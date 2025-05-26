@@ -1,0 +1,9 @@
+{
+	"SourceFiles": [
+		"C:\\Users\\zmwps\\Desktop\\Project_MMORPG\\P1\\Source\\P1\\P1.Build.cs",
+		"C:\\Users\\zmwps\\Desktop\\Project_MMORPG\\P1\\Source\\ProtobufCore\\ProtobufCore.Build.cs",
+		"C:\\Users\\zmwps\\Desktop\\Project_MMORPG\\P1\\Source\\P1.Target.cs",
+		"C:\\Users\\zmwps\\Desktop\\Project_MMORPG\\P1\\Source\\P1Editor.Target.cs"
+	],
+	"EngineVersion": "5.2.1"
+}
