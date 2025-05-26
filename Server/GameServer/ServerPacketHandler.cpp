@@ -89,7 +89,8 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	chatPkt.set_msg(pkt.msg());
 	auto sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
 
-	GRoom.Broadcast(sendBuffer); // WRITE_LOCK
+	session->Send(sendBuffer);
+	//GRoom.Broadcast(sendBuffer); // WRITE_LOCK
 
 	return true;
 }

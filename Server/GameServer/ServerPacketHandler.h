@@ -2,12 +2,14 @@
 #include "Protocol.pb.h"
 
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
-#include "S1.h"
+#include "SendBuffer.h"
+#include "Types.h"
 #endif
 
 using PacketHandlerFunc = std::function<bool(PacketSessionRef&, BYTE*, int32)>;
-extern PacketHandlerFunc GPacketHandler[UINT16_MAX]; // pkdId : 0~65535
+extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
+// Auto-generated
 enum : uint16
 {
 	PKT_C_LOGIN = 1000,
@@ -19,7 +21,8 @@ enum : uint16
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
-// ===== Auto-generated template Handle Functions =====
+
+// Auto-generated template Handle Functions
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt);
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt);
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt);
@@ -45,15 +48,14 @@ public:
 	}
 
 	// Auto-generated
-	static SendBufferRef MakeSerializedPacket(Protocol::S_LOGIN& pkt) { return MakeSerializedPacket(pkt, PKT_S_LOGIN); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_ENTER_GAME); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_S_CHAT); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_LOGIN& pkt) { return MakeSendBuffer(pkt, PKT_S_LOGIN); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_ENTER_GAME& pkt) { return MakeSendBuffer(pkt, PKT_S_ENTER_GAME); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_CHAT); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>
 	static bool HandlePacket(ProcessFunc func, PacketSessionRef& session, BYTE* buffer, int32 len)
 	{
-		/* deserialize packet data */
 		PacketType pkt;
 		if (pkt.ParseFromArray(buffer + sizeof(PacketHeader), len - sizeof(PacketHeader)) == false)
 			return false;
@@ -62,10 +64,10 @@ private:
 	}
 
 	template<typename T>
-	static SendBufferRef MakeSerializedPacket(T& pkt, uint16 pktId)
+	static SendBufferRef MakeSendBuffer(T& pkt, uint16 pktId)
 	{
-		const uint16 payloadSize = static_cast<uint16>(pkt.ByteSizeLong());
-		const uint16 packetSize = sizeof(PacketHeader) + payloadSize ;
+		const uint16 dataSize = static_cast<uint16>(pkt.ByteSizeLong());
+		const uint16 packetSize = dataSize + sizeof(PacketHeader);
 
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
 		SendBufferRef sendBuffer = MakeShared<SendBuffer>(packetSize);
@@ -73,12 +75,10 @@ private:
 		SendBufferRef sendBuffer = make_shared<SendBuffer>(packetSize);
 #endif
 
-		/* serialize packet data */
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(sendBuffer->Buffer());
 		header->size = packetSize;
 		header->id = pktId;
-		pkt.SerializeToArray(sendBuffer->Buffer() + sizeof(PacketHeader), payloadSize);
-
+		pkt.SerializeToArray(&header[1], dataSize);
 		sendBuffer->Close(packetSize);
 
 		return sendBuffer;
