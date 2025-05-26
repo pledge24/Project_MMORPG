@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "P1.h"
+#include "Types.h"
 #include "P1GameInstance.generated.h"
 
 /**
@@ -32,6 +32,5 @@ public:
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
 	int16 Port = 7777;
-	TSharedPtr<class PacketSession> GameServerSession;
-
+	PacketSessionRef GameServerSession;
 };

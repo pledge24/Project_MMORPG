@@ -28,7 +28,7 @@ void AMyActor::Tick(float DeltaTime)
 
 	Protocol::C_CHAT Msg;
 	Msg.set_msg("Hello Rookiss");
-	SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Msg);
+	SendBufferRef SendBuffer = ClientPacketHandler::MakeSendBuffer(Msg);
 	Cast<UP1GameInstance>(GetGameInstance())->SendPacket(SendBuffer);
 }
 

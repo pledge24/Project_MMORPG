@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Containers/Queue.h"
-#include "P1.h"
+#include "Types.h"
 
 class FSocket;
 
@@ -30,7 +30,7 @@ struct P1_API FPacketHeader
 class P1_API RecvWorker : public FRunnable
 {
 public:
-	RecvWorker(FSocket* Socket, TSharedPtr<class PacketSession> Session);
+	RecvWorker(FSocket* Socket, PacketSessionRef Session);
 	~RecvWorker();
 
 	virtual bool Init() override;
@@ -54,7 +54,7 @@ protected:
 class P1_API SendWorker : public FRunnable
 {
 public:
-	SendWorker(FSocket* Socket, TSharedPtr<class PacketSession> Session);
+	SendWorker(FSocket* Socket, PacketSessionRef Session);
 	~SendWorker();
 
 	virtual bool Init() override;

@@ -1,7 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "P1.h"
+#include "SendBuffer.h"
+#include "Types.h"
 
 class P1_API PacketSession : public TSharedFromThis<PacketSession>
 {
@@ -21,8 +22,8 @@ public:
 public:
 	class FSocket* Socket;
 
-	TSharedPtr<class RecvWorker> RecvWorkerThread;
-	TSharedPtr<class SendWorker> SendWorkerThread;
+	RecvWorkerRef RecvWorkerThread;
+	SendWorkerRef SendWorkerThread;
 
 	// GameThread랑 NetworkThread가 통신할때 사용하는 패킷 저장 큐
 	TQueue<TArray<uint8>> RecvPacketQueue;
