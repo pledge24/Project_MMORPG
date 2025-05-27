@@ -17,5 +17,5 @@ public:
 	virtual void OnSend(int32 len) override;
 
 public:
-	vector<PlayerRef> _players;
+	atomic<shared_ptr<Player>> player;
 };

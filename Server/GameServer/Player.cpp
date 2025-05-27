@@ -1,4 +1,12 @@
 #include "pch.h"
 #include "Player.h"
-#include "GameSession.h"
 
+Player::Player()
+{
+	playerInfo = new Protocol::PlayerInfo();
+}
+
+Player::~Player()
+{
+	delete playerInfo;
+}

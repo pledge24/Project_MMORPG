@@ -21,13 +21,28 @@ bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 	// 입장 UI 버튼 눌러서 게임 입장
 	Protocol::C_ENTER_GAME enterGamePkt;
 	enterGamePkt.set_playerindex(0); // 첫번째 캐릭터로 입장
-	auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(enterGamePkt);
+	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(enterGamePkt);
 	session->Send(sendBuffer);
 
 	return true;
 }
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
+{
+	return false;
+}
+
+bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
+{
+	return false;
+}
+
+bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
+{
+	return false;
+}
+
+bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 {
 	return false;
 }

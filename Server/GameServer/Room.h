@@ -1,15 +1,25 @@
 #pragma once
 
-class Room
+class Room : public enable_shared_from_this<Room>
 {
 public:
-	void Enter(PlayerRef player);
-	void Leave(PlayerRef player);
-	void Broadcast(SendBufferRef sendBuffer);
+	Room();
+	virtual ~Room();
+
+	bool HandleEnterPlayerLocked(PlayerRef player);
+	bool HandleLeavePlayerLocked(PlayerRef player);
 
 private:
+	bool EnterPlayer(PlayerRef player);
+	bool LeavePlayer(uint64 objectId);
+
 	USE_LOCK;
-	map<uint64, PlayerRef> _players;
+
+private:
+	void Broadcast(SendBufferRef sendBuffer, uint64 exceptId = 0);
+
+private:
+	unordered_map<uint64, PlayerRef> _players;
 };
 
-extern Room GRoom;
+extern RoomRef GRoom;

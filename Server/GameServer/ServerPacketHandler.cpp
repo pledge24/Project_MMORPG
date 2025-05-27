@@ -4,6 +4,7 @@
 #include "GameSession.h"
 #include "Player.h"
 #include "Room.h"
+#include "ObjectUtils.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -14,69 +15,56 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return false;
 }
 
+bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
+{
+	return false;
+}
+
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
-	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-
-	// TODO : Validation 체크
-
+	// TODO : DB에서 Account 정보를 긁어온다.
+	// TODO : DB에서 유저 정보를 긁어온다
 	Protocol::S_LOGIN loginPkt;
+
+	for (int32 i = 0; i < 3; i++)
+	{
+		Protocol::PlayerInfo* player = loginPkt.add_players();
+		player->set_x(Utils::GetRandom(0.f, 100.f));
+		player->set_y(Utils::GetRandom(0.f, 100.f));
+		player->set_z(Utils::GetRandom(0.f, 100.f));
+		player->set_yaw(Utils::GetRandom(0.f, 45.f));
+	}
+
 	loginPkt.set_success(true);
-
-	// DB에서 플레이 정보를 긁어온다
-	// GameSession에 플레이 정보를 저장 (메모리)
-
-	// ID 발급 (DB 아이디가 아니고, 인게임 아이디)
-	static atomic<uint64> idGenerator = 1;
-
-	{
-		auto player = loginPkt.add_players();
-		player->set_name(u8"DB에서긁어온이름1");
-		player->set_playertype(Protocol::PLAYER_TYPE_KNIGHT);
-
-		PlayerRef playerRef = make_shared<Player>();
-		playerRef->playerId = idGenerator++;
-		playerRef->name = player->name();
-		playerRef->type = player->playertype();
-		playerRef->ownerSession = gameSession;
-
-		gameSession->_players.push_back(playerRef);
-	}
-
-	{
-		auto player = loginPkt.add_players();
-		player->set_name(u8"DB에서긁어온이름2");
-		player->set_playertype(Protocol::PLAYER_TYPE_MAGE);
-
-		PlayerRef playerRef = make_shared<Player>();
-		playerRef->playerId = idGenerator++;
-		playerRef->name = player->name();
-		playerRef->type = player->playertype();
-		playerRef->ownerSession = gameSession;
-
-		gameSession->_players.push_back(playerRef);
-	}
-
-	auto sendBuffer = ServerPacketHandler::MakeSerializedPacket(loginPkt);
-	session->Send(sendBuffer);
+	SEND_PACKET(loginPkt);
 
 	return true;
 }
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+	// 플레이어 생성
+	PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
 
-	uint64 index = pkt.playerindex();
-	// TODO : Validation
+	// 방에 입장
+	GRoom->HandleEnterPlayerLocked(player);
 
-	PlayerRef player = gameSession->_players[index]; // READ_ONLY?
-	GRoom.Enter(player); // WRITE_LOCK
+	return true;
+}
 
-	Protocol::S_ENTER_GAME enterGamePkt;
-	enterGamePkt.set_success(true);
-	auto sendBuffer = ServerPacketHandler::MakeSerializedPacket(enterGamePkt);
-	player->ownerSession->Send(sendBuffer);
+bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
+{
+	auto gameSession = static_pointer_cast<GameSession>(session);
+
+	PlayerRef player = gameSession->player.load();
+	if (player == nullptr)
+		return false;
+
+	RoomRef room = player->room.load().lock();
+	if (room == nullptr)
+		return false;
+
+	room->HandleLeavePlayerLocked(player);
 
 	return true;
 }
@@ -84,13 +72,6 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
 	std::cout << pkt.msg() << endl;
-
-	Protocol::S_CHAT chatPkt;
-	chatPkt.set_msg(pkt.msg());
-	auto sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
-
-	session->Send(sendBuffer);
-	//GRoom.Broadcast(sendBuffer); // WRITE_LOCK
 
 	return true;
 }

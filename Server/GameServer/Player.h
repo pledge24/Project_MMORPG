@@ -1,12 +1,19 @@
 #pragma once
-#include "Enum.pb.h"
 
-class Player
+class GameSession;
+class Room;
+
+class Player : public enable_shared_from_this<Player>
 {
 public:
-	uint64 playerId = 0;
-	string name;
-	Protocol::PlayerType type = Protocol::PLAYER_TYPE_NONE;
-	GameSessionRef ownerSession; // TODO: Resolve Cycle
+	Player();
+	virtual ~Player();
+
+public:
+	Protocol::PlayerInfo* playerInfo;
+	weak_ptr<GameSession> session;
+
+public:
+	atomic<weak_ptr<Room>> room;
 };
 
