@@ -11,6 +11,12 @@
     <Filter Include="Game">
       <UniqueIdentifier>{3b44e930-ad63-4510-a2be-d0ac43d54f19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Protocol\Proto">
+      <UniqueIdentifier>{38370f68-972e-460a-8868-4b670f253cf0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{d4a3d086-a8c9-4324-91c6-ef2e7b671f5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -43,6 +49,12 @@
     <ClCompile Include="Room.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -72,19 +84,25 @@
     <ClInclude Include="Room.h">
       <Filter>Game</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Common\Protobuf\bin\Enum.proto">
-      <Filter>Protocol</Filter>
-    </None>
     <None Include="..\Common\Protobuf\bin\GenPackets.bat">
       <Filter>Protocol</Filter>
     </None>
+    <None Include="..\Common\Protobuf\bin\Enum.proto">
+      <Filter>Protocol\Proto</Filter>
+    </None>
     <None Include="..\Common\Protobuf\bin\Protocol.proto">
-      <Filter>Protocol</Filter>
+      <Filter>Protocol\Proto</Filter>
     </None>
     <None Include="..\Common\Protobuf\bin\Struct.proto">
-      <Filter>Protocol</Filter>
+      <Filter>Protocol\Proto</Filter>
     </None>
   </ItemGroup>
 </Project>

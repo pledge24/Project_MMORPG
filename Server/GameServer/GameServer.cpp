@@ -36,6 +36,11 @@ int main(void)
 			});
 	}
 
+	while (true)
+	{
+		this_thread::sleep_for(1s);
+	}
+
 	GThreadManager->Join();
 
 	return 0;
