@@ -8,6 +8,7 @@
 #include "PacketSession.h"
 #include "Protocol.pb.h"
 #include "ClientPacketHandler.h"
+#include "P1MyPlayer.h"
 #include "P1.h"
 
 void UP1GameInstance::ConnectToGameServer()
@@ -79,7 +80,7 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 }
 
 // 새로운 플레이어를 스폰
-void UP1GameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo)
+void UP1GameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool IsMine)
 {
 	if (Socket == nullptr || GameServerSession == nullptr)
 		return;
@@ -94,21 +95,36 @@ void UP1GameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo)
 		return;
 
 	FVector SpawnLocation(PlayerInfo.x(), PlayerInfo.y(), PlayerInfo.z());
-	AActor* Actor = World->SpawnActor(PlayerClass, &SpawnLocation);
 
-	Players.Add(PlayerInfo.object_id(), Actor);
+	if (IsMine)
+	{
+		auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+		AP1Player* Player = Cast<AP1Player>(PC->GetPawn());
+		if (Player == nullptr)
+			return;
+
+		Player->SetPlayerInfo(PlayerInfo);
+		MyPlayer = Player;
+		Players.Add(PlayerInfo.object_id(), Player);
+	}
+	else
+	{
+		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
+		Player->SetPlayerInfo(PlayerInfo);
+		Players.Add(PlayerInfo.object_id(), Player);
+	}
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt)
 {
-	HandleSpawn(EnterGamePkt.player());
+	HandleSpawn(EnterGamePkt.player(), true);
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
 	for (auto& Player : SpawnPkt.players())
 	{
-		HandleSpawn(Player);
+		HandleSpawn(Player, false);
 	}
 }
 
@@ -121,7 +137,7 @@ void UP1GameInstance::HandleDespawn(uint64 ObjectId)
 	if (World == nullptr)
 		return;
 
-	AActor** FindActor = Players.Find(ObjectId);
+	AP1Player** FindActor = Players.Find(ObjectId);
 	if (FindActor == nullptr)
 		return;
 
@@ -134,4 +150,27 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 	{
 		HandleDespawn(ObjectId);
 	}
+}
+
+void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
+{
+	if (Socket == nullptr || GameServerSession == nullptr)
+		return;
+
+	auto* World = GetWorld();
+	if (World == nullptr)
+		return;
+
+	const uint64 ObjectId = MovePkt.info().object_id();
+	AP1Player** FindActor = Players.Find(ObjectId);
+	if (FindActor == nullptr)
+		return;
+
+	AP1Player* Player = (*FindActor);
+	if (Player->IsMyPlayer())
+		return;
+
+	const Protocol::PlayerInfo& Info = MovePkt.info();
+	//Player->SetPlayerInfo(Info);
+	Player->SetDestInfo(Info);
 }
