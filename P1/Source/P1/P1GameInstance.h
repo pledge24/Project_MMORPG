@@ -8,6 +8,8 @@
 #include "Protocol.pb.h"
 #include "P1GameInstance.generated.h"
 
+class AP1Player;
+
 /**
  * 
  */
@@ -29,12 +31,14 @@ public:
 	void SendPacket(SendBufferRef SendBuffer);
 
 public:
-	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo);
+	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool IsMine);
 	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
 	void HandleDespawn(uint64 ObjectId);
 	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
+
+	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
 public:
 	// GameServer
@@ -45,7 +49,8 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<AActor> PlayerClass;
+	TSubclassOf<AP1Player> OtherPlayerClass;
 
-	TMap<uint64, AActor*> Players;
+	AP1Player* MyPlayer;
+	TMap<uint64, AP1Player*> Players;
 };
