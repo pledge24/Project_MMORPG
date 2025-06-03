@@ -59,7 +59,7 @@ void Session::Disconnect(const char* cause)
 
 void Session::Send(SendBufferRef sendBuffer)
 {
-	WRITE_LOCK;
+	USE_LOCK;
 	_sendQueue.push(sendBuffer);
 
 	bool sendRegistered = false;
@@ -267,7 +267,7 @@ void Session::ProcessSend(int32 numOfBytes)
 	// 컨텐츠 코드에서 재정의
 	OnSend(numOfBytes);
 
-	WRITE_LOCK;
+	USE_LOCK;
 
 	if (_sendQueue.empty())
 		_sendRegistered.store(false);

@@ -12,7 +12,7 @@ public:
 	void Broadcast(SendBufferRef sendBuffer);
 
 private:
-	USE_LOCK;
+	MAKE_LOCK;
 	set<GameSessionRef> _sessions;
 };
 

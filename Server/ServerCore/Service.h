@@ -41,7 +41,7 @@ public:
 	IocpCoreRef&		GetIocpCore() { return _iocpCore; }
 
 protected:
-	USE_LOCK;
+	MAKE_LOCK;
 	ServiceType			_type;
 	NetAddress			_netAddress = {};
 	IocpCoreRef			_iocpCore;
