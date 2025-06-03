@@ -76,11 +76,11 @@
     <ClInclude Include="GlobalQueue.h">
       <Filter>Job</Filter>
     </ClInclude>
-    <ClInclude Include="..\GameServer\LockQueue.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="CoreTLS.h">
       <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="LockQueue.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -123,9 +123,6 @@
     <ClCompile Include="RecvBuffer.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Job.cpp">
-      <Filter>Job</Filter>
-    </ClCompile>
     <ClCompile Include="JobQueue.cpp">
       <Filter>Job</Filter>
     </ClCompile>
@@ -135,11 +132,11 @@
     <ClCompile Include="GlobalQueue.cpp">
       <Filter>Job</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\LockQueue.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
     <ClCompile Include="CoreTLS.cpp">
       <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="LockQueue.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

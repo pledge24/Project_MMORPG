@@ -1,6 +1,8 @@
 // 자주 사용하는 헤더는 여기에 포함.
 #pragma once
 
+using namespace std;
+
 /*-----------------
 	   Core
 ------------------*/
@@ -52,5 +54,4 @@
 ------------------*/
 #include "JobQueue.h"
 
-using namespace std;
 

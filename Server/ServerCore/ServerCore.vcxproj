@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\GameServer\LockQueue.h" />
     <ClInclude Include="CoreGlobal.h" />
     <ClInclude Include="CoreMacro.h" />
     <ClInclude Include="CorePch.h" />
@@ -166,6 +165,7 @@
     <ClInclude Include="JobQueue.h" />
     <ClInclude Include="JobTimer.h" />
     <ClInclude Include="Listener.h" />
+    <ClInclude Include="LockQueue.h" />
     <ClInclude Include="NetAddress.h" />
     <ClInclude Include="NetworkEvent.h" />
     <ClInclude Include="pch.h" />
@@ -178,16 +178,15 @@
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\GameServer\LockQueue.cpp" />
     <ClCompile Include="CoreGlobal.cpp" />
     <ClCompile Include="CorePch.cpp" />
     <ClCompile Include="CoreTLS.cpp" />
     <ClCompile Include="GlobalQueue.cpp" />
     <ClCompile Include="IocpCore.cpp" />
-    <ClCompile Include="Job.cpp" />
     <ClCompile Include="JobQueue.cpp" />
     <ClCompile Include="JobTimer.cpp" />
     <ClCompile Include="Listener.cpp" />
+    <ClCompile Include="LockQueue.cpp" />
     <ClCompile Include="NetAddress.cpp" />
     <ClCompile Include="NetworkEvent.cpp" />
     <ClCompile Include="pch.cpp">

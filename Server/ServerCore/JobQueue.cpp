@@ -9,7 +9,7 @@
 void JobQueue::Push(JobRef job, bool pushOnly)
 {
 	const int32 prevCount = _jobCount.fetch_add(1);
-	_jobs.Push(job); // WRITE_LOCK
+	_jobs.Push(job); // USE_LOCK
 
 	// 첫번째 Job을 넣은 쓰레드가 실행까지 담당
 	if (prevCount == 0)
@@ -21,7 +21,7 @@ void JobQueue::Push(JobRef job, bool pushOnly)
 		}
 		else
 		{
-			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 넘긴다
+			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 떠넘긴다
 			GGlobalQueue->Push(shared_from_this());
 		}
 	}
@@ -35,24 +35,25 @@ void JobQueue::Execute()
 	while (true)
 	{
 		vector<JobRef> jobs;
-		_jobs.PopAll(OUT jobs);
+		_jobs.PopAll(OUT jobs); // USE_LOCK
 
 		const int32 jobCount = static_cast<int32>(jobs.size());
 		for (int32 i = 0; i < jobCount; i++)
 			jobs[i]->Execute();
 
-		// 남은 일감이 0개라면 종료
+		// 자리에 돌아왔을때 일감이 또 있는지 체크(없으면 나감)
 		if (_jobCount.fetch_sub(jobCount) == jobCount)
 		{
 			LCurrentJobQueue = nullptr;
 			return;
 		}
 
+		// 워라벨 체크
 		const uint64 now = ::GetTickCount64();
 		if (now >= LEndTickCount)
 		{
 			LCurrentJobQueue = nullptr;
-			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 넘긴다
+			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 떠넘긴다
 			GGlobalQueue->Push(shared_from_this());
 			break;
 		}			
