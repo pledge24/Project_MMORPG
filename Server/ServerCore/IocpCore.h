@@ -4,7 +4,7 @@
 	IocpObject
 -----------------*/
 
-/* Listener / Session 인터페이스 */
+/* Listener / Session의 인터페이스 */
 class IocpObject : public enable_shared_from_this<IocpObject>
 {
 public:
@@ -12,9 +12,9 @@ public:
 	virtual void Dispatch(class NetworkEvent* iocpEvent, int32 numOfBytes = 0) = 0;
 };
 
-/*---------------
-	IocpCore
-----------------*/
+/*-----------------
+	  IocpCore
+------------------*/
 class IocpCore
 {
 public:

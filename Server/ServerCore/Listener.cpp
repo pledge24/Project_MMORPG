@@ -26,54 +26,13 @@ void Listener::Dispatch(NetworkEvent* networkEvent, int32 numOfBytes)
 	ProcessAccept(acceptEvent);
 }
 
-bool Listener::StartListen()
+bool Listener::Start()
 {
-	// Socket
-	_listenSocket = SocketUtil::CreateSocket();
-	if (_listenSocket == INVALID_SOCKET)
+	if (Listen() == false)
 		return false;
 
-	// Set SocketOpt: 주소 재사용 가능(개발 편함용)
-	if (SocketUtil::SetReuseAddress(_listenSocket, true) == false)
+	if (Accept() == false)
 		return false;
-
-	// Set SocketOpt: 잉여 송신 데이터 무시.
-	if (SocketUtil::SetLinger(_listenSocket, 0, 0) == false)
-		return false;
-
-	// Set SocketOpt: 네이글 알고리즘 비활성화
-	if (SocketUtil::SetTcpNoDelay(_listenSocket, false) == false)
-		return false;
-
-	// IOCP에 등록
-	if (_service->GetIocpCore()->RegisterSocket(_listenSocket) == false)
-		return false;
-
-	// Bind 
-	if (SocketUtil::Bind(_listenSocket, _service->GetNetAddress()) == false)
-		return false;
-
-	// Listen
-	if (SocketUtil::Listen(_listenSocket) == false)
-		return false;
-
-	cout << "Success to generate listen Socket" << endl;
-
-	return true;
-}
-
-bool Listener::StartAccept()
-{
-	const int32 acceptCount = _service->GetMaxSessionCount();
-	for (int32 i = 0; i < acceptCount; i++)
-	{
-		AcceptEvent* acceptEvent = new AcceptEvent();
-		acceptEvent->owner = shared_from_this();
-		_acceptEvents.push_back(acceptEvent);
-		RegisterAccept(acceptEvent);
-	}
-
-	cout << "Success to register AcceptEvent: " << acceptCount << endl;
 
 	return true;
 }
@@ -119,7 +78,59 @@ void Listener::ProcessAccept(AcceptEvent* acceptEvent)
 	}
 
 	session->SetNetAddress(NetAddress(sockAddress));
-	session->ProcessConnect(); // 흠...
+	//session->ProcessConnect(); // TEMP: ProcessConnect는 클라 전용으로 간주
 
 	RegisterAccept(acceptEvent);
+}
+
+bool Listener::Listen()
+{
+	// Socket
+	_listenSocket = SocketUtil::CreateSocket();
+	if (_listenSocket == INVALID_SOCKET)
+		return false;
+
+	// Set SocketOpt: 주소 재사용 가능(개발 편함용)
+	if (SocketUtil::SetReuseAddress(_listenSocket, true) == false)
+		return false;
+
+	// Set SocketOpt: 잉여 송신 데이터 무시.
+	if (SocketUtil::SetLinger(_listenSocket, 0, 0) == false)
+		return false;
+
+	// Set SocketOpt: 네이글 알고리즘 비활성화
+	if (SocketUtil::SetTcpNoDelay(_listenSocket, false) == false)
+		return false;
+
+	// IOCP에 등록
+	if (_service->GetIocpCore()->RegisterSocket(_listenSocket) == false)
+		return false;
+
+	// Bind 
+	if (SocketUtil::Bind(_listenSocket, _service->GetNetAddress()) == false)
+		return false;
+
+	// Listen
+	if (SocketUtil::Listen(_listenSocket) == false)
+		return false;
+
+	cout << "Success to generate listen Socket" << endl;
+
+	return true;
+}
+
+bool Listener::Accept()
+{
+	const int32 acceptCount = _service->GetMaxSessionCount();
+	for (int32 i = 0; i < acceptCount; i++)
+	{
+		AcceptEvent* acceptEvent = new AcceptEvent();
+		acceptEvent->owner = shared_from_this();
+		_acceptEvents.push_back(acceptEvent);
+		RegisterAccept(acceptEvent);
+	}
+
+	cout << "Success to register AcceptEvent: " << acceptCount << endl;
+
+	return true;
 }

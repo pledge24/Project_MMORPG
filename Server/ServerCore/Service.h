@@ -1,8 +1,9 @@
 #pragma once
 #include "NetAddress.h"
 #include "IocpCore.h"
-#include "Listener.h"
 #include <functional>
+
+class Listener;
 
 enum class ServiceType : uint8
 {
@@ -27,8 +28,9 @@ public:
 
 	virtual void		CloseService();
 	void				SetSessionFactory(SessionFactory func) { _sessionFactory = func; }
-
-	void				Broadcast(SendBufferRef sendBuffer);
+			
+						/* Session 관리 관련*/
+	void				Broadcast(SendBufferRef sendBuffer); // TEMP?
 	SessionRef			CreateSession();
 	void				AddSession(SessionRef session);
 	void				RemoveSession(SessionRef session);
@@ -36,12 +38,13 @@ public:
 	int32				GetMaxSessionCount() { return _maxSessionCount; }
 
 public:
+						/* Service 정보 관련 */
 	ServiceType			GetServiceType() { return _type; }
 	NetAddress			GetNetAddress() { return _netAddress; }
 	IocpCoreRef&		GetIocpCore() { return _iocpCore; }
 
 protected:
-	USE_LOCK;
+	MAKE_LOCK;
 	ServiceType			_type;
 	NetAddress			_netAddress = {};
 	IocpCoreRef			_iocpCore;

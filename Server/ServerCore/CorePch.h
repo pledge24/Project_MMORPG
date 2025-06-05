@@ -1,13 +1,23 @@
+// 자주 사용하는 헤더는 여기에 포함.
 #pragma once
 
+using namespace std;
+
 /*-----------------
-	   Common
+	   Core
 ------------------*/
 #include "Types.h"
 #include "CoreMacro.h"
+#include "CoreTLS.h"
 #include "CoreGlobal.h"
 
+
+/*-----------------
+	   Debug
+------------------*/
 #include <iostream>
+#include <assert.h>
+
 
 /*-----------------
 	STL Container
@@ -22,6 +32,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+
 /*-----------------
 	Window Socket 
 ------------------*/
@@ -30,11 +41,17 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
+
 /*-----------------
 	   Network
 ------------------*/
 #include "SendBuffer.h"
 #include "Session.h"
 
-using namespace std;
+
+/*-----------------
+	    Etc
+------------------*/
+#include "JobQueue.h"
+
 

@@ -5,11 +5,25 @@
 #include "GameSession.h"
 #include "ServerPacketHandler.h"
 
-void WorkerThreadMain(ServerServiceRef service)
+enum
+{
+	WORKER_TICK = 64
+};
+
+void DoWorkerJob(ServerServiceRef& service)
 {
 	while (true)
 	{
-		service->GetIocpCore()->Dispatch();
+		LEndTickCount = ::GetTickCount64() + WORKER_TICK;
+
+		// 네트워크 입출력 처리 -> 인게임 로직까지 (패킷 핸들러에 의해)
+		service->GetIocpCore()->Dispatch(10);
+
+		// 시간이 된 TimerJob 각 JQ에 밀어넣기(하나만 통과)
+		ThreadManager::DistributeReservedJobs();
+
+		// 글로벌 큐(떠넘겨진 JQ 들어있음)
+		ThreadManager::DoGlobalQueueWork();
 	}
 }
 
@@ -17,29 +31,28 @@ int main(void)
 {
 	ServerPacketHandler::Init();
 
+	const int maxSessionCount = 30;
 	ServerServiceRef service = make_shared<ServerService>(
 		NetAddress("127.0.0.1"s, 7777),
 		make_shared<IocpCore>(),
 		[=]() { return make_shared<GameSession>(); }, // TODO : SessionManager 등
-		30
+		maxSessionCount
 	);
 
 	ASSERT_CRASH(service->Start());
 
-	// worker Thread
-	const int threadN = 5;
-	for (int i = 0; i < threadN; i++)
+	// worker thread
+	const int workerThreadN = 5;
+	for (int32 i = 0; i < workerThreadN; i++)
 	{
 		GThreadManager->Launch([&service]()
 			{
-				WorkerThreadMain(service);
+				DoWorkerJob(service);
 			});
 	}
 
-	while (true)
-	{
-		this_thread::sleep_for(1s);
-	}
+	// Main Thread
+	DoWorkerJob(service);
 
 	GThreadManager->Join();
 

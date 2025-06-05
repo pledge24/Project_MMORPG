@@ -3,7 +3,15 @@ package Protocol;
 
 import "Enum.proto";
 
-message PlayerInfo
+message ObjectInfo
+{
+	uint64 object_id = 1;
+	ObjectType object_type = 2;
+	PosInfo pos_info = 3;
+	//...
+}
+
+message PosInfo
 {
 	uint64 object_id = 1;
 	float x = 2;

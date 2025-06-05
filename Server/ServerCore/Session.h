@@ -71,7 +71,7 @@ protected:
 	virtual void			OnDisconnected() {}
 
 private:
-	USE_LOCK;
+	MAKE_LOCK;
 	weak_ptr<Service>		_service;
 	NetAddress				_netAddress;
 	SOCKET					_socket = INVALID_SOCKET;

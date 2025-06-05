@@ -4,6 +4,10 @@
 #include "NetworkEvent.h"
 #include "Service.h"
 
+/*---------------------
+		Session
+----------------------*/
+
 Session::Session() : _recvBuffer(BUFFER_SIZE)
 {
 	_socket = SocketUtil::CreateSocket();
@@ -51,25 +55,35 @@ void Session::Disconnect(const char* cause)
 	if (_connected.exchange(false) == false)
 		return;
 
-	// TODO: Log 남기기.
+	// TEMP
 	cout << "Disconnect : " << cause << endl;
+
+	// TODO: 강제 연결 해제 Log 남기기.
 
 	RegisterDisconnect();
 }
 
 void Session::Send(SendBufferRef sendBuffer)
 {
-	WRITE_LOCK;
-	_sendQueue.push(sendBuffer);
+	if (IsConnected() == false)
+		return;
 
-	bool sendRegistered = false;
+	bool registerSend = false;
 
-	if (_sendRegistered.exchange(true) == false)
-		sendRegistered = true;
+	// 현재 RegisterSend가 걸리지 않은 상태라면, 걸어준다.
+	{
+		USE_LOCK;
 
-	if (sendRegistered)
+		_sendQueue.push(sendBuffer);
+
+		if (_sendRegistered.exchange(true) == false)
+			registerSend = true;
+	}
+
+	if (registerSend)
 		RegisterSend();
 }
+
 
 bool Session::RegisterConnect()
 {
@@ -267,7 +281,7 @@ void Session::ProcessSend(int32 numOfBytes)
 	// 컨텐츠 코드에서 재정의
 	OnSend(numOfBytes);
 
-	WRITE_LOCK;
+	USE_LOCK;
 
 	if (_sendQueue.empty())
 		_sendRegistered.store(false);

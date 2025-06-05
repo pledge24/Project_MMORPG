@@ -11,6 +11,12 @@
     <Filter Include="Thread">
       <UniqueIdentifier>{df9256aa-1023-4786-be15-7683ace8c70a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Job">
+      <UniqueIdentifier>{6c360445-e576-4529-a762-b7fa5000b075}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{3d2f821a-a685-4651-b05e-5769487d5641}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -58,6 +64,24 @@
     <ClInclude Include="SendBuffer.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Job.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="JobQueue.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="JobTimer.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalQueue.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="CoreTLS.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="LockQueue.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -98,6 +122,21 @@
     </ClCompile>
     <ClCompile Include="RecvBuffer.cpp">
       <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="JobQueue.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
+    <ClCompile Include="JobTimer.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalQueue.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
+    <ClCompile Include="CoreTLS.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="LockQueue.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

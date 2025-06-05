@@ -2,6 +2,10 @@
 #include "IocpCore.h"
 #include "NetworkEvent.h"
 
+/*-----------------
+	  IocpCore
+------------------*/
+
 IocpCore::IocpCore()
 {
 	_iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);

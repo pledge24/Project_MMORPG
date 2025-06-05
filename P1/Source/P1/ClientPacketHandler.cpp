@@ -49,7 +49,7 @@ bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		// TODO: 게임 종료? 로비로?
+		// TODO: 게임 종료? 로비로?(연결을 곧바로 끊을지 선택해야함)
 
 	}
 

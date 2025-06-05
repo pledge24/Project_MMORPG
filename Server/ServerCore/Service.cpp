@@ -24,7 +24,7 @@ void Service::CloseService()
 
 void Service::Broadcast(SendBufferRef sendBuffer)
 {
-	WRITE_LOCK;
+	USE_LOCK;
 	for (const auto& session : _sessions)
 	{
 		session->Send(sendBuffer);
@@ -44,14 +44,14 @@ SessionRef Service::CreateSession()
 
 void Service::AddSession(SessionRef session)
 {
-	WRITE_LOCK;
+	USE_LOCK;
 	_sessionCount++;
 	_sessions.insert(session);
 }
 
 void Service::RemoveSession(SessionRef session)
 {
-	WRITE_LOCK;
+	USE_LOCK;
 	ASSERT_CRASH(_sessions.erase(session) != 0);
 	_sessionCount--;
 }
@@ -101,10 +101,7 @@ bool ServerService::Start()
 
 	_listener->SetService(static_pointer_cast<ServerService>(shared_from_this()));
 
-	if (_listener->StartListen() == false)
-		return false;
-
-	if (_listener->StartAccept() == false)
+	if (_listener->Start() == false)
 		return false;
 
 	return true;
