@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "SocketUtil.h"
 
-/*----------------
-	SocketUtil
------------------*/
+/*------------------
+	  SocketUtil
+-------------------*/
 
 LPFN_CONNECTEX		SocketUtil::ConnectEx = nullptr;
 LPFN_DISCONNECTEX	SocketUtil::DisconnectEx = nullptr;
@@ -13,9 +13,10 @@ bool				SocketUtil::alreadyInit = false;
 
 bool SocketUtil::Init()
 {
-	// TODO? : 여러번 실행되는 것을 막아야 하지 않나?
-	if (alreadyInit)
+	if (alreadyInit == true)
 		return false;
+	else
+		alreadyInit = true;
 			
 	/* Winsock 시작 */
 	WSADATA wsaData;
@@ -29,7 +30,6 @@ bool SocketUtil::Init()
 
 	Close(dummySocket);
 
-	alreadyInit = true;
 	return true;
 }
 
@@ -37,8 +37,6 @@ void SocketUtil::Clear()
 {
 	::WSACleanup();
 }
-
-
 
 bool SocketUtil::BindWindowsFunction(SOCKET socket, GUID guid, LPVOID* fn)
 {
@@ -54,7 +52,6 @@ SOCKET SocketUtil::CreateSocket()
 
 /*====== [Set SockOpt] ======*/
 
-/*Linger:질질끌다. -> 여기선 통신 종료후 X초 동안 송신 버퍼에 남은 데이터를 마저 전송함을 의미*/
 bool SocketUtil::SetLinger(SOCKET socket, uint16 onoff, uint16 linger)
 {
 	LINGER option;
@@ -83,7 +80,7 @@ bool SocketUtil::SetTcpNoDelay(SOCKET socket, bool flag)
 	return SetSockOpt(socket, SOL_SOCKET, TCP_NODELAY, flag);
 }
 
-// ListenSocket의 특성을 ClientSocket에 그대로 적용
+/* ListenSocket의 특성을 ClientSocket에 그대로 적용 */ 
 bool SocketUtil::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)
 {
 	return SetSockOpt(socket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, listenSocket);

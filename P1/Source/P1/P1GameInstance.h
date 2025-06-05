@@ -19,6 +19,7 @@ class P1_API UP1GameInstance : public UGameInstance
 	GENERATED_BODY()
 	
 public:
+	/* 네트워크 통신 관련 */
 	UFUNCTION(BlueprintCallable)
 	void ConnectToGameServer();
 
@@ -31,7 +32,8 @@ public:
 	void SendPacket(SendBufferRef SendBuffer);
 
 public:
-	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool IsMine);
+	/* 패킷 핸들 함수 */
+	void HandleSpawn(const Protocol::ObjectInfo& PlayerInfo, bool IsMine);
 	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
@@ -41,13 +43,14 @@ public:
 	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
 public:
-	// GameServer
+	/* GameServer Socket */
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
 	int16 Port = 7777;
 	PacketSessionRef GameServerSession;
 
 public:
+	/* Player 정보 */
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AP1Player> OtherPlayerClass;
 

@@ -21,7 +21,7 @@ void JobQueue::Push(JobRef job, bool pushOnly)
 		}
 		else
 		{
-			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 떠넘긴다
+			// 들어있는 일감을 다른 쓰레드가 실행할 수 있도록 GlobalQueue에 떠넘긴다
 			GGlobalQueue->Push(shared_from_this());
 		}
 	}
@@ -53,7 +53,7 @@ void JobQueue::Execute()
 		if (now >= LEndTickCount)
 		{
 			LCurrentJobQueue = nullptr;
-			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 떠넘긴다
+			// 들어있는 일감을 다른 쓰레드가 실행할 수 있도록 GlobalQueue에 떠넘긴다
 			GGlobalQueue->Push(shared_from_this());
 			break;
 		}			

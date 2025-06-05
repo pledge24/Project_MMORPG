@@ -27,6 +27,10 @@ struct P1_API FPacketHeader
 	uint16 PacketID;
 };
 
+/*-----------------
+	 RecvWorker
+------------------*/
+
 class P1_API RecvWorker : public FRunnable
 {
 public:
@@ -50,6 +54,9 @@ protected:
 	TWeakPtr<class PacketSession> SessionRef;
 };
 
+/*-----------------
+	 SendWorker
+------------------*/
 
 class P1_API SendWorker : public FRunnable
 {

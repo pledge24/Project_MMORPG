@@ -15,14 +15,17 @@ public:
 	virtual HANDLE		GetHandle() override;
 	virtual void		Dispatch(class NetworkEvent* networkEvent, int32 numOfBytes = 0) override;
 
-	bool				StartListen();
-	bool				StartAccept();
+	bool				Start();
 
 						/* 수신 관련 */
 	void				RegisterAccept(AcceptEvent* acceptEvent);
 	void				ProcessAccept(AcceptEvent* acceptEvent);
 
 	void				SetService(ServerServiceRef service) { _service = service; }
+
+private:
+	bool				Listen();
+	bool				Accept();
 
 private:
 	SOCKET _listenSocket = INVALID_SOCKET;

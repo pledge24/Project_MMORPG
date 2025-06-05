@@ -1,6 +1,14 @@
 syntax = "proto3";
 package Protocol;
 
+enum ObjectType
+{
+	OBJECT_TYPE_NONE = 0;
+	OBJECT_TYPE_CREATURE = 1;
+	OBJECT_TYPE_PROJECTILE = 2;
+	OBJECT_TYPE_ENV = 3;
+}
+
 enum PlayerType
 {
 	PLAYER_TYPE_NONE = 0;

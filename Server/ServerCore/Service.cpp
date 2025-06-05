@@ -101,10 +101,7 @@ bool ServerService::Start()
 
 	_listener->SetService(static_pointer_cast<ServerService>(shared_from_this()));
 
-	if (_listener->StartListen() == false)
-		return false;
-
-	if (_listener->StartAccept() == false)
+	if (_listener->Start() == false)
 		return false;
 
 	return true;

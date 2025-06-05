@@ -5,6 +5,7 @@
 #include "Monster.h"
 #include "ObjectUtils.h"
 
+// TEMP: Room 하나만 운영(나중엔 RoomManager 사용해서 관리)
 RoomRef GRoom = make_shared<Room>();
 
 Room::Room()
@@ -96,7 +97,7 @@ bool Room::LeaveRoom(ObjectRef object)
 			session->Send(sendBuffer);
 	}
 
-	// 퇴장 사실을 알린다
+	// 퇴장 사실을 다른 플레이어에게 알린다
 	{
 		Protocol::S_DESPAWN despawnPkt;
 		despawnPkt.add_object_ids(objectId);

@@ -1,10 +1,11 @@
 #pragma once
 #include "NetAddress.h"
 
-/*----------------
-	SocketUtil
------------------*/
+/*------------------
+	  SocketUtil
+-------------------*/
 
+// 전역 객체로 사용한다.
 class SocketUtil
 {
 public:

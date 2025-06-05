@@ -3,6 +3,10 @@
 #include "Serialization/ArrayWriter.h"
 #include "PacketSession.h"
 
+/*-----------------
+	 RecvWorker
+------------------*/
+
 RecvWorker::RecvWorker(FSocket* Socket, PacketSessionRef Session) : Socket(Socket), SessionRef(Session)
 {
 	Thread = FRunnableThread::Create(this, TEXT("RecvWorkerThread"));
@@ -106,7 +110,10 @@ bool RecvWorker::ReceiveDesiredBytes(uint8* Results, int32 Size)
 	return true;
 }
 
-// SendWorker
+/*-----------------
+	 SendWorker
+------------------*/
+
 SendWorker::SendWorker(FSocket* Socket, PacketSessionRef Session) : Socket(Socket), SessionRef(Session)
 {
 	Thread = FRunnableThread::Create(this, TEXT("SendWorkerThread"));
