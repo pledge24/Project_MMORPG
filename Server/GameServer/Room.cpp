@@ -41,7 +41,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 		playerInfo->CopyFrom(*object->objectInfo);
 		enterGamePkt.set_allocated_player(playerInfo);
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(enterGamePkt);
+		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(enterGamePkt);
 		if (auto session = player->session.lock())
 			session->Send(sendBuffer);
 	}
@@ -53,7 +53,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 		Protocol::ObjectInfo* objectInfo = spawnPkt.add_players();
 		objectInfo->CopyFrom(*object->objectInfo);
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(spawnPkt);
+		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
 		Broadcast(sendBuffer, object->objectInfo->object_id());
 	}
 
@@ -71,7 +71,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 			playerInfo->CopyFrom(*item.second->objectInfo);
 		}
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(spawnPkt);
+		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
 		if (auto session = player->session.lock())
 			session->Send(sendBuffer);
 	}
@@ -92,7 +92,7 @@ bool Room::LeaveRoom(ObjectRef object)
 	{
 		Protocol::S_LEAVE_GAME leaveGamePkt;
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(leaveGamePkt);
+		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(leaveGamePkt);
 		if (auto session = player->session.lock())
 			session->Send(sendBuffer);
 	}
@@ -102,7 +102,7 @@ bool Room::LeaveRoom(ObjectRef object)
 		Protocol::S_DESPAWN despawnPkt;
 		despawnPkt.add_object_ids(objectId);
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(despawnPkt);
+		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
 		Broadcast(sendBuffer, objectId);
 
 		if (auto player = dynamic_pointer_cast<Player>(object))
@@ -140,7 +140,7 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 			Protocol::PosInfo* info = movePkt.mutable_info();
 			info->CopyFrom(pkt.info());
 		}
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(movePkt);
+		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
 		Broadcast(sendBuffer);
 	}
 }

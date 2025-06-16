@@ -11,7 +11,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameServer", "GameServer\Ga
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{DBFCD51F-4D05-42A2-B4F7-9B745DC87AC4}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PacketGenerator", "Tools\PacketGenerator\PacketGenerator.pyproj", "{58104683-1B94-497F-896D-43E81AD37A6A}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PacketHandlerGenerator", "Tools\PacketGenerator\PacketHandlerGenerator.pyproj", "{58104683-1B94-497F-896D-43E81AD37A6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

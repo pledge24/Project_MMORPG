@@ -9,6 +9,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 
-#define SEND_PACKET(Pkt)														\
-	SendBufferRef SendBuffer = ClientPacketHandler::MakeSendBuffer(Pkt);		\
+#define SEND_PACKET(Pkt)															\
+	SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);		\
 	Cast<UP1GameInstance>(GWorld->GetGameInstance())->SendPacket(SendBuffer);
