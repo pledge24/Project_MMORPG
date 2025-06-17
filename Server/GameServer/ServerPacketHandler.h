@@ -62,14 +62,14 @@ public:
 	}
 
 	// Auto-generated
-	static SendBufferRef MakeSendBuffer(Protocol::S_PONG& pkt) { return MakeSendBuffer(pkt, PKT_S_PONG); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_LOGIN& pkt) { return MakeSendBuffer(pkt, PKT_S_LOGIN); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_ENTER_GAME& pkt) { return MakeSendBuffer(pkt, PKT_S_ENTER_GAME); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_LEAVE_GAME& pkt) { return MakeSendBuffer(pkt, PKT_S_LEAVE_GAME); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_SPAWN& pkt) { return MakeSendBuffer(pkt, PKT_S_SPAWN); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_DESPAWN& pkt) { return MakeSendBuffer(pkt, PKT_S_DESPAWN); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_MOVE& pkt) { return MakeSendBuffer(pkt, PKT_S_MOVE); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_CHAT); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_PONG& pkt) { return MakeSerializedPacket(pkt, PKT_S_PONG); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_LOGIN& pkt) { return MakeSerializedPacket(pkt, PKT_S_LOGIN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_ENTER_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_LEAVE_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_SPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_SPAWN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_DESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_DESPAWN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_MOVE& pkt) { return MakeSerializedPacket(pkt, PKT_S_MOVE); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_S_CHAT); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>
@@ -83,7 +83,7 @@ private:
 	}
 
 	template<typename T>
-	static SendBufferRef MakeSendBuffer(T& pkt, uint16 pktId)
+	static SendBufferRef MakeSerializedPacket(T& pkt, uint16 pktId)
 	{
 		const uint16 dataSize = static_cast<uint16>(pkt.ByteSizeLong());
 		const uint16 packetSize = dataSize + sizeof(PacketHeader);

@@ -169,7 +169,7 @@ void Session::RegisterSend()
 
 	// 보낼 데이터를 sendEvent에 등록
 	{
-		//WRITE_LOCK;
+		USE_LOCK;
 
 		int32 writeSize = 0;
 		while (_sendQueue.empty() == false)

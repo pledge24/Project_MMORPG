@@ -28,5 +28,5 @@ USING_SHARED_PTR(Object);
 USING_SHARED_PTR(Room);
 
 #define SEND_PACKET(pkt)													\
-	SendBufferRef sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);	\
+	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);	\
 	session->Send(sendBuffer);												

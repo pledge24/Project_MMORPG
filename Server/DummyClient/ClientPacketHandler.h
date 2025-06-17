@@ -66,12 +66,12 @@ public:
 	}
 
 	// Auto-generated
-	static SendBufferRef MakeSendBuffer(Protocol::C_PING& pkt) { return MakeSendBuffer(pkt, PKT_C_PING); }
-	static SendBufferRef MakeSendBuffer(Protocol::C_LOGIN& pkt) { return MakeSendBuffer(pkt, PKT_C_LOGIN); }
-	static SendBufferRef MakeSendBuffer(Protocol::C_ENTER_GAME& pkt) { return MakeSendBuffer(pkt, PKT_C_ENTER_GAME); }
-	static SendBufferRef MakeSendBuffer(Protocol::C_LEAVE_GAME& pkt) { return MakeSendBuffer(pkt, PKT_C_LEAVE_GAME); }
-	static SendBufferRef MakeSendBuffer(Protocol::C_MOVE& pkt) { return MakeSendBuffer(pkt, PKT_C_MOVE); }
-	static SendBufferRef MakeSendBuffer(Protocol::C_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_C_CHAT); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_PING& pkt) { return MakeSerializedPacket(pkt, PKT_C_PING); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_LOGIN& pkt) { return MakeSerializedPacket(pkt, PKT_C_LOGIN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_LEAVE_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_MOVE& pkt) { return MakeSerializedPacket(pkt, PKT_C_MOVE); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_C_CHAT); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>
@@ -85,7 +85,7 @@ private:
 	}
 
 	template<typename T>
-	static SendBufferRef MakeSendBuffer(T& pkt, uint16 pktId)
+	static SendBufferRef MakeSerializedPacket(T& pkt, uint16 pktId)
 	{
 		const uint16 dataSize = static_cast<uint16>(pkt.ByteSizeLong());
 		const uint16 packetSize = dataSize + sizeof(PacketHeader);

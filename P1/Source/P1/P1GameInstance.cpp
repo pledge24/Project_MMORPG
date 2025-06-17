@@ -37,7 +37,7 @@ void UP1GameInstance::ConnectToGameServer()
 		// TEMP : Lobby에서 캐릭터 선택창 등
 		{
 			Protocol::C_LOGIN Pkt;
-			SendBufferRef SendBuffer = ClientPacketHandler::MakeSendBuffer(Pkt);
+			SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);
 			SendPacket(SendBuffer);
 		}
 	}
