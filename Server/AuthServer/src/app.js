@@ -8,6 +8,7 @@ import connectionPool from '../src/DB/connectPool.js';
 
 const app = express();
 const PORT = configs.port;
+const router = express.Router();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,12 +18,23 @@ app.use('/Account', AccountRouter);
 
 // Init DB.
 RedisClient.connect();
-connectionPool;
+connectionPool.connect()
+    .then((pool) => {
+        console.log('LocalDB 연결 성공');
+        return pool.request().query('SELECT @@VERSION as version');
+    })
+    .then((result) => {
+        console.log('=========LocalDB 버전==========\n', result.recordset[0].version);
+    })
+    .catch((err) => {
+        console.error('LocalDB 연결 또는 쿼리 오류:', JSON.stringify(err, null, 2));
+    });
+
 
 app.get('/', (req, res) => {
     return res.json({ message: 'Welcome To AuthServer' });
 });
 
 app.listen(PORT, () => {
-    console.log(PORT, '포트로 서버가 열림!');
+    console.log(PORT, '포트로 열림');
 });

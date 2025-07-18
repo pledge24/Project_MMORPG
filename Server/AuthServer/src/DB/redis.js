@@ -1,23 +1,22 @@
-import redis from './redis.js';
+import redis from 'redis';
 import configs from '../Config/configs.js';
 
-// Redis Å¬¶óÀÌ¾ðÆ® »ý¼º
+// Redis í´ë¼ì´ì–¸íŠ¸ ìƒì„±
 const redisClient = redis.createClient({
     host: configs.redisHost,
-    port: configs.redisPort,
-    password: configs.redisPassword
+    port: configs.redisPort
 });
 
 redisClient.on('connect', () => {
-    console.log('Redis Å¬¶óÀÌ¾ðÆ®°¡ ¿¬°áµÇ¾ú½À´Ï´Ù.');
+    console.log('Redis í´ë¼ì´ì–¸íŠ¸ê°€ ì—°ê²°ë˜ì—ˆìŠµë‹ˆë‹¤.');
 });
 
 redisClient.on('disconnect', () => {
-    console.log('Redis Å¬¶óÀÌ¾ðÆ®°¡ Á¾·áµÇ¾ú½À´Ï´Ù.');
+    console.log('Redis í´ë¼ì´ì–¸íŠ¸ê°€ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.');
 });
 
 redisClient.on('error', (err) => {
-    console.error('Redis ¿À·ù:', err);
+    console.error('Redis ì˜¤ë¥˜:', err);
 });
 
 export default redisClient;

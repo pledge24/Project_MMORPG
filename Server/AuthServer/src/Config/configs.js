@@ -3,36 +3,34 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const configs = {
+
     // AuthServer
     port: process.env.PORT,
 
     // UserDB
     UserDBConfig: {
-        server: process.env.DB_DEV_SERVER,
-        port: parseInt(process.env.DB_DEV_PORT),
-        pool: {
-            max: 5,
-            min: 1,
-            idleTimeoutMillis: 30000
+        connectionString: process.env.DB_CONNECTION_STRING,
+        driver: process.env.DB_DRIVER,
+
+        // DB 커넥션 풀 설정
+        pool: {                                         
+            max: parseInt(process.env.DB_MAX_CONNECTION),
+            min: parseInt(process.env.DB_MIN_CONNECTION),
+            idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT)
         },
-        options: {
+
+        // DB 추가 옵션
+        options: {                                      
             encrypt: false,
-            datebase: process.env.DB_DEV_DATEBASE,
             trustServerCertificate: true,
-        },
-        authentication: {
-            type: 'default',
-            options: {
-                userName: process.env.DB_DEV_USERNAME,
-                password: process.env.DB_DEV_PASSOWRD,
-            },
-        },
+            enableArithAbort: true,
+            integratedSecurity: true
+        }
     },
 
     // Redis
     redisHost: process.env.REDIS_HOST,
     redisPort: process.env.REDIS_PORT,
-    redisPassword: process.env.REDIS_PASSWORD
 };
 
 export default configs;

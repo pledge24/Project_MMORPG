@@ -1,26 +1,26 @@
 import express from 'express';
 import configs from '../Config/configs.js';
 
-const router = express.router();
+const router = express.Router();
 
-/** È¸¿ø°¡ÀÔ API */
+/** íšŒì›ê°€ì… API */
 router.post('/Register', async (req, res) => {
     try {
         const { username, password } = req.body;
 
         if (!username) {
-            return res.status(401).json({ errorMessage: '·Î±×ÀÎÇÒ ¾ÆÀÌµğ¸¦ ÀÔ·ÂÇÏ¿© ÁÖ¼¼¿ä.' });
+            return res.status(401).json({ errorMessage: 'ë¡œê·¸ì¸í•  ì•„ì´ë””ë¥¼ ì…ë ¥í•˜ì—¬ ì£¼ì„¸ìš”.' });
         }
 
         if (!password) {
-            return res.status(401).json({ errorMessage: 'ºñ¹Ğ¹øÈ£¸¦ ÀÔ·ÂÇÏ¿© ÁÖ¼¼¿ä.' });
+            return res.status(401).json({ errorMessage: 'ë¹„ë°€ë²ˆí˜¸ë¥¼ ì…ë ¥í•˜ì—¬ ì£¼ì„¸ìš”.' });
         }
 
-        // ¾ÆÀÌµğ Áßº¹ È®ÀÎ.
+        // ì•„ì´ë”” ì¤‘ë³µ í™•ì¸.
 
-        // UserDB¿¡ À¯Àú Ãß°¡
+        // UserDBì— ìœ ì € ì¶”ê°€
 
-        return res.status(201).json({ message: 'È¸¿ø°¡ÀÔ ¿Ï·á' });
+        return res.status(201).json({ message: 'íšŒì›ê°€ì… ì™„ë£Œ' });
     }
     catch (err) {
         return res.status(500).json({ errorMessage: 'Internal Error' });

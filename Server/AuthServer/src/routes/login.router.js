@@ -1,4 +1,4 @@
-import express from "express";
+ï»¿import express from "express";
 import bcrypt from 'bcrypt';
 import redisClient from "../DB/redis.js";
 import { v4 as uuidv4 } from "uuid";
@@ -6,32 +6,32 @@ import configs from '../Config/configs.js';
 
 const router = express.Router();
 
-/** ·Î±×ÀÎ API */
+/** ë¡œê·¸ì¸ API */
 router.post("/Login", async (req, res) => {
     try {
         const { username, password } = req.body;
 
         if (!username) {
-            return res.status(401).json({ errorMessage: '·Î±×ÀÎÇÒ ¾ÆÀÌµğ¸¦ ÀÔ·ÂÇÏ¿© ÁÖ¼¼¿ä.' });
+            return res.status(401).json({ errorMessage: 'ë¡œê·¸ì¸í•  ì•„ì´ë””ë¥¼ ì…ë ¥í•˜ì—¬ ì£¼ì„¸ìš”.' });
         }
 
         if (!password) {
-            return res.status(401).json({ errorMessage: 'ºñ¹Ğ¹øÈ£¸¦ ÀÔ·ÂÇÏ¿© ÁÖ¼¼¿ä.' });
+            return res.status(401).json({ errorMessage: 'ë¹„ë°€ë²ˆí˜¸ë¥¼ ì…ë ¥í•˜ì—¬ ì£¼ì„¸ìš”.' });
         }
 
-        // À¯Àú Á¤º¸ °¡Á®¿Â´Ù.
+        // ìœ ì € ì •ë³´ ê°€ì ¸ì˜¨ë‹¤.
         //const account =
 
         if (!account) {
-            return res.status(404).json({ errorMessage: 'Á¸ÀçÇÏÁö ¾Ê´Â ¾ÆÀÌµğÀÔ´Ï´Ù.' });
+            return res.status(404).json({ errorMessage: 'ì¡´ì¬í•˜ì§€ ì•ŠëŠ” ì•„ì´ë””ì…ë‹ˆë‹¤.' });
         }
 
-        // ºñ¹Ğ¹øÈ£ ¾ÏÈ£È­ÇÑ ´ÙÀ½ DB¶û ´ëÁ¶
+        // ë¹„ë°€ë²ˆí˜¸ ì•”í˜¸í™”í•œ ë‹¤ìŒ DBë‘ ëŒ€ì¡°
         if (!(await bcrypt.compare(password, account.password))) {
-            return res.status(401).json({ errorMessage: 'ºñ¹Ğ¹øÈ£°¡ ÀÏÄ¡ÇÏÁö ¾Ê½À´Ï´Ù.' });
+            return res.status(401).json({ errorMessage: 'ë¹„ë°€ë²ˆí˜¸ê°€ ì¼ì¹˜í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.' });
         }
 
-        // Access Token Á¤Ã¥: UUID + Redis/DB ¼¼¼Ç ÀúÀå ±¸Á¶
+        // Access Token ì •ì±…: UUID + Redis/DB ì„¸ì…˜ ì €ì¥ êµ¬ì¡°
         const token = uuidv4();
 
         await redisClient.set('access_token:${token}', JSON.stringify({ username }), {
@@ -48,129 +48,129 @@ router.post("/Login", async (req, res) => {
 export default router;
 
 
-// API ¿£µåÆ÷ÀÎÆ® ¿¹Á¦
-app.get('/user/:id', async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const user = await client.hGetAll(`user:${userId}`);
+//// API ì—”ë“œí¬ì¸íŠ¸ ì˜ˆì œ
+//router.get('/user/:id', async (req, res) => {
+//    try {
+//        const userId = req.params.id;
+//        const user = await client.hGetAll(`user:${userId}`);
 
-        if (Object.keys(user).length === 0) {
-            return res.status(404).json({ error: '»ç¿ëÀÚ¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.' });
-        }
+//        if (Object.keys(user).length === 0) {
+//            return res.status(404).json({ error: 'ì‚¬ìš©ìë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.' });
+//        }
 
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ error: 'Redis ¿À·ù' });
-    }
-});
+//        res.json(user);
+//    } catch (error) {
+//        res.status(500).json({ error: 'Redis ì˜¤ë¥˜' });
+//    }
+//});
 
-app.post('/user', async (req, res) => {
-    try {
-        const { id, name, email, age } = req.body;
+//router.post('/user', async (req, res) => {
+//    try {
+//        const { id, name, email, age } = req.body;
 
-        await client.hSet(`user:${id}`, {
-            name,
-            email,
-            age: age.toString()
-        });
+//        await client.hSet(`user:${id}`, {
+//            name,
+//            email,
+//            age: age.toString()
+//        });
 
-        res.json({ message: '»ç¿ëÀÚ°¡ ÀúÀåµÇ¾ú½À´Ï´Ù.' });
-    } catch (error) {
-        res.status(500).json({ error: 'Redis ÀúÀå ¿À·ù' });
-    }
-});
+//        res.json({ message: 'ì‚¬ìš©ìê°€ ì €ì¥ë˜ì—ˆìŠµë‹ˆë‹¤.' });
+//    } catch (error) {
+//        res.status(500).json({ error: 'Redis ì €ì¥ ì˜¤ë¥˜' });
+//    }
+//});
 
-// Ä³½Ã ¹Ìµé¿ş¾î ¿¹Á¦
-const cacheMiddleware = (duration = 300) => {
-    return async (req, res, next) => {
-        const key = `cache:${req.originalUrl}`;
+//// ìºì‹œ ë¯¸ë“¤ì›¨ì–´ ì˜ˆì œ
+//const cacheMiddleware = (duration = 300) => {
+//    return async (req, res, next) => {
+//        const key = `cache:${req.originalUrl}`;
 
-        try {
-            const cached = await client.get(key);
+//        try {
+//            const cached = await client.get(key);
 
-            if (cached) {
-                return res.json(JSON.parse(cached));
-            }
+//            if (cached) {
+//                return res.json(JSON.parse(cached));
+//            }
 
-            // ¿ø·¡ res.jsonÀ» ÀúÀå
-            const originalJson = res.json;
+//            // ì›ë˜ res.jsonì„ ì €ì¥
+//            const originalJson = res.json;
 
-            // res.jsonÀ» ¿À¹ö¶óÀÌµåÇÏ¿© Ä³½Ã ÀúÀå
-            res.json = function (data) {
-                client.setEx(key, duration, JSON.stringify(data));
-                return originalJson.call(this, data);
-            };
+//            // res.jsonì„ ì˜¤ë²„ë¼ì´ë“œí•˜ì—¬ ìºì‹œ ì €ì¥
+//            res.json = function (data) {
+//                client.setEx(key, duration, JSON.stringify(data));
+//                return originalJson.call(this, data);
+//            };
 
-            next();
-        } catch (error) {
-            next();
-        }
-    };
-};
+//            next();
+//        } catch (error) {
+//            next();
+//        }
+//    };
+//};
 
-// Ä³½Ã ¹Ìµé¿ş¾î »ç¿ë ¿¹Á¦
-app.get('/expensive-operation', cacheMiddleware(600), async (req, res) => {
-    // ½Ã°£ÀÌ ¿À·¡ °É¸®´Â ÀÛ¾÷ ½Ã¹Ä·¹ÀÌ¼Ç
-    await new Promise(resolve => setTimeout(resolve, 2000));
+//// ìºì‹œ ë¯¸ë“¤ì›¨ì–´ ì‚¬ìš© ì˜ˆì œ
+//app.get('/expensive-operation', cacheMiddleware(600), async (req, res) => {
+//    // ì‹œê°„ì´ ì˜¤ë˜ ê±¸ë¦¬ëŠ” ì‘ì—… ì‹œë®¬ë ˆì´ì…˜
+//    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    res.json({
-        message: 'ºñ¿ëÀÌ ¸¹ÀÌ µå´Â ÀÛ¾÷ °á°ú',
-        timestamp: new Date().toISOString()
-    });
-});
+//    res.json({
+//        message: 'ë¹„ìš©ì´ ë§ì´ ë“œëŠ” ì‘ì—… ê²°ê³¼',
+//        timestamp: new Date().toISOString()
+//    });
+//});
 
 
 
-    // ±âº» Redis ÀÛ¾÷ ¿¹Á¦
-    async function redisOperations() {
-        try {
-            // ¹®ÀÚ¿­ ÀúÀå
-            await client.set('name', 'È«±æµ¿');
-            await client.set('age', '30');
+//// ê¸°ë³¸ Redis ì‘ì—… ì˜ˆì œ
+//async function redisOperations() {
+//    try {
+//        // ë¬¸ìì—´ ì €ì¥
+//        await client.set('name', 'í™ê¸¸ë™');
+//        await client.set('age', '30');
 
-            // ¹®ÀÚ¿­ Á¶È¸
-            const name = await client.get('name');
-            const age = await client.get('age');
-            console.log(`ÀÌ¸§: ${name}, ³ªÀÌ: ${age}`);
+//        // ë¬¸ìì—´ ì¡°íšŒ
+//        const name = await client.get('name');
+//        const age = await client.get('age');
+//        console.log(`ì´ë¦„: ${name}, ë‚˜ì´: ${age}`);
 
-            // ¸¸·á ½Ã°£ ¼³Á¤ (10ÃÊ)
-            await client.setEx('temp_key', 10, 'ÀÓ½Ã µ¥ÀÌÅÍ');
+//        // ë§Œë£Œ ì‹œê°„ ì„¤ì • (10ì´ˆ)
+//        await client.setEx('temp_key', 10, 'ì„ì‹œ ë°ì´í„°');
 
-            // ÇØ½Ã ÀúÀå
-            await client.hSet('user:1001', {
-                name: '±èÃ¶¼ö',
-                email: 'kim@example.com',
-                age: 25
-            });
+//        // í•´ì‹œ ì €ì¥
+//        await client.hSet('user:1001', {
+//            name: 'ê¹€ì² ìˆ˜',
+//            email: 'kim@example.com',
+//            age: 25
+//        });
 
-            // ÇØ½Ã Á¶È¸
-            const user = await client.hGetAll('user:1001');
-            console.log('»ç¿ëÀÚ Á¤º¸:', user);
+//        // í•´ì‹œ ì¡°íšŒ
+//        const user = await client.hGetAll('user:1001');
+//        console.log('ì‚¬ìš©ì ì •ë³´:', user);
 
-            // ¸®½ºÆ® ÀÛ¾÷
-            await client.lPush('tasks', ['ÇÒÀÏ1', 'ÇÒÀÏ2', 'ÇÒÀÏ3']);
-            const tasks = await client.lRange('tasks', 0, -1);
-            console.log('ÇÒÀÏ ¸ñ·Ï:', tasks);
+//        // ë¦¬ìŠ¤íŠ¸ ì‘ì—…
+//        await client.lPush('tasks', ['í• ì¼1', 'í• ì¼2', 'í• ì¼3']);
+//        const tasks = await client.lRange('tasks', 0, -1);
+//        console.log('í• ì¼ ëª©ë¡:', tasks);
 
-            // ÁıÇÕ(Set) ÀÛ¾÷
-            await client.sAdd('colors', ['»¡°­', 'ÆÄ¶û', '³ë¶û']);
-            const colors = await client.sMembers('colors');
-            console.log('»ö»ó ÁıÇÕ:', colors);
+//        // ì§‘í•©(Set) ì‘ì—…
+//        await client.sAdd('colors', ['ë¹¨ê°•', 'íŒŒë‘', 'ë…¸ë‘']);
+//        const colors = await client.sMembers('colors');
+//        console.log('ìƒ‰ìƒ ì§‘í•©:', colors);
 
-            // Å° Á¸Àç È®ÀÎ
-            const exists = await client.exists('name');
-            console.log('name Å° Á¸Àç:', exists === 1);
+//        // í‚¤ ì¡´ì¬ í™•ì¸
+//        const exists = await client.exists('name');
+//        console.log('name í‚¤ ì¡´ì¬:', exists === 1);
 
-            // Å° »èÁ¦
-            await client.del('temp_key');
+//        // í‚¤ ì‚­ì œ
+//        await client.del('temp_key');
 
-            // TTL È®ÀÎ (Time To Live)
-            const ttl = await client.ttl('name');
-            console.log('name Å°ÀÇ TTL:', ttl);
+//        // TTL í™•ì¸ (Time To Live)
+//        const ttl = await client.ttl('name');
+//        console.log('name í‚¤ì˜ TTL:', ttl);
 
-        } catch (error) {
-            console.error('Redis ÀÛ¾÷ ¿À·ù:', error);
-        }
-    }
+//    } catch (error) {
+//        console.error('Redis ì‘ì—… ì˜¤ë¥˜:', error);
+//    }
+//}
 
 
