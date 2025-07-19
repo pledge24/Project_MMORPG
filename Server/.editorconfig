@@ -1,12 +1,18 @@
 root = true
 
-[*]
-charset = utf-8
-
 # All files
 [*]
+charset = utf-8
 indent_style = space
 
 # Xml files
 [*.xml]
 indent_size = 2
+
+# proto files
+[*.proto]
+charset = cp949
+
+# bat files
+[*.bat]
+charset = cp949
