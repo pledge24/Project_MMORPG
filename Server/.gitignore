@@ -411,3 +411,6 @@ FodyWeavers.xsd
 # 하위 디렉토리와 파일들도 무시 해제
 !Libraries/**
 !Common/**
+
+# SQL 쿼리문 폴더 무시
+Queries/*
