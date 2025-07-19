@@ -22,7 +22,7 @@ message C_LOGIN
 message S_LOGIN
 {
 	bool success = 1;
-	repeated ObjectInfo players = 2; // ì•„ì´ë”” ë°œê¸‰ ì „
+	repeated ObjectInfo players = 2; // ¾ÆÀÌµğ ¹ß±Ş Àü
 }
 
 message C_ENTER_GAME

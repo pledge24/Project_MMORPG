@@ -4,14 +4,14 @@ pushd %~dp0
 
 pyinstaller --noconfirm --onefile PacketHandlerGenerator.py
 IF ERRORLEVEL 1 (
-    echo [ERROR] PyInstaller ë¹Œë“œ ì‹¤íŒ¨
+    echo [ERROR] PyInstaller ºôµå ½ÇÆĞ
     PAUSE
     EXIT /b 1
 )
 
 MOVE /Y ".\dist\PacketHandlerGenerator.exe"         "./"
 IF ERRORLEVEL 1 (
-    echo [ERROR] ì‹¤í–‰ íŒŒì¼ ì´ë™ ì‹¤íŒ¨
+    echo [ERROR] ½ÇÇà ÆÄÀÏ ÀÌµ¿ ½ÇÆĞ
     PAUSE
     EXIT /b 1
 )
@@ -23,7 +23,7 @@ DEL /F /Q ".\PacketHandlerGenerator.spec"
 XCOPY /Y PacketHandlerGenerator.exe		            "../../Common/Protobuf/bin"
 robocopy ".\Templates"                              "../../Common/Protobuf/bin/Templates" /E
 
-echo [INFO] ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
+echo [INFO] ¿Ï·áµÇ¾ú½À´Ï´Ù.
 PAUSE
 popd
 endlocal

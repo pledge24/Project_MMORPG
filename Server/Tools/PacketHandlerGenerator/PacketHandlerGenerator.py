@@ -39,7 +39,7 @@ def main():
 	output = template.render(parser=parser, output=args.output)
 
 	# 얻어낸 최종 출력물을 원하는 코드에 붙여넣는다(없다면 생성한다.)
-	f = open(args.output+'.h', 'w+')
+	f = open(args.output+'.h', 'w+', encoding='UTF8')
 	f.write(output)
 	f.close()
 

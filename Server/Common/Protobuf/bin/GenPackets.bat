@@ -38,7 +38,7 @@ DEL /Q /F *.pb.h
 DEL /Q /F *.pb.cc
 DEL /Q /F *.h
 
-echo [INFO] 완료되었습니다.
+echo [INFO] �Ϸ�Ǿ����ϴ�.
 PAUSE
 popd
 endlocal
