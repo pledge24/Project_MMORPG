@@ -26,7 +26,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 	// TODO : DB에서 유저 정보를 긁어온다
 	Protocol::S_LOGIN loginPkt;
 
-	for (int32 i = 0; i < 3; i++)
+	for (int32 i = 0; i < 1; i++)
 	{
 		Protocol::ObjectInfo* player = loginPkt.add_players();
 		Protocol::PosInfo* posInfo = player->mutable_pos_info();
