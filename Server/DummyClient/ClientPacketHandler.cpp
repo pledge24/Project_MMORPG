@@ -60,6 +60,7 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
 	std::cout << pkt.msg() << endl;
+
 	return true;
 }
 

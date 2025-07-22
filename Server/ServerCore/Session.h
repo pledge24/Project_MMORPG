@@ -56,7 +56,7 @@ private:
 	void					RegisterSend();
 
 							/* 완료 통지 관련 */
-	void					ProcessConnect();						// Only-use Client
+	void					ProcessConnect();						
 	void					ProcessDisconnect();
 	void					ProcessRecv(int32 numOfBytes);
 	void					ProcessSend(int32 numOfBytes);

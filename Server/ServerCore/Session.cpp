@@ -78,10 +78,10 @@ void Session::Send(SendBufferRef sendBuffer)
 
 		if (_sendRegistered.exchange(true) == false)
 			registerSend = true;
-	}
 
-	if (registerSend)
-		RegisterSend();
+        if (registerSend)
+            RegisterSend();
+	}
 }
 
 
@@ -169,7 +169,7 @@ void Session::RegisterSend()
 
 	// 보낼 데이터를 sendEvent에 등록
 	{
-		USE_LOCK;
+		// USE_LOCK; <- RegisterSend를 호출하는 함수에서 걸고 진입하기 때문에 안 씀.
 
 		int32 writeSize = 0;
 		while (_sendQueue.empty() == false)
@@ -209,6 +209,7 @@ void Session::RegisterSend()
 	}
 }
 
+// 양측은 연결 성공 시, Recv 이벤트를 등록한다.
 void Session::ProcessConnect()
 {
 	_connectEvent.owner = nullptr; // RELEASE_REF

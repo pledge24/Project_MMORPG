@@ -78,7 +78,7 @@ void Listener::ProcessAccept(AcceptEvent* acceptEvent)
 	}
 
 	session->SetNetAddress(NetAddress(sockAddress));
-	//session->ProcessConnect(); // TEMP: ProcessConnect는 클라 전용으로 간주
+	session->ProcessConnect();
 
 	RegisterAccept(acceptEvent);
 }
