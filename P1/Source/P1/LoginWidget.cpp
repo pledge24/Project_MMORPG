@@ -1,93 +1,59 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "LoginWidget.h"
-#include "Components/Button.h"
-#include "Components/TextBlock.h"
-#include "HttpModule.h"
-#include "Json.h"
 #include "P1.h"
+#include "LoginModeBase.h"
+#include "Components/EditableTextBox.h"   // ID, PW 입력란
+#include "Components/Button.h"            // 로그인 버튼
+#include "Components/TextBlock.h"         // 결과 출력 텍스트
 
-void ULoginWidget::RequestRegister(const FString& Username, const FString& Password)
+// LoginWidget.cpp
+void ULoginWidget::NativeConstruct()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Request:Register - ID: %s, PW: %s"), *Username, *Password));
+    Super::NativeConstruct();
 
+    LoginButton->OnClicked.AddDynamic(this, &ULoginWidget::OnLoginClicked);
+    RegisterButton->OnClicked.AddDynamic(this, &ULoginWidget::OnRegisterClicked);
 }
 
-void ULoginWidget::RequestLogin(const FString& Username, const FString& Password)
+void ULoginWidget::OnLoginClicked()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Request:Login - ID: %s, PW: %s"), *Username, *Password));
+    FString Username = UsernameBox->GetText().ToString();
+    FString Password = PasswordBox->GetText().ToString();
 
+    if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(this)))
+    {
+        ULoginManager* Manager = Mode->GetLoginManager();
+        if (Manager)
+        {
+            Manager->RequestLogin(Username, Password);
+        }
+    }
 }
 
-void ULoginWidget::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+void ULoginWidget::OnRegisterClicked()
 {
-    bool bLoginSuccess = false;
-    FString Message = TEXT("failed to login");
+    FString Username = UsernameBox->GetText().ToString();
+    FString Password = PasswordBox->GetText().ToString();
 
-    if (bWasSuccessful && Response.IsValid())
+    if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(this)))
     {
-        int32 ResponseCode = Response->GetResponseCode();
-        FString ResponseBody = Response->GetContentAsString();
-
-        if (ResponseCode == 200)
+        ULoginManager* Manager = Mode->GetLoginManager();
+        if (Manager)
         {
-            // JSON 응답 파싱
-            TSharedPtr<FJsonObject> JsonObject;
-            TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
-
-            if (FJsonSerializer::Deserialize(Reader, JsonObject))
-            {
-                // 토큰이나 사용자 정보 저장 (필요시)
-                FString Token = JsonObject->GetStringField("accessToken");
-                UE_LOG(LogTemp, Warning, TEXT("Login successful! Token: %s"), *Token);
-            }
-        }
-        else
-        {
-            TSharedPtr<FJsonObject> JsonObject;
-            Message = JsonObject->GetStringField("errorMessage");
+            Manager->RequestRegister(Username, Password);
         }
     }
-    else
-    {
-        Message = TEXT("failed to connect AuthServer");
-    }
-
-    // 블루프린트로 결과 전달
-    OnLoginComplete.Broadcast(bLoginSuccess, Message);
 }
 
-void ULoginWidget::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+void ULoginWidget::SetResultMessage(const FString& Message)
 {
-    bool bRegisterSuccess = false;
-    FString Message = TEXT("failed to register");
+    ResultText->SetText(FText::FromString(Message));
+}
 
-    if (bWasSuccessful && Response.IsValid())
-    {
-        int32 ResponseCode = Response->GetResponseCode();
-        FString ResponseBody = Response->GetContentAsString();
-
-        if (ResponseCode == 200 || ResponseCode == 201)
-        {
-            TSharedPtr<FJsonObject> JsonObject;
-            TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
-
-            if (FJsonSerializer::Deserialize(Reader, JsonObject))
-            {
-                Message = JsonObject->GetStringField("message");
-            }
-        }
-        else
-        {
-            TSharedPtr<FJsonObject> JsonObject;
-            Message = JsonObject->GetStringField("errorMessage");
-        }
-    }
-    else
-    {
-        Message = TEXT("failed to connect AuthServer");
-    }
-
-    // 블루프린트로 결과 전달
-    OnRegisterComplete.Broadcast(bRegisterSuccess, Message);
+void ULoginWidget::ClearMessage()
+{
+    UsernameBox->SetText(FText::GetEmpty());
+    PasswordBox->SetText(FText::GetEmpty());
 }

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Http.h"
 #include "LoginWidget.generated.h"
 
 /**
@@ -16,11 +15,31 @@ class P1_API ULoginWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
-    /** 블루프린트에서 호출할 함수 */
+    virtual void NativeConstruct() override;
 
-    UFUNCTION(BlueprintCallable, Category = "Login")
-    void RequestRegister(const FString& Username, const FString& Password);
+    void SetResultMessage(const FString& Message);
 
-    UFUNCTION(BlueprintCallable, Category = "Login")
-    void RequestLogin(const FString& Username, const FString& Password);
+    void ClearMessage();
+
+private:
+    UFUNCTION()
+    void OnLoginClicked();
+
+    UFUNCTION()
+    void OnRegisterClicked();
+
+    UPROPERTY(meta = (BindWidget))
+    class UEditableTextBox* UsernameBox;
+
+    UPROPERTY(meta = (BindWidget))
+    class UEditableTextBox* PasswordBox;
+
+    UPROPERTY(meta = (BindWidget))
+    class UButton* LoginButton;
+
+    UPROPERTY(meta = (BindWidget))
+    class UButton* RegisterButton;
+
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* ResultText;	
 };

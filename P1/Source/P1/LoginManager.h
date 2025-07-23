@@ -3,38 +3,33 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "UObject/NoExportTypes.h"
 #include "Http.h"
 #include "LoginManager.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnLoginComplete, bool, bSuccess, FString, Message);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnRegisterComplete, bool, bSuccess, FString, Message);
-
+/**
+ * 
+ */
 UCLASS()
-class P1_API ALoginManager : public AActor
+class P1_API ULoginManager : public UObject
 {
     GENERATED_BODY()
 
 public:
-    ALoginManager();
-
-    UFUNCTION(BlueprintCallable, Category = "Login")
     void RequestLogin(const FString& Username, const FString& Password);
+    void RequestRegister(const FString& Username, const FString& Password);
 
-    UFUNCTION(BlueprintCallable, Category = "Login")
-    void RequestRegister(const FString& Username, const FString& Password, const FString& Email);
+    void OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
+    void OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 
-    UPROPERTY(BlueprintAssignable)
-    FOnLoginComplete OnLoginComplete;
+    void SetLoginWidget(class ULoginWidget* Widget);
 
-    UPROPERTY(BlueprintAssignable)
-    FOnRegisterComplete OnRegisterComplete;
+private:
+    UPROPERTY()
+    ULoginWidget* LoginWidget;
 
 private:
     // 서버 설정
     FString ServerIP = TEXT("127.0.0.1");
     int32 ServerPort = 5000;
-
-    void OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
-    void OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 };

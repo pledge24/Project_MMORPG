@@ -1,135 +1,145 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "LoginManager.h"
+#include "LoginWidget.h"
+#include "Http.h"
 #include "HttpModule.h"
-#include "Json.h"
 
-ALoginManager::ALoginManager()
+void ULoginManager::SetLoginWidget(ULoginWidget* Widget)
 {
-    PrimaryActorTick.bCanEverTick = false;
+	LoginWidget = Widget;
 }
 
-void ALoginManager::RequestRegister(const FString& Username, const FString& Password, const FString& Email)
+void ULoginManager::RequestLogin(const FString& Username, const FString& Password)
 {
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
 
-    // JSON µ•¿Ã≈Õ ª˝º∫
-    TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-    JsonObject->SetStringField("username", Username);
-    JsonObject->SetStringField("password", Password);
+	// JSON Îç∞Ïù¥ÌÑ∞ ÏÉùÏÑ±
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+	JsonObject->SetStringField("username", Username);
+	JsonObject->SetStringField("password", Password);
 
-    FString OutputString;
-    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
-    FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-    // ø‰√ª º≥¡§
-    FString URL = FString::Printf(TEXT("http://%s:%d/Account/Register"), *ServerIP, ServerPort);
+	// ÏöîÏ≤≠ ÏÑ§Ï†ï
+	FString URL = FString::Printf(TEXT("http://%s:%d/Login"), *ServerIP, ServerPort);
 
-    Request->OnProcessRequestComplete().BindUObject(this, &ALoginManager::OnRegisterResponse);
-    Request->SetURL(URL);
-    Request->SetVerb("POST");
-    Request->SetHeader("Content-Type", TEXT("application/json"));
-    Request->SetContentAsString(OutputString);
-    Request->SetTimeout(10.0f);
+	Request->OnProcessRequestComplete().BindUObject(this, &ULoginManager::OnLoginResponse);
+	Request->SetURL(URL);
+	Request->SetVerb("POST");
+	Request->SetHeader("Content-Type", "application/json");
+	Request->SetContentAsString(OutputString);
+	Request->SetTimeout(10.0f); // 10Ï¥à ÌÉÄÏûÑÏïÑÏõÉ
 
-    Request->ProcessRequest();
+	Request->ProcessRequest();
 }
 
-void ALoginManager::RequestLogin(const FString& Username, const FString& Password)
+void ULoginManager::RequestRegister(const FString& Username, const FString& Password)
 {
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
 
-    // JSON µ•¿Ã≈Õ ª˝º∫
-    TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-    JsonObject->SetStringField("username", Username);
-    JsonObject->SetStringField("password", Password);
+	// JSON Îç∞Ïù¥ÌÑ∞ ÏÉùÏÑ±
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+	JsonObject->SetStringField("username", Username);
+	JsonObject->SetStringField("password", Password);
 
-    FString OutputString;
-    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
-    FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-    // ø‰√ª º≥¡§
-    FString URL = FString::Printf(TEXT("http://%s:%d/Login"), *ServerIP, ServerPort);
+	// ÏöîÏ≤≠ ÏÑ§Ï†ï
+	FString URL = FString::Printf(TEXT("http://%s:%d/Account/Register"), *ServerIP, ServerPort);
 
-    Request->OnProcessRequestComplete().BindUObject(this, &ALoginManager::OnLoginResponse);
-    Request->SetURL(URL);
-    Request->SetVerb("POST");
-    Request->SetHeader("Content-Type", TEXT("application/json"));
-    Request->SetContentAsString(OutputString);
-    Request->SetTimeout(10.0f); // 10√  ≈∏¿”æ∆øÙ
+	Request->OnProcessRequestComplete().BindUObject(this, &ULoginManager::OnRegisterResponse);
+	Request->SetURL(URL);
+	Request->SetVerb("POST");
+	Request->SetHeader("Content-Type", "application/json");
+	Request->SetContentAsString(OutputString);
+	Request->SetTimeout(10.0f); // 10Ï¥à ÌÉÄÏûÑÏïÑÏõÉ
 
-    Request->ProcessRequest();
+	Request->ProcessRequest();
 }
 
-void ALoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-    bool bLoginSuccess = false;
-    FString Message = TEXT("failed to login");
+	FString Message = TEXT("Î°úÍ∑∏Ïù∏ Ïã§Ìå®");
 
-    if (bWasSuccessful && Response.IsValid())
-    {
-        int32 ResponseCode = Response->GetResponseCode();
-        FString ResponseBody = Response->GetContentAsString();
+	if (bWasSuccessful && Response.IsValid())
+	{
+		int32 ResponseCode = Response->GetResponseCode();
+		FString ResponseBody = Response->GetContentAsString();
 
-        if (ResponseCode == 200)
-        {
-            // JSON ¿¿¥‰ ∆ƒΩÃ
-            TSharedPtr<FJsonObject> JsonObject;
-            TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		// JSON ÏùëÎãµ ÌååÏã±
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
 
-            if (FJsonSerializer::Deserialize(Reader, JsonObject))
-            {
-                // ≈‰≈´¿Ã≥™ ªÁøÎ¿⁄ ¡§∫∏ ¿˙¿Â (« ø‰Ω√)
-                FString Token = JsonObject->GetStringField("accessToken");
-                UE_LOG(LogTemp, Warning, TEXT("Login successful! Token: %s"), *Token);
-            }
-        }
-        else
-        {
-            TSharedPtr<FJsonObject> JsonObject;
-            Message = JsonObject->GetStringField("errorMessage");
-        }
-    }
-    else
-    {
-        Message = TEXT("failed to connect AuthServer");
-    }
+		if (ResponseCode == 200)
+		{
+			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			{
+				// ÌÜ†ÌÅ∞Ïù¥ÎÇò ÏÇ¨Ïö©Ïûê Ï†ïÎ≥¥ Ï†ÄÏû• (ÌïÑÏöîÏãú)
+				FString Token = JsonObject->GetStringField("accessToken");
+				Message = TEXT("Î°úÍ∑∏Ïù∏ ÏÑ±Í≥µ! Í≤åÏûÑÏóê Ï†ëÏÜçÌï©ÎãàÎã§...");
+				UE_LOG(LogTemp, Warning, TEXT("Login successful! Token: %s"), *Token);
+			}
+		}
+		else
+		{
+			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			{
+				Message = JsonObject->GetStringField("errorMessage");
+			}
+		}
+	}
+	else
+	{
+		Message = TEXT("Ïù∏Ï¶ù ÏÑúÎ≤ÑÏóê Ï†ëÏÜç Ïã§Ìå®");
+	}
 
-    // ∫Ì∑Á«¡∏∞∆Æ∑Œ ∞·∞˙ ¿¸¥ﬁ
-    OnLoginComplete.Broadcast(bLoginSuccess, Message);
+	if (LoginWidget)
+	{
+		LoginWidget->SetResultMessage(Message);
+	}
 }
 
-void ALoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-    bool bRegisterSuccess = false;
-    FString Message = TEXT("failed to register");
+	FString Message = TEXT("Î°úÍ∑∏Ïù∏ Ïã§Ìå®");
 
-    if (bWasSuccessful && Response.IsValid())
-    {
-        int32 ResponseCode = Response->GetResponseCode();
-        FString ResponseBody = Response->GetContentAsString();
+	if (bWasSuccessful && Response.IsValid())
+	{
+		int32 ResponseCode = Response->GetResponseCode();
+		FString ResponseBody = Response->GetContentAsString();
 
-        if (ResponseCode == 200 || ResponseCode == 201)
-        {
-            TSharedPtr<FJsonObject> JsonObject;
-            TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
 
-            if (FJsonSerializer::Deserialize(Reader, JsonObject))
-            {
-                Message = JsonObject->GetStringField("message");
-            }
-        }
-        else
-        {
-            TSharedPtr<FJsonObject> JsonObject;
-            Message = JsonObject->GetStringField("errorMessage");
-        }
-    }
-    else
-    {
-        Message = TEXT("failed to connect AuthServer");
-    }
+		if (ResponseCode == 200 || ResponseCode == 201)
+		{
 
-    // ∫Ì∑Á«¡∏∞∆Æ∑Œ ∞·∞˙ ¿¸¥ﬁ
-    OnRegisterComplete.Broadcast(bRegisterSuccess, Message);
+			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			{
+				Message = JsonObject->GetStringField("message");
+			}
+		}
+		else
+		{
+			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			{
+				Message = JsonObject->GetStringField("errorMessage");
+			}
+		}
+	}
+	else
+	{
+		Message = TEXT("Ïù∏Ï¶ù ÏÑúÎ≤ÑÏóê Ï†ëÏÜç Ïã§Ìå®");
+	}
+
+	if (LoginWidget)
+	{
+		LoginWidget->SetResultMessage(Message);
+		LoginWidget->ClearMessage();
+	}
 }
