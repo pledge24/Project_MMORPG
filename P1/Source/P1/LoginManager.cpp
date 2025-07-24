@@ -4,6 +4,7 @@
 #include "LoginWidget.h"
 #include "Http.h"
 #include "HttpModule.h"
+#include "P1.h"
 
 void ULoginManager::SetLoginWidget(ULoginWidget* Widget)
 {
@@ -66,6 +67,9 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 {
 	FString Message = TEXT("로그인 실패");
 
+	FString token;
+	bool loginSuccess = false;
+
 	if (bWasSuccessful && Response.IsValid())
 	{
 		int32 ResponseCode = Response->GetResponseCode();
@@ -79,10 +83,15 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 		{
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
-				// 토큰이나 사용자 정보 저장 (필요시)
-				FString Token = JsonObject->GetStringField("accessToken");
-				Message = TEXT("로그인 성공! 게임에 접속합니다...");
-				UE_LOG(LogTemp, Warning, TEXT("Login successful! Token: %s"), *Token);
+				// 토큰 저장 (필요시)
+				token = JsonObject->GetStringField("accessToken");
+				if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+				{
+					GameInstance->SetToken(token);
+				}
+
+				Message = TEXT("로그인 성공! 캐릭터 선택 창으로 이동중...");
+				loginSuccess = true;
 			}
 		}
 		else
@@ -101,6 +110,15 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 	if (LoginWidget)
 	{
 		LoginWidget->SetResultMessage(Message);
+	}
+
+	if (loginSuccess)
+	{
+		// 게임서버에 입장쓰.
+		
+		// 캐릭터 선택창으로 이동.
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("AccessToken: %s"), *token));
+		LoginWidget->SwitchToIndex(1);
 	}
 }
 

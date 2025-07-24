@@ -43,6 +43,10 @@ public:
 	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
 public:
+	void SetToken(FString token) { _token = token; }
+	FString GetToken() { return _token; }
+
+public:
 	/* GameServer Socket */
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
@@ -56,4 +60,7 @@ public:
 
 	AP1Player* MyPlayer;
 	TMap<uint64, AP1Player*> Players;
+
+private:
+	FString _token = "";
 };
