@@ -114,11 +114,24 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 
 	if (loginSuccess)
 	{
-		// 게임서버에 입장쓰.
-		
-		// 캐릭터 선택창으로 이동.
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("AccessToken: %s"), *token));
-		LoginWidget->SwitchToIndex(1);
+
+		auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
+
+		// 게임서버에 입장쓰.
+		if (GameInstance)
+		{
+			GameInstance->ConnectToGameServer();
+
+			// 캐릭터 선택창으로 이동.
+			LoginWidget->SwitchToIndex(1);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("게임인스턴스가 없습니다")));
+
+		}
+		
 	}
 }
 
