@@ -5,9 +5,12 @@
 #include "P1.h"
 #include "LoginModeBase.h"
 #include "Components/EditableTextBox.h"   
-#include "Components/Button.h"            
 #include "Components/TextBlock.h"
 #include "Components/HorizontalBox.h"
+#include "Components/CanvasPanel.h"
+#include "Styling/SlateBrush.h"
+//#include "Slate/SlateBrush.h"
+#include "Styling/SlateTypes.h"
 
 // LoginWidget.cpp
 void ULoginWidget::NativeConstruct()
@@ -22,41 +25,23 @@ void ULoginWidget::NativeConstruct()
         WidgetSwitcher->SetActiveWidgetIndex(0); // 0번 위젯으로 시작
     }
 
-    // 버튼들을 배열에 저장
-    for (int32 i = 0; i < SlotButtonHorizontalBox->GetChildrenCount(); ++i)
+    if (SlotButtonHorizontalBox)
     {
-        if (UButton* Button = Cast<UButton>(SlotButtonHorizontalBox->GetChildAt(i)))
-        {
-            SlotButtons.Add(Button);
-            Button->OnClicked.AddDynamic(this, &ULoginWidget::OnSlotButtonClicked);
-        }
+        // Init Character Slot Buttons.
+        SlotButtonsMap.Empty();
+
+        // 버튼 배열에 추가
+        SlotButtonsMap.Add(SlotButton0, 0);
+        SlotButtonsMap.Add(SlotButton1, 1);
+        SlotButtonsMap.Add(SlotButton2, 2);
+        SlotButtonsMap.Add(SlotButton3, 3);
+
+        SlotButton0->OnClicked.AddDynamic(this, &ULoginWidget::OnSlotButton0Clicked);
+        SlotButton1->OnClicked.AddDynamic(this, &ULoginWidget::OnSlotButton1Clicked);
+        SlotButton2->OnClicked.AddDynamic(this, &ULoginWidget::OnSlotButton2Clicked);
+        SlotButton3->OnClicked.AddDynamic(this, &ULoginWidget::OnSlotButton3Clicked);
     }
-
-    //SlotButtons.Empty();
-    //ButtonToPanelIndex.Empty();
-
-    //// HorizontalBox의 각 Canvas Panel에서 버튼 찾기
-    //for (int32 PanelIndex = 0; PanelIndex < ButtonHorizontalBox->GetChildrenCount(); ++PanelIndex)
-    //{
-    //    if (UCanvasPanel* CanvasPanel = Cast<UCanvasPanel>(ButtonHorizontalBox->GetChildAt(PanelIndex)))
-    //    {
-    //        // Canvas Panel 내의 모든 버튼 찾기
-    //        for (int32 i = 0; i < CanvasPanel->GetChildrenCount(); ++i)
-    //        {
-    //            if (UButton* Button = Cast<UButton>(CanvasPanel->GetChildAt(i)))
-    //            {
-    //                AllButtons.Add(Button);
-    //                ButtonToPanelIndex.Add(PanelIndex);
-
-    //                // 람다로 패널 인덱스와 버튼 인덱스 전달
-    //                Button->OnClicked.AddLambda([this, PanelIndex, Button]()
-    //                    {
-    //                        OnButtonClickedInPanel(PanelIndex, Button);
-    //                    });
-    //            }
-    //        }
-    //    }
-    //}
+    
 }
 
 void ULoginWidget::SetResultMessage(const FString& Message)
@@ -78,16 +63,32 @@ void ULoginWidget::SwitchToIndex(int32 Index)
     }
 }
 
-int32 ULoginWidget::GetClickedButtonIndex()
+void ULoginWidget::HighlightClickedButton(UButton* ClickedButton)
 {
-    for (int32 i = 0; i < SlotButtons.Num(); ++i)
+    // 외곽선 초기화
+    for (const auto& Pair : SlotButtonsMap)
     {
-        if (SlotButtons[i]->IsPressed())
+        UButton* Button = Pair.Key;
+        if (Button)
         {
-            return i;
+            FButtonStyle Style = Button->WidgetStyle;
+            Style.Normal.Margin = FMargin(0.0f);
+            Button->SetStyle(Style);
         }
     }
-    return -1;
+
+    // 클릭된 버튼 외곽선 적용
+    if (ClickedButton)
+    {
+        FButtonStyle ClickedStyle = ClickedButton->WidgetStyle;
+        ClickedStyle.Normal.Margin = FMargin(0.2f);
+        ClickedButton->SetStyle(ClickedStyle);
+
+        LastClickedButtonIdx = SlotButtonsMap[ClickedButton];
+
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green,
+            FString::Printf(TEXT("Slot button %d clicked!"), LastClickedButtonIdx));
+    }
 }
 
 void ULoginWidget::OnLoginClicked()
@@ -120,12 +121,4 @@ void ULoginWidget::OnRegisterClicked()
     }
 }
 
-void ULoginWidget::OnSlotButtonClicked()
-{
-    int32 ClickedIndex = GetClickedButtonIndex();
-    if (ClickedIndex != -1)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Button %d was clicked!"), ClickedIndex));
-    }
-}
 
