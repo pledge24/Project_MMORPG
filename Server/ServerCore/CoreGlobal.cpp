@@ -4,6 +4,7 @@
 #include "GlobalQueue.h"
 #include "JobTimer.h"
 #include "DBConnectionPool.h"
+#include "DBManager.h"
 
 // 전역 객체 추가 시, 여기에 하나씩 기입
 ThreadManager* GThreadManager = nullptr;
@@ -11,6 +12,7 @@ GlobalQueue* GGlobalQueue = nullptr;
 JobTimer* GJobTimer = nullptr;
 
 DBConnectionPool* GDBConnectionPool;
+DBManager* GDBManager = nullptr;
 
 /*----------------------
 		CoreGlobal
@@ -25,6 +27,7 @@ public:
 		GGlobalQueue = new GlobalQueue();
 		GJobTimer = new JobTimer();
         GDBConnectionPool = new DBConnectionPool();
+        GDBManager = new DBManager();
 		SocketUtil::Init();
 	}
 
@@ -34,6 +37,7 @@ public:
 		delete GGlobalQueue;
 		delete GJobTimer;
         delete GDBConnectionPool;
+        delete GDBManager;
 		SocketUtil::Clear();
 	}
 } GCoreGlobal;
