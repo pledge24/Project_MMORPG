@@ -20,6 +20,9 @@
     <Filter Include="Game\Object">
       <UniqueIdentifier>{84ec1cf8-758e-4103-8f95-c50d842904eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB">
+      <UniqueIdentifier>{0287b348-939c-4007-8cee-79ad2e0a1549}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -67,6 +70,9 @@
     <ClCompile Include="Creature.cpp">
       <Filter>Game\Object</Filter>
     </ClCompile>
+    <ClCompile Include="DBRequestFunctions.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -110,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="Creature.h">
       <Filter>Game\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="DBRequestFunctions.h">
+      <Filter>DB</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

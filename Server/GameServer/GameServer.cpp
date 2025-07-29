@@ -6,11 +6,24 @@
 #include "ServerPacketHandler.h"
 #include "DBConnectionPool.h"
 #include "DBBind.h"
+#include "DBQueue.h"
+#include "DBManager.h"
+#include "hiredis\hiredis.h"
+#include "sw/redis++/redis++.h"
 
 enum
 {
 	WORKER_TICK = 64
 };
+
+void DoDBJob(DBQueueRef dbQueue)
+{
+    while (dbQueue->isStop() == false)
+    {
+        JobRef job = dbQueue->WaitForSingleJob();
+        job->Execute();
+    }
+}
 
 void DoWorkerJob(ServerServiceRef& service)
 {
@@ -31,6 +44,114 @@ void DoWorkerJob(ServerServiceRef& service)
 
 int main(void)
 {
+    //// Redis 서버에 연결
+    //redisContext* c = redisConnect("127.0.0.1", 6379);
+    //if (c == nullptr || c->err)
+    //{
+    //    if (c)
+    //    {
+    //        std::cout << "연결 오류: " << c->errstr << std::endl;
+    //        redisFree(c);
+    //    }
+    //    else
+    //    {
+    //        std::cout << "Redis 컨텍스트를 할당할 수 없습니다" << std::endl;
+    //    }
+    //    return 1;
+    //}
+
+    //std::cout << "Redis에 연결되었습니다." << std::endl;
+
+    //// 테스트용 키 몇 개 생성
+    //redisCommand(c, "SET test:key1 value1");
+    //redisCommand(c, "SET test:key2 value2");
+    //redisCommand(c, "SET user:100 john");
+    //redisCommand(c, "SET user:101 jane");
+
+    //// KEYS * 명령 실행
+    //redisReply* reply = (redisReply*)redisCommand(c, "KEYS *");
+
+    //if (reply == nullptr)
+    //{
+    //    std::cout << "명령 실행 실패" << std::endl;
+    //    redisFree(c);
+    //    return 1;
+    //}
+
+    //// 응답 타입 확인
+    //if (reply->type == REDIS_REPLY_ARRAY)
+    //{
+    //    std::cout << "총 " << reply->elements << "개의 키를 찾았습니다:" << std::endl;
+
+    //    // 모든 키 출력
+    //    for (size_t i = 0; i < reply->elements; i++)
+    //    {
+    //        if (reply->element[i]->type == REDIS_REPLY_STRING)
+    //        {
+    //            std::cout << "  [" << i + 1 << "] " << reply->element[i]->str << std::endl;
+    //        }
+    //    }
+    //}
+    //else
+    //{
+    //    std::cout << "예상치 못한 응답 타입: " << reply->type << std::endl;
+    //}
+
+    //// 메모리 해제
+    //freeReplyObject(reply);
+
+    //// 특정 패턴으로 키 검색 예제
+    //std::cout << "\n'user:*' 패턴으로 검색:" << std::endl;
+    //reply = (redisReply*)redisCommand(c, "KEYS user:*");
+
+    //if (reply != nullptr && reply->type == REDIS_REPLY_ARRAY)
+    //{
+    //    std::cout << "찾은 키: " << reply->elements << "개" << std::endl;
+    //    for (size_t i = 0; i < reply->elements; i++)
+    //    {
+    //        if (reply->element[i]->type == REDIS_REPLY_STRING)
+    //        {
+    //            std::cout << "  " << reply->element[i]->str << std::endl;
+    //        }
+    //    }
+    //}
+
+    //freeReplyObject(reply);
+
+    //// 연결 종료
+    //redisFree(c);
+    //std::cout << "\nRedis 연결을 종료했습니다." << std::endl;
+
+    //return 0;
+
+    try
+    {
+        sw::redis::Redis redis("tcp://127.0.0.1:6379");
+        redis.ping();
+        std::wcout << L"Redis++ 연결 성공!" << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        std::wcout << L"오류: " << e.what() << std::endl;
+    }
+    return 0;
+
+    // DB thread
+    const int DBThreadN = 5;
+    GDBManager->Init(DBThreadN);
+    for (int32 i = 0; i < DBThreadN; i++)
+    {
+        DBQueueRef dbQueue = GDBManager->GetDBQueue(i);
+        
+        GThreadManager->Launch([&dbQueue]()
+            {
+                DoDBJob(dbQueue);
+            });
+    }
+
+    return 0;
+
+    // ===================
     int32 maxDBConnections = 1;
     const WCHAR* connectionString = L"Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\\ProjectModels;Database=GameDB;Trusted_Connection=Yes;";
     ASSERT_CRASH(GDBConnectionPool->Connect(maxDBConnections, connectionString));

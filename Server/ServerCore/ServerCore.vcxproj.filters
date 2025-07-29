@@ -94,6 +94,12 @@
     <ClInclude Include="DBConnectionPool.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="DBQueue.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DBManager.h">
+      <Filter>DB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -157,6 +163,12 @@
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="DBConnectionPool.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DBQueue.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DBManager.cpp">
       <Filter>DB</Filter>
     </ClCompile>
   </ItemGroup>

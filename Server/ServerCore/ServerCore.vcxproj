@@ -166,6 +166,8 @@
     <ClInclude Include="DBBind.h" />
     <ClInclude Include="DBConnection.h" />
     <ClInclude Include="DBConnectionPool.h" />
+    <ClInclude Include="DBManager.h" />
+    <ClInclude Include="DBQueue.h" />
     <ClInclude Include="GlobalQueue.h" />
     <ClInclude Include="IocpCore.h" />
     <ClInclude Include="Job.h" />
@@ -191,6 +193,8 @@
     <ClCompile Include="DBBind.cpp" />
     <ClCompile Include="DBConnection.cpp" />
     <ClCompile Include="DBConnectionPool.cpp" />
+    <ClCompile Include="DBManager.cpp" />
+    <ClCompile Include="DBQueue.cpp" />
     <ClCompile Include="GlobalQueue.cpp" />
     <ClCompile Include="IocpCore.cpp" />
     <ClCompile Include="JobQueue.cpp" />
