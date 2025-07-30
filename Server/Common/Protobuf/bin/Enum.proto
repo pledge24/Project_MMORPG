@@ -9,12 +9,11 @@ enum ObjectType
 	OBJECT_TYPE_ENV = 3;
 }
 
-enum PlayerType
+enum CharacterClass
 {
-	PLAYER_TYPE_NONE = 0;
-	PLAYER_TYPE_KNIGHT = 1;
-	PLAYER_TYPE_MAGE = 2;
-	PLAYER_TYPE_ARCHER = 3;
+	CLASS_TYPE_NONE = 0;
+	CLASS_TYPE_KNIGHT = 1;
+	CLASS_TYPE_MAGE = 2;
 }
 
 enum MoveState

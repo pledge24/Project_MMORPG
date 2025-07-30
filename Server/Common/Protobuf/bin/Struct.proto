@@ -3,6 +3,12 @@ package Protocol;
 
 import "Enum.proto";
 
+message CharacterOverview
+{
+    CharacterClass class = 1;
+    string name = 2;
+}
+
 message ObjectInfo
 {
 	uint64 object_id = 1;

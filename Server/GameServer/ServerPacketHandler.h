@@ -16,16 +16,20 @@ enum : uint16
 	PKT_S_PONG = 1001,
 	PKT_C_LOGIN = 1002,
 	PKT_S_LOGIN = 1003,
-	PKT_C_ENTER_GAME = 1004,
-	PKT_S_ENTER_GAME = 1005,
-	PKT_C_LEAVE_GAME = 1006,
-	PKT_S_LEAVE_GAME = 1007,
-	PKT_S_SPAWN = 1008,
-	PKT_S_DESPAWN = 1009,
-	PKT_C_MOVE = 1010,
-	PKT_S_MOVE = 1011,
-	PKT_C_CHAT = 1012,
-	PKT_S_CHAT = 1013,
+	PKT_C_CREATE_CHARACTER = 1004,
+	PKT_S_CREATE_CHARACTER = 1005,
+	PKT_C_DELETE_CHARACTER = 1006,
+	PKT_S_DELETE_CHARACTER = 1007,
+	PKT_C_ENTER_GAME = 1008,
+	PKT_S_ENTER_GAME = 1009,
+	PKT_C_LEAVE_GAME = 1010,
+	PKT_S_LEAVE_GAME = 1011,
+	PKT_S_SPAWN = 1012,
+	PKT_S_DESPAWN = 1013,
+	PKT_C_MOVE = 1014,
+	PKT_S_MOVE = 1015,
+	PKT_C_CHAT = 1016,
+	PKT_S_CHAT = 1017,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -33,6 +37,8 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 // Auto-generated template Handle Functions
 bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt);
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt);
+bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt);
+bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt);
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt);
 bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt);
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt);
@@ -49,6 +55,8 @@ public:
 		// Auto-generated
 		GPacketHandler[PKT_C_PING] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_PING>(Handle_C_PING, session, buffer, len); };
 		GPacketHandler[PKT_C_LOGIN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LOGIN>(Handle_C_LOGIN, session, buffer, len); };
+		GPacketHandler[PKT_C_CREATE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CREATE_CHARACTER>(Handle_C_CREATE_CHARACTER, session, buffer, len); };
+		GPacketHandler[PKT_C_DELETE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_DELETE_CHARACTER>(Handle_C_DELETE_CHARACTER, session, buffer, len); };
 		GPacketHandler[PKT_C_ENTER_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ENTER_GAME>(Handle_C_ENTER_GAME, session, buffer, len); };
 		GPacketHandler[PKT_C_LEAVE_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LEAVE_GAME>(Handle_C_LEAVE_GAME, session, buffer, len); };
 		GPacketHandler[PKT_C_MOVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MOVE>(Handle_C_MOVE, session, buffer, len); };
@@ -64,6 +72,8 @@ public:
 	// Auto-generated
 	static SendBufferRef MakeSerializedPacket(Protocol::S_PONG& pkt) { return MakeSerializedPacket(pkt, PKT_S_PONG); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_LOGIN& pkt) { return MakeSerializedPacket(pkt, PKT_S_LOGIN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_S_CREATE_CHARACTER); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_S_DELETE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_ENTER_GAME); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_LEAVE_GAME); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_SPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_SPAWN); }

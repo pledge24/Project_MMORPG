@@ -5,6 +5,9 @@
 #include "Player.h"
 #include "Room.h"
 #include "ObjectUtils.h"
+#include "DBRequestFunctions.h"
+#include "DBManager.h"
+#include "DBQueue.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -22,25 +25,37 @@ bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
 
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
+    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // ...
+
+    
 	// TODO : DB에서 Account 정보를 긁어온다.
-	// TODO : DB에서 유저 정보를 긁어온다
-	Protocol::S_LOGIN loginPkt;
+	// TODO : DB에서 유저 정보를 긁어온다.
 
-	for (int32 i = 0; i < 1; i++)
-	{
-		Protocol::ObjectInfo* player = loginPkt.add_players();
-		Protocol::PosInfo* posInfo = player->mutable_pos_info();
+    // 랜덤으로 아무 DBQueue에게 Job을 준다.
+    int32 dbQueueCount = GDBManager->GetDBQueueCount();
+    DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount));
 
-		posInfo->set_x(Utils::GetRandom(0.f, 100.f));
-		posInfo->set_y(Utils::GetRandom(0.f, 100.f));
-		posInfo->set_z(Utils::GetRandom(0.f, 100.f));
-		posInfo->set_yaw(Utils::GetRandom(0.f, 45.f));
-	}
+    JobRef job = make_shared<Job>(
+        []()
+        {
+            cout << "Handle_C_Login!" << endl;
+        }
+    );
 
-	loginPkt.set_success(true);
-	SEND_PACKET(loginPkt);
+    dbQueue->Push(std::move(job));
 
 	return true;
+}
+
+bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
+{
+    return true;
+}
+
+bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
+{
+    return true;
 }
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)

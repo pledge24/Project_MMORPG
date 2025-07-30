@@ -32,16 +32,15 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\n\nEnum.proto\022\010Protocol*m\n\nObjectType\022\024\n\020"
   "OBJECT_TYPE_NONE\020\000\022\030\n\024OBJECT_TYPE_CREATU"
   "RE\020\001\022\032\n\026OBJECT_TYPE_PROJECTILE\020\002\022\023\n\017OBJE"
-  "CT_TYPE_ENV\020\003*h\n\nPlayerType\022\024\n\020PLAYER_TY"
-  "PE_NONE\020\000\022\026\n\022PLAYER_TYPE_KNIGHT\020\001\022\024\n\020PLA"
-  "YER_TYPE_MAGE\020\002\022\026\n\022PLAYER_TYPE_ARCHER\020\003*"
-  "^\n\tMoveState\022\023\n\017MOVE_STATE_NONE\020\000\022\023\n\017MOV"
-  "E_STATE_IDLE\020\001\022\022\n\016MOVE_STATE_RUN\020\002\022\023\n\017MO"
-  "VE_STATE_JUMP\020\003b\006proto3"
+  "CT_TYPE_ENV\020\003*Q\n\016CharacterClass\022\023\n\017CLASS"
+  "_TYPE_NONE\020\000\022\025\n\021CLASS_TYPE_KNIGHT\020\001\022\023\n\017C"
+  "LASS_TYPE_MAGE\020\002*^\n\tMoveState\022\023\n\017MOVE_ST"
+  "ATE_NONE\020\000\022\023\n\017MOVE_STATE_IDLE\020\001\022\022\n\016MOVE_"
+  "STATE_RUN\020\002\022\023\n\017MOVE_STATE_JUMP\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 343, descriptor_table_protodef_Enum_2eproto,
+    false, false, 320, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -71,16 +70,15 @@ bool ObjectType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlayerType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CharacterClass_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[1];
 }
-bool PlayerType_IsValid(int value) {
+bool CharacterClass_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
     case 2:
-    case 3:
       return true;
     default:
       return false;

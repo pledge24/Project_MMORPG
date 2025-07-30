@@ -120,6 +120,7 @@
     <ClInclude Include="DBRequestFunctions.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\GenPackets.bat">

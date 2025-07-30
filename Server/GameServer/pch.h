@@ -1,17 +1,13 @@
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN             
-#define HIREDIS_STATIC
 
 #ifdef _DEBUG
 #pragma comment(lib, "ServerCore\\Debug\\ServerCore.lib")
 #pragma comment(lib, "Protobuf\\Debug\\libprotobufd.lib")
-#pragma comment(lib, "HiRedis\\Debug\\hiredisd.lib")
-#pragma comment(lib, "Redis-plus-plus\\Debug\\redis++_static.lib")
 #else
 #pragma comment(lib, "ServerCore\\Release\\ServerCore.lib")
 #pragma comment(lib, "Protobuf\\Release\\libprotobuf.lib")
-#pragma comment(lib, "Redis-plus-plus\\Release\\redis++_static.lib")
 #endif
 
 #include "CorePch.h"

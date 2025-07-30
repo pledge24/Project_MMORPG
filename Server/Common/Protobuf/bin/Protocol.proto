@@ -16,18 +16,40 @@ message S_PONG
 
 message C_LOGIN
 {
-
+    string accessToken = 1;
 }
 
 message S_LOGIN
 {
 	bool success = 1;
-	repeated ObjectInfo players = 2; // 아이디 발급 전
+	repeated CharacterOverview characters = 2; // 캐릭터 아이디 발급 전
+}
+
+message C_CREATE_CHARACTER
+{
+    CharacterOverview overview = 1;
+}
+
+message S_CREATE_CHARACTER
+{
+    bool success = 1;
+    CharacterOverview overview = 2;
+}
+
+message C_DELETE_CHARACTER
+{
+    uint32 characterIndex = 1;
+}
+
+message S_DELETE_CHARACTER
+{
+    bool success = 1;
+    uint32 characterIndex = 2;
 }
 
 message C_ENTER_GAME
 {
-	uint64 playerIndex = 1;
+	uint64 characterIndex = 1;
 }
 
 message S_ENTER_GAME
