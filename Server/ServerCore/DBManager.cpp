@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "DBQueue.h"
 #include "DBManager.h"
 #include <functional>
 
@@ -14,8 +15,14 @@ DBManager::~DBManager()
 
 void DBManager::Init(int32 dbQueueCount)
 {
-    _dbQueueList.resize(dbQueueCount);
     _dbQueueCount = dbQueueCount;
+    _dbQueueList.clear();
+
+    for (int dbQueueId = 0; dbQueueId < dbQueueCount; dbQueueId++)
+    {
+        DBQueueRef dbQueue = make_shared<DBQueue>(dbQueueId);
+        _dbQueueList.push_back(dbQueue);
+    }
 }
 
 void DBManager::Clear()

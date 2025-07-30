@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "DBQueue.h"
 
-DBQueue::DBQueue()
+DBQueue::DBQueue(int32 dbQueueId) : _dbQueueId(dbQueueId)
 {
 }
 
@@ -9,7 +9,7 @@ DBQueue::~DBQueue()
 {
 }
 
-void DBQueue::Push(JobRef job)
+void DBQueue::Push(JobRef&& job)
 {
     {
         LockGuard lock(mtx);
@@ -33,5 +33,5 @@ JobRef DBQueue::WaitForSingleJob()
     JobRef job = std::move(jobs.front());
     jobs.pop();
 
-    return job;
+    return std::move(job);
 }

@@ -5,14 +5,16 @@
 #include "JobTimer.h"
 #include "DBConnectionPool.h"
 #include "DBManager.h"
+#include "RedisManager.h"
 
 // 전역 객체 추가 시, 여기에 하나씩 기입
 ThreadManager* GThreadManager = nullptr;
 GlobalQueue* GGlobalQueue = nullptr;
 JobTimer* GJobTimer = nullptr;
 
-DBConnectionPool* GDBConnectionPool;
+DBConnectionPool* GDBConnectionPool = nullptr;
 DBManager* GDBManager = nullptr;
+RedisManager* GRedisManager = nullptr;
 
 /*----------------------
 		CoreGlobal
@@ -28,7 +30,9 @@ public:
 		GJobTimer = new JobTimer();
         GDBConnectionPool = new DBConnectionPool();
         GDBManager = new DBManager();
+        GRedisManager = new RedisManager();
 		SocketUtil::Init();
+        wcout.imbue(locale("kor"));
 	}
 
 	~CoreGlobal()
@@ -38,6 +42,7 @@ public:
 		delete GJobTimer;
         delete GDBConnectionPool;
         delete GDBManager;
+        delete GRedisManager;
 		SocketUtil::Clear();
 	}
 } GCoreGlobal;

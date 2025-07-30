@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <atomic>
+#include "sw/redis++/redis.h"
 
 /*-------------------
 	   Type 관련
@@ -21,7 +22,6 @@ using uint64 = unsigned __int64;
 /*-------------------
 	   Lock 관련
 ---------------------*/
-// 사용할 일이 있을까?
 template<typename T>
 using Atomic = std::atomic<T>;
 using Mutex = std::mutex;
@@ -45,4 +45,5 @@ USING_SHARED_PTR(PacketSession);
 USING_SHARED_PTR(Job);
 USING_SHARED_PTR(JobQueue);
 USING_SHARED_PTR(DBQueue);
+using RedisRef = std::shared_ptr<class sw::redis::Redis>;
 

@@ -12,3 +12,4 @@ extern class JobTimer* GJobTimer;
 
 extern class DBConnectionPool* GDBConnectionPool;
 extern class DBManager* GDBManager;
+extern class RedisManager* GRedisManager;

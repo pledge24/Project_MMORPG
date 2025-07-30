@@ -11,6 +11,8 @@ public:
 
     DBQueueRef                      GetDBQueue(int32 index);
     DBQueueRef                      GetDBQueueFromId(int32 id);
+    
+    int32                           GetDBQueueCount() { return _dbQueueCount; }
 
 private:
     vector<DBQueueRef>              _dbQueueList;
