@@ -414,3 +414,6 @@ FodyWeavers.xsd
 
 # SQL 쿼리문 폴더 무시
 Queries/*
+
+# 환경 변수 파일 무시
+config.h
