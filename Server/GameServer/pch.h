@@ -19,6 +19,26 @@
 #include "Utils.h"
 #include "GameSession.h"
 
+/*-------------------
+          DB
+---------------------*/
+#include "DBConnectionPool.h"
+#include "DBBind.h"
+#include "DBQueue.h"
+#include "DBManager.h"
+#include "RedisManager.h"
+
+
+/*-------------------
+         JSON
+---------------------*/
+#include "json.hpp"
+using Json = nlohmann::json;
+
+
+/*-------------------
+       SharedPtr
+---------------------*/
 USING_SHARED_PTR(GameSession);
 USING_SHARED_PTR(Player);
 USING_SHARED_PTR(Monster);

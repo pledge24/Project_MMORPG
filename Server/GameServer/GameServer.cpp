@@ -3,12 +3,6 @@
 #include "Service.h"
 #include "IocpCore.h"
 #include "GameSession.h"
-#include "ServerPacketHandler.h"
-#include "DBConnectionPool.h"
-#include "DBBind.h"
-#include "DBQueue.h"
-#include "DBManager.h"
-#include "RedisManager.h"
 #include "config.h"
 
 enum
@@ -107,7 +101,6 @@ int main(void)
 
         dbQueue->Push(std::move(job));
     }
-    
 
     //// Main Thread
     //DoWorkerJob(service);

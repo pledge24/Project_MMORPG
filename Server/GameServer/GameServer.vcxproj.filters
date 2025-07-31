@@ -121,6 +121,9 @@
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="config.h" />
+    <ClInclude Include="json.hpp">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\GenPackets.bat">
