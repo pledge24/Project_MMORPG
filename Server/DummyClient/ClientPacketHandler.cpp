@@ -15,21 +15,31 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
-	if (pkt.success() == false)
-		return true;
+	//if (pkt.success() == false)
+	//	return true;
 
-	if (pkt.players().size() == 0)
-	{
-		// 캐릭터 생성창
-	}
+	//if (pkt.players().size() == 0)
+	//{
+	//	// 캐릭터 생성창
+	//}
 
-	// 입장 UI 버튼 눌러서 게임 입장
-	Protocol::C_ENTER_GAME enterGamePkt;
-	enterGamePkt.set_playerindex(0); // 첫번째 캐릭터로 입장
-	auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(enterGamePkt);
-	session->Send(sendBuffer);
+	//// 입장 UI 버튼 눌러서 게임 입장
+	//Protocol::C_ENTER_GAME enterGamePkt;
+	//enterGamePkt.set_playerindex(0); // 첫번째 캐릭터로 입장
+	//auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(enterGamePkt);
+	//session->Send(sendBuffer);
 
 	return true;
+}
+
+bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt)
+{
+	return false;
+}
+
+bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt)
+{
+    return false;
 }
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)

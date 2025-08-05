@@ -23,9 +23,9 @@ public:
     void OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 
     void SetLoginWidget(class ULoginWidget* Widget);
+    ULoginWidget* GetLoginWidget() { return LoginWidget; }
 
 private:
-    UPROPERTY()
     ULoginWidget* LoginWidget;
 
 private:

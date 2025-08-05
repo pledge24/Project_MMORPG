@@ -5,8 +5,10 @@ import "Enum.proto";
 
 message CharacterOverview
 {
-    CharacterClass class = 1;
-    string name = 2;
+    uint64 character_id = 1;
+    CharacterClass class = 2;
+    string name = 3;
+    uint32 level = 4;
 }
 
 message ObjectInfo

@@ -36,8 +36,8 @@ DBQueueRef DBManager::GetDBQueue(int32 index)
     return _dbQueueList[index];
 }
 
-DBQueueRef DBManager::GetDBQueueFromId(int32 id)
+DBQueueRef DBManager::GetDBQueueFromId(int64 id)
 {
-    int index = _hashGenerator(id) % _dbQueueCount;
+    int64 index = _hashGenerator(id) % _dbQueueCount;
     return _dbQueueList[index];
 }

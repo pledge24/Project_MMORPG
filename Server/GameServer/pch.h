@@ -27,12 +27,12 @@
 #include "DBQueue.h"
 #include "DBManager.h"
 #include "RedisManager.h"
-
+#include "DBRequestFunctions.h"
 
 /*-------------------
          JSON
 ---------------------*/
-#include "json.hpp"
+#include "nlohmann/json.hpp"
 using Json = nlohmann::json;
 
 
@@ -46,6 +46,6 @@ USING_SHARED_PTR(Creature);
 USING_SHARED_PTR(Object);
 USING_SHARED_PTR(Room);
 
-#define SEND_PACKET(pkt)													\
+#define SEND_PACKET(pkt)													    \
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);	\
 	session->Send(sendBuffer);												

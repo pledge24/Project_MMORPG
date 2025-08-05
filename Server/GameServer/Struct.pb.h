@@ -186,10 +186,12 @@ class CharacterOverview final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kNameFieldNumber = 2,
-    kClassFieldNumber = 1,
+    kNameFieldNumber = 3,
+    kCharacterIdFieldNumber = 1,
+    kClassFieldNumber = 2,
+    kLevelFieldNumber = 4,
   };
-  // string name = 2;
+  // string name = 3;
   void clear_name();
   const std::string& name() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -203,13 +205,31 @@ class CharacterOverview final :
   std::string* _internal_mutable_name();
   public:
 
-  // .Protocol.CharacterClass class = 1;
+  // uint64 character_id = 1;
+  void clear_character_id();
+  uint64_t character_id() const;
+  void set_character_id(uint64_t value);
+  private:
+  uint64_t _internal_character_id() const;
+  void _internal_set_character_id(uint64_t value);
+  public:
+
+  // .Protocol.CharacterClass class = 2;
   void clear_class_();
   ::Protocol::CharacterClass class_() const;
   void set_class_(::Protocol::CharacterClass value);
   private:
   ::Protocol::CharacterClass _internal_class_() const;
   void _internal_set_class_(::Protocol::CharacterClass value);
+  public:
+
+  // uint32 level = 4;
+  void clear_level();
+  uint32_t level() const;
+  void set_level(uint32_t value);
+  private:
+  uint32_t _internal_level() const;
+  void _internal_set_level(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.CharacterOverview)
@@ -221,7 +241,9 @@ class CharacterOverview final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
+    uint64_t character_id_;
     int class__;
+    uint32_t level_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -620,7 +642,27 @@ class PosInfo final :
 #endif  // __GNUC__
 // CharacterOverview
 
-// .Protocol.CharacterClass class = 1;
+// uint64 character_id = 1;
+inline void CharacterOverview::clear_character_id() {
+  _impl_.character_id_ = uint64_t{0u};
+}
+inline uint64_t CharacterOverview::_internal_character_id() const {
+  return _impl_.character_id_;
+}
+inline uint64_t CharacterOverview::character_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.CharacterOverview.character_id)
+  return _internal_character_id();
+}
+inline void CharacterOverview::_internal_set_character_id(uint64_t value) {
+  
+  _impl_.character_id_ = value;
+}
+inline void CharacterOverview::set_character_id(uint64_t value) {
+  _internal_set_character_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.character_id)
+}
+
+// .Protocol.CharacterClass class = 2;
 inline void CharacterOverview::clear_class_() {
   _impl_.class__ = 0;
 }
@@ -640,7 +682,7 @@ inline void CharacterOverview::set_class_(::Protocol::CharacterClass value) {
   // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.class)
 }
 
-// string name = 2;
+// string name = 3;
 inline void CharacterOverview::clear_name() {
   _impl_.name_.ClearToEmpty();
 }
@@ -688,6 +730,26 @@ inline void CharacterOverview::set_allocated_name(std::string* name) {
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   // @@protoc_insertion_point(field_set_allocated:Protocol.CharacterOverview.name)
+}
+
+// uint32 level = 4;
+inline void CharacterOverview::clear_level() {
+  _impl_.level_ = 0u;
+}
+inline uint32_t CharacterOverview::_internal_level() const {
+  return _impl_.level_;
+}
+inline uint32_t CharacterOverview::level() const {
+  // @@protoc_insertion_point(field_get:Protocol.CharacterOverview.level)
+  return _internal_level();
+}
+inline void CharacterOverview::_internal_set_level(uint32_t value) {
+  
+  _impl_.level_ = value;
+}
+inline void CharacterOverview::set_level(uint32_t value) {
+  _internal_set_level(value);
+  // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.level)
 }
 
 // -------------------------------------------------------------------

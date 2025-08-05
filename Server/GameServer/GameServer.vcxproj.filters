@@ -23,6 +23,9 @@
     <Filter Include="DB">
       <UniqueIdentifier>{0287b348-939c-4007-8cee-79ad2e0a1549}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Queries">
+      <UniqueIdentifier>{16bdea6a-c160-4039-b349-dd326eaabaea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -121,7 +124,7 @@
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="config.h" />
-    <ClInclude Include="json.hpp">
+    <ClInclude Include="EncodingConverter.h">
       <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
@@ -137,6 +140,12 @@
     </None>
     <None Include="..\Common\Protobuf\bin\Struct.proto">
       <Filter>Protocol\Proto</Filter>
+    </None>
+    <None Include="..\Queries\UserDB_CreateUsersTable.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="GameDB_CreateAllTables.sql">
+      <Filter>Queries</Filter>
     </None>
   </ItemGroup>
 </Project>

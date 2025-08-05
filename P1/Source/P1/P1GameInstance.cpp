@@ -34,9 +34,11 @@ void UP1GameInstance::ConnectToGameServer()
 		GameServerSession = MakeShared<PacketSession>(Socket);
 		GameServerSession->Run();
 
-		// TEMP : Lobby에서 캐릭터 선택창 등
+		// AuthServer로부터 받은 AccessToken과 함께 로그인 패킷 전송
 		{
 			Protocol::C_LOGIN Pkt;
+			Pkt.set_accesstoken(TCHAR_TO_UTF8(*_token));
+
 			SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);
 			SendPacket(SendBuffer);
 		}

@@ -86,21 +86,21 @@ int main(void)
             });
     }
 
-    for (int32 i = 0; i < 100; i++)
-    {
-        int32 dbQueueCount = GDBManager->GetDBQueueCount();
-        int32 queueId = Utils::GetRandom(0, dbQueueCount);
-        DBQueueRef dbQueue = GDBManager->GetDBQueue(queueId);
+    //for (int32 i = 0; i < 100; i++)
+    //{
+    //    int32 dbQueueCount = GDBManager->GetDBQueueCount();
+    //    int32 queueId = Utils::GetRandom(0, dbQueueCount);
+    //    DBQueueRef dbQueue = GDBManager->GetDBQueue(queueId);
 
-        JobRef job = make_shared<Job>(
-            []()
-            {
-                cout << "Handle_C_Login!" << endl;
-            }
-        );
+    //    JobRef job = make_shared<Job>(
+    //        []()
+    //        {
+    //            cout << "Handle_C_Login!" << endl;
+    //        }
+    //    );
 
-        dbQueue->Push(std::move(job));
-    }
+    //    dbQueue->Push(std::move(job));
+    //}
 
     //// Main Thread
     //DoWorkerJob(service);

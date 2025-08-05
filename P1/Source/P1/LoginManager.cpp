@@ -83,14 +83,14 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 		{
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
-				// 토큰 저장 (필요시)
+				// 토큰을 GameInstance에 저장
 				token = JsonObject->GetStringField("accessToken");
-				if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+				if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
 				{
 					GameInstance->SetToken(token);
 				}
 
-				Message = TEXT("로그인 성공! 캐릭터 선택 창으로 이동중...");
+				Message = TEXT("로그인 성공! 캐릭터 불러오는 중...");
 				loginSuccess = true;
 			}
 		}
@@ -109,7 +109,7 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 
 	if (LoginWidget)
 	{
-		LoginWidget->SetResultMessage(Message);
+		LoginWidget->OnRecvResult(loginSuccess, Message);
 	}
 
 	if (loginSuccess)
@@ -122,14 +122,10 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 		if (GameInstance)
 		{
 			GameInstance->ConnectToGameServer();
-
-			// 캐릭터 선택창으로 이동.
-			LoginWidget->SwitchToIndex(1);
 		}
 		else
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("게임인스턴스가 없습니다")));
-
 		}
 		
 	}
@@ -139,6 +135,7 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 {
 	FString Message = TEXT("로그인 실패");
 
+	bool RegisterSuccess = false;
 	if (bWasSuccessful && Response.IsValid())
 	{
 		int32 ResponseCode = Response->GetResponseCode();
@@ -149,7 +146,7 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 
 		if (ResponseCode == 200 || ResponseCode == 201)
 		{
-
+			RegisterSuccess = true;
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
 				Message = JsonObject->GetStringField("message");
@@ -157,6 +154,7 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 		}
 		else
 		{
+			RegisterSuccess = false;
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
 				Message = JsonObject->GetStringField("errorMessage");
@@ -170,7 +168,6 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 
 	if (LoginWidget)
 	{
-		LoginWidget->SetResultMessage(Message);
-		LoginWidget->ClearMessage();
+		LoginWidget->OnRecvResult(RegisterSuccess, Message);
 	}
 }

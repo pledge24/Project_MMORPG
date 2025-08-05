@@ -27,29 +27,28 @@ message S_LOGIN
 
 message C_CREATE_CHARACTER
 {
-    CharacterOverview overview = 1;
+    CharacterOverview character = 1;
 }
 
 message S_CREATE_CHARACTER
 {
     bool success = 1;
-    CharacterOverview overview = 2;
+    uint64 characterId = 2;
 }
 
 message C_DELETE_CHARACTER
 {
-    uint32 characterIndex = 1;
+    uint64 characterId = 1;
 }
 
 message S_DELETE_CHARACTER
 {
     bool success = 1;
-    uint32 characterIndex = 2;
 }
 
 message C_ENTER_GAME
 {
-	uint64 characterIndex = 1;
+	uint64 characterId = 1;
 }
 
 message S_ENTER_GAME

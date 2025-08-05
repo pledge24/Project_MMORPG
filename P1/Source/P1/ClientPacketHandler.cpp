@@ -1,4 +1,6 @@
 #include "ClientPacketHandler.h"
+#include "LoginModeBase.h"
+#include "LoginWidget.h"
 #include "P1.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -16,21 +18,47 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
-	// TODO: 내 캐릭터들의 정보를 로비 UI에 띄운다.
-	/*for (auto& Player : pkt.players())
-	{
+	// 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
+	TMap<Protocol::CharacterClass, FString> ClassMap = {
+		{Protocol::CharacterClass::CLASS_TYPE_KNIGHT, FString(TEXT("Warrir"))}
+		//
+	};
 
+	// 언리얼 엔진에서 사용할 수 있는 형식으로 변경
+	TArray<FCharacterOverview> Characters;
+	for (auto& Character : pkt.characters())
+	{
+		FCharacterOverview character;
+		character.CharacterId = Character.character_id();
+		character.CharacterClass = ClassMap[Character.class_()];
+		character.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
+		character.CharacterLevel = Character.level();
+
+		Characters.Add(character);
 	}
 
-	for (int32 i = 0; i < pkt.players_size(); i++)
+	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		const Protocol::PlayerInfo& Player = pkt.players(i);
-	}*/
+		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+		{
+			if (ULoginManager* Manager = Mode->GetLoginManager())
+			{
+				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
+				{
+					LoginWidget->OnRecvCharacterOverviews(Characters);
+				}
+			}
+		}
+	}
+	return true;
+}
 
-	// TODO: 캐릭터 선택 시, 캐릭터 idx와 함께 패킷 전송(다른 장소에서. 여긴 테스트용)
-	Protocol::C_ENTER_GAME EnterGamePkt;
-	EnterGamePkt.set_playerindex(0);
-	SEND_PACKET(EnterGamePkt);
+bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt) {
+
+	return true;
+}
+
+bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt) {
 
 	return true;
 }

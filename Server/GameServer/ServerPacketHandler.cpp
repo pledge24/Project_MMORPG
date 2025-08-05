@@ -5,9 +5,6 @@
 #include "Player.h"
 #include "Room.h"
 #include "ObjectUtils.h"
-#include "DBRequestFunctions.h"
-#include "DBManager.h"
-#include "DBQueue.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -28,18 +25,38 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
     // TODO : 해당 패킷이 유효한지 검증(Validate)
     // ...
 
-    
-	// TODO : DB에서 Account 정보를 긁어온다.
-	// TODO : DB에서 유저 정보를 긁어온다.
-
     // 랜덤으로 아무 DBQueue에게 Job을 준다.
     int32 dbQueueCount = GDBManager->GetDBQueueCount();
     DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount));
 
     JobRef job = make_shared<Job>(
-        []()
+        [session, pkt]()
         {
-            cout << "Handle_C_Login!" << endl;
+            // 클라로부터 받은 AccessToken을 Redis와 비교
+            string accessToken = pkt.accesstoken();
+
+            RedisRef redis = GRedisManager->GetRedis();
+            auto val = redis->get("accessToken:" + accessToken);
+            if (val)
+            {
+                Json json = Json::parse(*val);
+                string username = json["username"];
+                int64 userId = json["userId"];
+
+                cout << "userId: " << userId << endl;
+                cout << "username: " << username << endl;
+                
+                // 게임 세션에 userId 저장.
+                GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+                gameSession->userId = userId;
+
+                // 있으면 DB에서 캐릭터 정보를 긁어온다.
+                DBRequestFunctions::GetCharacterData(session, userId);
+            }
+            else
+            {
+                cout << "Not Found AccessToken" << endl;
+            }
         }
     );
 
@@ -50,11 +67,45 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
+    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // ...
+
+    // 유저 Id를 통해 DBQueue를 선택
+    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
+
+    JobRef job = make_shared<Job>(
+        [session, pkt, userId]()
+        {
+            const Protocol::CharacterOverview& character = pkt.character();
+            DBRequestFunctions::CreateCharacter(session, character, userId);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
+
     return true;
 }
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
+    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // ...
+
+    // 유저 Id를 통해 DBQueue를 선택
+    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
+
+    JobRef job = make_shared<Job>(
+        [session, pkt]()
+        {
+            int64 characterId = pkt.characterid();
+            DBRequestFunctions::DeleteCharacter(session, characterId);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
+
     return true;
 }
 

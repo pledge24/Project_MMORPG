@@ -24,7 +24,9 @@ namespace Protocol {
 PROTOBUF_CONSTEXPR CharacterOverview::CharacterOverview(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.character_id_)*/uint64_t{0u}
   , /*decltype(_impl_.class__)*/0
+  , /*decltype(_impl_.level_)*/0u
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct CharacterOverviewDefaultTypeInternal {
   PROTOBUF_CONSTEXPR CharacterOverviewDefaultTypeInternal()
@@ -80,8 +82,10 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Protocol::CharacterOverview, _impl_.character_id_),
   PROTOBUF_FIELD_OFFSET(::Protocol::CharacterOverview, _impl_.class__),
   PROTOBUF_FIELD_OFFSET(::Protocol::CharacterOverview, _impl_.name_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::CharacterOverview, _impl_.level_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::ObjectInfo, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -106,8 +110,8 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::Protocol::CharacterOverview)},
-  { 8, -1, -1, sizeof(::Protocol::ObjectInfo)},
-  { 17, -1, -1, sizeof(::Protocol::PosInfo)},
+  { 10, -1, -1, sizeof(::Protocol::ObjectInfo)},
+  { 19, -1, -1, sizeof(::Protocol::PosInfo)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -117,22 +121,23 @@ static const ::_pb::Message* const file_default_instances[] = {
 };
 
 const char descriptor_table_protodef_Struct_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\014Struct.proto\022\010Protocol\032\nEnum.proto\"J\n\021"
-  "CharacterOverview\022\'\n\005class\030\001 \001(\0162\030.Proto"
-  "col.CharacterClass\022\014\n\004name\030\002 \001(\t\"o\n\nObje"
-  "ctInfo\022\021\n\tobject_id\030\001 \001(\004\022)\n\013object_type"
-  "\030\002 \001(\0162\024.Protocol.ObjectType\022#\n\010pos_info"
-  "\030\003 \001(\0132\021.Protocol.PosInfo\"n\n\007PosInfo\022\021\n\t"
-  "object_id\030\001 \001(\004\022\t\n\001x\030\002 \001(\002\022\t\n\001y\030\003 \001(\002\022\t\n"
-  "\001z\030\004 \001(\002\022\013\n\003yaw\030\005 \001(\002\022\"\n\005state\030\006 \001(\0162\023.P"
-  "rotocol.MoveStateb\006proto3"
+  "\n\014Struct.proto\022\010Protocol\032\nEnum.proto\"o\n\021"
+  "CharacterOverview\022\024\n\014character_id\030\001 \001(\004\022"
+  "\'\n\005class\030\002 \001(\0162\030.Protocol.CharacterClass"
+  "\022\014\n\004name\030\003 \001(\t\022\r\n\005level\030\004 \001(\r\"o\n\nObjectI"
+  "nfo\022\021\n\tobject_id\030\001 \001(\004\022)\n\013object_type\030\002 "
+  "\001(\0162\024.Protocol.ObjectType\022#\n\010pos_info\030\003 "
+  "\001(\0132\021.Protocol.PosInfo\"n\n\007PosInfo\022\021\n\tobj"
+  "ect_id\030\001 \001(\004\022\t\n\001x\030\002 \001(\002\022\t\n\001y\030\003 \001(\002\022\t\n\001z\030"
+  "\004 \001(\002\022\013\n\003yaw\030\005 \001(\002\022\"\n\005state\030\006 \001(\0162\023.Prot"
+  "ocol.MoveStateb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Struct_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Struct_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Struct_2eproto = {
-    false, false, 345, descriptor_table_protodef_Struct_2eproto,
+    false, false, 382, descriptor_table_protodef_Struct_2eproto,
     "Struct.proto",
     &descriptor_table_Struct_2eproto_once, descriptor_table_Struct_2eproto_deps, 1, 3,
     schemas, file_default_instances, TableStruct_Struct_2eproto::offsets,
@@ -164,7 +169,9 @@ CharacterOverview::CharacterOverview(const CharacterOverview& from)
   CharacterOverview* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.name_){}
+    , decltype(_impl_.character_id_){}
     , decltype(_impl_.class__){}
+    , decltype(_impl_.level_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -176,7 +183,9 @@ CharacterOverview::CharacterOverview(const CharacterOverview& from)
     _this->_impl_.name_.Set(from._internal_name(), 
       _this->GetArenaForAllocation());
   }
-  _this->_impl_.class__ = from._impl_.class__;
+  ::memcpy(&_impl_.character_id_, &from._impl_.character_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.level_) -
+    reinterpret_cast<char*>(&_impl_.character_id_)) + sizeof(_impl_.level_));
   // @@protoc_insertion_point(copy_constructor:Protocol.CharacterOverview)
 }
 
@@ -186,7 +195,9 @@ inline void CharacterOverview::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.name_){}
+    , decltype(_impl_.character_id_){uint64_t{0u}}
     , decltype(_impl_.class__){0}
+    , decltype(_impl_.level_){0u}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.name_.InitDefault();
@@ -220,7 +231,9 @@ void CharacterOverview::Clear() {
   (void) cached_has_bits;
 
   _impl_.name_.ClearToEmpty();
-  _impl_.class__ = 0;
+  ::memset(&_impl_.character_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.level_) -
+      reinterpret_cast<char*>(&_impl_.character_id_)) + sizeof(_impl_.level_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -230,22 +243,38 @@ const char* CharacterOverview::_InternalParse(const char* ptr, ::_pbi::ParseCont
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.CharacterClass class = 1;
+      // uint64 character_id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.character_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // .Protocol.CharacterClass class = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
           uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
           _internal_set_class_(static_cast<::Protocol::CharacterClass>(val));
         } else
           goto handle_unusual;
         continue;
-      // string name = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+      // string name = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
           auto str = _internal_mutable_name();
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
           CHK_(::_pbi::VerifyUTF8(str, "Protocol.CharacterOverview.name"));
+        } else
+          goto handle_unusual;
+        continue;
+      // uint32 level = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+          _impl_.level_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
@@ -278,21 +307,33 @@ uint8_t* CharacterOverview::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.CharacterClass class = 1;
+  // uint64 character_id = 1;
+  if (this->_internal_character_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_character_id(), target);
+  }
+
+  // .Protocol.CharacterClass class = 2;
   if (this->_internal_class_() != 0) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteEnumToArray(
-      1, this->_internal_class_(), target);
+      2, this->_internal_class_(), target);
   }
 
-  // string name = 2;
+  // string name = 3;
   if (!this->_internal_name().empty()) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_name().data(), static_cast<int>(this->_internal_name().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "Protocol.CharacterOverview.name");
     target = stream->WriteStringMaybeAliased(
-        2, this->_internal_name(), target);
+        3, this->_internal_name(), target);
+  }
+
+  // uint32 level = 4;
+  if (this->_internal_level() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(4, this->_internal_level(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -311,17 +352,27 @@ size_t CharacterOverview::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string name = 2;
+  // string name = 3;
   if (!this->_internal_name().empty()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_name());
   }
 
-  // .Protocol.CharacterClass class = 1;
+  // uint64 character_id = 1;
+  if (this->_internal_character_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_character_id());
+  }
+
+  // .Protocol.CharacterClass class = 2;
   if (this->_internal_class_() != 0) {
     total_size += 1 +
       ::_pbi::WireFormatLite::EnumSize(this->_internal_class_());
+  }
+
+  // uint32 level = 4;
+  if (this->_internal_level() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_level());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -345,8 +396,14 @@ void CharacterOverview::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, cons
   if (!from._internal_name().empty()) {
     _this->_internal_set_name(from._internal_name());
   }
+  if (from._internal_character_id() != 0) {
+    _this->_internal_set_character_id(from._internal_character_id());
+  }
   if (from._internal_class_() != 0) {
     _this->_internal_set_class_(from._internal_class_());
+  }
+  if (from._internal_level() != 0) {
+    _this->_internal_set_level(from._internal_level());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -371,7 +428,12 @@ void CharacterOverview::InternalSwap(CharacterOverview* other) {
       &_impl_.name_, lhs_arena,
       &other->_impl_.name_, rhs_arena
   );
-  swap(_impl_.class__, other->_impl_.class__);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(CharacterOverview, _impl_.level_)
+      + sizeof(CharacterOverview::_impl_.level_)
+      - PROTOBUF_FIELD_OFFSET(CharacterOverview, _impl_.character_id_)>(
+          reinterpret_cast<char*>(&_impl_.character_id_),
+          reinterpret_cast<char*>(&other->_impl_.character_id_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata CharacterOverview::GetMetadata() const {

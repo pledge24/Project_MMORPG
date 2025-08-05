@@ -72,7 +72,7 @@ struct S_LOGINDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_LOGINDefaultTypeInternal _S_LOGIN_default_instance_;
 PROTOBUF_CONSTEXPR C_CREATE_CHARACTER::C_CREATE_CHARACTER(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.overview_)*/nullptr
+    /*decltype(_impl_.character_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_CREATE_CHARACTERDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_CREATE_CHARACTERDefaultTypeInternal()
@@ -85,7 +85,7 @@ struct C_CREATE_CHARACTERDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_CREATE_CHARACTERDefaultTypeInternal _C_CREATE_CHARACTER_default_instance_;
 PROTOBUF_CONSTEXPR S_CREATE_CHARACTER::S_CREATE_CHARACTER(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.overview_)*/nullptr
+    /*decltype(_impl_.characterid_)*/uint64_t{0u}
   , /*decltype(_impl_.success_)*/false
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_CREATE_CHARACTERDefaultTypeInternal {
@@ -99,7 +99,7 @@ struct S_CREATE_CHARACTERDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_CREATE_CHARACTERDefaultTypeInternal _S_CREATE_CHARACTER_default_instance_;
 PROTOBUF_CONSTEXPR C_DELETE_CHARACTER::C_DELETE_CHARACTER(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.characterindex_)*/0u
+    /*decltype(_impl_.characterid_)*/uint64_t{0u}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_DELETE_CHARACTERDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_DELETE_CHARACTERDefaultTypeInternal()
@@ -113,7 +113,6 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR S_DELETE_CHARACTER::S_DELETE_CHARACTER(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.success_)*/false
-  , /*decltype(_impl_.characterindex_)*/0u
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_DELETE_CHARACTERDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_DELETE_CHARACTERDefaultTypeInternal()
@@ -126,7 +125,7 @@ struct S_DELETE_CHARACTERDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_DELETE_CHARACTERDefaultTypeInternal _S_DELETE_CHARACTER_default_instance_;
 PROTOBUF_CONSTEXPR C_ENTER_GAME::C_ENTER_GAME(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.characterindex_)*/uint64_t{0u}
+    /*decltype(_impl_.characterid_)*/uint64_t{0u}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_ENTER_GAMEDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_ENTER_GAMEDefaultTypeInternal()
@@ -292,7 +291,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_CREATE_CHARACTER, _impl_.overview_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_CREATE_CHARACTER, _impl_.character_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -300,14 +299,14 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _impl_.success_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _impl_.overview_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _impl_.characterid_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_DELETE_CHARACTER, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_DELETE_CHARACTER, _impl_.characterindex_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_DELETE_CHARACTER, _impl_.characterid_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_DELETE_CHARACTER, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -315,14 +314,13 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_DELETE_CHARACTER, _impl_.success_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::S_DELETE_CHARACTER, _impl_.characterindex_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_ENTER_GAME, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_ENTER_GAME, _impl_.characterindex_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_ENTER_GAME, _impl_.characterid_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_ENTER_GAME, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -396,16 +394,16 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 34, -1, -1, sizeof(::Protocol::S_CREATE_CHARACTER)},
   { 42, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
   { 49, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
-  { 57, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
-  { 64, -1, -1, sizeof(::Protocol::S_ENTER_GAME)},
-  { 72, -1, -1, sizeof(::Protocol::C_LEAVE_GAME)},
-  { 78, -1, -1, sizeof(::Protocol::S_LEAVE_GAME)},
-  { 84, -1, -1, sizeof(::Protocol::S_SPAWN)},
-  { 91, -1, -1, sizeof(::Protocol::S_DESPAWN)},
-  { 98, -1, -1, sizeof(::Protocol::C_MOVE)},
-  { 105, -1, -1, sizeof(::Protocol::S_MOVE)},
-  { 112, -1, -1, sizeof(::Protocol::C_CHAT)},
-  { 119, -1, -1, sizeof(::Protocol::S_CHAT)},
+  { 56, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
+  { 63, -1, -1, sizeof(::Protocol::S_ENTER_GAME)},
+  { 71, -1, -1, sizeof(::Protocol::C_LEAVE_GAME)},
+  { 77, -1, -1, sizeof(::Protocol::S_LEAVE_GAME)},
+  { 83, -1, -1, sizeof(::Protocol::S_SPAWN)},
+  { 90, -1, -1, sizeof(::Protocol::S_DESPAWN)},
+  { 97, -1, -1, sizeof(::Protocol::C_MOVE)},
+  { 104, -1, -1, sizeof(::Protocol::S_MOVE)},
+  { 111, -1, -1, sizeof(::Protocol::C_CHAT)},
+  { 118, -1, -1, sizeof(::Protocol::S_CHAT)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -434,23 +432,22 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "Struct.proto\"\010\n\006C_PING\"\010\n\006S_PONG\"\036\n\007C_LO"
   "GIN\022\023\n\013accessToken\030\001 \001(\t\"K\n\007S_LOGIN\022\017\n\007s"
   "uccess\030\001 \001(\010\022/\n\ncharacters\030\002 \003(\0132\033.Proto"
-  "col.CharacterOverview\"C\n\022C_CREATE_CHARAC"
-  "TER\022-\n\010overview\030\001 \001(\0132\033.Protocol.Charact"
-  "erOverview\"T\n\022S_CREATE_CHARACTER\022\017\n\007succ"
-  "ess\030\001 \001(\010\022-\n\010overview\030\002 \001(\0132\033.Protocol.C"
-  "haracterOverview\",\n\022C_DELETE_CHARACTER\022\026"
-  "\n\016characterIndex\030\001 \001(\r\"=\n\022S_DELETE_CHARA"
-  "CTER\022\017\n\007success\030\001 \001(\010\022\026\n\016characterIndex\030"
-  "\002 \001(\r\"&\n\014C_ENTER_GAME\022\026\n\016characterIndex\030"
-  "\001 \001(\004\"E\n\014S_ENTER_GAME\022\017\n\007success\030\001 \001(\010\022$"
-  "\n\006player\030\002 \001(\0132\024.Protocol.ObjectInfo\"\016\n\014"
-  "C_LEAVE_GAME\"\016\n\014S_LEAVE_GAME\"0\n\007S_SPAWN\022"
-  "%\n\007players\030\001 \003(\0132\024.Protocol.ObjectInfo\"\037"
-  "\n\tS_DESPAWN\022\022\n\nobject_ids\030\001 \003(\004\")\n\006C_MOV"
-  "E\022\037\n\004info\030\001 \001(\0132\021.Protocol.PosInfo\")\n\006S_"
-  "MOVE\022\037\n\004info\030\001 \001(\0132\021.Protocol.PosInfo\"\025\n"
-  "\006C_CHAT\022\013\n\003msg\030\001 \001(\t\"\'\n\006S_CHAT\022\020\n\010player"
-  "Id\030\001 \001(\004\022\013\n\003msg\030\002 \001(\tb\006proto3"
+  "col.CharacterOverview\"D\n\022C_CREATE_CHARAC"
+  "TER\022.\n\tcharacter\030\001 \001(\0132\033.Protocol.Charac"
+  "terOverview\":\n\022S_CREATE_CHARACTER\022\017\n\007suc"
+  "cess\030\001 \001(\010\022\023\n\013characterId\030\002 \001(\004\")\n\022C_DEL"
+  "ETE_CHARACTER\022\023\n\013characterId\030\001 \001(\004\"%\n\022S_"
+  "DELETE_CHARACTER\022\017\n\007success\030\001 \001(\010\"#\n\014C_E"
+  "NTER_GAME\022\023\n\013characterId\030\001 \001(\004\"E\n\014S_ENTE"
+  "R_GAME\022\017\n\007success\030\001 \001(\010\022$\n\006player\030\002 \001(\0132"
+  "\024.Protocol.ObjectInfo\"\016\n\014C_LEAVE_GAME\"\016\n"
+  "\014S_LEAVE_GAME\"0\n\007S_SPAWN\022%\n\007players\030\001 \003("
+  "\0132\024.Protocol.ObjectInfo\"\037\n\tS_DESPAWN\022\022\n\n"
+  "object_ids\030\001 \003(\004\")\n\006C_MOVE\022\037\n\004info\030\001 \001(\013"
+  "2\021.Protocol.PosInfo\")\n\006S_MOVE\022\037\n\004info\030\001 "
+  "\001(\0132\021.Protocol.PosInfo\"\025\n\006C_CHAT\022\013\n\003msg\030"
+  "\001 \001(\t\"\'\n\006S_CHAT\022\020\n\010playerId\030\001 \001(\004\022\013\n\003msg"
+  "\030\002 \001(\tb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -458,7 +455,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 829, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 774, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 18,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -975,18 +972,18 @@ void S_LOGIN::InternalSwap(S_LOGIN* other) {
 
 class C_CREATE_CHARACTER::_Internal {
  public:
-  static const ::Protocol::CharacterOverview& overview(const C_CREATE_CHARACTER* msg);
+  static const ::Protocol::CharacterOverview& character(const C_CREATE_CHARACTER* msg);
 };
 
 const ::Protocol::CharacterOverview&
-C_CREATE_CHARACTER::_Internal::overview(const C_CREATE_CHARACTER* msg) {
-  return *msg->_impl_.overview_;
+C_CREATE_CHARACTER::_Internal::character(const C_CREATE_CHARACTER* msg) {
+  return *msg->_impl_.character_;
 }
-void C_CREATE_CHARACTER::clear_overview() {
-  if (GetArenaForAllocation() == nullptr && _impl_.overview_ != nullptr) {
-    delete _impl_.overview_;
+void C_CREATE_CHARACTER::clear_character() {
+  if (GetArenaForAllocation() == nullptr && _impl_.character_ != nullptr) {
+    delete _impl_.character_;
   }
-  _impl_.overview_ = nullptr;
+  _impl_.character_ = nullptr;
 }
 C_CREATE_CHARACTER::C_CREATE_CHARACTER(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -998,12 +995,12 @@ C_CREATE_CHARACTER::C_CREATE_CHARACTER(const C_CREATE_CHARACTER& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_CREATE_CHARACTER* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.overview_){nullptr}
+      decltype(_impl_.character_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_overview()) {
-    _this->_impl_.overview_ = new ::Protocol::CharacterOverview(*from._impl_.overview_);
+  if (from._internal_has_character()) {
+    _this->_impl_.character_ = new ::Protocol::CharacterOverview(*from._impl_.character_);
   }
   // @@protoc_insertion_point(copy_constructor:Protocol.C_CREATE_CHARACTER)
 }
@@ -1013,7 +1010,7 @@ inline void C_CREATE_CHARACTER::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.overview_){nullptr}
+      decltype(_impl_.character_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -1029,7 +1026,7 @@ C_CREATE_CHARACTER::~C_CREATE_CHARACTER() {
 
 inline void C_CREATE_CHARACTER::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.overview_;
+  if (this != internal_default_instance()) delete _impl_.character_;
 }
 
 void C_CREATE_CHARACTER::SetCachedSize(int size) const {
@@ -1042,10 +1039,10 @@ void C_CREATE_CHARACTER::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.overview_ != nullptr) {
-    delete _impl_.overview_;
+  if (GetArenaForAllocation() == nullptr && _impl_.character_ != nullptr) {
+    delete _impl_.character_;
   }
-  _impl_.overview_ = nullptr;
+  _impl_.character_ = nullptr;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1055,10 +1052,10 @@ const char* C_CREATE_CHARACTER::_InternalParse(const char* ptr, ::_pbi::ParseCon
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.CharacterOverview overview = 1;
+      // .Protocol.CharacterOverview character = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_overview(), ptr);
+          ptr = ctx->ParseMessage(_internal_mutable_character(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1092,11 +1089,11 @@ uint8_t* C_CREATE_CHARACTER::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.CharacterOverview overview = 1;
-  if (this->_internal_has_overview()) {
+  // .Protocol.CharacterOverview character = 1;
+  if (this->_internal_has_character()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::overview(this),
-        _Internal::overview(this).GetCachedSize(), target, stream);
+      InternalWriteMessage(1, _Internal::character(this),
+        _Internal::character(this).GetCachedSize(), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1115,11 +1112,11 @@ size_t C_CREATE_CHARACTER::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.CharacterOverview overview = 1;
-  if (this->_internal_has_overview()) {
+  // .Protocol.CharacterOverview character = 1;
+  if (this->_internal_has_character()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.overview_);
+        *_impl_.character_);
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -1140,9 +1137,9 @@ void C_CREATE_CHARACTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, con
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_overview()) {
-    _this->_internal_mutable_overview()->::Protocol::CharacterOverview::MergeFrom(
-        from._internal_overview());
+  if (from._internal_has_character()) {
+    _this->_internal_mutable_character()->::Protocol::CharacterOverview::MergeFrom(
+        from._internal_character());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -1161,7 +1158,7 @@ bool C_CREATE_CHARACTER::IsInitialized() const {
 void C_CREATE_CHARACTER::InternalSwap(C_CREATE_CHARACTER* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_.overview_, other->_impl_.overview_);
+  swap(_impl_.character_, other->_impl_.character_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_CREATE_CHARACTER::GetMetadata() const {
@@ -1174,19 +1171,8 @@ void C_CREATE_CHARACTER::InternalSwap(C_CREATE_CHARACTER* other) {
 
 class S_CREATE_CHARACTER::_Internal {
  public:
-  static const ::Protocol::CharacterOverview& overview(const S_CREATE_CHARACTER* msg);
 };
 
-const ::Protocol::CharacterOverview&
-S_CREATE_CHARACTER::_Internal::overview(const S_CREATE_CHARACTER* msg) {
-  return *msg->_impl_.overview_;
-}
-void S_CREATE_CHARACTER::clear_overview() {
-  if (GetArenaForAllocation() == nullptr && _impl_.overview_ != nullptr) {
-    delete _impl_.overview_;
-  }
-  _impl_.overview_ = nullptr;
-}
 S_CREATE_CHARACTER::S_CREATE_CHARACTER(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
@@ -1197,15 +1183,14 @@ S_CREATE_CHARACTER::S_CREATE_CHARACTER(const S_CREATE_CHARACTER& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   S_CREATE_CHARACTER* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.overview_){nullptr}
+      decltype(_impl_.characterid_){}
     , decltype(_impl_.success_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_overview()) {
-    _this->_impl_.overview_ = new ::Protocol::CharacterOverview(*from._impl_.overview_);
-  }
-  _this->_impl_.success_ = from._impl_.success_;
+  ::memcpy(&_impl_.characterid_, &from._impl_.characterid_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.success_) -
+    reinterpret_cast<char*>(&_impl_.characterid_)) + sizeof(_impl_.success_));
   // @@protoc_insertion_point(copy_constructor:Protocol.S_CREATE_CHARACTER)
 }
 
@@ -1214,7 +1199,7 @@ inline void S_CREATE_CHARACTER::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.overview_){nullptr}
+      decltype(_impl_.characterid_){uint64_t{0u}}
     , decltype(_impl_.success_){false}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -1231,7 +1216,6 @@ S_CREATE_CHARACTER::~S_CREATE_CHARACTER() {
 
 inline void S_CREATE_CHARACTER::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.overview_;
 }
 
 void S_CREATE_CHARACTER::SetCachedSize(int size) const {
@@ -1244,11 +1228,9 @@ void S_CREATE_CHARACTER::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.overview_ != nullptr) {
-    delete _impl_.overview_;
-  }
-  _impl_.overview_ = nullptr;
-  _impl_.success_ = false;
+  ::memset(&_impl_.characterid_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.success_) -
+      reinterpret_cast<char*>(&_impl_.characterid_)) + sizeof(_impl_.success_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1266,10 +1248,10 @@ const char* S_CREATE_CHARACTER::_InternalParse(const char* ptr, ::_pbi::ParseCon
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.CharacterOverview overview = 2;
+      // uint64 characterId = 2;
       case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
-          ptr = ctx->ParseMessage(_internal_mutable_overview(), ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.characterid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1309,11 +1291,10 @@ uint8_t* S_CREATE_CHARACTER::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
   }
 
-  // .Protocol.CharacterOverview overview = 2;
-  if (this->_internal_has_overview()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(2, _Internal::overview(this),
-        _Internal::overview(this).GetCachedSize(), target, stream);
+  // uint64 characterId = 2;
+  if (this->_internal_characterid() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(2, this->_internal_characterid(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1332,11 +1313,9 @@ size_t S_CREATE_CHARACTER::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.CharacterOverview overview = 2;
-  if (this->_internal_has_overview()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.overview_);
+  // uint64 characterId = 2;
+  if (this->_internal_characterid() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_characterid());
   }
 
   // bool success = 1;
@@ -1362,9 +1341,8 @@ void S_CREATE_CHARACTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, con
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_overview()) {
-    _this->_internal_mutable_overview()->::Protocol::CharacterOverview::MergeFrom(
-        from._internal_overview());
+  if (from._internal_characterid() != 0) {
+    _this->_internal_set_characterid(from._internal_characterid());
   }
   if (from._internal_success() != 0) {
     _this->_internal_set_success(from._internal_success());
@@ -1389,9 +1367,9 @@ void S_CREATE_CHARACTER::InternalSwap(S_CREATE_CHARACTER* other) {
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(S_CREATE_CHARACTER, _impl_.success_)
       + sizeof(S_CREATE_CHARACTER::_impl_.success_)
-      - PROTOBUF_FIELD_OFFSET(S_CREATE_CHARACTER, _impl_.overview_)>(
-          reinterpret_cast<char*>(&_impl_.overview_),
-          reinterpret_cast<char*>(&other->_impl_.overview_));
+      - PROTOBUF_FIELD_OFFSET(S_CREATE_CHARACTER, _impl_.characterid_)>(
+          reinterpret_cast<char*>(&_impl_.characterid_),
+          reinterpret_cast<char*>(&other->_impl_.characterid_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_CREATE_CHARACTER::GetMetadata() const {
@@ -1416,11 +1394,11 @@ C_DELETE_CHARACTER::C_DELETE_CHARACTER(const C_DELETE_CHARACTER& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_DELETE_CHARACTER* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.characterindex_){}
+      decltype(_impl_.characterid_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.characterindex_ = from._impl_.characterindex_;
+  _this->_impl_.characterid_ = from._impl_.characterid_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_DELETE_CHARACTER)
 }
 
@@ -1429,7 +1407,7 @@ inline void C_DELETE_CHARACTER::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.characterindex_){0u}
+      decltype(_impl_.characterid_){uint64_t{0u}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -1457,7 +1435,7 @@ void C_DELETE_CHARACTER::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.characterindex_ = 0u;
+  _impl_.characterid_ = uint64_t{0u};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1467,10 +1445,10 @@ const char* C_DELETE_CHARACTER::_InternalParse(const char* ptr, ::_pbi::ParseCon
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // uint32 characterIndex = 1;
+      // uint64 characterId = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          _impl_.characterindex_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          _impl_.characterid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1504,10 +1482,10 @@ uint8_t* C_DELETE_CHARACTER::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // uint32 characterIndex = 1;
-  if (this->_internal_characterindex() != 0) {
+  // uint64 characterId = 1;
+  if (this->_internal_characterid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(1, this->_internal_characterindex(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_characterid(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1526,9 +1504,9 @@ size_t C_DELETE_CHARACTER::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // uint32 characterIndex = 1;
-  if (this->_internal_characterindex() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_characterindex());
+  // uint64 characterId = 1;
+  if (this->_internal_characterid() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_characterid());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -1549,8 +1527,8 @@ void C_DELETE_CHARACTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, con
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_characterindex() != 0) {
-    _this->_internal_set_characterindex(from._internal_characterindex());
+  if (from._internal_characterid() != 0) {
+    _this->_internal_set_characterid(from._internal_characterid());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -1569,7 +1547,7 @@ bool C_DELETE_CHARACTER::IsInitialized() const {
 void C_DELETE_CHARACTER::InternalSwap(C_DELETE_CHARACTER* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_.characterindex_, other->_impl_.characterindex_);
+  swap(_impl_.characterid_, other->_impl_.characterid_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_DELETE_CHARACTER::GetMetadata() const {
@@ -1595,13 +1573,10 @@ S_DELETE_CHARACTER::S_DELETE_CHARACTER(const S_DELETE_CHARACTER& from)
   S_DELETE_CHARACTER* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.success_){}
-    , decltype(_impl_.characterindex_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  ::memcpy(&_impl_.success_, &from._impl_.success_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.characterindex_) -
-    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.characterindex_));
+  _this->_impl_.success_ = from._impl_.success_;
   // @@protoc_insertion_point(copy_constructor:Protocol.S_DELETE_CHARACTER)
 }
 
@@ -1611,7 +1586,6 @@ inline void S_DELETE_CHARACTER::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.success_){false}
-    , decltype(_impl_.characterindex_){0u}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -1639,9 +1613,7 @@ void S_DELETE_CHARACTER::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&_impl_.success_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.characterindex_) -
-      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.characterindex_));
+  _impl_.success_ = false;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1655,14 +1627,6 @@ const char* S_DELETE_CHARACTER::_InternalParse(const char* ptr, ::_pbi::ParseCon
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
-          CHK_(ptr);
-        } else
-          goto handle_unusual;
-        continue;
-      // uint32 characterIndex = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
-          _impl_.characterindex_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1702,12 +1666,6 @@ uint8_t* S_DELETE_CHARACTER::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
   }
 
-  // uint32 characterIndex = 2;
-  if (this->_internal_characterindex() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(2, this->_internal_characterindex(), target);
-  }
-
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1727,11 +1685,6 @@ size_t S_DELETE_CHARACTER::ByteSizeLong() const {
   // bool success = 1;
   if (this->_internal_success() != 0) {
     total_size += 1 + 1;
-  }
-
-  // uint32 characterIndex = 2;
-  if (this->_internal_characterindex() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_characterindex());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -1755,9 +1708,6 @@ void S_DELETE_CHARACTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, con
   if (from._internal_success() != 0) {
     _this->_internal_set_success(from._internal_success());
   }
-  if (from._internal_characterindex() != 0) {
-    _this->_internal_set_characterindex(from._internal_characterindex());
-  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -1775,12 +1725,7 @@ bool S_DELETE_CHARACTER::IsInitialized() const {
 void S_DELETE_CHARACTER::InternalSwap(S_DELETE_CHARACTER* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(S_DELETE_CHARACTER, _impl_.characterindex_)
-      + sizeof(S_DELETE_CHARACTER::_impl_.characterindex_)
-      - PROTOBUF_FIELD_OFFSET(S_DELETE_CHARACTER, _impl_.success_)>(
-          reinterpret_cast<char*>(&_impl_.success_),
-          reinterpret_cast<char*>(&other->_impl_.success_));
+  swap(_impl_.success_, other->_impl_.success_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_DELETE_CHARACTER::GetMetadata() const {
@@ -1805,11 +1750,11 @@ C_ENTER_GAME::C_ENTER_GAME(const C_ENTER_GAME& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_ENTER_GAME* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.characterindex_){}
+      decltype(_impl_.characterid_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.characterindex_ = from._impl_.characterindex_;
+  _this->_impl_.characterid_ = from._impl_.characterid_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_ENTER_GAME)
 }
 
@@ -1818,7 +1763,7 @@ inline void C_ENTER_GAME::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.characterindex_){uint64_t{0u}}
+      decltype(_impl_.characterid_){uint64_t{0u}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -1846,7 +1791,7 @@ void C_ENTER_GAME::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.characterindex_ = uint64_t{0u};
+  _impl_.characterid_ = uint64_t{0u};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1856,10 +1801,10 @@ const char* C_ENTER_GAME::_InternalParse(const char* ptr, ::_pbi::ParseContext* 
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // uint64 characterIndex = 1;
+      // uint64 characterId = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          _impl_.characterindex_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          _impl_.characterid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1893,10 +1838,10 @@ uint8_t* C_ENTER_GAME::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // uint64 characterIndex = 1;
-  if (this->_internal_characterindex() != 0) {
+  // uint64 characterId = 1;
+  if (this->_internal_characterid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_characterindex(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_characterid(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1915,9 +1860,9 @@ size_t C_ENTER_GAME::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // uint64 characterIndex = 1;
-  if (this->_internal_characterindex() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_characterindex());
+  // uint64 characterId = 1;
+  if (this->_internal_characterid() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_characterid());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -1938,8 +1883,8 @@ void C_ENTER_GAME::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::P
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_characterindex() != 0) {
-    _this->_internal_set_characterindex(from._internal_characterindex());
+  if (from._internal_characterid() != 0) {
+    _this->_internal_set_characterid(from._internal_characterid());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -1958,7 +1903,7 @@ bool C_ENTER_GAME::IsInitialized() const {
 void C_ENTER_GAME::InternalSwap(C_ENTER_GAME* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_.characterindex_, other->_impl_.characterindex_);
+  swap(_impl_.characterid_, other->_impl_.characterid_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_ENTER_GAME::GetMetadata() const {

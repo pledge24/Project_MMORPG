@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/WidgetSwitcher.h"
-#include "Components/Button.h"            
+#include "Components/Button.h"    
 #include "LoginWidget.generated.h"
 
 /**
@@ -19,75 +19,28 @@ class P1_API ULoginWidget : public UUserWidget
 public:
     virtual void NativeConstruct() override;
 
-    void SetResultMessage(const FString& Message);
-    void ClearMessage();
+    /* 외부에서 발동되는 이벤트 */
+    void OnRecvResult(bool success, const FString& Message);
 
-    UFUNCTION(BlueprintCallable)
-    void SwitchToIndex(int32 Index);
+    UFUNCTION(BlueprintImplementableEvent, Category = "CharacterSelect")
+    void OnRecvCharacterOverviews(const TArray<FCharacterOverview>& Characters);
 
-    void HighlightClickedButton(UButton* ClickedButton);
+private:
+    /* 버튼 클릭 이벤트 */
+    UFUNCTION(BlueprintCallable, Category = "Login")
+    void OnLoginClicked(FString Username, FString Password);
+
+    UFUNCTION(BlueprintCallable, Category = "Login")
+    void OnRegisterClicked(FString Username, FString Password);
+
+
+protected:
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
+    UWidgetSwitcher* WidgetSwitcher;
+
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
+    class UTextBlock* ResultText;
 
 private:
     int32 LastClickedButtonIdx = -1;
-
-protected:
-    UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
-    UWidgetSwitcher* WidgetSwitcher;
-
-    UPROPERTY(meta = (BindWidget))
-    class UEditableTextBox* UsernameBox;
-
-    UPROPERTY(meta = (BindWidget))
-    class UEditableTextBox* PasswordBox;
-
-    UPROPERTY(meta = (BindWidget))
-    class UButton* LoginButton;
-
-    UPROPERTY(meta = (BindWidget))
-    class UButton* RegisterButton;
-
-    UPROPERTY(meta = (BindWidget))
-    class UTextBlock* ResultText;
-
-    /* 캐릭터 슬롯 관련 */
-    UPROPERTY(meta = (BindWidget))
-    class UHorizontalBox* SlotButtonHorizontalBox;
-
-    UPROPERTY()
-    TMap<UButton*, int32> SlotButtonsMap;
-
-    /* 캐릭터 슬롯 관련(시도) */
-    UPROPERTY(meta = (BindWidget))
-    UButton* SlotButton0;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* SlotButton1;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* SlotButton2;
-
-    UPROPERTY(meta = (BindWidget))
-    UButton* SlotButton3;
-
-    
-private:
-    /* Event Function */
-    UFUNCTION()
-    void OnLoginClicked();
-
-    UFUNCTION()
-    void OnRegisterClicked();
-
-    UFUNCTION()
-    void OnSlotButton0Clicked() { HighlightClickedButton(SlotButton0); }
-
-    UFUNCTION()
-    void OnSlotButton1Clicked() { HighlightClickedButton(SlotButton1); }
-
-    UFUNCTION()
-    void OnSlotButton2Clicked() { HighlightClickedButton(SlotButton2); }
-
-    UFUNCTION()
-    void OnSlotButton3Clicked() { HighlightClickedButton(SlotButton3); }
-
 };
