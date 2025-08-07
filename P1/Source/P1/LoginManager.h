@@ -29,7 +29,7 @@ private:
     ULoginWidget* LoginWidget;
 
 private:
-    // ¼­¹ö ¼³Á¤
+    // ì„œë²„ ì„¤ì •
     FString ServerIP = TEXT("127.0.0.1");
     int32 ServerPort = 5000;
 };

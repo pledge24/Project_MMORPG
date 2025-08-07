@@ -147,5 +147,11 @@
     <None Include="GameDB_CreateAllTables.sql">
       <Filter>Queries</Filter>
     </None>
+    <None Include="AlterTable.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="DEBUG.sql">
+      <Filter>Queries</Filter>
+    </None>
   </ItemGroup>
 </Project>

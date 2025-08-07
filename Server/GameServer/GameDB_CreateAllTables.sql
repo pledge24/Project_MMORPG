@@ -5,11 +5,10 @@ CREATE TABLE Characters(
     character_id        BIGINT IDENTITY(1, 1) PRIMARY KEY,
     user_id             BIGINT NOT NULL,
     class_id            INT NOT NULL,
-    character_name      NVARCHAR(50) NOT NULL,
+    character_name      NVARCHAR(50) NOT NULL UNIQUE,
     level               SMALLINT NOT NULL DEFAULT 1,
     last_login          DATETIME2 NULL,
-    created_at          DATETIME2 NOT NULL DEFAULT GETDATE(),
-    deleted_at          DATETIME2 NULL, -- Soft Delete 방식
+    created_at          DATETIME2 NOT NULL DEFAULT GETDATE()
 );
 GO
 

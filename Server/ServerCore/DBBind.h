@@ -1,5 +1,9 @@
-﻿#pragma once
+#pragma once
 #include "DBConnection.h"
+
+/*----------------
+      DBBind
+-----------------*/
 
 template<int32 C>
 struct FullBits { enum { value = (1 << (C - 1)) | FullBits<C-1>::value }; };

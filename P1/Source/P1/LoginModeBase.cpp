@@ -9,10 +9,10 @@ void ALoginModeBase::StartPlay()
 {
     Super::StartPlay();
 
-    // LoginManager 积己
+    // LoginManager 
     LoginManager = NewObject<ULoginManager>(this, ULoginManager::StaticClass());
 
-    // 困连 积己
+    // 
     if (ULoginWidget* LoginWidget = CreateWidget<ULoginWidget>(GetWorld(), LoginWidgetClass))
     {
         LoginWidget->AddToViewport();

@@ -962,10 +962,25 @@ class S_CREATE_CHARACTER final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kCharacterIdFieldNumber = 2,
+    kCauseFieldNumber = 2,
+    kCharacterIdFieldNumber = 3,
     kSuccessFieldNumber = 1,
   };
-  // uint64 characterId = 2;
+  // string cause = 2;
+  void clear_cause();
+  const std::string& cause() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_cause(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_cause();
+  PROTOBUF_NODISCARD std::string* release_cause();
+  void set_allocated_cause(std::string* cause);
+  private:
+  const std::string& _internal_cause() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_cause(const std::string& value);
+  std::string* _internal_mutable_cause();
+  public:
+
+  // uint64 characterId = 3;
   void clear_characterid();
   uint64_t characterid() const;
   void set_characterid(uint64_t value);
@@ -991,6 +1006,7 @@ class S_CREATE_CHARACTER final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr cause_;
     uint64_t characterid_;
     bool success_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -1269,8 +1285,18 @@ class S_DELETE_CHARACTER final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kCharacterIdFieldNumber = 2,
     kSuccessFieldNumber = 1,
   };
+  // uint64 characterId = 2;
+  void clear_characterid();
+  uint64_t characterid() const;
+  void set_characterid(uint64_t value);
+  private:
+  uint64_t _internal_characterid() const;
+  void _internal_set_characterid(uint64_t value);
+  public:
+
   // bool success = 1;
   void clear_success();
   bool success() const;
@@ -1288,6 +1314,7 @@ class S_DELETE_CHARACTER final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    uint64_t characterid_;
     bool success_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -3039,7 +3066,57 @@ inline void S_CREATE_CHARACTER::set_success(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_CREATE_CHARACTER.success)
 }
 
-// uint64 characterId = 2;
+// string cause = 2;
+inline void S_CREATE_CHARACTER::clear_cause() {
+  _impl_.cause_.ClearToEmpty();
+}
+inline const std::string& S_CREATE_CHARACTER::cause() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CREATE_CHARACTER.cause)
+  return _internal_cause();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void S_CREATE_CHARACTER::set_cause(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.cause_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:Protocol.S_CREATE_CHARACTER.cause)
+}
+inline std::string* S_CREATE_CHARACTER::mutable_cause() {
+  std::string* _s = _internal_mutable_cause();
+  // @@protoc_insertion_point(field_mutable:Protocol.S_CREATE_CHARACTER.cause)
+  return _s;
+}
+inline const std::string& S_CREATE_CHARACTER::_internal_cause() const {
+  return _impl_.cause_.Get();
+}
+inline void S_CREATE_CHARACTER::_internal_set_cause(const std::string& value) {
+  
+  _impl_.cause_.Set(value, GetArenaForAllocation());
+}
+inline std::string* S_CREATE_CHARACTER::_internal_mutable_cause() {
+  
+  return _impl_.cause_.Mutable(GetArenaForAllocation());
+}
+inline std::string* S_CREATE_CHARACTER::release_cause() {
+  // @@protoc_insertion_point(field_release:Protocol.S_CREATE_CHARACTER.cause)
+  return _impl_.cause_.Release();
+}
+inline void S_CREATE_CHARACTER::set_allocated_cause(std::string* cause) {
+  if (cause != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.cause_.SetAllocated(cause, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.cause_.IsDefault()) {
+    _impl_.cause_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_CREATE_CHARACTER.cause)
+}
+
+// uint64 characterId = 3;
 inline void S_CREATE_CHARACTER::clear_characterid() {
   _impl_.characterid_ = uint64_t{0u};
 }
@@ -3105,6 +3182,26 @@ inline void S_DELETE_CHARACTER::_internal_set_success(bool value) {
 inline void S_DELETE_CHARACTER::set_success(bool value) {
   _internal_set_success(value);
   // @@protoc_insertion_point(field_set:Protocol.S_DELETE_CHARACTER.success)
+}
+
+// uint64 characterId = 2;
+inline void S_DELETE_CHARACTER::clear_characterid() {
+  _impl_.characterid_ = uint64_t{0u};
+}
+inline uint64_t S_DELETE_CHARACTER::_internal_characterid() const {
+  return _impl_.characterid_;
+}
+inline uint64_t S_DELETE_CHARACTER::characterid() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DELETE_CHARACTER.characterId)
+  return _internal_characterid();
+}
+inline void S_DELETE_CHARACTER::_internal_set_characterid(uint64_t value) {
+  
+  _impl_.characterid_ = value;
+}
+inline void S_DELETE_CHARACTER::set_characterid(uint64_t value) {
+  _internal_set_characterid(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DELETE_CHARACTER.characterId)
 }
 
 // -------------------------------------------------------------------

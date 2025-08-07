@@ -85,7 +85,8 @@ struct C_CREATE_CHARACTERDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_CREATE_CHARACTERDefaultTypeInternal _C_CREATE_CHARACTER_default_instance_;
 PROTOBUF_CONSTEXPR S_CREATE_CHARACTER::S_CREATE_CHARACTER(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.characterid_)*/uint64_t{0u}
+    /*decltype(_impl_.cause_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.characterid_)*/uint64_t{0u}
   , /*decltype(_impl_.success_)*/false
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_CREATE_CHARACTERDefaultTypeInternal {
@@ -112,7 +113,8 @@ struct C_DELETE_CHARACTERDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_DELETE_CHARACTERDefaultTypeInternal _C_DELETE_CHARACTER_default_instance_;
 PROTOBUF_CONSTEXPR S_DELETE_CHARACTER::S_DELETE_CHARACTER(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.success_)*/false
+    /*decltype(_impl_.characterid_)*/uint64_t{0u}
+  , /*decltype(_impl_.success_)*/false
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_DELETE_CHARACTERDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_DELETE_CHARACTERDefaultTypeInternal()
@@ -299,6 +301,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _impl_.success_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _impl_.cause_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CREATE_CHARACTER, _impl_.characterid_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_DELETE_CHARACTER, _internal_metadata_),
@@ -314,6 +317,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_DELETE_CHARACTER, _impl_.success_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_DELETE_CHARACTER, _impl_.characterid_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_ENTER_GAME, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -392,18 +396,18 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 19, -1, -1, sizeof(::Protocol::S_LOGIN)},
   { 27, -1, -1, sizeof(::Protocol::C_CREATE_CHARACTER)},
   { 34, -1, -1, sizeof(::Protocol::S_CREATE_CHARACTER)},
-  { 42, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
-  { 49, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
-  { 56, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
-  { 63, -1, -1, sizeof(::Protocol::S_ENTER_GAME)},
-  { 71, -1, -1, sizeof(::Protocol::C_LEAVE_GAME)},
-  { 77, -1, -1, sizeof(::Protocol::S_LEAVE_GAME)},
-  { 83, -1, -1, sizeof(::Protocol::S_SPAWN)},
-  { 90, -1, -1, sizeof(::Protocol::S_DESPAWN)},
-  { 97, -1, -1, sizeof(::Protocol::C_MOVE)},
-  { 104, -1, -1, sizeof(::Protocol::S_MOVE)},
-  { 111, -1, -1, sizeof(::Protocol::C_CHAT)},
-  { 118, -1, -1, sizeof(::Protocol::S_CHAT)},
+  { 43, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
+  { 50, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
+  { 58, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
+  { 65, -1, -1, sizeof(::Protocol::S_ENTER_GAME)},
+  { 73, -1, -1, sizeof(::Protocol::C_LEAVE_GAME)},
+  { 79, -1, -1, sizeof(::Protocol::S_LEAVE_GAME)},
+  { 85, -1, -1, sizeof(::Protocol::S_SPAWN)},
+  { 92, -1, -1, sizeof(::Protocol::S_DESPAWN)},
+  { 99, -1, -1, sizeof(::Protocol::C_MOVE)},
+  { 106, -1, -1, sizeof(::Protocol::S_MOVE)},
+  { 113, -1, -1, sizeof(::Protocol::C_CHAT)},
+  { 120, -1, -1, sizeof(::Protocol::S_CHAT)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -434,20 +438,21 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "uccess\030\001 \001(\010\022/\n\ncharacters\030\002 \003(\0132\033.Proto"
   "col.CharacterOverview\"D\n\022C_CREATE_CHARAC"
   "TER\022.\n\tcharacter\030\001 \001(\0132\033.Protocol.Charac"
-  "terOverview\":\n\022S_CREATE_CHARACTER\022\017\n\007suc"
-  "cess\030\001 \001(\010\022\023\n\013characterId\030\002 \001(\004\")\n\022C_DEL"
-  "ETE_CHARACTER\022\023\n\013characterId\030\001 \001(\004\"%\n\022S_"
-  "DELETE_CHARACTER\022\017\n\007success\030\001 \001(\010\"#\n\014C_E"
-  "NTER_GAME\022\023\n\013characterId\030\001 \001(\004\"E\n\014S_ENTE"
-  "R_GAME\022\017\n\007success\030\001 \001(\010\022$\n\006player\030\002 \001(\0132"
-  "\024.Protocol.ObjectInfo\"\016\n\014C_LEAVE_GAME\"\016\n"
-  "\014S_LEAVE_GAME\"0\n\007S_SPAWN\022%\n\007players\030\001 \003("
-  "\0132\024.Protocol.ObjectInfo\"\037\n\tS_DESPAWN\022\022\n\n"
-  "object_ids\030\001 \003(\004\")\n\006C_MOVE\022\037\n\004info\030\001 \001(\013"
-  "2\021.Protocol.PosInfo\")\n\006S_MOVE\022\037\n\004info\030\001 "
-  "\001(\0132\021.Protocol.PosInfo\"\025\n\006C_CHAT\022\013\n\003msg\030"
-  "\001 \001(\t\"\'\n\006S_CHAT\022\020\n\010playerId\030\001 \001(\004\022\013\n\003msg"
-  "\030\002 \001(\tb\006proto3"
+  "terOverview\"I\n\022S_CREATE_CHARACTER\022\017\n\007suc"
+  "cess\030\001 \001(\010\022\r\n\005cause\030\002 \001(\t\022\023\n\013characterId"
+  "\030\003 \001(\004\")\n\022C_DELETE_CHARACTER\022\023\n\013characte"
+  "rId\030\001 \001(\004\":\n\022S_DELETE_CHARACTER\022\017\n\007succe"
+  "ss\030\001 \001(\010\022\023\n\013characterId\030\002 \001(\004\"#\n\014C_ENTER"
+  "_GAME\022\023\n\013characterId\030\001 \001(\004\"E\n\014S_ENTER_GA"
+  "ME\022\017\n\007success\030\001 \001(\010\022$\n\006player\030\002 \001(\0132\024.Pr"
+  "otocol.ObjectInfo\"\016\n\014C_LEAVE_GAME\"\016\n\014S_L"
+  "EAVE_GAME\"0\n\007S_SPAWN\022%\n\007players\030\001 \003(\0132\024."
+  "Protocol.ObjectInfo\"\037\n\tS_DESPAWN\022\022\n\nobje"
+  "ct_ids\030\001 \003(\004\")\n\006C_MOVE\022\037\n\004info\030\001 \001(\0132\021.P"
+  "rotocol.PosInfo\")\n\006S_MOVE\022\037\n\004info\030\001 \001(\0132"
+  "\021.Protocol.PosInfo\"\025\n\006C_CHAT\022\013\n\003msg\030\001 \001("
+  "\t\"\'\n\006S_CHAT\022\020\n\010playerId\030\001 \001(\004\022\013\n\003msg\030\002 \001"
+  "(\tb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -455,7 +460,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 774, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 810, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 18,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -1183,11 +1188,20 @@ S_CREATE_CHARACTER::S_CREATE_CHARACTER(const S_CREATE_CHARACTER& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   S_CREATE_CHARACTER* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.characterid_){}
+      decltype(_impl_.cause_){}
+    , decltype(_impl_.characterid_){}
     , decltype(_impl_.success_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.cause_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.cause_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_cause().empty()) {
+    _this->_impl_.cause_.Set(from._internal_cause(), 
+      _this->GetArenaForAllocation());
+  }
   ::memcpy(&_impl_.characterid_, &from._impl_.characterid_,
     static_cast<size_t>(reinterpret_cast<char*>(&_impl_.success_) -
     reinterpret_cast<char*>(&_impl_.characterid_)) + sizeof(_impl_.success_));
@@ -1199,10 +1213,15 @@ inline void S_CREATE_CHARACTER::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.characterid_){uint64_t{0u}}
+      decltype(_impl_.cause_){}
+    , decltype(_impl_.characterid_){uint64_t{0u}}
     , decltype(_impl_.success_){false}
     , /*decltype(_impl_._cached_size_)*/{}
   };
+  _impl_.cause_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.cause_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
 S_CREATE_CHARACTER::~S_CREATE_CHARACTER() {
@@ -1216,6 +1235,7 @@ S_CREATE_CHARACTER::~S_CREATE_CHARACTER() {
 
 inline void S_CREATE_CHARACTER::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.cause_.Destroy();
 }
 
 void S_CREATE_CHARACTER::SetCachedSize(int size) const {
@@ -1228,6 +1248,7 @@ void S_CREATE_CHARACTER::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.cause_.ClearToEmpty();
   ::memset(&_impl_.characterid_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.success_) -
       reinterpret_cast<char*>(&_impl_.characterid_)) + sizeof(_impl_.success_));
@@ -1248,9 +1269,19 @@ const char* S_CREATE_CHARACTER::_InternalParse(const char* ptr, ::_pbi::ParseCon
         } else
           goto handle_unusual;
         continue;
-      // uint64 characterId = 2;
+      // string cause = 2;
       case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_cause();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "Protocol.S_CREATE_CHARACTER.cause"));
+        } else
+          goto handle_unusual;
+        continue;
+      // uint64 characterId = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
           _impl_.characterid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
@@ -1291,10 +1322,20 @@ uint8_t* S_CREATE_CHARACTER::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
   }
 
-  // uint64 characterId = 2;
+  // string cause = 2;
+  if (!this->_internal_cause().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_cause().data(), static_cast<int>(this->_internal_cause().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "Protocol.S_CREATE_CHARACTER.cause");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_cause(), target);
+  }
+
+  // uint64 characterId = 3;
   if (this->_internal_characterid() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(2, this->_internal_characterid(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(3, this->_internal_characterid(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1313,7 +1354,14 @@ size_t S_CREATE_CHARACTER::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // uint64 characterId = 2;
+  // string cause = 2;
+  if (!this->_internal_cause().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_cause());
+  }
+
+  // uint64 characterId = 3;
   if (this->_internal_characterid() != 0) {
     total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_characterid());
   }
@@ -1341,6 +1389,9 @@ void S_CREATE_CHARACTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, con
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (!from._internal_cause().empty()) {
+    _this->_internal_set_cause(from._internal_cause());
+  }
   if (from._internal_characterid() != 0) {
     _this->_internal_set_characterid(from._internal_characterid());
   }
@@ -1363,7 +1414,13 @@ bool S_CREATE_CHARACTER::IsInitialized() const {
 
 void S_CREATE_CHARACTER::InternalSwap(S_CREATE_CHARACTER* other) {
   using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.cause_, lhs_arena,
+      &other->_impl_.cause_, rhs_arena
+  );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(S_CREATE_CHARACTER, _impl_.success_)
       + sizeof(S_CREATE_CHARACTER::_impl_.success_)
@@ -1572,11 +1629,14 @@ S_DELETE_CHARACTER::S_DELETE_CHARACTER(const S_DELETE_CHARACTER& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   S_DELETE_CHARACTER* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.success_){}
+      decltype(_impl_.characterid_){}
+    , decltype(_impl_.success_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.success_ = from._impl_.success_;
+  ::memcpy(&_impl_.characterid_, &from._impl_.characterid_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.success_) -
+    reinterpret_cast<char*>(&_impl_.characterid_)) + sizeof(_impl_.success_));
   // @@protoc_insertion_point(copy_constructor:Protocol.S_DELETE_CHARACTER)
 }
 
@@ -1585,7 +1645,8 @@ inline void S_DELETE_CHARACTER::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.success_){false}
+      decltype(_impl_.characterid_){uint64_t{0u}}
+    , decltype(_impl_.success_){false}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -1613,7 +1674,9 @@ void S_DELETE_CHARACTER::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.success_ = false;
+  ::memset(&_impl_.characterid_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.success_) -
+      reinterpret_cast<char*>(&_impl_.characterid_)) + sizeof(_impl_.success_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1627,6 +1690,14 @@ const char* S_DELETE_CHARACTER::_InternalParse(const char* ptr, ::_pbi::ParseCon
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // uint64 characterId = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.characterid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -1666,6 +1737,12 @@ uint8_t* S_DELETE_CHARACTER::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
   }
 
+  // uint64 characterId = 2;
+  if (this->_internal_characterid() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(2, this->_internal_characterid(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1681,6 +1758,11 @@ size_t S_DELETE_CHARACTER::ByteSizeLong() const {
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // uint64 characterId = 2;
+  if (this->_internal_characterid() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_characterid());
+  }
 
   // bool success = 1;
   if (this->_internal_success() != 0) {
@@ -1705,6 +1787,9 @@ void S_DELETE_CHARACTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, con
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from._internal_characterid() != 0) {
+    _this->_internal_set_characterid(from._internal_characterid());
+  }
   if (from._internal_success() != 0) {
     _this->_internal_set_success(from._internal_success());
   }
@@ -1725,7 +1810,12 @@ bool S_DELETE_CHARACTER::IsInitialized() const {
 void S_DELETE_CHARACTER::InternalSwap(S_DELETE_CHARACTER* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_.success_, other->_impl_.success_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(S_DELETE_CHARACTER, _impl_.success_)
+      + sizeof(S_DELETE_CHARACTER::_impl_.success_)
+      - PROTOBUF_FIELD_OFFSET(S_DELETE_CHARACTER, _impl_.characterid_)>(
+          reinterpret_cast<char*>(&_impl_.characterid_),
+          reinterpret_cast<char*>(&other->_impl_.characterid_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_DELETE_CHARACTER::GetMetadata() const {

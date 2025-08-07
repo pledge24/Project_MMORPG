@@ -8,6 +8,13 @@
 #include "Components/Button.h"    
 #include "LoginWidget.generated.h"
 
+namespace Protocol
+{
+    class S_LOGIN;
+    class S_CREATE_CHARACTER;
+    class S_DELETE_CHARACTER;
+}
+
 /**
  * 
  */
@@ -19,20 +26,34 @@ class P1_API ULoginWidget : public UUserWidget
 public:
     virtual void NativeConstruct() override;
 
-    /* ø‹∫Œø°º≠ πﬂµøµ«¥¬ ¿Ã∫•∆Æ */
-    void OnRecvResult(bool success, const FString& Message);
+    /* Ïô∏Î∂Ä Ìò∏Ï∂ú Ìï®Ïàò */
+    void SetResultText(bool success, const FString& Message);
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "CharacterSelect")
-    void OnRecvCharacterOverviews(const TArray<FCharacterOverview>& Characters);
+    void FetchCharacterOverviews(Protocol::S_LOGIN& pkt);
+    void AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt);
+    void RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt);
 
-private:
-    /* πˆ∆∞ ≈¨∏Ø ¿Ã∫•∆Æ */
+    /* C++ Ìò∏Ï∂ú Ïù¥Î≤§Ìä∏ */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Character Create")
+    void OnRecvCreateCharacterRes(bool Success, const FString& Cause, int64 CharacterId = -1);
+
+protected:
+    /* BP Ìò∏Ï∂ú Ìï®Ïàò */
     UFUNCTION(BlueprintCallable, Category = "Login")
-    void OnLoginClicked(FString Username, FString Password);
+    void SendLoginRequest(FString Username, FString Password);
 
     UFUNCTION(BlueprintCallable, Category = "Login")
-    void OnRegisterClicked(FString Username, FString Password);
+    void SendRegisterRequest(FString Username, FString Password);
 
+    UFUNCTION(BlueprintCallable, Category = "Character Create")
+    void SendCreateCharacterPkt(FString CharacterName, int32 CharacterClassId);
+
+    UFUNCTION(BlueprintCallable, Category = "Character Delete")
+    void SendDeleteCharacterPkt();
+
+    /* C++ Ìò∏Ï∂ú Ïù¥Î≤§Ìä∏ */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Character Select")
+    void OnDisplayCharacterOverviews(const TArray<FCharacterOverview>& Characters);
 
 protected:
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
@@ -41,6 +62,18 @@ protected:
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
     class UTextBlock* ResultText;
 
-private:
-    int32 LastClickedButtonIdx = -1;
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
+    class UTextBlock* CC_DescriptionText;
+
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
+    class UEditableTextBox* CC_CharacterNameText;
+
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
+    int32 CC_CharacterClassId;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Character Select")
+    TArray<FCharacterOverview> _Characters;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Character Select")
+    int32 LastClickedSlotIdx = -1;
 };

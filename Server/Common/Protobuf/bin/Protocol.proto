@@ -33,7 +33,8 @@ message C_CREATE_CHARACTER
 message S_CREATE_CHARACTER
 {
     bool success = 1;
-    uint64 characterId = 2;
+    string cause = 2;
+    uint64 characterId = 3;
 }
 
 message C_DELETE_CHARACTER
@@ -44,6 +45,7 @@ message C_DELETE_CHARACTER
 message S_DELETE_CHARACTER
 {
     bool success = 1;
+    uint64 characterId = 2;
 }
 
 message C_ENTER_GAME

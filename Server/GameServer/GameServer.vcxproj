@@ -241,6 +241,8 @@
     <None Include="..\Common\Protobuf\bin\Protocol.proto" />
     <None Include="..\Common\Protobuf\bin\Struct.proto" />
     <None Include="..\Queries\UserDB_CreateUsersTable.sql" />
+    <None Include="AlterTable.sql" />
+    <None Include="DEBUG.sql" />
     <None Include="GameDB_CreateAllTables.sql" />
   </ItemGroup>
   <ItemGroup>

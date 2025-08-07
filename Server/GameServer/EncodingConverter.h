@@ -5,7 +5,7 @@
 class EncodingConverter
 {
 public:
-    static std::string WCharToString(const wchar_t* wstr)
+    static string WCharToString(const wchar_t* wstr)
     {
         if (!wstr)
         {
@@ -29,7 +29,7 @@ public:
         }
 
         // 버퍼 할당 및 변환 수행
-        std::string result(bufferSize, 0);
+        string result(bufferSize, 0);
         WideCharToMultiByte(
             CP_UTF8,
             0,
@@ -46,7 +46,7 @@ public:
         return result;
     }
 
-    static std::wstring StringToWString(const std::string& str)
+    static wstring StringToWString(const std::string& str)
     {
         if (str.empty())
         {
@@ -70,7 +70,7 @@ public:
         }
 
         // 버퍼 할당 및 변환 수행
-        std::wstring result(bufferSize, 0);
+        wstring result(bufferSize, 0);
         MultiByteToWideChar(
             CP_UTF8,
             0,

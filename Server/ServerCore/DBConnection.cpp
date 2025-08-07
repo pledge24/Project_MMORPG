@@ -50,6 +50,8 @@ void DBConnection::Clear()
 
 bool DBConnection::Execute(const WCHAR* query)
 {
+    _diagnostics.clear();
+
 	SQLRETURN ret = ::SQLExecDirectW(_statement, (SQLWCHAR*)query, SQL_NTSL);
 	if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
 		return true;
@@ -77,6 +79,7 @@ bool DBConnection::Fetch()
 	}
 }
 
+/* 수정 쿼리(UPDATE, INSERT, DELETE)에 영향을 받은 행의 수 반환(SELECT는 -1 반환)*/
 int32 DBConnection::GetRowCount()
 {
 	SQLLEN count = 0;
@@ -93,6 +96,37 @@ void DBConnection::Unbind()
 	::SQLFreeStmt(_statement, SQL_UNBIND);
 	::SQLFreeStmt(_statement, SQL_RESET_PARAMS);
 	::SQLFreeStmt(_statement, SQL_CLOSE);
+}
+
+bool DBConnection::FindError(const SQLWCHAR* targetState)
+{
+    if (targetState == nullptr) return false;
+
+    wstring target(targetState);
+
+    return FindError(target);
+}
+
+bool DBConnection::FindError(const wstring& targetState)
+{
+    for (const auto& diag : _diagnostics)
+    {
+        if (diag.sqlState == targetState)
+            return true;
+    }
+
+    return false;
+}
+
+bool DBConnection::FindError(SQLINTEGER nativeError)
+{
+    for (const auto& diag : _diagnostics)
+    {
+        if (diag.nativeError == nativeError)
+            return true;
+    }
+
+    return false;
 }
 
 bool DBConnection::BindParam(int32 paramIndex, bool* value, SQLLEN* index)
@@ -242,15 +276,14 @@ void DBConnection::HandleError(SQLRETURN ret)
 		return;
 
 	SQLSMALLINT index = 1;
-	SQLWCHAR sqlState[MAX_PATH] = { 0 };
+	SQLWCHAR sqlState[6] = { 0 };
 	SQLINTEGER nativeErr = 0;
 	SQLWCHAR errMsg[MAX_PATH] = { 0 };
 	SQLSMALLINT msgLen = 0;
-	SQLRETURN errorRet = 0;
 
 	while (true)
 	{
-		errorRet = ::SQLGetDiagRecW(
+        SQLRETURN errorRet = ::SQLGetDiagRecW(
 			SQL_HANDLE_STMT,
 			_statement,
 			index,
@@ -261,15 +294,20 @@ void DBConnection::HandleError(SQLRETURN ret)
 			OUT &msgLen
 		);
 
-		if (errorRet == SQL_NO_DATA)
+		if (errorRet == SQL_NO_DATA/* 더이상 진단 레코드가 없는 경우*/)
 			break;
 
 		if (errorRet != SQL_SUCCESS && errorRet != SQL_SUCCESS_WITH_INFO)
 			break;
 
-		// TODO : Log
-		wcout.imbue(locale("kor"));
-		wcout << errMsg << endl;
+        // Print Log
+		wcout << L"DB 오류 발생(HandleError): " << errMsg << endl;
+
+        _diagnostics.push_back(DiagnosticInfo{
+            sqlState,
+            nativeErr,
+            errMsg
+            });
 
 		index++;
 	}

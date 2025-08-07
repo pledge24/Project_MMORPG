@@ -109,7 +109,7 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 
 	if (LoginWidget)
 	{
-		LoginWidget->OnRecvResult(loginSuccess, Message);
+		LoginWidget->SetResultText(loginSuccess, Message);
 	}
 
 	if (loginSuccess)
@@ -168,6 +168,6 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 
 	if (LoginWidget)
 	{
-		LoginWidget->OnRecvResult(RegisterSuccess, Message);
+		LoginWidget->SetResultText(RegisterSuccess, Message);
 	}
 }

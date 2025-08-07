@@ -65,6 +65,44 @@ int main(void)
         ASSERT_CRASH(GRedisManager->Connect(ENV_REDIS_URI));
     }
 
+  //  // Create Table
+  //  {
+  //      auto query = L"									\
+		//DROP TABLE IF EXISTS [dbo].[Gold];			\
+		//CREATE TABLE [dbo].[Gold]					\
+		//(											\
+		//	[id] INT NOT NULL PRIMARY KEY IDENTITY, \
+		//	[gold] INT NULL,						\
+		//	[name] NVARCHAR(50) NULL,				\
+		//	[createDate] DATETIME NULL				\
+		//);";
+
+  //      DBConnection* dbConn = GDBConnectionPool->Pop();
+  //      ASSERT_CRASH(dbConn->Execute(query));
+  //      GDBConnectionPool->Push(dbConn);
+  //  }
+
+  //  // Add Data
+  //  for (int32 i = 0; i < 3; i++)
+  //  {
+  //      DBConnection* dbConn = GDBConnectionPool->Pop();
+
+  //      DBBind<3, 0> dbBind(*dbConn, L"INSERT INTO [dbo].[Gold]([gold], [name], [createDate]) VALUES(?, ?, ?)");
+
+  //      int32 gold = 100;
+  //      dbBind.BindParam(0, gold);
+  //      WCHAR name[100] = L"루키스";
+  //      dbBind.BindParam(1, name);
+  //      TIMESTAMP_STRUCT ts = { 2021, 6, 5 };
+  //      dbBind.BindParam(2, ts);
+
+  //      ASSERT_CRASH(dbBind.Execute());
+
+  //      GDBConnectionPool->Push(dbConn);
+  //  }
+
+ /*   return 0;*/
+
 	// worker thread
 	const int workerThreadN = 5;
 	for (int32 i = 0; i < workerThreadN; i++)

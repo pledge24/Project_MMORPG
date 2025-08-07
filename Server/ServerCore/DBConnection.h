@@ -12,6 +12,13 @@ enum
 	BINARY_MAX = 8000
 };
 
+struct DiagnosticInfo
+{
+    wstring sqlState;
+    SQLINTEGER nativeError;
+    wstring message;
+};
+
 class DBConnection
 {
 public:
@@ -22,6 +29,10 @@ public:
 	bool			Fetch();
 	int32			GetRowCount();
 	void			Unbind();
+
+    bool            FindError(const SQLWCHAR* sqlState);
+    bool            FindError(const wstring& targetState);
+    bool            FindError(SQLINTEGER nativeError);
 
 public:
 	bool			BindParam(int32 paramIndex, bool* value, SQLLEN* index);
@@ -52,7 +63,8 @@ private:
 	void			HandleError(SQLRETURN ret);
 
 private:
-	SQLHDBC			_connection = SQL_NULL_HANDLE;
-	SQLHSTMT		_statement = SQL_NULL_HANDLE;
+	SQLHDBC			        _connection = SQL_NULL_HANDLE;
+	SQLHSTMT		        _statement = SQL_NULL_HANDLE;
+    vector<DiagnosticInfo>  _diagnostics;
 };
 
