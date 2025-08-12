@@ -78,10 +78,11 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Handle_S_ENTER_GAME")));
+	/*if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleSpawn(pkt);
-	}
+	}*/
 
 	return true;
 }

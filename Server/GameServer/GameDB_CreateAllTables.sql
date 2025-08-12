@@ -1,5 +1,11 @@
 -- GameDB에서 사용하는 모든 테이블
 
+DROP TABLE IF EXISTS CharacterLastState;
+DROP TABLE IF EXISTS CharacterInventory;
+DROP TABLE IF EXISTS CharacterEquipment;
+DROP TABLE IF EXISTS Characters;
+
+
 -- 1. Characters: 캐릭터 기본 정보
 DROP TABLE IF EXISTS Characters;
 CREATE TABLE Characters(
@@ -18,16 +24,16 @@ GO
 DROP TABLE IF EXISTS CharacterLastState;
 CREATE TABLE CharacterLastState(
     character_id        BIGINT PRIMARY KEY,
-    exp                 BIGINT NOT NULL DEFAULT 0,
     cur_hp              INT NOT NULL DEFAULT 0,
     cur_mp              INT NOT NULL DEFAULT 0,
     cur_attack          INT NOT NULL DEFAULT 0,
     cur_magic           INT NOT NULL DEFAULT 0,
-    map_id              INT NOT NULL,
+    map_id              INT NOT NULL DEFAULT 0,
     pos_x               FLOAT NOT NULL DEFAULT 0.0,
     pos_y               FLOAT NOT NULL DEFAULT 0.0,
     pos_z               FLOAT NOT NULL DEFAULT 0.0,
     rot_yaw             FLOAT NOT NULL DEFAULT 0.0,
+    exp                 BIGINT NOT NULL DEFAULT 0,
     gold                BIGINT NOT NULL DEFAULT 1000,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)

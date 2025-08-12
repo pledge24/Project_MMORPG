@@ -4,6 +4,9 @@
 #include "IocpCore.h"
 #include "GameSession.h"
 #include "config.h"
+#include "EncodingConverter.h"
+
+#include <fstream>
 
 enum
 {
@@ -42,6 +45,22 @@ void DoWorkerJob(ServerServiceRef& service)
 
 int main(void)
 {
+    // 방법 2: json::parse()를 사용한 방법
+    //try
+    //{
+    //    std::ifstream file2("Quest.json");
+    //    if (file2.is_open())
+    //    {
+    //        Json j2 = Json::parse(file2);
+    //        wcout << L"방법 2로 읽은 JSON: " << EncodingConverter::StringToWString(j2.dump(4)) << endl;
+    //    }
+    //}
+    //catch (const std::exception& e)
+    //{
+    //    std::cerr << "방법 2 오류: " << e.what() << std::endl;
+    //}
+
+    //return 0;
 	ServerPacketHandler::Init();
 
 	const int maxSessionCount = 30;

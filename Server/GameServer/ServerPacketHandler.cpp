@@ -51,7 +51,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 gameSession->userId = userId;
 
                 // 있으면 DB에서 캐릭터 정보를 긁어온다.
-                DBRequestFunctions::GetCharacterData(session, userId);
+                DBRequestFunctions::GetUserCharactersData(session, userId);
             }
             else
             {
@@ -114,8 +114,22 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 	// 플레이어 생성
 	PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
 
+    // 유저 Id를 통해 DBQueue를 선택
+    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
+
+    JobRef job = make_shared<Job>(
+        [session, pkt, player]()
+        {
+            int64 characterId = pkt.characterid();
+            DBRequestFunctions::GetEnterGameData(session, characterId);
+            GRoom->DoAsync(&Room::HandleEnterPlayer, player);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
+
 	// 방에 입장
-	GRoom->DoAsync(&Room::HandleEnterPlayer, player);
 
 	return true;
 }

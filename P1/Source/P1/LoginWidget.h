@@ -45,6 +45,9 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Login")
     void SendRegisterRequest(FString Username, FString Password);
 
+    UFUNCTION(BlueprintCallable, Category = "Character Select")
+    void SendEnterGamePkt();
+
     UFUNCTION(BlueprintCallable, Category = "Character Create")
     void SendCreateCharacterPkt(FString CharacterName, int32 CharacterClassId);
 
