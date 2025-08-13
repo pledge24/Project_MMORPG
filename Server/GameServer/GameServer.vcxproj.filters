@@ -20,6 +20,12 @@
     <Filter Include="Game\Object">
       <UniqueIdentifier>{84ec1cf8-758e-4103-8f95-c50d842904eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DB">
+      <UniqueIdentifier>{0287b348-939c-4007-8cee-79ad2e0a1549}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Queries">
+      <UniqueIdentifier>{16bdea6a-c160-4039-b349-dd326eaabaea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -67,6 +73,9 @@
     <ClCompile Include="Creature.cpp">
       <Filter>Game\Object</Filter>
     </ClCompile>
+    <ClCompile Include="DBRequestFunctions.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -111,6 +120,13 @@
     <ClInclude Include="Creature.h">
       <Filter>Game\Object</Filter>
     </ClInclude>
+    <ClInclude Include="DBRequestFunctions.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="EncodingConverter.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\GenPackets.bat">
@@ -124,6 +140,18 @@
     </None>
     <None Include="..\Common\Protobuf\bin\Struct.proto">
       <Filter>Protocol\Proto</Filter>
+    </None>
+    <None Include="..\Queries\UserDB_CreateUsersTable.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="GameDB_CreateAllTables.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="AlterTable.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="DEBUG.sql">
+      <Filter>Queries</Filter>
     </None>
   </ItemGroup>
 </Project>

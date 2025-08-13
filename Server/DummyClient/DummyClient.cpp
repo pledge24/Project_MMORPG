@@ -20,14 +20,10 @@ public:
 	{
 		cout << "OnConnected" << endl;
 
-		//Protocol::C_LOGIN pkt;
-		//auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(pkt);
-		//Send(sendBuffer);
-
-		//this_thread::sleep_for(3s);
-
-		//SOCKET socket = GetSocket();
-		//SocketUtil::Close(socket);
+        // TEST
+		Protocol::C_LOGIN pkt;
+		auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(pkt);
+		Send(sendBuffer);
 	}
 
 	virtual void OnRecvPacket(BYTE* buffer, int32 len) override
@@ -60,7 +56,7 @@ int main()
 		NetAddress("127.0.0.1"s, 7777),
 		make_shared<IocpCore>(),
 		[=]() { return make_shared<ServerSession>(); }, // TODO : SessionManager 등
-		1);
+		100);
 
 	ASSERT_CRASH(service->Start());
 
@@ -75,15 +71,16 @@ int main()
 			});
 	}
 
-	//Protocol::C_CHAT chatPkt;
-	//chatPkt.set_msg(u8"Hello World !");
-	//auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(chatPkt);
+    // TEST
+	Protocol::C_CHAT chatPkt;
+	chatPkt.set_msg("Hello World !");
+	auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(chatPkt);
 
-	//while (true)
-	//{
-	//	service->Broadcast(sendBuffer);
-	//	this_thread::sleep_for(1s);
-	//}
+	while (true)
+	{
+		service->Broadcast(sendBuffer);
+		this_thread::sleep_for(1s);
+	}
 
 	GThreadManager->Join();
 

@@ -53,8 +53,9 @@ router.post('/Login', async (req, res) => {
 
         // Access Token 정책: UUID + Redis/DB 세션 저장 구조
         const token = uuidv4();
+        const userId = account.user_id;
 
-        await redisClient.set(`accessToken:${token}`, JSON.stringify({ username }), {
+        await redisClient.set(`accessToken:${token}`, JSON.stringify({ userId, username }), {
             EX: configs.accessTokenTTL
         });
 

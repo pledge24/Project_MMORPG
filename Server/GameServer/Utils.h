@@ -15,7 +15,7 @@ public:
 		// 균등하게 나타나는 난수열을 생성하기 위해 균등 분포 정의.
 		if constexpr (std::is_integral_v<T>)
 		{
-			std::uniform_int_distribution<T> distribution(min, max);
+			std::uniform_int_distribution<T> distribution(min, max-1);
 			return distribution(generator);
 		}
 		else

@@ -3,20 +3,55 @@ package Protocol;
 
 import "Enum.proto";
 
+message CharacterOverview
+{
+    uint64 character_id = 1;
+    CharacterClass class = 2;
+    string name = 3;
+    uint32 level = 4;
+}
+
 message ObjectInfo
 {
 	uint64 object_id = 1;
 	ObjectType object_type = 2;
 	PosInfo pos_info = 3;
+    StatInfo stat_info = 4;
+    PlayerInfo player_info = 5;
 	//...
+}
+
+message PlayerInfo
+{
+    CharacterOverview overview = 1;
+    uint64 gold = 2;
+    uint64 exp = 3;
+    repeated Item inventory = 4;
+    repeated Item equipment = 5;
 }
 
 message PosInfo
 {
 	uint64 object_id = 1;
-	float x = 2;
-	float y = 3;
-	float z = 4;
-	float yaw = 5;
-	MoveState state = 6;
+    int32 map_id = 2;
+	float x = 3;
+	float y = 4;
+	float z = 5;
+	float yaw = 6;
+	MoveState state = 7;
+}
+
+message StatInfo
+{
+    int32 cur_hp = 1;
+    int32 cur_mp = 2;
+    int32 cur_attack = 3;
+    int32 cur_magic = 4;
+}
+
+message Item
+{
+    int32 item_id = 1;
+    int32 slot_id = 2;
+    int32 quantity = 3;
 }

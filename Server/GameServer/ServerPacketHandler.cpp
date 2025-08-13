@@ -22,25 +22,91 @@ bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
 
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
-	// TODO : DB에서 Account 정보를 긁어온다.
-	// TODO : DB에서 유저 정보를 긁어온다
-	Protocol::S_LOGIN loginPkt;
+    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // ...
 
-	for (int32 i = 0; i < 3; i++)
-	{
-		Protocol::ObjectInfo* player = loginPkt.add_players();
-		Protocol::PosInfo* posInfo = player->mutable_pos_info();
+    // 랜덤으로 아무 DBQueue에게 Job을 준다.
+    int32 dbQueueCount = GDBManager->GetDBQueueCount();
+    DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount));
 
-		posInfo->set_x(Utils::GetRandom(0.f, 100.f));
-		posInfo->set_y(Utils::GetRandom(0.f, 100.f));
-		posInfo->set_z(Utils::GetRandom(0.f, 100.f));
-		posInfo->set_yaw(Utils::GetRandom(0.f, 45.f));
-	}
+    JobRef job = make_shared<Job>(
+        [session, pkt]()
+        {
+            // 클라로부터 받은 AccessToken을 Redis와 비교
+            string accessToken = pkt.accesstoken();
 
-	loginPkt.set_success(true);
-	SEND_PACKET(loginPkt);
+            RedisRef redis = GRedisManager->GetRedis();
+            auto val = redis->get("accessToken:" + accessToken);
+            if (val)
+            {
+                Json json = Json::parse(*val);
+                string username = json["username"];
+                int64 userId = json["userId"];
+
+                cout << "userId: " << userId << endl;
+                cout << "username: " << username << endl;
+                
+                // 게임 세션에 userId 저장.
+                GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+                gameSession->userId = userId;
+
+                // 있으면 DB에서 캐릭터 정보를 긁어온다.
+                DBRequestFunctions::GetUserCharactersData(session, userId);
+            }
+            else
+            {
+                cout << "Not Found AccessToken" << endl;
+            }
+        }
+    );
+
+    dbQueue->Push(std::move(job));
 
 	return true;
+}
+
+bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
+{
+    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // ...
+
+    // 유저 Id를 통해 DBQueue를 선택
+    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
+
+    JobRef job = make_shared<Job>(
+        [session, pkt, userId]()
+        {
+            const Protocol::CharacterOverview& character = pkt.character();
+            DBRequestFunctions::CreateCharacter(session, character, userId);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
+
+    return true;
+}
+
+bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
+{
+    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // ...
+
+    // 유저 Id를 통해 DBQueue를 선택
+    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
+
+    JobRef job = make_shared<Job>(
+        [session, pkt]()
+        {
+            int64 characterId = pkt.characterid();
+            DBRequestFunctions::DeleteCharacter(session, characterId);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
+
+    return true;
 }
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
@@ -48,8 +114,22 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 	// 플레이어 생성
 	PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
 
+    // 유저 Id를 통해 DBQueue를 선택
+    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
+
+    JobRef job = make_shared<Job>(
+        [session, pkt, player]()
+        {
+            int64 characterId = pkt.characterid();
+            DBRequestFunctions::GetEnterGameData(session, characterId);
+            GRoom->DoAsync(&Room::HandleEnterPlayer, player);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
+
 	// 방에 입장
-	GRoom->DoAsync(&Room::HandleEnterPlayer, player);
 
 	return true;
 }

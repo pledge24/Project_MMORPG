@@ -31,6 +31,7 @@ const configs = {
     // Redis
     redisHost: process.env.REDIS_HOST,
     redisPort: process.env.REDIS_PORT,
+    accessTokenTTL: process.env.ACCESS_TOKEN_TTL
 };
 
 export default configs;

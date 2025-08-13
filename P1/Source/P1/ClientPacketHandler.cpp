@@ -1,4 +1,6 @@
 #include "ClientPacketHandler.h"
+#include "LoginModeBase.h"
+#include "LoginWidget.h"
 #include "P1.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -16,31 +18,80 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
-	// TODO: 내 캐릭터들의 정보를 로비 UI에 띄운다.
-	/*for (auto& Player : pkt.players())
+	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-
+		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+		{
+			if (ULoginManager* Manager = Mode->GetLoginManager())
+			{
+				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
+				{
+                    LoginWidget->FetchCharacterOverviews(pkt);
+                    return true;
+				}
+			}
+		}
 	}
 
-	for (int32 i = 0; i < pkt.players_size(); i++)
-	{
-		const Protocol::PlayerInfo& Player = pkt.players(i);
-	}*/
+	return false;
+}
 
-	// TODO: 캐릭터 선택 시, 캐릭터 idx와 함께 패킷 전송(다른 장소에서. 여긴 테스트용)
-	Protocol::C_ENTER_GAME EnterGamePkt;
-	EnterGamePkt.set_playerindex(0);
-	SEND_PACKET(EnterGamePkt);
+bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt) {
+	
+	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+	{
+		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+		{
+			if (ULoginManager* Manager = Mode->GetLoginManager())
+			{
+				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
+				{
+                    LoginWidget->AddCharacterOverview(pkt);
+                    return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt) {
+
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+        {
+            if (ULoginManager* Manager = Mode->GetLoginManager())
+            {
+                if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
+                {
+                    LoginWidget->RemoveCharacterOverview(pkt);
+                    return true;
+                }
+            }
+        }
+    }
 
 	return true;
 }
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
-	{
-		GameInstance->HandleSpawn(pkt);
-	}
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Handle_S_ENTER_GAME")));
+	
+    // 1. S_ENTER_GAME을 분해해서 MyPlayer에 저장한다.
+    // 2. 로그인 레벨을 언로드(Unload)한다.
+    // 3. 다음 레벨을 연다.
+    
+    if (GWorld)
+    {
+        UGameplayStatics::OpenLevel(GWorld, FName("DevMap"));
+        if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+        {
+            GameInstance->HandleSpawn(pkt);
+        }
+    }
 
 	return true;
 }

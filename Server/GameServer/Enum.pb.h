@@ -74,32 +74,31 @@ inline bool ObjectType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ObjectType>(
     ObjectType_descriptor(), name, value);
 }
-enum PlayerType : int {
-  PLAYER_TYPE_NONE = 0,
-  PLAYER_TYPE_KNIGHT = 1,
-  PLAYER_TYPE_MAGE = 2,
-  PLAYER_TYPE_ARCHER = 3,
-  PlayerType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  PlayerType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+enum CharacterClass : int {
+  CLASS_TYPE_NONE = 0,
+  CLASS_TYPE_KNIGHT = 1,
+  CLASS_TYPE_MAGE = 2,
+  CharacterClass_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  CharacterClass_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool PlayerType_IsValid(int value);
-constexpr PlayerType PlayerType_MIN = PLAYER_TYPE_NONE;
-constexpr PlayerType PlayerType_MAX = PLAYER_TYPE_ARCHER;
-constexpr int PlayerType_ARRAYSIZE = PlayerType_MAX + 1;
+bool CharacterClass_IsValid(int value);
+constexpr CharacterClass CharacterClass_MIN = CLASS_TYPE_NONE;
+constexpr CharacterClass CharacterClass_MAX = CLASS_TYPE_MAGE;
+constexpr int CharacterClass_ARRAYSIZE = CharacterClass_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlayerType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CharacterClass_descriptor();
 template<typename T>
-inline const std::string& PlayerType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, PlayerType>::value ||
+inline const std::string& CharacterClass_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, CharacterClass>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function PlayerType_Name.");
+    "Incorrect type passed to function CharacterClass_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    PlayerType_descriptor(), enum_t_value);
+    CharacterClass_descriptor(), enum_t_value);
 }
-inline bool PlayerType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlayerType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlayerType>(
-    PlayerType_descriptor(), name, value);
+inline bool CharacterClass_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, CharacterClass* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<CharacterClass>(
+    CharacterClass_descriptor(), name, value);
 }
 enum MoveState : int {
   MOVE_STATE_NONE = 0,
@@ -155,10 +154,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::ObjectType>() {
   return ::Protocol::ObjectType_descriptor();
 }
-template <> struct is_proto_enum< ::Protocol::PlayerType> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::CharacterClass> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::PlayerType>() {
-  return ::Protocol::PlayerType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::CharacterClass>() {
+  return ::Protocol::CharacterClass_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::MoveState> : ::std::true_type {};
 template <>

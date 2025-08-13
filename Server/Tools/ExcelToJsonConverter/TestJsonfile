@@ -1,0 +1,72 @@
+[
+    {
+        "QuestID": 1001,
+        "Title": "늑대 처치",
+        "Description": "마을 근처의 늑대를 처치하십시오.",
+        "RequiredLevel": 5,
+        "QuestType": "Hunting",
+        "StartNPC": 101,
+        "EndNPC": 102,
+        "PreRequisiteQuests": null,
+        "Objectives": {
+            "Type": "Kill",
+            "Object": "Wolf",
+            "Count": 5
+        },
+        "Rewards": {
+            "Exp": 500,
+            "Gold": 100,
+            "Item": {
+                "id": 2001,
+                "quantity": 1,
+                "description": "안녕하세요"
+            }
+        },
+        "IsRepeatable": "FALSE",
+        "IsDaily": "FALSE",
+        "TimeLimit": null
+    },
+    {
+        "QuestID": 1002,
+        "Title": "사라진 병사 조사",
+        "Description": "숲속에서 실종된 병사를 찾아주세요.",
+        "RequiredLevel": 7,
+        "QuestType": "Investigation",
+        "StartNPC": 102,
+        "EndNPC": 103,
+        "PreRequisiteQuests": 1001,
+        "Objectives": {
+            "Type": "Find",
+            "NPC": 201
+        },
+        "Rewards": {
+            "Exp": 800,
+            "Gold": 150
+        },
+        "IsRepeatable": "FALSE",
+        "IsDaily": "FALSE",
+        "TimeLimit": null
+    },
+    {
+        "QuestID": 1003,
+        "Title": "하루 일과",
+        "Description": "오늘도 늑대를 잡아주세요!",
+        "RequiredLevel": 5,
+        "QuestType": "Hunting",
+        "StartNPC": 101,
+        "EndNPC": 101,
+        "PreRequisiteQuests": null,
+        "Objectives": {
+            "Type": "Kill",
+            "Object": "Wolf",
+            "Count": 3
+        },
+        "Rewards": {
+            "Exp": 200,
+            "Gold": 50
+        },
+        "IsRepeatable": "TRUE",
+        "IsDaily": "TRUE",
+        "TimeLimit": 86400
+    }
+]

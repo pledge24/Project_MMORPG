@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BP_Structs.h"
 
 #define USING_SHARED_PTR(name)	using name##Ref = TSharedPtr<class name>;
 
