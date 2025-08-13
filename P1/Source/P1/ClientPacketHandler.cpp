@@ -78,11 +78,20 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Handle_S_ENTER_GAME")));
-	/*if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
-	{
-		GameInstance->HandleSpawn(pkt);
-	}*/
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Handle_S_ENTER_GAME")));
+	
+    // 1. S_ENTER_GAME을 분해해서 MyPlayer에 저장한다.
+    // 2. 로그인 레벨을 언로드(Unload)한다.
+    // 3. 다음 레벨을 연다.
+    
+    if (GWorld)
+    {
+        UGameplayStatics::OpenLevel(GWorld, FName("DevMap"));
+        if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+        {
+            GameInstance->HandleSpawn(pkt);
+        }
+    }
 
 	return true;
 }
