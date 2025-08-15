@@ -1,0 +1,452 @@
+[
+    {
+        "level": 1,
+        "class": "warrior",
+        "max_hp": 500,
+        "max_mp": 100,
+        "base_attack": 10,
+        "base_magic": 5,
+        "max_exp": 50
+    },
+    {
+        "level": 2,
+        "class": "warrior",
+        "max_hp": 600,
+        "max_mp": 200,
+        "base_attack": 20,
+        "base_magic": 10,
+        "max_exp": 80
+    },
+    {
+        "level": 3,
+        "class": "warrior",
+        "max_hp": 700,
+        "max_mp": 300,
+        "base_attack": 30,
+        "base_magic": 15,
+        "max_exp": 110
+    },
+    {
+        "level": 4,
+        "class": "warrior",
+        "max_hp": 800,
+        "max_mp": 400,
+        "base_attack": 40,
+        "base_magic": 20,
+        "max_exp": 140
+    },
+    {
+        "level": 5,
+        "class": "warrior",
+        "max_hp": 900,
+        "max_mp": 500,
+        "base_attack": 50,
+        "base_magic": 25,
+        "max_exp": 170
+    },
+    {
+        "level": 6,
+        "class": "warrior",
+        "max_hp": 1000,
+        "max_mp": 600,
+        "base_attack": 60,
+        "base_magic": 30,
+        "max_exp": 200
+    },
+    {
+        "level": 7,
+        "class": "warrior",
+        "max_hp": 1100,
+        "max_mp": 700,
+        "base_attack": 70,
+        "base_magic": 35,
+        "max_exp": 230
+    },
+    {
+        "level": 8,
+        "class": "warrior",
+        "max_hp": 1200,
+        "max_mp": 800,
+        "base_attack": 80,
+        "base_magic": 40,
+        "max_exp": 260
+    },
+    {
+        "level": 9,
+        "class": "warrior",
+        "max_hp": 1300,
+        "max_mp": 900,
+        "base_attack": 90,
+        "base_magic": 45,
+        "max_exp": 290
+    },
+    {
+        "level": 10,
+        "class": "warrior",
+        "max_hp": 1400,
+        "max_mp": 1000,
+        "base_attack": 100,
+        "base_magic": 50,
+        "max_exp": 320
+    },
+    {
+        "level": 11,
+        "class": "warrior",
+        "max_hp": 1500,
+        "max_mp": 1100,
+        "base_attack": 110,
+        "base_magic": 55,
+        "max_exp": 350
+    },
+    {
+        "level": 12,
+        "class": "warrior",
+        "max_hp": 1600,
+        "max_mp": 1200,
+        "base_attack": 120,
+        "base_magic": 60,
+        "max_exp": 380
+    },
+    {
+        "level": 13,
+        "class": "warrior",
+        "max_hp": 1700,
+        "max_mp": 1300,
+        "base_attack": 130,
+        "base_magic": 65,
+        "max_exp": 410
+    },
+    {
+        "level": 14,
+        "class": "warrior",
+        "max_hp": 1800,
+        "max_mp": 1400,
+        "base_attack": 140,
+        "base_magic": 70,
+        "max_exp": 440
+    },
+    {
+        "level": 15,
+        "class": "warrior",
+        "max_hp": 1900,
+        "max_mp": 1500,
+        "base_attack": 150,
+        "base_magic": 75,
+        "max_exp": 470
+    },
+    {
+        "level": 16,
+        "class": "warrior",
+        "max_hp": 2000,
+        "max_mp": 1600,
+        "base_attack": 160,
+        "base_magic": 80,
+        "max_exp": 500
+    },
+    {
+        "level": 17,
+        "class": "warrior",
+        "max_hp": 2100,
+        "max_mp": 1700,
+        "base_attack": 170,
+        "base_magic": 85,
+        "max_exp": 530
+    },
+    {
+        "level": 18,
+        "class": "warrior",
+        "max_hp": 2200,
+        "max_mp": 1800,
+        "base_attack": 180,
+        "base_magic": 90,
+        "max_exp": 560
+    },
+    {
+        "level": 19,
+        "class": "warrior",
+        "max_hp": 2300,
+        "max_mp": 1900,
+        "base_attack": 190,
+        "base_magic": 95,
+        "max_exp": 590
+    },
+    {
+        "level": 20,
+        "class": "warrior",
+        "max_hp": 2400,
+        "max_mp": 2000,
+        "base_attack": 200,
+        "base_magic": 100,
+        "max_exp": 620
+    },
+    {
+        "level": 21,
+        "class": "warrior",
+        "max_hp": 2500,
+        "max_mp": 2100,
+        "base_attack": 210,
+        "base_magic": 105,
+        "max_exp": 650
+    },
+    {
+        "level": 22,
+        "class": "warrior",
+        "max_hp": 2600,
+        "max_mp": 2200,
+        "base_attack": 220,
+        "base_magic": 110,
+        "max_exp": 680
+    },
+    {
+        "level": 23,
+        "class": "warrior",
+        "max_hp": 2700,
+        "max_mp": 2300,
+        "base_attack": 230,
+        "base_magic": 115,
+        "max_exp": 710
+    },
+    {
+        "level": 24,
+        "class": "warrior",
+        "max_hp": 2800,
+        "max_mp": 2400,
+        "base_attack": 240,
+        "base_magic": 120,
+        "max_exp": 740
+    },
+    {
+        "level": 25,
+        "class": "warrior",
+        "max_hp": 2900,
+        "max_mp": 2500,
+        "base_attack": 250,
+        "base_magic": 125,
+        "max_exp": 770
+    },
+    {
+        "level": 26,
+        "class": "warrior",
+        "max_hp": 3000,
+        "max_mp": 2600,
+        "base_attack": 260,
+        "base_magic": 130,
+        "max_exp": 800
+    },
+    {
+        "level": 27,
+        "class": "warrior",
+        "max_hp": 3100,
+        "max_mp": 2700,
+        "base_attack": 270,
+        "base_magic": 135,
+        "max_exp": 830
+    },
+    {
+        "level": 28,
+        "class": "warrior",
+        "max_hp": 3200,
+        "max_mp": 2800,
+        "base_attack": 280,
+        "base_magic": 140,
+        "max_exp": 860
+    },
+    {
+        "level": 29,
+        "class": "warrior",
+        "max_hp": 3300,
+        "max_mp": 2900,
+        "base_attack": 290,
+        "base_magic": 145,
+        "max_exp": 890
+    },
+    {
+        "level": 30,
+        "class": "warrior",
+        "max_hp": 3400,
+        "max_mp": 3000,
+        "base_attack": 300,
+        "base_magic": 150,
+        "max_exp": 920
+    },
+    {
+        "level": 31,
+        "class": "warrior",
+        "max_hp": 3500,
+        "max_mp": 3100,
+        "base_attack": 310,
+        "base_magic": 155,
+        "max_exp": 950
+    },
+    {
+        "level": 32,
+        "class": "warrior",
+        "max_hp": 3600,
+        "max_mp": 3200,
+        "base_attack": 320,
+        "base_magic": 160,
+        "max_exp": 980
+    },
+    {
+        "level": 33,
+        "class": "warrior",
+        "max_hp": 3700,
+        "max_mp": 3300,
+        "base_attack": 330,
+        "base_magic": 165,
+        "max_exp": 1010
+    },
+    {
+        "level": 34,
+        "class": "warrior",
+        "max_hp": 3800,
+        "max_mp": 3400,
+        "base_attack": 340,
+        "base_magic": 170,
+        "max_exp": 1040
+    },
+    {
+        "level": 35,
+        "class": "warrior",
+        "max_hp": 3900,
+        "max_mp": 3500,
+        "base_attack": 350,
+        "base_magic": 175,
+        "max_exp": 1070
+    },
+    {
+        "level": 36,
+        "class": "warrior",
+        "max_hp": 4000,
+        "max_mp": 3600,
+        "base_attack": 360,
+        "base_magic": 180,
+        "max_exp": 1100
+    },
+    {
+        "level": 37,
+        "class": "warrior",
+        "max_hp": 4100,
+        "max_mp": 3700,
+        "base_attack": 370,
+        "base_magic": 185,
+        "max_exp": 1130
+    },
+    {
+        "level": 38,
+        "class": "warrior",
+        "max_hp": 4200,
+        "max_mp": 3800,
+        "base_attack": 380,
+        "base_magic": 190,
+        "max_exp": 1160
+    },
+    {
+        "level": 39,
+        "class": "warrior",
+        "max_hp": 4300,
+        "max_mp": 3900,
+        "base_attack": 390,
+        "base_magic": 195,
+        "max_exp": 1190
+    },
+    {
+        "level": 40,
+        "class": "warrior",
+        "max_hp": 4400,
+        "max_mp": 4000,
+        "base_attack": 400,
+        "base_magic": 200,
+        "max_exp": 1220
+    },
+    {
+        "level": 41,
+        "class": "warrior",
+        "max_hp": 4500,
+        "max_mp": 4100,
+        "base_attack": 410,
+        "base_magic": 205,
+        "max_exp": 1250
+    },
+    {
+        "level": 42,
+        "class": "warrior",
+        "max_hp": 4600,
+        "max_mp": 4200,
+        "base_attack": 420,
+        "base_magic": 210,
+        "max_exp": 1280
+    },
+    {
+        "level": 43,
+        "class": "warrior",
+        "max_hp": 4700,
+        "max_mp": 4300,
+        "base_attack": 430,
+        "base_magic": 215,
+        "max_exp": 1310
+    },
+    {
+        "level": 44,
+        "class": "warrior",
+        "max_hp": 4800,
+        "max_mp": 4400,
+        "base_attack": 440,
+        "base_magic": 220,
+        "max_exp": 1340
+    },
+    {
+        "level": 45,
+        "class": "warrior",
+        "max_hp": 4900,
+        "max_mp": 4500,
+        "base_attack": 450,
+        "base_magic": 225,
+        "max_exp": 1370
+    },
+    {
+        "level": 46,
+        "class": "warrior",
+        "max_hp": 5000,
+        "max_mp": 4600,
+        "base_attack": 460,
+        "base_magic": 230,
+        "max_exp": 1400
+    },
+    {
+        "level": 47,
+        "class": "warrior",
+        "max_hp": 5100,
+        "max_mp": 4700,
+        "base_attack": 470,
+        "base_magic": 235,
+        "max_exp": 1430
+    },
+    {
+        "level": 48,
+        "class": "warrior",
+        "max_hp": 5200,
+        "max_mp": 4800,
+        "base_attack": 480,
+        "base_magic": 240,
+        "max_exp": 1460
+    },
+    {
+        "level": 49,
+        "class": "warrior",
+        "max_hp": 5300,
+        "max_mp": 4900,
+        "base_attack": 490,
+        "base_magic": 245,
+        "max_exp": 1490
+    },
+    {
+        "level": 50,
+        "class": "warrior",
+        "max_hp": 5400,
+        "max_mp": 5000,
+        "base_attack": 500,
+        "base_magic": 250,
+        "max_exp": 0
+    }
+]

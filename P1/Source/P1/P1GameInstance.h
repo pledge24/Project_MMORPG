@@ -17,7 +17,7 @@ UCLASS()
 class P1_API UP1GameInstance : public UGameInstance
 {
 	GENERATED_BODY()
-	
+
 public:
 	/* 네트워크 통신 관련 */
 	UFUNCTION(BlueprintCallable)

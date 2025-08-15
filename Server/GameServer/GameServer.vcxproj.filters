@@ -26,6 +26,9 @@
     <Filter Include="Queries">
       <UniqueIdentifier>{16bdea6a-c160-4039-b349-dd326eaabaea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Data">
+      <UniqueIdentifier>{c1cdcfa1-e243-42a2-ab0e-55ffd15cd2ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -75,6 +78,9 @@
     </ClCompile>
     <ClCompile Include="DBRequestFunctions.cpp">
       <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamedata.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -127,6 +133,12 @@
     <ClInclude Include="EncodingConverter.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Gamedata.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Global.h">
+      <Filter>Main</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\GenPackets.bat">
@@ -152,6 +164,21 @@
     </None>
     <None Include="DEBUG.sql">
       <Filter>Queries</Filter>
+    </None>
+    <None Include="S_Character.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Item.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Map.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Monster.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Quest.json">
+      <Filter>Game\Data</Filter>
     </None>
   </ItemGroup>
 </Project>

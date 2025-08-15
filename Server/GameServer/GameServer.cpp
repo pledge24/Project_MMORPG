@@ -6,8 +6,6 @@
 #include "config.h"
 #include "EncodingConverter.h"
 
-#include <fstream>
-
 enum
 {
 	WORKER_TICK = 64
@@ -45,23 +43,9 @@ void DoWorkerJob(ServerServiceRef& service)
 
 int main(void)
 {
-    // 방법 2: json::parse()를 사용한 방법
-    //try
-    //{
-    //    std::ifstream file2("Quest.json");
-    //    if (file2.is_open())
-    //    {
-    //        Json j2 = Json::parse(file2);
-    //        wcout << L"방법 2로 읽은 JSON: " << EncodingConverter::StringToWString(j2.dump(4)) << endl;
-    //    }
-    //}
-    //catch (const std::exception& e)
-    //{
-    //    std::cerr << "방법 2 오류: " << e.what() << std::endl;
-    //}
-
-    //return 0;
+    // Init
 	ServerPacketHandler::Init();
+    ASSERT_CRASH(Gamedata::LoadAllGamedata());
 
 	const int maxSessionCount = 30;
 	ServerServiceRef service = make_shared<ServerService>(
@@ -84,44 +68,6 @@ int main(void)
         ASSERT_CRASH(GRedisManager->Connect(ENV_REDIS_URI));
     }
 
-  //  // Create Table
-  //  {
-  //      auto query = L"									\
-		//DROP TABLE IF EXISTS [dbo].[Gold];			\
-		//CREATE TABLE [dbo].[Gold]					\
-		//(											\
-		//	[id] INT NOT NULL PRIMARY KEY IDENTITY, \
-		//	[gold] INT NULL,						\
-		//	[name] NVARCHAR(50) NULL,				\
-		//	[createDate] DATETIME NULL				\
-		//);";
-
-  //      DBConnection* dbConn = GDBConnectionPool->Pop();
-  //      ASSERT_CRASH(dbConn->Execute(query));
-  //      GDBConnectionPool->Push(dbConn);
-  //  }
-
-  //  // Add Data
-  //  for (int32 i = 0; i < 3; i++)
-  //  {
-  //      DBConnection* dbConn = GDBConnectionPool->Pop();
-
-  //      DBBind<3, 0> dbBind(*dbConn, L"INSERT INTO [dbo].[Gold]([gold], [name], [createDate]) VALUES(?, ?, ?)");
-
-  //      int32 gold = 100;
-  //      dbBind.BindParam(0, gold);
-  //      WCHAR name[100] = L"루키스";
-  //      dbBind.BindParam(1, name);
-  //      TIMESTAMP_STRUCT ts = { 2021, 6, 5 };
-  //      dbBind.BindParam(2, ts);
-
-  //      ASSERT_CRASH(dbBind.Execute());
-
-  //      GDBConnectionPool->Push(dbConn);
-  //  }
-
- /*   return 0;*/
-
 	// worker thread
 	const int workerThreadN = 5;
 	for (int32 i = 0; i < workerThreadN; i++)
@@ -143,24 +89,8 @@ int main(void)
             });
     }
 
-    //for (int32 i = 0; i < 100; i++)
-    //{
-    //    int32 dbQueueCount = GDBManager->GetDBQueueCount();
-    //    int32 queueId = Utils::GetRandom(0, dbQueueCount);
-    //    DBQueueRef dbQueue = GDBManager->GetDBQueue(queueId);
-
-    //    JobRef job = make_shared<Job>(
-    //        []()
-    //        {
-    //            cout << "Handle_C_Login!" << endl;
-    //        }
-    //    );
-
-    //    dbQueue->Push(std::move(job));
-    //}
-
-    //// Main Thread
-    //DoWorkerJob(service);
+    // Main Thread
+    DoWorkerJob(service);
 
 	GThreadManager->Join();
 
