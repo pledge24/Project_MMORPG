@@ -19,6 +19,8 @@
 #include "Utils.h"
 #include "GameSession.h"
 
+#include "Gamedata.h"
+
 /*-------------------
           DB
 ---------------------*/

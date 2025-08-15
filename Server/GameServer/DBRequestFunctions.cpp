@@ -316,6 +316,8 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
         SEND_PACKET(pkt);
     }
 
+
+
     GDBConnectionPool->Push(dbConn);
 }
 

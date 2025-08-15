@@ -1,0 +1,134 @@
+[
+    {
+        "template_id": 100,
+        "map_name": "마을",
+        "map_type": "safe zone",
+        "have_start_point": true,
+        "width": 20,
+        "height": 20,
+        "start_point": {
+            "pos_x": 0,
+            "pos_y": 0,
+            "pos_z": 0
+        },
+        "teleport_points": {
+            "points": [
+                {
+                    "map_id": 101,
+                    "position": {
+                        "pos_x": 0,
+                        "pos_y": 0,
+                        "pos_z": 0
+                    }
+                },
+                {
+                    "map_id": 102,
+                    "position": {
+                        "pos_x": 0,
+                        "pos_y": 0,
+                        "pos_z": 0
+                    }
+                },
+                {
+                    "map_id": 103,
+                    "position": {
+                        "pos_x": 0,
+                        "pos_y": 0,
+                        "pos_z": 0
+                    }
+                }
+            ]
+        },
+        "monster_ids": null,
+        "respawn_time": null,
+        "max_monster_count": null,
+        "min_monster_count": null
+    },
+    {
+        "template_id": 101,
+        "map_name": "초급 사냥터(Lv1~Lv10)",
+        "map_type": "field",
+        "have_start_point": false,
+        "width": 50,
+        "height": 50,
+        "start_point": null,
+        "teleport_points": {
+            "points": [
+                {
+                    "map_id": 100,
+                    "position": {
+                        "pos_x": 0,
+                        "pos_y": 0,
+                        "pos_z": 0
+                    }
+                }
+            ]
+        },
+        "monster_ids": [
+            5000,
+            5001,
+            5002
+        ],
+        "respawn_time": 10,
+        "max_monster_count": 20,
+        "min_monster_count": 5
+    },
+    {
+        "template_id": 102,
+        "map_name": "중급 사냥터(Lv11~Lv30)",
+        "map_type": "field",
+        "have_start_point": false,
+        "width": 50,
+        "height": 50,
+        "start_point": null,
+        "teleport_points": {
+            "points": [
+                {
+                    "map_id": 100,
+                    "position": {
+                        "pos_x": 0,
+                        "pos_y": 0,
+                        "pos_z": 0
+                    }
+                }
+            ]
+        },
+        "monster_ids": [
+            5003,
+            5004,
+            5005
+        ],
+        "respawn_time": 10,
+        "max_monster_count": 20,
+        "min_monster_count": 5
+    },
+    {
+        "template_id": 103,
+        "map_name": "고급 사냥터(Lv31~Lv50)",
+        "map_type": "field",
+        "have_start_point": false,
+        "width": 50,
+        "height": 50,
+        "start_point": null,
+        "teleport_points": {
+            "points": [
+                {
+                    "map_id": 100,
+                    "position": {
+                        "pos_x": 0,
+                        "pos_y": 0,
+                        "pos_z": 0
+                    }
+                }
+            ]
+        },
+        "monster_ids": [
+            5006,
+            5007,
+            5008
+        ],
+        "respawn_time": 10,
+        "max_monster_count": 20,
+        "min_monster_count": 5
+    }
+]
