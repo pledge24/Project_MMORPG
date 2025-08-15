@@ -491,6 +491,7 @@ FodyWeavers.xsd
 
 Content/*
 !Content/Blueprints/
+!Content/Data/
 
 Binaries/
 Intermediate/

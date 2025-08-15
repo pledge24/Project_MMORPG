@@ -1,0 +1,47 @@
+[
+    {
+        "Name": 5000,
+        "Level": 3,
+        "MonsterName": "초급 근거리 미니언"
+    },
+    {
+        "Name": 5001,
+        "Level": 5,
+        "MonsterName": "초급 원거리 미니언"
+    },
+    {
+        "Name": 5002,
+        "Level": 7,
+        "MonsterName": "초급 중형 미니언"
+    },
+    {
+        "Name": 5003,
+        "Level": 10,
+        "MonsterName": "중급 근거리 미니언"
+    },
+    {
+        "Name": 5004,
+        "Level": 15,
+        "MonsterName": "중급 원거리 미니언"
+    },
+    {
+        "Name": 5005,
+        "Level": 25,
+        "MonsterName": "중급 중형 미니언"
+    },
+    {
+        "Name": 5006,
+        "Level": 30,
+        "MonsterName": "고급 근거리 미니언"
+    },
+    {
+        "Name": 5007,
+        "Level": 40,
+        "MonsterName": "고급 원거리 미니언"
+    },
+    {
+        "Name": 5008,
+        "Level": 45,
+        "MonsterName": "고급 중형 미니언"
+    }
+]
