@@ -1,15 +1,15 @@
 [
     {
-        "template_id": 9000,
+        "templateId": 9000,
         "title": "초급 근거리 미니언 처치",
-        "level_requirement": 3,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 3,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5000,
-            "Count": 10
+            "templateId": 5000,
+            "count": 10
         },
         "rewards": {
             "exp": 100,
@@ -24,16 +24,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9001,
+        "templateId": 9001,
         "title": "초급 원거리 미니언 처치",
-        "level_requirement": 5,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 5,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5001,
-            "Count": 10
+            "templateId": 5001,
+            "count": 10
         },
         "rewards": {
             "exp": 100,
@@ -48,16 +48,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9002,
+        "templateId": 9002,
         "title": "초급 근거리 미니언 처치",
-        "level_requirement": 7,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 7,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5002,
-            "Count": 10
+            "templateId": 5002,
+            "count": 10
         },
         "rewards": {
             "exp": 100,
@@ -72,16 +72,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9003,
+        "templateId": 9003,
         "title": "중급 근거리 미니언 처치",
-        "level_requirement": 10,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 10,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5003,
-            "Count": 10
+            "templateId": 5003,
+            "count": 10
         },
         "rewards": {
             "exp": 500,
@@ -96,16 +96,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9004,
+        "templateId": 9004,
         "title": "중급 원거리 미니언 처치",
-        "level_requirement": 15,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 15,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5004,
-            "Count": 10
+            "templateId": 5004,
+            "count": 10
         },
         "rewards": {
             "exp": 500,
@@ -120,16 +120,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9005,
+        "templateId": 9005,
         "title": "중급 중형 미니언 처치",
-        "level_requirement": 25,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 25,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5005,
-            "Count": 10
+            "templateId": 5005,
+            "count": 10
         },
         "rewards": {
             "exp": 500,
@@ -144,16 +144,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9006,
+        "templateId": 9006,
         "title": "고급 근거리 미니언 처치",
-        "level_requirement": 30,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 30,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5006,
-            "Count": 10
+            "templateId": 5006,
+            "count": 10
         },
         "rewards": {
             "exp": 1000,
@@ -168,16 +168,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9007,
+        "templateId": 9007,
         "title": "고급 원거리 미니언 처치",
-        "level_requirement": 40,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 40,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5007,
-            "Count": 10
+            "templateId": 5007,
+            "count": 10
         },
         "rewards": {
             "exp": 1000,
@@ -192,16 +192,16 @@
         "repeatable": true
     },
     {
-        "template_id": 9008,
+        "templateId": 9008,
         "title": "고급 중형 미니언 처치",
-        "level_requirement": 45,
-        "quest_type": "Hunting",
-        "start_npc": 101,
-        "end_npc": 101,
+        "levelRequirement": 45,
+        "questType": "Hunting",
+        "startNpc": 101,
+        "endNpc": 101,
         "objectives": {
             "type": "kill",
-            "object_id": 5008,
-            "Count": 10
+            "templateId": 5008,
+            "count": 10
         },
         "rewards": {
             "exp": 1000,

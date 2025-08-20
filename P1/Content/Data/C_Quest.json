@@ -1,23 +1,24 @@
 [
     {
         "Name": 9000,
+        "TemplateId": 9000,
         "Title": "초급 근거리 미니언 처치",
         "LevelRequirement": 3,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
+            "Type": "kill",
+            "TemplateId": 5000,
             "Count": 10
         },
         "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
+            "Exp": 100,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 3
+                    "Id": 2000,
+                    "Quantity": 3
                 }
             ]
         },
@@ -26,23 +27,24 @@
     },
     {
         "Name": 9001,
+        "TemplateId": 9001,
         "Title": "초급 원거리 미니언 처치",
         "LevelRequirement": 5,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5001,
+            "Type": "kill",
+            "TemplateId": 5001,
             "Count": 10
         },
         "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
+            "Exp": 100,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 4
+                    "Id": 2000,
+                    "Quantity": 4
                 }
             ]
         },
@@ -51,23 +53,24 @@
     },
     {
         "Name": 9002,
+        "TemplateId": 9002,
         "Title": "초급 근거리 미니언 처치",
         "LevelRequirement": 7,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5002,
+            "Type": "kill",
+            "TemplateId": 5002,
             "Count": 10
         },
         "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
+            "Exp": 100,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 5
+                    "Id": 2000,
+                    "Quantity": 5
                 }
             ]
         },
@@ -76,23 +79,24 @@
     },
     {
         "Name": 9003,
+        "TemplateId": 9003,
         "Title": "중급 근거리 미니언 처치",
         "LevelRequirement": 10,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5003,
+            "Type": "kill",
+            "TemplateId": 5003,
             "Count": 10
         },
         "Rewards": {
-            "exp": 500,
-            "gold": 200,
-            "items": [
+            "Exp": 500,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 6
+                    "Id": 2000,
+                    "Quantity": 6
                 }
             ]
         },
@@ -101,23 +105,24 @@
     },
     {
         "Name": 9004,
+        "TemplateId": 9004,
         "Title": "중급 원거리 미니언 처치",
         "LevelRequirement": 15,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5004,
+            "Type": "kill",
+            "TemplateId": 5004,
             "Count": 10
         },
         "Rewards": {
-            "exp": 500,
-            "gold": 200,
-            "items": [
+            "Exp": 500,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 7
+                    "Id": 2000,
+                    "Quantity": 7
                 }
             ]
         },
@@ -126,23 +131,24 @@
     },
     {
         "Name": 9005,
+        "TemplateId": 9005,
         "Title": "중급 중형 미니언 처치",
         "LevelRequirement": 25,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5005,
+            "Type": "kill",
+            "TemplateId": 5005,
             "Count": 10
         },
         "Rewards": {
-            "exp": 500,
-            "gold": 200,
-            "items": [
+            "Exp": 500,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 8
+                    "Id": 2000,
+                    "Quantity": 8
                 }
             ]
         },
@@ -151,23 +157,24 @@
     },
     {
         "Name": 9006,
+        "TemplateId": 9006,
         "Title": "고급 근거리 미니언 처치",
         "LevelRequirement": 30,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5006,
+            "Type": "kill",
+            "TemplateId": 5006,
             "Count": 10
         },
         "Rewards": {
-            "exp": 1000,
-            "gold": 200,
-            "items": [
+            "Exp": 1000,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 9
+                    "Id": 2000,
+                    "Quantity": 9
                 }
             ]
         },
@@ -176,23 +183,24 @@
     },
     {
         "Name": 9007,
+        "TemplateId": 9007,
         "Title": "고급 원거리 미니언 처치",
         "LevelRequirement": 40,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5007,
+            "Type": "kill",
+            "TemplateId": 5007,
             "Count": 10
         },
         "Rewards": {
-            "exp": 1000,
-            "gold": 200,
-            "items": [
+            "Exp": 1000,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 10
+                    "Id": 2000,
+                    "Quantity": 10
                 }
             ]
         },
@@ -201,23 +209,24 @@
     },
     {
         "Name": 9008,
+        "TemplateId": 9008,
         "Title": "고급 중형 미니언 처치",
         "LevelRequirement": 45,
         "QuestType": "Hunting",
         "StartNpc": 101,
         "EndNpc": 101,
         "Objectives": {
-            "type": "kill",
-            "object_id": 5008,
+            "Type": "kill",
+            "TemplateId": 5008,
             "Count": 10
         },
         "Rewards": {
-            "exp": 1000,
-            "gold": 200,
-            "items": [
+            "Exp": 1000,
+            "Gold": 200,
+            "Items": [
                 {
-                    "id": 2000,
-                    "quantity": 11
+                    "Id": 2000,
+                    "Quantity": 11
                 }
             ]
         },

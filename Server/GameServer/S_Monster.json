@@ -1,182 +1,182 @@
 [
     {
-        "template_id": 5000,
+        "templateId": 5000,
         "level": 3,
-        "monster_name": "초급 근거리 미니언",
-        "attack_type": "melee",
-        "max_hp": 50,
-        "base_attack": 10,
-        "exp_reward": {
+        "monsterName": "초급 근거리 미니언",
+        "attackType": "melee",
+        "maxHp": 50,
+        "baseAttack": 10,
+        "expReward": {
             "minExp": 5,
             "maxExp": 10
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 10,
             "maxGold": 20
         },
-        "attack_speed": 1,
-        "attack_range": 1,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 1,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5001,
+        "templateId": 5001,
         "level": 5,
-        "monster_name": "초급 원거리 미니언",
-        "attack_type": "ranged",
-        "max_hp": 120,
-        "base_attack": 20,
-        "exp_reward": {
+        "monsterName": "초급 원거리 미니언",
+        "attackType": "ranged",
+        "maxHp": 120,
+        "baseAttack": 20,
+        "expReward": {
             "minExp": 5,
             "maxExp": 15
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 10,
             "maxGold": 50
         },
-        "attack_speed": 1,
-        "attack_range": 5,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 5,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5002,
+        "templateId": 5002,
         "level": 7,
-        "monster_name": "초급 중형 미니언",
-        "attack_type": "melee",
-        "max_hp": 200,
-        "base_attack": 40,
-        "exp_reward": {
+        "monsterName": "초급 중형 미니언",
+        "attackType": "melee",
+        "maxHp": 200,
+        "baseAttack": 40,
+        "expReward": {
             "minExp": 5,
             "maxExp": 20
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 10,
             "maxGold": 80
         },
-        "attack_speed": 1,
-        "attack_range": 1,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 1,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5003,
+        "templateId": 5003,
         "level": 10,
-        "monster_name": "중급 근거리 미니언",
-        "attack_type": "melee",
-        "max_hp": 350,
-        "base_attack": 60,
-        "exp_reward": {
+        "monsterName": "중급 근거리 미니언",
+        "attackType": "melee",
+        "maxHp": 350,
+        "baseAttack": 60,
+        "expReward": {
             "minExp": 20,
             "maxExp": 50
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 80,
             "maxGold": 160
         },
-        "attack_speed": 1,
-        "attack_range": 1,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 1,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5004,
+        "templateId": 5004,
         "level": 15,
-        "monster_name": "중급 원거리 미니언",
-        "attack_type": "ranged",
-        "max_hp": 600,
-        "base_attack": 80,
-        "exp_reward": {
+        "monsterName": "중급 원거리 미니언",
+        "attackType": "ranged",
+        "maxHp": 600,
+        "baseAttack": 80,
+        "expReward": {
             "minExp": 20,
             "maxExp": 80
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 80,
             "maxGold": 200
         },
-        "attack_speed": 1,
-        "attack_range": 5,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 5,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5005,
+        "templateId": 5005,
         "level": 25,
-        "monster_name": "중급 중형 미니언",
-        "attack_type": "melee",
-        "max_hp": 1000,
-        "base_attack": 120,
-        "exp_reward": {
+        "monsterName": "중급 중형 미니언",
+        "attackType": "melee",
+        "maxHp": 1000,
+        "baseAttack": 120,
+        "expReward": {
             "minExp": 20,
             "maxExp": 120
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 80,
             "maxGold": 300
         },
-        "attack_speed": 1,
-        "attack_range": 1,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 1,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5006,
+        "templateId": 5006,
         "level": 30,
-        "monster_name": "고급 근거리 미니언",
-        "attack_type": "melee",
-        "max_hp": 1500,
-        "base_attack": 180,
-        "exp_reward": {
+        "monsterName": "고급 근거리 미니언",
+        "attackType": "melee",
+        "maxHp": 1500,
+        "baseAttack": 180,
+        "expReward": {
             "minExp": 120,
             "maxExp": 150
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 300,
             "maxGold": 500
         },
-        "attack_speed": 1,
-        "attack_range": 1,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 1,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5007,
+        "templateId": 5007,
         "level": 40,
-        "monster_name": "고급 원거리 미니언",
-        "attack_type": "ranged",
-        "max_hp": 2000,
-        "base_attack": 240,
-        "exp_reward": {
+        "monsterName": "고급 원거리 미니언",
+        "attackType": "ranged",
+        "maxHp": 2000,
+        "baseAttack": 240,
+        "expReward": {
             "minExp": 120,
             "maxExp": 180
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 300,
             "maxGold": 800
         },
-        "attack_speed": 1,
-        "attack_range": 5,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 5,
+        "detectionRange": 3,
+        "chaseRange": 5
     },
     {
-        "template_id": 5008,
+        "templateId": 5008,
         "level": 45,
-        "monster_name": "고급 중형 미니언",
-        "attack_type": "melee",
-        "max_hp": 3000,
-        "base_attack": 300,
-        "exp_reward": {
+        "monsterName": "고급 중형 미니언",
+        "attackType": "melee",
+        "maxHp": 3000,
+        "baseAttack": 300,
+        "expReward": {
             "minExp": 120,
             "maxExp": 250
         },
-        "gold_reward": {
+        "goldReward": {
             "minGold": 300,
             "maxGold": 2500
         },
-        "attack_speed": 1,
-        "attack_range": 1,
-        "detection_range": 3,
-        "chase_range": 5
+        "attackSpeed": 1,
+        "attackRange": 1,
+        "detectionRange": 3,
+        "chaseRange": 5
     }
 ]

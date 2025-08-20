@@ -1,227 +1,56 @@
 [
     {
-        "Name": 9000,
-        "Title": "초급 근거리 미니언 처치",
-        "LevelRequirement": 3,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 10
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 3
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "초급 사냥터에서 초급 근거리 미니언을 10마리 처치하십시오."
+        "Name": 5000,
+        "TemplateId": 5000,
+        "Level": 3,
+        "MonsterName": "초급 근거리 미니언"
     },
     {
-        "Name": 9001,
-        "Title": "초급 원거리 미니언 처치",
-        "LevelRequirement": 5,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 11
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 4
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "초급 사냥터에서 초급 원거리 미니언을 10마리 처치하십시오."
+        "Name": 5001,
+        "TemplateId": 5001,
+        "Level": 5,
+        "MonsterName": "초급 원거리 미니언"
     },
     {
-        "Name": 9002,
-        "Title": "초급 근거리 미니언 처치",
-        "LevelRequirement": 7,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 12
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 5
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "초급 사냥터에서 초급 중형 미니언을 10마리 처치하십시오."
+        "Name": 5002,
+        "TemplateId": 5002,
+        "Level": 7,
+        "MonsterName": "초급 중형 미니언"
     },
     {
-        "Name": 9003,
-        "Title": "중급 근거리 미니언 처치",
-        "LevelRequirement": 10,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 13
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 6
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "중급 사냥터에서 중급 근거리 미니언을 10마리 처치하십시오."
+        "Name": 5003,
+        "TemplateId": 5003,
+        "Level": 10,
+        "MonsterName": "중급 근거리 미니언"
     },
     {
-        "Name": 9004,
-        "Title": "중급 원거리 미니언 처치",
-        "LevelRequirement": 15,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 14
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 7
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "중급 사냥터에서 중급 원거리 미니언을 10마리 처치하십시오."
+        "Name": 5004,
+        "TemplateId": 5004,
+        "Level": 15,
+        "MonsterName": "중급 원거리 미니언"
     },
     {
-        "Name": 9005,
-        "Title": "중급 중형 미니언 처치",
-        "LevelRequirement": 25,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 15
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 8
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "중급 사냥터에서 중급 중형 미니언을 10마리 처치하십시오."
+        "Name": 5005,
+        "TemplateId": 5005,
+        "Level": 25,
+        "MonsterName": "중급 중형 미니언"
     },
     {
-        "Name": 9006,
-        "Title": "고급 근거리 미니언 처치",
-        "LevelRequirement": 30,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 16
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 9
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "고급 사냥터에서 고급 근거리 미니언을 10마리 처치하십시오."
+        "Name": 5006,
+        "TemplateId": 5006,
+        "Level": 30,
+        "MonsterName": "고급 근거리 미니언"
     },
     {
-        "Name": 9007,
-        "Title": "고급 원거리 미니언 처치",
-        "LevelRequirement": 40,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 17
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 10
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "고급 사냥터에서 고급 원거리 미니언을 10마리 처치하십시오."
+        "Name": 5007,
+        "TemplateId": 5007,
+        "Level": 40,
+        "MonsterName": "고급 원거리 미니언"
     },
     {
-        "Name": 9008,
-        "Title": "고급 중형 미니언 처치",
-        "LevelRequirement": 45,
-        "QuestType": "Hunting",
-        "StartNpc": 101,
-        "EndNpc": 101,
-        "Objectives": {
-            "type": "kill",
-            "object_id": 5000,
-            "Count": 18
-        },
-        "Rewards": {
-            "exp": 100,
-            "gold": 200,
-            "items": [
-                {
-                    "id": 2000,
-                    "quantity": 11
-                }
-            ]
-        },
-        "Repeatable": true,
-        "Description": "고급 사냥터에서 고급 중형 미니언을 10마리 처치하십시오."
+        "Name": 5008,
+        "TemplateId": 5008,
+        "Level": 45,
+        "MonsterName": "고급 중형 미니언"
     }
 ]

@@ -12,6 +12,10 @@ public class P1 : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "ProtobufCore", "Slate", "SlateCore" });
 
+        PublicIncludePaths.AddRange(new string[] {
+            "Game/Structs"
+        });
+
         PrivateIncludePaths.AddRange(new string[]
         {
             "P1/",
