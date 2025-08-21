@@ -5,8 +5,11 @@ import json
 from pathlib import Path
 
 def snake_to_pascal(snake_str):
-    """snake_case를 PascalCase로 변환"""
     return ''.join(word.capitalize() for word in snake_str.split('_'))
+
+def snake_to_camel(snake_str: str) -> str:
+    parts = snake_str.split('_')
+    return parts[0].lower() + ''.join(word.capitalize() for word in parts[1:])
 
 def main():
 
@@ -15,7 +18,7 @@ def main():
     # 같은 디렉토리에 있는 엑셀 파일 경로를 얻는다.
     current_file = Path(__file__)
     base_dir = current_file.parents[0]
-    target_file = base_dir/'test.xlsx' # 엑셀 파일 경로
+    target_file = base_dir/'test1.xlsx' # 엑셀 파일 경로
 
     # argparse 객체에 CLI 명령줄에서 사용가능한 인자 종류를 추가한다.
     arg_parser.add_argument('--path', type=str, default=target_file.resolve(), help='excel file path')
@@ -61,12 +64,12 @@ def main():
                 if(authorizations[i] == "BOTH" or authorizations[i] == "CLIENT"):
                     # 언리얼을 "Name"이라는 필드가 반드시 있어야해서 이리함.
                     if(headerName == "template_id"):
-                        row_client_data["Name"] = parsed_value;
-                    else:
-                        row_client_data[snake_to_pascal(headerName)] = parsed_value
+                        row_client_data["Name"] = parsed_value
+                    
+                    row_client_data[snake_to_pascal(headerName)] = parser.convert_keys(parsed_value, mode="pascal")
 
                 if(authorizations[i] == "BOTH" or authorizations[i] == "SERVER"):
-                    row_server_data[headerName] = parsed_value
+                    row_server_data[snake_to_camel(headerName)] = parser.convert_keys(parsed_value, mode="camel")
 
             clientData.append(row_client_data)
             serverData.append(row_server_data)
