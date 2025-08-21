@@ -3,7 +3,8 @@
 
 #include "LoginWidget.h"
 #include "P1.h"
-#include "LoginModeBase.h"
+#include "LoginMenuPlayerController.h"
+#include "LoginManager.h"
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
 
@@ -106,9 +107,9 @@ void ULoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
 
 void ULoginWidget::SendLoginRequest(FString Username, FString Password)
 {
-    if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(this)))
+    if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
-        ULoginManager* Manager = Mode->GetLoginManager();
+        ULoginManager* Manager = Controller->GetLoginManager();
         if (Manager)
         {
             Manager->RequestLogin(Username, Password);
@@ -118,9 +119,9 @@ void ULoginWidget::SendLoginRequest(FString Username, FString Password)
 
 void ULoginWidget::SendRegisterRequest(FString Username, FString Password)
 {
-    if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(this)))
+    if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
-        ULoginManager* Manager = Mode->GetLoginManager();
+        ULoginManager* Manager = Controller->GetLoginManager();
         if (Manager)
         {
             Manager->RequestRegister(Username, Password);

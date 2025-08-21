@@ -1,6 +1,8 @@
 #include "ClientPacketHandler.h"
-#include "LoginModeBase.h"
+#include "LoginMenuMode.h"
 #include "LoginWidget.h"
+#include "LoginMenuPlayerController.h"
+#include "LoginManager.h"
 #include "P1.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -20,9 +22,9 @@ bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+		if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
 		{
-			if (ULoginManager* Manager = Mode->GetLoginManager())
+			if (ULoginManager* Manager = Controller->GetLoginManager())
 			{
 				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
 				{
@@ -40,9 +42,9 @@ bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHA
 	
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+        if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
 		{
-			if (ULoginManager* Manager = Mode->GetLoginManager())
+			if (ULoginManager* Manager = Controller->GetLoginManager())
 			{
 				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
 				{
@@ -60,9 +62,9 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
 
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+        if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
         {
-            if (ULoginManager* Manager = Mode->GetLoginManager())
+            if (ULoginManager* Manager = Controller->GetLoginManager())
             {
                 if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
                 {
