@@ -81,7 +81,9 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 	GameServerSession->SendPacket(SendBuffer);
 }
 
-// 새로운 플레이어를 스폰
+//////////////////////Network End//////////////////////////
+
+// 새로운 오브젝트(본인 포함)를 맵에 스폰
 void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool IsMine)
 {
 	if (Socket == nullptr || GameServerSession == nullptr)
@@ -105,14 +107,14 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 		if (Player == nullptr)
 			return;
 
-		Player->SetPlayerInfo(ObjectInfo.pos_info());
+		Player->SetPosInfo(ObjectInfo.pos_info());
 		MyPlayer = Player;
 		Players.Add(ObjectInfo.object_id(), Player);
 	}
 	else
 	{
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
-		Player->SetPlayerInfo(ObjectInfo.pos_info());
+		Player->SetPosInfo(ObjectInfo.pos_info());
 		Players.Add(ObjectInfo.object_id(), Player);
 	}
 }

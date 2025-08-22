@@ -11,6 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1MyPlayer.h"
+#include "PlayerInfoComponent.h"
 
 AP1Player::AP1Player()
 {
@@ -40,6 +41,8 @@ AP1Player::AP1Player()
 
 	PlayerInfo = new Protocol::PosInfo();
 	DestInfo = new Protocol::PosInfo();
+
+    SetupPlayerInfoComponent();
 }
 
 AP1Player::~AP1Player()
@@ -114,6 +117,30 @@ bool AP1Player::IsMyPlayer()
 	return Cast<AP1MyPlayer>(this) != nullptr;
 }
 
+void AP1Player::SetPlayerData(const Protocol::ObjectInfo& ObjectInfo)
+{
+    //const google::protobuf::RepeatedPtrField<Protocol::Item>& source_items
+    //    = ObjectInfo.player_info().equipment();
+
+    //// 방법 1. TArray를 사용한다.
+    //{
+    //    TArray<Protocol::Item> Equipment;
+    //    Equipment.Empty();
+    //    
+    //    for (auto&& item : source_items)
+    //    {
+    //        Equipment.Add(std::move(item));
+    //    }
+    //}
+
+    //// 방법 2. Protobuf 방식을 유지한다.
+    //{
+    //    google::protobuf::RepeatedPtrField<Protocol::Item> Equipment;
+    //    Equipment.CopyFrom(source_items);
+    //    // Equipment.MergeFrom(source_items); // 존재하는 데이터 뒤에 붙이는 방식(Append)
+    //}
+}
+
 void AP1Player::SetMoveState(Protocol::MoveState State)
 {
 	if (PlayerInfo->state() == State)
@@ -124,7 +151,7 @@ void AP1Player::SetMoveState(Protocol::MoveState State)
 	// TODO
 }
 
-void AP1Player::SetPlayerInfo(const Protocol::PosInfo& Info)
+void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
 {
 	if (PlayerInfo->object_id() != 0)
 	{
@@ -149,5 +176,10 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 
 	// 상태만 바로 관리하자.
 	SetMoveState(Info.state());
+}
+
+void AP1Player::SetupPlayerInfoComponent()
+{
+    PlayerInfoComponent = CreateDefaultSubobject<UPlayerInfoComponent>(TEXT("PlayerInfoComponent"));
 }
 

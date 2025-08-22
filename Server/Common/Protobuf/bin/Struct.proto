@@ -17,7 +17,9 @@ message ObjectInfo
 	ObjectType object_type = 2;
 	PosInfo pos_info = 3;
     StatInfo stat_info = 4;
-    PlayerInfo player_info = 5;
+
+    // optional ÇÊµå
+    optional PlayerInfo player_info = 5;
 	//...
 }
 
@@ -44,9 +46,11 @@ message PosInfo
 message StatInfo
 {
     int32 cur_hp = 1;
-    int32 cur_mp = 2;
-    int32 cur_attack = 3;
-    int32 cur_magic = 4;
+    int32 max_hp = 2;
+    int32 cur_mp = 3;
+    int32 max_mp = 4;
+    int32 cur_attack = 5;
+    int32 cur_magic = 6;
 }
 
 message Item

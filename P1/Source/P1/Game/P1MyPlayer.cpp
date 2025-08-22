@@ -12,22 +12,24 @@
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "InventoryComponent.h"
+#include "MyPlayerInfoComponent.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+    // Create a camera boom (pulls in towards the player if there is a collision)
+    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+    CameraBoom->SetupAttachment(RootComponent);
+    CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
+    CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+    // Create a follow camera
+    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+    FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+    // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
+    // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -159,6 +161,9 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 	}
 }
 
-
+void AP1MyPlayer::SetupPlayerInfoComponent()
+{
+    PlayerInfoComponent = CreateDefaultSubobject<UMyPlayerInfoComponent>(TEXT("MyPlayerInfoComponent"));
+}
 
 

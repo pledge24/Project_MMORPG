@@ -75,18 +75,27 @@ void AInGamePlayerController::ToggleWidget(UUserWidget* Widget, int32 FlagIdx)
 
     if (IsVisible)
     {
-        Widget->RemoveFromParent();
-        SetInputMode(FInputModeGameOnly());
+        Widget->SetVisibility(ESlateVisibility::Collapsed);
     }
     else
     {
-        Widget->AddToViewport();
-        SetInputMode(FInputModeGameAndUI());
+        Widget->SetVisibility(ESlateVisibility::Visible);
     }
 
+    // Toggle Flag
     ToggleFlag ^= (1 << FlagIdx);
 
-    bShowMouseCursor = ToggleFlag > 0;
+    // 켜진 UI가 1개 이상이면 UI모드 유지
+    if (ToggleFlag > 0)
+    {
+        bShowMouseCursor = true;
+        SetInputMode(FInputModeGameAndUI());
+    }
+    else
+    {
+        bShowMouseCursor = false;
+        SetInputMode(FInputModeGameOnly());
+    }
 }
 
 
