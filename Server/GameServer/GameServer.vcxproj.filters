@@ -165,9 +165,6 @@
     <None Include="DEBUG.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="S_Character.json">
-      <Filter>Game\Data</Filter>
-    </None>
     <None Include="S_Item.json">
       <Filter>Game\Data</Filter>
     </None>
@@ -178,6 +175,12 @@
       <Filter>Game\Data</Filter>
     </None>
     <None Include="S_Quest.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Warrior_Level_Data.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Equipment.json">
       <Filter>Game\Data</Filter>
     </None>
   </ItemGroup>

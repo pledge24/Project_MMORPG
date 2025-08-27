@@ -8,26 +8,37 @@
        Gamedata
 ---------------------*/
 
-map<pair<int32, int32>, Json> Gamedata::CharacterDataTable;
-unordered_map<int32, Json> Gamedata::ItemDataTable;
-unordered_map<int32, Json> Gamedata::MapDataTable;
-unordered_map<int32, Json> Gamedata::MonsterDataTable;
-unordered_map<int32, Json> Gamedata::QuestDataTable;
+/* 직업별 레벨 테이블 */
+DataTable Gamedata::WarriorLevelDataTable;
+
+/* 레벨 테이블 매핑 */
+unordered_map<int32, DataTable*> Gamedata::ClassLevelDataTableMappings;
+
+/* 게임 데이터 */
+DataTable Gamedata::ItemDataTable;
+DataTable Gamedata::EquipmentDataTable;
+DataTable Gamedata::MapDataTable;
+DataTable Gamedata::MonsterDataTable;
+DataTable Gamedata::QuestDataTable;
 
 bool Gamedata::LoadAllGamedata()
 {
+    // 레벨 테이블 매핑 초기화
+    ClassLevelDataTableMappings = {
+        make_pair(Protocol::CharacterClass::CLASS_TYPE_WARRIOR, &WarriorLevelDataTable)
+    };
+
     // 1. 캐릭터 정보
     try
     {
-        ifstream file("S_Character.json");
+        ifstream file("S_Warrior_Level_Data.json");
         if (file.is_open())
         {
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 classId = ClassMappings[row["class"]];
                 int32 level = row["level"];
-                CharacterDataTable[make_pair(classId, level)] = row;
+                WarriorLevelDataTable[level] = row;
             }
         }
     }
@@ -57,7 +68,27 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
-    // 3. 맵 정보
+    // 3. 장비 정보
+    try
+    {
+        ifstream file("S_Equipment.json");
+        if (file.is_open())
+        {
+            Json json_data = Json::parse(file);
+            for (auto& row : json_data)
+            {
+                int32 templateId = row["template_id"];
+                EquipmentDataTable[templateId] = row;
+            }
+        }
+    }
+    catch (const exception& e)
+    {
+        wcerr << L"장비 데이터 저장 오류" << e.what() << endl;
+        return false;
+    }
+
+    // 4. 맵 정보
     try
     {
         ifstream file("S_Map.json");
@@ -77,7 +108,7 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
-    // 4. 몬스터 정보
+    // 5. 몬스터 정보
     try
     {
         ifstream file("S_Monster.json");
@@ -97,7 +128,7 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
-    // 5. 퀘스트 정보
+    // 6. 퀘스트 정보
     try
     {
         ifstream file("S_Quest.json");
@@ -123,13 +154,19 @@ bool Gamedata::LoadAllGamedata()
 #ifdef _DEBUG
 void Gamedata::PrintAllGamedata()
 {
-    for (auto elem : CharacterDataTable)
+    for (auto elem : WarriorLevelDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';
     }
 
     for (auto elem : ItemDataTable)
+    {
+        string str = elem.second.dump();
+        wcout << EncodingConverter::StringToWString(str) << '\n';
+    }
+
+    for (auto elem : EquipmentDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';

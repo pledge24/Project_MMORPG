@@ -16,7 +16,7 @@ public:
 private:
     static bool GetCharacterData(SessionRef session, int64 characterId);
     static bool GetCharacterLastStateData(SessionRef session, int64 characterId);
-    static bool GetCharacterInventoryData(SessionRef session, int64 characterId);
-    static bool GetCharacterEquipmentData(SessionRef session, int64 characterId);
+    static bool GetCharactersItemData(SessionRef session, int64 characterId);
+    static bool GetCharactersEquipmentData(SessionRef session, int64 characterId);
 };
 

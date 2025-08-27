@@ -247,11 +247,12 @@
     <None Include="AlterTable.sql" />
     <None Include="DEBUG.sql" />
     <None Include="GameDB_CreateAllTables.sql" />
-    <None Include="S_Character.json" />
+    <None Include="S_Equipment.json" />
     <None Include="S_Item.json" />
     <None Include="S_Map.json" />
     <None Include="S_Monster.json" />
     <None Include="S_Quest.json" />
+    <None Include="S_Warrior_Level_Data.json" />
   </ItemGroup>
   <ItemGroup>
     <UpToDateCheckInput Include="..\Common\Protobuf\bin\Enum.proto" />

@@ -50,12 +50,12 @@ void DBRequestFunctions::GetUserCharactersData(SessionRef session, int64 userId)
     try
     {
         // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, L"                             \
-            SELECT character_id, class_id, character_name, level            \
-            FROM [dbo].[Characters]                                         \
-            WHERE user_id = (?)                                             \
-            ORDER BY created_at                                             \
-        ");
+        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(                             
+            SELECT character_id, class_id, character_name, level
+            FROM [dbo].[Characters]
+            WHERE user_id = (?)
+            ORDER BY created_at
+        )SQL");
 
         BindObject bindObject(dbBind, userId);
 
@@ -118,6 +118,11 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         BindObject(DBBind<PARAMS, COLS>& dbBind, const Protocol::CharacterOverview& character, int64 userId)
             : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name()))
         {
+            unordered_map<int32, Json>* ClassLevelDataTable = Gamedata::ClassLevelDataTableMappings[_classId];
+            _curHp = (*ClassLevelDataTable)[1]["maxHp"];
+            _curMp = (*ClassLevelDataTable)[1]["maxMp"];
+            _curAttack = (*ClassLevelDataTable)[1]["baseAttack"];
+            _curMagic = (*ClassLevelDataTable)[1]["baseMagic"];
             BindParam(dbBind);
             BindCol(dbBind);
         }
@@ -142,10 +147,10 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         int64 _userId;
         int32 _classId;
         wstring _name;
-        int32 _curHp = 1000;
-        int32 _curMp = 500;
-        int32 _curAttack = 100;
-        int32 _curMagic = 100;
+        int32 _curHp;
+        int32 _curMp;
+        int32 _curAttack;
+        int32 _curMagic;
 
         /* Cols */
         int64 _characterId;
@@ -182,10 +187,14 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
                 SET @character_id = SCOPE_IDENTITY();
                 
                 -- 2. 캐릭터 마지막 상태 저장 (기본값)
-                INSERT INTO [dbo].[CharacterLastState]([character_id], [cur_hp], [cur_mp], [cur_attack], [cur_magic])
+                INSERT INTO [dbo].[CharactersLastState]([character_id], [cur_hp], [cur_mp], [cur_attack], [cur_magic])
                 VALUES(@character_id, (?), (?), (?), (?));
                 
-                -- 3. 결과셋으로 반환
+                -- 3. 기본 아이템을 추가
+                INSERT INTO [dbo].[CharactersEquipments]([character_id], [template_id])
+                VALUES(@character_id, 1005);
+
+                -- 4. 결과셋으로 반환
                 SELECT @character_id AS character_id;
                 
                 COMMIT TRANSACTION;
@@ -266,25 +275,25 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
     {
         // 캐릭터 삭제
         // TODO: 다른 유저가 내 캐릭터를 지워버리지 못하도록 해야함
-        DBBind<PARAMS, COLS> dbBind(*dbConn, L"\
-            BEGIN TRANSACTION;\
-            \
-            DECLARE @character_id BIGINT;\
-            DECLARE @user_id BIGINT;\
-            SET @character_id = (?);\
-            SET @user_id = (?);\
-            \
-            IF EXISTS (SELECT 1 FROM [dbo].[Characters] WHERE [character_id] = @character_id) AND [user_id] = @user_id\
-            BEGIN \
-                DELETE FROM [dbo].[Characters]\
-                WHERE [character_id] = @character_id\
-                COMMIT TRANSACTION;\
-            END\
-            ELSE\
-            BEGIN\
-                ROLLBACK TRANSACTION;\
-            END\
-        ");
+        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+            BEGIN TRANSACTION;
+            
+            DECLARE @character_id BIGINT;
+            DECLARE @user_id BIGINT;
+            SET @character_id = (?);
+            SET @user_id = (?);
+            
+            IF EXISTS (SELECT 1 FROM [dbo].[Characters] WHERE [character_id] = @character_id) AND [user_id] = @user_id
+            BEGIN 
+                DELETE FROM [dbo].[Characters]
+                WHERE [character_id] = @character_id
+                COMMIT TRANSACTION;
+            END
+            ELSE
+            BEGIN
+                ROLLBACK TRANSACTION;
+            END
+        )SQL");
 
         GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
         BindObject bindObject(dbBind, characterId, gameSession->userId);
@@ -316,8 +325,6 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
         SEND_PACKET(pkt);
     }
 
-
-
     GDBConnectionPool->Push(dbConn);
 }
 
@@ -338,14 +345,14 @@ void DBRequestFunctions::GetEnterGameData(SessionRef session, int64 characterId)
     }
 
     // 3. 캐릭터 인벤토리 가져오기
-    if (GetCharacterInventoryData(session, characterId) == false)
+    if (GetCharactersItemData(session, characterId) == false)
     {
         cout << "Error In GetCharacterInventoryData" << endl;
         return;
     }
 
     // 4. 캐릭터 착장 정보 가져오기
-    if (GetCharacterEquipmentData(session, characterId) == false)
+    if (GetCharactersEquipmentData(session, characterId) == false)
     {
         cout << "Error In GetCharacterEquipmentData" << endl;
         return;
@@ -397,12 +404,12 @@ bool DBRequestFunctions::GetCharacterData(SessionRef session, int64 characterId)
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
     // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-    DBBind<PARAMS, COLS> dbBind(*dbConn, L"                             \
-        SELECT class_id, character_name, level                          \
-        FROM [dbo].[Characters]                                         \
-        WHERE character_id = (?)                                        \
-        ORDER BY created_at                                             \
-    ");
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT class_id, character_name, level
+        FROM [dbo].[Characters]
+        WHERE character_id = (?)
+        ORDER BY created_at
+    )SQL");
 
     BindObject bindObject(dbBind, characterId);
 
@@ -480,11 +487,11 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
     // 해당 유저의 마지막 정보를 가져온다.
-    DBBind<PARAMS, COLS> dbBind(*dbConn, L"                                                             \
-        SELECT exp, cur_hp, cur_mp, cur_attack, cur_magic, map_id, pos_x, pos_y, pos_z, rot_yaw, gold   \
-        FROM [dbo].[CharacterLastState]                                                                 \
-        WHERE character_id = (?)                                                                        \
-    ");
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT exp, cur_hp, cur_mp, cur_attack, cur_magic, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
+        FROM [dbo].[CharactersLastState] 
+        WHERE character_id = (?)
+    )SQL");
 
     BindObject bindObject(dbBind, characterId);
 
@@ -522,7 +529,7 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     return true;
 }
 
-bool DBRequestFunctions::GetCharacterInventoryData(SessionRef session, int64 characterId)
+bool DBRequestFunctions::GetCharactersItemData(SessionRef session, int64 characterId)
 {
     const int PARAMS = 1;
     const int COLS = 3;
@@ -542,28 +549,28 @@ bool DBRequestFunctions::GetCharacterInventoryData(SessionRef session, int64 cha
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
         {
-            dbBind.BindCol(0, _itemId);
+            dbBind.BindCol(0, _templateId);
             dbBind.BindCol(1, _slotId);
-            dbBind.BindCol(2, _quantity);
+            dbBind.BindCol(2, _count);
         }
 
         /* Params */
         int64 _characterId;
 
         /* Cols */
-        int32 _itemId;
+        int32 _templateId;
         int32 _slotId;
-        int32 _quantity;
+        int32 _count;
     };
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
     // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-    DBBind<PARAMS, COLS> dbBind(*dbConn, L"                             \
-        SELECT item_id, slot_id, quantity                               \
-        FROM [dbo].[CharacterInventory]                                 \
-        WHERE character_id = (?)                                         \
-    ");
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT template_id, slot_id, count
+        FROM [dbo].[CharactersItems]
+        WHERE character_id = (?)
+    )SQL");
 
     BindObject bindObject(dbBind, characterId);
 
@@ -575,11 +582,11 @@ bool DBRequestFunctions::GetCharacterInventoryData(SessionRef session, int64 cha
 
     while (dbConn->Fetch())
     {
-        Protocol::Item* item = playerInfo->add_inventory();
+        Protocol::Item* item = playerInfo->add_items();
         
-        item->set_item_id(bindObject._itemId);
+        item->set_template_id(bindObject._templateId);
         item->set_slot_id(bindObject._slotId);
-        item->set_quantity(bindObject._quantity);
+        item->set_count(bindObject._count);
     }
 
     GDBConnectionPool->Push(dbConn);
@@ -587,10 +594,10 @@ bool DBRequestFunctions::GetCharacterInventoryData(SessionRef session, int64 cha
     return true;
 }
 
-bool DBRequestFunctions::GetCharacterEquipmentData(SessionRef session, int64 characterId)
+bool DBRequestFunctions::GetCharactersEquipmentData(SessionRef session, int64 characterId)
 {
     const int PARAMS = 1;
-    const int COLS = 2;
+    const int COLS = 3;
 
     struct BindObject
     {
@@ -607,26 +614,28 @@ bool DBRequestFunctions::GetCharacterEquipmentData(SessionRef session, int64 cha
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
         {
-            dbBind.BindCol(0, _itemId);
-            dbBind.BindCol(1, _slotId);
+            dbBind.BindCol(0, _item_uid);
+            dbBind.BindCol(1, _template_id);
+            dbBind.BindCol(2, _slotId);
         }
 
         /* Params */
         int64 _characterId;
 
         /* Cols */
-        int32 _itemId;
+        int64 _item_uid;
+        int32 _template_id;
         int32 _slotId;
     };
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
     // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-    DBBind<PARAMS, COLS> dbBind(*dbConn, L"                             \
-        SELECT item_id, slot_id                                         \
-        FROM [dbo].[CharacterEquipment]                                 \
-        WHERE character_id = (?)                                        \
-    ");
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT item_uid, template_id, slot_id
+        FROM [dbo].[CharactersEquipments]
+        WHERE character_id = (?)
+    )SQL");
 
     BindObject bindObject(dbBind, characterId);
 
@@ -638,10 +647,11 @@ bool DBRequestFunctions::GetCharacterEquipmentData(SessionRef session, int64 cha
 
     while (dbConn->Fetch())
     {
-        Protocol::Item* item = playerInfo->add_equipment();
+        Protocol::Equipment* equipment = playerInfo->add_equipments();
 
-        item->set_item_id(bindObject._itemId);
-        item->set_slot_id(bindObject._slotId);
+        equipment->set_item_uid(bindObject._item_uid);
+        equipment->set_template_id(bindObject._template_id);
+        equipment->set_slot_id(bindObject._slotId);
     }
 
     GDBConnectionPool->Push(dbConn);

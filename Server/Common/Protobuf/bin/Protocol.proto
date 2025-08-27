@@ -89,13 +89,98 @@ message S_MOVE
 	PosInfo info = 1;
 }
 
-message C_CHAT
+message C_ATTACK
 {
-	string msg = 1;
+    // Normal Attack만 이 패킷을 사용한다.
 }
 
-message S_CHAT
+message S_ATTACK
 {
-	uint64 playerId = 1;
-	string msg = 2;
+    uint64 object_id = 1;
+}
+
+message S_HIT
+{
+    uint64 attacker_id = 1; // object_id
+    uint64 target_id = 2; // object_id
+    HitType type = 3;
+    optional int32 skill_id = 4;    // 스킬로 맞은 경우에만 값이 있음
+    optional int32 effect_id = 5;   // 지속피해로 맞은 경우에만 값이 있음
+
+    // 맞아서 바뀐 스텟들
+    optional int32 changed_hp = 6;
+    optional int32 changed_mp = 7;
+
+    // 맞아서 생긴 효과(버프, 디버프)
+    // repeated Effect addedEffect = ?;
+}
+
+message C_BUY_ITEM
+{
+    int32 template_id = 1;
+    int32 count = 2;
+}
+
+message S_BUY_ITEM
+{
+    // {template_id} 아이템을 구매하여 {slot_id}의 아이템 개수가 {count}개로 변경됨.
+    int32 template_id = 1;
+    int32 slot_id = 2;
+    int32 count = 3;
+    optional int32 item_uid = 4; // 무기를 산 경우만 값이 있음.
+    int64 gold = 5;
+}
+
+message C_SELL_ITEM
+{
+    int32 template_id = 1;
+    int32 slot_id = 2;
+    int32 count = 3;
+    optional int32 item_uid = 4; // 무기인 경우만 값이 있음.
+}
+
+message S_SELL_ITEM
+{
+    int32 slot_id = 1;
+    int32 count = 2;
+    int64 gold = 3;
+}
+
+message C_EQUIP_EQUIPMENT
+{
+    int32 slot_id = 1;
+    int32 item_uid = 2;
+}
+
+message S_EQUIP_EQUIPMENT
+{
+    // 장비 교체인 경우 교체한 장비 슬롯 창으로 들어가게끔 클라이언트와 약속한다.
+    int32 item_uid = 1;
+    StatInfo info = 2; // 바뀐 스텟
+}
+
+message C_UNEQUIP_EQUIPMENT
+{
+    int32 slot_id = 1;
+    int32 item_uid = 2;
+}
+
+message S_UNEQUIP_EQUIPMENT
+{
+    // 탈착한 장비의 경우 가장 앞에 있는 빈 슬롯에 들어가게끔 클라이언트와 약속한다.
+    int32 item_uid = 1;
+    StatInfo info = 3; // 바뀐 스텟
+}
+
+message C_USE_ITEM
+{
+    int32 template_id = 1;
+    int32 slot_id = 2;
+}
+
+message S_USE_ITEM
+{
+    int32 slot_id = 1;
+    int32 count = 2;
+    StatInfo info = 3; // 바뀐 스텟
 }

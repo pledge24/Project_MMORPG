@@ -60,8 +60,6 @@ protected:
 	class UInputAction* LookAction;
 
 protected:
-    virtual void SetupPlayerInfoComponent() override;
-
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
@@ -72,8 +70,4 @@ protected:
 
 	// Dirty Flag Test
 	FVector2D LastDesiredInput;
-
-    // 장착 아이템 컴포넌트 보유
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    class UInventoryComponent* InventoryComponent;
 };

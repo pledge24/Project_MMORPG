@@ -12,7 +12,7 @@ enum ObjectType
 enum CharacterClass
 {
 	CLASS_TYPE_NONE = 0;
-	CLASS_TYPE_KNIGHT = 1;
+	CLASS_TYPE_WARRIOR = 1;
 	CLASS_TYPE_MAGE = 2;
 }
 
@@ -22,4 +22,21 @@ enum MoveState
 	MOVE_STATE_IDLE = 1;
 	MOVE_STATE_RUN = 2;
 	MOVE_STATE_JUMP = 3;
+}
+
+enum HitType
+{
+    HIT_TYPE_NONE = 0;
+    HIT_TYPE_NORMAL = 1;
+    HIT_TYPE_SKILL = 2;
+    HIT_TYPE_EOT = 3; // Effect Over Time: 지속 효과 피해
+}
+
+enum DamageType
+{
+    DAMAGE_TYPE_NONE = 0;
+    DAMAGE_TYPE_PHYSICAL = 1;   // 물리 피해
+    DAMAGE_TYPE_MAGICAL = 2;    // 마법 피해
+    DAMAGE_TYPE_BURN = 3;       // 화염 피해
+    DAMAGE_TYPE_POSION = 4;     // 독 피해
 }

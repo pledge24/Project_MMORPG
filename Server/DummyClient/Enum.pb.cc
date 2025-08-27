@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[3];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[5];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -32,15 +32,21 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\n\nEnum.proto\022\010Protocol*m\n\nObjectType\022\024\n\020"
   "OBJECT_TYPE_NONE\020\000\022\030\n\024OBJECT_TYPE_CREATU"
   "RE\020\001\022\032\n\026OBJECT_TYPE_PROJECTILE\020\002\022\023\n\017OBJE"
-  "CT_TYPE_ENV\020\003*Q\n\016CharacterClass\022\023\n\017CLASS"
-  "_TYPE_NONE\020\000\022\025\n\021CLASS_TYPE_KNIGHT\020\001\022\023\n\017C"
-  "LASS_TYPE_MAGE\020\002*^\n\tMoveState\022\023\n\017MOVE_ST"
-  "ATE_NONE\020\000\022\023\n\017MOVE_STATE_IDLE\020\001\022\022\n\016MOVE_"
-  "STATE_RUN\020\002\022\023\n\017MOVE_STATE_JUMP\020\003b\006proto3"
+  "CT_TYPE_ENV\020\003*R\n\016CharacterClass\022\023\n\017CLASS"
+  "_TYPE_NONE\020\000\022\026\n\022CLASS_TYPE_WARRIOR\020\001\022\023\n\017"
+  "CLASS_TYPE_MAGE\020\002*^\n\tMoveState\022\023\n\017MOVE_S"
+  "TATE_NONE\020\000\022\023\n\017MOVE_STATE_IDLE\020\001\022\022\n\016MOVE"
+  "_STATE_RUN\020\002\022\023\n\017MOVE_STATE_JUMP\020\003*W\n\007Hit"
+  "Type\022\021\n\rHIT_TYPE_NONE\020\000\022\023\n\017HIT_TYPE_NORM"
+  "AL\020\001\022\022\n\016HIT_TYPE_SKILL\020\002\022\020\n\014HIT_TYPE_EOT"
+  "\020\003*\203\001\n\nDamageType\022\024\n\020DAMAGE_TYPE_NONE\020\000\022"
+  "\030\n\024DAMAGE_TYPE_PHYSICAL\020\001\022\027\n\023DAMAGE_TYPE"
+  "_MAGICAL\020\002\022\024\n\020DAMAGE_TYPE_BURN\020\003\022\026\n\022DAMA"
+  "GE_TYPE_POSION\020\004b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 320, descriptor_table_protodef_Enum_2eproto,
+    false, false, 544, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -95,6 +101,39 @@ bool MoveState_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* HitType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[3];
+}
+bool HitType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DamageType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[4];
+}
+bool DamageType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
       return true;
     default:
       return false;

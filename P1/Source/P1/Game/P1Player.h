@@ -36,12 +36,6 @@ public:
 	Protocol::PosInfo* GetPlayerInfo() { return PlayerInfo; }
 
 protected:
-    virtual void SetupPlayerInfoComponent();
-
-    // 플레이어 정보 컴포넌트
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    class UPlayerInfoComponent* PlayerInfoComponent;
-
     class Protocol::PosInfo* PlayerInfo; // 현재 위치
 	class Protocol::PosInfo* DestInfo; // 목적지
 };

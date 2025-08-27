@@ -170,11 +170,33 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 	return true;
 }
 
-bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
+bool Handle_C_ATTACK(PacketSessionRef& session, Protocol::C_ATTACK& pkt)
 {
-	std::cout << pkt.msg() << endl;
-
-	return true;
+    return false;
 }
 
+bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
+{
+    return false;
+}
+
+bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
+{
+    return false;
+}
+
+bool Handle_C_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_EQUIP_EQUIPMENT& pkt)
+{
+    return false;
+}
+
+bool Handle_C_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_UNEQUIP_EQUIPMENT& pkt)
+{
+    return false;
+}
+
+bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
+{
+    return false;
+}
 

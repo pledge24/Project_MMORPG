@@ -1,10 +1,7 @@
 -- GameDB에서 사용하는 모든 테이블
-
-DROP TABLE IF EXISTS CharacterLastState;
-DROP TABLE IF EXISTS CharacterInventory;
-DROP TABLE IF EXISTS CharacterEquipment;
-DROP TABLE IF EXISTS Characters;
-
+DROP TABLE IF EXISTS CharactersLastState;
+DROP TABLE IF EXISTS CharactersItems;
+DROP TABLE IF EXISTS CharactersEquipments;
 
 -- 1. Characters: 캐릭터 기본 정보
 DROP TABLE IF EXISTS Characters;
@@ -20,9 +17,9 @@ CREATE TABLE Characters(
 GO
 
 
--- 2. CharacterState: 캐릭터의 마지막 상태
-DROP TABLE IF EXISTS CharacterLastState;
-CREATE TABLE CharacterLastState(
+-- 2. CharactersState: 캐릭터의 마지막 상태
+DROP TABLE IF EXISTS CharactersLastState;
+CREATE TABLE CharactersLastState(
     character_id        BIGINT PRIMARY KEY,
     cur_hp              INT NOT NULL DEFAULT 0,
     cur_mp              INT NOT NULL DEFAULT 0,
@@ -42,13 +39,13 @@ CREATE TABLE CharacterLastState(
 GO
 
 
--- 3. CharacterInventory: 캐릭터 인벤토리 정보
-DROP TABLE IF EXISTS CharacterInventory;
-CREATE TABLE CharacterInventory(
+-- 3. CharactersItems: 캐릭터 아이템 정보(장비는 제외)
+DROP TABLE IF EXISTS CharactersItems;
+CREATE TABLE CharactersItems(
     character_id        BIGINT NOT NULL,
-    item_id             INT NOT NULL,
+    template_id         INT NOT NULL,
     slot_id             INT NOT NULL,
-    quantity            INT NOT NULL DEFAULT 1,
+    count               INT NOT NULL DEFAULT 1,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,
@@ -58,16 +55,19 @@ CREATE TABLE CharacterInventory(
 GO
 
 
--- 4. CharacterEquipment: 캐릭터 장착 정보
-DROP TABLE IF EXISTS CharacterEquipment;
-CREATE TABLE CharacterEquipment(
+-- 4. CharactersEquipments: 캐릭터 장착 아이템 정보(무기, 갑옷)
+DROP TABLE IF EXISTS CharactersEquipments;
+CREATE TABLE CharactersEquipments(
+    item_uid            BIGINT IDENTITY(1000, 1) PRIMARY KEY,
     character_id        BIGINT NOT NULL,
-    item_id             INT NOT NULL,
-    slot_id             INT NOT NULL, -- 장착 부위 ID(ex. 0=투구, 1=상의, 2=하의, 3=무기)
+    template_id         INT NOT NULL,
+    slot_id             INT NOT NULL, -- 장착 중인 무기이면 100,000부터 시작
+    enhance             INT NOT NULL DEFAULT 0,
+    durability          INT NOT NULL DEFAULT 0,
+    bonus_attack        INT NOT NULL DEFAULT 0,
+    bonus_magic         INT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,
-
-    PRIMARY KEY (character_id, slot_id)
 );
 GO

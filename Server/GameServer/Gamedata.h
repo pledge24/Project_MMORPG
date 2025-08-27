@@ -2,6 +2,7 @@
 
 #include "nlohmann/json.hpp"
 using Json = nlohmann::json;
+using DataTable = unordered_map<int32, Json>;
 
 /*-------------------
        Gamedata
@@ -16,10 +17,19 @@ public:
     static void PrintAllGamedata();
 #endif
 
+public:
+    /* 직업별 레벨 테이블 */
+    static DataTable WarriorLevelDataTable;
+
+    /* 레벨 테이블 매핑 */
+    static unordered_map<int32, DataTable*> ClassLevelDataTableMappings;
+
     /* 게임 데이터 */
-    static map<pair<int32, int32>, Json> CharacterDataTable;    // <<classId, level>, LevelTable>
-    static unordered_map<int32, Json> ItemDataTable;
-    static unordered_map<int32, Json> MapDataTable;
-    static unordered_map<int32, Json> MonsterDataTable;
-    static unordered_map<int32, Json> QuestDataTable;
+    static DataTable ItemDataTable;
+    static DataTable EquipmentDataTable;
+    static DataTable MapDataTable;
+    static DataTable MonsterDataTable;
+    static DataTable QuestDataTable;
+
+
 };

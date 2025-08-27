@@ -11,7 +11,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1MyPlayer.h"
-#include "PlayerInfoComponent.h"
 
 AP1Player::AP1Player()
 {
@@ -41,8 +40,6 @@ AP1Player::AP1Player()
 
 	PlayerInfo = new Protocol::PosInfo();
 	DestInfo = new Protocol::PosInfo();
-
-    SetupPlayerInfoComponent();
 }
 
 AP1Player::~AP1Player()
@@ -177,9 +174,3 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 	// 상태만 바로 관리하자.
 	SetMoveState(Info.state());
 }
-
-void AP1Player::SetupPlayerInfoComponent()
-{
-    PlayerInfoComponent = CreateDefaultSubobject<UPlayerInfoComponent>(TEXT("PlayerInfoComponent"));
-}
-

@@ -76,7 +76,7 @@ inline bool ObjectType_Parse(
 }
 enum CharacterClass : int {
   CLASS_TYPE_NONE = 0,
-  CLASS_TYPE_KNIGHT = 1,
+  CLASS_TYPE_WARRIOR = 1,
   CLASS_TYPE_MAGE = 2,
   CharacterClass_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   CharacterClass_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
@@ -127,6 +127,61 @@ inline bool MoveState_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<MoveState>(
     MoveState_descriptor(), name, value);
 }
+enum HitType : int {
+  HIT_TYPE_NONE = 0,
+  HIT_TYPE_NORMAL = 1,
+  HIT_TYPE_SKILL = 2,
+  HIT_TYPE_EOT = 3,
+  HitType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  HitType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool HitType_IsValid(int value);
+constexpr HitType HitType_MIN = HIT_TYPE_NONE;
+constexpr HitType HitType_MAX = HIT_TYPE_EOT;
+constexpr int HitType_ARRAYSIZE = HitType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* HitType_descriptor();
+template<typename T>
+inline const std::string& HitType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, HitType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function HitType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    HitType_descriptor(), enum_t_value);
+}
+inline bool HitType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, HitType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<HitType>(
+    HitType_descriptor(), name, value);
+}
+enum DamageType : int {
+  DAMAGE_TYPE_NONE = 0,
+  DAMAGE_TYPE_PHYSICAL = 1,
+  DAMAGE_TYPE_MAGICAL = 2,
+  DAMAGE_TYPE_BURN = 3,
+  DAMAGE_TYPE_POSION = 4,
+  DamageType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  DamageType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool DamageType_IsValid(int value);
+constexpr DamageType DamageType_MIN = DAMAGE_TYPE_NONE;
+constexpr DamageType DamageType_MAX = DAMAGE_TYPE_POSION;
+constexpr int DamageType_ARRAYSIZE = DamageType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DamageType_descriptor();
+template<typename T>
+inline const std::string& DamageType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, DamageType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function DamageType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    DamageType_descriptor(), enum_t_value);
+}
+inline bool DamageType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, DamageType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<DamageType>(
+    DamageType_descriptor(), name, value);
+}
 // ===================================================================
 
 
@@ -163,6 +218,16 @@ template <> struct is_proto_enum< ::Protocol::MoveState> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::MoveState>() {
   return ::Protocol::MoveState_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::HitType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::HitType>() {
+  return ::Protocol::HitType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::DamageType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::DamageType>() {
+  return ::Protocol::DamageType_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

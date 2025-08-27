@@ -12,8 +12,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "InventoryComponent.h"
-#include "MyPlayerInfoComponent.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
@@ -160,10 +158,4 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
-
-void AP1MyPlayer::SetupPlayerInfoComponent()
-{
-    PlayerInfoComponent = CreateDefaultSubobject<UMyPlayerInfoComponent>(TEXT("MyPlayerInfoComponent"));
-}
-
 
