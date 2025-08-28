@@ -1,7 +1,8 @@
 -- GameDB에서 사용하는 모든 테이블
 DROP TABLE IF EXISTS CharactersLastState;
-DROP TABLE IF EXISTS CharactersItems;
-DROP TABLE IF EXISTS CharactersEquipments;
+DROP TABLE IF EXISTS CharactersGearItems;
+DROP TABLE IF EXISTS CharactersConsumableItems;
+DROP TABLE IF EXISTS CharactersMiscItems;
 
 -- 1. Characters: 캐릭터 기본 정보
 DROP TABLE IF EXISTS Characters;
@@ -39,9 +40,27 @@ CREATE TABLE CharactersLastState(
 GO
 
 
--- 3. CharactersItems: 캐릭터 아이템 정보(장비는 제외)
-DROP TABLE IF EXISTS CharactersItems;
-CREATE TABLE CharactersItems(
+-- 3. CharactersGearItems: 캐릭터의 장비 아이템
+DROP TABLE IF EXISTS CharactersGearItems;
+CREATE TABLE CharactersGearItems(
+    item_uid            BIGINT IDENTITY(1000, 1) PRIMARY KEY,
+    character_id        BIGINT NOT NULL,
+    template_id         INT NOT NULL,
+    slot_id             INT NOT NULL, -- 장착 중인 무기이면 100,000부터 시작
+    enhance             INT NOT NULL DEFAULT 0,
+    durability          INT NOT NULL DEFAULT 0,
+    bonus_attack        INT NOT NULL DEFAULT 0,
+    bonus_magic         INT NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (character_id) REFERENCES Characters(character_id)
+    ON DELETE CASCADE,
+);
+GO
+
+
+-- 4. CharactersConsumableItems: 캐릭터의 소비 아이템
+DROP TABLE IF EXISTS CharactersConsumableItems;
+CREATE TABLE CharactersConsumableItems(
     character_id        BIGINT NOT NULL,
     template_id         INT NOT NULL,
     slot_id             INT NOT NULL,
@@ -55,19 +74,17 @@ CREATE TABLE CharactersItems(
 GO
 
 
--- 4. CharactersEquipments: 캐릭터 장착 아이템 정보(무기, 갑옷)
-DROP TABLE IF EXISTS CharactersEquipments;
-CREATE TABLE CharactersEquipments(
-    item_uid            BIGINT IDENTITY(1000, 1) PRIMARY KEY,
+-- 5. CharactersMiscItems: 캐릭터의 기타 아이템
+DROP TABLE IF EXISTS CharactersMiscItems;
+CREATE TABLE CharactersMiscItems(
     character_id        BIGINT NOT NULL,
     template_id         INT NOT NULL,
-    slot_id             INT NOT NULL, -- 장착 중인 무기이면 100,000부터 시작
-    enhance             INT NOT NULL DEFAULT 0,
-    durability          INT NOT NULL DEFAULT 0,
-    bonus_attack        INT NOT NULL DEFAULT 0,
-    bonus_magic         INT NOT NULL DEFAULT 0,
+    slot_id             INT NOT NULL,
+    count               INT NOT NULL DEFAULT 1,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,
+
+    PRIMARY KEY (character_id, slot_id)
 );
 GO

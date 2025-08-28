@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[5];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[7];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -42,11 +42,16 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\020\003*\203\001\n\nDamageType\022\024\n\020DAMAGE_TYPE_NONE\020\000\022"
   "\030\n\024DAMAGE_TYPE_PHYSICAL\020\001\022\027\n\023DAMAGE_TYPE"
   "_MAGICAL\020\002\022\024\n\020DAMAGE_TYPE_BURN\020\003\022\026\n\022DAMA"
-  "GE_TYPE_POSION\020\004b\006proto3"
+  "GE_TYPE_POSION\020\004*i\n\010ItemType\022\022\n\016ITEM_TYP"
+  "E_NONE\020\000\022\022\n\016ITEM_TYPE_GEAR\020\001\022\030\n\024ITEM_TYP"
+  "E_CONSUMABLE\020\002\022\033\n\027ITEM_TYPE_MISCELLANEOU"
+  "S\020\003*d\n\010SlotType\022\022\n\016SLOT_TYPE_NONE\020\000\022\027\n\023S"
+  "LOT_TYPE_INVENTORY\020\001\022\026\n\022SLOT_TYPE_EQUIPP"
+  "ED\020\002\022\023\n\017SLOT_TYPE_QUICK\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 544, descriptor_table_protodef_Enum_2eproto,
+    false, false, 753, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -134,6 +139,38 @@ bool DamageType_IsValid(int value) {
     case 2:
     case 3:
     case 4:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ItemType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[5];
+}
+bool ItemType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SlotType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[6];
+}
+bool SlotType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
       return true;
     default:
       return false;

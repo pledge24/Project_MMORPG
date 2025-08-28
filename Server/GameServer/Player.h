@@ -16,6 +16,5 @@ public:
 
     Protocol::PlayerInfo* playerInfo;
     Protocol::CharacterOverview* overview;
-
 };
 

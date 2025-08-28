@@ -40,3 +40,19 @@ enum DamageType
     DAMAGE_TYPE_BURN = 3;       // »≠ø∞ «««ÿ
     DAMAGE_TYPE_POSION = 4;     // µ∂ «««ÿ
 }
+
+enum ItemType
+{
+    ITEM_TYPE_NONE = 0;            
+    ITEM_TYPE_GEAR = 1;            // ¿Â∫Ò≈«
+    ITEM_TYPE_CONSUMABLE = 2;      // º“∫Ò≈«
+    ITEM_TYPE_MISCELLANEOUS = 3;   // ±‚≈∏≈«
+}
+
+enum SlotType
+{
+    SLOT_TYPE_NONE = 0;
+    SLOT_TYPE_INVENTORY = 1;        // ¿Œ∫• ΩΩ∑‘
+    SLOT_TYPE_EQUIPPED = 2;         // ¿Â∫Ò ΩΩ∑‘
+    SLOT_TYPE_QUICK = 3;            // ƒ¸ ΩΩ∑‘
+}

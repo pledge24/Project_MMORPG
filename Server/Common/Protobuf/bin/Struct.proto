@@ -16,17 +16,23 @@ message ObjectInfo
 	uint64 object_id = 1;
 	ObjectType object_type = 2;
 	PosInfo pos_info = 3;
-    StatInfo stat_info = 4;
-    optional PlayerInfo player_info = 5;
+   
+    optional PlayerInfo player_info = 4;
 }
 
 message PlayerInfo
 {
+    // 캐릭터 기본 정보
     CharacterOverview overview = 1;
-    uint64 gold = 2;
-    uint64 exp = 3;
-    repeated Item items = 4;
-    repeated Equipment Equipments = 5;
+
+    // 성장 및 스텟 관련
+    uint64 exp = 2;
+    StatInfo stat_info = 3;
+
+    // 소유 관련
+    uint64 gold = 4;
+    Inventory inventory = 5;
+    repeated Slot equipped_gear = 6;
 }
 
 message PosInfo
@@ -50,23 +56,41 @@ message StatInfo
     int32 cur_magic = 6;
 }
 
-message Item
-{
-    int32 template_id = 1;
-    int32 slot_id = 2;
-    int32 count = 3;
-}
-
-message Equipment
-{
-    int32 item_uid = 1;
-    int32 template_id = 2;
-    int32 slot_id = 3;
-    int32 count = 4;
-}
-
 message Effect
 {
     int32 effect_id = 1;
     float duration = 2;
 }
+
+message GearInfo
+{
+    int64 item_uid = 1;
+    int32 enhance = 2;
+    int32 durability = 3;
+    int32 bonus_attack = 4;
+    int32 bonus_magic = 5;
+}
+
+message Item
+{
+    int32 template_id = 1;
+    ItemType type = 2;
+    int32 count = 3;
+
+    optional GearInfo GearInfo = 4;
+}
+
+message Slot
+{
+    int32 slot_id = 1;
+    SlotType type = 2;
+    optional Item item = 3;
+}
+
+message Inventory
+{
+    repeated Slot gear = 1;
+    repeated Slot consumables = 2;
+    repeated Slot miscellaneous = 3;
+}
+

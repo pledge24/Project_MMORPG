@@ -29,6 +29,9 @@
     <Filter Include="Game\Data">
       <UniqueIdentifier>{c1cdcfa1-e243-42a2-ab0e-55ffd15cd2ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\System">
+      <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -81,6 +84,9 @@
     </ClCompile>
     <ClCompile Include="Gamedata.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Game\System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +144,9 @@
     </ClInclude>
     <ClInclude Include="Global.h">
       <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Game\System</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -96,6 +96,9 @@ void DBConnection::Unbind()
 	::SQLFreeStmt(_statement, SQL_UNBIND);
 	::SQLFreeStmt(_statement, SQL_RESET_PARAMS);
 	::SQLFreeStmt(_statement, SQL_CLOSE);
+
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0);
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);
 }
 
 bool DBConnection::FindError(const SQLWCHAR* targetState)
@@ -136,12 +139,12 @@ bool DBConnection::BindParam(int32 paramIndex, bool* value, SQLLEN* index)
 
 bool DBConnection::BindParam(int32 paramIndex, float* value, SQLLEN* index)
 {
-	return BindParam(paramIndex, SQL_C_FLOAT, SQL_REAL, 0, value, index);
+	return BindParam(paramIndex, SQL_C_FLOAT, SQL_REAL, size32(float), value, index);
 }
 
 bool DBConnection::BindParam(int32 paramIndex, double* value, SQLLEN* index)
 {
-	return BindParam(paramIndex, SQL_C_DOUBLE, SQL_DOUBLE, 0, value, index);
+	return BindParam(paramIndex, SQL_C_DOUBLE, SQL_DOUBLE, size32(double), value, index);
 }
 
 bool DBConnection::BindParam(int32 paramIndex, int8* value, SQLLEN* index)
