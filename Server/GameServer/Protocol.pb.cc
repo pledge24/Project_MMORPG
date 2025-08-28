@@ -302,8 +302,7 @@ struct S_BUY_ITEMDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_BUY_ITEMDefaultTypeInternal _S_BUY_ITEM_default_instance_;
 PROTOBUF_CONSTEXPR C_SELL_ITEM::C_SELL_ITEM(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.item_)*/nullptr
-  , /*decltype(_impl_.slot_id_)*/0
+    /*decltype(_impl_.slot_)*/nullptr
   , /*decltype(_impl_.count_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_SELL_ITEMDefaultTypeInternal {
@@ -331,8 +330,7 @@ struct S_SELL_ITEMDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_SELL_ITEMDefaultTypeInternal _S_SELL_ITEM_default_instance_;
 PROTOBUF_CONSTEXPR C_EQUIP_EQUIPMENT::C_EQUIP_EQUIPMENT(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.item_)*/nullptr
-  , /*decltype(_impl_.slot_id_)*/0
+    /*decltype(_impl_.slot_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_EQUIP_EQUIPMENTDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_EQUIP_EQUIPMENTDefaultTypeInternal()
@@ -359,8 +357,7 @@ struct S_EQUIP_EQUIPMENTDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_EQUIP_EQUIPMENTDefaultTypeInternal _S_EQUIP_EQUIPMENT_default_instance_;
 PROTOBUF_CONSTEXPR C_UNEQUIP_EQUIPMENT::C_UNEQUIP_EQUIPMENT(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.item_)*/nullptr
-  , /*decltype(_impl_.slot_id_)*/0
+    /*decltype(_impl_.slot_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_UNEQUIP_EQUIPMENTDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_UNEQUIP_EQUIPMENTDefaultTypeInternal()
@@ -387,8 +384,7 @@ struct S_UNEQUIP_EQUIPMENTDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_UNEQUIP_EQUIPMENTDefaultTypeInternal _S_UNEQUIP_EQUIPMENT_default_instance_;
 PROTOBUF_CONSTEXPR C_USE_ITEM::C_USE_ITEM(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.item_)*/nullptr
-  , /*decltype(_impl_.slot_id_)*/0
+    /*decltype(_impl_.slot_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_USE_ITEMDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_USE_ITEMDefaultTypeInternal()
@@ -587,8 +583,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.item_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.slot_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.slot_),
   PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.count_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_SELL_ITEM, _internal_metadata_),
@@ -604,8 +599,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_EQUIP_EQUIPMENT, _impl_.item_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_EQUIP_EQUIPMENT, _impl_.slot_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_EQUIP_EQUIPMENT, _impl_.slot_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_EQUIP_EQUIPMENT, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -620,8 +614,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_UNEQUIP_EQUIPMENT, _impl_.item_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_UNEQUIP_EQUIPMENT, _impl_.slot_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_UNEQUIP_EQUIPMENT, _impl_.slot_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_UNEQUIP_EQUIPMENT, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -636,8 +629,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_USE_ITEM, _impl_.item_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_USE_ITEM, _impl_.slot_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_USE_ITEM, _impl_.slot_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_USE_ITEM, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -670,13 +662,13 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 146, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
   { 154, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
   { 162, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
-  { 171, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
-  { 179, -1, -1, sizeof(::Protocol::C_EQUIP_EQUIPMENT)},
-  { 187, -1, -1, sizeof(::Protocol::S_EQUIP_EQUIPMENT)},
-  { 195, -1, -1, sizeof(::Protocol::C_UNEQUIP_EQUIPMENT)},
-  { 203, -1, -1, sizeof(::Protocol::S_UNEQUIP_EQUIPMENT)},
-  { 211, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
-  { 219, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
+  { 170, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
+  { 178, -1, -1, sizeof(::Protocol::C_EQUIP_EQUIPMENT)},
+  { 185, -1, -1, sizeof(::Protocol::S_EQUIP_EQUIPMENT)},
+  { 193, -1, -1, sizeof(::Protocol::C_UNEQUIP_EQUIPMENT)},
+  { 200, -1, -1, sizeof(::Protocol::S_UNEQUIP_EQUIPMENT)},
+  { 208, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
+  { 215, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -740,23 +732,21 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "d_hpB\r\n\013_changed_mp\"0\n\nC_BUY_ITEM\022\023\n\013tem"
   "plate_id\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"@\n\nS_BUY_I"
   "TEM\022$\n\014updatedSlots\030\001 \003(\0132\016.Protocol.Slo"
-  "t\022\014\n\004gold\030\002 \001(\003\"K\n\013C_SELL_ITEM\022\034\n\004item\030\001"
-  " \001(\0132\016.Protocol.Item\022\017\n\007slot_id\030\002 \001(\005\022\r\n"
-  "\005count\030\003 \001(\005\"A\n\013S_SELL_ITEM\022$\n\014updatedSl"
-  "ots\030\001 \003(\0132\016.Protocol.Slot\022\014\n\004gold\030\002 \001(\003\""
-  "B\n\021C_EQUIP_EQUIPMENT\022\034\n\004item\030\001 \001(\0132\016.Pro"
-  "tocol.Item\022\017\n\007slot_id\030\002 \001(\005\"b\n\021S_EQUIP_E"
-  "QUIPMENT\022$\n\014updatedSlots\030\001 \003(\0132\016.Protoco"
-  "l.Slot\022\'\n\013updatedStat\030\002 \001(\0132\022.Protocol.S"
-  "tatInfo\"D\n\023C_UNEQUIP_EQUIPMENT\022\034\n\004item\030\001"
-  " \001(\0132\016.Protocol.Item\022\017\n\007slot_id\030\002 \001(\005\"d\n"
-  "\023S_UNEQUIP_EQUIPMENT\022$\n\014updatedSlots\030\001 \003"
-  "(\0132\016.Protocol.Slot\022\'\n\013updatedStat\030\002 \001(\0132"
-  "\022.Protocol.StatInfo\";\n\nC_USE_ITEM\022\034\n\004ite"
-  "m\030\001 \001(\0132\016.Protocol.Item\022\017\n\007slot_id\030\002 \001(\005"
-  "\"[\n\nS_USE_ITEM\022$\n\014updatedSlots\030\001 \003(\0132\016.P"
+  "t\022\014\n\004gold\030\002 \001(\003\":\n\013C_SELL_ITEM\022\034\n\004slot\030\001"
+  " \001(\0132\016.Protocol.Slot\022\r\n\005count\030\002 \001(\005\"A\n\013S"
+  "_SELL_ITEM\022$\n\014updatedSlots\030\001 \003(\0132\016.Proto"
+  "col.Slot\022\014\n\004gold\030\002 \001(\003\"1\n\021C_EQUIP_EQUIPM"
+  "ENT\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"b\n\021S_E"
+  "QUIP_EQUIPMENT\022$\n\014updatedSlots\030\001 \003(\0132\016.P"
   "rotocol.Slot\022\'\n\013updatedStat\030\002 \001(\0132\022.Prot"
-  "ocol.StatInfob\006proto3"
+  "ocol.StatInfo\"3\n\023C_UNEQUIP_EQUIPMENT\022\034\n\004"
+  "slot\030\001 \001(\0132\016.Protocol.Slot\"d\n\023S_UNEQUIP_"
+  "EQUIPMENT\022$\n\014updatedSlots\030\001 \003(\0132\016.Protoc"
+  "ol.Slot\022\'\n\013updatedStat\030\002 \001(\0132\022.Protocol."
+  "StatInfo\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.P"
+  "rotocol.Slot\"[\n\nS_USE_ITEM\022$\n\014updatedSlo"
+  "ts\030\001 \003(\0132\016.Protocol.Slot\022\'\n\013updatedStat\030"
+  "\002 \001(\0132\022.Protocol.StatInfob\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -764,7 +754,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 1781, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 1713, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 29,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -4428,18 +4418,18 @@ void S_BUY_ITEM::InternalSwap(S_BUY_ITEM* other) {
 
 class C_SELL_ITEM::_Internal {
  public:
-  static const ::Protocol::Item& item(const C_SELL_ITEM* msg);
+  static const ::Protocol::Slot& slot(const C_SELL_ITEM* msg);
 };
 
-const ::Protocol::Item&
-C_SELL_ITEM::_Internal::item(const C_SELL_ITEM* msg) {
-  return *msg->_impl_.item_;
+const ::Protocol::Slot&
+C_SELL_ITEM::_Internal::slot(const C_SELL_ITEM* msg) {
+  return *msg->_impl_.slot_;
 }
-void C_SELL_ITEM::clear_item() {
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+void C_SELL_ITEM::clear_slot() {
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
+  _impl_.slot_ = nullptr;
 }
 C_SELL_ITEM::C_SELL_ITEM(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -4451,18 +4441,15 @@ C_SELL_ITEM::C_SELL_ITEM(const C_SELL_ITEM& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_SELL_ITEM* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){}
+      decltype(_impl_.slot_){nullptr}
     , decltype(_impl_.count_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_item()) {
-    _this->_impl_.item_ = new ::Protocol::Item(*from._impl_.item_);
+  if (from._internal_has_slot()) {
+    _this->_impl_.slot_ = new ::Protocol::Slot(*from._impl_.slot_);
   }
-  ::memcpy(&_impl_.slot_id_, &from._impl_.slot_id_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.count_) -
-    reinterpret_cast<char*>(&_impl_.slot_id_)) + sizeof(_impl_.count_));
+  _this->_impl_.count_ = from._impl_.count_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_SELL_ITEM)
 }
 
@@ -4471,8 +4458,7 @@ inline void C_SELL_ITEM::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){0}
+      decltype(_impl_.slot_){nullptr}
     , decltype(_impl_.count_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -4489,7 +4475,7 @@ C_SELL_ITEM::~C_SELL_ITEM() {
 
 inline void C_SELL_ITEM::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.item_;
+  if (this != internal_default_instance()) delete _impl_.slot_;
 }
 
 void C_SELL_ITEM::SetCachedSize(int size) const {
@@ -4502,13 +4488,11 @@ void C_SELL_ITEM::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
-  ::memset(&_impl_.slot_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.count_) -
-      reinterpret_cast<char*>(&_impl_.slot_id_)) + sizeof(_impl_.count_));
+  _impl_.slot_ = nullptr;
+  _impl_.count_ = 0;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -4518,25 +4502,17 @@ const char* C_SELL_ITEM::_InternalParse(const char* ptr, ::_pbi::ParseContext* c
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.Item item = 1;
+      // .Protocol.Slot slot = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_item(), ptr);
+          ptr = ctx->ParseMessage(_internal_mutable_slot(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // int32 slot_id = 2;
+      // int32 count = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
-          _impl_.slot_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
-          CHK_(ptr);
-        } else
-          goto handle_unusual;
-        continue;
-      // int32 count = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
           _impl_.count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else
@@ -4571,23 +4547,17 @@ uint8_t* C_SELL_ITEM::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::item(this),
-        _Internal::item(this).GetCachedSize(), target, stream);
+      InternalWriteMessage(1, _Internal::slot(this),
+        _Internal::slot(this).GetCachedSize(), target, stream);
   }
 
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_slot_id(), target);
-  }
-
-  // int32 count = 3;
+  // int32 count = 2;
   if (this->_internal_count() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_count(), target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_count(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -4606,19 +4576,14 @@ size_t C_SELL_ITEM::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.item_);
+        *_impl_.slot_);
   }
 
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_slot_id());
-  }
-
-  // int32 count = 3;
+  // int32 count = 2;
   if (this->_internal_count() != 0) {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_count());
   }
@@ -4641,12 +4606,9 @@ void C_SELL_ITEM::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PR
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_item()) {
-    _this->_internal_mutable_item()->::Protocol::Item::MergeFrom(
-        from._internal_item());
-  }
-  if (from._internal_slot_id() != 0) {
-    _this->_internal_set_slot_id(from._internal_slot_id());
+  if (from._internal_has_slot()) {
+    _this->_internal_mutable_slot()->::Protocol::Slot::MergeFrom(
+        from._internal_slot());
   }
   if (from._internal_count() != 0) {
     _this->_internal_set_count(from._internal_count());
@@ -4671,9 +4633,9 @@ void C_SELL_ITEM::InternalSwap(C_SELL_ITEM* other) {
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(C_SELL_ITEM, _impl_.count_)
       + sizeof(C_SELL_ITEM::_impl_.count_)
-      - PROTOBUF_FIELD_OFFSET(C_SELL_ITEM, _impl_.item_)>(
-          reinterpret_cast<char*>(&_impl_.item_),
-          reinterpret_cast<char*>(&other->_impl_.item_));
+      - PROTOBUF_FIELD_OFFSET(C_SELL_ITEM, _impl_.slot_)>(
+          reinterpret_cast<char*>(&_impl_.slot_),
+          reinterpret_cast<char*>(&other->_impl_.slot_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_SELL_ITEM::GetMetadata() const {
@@ -4901,18 +4863,18 @@ void S_SELL_ITEM::InternalSwap(S_SELL_ITEM* other) {
 
 class C_EQUIP_EQUIPMENT::_Internal {
  public:
-  static const ::Protocol::Item& item(const C_EQUIP_EQUIPMENT* msg);
+  static const ::Protocol::Slot& slot(const C_EQUIP_EQUIPMENT* msg);
 };
 
-const ::Protocol::Item&
-C_EQUIP_EQUIPMENT::_Internal::item(const C_EQUIP_EQUIPMENT* msg) {
-  return *msg->_impl_.item_;
+const ::Protocol::Slot&
+C_EQUIP_EQUIPMENT::_Internal::slot(const C_EQUIP_EQUIPMENT* msg) {
+  return *msg->_impl_.slot_;
 }
-void C_EQUIP_EQUIPMENT::clear_item() {
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+void C_EQUIP_EQUIPMENT::clear_slot() {
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
+  _impl_.slot_ = nullptr;
 }
 C_EQUIP_EQUIPMENT::C_EQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -4924,15 +4886,13 @@ C_EQUIP_EQUIPMENT::C_EQUIP_EQUIPMENT(const C_EQUIP_EQUIPMENT& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_EQUIP_EQUIPMENT* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){}
+      decltype(_impl_.slot_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_item()) {
-    _this->_impl_.item_ = new ::Protocol::Item(*from._impl_.item_);
+  if (from._internal_has_slot()) {
+    _this->_impl_.slot_ = new ::Protocol::Slot(*from._impl_.slot_);
   }
-  _this->_impl_.slot_id_ = from._impl_.slot_id_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_EQUIP_EQUIPMENT)
 }
 
@@ -4941,8 +4901,7 @@ inline void C_EQUIP_EQUIPMENT::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){0}
+      decltype(_impl_.slot_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -4958,7 +4917,7 @@ C_EQUIP_EQUIPMENT::~C_EQUIP_EQUIPMENT() {
 
 inline void C_EQUIP_EQUIPMENT::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.item_;
+  if (this != internal_default_instance()) delete _impl_.slot_;
 }
 
 void C_EQUIP_EQUIPMENT::SetCachedSize(int size) const {
@@ -4971,11 +4930,10 @@ void C_EQUIP_EQUIPMENT::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
-  _impl_.slot_id_ = 0;
+  _impl_.slot_ = nullptr;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -4985,18 +4943,10 @@ const char* C_EQUIP_EQUIPMENT::_InternalParse(const char* ptr, ::_pbi::ParseCont
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.Item item = 1;
+      // .Protocol.Slot slot = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_item(), ptr);
-          CHK_(ptr);
-        } else
-          goto handle_unusual;
-        continue;
-      // int32 slot_id = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
-          _impl_.slot_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          ptr = ctx->ParseMessage(_internal_mutable_slot(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -5030,17 +4980,11 @@ uint8_t* C_EQUIP_EQUIPMENT::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::item(this),
-        _Internal::item(this).GetCachedSize(), target, stream);
-  }
-
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_slot_id(), target);
+      InternalWriteMessage(1, _Internal::slot(this),
+        _Internal::slot(this).GetCachedSize(), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -5059,16 +5003,11 @@ size_t C_EQUIP_EQUIPMENT::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.item_);
-  }
-
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_slot_id());
+        *_impl_.slot_);
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -5089,12 +5028,9 @@ void C_EQUIP_EQUIPMENT::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, cons
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_item()) {
-    _this->_internal_mutable_item()->::Protocol::Item::MergeFrom(
-        from._internal_item());
-  }
-  if (from._internal_slot_id() != 0) {
-    _this->_internal_set_slot_id(from._internal_slot_id());
+  if (from._internal_has_slot()) {
+    _this->_internal_mutable_slot()->::Protocol::Slot::MergeFrom(
+        from._internal_slot());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -5113,12 +5049,7 @@ bool C_EQUIP_EQUIPMENT::IsInitialized() const {
 void C_EQUIP_EQUIPMENT::InternalSwap(C_EQUIP_EQUIPMENT* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(C_EQUIP_EQUIPMENT, _impl_.slot_id_)
-      + sizeof(C_EQUIP_EQUIPMENT::_impl_.slot_id_)
-      - PROTOBUF_FIELD_OFFSET(C_EQUIP_EQUIPMENT, _impl_.item_)>(
-          reinterpret_cast<char*>(&_impl_.item_),
-          reinterpret_cast<char*>(&other->_impl_.item_));
+  swap(_impl_.slot_, other->_impl_.slot_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_EQUIP_EQUIPMENT::GetMetadata() const {
@@ -5367,18 +5298,18 @@ void S_EQUIP_EQUIPMENT::InternalSwap(S_EQUIP_EQUIPMENT* other) {
 
 class C_UNEQUIP_EQUIPMENT::_Internal {
  public:
-  static const ::Protocol::Item& item(const C_UNEQUIP_EQUIPMENT* msg);
+  static const ::Protocol::Slot& slot(const C_UNEQUIP_EQUIPMENT* msg);
 };
 
-const ::Protocol::Item&
-C_UNEQUIP_EQUIPMENT::_Internal::item(const C_UNEQUIP_EQUIPMENT* msg) {
-  return *msg->_impl_.item_;
+const ::Protocol::Slot&
+C_UNEQUIP_EQUIPMENT::_Internal::slot(const C_UNEQUIP_EQUIPMENT* msg) {
+  return *msg->_impl_.slot_;
 }
-void C_UNEQUIP_EQUIPMENT::clear_item() {
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+void C_UNEQUIP_EQUIPMENT::clear_slot() {
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
+  _impl_.slot_ = nullptr;
 }
 C_UNEQUIP_EQUIPMENT::C_UNEQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -5390,15 +5321,13 @@ C_UNEQUIP_EQUIPMENT::C_UNEQUIP_EQUIPMENT(const C_UNEQUIP_EQUIPMENT& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_UNEQUIP_EQUIPMENT* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){}
+      decltype(_impl_.slot_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_item()) {
-    _this->_impl_.item_ = new ::Protocol::Item(*from._impl_.item_);
+  if (from._internal_has_slot()) {
+    _this->_impl_.slot_ = new ::Protocol::Slot(*from._impl_.slot_);
   }
-  _this->_impl_.slot_id_ = from._impl_.slot_id_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_UNEQUIP_EQUIPMENT)
 }
 
@@ -5407,8 +5336,7 @@ inline void C_UNEQUIP_EQUIPMENT::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){0}
+      decltype(_impl_.slot_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -5424,7 +5352,7 @@ C_UNEQUIP_EQUIPMENT::~C_UNEQUIP_EQUIPMENT() {
 
 inline void C_UNEQUIP_EQUIPMENT::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.item_;
+  if (this != internal_default_instance()) delete _impl_.slot_;
 }
 
 void C_UNEQUIP_EQUIPMENT::SetCachedSize(int size) const {
@@ -5437,11 +5365,10 @@ void C_UNEQUIP_EQUIPMENT::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
-  _impl_.slot_id_ = 0;
+  _impl_.slot_ = nullptr;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -5451,18 +5378,10 @@ const char* C_UNEQUIP_EQUIPMENT::_InternalParse(const char* ptr, ::_pbi::ParseCo
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.Item item = 1;
+      // .Protocol.Slot slot = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_item(), ptr);
-          CHK_(ptr);
-        } else
-          goto handle_unusual;
-        continue;
-      // int32 slot_id = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
-          _impl_.slot_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          ptr = ctx->ParseMessage(_internal_mutable_slot(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -5496,17 +5415,11 @@ uint8_t* C_UNEQUIP_EQUIPMENT::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::item(this),
-        _Internal::item(this).GetCachedSize(), target, stream);
-  }
-
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_slot_id(), target);
+      InternalWriteMessage(1, _Internal::slot(this),
+        _Internal::slot(this).GetCachedSize(), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -5525,16 +5438,11 @@ size_t C_UNEQUIP_EQUIPMENT::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.item_);
-  }
-
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_slot_id());
+        *_impl_.slot_);
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -5555,12 +5463,9 @@ void C_UNEQUIP_EQUIPMENT::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, co
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_item()) {
-    _this->_internal_mutable_item()->::Protocol::Item::MergeFrom(
-        from._internal_item());
-  }
-  if (from._internal_slot_id() != 0) {
-    _this->_internal_set_slot_id(from._internal_slot_id());
+  if (from._internal_has_slot()) {
+    _this->_internal_mutable_slot()->::Protocol::Slot::MergeFrom(
+        from._internal_slot());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -5579,12 +5484,7 @@ bool C_UNEQUIP_EQUIPMENT::IsInitialized() const {
 void C_UNEQUIP_EQUIPMENT::InternalSwap(C_UNEQUIP_EQUIPMENT* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(C_UNEQUIP_EQUIPMENT, _impl_.slot_id_)
-      + sizeof(C_UNEQUIP_EQUIPMENT::_impl_.slot_id_)
-      - PROTOBUF_FIELD_OFFSET(C_UNEQUIP_EQUIPMENT, _impl_.item_)>(
-          reinterpret_cast<char*>(&_impl_.item_),
-          reinterpret_cast<char*>(&other->_impl_.item_));
+  swap(_impl_.slot_, other->_impl_.slot_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_UNEQUIP_EQUIPMENT::GetMetadata() const {
@@ -5833,18 +5733,18 @@ void S_UNEQUIP_EQUIPMENT::InternalSwap(S_UNEQUIP_EQUIPMENT* other) {
 
 class C_USE_ITEM::_Internal {
  public:
-  static const ::Protocol::Item& item(const C_USE_ITEM* msg);
+  static const ::Protocol::Slot& slot(const C_USE_ITEM* msg);
 };
 
-const ::Protocol::Item&
-C_USE_ITEM::_Internal::item(const C_USE_ITEM* msg) {
-  return *msg->_impl_.item_;
+const ::Protocol::Slot&
+C_USE_ITEM::_Internal::slot(const C_USE_ITEM* msg) {
+  return *msg->_impl_.slot_;
 }
-void C_USE_ITEM::clear_item() {
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+void C_USE_ITEM::clear_slot() {
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
+  _impl_.slot_ = nullptr;
 }
 C_USE_ITEM::C_USE_ITEM(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -5856,15 +5756,13 @@ C_USE_ITEM::C_USE_ITEM(const C_USE_ITEM& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_USE_ITEM* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){}
+      decltype(_impl_.slot_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_item()) {
-    _this->_impl_.item_ = new ::Protocol::Item(*from._impl_.item_);
+  if (from._internal_has_slot()) {
+    _this->_impl_.slot_ = new ::Protocol::Slot(*from._impl_.slot_);
   }
-  _this->_impl_.slot_id_ = from._impl_.slot_id_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_USE_ITEM)
 }
 
@@ -5873,8 +5771,7 @@ inline void C_USE_ITEM::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_){nullptr}
-    , decltype(_impl_.slot_id_){0}
+      decltype(_impl_.slot_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -5890,7 +5787,7 @@ C_USE_ITEM::~C_USE_ITEM() {
 
 inline void C_USE_ITEM::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.item_;
+  if (this != internal_default_instance()) delete _impl_.slot_;
 }
 
 void C_USE_ITEM::SetCachedSize(int size) const {
@@ -5903,11 +5800,10 @@ void C_USE_ITEM::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.item_ != nullptr) {
-    delete _impl_.item_;
+  if (GetArenaForAllocation() == nullptr && _impl_.slot_ != nullptr) {
+    delete _impl_.slot_;
   }
-  _impl_.item_ = nullptr;
-  _impl_.slot_id_ = 0;
+  _impl_.slot_ = nullptr;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -5917,18 +5813,10 @@ const char* C_USE_ITEM::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.Item item = 1;
+      // .Protocol.Slot slot = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_item(), ptr);
-          CHK_(ptr);
-        } else
-          goto handle_unusual;
-        continue;
-      // int32 slot_id = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
-          _impl_.slot_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          ptr = ctx->ParseMessage(_internal_mutable_slot(), ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -5962,17 +5850,11 @@ uint8_t* C_USE_ITEM::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::item(this),
-        _Internal::item(this).GetCachedSize(), target, stream);
-  }
-
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_slot_id(), target);
+      InternalWriteMessage(1, _Internal::slot(this),
+        _Internal::slot(this).GetCachedSize(), target, stream);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -5991,16 +5873,11 @@ size_t C_USE_ITEM::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.Item item = 1;
-  if (this->_internal_has_item()) {
+  // .Protocol.Slot slot = 1;
+  if (this->_internal_has_slot()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.item_);
-  }
-
-  // int32 slot_id = 2;
-  if (this->_internal_slot_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_slot_id());
+        *_impl_.slot_);
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -6021,12 +5898,9 @@ void C_USE_ITEM::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_item()) {
-    _this->_internal_mutable_item()->::Protocol::Item::MergeFrom(
-        from._internal_item());
-  }
-  if (from._internal_slot_id() != 0) {
-    _this->_internal_set_slot_id(from._internal_slot_id());
+  if (from._internal_has_slot()) {
+    _this->_internal_mutable_slot()->::Protocol::Slot::MergeFrom(
+        from._internal_slot());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -6045,12 +5919,7 @@ bool C_USE_ITEM::IsInitialized() const {
 void C_USE_ITEM::InternalSwap(C_USE_ITEM* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(C_USE_ITEM, _impl_.slot_id_)
-      + sizeof(C_USE_ITEM::_impl_.slot_id_)
-      - PROTOBUF_FIELD_OFFSET(C_USE_ITEM, _impl_.item_)>(
-          reinterpret_cast<char*>(&_impl_.item_),
-          reinterpret_cast<char*>(&other->_impl_.item_));
+  swap(_impl_.slot_, other->_impl_.slot_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_USE_ITEM::GetMetadata() const {

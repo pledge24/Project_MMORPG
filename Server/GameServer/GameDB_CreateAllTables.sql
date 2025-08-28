@@ -46,7 +46,7 @@ CREATE TABLE CharactersGearItems(
     item_uid            BIGINT IDENTITY(1000, 1) PRIMARY KEY,
     character_id        BIGINT NOT NULL,
     template_id         INT NOT NULL,
-    slot_id             INT NOT NULL, -- 장착 중인 무기이면 100,000부터 시작
+    slot_id             INT NOT NULL,
     enhance             INT NOT NULL DEFAULT 0,
     durability          INT NOT NULL DEFAULT 0,
     bonus_attack        INT NOT NULL DEFAULT 0,

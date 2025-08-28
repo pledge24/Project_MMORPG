@@ -129,9 +129,8 @@ message S_BUY_ITEM
 
 message C_SELL_ITEM
 {
-    Item item = 1;
-    int32 slot_id = 2;
-    int32 count = 3;
+    Slot slot = 1;
+    int32 count = 2;
 }
 
 message S_SELL_ITEM
@@ -142,8 +141,7 @@ message S_SELL_ITEM
 
 message C_EQUIP_EQUIPMENT
 {
-    Item item = 1;
-    int32 slot_id = 2;
+    Slot slot = 1;
 }
 
 message S_EQUIP_EQUIPMENT
@@ -154,8 +152,7 @@ message S_EQUIP_EQUIPMENT
 
 message C_UNEQUIP_EQUIPMENT
 {
-    Item item = 1;
-    int32 slot_id = 2;
+    Slot slot = 1;
 }
 
 message S_UNEQUIP_EQUIPMENT
@@ -166,8 +163,7 @@ message S_UNEQUIP_EQUIPMENT
 
 message C_USE_ITEM
 {
-    Item item = 1;
-    int32 slot_id = 2;
+    Slot slot = 1;
 }
 
 message S_USE_ITEM
