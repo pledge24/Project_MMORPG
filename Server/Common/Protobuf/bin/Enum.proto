@@ -29,7 +29,7 @@ enum HitType
     HIT_TYPE_NONE = 0;
     HIT_TYPE_NORMAL = 1;
     HIT_TYPE_SKILL = 2;
-    HIT_TYPE_EOT = 3; // Effect Over Time: 지속 효과 피해
+    HIT_TYPE_EOT = 3;           // Effect Over Time: 지속 효과 피해
 }
 
 enum DamageType
@@ -37,8 +37,17 @@ enum DamageType
     DAMAGE_TYPE_NONE = 0;
     DAMAGE_TYPE_PHYSICAL = 1;   // 물리 피해
     DAMAGE_TYPE_MAGICAL = 2;    // 마법 피해
-    DAMAGE_TYPE_BURN = 3;       // 화염 피해
-    DAMAGE_TYPE_POSION = 4;     // 독 피해
+    DAMAGE_TYPE_FIX = 3;        // 고정 피해
+}
+
+enum EffectType
+{
+    EFFECT_TYPE_NONE = 0;
+    EFFECT_TYPE_BLEEDING = 1;   // 출혈
+    EFFECT_TYPE_BURN = 2;       // 화상
+    EFFECT_TYPE_POSION = 3;     // 독
+    EFFECT_TYPE_SPEED_UP = 4;   // 이속 증가
+    EFFECT_TYPE_SPEED_DOWN = 5; // 이속 감소
 }
 
 enum ItemType
@@ -55,4 +64,16 @@ enum SlotType
     SLOT_TYPE_INVENTORY = 1;        // 인벤 슬롯
     SLOT_TYPE_EQUIPPED = 2;         // 장비 슬롯
     SLOT_TYPE_QUICK = 3;            // 퀵 슬롯
+}
+
+enum StatType
+{
+    STAT_TYPE_NONE = 0;
+    STAT_TYPE_MAX_HP = 1;
+    STAT_TYPE_HP = 2;
+    STAT_TYPE_MAX_MP = 3;
+    STAT_TYPE_MP = 4;
+    STAT_TYPE_PHYSICAL_ATTACK = 5;
+    STAT_TYPE_MAGICAL_ATTACK = 6;
+    STAT_TYPE_EXP = 7;
 }

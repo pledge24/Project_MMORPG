@@ -222,7 +222,7 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         // 패킷으로 만들어서 클라이언트에게 보낸다.
         Protocol::S_CREATE_CHARACTER pkt;
         pkt.set_success(true);
-        pkt.set_characterid(bindObject._characterId);
+        pkt.set_character_id(bindObject._characterId);
         SEND_PACKET(pkt);
     }
     catch (wstring& cause)
@@ -309,7 +309,7 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
         // 패킷으로 만들어서 클라이언트에게 보낸다.
         Protocol::S_DELETE_CHARACTER pkt;
         pkt.set_success(true);
-        pkt.set_characterid(characterId);
+        pkt.set_character_id(characterId);
         SEND_PACKET(pkt);
     }
     catch (wstring& cause)
@@ -334,6 +334,8 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
 
 void DBRequestFunctions::GetEnterGameData(SessionRef session, int64 characterId)
 {
+    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+
     // 1. 캐릭터 기본 정보 다시 가져오기(이름, 레벨 등 필요)
     if (GetCharacterData(session, characterId) == false)
     {
@@ -348,21 +350,14 @@ void DBRequestFunctions::GetEnterGameData(SessionRef session, int64 characterId)
         return;
     }
 
-    // 3. 캐릭터 인벤토리 가져오기
-    if (GetCharactersItemData(session, characterId) == false)
+    // 3. 캐릭터 소유 아이템 정보 가져오기
+    if (GetAllCharacterItems(session, characterId) == false)
     {
+        // Player 클래스 정리
+        // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
         cout << "Error In GetCharacterInventoryData" << endl;
         return;
     }
-
-    // 4. 캐릭터 착장 정보 가져오기
-    if (GetCharactersEquipmentData(session, characterId) == false)
-    {
-        cout << "Error In GetCharacterEquipmentData" << endl;
-        return;
-    }
-
-    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
 
     // 패킷으로 만들어서 클라이언트에게 보낸다.
     Protocol::S_ENTER_GAME pkt;
@@ -422,16 +417,15 @@ bool DBRequestFunctions::GetCharacterData(SessionRef session, int64 characterId)
 
     PlayerRef player = static_pointer_cast<GameSession>(session)->player;
 
-    while (dbConn->Fetch())
-    {
-        Protocol::CharacterOverview* overview = player->overview;
+    dbConn->Fetch();
+    
+    Protocol::PlayerInfo* playerInfo = player->playerInfo;
 
-        overview->set_character_id(bindObject._characterId);
-        overview->set_class_((Protocol::CharacterClass)bindObject._classId);
-        overview->set_name(EncodingConverter::WCharToString(bindObject._characterName));
-        overview->set_level(bindObject._level);
-    }
-
+    playerInfo->set_character_id(bindObject._characterId);
+    playerInfo->set_class_((Protocol::CharacterClass)bindObject._classId);
+    playerInfo->set_name(EncodingConverter::WCharToString(bindObject._characterName));
+    playerInfo->set_level(bindObject._level);
+    
     GDBConnectionPool->Push(dbConn);
 
     return true;
@@ -506,16 +500,33 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
         return false;
 
     PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-    Protocol::ObjectInfo* objectInfo = player->objectInfo;
-    Protocol::PlayerInfo* playerInfo = objectInfo->mutable_player_info();
-    Protocol::StatInfo* statInfo = playerInfo->mutable_stat_info();
+    Protocol::PlayerInfo* playerInfo = player->playerInfo;
     Protocol::PosInfo* posInfo = player->posInfo;
 
-    // 스텟 설정
-    statInfo->set_cur_hp(bindObject._curHp);
-    statInfo->set_cur_mp(bindObject._curMp);
-    statInfo->set_cur_attack(bindObject._curAttack);
-    statInfo->set_cur_magic(bindObject._curMagic);
+    // 성장 및 스텟 관련
+    playerInfo->set_exp(bindObject._exp);
+
+    // 현재 Hp
+    Protocol::StatInfo* statInfo = playerInfo->add_stat_info();
+    statInfo->set_type(Protocol::STAT_TYPE_HP);
+    statInfo->set_is_gauge(true);
+    statInfo->set_value(bindObject._curHp);
+
+    // 현재 Mp
+    statInfo = playerInfo->add_stat_info();
+    statInfo->set_type(Protocol::STAT_TYPE_MP);
+    statInfo->set_is_gauge(true);
+    statInfo->set_value(bindObject._curMp);
+
+    // 현재 물리 공격력
+    statInfo = playerInfo->add_stat_info();
+    statInfo->set_type(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
+    statInfo->set_value(bindObject._curAttack);
+
+    // 현재 마법 공격력
+    statInfo = playerInfo->add_stat_info();
+    statInfo->set_type(Protocol::STAT_TYPE_MAGICAL_ATTACK);
+    statInfo->set_value(bindObject._curMagic);
 
     // 위치 설정
     posInfo->set_map_id(bindObject._mapId);
@@ -525,7 +536,6 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     posInfo->set_yaw(bindObject._rotYaw);
 
     // 플레이어 정보 설정
-    playerInfo->set_exp(bindObject._exp);
     playerInfo->set_gold(bindObject._gold);
 
     GDBConnectionPool->Push(dbConn);
@@ -533,132 +543,255 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     return true;
 }
 
-bool DBRequestFunctions::GetCharactersItemData(SessionRef session, int64 characterId)
+bool DBRequestFunctions::GetAllCharacterItems(SessionRef session, int64 characterId)
 {
-    //const int PARAMS = 1;
-    //const int COLS = 3;
+    // 1. 캐릭터 장비 아이템 가져오기
+    if (GetCharactersGearItems(session, characterId) == false)
+    {
+        cout << "Error In GetCharactersGearItems" << endl;
+        return false;
+    }
 
-    //struct BindObject
-    //{
-    //    BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId) : _characterId(characterId)
-    //    {
-    //        BindParam(dbBind);
-    //        BindCol(dbBind);
-    //    }
+    // 2. 캐릭터 소비 아이템 가져오기
+    if (GetCharactersConsumableItems(session, characterId) == false)
+    {
+        cout << "Error In GetCharactersConsumableItems" << endl;
+        return false;
+    }
 
-    //    void BindParam(DBBind<PARAMS, COLS>& dbBind)
-    //    {
-    //        dbBind.BindParam(0, _characterId);
-    //    }
-
-    //    void BindCol(DBBind<PARAMS, COLS>& dbBind)
-    //    {
-    //        dbBind.BindCol(0, _templateId);
-    //        dbBind.BindCol(1, _slotId);
-    //        dbBind.BindCol(2, _count);
-    //    }
-
-    //    /* Params */
-    //    int64 _characterId;
-
-    //    /* Cols */
-    //    int32 _templateId;
-    //    int32 _slotId;
-    //    int32 _count;
-    //};
-
-    //DBConnection* dbConn = GDBConnectionPool->Pop();
-
-    //// 해당 유저의 캐릭터 기본 정보들을 가져온다.
-    //DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-    //    SELECT template_id, slot_id, count
-    //    FROM [dbo].[CharactersItems]
-    //    WHERE character_id = (?)
-    //)SQL");
-
-    //BindObject bindObject(dbBind, characterId);
-
-    //if (dbBind.Execute() == false)
-    //    return false;
-
-    //PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-    //Protocol::PlayerInfo* playerInfo = player->objectInfo->mutable_player_info();
-
-    //while (dbConn->Fetch())
-    //{
-    //    Protocol::Item* item = playerInfo->add_items();
-    //    
-    //    item->set_template_id(bindObject._templateId);
-    //    item->set_slot_id(bindObject._slotId);
-    //    item->set_count(bindObject._count);
-    //}
-
-    //GDBConnectionPool->Push(dbConn);
+    // 3. 캐릭터 기타 아이템 가져오기
+    if (GetCharactersMiscItems(session, characterId) == false)
+    {
+        cout << "Error In GetCharactersMiscItems" << endl;
+        return false;
+    }
 
     return true;
 }
 
-bool DBRequestFunctions::GetCharactersEquipmentData(SessionRef session, int64 characterId)
+bool DBRequestFunctions::GetCharactersGearItems(SessionRef session, int64 characterId)
 {
-    //const int PARAMS = 1;
-    //const int COLS = 3;
+    const int PARAMS = 1;
+    const int COLS = 8;
 
-    //struct BindObject
-    //{
-    //    BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId) : _characterId(characterId)
-    //    {
-    //        BindParam(dbBind);
-    //        BindCol(dbBind);
-    //    }
+    struct BindObject
+    {
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId) : _characterId(characterId)
+        {
+            BindParam(dbBind);
+            BindCol(dbBind);
+        }
 
-    //    void BindParam(DBBind<PARAMS, COLS>& dbBind)
-    //    {
-    //        dbBind.BindParam(0, _characterId);
-    //    }
+        void BindParam(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindParam(0, _characterId);
+        }
 
-    //    void BindCol(DBBind<PARAMS, COLS>& dbBind)
-    //    {
-    //        dbBind.BindCol(0, _item_uid);
-    //        dbBind.BindCol(1, _template_id);
-    //        dbBind.BindCol(2, _slotId);
-    //    }
+        void BindCol(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindCol(0, _itemUid);
+            dbBind.BindCol(1, _templateId);
+            dbBind.BindCol(2, _isEquipped);
+            dbBind.BindCol(3, _slotId);
+            dbBind.BindCol(4, _enhance);
+            dbBind.BindCol(5, _durability);
+            dbBind.BindCol(6, _additionalPhysicalAttack);
+            dbBind.BindCol(7, _additionalMagicalAttack);
+        }
 
-    //    /* Params */
-    //    int64 _characterId;
+        /* Params */
+        int64 _characterId;
 
-    //    /* Cols */
-    //    int64 _item_uid;
-    //    int32 _template_id;
-    //    int32 _slotId;
-    //};
+        /* Cols */
+        int64 _itemUid;
+        int32 _templateId;
+        bool _isEquipped;
+        int32 _slotId;
+        int32 _enhance;
+        int32 _durability;
+        int32 _additionalPhysicalAttack;
+        int32 _additionalMagicalAttack;
+    };
 
-    //DBConnection* dbConn = GDBConnectionPool->Pop();
+    DBConnection* dbConn = GDBConnectionPool->Pop();
 
-    //// 해당 유저의 캐릭터 기본 정보들을 가져온다.
-    //DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-    //    SELECT item_uid, template_id, slot_id
-    //    FROM [dbo].[CharactersEquipments]
-    //    WHERE character_id = (?)
-    //)SQL");
+    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT item_uid, template_id, slot_id, enhance, durability, additional_physical_attack, additional_magical_attack
+        FROM [dbo].[CharactersGearItems]
+        WHERE character_id = (?)
+    )SQL");
 
-    //BindObject bindObject(dbBind, characterId);
+    BindObject bindObject(dbBind, characterId);
 
-    //if (dbBind.Execute() == false)
-    //    return false;
+    if (dbBind.Execute() == false)
+        return false;
 
-    //PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-    //Protocol::PlayerInfo* playerInfo = player->objectInfo->mutable_player_info();
+    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    Protocol::PlayerInfo* playerInfo = player->playerInfo;
+    Protocol::Inventory* inventory = playerInfo->mutable_inventory();
 
-    //while (dbConn->Fetch())
-    //{
-    //    Protocol::Equipment* equipment = playerInfo->add_equipments();
+    while (dbConn->Fetch())
+    {
+        Protocol::Slot* slot = bindObject._isEquipped ? playerInfo->add_equipped_gear() : inventory->add_gear();
+        Protocol::Item* item = slot->mutable_item();
+        Protocol::GearInfo* gearInfo = item->mutable_gearinfo();
 
-    //    equipment->set_item_uid(bindObject._item_uid);
-    //    equipment->set_template_id(bindObject._template_id);
-    //    equipment->set_slot_id(bindObject._slotId);
-    //}
+        slot->set_slot_id(bindObject._slotId);
+        slot->set_type(bindObject._isEquipped ? Protocol::SlotType::SLOT_TYPE_EQUIPPED : Protocol::SlotType::SLOT_TYPE_INVENTORY);
+        
+        item->set_template_id(bindObject._templateId);
+        item->set_type(Protocol::ItemType::ITEM_TYPE_GEAR);
+        item->set_count(1);
 
-    //GDBConnectionPool->Push(dbConn);
+        gearInfo->set_item_uid(bindObject._itemUid);
+        gearInfo->set_enhance(bindObject._enhance);
+        gearInfo->set_durability(bindObject._durability);
+        gearInfo->set_additional_physical_attack(bindObject._additionalMagicalAttack);
+        gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
+    }
+
+    GDBConnectionPool->Push(dbConn);
+
+    return true;
+}
+
+bool DBRequestFunctions::GetCharactersConsumableItems(SessionRef session, int64 characterId)
+{
+    const int PARAMS = 1;
+    const int COLS = 3;
+
+    struct BindObject
+    {
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId) : _characterId(characterId)
+        {
+            BindParam(dbBind);
+            BindCol(dbBind);
+        }
+
+        void BindParam(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindParam(0, _characterId);
+        }
+
+        void BindCol(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindCol(0, _templateId);
+            dbBind.BindCol(1, _slotId);
+            dbBind.BindCol(2, _count);
+        }
+
+        /* Params */
+        int64 _characterId;
+
+        /* Cols */
+        int32 _templateId;
+        int32 _slotId;
+        int32 _count;
+    };
+
+    DBConnection* dbConn = GDBConnectionPool->Pop();
+
+    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT template_id, slot_id, count
+        FROM [dbo].[CharactersConsumableItems]
+        WHERE character_id = (?)
+    )SQL");
+
+    BindObject bindObject(dbBind, characterId);
+
+    if (dbBind.Execute() == false)
+        return false;
+
+    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    Protocol::PlayerInfo* playerInfo = player->playerInfo;
+    Protocol::Inventory* inventory = playerInfo->mutable_inventory();
+
+    while (dbConn->Fetch())
+    {
+        Protocol::Slot* slot = inventory->add_consumables();
+        Protocol::Item* item = slot->mutable_item();
+
+        slot->set_slot_id(bindObject._slotId);
+        slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY);
+
+        item->set_template_id(bindObject._templateId);
+        item->set_type(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+        item->set_count(bindObject._count);
+    }
+
+    GDBConnectionPool->Push(dbConn);
+
+    return true;
+}
+
+bool DBRequestFunctions::GetCharactersMiscItems(SessionRef session, int64 characterId)
+{
+    const int PARAMS = 1;
+    const int COLS = 3;
+
+    struct BindObject
+    {
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId) : _characterId(characterId)
+        {
+            BindParam(dbBind);
+            BindCol(dbBind);
+        }
+
+        void BindParam(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindParam(0, _characterId);
+        }
+
+        void BindCol(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindCol(0, _templateId);
+            dbBind.BindCol(1, _slotId);
+            dbBind.BindCol(2, _count);
+        }
+
+        /* Params */
+        int64 _characterId;
+
+        /* Cols */
+        int32 _templateId;
+        int32 _slotId;
+        int32 _count;
+    };
+
+    DBConnection* dbConn = GDBConnectionPool->Pop();
+
+    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        SELECT template_id, slot_id, count
+        FROM [dbo].[CharactersMiscItems]
+        WHERE character_id = (?)
+    )SQL");
+
+    BindObject bindObject(dbBind, characterId);
+
+    if (dbBind.Execute() == false)
+        return false;
+
+    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    Protocol::PlayerInfo* playerInfo = player->playerInfo;
+    Protocol::Inventory* inventory = playerInfo->mutable_inventory();
+
+    while (dbConn->Fetch())
+    {
+        Protocol::Slot* slot = inventory->add_miscellaneous();
+        Protocol::Item* item = slot->mutable_item();
+
+        slot->set_slot_id(bindObject._slotId);
+        slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY);
+
+        item->set_template_id(bindObject._templateId);
+        item->set_type(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
+        item->set_count(bindObject._count);
+    }
+
+    GDBConnectionPool->Push(dbConn);
 
     return true;
 }

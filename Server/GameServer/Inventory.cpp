@@ -3,17 +3,43 @@
 
 Inventory::Inventory()
 {
+    _gear.resize(MAX_SLOTS);
+    _consumables.resize(MAX_SLOTS);
+    _miscellaneous.resize(MAX_SLOTS);
+
+    _gearDirtyFlags.resize(MAX_SLOTS);
+    _consumablesDirtyFlags.resize(MAX_SLOTS);
+    _miscellaneousDirtyFlags.resize(MAX_SLOTS);
 }
 
 Inventory::~Inventory()
 {
 }
 
-void Inventory::Init(vector<Protocol::Item>& gear, vector<Protocol::Item>& consumables, vector<Protocol::Item>& miscellaneous)
+void Inventory::Init(Protocol::PlayerInfo* info)
 {
-    _gear = std::move(gear);
-    _consumables = std::move(consumables);
-    _miscellaneous = std::move(miscellaneous);
+    const Protocol::Inventory& inven = info->inventory();
+
+    // 1. 장비 아이템
+    for (const auto& slot : inven.gear())
+    {
+        int32 slotId = slot.slot_id();
+        _gear[slotId] = slot.item();
+    }
+
+    // 2. 소비 아이템
+    for (const auto& slot : inven.consumables())
+    {
+        int32 slotId = slot.slot_id();
+        _consumables[slotId] = slot.item();
+    }
+
+    // 3. 기타 아이템
+    for (const auto& slot : inven.miscellaneous())
+    {
+        int32 slotId = slot.slot_id();
+        _miscellaneous[slotId] = slot.item();
+    }
 }
 
 void Inventory::addItem(Protocol::Slot* updatedSlots, int32 templateId, int32 count)

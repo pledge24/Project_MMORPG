@@ -600,14 +600,35 @@ class PlayerInfo final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kEquippedGearFieldNumber = 6,
-    kOverviewFieldNumber = 1,
-    kStatInfoFieldNumber = 3,
-    kInventoryFieldNumber = 5,
-    kExpFieldNumber = 2,
-    kGoldFieldNumber = 4,
+    kStatInfoFieldNumber = 6,
+    kEquippedGearFieldNumber = 9,
+    kNameFieldNumber = 3,
+    kInventoryFieldNumber = 8,
+    kCharacterIdFieldNumber = 1,
+    kClassFieldNumber = 2,
+    kLevelFieldNumber = 4,
+    kExpFieldNumber = 5,
+    kGoldFieldNumber = 7,
   };
-  // repeated .Protocol.Slot equipped_gear = 6;
+  // repeated .Protocol.StatInfo stat_info = 6;
+  int stat_info_size() const;
+  private:
+  int _internal_stat_info_size() const;
+  public:
+  void clear_stat_info();
+  ::Protocol::StatInfo* mutable_stat_info(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >*
+      mutable_stat_info();
+  private:
+  const ::Protocol::StatInfo& _internal_stat_info(int index) const;
+  ::Protocol::StatInfo* _internal_add_stat_info();
+  public:
+  const ::Protocol::StatInfo& stat_info(int index) const;
+  ::Protocol::StatInfo* add_stat_info();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >&
+      stat_info() const;
+
+  // repeated .Protocol.Slot equipped_gear = 9;
   int equipped_gear_size() const;
   private:
   int _internal_equipped_gear_size() const;
@@ -625,43 +646,21 @@ class PlayerInfo final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
       equipped_gear() const;
 
-  // .Protocol.CharacterOverview overview = 1;
-  bool has_overview() const;
+  // string name = 3;
+  void clear_name();
+  const std::string& name() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_name(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_name();
+  PROTOBUF_NODISCARD std::string* release_name();
+  void set_allocated_name(std::string* name);
   private:
-  bool _internal_has_overview() const;
+  const std::string& _internal_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(const std::string& value);
+  std::string* _internal_mutable_name();
   public:
-  void clear_overview();
-  const ::Protocol::CharacterOverview& overview() const;
-  PROTOBUF_NODISCARD ::Protocol::CharacterOverview* release_overview();
-  ::Protocol::CharacterOverview* mutable_overview();
-  void set_allocated_overview(::Protocol::CharacterOverview* overview);
-  private:
-  const ::Protocol::CharacterOverview& _internal_overview() const;
-  ::Protocol::CharacterOverview* _internal_mutable_overview();
-  public:
-  void unsafe_arena_set_allocated_overview(
-      ::Protocol::CharacterOverview* overview);
-  ::Protocol::CharacterOverview* unsafe_arena_release_overview();
 
-  // .Protocol.StatInfo stat_info = 3;
-  bool has_stat_info() const;
-  private:
-  bool _internal_has_stat_info() const;
-  public:
-  void clear_stat_info();
-  const ::Protocol::StatInfo& stat_info() const;
-  PROTOBUF_NODISCARD ::Protocol::StatInfo* release_stat_info();
-  ::Protocol::StatInfo* mutable_stat_info();
-  void set_allocated_stat_info(::Protocol::StatInfo* stat_info);
-  private:
-  const ::Protocol::StatInfo& _internal_stat_info() const;
-  ::Protocol::StatInfo* _internal_mutable_stat_info();
-  public:
-  void unsafe_arena_set_allocated_stat_info(
-      ::Protocol::StatInfo* stat_info);
-  ::Protocol::StatInfo* unsafe_arena_release_stat_info();
-
-  // .Protocol.Inventory inventory = 5;
+  // .Protocol.Inventory inventory = 8;
   bool has_inventory() const;
   private:
   bool _internal_has_inventory() const;
@@ -679,7 +678,34 @@ class PlayerInfo final :
       ::Protocol::Inventory* inventory);
   ::Protocol::Inventory* unsafe_arena_release_inventory();
 
-  // uint64 exp = 2;
+  // uint64 character_id = 1;
+  void clear_character_id();
+  uint64_t character_id() const;
+  void set_character_id(uint64_t value);
+  private:
+  uint64_t _internal_character_id() const;
+  void _internal_set_character_id(uint64_t value);
+  public:
+
+  // .Protocol.CharacterClass class = 2;
+  void clear_class_();
+  ::Protocol::CharacterClass class_() const;
+  void set_class_(::Protocol::CharacterClass value);
+  private:
+  ::Protocol::CharacterClass _internal_class_() const;
+  void _internal_set_class_(::Protocol::CharacterClass value);
+  public:
+
+  // uint32 level = 4;
+  void clear_level();
+  uint32_t level() const;
+  void set_level(uint32_t value);
+  private:
+  uint32_t _internal_level() const;
+  void _internal_set_level(uint32_t value);
+  public:
+
+  // uint64 exp = 5;
   void clear_exp();
   uint64_t exp() const;
   void set_exp(uint64_t value);
@@ -688,7 +714,7 @@ class PlayerInfo final :
   void _internal_set_exp(uint64_t value);
   public:
 
-  // uint64 gold = 4;
+  // uint64 gold = 7;
   void clear_gold();
   uint64_t gold() const;
   void set_gold(uint64_t value);
@@ -705,10 +731,13 @@ class PlayerInfo final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo > stat_info_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > equipped_gear_;
-    ::Protocol::CharacterOverview* overview_;
-    ::Protocol::StatInfo* stat_info_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
     ::Protocol::Inventory* inventory_;
+    uint64_t character_id_;
+    int class__;
+    uint32_t level_;
     uint64_t exp_;
     uint64_t gold_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -1053,65 +1082,35 @@ class StatInfo final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kCurHpFieldNumber = 1,
-    kMaxHpFieldNumber = 2,
-    kCurMpFieldNumber = 3,
-    kMaxMpFieldNumber = 4,
-    kCurAttackFieldNumber = 5,
-    kCurMagicFieldNumber = 6,
+    kTypeFieldNumber = 1,
+    kIsGaugeFieldNumber = 2,
+    kValueFieldNumber = 3,
   };
-  // int32 cur_hp = 1;
-  void clear_cur_hp();
-  int32_t cur_hp() const;
-  void set_cur_hp(int32_t value);
+  // .Protocol.StatType type = 1;
+  void clear_type();
+  ::Protocol::StatType type() const;
+  void set_type(::Protocol::StatType value);
   private:
-  int32_t _internal_cur_hp() const;
-  void _internal_set_cur_hp(int32_t value);
+  ::Protocol::StatType _internal_type() const;
+  void _internal_set_type(::Protocol::StatType value);
   public:
 
-  // int32 max_hp = 2;
-  void clear_max_hp();
-  int32_t max_hp() const;
-  void set_max_hp(int32_t value);
+  // bool is_gauge = 2;
+  void clear_is_gauge();
+  bool is_gauge() const;
+  void set_is_gauge(bool value);
   private:
-  int32_t _internal_max_hp() const;
-  void _internal_set_max_hp(int32_t value);
+  bool _internal_is_gauge() const;
+  void _internal_set_is_gauge(bool value);
   public:
 
-  // int32 cur_mp = 3;
-  void clear_cur_mp();
-  int32_t cur_mp() const;
-  void set_cur_mp(int32_t value);
+  // int32 value = 3;
+  void clear_value();
+  int32_t value() const;
+  void set_value(int32_t value);
   private:
-  int32_t _internal_cur_mp() const;
-  void _internal_set_cur_mp(int32_t value);
-  public:
-
-  // int32 max_mp = 4;
-  void clear_max_mp();
-  int32_t max_mp() const;
-  void set_max_mp(int32_t value);
-  private:
-  int32_t _internal_max_mp() const;
-  void _internal_set_max_mp(int32_t value);
-  public:
-
-  // int32 cur_attack = 5;
-  void clear_cur_attack();
-  int32_t cur_attack() const;
-  void set_cur_attack(int32_t value);
-  private:
-  int32_t _internal_cur_attack() const;
-  void _internal_set_cur_attack(int32_t value);
-  public:
-
-  // int32 cur_magic = 6;
-  void clear_cur_magic();
-  int32_t cur_magic() const;
-  void set_cur_magic(int32_t value);
-  private:
-  int32_t _internal_cur_magic() const;
-  void _internal_set_cur_magic(int32_t value);
+  int32_t _internal_value() const;
+  void _internal_set_value(int32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.StatInfo)
@@ -1122,12 +1121,9 @@ class StatInfo final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int32_t cur_hp_;
-    int32_t max_hp_;
-    int32_t cur_mp_;
-    int32_t max_mp_;
-    int32_t cur_attack_;
-    int32_t cur_magic_;
+    int type_;
+    bool is_gauge_;
+    int32_t value_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -1418,8 +1414,8 @@ class GearInfo final :
     kItemUidFieldNumber = 1,
     kEnhanceFieldNumber = 2,
     kDurabilityFieldNumber = 3,
-    kBonusAttackFieldNumber = 4,
-    kBonusMagicFieldNumber = 5,
+    kAdditionalPhysicalAttackFieldNumber = 4,
+    kAdditionalMagicalAttackFieldNumber = 5,
   };
   // int64 item_uid = 1;
   void clear_item_uid();
@@ -1448,22 +1444,22 @@ class GearInfo final :
   void _internal_set_durability(int32_t value);
   public:
 
-  // int32 bonus_attack = 4;
-  void clear_bonus_attack();
-  int32_t bonus_attack() const;
-  void set_bonus_attack(int32_t value);
+  // int32 additional_physical_attack = 4;
+  void clear_additional_physical_attack();
+  int32_t additional_physical_attack() const;
+  void set_additional_physical_attack(int32_t value);
   private:
-  int32_t _internal_bonus_attack() const;
-  void _internal_set_bonus_attack(int32_t value);
+  int32_t _internal_additional_physical_attack() const;
+  void _internal_set_additional_physical_attack(int32_t value);
   public:
 
-  // int32 bonus_magic = 5;
-  void clear_bonus_magic();
-  int32_t bonus_magic() const;
-  void set_bonus_magic(int32_t value);
+  // int32 additional_magical_attack = 5;
+  void clear_additional_magical_attack();
+  int32_t additional_magical_attack() const;
+  void set_additional_magical_attack(int32_t value);
   private:
-  int32_t _internal_bonus_magic() const;
-  void _internal_set_bonus_magic(int32_t value);
+  int32_t _internal_additional_magical_attack() const;
+  void _internal_set_additional_magical_attack(int32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.GearInfo)
@@ -1477,8 +1473,8 @@ class GearInfo final :
     int64_t item_uid_;
     int32_t enhance_;
     int32_t durability_;
-    int32_t bonus_attack_;
-    int32_t bonus_magic_;
+    int32_t additional_physical_attack_;
+    int32_t additional_magical_attack_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2401,97 +2397,117 @@ inline void ObjectInfo::set_allocated_player_info(::Protocol::PlayerInfo* player
 
 // PlayerInfo
 
-// .Protocol.CharacterOverview overview = 1;
-inline bool PlayerInfo::_internal_has_overview() const {
-  return this != internal_default_instance() && _impl_.overview_ != nullptr;
+// uint64 character_id = 1;
+inline void PlayerInfo::clear_character_id() {
+  _impl_.character_id_ = uint64_t{0u};
 }
-inline bool PlayerInfo::has_overview() const {
-  return _internal_has_overview();
+inline uint64_t PlayerInfo::_internal_character_id() const {
+  return _impl_.character_id_;
 }
-inline void PlayerInfo::clear_overview() {
-  if (GetArenaForAllocation() == nullptr && _impl_.overview_ != nullptr) {
-    delete _impl_.overview_;
-  }
-  _impl_.overview_ = nullptr;
+inline uint64_t PlayerInfo::character_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.character_id)
+  return _internal_character_id();
 }
-inline const ::Protocol::CharacterOverview& PlayerInfo::_internal_overview() const {
-  const ::Protocol::CharacterOverview* p = _impl_.overview_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::CharacterOverview&>(
-      ::Protocol::_CharacterOverview_default_instance_);
-}
-inline const ::Protocol::CharacterOverview& PlayerInfo::overview() const {
-  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.overview)
-  return _internal_overview();
-}
-inline void PlayerInfo::unsafe_arena_set_allocated_overview(
-    ::Protocol::CharacterOverview* overview) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.overview_);
-  }
-  _impl_.overview_ = overview;
-  if (overview) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.PlayerInfo.overview)
-}
-inline ::Protocol::CharacterOverview* PlayerInfo::release_overview() {
+inline void PlayerInfo::_internal_set_character_id(uint64_t value) {
   
-  ::Protocol::CharacterOverview* temp = _impl_.overview_;
-  _impl_.overview_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
+  _impl_.character_id_ = value;
 }
-inline ::Protocol::CharacterOverview* PlayerInfo::unsafe_arena_release_overview() {
-  // @@protoc_insertion_point(field_release:Protocol.PlayerInfo.overview)
-  
-  ::Protocol::CharacterOverview* temp = _impl_.overview_;
-  _impl_.overview_ = nullptr;
-  return temp;
-}
-inline ::Protocol::CharacterOverview* PlayerInfo::_internal_mutable_overview() {
-  
-  if (_impl_.overview_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::CharacterOverview>(GetArenaForAllocation());
-    _impl_.overview_ = p;
-  }
-  return _impl_.overview_;
-}
-inline ::Protocol::CharacterOverview* PlayerInfo::mutable_overview() {
-  ::Protocol::CharacterOverview* _msg = _internal_mutable_overview();
-  // @@protoc_insertion_point(field_mutable:Protocol.PlayerInfo.overview)
-  return _msg;
-}
-inline void PlayerInfo::set_allocated_overview(::Protocol::CharacterOverview* overview) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete _impl_.overview_;
-  }
-  if (overview) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(overview);
-    if (message_arena != submessage_arena) {
-      overview = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, overview, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.overview_ = overview;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.PlayerInfo.overview)
+inline void PlayerInfo::set_character_id(uint64_t value) {
+  _internal_set_character_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.character_id)
 }
 
-// uint64 exp = 2;
+// .Protocol.CharacterClass class = 2;
+inline void PlayerInfo::clear_class_() {
+  _impl_.class__ = 0;
+}
+inline ::Protocol::CharacterClass PlayerInfo::_internal_class_() const {
+  return static_cast< ::Protocol::CharacterClass >(_impl_.class__);
+}
+inline ::Protocol::CharacterClass PlayerInfo::class_() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.class)
+  return _internal_class_();
+}
+inline void PlayerInfo::_internal_set_class_(::Protocol::CharacterClass value) {
+  
+  _impl_.class__ = value;
+}
+inline void PlayerInfo::set_class_(::Protocol::CharacterClass value) {
+  _internal_set_class_(value);
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.class)
+}
+
+// string name = 3;
+inline void PlayerInfo::clear_name() {
+  _impl_.name_.ClearToEmpty();
+}
+inline const std::string& PlayerInfo::name() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.name)
+  return _internal_name();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlayerInfo::set_name(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.name_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.name)
+}
+inline std::string* PlayerInfo::mutable_name() {
+  std::string* _s = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:Protocol.PlayerInfo.name)
+  return _s;
+}
+inline const std::string& PlayerInfo::_internal_name() const {
+  return _impl_.name_.Get();
+}
+inline void PlayerInfo::_internal_set_name(const std::string& value) {
+  
+  _impl_.name_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlayerInfo::_internal_mutable_name() {
+  
+  return _impl_.name_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlayerInfo::release_name() {
+  // @@protoc_insertion_point(field_release:Protocol.PlayerInfo.name)
+  return _impl_.name_.Release();
+}
+inline void PlayerInfo::set_allocated_name(std::string* name) {
+  if (name != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.name_.SetAllocated(name, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:Protocol.PlayerInfo.name)
+}
+
+// uint32 level = 4;
+inline void PlayerInfo::clear_level() {
+  _impl_.level_ = 0u;
+}
+inline uint32_t PlayerInfo::_internal_level() const {
+  return _impl_.level_;
+}
+inline uint32_t PlayerInfo::level() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.level)
+  return _internal_level();
+}
+inline void PlayerInfo::_internal_set_level(uint32_t value) {
+  
+  _impl_.level_ = value;
+}
+inline void PlayerInfo::set_level(uint32_t value) {
+  _internal_set_level(value);
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.level)
+}
+
+// uint64 exp = 5;
 inline void PlayerInfo::clear_exp() {
   _impl_.exp_ = uint64_t{0u};
 }
@@ -2511,97 +2527,47 @@ inline void PlayerInfo::set_exp(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.exp)
 }
 
-// .Protocol.StatInfo stat_info = 3;
-inline bool PlayerInfo::_internal_has_stat_info() const {
-  return this != internal_default_instance() && _impl_.stat_info_ != nullptr;
+// repeated .Protocol.StatInfo stat_info = 6;
+inline int PlayerInfo::_internal_stat_info_size() const {
+  return _impl_.stat_info_.size();
 }
-inline bool PlayerInfo::has_stat_info() const {
-  return _internal_has_stat_info();
+inline int PlayerInfo::stat_info_size() const {
+  return _internal_stat_info_size();
 }
 inline void PlayerInfo::clear_stat_info() {
-  if (GetArenaForAllocation() == nullptr && _impl_.stat_info_ != nullptr) {
-    delete _impl_.stat_info_;
-  }
-  _impl_.stat_info_ = nullptr;
+  _impl_.stat_info_.Clear();
 }
-inline const ::Protocol::StatInfo& PlayerInfo::_internal_stat_info() const {
-  const ::Protocol::StatInfo* p = _impl_.stat_info_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::StatInfo&>(
-      ::Protocol::_StatInfo_default_instance_);
+inline ::Protocol::StatInfo* PlayerInfo::mutable_stat_info(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.PlayerInfo.stat_info)
+  return _impl_.stat_info_.Mutable(index);
 }
-inline const ::Protocol::StatInfo& PlayerInfo::stat_info() const {
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >*
+PlayerInfo::mutable_stat_info() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.PlayerInfo.stat_info)
+  return &_impl_.stat_info_;
+}
+inline const ::Protocol::StatInfo& PlayerInfo::_internal_stat_info(int index) const {
+  return _impl_.stat_info_.Get(index);
+}
+inline const ::Protocol::StatInfo& PlayerInfo::stat_info(int index) const {
   // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.stat_info)
-  return _internal_stat_info();
+  return _internal_stat_info(index);
 }
-inline void PlayerInfo::unsafe_arena_set_allocated_stat_info(
-    ::Protocol::StatInfo* stat_info) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.stat_info_);
-  }
-  _impl_.stat_info_ = stat_info;
-  if (stat_info) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.PlayerInfo.stat_info)
+inline ::Protocol::StatInfo* PlayerInfo::_internal_add_stat_info() {
+  return _impl_.stat_info_.Add();
 }
-inline ::Protocol::StatInfo* PlayerInfo::release_stat_info() {
-  
-  ::Protocol::StatInfo* temp = _impl_.stat_info_;
-  _impl_.stat_info_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
+inline ::Protocol::StatInfo* PlayerInfo::add_stat_info() {
+  ::Protocol::StatInfo* _add = _internal_add_stat_info();
+  // @@protoc_insertion_point(field_add:Protocol.PlayerInfo.stat_info)
+  return _add;
 }
-inline ::Protocol::StatInfo* PlayerInfo::unsafe_arena_release_stat_info() {
-  // @@protoc_insertion_point(field_release:Protocol.PlayerInfo.stat_info)
-  
-  ::Protocol::StatInfo* temp = _impl_.stat_info_;
-  _impl_.stat_info_ = nullptr;
-  return temp;
-}
-inline ::Protocol::StatInfo* PlayerInfo::_internal_mutable_stat_info() {
-  
-  if (_impl_.stat_info_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::StatInfo>(GetArenaForAllocation());
-    _impl_.stat_info_ = p;
-  }
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >&
+PlayerInfo::stat_info() const {
+  // @@protoc_insertion_point(field_list:Protocol.PlayerInfo.stat_info)
   return _impl_.stat_info_;
 }
-inline ::Protocol::StatInfo* PlayerInfo::mutable_stat_info() {
-  ::Protocol::StatInfo* _msg = _internal_mutable_stat_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.PlayerInfo.stat_info)
-  return _msg;
-}
-inline void PlayerInfo::set_allocated_stat_info(::Protocol::StatInfo* stat_info) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete _impl_.stat_info_;
-  }
-  if (stat_info) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(stat_info);
-    if (message_arena != submessage_arena) {
-      stat_info = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, stat_info, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.stat_info_ = stat_info;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.PlayerInfo.stat_info)
-}
 
-// uint64 gold = 4;
+// uint64 gold = 7;
 inline void PlayerInfo::clear_gold() {
   _impl_.gold_ = uint64_t{0u};
 }
@@ -2621,7 +2587,7 @@ inline void PlayerInfo::set_gold(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.gold)
 }
 
-// .Protocol.Inventory inventory = 5;
+// .Protocol.Inventory inventory = 8;
 inline bool PlayerInfo::_internal_has_inventory() const {
   return this != internal_default_instance() && _impl_.inventory_ != nullptr;
 }
@@ -2711,7 +2677,7 @@ inline void PlayerInfo::set_allocated_inventory(::Protocol::Inventory* inventory
   // @@protoc_insertion_point(field_set_allocated:Protocol.PlayerInfo.inventory)
 }
 
-// repeated .Protocol.Slot equipped_gear = 6;
+// repeated .Protocol.Slot equipped_gear = 9;
 inline int PlayerInfo::_internal_equipped_gear_size() const {
   return _impl_.equipped_gear_.size();
 }
@@ -2899,124 +2865,64 @@ inline void PosInfo::set_state(::Protocol::MoveState value) {
 
 // StatInfo
 
-// int32 cur_hp = 1;
-inline void StatInfo::clear_cur_hp() {
-  _impl_.cur_hp_ = 0;
+// .Protocol.StatType type = 1;
+inline void StatInfo::clear_type() {
+  _impl_.type_ = 0;
 }
-inline int32_t StatInfo::_internal_cur_hp() const {
-  return _impl_.cur_hp_;
+inline ::Protocol::StatType StatInfo::_internal_type() const {
+  return static_cast< ::Protocol::StatType >(_impl_.type_);
 }
-inline int32_t StatInfo::cur_hp() const {
-  // @@protoc_insertion_point(field_get:Protocol.StatInfo.cur_hp)
-  return _internal_cur_hp();
+inline ::Protocol::StatType StatInfo::type() const {
+  // @@protoc_insertion_point(field_get:Protocol.StatInfo.type)
+  return _internal_type();
 }
-inline void StatInfo::_internal_set_cur_hp(int32_t value) {
+inline void StatInfo::_internal_set_type(::Protocol::StatType value) {
   
-  _impl_.cur_hp_ = value;
+  _impl_.type_ = value;
 }
-inline void StatInfo::set_cur_hp(int32_t value) {
-  _internal_set_cur_hp(value);
-  // @@protoc_insertion_point(field_set:Protocol.StatInfo.cur_hp)
+inline void StatInfo::set_type(::Protocol::StatType value) {
+  _internal_set_type(value);
+  // @@protoc_insertion_point(field_set:Protocol.StatInfo.type)
 }
 
-// int32 max_hp = 2;
-inline void StatInfo::clear_max_hp() {
-  _impl_.max_hp_ = 0;
+// bool is_gauge = 2;
+inline void StatInfo::clear_is_gauge() {
+  _impl_.is_gauge_ = false;
 }
-inline int32_t StatInfo::_internal_max_hp() const {
-  return _impl_.max_hp_;
+inline bool StatInfo::_internal_is_gauge() const {
+  return _impl_.is_gauge_;
 }
-inline int32_t StatInfo::max_hp() const {
-  // @@protoc_insertion_point(field_get:Protocol.StatInfo.max_hp)
-  return _internal_max_hp();
+inline bool StatInfo::is_gauge() const {
+  // @@protoc_insertion_point(field_get:Protocol.StatInfo.is_gauge)
+  return _internal_is_gauge();
 }
-inline void StatInfo::_internal_set_max_hp(int32_t value) {
+inline void StatInfo::_internal_set_is_gauge(bool value) {
   
-  _impl_.max_hp_ = value;
+  _impl_.is_gauge_ = value;
 }
-inline void StatInfo::set_max_hp(int32_t value) {
-  _internal_set_max_hp(value);
-  // @@protoc_insertion_point(field_set:Protocol.StatInfo.max_hp)
+inline void StatInfo::set_is_gauge(bool value) {
+  _internal_set_is_gauge(value);
+  // @@protoc_insertion_point(field_set:Protocol.StatInfo.is_gauge)
 }
 
-// int32 cur_mp = 3;
-inline void StatInfo::clear_cur_mp() {
-  _impl_.cur_mp_ = 0;
+// int32 value = 3;
+inline void StatInfo::clear_value() {
+  _impl_.value_ = 0;
 }
-inline int32_t StatInfo::_internal_cur_mp() const {
-  return _impl_.cur_mp_;
+inline int32_t StatInfo::_internal_value() const {
+  return _impl_.value_;
 }
-inline int32_t StatInfo::cur_mp() const {
-  // @@protoc_insertion_point(field_get:Protocol.StatInfo.cur_mp)
-  return _internal_cur_mp();
+inline int32_t StatInfo::value() const {
+  // @@protoc_insertion_point(field_get:Protocol.StatInfo.value)
+  return _internal_value();
 }
-inline void StatInfo::_internal_set_cur_mp(int32_t value) {
+inline void StatInfo::_internal_set_value(int32_t value) {
   
-  _impl_.cur_mp_ = value;
+  _impl_.value_ = value;
 }
-inline void StatInfo::set_cur_mp(int32_t value) {
-  _internal_set_cur_mp(value);
-  // @@protoc_insertion_point(field_set:Protocol.StatInfo.cur_mp)
-}
-
-// int32 max_mp = 4;
-inline void StatInfo::clear_max_mp() {
-  _impl_.max_mp_ = 0;
-}
-inline int32_t StatInfo::_internal_max_mp() const {
-  return _impl_.max_mp_;
-}
-inline int32_t StatInfo::max_mp() const {
-  // @@protoc_insertion_point(field_get:Protocol.StatInfo.max_mp)
-  return _internal_max_mp();
-}
-inline void StatInfo::_internal_set_max_mp(int32_t value) {
-  
-  _impl_.max_mp_ = value;
-}
-inline void StatInfo::set_max_mp(int32_t value) {
-  _internal_set_max_mp(value);
-  // @@protoc_insertion_point(field_set:Protocol.StatInfo.max_mp)
-}
-
-// int32 cur_attack = 5;
-inline void StatInfo::clear_cur_attack() {
-  _impl_.cur_attack_ = 0;
-}
-inline int32_t StatInfo::_internal_cur_attack() const {
-  return _impl_.cur_attack_;
-}
-inline int32_t StatInfo::cur_attack() const {
-  // @@protoc_insertion_point(field_get:Protocol.StatInfo.cur_attack)
-  return _internal_cur_attack();
-}
-inline void StatInfo::_internal_set_cur_attack(int32_t value) {
-  
-  _impl_.cur_attack_ = value;
-}
-inline void StatInfo::set_cur_attack(int32_t value) {
-  _internal_set_cur_attack(value);
-  // @@protoc_insertion_point(field_set:Protocol.StatInfo.cur_attack)
-}
-
-// int32 cur_magic = 6;
-inline void StatInfo::clear_cur_magic() {
-  _impl_.cur_magic_ = 0;
-}
-inline int32_t StatInfo::_internal_cur_magic() const {
-  return _impl_.cur_magic_;
-}
-inline int32_t StatInfo::cur_magic() const {
-  // @@protoc_insertion_point(field_get:Protocol.StatInfo.cur_magic)
-  return _internal_cur_magic();
-}
-inline void StatInfo::_internal_set_cur_magic(int32_t value) {
-  
-  _impl_.cur_magic_ = value;
-}
-inline void StatInfo::set_cur_magic(int32_t value) {
-  _internal_set_cur_magic(value);
-  // @@protoc_insertion_point(field_set:Protocol.StatInfo.cur_magic)
+inline void StatInfo::set_value(int32_t value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:Protocol.StatInfo.value)
 }
 
 // -------------------------------------------------------------------
@@ -3127,44 +3033,44 @@ inline void GearInfo::set_durability(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.GearInfo.durability)
 }
 
-// int32 bonus_attack = 4;
-inline void GearInfo::clear_bonus_attack() {
-  _impl_.bonus_attack_ = 0;
+// int32 additional_physical_attack = 4;
+inline void GearInfo::clear_additional_physical_attack() {
+  _impl_.additional_physical_attack_ = 0;
 }
-inline int32_t GearInfo::_internal_bonus_attack() const {
-  return _impl_.bonus_attack_;
+inline int32_t GearInfo::_internal_additional_physical_attack() const {
+  return _impl_.additional_physical_attack_;
 }
-inline int32_t GearInfo::bonus_attack() const {
-  // @@protoc_insertion_point(field_get:Protocol.GearInfo.bonus_attack)
-  return _internal_bonus_attack();
+inline int32_t GearInfo::additional_physical_attack() const {
+  // @@protoc_insertion_point(field_get:Protocol.GearInfo.additional_physical_attack)
+  return _internal_additional_physical_attack();
 }
-inline void GearInfo::_internal_set_bonus_attack(int32_t value) {
+inline void GearInfo::_internal_set_additional_physical_attack(int32_t value) {
   
-  _impl_.bonus_attack_ = value;
+  _impl_.additional_physical_attack_ = value;
 }
-inline void GearInfo::set_bonus_attack(int32_t value) {
-  _internal_set_bonus_attack(value);
-  // @@protoc_insertion_point(field_set:Protocol.GearInfo.bonus_attack)
+inline void GearInfo::set_additional_physical_attack(int32_t value) {
+  _internal_set_additional_physical_attack(value);
+  // @@protoc_insertion_point(field_set:Protocol.GearInfo.additional_physical_attack)
 }
 
-// int32 bonus_magic = 5;
-inline void GearInfo::clear_bonus_magic() {
-  _impl_.bonus_magic_ = 0;
+// int32 additional_magical_attack = 5;
+inline void GearInfo::clear_additional_magical_attack() {
+  _impl_.additional_magical_attack_ = 0;
 }
-inline int32_t GearInfo::_internal_bonus_magic() const {
-  return _impl_.bonus_magic_;
+inline int32_t GearInfo::_internal_additional_magical_attack() const {
+  return _impl_.additional_magical_attack_;
 }
-inline int32_t GearInfo::bonus_magic() const {
-  // @@protoc_insertion_point(field_get:Protocol.GearInfo.bonus_magic)
-  return _internal_bonus_magic();
+inline int32_t GearInfo::additional_magical_attack() const {
+  // @@protoc_insertion_point(field_get:Protocol.GearInfo.additional_magical_attack)
+  return _internal_additional_magical_attack();
 }
-inline void GearInfo::_internal_set_bonus_magic(int32_t value) {
+inline void GearInfo::_internal_set_additional_magical_attack(int32_t value) {
   
-  _impl_.bonus_magic_ = value;
+  _impl_.additional_magical_attack_ = value;
 }
-inline void GearInfo::set_bonus_magic(int32_t value) {
-  _internal_set_bonus_magic(value);
-  // @@protoc_insertion_point(field_set:Protocol.GearInfo.bonus_magic)
+inline void GearInfo::set_additional_magical_attack(int32_t value) {
+  _internal_set_additional_magical_attack(value);
+  // @@protoc_insertion_point(field_set:Protocol.GearInfo.additional_magical_attack)
 }
 
 // -------------------------------------------------------------------

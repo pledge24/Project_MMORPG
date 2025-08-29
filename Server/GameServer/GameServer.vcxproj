@@ -180,6 +180,7 @@
     <ClInclude Include="DBRequestFunctions.h" />
     <ClInclude Include="EncodingConverter.h" />
     <ClInclude Include="Enum.pb.h" />
+    <ClInclude Include="EquippedGear.h" />
     <ClInclude Include="Gamedata.h" />
     <ClInclude Include="GameSession.h" />
     <ClInclude Include="GameSessionManager.h" />
@@ -205,6 +206,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="EquippedGear.cpp" />
     <ClCompile Include="Gamedata.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="GameSession.cpp" />

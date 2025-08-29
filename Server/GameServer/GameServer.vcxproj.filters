@@ -88,6 +88,9 @@
     <ClCompile Include="Inventory.cpp">
       <Filter>Game\System</Filter>
     </ClCompile>
+    <ClCompile Include="EquippedGear.cpp">
+      <Filter>Game\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -146,6 +149,9 @@
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="Inventory.h">
+      <Filter>Game\System</Filter>
+    </ClInclude>
+    <ClInclude Include="EquippedGear.h">
       <Filter>Game\System</Filter>
     </ClInclude>
   </ItemGroup>

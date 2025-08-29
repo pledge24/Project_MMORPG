@@ -14,9 +14,14 @@ public:
     static void GetEnterGameData(SessionRef session, int64 characterId);
 
 private:
+    /* GetEnterGameData가 호출*/
     static bool GetCharacterData(SessionRef session, int64 characterId);
     static bool GetCharacterLastStateData(SessionRef session, int64 characterId);
-    static bool GetCharactersItemData(SessionRef session, int64 characterId);
-    static bool GetCharactersEquipmentData(SessionRef session, int64 characterId);
+    static bool GetAllCharacterItems(SessionRef session, int64 characterId);
+
+    /* GetAllCharacterItems가 호출*/
+    static bool GetCharactersGearItems(SessionRef session, int64 characterId);
+    static bool GetCharactersConsumableItems(SessionRef session, int64 characterId);
+    static bool GetCharactersMiscItems(SessionRef session, int64 characterId);
 };
 

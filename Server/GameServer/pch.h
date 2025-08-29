@@ -47,6 +47,8 @@ USING_SHARED_PTR(Monster);
 USING_SHARED_PTR(Creature);
 USING_SHARED_PTR(Object);
 USING_SHARED_PTR(Room);
+USING_SHARED_PTR(Inventory);
+USING_SHARED_PTR(EquippedGear);
 
 #define SEND_PACKET(pkt)													    \
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);	\

@@ -16,7 +16,7 @@ message S_PONG
 
 message C_LOGIN
 {
-    string accessToken = 1;
+    string access_token = 1;
 }
 
 message S_LOGIN
@@ -34,23 +34,23 @@ message S_CREATE_CHARACTER
 {
     bool success = 1;
     string cause = 2;
-    uint64 characterId = 3;
+    uint64 character_id = 3;
 }
 
 message C_DELETE_CHARACTER
 {
-    uint64 characterId = 1;
+    uint64 character_id = 1;
 }
 
 message S_DELETE_CHARACTER
 {
     bool success = 1;
-    uint64 characterId = 2;
+    uint64 character_id = 2;
 }
 
 message C_ENTER_GAME
 {
-	uint64 characterId = 1;
+	uint64 character_id = 1;
 }
 
 message S_ENTER_GAME
@@ -101,15 +101,13 @@ message S_ATTACK
 
 message S_HIT
 {
-    uint64 attacker_id = 1; // object_id
-    uint64 target_id = 2; // object_id
-    HitType type = 3;
-    optional int32 skill_id = 4;    // 스킬로 맞은 경우에만 값이 있음
-    optional int32 effect_id = 5;   // 지속피해로 맞은 경우에만 값이 있음
+    uint64 attacker_id = 1;         // object_id
+    uint64 target_id = 2;           // object_id
+
+    DamageType damage_type = 3;     // 물리 피해? 마법 피해?
 
     // 맞아서 바뀐 스텟들
-    optional int32 changed_hp = 6;
-    optional int32 changed_mp = 7;
+    repeated StatInfo updated_stat = 4;
 
     // 맞아서 생긴 효과(버프, 디버프)
     // repeated Effect addedEffect = ?;
@@ -123,7 +121,7 @@ message C_BUY_ITEM
 
 message S_BUY_ITEM
 {
-    repeated Slot updatedSlots = 1;
+    repeated Slot updated_slots = 1;
     int64 gold = 2;
 }
 
@@ -135,7 +133,7 @@ message C_SELL_ITEM
 
 message S_SELL_ITEM
 {
-    repeated Slot updatedSlots = 1;
+    repeated Slot updated_slots = 1;
     int64 gold = 2;
 }
 
@@ -146,8 +144,8 @@ message C_EQUIP_EQUIPMENT
 
 message S_EQUIP_EQUIPMENT
 {
-    repeated Slot updatedSlots = 1;
-    StatInfo updatedStat = 2; // 바뀐 스텟
+    repeated Slot updated_slots = 1;
+    StatInfo updated_stat = 2; // 바뀐 스텟
 }
 
 message C_UNEQUIP_EQUIPMENT
@@ -157,8 +155,8 @@ message C_UNEQUIP_EQUIPMENT
 
 message S_UNEQUIP_EQUIPMENT
 {
-    repeated Slot updatedSlots = 1;
-    StatInfo updatedStat = 2; // 바뀐 스텟
+    repeated Slot updated_slots = 1;
+    StatInfo updated_stat = 2; // 바뀐 스텟
 }
 
 message C_USE_ITEM
@@ -168,6 +166,6 @@ message C_USE_ITEM
 
 message S_USE_ITEM
 {
-    repeated Slot updatedSlots = 1;
-    StatInfo updatedStat = 2; // 바뀐 스텟
+    repeated Slot updated_slots = 1;
+    StatInfo updated_stat = 2; // 바뀐 스텟
 }

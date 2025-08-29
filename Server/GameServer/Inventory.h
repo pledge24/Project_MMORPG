@@ -3,14 +3,18 @@
 /*----------------------
         Inventory
 -----------------------*/
+enum
+{
+    MAX_SLOTS = 50
+};
+
 class Inventory
 {
 public:
     Inventory();
     ~Inventory();
 
-    void Init(vector<Protocol::Item>& gear, vector<Protocol::Item>& consumables, vector<Protocol::Item>& miscellaneous);
-
+    void Init(Protocol::PlayerInfo* info);
     void addItem(Protocol::Slot* updatedSlots, int32 templateId, int32 count=1);
     void removeItem(Protocol::Slot* targetSlot, Protocol::Slot* updatedSlots, int32 count=1);
 
@@ -21,8 +25,9 @@ private:
     vector<Protocol::Item> _miscellaneous;
 
     /* 더티 플래그('': 변경 없음, 'U': 업데이트, 'I': 추가(슬롯))*/
-    vector<char> gearDirtyFlags;
-    vector<char> consumablesDirtyFlags;
-    vector<char> miscellaneousDirtyFlags;
+    vector<char> _gearDirtyFlags;
+    vector<char> _consumablesDirtyFlags;
+    vector<char> _miscellaneousDirtyFlags;
+
 };
 

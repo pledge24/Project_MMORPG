@@ -33,7 +33,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
         [session, pkt]()
         {
             // 클라로부터 받은 AccessToken을 Redis와 비교
-            string accessToken = pkt.accesstoken();
+            string accessToken = pkt.access_token();
 
             RedisRef redis = GRedisManager->GetRedis();
             auto val = redis->get("accessToken:" + accessToken);
@@ -99,7 +99,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
     JobRef job = make_shared<Job>(
         [session, pkt]()
         {
-            int64 characterId = pkt.characterid();
+            int64 characterId = pkt.character_id();
             DBRequestFunctions::DeleteCharacter(session, characterId);
         }
     );
@@ -121,7 +121,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     JobRef job = make_shared<Job>(
         [session, pkt, player]()
         {
-            int64 characterId = pkt.characterid();
+            int64 characterId = pkt.character_id();
             DBRequestFunctions::GetEnterGameData(session, characterId);
             GRoom->DoAsync(&Room::HandleEnterPlayer, player);
         }

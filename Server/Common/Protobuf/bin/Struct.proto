@@ -17,22 +17,26 @@ message ObjectInfo
 	ObjectType object_type = 2;
 	PosInfo pos_info = 3;
    
+    // 특정 상황에만 있는 정보들
     optional PlayerInfo player_info = 4;
 }
 
 message PlayerInfo
 {
-    // 캐릭터 기본 정보
-    CharacterOverview overview = 1;
+    // 캐릭터 기본 정보(CharacterOverview 풀어서 들고있자)
+    uint64 character_id = 1;
+    CharacterClass class = 2;
+    string name = 3;
+    uint32 level = 4;
 
     // 성장 및 스텟 관련
-    uint64 exp = 2;
-    StatInfo stat_info = 3;
+    uint64 exp = 5;
+    repeated StatInfo stat_info = 6;
 
     // 소유 관련
-    uint64 gold = 4;
-    Inventory inventory = 5;
-    repeated Slot equipped_gear = 6;
+    uint64 gold = 7;
+    Inventory inventory = 8;
+    repeated Slot equipped_gear = 9;
 }
 
 message PosInfo
@@ -48,12 +52,9 @@ message PosInfo
 
 message StatInfo
 {
-    int32 cur_hp = 1;
-    int32 max_hp = 2;
-    int32 cur_mp = 3;
-    int32 max_mp = 4;
-    int32 cur_attack = 5;
-    int32 cur_magic = 6;
+    StatType type = 1;
+    bool is_gauge = 2;
+    int32 value = 3;
 }
 
 message Effect
@@ -67,8 +68,8 @@ message GearInfo
     int64 item_uid = 1;
     int32 enhance = 2;
     int32 durability = 3;
-    int32 bonus_attack = 4;
-    int32 bonus_magic = 5;
+    int32 additional_physical_attack = 4;  // 추가 물리 공격력
+    int32 additional_magical_attack = 5;   // 추가 마법 공격력
 }
 
 message Item
@@ -93,4 +94,6 @@ message Inventory
     repeated Slot consumables = 2;
     repeated Slot miscellaneous = 3;
 }
+
+
 
