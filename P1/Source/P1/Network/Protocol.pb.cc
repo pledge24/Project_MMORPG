@@ -709,28 +709,28 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "\nobject_ids\030\001 \003(\004\")\n\006C_MOVE\022\037\n\004info\030\001 \001("
   "\0132\021.Protocol.PosInfo\")\n\006S_MOVE\022\037\n\004info\030\001"
   " \001(\0132\021.Protocol.PosInfo\"\n\n\010C_ATTACK\"\036\n\010S"
-  "_ATTACK\022\022\n\nobject_ids\030\001 \003(\004\"\204\001\n\005S_HIT\022\023\n"
+  "_ATTACK\022\022\n\nobject_ids\030\001 \003(\004\"\200\001\n\005S_HIT\022\023\n"
   "\013attacker_id\030\001 \001(\004\022\021\n\ttarget_id\030\002 \001(\004\022)\n"
   "\013damage_type\030\003 \001(\0162\024.Protocol.DamageType"
-  "\022(\n\014updated_stat\030\004 \003(\0132\022.Protocol.StatIn"
-  "fo\"0\n\nC_BUY_ITEM\022\023\n\013template_id\030\001 \001(\005\022\r\n"
-  "\005count\030\002 \001(\005\"A\n\nS_BUY_ITEM\022%\n\rupdated_sl"
-  "ots\030\001 \003(\0132\016.Protocol.Slot\022\014\n\004gold\030\002 \001(\003\""
-  ":\n\013C_SELL_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol."
-  "Slot\022\r\n\005count\030\002 \001(\005\"B\n\013S_SELL_ITEM\022%\n\rup"
-  "dated_slots\030\001 \003(\0132\016.Protocol.Slot\022\014\n\004gol"
-  "d\030\002 \001(\003\"1\n\021C_EQUIP_EQUIPMENT\022\034\n\004slot\030\001 \001"
-  "(\0132\016.Protocol.Slot\"d\n\021S_EQUIP_EQUIPMENT\022"
-  "%\n\rupdated_slots\030\001 \003(\0132\016.Protocol.Slot\022("
-  "\n\014updated_stat\030\002 \001(\0132\022.Protocol.StatInfo"
-  "\"3\n\023C_UNEQUIP_EQUIPMENT\022\034\n\004slot\030\001 \001(\0132\016."
-  "Protocol.Slot\"f\n\023S_UNEQUIP_EQUIPMENT\022%\n\r"
-  "updated_slots\030\001 \003(\0132\016.Protocol.Slot\022(\n\014u"
-  "pdated_stat\030\002 \001(\0132\022.Protocol.StatInfo\"*\n"
-  "\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slo"
-  "t\"]\n\nS_USE_ITEM\022%\n\rupdated_slots\030\001 \003(\0132\016"
-  ".Protocol.Slot\022(\n\014updated_stat\030\002 \001(\0132\022.P"
-  "rotocol.StatInfob\006proto3"
+  "\022$\n\014updated_stat\030\004 \003(\0132\016.Protocol.Stat\"0"
+  "\n\nC_BUY_ITEM\022\023\n\013template_id\030\001 \001(\005\022\r\n\005cou"
+  "nt\030\002 \001(\005\"A\n\nS_BUY_ITEM\022%\n\rupdated_slots\030"
+  "\001 \003(\0132\016.Protocol.Slot\022\014\n\004gold\030\002 \001(\003\":\n\013C"
+  "_SELL_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot"
+  "\022\r\n\005count\030\002 \001(\005\"B\n\013S_SELL_ITEM\022%\n\rupdate"
+  "d_slots\030\001 \003(\0132\016.Protocol.Slot\022\014\n\004gold\030\002 "
+  "\001(\003\"1\n\021C_EQUIP_EQUIPMENT\022\034\n\004slot\030\001 \001(\0132\016"
+  ".Protocol.Slot\"`\n\021S_EQUIP_EQUIPMENT\022%\n\ru"
+  "pdated_slots\030\001 \003(\0132\016.Protocol.Slot\022$\n\014up"
+  "dated_stat\030\002 \001(\0132\016.Protocol.Stat\"3\n\023C_UN"
+  "EQUIP_EQUIPMENT\022\034\n\004slot\030\001 \001(\0132\016.Protocol"
+  ".Slot\"b\n\023S_UNEQUIP_EQUIPMENT\022%\n\rupdated_"
+  "slots\030\001 \003(\0132\016.Protocol.Slot\022$\n\014updated_s"
+  "tat\030\002 \001(\0132\016.Protocol.Stat\"*\n\nC_USE_ITEM\022"
+  "\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"Y\n\nS_USE_I"
+  "TEM\022%\n\rupdated_slots\030\001 \003(\0132\016.Protocol.Sl"
+  "ot\022$\n\014updated_stat\030\002 \001(\0132\016.Protocol.Stat"
+  "b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -738,7 +738,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 1624, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 1608, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 29,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -3709,7 +3709,7 @@ const char* S_HIT::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // repeated .Protocol.StatInfo updated_stat = 4;
+      // repeated .Protocol.Stat updated_stat = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
           ptr -= 1;
@@ -3770,7 +3770,7 @@ uint8_t* S_HIT::_InternalSerialize(
       3, this->_internal_damage_type(), target);
   }
 
-  // repeated .Protocol.StatInfo updated_stat = 4;
+  // repeated .Protocol.Stat updated_stat = 4;
   for (unsigned i = 0,
       n = static_cast<unsigned>(this->_internal_updated_stat_size()); i < n; i++) {
     const auto& repfield = this->_internal_updated_stat(i);
@@ -3794,7 +3794,7 @@ size_t S_HIT::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated .Protocol.StatInfo updated_stat = 4;
+  // repeated .Protocol.Stat updated_stat = 4;
   total_size += 1UL * this->_internal_updated_stat_size();
   for (const auto& msg : this->_impl_.updated_stat_) {
     total_size +=
@@ -4951,10 +4951,10 @@ void C_EQUIP_EQUIPMENT::InternalSwap(C_EQUIP_EQUIPMENT* other) {
 
 class S_EQUIP_EQUIPMENT::_Internal {
  public:
-  static const ::Protocol::StatInfo& updated_stat(const S_EQUIP_EQUIPMENT* msg);
+  static const ::Protocol::Stat& updated_stat(const S_EQUIP_EQUIPMENT* msg);
 };
 
-const ::Protocol::StatInfo&
+const ::Protocol::Stat&
 S_EQUIP_EQUIPMENT::_Internal::updated_stat(const S_EQUIP_EQUIPMENT* msg) {
   return *msg->_impl_.updated_stat_;
 }
@@ -4983,7 +4983,7 @@ S_EQUIP_EQUIPMENT::S_EQUIP_EQUIPMENT(const S_EQUIP_EQUIPMENT& from)
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   if (from._internal_has_updated_stat()) {
-    _this->_impl_.updated_stat_ = new ::Protocol::StatInfo(*from._impl_.updated_stat_);
+    _this->_impl_.updated_stat_ = new ::Protocol::Stat(*from._impl_.updated_stat_);
   }
   // @@protoc_insertion_point(copy_constructor:Protocol.S_EQUIP_EQUIPMENT)
 }
@@ -5051,7 +5051,7 @@ const char* S_EQUIP_EQUIPMENT::_InternalParse(const char* ptr, ::_pbi::ParseCont
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.StatInfo updated_stat = 2;
+      // .Protocol.Stat updated_stat = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
           ptr = ctx->ParseMessage(_internal_mutable_updated_stat(), ptr);
@@ -5096,7 +5096,7 @@ uint8_t* S_EQUIP_EQUIPMENT::_InternalSerialize(
         InternalWriteMessage(1, repfield, repfield.GetCachedSize(), target, stream);
   }
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   if (this->_internal_has_updated_stat()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(2, _Internal::updated_stat(this),
@@ -5126,7 +5126,7 @@ size_t S_EQUIP_EQUIPMENT::ByteSizeLong() const {
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   if (this->_internal_has_updated_stat()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
@@ -5153,7 +5153,7 @@ void S_EQUIP_EQUIPMENT::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, cons
 
   _this->_impl_.updated_slots_.MergeFrom(from._impl_.updated_slots_);
   if (from._internal_has_updated_stat()) {
-    _this->_internal_mutable_updated_stat()->::Protocol::StatInfo::MergeFrom(
+    _this->_internal_mutable_updated_stat()->::Protocol::Stat::MergeFrom(
         from._internal_updated_stat());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -5386,10 +5386,10 @@ void C_UNEQUIP_EQUIPMENT::InternalSwap(C_UNEQUIP_EQUIPMENT* other) {
 
 class S_UNEQUIP_EQUIPMENT::_Internal {
  public:
-  static const ::Protocol::StatInfo& updated_stat(const S_UNEQUIP_EQUIPMENT* msg);
+  static const ::Protocol::Stat& updated_stat(const S_UNEQUIP_EQUIPMENT* msg);
 };
 
-const ::Protocol::StatInfo&
+const ::Protocol::Stat&
 S_UNEQUIP_EQUIPMENT::_Internal::updated_stat(const S_UNEQUIP_EQUIPMENT* msg) {
   return *msg->_impl_.updated_stat_;
 }
@@ -5418,7 +5418,7 @@ S_UNEQUIP_EQUIPMENT::S_UNEQUIP_EQUIPMENT(const S_UNEQUIP_EQUIPMENT& from)
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   if (from._internal_has_updated_stat()) {
-    _this->_impl_.updated_stat_ = new ::Protocol::StatInfo(*from._impl_.updated_stat_);
+    _this->_impl_.updated_stat_ = new ::Protocol::Stat(*from._impl_.updated_stat_);
   }
   // @@protoc_insertion_point(copy_constructor:Protocol.S_UNEQUIP_EQUIPMENT)
 }
@@ -5486,7 +5486,7 @@ const char* S_UNEQUIP_EQUIPMENT::_InternalParse(const char* ptr, ::_pbi::ParseCo
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.StatInfo updated_stat = 2;
+      // .Protocol.Stat updated_stat = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
           ptr = ctx->ParseMessage(_internal_mutable_updated_stat(), ptr);
@@ -5531,7 +5531,7 @@ uint8_t* S_UNEQUIP_EQUIPMENT::_InternalSerialize(
         InternalWriteMessage(1, repfield, repfield.GetCachedSize(), target, stream);
   }
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   if (this->_internal_has_updated_stat()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(2, _Internal::updated_stat(this),
@@ -5561,7 +5561,7 @@ size_t S_UNEQUIP_EQUIPMENT::ByteSizeLong() const {
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   if (this->_internal_has_updated_stat()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
@@ -5588,7 +5588,7 @@ void S_UNEQUIP_EQUIPMENT::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, co
 
   _this->_impl_.updated_slots_.MergeFrom(from._impl_.updated_slots_);
   if (from._internal_has_updated_stat()) {
-    _this->_internal_mutable_updated_stat()->::Protocol::StatInfo::MergeFrom(
+    _this->_internal_mutable_updated_stat()->::Protocol::Stat::MergeFrom(
         from._internal_updated_stat());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -5821,10 +5821,10 @@ void C_USE_ITEM::InternalSwap(C_USE_ITEM* other) {
 
 class S_USE_ITEM::_Internal {
  public:
-  static const ::Protocol::StatInfo& updated_stat(const S_USE_ITEM* msg);
+  static const ::Protocol::Stat& updated_stat(const S_USE_ITEM* msg);
 };
 
-const ::Protocol::StatInfo&
+const ::Protocol::Stat&
 S_USE_ITEM::_Internal::updated_stat(const S_USE_ITEM* msg) {
   return *msg->_impl_.updated_stat_;
 }
@@ -5853,7 +5853,7 @@ S_USE_ITEM::S_USE_ITEM(const S_USE_ITEM& from)
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   if (from._internal_has_updated_stat()) {
-    _this->_impl_.updated_stat_ = new ::Protocol::StatInfo(*from._impl_.updated_stat_);
+    _this->_impl_.updated_stat_ = new ::Protocol::Stat(*from._impl_.updated_stat_);
   }
   // @@protoc_insertion_point(copy_constructor:Protocol.S_USE_ITEM)
 }
@@ -5921,7 +5921,7 @@ const char* S_USE_ITEM::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.StatInfo updated_stat = 2;
+      // .Protocol.Stat updated_stat = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
           ptr = ctx->ParseMessage(_internal_mutable_updated_stat(), ptr);
@@ -5966,7 +5966,7 @@ uint8_t* S_USE_ITEM::_InternalSerialize(
         InternalWriteMessage(1, repfield, repfield.GetCachedSize(), target, stream);
   }
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   if (this->_internal_has_updated_stat()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(2, _Internal::updated_stat(this),
@@ -5996,7 +5996,7 @@ size_t S_USE_ITEM::ByteSizeLong() const {
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   if (this->_internal_has_updated_stat()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
@@ -6023,7 +6023,7 @@ void S_USE_ITEM::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
 
   _this->_impl_.updated_slots_.MergeFrom(from._impl_.updated_slots_);
   if (from._internal_has_updated_stat()) {
-    _this->_internal_mutable_updated_stat()->::Protocol::StatInfo::MergeFrom(
+    _this->_internal_mutable_updated_stat()->::Protocol::Stat::MergeFrom(
         from._internal_updated_stat());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);

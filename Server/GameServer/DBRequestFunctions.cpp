@@ -120,11 +120,12 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         BindObject(DBBind<PARAMS, COLS>& dbBind, const Protocol::CharacterOverview& character, int64 userId)
             : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name()))
         {
-            unordered_map<int32, Json>* ClassLevelDataTable = Gamedata::ClassLevelDataTableMappings[_classId];
-            _curHp = (*ClassLevelDataTable)[1]["maxHp"];
-            _curMp = (*ClassLevelDataTable)[1]["maxMp"];
-            _curAttack = (*ClassLevelDataTable)[1]["baseAttack"];
-            _curMagic = (*ClassLevelDataTable)[1]["baseMagic"];
+            unordered_map<int32, Json>& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[_classId]);
+            const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
+            _curHp = classLevelDataTable[level]["maxHp"];
+            _curMp = classLevelDataTable[level]["maxMp"];
+            _curPhysicalAttack = classLevelDataTable[level]["physicalAttack"];
+            _curMagicalAttack = classLevelDataTable[level]["magicalAttack"];
             BindParam(dbBind);
             BindCol(dbBind);
         }
@@ -136,8 +137,8 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
             dbBind.BindParam(2, _name.c_str());
             dbBind.BindParam(3, _curHp);
             dbBind.BindParam(4, _curMp);
-            dbBind.BindParam(5, _curAttack);
-            dbBind.BindParam(6, _curMagic);
+            dbBind.BindParam(5, _curPhysicalAttack);
+            dbBind.BindParam(6, _curMagicalAttack);
         }
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
@@ -149,10 +150,10 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         int64 _userId;
         int32 _classId;
         wstring _name;
-        int32 _curHp;
-        int32 _curMp;
-        int32 _curAttack;
-        int32 _curMagic;
+        int32 _curHp = 0;
+        int32 _curMp = 0;
+        int32 _curPhysicalAttack = 0;
+        int32 _curMagicalAttack = 0;
 
         /* Cols */
         int64 _characterId;
@@ -189,12 +190,12 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
                 SET @character_id = SCOPE_IDENTITY();
                 
                 -- 2. 캐릭터 마지막 상태 저장 (기본값)
-                INSERT INTO [dbo].[CharactersLastState]([character_id], [cur_hp], [cur_mp], [cur_attack], [cur_magic])
+                INSERT INTO [dbo].[CharactersLastState]([character_id], [cur_hp], [cur_mp], [cur_physical_attack], [cur_magical_attack])
                 VALUES(@character_id, (?), (?), (?), (?));
                 
                 -- 3. 기본 아이템을 추가
-                INSERT INTO [dbo].[CharactersEquipments]([character_id], [template_id])
-                VALUES(@character_id, 1005);
+                INSERT INTO [dbo].[CharactersGearItems]([character_id], [template_id], [is_equipped], [slot_id])
+                VALUES(@character_id, 1005, 1, 1);
 
                 -- 4. 결과셋으로 반환
                 SELECT @character_id AS character_id;
@@ -503,30 +504,15 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     Protocol::PlayerInfo* playerInfo = player->playerInfo;
     Protocol::PosInfo* posInfo = player->posInfo;
 
-    // 성장 및 스텟 관련
+    // ==성장 및 스텟 관련==
     playerInfo->set_exp(bindObject._exp);
 
     // 현재 Hp
-    Protocol::StatInfo* statInfo = playerInfo->add_stat_info();
-    statInfo->set_type(Protocol::STAT_TYPE_HP);
-    statInfo->set_is_gauge(true);
-    statInfo->set_value(bindObject._curHp);
-
-    // 현재 Mp
-    statInfo = playerInfo->add_stat_info();
-    statInfo->set_type(Protocol::STAT_TYPE_MP);
-    statInfo->set_is_gauge(true);
-    statInfo->set_value(bindObject._curMp);
-
-    // 현재 물리 공격력
-    statInfo = playerInfo->add_stat_info();
-    statInfo->set_type(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
-    statInfo->set_value(bindObject._curAttack);
-
-    // 현재 마법 공격력
-    statInfo = playerInfo->add_stat_info();
-    statInfo->set_type(Protocol::STAT_TYPE_MAGICAL_ATTACK);
-    statInfo->set_value(bindObject._curMagic);
+    Protocol::StatInfo* statInfo = player->statInfo;
+    statInfo->set_hp(bindObject._curHp);
+    statInfo->set_mp(bindObject._curMp);
+    statInfo->set_physical_attack(bindObject._curAttack);
+    statInfo->set_magical_attack(bindObject._curMagic);
 
     // 위치 설정
     posInfo->set_map_id(bindObject._mapId);
@@ -535,7 +521,7 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     posInfo->set_z(bindObject._posZ);
     posInfo->set_yaw(bindObject._rotYaw);
 
-    // 플레이어 정보 설정
+    // ==플레이어 골드 설정==
     playerInfo->set_gold(bindObject._gold);
 
     GDBConnectionPool->Push(dbConn);

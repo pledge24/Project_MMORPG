@@ -1,12 +1,12 @@
 #pragma once
 
 #include "nlohmann/json.hpp"
-using Json = nlohmann::json;
-using DataTable = unordered_map<int32, Json>;
 
 /*-------------------
        Gamedata
 ---------------------*/
+using Json = nlohmann::json;
+using DataTable = unordered_map<int32, Json>;
 
 class Gamedata
 {
@@ -19,6 +19,7 @@ public:
 
 public:
     /* 직업별 레벨 테이블 */
+    static DataTable InvalidLevelDataTable;
     static DataTable WarriorLevelDataTable;
 
     /* 레벨 테이블 매핑 */
@@ -26,10 +27,8 @@ public:
 
     /* 게임 데이터 */
     static DataTable ItemDataTable;
-    static DataTable EquipmentDataTable;
+    static DataTable GearDataTable;
     static DataTable MapDataTable;
     static DataTable MonsterDataTable;
     static DataTable QuestDataTable;
-
-
 };

@@ -2958,22 +2958,22 @@ class S_HIT final :
     kTargetIdFieldNumber = 2,
     kDamageTypeFieldNumber = 3,
   };
-  // repeated .Protocol.StatInfo updated_stat = 4;
+  // repeated .Protocol.Stat updated_stat = 4;
   int updated_stat_size() const;
   private:
   int _internal_updated_stat_size() const;
   public:
   void clear_updated_stat();
-  ::Protocol::StatInfo* mutable_updated_stat(int index);
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >*
+  ::Protocol::Stat* mutable_updated_stat(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >*
       mutable_updated_stat();
   private:
-  const ::Protocol::StatInfo& _internal_updated_stat(int index) const;
-  ::Protocol::StatInfo* _internal_add_updated_stat();
+  const ::Protocol::Stat& _internal_updated_stat(int index) const;
+  ::Protocol::Stat* _internal_add_updated_stat();
   public:
-  const ::Protocol::StatInfo& updated_stat(int index) const;
-  ::Protocol::StatInfo* add_updated_stat();
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >&
+  const ::Protocol::Stat& updated_stat(int index) const;
+  ::Protocol::Stat* add_updated_stat();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
       updated_stat() const;
 
   // uint64 attacker_id = 1;
@@ -3011,7 +3011,7 @@ class S_HIT final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo > updated_stat_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat > updated_stat_;
     uint64_t attacker_id_;
     uint64_t target_id_;
     int damage_type_;
@@ -3984,23 +3984,23 @@ class S_EQUIP_EQUIPMENT final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
       updated_slots() const;
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   bool has_updated_stat() const;
   private:
   bool _internal_has_updated_stat() const;
   public:
   void clear_updated_stat();
-  const ::Protocol::StatInfo& updated_stat() const;
-  PROTOBUF_NODISCARD ::Protocol::StatInfo* release_updated_stat();
-  ::Protocol::StatInfo* mutable_updated_stat();
-  void set_allocated_updated_stat(::Protocol::StatInfo* updated_stat);
+  const ::Protocol::Stat& updated_stat() const;
+  PROTOBUF_NODISCARD ::Protocol::Stat* release_updated_stat();
+  ::Protocol::Stat* mutable_updated_stat();
+  void set_allocated_updated_stat(::Protocol::Stat* updated_stat);
   private:
-  const ::Protocol::StatInfo& _internal_updated_stat() const;
-  ::Protocol::StatInfo* _internal_mutable_updated_stat();
+  const ::Protocol::Stat& _internal_updated_stat() const;
+  ::Protocol::Stat* _internal_mutable_updated_stat();
   public:
   void unsafe_arena_set_allocated_updated_stat(
-      ::Protocol::StatInfo* updated_stat);
-  ::Protocol::StatInfo* unsafe_arena_release_updated_stat();
+      ::Protocol::Stat* updated_stat);
+  ::Protocol::Stat* unsafe_arena_release_updated_stat();
 
   // @@protoc_insertion_point(class_scope:Protocol.S_EQUIP_EQUIPMENT)
  private:
@@ -4011,7 +4011,7 @@ class S_EQUIP_EQUIPMENT final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
-    ::Protocol::StatInfo* updated_stat_;
+    ::Protocol::Stat* updated_stat_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4318,23 +4318,23 @@ class S_UNEQUIP_EQUIPMENT final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
       updated_slots() const;
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   bool has_updated_stat() const;
   private:
   bool _internal_has_updated_stat() const;
   public:
   void clear_updated_stat();
-  const ::Protocol::StatInfo& updated_stat() const;
-  PROTOBUF_NODISCARD ::Protocol::StatInfo* release_updated_stat();
-  ::Protocol::StatInfo* mutable_updated_stat();
-  void set_allocated_updated_stat(::Protocol::StatInfo* updated_stat);
+  const ::Protocol::Stat& updated_stat() const;
+  PROTOBUF_NODISCARD ::Protocol::Stat* release_updated_stat();
+  ::Protocol::Stat* mutable_updated_stat();
+  void set_allocated_updated_stat(::Protocol::Stat* updated_stat);
   private:
-  const ::Protocol::StatInfo& _internal_updated_stat() const;
-  ::Protocol::StatInfo* _internal_mutable_updated_stat();
+  const ::Protocol::Stat& _internal_updated_stat() const;
+  ::Protocol::Stat* _internal_mutable_updated_stat();
   public:
   void unsafe_arena_set_allocated_updated_stat(
-      ::Protocol::StatInfo* updated_stat);
-  ::Protocol::StatInfo* unsafe_arena_release_updated_stat();
+      ::Protocol::Stat* updated_stat);
+  ::Protocol::Stat* unsafe_arena_release_updated_stat();
 
   // @@protoc_insertion_point(class_scope:Protocol.S_UNEQUIP_EQUIPMENT)
  private:
@@ -4345,7 +4345,7 @@ class S_UNEQUIP_EQUIPMENT final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
-    ::Protocol::StatInfo* updated_stat_;
+    ::Protocol::Stat* updated_stat_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4652,23 +4652,23 @@ class S_USE_ITEM final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
       updated_slots() const;
 
-  // .Protocol.StatInfo updated_stat = 2;
+  // .Protocol.Stat updated_stat = 2;
   bool has_updated_stat() const;
   private:
   bool _internal_has_updated_stat() const;
   public:
   void clear_updated_stat();
-  const ::Protocol::StatInfo& updated_stat() const;
-  PROTOBUF_NODISCARD ::Protocol::StatInfo* release_updated_stat();
-  ::Protocol::StatInfo* mutable_updated_stat();
-  void set_allocated_updated_stat(::Protocol::StatInfo* updated_stat);
+  const ::Protocol::Stat& updated_stat() const;
+  PROTOBUF_NODISCARD ::Protocol::Stat* release_updated_stat();
+  ::Protocol::Stat* mutable_updated_stat();
+  void set_allocated_updated_stat(::Protocol::Stat* updated_stat);
   private:
-  const ::Protocol::StatInfo& _internal_updated_stat() const;
-  ::Protocol::StatInfo* _internal_mutable_updated_stat();
+  const ::Protocol::Stat& _internal_updated_stat() const;
+  ::Protocol::Stat* _internal_mutable_updated_stat();
   public:
   void unsafe_arena_set_allocated_updated_stat(
-      ::Protocol::StatInfo* updated_stat);
-  ::Protocol::StatInfo* unsafe_arena_release_updated_stat();
+      ::Protocol::Stat* updated_stat);
+  ::Protocol::Stat* unsafe_arena_release_updated_stat();
 
   // @@protoc_insertion_point(class_scope:Protocol.S_USE_ITEM)
  private:
@@ -4679,7 +4679,7 @@ class S_USE_ITEM final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
-    ::Protocol::StatInfo* updated_stat_;
+    ::Protocol::Stat* updated_stat_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -5596,38 +5596,38 @@ inline void S_HIT::set_damage_type(::Protocol::DamageType value) {
   // @@protoc_insertion_point(field_set:Protocol.S_HIT.damage_type)
 }
 
-// repeated .Protocol.StatInfo updated_stat = 4;
+// repeated .Protocol.Stat updated_stat = 4;
 inline int S_HIT::_internal_updated_stat_size() const {
   return _impl_.updated_stat_.size();
 }
 inline int S_HIT::updated_stat_size() const {
   return _internal_updated_stat_size();
 }
-inline ::Protocol::StatInfo* S_HIT::mutable_updated_stat(int index) {
+inline ::Protocol::Stat* S_HIT::mutable_updated_stat(int index) {
   // @@protoc_insertion_point(field_mutable:Protocol.S_HIT.updated_stat)
   return _impl_.updated_stat_.Mutable(index);
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >*
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >*
 S_HIT::mutable_updated_stat() {
   // @@protoc_insertion_point(field_mutable_list:Protocol.S_HIT.updated_stat)
   return &_impl_.updated_stat_;
 }
-inline const ::Protocol::StatInfo& S_HIT::_internal_updated_stat(int index) const {
+inline const ::Protocol::Stat& S_HIT::_internal_updated_stat(int index) const {
   return _impl_.updated_stat_.Get(index);
 }
-inline const ::Protocol::StatInfo& S_HIT::updated_stat(int index) const {
+inline const ::Protocol::Stat& S_HIT::updated_stat(int index) const {
   // @@protoc_insertion_point(field_get:Protocol.S_HIT.updated_stat)
   return _internal_updated_stat(index);
 }
-inline ::Protocol::StatInfo* S_HIT::_internal_add_updated_stat() {
+inline ::Protocol::Stat* S_HIT::_internal_add_updated_stat() {
   return _impl_.updated_stat_.Add();
 }
-inline ::Protocol::StatInfo* S_HIT::add_updated_stat() {
-  ::Protocol::StatInfo* _add = _internal_add_updated_stat();
+inline ::Protocol::Stat* S_HIT::add_updated_stat() {
+  ::Protocol::Stat* _add = _internal_add_updated_stat();
   // @@protoc_insertion_point(field_add:Protocol.S_HIT.updated_stat)
   return _add;
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::StatInfo >&
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
 S_HIT::updated_stat() const {
   // @@protoc_insertion_point(field_list:Protocol.S_HIT.updated_stat)
   return _impl_.updated_stat_;
@@ -6038,24 +6038,24 @@ S_EQUIP_EQUIPMENT::updated_slots() const {
   return _impl_.updated_slots_;
 }
 
-// .Protocol.StatInfo updated_stat = 2;
+// .Protocol.Stat updated_stat = 2;
 inline bool S_EQUIP_EQUIPMENT::_internal_has_updated_stat() const {
   return this != internal_default_instance() && _impl_.updated_stat_ != nullptr;
 }
 inline bool S_EQUIP_EQUIPMENT::has_updated_stat() const {
   return _internal_has_updated_stat();
 }
-inline const ::Protocol::StatInfo& S_EQUIP_EQUIPMENT::_internal_updated_stat() const {
-  const ::Protocol::StatInfo* p = _impl_.updated_stat_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::StatInfo&>(
-      ::Protocol::_StatInfo_default_instance_);
+inline const ::Protocol::Stat& S_EQUIP_EQUIPMENT::_internal_updated_stat() const {
+  const ::Protocol::Stat* p = _impl_.updated_stat_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Stat&>(
+      ::Protocol::_Stat_default_instance_);
 }
-inline const ::Protocol::StatInfo& S_EQUIP_EQUIPMENT::updated_stat() const {
+inline const ::Protocol::Stat& S_EQUIP_EQUIPMENT::updated_stat() const {
   // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
   return _internal_updated_stat();
 }
 inline void S_EQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
-    ::Protocol::StatInfo* updated_stat) {
+    ::Protocol::Stat* updated_stat) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
   }
@@ -6067,9 +6067,9 @@ inline void S_EQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
 }
-inline ::Protocol::StatInfo* S_EQUIP_EQUIPMENT::release_updated_stat() {
+inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::release_updated_stat() {
   
-  ::Protocol::StatInfo* temp = _impl_.updated_stat_;
+  ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
 #ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
   auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
@@ -6082,27 +6082,27 @@ inline ::Protocol::StatInfo* S_EQUIP_EQUIPMENT::release_updated_stat() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::StatInfo* S_EQUIP_EQUIPMENT::unsafe_arena_release_updated_stat() {
+inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::unsafe_arena_release_updated_stat() {
   // @@protoc_insertion_point(field_release:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
   
-  ::Protocol::StatInfo* temp = _impl_.updated_stat_;
+  ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
   return temp;
 }
-inline ::Protocol::StatInfo* S_EQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
+inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
   
   if (_impl_.updated_stat_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::StatInfo>(GetArenaForAllocation());
+    auto* p = CreateMaybeMessage<::Protocol::Stat>(GetArenaForAllocation());
     _impl_.updated_stat_ = p;
   }
   return _impl_.updated_stat_;
 }
-inline ::Protocol::StatInfo* S_EQUIP_EQUIPMENT::mutable_updated_stat() {
-  ::Protocol::StatInfo* _msg = _internal_mutable_updated_stat();
+inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::mutable_updated_stat() {
+  ::Protocol::Stat* _msg = _internal_mutable_updated_stat();
   // @@protoc_insertion_point(field_mutable:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
   return _msg;
 }
-inline void S_EQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::StatInfo* updated_stat) {
+inline void S_EQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
@@ -6253,24 +6253,24 @@ S_UNEQUIP_EQUIPMENT::updated_slots() const {
   return _impl_.updated_slots_;
 }
 
-// .Protocol.StatInfo updated_stat = 2;
+// .Protocol.Stat updated_stat = 2;
 inline bool S_UNEQUIP_EQUIPMENT::_internal_has_updated_stat() const {
   return this != internal_default_instance() && _impl_.updated_stat_ != nullptr;
 }
 inline bool S_UNEQUIP_EQUIPMENT::has_updated_stat() const {
   return _internal_has_updated_stat();
 }
-inline const ::Protocol::StatInfo& S_UNEQUIP_EQUIPMENT::_internal_updated_stat() const {
-  const ::Protocol::StatInfo* p = _impl_.updated_stat_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::StatInfo&>(
-      ::Protocol::_StatInfo_default_instance_);
+inline const ::Protocol::Stat& S_UNEQUIP_EQUIPMENT::_internal_updated_stat() const {
+  const ::Protocol::Stat* p = _impl_.updated_stat_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Stat&>(
+      ::Protocol::_Stat_default_instance_);
 }
-inline const ::Protocol::StatInfo& S_UNEQUIP_EQUIPMENT::updated_stat() const {
+inline const ::Protocol::Stat& S_UNEQUIP_EQUIPMENT::updated_stat() const {
   // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
   return _internal_updated_stat();
 }
 inline void S_UNEQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
-    ::Protocol::StatInfo* updated_stat) {
+    ::Protocol::Stat* updated_stat) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
   }
@@ -6282,9 +6282,9 @@ inline void S_UNEQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
 }
-inline ::Protocol::StatInfo* S_UNEQUIP_EQUIPMENT::release_updated_stat() {
+inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::release_updated_stat() {
   
-  ::Protocol::StatInfo* temp = _impl_.updated_stat_;
+  ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
 #ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
   auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
@@ -6297,27 +6297,27 @@ inline ::Protocol::StatInfo* S_UNEQUIP_EQUIPMENT::release_updated_stat() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::StatInfo* S_UNEQUIP_EQUIPMENT::unsafe_arena_release_updated_stat() {
+inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::unsafe_arena_release_updated_stat() {
   // @@protoc_insertion_point(field_release:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
   
-  ::Protocol::StatInfo* temp = _impl_.updated_stat_;
+  ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
   return temp;
 }
-inline ::Protocol::StatInfo* S_UNEQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
+inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
   
   if (_impl_.updated_stat_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::StatInfo>(GetArenaForAllocation());
+    auto* p = CreateMaybeMessage<::Protocol::Stat>(GetArenaForAllocation());
     _impl_.updated_stat_ = p;
   }
   return _impl_.updated_stat_;
 }
-inline ::Protocol::StatInfo* S_UNEQUIP_EQUIPMENT::mutable_updated_stat() {
-  ::Protocol::StatInfo* _msg = _internal_mutable_updated_stat();
+inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::mutable_updated_stat() {
+  ::Protocol::Stat* _msg = _internal_mutable_updated_stat();
   // @@protoc_insertion_point(field_mutable:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
   return _msg;
 }
-inline void S_UNEQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::StatInfo* updated_stat) {
+inline void S_UNEQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
@@ -6468,24 +6468,24 @@ S_USE_ITEM::updated_slots() const {
   return _impl_.updated_slots_;
 }
 
-// .Protocol.StatInfo updated_stat = 2;
+// .Protocol.Stat updated_stat = 2;
 inline bool S_USE_ITEM::_internal_has_updated_stat() const {
   return this != internal_default_instance() && _impl_.updated_stat_ != nullptr;
 }
 inline bool S_USE_ITEM::has_updated_stat() const {
   return _internal_has_updated_stat();
 }
-inline const ::Protocol::StatInfo& S_USE_ITEM::_internal_updated_stat() const {
-  const ::Protocol::StatInfo* p = _impl_.updated_stat_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::StatInfo&>(
-      ::Protocol::_StatInfo_default_instance_);
+inline const ::Protocol::Stat& S_USE_ITEM::_internal_updated_stat() const {
+  const ::Protocol::Stat* p = _impl_.updated_stat_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Stat&>(
+      ::Protocol::_Stat_default_instance_);
 }
-inline const ::Protocol::StatInfo& S_USE_ITEM::updated_stat() const {
+inline const ::Protocol::Stat& S_USE_ITEM::updated_stat() const {
   // @@protoc_insertion_point(field_get:Protocol.S_USE_ITEM.updated_stat)
   return _internal_updated_stat();
 }
 inline void S_USE_ITEM::unsafe_arena_set_allocated_updated_stat(
-    ::Protocol::StatInfo* updated_stat) {
+    ::Protocol::Stat* updated_stat) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
   }
@@ -6497,9 +6497,9 @@ inline void S_USE_ITEM::unsafe_arena_set_allocated_updated_stat(
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_USE_ITEM.updated_stat)
 }
-inline ::Protocol::StatInfo* S_USE_ITEM::release_updated_stat() {
+inline ::Protocol::Stat* S_USE_ITEM::release_updated_stat() {
   
-  ::Protocol::StatInfo* temp = _impl_.updated_stat_;
+  ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
 #ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
   auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
@@ -6512,27 +6512,27 @@ inline ::Protocol::StatInfo* S_USE_ITEM::release_updated_stat() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::StatInfo* S_USE_ITEM::unsafe_arena_release_updated_stat() {
+inline ::Protocol::Stat* S_USE_ITEM::unsafe_arena_release_updated_stat() {
   // @@protoc_insertion_point(field_release:Protocol.S_USE_ITEM.updated_stat)
   
-  ::Protocol::StatInfo* temp = _impl_.updated_stat_;
+  ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
   return temp;
 }
-inline ::Protocol::StatInfo* S_USE_ITEM::_internal_mutable_updated_stat() {
+inline ::Protocol::Stat* S_USE_ITEM::_internal_mutable_updated_stat() {
   
   if (_impl_.updated_stat_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::StatInfo>(GetArenaForAllocation());
+    auto* p = CreateMaybeMessage<::Protocol::Stat>(GetArenaForAllocation());
     _impl_.updated_stat_ = p;
   }
   return _impl_.updated_stat_;
 }
-inline ::Protocol::StatInfo* S_USE_ITEM::mutable_updated_stat() {
-  ::Protocol::StatInfo* _msg = _internal_mutable_updated_stat();
+inline ::Protocol::Stat* S_USE_ITEM::mutable_updated_stat() {
+  ::Protocol::Stat* _msg = _internal_mutable_updated_stat();
   // @@protoc_insertion_point(field_mutable:Protocol.S_USE_ITEM.updated_stat)
   return _msg;
 }
-inline void S_USE_ITEM::set_allocated_updated_stat(::Protocol::StatInfo* updated_stat) {
+inline void S_USE_ITEM::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);

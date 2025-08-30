@@ -9,6 +9,7 @@
 ---------------------*/
 
 /* 직업별 레벨 테이블 */
+DataTable Gamedata::InvalidLevelDataTable;
 DataTable Gamedata::WarriorLevelDataTable;
 
 /* 레벨 테이블 매핑 */
@@ -16,7 +17,7 @@ unordered_map<int32, DataTable*> Gamedata::ClassLevelDataTableMappings;
 
 /* 게임 데이터 */
 DataTable Gamedata::ItemDataTable;
-DataTable Gamedata::EquipmentDataTable;
+DataTable Gamedata::GearDataTable;
 DataTable Gamedata::MapDataTable;
 DataTable Gamedata::MonsterDataTable;
 DataTable Gamedata::QuestDataTable;
@@ -25,6 +26,7 @@ bool Gamedata::LoadAllGamedata()
 {
     // 레벨 테이블 매핑 초기화
     ClassLevelDataTableMappings = {
+        make_pair(Protocol::CharacterClass::CLASS_TYPE_NONE, &InvalidLevelDataTable),
         make_pair(Protocol::CharacterClass::CLASS_TYPE_WARRIOR, &WarriorLevelDataTable)
     };
 
@@ -71,14 +73,14 @@ bool Gamedata::LoadAllGamedata()
     // 3. 장비 정보
     try
     {
-        ifstream file("S_Equipment.json");
+        ifstream file("S_Gear.json");
         if (file.is_open())
         {
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
                 int32 templateId = row["template_id"];
-                EquipmentDataTable[templateId] = row;
+                GearDataTable[templateId] = row;
             }
         }
     }
@@ -166,7 +168,7 @@ void Gamedata::PrintAllGamedata()
         wcout << EncodingConverter::StringToWString(str) << '\n';
     }
 
-    for (auto elem : EquipmentDataTable)
+    for (auto elem : GearDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';

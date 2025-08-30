@@ -37,7 +37,6 @@
 #include "nlohmann/json.hpp"
 using Json = nlohmann::json;
 
-
 /*-------------------
        SharedPtr
 ---------------------*/

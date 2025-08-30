@@ -13,8 +13,9 @@ public:
 
     void Init(Protocol::PlayerInfo* info);
 
-    bool EquipGear();
-    bool UnEquipGear();
+    bool EquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot);
+    bool UnEquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot);
+
 
 private:
     vector<Protocol::Item> _gear;

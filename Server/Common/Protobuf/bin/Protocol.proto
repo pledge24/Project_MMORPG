@@ -107,7 +107,7 @@ message S_HIT
     DamageType damage_type = 3;     // ¹°¸® ÇÇÇØ? ¸¶¹ý ÇÇÇØ?
 
     // ¸Â¾Æ¼­ ¹Ù²ï ½ºÅÝµé
-    repeated StatInfo updated_stat = 4;
+    repeated Stat updated_stat = 4;
 
     // ¸Â¾Æ¼­ »ý±ä È¿°ú(¹öÇÁ, µð¹öÇÁ)
     // repeated Effect addedEffect = ?;
@@ -145,7 +145,7 @@ message C_EQUIP_EQUIPMENT
 message S_EQUIP_EQUIPMENT
 {
     repeated Slot updated_slots = 1;
-    StatInfo updated_stat = 2; // ¹Ù²ï ½ºÅÝ
+    Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
 }
 
 message C_UNEQUIP_EQUIPMENT
@@ -156,7 +156,7 @@ message C_UNEQUIP_EQUIPMENT
 message S_UNEQUIP_EQUIPMENT
 {
     repeated Slot updated_slots = 1;
-    StatInfo updated_stat = 2; // ¹Ù²ï ½ºÅÝ
+    Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
 }
 
 message C_USE_ITEM
@@ -167,5 +167,5 @@ message C_USE_ITEM
 message S_USE_ITEM
 {
     repeated Slot updated_slots = 1;
-    StatInfo updated_stat = 2; // ¹Ù²ï ½ºÅÝ
+    Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
 }
