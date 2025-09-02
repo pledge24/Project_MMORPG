@@ -27,7 +27,6 @@ public:
 
     /* 게임 데이터 */
     static DataTable ItemDataTable;
-    static DataTable GearDataTable;
     static DataTable MapDataTable;
     static DataTable MonsterDataTable;
     static DataTable QuestDataTable;

@@ -24,21 +24,21 @@ void Inventory::Init(Protocol::PlayerInfo* info)
     for (const auto& slot : inven.gear())
     {
         int32 slotId = slot.slot_id();
-        _gear[slotId] = slot.item();
+        _gear[slotId] = slot;
     }
 
     // 2. 소비 아이템
     for (const auto& slot : inven.consumables())
     {
         int32 slotId = slot.slot_id();
-        _consumables[slotId] = slot.item();
+        _consumables[slotId] = slot;
     }
 
     // 3. 기타 아이템
     for (const auto& slot : inven.miscellaneous())
     {
         int32 slotId = slot.slot_id();
-        _miscellaneous[slotId] = slot.item();
+        _miscellaneous[slotId] = slot;
     }
 }
 

@@ -195,8 +195,5 @@
     <None Include="S_Warrior_Level_Data.json">
       <Filter>Game\Data</Filter>
     </None>
-    <None Include="S_Gear.json">
-      <Filter>Game\Data</Filter>
-    </None>
   </ItemGroup>
 </Project>

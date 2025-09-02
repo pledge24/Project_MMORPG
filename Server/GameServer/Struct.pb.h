@@ -1618,31 +1618,21 @@ class GearInfo final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kItemUidFieldNumber = 1,
-    kEnhanceFieldNumber = 2,
-    kDurabilityFieldNumber = 3,
-    kAdditionalPhysicalAttackFieldNumber = 4,
-    kAdditionalMagicalAttackFieldNumber = 5,
+    kEnhanceLevelFieldNumber = 1,
+    kDurabilityFieldNumber = 2,
+    kAdditionalPhysicalAttackFieldNumber = 3,
+    kAdditionalMagicalAttackFieldNumber = 4,
   };
-  // int64 item_uid = 1;
-  void clear_item_uid();
-  int64_t item_uid() const;
-  void set_item_uid(int64_t value);
+  // int32 enhance_level = 1;
+  void clear_enhance_level();
+  int32_t enhance_level() const;
+  void set_enhance_level(int32_t value);
   private:
-  int64_t _internal_item_uid() const;
-  void _internal_set_item_uid(int64_t value);
+  int32_t _internal_enhance_level() const;
+  void _internal_set_enhance_level(int32_t value);
   public:
 
-  // int32 enhance = 2;
-  void clear_enhance();
-  int32_t enhance() const;
-  void set_enhance(int32_t value);
-  private:
-  int32_t _internal_enhance() const;
-  void _internal_set_enhance(int32_t value);
-  public:
-
-  // int32 durability = 3;
+  // int32 durability = 2;
   void clear_durability();
   int32_t durability() const;
   void set_durability(int32_t value);
@@ -1651,7 +1641,7 @@ class GearInfo final :
   void _internal_set_durability(int32_t value);
   public:
 
-  // int32 additional_physical_attack = 4;
+  // int32 additional_physical_attack = 3;
   void clear_additional_physical_attack();
   int32_t additional_physical_attack() const;
   void set_additional_physical_attack(int32_t value);
@@ -1660,7 +1650,7 @@ class GearInfo final :
   void _internal_set_additional_physical_attack(int32_t value);
   public:
 
-  // int32 additional_magical_attack = 5;
+  // int32 additional_magical_attack = 4;
   void clear_additional_magical_attack();
   int32_t additional_magical_attack() const;
   void set_additional_magical_attack(int32_t value);
@@ -1677,8 +1667,7 @@ class GearInfo final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int64_t item_uid_;
-    int32_t enhance_;
+    int32_t enhance_level_;
     int32_t durability_;
     int32_t additional_physical_attack_;
     int32_t additional_magical_attack_;
@@ -1732,6 +1721,11 @@ class Item final :
   static const Item& default_instance() {
     return *internal_default_instance();
   }
+  enum InstanceDataCase {
+    kGearInfo = 3,
+    INSTANCE_DATA_NOT_SET = 0,
+  };
+
   static inline const Item* internal_default_instance() {
     return reinterpret_cast<const Item*>(
                &_Item_default_instance_);
@@ -1810,12 +1804,29 @@ class Item final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kGearInfoFieldNumber = 4,
+    kItemUidFieldNumber = 2,
     kTemplateIdFieldNumber = 1,
-    kTypeFieldNumber = 2,
-    kCountFieldNumber = 3,
+    kGearInfoFieldNumber = 3,
   };
-  // optional .Protocol.GearInfo GearInfo = 4;
+  // int64 item_uid = 2;
+  void clear_item_uid();
+  int64_t item_uid() const;
+  void set_item_uid(int64_t value);
+  private:
+  int64_t _internal_item_uid() const;
+  void _internal_set_item_uid(int64_t value);
+  public:
+
+  // int32 template_id = 1;
+  void clear_template_id();
+  int32_t template_id() const;
+  void set_template_id(int32_t value);
+  private:
+  int32_t _internal_template_id() const;
+  void _internal_set_template_id(int32_t value);
+  public:
+
+  // .Protocol.GearInfo GearInfo = 3;
   bool has_gearinfo() const;
   private:
   bool _internal_has_gearinfo() const;
@@ -1833,47 +1844,30 @@ class Item final :
       ::Protocol::GearInfo* gearinfo);
   ::Protocol::GearInfo* unsafe_arena_release_gearinfo();
 
-  // int32 template_id = 1;
-  void clear_template_id();
-  int32_t template_id() const;
-  void set_template_id(int32_t value);
-  private:
-  int32_t _internal_template_id() const;
-  void _internal_set_template_id(int32_t value);
-  public:
-
-  // .Protocol.ItemType type = 2;
-  void clear_type();
-  ::Protocol::ItemType type() const;
-  void set_type(::Protocol::ItemType value);
-  private:
-  ::Protocol::ItemType _internal_type() const;
-  void _internal_set_type(::Protocol::ItemType value);
-  public:
-
-  // int32 count = 3;
-  void clear_count();
-  int32_t count() const;
-  void set_count(int32_t value);
-  private:
-  int32_t _internal_count() const;
-  void _internal_set_count(int32_t value);
-  public:
-
+  void clear_instance_data();
+  InstanceDataCase instance_data_case() const;
   // @@protoc_insertion_point(class_scope:Protocol.Item)
  private:
   class _Internal;
+  void set_has_gearinfo();
+
+  inline bool has_instance_data() const;
+  inline void clear_has_instance_data();
 
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    ::Protocol::GearInfo* gearinfo_;
+    int64_t item_uid_;
     int32_t template_id_;
-    int type_;
-    int32_t count_;
+    union InstanceDataUnion {
+      constexpr InstanceDataUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      ::Protocol::GearInfo* gearinfo_;
+    } instance_data_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Struct_2eproto;
@@ -2004,6 +1998,7 @@ class Slot final :
     kItemFieldNumber = 3,
     kSlotIdFieldNumber = 1,
     kTypeFieldNumber = 2,
+    kCountFieldNumber = 4,
   };
   // optional .Protocol.Item item = 3;
   bool has_item() const;
@@ -2041,6 +2036,15 @@ class Slot final :
   void _internal_set_type(::Protocol::SlotType value);
   public:
 
+  // int32 count = 4;
+  void clear_count();
+  int32_t count() const;
+  void set_count(int32_t value);
+  private:
+  int32_t _internal_count() const;
+  void _internal_set_count(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:Protocol.Slot)
  private:
   class _Internal;
@@ -2054,6 +2058,7 @@ class Slot final :
     ::Protocol::Item* item_;
     int32_t slot_id_;
     int type_;
+    int32_t count_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Struct_2eproto;
@@ -3354,47 +3359,27 @@ inline void Effect::set_duration(float value) {
 
 // GearInfo
 
-// int64 item_uid = 1;
-inline void GearInfo::clear_item_uid() {
-  _impl_.item_uid_ = int64_t{0};
+// int32 enhance_level = 1;
+inline void GearInfo::clear_enhance_level() {
+  _impl_.enhance_level_ = 0;
 }
-inline int64_t GearInfo::_internal_item_uid() const {
-  return _impl_.item_uid_;
+inline int32_t GearInfo::_internal_enhance_level() const {
+  return _impl_.enhance_level_;
 }
-inline int64_t GearInfo::item_uid() const {
-  // @@protoc_insertion_point(field_get:Protocol.GearInfo.item_uid)
-  return _internal_item_uid();
+inline int32_t GearInfo::enhance_level() const {
+  // @@protoc_insertion_point(field_get:Protocol.GearInfo.enhance_level)
+  return _internal_enhance_level();
 }
-inline void GearInfo::_internal_set_item_uid(int64_t value) {
+inline void GearInfo::_internal_set_enhance_level(int32_t value) {
   
-  _impl_.item_uid_ = value;
+  _impl_.enhance_level_ = value;
 }
-inline void GearInfo::set_item_uid(int64_t value) {
-  _internal_set_item_uid(value);
-  // @@protoc_insertion_point(field_set:Protocol.GearInfo.item_uid)
+inline void GearInfo::set_enhance_level(int32_t value) {
+  _internal_set_enhance_level(value);
+  // @@protoc_insertion_point(field_set:Protocol.GearInfo.enhance_level)
 }
 
-// int32 enhance = 2;
-inline void GearInfo::clear_enhance() {
-  _impl_.enhance_ = 0;
-}
-inline int32_t GearInfo::_internal_enhance() const {
-  return _impl_.enhance_;
-}
-inline int32_t GearInfo::enhance() const {
-  // @@protoc_insertion_point(field_get:Protocol.GearInfo.enhance)
-  return _internal_enhance();
-}
-inline void GearInfo::_internal_set_enhance(int32_t value) {
-  
-  _impl_.enhance_ = value;
-}
-inline void GearInfo::set_enhance(int32_t value) {
-  _internal_set_enhance(value);
-  // @@protoc_insertion_point(field_set:Protocol.GearInfo.enhance)
-}
-
-// int32 durability = 3;
+// int32 durability = 2;
 inline void GearInfo::clear_durability() {
   _impl_.durability_ = 0;
 }
@@ -3414,7 +3399,7 @@ inline void GearInfo::set_durability(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.GearInfo.durability)
 }
 
-// int32 additional_physical_attack = 4;
+// int32 additional_physical_attack = 3;
 inline void GearInfo::clear_additional_physical_attack() {
   _impl_.additional_physical_attack_ = 0;
 }
@@ -3434,7 +3419,7 @@ inline void GearInfo::set_additional_physical_attack(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.GearInfo.additional_physical_attack)
 }
 
-// int32 additional_magical_attack = 5;
+// int32 additional_magical_attack = 4;
 inline void GearInfo::clear_additional_magical_attack() {
   _impl_.additional_magical_attack_ = 0;
 }
@@ -3478,136 +3463,109 @@ inline void Item::set_template_id(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.Item.template_id)
 }
 
-// .Protocol.ItemType type = 2;
-inline void Item::clear_type() {
-  _impl_.type_ = 0;
+// int64 item_uid = 2;
+inline void Item::clear_item_uid() {
+  _impl_.item_uid_ = int64_t{0};
 }
-inline ::Protocol::ItemType Item::_internal_type() const {
-  return static_cast< ::Protocol::ItemType >(_impl_.type_);
+inline int64_t Item::_internal_item_uid() const {
+  return _impl_.item_uid_;
 }
-inline ::Protocol::ItemType Item::type() const {
-  // @@protoc_insertion_point(field_get:Protocol.Item.type)
-  return _internal_type();
+inline int64_t Item::item_uid() const {
+  // @@protoc_insertion_point(field_get:Protocol.Item.item_uid)
+  return _internal_item_uid();
 }
-inline void Item::_internal_set_type(::Protocol::ItemType value) {
+inline void Item::_internal_set_item_uid(int64_t value) {
   
-  _impl_.type_ = value;
+  _impl_.item_uid_ = value;
 }
-inline void Item::set_type(::Protocol::ItemType value) {
-  _internal_set_type(value);
-  // @@protoc_insertion_point(field_set:Protocol.Item.type)
+inline void Item::set_item_uid(int64_t value) {
+  _internal_set_item_uid(value);
+  // @@protoc_insertion_point(field_set:Protocol.Item.item_uid)
 }
 
-// int32 count = 3;
-inline void Item::clear_count() {
-  _impl_.count_ = 0;
-}
-inline int32_t Item::_internal_count() const {
-  return _impl_.count_;
-}
-inline int32_t Item::count() const {
-  // @@protoc_insertion_point(field_get:Protocol.Item.count)
-  return _internal_count();
-}
-inline void Item::_internal_set_count(int32_t value) {
-  
-  _impl_.count_ = value;
-}
-inline void Item::set_count(int32_t value) {
-  _internal_set_count(value);
-  // @@protoc_insertion_point(field_set:Protocol.Item.count)
-}
-
-// optional .Protocol.GearInfo GearInfo = 4;
+// .Protocol.GearInfo GearInfo = 3;
 inline bool Item::_internal_has_gearinfo() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
-  PROTOBUF_ASSUME(!value || _impl_.gearinfo_ != nullptr);
-  return value;
+  return instance_data_case() == kGearInfo;
 }
 inline bool Item::has_gearinfo() const {
   return _internal_has_gearinfo();
 }
+inline void Item::set_has_gearinfo() {
+  _impl_._oneof_case_[0] = kGearInfo;
+}
 inline void Item::clear_gearinfo() {
-  if (_impl_.gearinfo_ != nullptr) _impl_.gearinfo_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000001u;
+  if (_internal_has_gearinfo()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.instance_data_.gearinfo_;
+    }
+    clear_has_instance_data();
+  }
+}
+inline ::Protocol::GearInfo* Item::release_gearinfo() {
+  // @@protoc_insertion_point(field_release:Protocol.Item.GearInfo)
+  if (_internal_has_gearinfo()) {
+    clear_has_instance_data();
+    ::Protocol::GearInfo* temp = _impl_.instance_data_.gearinfo_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.instance_data_.gearinfo_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
 }
 inline const ::Protocol::GearInfo& Item::_internal_gearinfo() const {
-  const ::Protocol::GearInfo* p = _impl_.gearinfo_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::GearInfo&>(
-      ::Protocol::_GearInfo_default_instance_);
+  return _internal_has_gearinfo()
+      ? *_impl_.instance_data_.gearinfo_
+      : reinterpret_cast< ::Protocol::GearInfo&>(::Protocol::_GearInfo_default_instance_);
 }
 inline const ::Protocol::GearInfo& Item::gearinfo() const {
   // @@protoc_insertion_point(field_get:Protocol.Item.GearInfo)
   return _internal_gearinfo();
 }
-inline void Item::unsafe_arena_set_allocated_gearinfo(
-    ::Protocol::GearInfo* gearinfo) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.gearinfo_);
-  }
-  _impl_.gearinfo_ = gearinfo;
-  if (gearinfo) {
-    _impl_._has_bits_[0] |= 0x00000001u;
+inline ::Protocol::GearInfo* Item::unsafe_arena_release_gearinfo() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.Item.GearInfo)
+  if (_internal_has_gearinfo()) {
+    clear_has_instance_data();
+    ::Protocol::GearInfo* temp = _impl_.instance_data_.gearinfo_;
+    _impl_.instance_data_.gearinfo_ = nullptr;
+    return temp;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000001u;
+    return nullptr;
+  }
+}
+inline void Item::unsafe_arena_set_allocated_gearinfo(::Protocol::GearInfo* gearinfo) {
+  clear_instance_data();
+  if (gearinfo) {
+    set_has_gearinfo();
+    _impl_.instance_data_.gearinfo_ = gearinfo;
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.Item.GearInfo)
 }
-inline ::Protocol::GearInfo* Item::release_gearinfo() {
-  _impl_._has_bits_[0] &= ~0x00000001u;
-  ::Protocol::GearInfo* temp = _impl_.gearinfo_;
-  _impl_.gearinfo_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
-}
-inline ::Protocol::GearInfo* Item::unsafe_arena_release_gearinfo() {
-  // @@protoc_insertion_point(field_release:Protocol.Item.GearInfo)
-  _impl_._has_bits_[0] &= ~0x00000001u;
-  ::Protocol::GearInfo* temp = _impl_.gearinfo_;
-  _impl_.gearinfo_ = nullptr;
-  return temp;
-}
 inline ::Protocol::GearInfo* Item::_internal_mutable_gearinfo() {
-  _impl_._has_bits_[0] |= 0x00000001u;
-  if (_impl_.gearinfo_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::GearInfo>(GetArenaForAllocation());
-    _impl_.gearinfo_ = p;
+  if (!_internal_has_gearinfo()) {
+    clear_instance_data();
+    set_has_gearinfo();
+    _impl_.instance_data_.gearinfo_ = CreateMaybeMessage< ::Protocol::GearInfo >(GetArenaForAllocation());
   }
-  return _impl_.gearinfo_;
+  return _impl_.instance_data_.gearinfo_;
 }
 inline ::Protocol::GearInfo* Item::mutable_gearinfo() {
   ::Protocol::GearInfo* _msg = _internal_mutable_gearinfo();
   // @@protoc_insertion_point(field_mutable:Protocol.Item.GearInfo)
   return _msg;
 }
-inline void Item::set_allocated_gearinfo(::Protocol::GearInfo* gearinfo) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete _impl_.gearinfo_;
-  }
-  if (gearinfo) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(gearinfo);
-    if (message_arena != submessage_arena) {
-      gearinfo = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, gearinfo, submessage_arena);
-    }
-    _impl_._has_bits_[0] |= 0x00000001u;
-  } else {
-    _impl_._has_bits_[0] &= ~0x00000001u;
-  }
-  _impl_.gearinfo_ = gearinfo;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.Item.GearInfo)
-}
 
+inline bool Item::has_instance_data() const {
+  return instance_data_case() != INSTANCE_DATA_NOT_SET;
+}
+inline void Item::clear_has_instance_data() {
+  _impl_._oneof_case_[0] = INSTANCE_DATA_NOT_SET;
+}
+inline Item::InstanceDataCase Item::instance_data_case() const {
+  return Item::InstanceDataCase(_impl_._oneof_case_[0]);
+}
 // -------------------------------------------------------------------
 
 // Slot
@@ -3740,6 +3698,26 @@ inline void Slot::set_allocated_item(::Protocol::Item* item) {
   }
   _impl_.item_ = item;
   // @@protoc_insertion_point(field_set_allocated:Protocol.Slot.item)
+}
+
+// int32 count = 4;
+inline void Slot::clear_count() {
+  _impl_.count_ = 0;
+}
+inline int32_t Slot::_internal_count() const {
+  return _impl_.count_;
+}
+inline int32_t Slot::count() const {
+  // @@protoc_insertion_point(field_get:Protocol.Slot.count)
+  return _internal_count();
+}
+inline void Slot::_internal_set_count(int32_t value) {
+  
+  _impl_.count_ = value;
+}
+inline void Slot::set_count(int32_t value) {
+  _internal_set_count(value);
+  // @@protoc_insertion_point(field_set:Protocol.Slot.count)
 }
 
 // -------------------------------------------------------------------

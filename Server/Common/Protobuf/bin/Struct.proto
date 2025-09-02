@@ -77,20 +77,21 @@ message Effect
 
 message GearInfo
 {
-    int64 item_uid = 1;
-    int32 enhance = 2;
-    int32 durability = 3;
-    int32 additional_physical_attack = 4;  // 추가 물리 공격력
-    int32 additional_magical_attack = 5;   // 추가 마법 공격력
+    int32 enhance_level = 1;
+    int32 durability = 2;
+    int32 additional_physical_attack = 3;  // 추가 물리 공격력
+    int32 additional_magical_attack = 4;   // 추가 마법 공격력
 }
 
 message Item
 {
     int32 template_id = 1;
-    ItemType type = 2;
-    int32 count = 3;
+    int64 item_uid = 2;
 
-    optional GearInfo GearInfo = 4;
+    // 아이템 인스턴스 데이터
+    oneof instance_data{
+        GearInfo GearInfo = 3;
+    }
 }
 
 message Slot
@@ -98,6 +99,7 @@ message Slot
     int32 slot_id = 1;
     SlotType type = 2;
     optional Item item = 3;
+    int32 count = 4;
 }
 
 message Inventory

@@ -251,7 +251,6 @@
     <None Include="AlterTable.sql" />
     <None Include="DEBUG.sql" />
     <None Include="GameDB_CreateAllTables.sql" />
-    <None Include="S_Gear.json" />
     <None Include="S_Item.json" />
     <None Include="S_Map.json" />
     <None Include="S_Monster.json" />

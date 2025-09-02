@@ -52,6 +52,7 @@ enum EffectType
 
 enum ItemType
 {
+    // 현재 사용 안 함
     ITEM_TYPE_NONE = 0;            
     ITEM_TYPE_GEAR = 1;            // 장비탭
     ITEM_TYPE_CONSUMABLE = 2;      // 소비탭

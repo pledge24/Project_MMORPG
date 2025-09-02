@@ -625,13 +625,12 @@ bool DBRequestFunctions::GetCharactersGearItems(SessionRef session, int64 charac
 
         slot->set_slot_id(bindObject._slotId);
         slot->set_type(bindObject._isEquipped ? Protocol::SlotType::SLOT_TYPE_EQUIPPED : Protocol::SlotType::SLOT_TYPE_INVENTORY);
-        
-        item->set_template_id(bindObject._templateId);
-        item->set_type(Protocol::ItemType::ITEM_TYPE_GEAR);
-        item->set_count(1);
+        slot->set_count(1);
 
-        gearInfo->set_item_uid(bindObject._itemUid);
-        gearInfo->set_enhance(bindObject._enhance);
+        item->set_template_id(bindObject._templateId);
+        item->set_item_uid(bindObject._itemUid);
+
+        gearInfo->set_enhance_level(bindObject._enhance);
         gearInfo->set_durability(bindObject._durability);
         gearInfo->set_additional_physical_attack(bindObject._additionalMagicalAttack);
         gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
@@ -701,10 +700,9 @@ bool DBRequestFunctions::GetCharactersConsumableItems(SessionRef session, int64 
 
         slot->set_slot_id(bindObject._slotId);
         slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY);
+        slot->set_count(bindObject._count);
 
         item->set_template_id(bindObject._templateId);
-        item->set_type(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
-        item->set_count(bindObject._count);
     }
 
     GDBConnectionPool->Push(dbConn);
@@ -771,10 +769,9 @@ bool DBRequestFunctions::GetCharactersMiscItems(SessionRef session, int64 charac
 
         slot->set_slot_id(bindObject._slotId);
         slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY);
+        slot->set_count(bindObject._count);
 
         item->set_template_id(bindObject._templateId);
-        item->set_type(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
-        item->set_count(bindObject._count);
     }
 
     GDBConnectionPool->Push(dbConn);

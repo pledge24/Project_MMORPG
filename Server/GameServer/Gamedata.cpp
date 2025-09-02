@@ -17,7 +17,6 @@ unordered_map<int32, DataTable*> Gamedata::ClassLevelDataTableMappings;
 
 /* 게임 데이터 */
 DataTable Gamedata::ItemDataTable;
-DataTable Gamedata::GearDataTable;
 DataTable Gamedata::MapDataTable;
 DataTable Gamedata::MonsterDataTable;
 DataTable Gamedata::QuestDataTable;
@@ -70,27 +69,7 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
-    // 3. 장비 정보
-    try
-    {
-        ifstream file("S_Gear.json");
-        if (file.is_open())
-        {
-            Json json_data = Json::parse(file);
-            for (auto& row : json_data)
-            {
-                int32 templateId = row["template_id"];
-                GearDataTable[templateId] = row;
-            }
-        }
-    }
-    catch (const exception& e)
-    {
-        wcerr << L"장비 데이터 저장 오류" << e.what() << endl;
-        return false;
-    }
-
-    // 4. 맵 정보
+    // 3. 맵 정보
     try
     {
         ifstream file("S_Map.json");
@@ -110,7 +89,7 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
-    // 5. 몬스터 정보
+    // 4. 몬스터 정보
     try
     {
         ifstream file("S_Monster.json");
@@ -130,7 +109,7 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
-    // 6. 퀘스트 정보
+    // 5. 퀘스트 정보
     try
     {
         ifstream file("S_Quest.json");
@@ -163,12 +142,6 @@ void Gamedata::PrintAllGamedata()
     }
 
     for (auto elem : ItemDataTable)
-    {
-        string str = elem.second.dump();
-        wcout << EncodingConverter::StringToWString(str) << '\n';
-    }
-
-    for (auto elem : GearDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';

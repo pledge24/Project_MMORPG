@@ -57,10 +57,10 @@ bool Player::CalculateFinalStat()
     for (const auto& slot : playerInfo->equipped_gear())
     {
         const Protocol::Item& item = slot.item();
-        finalStat.maxHp += Gamedata::GearDataTable[item.template_id()]["hp"];
-        finalStat.maxMp += Gamedata::GearDataTable[item.template_id()]["mp"];
-        finalStat.physical_attack += Gamedata::GearDataTable[item.template_id()]["physicalAttack"];
-        finalStat.magical_attack += Gamedata::GearDataTable[item.template_id()]["magicalAttack"];
+        finalStat.maxHp += Gamedata::ItemDataTable[item.template_id()]["hp"];
+        finalStat.maxMp += Gamedata::ItemDataTable[item.template_id()]["mp"];
+        finalStat.physical_attack += Gamedata::ItemDataTable[item.template_id()]["physicalAttack"];
+        finalStat.magical_attack += Gamedata::ItemDataTable[item.template_id()]["magicalAttack"];
     }
 
     // validate

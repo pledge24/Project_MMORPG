@@ -20,11 +20,11 @@ public:
 
 private:
     /* 카테고리별 인벤토리 */
-    vector<Protocol::Item> _gear;
-    vector<Protocol::Item> _consumables;
-    vector<Protocol::Item> _miscellaneous;
+    vector<Protocol::Slot> _gear;
+    vector<Protocol::Slot> _consumables;
+    vector<Protocol::Slot> _miscellaneous;
 
-    /* 더티 플래그('': 변경 없음, 'U': 업데이트, 'I': 추가(슬롯))*/
+    /* 더티 플래그('': 변경 없음, 'U': 업데이트, 'I': 추가(슬롯), 'D' 삭제됨(비워진 경우 포함)*/
     vector<char> _gearDirtyFlags;
     vector<char> _consumablesDirtyFlags;
     vector<char> _miscellaneousDirtyFlags;

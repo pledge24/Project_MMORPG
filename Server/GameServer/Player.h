@@ -17,6 +17,7 @@ public:
 
 public:
 	weak_ptr<GameSession> session;
+
     Protocol::PlayerInfo* playerInfo;
     Protocol::StatInfo* statInfo;
 
