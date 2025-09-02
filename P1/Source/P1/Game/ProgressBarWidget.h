@@ -15,7 +15,7 @@ class P1_API UProgressBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    void Init(int32 Value);
+    void Init(int32 _MaxValue, int32 CurValue, bool IsPercentFormat = false);
     void SetMaxValue(int32 Value) { MaxValue = Value; };
 
     UFUNCTION(BlueprintCallable, Category = "UI")
@@ -29,5 +29,4 @@ protected:
 	
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "UI")
     class UTextBlock* TextBlock;
-
 };

@@ -10,6 +10,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Types.h"
+#include "InGamePlayerController.h"
 
 #define SEND_PACKET(Pkt)															\
 	SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);		\

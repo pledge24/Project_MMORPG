@@ -29,16 +29,10 @@ struct FItemData : public FTableRowBase
     FString ItemSubType;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 EquipmentSlotId;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 LevelRequirement;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ClassRequirement;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 MaxStack;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 BuyPrice;
@@ -47,44 +41,51 @@ struct FItemData : public FTableRowBase
     int32 SellPrice;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 BaseAttack;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 BaseMagicAttack;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 HpBonus;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 MpBonus;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float HpRestore;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MpRestore;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool QuestItem;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 VendorNpcId;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool Equippable;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool Sellable;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool Consumable;
+    int32 MaxStack;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Cooldown;
+    float Cooldown;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Description;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftObjectPtr<UTexture2D> Icon;
+
+    /*---------------------------
+           Conumption Field
+    ----------------------------*/
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float HpRestore;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float MpRestore;
+    
+    /*---------------------------
+              Gear Field
+    ----------------------------*/
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 PhysicalAttack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 MagicalAttack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Hp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Mp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 HpRegenerate;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 MpRegenerate;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSoftObjectPtr<USkeletalMesh> Asset;
 };

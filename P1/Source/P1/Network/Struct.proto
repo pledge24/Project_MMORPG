@@ -3,10 +3,113 @@ package Protocol;
 
 import "Enum.proto";
 
-message Player
+message CharacterOverview
 {
-	uint64 id = 1;
-	string name = 2;
-	PlayerType playerType = 3;
-	// ìŠ¤í…Ÿ ì •ë³´...
+    uint64 character_id = 1;
+    CharacterClass class = 2;
+    string name = 3;
+    uint32 level = 4;
 }
+
+message ObjectInfo
+{
+	uint64 object_id = 1;
+	ObjectType object_type = 2;
+	PosInfo pos_info = 3;
+   
+    // Æ¯Á¤ »óÈ²¿¡¸¸ ÀÖ´Â Á¤º¸µé
+    optional PlayerInfo player_info = 4;
+}
+
+message PlayerInfo
+{
+    // Ä³¸¯ÅÍ ±âº» Á¤º¸(CharacterOverview Ç®¾î¼­ µé°íÀÖÀÚ)
+    uint64 character_id = 1;
+    CharacterClass class = 2;
+    string name = 3;
+    uint32 level = 4;
+
+    // ¼ºÀå ¹× ½ºÅÝ °ü·Ã
+    uint64 cur_exp = 5;
+    uint64 max_exp = 6;
+    StatInfo stat_info = 7;
+
+    // ¼ÒÀ¯ °ü·Ã
+    uint64 gold = 8;
+    Inventory inventory = 9;
+    repeated Slot equipped_gear = 10;
+}
+
+message PosInfo
+{
+	uint64 object_id = 1;
+    int32 map_id = 2;
+	float x = 3;
+	float y = 4;
+	float z = 5;
+	float yaw = 6;
+	MoveState state = 7;
+}
+
+message StatInfo
+{
+    // Ä³¸¯ÅÍ ½ºÅÝ Á¤º¸ ÀüÃ¼¸¦ º¸³¾¶§ »ç¿ë
+    int32 max_hp = 1;
+    int32 hp = 2;
+    int32 max_mp = 3;
+    int32 mp = 4;
+    int32 physical_attack = 5;
+    int32 magical_attack = 6;
+}
+
+message Stat
+{
+    // °ÔÀÓ³» »óÈ£ÀÛ¿ë¿¡¼­ »ç¿ë
+    StatType type = 1;
+    bool is_gauge = 2;
+    int32 value = 3;
+}
+
+message Effect
+{
+    int32 effect_id = 1;
+    float duration = 2;
+}
+
+message GearInfo
+{
+    int32 enhance_level = 1;
+    int32 durability = 2;
+    int32 additional_physical_attack = 3;  // Ãß°¡ ¹°¸® °ø°Ý·Â
+    int32 additional_magical_attack = 4;   // Ãß°¡ ¸¶¹ý °ø°Ý·Â
+}
+
+message Item
+{
+    int32 template_id = 1;
+    int64 item_uid = 2;
+
+    // ¾ÆÀÌÅÛ ÀÎ½ºÅÏ½º µ¥ÀÌÅÍ
+    oneof instance_data{
+        GearInfo GearInfo = 3;
+    }
+}
+
+message Slot
+{
+    int32 slot_id = 1;
+    SlotType type = 2;
+    UpdateState state = 3;  // ½½·Ô °»½Å »óÅÂ
+    optional Item item = 4;
+    int32 count = 5;
+}
+
+message Inventory
+{
+    repeated Slot gear = 1;
+    repeated Slot consumables = 2;
+    repeated Slot miscellaneous = 3;
+}
+
+
+

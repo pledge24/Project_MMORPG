@@ -114,7 +114,7 @@ bool AP1Player::IsMyPlayer()
 	return Cast<AP1MyPlayer>(this) != nullptr;
 }
 
-void AP1Player::SetPlayerData(const Protocol::ObjectInfo& ObjectInfo)
+void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
 {
     //const google::protobuf::RepeatedPtrField<Protocol::Item>& source_items
     //    = ObjectInfo.player_info().equipment();

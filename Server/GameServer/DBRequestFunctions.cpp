@@ -505,7 +505,10 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     Protocol::PosInfo* posInfo = player->posInfo;
 
     // ==성장 및 스텟 관련==
-    playerInfo->set_exp(bindObject._exp);
+    playerInfo->set_cur_exp(bindObject._exp);
+    DataTable& classLevelDataTable = *Gamedata::ClassLevelDataTableMappings[playerInfo->class_()];
+    uint64 maxExp = classLevelDataTable[playerInfo->level()]["expRequirement"];
+    playerInfo->set_max_exp(maxExp);
 
     // 현재 Hp
     Protocol::StatInfo* statInfo = player->statInfo;
@@ -624,7 +627,8 @@ bool DBRequestFunctions::GetCharactersGearItems(SessionRef session, int64 charac
         Protocol::GearInfo* gearInfo = item->mutable_gearinfo();
 
         slot->set_slot_id(bindObject._slotId);
-        slot->set_type(bindObject._isEquipped ? Protocol::SlotType::SLOT_TYPE_EQUIPPED : Protocol::SlotType::SLOT_TYPE_INVENTORY);
+        slot->set_type(bindObject._isEquipped ? Protocol::SlotType::SLOT_TYPE_EQUIPPED : Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
+        slot->set_state(Protocol::UpdateState::UPDATE_STATE_INSERT);
         slot->set_count(1);
 
         item->set_template_id(bindObject._templateId);
@@ -699,7 +703,8 @@ bool DBRequestFunctions::GetCharactersConsumableItems(SessionRef session, int64 
         Protocol::Item* item = slot->mutable_item();
 
         slot->set_slot_id(bindObject._slotId);
-        slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY);
+        slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
+        slot->set_state(Protocol::UpdateState::UPDATE_STATE_INSERT);
         slot->set_count(bindObject._count);
 
         item->set_template_id(bindObject._templateId);
@@ -768,7 +773,8 @@ bool DBRequestFunctions::GetCharactersMiscItems(SessionRef session, int64 charac
         Protocol::Item* item = slot->mutable_item();
 
         slot->set_slot_id(bindObject._slotId);
-        slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY);
+        slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
+        slot->set_state(Protocol::UpdateState::UPDATE_STATE_INSERT);
         slot->set_count(bindObject._count);
 
         item->set_template_id(bindObject._templateId);

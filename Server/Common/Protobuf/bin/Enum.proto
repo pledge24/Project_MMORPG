@@ -62,9 +62,11 @@ enum ItemType
 enum SlotType
 {
     SLOT_TYPE_NONE = 0;
-    SLOT_TYPE_INVENTORY = 1;        // ¿Œ∫• ΩΩ∑‘
-    SLOT_TYPE_EQUIPPED = 2;         // ¿Â∫Ò ΩΩ∑‘
-    SLOT_TYPE_QUICK = 3;            // ƒ¸ ΩΩ∑‘
+    SLOT_TYPE_INVENTORY_GEAR = 1;               // ¿Œ∫• ¿Â∫Ò ΩΩ∑‘
+    SLOT_TYPE_INVENTORY_CONSUMABLE = 2;         // ¿Œ∫• º“∫Ò ΩΩ∑‘
+    SLOT_TYPE_INVENTORY_MISC = 3;               // ¿Œ∫• ±‚≈∏ ΩΩ∑‘
+    SLOT_TYPE_EQUIPPED = 4;                     // ¿Â∫Ò ΩΩ∑‘
+    SLOT_TYPE_QUICK = 5;                        // ƒ¸ ΩΩ∑‘
 }
 
 enum StatType
@@ -77,4 +79,12 @@ enum StatType
     STAT_TYPE_PHYSICAL_ATTACK = 5;
     STAT_TYPE_MAGICAL_ATTACK = 6;
     STAT_TYPE_EXP = 7;
+}
+
+enum UpdateState
+{
+    UPDATE_STATE_NONE = 0;
+    UPDATE_STATE_INSERT = 1;
+    UPDATE_STATE_UPDATE = 2;
+    UPDATE_STATE_DELETE = 3;
 }

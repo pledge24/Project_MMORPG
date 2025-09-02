@@ -24,7 +24,7 @@ protected:
 public:
 	bool IsMyPlayer();
 
-    virtual void SetPlayerData(const Protocol::ObjectInfo& ObjectInfo);
+    virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
 
     /** 상태 관련 */
 	Protocol::MoveState GetMoveState() { return PlayerInfo->state(); }

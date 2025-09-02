@@ -12,6 +12,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Inventory.h"
+#include "EquippedGear.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
@@ -28,6 +30,12 @@ AP1MyPlayer::AP1MyPlayer()
 
     // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+    playerInfo = new Protocol::PlayerInfo();
+    statInfo = playerInfo->mutable_stat_info();
+
+    InventoryComp = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+    EquippedGearComp = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -107,6 +115,20 @@ void AP1MyPlayer::Tick(float DeltaTime)
 
 		SEND_PACKET(MovePkt);
 	}
+}
+
+void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo)
+{
+    Super::Init(ObjectInfo);
+
+    InventoryComp->Init(ObjectInfo);
+
+    EquippedGearComp->Init(ObjectInfo);
+
+    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    {
+        InGamePlayerController->UpdatePlayerUI(ObjectInfo.player_info());
+    }
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)

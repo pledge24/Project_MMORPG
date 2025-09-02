@@ -4,7 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Protocol.pb.h"
 #include "InGamePlayerController.generated.h"
+
+class UUserWidget;
+class UInventoryWidget;
+class UStatusWindowWidget;
+class UHUDWidget;
 
 /**
  * 
@@ -21,40 +27,44 @@ protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
 
+public:
+    void UpdateInventorySlot(const Protocol::Slot& _Slot);
+    void UpdateEquippedGearSlot(const Protocol::Slot& _Slot);
+    void UpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo);
+
 private:
-    void ToggleStatusWindow();
-    void ToggleInventory();
+    void OnToggleStatusWindowWidget();
+    void OnToggleInventoryWidget();
     void ToggleWidget(UUserWidget* Widget, int32 FlagIdx);
 
-public:
+protected:
     /** HUD UI */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UUserWidget> HUDWidgetClass;
+    TSubclassOf<UHUDWidget> HUDWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
-    UUserWidget* HUDWidget;
+    UHUDWidget* HUDWidget;
 
     /** Control Help UI */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UUserWidget> HelpWidgetClass;
+    TSubclassOf<UUserWidget> HelpWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
     UUserWidget* HelpWidget;
 
-private:
     /** 상태창 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> StatusWindowWidgetClass;
+    TSubclassOf<UStatusWindowWidget> StatusWindowWidgetClass;
 
     UPROPERTY()
-    UUserWidget* StatusWindowWidget;
+    UStatusWindowWidget* StatusWindowWidget;
 
     /** 인벤토리 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> InventoryWidgetClass;
+    TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
     UPROPERTY()
-    UUserWidget* InventoryWidget;
+    UInventoryWidget* InventoryWidget;
 
 private:
     int32 ToggleFlag = 0;

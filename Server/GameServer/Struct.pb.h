@@ -604,17 +604,18 @@ class PlayerInfo final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kEquippedGearFieldNumber = 9,
+    kEquippedGearFieldNumber = 10,
     kNameFieldNumber = 3,
-    kStatInfoFieldNumber = 6,
-    kInventoryFieldNumber = 8,
+    kStatInfoFieldNumber = 7,
+    kInventoryFieldNumber = 9,
     kCharacterIdFieldNumber = 1,
     kClassFieldNumber = 2,
     kLevelFieldNumber = 4,
-    kExpFieldNumber = 5,
-    kGoldFieldNumber = 7,
+    kCurExpFieldNumber = 5,
+    kMaxExpFieldNumber = 6,
+    kGoldFieldNumber = 8,
   };
-  // repeated .Protocol.Slot equipped_gear = 9;
+  // repeated .Protocol.Slot equipped_gear = 10;
   int equipped_gear_size() const;
   private:
   int _internal_equipped_gear_size() const;
@@ -646,7 +647,7 @@ class PlayerInfo final :
   std::string* _internal_mutable_name();
   public:
 
-  // .Protocol.StatInfo stat_info = 6;
+  // .Protocol.StatInfo stat_info = 7;
   bool has_stat_info() const;
   private:
   bool _internal_has_stat_info() const;
@@ -664,7 +665,7 @@ class PlayerInfo final :
       ::Protocol::StatInfo* stat_info);
   ::Protocol::StatInfo* unsafe_arena_release_stat_info();
 
-  // .Protocol.Inventory inventory = 8;
+  // .Protocol.Inventory inventory = 9;
   bool has_inventory() const;
   private:
   bool _internal_has_inventory() const;
@@ -709,16 +710,25 @@ class PlayerInfo final :
   void _internal_set_level(uint32_t value);
   public:
 
-  // uint64 exp = 5;
-  void clear_exp();
-  uint64_t exp() const;
-  void set_exp(uint64_t value);
+  // uint64 cur_exp = 5;
+  void clear_cur_exp();
+  uint64_t cur_exp() const;
+  void set_cur_exp(uint64_t value);
   private:
-  uint64_t _internal_exp() const;
-  void _internal_set_exp(uint64_t value);
+  uint64_t _internal_cur_exp() const;
+  void _internal_set_cur_exp(uint64_t value);
   public:
 
-  // uint64 gold = 7;
+  // uint64 max_exp = 6;
+  void clear_max_exp();
+  uint64_t max_exp() const;
+  void set_max_exp(uint64_t value);
+  private:
+  uint64_t _internal_max_exp() const;
+  void _internal_set_max_exp(uint64_t value);
+  public:
+
+  // uint64 gold = 8;
   void clear_gold();
   uint64_t gold() const;
   void set_gold(uint64_t value);
@@ -742,7 +752,8 @@ class PlayerInfo final :
     uint64_t character_id_;
     int class__;
     uint32_t level_;
-    uint64_t exp_;
+    uint64_t cur_exp_;
+    uint64_t max_exp_;
     uint64_t gold_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -1995,12 +2006,13 @@ class Slot final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kItemFieldNumber = 3,
+    kItemFieldNumber = 4,
     kSlotIdFieldNumber = 1,
     kTypeFieldNumber = 2,
-    kCountFieldNumber = 4,
+    kStateFieldNumber = 3,
+    kCountFieldNumber = 5,
   };
-  // optional .Protocol.Item item = 3;
+  // optional .Protocol.Item item = 4;
   bool has_item() const;
   private:
   bool _internal_has_item() const;
@@ -2036,7 +2048,16 @@ class Slot final :
   void _internal_set_type(::Protocol::SlotType value);
   public:
 
-  // int32 count = 4;
+  // .Protocol.UpdateState state = 3;
+  void clear_state();
+  ::Protocol::UpdateState state() const;
+  void set_state(::Protocol::UpdateState value);
+  private:
+  ::Protocol::UpdateState _internal_state() const;
+  void _internal_set_state(::Protocol::UpdateState value);
+  public:
+
+  // int32 count = 5;
   void clear_count();
   int32_t count() const;
   void set_count(int32_t value);
@@ -2058,6 +2079,7 @@ class Slot final :
     ::Protocol::Item* item_;
     int32_t slot_id_;
     int type_;
+    int state_;
     int32_t count_;
   };
   union { Impl_ _impl_; };
@@ -2719,27 +2741,47 @@ inline void PlayerInfo::set_level(uint32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.level)
 }
 
-// uint64 exp = 5;
-inline void PlayerInfo::clear_exp() {
-  _impl_.exp_ = uint64_t{0u};
+// uint64 cur_exp = 5;
+inline void PlayerInfo::clear_cur_exp() {
+  _impl_.cur_exp_ = uint64_t{0u};
 }
-inline uint64_t PlayerInfo::_internal_exp() const {
-  return _impl_.exp_;
+inline uint64_t PlayerInfo::_internal_cur_exp() const {
+  return _impl_.cur_exp_;
 }
-inline uint64_t PlayerInfo::exp() const {
-  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.exp)
-  return _internal_exp();
+inline uint64_t PlayerInfo::cur_exp() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.cur_exp)
+  return _internal_cur_exp();
 }
-inline void PlayerInfo::_internal_set_exp(uint64_t value) {
+inline void PlayerInfo::_internal_set_cur_exp(uint64_t value) {
   
-  _impl_.exp_ = value;
+  _impl_.cur_exp_ = value;
 }
-inline void PlayerInfo::set_exp(uint64_t value) {
-  _internal_set_exp(value);
-  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.exp)
+inline void PlayerInfo::set_cur_exp(uint64_t value) {
+  _internal_set_cur_exp(value);
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.cur_exp)
 }
 
-// .Protocol.StatInfo stat_info = 6;
+// uint64 max_exp = 6;
+inline void PlayerInfo::clear_max_exp() {
+  _impl_.max_exp_ = uint64_t{0u};
+}
+inline uint64_t PlayerInfo::_internal_max_exp() const {
+  return _impl_.max_exp_;
+}
+inline uint64_t PlayerInfo::max_exp() const {
+  // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.max_exp)
+  return _internal_max_exp();
+}
+inline void PlayerInfo::_internal_set_max_exp(uint64_t value) {
+  
+  _impl_.max_exp_ = value;
+}
+inline void PlayerInfo::set_max_exp(uint64_t value) {
+  _internal_set_max_exp(value);
+  // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.max_exp)
+}
+
+// .Protocol.StatInfo stat_info = 7;
 inline bool PlayerInfo::_internal_has_stat_info() const {
   return this != internal_default_instance() && _impl_.stat_info_ != nullptr;
 }
@@ -2829,7 +2871,7 @@ inline void PlayerInfo::set_allocated_stat_info(::Protocol::StatInfo* stat_info)
   // @@protoc_insertion_point(field_set_allocated:Protocol.PlayerInfo.stat_info)
 }
 
-// uint64 gold = 7;
+// uint64 gold = 8;
 inline void PlayerInfo::clear_gold() {
   _impl_.gold_ = uint64_t{0u};
 }
@@ -2849,7 +2891,7 @@ inline void PlayerInfo::set_gold(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.gold)
 }
 
-// .Protocol.Inventory inventory = 8;
+// .Protocol.Inventory inventory = 9;
 inline bool PlayerInfo::_internal_has_inventory() const {
   return this != internal_default_instance() && _impl_.inventory_ != nullptr;
 }
@@ -2939,7 +2981,7 @@ inline void PlayerInfo::set_allocated_inventory(::Protocol::Inventory* inventory
   // @@protoc_insertion_point(field_set_allocated:Protocol.PlayerInfo.inventory)
 }
 
-// repeated .Protocol.Slot equipped_gear = 9;
+// repeated .Protocol.Slot equipped_gear = 10;
 inline int PlayerInfo::_internal_equipped_gear_size() const {
   return _impl_.equipped_gear_.size();
 }
@@ -3610,7 +3652,27 @@ inline void Slot::set_type(::Protocol::SlotType value) {
   // @@protoc_insertion_point(field_set:Protocol.Slot.type)
 }
 
-// optional .Protocol.Item item = 3;
+// .Protocol.UpdateState state = 3;
+inline void Slot::clear_state() {
+  _impl_.state_ = 0;
+}
+inline ::Protocol::UpdateState Slot::_internal_state() const {
+  return static_cast< ::Protocol::UpdateState >(_impl_.state_);
+}
+inline ::Protocol::UpdateState Slot::state() const {
+  // @@protoc_insertion_point(field_get:Protocol.Slot.state)
+  return _internal_state();
+}
+inline void Slot::_internal_set_state(::Protocol::UpdateState value) {
+  
+  _impl_.state_ = value;
+}
+inline void Slot::set_state(::Protocol::UpdateState value) {
+  _internal_set_state(value);
+  // @@protoc_insertion_point(field_set:Protocol.Slot.state)
+}
+
+// optional .Protocol.Item item = 4;
 inline bool Slot::_internal_has_item() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.item_ != nullptr);
@@ -3700,7 +3762,7 @@ inline void Slot::set_allocated_item(::Protocol::Item* item) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.Slot.item)
 }
 
-// int32 count = 4;
+// int32 count = 5;
 inline void Slot::clear_count() {
   _impl_.count_ = 0;
 }

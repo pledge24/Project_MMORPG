@@ -32,10 +32,10 @@ void UItemTooltipWidget::Init(const FItemData& Item)
     SetItemDetailsToVerticalBox(ChildIdx, TEXT("아이템 타입: "), Item.ItemType);
 
     SetItemStatToVerticalBox(ChildIdx, TEXT("쿨타임: "), Item.Cooldown);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("물리 피해 +"), Item.BaseAttack);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("마법 피해 +"), Item.BaseMagicAttack);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Hp +"), Item.HpBonus);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Mp +"), Item.MpBonus);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("물리 피해 +"), Item.PhysicalAttack);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("마법 피해 +"), Item.MagicalAttack);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Hp +"), Item.Hp);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Mp +"), Item.Mp);
     SetItemStatToVerticalBox(ChildIdx, TEXT("Hp 회복 +"), Item.HpRestore, true);
     SetItemStatToVerticalBox(ChildIdx, TEXT("Mp 회복 +"), Item.MpRestore, true);
     SetItemStatToVerticalBox(ChildIdx, TEXT("상점 구매 가격: "), Item.BuyPrice);

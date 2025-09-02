@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[9];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[10];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -48,19 +48,23 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "_UP\020\004\022\032\n\026EFFECT_TYPE_SPEED_DOWN\020\005*i\n\010Ite"
   "mType\022\022\n\016ITEM_TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_G"
   "EAR\020\001\022\030\n\024ITEM_TYPE_CONSUMABLE\020\002\022\033\n\027ITEM_"
-  "TYPE_MISCELLANEOUS\020\003*d\n\010SlotType\022\022\n\016SLOT"
-  "_TYPE_NONE\020\000\022\027\n\023SLOT_TYPE_INVENTORY\020\001\022\026\n"
-  "\022SLOT_TYPE_EQUIPPED\020\002\022\023\n\017SLOT_TYPE_QUICK"
-  "\020\003*\276\001\n\010StatType\022\022\n\016STAT_TYPE_NONE\020\000\022\024\n\020S"
-  "TAT_TYPE_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020S"
-  "TAT_TYPE_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031S"
-  "TAT_TYPE_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYPE_"
-  "MAGICAL_ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007b\006pro"
-  "to3"
+  "TYPE_MISCELLANEOUS\020\003*\253\001\n\010SlotType\022\022\n\016SLO"
+  "T_TYPE_NONE\020\000\022\034\n\030SLOT_TYPE_INVENTORY_GEA"
+  "R\020\001\022\"\n\036SLOT_TYPE_INVENTORY_CONSUMABLE\020\002\022"
+  "\034\n\030SLOT_TYPE_INVENTORY_MISC\020\003\022\026\n\022SLOT_TY"
+  "PE_EQUIPPED\020\004\022\023\n\017SLOT_TYPE_QUICK\020\005*\276\001\n\010S"
+  "tatType\022\022\n\016STAT_TYPE_NONE\020\000\022\024\n\020STAT_TYPE"
+  "_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020STAT_TYPE"
+  "_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031STAT_TYPE"
+  "_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYPE_MAGICAL_"
+  "ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007*o\n\013UpdateSta"
+  "te\022\025\n\021UPDATE_STATE_NONE\020\000\022\027\n\023UPDATE_STAT"
+  "E_INSERT\020\001\022\027\n\023UPDATE_STATE_UPDATE\020\002\022\027\n\023U"
+  "PDATE_STATE_DELETE\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1083, descriptor_table_protodef_Enum_2eproto,
+    false, false, 1268, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -197,6 +201,8 @@ bool SlotType_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+    case 4:
+    case 5:
       return true;
     default:
       return false;
@@ -217,6 +223,22 @@ bool StatType_IsValid(int value) {
     case 5:
     case 6:
     case 7:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* UpdateState_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[9];
+}
+bool UpdateState_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
       return true;
     default:
       return false;

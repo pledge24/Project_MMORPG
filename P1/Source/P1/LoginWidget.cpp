@@ -10,7 +10,7 @@
 
 // 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
 TMap<Protocol::CharacterClass, FString> ClassMap = {
-    {Protocol::CharacterClass::CLASS_TYPE_KNIGHT, FString(TEXT("전사"))},
+    {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
     //
 };
@@ -64,7 +64,7 @@ void ULoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
     // Add New CharacterOverview
     {
         FCharacterOverview character;
-        character.CharacterId = pkt.characterid();
+        character.CharacterId = pkt.character_id();
         character.CharacterClass = ClassMap[Protocol::CharacterClass(CC_CharacterClassId)];
         character.CharacterName = CC_CharacterNameText->GetText().ToString();
         character.CharacterLevel = 1;
@@ -84,7 +84,7 @@ void ULoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
         return;
     }
 
-    int64 CharacterId = pkt.characterid();
+    int64 CharacterId = pkt.character_id();
     if (_Characters[LastClickedSlotIdx].CharacterId == CharacterId)
     {
         _Characters.RemoveAt(LastClickedSlotIdx);
@@ -139,7 +139,7 @@ void ULoginWidget::SendEnterGamePkt()
     FCharacterOverview& Character = _Characters[LastClickedSlotIdx];
 
     Protocol::C_ENTER_GAME pkt;
-    pkt.set_characterid(Character.CharacterId);
+    pkt.set_character_id(Character.CharacterId);
 
     SEND_PACKET(pkt);
 }
@@ -179,7 +179,7 @@ void ULoginWidget::SendDeleteCharacterPkt()
     FCharacterOverview& Character = _Characters[LastClickedSlotIdx];
 
     Protocol::C_DELETE_CHARACTER pkt;
-    pkt.set_characterid(Character.CharacterId);
+    pkt.set_character_id(Character.CharacterId);
 
     SEND_PACKET(pkt);
 }

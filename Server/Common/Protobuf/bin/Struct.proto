@@ -30,13 +30,14 @@ message PlayerInfo
     uint32 level = 4;
 
     // 성장 및 스텟 관련
-    uint64 exp = 5;
-    StatInfo stat_info = 6;
+    uint64 cur_exp = 5;
+    uint64 max_exp = 6;
+    StatInfo stat_info = 7;
 
     // 소유 관련
-    uint64 gold = 7;
-    Inventory inventory = 8;
-    repeated Slot equipped_gear = 9;
+    uint64 gold = 8;
+    Inventory inventory = 9;
+    repeated Slot equipped_gear = 10;
 }
 
 message PosInfo
@@ -98,8 +99,9 @@ message Slot
 {
     int32 slot_id = 1;
     SlotType type = 2;
-    optional Item item = 3;
-    int32 count = 4;
+    UpdateState state = 3;  // 슬롯 갱신 상태
+    optional Item item = 4;
+    int32 count = 5;
 }
 
 message Inventory

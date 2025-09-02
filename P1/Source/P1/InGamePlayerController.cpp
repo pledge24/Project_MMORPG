@@ -2,6 +2,9 @@
 
 #include "InGamePlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "StatusWindowWidget.h"
+#include "InventoryWidget.h"
+#include "HUDWidget.h"
 
 enum WidgetType
 {
@@ -21,7 +24,7 @@ void AInGamePlayerController::BeginPlay()
 
     if(HUDWidgetClass && !HUDWidget)
     {
-        HUDWidget = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        HUDWidget = CreateWidget<UHUDWidget>(this, HUDWidgetClass);
         if (HUDWidget)
         {
             HUDWidget->AddToViewport();
@@ -36,37 +39,60 @@ void AInGamePlayerController::BeginPlay()
             HelpWidget->AddToViewport();
         }
     }
+
+    if (StatusWindowWidgetClass && !StatusWindowWidget)
+    {
+        StatusWindowWidget = CreateWidget<UStatusWindowWidget>(this, StatusWindowWidgetClass);
+        if (StatusWindowWidget)
+        {
+            StatusWindowWidget->AddToViewport();
+            StatusWindowWidget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    if (InventoryWidgetClass && !InventoryWidget)
+    {
+        InventoryWidget = CreateWidget<UInventoryWidget>(this, InventoryWidgetClass);
+        if (InventoryWidget)
+        {
+            InventoryWidget->AddToViewport();
+            InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
 }
 
 void AInGamePlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-    InputComponent->BindAction("ToggleStatusWindow", IE_Pressed, this, &AInGamePlayerController::ToggleStatusWindow);
-    InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AInGamePlayerController::ToggleInventory);
+    InputComponent->BindAction("ToggleStatusWindow", IE_Pressed, this, &AInGamePlayerController::OnToggleStatusWindowWidget);
+    InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AInGamePlayerController::OnToggleInventoryWidget);
 }
 
-void AInGamePlayerController::ToggleStatusWindow()
+void AInGamePlayerController::UpdateInventorySlot(const Protocol::Slot& _Slot)
 {
-    // 위젯이 없으면 생성.
-    if (!StatusWindowWidget && StatusWindowWidgetClass)
-    {
-        StatusWindowWidget = CreateWidget<UUserWidget>(this, StatusWindowWidgetClass);
-    }
-
-    if (StatusWindowWidget)
-        ToggleWidget(StatusWindowWidget, WidgetType::WIDGET_STATUS_WINDOW);
+    InventoryWidget->UpdateSlot(_Slot);
 }
 
-void AInGamePlayerController::ToggleInventory()
+void AInGamePlayerController::UpdateEquippedGearSlot(const Protocol::Slot& _Slot)
 {
-    // 위젯이 없으면 생성.
-    if (!InventoryWidget && InventoryWidgetClass)
-    {
-        InventoryWidget = CreateWidget<UUserWidget>(this, InventoryWidgetClass);
-    }
+    StatusWindowWidget->UpdateSlot(_Slot);
+}
 
-    if (InventoryWidget)
-        ToggleWidget(InventoryWidget, WidgetType::WIDGET_INVENTORY);
+void AInGamePlayerController::UpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo)
+{
+    StatusWindowWidget->UpdateAllStat(_PlayerInfo.stat_info());
+    HUDWidget->UpdateAllProgressBar(_PlayerInfo.stat_info(), _PlayerInfo.cur_exp(), _PlayerInfo.max_exp());
+}
+
+
+void AInGamePlayerController::OnToggleStatusWindowWidget()
+{
+    ToggleWidget(StatusWindowWidget, WIDGET_STATUS_WINDOW);
+}
+
+void AInGamePlayerController::OnToggleInventoryWidget()
+{
+    ToggleWidget(InventoryWidget, WIDGET_INVENTORY);
 }
 
 void AInGamePlayerController::ToggleWidget(UUserWidget* Widget, int32 FlagIdx)
@@ -97,5 +123,4 @@ void AInGamePlayerController::ToggleWidget(UUserWidget* Widget, int32 FlagIdx)
         SetInputMode(FInputModeGameOnly());
     }
 }
-
 

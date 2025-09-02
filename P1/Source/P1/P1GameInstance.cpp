@@ -37,7 +37,7 @@ void UP1GameInstance::ConnectToGameServer()
 		// AuthServer로부터 받은 AccessToken과 함께 로그인 패킷 전송
 		{
 			Protocol::C_LOGIN Pkt;
-			Pkt.set_accesstoken(TCHAR_TO_UTF8(*_token));
+			Pkt.set_access_token(TCHAR_TO_UTF8(*_token));
 
 			SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);
 			SendPacket(SendBuffer);
@@ -126,7 +126,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt)
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
-	for (auto& Player : SpawnPkt.players())
+	for (auto& Player : SpawnPkt.objects())
 	{
 		HandleSpawn(Player, false);
 	}
