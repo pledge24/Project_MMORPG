@@ -25,10 +25,10 @@ protected:
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UUserWidget> LoginMenuWidgetClass;
+    TSubclassOf<class ULoginWidget> LoginMenuWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
-    UUserWidget* LoginMenuWidget;
+    ULoginWidget* LoginMenuWidget;
 
 private:
     ULoginManager* LoginManager;

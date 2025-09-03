@@ -15,7 +15,7 @@ class P1_API UProgressBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    void Init(int32 _MaxValue, int32 CurValue, bool IsPercentFormat = false);
+    void Init(int32 CurValue, int32 _MaxValue, bool IsPercentFormat = false);
     void SetMaxValue(int32 Value) { MaxValue = Value; };
 
     UFUNCTION(BlueprintCallable, Category = "UI")

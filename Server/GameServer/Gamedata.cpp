@@ -58,7 +58,7 @@ bool Gamedata::LoadAllGamedata()
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["template_id"];
+                int32 templateId = row["templateId"];
                 ItemDataTable[templateId] = row;
             }
         }
@@ -78,7 +78,7 @@ bool Gamedata::LoadAllGamedata()
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["template_id"];
+                int32 templateId = row["templateId"];
                 MapDataTable[templateId] = row;
             }
         }
@@ -98,7 +98,7 @@ bool Gamedata::LoadAllGamedata()
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["template_id"];
+                int32 templateId = row["templateId"];
                 MonsterDataTable[templateId] = row;
             }
         }
@@ -118,7 +118,7 @@ bool Gamedata::LoadAllGamedata()
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["template_id"];
+                int32 templateId = row["templateId"];
                 QuestDataTable[templateId] = row;
             }
         }

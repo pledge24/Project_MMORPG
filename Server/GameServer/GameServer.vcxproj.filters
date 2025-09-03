@@ -91,6 +91,9 @@
     <ClCompile Include="EquippedGear.cpp">
       <Filter>Game\System</Filter>
     </ClCompile>
+    <ClCompile Include="Global.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -194,6 +197,12 @@
     </None>
     <None Include="S_Warrior_Level_Data.json">
       <Filter>Game\Data</Filter>
+    </None>
+    <None Include="GameDB_InsertAdminAccount.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="GameDB_GetMaxItemUid.sql">
+      <Filter>Queries</Filter>
     </None>
   </ItemGroup>
 </Project>

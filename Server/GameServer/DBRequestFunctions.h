@@ -13,6 +13,8 @@ public:
     static void DeleteCharacter(SessionRef session, int64 characterId);
     static void GetEnterGameData(SessionRef session, int64 characterId);
 
+    static bool GetMaxItemUID();
+
 private:
     /* GetEnterGameData가 호출*/
     static bool GetCharacterData(SessionRef session, int64 characterId);

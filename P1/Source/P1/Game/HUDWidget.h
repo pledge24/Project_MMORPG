@@ -19,7 +19,8 @@ class P1_API UHUDWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    void UpdateAllProgressBar(const Protocol::StatInfo _StatInfo, int32 CurExp, int32 MaxExp);
+    void UpdateAllHUDData(const Protocol::PlayerInfo& _PlayerInfo);
+    void UpdateCurLevel(int32 Level);
     void UpdateCurHp(int32 Hp);
     void UpdateCurMp(int32 Mp);
     void UpdateCurExp(int32 Exp);

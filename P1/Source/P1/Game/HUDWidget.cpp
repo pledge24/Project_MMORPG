@@ -2,14 +2,23 @@
 
 
 #include "Game/HUDWidget.h"
+#include "Components/TextBlock.h"
 #include "ProgressBarWidget.h"
 
-void UHUDWidget::UpdateAllProgressBar(const Protocol::StatInfo _StatInfo, int32 CurExp, int32 MaxExp)
+void UHUDWidget::UpdateAllHUDData(const Protocol::PlayerInfo& _PlayerInfo)
 {
-    HpBar->Init(_StatInfo.max_hp(), _StatInfo.hp());
-    MpBar->Init(_StatInfo.max_mp(), _StatInfo.mp());
-    ExpBar->Init(CurExp, MaxExp);
+    const Protocol::StatInfo& _StatInfo = _PlayerInfo.stat_info();
+    UpdateCurLevel(_PlayerInfo.level());
+    HpBar->Init(_StatInfo.hp(), _StatInfo.max_hp());
+    MpBar->Init(_StatInfo.mp(), _StatInfo.max_mp());
+    ExpBar->Init(_PlayerInfo.cur_exp(), _PlayerInfo.max_exp());
 }
+
+void UHUDWidget::UpdateCurLevel(int32 Level)
+{
+    Level_txt->SetText(FText::AsNumber(Level));
+}
+
 
 void UHUDWidget::UpdateCurHp(int32 Hp)
 {

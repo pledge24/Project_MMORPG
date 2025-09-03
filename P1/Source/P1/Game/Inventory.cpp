@@ -25,7 +25,7 @@ void UInventory::Init(const Protocol::ObjectInfo& Info)
         {
             int32 _SlotId = _Slot.slot_id();
             _Gear[_SlotId] = _Slot;
-            InGamePlayerController->UpdateInventorySlot(_Slot);
+            InGamePlayerController->OnUpdateInventorySlot(_Slot);
         }
 
         // 소비 창
@@ -33,7 +33,7 @@ void UInventory::Init(const Protocol::ObjectInfo& Info)
         {
             int32 _SlotId = _Slot.slot_id();
             _Consumables[_SlotId] = _Slot;
-            InGamePlayerController->UpdateInventorySlot(_Slot);
+            InGamePlayerController->OnUpdateInventorySlot(_Slot);
         }
 
         // 기타 창
@@ -41,8 +41,10 @@ void UInventory::Init(const Protocol::ObjectInfo& Info)
         {
             int32 _SlotId = _Slot.slot_id();
             _Miscellaneous[_SlotId] = _Slot;
-            InGamePlayerController->UpdateInventorySlot(_Slot);
+            InGamePlayerController->OnUpdateInventorySlot(_Slot);
         }
+
+        InGamePlayerController->OnUpdateGold(Info.player_info().gold());
     }
 }
 

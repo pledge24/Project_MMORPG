@@ -65,10 +65,7 @@ protected:
     Protocol::PlayerInfo* playerInfo;
     Protocol::StatInfo* statInfo;
 
-    UPROPERTY()
     class UInventory* InventoryComp;
-
-    UPROPERTY()
     class UEquippedGear* EquippedGearComp;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;

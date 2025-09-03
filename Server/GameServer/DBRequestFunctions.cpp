@@ -2,6 +2,7 @@
 #include "DBRequestFunctions.h"
 #include "EncodingConverter.h"
 #include "Player.h"
+#include "Global.h"
 
 /*-------------------------
     DBRequestFunctions
@@ -193,9 +194,9 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
                 INSERT INTO [dbo].[CharactersLastState]([character_id], [cur_hp], [cur_mp], [cur_physical_attack], [cur_magical_attack])
                 VALUES(@character_id, (?), (?), (?), (?));
                 
-                -- 3. 기본 아이템을 추가
-                INSERT INTO [dbo].[CharactersGearItems]([character_id], [template_id], [is_equipped], [slot_id])
-                VALUES(@character_id, 1005, 1, 1);
+                -- 3. 기본 아이템을 추가(보류)
+                --INSERT INTO [dbo].[CharactersGearItems]([character_id], [template_id], [is_equipped], [slot_id])
+                --VALUES(@character_id, 1005, 1, 1);
 
                 -- 4. 결과셋으로 반환
                 SELECT @character_id AS character_id;
@@ -354,17 +355,65 @@ void DBRequestFunctions::GetEnterGameData(SessionRef session, int64 characterId)
     // 3. 캐릭터 소유 아이템 정보 가져오기
     if (GetAllCharacterItems(session, characterId) == false)
     {
-        // Player 클래스 정리
-        // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
         cout << "Error In GetCharacterInventoryData" << endl;
         return;
     }
 
+    // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
+    bool success = player->Init();
+    
     // 패킷으로 만들어서 클라이언트에게 보낸다.
     Protocol::S_ENTER_GAME pkt;
     pkt.set_success(true);
     pkt.mutable_player()->CopyFrom(*player->objectInfo);
     SEND_PACKET(pkt);
+}
+
+bool DBRequestFunctions::GetMaxItemUID()
+{
+    const int PARAMS = 0;
+    const int COLS = 1;
+
+    struct BindObject
+    {
+        BindObject(DBBind<PARAMS, COLS>& dbBind)
+        {
+            BindCol(dbBind);
+        }
+
+        void BindParam(DBBind<PARAMS, COLS>& dbBind)
+        {
+        }
+
+        void BindCol(DBBind<PARAMS, COLS>& dbBind)
+        {
+
+            dbBind.BindCol(0, _maxItemUID);
+        }
+
+        /* Cols */
+        int32 _maxItemUID;
+    };
+
+    DBConnection* dbConn = GDBConnectionPool->Pop();
+
+    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        EXEC GetMaxItemUID;
+    )SQL");
+
+    BindObject bindObject(dbBind);
+
+    if (dbBind.Execute() == false)
+        return false;
+
+    if (dbConn->Fetch() == false)
+        return false;
+
+    GmaxItemUID = bindObject._maxItemUID; // itemUid저장
+
+    GDBConnectionPool->Push(dbConn);
+
+    return true;
 }
 
 bool DBRequestFunctions::GetCharacterData(SessionRef session, int64 characterId)
@@ -456,8 +505,8 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
             dbBind.BindCol(0, _exp);
             dbBind.BindCol(1, _curHp);
             dbBind.BindCol(2, _curMp);
-            dbBind.BindCol(3, _curAttack);
-            dbBind.BindCol(4, _curMagic);
+            dbBind.BindCol(3, _curPhysicalAttack);
+            dbBind.BindCol(4, _curMagicalAttack);
             dbBind.BindCol(5, _mapId);
             dbBind.BindCol(6, _posX);
             dbBind.BindCol(7, _posY);
@@ -473,8 +522,8 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
         int64 _exp;
         int32 _curHp;
         int32 _curMp;
-        int32 _curAttack;
-        int32 _curMagic;
+        int32 _curPhysicalAttack;
+        int32 _curMagicalAttack;
         int32 _mapId;
         float _posX;
         float _posY;
@@ -487,7 +536,7 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
 
     // 해당 유저의 마지막 정보를 가져온다.
     DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-        SELECT exp, cur_hp, cur_mp, cur_attack, cur_magic, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
+        SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
         FROM [dbo].[CharactersLastState] 
         WHERE character_id = (?)
     )SQL");
@@ -514,8 +563,8 @@ bool DBRequestFunctions::GetCharacterLastStateData(SessionRef session, int64 cha
     Protocol::StatInfo* statInfo = player->statInfo;
     statInfo->set_hp(bindObject._curHp);
     statInfo->set_mp(bindObject._curMp);
-    statInfo->set_physical_attack(bindObject._curAttack);
-    statInfo->set_magical_attack(bindObject._curMagic);
+    statInfo->set_physical_attack(bindObject._curPhysicalAttack);
+    statInfo->set_magical_attack(bindObject._curMagicalAttack);
 
     // 위치 설정
     posInfo->set_map_id(bindObject._mapId);
@@ -604,7 +653,7 @@ bool DBRequestFunctions::GetCharactersGearItems(SessionRef session, int64 charac
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
-    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    // 해당 캐릭터의 장비 아이템 정보를 가져온다.
     DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
         SELECT item_uid, template_id, slot_id, enhance, durability, additional_physical_attack, additional_magical_attack
         FROM [dbo].[CharactersGearItems]
@@ -681,7 +730,7 @@ bool DBRequestFunctions::GetCharactersConsumableItems(SessionRef session, int64 
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
-    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    // 해당 캐릭터의 소비 아이템 정보를 가져온다.
     DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
         SELECT template_id, slot_id, count
         FROM [dbo].[CharactersConsumableItems]
@@ -751,7 +800,7 @@ bool DBRequestFunctions::GetCharactersMiscItems(SessionRef session, int64 charac
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
-    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    // 해당 캐릭터의 기타 아이템 정보를 가져온다.
     DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
         SELECT template_id, slot_id, count
         FROM [dbo].[CharactersMiscItems]

@@ -5,7 +5,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
-void UProgressBarWidget::Init(int32 _MaxValue, int32 CurValue, bool IsPercentFormat)
+void UProgressBarWidget::Init(int32 CurValue, int32 _MaxValue, bool IsPercentFormat)
 {
     SetMaxValue(_MaxValue);
     UpdateBar(CurValue, IsPercentFormat);

@@ -28,9 +28,10 @@ protected:
     virtual void SetupInputComponent() override;
 
 public:
-    void UpdateInventorySlot(const Protocol::Slot& _Slot);
-    void UpdateEquippedGearSlot(const Protocol::Slot& _Slot);
-    void UpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo);
+    void OnUpdateInventorySlot(const Protocol::Slot& _Slot);
+    void OnUpdateEquippedGearSlot(const Protocol::Slot& _Slot);
+    void OnUpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo);
+    void OnUpdateGold(int32 Gold);
 
 private:
     void OnToggleStatusWindowWidget();

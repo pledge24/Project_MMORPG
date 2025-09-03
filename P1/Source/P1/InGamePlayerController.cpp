@@ -5,6 +5,8 @@
 #include "StatusWindowWidget.h"
 #include "InventoryWidget.h"
 #include "HUDWidget.h"
+#include "P1GameInstance.h"
+#include "P1Player.h"
 
 enum WidgetType
 {
@@ -68,20 +70,25 @@ void AInGamePlayerController::SetupInputComponent()
     InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AInGamePlayerController::OnToggleInventoryWidget);
 }
 
-void AInGamePlayerController::UpdateInventorySlot(const Protocol::Slot& _Slot)
+void AInGamePlayerController::OnUpdateInventorySlot(const Protocol::Slot& _Slot)
 {
     InventoryWidget->UpdateSlot(_Slot);
 }
 
-void AInGamePlayerController::UpdateEquippedGearSlot(const Protocol::Slot& _Slot)
+void AInGamePlayerController::OnUpdateEquippedGearSlot(const Protocol::Slot& _Slot)
 {
     StatusWindowWidget->UpdateSlot(_Slot);
 }
 
-void AInGamePlayerController::UpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo)
+void AInGamePlayerController::OnUpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo)
 {
     StatusWindowWidget->UpdateAllStat(_PlayerInfo.stat_info());
-    HUDWidget->UpdateAllProgressBar(_PlayerInfo.stat_info(), _PlayerInfo.cur_exp(), _PlayerInfo.max_exp());
+    HUDWidget->UpdateAllHUDData(_PlayerInfo);
+}
+
+void AInGamePlayerController::OnUpdateGold(int32 Gold)
+{
+    InventoryWidget->UpdateGold(Gold);
 }
 
 

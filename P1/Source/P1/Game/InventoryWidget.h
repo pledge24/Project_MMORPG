@@ -8,6 +8,7 @@
 #include "InventoryWidget.generated.h"
 
 class UUniformGridPanel;
+class UTextBlock;
 
 /**
  * 
@@ -24,6 +25,7 @@ public:
     void Clear();
 
     void UpdateSlot(const Protocol::Slot& _Slot);
+    void UpdateGold(int32 Gold);
     class USlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& _Slot);
 
 protected:
@@ -35,4 +37,7 @@ protected:
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UUniformGridPanel* Misc_Inven;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* Gold_txt;
 };

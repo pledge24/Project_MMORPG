@@ -23,7 +23,9 @@ void UEquippedGear::Init(const Protocol::ObjectInfo& Info)
         {
             int32 _SlotId = _Slot.slot_id();
             _Gear[_SlotId] = _Slot;
-            InGamePlayerController->UpdateEquippedGearSlot(_Slot);
+            InGamePlayerController->OnUpdateEquippedGearSlot(_Slot);
         }
+
+        InGamePlayerController->OnUpdateGold(Info.player_info().gold());
     }
 }

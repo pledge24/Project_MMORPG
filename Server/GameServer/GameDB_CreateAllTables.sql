@@ -43,7 +43,7 @@ GO
 -- 3. CharactersGearItems: 캐릭터의 장비 아이템
 DROP TABLE IF EXISTS CharactersGearItems;
 CREATE TABLE CharactersGearItems(
-    item_uid                        BIGINT IDENTITY(1000, 1) PRIMARY KEY,
+    item_uid                        BIGINT PRIMARY KEY,
     character_id                    BIGINT NOT NULL,
     template_id                     INT NOT NULL,
     is_equipped                     BIT NOT NULL DEFAULT 0,

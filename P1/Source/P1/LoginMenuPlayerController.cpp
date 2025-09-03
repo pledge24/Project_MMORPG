@@ -3,6 +3,7 @@
 #include "LoginMenuPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "LoginManager.h"
+#include "LoginWidget.h"
 
 ALoginMenuPlayerController::ALoginMenuPlayerController()
 {
@@ -17,10 +18,12 @@ void ALoginMenuPlayerController::BeginPlay()
 
     if (LoginMenuWidgetClass && !LoginMenuWidget)
     {
-        LoginMenuWidget = CreateWidget<UUserWidget>(this, LoginMenuWidgetClass);
+        LoginMenuWidget = CreateWidget<ULoginWidget>(this, LoginMenuWidgetClass);
         if (LoginMenuWidget)
         {
             LoginMenuWidget->AddToViewport();
         }
+        LoginManager->SetLoginWidget(LoginMenuWidget);
     }
+
 }

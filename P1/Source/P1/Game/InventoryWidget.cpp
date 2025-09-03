@@ -2,7 +2,8 @@
 
 
 #include "Game/InventoryWidget.h"
-#include "Components\UniformGridPanel.h"
+#include "Components/UniformGridPanel.h"
+#include "Components/TextBlock.h"
 #include "SlotWidget.h"
 
 void UInventoryWidget::NativeConstruct()
@@ -40,6 +41,11 @@ void UInventoryWidget::UpdateSlot(const Protocol::Slot& _Slot)
 
     if (SlotWidget)
         SlotWidget->SetSlot(_Slot);
+}
+
+void UInventoryWidget::UpdateGold(int32 Gold)
+{
+    Gold_txt->SetText(FText::AsNumber(Gold));
 }
 
 USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot)

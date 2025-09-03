@@ -61,6 +61,10 @@ public:
 	AP1Player* MyPlayer;
 	TMap<uint64, AP1Player*> Players;
 
+    bool bHasPendingMyPlayer = false;
+
+    Protocol::ObjectInfo PendingMyPlayerData;
+
 private:
 	FString _token = "";
 };

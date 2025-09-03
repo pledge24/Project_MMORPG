@@ -102,14 +102,8 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-		auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-		AP1Player* Player = Cast<AP1Player>(PC->GetPawn());
-		if (Player == nullptr)
-			return;
-
-        Player->Init(ObjectInfo);
-		MyPlayer = Player;
-		Players.Add(ObjectInfo.object_id(), Player);
+        PendingMyPlayerData = std::move(ObjectInfo);
+        bHasPendingMyPlayer = true;
 	}
 	else
 	{

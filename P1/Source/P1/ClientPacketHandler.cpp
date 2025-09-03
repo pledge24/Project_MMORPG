@@ -88,7 +88,7 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
     
     if (GWorld)
     {
-        UGameplayStatics::OpenLevel(GWorld, FName("DevMap"));
+        UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
         {
             GameInstance->HandleSpawn(pkt);
