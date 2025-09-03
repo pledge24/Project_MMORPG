@@ -87,5 +87,5 @@ struct FItemData : public FTableRowBase
     int32 MpRegenerate;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftObjectPtr<USkeletalMesh> Asset;
+    TSoftObjectPtr<UObject> Asset;
 };

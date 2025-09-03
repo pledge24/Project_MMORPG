@@ -116,26 +116,14 @@ bool AP1Player::IsMyPlayer()
 
 void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
 {
-    //const google::protobuf::RepeatedPtrField<Protocol::Item>& source_items
-    //    = ObjectInfo.player_info().equipment();
+    // 위치 설정
+    SetPosInfo(ObjectInfo.pos_info());
 
-    //// 방법 1. TArray를 사용한다.
-    //{
-    //    TArray<Protocol::Item> Equipment;
-    //    Equipment.Empty();
-    //    
-    //    for (auto&& item : source_items)
-    //    {
-    //        Equipment.Add(std::move(item));
-    //    }
-    //}
-
-    //// 방법 2. Protobuf 방식을 유지한다.
-    //{
-    //    google::protobuf::RepeatedPtrField<Protocol::Item> Equipment;
-    //    Equipment.CopyFrom(source_items);
-    //    // Equipment.MergeFrom(source_items); // 존재하는 데이터 뒤에 붙이는 방식(Append)
-    //}
+    // 장착한 장비를 메시로 표현
+    for (auto& _Slot : ObjectInfo.player_info().equipped_gear())
+    {
+        UpdateEquippedGear(_Slot);
+    }
 }
 
 void AP1Player::SetMoveState(Protocol::MoveState State)
@@ -173,4 +161,11 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 
 	// 상태만 바로 관리하자.
 	SetMoveState(Info.state());
+}
+
+void AP1Player::UpdateEquippedGear(const Protocol::Slot& _Slot)
+{
+    int32 SlotId = _Slot.slot_id();
+    int32 TemplateId = _Slot.item().template_id();
+    OnChangeMesh(SlotId, TemplateId);
 }

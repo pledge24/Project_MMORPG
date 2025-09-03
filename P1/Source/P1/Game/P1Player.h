@@ -35,6 +35,11 @@ public:
 	void SetDestInfo(const Protocol::PosInfo& Info);
 	Protocol::PosInfo* GetPlayerInfo() { return PlayerInfo; }
 
+    /** 장착 관련*/
+    void UpdateEquippedGear(const Protocol::Slot& _Slot);
+    UFUNCTION(BlueprintImplementableEvent, Category = "Character")
+    void OnChangeMesh(int32 SlotId, int32 TemplateId);
+
 protected:
     class Protocol::PosInfo* PlayerInfo; // 현재 위치
 	class Protocol::PosInfo* DestInfo; // 목적지

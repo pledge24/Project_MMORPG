@@ -107,14 +107,14 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 		if (Player == nullptr)
 			return;
 
-		Player->SetPosInfo(ObjectInfo.pos_info());
+        Player->Init(ObjectInfo);
 		MyPlayer = Player;
 		Players.Add(ObjectInfo.object_id(), Player);
 	}
 	else
 	{
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
-		Player->SetPosInfo(ObjectInfo.pos_info());
+		Player->Init(ObjectInfo);
 		Players.Add(ObjectInfo.object_id(), Player);
 	}
 }
