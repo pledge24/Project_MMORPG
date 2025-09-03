@@ -4,8 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "BP_Structs.h"
+#include "Protocol.pb.h"
+#include "Structs/ItemData.h"
 #include "Inventory.generated.h"
+
+enum
+{
+    MAX_SLOTS = 50
+};
 
 /**
  * 
@@ -16,23 +22,16 @@ class P1_API UInventory : public UObject
 	GENERATED_BODY()
 	
 public:
-    UFUNCTION(BlueprintCallable)
-    void Init();
+    UInventory();
+    ~UInventory();
 
-    UFUNCTION(BlueprintCallable)
-    void Clear();
+    void Init(const Protocol::ObjectInfo& Info);
 
-    UFUNCTION(BlueprintCallable)
-    void AddItem(int32 ItemID);
+    void UpdateSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& Slots);
 
-    UFUNCTION(BlueprintCallable)
-    void RemoveItem(int32 SlotID, int32 Quantity);
-
-    
 private:
-    FItemData* FindItem(int32 ItemID);
-
-public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<FItemData> Items;
+    /* 카테고리별 인벤토리(캐시용) */
+    TArray<Protocol::Slot> _Gear;
+    TArray<Protocol::Slot> _Consumables;
+    TArray<Protocol::Slot> _Miscellaneous;
 };

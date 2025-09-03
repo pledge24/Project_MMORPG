@@ -37,7 +37,7 @@ void UP1GameInstance::ConnectToGameServer()
 		// AuthServer로부터 받은 AccessToken과 함께 로그인 패킷 전송
 		{
 			Protocol::C_LOGIN Pkt;
-			Pkt.set_accesstoken(TCHAR_TO_UTF8(*_token));
+			Pkt.set_access_token(TCHAR_TO_UTF8(*_token));
 
 			SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);
 			SendPacket(SendBuffer);
@@ -81,7 +81,9 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 	GameServerSession->SendPacket(SendBuffer);
 }
 
-// 새로운 플레이어를 스폰
+//////////////////////Network End//////////////////////////
+
+// 새로운 오브젝트(본인 포함)를 맵에 스폰
 void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool IsMine)
 {
 	if (Socket == nullptr || GameServerSession == nullptr)
@@ -100,19 +102,13 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-		auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-		AP1Player* Player = Cast<AP1Player>(PC->GetPawn());
-		if (Player == nullptr)
-			return;
-
-		Player->SetPlayerInfo(ObjectInfo.pos_info());
-		MyPlayer = Player;
-		Players.Add(ObjectInfo.object_id(), Player);
+        PendingMyPlayerData = std::move(ObjectInfo);
+        bHasPendingMyPlayer = true;
 	}
 	else
 	{
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
-		Player->SetPlayerInfo(ObjectInfo.pos_info());
+		Player->Init(ObjectInfo);
 		Players.Add(ObjectInfo.object_id(), Player);
 	}
 }
@@ -124,7 +120,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt)
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
-	for (auto& Player : SpawnPkt.players())
+	for (auto& Player : SpawnPkt.objects())
 	{
 		HandleSpawn(Player, false);
 	}

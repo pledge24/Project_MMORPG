@@ -24,15 +24,23 @@ protected:
 public:
 	bool IsMyPlayer();
 
+    virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
+
+    /** 상태 관련 */
 	Protocol::MoveState GetMoveState() { return PlayerInfo->state(); }
 	void SetMoveState(Protocol::MoveState State);
 
-public:
-	void SetPlayerInfo(const Protocol::PosInfo& Info);
+    /** 이동 관련 */
+	void SetPosInfo(const Protocol::PosInfo& Info);
 	void SetDestInfo(const Protocol::PosInfo& Info);
 	Protocol::PosInfo* GetPlayerInfo() { return PlayerInfo; }
 
+    /** 장착 관련*/
+    void UpdateEquippedGear(const Protocol::Slot& _Slot);
+    UFUNCTION(BlueprintImplementableEvent, Category = "Character")
+    void OnChangeMesh(int32 SlotId, int32 TemplateId);
+
 protected:
-	class Protocol::PosInfo* PlayerInfo; // 현재 위치
+    class Protocol::PosInfo* PlayerInfo; // 현재 위치
 	class Protocol::PosInfo* DestInfo; // 목적지
 };

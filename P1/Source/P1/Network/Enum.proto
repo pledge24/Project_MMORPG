@@ -1,10 +1,90 @@
 syntax = "proto3";
 package Protocol;
 
-enum PlayerType
+enum ObjectType
 {
-	PLAYER_TYPE_NONE = 0;
-	PLAYER_TYPE_KNIGHT = 1;
-	PLAYER_TYPE_MAGE = 2;
-	PLAYER_TYPE_ARCHER = 3;
+	OBJECT_TYPE_NONE = 0;
+	OBJECT_TYPE_CREATURE = 1;
+	OBJECT_TYPE_PROJECTILE = 2;
+	OBJECT_TYPE_ENV = 3;
+}
+
+enum CharacterClass
+{
+	CLASS_TYPE_NONE = 0;
+	CLASS_TYPE_WARRIOR = 1;
+	CLASS_TYPE_MAGE = 2;
+}
+
+enum MoveState
+{
+	MOVE_STATE_NONE = 0;
+	MOVE_STATE_IDLE = 1;
+	MOVE_STATE_RUN = 2;
+	MOVE_STATE_JUMP = 3;
+}
+
+enum HitType
+{
+    HIT_TYPE_NONE = 0;
+    HIT_TYPE_NORMAL = 1;
+    HIT_TYPE_SKILL = 2;
+    HIT_TYPE_EOT = 3;           // Effect Over Time: 지속 효과 피해
+}
+
+enum DamageType
+{
+    DAMAGE_TYPE_NONE = 0;
+    DAMAGE_TYPE_PHYSICAL = 1;   // 물리 피해
+    DAMAGE_TYPE_MAGICAL = 2;    // 마법 피해
+    DAMAGE_TYPE_FIX = 3;        // 고정 피해
+}
+
+enum EffectType
+{
+    EFFECT_TYPE_NONE = 0;
+    EFFECT_TYPE_BLEEDING = 1;   // 출혈
+    EFFECT_TYPE_BURN = 2;       // 화상
+    EFFECT_TYPE_POSION = 3;     // 독
+    EFFECT_TYPE_SPEED_UP = 4;   // 이속 증가
+    EFFECT_TYPE_SPEED_DOWN = 5; // 이속 감소
+}
+
+enum ItemType
+{
+    // 현재 사용 안 함
+    ITEM_TYPE_NONE = 0;            
+    ITEM_TYPE_GEAR = 1;            // 장비탭
+    ITEM_TYPE_CONSUMABLE = 2;      // 소비탭
+    ITEM_TYPE_MISCELLANEOUS = 3;   // 기타탭
+}
+
+enum SlotType
+{
+    SLOT_TYPE_NONE = 0;
+    SLOT_TYPE_INVENTORY_GEAR = 1;               // 인벤 장비 슬롯
+    SLOT_TYPE_INVENTORY_CONSUMABLE = 2;         // 인벤 소비 슬롯
+    SLOT_TYPE_INVENTORY_MISC = 3;               // 인벤 기타 슬롯
+    SLOT_TYPE_EQUIPPED = 4;                     // 장비 슬롯
+    SLOT_TYPE_QUICK = 5;                        // 퀵 슬롯
+}
+
+enum StatType
+{
+    STAT_TYPE_NONE = 0;
+    STAT_TYPE_MAX_HP = 1;
+    STAT_TYPE_HP = 2;
+    STAT_TYPE_MAX_MP = 3;
+    STAT_TYPE_MP = 4;
+    STAT_TYPE_PHYSICAL_ATTACK = 5;
+    STAT_TYPE_MAGICAL_ATTACK = 6;
+    STAT_TYPE_EXP = 7;
+}
+
+enum UpdateState
+{
+    UPDATE_STATE_NONE = 0;
+    UPDATE_STATE_INSERT = 1;
+    UPDATE_STATE_UPDATE = 2;
+    UPDATE_STATE_DELETE = 3;
 }

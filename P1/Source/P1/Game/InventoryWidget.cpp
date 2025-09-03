@@ -2,7 +2,8 @@
 
 
 #include "Game/InventoryWidget.h"
-#include "Components\UniformGridPanel.h"
+#include "Components/UniformGridPanel.h"
+#include "Components/TextBlock.h"
 #include "SlotWidget.h"
 
 void UInventoryWidget::NativeConstruct()
@@ -10,14 +11,23 @@ void UInventoryWidget::NativeConstruct()
     Super::NativeConstruct();
 }
 
-void UInventoryWidget::Init(TArray<FSlotData>& Items)
-{
-    UpdateMultipleSlots(Items);
-}
-
 void UInventoryWidget::Clear()
 {
-    for (UWidget* GridSlot : GridPanel->GetAllChildren())
+    for (UWidget* GridSlot : Gear_Inven->GetAllChildren())
+    {
+        USlotWidget* slot = Cast<USlotWidget>(GridSlot);
+        if (slot)
+            slot->ClearSlot();
+    }
+
+    for (UWidget* GridSlot : Consumables_Inven->GetAllChildren())
+    {
+        USlotWidget* slot = Cast<USlotWidget>(GridSlot);
+        if (slot)
+            slot->ClearSlot();
+    }
+
+    for (UWidget* GridSlot : Misc_Inven->GetAllChildren())
     {
         USlotWidget* slot = Cast<USlotWidget>(GridSlot);
         if (slot)
@@ -25,33 +35,43 @@ void UInventoryWidget::Clear()
     }
 }
 
-void UInventoryWidget::UpdateSingleSlot(FSlotData slotItem)
+void UInventoryWidget::UpdateSlot(const Protocol::Slot& _Slot)
 {
-    USlotWidget* slot = GetSlotFromSlotId(slotItem.SlotId);
+    USlotWidget* SlotWidget = GetSlotWidgetFromSlot(_Slot);
 
-    if (slot)
-        slot->InitSlot(slotItem.Item, slotItem.Quantity);
+    if (SlotWidget)
+        SlotWidget->SetSlot(_Slot);
 }
 
-void UInventoryWidget::UpdateMultipleSlots(TArray<FSlotData>& Items)
+void UInventoryWidget::UpdateGold(int32 Gold)
 {
-    for (FSlotData& slotItem : Items)
+    Gold_txt->SetText(FText::AsNumber(Gold));
+}
+
+USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot)
+{
+    UUniformGridPanel* Inven = nullptr;
+    int32 SlotId = _Slot.slot_id();
+
+    switch (_Slot.type())
     {
-        USlotWidget* slot = GetSlotFromSlotId(slotItem.SlotId);
-
-        if(slot)
-            slot->InitSlot(slotItem.Item, slotItem.Quantity);
+    case Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR:
+        Inven = Gear_Inven;
+        break;
+    case Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE:
+        Inven = Consumables_Inven;
+        break;
+    case Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC:
+        Inven = Misc_Inven;
+        break;
     }
-}
 
-USlotWidget* UInventoryWidget::GetSlotFromSlotId(int32 SlotId)
-{
-    if (!GridPanel || SlotId < 0 || SlotId >= GridPanel->GetChildrenCount())
+    if (!Inven || SlotId < 0 || SlotId >= Inven->GetChildrenCount())
     {
         return nullptr;
     }
 
-    UWidget* ChildWidget = GridPanel->GetChildAt(SlotId);
+    UWidget* ChildWidget = Inven->GetChildAt(SlotId);
 
     if (ChildWidget)
     {

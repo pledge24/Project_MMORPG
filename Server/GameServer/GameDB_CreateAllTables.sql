@@ -1,10 +1,8 @@
 -- GameDB에서 사용하는 모든 테이블
-
-DROP TABLE IF EXISTS CharacterLastState;
-DROP TABLE IF EXISTS CharacterInventory;
-DROP TABLE IF EXISTS CharacterEquipment;
-DROP TABLE IF EXISTS Characters;
-
+DROP TABLE IF EXISTS CharactersLastState;
+DROP TABLE IF EXISTS CharactersGearItems;
+DROP TABLE IF EXISTS CharactersConsumableItems;
+DROP TABLE IF EXISTS CharactersMiscItems;
 
 -- 1. Characters: 캐릭터 기본 정보
 DROP TABLE IF EXISTS Characters;
@@ -20,21 +18,21 @@ CREATE TABLE Characters(
 GO
 
 
--- 2. CharacterState: 캐릭터의 마지막 상태
-DROP TABLE IF EXISTS CharacterLastState;
-CREATE TABLE CharacterLastState(
-    character_id        BIGINT PRIMARY KEY,
-    cur_hp              INT NOT NULL DEFAULT 0,
-    cur_mp              INT NOT NULL DEFAULT 0,
-    cur_attack          INT NOT NULL DEFAULT 0,
-    cur_magic           INT NOT NULL DEFAULT 0,
-    map_id              INT NOT NULL DEFAULT 0,
-    pos_x               FLOAT NOT NULL DEFAULT 0.0,
-    pos_y               FLOAT NOT NULL DEFAULT 0.0,
-    pos_z               FLOAT NOT NULL DEFAULT 0.0,
-    rot_yaw             FLOAT NOT NULL DEFAULT 0.0,
-    exp                 BIGINT NOT NULL DEFAULT 0,
-    gold                BIGINT NOT NULL DEFAULT 1000,
+-- 2. CharactersState: 캐릭터의 마지막 상태
+DROP TABLE IF EXISTS CharactersLastState;
+CREATE TABLE CharactersLastState(
+    character_id            BIGINT PRIMARY KEY,
+    cur_hp                  INT NOT NULL DEFAULT 0,
+    cur_mp                  INT NOT NULL DEFAULT 0,
+    cur_physical_attack     INT NOT NULL DEFAULT 0,
+    cur_magical_attack      INT NOT NULL DEFAULT 0,
+    map_id                  INT NOT NULL DEFAULT 0,
+    pos_x                   FLOAT NOT NULL DEFAULT 0.0,
+    pos_y                   FLOAT NOT NULL DEFAULT 0.0,
+    pos_z                   FLOAT NOT NULL DEFAULT 0.0,
+    rot_yaw                 FLOAT NOT NULL DEFAULT 0.0,
+    exp                     BIGINT NOT NULL DEFAULT 0,
+    gold                    BIGINT NOT NULL DEFAULT 1000,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE
@@ -42,13 +40,32 @@ CREATE TABLE CharacterLastState(
 GO
 
 
--- 3. CharacterInventory: 캐릭터 인벤토리 정보
-DROP TABLE IF EXISTS CharacterInventory;
-CREATE TABLE CharacterInventory(
+-- 3. CharactersGearItems: 캐릭터의 장비 아이템
+DROP TABLE IF EXISTS CharactersGearItems;
+CREATE TABLE CharactersGearItems(
+    item_uid                        BIGINT PRIMARY KEY,
+    character_id                    BIGINT NOT NULL,
+    template_id                     INT NOT NULL,
+    is_equipped                     BIT NOT NULL DEFAULT 0,
+    slot_id                         INT NOT NULL,
+    enhance                         INT NOT NULL DEFAULT 0,
+    durability                      INT NOT NULL DEFAULT 0,
+    additional_physical_attack      INT NOT NULL DEFAULT 0,
+    additional_magical_attack       INT NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (character_id) REFERENCES Characters(character_id)
+    ON DELETE CASCADE,
+);
+GO
+
+
+-- 4. CharactersConsumableItems: 캐릭터의 소비 아이템
+DROP TABLE IF EXISTS CharactersConsumableItems;
+CREATE TABLE CharactersConsumableItems(
     character_id        BIGINT NOT NULL,
-    item_id             INT NOT NULL,
+    template_id         INT NOT NULL,
     slot_id             INT NOT NULL,
-    quantity            INT NOT NULL DEFAULT 1,
+    count               INT NOT NULL DEFAULT 1,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,
@@ -58,12 +75,13 @@ CREATE TABLE CharacterInventory(
 GO
 
 
--- 4. CharacterEquipment: 캐릭터 장착 정보
-DROP TABLE IF EXISTS CharacterEquipment;
-CREATE TABLE CharacterEquipment(
+-- 5. CharactersMiscItems: 캐릭터의 기타 아이템
+DROP TABLE IF EXISTS CharactersMiscItems;
+CREATE TABLE CharactersMiscItems(
     character_id        BIGINT NOT NULL,
-    item_id             INT NOT NULL,
-    slot_id             INT NOT NULL, -- 장착 부위 ID(ex. 0=투구, 1=상의, 2=하의, 3=무기)
+    template_id         INT NOT NULL,
+    slot_id             INT NOT NULL,
+    count               INT NOT NULL DEFAULT 1,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,

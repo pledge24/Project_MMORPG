@@ -114,6 +114,18 @@ bool AP1Player::IsMyPlayer()
 	return Cast<AP1MyPlayer>(this) != nullptr;
 }
 
+void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
+{
+    // 위치 설정
+    SetPosInfo(ObjectInfo.pos_info());
+
+    // 장착한 장비를 메시로 표현
+    for (auto& _Slot : ObjectInfo.player_info().equipped_gear())
+    {
+        UpdateEquippedGear(_Slot);
+    }
+}
+
 void AP1Player::SetMoveState(Protocol::MoveState State)
 {
 	if (PlayerInfo->state() == State)
@@ -124,7 +136,7 @@ void AP1Player::SetMoveState(Protocol::MoveState State)
 	// TODO
 }
 
-void AP1Player::SetPlayerInfo(const Protocol::PosInfo& Info)
+void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
 {
 	if (PlayerInfo->object_id() != 0)
 	{
@@ -151,3 +163,9 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 	SetMoveState(Info.state());
 }
 
+void AP1Player::UpdateEquippedGear(const Protocol::Slot& _Slot)
+{
+    int32 SlotId = _Slot.slot_id();
+    int32 TemplateId = _Slot.item().template_id();
+    OnChangeMesh(SlotId, TemplateId);
+}

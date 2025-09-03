@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Structs/ItemData.h"
-#include "Structs/SlotData.h"
+#include "Protocol.pb.h"
 #include "InventoryWidget.generated.h"
 
 class UUniformGridPanel;
+class UTextBlock;
 
 /**
  * 
@@ -22,21 +22,22 @@ public:
     virtual void NativeConstruct() override;
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void Init(TArray<FSlotData>& Items);
-
-    UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    UFUNCTION(BlueprintCallable, Category= "Inventory")
-    void UpdateSingleSlot(FSlotData slotItem);
-
-    UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void UpdateMultipleSlots(TArray<FSlotData>& Items);
-
-    UFUNCTION(BlueprintCallable, Category = "Inventory")
-    USlotWidget* GetSlotFromSlotId(int32 SlotId);
+    void UpdateSlot(const Protocol::Slot& _Slot);
+    void UpdateGold(int32 Gold);
+    class USlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& _Slot);
 
 protected:
     UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-    UUniformGridPanel* GridPanel;
+    UUniformGridPanel* Gear_Inven;
+
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+    UUniformGridPanel* Consumables_Inven;
+
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+    UUniformGridPanel* Misc_Inven;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* Gold_txt;
 };

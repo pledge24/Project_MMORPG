@@ -180,10 +180,12 @@
     <ClInclude Include="DBRequestFunctions.h" />
     <ClInclude Include="EncodingConverter.h" />
     <ClInclude Include="Enum.pb.h" />
+    <ClInclude Include="EquippedGear.h" />
     <ClInclude Include="Gamedata.h" />
     <ClInclude Include="GameSession.h" />
     <ClInclude Include="GameSessionManager.h" />
     <ClInclude Include="Global.h" />
+    <ClInclude Include="Inventory.h" />
     <ClInclude Include="Monster.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectUtils.h" />
@@ -204,10 +206,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="EquippedGear.cpp" />
     <ClCompile Include="Gamedata.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="GameSessionManager.cpp" />
+    <ClCompile Include="Global.cpp" />
+    <ClCompile Include="Inventory.cpp" />
     <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="ObjectUtils.cpp" />
@@ -247,11 +252,13 @@
     <None Include="AlterTable.sql" />
     <None Include="DEBUG.sql" />
     <None Include="GameDB_CreateAllTables.sql" />
-    <None Include="S_Character.json" />
+    <None Include="GameDB_GetMaxItemUid.sql" />
+    <None Include="GameDB_InsertAdminAccount.sql" />
     <None Include="S_Item.json" />
     <None Include="S_Map.json" />
     <None Include="S_Monster.json" />
     <None Include="S_Quest.json" />
+    <None Include="S_Warrior_Level_Data.json" />
   </ItemGroup>
   <ItemGroup>
     <UpToDateCheckInput Include="..\Common\Protobuf\bin\Enum.proto" />

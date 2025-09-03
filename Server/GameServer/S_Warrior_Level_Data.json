@@ -1,0 +1,402 @@
+[
+    {
+        "level": 1,
+        "maxHp": 500,
+        "maxMp": 100,
+        "physicalAttack": 10,
+        "magicalAttack": 2,
+        "expRequirement": 50
+    },
+    {
+        "level": 2,
+        "maxHp": 600,
+        "maxMp": 200,
+        "physicalAttack": 20,
+        "magicalAttack": 4,
+        "expRequirement": 80
+    },
+    {
+        "level": 3,
+        "maxHp": 700,
+        "maxMp": 300,
+        "physicalAttack": 30,
+        "magicalAttack": 6,
+        "expRequirement": 110
+    },
+    {
+        "level": 4,
+        "maxHp": 800,
+        "maxMp": 400,
+        "physicalAttack": 40,
+        "magicalAttack": 8,
+        "expRequirement": 140
+    },
+    {
+        "level": 5,
+        "maxHp": 900,
+        "maxMp": 500,
+        "physicalAttack": 50,
+        "magicalAttack": 10,
+        "expRequirement": 170
+    },
+    {
+        "level": 6,
+        "maxHp": 1000,
+        "maxMp": 600,
+        "physicalAttack": 60,
+        "magicalAttack": 12,
+        "expRequirement": 200
+    },
+    {
+        "level": 7,
+        "maxHp": 1100,
+        "maxMp": 700,
+        "physicalAttack": 70,
+        "magicalAttack": 14,
+        "expRequirement": 230
+    },
+    {
+        "level": 8,
+        "maxHp": 1200,
+        "maxMp": 800,
+        "physicalAttack": 80,
+        "magicalAttack": 16,
+        "expRequirement": 260
+    },
+    {
+        "level": 9,
+        "maxHp": 1300,
+        "maxMp": 900,
+        "physicalAttack": 90,
+        "magicalAttack": 18,
+        "expRequirement": 290
+    },
+    {
+        "level": 10,
+        "maxHp": 1400,
+        "maxMp": 1000,
+        "physicalAttack": 100,
+        "magicalAttack": 20,
+        "expRequirement": 320
+    },
+    {
+        "level": 11,
+        "maxHp": 1500,
+        "maxMp": 1100,
+        "physicalAttack": 110,
+        "magicalAttack": 22,
+        "expRequirement": 350
+    },
+    {
+        "level": 12,
+        "maxHp": 1600,
+        "maxMp": 1200,
+        "physicalAttack": 120,
+        "magicalAttack": 24,
+        "expRequirement": 380
+    },
+    {
+        "level": 13,
+        "maxHp": 1700,
+        "maxMp": 1300,
+        "physicalAttack": 130,
+        "magicalAttack": 26,
+        "expRequirement": 410
+    },
+    {
+        "level": 14,
+        "maxHp": 1800,
+        "maxMp": 1400,
+        "physicalAttack": 140,
+        "magicalAttack": 28,
+        "expRequirement": 440
+    },
+    {
+        "level": 15,
+        "maxHp": 1900,
+        "maxMp": 1500,
+        "physicalAttack": 150,
+        "magicalAttack": 30,
+        "expRequirement": 470
+    },
+    {
+        "level": 16,
+        "maxHp": 2000,
+        "maxMp": 1600,
+        "physicalAttack": 160,
+        "magicalAttack": 32,
+        "expRequirement": 500
+    },
+    {
+        "level": 17,
+        "maxHp": 2100,
+        "maxMp": 1700,
+        "physicalAttack": 170,
+        "magicalAttack": 34,
+        "expRequirement": 530
+    },
+    {
+        "level": 18,
+        "maxHp": 2200,
+        "maxMp": 1800,
+        "physicalAttack": 180,
+        "magicalAttack": 36,
+        "expRequirement": 560
+    },
+    {
+        "level": 19,
+        "maxHp": 2300,
+        "maxMp": 1900,
+        "physicalAttack": 190,
+        "magicalAttack": 38,
+        "expRequirement": 590
+    },
+    {
+        "level": 20,
+        "maxHp": 2400,
+        "maxMp": 2000,
+        "physicalAttack": 200,
+        "magicalAttack": 40,
+        "expRequirement": 620
+    },
+    {
+        "level": 21,
+        "maxHp": 2500,
+        "maxMp": 2100,
+        "physicalAttack": 210,
+        "magicalAttack": 42,
+        "expRequirement": 650
+    },
+    {
+        "level": 22,
+        "maxHp": 2600,
+        "maxMp": 2200,
+        "physicalAttack": 220,
+        "magicalAttack": 44,
+        "expRequirement": 680
+    },
+    {
+        "level": 23,
+        "maxHp": 2700,
+        "maxMp": 2300,
+        "physicalAttack": 230,
+        "magicalAttack": 46,
+        "expRequirement": 710
+    },
+    {
+        "level": 24,
+        "maxHp": 2800,
+        "maxMp": 2400,
+        "physicalAttack": 240,
+        "magicalAttack": 48,
+        "expRequirement": 740
+    },
+    {
+        "level": 25,
+        "maxHp": 2900,
+        "maxMp": 2500,
+        "physicalAttack": 250,
+        "magicalAttack": 50,
+        "expRequirement": 770
+    },
+    {
+        "level": 26,
+        "maxHp": 3000,
+        "maxMp": 2600,
+        "physicalAttack": 260,
+        "magicalAttack": 52,
+        "expRequirement": 800
+    },
+    {
+        "level": 27,
+        "maxHp": 3100,
+        "maxMp": 2700,
+        "physicalAttack": 270,
+        "magicalAttack": 54,
+        "expRequirement": 830
+    },
+    {
+        "level": 28,
+        "maxHp": 3200,
+        "maxMp": 2800,
+        "physicalAttack": 280,
+        "magicalAttack": 56,
+        "expRequirement": 860
+    },
+    {
+        "level": 29,
+        "maxHp": 3300,
+        "maxMp": 2900,
+        "physicalAttack": 290,
+        "magicalAttack": 58,
+        "expRequirement": 890
+    },
+    {
+        "level": 30,
+        "maxHp": 3400,
+        "maxMp": 3000,
+        "physicalAttack": 300,
+        "magicalAttack": 60,
+        "expRequirement": 920
+    },
+    {
+        "level": 31,
+        "maxHp": 3500,
+        "maxMp": 3100,
+        "physicalAttack": 310,
+        "magicalAttack": 62,
+        "expRequirement": 950
+    },
+    {
+        "level": 32,
+        "maxHp": 3600,
+        "maxMp": 3200,
+        "physicalAttack": 320,
+        "magicalAttack": 64,
+        "expRequirement": 980
+    },
+    {
+        "level": 33,
+        "maxHp": 3700,
+        "maxMp": 3300,
+        "physicalAttack": 330,
+        "magicalAttack": 66,
+        "expRequirement": 1010
+    },
+    {
+        "level": 34,
+        "maxHp": 3800,
+        "maxMp": 3400,
+        "physicalAttack": 340,
+        "magicalAttack": 68,
+        "expRequirement": 1040
+    },
+    {
+        "level": 35,
+        "maxHp": 3900,
+        "maxMp": 3500,
+        "physicalAttack": 350,
+        "magicalAttack": 70,
+        "expRequirement": 1070
+    },
+    {
+        "level": 36,
+        "maxHp": 4000,
+        "maxMp": 3600,
+        "physicalAttack": 360,
+        "magicalAttack": 72,
+        "expRequirement": 1100
+    },
+    {
+        "level": 37,
+        "maxHp": 4100,
+        "maxMp": 3700,
+        "physicalAttack": 370,
+        "magicalAttack": 74,
+        "expRequirement": 1130
+    },
+    {
+        "level": 38,
+        "maxHp": 4200,
+        "maxMp": 3800,
+        "physicalAttack": 380,
+        "magicalAttack": 76,
+        "expRequirement": 1160
+    },
+    {
+        "level": 39,
+        "maxHp": 4300,
+        "maxMp": 3900,
+        "physicalAttack": 390,
+        "magicalAttack": 78,
+        "expRequirement": 1190
+    },
+    {
+        "level": 40,
+        "maxHp": 4400,
+        "maxMp": 4000,
+        "physicalAttack": 400,
+        "magicalAttack": 80,
+        "expRequirement": 1220
+    },
+    {
+        "level": 41,
+        "maxHp": 4500,
+        "maxMp": 4100,
+        "physicalAttack": 410,
+        "magicalAttack": 82,
+        "expRequirement": 1250
+    },
+    {
+        "level": 42,
+        "maxHp": 4600,
+        "maxMp": 4200,
+        "physicalAttack": 420,
+        "magicalAttack": 84,
+        "expRequirement": 1280
+    },
+    {
+        "level": 43,
+        "maxHp": 4700,
+        "maxMp": 4300,
+        "physicalAttack": 430,
+        "magicalAttack": 86,
+        "expRequirement": 1310
+    },
+    {
+        "level": 44,
+        "maxHp": 4800,
+        "maxMp": 4400,
+        "physicalAttack": 440,
+        "magicalAttack": 88,
+        "expRequirement": 1340
+    },
+    {
+        "level": 45,
+        "maxHp": 4900,
+        "maxMp": 4500,
+        "physicalAttack": 450,
+        "magicalAttack": 90,
+        "expRequirement": 1370
+    },
+    {
+        "level": 46,
+        "maxHp": 5000,
+        "maxMp": 4600,
+        "physicalAttack": 460,
+        "magicalAttack": 92,
+        "expRequirement": 1400
+    },
+    {
+        "level": 47,
+        "maxHp": 5100,
+        "maxMp": 4700,
+        "physicalAttack": 470,
+        "magicalAttack": 94,
+        "expRequirement": 1430
+    },
+    {
+        "level": 48,
+        "maxHp": 5200,
+        "maxMp": 4800,
+        "physicalAttack": 480,
+        "magicalAttack": 96,
+        "expRequirement": 1460
+    },
+    {
+        "level": 49,
+        "maxHp": 5300,
+        "maxMp": 4900,
+        "physicalAttack": 490,
+        "magicalAttack": 98,
+        "expRequirement": 1490
+    },
+    {
+        "level": 50,
+        "maxHp": 5400,
+        "maxMp": 5000,
+        "physicalAttack": 500,
+        "magicalAttack": 100,
+        "expRequirement": 0
+    }
+]

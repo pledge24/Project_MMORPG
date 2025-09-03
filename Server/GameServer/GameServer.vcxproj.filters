@@ -29,6 +29,9 @@
     <Filter Include="Game\Data">
       <UniqueIdentifier>{c1cdcfa1-e243-42a2-ab0e-55ffd15cd2ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\System">
+      <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -81,6 +84,15 @@
     </ClCompile>
     <ClCompile Include="Gamedata.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Inventory.cpp">
+      <Filter>Game\System</Filter>
+    </ClCompile>
+    <ClCompile Include="EquippedGear.cpp">
+      <Filter>Game\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Global.cpp">
+      <Filter>Main</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -139,6 +151,12 @@
     <ClInclude Include="Global.h">
       <Filter>Main</Filter>
     </ClInclude>
+    <ClInclude Include="Inventory.h">
+      <Filter>Game\System</Filter>
+    </ClInclude>
+    <ClInclude Include="EquippedGear.h">
+      <Filter>Game\System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\GenPackets.bat">
@@ -165,9 +183,6 @@
     <None Include="DEBUG.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="S_Character.json">
-      <Filter>Game\Data</Filter>
-    </None>
     <None Include="S_Item.json">
       <Filter>Game\Data</Filter>
     </None>
@@ -179,6 +194,15 @@
     </None>
     <None Include="S_Quest.json">
       <Filter>Game\Data</Filter>
+    </None>
+    <None Include="S_Warrior_Level_Data.json">
+      <Filter>Game\Data</Filter>
+    </None>
+    <None Include="GameDB_InsertAdminAccount.sql">
+      <Filter>Queries</Filter>
+    </None>
+    <None Include="GameDB_GetMaxItemUid.sql">
+      <Filter>Queries</Filter>
     </None>
   </ItemGroup>
 </Project>

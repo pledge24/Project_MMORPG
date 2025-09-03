@@ -30,6 +30,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+    virtual void Init(const Protocol::ObjectInfo& ObjectInfo) override;
+
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -60,6 +62,12 @@ protected:
 	class UInputAction* LookAction;
 
 protected:
+    Protocol::PlayerInfo* playerInfo;
+    Protocol::StatInfo* statInfo;
+
+    class UInventory* InventoryComp;
+    class UEquippedGear* EquippedGearComp;
+
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 

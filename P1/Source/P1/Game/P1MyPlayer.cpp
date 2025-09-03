@@ -12,22 +12,30 @@
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Inventory.h"
+#include "EquippedGear.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+    // Create a camera boom (pulls in towards the player if there is a collision)
+    CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+    CameraBoom->SetupAttachment(RootComponent);
+    CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
+    CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+    // Create a follow camera
+    FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+    FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+    // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
+    // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+    playerInfo = new Protocol::PlayerInfo();
+    statInfo = playerInfo->mutable_stat_info();
+
+    InventoryComp = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+    EquippedGearComp = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -41,9 +49,27 @@ void AP1MyPlayer::BeginPlay()
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-
 		}
 	}
+
+    if(!InventoryComp)
+        InventoryComp = NewObject<UInventory>(this, UInventory::StaticClass());
+
+    if (!EquippedGearComp)
+        EquippedGearComp = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
+
+    // GameInstance에서 보류 중인 데이터가 있는지 확인
+    if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
+    {
+        if (GameInstance->bHasPendingMyPlayer)
+        {
+            // 안전하게 초기화
+            Init(GameInstance->PendingMyPlayerData);
+            GameInstance->MyPlayer = this;
+            GameInstance->Players.Add(GameInstance->PendingMyPlayerData.object_id(), this);
+            GameInstance->bHasPendingMyPlayer = false;
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -54,7 +80,6 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-
 		//Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
@@ -65,7 +90,6 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
-
 	}
 
 }
@@ -107,6 +131,20 @@ void AP1MyPlayer::Tick(float DeltaTime)
 
 		SEND_PACKET(MovePkt);
 	}
+}
+
+void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo)
+{
+    Super::Init(ObjectInfo);
+
+    InventoryComp->Init(ObjectInfo);
+
+    EquippedGearComp->Init(ObjectInfo);
+
+    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    {
+        InGamePlayerController->OnUpdatePlayerUI(ObjectInfo.player_info());
+    }
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)
@@ -158,7 +196,4 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
-
-
-
 

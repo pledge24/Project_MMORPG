@@ -1,6 +1,8 @@
 #include "ClientPacketHandler.h"
-#include "LoginModeBase.h"
+#include "LoginMenuMode.h"
 #include "LoginWidget.h"
+#include "LoginMenuPlayerController.h"
+#include "LoginManager.h"
 #include "P1.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -20,9 +22,9 @@ bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+		if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
 		{
-			if (ULoginManager* Manager = Mode->GetLoginManager())
+			if (ULoginManager* Manager = Controller->GetLoginManager())
 			{
 				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
 				{
@@ -40,9 +42,9 @@ bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHA
 	
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+        if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
 		{
-			if (ULoginManager* Manager = Mode->GetLoginManager())
+			if (ULoginManager* Manager = Controller->GetLoginManager())
 			{
 				if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
 				{
@@ -60,9 +62,9 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
 
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        if (ALoginModeBase* Mode = Cast<ALoginModeBase>(UGameplayStatics::GetGameMode(GameInstance)))
+        if (ALoginMenuPlayerController* Controller = Cast<ALoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
         {
-            if (ULoginManager* Manager = Mode->GetLoginManager())
+            if (ULoginManager* Manager = Controller->GetLoginManager())
             {
                 if (ULoginWidget* LoginWidget = Manager->GetLoginWidget())
                 {
@@ -86,7 +88,7 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
     
     if (GWorld)
     {
-        UGameplayStatics::OpenLevel(GWorld, FName("DevMap"));
+        UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
         {
             GameInstance->HandleSpawn(pkt);
@@ -137,11 +139,44 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 	return false;
 }
 
-bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
+bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
 {
-	auto Msg = pkt.msg();
 
-
-	return true;
+    return true;
 }
 
+bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
+{
+
+    return true;
+}
+
+bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
+{
+
+    return true;
+}
+
+bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
+{
+
+    return true;
+}
+
+bool Handle_S_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::S_EQUIP_EQUIPMENT& pkt)
+{
+
+    return true;
+}
+
+bool Handle_S_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::S_UNEQUIP_EQUIPMENT& pkt)
+{
+
+    return true;
+}
+
+bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
+{
+
+    return true;
+}

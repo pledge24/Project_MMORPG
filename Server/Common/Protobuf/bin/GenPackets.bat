@@ -34,6 +34,10 @@ XCOPY /Y Protocol.pb.h				"../../../../P1/Source/P1/Network"
 XCOPY /Y Protocol.pb.cc				"../../../../P1/Source/P1/Network"
 XCOPY /Y ClientPacketHandler.h		"../../../../P1/Source/P1"
 
+XCOPY /Y Protocol.proto				"../../../../P1/Source/P1/Network"
+XCOPY /Y Struct.proto				"../../../../P1/Source/P1/Network"
+XCOPY /Y Enum.proto					"../../../../P1/Source/P1/Network"
+
 DEL /Q /F *.pb.h
 DEL /Q /F *.pb.cc
 DEL /Q /F *.h

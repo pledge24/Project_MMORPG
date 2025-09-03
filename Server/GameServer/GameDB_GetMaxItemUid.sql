@@ -1,0 +1,11 @@
+CREATE PROCEDURE GetMaxItemUID
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT ISNULL(MAX(item_uid), 1) AS MaxItemUID
+    FROM CharactersGearItems;
+END
+GO
+
+EXEC GetMaxItemUID;

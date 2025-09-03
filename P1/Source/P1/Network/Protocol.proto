@@ -4,34 +4,168 @@ package Protocol;
 import "Enum.proto";
 import "Struct.proto";
 
-message C_LOGIN
+message C_PING
 {
 
+}
+
+message S_PONG
+{
+
+}
+
+message C_LOGIN
+{
+    string access_token = 1;
 }
 
 message S_LOGIN
 {
 	bool success = 1;
-	repeated Player players = 2; // ÏïÑÏù¥Îîî Î∞úÍ∏â Ï†Ñ
+	repeated CharacterOverview characters = 2; // ƒ≥∏Ø≈Õ æ∆¿Ãµ πﬂ±ﬁ ¿¸
+}
+
+message C_CREATE_CHARACTER
+{
+    CharacterOverview character = 1;
+}
+
+message S_CREATE_CHARACTER
+{
+    bool success = 1;
+    string cause = 2;
+    uint64 character_id = 3;
+}
+
+message C_DELETE_CHARACTER
+{
+    uint64 character_id = 1;
+}
+
+message S_DELETE_CHARACTER
+{
+    bool success = 1;
+    uint64 character_id = 2;
 }
 
 message C_ENTER_GAME
 {
-	uint64 playerIndex = 1;
+	uint64 character_id = 1;
 }
 
 message S_ENTER_GAME
 {
 	bool success = 1;
+	ObjectInfo player = 2;
 }
 
-message C_CHAT
+message C_LEAVE_GAME
 {
-	string msg = 1;
+
 }
 
-message S_CHAT
+message S_LEAVE_GAME
 {
-	uint64 playerId = 1;
-	string msg = 2;
+
+}
+
+message S_SPAWN
+{
+	repeated ObjectInfo objects = 1;
+}
+
+message S_DESPAWN
+{
+	repeated uint64 object_ids = 1;
+}
+
+message C_MOVE
+{
+	PosInfo info = 1;
+}
+
+message S_MOVE
+{
+	PosInfo info = 1;
+}
+
+message C_ATTACK
+{
+    // Normal Attack∏∏ ¿Ã ∆–≈∂¿ª ªÁøÎ«—¥Ÿ.
+}
+
+message S_ATTACK
+{
+    repeated uint64 object_ids = 1;
+}
+
+message S_HIT
+{
+    uint64 attacker_id = 1;         // object_id
+    uint64 target_id = 2;           // object_id
+
+    DamageType damage_type = 3;     // π∞∏Æ «««ÿ? ∏∂π˝ «««ÿ?
+
+    // ∏¬æ∆º≠ πŸ≤Ô Ω∫≈›µÈ
+    repeated Stat updated_stat = 4;
+
+    // ∏¬æ∆º≠ ª˝±‰ »ø∞˙(πˆ«¡, µπˆ«¡)
+    // repeated Effect addedEffect = ?;
+}
+
+message C_BUY_ITEM
+{
+    int32 template_id = 1;
+    int32 count = 2;
+}
+
+message S_BUY_ITEM
+{
+    repeated Slot updated_slots = 1;
+    int64 gold = 2;
+}
+
+message C_SELL_ITEM
+{
+    Slot slot = 1;
+    int32 count = 2;
+}
+
+message S_SELL_ITEM
+{
+    repeated Slot updated_slots = 1;
+    int64 gold = 2;
+}
+
+message C_EQUIP_EQUIPMENT
+{
+    Slot slot = 1;
+}
+
+message S_EQUIP_EQUIPMENT
+{
+    repeated Slot updated_slots = 1;
+    Stat updated_stat = 2; // πŸ≤Ô Ω∫≈›
+}
+
+message C_UNEQUIP_EQUIPMENT
+{
+    Slot slot = 1;
+}
+
+message S_UNEQUIP_EQUIPMENT
+{
+    repeated Slot updated_slots = 1;
+    Stat updated_stat = 2; // πŸ≤Ô Ω∫≈›
+}
+
+message C_USE_ITEM
+{
+    Slot slot = 1;
+}
+
+message S_USE_ITEM
+{
+    repeated Slot updated_slots = 1;
+    Stat updated_stat = 2; // πŸ≤Ô Ω∫≈›
 }

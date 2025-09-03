@@ -50,7 +50,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 	{
 		Protocol::S_SPAWN spawnPkt;
 
-		Protocol::ObjectInfo* objectInfo = spawnPkt.add_players();
+		Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
 		objectInfo->CopyFrom(*object->objectInfo);
 
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
@@ -67,7 +67,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 			if (item.second->IsPlayer() == false)
 				continue;
 
-			Protocol::ObjectInfo* playerInfo = spawnPkt.add_players();
+			Protocol::ObjectInfo* playerInfo = spawnPkt.add_objects();
 			playerInfo->CopyFrom(*item.second->objectInfo);
 		}
 

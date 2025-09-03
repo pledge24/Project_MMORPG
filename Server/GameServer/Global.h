@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
 
-extern map<string, int32> ClassMappings = {
-    make_pair("warrior", 1)
-};
+extern const map<string, int32> GClassMappings;
+
+extern atomic<int64> GmaxItemUID;

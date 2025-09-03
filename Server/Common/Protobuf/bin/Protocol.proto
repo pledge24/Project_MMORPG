@@ -16,7 +16,7 @@ message S_PONG
 
 message C_LOGIN
 {
-    string accessToken = 1;
+    string access_token = 1;
 }
 
 message S_LOGIN
@@ -34,23 +34,23 @@ message S_CREATE_CHARACTER
 {
     bool success = 1;
     string cause = 2;
-    uint64 characterId = 3;
+    uint64 character_id = 3;
 }
 
 message C_DELETE_CHARACTER
 {
-    uint64 characterId = 1;
+    uint64 character_id = 1;
 }
 
 message S_DELETE_CHARACTER
 {
     bool success = 1;
-    uint64 characterId = 2;
+    uint64 character_id = 2;
 }
 
 message C_ENTER_GAME
 {
-	uint64 characterId = 1;
+	uint64 character_id = 1;
 }
 
 message S_ENTER_GAME
@@ -71,7 +71,7 @@ message S_LEAVE_GAME
 
 message S_SPAWN
 {
-	repeated ObjectInfo players = 1;
+	repeated ObjectInfo objects = 1;
 }
 
 message S_DESPAWN
@@ -89,13 +89,83 @@ message S_MOVE
 	PosInfo info = 1;
 }
 
-message C_CHAT
+message C_ATTACK
 {
-	string msg = 1;
+    // Normal Attack만 이 패킷을 사용한다.
 }
 
-message S_CHAT
+message S_ATTACK
 {
-	uint64 playerId = 1;
-	string msg = 2;
+    repeated uint64 object_ids = 1;
+}
+
+message S_HIT
+{
+    uint64 attacker_id = 1;         // object_id
+    uint64 target_id = 2;           // object_id
+
+    DamageType damage_type = 3;     // 물리 피해? 마법 피해?
+
+    // 맞아서 바뀐 스텟들
+    repeated Stat updated_stat = 4;
+
+    // 맞아서 생긴 효과(버프, 디버프)
+    // repeated Effect addedEffect = ?;
+}
+
+message C_BUY_ITEM
+{
+    int32 template_id = 1;
+    int32 count = 2;
+}
+
+message S_BUY_ITEM
+{
+    repeated Slot updated_slots = 1;
+    int64 gold = 2;
+}
+
+message C_SELL_ITEM
+{
+    Slot slot = 1;
+    int32 count = 2;
+}
+
+message S_SELL_ITEM
+{
+    repeated Slot updated_slots = 1;
+    int64 gold = 2;
+}
+
+message C_EQUIP_EQUIPMENT
+{
+    Slot slot = 1;
+}
+
+message S_EQUIP_EQUIPMENT
+{
+    repeated Slot updated_slots = 1;
+    Stat updated_stat = 2; // 바뀐 스텟
+}
+
+message C_UNEQUIP_EQUIPMENT
+{
+    Slot slot = 1;
+}
+
+message S_UNEQUIP_EQUIPMENT
+{
+    repeated Slot updated_slots = 1;
+    Stat updated_stat = 2; // 바뀐 스텟
+}
+
+message C_USE_ITEM
+{
+    Slot slot = 1;
+}
+
+message S_USE_ITEM
+{
+    repeated Slot updated_slots = 1;
+    Stat updated_stat = 2; // 바뀐 스텟
 }
