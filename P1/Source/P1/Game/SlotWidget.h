@@ -13,6 +13,7 @@
 class UImage;
 class UTextBlock;
 class UItemTooltipWidget;
+class UButton;
 
 /**
  * 
@@ -26,14 +27,15 @@ public:
     virtual void NativeConstruct() override;
 
     /** 슬롯 UI를 초기화/갱신하는 함수 */
-    UFUNCTION(BlueprintCallable, Category = "Item")
+    UFUNCTION(BlueprintCallable, Category = "Slot")
     void InitSlot(const FItemData& Item, int32 Count = 1);
 
     void SetSlot(const Protocol::Slot& _Slot);
+    void SetSlotId(int32 Id) { SlotId = Id; }
     void ClearSlot();
 
     /** 툴팁으로 사용할 위젯 클래스 */
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
     TSubclassOf<UItemTooltipWidget> TooltipClass;
 
     UItemTooltipWidget* TooltipWidget;
@@ -58,6 +60,10 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ItemCountText;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
+    int32 SlotId;
+
 private:
     void InsertData(const Protocol::Slot& _Slot);
+
 };

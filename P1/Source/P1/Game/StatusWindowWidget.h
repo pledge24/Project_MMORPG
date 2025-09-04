@@ -27,23 +27,26 @@ public:
     void UpdateMagicalAttack(int32 Value);
 
 protected:
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendUnequipPacket(USlotWidget* _Slot);
+
     // 장착 중인 장비
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category="EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Helmet;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Chest;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Gloves;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Legs;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Boots;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Weapon;
 
     // 상세 스텟 정보

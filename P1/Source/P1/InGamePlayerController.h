@@ -67,6 +67,13 @@ protected:
     UPROPERTY()
     UInventoryWidget* InventoryWidget;
 
+    /** 상점 UI*/
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> ShopWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* ShopWidget;
+
 private:
     int32 ToggleFlag = 0;
 };

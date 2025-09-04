@@ -12,7 +12,8 @@ enum WidgetType
 {
     WIDGET_NONE = 0,
     WIDGET_STATUS_WINDOW = 1,
-    WIDGET_INVENTORY = 2
+    WIDGET_INVENTORY = 2,
+    WIDGET_SHOP = 3,
 };
 
 AInGamePlayerController::AInGamePlayerController()
@@ -59,6 +60,16 @@ void AInGamePlayerController::BeginPlay()
         {
             InventoryWidget->AddToViewport();
             InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    if (ShopWidgetClass && !ShopWidget)
+    {
+        ShopWidget = CreateWidget<UUserWidget>(this, ShopWidgetClass);
+        if (ShopWidget)
+        {
+            ShopWidget->AddToViewport();
+            //ShopWidget->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
 }

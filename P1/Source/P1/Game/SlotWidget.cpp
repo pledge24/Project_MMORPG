@@ -6,6 +6,7 @@
 #include "P1.h"
 #include "Engine/DataTable.h"
 #include "ItemTooltipWidget.h"
+#include "Components/Button.h"
 
 void USlotWidget::NativeConstruct()
 {

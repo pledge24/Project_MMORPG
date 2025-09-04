@@ -59,3 +59,9 @@ void UStatusWindowWidget::UpdateMagicalAttack(int32 Value)
 {
     Details_Magical_Attack->SetText(FText::AsNumber(Value));
 }
+
+void UStatusWindowWidget::SendUnequipPacket(USlotWidget* _Slot)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d")));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
+}

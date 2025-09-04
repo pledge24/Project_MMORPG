@@ -29,6 +29,12 @@ public:
     class USlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& _Slot);
 
 protected:
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendSellPacket(USlotWidget* _Slot);
+
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendEquipPacket(USlotWidget* _Slot);
+
     UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
     UUniformGridPanel* Gear_Inven;
 

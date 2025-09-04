@@ -80,3 +80,15 @@ USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot
 
     return nullptr;
 }
+
+void UInventoryWidget::SendSellPacket(USlotWidget* _Slot)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnSell! template_id: %d"), _Slot->ItemData.TemplateId));
+}
+
+void UInventoryWidget::SendEquipPacket(USlotWidget* _Slot)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
+}

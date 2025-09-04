@@ -7,6 +7,9 @@
 
 void UItemTooltipWidget::Init(const FItemData& Item)
 {
+    if (Item.TemplateId <= 0)
+        return;
+
     if (Item.Icon.IsValid() || Item.Icon.ToSoftObjectPath().IsValid())
     {
         UTexture2D* LoadedIcon = Item.Icon.LoadSynchronous();
@@ -16,8 +19,10 @@ void UItemTooltipWidget::Init(const FItemData& Item)
         }
     }
 
-    ItemNameText->SetText(FText::FromString(Item.ItemName));
-    ItemDescriptionText->SetText(FText::FromString(Item.Description));
+    if(ItemNameText)
+        ItemNameText->SetText(FText::FromString(Item.ItemName));
+    if(ItemDescriptionText)
+        ItemDescriptionText->SetText(FText::FromString(Item.Description));
 
     // Clear Text
     for (UWidget* Child : VB_ItemInfo->GetAllChildren())
