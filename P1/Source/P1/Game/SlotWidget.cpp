@@ -12,11 +12,11 @@ void USlotWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (!TooltipWidget)
+    if (TooltipClass && !TooltipWidget)
         TooltipWidget = CreateWidget<UItemTooltipWidget>(this, TooltipClass);
 }
 
-void USlotWidget::InitSlot(const FItemData& Item, int32 Count)
+void USlotWidget::SetSlot(const FItemData& Item, int32 Count)
 {
     ItemData = Item;
     SlotData.set_count(Count);

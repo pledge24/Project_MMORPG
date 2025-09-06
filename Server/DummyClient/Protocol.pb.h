@@ -63,9 +63,9 @@ extern C_DELETE_CHARACTERDefaultTypeInternal _C_DELETE_CHARACTER_default_instanc
 class C_ENTER_GAME;
 struct C_ENTER_GAMEDefaultTypeInternal;
 extern C_ENTER_GAMEDefaultTypeInternal _C_ENTER_GAME_default_instance_;
-class C_EQUIP_EQUIPMENT;
-struct C_EQUIP_EQUIPMENTDefaultTypeInternal;
-extern C_EQUIP_EQUIPMENTDefaultTypeInternal _C_EQUIP_EQUIPMENT_default_instance_;
+class C_EQUIP_GEAR;
+struct C_EQUIP_GEARDefaultTypeInternal;
+extern C_EQUIP_GEARDefaultTypeInternal _C_EQUIP_GEAR_default_instance_;
 class C_LEAVE_GAME;
 struct C_LEAVE_GAMEDefaultTypeInternal;
 extern C_LEAVE_GAMEDefaultTypeInternal _C_LEAVE_GAME_default_instance_;
@@ -81,9 +81,9 @@ extern C_PINGDefaultTypeInternal _C_PING_default_instance_;
 class C_SELL_ITEM;
 struct C_SELL_ITEMDefaultTypeInternal;
 extern C_SELL_ITEMDefaultTypeInternal _C_SELL_ITEM_default_instance_;
-class C_UNEQUIP_EQUIPMENT;
-struct C_UNEQUIP_EQUIPMENTDefaultTypeInternal;
-extern C_UNEQUIP_EQUIPMENTDefaultTypeInternal _C_UNEQUIP_EQUIPMENT_default_instance_;
+class C_UNEQUIP_GEAR;
+struct C_UNEQUIP_GEARDefaultTypeInternal;
+extern C_UNEQUIP_GEARDefaultTypeInternal _C_UNEQUIP_GEAR_default_instance_;
 class C_USE_ITEM;
 struct C_USE_ITEMDefaultTypeInternal;
 extern C_USE_ITEMDefaultTypeInternal _C_USE_ITEM_default_instance_;
@@ -105,9 +105,9 @@ extern S_DESPAWNDefaultTypeInternal _S_DESPAWN_default_instance_;
 class S_ENTER_GAME;
 struct S_ENTER_GAMEDefaultTypeInternal;
 extern S_ENTER_GAMEDefaultTypeInternal _S_ENTER_GAME_default_instance_;
-class S_EQUIP_EQUIPMENT;
-struct S_EQUIP_EQUIPMENTDefaultTypeInternal;
-extern S_EQUIP_EQUIPMENTDefaultTypeInternal _S_EQUIP_EQUIPMENT_default_instance_;
+class S_EQUIP_GEAR;
+struct S_EQUIP_GEARDefaultTypeInternal;
+extern S_EQUIP_GEARDefaultTypeInternal _S_EQUIP_GEAR_default_instance_;
 class S_HIT;
 struct S_HITDefaultTypeInternal;
 extern S_HITDefaultTypeInternal _S_HIT_default_instance_;
@@ -129,9 +129,9 @@ extern S_SELL_ITEMDefaultTypeInternal _S_SELL_ITEM_default_instance_;
 class S_SPAWN;
 struct S_SPAWNDefaultTypeInternal;
 extern S_SPAWNDefaultTypeInternal _S_SPAWN_default_instance_;
-class S_UNEQUIP_EQUIPMENT;
-struct S_UNEQUIP_EQUIPMENTDefaultTypeInternal;
-extern S_UNEQUIP_EQUIPMENTDefaultTypeInternal _S_UNEQUIP_EQUIPMENT_default_instance_;
+class S_UNEQUIP_GEAR;
+struct S_UNEQUIP_GEARDefaultTypeInternal;
+extern S_UNEQUIP_GEARDefaultTypeInternal _S_UNEQUIP_GEAR_default_instance_;
 class S_USE_ITEM;
 struct S_USE_ITEMDefaultTypeInternal;
 extern S_USE_ITEMDefaultTypeInternal _S_USE_ITEM_default_instance_;
@@ -142,13 +142,13 @@ template<> ::Protocol::C_BUY_ITEM* Arena::CreateMaybeMessage<::Protocol::C_BUY_I
 template<> ::Protocol::C_CREATE_CHARACTER* Arena::CreateMaybeMessage<::Protocol::C_CREATE_CHARACTER>(Arena*);
 template<> ::Protocol::C_DELETE_CHARACTER* Arena::CreateMaybeMessage<::Protocol::C_DELETE_CHARACTER>(Arena*);
 template<> ::Protocol::C_ENTER_GAME* Arena::CreateMaybeMessage<::Protocol::C_ENTER_GAME>(Arena*);
-template<> ::Protocol::C_EQUIP_EQUIPMENT* Arena::CreateMaybeMessage<::Protocol::C_EQUIP_EQUIPMENT>(Arena*);
+template<> ::Protocol::C_EQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::C_EQUIP_GEAR>(Arena*);
 template<> ::Protocol::C_LEAVE_GAME* Arena::CreateMaybeMessage<::Protocol::C_LEAVE_GAME>(Arena*);
 template<> ::Protocol::C_LOGIN* Arena::CreateMaybeMessage<::Protocol::C_LOGIN>(Arena*);
 template<> ::Protocol::C_MOVE* Arena::CreateMaybeMessage<::Protocol::C_MOVE>(Arena*);
 template<> ::Protocol::C_PING* Arena::CreateMaybeMessage<::Protocol::C_PING>(Arena*);
 template<> ::Protocol::C_SELL_ITEM* Arena::CreateMaybeMessage<::Protocol::C_SELL_ITEM>(Arena*);
-template<> ::Protocol::C_UNEQUIP_EQUIPMENT* Arena::CreateMaybeMessage<::Protocol::C_UNEQUIP_EQUIPMENT>(Arena*);
+template<> ::Protocol::C_UNEQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::C_UNEQUIP_GEAR>(Arena*);
 template<> ::Protocol::C_USE_ITEM* Arena::CreateMaybeMessage<::Protocol::C_USE_ITEM>(Arena*);
 template<> ::Protocol::S_ATTACK* Arena::CreateMaybeMessage<::Protocol::S_ATTACK>(Arena*);
 template<> ::Protocol::S_BUY_ITEM* Arena::CreateMaybeMessage<::Protocol::S_BUY_ITEM>(Arena*);
@@ -156,7 +156,7 @@ template<> ::Protocol::S_CREATE_CHARACTER* Arena::CreateMaybeMessage<::Protocol:
 template<> ::Protocol::S_DELETE_CHARACTER* Arena::CreateMaybeMessage<::Protocol::S_DELETE_CHARACTER>(Arena*);
 template<> ::Protocol::S_DESPAWN* Arena::CreateMaybeMessage<::Protocol::S_DESPAWN>(Arena*);
 template<> ::Protocol::S_ENTER_GAME* Arena::CreateMaybeMessage<::Protocol::S_ENTER_GAME>(Arena*);
-template<> ::Protocol::S_EQUIP_EQUIPMENT* Arena::CreateMaybeMessage<::Protocol::S_EQUIP_EQUIPMENT>(Arena*);
+template<> ::Protocol::S_EQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::S_EQUIP_GEAR>(Arena*);
 template<> ::Protocol::S_HIT* Arena::CreateMaybeMessage<::Protocol::S_HIT>(Arena*);
 template<> ::Protocol::S_LEAVE_GAME* Arena::CreateMaybeMessage<::Protocol::S_LEAVE_GAME>(Arena*);
 template<> ::Protocol::S_LOGIN* Arena::CreateMaybeMessage<::Protocol::S_LOGIN>(Arena*);
@@ -164,7 +164,7 @@ template<> ::Protocol::S_MOVE* Arena::CreateMaybeMessage<::Protocol::S_MOVE>(Are
 template<> ::Protocol::S_PONG* Arena::CreateMaybeMessage<::Protocol::S_PONG>(Arena*);
 template<> ::Protocol::S_SELL_ITEM* Arena::CreateMaybeMessage<::Protocol::S_SELL_ITEM>(Arena*);
 template<> ::Protocol::S_SPAWN* Arena::CreateMaybeMessage<::Protocol::S_SPAWN>(Arena*);
-template<> ::Protocol::S_UNEQUIP_EQUIPMENT* Arena::CreateMaybeMessage<::Protocol::S_UNEQUIP_EQUIPMENT>(Arena*);
+template<> ::Protocol::S_UNEQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::S_UNEQUIP_GEAR>(Arena*);
 template<> ::Protocol::S_USE_ITEM* Arena::CreateMaybeMessage<::Protocol::S_USE_ITEM>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
@@ -3685,24 +3685,24 @@ class S_SELL_ITEM final :
 };
 // -------------------------------------------------------------------
 
-class C_EQUIP_EQUIPMENT final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_EQUIP_EQUIPMENT) */ {
+class C_EQUIP_GEAR final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_EQUIP_GEAR) */ {
  public:
-  inline C_EQUIP_EQUIPMENT() : C_EQUIP_EQUIPMENT(nullptr) {}
-  ~C_EQUIP_EQUIPMENT() override;
-  explicit PROTOBUF_CONSTEXPR C_EQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline C_EQUIP_GEAR() : C_EQUIP_GEAR(nullptr) {}
+  ~C_EQUIP_GEAR() override;
+  explicit PROTOBUF_CONSTEXPR C_EQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  C_EQUIP_EQUIPMENT(const C_EQUIP_EQUIPMENT& from);
-  C_EQUIP_EQUIPMENT(C_EQUIP_EQUIPMENT&& from) noexcept
-    : C_EQUIP_EQUIPMENT() {
+  C_EQUIP_GEAR(const C_EQUIP_GEAR& from);
+  C_EQUIP_GEAR(C_EQUIP_GEAR&& from) noexcept
+    : C_EQUIP_GEAR() {
     *this = ::std::move(from);
   }
 
-  inline C_EQUIP_EQUIPMENT& operator=(const C_EQUIP_EQUIPMENT& from) {
+  inline C_EQUIP_GEAR& operator=(const C_EQUIP_GEAR& from) {
     CopyFrom(from);
     return *this;
   }
-  inline C_EQUIP_EQUIPMENT& operator=(C_EQUIP_EQUIPMENT&& from) noexcept {
+  inline C_EQUIP_GEAR& operator=(C_EQUIP_GEAR&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -3725,20 +3725,20 @@ class C_EQUIP_EQUIPMENT final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const C_EQUIP_EQUIPMENT& default_instance() {
+  static const C_EQUIP_GEAR& default_instance() {
     return *internal_default_instance();
   }
-  static inline const C_EQUIP_EQUIPMENT* internal_default_instance() {
-    return reinterpret_cast<const C_EQUIP_EQUIPMENT*>(
-               &_C_EQUIP_EQUIPMENT_default_instance_);
+  static inline const C_EQUIP_GEAR* internal_default_instance() {
+    return reinterpret_cast<const C_EQUIP_GEAR*>(
+               &_C_EQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     23;
 
-  friend void swap(C_EQUIP_EQUIPMENT& a, C_EQUIP_EQUIPMENT& b) {
+  friend void swap(C_EQUIP_GEAR& a, C_EQUIP_GEAR& b) {
     a.Swap(&b);
   }
-  inline void Swap(C_EQUIP_EQUIPMENT* other) {
+  inline void Swap(C_EQUIP_GEAR* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -3751,7 +3751,7 @@ class C_EQUIP_EQUIPMENT final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(C_EQUIP_EQUIPMENT* other) {
+  void UnsafeArenaSwap(C_EQUIP_GEAR* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -3759,14 +3759,14 @@ class C_EQUIP_EQUIPMENT final :
 
   // implements Message ----------------------------------------------
 
-  C_EQUIP_EQUIPMENT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<C_EQUIP_EQUIPMENT>(arena);
+  C_EQUIP_GEAR* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_EQUIP_GEAR>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const C_EQUIP_EQUIPMENT& from);
+  void CopyFrom(const C_EQUIP_GEAR& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const C_EQUIP_EQUIPMENT& from) {
-    C_EQUIP_EQUIPMENT::MergeImpl(*this, from);
+  void MergeFrom( const C_EQUIP_GEAR& from) {
+    C_EQUIP_GEAR::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -3784,15 +3784,15 @@ class C_EQUIP_EQUIPMENT final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(C_EQUIP_EQUIPMENT* other);
+  void InternalSwap(C_EQUIP_GEAR* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.C_EQUIP_EQUIPMENT";
+    return "Protocol.C_EQUIP_GEAR";
   }
   protected:
-  explicit C_EQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit C_EQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -3826,7 +3826,7 @@ class C_EQUIP_EQUIPMENT final :
       ::Protocol::Slot* slot);
   ::Protocol::Slot* unsafe_arena_release_slot();
 
-  // @@protoc_insertion_point(class_scope:Protocol.C_EQUIP_EQUIPMENT)
+  // @@protoc_insertion_point(class_scope:Protocol.C_EQUIP_GEAR)
  private:
   class _Internal;
 
@@ -3842,24 +3842,24 @@ class C_EQUIP_EQUIPMENT final :
 };
 // -------------------------------------------------------------------
 
-class S_EQUIP_EQUIPMENT final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_EQUIP_EQUIPMENT) */ {
+class S_EQUIP_GEAR final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_EQUIP_GEAR) */ {
  public:
-  inline S_EQUIP_EQUIPMENT() : S_EQUIP_EQUIPMENT(nullptr) {}
-  ~S_EQUIP_EQUIPMENT() override;
-  explicit PROTOBUF_CONSTEXPR S_EQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline S_EQUIP_GEAR() : S_EQUIP_GEAR(nullptr) {}
+  ~S_EQUIP_GEAR() override;
+  explicit PROTOBUF_CONSTEXPR S_EQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  S_EQUIP_EQUIPMENT(const S_EQUIP_EQUIPMENT& from);
-  S_EQUIP_EQUIPMENT(S_EQUIP_EQUIPMENT&& from) noexcept
-    : S_EQUIP_EQUIPMENT() {
+  S_EQUIP_GEAR(const S_EQUIP_GEAR& from);
+  S_EQUIP_GEAR(S_EQUIP_GEAR&& from) noexcept
+    : S_EQUIP_GEAR() {
     *this = ::std::move(from);
   }
 
-  inline S_EQUIP_EQUIPMENT& operator=(const S_EQUIP_EQUIPMENT& from) {
+  inline S_EQUIP_GEAR& operator=(const S_EQUIP_GEAR& from) {
     CopyFrom(from);
     return *this;
   }
-  inline S_EQUIP_EQUIPMENT& operator=(S_EQUIP_EQUIPMENT&& from) noexcept {
+  inline S_EQUIP_GEAR& operator=(S_EQUIP_GEAR&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -3882,20 +3882,20 @@ class S_EQUIP_EQUIPMENT final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const S_EQUIP_EQUIPMENT& default_instance() {
+  static const S_EQUIP_GEAR& default_instance() {
     return *internal_default_instance();
   }
-  static inline const S_EQUIP_EQUIPMENT* internal_default_instance() {
-    return reinterpret_cast<const S_EQUIP_EQUIPMENT*>(
-               &_S_EQUIP_EQUIPMENT_default_instance_);
+  static inline const S_EQUIP_GEAR* internal_default_instance() {
+    return reinterpret_cast<const S_EQUIP_GEAR*>(
+               &_S_EQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     24;
 
-  friend void swap(S_EQUIP_EQUIPMENT& a, S_EQUIP_EQUIPMENT& b) {
+  friend void swap(S_EQUIP_GEAR& a, S_EQUIP_GEAR& b) {
     a.Swap(&b);
   }
-  inline void Swap(S_EQUIP_EQUIPMENT* other) {
+  inline void Swap(S_EQUIP_GEAR* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -3908,7 +3908,7 @@ class S_EQUIP_EQUIPMENT final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(S_EQUIP_EQUIPMENT* other) {
+  void UnsafeArenaSwap(S_EQUIP_GEAR* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -3916,14 +3916,14 @@ class S_EQUIP_EQUIPMENT final :
 
   // implements Message ----------------------------------------------
 
-  S_EQUIP_EQUIPMENT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<S_EQUIP_EQUIPMENT>(arena);
+  S_EQUIP_GEAR* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_EQUIP_GEAR>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const S_EQUIP_EQUIPMENT& from);
+  void CopyFrom(const S_EQUIP_GEAR& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const S_EQUIP_EQUIPMENT& from) {
-    S_EQUIP_EQUIPMENT::MergeImpl(*this, from);
+  void MergeFrom( const S_EQUIP_GEAR& from) {
+    S_EQUIP_GEAR::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -3941,15 +3941,15 @@ class S_EQUIP_EQUIPMENT final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(S_EQUIP_EQUIPMENT* other);
+  void InternalSwap(S_EQUIP_GEAR* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.S_EQUIP_EQUIPMENT";
+    return "Protocol.S_EQUIP_GEAR";
   }
   protected:
-  explicit S_EQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit S_EQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -4002,7 +4002,7 @@ class S_EQUIP_EQUIPMENT final :
       ::Protocol::Stat* updated_stat);
   ::Protocol::Stat* unsafe_arena_release_updated_stat();
 
-  // @@protoc_insertion_point(class_scope:Protocol.S_EQUIP_EQUIPMENT)
+  // @@protoc_insertion_point(class_scope:Protocol.S_EQUIP_GEAR)
  private:
   class _Internal;
 
@@ -4019,24 +4019,24 @@ class S_EQUIP_EQUIPMENT final :
 };
 // -------------------------------------------------------------------
 
-class C_UNEQUIP_EQUIPMENT final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_UNEQUIP_EQUIPMENT) */ {
+class C_UNEQUIP_GEAR final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_UNEQUIP_GEAR) */ {
  public:
-  inline C_UNEQUIP_EQUIPMENT() : C_UNEQUIP_EQUIPMENT(nullptr) {}
-  ~C_UNEQUIP_EQUIPMENT() override;
-  explicit PROTOBUF_CONSTEXPR C_UNEQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline C_UNEQUIP_GEAR() : C_UNEQUIP_GEAR(nullptr) {}
+  ~C_UNEQUIP_GEAR() override;
+  explicit PROTOBUF_CONSTEXPR C_UNEQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  C_UNEQUIP_EQUIPMENT(const C_UNEQUIP_EQUIPMENT& from);
-  C_UNEQUIP_EQUIPMENT(C_UNEQUIP_EQUIPMENT&& from) noexcept
-    : C_UNEQUIP_EQUIPMENT() {
+  C_UNEQUIP_GEAR(const C_UNEQUIP_GEAR& from);
+  C_UNEQUIP_GEAR(C_UNEQUIP_GEAR&& from) noexcept
+    : C_UNEQUIP_GEAR() {
     *this = ::std::move(from);
   }
 
-  inline C_UNEQUIP_EQUIPMENT& operator=(const C_UNEQUIP_EQUIPMENT& from) {
+  inline C_UNEQUIP_GEAR& operator=(const C_UNEQUIP_GEAR& from) {
     CopyFrom(from);
     return *this;
   }
-  inline C_UNEQUIP_EQUIPMENT& operator=(C_UNEQUIP_EQUIPMENT&& from) noexcept {
+  inline C_UNEQUIP_GEAR& operator=(C_UNEQUIP_GEAR&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -4059,20 +4059,20 @@ class C_UNEQUIP_EQUIPMENT final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const C_UNEQUIP_EQUIPMENT& default_instance() {
+  static const C_UNEQUIP_GEAR& default_instance() {
     return *internal_default_instance();
   }
-  static inline const C_UNEQUIP_EQUIPMENT* internal_default_instance() {
-    return reinterpret_cast<const C_UNEQUIP_EQUIPMENT*>(
-               &_C_UNEQUIP_EQUIPMENT_default_instance_);
+  static inline const C_UNEQUIP_GEAR* internal_default_instance() {
+    return reinterpret_cast<const C_UNEQUIP_GEAR*>(
+               &_C_UNEQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     25;
 
-  friend void swap(C_UNEQUIP_EQUIPMENT& a, C_UNEQUIP_EQUIPMENT& b) {
+  friend void swap(C_UNEQUIP_GEAR& a, C_UNEQUIP_GEAR& b) {
     a.Swap(&b);
   }
-  inline void Swap(C_UNEQUIP_EQUIPMENT* other) {
+  inline void Swap(C_UNEQUIP_GEAR* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -4085,7 +4085,7 @@ class C_UNEQUIP_EQUIPMENT final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(C_UNEQUIP_EQUIPMENT* other) {
+  void UnsafeArenaSwap(C_UNEQUIP_GEAR* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -4093,14 +4093,14 @@ class C_UNEQUIP_EQUIPMENT final :
 
   // implements Message ----------------------------------------------
 
-  C_UNEQUIP_EQUIPMENT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<C_UNEQUIP_EQUIPMENT>(arena);
+  C_UNEQUIP_GEAR* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_UNEQUIP_GEAR>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const C_UNEQUIP_EQUIPMENT& from);
+  void CopyFrom(const C_UNEQUIP_GEAR& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const C_UNEQUIP_EQUIPMENT& from) {
-    C_UNEQUIP_EQUIPMENT::MergeImpl(*this, from);
+  void MergeFrom( const C_UNEQUIP_GEAR& from) {
+    C_UNEQUIP_GEAR::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -4118,15 +4118,15 @@ class C_UNEQUIP_EQUIPMENT final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(C_UNEQUIP_EQUIPMENT* other);
+  void InternalSwap(C_UNEQUIP_GEAR* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.C_UNEQUIP_EQUIPMENT";
+    return "Protocol.C_UNEQUIP_GEAR";
   }
   protected:
-  explicit C_UNEQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit C_UNEQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -4160,7 +4160,7 @@ class C_UNEQUIP_EQUIPMENT final :
       ::Protocol::Slot* slot);
   ::Protocol::Slot* unsafe_arena_release_slot();
 
-  // @@protoc_insertion_point(class_scope:Protocol.C_UNEQUIP_EQUIPMENT)
+  // @@protoc_insertion_point(class_scope:Protocol.C_UNEQUIP_GEAR)
  private:
   class _Internal;
 
@@ -4176,24 +4176,24 @@ class C_UNEQUIP_EQUIPMENT final :
 };
 // -------------------------------------------------------------------
 
-class S_UNEQUIP_EQUIPMENT final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_UNEQUIP_EQUIPMENT) */ {
+class S_UNEQUIP_GEAR final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_UNEQUIP_GEAR) */ {
  public:
-  inline S_UNEQUIP_EQUIPMENT() : S_UNEQUIP_EQUIPMENT(nullptr) {}
-  ~S_UNEQUIP_EQUIPMENT() override;
-  explicit PROTOBUF_CONSTEXPR S_UNEQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline S_UNEQUIP_GEAR() : S_UNEQUIP_GEAR(nullptr) {}
+  ~S_UNEQUIP_GEAR() override;
+  explicit PROTOBUF_CONSTEXPR S_UNEQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  S_UNEQUIP_EQUIPMENT(const S_UNEQUIP_EQUIPMENT& from);
-  S_UNEQUIP_EQUIPMENT(S_UNEQUIP_EQUIPMENT&& from) noexcept
-    : S_UNEQUIP_EQUIPMENT() {
+  S_UNEQUIP_GEAR(const S_UNEQUIP_GEAR& from);
+  S_UNEQUIP_GEAR(S_UNEQUIP_GEAR&& from) noexcept
+    : S_UNEQUIP_GEAR() {
     *this = ::std::move(from);
   }
 
-  inline S_UNEQUIP_EQUIPMENT& operator=(const S_UNEQUIP_EQUIPMENT& from) {
+  inline S_UNEQUIP_GEAR& operator=(const S_UNEQUIP_GEAR& from) {
     CopyFrom(from);
     return *this;
   }
-  inline S_UNEQUIP_EQUIPMENT& operator=(S_UNEQUIP_EQUIPMENT&& from) noexcept {
+  inline S_UNEQUIP_GEAR& operator=(S_UNEQUIP_GEAR&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -4216,20 +4216,20 @@ class S_UNEQUIP_EQUIPMENT final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const S_UNEQUIP_EQUIPMENT& default_instance() {
+  static const S_UNEQUIP_GEAR& default_instance() {
     return *internal_default_instance();
   }
-  static inline const S_UNEQUIP_EQUIPMENT* internal_default_instance() {
-    return reinterpret_cast<const S_UNEQUIP_EQUIPMENT*>(
-               &_S_UNEQUIP_EQUIPMENT_default_instance_);
+  static inline const S_UNEQUIP_GEAR* internal_default_instance() {
+    return reinterpret_cast<const S_UNEQUIP_GEAR*>(
+               &_S_UNEQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     26;
 
-  friend void swap(S_UNEQUIP_EQUIPMENT& a, S_UNEQUIP_EQUIPMENT& b) {
+  friend void swap(S_UNEQUIP_GEAR& a, S_UNEQUIP_GEAR& b) {
     a.Swap(&b);
   }
-  inline void Swap(S_UNEQUIP_EQUIPMENT* other) {
+  inline void Swap(S_UNEQUIP_GEAR* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -4242,7 +4242,7 @@ class S_UNEQUIP_EQUIPMENT final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(S_UNEQUIP_EQUIPMENT* other) {
+  void UnsafeArenaSwap(S_UNEQUIP_GEAR* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -4250,14 +4250,14 @@ class S_UNEQUIP_EQUIPMENT final :
 
   // implements Message ----------------------------------------------
 
-  S_UNEQUIP_EQUIPMENT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<S_UNEQUIP_EQUIPMENT>(arena);
+  S_UNEQUIP_GEAR* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_UNEQUIP_GEAR>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const S_UNEQUIP_EQUIPMENT& from);
+  void CopyFrom(const S_UNEQUIP_GEAR& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const S_UNEQUIP_EQUIPMENT& from) {
-    S_UNEQUIP_EQUIPMENT::MergeImpl(*this, from);
+  void MergeFrom( const S_UNEQUIP_GEAR& from) {
+    S_UNEQUIP_GEAR::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -4275,15 +4275,15 @@ class S_UNEQUIP_EQUIPMENT final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(S_UNEQUIP_EQUIPMENT* other);
+  void InternalSwap(S_UNEQUIP_GEAR* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.S_UNEQUIP_EQUIPMENT";
+    return "Protocol.S_UNEQUIP_GEAR";
   }
   protected:
-  explicit S_UNEQUIP_EQUIPMENT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit S_UNEQUIP_GEAR(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -4336,7 +4336,7 @@ class S_UNEQUIP_EQUIPMENT final :
       ::Protocol::Stat* updated_stat);
   ::Protocol::Stat* unsafe_arena_release_updated_stat();
 
-  // @@protoc_insertion_point(class_scope:Protocol.S_UNEQUIP_EQUIPMENT)
+  // @@protoc_insertion_point(class_scope:Protocol.S_UNEQUIP_GEAR)
  private:
   class _Internal;
 
@@ -5910,25 +5910,25 @@ inline void S_SELL_ITEM::set_gold(int64_t value) {
 
 // -------------------------------------------------------------------
 
-// C_EQUIP_EQUIPMENT
+// C_EQUIP_GEAR
 
 // .Protocol.Slot slot = 1;
-inline bool C_EQUIP_EQUIPMENT::_internal_has_slot() const {
+inline bool C_EQUIP_GEAR::_internal_has_slot() const {
   return this != internal_default_instance() && _impl_.slot_ != nullptr;
 }
-inline bool C_EQUIP_EQUIPMENT::has_slot() const {
+inline bool C_EQUIP_GEAR::has_slot() const {
   return _internal_has_slot();
 }
-inline const ::Protocol::Slot& C_EQUIP_EQUIPMENT::_internal_slot() const {
+inline const ::Protocol::Slot& C_EQUIP_GEAR::_internal_slot() const {
   const ::Protocol::Slot* p = _impl_.slot_;
   return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Slot&>(
       ::Protocol::_Slot_default_instance_);
 }
-inline const ::Protocol::Slot& C_EQUIP_EQUIPMENT::slot() const {
-  // @@protoc_insertion_point(field_get:Protocol.C_EQUIP_EQUIPMENT.slot)
+inline const ::Protocol::Slot& C_EQUIP_GEAR::slot() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_EQUIP_GEAR.slot)
   return _internal_slot();
 }
-inline void C_EQUIP_EQUIPMENT::unsafe_arena_set_allocated_slot(
+inline void C_EQUIP_GEAR::unsafe_arena_set_allocated_slot(
     ::Protocol::Slot* slot) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.slot_);
@@ -5939,9 +5939,9 @@ inline void C_EQUIP_EQUIPMENT::unsafe_arena_set_allocated_slot(
   } else {
     
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.C_EQUIP_EQUIPMENT.slot)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.C_EQUIP_GEAR.slot)
 }
-inline ::Protocol::Slot* C_EQUIP_EQUIPMENT::release_slot() {
+inline ::Protocol::Slot* C_EQUIP_GEAR::release_slot() {
   
   ::Protocol::Slot* temp = _impl_.slot_;
   _impl_.slot_ = nullptr;
@@ -5956,14 +5956,14 @@ inline ::Protocol::Slot* C_EQUIP_EQUIPMENT::release_slot() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::Slot* C_EQUIP_EQUIPMENT::unsafe_arena_release_slot() {
-  // @@protoc_insertion_point(field_release:Protocol.C_EQUIP_EQUIPMENT.slot)
+inline ::Protocol::Slot* C_EQUIP_GEAR::unsafe_arena_release_slot() {
+  // @@protoc_insertion_point(field_release:Protocol.C_EQUIP_GEAR.slot)
   
   ::Protocol::Slot* temp = _impl_.slot_;
   _impl_.slot_ = nullptr;
   return temp;
 }
-inline ::Protocol::Slot* C_EQUIP_EQUIPMENT::_internal_mutable_slot() {
+inline ::Protocol::Slot* C_EQUIP_GEAR::_internal_mutable_slot() {
   
   if (_impl_.slot_ == nullptr) {
     auto* p = CreateMaybeMessage<::Protocol::Slot>(GetArenaForAllocation());
@@ -5971,12 +5971,12 @@ inline ::Protocol::Slot* C_EQUIP_EQUIPMENT::_internal_mutable_slot() {
   }
   return _impl_.slot_;
 }
-inline ::Protocol::Slot* C_EQUIP_EQUIPMENT::mutable_slot() {
+inline ::Protocol::Slot* C_EQUIP_GEAR::mutable_slot() {
   ::Protocol::Slot* _msg = _internal_mutable_slot();
-  // @@protoc_insertion_point(field_mutable:Protocol.C_EQUIP_EQUIPMENT.slot)
+  // @@protoc_insertion_point(field_mutable:Protocol.C_EQUIP_GEAR.slot)
   return _msg;
 }
-inline void C_EQUIP_EQUIPMENT::set_allocated_slot(::Protocol::Slot* slot) {
+inline void C_EQUIP_GEAR::set_allocated_slot(::Protocol::Slot* slot) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.slot_);
@@ -5994,67 +5994,67 @@ inline void C_EQUIP_EQUIPMENT::set_allocated_slot(::Protocol::Slot* slot) {
     
   }
   _impl_.slot_ = slot;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.C_EQUIP_EQUIPMENT.slot)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.C_EQUIP_GEAR.slot)
 }
 
 // -------------------------------------------------------------------
 
-// S_EQUIP_EQUIPMENT
+// S_EQUIP_GEAR
 
 // repeated .Protocol.Slot updated_slots = 1;
-inline int S_EQUIP_EQUIPMENT::_internal_updated_slots_size() const {
+inline int S_EQUIP_GEAR::_internal_updated_slots_size() const {
   return _impl_.updated_slots_.size();
 }
-inline int S_EQUIP_EQUIPMENT::updated_slots_size() const {
+inline int S_EQUIP_GEAR::updated_slots_size() const {
   return _internal_updated_slots_size();
 }
-inline ::Protocol::Slot* S_EQUIP_EQUIPMENT::mutable_updated_slots(int index) {
-  // @@protoc_insertion_point(field_mutable:Protocol.S_EQUIP_EQUIPMENT.updated_slots)
+inline ::Protocol::Slot* S_EQUIP_GEAR::mutable_updated_slots(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.S_EQUIP_GEAR.updated_slots)
   return _impl_.updated_slots_.Mutable(index);
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >*
-S_EQUIP_EQUIPMENT::mutable_updated_slots() {
-  // @@protoc_insertion_point(field_mutable_list:Protocol.S_EQUIP_EQUIPMENT.updated_slots)
+S_EQUIP_GEAR::mutable_updated_slots() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_EQUIP_GEAR.updated_slots)
   return &_impl_.updated_slots_;
 }
-inline const ::Protocol::Slot& S_EQUIP_EQUIPMENT::_internal_updated_slots(int index) const {
+inline const ::Protocol::Slot& S_EQUIP_GEAR::_internal_updated_slots(int index) const {
   return _impl_.updated_slots_.Get(index);
 }
-inline const ::Protocol::Slot& S_EQUIP_EQUIPMENT::updated_slots(int index) const {
-  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_EQUIPMENT.updated_slots)
+inline const ::Protocol::Slot& S_EQUIP_GEAR::updated_slots(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_GEAR.updated_slots)
   return _internal_updated_slots(index);
 }
-inline ::Protocol::Slot* S_EQUIP_EQUIPMENT::_internal_add_updated_slots() {
+inline ::Protocol::Slot* S_EQUIP_GEAR::_internal_add_updated_slots() {
   return _impl_.updated_slots_.Add();
 }
-inline ::Protocol::Slot* S_EQUIP_EQUIPMENT::add_updated_slots() {
+inline ::Protocol::Slot* S_EQUIP_GEAR::add_updated_slots() {
   ::Protocol::Slot* _add = _internal_add_updated_slots();
-  // @@protoc_insertion_point(field_add:Protocol.S_EQUIP_EQUIPMENT.updated_slots)
+  // @@protoc_insertion_point(field_add:Protocol.S_EQUIP_GEAR.updated_slots)
   return _add;
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
-S_EQUIP_EQUIPMENT::updated_slots() const {
-  // @@protoc_insertion_point(field_list:Protocol.S_EQUIP_EQUIPMENT.updated_slots)
+S_EQUIP_GEAR::updated_slots() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_EQUIP_GEAR.updated_slots)
   return _impl_.updated_slots_;
 }
 
 // .Protocol.Stat updated_stat = 2;
-inline bool S_EQUIP_EQUIPMENT::_internal_has_updated_stat() const {
+inline bool S_EQUIP_GEAR::_internal_has_updated_stat() const {
   return this != internal_default_instance() && _impl_.updated_stat_ != nullptr;
 }
-inline bool S_EQUIP_EQUIPMENT::has_updated_stat() const {
+inline bool S_EQUIP_GEAR::has_updated_stat() const {
   return _internal_has_updated_stat();
 }
-inline const ::Protocol::Stat& S_EQUIP_EQUIPMENT::_internal_updated_stat() const {
+inline const ::Protocol::Stat& S_EQUIP_GEAR::_internal_updated_stat() const {
   const ::Protocol::Stat* p = _impl_.updated_stat_;
   return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Stat&>(
       ::Protocol::_Stat_default_instance_);
 }
-inline const ::Protocol::Stat& S_EQUIP_EQUIPMENT::updated_stat() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
+inline const ::Protocol::Stat& S_EQUIP_GEAR::updated_stat() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_GEAR.updated_stat)
   return _internal_updated_stat();
 }
-inline void S_EQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
+inline void S_EQUIP_GEAR::unsafe_arena_set_allocated_updated_stat(
     ::Protocol::Stat* updated_stat) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
@@ -6065,9 +6065,9 @@ inline void S_EQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
   } else {
     
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_EQUIP_GEAR.updated_stat)
 }
-inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::release_updated_stat() {
+inline ::Protocol::Stat* S_EQUIP_GEAR::release_updated_stat() {
   
   ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
@@ -6082,14 +6082,14 @@ inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::release_updated_stat() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::unsafe_arena_release_updated_stat() {
-  // @@protoc_insertion_point(field_release:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
+inline ::Protocol::Stat* S_EQUIP_GEAR::unsafe_arena_release_updated_stat() {
+  // @@protoc_insertion_point(field_release:Protocol.S_EQUIP_GEAR.updated_stat)
   
   ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
   return temp;
 }
-inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
+inline ::Protocol::Stat* S_EQUIP_GEAR::_internal_mutable_updated_stat() {
   
   if (_impl_.updated_stat_ == nullptr) {
     auto* p = CreateMaybeMessage<::Protocol::Stat>(GetArenaForAllocation());
@@ -6097,12 +6097,12 @@ inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
   }
   return _impl_.updated_stat_;
 }
-inline ::Protocol::Stat* S_EQUIP_EQUIPMENT::mutable_updated_stat() {
+inline ::Protocol::Stat* S_EQUIP_GEAR::mutable_updated_stat() {
   ::Protocol::Stat* _msg = _internal_mutable_updated_stat();
-  // @@protoc_insertion_point(field_mutable:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
+  // @@protoc_insertion_point(field_mutable:Protocol.S_EQUIP_GEAR.updated_stat)
   return _msg;
 }
-inline void S_EQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
+inline void S_EQUIP_GEAR::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
@@ -6120,30 +6120,30 @@ inline void S_EQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::Stat* upda
     
   }
   _impl_.updated_stat_ = updated_stat;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_EQUIP_EQUIPMENT.updated_stat)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_EQUIP_GEAR.updated_stat)
 }
 
 // -------------------------------------------------------------------
 
-// C_UNEQUIP_EQUIPMENT
+// C_UNEQUIP_GEAR
 
 // .Protocol.Slot slot = 1;
-inline bool C_UNEQUIP_EQUIPMENT::_internal_has_slot() const {
+inline bool C_UNEQUIP_GEAR::_internal_has_slot() const {
   return this != internal_default_instance() && _impl_.slot_ != nullptr;
 }
-inline bool C_UNEQUIP_EQUIPMENT::has_slot() const {
+inline bool C_UNEQUIP_GEAR::has_slot() const {
   return _internal_has_slot();
 }
-inline const ::Protocol::Slot& C_UNEQUIP_EQUIPMENT::_internal_slot() const {
+inline const ::Protocol::Slot& C_UNEQUIP_GEAR::_internal_slot() const {
   const ::Protocol::Slot* p = _impl_.slot_;
   return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Slot&>(
       ::Protocol::_Slot_default_instance_);
 }
-inline const ::Protocol::Slot& C_UNEQUIP_EQUIPMENT::slot() const {
-  // @@protoc_insertion_point(field_get:Protocol.C_UNEQUIP_EQUIPMENT.slot)
+inline const ::Protocol::Slot& C_UNEQUIP_GEAR::slot() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_UNEQUIP_GEAR.slot)
   return _internal_slot();
 }
-inline void C_UNEQUIP_EQUIPMENT::unsafe_arena_set_allocated_slot(
+inline void C_UNEQUIP_GEAR::unsafe_arena_set_allocated_slot(
     ::Protocol::Slot* slot) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.slot_);
@@ -6154,9 +6154,9 @@ inline void C_UNEQUIP_EQUIPMENT::unsafe_arena_set_allocated_slot(
   } else {
     
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.C_UNEQUIP_EQUIPMENT.slot)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.C_UNEQUIP_GEAR.slot)
 }
-inline ::Protocol::Slot* C_UNEQUIP_EQUIPMENT::release_slot() {
+inline ::Protocol::Slot* C_UNEQUIP_GEAR::release_slot() {
   
   ::Protocol::Slot* temp = _impl_.slot_;
   _impl_.slot_ = nullptr;
@@ -6171,14 +6171,14 @@ inline ::Protocol::Slot* C_UNEQUIP_EQUIPMENT::release_slot() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::Slot* C_UNEQUIP_EQUIPMENT::unsafe_arena_release_slot() {
-  // @@protoc_insertion_point(field_release:Protocol.C_UNEQUIP_EQUIPMENT.slot)
+inline ::Protocol::Slot* C_UNEQUIP_GEAR::unsafe_arena_release_slot() {
+  // @@protoc_insertion_point(field_release:Protocol.C_UNEQUIP_GEAR.slot)
   
   ::Protocol::Slot* temp = _impl_.slot_;
   _impl_.slot_ = nullptr;
   return temp;
 }
-inline ::Protocol::Slot* C_UNEQUIP_EQUIPMENT::_internal_mutable_slot() {
+inline ::Protocol::Slot* C_UNEQUIP_GEAR::_internal_mutable_slot() {
   
   if (_impl_.slot_ == nullptr) {
     auto* p = CreateMaybeMessage<::Protocol::Slot>(GetArenaForAllocation());
@@ -6186,12 +6186,12 @@ inline ::Protocol::Slot* C_UNEQUIP_EQUIPMENT::_internal_mutable_slot() {
   }
   return _impl_.slot_;
 }
-inline ::Protocol::Slot* C_UNEQUIP_EQUIPMENT::mutable_slot() {
+inline ::Protocol::Slot* C_UNEQUIP_GEAR::mutable_slot() {
   ::Protocol::Slot* _msg = _internal_mutable_slot();
-  // @@protoc_insertion_point(field_mutable:Protocol.C_UNEQUIP_EQUIPMENT.slot)
+  // @@protoc_insertion_point(field_mutable:Protocol.C_UNEQUIP_GEAR.slot)
   return _msg;
 }
-inline void C_UNEQUIP_EQUIPMENT::set_allocated_slot(::Protocol::Slot* slot) {
+inline void C_UNEQUIP_GEAR::set_allocated_slot(::Protocol::Slot* slot) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.slot_);
@@ -6209,67 +6209,67 @@ inline void C_UNEQUIP_EQUIPMENT::set_allocated_slot(::Protocol::Slot* slot) {
     
   }
   _impl_.slot_ = slot;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.C_UNEQUIP_EQUIPMENT.slot)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.C_UNEQUIP_GEAR.slot)
 }
 
 // -------------------------------------------------------------------
 
-// S_UNEQUIP_EQUIPMENT
+// S_UNEQUIP_GEAR
 
 // repeated .Protocol.Slot updated_slots = 1;
-inline int S_UNEQUIP_EQUIPMENT::_internal_updated_slots_size() const {
+inline int S_UNEQUIP_GEAR::_internal_updated_slots_size() const {
   return _impl_.updated_slots_.size();
 }
-inline int S_UNEQUIP_EQUIPMENT::updated_slots_size() const {
+inline int S_UNEQUIP_GEAR::updated_slots_size() const {
   return _internal_updated_slots_size();
 }
-inline ::Protocol::Slot* S_UNEQUIP_EQUIPMENT::mutable_updated_slots(int index) {
-  // @@protoc_insertion_point(field_mutable:Protocol.S_UNEQUIP_EQUIPMENT.updated_slots)
+inline ::Protocol::Slot* S_UNEQUIP_GEAR::mutable_updated_slots(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.S_UNEQUIP_GEAR.updated_slots)
   return _impl_.updated_slots_.Mutable(index);
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >*
-S_UNEQUIP_EQUIPMENT::mutable_updated_slots() {
-  // @@protoc_insertion_point(field_mutable_list:Protocol.S_UNEQUIP_EQUIPMENT.updated_slots)
+S_UNEQUIP_GEAR::mutable_updated_slots() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_UNEQUIP_GEAR.updated_slots)
   return &_impl_.updated_slots_;
 }
-inline const ::Protocol::Slot& S_UNEQUIP_EQUIPMENT::_internal_updated_slots(int index) const {
+inline const ::Protocol::Slot& S_UNEQUIP_GEAR::_internal_updated_slots(int index) const {
   return _impl_.updated_slots_.Get(index);
 }
-inline const ::Protocol::Slot& S_UNEQUIP_EQUIPMENT::updated_slots(int index) const {
-  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_EQUIPMENT.updated_slots)
+inline const ::Protocol::Slot& S_UNEQUIP_GEAR::updated_slots(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_GEAR.updated_slots)
   return _internal_updated_slots(index);
 }
-inline ::Protocol::Slot* S_UNEQUIP_EQUIPMENT::_internal_add_updated_slots() {
+inline ::Protocol::Slot* S_UNEQUIP_GEAR::_internal_add_updated_slots() {
   return _impl_.updated_slots_.Add();
 }
-inline ::Protocol::Slot* S_UNEQUIP_EQUIPMENT::add_updated_slots() {
+inline ::Protocol::Slot* S_UNEQUIP_GEAR::add_updated_slots() {
   ::Protocol::Slot* _add = _internal_add_updated_slots();
-  // @@protoc_insertion_point(field_add:Protocol.S_UNEQUIP_EQUIPMENT.updated_slots)
+  // @@protoc_insertion_point(field_add:Protocol.S_UNEQUIP_GEAR.updated_slots)
   return _add;
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
-S_UNEQUIP_EQUIPMENT::updated_slots() const {
-  // @@protoc_insertion_point(field_list:Protocol.S_UNEQUIP_EQUIPMENT.updated_slots)
+S_UNEQUIP_GEAR::updated_slots() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_UNEQUIP_GEAR.updated_slots)
   return _impl_.updated_slots_;
 }
 
 // .Protocol.Stat updated_stat = 2;
-inline bool S_UNEQUIP_EQUIPMENT::_internal_has_updated_stat() const {
+inline bool S_UNEQUIP_GEAR::_internal_has_updated_stat() const {
   return this != internal_default_instance() && _impl_.updated_stat_ != nullptr;
 }
-inline bool S_UNEQUIP_EQUIPMENT::has_updated_stat() const {
+inline bool S_UNEQUIP_GEAR::has_updated_stat() const {
   return _internal_has_updated_stat();
 }
-inline const ::Protocol::Stat& S_UNEQUIP_EQUIPMENT::_internal_updated_stat() const {
+inline const ::Protocol::Stat& S_UNEQUIP_GEAR::_internal_updated_stat() const {
   const ::Protocol::Stat* p = _impl_.updated_stat_;
   return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Stat&>(
       ::Protocol::_Stat_default_instance_);
 }
-inline const ::Protocol::Stat& S_UNEQUIP_EQUIPMENT::updated_stat() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
+inline const ::Protocol::Stat& S_UNEQUIP_GEAR::updated_stat() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_GEAR.updated_stat)
   return _internal_updated_stat();
 }
-inline void S_UNEQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
+inline void S_UNEQUIP_GEAR::unsafe_arena_set_allocated_updated_stat(
     ::Protocol::Stat* updated_stat) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
@@ -6280,9 +6280,9 @@ inline void S_UNEQUIP_EQUIPMENT::unsafe_arena_set_allocated_updated_stat(
   } else {
     
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_UNEQUIP_GEAR.updated_stat)
 }
-inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::release_updated_stat() {
+inline ::Protocol::Stat* S_UNEQUIP_GEAR::release_updated_stat() {
   
   ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
@@ -6297,14 +6297,14 @@ inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::release_updated_stat() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::unsafe_arena_release_updated_stat() {
-  // @@protoc_insertion_point(field_release:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
+inline ::Protocol::Stat* S_UNEQUIP_GEAR::unsafe_arena_release_updated_stat() {
+  // @@protoc_insertion_point(field_release:Protocol.S_UNEQUIP_GEAR.updated_stat)
   
   ::Protocol::Stat* temp = _impl_.updated_stat_;
   _impl_.updated_stat_ = nullptr;
   return temp;
 }
-inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
+inline ::Protocol::Stat* S_UNEQUIP_GEAR::_internal_mutable_updated_stat() {
   
   if (_impl_.updated_stat_ == nullptr) {
     auto* p = CreateMaybeMessage<::Protocol::Stat>(GetArenaForAllocation());
@@ -6312,12 +6312,12 @@ inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::_internal_mutable_updated_stat() {
   }
   return _impl_.updated_stat_;
 }
-inline ::Protocol::Stat* S_UNEQUIP_EQUIPMENT::mutable_updated_stat() {
+inline ::Protocol::Stat* S_UNEQUIP_GEAR::mutable_updated_stat() {
   ::Protocol::Stat* _msg = _internal_mutable_updated_stat();
-  // @@protoc_insertion_point(field_mutable:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
+  // @@protoc_insertion_point(field_mutable:Protocol.S_UNEQUIP_GEAR.updated_stat)
   return _msg;
 }
-inline void S_UNEQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
+inline void S_UNEQUIP_GEAR::set_allocated_updated_stat(::Protocol::Stat* updated_stat) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_stat_);
@@ -6335,7 +6335,7 @@ inline void S_UNEQUIP_EQUIPMENT::set_allocated_updated_stat(::Protocol::Stat* up
     
   }
   _impl_.updated_stat_ = updated_stat;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_UNEQUIP_EQUIPMENT.updated_stat)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_UNEQUIP_GEAR.updated_stat)
 }
 
 // -------------------------------------------------------------------

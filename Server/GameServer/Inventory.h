@@ -15,7 +15,7 @@ public:
     ~Inventory();
 
     void Init(Protocol::PlayerInfo* info);
-    void addItem(Protocol::Slot* updatedSlots, int32 templateId, int32 count=1);
+    void addItem(auto updatedSlots, int32 templateId, int32 count=1);
     void removeItem(Protocol::Slot* targetSlot, Protocol::Slot* updatedSlots, int32 count=1);
 
 private:

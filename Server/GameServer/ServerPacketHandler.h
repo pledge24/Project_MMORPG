@@ -35,10 +35,10 @@ enum : uint16
 	PKT_S_BUY_ITEM = 1020,
 	PKT_C_SELL_ITEM = 1021,
 	PKT_S_SELL_ITEM = 1022,
-	PKT_C_EQUIP_EQUIPMENT = 1023,
-	PKT_S_EQUIP_EQUIPMENT = 1024,
-	PKT_C_UNEQUIP_EQUIPMENT = 1025,
-	PKT_S_UNEQUIP_EQUIPMENT = 1026,
+	PKT_C_EQUIP_GEAR = 1023,
+	PKT_S_EQUIP_GEAR = 1024,
+	PKT_C_UNEQUIP_GEAR = 1025,
+	PKT_S_UNEQUIP_GEAR = 1026,
 	PKT_C_USE_ITEM = 1027,
 	PKT_S_USE_ITEM = 1028,
 };
@@ -56,8 +56,8 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt);
 bool Handle_C_ATTACK(PacketSessionRef& session, Protocol::C_ATTACK& pkt);
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt);
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt);
-bool Handle_C_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_EQUIP_EQUIPMENT& pkt);
-bool Handle_C_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_UNEQUIP_EQUIPMENT& pkt);
+bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt);
+bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt);
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt);
 
 class ServerPacketHandler
@@ -79,8 +79,8 @@ public:
 		GPacketHandler[PKT_C_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ATTACK>(Handle_C_ATTACK, session, buffer, len); };
 		GPacketHandler[PKT_C_BUY_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_BUY_ITEM>(Handle_C_BUY_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_C_SELL_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_SELL_ITEM>(Handle_C_SELL_ITEM, session, buffer, len); };
-		GPacketHandler[PKT_C_EQUIP_EQUIPMENT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_EQUIP_EQUIPMENT>(Handle_C_EQUIP_EQUIPMENT, session, buffer, len); };
-		GPacketHandler[PKT_C_UNEQUIP_EQUIPMENT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_UNEQUIP_EQUIPMENT>(Handle_C_UNEQUIP_EQUIPMENT, session, buffer, len); };
+		GPacketHandler[PKT_C_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_EQUIP_GEAR>(Handle_C_EQUIP_GEAR, session, buffer, len); };
+		GPacketHandler[PKT_C_UNEQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_UNEQUIP_GEAR>(Handle_C_UNEQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_USE_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_USE_ITEM>(Handle_C_USE_ITEM, session, buffer, len); };
 	}
 
@@ -104,8 +104,8 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_HIT& pkt) { return MakeSerializedPacket(pkt, PKT_S_HIT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_BUY_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_BUY_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_SELL_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_SELL_ITEM); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_EQUIP_EQUIPMENT& pkt) { return MakeSerializedPacket(pkt, PKT_S_EQUIP_EQUIPMENT); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_UNEQUIP_EQUIPMENT& pkt) { return MakeSerializedPacket(pkt, PKT_S_UNEQUIP_EQUIPMENT); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_EQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_EQUIP_GEAR); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_UNEQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_UNEQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_USE_ITEM); }
 
 private:

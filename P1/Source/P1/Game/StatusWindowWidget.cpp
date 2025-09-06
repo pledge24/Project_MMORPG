@@ -2,6 +2,7 @@
 
 #include "Game/StatusWindowWidget.h"
 #include "Components/TextBlock.h"
+#include "P1.h"
 
 void UStatusWindowWidget::UpdateSlot(const Protocol::Slot& _Slot)
 {
@@ -63,5 +64,13 @@ void UStatusWindowWidget::UpdateMagicalAttack(int32 Value)
 void UStatusWindowWidget::SendUnequipPacket(USlotWidget* _Slot)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d")));
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
+    
+    if (_Slot)
+    {
+        const Protocol::Slot& SlotData = _Slot->SlotData;
+
+        Protocol::C_UNEQUIP_GEAR pkt;
+        pkt.mutable_slot()->CopyFrom(SlotData);
+        SEND_PACKET(pkt);
+    }
 }

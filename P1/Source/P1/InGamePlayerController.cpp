@@ -16,11 +16,6 @@ enum WidgetType
     WIDGET_SHOP = 3,
 };
 
-AInGamePlayerController::AInGamePlayerController()
-{
-    HUDWidget = nullptr;
-}
-
 void AInGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -77,6 +72,7 @@ void AInGamePlayerController::BeginPlay()
 void AInGamePlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
+
     InputComponent->BindAction("ToggleStatusWindow", IE_Pressed, this, &AInGamePlayerController::OnToggleStatusWindowWidget);
     InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AInGamePlayerController::OnToggleInventoryWidget);
 }
@@ -101,7 +97,6 @@ void AInGamePlayerController::OnUpdateGold(int32 Gold)
 {
     InventoryWidget->UpdateGold(Gold);
 }
-
 
 void AInGamePlayerController::OnToggleStatusWindowWidget()
 {
@@ -140,5 +135,6 @@ void AInGamePlayerController::ToggleWidget(UUserWidget* Widget, int32 FlagIdx)
         bShowMouseCursor = false;
         SetInputMode(FInputModeGameOnly());
     }
+
 }
 

@@ -42,7 +42,7 @@ void Inventory::Init(Protocol::PlayerInfo* info)
     }
 }
 
-void Inventory::addItem(Protocol::Slot* updatedSlots, int32 templateId, int32 count)
+void Inventory::addItem(auto updatedSlots, int32 templateId, int32 count)
 {
     Protocol::Item item;
 

@@ -137,23 +137,23 @@ message S_SELL_ITEM
     int64 gold = 2;
 }
 
-message C_EQUIP_EQUIPMENT
+message C_EQUIP_GEAR
 {
     Slot slot = 1;
 }
 
-message S_EQUIP_EQUIPMENT
+message S_EQUIP_GEAR
 {
     repeated Slot updated_slots = 1;
     Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
 }
 
-message C_UNEQUIP_EQUIPMENT
+message C_UNEQUIP_GEAR
 {
     Slot slot = 1;
 }
 
-message S_UNEQUIP_EQUIPMENT
+message S_UNEQUIP_GEAR
 {
     repeated Slot updated_slots = 1;
     Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ

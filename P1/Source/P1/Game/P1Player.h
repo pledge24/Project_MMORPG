@@ -27,13 +27,13 @@ public:
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
 
     /** 상태 관련 */
-	Protocol::MoveState GetMoveState() { return PlayerInfo->state(); }
+	Protocol::MoveState GetMoveState() { return SrcInfo->state(); }
 	void SetMoveState(Protocol::MoveState State);
 
     /** 이동 관련 */
 	void SetPosInfo(const Protocol::PosInfo& Info);
 	void SetDestInfo(const Protocol::PosInfo& Info);
-	Protocol::PosInfo* GetPlayerInfo() { return PlayerInfo; }
+	Protocol::PosInfo* GetPlayerInfo() { return SrcInfo; }
 
     /** 장착 관련*/
     void UpdateEquippedGear(const Protocol::Slot& _Slot);
@@ -41,6 +41,6 @@ public:
     void OnChangeMesh(int32 SlotId, int32 TemplateId);
 
 protected:
-    class Protocol::PosInfo* PlayerInfo; // 현재 위치
+    class Protocol::PosInfo* SrcInfo; // 현재 위치
 	class Protocol::PosInfo* DestInfo; // 목적지
 };

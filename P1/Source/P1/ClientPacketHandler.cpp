@@ -163,13 +163,13 @@ bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
     return true;
 }
 
-bool Handle_S_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::S_EQUIP_EQUIPMENT& pkt)
+bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
 
     return true;
 }
 
-bool Handle_S_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::S_UNEQUIP_EQUIPMENT& pkt)
+bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
 
     return true;

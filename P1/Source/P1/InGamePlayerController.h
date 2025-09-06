@@ -21,7 +21,8 @@ class P1_API AInGamePlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-    AInGamePlayerController();
+    AInGamePlayerController() = default;
+    ~AInGamePlayerController() = default;
 
 protected:
     virtual void BeginPlay() override;
@@ -34,6 +35,7 @@ public:
     void OnUpdateGold(int32 Gold);
 
 private:
+    /** 위젯 토글 관련*/
     void OnToggleStatusWindowWidget();
     void OnToggleInventoryWidget();
     void ToggleWidget(UUserWidget* Widget, int32 FlagIdx);
@@ -43,14 +45,14 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UHUDWidget> HUDWidgetClass;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+    UPROPERTY()
     UHUDWidget* HUDWidget;
 
     /** Control Help UI */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
     TSubclassOf<UUserWidget> HelpWidgetClass;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
+    UPROPERTY()
     UUserWidget* HelpWidget;
 
     /** 상태창 UI*/

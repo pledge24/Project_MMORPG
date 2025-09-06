@@ -28,24 +28,18 @@ public:
 
     /** 슬롯 UI를 초기화/갱신하는 함수 */
     UFUNCTION(BlueprintCallable, Category = "Slot")
-    void InitSlot(const FItemData& Item, int32 Count = 1);
-
+    void SetSlot(const FItemData& Item, int32 Count = 1);
     void SetSlot(const Protocol::Slot& _Slot);
-    void SetSlotId(int32 Id) { SlotId = Id; }
+
     void ClearSlot();
-
-    /** 툴팁으로 사용할 위젯 클래스 */
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
-    TSubclassOf<UItemTooltipWidget> TooltipClass;
-
-    UItemTooltipWidget* TooltipWidget;
+    void InsertData(const Protocol::Slot& _Slot);
 
     // 데이터 테이블 애셋 포인터
     UPROPERTY(EditAnywhere, Category = "DataTable")
     UDataTable* ItemTable;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
-    FItemData ItemData;
+    FItemData ItemData; // templateId가 바뀌면 변경됨
 
     Protocol::Slot SlotData;
 
@@ -54,16 +48,15 @@ protected:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     UWidget* GetToolTipWidget() const;
 
+    /** 툴팁으로 사용할 위젯 클래스 */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
+    TSubclassOf<UItemTooltipWidget> TooltipClass;
+
+    UItemTooltipWidget* TooltipWidget;
+
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UImage* ItemIcon;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ItemCountText;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
-    int32 SlotId;
-
-private:
-    void InsertData(const Protocol::Slot& _Slot);
-
 };

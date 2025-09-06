@@ -38,15 +38,15 @@ AP1Player::AP1Player()
 	GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	//====================================================================
 
-	PlayerInfo = new Protocol::PosInfo();
+	SrcInfo = new Protocol::PosInfo();
 	DestInfo = new Protocol::PosInfo();
 }
 
 AP1Player::~AP1Player()
 {
-	delete PlayerInfo;
+	delete SrcInfo;
 	delete DestInfo;
-	PlayerInfo = nullptr;
+	SrcInfo = nullptr;
 	DestInfo = nullptr;
 }
 
@@ -72,10 +72,10 @@ void AP1Player::Tick(float DeltaSeconds)
 	// 틱마다 플레이어의 위치를 수집해서 PlayerInfo에 저장
 	{
 		FVector Location = GetActorLocation();
-		PlayerInfo->set_x(Location.X);
-		PlayerInfo->set_y(Location.Y);
-		PlayerInfo->set_z(Location.Z);
-		PlayerInfo->set_yaw(GetControlRotation().Yaw);
+		SrcInfo->set_x(Location.X);
+		SrcInfo->set_y(Location.Y);
+		SrcInfo->set_z(Location.Z);
+		SrcInfo->set_yaw(GetControlRotation().Yaw);
 	}
 
 	if (IsMyPlayer() == false)
@@ -95,7 +95,7 @@ void AP1Player::Tick(float DeltaSeconds)
 		SetActorLocation(NextLocation);*/
 
 		// TEST: 수신된 패킷에서 방향만 사용.
-		const Protocol::MoveState State = PlayerInfo->state();
+		const Protocol::MoveState State = SrcInfo->state();
 
 		if (State == Protocol::MOVE_STATE_RUN)
 		{
@@ -128,22 +128,22 @@ void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
 
 void AP1Player::SetMoveState(Protocol::MoveState State)
 {
-	if (PlayerInfo->state() == State)
+	if (SrcInfo->state() == State)
 		return;
 
-	PlayerInfo->set_state(State);
+	SrcInfo->set_state(State);
 
 	// TODO
 }
 
 void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
 {
-	if (PlayerInfo->object_id() != 0)
+	if (SrcInfo->object_id() != 0)
 	{
-		assert(PlayerInfo->object_id() == Info.object_id());
+		assert(SrcInfo->object_id() == Info.object_id());
 	}
 
-	PlayerInfo->CopyFrom(Info);
+	SrcInfo->CopyFrom(Info);
 
 	FVector Location(Info.x(), Info.y(), Info.z());
 	SetActorLocation(Location);
@@ -151,9 +151,9 @@ void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
 
 void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 {
-	if (PlayerInfo->object_id() != 0)
+	if (SrcInfo->object_id() != 0)
 	{
-		assert(PlayerInfo->object_id() == Info.object_id());
+		assert(SrcInfo->object_id() == Info.object_id());
 	}
 
 	// Dest에 최종 상태 복사

@@ -14,38 +14,35 @@ UInventory::~UInventory()
 {
 }
 
-void UInventory::Init(const Protocol::ObjectInfo& Info)
+void UInventory::Init(const Protocol::Inventory& Inventory_)
 {
-    const Protocol::Inventory& _Inventory = Info.player_info().inventory();
-
     if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
         // 장비 창
-        for (const Protocol::Slot& _Slot : _Inventory.gear())
+        for (const Protocol::Slot& Slot_ : Inventory_.gear())
         {
-            int32 _SlotId = _Slot.slot_id();
-            _Gear[_SlotId] = _Slot;
-            InGamePlayerController->OnUpdateInventorySlot(_Slot);
+            int32 SlotId = Slot_.slot_id();
+            _Gear[SlotId].CopyFrom(Slot_);
+            InGamePlayerController->OnUpdateInventorySlot(Slot_);
         }
 
         // 소비 창
-        for (const Protocol::Slot& _Slot : _Inventory.consumables())
+        for (const Protocol::Slot& Slot_ : Inventory_.consumables())
         {
-            int32 _SlotId = _Slot.slot_id();
-            _Consumables[_SlotId] = _Slot;
-            InGamePlayerController->OnUpdateInventorySlot(_Slot);
+            int32 SlotId = Slot_.slot_id();
+            _Consumables[SlotId].CopyFrom(Slot_);
+            InGamePlayerController->OnUpdateInventorySlot(Slot_);
         }
 
         // 기타 창
-        for (const Protocol::Slot& _Slot : _Inventory.miscellaneous())
+        for (const Protocol::Slot& Slot_ : Inventory_.miscellaneous())
         {
-            int32 _SlotId = _Slot.slot_id();
-            _Miscellaneous[_SlotId] = _Slot;
-            InGamePlayerController->OnUpdateInventorySlot(_Slot);
+            int32 SlotId = Slot_.slot_id();
+            _Miscellaneous[SlotId].CopyFrom(Slot_);
+            InGamePlayerController->OnUpdateInventorySlot(Slot_);
         }
-
-        InGamePlayerController->OnUpdateGold(Info.player_info().gold());
     }
+    
 }
 
 void UInventory::UpdateSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& Slots)
@@ -75,6 +72,4 @@ void UInventory::UpdateSlots(const google::protobuf::RepeatedPtrField<Protocol::
         }
     }
 }
-
-
 

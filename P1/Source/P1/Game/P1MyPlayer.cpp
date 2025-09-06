@@ -31,11 +31,19 @@ AP1MyPlayer::AP1MyPlayer()
     // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
-    playerInfo = new Protocol::PlayerInfo();
-    statInfo = playerInfo->mutable_stat_info();
+    PlayerInfo_ = new Protocol::PlayerInfo();
+    StatInfo_ = PlayerInfo_->mutable_stat_info();
 
-    InventoryComp = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
-    EquippedGearComp = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
+    CachedInventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+    CachedEquippedGear = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
+}
+
+AP1MyPlayer::~AP1MyPlayer()
+{
+    delete PlayerInfo_;
+    delete StatInfo_;
+    PlayerInfo_ = nullptr;
+    StatInfo_ = nullptr;
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -52,11 +60,11 @@ void AP1MyPlayer::BeginPlay()
 		}
 	}
 
-    if(!InventoryComp)
-        InventoryComp = NewObject<UInventory>(this, UInventory::StaticClass());
+    //if(!MyInventory)
+    //    MyInventory = NewObject<UInventory>(this, UInventory::StaticClass());
 
-    if (!EquippedGearComp)
-        EquippedGearComp = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
+    //if (!MyEquippedGear)
+    //    MyEquippedGear = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
 
     // GameInstance에서 보류 중인 데이터가 있는지 확인
     if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
@@ -124,7 +132,7 @@ void AP1MyPlayer::Tick(float DeltaTime)
 		// 현재 위치 정보
 		{
 			Protocol::PosInfo* Info = MovePkt.mutable_info();
-			Info->CopyFrom(*PlayerInfo);
+			Info->CopyFrom(*SrcInfo);
 			Info->set_yaw(DesiredYaw);
 			Info->set_state(GetMoveState());
 		}
@@ -133,17 +141,19 @@ void AP1MyPlayer::Tick(float DeltaTime)
 	}
 }
 
-void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo)
+void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
 {
-    Super::Init(ObjectInfo);
+    Super::Init(ObjectInfo_);
 
-    InventoryComp->Init(ObjectInfo);
+    PlayerInfo_->CopyFrom(ObjectInfo_.player_info());
 
-    EquippedGearComp->Init(ObjectInfo);
+    CachedInventory->Init(PlayerInfo_->inventory());
+    CachedEquippedGear->Init(PlayerInfo_->equipped_gear());
 
     if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
-        InGamePlayerController->OnUpdatePlayerUI(ObjectInfo.player_info());
+        InGamePlayerController->OnUpdatePlayerUI(*PlayerInfo_);
+        InGamePlayerController->OnUpdateGold(PlayerInfo_->gold());
     }
 }
 

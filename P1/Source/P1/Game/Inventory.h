@@ -25,12 +25,12 @@ public:
     UInventory();
     ~UInventory();
 
-    void Init(const Protocol::ObjectInfo& Info);
+    void Init(const Protocol::Inventory& Inventory_);
 
     void UpdateSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& Slots);
 
 private:
-    /* 카테고리별 인벤토리(캐시용) */
+    /* 카테고리별 인벤토리 LookUp */
     TArray<Protocol::Slot> _Gear;
     TArray<Protocol::Slot> _Consumables;
     TArray<Protocol::Slot> _Miscellaneous;

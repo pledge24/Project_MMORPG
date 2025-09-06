@@ -12,20 +12,16 @@ UEquippedGear::~UEquippedGear()
 {
 }
 
-void UEquippedGear::Init(const Protocol::ObjectInfo& Info)
+void UEquippedGear::Init(const google::protobuf::RepeatedPtrField<Protocol::Slot>& EquippedGear_)
 {
-    auto& _EquippedGear = Info.player_info().equipped_gear();
-
     if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
         // 장비 창
-        for (const Protocol::Slot& _Slot : _EquippedGear)
+        for (const Protocol::Slot& Slot_ : EquippedGear_)
         {
-            int32 _SlotId = _Slot.slot_id();
-            _Gear[_SlotId] = _Slot;
-            InGamePlayerController->OnUpdateEquippedGearSlot(_Slot);
+            int32 SlotId = Slot_.slot_id();
+            _Gear[SlotId] = Slot_;
+            InGamePlayerController->OnUpdateEquippedGearSlot(Slot_);
         }
-
-        InGamePlayerController->OnUpdateGold(Info.player_info().gold());
     }
 }

@@ -5,6 +5,8 @@
 #include "Player.h"
 #include "Room.h"
 #include "ObjectUtils.h"
+#include "Inventory.h"
+#include "EquippedGear.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -177,26 +179,74 @@ bool Handle_C_ATTACK(PacketSessionRef& session, Protocol::C_ATTACK& pkt)
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    int64 gold = player->playerInfo->gold();
+    int32 template_id = pkt.template_id();
+    int64 buyPrice = Gamedata::ItemDataTable[template_id]["buyPrice"];
+
+    if (gold < buyPrice)
+        return false;
+
+    {
+        Protocol::S_BUY_ITEM pkt;
+        auto updatedSlot = pkt.mutable_updated_slots();
+
+        int64 totalGold = gold - buyPrice;
+        player->playerInfo->set_gold(totalGold);
+        player->inventory->addItem(updatedSlot, template_id);
+
+        pkt.set_gold(totalGold);
+
+        SEND_PACKET(pkt);
+    }
+  
+    return true;
 }
 
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    
+
+
+    return true;
 }
 
-bool Handle_C_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_EQUIP_EQUIPMENT& pkt)
+bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    return true;
 }
 
-bool Handle_C_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_UNEQUIP_EQUIPMENT& pkt)
+
+bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    return true;
 }
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
-    return false;
+    return true;
 }
 

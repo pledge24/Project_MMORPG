@@ -5,6 +5,7 @@
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
 #include "SlotWidget.h"
+#include "P1.h"
 
 void UInventoryWidget::NativeConstruct()
 {
@@ -84,11 +85,29 @@ USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot
 void UInventoryWidget::SendSellPacket(USlotWidget* _Slot)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnSell! template_id: %d"), _Slot->ItemData.TemplateId));
+    
+    if (_Slot)
+    {
+        const Protocol::Slot& SlotData = _Slot->SlotData;
+
+        Protocol::C_SELL_ITEM pkt;
+        pkt.mutable_slot()->CopyFrom(SlotData);
+        pkt.set_count(1);
+        SEND_PACKET(pkt);
+    }
 }
 
 void UInventoryWidget::SendEquipPacket(USlotWidget* _Slot)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
+    
+    if (_Slot)
+    {
+        const Protocol::Slot& SlotData = _Slot->SlotData;
+
+        Protocol::C_EQUIP_GEAR pkt;
+        pkt.mutable_slot()->CopyFrom(SlotData);
+        SEND_PACKET(pkt);
+
+    }
 }

@@ -17,6 +17,7 @@ class P1_API AP1MyPlayer : public AP1Player
 
 public:
 	AP1MyPlayer();
+    ~AP1MyPlayer() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -31,6 +32,7 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo) override;
+    int64 GetGold() { return PlayerInfo_->gold(); };
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -62,11 +64,14 @@ protected:
 	class UInputAction* LookAction;
 
 protected:
-    Protocol::PlayerInfo* playerInfo;
-    Protocol::StatInfo* statInfo;
+    Protocol::PlayerInfo* PlayerInfo_;
+    Protocol::StatInfo* StatInfo_;
 
-    class UInventory* InventoryComp;
-    class UEquippedGear* EquippedGearComp;
+    UPROPERTY()
+    TObjectPtr<class UInventory> CachedInventory;
+
+    UPROPERTY()
+    TObjectPtr<class UEquippedGear> CachedEquippedGear;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
@@ -76,6 +81,6 @@ protected:
 	FVector DesiredMoveDirection;
 	float DesiredYaw;
 
-	// Dirty Flag Test
+	// Dirty Flag
 	FVector2D LastDesiredInput;
 };

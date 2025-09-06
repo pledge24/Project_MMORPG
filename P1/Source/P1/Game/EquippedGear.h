@@ -24,10 +24,9 @@ public:
     UEquippedGear();
     ~UEquippedGear();
 
-    void Init(const Protocol::ObjectInfo& Info);
+    void Init(const google::protobuf::RepeatedPtrField<Protocol::Slot>& EquippedGear_);
 
 private:
     /* 장착 아이템(캐시용) */
     TArray<Protocol::Slot> _Gear;
-
 };
