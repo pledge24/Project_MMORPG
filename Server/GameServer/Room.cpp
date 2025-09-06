@@ -4,6 +4,7 @@
 #include "GameSession.h"
 #include "Monster.h"
 #include "ObjectUtils.h"
+#include "EquippedGear.h"
 
 // TEMP: Room 하나만 운영(나중엔 RoomManager 사용해서 관리)
 RoomRef GRoom = make_shared<Room>();
@@ -143,6 +144,42 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
 		Broadcast(sendBuffer);
 	}
+}
+
+void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
+{
+    const uint64 objectId = player->objectInfo->object_id();
+    if (_objects.find(objectId) == _objects.end())
+        return;
+
+    Protocol::S_EQUIP_GEAR rPkt;
+    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+    Protocol::Stat* updatedStat = rPkt.mutable_updated_stat();
+    if (player->equippedGear->EquipGear(updatedSlot, updatedStat, pkt.mutable_slot()) == false)
+        return;
+
+    rPkt.set_object_id(objectId);
+
+    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+    Broadcast(sendBuffer);
+}
+
+void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
+{
+    const uint64 objectId = player->objectInfo->object_id();
+    if (_objects.find(objectId) == _objects.end())
+        return;
+
+    Protocol::S_UNEQUIP_GEAR rPkt;
+    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+    Protocol::Stat* updatedStat = rPkt.mutable_updated_stat();
+    if (player->equippedGear->UnequipGear(updatedSlot, updatedStat, pkt.mutable_slot()) == false)
+        return;
+
+    rPkt.set_object_id(objectId);
+
+    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+    Broadcast(sendBuffer);
 }
 
 void Room::UpdateTick()

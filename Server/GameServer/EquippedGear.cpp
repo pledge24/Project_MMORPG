@@ -21,12 +21,16 @@ void EquippedGear::Init(Protocol::PlayerInfo* info)
     }
 }
 
-bool EquippedGear::EquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot)
+bool EquippedGear::EquipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot)
 {
-    return false;
+
+
+    return true;
 }
 
-bool EquippedGear::UnEquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot)
+bool EquippedGear::UnequipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot)
 {
-    return false;
+
+
+    return true;
 }

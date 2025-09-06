@@ -32,10 +32,11 @@
 #include "DBRequestFunctions.h"
 
 /*-------------------
-         JSON
+         Using
 ---------------------*/
 #include "nlohmann/json.hpp"
 using Json = nlohmann::json;
+using namespace google::protobuf;
 
 /*-------------------
        SharedPtr

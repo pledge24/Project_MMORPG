@@ -185,26 +185,26 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
     if (player == nullptr)
         return false;
 
+    Protocol::S_BUY_ITEM rPkt;
+    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+
+    // 1. 충분한 돈이 있는지 Validation
     int64 gold = player->playerInfo->gold();
-    int32 template_id = pkt.template_id();
-    int64 buyPrice = Gamedata::ItemDataTable[template_id]["buyPrice"];
+    int32 templateId = pkt.template_id();
+    int64 buyPrice = Gamedata::ItemDataTable[templateId]["buyPrice"];
 
     if (gold < buyPrice)
         return false;
 
-    {
-        Protocol::S_BUY_ITEM pkt;
-        auto updatedSlot = pkt.mutable_updated_slots();
+    // 2. 구매 후 금액 정산
+    int64 totalGold = gold - buyPrice;
+    player->playerInfo->set_gold(totalGold);
 
-        int64 totalGold = gold - buyPrice;
-        player->playerInfo->set_gold(totalGold);
-        player->inventory->addItem(updatedSlot, template_id);
+    // 3. 패킷 필드 세팅 및 전송
+    rPkt.set_gold(totalGold);
+    SEND_PACKET(rPkt);
 
-        pkt.set_gold(totalGold);
 
-        SEND_PACKET(pkt);
-    }
-  
     return true;
 }
 
@@ -216,8 +216,26 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    
+    Protocol::S_SELL_ITEM rPkt;
+    Protocol::Slot* targetSlot = pkt.mutable_slot();
+    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
 
+    // 1. "해당 슬롯"의 Validation(아이템 uid 확인, 수량 확인)
+    if (player->inventory->removeItem(updatedSlot, targetSlot) == false)
+        return false;
+
+    // 2. 판매 후 금액 정산
+    int64 gold = player->playerInfo->gold();
+    int32 templateId = targetSlot->item().template_id();
+    int64 sellPrice = Gamedata::ItemDataTable[templateId]["sellPrice"];
+    
+    int64 totalGold = gold + sellPrice;
+    player->playerInfo->set_gold(totalGold);
+
+    // 3. 패킷 필드 세팅 및 전송
+    rPkt.set_gold(totalGold);
+    SEND_PACKET(rPkt);
+    
 
     return true;
 }
@@ -230,6 +248,12 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
     if (player == nullptr)
         return false;
 
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        return false;
+
+    GRoom->DoAsync(&Room::HandleEquipGear, pkt, player);
+
     return true;
 }
 
@@ -241,6 +265,12 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
     PlayerRef player = gameSession->player.load();
     if (player == nullptr)
         return false;
+
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        return false;
+
+    GRoom->DoAsync(&Room::HandleUnequipGear, pkt, player);
 
     return true;
 }

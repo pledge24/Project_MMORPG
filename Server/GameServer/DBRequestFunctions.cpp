@@ -409,7 +409,7 @@ bool DBRequestFunctions::GetMaxItemUID()
     if (dbConn->Fetch() == false)
         return false;
 
-    GmaxItemUID = bindObject._maxItemUID; // itemUid저장
+    GNextItemUID = bindObject._maxItemUID + 1; // itemUid저장
 
     GDBConnectionPool->Push(dbConn);
 

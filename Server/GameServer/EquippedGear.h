@@ -13,8 +13,8 @@ public:
 
     void Init(Protocol::PlayerInfo* info);
 
-    bool EquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot);
-    bool UnEquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot);
+    bool EquipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot);
+    bool UnequipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot);
 
 
 private:
