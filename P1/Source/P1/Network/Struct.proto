@@ -97,11 +97,11 @@ message Item
 
 message Slot
 {
-    int32 slot_id = 1;
-    SlotType type = 2;
-    optional UpdateState state = 3;  // 슬롯 갱신 상태: 서버가 세팅하고 클라이언트만 사용
+    int32 slot_id = 1;              // 서버에선 딱 한 번만 세팅 1
+    SlotType type = 2;              // 서버에선 딱 한 번만 세팅 2
+    optional UpdateState state = 3; // 슬롯 갱신 상태: 서버가 세팅하고 클라이언트만 사용
     optional Item item = 4;
-    int32 count = 5;
+    optional int32 count = 5;
 }
 
 message Inventory

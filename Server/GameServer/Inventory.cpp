@@ -62,18 +62,19 @@ Inventory::~Inventory()
 bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemInstance, int32 count)
 {
     const Json& itemData = Gamedata::ItemDataTable[itemInstance.template_id()];
-    Protocol::ItemType itemType = Protocol::ItemType::ITEM_TYPE_NONE;
 
     if (itemTypeMappings.find(itemData["itemType"]) == itemTypeMappings.end())
         return false;
-    itemType = itemTypeMappings[itemData["itemType"]];
-    
-    int32 availableSlotId = findFirstAvailableSlotId(itemType, itemInstance.template_id());
 
-    // 들어갈 슬롯 찾았으니 이제 진짜 추가해야함
+    Protocol::ItemType itemType = itemTypeMappings[itemData["itemType"]];
     if (lookupMappings.find(itemType) == lookupMappings.end())
         return false;
 
+    int32 availableSlotId = findFirstAvailableSlotId(itemType, itemInstance.template_id());
+    if (availableSlotId == -1)
+        return false;
+
+    // 들어갈 슬롯 찾았으니 이제 진짜 추가해야함
     RepeatedPtrField<Protocol::Slot>* lookupTable = lookupMappings[itemType];
     Protocol::Slot* targetSlot = lookupTable->Mutable(availableSlotId);
     if (targetSlot == nullptr)
@@ -166,9 +167,9 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
     if (type == Protocol::ItemType::ITEM_TYPE_GEAR)
     {
         // leftmost 빈 슬롯 찾기.
-        auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot* slot)
+        auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot& slot)
             {
-                return slot->has_item() == false;
+                return slot.has_item() == false;
             });
 
         if(it != lookupTable->end())
@@ -180,9 +181,9 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
 
         // 같은 아이템이 있는지 확인
         {
-            auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot* slot)
+            auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot& slot)
                 {
-                    return slot->item().template_id() == templateId;
+                    return slot.item().template_id() == templateId;
                 });
 
             if (it != lookupTable->end())
@@ -195,9 +196,9 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
         if (!found)
         {
             // leftmost 빈 슬롯 찾기.
-            auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot* slot)
+            auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot& slot)
                 {
-                    return slot->has_item() == false;
+                    return slot.has_item() == false;
                 });
 
             if (it != lookupTable->end())

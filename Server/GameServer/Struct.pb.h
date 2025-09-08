@@ -2091,7 +2091,11 @@ class Slot final :
   void _internal_set_state(::Protocol::UpdateState value);
   public:
 
-  // int32 count = 5;
+  // optional int32 count = 5;
+  bool has_count() const;
+  private:
+  bool _internal_has_count() const;
+  public:
   void clear_count();
   int32_t count() const;
   void set_count(int32_t value);
@@ -3860,9 +3864,17 @@ inline void Slot::set_allocated_item(::Protocol::Item* item) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.Slot.item)
 }
 
-// int32 count = 5;
+// optional int32 count = 5;
+inline bool Slot::_internal_has_count() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool Slot::has_count() const {
+  return _internal_has_count();
+}
 inline void Slot::clear_count() {
   _impl_.count_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline int32_t Slot::_internal_count() const {
   return _impl_.count_;
@@ -3872,7 +3884,7 @@ inline int32_t Slot::count() const {
   return _internal_count();
 }
 inline void Slot::_internal_set_count(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.count_ = value;
 }
 inline void Slot::set_count(int32_t value) {

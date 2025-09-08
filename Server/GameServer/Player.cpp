@@ -20,12 +20,6 @@ Player::~Player()
 
 bool Player::Init()
 {
-    // inventory 채우기
-    inventory->Init(playerInfo);
-
-    // equippedGear 채우기
-    equippedGear->Init(playerInfo);
-
     // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
     bool success = CalculateFinalStat();
 
@@ -90,7 +84,7 @@ bool Player::CalculateFinalStat()
     return true;
 }
 
-bool Player::BuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count = 1)
+bool Player::BuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = playerInfo->gold();
     int64 buyPrice = Gamedata::ItemDataTable[templateId]["buyPrice"] * count;
@@ -107,7 +101,7 @@ bool Player::BuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int3
     return true;
 }
 
-bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count = 1)
+bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count)
 {
     int64 gold = playerInfo->gold();
     int32 templateId = targetSlot->item().template_id();

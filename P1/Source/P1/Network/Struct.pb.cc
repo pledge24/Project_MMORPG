@@ -341,7 +341,7 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   ~0u,
   1,
   0,
-  ~0u,
+  2,
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::Inventory, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -414,21 +414,21 @@ const char descriptor_table_protodef_Struct_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "x\n\004Item\022\023\n\013template_id\030\001 \001(\005\022\025\n\010item_uid"
   "\030\002 \001(\003H\001\210\001\001\022&\n\010gearInfo\030\003 \001(\0132\022.Protocol"
   ".GearInfoH\000B\017\n\rinstance_dataB\013\n\t_item_ui"
-  "d\"\251\001\n\004Slot\022\017\n\007slot_id\030\001 \001(\005\022 \n\004type\030\002 \001("
+  "d\"\270\001\n\004Slot\022\017\n\007slot_id\030\001 \001(\005\022 \n\004type\030\002 \001("
   "\0162\022.Protocol.SlotType\022)\n\005state\030\003 \001(\0162\025.P"
   "rotocol.UpdateStateH\000\210\001\001\022!\n\004item\030\004 \001(\0132\016"
-  ".Protocol.ItemH\001\210\001\001\022\r\n\005count\030\005 \001(\005B\010\n\006_s"
-  "tateB\007\n\005_item\"u\n\tInventory\022\034\n\004gear\030\001 \003(\013"
-  "2\016.Protocol.Slot\022#\n\013consumables\030\002 \003(\0132\016."
-  "Protocol.Slot\022%\n\rmiscellaneous\030\003 \003(\0132\016.P"
-  "rotocol.Slotb\006proto3"
+  ".Protocol.ItemH\001\210\001\001\022\022\n\005count\030\005 \001(\005H\002\210\001\001B"
+  "\010\n\006_stateB\007\n\005_itemB\010\n\006_count\"u\n\tInventor"
+  "y\022\034\n\004gear\030\001 \003(\0132\016.Protocol.Slot\022#\n\013consu"
+  "mables\030\002 \003(\0132\016.Protocol.Slot\022%\n\rmiscella"
+  "neous\030\003 \003(\0132\016.Protocol.Slotb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Struct_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Struct_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Struct_2eproto = {
-    false, false, 1620, descriptor_table_protodef_Struct_2eproto,
+    false, false, 1635, descriptor_table_protodef_Struct_2eproto,
     "Struct.proto",
     &descriptor_table_Struct_2eproto_once, descriptor_table_Struct_2eproto_deps, 1, 11,
     schemas, file_default_instances, TableStruct_Struct_2eproto::offsets,
@@ -3299,6 +3299,9 @@ class Slot::_Internal {
   static void set_has_item(HasBits* has_bits) {
     (*has_bits)[0] |= 1u;
   }
+  static void set_has_count(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
 };
 
 const ::Protocol::Item&
@@ -3380,8 +3383,11 @@ void Slot::Clear() {
   ::memset(&_impl_.slot_id_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.type_) -
       reinterpret_cast<char*>(&_impl_.slot_id_)) + sizeof(_impl_.type_));
-  _impl_.state_ = 0;
-  _impl_.count_ = 0;
+  if (cached_has_bits & 0x00000006u) {
+    ::memset(&_impl_.state_, 0, static_cast<size_t>(
+        reinterpret_cast<char*>(&_impl_.count_) -
+        reinterpret_cast<char*>(&_impl_.state_)) + sizeof(_impl_.count_));
+  }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -3427,9 +3433,10 @@ const char* Slot::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // int32 count = 5;
+      // optional int32 count = 5;
       case 5:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
+          _Internal::set_has_count(&has_bits);
           _impl_.count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else
@@ -3492,8 +3499,8 @@ uint8_t* Slot::_InternalSerialize(
         _Internal::item(this).GetCachedSize(), target, stream);
   }
 
-  // int32 count = 5;
-  if (this->_internal_count() != 0) {
+  // optional int32 count = 5;
+  if (_internal_has_count()) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(5, this->_internal_count(), target);
   }
@@ -3533,17 +3540,19 @@ size_t Slot::ByteSizeLong() const {
       ::_pbi::WireFormatLite::EnumSize(this->_internal_type());
   }
 
-  // optional .Protocol.UpdateState state = 3;
-  if (cached_has_bits & 0x00000002u) {
-    total_size += 1 +
-      ::_pbi::WireFormatLite::EnumSize(this->_internal_state());
-  }
+  if (cached_has_bits & 0x00000006u) {
+    // optional .Protocol.UpdateState state = 3;
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::_pbi::WireFormatLite::EnumSize(this->_internal_state());
+    }
 
-  // int32 count = 5;
-  if (this->_internal_count() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_count());
-  }
+    // optional int32 count = 5;
+    if (cached_has_bits & 0x00000004u) {
+      total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_count());
+    }
 
+  }
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -3572,11 +3581,15 @@ void Slot::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_
   if (from._internal_type() != 0) {
     _this->_internal_set_type(from._internal_type());
   }
-  if (from._internal_has_state()) {
-    _this->_internal_set_state(from._internal_state());
-  }
-  if (from._internal_count() != 0) {
-    _this->_internal_set_count(from._internal_count());
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000006u) {
+    if (cached_has_bits & 0x00000002u) {
+      _this->_impl_.state_ = from._impl_.state_;
+    }
+    if (cached_has_bits & 0x00000004u) {
+      _this->_impl_.count_ = from._impl_.count_;
+    }
+    _this->_impl_._has_bits_[0] |= cached_has_bits;
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }

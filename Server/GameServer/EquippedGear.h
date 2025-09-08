@@ -6,8 +6,6 @@ public:
     EquippedGear(PlayerRef player);
     ~EquippedGear();
 
-    void Init(Protocol::PlayerInfo* info);
-
     bool EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Slot* slot);
     bool UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Slot* slot);
 

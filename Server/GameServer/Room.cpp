@@ -166,7 +166,7 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
-        rPkt.clear_updated_stats();
+        rPkt.clear_updated_stat_info();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
         Broadcast(sendBuffer, objectId);
     }
@@ -192,7 +192,7 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
-        rPkt.clear_updated_stats();
+        rPkt.clear_updated_stat_info();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
         Broadcast(sendBuffer, objectId);
     }
