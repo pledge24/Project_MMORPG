@@ -87,3 +87,14 @@ enum UpdateState
     UPDATE_STATE_MODIFIED = 2;
     UPDATE_STATE_REMOVED = 3;
 }
+
+enum gearType
+{
+    GEAR_TYPE_NONE = 0;
+    GEAR_TYPE_HELMET = 1;
+    GEAR_TYPE_CHEST = 2;
+    GEAR_TYPE_LEGS = 3;
+    GEAR_TYPE_ARMS = 4;
+    GEAR_TYPE_BOOTS = 5;
+    GEAR_TYPE_WEAPON = 6;
+}

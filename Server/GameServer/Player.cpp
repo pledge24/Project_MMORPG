@@ -10,11 +10,8 @@ Player::Player()
     playerInfo = objectInfo->mutable_player_info();
     statInfo = playerInfo->mutable_stat_info();
 
-    inventory = make_shared<Inventory>();
-    equippedGear = make_shared<EquippedGear>();
-
-    inventory->player = static_pointer_cast<Player>(shared_from_this());
-    equippedGear->player = static_pointer_cast<Player>(shared_from_this());
+    inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
+    equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
 }
 
 Player::~Player()
@@ -89,6 +86,74 @@ bool Player::CalculateFinalStat()
     statInfo->set_max_mp(finalStat.maxMp);
     statInfo->set_physical_attack(finalStat.physical_attack);
     statInfo->set_magical_attack(finalStat.magical_attack);
+
+    return true;
+}
+
+bool Player::BuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count = 1)
+{
+    int64 gold = playerInfo->gold();
+    int64 buyPrice = Gamedata::ItemDataTable[templateId]["buyPrice"] * count;
+
+    if (gold < buyPrice)
+        return false;
+
+    if (inventory->addItem(OUT updatedSlot, templateId, count) == false)
+        return false;
+
+    totalGold = gold - buyPrice;
+    playerInfo->set_gold(totalGold);
+
+    return true;
+}
+
+bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count = 1)
+{
+    int64 gold = playerInfo->gold();
+    int32 templateId = targetSlot->item().template_id();
+    int64 sellPrice = Gamedata::ItemDataTable[templateId]["sellPrice"] * count;
+
+    if (inventory->removeItem(OUT updatedSlot, targetSlot, count) == false)
+        return false;
+
+    totalGold = gold + sellPrice;
+    playerInfo->set_gold(totalGold);
+
+    return true;
+}
+
+bool Player::EquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
+{
+    Protocol::Slot* updatedSlot = nullptr;
+    Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
+
+    updatedSlot = pkt.add_updated_slots();
+    if (equippedGear->EquipGear(OUT updatedSlot, OUT statInfo, targetSlot) == false)
+        return false;
+
+    updatedStatInfo->CopyFrom(*statInfo);
+
+    updatedSlot = pkt.add_updated_slots();
+    if (inventory->addItem(OUT updatedSlot, *(targetSlot->mutable_item())) == false)
+        return false;
+
+    return true;
+}
+
+bool Player::UnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
+{
+    Protocol::Slot* updatedSlot = nullptr;
+    Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
+
+    updatedSlot = pkt.add_updated_slots();
+    if (equippedGear->UnequipGear(OUT updatedSlot, OUT statInfo, targetSlot) == false)
+        return false;
+
+    updatedStatInfo->CopyFrom(*statInfo);
+
+    updatedSlot = pkt.add_updated_slots();
+    if (inventory->removeItem(OUT updatedSlot, targetSlot) == false)
+        return false;
 
     return true;
 }

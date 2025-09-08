@@ -1,36 +1,115 @@
 #include "pch.h"
 #include "EquippedGear.h"
+#include "Player.h"
 
-EquippedGear::EquippedGear()
+EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {
-    _gear.resize(MAX_EQUIPPABLE_SLOT_ID + 1);
-    _gearDirtyFlags.resize(MAX_EQUIPPABLE_SLOT_ID + 1);
+    int32 slotId = 0;
+    while (slotId < Protocol::gearType_MAX + 1)
+    {
+        Protocol::Slot* slotEquippedGear = player->playerInfo->add_equipped_gear();
+
+        slotEquippedGear->set_slot_id(slotId);
+        slotEquippedGear->set_type(Protocol::SlotType::SLOT_TYPE_EQUIPPED);
+        slotEquippedGear->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
+
+        slotId++;
+    }
+
+    equippedGearlookupTable = player->playerInfo->mutable_equipped_gear();
+    gearDirtyFlags.resize(Protocol::gearType_MAX + 1, false);
+
+    gearTypeMappings = {
+        {"helmet", Protocol::gearType::GEAR_TYPE_HELMET},
+        {"chest", Protocol::gearType::GEAR_TYPE_CHEST},
+        {"legs", Protocol::gearType::GEAR_TYPE_LEGS},
+        {"arms", Protocol::gearType::GEAR_TYPE_ARMS},
+        {"boots", Protocol::gearType::GEAR_TYPE_BOOTS},
+        {"sword", Protocol::gearType::GEAR_TYPE_WEAPON},
+        {"weapon", Protocol::gearType::GEAR_TYPE_WEAPON}
+    };
 }
 
 EquippedGear::~EquippedGear()
 {
 }
 
-void EquippedGear::Init(Protocol::PlayerInfo* info)
+bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Slot* slot)
 {
-    // 1. 장착 중인 장비 아이템
-    for (const auto& slot : info->equipped_gear())
-    {
-        int32 slotId = slot.slot_id();
-        _gear[slotId] = slot.item();
-    }
-}
+    if (slot->has_item() == false)
+        return false;
 
-bool EquippedGear::EquipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot)
-{
+    const Protocol::Item& item = slot->item();
+    int32 templateId = item.template_id();
+    const Json& ItemData = Gamedata::ItemDataTable[templateId];
 
+    // 장착 반영
+    if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
+        return false;
 
+    Protocol::gearType type = gearTypeMappings[ItemData["itemSubtype"]];
+    Protocol::Slot* targetSlot = equippedGearlookupTable->Mutable(type);
+
+    if (targetSlot->has_item() == true)
+        return false;
+
+    gearDirtyFlags[type] = true;
+
+    targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
+    targetSlot->mutable_item()->CopyFrom(item);
+    targetSlot->set_count(1);
+
+    reflectSlot->CopyFrom(*targetSlot);
+
+    // 스텟 반영
+    if (ItemData.count("hp") && ItemData["hp"] > 0)
+        statInfo->set_max_hp(statInfo->max_hp() + ItemData["hp"]);
+    if (ItemData.count("mp") && ItemData["mp"] > 0)
+        statInfo->set_max_mp(statInfo->max_mp() + ItemData["mp"]);
+    if (ItemData.count("physicalAttack") && ItemData["physicalAttack"] > 0)
+        statInfo->set_physical_attack(statInfo->physical_attack() + ItemData["physicalAttack"]);
+    if (ItemData.count("magicalAttack") && ItemData["magicalAttack"] > 0)
+        statInfo->set_magical_attack(statInfo->magical_attack() + ItemData["magicalAttack"]);
+  
     return true;
 }
 
-bool EquippedGear::UnequipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot)
+bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Slot* slot)
 {
+    if (slot->has_item() == false)
+        return false;
 
+    const Protocol::Item& item = slot->item();
+    int32 templateId = item.template_id();
+    const Json& ItemData = Gamedata::ItemDataTable[templateId];
+
+    // 장착 반영
+    if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
+        return false;
+
+    Protocol::gearType type = gearTypeMappings[ItemData["itemSubtype"]];
+    Protocol::Slot* targetSlot = equippedGearlookupTable->Mutable(type);
+
+    if (targetSlot->has_item() == false)
+        return false;
+
+    gearDirtyFlags[type] = true;
+
+    targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
+    targetSlot->clear_item();
+    targetSlot->clear_count();
+
+    reflectSlot->CopyFrom(*targetSlot);
+
+    // 스텟 반영
+    if (ItemData.count("hp") && ItemData["hp"] > 0)
+        statInfo->set_max_hp(statInfo->max_hp() - ItemData["hp"]);
+    if (ItemData.count("mp") && ItemData["mp"] > 0)
+        statInfo->set_max_mp(statInfo->max_mp() - ItemData["mp"]);
+    if (ItemData.count("physicalAttack") && ItemData["physicalAttack"] > 0)
+        statInfo->set_physical_attack(statInfo->physical_attack() - ItemData["physicalAttack"]);
+    if (ItemData.count("magicalAttack") && ItemData["magicalAttack"] > 0)
+        statInfo->set_magical_attack(statInfo->magical_attack() - ItemData["magicalAttack"]);
 
     return true;
 }

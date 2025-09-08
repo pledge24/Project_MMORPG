@@ -1104,7 +1104,11 @@ class StatInfo final :
     kPhysicalAttackFieldNumber = 5,
     kMagicalAttackFieldNumber = 6,
   };
-  // int32 max_hp = 1;
+  // optional int32 max_hp = 1;
+  bool has_max_hp() const;
+  private:
+  bool _internal_has_max_hp() const;
+  public:
   void clear_max_hp();
   int32_t max_hp() const;
   void set_max_hp(int32_t value);
@@ -1113,7 +1117,11 @@ class StatInfo final :
   void _internal_set_max_hp(int32_t value);
   public:
 
-  // int32 hp = 2;
+  // optional int32 hp = 2;
+  bool has_hp() const;
+  private:
+  bool _internal_has_hp() const;
+  public:
   void clear_hp();
   int32_t hp() const;
   void set_hp(int32_t value);
@@ -1122,7 +1130,11 @@ class StatInfo final :
   void _internal_set_hp(int32_t value);
   public:
 
-  // int32 max_mp = 3;
+  // optional int32 max_mp = 3;
+  bool has_max_mp() const;
+  private:
+  bool _internal_has_max_mp() const;
+  public:
   void clear_max_mp();
   int32_t max_mp() const;
   void set_max_mp(int32_t value);
@@ -1131,7 +1143,11 @@ class StatInfo final :
   void _internal_set_max_mp(int32_t value);
   public:
 
-  // int32 mp = 4;
+  // optional int32 mp = 4;
+  bool has_mp() const;
+  private:
+  bool _internal_has_mp() const;
+  public:
   void clear_mp();
   int32_t mp() const;
   void set_mp(int32_t value);
@@ -1140,7 +1156,11 @@ class StatInfo final :
   void _internal_set_mp(int32_t value);
   public:
 
-  // int32 physical_attack = 5;
+  // optional int32 physical_attack = 5;
+  bool has_physical_attack() const;
+  private:
+  bool _internal_has_physical_attack() const;
+  public:
   void clear_physical_attack();
   int32_t physical_attack() const;
   void set_physical_attack(int32_t value);
@@ -1149,7 +1169,11 @@ class StatInfo final :
   void _internal_set_physical_attack(int32_t value);
   public:
 
-  // int32 magical_attack = 6;
+  // optional int32 magical_attack = 6;
+  bool has_magical_attack() const;
+  private:
+  bool _internal_has_magical_attack() const;
+  public:
   void clear_magical_attack();
   int32_t magical_attack() const;
   void set_magical_attack(int32_t value);
@@ -1166,13 +1190,14 @@ class StatInfo final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int32_t max_hp_;
     int32_t hp_;
     int32_t max_mp_;
     int32_t mp_;
     int32_t physical_attack_;
     int32_t magical_attack_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Struct_2eproto;
@@ -3178,9 +3203,17 @@ inline void PosInfo::set_state(::Protocol::MoveState value) {
 
 // StatInfo
 
-// int32 max_hp = 1;
+// optional int32 max_hp = 1;
+inline bool StatInfo::_internal_has_max_hp() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool StatInfo::has_max_hp() const {
+  return _internal_has_max_hp();
+}
 inline void StatInfo::clear_max_hp() {
   _impl_.max_hp_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int32_t StatInfo::_internal_max_hp() const {
   return _impl_.max_hp_;
@@ -3190,7 +3223,7 @@ inline int32_t StatInfo::max_hp() const {
   return _internal_max_hp();
 }
 inline void StatInfo::_internal_set_max_hp(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.max_hp_ = value;
 }
 inline void StatInfo::set_max_hp(int32_t value) {
@@ -3198,9 +3231,17 @@ inline void StatInfo::set_max_hp(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.StatInfo.max_hp)
 }
 
-// int32 hp = 2;
+// optional int32 hp = 2;
+inline bool StatInfo::_internal_has_hp() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool StatInfo::has_hp() const {
+  return _internal_has_hp();
+}
 inline void StatInfo::clear_hp() {
   _impl_.hp_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline int32_t StatInfo::_internal_hp() const {
   return _impl_.hp_;
@@ -3210,7 +3251,7 @@ inline int32_t StatInfo::hp() const {
   return _internal_hp();
 }
 inline void StatInfo::_internal_set_hp(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.hp_ = value;
 }
 inline void StatInfo::set_hp(int32_t value) {
@@ -3218,9 +3259,17 @@ inline void StatInfo::set_hp(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.StatInfo.hp)
 }
 
-// int32 max_mp = 3;
+// optional int32 max_mp = 3;
+inline bool StatInfo::_internal_has_max_mp() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool StatInfo::has_max_mp() const {
+  return _internal_has_max_mp();
+}
 inline void StatInfo::clear_max_mp() {
   _impl_.max_mp_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline int32_t StatInfo::_internal_max_mp() const {
   return _impl_.max_mp_;
@@ -3230,7 +3279,7 @@ inline int32_t StatInfo::max_mp() const {
   return _internal_max_mp();
 }
 inline void StatInfo::_internal_set_max_mp(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.max_mp_ = value;
 }
 inline void StatInfo::set_max_mp(int32_t value) {
@@ -3238,9 +3287,17 @@ inline void StatInfo::set_max_mp(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.StatInfo.max_mp)
 }
 
-// int32 mp = 4;
+// optional int32 mp = 4;
+inline bool StatInfo::_internal_has_mp() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool StatInfo::has_mp() const {
+  return _internal_has_mp();
+}
 inline void StatInfo::clear_mp() {
   _impl_.mp_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline int32_t StatInfo::_internal_mp() const {
   return _impl_.mp_;
@@ -3250,7 +3307,7 @@ inline int32_t StatInfo::mp() const {
   return _internal_mp();
 }
 inline void StatInfo::_internal_set_mp(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.mp_ = value;
 }
 inline void StatInfo::set_mp(int32_t value) {
@@ -3258,9 +3315,17 @@ inline void StatInfo::set_mp(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.StatInfo.mp)
 }
 
-// int32 physical_attack = 5;
+// optional int32 physical_attack = 5;
+inline bool StatInfo::_internal_has_physical_attack() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool StatInfo::has_physical_attack() const {
+  return _internal_has_physical_attack();
+}
 inline void StatInfo::clear_physical_attack() {
   _impl_.physical_attack_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline int32_t StatInfo::_internal_physical_attack() const {
   return _impl_.physical_attack_;
@@ -3270,7 +3335,7 @@ inline int32_t StatInfo::physical_attack() const {
   return _internal_physical_attack();
 }
 inline void StatInfo::_internal_set_physical_attack(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.physical_attack_ = value;
 }
 inline void StatInfo::set_physical_attack(int32_t value) {
@@ -3278,9 +3343,17 @@ inline void StatInfo::set_physical_attack(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.StatInfo.physical_attack)
 }
 
-// int32 magical_attack = 6;
+// optional int32 magical_attack = 6;
+inline bool StatInfo::_internal_has_magical_attack() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool StatInfo::has_magical_attack() const {
+  return _internal_has_magical_attack();
+}
 inline void StatInfo::clear_magical_attack() {
   _impl_.magical_attack_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline int32_t StatInfo::_internal_magical_attack() const {
   return _impl_.magical_attack_;
@@ -3290,7 +3363,7 @@ inline int32_t StatInfo::magical_attack() const {
   return _internal_magical_attack();
 }
 inline void StatInfo::_internal_set_magical_attack(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.magical_attack_ = value;
 }
 inline void StatInfo::set_magical_attack(int32_t value) {

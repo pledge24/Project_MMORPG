@@ -187,23 +187,14 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 
     Protocol::S_BUY_ITEM rPkt;
     Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
-
-    // 1. 충분한 돈이 있는지 Validation
-    int64 gold = player->playerInfo->gold();
     int32 templateId = pkt.template_id();
-    int64 buyPrice = Gamedata::ItemDataTable[templateId]["buyPrice"];
+    int64 totalGold = 0;
 
-    if (gold < buyPrice)
+    if (player->BuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
         return false;
 
-    // 2. 구매 후 금액 정산
-    int64 totalGold = gold - buyPrice;
-    player->playerInfo->set_gold(totalGold);
-
-    // 3. 패킷 필드 세팅 및 전송
     rPkt.set_gold(totalGold);
     SEND_PACKET(rPkt);
-
 
     return true;
 }
@@ -220,23 +211,13 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     Protocol::Slot* targetSlot = pkt.mutable_slot();
     Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
 
-    // 1. "해당 슬롯"의 Validation(아이템 uid 확인, 수량 확인)
-    if (player->inventory->removeItem(updatedSlot, targetSlot) == false)
+    int64 totalGold = 0;
+    if (player->SellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
         return false;
 
-    // 2. 판매 후 금액 정산
-    int64 gold = player->playerInfo->gold();
-    int32 templateId = targetSlot->item().template_id();
-    int64 sellPrice = Gamedata::ItemDataTable[templateId]["sellPrice"];
-    
-    int64 totalGold = gold + sellPrice;
-    player->playerInfo->set_gold(totalGold);
-
-    // 3. 패킷 필드 세팅 및 전송
     rPkt.set_gold(totalGold);
     SEND_PACKET(rPkt);
     
-
     return true;
 }
 

@@ -153,15 +153,23 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
         return;
 
     Protocol::S_EQUIP_GEAR rPkt;
-    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
-    Protocol::Stat* updatedStat = rPkt.mutable_updated_stat();
-    if (player->equippedGear->EquipGear(updatedSlot, updatedStat, pkt.mutable_slot()) == false)
-        return;
-
     rPkt.set_object_id(objectId);
 
-    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
-    Broadcast(sendBuffer);
+    if (player->EquipGear(OUT rPkt, pkt.mutable_slot()) == false)
+        return;
+
+    // 장착한 유저에게만 그대로 전송.
+    {
+        SessionRef session = player->session.lock();
+        SEND_PACKET(rPkt);
+    }
+
+    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
+    {
+        rPkt.clear_updated_stats();
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+        Broadcast(sendBuffer, objectId);
+    }
 }
 
 void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
@@ -171,15 +179,23 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
         return;
 
     Protocol::S_UNEQUIP_GEAR rPkt;
-    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
-    Protocol::Stat* updatedStat = rPkt.mutable_updated_stat();
-    if (player->equippedGear->UnequipGear(updatedSlot, updatedStat, pkt.mutable_slot()) == false)
-        return;
-
     rPkt.set_object_id(objectId);
 
-    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
-    Broadcast(sendBuffer);
+    if (player->UnequipGear(OUT rPkt, pkt.mutable_slot()) == false)
+        return;
+
+    // 탈착한 유저에게만 그대로 전송.
+    {
+        SessionRef session = player->session.lock();
+        SEND_PACKET(rPkt);
+    }
+
+    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
+    {
+        rPkt.clear_updated_stats();
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+        Broadcast(sendBuffer, objectId);
+    }
 }
 
 void Room::UpdateTick()

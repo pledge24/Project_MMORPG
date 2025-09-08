@@ -145,8 +145,8 @@ message C_EQUIP_GEAR
 message S_EQUIP_GEAR
 {
     uint64 object_id = 1;
-    Slot updated_slot = 2;
-    Stat updated_stat = 3; // πŸ≤Ô Ω∫≈›
+    repeated Slot updated_slots = 2;
+    StatInfo updated_stat_info = 3; // πŸ≤Ô Ω∫≈»
 }
 
 message C_UNEQUIP_GEAR
@@ -157,8 +157,8 @@ message C_UNEQUIP_GEAR
 message S_UNEQUIP_GEAR
 {
     uint64 object_id = 1;
-    Slot updated_slot = 2;
-    Stat updated_stat = 3; // πŸ≤Ô Ω∫≈›
+    repeated Slot updated_slots = 2;
+    StatInfo updated_stat_info = 3; // πŸ≤Ô Ω∫≈»
 }
 
 message C_USE_ITEM
@@ -168,6 +168,7 @@ message C_USE_ITEM
 
 message S_USE_ITEM
 {
-    repeated Slot updated_slots = 1;
-    Stat updated_stat = 2; // πŸ≤Ô Ω∫≈›
+    uint64 object_id = 1;
+    repeated Slot updated_slots = 2;
+    StatInfo updated_stat_info = 3; // πŸ≤Ô Ω∫≈»
 }

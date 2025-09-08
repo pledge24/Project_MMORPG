@@ -54,17 +54,17 @@ message PosInfo
 message StatInfo
 {
     // 캐릭터 스텟 정보 전체를 보낼때 사용
-    int32 max_hp = 1;
-    int32 hp = 2;
-    int32 max_mp = 3;
-    int32 mp = 4;
-    int32 physical_attack = 5;
-    int32 magical_attack = 6;
+    optional int32 max_hp = 1;
+    optional int32 hp = 2;
+    optional int32 max_mp = 3;
+    optional int32 mp = 4;
+    optional int32 physical_attack = 5;
+    optional int32 magical_attack = 6;
 }
 
 message Stat
 {
-    // 게임내 상호작용에서 사용
+    // 게임내 상호작용에서 사용(지금은 StatInfo로 대체 사용)
     StatType type = 1;
     bool is_gauge = 2;
     int32 value = 3;
@@ -97,11 +97,11 @@ message Item
 
 message Slot
 {
-    int32 slot_id = 1;
-    SlotType type = 2;
-    optional UpdateState state = 3;  // 슬롯 갱신 상태: 서버가 세팅하고 클라이언트만 사용
+    int32 slot_id = 1;              // 서버에선 딱 한 번만 세팅 1
+    SlotType type = 2;              // 서버에선 딱 한 번만 세팅 2
+    optional UpdateState state = 3; // 슬롯 갱신 상태: 서버가 세팅하고 클라이언트만 사용
     optional Item item = 4;
-    int32 count = 5;
+    optional int32 count = 5;
 }
 
 message Inventory
