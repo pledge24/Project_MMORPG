@@ -12,6 +12,9 @@ Player::Player()
 
     inventory = make_shared<Inventory>();
     equippedGear = make_shared<EquippedGear>();
+
+    inventory->player = static_pointer_cast<Player>(shared_from_this());
+    equippedGear->player = static_pointer_cast<Player>(shared_from_this());
 }
 
 Player::~Player()

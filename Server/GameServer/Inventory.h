@@ -22,18 +22,10 @@ public:
 
     int32 findFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
 
+    weak_ptr<Player> player;
+
 private:
-    /* 카테고리별 인벤토리 */
-    vector<Protocol::Slot> _gear;
-    vector<Protocol::Slot> _consumables;
-    vector<Protocol::Slot> _miscellaneous;
-
-    /* 더티 플래그*/
-    vector<Protocol::UpdateState> _gearDirtyFlags;
-    vector<Protocol::UpdateState> _consumablesDirtyFlags;
-    vector<Protocol::UpdateState> _miscellaneousDirtyFlags;
-
-    unordered_map<Protocol::ItemType, vector<Protocol::Slot>&> inventoryMappings;
-    unordered_map<Protocol::ItemType, vector<Protocol::UpdateState>&> dirtyFlagsMappings;
+    unordered_map<Protocol::ItemType, vector<Protocol::Slot*>> lookupTableMappings;
+    unordered_map<Protocol::ItemType, vector<bool>> dirtyFlagsMappings;
 };
 

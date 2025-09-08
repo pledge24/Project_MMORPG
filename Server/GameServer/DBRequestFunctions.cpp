@@ -671,13 +671,14 @@ bool DBRequestFunctions::GetCharactersGearItems(SessionRef session, int64 charac
 
     while (dbConn->Fetch())
     {
+        // Player->playerInfo
         Protocol::Slot* slot = bindObject._isEquipped ? playerInfo->add_equipped_gear() : inventory->add_gear();
         Protocol::Item* item = slot->mutable_item();
         Protocol::GearInfo* gearInfo = item->mutable_gearinfo();
 
         slot->set_slot_id(bindObject._slotId);
         slot->set_type(bindObject._isEquipped ? Protocol::SlotType::SLOT_TYPE_EQUIPPED : Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
-        slot->set_state(Protocol::UpdateState::UPDATE_STATE_INSERT);
+        slot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
         slot->set_count(1);
 
         item->set_template_id(bindObject._templateId);
@@ -753,7 +754,7 @@ bool DBRequestFunctions::GetCharactersConsumableItems(SessionRef session, int64 
 
         slot->set_slot_id(bindObject._slotId);
         slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
-        slot->set_state(Protocol::UpdateState::UPDATE_STATE_INSERT);
+        slot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
         slot->set_count(bindObject._count);
 
         item->set_template_id(bindObject._templateId);
@@ -823,7 +824,7 @@ bool DBRequestFunctions::GetCharactersMiscItems(SessionRef session, int64 charac
 
         slot->set_slot_id(bindObject._slotId);
         slot->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
-        slot->set_state(Protocol::UpdateState::UPDATE_STATE_INSERT);
+        slot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
         slot->set_count(bindObject._count);
 
         item->set_template_id(bindObject._templateId);

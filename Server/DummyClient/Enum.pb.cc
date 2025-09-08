@@ -57,14 +57,14 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020STAT_TYPE"
   "_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031STAT_TYPE"
   "_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYPE_MAGICAL_"
-  "ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007*o\n\013UpdateSta"
-  "te\022\025\n\021UPDATE_STATE_NONE\020\000\022\027\n\023UPDATE_STAT"
-  "E_INSERT\020\001\022\027\n\023UPDATE_STATE_UPDATE\020\002\022\027\n\023U"
-  "PDATE_STATE_DELETE\020\003b\006proto3"
+  "ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007*q\n\013UpdateSta"
+  "te\022\025\n\021UPDATE_STATE_NONE\020\000\022\026\n\022UPDATE_STAT"
+  "E_ADDED\020\001\022\031\n\025UPDATE_STATE_MODIFIED\020\002\022\030\n\024"
+  "UPDATE_STATE_REMOVED\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1268, descriptor_table_protodef_Enum_2eproto,
+    false, false, 1270, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,

@@ -52,7 +52,6 @@ enum EffectType
 
 enum ItemType
 {
-    // 현재 사용 안 함
     ITEM_TYPE_NONE = 0;            
     ITEM_TYPE_GEAR = 1;            // 장비탭
     ITEM_TYPE_CONSUMABLE = 2;      // 소비탭
@@ -84,7 +83,7 @@ enum StatType
 enum UpdateState
 {
     UPDATE_STATE_NONE = 0;
-    UPDATE_STATE_INSERT = 1;
-    UPDATE_STATE_UPDATE = 2;
-    UPDATE_STATE_DELETE = 3;
+    UPDATE_STATE_ADDED = 1;
+    UPDATE_STATE_MODIFIED = 2;
+    UPDATE_STATE_REMOVED = 3;
 }

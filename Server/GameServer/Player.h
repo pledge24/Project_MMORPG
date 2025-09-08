@@ -18,10 +18,10 @@ public:
 public:
 	weak_ptr<GameSession> session;
 
-    Protocol::PlayerInfo* playerInfo;
+    Protocol::PlayerInfo* playerInfo;   // 플레이어의 모든 정보가 여기에 저장됨.
     Protocol::StatInfo* statInfo;
 
-    InventoryRef inventory;
-    EquippedGearRef equippedGear;
+    InventoryRef inventory;             // 인벤토리 헬퍼
+    EquippedGearRef equippedGear;       // 장착 아이템 헬퍼
 };
 

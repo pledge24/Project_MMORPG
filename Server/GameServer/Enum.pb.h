@@ -299,15 +299,15 @@ inline bool StatType_Parse(
 }
 enum UpdateState : int {
   UPDATE_STATE_NONE = 0,
-  UPDATE_STATE_INSERT = 1,
-  UPDATE_STATE_UPDATE = 2,
-  UPDATE_STATE_DELETE = 3,
+  UPDATE_STATE_ADDED = 1,
+  UPDATE_STATE_MODIFIED = 2,
+  UPDATE_STATE_REMOVED = 3,
   UpdateState_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   UpdateState_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool UpdateState_IsValid(int value);
 constexpr UpdateState UpdateState_MIN = UPDATE_STATE_NONE;
-constexpr UpdateState UpdateState_MAX = UPDATE_STATE_DELETE;
+constexpr UpdateState UpdateState_MAX = UPDATE_STATE_REMOVED;
 constexpr int UpdateState_ARRAYSIZE = UpdateState_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* UpdateState_descriptor();

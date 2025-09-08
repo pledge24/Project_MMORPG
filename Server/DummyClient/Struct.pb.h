@@ -1819,7 +1819,11 @@ class Item final :
     kTemplateIdFieldNumber = 1,
     kGearInfoFieldNumber = 3,
   };
-  // int64 item_uid = 2;
+  // optional int64 item_uid = 2;
+  bool has_item_uid() const;
+  private:
+  bool _internal_has_item_uid() const;
+  public:
   void clear_item_uid();
   int64_t item_uid() const;
   void set_item_uid(int64_t value);
@@ -1837,7 +1841,7 @@ class Item final :
   void _internal_set_template_id(int32_t value);
   public:
 
-  // .Protocol.GearInfo GearInfo = 3;
+  // .Protocol.GearInfo gearInfo = 3;
   bool has_gearinfo() const;
   private:
   bool _internal_has_gearinfo() const;
@@ -1869,6 +1873,8 @@ class Item final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int64_t item_uid_;
     int32_t template_id_;
     union InstanceDataUnion {
@@ -1876,7 +1882,6 @@ class Item final :
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
       ::Protocol::GearInfo* gearinfo_;
     } instance_data_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
 
   };
@@ -2048,7 +2053,11 @@ class Slot final :
   void _internal_set_type(::Protocol::SlotType value);
   public:
 
-  // .Protocol.UpdateState state = 3;
+  // optional .Protocol.UpdateState state = 3;
+  bool has_state() const;
+  private:
+  bool _internal_has_state() const;
+  public:
   void clear_state();
   ::Protocol::UpdateState state() const;
   void set_state(::Protocol::UpdateState value);
@@ -3505,9 +3514,17 @@ inline void Item::set_template_id(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.Item.template_id)
 }
 
-// int64 item_uid = 2;
+// optional int64 item_uid = 2;
+inline bool Item::_internal_has_item_uid() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Item::has_item_uid() const {
+  return _internal_has_item_uid();
+}
 inline void Item::clear_item_uid() {
   _impl_.item_uid_ = int64_t{0};
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int64_t Item::_internal_item_uid() const {
   return _impl_.item_uid_;
@@ -3517,7 +3534,7 @@ inline int64_t Item::item_uid() const {
   return _internal_item_uid();
 }
 inline void Item::_internal_set_item_uid(int64_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.item_uid_ = value;
 }
 inline void Item::set_item_uid(int64_t value) {
@@ -3525,7 +3542,7 @@ inline void Item::set_item_uid(int64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.Item.item_uid)
 }
 
-// .Protocol.GearInfo GearInfo = 3;
+// .Protocol.GearInfo gearInfo = 3;
 inline bool Item::_internal_has_gearinfo() const {
   return instance_data_case() == kGearInfo;
 }
@@ -3544,7 +3561,7 @@ inline void Item::clear_gearinfo() {
   }
 }
 inline ::Protocol::GearInfo* Item::release_gearinfo() {
-  // @@protoc_insertion_point(field_release:Protocol.Item.GearInfo)
+  // @@protoc_insertion_point(field_release:Protocol.Item.gearInfo)
   if (_internal_has_gearinfo()) {
     clear_has_instance_data();
     ::Protocol::GearInfo* temp = _impl_.instance_data_.gearinfo_;
@@ -3563,11 +3580,11 @@ inline const ::Protocol::GearInfo& Item::_internal_gearinfo() const {
       : reinterpret_cast< ::Protocol::GearInfo&>(::Protocol::_GearInfo_default_instance_);
 }
 inline const ::Protocol::GearInfo& Item::gearinfo() const {
-  // @@protoc_insertion_point(field_get:Protocol.Item.GearInfo)
+  // @@protoc_insertion_point(field_get:Protocol.Item.gearInfo)
   return _internal_gearinfo();
 }
 inline ::Protocol::GearInfo* Item::unsafe_arena_release_gearinfo() {
-  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.Item.GearInfo)
+  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.Item.gearInfo)
   if (_internal_has_gearinfo()) {
     clear_has_instance_data();
     ::Protocol::GearInfo* temp = _impl_.instance_data_.gearinfo_;
@@ -3583,7 +3600,7 @@ inline void Item::unsafe_arena_set_allocated_gearinfo(::Protocol::GearInfo* gear
     set_has_gearinfo();
     _impl_.instance_data_.gearinfo_ = gearinfo;
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.Item.GearInfo)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.Item.gearInfo)
 }
 inline ::Protocol::GearInfo* Item::_internal_mutable_gearinfo() {
   if (!_internal_has_gearinfo()) {
@@ -3595,7 +3612,7 @@ inline ::Protocol::GearInfo* Item::_internal_mutable_gearinfo() {
 }
 inline ::Protocol::GearInfo* Item::mutable_gearinfo() {
   ::Protocol::GearInfo* _msg = _internal_mutable_gearinfo();
-  // @@protoc_insertion_point(field_mutable:Protocol.Item.GearInfo)
+  // @@protoc_insertion_point(field_mutable:Protocol.Item.gearInfo)
   return _msg;
 }
 
@@ -3652,9 +3669,17 @@ inline void Slot::set_type(::Protocol::SlotType value) {
   // @@protoc_insertion_point(field_set:Protocol.Slot.type)
 }
 
-// .Protocol.UpdateState state = 3;
+// optional .Protocol.UpdateState state = 3;
+inline bool Slot::_internal_has_state() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool Slot::has_state() const {
+  return _internal_has_state();
+}
 inline void Slot::clear_state() {
   _impl_.state_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline ::Protocol::UpdateState Slot::_internal_state() const {
   return static_cast< ::Protocol::UpdateState >(_impl_.state_);
@@ -3664,7 +3689,7 @@ inline ::Protocol::UpdateState Slot::state() const {
   return _internal_state();
 }
 inline void Slot::_internal_set_state(::Protocol::UpdateState value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.state_ = value;
 }
 inline void Slot::set_state(::Protocol::UpdateState value) {

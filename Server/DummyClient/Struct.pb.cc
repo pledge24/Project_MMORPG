@@ -160,10 +160,11 @@ struct GearInfoDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 GearInfoDefaultTypeInternal _GearInfo_default_instance_;
 PROTOBUF_CONSTEXPR Item::Item(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.item_uid_)*/int64_t{0}
+    /*decltype(_impl_._has_bits_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_.item_uid_)*/int64_t{0}
   , /*decltype(_impl_.template_id_)*/0
   , /*decltype(_impl_.instance_data_)*/{}
-  , /*decltype(_impl_._cached_size_)*/{}
   , /*decltype(_impl_._oneof_case_)*/{}} {}
 struct ItemDefaultTypeInternal {
   PROTOBUF_CONSTEXPR ItemDefaultTypeInternal()
@@ -305,7 +306,7 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   PROTOBUF_FIELD_OFFSET(::Protocol::GearInfo, _impl_.durability_),
   PROTOBUF_FIELD_OFFSET(::Protocol::GearInfo, _impl_.additional_physical_attack_),
   PROTOBUF_FIELD_OFFSET(::Protocol::GearInfo, _impl_.additional_magical_attack_),
-  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Protocol::Item, _impl_._has_bits_),
   PROTOBUF_FIELD_OFFSET(::Protocol::Item, _internal_metadata_),
   ~0u,  // no _extensions_
   PROTOBUF_FIELD_OFFSET(::Protocol::Item, _impl_._oneof_case_[0]),
@@ -315,6 +316,9 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   PROTOBUF_FIELD_OFFSET(::Protocol::Item, _impl_.item_uid_),
   ::_pbi::kInvalidFieldOffsetTag,
   PROTOBUF_FIELD_OFFSET(::Protocol::Item, _impl_.instance_data_),
+  ~0u,
+  0,
+  ~0u,
   PROTOBUF_FIELD_OFFSET(::Protocol::Slot, _impl_._has_bits_),
   PROTOBUF_FIELD_OFFSET(::Protocol::Slot, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -328,7 +332,7 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   PROTOBUF_FIELD_OFFSET(::Protocol::Slot, _impl_.count_),
   ~0u,
   ~0u,
-  ~0u,
+  1,
   0,
   ~0u,
   ~0u,  // no _has_bits_
@@ -350,9 +354,9 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 65, -1, -1, sizeof(::Protocol::Stat)},
   { 74, -1, -1, sizeof(::Protocol::Effect)},
   { 82, -1, -1, sizeof(::Protocol::GearInfo)},
-  { 92, -1, -1, sizeof(::Protocol::Item)},
-  { 102, 113, -1, sizeof(::Protocol::Slot)},
-  { 118, -1, -1, sizeof(::Protocol::Inventory)},
+  { 92, 102, -1, sizeof(::Protocol::Item)},
+  { 105, 116, -1, sizeof(::Protocol::Slot)},
+  { 121, -1, -1, sizeof(::Protocol::Inventory)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -397,24 +401,24 @@ const char descriptor_table_protodef_Struct_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "n\030\002 \001(\002\"|\n\010GearInfo\022\025\n\renhance_level\030\001 \001"
   "(\005\022\022\n\ndurability\030\002 \001(\005\022\"\n\032additional_phy"
   "sical_attack\030\003 \001(\005\022!\n\031additional_magical"
-  "_attack\030\004 \001(\005\"f\n\004Item\022\023\n\013template_id\030\001 \001"
-  "(\005\022\020\n\010item_uid\030\002 \001(\003\022&\n\010GearInfo\030\003 \001(\0132\022"
-  ".Protocol.GearInfoH\000B\017\n\rinstance_data\"\232\001"
-  "\n\004Slot\022\017\n\007slot_id\030\001 \001(\005\022 \n\004type\030\002 \001(\0162\022."
-  "Protocol.SlotType\022$\n\005state\030\003 \001(\0162\025.Proto"
-  "col.UpdateState\022!\n\004item\030\004 \001(\0132\016.Protocol"
-  ".ItemH\000\210\001\001\022\r\n\005count\030\005 \001(\005B\007\n\005_item\"u\n\tIn"
-  "ventory\022\034\n\004gear\030\001 \003(\0132\016.Protocol.Slot\022#\n"
-  "\013consumables\030\002 \003(\0132\016.Protocol.Slot\022%\n\rmi"
-  "scellaneous\030\003 \003(\0132\016.Protocol.Slotb\006proto"
-  "3"
+  "_attack\030\004 \001(\005\"x\n\004Item\022\023\n\013template_id\030\001 \001"
+  "(\005\022\025\n\010item_uid\030\002 \001(\003H\001\210\001\001\022&\n\010gearInfo\030\003 "
+  "\001(\0132\022.Protocol.GearInfoH\000B\017\n\rinstance_da"
+  "taB\013\n\t_item_uid\"\251\001\n\004Slot\022\017\n\007slot_id\030\001 \001("
+  "\005\022 \n\004type\030\002 \001(\0162\022.Protocol.SlotType\022)\n\005s"
+  "tate\030\003 \001(\0162\025.Protocol.UpdateStateH\000\210\001\001\022!"
+  "\n\004item\030\004 \001(\0132\016.Protocol.ItemH\001\210\001\001\022\r\n\005cou"
+  "nt\030\005 \001(\005B\010\n\006_stateB\007\n\005_item\"u\n\tInventory"
+  "\022\034\n\004gear\030\001 \003(\0132\016.Protocol.Slot\022#\n\013consum"
+  "ables\030\002 \003(\0132\016.Protocol.Slot\022%\n\rmiscellan"
+  "eous\030\003 \003(\0132\016.Protocol.Slotb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Struct_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Struct_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Struct_2eproto = {
-    false, false, 1481, descriptor_table_protodef_Struct_2eproto,
+    false, false, 1514, descriptor_table_protodef_Struct_2eproto,
     "Struct.proto",
     &descriptor_table_Struct_2eproto_once, descriptor_table_Struct_2eproto_deps, 1, 11,
     schemas, file_default_instances, TableStruct_Struct_2eproto::offsets,
@@ -2918,6 +2922,10 @@ void GearInfo::InternalSwap(GearInfo* other) {
 
 class Item::_Internal {
  public:
+  using HasBits = decltype(std::declval<Item>()._impl_._has_bits_);
+  static void set_has_item_uid(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
   static const ::Protocol::GearInfo& gearinfo(const Item* msg);
 };
 
@@ -2938,7 +2946,7 @@ void Item::set_allocated_gearinfo(::Protocol::GearInfo* gearinfo) {
     set_has_gearinfo();
     _impl_.instance_data_.gearinfo_ = gearinfo;
   }
-  // @@protoc_insertion_point(field_set_allocated:Protocol.Item.GearInfo)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.Item.gearInfo)
 }
 Item::Item(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -2950,10 +2958,11 @@ Item::Item(const Item& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   Item* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_uid_){}
+      decltype(_impl_._has_bits_){from._impl_._has_bits_}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.item_uid_){}
     , decltype(_impl_.template_id_){}
     , decltype(_impl_.instance_data_){}
-    , /*decltype(_impl_._cached_size_)*/{}
     , /*decltype(_impl_._oneof_case_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -2979,10 +2988,11 @@ inline void Item::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.item_uid_){int64_t{0}}
+      decltype(_impl_._has_bits_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.item_uid_){int64_t{0}}
     , decltype(_impl_.template_id_){0}
     , decltype(_impl_.instance_data_){}
-    , /*decltype(_impl_._cached_size_)*/{}
     , /*decltype(_impl_._oneof_case_)*/{}
   };
   clear_has_instance_data();
@@ -3031,15 +3041,16 @@ void Item::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&_impl_.item_uid_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.template_id_) -
-      reinterpret_cast<char*>(&_impl_.item_uid_)) + sizeof(_impl_.template_id_));
+  _impl_.item_uid_ = int64_t{0};
+  _impl_.template_id_ = 0;
   clear_instance_data();
+  _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
 const char* Item::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
   while (!ctx->Done(&ptr)) {
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
@@ -3052,15 +3063,16 @@ const char* Item::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // int64 item_uid = 2;
+      // optional int64 item_uid = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _Internal::set_has_item_uid(&has_bits);
           _impl_.item_uid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.GearInfo GearInfo = 3;
+      // .Protocol.GearInfo gearInfo = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
           ptr = ctx->ParseMessage(_internal_mutable_gearinfo(), ptr);
@@ -3084,6 +3096,7 @@ const char* Item::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
     CHK_(ptr != nullptr);
   }  // while
 message_done:
+  _impl_._has_bits_.Or(has_bits);
   return ptr;
 failure:
   ptr = nullptr;
@@ -3103,13 +3116,13 @@ uint8_t* Item::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_template_id(), target);
   }
 
-  // int64 item_uid = 2;
-  if (this->_internal_item_uid() != 0) {
+  // optional int64 item_uid = 2;
+  if (_internal_has_item_uid()) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteInt64ToArray(2, this->_internal_item_uid(), target);
   }
 
-  // .Protocol.GearInfo GearInfo = 3;
+  // .Protocol.GearInfo gearInfo = 3;
   if (_internal_has_gearinfo()) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
       InternalWriteMessage(3, _Internal::gearinfo(this),
@@ -3132,8 +3145,9 @@ size_t Item::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 item_uid = 2;
-  if (this->_internal_item_uid() != 0) {
+  // optional int64 item_uid = 2;
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
     total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_item_uid());
   }
 
@@ -3143,7 +3157,7 @@ size_t Item::ByteSizeLong() const {
   }
 
   switch (instance_data_case()) {
-    // .Protocol.GearInfo GearInfo = 3;
+    // .Protocol.GearInfo gearInfo = 3;
     case kGearInfo: {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
@@ -3172,7 +3186,7 @@ void Item::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_item_uid() != 0) {
+  if (from._internal_has_item_uid()) {
     _this->_internal_set_item_uid(from._internal_item_uid());
   }
   if (from._internal_template_id() != 0) {
@@ -3205,6 +3219,7 @@ bool Item::IsInitialized() const {
 void Item::InternalSwap(Item* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(Item, _impl_.template_id_)
       + sizeof(Item::_impl_.template_id_)
@@ -3226,6 +3241,9 @@ void Item::InternalSwap(Item* other) {
 class Slot::_Internal {
  public:
   using HasBits = decltype(std::declval<Slot>()._impl_._has_bits_);
+  static void set_has_state(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
   static const ::Protocol::Item& item(const Slot* msg);
   static void set_has_item(HasBits* has_bits) {
     (*has_bits)[0] |= 1u;
@@ -3309,8 +3327,10 @@ void Slot::Clear() {
     _impl_.item_->Clear();
   }
   ::memset(&_impl_.slot_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.count_) -
-      reinterpret_cast<char*>(&_impl_.slot_id_)) + sizeof(_impl_.count_));
+      reinterpret_cast<char*>(&_impl_.type_) -
+      reinterpret_cast<char*>(&_impl_.slot_id_)) + sizeof(_impl_.type_));
+  _impl_.state_ = 0;
+  _impl_.count_ = 0;
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -3339,7 +3359,7 @@ const char* Slot::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.UpdateState state = 3;
+      // optional .Protocol.UpdateState state = 3;
       case 3:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
           uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
@@ -3407,8 +3427,8 @@ uint8_t* Slot::_InternalSerialize(
       2, this->_internal_type(), target);
   }
 
-  // .Protocol.UpdateState state = 3;
-  if (this->_internal_state() != 0) {
+  // optional .Protocol.UpdateState state = 3;
+  if (_internal_has_state()) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteEnumToArray(
       3, this->_internal_state(), target);
@@ -3462,8 +3482,8 @@ size_t Slot::ByteSizeLong() const {
       ::_pbi::WireFormatLite::EnumSize(this->_internal_type());
   }
 
-  // .Protocol.UpdateState state = 3;
-  if (this->_internal_state() != 0) {
+  // optional .Protocol.UpdateState state = 3;
+  if (cached_has_bits & 0x00000002u) {
     total_size += 1 +
       ::_pbi::WireFormatLite::EnumSize(this->_internal_state());
   }
@@ -3501,7 +3521,7 @@ void Slot::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_
   if (from._internal_type() != 0) {
     _this->_internal_set_type(from._internal_type());
   }
-  if (from._internal_state() != 0) {
+  if (from._internal_has_state()) {
     _this->_internal_set_state(from._internal_state());
   }
   if (from._internal_count() != 0) {

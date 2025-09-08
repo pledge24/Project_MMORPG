@@ -16,6 +16,7 @@ public:
     bool EquipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot);
     bool UnequipGear(OUT Protocol::Slot* updatedSlot, OUT Protocol::Stat* updatedStat, Protocol::Slot* slot);
 
+    weak_ptr<Player> player;
 
 private:
     vector<Protocol::Item> _gear;
