@@ -68,7 +68,7 @@ public:
 		_paramFlag |= (1LL << idx);
 	}
 
-    /* 특수화: T타입이 N개 들어있는 배열의 시작 주소는 넘겨주는 경우 */
+    /* 특수화: T타입이 N개 들어있는 배열의 시작 주소를 넘겨주는 경우 */
 	template<typename T>
 	void BindParam(int32 idx, T* value, int32 N)
 	{

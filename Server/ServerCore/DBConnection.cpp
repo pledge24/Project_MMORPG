@@ -101,6 +101,11 @@ void DBConnection::Unbind()
     ::SQLSetStmtAttr(_statement, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);
 }
 
+void DBConnection::SetParamSetSize(int32& rows)
+{
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)rows, 0);
+}
+
 bool DBConnection::FindError(const SQLWCHAR* targetState)
 {
     if (targetState == nullptr) return false;

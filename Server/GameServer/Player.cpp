@@ -121,8 +121,12 @@ bool Player::EquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSl
     Protocol::Slot* updatedSlot = nullptr;
     Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
 
+    if (targetSlot == nullptr || targetSlot->has_item() == false)
+        return false;
+
     updatedSlot = pkt.add_updated_slots();
-    if (equippedGear->EquipGear(OUT updatedSlot, OUT statInfo, targetSlot) == false)
+    Protocol::Item* itemInstance = targetSlot->mutable_item();
+    if (equippedGear->EquipGear(OUT updatedSlot, OUT statInfo, *itemInstance) == false)
         return false;
 
     updatedStatInfo->CopyFrom(*statInfo);

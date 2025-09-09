@@ -59,7 +59,7 @@ Inventory::~Inventory()
 {
 }
 
-bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemInstance, int32 count)
+bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
     const Json& itemData = Gamedata::ItemDataTable[itemInstance.template_id()];
 
@@ -70,7 +70,7 @@ bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemIns
     if (lookupMappings.find(itemType) == lookupMappings.end())
         return false;
 
-    int32 availableSlotId = findFirstAvailableSlotId(itemType, itemInstance.template_id());
+    int32 availableSlotId = setSlotId.has_value() ? setSlotId.value() : findFirstAvailableSlotId(itemType, itemInstance.template_id());
     if (availableSlotId == -1)
         return false;
 
@@ -88,7 +88,8 @@ bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemIns
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
         targetSlot->set_count(updatedCount);
 
-        reflectSlot->CopyFrom(*targetSlot);
+        if(reflectSlot != nullptr)
+            reflectSlot->CopyFrom(*targetSlot);
     }
     else
     {
@@ -101,7 +102,8 @@ bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemIns
         if (itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
             item->set_item_uid(GNextItemUID.fetch_add(1));
         
-        reflectSlot->CopyFrom(*targetSlot);
+        if (reflectSlot != nullptr)
+            reflectSlot->CopyFrom(*targetSlot);
     }
 
     return true;
@@ -173,7 +175,7 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
             });
 
         if(it != lookupTable->end())
-            availableSlotId = it - lookupTable->begin();
+            availableSlotId = (int32)(it - lookupTable->begin());
     }
     else
     {
@@ -188,7 +190,7 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
 
             if (it != lookupTable->end())
             {
-                availableSlotId = it - lookupTable->begin();
+                availableSlotId = (int32)(it - lookupTable->begin());
                 found = true;
             }
         }
@@ -202,7 +204,7 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
                 });
 
             if (it != lookupTable->end())
-                availableSlotId = it - lookupTable->begin();
+                availableSlotId = (int32)(it - lookupTable->begin());
         }
             
     }

@@ -17,7 +17,6 @@ public:
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
     void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
 
-
 public:
 	void UpdateTick();
 

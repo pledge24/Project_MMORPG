@@ -53,7 +53,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 gameSession->userId = userId;
 
                 // 있으면 DB에서 캐릭터 정보를 긁어온다.
-                DBRequestFunctions::GetUserCharactersData(session, userId);
+                DBRequestFunctions::LoadUserCharactersData(session, userId);
             }
             else
             {
@@ -124,7 +124,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
         [session, pkt, player]()
         {
             int64 characterId = pkt.character_id();
-            DBRequestFunctions::GetEnterGameData(session, characterId);
+            DBRequestFunctions::LoadAllCharactersData(session, characterId);
             GRoom->DoAsync(&Room::HandleEnterPlayer, player);
         }
     );
@@ -148,7 +148,19 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 	if (room == nullptr)
 		return false;
 
-	GRoom->DoAsync(&Room::HandleLeavePlayer, player);
+    // 여기서 게임을 나간 캐릭터의 정보를 서버 메모리 -> DB로 옮긴다.
+    int64 characterId = player->playerInfo->character_id();
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
+
+    JobRef job = make_shared<Job>(
+        [session, player]()
+        {
+            GRoom->DoAsync(&Room::HandleLeavePlayer, player);
+            DBRequestFunctions::UpdateAllCharactersData(session);
+        }
+    );
+
+    dbQueue->Push(std::move(job));
 
 	return true;
 }
