@@ -270,6 +270,19 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    Protocol::S_USE_ITEM rPkt;
+    Protocol::Slot* targetSlot = pkt.mutable_slot();
+    if (player->UseItem(rPkt, targetSlot) == false)
+        return false;
+
+    SEND_PACKET(rPkt);
+
     return true;
 }
 

@@ -116,6 +116,40 @@ bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlo
     return true;
 }
 
+bool Player::UseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* targetSlot)
+{
+    // 아이템 사용으로 인한 슬롯 변경 정보 채우기
+    if (inventory->removeItem(pkt.add_updated_slots(), targetSlot) == false)
+        return false;
+
+    // objectId 채우기
+    ObjectRef object = shared_from_this();
+    pkt.set_object_id(object->objectInfo->object_id());
+
+    // 변경된 스텟 반영
+    Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
+    int32 templateId = targetSlot->item().template_id();
+    const Json& itemData = Gamedata::ItemDataTable[templateId];
+    
+    if (itemData.contains("hpRestore"))
+    {
+        int32 amount = statInfo->max_hp() * itemData["hpRestore"];
+        int32 updatedHp = min(statInfo->max_hp(), statInfo->hp() + amount);
+        statInfo->set_hp(updatedHp);
+        updatedStatInfo->set_hp(updatedHp);
+    }
+
+    if (itemData.contains("mpRestore"))
+    {
+        int32 amount = statInfo->max_mp() * itemData["mpRestore"];
+        int32 updatedMp = min(statInfo->max_mp(), statInfo->mp() + amount);
+        statInfo->set_mp(updatedMp);
+        updatedStatInfo->set_hp(updatedMp);
+    }
+
+    return true;
+}
+
 bool Player::EquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
 {
     Protocol::Slot* updatedSlot = nullptr;

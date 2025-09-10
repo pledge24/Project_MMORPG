@@ -40,13 +40,13 @@ void USlotWidget::SetSlot(const Protocol::Slot& _Slot)
     // 슬롯 정보 저장(언리얼 방식으로)
     switch (_Slot.state())
     {
-    case Protocol::UpdateState::UPDATE_STATE_INSERT:
+    case Protocol::UpdateState::UPDATE_STATE_ADDED:
         InsertData(_Slot);
         break;
-    case Protocol::UpdateState::UPDATE_STATE_UPDATE:
+    case Protocol::UpdateState::UPDATE_STATE_MODIFIED:
         SlotData.CopyFrom(_Slot);
         break;
-    case Protocol::UpdateState::UPDATE_STATE_DELETE:
+    case Protocol::UpdateState::UPDATE_STATE_REMOVED:
         ClearSlot();
         break;
     }

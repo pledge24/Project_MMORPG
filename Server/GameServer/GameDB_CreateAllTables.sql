@@ -32,7 +32,7 @@ CREATE TABLE CharactersLastState(
     pos_z                   FLOAT NOT NULL DEFAULT 0.0,
     rot_yaw                 FLOAT NOT NULL DEFAULT 0.0,
     exp                     BIGINT NOT NULL DEFAULT 0,
-    gold                    BIGINT NOT NULL DEFAULT 1000,
+    gold                    BIGINT NOT NULL DEFAULT 10000000,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE
