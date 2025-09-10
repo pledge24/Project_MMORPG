@@ -1209,18 +1209,18 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             USING #TempTable AS S
             ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
 
-            -- 3-1). 둘 다 행이 존재 -> UPDATE
+            -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+            WHEN MATCHED AND S.template_id = 0 THEN
+                DELETE
+
+            -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
             WHEN MATCHED THEN
                 UPDATE SET item_uid = S.item_uid, template_id = S.template_id, is_equipped = S.is_equipped, enhance = S.enhance, durability = S.durability, additional_physical_attack = S.additional_physical_attack, additional_magical_attack = S.additional_magical_attack
 
-            -- 3-2). DB 테이블에 행이 없음 -> INSERT
+            -- DB 테이블에 행이 없음 -> INSERT
             WHEN NOT MATCHED BY TARGET THEN
                 INSERT (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
                 VALUES (S.character_id, S.slot_id, S.tem_uid, S.template_id, S.is_equipped, S.enhance, S.durability, S.additional_physical_attack, S.additional_magical_attack)
-
-            -- 3-3). 임시 테이블에 행이 없음 -> DELETE
-            WHEN NOT MATCHED BY SOURCE AND T.character_id = @character_id THEN
-                DELETE;
 
             -- 4. 임시 테이블 삭제
             DROP TABLE #TempItems;
@@ -1323,18 +1323,18 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
             USING #TempTable AS S
             ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
 
-            -- 3-1). 둘 다 행이 존재 -> UPDATE
+            -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+            WHEN MATCHED AND S.template_id = 0 THEN
+                DELETE
+
+            -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
             WHEN MATCHED THEN
                 UPDATE SET template_id = S.template_id, count = S.count
 
-            -- 3-2). DB 테이블에 행이 없음 -> INSERT
+            -- DB 테이블에 행이 없음 -> INSERT
             WHEN NOT MATCHED BY TARGET THEN
                 INSERT (character_id, slot_id, template_id, count)
                 VALUES (S.character_id, S.slot_id, S.template_id, S.count)
-
-            -- 3-3). 임시 테이블에 행이 없음 -> DELETE
-            WHEN NOT MATCHED BY SOURCE AND T.character_id = @character_id THEN
-                DELETE;
 
             -- 4. 임시 테이블 삭제
             DROP TABLE #TempItems;
@@ -1436,18 +1436,18 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
             USING #TempTable AS S
             ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
 
-            -- 3-1). 둘 다 행이 존재 -> UPDATE
+            -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+            WHEN MATCHED AND S.template_id = 0 THEN
+                DELETE
+
+            -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
             WHEN MATCHED THEN
                 UPDATE SET template_id = S.template_id, count = S.count
 
-            -- 3-2). DB 테이블에 행이 없음 -> INSERT
+            -- DB 테이블에 행이 없음 -> INSERT
             WHEN NOT MATCHED BY TARGET THEN
                 INSERT (character_id, slot_id, template_id, count)
                 VALUES (S.character_id, S.slot_id, S.template_id, S.count)
-
-            -- 3-3). 임시 테이블에 행이 없음 -> DELETE
-            WHEN NOT MATCHED BY SOURCE AND T.character_id = @character_id THEN
-                DELETE;
 
             -- 4. 임시 테이블 삭제
             DROP TABLE #TempItems;
