@@ -114,9 +114,10 @@ bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleSpawn(pkt);
+        return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
@@ -124,9 +125,10 @@ bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleDespawn(pkt);
+        return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
@@ -134,6 +136,7 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleMove(pkt);
+        return true;
 	}
 
 	return false;
@@ -153,30 +156,55 @@ bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleBuyItem(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleSellItem(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleEquipGear(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleUnequipGear(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleUseItem(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }

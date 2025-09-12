@@ -40,6 +40,14 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void OnChangeMesh(int32 SlotId, int32 TemplateId);
 
+public:
+    /** 델리게이트 모음 */
+    DECLARE_MULTICAST_DELEGATE_OneParam(FEquipGearDelegate, const Protocol::Slot&);
+    FEquipGearDelegate OnEquipGearDelegate;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FUnequipGearDelegate, const Protocol::Slot&);
+    FUnequipGearDelegate OnUnequipGearDelegate;
+
 protected:
     class Protocol::PosInfo* SrcInfo; // 현재 위치
 	class Protocol::PosInfo* DestInfo; // 목적지

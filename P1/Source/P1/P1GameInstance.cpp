@@ -172,3 +172,131 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	//Player->SetPlayerInfo(Info);
 	Player->SetDestInfo(Info);
 }
+
+void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        MyPlayer_->OnAddItemDelegate.Broadcast(BuyItemPkt.updated_slot());
+        MyPlayer_->OnChangedGoldDelegate.Broadcast(BuyItemPkt.gold());
+    }
+}
+
+void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        MyPlayer_->OnRemoveItemDelegate.Broadcast(SellItemPkt.updated_slot());
+        MyPlayer_->OnChangedGoldDelegate.Broadcast(SellItemPkt.gold());
+    }
+}
+
+void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = EquipGearPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        for (auto& Slot : EquipGearPkt.updated_slots())
+        {
+            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
+            {
+                MyPlayer_->OnEquipGearDelegate.Broadcast(Slot);
+            }
+            else
+            {
+                MyPlayer_->OnRemoveItemDelegate.Broadcast(Slot);
+            }
+        }
+
+        MyPlayer_->OnChangedStatInfoDelegate.Broadcast(EquipGearPkt.updated_stat_info());
+    }
+}
+
+void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = UnequipGearPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        for (auto& Slot : UnequipGearPkt.updated_slots())
+        {
+            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
+            {
+                MyPlayer_->OnUnequipGearDelegate.Broadcast(Slot);
+            }
+            else
+            {
+                MyPlayer_->OnAddItemDelegate.Broadcast(Slot);
+            }
+        }
+
+        MyPlayer_->OnChangedStatInfoDelegate.Broadcast(UnequipGearPkt.updated_stat_info());
+    }
+}
+
+void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = UseItemPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+    if (Player->IsMyPlayer() == false)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        for (auto& Slot : UseItemPkt.updated_slots())
+        {
+            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
+            {
+                MyPlayer_->OnRemoveItemDelegate.Broadcast(Slot);
+            }
+        }
+
+        MyPlayer_->OnChangedStatInfoDelegate.Broadcast(UseItemPkt.updated_stat_info());
+    }
+}

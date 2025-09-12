@@ -34,6 +34,20 @@ public:
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo) override;
     int64 GetGold() { return PlayerInfo_->gold(); };
 
+public:
+    /** 델리게이트 모음 */
+    DECLARE_MULTICAST_DELEGATE_OneParam(FAddItemDelegate, const Protocol::Slot&);
+    FAddItemDelegate OnAddItemDelegate;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FRemoveItemDelegate, const Protocol::Slot&);
+    FRemoveItemDelegate OnRemoveItemDelegate;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FChangedStatInfoDelegate, const Protocol::StatInfo&);
+    FChangedStatInfoDelegate OnChangedStatInfoDelegate;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FChangedGoldDelegate, const int32&);
+    FChangedGoldDelegate OnChangedGoldDelegate;
+
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -67,11 +81,11 @@ protected:
     Protocol::PlayerInfo* PlayerInfo_;
     Protocol::StatInfo* StatInfo_;
 
-    //UPROPERTY()
-    //TObjectPtr<class UInventory> CachedInventory;
+    UPROPERTY()
+    TObjectPtr<class UInventory> CachedInventory;
 
-    //UPROPERTY()
-    //TObjectPtr<class UEquippedGear> CachedEquippedGear;
+    UPROPERTY()
+    TObjectPtr<class UEquippedGear> CachedEquippedGear;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;

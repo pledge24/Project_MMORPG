@@ -7,6 +7,7 @@
 #include "HUDWidget.h"
 #include "P1GameInstance.h"
 #include "P1Player.h"
+#include "P1MyPlayer.h"
 
 enum WidgetType
 {

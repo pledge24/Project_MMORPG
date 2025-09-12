@@ -19,7 +19,10 @@ class P1_API UHUDWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    void UpdateAllHUDData(const Protocol::PlayerInfo& _PlayerInfo);
+    void SetupDelegateBinding(class AP1MyPlayer* Player);
+
+    void UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_);
+    void UpdateAllStatInfo(const Protocol::StatInfo& StatInfo_);
     void UpdateCurLevel(int32 Level);
     void UpdateCurHp(int32 Hp);
     void UpdateCurMp(int32 Mp);

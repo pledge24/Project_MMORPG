@@ -42,6 +42,14 @@ public:
 
 	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
+    void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
+    void HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt);
+
+    void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
+    void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
+    void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
+
+
 public:
 	void SetToken(FString token) { _token = token; }
 	FString GetToken() { return _token; }

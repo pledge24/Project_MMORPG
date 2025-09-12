@@ -84,9 +84,11 @@ bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemIns
     if (targetSlot->has_item())
     {
         // Modifiy slot data
-        int32 updatedCount = targetSlot->count() + count;
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
-        targetSlot->set_count(updatedCount);
+
+        Protocol::Item* item = targetSlot->mutable_item();
+        int32 updatedCount = item->count() + count;
+        item->set_count(updatedCount);
 
         if(reflectSlot != nullptr)
             reflectSlot->CopyFrom(*targetSlot);
@@ -95,7 +97,6 @@ bool Inventory::addItem(OUT Protocol::Slot* reflectSlot, Protocol::Item& itemIns
     {
         // Add new slot data
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
-        targetSlot->set_count(count);
 
         Protocol::Item* item = targetSlot->mutable_item();
         item->CopyFrom(itemInstance);
@@ -129,16 +130,18 @@ bool Inventory::removeItem(Protocol::Slot* reflectSlot, Protocol::Slot* slot, in
     Protocol::ItemType itemType = slotTypeToItemTypeMappings[slot->type()];
     int32 slotId = slot->slot_id();
     Protocol::Slot* targetSlot = lookupMappings[itemType]->Mutable(slotId);
+    Protocol::Item* item = targetSlot->mutable_item();
+
     dirtyFlagsMappings[itemType][slotId] = true;
 
-    if (targetSlot->has_item() == false || targetSlot->count() < count)
+    if (targetSlot->has_item() == false || item->count() < count)
         return false;
 
-    int32 updatedCount = targetSlot->count() - count;
+    int32 updatedCount = item->count() - count;
     if (updatedCount > 0)
     {
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
-        targetSlot->set_count(updatedCount);
+        item->set_count(updatedCount);
 
         reflectSlot->CopyFrom(*targetSlot);
     }
@@ -146,8 +149,7 @@ bool Inventory::removeItem(Protocol::Slot* reflectSlot, Protocol::Slot* slot, in
     {
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
         targetSlot->clear_item();
-        targetSlot->clear_count();
-
+        
         reflectSlot->CopyFrom(*targetSlot);
     }
     

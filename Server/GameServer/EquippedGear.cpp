@@ -53,7 +53,6 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
     targetSlot->mutable_item()->CopyFrom(itemInstance);
-    targetSlot->set_count(1);
 
     if(reflectSlot != nullptr)
         reflectSlot->CopyFrom(*targetSlot);
@@ -97,7 +96,6 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
     targetSlot->clear_item();
-    targetSlot->clear_count();
 
     if (reflectSlot != nullptr)
         reflectSlot->CopyFrom(*targetSlot);

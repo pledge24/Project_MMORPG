@@ -22,16 +22,20 @@ class P1_API UInventory : public UObject
 	GENERATED_BODY()
 	
 public:
-    UInventory();
+    UInventory() = default;
+    UInventory(AActor* Owner_);
     ~UInventory();
 
     void Init(const Protocol::Inventory& Inventory_);
 
     void UpdateSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& Slots);
+    void UpdateSlot(const Protocol::Slot& Slot_);
 
 private:
     /* 카테고리별 인벤토리 LookUp */
-    TArray<Protocol::Slot> _Gear;
-    TArray<Protocol::Slot> _Consumables;
-    TArray<Protocol::Slot> _Miscellaneous;
+    TArray<Protocol::Item*> GearLookup;
+    TArray<Protocol::Item*> ConsumablesLookup;
+    TArray<Protocol::Item*> MiscellaneousLookup;
+
+    AActor* Owner;
 };

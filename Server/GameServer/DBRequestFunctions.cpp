@@ -1276,7 +1276,7 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
                     const Protocol::Slot slot = inven.gear().Get(i);
                     _slotId[rows] = slot.slot_id();
                     _templateId[rows] = slot.item().template_id();
-                    _count[rows] = slot.count();
+                    _count[rows] = slot.item().count();
 
                     rows++;
                 }
@@ -1389,7 +1389,7 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
                     const Protocol::Slot slot = inven.gear().Get(i);
                     _slotId[rows] = slot.slot_id();
                     _templateId[rows] = slot.item().template_id();
-                    _count[rows] = slot.count();
+                    _count[rows] = slot.item().count();
 
                     rows++;
                 }

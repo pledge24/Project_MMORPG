@@ -27,6 +27,7 @@ public:
 private:
     unordered_map<Protocol::ItemType, RepeatedPtrField<Protocol::Slot>*> lookupMappings;
     unordered_map<Protocol::ItemType, vector<bool>> dirtyFlagsMappings;
+
     unordered_map<Protocol::SlotType, Protocol::ItemType> slotTypeToItemTypeMappings;
     unordered_map<string, Protocol::ItemType> itemTypeMappings;
 };

@@ -4,14 +4,29 @@
 #include "Game/HUDWidget.h"
 #include "Components/TextBlock.h"
 #include "ProgressBarWidget.h"
+#include "P1MyPlayer.h"
 
-void UHUDWidget::UpdateAllHUDData(const Protocol::PlayerInfo& _PlayerInfo)
+void UHUDWidget::SetupDelegateBinding(AP1MyPlayer* Player)
 {
-    const Protocol::StatInfo& _StatInfo = _PlayerInfo.stat_info();
-    UpdateCurLevel(_PlayerInfo.level());
-    HpBar->Init(_StatInfo.hp(), _StatInfo.max_hp());
-    MpBar->Init(_StatInfo.mp(), _StatInfo.max_mp());
-    ExpBar->Init(_PlayerInfo.cur_exp(), _PlayerInfo.max_exp());
+    if (!Player)
+    {
+        Player->OnChangedStatInfoDelegate.AddUObject(this, &UHUDWidget::UpdateAllStatInfo);
+    }
+}
+
+void UHUDWidget::UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_)
+{
+    const Protocol::StatInfo& StatInfo_ = PlayerInfo_.stat_info();
+
+    UpdateCurLevel(PlayerInfo_.level());
+    HpBar->Init(StatInfo_.hp(), StatInfo_.max_hp());
+    MpBar->Init(StatInfo_.mp(), StatInfo_.max_mp());
+    ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp());
+}
+
+void UHUDWidget::UpdateAllStatInfo(const Protocol::StatInfo& StatInfo_)
+{
+    if(StatInfo_.has_hp())
 }
 
 void UHUDWidget::UpdateCurLevel(int32 Level)

@@ -1758,7 +1758,7 @@ class Item final :
     return *internal_default_instance();
   }
   enum InstanceDataCase {
-    kGearInfo = 3,
+    kGearInfo = 4,
     INSTANCE_DATA_NOT_SET = 0,
   };
 
@@ -1842,7 +1842,8 @@ class Item final :
   enum : int {
     kItemUidFieldNumber = 2,
     kTemplateIdFieldNumber = 1,
-    kGearInfoFieldNumber = 3,
+    kCountFieldNumber = 3,
+    kGearInfoFieldNumber = 4,
   };
   // optional int64 item_uid = 2;
   bool has_item_uid() const;
@@ -1866,7 +1867,20 @@ class Item final :
   void _internal_set_template_id(int32_t value);
   public:
 
-  // .Protocol.GearInfo gearInfo = 3;
+  // optional int32 count = 3;
+  bool has_count() const;
+  private:
+  bool _internal_has_count() const;
+  public:
+  void clear_count();
+  int32_t count() const;
+  void set_count(int32_t value);
+  private:
+  int32_t _internal_count() const;
+  void _internal_set_count(int32_t value);
+  public:
+
+  // .Protocol.GearInfo gearInfo = 4;
   bool has_gearinfo() const;
   private:
   bool _internal_has_gearinfo() const;
@@ -1902,6 +1916,7 @@ class Item final :
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int64_t item_uid_;
     int32_t template_id_;
+    int32_t count_;
     union InstanceDataUnion {
       constexpr InstanceDataUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
@@ -2040,7 +2055,6 @@ class Slot final :
     kSlotIdFieldNumber = 1,
     kTypeFieldNumber = 2,
     kStateFieldNumber = 3,
-    kCountFieldNumber = 5,
   };
   // optional .Protocol.Item item = 4;
   bool has_item() const;
@@ -2091,19 +2105,6 @@ class Slot final :
   void _internal_set_state(::Protocol::UpdateState value);
   public:
 
-  // optional int32 count = 5;
-  bool has_count() const;
-  private:
-  bool _internal_has_count() const;
-  public:
-  void clear_count();
-  int32_t count() const;
-  void set_count(int32_t value);
-  private:
-  int32_t _internal_count() const;
-  void _internal_set_count(int32_t value);
-  public:
-
   // @@protoc_insertion_point(class_scope:Protocol.Slot)
  private:
   class _Internal;
@@ -2118,7 +2119,6 @@ class Slot final :
     int32_t slot_id_;
     int type_;
     int state_;
-    int32_t count_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Struct_2eproto;
@@ -3619,7 +3619,35 @@ inline void Item::set_item_uid(int64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.Item.item_uid)
 }
 
-// .Protocol.GearInfo gearInfo = 3;
+// optional int32 count = 3;
+inline bool Item::_internal_has_count() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool Item::has_count() const {
+  return _internal_has_count();
+}
+inline void Item::clear_count() {
+  _impl_.count_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline int32_t Item::_internal_count() const {
+  return _impl_.count_;
+}
+inline int32_t Item::count() const {
+  // @@protoc_insertion_point(field_get:Protocol.Item.count)
+  return _internal_count();
+}
+inline void Item::_internal_set_count(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.count_ = value;
+}
+inline void Item::set_count(int32_t value) {
+  _internal_set_count(value);
+  // @@protoc_insertion_point(field_set:Protocol.Item.count)
+}
+
+// .Protocol.GearInfo gearInfo = 4;
 inline bool Item::_internal_has_gearinfo() const {
   return instance_data_case() == kGearInfo;
 }
@@ -3862,34 +3890,6 @@ inline void Slot::set_allocated_item(::Protocol::Item* item) {
   }
   _impl_.item_ = item;
   // @@protoc_insertion_point(field_set_allocated:Protocol.Slot.item)
-}
-
-// optional int32 count = 5;
-inline bool Slot::_internal_has_count() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
-  return value;
-}
-inline bool Slot::has_count() const {
-  return _internal_has_count();
-}
-inline void Slot::clear_count() {
-  _impl_.count_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004u;
-}
-inline int32_t Slot::_internal_count() const {
-  return _impl_.count_;
-}
-inline int32_t Slot::count() const {
-  // @@protoc_insertion_point(field_get:Protocol.Slot.count)
-  return _internal_count();
-}
-inline void Slot::_internal_set_count(int32_t value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
-  _impl_.count_ = value;
-}
-inline void Slot::set_count(int32_t value) {
-  _internal_set_count(value);
-  // @@protoc_insertion_point(field_set:Protocol.Slot.count)
 }
 
 // -------------------------------------------------------------------

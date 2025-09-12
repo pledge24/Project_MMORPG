@@ -19,7 +19,7 @@ void USlotWidget::NativeConstruct()
 void USlotWidget::SetSlot(const FItemData& Item, int32 Count)
 {
     ItemData = Item;
-    SlotData.set_count(Count);
+    SlotData.mutable_item()->set_count(Count);
 
     if (!Item.Icon.IsNull())
     {
@@ -51,8 +51,8 @@ void USlotWidget::SetSlot(const Protocol::Slot& _Slot)
         break;
     }
     
-    if (SlotData.count() > 1)
-        ItemCountText->SetText(FText::AsNumber(SlotData.count()));
+    if (SlotData.item().count() > 1)
+        ItemCountText->SetText(FText::AsNumber(SlotData.item().count()));
     else
         ItemCountText->SetText(FText::GetEmpty());
 }
