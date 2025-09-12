@@ -67,11 +67,11 @@ protected:
     Protocol::PlayerInfo* PlayerInfo_;
     Protocol::StatInfo* StatInfo_;
 
-    UPROPERTY()
-    TObjectPtr<class UInventory> CachedInventory;
+    //UPROPERTY()
+    //TObjectPtr<class UInventory> CachedInventory;
 
-    UPROPERTY()
-    TObjectPtr<class UEquippedGear> CachedEquippedGear;
+    //UPROPERTY()
+    //TObjectPtr<class UEquippedGear> CachedEquippedGear;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;

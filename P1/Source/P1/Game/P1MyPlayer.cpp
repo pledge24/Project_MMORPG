@@ -34,14 +34,13 @@ AP1MyPlayer::AP1MyPlayer()
     PlayerInfo_ = new Protocol::PlayerInfo();
     StatInfo_ = PlayerInfo_->mutable_stat_info();
 
-    CachedInventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
-    CachedEquippedGear = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
+    /*CachedInventory = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+    CachedEquippedGear = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));*/
 }
 
 AP1MyPlayer::~AP1MyPlayer()
 {
     delete PlayerInfo_;
-    delete StatInfo_;
     PlayerInfo_ = nullptr;
     StatInfo_ = nullptr;
 }
@@ -147,8 +146,8 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
 
     PlayerInfo_->CopyFrom(ObjectInfo_.player_info());
 
-    CachedInventory->Init(PlayerInfo_->inventory());
-    CachedEquippedGear->Init(PlayerInfo_->equipped_gear());
+    //CachedInventory->Init(PlayerInfo_->inventory());
+    //CachedEquippedGear->Init(PlayerInfo_->equipped_gear());
 
     if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {

@@ -78,4 +78,5 @@ protected:
 
 private:
     int32 ToggleFlag = 0;
+
 };
