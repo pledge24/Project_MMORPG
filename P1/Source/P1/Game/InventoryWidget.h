@@ -21,6 +21,8 @@ class P1_API UInventoryWidget : public UUserWidget
 public:
     virtual void NativeConstruct() override;
 
+    void SetupDelegateBinding();
+
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 

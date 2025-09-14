@@ -17,26 +17,19 @@ class P1_API UInventory : public UObject
 	GENERATED_BODY()
 	
 public:
-    UInventory() = default;
-    UInventory(AActor* Owner_);
+    UInventory();
     ~UInventory();
 
-    void Init(const Protocol::Inventory& Inventory_);
+    void Init(Protocol::Inventory* Inventory_, AActor* Owner);
+    void Refresh();
 
-    void AddItem(const Protocol::Slot& Slot_);
-    void RemoveItem(const Protocol::Slot& Slot_);
+    void SetSlot(const Protocol::Slot& Slot_);
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventoryUpdated, const Protocol::Slot&);
-    FOnInventoryUpdated OnInventoryUpdated;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventoryRefreshed, const TArray<Protocol::Slot*>&);
+    FOnInventoryRefreshed OnInventoryRefreshed;
 
 private:
     /** 카테고리별 인벤토리 Lookup 매핑 정보*/
-    TMap<Protocol::SlotType, TArray<Protocol::Item*>&> InventoryLookupMappings;
-
-    /** 카테고리별 인벤토리 LookUp */
-    TArray<Protocol::Item*> GearLookup;
-    TArray<Protocol::Item*> ConsumablesLookup;
-    TArray<Protocol::Item*> MiscellaneousLookup;
-
-    AActor* Owner;
+    TMap<Protocol::SlotType, TArray<Protocol::Slot*>> InventoryLookupMappings;
+    AActor* _Owner;
 };

@@ -18,15 +18,18 @@ class P1_API UHUDWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-public:
-    void SetupDelegateBinding(class AP1MyPlayer* Player);
+protected:
+    virtual void NativeConstruct() override;
 
+    void SetupDelegateBinding();
+
+public:
     void UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_);
     void UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_);
     void UpdateCurLevel(int32 Level);
     void UpdateCurHp(int32 Hp);
     void UpdateCurMp(int32 Mp);
-    void UpdateCurExp(int32 Exp);
+    void UpdateExp(int32 CurExp, int32 MaxExp);
 
 protected:
     UPROPERTY(meta = (BindWidget))

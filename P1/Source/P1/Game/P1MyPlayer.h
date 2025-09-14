@@ -42,8 +42,10 @@ public:
 
     /** 소유 관련 */
     void SetGold(int64 Gold);
-    void SetInventory();
-    void SetEquippedGear();
+    int32 GetGold() { return _PlayerInfo->gold(); };
+
+    void SetInventorySlot(const Protocol::Slot& Slot_);
+    void SetEquippedGearSlot(const Protocol::Slot& Slot_);
 
 public:
     /** 델리게이트 모음 */
@@ -56,18 +58,17 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
     FOnStatInfoChanged OnStatInfoChanged;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAdded, const Protocol::Slot&);
-    FOnItemAdded OnItemAdded;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAdded, const Protocol::Slot&);
-    FOnItemAdded OnItemAdded;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, const Protocol::Slot&);
-    FOnItemRemoved OnItemRemoved;
-
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32);
     FOnGoldChanged OnGoldChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventorySlotChanged, const Protocol::Slot&);
+    FOnInventorySlotChanged OnInventorySlotChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedGearSlotChanged, const Protocol::Slot&);
+    FOnEquippedGearSlotChanged OnEquippedGearSlotChanged;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRefresh);
+    FOnRefresh OnRefresh;
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -99,14 +100,14 @@ protected:
 	class UInputAction* LookAction;
 
 protected:
-    Protocol::PlayerInfo* PlayerInfo_;
-    Protocol::StatInfo* StatInfo_;
+    Protocol::PlayerInfo* _PlayerInfo;
+    Protocol::StatInfo* _StatInfo;
 
     UPROPERTY()
-    TObjectPtr<class UInventory> CachedInventory;
+    TObjectPtr<class UInventory> InventoryHelper;
 
     UPROPERTY()
-    TObjectPtr<class UEquippedGear> CachedEquippedGear;
+    TObjectPtr<class UEquippedGear> EquippedGearHelper;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;

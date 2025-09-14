@@ -6,10 +6,35 @@
 #include "Components/TextBlock.h"
 #include "SlotWidget.h"
 #include "P1.h"
+#include "P1MyPlayer.h"
+#include "P1GameInstance.h"
 
 void UInventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    SetupDelegateBinding();
+}
+
+void UInventoryWidget::SetupDelegateBinding()
+{
+    UWorld* World = GetWorld();
+    AP1MyPlayer* MyPlayer = nullptr;
+    if (World)
+    {
+        UP1GameInstance* GameInstance = Cast<UP1GameInstance>(World->GetGameInstance());
+
+        if (GameInstance)
+        {
+            MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer);
+        }
+    }
+
+    if (MyPlayer)
+    {
+        MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
+        MyPlayer->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlot);
+    }
 }
 
 void UInventoryWidget::Clear()
@@ -108,6 +133,5 @@ void UInventoryWidget::SendEquipPacket(USlotWidget* _Slot)
         Protocol::C_EQUIP_GEAR pkt;
         pkt.mutable_slot()->CopyFrom(SlotData);
         SEND_PACKET(pkt);
-
     }
 }

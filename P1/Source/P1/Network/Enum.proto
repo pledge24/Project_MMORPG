@@ -88,7 +88,7 @@ enum UpdateState
     UPDATE_STATE_REMOVED = 3;
 }
 
-enum gearType
+enum GearType
 {
     GEAR_TYPE_NONE = 0;
     GEAR_TYPE_HELMET = 1;

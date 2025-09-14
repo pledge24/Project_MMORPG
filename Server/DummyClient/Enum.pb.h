@@ -324,7 +324,7 @@ inline bool UpdateState_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<UpdateState>(
     UpdateState_descriptor(), name, value);
 }
-enum gearType : int {
+enum GearType : int {
   GEAR_TYPE_NONE = 0,
   GEAR_TYPE_HELMET = 1,
   GEAR_TYPE_CHEST = 2,
@@ -332,27 +332,27 @@ enum gearType : int {
   GEAR_TYPE_ARMS = 4,
   GEAR_TYPE_BOOTS = 5,
   GEAR_TYPE_WEAPON = 6,
-  gearType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  gearType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+  GearType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  GearType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool gearType_IsValid(int value);
-constexpr gearType gearType_MIN = GEAR_TYPE_NONE;
-constexpr gearType gearType_MAX = GEAR_TYPE_WEAPON;
-constexpr int gearType_ARRAYSIZE = gearType_MAX + 1;
+bool GearType_IsValid(int value);
+constexpr GearType GearType_MIN = GEAR_TYPE_NONE;
+constexpr GearType GearType_MAX = GEAR_TYPE_WEAPON;
+constexpr int GearType_ARRAYSIZE = GearType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* gearType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearType_descriptor();
 template<typename T>
-inline const std::string& gearType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, gearType>::value ||
+inline const std::string& GearType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, GearType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function gearType_Name.");
+    "Incorrect type passed to function GearType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    gearType_descriptor(), enum_t_value);
+    GearType_descriptor(), enum_t_value);
 }
-inline bool gearType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, gearType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<gearType>(
-    gearType_descriptor(), name, value);
+inline bool GearType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, GearType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearType>(
+    GearType_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -426,10 +426,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::UpdateState>() {
   return ::Protocol::UpdateState_descriptor();
 }
-template <> struct is_proto_enum< ::Protocol::gearType> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::GearType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::gearType>() {
-  return ::Protocol::gearType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearType>() {
+  return ::Protocol::GearType_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

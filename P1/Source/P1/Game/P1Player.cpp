@@ -167,5 +167,5 @@ void AP1Player::UpdateEquippedGear(const Protocol::Slot& _Slot)
 {
     int32 SlotId = _Slot.slot_id();
     int32 TemplateId = _Slot.item().template_id();
-    OnChangeMesh(SlotId, TemplateId);
+    ChangeMesh(SlotId, TemplateId);
 }

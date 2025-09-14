@@ -3,42 +3,76 @@
 #include "Game/StatusWindowWidget.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
+#include "P1MyPlayer.h"
+#include "P1GameInstance.h"
 
-void UStatusWindowWidget::UpdateSlot(const Protocol::Slot& _Slot)
+void UStatusWindowWidget::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    SetupDelegateBinding();
+}
+
+void UStatusWindowWidget::SetupDelegateBinding()
+{
+    UWorld* World = GetWorld();
+    AP1MyPlayer* MyPlayer = nullptr;
+    if (World)
+    {
+        UP1GameInstance* GameInstance = Cast<UP1GameInstance>(World->GetGameInstance());
+
+        if (GameInstance)
+        {
+            MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer);
+        }
+    }
+
+    if (MyPlayer)
+    {
+        MyPlayer->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
+        MyPlayer->OnEquippedGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
+    }
+}
+
+void UStatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)
 {
     TObjectPtr<USlotWidget> SlotWidget = nullptr;
-    switch (_Slot.slot_id())
+    switch ((Protocol::GearType)Slot_.slot_id())
     {
-    case 1:
+    case Protocol::GearType::GEAR_TYPE_HELMET:
         SlotWidget = Equipped_Helmet;
         break;
-    case 2:
+    case Protocol::GearType::GEAR_TYPE_CHEST:
         SlotWidget = Equipped_Chest;
         break;
-    case 3:
-        SlotWidget = Equipped_Gloves;
+    case Protocol::GearType::GEAR_TYPE_ARMS:
+        SlotWidget = Equipped_Arms;
         break;
-    case 4:
+    case Protocol::GearType::GEAR_TYPE_LEGS:
         SlotWidget = Equipped_Legs;
         break;
-    case 5:
+    case Protocol::GearType::GEAR_TYPE_BOOTS:
         SlotWidget = Equipped_Boots;
         break;
-    case 6:
+    case Protocol::GearType::GEAR_TYPE_WEAPON:
         SlotWidget = Equipped_Weapon;
         break;
     }
 
     if (SlotWidget)
-        SlotWidget->SetSlot(_Slot);
+        SlotWidget->SetSlot(Slot_);
 }
 
-void UStatusWindowWidget::UpdateAllStat(const Protocol::StatInfo& _StatInfo)
+void UStatusWindowWidget::UpdateAllStat(const Protocol::StatInfo& StatInfo_)
 {
-    UpdateMaxHp(_StatInfo.max_hp());
-    UpdateMaxMp(_StatInfo.max_mp());
-    UpdatePhysicalAttack(_StatInfo.physical_attack());
-    UpdateMagicalAttack(_StatInfo.magical_attack());
+    if(StatInfo_.has_max_hp())
+        UpdateMaxHp(StatInfo_.max_hp());
+    if(StatInfo_.has_max_mp())
+        UpdateMaxMp(StatInfo_.max_mp());
+    if(StatInfo_.has_physical_attack())
+        UpdatePhysicalAttack(StatInfo_.physical_attack());
+    if(StatInfo_.has_magical_attack())
+        UpdateMagicalAttack(StatInfo_.magical_attack());
 }
 
 void UStatusWindowWidget::UpdateMaxHp(int32 Value)
@@ -61,13 +95,13 @@ void UStatusWindowWidget::UpdateMagicalAttack(int32 Value)
     Details_Magical_Attack->SetText(FText::AsNumber(Value));
 }
 
-void UStatusWindowWidget::SendUnequipPacket(USlotWidget* _Slot)
+void UStatusWindowWidget::SendUnequipPacket(USlotWidget* Slot_)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d")));
     
-    if (_Slot)
+    if (Slot_)
     {
-        const Protocol::Slot& SlotData = _Slot->SlotData;
+        const Protocol::Slot& SlotData = Slot_->SlotData;
 
         Protocol::C_UNEQUIP_GEAR pkt;
         pkt.mutable_slot()->CopyFrom(SlotData);

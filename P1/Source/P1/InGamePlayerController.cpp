@@ -85,7 +85,7 @@ void AInGamePlayerController::OnUpdateInventorySlot(const Protocol::Slot& _Slot)
 
 void AInGamePlayerController::OnUpdateEquippedGearSlot(const Protocol::Slot& _Slot)
 {
-    StatusWindowWidget->UpdateSlot(_Slot);
+    StatusWindowWidget->UpdateSlotWidget(_Slot);
 }
 
 void AInGamePlayerController::OnUpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo)

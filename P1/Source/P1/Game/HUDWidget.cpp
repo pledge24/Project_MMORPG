@@ -5,12 +5,34 @@
 #include "Components/TextBlock.h"
 #include "ProgressBarWidget.h"
 #include "P1MyPlayer.h"
+#include "P1GameInstance.h"
 
-void UHUDWidget::SetupDelegateBinding(AP1MyPlayer* Player)
+void UHUDWidget::NativeConstruct()
 {
-    if (!Player)
+    Super::NativeConstruct();
+
+    SetupDelegateBinding();
+}
+
+void UHUDWidget::SetupDelegateBinding()
+{
+    UWorld* World = GetWorld();
+    AP1MyPlayer* MyPlayer = nullptr;
+    if (World)
     {
-        Player->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
+        UP1GameInstance* GameInstance = Cast<UP1GameInstance>(World->GetGameInstance());
+
+        if (GameInstance)
+        {
+            MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer);
+        }
+    }
+
+    if (MyPlayer)
+    {
+        MyPlayer->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateCurLevel);
+        MyPlayer->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExp);
+        MyPlayer->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
     }
 }
 
@@ -48,7 +70,10 @@ void UHUDWidget::UpdateCurMp(int32 Mp)
     MpBar->UpdateBar(Mp);
 }
 
-void UHUDWidget::UpdateCurExp(int32 Exp)
+void UHUDWidget::UpdateExp(int32 CurExp, int32 MaxExp)
 {
-    ExpBar->UpdateBar(Exp, true);
+    if (MaxExp > 0)
+        ExpBar->Init(CurExp, MaxExp, true);
+    else
+        ExpBar->UpdateBar(CurExp, true);
 }

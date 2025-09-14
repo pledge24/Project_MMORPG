@@ -5,7 +5,7 @@
 EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {
     int32 slotId = 0;
-    while (slotId < Protocol::gearType_MAX + 1)
+    while (slotId < Protocol::GearType_MAX + 1)
     {
         Protocol::Slot* slotEquippedGear = player->playerInfo->add_equipped_gear();
 
@@ -17,16 +17,16 @@ EquippedGear::EquippedGear(PlayerRef player) : _player(player)
     }
 
     equippedGearlookupTable = player->playerInfo->mutable_equipped_gear();
-    gearDirtyFlags.resize(Protocol::gearType_MAX + 1, false);
+    gearDirtyFlags.resize(Protocol::GearType_MAX + 1, false);
 
     gearTypeMappings = {
-        {"helmet", Protocol::gearType::GEAR_TYPE_HELMET},
-        {"chest", Protocol::gearType::GEAR_TYPE_CHEST},
-        {"legs", Protocol::gearType::GEAR_TYPE_LEGS},
-        {"arms", Protocol::gearType::GEAR_TYPE_ARMS},
-        {"boots", Protocol::gearType::GEAR_TYPE_BOOTS},
-        {"sword", Protocol::gearType::GEAR_TYPE_WEAPON},
-        {"weapon", Protocol::gearType::GEAR_TYPE_WEAPON}
+        {"helmet", Protocol::GearType::GEAR_TYPE_HELMET},
+        {"chest", Protocol::GearType::GEAR_TYPE_CHEST},
+        {"legs", Protocol::GearType::GEAR_TYPE_LEGS},
+        {"arms", Protocol::GearType::GEAR_TYPE_ARMS},
+        {"boots", Protocol::GearType::GEAR_TYPE_BOOTS},
+        {"sword", Protocol::GearType::GEAR_TYPE_WEAPON},
+        {"weapon", Protocol::GearType::GEAR_TYPE_WEAPON}
     };
 }
 
@@ -43,7 +43,7 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
     if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
         return false;
 
-    Protocol::gearType type = setSlotId.has_value() ? (Protocol::gearType)setSlotId.value() : gearTypeMappings[ItemData["itemSubtype"]];
+    Protocol::GearType type = setSlotId.has_value() ? (Protocol::GearType)setSlotId.value() : gearTypeMappings[ItemData["itemSubtype"]];
     Protocol::Slot* targetSlot = equippedGearlookupTable->Mutable(type);
 
     if (targetSlot->has_item() == true)
@@ -86,7 +86,7 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
     if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
         return false;
 
-    Protocol::gearType type = gearTypeMappings[ItemData["itemSubtype"]];
+    Protocol::GearType type = gearTypeMappings[ItemData["itemSubtype"]];
     Protocol::Slot* targetSlot = equippedGearlookupTable->Mutable(type);
 
     if (targetSlot->has_item() == false)

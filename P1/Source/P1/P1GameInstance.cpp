@@ -184,8 +184,8 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        MyPlayer_->OnItemAdded.Broadcast(BuyItemPkt.updated_slot());
-        MyPlayer_->OnGoldChanged.Broadcast(BuyItemPkt.gold());
+        MyPlayer_->SetInventorySlot(BuyItemPkt.updated_slot());
+        MyPlayer_->SetGold(BuyItemPkt.gold());
     }
 }
 
@@ -200,8 +200,8 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        MyPlayer_->OnItemRemoved.Broadcast(SellItemPkt.updated_slot());
-        MyPlayer_->OnGoldChanged.Broadcast(SellItemPkt.gold());
+        MyPlayer_->SetInventorySlot(SellItemPkt.updated_slot());
+        MyPlayer_->SetGold(SellItemPkt.gold());
     }
 }
 
@@ -219,22 +219,31 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     if (FindActor == nullptr)
         return;
 
-    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
-    {
-        for (auto& Slot : EquipGearPkt.updated_slots())
-        {
-            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
-            {
-                MyPlayer_->OnGearEquipped.Broadcast(Slot);
-            }
-            else
-            {
-                MyPlayer_->OnItemRemoved.Broadcast(Slot);
-            }
-        }
+    AP1Player* Player = (*FindActor);
+    bool IsMyPlayer = Player->IsMyPlayer();
+    AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
 
-        MyPlayer_->OnStatInfoChanged.Broadcast(EquipGearPkt.updated_stat_info());
+    // 대개 2개(장착된 슬롯, 인벤 슬롯)
+    for (auto& Slot : EquipGearPkt.updated_slots())
+    {
+        if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
+        {
+            // 장착한 아이템 정보를 넘겨준다.
+            const Protocol::Item& Item_ = Slot.item();
+            Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+
+            if(IsMyPlayer)
+                MyPlayer_->SetEquippedGearSlot(Slot);
+        }
+        else
+        {
+            if (Player->IsMyPlayer())
+                MyPlayer_->SetInventorySlot(Slot);
+        }
     }
+
+    if(Player->IsMyPlayer())
+        MyPlayer_->SetStatInfo(EquipGearPkt.updated_stat_info());
 }
 
 void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
@@ -251,22 +260,31 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     if (FindActor == nullptr)
         return;
 
-    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
-    {
-        for (auto& Slot : UnequipGearPkt.updated_slots())
-        {
-            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
-            {
-                MyPlayer_->OnGearUnequipped.Broadcast(Slot);
-            }
-            else
-            {
-                MyPlayer_->OnItemAdded.Broadcast(Slot);
-            }
-        }
+    AP1Player* Player = (*FindActor);
+    bool IsMyPlayer = Player->IsMyPlayer();
+    AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
 
-        MyPlayer_->OnStatInfoChanged.Broadcast(UnequipGearPkt.updated_stat_info());
+    // 대개 2개(장착된 슬롯, 인벤 슬롯)
+    for (auto& Slot : UnequipGearPkt.updated_slots())
+    {
+        if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
+        {
+            // 장착한 아이템 정보를 넘겨준다.
+            const Protocol::Item& Item_ = Slot.item();
+            Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+
+            if (IsMyPlayer)
+                MyPlayer_->SetEquippedGearSlot(Slot);
+        }
+        else
+        {
+            if (Player->IsMyPlayer())
+                MyPlayer_->SetInventorySlot(Slot);
+        }
     }
+
+    if (Player->IsMyPlayer())
+        MyPlayer_->SetStatInfo(UnequipGearPkt.updated_stat_info());
 }
 
 void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
@@ -293,10 +311,11 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         {
             if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
             {
-                MyPlayer_->OnItemRemoved.Broadcast(Slot);
+                MyPlayer_->SetInventorySlot(Slot);
             }
         }
 
-        MyPlayer_->OnStatInfoChanged.Broadcast(UseItemPkt.updated_stat_info());
+        MyPlayer_->SetStatInfo(UseItemPkt.updated_stat_info());
+
     }
 }

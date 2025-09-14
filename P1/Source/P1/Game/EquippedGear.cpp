@@ -4,45 +4,46 @@
 #include "P1MyPlayer.h"
 #include "P1.h"
 
-UEquippedGear::UEquippedGear(AActor* Owner_) : Owner(Owner_)
+UEquippedGear::UEquippedGear()
 {
-    _EquippedGearLookup.SetNum(MAX_EQUIPPED_SLOTS + 1);
-
-    if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(Owner))
-    {
-        MyPlayer->OnGearEquipped.AddUObject(this, &UEquippedGear::UpdateSlot);
-        MyPlayer->OnGearUnequipped.AddUObject(this, &UEquippedGear::UpdateSlot);
-    }
+    EquippedGearLookup.SetNum(MAX_EQUIPPED_SLOTS + 1);
 }
 
 UEquippedGear::~UEquippedGear()
 {
 }
 
-void UEquippedGear::Init(const google::protobuf::RepeatedPtrField<Protocol::Slot>& EquippedGear_)
+void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_, AActor* Owner)
 {
-    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    _Owner = Owner;
+
+    int32 size = PlayerInfo_->equipped_gear_size();
+    EquippedGearLookup.SetNum(size);
+    for (int32 i = 0; i < size; ++i)
     {
-        // 장비 창
-        for (const Protocol::Slot& Slot_ : EquippedGear_)
-        {
-            int32 SlotId = Slot_.slot_id();
-            _EquippedGearLookup[SlotId]->CopyFrom(Slot_.item());
-            InGamePlayerController->OnUpdateEquippedGearSlot(Slot_);
-        }
+        Protocol::Slot* Slot_ = PlayerInfo_->mutable_equipped_gear(i);
+        EquippedGearLookup[Slot_->slot_id()] = Slot_;
+    }
+
+    // 델리게이트 바인딩
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(_Owner))
+    {
+        MyPlayer_->OnRefresh.AddUObject(this, &UEquippedGear::Refresh);
     }
 }
 
-void UEquippedGear::UpdateSlot(const Protocol::Slot& Slot_)
+void UEquippedGear::Refresh()
+{
+    OnEquippedGearRefreshed.Broadcast(EquippedGearLookup);
+}
+
+void UEquippedGear::SetSlot(const Protocol::Slot& Slot_)
 {
     int32 SlotId_ = Slot_.slot_id();
     Protocol::SlotType SlotType_ = Slot_.type();
+
     if (SlotType_ != Protocol::SlotType::SLOT_TYPE_EQUIPPED)
         return;
 
-    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-    {
-        _EquippedGearLookup[SlotId_]->CopyFrom(Slot_.item());
-        InGamePlayerController->OnUpdateInventorySlot(Slot_);
-    }
+    EquippedGearLookup[SlotId_]->CopyFrom(Slot_);
 }

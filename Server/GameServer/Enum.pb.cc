@@ -60,7 +60,7 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007*q\n\013UpdateSta"
   "te\022\025\n\021UPDATE_STATE_NONE\020\000\022\026\n\022UPDATE_STAT"
   "E_ADDED\020\001\022\031\n\025UPDATE_STATE_MODIFIED\020\002\022\030\n\024"
-  "UPDATE_STATE_REMOVED\020\003*\234\001\n\010gearType\022\022\n\016G"
+  "UPDATE_STATE_REMOVED\020\003*\234\001\n\010GearType\022\022\n\016G"
   "EAR_TYPE_NONE\020\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n"
   "\017GEAR_TYPE_CHEST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022"
   "\n\016GEAR_TYPE_ARMS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022"
@@ -249,11 +249,11 @@ bool UpdateState_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* gearType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[10];
 }
-bool gearType_IsValid(int value) {
+bool GearType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:

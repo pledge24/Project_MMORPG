@@ -54,12 +54,12 @@ message PosInfo
 message StatInfo
 {
     // 캐릭터 스텟 정보 전체를 보낼때 사용
-    int32 max_hp = 1;
-    int32 hp = 2;
-    int32 max_mp = 3;
-    int32 mp = 4;
-    int32 physical_attack = 5;
-    int32 magical_attack = 6;
+    optional int32 max_hp = 1;
+    optional int32 hp = 2;
+    optional int32 max_mp = 3;
+    optional int32 mp = 4;
+    optional int32 physical_attack = 5;
+    optional int32 magical_attack = 6;
 }
 
 message Stat

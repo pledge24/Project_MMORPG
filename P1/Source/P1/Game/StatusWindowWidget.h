@@ -17,9 +17,14 @@ class P1_API UStatusWindowWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
+protected:
+    virtual void NativeConstruct() override;
+
+    void SetupDelegateBinding();
+
 public:
-    void UpdateSlot(const Protocol::Slot& _Slot);
-    void UpdateAllStat(const Protocol::StatInfo& _StatInfo);
+    void UpdateSlotWidget(const Protocol::Slot& Slot_);
+    void UpdateAllStat(const Protocol::StatInfo& StatInfo_);
 
     void UpdateMaxHp(int32 Value);
     void UpdateMaxMp(int32 Value);
@@ -28,7 +33,7 @@ public:
 
 protected:
     UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendUnequipPacket(USlotWidget* _Slot);
+    void SendUnequipPacket(USlotWidget* Slot_);
 
     // 장착 중인 장비
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category="EquippedGear")
@@ -38,7 +43,7 @@ protected:
     TObjectPtr<USlotWidget> Equipped_Chest;
 
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<USlotWidget> Equipped_Gloves;
+    TObjectPtr<USlotWidget> Equipped_Arms;
 
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Legs;

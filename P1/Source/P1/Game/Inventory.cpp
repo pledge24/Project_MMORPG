@@ -4,13 +4,13 @@
 #include "P1MyPlayer.h"
 #include "P1.h"
 
-UInventory::UInventory(AActor* Owner_) : Owner(Owner_)
+UInventory::UInventory()
 {
     InventoryLookupMappings =
     {
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, GearLookup},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, ConsumablesLookup},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, MiscellaneousLookup}
+        {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, TArray<Protocol::Slot*>()},
+        {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, TArray<Protocol::Slot*>()},
+        {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, TArray<Protocol::Slot*>()}
     };
 }
 
@@ -18,66 +18,66 @@ UInventory::~UInventory()
 {
 }
 
-void UInventory::Init(const Protocol::Inventory& Inventory_)
+void UInventory::Init(Protocol::Inventory* Inventory_, AActor* Owner)
 {
-    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    _Owner = Owner;
+
+    // 장비창 룩업 저장
     {
-        // 장비 창
-        GearLookup.SetNum(Inventory_.gear().size());
-        for (const Protocol::Slot& Slot_ : Inventory_.gear())
+        int32 size = Inventory_->gear_size();
+        TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
+        GearLookup.SetNum(size);
+        for (int32 i = 0; i < size; ++i)
         {
-            // 룩업 저장
-            GearLookup[Slot_.slot_id()]->CopyFrom(Slot_.item());
-            InGamePlayerController->OnUpdateInventorySlot(Slot_);
-        }
-
-        // 소비 창
-        ConsumablesLookup.SetNum(Inventory_.consumables().size());
-        for (const Protocol::Slot& Slot_ : Inventory_.consumables())
-        {
-            ConsumablesLookup[Slot_.slot_id()]->CopyFrom(Slot_.item());
-            InGamePlayerController->OnUpdateInventorySlot(Slot_);
-        }
-
-        // 기타 창
-        MiscellaneousLookup.SetNum(Inventory_.miscellaneous().size());
-        for (const Protocol::Slot& Slot_ : Inventory_.miscellaneous())
-        {
-            MiscellaneousLookup[Slot_.slot_id()]->CopyFrom(Slot_.item());
-            InGamePlayerController->OnUpdateInventorySlot(Slot_);
+            Protocol::Slot* Slot_ = Inventory_->mutable_gear(i);
+            GearLookup[Slot_->slot_id()] = Slot_;
         }
     }
-    
-    // 델리게이트 바인드
-    if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(Owner))
+
+    // 소비창 룩업 저장
     {
-        MyPlayer->OnItemAdded.AddUObject(this, &UInventory::AddItem);
-        MyPlayer->OnItemRemoved.AddUObject(this, &UInventory::RemoveItem);
+        int32 size = Inventory_->consumables_size();
+        TArray<Protocol::Slot*>& ConsumablesLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE];
+        ConsumablesLookup.SetNum(size);
+        for (int32 i = 0; i < size; ++i)
+        {
+            Protocol::Slot* Slot_ = Inventory_->mutable_gear(i);
+            ConsumablesLookup[Slot_->slot_id()] = Slot_;
+        }
+    }
+
+    // 기타창 룩업 저장
+    {
+        int32 size = Inventory_->miscellaneous_size();
+        TArray<Protocol::Slot*>& MiscellaneousLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC];
+        MiscellaneousLookup.SetNum(size);
+        for (int32 i = 0; i < size; ++i)
+        {
+            Protocol::Slot* Slot_ = Inventory_->mutable_miscellaneous(i);
+            MiscellaneousLookup[Slot_->slot_id()] = Slot_;
+        }
+    }
+
+    // 델리게이트 바인딩
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(_Owner))
+    {
+        MyPlayer_->OnRefresh.AddUObject(this, &UInventory::Refresh);
     }
 }
 
-void UInventory::AddItem(const Protocol::Slot& Slot_)
+void UInventory::Refresh()
 {
-    // Validation
-    if (Slot_.state() != Protocol::UpdateState::UPDATE_STATE_ADDED && 
-        Slot_.state() != Protocol::UpdateState::UPDATE_STATE_MODIFIED)
-        return;
-    
-    TArray<Protocol::Item*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
-    InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_.item());
+    TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
+    TArray<Protocol::Slot*>& ConsumablesLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE];
+    TArray<Protocol::Slot*>& MiscellaneousLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC];
 
-    OnInventoryUpdated.Broadcast(Slot_);
+    OnInventoryRefreshed.Broadcast(GearLookup);
+    OnInventoryRefreshed.Broadcast(ConsumablesLookup);
+    OnInventoryRefreshed.Broadcast(MiscellaneousLookup);
 }
 
-void UInventory::RemoveItem(const Protocol::Slot& Slot_)
-{
-    // Validation
-    if (Slot_.state() != Protocol::UpdateState::UPDATE_STATE_REMOVED &&
-        Slot_.state() != Protocol::UpdateState::UPDATE_STATE_MODIFIED)
-        return;
-
-    TArray<Protocol::Item*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
-    InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_.item());
-
-    OnInventoryUpdated.Broadcast(Slot_);
+void UInventory::SetSlot(const Protocol::Slot& Slot_)
+{  
+    TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
+    InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
 }

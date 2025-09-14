@@ -21,15 +21,20 @@ class P1_API UEquippedGear : public UObject
 	GENERATED_BODY()
 
 public:
-    UEquippedGear() = default;
-    UEquippedGear(AActor* Owner_);
+    UEquippedGear();
     ~UEquippedGear();
 
-    void Init(const google::protobuf::RepeatedPtrField<Protocol::Slot>& EquippedGear_);
-    void UpdateSlot(const Protocol::Slot& Slot_);
+    void Init(Protocol::PlayerInfo* PlayerInfo_, AActor* Owner);
+    void Refresh();
+
+    void SetSlot(const Protocol::Slot& Slot_);
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedGearRefreshed, const TArray<Protocol::Slot*>&);
+    FOnEquippedGearRefreshed OnEquippedGearRefreshed;
 
 private:
-    /* 장착 아이템(캐시용) */
-    TArray<Protocol::Item*> _EquippedGearLookup;
-    AActor* Owner;
+    /** 장착 아이템 LookUp */
+    TArray<Protocol::Slot*> EquippedGearLookup;
+
+    AActor* _Owner;
 };

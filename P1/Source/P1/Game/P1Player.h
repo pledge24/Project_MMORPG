@@ -37,16 +37,14 @@ public:
 
     /** 장착 관련*/
     void UpdateEquippedGear(const Protocol::Slot& _Slot);
+
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
-    void OnChangeMesh(int32 SlotId, int32 TemplateId);
+    void ChangeMesh(int32 SlotId, int32 TemplateId);
 
 public:
     /** 델리게이트 모음 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGearEquipped, const Protocol::Slot&);
-    FOnGearEquipped OnGearEquipped;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGearUnequipped, const Protocol::Slot&);
-    FOnGearUnequipped OnGearUnequipped;
+    //DECLARE_MULTICAST_DELEGATE_OneParam(OnEquippedGearChanged, const Protocol::Slot&);
+    //OnEquippedGearChanged OnEquippedGearChanged;
 
 protected:
     class Protocol::PosInfo* SrcInfo; // 현재 위치

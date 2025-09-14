@@ -16,6 +16,6 @@ public:
 private:
     RepeatedPtrField<Protocol::Slot>* equippedGearlookupTable;
     vector<bool> gearDirtyFlags;
-    unordered_map<string, Protocol::gearType> gearTypeMappings;
+    unordered_map<string, Protocol::GearType> gearTypeMappings;
 };
 
