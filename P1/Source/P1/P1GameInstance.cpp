@@ -184,8 +184,8 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        MyPlayer_->OnAddItemDelegate.Broadcast(BuyItemPkt.updated_slot());
-        MyPlayer_->OnChangedGoldDelegate.Broadcast(BuyItemPkt.gold());
+        MyPlayer_->OnItemAdded.Broadcast(BuyItemPkt.updated_slot());
+        MyPlayer_->OnGoldChanged.Broadcast(BuyItemPkt.gold());
     }
 }
 
@@ -200,8 +200,8 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        MyPlayer_->OnRemoveItemDelegate.Broadcast(SellItemPkt.updated_slot());
-        MyPlayer_->OnChangedGoldDelegate.Broadcast(SellItemPkt.gold());
+        MyPlayer_->OnItemRemoved.Broadcast(SellItemPkt.updated_slot());
+        MyPlayer_->OnGoldChanged.Broadcast(SellItemPkt.gold());
     }
 }
 
@@ -225,15 +225,15 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
         {
             if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
             {
-                MyPlayer_->OnEquipGearDelegate.Broadcast(Slot);
+                MyPlayer_->OnGearEquipped.Broadcast(Slot);
             }
             else
             {
-                MyPlayer_->OnRemoveItemDelegate.Broadcast(Slot);
+                MyPlayer_->OnItemRemoved.Broadcast(Slot);
             }
         }
 
-        MyPlayer_->OnChangedStatInfoDelegate.Broadcast(EquipGearPkt.updated_stat_info());
+        MyPlayer_->OnStatInfoChanged.Broadcast(EquipGearPkt.updated_stat_info());
     }
 }
 
@@ -257,15 +257,15 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
         {
             if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
             {
-                MyPlayer_->OnUnequipGearDelegate.Broadcast(Slot);
+                MyPlayer_->OnGearUnequipped.Broadcast(Slot);
             }
             else
             {
-                MyPlayer_->OnAddItemDelegate.Broadcast(Slot);
+                MyPlayer_->OnItemAdded.Broadcast(Slot);
             }
         }
 
-        MyPlayer_->OnChangedStatInfoDelegate.Broadcast(UnequipGearPkt.updated_stat_info());
+        MyPlayer_->OnStatInfoChanged.Broadcast(UnequipGearPkt.updated_stat_info());
     }
 }
 
@@ -293,10 +293,10 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         {
             if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
             {
-                MyPlayer_->OnRemoveItemDelegate.Broadcast(Slot);
+                MyPlayer_->OnItemRemoved.Broadcast(Slot);
             }
         }
 
-        MyPlayer_->OnChangedStatInfoDelegate.Broadcast(UseItemPkt.updated_stat_info());
+        MyPlayer_->OnStatInfoChanged.Broadcast(UseItemPkt.updated_stat_info());
     }
 }

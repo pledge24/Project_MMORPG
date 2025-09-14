@@ -32,21 +32,42 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo) override;
-    int64 GetGold() { return PlayerInfo_->gold(); };
+
+    /** 레벨 관련 */
+    void SetLevel(int32 Level_);
+    void SetExp(int32 CurExp, int32 MaxExp=-1);
+
+    /** 스텟 관련 */
+    void SetStatInfo(const Protocol::StatInfo& StatInfo_);
+
+    /** 소유 관련 */
+    void SetGold(int64 Gold);
+    void SetInventory();
+    void SetEquippedGear();
 
 public:
     /** 델리게이트 모음 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FAddItemDelegate, const Protocol::Slot&);
-    FAddItemDelegate OnAddItemDelegate;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
+    FOnLevelChanged OnLevelChanged;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FRemoveItemDelegate, const Protocol::Slot&);
-    FRemoveItemDelegate OnRemoveItemDelegate;
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, int32, int32);
+    FOnExpChanged OnExpChanged;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FChangedStatInfoDelegate, const Protocol::StatInfo&);
-    FChangedStatInfoDelegate OnChangedStatInfoDelegate;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
+    FOnStatInfoChanged OnStatInfoChanged;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FChangedGoldDelegate, const int32&);
-    FChangedGoldDelegate OnChangedGoldDelegate;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAdded, const Protocol::Slot&);
+    FOnItemAdded OnItemAdded;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemAdded, const Protocol::Slot&);
+    FOnItemAdded OnItemAdded;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, const Protocol::Slot&);
+    FOnItemRemoved OnItemRemoved;
+
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32&);
+    FOnGoldChanged OnGoldChanged;
 
 protected:
 	void Move(const FInputActionValue& Value);

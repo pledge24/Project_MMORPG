@@ -42,11 +42,11 @@ public:
 
 public:
     /** 델리게이트 모음 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FEquipGearDelegate, const Protocol::Slot&);
-    FEquipGearDelegate OnEquipGearDelegate;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGearEquipped, const Protocol::Slot&);
+    FOnGearEquipped OnGearEquipped;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FUnequipGearDelegate, const Protocol::Slot&);
-    FUnequipGearDelegate OnUnequipGearDelegate;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGearUnequipped, const Protocol::Slot&);
+    FOnGearUnequipped OnGearUnequipped;
 
 protected:
     class Protocol::PosInfo* SrcInfo; // 현재 위치

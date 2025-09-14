@@ -10,8 +10,8 @@ UEquippedGear::UEquippedGear(AActor* Owner_) : Owner(Owner_)
 
     if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(Owner))
     {
-        MyPlayer->OnEquipGearDelegate.AddUObject(this, &UEquippedGear::UpdateSlot);
-        MyPlayer->OnUnequipGearDelegate.AddUObject(this, &UEquippedGear::UpdateSlot);
+        MyPlayer->OnGearEquipped.AddUObject(this, &UEquippedGear::UpdateSlot);
+        MyPlayer->OnGearUnequipped.AddUObject(this, &UEquippedGear::UpdateSlot);
     }
 }
 

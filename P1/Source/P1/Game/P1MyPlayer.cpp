@@ -156,6 +156,34 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
     }
 }
 
+void AP1MyPlayer::SetLevel(int32 Level_)
+{
+    PlayerInfo_->set_level(Level_);
+}
+
+void AP1MyPlayer::SetExp(int32 CurExp, int32 MaxExp)
+{
+    PlayerInfo_->set_cur_exp(CurExp);
+    if(MaxExp > 0)
+        PlayerInfo_->set_max_exp(MaxExp);
+}
+
+void AP1MyPlayer::SetStatInfo(const Protocol::StatInfo& StatInfo_)
+{
+}
+
+void AP1MyPlayer::SetGold(int64 Gold)
+{
+}
+
+void AP1MyPlayer::SetInventory()
+{
+}
+
+void AP1MyPlayer::SetEquippedGear()
+{
+}
+
 void AP1MyPlayer::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D

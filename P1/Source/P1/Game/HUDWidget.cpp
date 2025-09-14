@@ -10,7 +10,7 @@ void UHUDWidget::SetupDelegateBinding(AP1MyPlayer* Player)
 {
     if (!Player)
     {
-        Player->OnChangedStatInfoDelegate.AddUObject(this, &UHUDWidget::UpdateAllStatInfo);
+        Player->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
     }
 }
 
@@ -24,9 +24,12 @@ void UHUDWidget::UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_)
     ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp());
 }
 
-void UHUDWidget::UpdateAllStatInfo(const Protocol::StatInfo& StatInfo_)
+void UHUDWidget::UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_)
 {
-    if(StatInfo_.has_hp())
+    if (StatInfo_.has_hp())
+        UpdateCurHp(StatInfo_.hp());
+    if (StatInfo_.has_mp())
+        UpdateCurMp(StatInfo_.mp());
 }
 
 void UHUDWidget::UpdateCurLevel(int32 Level)
