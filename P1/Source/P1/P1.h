@@ -12,6 +12,8 @@
 #include "Types.h"
 #include "InGamePlayerController.h"
 
+#include "Protocol.pb.h"
+
 #define SEND_PACKET(Pkt)															\
 	SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);		\
 	Cast<UP1GameInstance>(GWorld->GetGameInstance())->SendPacket(SendBuffer);

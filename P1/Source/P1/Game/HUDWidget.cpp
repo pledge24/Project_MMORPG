@@ -6,30 +6,25 @@
 #include "ProgressBarWidget.h"
 #include "P1MyPlayer.h"
 #include "P1GameInstance.h"
+#include "P1.h"
 
 void UHUDWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    SetupDelegateBinding();
-}
-
-void UHUDWidget::SetupDelegateBinding()
-{
-    UWorld* World = GetWorld();
-    AP1MyPlayer* MyPlayer = nullptr;
-    if (World)
-    {
-        UP1GameInstance* GameInstance = Cast<UP1GameInstance>(World->GetGameInstance());
-
-        if (GameInstance)
-        {
-            MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer);
-        }
-    }
+    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
 
     if (MyPlayer)
     {
+        // Init
+        const Protocol::PlayerInfo& PlayerInfo_ = MyPlayer->GetPlayerInfo();
+
+        UpdateCurLevel(PlayerInfo_.level());
+        UpdateExp(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp());
+        UpdateAllStatsChanged(PlayerInfo_.stat_info());
+
+        // 바인딩 셋업
         MyPlayer->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateCurLevel);
         MyPlayer->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExp);
         MyPlayer->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);

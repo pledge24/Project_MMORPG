@@ -58,22 +58,6 @@ void UInventory::Init(Protocol::Inventory* Inventory_, AActor* Owner)
         }
     }
 
-    // 델리게이트 바인딩
-    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(_Owner))
-    {
-        MyPlayer_->OnRefresh.AddUObject(this, &UInventory::Refresh);
-    }
-}
-
-void UInventory::Refresh()
-{
-    TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
-    TArray<Protocol::Slot*>& ConsumablesLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE];
-    TArray<Protocol::Slot*>& MiscellaneousLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC];
-
-    OnInventoryRefreshed.Broadcast(GearLookup);
-    OnInventoryRefreshed.Broadcast(ConsumablesLookup);
-    OnInventoryRefreshed.Broadcast(MiscellaneousLookup);
 }
 
 void UInventory::SetSlot(const Protocol::Slot& Slot_)

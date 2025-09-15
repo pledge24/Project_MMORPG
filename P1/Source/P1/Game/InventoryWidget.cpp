@@ -13,27 +13,39 @@ void UInventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    SetupDelegateBinding();
-}
-
-void UInventoryWidget::SetupDelegateBinding()
-{
-    UWorld* World = GetWorld();
-    AP1MyPlayer* MyPlayer = nullptr;
-    if (World)
-    {
-        UP1GameInstance* GameInstance = Cast<UP1GameInstance>(World->GetGameInstance());
-
-        if (GameInstance)
-        {
-            MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer);
-        }
-    }
+    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
 
     if (MyPlayer)
     {
+        // Init
+        const Protocol::PlayerInfo& PlayerInfo_ = MyPlayer->GetPlayerInfo();
+        const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
+
+        UpdateGold(PlayerInfo_.gold());
+
+        for (const Protocol::Slot& Slot_ : Inven_.gear())
+        {
+            UpdateSlotWidget(Slot_);
+        }
+
+        for (const Protocol::Slot& Slot_ : Inven_.consumables())
+        {
+            UpdateSlotWidget(Slot_);
+        }
+
+        for (const Protocol::Slot& Slot_ : Inven_.miscellaneous())
+        {
+            UpdateSlotWidget(Slot_);
+        }
+        
+        // 바인딩 셋업
         MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
-        MyPlayer->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlot);
+        MyPlayer->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
+
+        MyPlayer->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) CanInteractive = true; });
+        MyPlayer->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
+        MyPlayer->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
     }
 }
 
@@ -41,32 +53,36 @@ void UInventoryWidget::Clear()
 {
     for (UWidget* GridSlot : Gear_Inven->GetAllChildren())
     {
-        USlotWidget* slot = Cast<USlotWidget>(GridSlot);
-        if (slot)
-            slot->ClearSlot();
+        USlotWidget* Slot_ = Cast<USlotWidget>(GridSlot);
+        if (Slot_)
+            Slot_->ClearSlot();
     }
 
     for (UWidget* GridSlot : Consumables_Inven->GetAllChildren())
     {
-        USlotWidget* slot = Cast<USlotWidget>(GridSlot);
-        if (slot)
-            slot->ClearSlot();
+        USlotWidget* Slot_ = Cast<USlotWidget>(GridSlot);
+        if (Slot_)
+            Slot_->ClearSlot();
     }
 
     for (UWidget* GridSlot : Misc_Inven->GetAllChildren())
     {
-        USlotWidget* slot = Cast<USlotWidget>(GridSlot);
-        if (slot)
-            slot->ClearSlot();
+        USlotWidget* Slot_ = Cast<USlotWidget>(GridSlot);
+        if (Slot_)
+            Slot_->ClearSlot();
     }
 }
 
-void UInventoryWidget::UpdateSlot(const Protocol::Slot& _Slot)
+void UInventoryWidget::UpdateSlotWidget(const Protocol::Slot& _Slot, bool OnUse)
 {
     USlotWidget* SlotWidget = GetSlotWidgetFromSlot(_Slot);
 
     if (SlotWidget)
+    {
         SlotWidget->SetSlot(_Slot);
+        if (OnUse)
+            SlotWidget->OnUse();
+    }
 }
 
 void UInventoryWidget::UpdateGold(int32 Gold)
@@ -107,10 +123,15 @@ USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot
     return nullptr;
 }
 
-void UInventoryWidget::SendSellPacket(USlotWidget* _Slot)
+void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
 {
+    if (!CanInteractive)
+        return;
+    else
+        CanInteractive = false;
+
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
-    
+
     if (_Slot)
     {
         const Protocol::Slot& SlotData = _Slot->SlotData;
@@ -122,16 +143,48 @@ void UInventoryWidget::SendSellPacket(USlotWidget* _Slot)
     }
 }
 
-void UInventoryWidget::SendEquipPacket(USlotWidget* _Slot)
+void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
-    
+    if (!CanInteractive)
+        return;
+    else
+        CanInteractive = false;
+
     if (_Slot)
     {
         const Protocol::Slot& SlotData = _Slot->SlotData;
 
-        Protocol::C_EQUIP_GEAR pkt;
-        pkt.mutable_slot()->CopyFrom(SlotData);
-        SEND_PACKET(pkt);
+        auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+        AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
+        if (!MyPlayer)
+            return;
+
+        int32 Level = MyPlayer->GetLevel();
+        if (Level < _Slot->ItemData.LevelRequirement)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
+            return;
+        }
+
+        if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
+            
+            Protocol::C_EQUIP_GEAR pkt;
+            pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(pkt);
+        }
+        else if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnUse!")));
+
+            Protocol::C_USE_ITEM pkt;
+            pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(pkt);
+        }
+        else
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Something Wrong in SendUseItemPacket!")));
+        }
     }
 }

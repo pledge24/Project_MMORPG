@@ -21,21 +21,19 @@ class P1_API UInventoryWidget : public UUserWidget
 public:
     virtual void NativeConstruct() override;
 
-    void SetupDelegateBinding();
-
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    void UpdateSlot(const Protocol::Slot& _Slot);
+    void UpdateSlotWidget(const Protocol::Slot& _Slot, bool OnUse = false);
     void UpdateGold(int32 Gold);
     class USlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& _Slot);
 
 protected:
     UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendSellPacket(USlotWidget* _Slot);
+    void SendSellItemPacket(USlotWidget* _Slot);
 
     UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendEquipPacket(USlotWidget* _Slot);
+    void SendUseItemPacket(USlotWidget* _Slot);
 
     UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
     UUniformGridPanel* Gear_Inven;
@@ -48,4 +46,7 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Gold_txt;
+
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    bool CanInteractive = true;
 };

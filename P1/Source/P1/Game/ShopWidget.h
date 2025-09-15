@@ -17,8 +17,12 @@ class P1_API UShopWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+    virtual void NativeConstruct() override;
 
 protected:
     UFUNCTION(BlueprintCallable, Category="Network")
-    void SendBuyPacket(USlotWidget* _Slot);
+    void SendBuyItemPacket(USlotWidget* _Slot);
+
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    bool CanInteractive = true;
 };

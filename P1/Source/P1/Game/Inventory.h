@@ -21,12 +21,8 @@ public:
     ~UInventory();
 
     void Init(Protocol::Inventory* Inventory_, AActor* Owner);
-    void Refresh();
 
     void SetSlot(const Protocol::Slot& Slot_);
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnInventoryRefreshed, const TArray<Protocol::Slot*>&);
-    FOnInventoryRefreshed OnInventoryRefreshed;
 
 private:
     /** 카테고리별 인벤토리 Lookup 매핑 정보*/

@@ -33,10 +33,10 @@ public:
     /** 이동 관련 */
 	void SetPosInfo(const Protocol::PosInfo& Info);
 	void SetDestInfo(const Protocol::PosInfo& Info);
-	Protocol::PosInfo* GetPlayerInfo() { return SrcInfo; }
+	Protocol::PosInfo* GetPosInfo() { return SrcInfo; }
 
     /** 장착 관련*/
-    void UpdateEquippedGear(const Protocol::Slot& _Slot);
+    void SetEquippedGear(const Protocol::Slot& _Slot);
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);

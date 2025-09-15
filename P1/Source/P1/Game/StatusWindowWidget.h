@@ -20,8 +20,6 @@ class P1_API UStatusWindowWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
-    void SetupDelegateBinding();
-
 public:
     void UpdateSlotWidget(const Protocol::Slot& Slot_);
     void UpdateAllStat(const Protocol::StatInfo& StatInfo_);
@@ -66,4 +64,7 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Details_Magical_Attack;
+
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    bool CanInteractive = true;
 };

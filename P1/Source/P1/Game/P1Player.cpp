@@ -116,13 +116,10 @@ bool AP1Player::IsMyPlayer()
 
 void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
 {
-    // 위치 설정
-    SetPosInfo(ObjectInfo.pos_info());
-
     // 장착한 장비를 메시로 표현
     for (auto& _Slot : ObjectInfo.player_info().equipped_gear())
     {
-        UpdateEquippedGear(_Slot);
+        SetEquippedGear(_Slot);
     }
 }
 
@@ -163,7 +160,7 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 	SetMoveState(Info.state());
 }
 
-void AP1Player::UpdateEquippedGear(const Protocol::Slot& _Slot)
+void AP1Player::SetEquippedGear(const Protocol::Slot& _Slot)
 {
     int32 SlotId = _Slot.slot_id();
     int32 TemplateId = _Slot.item().template_id();

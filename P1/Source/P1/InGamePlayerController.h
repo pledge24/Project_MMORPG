@@ -28,12 +28,6 @@ protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
 
-public:
-    void OnUpdateInventorySlot(const Protocol::Slot& _Slot);
-    void OnUpdateEquippedGearSlot(const Protocol::Slot& _Slot);
-    void OnUpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo);
-    void OnUpdateGold(int32 Gold);
-
 private:
     /** 위젯 토글 관련*/
     void OnToggleStatusWindowWidget();

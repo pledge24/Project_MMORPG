@@ -34,6 +34,9 @@ public:
     void ClearSlot();
     void InsertData(const Protocol::Slot& _Slot);
 
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnUse();
+
     // 데이터 테이블 애셋 포인터
     UPROPERTY(EditAnywhere, Category = "DataTable")
     UDataTable* ItemTable;

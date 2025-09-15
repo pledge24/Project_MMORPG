@@ -25,12 +25,8 @@ public:
     ~UEquippedGear();
 
     void Init(Protocol::PlayerInfo* PlayerInfo_, AActor* Owner);
-    void Refresh();
 
     void SetSlot(const Protocol::Slot& Slot_);
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedGearRefreshed, const TArray<Protocol::Slot*>&);
-    FOnEquippedGearRefreshed OnEquippedGearRefreshed;
 
 private:
     /** 장착 아이템 LookUp */

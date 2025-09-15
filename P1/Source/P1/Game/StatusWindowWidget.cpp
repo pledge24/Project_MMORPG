@@ -10,28 +10,28 @@ void UStatusWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    SetupDelegateBinding();
-}
-
-void UStatusWindowWidget::SetupDelegateBinding()
-{
-    UWorld* World = GetWorld();
-    AP1MyPlayer* MyPlayer = nullptr;
-    if (World)
-    {
-        UP1GameInstance* GameInstance = Cast<UP1GameInstance>(World->GetGameInstance());
-
-        if (GameInstance)
-        {
-            MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer);
-        }
-    }
+    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
 
     if (MyPlayer)
     {
+        // Init
+        const Protocol::PlayerInfo& PlayerInfo_ = MyPlayer->GetPlayerInfo();
+
+        UpdateAllStat(PlayerInfo_.stat_info());
+
+        for (const Protocol::Slot& Slot_ : PlayerInfo_.equipped_gear())
+        {
+            UpdateSlotWidget(Slot_);
+        }
+
+        // 바인딩 셋업
         MyPlayer->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
         MyPlayer->OnEquippedGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
+
+        MyPlayer->OnRep_UnequipGear.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
     }
+
 }
 
 void UStatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)
@@ -97,6 +97,11 @@ void UStatusWindowWidget::UpdateMagicalAttack(int32 Value)
 
 void UStatusWindowWidget::SendUnequipPacket(USlotWidget* Slot_)
 {
+    if (!CanInteractive)
+        return;
+    else
+        CanInteractive = false;
+
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d")));
     
     if (Slot_)

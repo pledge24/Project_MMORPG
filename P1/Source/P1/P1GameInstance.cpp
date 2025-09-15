@@ -102,8 +102,14 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-        PendingMyPlayerData = std::move(ObjectInfo);
-        bHasPendingMyPlayer = true;
+        auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+        AP1Player* Player = Cast<AP1Player>(PC->GetPawn());
+        if (Player == nullptr)
+            return;
+
+        Player->Init(ObjectInfo);
+        MyPlayer = Player;
+        Players.Add(ObjectInfo.object_id(), Player);
 	}
 	else
 	{
@@ -311,11 +317,10 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         {
             if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
             {
-                MyPlayer_->SetInventorySlot(Slot);
+                MyPlayer_->SetInventorySlot(Slot, true);
             }
         }
 
         MyPlayer_->SetStatInfo(UseItemPkt.updated_stat_info());
-
     }
 }

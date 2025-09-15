@@ -78,27 +78,6 @@ void AInGamePlayerController::SetupInputComponent()
     InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AInGamePlayerController::OnToggleInventoryWidget);
 }
 
-void AInGamePlayerController::OnUpdateInventorySlot(const Protocol::Slot& _Slot)
-{
-    InventoryWidget->UpdateSlot(_Slot);
-}
-
-void AInGamePlayerController::OnUpdateEquippedGearSlot(const Protocol::Slot& _Slot)
-{
-    StatusWindowWidget->UpdateSlotWidget(_Slot);
-}
-
-void AInGamePlayerController::OnUpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo)
-{
-    StatusWindowWidget->UpdateAllStat(_PlayerInfo.stat_info());
-    HUDWidget->UpdateAllHUDData(_PlayerInfo);
-}
-
-void AInGamePlayerController::OnUpdateGold(int32 Gold)
-{
-    InventoryWidget->UpdateGold(Gold);
-}
-
 void AInGamePlayerController::OnToggleStatusWindowWidget()
 {
     ToggleWidget(StatusWindowWidget, WIDGET_STATUS_WINDOW);

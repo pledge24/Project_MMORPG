@@ -58,25 +58,6 @@ void AP1MyPlayer::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
-
-    //if(!MyInventory)
-    //    MyInventory = NewObject<UInventory>(this, UInventory::StaticClass());
-
-    //if (!MyEquippedGear)
-    //    MyEquippedGear = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
-
-    // GameInstance에서 보류 중인 데이터가 있는지 확인
-    if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
-    {
-        if (GameInstance->bHasPendingMyPlayer)
-        {
-            // 안전하게 초기화
-            Init(GameInstance->PendingMyPlayerData);
-            GameInstance->MyPlayer = this;
-            GameInstance->Players.Add(GameInstance->PendingMyPlayerData.object_id(), this);
-            GameInstance->bHasPendingMyPlayer = false;
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -144,16 +125,12 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
 {
     Super::Init(ObjectInfo_);
 
+    SetPosInfo(ObjectInfo_.pos_info());
+
     _PlayerInfo->CopyFrom(ObjectInfo_.player_info());
 
     InventoryHelper->Init(_PlayerInfo->mutable_inventory(), this);
     EquippedGearHelper->Init(_PlayerInfo, this);
-
-    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-    {
-        InGamePlayerController->OnUpdatePlayerUI(*_PlayerInfo);
-        InGamePlayerController->OnUpdateGold(_PlayerInfo->gold());
-    }
 }
 
 void AP1MyPlayer::SetLevel(int32 Level_)
@@ -183,10 +160,10 @@ void AP1MyPlayer::SetGold(int64 Gold)
     OnGoldChanged.Broadcast(_PlayerInfo->gold());
 }
 
-void AP1MyPlayer::SetInventorySlot(const Protocol::Slot& Slot_)
+void AP1MyPlayer::SetInventorySlot(const Protocol::Slot& Slot_, bool OnUse)
 {
     InventoryHelper->SetSlot(Slot_);
-    OnInventorySlotChanged.Broadcast(Slot_);
+    OnInventorySlotChanged.Broadcast(Slot_, OnUse);
 }
 
 void AP1MyPlayer::SetEquippedGearSlot(const Protocol::Slot& Slot_)

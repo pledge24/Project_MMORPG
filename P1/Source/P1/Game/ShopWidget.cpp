@@ -5,25 +5,44 @@
 #include "P1.h"
 #include "P1MyPlayer.h"
 
-void UShopWidget::SendBuyPacket(USlotWidget* _Slot)
+void UShopWidget::NativeConstruct()
 {
+    Super::NativeConstruct();
+
+    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
+
+    if (MyPlayer)
+    {
+        // 바인딩 셋업
+        MyPlayer->OnRep_BuyItem.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
+    }
+}
+
+void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
+{
+    if (!CanInteractive)
+        return;
+    else
+        CanInteractive = false;
+
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
 
-    if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn()))
     {
-        if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(GameInstance->MyPlayer))
+        int64 Gold = MyPlayer->GetGold();
+        int64 BuyPrice = _Slot->ItemData.BuyPrice;
+
+        if (Gold < BuyPrice)
         {
-            int64 Gold = MyPlayer->GetGold();
-            int64 BuyPrice = _Slot->ItemData.BuyPrice;
-
-            if (Gold < BuyPrice)
-                return;
-            
-            Protocol::C_BUY_ITEM pkt;
-            pkt.set_template_id(_Slot->ItemData.TemplateId);
-            pkt.set_count(1);
-            SEND_PACKET(pkt)
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("NO MONEY")));
+            return;
         }
-
+            
+        Protocol::C_BUY_ITEM pkt;
+        pkt.set_template_id(_Slot->ItemData.TemplateId);
+        pkt.set_count(1);
+        SEND_PACKET(pkt)
     }
 }

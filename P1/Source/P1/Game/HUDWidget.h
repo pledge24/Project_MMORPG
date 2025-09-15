@@ -21,8 +21,6 @@ class P1_API UHUDWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
-    void SetupDelegateBinding();
-
 public:
     void UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_);
     void UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_);

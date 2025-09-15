@@ -24,17 +24,6 @@ void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_, AActor* Owner)
         Protocol::Slot* Slot_ = PlayerInfo_->mutable_equipped_gear(i);
         EquippedGearLookup[Slot_->slot_id()] = Slot_;
     }
-
-    // 델리게이트 바인딩
-    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(_Owner))
-    {
-        MyPlayer_->OnRefresh.AddUObject(this, &UEquippedGear::Refresh);
-    }
-}
-
-void UEquippedGear::Refresh()
-{
-    OnEquippedGearRefreshed.Broadcast(EquippedGearLookup);
 }
 
 void UEquippedGear::SetSlot(const Protocol::Slot& Slot_)
