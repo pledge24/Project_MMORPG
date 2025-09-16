@@ -12,7 +12,7 @@ struct FCharacterOverview
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite, Category = "CharacterSelect")
-    int64 CharacterId;
+    int64 CharacterId = -1;
 
     UPROPERTY(BlueprintReadWrite, Category = "CharacterSelect")
     FString CharacterClass;

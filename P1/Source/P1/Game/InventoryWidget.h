@@ -48,5 +48,5 @@ protected:
     UTextBlock* Gold_txt;
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-    bool CanInteractive = true;
+    bool PendingPacket = true;
 };

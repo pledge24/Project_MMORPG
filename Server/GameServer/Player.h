@@ -12,7 +12,8 @@ public:
 	Player();
 	virtual ~Player();
 
-    bool Init();
+    void Init();
+    bool PostInit();
     bool CalculateFinalStat();
 
 public:

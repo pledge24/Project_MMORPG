@@ -248,10 +248,8 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
             throw DBCustomError::ALREADY_EXISTING_CHARACTER;
         }
 
-        // 패킷으로 만들어서 클라이언트에게 보낸다.
         pkt.set_success(true);
         pkt.set_character_id(bindObject._characterId);
-        SEND_PACKET(pkt);
     }
     catch (DBCustomError dbError)
     {
@@ -314,16 +312,23 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
         // TODO: 다른 유저가 내 캐릭터를 지워버리지 못하도록 해야함
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             BEGIN TRANSACTION;
-            
+
             DECLARE @character_id BIGINT;
             DECLARE @user_id BIGINT;
             SET @character_id = (?);
             SET @user_id = (?);
-            
-            IF EXISTS (SELECT 1 FROM [dbo].[Characters] WHERE [character_id] = @character_id) AND [user_id] = @user_id
+
+            IF EXISTS (
+                SELECT 1 
+                FROM [dbo].[Characters] 
+                WHERE [character_id] = @character_id 
+                  AND [user_id] = @user_id
+            )
             BEGIN 
                 DELETE FROM [dbo].[Characters]
                 WHERE [character_id] = @character_id
+                  AND [user_id] = @user_id;
+
                 COMMIT TRANSACTION;
             END
             ELSE
@@ -392,13 +397,16 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     }
 
     // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
-    if (player->Init() == false)
+    if (player->PostInit() == false)
         return;
     
     // 패킷으로 만들어서 클라이언트에게 보낸다.
     Protocol::S_ENTER_GAME pkt;
     pkt.set_success(true);
     pkt.mutable_player()->CopyFrom(*player->objectInfo);
+
+    cout << pkt.DebugString() << endl;
+
     SEND_PACKET(pkt);
 }
 

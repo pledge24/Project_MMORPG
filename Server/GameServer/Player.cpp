@@ -9,25 +9,29 @@ Player::Player()
 
     playerInfo = objectInfo->mutable_player_info();
     statInfo = playerInfo->mutable_stat_info();
-
-    inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
-    equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
 }
 
 Player::~Player()
 {
 }
 
-bool Player::Init()
+void Player::Init()
 {
-    // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
-    bool success = CalculateFinalStat();
+    inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
+    equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
+}
 
-    return success;
+bool Player::PostInit()
+{
+    if (CalculateFinalStat() == false)
+        return false;
+
+    return true;
 }
 
 bool Player::CalculateFinalStat()
 {
+    // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
     struct FinalStat
     {
         int32 maxHp = 0;
@@ -42,19 +46,31 @@ bool Player::CalculateFinalStat()
     // 1. 레벨당 캐릭터 기본 스텟
     DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
     int32 level = playerInfo->level();
-    finalStat.maxHp += classLevelDataTable[level]["maxHp"];
-    finalStat.maxMp += classLevelDataTable[level]["maxMp"];
-    finalStat.physical_attack += classLevelDataTable[level]["physicalAttack"];
-    finalStat.magical_attack += classLevelDataTable[level]["magicalAttack"];
+    if(classLevelDataTable[level].contains("maxHp"))
+        finalStat.maxHp += classLevelDataTable[level]["maxHp"];
+    if (classLevelDataTable[level].contains("maxMp"))
+        finalStat.maxMp += classLevelDataTable[level]["maxMp"];
+    if (classLevelDataTable[level].contains("physicalAttack"))
+        finalStat.physical_attack += classLevelDataTable[level]["physicalAttack"];
+    if (classLevelDataTable[level].contains("magicalAttack"))
+        finalStat.magical_attack += classLevelDataTable[level]["magicalAttack"];
 
     // 2. 장착 중이 장비 스텟 추가
     for (const auto& slot : playerInfo->equipped_gear())
     {
         const Protocol::Item& item = slot.item();
-        finalStat.maxHp += Gamedata::ItemDataTable[item.template_id()]["hp"];
-        finalStat.maxMp += Gamedata::ItemDataTable[item.template_id()]["mp"];
-        finalStat.physical_attack += Gamedata::ItemDataTable[item.template_id()]["physicalAttack"];
-        finalStat.magical_attack += Gamedata::ItemDataTable[item.template_id()]["magicalAttack"];
+
+        if (item.template_id() == 0)
+            continue;
+
+        if (Gamedata::ItemDataTable[item.template_id()].contains("hp"))
+            finalStat.maxHp += Gamedata::ItemDataTable[item.template_id()]["hp"];
+        if (Gamedata::ItemDataTable[item.template_id()].contains("mp"))
+            finalStat.maxMp += Gamedata::ItemDataTable[item.template_id()]["mp"];
+        if (Gamedata::ItemDataTable[item.template_id()].contains("physicalAttack"))
+            finalStat.physical_attack += Gamedata::ItemDataTable[item.template_id()]["physicalAttack"];
+        if (Gamedata::ItemDataTable[item.template_id()].contains("magicalAttack"))
+            finalStat.magical_attack += Gamedata::ItemDataTable[item.template_id()]["magicalAttack"];
     }
 
     // validate

@@ -43,9 +43,9 @@ void UInventoryWidget::NativeConstruct()
         MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
         MyPlayer->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
 
-        MyPlayer->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) CanInteractive = true; });
-        MyPlayer->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
-        MyPlayer->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
+        MyPlayer->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) PendingPacket = false; });
+        MyPlayer->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        MyPlayer->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
@@ -125,12 +125,12 @@ USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot
 
 void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
 {
-    if (!CanInteractive)
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
+    
+    if (PendingPacket)
         return;
     else
-        CanInteractive = false;
-
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
+        PendingPacket = true;
 
     if (_Slot)
     {
@@ -145,10 +145,10 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
 
 void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
 {
-    if (!CanInteractive)
+    if (PendingPacket)
         return;
     else
-        CanInteractive = false;
+        PendingPacket = true;
 
     if (_Slot)
     {

@@ -12,6 +12,15 @@ class UInventoryWidget;
 class UStatusWindowWidget;
 class UHUDWidget;
 
+UENUM(BlueprintType)
+enum class WidgetType : uint8
+{
+    WIDGET_NONE = 0 UMETA(Hidden),
+    WIDGET_STATUS_WINDOW = 1 UMETA(DisplayName="StatusWindow"),
+    WIDGET_INVENTORY = 2 UMETA(DisplayName = "Inventory"),
+    WIDGET_SHOP = 3 UMETA(DisplayName = "Shop"),
+};
+
 /**
  * 
  */
@@ -32,7 +41,18 @@ private:
     /** 위젯 토글 관련*/
     void OnToggleStatusWindowWidget();
     void OnToggleInventoryWidget();
-    void ToggleWidget(UUserWidget* Widget, int32 FlagIdx);
+
+public:
+    void ToggleWidget(WidgetType Type);
+
+    UFUNCTION(BlueprintCallable, Category = "Widget")
+    void TurnOnWidget(WidgetType Type);
+
+    UFUNCTION(BlueprintCallable, Category = "Widget")
+    void TurnOffWidget(WidgetType Type);
+
+    UFUNCTION(BlueprintCallable, Category = "Widget")
+    bool IsTurnOnThisWidget(WidgetType Type) const { return WidgetFlag && (1 << (uint8)Type); }
 
 protected:
     /** HUD UI */
@@ -71,6 +91,7 @@ protected:
     UUserWidget* ShopWidget;
 
 private:
-    int32 ToggleFlag = 0;
+    TMap<WidgetType, UUserWidget*> WidgetMappings;
+    int32 WidgetFlag = 0;
 
 };

@@ -66,5 +66,5 @@ protected:
     UTextBlock* Details_Magical_Attack;
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-    bool CanInteractive = true;
+    bool PendingPacket = false;
 };

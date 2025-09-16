@@ -24,5 +24,5 @@ protected:
     void SendBuyItemPacket(USlotWidget* _Slot);
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-    bool CanInteractive = true;
+    bool PendingPacket = false;
 };

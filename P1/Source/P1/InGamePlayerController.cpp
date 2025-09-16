@@ -9,14 +9,6 @@
 #include "P1Player.h"
 #include "P1MyPlayer.h"
 
-enum WidgetType
-{
-    WIDGET_NONE = 0,
-    WIDGET_STATUS_WINDOW = 1,
-    WIDGET_INVENTORY = 2,
-    WIDGET_SHOP = 3,
-};
-
 void AInGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -65,9 +57,15 @@ void AInGamePlayerController::BeginPlay()
         if (ShopWidget)
         {
             ShopWidget->AddToViewport();
-            //ShopWidget->SetVisibility(ESlateVisibility::Collapsed);
+            ShopWidget->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
+
+    WidgetMappings = {
+        {WidgetType::WIDGET_STATUS_WINDOW, StatusWindowWidget},
+        {WidgetType::WIDGET_INVENTORY, InventoryWidget},
+        {WidgetType::WIDGET_SHOP, ShopWidget},
+    };
 }
 
 void AInGamePlayerController::SetupInputComponent()
@@ -80,41 +78,94 @@ void AInGamePlayerController::SetupInputComponent()
 
 void AInGamePlayerController::OnToggleStatusWindowWidget()
 {
-    ToggleWidget(StatusWindowWidget, WIDGET_STATUS_WINDOW);
+    ToggleWidget(WidgetType::WIDGET_STATUS_WINDOW);
 }
 
 void AInGamePlayerController::OnToggleInventoryWidget()
 {
-    ToggleWidget(InventoryWidget, WIDGET_INVENTORY);
+    ToggleWidget(WidgetType::WIDGET_INVENTORY);
 }
 
-void AInGamePlayerController::ToggleWidget(UUserWidget* Widget, int32 FlagIdx)
+void AInGamePlayerController::ToggleWidget(WidgetType Type)
 {
-    bool IsVisible = (ToggleFlag & (1 << FlagIdx)) > 0;
-
-    if (IsVisible)
+    if (UUserWidget* Widget = WidgetMappings[Type])
     {
-        Widget->SetVisibility(ESlateVisibility::Collapsed);
+        uint8 FlagIdx = (uint8)Type;
+        bool IsVisible = (WidgetFlag & (1 << FlagIdx)) > 0;
+
+        if (IsVisible)
+        {
+            Widget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+        else
+        {
+            Widget->SetVisibility(ESlateVisibility::Visible);
+        }
+
+        // Update Widget Flag
+        WidgetFlag ^= (1 << FlagIdx);
+
+        // 켜진 UI가 1개 이상이면 UI모드 유지
+        if (WidgetFlag > 0)
+        {
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeGameAndUI());
+        }
+        else
+        {
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
+        }
     }
-    else
+}
+
+void AInGamePlayerController::TurnOnWidget(WidgetType Type)
+{
+    if (UUserWidget* Widget = WidgetMappings[Type])
     {
         Widget->SetVisibility(ESlateVisibility::Visible);
+
+        uint8 FlagIdx = (uint8)Type;
+
+        // Update Widget Flag
+        WidgetFlag |= (1 << FlagIdx);
+
+        // 켜진 UI가 1개 이상이면 UI모드 유지
+        if (WidgetFlag > 0)
+        {
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeGameAndUI());
+        }
+        else
+        {
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
+        }
     }
+}
 
-    // Toggle Flag
-    ToggleFlag ^= (1 << FlagIdx);
-
-    // 켜진 UI가 1개 이상이면 UI모드 유지
-    if (ToggleFlag > 0)
+void AInGamePlayerController::TurnOffWidget(WidgetType Type)
+{
+    if (UUserWidget* Widget = WidgetMappings[Type])
     {
-        bShowMouseCursor = true;
-        SetInputMode(FInputModeGameAndUI());
-    }
-    else
-    {
-        bShowMouseCursor = false;
-        SetInputMode(FInputModeGameOnly());
-    }
+        Widget->SetVisibility(ESlateVisibility::Collapsed);
 
+        uint8 FlagIdx = (uint8)Type;
+
+        // Update Widget Flag
+        WidgetFlag &= (0 << FlagIdx);
+
+        // 켜진 UI가 1개 이상이면 UI모드 유지
+        if (WidgetFlag > 0)
+        {
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeGameAndUI());
+        }
+        else
+        {
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
+        }
+    }
 }
 

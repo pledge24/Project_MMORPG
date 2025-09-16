@@ -29,7 +29,7 @@ void UStatusWindowWidget::NativeConstruct()
         MyPlayer->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
         MyPlayer->OnEquippedGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
 
-        MyPlayer->OnRep_UnequipGear.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
+        MyPlayer->OnRep_UnequipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 
 }
@@ -97,10 +97,10 @@ void UStatusWindowWidget::UpdateMagicalAttack(int32 Value)
 
 void UStatusWindowWidget::SendUnequipPacket(USlotWidget* Slot_)
 {
-    if (!CanInteractive)
+    if (PendingPacket)
         return;
     else
-        CanInteractive = false;
+        PendingPacket = true;
 
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d")));
     

@@ -15,16 +15,16 @@ void UShopWidget::NativeConstruct()
     if (MyPlayer)
     {
         // 바인딩 셋업
-        MyPlayer->OnRep_BuyItem.AddLambda([this]() { if (IsValid(this)) CanInteractive = true; });
+        MyPlayer->OnRep_BuyItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
 void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
 {
-    if (!CanInteractive)
+    if (PendingPacket)
         return;
     else
-        CanInteractive = false;
+        PendingPacket = true;
 
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
 
