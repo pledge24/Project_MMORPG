@@ -10,6 +10,31 @@
 #include "ClientPacketHandler.h"
 #include "P1MyPlayer.h"
 #include "P1.h"
+#include "Inventory.h"
+#include "EquippedGear.h"
+
+UP1GameInstance::UP1GameInstance()
+{
+    InventoryHelper = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
+    EquippedGearHelper = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
+
+    _PlayerInfo = new Protocol::PlayerInfo();
+    _StatInfo = _PlayerInfo->mutable_stat_info();
+}
+
+void UP1GameInstance::Init()
+{
+    Super::Init();
+}
+
+void UP1GameInstance::BeginDestroy()
+{
+    Super::BeginDestroy();
+
+    delete _PlayerInfo;
+    _PlayerInfo = nullptr;
+    _StatInfo = nullptr;
+}
 
 void UP1GameInstance::ConnectToGameServer()
 {
@@ -83,7 +108,61 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 
 //////////////////////Network End//////////////////////////
 
-// 새로운 오브젝트(본인 포함)를 맵에 스폰
+void UP1GameInstance::RepLevel(int32 Level_)
+{
+    _PlayerInfo->set_level(Level_);
+    OnLevelChanged.Broadcast(_PlayerInfo->level());
+}
+
+void UP1GameInstance::RepExp(int32 CurExp, int32 MaxExp)
+{
+    _PlayerInfo->set_cur_exp(CurExp);
+    if (MaxExp > 0)
+        _PlayerInfo->set_max_exp(MaxExp);
+
+    OnExpChanged.Broadcast(_PlayerInfo->cur_exp(), _PlayerInfo->max_exp());
+}
+
+void UP1GameInstance::RepStatInfo(const Protocol::StatInfo& StatInfo_)
+{
+    _StatInfo->CopyFrom(StatInfo_);
+    OnStatInfoChanged.Broadcast(*_StatInfo);
+}
+
+void UP1GameInstance::RepGold(int64 Gold)
+{
+    _PlayerInfo->set_gold(Gold);
+    OnGoldChanged.Broadcast(_PlayerInfo->gold());
+}
+
+void UP1GameInstance::RepInventorySlot(const Protocol::Slot& Slot_, bool OnUse)
+{
+    InventoryHelper->SetSlot(Slot_);
+    OnInventorySlotChanged.Broadcast(Slot_, OnUse);
+}
+
+void UP1GameInstance::RepEquippedGearSlot(const Protocol::Slot& Slot_)
+{
+    EquippedGearHelper->SetSlot(Slot_);
+    OnEquippedGearSlotChanged.Broadcast(Slot_);
+}
+
+////////////////////// Replication End //////////////////////////
+
+void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt)
+{
+    if (EnterGamePkt.success() == false)
+        return;
+
+    // Init MyPlayer Data
+    const Protocol::PlayerInfo& PlayerInfo_ = EnterGamePkt.player().player_info();
+    _PlayerInfo->CopyFrom(PlayerInfo_);
+
+    _MyPlayerId = EnterGamePkt.player().object_id();
+    InventoryHelper->Init(_PlayerInfo->mutable_inventory());
+    EquippedGearHelper->Init(_PlayerInfo);
+}
+
 void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool IsMine)
 {
 	if (Socket == nullptr || GameServerSession == nullptr)
@@ -107,21 +186,16 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
         if (Player == nullptr)
             return;
 
-        Player->Init(ObjectInfo);
+        Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
         MyPlayer = Player;
         Players.Add(ObjectInfo.object_id(), Player);
 	}
 	else
 	{
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
-		Player->Init(ObjectInfo);
+		Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
 		Players.Add(ObjectInfo.object_id(), Player);
 	}
-}
-
-void UP1GameInstance::HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt)
-{
-	HandleSpawn(EnterGamePkt.player(), true);
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
@@ -190,8 +264,8 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        MyPlayer_->SetInventorySlot(BuyItemPkt.updated_slot());
-        MyPlayer_->SetGold(BuyItemPkt.gold());
+        RepInventorySlot(BuyItemPkt.updated_slot());
+        RepGold(BuyItemPkt.gold());
     }
 }
 
@@ -206,8 +280,8 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        MyPlayer_->SetInventorySlot(SellItemPkt.updated_slot());
-        MyPlayer_->SetGold(SellItemPkt.gold());
+        RepInventorySlot(SellItemPkt.updated_slot());
+        RepGold(SellItemPkt.gold());
     }
 }
 
@@ -229,7 +303,7 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     bool IsMyPlayer = Player->IsMyPlayer();
     AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
 
-    // 대개 2개(장착된 슬롯, 인벤 슬롯)
+    // 딱 2개(장착된 슬롯, 인벤 슬롯)
     for (auto& Slot : EquipGearPkt.updated_slots())
     {
         if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
@@ -239,17 +313,17 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
             Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
 
             if(IsMyPlayer)
-                MyPlayer_->SetEquippedGearSlot(Slot);
+                RepEquippedGearSlot(Slot);
         }
         else
         {
             if (Player->IsMyPlayer())
-                MyPlayer_->SetInventorySlot(Slot);
+                RepInventorySlot(Slot);
         }
     }
 
     if(Player->IsMyPlayer())
-        MyPlayer_->SetStatInfo(EquipGearPkt.updated_stat_info());
+        RepStatInfo(EquipGearPkt.updated_stat_info());
 }
 
 void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
@@ -280,17 +354,17 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
             Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
 
             if (IsMyPlayer)
-                MyPlayer_->SetEquippedGearSlot(Slot);
+                RepEquippedGearSlot(Slot);
         }
         else
         {
             if (Player->IsMyPlayer())
-                MyPlayer_->SetInventorySlot(Slot);
+                RepInventorySlot(Slot);
         }
     }
 
     if (Player->IsMyPlayer())
-        MyPlayer_->SetStatInfo(UnequipGearPkt.updated_stat_info());
+        RepStatInfo(UnequipGearPkt.updated_stat_info());
 }
 
 void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
@@ -317,10 +391,10 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         {
             if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
             {
-                MyPlayer_->SetInventorySlot(Slot, true);
+                RepInventorySlot(Slot, true);
             }
         }
 
-        MyPlayer_->SetStatInfo(UseItemPkt.updated_stat_info());
+        RepStatInfo(UseItemPkt.updated_stat_info());
     }
 }

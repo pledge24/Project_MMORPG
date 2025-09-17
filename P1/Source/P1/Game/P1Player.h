@@ -15,10 +15,10 @@ class P1_API AP1Player : public ACharacter
 
 public:
 	AP1Player();
-	virtual ~AP1Player();
 
 protected:
 	virtual void BeginPlay();
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
 
 public:

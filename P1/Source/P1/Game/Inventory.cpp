@@ -18,10 +18,8 @@ UInventory::~UInventory()
 {
 }
 
-void UInventory::Init(Protocol::Inventory* Inventory_, AActor* Owner)
+void UInventory::Init(Protocol::Inventory* Inventory_)
 {
-    _Owner = Owner;
-
     // 장비창 룩업 저장
     {
         int32 size = Inventory_->gear_size();

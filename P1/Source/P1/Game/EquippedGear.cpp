@@ -13,10 +13,8 @@ UEquippedGear::~UEquippedGear()
 {
 }
 
-void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_, AActor* Owner)
+void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_)
 {
-    _Owner = Owner;
-
     int32 size = PlayerInfo_->equipped_gear_size();
     EquippedGearLookup.SetNum(size);
     for (int32 i = 0; i < size; ++i)

@@ -24,7 +24,7 @@ public:
     UEquippedGear();
     ~UEquippedGear();
 
-    void Init(Protocol::PlayerInfo* PlayerInfo_, AActor* Owner);
+    void Init(Protocol::PlayerInfo* PlayerInfo_);
 
     void SetSlot(const Protocol::Slot& Slot_);
 

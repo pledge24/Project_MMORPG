@@ -19,6 +19,10 @@ class P1_API UP1GameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
+    UP1GameInstance();
+    virtual void Init() override;
+    virtual void BeginDestroy() override;
+
 	/* 네트워크 통신 관련 */
 	UFUNCTION(BlueprintCallable)
 	void ConnectToGameServer();
@@ -32,9 +36,28 @@ public:
 	void SendPacket(SendBufferRef SendBuffer);
 
 public:
+    /** Getter */
+    const Protocol::PlayerInfo& GetPlayerInfo() { return *_PlayerInfo; }
+    int32 GetGold() { return _PlayerInfo->gold(); };
+    int32 GetLevel() { return _PlayerInfo->level(); };
+
+    /** 레벨 관련 Rep  */
+    void RepLevel(int32 Level_);
+    void RepExp(int32 CurExp, int32 MaxExp = -1);
+
+    /** 스텟 관련 Rep */
+    void RepStatInfo(const Protocol::StatInfo& StatInfo_);
+
+    /** 소유 관련 Rep */
+    void RepGold(int64 Gold);
+    void RepInventorySlot(const Protocol::Slot& Slot_, bool OnUse = false);
+    void RepEquippedGearSlot(const Protocol::Slot& Slot_);
+
+public:
 	/* 패킷 핸들 함수 */
+	void HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt);
+
 	void HandleSpawn(const Protocol::ObjectInfo& PlayerInfo, bool IsMine);
-	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
 	void HandleDespawn(uint64 ObjectId);
@@ -49,25 +72,71 @@ public:
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
     void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
 
+public:
+    /** 델리게이트 모음(위젯 상태 갱신용) */
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
+    FOnLevelChanged OnLevelChanged;
+
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, int32, int32);
+    FOnExpChanged OnExpChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
+    FOnStatInfoChanged OnStatInfoChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32);
+    FOnGoldChanged OnGoldChanged;
+
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventorySlotChanged, const Protocol::Slot&, bool);
+    FOnInventorySlotChanged OnInventorySlotChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedGearSlotChanged, const Protocol::Slot&);
+    FOnEquippedGearSlotChanged OnEquippedGearSlotChanged;
+
+    /** 델리게이트 모음(위젯 액션 알림용) */
+    DECLARE_MULTICAST_DELEGATE(FOnRep_BuyItem);
+    FOnRep_BuyItem OnRep_BuyItem;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRep_SellItem);
+    FOnRep_SellItem OnRep_SellItem;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRep_UseItem);
+    FOnRep_UseItem OnRep_UseItem;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRep_EquipGear);
+    FOnRep_EquipGear OnRep_EquipGear;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRep_UnequipGear);
+    FOnRep_UnequipGear OnRep_UnequipGear;
 
 public:
 	void SetToken(FString token) { _token = token; }
 	FString GetToken() { return _token; }
 
 public:
-	/* GameServer Socket */
+	/** GameServer Socket */
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
 	int16 Port = 7777;
 	PacketSessionRef GameServerSession;
 
 public:
-	/* Player 정보 */
+	/** Player 정보 */
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AP1Player> OtherPlayerClass;
 
 	AP1Player* MyPlayer;
 	TMap<uint64, AP1Player*> Players;
+
+    /** MyPlayer 고유 정보 */
+    UPROPERTY()
+    TObjectPtr<class UInventory> InventoryHelper;
+
+    UPROPERTY()
+    TObjectPtr<class UEquippedGear> EquippedGearHelper;
+
+    uint64 _MyPlayerId;
+    Protocol::PlayerInfo* _PlayerInfo;
+    Protocol::StatInfo* _StatInfo;
 
 private:
 	FString _token = "";

@@ -33,59 +33,6 @@ public:
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo_) override;
 
-    const Protocol::PlayerInfo& GetPlayerInfo() { return *_PlayerInfo; }
-
-    /** 레벨 관련 */
-    void SetLevel(int32 Level_);
-    void SetExp(int32 CurExp, int32 MaxExp=-1);
-
-    /** 스텟 관련 */
-    void SetStatInfo(const Protocol::StatInfo& StatInfo_);
-
-    /** 소유 관련 */
-    void SetGold(int64 Gold);
-    int32 GetGold() { return _PlayerInfo->gold(); };
-    int32 GetLevel() { return _PlayerInfo->level(); };
-
-    void SetInventorySlot(const Protocol::Slot& Slot_, bool OnUse = false);
-    void SetEquippedGearSlot(const Protocol::Slot& Slot_);
-
-public:
-    /** 델리게이트 모음(위젯 상태 갱신용) */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
-    FOnLevelChanged OnLevelChanged;
-
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, int32, int32);
-    FOnExpChanged OnExpChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
-    FOnStatInfoChanged OnStatInfoChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32);
-    FOnGoldChanged OnGoldChanged;
-
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventorySlotChanged, const Protocol::Slot&, bool);
-    FOnInventorySlotChanged OnInventorySlotChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedGearSlotChanged, const Protocol::Slot&);
-    FOnEquippedGearSlotChanged OnEquippedGearSlotChanged;
-
-    /** 델리게이트 모음(위젯 액션 알림용) */
-    DECLARE_MULTICAST_DELEGATE(FOnRep_BuyItem);
-    FOnRep_BuyItem OnRep_BuyItem;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_SellItem);
-    FOnRep_SellItem OnRep_SellItem;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_UseItem);
-    FOnRep_UseItem OnRep_UseItem;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_EquipGear);
-    FOnRep_EquipGear OnRep_EquipGear;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_UnequipGear);
-    FOnRep_UnequipGear OnRep_UnequipGear;
-
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -116,15 +63,6 @@ protected:
 	class UInputAction* LookAction;
 
 protected:
-    Protocol::PlayerInfo* _PlayerInfo;
-    Protocol::StatInfo* _StatInfo;
-
-    UPROPERTY()
-    TObjectPtr<class UInventory> InventoryHelper;
-
-    UPROPERTY()
-    TObjectPtr<class UEquippedGear> EquippedGearHelper;
-
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 

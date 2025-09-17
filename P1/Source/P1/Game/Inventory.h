@@ -20,7 +20,7 @@ public:
     UInventory();
     ~UInventory();
 
-    void Init(Protocol::Inventory* Inventory_, AActor* Owner);
+    void Init(Protocol::Inventory* Inventory_);
 
     void SetSlot(const Protocol::Slot& Slot_);
 

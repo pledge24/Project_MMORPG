@@ -2,8 +2,6 @@
 #include "ObjectUtils.h"
 #include "Player.h"
 #include "GameSession.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
 
 atomic<int64> ObjectUtils::s_idGenerator = 1;
 

@@ -82,14 +82,20 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
     if (GWorld)
     {
-        UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
         {
-            GameInstance->HandleSpawn(pkt);
+            GameInstance->HandleEnterGame(pkt);
+            UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         }
     }
 
 	return true;
+}
+
+bool Handle_S_MOVE_ROOM(PacketSessionRef& session, Protocol::S_MOVE_ROOM& pkt)
+{
+
+    return true;
 }
 
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)

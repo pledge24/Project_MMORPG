@@ -30,19 +30,6 @@ AP1MyPlayer::AP1MyPlayer()
 
     // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
-
-    _PlayerInfo = new Protocol::PlayerInfo();
-    _StatInfo = _PlayerInfo->mutable_stat_info();
-
-    InventoryHelper = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
-    EquippedGearHelper = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
-}
-
-AP1MyPlayer::~AP1MyPlayer()
-{
-    delete _PlayerInfo;
-    _PlayerInfo = nullptr;
-    _StatInfo = nullptr;
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -126,50 +113,6 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
     Super::Init(ObjectInfo_);
 
     SetPosInfo(ObjectInfo_.pos_info());
-
-    _PlayerInfo->CopyFrom(ObjectInfo_.player_info());
-
-    InventoryHelper->Init(_PlayerInfo->mutable_inventory(), this);
-    EquippedGearHelper->Init(_PlayerInfo, this);
-}
-
-void AP1MyPlayer::SetLevel(int32 Level_)
-{
-    _PlayerInfo->set_level(Level_);
-    OnLevelChanged.Broadcast(_PlayerInfo->level());
-}
-
-void AP1MyPlayer::SetExp(int32 CurExp, int32 MaxExp)
-{
-    _PlayerInfo->set_cur_exp(CurExp);
-    if(MaxExp > 0)
-        _PlayerInfo->set_max_exp(MaxExp);
-
-    OnExpChanged.Broadcast(_PlayerInfo->cur_exp(), _PlayerInfo->max_exp());
-}
-
-void AP1MyPlayer::SetStatInfo(const Protocol::StatInfo& StatInfo_)
-{
-    _StatInfo->CopyFrom(StatInfo_);
-    OnStatInfoChanged.Broadcast(*_StatInfo);
-}
-
-void AP1MyPlayer::SetGold(int64 Gold)
-{
-    _PlayerInfo->set_gold(Gold);
-    OnGoldChanged.Broadcast(_PlayerInfo->gold());
-}
-
-void AP1MyPlayer::SetInventorySlot(const Protocol::Slot& Slot_, bool OnUse)
-{
-    InventoryHelper->SetSlot(Slot_);
-    OnInventorySlotChanged.Broadcast(Slot_, OnUse);
-}
-
-void AP1MyPlayer::SetEquippedGearSlot(const Protocol::Slot& Slot_)
-{
-    EquippedGearHelper->SetSlot(Slot_);
-    OnEquippedGearSlotChanged.Broadcast(Slot_);
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)

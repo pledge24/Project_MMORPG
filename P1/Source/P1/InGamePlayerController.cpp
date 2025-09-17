@@ -8,10 +8,14 @@
 #include "P1GameInstance.h"
 #include "P1Player.h"
 #include "P1MyPlayer.h"
+#include "P1.h"
 
 void AInGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
+
+    Protocol::C_ENTER_MAP_COMPLETE pkt;
+    SEND_PACKET(pkt);
 
     if(HUDWidgetClass && !HUDWidget)
     {

@@ -121,19 +121,33 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
-        [session, pkt, player]()
+        [session, pkt]()
         {
             int64 characterId = pkt.character_id();
             DBRequestFunctions::LoadAllCharactersData(session, characterId);
-            GRoom->DoAsync(&Room::HandleEnterPlayer, player);
         }
     );
 
     dbQueue->Push(std::move(job));
 
-	// 방에 입장
-
 	return true;
+}
+
+bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
+{
+    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+
+    // 클라이언트 맵 로딩이 완료되었으니, 해당 플레이어를 Room에 넣는다.
+    GRoom->DoAsync(&Room::HandleEnterPlayer, player);
+
+    return true;
+}
+
+bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
+{
+
+
+    return true;
 }
 
 bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)

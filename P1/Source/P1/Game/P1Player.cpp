@@ -42,14 +42,6 @@ AP1Player::AP1Player()
 	DestInfo = new Protocol::PosInfo();
 }
 
-AP1Player::~AP1Player()
-{
-	delete SrcInfo;
-	delete DestInfo;
-	SrcInfo = nullptr;
-	DestInfo = nullptr;
-}
-
 void AP1Player::BeginPlay()
 {
 	Super::BeginPlay();
@@ -63,6 +55,18 @@ void AP1Player::BeginPlay()
 
 		//SetMoveState(Protocol::MOVE_STATE_IDLE);
 	}
+}
+
+void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+
+    {
+        delete SrcInfo;
+        delete DestInfo;
+        SrcInfo = nullptr;
+        DestInfo = nullptr;
+    }
 }
 
 void AP1Player::Tick(float DeltaSeconds)
