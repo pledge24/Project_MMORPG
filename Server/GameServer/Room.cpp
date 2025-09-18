@@ -21,7 +21,9 @@ Room::~Room()
 
 bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 {
-	bool success = AddObject(object);
+    // 현재 방에 해당 Object를 추가
+    if (AddObject(object) == false)
+        return false;
 
 	// 랜덤 위치
 	if (randPos)
@@ -32,22 +34,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 		object->posInfo->set_yaw(Utils::GetRandom(0.f, 100.f));
 	}
 
-	// 입장 사실을 신입 플레이어에게 알린다
-	//if (auto player = dynamic_pointer_cast<Player>(object))
-	//{
-	//	Protocol::S_ENTER_GAME enterGamePkt;
-	//	enterGamePkt.set_success(success);
-
-	//	Protocol::ObjectInfo* playerInfo = new Protocol::ObjectInfo();
-	//	playerInfo->CopyFrom(*object->objectInfo);
-	//	enterGamePkt.set_allocated_player(playerInfo);
-
-	//	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(enterGamePkt);
-	//	if (auto session = player->session.lock())
-	//		session->Send(sendBuffer);
-	//}
-
-	// 다른 플레이어에게 현재 플레이어 Spawn Broadcast
+	// 다른 플레이어들에게 현재 플레이어 Spawn Broadcast
 	{
 		Protocol::S_SPAWN spawnPkt;
 
@@ -55,10 +42,10 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 		objectInfo->CopyFrom(*object->objectInfo);
 
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-		Broadcast(sendBuffer, object->objectInfo->object_id());
+        Broadcast(sendBuffer, object->objectInfo->object_id());
 	}
 
-	// 방에 있던 다른 플레이어 목록을 현재 플레이어한테 전송
+	// 현재 플레이어에게 방에 있는 모든 플레이어 전송(본인 포함)
 	if (auto player = dynamic_pointer_cast<Player>(object))
 	{
 		Protocol::S_SPAWN spawnPkt;
@@ -77,7 +64,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 			session->Send(sendBuffer);
 	}
 
-	return success;
+	return true;
 }
 
 bool Room::LeaveRoom(ObjectRef object)

@@ -22,7 +22,6 @@ protected:
     virtual void NativeConstruct() override;
 
 public:
-    void UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_);
     void UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_);
     void UpdateCurLevel(int32 Level);
     void UpdateCurHp(int32 Hp);
@@ -30,6 +29,9 @@ public:
     void UpdateExp(int32 CurExp, int32 MaxExp);
 
 protected:
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* Name_txt;
+
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Level_txt;
 

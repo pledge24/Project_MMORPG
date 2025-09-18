@@ -12,33 +12,23 @@ void UHUDWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
-
-    if (MyPlayer)
+    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
         // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = MyPlayer->GetPlayerInfo();
+        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
+        const Protocol::StatInfo& StatInfo_ = PlayerInfo_.stat_info();
 
+        Name_txt->SetText(FText::FromString(UTF8_TO_TCHAR(PlayerInfo_.name().c_str())));
         UpdateCurLevel(PlayerInfo_.level());
-        UpdateExp(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp());
-        UpdateAllStatsChanged(PlayerInfo_.stat_info());
+        HpBar->Init(StatInfo_.hp(), StatInfo_.max_hp());
+        MpBar->Init(StatInfo_.mp(), StatInfo_.max_mp());
+        ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp());
 
         // 바인딩 셋업
-        MyPlayer->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateCurLevel);
-        MyPlayer->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExp);
-        MyPlayer->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
+        GameInstance->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateCurLevel);
+        GameInstance->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExp);
+        GameInstance->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
     }
-}
-
-void UHUDWidget::UpdateAllHUDData(const Protocol::PlayerInfo& PlayerInfo_)
-{
-    const Protocol::StatInfo& StatInfo_ = PlayerInfo_.stat_info();
-
-    UpdateCurLevel(PlayerInfo_.level());
-    HpBar->Init(StatInfo_.hp(), StatInfo_.max_hp());
-    MpBar->Init(StatInfo_.mp(), StatInfo_.max_mp());
-    ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp());
 }
 
 void UHUDWidget::UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_)

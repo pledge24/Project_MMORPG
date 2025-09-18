@@ -120,10 +120,14 @@ bool AP1Player::IsMyPlayer()
 
 void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
 {
+    if (ObjectInfo.player_info().equipped_gear().empty())
+        return;
+
     // 장착한 장비를 메시로 표현
-    for (auto& _Slot : ObjectInfo.player_info().equipped_gear())
+    for (const auto& Pair : ObjectInfo.player_info().equipped_gear())
     {
-        SetEquippedGear(_Slot);
+        const Protocol::Slot& Slot_ = Pair.second;
+        SetEquippedGear(Slot_);
     }
 }
 

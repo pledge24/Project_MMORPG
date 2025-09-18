@@ -10,26 +10,24 @@ void UStatusWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
-
-    if (MyPlayer)
+    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
         // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = MyPlayer->GetPlayerInfo();
+        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
 
         UpdateAllStat(PlayerInfo_.stat_info());
 
-        for (const Protocol::Slot& Slot_ : PlayerInfo_.equipped_gear())
+        for (const auto& Pair : PlayerInfo_.equipped_gear())
         {
+            const Protocol::Slot& Slot_ = Pair.second;
             UpdateSlotWidget(Slot_);
         }
 
         // 바인딩 셋업
-        MyPlayer->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
-        MyPlayer->OnEquippedGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
+        GameInstance->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
+        GameInstance->OnEquippedGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
 
-        MyPlayer->OnRep_UnequipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->OnRep_UnequipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 
 }

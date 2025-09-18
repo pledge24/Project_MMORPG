@@ -21,8 +21,7 @@ class P1_API UEquippedGear : public UObject
 	GENERATED_BODY()
 
 public:
-    UEquippedGear();
-    ~UEquippedGear();
+    UEquippedGear() = default;
 
     void Init(Protocol::PlayerInfo* PlayerInfo_);
 
@@ -30,7 +29,7 @@ public:
 
 private:
     /** 장착 아이템 LookUp */
-    TArray<Protocol::Slot*> EquippedGearLookup;
+    google::protobuf::Map<int32, Protocol::Slot>* EquippedGearLookup;
 
     AActor* _Owner;
 };

@@ -17,7 +17,6 @@ class P1_API AP1MyPlayer : public AP1Player
 
 public:
 	AP1MyPlayer();
-    ~AP1MyPlayer() override;
 
 protected:
 	virtual void BeginPlay() override;

@@ -9,13 +9,10 @@ void UShopWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
-
-    if (MyPlayer)
+    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
         // 바인딩 셋업
-        MyPlayer->OnRep_BuyItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->OnRep_BuyItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
@@ -28,10 +25,9 @@ void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
 
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
 
-    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-    if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn()))
+    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
-        int64 Gold = MyPlayer->GetGold();
+        int64 Gold = GameInstance->GetGold();
         int64 BuyPrice = _Slot->ItemData.BuyPrice;
 
         if (Gold < BuyPrice)

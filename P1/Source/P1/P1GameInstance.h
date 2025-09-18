@@ -9,6 +9,7 @@
 #include "P1GameInstance.generated.h"
 
 class AP1Player;
+class AP1MyPlayer;
 
 /**
  * 
@@ -123,6 +124,9 @@ public:
 	/** Player 정보 */
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AP1Player> OtherPlayerClass;
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<AP1MyPlayer> MyPlayerClass;
 
 	AP1Player* MyPlayer;
 	TMap<uint64, AP1Player*> Players;

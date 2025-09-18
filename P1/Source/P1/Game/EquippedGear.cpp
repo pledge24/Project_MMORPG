@@ -4,24 +4,9 @@
 #include "P1MyPlayer.h"
 #include "P1.h"
 
-UEquippedGear::UEquippedGear()
-{
-    EquippedGearLookup.SetNum(MAX_EQUIPPED_SLOTS + 1);
-}
-
-UEquippedGear::~UEquippedGear()
-{
-}
-
 void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_)
 {
-    int32 size = PlayerInfo_->equipped_gear_size();
-    EquippedGearLookup.SetNum(size);
-    for (int32 i = 0; i < size; ++i)
-    {
-        Protocol::Slot* Slot_ = PlayerInfo_->mutable_equipped_gear(i);
-        EquippedGearLookup[Slot_->slot_id()] = Slot_;
-    }
+    EquippedGearLookup = PlayerInfo_->mutable_equipped_gear();
 }
 
 void UEquippedGear::SetSlot(const Protocol::Slot& Slot_)
@@ -32,5 +17,5 @@ void UEquippedGear::SetSlot(const Protocol::Slot& Slot_)
     if (SlotType_ != Protocol::SlotType::SLOT_TYPE_EQUIPPED)
         return;
 
-    EquippedGearLookup[SlotId_]->CopyFrom(Slot_);
+    EquippedGearLookup->at(SlotId_).CopyFrom(Slot_);
 }

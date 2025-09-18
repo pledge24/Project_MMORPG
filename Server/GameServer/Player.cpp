@@ -56,9 +56,9 @@ bool Player::CalculateFinalStat()
         finalStat.magical_attack += classLevelDataTable[level]["magicalAttack"];
 
     // 2. 장착 중이 장비 스텟 추가
-    for (const auto& slot : playerInfo->equipped_gear())
+    for (const auto& pair : playerInfo->equipped_gear())
     {
-        const Protocol::Item& item = slot.item();
+        const Protocol::Item& item = pair.second.item();
 
         if (item.template_id() == 0)
             continue;
@@ -135,7 +135,7 @@ bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlo
 bool Player::UseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* targetSlot)
 {
     // 아이템 사용으로 인한 슬롯 변경 정보 채우기
-    if (inventory->removeItem(pkt.add_updated_slots(), targetSlot) == false)
+    if (inventory->removeItem(OUT pkt.mutable_updated_inventory_slot(), targetSlot) == false)
         return false;
 
     // objectId 채우기
@@ -174,15 +174,13 @@ bool Player::EquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSl
     if (targetSlot == nullptr || targetSlot->has_item() == false)
         return false;
 
-    updatedSlot = pkt.add_updated_slots();
     Protocol::Item* itemInstance = targetSlot->mutable_item();
-    if (equippedGear->EquipGear(OUT updatedSlot, OUT statInfo, *itemInstance) == false)
+    if (equippedGear->EquipGear(OUT pkt.mutable_updated_equipped_slot(), OUT statInfo, *itemInstance) == false)
         return false;
 
     updatedStatInfo->CopyFrom(*statInfo);
 
-    updatedSlot = pkt.add_updated_slots();
-    if (inventory->addItem(OUT updatedSlot, *(targetSlot->mutable_item())) == false)
+    if (inventory->addItem(OUT pkt.mutable_updated_inventory_slot(), *(targetSlot->mutable_item())) == false)
         return false;
 
     return true;
@@ -193,14 +191,12 @@ bool Player::UnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targ
     Protocol::Slot* updatedSlot = nullptr;
     Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
 
-    updatedSlot = pkt.add_updated_slots();
-    if (equippedGear->UnequipGear(OUT updatedSlot, OUT statInfo, targetSlot) == false)
+    if (equippedGear->UnequipGear(OUT pkt.mutable_updated_equipped_slot(), OUT statInfo, targetSlot) == false)
         return false;
 
     updatedStatInfo->CopyFrom(*statInfo);
 
-    updatedSlot = pkt.add_updated_slots();
-    if (inventory->removeItem(OUT updatedSlot, targetSlot) == false)
+    if (inventory->removeItem(OUT pkt.mutable_updated_inventory_slot(), targetSlot) == false)
         return false;
 
     return true;

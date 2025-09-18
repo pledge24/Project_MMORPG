@@ -4,20 +4,7 @@
 
 EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {
-    int32 slotId = 0;
-    while (slotId < Protocol::GearType_MAX + 1)
-    {
-        Protocol::Slot* slotEquippedGear = player->playerInfo->add_equipped_gear();
-
-        slotEquippedGear->set_slot_id(slotId);
-        slotEquippedGear->set_type(Protocol::SlotType::SLOT_TYPE_EQUIPPED);
-        slotEquippedGear->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
-
-        slotId++;
-    }
-
-    equippedGearlookupTable = player->playerInfo->mutable_equipped_gear();
-    gearDirtyFlags.resize(Protocol::GearType_MAX + 1, false);
+    equippedGearLookup = player->playerInfo->mutable_equipped_gear();
 
     gearTypeMappings = {
         {"helmet", Protocol::GearType::GEAR_TYPE_HELMET},
@@ -44,7 +31,7 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
         return false;
 
     Protocol::GearType type = setSlotId.has_value() ? (Protocol::GearType)setSlotId.value() : gearTypeMappings[ItemData["itemSubtype"]];
-    Protocol::Slot* targetSlot = equippedGearlookupTable->Mutable(type);
+    Protocol::Slot* targetSlot = &(*equippedGearLookup)[type];
 
     if (targetSlot->has_item() == true)
         return false;
@@ -87,7 +74,7 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
         return false;
 
     Protocol::GearType type = gearTypeMappings[ItemData["itemSubtype"]];
-    Protocol::Slot* targetSlot = equippedGearlookupTable->Mutable(type);
+    Protocol::Slot* targetSlot = &(*equippedGearLookup)[type];
 
     if (targetSlot->has_item() == false)
         return false;

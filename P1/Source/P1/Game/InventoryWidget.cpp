@@ -13,13 +13,10 @@ void UInventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
-
-    if (MyPlayer)
+    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
         // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = MyPlayer->GetPlayerInfo();
+        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
         const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
 
         UpdateGold(PlayerInfo_.gold());
@@ -40,12 +37,12 @@ void UInventoryWidget::NativeConstruct()
         }
         
         // 바인딩 셋업
-        MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
-        MyPlayer->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
+        GameInstance->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
+        GameInstance->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
 
-        MyPlayer->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) PendingPacket = false; });
-        MyPlayer->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
-        MyPlayer->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) PendingPacket = false; });
+        GameInstance->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
@@ -155,11 +152,11 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
         const Protocol::Slot& SlotData = _Slot->SlotData;
 
         auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-        AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(PC->GetPawn());
-        if (!MyPlayer)
+        auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
+        if (GameInstance == nullptr)
             return;
 
-        int32 Level = MyPlayer->GetLevel();
+        int32 Level = GameInstance->GetLevel();
         if (Level < _Slot->ItemData.LevelRequirement)
         {
             GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));

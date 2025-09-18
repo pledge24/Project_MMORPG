@@ -1132,7 +1132,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             {
                 if (gearDirtyFlags[i] == true)
                 {
-                    const Protocol::Slot slot = inven.gear().Get(i);
+                    const Protocol::Slot& slot = inven.gear().Get(i);
                     _slotId[rows] = slot.slot_id();
                     _itemUid[rows] = slot.item().item_uid();
                     _templateId[rows] = slot.item().template_id();
@@ -1147,12 +1147,13 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             }
 
             // 장착 중인 장비
-            vector<bool>& equippedGearDirtyFlags = player->equippedGear->GetDirtyFlags();
-            for (int i = 0; i < playerInfo.equipped_gear_size(); i++)
+            map<int32, bool>& equippedGearDirtyFlags = player->equippedGear->GetDirtyFlags();
+            for (const auto& pair : equippedGearDirtyFlags)
             {
-                if (equippedGearDirtyFlags[i] == true)
+                if (pair.second == true)
                 {
-                    const Protocol::Slot slot = playerInfo.equipped_gear().Get(i);
+                    int32 slotId = pair.first;
+                    const Protocol::Slot& slot = playerInfo.equipped_gear().at(slotId);
                     _slotId[rows] = slot.slot_id();
                     _itemUid[rows] = slot.item().item_uid();
                     _templateId[rows] = slot.item().template_id();

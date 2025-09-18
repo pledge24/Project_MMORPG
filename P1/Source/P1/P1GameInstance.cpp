@@ -15,9 +15,6 @@
 
 UP1GameInstance::UP1GameInstance()
 {
-    InventoryHelper = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
-    EquippedGearHelper = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
-
     _PlayerInfo = new Protocol::PlayerInfo();
     _StatInfo = _PlayerInfo->mutable_stat_info();
 }
@@ -25,6 +22,9 @@ UP1GameInstance::UP1GameInstance()
 void UP1GameInstance::Init()
 {
     Super::Init();
+
+    InventoryHelper = NewObject<UInventory>(this, UInventory::StaticClass());
+    EquippedGearHelper = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
 }
 
 void UP1GameInstance::BeginDestroy()
@@ -181,14 +181,11 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-        auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-        AP1Player* Player = Cast<AP1Player>(PC->GetPawn());
-        if (Player == nullptr)
-            return;
-
+        AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
         Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
-        MyPlayer = Player;
         Players.Add(ObjectInfo.object_id(), Player);
+
+        MyPlayer = Player;
 	}
 	else
 	{
@@ -202,7 +199,8 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
 	for (auto& Player : SpawnPkt.objects())
 	{
-		HandleSpawn(Player, false);
+        bool IsMine = Player.object_id() == _MyPlayerId;
+		HandleSpawn(Player, IsMine);
 	}
 }
 
@@ -303,23 +301,23 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     bool IsMyPlayer = Player->IsMyPlayer();
     AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
 
-    // 딱 2개(장착된 슬롯, 인벤 슬롯)
-    for (auto& Slot : EquipGearPkt.updated_slots())
+    // 장착해서 갱신된 장착 슬롯 정보를 반영.
     {
-        if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
-        {
-            // 장착한 아이템 정보를 넘겨준다.
-            const Protocol::Item& Item_ = Slot.item();
-            Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+        auto& Slot = EquipGearPkt.updated_equipped_slot();
+        const Protocol::Item& Item_ = Slot.item();
 
-            if(IsMyPlayer)
-                RepEquippedGearSlot(Slot);
-        }
-        else
-        {
-            if (Player->IsMyPlayer())
-                RepInventorySlot(Slot);
-        }
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+
+        if (IsMyPlayer)
+            RepEquippedGearSlot(Slot);
+    }
+
+    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
+    {
+        auto& Slot = EquipGearPkt.updated_inventory_slot();
+        if (Player->IsMyPlayer())
+            RepInventorySlot(Slot);
     }
 
     if(Player->IsMyPlayer())
@@ -344,23 +342,23 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     bool IsMyPlayer = Player->IsMyPlayer();
     AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
 
-    // 대개 2개(장착된 슬롯, 인벤 슬롯)
-    for (auto& Slot : UnequipGearPkt.updated_slots())
+    // 장착해서 갱신된 장착 슬롯 정보를 반영.
     {
-        if (Slot.type() == Protocol::SlotType::SLOT_TYPE_EQUIPPED)
-        {
-            // 장착한 아이템 정보를 넘겨준다.
-            const Protocol::Item& Item_ = Slot.item();
-            Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+        auto& Slot = UnequipGearPkt.updated_equipped_slot();
+        const Protocol::Item& Item_ = Slot.item();
 
-            if (IsMyPlayer)
-                RepEquippedGearSlot(Slot);
-        }
-        else
-        {
-            if (Player->IsMyPlayer())
-                RepInventorySlot(Slot);
-        }
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+
+        if (IsMyPlayer)
+            RepEquippedGearSlot(Slot);
+    }
+
+    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
+    {
+        auto& Slot = UnequipGearPkt.updated_inventory_slot();
+        if (Player->IsMyPlayer())
+            RepInventorySlot(Slot);
     }
 
     if (Player->IsMyPlayer())
@@ -387,14 +385,13 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        for (auto& Slot : UseItemPkt.updated_slots())
+        auto& Slot = UseItemPkt.updated_inventory_slot();
+        
+        if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
         {
-            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
-            {
-                RepInventorySlot(Slot, true);
-            }
+            RepInventorySlot(Slot, true);
         }
-
+        
         RepStatInfo(UseItemPkt.updated_stat_info());
     }
 }
