@@ -221,6 +221,7 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 
     rPkt.set_gold(totalGold);
     SEND_PACKET(rPkt);
+    cout << rPkt.DebugString() << endl;
 
     return true;
 }

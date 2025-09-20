@@ -264,6 +264,7 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
     {
         RepInventorySlot(BuyItemPkt.updated_slot());
         RepGold(BuyItemPkt.gold());
+        OnRep_BuyItem.Broadcast();
     }
 }
 
@@ -280,89 +281,8 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
     {
         RepInventorySlot(SellItemPkt.updated_slot());
         RepGold(SellItemPkt.gold());
+        OnRep_SellItem.Broadcast();
     }
-}
-
-void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
-{
-    if (Socket == nullptr || GameServerSession == nullptr)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    const uint64 ObjectId = EquipGearPkt.object_id();
-    AP1Player** FindActor = Players.Find(ObjectId);
-    if (FindActor == nullptr)
-        return;
-
-    AP1Player* Player = (*FindActor);
-    bool IsMyPlayer = Player->IsMyPlayer();
-    AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
-
-    // 장착해서 갱신된 장착 슬롯 정보를 반영.
-    {
-        auto& Slot = EquipGearPkt.updated_equipped_slot();
-        const Protocol::Item& Item_ = Slot.item();
-
-        // 장착한 갑옷 메시 적용
-        Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
-
-        if (IsMyPlayer)
-            RepEquippedGearSlot(Slot);
-    }
-
-    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
-    {
-        auto& Slot = EquipGearPkt.updated_inventory_slot();
-        if (Player->IsMyPlayer())
-            RepInventorySlot(Slot);
-    }
-
-    if(Player->IsMyPlayer())
-        RepStatInfo(EquipGearPkt.updated_stat_info());
-}
-
-void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
-{
-    if (Socket == nullptr || GameServerSession == nullptr)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    const uint64 ObjectId = UnequipGearPkt.object_id();
-    AP1Player** FindActor = Players.Find(ObjectId);
-    if (FindActor == nullptr)
-        return;
-
-    AP1Player* Player = (*FindActor);
-    bool IsMyPlayer = Player->IsMyPlayer();
-    AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
-
-    // 장착해서 갱신된 장착 슬롯 정보를 반영.
-    {
-        auto& Slot = UnequipGearPkt.updated_equipped_slot();
-        const Protocol::Item& Item_ = Slot.item();
-
-        // 장착한 갑옷 메시 적용
-        Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
-
-        if (IsMyPlayer)
-            RepEquippedGearSlot(Slot);
-    }
-
-    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
-    {
-        auto& Slot = UnequipGearPkt.updated_inventory_slot();
-        if (Player->IsMyPlayer())
-            RepInventorySlot(Slot);
-    }
-
-    if (Player->IsMyPlayer())
-        RepStatInfo(UnequipGearPkt.updated_stat_info());
 }
 
 void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
@@ -386,12 +306,89 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
         auto& Slot = UseItemPkt.updated_inventory_slot();
-        
+
         if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
         {
             RepInventorySlot(Slot, true);
+            RepStatInfo(UseItemPkt.updated_stat_info());
+            OnRep_UseItem.Broadcast();
         }
-        
-        RepStatInfo(UseItemPkt.updated_stat_info());
     }
+}
+
+void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = EquipGearPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+    bool IsMyPlayer = Player->IsMyPlayer();
+    AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
+
+    auto& Slot = EquipGearPkt.updated_equipped_slot();
+
+    // 모든 플레이어: 장착 부위 매쉬 변경
+    {
+        const Protocol::Item& Item_ = Slot.item();
+
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+    }
+
+    // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
+    if (Player->IsMyPlayer())
+    {
+        RepEquippedGearSlot(Slot);
+        RepInventorySlot(Slot);
+        RepStatInfo(EquipGearPkt.updated_stat_info());
+        OnRep_EquipGear.Broadcast();
+    }
+}
+
+void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = UnequipGearPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+    bool IsMyPlayer = Player->IsMyPlayer();
+    AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
+
+    auto& Slot = UnequipGearPkt.updated_equipped_slot();
+
+    // 장착해서 갱신된 장착 슬롯 정보를 반영.
+    {
+        const Protocol::Item& Item_ = Slot.item();
+
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(Slot.slot_id(), Item_.template_id());
+    }
+
+    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
+    if (Player->IsMyPlayer())
+    {
+        RepEquippedGearSlot(Slot);
+        RepInventorySlot(Slot);
+        RepStatInfo(UnequipGearPkt.updated_stat_info());
+        OnRep_UnequipGear.Broadcast();
+    }
+
 }

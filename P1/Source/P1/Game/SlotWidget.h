@@ -38,7 +38,7 @@ public:
     void OnUse();
 
     // 데이터 테이블 애셋 포인터
-    UPROPERTY(EditAnywhere, Category = "DataTable")
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
     UDataTable* ItemTable;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
@@ -55,8 +55,10 @@ protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
     TSubclassOf<UItemTooltipWidget> TooltipClass;
 
-    UItemTooltipWidget* TooltipWidget;
+    UPROPERTY()
+    UItemTooltipWidget* SlotTooltipWidget;
 
+    /** 슬롯 비쥬얼 */
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UImage* ItemIcon;
 

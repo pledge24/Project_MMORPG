@@ -92,34 +92,16 @@ void AInGamePlayerController::OnToggleInventoryWidget()
 
 void AInGamePlayerController::ToggleWidget(WidgetType Type)
 {
-    if (UUserWidget* Widget = WidgetMappings[Type])
+    uint8 FlagIdx = (uint8)Type;
+    bool IsActive = (WidgetFlag & (1 << FlagIdx)) > 0;
+
+    if (!IsActive)
     {
-        uint8 FlagIdx = (uint8)Type;
-        bool IsVisible = (WidgetFlag & (1 << FlagIdx)) > 0;
-
-        if (IsVisible)
-        {
-            Widget->SetVisibility(ESlateVisibility::Collapsed);
-        }
-        else
-        {
-            Widget->SetVisibility(ESlateVisibility::Visible);
-        }
-
-        // Update Widget Flag
-        WidgetFlag ^= (1 << FlagIdx);
-
-        // 켜진 UI가 1개 이상이면 UI모드 유지
-        if (WidgetFlag > 0)
-        {
-            bShowMouseCursor = true;
-            SetInputMode(FInputModeGameAndUI());
-        }
-        else
-        {
-            bShowMouseCursor = false;
-            SetInputMode(FInputModeGameOnly());
-        }
+        TurnOnWidget(Type);
+    }
+    else
+    {
+        TurnOffWidget(Type);
     }
 }
 
@@ -127,7 +109,7 @@ void AInGamePlayerController::TurnOnWidget(WidgetType Type)
 {
     if (UUserWidget* Widget = WidgetMappings[Type])
     {
-        Widget->SetVisibility(ESlateVisibility::Visible);
+        Widget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
         uint8 FlagIdx = (uint8)Type;
 
@@ -157,7 +139,7 @@ void AInGamePlayerController::TurnOffWidget(WidgetType Type)
         uint8 FlagIdx = (uint8)Type;
 
         // Update Widget Flag
-        WidgetFlag &= (0 << FlagIdx);
+        WidgetFlag &= ~(1 << FlagIdx);
 
         // 켜진 UI가 1개 이상이면 UI모드 유지
         if (WidgetFlag > 0)

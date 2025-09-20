@@ -13,16 +13,23 @@ void UItemTooltipWidget::Init(const FItemData& Item)
     if (Item.Icon.IsValid() || Item.Icon.ToSoftObjectPath().IsValid())
     {
         UTexture2D* LoadedIcon = Item.Icon.LoadSynchronous();
-        if (LoadedIcon)
+        if (LoadedIcon && ItemIcon)
         {
             ItemIcon->SetBrushFromTexture(LoadedIcon);
         }
     }
 
-    if(ItemNameText)
+    if (ItemNameText)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("ItemNameText")));
         ItemNameText->SetText(FText::FromString(Item.ItemName));
-    if(ItemDescriptionText)
+    }
+
+    if (ItemDescriptionText)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("ItemDescriptionText")));
         ItemDescriptionText->SetText(FText::FromString(Item.Description));
+    }
 
     // Clear Text
     for (UWidget* Child : VB_ItemInfo->GetAllChildren())

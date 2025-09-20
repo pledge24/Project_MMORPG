@@ -125,7 +125,10 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
     
     if (PendingPacket)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
+    }
     else
         PendingPacket = true;
 

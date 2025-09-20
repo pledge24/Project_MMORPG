@@ -19,7 +19,10 @@ void UShopWidget::NativeConstruct()
 void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
 {
     if (PendingPacket)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
+    }
     else
         PendingPacket = true;
 

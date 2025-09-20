@@ -12,8 +12,8 @@ void USlotWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (TooltipClass && !TooltipWidget)
-        TooltipWidget = CreateWidget<UItemTooltipWidget>(this, TooltipClass);
+    if (TooltipClass && !SlotTooltipWidget)
+        SlotTooltipWidget = CreateWidget<UItemTooltipWidget>(this, TooltipClass);
 }
 
 void USlotWidget::SetSlot(const FItemData& Item, int32 Count)
@@ -67,15 +67,18 @@ void USlotWidget::ClearSlot()
 void USlotWidget::InsertData(const Protocol::Slot& _Slot)
 {
     SlotData.CopyFrom(_Slot);
-    static const FString Context(TEXT("LookupRow"));
     FString TemplateId_Str = FString::FromInt(_Slot.item().template_id());
-    ItemData = *ItemTable->FindRow<FItemData>(FName(*TemplateId_Str), Context);
 
-    if (!ItemData.Icon.IsNull())
+    if (ItemTable)
     {
-        if (UTexture2D* LoadedIcon = ItemData.Icon.LoadSynchronous())
+        ItemData = *ItemTable->FindRow<FItemData>(FName(*TemplateId_Str), FString("USlotWidget::InsertData"));
+
+        if (!ItemData.Icon.IsNull())
         {
-            ItemIcon->SetBrushFromTexture(LoadedIcon);
+            if (UTexture2D* LoadedIcon = ItemData.Icon.LoadSynchronous())
+            {
+                ItemIcon->SetBrushFromTexture(LoadedIcon);
+            }
         }
     }
 }
@@ -84,11 +87,11 @@ UWidget* USlotWidget::GetToolTipWidget_Implementation() const
 {
     if (ItemData.TemplateId > 0 && TooltipClass)
     {
-        if (TooltipWidget)
+        if (SlotTooltipWidget)
         {
-            TooltipWidget->Init(ItemData); // 아이템 정보 전달
+            SlotTooltipWidget->Init(ItemData); // 아이템 정보 전달
             GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("GetToolTipWidget_Implementation_Success")));
-            return TooltipWidget;
+            return SlotTooltipWidget;
         }
     }
     

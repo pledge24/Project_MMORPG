@@ -68,10 +68,10 @@ public:
 
     void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
     void HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt);
+    void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
 
     void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
-    void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
 
 public:
     /** 델리게이트 모음(위젯 상태 갱신용) */
