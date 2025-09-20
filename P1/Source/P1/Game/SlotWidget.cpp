@@ -59,7 +59,7 @@ void USlotWidget::SetSlot(const Protocol::Slot& _Slot)
 
 void USlotWidget::ClearSlot()
 {
-    if (ItemIcon) ItemIcon->SetBrushFromTexture(nullptr);
+    if (ItemIcon) ItemIcon->SetBrushFromTexture(SlotDefaultIcon);
     if (ItemCountText) ItemCountText->SetText(FText::GetEmpty());
     SlotData.Clear();
 }

@@ -64,4 +64,7 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* ItemCountText;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
+    UTexture2D* SlotDefaultIcon;
 };

@@ -216,9 +216,14 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
     int32 templateId = pkt.template_id();
     int64 totalGold = 0;
 
-    if (player->BuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
+    if (player->HandleBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
+    {
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
         return false;
+    }
 
+    rPkt.set_success(true);
     rPkt.set_gold(totalGold);
     SEND_PACKET(rPkt);
     cout << rPkt.DebugString() << endl;
@@ -239,9 +244,14 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
 
     int64 totalGold = 0;
-    if (player->SellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
+    if (player->HandleSellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
+    {
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
         return false;
+    }
 
+    rPkt.set_success(true);
     rPkt.set_gold(totalGold);
     SEND_PACKET(rPkt);
     
@@ -293,9 +303,14 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 
     Protocol::S_USE_ITEM rPkt;
     Protocol::Slot* targetSlot = pkt.mutable_slot();
-    if (player->UseItem(rPkt, targetSlot) == false)
+    if (player->HandleUseItem(rPkt, targetSlot) == false)
+    {
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
         return false;
+    }
 
+    rPkt.set_success(true);
     SEND_PACKET(rPkt);
 
     return true;

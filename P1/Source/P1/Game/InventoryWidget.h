@@ -48,5 +48,5 @@ protected:
     UTextBlock* Gold_txt;
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-    bool PendingPacket = true;
+    bool PendingPacket = false;
 };

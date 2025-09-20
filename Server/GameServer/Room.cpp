@@ -142,12 +142,20 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     Protocol::S_EQUIP_GEAR rPkt;
     rPkt.set_object_id(objectId);
 
-    if (player->EquipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    if (player->HandleEquipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    {
+        SessionRef session = player->session.lock();
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
         return;
+    }
+
+    rPkt.set_success(true);
 
     // 장착한 유저에게만 그대로 전송.
     {
         SessionRef session = player->session.lock();
+        cout << rPkt.DebugString() << endl;
         SEND_PACKET(rPkt);
     }
 
@@ -168,8 +176,15 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     Protocol::S_UNEQUIP_GEAR rPkt;
     rPkt.set_object_id(objectId);
 
-    if (player->UnequipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    if (player->HandleUnequipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    {
+        SessionRef session = player->session.lock();
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
         return;
+    }
+
+    rPkt.set_success(true);
 
     // 탈착한 유저에게만 그대로 전송.
     {

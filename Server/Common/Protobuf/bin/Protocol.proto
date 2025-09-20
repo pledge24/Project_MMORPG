@@ -137,20 +137,22 @@ message C_BUY_ITEM
 
 message S_BUY_ITEM
 {
-    Slot updated_slot = 1;
-    int64 gold = 2;
+    bool success = 1;
+    Slot updated_slot = 2;
+    int64 gold = 3;
 }
 
 message C_SELL_ITEM
-{
+{ 
     Slot slot = 1;
     int32 count = 2;        // «ˆ¿Á 1∑Œ ∞Ì¡§(±◊∑°º≠ ªÁøÎæ»«‘)
 }
 
 message S_SELL_ITEM
 {
-    Slot updated_slot = 1;
-    int64 gold = 2;
+    bool success = 1;
+    Slot updated_slot = 2;
+    int64 gold = 3;
 }
 
 message C_EQUIP_GEAR
@@ -160,11 +162,12 @@ message C_EQUIP_GEAR
 
 message S_EQUIP_GEAR
 {
-    uint64 object_id = 1;
-    Slot updated_equipped_slot = 2;
+    bool success = 1;
+    uint64 object_id = 2;
+    Slot updated_equipped_slot = 3;
     
-    optional Slot updated_inventory_slot = 3;
-    optional StatInfo updated_stat_info = 4; // πŸ≤Ô Ω∫≈»
+    optional Slot updated_inventory_slot = 4;
+    optional StatInfo updated_stat_info = 5; // πŸ≤Ô Ω∫≈»
 }
 
 message C_UNEQUIP_GEAR
@@ -174,11 +177,12 @@ message C_UNEQUIP_GEAR
 
 message S_UNEQUIP_GEAR
 {
-    uint64 object_id = 1;
-    Slot updated_equipped_slot = 2;
+    bool success = 1;
+    uint64 object_id = 2;
+    Slot updated_equipped_slot = 3;
     
-    optional Slot updated_inventory_slot = 3;
-    optional StatInfo updated_stat_info = 4; // πŸ≤Ô Ω∫≈»
+    optional Slot updated_inventory_slot = 4;
+    optional StatInfo updated_stat_info = 5; // πŸ≤Ô Ω∫≈»
 }
 
 message C_USE_ITEM
@@ -188,8 +192,9 @@ message C_USE_ITEM
 
 message S_USE_ITEM
 {
-    uint64 object_id = 1;
+    bool success = 1;
+    uint64 object_id = 2;
 
-    optional Slot updated_inventory_slot = 2;
-    optional StatInfo updated_stat_info = 3; // πŸ≤Ô Ω∫≈»
+    optional Slot updated_inventory_slot = 3;
+    optional StatInfo updated_stat_info = 4; // πŸ≤Ô Ω∫≈»
 }

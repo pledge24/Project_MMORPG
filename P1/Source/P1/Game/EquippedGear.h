@@ -30,6 +30,4 @@ public:
 private:
     /** 장착 아이템 LookUp */
     google::protobuf::Map<int32, Protocol::Slot>* EquippedGearLookup;
-
-    AActor* _Owner;
 };

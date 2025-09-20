@@ -115,6 +115,7 @@ bool Inventory::addItem(OUT Protocol::Slot* repSlot, int32 templateId, int32 cou
     // -> 아직 인스턴스화된 아이템이 아닐때 진입(ex. 구매한 아이템)
     Protocol::Item itemInstance;
     itemInstance.set_template_id(templateId);
+    itemInstance.set_count(count);
 
     // TODO: generate inital instance data.
     // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)

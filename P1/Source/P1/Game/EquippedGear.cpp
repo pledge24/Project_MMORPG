@@ -17,5 +17,5 @@ void UEquippedGear::SetSlot(const Protocol::Slot& Slot_)
     if (SlotType_ != Protocol::SlotType::SLOT_TYPE_EQUIPPED)
         return;
 
-    EquippedGearLookup->at(SlotId_).CopyFrom(Slot_);
+    (*EquippedGearLookup)[SlotId_] = Slot_;
 }

@@ -100,7 +100,7 @@ bool Player::CalculateFinalStat()
     return true;
 }
 
-bool Player::BuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
+bool Player::HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = playerInfo->gold();
     int64 buyPrice = Gamedata::ItemDataTable[templateId]["buyPrice"] * count;
@@ -117,7 +117,7 @@ bool Player::BuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int3
     return true;
 }
 
-bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count)
+bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count)
 {
     int64 gold = playerInfo->gold();
     int32 templateId = targetSlot->item().template_id();
@@ -132,7 +132,7 @@ bool Player::SellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlo
     return true;
 }
 
-bool Player::UseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* targetSlot)
+bool Player::HandleUseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* targetSlot)
 {
     // 아이템 사용으로 인한 슬롯 변경 정보 채우기
     if (inventory->removeItem(OUT pkt.mutable_updated_inventory_slot(), targetSlot) == false)
@@ -166,7 +166,7 @@ bool Player::UseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* targetSlot)
     return true;
 }
 
-bool Player::EquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
+bool Player::HandleEquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
 {
     Protocol::Slot* updatedSlot = nullptr;
     Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
@@ -180,13 +180,13 @@ bool Player::EquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSl
 
     updatedStatInfo->CopyFrom(*statInfo);
 
-    if (inventory->addItem(OUT pkt.mutable_updated_inventory_slot(), *(targetSlot->mutable_item())) == false)
+    if (inventory->removeItem(OUT pkt.mutable_updated_inventory_slot(), targetSlot) == false)
         return false;
 
     return true;
 }
 
-bool Player::UnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
+bool Player::HandleUnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targetSlot)
 {
     Protocol::Slot* updatedSlot = nullptr;
     Protocol::StatInfo* updatedStatInfo = pkt.mutable_updated_stat_info();
@@ -196,7 +196,7 @@ bool Player::UnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targ
 
     updatedStatInfo->CopyFrom(*statInfo);
 
-    if (inventory->removeItem(OUT pkt.mutable_updated_inventory_slot(), targetSlot) == false)
+    if (inventory->addItem(OUT pkt.mutable_updated_inventory_slot(), *(targetSlot->mutable_item())) == false)
         return false;
 
     return true;

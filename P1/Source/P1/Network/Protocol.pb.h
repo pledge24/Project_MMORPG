@@ -3780,10 +3780,11 @@ class S_BUY_ITEM final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kUpdatedSlotFieldNumber = 1,
-    kGoldFieldNumber = 2,
+    kUpdatedSlotFieldNumber = 2,
+    kGoldFieldNumber = 3,
+    kSuccessFieldNumber = 1,
   };
-  // .Protocol.Slot updated_slot = 1;
+  // .Protocol.Slot updated_slot = 2;
   bool has_updated_slot() const;
   private:
   bool _internal_has_updated_slot() const;
@@ -3801,13 +3802,22 @@ class S_BUY_ITEM final :
       ::Protocol::Slot* updated_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_slot();
 
-  // int64 gold = 2;
+  // int64 gold = 3;
   void clear_gold();
   int64_t gold() const;
   void set_gold(int64_t value);
   private:
   int64_t _internal_gold() const;
   void _internal_set_gold(int64_t value);
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_BUY_ITEM)
@@ -3820,6 +3830,7 @@ class S_BUY_ITEM final :
   struct Impl_ {
     ::Protocol::Slot* updated_slot_;
     int64_t gold_;
+    bool success_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4116,10 +4127,11 @@ class S_SELL_ITEM final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kUpdatedSlotFieldNumber = 1,
-    kGoldFieldNumber = 2,
+    kUpdatedSlotFieldNumber = 2,
+    kGoldFieldNumber = 3,
+    kSuccessFieldNumber = 1,
   };
-  // .Protocol.Slot updated_slot = 1;
+  // .Protocol.Slot updated_slot = 2;
   bool has_updated_slot() const;
   private:
   bool _internal_has_updated_slot() const;
@@ -4137,13 +4149,22 @@ class S_SELL_ITEM final :
       ::Protocol::Slot* updated_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_slot();
 
-  // int64 gold = 2;
+  // int64 gold = 3;
   void clear_gold();
   int64_t gold() const;
   void set_gold(int64_t value);
   private:
   int64_t _internal_gold() const;
   void _internal_set_gold(int64_t value);
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_SELL_ITEM)
@@ -4156,6 +4177,7 @@ class S_SELL_ITEM final :
   struct Impl_ {
     ::Protocol::Slot* updated_slot_;
     int64_t gold_;
+    bool success_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4441,12 +4463,13 @@ class S_EQUIP_GEAR final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kUpdatedEquippedSlotFieldNumber = 2,
-    kUpdatedInventorySlotFieldNumber = 3,
-    kUpdatedStatInfoFieldNumber = 4,
-    kObjectIdFieldNumber = 1,
+    kUpdatedEquippedSlotFieldNumber = 3,
+    kUpdatedInventorySlotFieldNumber = 4,
+    kUpdatedStatInfoFieldNumber = 5,
+    kObjectIdFieldNumber = 2,
+    kSuccessFieldNumber = 1,
   };
-  // .Protocol.Slot updated_equipped_slot = 2;
+  // .Protocol.Slot updated_equipped_slot = 3;
   bool has_updated_equipped_slot() const;
   private:
   bool _internal_has_updated_equipped_slot() const;
@@ -4464,7 +4487,7 @@ class S_EQUIP_GEAR final :
       ::Protocol::Slot* updated_equipped_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_equipped_slot();
 
-  // optional .Protocol.Slot updated_inventory_slot = 3;
+  // optional .Protocol.Slot updated_inventory_slot = 4;
   bool has_updated_inventory_slot() const;
   private:
   bool _internal_has_updated_inventory_slot() const;
@@ -4482,7 +4505,7 @@ class S_EQUIP_GEAR final :
       ::Protocol::Slot* updated_inventory_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_inventory_slot();
 
-  // optional .Protocol.StatInfo updated_stat_info = 4;
+  // optional .Protocol.StatInfo updated_stat_info = 5;
   bool has_updated_stat_info() const;
   private:
   bool _internal_has_updated_stat_info() const;
@@ -4500,13 +4523,22 @@ class S_EQUIP_GEAR final :
       ::Protocol::StatInfo* updated_stat_info);
   ::Protocol::StatInfo* unsafe_arena_release_updated_stat_info();
 
-  // uint64 object_id = 1;
+  // uint64 object_id = 2;
   void clear_object_id();
   uint64_t object_id() const;
   void set_object_id(uint64_t value);
   private:
   uint64_t _internal_object_id() const;
   void _internal_set_object_id(uint64_t value);
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_EQUIP_GEAR)
@@ -4523,6 +4555,7 @@ class S_EQUIP_GEAR final :
     ::Protocol::Slot* updated_inventory_slot_;
     ::Protocol::StatInfo* updated_stat_info_;
     uint64_t object_id_;
+    bool success_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
@@ -4807,12 +4840,13 @@ class S_UNEQUIP_GEAR final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kUpdatedEquippedSlotFieldNumber = 2,
-    kUpdatedInventorySlotFieldNumber = 3,
-    kUpdatedStatInfoFieldNumber = 4,
-    kObjectIdFieldNumber = 1,
+    kUpdatedEquippedSlotFieldNumber = 3,
+    kUpdatedInventorySlotFieldNumber = 4,
+    kUpdatedStatInfoFieldNumber = 5,
+    kObjectIdFieldNumber = 2,
+    kSuccessFieldNumber = 1,
   };
-  // .Protocol.Slot updated_equipped_slot = 2;
+  // .Protocol.Slot updated_equipped_slot = 3;
   bool has_updated_equipped_slot() const;
   private:
   bool _internal_has_updated_equipped_slot() const;
@@ -4830,7 +4864,7 @@ class S_UNEQUIP_GEAR final :
       ::Protocol::Slot* updated_equipped_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_equipped_slot();
 
-  // optional .Protocol.Slot updated_inventory_slot = 3;
+  // optional .Protocol.Slot updated_inventory_slot = 4;
   bool has_updated_inventory_slot() const;
   private:
   bool _internal_has_updated_inventory_slot() const;
@@ -4848,7 +4882,7 @@ class S_UNEQUIP_GEAR final :
       ::Protocol::Slot* updated_inventory_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_inventory_slot();
 
-  // optional .Protocol.StatInfo updated_stat_info = 4;
+  // optional .Protocol.StatInfo updated_stat_info = 5;
   bool has_updated_stat_info() const;
   private:
   bool _internal_has_updated_stat_info() const;
@@ -4866,13 +4900,22 @@ class S_UNEQUIP_GEAR final :
       ::Protocol::StatInfo* updated_stat_info);
   ::Protocol::StatInfo* unsafe_arena_release_updated_stat_info();
 
-  // uint64 object_id = 1;
+  // uint64 object_id = 2;
   void clear_object_id();
   uint64_t object_id() const;
   void set_object_id(uint64_t value);
   private:
   uint64_t _internal_object_id() const;
   void _internal_set_object_id(uint64_t value);
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_UNEQUIP_GEAR)
@@ -4889,6 +4932,7 @@ class S_UNEQUIP_GEAR final :
     ::Protocol::Slot* updated_inventory_slot_;
     ::Protocol::StatInfo* updated_stat_info_;
     uint64_t object_id_;
+    bool success_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
@@ -5173,11 +5217,12 @@ class S_USE_ITEM final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kUpdatedInventorySlotFieldNumber = 2,
-    kUpdatedStatInfoFieldNumber = 3,
-    kObjectIdFieldNumber = 1,
+    kUpdatedInventorySlotFieldNumber = 3,
+    kUpdatedStatInfoFieldNumber = 4,
+    kObjectIdFieldNumber = 2,
+    kSuccessFieldNumber = 1,
   };
-  // optional .Protocol.Slot updated_inventory_slot = 2;
+  // optional .Protocol.Slot updated_inventory_slot = 3;
   bool has_updated_inventory_slot() const;
   private:
   bool _internal_has_updated_inventory_slot() const;
@@ -5195,7 +5240,7 @@ class S_USE_ITEM final :
       ::Protocol::Slot* updated_inventory_slot);
   ::Protocol::Slot* unsafe_arena_release_updated_inventory_slot();
 
-  // optional .Protocol.StatInfo updated_stat_info = 3;
+  // optional .Protocol.StatInfo updated_stat_info = 4;
   bool has_updated_stat_info() const;
   private:
   bool _internal_has_updated_stat_info() const;
@@ -5213,13 +5258,22 @@ class S_USE_ITEM final :
       ::Protocol::StatInfo* updated_stat_info);
   ::Protocol::StatInfo* unsafe_arena_release_updated_stat_info();
 
-  // uint64 object_id = 1;
+  // uint64 object_id = 2;
   void clear_object_id();
   uint64_t object_id() const;
   void set_object_id(uint64_t value);
   private:
   uint64_t _internal_object_id() const;
   void _internal_set_object_id(uint64_t value);
+  public:
+
+  // bool success = 1;
+  void clear_success();
+  bool success() const;
+  void set_success(bool value);
+  private:
+  bool _internal_success() const;
+  void _internal_set_success(bool value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_USE_ITEM)
@@ -5235,6 +5289,7 @@ class S_USE_ITEM final :
     ::Protocol::Slot* updated_inventory_slot_;
     ::Protocol::StatInfo* updated_stat_info_;
     uint64_t object_id_;
+    bool success_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
@@ -6308,7 +6363,27 @@ inline void C_BUY_ITEM::set_count(int32_t value) {
 
 // S_BUY_ITEM
 
-// .Protocol.Slot updated_slot = 1;
+// bool success = 1;
+inline void S_BUY_ITEM::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool S_BUY_ITEM::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool S_BUY_ITEM::success() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_BUY_ITEM.success)
+  return _internal_success();
+}
+inline void S_BUY_ITEM::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void S_BUY_ITEM::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_BUY_ITEM.success)
+}
+
+// .Protocol.Slot updated_slot = 2;
 inline bool S_BUY_ITEM::_internal_has_updated_slot() const {
   return this != internal_default_instance() && _impl_.updated_slot_ != nullptr;
 }
@@ -6393,7 +6468,7 @@ inline void S_BUY_ITEM::set_allocated_updated_slot(::Protocol::Slot* updated_slo
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_BUY_ITEM.updated_slot)
 }
 
-// int64 gold = 2;
+// int64 gold = 3;
 inline void S_BUY_ITEM::clear_gold() {
   _impl_.gold_ = int64_t{0};
 }
@@ -6526,7 +6601,27 @@ inline void C_SELL_ITEM::set_count(int32_t value) {
 
 // S_SELL_ITEM
 
-// .Protocol.Slot updated_slot = 1;
+// bool success = 1;
+inline void S_SELL_ITEM::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool S_SELL_ITEM::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool S_SELL_ITEM::success() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SELL_ITEM.success)
+  return _internal_success();
+}
+inline void S_SELL_ITEM::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void S_SELL_ITEM::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_SELL_ITEM.success)
+}
+
+// .Protocol.Slot updated_slot = 2;
 inline bool S_SELL_ITEM::_internal_has_updated_slot() const {
   return this != internal_default_instance() && _impl_.updated_slot_ != nullptr;
 }
@@ -6611,7 +6706,7 @@ inline void S_SELL_ITEM::set_allocated_updated_slot(::Protocol::Slot* updated_sl
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_SELL_ITEM.updated_slot)
 }
 
-// int64 gold = 2;
+// int64 gold = 3;
 inline void S_SELL_ITEM::clear_gold() {
   _impl_.gold_ = int64_t{0};
 }
@@ -6724,7 +6819,27 @@ inline void C_EQUIP_GEAR::set_allocated_slot(::Protocol::Slot* slot) {
 
 // S_EQUIP_GEAR
 
-// uint64 object_id = 1;
+// bool success = 1;
+inline void S_EQUIP_GEAR::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool S_EQUIP_GEAR::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool S_EQUIP_GEAR::success() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_GEAR.success)
+  return _internal_success();
+}
+inline void S_EQUIP_GEAR::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void S_EQUIP_GEAR::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_EQUIP_GEAR.success)
+}
+
+// uint64 object_id = 2;
 inline void S_EQUIP_GEAR::clear_object_id() {
   _impl_.object_id_ = uint64_t{0u};
 }
@@ -6744,7 +6859,7 @@ inline void S_EQUIP_GEAR::set_object_id(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_EQUIP_GEAR.object_id)
 }
 
-// .Protocol.Slot updated_equipped_slot = 2;
+// .Protocol.Slot updated_equipped_slot = 3;
 inline bool S_EQUIP_GEAR::_internal_has_updated_equipped_slot() const {
   return this != internal_default_instance() && _impl_.updated_equipped_slot_ != nullptr;
 }
@@ -6829,7 +6944,7 @@ inline void S_EQUIP_GEAR::set_allocated_updated_equipped_slot(::Protocol::Slot* 
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_EQUIP_GEAR.updated_equipped_slot)
 }
 
-// optional .Protocol.Slot updated_inventory_slot = 3;
+// optional .Protocol.Slot updated_inventory_slot = 4;
 inline bool S_EQUIP_GEAR::_internal_has_updated_inventory_slot() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.updated_inventory_slot_ != nullptr);
@@ -6916,7 +7031,7 @@ inline void S_EQUIP_GEAR::set_allocated_updated_inventory_slot(::Protocol::Slot*
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_EQUIP_GEAR.updated_inventory_slot)
 }
 
-// optional .Protocol.StatInfo updated_stat_info = 4;
+// optional .Protocol.StatInfo updated_stat_info = 5;
 inline bool S_EQUIP_GEAR::_internal_has_updated_stat_info() const {
   bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.updated_stat_info_ != nullptr);
@@ -7096,7 +7211,27 @@ inline void C_UNEQUIP_GEAR::set_allocated_slot(::Protocol::Slot* slot) {
 
 // S_UNEQUIP_GEAR
 
-// uint64 object_id = 1;
+// bool success = 1;
+inline void S_UNEQUIP_GEAR::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool S_UNEQUIP_GEAR::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool S_UNEQUIP_GEAR::success() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_GEAR.success)
+  return _internal_success();
+}
+inline void S_UNEQUIP_GEAR::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void S_UNEQUIP_GEAR::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_UNEQUIP_GEAR.success)
+}
+
+// uint64 object_id = 2;
 inline void S_UNEQUIP_GEAR::clear_object_id() {
   _impl_.object_id_ = uint64_t{0u};
 }
@@ -7116,7 +7251,7 @@ inline void S_UNEQUIP_GEAR::set_object_id(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_UNEQUIP_GEAR.object_id)
 }
 
-// .Protocol.Slot updated_equipped_slot = 2;
+// .Protocol.Slot updated_equipped_slot = 3;
 inline bool S_UNEQUIP_GEAR::_internal_has_updated_equipped_slot() const {
   return this != internal_default_instance() && _impl_.updated_equipped_slot_ != nullptr;
 }
@@ -7201,7 +7336,7 @@ inline void S_UNEQUIP_GEAR::set_allocated_updated_equipped_slot(::Protocol::Slot
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_UNEQUIP_GEAR.updated_equipped_slot)
 }
 
-// optional .Protocol.Slot updated_inventory_slot = 3;
+// optional .Protocol.Slot updated_inventory_slot = 4;
 inline bool S_UNEQUIP_GEAR::_internal_has_updated_inventory_slot() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.updated_inventory_slot_ != nullptr);
@@ -7288,7 +7423,7 @@ inline void S_UNEQUIP_GEAR::set_allocated_updated_inventory_slot(::Protocol::Slo
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_UNEQUIP_GEAR.updated_inventory_slot)
 }
 
-// optional .Protocol.StatInfo updated_stat_info = 4;
+// optional .Protocol.StatInfo updated_stat_info = 5;
 inline bool S_UNEQUIP_GEAR::_internal_has_updated_stat_info() const {
   bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.updated_stat_info_ != nullptr);
@@ -7468,7 +7603,27 @@ inline void C_USE_ITEM::set_allocated_slot(::Protocol::Slot* slot) {
 
 // S_USE_ITEM
 
-// uint64 object_id = 1;
+// bool success = 1;
+inline void S_USE_ITEM::clear_success() {
+  _impl_.success_ = false;
+}
+inline bool S_USE_ITEM::_internal_success() const {
+  return _impl_.success_;
+}
+inline bool S_USE_ITEM::success() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_USE_ITEM.success)
+  return _internal_success();
+}
+inline void S_USE_ITEM::_internal_set_success(bool value) {
+  
+  _impl_.success_ = value;
+}
+inline void S_USE_ITEM::set_success(bool value) {
+  _internal_set_success(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_USE_ITEM.success)
+}
+
+// uint64 object_id = 2;
 inline void S_USE_ITEM::clear_object_id() {
   _impl_.object_id_ = uint64_t{0u};
 }
@@ -7488,7 +7643,7 @@ inline void S_USE_ITEM::set_object_id(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_USE_ITEM.object_id)
 }
 
-// optional .Protocol.Slot updated_inventory_slot = 2;
+// optional .Protocol.Slot updated_inventory_slot = 3;
 inline bool S_USE_ITEM::_internal_has_updated_inventory_slot() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.updated_inventory_slot_ != nullptr);
@@ -7575,7 +7730,7 @@ inline void S_USE_ITEM::set_allocated_updated_inventory_slot(::Protocol::Slot* u
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_USE_ITEM.updated_inventory_slot)
 }
 
-// optional .Protocol.StatInfo updated_stat_info = 3;
+// optional .Protocol.StatInfo updated_stat_info = 4;
 inline bool S_USE_ITEM::_internal_has_updated_stat_info() const {
   bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.updated_stat_info_ != nullptr);

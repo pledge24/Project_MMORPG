@@ -262,9 +262,12 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        RepInventorySlot(BuyItemPkt.updated_slot());
-        RepGold(BuyItemPkt.gold());
         OnRep_BuyItem.Broadcast();
+        if (BuyItemPkt.success() == true)
+        {
+            RepInventorySlot(BuyItemPkt.updated_slot());
+            RepGold(BuyItemPkt.gold());
+        }
     }
 }
 
@@ -279,9 +282,12 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        RepInventorySlot(SellItemPkt.updated_slot());
-        RepGold(SellItemPkt.gold());
         OnRep_SellItem.Broadcast();
+        if (SellItemPkt.success() == true)
+        {
+            RepInventorySlot(SellItemPkt.updated_slot());
+            RepGold(SellItemPkt.gold());
+        }
     }
 }
 
@@ -305,13 +311,16 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 
     if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
     {
-        auto& Slot = UseItemPkt.updated_inventory_slot();
-
-        if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
+        OnRep_UseItem.Broadcast();
+        if (UseItemPkt.success() == true)
         {
-            RepInventorySlot(Slot, true);
-            RepStatInfo(UseItemPkt.updated_stat_info());
-            OnRep_UseItem.Broadcast();
+            auto& Slot = UseItemPkt.updated_inventory_slot();
+
+            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
+            {
+                RepInventorySlot(Slot, true);
+                RepStatInfo(UseItemPkt.updated_stat_info());
+            }
         }
     }
 }
@@ -347,10 +356,13 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
     if (Player->IsMyPlayer())
     {
-        RepEquippedGearSlot(Slot);
-        RepInventorySlot(Slot);
-        RepStatInfo(EquipGearPkt.updated_stat_info());
         OnRep_EquipGear.Broadcast();
+        if (EquipGearPkt.success() == true)
+        {
+            RepEquippedGearSlot(Slot);
+            RepInventorySlot(Slot);
+            RepStatInfo(EquipGearPkt.updated_stat_info());
+        }
     }
 }
 
@@ -385,10 +397,14 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     // 장착해서 갱신된 인벤 슬롯 정보를 반영.
     if (Player->IsMyPlayer())
     {
-        RepEquippedGearSlot(Slot);
-        RepInventorySlot(Slot);
-        RepStatInfo(UnequipGearPkt.updated_stat_info());
         OnRep_UnequipGear.Broadcast();
+        if (UnequipGearPkt.success() == true)
+        {
+            RepEquippedGearSlot(Slot);
+            RepInventorySlot(Slot);
+            RepStatInfo(UnequipGearPkt.updated_stat_info());
+        }
+
     }
 
 }
