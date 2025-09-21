@@ -6,6 +6,16 @@ EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {
     equippedGearLookup = player->playerInfo->mutable_equipped_gear();
 
+    for (int32 slotId = 0; slotId <= Protocol::GearType_MAX; slotId++)
+    {
+        Protocol::Slot slot;
+        slot.set_slot_id(slotId);
+        slot.set_type(Protocol::SlotType::SLOT_TYPE_EQUIPPED);
+        slot.set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
+
+        equippedGearLookup->emplace(slotId, std::move(slot));
+    }
+
     gearTypeMappings = {
         {"helmet", Protocol::GearType::GEAR_TYPE_HELMET},
         {"chest", Protocol::GearType::GEAR_TYPE_CHEST},
@@ -26,14 +36,15 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
     int32 templateId = itemInstance.template_id();
     const Json& ItemData = Gamedata::ItemDataTable[templateId];
 
-    // 장착 반영
+    // 장비 타입 아이템인지 체크
     if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
         return false;
-
+    
     Protocol::GearType type = setSlotId.has_value() ? (Protocol::GearType)setSlotId.value() : gearTypeMappings[ItemData["itemSubtype"]];
-    Protocol::Slot* targetSlot = &(*equippedGearLookup)[type];
+    Protocol::Slot* targetSlot = equippedGearLookup->find(type) != equippedGearLookup->end() ? &(*equippedGearLookup)[type] : nullptr;
 
-    if (targetSlot->has_item() == true)
+    // 장착 중인 상태에서 다른 장비 장착 금지
+    if (targetSlot == nullptr || targetSlot->has_item() == true)
         return false;
 
     gearDirtyFlags[type] = true;

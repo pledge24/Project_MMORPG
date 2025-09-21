@@ -23,10 +23,22 @@ protected:
 
 public:
     void UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_);
-    void UpdateCurLevel(int32 Level);
-    void UpdateCurHp(int32 Hp);
-    void UpdateCurMp(int32 Mp);
-    void UpdateExp(int32 CurExp, int32 MaxExp);
+    void UpdateLevel(int32 Value);
+
+    /** HP Bar*/
+    void UpdateMaxHp(int32 Value);
+    void UpdateCurHp(int32 Value);
+    void UpdateHpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
+
+    /** MP Bar*/
+    void UpdateMaxMp(int32 Value);
+    void UpdateCurMp(int32 Value);
+    void UpdateMpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
+
+    /** EXP Bar*/
+    void UpdateMaxExp(int32 Value);
+    void UpdateCurExp(int32 Value);
+    void UpdateExpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
 
 protected:
     UPROPERTY(meta = (BindWidget))

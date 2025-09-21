@@ -60,6 +60,9 @@ void UInventory::Init(Protocol::Inventory* Inventory_)
 
 void UInventory::SetSlot(const Protocol::Slot& Slot_)
 {  
-    TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
-    InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
+    if (InventoryLookupMappings.Contains(Slot_.type()))
+    {
+        TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
+        InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
+    }
 }

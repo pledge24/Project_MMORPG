@@ -7,8 +7,7 @@ Inventory::Inventory(PlayerRef player) : _player(player)
 {
     Protocol::Inventory* inventory = player->playerInfo->mutable_inventory();
     
-    int32 slotId = 0;
-    while (slotId < MAX_SLOTS)
+    for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
     {
         Protocol::Slot* slotGear = inventory->add_gear();
         Protocol::Slot* slotConsumables = inventory->add_consumables();
@@ -25,8 +24,6 @@ Inventory::Inventory(PlayerRef player) : _player(player)
         slotMisc->set_slot_id(slotId);
         slotMisc->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
         slotMisc->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
-
-        slotId++;
     }
 
     inventorylookupMappings = {

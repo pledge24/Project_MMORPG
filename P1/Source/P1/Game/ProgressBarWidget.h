@@ -15,18 +15,22 @@ class P1_API UProgressBarWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    void Init(int32 CurValue, int32 _MaxValue, bool IsPercentFormat = false);
-    void SetMaxValue(int32 Value) { MaxValue = Value; };
+    void Init(int32 CurValue, int32 MaxValue, bool IsPercentFormat = false);
 
-    UFUNCTION(BlueprintCallable, Category = "UI")
-    void UpdateBar(int32 Value, bool IsPercentFormat = false);
-
-    int32 MaxValue = 100;
+    void SetCurValue(int32 Value);
+    void SetMaxValue(int32 Value);
+    void SetBoth(int32 CurValue, int32 MaxValue);
 
 protected:
+    void UpdateBar();
+
     UPROPERTY(BlueprintReadOnly , meta = (BindWidget), Category = "UI")
     class UProgressBar* ProgressBar;
 	
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "UI")
     class UTextBlock* TextBlock;
+
+    int32 _CurValue;
+    int32 _MaxValue;
+    bool bIsPercentFormat = false;
 };

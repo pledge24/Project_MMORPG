@@ -5,6 +5,7 @@
 #include "P1.h"
 #include "P1MyPlayer.h"
 #include "P1GameInstance.h"
+#include "HUDWidget.h"
 
 void UStatusWindowWidget::NativeConstruct()
 {
@@ -55,6 +56,8 @@ void UStatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)
     case Protocol::GearType::GEAR_TYPE_WEAPON:
         SlotWidget = Equipped_Weapon;
         break;
+    default:
+        return;
     }
 
     if (SlotWidget)

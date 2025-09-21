@@ -163,6 +163,7 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
         if (Level < _Slot->ItemData.LevelRequirement)
         {
             GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
+            PendingPacket = false;
             return;
         }
 
