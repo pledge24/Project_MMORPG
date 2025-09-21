@@ -27,5 +27,4 @@ public:
 private:
     /** 카테고리별 인벤토리 Lookup 매핑 정보*/
     TMap<Protocol::SlotType, TArray<Protocol::Slot*>> InventoryLookupMappings;
-    AActor* _Owner;
 };

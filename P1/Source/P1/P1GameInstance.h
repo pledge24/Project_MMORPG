@@ -78,7 +78,7 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
     FOnLevelChanged OnLevelChanged;
 
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, int32, int32);
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, TOptional<int32>, TOptional<int32>);
     FOnExpChanged OnExpChanged;
 
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);

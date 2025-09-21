@@ -66,7 +66,11 @@ bool RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 	{
 		FMemoryReader Reader(HeaderBuffer);
 		Reader << Header;
-		UE_LOG(LogTemp, Log, TEXT("Recv PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
+        
+        if (Header.PacketID != 1018 /* MovePacketId */)
+        {
+		    UE_LOG(LogTemp, Log, TEXT("Recv PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
+        }
 	}
 
 	// 헤더 추가
