@@ -1124,6 +1124,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             const Protocol::Inventory& inven = playerInfo.inventory();
             vector<bool>& gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
 
+            // 캐릭터 id
             _characterId = playerInfo.character_id();
 
             // 인벤에 들어있는 장비
@@ -1170,32 +1171,20 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
         }
 
         void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
-        {
-            for (int i = 0; i < MAX_ROWS; i++)
-            {
-                _indicators[i] = SQL_NULL_DATA;
-            }
-
-            for (int i = 0; i < rows; i++)
-            {
-                _characterIdArray[i] = _characterId;
-                _indicators[i] = 0; // not null.
-            }
-            
-            dbBind.BindParam(0, _characterIdArray, rows, _indicators);
-            dbBind.BindParam(1, _slotId, rows, _indicators);
-            dbBind.BindParam(2, _itemUid, rows, _indicators);
-            dbBind.BindParam(3, _templateId, rows, _indicators);
-            dbBind.BindParam(4, _isEquipped, rows, _indicators);
-            dbBind.BindParam(5, _enhance, rows, _indicators);
-            dbBind.BindParam(6, _durability, rows, _indicators);
-            dbBind.BindParam(7, _additionalPhysicalAttack, rows, _indicators);
-            dbBind.BindParam(8, _additionalMagicalAttack, rows, _indicators);
+        {           
+            dbBind.BindParam(0, _characterId);
+            dbBind.BindParamSet(1, _slotId, rows);
+            dbBind.BindParamSet(2, _itemUid, rows);
+            dbBind.BindParamSet(3, _templateId, rows);
+            dbBind.BindParamSet(4, _isEquipped, rows);
+            dbBind.BindParamSet(5, _enhance, rows);
+            dbBind.BindParamSet(6, _durability, rows);
+            dbBind.BindParamSet(7, _additionalPhysicalAttack, rows);
+            dbBind.BindParamSet(8, _additionalMagicalAttack, rows);
         }
 
         /* Params */
         int64 _characterId;
-        int64 _characterIdArray[MAX_ROWS];
         int32 _slotId[MAX_ROWS];
         int64 _itemUid[MAX_ROWS];
         int32 _templateId[MAX_ROWS];
@@ -1204,8 +1193,6 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
         int32 _durability[MAX_ROWS];
         int32 _additionalPhysicalAttack[MAX_ROWS];
         int32 _additionalMagicalAttack[MAX_ROWS];
-
-        SQLLEN _indicators[MAX_ROWS];
     };
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
@@ -1220,6 +1207,8 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
         // 1단계: 임시 테이블에 데이터 삽입
         {
             DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+                DECLARE @character_id BIGINT = (?);
+
                 -- 1. 임시 테이블 생성
                 SELECT *
                 INTO #TempTable
@@ -1228,7 +1217,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
 
                 -- 2. 임시 테이블에 INSERT
                 INSERT INTO #TempTable (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (@character_id, ?, ?, ?, ?, ?, ?, ?, ?)
             )SQL");
 
             BindObject bindObject(dbBind, objectInfo, player, OUT rows);
