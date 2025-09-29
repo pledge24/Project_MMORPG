@@ -45,7 +45,7 @@ public:
 	}
 
 public:
-    /* 일반적인 경우 진입 */
+    /* 기본: 일반 타입으로 넘겨주는 경우 */
 	template<typename T>
 	void BindParam(int32 idx, T& value)
 	{
@@ -60,24 +60,43 @@ public:
 		_paramFlag |= (1LL << idx);
 	}
 
+ //   /* 특수화: 배열을 넘겨주는 경우(BYTE 버전) */
+	//template<typename T, int32 N>
+	//void BindParam(int32 idx, T(&value)[N])
+	//{
+	//	_dbConnection.BindParam(idx + 1, (const BYTE*)value, size32(T) * N, &_paramIndex[idx]);
+	//	_paramFlag |= (1LL << idx);
+	//}
+
     /* 특수화: 배열을 넘겨주는 경우 */
-	template<typename T, int32 N>
-	void BindParam(int32 idx, T(&value)[N])
-	{
-		_dbConnection.BindParam(idx + 1, (const BYTE*)value, size32(T) * N, &_paramIndex[idx]);
-		_paramFlag |= (1LL << idx);
-	}
+    template<typename T, int32 N>
+    void BindParam(int32 idx, T(&value)[N])
+    {
+        SQLLEN indicators[N];
+        for (int32 i = 0; i < N; i++)
+            indicators[i] = 0; // not null.
+
+        _dbConnection.BindParam(idx + 1, value, indicators);
+        _paramFlag |= (1LL << idx);
+    }
+
+ //   /* 특수화: T타입이 N개 들어있는 배열의 시작 주소를 넘겨주는 경우(BYTE 버전) */
+	//template<typename T>
+	//void BindParam(int32 idx, T* value, int32 N)
+	//{
+	//	_dbConnection.BindParam(idx + 1, (const BYTE*)value, size32(T) * N, &_paramIndex[idx]);
+	//	_paramFlag |= (1LL << idx);
+	//}
 
     /* 특수화: T타입이 N개 들어있는 배열의 시작 주소를 넘겨주는 경우 */
-	template<typename T>
-	void BindParam(int32 idx, T* value, int32 N)
-	{
-		_dbConnection.BindParam(idx + 1, (const BYTE*)value, size32(T) * N, &_paramIndex[idx]);
-		_paramFlag |= (1LL << idx);
-	}
+    template<typename T>
+    void BindParam(int32 idx, T* value, int32 N, SQLLEN* indicators)
+    {
+        _dbConnection.BindParam(idx + 1, value, indicators);
+        _paramFlag |= (1LL << idx);
+    }
 
-
-    /* 일반적인 경우 진입 */
+    /* 기본: 일반 타입으로 넘겨주는 경우 */
 	template<typename T>
 	void BindCol(int32 idx, T& value)
 	{

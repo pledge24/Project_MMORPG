@@ -52,7 +52,7 @@ public:
     void TurnOffWidget(WidgetType Type);
 
     UFUNCTION(BlueprintCallable, Category = "Widget")
-    bool IsTurnOnThisWidget(WidgetType Type) const { return WidgetFlag && (1 << (uint8)Type); }
+    bool IsTurnOnThisWidget(WidgetType Type) const;
 
 protected:
     /** HUD UI */
@@ -93,5 +93,5 @@ protected:
 private:
     TMap<WidgetType, UUserWidget*> WidgetMappings;
     int32 WidgetFlag = 0;
-
+    int32 CurrentMaxZOrder = 0;
 };

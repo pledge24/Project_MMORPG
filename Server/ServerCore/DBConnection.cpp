@@ -53,7 +53,7 @@ bool DBConnection::Execute(const WCHAR* query)
     _diagnostics.clear();
 
 	SQLRETURN ret = ::SQLExecDirectW(_statement, (SQLWCHAR*)query, SQL_NTSL);
-	if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+	if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO || ret == SQL_NO_DATA)
 		return true;
 
 	HandleError(ret);

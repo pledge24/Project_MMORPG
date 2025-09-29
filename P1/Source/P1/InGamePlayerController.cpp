@@ -2,6 +2,7 @@
 
 #include "InGamePlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/CanvasPanelSlot.h"
 #include "StatusWindowWidget.h"
 #include "InventoryWidget.h"
 #include "HUDWidget.h"
@@ -109,24 +110,17 @@ void AInGamePlayerController::TurnOnWidget(WidgetType Type)
 {
     if (UUserWidget* Widget = WidgetMappings[Type])
     {
+        Widget->RemoveFromViewport();
+        Widget->AddToViewport(CurrentMaxZOrder++);
         Widget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-
         uint8 FlagIdx = (uint8)Type;
 
         // Update Widget Flag
         WidgetFlag |= (1 << FlagIdx);
 
         // 켜진 UI가 1개 이상이면 UI모드 유지
-        if (WidgetFlag > 0)
-        {
-            bShowMouseCursor = true;
-            SetInputMode(FInputModeGameAndUI());
-        }
-        else
-        {
-            bShowMouseCursor = false;
-            SetInputMode(FInputModeGameOnly());
-        }
+        bShowMouseCursor = true;
+        SetInputMode(FInputModeGameAndUI());
     }
 }
 
@@ -153,5 +147,10 @@ void AInGamePlayerController::TurnOffWidget(WidgetType Type)
             SetInputMode(FInputModeGameOnly());
         }
     }
+}
+
+bool AInGamePlayerController::IsTurnOnThisWidget(WidgetType Type) const
+{
+    return WidgetFlag & (1 << (uint8)Type); 
 }
 

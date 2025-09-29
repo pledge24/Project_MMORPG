@@ -132,21 +132,72 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
     else
         PendingPacket = true;
 
-    if (_Slot)
+    if (_Slot == nullptr)
     {
-        const Protocol::Slot& SlotData = _Slot->SlotData;
-
-        Protocol::C_SELL_ITEM pkt;
-        pkt.mutable_slot()->CopyFrom(SlotData);
-        pkt.set_count(1);
-        SEND_PACKET(pkt);
+        PendingPacket = false;
+        return;
     }
+
+    const Protocol::Slot& SlotData = _Slot->SlotData;
+
+    Protocol::C_SELL_ITEM pkt;
+    pkt.mutable_slot()->CopyFrom(SlotData);
+    pkt.set_count(1);
+    SEND_PACKET(pkt);
+    
 }
 
 void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnUse!")));
+
     if (PendingPacket)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
+    }
+    else
+        PendingPacket = true;
+
+    if (_Slot)
+    {
+        const Protocol::Slot& SlotData = _Slot->SlotData;
+
+        auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+        auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
+        if (GameInstance == nullptr)
+            return;
+
+        int32 Level = GameInstance->GetLevel();
+        if (Level < _Slot->ItemData.LevelRequirement)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
+            PendingPacket = false;
+            return;
+        }
+
+        if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
+        {
+            Protocol::C_USE_ITEM pkt;
+            pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(pkt);
+        }
+        else
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Something Wrong in SendUseItemPacket!")));
+        }
+    }
+}
+
+void UInventoryWidget::SendEquipItemPacket(USlotWidget* _Slot)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
+
+    if (PendingPacket)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
+        return;
+    }
     else
         PendingPacket = true;
 
@@ -169,23 +220,10 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
 
         if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
-            
             Protocol::C_EQUIP_GEAR pkt;
             pkt.mutable_slot()->CopyFrom(SlotData);
             SEND_PACKET(pkt);
         }
-        else if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnUse!")));
-
-            Protocol::C_USE_ITEM pkt;
-            pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(pkt);
-        }
-        else
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Something Wrong in SendUseItemPacket!")));
-        }
+        
     }
 }

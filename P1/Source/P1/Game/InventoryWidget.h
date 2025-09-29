@@ -35,6 +35,9 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Network")
     void SendUseItemPacket(USlotWidget* _Slot);
 
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendEquipItemPacket(USlotWidget* _Slot);
+
     UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
     UUniformGridPanel* Gear_Inven;
 

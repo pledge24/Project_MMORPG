@@ -28,7 +28,7 @@ const unordered_map<DBCustomError, wstring> DBErrorCauseMappings =
 
 void PrintDBErrorLog(const DBCustomError error)
 {
-    wcerr << L"오류 발생: " << error << L"(" << DBErrorCauseMappings.at(error) << L")" << endl;
+    wcout << L"오류 발생: " << error << L"(" << DBErrorCauseMappings.at(error) << L")" << endl;
 }
 
 /*-------------------------
@@ -978,9 +978,6 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
-
-        if (dbConn->GetRowCount() != 1)
-            throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
     }
     catch (DBCustomError error)
     {
@@ -1072,8 +1069,8 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        if (dbConn->GetRowCount() != 1)
-            throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
+        //if (dbConn->GetRowCount() != 1)
+        //    throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
     }
     catch (DBCustomError error)
     {
@@ -1127,6 +1124,8 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             const Protocol::Inventory& inven = playerInfo.inventory();
             vector<bool>& gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
 
+            _characterId = playerInfo.character_id();
+
             // 인벤에 들어있는 장비
             for (int i = 0; i < inven.gear_size(); i++)
             {
@@ -1172,19 +1171,31 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
 
         void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
         {
-            dbBind.BindParam(0, _characterId);
-            dbBind.BindParam(1, _slotId, rows);
-            dbBind.BindParam(2, _itemUid, rows);
-            dbBind.BindParam(3, _templateId, rows);
-            dbBind.BindParam(4, _isEquipped, rows);
-            dbBind.BindParam(5, _enhance, rows);
-            dbBind.BindParam(6, _durability, rows);
-            dbBind.BindParam(7, _additionalPhysicalAttack, rows);
-            dbBind.BindParam(8, _additionalMagicalAttack, rows);
+            for (int i = 0; i < MAX_ROWS; i++)
+            {
+                _indicators[i] = SQL_NULL_DATA;
+            }
+
+            for (int i = 0; i < rows; i++)
+            {
+                _characterIdArray[i] = _characterId;
+                _indicators[i] = 0; // not null.
+            }
+            
+            dbBind.BindParam(0, _characterIdArray, rows, _indicators);
+            dbBind.BindParam(1, _slotId, rows, _indicators);
+            dbBind.BindParam(2, _itemUid, rows, _indicators);
+            dbBind.BindParam(3, _templateId, rows, _indicators);
+            dbBind.BindParam(4, _isEquipped, rows, _indicators);
+            dbBind.BindParam(5, _enhance, rows, _indicators);
+            dbBind.BindParam(6, _durability, rows, _indicators);
+            dbBind.BindParam(7, _additionalPhysicalAttack, rows, _indicators);
+            dbBind.BindParam(8, _additionalMagicalAttack, rows, _indicators);
         }
 
         /* Params */
         int64 _characterId;
+        int64 _characterIdArray[MAX_ROWS];
         int32 _slotId[MAX_ROWS];
         int64 _itemUid[MAX_ROWS];
         int32 _templateId[MAX_ROWS];
@@ -1193,68 +1204,81 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
         int32 _durability[MAX_ROWS];
         int32 _additionalPhysicalAttack[MAX_ROWS];
         int32 _additionalMagicalAttack[MAX_ROWS];
+
+        SQLLEN _indicators[MAX_ROWS];
     };
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
 
     try
     {
-        // 해당 캐릭터의 장비 아이템 정보를 갱신한다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-            DECLARE @character_id BIGINT = (?); 
-
-            -- 1. 임시 테이블 생성
-            SELECT *
-            INTO #TempTable
-            FROM [dbo].[CharactersGearItems]
-            WHERE 1 = 0;
-
-            -- 2. 임시 테이블에 INSERT
-            INSERT INTO #TempTable (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
-            VALUES (@character_id, ?, ?, ?, ?, ?, ?, ?, ?)
-
-            -- 3. MERGE 진행
-            MERGE INTO [dbo].[CharactersGearItems] AS T
-            USING #TempTable AS S
-            ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
-
-            -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
-            WHEN MATCHED AND S.template_id = 0 THEN
-                DELETE
-
-            -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
-            WHEN MATCHED THEN
-                UPDATE SET item_uid = S.item_uid, template_id = S.template_id, is_equipped = S.is_equipped, enhance = S.enhance, durability = S.durability, additional_physical_attack = S.additional_physical_attack, additional_magical_attack = S.additional_magical_attack
-
-            -- DB 테이블에 행이 없음 -> INSERT
-            WHEN NOT MATCHED BY TARGET THEN
-                INSERT (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
-                VALUES (S.character_id, S.slot_id, S.tem_uid, S.template_id, S.is_equipped, S.enhance, S.durability, S.additional_physical_attack, S.additional_magical_attack)
-
-            -- 4. 임시 테이블 삭제
-            DROP TABLE #TempItems;
-        )SQL");
-
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
         Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
         int32 rows = 0;
-        int32 processedRows = 0;
-        BindObject bindObject(dbBind, objectInfo, player, OUT rows);
 
-        // 파마미터 배열 집합 크기 세팅
-        dbConn->SetParamSetSize(rows);
+        // 1단계: 임시 테이블에 데이터 삽입
+        {
+            DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+                -- 1. 임시 테이블 생성
+                SELECT *
+                INTO #TempTable
+                FROM [dbo].[CharactersGearItems]
+                WHERE 1 = 0;
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
+                -- 2. 임시 테이블에 INSERT
+                INSERT INTO #TempTable (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            )SQL");
 
-        if (rows != processedRows)
-            throw DBCustomError::SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE;
+            BindObject bindObject(dbBind, objectInfo, player, OUT rows);
+
+            if (rows > 0)
+            {
+                dbConn->SetParamSetSize(rows);
+
+                if (dbBind.Execute() == false)
+                    throw DBCustomError::SQL_EXECUTE_FAIL;
+            }
+        }
+
+        // 2단계: MERGE 실행 (rows > 0인 경우에만)
+        if (rows > 0)
+        {
+            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
+            int64 characterId = playerInfo.character_id();
+
+            DBBind<1, 0> dbBindMerge(*dbConn, LR"SQL(
+                MERGE INTO [dbo].[CharactersGearItems] AS T
+                USING #TempTable AS S
+                ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
+                WHEN MATCHED AND S.template_id = 0 THEN
+                    DELETE
+                WHEN MATCHED THEN
+                    UPDATE SET 
+                        item_uid = S.item_uid, 
+                        template_id = S.template_id, 
+                        is_equipped = S.is_equipped, 
+                        enhance = S.enhance, 
+                        durability = S.durability, 
+                        additional_physical_attack = S.additional_physical_attack, 
+                        additional_magical_attack = S.additional_magical_attack
+                WHEN NOT MATCHED BY TARGET THEN
+                    INSERT (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
+                    VALUES (S.character_id, S.slot_id, S.item_uid, S.template_id, S.is_equipped, S.enhance, S.durability, S.additional_physical_attack, S.additional_magical_attack);
+
+                DROP TABLE #TempTable;
+            )SQL");
+
+            dbBindMerge.BindParam(0, characterId);
+
+            if (dbBindMerge.Execute() == false)
+                throw DBCustomError::SQL_EXECUTE_FAIL;
+        }
     }
     catch (DBCustomError error)
     {
         PrintDBErrorLog(error);
-
         GDBConnectionPool->Push(dbConn);
         return false;
     }
@@ -1265,226 +1289,236 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
 
 bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
 {
-    const int PARAMS = 4;
-    const int COLS = 0;
-    const int MAX_ROWS = 100;
+    //const int PARAMS = 4;
+    //const int COLS = 0;
+    //const int MAX_ROWS = 100;
 
-    struct BindObject
-    {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
-        {
-            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.inventory();
-            vector<bool>& consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+    //struct BindObject
+    //{
+    //    BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
+    //    {
+    //        const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
+    //        const Protocol::Inventory& inven = playerInfo.inventory();
+    //        vector<bool>& consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
 
-            // 인벤에 들어있는 장비
-            for (int i = 0; i < inven.consumables_size(); i++)
-            {
-                if (consumableDirtyFlags[i] == true)
-                {
-                    const Protocol::Slot slot = inven.gear().Get(i);
-                    _slotId[rows] = slot.slot_id();
-                    _templateId[rows] = slot.item().template_id();
-                    _count[rows] = slot.item().count();
+    //        _characterId = playerInfo.character_id();
 
-                    rows++;
-                }
-            }
+    //        // 인벤에 들어있는 장비
+    //        for (int i = 0; i < inven.consumables_size(); i++)
+    //        {
+    //            if (consumableDirtyFlags[i] == true)
+    //            {
+    //                const Protocol::Slot slot = inven.gear().Get(i);
+    //                _slotId[rows] = slot.slot_id();
+    //                _templateId[rows] = slot.item().template_id();
+    //                _count[rows] = slot.item().count();
 
-            BindParam(dbBind, rows);
-        }
+    //                rows++;
+    //            }
+    //        }
 
-        void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
-        {
-            dbBind.BindParam(0, _characterId);
-            dbBind.BindParam(1, _slotId, rows);
-            dbBind.BindParam(2, _templateId, rows);
-            dbBind.BindParam(3, _count, rows);
-        }
+    //        BindParam(dbBind, rows);
+    //    }
 
-        /* Params */
-        int64 _characterId;
-        int32 _slotId[MAX_ROWS];
-        int32 _templateId[MAX_ROWS];
-        int32 _count[MAX_ROWS];
-    };
+    //    void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
+    //    {
+    //        dbBind.BindParam(0, _characterId);
+    //        dbBind.BindParam(1, _slotId, rows);
+    //        dbBind.BindParam(2, _templateId, rows);
+    //        dbBind.BindParam(3, _count, rows);
+    //    }
 
-    DBConnection* dbConn = GDBConnectionPool->Pop();
+    //    /* Params */
+    //    int64 _characterId;
+    //    int32 _slotId[MAX_ROWS];
+    //    int32 _templateId[MAX_ROWS];
+    //    int32 _count[MAX_ROWS];
+    //};
 
-    try
-    {
-        // 해당 캐릭터의 장비 아이템 정보를 갱신한다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-            DECLARE @character_id BIGINT = (?); 
+    //DBConnection* dbConn = GDBConnectionPool->Pop();
 
-            -- 1. 임시 테이블 생성
-            SELECT *
-            INTO #TempTable
-            FROM [dbo].[CharactersConsumableItems]
-            WHERE 1 = 0;
+    //try
+    //{
+    //    // 해당 캐릭터의 장비 아이템 정보를 갱신한다.
+    //    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+    //        DECLARE @character_id BIGINT = (?); 
 
-            -- 2. 임시 테이블에 INSERT
-            INSERT INTO #TempTable (character_id, slot_id, template_id, count)
-            VALUES (@character_id, ?, ?, ?)
+    //        -- 1. 임시 테이블 생성
+    //        SELECT *
+    //        INTO #TempTable
+    //        FROM [dbo].[CharactersConsumableItems]
+    //        WHERE 1 = 0;
 
-            -- 3. MERGE 진행
-            MERGE INTO [dbo].[CharactersConsumableItems] AS T
-            USING #TempTable AS S
-            ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
+    //        -- 2. 임시 테이블에 INSERT
+    //        INSERT INTO #TempTable (character_id, slot_id, template_id, count)
+    //        VALUES (@character_id, ?, ?, ?)
 
-            -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
-            WHEN MATCHED AND S.template_id = 0 THEN
-                DELETE
+    //        -- 3. MERGE 진행
+    //        MERGE INTO [dbo].[CharactersConsumableItems] AS T
+    //        USING #TempTable AS S
+    //        ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
 
-            -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
-            WHEN MATCHED THEN
-                UPDATE SET template_id = S.template_id, count = S.count
+    //        -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+    //        WHEN MATCHED AND S.template_id = 0 THEN
+    //            DELETE
 
-            -- DB 테이블에 행이 없음 -> INSERT
-            WHEN NOT MATCHED BY TARGET THEN
-                INSERT (character_id, slot_id, template_id, count)
-                VALUES (S.character_id, S.slot_id, S.template_id, S.count)
+    //        -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
+    //        WHEN MATCHED THEN
+    //            UPDATE SET template_id = S.template_id, count = S.count
 
-            -- 4. 임시 테이블 삭제
-            DROP TABLE #TempItems;
-        )SQL");
+    //        -- DB 테이블에 행이 없음 -> INSERT
+    //        WHEN NOT MATCHED BY TARGET THEN
+    //            INSERT (character_id, slot_id, template_id, count)
+    //            VALUES (S.character_id, S.slot_id, S.template_id, S.count)
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
+    //        -- 4. 임시 테이블 삭제
+    //        DROP TABLE #TempItems;
+    //    )SQL");
 
-        int32 rows = 0;
-        int32 processedRows = 0;
-        BindObject bindObject(dbBind, objectInfo, player, OUT rows);
+    //    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    //    Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
-        dbConn->SetParamSetSize(rows);
+    //    int32 rows = 0;
+    //    int32 processedRows = 0;
+    //    BindObject bindObject(dbBind, objectInfo, player, OUT rows);
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
+    //    if (rows > 0)
+    //    {
+    //        dbConn->SetParamSetSize(rows);
 
-        if (rows != processedRows)
-            throw DBCustomError::SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE;
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
+    //        if (dbBind.Execute() == false)
+    //            throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        GDBConnectionPool->Push(dbConn);
-        return false;
-    }
+    //        if (rows != processedRows)
+    //            throw DBCustomError::SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE;
+    //    }
+    //}
+    //catch (DBCustomError error)
+    //{
+    //    PrintDBErrorLog(error);
 
-    GDBConnectionPool->Push(dbConn);
+    //    GDBConnectionPool->Push(dbConn);
+    //    return false;
+    //}
+
+    //GDBConnectionPool->Push(dbConn);
     return true;
 }
 
 bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
 {
-    const int PARAMS = 4;
-    const int COLS = 0;
-    const int MAX_ROWS = 100;
+    //const int PARAMS = 4;
+    //const int COLS = 0;
+    //const int MAX_ROWS = 100;
 
-    struct BindObject
-    {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
-        {
-            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.inventory();
-            vector<bool>& miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
+    //struct BindObject
+    //{
+    //    BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
+    //    {
+    //        const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
+    //        const Protocol::Inventory& inven = playerInfo.inventory();
+    //        vector<bool>& miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
 
-            // 인벤에 들어있는 장비
-            for (int i = 0; i < inven.consumables_size(); i++)
-            {
-                if (miscDirtyFlags[i] == true)
-                {
-                    const Protocol::Slot slot = inven.gear().Get(i);
-                    _slotId[rows] = slot.slot_id();
-                    _templateId[rows] = slot.item().template_id();
-                    _count[rows] = slot.item().count();
+    //        _characterId = playerInfo.character_id();
 
-                    rows++;
-                }
-            }
+    //        // 인벤에 들어있는 장비
+    //        for (int i = 0; i < inven.consumables_size(); i++)
+    //        {
+    //            if (miscDirtyFlags[i] == true)
+    //            {
+    //                const Protocol::Slot slot = inven.gear().Get(i);
+    //                _slotId[rows] = slot.slot_id();
+    //                _templateId[rows] = slot.item().template_id();
+    //                _count[rows] = slot.item().count();
 
-            BindParam(dbBind, rows);
-        }
+    //                rows++;
+    //            }
+    //        }
 
-        void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
-        {
-            dbBind.BindParam(0, _characterId);
-            dbBind.BindParam(1, _slotId, rows);
-            dbBind.BindParam(2, _templateId, rows);
-            dbBind.BindParam(3, _count, rows);
-        }
+    //        BindParam(dbBind, rows);
+    //    }
 
-        /* Params */
-        int64 _characterId;
-        int32 _slotId[MAX_ROWS];
-        int32 _templateId[MAX_ROWS];
-        int32 _count[MAX_ROWS];
-    };
+    //    void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
+    //    {
+    //        dbBind.BindParam(0, _characterId);
+    //        dbBind.BindParam(1, _slotId, rows);
+    //        dbBind.BindParam(2, _templateId, rows);
+    //        dbBind.BindParam(3, _count, rows);
+    //    }
 
-    DBConnection* dbConn = GDBConnectionPool->Pop();
+    //    /* Params */
+    //    int64 _characterId;
+    //    int32 _slotId[MAX_ROWS];
+    //    int32 _templateId[MAX_ROWS];
+    //    int32 _count[MAX_ROWS];
+    //};
 
-    try
-    {
-        // 해당 캐릭터의 장비 아이템 정보를 갱신한다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-            DECLARE @character_id BIGINT = (?); 
+    //DBConnection* dbConn = GDBConnectionPool->Pop();
 
-            -- 1. 임시 테이블 생성
-            SELECT *
-            INTO #TempTable
-            FROM [dbo].[CharactersMiscItems]
-            WHERE 1 = 0;
+    //try
+    //{
+    //    // 해당 캐릭터의 장비 아이템 정보를 갱신한다.
+    //    DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+    //        DECLARE @character_id BIGINT = (?); 
 
-            -- 2. 임시 테이블에 INSERT
-            INSERT INTO #TempTable (character_id, slot_id, template_id, count)
-            VALUES (@character_id, ?, ?, ?)
+    //        -- 1. 임시 테이블 생성
+    //        SELECT *
+    //        INTO #TempTable
+    //        FROM [dbo].[CharactersMiscItems]
+    //        WHERE 1 = 0;
 
-            -- 3. MERGE 진행
-            MERGE INTO [dbo].[CharactersMiscItems] AS T
-            USING #TempTable AS S
-            ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
+    //        -- 2. 임시 테이블에 INSERT
+    //        INSERT INTO #TempTable (character_id, slot_id, template_id, count)
+    //        VALUES (@character_id, ?, ?, ?)
 
-            -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
-            WHEN MATCHED AND S.template_id = 0 THEN
-                DELETE
+    //        -- 3. MERGE 진행
+    //        MERGE INTO [dbo].[CharactersMiscItems] AS T
+    //        USING #TempTable AS S
+    //        ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
 
-            -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
-            WHEN MATCHED THEN
-                UPDATE SET template_id = S.template_id, count = S.count
+    //        -- 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+    //        WHEN MATCHED AND S.template_id = 0 THEN
+    //            DELETE
 
-            -- DB 테이블에 행이 없음 -> INSERT
-            WHEN NOT MATCHED BY TARGET THEN
-                INSERT (character_id, slot_id, template_id, count)
-                VALUES (S.character_id, S.slot_id, S.template_id, S.count)
+    //        -- 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
+    //        WHEN MATCHED THEN
+    //            UPDATE SET template_id = S.template_id, count = S.count
 
-            -- 4. 임시 테이블 삭제
-            DROP TABLE #TempItems;
-        )SQL");
+    //        -- DB 테이블에 행이 없음 -> INSERT
+    //        WHEN NOT MATCHED BY TARGET THEN
+    //            INSERT (character_id, slot_id, template_id, count)
+    //            VALUES (S.character_id, S.slot_id, S.template_id, S.count)
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
+    //        -- 4. 임시 테이블 삭제
+    //        DROP TABLE #TempItems;
+    //    )SQL");
 
-        int32 rows = 0;
-        int32 processedRows = 0;
-        BindObject bindObject(dbBind, objectInfo, player, OUT rows);
+    //    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    //    Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
-        dbConn->SetParamSetSize(rows);
+    //    int32 rows = 0;
+    //    int32 processedRows = 0;
+    //    BindObject bindObject(dbBind, objectInfo, player, OUT rows);
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
+    //    if (rows > 0)
+    //    {
+    //        dbConn->SetParamSetSize(rows);
 
-        if (rows != processedRows)
-            throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
+    //        if (dbBind.Execute() == false)
+    //            throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        GDBConnectionPool->Push(dbConn);
-        return false;
-    }
+    //        if (rows != processedRows)
+    //            throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
+    //    }
+    //}
+    //catch (DBCustomError error)
+    //{
+    //    PrintDBErrorLog(error);
 
-    GDBConnectionPool->Push(dbConn);
+    //    GDBConnectionPool->Push(dbConn);
+    //    return false;
+    //}
+
+    //GDBConnectionPool->Push(dbConn);
     return true;
 }

@@ -58,13 +58,21 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
     // 스텟 반영
     if (statInfo != nullptr)
     {
-        if (ItemData.count("hp") && ItemData["hp"] > 0)
+        if (ItemData.contains("hp") && ItemData["hp"] > 0)
+        {
             statInfo->set_max_hp(statInfo->max_hp() + ItemData["hp"]);
-        if (ItemData.count("mp") && ItemData["mp"] > 0)
+            int curHp = std::clamp(statInfo->hp(), 0, statInfo->max_hp());
+            statInfo->set_hp(curHp);
+        }
+        if (ItemData.contains("mp") && ItemData["mp"] > 0)
+        {
             statInfo->set_max_mp(statInfo->max_mp() + ItemData["mp"]);
-        if (ItemData.count("physicalAttack") && ItemData["physicalAttack"] > 0)
+            int curMp = std::clamp(statInfo->mp(), 0, statInfo->max_mp());
+            statInfo->set_mp(curMp);
+        }
+        if (ItemData.contains("physicalAttack") && ItemData["physicalAttack"] > 0)
             statInfo->set_physical_attack(statInfo->physical_attack() + ItemData["physicalAttack"]);
-        if (ItemData.count("magicalAttack") && ItemData["magicalAttack"] > 0)
+        if (ItemData.contains("magicalAttack") && ItemData["magicalAttack"] > 0)
             statInfo->set_magical_attack(statInfo->magical_attack() + ItemData["magicalAttack"]);
     }
   
@@ -99,13 +107,21 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
         reflectSlot->CopyFrom(*targetSlot);
 
     // 스텟 반영
-    if (ItemData.count("hp") && ItemData["hp"] > 0)
+    if (ItemData.contains("hp") && ItemData["hp"] > 0)
+    {
         statInfo->set_max_hp(statInfo->max_hp() - ItemData["hp"]);
-    if (ItemData.count("mp") && ItemData["mp"] > 0)
+        int curHp = std::clamp(statInfo->hp(), 0, statInfo->max_hp());
+        statInfo->set_hp(curHp);
+    }
+    if (ItemData.contains("mp") && ItemData["mp"] > 0)
+    {
         statInfo->set_max_mp(statInfo->max_mp() - ItemData["mp"]);
-    if (ItemData.count("physicalAttack") && ItemData["physicalAttack"] > 0)
+        int curMp = std::clamp(statInfo->mp(), 0, statInfo->max_mp());
+        statInfo->set_mp(curMp);
+    }
+    if (ItemData.contains("physicalAttack") && ItemData["physicalAttack"] > 0)
         statInfo->set_physical_attack(statInfo->physical_attack() - ItemData["physicalAttack"]);
-    if (ItemData.count("magicalAttack") && ItemData["magicalAttack"] > 0)
+    if (ItemData.contains("magicalAttack") && ItemData["magicalAttack"] > 0)
         statInfo->set_magical_attack(statInfo->magical_attack() - ItemData["magicalAttack"]);
 
     return true;

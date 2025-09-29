@@ -149,7 +149,8 @@ bool Player::HandleUseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* target
     
     if (itemData.contains("hpRestore"))
     {
-        int32 amount = statInfo->max_hp() * itemData["hpRestore"];
+        float ratio = itemData["hpRestore"];
+        int32 amount = statInfo->max_hp() * ratio;
         int32 updatedHp = min(statInfo->max_hp(), statInfo->hp() + amount);
         statInfo->set_hp(updatedHp);
         updatedStatInfo->set_hp(updatedHp);
@@ -157,10 +158,11 @@ bool Player::HandleUseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* target
 
     if (itemData.contains("mpRestore"))
     {
-        int32 amount = statInfo->max_mp() * itemData["mpRestore"];
+        float ratio = itemData["mpRestore"];
+        int32 amount = statInfo->max_mp() * ratio;
         int32 updatedMp = min(statInfo->max_mp(), statInfo->mp() + amount);
         statInfo->set_mp(updatedMp);
-        updatedStatInfo->set_hp(updatedMp);
+        updatedStatInfo->set_mp(updatedMp);
     }
 
     return true;
