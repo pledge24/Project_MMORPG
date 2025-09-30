@@ -47,7 +47,7 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
     if (targetSlot == nullptr || targetSlot->has_item() == true)
         return false;
 
-    gearDirtyFlags[type] = true;
+    dirtyFlagMappings[type] = true;
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
     targetSlot->mutable_item()->CopyFrom(itemInstance);
@@ -98,7 +98,7 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
     if (targetSlot->has_item() == false)
         return false;
 
-    gearDirtyFlags[type] = true;
+    dirtyFlagMappings[type] = true;
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
     targetSlot->clear_item();
@@ -125,4 +125,10 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
         statInfo->set_magical_attack(statInfo->magical_attack() - ItemData["magicalAttack"]);
 
     return true;
+}
+
+void EquippedGear::ClearDirtyFlag()
+{
+    for (auto& dirtyFlagPair : dirtyFlagMappings)
+        dirtyFlagPair.second = false;
 }

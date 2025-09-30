@@ -21,6 +21,7 @@ public:
     int32 findFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
 
     vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMappings[itemType]; }
+    void ClearDirtyFlags();
 
     weak_ptr<Player> _player;
 

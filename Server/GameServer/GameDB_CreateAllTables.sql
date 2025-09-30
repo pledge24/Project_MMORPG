@@ -56,7 +56,7 @@ CREATE TABLE CharactersGearItems(
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,
 
-    PRIMARY KEY (character_id, slot_id)
+    PRIMARY KEY (character_id, slot_id, is_equipped)
 );
 GO
 

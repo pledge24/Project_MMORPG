@@ -58,6 +58,9 @@ Inventory::~Inventory()
 
 bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
+    if (itemInstance.template_id() == 0)
+        return false;
+
     const Json& itemData = Gamedata::ItemDataTable[itemInstance.template_id()];
 
     if (itemTypeMappings.find(itemData["itemType"]) == itemTypeMappings.end())
@@ -210,5 +213,14 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
     }
 
     return availableSlotId;
+}
+
+void Inventory::ClearDirtyFlags()
+{
+    for (auto& mappingsPair : dirtyFlagsMappings)
+    {
+        vector<bool>& dirtyFlag = mappingsPair.second;
+        std::fill(dirtyFlag.begin(), dirtyFlag.end(), false);
+    }
 }
 
