@@ -3,6 +3,8 @@
 #include "LoginWidget.h"
 #include "LoginMenuPlayerController.h"
 #include "LoginManager.h"
+#include "Sockets.h"
+#include "SocketSubsystem.h"
 #include "P1.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -102,8 +104,15 @@ bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		// TODO: 게임 종료? 로비로?(연결을 곧바로 끊을지 선택해야함)
+		// 연결을 곧바로 끊음
+        if (FSocket* Socket = GameInstance->Socket)
+        {
+        	//ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
+        	//SocketSubsystem->DestroySocket(Socket);
+        	//Socket = nullptr;
 
+            Socket->Close();
+        }
 	}
 
 	return true;

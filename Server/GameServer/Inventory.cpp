@@ -58,8 +58,8 @@ Inventory::~Inventory()
 
 bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
-    if (itemInstance.template_id() == 0)
-        return false;
+    //if (itemInstance.template_id() == 0)
+    //    return false;
 
     const Json& itemData = Gamedata::ItemDataTable[itemInstance.template_id()];
 
@@ -100,6 +100,8 @@ bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstanc
 
         Protocol::Item* item = targetSlot->mutable_item();
         item->CopyFrom(itemInstance);
+        item->set_count(count);
+
         if (itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
             item->set_item_uid(GNextItemUID.fetch_add(1));
         

@@ -90,12 +90,9 @@ UWidget* USlotWidget::GetToolTipWidget_Implementation() const
         if (SlotTooltipWidget)
         {
             SlotTooltipWidget->Init(ItemData); // 아이템 정보 전달
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("GetToolTipWidget_Implementation_Success")));
             return SlotTooltipWidget;
         }
     }
     
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("GetToolTipWidget_Implementation")));
-
     return nullptr;
 }

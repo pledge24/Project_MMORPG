@@ -21,13 +21,11 @@ void UItemTooltipWidget::Init(const FItemData& Item)
 
     if (ItemNameText)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("ItemNameText")));
         ItemNameText->SetText(FText::FromString(Item.ItemName));
     }
 
     if (ItemDescriptionText)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("ItemDescriptionText")));
         ItemDescriptionText->SetText(FText::FromString(Item.Description));
     }
 
@@ -43,6 +41,7 @@ void UItemTooltipWidget::Init(const FItemData& Item)
     int32 ChildIdx = 0;
     SetItemDetailsToVerticalBox(ChildIdx, TEXT("아이템 타입: "), Item.ItemType);
 
+    SetItemStatToVerticalBox(ChildIdx, TEXT("레벨 제한: "), Item.LevelRequirement);
     SetItemStatToVerticalBox(ChildIdx, TEXT("쿨타임: "), Item.Cooldown);
     SetItemStatToVerticalBox(ChildIdx, TEXT("물리 피해 +"), Item.PhysicalAttack);
     SetItemStatToVerticalBox(ChildIdx, TEXT("마법 피해 +"), Item.MagicalAttack);

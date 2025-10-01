@@ -81,13 +81,6 @@ void UP1GameInstance::DisconnectFromGameServer()
 
 	Protocol::C_LEAVE_GAME LeavePkt;
 	SEND_PACKET(LeavePkt);
-
-	//if (Socket)
-	//{
-	//	ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-	//	SocketSubsystem->DestroySocket(Socket);
-	//	Socket = nullptr;
-	//}
 }
 
 void UP1GameInstance::HandleRecvPackets()
@@ -347,13 +340,8 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     auto& InvenSlot = EquipGearPkt.updated_inventory_slot();
 
     // 공통: 장착 부위 매쉬 변경
-    {
+    if(EquipGearPkt.success() == true){
         const Protocol::Item& Item_ = EquippedGearSlot.item();
-
-        if (Player == MyPlayer)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("MYPLAYERRRRRRRRRRRRRRRRRRRRRRRRRR"));
-        }
 
         // 장착한 갑옷 메시 적용
         Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
@@ -370,6 +358,7 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
             RepStatInfo(EquipGearPkt.updated_stat_info());
         }
     }
+
 }
 
 void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
@@ -392,6 +381,7 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     auto& InvenSlot = UnequipGearPkt.updated_inventory_slot();
 
     // 장착해서 갱신된 장착 슬롯 정보를 반영.
+    if (UnequipGearPkt.success() == true)
     {
         const Protocol::Item& Item_ = EquippedGearSlot.item();
 

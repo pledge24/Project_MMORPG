@@ -103,7 +103,7 @@ void UStatusWindowWidget::SendUnequipPacket(USlotWidget* Slot_)
     else
         PendingPacket = true;
 
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d")));
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnUnequip! template_id: %d"), Slot_->ItemData.TemplateId));
     
     if (Slot_)
     {

@@ -37,8 +37,6 @@ void PrintDBErrorLog(const DBCustomError error)
 
 void DBRequestFunctions::LoadUserCharactersData(SessionRef session, int64 userId)
 {
-    cout << "GetUserCharactersData!" << endl;
-
     const int PARAMS = 1;
     const int COLS = 4;
 
@@ -98,18 +96,11 @@ void DBRequestFunctions::LoadUserCharactersData(SessionRef session, int64 userId
 
             Protocol::CharacterOverview* character = pkt.add_characters();
 
-            wcout << "characterId: " << bindObject._characterId << endl;
-            wcout << "classId: " << bindObject._classId << endl;
-            wcout << "characterName: " << bindObject._characterName << endl;
-            wcout << "level: " << bindObject._level << endl;
-
             character->set_character_id(bindObject._characterId);
             character->set_class_((Protocol::CharacterClass)bindObject._classId);
             character->set_name(EncodingConverter::WCharToString(bindObject._characterName));
             character->set_level(bindObject._level);
         }
-
-        wcout << L"캐릭터 개수: " << records << endl;
 
         pkt.set_success(true);
     }
@@ -134,8 +125,6 @@ void DBRequestFunctions::LoadUserCharactersData(SessionRef session, int64 userId
 
 void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::CharacterOverview& character, int64 userId)
 {
-    cout << "CreateCharacter!" << endl;
-
     const int PARAMS = 7;
     const int COLS = 1;
 
@@ -404,8 +393,6 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     Protocol::S_ENTER_GAME pkt;
     pkt.set_success(true);
     pkt.mutable_player()->CopyFrom(*player->objectInfo);
-
-    cout << pkt.DebugString() << endl;
 
     SEND_PACKET(pkt);
 }
@@ -1180,7 +1167,8 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
                 }
             }
 
-            BindParam(dbBind, rows);
+            if(rows > 0)
+                BindParam(dbBind, rows);
         }
 
         void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
@@ -1314,7 +1302,8 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
                 }
             }
 
-            BindParam(dbBind, rows);
+            if(rows > 0)
+                BindParam(dbBind, rows);
         }
 
         void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
@@ -1432,7 +1421,8 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
                 }
             }
 
-            BindParam(dbBind, rows);
+            if(rows > 0)
+                BindParam(dbBind, rows);
         }
 
         void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)

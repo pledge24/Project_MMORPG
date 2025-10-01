@@ -162,19 +162,23 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 	if (room == nullptr)
 		return false;
 
-    // 여기서 게임을 나간 캐릭터의 정보를 서버 메모리 -> DB로 옮긴다.
+    // 같은 Room에 있는 유저들에게 해당 유저 퇴장 처리.
+    GRoom->DoAsync(&Room::HandleLeavePlayer, player);
+
     int64 characterId = player->playerInfo->character_id();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
 
+    // 게임 종료 플레이어 정보 DB에 저장.
     JobRef job = make_shared<Job>(
         [session, player]()
         {
-            GRoom->DoAsync(&Room::HandleLeavePlayer, player);
             DBRequestFunctions::UpdateAllCharactersData(session);
         }
     );
-
     dbQueue->Push(std::move(job));
+
+    // 해당 플레이어 세션 닫기.
+    gameSession->Disconnect("Exit Game");
 
 	return true;
 }
