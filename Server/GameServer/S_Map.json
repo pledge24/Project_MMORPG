@@ -1,64 +1,89 @@
 [
     {
-        "templateId": 100,
+        "templateId": 10,
         "mapName": "마을",
         "mapType": "safe zone",
-        "haveStartPoint": true,
-        "width": 20,
-        "height": 20,
-        "startPoint": {
+        "haveSpawnPoint": true,
+        "widthHalfExtent": 1500,
+        "heightHalfExtent": 1500,
+        "spawnPoint": {
             "posX": 0,
             "posY": 0,
             "posZ": 0
         },
-        "teleportPoints": {
-            "points": [
+        "portals": {
+            "lists": [
                 {
-                    "mapId": 101,
-                    "position": {
-                        "posX": 0,
+                    "portalId": 11,
+                    "type": "room",
+                    "src": {
+                        "posX": -1200,
+                        "posY": 1000,
+                        "posZ": 0
+                    },
+                    "dst": {
+                        "posX": -7750,
+                        "posY": 10000,
+                        "posZ": 0
+                    }
+                },
+                {
+                    "portalId": 12,
+                    "type": "room",
+                    "src": {
+                        "posX": -1200,
+                        "posY": 0,
+                        "posZ": 0
+                    },
+                    "dst": {
+                        "posX": -7750,
                         "posY": 0,
                         "posZ": 0
                     }
                 },
                 {
-                    "mapId": 102,
-                    "position": {
-                        "posX": 0,
-                        "posY": 0,
+                    "portalId": 13,
+                    "type": "room",
+                    "src": {
+                        "posX": -1200,
+                        "posY": -1000,
                         "posZ": 0
-                    }
-                },
-                {
-                    "mapId": 103,
-                    "position": {
-                        "posX": 0,
-                        "posY": 0,
+                    },
+                    "dst": {
+                        "posX": -7750,
+                        "posY": -10000,
                         "posZ": 0
                     }
                 }
             ]
         },
-        "monsterIds": null,
-        "respawnTime": null,
+        "monsterIds": [],
         "maxMonsterCount": null,
-        "minMonsterCount": null
+        "minMonsterCount": null,
+        "respawnPeriod": null,
+        "summonCount": null
     },
     {
-        "templateId": 101,
+        "templateId": 20,
         "mapName": "초급 사냥터(Lv1~Lv10)",
-        "mapType": "field",
-        "haveStartPoint": false,
-        "width": 50,
-        "height": 50,
-        "startPoint": null,
-        "teleportPoints": {
-            "points": [
+        "mapType": "hunting field",
+        "haveSpawnPoint": false,
+        "widthHalfExtent": 2500,
+        "heightHalfExtent": 2500,
+        "spawnPoint": null,
+        "portals": {
+            "lists": [
                 {
-                    "mapId": 100,
-                    "position": {
-                        "posX": 0,
-                        "posY": 0,
+                    "portalId": 21,
+                    "type": "room",
+                    "src": {
+                        "posX": -7750,
+                        "posY": 10000,
+                        "posZ": 0
+                    },
+                    "dst": {
+                        "posX": -1000,
+                        "posY": 1000,
                         "posZ": 0
                     }
                 }
@@ -69,24 +94,31 @@
             5001,
             5002
         ],
-        "respawnTime": 10,
         "maxMonsterCount": 20,
-        "minMonsterCount": 5
+        "minMonsterCount": 5,
+        "respawnPeriod": 10,
+        "summonCount": 3
     },
     {
-        "templateId": 102,
+        "templateId": 30,
         "mapName": "중급 사냥터(Lv11~Lv30)",
-        "mapType": "field",
-        "haveStartPoint": false,
-        "width": 50,
-        "height": 50,
-        "startPoint": null,
-        "teleportPoints": {
-            "points": [
+        "mapType": "hunting field",
+        "haveSpawnPoint": false,
+        "widthHalfExtent": 2500,
+        "heightHalfExtent": 2500,
+        "spawnPoint": null,
+        "portals": {
+            "lists": [
                 {
-                    "mapId": 100,
-                    "position": {
-                        "posX": 0,
+                    "portalId": 31,
+                    "type": "room",
+                    "src": {
+                        "posX": -7750,
+                        "posY": 0,
+                        "posZ": 0
+                    },
+                    "dst": {
+                        "posX": -1000,
                         "posY": 0,
                         "posZ": 0
                     }
@@ -98,25 +130,32 @@
             5004,
             5005
         ],
-        "respawnTime": 10,
         "maxMonsterCount": 20,
-        "minMonsterCount": 5
+        "minMonsterCount": 5,
+        "respawnPeriod": 10,
+        "summonCount": 3
     },
     {
-        "templateId": 103,
+        "templateId": 40,
         "mapName": "고급 사냥터(Lv31~Lv50)",
-        "mapType": "field",
-        "haveStartPoint": false,
-        "width": 50,
-        "height": 50,
-        "startPoint": null,
-        "teleportPoints": {
-            "points": [
+        "mapType": "hunting field",
+        "haveSpawnPoint": false,
+        "widthHalfExtent": 2500,
+        "heightHalfExtent": 2500,
+        "spawnPoint": null,
+        "portals": {
+            "lists": [
                 {
-                    "mapId": 100,
-                    "position": {
-                        "posX": 0,
-                        "posY": 0,
+                    "portalId": 41,
+                    "type": "room",
+                    "src": {
+                        "posX": -7750,
+                        "posY": -10000,
+                        "posZ": 0
+                    },
+                    "dst": {
+                        "posX": -1000,
+                        "posY": -1000,
                         "posZ": 0
                     }
                 }
@@ -127,8 +166,9 @@
             5007,
             5008
         ],
-        "respawnTime": 10,
         "maxMonsterCount": 20,
-        "minMonsterCount": 5
+        "minMonsterCount": 5,
+        "respawnPeriod": 10,
+        "summonCount": 3
     }
 ]
