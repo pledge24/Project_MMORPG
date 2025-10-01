@@ -21,13 +21,13 @@ class P1_API UEquippedGear : public UObject
 	GENERATED_BODY()
 
 public:
-    UEquippedGear();
-    ~UEquippedGear();
+    UEquippedGear() = default;
 
-    void Init(const Protocol::ObjectInfo& Info);
+    void Init(Protocol::PlayerInfo* PlayerInfo_);
+
+    void SetSlot(const Protocol::Slot& Slot_);
 
 private:
-    /* 장착 아이템(캐시용) */
-    TArray<Protocol::Slot> _Gear;
-
+    /** 장착 아이템 LookUp */
+    google::protobuf::Map<int32, Protocol::Slot>* EquippedGearLookup;
 };

@@ -4,6 +4,7 @@
 #include "GameSession.h"
 #include "Monster.h"
 #include "ObjectUtils.h"
+#include "EquippedGear.h"
 
 // TEMP: Room 하나만 운영(나중엔 RoomManager 사용해서 관리)
 RoomRef GRoom = make_shared<Room>();
@@ -20,7 +21,9 @@ Room::~Room()
 
 bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 {
-	bool success = AddObject(object);
+    // 현재 방에 해당 Object를 추가
+    if (AddObject(object) == false)
+        return false;
 
 	// 랜덤 위치
 	if (randPos)
@@ -31,22 +34,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 		object->posInfo->set_yaw(Utils::GetRandom(0.f, 100.f));
 	}
 
-	// 입장 사실을 신입 플레이어에게 알린다
-	if (auto player = dynamic_pointer_cast<Player>(object))
-	{
-		Protocol::S_ENTER_GAME enterGamePkt;
-		enterGamePkt.set_success(success);
-
-		Protocol::ObjectInfo* playerInfo = new Protocol::ObjectInfo();
-		playerInfo->CopyFrom(*object->objectInfo);
-		enterGamePkt.set_allocated_player(playerInfo);
-
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(enterGamePkt);
-		if (auto session = player->session.lock())
-			session->Send(sendBuffer);
-	}
-
-	// 입장 사실을 다른 플레이어에게 알린다
+	// 다른 플레이어들에게 현재 플레이어 Spawn Broadcast
 	{
 		Protocol::S_SPAWN spawnPkt;
 
@@ -54,10 +42,10 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 		objectInfo->CopyFrom(*object->objectInfo);
 
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-		Broadcast(sendBuffer, object->objectInfo->object_id());
+        Broadcast(sendBuffer, object->objectInfo->object_id());
 	}
 
-	// 기존 입장한 플레이어 목록을 신입 플레이어한테 전송해준다
+	// 현재 플레이어에게 방에 있는 모든 플레이어 전송(본인 포함)
 	if (auto player = dynamic_pointer_cast<Player>(object))
 	{
 		Protocol::S_SPAWN spawnPkt;
@@ -76,7 +64,7 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 			session->Send(sendBuffer);
 	}
 
-	return success;
+	return true;
 }
 
 bool Room::LeaveRoom(ObjectRef object)
@@ -115,7 +103,7 @@ bool Room::LeaveRoom(ObjectRef object)
 
 bool Room::HandleEnterPlayer(PlayerRef player)
 {
-	return EnterRoom(player, true);
+	return EnterRoom(player, false);
 }
 
 bool Room::HandleLeavePlayer(PlayerRef player)
@@ -143,6 +131,73 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
 		Broadcast(sendBuffer);
 	}
+}
+
+void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
+{
+    const uint64 objectId = player->objectInfo->object_id();
+    if (_objects.find(objectId) == _objects.end())
+        return;
+
+    Protocol::S_EQUIP_GEAR rPkt;
+    rPkt.set_object_id(objectId);
+
+    if (player->HandleEquipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    {
+        SessionRef session = player->session.lock();
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
+        return;
+    }
+
+    rPkt.set_success(true);
+
+    // 장착한 유저에게만 그대로 전송.
+    {
+        SessionRef session = player->session.lock();
+        cout << rPkt.DebugString() << endl;
+        SEND_PACKET(rPkt);
+    }
+
+    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
+    {
+        rPkt.clear_updated_stat_info();
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+        Broadcast(sendBuffer, objectId);
+    }
+}
+
+void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
+{
+    const uint64 objectId = player->objectInfo->object_id();
+    if (_objects.find(objectId) == _objects.end())
+        return;
+
+    Protocol::S_UNEQUIP_GEAR rPkt;
+    rPkt.set_object_id(objectId);
+
+    if (player->HandleUnequipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    {
+        SessionRef session = player->session.lock();
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
+        return;
+    }
+
+    rPkt.set_success(true);
+
+    // 탈착한 유저에게만 그대로 전송.
+    {
+        SessionRef session = player->session.lock();
+        SEND_PACKET(rPkt);
+    }
+
+    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
+    {
+        rPkt.clear_updated_stat_info();
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+        Broadcast(sendBuffer, objectId);
+    }
 }
 
 void Room::UpdateTick()

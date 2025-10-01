@@ -14,6 +14,8 @@ public:
 	bool HandleEnterPlayer(PlayerRef player);
 	bool HandleLeavePlayer(PlayerRef player);
 	void HandleMove(Protocol::C_MOVE pkt);
+    void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
+    void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
 
 public:
 	void UpdateTick();

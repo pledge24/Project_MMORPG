@@ -10,6 +10,31 @@
 #include "ClientPacketHandler.h"
 #include "P1MyPlayer.h"
 #include "P1.h"
+#include "Inventory.h"
+#include "EquippedGear.h"
+
+UP1GameInstance::UP1GameInstance()
+{
+    _PlayerInfo = new Protocol::PlayerInfo();
+    _StatInfo = _PlayerInfo->mutable_stat_info();
+}
+
+void UP1GameInstance::Init()
+{
+    Super::Init();
+
+    InventoryHelper = NewObject<UInventory>(this, UInventory::StaticClass());
+    EquippedGearHelper = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
+}
+
+void UP1GameInstance::BeginDestroy()
+{
+    Super::BeginDestroy();
+
+    delete _PlayerInfo;
+    _PlayerInfo = nullptr;
+    _StatInfo = nullptr;
+}
 
 void UP1GameInstance::ConnectToGameServer()
 {
@@ -56,13 +81,6 @@ void UP1GameInstance::DisconnectFromGameServer()
 
 	Protocol::C_LEAVE_GAME LeavePkt;
 	SEND_PACKET(LeavePkt);
-
-	//if (Socket)
-	//{
-	//	ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-	//	SocketSubsystem->DestroySocket(Socket);
-	//	Socket = nullptr;
-	//}
 }
 
 void UP1GameInstance::HandleRecvPackets()
@@ -83,7 +101,62 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 
 //////////////////////Network End//////////////////////////
 
-// 새로운 오브젝트(본인 포함)를 맵에 스폰
+void UP1GameInstance::RepLevel(int32 Level_)
+{
+    _PlayerInfo->set_level(Level_);
+    OnLevelChanged.Broadcast(_PlayerInfo->level());
+}
+
+void UP1GameInstance::RepExp(int32 CurExp, int32 MaxExp)
+{
+    _PlayerInfo->set_cur_exp(CurExp);
+    if (MaxExp > 0)
+        _PlayerInfo->set_max_exp(MaxExp);
+
+    OnExpChanged.Broadcast(_PlayerInfo->cur_exp(), _PlayerInfo->max_exp());
+}
+
+void UP1GameInstance::RepStatInfo(const Protocol::StatInfo& StatInfo_)
+{
+    _StatInfo->CopyFrom(StatInfo_);
+    OnStatInfoChanged.Broadcast(*_StatInfo);
+}
+
+void UP1GameInstance::RepGold(int64 Gold)
+{
+    _PlayerInfo->set_gold(Gold);
+    OnGoldChanged.Broadcast(_PlayerInfo->gold());
+}
+
+void UP1GameInstance::RepInventorySlot(const Protocol::Slot& Slot_, bool OnUse)
+{
+    InventoryHelper->SetSlot(Slot_);
+    OnInventorySlotChanged.Broadcast(Slot_, OnUse);
+}
+
+void UP1GameInstance::RepEquippedGearSlot(const Protocol::Slot& Slot_)
+{
+    EquippedGearHelper->SetSlot(Slot_);
+    OnEquippedGearSlotChanged.Broadcast(Slot_);
+}
+
+////////////////////// Replication End //////////////////////////
+
+void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt)
+{
+    if (EnterGamePkt.success() == false)
+        return;
+
+    // Init MyPlayer Data
+    const Protocol::PlayerInfo& PlayerInfo_ = EnterGamePkt.player().player_info();
+    _PlayerInfo->CopyFrom(PlayerInfo_);
+    _StatInfo = _PlayerInfo->mutable_stat_info();   // CopyFrom 시, 포인터 주소가 달라질 수 있음.
+
+    _MyPlayerId = EnterGamePkt.player().object_id();
+    InventoryHelper->Init(_PlayerInfo->mutable_inventory());
+    EquippedGearHelper->Init(_PlayerInfo);
+}
+
 void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool IsMine)
 {
 	if (Socket == nullptr || GameServerSession == nullptr)
@@ -102,27 +175,27 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-        PendingMyPlayerData = std::move(ObjectInfo);
-        bHasPendingMyPlayer = true;
+        AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
+        MyPlayer = Player;
+        Players.Add(ObjectInfo.object_id(), Player);
+        
+        Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
 	}
 	else
 	{
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
-		Player->Init(ObjectInfo);
-		Players.Add(ObjectInfo.object_id(), Player);
+        Players.Add(ObjectInfo.object_id(), Player);
+		
+        Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
 	}
-}
-
-void UP1GameInstance::HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt)
-{
-	HandleSpawn(EnterGamePkt.player(), true);
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
 	for (auto& Player : SpawnPkt.objects())
 	{
-		HandleSpawn(Player, false);
+        bool IsMine = Player.object_id() == _MyPlayerId;
+		HandleSpawn(Player, IsMine);
 	}
 }
 
@@ -171,4 +244,162 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	const Protocol::PosInfo& Info = MovePkt.info();
 	//Player->SetPlayerInfo(Info);
 	Player->SetDestInfo(Info);
+}
+
+void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        OnRep_BuyItem.Broadcast();
+        if (BuyItemPkt.success() == true)
+        {
+            RepInventorySlot(BuyItemPkt.updated_slot());
+            RepGold(BuyItemPkt.gold());
+        }
+    }
+}
+
+void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        OnRep_SellItem.Broadcast();
+        if (SellItemPkt.success() == true)
+        {
+            RepInventorySlot(SellItemPkt.updated_slot());
+            RepGold(SellItemPkt.gold());
+        }
+    }
+}
+
+void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = UseItemPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+    if (Player->IsMyPlayer() == false)
+        return;
+
+    if (AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(MyPlayer))
+    {
+        OnRep_UseItem.Broadcast();
+        if (UseItemPkt.success() == true)
+        {
+            auto& Slot = UseItemPkt.updated_inventory_slot();
+
+            if (Slot.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
+            {
+                RepInventorySlot(Slot, true);
+                RepStatInfo(UseItemPkt.updated_stat_info());
+            }
+        }
+    }
+}
+
+void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = EquipGearPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+    
+    auto& EquippedGearSlot = EquipGearPkt.updated_equipped_slot();
+    auto& InvenSlot = EquipGearPkt.updated_inventory_slot();
+
+    // 공통: 장착 부위 매쉬 변경
+    if(EquipGearPkt.success() == true){
+        const Protocol::Item& Item_ = EquippedGearSlot.item();
+
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
+    }
+
+    // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
+    if (Player->IsMyPlayer())
+    {
+        OnRep_EquipGear.Broadcast();
+        if (EquipGearPkt.success() == true)
+        {
+            RepEquippedGearSlot(EquippedGearSlot);
+            RepInventorySlot(InvenSlot);
+            RepStatInfo(EquipGearPkt.updated_stat_info());
+        }
+    }
+
+}
+
+void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = UnequipGearPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+
+    auto& EquippedGearSlot = UnequipGearPkt.updated_equipped_slot();
+    auto& InvenSlot = UnequipGearPkt.updated_inventory_slot();
+
+    // 장착해서 갱신된 장착 슬롯 정보를 반영.
+    if (UnequipGearPkt.success() == true)
+    {
+        const Protocol::Item& Item_ = EquippedGearSlot.item();
+
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
+    }
+
+    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
+    if (Player->IsMyPlayer())
+    {
+        OnRep_UnequipGear.Broadcast();
+        if (UnequipGearPkt.success() == true)
+        {
+            RepEquippedGearSlot(EquippedGearSlot);
+            RepInventorySlot(InvenSlot);
+            RepStatInfo(UnequipGearPkt.updated_stat_info());
+        }
+
+    }
+
 }

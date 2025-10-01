@@ -40,3 +40,47 @@ BEGIN
     SELECT -1 as character_id;
     ROLLBACK TRANSACTION;
 END
+
+BEGIN TRANSACTION;
+            
+DECLARE @character_id BIGINT;
+DECLARE @user_id BIGINT;
+SET @character_id = (1);
+SET @user_id = (2);
+            
+IF EXISTS (SELECT 1 FROM [dbo].[Characters] WHERE [character_id] = @character_id AND [user_id] = @user_id)
+BEGIN 
+    DELETE FROM [dbo].[Characters]
+    WHERE [character_id] = @character_id
+    COMMIT TRANSACTION;
+END
+ELSE
+BEGIN
+    ROLLBACK TRANSACTION;
+END
+
+
+BEGIN TRANSACTION;
+
+DECLARE @character_id BIGINT;
+DECLARE @user_id BIGINT;
+SET @character_id = (11);
+SET @user_id = (2);
+
+IF EXISTS (
+    SELECT 1 
+    FROM [dbo].[Characters] 
+    WHERE [character_id] = @character_id 
+      AND [user_id] = @user_id
+)
+BEGIN 
+    DELETE FROM [dbo].[Characters]
+    WHERE [character_id] = @character_id
+      AND [user_id] = @user_id;
+
+    COMMIT TRANSACTION;
+END
+ELSE
+BEGIN
+    ROLLBACK TRANSACTION;
+END

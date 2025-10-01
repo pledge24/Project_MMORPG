@@ -5,29 +5,32 @@
 -----------------------*/
 enum
 {
-    MAX_SLOTS = 50
+    MAX_SLOTS = 32
 };
 
 class Inventory
 {
 public:
-    Inventory();
+    Inventory(PlayerRef player);
     ~Inventory();
 
-    void Init(Protocol::PlayerInfo* info);
-    void addItem(Protocol::Slot* updatedSlots, int32 templateId, int32 count=1);
-    void removeItem(Protocol::Slot* targetSlot, Protocol::Slot* updatedSlots, int32 count=1);
+    bool addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstance, int32 count = 1, optional<int32> setSlotId = nullopt);
+    bool addItem(OUT Protocol::Slot* repSlot, int32 templateId, int32 count = 1);
+    bool removeItem(OUT Protocol::Slot* repSlot, Protocol::Slot* slot, int32 count = 1);
+
+    int32 findFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
+
+    vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMappings[itemType]; }
+    void ClearDirtyFlags();
+
+    weak_ptr<Player> _player;
 
 private:
-    /* 카테고리별 인벤토리 */
-    vector<Protocol::Slot> _gear;
-    vector<Protocol::Slot> _consumables;
-    vector<Protocol::Slot> _miscellaneous;
+    unordered_map<Protocol::ItemType, RepeatedPtrField<Protocol::Slot>*> inventorylookupMappings;
+    unordered_map<Protocol::ItemType, vector<bool>> dirtyFlagsMappings;
 
-    /* 더티 플래그('': 변경 없음, 'U': 업데이트, 'I': 추가(슬롯), 'D' 삭제됨(비워진 경우 포함)*/
-    vector<char> _gearDirtyFlags;
-    vector<char> _consumablesDirtyFlags;
-    vector<char> _miscellaneousDirtyFlags;
-
+    /* 유틸 매핑 */
+    unordered_map<Protocol::SlotType, Protocol::ItemType> slotTypeToItemTypeMappings;
+    unordered_map<string, Protocol::ItemType> itemTypeMappings;
 };
 

@@ -8,11 +8,6 @@
 #include "Structs/ItemData.h"
 #include "Inventory.generated.h"
 
-enum
-{
-    MAX_SLOTS = 50
-};
-
 /**
  * 
  */
@@ -25,13 +20,11 @@ public:
     UInventory();
     ~UInventory();
 
-    void Init(const Protocol::ObjectInfo& Info);
+    void Init(Protocol::Inventory* Inventory_);
 
-    void UpdateSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& Slots);
+    void SetSlot(const Protocol::Slot& Slot_);
 
 private:
-    /* 카테고리별 인벤토리(캐시용) */
-    TArray<Protocol::Slot> _Gear;
-    TArray<Protocol::Slot> _Consumables;
-    TArray<Protocol::Slot> _Miscellaneous;
+    /** 카테고리별 인벤토리 Lookup 매핑 정보*/
+    TMap<Protocol::SlotType, TArray<Protocol::Slot*>> InventoryLookupMappings;
 };

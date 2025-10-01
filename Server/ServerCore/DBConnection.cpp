@@ -53,7 +53,7 @@ bool DBConnection::Execute(const WCHAR* query)
     _diagnostics.clear();
 
 	SQLRETURN ret = ::SQLExecDirectW(_statement, (SQLWCHAR*)query, SQL_NTSL);
-	if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+	if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO || ret == SQL_NO_DATA)
 		return true;
 
 	HandleError(ret);
@@ -99,6 +99,11 @@ void DBConnection::Unbind()
 
     ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0);
     ::SQLSetStmtAttr(_statement, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);
+}
+
+void DBConnection::SetParamSetSize(int32& rows)
+{
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)rows, 0);
 }
 
 bool DBConnection::FindError(const SQLWCHAR* targetState)

@@ -3,6 +3,8 @@
 #include "LoginWidget.h"
 #include "LoginMenuPlayerController.h"
 #include "LoginManager.h"
+#include "Sockets.h"
+#include "SocketSubsystem.h"
 #include "P1.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -80,30 +82,37 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Handle_S_ENTER_GAME")));
-	
-    // 1. S_ENTER_GAME을 분해해서 MyPlayer에 저장한다.
-    // 2. 로그인 레벨을 언로드(Unload)한다.
-    // 3. 다음 레벨을 연다.
-    
     if (GWorld)
     {
-        UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
         {
-            GameInstance->HandleSpawn(pkt);
+            GameInstance->HandleEnterGame(pkt);
+            UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         }
     }
 
 	return true;
 }
 
+bool Handle_S_MOVE_ROOM(PacketSessionRef& session, Protocol::S_MOVE_ROOM& pkt)
+{
+
+    return true;
+}
+
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
-		// TODO: 게임 종료? 로비로?(연결을 곧바로 끊을지 선택해야함)
+		// 연결을 곧바로 끊음
+        if (FSocket* Socket = GameInstance->Socket)
+        {
+        	//ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
+        	//SocketSubsystem->DestroySocket(Socket);
+        	//Socket = nullptr;
 
+            Socket->Close();
+        }
 	}
 
 	return true;
@@ -114,9 +123,10 @@ bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleSpawn(pkt);
+        return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
@@ -124,9 +134,10 @@ bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleDespawn(pkt);
+        return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
@@ -134,6 +145,7 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
 	{
 		GameInstance->HandleMove(pkt);
+        return true;
 	}
 
 	return false;
@@ -153,30 +165,55 @@ bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleBuyItem(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleSellItem(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
-bool Handle_S_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::S_EQUIP_EQUIPMENT& pkt)
+bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleEquipGear(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
-bool Handle_S_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::S_UNEQUIP_EQUIPMENT& pkt)
+bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleUnequipGear(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleUseItem(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }

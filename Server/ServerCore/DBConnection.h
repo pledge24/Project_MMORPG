@@ -29,6 +29,7 @@ public:
 	bool			Fetch();
 	int32			GetRowCount();
 	void			Unbind();
+    void            SetParamSetSize(int32& rows);
 
     bool            FindError(const SQLWCHAR* sqlState);
     bool            FindError(const wstring& targetState);

@@ -24,11 +24,20 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    void UpdateSlot(const Protocol::Slot& _Slot);
+    void UpdateSlotWidget(const Protocol::Slot& _Slot, bool OnUse = false);
     void UpdateGold(int32 Gold);
     class USlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& _Slot);
 
 protected:
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendSellItemPacket(USlotWidget* _Slot);
+
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendUseItemPacket(USlotWidget* _Slot);
+
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendEquipItemPacket(USlotWidget* _Slot);
+
     UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
     UUniformGridPanel* Gear_Inven;
 
@@ -40,4 +49,7 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Gold_txt;
+
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    bool PendingPacket = false;
 };

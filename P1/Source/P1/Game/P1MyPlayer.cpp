@@ -30,12 +30,6 @@ AP1MyPlayer::AP1MyPlayer()
 
     // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
-
-    playerInfo = new Protocol::PlayerInfo();
-    statInfo = playerInfo->mutable_stat_info();
-
-    InventoryComp = CreateDefaultSubobject<UInventory>(TEXT("InventoryComponent"));
-    EquippedGearComp = CreateDefaultSubobject<UEquippedGear>(TEXT("EquippedGearComponent"));
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -43,32 +37,18 @@ void AP1MyPlayer::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-	}
-
-    if(!InventoryComp)
-        InventoryComp = NewObject<UInventory>(this, UInventory::StaticClass());
-
-    if (!EquippedGearComp)
-        EquippedGearComp = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
-
-    // GameInstance에서 보류 중인 데이터가 있는지 확인
-    if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
     {
-        if (GameInstance->bHasPendingMyPlayer)
-        {
-            // 안전하게 초기화
-            Init(GameInstance->PendingMyPlayerData);
-            GameInstance->MyPlayer = this;
-            GameInstance->Players.Add(GameInstance->PendingMyPlayerData.object_id(), this);
-            GameInstance->bHasPendingMyPlayer = false;
-        }
+        PC->Possess(this);
+
+	    //Add Input Mapping Context
+	    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	    {
+		    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		    {
+			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		    }
+	    }
     }
 }
 
@@ -124,7 +104,7 @@ void AP1MyPlayer::Tick(float DeltaTime)
 		// 현재 위치 정보
 		{
 			Protocol::PosInfo* Info = MovePkt.mutable_info();
-			Info->CopyFrom(*PlayerInfo);
+			Info->CopyFrom(*SrcInfo);
 			Info->set_yaw(DesiredYaw);
 			Info->set_state(GetMoveState());
 		}
@@ -133,18 +113,11 @@ void AP1MyPlayer::Tick(float DeltaTime)
 	}
 }
 
-void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo)
+void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
 {
-    Super::Init(ObjectInfo);
+    Super::Init(ObjectInfo_);
 
-    InventoryComp->Init(ObjectInfo);
-
-    EquippedGearComp->Init(ObjectInfo);
-
-    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-    {
-        InGamePlayerController->OnUpdatePlayerUI(ObjectInfo.player_info());
-    }
+    SetPosInfo(ObjectInfo_.pos_info());
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)

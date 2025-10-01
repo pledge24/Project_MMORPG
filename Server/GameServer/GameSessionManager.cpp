@@ -7,12 +7,14 @@ GameSessionManager GSessionManager;
 void GameSessionManager::Add(GameSessionRef session)
 {
 	USE_LOCK;
+    cout << "GameSession Added in Manager" << endl;
 	_sessions.insert(session);
 }
 
 void GameSessionManager::Remove(GameSessionRef session)
 {
 	USE_LOCK;
+    cout << "GameSession Removed in Manager" << endl;
 	_sessions.erase(session);
 }
 

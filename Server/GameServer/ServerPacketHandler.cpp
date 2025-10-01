@@ -5,6 +5,8 @@
 #include "Player.h"
 #include "Room.h"
 #include "ObjectUtils.h"
+#include "Inventory.h"
+#include "EquippedGear.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -51,7 +53,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 gameSession->userId = userId;
 
                 // 있으면 DB에서 캐릭터 정보를 긁어온다.
-                DBRequestFunctions::GetUserCharactersData(session, userId);
+                DBRequestFunctions::LoadUserCharactersData(session, userId);
             }
             else
             {
@@ -119,19 +121,33 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
-        [session, pkt, player]()
+        [session, pkt]()
         {
             int64 characterId = pkt.character_id();
-            DBRequestFunctions::GetEnterGameData(session, characterId);
-            GRoom->DoAsync(&Room::HandleEnterPlayer, player);
+            DBRequestFunctions::LoadAllCharactersData(session, characterId);
         }
     );
 
     dbQueue->Push(std::move(job));
 
-	// 방에 입장
-
 	return true;
+}
+
+bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
+{
+    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+
+    // 클라이언트 맵 로딩이 완료되었으니, 해당 플레이어를 Room에 넣는다.
+    GRoom->DoAsync(&Room::HandleEnterPlayer, player);
+
+    return true;
+}
+
+bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
+{
+
+
+    return true;
 }
 
 bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
@@ -146,7 +162,23 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 	if (room == nullptr)
 		return false;
 
-	GRoom->DoAsync(&Room::HandleLeavePlayer, player);
+    // 같은 Room에 있는 유저들에게 해당 유저 퇴장 처리.
+    GRoom->DoAsync(&Room::HandleLeavePlayer, player);
+
+    int64 characterId = player->playerInfo->character_id();
+    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
+
+    // 게임 종료 플레이어 정보 DB에 저장.
+    JobRef job = make_shared<Job>(
+        [session, player]()
+        {
+            DBRequestFunctions::UpdateAllCharactersData(session);
+        }
+    );
+    dbQueue->Push(std::move(job));
+
+    // 해당 플레이어 세션 닫기.
+    gameSession->Disconnect("Exit Game");
 
 	return true;
 }
@@ -177,26 +209,114 @@ bool Handle_C_ATTACK(PacketSessionRef& session, Protocol::C_ATTACK& pkt)
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    Protocol::S_BUY_ITEM rPkt;
+    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+    int32 templateId = pkt.template_id();
+    int64 totalGold = 0;
+
+    if (player->HandleBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
+    {
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
+        return false;
+    }
+
+    rPkt.set_success(true);
+    rPkt.set_gold(totalGold);
+    SEND_PACKET(rPkt);
+    cout << rPkt.DebugString() << endl;
+
+    return true;
 }
 
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    Protocol::S_SELL_ITEM rPkt;
+    Protocol::Slot* targetSlot = pkt.mutable_slot();
+    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+
+    int64 totalGold = 0;
+    if (player->HandleSellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
+    {
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
+        return false;
+    }
+
+    rPkt.set_success(true);
+    rPkt.set_gold(totalGold);
+    SEND_PACKET(rPkt);
+    
+    return true;
 }
 
-bool Handle_C_EQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_EQUIP_EQUIPMENT& pkt)
+bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        return false;
+
+    GRoom->DoAsync(&Room::HandleEquipGear, pkt, player);
+
+    return true;
 }
 
-bool Handle_C_UNEQUIP_EQUIPMENT(PacketSessionRef& session, Protocol::C_UNEQUIP_EQUIPMENT& pkt)
+
+bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        return false;
+
+    GRoom->DoAsync(&Room::HandleUnequipGear, pkt, player);
+
+    return true;
 }
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    Protocol::S_USE_ITEM rPkt;
+    Protocol::Slot* targetSlot = pkt.mutable_slot();
+    if (player->HandleUseItem(rPkt, targetSlot) == false)
+    {
+        rPkt.set_success(false);
+        SEND_PACKET(rPkt);
+        return false;
+    }
+
+    rPkt.set_success(true);
+    SEND_PACKET(rPkt);
+
+    return true;
 }
 

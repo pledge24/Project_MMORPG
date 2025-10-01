@@ -9,7 +9,7 @@
 #include "Components/EditableTextBox.h"
 
 // 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
-TMap<Protocol::CharacterClass, FString> ClassMap = {
+TMap<Protocol::CharacterClass, FString> ClassMappings = {
     {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
     //
@@ -42,7 +42,7 @@ void ULoginWidget::FetchCharacterOverviews(Protocol::S_LOGIN& pkt)
     {
         FCharacterOverview character;
         character.CharacterId = Character.character_id();
-        character.CharacterClass = ClassMap[Character.class_()];
+        character.CharacterClass = ClassMappings[Character.class_()];
         character.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
         character.CharacterLevel = Character.level();
 
@@ -65,11 +65,13 @@ void ULoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
     {
         FCharacterOverview character;
         character.CharacterId = pkt.character_id();
-        character.CharacterClass = ClassMap[Protocol::CharacterClass(CC_CharacterClassId)];
+        character.CharacterClass = ClassMappings[Protocol::CharacterClass(CC_CharacterClassId)];
         character.CharacterName = CC_CharacterNameText->GetText().ToString();
         character.CharacterLevel = 1;
 
+        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), _Characters.Num());
         _Characters.Add(character);
+        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), _Characters.Num());
     }
 
     OnDisplayCharacterOverviews(_Characters);

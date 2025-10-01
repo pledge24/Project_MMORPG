@@ -1,26 +1,22 @@
 #pragma once
 
-enum
-{
-    MAX_EQUIPPABLE_SLOT_ID = 6
-};
-
 class EquippedGear
 {
 public:
-    EquippedGear();
+    EquippedGear(PlayerRef player);
     ~EquippedGear();
 
-    void Init(Protocol::PlayerInfo* info);
+    bool EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Item& itemInstance, optional<int32> setSlotId = nullopt);
+    bool UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Slot* slot);
 
-    bool EquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot);
-    bool UnEquipGear(Protocol::Slot* slot, OUT Protocol::Slot* updatedSlot);
+    map<int32, bool>& GetDirtyFlagMappings() { return dirtyFlagMappings; }
+    void ClearDirtyFlag();
 
+    weak_ptr<Player> _player;
 
 private:
-    vector<Protocol::Item> _gear;
-
-    /* 더티 플래그('': 변경 없음, 'U': 업데이트, 'I': 추가(슬롯))*/
-    vector<char> _gearDirtyFlags;
+    google::protobuf::Map<int32, Protocol::Slot>* equippedGearLookup;
+    map<int32, bool> dirtyFlagMappings;
+    unordered_map<string, Protocol::GearType> gearTypeMappings;
 };
 

@@ -17,9 +17,12 @@ class P1_API UStatusWindowWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
+protected:
+    virtual void NativeConstruct() override;
+
 public:
-    void UpdateSlot(const Protocol::Slot& _Slot);
-    void UpdateAllStat(const Protocol::StatInfo& _StatInfo);
+    void UpdateSlotWidget(const Protocol::Slot& Slot_);
+    void UpdateAllStat(const Protocol::StatInfo& StatInfo_);
 
     void UpdateMaxHp(int32 Value);
     void UpdateMaxMp(int32 Value);
@@ -27,23 +30,26 @@ public:
     void UpdateMagicalAttack(int32 Value);
 
 protected:
+    UFUNCTION(BlueprintCallable, Category = "Network")
+    void SendUnequipPacket(USlotWidget* Slot_);
+
     // 장착 중인 장비
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category="EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Helmet;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Chest;
 
-    UPROPERTY(meta = (BindWidget))
-    TObjectPtr<USlotWidget> Equipped_Gloves;
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
+    TObjectPtr<USlotWidget> Equipped_Arms;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Legs;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Boots;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<USlotWidget> Equipped_Weapon;
 
     // 상세 스텟 정보
@@ -58,4 +64,7 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Details_Magical_Attack;
+
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    bool PendingPacket = false;
 };

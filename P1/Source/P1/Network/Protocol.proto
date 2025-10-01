@@ -59,6 +59,22 @@ message S_ENTER_GAME
 	ObjectInfo player = 2;
 }
 
+message C_ENTER_MAP_COMPLETE
+{
+
+}
+
+message C_MOVE_ROOM
+{
+    uint32 room_id = 1;
+}
+
+message S_MOVE_ROOM
+{
+	bool success = 1;
+	repeated ObjectInfo objects = 2;
+}
+
 message C_LEAVE_GAME
 {
 
@@ -96,7 +112,7 @@ message C_ATTACK
 
 message S_ATTACK
 {
-    repeated uint64 object_ids = 1;
+    map<uint64, int32> attack_info = 1; // <object_ids, combo_id>
 }
 
 message S_HIT
@@ -116,47 +132,57 @@ message S_HIT
 message C_BUY_ITEM
 {
     int32 template_id = 1;
-    int32 count = 2;
+    int32 count = 2;        // ÇöÀç 1·Î °íÁ¤(±×·¡¼­ »ç¿ë¾ÈÇÔ)
 }
 
 message S_BUY_ITEM
 {
-    repeated Slot updated_slots = 1;
-    int64 gold = 2;
+    bool success = 1;
+    Slot updated_slot = 2;
+    int64 gold = 3;
 }
 
 message C_SELL_ITEM
-{
+{ 
     Slot slot = 1;
-    int32 count = 2;
+    int32 count = 2;        // ÇöÀç 1·Î °íÁ¤(±×·¡¼­ »ç¿ë¾ÈÇÔ)
 }
 
 message S_SELL_ITEM
 {
-    repeated Slot updated_slots = 1;
-    int64 gold = 2;
+    bool success = 1;
+    Slot updated_slot = 2;
+    int64 gold = 3;
 }
 
-message C_EQUIP_EQUIPMENT
+message C_EQUIP_GEAR
 {
     Slot slot = 1;
 }
 
-message S_EQUIP_EQUIPMENT
+message S_EQUIP_GEAR
 {
-    repeated Slot updated_slots = 1;
-    Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
+    bool success = 1;
+    uint64 object_id = 2;
+    Slot updated_equipped_slot = 3;
+    
+    optional Slot updated_inventory_slot = 4;
+    optional StatInfo updated_stat_info = 5; // ¹Ù²ï ½ºÅÈ
 }
 
-message C_UNEQUIP_EQUIPMENT
+message C_UNEQUIP_GEAR
 {
     Slot slot = 1;
 }
 
-message S_UNEQUIP_EQUIPMENT
+message S_UNEQUIP_GEAR
 {
-    repeated Slot updated_slots = 1;
-    Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
+    bool success = 1;
+    uint64 object_id = 2;
+    Slot updated_equipped_slot = 3;
+    
+    optional Slot updated_inventory_slot = 4;
+    optional StatInfo updated_stat_info = 5; // ¹Ù²ï ½ºÅÈ
 }
 
 message C_USE_ITEM
@@ -166,6 +192,9 @@ message C_USE_ITEM
 
 message S_USE_ITEM
 {
-    repeated Slot updated_slots = 1;
-    Stat updated_stat = 2; // ¹Ù²ï ½ºÅÝ
+    bool success = 1;
+    uint64 object_id = 2;
+
+    optional Slot updated_inventory_slot = 3;
+    optional StatInfo updated_stat_info = 4; // ¹Ù²ï ½ºÅÈ
 }

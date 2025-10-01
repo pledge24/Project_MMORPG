@@ -2,27 +2,21 @@
 
 #include "InGamePlayerController.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/CanvasPanelSlot.h"
 #include "StatusWindowWidget.h"
 #include "InventoryWidget.h"
 #include "HUDWidget.h"
 #include "P1GameInstance.h"
 #include "P1Player.h"
-
-enum WidgetType
-{
-    WIDGET_NONE = 0,
-    WIDGET_STATUS_WINDOW = 1,
-    WIDGET_INVENTORY = 2
-};
-
-AInGamePlayerController::AInGamePlayerController()
-{
-    HUDWidget = nullptr;
-}
+#include "P1MyPlayer.h"
+#include "P1.h"
 
 void AInGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
+
+    Protocol::C_ENTER_MAP_COMPLETE pkt;
+    SEND_PACKET(pkt);
 
     if(HUDWidgetClass && !HUDWidget)
     {
@@ -61,73 +55,102 @@ void AInGamePlayerController::BeginPlay()
             InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
+
+    if (ShopWidgetClass && !ShopWidget)
+    {
+        ShopWidget = CreateWidget<UUserWidget>(this, ShopWidgetClass);
+        if (ShopWidget)
+        {
+            ShopWidget->AddToViewport();
+            ShopWidget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    WidgetMappings = {
+        {WidgetType::WIDGET_STATUS_WINDOW, StatusWindowWidget},
+        {WidgetType::WIDGET_INVENTORY, InventoryWidget},
+        {WidgetType::WIDGET_SHOP, ShopWidget},
+    };
 }
 
 void AInGamePlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
+
     InputComponent->BindAction("ToggleStatusWindow", IE_Pressed, this, &AInGamePlayerController::OnToggleStatusWindowWidget);
     InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AInGamePlayerController::OnToggleInventoryWidget);
 }
 
-void AInGamePlayerController::OnUpdateInventorySlot(const Protocol::Slot& _Slot)
-{
-    InventoryWidget->UpdateSlot(_Slot);
-}
-
-void AInGamePlayerController::OnUpdateEquippedGearSlot(const Protocol::Slot& _Slot)
-{
-    StatusWindowWidget->UpdateSlot(_Slot);
-}
-
-void AInGamePlayerController::OnUpdatePlayerUI(const Protocol::PlayerInfo& _PlayerInfo)
-{
-    StatusWindowWidget->UpdateAllStat(_PlayerInfo.stat_info());
-    HUDWidget->UpdateAllHUDData(_PlayerInfo);
-}
-
-void AInGamePlayerController::OnUpdateGold(int32 Gold)
-{
-    InventoryWidget->UpdateGold(Gold);
-}
-
-
 void AInGamePlayerController::OnToggleStatusWindowWidget()
 {
-    ToggleWidget(StatusWindowWidget, WIDGET_STATUS_WINDOW);
+    ToggleWidget(WidgetType::WIDGET_STATUS_WINDOW);
 }
 
 void AInGamePlayerController::OnToggleInventoryWidget()
 {
-    ToggleWidget(InventoryWidget, WIDGET_INVENTORY);
+    ToggleWidget(WidgetType::WIDGET_INVENTORY);
 }
 
-void AInGamePlayerController::ToggleWidget(UUserWidget* Widget, int32 FlagIdx)
+void AInGamePlayerController::ToggleWidget(WidgetType Type)
 {
-    bool IsVisible = (ToggleFlag & (1 << FlagIdx)) > 0;
+    uint8 FlagIdx = (uint8)Type;
+    bool IsActive = (WidgetFlag & (1 << FlagIdx)) > 0;
 
-    if (IsVisible)
+    if (!IsActive)
     {
-        Widget->SetVisibility(ESlateVisibility::Collapsed);
+        TurnOnWidget(Type);
     }
     else
     {
-        Widget->SetVisibility(ESlateVisibility::Visible);
+        TurnOffWidget(Type);
     }
+}
 
-    // Toggle Flag
-    ToggleFlag ^= (1 << FlagIdx);
-
-    // 켜진 UI가 1개 이상이면 UI모드 유지
-    if (ToggleFlag > 0)
+void AInGamePlayerController::TurnOnWidget(WidgetType Type)
+{
+    if (UUserWidget* Widget = WidgetMappings[Type])
     {
+        Widget->RemoveFromViewport();
+        Widget->AddToViewport(CurrentMaxZOrder++);
+        Widget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+        uint8 FlagIdx = (uint8)Type;
+
+        // Update Widget Flag
+        WidgetFlag |= (1 << FlagIdx);
+
+        // 켜진 UI가 1개 이상이면 UI모드 유지
         bShowMouseCursor = true;
         SetInputMode(FInputModeGameAndUI());
     }
-    else
+}
+
+void AInGamePlayerController::TurnOffWidget(WidgetType Type)
+{
+    if (UUserWidget* Widget = WidgetMappings[Type])
     {
-        bShowMouseCursor = false;
-        SetInputMode(FInputModeGameOnly());
+        Widget->SetVisibility(ESlateVisibility::Collapsed);
+
+        uint8 FlagIdx = (uint8)Type;
+
+        // Update Widget Flag
+        WidgetFlag &= ~(1 << FlagIdx);
+
+        // 켜진 UI가 1개 이상이면 UI모드 유지
+        if (WidgetFlag > 0)
+        {
+            bShowMouseCursor = true;
+            SetInputMode(FInputModeGameAndUI());
+        }
+        else
+        {
+            bShowMouseCursor = false;
+            SetInputMode(FInputModeGameOnly());
+        }
     }
+}
+
+bool AInGamePlayerController::IsTurnOnThisWidget(WidgetType Type) const
+{
+    return WidgetFlag & (1 << (uint8)Type); 
 }
 

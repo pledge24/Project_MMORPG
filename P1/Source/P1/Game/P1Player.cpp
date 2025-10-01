@@ -38,16 +38,8 @@ AP1Player::AP1Player()
 	GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	//====================================================================
 
-	PlayerInfo = new Protocol::PosInfo();
+	SrcInfo = new Protocol::PosInfo();
 	DestInfo = new Protocol::PosInfo();
-}
-
-AP1Player::~AP1Player()
-{
-	delete PlayerInfo;
-	delete DestInfo;
-	PlayerInfo = nullptr;
-	DestInfo = nullptr;
 }
 
 void AP1Player::BeginPlay()
@@ -65,6 +57,18 @@ void AP1Player::BeginPlay()
 	}
 }
 
+void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+
+    {
+        delete SrcInfo;
+        delete DestInfo;
+        SrcInfo = nullptr;
+        DestInfo = nullptr;
+    }
+}
+
 void AP1Player::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -72,10 +76,10 @@ void AP1Player::Tick(float DeltaSeconds)
 	// 틱마다 플레이어의 위치를 수집해서 PlayerInfo에 저장
 	{
 		FVector Location = GetActorLocation();
-		PlayerInfo->set_x(Location.X);
-		PlayerInfo->set_y(Location.Y);
-		PlayerInfo->set_z(Location.Z);
-		PlayerInfo->set_yaw(GetControlRotation().Yaw);
+		SrcInfo->set_x(Location.X);
+		SrcInfo->set_y(Location.Y);
+		SrcInfo->set_z(Location.Z);
+		SrcInfo->set_yaw(GetControlRotation().Yaw);
 	}
 
 	if (IsMyPlayer() == false)
@@ -95,7 +99,7 @@ void AP1Player::Tick(float DeltaSeconds)
 		SetActorLocation(NextLocation);*/
 
 		// TEST: 수신된 패킷에서 방향만 사용.
-		const Protocol::MoveState State = PlayerInfo->state();
+		const Protocol::MoveState State = SrcInfo->state();
 
 		if (State == Protocol::MOVE_STATE_RUN)
 		{
@@ -116,34 +120,35 @@ bool AP1Player::IsMyPlayer()
 
 void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
 {
-    // 위치 설정
-    SetPosInfo(ObjectInfo.pos_info());
+    if (ObjectInfo.player_info().equipped_gear().empty())
+        return;
 
     // 장착한 장비를 메시로 표현
-    for (auto& _Slot : ObjectInfo.player_info().equipped_gear())
+    for (const auto& Pair : ObjectInfo.player_info().equipped_gear())
     {
-        UpdateEquippedGear(_Slot);
+        const Protocol::Slot& Slot_ = Pair.second;
+        SetEquippedGear(Slot_);
     }
 }
 
 void AP1Player::SetMoveState(Protocol::MoveState State)
 {
-	if (PlayerInfo->state() == State)
+	if (SrcInfo->state() == State)
 		return;
 
-	PlayerInfo->set_state(State);
+	SrcInfo->set_state(State);
 
 	// TODO
 }
 
 void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
 {
-	if (PlayerInfo->object_id() != 0)
+	if (SrcInfo->object_id() != 0)
 	{
-		assert(PlayerInfo->object_id() == Info.object_id());
+		assert(SrcInfo->object_id() == Info.object_id());
 	}
 
-	PlayerInfo->CopyFrom(Info);
+	SrcInfo->CopyFrom(Info);
 
 	FVector Location(Info.x(), Info.y(), Info.z());
 	SetActorLocation(Location);
@@ -151,9 +156,9 @@ void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
 
 void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 {
-	if (PlayerInfo->object_id() != 0)
+	if (SrcInfo->object_id() != 0)
 	{
-		assert(PlayerInfo->object_id() == Info.object_id());
+		assert(SrcInfo->object_id() == Info.object_id());
 	}
 
 	// Dest에 최종 상태 복사
@@ -163,9 +168,9 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 	SetMoveState(Info.state());
 }
 
-void AP1Player::UpdateEquippedGear(const Protocol::Slot& _Slot)
+void AP1Player::SetEquippedGear(const Protocol::Slot& _Slot)
 {
     int32 SlotId = _Slot.slot_id();
     int32 TemplateId = _Slot.item().template_id();
-    OnChangeMesh(SlotId, TemplateId);
+    ChangeMesh(SlotId, TemplateId);
 }

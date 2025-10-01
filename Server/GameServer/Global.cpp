@@ -5,4 +5,4 @@ const map<string, int32> GClassMappings = {
     make_pair("warrior", 1)
 };
 
-atomic<int64> GmaxItemUID = 0;
+atomic<int64> GNextItemUID = 0;

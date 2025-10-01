@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[10];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[11];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -57,14 +57,18 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020STAT_TYPE"
   "_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031STAT_TYPE"
   "_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYPE_MAGICAL_"
-  "ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007*o\n\013UpdateSta"
-  "te\022\025\n\021UPDATE_STATE_NONE\020\000\022\027\n\023UPDATE_STAT"
-  "E_INSERT\020\001\022\027\n\023UPDATE_STATE_UPDATE\020\002\022\027\n\023U"
-  "PDATE_STATE_DELETE\020\003b\006proto3"
+  "ATTACK\020\006\022\021\n\rSTAT_TYPE_EXP\020\007*q\n\013UpdateSta"
+  "te\022\025\n\021UPDATE_STATE_NONE\020\000\022\026\n\022UPDATE_STAT"
+  "E_ADDED\020\001\022\031\n\025UPDATE_STATE_MODIFIED\020\002\022\030\n\024"
+  "UPDATE_STATE_REMOVED\020\003*\234\001\n\010GearType\022\022\n\016G"
+  "EAR_TYPE_NONE\020\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n"
+  "\017GEAR_TYPE_CHEST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022"
+  "\n\016GEAR_TYPE_ARMS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022"
+  "\024\n\020GEAR_TYPE_WEAPON\020\006b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1268, descriptor_table_protodef_Enum_2eproto,
+    false, false, 1429, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -239,6 +243,25 @@ bool UpdateState_IsValid(int value) {
     case 1:
     case 2:
     case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[10];
+}
+bool GearType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
       return true;
     default:
       return false;

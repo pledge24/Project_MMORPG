@@ -32,7 +32,7 @@ CREATE TABLE CharactersLastState(
     pos_z                   FLOAT NOT NULL DEFAULT 0.0,
     rot_yaw                 FLOAT NOT NULL DEFAULT 0.0,
     exp                     BIGINT NOT NULL DEFAULT 0,
-    gold                    BIGINT NOT NULL DEFAULT 1000,
+    gold                    BIGINT NOT NULL DEFAULT 10000000,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE
@@ -43,11 +43,11 @@ GO
 -- 3. CharactersGearItems: 캐릭터의 장비 아이템
 DROP TABLE IF EXISTS CharactersGearItems;
 CREATE TABLE CharactersGearItems(
-    item_uid                        BIGINT PRIMARY KEY,
     character_id                    BIGINT NOT NULL,
-    template_id                     INT NOT NULL,
-    is_equipped                     BIT NOT NULL DEFAULT 0,
     slot_id                         INT NOT NULL,
+    item_uid                        BIGINT NOT NULL,
+    template_id                     INT NOT NULL,
+    is_equipped                     BIT NOT NULL,
     enhance                         INT NOT NULL DEFAULT 0,
     durability                      INT NOT NULL DEFAULT 0,
     additional_physical_attack      INT NOT NULL DEFAULT 0,
@@ -55,6 +55,8 @@ CREATE TABLE CharactersGearItems(
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,
+
+    PRIMARY KEY (character_id, slot_id, is_equipped)
 );
 GO
 
@@ -63,8 +65,8 @@ GO
 DROP TABLE IF EXISTS CharactersConsumableItems;
 CREATE TABLE CharactersConsumableItems(
     character_id        BIGINT NOT NULL,
-    template_id         INT NOT NULL,
     slot_id             INT NOT NULL,
+    template_id         INT NOT NULL,
     count               INT NOT NULL DEFAULT 1,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
@@ -79,8 +81,8 @@ GO
 DROP TABLE IF EXISTS CharactersMiscItems;
 CREATE TABLE CharactersMiscItems(
     character_id        BIGINT NOT NULL,
-    template_id         INT NOT NULL,
     slot_id             INT NOT NULL,
+    template_id         INT NOT NULL,
     count               INT NOT NULL DEFAULT 1,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)

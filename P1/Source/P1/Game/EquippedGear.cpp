@@ -1,31 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Game/EquippedGear.h"
+#include "P1MyPlayer.h"
 #include "P1.h"
 
-UEquippedGear::UEquippedGear()
+void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_)
 {
-    _Gear.SetNum(MAX_EQUIPPED_SLOTS +1);
+    EquippedGearLookup = PlayerInfo_->mutable_equipped_gear();
 }
 
-UEquippedGear::~UEquippedGear()
+void UEquippedGear::SetSlot(const Protocol::Slot& Slot_)
 {
-}
+    int32 SlotId_ = Slot_.slot_id();
+    Protocol::SlotType SlotType_ = Slot_.type();
 
-void UEquippedGear::Init(const Protocol::ObjectInfo& Info)
-{
-    auto& _EquippedGear = Info.player_info().equipped_gear();
+    if (SlotType_ != Protocol::SlotType::SLOT_TYPE_EQUIPPED)
+        return;
 
-    if (AInGamePlayerController* InGamePlayerController = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-    {
-        // 장비 창
-        for (const Protocol::Slot& _Slot : _EquippedGear)
-        {
-            int32 _SlotId = _Slot.slot_id();
-            _Gear[_SlotId] = _Slot;
-            InGamePlayerController->OnUpdateEquippedGearSlot(_Slot);
-        }
-
-        InGamePlayerController->OnUpdateGold(Info.player_info().gold());
-    }
+    (*EquippedGearLookup)[SlotId_] = Slot_;
 }
