@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Game/HUDWidget.h"
+#include "Widgets/HUDWidget.h"
+#include "Widgets/ProgressBarWidget.h"
 #include "Components/TextBlock.h"
-#include "ProgressBarWidget.h"
 #include "P1MyPlayer.h"
 #include "P1GameInstance.h"
 #include "P1.h"

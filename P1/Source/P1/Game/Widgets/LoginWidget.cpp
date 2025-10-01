@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "LoginWidget.h"
+#include "Widgets/LoginWidget.h"
+#include "Components/TextBlock.h"
+#include "Components/EditableTextBox.h"
 #include "P1.h"
 #include "LoginMenuPlayerController.h"
 #include "LoginManager.h"
-#include "Components/TextBlock.h"
-#include "Components/EditableTextBox.h"
 
 // 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
 TMap<Protocol::CharacterClass, FString> ClassMappings = {

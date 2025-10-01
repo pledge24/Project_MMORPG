@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Game/InventoryWidget.h"
+#include "Widgets/InventoryWidget.h"
+#include "Widgets/SlotWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
-#include "SlotWidget.h"
 #include "P1.h"
 #include "P1MyPlayer.h"
 #include "P1GameInstance.h"

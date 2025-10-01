@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Game/ShopWidget.h"
-#include "SlotWidget.h"
+#include "Widgets/ShopWidget.h"
+#include "Widgets/SlotWidget.h"
 #include "P1.h"
 #include "P1MyPlayer.h"
 

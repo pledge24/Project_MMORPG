@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SlotWidget.h"
+#include "Widgets/SlotWidget.h"
+#include "Widgets/ItemTooltipWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Components/Button.h"
 #include "P1.h"
 #include "Engine/DataTable.h"
-#include "ItemTooltipWidget.h"
-#include "Components/Button.h"
 
 void USlotWidget::NativeConstruct()
 {
