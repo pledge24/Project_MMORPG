@@ -63,10 +63,10 @@ bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstanc
 
     const Json& itemData = Gamedata::ItemDataTable[itemInstance.template_id()];
 
-    if (itemTypeMappings.find(itemData["itemType"]) == itemTypeMappings.end())
+    if (itemTypeMappings.find(itemData[JsonProperty::Item::ItemType]) == itemTypeMappings.end())
         return false;
 
-    Protocol::ItemType itemType = itemTypeMappings[itemData["itemType"]];
+    Protocol::ItemType itemType = itemTypeMappings[itemData[JsonProperty::Item::ItemType]];
     if (inventorylookupMappings.find(itemType) == inventorylookupMappings.end())
         return false;
 
@@ -167,8 +167,6 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
         return -1;
     }
 
-    const Json& itemData = Gamedata::ItemDataTable[templateId];
- 
     RepeatedPtrField<Protocol::Slot>* lookupTable = inventorylookupMappings[type];
     int32 availableSlotId = -1;
     if (type == Protocol::ItemType::ITEM_TYPE_GEAR)

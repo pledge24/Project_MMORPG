@@ -135,10 +135,10 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         {
             unordered_map<int32, Json>& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[_classId]);
             const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
-            _curHp = classLevelDataTable[level]["maxHp"];
-            _curMp = classLevelDataTable[level]["maxMp"];
-            _curPhysicalAttack = classLevelDataTable[level]["physicalAttack"];
-            _curMagicalAttack = classLevelDataTable[level]["magicalAttack"];
+            _curHp = classLevelDataTable[level][JsonProperty::LevelTable::MaxHp];
+            _curMp = classLevelDataTable[level][JsonProperty::LevelTable::MaxMp];
+            _curPhysicalAttack = classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack];
+            _curMagicalAttack = classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack];
             BindParam(dbBind);
             BindCol(dbBind);
         }
@@ -628,7 +628,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         // ==성장 및 스텟 관련==
         playerInfo->set_cur_exp(bindObject._exp);
         DataTable& classLevelDataTable = *Gamedata::ClassLevelDataTableMappings[playerInfo->class_()];
-        uint64 maxExp = classLevelDataTable[playerInfo->level()]["expRequirement"];
+        uint64 maxExp = classLevelDataTable[playerInfo->level()][JsonProperty::LevelTable::ExpRequirement];
         playerInfo->set_max_exp(maxExp);
 
         // 현재 Hp

@@ -37,7 +37,7 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
     const Json& ItemData = Gamedata::ItemDataTable[templateId];
 
     // 장비 타입 아이템인지 체크
-    if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
+    if (gearTypeMappings.find(ItemData[JsonProperty::Item::ItemSubtype]) == gearTypeMappings.end())
         return false;
     
     Protocol::GearType type = setSlotId.has_value() ? (Protocol::GearType)setSlotId.value() : gearTypeMappings[ItemData["itemSubtype"]];
@@ -58,22 +58,29 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::Stat
     // 스텟 반영
     if (statInfo != nullptr)
     {
-        if (ItemData.contains("hp") && ItemData["hp"] > 0)
+        const string_view& hpProperty = JsonProperty::Item::Hp;
+        if (ItemData.contains(hpProperty) && ItemData[hpProperty] > 0)
         {
-            statInfo->set_max_hp(statInfo->max_hp() + ItemData["hp"]);
+            statInfo->set_max_hp(statInfo->max_hp() + ItemData[hpProperty]);
             int curHp = std::clamp(statInfo->hp(), 0, statInfo->max_hp());
             statInfo->set_hp(curHp);
         }
-        if (ItemData.contains("mp") && ItemData["mp"] > 0)
+
+        const string_view& mpProperty = JsonProperty::Item::Mp;
+        if (ItemData.contains(mpProperty) && ItemData[mpProperty] > 0)
         {
-            statInfo->set_max_mp(statInfo->max_mp() + ItemData["mp"]);
+            statInfo->set_max_mp(statInfo->max_mp() + ItemData[mpProperty]);
             int curMp = std::clamp(statInfo->mp(), 0, statInfo->max_mp());
             statInfo->set_mp(curMp);
         }
-        if (ItemData.contains("physicalAttack") && ItemData["physicalAttack"] > 0)
-            statInfo->set_physical_attack(statInfo->physical_attack() + ItemData["physicalAttack"]);
-        if (ItemData.contains("magicalAttack") && ItemData["magicalAttack"] > 0)
-            statInfo->set_magical_attack(statInfo->magical_attack() + ItemData["magicalAttack"]);
+
+        const string_view& physicalAttackProperty = JsonProperty::Item::PhysicalAttack;
+        if (ItemData.contains(physicalAttackProperty) && ItemData[physicalAttackProperty] > 0)
+            statInfo->set_physical_attack(statInfo->physical_attack() + ItemData[physicalAttackProperty]);
+
+        const string_view& magicalAttackProperty = JsonProperty::Item::MagicalAttack;
+        if (ItemData.contains(magicalAttackProperty) && ItemData[magicalAttackProperty] > 0)
+            statInfo->set_magical_attack(statInfo->magical_attack() + ItemData[magicalAttackProperty]);
     }
   
     return true;
@@ -89,10 +96,10 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
     const Json& ItemData = Gamedata::ItemDataTable[templateId];
 
     // 장착 반영
-    if (gearTypeMappings.find(ItemData["itemSubtype"]) == gearTypeMappings.end())
+    if (gearTypeMappings.find(ItemData[JsonProperty::Item::ItemSubtype]) == gearTypeMappings.end())
         return false;
 
-    Protocol::GearType type = gearTypeMappings[ItemData["itemSubtype"]];
+    Protocol::GearType type = gearTypeMappings[ItemData[JsonProperty::Item::ItemSubtype]];
     Protocol::Slot* targetSlot = &(*equippedGearLookup)[type];
 
     if (targetSlot->has_item() == false)
@@ -107,22 +114,29 @@ bool EquippedGear::UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::St
         reflectSlot->CopyFrom(*targetSlot);
 
     // 스텟 반영
-    if (ItemData.contains("hp") && ItemData["hp"] > 0)
+    const string_view& hpProperty = JsonProperty::Item::Hp;
+    if (ItemData.contains(hpProperty) && ItemData[hpProperty] > 0)
     {
-        statInfo->set_max_hp(statInfo->max_hp() - ItemData["hp"]);
+        statInfo->set_max_hp(statInfo->max_hp() - ItemData[hpProperty]);
         int curHp = std::clamp(statInfo->hp(), 0, statInfo->max_hp());
         statInfo->set_hp(curHp);
     }
-    if (ItemData.contains("mp") && ItemData["mp"] > 0)
+
+    const string_view& mpProperty = JsonProperty::Item::Mp;
+    if (ItemData.contains(mpProperty) && ItemData[mpProperty] > 0)
     {
-        statInfo->set_max_mp(statInfo->max_mp() - ItemData["mp"]);
+        statInfo->set_max_mp(statInfo->max_mp() - ItemData[mpProperty]);
         int curMp = std::clamp(statInfo->mp(), 0, statInfo->max_mp());
         statInfo->set_mp(curMp);
     }
-    if (ItemData.contains("physicalAttack") && ItemData["physicalAttack"] > 0)
-        statInfo->set_physical_attack(statInfo->physical_attack() - ItemData["physicalAttack"]);
-    if (ItemData.contains("magicalAttack") && ItemData["magicalAttack"] > 0)
-        statInfo->set_magical_attack(statInfo->magical_attack() - ItemData["magicalAttack"]);
+
+    const string_view& physicalAttackProperty = JsonProperty::Item::PhysicalAttack;
+    if (ItemData.contains(physicalAttackProperty) && ItemData[physicalAttackProperty] > 0)
+        statInfo->set_physical_attack(statInfo->physical_attack() - ItemData[physicalAttackProperty]);
+    
+    const string_view& magicalAttackProperty = JsonProperty::Item::MagicalAttack;
+    if (ItemData.contains(magicalAttackProperty) && ItemData[magicalAttackProperty] > 0)
+        statInfo->set_magical_attack(statInfo->magical_attack() - ItemData[magicalAttackProperty]);
 
     return true;
 }

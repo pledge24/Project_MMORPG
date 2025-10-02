@@ -186,6 +186,7 @@
     <ClInclude Include="GameSessionManager.h" />
     <ClInclude Include="Global.h" />
     <ClInclude Include="Inventory.h" />
+    <ClInclude Include="JsonProperty.h" />
     <ClInclude Include="Monster.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="ObjectUtils.h" />

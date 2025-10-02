@@ -32,6 +32,9 @@
     <Filter Include="Game\System">
       <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Data\Json">
+      <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -82,9 +85,6 @@
     <ClCompile Include="DBRequestFunctions.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="Gamedata.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
     <ClCompile Include="Inventory.cpp">
       <Filter>Game\System</Filter>
     </ClCompile>
@@ -93,6 +93,9 @@
     </ClCompile>
     <ClCompile Include="Global.cpp">
       <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamedata.cpp">
+      <Filter>Game\Data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -145,9 +148,6 @@
     <ClInclude Include="EncodingConverter.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Gamedata.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
     <ClInclude Include="Global.h">
       <Filter>Main</Filter>
     </ClInclude>
@@ -156,6 +156,12 @@
     </ClInclude>
     <ClInclude Include="EquippedGear.h">
       <Filter>Game\System</Filter>
+    </ClInclude>
+    <ClInclude Include="JsonProperty.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamedata.h">
+      <Filter>Game\Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -183,26 +189,26 @@
     <None Include="DEBUG.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="S_Item.json">
-      <Filter>Game\Data</Filter>
-    </None>
-    <None Include="S_Map.json">
-      <Filter>Game\Data</Filter>
-    </None>
-    <None Include="S_Monster.json">
-      <Filter>Game\Data</Filter>
-    </None>
-    <None Include="S_Quest.json">
-      <Filter>Game\Data</Filter>
-    </None>
-    <None Include="S_Warrior_Level_Data.json">
-      <Filter>Game\Data</Filter>
-    </None>
     <None Include="GameDB_InsertAdminAccount.sql">
       <Filter>Queries</Filter>
     </None>
     <None Include="GameDB_GetMaxItemUid.sql">
       <Filter>Queries</Filter>
+    </None>
+    <None Include="S_Item.json">
+      <Filter>Game\Data\Json</Filter>
+    </None>
+    <None Include="S_Map.json">
+      <Filter>Game\Data\Json</Filter>
+    </None>
+    <None Include="S_Monster.json">
+      <Filter>Game\Data\Json</Filter>
+    </None>
+    <None Include="S_Quest.json">
+      <Filter>Game\Data\Json</Filter>
+    </None>
+    <None Include="S_Warrior_Level_Data.json">
+      <Filter>Game\Data\Json</Filter>
     </None>
   </ItemGroup>
 </Project>

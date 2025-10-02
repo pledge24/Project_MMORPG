@@ -19,7 +19,11 @@
 #include "Utils.h"
 #include "GameSession.h"
 
+/*-------------------
+        GameData
+---------------------*/
 #include "Gamedata.h"
+#include "JsonProperty.h"
 
 /*-------------------
           DB

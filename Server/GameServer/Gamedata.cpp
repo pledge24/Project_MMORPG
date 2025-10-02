@@ -29,92 +29,82 @@ bool Gamedata::LoadAllGamedata()
         make_pair(Protocol::CharacterClass::CLASS_TYPE_WARRIOR, &WarriorLevelDataTable)
     };
 
-    // 1. 캐릭터 정보
     try
     {
-        ifstream file("S_Warrior_Level_Data.json");
-        if (file.is_open())
+        // 1. 캐릭터 정보
         {
+            ifstream file("S_Warrior_Level_Data.json");
+            if (file.is_open() == false)
+                throw wstring(L"LevelTable JSON 파일 열기 실패");
+   
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 level = row["level"];
+                if (row.contains(JsonProperty::LevelTable::Level) == false)
+                    throw wstring(L"LevelTable JSON 파일에 level 정보가 존재하지 않음");
+
+                int32 level = row[JsonProperty::LevelTable::Level];
                 WarriorLevelDataTable[level] = row;
             }
         }
-    }
-    catch (const exception& e)
-    {
-        wcerr << L"캐릭터 데이터 저장 오류" << e.what() << endl;
-        return false;
-    }
 
-    // 2. 아이템 정보
-    try
-    {
-        ifstream file("S_Item.json");
-        if (file.is_open())
+        // 2. 아이템 정보
         {
+            ifstream file("S_Item.json");
+            if (file.is_open() == false)
+                throw wstring(L"Item JSON 파일 열기 실패");
+
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["templateId"];
+                if(row.contains(JsonProperty::Item::TemplateId) == false)
+                    throw wstring(L"Item JSON 파일에 templateId 정보가 존재하지 않음");
+
+                int32 templateId = row[JsonProperty::Item::TemplateId];
                 ItemDataTable[templateId] = row;
             }
         }
-    }
-    catch (const exception& e)
-    {
-        wcerr << L"아이템 데이터 저장 오류" << e.what() << endl;
-        return false;
-    }
-
-    // 3. 맵 정보
-    try
-    {
-        ifstream file("S_Map.json");
-        if (file.is_open())
+    
+        // 3. 맵 정보
         {
+            ifstream file("S_Map.json");
+            if (file.is_open() == false)
+                throw wstring(L"Map JSON 파일 열기 실패");
+
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["templateId"];
+                if(row.contains(JsonProperty::Map::TemplateId) == false)
+                    throw wstring(L"Map JSON 파일에 templateId 정보가 존재하지 않음");
+
+                int32 templateId = row[JsonProperty::Map::TemplateId];
                 MapDataTable[templateId] = row;
             }
         }
-    }
-    catch (const exception& e)
-    {
-        wcerr << L"맵 데이터 저장 오류" << e.what() << endl;
-        return false;
-    }
 
-    // 4. 몬스터 정보
-    try
-    {
-        ifstream file("S_Monster.json");
-        if (file.is_open())
+        // 4. 몬스터 정보
         {
+            ifstream file("S_Monster.json");
+            if (file.is_open() == false)
+                throw wstring(L"Monster JSON 파일 열기 실패");
+
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
-                int32 templateId = row["templateId"];
+                if(row.contains(JsonProperty::Monster::TemplateId) == false)
+                    throw wstring(L"Monster JSON 파일에 templateId 정보가 존재하지 않음");
+
+                int32 templateId = row[JsonProperty::Monster::TemplateId];
                 MonsterDataTable[templateId] = row;
             }
         }
-    }
-    catch (const exception& e)
-    {
-        wcerr << L"몬스터 데이터 저장 오류" << e.what() << endl;
-        return false;
-    }
 
-    // 5. 퀘스트 정보
-    try
-    {
-        ifstream file("S_Quest.json");
-        if (file.is_open())
+        // 5. 퀘스트 정보(현재 사용하지 않음)
         {
+            ifstream file("S_Quest.json");
+            if (file.is_open() == false)
+                throw wstring(L"Quest JSON 파일 열기 실패");
+
             Json json_data = Json::parse(file);
             for (auto& row : json_data)
             {
@@ -122,10 +112,19 @@ bool Gamedata::LoadAllGamedata()
                 QuestDataTable[templateId] = row;
             }
         }
+    
     }
-    catch (const exception& e)
+    catch (const wstring cause)
     {
-        wcerr << L"퀘스트 데이터 저장 오류" << e.what() << endl;
+        wcout << L"Gamedata JSON 파일 로드 중 오류 발생: " << cause << endl;
+        return false;
+    }
+    catch (const Json::parse_error& e)
+    {
+        // JSON 파싱 실패 시 예외 처리
+        wcout << L"JSON 파싱 오류 발생: " << e.what() << endl;
+        wcout << L"오류 코드: " << e.id << endl;
+        wcout << L"오류 발생 위치 (byte offset): " << e.byte << endl;
         return false;
     }
 
