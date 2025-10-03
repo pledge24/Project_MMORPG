@@ -175,11 +175,18 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-        AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
-        MyPlayer = Player;
-        Players.Add(ObjectInfo.object_id(), Player);
+        if (MyPlayer == nullptr)
+        {
+            AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
+            MyPlayer = Player;
+            Players.Add(ObjectInfo.object_id(), Player);
         
-        Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
+            Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
+        }
+        else
+        {
+            MyPlayer->SetPosInfo(ObjectInfo.pos_info());
+        }
 	}
 	else
 	{

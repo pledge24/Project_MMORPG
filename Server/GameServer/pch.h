@@ -11,6 +11,7 @@
 #endif
 
 #include "CorePch.h"
+#include "Global.h"
 
 #include "Protocol.pb.h"
 #include "Enum.pb.h"
@@ -18,6 +19,7 @@
 #include "ServerPacketHandler.h"
 #include "Utils.h"
 #include "GameSession.h"
+#include "RoomManager.h"
 
 /*-------------------
         GameData

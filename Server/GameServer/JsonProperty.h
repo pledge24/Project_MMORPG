@@ -62,6 +62,7 @@ namespace JsonProperty
         constexpr std::string_view MapName = "mapName";
         constexpr std::string_view MapType = "mapType";
         constexpr std::string_view HaveSpawnPoint = "haveSpawnPoint";
+        constexpr std::string_view CenterPos = "centerPos";
         constexpr std::string_view WidthHalfExtent = "widthHalfExtent";
         constexpr std::string_view HeightHalfExtent = "heightHalfExtent";
         constexpr std::string_view SpawnPoint = "spawnPoint";
@@ -76,8 +77,9 @@ namespace JsonProperty
         constexpr std::string_view Dst = "dst";
         constexpr std::string_view MonsterIds = "monsterIds";
         constexpr std::string_view MaxMonsterCount = "maxMonsterCount";
-        constexpr std::string_view MinMonsterCount = "minMonsterCount";
-        constexpr std::string_view RespawnPeriod = "respawnPeriod";
-        constexpr std::string_view SummonCount = "summonCount";
+        // constexpr std::string_view MinMonsterCount = "minMonsterCount";
+        constexpr std::string_view RespawnTime = "monsterRespawnTime";
+        //constexpr std::string_view SummonCount = "summonCount";
+
     }
 }

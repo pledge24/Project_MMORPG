@@ -26,7 +26,7 @@ CREATE TABLE CharactersLastState(
     cur_mp                  INT NOT NULL DEFAULT 0,
     cur_physical_attack     INT NOT NULL DEFAULT 0,
     cur_magical_attack      INT NOT NULL DEFAULT 0,
-    map_id                  INT NOT NULL DEFAULT 0,
+    map_id                  INT NOT NULL DEFAULT 10,
     pos_x                   FLOAT NOT NULL DEFAULT 0.0,
     pos_y                   FLOAT NOT NULL DEFAULT 0.0,
     pos_z                   FLOAT NOT NULL DEFAULT 0.0,

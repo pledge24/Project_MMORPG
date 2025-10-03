@@ -35,6 +35,9 @@
     <Filter Include="Game\Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Room">
+      <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -60,9 +63,6 @@
     </ClCompile>
     <ClCompile Include="Enum.pb.cc">
       <Filter>Protocol</Filter>
-    </ClCompile>
-    <ClCompile Include="Room.cpp">
-      <Filter>Game</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp">
       <Filter>Utils</Filter>
@@ -97,6 +97,12 @@
     <ClCompile Include="Gamedata.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
+    <ClCompile Include="Room.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomManager.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -119,9 +125,6 @@
     </ClInclude>
     <ClInclude Include="Struct.pb.h">
       <Filter>Protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="Room.h">
-      <Filter>Game</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Utils</Filter>
@@ -162,6 +165,12 @@
     </ClInclude>
     <ClInclude Include="Gamedata.h">
       <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Room.h">
+      <Filter>Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomManager.h">
+      <Filter>Game\Room</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

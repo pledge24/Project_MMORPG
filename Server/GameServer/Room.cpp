@@ -6,20 +6,32 @@
 #include "ObjectUtils.h"
 #include "EquippedGear.h"
 
-// TEMP: Room 하나만 운영(나중엔 RoomManager 사용해서 관리)
-RoomRef GRoom = make_shared<Room>();
-
 Room::Room()
 {
-
 }
+
 
 Room::~Room()
 {
 
 }
 
-bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
+void Room::Init(const Json& roomData)
+{
+    // roomData가 들어있는 지 확인한다.
+    if (roomData.empty())
+        throw wstring(L"roomData가 없습니다");
+
+    _roomId = roomData[JsonProperty::Map::TemplateId];
+    _roomData = roomData;
+
+    cout << "roomId: " << _roomId << endl;
+    cout << _roomData.dump(2) << endl;
+
+    // 몬스터를 room에 스폰한다.
+}
+
+bool Room::EnterRoom(ObjectRef object, bool randPos /* true*/)
 {
     // 현재 방에 해당 Object를 추가
     if (AddObject(object) == false)
@@ -52,8 +64,8 @@ bool Room::EnterRoom(ObjectRef object, bool randPos /*= true*/)
 
 		for (auto& item : _objects)
 		{
-			if (item.second->IsPlayer() == false)
-				continue;
+			//if (item.second->IsPlayer() == false)
+			//	continue;
 
 			Protocol::ObjectInfo* playerInfo = spawnPkt.add_objects();
 			playerInfo->CopyFrom(*item.second->objectInfo);
@@ -75,15 +87,20 @@ bool Room::LeaveRoom(ObjectRef object)
 	const uint64 objectId = object->objectInfo->object_id();
 	bool success = RemoveObject(objectId);
 
-	// 퇴장 사실을 퇴장하는 플레이어에게 알린다
-	if (auto player = dynamic_pointer_cast<Player>(object))
-	{
-		Protocol::S_LEAVE_GAME leaveGamePkt;
+    // 떠난 플레이어에게 디스폰 패킷을 전송한다.
+    if(PlayerRef player = dynamic_pointer_cast<Player>(object)){
+        Protocol::S_DESPAWN despawnPkt;
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(leaveGamePkt);
-		if (auto session = player->session.lock())
-			session->Send(sendBuffer);
-	}
+        for (auto& item : _objects)
+        {
+            if(item.first != objectId)
+                despawnPkt.add_object_ids(item.first);
+        }
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
+        if (auto session = player->session.lock())
+            session->Send(sendBuffer);
+    }
 
 	// 퇴장 사실을 다른 플레이어에게 알린다
 	{
@@ -212,6 +229,26 @@ RoomRef Room::GetRoomRef()
 	return static_pointer_cast<Room>(shared_from_this());
 }
 
+int32 Room::GetRoomId()
+{
+    return _roomId;
+}
+
+optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
+{
+    const Json& portalList = _roomData[JsonProperty::Map::Lists];
+    if(portalList.size() == 0)
+        return nullopt;
+
+    for (const auto& portal : portalList)
+    {
+        if (portal[JsonProperty::Map::PortalId] == portalId)
+            return portal;
+    }
+
+    return nullopt;
+}
+
 bool Room::AddObject(ObjectRef object)
 {
 	// 있다면 문제가 있다.
@@ -233,8 +270,6 @@ bool Room::RemoveObject(uint64 objectId)
 
 	ObjectRef object = _objects[objectId];
 	PlayerRef player = dynamic_pointer_cast<Player>(object);
-	if (player)
-		player->room.store(weak_ptr<Room>());
 
 	_objects.erase(objectId);
 

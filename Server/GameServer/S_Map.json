@@ -4,6 +4,11 @@
         "mapName": "마을",
         "mapType": "safe zone",
         "haveSpawnPoint": true,
+        "centerPos": {
+            "posX": 0,
+            "posY": 0,
+            "posZ": 0
+        },
         "widthHalfExtent": 1500,
         "heightHalfExtent": 1500,
         "spawnPoint": {
@@ -22,6 +27,7 @@
                         "posZ": 0
                     },
                     "dst": {
+                        "templateId": 20,
                         "posX": -7750,
                         "posY": 10000,
                         "posZ": 0
@@ -36,6 +42,7 @@
                         "posZ": 0
                     },
                     "dst": {
+                        "templateId": 30,
                         "posX": -7750,
                         "posY": 0,
                         "posZ": 0
@@ -50,6 +57,7 @@
                         "posZ": 0
                     },
                     "dst": {
+                        "templateId": 40,
                         "posX": -7750,
                         "posY": -10000,
                         "posZ": 0
@@ -59,15 +67,18 @@
         },
         "monsterIds": [],
         "maxMonsterCount": null,
-        "minMonsterCount": null,
-        "respawnPeriod": null,
-        "summonCount": null
+        "monsterRespawnTime": null
     },
     {
         "templateId": 20,
         "mapName": "초급 사냥터(Lv1~Lv10)",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
+        "centerPos": {
+            "posX": -10000,
+            "posY": 10000,
+            "posZ": 0
+        },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
         "spawnPoint": null,
@@ -82,6 +93,7 @@
                         "posZ": 0
                     },
                     "dst": {
+                        "templateId": 10,
                         "posX": -1000,
                         "posY": 1000,
                         "posZ": 0
@@ -95,15 +107,18 @@
             5002
         ],
         "maxMonsterCount": 20,
-        "minMonsterCount": 5,
-        "respawnPeriod": 10,
-        "summonCount": 3
+        "monsterRespawnTime": 10
     },
     {
         "templateId": 30,
         "mapName": "중급 사냥터(Lv11~Lv30)",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
+        "centerPos": {
+            "posX": -10000,
+            "posY": 0,
+            "posZ": 0
+        },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
         "spawnPoint": null,
@@ -118,6 +133,7 @@
                         "posZ": 0
                     },
                     "dst": {
+                        "templateId": 10,
                         "posX": -1000,
                         "posY": 0,
                         "posZ": 0
@@ -131,15 +147,18 @@
             5005
         ],
         "maxMonsterCount": 20,
-        "minMonsterCount": 5,
-        "respawnPeriod": 10,
-        "summonCount": 3
+        "monsterRespawnTime": 10
     },
     {
         "templateId": 40,
         "mapName": "고급 사냥터(Lv31~Lv50)",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
+        "centerPos": {
+            "posX": -10000,
+            "posY": -10000,
+            "posZ": 0
+        },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
         "spawnPoint": null,
@@ -154,6 +173,7 @@
                         "posZ": 0
                     },
                     "dst": {
+                        "templateId": 10,
                         "posX": -1000,
                         "posY": -1000,
                         "posZ": 0
@@ -167,8 +187,6 @@
             5008
         ],
         "maxMonsterCount": 20,
-        "minMonsterCount": 5,
-        "respawnPeriod": 10,
-        "summonCount": 3
+        "monsterRespawnTime": 10
     }
 ]
