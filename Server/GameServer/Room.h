@@ -10,11 +10,12 @@ public:
 public:
     void Init(const Json& roomData);
 
-	bool EnterRoom(ObjectRef object, bool randPos = true);
-	bool LeaveRoom(ObjectRef object);
+	bool EnterRoom(ObjectRef object, bool moveRoom, bool randPos);
+	bool LeaveRoom(ObjectRef object, bool moveRoom);
 
-	bool HandleEnterPlayer(PlayerRef player);
-	bool HandleLeavePlayer(PlayerRef player);
+	bool HandleEnterPlayer(PlayerRef player, bool moveRoom);
+	bool HandleLeavePlayer(PlayerRef player, bool moveRoom);
+
 	void HandleMove(Protocol::C_MOVE pkt);
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
     void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
@@ -22,15 +23,18 @@ public:
 public:
 	void UpdateTick();
 
+    /* Room 정보 관련 */
 	RoomRef GetRoomRef();
     int32 GetRoomId();
     optional<Json> GetPortalDataFromPortalId(int32 portalId);
+    void SetupRandPos(Protocol::PosInfo* posInfo, bool randYaw = false);
 
 private:
+    /* Object 관리 관련 */
 	bool AddObject(ObjectRef object);
 	bool RemoveObject(uint64 objectId);
 
-private:
+    /* 네트워크 관련 */
 	void Broadcast(SendBufferRef sendBuffer, uint64 exceptId = 0);
 
 public:

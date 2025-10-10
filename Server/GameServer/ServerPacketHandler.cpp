@@ -140,7 +140,7 @@ bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MA
 
     // 클라이언트 맵 로딩이 완료되었으니, 해당 플레이어를 Room에 넣는다.
     RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
-    room->DoAsync(&Room::HandleEnterPlayer, player);
+    room->DoAsync(&Room::HandleEnterPlayer, player, false);
 
     return true;
 }
@@ -157,18 +157,30 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
     if (curRoom == nullptr)
         return false;
 
-    // 이동할 room과 위치를 뽑아낸다.
+    // 현재 Room에서 portalId를 통해 Portal 데이터를 뽑아온다.
     optional<Json> opt = curRoom->GetPortalDataFromPortalId(pkt.portal_id());
     if (opt.has_value() == false)
         return false;
 
+    using namespace JsonProperty::Map;
     const Json& portalData = opt.value();
-    const Json& dst = portalData[JsonProperty::Map::Dst];
-    RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(dst[JsonProperty::Map::TemplateId]);
+    const Json& dst = portalData[Dst];
 
-    // 현재 room은 나가고, 다음 room은 들어간다.
-    curRoom->DoAsync(&Room::HandleLeavePlayer, player);
-    nextRoom->DoAsync(&Room::HandleEnterPlayer, player);
+    // 1) teleport 위치 이동 세팅
+    {
+        player->posInfo->set_x(dst[PosX]);
+        player->posInfo->set_y(dst[PosY]);
+        player->posInfo->set_z(dst[PosZ]);
+    }
+
+    // 2) Room 입장/퇴장
+    {
+        RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(dst[TemplateId]);
+
+        // 현재 room은 나가고, 다음 room은 들어간다.
+        curRoom->DoAsync(&Room::HandleLeavePlayer, player, true);
+        nextRoom->DoAsync(&Room::HandleEnterPlayer, player, true);
+    }
 
     return true;
 }
@@ -187,7 +199,7 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 
     // 같은 Room에 있는 유저들에게 해당 유저 퇴장 처리.
     int32 roomId = room->GetRoomId();
-    room->DoAsync(&Room::HandleLeavePlayer, player);
+    room->DoAsync(&Room::HandleLeavePlayer, player, false);
 
     int64 characterId = player->playerInfo->character_id();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
