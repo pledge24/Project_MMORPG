@@ -166,11 +166,14 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
     const Json& portalData = opt.value();
     const Json& dst = portalData[Dst];
 
-    // 1) teleport 위치 이동 세팅
+    // 1) Room 이동에 따른 posInfo 갱신
     {
+        player->posInfo->set_map_id(dst[TemplateId]);
         player->posInfo->set_x(dst[PosX]);
         player->posInfo->set_y(dst[PosY]);
         player->posInfo->set_z(dst[PosZ]);
+        player->posInfo->set_yaw(0.f);
+        player->posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
     }
 
     // 2) Room 입장/퇴장

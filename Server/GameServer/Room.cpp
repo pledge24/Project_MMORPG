@@ -56,7 +56,7 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
 
 	if (auto player = dynamic_pointer_cast<Player>(object))
 	{
-        // 1) 입장한 플레이어에게 Room Object 정보 전송
+        // 1) 입장한 플레이어에게 이 Room에 있는 Object Spawn 전송
         {
             Protocol::S_SPAWN spawnPkt;
             uint64 playerId = object->objectInfo->object_id();
@@ -79,7 +79,8 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
         if (moveRoom == true)
         {
             Protocol::S_MOVE movePkt;
-
+            movePkt.mutable_info()->CopyFrom(*player->posInfo);
+            
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
             if (auto session = player->session.lock())
                 session->Send(sendBuffer);
