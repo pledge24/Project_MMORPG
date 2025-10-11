@@ -175,11 +175,18 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 	if (IsMine)
 	{
-        AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
-        MyPlayer = Player;
-        Players.Add(ObjectInfo.object_id(), Player);
+        if (MyPlayer == nullptr)
+        {
+            AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
+            MyPlayer = Player;
+            Players.Add(ObjectInfo.object_id(), Player);
         
-        Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
+            Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
+        }
+        else
+        {
+            MyPlayer->SetPosInfo(ObjectInfo.pos_info());
+        }
 	}
 	else
 	{
@@ -237,13 +244,18 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	if (FindActor == nullptr)
 		return;
 
-	AP1Player* Player = (*FindActor);
-	if (Player->IsMyPlayer())
-		return;
-
 	const Protocol::PosInfo& Info = MovePkt.info();
-	//Player->SetPlayerInfo(Info);
-	Player->SetDestInfo(Info);
+	AP1Player* Player = (*FindActor);
+    if (Player->IsMyPlayer())
+    {
+        AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
+        MyPlayer_->PushToMoveQueue(MovePkt.info());
+    }
+    else
+    {
+	    //Player->SetPlayerInfo(Info);
+	    Player->SetDestInfo(Info);
+    }
 }
 
 void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)

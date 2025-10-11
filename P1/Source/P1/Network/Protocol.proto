@@ -66,13 +66,7 @@ message C_ENTER_MAP_COMPLETE
 
 message C_MOVE_ROOM
 {
-    uint32 room_id = 1;
-}
-
-message S_MOVE_ROOM
-{
-	bool success = 1;
-	repeated ObjectInfo objects = 2;
+    uint32 portal_id = 1;
 }
 
 message C_LEAVE_GAME

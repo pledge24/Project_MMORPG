@@ -46,14 +46,14 @@ bool Player::CalculateFinalStat()
     // 1. 레벨당 캐릭터 기본 스텟
     DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
     int32 level = playerInfo->level();
-    if(classLevelDataTable[level].contains("maxHp"))
-        finalStat.maxHp += classLevelDataTable[level]["maxHp"];
-    if (classLevelDataTable[level].contains("maxMp"))
-        finalStat.maxMp += classLevelDataTable[level]["maxMp"];
-    if (classLevelDataTable[level].contains("physicalAttack"))
-        finalStat.physical_attack += classLevelDataTable[level]["physicalAttack"];
-    if (classLevelDataTable[level].contains("magicalAttack"))
-        finalStat.magical_attack += classLevelDataTable[level]["magicalAttack"];
+    if(classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxHp))
+        finalStat.maxHp += classLevelDataTable[level][JsonProperty::LevelTable::MaxHp];
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxMp))
+        finalStat.maxMp += classLevelDataTable[level][JsonProperty::LevelTable::MaxMp];
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::PhysicalAttack))
+        finalStat.physical_attack += classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack];
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MagicalAttack))
+        finalStat.magical_attack += classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack];
 
     // 2. 장착 중이 장비 스텟 추가
     for (const auto& pair : playerInfo->equipped_gear())
@@ -63,14 +63,14 @@ bool Player::CalculateFinalStat()
         if (item.template_id() == 0)
             continue;
 
-        if (Gamedata::ItemDataTable[item.template_id()].contains("hp"))
-            finalStat.maxHp += Gamedata::ItemDataTable[item.template_id()]["hp"];
-        if (Gamedata::ItemDataTable[item.template_id()].contains("mp"))
-            finalStat.maxMp += Gamedata::ItemDataTable[item.template_id()]["mp"];
-        if (Gamedata::ItemDataTable[item.template_id()].contains("physicalAttack"))
-            finalStat.physical_attack += Gamedata::ItemDataTable[item.template_id()]["physicalAttack"];
-        if (Gamedata::ItemDataTable[item.template_id()].contains("magicalAttack"))
-            finalStat.magical_attack += Gamedata::ItemDataTable[item.template_id()]["magicalAttack"];
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
+            finalStat.maxHp += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Hp];
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
+            finalStat.maxMp += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Mp];
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
+            finalStat.physical_attack += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack];
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
+            finalStat.magical_attack += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack];
     }
 
     // validate
@@ -103,7 +103,7 @@ bool Player::CalculateFinalStat()
 bool Player::HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = playerInfo->gold();
-    int64 buyPrice = Gamedata::ItemDataTable[templateId]["buyPrice"] * count;
+    int64 buyPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice] * count;
 
     if (gold < buyPrice)
         return false;
@@ -121,7 +121,7 @@ bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* tar
 {
     int64 gold = playerInfo->gold();
     int32 templateId = targetSlot->item().template_id();
-    int64 sellPrice = Gamedata::ItemDataTable[templateId]["sellPrice"] * count;
+    int64 sellPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::Sellable] * count;
 
     if (inventory->removeItem(OUT updatedSlot, targetSlot, count) == false)
         return false;
@@ -147,18 +147,18 @@ bool Player::HandleUseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* target
     int32 templateId = targetSlot->item().template_id();
     const Json& itemData = Gamedata::ItemDataTable[templateId];
     
-    if (itemData.contains("hpRestore"))
+    if (itemData.contains(JsonProperty::Item::HpRestore))
     {
-        float ratio = itemData["hpRestore"];
+        float ratio = itemData[JsonProperty::Item::HpRestore];
         int32 amount = (int32)(statInfo->max_hp() * ratio);
         int32 updatedHp = min(statInfo->max_hp(), statInfo->hp() + amount);
         statInfo->set_hp(updatedHp);
         updatedStatInfo->set_hp(updatedHp);
     }
 
-    if (itemData.contains("mpRestore"))
+    if (itemData.contains(JsonProperty::Item::MpRestore))
     {
-        float ratio = itemData["mpRestore"];
+        float ratio = itemData[JsonProperty::Item::MpRestore];
         int32 amount = (int32)(statInfo->max_mp() * ratio);
         int32 updatedMp = min(statInfo->max_mp(), statInfo->mp() + amount);
         statInfo->set_mp(updatedMp);

@@ -136,16 +136,54 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
 {
     PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    int32 roomId = player->posInfo->map_id();
 
     // 클라이언트 맵 로딩이 완료되었으니, 해당 플레이어를 Room에 넣는다.
-    GRoom->DoAsync(&Room::HandleEnterPlayer, player);
+    RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
+    room->DoAsync(&Room::HandleEnterPlayer, player, false);
 
     return true;
 }
 
 bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
 {
+    auto gameSession = static_pointer_cast<GameSession>(session);
 
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef curRoom = player->room.load().lock();
+    if (curRoom == nullptr)
+        return false;
+
+    // 현재 Room에서 portalId를 통해 Portal 데이터를 뽑아온다.
+    optional<Json> opt = curRoom->GetPortalDataFromPortalId(pkt.portal_id());
+    if (opt.has_value() == false)
+        return false;
+
+    using namespace JsonProperty::Map;
+    const Json& portalData = opt.value();
+    const Json& dst = portalData[Dst];
+
+    // 1) Room 이동에 따른 posInfo 갱신
+    {
+        player->posInfo->set_map_id(dst[TemplateId]);
+        player->posInfo->set_x(dst[PosX]);
+        player->posInfo->set_y(dst[PosY]);
+        player->posInfo->set_z(dst[PosZ]);
+        player->posInfo->set_yaw(dst[Yaw]);
+        player->posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+    }
+
+    // 2) Room 입장/퇴장
+    {
+        RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(dst[TemplateId]);
+
+        // 현재 room은 나가고, 다음 room은 들어간다.
+        curRoom->DoAsync(&Room::HandleLeavePlayer, player, true);
+        nextRoom->DoAsync(&Room::HandleEnterPlayer, player, true);
+    }
 
     return true;
 }
@@ -163,7 +201,8 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 		return false;
 
     // 같은 Room에 있는 유저들에게 해당 유저 퇴장 처리.
-    GRoom->DoAsync(&Room::HandleLeavePlayer, player);
+    int32 roomId = room->GetRoomId();
+    room->DoAsync(&Room::HandleLeavePlayer, player, false);
 
     int64 characterId = player->playerInfo->character_id();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
@@ -195,9 +234,7 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 	if (room == nullptr)
 		return false;
 
-	// TODO
-
-	GRoom->DoAsync(&Room::HandleMove, pkt);
+    room->DoAsync(&Room::HandleMove, pkt);
 
 	return true;
 }
@@ -274,7 +311,7 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
     if (room == nullptr)
         return false;
 
-    GRoom->DoAsync(&Room::HandleEquipGear, pkt, player);
+    room->DoAsync(&Room::HandleEquipGear, pkt, player);
 
     return true;
 }
@@ -292,7 +329,7 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
     if (room == nullptr)
         return false;
 
-    GRoom->DoAsync(&Room::HandleUnequipGear, pkt, player);
+    room->DoAsync(&Room::HandleUnequipGear, pkt, player);
 
     return true;
 }

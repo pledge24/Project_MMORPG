@@ -78,6 +78,18 @@ void AP1MyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    // 네트워크로 수신한 teleport 처리
+    Protocol::PosInfo Info_;
+    while (MoveQueue.Dequeue(Info_))
+    {
+        const FVector TargetLocation(Info_.x(), Info_.y(), Info_.z());
+        SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+        FRotator CurrentRotation = GetActorRotation();
+        FRotator NewRotation = FRotator(CurrentRotation.Pitch, Info_.yaw(), CurrentRotation.Roll);
+        SetActorRotation(NewRotation);
+    }
+
 	// Send 판정
 	bool ForceSendPacket = false;
 
@@ -118,6 +130,11 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
     Super::Init(ObjectInfo_);
 
     SetPosInfo(ObjectInfo_.pos_info());
+}
+
+bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo Info_)
+{
+    return MoveQueue.Enqueue(Info_);
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)

@@ -48,6 +48,14 @@ int main(void)
 	ServerPacketHandler::Init();
     ASSERT_CRASH(Gamedata::LoadAllGamedata());
 
+    // Room 추가
+    for (auto& mapDataPair : Gamedata::MapDataTable)
+    {
+        int roomId = mapDataPair.first; // templateId
+        RoomRef room = GRoomManager->CreateRoom(roomId);
+        GRoomManager->AddRoom(roomId, room);
+    }
+
 	const int maxSessionCount = 30;
 	ServerServiceRef service = make_shared<ServerService>(
 		NetAddress("127.0.0.1"s, 7777),
