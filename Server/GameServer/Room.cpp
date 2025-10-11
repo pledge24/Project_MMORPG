@@ -43,7 +43,7 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
         SetupRandPos(object->posInfo, true);
     }
 
-	// 이 Room에 있는 Player들에게 Object Spawn Broadcast
+	// 이 Room에 있는 다른 Player들에게 Object Spawn Broadcast
 	{
 		Protocol::S_SPAWN spawnPkt;
 
@@ -54,9 +54,10 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
         Broadcast(sendBuffer, object->objectInfo->object_id());
 	}
 
+    // 추가된 Object가 Player인 경우
 	if (auto player = dynamic_pointer_cast<Player>(object))
 	{
-        // 1) 입장한 플레이어에게 이 Room에 있는 Object Spawn 전송
+        // 1) 입장한 플레이어에게 이 Room에 있는 모든 Object Spawn 전송(본인 제외)
         {
             Protocol::S_SPAWN spawnPkt;
             uint64 playerId = object->objectInfo->object_id();
@@ -106,7 +107,11 @@ bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
 	if (object == nullptr)
 		return false;
 
-	const uint64 objectId = object->objectInfo->object_id();
+    const uint64 objectId = object->objectInfo->object_id();
+
+    // 현재 방에 해당 Object를 제거
+    if (RemoveObject(objectId) == false)
+        return false;
 
     // 퇴장한 플레이어에게 이 Room의 Objects Desapwn
     if(PlayerRef player = dynamic_pointer_cast<Player>(object)){
@@ -123,22 +128,15 @@ bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
             session->Send(sendBuffer);
     }
 
-	// 이 Room에 있는 Player들에게 Object Despawn Broadcast
+	// 이 Room에 있는 모든 Player들에게 Object Despawn Broadcast
 	{
 		Protocol::S_DESPAWN despawnPkt;
 		despawnPkt.add_object_ids(objectId);
 
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
 
-        if(moveRoom == true)
-		    Broadcast(sendBuffer, objectId);
-        else
-            Broadcast(sendBuffer);
+        Broadcast(sendBuffer);
 	}
-
-    // 현재 방에 해당 Object를 제거
-    if (RemoveObject(objectId) == false)
-        return false;
 
 	return true;
 }
@@ -163,7 +161,7 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 	PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]);
 	player->posInfo->CopyFrom(pkt.info());
 
-	// 이동 사실을 알린다 (본인 포함? 빼고?)
+	// 이동 사실을 알린다 (본인 빼고)
 	{
 		Protocol::S_MOVE movePkt;
 		{
@@ -171,7 +169,7 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 			info->CopyFrom(pkt.info());
 		}
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-		Broadcast(sendBuffer);
+		Broadcast(sendBuffer, objectId);
 	}
 }
 
@@ -261,7 +259,9 @@ int32 Room::GetRoomId()
 
 optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
 {
-    const Json& portalList = _roomData[JsonProperty::Map::Lists];
+    using namespace JsonProperty::Map;
+
+    const Json& portalList = _roomData[Portals][Lists];
     if(portalList.size() == 0)
         return nullopt;
 

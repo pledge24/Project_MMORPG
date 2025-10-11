@@ -13,8 +13,8 @@ public:
 	bool EnterRoom(ObjectRef object, bool moveRoom, bool randPos);
 	bool LeaveRoom(ObjectRef object, bool moveRoom);
 
-	bool HandleEnterPlayer(PlayerRef player, bool moveRoom);
-	bool HandleLeavePlayer(PlayerRef player, bool moveRoom);
+	bool HandleEnterPlayer(PlayerRef player, bool moveRoom = false);
+	bool HandleLeavePlayer(PlayerRef player, bool moveRoom = false);
 
 	void HandleMove(Protocol::C_MOVE pkt);
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);

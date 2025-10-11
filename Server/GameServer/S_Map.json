@@ -28,9 +28,10 @@
                     },
                     "dst": {
                         "templateId": 20,
-                        "posX": -7750,
+                        "posX": -8000,
                         "posY": 10000,
-                        "posZ": 0
+                        "posZ": 0,
+                        "yaw": 180.0
                     }
                 },
                 {
@@ -43,9 +44,10 @@
                     },
                     "dst": {
                         "templateId": 30,
-                        "posX": -7750,
+                        "posX": -8000,
                         "posY": 0,
-                        "posZ": 0
+                        "posZ": 0,
+                        "yaw": 180.0
                     }
                 },
                 {
@@ -58,9 +60,10 @@
                     },
                     "dst": {
                         "templateId": 40,
-                        "posX": -7750,
+                        "posX": -8000,
                         "posY": -10000,
-                        "posZ": 0
+                        "posZ": 0,
+                        "yaw": 180.0
                     }
                 }
             ]
@@ -96,7 +99,8 @@
                         "templateId": 10,
                         "posX": -1000,
                         "posY": 1000,
-                        "posZ": 0
+                        "posZ": 0,
+                        "yaw": 0.0
                     }
                 }
             ]
@@ -136,7 +140,8 @@
                         "templateId": 10,
                         "posX": -1000,
                         "posY": 0,
-                        "posZ": 0
+                        "posZ": 0,
+                        "yaw": 0.0
                     }
                 }
             ]
@@ -176,7 +181,8 @@
                         "templateId": 10,
                         "posX": -1000,
                         "posY": -1000,
-                        "posZ": 0
+                        "posZ": 0,
+                        "yaw": 0.0
                     }
                 }
             ]

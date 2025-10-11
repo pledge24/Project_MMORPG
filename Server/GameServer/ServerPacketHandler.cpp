@@ -172,7 +172,7 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
         player->posInfo->set_x(dst[PosX]);
         player->posInfo->set_y(dst[PosY]);
         player->posInfo->set_z(dst[PosZ]);
-        player->posInfo->set_yaw(0.f);
+        player->posInfo->set_yaw(dst[Yaw]);
         player->posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
     }
 

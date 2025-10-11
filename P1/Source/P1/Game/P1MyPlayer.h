@@ -32,6 +32,8 @@ public:
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo_) override;
 
+    bool PushToMoveQueue(const Protocol::PosInfo Info_);
+
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -72,4 +74,7 @@ protected:
 
 	// Dirty Flag
 	FVector2D LastDesiredInput;
+
+    // MoveQueue
+    TQueue<Protocol::PosInfo> MoveQueue;
 };
