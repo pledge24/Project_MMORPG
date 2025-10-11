@@ -31,5 +31,6 @@ public:
     ULoginWidget* LoginMenuWidget;
 
 private:
+    UPROPERTY()
     ULoginManager* LoginManager;
 };
