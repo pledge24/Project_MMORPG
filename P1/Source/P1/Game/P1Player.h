@@ -41,6 +41,9 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);
 
+    UFUNCTION(BlueprintImplementableEvent, Category = "Character")
+    void SetName(const FText& ObjectName);
+
 public:
     /** 델리게이트 모음 */
     //DECLARE_MULTICAST_DELEGATE_OneParam(OnEquippedGearChanged, const Protocol::Slot&);
@@ -49,4 +52,5 @@ public:
 protected:
     class Protocol::PosInfo* SrcInfo; // 현재 위치
 	class Protocol::PosInfo* DestInfo; // 목적지
+    FText PlayerName;
 };
