@@ -9,7 +9,7 @@
 #include "LoginManager.h"
 
 // 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
-TMap<Protocol::CharacterClass, FString> ClassMappings = {
+TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
     {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
     //
@@ -35,21 +35,22 @@ void ULoginWidget::SetResultText(bool bSuccess, const FString& Message)
 
 void ULoginWidget::FetchCharacterOverviews(Protocol::S_LOGIN& pkt)
 {
-    _Characters.Empty();
+    CharacterOverviews.Empty();
 
     // 언리얼 엔진에서 사용할 수 있는 형식으로 변경
     for (auto& Character : pkt.characters())
     {
-        FCharacterOverview character;
-        character.CharacterId = Character.character_id();
-        character.CharacterClass = ClassMappings[Character.class_()];
-        character.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
-        character.CharacterLevel = Character.level();
+        FCharacterOverview CharacterOverview;
+        CharacterOverview.CharacterId = Character.character_id();
+        CharacterOverview.CharacterClass = ClassEnumToStringMappings[Character.class_()];
+        CharacterOverview.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
+        CharacterOverview.CharacterLevel = Character.level();
 
-        _Characters.Add(character);
+        CharacterOverviews.Add(CharacterOverview);
     }
 
-    OnDisplayCharacterOverviews(_Characters);
+    // 위젯에 캐릭터 Overview 진열.
+    OnDisplayCharacterOverviews(CharacterOverviews);
 }
 
 void ULoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
@@ -63,18 +64,18 @@ void ULoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
 
     // Add New CharacterOverview
     {
-        FCharacterOverview character;
-        character.CharacterId = pkt.character_id();
-        character.CharacterClass = ClassMappings[Protocol::CharacterClass(CC_CharacterClassId)];
-        character.CharacterName = CC_CharacterNameText->GetText().ToString();
-        character.CharacterLevel = 1;
+        FCharacterOverview CharacterOverview;
+        CharacterOverview.CharacterId = pkt.character_id();
+        CharacterOverview.CharacterClass = ClassEnumToStringMappings[Protocol::CharacterClass(CC_CharacterClassId)];
+        CharacterOverview.CharacterName = CC_CharacterNameText->GetText().ToString();
+        CharacterOverview.CharacterLevel = 1;
 
-        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), _Characters.Num());
-        _Characters.Add(character);
-        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), _Characters.Num());
+        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
+        CharacterOverviews.Add(CharacterOverview);
+        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
     }
 
-    OnDisplayCharacterOverviews(_Characters);
+    OnDisplayCharacterOverviews(CharacterOverviews);
 }
 
 void ULoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
@@ -87,24 +88,24 @@ void ULoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
     }
 
     int64 CharacterId = pkt.character_id();
-    if (_Characters[LastClickedSlotIdx].CharacterId == CharacterId)
+    if (CharacterOverviews[LastClickedSlotIdx].CharacterId == CharacterId)
     {
-        _Characters.RemoveAt(LastClickedSlotIdx);
+        CharacterOverviews.RemoveAt(LastClickedSlotIdx);
     }
     else /* 방어 코드 */
     {
-        for (int32 i = 0; i < _Characters.Num(); i++)
+        for (int32 i = 0; i < CharacterOverviews.Num(); i++)
         {
-            FCharacterOverview& Character = _Characters[i];
-            if (Character.CharacterId == CharacterId)
+            FCharacterOverview& CharacterOverview = CharacterOverviews[i];
+            if (CharacterOverview.CharacterId == CharacterId)
             {
-                _Characters.RemoveAt(i);
+                CharacterOverviews.RemoveAt(i);
                 break;
             }
         }
     }
 
-    OnDisplayCharacterOverviews(_Characters);
+    OnDisplayCharacterOverviews(CharacterOverviews);
 }
 
 void ULoginWidget::SendLoginRequest(FString Username, FString Password)
@@ -133,15 +134,15 @@ void ULoginWidget::SendRegisterRequest(FString Username, FString Password)
 
 void ULoginWidget::SendEnterGamePkt()
 {
-    if (LastClickedSlotIdx >= _Characters.Num() || LastClickedSlotIdx < 0)
+    if (LastClickedSlotIdx >= CharacterOverviews.Num() || LastClickedSlotIdx < 0)
     {
         return;
     }
 
-    FCharacterOverview& Character = _Characters[LastClickedSlotIdx];
+    FCharacterOverview& CharacterOverview = CharacterOverviews[LastClickedSlotIdx];
 
     Protocol::C_ENTER_GAME pkt;
-    pkt.set_character_id(Character.CharacterId);
+    pkt.set_character_id(CharacterOverview.CharacterId);
 
     SEND_PACKET(pkt);
 }
@@ -160,28 +161,28 @@ void ULoginWidget::SendCreateCharacterPkt(FString CharacterName, int32 Character
         return;
     }
 
-    Protocol::CharacterOverview* character = new Protocol::CharacterOverview();
-    character->set_class_((Protocol::CharacterClass)CharacterClassId);
-    character->set_name(TCHAR_TO_UTF8(*CharacterName));
+    Protocol::CharacterOverview* CharacterOverview = new Protocol::CharacterOverview();
+    CharacterOverview->set_class_((Protocol::CharacterClass)CharacterClassId);
+    CharacterOverview->set_name(TCHAR_TO_UTF8(*CharacterName));
 
     Protocol::C_CREATE_CHARACTER pkt;
-    pkt.set_allocated_character(character);
+    pkt.set_allocated_character(CharacterOverview);
 
     SEND_PACKET(pkt);
 }
 
 void ULoginWidget::SendDeleteCharacterPkt()
 {
-    if (LastClickedSlotIdx >= _Characters.Num() || LastClickedSlotIdx < 0)
+    if (LastClickedSlotIdx >= CharacterOverviews.Num() || LastClickedSlotIdx < 0)
     {
         CC_DescriptionText->SetText(FText::FromString(TEXT("삭제할 캐릭터가 없습니다.")));
         return;
     }
 
-    FCharacterOverview& Character = _Characters[LastClickedSlotIdx];
+    FCharacterOverview& CharacterOverview = CharacterOverviews[LastClickedSlotIdx];
 
     Protocol::C_DELETE_CHARACTER pkt;
-    pkt.set_character_id(Character.CharacterId);
+    pkt.set_character_id(CharacterOverview.CharacterId);
 
     SEND_PACKET(pkt);
 }
