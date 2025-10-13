@@ -129,6 +129,9 @@ void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
         const Protocol::Slot& Slot_ = Pair.second;
         SetEquippedGear(Slot_);
     }
+
+    PlayerName = FText::FromString(UTF8_TO_TCHAR(ObjectInfo.player_info().name().c_str()));
+    SetName(PlayerName);
 }
 
 void AP1Player::SetMoveState(Protocol::MoveState State)
@@ -161,8 +164,16 @@ void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
 		assert(SrcInfo->object_id() == Info.object_id());
 	}
 
-	// Dest에 최종 상태 복사
-	DestInfo->CopyFrom(Info);
+    if (DestInfo != nullptr)
+    {
+	    // Dest에 최종 상태 복사
+	    DestInfo->CopyFrom(Info);
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("nullnullnull")));
+        return;
+    }
 
 	// 상태만 바로 관리하자.
 	SetMoveState(Info.state());

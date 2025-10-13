@@ -32,4 +32,5 @@ private:
     // 서버 설정
     FString ServerIP = TEXT("127.0.0.1");
     int32 ServerPort = 5000;
+
 };

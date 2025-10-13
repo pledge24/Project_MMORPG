@@ -22,6 +22,7 @@ class P1_API UP1GameInstance : public UGameInstance
 public:
     UP1GameInstance();
     virtual void Init() override;
+    virtual void Shutdown() override;
     virtual void BeginDestroy() override;
 
 	/* 네트워크 통신 관련 */
@@ -63,7 +64,9 @@ public:
 
 	void HandleDespawn(uint64 ObjectId);
 	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
+    void HandleDespawnAll(bool ExceptMine = false);
 
+    void HandleMove(const Protocol::PosInfo& Info);
 	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
     void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);

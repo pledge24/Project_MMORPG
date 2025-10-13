@@ -13,7 +13,7 @@ void ULoginManager::SetLoginWidget(ULoginWidget* Widget)
 
 void ULoginManager::RequestLogin(const FString& Username, const FString& Password)
 {
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
 	// JSON 데이터 생성
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
@@ -27,19 +27,19 @@ void ULoginManager::RequestLogin(const FString& Username, const FString& Passwor
 	// 요청 설정
 	FString URL = FString::Printf(TEXT("http://%s:%d/Login"), *ServerIP, ServerPort);
 
-	Request->OnProcessRequestComplete().BindUObject(this, &ULoginManager::OnLoginResponse);
-	Request->SetURL(URL);
-	Request->SetVerb("POST");
-	Request->SetHeader("Content-Type", "application/json");
-	Request->SetContentAsString(OutputString);
-	Request->SetTimeout(10.0f); // 10초 타임아웃
+    RequestRef->OnProcessRequestComplete().BindUObject(this, &ULoginManager::OnLoginResponse);
+    RequestRef->SetURL(URL);
+    RequestRef->SetVerb("POST");
+    RequestRef->SetHeader("Content-Type", "application/json");
+    RequestRef->SetContentAsString(OutputString);
+    RequestRef->SetTimeout(10.0f); // 10초 타임아웃
 
-	Request->ProcessRequest();
+    RequestRef->ProcessRequest();
 }
 
 void ULoginManager::RequestRegister(const FString& Username, const FString& Password)
 {
-	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
 	// JSON 데이터 생성
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
@@ -53,14 +53,14 @@ void ULoginManager::RequestRegister(const FString& Username, const FString& Pass
 	// 요청 설정
 	FString URL = FString::Printf(TEXT("http://%s:%d/Account/Register"), *ServerIP, ServerPort);
 
-	Request->OnProcessRequestComplete().BindUObject(this, &ULoginManager::OnRegisterResponse);
-	Request->SetURL(URL);
-	Request->SetVerb("POST");
-	Request->SetHeader("Content-Type", "application/json");
-	Request->SetContentAsString(OutputString);
-	Request->SetTimeout(10.0f); // 10초 타임아웃
+    RequestRef->OnProcessRequestComplete().BindUObject(this, &ULoginManager::OnRegisterResponse);
+    RequestRef->SetURL(URL);
+    RequestRef->SetVerb("POST");
+    RequestRef->SetHeader("Content-Type", "application/json");
+    RequestRef->SetContentAsString(OutputString);
+    RequestRef->SetTimeout(10.0f); // 10초 타임아웃
 
-	Request->ProcessRequest();
+    RequestRef->ProcessRequest();
 }
 
 void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)

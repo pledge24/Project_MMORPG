@@ -57,9 +57,9 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
     // 추가된 Object가 Player인 경우
 	if (auto player = dynamic_pointer_cast<Player>(object))
 	{
-        // 1) 입장한 플레이어에게 이 Room에 있는 모든 Object Spawn 전송(본인 제외)
+        // 이 Room에 있는 모든 Object들을 가져온다.(본인 제외)
+        RepeatedPtrField<Protocol::ObjectInfo> roomObjects;
         {
-            Protocol::S_SPAWN spawnPkt;
             uint64 playerId = object->objectInfo->object_id();
 
             for (auto& item : _objects)
@@ -67,31 +67,31 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
                 if (item.second->objectInfo->object_id() == playerId)
                     continue;
 
-                Protocol::ObjectInfo* playerInfo = spawnPkt.add_objects();
-                playerInfo->CopyFrom(*item.second->objectInfo);
+                Protocol::ObjectInfo* objectInfo = roomObjects.Add();
+                objectInfo->CopyFrom(*item.second->objectInfo);
             }
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-            if (auto session = player->session.lock())
-                session->Send(sendBuffer);
         }
 
-        // 2) 입장한 플레이어가 단순 Room 이동이면 S_MOVE, 새로 입장이면 S_SPAWN
+        // 2) 입장한 플레이어가 단순 Room 이동이면 S_MOVE_ROOM, 새로 입장이면 S_SPAWN
         if (moveRoom == true)
         {
-            Protocol::S_MOVE movePkt;
-            movePkt.mutable_info()->CopyFrom(*player->posInfo);
-            
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
+            Protocol::S_MOVE_ROOM moveRoomPkt;
+            moveRoomPkt.set_map_id(player->objectInfo->map_id());
+            moveRoomPkt.mutable_info()->CopyFrom(*player->posInfo);
+            moveRoomPkt.mutable_objects()->Swap(&roomObjects);
+
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(moveRoomPkt);
             if (auto session = player->session.lock())
                 session->Send(sendBuffer);
         }
         else
         {
+            // Spawn할 Object에 본인을 추가
+            Protocol::ObjectInfo* myObjectInfo = roomObjects.Add();
+            myObjectInfo->CopyFrom(*object->objectInfo);
+            
             Protocol::S_SPAWN spawnPkt;
-
-            Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
-            objectInfo->CopyFrom(*object->objectInfo);
+            spawnPkt.mutable_objects()->Swap(&roomObjects);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
             if (auto session = player->session.lock())
@@ -104,7 +104,7 @@ bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
 
 bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
 {
-	if (object == nullptr)
+    if (object == nullptr)
 		return false;
 
     const uint64 objectId = object->objectInfo->object_id();
@@ -113,19 +113,18 @@ bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
     if (RemoveObject(objectId) == false)
         return false;
 
-    // 퇴장한 플레이어에게 이 Room의 Objects Desapwn
+    // 퇴장한 플레이어가 방 이동이 아닌 경우, Desapwn 패킷 전송
     if(PlayerRef player = dynamic_pointer_cast<Player>(object)){
-        Protocol::S_DESPAWN despawnPkt;
 
-        for (auto& item : _objects)
+        if (moveRoom == false)
         {
-            if(item.first != objectId)
-                despawnPkt.add_object_ids(item.first);
-        }
+            Protocol::S_DESPAWN despawnPkt;
+            despawnPkt.add_object_ids(objectId);
 
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
-        if (auto session = player->session.lock())
-            session->Send(sendBuffer);
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
+            if (auto session = player->session.lock())
+                session->Send(sendBuffer);
+        }
     }
 
 	// 이 Room에 있는 모든 Player들에게 Object Despawn Broadcast
@@ -201,6 +200,7 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
+        rPkt.clear_updated_inventory_slot();
         rPkt.clear_updated_stat_info();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
         Broadcast(sendBuffer, objectId);
@@ -234,6 +234,7 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
+        rPkt.clear_updated_inventory_slot();
         rPkt.clear_updated_stat_info();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
         Broadcast(sendBuffer, objectId);

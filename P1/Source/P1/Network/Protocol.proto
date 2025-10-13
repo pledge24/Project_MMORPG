@@ -69,6 +69,13 @@ message C_MOVE_ROOM
     uint32 portal_id = 1;
 }
 
+message S_MOVE_ROOM
+{
+    uint32 map_id = 1;
+    PosInfo info = 2;
+    repeated ObjectInfo objects = 3;
+}
+
 message C_LEAVE_GAME
 {
 

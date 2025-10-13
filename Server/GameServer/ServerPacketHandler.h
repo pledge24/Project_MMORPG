@@ -24,25 +24,26 @@ enum : uint16
 	PKT_S_ENTER_GAME = 1009,
 	PKT_C_ENTER_MAP_COMPLETE = 1010,
 	PKT_C_MOVE_ROOM = 1011,
-	PKT_C_LEAVE_GAME = 1012,
-	PKT_S_LEAVE_GAME = 1013,
-	PKT_S_SPAWN = 1014,
-	PKT_S_DESPAWN = 1015,
-	PKT_C_MOVE = 1016,
-	PKT_S_MOVE = 1017,
-	PKT_C_ATTACK = 1018,
-	PKT_S_ATTACK = 1019,
-	PKT_S_HIT = 1020,
-	PKT_C_BUY_ITEM = 1021,
-	PKT_S_BUY_ITEM = 1022,
-	PKT_C_SELL_ITEM = 1023,
-	PKT_S_SELL_ITEM = 1024,
-	PKT_C_EQUIP_GEAR = 1025,
-	PKT_S_EQUIP_GEAR = 1026,
-	PKT_C_UNEQUIP_GEAR = 1027,
-	PKT_S_UNEQUIP_GEAR = 1028,
-	PKT_C_USE_ITEM = 1029,
-	PKT_S_USE_ITEM = 1030,
+	PKT_S_MOVE_ROOM = 1012,
+	PKT_C_LEAVE_GAME = 1013,
+	PKT_S_LEAVE_GAME = 1014,
+	PKT_S_SPAWN = 1015,
+	PKT_S_DESPAWN = 1016,
+	PKT_C_MOVE = 1017,
+	PKT_S_MOVE = 1018,
+	PKT_C_ATTACK = 1019,
+	PKT_S_ATTACK = 1020,
+	PKT_S_HIT = 1021,
+	PKT_C_BUY_ITEM = 1022,
+	PKT_S_BUY_ITEM = 1023,
+	PKT_C_SELL_ITEM = 1024,
+	PKT_S_SELL_ITEM = 1025,
+	PKT_C_EQUIP_GEAR = 1026,
+	PKT_S_EQUIP_GEAR = 1027,
+	PKT_C_UNEQUIP_GEAR = 1028,
+	PKT_S_UNEQUIP_GEAR = 1029,
+	PKT_C_USE_ITEM = 1030,
+	PKT_S_USE_ITEM = 1031,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -102,6 +103,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_S_CREATE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_S_DELETE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_ENTER_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_MOVE_ROOM& pkt) { return MakeSerializedPacket(pkt, PKT_S_MOVE_ROOM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_LEAVE_GAME); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_SPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_SPAWN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_DESPAWN); }

@@ -38,7 +38,7 @@ public:
     void OnRecvCreateCharacterRes(bool Success, const FString& Cause, int64 CharacterId = -1);
 
 protected:
-    /* BP 호출 함수 */
+    /** 네트워크 관련 함수 */
     UFUNCTION(BlueprintCallable, Category = "Login")
     void SendLoginRequest(FString Username, FString Password);
 
@@ -54,11 +54,11 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Character Delete")
     void SendDeleteCharacterPkt();
 
-    /* C++ 호출 이벤트 */
     UFUNCTION(BlueprintImplementableEvent, Category = "Character Select")
     void OnDisplayCharacterOverviews(const TArray<FCharacterOverview>& Characters);
 
 protected:
+    /** BindWidget */
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
     UWidgetSwitcher* WidgetSwitcher;
 
@@ -74,8 +74,9 @@ protected:
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
     int32 CC_CharacterClassId;
 
+protected:
     UPROPERTY(BlueprintReadOnly, Category = "Character Select")
-    TArray<FCharacterOverview> _Characters;
+    TArray<FCharacterOverview> CharacterOverviews;
 
     UPROPERTY(BlueprintReadWrite, Category = "Character Select")
     int32 LastClickedSlotIdx = -1;
