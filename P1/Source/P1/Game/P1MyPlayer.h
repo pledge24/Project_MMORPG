@@ -32,7 +32,7 @@ public:
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo_) override;
 
-    bool PushToMoveQueue(const Protocol::PosInfo Info_);
+    bool PushToMoveQueue(const Protocol::PosInfo& Info_);
 
 protected:
 	void Move(const FInputActionValue& Value);

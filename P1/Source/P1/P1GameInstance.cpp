@@ -27,6 +27,14 @@ void UP1GameInstance::Init()
     EquippedGearHelper = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
 }
 
+void UP1GameInstance::Shutdown()
+{
+    Super::Shutdown();
+
+    // 게임 서버 연결 해제
+    DisconnectFromGameServer();
+}
+
 void UP1GameInstance::BeginDestroy()
 {
     Super::BeginDestroy();
@@ -221,7 +229,10 @@ void UP1GameInstance::HandleDespawn(uint64 ObjectId)
 	if (FindActor == nullptr)
 		return;
 
-	World->DestroyActor(*FindActor);
+    if (Players.Remove(ObjectId) > 0)
+    {
+	    World->DestroyActor(*FindActor);
+    }
 }
 
 void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
@@ -230,6 +241,35 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 	{
 		HandleDespawn(ObjectId);
 	}
+}
+
+void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
+{
+    uint64 ExceptId = ExceptMine ? _MyPlayerId : 0;
+    for (auto Item : Players)
+    {
+        if (ExceptId != Item.Key)
+            HandleDespawn(Item.Key);
+    }
+}
+
+void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
+{
+    AP1Player** FindActor = Players.Find(Info.object_id());
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+    if (Player->IsMyPlayer())
+    {
+        AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
+        MyPlayer_->PushToMoveQueue(Info);
+    }
+    else
+    {
+        //Player->SetPlayerInfo(Info);
+        Player->SetDestInfo(Info);
+    }
 }
 
 void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
@@ -241,23 +281,7 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	if (World == nullptr)
 		return;
 
-	const uint64 ObjectId = MovePkt.info().object_id();
-	AP1Player** FindActor = Players.Find(ObjectId);
-	if (FindActor == nullptr)
-		return;
-
-	const Protocol::PosInfo& Info = MovePkt.info();
-	AP1Player* Player = (*FindActor);
-    if (Player->IsMyPlayer())
-    {
-        AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
-        MyPlayer_->PushToMoveQueue(MovePkt.info());
-    }
-    else
-    {
-	    //Player->SetPlayerInfo(Info);
-	    Player->SetDestInfo(Info);
-    }
+    HandleMove(MovePkt.info());
 }
 
 void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)

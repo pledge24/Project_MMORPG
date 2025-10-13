@@ -622,6 +622,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
             return false;
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        Protocol::ObjectInfo* objectInfo = player->objectInfo;
         Protocol::PlayerInfo* playerInfo = player->playerInfo;
         Protocol::PosInfo* posInfo = player->posInfo;
 
@@ -639,7 +640,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         statInfo->set_magical_attack(bindObject._curMagicalAttack);
 
         // 위치 설정
-        posInfo->set_map_id(bindObject._mapId);
+        objectInfo->set_map_id(bindObject._mapId);
         posInfo->set_x(bindObject._posX);
         posInfo->set_y(bindObject._posY);
         posInfo->set_z(bindObject._posZ);
@@ -999,7 +1000,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             _curMp = playerInfo.stat_info().mp();
             _curPhysicalAttack = playerInfo.stat_info().physical_attack();
             _curMagicalAttack = playerInfo.stat_info().magical_attack();
-            _mapId = 1;
+            _mapId = objectInfo->map_id();
             _posX = posInfo.x();
             _posY = posInfo.y();
             _posZ = posInfo.z();

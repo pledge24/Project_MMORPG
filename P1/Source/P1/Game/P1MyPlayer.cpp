@@ -132,7 +132,7 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
     SetPosInfo(ObjectInfo_.pos_info());
 }
 
-bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo Info_)
+bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo& Info_)
 {
     return MoveQueue.Enqueue(Info_);
 }

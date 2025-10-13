@@ -136,10 +136,13 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
 {
     PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-    int32 roomId = player->posInfo->map_id();
+    int32 roomId = player->objectInfo->map_id();
 
     // 클라이언트 맵 로딩이 완료되었으니, 해당 플레이어를 Room에 넣는다.
     RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
+    if (room == nullptr)
+        return false;
+
     room->DoAsync(&Room::HandleEnterPlayer, player, false);
 
     return true;
@@ -168,7 +171,7 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
 
     // 1) Room 이동에 따른 posInfo 갱신
     {
-        player->posInfo->set_map_id(dst[TemplateId]);
+        player->objectInfo->set_map_id(dst[TemplateId]);
         player->posInfo->set_x(dst[PosX]);
         player->posInfo->set_y(dst[PosY]);
         player->posInfo->set_z(dst[PosZ]);

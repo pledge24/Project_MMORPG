@@ -362,7 +362,7 @@ class ObjectInfo final :
     return *internal_default_instance();
   }
   enum DetailsCase {
-    kPlayerInfo = 5,
+    kPlayerInfo = 6,
     DETAILS_NOT_SET = 0,
   };
 
@@ -447,13 +447,14 @@ class ObjectInfo final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kAppearanceFieldNumber = 4,
+    kAppearanceFieldNumber = 5,
     kPosInfoFieldNumber = 3,
     kObjectIdFieldNumber = 1,
     kObjectTypeFieldNumber = 2,
-    kPlayerInfoFieldNumber = 5,
+    kMapIdFieldNumber = 4,
+    kPlayerInfoFieldNumber = 6,
   };
-  // map<int32, int32> appearance = 4;
+  // map<int32, int32> appearance = 5;
   int appearance_size() const;
   private:
   int _internal_appearance_size() const;
@@ -506,7 +507,16 @@ class ObjectInfo final :
   void _internal_set_object_type(::Protocol::ObjectType value);
   public:
 
-  // .Protocol.PlayerInfo player_info = 5;
+  // uint32 map_id = 4;
+  void clear_map_id();
+  uint32_t map_id() const;
+  void set_map_id(uint32_t value);
+  private:
+  uint32_t _internal_map_id() const;
+  void _internal_set_map_id(uint32_t value);
+  public:
+
+  // .Protocol.PlayerInfo player_info = 6;
   bool has_player_info() const;
   private:
   bool _internal_has_player_info() const;
@@ -546,6 +556,7 @@ class ObjectInfo final :
     ::Protocol::PosInfo* pos_info_;
     uint64_t object_id_;
     int object_type_;
+    uint32_t map_id_;
     union DetailsUnion {
       constexpr DetailsUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
@@ -991,12 +1002,11 @@ class PosInfo final :
 
   enum : int {
     kObjectIdFieldNumber = 1,
-    kMapIdFieldNumber = 2,
-    kXFieldNumber = 3,
-    kYFieldNumber = 4,
-    kZFieldNumber = 5,
-    kYawFieldNumber = 6,
-    kStateFieldNumber = 7,
+    kXFieldNumber = 2,
+    kYFieldNumber = 3,
+    kZFieldNumber = 4,
+    kYawFieldNumber = 5,
+    kStateFieldNumber = 6,
   };
   // uint64 object_id = 1;
   void clear_object_id();
@@ -1007,16 +1017,7 @@ class PosInfo final :
   void _internal_set_object_id(uint64_t value);
   public:
 
-  // int32 map_id = 2;
-  void clear_map_id();
-  int32_t map_id() const;
-  void set_map_id(int32_t value);
-  private:
-  int32_t _internal_map_id() const;
-  void _internal_set_map_id(int32_t value);
-  public:
-
-  // float x = 3;
+  // float x = 2;
   void clear_x();
   float x() const;
   void set_x(float value);
@@ -1025,7 +1026,7 @@ class PosInfo final :
   void _internal_set_x(float value);
   public:
 
-  // float y = 4;
+  // float y = 3;
   void clear_y();
   float y() const;
   void set_y(float value);
@@ -1034,7 +1035,7 @@ class PosInfo final :
   void _internal_set_y(float value);
   public:
 
-  // float z = 5;
+  // float z = 4;
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -1043,7 +1044,7 @@ class PosInfo final :
   void _internal_set_z(float value);
   public:
 
-  // float yaw = 6;
+  // float yaw = 5;
   void clear_yaw();
   float yaw() const;
   void set_yaw(float value);
@@ -1052,7 +1053,7 @@ class PosInfo final :
   void _internal_set_yaw(float value);
   public:
 
-  // .Protocol.MoveState state = 7;
+  // .Protocol.MoveState state = 6;
   void clear_state();
   ::Protocol::MoveState state() const;
   void set_state(::Protocol::MoveState value);
@@ -1070,7 +1071,6 @@ class PosInfo final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     uint64_t object_id_;
-    int32_t map_id_;
     float x_;
     float y_;
     float z_;
@@ -2684,7 +2684,27 @@ inline void ObjectInfo::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.ObjectInfo.pos_info)
 }
 
-// map<int32, int32> appearance = 4;
+// uint32 map_id = 4;
+inline void ObjectInfo::clear_map_id() {
+  _impl_.map_id_ = 0u;
+}
+inline uint32_t ObjectInfo::_internal_map_id() const {
+  return _impl_.map_id_;
+}
+inline uint32_t ObjectInfo::map_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.map_id)
+  return _internal_map_id();
+}
+inline void ObjectInfo::_internal_set_map_id(uint32_t value) {
+  
+  _impl_.map_id_ = value;
+}
+inline void ObjectInfo::set_map_id(uint32_t value) {
+  _internal_set_map_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.ObjectInfo.map_id)
+}
+
+// map<int32, int32> appearance = 5;
 inline int ObjectInfo::_internal_appearance_size() const {
   return _impl_.appearance_.size();
 }
@@ -2713,7 +2733,7 @@ ObjectInfo::mutable_appearance() {
   return _internal_mutable_appearance();
 }
 
-// .Protocol.PlayerInfo player_info = 5;
+// .Protocol.PlayerInfo player_info = 6;
 inline bool ObjectInfo::_internal_has_player_info() const {
   return details_case() == kPlayerInfo;
 }
@@ -3205,27 +3225,7 @@ inline void PosInfo::set_object_id(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.object_id)
 }
 
-// int32 map_id = 2;
-inline void PosInfo::clear_map_id() {
-  _impl_.map_id_ = 0;
-}
-inline int32_t PosInfo::_internal_map_id() const {
-  return _impl_.map_id_;
-}
-inline int32_t PosInfo::map_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.PosInfo.map_id)
-  return _internal_map_id();
-}
-inline void PosInfo::_internal_set_map_id(int32_t value) {
-  
-  _impl_.map_id_ = value;
-}
-inline void PosInfo::set_map_id(int32_t value) {
-  _internal_set_map_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.PosInfo.map_id)
-}
-
-// float x = 3;
+// float x = 2;
 inline void PosInfo::clear_x() {
   _impl_.x_ = 0;
 }
@@ -3245,7 +3245,7 @@ inline void PosInfo::set_x(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.x)
 }
 
-// float y = 4;
+// float y = 3;
 inline void PosInfo::clear_y() {
   _impl_.y_ = 0;
 }
@@ -3265,7 +3265,7 @@ inline void PosInfo::set_y(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.y)
 }
 
-// float z = 5;
+// float z = 4;
 inline void PosInfo::clear_z() {
   _impl_.z_ = 0;
 }
@@ -3285,7 +3285,7 @@ inline void PosInfo::set_z(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.z)
 }
 
-// float yaw = 6;
+// float yaw = 5;
 inline void PosInfo::clear_yaw() {
   _impl_.yaw_ = 0;
 }
@@ -3305,7 +3305,7 @@ inline void PosInfo::set_yaw(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.yaw)
 }
 
-// .Protocol.MoveState state = 7;
+// .Protocol.MoveState state = 6;
 inline void PosInfo::clear_state() {
   _impl_.state_ = 0;
 }

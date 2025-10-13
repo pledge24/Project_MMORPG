@@ -94,6 +94,24 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 	return true;
 }
 
+bool Handle_S_MOVE_ROOM(PacketSessionRef& session, Protocol::S_MOVE_ROOM& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleMove(pkt.info());   // Teleporting My Character
+        GameInstance->HandleDespawnAll(true);
+
+        for (auto& Player : pkt.objects())
+        {
+            GameInstance->HandleSpawn(Player, false);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
 	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
