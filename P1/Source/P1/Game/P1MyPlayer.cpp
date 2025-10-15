@@ -14,6 +14,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "AttackSystemComponent.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
@@ -61,8 +62,8 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Move);
@@ -70,6 +71,9 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
+
+        //Attacking
+        EnhancedInputComponent->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &AP1MyPlayer::NormalAttack);
 	}
 
 }
@@ -185,5 +189,18 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
+{
+    if (AttackSystemComponent != nullptr)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("AttackAttack!")));
+        int32 Combo = AttackSystemComponent->GetNextCombo();
+        if (AttackSystemComponent->PerformNormalAttack() == true)
+        {
+            // C_NORMAL_ATTACK 전송
+        }
+    }
 }
 
