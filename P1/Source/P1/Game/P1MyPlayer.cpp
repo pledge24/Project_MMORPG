@@ -29,6 +29,15 @@ AP1MyPlayer::AP1MyPlayer()
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+    // Create a Weapon Static Mesh
+    WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+    USkeletalMeshComponent* CharacterMesh = GetMesh();
+
+    if (WeaponMesh && CharacterMesh)
+    {
+        WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
+    }
+
     // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -37,6 +46,15 @@ void AP1MyPlayer::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+    if (AttackSystemComponentClass)
+    {
+        AttackSystemComponent = NewObject<UAttackSystemComponent>(this, AttackSystemComponentClass);
+        if (AttackSystemComponent)
+        {
+            AttackSystemComponent->RegisterComponent();
+        }
+    }
 
     if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
     {
@@ -50,6 +68,26 @@ void AP1MyPlayer::BeginPlay()
 			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		    }
 	    }
+    }
+
+    if (WeaponMesh)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("WeaponMesh Pointer: %p"), WeaponMesh);
+        UE_LOG(LogTemp, Warning, TEXT("WeaponMesh Name: %s"), *WeaponMesh->GetName());
+        UE_LOG(LogTemp, Warning, TEXT("Has StaticMesh: %s"),
+            WeaponMesh->GetStaticMesh() ? TEXT("YES") : TEXT("NO"));
+
+        // 모든 StaticMeshComponent 찾기
+        TArray<UStaticMeshComponent*> Components;
+        GetComponents<UStaticMeshComponent>(Components);
+        UE_LOG(LogTemp, Warning, TEXT("Total StaticMeshComponents: %d"), Components.Num());
+
+        for (UStaticMeshComponent* Comp : Components)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("  - %s, HasMesh: %s"),
+                *Comp->GetName(),
+                Comp->GetStaticMesh() ? TEXT("YES") : TEXT("NO"));
+        }
     }
 }
 
@@ -143,11 +181,15 @@ bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo& Info_)
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)
 {
+    if (AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking() == true)
+        return;
+
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Move")));
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -193,12 +235,21 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 
 void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
 {
+    UStaticMesh* StaticMesh = WeaponMesh->GetStaticMesh();
+    if (!StaticMesh)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No StaticMesh assigned to WeaponMesh!"));
+        return;
+    }
+
     if (AttackSystemComponent != nullptr)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("AttackAttack!")));
-        int32 Combo = AttackSystemComponent->GetNextCombo();
-        if (AttackSystemComponent->PerformNormalAttack() == true)
+        if (AttackSystemComponent->IsAttacking() == false)
         {
+            AttackSystemComponent->bIsAttacking = true;
+            AttackSystemComponent->PerformNormalAttack();
+
+            int32 Combo = AttackSystemComponent->NormalAttackCombo;
             // C_NORMAL_ATTACK 전송
         }
     }

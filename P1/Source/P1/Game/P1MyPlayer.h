@@ -52,10 +52,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* DefaultMappingContext;
 
-    /** AttackSystemComponent*/
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    class UAttackSystemComponent* AttackSystemComponent;
-
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
@@ -71,6 +67,17 @@ protected:
     /** Look Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     class UInputAction* NormalAttackAction;
+
+protected:
+    /** Weapon StaticMesh*/
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    class UStaticMeshComponent* WeaponMesh;
+
+    /** AttackSystemComponent*/
+    UPROPERTY(EditAnywhere, Category = "Components")
+    TSubclassOf<class UAttackSystemComponent> AttackSystemComponentClass;
+
+    class UAttackSystemComponent* AttackSystemComponent;
 
 protected:
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
