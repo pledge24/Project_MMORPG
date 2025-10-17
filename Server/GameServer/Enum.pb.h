@@ -104,13 +104,12 @@ enum MoveState : int {
   MOVE_STATE_NONE = 0,
   MOVE_STATE_IDLE = 1,
   MOVE_STATE_RUN = 2,
-  MOVE_STATE_JUMP = 3,
   MoveState_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   MoveState_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool MoveState_IsValid(int value);
 constexpr MoveState MoveState_MIN = MOVE_STATE_NONE;
-constexpr MoveState MoveState_MAX = MOVE_STATE_JUMP;
+constexpr MoveState MoveState_MAX = MOVE_STATE_RUN;
 constexpr int MoveState_ARRAYSIZE = MoveState_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* MoveState_descriptor();

@@ -241,6 +241,29 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     }
 }
 
+void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt)
+{
+    const uint64 objectId = pkt.info().object_id();
+    if (_objects.find(objectId) == _objects.end())
+        return;
+    
+    // 적용
+    PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]);
+    player->posInfo->CopyFrom(pkt.info());
+
+    // 일반 공격 사실을 알린다 (본인 빼고)
+    {
+        Protocol::S_NORMAL_ATTACK normalAttackPkt;
+        {
+            Protocol::PosInfo* info = normalAttackPkt.mutable_info();
+            info->CopyFrom(pkt.info());
+            normalAttackPkt.set_combo(pkt.combo());
+        }
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
+        Broadcast(sendBuffer, objectId);
+    }
+}
+
 void Room::UpdateTick()
 {
 	cout << "Update Room" << endl;

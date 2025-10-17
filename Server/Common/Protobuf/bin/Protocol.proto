@@ -106,14 +106,17 @@ message S_MOVE
 	PosInfo info = 1;
 }
 
-message C_ATTACK
+message C_NORMAL_ATTACK
 {
     // Normal Attack만 이 패킷을 사용한다.
+    PosInfo info = 1;
+    uint32 combo = 2;
 }
 
-message S_ATTACK
+message S_NORMAL_ATTACK
 {
-    map<uint64, int32> attack_info = 1; // <object_ids, combo_id>
+    PosInfo info = 1;
+    uint32 combo = 2;
 }
 
 message S_HIT

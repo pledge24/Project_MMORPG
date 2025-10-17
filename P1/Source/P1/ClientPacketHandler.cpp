@@ -163,10 +163,15 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 	return false;
 }
 
-bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
+bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleNormalAttack(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)

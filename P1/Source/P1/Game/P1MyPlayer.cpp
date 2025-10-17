@@ -189,7 +189,6 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Move")));
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -250,7 +249,18 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
             AttackSystemComponent->PerformNormalAttack();
 
             int32 Combo = AttackSystemComponent->NormalAttackCombo;
-            // C_NORMAL_ATTACK 전송
+            Protocol::C_NORMAL_ATTACK NormalAttackPkt;
+
+            // 현재 위치 정보
+            {
+                Protocol::PosInfo* Info = NormalAttackPkt.mutable_info();
+                Info->CopyFrom(*SrcInfo);
+                Info->set_yaw(DesiredYaw);
+                Info->set_state(GetMoveState());
+                NormalAttackPkt.set_combo(Combo);
+            }
+
+            SEND_PACKET(NormalAttackPkt);
         }
     }
 }
