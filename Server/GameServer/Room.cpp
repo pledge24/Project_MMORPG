@@ -113,7 +113,7 @@ bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
     if (RemoveObject(objectId) == false)
         return false;
 
-    // 퇴장한 플레이어가 방 이동이 아닌 경우, Desapwn 패킷 전송
+    // 퇴장한 플레이어가 방 이동이 아닌 경우, Despawn 패킷 전송
     if(PlayerRef player = dynamic_pointer_cast<Player>(object)){
 
         if (moveRoom == false)
@@ -178,31 +178,31 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     if (_objects.find(objectId) == _objects.end())
         return;
 
-    Protocol::S_EQUIP_GEAR rPkt;
-    rPkt.set_object_id(objectId);
+    Protocol::S_EQUIP_GEAR equipGearPkt;
+    equipGearPkt.set_object_id(objectId);
 
-    if (player->HandleEquipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    if (player->HandleEquipGear(OUT equipGearPkt, pkt.mutable_slot()) == false)
     {
         SessionRef session = player->session.lock();
-        rPkt.set_success(false);
-        SEND_PACKET(rPkt);
+        equipGearPkt.set_success(false);
+        SEND_PACKET(equipGearPkt);
         return;
     }
 
-    rPkt.set_success(true);
+    equipGearPkt.set_success(true);
 
     // 장착한 유저에게만 그대로 전송.
     {
         SessionRef session = player->session.lock();
-        cout << rPkt.DebugString() << endl;
-        SEND_PACKET(rPkt);
+        cout << equipGearPkt.DebugString() << endl;
+        SEND_PACKET(equipGearPkt);
     }
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
-        rPkt.clear_updated_inventory_slot();
-        rPkt.clear_updated_stat_info();
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+        equipGearPkt.clear_updated_inventory_slot();
+        equipGearPkt.clear_updated_stat_info();
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(equipGearPkt);
         Broadcast(sendBuffer, objectId);
     }
 }
@@ -213,30 +213,30 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     if (_objects.find(objectId) == _objects.end())
         return;
 
-    Protocol::S_UNEQUIP_GEAR rPkt;
-    rPkt.set_object_id(objectId);
+    Protocol::S_UNEQUIP_GEAR unequipGearPkt;
+    unequipGearPkt.set_object_id(objectId);
 
-    if (player->HandleUnequipGear(OUT rPkt, pkt.mutable_slot()) == false)
+    if (player->HandleUnequipGear(OUT unequipGearPkt, pkt.mutable_slot()) == false)
     {
         SessionRef session = player->session.lock();
-        rPkt.set_success(false);
-        SEND_PACKET(rPkt);
+        unequipGearPkt.set_success(false);
+        SEND_PACKET(unequipGearPkt);
         return;
     }
 
-    rPkt.set_success(true);
+    unequipGearPkt.set_success(true);
 
     // 탈착한 유저에게만 그대로 전송.
     {
         SessionRef session = player->session.lock();
-        SEND_PACKET(rPkt);
+        SEND_PACKET(unequipGearPkt);
     }
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
-        rPkt.clear_updated_inventory_slot();
-        rPkt.clear_updated_stat_info();
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(rPkt);
+        unequipGearPkt.clear_updated_inventory_slot();
+        unequipGearPkt.clear_updated_stat_info();
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(unequipGearPkt);
         Broadcast(sendBuffer, objectId);
     }
 }

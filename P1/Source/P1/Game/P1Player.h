@@ -27,16 +27,16 @@ public:
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
 
     /** 상태 관련 */
-	Protocol::MoveState GetMoveState() { return SrcInfo->state(); }
+	Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
 	void SetMoveState(Protocol::MoveState State);
 
     /** 이동 관련 */
-	void SetPosInfo(const Protocol::PosInfo& Info);
-	void SetDestInfo(const Protocol::PosInfo& Info);
-	Protocol::PosInfo* GetPosInfo() { return SrcInfo; }
+	void SetClientPos(const Protocol::PosInfo& Info);
+	void SetServerPos(const Protocol::PosInfo& Info);
+	Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
 
     /** 장착 관련*/
-    void SetEquippedGear(const Protocol::Slot& _Slot);
+    void SetEquippedGear(const Protocol::Slot& Slot_);
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);
@@ -49,8 +49,22 @@ public:
     //DECLARE_MULTICAST_DELEGATE_OneParam(OnEquippedGearChanged, const Protocol::Slot&);
     //OnEquippedGearChanged OnEquippedGearChanged;
 
+private:
+    FVector GetPerpendicular() const;
+
 protected:
-    class Protocol::PosInfo* SrcInfo; // 현재 위치
-	class Protocol::PosInfo* DestInfo; // 목적지
+    /** Weapon StaticMesh*/
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    class UStaticMeshComponent* WeaponMesh;
+
+    class Protocol::PosInfo* ClientPos; // 클라이언트 위치(현재 캐릭터 위치)
+	class Protocol::PosInfo* ServerPos; // 서버로부터 수신받은 위치(Only Use Other Player)
+
     FText PlayerName;
+
+private:
+    FVector MoveDirection = FVector::ZeroVector;
+    const float CorrectionThreshold = 50.f;
+    const float CORRECTION_SPEED = 10.f;
+    const float RLERP_SPEED = 5.f;
 };

@@ -12,6 +12,8 @@
 #include "Types.h"
 #include "InGamePlayerController.h"
 
+#include "Kismet/KismetMathLibrary.h"
+
 #include "Protocol.pb.h"
 
 #define SEND_PACKET(Pkt)															\

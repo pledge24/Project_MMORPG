@@ -194,7 +194,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
         }
         else
         {
-            MyPlayer->SetPosInfo(ObjectInfo.pos_info());
+            MyPlayer->SetClientPos(ObjectInfo.pos_info());
         }
 	}
 	else
@@ -267,8 +267,7 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
     }
     else
     {
-        //Player->SetPlayerInfo(Info);
-        Player->SetDestInfo(Info);
+        Player->SetServerPos(Info);
     }
 }
 

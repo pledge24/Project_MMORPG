@@ -42,3 +42,8 @@ bool UAttackSystemComponent::IsAttacking() const
     return bIsAttacking;
 }
 
+bool UAttackSystemComponent::EnableInputAttack() const
+{
+    return bEnableInputAttack;
+}
+

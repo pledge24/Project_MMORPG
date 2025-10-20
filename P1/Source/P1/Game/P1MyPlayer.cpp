@@ -29,15 +29,6 @@ AP1MyPlayer::AP1MyPlayer()
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-    // Create a Weapon Static Mesh
-    WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-    USkeletalMeshComponent* CharacterMesh = GetMesh();
-
-    if (WeaponMesh && CharacterMesh)
-    {
-        WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
-    }
-
     // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -68,26 +59,6 @@ void AP1MyPlayer::BeginPlay()
 			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		    }
 	    }
-    }
-
-    if (WeaponMesh)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("WeaponMesh Pointer: %p"), WeaponMesh);
-        UE_LOG(LogTemp, Warning, TEXT("WeaponMesh Name: %s"), *WeaponMesh->GetName());
-        UE_LOG(LogTemp, Warning, TEXT("Has StaticMesh: %s"),
-            WeaponMesh->GetStaticMesh() ? TEXT("YES") : TEXT("NO"));
-
-        // 모든 StaticMeshComponent 찾기
-        TArray<UStaticMeshComponent*> Components;
-        GetComponents<UStaticMeshComponent>(Components);
-        UE_LOG(LogTemp, Warning, TEXT("Total StaticMeshComponents: %d"), Components.Num());
-
-        for (UStaticMeshComponent* Comp : Components)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("  - %s, HasMesh: %s"),
-                *Comp->GetName(),
-                Comp->GetStaticMesh() ? TEXT("YES") : TEXT("NO"));
-        }
     }
 }
 
@@ -158,7 +129,7 @@ void AP1MyPlayer::Tick(float DeltaTime)
 		// 현재 위치 정보
 		{
 			Protocol::PosInfo* Info = MovePkt.mutable_info();
-			Info->CopyFrom(*SrcInfo);
+			Info->CopyFrom(*ClientPos);
 			Info->set_yaw(DesiredYaw);
 			Info->set_state(GetMoveState());
 		}
@@ -171,7 +142,7 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
 {
     Super::Init(ObjectInfo_);
 
-    SetPosInfo(ObjectInfo_.pos_info());
+    SetClientPos(ObjectInfo_.pos_info());
 }
 
 bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo& Info_)
@@ -202,6 +173,7 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+
 
 		// Cache
 		{
@@ -243,9 +215,8 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
 
     if (AttackSystemComponent != nullptr)
     {
-        if (AttackSystemComponent->IsAttacking() == false)
+        if (AttackSystemComponent->EnableInputAttack() == true)
         {
-            AttackSystemComponent->bIsAttacking = true;
             AttackSystemComponent->PerformNormalAttack();
 
             int32 Combo = AttackSystemComponent->NormalAttackCombo;
@@ -254,7 +225,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
             // 현재 위치 정보
             {
                 Protocol::PosInfo* Info = NormalAttackPkt.mutable_info();
-                Info->CopyFrom(*SrcInfo);
+                Info->CopyFrom(*ClientPos);
                 Info->set_yaw(DesiredYaw);
                 Info->set_state(GetMoveState());
                 NormalAttackPkt.set_combo(Combo);

@@ -69,10 +69,6 @@ protected:
     class UInputAction* NormalAttackAction;
 
 protected:
-    /** Weapon StaticMesh*/
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
-    class UStaticMeshComponent* WeaponMesh;
-
     /** AttackSystemComponent*/
     UPROPERTY(EditAnywhere, Category = "Components")
     TSubclassOf<class UAttackSystemComponent> AttackSystemComponentClass;

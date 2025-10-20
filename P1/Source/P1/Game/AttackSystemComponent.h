@@ -27,9 +27,15 @@ public:
     UFUNCTION(BlueprintCallable, Category = "AttackSystem")
     bool IsAttacking() const;
 
+    UFUNCTION(BlueprintCallable, Category = "AttackSystem")
+    bool EnableInputAttack() const;
+
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
     bool bIsAttacking = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
+    bool bEnableInputAttack = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
     int32 NormalAttackCombo = 0;
