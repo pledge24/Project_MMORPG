@@ -50,21 +50,24 @@ public:
     //OnEquippedGearChanged OnEquippedGearChanged;
 
 private:
-    FVector GetPerpendicular() const;
+    void Move(float DeltaSeconds);
+    FVector GetPerpendicularPoint() const;
 
 protected:
     /** Weapon StaticMesh*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     class UStaticMeshComponent* WeaponMesh;
 
-    class Protocol::PosInfo* ClientPos; // 클라이언트 위치(현재 캐릭터 위치)
-	class Protocol::PosInfo* ServerPos; // 서버로부터 수신받은 위치(Only Use Other Player)
+    class Protocol::PosInfo* ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
+	class Protocol::PosInfo* ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
 
     FText PlayerName;
 
 private:
     FVector MoveDirection = FVector::ZeroVector;
-    const float CorrectionThreshold = 50.f;
-    const float CORRECTION_SPEED = 10.f;
-    const float RLERP_SPEED = 5.f;
+    const float CorrectionThreshold = 100.f;
+    const float CORRECTION_SPEED = 100.f;
+    const float INTERP_SPEED = 5.f;
+    const float RINTERP_SPEED = 5.f;
+
 };

@@ -185,7 +185,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 	{
         if (MyPlayer == nullptr)
         {
-            // Set SrcPos
+            // Set ClientPos
             AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
             MyPlayer = Player;
             Players.Add(ObjectInfo.object_id(), Player);
@@ -199,7 +199,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 	}
 	else
 	{
-        // Set SrcPos
+        // Set ClientPos
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
         Players.Add(ObjectInfo.object_id(), Player);
 		

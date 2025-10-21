@@ -91,7 +91,10 @@ void AP1MyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    // 네트워크로 수신한 teleport 처리
+    bool bForceSendPacket = false; // MovePacket 강제 전송 판정 변수
+    bool bCanInputMovement = CanInputMovement();
+
+    // Reposition(From Server)
     Protocol::PosInfo Info_;
     while (MoveQueue.Dequeue(Info_))
     {
@@ -101,41 +104,59 @@ void AP1MyPlayer::Tick(float DeltaTime)
         FRotator CurrentRotation = GetActorRotation();
         FRotator NewRotation = FRotator(CurrentRotation.Pitch, Info_.yaw(), CurrentRotation.Roll);
         SetActorRotation(NewRotation);
+
+        SetMoveState(Protocol::MOVE_STATE_IDLE);
+
+        bForceSendPacket = true;
     }
 
-	// Send 판정
-	bool ForceSendPacket = false;
-
-	if (LastDesiredInput != DesiredInput)
+    // bForceSendPacket 판정
 	{
-		ForceSendPacket = true;
-		LastDesiredInput = DesiredInput;
+        // 입력 변화 감지
+	    if (LastDesiredInput != DesiredInput)
+	    {
+            if (bCanInputMovement)
+		        bForceSendPacket = true;
+            LastDesiredInput = DesiredInput;
+	    }
+
+        //// 움직임 변화 판정
+        //UCharacterMovementComponent* CMC = GetCharacterMovement();
+        //bool DesiredMoving = CMC->Velocity.IsNearlyZero(VELOCITY_TOLERANCE) == false;
+
+        //// 급격한 회전 판정
+        //if (ClientPos->yaw() - MovePkt.info().yaw() >= YAW_TOLERANCE)
+        //{
+        //    bForceSendPacket = true;
+        //}
 	}
 
 	// State 판정
-	if (DesiredInput == FVector2D::Zero())
-		SetMoveState(Protocol::MOVE_STATE_IDLE);
-	else
+    if (bCanInputMovement && DesiredInput != FVector2D::Zero())
 		SetMoveState(Protocol::MOVE_STATE_RUN);
+    else
+		SetMoveState(Protocol::MOVE_STATE_IDLE);
 
-	MovePacketSendTimer -= DeltaTime;
+    // Send 판정
+    MovePacketSendTimer -= DeltaTime;
 
-	if (MovePacketSendTimer <= 0 || ForceSendPacket)
-	{
-		MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
+    if (MovePacketSendTimer <= 0 || bForceSendPacket)
+    {
+        MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
-		Protocol::C_MOVE MovePkt;
+        // 현재 위치 정보
+        {
+            MovePkt.Clear();
 
-		// 현재 위치 정보
-		{
-			Protocol::PosInfo* Info = MovePkt.mutable_info();
-			Info->CopyFrom(*ClientPos);
-			Info->set_yaw(DesiredYaw);
-			Info->set_state(GetMoveState());
-		}
+            Protocol::PosInfo* Info = MovePkt.mutable_info();
+            Info->CopyFrom(*ClientPos);
+            Info->set_yaw(DesiredYaw);
+            Info->set_state(GetMoveState());
+            //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("DesiredYaw: %f"), ClientPos->yaw()));
+        }
 
-		SEND_PACKET(MovePkt);
-	}
+        SEND_PACKET(MovePkt);
+    }
 }
 
 void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
@@ -152,10 +173,6 @@ bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo& Info_)
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)
 {
-    if (AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking() == true)
-        return;
-
-	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -170,12 +187,14 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+        if (CanInputMovement() == true)
+        {
+		    // add movement 
+		    AddMovementInput(ForwardDirection, MovementVector.Y);
+		    AddMovementInput(RightDirection, MovementVector.X);
+        }
 
-
-		// Cache
+		// Cache Movement Input
 		{
 			DesiredInput = MovementVector;
 
@@ -184,9 +203,7 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 			DesiredMoveDirection += RightDirection * MovementVector.X;
 			DesiredMoveDirection.Normalize();
 
-			const FVector Location = GetActorLocation();
-			FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + DesiredMoveDirection);
-			DesiredYaw = Rotator.Yaw;
+            DesiredYaw = DesiredMoveDirection.Rotation().Yaw;
 		}
 	}
 }
@@ -234,5 +251,13 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
             SEND_PACKET(NormalAttackPkt);
         }
     }
+}
+
+bool AP1MyPlayer::CanInputMovement() const
+{
+    if (AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking() == true)
+        return false;
+
+    return true;
 }
 

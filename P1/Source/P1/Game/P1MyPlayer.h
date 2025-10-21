@@ -73,16 +73,28 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Components")
     TSubclassOf<class UAttackSystemComponent> AttackSystemComponentClass;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class UAttackSystemComponent* AttackSystemComponent;
 
 protected:
+    /** MovePkt 관련 */
+    bool CanInputMovement() const;
+
+    Protocol::C_MOVE MovePkt;
+
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
+    const float VELOCITY_TOLERANCE = 1.f;
+    const float YAW_TOLERANCE = 30.f;
+
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
-	// Move Direction Cache
-	FVector2D DesiredInput;
-	FVector DesiredMoveDirection;
-	float DesiredYaw;
+	// Input Movement Cache.
+	FVector2D DesiredInput;         // FInputActionValue
+	FVector DesiredMoveDirection;   // 이동할 방향(Vector 타입)
+	float DesiredYaw;               // 이동할 방향(Rotator 타입)
+
+    // Moving Cache
+    bool LastDesiredMoving = false;
 
 	// Dirty Flag
 	FVector2D LastDesiredInput;
