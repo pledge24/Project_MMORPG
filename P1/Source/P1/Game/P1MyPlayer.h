@@ -32,12 +32,12 @@ public:
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo_) override;
 
-    bool PushToMoveQueue(const Protocol::PosInfo& Info_);
-
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
     void NormalAttack(const FInputActionValue& Value);
+
+    bool CanInputMovement() const;
 
 protected:
 	/** Camera boom positioning the camera behind the character */
@@ -68,7 +68,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     class UInputAction* NormalAttackAction;
 
-protected:
     /** AttackSystemComponent*/
     UPROPERTY(EditAnywhere, Category = "Components")
     TSubclassOf<class UAttackSystemComponent> AttackSystemComponentClass;
@@ -76,16 +75,13 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     class UAttackSystemComponent* AttackSystemComponent;
 
-protected:
-    /** MovePkt 관련 */
-    bool CanInputMovement() const;
-
+private:
+    /** MovePkt 전송 관련 */
     Protocol::C_MOVE MovePkt;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
     const float VELOCITY_TOLERANCE = 1.f;
     const float YAW_TOLERANCE = 30.f;
-
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
 	// Input Movement Cache.
@@ -93,12 +89,6 @@ protected:
 	FVector DesiredMoveDirection;   // 이동할 방향(Vector 타입)
 	float DesiredYaw;               // 이동할 방향(Rotator 타입)
 
-    // Moving Cache
-    bool LastDesiredMoving = false;
-
 	// Dirty Flag
 	FVector2D LastDesiredInput;
-
-    // MoveQueue
-    TQueue<Protocol::PosInfo> MoveQueue;
 };

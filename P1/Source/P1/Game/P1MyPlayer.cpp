@@ -94,22 +94,6 @@ void AP1MyPlayer::Tick(float DeltaTime)
     bool bForceSendPacket = false; // MovePacket 강제 전송 판정 변수
     bool bCanInputMovement = CanInputMovement();
 
-    // Reposition(From Server)
-    Protocol::PosInfo Info_;
-    while (MoveQueue.Dequeue(Info_))
-    {
-        const FVector TargetLocation(Info_.x(), Info_.y(), Info_.z());
-        SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
-
-        FRotator CurrentRotation = GetActorRotation();
-        FRotator NewRotation = FRotator(CurrentRotation.Pitch, Info_.yaw(), CurrentRotation.Roll);
-        SetActorRotation(NewRotation);
-
-        SetMoveState(Protocol::MOVE_STATE_IDLE);
-
-        bForceSendPacket = true;
-    }
-
     // bForceSendPacket 판정
 	{
         // 입력 변화 감지
@@ -120,15 +104,14 @@ void AP1MyPlayer::Tick(float DeltaTime)
             LastDesiredInput = DesiredInput;
 	    }
 
-        //// 움직임 변화 판정
-        //UCharacterMovementComponent* CMC = GetCharacterMovement();
-        //bool DesiredMoving = CMC->Velocity.IsNearlyZero(VELOCITY_TOLERANCE) == false;
-
-        //// 급격한 회전 판정
-        //if (ClientPos->yaw() - MovePkt.info().yaw() >= YAW_TOLERANCE)
-        //{
-        //    bForceSendPacket = true;
-        //}
+        // 움직임 변화 판정
+        UCharacterMovementComponent* CMC = GetCharacterMovement();
+        bool DesiredMoving = CMC->Velocity.IsNearlyZero(VELOCITY_TOLERANCE) == false;
+        // 급격한 회전 판정
+        if (ClientPos->yaw() - MovePkt.info().yaw() >= YAW_TOLERANCE)
+        {
+            bForceSendPacket = true;
+        }
 	}
 
 	// State 판정
@@ -150,7 +133,7 @@ void AP1MyPlayer::Tick(float DeltaTime)
 
             Protocol::PosInfo* Info = MovePkt.mutable_info();
             Info->CopyFrom(*ClientPos);
-            Info->set_yaw(DesiredYaw);
+            Info->set_desired_yaw(DesiredYaw);
             Info->set_state(GetMoveState());
             //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("DesiredYaw: %f"), ClientPos->yaw()));
         }
@@ -164,11 +147,6 @@ void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
     Super::Init(ObjectInfo_);
 
     SetClientPos(ObjectInfo_.pos_info());
-}
-
-bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo& Info_)
-{
-    return MoveQueue.Enqueue(Info_);
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)

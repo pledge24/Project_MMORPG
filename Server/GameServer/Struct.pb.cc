@@ -107,6 +107,7 @@ PROTOBUF_CONSTEXPR PosInfo::PosInfo(
   , /*decltype(_impl_.y_)*/0
   , /*decltype(_impl_.z_)*/0
   , /*decltype(_impl_.yaw_)*/0
+  , /*decltype(_impl_.desired_yaw_)*/0
   , /*decltype(_impl_.state_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct PosInfoDefaultTypeInternal {
@@ -308,6 +309,7 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   PROTOBUF_FIELD_OFFSET(::Protocol::PosInfo, _impl_.y_),
   PROTOBUF_FIELD_OFFSET(::Protocol::PosInfo, _impl_.z_),
   PROTOBUF_FIELD_OFFSET(::Protocol::PosInfo, _impl_.yaw_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::PosInfo, _impl_.desired_yaw_),
   PROTOBUF_FIELD_OFFSET(::Protocol::PosInfo, _impl_.state_),
   PROTOBUF_FIELD_OFFSET(::Protocol::StatInfo, _impl_._has_bits_),
   PROTOBUF_FIELD_OFFSET(::Protocol::StatInfo, _internal_metadata_),
@@ -400,13 +402,13 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 33, 41, -1, sizeof(::Protocol::PlayerInfo_EquippedGearEntry_DoNotUse)},
   { 43, -1, -1, sizeof(::Protocol::PlayerInfo)},
   { 59, -1, -1, sizeof(::Protocol::PosInfo)},
-  { 71, 83, -1, sizeof(::Protocol::StatInfo)},
-  { 89, -1, -1, sizeof(::Protocol::Stat)},
-  { 98, -1, -1, sizeof(::Protocol::Effect)},
-  { 106, -1, -1, sizeof(::Protocol::GearInfo)},
-  { 116, 127, -1, sizeof(::Protocol::Item)},
-  { 131, 141, -1, sizeof(::Protocol::Slot)},
-  { 145, -1, -1, sizeof(::Protocol::Inventory)},
+  { 72, 84, -1, sizeof(::Protocol::StatInfo)},
+  { 90, -1, -1, sizeof(::Protocol::Stat)},
+  { 99, -1, -1, sizeof(::Protocol::Effect)},
+  { 107, -1, -1, sizeof(::Protocol::GearInfo)},
+  { 117, 128, -1, sizeof(::Protocol::Item)},
+  { 132, 142, -1, sizeof(::Protocol::Slot)},
+  { 146, -1, -1, sizeof(::Protocol::Inventory)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -446,39 +448,40 @@ const char descriptor_table_protodef_Struct_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "\n\requipped_gear\030\n \003(\0132&.Protocol.PlayerI"
   "nfo.EquippedGearEntry\032C\n\021EquippedGearEnt"
   "ry\022\013\n\003key\030\001 \001(\005\022\035\n\005value\030\002 \001(\0132\016.Protoco"
-  "l.Slot:\0028\001\"n\n\007PosInfo\022\021\n\tobject_id\030\001 \001(\004"
-  "\022\t\n\001x\030\002 \001(\002\022\t\n\001y\030\003 \001(\002\022\t\n\001z\030\004 \001(\002\022\013\n\003yaw"
-  "\030\005 \001(\002\022\"\n\005state\030\006 \001(\0162\023.Protocol.MoveSta"
-  "te\"\334\001\n\010StatInfo\022\023\n\006max_hp\030\001 \001(\005H\000\210\001\001\022\017\n\002"
-  "hp\030\002 \001(\005H\001\210\001\001\022\023\n\006max_mp\030\003 \001(\005H\002\210\001\001\022\017\n\002mp"
-  "\030\004 \001(\005H\003\210\001\001\022\034\n\017physical_attack\030\005 \001(\005H\004\210\001"
-  "\001\022\033\n\016magical_attack\030\006 \001(\005H\005\210\001\001B\t\n\007_max_h"
-  "pB\005\n\003_hpB\t\n\007_max_mpB\005\n\003_mpB\022\n\020_physical_"
-  "attackB\021\n\017_magical_attack\"I\n\004Stat\022 \n\004typ"
-  "e\030\001 \001(\0162\022.Protocol.StatType\022\020\n\010is_gauge\030"
-  "\002 \001(\010\022\r\n\005value\030\003 \001(\005\"-\n\006Effect\022\021\n\teffect"
-  "_id\030\001 \001(\005\022\020\n\010duration\030\002 \001(\002\"|\n\010GearInfo\022"
-  "\025\n\renhance_level\030\001 \001(\005\022\022\n\ndurability\030\002 \001"
-  "(\005\022\"\n\032additional_physical_attack\030\003 \001(\005\022!"
-  "\n\031additional_magical_attack\030\004 \001(\005\"\226\001\n\004It"
-  "em\022\023\n\013template_id\030\001 \001(\005\022\025\n\010item_uid\030\002 \001("
-  "\003H\001\210\001\001\022\022\n\005count\030\003 \001(\005H\002\210\001\001\022&\n\010gearInfo\030\004"
-  " \001(\0132\022.Protocol.GearInfoH\000B\017\n\rinstance_d"
-  "ataB\013\n\t_item_uidB\010\n\006_count\"\232\001\n\004Slot\022\017\n\007s"
-  "lot_id\030\001 \001(\005\022 \n\004type\030\002 \001(\0162\022.Protocol.Sl"
-  "otType\022)\n\005state\030\003 \001(\0162\025.Protocol.UpdateS"
-  "tateH\000\210\001\001\022!\n\004item\030\004 \001(\0132\016.Protocol.ItemH"
-  "\001\210\001\001B\010\n\006_stateB\007\n\005_item\"u\n\tInventory\022\034\n\004"
-  "gear\030\001 \003(\0132\016.Protocol.Slot\022#\n\013consumable"
-  "s\030\002 \003(\0132\016.Protocol.Slot\022%\n\rmiscellaneous"
-  "\030\003 \003(\0132\016.Protocol.Slotb\006proto3"
+  "l.Slot:\0028\001\"\203\001\n\007PosInfo\022\021\n\tobject_id\030\001 \001("
+  "\004\022\t\n\001x\030\002 \001(\002\022\t\n\001y\030\003 \001(\002\022\t\n\001z\030\004 \001(\002\022\013\n\003ya"
+  "w\030\005 \001(\002\022\023\n\013desired_yaw\030\006 \001(\002\022\"\n\005state\030\007 "
+  "\001(\0162\023.Protocol.MoveState\"\334\001\n\010StatInfo\022\023\n"
+  "\006max_hp\030\001 \001(\005H\000\210\001\001\022\017\n\002hp\030\002 \001(\005H\001\210\001\001\022\023\n\006m"
+  "ax_mp\030\003 \001(\005H\002\210\001\001\022\017\n\002mp\030\004 \001(\005H\003\210\001\001\022\034\n\017phy"
+  "sical_attack\030\005 \001(\005H\004\210\001\001\022\033\n\016magical_attac"
+  "k\030\006 \001(\005H\005\210\001\001B\t\n\007_max_hpB\005\n\003_hpB\t\n\007_max_m"
+  "pB\005\n\003_mpB\022\n\020_physical_attackB\021\n\017_magical"
+  "_attack\"I\n\004Stat\022 \n\004type\030\001 \001(\0162\022.Protocol"
+  ".StatType\022\020\n\010is_gauge\030\002 \001(\010\022\r\n\005value\030\003 \001"
+  "(\005\"-\n\006Effect\022\021\n\teffect_id\030\001 \001(\005\022\020\n\010durat"
+  "ion\030\002 \001(\002\"|\n\010GearInfo\022\025\n\renhance_level\030\001"
+  " \001(\005\022\022\n\ndurability\030\002 \001(\005\022\"\n\032additional_p"
+  "hysical_attack\030\003 \001(\005\022!\n\031additional_magic"
+  "al_attack\030\004 \001(\005\"\226\001\n\004Item\022\023\n\013template_id\030"
+  "\001 \001(\005\022\025\n\010item_uid\030\002 \001(\003H\001\210\001\001\022\022\n\005count\030\003 "
+  "\001(\005H\002\210\001\001\022&\n\010gearInfo\030\004 \001(\0132\022.Protocol.Ge"
+  "arInfoH\000B\017\n\rinstance_dataB\013\n\t_item_uidB\010"
+  "\n\006_count\"\232\001\n\004Slot\022\017\n\007slot_id\030\001 \001(\005\022 \n\004ty"
+  "pe\030\002 \001(\0162\022.Protocol.SlotType\022)\n\005state\030\003 "
+  "\001(\0162\025.Protocol.UpdateStateH\000\210\001\001\022!\n\004item\030"
+  "\004 \001(\0132\016.Protocol.ItemH\001\210\001\001B\010\n\006_stateB\007\n\005"
+  "_item\"u\n\tInventory\022\034\n\004gear\030\001 \003(\0132\016.Proto"
+  "col.Slot\022#\n\013consumables\030\002 \003(\0132\016.Protocol"
+  ".Slot\022%\n\rmiscellaneous\030\003 \003(\0132\016.Protocol."
+  "Slotb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Struct_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Struct_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Struct_2eproto = {
-    false, false, 1830, descriptor_table_protodef_Struct_2eproto,
+    false, false, 1852, descriptor_table_protodef_Struct_2eproto,
     "Struct.proto",
     &descriptor_table_Struct_2eproto_once, descriptor_table_Struct_2eproto_deps, 1, 13,
     schemas, file_default_instances, TableStruct_Struct_2eproto::offsets,
@@ -1761,6 +1764,7 @@ PosInfo::PosInfo(const PosInfo& from)
     , decltype(_impl_.y_){}
     , decltype(_impl_.z_){}
     , decltype(_impl_.yaw_){}
+    , decltype(_impl_.desired_yaw_){}
     , decltype(_impl_.state_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
@@ -1781,6 +1785,7 @@ inline void PosInfo::SharedCtor(
     , decltype(_impl_.y_){0}
     , decltype(_impl_.z_){0}
     , decltype(_impl_.yaw_){0}
+    , decltype(_impl_.desired_yaw_){0}
     , decltype(_impl_.state_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -1861,9 +1866,17 @@ const char* PosInfo::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) 
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.MoveState state = 6;
+      // float desired_yaw = 6;
       case 6:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 48)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 53)) {
+          _impl_.desired_yaw_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
+          goto handle_unusual;
+        continue;
+      // .Protocol.MoveState state = 7;
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 56)) {
           uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
           _internal_set_state(static_cast<::Protocol::MoveState>(val));
@@ -1945,11 +1958,21 @@ uint8_t* PosInfo::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteFloatToArray(5, this->_internal_yaw(), target);
   }
 
-  // .Protocol.MoveState state = 6;
+  // float desired_yaw = 6;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_desired_yaw = this->_internal_desired_yaw();
+  uint32_t raw_desired_yaw;
+  memcpy(&raw_desired_yaw, &tmp_desired_yaw, sizeof(tmp_desired_yaw));
+  if (raw_desired_yaw != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(6, this->_internal_desired_yaw(), target);
+  }
+
+  // .Protocol.MoveState state = 7;
   if (this->_internal_state() != 0) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteEnumToArray(
-      6, this->_internal_state(), target);
+      7, this->_internal_state(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -2009,7 +2032,16 @@ size_t PosInfo::ByteSizeLong() const {
     total_size += 1 + 4;
   }
 
-  // .Protocol.MoveState state = 6;
+  // float desired_yaw = 6;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_desired_yaw = this->_internal_desired_yaw();
+  uint32_t raw_desired_yaw;
+  memcpy(&raw_desired_yaw, &tmp_desired_yaw, sizeof(tmp_desired_yaw));
+  if (raw_desired_yaw != 0) {
+    total_size += 1 + 4;
+  }
+
+  // .Protocol.MoveState state = 7;
   if (this->_internal_state() != 0) {
     total_size += 1 +
       ::_pbi::WireFormatLite::EnumSize(this->_internal_state());
@@ -2063,6 +2095,13 @@ void PosInfo::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOB
   memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
   if (raw_yaw != 0) {
     _this->_internal_set_yaw(from._internal_yaw());
+  }
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_desired_yaw = from._internal_desired_yaw();
+  uint32_t raw_desired_yaw;
+  memcpy(&raw_desired_yaw, &tmp_desired_yaw, sizeof(tmp_desired_yaw));
+  if (raw_desired_yaw != 0) {
+    _this->_internal_set_desired_yaw(from._internal_desired_yaw());
   }
   if (from._internal_state() != 0) {
     _this->_internal_set_state(from._internal_state());

@@ -22,52 +22,47 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 public:
-	bool IsMyPlayer();
-
-    virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
-
-    /** 상태 관련 */
-	Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
-	void SetMoveState(Protocol::MoveState State);
-
-    /** 이동 관련 */
-	void SetClientPos(const Protocol::PosInfo& Info);
-	void SetServerPos(const Protocol::PosInfo& Info);
-	Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
-
-    /** 장착 관련*/
-    void SetEquippedGear(const Protocol::Slot& Slot_);
-
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void SetName(const FText& ObjectName);
 
-public:
-    /** 델리게이트 모음 */
-    //DECLARE_MULTICAST_DELEGATE_OneParam(OnEquippedGearChanged, const Protocol::Slot&);
-    //OnEquippedGearChanged OnEquippedGearChanged;
+    virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
+
+	bool IsMyPlayer();
+
+    bool PushToMoveQueue(const Protocol::PosInfo& Info_);
+
+    /** Setter함수 */
+	void SetMoveState(Protocol::MoveState State);
+	void SetClientPos(const Protocol::PosInfo& Info);
+	void SetServerPos(const Protocol::PosInfo& Info);
+    void SetEquippedGear(const Protocol::Slot& Slot_);
+
+    /** Getter함수 */
+	Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
+	Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
 
 private:
+    /** 이동 관련 함수 */
     void Move(float DeltaSeconds);
-    FVector GetPerpendicularPoint() const;
+    FVector FindPerpendicularPoint() const;
 
 protected:
-    /** Weapon StaticMesh*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
     class UStaticMeshComponent* WeaponMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
+    FText PlayerName;
 
     class Protocol::PosInfo* ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
 	class Protocol::PosInfo* ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
 
-    FText PlayerName;
-
 private:
+    TQueue<Protocol::PosInfo> MoveQueue;
     FVector MoveDirection = FVector::ZeroVector;
     const float CorrectionThreshold = 100.f;
-    const float CORRECTION_SPEED = 100.f;
-    const float INTERP_SPEED = 5.f;
-    const float RINTERP_SPEED = 5.f;
-
+    const float CORR_INTERP_SPEED = 5.f;
+    const float CORR_RINTERP_SPEED = 5.f;
 };

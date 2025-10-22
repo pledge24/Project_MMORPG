@@ -194,7 +194,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
         }
         else
         {
-            MyPlayer->SetClientPos(ObjectInfo.pos_info());
+            MyPlayer->PushToMoveQueue(ObjectInfo.pos_info());
         }
 	}
 	else
@@ -260,15 +260,7 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
         return;
 
     AP1Player* Player = (*FindActor);
-    if (Player->IsMyPlayer())
-    {
-        AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
-        MyPlayer_->PushToMoveQueue(Info);
-    }
-    else
-    {
-        Player->SetServerPos(Info);
-    }
+    Player->PushToMoveQueue(Info);
 }
 
 void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
