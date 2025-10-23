@@ -254,7 +254,7 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleNormalAttack, pkt);
+    room->DoAsync(&Room::HandleNormalAttack, pkt, player);
 
     return true;
 }

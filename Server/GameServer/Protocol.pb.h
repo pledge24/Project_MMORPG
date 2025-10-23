@@ -3139,28 +3139,9 @@ class C_NORMAL_ATTACK final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kInfoFieldNumber = 1,
-    kComboFieldNumber = 2,
+    kComboFieldNumber = 1,
   };
-  // .Protocol.PosInfo info = 1;
-  bool has_info() const;
-  private:
-  bool _internal_has_info() const;
-  public:
-  void clear_info();
-  const ::Protocol::PosInfo& info() const;
-  PROTOBUF_NODISCARD ::Protocol::PosInfo* release_info();
-  ::Protocol::PosInfo* mutable_info();
-  void set_allocated_info(::Protocol::PosInfo* info);
-  private:
-  const ::Protocol::PosInfo& _internal_info() const;
-  ::Protocol::PosInfo* _internal_mutable_info();
-  public:
-  void unsafe_arena_set_allocated_info(
-      ::Protocol::PosInfo* info);
-  ::Protocol::PosInfo* unsafe_arena_release_info();
-
-  // uint32 combo = 2;
+  // uint32 combo = 1;
   void clear_combo();
   uint32_t combo() const;
   void set_combo(uint32_t value);
@@ -3177,7 +3158,6 @@ class C_NORMAL_ATTACK final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::Protocol::PosInfo* info_;
     uint32_t combo_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -3307,26 +3287,17 @@ class S_NORMAL_ATTACK final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kInfoFieldNumber = 1,
+    kObjectIdFieldNumber = 1,
     kComboFieldNumber = 2,
   };
-  // .Protocol.PosInfo info = 1;
-  bool has_info() const;
+  // uint64 object_id = 1;
+  void clear_object_id();
+  uint64_t object_id() const;
+  void set_object_id(uint64_t value);
   private:
-  bool _internal_has_info() const;
+  uint64_t _internal_object_id() const;
+  void _internal_set_object_id(uint64_t value);
   public:
-  void clear_info();
-  const ::Protocol::PosInfo& info() const;
-  PROTOBUF_NODISCARD ::Protocol::PosInfo* release_info();
-  ::Protocol::PosInfo* mutable_info();
-  void set_allocated_info(::Protocol::PosInfo* info);
-  private:
-  const ::Protocol::PosInfo& _internal_info() const;
-  ::Protocol::PosInfo* _internal_mutable_info();
-  public:
-  void unsafe_arena_set_allocated_info(
-      ::Protocol::PosInfo* info);
-  ::Protocol::PosInfo* unsafe_arena_release_info();
 
   // uint32 combo = 2;
   void clear_combo();
@@ -3345,7 +3316,7 @@ class S_NORMAL_ATTACK final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::Protocol::PosInfo* info_;
+    uint64_t object_id_;
     uint32_t combo_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -6308,92 +6279,7 @@ inline void S_MOVE::set_allocated_info(::Protocol::PosInfo* info) {
 
 // C_NORMAL_ATTACK
 
-// .Protocol.PosInfo info = 1;
-inline bool C_NORMAL_ATTACK::_internal_has_info() const {
-  return this != internal_default_instance() && _impl_.info_ != nullptr;
-}
-inline bool C_NORMAL_ATTACK::has_info() const {
-  return _internal_has_info();
-}
-inline const ::Protocol::PosInfo& C_NORMAL_ATTACK::_internal_info() const {
-  const ::Protocol::PosInfo* p = _impl_.info_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
-      ::Protocol::_PosInfo_default_instance_);
-}
-inline const ::Protocol::PosInfo& C_NORMAL_ATTACK::info() const {
-  // @@protoc_insertion_point(field_get:Protocol.C_NORMAL_ATTACK.info)
-  return _internal_info();
-}
-inline void C_NORMAL_ATTACK::unsafe_arena_set_allocated_info(
-    ::Protocol::PosInfo* info) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.info_);
-  }
-  _impl_.info_ = info;
-  if (info) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.C_NORMAL_ATTACK.info)
-}
-inline ::Protocol::PosInfo* C_NORMAL_ATTACK::release_info() {
-  
-  ::Protocol::PosInfo* temp = _impl_.info_;
-  _impl_.info_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
-}
-inline ::Protocol::PosInfo* C_NORMAL_ATTACK::unsafe_arena_release_info() {
-  // @@protoc_insertion_point(field_release:Protocol.C_NORMAL_ATTACK.info)
-  
-  ::Protocol::PosInfo* temp = _impl_.info_;
-  _impl_.info_ = nullptr;
-  return temp;
-}
-inline ::Protocol::PosInfo* C_NORMAL_ATTACK::_internal_mutable_info() {
-  
-  if (_impl_.info_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
-    _impl_.info_ = p;
-  }
-  return _impl_.info_;
-}
-inline ::Protocol::PosInfo* C_NORMAL_ATTACK::mutable_info() {
-  ::Protocol::PosInfo* _msg = _internal_mutable_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.C_NORMAL_ATTACK.info)
-  return _msg;
-}
-inline void C_NORMAL_ATTACK::set_allocated_info(::Protocol::PosInfo* info) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.info_);
-  }
-  if (info) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
-                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(info));
-    if (message_arena != submessage_arena) {
-      info = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, info, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.info_ = info;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.C_NORMAL_ATTACK.info)
-}
-
-// uint32 combo = 2;
+// uint32 combo = 1;
 inline void C_NORMAL_ATTACK::clear_combo() {
   _impl_.combo_ = 0u;
 }
@@ -6417,89 +6303,24 @@ inline void C_NORMAL_ATTACK::set_combo(uint32_t value) {
 
 // S_NORMAL_ATTACK
 
-// .Protocol.PosInfo info = 1;
-inline bool S_NORMAL_ATTACK::_internal_has_info() const {
-  return this != internal_default_instance() && _impl_.info_ != nullptr;
+// uint64 object_id = 1;
+inline void S_NORMAL_ATTACK::clear_object_id() {
+  _impl_.object_id_ = uint64_t{0u};
 }
-inline bool S_NORMAL_ATTACK::has_info() const {
-  return _internal_has_info();
+inline uint64_t S_NORMAL_ATTACK::_internal_object_id() const {
+  return _impl_.object_id_;
 }
-inline const ::Protocol::PosInfo& S_NORMAL_ATTACK::_internal_info() const {
-  const ::Protocol::PosInfo* p = _impl_.info_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
-      ::Protocol::_PosInfo_default_instance_);
+inline uint64_t S_NORMAL_ATTACK::object_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_NORMAL_ATTACK.object_id)
+  return _internal_object_id();
 }
-inline const ::Protocol::PosInfo& S_NORMAL_ATTACK::info() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_NORMAL_ATTACK.info)
-  return _internal_info();
-}
-inline void S_NORMAL_ATTACK::unsafe_arena_set_allocated_info(
-    ::Protocol::PosInfo* info) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.info_);
-  }
-  _impl_.info_ = info;
-  if (info) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_NORMAL_ATTACK.info)
-}
-inline ::Protocol::PosInfo* S_NORMAL_ATTACK::release_info() {
+inline void S_NORMAL_ATTACK::_internal_set_object_id(uint64_t value) {
   
-  ::Protocol::PosInfo* temp = _impl_.info_;
-  _impl_.info_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
+  _impl_.object_id_ = value;
 }
-inline ::Protocol::PosInfo* S_NORMAL_ATTACK::unsafe_arena_release_info() {
-  // @@protoc_insertion_point(field_release:Protocol.S_NORMAL_ATTACK.info)
-  
-  ::Protocol::PosInfo* temp = _impl_.info_;
-  _impl_.info_ = nullptr;
-  return temp;
-}
-inline ::Protocol::PosInfo* S_NORMAL_ATTACK::_internal_mutable_info() {
-  
-  if (_impl_.info_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
-    _impl_.info_ = p;
-  }
-  return _impl_.info_;
-}
-inline ::Protocol::PosInfo* S_NORMAL_ATTACK::mutable_info() {
-  ::Protocol::PosInfo* _msg = _internal_mutable_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.S_NORMAL_ATTACK.info)
-  return _msg;
-}
-inline void S_NORMAL_ATTACK::set_allocated_info(::Protocol::PosInfo* info) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.info_);
-  }
-  if (info) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
-                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(info));
-    if (message_arena != submessage_arena) {
-      info = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, info, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.info_ = info;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_NORMAL_ATTACK.info)
+inline void S_NORMAL_ATTACK::set_object_id(uint64_t value) {
+  _internal_set_object_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_NORMAL_ATTACK.object_id)
 }
 
 // uint32 combo = 2;

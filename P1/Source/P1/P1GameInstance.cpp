@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "P1GameInstance.h"
+
+#include "AttackSystemComponent.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
@@ -436,4 +438,25 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
 void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Magenta, FString::Printf(TEXT("Someone Attack")));
+
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = NormalAttackPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+
+    UAttackSystemComponent* AttackSystemComponent = Player->GetAttackSystemComponent();
+    if (AttackSystemComponent == nullptr)
+        return;
+
+    uint32 Combo = NormalAttackPkt.combo();
+    AttackSystemComponent->O_PerformNormalAttack(Combo);
 }

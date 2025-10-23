@@ -268,8 +268,7 @@ struct S_MOVEDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_MOVEDefaultTypeInternal _S_MOVE_default_instance_;
 PROTOBUF_CONSTEXPR C_NORMAL_ATTACK::C_NORMAL_ATTACK(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.info_)*/nullptr
-  , /*decltype(_impl_.combo_)*/0u
+    /*decltype(_impl_.combo_)*/0u
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_NORMAL_ATTACKDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_NORMAL_ATTACKDefaultTypeInternal()
@@ -282,7 +281,7 @@ struct C_NORMAL_ATTACKDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_NORMAL_ATTACKDefaultTypeInternal _C_NORMAL_ATTACK_default_instance_;
 PROTOBUF_CONSTEXPR S_NORMAL_ATTACK::S_NORMAL_ATTACK(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.info_)*/nullptr
+    /*decltype(_impl_.object_id_)*/uint64_t{0u}
   , /*decltype(_impl_.combo_)*/0u
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_NORMAL_ATTACKDefaultTypeInternal {
@@ -607,7 +606,6 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::C_NORMAL_ATTACK, _impl_.info_),
   PROTOBUF_FIELD_OFFSET(::Protocol::C_NORMAL_ATTACK, _impl_.combo_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_NORMAL_ATTACK, _internal_metadata_),
@@ -615,7 +613,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::S_NORMAL_ATTACK, _impl_.info_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_NORMAL_ATTACK, _impl_.object_id_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_NORMAL_ATTACK, _impl_.combo_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_HIT, _internal_metadata_),
@@ -750,18 +748,18 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 121, -1, -1, sizeof(::Protocol::C_MOVE)},
   { 128, -1, -1, sizeof(::Protocol::S_MOVE)},
   { 135, -1, -1, sizeof(::Protocol::C_NORMAL_ATTACK)},
-  { 143, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
-  { 151, -1, -1, sizeof(::Protocol::S_HIT)},
-  { 161, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
-  { 169, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
-  { 178, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
-  { 186, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
-  { 195, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
-  { 202, 213, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
-  { 218, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
-  { 225, 236, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
-  { 241, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
-  { 248, 258, -1, sizeof(::Protocol::S_USE_ITEM)},
+  { 142, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
+  { 150, -1, -1, sizeof(::Protocol::S_HIT)},
+  { 160, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
+  { 168, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
+  { 177, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
+  { 185, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
+  { 194, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
+  { 201, 212, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
+  { 217, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
+  { 224, 235, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
+  { 240, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
+  { 247, 257, -1, sizeof(::Protocol::S_USE_ITEM)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -822,42 +820,41 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "\003(\0132\024.Protocol.ObjectInfo\"\037\n\tS_DESPAWN\022\022"
   "\n\nobject_ids\030\001 \003(\004\")\n\006C_MOVE\022\037\n\004info\030\001 \001"
   "(\0132\021.Protocol.PosInfo\")\n\006S_MOVE\022\037\n\004info\030"
-  "\001 \001(\0132\021.Protocol.PosInfo\"A\n\017C_NORMAL_ATT"
-  "ACK\022\037\n\004info\030\001 \001(\0132\021.Protocol.PosInfo\022\r\n\005"
-  "combo\030\002 \001(\r\"A\n\017S_NORMAL_ATTACK\022\037\n\004info\030\001"
-  " \001(\0132\021.Protocol.PosInfo\022\r\n\005combo\030\002 \001(\r\"\200"
-  "\001\n\005S_HIT\022\023\n\013attacker_id\030\001 \001(\004\022\021\n\ttarget_"
-  "id\030\002 \001(\004\022)\n\013damage_type\030\003 \001(\0162\024.Protocol"
-  ".DamageType\022$\n\014updated_stat\030\004 \003(\0132\016.Prot"
-  "ocol.Stat\"0\n\nC_BUY_ITEM\022\023\n\013template_id\030\001"
-  " \001(\005\022\r\n\005count\030\002 \001(\005\"Q\n\nS_BUY_ITEM\022\017\n\007suc"
-  "cess\030\001 \001(\010\022$\n\014updated_slot\030\002 \001(\0132\016.Proto"
-  "col.Slot\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_ITEM\022\034\n"
-  "\004slot\030\001 \001(\0132\016.Protocol.Slot\022\r\n\005count\030\002 \001"
-  "(\005\"R\n\013S_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022$\n\014up"
-  "dated_slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004gold"
-  "\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016.P"
-  "rotocol.Slot\"\373\001\n\014S_EQUIP_GEAR\022\017\n\007success"
-  "\030\001 \001(\010\022\021\n\tobject_id\030\002 \001(\004\022-\n\025updated_equ"
-  "ipped_slot\030\003 \001(\0132\016.Protocol.Slot\0223\n\026upda"
-  "ted_inventory_slot\030\004 \001(\0132\016.Protocol.Slot"
-  "H\000\210\001\001\0222\n\021updated_stat_info\030\005 \001(\0132\022.Proto"
-  "col.StatInfoH\001\210\001\001B\031\n\027_updated_inventory_"
-  "slotB\024\n\022_updated_stat_info\".\n\016C_UNEQUIP_"
-  "GEAR\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\375\001\n\016S"
-  "_UNEQUIP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tobject"
-  "_id\030\002 \001(\004\022-\n\025updated_equipped_slot\030\003 \001(\013"
-  "2\016.Protocol.Slot\0223\n\026updated_inventory_sl"
-  "ot\030\004 \001(\0132\016.Protocol.SlotH\000\210\001\001\0222\n\021updated"
-  "_stat_info\030\005 \001(\0132\022.Protocol.StatInfoH\001\210\001"
-  "\001B\031\n\027_updated_inventory_slotB\024\n\022_updated"
-  "_stat_info\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016"
-  ".Protocol.Slot\"\312\001\n\nS_USE_ITEM\022\017\n\007success"
-  "\030\001 \001(\010\022\021\n\tobject_id\030\002 \001(\004\0223\n\026updated_inv"
-  "entory_slot\030\003 \001(\0132\016.Protocol.SlotH\000\210\001\001\0222"
-  "\n\021updated_stat_info\030\004 \001(\0132\022.Protocol.Sta"
+  "\001 \001(\0132\021.Protocol.PosInfo\" \n\017C_NORMAL_ATT"
+  "ACK\022\r\n\005combo\030\001 \001(\r\"3\n\017S_NORMAL_ATTACK\022\021\n"
+  "\tobject_id\030\001 \001(\004\022\r\n\005combo\030\002 \001(\r\"\200\001\n\005S_HI"
+  "T\022\023\n\013attacker_id\030\001 \001(\004\022\021\n\ttarget_id\030\002 \001("
+  "\004\022)\n\013damage_type\030\003 \001(\0162\024.Protocol.Damage"
+  "Type\022$\n\014updated_stat\030\004 \003(\0132\016.Protocol.St"
+  "at\"0\n\nC_BUY_ITEM\022\023\n\013template_id\030\001 \001(\005\022\r\n"
+  "\005count\030\002 \001(\005\"Q\n\nS_BUY_ITEM\022\017\n\007success\030\001 "
+  "\001(\010\022$\n\014updated_slot\030\002 \001(\0132\016.Protocol.Slo"
+  "t\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_ITEM\022\034\n\004slot\030\001"
+  " \001(\0132\016.Protocol.Slot\022\r\n\005count\030\002 \001(\005\"R\n\013S"
+  "_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022$\n\014updated_s"
+  "lot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004gold\030\003 \001(\003\""
+  ",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016.Protocol"
+  ".Slot\"\373\001\n\014S_EQUIP_GEAR\022\017\n\007success\030\001 \001(\010\022"
+  "\021\n\tobject_id\030\002 \001(\004\022-\n\025updated_equipped_s"
+  "lot\030\003 \001(\0132\016.Protocol.Slot\0223\n\026updated_inv"
+  "entory_slot\030\004 \001(\0132\016.Protocol.SlotH\000\210\001\001\0222"
+  "\n\021updated_stat_info\030\005 \001(\0132\022.Protocol.Sta"
   "tInfoH\001\210\001\001B\031\n\027_updated_inventory_slotB\024\n"
-  "\022_updated_stat_infob\006proto3"
+  "\022_updated_stat_info\".\n\016C_UNEQUIP_GEAR\022\034\n"
+  "\004slot\030\001 \001(\0132\016.Protocol.Slot\"\375\001\n\016S_UNEQUI"
+  "P_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tobject_id\030\002 \001"
+  "(\004\022-\n\025updated_equipped_slot\030\003 \001(\0132\016.Prot"
+  "ocol.Slot\0223\n\026updated_inventory_slot\030\004 \001("
+  "\0132\016.Protocol.SlotH\000\210\001\001\0222\n\021updated_stat_i"
+  "nfo\030\005 \001(\0132\022.Protocol.StatInfoH\001\210\001\001B\031\n\027_u"
+  "pdated_inventory_slotB\024\n\022_updated_stat_i"
+  "nfo\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protoc"
+  "ol.Slot\"\312\001\n\nS_USE_ITEM\022\017\n\007success\030\001 \001(\010\022"
+  "\021\n\tobject_id\030\002 \001(\004\0223\n\026updated_inventory_"
+  "slot\030\003 \001(\0132\016.Protocol.SlotH\000\210\001\001\0222\n\021updat"
+  "ed_stat_info\030\004 \001(\0132\022.Protocol.StatInfoH\001"
+  "\210\001\001B\031\n\027_updated_inventory_slotB\024\n\022_updat"
+  "ed_stat_infob\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -865,7 +862,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 2307, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 2260, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 32,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -3985,19 +3982,8 @@ void S_MOVE::InternalSwap(S_MOVE* other) {
 
 class C_NORMAL_ATTACK::_Internal {
  public:
-  static const ::Protocol::PosInfo& info(const C_NORMAL_ATTACK* msg);
 };
 
-const ::Protocol::PosInfo&
-C_NORMAL_ATTACK::_Internal::info(const C_NORMAL_ATTACK* msg) {
-  return *msg->_impl_.info_;
-}
-void C_NORMAL_ATTACK::clear_info() {
-  if (GetArenaForAllocation() == nullptr && _impl_.info_ != nullptr) {
-    delete _impl_.info_;
-  }
-  _impl_.info_ = nullptr;
-}
 C_NORMAL_ATTACK::C_NORMAL_ATTACK(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
@@ -4008,14 +3994,10 @@ C_NORMAL_ATTACK::C_NORMAL_ATTACK(const C_NORMAL_ATTACK& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_NORMAL_ATTACK* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.info_){nullptr}
-    , decltype(_impl_.combo_){}
+      decltype(_impl_.combo_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_info()) {
-    _this->_impl_.info_ = new ::Protocol::PosInfo(*from._impl_.info_);
-  }
   _this->_impl_.combo_ = from._impl_.combo_;
   // @@protoc_insertion_point(copy_constructor:Protocol.C_NORMAL_ATTACK)
 }
@@ -4025,8 +4007,7 @@ inline void C_NORMAL_ATTACK::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.info_){nullptr}
-    , decltype(_impl_.combo_){0u}
+      decltype(_impl_.combo_){0u}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -4042,7 +4023,6 @@ C_NORMAL_ATTACK::~C_NORMAL_ATTACK() {
 
 inline void C_NORMAL_ATTACK::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.info_;
 }
 
 void C_NORMAL_ATTACK::SetCachedSize(int size) const {
@@ -4055,10 +4035,6 @@ void C_NORMAL_ATTACK::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.info_ != nullptr) {
-    delete _impl_.info_;
-  }
-  _impl_.info_ = nullptr;
   _impl_.combo_ = 0u;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -4069,17 +4045,9 @@ const char* C_NORMAL_ATTACK::_InternalParse(const char* ptr, ::_pbi::ParseContex
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.PosInfo info = 1;
+      // uint32 combo = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_info(), ptr);
-          CHK_(ptr);
-        } else
-          goto handle_unusual;
-        continue;
-      // uint32 combo = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.combo_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
         } else
@@ -4114,17 +4082,10 @@ uint8_t* C_NORMAL_ATTACK::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.PosInfo info = 1;
-  if (this->_internal_has_info()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::info(this),
-        _Internal::info(this).GetCachedSize(), target, stream);
-  }
-
-  // uint32 combo = 2;
+  // uint32 combo = 1;
   if (this->_internal_combo() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(2, this->_internal_combo(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(1, this->_internal_combo(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -4143,14 +4104,7 @@ size_t C_NORMAL_ATTACK::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.PosInfo info = 1;
-  if (this->_internal_has_info()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.info_);
-  }
-
-  // uint32 combo = 2;
+  // uint32 combo = 1;
   if (this->_internal_combo() != 0) {
     total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_combo());
   }
@@ -4173,10 +4127,6 @@ void C_NORMAL_ATTACK::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const 
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_info()) {
-    _this->_internal_mutable_info()->::Protocol::PosInfo::MergeFrom(
-        from._internal_info());
-  }
   if (from._internal_combo() != 0) {
     _this->_internal_set_combo(from._internal_combo());
   }
@@ -4197,12 +4147,7 @@ bool C_NORMAL_ATTACK::IsInitialized() const {
 void C_NORMAL_ATTACK::InternalSwap(C_NORMAL_ATTACK* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(C_NORMAL_ATTACK, _impl_.combo_)
-      + sizeof(C_NORMAL_ATTACK::_impl_.combo_)
-      - PROTOBUF_FIELD_OFFSET(C_NORMAL_ATTACK, _impl_.info_)>(
-          reinterpret_cast<char*>(&_impl_.info_),
-          reinterpret_cast<char*>(&other->_impl_.info_));
+  swap(_impl_.combo_, other->_impl_.combo_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_NORMAL_ATTACK::GetMetadata() const {
@@ -4215,19 +4160,8 @@ void C_NORMAL_ATTACK::InternalSwap(C_NORMAL_ATTACK* other) {
 
 class S_NORMAL_ATTACK::_Internal {
  public:
-  static const ::Protocol::PosInfo& info(const S_NORMAL_ATTACK* msg);
 };
 
-const ::Protocol::PosInfo&
-S_NORMAL_ATTACK::_Internal::info(const S_NORMAL_ATTACK* msg) {
-  return *msg->_impl_.info_;
-}
-void S_NORMAL_ATTACK::clear_info() {
-  if (GetArenaForAllocation() == nullptr && _impl_.info_ != nullptr) {
-    delete _impl_.info_;
-  }
-  _impl_.info_ = nullptr;
-}
 S_NORMAL_ATTACK::S_NORMAL_ATTACK(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
@@ -4238,15 +4172,14 @@ S_NORMAL_ATTACK::S_NORMAL_ATTACK(const S_NORMAL_ATTACK& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   S_NORMAL_ATTACK* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.info_){nullptr}
+      decltype(_impl_.object_id_){}
     , decltype(_impl_.combo_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_info()) {
-    _this->_impl_.info_ = new ::Protocol::PosInfo(*from._impl_.info_);
-  }
-  _this->_impl_.combo_ = from._impl_.combo_;
+  ::memcpy(&_impl_.object_id_, &from._impl_.object_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.combo_) -
+    reinterpret_cast<char*>(&_impl_.object_id_)) + sizeof(_impl_.combo_));
   // @@protoc_insertion_point(copy_constructor:Protocol.S_NORMAL_ATTACK)
 }
 
@@ -4255,7 +4188,7 @@ inline void S_NORMAL_ATTACK::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.info_){nullptr}
+      decltype(_impl_.object_id_){uint64_t{0u}}
     , decltype(_impl_.combo_){0u}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -4272,7 +4205,6 @@ S_NORMAL_ATTACK::~S_NORMAL_ATTACK() {
 
 inline void S_NORMAL_ATTACK::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.info_;
 }
 
 void S_NORMAL_ATTACK::SetCachedSize(int size) const {
@@ -4285,11 +4217,9 @@ void S_NORMAL_ATTACK::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.info_ != nullptr) {
-    delete _impl_.info_;
-  }
-  _impl_.info_ = nullptr;
-  _impl_.combo_ = 0u;
+  ::memset(&_impl_.object_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.combo_) -
+      reinterpret_cast<char*>(&_impl_.object_id_)) + sizeof(_impl_.combo_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -4299,10 +4229,10 @@ const char* S_NORMAL_ATTACK::_InternalParse(const char* ptr, ::_pbi::ParseContex
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.PosInfo info = 1;
+      // uint64 object_id = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
-          ptr = ctx->ParseMessage(_internal_mutable_info(), ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.object_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -4344,11 +4274,10 @@ uint8_t* S_NORMAL_ATTACK::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.PosInfo info = 1;
-  if (this->_internal_has_info()) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(1, _Internal::info(this),
-        _Internal::info(this).GetCachedSize(), target, stream);
+  // uint64 object_id = 1;
+  if (this->_internal_object_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_object_id(), target);
   }
 
   // uint32 combo = 2;
@@ -4373,11 +4302,9 @@ size_t S_NORMAL_ATTACK::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.PosInfo info = 1;
-  if (this->_internal_has_info()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.info_);
+  // uint64 object_id = 1;
+  if (this->_internal_object_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_object_id());
   }
 
   // uint32 combo = 2;
@@ -4403,9 +4330,8 @@ void S_NORMAL_ATTACK::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const 
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_info()) {
-    _this->_internal_mutable_info()->::Protocol::PosInfo::MergeFrom(
-        from._internal_info());
+  if (from._internal_object_id() != 0) {
+    _this->_internal_set_object_id(from._internal_object_id());
   }
   if (from._internal_combo() != 0) {
     _this->_internal_set_combo(from._internal_combo());
@@ -4430,9 +4356,9 @@ void S_NORMAL_ATTACK::InternalSwap(S_NORMAL_ATTACK* other) {
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(S_NORMAL_ATTACK, _impl_.combo_)
       + sizeof(S_NORMAL_ATTACK::_impl_.combo_)
-      - PROTOBUF_FIELD_OFFSET(S_NORMAL_ATTACK, _impl_.info_)>(
-          reinterpret_cast<char*>(&_impl_.info_),
-          reinterpret_cast<char*>(&other->_impl_.info_));
+      - PROTOBUF_FIELD_OFFSET(S_NORMAL_ATTACK, _impl_.object_id_)>(
+          reinterpret_cast<char*>(&_impl_.object_id_),
+          reinterpret_cast<char*>(&other->_impl_.object_id_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_NORMAL_ATTACK::GetMetadata() const {

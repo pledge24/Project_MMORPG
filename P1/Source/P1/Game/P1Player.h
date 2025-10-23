@@ -43,6 +43,7 @@ public:
     /** Getter함수 */
 	Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
 	Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
+    class UAttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent;}
 
 private:
     /** 이동 관련 함수 */
@@ -50,8 +51,13 @@ private:
     FVector FindPerpendicularPoint() const;
 
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+    /** Weapon CharacterMesh Component*/
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     class UStaticMeshComponent* WeaponMesh;
+
+    /** Attack System Component*/
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class UAttackSystemComponent* AttackSystemComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
     FText PlayerName;

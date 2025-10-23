@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AttackSystemComponent.h"
 #include "P1.h"
 #include "P1MyPlayer.h"
 
@@ -39,10 +40,6 @@ AP1Player::AP1Player()
 	GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	//====================================================================
 
-	ClientPos = new Protocol::PosInfo();
-	ServerPos = new Protocol::PosInfo();
-
-    // Create a Weapon Static Mesh
     WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
     USkeletalMeshComponent* CharacterMesh = GetMesh();
 
@@ -50,11 +47,18 @@ AP1Player::AP1Player()
     {
         WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
     }
+
+	ClientPos = new Protocol::PosInfo();
+	ServerPos = new Protocol::PosInfo();
 }
 
 void AP1Player::BeginPlay()
 {
 	Super::BeginPlay();
+
+    AttackSystemComponent = FindComponentByClass<UAttackSystemComponent>();
+    if (AttackSystemComponent == nullptr)
+        UE_LOG(LogTemp, Warning, TEXT("AttackSystemComponent 누락"));
 
 	{
 		FVector Location = GetActorLocation();
@@ -192,22 +196,6 @@ void AP1Player::Move(float DeltaSeconds)
     FVector ServerLocation = FVector(ServerPos->x(), ServerPos->y(), ServerPos->z());
     const float Dist = FVector::Distance(ClientLocation, ServerLocation);
 
-    // Correction
-    if (Dist > CorrectionThreshold) 
-    {
-        // 보정 거리 초과 시 Reposition
-        SetActorLocation(ServerLocation);
-        SetActorRotation(FRotator(0, ServerPos->yaw(), 0));
-    }
-    else
-    {
-        FVector CorrectionPoint = MoveDirection == FVector::Zero() ?
-            ServerLocation : FindPerpendicularPoint();
-
-        FVector CorrectedClientLocation = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, CORR_INTERP_SPEED);
-        SetActorLocation(CorrectedClientLocation);
-    }
-
     // Move
     if (ServerPos->state() == Protocol::MOVE_STATE_RUN)
     {
@@ -223,6 +211,27 @@ void AP1Player::Move(float DeltaSeconds)
 
             SetActorRotation(NewRot);
         }
+    }
+    else if (ServerPos->state() == Protocol::MOVE_STATE_ACTION)
+    {
+        // 루트 모션이 들어간 Action 중에는 보정 안 함.
+        return;
+    }
+
+    // Correction
+    if (Dist > CorrectionThreshold) 
+    {
+        // 보정 거리 초과 시 Reposition
+        SetActorLocation(ServerLocation);
+        SetActorRotation(FRotator(0, ServerPos->yaw(), 0));
+    }
+    else
+    {
+        FVector CorrectionPoint = MoveDirection == FVector::Zero() ?
+            ServerLocation : FindPerpendicularPoint();
+
+        FVector CorrectedClientLocation = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, CORR_INTERP_SPEED);
+        SetActorLocation(CorrectedClientLocation);
     }
 }
 

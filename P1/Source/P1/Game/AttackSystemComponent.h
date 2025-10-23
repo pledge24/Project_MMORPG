@@ -7,7 +7,7 @@
 #include "AttackSystemComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class P1_API UAttackSystemComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -16,21 +16,25 @@ public:
 	// Sets default values for this component's properties
 	UAttackSystemComponent();
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "AttackSystem")
-    void PerformNormalAttack();
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:
-    UFUNCTION(BlueprintCallable, Category = "AttackSystem")
+    UFUNCTION(BlueprintImplementableEvent, Category = "AttackSystem")
+    void M_PerformNormalAttack();
+
+    UFUNCTION(BlueprintImplementableEvent, Category = "AttackSystem")
+    void O_PerformNormalAttack(int32 Combo);
+
     bool IsAttacking() const;
-
-    UFUNCTION(BlueprintCallable, Category = "AttackSystem")
     bool EnableInputAttack() const;
+    int32 GetLastCombo() const { return NormalAttackCombo;}
 
-public:
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
+    class USkeletalMeshComponent* CharacterMesh;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
     bool bIsAttacking = false;
 
@@ -38,8 +42,5 @@ public:
     bool bEnableInputAttack = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
-    int32 NormalAttackCombo = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
-    class USkeletalMeshComponent* Mesh;
+    int32 NormalAttackCombo = 0; // 쌓인 콤보 기준
 };

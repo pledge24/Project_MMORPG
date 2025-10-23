@@ -3,18 +3,15 @@
 
 #include "Game/P1MyPlayer.h"
 #include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "AttackSystemComponent.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
-#include "AttackSystemComponent.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
@@ -29,7 +26,7 @@ AP1MyPlayer::AP1MyPlayer()
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-    // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
+    // Note: The skeletal mesh and anim blueprint references on the CharacterMesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
@@ -37,15 +34,6 @@ void AP1MyPlayer::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
-
-    if (AttackSystemComponentClass)
-    {
-        AttackSystemComponent = NewObject<UAttackSystemComponent>(this, AttackSystemComponentClass);
-        if (AttackSystemComponent)
-        {
-            AttackSystemComponent->RegisterComponent();
-        }
-    }
 
     if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
     {
@@ -114,7 +102,12 @@ void AP1MyPlayer::Tick(float DeltaTime)
 	}
 
 	// State 판정
-    if (bCanInputMovement && DesiredInput != FVector2D::Zero())
+    if (AttackSystemComponent->IsAttacking() == true)
+    {
+        SetMoveState(Protocol::MOVE_STATE_ACTION);
+        bForceSendPacket = false;
+    }
+    else if (bCanInputMovement && DesiredInput != FVector2D::Zero())
 		SetMoveState(Protocol::MOVE_STATE_RUN);
     else
 		SetMoveState(Protocol::MOVE_STATE_IDLE);
@@ -214,21 +207,16 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
     {
         if (AttackSystemComponent->EnableInputAttack() == true)
         {
-            AttackSystemComponent->PerformNormalAttack();
+            AttackSystemComponent->M_PerformNormalAttack();
+            int32 Combo = AttackSystemComponent->GetLastCombo();
 
-            int32 Combo = AttackSystemComponent->NormalAttackCombo;
-            Protocol::C_NORMAL_ATTACK NormalAttackPkt;
-
-            // 현재 위치 정보
-            {
-                Protocol::PosInfo* Info = NormalAttackPkt.mutable_info();
-                Info->CopyFrom(*ClientPos);
-                Info->set_yaw(DesiredYaw);
-                Info->set_state(GetMoveState());
+            if (Combo > 0){
+                Protocol::C_NORMAL_ATTACK NormalAttackPkt;
                 NormalAttackPkt.set_combo(Combo);
-            }
 
-            SEND_PACKET(NormalAttackPkt);
+                SEND_PACKET(NormalAttackPkt);
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Send Combo: %d"), Combo));
+            }
         }
     }
 }

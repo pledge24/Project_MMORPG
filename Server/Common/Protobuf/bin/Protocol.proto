@@ -109,13 +109,12 @@ message S_MOVE
 message C_NORMAL_ATTACK
 {
     // Normal Attack만 이 패킷을 사용한다.
-    PosInfo info = 1;
-    uint32 combo = 2;
+    uint32 combo = 1;
 }
 
 message S_NORMAL_ATTACK
 {
-    PosInfo info = 1;
+    uint64 object_id = 1;
     uint32 combo = 2;
 }
 

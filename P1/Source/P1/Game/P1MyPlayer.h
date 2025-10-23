@@ -68,13 +68,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     class UInputAction* NormalAttackAction;
 
-    /** AttackSystemComponent*/
-    UPROPERTY(EditAnywhere, Category = "Components")
-    TSubclassOf<class UAttackSystemComponent> AttackSystemComponentClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    class UAttackSystemComponent* AttackSystemComponent;
-
 private:
     /** MovePkt 전송 관련 */
     Protocol::C_MOVE MovePkt;
