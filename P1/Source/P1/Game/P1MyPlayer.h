@@ -80,8 +80,7 @@ private:
     Protocol::C_MOVE MovePkt;
 
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
-    const float VELOCITY_TOLERANCE = 1.f;
-    const float YAW_TOLERANCE = 30.f;
+    const float YAW_TOLERANCE = 60.f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
 	// Input Movement Cache.
@@ -91,4 +90,8 @@ private:
 
 	// Dirty Flag
 	FVector2D LastDesiredInput;
+
+    // AvgSendSpeed DEBUGGING
+    int32 SendCounter = 1;
+    float TotalSecond = 0.2f;
 };

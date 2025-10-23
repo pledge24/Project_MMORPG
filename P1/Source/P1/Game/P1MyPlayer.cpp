@@ -104,14 +104,13 @@ void AP1MyPlayer::Tick(float DeltaTime)
             LastDesiredInput = DesiredInput;
 	    }
 
-        // 움직임 변화 판정
-        UCharacterMovementComponent* CMC = GetCharacterMovement();
-        bool DesiredMoving = CMC->Velocity.IsNearlyZero(VELOCITY_TOLERANCE) == false;
-        // 급격한 회전 판정
-        if (ClientPos->yaw() - MovePkt.info().yaw() >= YAW_TOLERANCE)
+        // 급격한 회전 감지
+        FRotator DeltaRotator = FRotator(0.f, DesiredYaw, 0.f) - FRotator(0.f, MovePkt.info().desired_yaw(), 0.f);
+        if (FMath::Abs(DeltaRotator.Yaw) >= YAW_TOLERANCE)
         {
             bForceSendPacket = true;
         }
+        
 	}
 
 	// State 판정
@@ -125,6 +124,10 @@ void AP1MyPlayer::Tick(float DeltaTime)
 
     if (MovePacketSendTimer <= 0 || bForceSendPacket)
     {
+        /*SendCounter++;
+        TotalSecond += MOVE_PACKET_SEND_DELAY - MovePacketSendTimer;
+        GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("AvgSendSpeed: %f"), TotalSecond / SendCounter));*/
+
         MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
         // 현재 위치 정보
@@ -135,7 +138,6 @@ void AP1MyPlayer::Tick(float DeltaTime)
             Info->CopyFrom(*ClientPos);
             Info->set_desired_yaw(DesiredYaw);
             Info->set_state(GetMoveState());
-            //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("DesiredYaw: %f"), ClientPos->yaw()));
         }
 
         SEND_PACKET(MovePkt);
