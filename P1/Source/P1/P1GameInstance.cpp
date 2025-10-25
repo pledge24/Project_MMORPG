@@ -14,6 +14,7 @@
 #include "P1.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Log/LogCategory.h"
 
 UP1GameInstance::UP1GameInstance()
 {
@@ -57,13 +58,11 @@ void UP1GameInstance::ConnectToGameServer()
 	InternetAddr->SetIp(Ip.Value);
 	InternetAddr->SetPort(Port);
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connecting To Server...")));
-
 	bool Connected = Socket->Connect(*InternetAddr);
 
 	if (Connected)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connection Success")));
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Success To Connect GameServer")));
 
 		// Session
 		GameServerSession = MakeShared<PacketSession>(Socket);
@@ -80,7 +79,7 @@ void UP1GameInstance::ConnectToGameServer()
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connection Failed")));
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Fail To Connect GameServer")));
 	}
 }
 
@@ -437,8 +436,6 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
 
 void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Magenta, FString::Printf(TEXT("Someone Attack")));
-
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 

@@ -5,6 +5,7 @@
 #include "Http.h"
 #include "HttpModule.h"
 #include "P1.h"
+#include "Log/LogCategory.h"
 
 void ULoginManager::SetLoginWidget(ULoginWidget* Widget)
 {
@@ -114,20 +115,16 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 
 	if (loginSuccess)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("AccessToken: %s"), *token));
+        UE_LOG(LogNetwork, Display, TEXT("AccessToken: %s"), *token);
 
-		auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
-
-		// 게임서버에 입장쓰.
-		if (GameInstance)
+		if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
 		{
-			GameInstance->ConnectToGameServer();
+            GameInstance->ConnectToGameServer();
 		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("게임인스턴스가 없습니다")));
-		}
-		
+        else
+        {
+            UE_LOG(LogNetwork, Error, TEXT("게임인스턴스가 없습니다"));
+        }
 	}
 }
 

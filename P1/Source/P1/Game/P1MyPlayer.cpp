@@ -12,6 +12,7 @@
 #include "AttackSystemComponent.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Log/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
@@ -199,7 +200,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
     UStaticMesh* StaticMesh = WeaponMesh->GetStaticMesh();
     if (!StaticMesh)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No StaticMesh assigned to WeaponMesh!"));
+        UE_LOG(LogCharacterComp, Display, TEXT("무기없이 일반 공격을 수행할 수 없습니다."));
         return;
     }
 
@@ -215,7 +216,6 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
                 NormalAttackPkt.set_combo(Combo);
 
                 SEND_PACKET(NormalAttackPkt);
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Send Combo: %d"), Combo));
             }
         }
     }

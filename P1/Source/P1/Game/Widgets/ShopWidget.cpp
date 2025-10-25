@@ -19,14 +19,9 @@ void UShopWidget::NativeConstruct()
 void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
 {
     if (PendingPacket)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
-    }
     else
         PendingPacket = true;
-
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("OnBuy! template_id: %d"), _Slot->ItemData.TemplateId));
 
     if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
@@ -35,7 +30,6 @@ void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
 
         if (Gold < BuyPrice)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("NO MONEY")));
             return;
         }
             

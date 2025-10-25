@@ -13,6 +13,7 @@
 #include "AttackSystemComponent.h"
 #include "P1.h"
 #include "P1MyPlayer.h"
+#include "Log/LogCategory.h"
 
 AP1Player::AP1Player()
 {
@@ -174,7 +175,7 @@ void AP1Player::SetServerPos(const Protocol::PosInfo& Info)
 
     if (ServerPos == nullptr)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("ServerPos Is NullNullNull")));
+        UE_LOG(LogProtobuf, Error, TEXT("ServerPos Is Nullptr"));
         return;
     }
 
