@@ -19,6 +19,7 @@ public class P1 : ModuleRules
             "P1/Game/",
             "P1/Game/Structs",
             "P1/Game/Widgets",
+            "P1/Log",
         });
 
         // Uncomment if you are using Slate UI
