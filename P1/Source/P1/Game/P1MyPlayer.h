@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Game/P1Player.h"
 #include "InputActionValue.h"
+#include "Logging/LogMacros.h"
 #include "P1MyPlayer.generated.h"
 
 /**
@@ -32,11 +33,12 @@ public:
 
     virtual void Init(const Protocol::ObjectInfo& ObjectInfo_) override;
 
-    bool PushToMoveQueue(const Protocol::PosInfo& Info_);
-
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+    void NormalAttack(const FInputActionValue& Value);
+
+    bool CanInputMovement() const;
 
 protected:
 	/** Camera boom positioning the camera behind the character */
@@ -63,18 +65,27 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-protected:
+    /** Look Input Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    class UInputAction* NormalAttackAction;
+
+private:
+    /** MovePkt 전송 관련 */
+    Protocol::C_MOVE MovePkt;
+
 	const float MOVE_PACKET_SEND_DELAY = 0.2f;
+    const float YAW_TOLERANCE = 60.f;
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
-	// Cache
-	FVector2D DesiredInput;
-	FVector DesiredMoveDirection;
-	float DesiredYaw;
+	// Input Movement Cache.
+	FVector2D DesiredInput;         // FInputActionValue
+	FVector DesiredMoveDirection;   // 이동할 방향(Vector 타입)
+	float DesiredYaw;               // 이동할 방향(Rotator 타입)
 
 	// Dirty Flag
 	FVector2D LastDesiredInput;
 
-    // MoveQueue
-    TQueue<Protocol::PosInfo> MoveQueue;
+    // AvgSendSpeed DEBUGGING
+    int32 SendCounter = 1;
+    float TotalSecond = 0.2f;
 };

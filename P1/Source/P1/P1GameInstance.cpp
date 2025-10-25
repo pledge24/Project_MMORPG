@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "P1GameInstance.h"
+
+#include "AttackSystemComponent.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
@@ -12,6 +14,7 @@
 #include "P1.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Log/LogCategory.h"
 
 UP1GameInstance::UP1GameInstance()
 {
@@ -55,13 +58,11 @@ void UP1GameInstance::ConnectToGameServer()
 	InternetAddr->SetIp(Ip.Value);
 	InternetAddr->SetPort(Port);
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connecting To Server...")));
-
 	bool Connected = Socket->Connect(*InternetAddr);
 
 	if (Connected)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connection Success")));
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Success To Connect GameServer")));
 
 		// Session
 		GameServerSession = MakeShared<PacketSession>(Socket);
@@ -78,7 +79,7 @@ void UP1GameInstance::ConnectToGameServer()
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Connection Failed")));
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Fail To Connect GameServer")));
 	}
 }
 
@@ -185,7 +186,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 	{
         if (MyPlayer == nullptr)
         {
-            // Set SrcPos
+            // Set ClientPos
             AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
             MyPlayer = Player;
             Players.Add(ObjectInfo.object_id(), Player);
@@ -194,12 +195,12 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
         }
         else
         {
-            MyPlayer->SetPosInfo(ObjectInfo.pos_info());
+            MyPlayer->PushToMoveQueue(ObjectInfo.pos_info());
         }
 	}
 	else
 	{
-        // Set SrcPos
+        // Set ClientPos
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
         Players.Add(ObjectInfo.object_id(), Player);
 		
@@ -260,16 +261,7 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
         return;
 
     AP1Player* Player = (*FindActor);
-    if (Player->IsMyPlayer())
-    {
-        AP1MyPlayer* MyPlayer_ = Cast<AP1MyPlayer>(Player);
-        MyPlayer_->PushToMoveQueue(Info);
-    }
-    else
-    {
-        //Player->SetPlayerInfo(Info);
-        Player->SetDestInfo(Info);
-    }
+    Player->PushToMoveQueue(Info);
 }
 
 void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
@@ -440,4 +432,28 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
 
     }
 
+}
+
+void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = NormalAttackPkt.object_id();
+    AP1Player** FindActor = Players.Find(ObjectId);
+    if (FindActor == nullptr)
+        return;
+
+    AP1Player* Player = (*FindActor);
+
+    UAttackSystemComponent* AttackSystemComponent = Player->GetAttackSystemComponent();
+    if (AttackSystemComponent == nullptr)
+        return;
+
+    uint32 Combo = NormalAttackPkt.combo();
+    AttackSystemComponent->O_PerformNormalAttack(Combo);
 }

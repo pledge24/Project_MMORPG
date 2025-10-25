@@ -31,8 +31,8 @@ enum : uint16
 	PKT_S_DESPAWN = 1016,
 	PKT_C_MOVE = 1017,
 	PKT_S_MOVE = 1018,
-	PKT_C_ATTACK = 1019,
-	PKT_S_ATTACK = 1020,
+	PKT_C_NORMAL_ATTACK = 1019,
+	PKT_S_NORMAL_ATTACK = 1020,
 	PKT_S_HIT = 1021,
 	PKT_C_BUY_ITEM = 1022,
 	PKT_S_BUY_ITEM = 1023,
@@ -58,7 +58,7 @@ bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MA
 bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt);
 bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt);
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt);
-bool Handle_C_ATTACK(PacketSessionRef& session, Protocol::C_ATTACK& pkt);
+bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt);
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt);
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt);
 bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt);
@@ -83,7 +83,7 @@ public:
 		GPacketHandler[PKT_C_MOVE_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MOVE_ROOM>(Handle_C_MOVE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_LEAVE_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LEAVE_GAME>(Handle_C_LEAVE_GAME, session, buffer, len); };
 		GPacketHandler[PKT_C_MOVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MOVE>(Handle_C_MOVE, session, buffer, len); };
-		GPacketHandler[PKT_C_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ATTACK>(Handle_C_ATTACK, session, buffer, len); };
+		GPacketHandler[PKT_C_NORMAL_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_NORMAL_ATTACK>(Handle_C_NORMAL_ATTACK, session, buffer, len); };
 		GPacketHandler[PKT_C_BUY_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_BUY_ITEM>(Handle_C_BUY_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_C_SELL_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_SELL_ITEM>(Handle_C_SELL_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_C_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_EQUIP_GEAR>(Handle_C_EQUIP_GEAR, session, buffer, len); };
@@ -108,7 +108,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_SPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_SPAWN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_DESPAWN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_MOVE& pkt) { return MakeSerializedPacket(pkt, PKT_S_MOVE); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_ATTACK& pkt) { return MakeSerializedPacket(pkt, PKT_S_ATTACK); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_NORMAL_ATTACK& pkt) { return MakeSerializedPacket(pkt, PKT_S_NORMAL_ATTACK); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_HIT& pkt) { return MakeSerializedPacket(pkt, PKT_S_HIT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_BUY_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_BUY_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_SELL_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_SELL_ITEM); }

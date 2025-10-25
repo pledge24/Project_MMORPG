@@ -3,17 +3,16 @@
 
 #include "Game/P1MyPlayer.h"
 #include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "AttackSystemComponent.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Log/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
@@ -28,7 +27,7 @@ AP1MyPlayer::AP1MyPlayer()
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-    // Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
+    // Note: The skeletal mesh and anim blueprint references on the CharacterMesh component (inherited from Character) 
     // are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
@@ -61,8 +60,8 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Move);
@@ -70,6 +69,9 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
+
+        //Attacking
+        EnhancedInputComponent->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &AP1MyPlayer::NormalAttack);
 	}
 
 }
@@ -78,68 +80,73 @@ void AP1MyPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-    // 네트워크로 수신한 teleport 처리
-    Protocol::PosInfo Info_;
-    while (MoveQueue.Dequeue(Info_))
-    {
-        const FVector TargetLocation(Info_.x(), Info_.y(), Info_.z());
-        SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
+    bool bForceSendPacket = false; // MovePacket 강제 전송 판정 변수
+    bool bCanInputMovement = CanInputMovement();
 
-        FRotator CurrentRotation = GetActorRotation();
-        FRotator NewRotation = FRotator(CurrentRotation.Pitch, Info_.yaw(), CurrentRotation.Roll);
-        SetActorRotation(NewRotation);
-    }
-
-	// Send 판정
-	bool ForceSendPacket = false;
-
-	if (LastDesiredInput != DesiredInput)
+    // bForceSendPacket 판정
 	{
-		ForceSendPacket = true;
-		LastDesiredInput = DesiredInput;
+        // 입력 변화 감지
+	    if (LastDesiredInput != DesiredInput)
+	    {
+            if (bCanInputMovement)
+		        bForceSendPacket = true;
+            LastDesiredInput = DesiredInput;
+	    }
+
+        // 급격한 회전 감지
+        FRotator DeltaRotator = FRotator(0.f, DesiredYaw, 0.f) - FRotator(0.f, MovePkt.info().desired_yaw(), 0.f);
+        if (FMath::Abs(DeltaRotator.Yaw) >= YAW_TOLERANCE)
+        {
+            bForceSendPacket = true;
+        }
+        
 	}
 
 	// State 판정
-	if (DesiredInput == FVector2D::Zero())
-		SetMoveState(Protocol::MOVE_STATE_IDLE);
-	else
+    if (AttackSystemComponent->IsAttacking() == true)
+    {
+        SetMoveState(Protocol::MOVE_STATE_ACTION);
+        bForceSendPacket = false;
+    }
+    else if (bCanInputMovement && DesiredInput != FVector2D::Zero())
 		SetMoveState(Protocol::MOVE_STATE_RUN);
+    else
+		SetMoveState(Protocol::MOVE_STATE_IDLE);
 
-	MovePacketSendTimer -= DeltaTime;
+    // Send 판정
+    MovePacketSendTimer -= DeltaTime;
 
-	if (MovePacketSendTimer <= 0 || ForceSendPacket)
-	{
-		MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
+    if (MovePacketSendTimer <= 0 || bForceSendPacket)
+    {
+        /*SendCounter++;
+        TotalSecond += MOVE_PACKET_SEND_DELAY - MovePacketSendTimer;
+        GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("AvgSendSpeed: %f"), TotalSecond / SendCounter));*/
 
-		Protocol::C_MOVE MovePkt;
+        MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
-		// 현재 위치 정보
-		{
-			Protocol::PosInfo* Info = MovePkt.mutable_info();
-			Info->CopyFrom(*SrcInfo);
-			Info->set_yaw(DesiredYaw);
-			Info->set_state(GetMoveState());
-		}
+        // 현재 위치 정보
+        {
+            MovePkt.Clear();
 
-		SEND_PACKET(MovePkt);
-	}
+            Protocol::PosInfo* Info = MovePkt.mutable_info();
+            Info->CopyFrom(*ClientPos);
+            Info->set_desired_yaw(DesiredYaw);
+            Info->set_state(GetMoveState());
+        }
+
+        SEND_PACKET(MovePkt);
+    }
 }
 
 void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
 {
     Super::Init(ObjectInfo_);
 
-    SetPosInfo(ObjectInfo_.pos_info());
-}
-
-bool AP1MyPlayer::PushToMoveQueue(const Protocol::PosInfo& Info_)
-{
-    return MoveQueue.Enqueue(Info_);
+    SetClientPos(ObjectInfo_.pos_info());
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
@@ -154,11 +161,14 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+        if (CanInputMovement() == true)
+        {
+		    // add movement 
+		    AddMovementInput(ForwardDirection, MovementVector.Y);
+		    AddMovementInput(RightDirection, MovementVector.X);
+        }
 
-		// Cache
+		// Cache Movement Input
 		{
 			DesiredInput = MovementVector;
 
@@ -167,9 +177,7 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 			DesiredMoveDirection += RightDirection * MovementVector.X;
 			DesiredMoveDirection.Normalize();
 
-			const FVector Location = GetActorLocation();
-			FRotator Rotator = UKismetMathLibrary::FindLookAtRotation(Location, Location + DesiredMoveDirection);
-			DesiredYaw = Rotator.Yaw;
+            DesiredYaw = DesiredMoveDirection.Rotation().Yaw;
 		}
 	}
 }
@@ -185,5 +193,39 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
+{
+    UStaticMesh* StaticMesh = WeaponMesh->GetStaticMesh();
+    if (!StaticMesh)
+    {
+        UE_LOG(LogCharacterComp, Display, TEXT("무기없이 일반 공격을 수행할 수 없습니다."));
+        return;
+    }
+
+    if (AttackSystemComponent != nullptr)
+    {
+        if (AttackSystemComponent->EnableInputAttack() == true)
+        {
+            AttackSystemComponent->M_PerformNormalAttack();
+            int32 Combo = AttackSystemComponent->GetLastCombo();
+
+            if (Combo > 0){
+                Protocol::C_NORMAL_ATTACK NormalAttackPkt;
+                NormalAttackPkt.set_combo(Combo);
+
+                SEND_PACKET(NormalAttackPkt);
+            }
+        }
+    }
+}
+
+bool AP1MyPlayer::CanInputMovement() const
+{
+    if (AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking() == true)
+        return false;
+
+    return true;
 }
 

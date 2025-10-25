@@ -242,10 +242,24 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 	return true;
 }
 
-bool Handle_C_ATTACK(PacketSessionRef& session, Protocol::C_ATTACK& pkt)
+bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt)
 {
-    return false;
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        return false;
+
+    room->DoAsync(&Room::HandleNormalAttack, pkt, player);
+
+    return true;
 }
+
+
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
@@ -255,22 +269,22 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_BUY_ITEM rPkt;
-    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+    Protocol::S_BUY_ITEM buyItemPkt;
+    Protocol::Slot* updatedSlot = buyItemPkt.mutable_updated_slot();
     int32 templateId = pkt.template_id();
     int64 totalGold = 0;
 
     if (player->HandleBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
     {
-        rPkt.set_success(false);
-        SEND_PACKET(rPkt);
+        buyItemPkt.set_success(false);
+        SEND_PACKET(buyItemPkt);
         return false;
     }
 
-    rPkt.set_success(true);
-    rPkt.set_gold(totalGold);
-    SEND_PACKET(rPkt);
-    cout << rPkt.DebugString() << endl;
+    buyItemPkt.set_success(true);
+    buyItemPkt.set_gold(totalGold);
+    SEND_PACKET(buyItemPkt);
+    cout << buyItemPkt.DebugString() << endl;
 
     return true;
 }
@@ -283,21 +297,21 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_SELL_ITEM rPkt;
+    Protocol::S_SELL_ITEM sellItemPkt;
     Protocol::Slot* targetSlot = pkt.mutable_slot();
-    Protocol::Slot* updatedSlot = rPkt.mutable_updated_slot();
+    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
 
     int64 totalGold = 0;
     if (player->HandleSellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
     {
-        rPkt.set_success(false);
-        SEND_PACKET(rPkt);
+        sellItemPkt.set_success(false);
+        SEND_PACKET(sellItemPkt);
         return false;
     }
 
-    rPkt.set_success(true);
-    rPkt.set_gold(totalGold);
-    SEND_PACKET(rPkt);
+    sellItemPkt.set_success(true);
+    sellItemPkt.set_gold(totalGold);
+    SEND_PACKET(sellItemPkt);
     
     return true;
 }
@@ -345,17 +359,17 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_USE_ITEM rPkt;
+    Protocol::S_USE_ITEM useItemPkt;
     Protocol::Slot* targetSlot = pkt.mutable_slot();
-    if (player->HandleUseItem(rPkt, targetSlot) == false)
+    if (player->HandleUseItem(useItemPkt, targetSlot) == false)
     {
-        rPkt.set_success(false);
-        SEND_PACKET(rPkt);
+        useItemPkt.set_success(false);
+        SEND_PACKET(useItemPkt);
         return false;
     }
 
-    rPkt.set_success(true);
-    SEND_PACKET(rPkt);
+    useItemPkt.set_success(true);
+    SEND_PACKET(useItemPkt);
 
     return true;
 }

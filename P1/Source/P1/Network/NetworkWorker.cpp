@@ -2,6 +2,7 @@
 #include "Sockets.h"
 #include "Serialization/ArrayWriter.h"
 #include "PacketSession.h"
+#include "Log/LogCategory.h"
 
 /*-----------------
 	 RecvWorker
@@ -19,7 +20,7 @@ RecvWorker::~RecvWorker()
 
 bool RecvWorker::Init()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Recv Thread Init")));
+    UE_LOG(LogSystem, Display, TEXT("Recv Thread Init"));
 	return true;
 }
 
@@ -130,8 +131,7 @@ SendWorker::~SendWorker()
 
 bool SendWorker::Init()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Send Thread Init")));
-
+    UE_LOG(LogSystem, Display, TEXT("Send Thread Init"));
 	return true;
 }
 
@@ -148,8 +148,6 @@ uint32 SendWorker::Run()
 				SendPacket(SendBuffer);
 			}
 		}
-
-		// Sleep?
 	}
 
 	return 0;

@@ -6,8 +6,8 @@
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
-#include "P1MyPlayer.h"
 #include "P1GameInstance.h"
+#include "Log/LogCategory.h"
 
 void UInventoryWidget::NativeConstruct()
 {
@@ -122,13 +122,8 @@ USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot
 
 void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnSell!")));
-    
     if (PendingPacket)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
-    }
     else
         PendingPacket = true;
 
@@ -149,13 +144,8 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
 
 void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnUse!")));
-
     if (PendingPacket)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
-    }
     else
         PendingPacket = true;
 
@@ -184,20 +174,15 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
         }
         else
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Something Wrong in SendUseItemPacket!")));
+            UE_LOG(LogNetwork, Warning, TEXT("Something Wrong in SendUseItemPacket.."));
         }
     }
 }
 
 void UInventoryWidget::SendEquipItemPacket(USlotWidget* _Slot)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("OnEquip!")));
-
     if (PendingPacket)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Pending...")));
         return;
-    }
     else
         PendingPacket = true;
 
@@ -213,7 +198,6 @@ void UInventoryWidget::SendEquipItemPacket(USlotWidget* _Slot)
         int32 Level = GameInstance->GetLevel();
         if (Level < _Slot->ItemData.LevelRequirement)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
             PendingPacket = false;
             return;
         }
@@ -223,6 +207,10 @@ void UInventoryWidget::SendEquipItemPacket(USlotWidget* _Slot)
             Protocol::C_EQUIP_GEAR pkt;
             pkt.mutable_slot()->CopyFrom(SlotData);
             SEND_PACKET(pkt);
+        }
+        else
+        {
+            UE_LOG(LogNetwork, Warning, TEXT("Something Wrong in EquipGearPacket.."));
         }
         
     }

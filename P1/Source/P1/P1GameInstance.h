@@ -76,6 +76,8 @@ public:
     void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
 
+    void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
+
 public:
     /** 델리게이트 모음(위젯 상태 갱신용) */
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);

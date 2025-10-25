@@ -1006,7 +1006,8 @@ class PosInfo final :
     kYFieldNumber = 3,
     kZFieldNumber = 4,
     kYawFieldNumber = 5,
-    kStateFieldNumber = 6,
+    kDesiredYawFieldNumber = 6,
+    kStateFieldNumber = 7,
   };
   // uint64 object_id = 1;
   void clear_object_id();
@@ -1053,7 +1054,16 @@ class PosInfo final :
   void _internal_set_yaw(float value);
   public:
 
-  // .Protocol.MoveState state = 6;
+  // float desired_yaw = 6;
+  void clear_desired_yaw();
+  float desired_yaw() const;
+  void set_desired_yaw(float value);
+  private:
+  float _internal_desired_yaw() const;
+  void _internal_set_desired_yaw(float value);
+  public:
+
+  // .Protocol.MoveState state = 7;
   void clear_state();
   ::Protocol::MoveState state() const;
   void set_state(::Protocol::MoveState value);
@@ -1075,6 +1085,7 @@ class PosInfo final :
     float y_;
     float z_;
     float yaw_;
+    float desired_yaw_;
     int state_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -3305,7 +3316,27 @@ inline void PosInfo::set_yaw(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.yaw)
 }
 
-// .Protocol.MoveState state = 6;
+// float desired_yaw = 6;
+inline void PosInfo::clear_desired_yaw() {
+  _impl_.desired_yaw_ = 0;
+}
+inline float PosInfo::_internal_desired_yaw() const {
+  return _impl_.desired_yaw_;
+}
+inline float PosInfo::desired_yaw() const {
+  // @@protoc_insertion_point(field_get:Protocol.PosInfo.desired_yaw)
+  return _internal_desired_yaw();
+}
+inline void PosInfo::_internal_set_desired_yaw(float value) {
+  
+  _impl_.desired_yaw_ = value;
+}
+inline void PosInfo::set_desired_yaw(float value) {
+  _internal_set_desired_yaw(value);
+  // @@protoc_insertion_point(field_set:Protocol.PosInfo.desired_yaw)
+}
+
+// .Protocol.MoveState state = 7;
 inline void PosInfo::clear_state() {
   _impl_.state_ = 0;
 }

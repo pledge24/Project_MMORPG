@@ -54,8 +54,9 @@ message PosInfo
 	float x = 2;
 	float y = 3;
 	float z = 4;
-	float yaw = 5;
-	MoveState state = 6;
+    float yaw = 5;
+	float desired_yaw = 6;
+	MoveState state = 7;
 }
 
 message StatInfo

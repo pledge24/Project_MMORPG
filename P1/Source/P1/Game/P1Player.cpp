@@ -10,7 +10,10 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "AttackSystemComponent.h"
+#include "P1.h"
 #include "P1MyPlayer.h"
+#include "Log/LogCategory.h"
 
 AP1Player::AP1Player()
 {
@@ -38,22 +41,35 @@ AP1Player::AP1Player()
 	GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	//====================================================================
 
-	SrcInfo = new Protocol::PosInfo();
-	DestInfo = new Protocol::PosInfo();
+    WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+    USkeletalMeshComponent* CharacterMesh = GetMesh();
+
+    if (WeaponMesh && CharacterMesh)
+    {
+        WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
+    }
+
+	ClientPos = new Protocol::PosInfo();
+	ServerPos = new Protocol::PosInfo();
 }
 
 void AP1Player::BeginPlay()
 {
 	Super::BeginPlay();
 
+    AttackSystemComponent = FindComponentByClass<UAttackSystemComponent>();
+    if (AttackSystemComponent == nullptr)
+        UE_LOG(LogTemp, Warning, TEXT("AttackSystemComponent 누락"));
+
 	{
 		FVector Location = GetActorLocation();
-		DestInfo->set_x(Location.X);
-		DestInfo->set_y(Location.Y);
-		DestInfo->set_z(Location.Z);
-		DestInfo->set_yaw(GetControlRotation().Yaw);
+        ServerPos->set_x(Location.X);
+        ServerPos->set_y(Location.Y);
+        ServerPos->set_z(Location.Z);
+        ServerPos->set_yaw(GetControlRotation().Yaw);
+        ServerPos->set_state(Protocol::MOVE_STATE_IDLE);
 
-		//SetMoveState(Protocol::MOVE_STATE_IDLE);
+        ClientPos->CopyFrom(*ServerPos);
 	}
 }
 
@@ -62,10 +78,11 @@ void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 
     {
-        delete SrcInfo;
-        delete DestInfo;
-        SrcInfo = nullptr;
-        DestInfo = nullptr;
+        delete ClientPos;
+        delete ServerPos;
+
+        ClientPos = nullptr;
+        ServerPos = nullptr;
     }
 }
 
@@ -73,49 +90,29 @@ void AP1Player::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// 틱마다 플레이어의 위치를 수집해서 PlayerInfo에 저장
-	{
-		FVector Location = GetActorLocation();
-		SrcInfo->set_x(Location.X);
-		SrcInfo->set_y(Location.Y);
-		SrcInfo->set_z(Location.Z);
-		SrcInfo->set_yaw(GetControlRotation().Yaw);
-	}
+    // Cache: 틱마다 플레이어의 이전 틱 위치 정보 저장
+    {
+        FVector Location = GetActorLocation();
+        ClientPos->set_x(Location.X);
+        ClientPos->set_y(Location.Y);
+        ClientPos->set_z(Location.Z);
+        ClientPos->set_yaw(GetActorRotation().Yaw);
+    }
 
-	if (IsMyPlayer() == false)
-	{
-		// 이렇게 하면 안된다?
-		/*FVector Location = GetActorLocation();
-		FVector DestLocation = FVector(DestInfo->x(), DestInfo->y(), DestInfo->z());
+    // MyPlayer -> Reposition | OtherPlayer -> Set Dst
+    Protocol::PosInfo Info_;
+    while (MoveQueue.Dequeue(Info_))
+    {
+        if (IsMyPlayer() == true)
+            SetClientPos(Info_);
+        else
+            SetServerPos(Info_);
+    }
 
-		FVector MoveDir = (DestLocation - Location);
-		const float DistToDest = MoveDir.Length();
-		MoveDir.Normalize();
-
-		float MoveDist = (MoveDir * 600.f * DeltaSeconds).Length();
-		MoveDist = FMath::Min(MoveDist, DistToDest);
-		FVector NextLocation = Location + MoveDir* MoveDist;
-
-		SetActorLocation(NextLocation);*/
-
-		// TEST: 수신된 패킷에서 방향만 사용.
-		const Protocol::MoveState State = SrcInfo->state();
-
-		if (State == Protocol::MOVE_STATE_RUN)
-		{
-			SetActorRotation(FRotator(0, DestInfo->yaw(), 0));
-			AddMovementInput(GetActorForwardVector());
-		}
-		else
-		{
-
-		}
-	}
-}
-
-bool AP1Player::IsMyPlayer()
-{
-	return Cast<AP1MyPlayer>(this) != nullptr;
+    if (IsMyPlayer() == false)
+    {
+        Move(DeltaSeconds);
+    }
 }
 
 void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
@@ -134,54 +131,115 @@ void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
     SetName(PlayerName);
 }
 
-void AP1Player::SetMoveState(Protocol::MoveState State)
+bool AP1Player::IsMyPlayer()
 {
-	if (SrcInfo->state() == State)
-		return;
-
-	SrcInfo->set_state(State);
-
-	// TODO
+	return Cast<AP1MyPlayer>(this) != nullptr;
 }
 
-void AP1Player::SetPosInfo(const Protocol::PosInfo& Info)
+bool AP1Player::PushToMoveQueue(const Protocol::PosInfo& Info_)
 {
-	if (SrcInfo->object_id() != 0)
+    return MoveQueue.Enqueue(Info_);
+}
+
+void AP1Player::SetMoveState(Protocol::MoveState State)
+{
+	if (ClientPos->state() == State)
+		return;
+
+	ClientPos->set_state(State);
+}
+
+void AP1Player::SetClientPos(const Protocol::PosInfo& Info)
+{
+	if (ClientPos->object_id() != 0)
 	{
 		assert(SrcInfo->object_id() == Info.object_id());
 	}
 
-	SrcInfo->CopyFrom(Info);
+	ClientPos->CopyFrom(Info);
 
 	FVector Location(Info.x(), Info.y(), Info.z());
 	SetActorLocation(Location);
+
+    FRotator CurrentRotation = GetActorRotation();
+    FRotator NewRotation = FRotator(CurrentRotation.Pitch, Info.yaw(), CurrentRotation.Roll);
+    SetActorRotation(NewRotation);
 }
 
-void AP1Player::SetDestInfo(const Protocol::PosInfo& Info)
+void AP1Player::SetServerPos(const Protocol::PosInfo& Info)
 {
-	if (SrcInfo->object_id() != 0)
+	if (ClientPos->object_id() != 0)
 	{
-		assert(SrcInfo->object_id() == Info.object_id());
+		assert(ClientPos->object_id() == Info.object_id());
 	}
 
-    if (DestInfo != nullptr)
+    if (ServerPos == nullptr)
     {
-	    // Dest에 최종 상태 복사
-	    DestInfo->CopyFrom(Info);
-    }
-    else
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("nullnullnull")));
+        UE_LOG(LogProtobuf, Error, TEXT("ServerPos Is Nullptr"));
         return;
     }
 
-	// 상태만 바로 관리하자.
-	SetMoveState(Info.state());
+    ServerPos->CopyFrom(Info);
+    MoveDirection = FRotator(0.f, ServerPos->desired_yaw(), 0.f).Vector();
+    SetMoveState(Info.state()); // state는 ClientPos에 바로 세팅
 }
 
-void AP1Player::SetEquippedGear(const Protocol::Slot& _Slot)
+void AP1Player::SetEquippedGear(const Protocol::Slot& Slot_)
 {
-    int32 SlotId = _Slot.slot_id();
-    int32 TemplateId = _Slot.item().template_id();
+    int32 SlotId = Slot_.slot_id();
+    int32 TemplateId = Slot_.item().template_id();
     ChangeMesh(SlotId, TemplateId);
+}
+
+void AP1Player::Move(float DeltaSeconds)
+{
+    FVector ClientLocation = GetActorLocation();
+    FVector ServerLocation = FVector(ServerPos->x(), ServerPos->y(), ServerPos->z());
+    const float Dist = FVector::Distance(ClientLocation, ServerLocation);
+
+    // Move
+    if (ServerPos->state() == Protocol::MOVE_STATE_RUN)
+    {
+        AddMovementInput(MoveDirection);
+    }
+    // 제자리 회전 보정
+    else if (ServerPos->state() == Protocol::MOVE_STATE_IDLE)
+    {
+        if (ServerPos->yaw() != GetActorRotation().Yaw)
+        {
+            FRotator TargetRot = FRotator(0, ServerPos->yaw(), 0);
+            FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRot, DeltaSeconds, CORR_RINTERP_SPEED);
+
+            SetActorRotation(NewRot);
+        }
+    }
+    else if (ServerPos->state() == Protocol::MOVE_STATE_ACTION)
+    {
+        // 루트 모션이 들어간 Action 중에는 보정 안 함.
+        return;
+    }
+
+    // Correction
+    if (Dist > CorrectionThreshold) 
+    {
+        // 보정 거리 초과 시 Reposition
+        SetActorLocation(ServerLocation);
+        SetActorRotation(FRotator(0, ServerPos->yaw(), 0));
+    }
+    else
+    {
+        FVector CorrectionPoint = MoveDirection == FVector::Zero() ?
+            ServerLocation : FindPerpendicularPoint();
+
+        FVector CorrectedClientLocation = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, CORR_INTERP_SPEED);
+        SetActorLocation(CorrectedClientLocation);
+    }
+}
+
+FVector AP1Player::FindPerpendicularPoint() const
+{
+    FVector ServerPoint = FVector(ServerPos->x(), ServerPos->y(), ServerPos->z());
+    FVector ClosestPoint = UKismetMathLibrary::FindClosestPointOnLine(GetActorLocation(), ServerPoint, MoveDirection);
+
+    return ClosestPoint;
 }
