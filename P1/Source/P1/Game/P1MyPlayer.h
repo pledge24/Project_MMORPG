@@ -31,7 +31,7 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-    virtual void Init(const Protocol::ObjectInfo& ObjectInfo_) override;
+    virtual void InitializePlayer(const Protocol::ObjectInfo& ObjectInfo_) override;
 
 protected:
 	void Move(const FInputActionValue& Value);

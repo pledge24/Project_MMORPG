@@ -28,7 +28,7 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void SetName(const FText& ObjectName);
 
-    virtual void Init(const Protocol::ObjectInfo& ObjectInfo);
+    virtual void InitializePlayer(const Protocol::ObjectInfo& ObjectInfo);
 
 	bool IsMyPlayer();
 

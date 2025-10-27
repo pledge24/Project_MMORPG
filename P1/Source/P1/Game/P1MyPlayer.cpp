@@ -138,9 +138,9 @@ void AP1MyPlayer::Tick(float DeltaTime)
     }
 }
 
-void AP1MyPlayer::Init(const Protocol::ObjectInfo& ObjectInfo_)
+void AP1MyPlayer::InitializePlayer(const Protocol::ObjectInfo& ObjectInfo_)
 {
-    Super::Init(ObjectInfo_);
+    Super::InitializePlayer(ObjectInfo_);
 
     SetClientPos(ObjectInfo_.pos_info());
 }

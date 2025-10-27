@@ -156,7 +156,7 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     if (EnterGamePkt.success() == false)
         return;
 
-    // Init MyPlayer Data
+    // InitializePlayer MyPlayer Data
     const Protocol::PlayerInfo& PlayerInfo_ = EnterGamePkt.player().player_info();
     _PlayerInfo->CopyFrom(PlayerInfo_);
     _StatInfo = _PlayerInfo->mutable_stat_info();   // CopyFrom 시, 포인터 주소가 달라질 수 있음.
@@ -191,7 +191,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
             MyPlayer = Player;
             Players.Add(ObjectInfo.object_id(), Player);
         
-            Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
+            Player->InitializePlayer(ObjectInfo);   // 갑옷 메시 입히는 용
         }
         else
         {
@@ -204,7 +204,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 		AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
         Players.Add(ObjectInfo.object_id(), Player);
 		
-        Player->Init(ObjectInfo);   // 갑옷 메시 입히는 용
+        Player->InitializePlayer(ObjectInfo);   // 갑옷 메시 입히는 용
 	}
 }
 

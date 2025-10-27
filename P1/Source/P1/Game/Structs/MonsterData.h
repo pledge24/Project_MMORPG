@@ -24,4 +24,13 @@ struct FMonsterData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString MonsterName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString AttackType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int64 MaxHp;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int64 BaseAttack;
 };

@@ -115,7 +115,7 @@ void AP1Player::Tick(float DeltaSeconds)
     }
 }
 
-void AP1Player::Init(const Protocol::ObjectInfo& ObjectInfo)
+void AP1Player::InitializePlayer(const Protocol::ObjectInfo& ObjectInfo)
 {
     if (ObjectInfo.player_info().equipped_gear().empty())
         return;
