@@ -11,6 +11,7 @@ class UUserWidget;
 class UInventoryWidget;
 class UStatusWindowWidget;
 class UHUDWidget;
+class UNameplateWidget;
 
 UENUM(BlueprintType)
 enum class WidgetType : uint8
@@ -89,6 +90,13 @@ protected:
 
     UPROPERTY()
     UUserWidget* ShopWidget;
+
+    /** Nameplate UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UNameplateWidget> NameplateWidgetClass;
+
+    UPROPERTY()
+    class UNameplateManager* NameplateManager;
 
 private:
     TMap<WidgetType, UUserWidget*> WidgetMappings;

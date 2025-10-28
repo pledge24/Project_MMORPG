@@ -79,6 +79,11 @@ public:
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
 
 public:
+    /** GameServer 접속 토큰 정보 */
+    void SetToken(FString token) { _token = token; }
+    FString GetToken() { return _token; }
+
+public:
     /** 델리게이트 모음(위젯 상태 갱신용) */
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
     FOnLevelChanged OnLevelChanged;
@@ -113,10 +118,6 @@ public:
 
     DECLARE_MULTICAST_DELEGATE(FOnRep_UnequipGear);
     FOnRep_UnequipGear OnRep_UnequipGear;
-
-public:
-	void SetToken(FString token) { _token = token; }
-	FString GetToken() { return _token; }
 
 public:
 	/** GameServer Socket */

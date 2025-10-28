@@ -108,7 +108,7 @@ void AP1Player::Tick(float DeltaSeconds)
         else
             SetServerPos(Info_);
     }
-
+    
     if (IsMyPlayer() == false)
     {
         Move(DeltaSeconds);
@@ -128,7 +128,6 @@ void AP1Player::InitializePlayer(const Protocol::ObjectInfo& ObjectInfo)
     }
 
     PlayerName = FText::FromString(UTF8_TO_TCHAR(ObjectInfo.player_info().name().c_str()));
-    SetName(PlayerName);
 }
 
 bool AP1Player::IsMyPlayer()

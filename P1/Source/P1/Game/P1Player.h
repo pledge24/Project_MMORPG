@@ -25,9 +25,6 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "Character")
-    void SetName(const FText& ObjectName);
-
     virtual void InitializePlayer(const Protocol::ObjectInfo& ObjectInfo);
 
 	bool IsMyPlayer();

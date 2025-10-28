@@ -10,6 +10,8 @@
 #include "P1Player.h"
 #include "P1MyPlayer.h"
 #include "P1.h"
+#include "NameplateManager.h"
+#include "NameplateWidget.h"
 
 void AInGamePlayerController::BeginPlay()
 {
@@ -18,6 +20,14 @@ void AInGamePlayerController::BeginPlay()
     Protocol::C_ENTER_MAP_COMPLETE pkt;
     SEND_PACKET(pkt);
 
+    // =================== Manager들 추가 ======================
+    NameplateManager = NewObject<UNameplateManager>(this);
+    if (NameplateWidgetClass)
+    {
+        NameplateManager->InitializeManager(this, NameplateWidgetClass);
+    }
+
+    // ==================== Widget들 추가 ======================
     if(HUDWidgetClass && !HUDWidget)
     {
         HUDWidget = CreateWidget<UHUDWidget>(this, HUDWidgetClass);

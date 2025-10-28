@@ -22,13 +22,14 @@ public:
     void SetBoth(int32 CurValue, int32 MaxValue);
 
 protected:
+    UFUNCTION(BlueprintImplementableEvent, Category="ProgressBar")
+    void SetProgressBarText(const FString& ProgressText);
+
     void UpdateBar();
 
-    UPROPERTY(BlueprintReadOnly , meta = (BindWidget), Category = "UI")
+protected:
+    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="ProgressBar")
     class UProgressBar* ProgressBar;
-	
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "UI")
-    class UTextBlock* TextBlock;
 
     int32 _CurValue;
     int32 _MaxValue;

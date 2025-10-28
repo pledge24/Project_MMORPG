@@ -11,5 +11,11 @@ USING_SHARED_PTR(SendBuffer);
 USING_SHARED_PTR(RecvWorker);
 USING_SHARED_PTR(SendWorker);
 
-
+UENUM(BlueprintType)
+enum class ECreatureType
+{
+    None UMETA(DisplayName = "None"),
+    Monster UMETA(DisplayName = "Monster"),
+    Player UMETA(DisplayName = "Player"),
+};
 

@@ -99,7 +99,6 @@ void AP1MyPlayer::Tick(float DeltaTime)
         {
             bForceSendPacket = true;
         }
-        
 	}
 
 	// State 판정
