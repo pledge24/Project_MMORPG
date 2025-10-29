@@ -7,6 +7,9 @@
 #include "Types.h"
 #include "NameplateWidget.generated.h"
 
+class UTextBlock;
+class UProgressBarWidget;
+
 /**
  * 
  */
@@ -16,6 +19,17 @@ class P1_API UNameplateWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    UFUNCTION(BlueprintImplementableEvent)
-    void SetNameplateMode(ECreatureType CreatureType);
+    void NativeConstruct() override;
+    void InitializeWidget(AActor* Actor);
+
+protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
+    UTextBlock* NameTextBlock;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
+    UProgressBarWidget* HpBar;
+
+private:
+    ESlateVisibility NameTextVisibility = ESlateVisibility::Collapsed;
+    ESlateVisibility HpBarVisibility = ESlateVisibility::Collapsed;
 };

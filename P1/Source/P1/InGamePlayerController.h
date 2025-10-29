@@ -11,7 +11,9 @@ class UUserWidget;
 class UInventoryWidget;
 class UStatusWindowWidget;
 class UHUDWidget;
+class UShopWidget;
 class UNameplateWidget;
+class UNameplateManager;
 
 UENUM(BlueprintType)
 enum class WidgetType : uint8
@@ -44,8 +46,6 @@ private:
     void OnToggleInventoryWidget();
 
 public:
-    void ToggleWidget(WidgetType Type);
-
     UFUNCTION(BlueprintCallable, Category = "Widget")
     void TurnOnWidget(WidgetType Type);
 
@@ -54,6 +54,11 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Widget")
     bool IsTurnOnThisWidget(WidgetType Type) const;
+
+    void ToggleWidget(WidgetType Type);
+
+    void AttachNameplate(AActor* Actor);
+    void DetachNameplate(AActor* Actor);
 
 protected:
     /** HUD UI */
@@ -86,17 +91,14 @@ protected:
 
     /** 상점 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> ShopWidgetClass;
+    TSubclassOf<UShopWidget> ShopWidgetClass;
 
     UPROPERTY()
-    UUserWidget* ShopWidget;
+    UShopWidget* ShopWidget;
 
     /** Nameplate UI */
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UNameplateWidget> NameplateWidgetClass;
-
-    UPROPERTY()
-    class UNameplateManager* NameplateManager;
 
 private:
     TMap<WidgetType, UUserWidget*> WidgetMappings;

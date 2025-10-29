@@ -41,6 +41,7 @@ public:
 	Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
 	Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
     class UAttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent;}
+    FText GetPlayerName() const { return PlayerName; }
 
 private:
     /** 이동 관련 함수 */

@@ -14,6 +14,8 @@
 #include "P1.h"
 #include "P1MyPlayer.h"
 #include "Log/LogCategory.h"
+#include "InGamePlayerController.h"
+#include "NameplateManager.h"
 
 AP1Player::AP1Player()
 {
@@ -71,6 +73,12 @@ void AP1Player::BeginPlay()
 
         ClientPos->CopyFrom(*ServerPos);
 	}
+
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (AInGamePlayerController* InGamePC = Cast<AInGamePlayerController>(PC))
+    {
+        InGamePC->AttachNameplate(this);
+    }
 }
 
 void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -83,6 +91,12 @@ void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
         ClientPos = nullptr;
         ServerPos = nullptr;
+    }
+
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (AInGamePlayerController* InGamePC = Cast<AInGamePlayerController>(PC))
+    {
+        InGamePC->DetachNameplate(this);
     }
 }
 

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "NameplateManager.generated.h"
 
 class UNameplateWidget;
@@ -12,28 +11,29 @@ class UNameplateWidget;
  * 
  */
 UCLASS()
-class P1_API UNameplateManager : public UObject
+class P1_API UNameplateManager : public ULocalPlayerSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 
 public:
-    void InitializeManager(APlayerController* PC, const TSubclassOf<UNameplateWidget>& WidgetClass);
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    virtual void Deinitialize() override;
 
-    bool AddOnActorNameplate(AActor* Actor);
+    virtual void Tick(float DeltaTime) override;
+    virtual TStatId GetStatId() const override;
+    virtual bool IsTickableInEditor() const override { return false; } // 에디터 틱 활성화 여부
+
+public:
+    bool AddOnActorNameplate(AActor* Actor, UNameplateWidget* NameplateWidget);
     bool RemoveOnActorNameplate(AActor* Actor);
 
-    void Update();
     void Clear();
+
+    void SetNameplateLocaction(AActor* Actor, UNameplateWidget* Nameplate);
 
 private:
     UPROPERTY()
-    TSubclassOf<UNameplateWidget> NameplateWidgetClass;
-
-    UPROPERTY()
     TMap<AActor*, UNameplateWidget*> NameplateMappings;
-
-    UPROPERTY()
-    APlayerController* PlayerController;
 
     float WIDGET_OFFSET = -20.f;
 };
