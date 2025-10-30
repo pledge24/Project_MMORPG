@@ -8,7 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "NameplateWidget.h"
 #include "InGamePlayerController.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
+
 
 void UNameplateManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -32,6 +32,8 @@ void UNameplateManager::Tick(float DeltaTime)
 
         SetNameplateLocaction(Actor, Nameplate);
     }
+        
+    
 }
 
 TStatId UNameplateManager::GetStatId() const
@@ -89,23 +91,14 @@ void UNameplateManager::SetNameplateLocaction(AActor* Actor, UNameplateWidget* N
         if (CapsuleComponent)
         {
             float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
-            FVector WorldHeadPos = Character->GetActorLocation() + FVector(0, 0, HalfHeight * 2.f);
+            FVector WorldLoc = Character->GetActorLocation() + FVector(0, 0, HalfHeight);
+            FVector2D ScreenLoc;
 
-            FVector2D ScreenHeadPos;
-            bool bOnScreen = PlayerController->ProjectWorldLocationToScreen(WorldHeadPos, ScreenHeadPos);
-
+            bool bOnScreen = PlayerController->ProjectWorldLocationToScreen(WorldLoc, ScreenLoc);
             if (bOnScreen)
             {
-                // Alignment 제거 - 이게 문제를 일으킬 수 있음
-                Nameplate->SetAnchorsInViewport(FAnchors(0.f, 0.f, 0.f, 0.f));
-                // Nameplate->SetAlignmentInViewport(FVector2D(0.5f, 1.0f)); // 이 줄 제거
-
-                FVector2D WidgetPos = ScreenHeadPos + FVector2D(0, WIDGET_OFFSET);
-                Nameplate->SetPositionInViewport(WidgetPos, false);
+                Nameplate->SetPositionInViewport(ScreenLoc);
                 Nameplate->SetVisibility(ESlateVisibility::Visible);
-
-                UE_LOG(LogTemp, Log, TEXT("WorldPos: %s, ScreenPos: %s, WidgetPos: %s"),
-                    *WorldHeadPos.ToString(), *ScreenHeadPos.ToString(), *WidgetPos.ToString());
             }
             else
             {
