@@ -17,6 +17,8 @@ public class P1 : ModuleRules
             "P1/",
             "P1/Network/",
             "P1/Game/",
+            "P1/Game/Objects",
+            "P1/Game/Props",
             "P1/Game/Structs",
             "P1/Game/Widgets",
             "P1/Log",

@@ -6,10 +6,12 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "Protocol.pb.h"
+#include "Objects/Creature.h"
 #include "P1Player.generated.h"
 
+
 UCLASS()
-class P1_API AP1Player : public ACharacter
+class P1_API AP1Player : public ACreature
 {
 	GENERATED_BODY()
 

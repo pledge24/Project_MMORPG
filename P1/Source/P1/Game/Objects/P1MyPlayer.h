@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Game/P1Player.h"
+#include "P1Player.h"
 #include "InputActionValue.h"
 #include "Logging/LogMacros.h"
 #include "P1MyPlayer.generated.h"

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Game/P1Player.h"
+#include "P1Player.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -73,12 +73,6 @@ void AP1Player::BeginPlay()
 
         ClientPos->CopyFrom(*ServerPos);
 	}
-
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    if (AInGamePlayerController* InGamePC = Cast<AInGamePlayerController>(PC))
-    {
-        InGamePC->AttachNameplate(this);
-    }
 }
 
 void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -91,12 +85,6 @@ void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
         ClientPos = nullptr;
         ServerPos = nullptr;
-    }
-
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    if (AInGamePlayerController* InGamePC = Cast<AInGamePlayerController>(PC))
-    {
-        InGamePC->DetachNameplate(this);
     }
 }
 

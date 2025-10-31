@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "MonsterData.h"
+#include "Objects/Creature.h"
 #include "Monster.generated.h"
 
 UCLASS()
-class P1_API AMonster : public ACharacter
+class P1_API AMonster : public ACreature
 {
 	GENERATED_BODY()
 
