@@ -10,7 +10,7 @@
 #include "PacketSession.h"
 #include "Protocol.pb.h"
 #include "ClientPacketHandler.h"
-#include "P1MyPlayer.h"
+#include "Objects/P1MyPlayer.h"
 #include "P1.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
@@ -181,13 +181,14 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 		return;
 
 	FVector SpawnLocation(ObjectInfo.pos_info().x(), ObjectInfo.pos_info().y(), ObjectInfo.pos_info().z());
+    FRotator SpawnRotator(0.f, ObjectInfo.pos_info().yaw(), 0.f);
 
 	if (IsMine)
 	{
         if (MyPlayer == nullptr)
         {
             // Set Spawn Point
-            AP1Player* Player = Cast<AP1Player>(World->SpawnActor(MyPlayerClass, &SpawnLocation));
+            AP1Player* Player = World->SpawnActor<AP1Player>(MyPlayerClass, SpawnLocation, SpawnRotator);
             MyPlayer = Player;
             Players.Add(ObjectInfo.object_id(), Player);
         
@@ -201,7 +202,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 	else
 	{
         // Set Spawn Point
-        AP1Player* Player = Cast<AP1Player>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
+        AP1Player* Player = World->SpawnActor<AP1Player>(OtherPlayerClass, SpawnLocation, SpawnRotator);
         Players.Add(ObjectInfo.object_id(), Player);
 		
         Player->InitializePlayer(ObjectInfo);   // 갑옷 메시 입히는 용

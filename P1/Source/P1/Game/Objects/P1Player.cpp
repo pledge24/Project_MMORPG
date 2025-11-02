@@ -16,6 +16,7 @@
 #include "Log/LogCategory.h"
 #include "InGamePlayerController.h"
 #include "NameplateManager.h"
+#include "Blueprint/UserWidget.h"
 
 AP1Player::AP1Player()
 {
@@ -73,6 +74,7 @@ void AP1Player::BeginPlay()
 
         ClientPos->CopyFrom(*ServerPos);
 	}
+    
 }
 
 void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)

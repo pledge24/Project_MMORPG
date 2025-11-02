@@ -7,8 +7,8 @@
 #include "InventoryWidget.h"
 #include "HUDWidget.h"
 #include "P1GameInstance.h"
-#include "P1Player.h"
-#include "P1MyPlayer.h"
+#include "Objects/P1Player.h"
+#include "Objects/P1MyPlayer.h"
 #include "P1.h"
 #include "ShopWidget.h"
 #include "NameplateManager.h"
@@ -168,7 +168,7 @@ void AInGamePlayerController::AttachNameplate(AActor* Actor)
             UNameplateManager* NameplateManager = GetLocalPlayer()->GetSubsystem<UNameplateManager>();
             if (NameplateManager)
             {
-                NameplateManager->AddOnActorNameplate(Actor, NameplateWidget);
+                NameplateManager->RegisterNameplate(Actor, NameplateWidget);
             }
         }
     }
@@ -179,7 +179,7 @@ void AInGamePlayerController::DetachNameplate(AActor* Actor)
     UNameplateManager* NameplateManager = GetLocalPlayer()->GetSubsystem<UNameplateManager>();
     if (NameplateManager)
     {
-        NameplateManager->RemoveOnActorNameplate(Actor);
+        NameplateManager->UnRegisterNameplate(Actor);
     }
 }
 

@@ -30,6 +30,6 @@ protected:
     UProgressBarWidget* HpBar;
 
 private:
-    ESlateVisibility NameTextVisibility = ESlateVisibility::Collapsed;
-    ESlateVisibility HpBarVisibility = ESlateVisibility::Collapsed;
+    ESlateVisibility NameTextInitVisibility;
+    ESlateVisibility HpBarInitVisibility;
 };

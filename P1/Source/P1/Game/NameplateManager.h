@@ -24,8 +24,8 @@ public:
     virtual bool IsTickableInEditor() const override { return false; } // 에디터 틱 활성화 여부
 
 public:
-    bool AddOnActorNameplate(AActor* Actor, UNameplateWidget* NameplateWidget);
-    bool RemoveOnActorNameplate(AActor* Actor);
+    bool RegisterNameplate(AActor* Actor, UNameplateWidget* NameplateWidget);
+    bool UnRegisterNameplate(AActor* Actor);
 
     void Clear();
 

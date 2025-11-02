@@ -25,8 +25,6 @@ void UAttackSystemComponent::BeginPlay()
         USkeletalMeshComponent* SkeletalMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
         if (SkeletalMesh)
         {
-            // 스켈레탈 메쉬 컴포넌트를 성공적으로 가져왔을 때의 로직
-            UE_LOG(LogTemp, Warning, TEXT("Skeletal CharacterMesh Found: %s"), *SkeletalMesh->GetName());
             CharacterMesh = SkeletalMesh;
         }
 

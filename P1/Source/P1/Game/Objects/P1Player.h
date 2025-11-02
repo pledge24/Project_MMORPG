@@ -60,7 +60,7 @@ protected:
     class UAttackSystemComponent* AttackSystemComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
-    FText PlayerName;
+    FText PlayerName = FText::FromString("NULL");
 
     class Protocol::PosInfo* ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
 	class Protocol::PosInfo* ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)

@@ -32,8 +32,6 @@ void UNameplateManager::Tick(float DeltaTime)
 
         SetNameplateLocaction(Actor, Nameplate);
     }
-        
-    
 }
 
 TStatId UNameplateManager::GetStatId() const
@@ -41,21 +39,21 @@ TStatId UNameplateManager::GetStatId() const
     RETURN_QUICK_DECLARE_CYCLE_STAT(UMyLocalPlayerSubsystem, STATGROUP_Tickables);
 }
 
-bool UNameplateManager::AddOnActorNameplate(AActor* Actor, UNameplateWidget* NameplateWidget)
+bool UNameplateManager::RegisterNameplate(AActor* Actor, UNameplateWidget* NameplateWidget)
 {
     if (!Actor || !NameplateWidget)
         return false;
 
-    NameplateWidget->InitializeWidget(Actor);
-
     NameplateMappings.Add(Actor, NameplateWidget);
+
+    NameplateWidget->InitializeWidget(Actor);
     SetNameplateLocaction(Actor, NameplateWidget);
     NameplateWidget->AddToViewport();
 
     return true;
 }
 
-bool UNameplateManager::RemoveOnActorNameplate(AActor* Actor)
+bool UNameplateManager::UnRegisterNameplate(AActor* Actor)
 {
     if (!Actor)
         return false;
