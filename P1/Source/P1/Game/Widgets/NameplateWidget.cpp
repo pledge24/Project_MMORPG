@@ -16,7 +16,7 @@ void UNameplateWidget::InitializeWidget(AActor* Actor)
 {
     if (AP1Player* Player = Cast<AP1Player>(Actor))
     {
-        NameTextInitVisibility = ESlateVisibility::Visible;
+        NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
         HpBarInitVisibility = ESlateVisibility::Collapsed;
 
         NameTextBlock->SetVisibility(NameTextInitVisibility);
@@ -26,8 +26,8 @@ void UNameplateWidget::InitializeWidget(AActor* Actor)
     }
     else if (AMonster* Monster = Cast<AMonster>(Actor))
     {
-        NameTextInitVisibility = ESlateVisibility::Visible;
-        HpBarInitVisibility = ESlateVisibility::Visible;
+        NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
+        HpBarInitVisibility = ESlateVisibility::SelfHitTestInvisible;
 
         NameTextBlock->SetVisibility(NameTextInitVisibility);
         HpBar->SetVisibility(HpBarInitVisibility);

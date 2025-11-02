@@ -96,7 +96,7 @@ void UNameplateManager::SetNameplateLocaction(AActor* Actor, UNameplateWidget* N
             if (bOnScreen)
             {
                 Nameplate->SetPositionInViewport(ScreenLoc);
-                Nameplate->SetVisibility(ESlateVisibility::Visible);
+                Nameplate->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
             }
             else
             {
