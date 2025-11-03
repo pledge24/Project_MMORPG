@@ -15,7 +15,6 @@
 #include "P1MyPlayer.h"
 #include "Log/LogCategory.h"
 #include "InGamePlayerController.h"
-#include "NameplateManager.h"
 #include "Blueprint/UserWidget.h"
 
 AP1Player::AP1Player()

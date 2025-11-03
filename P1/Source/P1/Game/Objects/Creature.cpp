@@ -16,24 +16,11 @@ ACreature::ACreature()
 void ACreature::BeginPlay()
 {
     Super::BeginPlay();
-
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    if (AInGamePlayerController* InGamePC = Cast<AInGamePlayerController>(PC))
-    {
-        InGamePC->AttachNameplate(this);
-    }
-	
 }
 
 void ACreature::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    if (AInGamePlayerController* InGamePC = Cast<AInGamePlayerController>(PC))
-    {
-        InGamePC->DetachNameplate(this);
-    }
 }
 
 // Called every frame

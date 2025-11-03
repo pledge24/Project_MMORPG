@@ -31,7 +31,12 @@ void PacketSession::HandleRecvPackets()
 			break;
 
 		PacketSessionRef ThisPtr = AsShared();
-		ClientPacketHandler::HandlePacket(ThisPtr, Packet.GetData(), Packet.Num());
+		bool bHandlePacket = ClientPacketHandler::HandlePacket(ThisPtr, Packet.GetData(), Packet.Num());
+        if (bHandlePacket)
+        {
+            PacketHeader* header = reinterpret_cast<PacketHeader*>(Packet.GetData());
+            UE_LOG(LogTemp, Warning, TEXT("Fail to Handle Packet. Packet Id: %d"), header->id);
+        }
 	}
 }
 

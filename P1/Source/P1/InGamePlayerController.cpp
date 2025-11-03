@@ -11,7 +11,6 @@
 #include "Objects/P1MyPlayer.h"
 #include "P1.h"
 #include "ShopWidget.h"
-#include "NameplateManager.h"
 #include "NameplateWidget.h"
 
 void AInGamePlayerController::BeginPlay()
@@ -157,29 +156,3 @@ void AInGamePlayerController::ToggleWidget(WidgetType Type)
         TurnOffWidget(Type);
     }
 }
-
-void AInGamePlayerController::AttachNameplate(AActor* Actor)
-{
-    if (NameplateWidgetClass)
-    {
-        UNameplateWidget* NameplateWidget = CreateWidget<UNameplateWidget>(this, NameplateWidgetClass);
-        if (NameplateWidget)
-        {
-            UNameplateManager* NameplateManager = GetLocalPlayer()->GetSubsystem<UNameplateManager>();
-            if (NameplateManager)
-            {
-                NameplateManager->RegisterNameplate(Actor, NameplateWidget);
-            }
-        }
-    }
-}
-
-void AInGamePlayerController::DetachNameplate(AActor* Actor)
-{
-    UNameplateManager* NameplateManager = GetLocalPlayer()->GetSubsystem<UNameplateManager>();
-    if (NameplateManager)
-    {
-        NameplateManager->UnRegisterNameplate(Actor);
-    }
-}
-

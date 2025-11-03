@@ -47,6 +47,10 @@ void UP1GameInstance::BeginDestroy()
     _StatInfo = nullptr;
 }
 
+/*-------------------------
+*       Network Method
+ -------------------------*/
+
 void UP1GameInstance::ConnectToGameServer()
 {
 	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("Stream"), TEXT("Client Socket"));
@@ -108,7 +112,9 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 	GameServerSession->SendPacket(SendBuffer);
 }
 
-//////////////////////Network End//////////////////////////
+/*-------------------------
+*    Replication Method
+ -------------------------*/
 
 void UP1GameInstance::RepLevel(int32 Level_)
 {
@@ -149,14 +155,16 @@ void UP1GameInstance::RepEquippedGearSlot(const Protocol::Slot& Slot_)
     OnEquippedGearSlotChanged.Broadcast(Slot_);
 }
 
-////////////////////// Replication End //////////////////////////
+/*-------------------------
+ *  Handle Packet Method
+ -------------------------*/
 
 void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt)
 {
     if (EnterGamePkt.success() == false)
         return;
 
-    // InitializePlayer MyPlayer Data
+    // Initialize MyPlayer Data
     const Protocol::PlayerInfo& PlayerInfo_ = EnterGamePkt.player().player_info();
     _PlayerInfo->CopyFrom(PlayerInfo_);
     _StatInfo = _PlayerInfo->mutable_stat_info();   // CopyFrom 시, 포인터 주소가 달라질 수 있음.
@@ -174,7 +182,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 	auto* World = GetWorld();
 	if (World == nullptr)
 		return;
-
+    
 	// 있으면 안된다.
 	const uint64 ObjectId = ObjectInfo.object_id();
 	if (Players.Find(ObjectId) != nullptr)

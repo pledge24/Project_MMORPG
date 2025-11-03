@@ -2,8 +2,6 @@
 
 
 #include "Monster.h"
-#include "NameplateManager.h"
-#include "InGamePlayerController.h"
 
 AMonster::AMonster()
 {

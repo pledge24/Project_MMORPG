@@ -96,10 +96,6 @@ protected:
     UPROPERTY()
     UShopWidget* ShopWidget;
 
-    /** Nameplate UI */
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UNameplateWidget> NameplateWidgetClass;
-
 private:
     TMap<WidgetType, UUserWidget*> WidgetMappings;
     int32 WidgetFlag = 0;
