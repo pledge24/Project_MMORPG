@@ -137,17 +137,18 @@ void AP1MyPlayer::Tick(float DeltaTime)
     }
 }
 
-void AP1MyPlayer::InitializePlayer(const Protocol::ObjectInfo& ObjectInfo_)
+void AP1MyPlayer::Initialize(const Protocol::ObjectInfo& InObjectInfo)
 {
-    Super::InitializePlayer(ObjectInfo_);
+    Super::Initialize(InObjectInfo);
 
-    SetClientPos(ObjectInfo_.pos_info());
+    SetClientPos(InObjectInfo.pos_info());
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
+    UE_LOG(LogTemp, Log, TEXT("MOVE: (%f, %f)"), MovementVector.Y, MovementVector.X);
 	if (Controller != nullptr)
 	{
 		// find out which way is forward
@@ -207,7 +208,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
     {
         if (AttackSystemComponent->EnableInputAttack() == true)
         {
-            AttackSystemComponent->M_PerformNormalAttack();
+            AttackSystemComponent->PerformNormalAttack();
             int32 Combo = AttackSystemComponent->GetLastCombo();
 
             if (Combo > 0){

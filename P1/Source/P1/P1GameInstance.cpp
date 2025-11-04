@@ -14,6 +14,7 @@
 #include "P1.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Creature.h"
 #include "Log/LogCategory.h"
 
 UP1GameInstance::UP1GameInstance()
@@ -25,7 +26,6 @@ UP1GameInstance::UP1GameInstance()
 void UP1GameInstance::Init()
 {
     Super::Init();
-
     InventoryHelper = NewObject<UInventory>(this, UInventory::StaticClass());
     EquippedGearHelper = NewObject<UEquippedGear>(this, UEquippedGear::StaticClass());
 }
@@ -200,7 +200,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
             MyPlayer = Player;
             Players.Add(ObjectInfo.object_id(), Player);
         
-            Player->InitializePlayer(ObjectInfo);   // 갑옷 메시 입히는 용
+            Player->Initialize(ObjectInfo);   // 갑옷 메시 입히는 용
         }
         else
         {
@@ -213,7 +213,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
         AP1Player* Player = World->SpawnActor<AP1Player>(OtherPlayerClass, SpawnLocation, SpawnRotator);
         Players.Add(ObjectInfo.object_id(), Player);
 		
-        Player->InitializePlayer(ObjectInfo);   // 갑옷 메시 입히는 용
+        Player->Initialize(ObjectInfo);   // 갑옷 메시 입히는 용
 	}
 }
 
@@ -458,11 +458,7 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
         return;
 
     AP1Player* Player = (*FindActor);
-
-    UAttackSystemComponent* AttackSystemComponent = Player->GetAttackSystemComponent();
-    if (AttackSystemComponent == nullptr)
-        return;
-
     uint32 Combo = NormalAttackPkt.combo();
-    AttackSystemComponent->O_PerformNormalAttack(Combo);
+
+    Player->S_NormalAttack(Combo);
 }

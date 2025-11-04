@@ -98,7 +98,7 @@ void AInGamePlayerController::TurnOnWidget(WidgetType Type)
 {
     if (UUserWidget* Widget = WidgetMappings[Type])
     {
-        Widget->RemoveFromViewport();
+        Widget->RemoveFromParent();
         Widget->AddToViewport(CurrentMaxZOrder++);
         Widget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
         uint8 FlagIdx = (uint8)Type;

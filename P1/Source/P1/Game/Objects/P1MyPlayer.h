@@ -31,7 +31,13 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-    virtual void InitializePlayer(const Protocol::ObjectInfo& ObjectInfo_) override;
+    virtual void Initialize(const Protocol::ObjectInfo& InObjectInfo) override;
+
+protected:
+    /** 상태 동기화용 함수 Delete */
+    virtual void S_Move(float DeltaSeconds) override final {};
+    virtual void S_NormalAttack(uint32 Combo) override final {};
+
 
 protected:
 	void Move(const FInputActionValue& Value);
@@ -57,7 +63,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	/** Move Input Action */
+	/** S_Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
 

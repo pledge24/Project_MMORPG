@@ -22,10 +22,10 @@ protected:
 
 public:
     UFUNCTION(BlueprintImplementableEvent, Category = "AttackSystem")
-    void M_PerformNormalAttack();
+    void PerformNormalAttack();
 
     UFUNCTION(BlueprintImplementableEvent, Category = "AttackSystem")
-    void O_PerformNormalAttack(int32 Combo);
+    void S_PerformNormalAttack(int32 Combo);
 
     bool IsAttacking() const;
     bool EnableInputAttack() const;
