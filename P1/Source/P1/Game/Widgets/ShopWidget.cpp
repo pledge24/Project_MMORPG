@@ -12,7 +12,7 @@ void UShopWidget::NativeConstruct()
     if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
         // 바인딩 셋업
-        GameInstance->OnRep_BuyItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->MyPlayer->OnRecvBuyItemPkt.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
@@ -25,7 +25,7 @@ void UShopWidget::SendBuyItemPacket(USlotWidget* _Slot)
 
     if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
-        int64 Gold = GameInstance->GetGold();
+        int64 Gold = GameInstance->MyPlayer->GetGold();
         int64 BuyPrice = _Slot->ItemData.BuyPrice;
 
         if (Gold < BuyPrice)

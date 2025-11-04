@@ -8,6 +8,13 @@
 #include "Logging/LogMacros.h"
 #include "P1MyPlayer.generated.h"
 
+class USpringArmComponent;
+class UCameraComponent;
+class UInputMappingContext;
+class UInputAction;
+class UInventoryComponent;
+class UEquippedGearComponent;
+
 /**
  *
  */
@@ -21,17 +28,30 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
     virtual void Initialize(const Protocol::ObjectInfo& InObjectInfo) override;
+
+    /** Getter함수 */
+	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+    UInventoryComponent* GetInventory() const { return InventoryComponent; }
+    UEquippedGearComponent* GetEquippedGear() const { return EquippedGearComponent; }
+
+    const Protocol::PlayerInfo& GetPlayerInfo() const { return *_PlayerInfo; }
+    int32 GetGold() const { return _PlayerInfo->gold(); };
+    int32 GetPlayerLevel() const { return _PlayerInfo->level(); };
+    uint64 GetPlayerId() const { return _PlayerId; }
+
+    /** 패킷 핸들 함수 */
+    void HandleGoldChanged(int64 Gold);
+    void HandleLevelChanged(int32 Level);
+    void HandleExpChanged(int32 CurExp, int32 MaxExp);
+    void HandleStatChanged(const Protocol::StatInfo& InStatInfo);
 
 protected:
     /** 상태 동기화용 함수 Delete */
@@ -46,36 +66,84 @@ protected:
 
     bool CanInputMovement() const;
 
+public:
+    /** 델리게이트 */
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, TOptional<int32>, TOptional<int32>);
+    FOnExpChanged OnExpChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32);
+    FOnGoldChanged OnGoldChanged;
+
+    /** 패킷 수신 체크용 델리게이트 */
+    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
+    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
+    FOnRecvSellItemPkt OnRecvSellItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
+    FOnRecvUseItemPkt OnRecvUseItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
+    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
+    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
+
 protected:
+    /**--------------------
+     *       Camera
+     *--------------------*/
+
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
+	USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+    UCameraComponent* FollowCamera;
+
+    /**--------------------
+     *        Input
+     *--------------------*/
 
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* DefaultMappingContext;
+	UInputMappingContext* DefaultMappingContext;
 
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* JumpAction;
+	UInputAction* JumpAction;
 
-	/** S_Move Input Action */
+	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* MoveAction;
+	UInputAction* MoveAction;
 
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
+	UInputAction* LookAction;
 
     /** Look Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-    class UInputAction* NormalAttackAction;
+    UInputAction* NormalAttackAction;
+
+    /**--------------------
+     *      Components
+     *--------------------*/
+
+    /** Inventory Component*/
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UInventoryComponent* InventoryComponent;
+
+    /** EquippedGear Component */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UEquippedGearComponent* EquippedGearComponent;
 
 private:
+    uint64 _PlayerId = 0;
+    Protocol::PlayerInfo* _PlayerInfo;
+    Protocol::StatInfo* _StatInfo;
+
     /** MovePkt 전송 관련 */
     Protocol::C_MOVE MovePkt;
 
@@ -92,6 +160,7 @@ private:
 	FVector2D LastDesiredInput;
 
     // AvgSendSpeed DEBUGGING
+    const bool Activate = false;
     int32 SendCounter = 1;
     float TotalSecond = 0.2f;
 };

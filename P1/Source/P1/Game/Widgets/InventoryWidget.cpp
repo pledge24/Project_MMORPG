@@ -8,6 +8,8 @@
 #include "P1.h"
 #include "P1GameInstance.h"
 #include "Log/LogCategory.h"
+#include "P1MyPlayer.h"
+#include "InventoryComponent.h"
 
 void UInventoryWidget::NativeConstruct()
 {
@@ -16,7 +18,7 @@ void UInventoryWidget::NativeConstruct()
     if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
         // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
+        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->MyPlayer->GetPlayerInfo();
         const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
 
         UpdateGold(PlayerInfo_.gold());
@@ -37,12 +39,12 @@ void UInventoryWidget::NativeConstruct()
         }
         
         // 바인딩 셋업
-        GameInstance->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
-        GameInstance->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
+        GameInstance->MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
+        //GameInstance->MyPlayer->GetInventory()->OnSlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
 
-        GameInstance->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) PendingPacket = false; });
-        GameInstance->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
-        GameInstance->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->MyPlayer->OnRecvSellItemPkt.AddLambda([this]() { if(IsValid(this)) PendingPacket = false; });
+        GameInstance->MyPlayer->OnRecvUseItemPkt.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
+        GameInstance->MyPlayer->OnRecvEquipGearPkt.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
@@ -158,7 +160,7 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
         if (GameInstance == nullptr)
             return;
 
-        int32 Level = GameInstance->GetLevel();
+        int32 Level = GameInstance->MyPlayer->GetPlayerLevel();
         if (Level < _Slot->ItemData.LevelRequirement)
         {
             GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
@@ -195,7 +197,7 @@ void UInventoryWidget::SendEquipItemPacket(USlotWidget* _Slot)
         if (GameInstance == nullptr)
             return;
 
-        int32 Level = GameInstance->GetLevel();
+        int32 Level = GameInstance->MyPlayer->GetPlayerLevel();
         if (Level < _Slot->ItemData.LevelRequirement)
         {
             PendingPacket = false;

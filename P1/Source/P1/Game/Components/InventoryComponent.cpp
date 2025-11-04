@@ -1,11 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Game/Inventory.h"
-#include "P1MyPlayer.h"
-#include "P1.h"
 
-UInventory::UInventory()
+#include "InventoryComponent.h"
+#include "P1GameInstance.h"
+
+// Sets default values for this component's properties
+UInventoryComponent::UInventoryComponent()
 {
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
+	PrimaryComponentTick.bCanEverTick = true;
+
     InventoryLookupMappings =
     {
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, TArray<Protocol::Slot*>()},
@@ -14,11 +19,28 @@ UInventory::UInventory()
     };
 }
 
-UInventory::~UInventory()
+
+void UInventoryComponent::BeginPlay()
 {
+	Super::BeginPlay();
+
+    //AActor* Owner = GetOwner();
+    //if (Owner->IsA<AP1MyPlayer>() == false)
+    //    return;
+
+    //if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    //{
+    //    Protocol::ObjectInfo* PlayerInfo = GameInstance->CachedMyPlayerInfo;
+    //    if (PlayerInfo == nullptr)
+    //        return;
+
+    //    Protocol::Inventory* Inventory = PlayerInfo->mutable_player_info()->mutable_inventory();
+    //    Init(Inventory);
+    //}
+
 }
 
-void UInventory::Init(Protocol::Inventory* Inventory_)
+void UInventoryComponent::Init(Protocol::Inventory* Inventory_)
 {
     // 장비창 룩업 저장
     {
@@ -55,14 +77,14 @@ void UInventory::Init(Protocol::Inventory* Inventory_)
             MiscellaneousLookup[Slot_->slot_id()] = Slot_;
         }
     }
-
 }
 
-void UInventory::SetSlot(const Protocol::Slot& Slot_)
-{  
-    if (InventoryLookupMappings.Contains(Slot_.type()))
+void UInventoryComponent::HandleSlotChanged(const Protocol::Slot& InSlot, bool OnUse)
+{
+    if (InventoryLookupMappings.Contains(InSlot.type()))
     {
-        TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
-        InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
+        TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[InSlot.type()];
+        InvenLookup[InSlot.slot_id()]->CopyFrom(InSlot);
     }
+    OnSlotChanged.Broadcast(InSlot, OnUse);
 }

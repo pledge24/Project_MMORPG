@@ -33,6 +33,11 @@ public:
     /** Getter함수 */
     FText GetPlayerName() const { return GetCreatureName(); }
 
+public:
+    /** 델리게이트 */
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
+    FOnLevelChanged OnLevelChanged;
+
 protected:
     /** 이동 관련 함수 */
     virtual void S_Move(float DeltaSeconds) override;

@@ -45,11 +45,18 @@ public:
 
     FVector FindPerpendicularPoint() const;
 
+public:
+    /** 델리게이트 */
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
+    FOnStatInfoChanged OnStatInfoChanged;
+
+
 protected:
-    /** Attack System Component*/
+    /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     class UAttackSystemComponent* AttackSystemComponent;
 
+    /** Etc Data */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
     FText CreatureName = FText::FromString("NULL");
 

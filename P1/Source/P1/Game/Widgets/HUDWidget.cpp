@@ -12,23 +12,23 @@ void UHUDWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
-    {
-        // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
-        const Protocol::StatInfo& StatInfo_ = PlayerInfo_.stat_info();
+    //if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    //{
+    //    // Init
+    //    const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
+    //    const Protocol::StatInfo& StatInfo_ = PlayerInfo_.stat_info();
 
-        Name_txt->SetText(FText::FromString(UTF8_TO_TCHAR(PlayerInfo_.name().c_str())));
-        UpdateLevel(PlayerInfo_.level());
-        HpBar->Init(StatInfo_.hp(), StatInfo_.max_hp());
-        MpBar->Init(StatInfo_.mp(), StatInfo_.max_mp());
-        ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp(), true);
+    //    Name_txt->SetText(FText::FromString(UTF8_TO_TCHAR(PlayerInfo_.name().c_str())));
+    //    UpdateLevel(PlayerInfo_.level());
+    //    HpBar->Init(StatInfo_.hp(), StatInfo_.max_hp());
+    //    MpBar->Init(StatInfo_.mp(), StatInfo_.max_mp());
+    //    ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp(), true);
 
-        // 바인딩 셋업
-        GameInstance->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateLevel);
-        GameInstance->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExpBar);
-        GameInstance->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
-    }
+    //    // 바인딩 셋업
+    //    GameInstance->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateLevel);
+    //    GameInstance->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExpBar);
+    //    GameInstance->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
+    //}
 }
 
 void UHUDWidget::UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_)
