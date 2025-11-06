@@ -8,6 +8,7 @@
 #include "Protocol.pb.h"
 #include "P1GameInstance.generated.h"
 
+class UMyPlayerData;
 class AP1Player;
 class AP1MyPlayer;
 
@@ -60,17 +61,12 @@ public:
 
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
 
-public:
-    /** GameServer 접속 토큰 정보 */
-    void SetToken(FString token) { _token = token; }
-    FString GetToken() { return _token; }
+    /** Getter 함수 */
+    FString GetToken() const { return _token; }
+    UMyPlayerData* GetMyPlayerData() const { return _MyPlayerData; }
 
-public:
-	/** GameServer Socket */
-	class FSocket* Socket;
-	FString IpAddress = TEXT("127.0.0.1");
-	int16 Port = 7777;
-	PacketSessionRef GameServerSession;
+    /** Setter 함수 */
+    void SetToken(FString token) { _token = token; }
 
 public:
 	/** Player 정보 */
@@ -83,9 +79,15 @@ public:
 	AP1MyPlayer* MyPlayer;
 	TMap<uint64, AP1Player*> Players;
 
-    Protocol::ObjectInfo* CachedMyPlayerInfo;
-    uint64 CachedMyPlayerId = 0;
+    /** GameServer Socket */
+    class FSocket* Socket;
+    FString IpAddress = TEXT("127.0.0.1");
+    int16 Port = 7777;
+    PacketSessionRef GameServerSession;
 
-private:
-	FString _token = "";
+protected:
+    UPROPERTY()
+    UMyPlayerData* _MyPlayerData;
+
+	FString _token = ""; // GameServer 접속 토큰
 };

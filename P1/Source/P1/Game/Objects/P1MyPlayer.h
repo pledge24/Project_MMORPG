@@ -39,19 +39,6 @@ public:
     /** Getter함수 */
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-    UInventoryComponent* GetInventory() const { return InventoryComponent; }
-    UEquippedGearComponent* GetEquippedGear() const { return EquippedGearComponent; }
-
-    const Protocol::PlayerInfo& GetPlayerInfo() const { return *_PlayerInfo; }
-    int32 GetGold() const { return _PlayerInfo->gold(); };
-    int32 GetPlayerLevel() const { return _PlayerInfo->level(); };
-    uint64 GetPlayerId() const { return _PlayerId; }
-
-    /** 패킷 핸들 함수 */
-    void HandleGoldChanged(int64 Gold);
-    void HandleLevelChanged(int32 Level);
-    void HandleExpChanged(int32 CurExp, int32 MaxExp);
-    void HandleStatChanged(const Protocol::StatInfo& InStatInfo);
 
 protected:
     /** 상태 동기화용 함수 Delete */
@@ -71,8 +58,14 @@ public:
     DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, TOptional<int32>, TOptional<int32>);
     FOnExpChanged OnExpChanged;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int64);
     FOnGoldChanged OnGoldChanged;
+
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInvenSlotChanged, const Protocol::Slot&, bool);
+    FOnInvenSlotChanged OnInvenSlotChanged;
+
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGearSlotChanged, const Protocol::Slot&);
+    FOnGearSlotChanged OnGearSlotChanged;
 
     /** 패킷 수신 체크용 델리게이트 */
     DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
@@ -89,6 +82,10 @@ public:
 
     DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
     FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
+
+    /** ETC */
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    bool bOnlyUIInputMode = false;
 
 protected:
     /**--------------------
@@ -127,23 +124,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* NormalAttackAction;
 
-    /**--------------------
-     *      Components
-     *--------------------*/
-
-    /** Inventory Component*/
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UInventoryComponent* InventoryComponent;
-
-    /** EquippedGear Component */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    UEquippedGearComponent* EquippedGearComponent;
-
 private:
-    uint64 _PlayerId = 0;
-    Protocol::PlayerInfo* _PlayerInfo;
-    Protocol::StatInfo* _StatInfo;
-
     /** MovePkt 전송 관련 */
     Protocol::C_MOVE MovePkt;
 

@@ -32,6 +32,16 @@ void UAttackSystemComponent::BeginPlay()
 	
 }
 
+void UAttackSystemComponent::InRestrictedArea()
+{
+    RestrictedArea++;
+}
+
+void UAttackSystemComponent::OutRestrictedArea()
+{
+    RestrictedArea = FMath::Min(RestrictedArea - 1, 0);
+}
+
 bool UAttackSystemComponent::IsAttacking() const
 {
     return bIsAttacking;
@@ -39,5 +49,5 @@ bool UAttackSystemComponent::IsAttacking() const
 
 bool UAttackSystemComponent::EnableInputAttack() const
 {
-    return bEnableInputAttack;
+    return bEnableInputAttack && RestrictedArea == 0;
 }

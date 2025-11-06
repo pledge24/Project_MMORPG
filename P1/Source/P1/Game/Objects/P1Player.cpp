@@ -72,11 +72,11 @@ void AP1Player::Initialize(const Protocol::ObjectInfo& ObjectInfo)
     for (const auto& Pair : ObjectInfo.player_info().equipped_gear())
     {
         const Protocol::Slot& Slot_ = Pair.second;
-        SetEquippedGear(Slot_);
+        EquipGear(Slot_);
     }
 }
 
-void AP1Player::SetEquippedGear(const Protocol::Slot& InSlot)
+void AP1Player::EquipGear(const Protocol::Slot& InSlot)
 {
     int32 SlotId = InSlot.slot_id();
     int32 TemplateId = InSlot.item().template_id();

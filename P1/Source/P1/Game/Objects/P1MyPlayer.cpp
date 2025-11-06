@@ -4,14 +4,13 @@
 #include "P1MyPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
-#include "Components/InventoryComponent.h"
-#include "Components/EquippedGearComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
 #include "AttackSystemComponent.h"
+#include "MyPlayerData.h"
 #include "Log/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
@@ -26,16 +25,6 @@ AP1MyPlayer::AP1MyPlayer()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
-    // Create a Inventory
-    InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
-
-    // Create a EquippedGear
-    EquippedGearComponent = CreateDefaultSubobject<UEquippedGearComponent>(TEXT("EquippedGear"));
-
-    // Proto
-    _PlayerInfo = new Protocol::PlayerInfo();
-    _StatInfo = _PlayerInfo->mutable_stat_info();
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -47,7 +36,7 @@ void AP1MyPlayer::BeginPlay()
     {
         PC->Possess(this);
 
-	    //Add Input Mapping Context
+	    // Add Input Mapping Context
 	    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	    {
 		    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -55,16 +44,21 @@ void AP1MyPlayer::BeginPlay()
 			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		    }
 	    }
+
+        // Broadcast Spawn MyPlayer
+        if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
+        {
+            if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
+            {
+                MyPlayerData->OnMyPlayerSpawned.Broadcast(this);
+            }
+        }
     }
 }
 
 void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-
-    delete _PlayerInfo;
-    _PlayerInfo = nullptr;
-    _StatInfo = nullptr;
 }
 
 /**--------------------
@@ -161,38 +155,10 @@ void AP1MyPlayer::Initialize(const Protocol::ObjectInfo& InObjectInfo)
     SetClientPos(InObjectInfo.pos_info());
 }
 
-void AP1MyPlayer::HandleGoldChanged(int64 Gold)
-{
-    _PlayerInfo->set_gold(Gold);
-    OnGoldChanged.Broadcast(Gold);
-}
-
-void AP1MyPlayer::HandleLevelChanged(int32 Level)
-{
-    _PlayerInfo->set_level(Level);
-    OnLevelChanged.Broadcast(_PlayerInfo->level());
-}
-
-void AP1MyPlayer::HandleExpChanged(int32 CurExp, int32 MaxExp)
-{
-    _PlayerInfo->set_cur_exp(CurExp);
-    if (MaxExp > 0)
-        _PlayerInfo->set_max_exp(MaxExp);
-
-    OnExpChanged.Broadcast(_PlayerInfo->cur_exp(), _PlayerInfo->max_exp());
-}
-
-void AP1MyPlayer::HandleStatChanged(const Protocol::StatInfo& InStatInfo)
-{
-    _StatInfo->CopyFrom(InStatInfo);
-    OnStatInfoChanged.Broadcast(*_StatInfo);
-}
-
 void AP1MyPlayer::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-    UE_LOG(LogTemp, Log, TEXT("MOVE: (%f, %f)"), MovementVector.Y, MovementVector.X);
 	if (Controller != nullptr)
 	{
 		// find out which way is forward
@@ -231,7 +197,7 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	if (Controller != nullptr && bOnlyUIInputMode == false)
 	{
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
@@ -248,7 +214,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
         return;
     }
 
-    if (AttackSystemComponent != nullptr)
+    if (AttackSystemComponent != nullptr && bOnlyUIInputMode == false)
     {
         if (AttackSystemComponent->EnableInputAttack() == true)
         {

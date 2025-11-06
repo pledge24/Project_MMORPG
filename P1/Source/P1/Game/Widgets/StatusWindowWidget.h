@@ -7,6 +7,7 @@
 #include "SlotWidget.h"
 #include "StatusWindowWidget.generated.h"
 
+class AP1MyPlayer;
 class UTextBlock;
 
 /**
@@ -19,6 +20,8 @@ class P1_API UStatusWindowWidget : public UUserWidget
 
 protected:
     virtual void NativeConstruct() override;
+
+    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 
 public:
     void UpdateSlotWidget(const Protocol::Slot& Slot_);

@@ -27,6 +27,13 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "AttackSystem")
     void S_PerformNormalAttack(int32 Combo);
 
+    UFUNCTION(BlueprintCallable, Category = "AttackSystem")
+    void InRestrictedArea();
+
+    UFUNCTION(BlueprintCallable, Category = "AttackSystem")
+
+    void OutRestrictedArea();
+
     bool IsAttacking() const;
     bool EnableInputAttack() const;
     int32 GetLastCombo() const { return NormalAttackCombo;}
@@ -43,4 +50,7 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
     int32 NormalAttackCombo = 0; // 쌓인 콤보 기준
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
+    int32 RestrictedArea = 0; 
 };

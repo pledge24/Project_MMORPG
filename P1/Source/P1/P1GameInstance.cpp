@@ -13,19 +13,21 @@
 #include "Objects/P1MyPlayer.h"
 #include "P1.h"
 #include "Creature.h"
+#include "MyPlayerData.h"
 #include "Log/LogCategory.h"
 #include "P1MyPlayer.h"
-#include "Components/InventoryComponent.h"
-#include "Components/EquippedGearComponent.h"
 
 UP1GameInstance::UP1GameInstance()
 {
-    CachedMyPlayerInfo = new Protocol::ObjectInfo();
 }
 
 void UP1GameInstance::Init()
 {
     Super::Init();
+
+    _MyPlayerData = GetSubsystem<UMyPlayerData>();
+    if (IsValid(_MyPlayerData) == false)
+        UE_LOG(LogTemp, Warning, TEXT("_MyPlayerData Is Not Stored"));
 }
 
 void UP1GameInstance::Shutdown()
@@ -39,9 +41,6 @@ void UP1GameInstance::Shutdown()
 void UP1GameInstance::BeginDestroy()
 {
     Super::BeginDestroy();
-
-    delete CachedMyPlayerInfo;
-    CachedMyPlayerInfo = nullptr;
 }
 
 
@@ -123,9 +122,11 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     if (EnterGamePkt.success() == false)
         return;
 
-    // Cached MyPlayer Data
-    CachedMyPlayerInfo->CopyFrom(EnterGamePkt.player());
-    CachedMyPlayerId = EnterGamePkt.player().object_id();
+    UMyPlayerData* MyPlayerData = GetSubsystem<UMyPlayerData>();
+    const Protocol::ObjectInfo& ObjectInfo = EnterGamePkt.player();
+
+    // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다.
+    MyPlayerData->InitMyPlayerData(ObjectInfo);
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool IsMine)
@@ -145,17 +146,18 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 	FVector SpawnLocation(ObjectInfo.pos_info().x(), ObjectInfo.pos_info().y(), ObjectInfo.pos_info().z());
     FRotator SpawnRotator(0.f, ObjectInfo.pos_info().yaw(), 0.f);
 
+
 	if (IsMine)
 	{
+        // 리스폰할때 진입
         if (IsValid(MyPlayer) == true)
         {
-            // 리스폰할때 진입
             // bool bRespawn = false;
             MyPlayer->PushToMoveQueue(ObjectInfo.pos_info());
             return;
         }
         
-        // Spawn MyPlayer
+        // Map에 처음 진입했을때 진입
         AP1Player* Player = World->SpawnActor<AP1Player>(MyPlayerClass, SpawnLocation, SpawnRotator);
         MyPlayer = Cast<AP1MyPlayer>(Player);
         Players.Add(ObjectInfo.object_id(), Player);
@@ -174,9 +176,12 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool I
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
+    UMyPlayerData* MyPlayerData = GetSubsystem<UMyPlayerData>();
+    uint64 MyPlayerId = MyPlayerData->GetPlayerId();
+
 	for (auto& Player : SpawnPkt.objects())
 	{
-        bool IsMine = Player.object_id() == CachedMyPlayerId;
+        bool IsMine = Player.object_id() == MyPlayerId;
 		HandleSpawn(Player, IsMine);
 	}
 }
@@ -210,7 +215,9 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 
 void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
 {
-    uint64 ExceptId = ExceptMine ? CachedMyPlayerId : 0;
+    uint64 MyPlayerId = _MyPlayerData->GetPlayerId();
+
+    uint64 ExceptId = ExceptMine ? MyPlayerId : 0;
     for (auto Item : Players)
     {
         if (ExceptId != Item.Key)
@@ -254,9 +261,8 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
         MyPlayer->OnRecvBuyItemPkt.Broadcast();
         if (BuyItemPkt.success() == true)
         {
-            UInventoryComponent* InventoryComponent = MyPlayer->GetInventory();
-            InventoryComponent->HandleSlotChanged(BuyItemPkt.updated_slot());
-            MyPlayer->HandleGoldChanged(BuyItemPkt.gold());
+            MyPlayer->OnInvenSlotChanged.Broadcast(BuyItemPkt.updated_slot(), false);
+            MyPlayer->OnGoldChanged.Broadcast(BuyItemPkt.gold());
         }
     }
 }
@@ -270,14 +276,13 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
     if (World == nullptr)
         return;
 
-    if (IsValid(MyPlayer))
+    if (IsValid(MyPlayer) == true)
     {
         MyPlayer->OnRecvSellItemPkt.Broadcast();
         if (SellItemPkt.success() == true)
         {
-            UInventoryComponent* InventoryComponent = MyPlayer->GetInventory();
-            InventoryComponent->HandleSlotChanged(SellItemPkt.updated_slot());
-            MyPlayer->HandleGoldChanged(SellItemPkt.gold());
+            MyPlayer->OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
+            MyPlayer->OnGoldChanged.Broadcast(SellItemPkt.gold());
         }
     }
 }
@@ -306,8 +311,8 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         if (UseItemPkt.success() == true)
         {
             auto& Slot = UseItemPkt.updated_inventory_slot();
-            MyPlayer->GetInventory()->HandleSlotChanged(Slot, true);
-            MyPlayer->HandleStatChanged(UseItemPkt.updated_stat_info());
+            MyPlayer->OnInvenSlotChanged.Broadcast(Slot, true);
+            MyPlayer->OnStatInfoChanged.Broadcast(UseItemPkt.updated_stat_info());
         }
     }
 }
@@ -345,9 +350,9 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
         MyPlayer->OnRecvEquipGearPkt.Broadcast();
         if (EquipGearPkt.success() == true)
         {
-            MyPlayer->GetEquippedGear()->HandleSlotChanged(EquippedGearSlot);
-            MyPlayer->GetInventory()->HandleSlotChanged(InvenSlot);
-            MyPlayer->HandleStatChanged(EquipGearPkt.updated_stat_info());
+            MyPlayer->OnGearSlotChanged.Broadcast(EquippedGearSlot);
+            MyPlayer->OnInvenSlotChanged.Broadcast(InvenSlot, false);
+            MyPlayer->OnStatInfoChanged.Broadcast(EquipGearPkt.updated_stat_info());
         }
     }
 
@@ -387,9 +392,9 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
         MyPlayer->OnRecvUnequipGearPkt.Broadcast();
         if (UnequipGearPkt.success() == true)
         {
-            MyPlayer->GetEquippedGear()->HandleSlotChanged(EquippedGearSlot);
-            MyPlayer->GetInventory()->HandleSlotChanged(InvenSlot);
-            MyPlayer->HandleStatChanged(UnequipGearPkt.updated_stat_info());
+            MyPlayer->OnGearSlotChanged.Broadcast(EquippedGearSlot);
+            MyPlayer->OnInvenSlotChanged.Broadcast(InvenSlot, false);
+            MyPlayer->OnStatInfoChanged.Broadcast(UnequipGearPkt.updated_stat_info());
         }
 
     }

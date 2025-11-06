@@ -74,6 +74,7 @@ void AInGamePlayerController::BeginPlay()
         {WidgetType::WIDGET_INVENTORY, InventoryWidget},
         {WidgetType::WIDGET_SHOP, ShopWidget},
     };
+    
 }
 
 void AInGamePlayerController::SetupInputComponent()

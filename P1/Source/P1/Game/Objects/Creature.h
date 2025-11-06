@@ -20,8 +20,10 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 
+    
 public:
     virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);
+
 
     bool IsMyPlayer() const;
     bool PushToMoveQueue(const Protocol::PosInfo& InInfo);
@@ -34,8 +36,8 @@ public:
 
     /** Getter함수 */
     Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
-    Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
     class UAttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
+    Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
     FText GetCreatureName() const { return CreatureName; }
 
 public:
@@ -50,12 +52,11 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
     FOnStatInfoChanged OnStatInfoChanged;
 
-
-protected:
     /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     class UAttackSystemComponent* AttackSystemComponent;
 
+protected:
     /** Etc Data */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
     FText CreatureName = FText::FromString("NULL");

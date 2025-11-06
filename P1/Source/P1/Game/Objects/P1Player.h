@@ -27,7 +27,7 @@ public:
     virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override;
 
     /** Setter함수 */
-    void SetEquippedGear(const Protocol::Slot& InSlot);
+    void EquipGear(const Protocol::Slot& InSlot);
     void SetPlayerName(const FText& InName);
 
     /** Getter함수 */

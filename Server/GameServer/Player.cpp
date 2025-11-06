@@ -121,7 +121,7 @@ bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* tar
 {
     int64 gold = playerInfo->gold();
     int32 templateId = targetSlot->item().template_id();
-    int64 sellPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::Sellable] * count;
+    int64 sellPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::SellPrice] * count;
 
     if (inventory->removeItem(OUT updatedSlot, targetSlot, count) == false)
         return false;
