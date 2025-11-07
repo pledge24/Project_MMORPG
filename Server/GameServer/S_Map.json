@@ -74,7 +74,7 @@
     },
     {
         "templateId": 20,
-        "mapName": "초급 사냥터(Lv1~Lv10)",
+        "mapName": "초급 사냥터",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
         "centerPos": {
@@ -115,7 +115,7 @@
     },
     {
         "templateId": 30,
-        "mapName": "중급 사냥터(Lv11~Lv30)",
+        "mapName": "중급 사냥터",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
         "centerPos": {
@@ -156,7 +156,7 @@
     },
     {
         "templateId": 40,
-        "mapName": "고급 사냥터(Lv31~Lv50)",
+        "mapName": "고급 사냥터",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
         "centerPos": {

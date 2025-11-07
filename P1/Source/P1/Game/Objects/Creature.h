@@ -52,11 +52,15 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
     FOnStatInfoChanged OnStatInfoChanged;
 
+protected:
     /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     class UAttackSystemComponent* AttackSystemComponent;
 
-protected:
+    /** Attack System Component */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class UWidgetComponent* NameplateComponent;
+
     /** Etc Data */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
     FText CreatureName = FText::FromString("NULL");

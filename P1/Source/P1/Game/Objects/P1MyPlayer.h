@@ -87,7 +87,7 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     bool bOnlyUIInputMode = false;
 
-protected:
+private:
     /**--------------------
      *       Camera
      *--------------------*/
@@ -124,7 +124,10 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* NormalAttackAction;
 
-private:
+    /**--------------------
+     *      Movement
+     *--------------------*/
+
     /** MovePkt 전송 관련 */
     Protocol::C_MOVE MovePkt;
 

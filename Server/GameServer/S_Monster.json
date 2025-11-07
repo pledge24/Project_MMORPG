@@ -42,7 +42,7 @@
     {
         "templateId": 5002,
         "level": 7,
-        "monsterName": "초급 중형 미니언",
+        "monsterName": "초급 슈퍼 미니언",
         "attackType": "melee",
         "maxHp": 200,
         "baseAttack": 40,
@@ -102,7 +102,7 @@
     {
         "templateId": 5005,
         "level": 25,
-        "monsterName": "중급 중형 미니언",
+        "monsterName": "중급 슈퍼 미니언",
         "attackType": "melee",
         "maxHp": 1000,
         "baseAttack": 120,
@@ -162,7 +162,7 @@
     {
         "templateId": 5008,
         "level": 45,
-        "monsterName": "고급 중형 미니언",
+        "monsterName": "고급 슈퍼 미니언",
         "attackType": "melee",
         "maxHp": 3000,
         "baseAttack": 300,

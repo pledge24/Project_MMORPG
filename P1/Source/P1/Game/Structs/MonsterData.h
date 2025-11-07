@@ -33,4 +33,7 @@ struct FMonsterData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int64 BaseAttack;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSoftClassPtr<class AMonster> MonsterClass;
 };

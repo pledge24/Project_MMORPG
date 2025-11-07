@@ -5,15 +5,18 @@
 #include "InGamePlayerController.h"
 #include "AttackSystemComponent.h"
 #include "P1MyPlayer.h"
+#include "Components/WidgetComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Log/LogCategory.h"
 
 ACreature::ACreature()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+    
     ClientPos = new Protocol::PosInfo();
     ServerPos = new Protocol::PosInfo();
+
+    SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 }
 
 void ACreature::BeginPlay()
@@ -23,6 +26,10 @@ void ACreature::BeginPlay()
     AttackSystemComponent = FindComponentByClass<UAttackSystemComponent>();
     if (AttackSystemComponent == nullptr)
         UE_LOG(LogTemp, Warning, TEXT("AttackSystemComponent 누락"));
+
+    NameplateComponent = FindComponentByClass<UWidgetComponent>();
+    if (NameplateComponent == nullptr)
+        UE_LOG(LogTemp, Warning, TEXT("NameplateComponent 누락"));
 
     {
         FVector Location = GetActorLocation();
