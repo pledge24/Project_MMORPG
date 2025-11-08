@@ -26,9 +26,6 @@ AMonster* AMonsterSpawner::SpawnMonster(int32 TemplateId, const FVector& Locatio
     TSubclassOf<AMonster> MonsterBPClass = MonsterData.MonsterClass.Get();
     AMonster* Monster = GetWorld()->SpawnActor<AMonster>(MonsterBPClass, Location, Rotation);
 
-    if (IsValid(Monster) == false)
-        UE_LOG(LogTemp, Log, TEXT("WHY"));
-
     return Monster;
 }
 

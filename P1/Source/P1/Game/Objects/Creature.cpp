@@ -6,6 +6,7 @@
 #include "AttackSystemComponent.h"
 #include "P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Log/LogCategory.h"
 
@@ -17,6 +18,8 @@ ACreature::ACreature()
     ServerPos = new Protocol::PosInfo();
 
     SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+    GetCharacterMovement()->bRunPhysicsWithNoController = true;
 }
 
 void ACreature::BeginPlay()
@@ -191,6 +194,8 @@ void ACreature::S_Move(float DeltaSeconds)
             ServerLocation : FindPerpendicularPoint();
 
         FVector CorrectedClientLocation = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, CORR_INTERP_SPEED);
+        CorrectedClientLocation.Z = ClientLocation.Z;
+
         SetActorLocation(CorrectedClientLocation);
     }
 }

@@ -34,7 +34,7 @@ AP1Player::AP1Player()
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
-	GetCharacterMovement()->bRunPhysicsWithNoController = true;
+	//GetCharacterMovement()->bRunPhysicsWithNoController = true;
 	//====================================================================
 
     WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
