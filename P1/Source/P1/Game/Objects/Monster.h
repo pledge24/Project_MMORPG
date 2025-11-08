@@ -25,12 +25,26 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override;
+
     const FMonsterData& GetMonsterData() const { return MonsterData; }
-    int64 GetCurHp() const { return CurHp; }
+    int32 GetTemplateId() const { return TemplateId; }
+    int32 GetCurHp() const { return CurHp; }
+
+    void SetDefaultMonsterData(const FMonsterData& InMonsterData);
 
 protected:
     /** 고정된 데이터 */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MonsterData")
     FMonsterData MonsterData;
 
-    int64 CurHp = -1;
+    // Cached
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MonsterData")
+    int32 TemplateId = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="MonsterData")
+    int32 CurHp = -1;
+
+    Protocol::MonsterInfo _MonsterInfo;
+
 };

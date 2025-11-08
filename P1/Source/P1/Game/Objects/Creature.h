@@ -52,6 +52,9 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
     FOnStatInfoChanged OnStatInfoChanged;
 
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, const int32&);
+    FOnHpChanged OnHpChanged;
+
 protected:
     /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

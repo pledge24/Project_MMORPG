@@ -26,6 +26,7 @@ message ObjectInfo
     {
         // oneof 그룹 내의 모든 필드는 기본적으로 optional 효과를 가짐
         PlayerInfo player_info = 6;
+        MonsterInfo monster_info = 7;
     }
 }
 
@@ -46,6 +47,12 @@ message PlayerInfo
     uint64 gold = 8;
     Inventory inventory = 9;
     map<int32, Slot> equipped_gear = 10; // <SlotId(or GearType), Slot>
+}
+
+message MonsterInfo
+{
+    int32 template_id = 1;
+    int32 hp = 2;
 }
 
 message PosInfo

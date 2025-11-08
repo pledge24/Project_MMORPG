@@ -4,6 +4,7 @@
 #include "Game/Objects/Creature.h"
 #include "InGamePlayerController.h"
 #include "AttackSystemComponent.h"
+#include "NameplateWidget.h"
 #include "P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -28,11 +29,11 @@ void ACreature::BeginPlay()
 
     AttackSystemComponent = FindComponentByClass<UAttackSystemComponent>();
     if (AttackSystemComponent == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("AttackSystemComponent 누락"));
+        UE_LOG(LogTemp, Warning, TEXT("ACreature: AttackSystemComponent 누락"));
 
     NameplateComponent = FindComponentByClass<UWidgetComponent>();
     if (NameplateComponent == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("NameplateComponent 누락"));
+        UE_LOG(LogTemp, Warning, TEXT("ACreature: NameplateComponent 누락"));
 
     {
         FVector Location = GetActorLocation();

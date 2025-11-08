@@ -7,6 +7,8 @@
 #include "Types.h"
 #include "NameplateWidget.generated.h"
 
+class AP1Player;
+class AMonster;
 class UTextBlock;
 class UProgressBarWidget;
 
@@ -19,8 +21,14 @@ class P1_API UNameplateWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-    void NativeConstruct() override;
+    virtual void NativeConstruct() override;
+
+public:
+    UFUNCTION(BlueprintCallable)
     void InitializeWidget(AActor* Actor);
+
+    void InitializePlayerNameplate(AP1Player* TargetPlayer);
+    void InitializeMonsterNameplate(AMonster* TargetMonster);
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))

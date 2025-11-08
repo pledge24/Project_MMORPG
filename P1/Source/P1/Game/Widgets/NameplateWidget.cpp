@@ -16,34 +16,47 @@ void UNameplateWidget::InitializeWidget(AActor* Actor)
 {
     if (AP1Player* Player = Cast<AP1Player>(Actor))
     {
-        NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
-        HpBarInitVisibility = ESlateVisibility::Collapsed;
-
-        NameTextBlock->SetVisibility(NameTextInitVisibility);
-        HpBar->SetVisibility(HpBarInitVisibility);
-
-        NameTextBlock->SetText(Player->GetPlayerName());
+        InitializePlayerNameplate(Player);
     }
     else if (AMonster* Monster = Cast<AMonster>(Actor))
     {
-        NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
-        HpBarInitVisibility = ESlateVisibility::SelfHitTestInvisible;
-
-        NameTextBlock->SetVisibility(NameTextInitVisibility);
-        HpBar->SetVisibility(HpBarInitVisibility);
-
-        const FMonsterData& MonsterData = Monster->GetMonsterData();
-        if (MonsterData.TemplateId == 0)
-            return;
-
-        NameTextBlock->SetText(FText::FromString(MonsterData.MonsterName));
-
-        int64 CurHp = Monster->GetCurHp();
-        int64 MaxHp = MonsterData.MaxHp;
-        HpBar->Init(CurHp, MaxHp);
+        InitializeMonsterNameplate(Monster);
     }
     else
     {
         return;
     }
+}
+
+void UNameplateWidget::InitializePlayerNameplate(AP1Player* TargetPlayer)
+{
+    NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
+    HpBarInitVisibility = ESlateVisibility::Collapsed;
+
+    NameTextBlock->SetVisibility(NameTextInitVisibility);
+    HpBar->SetVisibility(HpBarInitVisibility);
+
+    NameTextBlock->SetText(TargetPlayer->GetPlayerName());
+}
+
+void UNameplateWidget::InitializeMonsterNameplate(AMonster* TargetMonster)
+{
+    NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
+    HpBarInitVisibility = ESlateVisibility::SelfHitTestInvisible;
+
+    NameTextBlock->SetVisibility(NameTextInitVisibility);
+    HpBar->SetVisibility(HpBarInitVisibility);
+
+    const FMonsterData& MonsterData = TargetMonster->GetMonsterData();
+    if (TargetMonster->GetTemplateId() == 0)
+    {
+        UE_LOG(LogTemp, Log, TEXT("InitializeMonsterNameplate"));
+        return;
+    }
+
+    NameTextBlock->SetText(FText::FromString(MonsterData.MonsterName));
+
+    int64 CurHp = TargetMonster->GetCurHp();
+    int64 MaxHp = MonsterData.MaxHp;
+    HpBar->Init(CurHp, MaxHp);
 }
