@@ -34,7 +34,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-    virtual void Initialize(const Protocol::ObjectInfo& InObjectInfo) override;
+    virtual void Initialize(const Protocol::ObjectInfo& InObjectInfo) override; // Server Only
 
     /** Getter함수 */
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

@@ -49,10 +49,7 @@ void UNameplateWidget::InitializeMonsterNameplate(AMonster* TargetMonster)
 
     const FMonsterData& MonsterData = TargetMonster->GetMonsterData();
     if (TargetMonster->GetTemplateId() == 0)
-    {
-        UE_LOG(LogTemp, Log, TEXT("InitializeMonsterNameplate"));
         return;
-    }
 
     NameTextBlock->SetText(FText::FromString(MonsterData.MonsterName));
 

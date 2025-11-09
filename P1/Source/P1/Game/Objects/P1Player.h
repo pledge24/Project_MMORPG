@@ -24,7 +24,7 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);
 
-    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override;
+    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override; // Server Only
 
     /** Setter함수 */
     void EquipGear(const Protocol::Slot& InSlot);

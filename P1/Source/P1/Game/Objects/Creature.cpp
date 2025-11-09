@@ -27,13 +27,25 @@ void ACreature::BeginPlay()
 {
     Super::BeginPlay();
 
+    // Set AttackSystem Component
     AttackSystemComponent = FindComponentByClass<UAttackSystemComponent>();
     if (AttackSystemComponent == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("ACreature: AttackSystemComponent 누락"));
+        UE_LOG(LogTemp, Warning, TEXT("ACreature {%s} AttackSystemComponent 누락"), *this->GetName());
 
+    // Set and Initialize Nameplate Component
     NameplateComponent = FindComponentByClass<UWidgetComponent>();
-    if (NameplateComponent == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("ACreature: NameplateComponent 누락"));
+    if (NameplateComponent)
+    {
+        if (UNameplateWidget* NameplateWidget = Cast<UNameplateWidget>(NameplateComponent->GetWidget()))
+            NameplateWidget->InitializeWidget(this);
+        else
+            UE_LOG(LogTemp, Warning, TEXT("ACreature::BeginPlay() NameplateWidget 누락"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ACreature::BeginPlay() NameplateComponent 누락"));
+    }
+
 
     {
         FVector Location = GetActorLocation();

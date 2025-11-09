@@ -61,7 +61,5 @@ void AMonster::SetDefaultMonsterData(const FMonsterData& InMonsterData)
     TemplateId = MonsterData.TemplateId;
     if (CurHp < 0)
         CurHp = MonsterData.MaxHp;
-
-    UE_LOG(LogTemp, Log, TEXT("SetDefaultMonsterData"));
 }
 

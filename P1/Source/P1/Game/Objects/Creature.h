@@ -22,8 +22,7 @@ protected:
 
     
 public:
-    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);
-
+    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);    // Server Only
 
     bool IsMyPlayer() const;
     bool PushToMoveQueue(const Protocol::PosInfo& InInfo);
