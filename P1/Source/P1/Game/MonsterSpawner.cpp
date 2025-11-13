@@ -10,12 +10,12 @@ AMonsterSpawner::AMonsterSpawner()
 
 }
 
-bool AMonsterSpawner::SpawnMonster(int32 TemplateId, AMonster* OutMonster, const FTransform& Transform)
+bool AMonsterSpawner::SpawnMonster(int32 TemplateId, AActor* OutMonster, const FTransform& Transform)
 {
     FVector Location = Transform.GetLocation();
     FRotator Rotation = Transform.GetRotation().Rotator();
 
-    return SpawnMonster(TemplateId, OutMonster, Location, Rotation);
+    return SpawnMonster(TemplateId, (AMonster*)OutMonster, Location, Rotation);
 }
 
 bool AMonsterSpawner::SpawnMonster(int32 TemplateId, AMonster* OutMonster, const Protocol::ObjectInfo& InObjectInfo)

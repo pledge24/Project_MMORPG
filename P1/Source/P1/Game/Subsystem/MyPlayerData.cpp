@@ -10,8 +10,6 @@ void UMyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    UE_LOG(LogTemp, Log, TEXT("MyGameInstanceSubsystem Initialized"));
-
     // Create a Inventory Object
     Inventory = NewObject<UInventory>(this, UInventory::StaticClass());
     if (Inventory == nullptr)
@@ -30,8 +28,6 @@ void UMyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 
 void UMyPlayerData::Deinitialize()
 {
-    UE_LOG(LogTemp, Log, TEXT("MyGameInstanceSubsystem Deinitialized"));
-
     Inventory = nullptr;
     EquippedGear = nullptr;
 

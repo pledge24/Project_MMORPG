@@ -54,6 +54,10 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, const int32&);
     FOnHpChanged OnHpChanged;
 
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDie);
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnDie OnDie;
+
 protected:
     /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

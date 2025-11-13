@@ -13,5 +13,6 @@ UCLASS()
 class P1_API UStatefulObjectManager : public UWorldSubsystem
 {
 	GENERATED_BODY()
-	
+
+    virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 };

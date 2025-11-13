@@ -3,3 +3,7 @@
 
 #include "Game/Subsystem/StatefulObjectManager.h"
 
+void UStatefulObjectManager::OnWorldBeginPlay(UWorld& InWorld)
+{
+    Super::OnWorldBeginPlay(InWorld);
+}

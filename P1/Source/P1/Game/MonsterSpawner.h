@@ -21,7 +21,7 @@ protected:
 
 public:
     UFUNCTION(BlueprintCallable, Category="Spawn")
-    bool SpawnMonster(int32 TemplateId, AMonster* OutMonster, const FTransform& Transform);
+    bool SpawnMonster(int32 TemplateId, AActor* OutMonster, const FTransform& Transform);
 
     bool SpawnMonster(int32 TemplateId, AMonster* OutMonster, const Protocol::ObjectInfo& InObjectInfo); // Server Only
     bool SpawnMonster(int32 TemplateId, AMonster* OutMonster, const FVector& Location, const FRotator& Rotation, TOptional<Protocol::ObjectInfo> ServerInfo = NullOpt);
