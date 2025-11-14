@@ -100,9 +100,9 @@ bool Handle_S_MOVE_ROOM(PacketSessionRef& session, Protocol::S_MOVE_ROOM& pkt)
         GameInstance->HandleMove(pkt.info());   // Teleporting My Character
         GameInstance->HandleDespawnAll(true);
 
-        for (auto& Player : pkt.objects())
+        for (auto& Object : pkt.objects())
         {
-            GameInstance->HandleSpawn(Player, false);
+            GameInstance->HandleSpawn(Object);
         }
 
         return true;

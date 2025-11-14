@@ -13,6 +13,7 @@ PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
 	PlayerRef player = make_shared<Player>();
     player->Init();
 
+    player->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
 	player->objectInfo->set_object_id(newId);
 	player->posInfo->set_object_id(newId);
 

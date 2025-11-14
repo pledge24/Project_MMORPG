@@ -27,7 +27,7 @@ void UP1GameInstance::Init()
 
     _MyPlayerData = GetSubsystem<UMyPlayerData>();
     if (IsValid(_MyPlayerData) == false)
-        UE_LOG(LogTemp, Warning, TEXT("_MyPlayerData Is Not Stored"));
+        UE_LOG(LogTemp, Warning, TEXT("_MyPlayerData Is Invalid"));
 }
 
 void UP1GameInstance::Shutdown()
@@ -129,110 +129,90 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     MyPlayerData->InitMyPlayerData(ObjectInfo);
 }
 
-void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo, bool IsMine)
+void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo)
 {
-	if (Socket == nullptr || GameServerSession == nullptr)
-		return;
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
 
-	auto* World = GetWorld();
-	if (World == nullptr)
-		return;
-    
-	// 있으면 안된다.
-	const uint64 ObjectId = ObjectInfo.object_id();
-	if (Players.Find(ObjectId) != nullptr)
-		return;
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
 
-	FVector SpawnLocation(ObjectInfo.pos_info().x(), ObjectInfo.pos_info().y(), ObjectInfo.pos_info().z());
-    FRotator SpawnRotator(0.f, ObjectInfo.pos_info().yaw(), 0.f);
-
-
-	if (IsMine)
-	{
-        // 리스폰할때 진입
-        if (IsValid(MyPlayer) == true)
-        {
-            // bool bRespawn = false;
-            MyPlayer->PushToMoveQueue(ObjectInfo.pos_info());
-            return;
-        }
-        
-        // Map에 처음 진입했을때 진입
-        AP1Player* Player = World->SpawnActor<AP1Player>(MyPlayerClass, SpawnLocation, SpawnRotator);
-        MyPlayer = Cast<AP1MyPlayer>(Player);
-        Players.Add(ObjectInfo.object_id(), Player);
-    
-        Player->Initialize(ObjectInfo);   // 갑옷 메시 입히는 용
-	}
-	else
-	{
-        // Set Spawn Point
-        AP1Player* Player = World->SpawnActor<AP1Player>(OtherPlayerClass, SpawnLocation, SpawnRotator);
-        Players.Add(ObjectInfo.object_id(), Player);
-		
-        Player->Initialize(ObjectInfo);   // 갑옷 메시 입히는 용
-	}
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        StatefulObjectManager->SpawnObject(ObjectInfo);
+    }
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
-    UMyPlayerData* MyPlayerData = GetSubsystem<UMyPlayerData>();
-    uint64 MyPlayerId = MyPlayerData->GetPlayerId();
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
 
-	for (auto& Player : SpawnPkt.objects())
-	{
-        bool IsMine = Player.object_id() == MyPlayerId;
-		HandleSpawn(Player, IsMine);
-	}
-}
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
 
-void UP1GameInstance::HandleDespawn(uint64 ObjectId)
-{
-	if (Socket == nullptr || GameServerSession == nullptr)
-		return;
-
-	auto* World = GetWorld();
-	if (World == nullptr)
-		return;
-
-	AP1Player** FindActor = Players.Find(ObjectId);
-	if (FindActor == nullptr)
-		return;
-
-    if (Players.Remove(ObjectId) > 0)
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
     {
-	    World->DestroyActor(*FindActor);
+	    for (auto& Object : SpawnPkt.objects())
+	    {
+            StatefulObjectManager->SpawnObject(Object);
+	    }
     }
 }
 
 void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 {
-	for (auto& ObjectId : DespawnPkt.object_ids())
-	{
-		HandleDespawn(ObjectId);
-	}
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        for (auto& ObjectId : DespawnPkt.object_ids())
+        {
+            StatefulObjectManager->DespawnObject(ObjectId);
+        }
+    }
+	
 }
 
 void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
 {
-    uint64 MyPlayerId = _MyPlayerData->GetPlayerId();
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
 
-    uint64 ExceptId = ExceptMine ? MyPlayerId : 0;
-    for (auto Item : Players)
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
     {
-        if (ExceptId != Item.Key)
-            HandleDespawn(Item.Key);
+        StatefulObjectManager->DespawnAllObjects(ExceptMine);
     }
 }
 
 void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
 {
-    AP1Player** FindActor = Players.Find(Info.object_id());
-    if (FindActor == nullptr)
+    auto* World = GetWorld();
+    if (World == nullptr)
         return;
 
-    AP1Player* Player = (*FindActor);
-    Player->PushToMoveQueue(Info);
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        AActor* FindActor = StatefulObjectManager->FindObject(Info.object_id());
+        if (FindActor == nullptr)
+            return;
+
+        if (ACreature* Creature = Cast<ACreature>(FindActor))
+        {
+            Creature->PushToMoveQueue(Info);
+        }
+    }
 }
 
 void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
@@ -240,9 +220,9 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	if (Socket == nullptr || GameServerSession == nullptr)
 		return;
 
-	auto* World = GetWorld();
-	if (World == nullptr)
-		return;
+	//auto* World = GetWorld();
+	//if (World == nullptr)
+	//	return;
 
     HandleMove(MovePkt.info());
 }
@@ -256,13 +236,13 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
     if (World == nullptr)
         return;
 
-    if (IsValid(MyPlayer) == true)
+    if (IsValid(_MyPlayer) == true)
     {
-        MyPlayer->OnRecvBuyItemPkt.Broadcast();
+        _MyPlayer->OnRecvBuyItemPkt.Broadcast();
         if (BuyItemPkt.success() == true)
         {
-            MyPlayer->OnInvenSlotChanged.Broadcast(BuyItemPkt.updated_slot(), false);
-            MyPlayer->OnGoldChanged.Broadcast(BuyItemPkt.gold());
+            _MyPlayer->OnInvenSlotChanged.Broadcast(BuyItemPkt.updated_slot(), false);
+            _MyPlayer->OnGoldChanged.Broadcast(BuyItemPkt.gold());
         }
     }
 }
@@ -276,13 +256,13 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
     if (World == nullptr)
         return;
 
-    if (IsValid(MyPlayer) == true)
+    if (IsValid(_MyPlayer) == true)
     {
-        MyPlayer->OnRecvSellItemPkt.Broadcast();
+        _MyPlayer->OnRecvSellItemPkt.Broadcast();
         if (SellItemPkt.success() == true)
         {
-            MyPlayer->OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
-            MyPlayer->OnGoldChanged.Broadcast(SellItemPkt.gold());
+            _MyPlayer->OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
+            _MyPlayer->OnGoldChanged.Broadcast(SellItemPkt.gold());
         }
     }
 }
@@ -297,24 +277,31 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         return;
 
     const uint64 ObjectId = UseItemPkt.object_id();
-    AP1Player** FindActor = Players.Find(ObjectId);
-    if (FindActor == nullptr)
-        return;
-
-    AP1Player* Player = (*FindActor);
-    if (Player->IsMyPlayer() == false)
-        return;
-
-    if (IsValid(MyPlayer) == true)
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
     {
-        MyPlayer->OnRecvUseItemPkt.Broadcast();
-        if (UseItemPkt.success() == true)
+        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        if (FindActor == nullptr)
+            return;
+
+        AP1Player* Player = Cast<AP1Player>(FindActor);
+        if (Player == nullptr)
+            return;
+
+        if (Player->IsMyPlayer() == false)
+            return;
+
+        if (IsValid(_MyPlayer) == true)
         {
-            auto& Slot = UseItemPkt.updated_inventory_slot();
-            MyPlayer->OnInvenSlotChanged.Broadcast(Slot, true);
-            MyPlayer->OnStatInfoChanged.Broadcast(UseItemPkt.updated_stat_info());
+            _MyPlayer->OnRecvUseItemPkt.Broadcast();
+            if (UseItemPkt.success() == true)
+            {
+                auto& Slot = UseItemPkt.updated_inventory_slot();
+                _MyPlayer->OnInvenSlotChanged.Broadcast(Slot, true);
+                _MyPlayer->OnStatInfoChanged.Broadcast(UseItemPkt.updated_stat_info());
+            }
         }
     }
+
 }
 
 void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
@@ -327,32 +314,37 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
         return;
 
     const uint64 ObjectId = EquipGearPkt.object_id();
-    AP1Player** FindActor = Players.Find(ObjectId);
-    if (FindActor == nullptr)
-        return;
-
-    AP1Player* Player = (*FindActor);
-    
-    auto& EquippedGearSlot = EquipGearPkt.updated_equipped_slot();
-    auto& InvenSlot = EquipGearPkt.updated_inventory_slot();
-
-    // 공통: 장착 부위 매쉬 변경
-    if(EquipGearPkt.success() == true){
-        const Protocol::Item& Item_ = EquippedGearSlot.item();
-
-        // 장착한 갑옷 메시 적용
-        Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
-    }
-
-    // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
-    if (Player->IsMyPlayer())
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
     {
-        MyPlayer->OnRecvEquipGearPkt.Broadcast();
-        if (EquipGearPkt.success() == true)
+        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        if (FindActor == nullptr)
+            return;
+
+        AP1Player* Player = Cast<AP1Player>(FindActor);
+        if (Player == nullptr)
+            return;
+
+        auto& EquippedGearSlot = EquipGearPkt.updated_equipped_slot();
+        auto& InvenSlot = EquipGearPkt.updated_inventory_slot();
+
+        // 공통: 장착 부위 매쉬 변경
+        if(EquipGearPkt.success() == true){
+            const Protocol::Item& Item_ = EquippedGearSlot.item();
+
+            // 장착한 갑옷 메시 적용
+            Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
+        }
+
+        // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
+        if (Player->IsMyPlayer())
         {
-            MyPlayer->OnGearSlotChanged.Broadcast(EquippedGearSlot);
-            MyPlayer->OnInvenSlotChanged.Broadcast(InvenSlot, false);
-            MyPlayer->OnStatInfoChanged.Broadcast(EquipGearPkt.updated_stat_info());
+            _MyPlayer->OnRecvEquipGearPkt.Broadcast();
+            if (EquipGearPkt.success() == true)
+            {
+                _MyPlayer->OnGearSlotChanged.Broadcast(EquippedGearSlot);
+                _MyPlayer->OnInvenSlotChanged.Broadcast(InvenSlot, false);
+                _MyPlayer->OnStatInfoChanged.Broadcast(EquipGearPkt.updated_stat_info());
+            }
         }
     }
 
@@ -368,33 +360,39 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
         return;
 
     const uint64 ObjectId = UnequipGearPkt.object_id();
-    AP1Player** FindActor = Players.Find(ObjectId);
-    if (FindActor == nullptr)
-        return;
-
-    AP1Player* Player = (*FindActor);
-
-    auto& EquippedGearSlot = UnequipGearPkt.updated_equipped_slot();
-    auto& InvenSlot = UnequipGearPkt.updated_inventory_slot();
-
-    // 장착해서 갱신된 장착 슬롯 정보를 반영.
-    if (UnequipGearPkt.success() == true)
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
     {
-        const Protocol::Item& Item_ = EquippedGearSlot.item();
+        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        if (FindActor == nullptr)
+            return;
 
-        // 장착한 갑옷 메시 적용
-        Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
-    }
+        AP1Player* Player = Cast<AP1Player>(FindActor);
+        if (Player == nullptr)
+            return;
 
-    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
-    if (Player->IsMyPlayer())
-    {
-        MyPlayer->OnRecvUnequipGearPkt.Broadcast();
+        auto& EquippedGearSlot = UnequipGearPkt.updated_equipped_slot();
+        auto& InvenSlot = UnequipGearPkt.updated_inventory_slot();
+
+        // 장착해서 갱신된 장착 슬롯 정보를 반영.
         if (UnequipGearPkt.success() == true)
         {
-            MyPlayer->OnGearSlotChanged.Broadcast(EquippedGearSlot);
-            MyPlayer->OnInvenSlotChanged.Broadcast(InvenSlot, false);
-            MyPlayer->OnStatInfoChanged.Broadcast(UnequipGearPkt.updated_stat_info());
+            const Protocol::Item& Item_ = EquippedGearSlot.item();
+
+            // 장착한 갑옷 메시 적용
+            Player->ChangeMesh(EquippedGearSlot.slot_id(), Item_.template_id());
+        }
+
+        // 장착해서 갱신된 인벤 슬롯 정보를 반영.
+        if (Player->IsMyPlayer())
+        {
+            _MyPlayer->OnRecvUnequipGearPkt.Broadcast();
+            if (UnequipGearPkt.success() == true)
+            {
+                _MyPlayer->OnGearSlotChanged.Broadcast(EquippedGearSlot);
+                _MyPlayer->OnInvenSlotChanged.Broadcast(InvenSlot, false);
+                _MyPlayer->OnStatInfoChanged.Broadcast(UnequipGearPkt.updated_stat_info());
+            }
+
         }
 
     }
@@ -411,12 +409,27 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
         return;
 
     const uint64 ObjectId = NormalAttackPkt.object_id();
-    AP1Player** FindActor = Players.Find(ObjectId);
-    if (FindActor == nullptr)
-        return;
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        if (FindActor == nullptr)
+            return;
 
-    AP1Player* Player = (*FindActor);
-    uint32 Combo = NormalAttackPkt.combo();
+        AP1Player* Player = Cast<AP1Player>(FindActor);
+        if (Player == nullptr)
+            return;
 
-    Player->S_NormalAttack(Combo);
+        uint32 Combo = NormalAttackPkt.combo();
+
+        Player->S_NormalAttack(Combo);
+    }
+
+}
+
+UMyPlayerData* UP1GameInstance::GetMyPlayerData()
+{
+    if (IsValid(_MyPlayerData) == false)
+        _MyPlayerData = GetSubsystem<UMyPlayerData>();
+
+    return _MyPlayerData;
 }

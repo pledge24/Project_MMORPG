@@ -76,6 +76,9 @@ void ACreature::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+    if (IsPendingKill() || IsActorBeingDestroyed())
+        return;
+
     // Cache: 틱마다 플레이어의 이전 틱 위치 정보 저장
     {
         FVector Location = GetActorLocation();

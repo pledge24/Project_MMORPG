@@ -20,7 +20,6 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 
-    
 public:
     virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);    // Server Only
 
@@ -54,7 +53,7 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, const int32&);
     FOnHpChanged OnHpChanged;
 
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDie);
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnDie OnDie;
 
@@ -71,8 +70,8 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
     FText CreatureName = FText::FromString("NULL");
 
-    class Protocol::PosInfo* ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
-    class Protocol::PosInfo* ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
+    Protocol::PosInfo* ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
+    Protocol::PosInfo* ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
 
 private:
     TQueue<Protocol::PosInfo> MoveQueue;

@@ -6,6 +6,7 @@
 #include "Engine/GameInstance.h"
 #include "Types.h"
 #include "Protocol.pb.h"
+#include "StatefulObjectManager.h"
 #include "P1GameInstance.generated.h"
 
 class UMyPlayerData;
@@ -42,10 +43,9 @@ public:
 	/* 패킷 핸들 함수 */
 	void HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt);
 
-	void HandleSpawn(const Protocol::ObjectInfo& PlayerInfo, bool IsMine);
+    void HandleSpawn(const Protocol::ObjectInfo& ObjectInfo);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
-	void HandleDespawn(uint64 ObjectId);
 	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
     void HandleDespawnAll(bool ExceptMine = false);
 
@@ -63,31 +63,28 @@ public:
 
     /** Getter 함수 */
     FString GetToken() const { return _token; }
-    UMyPlayerData* GetMyPlayerData() const { return _MyPlayerData; }
+    UMyPlayerData* GetMyPlayerData();
 
     /** Setter 함수 */
     void SetToken(FString token) { _token = token; }
+    void SetMyPlayer(AP1MyPlayer* MyPlayer) { _MyPlayer = MyPlayer; }
 
 public:
-	/** Player 정보 */
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AP1Player> OtherPlayerClass;
-
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<AP1MyPlayer> MyPlayerClass;
-
-	AP1MyPlayer* MyPlayer;
-	TMap<uint64, AP1Player*> Players;
-
     /** GameServer Socket */
     class FSocket* Socket;
-    FString IpAddress = TEXT("127.0.0.1");
-    int16 Port = 7777;
+    const FString IpAddress = TEXT("127.0.0.1");
+    const int16 Port = 7777;
     PacketSessionRef GameServerSession;
 
+    /** AuthServer Token */
+	FString _token = ""; // GameServer 접속 토큰
+
 protected:
+    /** MyPlayer Data */
+    UPROPERTY()
+	AP1MyPlayer* _MyPlayer;
+
     UPROPERTY()
     UMyPlayerData* _MyPlayerData;
 
-	FString _token = ""; // GameServer 접속 토큰
 };
