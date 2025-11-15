@@ -73,6 +73,8 @@ AActor* UStatefulObjectManager::FindObject(uint64 ObjectId)
         return *FindMonster;
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("해당 Object(Id:%d)를 ObjectManager에서 찾지 못했습니다"), (int32)ObjectId);
+
     return nullptr;
 }
 
@@ -156,7 +158,6 @@ void UStatefulObjectManager::Clear()
 void UStatefulObjectManager::SpawnMonster(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId)
 {
     AObjectSpawner* Spawner = ObjectSpawners[SpawnerId];
-    AMonster* OutMonster = nullptr;
 
     const uint64 ObjectId = InObjectInfo.object_id();
     if (Monsters.Find(ObjectId) != nullptr)
@@ -168,20 +169,21 @@ void UStatefulObjectManager::SpawnMonster(const Protocol::ObjectInfo& InObjectIn
         return;
     }
 
-    if (Spawner->SpawnMonster(OUT OutMonster, InObjectInfo) == false || OutMonster == nullptr)
+    if (AMonster* NewMonster = Cast<AMonster>(Spawner->SpawnMonster(InObjectInfo)))
+    {
+        // Register New Monster
+        RegisterObject(ObjectId, NewMonster);
+    }
+    else
     {
         UE_LOG(LogTemp, Warning, TEXT("몬스터 스폰 실패"));
-        return;
     }
-
-    // Add Monster
-    RegisterObject(ObjectId, OutMonster);
+    
 }
 
 void UStatefulObjectManager::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId)
 {
     AObjectSpawner* Spawner = ObjectSpawners[SpawnerId];
-    AP1Player* OutPlayer = nullptr;
 
     const uint64 ObjectId = InObjectInfo.object_id();
     if (Players.Find(ObjectId) != nullptr)
@@ -193,12 +195,15 @@ void UStatefulObjectManager::SpawnPlayer(const Protocol::ObjectInfo& InObjectInf
         return;
     }
 
-    if (Spawner->SpawnPlayer(OUT OutPlayer, InObjectInfo) == false || OutPlayer == nullptr)
+    if (AP1Player* NewPlayer = Cast<AP1Player>(Spawner->SpawnPlayer(InObjectInfo)))
+    {
+        // Register New Player
+        RegisterObject(ObjectId, NewPlayer);
+    }
+    else
     {
         UE_LOG(LogTemp, Warning, TEXT("플레이어 스폰 실패"));
-        return;
     }
-
-    // Add Monster
-    RegisterObject(ObjectId, OutPlayer);
 }
+
+    

@@ -12,6 +12,7 @@
 #include "P1.h"
 #include "ShopWidget.h"
 #include "NameplateWidget.h"
+#include "WarningTextWidget.h"
 
 void AInGamePlayerController::BeginPlay()
 {
@@ -27,6 +28,7 @@ void AInGamePlayerController::BeginPlay()
         if (HUDWidget)
         {
             HUDWidget->AddToViewport();
+            HUDWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
         }
     }
 
@@ -36,6 +38,7 @@ void AInGamePlayerController::BeginPlay()
         if (HelpWidget)
         {
             HelpWidget->AddToViewport();
+            HelpWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
         }
     }
 
@@ -66,6 +69,16 @@ void AInGamePlayerController::BeginPlay()
         {
             ShopWidget->AddToViewport();
             ShopWidget->SetVisibility(ESlateVisibility::Collapsed);
+        }
+    }
+
+    if (WarningTextWidgetClass && !WarningTextWidget)
+    {
+        WarningTextWidget = CreateWidget<UWarningTextWidget>(this, WarningTextWidgetClass);
+        if (WarningTextWidget)
+        {
+            WarningTextWidget->AddToViewport();
+            WarningTextWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
         }
     }
 
@@ -117,6 +130,10 @@ void AInGamePlayerController::TurnOffWidget(WidgetType Type)
 {
     if (UUserWidget* Widget = WidgetMappings[Type])
     {
+        ESlateVisibility Visibility = Widget->GetVisibility();
+        if (Visibility == ESlateVisibility::Collapsed || Visibility == ESlateVisibility::Hidden)
+            return;
+
         Widget->SetVisibility(ESlateVisibility::Collapsed);
 
         uint8 FlagIdx = (uint8)Type;
@@ -141,6 +158,11 @@ void AInGamePlayerController::TurnOffWidget(WidgetType Type)
 bool AInGamePlayerController::IsTurnOnThisWidget(WidgetType Type) const
 {
     return WidgetFlag & (1 << (uint8)Type); 
+}
+
+void AInGamePlayerController::DisplayWarningText(const FText& Message)
+{
+    WarningTextWidget->DisplayWarningMessage(Message);
 }
 
 void AInGamePlayerController::ToggleWidget(WidgetType Type)

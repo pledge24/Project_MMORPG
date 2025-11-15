@@ -70,19 +70,23 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		//Jumping
+		// Jumping
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		//Moving
+		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Move);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AP1MyPlayer::Move);
 
-		//Looking
+		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
 
-        //Attacking
+        // Attacking
         EnhancedInputComponent->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &AP1MyPlayer::NormalAttack);
+
+        // Toggle BattleMode
+        EnhancedInputComponent->BindAction(ToggleBattleModeAction, ETriggerEvent::Started, this, &AP1MyPlayer::ToggleBattleMode);
+
 	}
 
 }
@@ -197,7 +201,7 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr && bOnlyUIInputMode == false)
+	if (Controller != nullptr)
 	{
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
@@ -214,7 +218,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
         return;
     }
 
-    if (AttackSystemComponent != nullptr && bOnlyUIInputMode == false)
+    if (AttackSystemComponent != nullptr && bBattleMode == true)
     {
         if (AttackSystemComponent->EnableInputAttack() == true)
         {
@@ -227,6 +231,28 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
 
                 SEND_PACKET(NormalAttackPkt);
             }
+        }
+    }
+}
+
+void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
+{
+    bBattleMode = !bBattleMode;
+
+    if (bBattleMode)
+    {
+        if (AInGamePlayerController* PC = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+        {
+            FString Message = TEXT("전투모드를 활성화합니다");
+            PC->DisplayWarningText(FText::FromString(Message));
+        }
+    }
+    else
+    {
+        if (AInGamePlayerController* PC = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+        {
+            FString Message = TEXT("전투모드를 비활성화합니다");
+            PC->DisplayWarningText(FText::FromString(Message));
         }
     }
 }

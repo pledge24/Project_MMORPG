@@ -15,8 +15,8 @@ ACreature::ACreature()
 {
 	PrimaryActorTick.bCanEverTick = true;
     
-    ClientPos = new Protocol::PosInfo();
-    ServerPos = new Protocol::PosInfo();
+    ClientPos = MakeShared<Protocol::PosInfo>();
+    ServerPos = MakeShared<Protocol::PosInfo>();
 
     SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -62,21 +62,13 @@ void ACreature::BeginPlay()
 void ACreature::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
-
-    {
-        delete ClientPos;
-        delete ServerPos;
-
-        ClientPos = nullptr;
-        ServerPos = nullptr;
-    }
 }
 
 void ACreature::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (IsPendingKill() || IsActorBeingDestroyed())
+    if (IsValid(this) == false)
         return;
 
     // Cache: 틱마다 플레이어의 이전 틱 위치 정보 저장

@@ -30,15 +30,15 @@ void AObjectSpawner::BeginPlay()
 
 }
 
-bool AObjectSpawner::SpawnMonster(int32 TemplateId, AActor* OutMonster, const FTransform& Transform)
+AActor* AObjectSpawner::SpawnMonster(int32 TemplateId, const FTransform& Transform)
 {
     FVector Location = Transform.GetLocation();
     FRotator Rotation = Transform.GetRotation().Rotator();
 
-    return SpawnMonster(TemplateId, (AMonster*)OutMonster, Location, Rotation);
+    return SpawnMonster(TemplateId, Location, Rotation);
 }
 
-bool AObjectSpawner::SpawnMonster(AMonster* OutMonster, const Protocol::ObjectInfo& InObjectInfo)
+AActor* AObjectSpawner::SpawnMonster(const Protocol::ObjectInfo& InObjectInfo)
 {
     int32 TemplateId = InObjectInfo.monster_info().template_id();
     const Protocol::PosInfo& PosInfo_ = InObjectInfo.pos_info();
@@ -46,21 +46,21 @@ bool AObjectSpawner::SpawnMonster(AMonster* OutMonster, const Protocol::ObjectIn
     FVector Location = FVector(PosInfo_.x(), PosInfo_.y(), PosInfo_.z());
     FRotator Rotation = FRotator(0, PosInfo_.yaw(), 0);
 
-    return SpawnMonster(TemplateId, OutMonster, Location, Rotation, InObjectInfo);
+    return SpawnMonster(TemplateId, Location, Rotation, InObjectInfo);
 }
 
-bool AObjectSpawner::SpawnMonster(int32 TemplateId, AMonster* OutMonster, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo)
+AActor* AObjectSpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo)
 {
     if (MonsterDataTable == nullptr)
-        return false;
+        return nullptr;
 
     FMonsterData MonsterData;
     if (GetMonsterData(TemplateId, MonsterData) == false)
-        return false;
+        return nullptr;
 
     TSubclassOf<AMonster> MonsterBPClass = MonsterData.MonsterClass.Get();
 
-    AMonster* TempMonster = GetWorld()->SpawnActorDeferred<AMonster>(
+    AMonster* OutMonster = GetWorld()->SpawnActorDeferred<AMonster>(
         MonsterBPClass,
         FTransform(SpawnRotation, SpawnLocation),
         nullptr, 
@@ -68,20 +68,17 @@ bool AObjectSpawner::SpawnMonster(int32 TemplateId, AMonster* OutMonster, const 
         ESpawnActorCollisionHandlingMethod::AlwaysSpawn
     );
 
-    if (TempMonster == nullptr)
-        return false;
-
     // 스폰 전에 몬스터 데이터 설정
+    if (OutMonster != nullptr)
     {
         if (ServerInfo.IsSet())
-            TempMonster->Initialize(ServerInfo.GetValue());
+            OutMonster->Initialize(ServerInfo.GetValue());
 
-        TempMonster->SetDefaultMonsterData(MonsterData);
-        OutMonster = TempMonster;
+        OutMonster->SetDefaultMonsterData(MonsterData);
         OutMonster->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
     }
 
-    return true;
+    return OutMonster;
 }
 
 bool AObjectSpawner::GetMonsterData(int32 TemplateId, FMonsterData& OutMonsterData)
@@ -110,11 +107,11 @@ bool AObjectSpawner::GetMonsterData(int32 TemplateId, FMonsterData& OutMonsterDa
     return true;
 }
 
-bool AObjectSpawner::SpawnPlayer(AP1Player* OutPlayer, const Protocol::ObjectInfo& InObjectInfo)
+AActor* AObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
 {
     UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance());
     if (GameInstance == nullptr)
-        return false;
+        return nullptr;
 
     UWorld* World = GetWorld();
     UMyPlayerData* MyPlayerData = GameInstance->GetMyPlayerData();
@@ -124,12 +121,13 @@ bool AObjectSpawner::SpawnPlayer(AP1Player* OutPlayer, const Protocol::ObjectInf
     FVector SpawnLocation(InObjectInfo.pos_info().x(), InObjectInfo.pos_info().y(), InObjectInfo.pos_info().z());
     FRotator SpawnRotation(0.f, InObjectInfo.pos_info().yaw(), 0.f);
 
+    AP1Player* OutPlayer = nullptr;
     if (IsMine)
     {
         if (!MyPlayerClass)
         {
             UE_LOG(LogTemp, Warning, TEXT("MyPlayerClass가 설정되지 않았습니다"));
-            return false;
+            return nullptr;
         }
 
         OutPlayer = World->SpawnActorDeferred<AP1Player>(
@@ -148,7 +146,7 @@ bool AObjectSpawner::SpawnPlayer(AP1Player* OutPlayer, const Protocol::ObjectInf
         if (!OtherPlayerClass)
         {
             UE_LOG(LogTemp, Warning, TEXT("OtherPlayerClass가 설정되지 않았습니다"));
-            return false;
+            return nullptr;
         }
 
         OutPlayer = World->SpawnActorDeferred<AP1Player>(
@@ -161,24 +159,21 @@ bool AObjectSpawner::SpawnPlayer(AP1Player* OutPlayer, const Protocol::ObjectInf
 
     }
 
-    if (OutPlayer == nullptr)
+    if (OutPlayer != nullptr)
     {
-        UE_LOG(LogTemp, Warning, TEXT("플레이어 SpawnActorDeferred<> NullPtr 반환"));
-        return false;
-    }
-
-    // 플레이어 데이터 설정(스폰 전 후로)
-    {
+        // 플레이어 데이터 설정(스폰 전 후로)
         FString PlayerName = InObjectInfo.player_info().name().c_str();
         OutPlayer->SetPlayerName(FText::FromString(PlayerName));
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
         OutPlayer->Initialize(InObjectInfo);
+        
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("플레이어 SpawnActorDeferred<> NullPtr 반환"));
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("스폰 완료!"));
-
-
-    return true;
+    return OutPlayer;
 }
 
 

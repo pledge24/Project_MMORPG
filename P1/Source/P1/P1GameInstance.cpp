@@ -414,6 +414,7 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
             return;
+        
 
         AP1Player* Player = Cast<AP1Player>(FindActor);
         if (Player == nullptr)

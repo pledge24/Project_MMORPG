@@ -44,8 +44,6 @@ protected:
 
 
 protected:
-
-
     /** Weapon CharacterMesh Component*/
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     class UStaticMeshComponent* WeaponMesh;

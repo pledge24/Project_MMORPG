@@ -35,7 +35,7 @@ public:
     /** Getter함수 */
     Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
     class UAttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
-    Protocol::PosInfo* GetPosInfo() const { return ClientPos; }
+    TSharedPtr<Protocol::PosInfo> GetPosInfo() const { return ClientPos; }
     FText GetCreatureName() const { return CreatureName; }
 
 public:
@@ -70,8 +70,8 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
     FText CreatureName = FText::FromString("NULL");
 
-    Protocol::PosInfo* ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
-    Protocol::PosInfo* ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
+    TSharedPtr<Protocol::PosInfo> ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
+    TSharedPtr<Protocol::PosInfo> ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
 
 private:
     TQueue<Protocol::PosInfo> MoveQueue;

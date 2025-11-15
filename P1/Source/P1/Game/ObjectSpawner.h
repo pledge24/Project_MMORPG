@@ -23,15 +23,15 @@ protected:
 public:
     /** Monster 관련 함수 */
     UFUNCTION(BlueprintCallable, Category="Spawn")
-    bool SpawnMonster(int32 TemplateId, AActor* OutMonster, const FTransform& Transform);
+    AActor* SpawnMonster(int32 TemplateId, const FTransform& Transform);
 
-    bool SpawnMonster(AMonster* OutMonster, const Protocol::ObjectInfo& InObjectInfo); // Server Only
-    bool SpawnMonster(int32 TemplateId, AMonster* OutMonster, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo = NullOpt);
+    AActor* SpawnMonster(const Protocol::ObjectInfo& InObjectInfo); // Server Only
+    AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo = NullOpt);
 
     bool GetMonsterData(int32 TemplateId, FMonsterData& OutMonsterData);
 
     /** Player 관련 함수 */
-    bool SpawnPlayer(AP1Player* OutPlayer, const Protocol::ObjectInfo& InObjectInfo); // Server Only
+    AActor* SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo); // Server Only
 
 protected:
     /** Monster 정보 */

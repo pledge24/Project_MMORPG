@@ -14,6 +14,7 @@ class UHUDWidget;
 class UShopWidget;
 class UNameplateWidget;
 class UNameplateManager;
+class UWarningTextWidget;
 
 UENUM(BlueprintType)
 enum class WidgetType : uint8
@@ -34,7 +35,6 @@ class P1_API AInGamePlayerController : public APlayerController
 
 public:
     AInGamePlayerController() = default;
-    ~AInGamePlayerController() = default;
 
 protected:
     virtual void BeginPlay() override;
@@ -55,49 +55,60 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Widget")
     bool IsTurnOnThisWidget(WidgetType Type) const;
 
+    UFUNCTION(BlueprintCallable, Category = "Widget")
+    void DisplayWarningText(const FText& Message);
+
     void ToggleWidget(WidgetType Type);
 
-    void AttachNameplate(AActor* Actor);
-    void DetachNameplate(AActor* Actor);
 
 protected:
     /** HUD UI */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UHUDWidget> HUDWidgetClass;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
     UHUDWidget* HUDWidget;
 
     /** Control Help UI */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> HelpWidgetClass;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
     UUserWidget* HelpWidget;
 
     /** 상태창 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UStatusWindowWidget> StatusWindowWidgetClass;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
     UStatusWindowWidget* StatusWindowWidget;
 
     /** 인벤토리 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
     UInventoryWidget* InventoryWidget;
 
     /** 상점 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UShopWidget> ShopWidgetClass;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
     UShopWidget* ShopWidget;
 
-private:
+    /** 경고 메세지 UI*/
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UWarningTextWidget> WarningTextWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UWarningTextWidget* WarningTextWidget;
+
+protected:
+    UPROPERTY()
     TMap<WidgetType, UUserWidget*> WidgetMappings;
+
+private:
     int32 WidgetFlag = 0;
     int32 CurrentMaxZOrder = 0;
 };

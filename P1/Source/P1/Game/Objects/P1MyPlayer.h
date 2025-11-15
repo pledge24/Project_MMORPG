@@ -50,6 +50,7 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
     void NormalAttack(const FInputActionValue& Value);
+    void ToggleBattleMode(const FInputActionValue& Value);
 
     bool CanInputMovement() const;
 
@@ -84,8 +85,8 @@ public:
     FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
 
     /** ETC */
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-    bool bOnlyUIInputMode = false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    bool bBattleMode = false;
 
 private:
     /**--------------------
@@ -120,9 +121,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
-    /** Look Input Action */
+    /** Attack Input Action */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
     UInputAction* NormalAttackAction;
+
+    /** Attack Input Action */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+    UInputAction* ToggleBattleModeAction;
 
     /**--------------------
      *      Movement
