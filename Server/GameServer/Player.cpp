@@ -103,7 +103,7 @@ bool Player::CalculateFinalStat()
 bool Player::HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = playerInfo->gold();
-    int64 buyPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice] * count;
+    int64 buyPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
 
     if (gold < buyPrice)
         return false;
@@ -121,7 +121,7 @@ bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* tar
 {
     int64 gold = playerInfo->gold();
     int32 templateId = targetSlot->item().template_id();
-    int64 sellPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::SellPrice] * count;
+    int64 sellPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::SellPrice]) * count;
 
     if (inventory->removeItem(OUT updatedSlot, targetSlot, count) == false)
         return false;

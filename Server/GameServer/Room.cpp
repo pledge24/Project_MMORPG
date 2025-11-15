@@ -18,23 +18,51 @@ Room::~Room()
 
 void Room::Init(const Json& roomData)
 {
-    // roomData가 들어있는 지 확인한다.
     if (roomData.empty())
         throw wstring(L"roomData가 없습니다");
 
-    _roomId = roomData[JsonProperty::Map::TemplateId];
     _roomData = roomData;
 
-    cout << "roomId: " << _roomId << endl;
-    cout << _roomData.dump(2) << endl;
+    // 자주 사용하는 JsonProperty Cache
+    CacheRoomData();
 
     // 몬스터를 room에 스폰한다.
+    int32 kindOfMonster = monsterIds.size();
+    for (int32 i = 0; i < maxMonsterCount; i++)
+    {
+        int32 monsterTemplateid = monsterIds[Utils::GetRandom(0, kindOfMonster)];
+        SpawnMonster(monsterTemplateid);
+    }
+}
+
+void Room::CacheRoomData()
+{
+    using namespace JsonProperty::Map;
+
+    _roomId = _roomData[TemplateId];
+
+    const Json& centerPos = _roomData[CenterPos];
+    roomCenterPos.x = centerPos[PosX].is_null() ? 0 : static_cast<float>(centerPos[PosX]);
+    roomCenterPos.y = centerPos[PosY].is_null() ? 0 : static_cast<float>(centerPos[PosY]);
+    roomCenterPos.z = centerPos[PosZ].is_null() ? 0 : static_cast<float>(centerPos[PosZ]);
+
+    widthHalfExtent = _roomData[WidthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[WidthHalfExtent]);
+    heightHalfExtent = _roomData[HeightHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[HeightHalfExtent]);
+
+    maxMonsterCount = _roomData[MaxMonsterCount].is_null() ? 0 : static_cast<int32>(_roomData[MaxMonsterCount]);
+    monsterRespawnTime = _roomData[MonsterRespawnTime].is_null() ? 100000.f : static_cast<float>(_roomData[MonsterRespawnTime]);
+
+    for (int32 monsterId : _roomData[MonsterIds])
+    {
+        monsterIds.push_back(monsterId);
+    }
+    
 }
 
 bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
 {
     // 현재 방에 해당 Object를 추가
-    if (AddObject(object) == false)
+    if (RegisterObject(object) == false)
         return false;
 
     // randPos
@@ -110,7 +138,7 @@ bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
     const uint64 objectId = object->objectInfo->object_id();
 
     // 현재 방에 해당 Object를 제거
-    if (RemoveObject(objectId) == false)
+    if (UnRegisterObject(objectId) == false)
         return false;
 
     // 퇴장한 플레이어가 방 이동이 아닌 경우, Despawn 패킷 전송
@@ -297,22 +325,15 @@ void Room::SetupRandPos(Protocol::PosInfo* posInfo, bool randYaw)
 {
     using namespace JsonProperty::Map;
 
-    float centerPosX = _roomData[CenterPos][PosX];
-    float centerPosY = _roomData[CenterPos][PosY];
-    float centerPosZ = _roomData[CenterPos][PosZ];
-
-    float widthHalfExtent = _roomData[WidthHalfExtent];
-    float heightHalfExtent = _roomData[HeightHalfExtent];
-
-    posInfo->set_x(Utils::GetRandom(centerPosX - widthHalfExtent, centerPosX + widthHalfExtent));
-    posInfo->set_y(Utils::GetRandom(centerPosY - heightHalfExtent, centerPosY + heightHalfExtent));
-    posInfo->set_z(centerPosZ + 10.f);
+    posInfo->set_x(Utils::GetRandom(roomCenterPos.x - widthHalfExtent, roomCenterPos.x + widthHalfExtent));
+    posInfo->set_y(Utils::GetRandom(roomCenterPos.y - heightHalfExtent, roomCenterPos.y + heightHalfExtent));
+    posInfo->set_z(roomCenterPos.z + 10.f);
 
     if(randYaw)
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
 }
 
-bool Room::AddObject(ObjectRef object)
+bool Room::RegisterObject(ObjectRef object)
 {
 	// 있다면 문제가 있다.
 	if (_objects.find(object->objectInfo->object_id()) != _objects.end())
@@ -325,7 +346,7 @@ bool Room::AddObject(ObjectRef object)
 	return true;
 }
 
-bool Room::RemoveObject(uint64 objectId)
+bool Room::UnRegisterObject(uint64 objectId)
 {
 	// 없다면 문제가 있다.
 	if (_objects.find(objectId) == _objects.end())
@@ -337,6 +358,17 @@ bool Room::RemoveObject(uint64 objectId)
 	_objects.erase(objectId);
 
 	return true;
+}
+
+void Room::SpawnMonster(int32 templateId)
+{
+    MonsterRef newMonster = ObjectUtils::CreateMonster(templateId);
+    newMonster->Init();
+
+    // roomData 추가 설정
+    newMonster->objectInfo->set_map_id(_roomId);
+
+    EnterRoom(newMonster, false, true);
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer, uint64 exceptId)
