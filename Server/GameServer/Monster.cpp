@@ -14,6 +14,14 @@ Monster::~Monster()
 
 }
 
+void Monster::Tick(float deltaSecond)
+{
+    Creature::Tick(deltaSecond);
+
+    //cout << "Monster Tick!" << '\n';
+
+}
+
 void Monster::Init()
 {
     int32 templateId = objectInfo->monster_info().template_id();

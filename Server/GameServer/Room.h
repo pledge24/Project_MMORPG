@@ -15,7 +15,7 @@ public:
 	virtual ~Room() = default;
 
 protected:
-    void Tick();
+    void UpdateTick();
 
 public:
     void Init(const Json& roomData);
@@ -72,5 +72,8 @@ private:
     const float SPAWN_PADDING_Y = 1000.f;
     const float SPAWN_PADDING_Z = 100.f;
 
+    /** 기타 */
+    uint64 prevTick = GetTickCount64();
+    const uint64 ROOM_TICK_MILLISECOND = 1023;
 };
 

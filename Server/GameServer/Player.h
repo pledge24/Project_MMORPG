@@ -12,6 +12,10 @@ public:
 	Player();
 	virtual ~Player();
 
+protected:
+    virtual void Tick(float deltaSecond) override {};
+
+public:
     void Init();
     bool PostInit();
     bool CalculateFinalStat();

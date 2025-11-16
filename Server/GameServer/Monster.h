@@ -7,6 +7,9 @@ public:
 	Monster();
 	virtual ~Monster();
 
+protected:
+    virtual void Tick(float deltaSecond) override;
+
 public:
     void Init();
     void PrintMonsterAllData();

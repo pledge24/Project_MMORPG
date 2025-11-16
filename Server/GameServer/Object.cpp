@@ -12,3 +12,7 @@ Object::~Object()
 {
 	delete objectInfo;
 }
+
+void Object::Tick(float deltaSecond)
+{
+}

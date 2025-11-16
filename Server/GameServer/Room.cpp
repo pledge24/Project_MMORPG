@@ -5,12 +5,23 @@
 #include "Monster.h"
 #include "ObjectUtils.h"
 #include "EquippedGear.h"
+#include "Object.h"
 
-void Room::Tick()
+void Room::UpdateTick()
 {
-    cout << "Update Room" << endl;
+    uint64 curTick = GetTickCount64();
+    float deltaSecond = static_cast<float>(curTick - prevTick) / 1000.f;
+    prevTick = curTick;
 
-    DoTimer(100, &Room::Tick);
+    cout << "Update Room. DeltaSecond: " << deltaSecond << '\n';
+
+    for (auto pair : _objects)
+    {
+        ObjectRef object = pair.second;
+        object->Tick(deltaSecond);
+    }
+
+    DoTimer(ROOM_TICK_MILLISECOND, &Room::UpdateTick);
 }
 
 void Room::Init(const Json& roomData)
@@ -31,6 +42,7 @@ void Room::Init(const Json& roomData)
         SpawnMonster(monsterTemplateId);
     }
 
+    UpdateTick();
 }
 
 void Room::CacheRoomData()

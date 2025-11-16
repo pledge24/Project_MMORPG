@@ -9,3 +9,8 @@ Creature::~Creature()
 {
 
 }
+
+void Creature::Tick(float deltaSecond)
+{
+    Object::Tick(deltaSecond);
+}
