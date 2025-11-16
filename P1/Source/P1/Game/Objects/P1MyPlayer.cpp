@@ -149,14 +149,14 @@ void AP1MyPlayer::Tick(float DeltaTime)
         }
 
         SEND_PACKET(MovePkt);
+        //FString DebugMessage = MovePkt.Utf8DebugString().c_str();
+        //UE_LOG(LogTemp, Log, TEXT("%s"), *DebugMessage);
     }
 }
 
 void AP1MyPlayer::Initialize(const Protocol::ObjectInfo& InObjectInfo)
 {
     Super::Initialize(InObjectInfo);
-
-    SetClientPos(InObjectInfo.pos_info());
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)

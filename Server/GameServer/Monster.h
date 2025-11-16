@@ -9,6 +9,7 @@ public:
 
 public:
     void Init();
+    void PrintMonsterAllData();
 
 private:
     void CacheMonsterData();

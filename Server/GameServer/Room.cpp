@@ -6,14 +6,11 @@
 #include "ObjectUtils.h"
 #include "EquippedGear.h"
 
-Room::Room()
+void Room::Tick()
 {
-}
+    cout << "Update Room" << endl;
 
-
-Room::~Room()
-{
-
+    DoTimer(100, &Room::Tick);
 }
 
 void Room::Init(const Json& roomData)
@@ -30,9 +27,10 @@ void Room::Init(const Json& roomData)
     int32 kindOfMonster = monsterIds.size();
     for (int32 i = 0; i < maxMonsterCount; i++)
     {
-        int32 monsterTemplateid = monsterIds[Utils::GetRandom(0, kindOfMonster)];
-        SpawnMonster(monsterTemplateid);
+        int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster)];
+        SpawnMonster(monsterTemplateId);
     }
+
 }
 
 void Room::CacheRoomData()
@@ -59,130 +57,120 @@ void Room::CacheRoomData()
     
 }
 
-bool Room::EnterRoom(ObjectRef object, bool moveRoom, bool randPos)
+void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, bool moveRoom)
 {
-    // 현재 방에 해당 Object를 추가
-    if (RegisterObject(object) == false)
-        return false;
+    uint64 enterPlayerId = enterPlayer->objectInfo->object_id();
 
-    // randPos
-    if (randPos)
+    // 현재 방에 해당 player를 추가
+    if (RegisterObject(enterPlayer) == false)
     {
-        SetupRandPos(object->posInfo, true);
+        if (moveRoom)
+            wcout << L"플레이어: " << enterPlayerId << "가 Room 이동시 다음 Room 입장에 실패했습니다" << '\n';
+        else
+            wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
+
+        return;
     }
 
-	// 이 Room에 있는 다른 Player들에게 Object Spawn Broadcast
-	{
-		Protocol::S_SPAWN spawnPkt;
+    // 입장 위치 세팅
+    enterPlayer->posInfo->CopyFrom(*enterPos);
 
-		Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
-		objectInfo->CopyFrom(*object->objectInfo);
+    // OtherPlayer: Broadcast NewPlayer SpawnPkt In Room
+    {
+        Protocol::S_SPAWN spawnPkt;
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer, object->objectInfo->object_id());
-	}
+        Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
+        objectInfo->CopyFrom(*enterPlayer->objectInfo);
 
-    // 추가된 Object가 Player인 경우
-	if (auto player = dynamic_pointer_cast<Player>(object))
-	{
-        // 이 Room에 있는 모든 Object들을 가져온다.(본인 제외)
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
+        Broadcast(sendBuffer, enterPlayerId);
+    }
+
+    // enterPlayer: Send Room's Objects
+    {
+        // 1) Room에 있는 모든 Object들을 가져온다.(본인 제외)
         RepeatedPtrField<Protocol::ObjectInfo> roomObjects;
         {
-            uint64 playerId = object->objectInfo->object_id();
-
             for (auto& item : _objects)
             {
-                if (item.second->objectInfo->object_id() == playerId)
+                if (item.second->objectInfo->object_id() == enterPlayerId)
                     continue;
 
-                Protocol::ObjectInfo* objectInfo = roomObjects.Add();
-                objectInfo->CopyFrom(*item.second->objectInfo);
+                roomObjects.Add()->CopyFrom(*item.second->objectInfo);
             }
         }
 
         // 2) 입장한 플레이어가 단순 Room 이동이면 S_MOVE_ROOM, 새로 입장이면 S_SPAWN
-        if (moveRoom == true)
+        if (moveRoom)
         {
             Protocol::S_MOVE_ROOM moveRoomPkt;
-            moveRoomPkt.set_map_id(player->objectInfo->map_id());
-            moveRoomPkt.mutable_info()->CopyFrom(*player->posInfo);
+            moveRoomPkt.set_map_id(enterPlayer->objectInfo->map_id());
+            moveRoomPkt.mutable_info()->CopyFrom(*enterPos);
             moveRoomPkt.mutable_objects()->Swap(&roomObjects);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(moveRoomPkt);
-            if (auto session = player->session.lock())
+            if (auto session = enterPlayer->session.lock())
                 session->Send(sendBuffer);
         }
         else
         {
             // Spawn할 Object에 본인을 추가
-            Protocol::ObjectInfo* myObjectInfo = roomObjects.Add();
-            myObjectInfo->CopyFrom(*object->objectInfo);
-            
+            roomObjects.Add()->CopyFrom(*enterPlayer->objectInfo);
+
             Protocol::S_SPAWN spawnPkt;
             spawnPkt.mutable_objects()->Swap(&roomObjects);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-            if (auto session = player->session.lock())
+            if (auto session = enterPlayer->session.lock())
                 session->Send(sendBuffer);
         }
-	}
-
-	return true;
+    }
+    
 }
 
-bool Room::LeaveRoom(ObjectRef object, bool moveRoom /*false*/)
+void Room::HandleLeavePlayer(PlayerRef leavePlayer, bool moveRoom)
 {
-    if (object == nullptr)
-		return false;
+    const uint64 leavePlayerId = leavePlayer->objectInfo->object_id();
 
-    const uint64 objectId = object->objectInfo->object_id();
+    // 방을 나간 Player를 제거
+    if (UnRegisterObject(leavePlayerId) == false)
+    {
+        if (moveRoom)
+            wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 시 이전 Room 퇴장에 실패했습니다" << '\n';
+        else
+            wcout << L"플레이어: " << leavePlayerId << "가 Room 퇴장에 실패했습니다" << '\n';
 
-    // 현재 방에 해당 Object를 제거
-    if (UnRegisterObject(objectId) == false)
-        return false;
+        return;
+    }
 
-    // 퇴장한 플레이어가 방 이동이 아닌 경우, Despawn 패킷 전송
-    if(PlayerRef player = dynamic_pointer_cast<Player>(object)){
-
+    // leavePlayer: Send Despawn Packet(If needed)
+    {
         if (moveRoom == false)
         {
             Protocol::S_DESPAWN despawnPkt;
-            despawnPkt.add_object_ids(objectId);
+            despawnPkt.add_object_ids(leavePlayerId);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
-            if (auto session = player->session.lock())
+            if (auto session = leavePlayer->session.lock())
                 session->Send(sendBuffer);
         }
     }
 
-	// 이 Room에 있는 모든 Player들에게 Object Despawn Broadcast
-	{
-		Protocol::S_DESPAWN despawnPkt;
-		despawnPkt.add_object_ids(objectId);
+    // OtherPlayer: Broadcast Player Despawn In Room
+    {
+        Protocol::S_DESPAWN despawnPkt;
+        despawnPkt.add_object_ids(leavePlayerId);
 
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
-
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
         Broadcast(sendBuffer);
-	}
-
-	return true;
-}
-
-bool Room::HandleEnterPlayer(PlayerRef player, bool moveRoom)
-{
-	return EnterRoom(player, moveRoom, false);
-}
-
-bool Room::HandleLeavePlayer(PlayerRef player, bool moveRoom)
-{
-	return LeaveRoom(player, moveRoom);
+    }
 }
 
 void Room::HandleMove(Protocol::C_MOVE pkt)
 {
 	const uint64 objectId = pkt.info().object_id();
-	if (_objects.find(objectId) == _objects.end())
-		return;
+    if (_objects.contains(objectId) == false)
+        return;
 
 	// 적용
 	PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]);
@@ -203,7 +191,7 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
     const uint64 objectId = player->objectInfo->object_id();
-    if (_objects.find(objectId) == _objects.end())
+    if (_objects.contains(objectId) == false)
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
@@ -238,7 +226,7 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
     const uint64 objectId = player->objectInfo->object_id();
-    if (_objects.find(objectId) == _objects.end())
+    if (_objects.contains(objectId) == false)
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
@@ -272,7 +260,7 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
     const uint64 objectId = player->objectInfo->object_id();
-    if (_objects.find(objectId) == _objects.end())
+    if (_objects.contains(objectId) == false)
         return;
     
     // 일반 공격 사실을 알린다 (본인 빼고)
@@ -287,29 +275,12 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     }
 }
 
-void Room::UpdateTick()
-{
-	cout << "Update Room" << endl;
-
-	DoTimer(100, &Room::UpdateTick);
-}
-
-RoomRef Room::GetRoomRef()
-{
-	return static_pointer_cast<Room>(shared_from_this());
-}
-
-int32 Room::GetRoomId()
-{
-    return _roomId;
-}
-
 optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
 {
     using namespace JsonProperty::Map;
 
     const Json& portalList = _roomData[Portals][Lists];
-    if(portalList.size() == 0)
+    if(portalList.empty())
         return nullopt;
 
     for (const auto& portal : portalList)
@@ -321,13 +292,18 @@ optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
     return nullopt;
 }
 
-void Room::SetupRandPos(Protocol::PosInfo* posInfo, bool randYaw)
+void Room::SetRandomPos(Protocol::PosInfo* posInfo, float widthPadding, float heightPadding, bool randYaw)
 {
     using namespace JsonProperty::Map;
 
-    posInfo->set_x(Utils::GetRandom(roomCenterPos.x - widthHalfExtent, roomCenterPos.x + widthHalfExtent));
-    posInfo->set_y(Utils::GetRandom(roomCenterPos.y - heightHalfExtent, roomCenterPos.y + heightHalfExtent));
-    posInfo->set_z(roomCenterPos.z + 10.f);
+    float minX = roomCenterPos.x - (widthHalfExtent - widthPadding);
+    float maxX = roomCenterPos.x + (widthHalfExtent - widthPadding);
+    float minY = roomCenterPos.y - (heightHalfExtent - heightPadding);
+    float maxY = roomCenterPos.y + (heightHalfExtent - heightPadding);
+
+    posInfo->set_x(Utils::GetRandom(minX, maxX));
+    posInfo->set_y(Utils::GetRandom(minY, maxY));
+    posInfo->set_z(roomCenterPos.z + SPAWN_PADDING_Z);
 
     if(randYaw)
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
@@ -335,40 +311,45 @@ void Room::SetupRandPos(Protocol::PosInfo* posInfo, bool randYaw)
 
 bool Room::RegisterObject(ObjectRef object)
 {
-	// 있다면 문제가 있다.
-	if (_objects.find(object->objectInfo->object_id()) != _objects.end())
+    uint64 objectId = object->objectInfo->object_id();
+	if (_objects.contains(objectId))
 		return false;
 
-	_objects.insert(make_pair(object->objectInfo->object_id(), object));
+	_objects.insert(make_pair(objectId, object));
 
-	object->room.store(GetRoomRef()); // set Last RoomRef
+    // Object가 속한 Room에 대한 정보 갱신
+	object->room.store(GetRoomRef());
+    object->objectInfo->set_map_id(_roomId);
 
 	return true;
 }
 
 bool Room::UnRegisterObject(uint64 objectId)
 {
-	// 없다면 문제가 있다.
-	if (_objects.find(objectId) == _objects.end())
+	if (_objects.contains(objectId) == false)
 		return false;
-
-	ObjectRef object = _objects[objectId];
-	PlayerRef player = dynamic_pointer_cast<Player>(object);
 
 	_objects.erase(objectId);
 
 	return true;
 }
 
-void Room::SpawnMonster(int32 templateId)
+MonsterRef Room::SpawnMonster(int32 templateId)
 {
     MonsterRef newMonster = ObjectUtils::CreateMonster(templateId);
     newMonster->Init();
 
-    // roomData 추가 설정
-    newMonster->objectInfo->set_map_id(_roomId);
+    if (RegisterObject(newMonster) == false)
+    {
+        wcout << L"SpawnMonster 실패" << '\n';
+        return nullptr;
+    }
 
-    EnterRoom(newMonster, false, true);
+    SetRandomPos(newMonster->posInfo, SPAWN_PADDING_X, SPAWN_PADDING_Y, true);
+
+    //newMonster->PrintMonsterAllData(); // DEBUG
+
+    return newMonster;
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer, uint64 exceptId)

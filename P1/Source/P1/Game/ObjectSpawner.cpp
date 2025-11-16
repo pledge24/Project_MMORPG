@@ -72,7 +72,9 @@ AActor* AObjectSpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLocat
     if (OutMonster != nullptr)
     {
         if (ServerInfo.IsSet())
+        {
             OutMonster->Initialize(ServerInfo.GetValue());
+        }
 
         OutMonster->SetDefaultMonsterData(MonsterData);
         OutMonster->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
@@ -164,9 +166,9 @@ AActor* AObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
         // 플레이어 데이터 설정(스폰 전 후로)
         FString PlayerName = InObjectInfo.player_info().name().c_str();
         OutPlayer->SetPlayerName(FText::FromString(PlayerName));
+        OutPlayer->SetServerPos(InObjectInfo.pos_info());
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
         OutPlayer->Initialize(InObjectInfo);
-        
     }
     else
     {

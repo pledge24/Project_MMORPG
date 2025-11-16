@@ -41,7 +41,7 @@ void RoomManager::AddRoom(int32 templateId, RoomRef room)
     if (_rooms.find(templateId) != _rooms.end())
         return;
 
-    room->isValid = true;
+    room->SetValid(true);
     _rooms.insert(make_pair(templateId, room));
 }
 
@@ -51,7 +51,7 @@ void RoomManager::RemoveRoom(int32 templateId)
         return;
 
     RoomRef room = _rooms[templateId];
-    room->isValid = false;
+    room->SetValid(false);
 
     _rooms.erase(templateId);
 }
@@ -61,7 +61,7 @@ void RoomManager::Clear()
     for (auto pair : _rooms)
     {
         RoomRef room = pair.second;
-        room->isValid = false;
+        room->SetValid(false);
     }
 
     _rooms.clear();
@@ -69,7 +69,7 @@ void RoomManager::Clear()
 
 RoomRef RoomManager::GetRoomRefFromRoomId(int32 templateId)
 {
-    if (_rooms.find(templateId) == _rooms.end())
+    if (_rooms.contains(templateId) == false)
         return nullptr;
 
     return _rooms[templateId];

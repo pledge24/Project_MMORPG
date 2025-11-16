@@ -35,6 +35,24 @@ void Monster::Init()
     monsterInfo->set_hp(maxHp);
 }
 
+void Monster::PrintMonsterAllData()
+{
+    cout << "=====================" << '\n';
+    cout << _monsterData.dump(2) << '\n';
+
+    cout << "templateId: " << templateId << '\n';
+    cout << "maxHp: " << maxHp << '\n';
+    cout << "attackSpeed: " << attackSpeed << '\n';
+    cout << "baseAttack: " << baseAttack << '\n';
+    cout << "attackRange: " << attackRange << '\n';
+    cout << "detectionRange: " << detectionRange << '\n';
+    cout << "chaseRange: " << chaseRange << '\n';
+
+    cout << objectInfo->Utf8DebugString() << '\n';
+
+    cout << "======Monster Data End ====" << '\n';
+}
+
 void Monster::CacheMonsterData()
 {
     using namespace JsonProperty::Monster;

@@ -17,6 +17,7 @@ void UStatefulObjectManager::Initialize(FSubsystemCollectionBase& Collection)
     //{
     //    RegisterSpawner(ObjectSpawner);
     //}
+    Clear();
 }
 
 void UStatefulObjectManager::Deinitialize()
@@ -29,8 +30,6 @@ void UStatefulObjectManager::Deinitialize()
 void UStatefulObjectManager::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
-
-    Clear();
 }
 
 void UStatefulObjectManager::RegisterSpawner(AObjectSpawner* Spawner)
@@ -44,6 +43,8 @@ void UStatefulObjectManager::RegisterObject(uint64 ObjectId, AActor* SpawnedActo
         Monsters.Add(ObjectId, Monster);
     else if (AP1Player* Player = Cast<AP1Player>(SpawnedActor))
         Players.Add(ObjectId, Player);
+
+    //UE_LOG(LogTemp, Log, TEXT("Object {%d} 등록됨"), ObjectId);
 }
 
 void UStatefulObjectManager::UnRegisterObject(uint64 ObjectId, EObjectType ObjectType)
@@ -109,6 +110,7 @@ void UStatefulObjectManager::DespawnAllObjects(bool ExceptMine)
     UWorld* World = GetWorld();
     UMyPlayerData* MyPlayerData = World->GetGameInstance()->GetSubsystem<UMyPlayerData>();
     uint64 MyPlayerId = MyPlayerData->GetPlayerId();
+    AP1Player* MyPlayer = Players[MyPlayerId];
 
     for (auto Pair : Players)
     {
@@ -130,6 +132,7 @@ void UStatefulObjectManager::DespawnAllObjects(bool ExceptMine)
     }
 
     Clear();
+    RegisterObject(MyPlayerId, MyPlayer);
 }
 
 void UStatefulObjectManager::DespawnObject(uint64 ObjectId)
@@ -150,7 +153,6 @@ void UStatefulObjectManager::DespawnObject(uint64 ObjectId)
 
 void UStatefulObjectManager::Clear()
 {
-    ObjectSpawners.Empty();
     Players.Empty();
     Monsters.Empty();
 }

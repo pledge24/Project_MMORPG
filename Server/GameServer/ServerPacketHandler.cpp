@@ -135,15 +135,24 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 
 bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
 {
-    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-    int32 roomId = player->objectInfo->map_id();
+    auto gameSession = static_pointer_cast<GameSession>(session);
 
-    // 클라이언트 맵 로딩이 완료되었으니, 해당 플레이어를 Room에 넣는다.
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    int32 roomId = player->objectInfo->map_id();
     RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleEnterPlayer, player, false);
+    // Room 입장 처리
+    {
+        shared_ptr<Protocol::PosInfo> enterPos = make_shared<Protocol::PosInfo>();
+        enterPos->CopyFrom(player->objectInfo->pos_info());
+
+        room->DoAsync(&Room::HandleEnterPlayer, player, enterPos, false);
+    }
 
     return true;
 }
@@ -160,32 +169,37 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
     if (curRoom == nullptr)
         return false;
 
-    // 현재 Room에서 portalId를 통해 Portal 데이터를 뽑아온다.
     optional<Json> opt = curRoom->GetPortalDataFromPortalId(pkt.portal_id());
     if (opt.has_value() == false)
-        return false;
-
-    using namespace JsonProperty::Map;
-    const Json& portalData = opt.value();
-    const Json& dst = portalData[Dst];
-
-    // 1) Room 이동에 따른 posInfo 갱신
     {
-        player->objectInfo->set_map_id(dst[TemplateId]);
-        player->posInfo->set_x(dst[PosX]);
-        player->posInfo->set_y(dst[PosY]);
-        player->posInfo->set_z(dst[PosZ]);
-        player->posInfo->set_yaw(dst[Yaw]);
-        player->posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+        wcout << "플레이어가 현재 Room에 존재하지 않는 포탈사용 시도" << '\n';
+        return false;
     }
 
-    // 2) Room 입장/퇴장
+    // Room 이동 처리
     {
-        RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(dst[TemplateId]);
+        using namespace JsonProperty::Map;
+        const Json& portalData = opt.value();
+        const Json& dst = portalData[Dst];
 
-        // 현재 room은 나가고, 다음 room은 들어간다.
-        curRoom->DoAsync(&Room::HandleLeavePlayer, player, true);
-        nextRoom->DoAsync(&Room::HandleEnterPlayer, player, true);
+        // 1) 이동할 위치 설정
+        shared_ptr<Protocol::PosInfo> enterPos = make_shared<Protocol::PosInfo>();
+        {
+            enterPos->set_object_id(player->objectInfo->object_id());
+            enterPos->set_x(dst[PosX]);
+            enterPos->set_y(dst[PosY]);
+            enterPos->set_z(dst[PosZ]);
+            enterPos->set_yaw(dst[Yaw]);
+            enterPos->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+        }
+
+        // 2) Room 현재 room은 나가고, 다음 room은 들어간다.
+        {
+            RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(dst[TemplateId]);
+
+            curRoom->DoAsync(&Room::HandleLeavePlayer, player, true);
+            enterRoom->DoAsync(&Room::HandleEnterPlayer, player, enterPos, true);
+        }
     }
 
     return true;
@@ -203,23 +217,27 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 	if (room == nullptr)
 		return false;
 
-    // 같은 Room에 있는 유저들에게 해당 유저 퇴장 처리.
-    int32 roomId = room->GetRoomId();
-    room->DoAsync(&Room::HandleLeavePlayer, player, false);
+    // Room 퇴장 처리
+    {
+        room->DoAsync(&Room::HandleLeavePlayer, player, false);
+	}
 
-    int64 characterId = player->playerInfo->character_id();
-    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
+    // DB 업데이트 처리
+	{
+        int64 characterId = player->playerInfo->character_id();
+        DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
 
-    // 게임 종료 플레이어 정보 DB에 저장.
-    JobRef job = make_shared<Job>(
-        [session, player]()
-        {
-            DBRequestFunctions::UpdateAllCharactersData(session);
-        }
-    );
-    dbQueue->Push(std::move(job));
+        // 게임 종료 플레이어 정보 DB에 저장.
+        JobRef job = make_shared<Job>(
+            [session, player]()
+            {
+                DBRequestFunctions::UpdateAllCharactersData(session);
+            }
+        );
+        dbQueue->Push(std::move(job));
+	}
 
-    // 해당 플레이어 세션 닫기.
+    // GameSession 네트워크 연결 해제
     gameSession->Disconnect("Exit Game");
 
 	return true;

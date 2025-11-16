@@ -46,17 +46,6 @@ void ACreature::BeginPlay()
         UE_LOG(LogTemp, Warning, TEXT("ACreature::BeginPlay() NameplateComponent 누락"));
     }
 
-
-    {
-        FVector Location = GetActorLocation();
-        ServerPos->set_x(Location.X);
-        ServerPos->set_y(Location.Y);
-        ServerPos->set_z(Location.Z);
-        ServerPos->set_yaw(GetControlRotation().Yaw);
-        ServerPos->set_state(Protocol::MOVE_STATE_IDLE);
-
-        ClientPos->CopyFrom(*ServerPos);
-    }
 }
 
 void ACreature::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -101,6 +90,9 @@ void ACreature::Initialize(const Protocol::ObjectInfo& ObjectInfo)
 {
     FText InName = FText::FromString(UTF8_TO_TCHAR(ObjectInfo.player_info().name().c_str()));
     SetCreatureName(InName);
+
+    ClientPos->CopyFrom(ObjectInfo.pos_info());
+    ServerPos->CopyFrom(ObjectInfo.pos_info());
 }
 
 bool ACreature::IsMyPlayer() const
