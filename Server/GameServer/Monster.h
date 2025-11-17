@@ -1,6 +1,15 @@
 #pragma once
 #include "Creature.h"
 
+enum class MonsterState : uint8
+{
+    Idle = 0,
+    Chasing,
+    Attacking,
+    Death,
+    StateCount
+};
+
 class Monster : public Creature
 {
 public:
@@ -12,10 +21,16 @@ protected:
 
 public:
     void Init();
-    void PrintMonsterAllData();
+    void PrintMonsterAllData() const;
 
 private:
     void CacheMonsterData();
+
+    void ProcessNone();
+    void ProcessIdle();
+    void ProcessAttacking();
+    void ProcessChasing();
+    void ProcessDeath();
 
 private:
     Protocol::MonsterInfo* monsterInfo;
@@ -30,6 +45,7 @@ private:
     int32 baseAttack;
 
     /** Monster AI Data */
+    MonsterState state = MonsterState::Idle;
     float attackRange;
     float detectionRange;
     float chaseRange;
