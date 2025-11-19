@@ -1,12 +1,14 @@
 #include "pch.h"
 #include "Monster.h"
 #include "Gamedata.h"
+#include "TickTimer.h"
 
 Monster::Monster()
 {
     _isPlayer = false;
 
     monsterInfo = objectInfo->mutable_monster_info();
+    StateTickTimer = make_shared<TickTimer>();
 }
 
 Monster::~Monster()
@@ -17,7 +19,9 @@ void Monster::Tick(float deltaSecond)
 {
     Creature::Tick(deltaSecond);
 
-    // Do State Behavior
+    StateTickTimer->Tick(deltaSecond);
+
+    // Process State Function
     switch (state)
     {
     case MonsterState::Idle:
@@ -61,6 +65,9 @@ void Monster::Init()
     // set Init data
     monsterInfo->set_template_id(templateId);
     monsterInfo->set_hp(maxHp-300);
+
+    // set Idle State
+    SetState(MonsterState::Idle);
 }
 
 void Monster::PrintMonsterAllData() const
@@ -137,4 +144,28 @@ void Monster::ProcessChasing(float deltaSecond)
 
 void Monster::ProcessDeath(float deltaSecond)
 {
+}
+
+void Monster::SetState(MonsterState updatedState)
+{
+    state = MonsterState::Idle;
+    bool isRepeated = false;
+
+    switch (state)
+    {
+    case MonsterState::Idle:
+        StateTickTimer->SetEndTime(vector<float>{ IDLE_MOVING_TIME, IDLE_STANDING_TIME });
+        isRepeated = true;
+        break;
+    case MonsterState::Chasing:
+        break;
+    case MonsterState::Attacking:
+        break;
+    case MonsterState::Death:
+        break;
+    default:
+        break;
+    }
+
+    StateTickTimer->Start(isRepeated);
 }
