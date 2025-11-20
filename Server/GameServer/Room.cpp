@@ -9,19 +9,40 @@
 
 void Room::UpdateTick()
 {
-    uint64 curTick = GetTickCount64();
-    float deltaSecond = static_cast<float>(curTick - prevTick) / 1000.f;
-    prevTick = curTick;
+    uint64 curTickTime = GetTickCount64();
+    float deltaTime = static_cast<float>(curTickTime - prevTickTime) / 1000.f;
+    prevTickTime = curTickTime;
 
-    cout << "Update Room. DeltaSecond: " << deltaSecond << '\n';
+    //cout << "Update Room. DeltaTime: " << deltaTime << '\n';
 
+    // Tick All Objects In Room.
     for (auto pair : _objects)
     {
         ObjectRef object = pair.second;
-        object->Tick(deltaSecond);
+        object->Tick(deltaTime);
     }
 
-    DoTimer(ROOM_TICK_MILLISECOND, &Room::UpdateTick);
+    elapsedTime += deltaTime;
+    if (elapsedTime > SEND_MOVE_PACKET_TIME)
+    {
+        elapsedTime = 0.f;
+
+        Protocol::S_MOVE movePkt;
+        for (auto pair : _objects)
+        {
+            ObjectRef object = pair.second;
+            if(PlayerRef player = dynamic_pointer_cast<Player>(object))
+                continue;
+
+            Protocol::PosInfo* info = movePkt.add_info();
+            info->CopyFrom(*object->posInfo);
+        }
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
+        Broadcast(sendBuffer);
+    }
+
+    DoTimer(ROOM_TICK, &Room::UpdateTick);
 }
 
 void Room::Init(const Json& roomData)
@@ -34,12 +55,14 @@ void Room::Init(const Json& roomData)
     // 자주 사용하는 JsonProperty Cache
     CacheRoomData();
 
-    // 몬스터를 room에 스폰한다.
+    // 몬스터를 Room에 스폰한다.
     int32 kindOfMonster = monsterIds.size();
     for (int32 i = 0; i < maxMonsterCount; i++)
     {
         int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster)];
         SpawnMonster(monsterTemplateId);
+        cout << "Monster Spawn!" << '\n';
+        break;  // TEST
     }
 
     UpdateTick();
@@ -192,7 +215,7 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 	{
 		Protocol::S_MOVE movePkt;
 		{
-			Protocol::PosInfo* info = movePkt.mutable_info();
+            Protocol::PosInfo* info = movePkt.add_info();
 			info->CopyFrom(pkt.info());
 		}
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
@@ -304,9 +327,12 @@ optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
     return nullopt;
 }
 
-void Room::SetRandomPos(Protocol::PosInfo* posInfo, float widthPadding, float heightPadding, bool randYaw)
+void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYaw)
 {
     using namespace JsonProperty::Map;
+
+    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
+    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
 
     float minX = roomCenterPos.x - (widthHalfExtent - widthPadding);
     float maxX = roomCenterPos.x + (widthHalfExtent - widthPadding);
@@ -315,7 +341,7 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, float widthPadding, float he
 
     posInfo->set_x(Utils::GetRandom(minX, maxX));
     posInfo->set_y(Utils::GetRandom(minY, maxY));
-    posInfo->set_z(roomCenterPos.z + SPAWN_PADDING_Z);
+    posInfo->set_z(roomCenterPos.z + LOCATION_PADDING_Z);
 
     if(randYaw)
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
@@ -357,7 +383,7 @@ MonsterRef Room::SpawnMonster(int32 templateId)
         return nullptr;
     }
 
-    SetRandomPos(newMonster->posInfo, SPAWN_PADDING_X, SPAWN_PADDING_Y, true);
+    SetRandomPos(newMonster->posInfo, true, true);
 
     //newMonster->PrintMonsterAllData(); // DEBUG
 
@@ -378,3 +404,20 @@ void Room::Broadcast(SendBufferRef sendBuffer, uint64 exceptId)
 			session->Send(sendBuffer);
 	}
 }
+
+vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
+{
+    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
+    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
+
+    float minX = roomCenterPos.x - (widthHalfExtent - widthPadding);
+    float maxX = roomCenterPos.x + (widthHalfExtent - widthPadding);
+    float minY = roomCenterPos.y - (heightHalfExtent - heightPadding);
+    float maxY = roomCenterPos.y + (heightHalfExtent - heightPadding);
+
+    float clampedPosX = std::clamp(posX, minX, maxX);
+    float clampedPosY = std::clamp(posY, minY, maxY);
+
+    return { clampedPosX, clampedPosY };
+}
+

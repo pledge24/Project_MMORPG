@@ -13,7 +13,7 @@ public:
 	virtual ~Player();
 
 protected:
-    virtual void Tick(float deltaSecond) override {};
+    virtual void Tick(float deltaTime) override;
 
 public:
     void Init();

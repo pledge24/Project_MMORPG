@@ -13,6 +13,6 @@ Object::~Object()
 	delete objectInfo;
 }
 
-void Object::Tick(float deltaSecond)
+void Object::Tick(float deltaTime)
 {
 }

@@ -193,7 +193,6 @@
     <ClInclude Include="Session.h" />
     <ClInclude Include="SocketUtil.h" />
     <ClInclude Include="ThreadManager.h" />
-    <ClInclude Include="TickTimer.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <ItemGroup>
@@ -226,7 +225,6 @@
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="SocketUtil.cpp" />
     <ClCompile Include="ThreadManager.cpp" />
-    <ClCompile Include="TickTimer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

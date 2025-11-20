@@ -8,7 +8,7 @@ public:
 	virtual ~Object();
 
 public:
-    virtual void Tick(float deltaSecond);
+    virtual void Tick(float deltaTime);
 
 public:
 	bool IsPlayer() { return _isPlayer; }

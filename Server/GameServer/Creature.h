@@ -8,7 +8,7 @@ public:
 	virtual ~Creature();
 
 protected:
-    virtual void Tick(float deltaSecond) override;
+    virtual void Tick(float deltaTime) override;
 
 };
 

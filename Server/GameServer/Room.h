@@ -1,12 +1,6 @@
 #pragma once
 #include "JobQueue.h"
-
-struct Pos
-{
-    float x = 0.f;
-    float y = 0.f;
-    float z = 0.f;
-};
+#include "Utils.h"
 
 class Room : public JobQueue
 {
@@ -36,10 +30,13 @@ public:
     optional<Json> GetPortalDataFromPortalId(int32 portalId);
 
     /** Setter 함수 */
-    void SetRandomPos(Protocol::PosInfo* posInfo, float widthPadding, float heightPadding, bool randYaw = false);
+    void SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
     void SetValid(bool isValid) { _isValid = isValid; }
 
     bool IsValid() const { return _isValid; }
+
+    /** Room 위치 관련 */
+    vector2D ClampLocation(float posX, float posY, bool usePadding = true);
 
 protected:
     /* Object 관리 관련*/
@@ -59,7 +56,7 @@ private:
     Json _roomData;
     bool _isValid = false;
 
-    Pos roomCenterPos;
+    vector3D roomCenterPos;
     float widthHalfExtent;
     float heightHalfExtent;
 
@@ -68,12 +65,14 @@ private:
     float monsterRespawnTime;
     vector<int32> monsterIds;
 
-    const float SPAWN_PADDING_X = 1000.f;
-    const float SPAWN_PADDING_Y = 1000.f;
-    const float SPAWN_PADDING_Z = 100.f;
+    const float LOCATION_PADDING_X = 1000.f;
+    const float LOCATION_PADDING_Y = 1000.f;
+    const float LOCATION_PADDING_Z = 100.f;
 
     /** 기타 */
-    uint64 prevTick = GetTickCount64();
-    const uint64 ROOM_TICK_MILLISECOND = 1023;
+    uint64 prevTickTime = GetTickCount64();
+    const uint64 ROOM_TICK = 500;
+    const float SEND_MOVE_PACKET_TIME = 1.f;
+    float elapsedTime = 0.f;
 };
 

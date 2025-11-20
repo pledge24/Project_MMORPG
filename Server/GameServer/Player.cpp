@@ -15,6 +15,13 @@ Player::~Player()
 {
 }
 
+void Player::Tick(float deltaTime)
+{
+    Creature::Tick(deltaTime);
+
+
+}
+
 void Player::Init()
 {
     inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));

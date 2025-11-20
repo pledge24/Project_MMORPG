@@ -2984,23 +2984,23 @@ class S_MOVE final :
   enum : int {
     kInfoFieldNumber = 1,
   };
-  // .Protocol.PosInfo info = 1;
-  bool has_info() const;
+  // repeated .Protocol.PosInfo info = 1;
+  int info_size() const;
   private:
-  bool _internal_has_info() const;
+  int _internal_info_size() const;
   public:
   void clear_info();
-  const ::Protocol::PosInfo& info() const;
-  PROTOBUF_NODISCARD ::Protocol::PosInfo* release_info();
-  ::Protocol::PosInfo* mutable_info();
-  void set_allocated_info(::Protocol::PosInfo* info);
+  ::Protocol::PosInfo* mutable_info(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::PosInfo >*
+      mutable_info();
   private:
-  const ::Protocol::PosInfo& _internal_info() const;
-  ::Protocol::PosInfo* _internal_mutable_info();
+  const ::Protocol::PosInfo& _internal_info(int index) const;
+  ::Protocol::PosInfo* _internal_add_info();
   public:
-  void unsafe_arena_set_allocated_info(
-      ::Protocol::PosInfo* info);
-  ::Protocol::PosInfo* unsafe_arena_release_info();
+  const ::Protocol::PosInfo& info(int index) const;
+  ::Protocol::PosInfo* add_info();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::PosInfo >&
+      info() const;
 
   // @@protoc_insertion_point(class_scope:Protocol.S_MOVE)
  private:
@@ -3010,7 +3010,7 @@ class S_MOVE final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::Protocol::PosInfo* info_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::PosInfo > info_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -6190,89 +6190,41 @@ inline void C_MOVE::set_allocated_info(::Protocol::PosInfo* info) {
 
 // S_MOVE
 
-// .Protocol.PosInfo info = 1;
-inline bool S_MOVE::_internal_has_info() const {
-  return this != internal_default_instance() && _impl_.info_ != nullptr;
+// repeated .Protocol.PosInfo info = 1;
+inline int S_MOVE::_internal_info_size() const {
+  return _impl_.info_.size();
 }
-inline bool S_MOVE::has_info() const {
-  return _internal_has_info();
+inline int S_MOVE::info_size() const {
+  return _internal_info_size();
 }
-inline const ::Protocol::PosInfo& S_MOVE::_internal_info() const {
-  const ::Protocol::PosInfo* p = _impl_.info_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
-      ::Protocol::_PosInfo_default_instance_);
-}
-inline const ::Protocol::PosInfo& S_MOVE::info() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_MOVE.info)
-  return _internal_info();
-}
-inline void S_MOVE::unsafe_arena_set_allocated_info(
-    ::Protocol::PosInfo* info) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.info_);
-  }
-  _impl_.info_ = info;
-  if (info) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_MOVE.info)
-}
-inline ::Protocol::PosInfo* S_MOVE::release_info() {
-  
-  ::Protocol::PosInfo* temp = _impl_.info_;
-  _impl_.info_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
-}
-inline ::Protocol::PosInfo* S_MOVE::unsafe_arena_release_info() {
-  // @@protoc_insertion_point(field_release:Protocol.S_MOVE.info)
-  
-  ::Protocol::PosInfo* temp = _impl_.info_;
-  _impl_.info_ = nullptr;
-  return temp;
-}
-inline ::Protocol::PosInfo* S_MOVE::_internal_mutable_info() {
-  
-  if (_impl_.info_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
-    _impl_.info_ = p;
-  }
-  return _impl_.info_;
-}
-inline ::Protocol::PosInfo* S_MOVE::mutable_info() {
-  ::Protocol::PosInfo* _msg = _internal_mutable_info();
+inline ::Protocol::PosInfo* S_MOVE::mutable_info(int index) {
   // @@protoc_insertion_point(field_mutable:Protocol.S_MOVE.info)
-  return _msg;
+  return _impl_.info_.Mutable(index);
 }
-inline void S_MOVE::set_allocated_info(::Protocol::PosInfo* info) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.info_);
-  }
-  if (info) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
-                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(info));
-    if (message_arena != submessage_arena) {
-      info = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, info, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.info_ = info;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_MOVE.info)
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::PosInfo >*
+S_MOVE::mutable_info() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_MOVE.info)
+  return &_impl_.info_;
+}
+inline const ::Protocol::PosInfo& S_MOVE::_internal_info(int index) const {
+  return _impl_.info_.Get(index);
+}
+inline const ::Protocol::PosInfo& S_MOVE::info(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_MOVE.info)
+  return _internal_info(index);
+}
+inline ::Protocol::PosInfo* S_MOVE::_internal_add_info() {
+  return _impl_.info_.Add();
+}
+inline ::Protocol::PosInfo* S_MOVE::add_info() {
+  ::Protocol::PosInfo* _add = _internal_add_info();
+  // @@protoc_insertion_point(field_add:Protocol.S_MOVE.info)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::PosInfo >&
+S_MOVE::info() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_MOVE.info)
+  return _impl_.info_;
 }
 
 // -------------------------------------------------------------------

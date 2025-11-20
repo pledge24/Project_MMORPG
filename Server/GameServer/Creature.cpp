@@ -10,7 +10,7 @@ Creature::~Creature()
 
 }
 
-void Creature::Tick(float deltaSecond)
+void Creature::Tick(float deltaTime)
 {
-    Object::Tick(deltaSecond);
+    Object::Tick(deltaTime);
 }

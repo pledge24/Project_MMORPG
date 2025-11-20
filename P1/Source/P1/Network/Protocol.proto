@@ -103,7 +103,7 @@ message C_MOVE
 
 message S_MOVE
 {
-	PosInfo info = 1;
+	repeated PosInfo info = 1;
 }
 
 message C_NORMAL_ATTACK
