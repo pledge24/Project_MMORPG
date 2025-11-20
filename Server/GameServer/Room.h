@@ -1,6 +1,7 @@
 #pragma once
 #include "JobQueue.h"
 #include "Utils.h"
+#include "object.h"
 
 class Room : public JobQueue
 {
@@ -10,6 +11,7 @@ public:
 
 protected:
     void UpdateTick();
+    void TickThisGroup(ETickGroup tickGroup, float deltaTime);
 
 public:
     void Init(const Json& roomData);

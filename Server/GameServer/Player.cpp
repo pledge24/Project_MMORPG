@@ -15,6 +15,13 @@ Player::~Player()
 {
 }
 
+void Player::PostConstructionSetup()
+{
+    Creature::PostConstructionSetup();
+
+    Init();
+}
+
 void Player::Tick(float deltaTime)
 {
     Creature::Tick(deltaTime);

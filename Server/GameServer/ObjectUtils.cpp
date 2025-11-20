@@ -11,8 +11,7 @@ PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
     // objectId 생성
 	const int64 newId = s_idGenerator.fetch_add(1);
 
-	PlayerRef player = make_shared<Player>();
-    player->Init();
+    PlayerRef player = static_pointer_cast<Player>(Object::Create<Player>());
 
     player->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
 	player->objectInfo->set_object_id(newId);
@@ -29,7 +28,7 @@ MonsterRef ObjectUtils::CreateMonster(int32 templateId)
     // objectId 생성
     const int64 newId = s_idGenerator.fetch_add(1);
 
-    MonsterRef monster = make_shared<Monster>();
+    MonsterRef monster = static_pointer_cast<Monster>(Object::Create<Monster>());
 
     monster->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_MONSTER);
     monster->objectInfo->set_object_id(newId);

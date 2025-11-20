@@ -10,6 +10,12 @@ Creature::~Creature()
 
 }
 
+void Creature::PostConstructionSetup()
+{
+    Object::PostConstructionSetup();
+
+}
+
 void Creature::Tick(float deltaTime)
 {
     Object::Tick(deltaTime);

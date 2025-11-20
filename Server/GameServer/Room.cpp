@@ -5,7 +5,6 @@
 #include "Monster.h"
 #include "ObjectUtils.h"
 #include "EquippedGear.h"
-#include "Object.h"
 
 void Room::UpdateTick()
 {
@@ -16,11 +15,10 @@ void Room::UpdateTick()
     //cout << "Update Room. DeltaTime: " << deltaTime << '\n';
 
     // Tick All Objects In Room.
-    for (auto pair : _objects)
-    {
-        ObjectRef object = pair.second;
-        object->Tick(deltaTime);
-    }
+    TickThisGroup(ETickGroup::TG_PrePhysics, deltaTime);
+    TickThisGroup(ETickGroup::TG_DuringPhysics, deltaTime);
+    TickThisGroup(ETickGroup::TG_PostPhysics, deltaTime);
+    TickThisGroup(ETickGroup::TG_ObjectTick, deltaTime);
 
     elapsedTime += deltaTime;
     if (elapsedTime > SEND_MOVE_PACKET_TIME)
@@ -43,6 +41,15 @@ void Room::UpdateTick()
     }
 
     DoTimer(ROOM_TICK, &Room::UpdateTick);
+}
+
+void Room::TickThisGroup(ETickGroup tickGroup, float deltaTime)
+{
+    for (auto pair : _objects)
+    {
+        ObjectRef object = pair.second;
+        object->TickThisGroup(tickGroup, deltaTime);
+    }
 }
 
 void Room::Init(const Json& roomData)

@@ -17,6 +17,12 @@ Monster::~Monster()
 {
 }
 
+void Monster::PostConstructionSetup()
+{
+    Object::PostConstructionSetup();
+
+}
+
 void Monster::Tick(float deltaTime)
 {
     Creature::Tick(deltaTime);

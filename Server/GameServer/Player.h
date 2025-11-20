@@ -13,6 +13,7 @@ public:
 	virtual ~Player();
 
 protected:
+    virtual void PostConstructionSetup() override;
     virtual void Tick(float deltaTime) override;
 
 public:

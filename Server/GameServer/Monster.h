@@ -21,6 +21,7 @@ public:
 	virtual ~Monster();
 
 protected:
+    virtual void PostConstructionSetup() override;
     virtual void Tick(float deltaTime) override;
 
 public:
@@ -71,6 +72,5 @@ private:
 
     vector2D targetPos;
     bool shouldReturn = false;          // patrolling 할때 스폰 포인트로 이동 여부
-
 };
 
