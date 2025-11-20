@@ -32,6 +32,7 @@ protected:
     void CacheMonsterData();
 
     /** 상태 함수 */
+    void TickStateMachine(float deltaTime);
     void ProcessNone();
     void ProcessIdle(float deltaTime);
     void ProcessPatrolling(float deltaTime);

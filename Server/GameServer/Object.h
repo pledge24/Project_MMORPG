@@ -2,9 +2,9 @@
 
 enum class ETickGroup : uint8
 {
-    TG_PrePhysics = 0,      // 물리 시뮬레이션 실행 전
-    TG_DuringPhysics,       // 물리 시뮬레이션 실행
-    TG_PostPhysics,         // 물리 시뮬레이션 실행 후
+    TG_PrePhysics = 0,      // 물리 시뮬레이션 실행 전(ex. 캐릭터 이동 업데이트)
+    TG_DuringPhysics,       // 물리 시뮬레이션 실행(ex. 물리 상호작용 관련 로직)
+    TG_PostPhysics,         // 물리 시뮬레이션 실행 후(ex. 피격 판정/반응 처리)
     TG_ObjectTick,          // Object::Tick()
     TG_COUNT
 };

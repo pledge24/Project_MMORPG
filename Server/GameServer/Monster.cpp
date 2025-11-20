@@ -19,38 +19,24 @@ Monster::~Monster()
 
 void Monster::PostConstructionSetup()
 {
-    Object::PostConstructionSetup();
+    Creature::PostConstructionSetup();
 
+    weak_ptr<Monster> weakSelf = static_pointer_cast<Monster>(shared_from_this());
+    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PrePhysics)].push_back(
+        [weakSelf](float deltaTime)
+        {
+            if (auto self = weakSelf.lock())
+            {
+                self->stateTickTimer->Tick(deltaTime);
+                self->TickStateMachine(deltaTime);
+            }
+        }
+    );
 }
 
 void Monster::Tick(float deltaTime)
 {
     Creature::Tick(deltaTime);
-
-    stateTickTimer->Tick(deltaTime);
-
-    // Process State Function
-    switch (state)
-    {
-    case MonsterState::Idle:
-        ProcessIdle(deltaTime);
-        break;
-    case MonsterState::Patrolling:
-        ProcessPatrolling(deltaTime);
-        break;
-    case MonsterState::Chasing:
-        ProcessChasing(deltaTime);
-        break;
-    case MonsterState::Attacking:
-        ProcessAttacking(deltaTime);
-        break;
-    case MonsterState::Death:
-        ProcessDeath(deltaTime);
-        break;
-    default:
-        ProcessNone();
-        break;
-    }
 
 }
 
@@ -109,6 +95,31 @@ void Monster::CacheMonsterData()
     attackRange = _monsterData[AttackRange].is_null() ? 0.f : static_cast<float>(_monsterData[AttackRange]);
     detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
     chaseRange = _monsterData[ChaseRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChaseRange]);
+}
+
+void Monster::TickStateMachine(float deltaTime)
+{
+    switch (state)
+    {
+    case MonsterState::Idle:
+        ProcessIdle(deltaTime);
+        break;
+    case MonsterState::Patrolling:
+        ProcessPatrolling(deltaTime);
+        break;
+    case MonsterState::Chasing:
+        ProcessChasing(deltaTime);
+        break;
+    case MonsterState::Attacking:
+        ProcessAttacking(deltaTime);
+        break;
+    case MonsterState::Death:
+        ProcessDeath(deltaTime);
+        break;
+    default:
+        ProcessNone();
+        break;
+    }
 }
 
 void Monster::ProcessNone()
