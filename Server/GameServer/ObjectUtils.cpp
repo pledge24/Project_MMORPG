@@ -12,13 +12,15 @@ PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
 	const int64 newId = s_idGenerator.fetch_add(1);
 
     PlayerRef player = static_pointer_cast<Player>(Object::Create<Player>());
+    if (player)
+    {
+        player->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
+        player->objectInfo->set_object_id(newId);
+        player->posInfo->set_object_id(newId);
 
-    player->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
-	player->objectInfo->set_object_id(newId);
-	player->posInfo->set_object_id(newId);
-
-	player->session = session;
-	session->player.store(player);
+        player->session = session;
+        session->player.store(player);
+    }
 
 	return player;
 }
@@ -29,14 +31,18 @@ MonsterRef ObjectUtils::CreateMonster(int32 templateId)
     const int64 newId = s_idGenerator.fetch_add(1);
 
     MonsterRef monster = static_pointer_cast<Monster>(Object::Create<Monster>());
+    if (monster)
+    {
+        monster->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_MONSTER);
+        monster->objectInfo->set_object_id(newId);
+        monster->posInfo->set_object_id(newId);
 
-    monster->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_MONSTER);
-    monster->objectInfo->set_object_id(newId);
-    monster->posInfo->set_object_id(newId);
+        // MonsterInfo templateId만 세팅
+        Protocol::MonsterInfo* monsterInfo = monster->objectInfo->mutable_monster_info();
+        monsterInfo->set_template_id(templateId);
 
-    // MonsterInfo templateId만 세팅
-    Protocol::MonsterInfo* monsterInfo = monster->objectInfo->mutable_monster_info();
-    monsterInfo->set_template_id(templateId);
+        monster->PostInit();
+    }
 
     return monster;
 }

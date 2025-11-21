@@ -6,6 +6,58 @@
 #include "ObjectUtils.h"
 #include "EquippedGear.h"
 
+RoomRef Room::Create(const Json& roomData)
+{
+    RoomRef newRoom = make_shared<Room>();
+
+    if (newRoom->Init(roomData) == false)
+    {
+        return nullptr;
+    }
+
+    return newRoom;
+}
+
+bool Room::Init(const Json& roomData)
+{
+    if (roomData.empty())
+    {
+        wcout << L"roomData가 없습니다" << '\n';
+        return false;
+    }
+
+    _roomData = roomData;
+
+    // 자주 사용하는 JsonProperty Cache
+    CacheRoomData();
+
+    CreateCellMatrix();
+
+    return true;
+}
+
+bool Room::Start()
+{
+    // 몬스터를 Room에 스폰한다.
+    if (monsterIds.empty() == false)
+    {
+        int32 kindOfMonster = monsterIds.size();
+        for (int32 i = 0; i < maxMonsterCount; i++)
+        {
+            int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster)];
+            if (SpawnMonster(monsterTemplateId) == nullptr)
+                return false;
+
+            cout << "Monster Spawn!" << '\n';
+            break;  // TEST
+        }
+    }
+
+    UpdateTick();
+
+    return true;
+}
+
 void Room::UpdateTick()
 {
     uint64 curTickTime = GetTickCount64();
@@ -50,53 +102,6 @@ void Room::TickThisGroup(ETickGroup tickGroup, float deltaTime)
         ObjectRef object = pair.second;
         object->TickThisGroup(tickGroup, deltaTime);
     }
-}
-
-void Room::Init(const Json& roomData)
-{
-    if (roomData.empty())
-        throw wstring(L"roomData가 없습니다");
-
-    _roomData = roomData;
-
-    // 자주 사용하는 JsonProperty Cache
-    CacheRoomData();
-
-    // 몬스터를 Room에 스폰한다.
-    int32 kindOfMonster = monsterIds.size();
-    for (int32 i = 0; i < maxMonsterCount; i++)
-    {
-        int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster)];
-        SpawnMonster(monsterTemplateId);
-        cout << "Monster Spawn!" << '\n';
-        break;  // TEST
-    }
-
-    UpdateTick();
-}
-
-void Room::CacheRoomData()
-{
-    using namespace JsonProperty::Map;
-
-    _roomId = _roomData[TemplateId];
-
-    const Json& centerPos = _roomData[CenterPos];
-    roomCenterPos.x = centerPos[PosX].is_null() ? 0 : static_cast<float>(centerPos[PosX]);
-    roomCenterPos.y = centerPos[PosY].is_null() ? 0 : static_cast<float>(centerPos[PosY]);
-    roomCenterPos.z = centerPos[PosZ].is_null() ? 0 : static_cast<float>(centerPos[PosZ]);
-
-    widthHalfExtent = _roomData[WidthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[WidthHalfExtent]);
-    heightHalfExtent = _roomData[HeightHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[HeightHalfExtent]);
-
-    maxMonsterCount = _roomData[MaxMonsterCount].is_null() ? 0 : static_cast<int32>(_roomData[MaxMonsterCount]);
-    monsterRespawnTime = _roomData[MonsterRespawnTime].is_null() ? 100000.f : static_cast<float>(_roomData[MonsterRespawnTime]);
-
-    for (int32 monsterId : _roomData[MonsterIds])
-    {
-        monsterIds.push_back(monsterId);
-    }
-    
 }
 
 void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, bool moveRoom)
@@ -341,21 +346,109 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
     float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
     float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
 
-    float minX = roomCenterPos.x - (widthHalfExtent - widthPadding);
-    float maxX = roomCenterPos.x + (widthHalfExtent - widthPadding);
-    float minY = roomCenterPos.y - (heightHalfExtent - heightPadding);
-    float maxY = roomCenterPos.y + (heightHalfExtent - heightPadding);
+    float spawnMinX = _roomMinX + widthPadding;
+    float spawnMaxX = _roomMaxX - widthPadding;
+    float spawnMinY = _roomMinY + heightPadding;
+    float spawnMaxY = _roomMaxY - heightPadding;
 
-    posInfo->set_x(Utils::GetRandom(minX, maxX));
-    posInfo->set_y(Utils::GetRandom(minY, maxY));
-    posInfo->set_z(roomCenterPos.z + LOCATION_PADDING_Z);
+    posInfo->set_x(Utils::GetRandom(_roomMinX, _roomMaxX));
+    posInfo->set_y(Utils::GetRandom(_roomMinY, _roomMaxY));
+    posInfo->set_z(_roomCenterPos.z + LOCATION_PADDING_Z);
 
     if(randYaw)
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
 }
 
+void Room::CacheRoomData()
+{
+    using namespace JsonProperty::Map;
+
+    _roomId = _roomData[TemplateId];
+
+    const Json& centerPos = _roomData[CenterPos];
+    _roomCenterPos.x = centerPos[PosX].is_null() ? 0 : static_cast<float>(centerPos[PosX]);
+    _roomCenterPos.y = centerPos[PosY].is_null() ? 0 : static_cast<float>(centerPos[PosY]);
+    _roomCenterPos.z = centerPos[PosZ].is_null() ? 0 : static_cast<float>(centerPos[PosZ]);
+
+    _widthHalfExtent = _roomData[WidthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[WidthHalfExtent]);
+    _heightHalfExtent = _roomData[HeightHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[HeightHalfExtent]);
+
+    _roomMinX = _roomCenterPos.x - _heightHalfExtent;
+    _roomMaxX = _roomCenterPos.x + _heightHalfExtent;
+    _roomMinY = _roomCenterPos.y - _widthHalfExtent;
+    _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
+
+    maxMonsterCount = _roomData[MaxMonsterCount].is_null() ? 0 : static_cast<int32>(_roomData[MaxMonsterCount]);
+    monsterRespawnTime = _roomData[MonsterRespawnTime].is_null() ? 100000.f : static_cast<float>(_roomData[MonsterRespawnTime]);
+
+    for (int32 monsterId : _roomData[MonsterIds])
+    {
+        monsterIds.push_back(monsterId);
+    }
+
+}
+
+void Room::CreateCellMatrix()
+{
+    float snappedMinX = static_cast<float>(std::floor(_roomMinX / CELL_SIZE)) * CELL_SIZE;
+    float snappedMaxX = static_cast<float>(std::ceil(_roomMaxX / CELL_SIZE)) * CELL_SIZE;
+    float snappedMinY = static_cast<float>(std::floor(_roomMinY / CELL_SIZE)) * CELL_SIZE;
+    float snappedMaxY = static_cast<float>(std::ceil(_roomMaxY / CELL_SIZE)) * CELL_SIZE;
+
+    int32 cellCountX = static_cast<int32>((snappedMaxX - snappedMinX) / CELL_SIZE);
+    int32 cellCountY = static_cast<int32>((snappedMaxY - snappedMinY) / CELL_SIZE);
+
+    _cellMatrix.resize(cellCountX, vector<Cell>(cellCountY));
+    _cellOffset = vector2D(snappedMinX, snappedMinY);
+}
+
+std::pair<int32, int32> Room::GetCellIndexFromPos(const vector2D& objectPos)
+{
+    float offsetX = objectPos.x - _cellOffset.x;
+    float offsetY = objectPos.y - _cellOffset.y;
+
+    if (offsetX < 0.f || offsetY < 0.f)
+        return make_pair(-1, -1);
+
+    int32 indexX = static_cast<int32>(offsetX / CELL_SIZE);
+    int32 indexY = static_cast<int32>(offsetY / CELL_SIZE);
+
+    if(indexX < 0 || indexX >= _cellMatrix.size() || indexY < 0 || indexY >= _cellMatrix[0].size())
+        return make_pair(-1, -1);
+
+    return make_pair(indexX, indexY);
+}
+
+std::pair<int32, int32> Room::GetCellIndexFromPos(Protocol::PosInfo* posInfo)
+{
+    return GetCellIndexFromPos(vector2D(posInfo->x(), posInfo->y()));
+}
+
+Cell* Room::GetCellFromPos(const vector2D& pos)
+{
+    auto cellIndices = GetCellIndexFromPos(pos);
+    if (cellIndices == make_pair(-1, -1))
+    {
+        wcout << L"GetCellFromPos: 유효하지 않는 위치입니다" << '\n';
+        return nullptr;
+    }
+
+    int32 indexX = cellIndices.first;
+    int32 indexY = cellIndices.second;
+
+    return &_cellMatrix[indexX][indexY];
+}
+
+Cell* Room::GetCellFromPos(Protocol::PosInfo* posInfo)
+{
+    return GetCellFromPos(vector2D(posInfo->x(), posInfo->y()));
+}
+
 bool Room::RegisterObject(ObjectRef object)
 {
+    if (object == nullptr)
+        return false;
+
     uint64 objectId = object->objectInfo->object_id();
 	if (_objects.contains(objectId))
 		return false;
@@ -366,6 +459,10 @@ bool Room::RegisterObject(ObjectRef object)
 	object->room.store(GetRoomRef());
     object->objectInfo->set_map_id(_roomId);
 
+    // cellMatrix에 object 위치 등록
+    auto cellPos = GetCellIndexFromPos(object->posInfo);
+    _cellMatrix[cellPos.first][cellPos.second].insert(objectId);
+
 	return true;
 }
 
@@ -374,6 +471,13 @@ bool Room::UnRegisterObject(uint64 objectId)
 	if (_objects.contains(objectId) == false)
 		return false;
 
+    ObjectRef object = _objects[objectId];
+
+    // cellMatrix에 object 삭제
+    auto cellPos = GetCellIndexFromPos(object->posInfo);
+    _cellMatrix[cellPos.first][cellPos.second].erase(objectId);
+
+    // object 삭제
 	_objects.erase(objectId);
 
 	return true;
@@ -382,15 +486,14 @@ bool Room::UnRegisterObject(uint64 objectId)
 MonsterRef Room::SpawnMonster(int32 templateId)
 {
     MonsterRef newMonster = ObjectUtils::CreateMonster(templateId);
-    newMonster->Init();
+
+    SetRandomPos(newMonster->posInfo, true, true);
 
     if (RegisterObject(newMonster) == false)
     {
         wcout << L"SpawnMonster 실패" << '\n';
         return nullptr;
     }
-
-    SetRandomPos(newMonster->posInfo, true, true);
 
     //newMonster->PrintMonsterAllData(); // DEBUG
 
@@ -417,14 +520,35 @@ vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
     float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
     float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
 
-    float minX = roomCenterPos.x - (widthHalfExtent - widthPadding);
-    float maxX = roomCenterPos.x + (widthHalfExtent - widthPadding);
-    float minY = roomCenterPos.y - (heightHalfExtent - heightPadding);
-    float maxY = roomCenterPos.y + (heightHalfExtent - heightPadding);
+    float minX = _roomCenterPos.x - (_widthHalfExtent - widthPadding);
+    float maxX = _roomCenterPos.x + (_widthHalfExtent - widthPadding);
+    float minY = _roomCenterPos.y - (_heightHalfExtent - heightPadding);
+    float maxY = _roomCenterPos.y + (_heightHalfExtent - heightPadding);
 
     float clampedPosX = std::clamp(posX, minX, maxX);
     float clampedPosY = std::clamp(posY, minY, maxY);
 
     return { clampedPosX, clampedPosY };
+}
+
+void Room::UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst)
+{
+    Cell* prevCell = GetCellFromPos(src);
+    Cell* curCell = GetCellFromPos(dst);
+    if (prevCell == nullptr || curCell == nullptr)
+        return;
+
+    if (prevCell->contains(objectId) == false)
+    {
+        wcout << L"왜인지 모르겠지만 CellMatrix에 object의 id가 없음" << '\n';
+        return;
+    }
+
+    if (prevCell != curCell)
+    {
+        prevCell->erase(objectId);
+        curCell->insert(objectId);
+    }
+    
 }
 

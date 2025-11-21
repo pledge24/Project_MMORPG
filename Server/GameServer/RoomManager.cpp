@@ -17,21 +17,20 @@ RoomManager::~RoomManager()
 
 RoomRef RoomManager::CreateRoom(int32 templateId)
 {
-    RoomRef room = nullptr;
-    try
+    if (Gamedata::MapDataTable.find(templateId) == Gamedata::MapDataTable.end())
     {
-        if (Gamedata::MapDataTable.find(templateId) == Gamedata::MapDataTable.end())
-            throw wstring(L"Gamedata에 해당 room에 대한 정보가 없음");
-
-        const Json& roomData = Gamedata::MapDataTable[templateId];
-        room = make_shared<Room>();
-        room->Init(roomData);
-    }
-    catch (const wstring cause)
-    {
-        wcout << L"CreateRoom 중 문제 발생: " << cause << endl;
+        wcout << L"Gamedata에 해당 room에 대한 정보 누락" << '\n';
         return nullptr;
     }
+
+    const Json& roomData = Gamedata::MapDataTable[templateId];
+    RoomRef room = Room::Create(roomData);
+    
+    if (room == nullptr)
+        return nullptr;
+
+    if (room->Start() == false)
+        return nullptr;
 
     return room;
 }

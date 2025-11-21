@@ -3,20 +3,24 @@
 #include "Utils.h"
 #include "object.h"
 
+using Cell = set<uint64>;   // 특정 영역에 있는 ObjectId
+
 class Room : public JobQueue
 {
 public:
     Room() = default;
 	virtual ~Room() = default;
 
+public:
+    static RoomRef Create(const Json& roomData);
+    bool Init(const Json& roomData);
+    bool Start();
+
 protected:
     void UpdateTick();
     void TickThisGroup(ETickGroup tickGroup, float deltaTime);
 
 public:
-    void Init(const Json& roomData);
-    void CacheRoomData();
-
     /** 핸들 함수 */
 	void HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, bool moveRoom = false);
     void HandleLeavePlayer(PlayerRef leavePlayer, bool moveRoom = false);
@@ -39,9 +43,18 @@ public:
 
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
+    void UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst);
 
 protected:
-    /* Object 관리 관련*/
+    /** Room 관련 */
+    void CacheRoomData();
+    void CreateCellMatrix();
+    pair<int32, int32> GetCellIndexFromPos(const vector2D& pos);
+    pair<int32, int32> GetCellIndexFromPos(Protocol::PosInfo* posInfo);
+    Cell* GetCellFromPos(const vector2D& pos);
+    Cell* GetCellFromPos(Protocol::PosInfo* posInfo);
+
+    /* Object 관련*/
 	bool RegisterObject(ObjectRef object);
 	bool UnRegisterObject(uint64 objectId);
 
@@ -51,27 +64,37 @@ protected:
 	void Broadcast(SendBufferRef sendBuffer, uint64 exceptId = 0);
 
 private:
-	unordered_map<uint64, ObjectRef> _objects;
-
     /** 해당 Room 관련 정보 */
+	unordered_map<uint64, ObjectRef> _objects;
+    vector<vector<Cell>> _cellMatrix;
+    vector2D _cellOffset = vector2D::GetZeroVector();
+
     int32 _roomId;
     Json _roomData;
     bool _isValid = false;
 
-    vector3D roomCenterPos;
-    float widthHalfExtent;
-    float heightHalfExtent;
+    vector3D _roomCenterPos;
+    float _widthHalfExtent;
+    float _heightHalfExtent;
+
+    float _roomMinX;
+    float _roomMaxX;
+    float _roomMinY;
+    float _roomMaxY;
+
+    /** Config */
+    const float LOCATION_PADDING_X = 1000.f;
+    const float LOCATION_PADDING_Y = 1000.f;
+    const float LOCATION_PADDING_Z = 100.f;
+
+    const float CELL_SIZE = 1000.f;    // 10M
 
     /** 몬스터 관련 정보 */
     int32 maxMonsterCount;
     float monsterRespawnTime;
     vector<int32> monsterIds;
 
-    const float LOCATION_PADDING_X = 1000.f;
-    const float LOCATION_PADDING_Y = 1000.f;
-    const float LOCATION_PADDING_Z = 100.f;
-
-    /** 기타 */
+    /** 네트워크 */
     uint64 prevTickTime = GetTickCount64();
     const uint64 ROOM_TICK = 500;
     const float SEND_MOVE_PACKET_TIME = 1.f;

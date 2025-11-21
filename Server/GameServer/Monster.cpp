@@ -40,7 +40,7 @@ void Monster::Tick(float deltaTime)
 
 }
 
-void Monster::Init()
+void Monster::PostInit()
 {
     int32 templateId = objectInfo->monster_info().template_id();
 
@@ -254,14 +254,23 @@ void Monster::Move(float deltaTime)
     float dx = moveUnitVec.x * min(MONSTER_SPEED * deltaTime, moveVec.GetMagnitude());
     float dy = moveUnitVec.y * min(MONSTER_SPEED * deltaTime, moveVec.GetMagnitude());
 
-    float nx = posInfo->x() + dx;
-    float ny = posInfo->y() + dy;
+    vector2D prevPos = { posInfo->x(), posInfo->y() };
+    vector2D curPos;
 
-    posInfo->set_x(nx);
-    posInfo->set_y(ny);
+    curPos.x = prevPos.x + dx;
+    curPos.y = prevPos.y + dy;
+
+    posInfo->set_x(curPos.x);
+    posInfo->set_y(curPos.y);
     posInfo->set_yaw(MathUtil::vectorToYaw(moveUnitVec));
 
-    cout << "Monster MoveTo: " << nx << " " << ny << '\n';
+    uint64 objectId = objectInfo->object_id();
+    if (RoomRef ownerRoom = room.load().lock())
+    {
+        ownerRoom->UpdateCellMatrixOnMove(objectId, prevPos, curPos);
+    }
+
+    cout << "Monster MoveTo: " << curPos.x << " " << curPos.y << '\n';
 }
 
 bool Monster::AlreadyArrive()

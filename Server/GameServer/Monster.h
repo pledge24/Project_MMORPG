@@ -25,7 +25,7 @@ protected:
     virtual void Tick(float deltaTime) override;
 
 public:
-    void Init();
+    void PostInit();
     void PrintMonsterAllData() const;
 
 protected:
