@@ -40,8 +40,6 @@ MonsterRef ObjectUtils::CreateMonster(int32 templateId)
         // MonsterInfo templateId만 세팅
         Protocol::MonsterInfo* monsterInfo = monster->objectInfo->mutable_monster_info();
         monsterInfo->set_template_id(templateId);
-
-        monster->PostInit();
     }
 
     return monster;

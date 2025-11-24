@@ -36,21 +36,23 @@ public:
     optional<Json> GetPortalDataFromPortalId(int32 portalId);
 
     /** Setter 함수 */
-    void SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
+    void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
     void SetValid(bool isValid) { _isValid = isValid; }
 
     bool IsValid() const { return _isValid; }
+    bool Contains(uint64 objectId) { return _objects.contains(objectId); }
 
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
     void UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst);
+    pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);  // pair<플레이어 참조, 거리^2> 
 
 protected:
     /** Room 관련 */
     void CacheRoomData();
     void CreateCellMatrix();
-    pair<int32, int32> GetCellIndexFromPos(const vector2D& pos);
-    pair<int32, int32> GetCellIndexFromPos(Protocol::PosInfo* posInfo);
+    pair<int32, int32> GetCellIndicesFromPos(const vector2D& pos);
+    pair<int32, int32> GetCellIndicesFromPos(Protocol::PosInfo* posInfo);
     Cell* GetCellFromPos(const vector2D& pos);
     Cell* GetCellFromPos(Protocol::PosInfo* posInfo);
 

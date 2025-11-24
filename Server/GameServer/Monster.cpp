@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Monster.h"
 #include "Gamedata.h"
-#include "TickTimer.h"
+#include "TickIntervalTimer.h"
 #include "Room.h"
 
 Monster::Monster()
@@ -10,7 +10,7 @@ Monster::Monster()
 
     monsterInfo = objectInfo->mutable_monster_info();
     spawnPos = make_shared<Protocol::PosInfo>();
-    stateTickTimer = make_shared<TickTimer>();
+    stateIntervalTimer = make_shared<TickIntervalTimer>();
 }
 
 Monster::~Monster()
@@ -21,14 +21,25 @@ void Monster::PostConstructionSetup()
 {
     Creature::PostConstructionSetup();
 
+    // 몬스터 AI 인터벌 타이머 초기화
     weak_ptr<Monster> weakSelf = static_pointer_cast<Monster>(shared_from_this());
-    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PrePhysics)].push_back(
+    stateIntervalTimer->Init(UPDATE_STATE_INTERVAL, [weakSelf]()
+        {
+            if (auto self = weakSelf.lock())
+            {
+                self->UpdateState();
+            }
+            
+        });
+
+    // 틱마다 타이머 갱신
+    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PreObjectTick)].push_back(
         [weakSelf](float deltaTime)
         {
             if (auto self = weakSelf.lock())
             {
-                self->stateTickTimer->Tick(deltaTime);
-                self->TickStateMachine(deltaTime);
+                self->_stateTimer += deltaTime;
+                self->stateIntervalTimer->Tick(deltaTime);
             }
         }
     );
@@ -38,6 +49,8 @@ void Monster::Tick(float deltaTime)
 {
     Creature::Tick(deltaTime);
 
+    // 몬스터 AI 실행
+    ExecuteStateBehavior(deltaTime);
 }
 
 void Monster::PostInit()
@@ -97,147 +110,194 @@ void Monster::CacheMonsterData()
     chaseRange = _monsterData[ChaseRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChaseRange]);
 }
 
-void Monster::TickStateMachine(float deltaTime)
+void Monster::UpdateState()
 {
+    cout << "Update State!" << '\n';
+
     switch (state)
     {
     case MonsterState::Idle:
-        ProcessIdle(deltaTime);
-        break;
     case MonsterState::Patrolling:
-        ProcessPatrolling(deltaTime);
+    {
+        // (Idle, Patrolling) -> (chasing, attacking): detection 안에 플레이어 감지
+        if (RoomRef ownerRoom = room.load().lock())
+        {
+            PlayerRef player = nullptr;
+            float squareDist = 0.f;
+            std::tie(player, squareDist) = ownerRoom->FindClosestPlayer(posInfo, detectionRange);
+
+            if (player != nullptr)
+            {
+                _stateTimer = 0.f;
+                _target = static_pointer_cast<Object>(player);
+
+                // 공격 범위 내로 들어온 경우.
+                if (squareDist <= attackRange * attackRange)
+                {
+
+                    SetState(MonsterState::Attacking);
+                }
+                else
+                {
+
+                    SetState(MonsterState::Chasing);
+                }
+
+                return;
+            }
+        }
+
+        // Idle -> Patrolling으로 상태 전환
+        if (state == MonsterState::Idle && _stateTimer >= IDLE_TIME)
+        {
+            _stateTimer = 0.f;
+            SetState(MonsterState::Patrolling);
+            return;
+        }
+           
+        // Patrolling -> Idle로 상태 전환
+        if (state == MonsterState::Patrolling)
+        {
+            if (_stateTimer >= PATROL_MOVING_TIME || AlreadyArrive())
+            {
+                _stateTimer = 0.f;
+                SetState(MonsterState::Idle);
+                return;
+            }
+        }
+
         break;
+    }
     case MonsterState::Chasing:
-        ProcessChasing(deltaTime);
+    {
+        // 전환 조건(attacking): 공격 범위 안에 들어옴
+        if (auto target = _target.lock())
+        {
+            Protocol::PosInfo* targetPos = target->posInfo;
+            float squareDist = MathUtil::Distance(posInfo, targetPos);
+
+            if (squareDist <= attackRange * attackRange)
+            {
+                _stateTimer = 0.f;
+                SetState(MonsterState::Attacking);
+                return;
+            }
+        }
+
+        // 전환 조건(idle): 타겟이 몇 초 이상 범위를 벗어남
+        if (_stateTimer >= QUIT_CHASING_TIME)
+        {
+            _stateTimer = 0.f;
+            SetState(MonsterState::Idle);
+            return;
+        }
+
         break;
+    }
     case MonsterState::Attacking:
-        ProcessAttacking(deltaTime);
+    {
+        if (auto target = _target.lock())
+        {
+            Protocol::PosInfo* targetPos = target->posInfo;
+            float squareDist = MathUtil::Distance(posInfo, targetPos);
+
+            // 전환 조건(Chasing): 공격 범위를 벗어남
+            if (squareDist > attackRange * attackRange)
+            {
+                _stateTimer = 0.f;
+                SetState(MonsterState::Chasing);
+                return;
+            }
+
+            // 전환 조건(Idle): 타겟이 현재 Room에서 사라진 경우
+            if (auto ownerRoom = room.load().lock())
+            {
+                if (ownerRoom->Contains(target->objectInfo->object_id()) == false)
+                {
+                    _target.reset();
+                    _stateTimer = 0.f;
+                    SetState(MonsterState::Idle);
+                    return;
+                }
+            }
+
+        }
+        else
+        {
+            // 전환 조건(Idle): 타겟이 유효하지 않음
+            _target.reset();
+            _stateTimer = 0.f;
+            SetState(MonsterState::Idle);
+            return;
+        }
+
         break;
-    case MonsterState::Death:
-        ProcessDeath(deltaTime);
-        break;
+    }
     default:
-        ProcessNone();
         break;
     }
-}
-
-void Monster::ProcessNone()
-{
-    cout << "State None" << '\n';
-}
-
-void Monster::ProcessIdle(float deltaTime)
-{
-    // Check Transition Death
-    if (monsterInfo->hp() <= 0)
-    {
-        SetState(MonsterState::Death);
-        return;
-    }
-
-    // 타겟이 detection 범위에 들어오면 배틀모드로 전환
-
-    // Check Transition Patrolling
-    if (stateTickTimer->GetLastTriggered() > 0)
-    {
-        SetState(MonsterState::Patrolling);
-        return;
-    }
-    
-}
-
-void Monster::ProcessPatrolling(float deltaTime)
-{
-    Move(deltaTime);
-
-    // Transition Idle
-    if (stateTickTimer->GetLastTriggered() > 0 || AlreadyArrive())
-    {
-        SetState(MonsterState::Idle);
-        return;
-    }
-}
-
-void Monster::ProcessAttacking(float deltaTime)
-{
-    // 전환 조건 체크
-
-    // Transition Chasing: 공격 사거리를 벗어남
-
-    // Transition Idle : 타겟이 죽음
-
-    // Transition 없음: 공격 or 공격 대기
-}
-
-void Monster::ProcessChasing(float deltaTime)
-{
-    // 전환 조건 체크
-
-    // Transition Attacking: 공격 사거리를 들어옴
-
-    // Transition Idle : 타겟이 죽음 or 일정 시간동안 추격 범위 벗어남
-
-    // Transition 없음: 타겟으로 이동
-}
-
-void Monster::ProcessDeath(float deltaTime)
-{
 }
 
 void Monster::SetState(MonsterState updatedState)
 {
     state = updatedState;
-    bool isRepeated = false;
 
     switch (state)
     {
     case MonsterState::Idle:
-        {
-            cout << "Turn into Idle! Monster id: " << objectInfo->object_id() << '\n';
-            posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-
-            // Set & Start Timer
-            stateTickTimer->SetEndTime(STANDING_TIME);
-            stateTickTimer->Start(isRepeated);
-            break;
-        }
+    {
+        cout << "Turn into Idle! Monster id: " << objectInfo->object_id() << '\n';
+        posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+        break;
+    }
     case MonsterState::Patrolling:
+    {
+        cout << "Turn into Patrolling!id: " << objectInfo->object_id() << '\n';
+        posInfo->set_state(Protocol::MoveState::MOVE_STATE_RUN);
+
+        // Set targetPos
+        if (_shouldReturn)
         {
-            cout << "Turn into Patrolling!id: " << objectInfo->object_id() << '\n';
-            posInfo->set_state(Protocol::MoveState::MOVE_STATE_RUN);
-
-            // Set targetPos
-            if (shouldReturn)
-            {
-                targetPos = { spawnPos->x(), spawnPos->y() };
-            }
-            else
-            {
-                RoomRef ownerRoom = room.load().lock();
-                if (ownerRoom == nullptr)
-                    return;
-
-                float patrolDir = Utils::GetRandom(-180.f, 180.f);
-                vector2D moveUnitVec = MathUtil::GetUnitVector(patrolDir);
-
-                float nx = (posInfo->x() + moveUnitVec.x) * 1000.f; // 맵 끝을 포인트로 잡기위해 1000000을 곱한다.
-                float ny = (posInfo->y() + moveUnitVec.y) * 1000.f;
-
-                targetPos = ownerRoom->ClampLocation(nx, ny);
-            }
-            
-            shouldReturn = !shouldReturn;
-
-            // Set & Start Timer
-            stateTickTimer->SetEndTime(PATROL_MOVING_TIME);
-            stateTickTimer->Start(isRepeated);
-            break;
+            _targetPos = { spawnPos->x(), spawnPos->y() };
         }
-    case MonsterState::Chasing:
+        else
+        {
+            RoomRef ownerRoom = room.load().lock();
+            if (ownerRoom == nullptr)
+                return;
+
+            float patrolDir = Utils::GetRandom(-180.f, 180.f);
+            vector2D moveUnitVec = MathUtil::GetUnitVector(patrolDir);
+
+            float nx = posInfo->x() + moveUnitVec.x * 10000.f; // 맵 끝을 포인트로 잡기위해 10000을 곱한다.
+            float ny = posInfo->y() + moveUnitVec.y * 10000.f;
+
+            _targetPos = ownerRoom->ClampLocation(nx, ny);
+        }
+
+        _shouldReturn = !_shouldReturn;
         break;
+    }
+    case MonsterState::Chasing: 
+    {
+        if (ObjectRef object = _target.lock())
+        {
+            Protocol::PosInfo* targetPos = object->posInfo;
+            _targetPos = { targetPos->x(), targetPos->y() };
+        }
+
+        break;
+    }
     case MonsterState::Attacking:
+    {
+        if (ObjectRef object = _target.lock())
+        {
+            Protocol::PosInfo* targetPos = object->posInfo;
+            _targetPos = { targetPos->x(), targetPos->y() };
+        }
+
         break;
+    }
     case MonsterState::Death:
         break;
     default:
@@ -246,9 +306,61 @@ void Monster::SetState(MonsterState updatedState)
 
 }
 
+void Monster::ExecuteStateBehavior(float deltaTime)
+{
+    switch (state)
+    {
+    case MonsterState::Idle:
+        ExecuteStateIdle(deltaTime);
+        break;
+    case MonsterState::Patrolling:
+        ExecuteStatePatrolling(deltaTime);
+        break;
+    case MonsterState::Chasing:
+        ExecuteStateChasing(deltaTime);
+        break;
+    case MonsterState::Attacking:
+        ExecuteStateAttacking(deltaTime);
+        break;
+    case MonsterState::Death:
+        ExecuteStateDeath(deltaTime);
+        break;
+    default:
+        ExecuteStateNone();
+        break;
+    }
+}
+
+void Monster::ExecuteStateNone()
+{
+    cout << "Invalid State: State None" << '\n';
+}
+
+void Monster::ExecuteStateIdle(float deltaTime)
+{
+    // Do Nothing
+}
+
+void Monster::ExecuteStatePatrolling(float deltaTime)
+{
+    Move(deltaTime);
+}
+
+void Monster::ExecuteStateAttacking(float deltaTime)
+{
+}
+
+void Monster::ExecuteStateChasing(float deltaTime)
+{
+}
+
+void Monster::ExecuteStateDeath(float deltaTime)
+{
+}
+
 void Monster::Move(float deltaTime)
 {
-    vector2D moveVec = vector2D{ targetPos.x - posInfo->x(), targetPos.y - posInfo->y() };
+    vector2D moveVec = vector2D{ _targetPos.x - posInfo->x(), _targetPos.y - posInfo->y() };
     vector2D moveUnitVec = moveVec.GetNormalize();
 
     float dx = moveUnitVec.x * min(MONSTER_SPEED * deltaTime, moveVec.GetMagnitude());
@@ -262,7 +374,7 @@ void Monster::Move(float deltaTime)
 
     posInfo->set_x(curPos.x);
     posInfo->set_y(curPos.y);
-    posInfo->set_yaw(MathUtil::vectorToYaw(moveUnitVec));
+    posInfo->set_yaw(MathUtil::VectorToYaw(moveUnitVec));
 
     uint64 objectId = objectInfo->object_id();
     if (RoomRef ownerRoom = room.load().lock())
@@ -277,5 +389,5 @@ bool Monster::AlreadyArrive()
 {
     vector2D monsterPos = vector2D{ posInfo->x(), posInfo->y() };
 
-    return MathUtil::distance(monsterPos, targetPos, true) < 1.f;
+    return MathUtil::Distance(monsterPos, _targetPos, true) < 1.f;
 }

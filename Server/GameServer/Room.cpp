@@ -67,10 +67,10 @@ void Room::UpdateTick()
     //cout << "Update Room. DeltaTime: " << deltaTime << '\n';
 
     // Tick All Objects In Room.
+    TickThisGroup(ETickGroup::TG_PreObjectTick, deltaTime);
     TickThisGroup(ETickGroup::TG_PrePhysics, deltaTime);
     TickThisGroup(ETickGroup::TG_DuringPhysics, deltaTime);
     TickThisGroup(ETickGroup::TG_PostPhysics, deltaTime);
-    TickThisGroup(ETickGroup::TG_ObjectTick, deltaTime);
 
     elapsedTime += deltaTime;
     if (elapsedTime > SEND_MOVE_PACKET_TIME)
@@ -359,6 +359,105 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
 }
 
+vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
+{
+    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
+    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
+
+    float minX = _roomMinX + widthPadding;
+    float maxX = _roomMaxX - widthPadding;
+    float minY = _roomMinY + heightPadding;
+    float maxY = _roomMaxY - heightPadding;
+
+    float clampedPosX = std::clamp(posX, minX, maxX);
+    float clampedPosY = std::clamp(posY, minY, maxY);
+
+    return { clampedPosX, clampedPosY };
+}
+
+void Room::UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst)
+{
+    Cell* prevCell = GetCellFromPos(src);
+    Cell* curCell = GetCellFromPos(dst);
+    if (prevCell == nullptr || curCell == nullptr)
+        return;
+
+    if (prevCell->contains(objectId) == false)
+    {
+        wcout << L"왜인지 모르겠지만 CellMatrix에 object의 id가 없음" << '\n';
+        return;
+    }
+
+    if (prevCell != curCell)
+    {
+        prevCell->erase(objectId);
+        curCell->insert(objectId);
+
+        auto srcIndices = GetCellIndicesFromPos(src);
+        auto dstIndices = GetCellIndicesFromPos(dst);
+        printf("Move to (%d, %d) -> (%d, %d)\n", srcIndices.first, srcIndices.second, dstIndices.first, dstIndices.second);
+    }
+
+}
+
+pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
+{
+    float minX = posInfo->x() - range;
+    float maxX = posInfo->x() + range;
+    float minY = posInfo->y() - range;
+    float maxY = posInfo->y() + range;
+
+    vector2D minPos = ClampLocation(minX, minY, false);
+    vector2D maxPos = ClampLocation(maxX, maxY, false);
+
+    auto minIndices = GetCellIndicesFromPos(minPos);
+    auto maxIndices = GetCellIndicesFromPos(maxPos);
+
+    if (minIndices == make_pair(-1, -1) || maxIndices == make_pair(-1, -1))
+    {
+        wcout << L"FindClosestPlayer 실패" << '\n';
+        return make_pair(nullptr, -1.f);
+    }
+
+    // Find Interested Of Cell
+    using Indices = pair<int32, int32>;
+    vector<Indices> indicesList;
+    for (int32 indexX = minIndices.first; indexX <= maxIndices.first; indexX++)
+    {
+        for (int32 indexY = minIndices.second; indexY <= maxIndices.second; indexY++)
+        {
+            indicesList.push_back(make_pair(indexX, indexY));
+        }
+    }
+
+    PlayerRef closestPlayer = nullptr;
+    float minDist = -1.f;
+    float squareRange = range * range;
+    for (Indices indices : indicesList)
+    {
+        const Cell& cell = _cellMatrix[indices.first][indices.second];
+
+        for (uint64 objectId : cell)
+        {
+            if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]))
+            {
+                float squareDist = MathUtil::Distance(posInfo, player->posInfo);
+                if (squareRange < squareDist)
+                    continue;
+
+                if (minDist < 0.f || squareDist < minDist)
+                {
+                    minDist = squareDist;
+                    closestPlayer = player;
+                }
+            }
+        }
+
+    }
+
+    return make_pair(closestPlayer, squareRange);
+}
+
 void Room::CacheRoomData()
 {
     using namespace JsonProperty::Map;
@@ -402,7 +501,7 @@ void Room::CreateCellMatrix()
     _cellOffset = vector2D(snappedMinX, snappedMinY);
 }
 
-std::pair<int32, int32> Room::GetCellIndexFromPos(const vector2D& objectPos)
+std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& objectPos)
 {
     float offsetX = objectPos.x - _cellOffset.x;
     float offsetY = objectPos.y - _cellOffset.y;
@@ -419,14 +518,14 @@ std::pair<int32, int32> Room::GetCellIndexFromPos(const vector2D& objectPos)
     return make_pair(indexX, indexY);
 }
 
-std::pair<int32, int32> Room::GetCellIndexFromPos(Protocol::PosInfo* posInfo)
+std::pair<int32, int32> Room::GetCellIndicesFromPos(Protocol::PosInfo* posInfo)
 {
-    return GetCellIndexFromPos(vector2D(posInfo->x(), posInfo->y()));
+    return GetCellIndicesFromPos(vector2D(posInfo->x(), posInfo->y()));
 }
 
 Cell* Room::GetCellFromPos(const vector2D& pos)
 {
-    auto cellIndices = GetCellIndexFromPos(pos);
+    auto cellIndices = GetCellIndicesFromPos(pos);
     if (cellIndices == make_pair(-1, -1))
     {
         wcout << L"GetCellFromPos: 유효하지 않는 위치입니다" << '\n';
@@ -460,7 +559,7 @@ bool Room::RegisterObject(ObjectRef object)
     object->objectInfo->set_map_id(_roomId);
 
     // cellMatrix에 object 위치 등록
-    auto cellPos = GetCellIndexFromPos(object->posInfo);
+    auto cellPos = GetCellIndicesFromPos(object->posInfo);
     _cellMatrix[cellPos.first][cellPos.second].insert(objectId);
 
 	return true;
@@ -474,7 +573,7 @@ bool Room::UnRegisterObject(uint64 objectId)
     ObjectRef object = _objects[objectId];
 
     // cellMatrix에 object 삭제
-    auto cellPos = GetCellIndexFromPos(object->posInfo);
+    auto cellPos = GetCellIndicesFromPos(object->posInfo);
     _cellMatrix[cellPos.first][cellPos.second].erase(objectId);
 
     // object 삭제
@@ -488,6 +587,7 @@ MonsterRef Room::SpawnMonster(int32 templateId)
     MonsterRef newMonster = ObjectUtils::CreateMonster(templateId);
 
     SetRandomPos(newMonster->posInfo, true, true);
+    newMonster->PostInit();
 
     if (RegisterObject(newMonster) == false)
     {
@@ -496,6 +596,9 @@ MonsterRef Room::SpawnMonster(int32 templateId)
     }
 
     //newMonster->PrintMonsterAllData(); // DEBUG
+
+    wcout << L"monster 위치: " << newMonster->posInfo->x() << " " << newMonster->posInfo->y() <<
+        " roomId: " << _roomId << '\n';
 
     return newMonster;
 }
@@ -514,41 +617,3 @@ void Room::Broadcast(SendBufferRef sendBuffer, uint64 exceptId)
 			session->Send(sendBuffer);
 	}
 }
-
-vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
-{
-    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
-    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
-
-    float minX = _roomCenterPos.x - (_widthHalfExtent - widthPadding);
-    float maxX = _roomCenterPos.x + (_widthHalfExtent - widthPadding);
-    float minY = _roomCenterPos.y - (_heightHalfExtent - heightPadding);
-    float maxY = _roomCenterPos.y + (_heightHalfExtent - heightPadding);
-
-    float clampedPosX = std::clamp(posX, minX, maxX);
-    float clampedPosY = std::clamp(posY, minY, maxY);
-
-    return { clampedPosX, clampedPosY };
-}
-
-void Room::UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst)
-{
-    Cell* prevCell = GetCellFromPos(src);
-    Cell* curCell = GetCellFromPos(dst);
-    if (prevCell == nullptr || curCell == nullptr)
-        return;
-
-    if (prevCell->contains(objectId) == false)
-    {
-        wcout << L"왜인지 모르겠지만 CellMatrix에 object의 id가 없음" << '\n';
-        return;
-    }
-
-    if (prevCell != curCell)
-    {
-        prevCell->erase(objectId);
-        curCell->insert(objectId);
-    }
-    
-}
-

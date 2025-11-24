@@ -103,7 +103,7 @@
     <ClCompile Include="RoomManager.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
-    <ClCompile Include="TickTimer.cpp">
+    <ClCompile Include="TickIntervalTimer.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
@@ -175,7 +175,7 @@
     <ClInclude Include="RoomManager.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
-    <ClInclude Include="TickTimer.h">
+    <ClInclude Include="TickIntervalTimer.h">
       <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>

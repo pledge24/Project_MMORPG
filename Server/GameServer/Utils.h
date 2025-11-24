@@ -90,7 +90,7 @@ public:
         return vector2D{ dirX, dirY };
     }
 
-    static float vectorToYaw(const vector2D& vec)
+    static float VectorToYaw(const vector2D& vec)
     {
         float vy = vec.y;
         float vx = vec.x;
@@ -102,10 +102,19 @@ public:
         return yaw_degrees;
     }
 
-    static float distance(const vector2D& src, const vector2D& dst, bool noSqrt = false)
+    static float Distance(const vector2D& src, const vector2D& dst, bool noSqrt = false)
     {
         float dx = dst.x - src.x;
         float dy = dst.y - src.y;
+        float squareDist = dx * dx + dy * dy;
+
+        return noSqrt ? squareDist : sqrt(squareDist);
+    }
+
+    static float Distance(Protocol::PosInfo* src, Protocol::PosInfo* dst, bool noSqrt = false)
+    {
+        float dx = dst->x() - src->x();
+        float dy = dst->y() - src->y();
         float squareDist = dx * dx + dy * dy;
 
         return noSqrt ? squareDist : sqrt(squareDist);

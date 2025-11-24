@@ -29,7 +29,7 @@ void Object::TickThisGroup(ETickGroup tickGroup, float deltaTime)
 void Object::PostConstructionSetup()
 {
     weak_ptr<Object> weakSelf = shared_from_this();
-    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_ObjectTick)].push_back(
+    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PrePhysics)].push_back(
         [weakSelf](float deltaTime)
         {
             if (auto self = weakSelf.lock())

@@ -2,7 +2,7 @@
 #include "Creature.h"
 #include "Utils.h"
 
-class TickTimer;
+class TickIntervalTimer;
 
 enum class MonsterState : uint8
 {
@@ -32,15 +32,16 @@ protected:
     void CacheMonsterData();
 
     /** 상태 함수 */
-    void TickStateMachine(float deltaTime);
-    void ProcessNone();
-    void ProcessIdle(float deltaTime);
-    void ProcessPatrolling(float deltaTime);
-    void ProcessAttacking(float deltaTime);
-    void ProcessChasing(float deltaTime);
-    void ProcessDeath(float deltaTime);
-
+    void UpdateState();
     void SetState(MonsterState updatedState);
+
+    void ExecuteStateBehavior(float deltaTime);
+    void ExecuteStateNone();
+    void ExecuteStateIdle(float deltaTime);
+    void ExecuteStatePatrolling(float deltaTime);
+    void ExecuteStateAttacking(float deltaTime);
+    void ExecuteStateChasing(float deltaTime);
+    void ExecuteStateDeath(float deltaTime);
 
     /** AI 함수 */
     void Move(float deltaTime);
@@ -48,7 +49,7 @@ protected:
 
 private:
     Protocol::MonsterInfo* monsterInfo;
-    TickTimerRef stateTickTimer = nullptr;
+    TickIntervalTimerRef stateIntervalTimer = nullptr;
 
     /** Monster Raw Data */
     Json _monsterData;
@@ -59,6 +60,13 @@ private:
     float attackSpeed;
     int32 baseAttack;
 
+    /** Monster AI Data(Common) */
+    const float IDLE_TIME = 3.f;
+    const float PATROL_MOVING_TIME = 5.f;
+    const float UPDATE_STATE_INTERVAL = 1.f;
+    const float QUIT_CHASING_TIME = 5.f;
+    const float MONSTER_SPEED = 500.f;  // TEST(cm per sec)
+
     /** Monster AI Data(Individual) */
     MonsterState state = MonsterState::Idle;
     shared_ptr<Protocol::PosInfo> spawnPos;
@@ -66,12 +74,9 @@ private:
     float detectionRange;               // 타겟 감지 범위
     float chaseRange;                   // 추적 범위
 
-    /** Monster AI Data(Common) */
-    const float STANDING_TIME = 3.f;
-    const float PATROL_MOVING_TIME = 5.f;
-    const float MONSTER_SPEED = 500.f;  // TEST(cm per sec)
-
-    vector2D targetPos;
-    bool shouldReturn = false;          // patrolling 할때 스폰 포인트로 이동 여부
+    weak_ptr<Object> _target;
+    vector2D _targetPos;
+    bool _shouldReturn = false;         // patrolling 할때 스폰 포인트로 이동 여부
+    float _stateTimer = 0.f;            // 여러 용도로 사용됨
 };
 
