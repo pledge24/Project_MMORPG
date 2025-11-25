@@ -47,6 +47,9 @@ protected:
     void Move(float deltaTime);
     bool AlreadyArrive();
 
+    void UpdateTargetPos();
+    void LookAtTarget();
+
 private:
     Protocol::MonsterInfo* monsterInfo;
     TickIntervalTimerRef stateIntervalTimer = nullptr;
@@ -61,21 +64,20 @@ private:
     int32 baseAttack;
 
     /** Monster AI Data(Common) */
-    const float IDLE_TIME = 3.f;
-    const float PATROL_MOVING_TIME = 5.f;
+    const float IDLE_TIME = 5.f;
+    const float PATROL_MOVING_TIME = 2.f;
     const float UPDATE_STATE_INTERVAL = 1.f;
-    const float QUIT_CHASING_TIME = 5.f;
-    const float MONSTER_SPEED = 500.f;  // TEST(cm per sec)
+    const float MONSTER_SPEED = 300.f;  // TEST(cm per sec)
 
     /** Monster AI Data(Individual) */
     MonsterState state = MonsterState::Idle;
     shared_ptr<Protocol::PosInfo> spawnPos;
-    float attackRange;                  // 공격 사거리
-    float detectionRange;               // 타겟 감지 범위
-    float chaseRange;                   // 추적 범위
+    float tryAttackRange;                       // 공격 사거리
+    float detectionRange;                       // 타겟 감지 범위
+    float chasingMaxRange;                      // 추적 범위
 
     weak_ptr<Object> _target;
-    vector2D _targetPos;
+    optional<vector2D> _targetPos;
     bool _shouldReturn = false;         // patrolling 할때 스폰 포인트로 이동 여부
     float _stateTimer = 0.f;            // 여러 용도로 사용됨
 };

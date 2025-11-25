@@ -224,7 +224,8 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 	//if (World == nullptr)
 	//	return;
 
-    HandleMove(MovePkt.info());
+    for(auto& info : MovePkt.info())
+        HandleMove(info);
 }
 
 void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
@@ -415,14 +416,13 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
         if (FindActor == nullptr)
             return;
         
-
-        AP1Player* Player = Cast<AP1Player>(FindActor);
-        if (Player == nullptr)
+        ACreature* Creature = Cast<ACreature>(FindActor);
+        if (Creature == nullptr)
             return;
 
         uint32 Combo = NormalAttackPkt.combo();
 
-        Player->S_NormalAttack(Combo);
+        Creature->S_NormalAttack(Combo);
     }
 
 }

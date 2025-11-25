@@ -15,7 +15,7 @@ Object::~Object()
 	delete objectInfo;
 }
 
-void Object::TickThisGroup(ETickGroup tickGroup, float deltaTime)
+void Object::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
 {
     if (_isTickable == false)
         return;

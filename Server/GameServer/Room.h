@@ -18,10 +18,10 @@ public:
 
 protected:
     void UpdateTick();
-    void TickThisGroup(ETickGroup tickGroup, float deltaTime);
+    void ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime);
 
 public:
-    /** 핸들 함수 */
+    /** 핸들 함수(Network) */
 	void HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, bool moveRoom = false);
     void HandleLeavePlayer(PlayerRef leavePlayer, bool moveRoom = false);
 
@@ -44,17 +44,19 @@ public:
 
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
-    void UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst);
     pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);  // pair<플레이어 참조, 거리^2> 
 
 protected:
     /** Room 관련 */
     void CacheRoomData();
     void CreateCellMatrix();
+    void ClearCellMatrix();
+
     pair<int32, int32> GetCellIndicesFromPos(const vector2D& pos);
     pair<int32, int32> GetCellIndicesFromPos(Protocol::PosInfo* posInfo);
     Cell* GetCellFromPos(const vector2D& pos);
     Cell* GetCellFromPos(Protocol::PosInfo* posInfo);
+    void UpdateCellMatrix();
 
     /* Object 관련*/
 	bool RegisterObject(ObjectRef object);
@@ -64,6 +66,10 @@ protected:
 
     /* 네트워크 관련 */
 	void Broadcast(SendBufferRef sendBuffer, uint64 exceptId = 0);
+
+public:
+    friend class Object;
+    friend class Monster;
 
 private:
     /** 해당 Room 관련 정보 */
@@ -98,7 +104,7 @@ private:
 
     /** 네트워크 */
     uint64 prevTickTime = GetTickCount64();
-    const uint64 ROOM_TICK = 500;
+    const uint64 ROOM_TICK = 200;
     const float SEND_MOVE_PACKET_TIME = 1.f;
     float elapsedTime = 0.f;
 };

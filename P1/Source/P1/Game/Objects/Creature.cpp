@@ -146,6 +146,8 @@ void ACreature::SetServerPos(const Protocol::PosInfo& Info)
     ServerPos->CopyFrom(Info);
     MoveDirection = FRotator(0.f, ServerPos->desired_yaw(), 0.f).Vector();
     SetMoveState(Info.state()); // state는 ClientPos에 바로 세팅
+
+    //UE_LOG(LogTemp, Log, TEXT("ServerPos: (%f %f)"), ServerPos->x(), ServerPos->y());
 }
 
 void ACreature::SetCreatureName(const FText& InName)

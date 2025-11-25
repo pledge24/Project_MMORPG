@@ -39,7 +39,7 @@ bool Room::Init(const Json& roomData)
 bool Room::Start()
 {
     // 몬스터를 Room에 스폰한다.
-    if (monsterIds.empty() == false)
+    if (monsterIds.empty() == false && _roomId == 20)
     {
         int32 kindOfMonster = monsterIds.size();
         for (int32 i = 0; i < maxMonsterCount; i++)
@@ -67,10 +67,10 @@ void Room::UpdateTick()
     //cout << "Update Room. DeltaTime: " << deltaTime << '\n';
 
     // Tick All Objects In Room.
-    TickThisGroup(ETickGroup::TG_PreObjectTick, deltaTime);
-    TickThisGroup(ETickGroup::TG_PrePhysics, deltaTime);
-    TickThisGroup(ETickGroup::TG_DuringPhysics, deltaTime);
-    TickThisGroup(ETickGroup::TG_PostPhysics, deltaTime);
+    ProcessTickGroupFunc(ETickGroup::TG_PreObjectTick, deltaTime);
+    ProcessTickGroupFunc(ETickGroup::TG_PrePhysics, deltaTime);
+    ProcessTickGroupFunc(ETickGroup::TG_DuringPhysics, deltaTime);
+    ProcessTickGroupFunc(ETickGroup::TG_PostPhysics, deltaTime);
 
     elapsedTime += deltaTime;
     if (elapsedTime > SEND_MOVE_PACKET_TIME)
@@ -95,12 +95,33 @@ void Room::UpdateTick()
     DoTimer(ROOM_TICK, &Room::UpdateTick);
 }
 
-void Room::TickThisGroup(ETickGroup tickGroup, float deltaTime)
+void Room::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
 {
     for (auto pair : _objects)
     {
         ObjectRef object = pair.second;
-        object->TickThisGroup(tickGroup, deltaTime);
+        object->ProcessTickGroupFunc(tickGroup, deltaTime);
+    }
+
+    // Room Function
+    switch (tickGroup)
+    {
+    case ETickGroup::TG_PreObjectTick:
+    {
+
+    }
+    case ETickGroup::TG_PrePhysics: 
+    {
+        UpdateCellMatrix();
+    }
+    case ETickGroup::TG_DuringPhysics:
+    {
+
+    }
+    case ETickGroup::TG_PostPhysics:
+    {
+
+    }
     }
 }
 
@@ -310,7 +331,7 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     if (_objects.contains(objectId) == false)
         return;
     
-    // 일반 공격 사실을 알린다 (본인 빼고)
+    // 일반 공격 사실을 Broadcast.
     {
         Protocol::S_NORMAL_ATTACK normalAttackPkt;
         {
@@ -375,31 +396,6 @@ vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
     return { clampedPosX, clampedPosY };
 }
 
-void Room::UpdateCellMatrixOnMove(uint64 objectId, const vector2D& src, const vector2D& dst)
-{
-    Cell* prevCell = GetCellFromPos(src);
-    Cell* curCell = GetCellFromPos(dst);
-    if (prevCell == nullptr || curCell == nullptr)
-        return;
-
-    if (prevCell->contains(objectId) == false)
-    {
-        wcout << L"왜인지 모르겠지만 CellMatrix에 object의 id가 없음" << '\n';
-        return;
-    }
-
-    if (prevCell != curCell)
-    {
-        prevCell->erase(objectId);
-        curCell->insert(objectId);
-
-        auto srcIndices = GetCellIndicesFromPos(src);
-        auto dstIndices = GetCellIndicesFromPos(dst);
-        printf("Move to (%d, %d) -> (%d, %d)\n", srcIndices.first, srcIndices.second, dstIndices.first, dstIndices.second);
-    }
-
-}
-
 pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
 {
     float minX = posInfo->x() - range;
@@ -441,7 +437,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
         {
             if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]))
             {
-                float squareDist = MathUtil::Distance(posInfo, player->posInfo);
+                float squareDist = MathUtil::Distance(posInfo, player->posInfo, true);
                 if (squareRange < squareDist)
                     continue;
 
@@ -501,6 +497,17 @@ void Room::CreateCellMatrix()
     _cellOffset = vector2D(snappedMinX, snappedMinY);
 }
 
+void Room::ClearCellMatrix()
+{
+    for (auto& inner_vec : _cellMatrix)
+    {
+        for (auto& s : inner_vec)
+        {
+            s.clear();
+        }
+    }
+}
+
 std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& objectPos)
 {
     float offsetX = objectPos.x - _cellOffset.x;
@@ -543,6 +550,33 @@ Cell* Room::GetCellFromPos(Protocol::PosInfo* posInfo)
     return GetCellFromPos(vector2D(posInfo->x(), posInfo->y()));
 }
 
+void Room::UpdateCellMatrix()
+{
+    ClearCellMatrix();
+
+    for (auto& pair : _objects)
+    {
+        uint64 objectId = pair.first;
+        ObjectRef object = pair.second;
+
+        Protocol::PosInfo* objectPos = object->posInfo;
+        
+        auto indices = GetCellIndicesFromPos(objectPos);
+        if (indices == make_pair(-1, -1))
+        {
+            wcout << L"유효하지 않은 위치" << '\n';
+            continue;
+        }
+        
+        int32 indexX = indices.first;
+        int32 indexY = indices.second;
+
+        _cellMatrix[indexX][indexY].insert(objectId);
+
+        //printf("object: %d (%d, %d)\n", objectId, indexX, indexY);
+    }
+}
+
 bool Room::RegisterObject(ObjectRef object)
 {
     if (object == nullptr)
@@ -557,10 +591,6 @@ bool Room::RegisterObject(ObjectRef object)
     // Object가 속한 Room에 대한 정보 갱신
 	object->room.store(GetRoomRef());
     object->objectInfo->set_map_id(_roomId);
-
-    // cellMatrix에 object 위치 등록
-    auto cellPos = GetCellIndicesFromPos(object->posInfo);
-    _cellMatrix[cellPos.first][cellPos.second].insert(objectId);
 
 	return true;
 }

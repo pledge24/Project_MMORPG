@@ -22,6 +22,16 @@ struct vector2D
         return vector2D(x / magnitude, y / magnitude);
     }
 
+    friend bool operator==(const vector2D& lhs, const vector2D& rhs)
+    {
+        return lhs.x == rhs.x && lhs.y == rhs.y;
+    }
+
+    friend vector2D operator-(const vector2D& lhs, const vector2D& rhs)
+    {
+        return { lhs.x - rhs.x, lhs.y - rhs.y };
+    }
+
     float x = 0.f;
     float y = 0.f;
 };
@@ -81,7 +91,7 @@ class MathUtil
 public:
     static vector2D GetUnitVector(float yaw)
     {
-        const float PI = std::numbers::pi_v<float>;
+        constexpr float PI = std::numbers::pi_v<float>;
         float yaw_radians = yaw * (PI / 180.0f);
 
         float dirX = std::cosf(yaw_radians);
@@ -92,12 +102,15 @@ public:
 
     static float VectorToYaw(const vector2D& vec)
     {
-        float vy = vec.y;
-        float vx = vec.x;
-        float yaw_radians = std::atan2f(vy, vx);
+        float yaw_radians = std::atan2f(vec.y, vec.x);
 
-        const float PI_F = std::numbers::pi_v<float>;
-        float yaw_degrees = yaw_radians * (180.0f / PI_F);
+        float yaw_degrees = yaw_radians * (180.0f / std::numbers::pi_v<float>);
+
+        // 언리얼 방식에 맞게 -180~180 범위로 정규화
+        if (yaw_degrees > 180.0f)
+            yaw_degrees -= 360.0f;
+        else if (yaw_degrees < -180.0f)
+            yaw_degrees += 360.0f;
 
         return yaw_degrees;
     }

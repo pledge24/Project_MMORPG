@@ -27,7 +27,7 @@ public:
         return object;
     }
 
-    void TickThisGroup(ETickGroup tickGroup, float deltaTime);
+    void ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime);
 
 protected:
     virtual void PostConstructionSetup();
