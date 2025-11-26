@@ -15,10 +15,11 @@
             "minGold": 10,
             "maxGold": 20
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 100,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 80,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5001,
@@ -36,10 +37,11 @@
             "minGold": 10,
             "maxGold": 50
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 800,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 600,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5002,
@@ -57,10 +59,11 @@
             "minGold": 10,
             "maxGold": 80
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 100,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 80,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5003,
@@ -78,10 +81,11 @@
             "minGold": 80,
             "maxGold": 160
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 100,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 80,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5004,
@@ -99,10 +103,11 @@
             "minGold": 80,
             "maxGold": 200
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 800,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 600,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5005,
@@ -120,10 +125,11 @@
             "minGold": 80,
             "maxGold": 300
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 100,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 80,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5006,
@@ -141,10 +147,11 @@
             "minGold": 300,
             "maxGold": 500
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 100,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 80,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5007,
@@ -162,10 +169,11 @@
             "minGold": 300,
             "maxGold": 800
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 800,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 600,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     },
     {
         "templateId": 5008,
@@ -183,9 +191,10 @@
             "minGold": 300,
             "maxGold": 2500
         },
-        "attackSpeed": 1,
-        "tryAttackRange": 100,
-        "detectionRange": 800,
-        "chasingMaxRange": 1500
+        "attackInterval": 2.5,
+        "monsterSpeed": 300,
+        "tryAttackRange": 80,
+        "detectionRange": 900,
+        "chasingMaxRange": 1200
     }
 ]

@@ -3289,6 +3289,7 @@ class S_NORMAL_ATTACK final :
   enum : int {
     kObjectIdFieldNumber = 1,
     kComboFieldNumber = 2,
+    kYawFieldNumber = 3,
   };
   // uint64 object_id = 1;
   void clear_object_id();
@@ -3308,6 +3309,15 @@ class S_NORMAL_ATTACK final :
   void _internal_set_combo(uint32_t value);
   public:
 
+  // float yaw = 3;
+  void clear_yaw();
+  float yaw() const;
+  void set_yaw(float value);
+  private:
+  float _internal_yaw() const;
+  void _internal_set_yaw(float value);
+  public:
+
   // @@protoc_insertion_point(class_scope:Protocol.S_NORMAL_ATTACK)
  private:
   class _Internal;
@@ -3318,6 +3328,7 @@ class S_NORMAL_ATTACK final :
   struct Impl_ {
     uint64_t object_id_;
     uint32_t combo_;
+    float yaw_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -6293,6 +6304,26 @@ inline void S_NORMAL_ATTACK::_internal_set_combo(uint32_t value) {
 inline void S_NORMAL_ATTACK::set_combo(uint32_t value) {
   _internal_set_combo(value);
   // @@protoc_insertion_point(field_set:Protocol.S_NORMAL_ATTACK.combo)
+}
+
+// float yaw = 3;
+inline void S_NORMAL_ATTACK::clear_yaw() {
+  _impl_.yaw_ = 0;
+}
+inline float S_NORMAL_ATTACK::_internal_yaw() const {
+  return _impl_.yaw_;
+}
+inline float S_NORMAL_ATTACK::yaw() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_NORMAL_ATTACK.yaw)
+  return _internal_yaw();
+}
+inline void S_NORMAL_ATTACK::_internal_set_yaw(float value) {
+  
+  _impl_.yaw_ = value;
+}
+inline void S_NORMAL_ATTACK::set_yaw(float value) {
+  _internal_set_yaw(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_NORMAL_ATTACK.yaw)
 }
 
 // -------------------------------------------------------------------

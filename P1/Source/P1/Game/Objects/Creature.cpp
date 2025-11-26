@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Log/LogCategory.h"
+#include "Monster.h"
 
 ACreature::ACreature()
 {
@@ -147,7 +148,7 @@ void ACreature::SetServerPos(const Protocol::PosInfo& Info)
     MoveDirection = FRotator(0.f, ServerPos->desired_yaw(), 0.f).Vector();
     SetMoveState(Info.state()); // state는 ClientPos에 바로 세팅
 
-    //UE_LOG(LogTemp, Log, TEXT("ServerPos: (%f %f)"), ServerPos->x(), ServerPos->y());
+    UE_LOG(LogTemp, Log, TEXT("ServerPos: (%f %f)"), ServerPos->x(), ServerPos->y());
 }
 
 void ACreature::SetCreatureName(const FText& InName)
@@ -166,8 +167,16 @@ void ACreature::S_Move(float DeltaSeconds)
     {
         AddMovementInput(MoveDirection);
     }
-    // 제자리 회전 보정
-    else if (ServerPos->state() == Protocol::MOVE_STATE_IDLE)
+    else if (ServerPos->state() == Protocol::MOVE_STATE_ACTION)
+    {
+        // 루트 모션이 들어간 Action 중에는 보정 안 함.
+        //return;
+    }
+
+    // 회전 보간.
+    bool IsMonster = this->IsA<AMonster>();
+    bool IsIdlePlayer = ServerPos->state() == Protocol::MOVE_STATE_IDLE && this->IsA<AP1Player>();
+    if (IsMonster || IsIdlePlayer)
     {
         if (ServerPos->yaw() != GetActorRotation().Yaw)
         {
@@ -176,11 +185,6 @@ void ACreature::S_Move(float DeltaSeconds)
 
             SetActorRotation(NewRot);
         }
-    }
-    else if (ServerPos->state() == Protocol::MOVE_STATE_ACTION)
-    {
-        // 루트 모션이 들어간 Action 중에는 보정 안 함.
-        return;
     }
 
     // Correction
@@ -202,11 +206,12 @@ void ACreature::S_Move(float DeltaSeconds)
     }
 }
 
-void ACreature::S_NormalAttack(uint32 Combo)
+void ACreature::S_NormalAttack(uint32 Combo, float Yaw)
 {
     if (IsValid(AttackSystemComponent) == false)
         return;
 
+    SetActorRotation(FRotator(0, Yaw, 0));
     AttackSystemComponent->S_PerformNormalAttack(Combo);
 }
 

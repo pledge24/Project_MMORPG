@@ -421,8 +421,9 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
             return;
 
         uint32 Combo = NormalAttackPkt.combo();
+        float Yaw = NormalAttackPkt.yaw();
 
-        Creature->S_NormalAttack(Combo);
+        Creature->S_NormalAttack(Combo, Yaw);
     }
 
 }

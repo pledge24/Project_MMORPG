@@ -40,10 +40,11 @@ namespace JsonProperty
         constexpr std::string_view MinExp = "minExp";
         constexpr std::string_view MaxExp = "maxExp";
         constexpr std::string_view GoldReward = "goldReward";
-        constexpr std::string_view AttackSpeed = "attackSpeed";
+        constexpr std::string_view AttackInterval = "attackInterval";
         constexpr std::string_view TryAttackRange = "tryAttackRange";
         constexpr std::string_view DetectionRange = "detectionRange";
         constexpr std::string_view ChasingMaxRange = "chasingMaxRange";
+        constexpr std::string_view MonsterSpeed = "monsterSpeed";
     }
 
     namespace LevelTable

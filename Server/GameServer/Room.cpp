@@ -42,14 +42,17 @@ bool Room::Start()
     if (monsterIds.empty() == false && _roomId == 20)
     {
         int32 kindOfMonster = monsterIds.size();
+        SpawnMonster(5000);
+        SpawnMonster(5001);
+        return true;
+
         for (int32 i = 0; i < maxMonsterCount; i++)
         {
             int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster)];
             if (SpawnMonster(monsterTemplateId) == nullptr)
                 return false;
 
-            cout << "Monster Spawn!" << '\n';
-            break;  // TEST
+            break;
         }
     }
 
@@ -343,6 +346,24 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     }
 }
 
+vector2D Room::GetRandomPos(bool usePadding)
+{
+    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
+    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
+
+    float paddedMinX = _roomMinX + widthPadding;
+    float paddedMaxX = _roomMaxX - widthPadding;
+    float paddedMinY = _roomMinY + heightPadding;
+    float paddedMaxY = _roomMaxY - heightPadding;
+
+    vector2D randomPos;
+
+    randomPos.x = Utils::GetRandom(_roomMinX, _roomMaxX);
+    randomPos.y = Utils::GetRandom(_roomMinY, _roomMaxY);
+
+    return randomPos;
+}
+
 optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
 {
     using namespace JsonProperty::Map;
@@ -362,18 +383,10 @@ optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
 
 void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYaw)
 {
-    using namespace JsonProperty::Map;
+    vector2D randomPos = GetRandomPos();
 
-    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
-    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
-
-    float spawnMinX = _roomMinX + widthPadding;
-    float spawnMaxX = _roomMaxX - widthPadding;
-    float spawnMinY = _roomMinY + heightPadding;
-    float spawnMaxY = _roomMaxY - heightPadding;
-
-    posInfo->set_x(Utils::GetRandom(_roomMinX, _roomMaxX));
-    posInfo->set_y(Utils::GetRandom(_roomMinY, _roomMaxY));
+    posInfo->set_x(randomPos.x);
+    posInfo->set_y(randomPos.y);
     posInfo->set_z(_roomCenterPos.z + LOCATION_PADDING_Z);
 
     if(randYaw)
@@ -626,9 +639,6 @@ MonsterRef Room::SpawnMonster(int32 templateId)
     }
 
     //newMonster->PrintMonsterAllData(); // DEBUG
-
-    wcout << L"monster 위치: " << newMonster->posInfo->x() << " " << newMonster->posInfo->y() <<
-        " roomId: " << _roomId << '\n';
 
     return newMonster;
 }

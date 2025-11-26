@@ -110,7 +110,7 @@
             5001,
             5002
         ],
-        "maxMonsterCount": 20,
+        "maxMonsterCount": 10,
         "monsterRespawnTime": 10
     },
     {
@@ -151,7 +151,7 @@
             5004,
             5005
         ],
-        "maxMonsterCount": 20,
+        "maxMonsterCount": 10,
         "monsterRespawnTime": 10
     },
     {
@@ -192,7 +192,7 @@
             5007,
             5008
         ],
-        "maxMonsterCount": 20,
+        "maxMonsterCount": 10,
         "monsterRespawnTime": 10
     }
 ]

@@ -43,7 +43,7 @@ public:
 protected:
     /** 상태 동기화용 함수 Delete */
     virtual void S_Move(float DeltaSeconds) override final {};
-    virtual void S_NormalAttack(uint32 Combo) override final {};
+    virtual void S_NormalAttack(uint32 Combo, float Yaw) override final {};
 
 
 protected:

@@ -27,9 +27,24 @@ struct vector2D
         return lhs.x == rhs.x && lhs.y == rhs.y;
     }
 
+    friend vector2D operator+(const vector2D& lhs, const vector2D& rhs)
+    {
+        return { lhs.x + rhs.x, lhs.y + rhs.y };
+    }
+
     friend vector2D operator-(const vector2D& lhs, const vector2D& rhs)
     {
         return { lhs.x - rhs.x, lhs.y - rhs.y };
+    }
+
+    friend vector2D operator-=(const vector2D& lhs, const vector2D& rhs)
+    {
+        return { lhs.x - rhs.x, lhs.y - rhs.y };
+    }
+
+    friend vector2D operator*(const vector2D& lhs, float scale)
+    {
+        return { lhs.x * scale, lhs.y * scale };
     }
 
     float x = 0.f;
@@ -132,7 +147,16 @@ public:
 
         return noSqrt ? squareDist : sqrt(squareDist);
     }
+
+    static vector2D PosInfoToVector2D(Protocol::PosInfo* posInfo)
+    {
+        return { posInfo->x(), posInfo->y() };
+    }
+
+    static bool InRange(Protocol::PosInfo* curPos, Protocol::PosInfo* target, float range)
+    {
+        float squareDist = MathUtil::Distance(curPos, target, true);
+
+        return squareDist <= (range * range);
+    }
 };
-
-
-

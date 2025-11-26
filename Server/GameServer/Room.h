@@ -31,6 +31,7 @@ public:
     void HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
 
     /** Getter 함수 */
+    vector2D GetRandomPos(bool usePadding = true);
 	RoomRef GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
     int32 GetRoomId() const { return _roomId; }
     optional<Json> GetPortalDataFromPortalId(int32 portalId);
@@ -105,7 +106,7 @@ private:
     /** 네트워크 */
     uint64 prevTickTime = GetTickCount64();
     const uint64 ROOM_TICK = 200;
-    const float SEND_MOVE_PACKET_TIME = 1.f;
+    const float SEND_MOVE_PACKET_TIME = 0.2f;
     float elapsedTime = 0.f;
 };
 

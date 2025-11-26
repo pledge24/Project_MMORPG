@@ -41,7 +41,7 @@ public:
 public:
     /** 이동 관련 함수 */
     virtual void S_Move(float DeltaSeconds);
-    virtual void S_NormalAttack(uint32 Combo);
+    virtual void S_NormalAttack(uint32 Combo, float Yaw);
 
     FVector FindPerpendicularPoint() const;
 
@@ -76,7 +76,7 @@ protected:
 private:
     TQueue<Protocol::PosInfo> MoveQueue;
     FVector MoveDirection = FVector::ZeroVector;
-    const float CorrectionThreshold = 500.f;
-    const float CORR_INTERP_SPEED = 50.f;
+    const float CorrectionThreshold = 800.f;
+    const float CORR_INTERP_SPEED = 10.f;
     const float CORR_RINTERP_SPEED = 5.f;
 };

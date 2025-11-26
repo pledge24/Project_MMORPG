@@ -108,7 +108,6 @@ message S_MOVE
 
 message C_NORMAL_ATTACK
 {
-    // Normal Attack만 이 패킷을 사용한다.
     uint32 combo = 1;
 }
 
@@ -116,6 +115,7 @@ message S_NORMAL_ATTACK
 {
     uint64 object_id = 1;
     uint32 combo = 2;
+    float yaw = 3;
 }
 
 message S_HIT
@@ -126,10 +126,11 @@ message S_HIT
     DamageType damage_type = 3;     // 물리 피해? 마법 피해?
 
     // 맞아서 바뀐 스텟들
-    repeated Stat updated_stat = 4;
-
-    // 맞아서 생긴 효과(버프, 디버프)
-    // repeated Effect addedEffect = ?;
+    oneof hit_result
+    {
+        uint32 hp = 4;
+        repeated Stat updated_stat = 5;
+    }
 }
 
 message C_BUY_ITEM
