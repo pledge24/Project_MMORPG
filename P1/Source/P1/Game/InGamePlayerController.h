@@ -60,6 +60,7 @@ public:
 
     void ToggleWidget(WidgetType Type);
 
+    void OnToggleBattleMode(bool BattleMode);
 
 protected:
     /** HUD UI */

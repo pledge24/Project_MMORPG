@@ -43,12 +43,17 @@ public:
     void UpdateCurExp(int32 Value);
     void UpdateExpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
 
+    void SetBattleModeTxt(bool battleMode);
+
 protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Name_txt;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Level_txt;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* BattleMode_txt;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBarWidget> HpBar;
@@ -58,4 +63,6 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBarWidget> ExpBar;
+
+
 };

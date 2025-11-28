@@ -17,7 +17,7 @@
         },
         "attackInterval": 2.5,
         "monsterSpeed": 300,
-        "tryAttackRange": 80,
+        "tryAttackRange": 150,
         "detectionRange": 900,
         "chasingMaxRange": 1200
     },
@@ -61,7 +61,7 @@
         },
         "attackInterval": 2.5,
         "monsterSpeed": 300,
-        "tryAttackRange": 80,
+        "tryAttackRange": 150,
         "detectionRange": 900,
         "chasingMaxRange": 1200
     },
@@ -83,7 +83,7 @@
         },
         "attackInterval": 2.5,
         "monsterSpeed": 300,
-        "tryAttackRange": 80,
+        "tryAttackRange": 150,
         "detectionRange": 900,
         "chasingMaxRange": 1200
     },
@@ -127,7 +127,7 @@
         },
         "attackInterval": 2.5,
         "monsterSpeed": 300,
-        "tryAttackRange": 80,
+        "tryAttackRange": 150,
         "detectionRange": 900,
         "chasingMaxRange": 1200
     },
@@ -149,7 +149,7 @@
         },
         "attackInterval": 2.5,
         "monsterSpeed": 300,
-        "tryAttackRange": 80,
+        "tryAttackRange": 150,
         "detectionRange": 900,
         "chasingMaxRange": 1200
     },
@@ -193,7 +193,7 @@
         },
         "attackInterval": 2.5,
         "monsterSpeed": 300,
-        "tryAttackRange": 80,
+        "tryAttackRange": 150,
         "detectionRange": 900,
         "chasingMaxRange": 1200
     }

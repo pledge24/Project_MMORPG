@@ -91,6 +91,9 @@ extern StatDefaultTypeInternal _Stat_default_instance_;
 class StatInfo;
 struct StatInfoDefaultTypeInternal;
 extern StatInfoDefaultTypeInternal _StatInfo_default_instance_;
+class Vector;
+struct VectorDefaultTypeInternal;
+extern VectorDefaultTypeInternal _Vector_default_instance_;
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::CharacterOverview* Arena::CreateMaybeMessage<::Protocol::CharacterOverview>(Arena*);
@@ -107,6 +110,7 @@ template<> ::Protocol::PosInfo* Arena::CreateMaybeMessage<::Protocol::PosInfo>(A
 template<> ::Protocol::Slot* Arena::CreateMaybeMessage<::Protocol::Slot>(Arena*);
 template<> ::Protocol::Stat* Arena::CreateMaybeMessage<::Protocol::Stat>(Arena*);
 template<> ::Protocol::StatInfo* Arena::CreateMaybeMessage<::Protocol::StatInfo>(Arena*);
+template<> ::Protocol::Vector* Arena::CreateMaybeMessage<::Protocol::Vector>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
@@ -1065,6 +1069,176 @@ class MonsterInfo final :
 };
 // -------------------------------------------------------------------
 
+class Vector final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.Vector) */ {
+ public:
+  inline Vector() : Vector(nullptr) {}
+  ~Vector() override;
+  explicit PROTOBUF_CONSTEXPR Vector(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Vector(const Vector& from);
+  Vector(Vector&& from) noexcept
+    : Vector() {
+    *this = ::std::move(from);
+  }
+
+  inline Vector& operator=(const Vector& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Vector& operator=(Vector&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Vector& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const Vector* internal_default_instance() {
+    return reinterpret_cast<const Vector*>(
+               &_Vector_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    6;
+
+  friend void swap(Vector& a, Vector& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Vector* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Vector* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Vector* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Vector>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Vector& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Vector& from) {
+    Vector::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Vector* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.Vector";
+  }
+  protected:
+  explicit Vector(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kXFieldNumber = 1,
+    kYFieldNumber = 2,
+    kZFieldNumber = 3,
+  };
+  // float x = 1;
+  void clear_x();
+  float x() const;
+  void set_x(float value);
+  private:
+  float _internal_x() const;
+  void _internal_set_x(float value);
+  public:
+
+  // float y = 2;
+  void clear_y();
+  float y() const;
+  void set_y(float value);
+  private:
+  float _internal_y() const;
+  void _internal_set_y(float value);
+  public:
+
+  // float z = 3;
+  void clear_z();
+  float z() const;
+  void set_z(float value);
+  private:
+  float _internal_z() const;
+  void _internal_set_z(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.Vector)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    float x_;
+    float y_;
+    float z_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Struct_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PosInfo final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.PosInfo) */ {
  public:
@@ -1113,7 +1287,7 @@ class PosInfo final :
                &_PosInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(PosInfo& a, PosInfo& b) {
     a.Swap(&b);
@@ -1186,14 +1360,32 @@ class PosInfo final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kMoveDirectionFieldNumber = 6,
     kObjectIdFieldNumber = 1,
     kXFieldNumber = 2,
     kYFieldNumber = 3,
     kZFieldNumber = 4,
     kYawFieldNumber = 5,
-    kDesiredYawFieldNumber = 6,
     kStateFieldNumber = 7,
   };
+  // .Protocol.Vector move_direction = 6;
+  bool has_move_direction() const;
+  private:
+  bool _internal_has_move_direction() const;
+  public:
+  void clear_move_direction();
+  const ::Protocol::Vector& move_direction() const;
+  PROTOBUF_NODISCARD ::Protocol::Vector* release_move_direction();
+  ::Protocol::Vector* mutable_move_direction();
+  void set_allocated_move_direction(::Protocol::Vector* move_direction);
+  private:
+  const ::Protocol::Vector& _internal_move_direction() const;
+  ::Protocol::Vector* _internal_mutable_move_direction();
+  public:
+  void unsafe_arena_set_allocated_move_direction(
+      ::Protocol::Vector* move_direction);
+  ::Protocol::Vector* unsafe_arena_release_move_direction();
+
   // uint64 object_id = 1;
   void clear_object_id();
   uint64_t object_id() const;
@@ -1239,15 +1431,6 @@ class PosInfo final :
   void _internal_set_yaw(float value);
   public:
 
-  // float desired_yaw = 6;
-  void clear_desired_yaw();
-  float desired_yaw() const;
-  void set_desired_yaw(float value);
-  private:
-  float _internal_desired_yaw() const;
-  void _internal_set_desired_yaw(float value);
-  public:
-
   // .Protocol.MoveState state = 7;
   void clear_state();
   ::Protocol::MoveState state() const;
@@ -1265,12 +1448,12 @@ class PosInfo final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::Protocol::Vector* move_direction_;
     uint64_t object_id_;
     float x_;
     float y_;
     float z_;
     float yaw_;
-    float desired_yaw_;
     int state_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -1327,7 +1510,7 @@ class StatInfo final :
                &_StatInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(StatInfo& a, StatInfo& b) {
     a.Swap(&b);
@@ -1555,7 +1738,7 @@ class Stat final :
                &_Stat_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(Stat& a, Stat& b) {
     a.Swap(&b);
@@ -1725,7 +1908,7 @@ class Effect final :
                &_Effect_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(Effect& a, Effect& b) {
     a.Swap(&b);
@@ -1884,7 +2067,7 @@ class GearInfo final :
                &_GearInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(GearInfo& a, GearInfo& b) {
     a.Swap(&b);
@@ -2070,7 +2253,7 @@ class Item final :
                &_Item_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(Item& a, Item& b) {
     a.Swap(&b);
@@ -2281,7 +2464,7 @@ class Slot final :
                &_Slot_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(Slot& a, Slot& b) {
     a.Swap(&b);
@@ -2476,7 +2659,7 @@ class Inventory final :
                &_Inventory_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(Inventory& a, Inventory& b) {
     a.Swap(&b);
@@ -3517,6 +3700,70 @@ inline void MonsterInfo::set_hp(int32_t value) {
 
 // -------------------------------------------------------------------
 
+// Vector
+
+// float x = 1;
+inline void Vector::clear_x() {
+  _impl_.x_ = 0;
+}
+inline float Vector::_internal_x() const {
+  return _impl_.x_;
+}
+inline float Vector::x() const {
+  // @@protoc_insertion_point(field_get:Protocol.Vector.x)
+  return _internal_x();
+}
+inline void Vector::_internal_set_x(float value) {
+  
+  _impl_.x_ = value;
+}
+inline void Vector::set_x(float value) {
+  _internal_set_x(value);
+  // @@protoc_insertion_point(field_set:Protocol.Vector.x)
+}
+
+// float y = 2;
+inline void Vector::clear_y() {
+  _impl_.y_ = 0;
+}
+inline float Vector::_internal_y() const {
+  return _impl_.y_;
+}
+inline float Vector::y() const {
+  // @@protoc_insertion_point(field_get:Protocol.Vector.y)
+  return _internal_y();
+}
+inline void Vector::_internal_set_y(float value) {
+  
+  _impl_.y_ = value;
+}
+inline void Vector::set_y(float value) {
+  _internal_set_y(value);
+  // @@protoc_insertion_point(field_set:Protocol.Vector.y)
+}
+
+// float z = 3;
+inline void Vector::clear_z() {
+  _impl_.z_ = 0;
+}
+inline float Vector::_internal_z() const {
+  return _impl_.z_;
+}
+inline float Vector::z() const {
+  // @@protoc_insertion_point(field_get:Protocol.Vector.z)
+  return _internal_z();
+}
+inline void Vector::_internal_set_z(float value) {
+  
+  _impl_.z_ = value;
+}
+inline void Vector::set_z(float value) {
+  _internal_set_z(value);
+  // @@protoc_insertion_point(field_set:Protocol.Vector.z)
+}
+
+// -------------------------------------------------------------------
+
 // PosInfo
 
 // uint64 object_id = 1;
@@ -3619,24 +3866,94 @@ inline void PosInfo::set_yaw(float value) {
   // @@protoc_insertion_point(field_set:Protocol.PosInfo.yaw)
 }
 
-// float desired_yaw = 6;
-inline void PosInfo::clear_desired_yaw() {
-  _impl_.desired_yaw_ = 0;
+// .Protocol.Vector move_direction = 6;
+inline bool PosInfo::_internal_has_move_direction() const {
+  return this != internal_default_instance() && _impl_.move_direction_ != nullptr;
 }
-inline float PosInfo::_internal_desired_yaw() const {
-  return _impl_.desired_yaw_;
+inline bool PosInfo::has_move_direction() const {
+  return _internal_has_move_direction();
 }
-inline float PosInfo::desired_yaw() const {
-  // @@protoc_insertion_point(field_get:Protocol.PosInfo.desired_yaw)
-  return _internal_desired_yaw();
+inline void PosInfo::clear_move_direction() {
+  if (GetArenaForAllocation() == nullptr && _impl_.move_direction_ != nullptr) {
+    delete _impl_.move_direction_;
+  }
+  _impl_.move_direction_ = nullptr;
 }
-inline void PosInfo::_internal_set_desired_yaw(float value) {
+inline const ::Protocol::Vector& PosInfo::_internal_move_direction() const {
+  const ::Protocol::Vector* p = _impl_.move_direction_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Vector&>(
+      ::Protocol::_Vector_default_instance_);
+}
+inline const ::Protocol::Vector& PosInfo::move_direction() const {
+  // @@protoc_insertion_point(field_get:Protocol.PosInfo.move_direction)
+  return _internal_move_direction();
+}
+inline void PosInfo::unsafe_arena_set_allocated_move_direction(
+    ::Protocol::Vector* move_direction) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.move_direction_);
+  }
+  _impl_.move_direction_ = move_direction;
+  if (move_direction) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.PosInfo.move_direction)
+}
+inline ::Protocol::Vector* PosInfo::release_move_direction() {
   
-  _impl_.desired_yaw_ = value;
+  ::Protocol::Vector* temp = _impl_.move_direction_;
+  _impl_.move_direction_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
 }
-inline void PosInfo::set_desired_yaw(float value) {
-  _internal_set_desired_yaw(value);
-  // @@protoc_insertion_point(field_set:Protocol.PosInfo.desired_yaw)
+inline ::Protocol::Vector* PosInfo::unsafe_arena_release_move_direction() {
+  // @@protoc_insertion_point(field_release:Protocol.PosInfo.move_direction)
+  
+  ::Protocol::Vector* temp = _impl_.move_direction_;
+  _impl_.move_direction_ = nullptr;
+  return temp;
+}
+inline ::Protocol::Vector* PosInfo::_internal_mutable_move_direction() {
+  
+  if (_impl_.move_direction_ == nullptr) {
+    auto* p = CreateMaybeMessage<::Protocol::Vector>(GetArenaForAllocation());
+    _impl_.move_direction_ = p;
+  }
+  return _impl_.move_direction_;
+}
+inline ::Protocol::Vector* PosInfo::mutable_move_direction() {
+  ::Protocol::Vector* _msg = _internal_mutable_move_direction();
+  // @@protoc_insertion_point(field_mutable:Protocol.PosInfo.move_direction)
+  return _msg;
+}
+inline void PosInfo::set_allocated_move_direction(::Protocol::Vector* move_direction) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.move_direction_;
+  }
+  if (move_direction) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(move_direction);
+    if (message_arena != submessage_arena) {
+      move_direction = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, move_direction, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.move_direction_ = move_direction;
+  // @@protoc_insertion_point(field_set_allocated:Protocol.PosInfo.move_direction)
 }
 
 // .Protocol.MoveState state = 7;
@@ -4475,6 +4792,8 @@ Inventory::miscellaneous() const {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

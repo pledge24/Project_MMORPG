@@ -145,10 +145,8 @@ void ACreature::SetServerPos(const Protocol::PosInfo& Info)
     }
 
     ServerPos->CopyFrom(Info);
-    MoveDirection = FRotator(0.f, ServerPos->desired_yaw(), 0.f).Vector();
+    MoveDirection = FVector(ServerPos->mutable_move_direction()->x(), ServerPos->mutable_move_direction()->y(), 0.f);
     SetMoveState(Info.state()); // state는 ClientPos에 바로 세팅
-
-    UE_LOG(LogTemp, Log, TEXT("ServerPos: (%f %f)"), ServerPos->x(), ServerPos->y());
 }
 
 void ACreature::SetCreatureName(const FText& InName)
@@ -158,14 +156,17 @@ void ACreature::SetCreatureName(const FText& InName)
 
 void ACreature::S_Move(float DeltaSeconds)
 {
-    FVector ClientLocation = GetActorLocation();
-    FVector ServerLocation = FVector(ServerPos->x(), ServerPos->y(), ServerPos->z());
-    const float Dist = FVector::Distance(ClientLocation, ServerLocation);
 
-    // S_Move
     if (ServerPos->state() == Protocol::MOVE_STATE_RUN)
     {
         AddMovementInput(MoveDirection);
+    }
+    else if (ServerPos->state() == Protocol::MOVE_STATE_IDLE)
+    {
+        if (GetVelocity().Size() > 0.f)
+        {
+            GetCharacterMovement()->StopMovementImmediately();
+        }
     }
     else if (ServerPos->state() == Protocol::MOVE_STATE_ACTION)
     {
@@ -173,7 +174,11 @@ void ACreature::S_Move(float DeltaSeconds)
         //return;
     }
 
-    // 회전 보간.
+    FVector ClientLocation = GetActorLocation();
+    FVector ServerLocation = FVector(ServerPos->x(), ServerPos->y(), ClientLocation.Z);
+    const float Dist = FVector::Distance(ClientLocation, ServerLocation);
+
+    // 회전 보정.
     bool IsMonster = this->IsA<AMonster>();
     bool IsIdlePlayer = ServerPos->state() == Protocol::MOVE_STATE_IDLE && this->IsA<AP1Player>();
     if (IsMonster || IsIdlePlayer)
@@ -187,8 +192,8 @@ void ACreature::S_Move(float DeltaSeconds)
         }
     }
 
-    // Correction
-    if (Dist > CorrectionThreshold)
+    // 위치 보정
+    if (Dist >= CorrectionMaxThreshold)
     {
         // 보정 거리 초과 시 Reposition
         SetActorLocation(ServerLocation);
@@ -196,11 +201,11 @@ void ACreature::S_Move(float DeltaSeconds)
     }
     else
     {
-        FVector CorrectionPoint = MoveDirection == FVector::Zero() ?
-            ServerLocation : FindPerpendicularPoint();
+        FVector CurPos = ClientLocation;
+        FVector TargetPos = FVector(ServerLocation.X, ServerLocation.Y, ClientLocation.Z);
 
+        FVector CorrectionPoint = MoveDirection == FVector::Zero() ? TargetPos : FindPerpendicularPoint();
         FVector CorrectedClientLocation = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, CORR_INTERP_SPEED);
-        CorrectedClientLocation.Z = ClientLocation.Z;
 
         SetActorLocation(CorrectedClientLocation);
     }
@@ -217,8 +222,8 @@ void ACreature::S_NormalAttack(uint32 Combo, float Yaw)
 
 FVector ACreature::FindPerpendicularPoint() const
 {
-    FVector ServerPoint = FVector(ServerPos->x(), ServerPos->y(), ServerPos->z());
-    FVector ClosestPoint = UKismetMathLibrary::FindClosestPointOnLine(GetActorLocation(), ServerPoint, MoveDirection);
+    FVector TargetPoint = FVector(ServerPos->x(), ServerPos->y(), ClientPos->z());
+    FVector ClosestPoint = UKismetMathLibrary::FindClosestPointOnLine(GetActorLocation(), TargetPoint, MoveDirection);
 
     return ClosestPoint;
 }

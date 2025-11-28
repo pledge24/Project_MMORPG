@@ -105,7 +105,7 @@ private:
 
     /** 네트워크 */
     uint64 prevTickTime = GetTickCount64();
-    const uint64 ROOM_TICK = 200;
+    const uint64 ROOM_TICK = 50;
     const float SEND_MOVE_PACKET_TIME = 0.2f;
     float elapsedTime = 0.f;
 };

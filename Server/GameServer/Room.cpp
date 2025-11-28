@@ -43,7 +43,8 @@ bool Room::Start()
     {
         int32 kindOfMonster = monsterIds.size();
         SpawnMonster(5000);
-        SpawnMonster(5001);
+        //SpawnMonster(5002);
+        UpdateTick();
         return true;
 
         for (int32 i = 0; i < maxMonsterCount; i++)

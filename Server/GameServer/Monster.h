@@ -44,14 +44,23 @@ protected:
     void ExecuteStateDeath(float deltaTime);
 
     /** AI 함수 */
-    void Move(float deltaTime);
-    bool AlreadyArrive();
+    void Move(float deltaTime, bool orientRotationToMovement = true);
+    void LookAt(const vector2D& targetPos);
+    void StartMovingTo(const vector2D& dest, float minApproachDistance = 0.f);
+    void StopMoving(string context = "", bool shouldBeIdle = false);
 
+    bool CanMove();
+    bool AlreadyArrive();
     bool HaveDestination() { return _moveDest.has_value(); }
+
+    /** Getter-Setter 함수 */
     const vector2D& GetDestination() { return _moveDest.value(); }
 
     void SetDestination(const vector2D& destPos, float minApproachDistance = 0.f);
-    void LookAt(const vector2D& targetPos);
+    void SetMoveDirection(const vector2D& moveVec);
+    void SetYaw(float yaw);
+
+    void ClearDestination();
 
     /** 네트워크 함수 */
     void ForceBroadcastMovePkt();
@@ -73,7 +82,7 @@ private:
     const float IDLE_TIME = 5.f;
     const float WANDERING_TIME = 2.f;
     const float UPDATE_STATE_INTERVAL = 1.f;
-    const float MIN_APPROACH_DISTANCE = 50.f;
+    const float MIN_APPROACH_DISTANCE = 120.f;
 
     /** Monster AI Data(Individual) */
     MonsterState state = MonsterState::Idle;
@@ -85,6 +94,7 @@ private:
 
     weak_ptr<Object> _target;
     optional<vector2D> _moveDest;
-    float _stateTimer = 0.f;            // 여러 용도로 사용됨
+    float _stateTimer = 0.f;                    // 여러 용도로 사용됨
+    float _timeSinceLastAttack = 0.f;
 };
 

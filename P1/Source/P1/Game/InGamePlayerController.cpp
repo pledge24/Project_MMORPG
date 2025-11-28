@@ -179,3 +179,19 @@ void AInGamePlayerController::ToggleWidget(WidgetType Type)
         TurnOffWidget(Type);
     }
 }
+
+void AInGamePlayerController::OnToggleBattleMode(bool BattleMode)
+{
+    HUDWidget->SetBattleModeTxt(BattleMode);
+
+    if (BattleMode)
+    {
+        FString WarningMessage = TEXT("전투모드를 활성화합니다");
+        DisplayWarningText(FText::FromString(WarningMessage));
+    }
+    else
+    {
+        FString WarningMessage = TEXT("전투모드를 비활성화합니다");
+        DisplayWarningText(FText::FromString(WarningMessage));
+    }
+}

@@ -9,8 +9,8 @@ struct vector2D
     vector2D(float x_, float y_) : x(x_), y(y_) {};
 
     static vector2D GetZeroVector() { return vector2D(0.f, 0.f); }
-    float GetMagnitude() { return sqrt(x * x + y * y); }
-    vector2D GetNormalize() {
+    float GetMagnitude() const { return sqrt(x * x + y * y); }
+    vector2D GetNormalize() const {
         float magnitude = GetMagnitude();
 
         if (magnitude == 0.0)
@@ -20,6 +20,12 @@ struct vector2D
 
         // 각 성분을 크기로 나눕니다.
         return vector2D(x / magnitude, y / magnitude);
+    }
+
+    void CopyTo(Protocol::Vector* vector)
+    {
+        vector->set_x(x);
+        vector->set_y(y);
     }
 
     friend bool operator==(const vector2D& lhs, const vector2D& rhs)
@@ -156,7 +162,16 @@ public:
     static bool InRange(Protocol::PosInfo* curPos, Protocol::PosInfo* target, float range)
     {
         float squareDist = MathUtil::Distance(curPos, target, true);
-
+        
         return squareDist <= (range * range);
+    }
+
+    static bool IsZeroVector(Protocol::Vector* vector)
+    {
+        bool zeroX = vector->x() == 0.f;
+        bool zeroY = vector->y() == 0.f;
+        bool zeroZ = vector->z() == 0.f;
+
+        return (zeroX && zeroY && zeroZ);
     }
 };

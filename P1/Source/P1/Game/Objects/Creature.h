@@ -76,7 +76,8 @@ protected:
 private:
     TQueue<Protocol::PosInfo> MoveQueue;
     FVector MoveDirection = FVector::ZeroVector;
-    const float CorrectionThreshold = 800.f;
-    const float CORR_INTERP_SPEED = 10.f;
+    const float CorrectionMaxThreshold = 800.f;
+    const float CORR_INTERP_SPEED = 5.f;
     const float CORR_RINTERP_SPEED = 5.f;
+
 };

@@ -141,9 +141,9 @@ private:
 	float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
 
 	// Input Movement Cache.
-	FVector2D DesiredInput;         // FInputActionValue
-	FVector DesiredMoveDirection;   // 이동할 방향(Vector 타입)
-	float DesiredYaw;               // 이동할 방향(Rotator 타입)
+	FVector2D DesiredInput;             // FInputActionValue
+	FVector DesiredMoveDirectionVec;    // 이동할 방향(Unit Vector)
+	float DesiredMoveDirectionYaw;      // 이동할 방향(Yaw)
 
 	// Dirty Flag
 	FVector2D LastDesiredInput;

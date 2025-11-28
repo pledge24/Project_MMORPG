@@ -109,8 +109,8 @@ void AP1MyPlayer::Tick(float DeltaTime)
 	    }
 
         // 급격한 회전 감지
-        FRotator DeltaRotator = FRotator(0.f, DesiredYaw, 0.f) - FRotator(0.f, MovePkt.info().desired_yaw(), 0.f);
-        if (FMath::Abs(DeltaRotator.Yaw) >= YAW_TOLERANCE)
+        float DeltaYaw = FMath::Abs(DesiredMoveDirectionYaw - GetActorRotation().Yaw);
+        if (DeltaYaw >= YAW_TOLERANCE)
         {
             bForceSendPacket = true;
         }
@@ -144,7 +144,8 @@ void AP1MyPlayer::Tick(float DeltaTime)
 
             Protocol::PosInfo* Info = MovePkt.mutable_info();
             Info->CopyFrom(*ClientPos);
-            Info->set_desired_yaw(DesiredYaw);
+            Info->mutable_move_direction()->set_x(DesiredMoveDirectionVec.X);
+            Info->mutable_move_direction()->set_y(DesiredMoveDirectionVec.Y);
             Info->set_state(GetMoveState());
         }
 
@@ -186,12 +187,12 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 		{
 			DesiredInput = MovementVector;
 
-			DesiredMoveDirection = FVector::ZeroVector;
-			DesiredMoveDirection += ForwardDirection * MovementVector.Y;
-			DesiredMoveDirection += RightDirection * MovementVector.X;
-			DesiredMoveDirection.Normalize();
+			DesiredMoveDirectionVec = FVector::ZeroVector;
+			DesiredMoveDirectionVec += ForwardDirection * MovementVector.Y;
+			DesiredMoveDirectionVec += RightDirection * MovementVector.X;
+			DesiredMoveDirectionVec.Normalize();
 
-            DesiredYaw = DesiredMoveDirection.Rotation().Yaw;
+            DesiredMoveDirectionYaw = DesiredMoveDirectionVec.Rotation().Yaw;
 		}
 	}
 }
@@ -239,21 +240,9 @@ void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
 {
     bBattleMode = !bBattleMode;
 
-    if (bBattleMode)
+    if (AInGamePlayerController* PC = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
-        if (AInGamePlayerController* PC = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-        {
-            FString Message = TEXT("전투모드를 활성화합니다");
-            PC->DisplayWarningText(FText::FromString(Message));
-        }
-    }
-    else
-    {
-        if (AInGamePlayerController* PC = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-        {
-            FString Message = TEXT("전투모드를 비활성화합니다");
-            PC->DisplayWarningText(FText::FromString(Message));
-        }
+        PC->OnToggleBattleMode(bBattleMode);
     }
 }
 

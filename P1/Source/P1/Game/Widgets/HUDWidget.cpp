@@ -115,3 +115,17 @@ void UHUDWidget::UpdateExpBar(TOptional<int32> CurValue, TOptional<int32> MaxVal
     else if(MaxValue.IsSet())
         ExpBar->SetMaxValue(MaxValue.GetValue());
 }
+
+void UHUDWidget::SetBattleModeTxt(bool battleMode)
+{
+    if (battleMode)
+    {
+        FString Message = TEXT("전투 모드: 활성화");
+        BattleMode_txt->SetText(FText::FromString(Message));
+    }
+    else
+    {
+        FString Message = TEXT("전투 모드: 비활성화");
+        BattleMode_txt->SetText(FText::FromString(Message));
+    }
+}
