@@ -6,8 +6,10 @@
 #include "Engine/GameInstance.h"
 #include "Types.h"
 #include "Protocol.pb.h"
+#include "StatefulObjectManager.h"
 #include "P1GameInstance.generated.h"
 
+class UMyPlayerData;
 class AP1Player;
 class AP1MyPlayer;
 
@@ -38,31 +40,12 @@ public:
 	void SendPacket(SendBufferRef SendBuffer);
 
 public:
-    /** Getter */
-    const Protocol::PlayerInfo& GetPlayerInfo() { return *_PlayerInfo; }
-    int32 GetGold() { return _PlayerInfo->gold(); };
-    int32 GetLevel() { return _PlayerInfo->level(); };
-
-    /** 레벨 관련 Rep  */
-    void RepLevel(int32 Level_);
-    void RepExp(int32 CurExp, int32 MaxExp = -1);
-
-    /** 스텟 관련 Rep */
-    void RepStatInfo(const Protocol::StatInfo& StatInfo_);
-
-    /** 소유 관련 Rep */
-    void RepGold(int64 Gold);
-    void RepInventorySlot(const Protocol::Slot& Slot_, bool OnUse = false);
-    void RepEquippedGearSlot(const Protocol::Slot& Slot_);
-
-public:
 	/* 패킷 핸들 함수 */
 	void HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt);
 
-	void HandleSpawn(const Protocol::ObjectInfo& PlayerInfo, bool IsMine);
+    void HandleSpawn(const Protocol::ObjectInfo& ObjectInfo);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
-	void HandleDespawn(uint64 ObjectId);
 	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
     void HandleDespawnAll(bool ExceptMine = false);
 
@@ -78,75 +61,30 @@ public:
 
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
 
-public:
-    /** 델리게이트 모음(위젯 상태 갱신용) */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
-    FOnLevelChanged OnLevelChanged;
+    /** Getter 함수 */
+    FString GetToken() const { return _token; }
+    UMyPlayerData* GetMyPlayerData();
 
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, TOptional<int32>, TOptional<int32>);
-    FOnExpChanged OnExpChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
-    FOnStatInfoChanged OnStatInfoChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int32);
-    FOnGoldChanged OnGoldChanged;
-
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInventorySlotChanged, const Protocol::Slot&, bool);
-    FOnInventorySlotChanged OnInventorySlotChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquippedGearSlotChanged, const Protocol::Slot&);
-    FOnEquippedGearSlotChanged OnEquippedGearSlotChanged;
-
-    /** 델리게이트 모음(위젯 액션 알림용) */
-    DECLARE_MULTICAST_DELEGATE(FOnRep_BuyItem);
-    FOnRep_BuyItem OnRep_BuyItem;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_SellItem);
-    FOnRep_SellItem OnRep_SellItem;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_UseItem);
-    FOnRep_UseItem OnRep_UseItem;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_EquipGear);
-    FOnRep_EquipGear OnRep_EquipGear;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRep_UnequipGear);
-    FOnRep_UnequipGear OnRep_UnequipGear;
+    /** Setter 함수 */
+    void SetToken(FString token) { _token = token; }
+    void SetMyPlayer(AP1MyPlayer* MyPlayer) { _MyPlayer = MyPlayer; }
 
 public:
-	void SetToken(FString token) { _token = token; }
-	FString GetToken() { return _token; }
+    /** GameServer Socket */
+    class FSocket* Socket;
+    const FString IpAddress = TEXT("127.0.0.1");
+    const int16 Port = 7777;
+    PacketSessionRef GameServerSession;
 
-public:
-	/** GameServer Socket */
-	class FSocket* Socket;
-	FString IpAddress = TEXT("127.0.0.1");
-	int16 Port = 7777;
-	PacketSessionRef GameServerSession;
+    /** AuthServer Token */
+	FString _token = ""; // GameServer 접속 토큰
 
-public:
-	/** Player 정보 */
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AP1Player> OtherPlayerClass;
-
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<AP1MyPlayer> MyPlayerClass;
-
-	AP1Player* MyPlayer;
-	TMap<uint64, AP1Player*> Players;
-
-    /** MyPlayer 고유 정보 */
+protected:
+    /** MyPlayer Data */
     UPROPERTY()
-    TObjectPtr<class UInventory> InventoryHelper;
+	AP1MyPlayer* _MyPlayer;
 
     UPROPERTY()
-    TObjectPtr<class UEquippedGear> EquippedGearHelper;
+    UMyPlayerData* _MyPlayerData;
 
-    uint64 _MyPlayerId;
-    Protocol::PlayerInfo* _PlayerInfo;
-    Protocol::StatInfo* _StatInfo;
-
-private:
-	FString _token = "";
 };

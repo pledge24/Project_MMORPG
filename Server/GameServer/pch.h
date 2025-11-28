@@ -55,6 +55,7 @@ USING_SHARED_PTR(Object);
 USING_SHARED_PTR(Room);
 USING_SHARED_PTR(Inventory);
 USING_SHARED_PTR(EquippedGear);
+USING_SHARED_PTR(TickIntervalTimer);
 
 #define SEND_PACKET(pkt)													    \
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);	\

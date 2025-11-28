@@ -7,6 +7,7 @@
 #include "Protocol.pb.h"
 #include "HUDWidget.generated.h"
 
+class AP1MyPlayer;
 class UTextBlock;
 class UProgressBarWidget;
 
@@ -20,6 +21,8 @@ class P1_API UHUDWidget : public UUserWidget
 
 protected:
     virtual void NativeConstruct() override;
+
+    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 
 public:
     void UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_);
@@ -40,12 +43,17 @@ public:
     void UpdateCurExp(int32 Value);
     void UpdateExpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
 
+    void SetBattleModeTxt(bool battleMode);
+
 protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Name_txt;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Level_txt;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* BattleMode_txt;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBarWidget> HpBar;
@@ -55,4 +63,6 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBarWidget> ExpBar;
+
+
 };

@@ -42,5 +42,5 @@ void UProgressBarWidget::UpdateBar()
     FString ProgressText = !bIsPercentFormat ? FString::Printf(TEXT("%d/%d"), _CurValue, _MaxValue)
         : FString::Printf(TEXT("%.2f%%"), Percent);;
 
-    TextBlock->SetText(FText::FromString(ProgressText));
+    SetProgressBarText(ProgressText);
 }

@@ -6,6 +6,7 @@
 #include "P1.h"
 #include "P1MyPlayer.h"
 #include "P1GameInstance.h"
+#include "MyPlayerData.h"
 
 void UStatusWindowWidget::NativeConstruct()
 {
@@ -13,24 +14,33 @@ void UStatusWindowWidget::NativeConstruct()
 
     if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
-        // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
-
-        UpdateAllStat(PlayerInfo_.stat_info());
-
-        for (const auto& Pair : PlayerInfo_.equipped_gear())
+        // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
+        if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
         {
-            const Protocol::Slot& Slot_ = Pair.second;
-            UpdateSlotWidget(Slot_);
+            const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
+
+            UpdateAllStat(PlayerInfo_.stat_info());
+
+            for (const auto& Pair : PlayerInfo_.equipped_gear())
+            {
+                const Protocol::Slot& Slot_ = Pair.second;
+                UpdateSlotWidget(Slot_);
+            }
+
+            // MyPlayer 스폰 이벤트에 함수 등록
+            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UStatusWindowWidget::BindMyPlayerSpawned);
         }
-
-        // 바인딩 셋업
-        GameInstance->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
-        GameInstance->OnEquippedGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
-
-        GameInstance->OnRep_UnequipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 
+}
+
+void UStatusWindowWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
+{
+    // 바인딩 셋업
+    MyPlayer->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
+    MyPlayer->OnGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
+
+    MyPlayer->OnRecvUnequipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
 }
 
 void UStatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)

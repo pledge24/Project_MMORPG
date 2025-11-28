@@ -15,6 +15,20 @@ Player::~Player()
 {
 }
 
+void Player::PostConstructionSetup()
+{
+    Creature::PostConstructionSetup();
+
+    Init();
+}
+
+void Player::Tick(float deltaTime)
+{
+    Creature::Tick(deltaTime);
+
+
+}
+
 void Player::Init()
 {
     inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
@@ -47,13 +61,13 @@ bool Player::CalculateFinalStat()
     DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
     int32 level = playerInfo->level();
     if(classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxHp))
-        finalStat.maxHp += classLevelDataTable[level][JsonProperty::LevelTable::MaxHp];
+        finalStat.maxHp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxHp]);
     if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxMp))
-        finalStat.maxMp += classLevelDataTable[level][JsonProperty::LevelTable::MaxMp];
+        finalStat.maxMp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxMp]);
     if (classLevelDataTable[level].contains(JsonProperty::LevelTable::PhysicalAttack))
-        finalStat.physical_attack += classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack];
+        finalStat.physical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack]);
     if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MagicalAttack))
-        finalStat.magical_attack += classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack];
+        finalStat.magical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack]);
 
     // 2. 장착 중이 장비 스텟 추가
     for (const auto& pair : playerInfo->equipped_gear())
@@ -64,13 +78,13 @@ bool Player::CalculateFinalStat()
             continue;
 
         if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
-            finalStat.maxHp += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Hp];
+            finalStat.maxHp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Hp]);
         if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
-            finalStat.maxMp += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Mp];
+            finalStat.maxMp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Mp]);
         if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
-            finalStat.physical_attack += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack];
+            finalStat.physical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack]);
         if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
-            finalStat.magical_attack += Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack];
+            finalStat.magical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
     }
 
     // validate
@@ -103,7 +117,7 @@ bool Player::CalculateFinalStat()
 bool Player::HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = playerInfo->gold();
-    int64 buyPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice] * count;
+    int64 buyPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
 
     if (gold < buyPrice)
         return false;
@@ -121,7 +135,7 @@ bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* tar
 {
     int64 gold = playerInfo->gold();
     int32 templateId = targetSlot->item().template_id();
-    int64 sellPrice = Gamedata::ItemDataTable[templateId][JsonProperty::Item::Sellable] * count;
+    int64 sellPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::SellPrice]) * count;
 
     if (inventory->removeItem(OUT updatedSlot, targetSlot, count) == false)
         return false;

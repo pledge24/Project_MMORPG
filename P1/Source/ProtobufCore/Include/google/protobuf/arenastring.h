@@ -74,7 +74,7 @@ class PROTOBUF_EXPORT LazyString {
     size_t size;
   };
   // We keep a union of the initialization value and the std::string to save on
-  // space. We don't need the string array after Init() is done.
+  // space. We don't need the string array after InitializeManager() is done.
   union {
     mutable InitValue init_value_;
     alignas(std::string) mutable char string_buf_[sizeof(std::string)];

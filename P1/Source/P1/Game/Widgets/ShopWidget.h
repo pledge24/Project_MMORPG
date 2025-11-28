@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "ShopWidget.generated.h"
 
+class AP1MyPlayer;
 class USlotWidget;
 
 /**
@@ -19,9 +20,12 @@ class P1_API UShopWidget : public UUserWidget
 public:
     virtual void NativeConstruct() override;
 
+public:
+    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
+
 protected:
     UFUNCTION(BlueprintCallable, Category="Network")
-    void SendBuyItemPacket(USlotWidget* _Slot);
+    void SendBuyItemPacket(USlotWidget* Slot_);
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
     bool PendingPacket = false;

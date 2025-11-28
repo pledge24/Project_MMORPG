@@ -17,21 +17,20 @@ RoomManager::~RoomManager()
 
 RoomRef RoomManager::CreateRoom(int32 templateId)
 {
-    RoomRef room = nullptr;
-    try
+    if (Gamedata::MapDataTable.find(templateId) == Gamedata::MapDataTable.end())
     {
-        if (Gamedata::MapDataTable.find(templateId) == Gamedata::MapDataTable.end())
-            throw wstring(L"Gamedata에 해당 room에 대한 정보가 없음");
-
-        const Json& roomData = Gamedata::MapDataTable[templateId];
-        room = make_shared<Room>();
-        room->Init(roomData);
-    }
-    catch (const wstring cause)
-    {
-        wcout << L"CreateRoom 중 문제 발생: " << cause << endl;
+        wcout << L"Gamedata에 해당 room에 대한 정보 누락" << '\n';
         return nullptr;
     }
+
+    const Json& roomData = Gamedata::MapDataTable[templateId];
+    RoomRef room = Room::Create(roomData);
+    
+    if (room == nullptr)
+        return nullptr;
+
+    if (room->Start() == false)
+        return nullptr;
 
     return room;
 }
@@ -41,7 +40,7 @@ void RoomManager::AddRoom(int32 templateId, RoomRef room)
     if (_rooms.find(templateId) != _rooms.end())
         return;
 
-    room->isValid = true;
+    room->SetValid(true);
     _rooms.insert(make_pair(templateId, room));
 }
 
@@ -51,7 +50,7 @@ void RoomManager::RemoveRoom(int32 templateId)
         return;
 
     RoomRef room = _rooms[templateId];
-    room->isValid = false;
+    room->SetValid(false);
 
     _rooms.erase(templateId);
 }
@@ -61,7 +60,7 @@ void RoomManager::Clear()
     for (auto pair : _rooms)
     {
         RoomRef room = pair.second;
-        room->isValid = false;
+        room->SetValid(false);
     }
 
     _rooms.clear();
@@ -69,7 +68,7 @@ void RoomManager::Clear()
 
 RoomRef RoomManager::GetRoomRefFromRoomId(int32 templateId)
 {
-    if (_rooms.find(templateId) == _rooms.end())
+    if (_rooms.contains(templateId) == false)
         return nullptr;
 
     return _rooms[templateId];

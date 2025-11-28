@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "BP_Structs.h"
+#include "EObject.h"
 
 #define USING_SHARED_PTR(name)	using name##Ref = TSharedPtr<class name>;
 
@@ -10,6 +11,3 @@ USING_SHARED_PTR(PacketSession);
 USING_SHARED_PTR(SendBuffer);
 USING_SHARED_PTR(RecvWorker);
 USING_SHARED_PTR(SendWorker);
-
-
-

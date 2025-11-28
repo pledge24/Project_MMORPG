@@ -9,20 +9,23 @@
 #include "Inventory.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class P1_API UInventory : public UObject
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
     UInventory();
-    ~UInventory();
 
     void Init(Protocol::Inventory* Inventory_);
 
-    void SetSlot(const Protocol::Slot& Slot_);
+    void Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse = false);
+
+private:
+    // DEBUG
+    void PrintInventoryData();
 
 private:
     /** 카테고리별 인벤토리 Lookup 매핑 정보*/

@@ -8,6 +8,8 @@
 #include "P1.h"
 #include "P1GameInstance.h"
 #include "Log/LogCategory.h"
+#include "P1MyPlayer.h"
+#include "MyPlayerData.h"
 
 void UInventoryWidget::NativeConstruct()
 {
@@ -15,34 +17,33 @@ void UInventoryWidget::NativeConstruct()
 
     if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
     {
-        // Init
-        const Protocol::PlayerInfo& PlayerInfo_ = GameInstance->GetPlayerInfo();
-        const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
-
-        UpdateGold(PlayerInfo_.gold());
-
-        for (const Protocol::Slot& Slot_ : Inven_.gear())
+        // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
+        if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
         {
-            UpdateSlotWidget(Slot_);
-        }
+            const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
+            const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
 
-        for (const Protocol::Slot& Slot_ : Inven_.consumables())
-        {
-            UpdateSlotWidget(Slot_);
-        }
+            UpdateGold(PlayerInfo_.gold());
 
-        for (const Protocol::Slot& Slot_ : Inven_.miscellaneous())
-        {
-            UpdateSlotWidget(Slot_);
+            for (const Protocol::Slot& Slot_ : Inven_.gear())
+            {
+                UpdateSlotWidget(Slot_);
+            }
+
+            for (const Protocol::Slot& Slot_ : Inven_.consumables())
+            {
+                UpdateSlotWidget(Slot_);
+            }
+
+            for (const Protocol::Slot& Slot_ : Inven_.miscellaneous())
+            {
+                UpdateSlotWidget(Slot_);
+            }
+
+            // MyPlayer 스폰 이벤트에 함수 등록
+            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UInventoryWidget::BindMyPlayerSpawned);
         }
         
-        // 바인딩 셋업
-        GameInstance->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
-        GameInstance->OnInventorySlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
-
-        GameInstance->OnRep_SellItem.AddLambda([this]() { if(IsValid(this)) PendingPacket = false; });
-        GameInstance->OnRep_UseItem.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
-        GameInstance->OnRep_EquipGear.AddLambda([this]() { if (IsValid(this)) PendingPacket = false; });
     }
 }
 
@@ -70,29 +71,40 @@ void UInventoryWidget::Clear()
     }
 }
 
-void UInventoryWidget::UpdateSlotWidget(const Protocol::Slot& _Slot, bool OnUse)
+void UInventoryWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 {
-    USlotWidget* SlotWidget = GetSlotWidgetFromSlot(_Slot);
+    // 바인딩 셋업
+    MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
+    MyPlayer->OnInvenSlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
+
+    MyPlayer->OnRecvSellItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+    MyPlayer->OnRecvUseItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+    MyPlayer->OnRecvEquipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+}
+
+void UInventoryWidget::UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse)
+{
+    USlotWidget* SlotWidget = GetSlotWidgetFromSlot(InSlot);
 
     if (SlotWidget)
     {
-        SlotWidget->SetSlot(_Slot);
+        SlotWidget->SetSlot(InSlot);
         if (OnUse)
             SlotWidget->OnUse();
     }
 }
 
-void UInventoryWidget::UpdateGold(int32 Gold)
+void UInventoryWidget::UpdateGold(const int64 Gold)
 {
     Gold_txt->SetText(FText::AsNumber(Gold));
 }
 
-USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot)
+USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& InSlot)
 {
     UUniformGridPanel* Inven = nullptr;
-    int32 SlotId = _Slot.slot_id();
+    int32 SlotId = InSlot.slot_id();
 
-    switch (_Slot.type())
+    switch (InSlot.type())
     {
     case Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR:
         Inven = Gear_Inven;
@@ -120,20 +132,20 @@ USlotWidget* UInventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& _Slot
     return nullptr;
 }
 
-void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
+void UInventoryWidget::SendSellItemPacket(USlotWidget* SlotWidget)
 {
     if (PendingPacket)
         return;
     else
         PendingPacket = true;
 
-    if (_Slot == nullptr)
+    if (SlotWidget == nullptr)
     {
         PendingPacket = false;
         return;
     }
 
-    const Protocol::Slot& SlotData = _Slot->SlotData;
+    const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
     Protocol::C_SELL_ITEM pkt;
     pkt.mutable_slot()->CopyFrom(SlotData);
@@ -142,24 +154,25 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* _Slot)
     
 }
 
-void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
+void UInventoryWidget::SendUseItemPacket(USlotWidget* SlotWidget)
 {
     if (PendingPacket)
         return;
     else
         PendingPacket = true;
 
-    if (_Slot)
+    if (SlotWidget)
     {
-        const Protocol::Slot& SlotData = _Slot->SlotData;
+        const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
         auto* PC = UGameplayStatics::GetPlayerController(this, 0);
         auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
         if (GameInstance == nullptr)
             return;
 
-        int32 Level = GameInstance->GetLevel();
-        if (Level < _Slot->ItemData.LevelRequirement)
+        UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>();
+        int32 Level = MyPlayerData->GetPlayerLevel();
+        if (Level < SlotWidget->ItemData.LevelRequirement)
         {
             GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
             PendingPacket = false;
@@ -179,24 +192,25 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* _Slot)
     }
 }
 
-void UInventoryWidget::SendEquipItemPacket(USlotWidget* _Slot)
+void UInventoryWidget::SendEquipItemPacket(USlotWidget* SlotWidget)
 {
     if (PendingPacket)
         return;
     else
         PendingPacket = true;
 
-    if (_Slot)
+    if (SlotWidget)
     {
-        const Protocol::Slot& SlotData = _Slot->SlotData;
+        const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
         auto* PC = UGameplayStatics::GetPlayerController(this, 0);
         auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
         if (GameInstance == nullptr)
             return;
 
-        int32 Level = GameInstance->GetLevel();
-        if (Level < _Slot->ItemData.LevelRequirement)
+        UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>();
+        int32 Level = MyPlayerData->GetPlayerLevel();
+        if (Level < SlotWidget->ItemData.LevelRequirement)
         {
             PendingPacket = false;
             return;

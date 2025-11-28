@@ -13,21 +13,21 @@ enum
 };
 
 /**
- * 
+ *
  */
 UCLASS()
 class P1_API UEquippedGear : public UObject
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
     UEquippedGear() = default;
 
     void Init(Protocol::PlayerInfo* PlayerInfo_);
 
-    void SetSlot(const Protocol::Slot& Slot_);
+    void Rep_SlotChanged(const Protocol::Slot& Slot_);
 
 private:
     /** 장착 아이템 LookUp */
-    google::protobuf::Map<int32, Protocol::Slot>* EquippedGearLookup;
+    google::protobuf::Map<int32, Protocol::Slot> EquippedGearLookup;
 };

@@ -74,7 +74,7 @@
     },
     {
         "templateId": 20,
-        "mapName": "초급 사냥터(Lv1~Lv10)",
+        "mapName": "초급 사냥터",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
         "centerPos": {
@@ -110,12 +110,12 @@
             5001,
             5002
         ],
-        "maxMonsterCount": 20,
+        "maxMonsterCount": 10,
         "monsterRespawnTime": 10
     },
     {
         "templateId": 30,
-        "mapName": "중급 사냥터(Lv11~Lv30)",
+        "mapName": "중급 사냥터",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
         "centerPos": {
@@ -151,12 +151,12 @@
             5004,
             5005
         ],
-        "maxMonsterCount": 20,
+        "maxMonsterCount": 10,
         "monsterRespawnTime": 10
     },
     {
         "templateId": 40,
-        "mapName": "고급 사냥터(Lv31~Lv50)",
+        "mapName": "고급 사냥터",
         "mapType": "hunting field",
         "haveSpawnPoint": false,
         "centerPos": {
@@ -192,7 +192,7 @@
             5007,
             5008
         ],
-        "maxMonsterCount": 20,
+        "maxMonsterCount": 10,
         "monsterRespawnTime": 10
     }
 ]

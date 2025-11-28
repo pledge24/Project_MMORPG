@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Game/Inventory.h"
-#include "P1MyPlayer.h"
 #include "P1.h"
 
 UInventory::UInventory()
@@ -12,10 +11,6 @@ UInventory::UInventory()
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, TArray<Protocol::Slot*>()},
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, TArray<Protocol::Slot*>()}
     };
-}
-
-UInventory::~UInventory()
-{
 }
 
 void UInventory::Init(Protocol::Inventory* Inventory_)
@@ -39,7 +34,7 @@ void UInventory::Init(Protocol::Inventory* Inventory_)
         ConsumablesLookup.SetNum(size);
         for (int32 i = 0; i < size; ++i)
         {
-            Protocol::Slot* Slot_ = Inventory_->mutable_gear(i);
+            Protocol::Slot* Slot_ = Inventory_->mutable_consumables(i);
             ConsumablesLookup[Slot_->slot_id()] = Slot_;
         }
     }
@@ -58,11 +53,22 @@ void UInventory::Init(Protocol::Inventory* Inventory_)
 
 }
 
-void UInventory::SetSlot(const Protocol::Slot& Slot_)
-{  
+void UInventory::Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse)
+{
     if (InventoryLookupMappings.Contains(Slot_.type()))
     {
         TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
         InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
+    }
+}
+
+void UInventory::PrintInventoryData()
+{
+    TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
+
+    for (auto Gear : GearLookup)
+    {
+        FString GearStr = UTF8_TO_TCHAR(Gear->DebugString().c_str());
+        UE_LOG(LogTemp, Log, TEXT("%s"), *GearStr);
     }
 }

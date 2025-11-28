@@ -202,7 +202,7 @@ class FlatAllocator;
 
 class PROTOBUF_EXPORT LazyDescriptor {
  public:
-  // Init function to be called at init time of a descriptor containing
+  // InitializeManager function to be called at init time of a descriptor containing
   // a LazyDescriptor.
   void Init() {
     descriptor_ = nullptr;

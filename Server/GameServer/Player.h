@@ -12,6 +12,11 @@ public:
 	Player();
 	virtual ~Player();
 
+protected:
+    virtual void PostConstructionSetup() override;
+    virtual void Tick(float deltaTime) override;
+
+public:
     void Init();
     bool PostInit();
     bool CalculateFinalStat();
@@ -26,7 +31,7 @@ public:
     bool HandleEquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSlot);
     bool HandleUnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targetSlot);
 
-
+public:
 	weak_ptr<GameSession> session;
 
     Protocol::PlayerInfo* playerInfo;   // 플레이어의 모든 정보가 여기에 저장됨.

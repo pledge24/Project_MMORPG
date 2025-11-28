@@ -49,9 +49,10 @@ namespace Protocol {
 
 enum ObjectType : int {
   OBJECT_TYPE_NONE = 0,
-  OBJECT_TYPE_CREATURE = 1,
-  OBJECT_TYPE_PROJECTILE = 2,
-  OBJECT_TYPE_ENV = 3,
+  OBJECT_TYPE_PLAYER = 1,
+  OBJECT_TYPE_MONSTER = 2,
+  OBJECT_TYPE_PROJECTILE = 3,
+  OBJECT_TYPE_ENV = 4,
   ObjectType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   ObjectType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };

@@ -17,9 +17,15 @@ public class P1 : ModuleRules
             "P1/",
             "P1/Network/",
             "P1/Game/",
+            "P1/Game/Objects",
+            "P1/Game/Props",
             "P1/Game/Structs",
             "P1/Game/Widgets",
+            "P1/Game/Components",
+            "P1/Game/Subsystem",
+            "P1/Game/Enums",
             "P1/Log",
+            "P1/Login",
         });
 
         // Uncomment if you are using Slate UI
