@@ -28,6 +28,8 @@ public:
     void PostInit();
     void PrintMonsterAllData() const;
 
+    virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+
 protected:
     void CacheMonsterData();
 
@@ -48,13 +50,19 @@ protected:
     void LookAt(const vector2D& targetPos);
     void StartMovingTo(const vector2D& dest, float minApproachDistance = 0.f);
     void StopMoving(string context = "", bool shouldBeIdle = false);
+    void Attack();  // normal attack
 
     bool CanMove();
     bool AlreadyArrive();
     bool HaveDestination() { return _moveDest.has_value(); }
 
+    /** 이벤트 */
+    void OnHitCheck();
+
     /** Getter-Setter 함수 */
     const vector2D& GetDestination() { return _moveDest.value(); }
+    uint64 GetExpReward();
+    uint64 GetGoldReward();
 
     void SetDestination(const vector2D& destPos, float minApproachDistance = 0.f);
     void SetMoveDirection(const vector2D& moveVec);
@@ -91,6 +99,7 @@ private:
     float detectionRange;                       // 타겟 감지 범위
     float chasingMaxRange;                      // 추적 범위
     float monsterSpeed;                         // 몬스터 이동 속도
+    bool isTargeting;
 
     weak_ptr<Object> _target;
     optional<vector2D> _moveDest;

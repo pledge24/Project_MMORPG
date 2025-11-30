@@ -40,11 +40,14 @@ namespace JsonProperty
         constexpr std::string_view MinExp = "minExp";
         constexpr std::string_view MaxExp = "maxExp";
         constexpr std::string_view GoldReward = "goldReward";
+        constexpr std::string_view MinGold = "minGold";
+        constexpr std::string_view MaxGold = "maxGold";
         constexpr std::string_view AttackInterval = "attackInterval";
         constexpr std::string_view TryAttackRange = "tryAttackRange";
         constexpr std::string_view DetectionRange = "detectionRange";
         constexpr std::string_view ChasingMaxRange = "chasingMaxRange";
         constexpr std::string_view MonsterSpeed = "monsterSpeed";
+        constexpr std::string_view IsTargeting = "isTargeting";
     }
 
     namespace LevelTable
@@ -55,6 +58,13 @@ namespace JsonProperty
         constexpr std::string_view PhysicalAttack = "physicalAttack";
         constexpr std::string_view MagicalAttack = "magicalAttack";
         constexpr std::string_view ExpRequirement = "expRequirement";
+
+        // 증가량
+        constexpr std::string_view MaxHp_Increment = "maxHpIncrement";
+        constexpr std::string_view MaxMp_Increment = "maxMpIncrement";
+        constexpr std::string_view PA_Increment = "paIncrement";
+        constexpr std::string_view MA_Increment = "maIncrement";
+
     }
 
     namespace Map

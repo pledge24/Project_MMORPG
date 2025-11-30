@@ -44,6 +44,8 @@ enum : uint16
 	PKT_S_UNEQUIP_GEAR = 1029,
 	PKT_C_USE_ITEM = 1030,
 	PKT_S_USE_ITEM = 1031,
+	PKT_S_DIE = 1032,
+	PKT_S_MONSTER_KILL_RESULT = 1033,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -66,6 +68,8 @@ bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt);
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt);
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt);
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt);
+bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt);
+bool Handle_S_MONSTER_KILL_RESULT(PacketSessionRef& session, Protocol::S_MONSTER_KILL_RESULT& pkt);
 
 class ClientPacketHandler
 {
@@ -93,6 +97,8 @@ public:
 		GPacketHandler[PKT_S_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_EQUIP_GEAR>(Handle_S_EQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_S_UNEQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_UNEQUIP_GEAR>(Handle_S_UNEQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_S_USE_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_USE_ITEM>(Handle_S_USE_ITEM, session, buffer, len); };
+		GPacketHandler[PKT_S_DIE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DIE>(Handle_S_DIE, session, buffer, len); };
+		GPacketHandler[PKT_S_MONSTER_KILL_RESULT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_MONSTER_KILL_RESULT>(Handle_S_MONSTER_KILL_RESULT, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)

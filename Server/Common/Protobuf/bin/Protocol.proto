@@ -120,16 +120,13 @@ message S_NORMAL_ATTACK
 
 message S_HIT
 {
-    uint64 attacker_id = 1;         // object_id
-    uint64 target_id = 2;           // object_id
+    HitData hit_data = 1;
 
-    DamageType damage_type = 3;     // 물리 피해? 마법 피해?
-
-    // 맞아서 바뀐 스텟들
+    // 피격 결과
     oneof hit_result
     {
-        uint32 hp = 4;
-        repeated Stat updated_stat = 5;
+        uint32 hp = 2;
+        // repeated Stat updated_stat = 3; <- repeated는 oneof의 필드가 될 수 없음
     }
 }
 
@@ -201,4 +198,22 @@ message S_USE_ITEM
 
     optional Slot updated_inventory_slot = 3;
     optional StatInfo updated_stat_info = 4; // 바뀐 스탯
+}
+
+message S_DIE
+{
+    uint64 object_id = 1;
+}
+
+message S_MONSTER_KILL_RESULT
+{
+    uint64 object_id = 1;
+    uint64 monster_object_id = 2;
+
+    // 보상 획득에 의한 갱신 데이터
+    uint64 current_exp = 3;
+    uint64 current_gold = 4;
+
+    bool is_level_up = 5;
+    LevelUpInfo level_up_details = 6;
 }

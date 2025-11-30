@@ -68,8 +68,6 @@ void Room::UpdateTick()
     float deltaTime = static_cast<float>(curTickTime - prevTickTime) / 1000.f;
     prevTickTime = curTickTime;
 
-    //cout << "Update Room. DeltaTime: " << deltaTime << '\n';
-
     // Tick All Objects In Room.
     ProcessTickGroupFunc(ETickGroup::TG_PreObjectTick, deltaTime);
     ProcessTickGroupFunc(ETickGroup::TG_PrePhysics, deltaTime);

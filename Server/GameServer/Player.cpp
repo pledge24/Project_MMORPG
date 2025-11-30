@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Monster.h"
 
 Player::Player()
 {
@@ -39,6 +40,8 @@ bool Player::PostInit()
 {
     if (CalculateFinalStat() == false)
         return false;
+
+    CacheNextLevelUpData();
 
     return true;
 }
@@ -216,4 +219,97 @@ bool Player::HandleUnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot
         return false;
 
     return true;
+}
+
+void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
+{
+
+}
+
+void Player::OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward)
+{
+    bool levelUp = false;
+
+    // Get Reward
+    {
+        playerInfo->set_cur_exp(playerInfo->cur_exp() + expReward);
+        playerInfo->set_gold(playerInfo->gold() + goldReward);
+
+        // Check Level Up
+        if (playerInfo->cur_exp() >= playerInfo->max_exp())
+        {
+            playerInfo->set_cur_exp(playerInfo->cur_exp() - playerInfo->max_exp());
+            OnLevelUp();
+            levelUp = true;
+        }
+    }
+
+    // Send S_MONSTER_KILL_RESULT Packet
+    Protocol::S_MONSTER_KILL_RESULT monsterKillResultPkt;
+    {
+        monsterKillResultPkt.set_object_id(objectInfo->object_id());
+        monsterKillResultPkt.set_monster_object_id(killedMonster->objectInfo->object_id());
+
+        monsterKillResultPkt.set_current_exp(playerInfo->cur_exp());
+        monsterKillResultPkt.set_current_gold(playerInfo->gold());
+
+        if (levelUp)
+        {
+            monsterKillResultPkt.set_is_level_up(true);
+            Protocol::LevelUpInfo info;
+            info.set_new_level(playerInfo->level() - 1);
+            info.set_new_level(playerInfo->level());
+
+            info.set_new_max_hp(statInfo->max_hp());
+            info.set_new_max_mp(statInfo->max_hp());
+            info.set_new_physical_attack(statInfo->physical_attack());
+            info.set_new_magical_attack(statInfo->magical_attack());
+        }
+    }
+
+    auto ownerSession = session.lock();
+    if (ownerSession == nullptr)
+        return;
+
+    SEND_PACKET_USING_THIS_SESSION(ownerSession, monsterKillResultPkt);
+}
+
+void Player::OnLevelUp()
+{
+    // Set PlayerInfo
+    playerInfo->set_level(playerInfo->level() + 1);
+    playerInfo->set_max_exp(_nextLevelUpData.expRequirement);
+
+    // Set StatInfo
+    statInfo->set_max_hp(statInfo->max_hp() + (int32)_nextLevelUpData.maxHpIncrement);
+    statInfo->set_max_mp(statInfo->max_mp() + (int32)_nextLevelUpData.maxMpIncrement);
+    statInfo->set_physical_attack(statInfo->physical_attack() + (int32)_nextLevelUpData.paIncrement);
+    statInfo->set_magical_attack(statInfo->magical_attack() + (int32)_nextLevelUpData.maIncrement);
+
+    CacheNextLevelUpData();
+}
+
+void Player::CacheNextLevelUpData()
+{
+    int32 nextLevel = playerInfo->level() + 1;
+    if (nextLevel > (int32)MAX_LEVEL)
+    {
+        cout << "Current Level is Max! Can't Cache Level Up Data" << '\n';
+        return;
+    }
+
+    DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
+    const Json& nextLevelData = classLevelDataTable[nextLevel];
+
+    // Cache
+    {
+        using namespace JsonProperty::LevelTable;
+
+        _nextLevelUpData.level = nextLevelData[Level].is_null() ? 0 : static_cast<uint32>(nextLevelData[Level]);
+        _nextLevelUpData.maxHpIncrement = nextLevelData[MaxHp_Increment].is_null() ? 0 : static_cast<uint64>(nextLevelData[MaxHp_Increment]);
+        _nextLevelUpData.maxMpIncrement = nextLevelData[MaxMp_Increment].is_null() ? 0 : static_cast<uint64>(nextLevelData[MaxMp_Increment]);
+        _nextLevelUpData.paIncrement = nextLevelData[PA_Increment].is_null() ? 0 : static_cast<uint64>(nextLevelData[PA_Increment]);
+        _nextLevelUpData.maIncrement = nextLevelData[MA_Increment].is_null() ? 0 : static_cast<uint64>(nextLevelData[MA_Increment]);
+        _nextLevelUpData.expRequirement = nextLevelData[ExpRequirement].is_null() ? 0 : static_cast<uint64>(nextLevelData[ExpRequirement]);
+    }
 }

@@ -7,6 +7,8 @@ public:
 	Creature();
 	virtual ~Creature();
 
+    virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+
 protected:
     virtual void PostConstructionSetup() override;
     virtual void Tick(float deltaTime) override;

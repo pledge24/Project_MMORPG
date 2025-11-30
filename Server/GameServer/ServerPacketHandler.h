@@ -44,6 +44,8 @@ enum : uint16
 	PKT_S_UNEQUIP_GEAR = 1029,
 	PKT_C_USE_ITEM = 1030,
 	PKT_S_USE_ITEM = 1031,
+	PKT_S_DIE = 1032,
+	PKT_S_MONSTER_KILL_RESULT = 1033,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -115,6 +117,8 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_EQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_EQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_UNEQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_UNEQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_USE_ITEM); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_MONSTER_KILL_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_MONSTER_KILL_RESULT); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

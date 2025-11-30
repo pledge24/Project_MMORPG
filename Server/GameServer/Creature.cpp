@@ -10,6 +10,11 @@ Creature::~Creature()
 
 }
 
+void Creature::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
+{
+
+}
+
 void Creature::PostConstructionSetup()
 {
     Object::PostConstructionSetup();

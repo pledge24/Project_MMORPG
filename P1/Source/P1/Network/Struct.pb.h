@@ -58,12 +58,18 @@ extern EffectDefaultTypeInternal _Effect_default_instance_;
 class GearInfo;
 struct GearInfoDefaultTypeInternal;
 extern GearInfoDefaultTypeInternal _GearInfo_default_instance_;
+class HitData;
+struct HitDataDefaultTypeInternal;
+extern HitDataDefaultTypeInternal _HitData_default_instance_;
 class Inventory;
 struct InventoryDefaultTypeInternal;
 extern InventoryDefaultTypeInternal _Inventory_default_instance_;
 class Item;
 struct ItemDefaultTypeInternal;
 extern ItemDefaultTypeInternal _Item_default_instance_;
+class LevelUpInfo;
+struct LevelUpInfoDefaultTypeInternal;
+extern LevelUpInfoDefaultTypeInternal _LevelUpInfo_default_instance_;
 class MonsterInfo;
 struct MonsterInfoDefaultTypeInternal;
 extern MonsterInfoDefaultTypeInternal _MonsterInfo_default_instance_;
@@ -99,8 +105,10 @@ PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::CharacterOverview* Arena::CreateMaybeMessage<::Protocol::CharacterOverview>(Arena*);
 template<> ::Protocol::Effect* Arena::CreateMaybeMessage<::Protocol::Effect>(Arena*);
 template<> ::Protocol::GearInfo* Arena::CreateMaybeMessage<::Protocol::GearInfo>(Arena*);
+template<> ::Protocol::HitData* Arena::CreateMaybeMessage<::Protocol::HitData>(Arena*);
 template<> ::Protocol::Inventory* Arena::CreateMaybeMessage<::Protocol::Inventory>(Arena*);
 template<> ::Protocol::Item* Arena::CreateMaybeMessage<::Protocol::Item>(Arena*);
+template<> ::Protocol::LevelUpInfo* Arena::CreateMaybeMessage<::Protocol::LevelUpInfo>(Arena*);
 template<> ::Protocol::MonsterInfo* Arena::CreateMaybeMessage<::Protocol::MonsterInfo>(Arena*);
 template<> ::Protocol::ObjectInfo* Arena::CreateMaybeMessage<::Protocol::ObjectInfo>(Arena*);
 template<> ::Protocol::ObjectInfo_AppearanceEntry_DoNotUse* Arena::CreateMaybeMessage<::Protocol::ObjectInfo_AppearanceEntry_DoNotUse>(Arena*);
@@ -1462,6 +1470,187 @@ class PosInfo final :
 };
 // -------------------------------------------------------------------
 
+class HitData final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.HitData) */ {
+ public:
+  inline HitData() : HitData(nullptr) {}
+  ~HitData() override;
+  explicit PROTOBUF_CONSTEXPR HitData(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  HitData(const HitData& from);
+  HitData(HitData&& from) noexcept
+    : HitData() {
+    *this = ::std::move(from);
+  }
+
+  inline HitData& operator=(const HitData& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline HitData& operator=(HitData&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const HitData& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const HitData* internal_default_instance() {
+    return reinterpret_cast<const HitData*>(
+               &_HitData_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  friend void swap(HitData& a, HitData& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(HitData* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(HitData* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  HitData* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<HitData>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const HitData& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const HitData& from) {
+    HitData::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(HitData* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.HitData";
+  }
+  protected:
+  explicit HitData(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kAttackerIdFieldNumber = 1,
+    kTargetIdFieldNumber = 2,
+    kDamageFieldNumber = 4,
+    kDamageTypeFieldNumber = 3,
+  };
+  // uint64 attacker_id = 1;
+  void clear_attacker_id();
+  uint64_t attacker_id() const;
+  void set_attacker_id(uint64_t value);
+  private:
+  uint64_t _internal_attacker_id() const;
+  void _internal_set_attacker_id(uint64_t value);
+  public:
+
+  // uint64 target_id = 2;
+  void clear_target_id();
+  uint64_t target_id() const;
+  void set_target_id(uint64_t value);
+  private:
+  uint64_t _internal_target_id() const;
+  void _internal_set_target_id(uint64_t value);
+  public:
+
+  // uint64 damage = 4;
+  void clear_damage();
+  uint64_t damage() const;
+  void set_damage(uint64_t value);
+  private:
+  uint64_t _internal_damage() const;
+  void _internal_set_damage(uint64_t value);
+  public:
+
+  // .Protocol.DamageType damage_type = 3;
+  void clear_damage_type();
+  ::Protocol::DamageType damage_type() const;
+  void set_damage_type(::Protocol::DamageType value);
+  private:
+  ::Protocol::DamageType _internal_damage_type() const;
+  void _internal_set_damage_type(::Protocol::DamageType value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.HitData)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    uint64_t attacker_id_;
+    uint64_t target_id_;
+    uint64_t damage_;
+    int damage_type_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Struct_2eproto;
+};
+// -------------------------------------------------------------------
+
 class StatInfo final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.StatInfo) */ {
  public:
@@ -1510,7 +1699,7 @@ class StatInfo final :
                &_StatInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(StatInfo& a, StatInfo& b) {
     a.Swap(&b);
@@ -1738,7 +1927,7 @@ class Stat final :
                &_Stat_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(Stat& a, Stat& b) {
     a.Swap(&b);
@@ -1908,7 +2097,7 @@ class Effect final :
                &_Effect_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(Effect& a, Effect& b) {
     a.Swap(&b);
@@ -2067,7 +2256,7 @@ class GearInfo final :
                &_GearInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(GearInfo& a, GearInfo& b) {
     a.Swap(&b);
@@ -2253,7 +2442,7 @@ class Item final :
                &_Item_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(Item& a, Item& b) {
     a.Swap(&b);
@@ -2464,7 +2653,7 @@ class Slot final :
                &_Slot_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(Slot& a, Slot& b) {
     a.Swap(&b);
@@ -2659,7 +2848,7 @@ class Inventory final :
                &_Inventory_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(Inventory& a, Inventory& b) {
     a.Swap(&b);
@@ -2801,6 +2990,209 @@ class Inventory final :
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > gear_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > consumables_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > miscellaneous_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Struct_2eproto;
+};
+// -------------------------------------------------------------------
+
+class LevelUpInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.LevelUpInfo) */ {
+ public:
+  inline LevelUpInfo() : LevelUpInfo(nullptr) {}
+  ~LevelUpInfo() override;
+  explicit PROTOBUF_CONSTEXPR LevelUpInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  LevelUpInfo(const LevelUpInfo& from);
+  LevelUpInfo(LevelUpInfo&& from) noexcept
+    : LevelUpInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline LevelUpInfo& operator=(const LevelUpInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline LevelUpInfo& operator=(LevelUpInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const LevelUpInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const LevelUpInfo* internal_default_instance() {
+    return reinterpret_cast<const LevelUpInfo*>(
+               &_LevelUpInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    16;
+
+  friend void swap(LevelUpInfo& a, LevelUpInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(LevelUpInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(LevelUpInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  LevelUpInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<LevelUpInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const LevelUpInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const LevelUpInfo& from) {
+    LevelUpInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(LevelUpInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.LevelUpInfo";
+  }
+  protected:
+  explicit LevelUpInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kOldLevelFieldNumber = 1,
+    kNewLevelFieldNumber = 2,
+    kNewMaxHpFieldNumber = 5,
+    kNewMaxMpFieldNumber = 6,
+    kNewPhysicalAttackFieldNumber = 7,
+    kNewMagicalAttackFieldNumber = 8,
+  };
+  // uint32 old_level = 1;
+  void clear_old_level();
+  uint32_t old_level() const;
+  void set_old_level(uint32_t value);
+  private:
+  uint32_t _internal_old_level() const;
+  void _internal_set_old_level(uint32_t value);
+  public:
+
+  // uint32 new_level = 2;
+  void clear_new_level();
+  uint32_t new_level() const;
+  void set_new_level(uint32_t value);
+  private:
+  uint32_t _internal_new_level() const;
+  void _internal_set_new_level(uint32_t value);
+  public:
+
+  // uint64 new_max_hp = 5;
+  void clear_new_max_hp();
+  uint64_t new_max_hp() const;
+  void set_new_max_hp(uint64_t value);
+  private:
+  uint64_t _internal_new_max_hp() const;
+  void _internal_set_new_max_hp(uint64_t value);
+  public:
+
+  // uint64 new_max_mp = 6;
+  void clear_new_max_mp();
+  uint64_t new_max_mp() const;
+  void set_new_max_mp(uint64_t value);
+  private:
+  uint64_t _internal_new_max_mp() const;
+  void _internal_set_new_max_mp(uint64_t value);
+  public:
+
+  // uint64 new_physical_attack = 7;
+  void clear_new_physical_attack();
+  uint64_t new_physical_attack() const;
+  void set_new_physical_attack(uint64_t value);
+  private:
+  uint64_t _internal_new_physical_attack() const;
+  void _internal_set_new_physical_attack(uint64_t value);
+  public:
+
+  // uint64 new_magical_attack = 8;
+  void clear_new_magical_attack();
+  uint64_t new_magical_attack() const;
+  void set_new_magical_attack(uint64_t value);
+  private:
+  uint64_t _internal_new_magical_attack() const;
+  void _internal_set_new_magical_attack(uint64_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.LevelUpInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    uint32_t old_level_;
+    uint32_t new_level_;
+    uint64_t new_max_hp_;
+    uint64_t new_max_mp_;
+    uint64_t new_physical_attack_;
+    uint64_t new_magical_attack_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -3978,6 +4370,90 @@ inline void PosInfo::set_state(::Protocol::MoveState value) {
 
 // -------------------------------------------------------------------
 
+// HitData
+
+// uint64 attacker_id = 1;
+inline void HitData::clear_attacker_id() {
+  _impl_.attacker_id_ = uint64_t{0u};
+}
+inline uint64_t HitData::_internal_attacker_id() const {
+  return _impl_.attacker_id_;
+}
+inline uint64_t HitData::attacker_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.HitData.attacker_id)
+  return _internal_attacker_id();
+}
+inline void HitData::_internal_set_attacker_id(uint64_t value) {
+  
+  _impl_.attacker_id_ = value;
+}
+inline void HitData::set_attacker_id(uint64_t value) {
+  _internal_set_attacker_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.HitData.attacker_id)
+}
+
+// uint64 target_id = 2;
+inline void HitData::clear_target_id() {
+  _impl_.target_id_ = uint64_t{0u};
+}
+inline uint64_t HitData::_internal_target_id() const {
+  return _impl_.target_id_;
+}
+inline uint64_t HitData::target_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.HitData.target_id)
+  return _internal_target_id();
+}
+inline void HitData::_internal_set_target_id(uint64_t value) {
+  
+  _impl_.target_id_ = value;
+}
+inline void HitData::set_target_id(uint64_t value) {
+  _internal_set_target_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.HitData.target_id)
+}
+
+// .Protocol.DamageType damage_type = 3;
+inline void HitData::clear_damage_type() {
+  _impl_.damage_type_ = 0;
+}
+inline ::Protocol::DamageType HitData::_internal_damage_type() const {
+  return static_cast< ::Protocol::DamageType >(_impl_.damage_type_);
+}
+inline ::Protocol::DamageType HitData::damage_type() const {
+  // @@protoc_insertion_point(field_get:Protocol.HitData.damage_type)
+  return _internal_damage_type();
+}
+inline void HitData::_internal_set_damage_type(::Protocol::DamageType value) {
+  
+  _impl_.damage_type_ = value;
+}
+inline void HitData::set_damage_type(::Protocol::DamageType value) {
+  _internal_set_damage_type(value);
+  // @@protoc_insertion_point(field_set:Protocol.HitData.damage_type)
+}
+
+// uint64 damage = 4;
+inline void HitData::clear_damage() {
+  _impl_.damage_ = uint64_t{0u};
+}
+inline uint64_t HitData::_internal_damage() const {
+  return _impl_.damage_;
+}
+inline uint64_t HitData::damage() const {
+  // @@protoc_insertion_point(field_get:Protocol.HitData.damage)
+  return _internal_damage();
+}
+inline void HitData::_internal_set_damage(uint64_t value) {
+  
+  _impl_.damage_ = value;
+}
+inline void HitData::set_damage(uint64_t value) {
+  _internal_set_damage(value);
+  // @@protoc_insertion_point(field_set:Protocol.HitData.damage)
+}
+
+// -------------------------------------------------------------------
+
 // StatInfo
 
 // optional int32 max_hp = 1;
@@ -4789,9 +5265,137 @@ Inventory::miscellaneous() const {
   return _impl_.miscellaneous_;
 }
 
+// -------------------------------------------------------------------
+
+// LevelUpInfo
+
+// uint32 old_level = 1;
+inline void LevelUpInfo::clear_old_level() {
+  _impl_.old_level_ = 0u;
+}
+inline uint32_t LevelUpInfo::_internal_old_level() const {
+  return _impl_.old_level_;
+}
+inline uint32_t LevelUpInfo::old_level() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpInfo.old_level)
+  return _internal_old_level();
+}
+inline void LevelUpInfo::_internal_set_old_level(uint32_t value) {
+  
+  _impl_.old_level_ = value;
+}
+inline void LevelUpInfo::set_old_level(uint32_t value) {
+  _internal_set_old_level(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.old_level)
+}
+
+// uint32 new_level = 2;
+inline void LevelUpInfo::clear_new_level() {
+  _impl_.new_level_ = 0u;
+}
+inline uint32_t LevelUpInfo::_internal_new_level() const {
+  return _impl_.new_level_;
+}
+inline uint32_t LevelUpInfo::new_level() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpInfo.new_level)
+  return _internal_new_level();
+}
+inline void LevelUpInfo::_internal_set_new_level(uint32_t value) {
+  
+  _impl_.new_level_ = value;
+}
+inline void LevelUpInfo::set_new_level(uint32_t value) {
+  _internal_set_new_level(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.new_level)
+}
+
+// uint64 new_max_hp = 5;
+inline void LevelUpInfo::clear_new_max_hp() {
+  _impl_.new_max_hp_ = uint64_t{0u};
+}
+inline uint64_t LevelUpInfo::_internal_new_max_hp() const {
+  return _impl_.new_max_hp_;
+}
+inline uint64_t LevelUpInfo::new_max_hp() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpInfo.new_max_hp)
+  return _internal_new_max_hp();
+}
+inline void LevelUpInfo::_internal_set_new_max_hp(uint64_t value) {
+  
+  _impl_.new_max_hp_ = value;
+}
+inline void LevelUpInfo::set_new_max_hp(uint64_t value) {
+  _internal_set_new_max_hp(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.new_max_hp)
+}
+
+// uint64 new_max_mp = 6;
+inline void LevelUpInfo::clear_new_max_mp() {
+  _impl_.new_max_mp_ = uint64_t{0u};
+}
+inline uint64_t LevelUpInfo::_internal_new_max_mp() const {
+  return _impl_.new_max_mp_;
+}
+inline uint64_t LevelUpInfo::new_max_mp() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpInfo.new_max_mp)
+  return _internal_new_max_mp();
+}
+inline void LevelUpInfo::_internal_set_new_max_mp(uint64_t value) {
+  
+  _impl_.new_max_mp_ = value;
+}
+inline void LevelUpInfo::set_new_max_mp(uint64_t value) {
+  _internal_set_new_max_mp(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.new_max_mp)
+}
+
+// uint64 new_physical_attack = 7;
+inline void LevelUpInfo::clear_new_physical_attack() {
+  _impl_.new_physical_attack_ = uint64_t{0u};
+}
+inline uint64_t LevelUpInfo::_internal_new_physical_attack() const {
+  return _impl_.new_physical_attack_;
+}
+inline uint64_t LevelUpInfo::new_physical_attack() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpInfo.new_physical_attack)
+  return _internal_new_physical_attack();
+}
+inline void LevelUpInfo::_internal_set_new_physical_attack(uint64_t value) {
+  
+  _impl_.new_physical_attack_ = value;
+}
+inline void LevelUpInfo::set_new_physical_attack(uint64_t value) {
+  _internal_set_new_physical_attack(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.new_physical_attack)
+}
+
+// uint64 new_magical_attack = 8;
+inline void LevelUpInfo::clear_new_magical_attack() {
+  _impl_.new_magical_attack_ = uint64_t{0u};
+}
+inline uint64_t LevelUpInfo::_internal_new_magical_attack() const {
+  return _impl_.new_magical_attack_;
+}
+inline uint64_t LevelUpInfo::new_magical_attack() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpInfo.new_magical_attack)
+  return _internal_new_magical_attack();
+}
+inline void LevelUpInfo::_internal_set_new_magical_attack(uint64_t value) {
+  
+  _impl_.new_magical_attack_ = value;
+}
+inline void LevelUpInfo::set_new_magical_attack(uint64_t value) {
+  _internal_set_new_magical_attack(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.new_magical_attack)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

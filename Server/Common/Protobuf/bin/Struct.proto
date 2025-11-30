@@ -73,6 +73,15 @@ message PosInfo
 	MoveState state = 7;
 }
 
+message HitData
+{
+    uint64 attacker_id = 1;         // object_id
+    uint64 target_id = 2;           // object_id
+
+    DamageType damage_type = 3;     // 물리 피해? 마법 피해?
+    uint64 damage = 4;
+}
+
 message StatInfo
 {
     // 캐릭터 스텟 정보 전체를 보낼때 사용
@@ -133,5 +142,17 @@ message Inventory
     repeated Slot miscellaneous = 3;
 }
 
+message LevelUpInfo
+{
+    uint32 old_level = 1;
+    uint32 new_level = 2;
 
+//    uint32 earned_skill_points = 3;
+//    uint32 earned_stat_points = 4;
+
+    uint64 new_max_hp = 5;
+    uint64 new_max_mp = 6;
+    uint64 new_physical_attack = 7;
+    uint64 new_magical_attack = 8;
+}
 

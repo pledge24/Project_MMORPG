@@ -97,6 +97,54 @@ void Monster::PrintMonsterAllData() const
     cout << "======Monster Data End ====" << '\n';
 }
 
+void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
+{
+    auto ownerRoom = room.load().lock();
+    if (ownerRoom == nullptr)
+        return;
+
+    uint64 damage = hitData.damage();
+    int32 updated_hp = monsterInfo->hp() - damage;
+    if (updated_hp > 0)
+    {
+        monsterInfo->set_hp(updated_hp);
+
+        // Broadcast Hit Packet
+        {
+            Protocol::S_HIT hitPkt;
+
+            hitPkt.mutable_hit_data()->CopyFrom(hitData);
+            hitPkt.set_hp(updated_hp);
+
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
+            ownerRoom->Broadcast(sendBuffer);
+        }
+    }
+    else
+    {
+        uint64 objectId = objectInfo->object_id();
+        ownerRoom->UnRegisterObject(objectId);   // Room에서 이 오브젝트 삭제
+        
+        // Broadcast Die Packet
+        {
+            Protocol::S_DIE diePkt;
+            diePkt.set_object_id(objectId);
+
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(diePkt);
+            ownerRoom->Broadcast(sendBuffer);
+        }
+
+        // Trigger OnMonsterKill
+        if(PlayerRef player = dynamic_pointer_cast<Player>(attacker))
+        {
+            uint64 expReward = GetExpReward();
+            uint64 goldReward = GetGoldReward();
+
+            player->OnMonsterKill(static_pointer_cast<Monster>(shared_from_this()), expReward, goldReward);
+        }
+    }
+}
+
 void Monster::CacheMonsterData()
 {
     using namespace JsonProperty::Monster;
@@ -110,6 +158,7 @@ void Monster::CacheMonsterData()
     detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
     chasingMaxRange = _monsterData[ChasingMaxRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChasingMaxRange]);
     monsterSpeed = _monsterData[MonsterSpeed].is_null() ? 0.f : static_cast<float>(_monsterData[MonsterSpeed]);
+    isTargeting = _monsterData[IsTargeting].is_null() ? false : static_cast<bool>(_monsterData[IsTargeting]);
 }
 
 void Monster::UpdateState()
@@ -371,30 +420,12 @@ void Monster::ExecuteStateAttacking(float deltaTime)
     
     if (_timeSinceLastAttack >= attackInterval)
     {
-        if (bool outOfAttackRange = !MathUtil::InRange(posInfo, targetPos, tryAttackRange))
+        if (bool InAttackRange = MathUtil::InRange(posInfo, targetPos, tryAttackRange))
         {
-            return;
+            _timeSinceLastAttack = 0.f;
+            Attack();
         }
-
-        Protocol::S_NORMAL_ATTACK normalAttackPkt;
-        {
-            normalAttackPkt.set_object_id(objectInfo->object_id());
-            normalAttackPkt.set_combo(0);
-            normalAttackPkt.set_yaw(posInfo->yaw());
-        }
-
-        if (auto ownerRoom = room.load().lock())
-        {
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-            ownerRoom->Broadcast(sendBuffer);
-        }
-
-        _timeSinceLastAttack = 0.f;
-
-        // float dist = MathUtil::Distance(targetPos, posInfo);
-        // printf("Attack! MyPos(%.2f, %.2f) targetPos(%.2f, %.2f), CurYaw: %.2f, Distance: %.2f \n", posInfo->x(), posInfo->y(), targetPos->x(), targetPos->y(), posInfo->yaw(), dist);
     }
-
 
 }
 
@@ -494,6 +525,34 @@ void Monster::StopMoving(string context, bool shouldBeIdle)
     }
 }
 
+void Monster::Attack()
+{
+    Protocol::S_NORMAL_ATTACK normalAttackPkt;
+    {
+        normalAttackPkt.set_object_id(objectInfo->object_id());
+        normalAttackPkt.set_combo(0);
+        normalAttackPkt.set_yaw(posInfo->yaw());
+    }
+
+    if (auto ownerRoom = room.load().lock())
+    {
+        weak_ptr<Monster> weakSelf = static_pointer_cast<Monster>(shared_from_this());
+        ownerRoom->DoTimer(200, [weakSelf]()
+            {
+                if (auto self = weakSelf.lock())
+                {
+                    self->OnHitCheck();
+                }
+            } );
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
+        ownerRoom->Broadcast(sendBuffer);
+    }
+
+    // float dist = MathUtil::Distance(targetPos, posInfo);
+    // printf("Attack! MyPos(%.2f, %.2f) targetPos(%.2f, %.2f), CurYaw: %.2f, Distance: %.2f \n", posInfo->x(), posInfo->y(), targetPos->x(), targetPos->y(), posInfo->yaw(), dist);
+}
+
 bool Monster::CanMove()
 {
     bool hasLeftAttackDelay = _timeSinceLastAttack <= attackInterval;
@@ -534,6 +593,52 @@ void Monster::SetDestination(const vector2D& destPos, float minApproachDistance)
     {
         _moveDest = destPos;
     }
+}
+
+void Monster::OnHitCheck()
+{
+    if (isTargeting)
+    {
+        auto target = _target.lock();
+        if (target == nullptr)
+            return;
+
+        uint64 targetObjectId = target->objectInfo->object_id();
+
+        auto ownerRoom = room.load().lock();
+        if (ownerRoom == nullptr || ownerRoom->Contains(targetObjectId) == false)
+            return;
+
+        Protocol::HitData hitData; 
+        {
+            hitData.set_attacker_id(objectInfo->object_id());
+            hitData.set_target_id(targetObjectId);
+            hitData.set_damage_type(Protocol::DamageType::DAMAGE_TYPE_PHYSICAL);
+            hitData.set_damage(baseAttack);
+        }
+
+        target->OnHit(shared_from_this(), hitData);
+    }
+}
+
+uint64 Monster::GetExpReward()
+{
+    using namespace JsonProperty::Monster;
+
+    uint64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<uint64>(_monsterData[ExpReward][MinExp]);
+    uint64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<uint64>(_monsterData[ExpReward][MaxExp]);
+    
+    return Utils::GetRandom(minExp, maxExp);
+}
+
+uint64 Monster::GetGoldReward()
+{
+    using namespace JsonProperty::Monster;
+
+    uint64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<uint64>(_monsterData[GoldReward][MinGold]);
+    uint64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<uint64>(_monsterData[GoldReward][MaxGold]);
+
+    return Utils::GetRandom(minGold, maxGold);
 }
 
 void Monster::SetMoveDirection(const vector2D& moveVec)
