@@ -3,6 +3,7 @@
 #include "Inventory.h"
 #include "EquippedGear.h"
 #include "Monster.h"
+#include "Room.h"
 
 Player::Player()
 {
@@ -223,7 +224,35 @@ bool Player::HandleUnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot
 
 void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
 {
+    auto ownerRoom = room.load().lock();
+    if (ownerRoom == nullptr)
+        return;
 
+    uint64 damage = hitData.damage();
+    int32 updated_hp = statInfo->hp() - damage;
+    statInfo->set_hp(max(0, updated_hp));
+
+    if (updated_hp > 0)
+    {
+        // Send Hit Packet
+        {
+            Protocol::S_HIT hitPkt;
+
+            hitPkt.mutable_hit_data()->CopyFrom(hitData);
+            hitPkt.set_hp(updated_hp);
+
+            if (auto ownerSession = session.lock())
+            {
+                SEND_PACKET_USING_THIS_SESSION(ownerSession, hitPkt);
+            }
+
+        }
+    }
+    else
+    {
+        uint64 objectId = objectInfo->object_id();
+        ownerRoom->OnDie(objectId);   // Room에서 이 오브젝트 삭제
+    }
 }
 
 void Player::OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward)

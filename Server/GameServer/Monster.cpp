@@ -2,8 +2,8 @@
 #include "Monster.h"
 #include "Player.h"
 #include "Gamedata.h"
-#include "TickIntervalTimer.h"
 #include "Room.h"
+#include "TickIntervalTimer.h"
 
 Monster::Monster()
 {
@@ -105,10 +105,10 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
 
     uint64 damage = hitData.damage();
     int32 updated_hp = monsterInfo->hp() - damage;
+    monsterInfo->set_hp(max(0, updated_hp));
+
     if (updated_hp > 0)
     {
-        monsterInfo->set_hp(updated_hp);
-
         // Broadcast Hit Packet
         {
             Protocol::S_HIT hitPkt;
@@ -123,17 +123,8 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     else
     {
         uint64 objectId = objectInfo->object_id();
-        ownerRoom->UnRegisterObject(objectId);   // Room에서 이 오브젝트 삭제
+        ownerRoom->OnDie(objectId);   
         
-        // Broadcast Die Packet
-        {
-            Protocol::S_DIE diePkt;
-            diePkt.set_object_id(objectId);
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(diePkt);
-            ownerRoom->Broadcast(sendBuffer);
-        }
-
         // Trigger OnMonsterKill
         if(PlayerRef player = dynamic_pointer_cast<Player>(attacker))
         {

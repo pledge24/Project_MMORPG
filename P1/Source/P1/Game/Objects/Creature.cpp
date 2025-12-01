@@ -220,6 +220,16 @@ void ACreature::S_NormalAttack(uint32 Combo, float Yaw)
     AttackSystemComponent->S_PerformNormalAttack(Combo);
 }
 
+void ACreature::S_Hit()
+{
+
+}
+
+void ACreature::S_Die()
+{
+    OnDie.Broadcast(this);
+}
+
 FVector ACreature::FindPerpendicularPoint() const
 {
     FVector TargetPoint = FVector(ServerPos->x(), ServerPos->y(), ClientPos->z());

@@ -428,6 +428,66 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
 
 }
 
+void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const Protocol::HitData& HitData_ = HitPkt.hit_data();
+    const uint64 ObjectId = HitData_.target_id();
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        if (FindActor == nullptr)
+            return;
+
+        ACreature* Creature = Cast<ACreature>(FindActor);
+        if (Creature == nullptr)
+            return;
+
+        // S_Hit?
+        //Creature->S_NormalAttack(Combo, Yaw);
+    }
+}
+
+void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+    const uint64 ObjectId = DiePkt.object_id();
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        if (FindActor == nullptr)
+            return;
+
+        ACreature* Creature = Cast<ACreature>(FindActor);
+        if (Creature == nullptr)
+            return;
+
+        Creature->S_Die();
+    }
+}
+
+void UP1GameInstance::HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RESULT& MonsterKillResultPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+}
+
 UMyPlayerData* UP1GameInstance::GetMyPlayerData()
 {
     if (IsValid(_MyPlayerData) == false)

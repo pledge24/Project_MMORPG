@@ -60,6 +60,10 @@ public:
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
 
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
+    void HandleHit(const Protocol::S_HIT& HitPkt);
+    void HandleDie(const Protocol::S_DIE& DiePkt);
+    void HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RESULT& MonsterKillResultPkt);
+
 
     /** Getter 함수 */
     FString GetToken() const { return _token; }

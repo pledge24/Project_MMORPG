@@ -175,8 +175,13 @@ bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK
 
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleHit(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
@@ -228,6 +233,28 @@ bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
         GameInstance->HandleUseItem(pkt);
+        return true;
+    }
+
+    return false;
+}
+
+bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleDie(pkt);
+        return true;
+    }
+
+    return false;
+}
+
+bool Handle_S_MONSTER_KILL_RESULT(PacketSessionRef& session, Protocol::S_MONSTER_KILL_RESULT& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleMonsterKillResult(pkt);
         return true;
     }
 

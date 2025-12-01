@@ -392,6 +392,20 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
 }
 
+void Room::OnDie(uint64 objectId)
+{
+    UnRegisterObject(objectId);   // Room에서 이 오브젝트 삭제
+
+    // Broadcast Die Packet
+    {
+        Protocol::S_DIE diePkt;
+        diePkt.set_object_id(objectId);
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(diePkt);
+        Broadcast(sendBuffer);
+    }
+}
+
 vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
 {
     float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;

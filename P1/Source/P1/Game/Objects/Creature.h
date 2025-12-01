@@ -39,9 +39,11 @@ public:
     FText GetCreatureName() const { return CreatureName; }
 
 public:
-    /** 이동 관련 함수 */
+    /** 서버 패킷 핸들링 함수 */
     virtual void S_Move(float DeltaSeconds);
     virtual void S_NormalAttack(uint32 Combo, float Yaw);
+    virtual void S_Hit();
+    virtual void S_Die();
 
     FVector FindPerpendicularPoint() const;
 

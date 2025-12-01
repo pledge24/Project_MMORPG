@@ -43,6 +43,9 @@ public:
     bool IsValid() const { return _isValid; }
     bool Contains(uint64 objectId) { return _objects.contains(objectId); }
 
+    /** 이벤트 함수 */
+    void OnDie(uint64 objectId);
+
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
     pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);  // pair<플레이어 참조, 거리^2> 
