@@ -52,6 +52,9 @@ namespace Protocol {
 class CharacterOverview;
 struct CharacterOverviewDefaultTypeInternal;
 extern CharacterOverviewDefaultTypeInternal _CharacterOverview_default_instance_;
+class DiePenaltyInfo;
+struct DiePenaltyInfoDefaultTypeInternal;
+extern DiePenaltyInfoDefaultTypeInternal _DiePenaltyInfo_default_instance_;
 class Effect;
 struct EffectDefaultTypeInternal;
 extern EffectDefaultTypeInternal _Effect_default_instance_;
@@ -103,6 +106,7 @@ extern VectorDefaultTypeInternal _Vector_default_instance_;
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::CharacterOverview* Arena::CreateMaybeMessage<::Protocol::CharacterOverview>(Arena*);
+template<> ::Protocol::DiePenaltyInfo* Arena::CreateMaybeMessage<::Protocol::DiePenaltyInfo>(Arena*);
 template<> ::Protocol::Effect* Arena::CreateMaybeMessage<::Protocol::Effect>(Arena*);
 template<> ::Protocol::GearInfo* Arena::CreateMaybeMessage<::Protocol::GearInfo>(Arena*);
 template<> ::Protocol::HitData* Arena::CreateMaybeMessage<::Protocol::HitData>(Arena*);
@@ -3198,6 +3202,154 @@ class LevelUpInfo final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Struct_2eproto;
 };
+// -------------------------------------------------------------------
+
+class DiePenaltyInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.DiePenaltyInfo) */ {
+ public:
+  inline DiePenaltyInfo() : DiePenaltyInfo(nullptr) {}
+  ~DiePenaltyInfo() override;
+  explicit PROTOBUF_CONSTEXPR DiePenaltyInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  DiePenaltyInfo(const DiePenaltyInfo& from);
+  DiePenaltyInfo(DiePenaltyInfo&& from) noexcept
+    : DiePenaltyInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline DiePenaltyInfo& operator=(const DiePenaltyInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DiePenaltyInfo& operator=(DiePenaltyInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const DiePenaltyInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const DiePenaltyInfo* internal_default_instance() {
+    return reinterpret_cast<const DiePenaltyInfo*>(
+               &_DiePenaltyInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    17;
+
+  friend void swap(DiePenaltyInfo& a, DiePenaltyInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(DiePenaltyInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DiePenaltyInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  DiePenaltyInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<DiePenaltyInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const DiePenaltyInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const DiePenaltyInfo& from) {
+    DiePenaltyInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DiePenaltyInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.DiePenaltyInfo";
+  }
+  protected:
+  explicit DiePenaltyInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kUpdatedExpFieldNumber = 1,
+  };
+  // uint64 updated_exp = 1;
+  void clear_updated_exp();
+  uint64_t updated_exp() const;
+  void set_updated_exp(uint64_t value);
+  private:
+  uint64_t _internal_updated_exp() const;
+  void _internal_set_updated_exp(uint64_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.DiePenaltyInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    uint64_t updated_exp_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Struct_2eproto;
+};
 // ===================================================================
 
 
@@ -5389,9 +5541,35 @@ inline void LevelUpInfo::set_new_magical_attack(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.LevelUpInfo.new_magical_attack)
 }
 
+// -------------------------------------------------------------------
+
+// DiePenaltyInfo
+
+// uint64 updated_exp = 1;
+inline void DiePenaltyInfo::clear_updated_exp() {
+  _impl_.updated_exp_ = uint64_t{0u};
+}
+inline uint64_t DiePenaltyInfo::_internal_updated_exp() const {
+  return _impl_.updated_exp_;
+}
+inline uint64_t DiePenaltyInfo::updated_exp() const {
+  // @@protoc_insertion_point(field_get:Protocol.DiePenaltyInfo.updated_exp)
+  return _internal_updated_exp();
+}
+inline void DiePenaltyInfo::_internal_set_updated_exp(uint64_t value) {
+  
+  _impl_.updated_exp_ = value;
+}
+inline void DiePenaltyInfo::set_updated_exp(uint64_t value) {
+  _internal_set_updated_exp(value);
+  // @@protoc_insertion_point(field_set:Protocol.DiePenaltyInfo.updated_exp)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

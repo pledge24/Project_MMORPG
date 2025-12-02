@@ -203,6 +203,8 @@ message S_USE_ITEM
 message S_DIE
 {
     uint64 object_id = 1;
+
+    DiePenaltyInfo die_penalty_details = 2;
 }
 
 message S_MONSTER_KILL_RESULT
@@ -216,4 +218,16 @@ message S_MONSTER_KILL_RESULT
 
     bool is_level_up = 5;
     LevelUpInfo level_up_details = 6;
+}
+
+message C_RESPAWN
+{
+
+}
+
+message S_RESPAWN
+{
+    PosInfo pos_info = 1;
+    uint32 map_id = 2;
+    uint32 hp = 3;
 }

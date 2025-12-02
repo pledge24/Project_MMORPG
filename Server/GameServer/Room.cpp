@@ -127,14 +127,14 @@ void Room::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
     }
 }
 
-void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, bool moveRoom)
+void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, RoomEnterType enterType)
 {
     uint64 enterPlayerId = enterPlayer->objectInfo->object_id();
 
     // 현재 방에 해당 player를 추가
     if (RegisterObject(enterPlayer) == false)
     {
-        if (moveRoom)
+        if (enterType == RoomEnterType::ENTER_TYPE_USE_PORTAL)
             wcout << L"플레이어: " << enterPlayerId << "가 Room 이동시 다음 Room 입장에 실패했습니다" << '\n';
         else
             wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
@@ -144,17 +144,6 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
 
     // 입장 위치 세팅
     enterPlayer->posInfo->CopyFrom(*enterPos);
-
-    // OtherPlayer: Broadcast NewPlayer SpawnPkt In Room
-    {
-        Protocol::S_SPAWN spawnPkt;
-
-        Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
-        objectInfo->CopyFrom(*enterPlayer->objectInfo);
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer, enterPlayerId);
-    }
 
     // enterPlayer: Send Room's Objects
     {
@@ -170,19 +159,10 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
             }
         }
 
-        // 2) 입장한 플레이어가 단순 Room 이동이면 S_MOVE_ROOM, 새로 입장이면 S_SPAWN
-        if (moveRoom)
+        // 2) 입장 사유에 맞게 패킷 전송
+        switch (enterType)
         {
-            Protocol::S_MOVE_ROOM moveRoomPkt;
-            moveRoomPkt.set_map_id(enterPlayer->objectInfo->map_id());
-            moveRoomPkt.mutable_info()->CopyFrom(*enterPos);
-            moveRoomPkt.mutable_objects()->Swap(&roomObjects);
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(moveRoomPkt);
-            if (auto session = enterPlayer->session.lock())
-                session->Send(sendBuffer);
-        }
-        else
+        case RoomEnterType::ENTER_TYPE_ENTER_GAME:
         {
             // Spawn할 Object에 본인을 추가
             roomObjects.Add()->CopyFrom(*enterPlayer->objectInfo);
@@ -193,37 +173,68 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
             if (auto session = enterPlayer->session.lock())
                 session->Send(sendBuffer);
+
+            break;
         }
+        case RoomEnterType::ENTER_TYPE_USE_PORTAL:
+        {
+            Protocol::S_MOVE_ROOM moveRoomPkt;
+            moveRoomPkt.set_map_id(enterPlayer->objectInfo->map_id());
+            moveRoomPkt.mutable_info()->CopyFrom(*enterPos);
+            moveRoomPkt.mutable_objects()->Swap(&roomObjects);
+
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(moveRoomPkt);
+            if (auto session = enterPlayer->session.lock())
+                session->Send(sendBuffer);
+
+            break;
+        }
+        case RoomEnterType::ENTER_TYPE_RETURN_BY_DEATH:
+        {
+            Protocol::S_RESPAWN respawnPkt;
+            respawnPkt.mutable_pos_info()->CopyFrom(*enterPos);
+            respawnPkt.set_map_id(_roomId);
+            respawnPkt.set_hp(enterPlayer->statInfo->hp());
+
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(respawnPkt);
+            if (auto session = enterPlayer->session.lock())
+                session->Send(sendBuffer);
+
+            break;
+        }
+        default:
+        {
+            break;
+        }
+        }
+    }
+
+    // OtherPlayer: Broadcast NewPlayer SpawnPkt In Room
+    {
+        Protocol::S_SPAWN spawnPkt;
+
+        Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
+        objectInfo->CopyFrom(*enterPlayer->objectInfo);
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
+        Broadcast(sendBuffer, enterPlayerId);
     }
     
 }
 
-void Room::HandleLeavePlayer(PlayerRef leavePlayer, bool moveRoom)
+void Room::HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomTransitionData> transitionData)
 {
     const uint64 leavePlayerId = leavePlayer->objectInfo->object_id();
 
     // 방을 나간 Player를 제거
     if (UnRegisterObject(leavePlayerId) == false)
     {
-        if (moveRoom)
+        if (transitionData.has_value())
             wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 시 이전 Room 퇴장에 실패했습니다" << '\n';
         else
             wcout << L"플레이어: " << leavePlayerId << "가 Room 퇴장에 실패했습니다" << '\n';
 
         return;
-    }
-
-    // leavePlayer: Send Despawn Packet(If needed)
-    {
-        if (moveRoom == false)
-        {
-            Protocol::S_DESPAWN despawnPkt;
-            despawnPkt.add_object_ids(leavePlayerId);
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
-            if (auto session = leavePlayer->session.lock())
-                session->Send(sendBuffer);
-        }
     }
 
     // OtherPlayer: Broadcast Player Despawn In Room
@@ -234,6 +245,23 @@ void Room::HandleLeavePlayer(PlayerRef leavePlayer, bool moveRoom)
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
         Broadcast(sendBuffer);
     }
+
+    // leavePlayer: 이동할 Room 정보가 있으면 해당 Room에 입장, 없으면 Despawn Packet 전송
+    if (transitionData.has_value())
+    {
+        RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(transitionData->nextRoomId);
+        nextRoom->DoAsync(&Room::HandleEnterPlayer, leavePlayer, transitionData->enterPos, transitionData->roomEnterType);
+    }
+    else
+    {
+        Protocol::S_DESPAWN despawnPkt;
+        despawnPkt.add_object_ids(leavePlayerId);
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
+        if (auto session = leavePlayer->session.lock())
+            session->Send(sendBuffer);
+    }
+    
 }
 
 void Room::HandleMove(Protocol::C_MOVE pkt)
@@ -392,15 +420,16 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
 }
 
-void Room::OnDie(uint64 objectId)
+void Room::OnDie(Protocol::S_DIE& diePkt)
 {
-    UnRegisterObject(objectId);   // Room에서 이 오브젝트 삭제
+    ObjectRef DeadObject = _objects[diePkt.object_id()];
+    if (DeadObject->IsPlayer() == false)
+    {
+        UnRegisterObject(diePkt.object_id());   // Room에서 이 오브젝트 삭제
+    }
 
     // Broadcast Die Packet
     {
-        Protocol::S_DIE diePkt;
-        diePkt.set_object_id(objectId);
-
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(diePkt);
         Broadcast(sendBuffer);
     }

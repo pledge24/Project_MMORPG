@@ -229,7 +229,7 @@ void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
         return;
 
     uint64 damage = hitData.damage();
-    int32 updated_hp = statInfo->hp() - damage;
+    int32 updated_hp = static_cast<int32>(statInfo->hp() - damage);
     statInfo->set_hp(max(0, updated_hp));
 
     if (updated_hp > 0)
@@ -250,8 +250,21 @@ void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     }
     else
     {
-        uint64 objectId = objectInfo->object_id();
-        ownerRoom->OnDie(objectId);   // Room에서 이 오브젝트 삭제
+        // 죽으면 경험치 10% 감소
+        uint64 lossExp = static_cast<uint64>(playerInfo->max_exp() * 0.1);
+        uint64 curExp = playerInfo->cur_exp();
+        uint64 updatedExp = curExp <= lossExp ? 0 : curExp - lossExp;
+
+        playerInfo->set_cur_exp(updatedExp);
+
+        // Make and Pass On Die Packet
+        Protocol::S_DIE DiePkt;
+        {
+            DiePkt.set_object_id(objectInfo->object_id());
+            DiePkt.mutable_die_penalty_details()->set_updated_exp(updatedExp);
+        }
+
+        ownerRoom->OnDie(DiePkt);
     }
 }
 
@@ -316,6 +329,12 @@ void Player::OnLevelUp()
     statInfo->set_magical_attack(statInfo->magical_attack() + (int32)_nextLevelUpData.maIncrement);
 
     CacheNextLevelUpData();
+}
+
+void Player::SetRespawnHp()
+{
+    int32 respawnHp = static_cast<int32>(statInfo->max_hp() * 0.5f);
+    statInfo->set_hp(respawnHp);
 }
 
 void Player::CacheNextLevelUpData()

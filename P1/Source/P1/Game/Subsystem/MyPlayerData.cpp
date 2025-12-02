@@ -60,6 +60,7 @@ void UMyPlayerData::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 
     /** Creature Class Delegate */
     MyPlayer->OnStatInfoChanged.AddUObject(this, &UMyPlayerData::Rep_StatChanged);
+    MyPlayer->OnHpChanged.AddUObject(this, &UMyPlayerData::Rep_HpChanged);
 
     /** Player Class Delegate */
     MyPlayer->OnLevelChanged.AddUObject(this, &UMyPlayerData::Rep_LevelChanged);
@@ -92,4 +93,9 @@ void UMyPlayerData::Rep_ExpChanged(TOptional<int32> CurExp, TOptional<int32> Max
 void UMyPlayerData::Rep_StatChanged(const Protocol::StatInfo& InStatInfo) const
 {
     _PlayerInfo->mutable_stat_info()->CopyFrom(InStatInfo);
+}
+
+void UMyPlayerData::Rep_HpChanged(int32 UpdatedHp)
+{
+    _PlayerInfo->mutable_stat_info()->set_hp(UpdatedHp);
 }

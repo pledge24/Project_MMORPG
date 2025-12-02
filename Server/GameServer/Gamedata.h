@@ -12,6 +12,7 @@ class Gamedata
 {
 public:
     static bool LoadAllGamedata();
+    static const Protocol::PosInfo& GetRespawnPoint() { return RESPAWN_POINT; }
 
 #ifdef _DEBUG
     static void PrintAllGamedata();
@@ -30,4 +31,7 @@ public:
     static DataTable MapDataTable;
     static DataTable MonsterDataTable;
     static DataTable QuestDataTable;
+
+    static const int32 RESPAWN_ROOM_ID = 10;
+    static Protocol::PosInfo RESPAWN_POINT;
 };

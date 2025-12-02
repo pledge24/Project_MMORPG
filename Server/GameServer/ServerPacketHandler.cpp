@@ -7,6 +7,7 @@
 #include "ObjectUtils.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Gamedata.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -151,7 +152,7 @@ bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MA
         shared_ptr<Protocol::PosInfo> enterPos = make_shared<Protocol::PosInfo>();
         enterPos->CopyFrom(player->objectInfo->pos_info());
 
-        room->DoAsync(&Room::HandleEnterPlayer, player, enterPos, false);
+        room->DoAsync(&Room::HandleEnterPlayer, player, enterPos, RoomEnterType::ENTER_TYPE_ENTER_GAME);
     }
 
     return true;
@@ -182,9 +183,13 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
         const Json& portalData = opt.value();
         const Json& dst = portalData[Dst];
 
-        // 1) 이동할 위치 설정
-        shared_ptr<Protocol::PosInfo> enterPos = make_shared<Protocol::PosInfo>();
+        // 1) Room 이동 데이터 설정
+        Optional<RoomTransitionData> transitionData = RoomTransitionData();
         {
+            transitionData->roomEnterType = RoomEnterType::ENTER_TYPE_USE_PORTAL;
+            transitionData->nextRoomId = dst[TemplateId];
+
+            shared_ptr<Protocol::PosInfo> enterPos = transitionData->enterPos;
             enterPos->set_object_id(player->objectInfo->object_id());
             enterPos->set_x(dst[PosX]);
             enterPos->set_y(dst[PosY]);
@@ -193,13 +198,8 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
             enterPos->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
         }
 
-        // 2) Room 현재 room은 나가고, 다음 room은 들어간다.
-        {
-            RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(dst[TemplateId]);
-
-            curRoom->DoAsync(&Room::HandleLeavePlayer, player, true);
-            enterRoom->DoAsync(&Room::HandleEnterPlayer, player, enterPos, true);
-        }
+        // 2) Room을 이동한다.
+        curRoom->DoAsync(&Room::HandleLeavePlayer, player, transitionData);
     }
 
     return true;
@@ -219,7 +219,8 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 
     // Room 퇴장 처리
     {
-        room->DoAsync(&Room::HandleLeavePlayer, player, false);
+        Optional<RoomTransitionData> transitionData;    // Empty
+        room->DoAsync(&Room::HandleLeavePlayer, player, transitionData);
 	}
 
     // DB 업데이트 처리
@@ -388,6 +389,50 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 
     useItemPkt.set_success(true);
     SEND_PACKET(useItemPkt);
+
+    return true;
+}
+
+bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
+{
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef curRoom = player->room.load().lock();
+    if (curRoom == nullptr)
+        return false;
+
+    const Protocol::PosInfo& respawnPos = Gamedata::GetRespawnPoint();
+
+    // 리스폰 Hp 세팅
+    player->SetRespawnHp();
+
+    // Room 이동 처리
+    if(curRoom->GetRoomId() != Gamedata::RESPAWN_ROOM_ID)
+    {
+        using namespace JsonProperty::Map;
+
+        // 1) Room 이동 데이터 설정
+        Optional<RoomTransitionData> transitionData = RoomTransitionData();
+        {
+            transitionData->roomEnterType = RoomEnterType::ENTER_TYPE_RETURN_BY_DEATH;
+            transitionData->nextRoomId = Gamedata::RESPAWN_ROOM_ID;
+
+            shared_ptr<Protocol::PosInfo> enterPos = transitionData->enterPos;
+            enterPos->CopyFrom(respawnPos);
+            enterPos->set_object_id(player->objectInfo->object_id());
+        }
+
+        // 2) Room을 이동한다.
+        curRoom->DoAsync(&Room::HandleLeavePlayer, player, transitionData);
+    }
+    else
+    {
+
+    }
 
     return true;
 }

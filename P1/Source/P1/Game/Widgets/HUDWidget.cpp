@@ -38,6 +38,7 @@ void UHUDWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
     MyPlayer->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateLevel);
     MyPlayer->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExpBar);
     MyPlayer->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
+    MyPlayer->OnHpChanged.AddUObject(this, &UHUDWidget::UpdateCurHp);
 }
 
 void UHUDWidget::UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_)

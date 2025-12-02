@@ -3,6 +3,23 @@
 #include "Utils.h"
 #include "object.h"
 
+enum class RoomEnterType
+{
+    ENTER_TYPE_NONE = 0,
+    ENTER_TYPE_ENTER_GAME,
+    ENTER_TYPE_USE_PORTAL,
+    ENTER_TYPE_RETURN_BY_DEATH,
+};
+
+struct RoomTransitionData
+{
+    RoomTransitionData() { enterPos = make_shared<Protocol::PosInfo>(); }
+
+    RoomEnterType roomEnterType = RoomEnterType::ENTER_TYPE_NONE;
+    int32 nextRoomId = -1;
+    shared_ptr<Protocol::PosInfo> enterPos;
+};
+
 using Cell = set<uint64>;   // 특정 영역에 있는 ObjectId
 
 class Room : public JobQueue
@@ -22,8 +39,8 @@ protected:
 
 public:
     /** 핸들 함수(Network) */
-	void HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, bool moveRoom = false);
-    void HandleLeavePlayer(PlayerRef leavePlayer, bool moveRoom = false);
+	void HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, RoomEnterType enterType);
+    void HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomTransitionData> transitionData);
 
 	void HandleMove(Protocol::C_MOVE pkt);
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
@@ -44,7 +61,7 @@ public:
     bool Contains(uint64 objectId) { return _objects.contains(objectId); }
 
     /** 이벤트 함수 */
-    void OnDie(uint64 objectId);
+    void OnDie(Protocol::S_DIE& diePkt);
 
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);

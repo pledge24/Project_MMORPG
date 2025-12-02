@@ -42,7 +42,7 @@ public:
     /** 서버 패킷 핸들링 함수 */
     virtual void S_Move(float DeltaSeconds);
     virtual void S_NormalAttack(uint32 Combo, float Yaw);
-    virtual void S_Hit();
+    virtual void S_Hit(const Protocol::HitData& HitData_, uint32 updatedHp);
     virtual void S_Die();
 
     FVector FindPerpendicularPoint() const;
@@ -52,12 +52,16 @@ public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
     FOnStatInfoChanged OnStatInfoChanged;
 
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, const int32&);
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, int32);
     FOnHpChanged OnHpChanged;
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnDie OnDie;
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHit, const uint32&, damage);
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnHit OnHit;
 
 protected:
     /** Attack System Component */

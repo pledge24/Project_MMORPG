@@ -21,6 +21,8 @@ DataTable Gamedata::MapDataTable;
 DataTable Gamedata::MonsterDataTable;
 DataTable Gamedata::QuestDataTable;
 
+Protocol::PosInfo Gamedata::RESPAWN_POINT;
+
 bool Gamedata::LoadAllGamedata()
 {
     // 레벨 테이블 매핑 초기화
@@ -79,6 +81,24 @@ bool Gamedata::LoadAllGamedata()
 
                 int32 templateId = row[JsonProperty::Map::TemplateId];
                 MapDataTable[templateId] = row;
+
+                // 리스폰 포인트 저장
+                if (templateId == RESPAWN_ROOM_ID)
+                {
+                    if (row.contains(JsonProperty::Map::SpawnPoint) == false)
+                        throw wstring(L"Map JSON 파일에 SpawnPoint 정보가 존재하지 않음");
+
+                    const Json& respawnPoint = row[JsonProperty::Map::SpawnPoint];
+                    float posX = respawnPoint[JsonProperty::Map::PosX];
+                    float posY = respawnPoint[JsonProperty::Map::PosY];
+                    float posZ = respawnPoint[JsonProperty::Map::PosZ];
+
+                    RESPAWN_POINT.set_x(posX);
+                    RESPAWN_POINT.set_y(posY);
+                    RESPAWN_POINT.set_z(posZ);
+                    RESPAWN_POINT.set_yaw(0.f);
+                    RESPAWN_POINT.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+                }
             }
         }
 

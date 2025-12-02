@@ -104,7 +104,7 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
         return;
 
     uint64 damage = hitData.damage();
-    int32 updated_hp = monsterInfo->hp() - damage;
+    int32 updated_hp = static_cast<int32>(monsterInfo->hp() - damage);
     monsterInfo->set_hp(max(0, updated_hp));
 
     if (updated_hp > 0)
@@ -123,7 +123,14 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     else
     {
         uint64 objectId = objectInfo->object_id();
-        ownerRoom->OnDie(objectId);   
+
+        // Make Die Packet
+        Protocol::S_DIE DiePkt;
+        {
+            DiePkt.set_object_id(objectId);
+        }
+
+        ownerRoom->OnDie(DiePkt);
         
         // Trigger OnMonsterKill
         if(PlayerRef player = dynamic_pointer_cast<Player>(attacker))

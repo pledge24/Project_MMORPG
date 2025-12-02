@@ -39,10 +39,11 @@ public:
     uint64 GetPlayerId() const { return _PlayerId; }
 
     /** Replication 함수 */
-    auto Rep_GoldChanged(int64 Gold) const -> void;
+    void Rep_GoldChanged(int64 Gold) const;
     void Rep_LevelChanged(int32 Level) const;
     void Rep_ExpChanged(TOptional<int32> CurExp, TOptional<int32> MaxExp) const;
     void Rep_StatChanged(const Protocol::StatInfo& InStatInfo) const;
+    void Rep_HpChanged(int32 UpdatedHp);
 
 public:
     DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);

@@ -156,3 +156,7 @@ message LevelUpInfo
     uint64 new_magical_attack = 8;
 }
 
+message DiePenaltyInfo
+{
+    uint64 updated_exp = 1;
+}

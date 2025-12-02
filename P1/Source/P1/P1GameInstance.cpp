@@ -450,7 +450,7 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
             return;
 
         // S_Hit?
-        //Creature->S_NormalAttack(Combo, Yaw);
+        Creature->S_Hit(HitData_, HitPkt.hp());
     }
 }
 
