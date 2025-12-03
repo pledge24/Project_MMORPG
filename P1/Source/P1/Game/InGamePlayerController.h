@@ -15,6 +15,7 @@ class UShopWidget;
 class UNameplateWidget;
 class UNameplateManager;
 class UWarningTextWidget;
+class UDeathWidget;
 
 UENUM(BlueprintType)
 enum class WidgetType : uint8
@@ -105,6 +106,13 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
     UWarningTextWidget* WarningTextWidget;
 
+    /** 사망 UI*/
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UDeathWidget> DeathWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    UDeathWidget* DeathWidget;
+
 protected:
     UPROPERTY()
     TMap<WidgetType, UUserWidget*> WidgetMappings;
@@ -112,4 +120,5 @@ protected:
 private:
     int32 WidgetFlag = 0;
     int32 CurrentMaxZOrder = 0;
+    const int32 DEATH_WIDGET_Z_ORDER = 10000;
 };

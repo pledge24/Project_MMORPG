@@ -13,6 +13,7 @@
 #include "ShopWidget.h"
 #include "NameplateWidget.h"
 #include "WarningTextWidget.h"
+#include "DeathWidget.h"
 
 void AInGamePlayerController::BeginPlay()
 {
@@ -79,6 +80,16 @@ void AInGamePlayerController::BeginPlay()
         {
             WarningTextWidget->AddToViewport();
             WarningTextWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+        }
+    }
+
+    if (DeathWidgetClass && !DeathWidget)
+    {
+        DeathWidget = CreateWidget<UDeathWidget>(this, DeathWidgetClass);
+        if (DeathWidget)
+        {
+            DeathWidget->AddToViewport(DEATH_WIDGET_Z_ORDER);
+            DeathWidget->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
 

@@ -21,6 +21,13 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 public:
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    void SetDeadState(bool IsDead);
+
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    bool IsDead() const { return _IsDead; }
+
+public:
     virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);    // Server Only
 
     bool IsMyPlayer() const;
@@ -86,4 +93,5 @@ private:
     const float CORR_INTERP_SPEED = 5.f;
     const float CORR_RINTERP_SPEED = 5.f;
 
+    bool _IsDead = false;
 };

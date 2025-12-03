@@ -147,10 +147,10 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* SlotWidget)
 
     const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
-    Protocol::C_SELL_ITEM pkt;
-    pkt.mutable_slot()->CopyFrom(SlotData);
-    pkt.set_count(1);
-    SEND_PACKET(pkt);
+    Protocol::C_SELL_ITEM Pkt;
+    Pkt.mutable_slot()->CopyFrom(SlotData);
+    Pkt.set_count(1);
+    SEND_PACKET(Pkt);
     
 }
 
@@ -181,9 +181,9 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* SlotWidget)
 
         if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
         {
-            Protocol::C_USE_ITEM pkt;
-            pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(pkt);
+            Protocol::C_USE_ITEM Pkt;
+            Pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(Pkt);
         }
         else
         {
@@ -218,9 +218,9 @@ void UInventoryWidget::SendEquipItemPacket(USlotWidget* SlotWidget)
 
         if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR)
         {
-            Protocol::C_EQUIP_GEAR pkt;
-            pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(pkt);
+            Protocol::C_EQUIP_GEAR Pkt;
+            Pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(Pkt);
         }
         else
         {

@@ -260,3 +260,14 @@ bool Handle_S_MONSTER_KILL_RESULT(PacketSessionRef& session, Protocol::S_MONSTER
 
     return false;
 }
+
+bool Handle_S_RETURN_BY_DEATH(PacketSessionRef& session, Protocol::S_RETURN_BY_DEATH& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleReturnByDeath(pkt);
+        return true;
+    }
+
+    return false;
+}

@@ -154,6 +154,21 @@ void ACreature::SetCreatureName(const FText& InName)
     CreatureName = InName;
 }
 
+void ACreature::SetDeadState(bool IsDead)
+{
+    _IsDead = IsDead;
+
+    if (IsDead)
+    {
+        GetCharacterMovement()->DisableMovement();
+        GetCharacterMovement()->StopMovementImmediately();
+    }
+    else
+    {
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    }
+}
+
 void ACreature::S_Move(float DeltaSeconds)
 {
 
@@ -228,6 +243,8 @@ void ACreature::S_Hit(const Protocol::HitData& HitData_, uint32 updatedHp)
 
 void ACreature::S_Die()
 {
+    SetDeadState(true);
+    
     OnDie.Broadcast(this);
 }
 

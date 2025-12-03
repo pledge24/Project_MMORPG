@@ -486,6 +486,21 @@ void UP1GameInstance::HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RES
     auto* World = GetWorld();
     if (World == nullptr)
         return;
+
+
+
+}
+
+void UP1GameInstance::HandleReturnByDeath(const Protocol::S_RETURN_BY_DEATH& ReturnByDeathPkt)
+{
+    if (Socket == nullptr || GameServerSession == nullptr)
+        return;
+
+    auto* World = GetWorld();
+    if (World == nullptr)
+        return;
+
+
 }
 
 UMyPlayerData* UP1GameInstance::GetMyPlayerData()
