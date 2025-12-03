@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[11];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[13];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -65,11 +65,20 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017GEAR_TYPE_CHE"
   "ST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016GEAR_TYPE_AR"
   "MS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n\020GEAR_TYPE_W"
-  "EAPON\020\006b\006proto3"
+  "EAPON\020\006*\276\001\n\016TeleportReason\022\030\n\024TELEPORT_R"
+  "EASON_NONE\020\000\022#\n\037TELEPORT_REASON_RETURN_B"
+  "Y_DEATH\020\001\022$\n TELEPORT_REASON_TELEPORT_BY"
+  "_ITEM\020\002\022\"\n\036TELEPORT_REASON_ENTER_BY_QUES"
+  "T\020\003\022#\n\037TELEPORT_REASON_RECALL_BY_PARTY\020\004"
+  "*\232\001\n\rRoomEnterType\022\030\n\024ROOM_ENTER_TYPE_NO"
+  "NE\020\000\022\036\n\032ROOM_ENTER_TYPE_ENTER_GAME\020\001\022%\n!"
+  "ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD\020\002\022(\n$R"
+  "OOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM\020\003b\006p"
+  "roto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1455, descriptor_table_protodef_Enum_2eproto,
+    false, false, 1805, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -264,6 +273,39 @@ bool GearType_IsValid(int value) {
     case 4:
     case 5:
     case 6:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* TeleportReason_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[11];
+}
+bool TeleportReason_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RoomEnterType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[12];
+}
+bool RoomEnterType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
       return true;
     default:
       return false;

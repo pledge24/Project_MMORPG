@@ -3,20 +3,13 @@
 #include "Utils.h"
 #include "object.h"
 
-enum class RoomEnterType
+struct RoomEnterData
 {
-    ENTER_TYPE_NONE = 0,
-    ENTER_TYPE_ENTER_GAME,
-    ENTER_TYPE_USE_PORTAL,
-    ENTER_TYPE_RETURN_BY_DEATH,
-};
+    RoomEnterData() { enterPos = make_shared<Protocol::PosInfo>(); }
 
-struct RoomTransitionData
-{
-    RoomTransitionData() { enterPos = make_shared<Protocol::PosInfo>(); }
-
-    RoomEnterType roomEnterType = RoomEnterType::ENTER_TYPE_NONE;
     int32 nextRoomId = -1;
+    Protocol::RoomEnterType roomEnterType = Protocol::ROOM_ENTER_TYPE_NONE;
+    Protocol::TeleportReason teleportReason = Protocol::TELEPORT_REASON_NONE;
     shared_ptr<Protocol::PosInfo> enterPos;
 };
 
@@ -39,13 +32,14 @@ protected:
 
 public:
     /** 핸들 함수(Network) */
-	void HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, RoomEnterType enterType);
-    void HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomTransitionData> transitionData);
+	void HandleEnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
+    void HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomEnterData> roomEnterData);
 
 	void HandleMove(Protocol::C_MOVE pkt);
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
     void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
     void HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
+    void HandleReturnByDeath(PlayerRef player);
 
     /** Getter 함수 */
     vector2D GetRandomPos(bool usePadding = true);
@@ -110,6 +104,9 @@ private:
     float _roomMaxX;
     float _roomMinY;
     float _roomMaxY;
+
+    bool haveReturnPoint = false;
+    shared_ptr<Protocol::PosInfo> returnPoint;
 
     /** Config */
     const float LOCATION_PADDING_X = 1000.f;

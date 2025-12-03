@@ -99,3 +99,20 @@ enum GearType
     GEAR_TYPE_BOOTS = 5;
     GEAR_TYPE_WEAPON = 6;
 }
+
+enum TeleportReason
+{
+    TELEPORT_REASON_NONE = 0;
+    TELEPORT_REASON_RETURN_BY_DEATH = 1;        // 사망 귀환
+    TELEPORT_REASON_TELEPORT_BY_ITEM = 2;       // 아이템 사용
+    TELEPORT_REASON_ENTER_BY_QUEST = 3;         // 퀘스트 워프
+    TELEPORT_REASON_RECALL_BY_PARTY = 4;        // 파티원 소환
+};
+
+enum RoomEnterType
+{
+    ROOM_ENTER_TYPE_NONE = 0;
+    ROOM_ENTER_TYPE_ENTER_GAME = 1;             // 게임 입장
+    ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD = 2;      // 같은 필드 내 이동
+    ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM = 3;   // 사망 회귀(마을로)
+}

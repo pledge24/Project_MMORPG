@@ -355,6 +355,61 @@ inline bool GearType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearType>(
     GearType_descriptor(), name, value);
 }
+enum TeleportReason : int {
+  TELEPORT_REASON_NONE = 0,
+  TELEPORT_REASON_RETURN_BY_DEATH = 1,
+  TELEPORT_REASON_TELEPORT_BY_ITEM = 2,
+  TELEPORT_REASON_ENTER_BY_QUEST = 3,
+  TELEPORT_REASON_RECALL_BY_PARTY = 4,
+  TeleportReason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  TeleportReason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool TeleportReason_IsValid(int value);
+constexpr TeleportReason TeleportReason_MIN = TELEPORT_REASON_NONE;
+constexpr TeleportReason TeleportReason_MAX = TELEPORT_REASON_RECALL_BY_PARTY;
+constexpr int TeleportReason_ARRAYSIZE = TeleportReason_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* TeleportReason_descriptor();
+template<typename T>
+inline const std::string& TeleportReason_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, TeleportReason>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function TeleportReason_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    TeleportReason_descriptor(), enum_t_value);
+}
+inline bool TeleportReason_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, TeleportReason* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<TeleportReason>(
+    TeleportReason_descriptor(), name, value);
+}
+enum RoomEnterType : int {
+  ROOM_ENTER_TYPE_NONE = 0,
+  ROOM_ENTER_TYPE_ENTER_GAME = 1,
+  ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD = 2,
+  ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM = 3,
+  RoomEnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  RoomEnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool RoomEnterType_IsValid(int value);
+constexpr RoomEnterType RoomEnterType_MIN = ROOM_ENTER_TYPE_NONE;
+constexpr RoomEnterType RoomEnterType_MAX = ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM;
+constexpr int RoomEnterType_ARRAYSIZE = RoomEnterType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RoomEnterType_descriptor();
+template<typename T>
+inline const std::string& RoomEnterType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, RoomEnterType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function RoomEnterType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    RoomEnterType_descriptor(), enum_t_value);
+}
+inline bool RoomEnterType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RoomEnterType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RoomEnterType>(
+    RoomEnterType_descriptor(), name, value);
+}
 // ===================================================================
 
 
@@ -431,6 +486,16 @@ template <> struct is_proto_enum< ::Protocol::GearType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearType>() {
   return ::Protocol::GearType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::TeleportReason> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::TeleportReason>() {
+  return ::Protocol::TeleportReason_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::RoomEnterType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RoomEnterType>() {
+  return ::Protocol::RoomEnterType_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

@@ -3,7 +3,7 @@
         "templateId": 10,
         "mapName": "마을",
         "mapType": "safe zone",
-        "haveSpawnPoint": true,
+        "haveReturnPoint": true,
         "centerPos": {
             "posX": 0,
             "posY": 0,
@@ -11,7 +11,7 @@
         },
         "widthHalfExtent": 1500,
         "heightHalfExtent": 1500,
-        "spawnPoint": {
+        "returnPoint": {
             "posX": 0,
             "posY": 0,
             "posZ": 0
@@ -76,7 +76,7 @@
         "templateId": 20,
         "mapName": "초급 사냥터",
         "mapType": "hunting field",
-        "haveSpawnPoint": false,
+        "haveReturnPoint": false,
         "centerPos": {
             "posX": -10000,
             "posY": 10000,
@@ -84,7 +84,7 @@
         },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
-        "spawnPoint": null,
+        "returnPoint": null,
         "portals": {
             "lists": [
                 {
@@ -117,7 +117,7 @@
         "templateId": 30,
         "mapName": "중급 사냥터",
         "mapType": "hunting field",
-        "haveSpawnPoint": false,
+        "haveReturnPoint": false,
         "centerPos": {
             "posX": -10000,
             "posY": 0,
@@ -125,7 +125,7 @@
         },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
-        "spawnPoint": null,
+        "returnPoint": null,
         "portals": {
             "lists": [
                 {
@@ -158,7 +158,7 @@
         "templateId": 40,
         "mapName": "고급 사냥터",
         "mapType": "hunting field",
-        "haveSpawnPoint": false,
+        "haveReturnPoint": false,
         "centerPos": {
             "posX": -10000,
             "posY": -10000,
@@ -166,7 +166,7 @@
         },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
-        "spawnPoint": null,
+        "returnPoint": null,
         "portals": {
             "lists": [
                 {

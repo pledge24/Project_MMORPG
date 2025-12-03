@@ -46,8 +46,8 @@ enum : uint16
 	PKT_S_USE_ITEM = 1031,
 	PKT_S_DIE = 1032,
 	PKT_S_MONSTER_KILL_RESULT = 1033,
-	PKT_C_RESPAWN = 1034,
-	PKT_S_RESPAWN = 1035,
+	PKT_C_RETURN_BY_DEATH = 1034,
+	PKT_S_RETURN_BY_DEATH = 1035,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -68,7 +68,7 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt);
 bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt);
 bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt);
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt);
-bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt);
+bool Handle_C_RETURN_BY_DEATH(PacketSessionRef& session, Protocol::C_RETURN_BY_DEATH& pkt);
 
 class ServerPacketHandler
 {
@@ -94,7 +94,7 @@ public:
 		GPacketHandler[PKT_C_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_EQUIP_GEAR>(Handle_C_EQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_UNEQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_UNEQUIP_GEAR>(Handle_C_UNEQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_USE_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_USE_ITEM>(Handle_C_USE_ITEM, session, buffer, len); };
-		GPacketHandler[PKT_C_RESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_RESPAWN>(Handle_C_RESPAWN, session, buffer, len); };
+		GPacketHandler[PKT_C_RETURN_BY_DEATH] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_RETURN_BY_DEATH>(Handle_C_RETURN_BY_DEATH, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -123,7 +123,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_USE_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_MONSTER_KILL_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_MONSTER_KILL_RESULT); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_RESPAWN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_RETURN_BY_DEATH& pkt) { return MakeSerializedPacket(pkt, PKT_S_RETURN_BY_DEATH); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

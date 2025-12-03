@@ -110,40 +110,43 @@ void Room::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
     {
     case ETickGroup::TG_PreObjectTick:
     {
-
+        break;
     }
     case ETickGroup::TG_PrePhysics: 
     {
         UpdateCellMatrix();
+        break;
     }
     case ETickGroup::TG_DuringPhysics:
     {
-
+        break;
     }
     case ETickGroup::TG_PostPhysics:
     {
-
+        break;
     }
     }
 }
 
-void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo> enterPos, RoomEnterType enterType)
+void Room::HandleEnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 {
     uint64 enterPlayerId = enterPlayer->objectInfo->object_id();
 
-    // 현재 방에 해당 player를 추가
+    // 현재 방에 해당 player 추가
     if (RegisterObject(enterPlayer) == false)
     {
-        if (enterType == RoomEnterType::ENTER_TYPE_USE_PORTAL)
-            wcout << L"플레이어: " << enterPlayerId << "가 Room 이동시 다음 Room 입장에 실패했습니다" << '\n';
+        if (roomEnterData.roomEnterType == Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD)
+            wcout << L"플레이어: " << enterPlayerId << "가 필드간 Room 이동을 실패했습니다" << '\n';
         else
             wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
 
         return;
     }
 
-    // 입장 위치 세팅
-    enterPlayer->posInfo->CopyFrom(*enterPos);
+    // 플레이어 입장 세팅
+    {
+        enterPlayer->posInfo->CopyFrom(*roomEnterData.enterPos);
+    }
 
     // enterPlayer: Send Room's Objects
     {
@@ -160,9 +163,9 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
         }
 
         // 2) 입장 사유에 맞게 패킷 전송
-        switch (enterType)
+        switch (roomEnterData.roomEnterType)
         {
-        case RoomEnterType::ENTER_TYPE_ENTER_GAME:
+        case Protocol::ROOM_ENTER_TYPE_ENTER_GAME:
         {
             // Spawn할 Object에 본인을 추가
             roomObjects.Add()->CopyFrom(*enterPlayer->objectInfo);
@@ -176,11 +179,11 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
 
             break;
         }
-        case RoomEnterType::ENTER_TYPE_USE_PORTAL:
+        case Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD:
         {
             Protocol::S_MOVE_ROOM moveRoomPkt;
             moveRoomPkt.set_map_id(enterPlayer->objectInfo->map_id());
-            moveRoomPkt.mutable_info()->CopyFrom(*enterPos);
+            moveRoomPkt.mutable_info()->CopyFrom(*roomEnterData.enterPos);
             moveRoomPkt.mutable_objects()->Swap(&roomObjects);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(moveRoomPkt);
@@ -189,16 +192,13 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
 
             break;
         }
-        case RoomEnterType::ENTER_TYPE_RETURN_BY_DEATH:
+        case Protocol::ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM:
         {
-            Protocol::S_RESPAWN respawnPkt;
-            respawnPkt.mutable_pos_info()->CopyFrom(*enterPos);
-            respawnPkt.set_map_id(_roomId);
-            respawnPkt.set_hp(enterPlayer->statInfo->hp());
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(respawnPkt);
-            if (auto session = enterPlayer->session.lock())
-                session->Send(sendBuffer);
+            if (roomEnterData.teleportReason == Protocol::TELEPORT_REASON_RETURN_BY_DEATH)
+            {
+                HandleReturnByDeath(enterPlayer);
+                break;
+            }
 
             break;
         }
@@ -222,14 +222,14 @@ void Room::HandleEnterPlayer(PlayerRef enterPlayer, shared_ptr<Protocol::PosInfo
     
 }
 
-void Room::HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomTransitionData> transitionData)
+void Room::HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomEnterData> roomEnterData)
 {
     const uint64 leavePlayerId = leavePlayer->objectInfo->object_id();
 
     // 방을 나간 Player를 제거
     if (UnRegisterObject(leavePlayerId) == false)
     {
-        if (transitionData.has_value())
+        if (roomEnterData.has_value())
             wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 시 이전 Room 퇴장에 실패했습니다" << '\n';
         else
             wcout << L"플레이어: " << leavePlayerId << "가 Room 퇴장에 실패했습니다" << '\n';
@@ -247,10 +247,10 @@ void Room::HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomTransitionData>
     }
 
     // leavePlayer: 이동할 Room 정보가 있으면 해당 Room에 입장, 없으면 Despawn Packet 전송
-    if (transitionData.has_value())
+    if (roomEnterData.has_value())
     {
-        RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(transitionData->nextRoomId);
-        nextRoom->DoAsync(&Room::HandleEnterPlayer, leavePlayer, transitionData->enterPos, transitionData->roomEnterType);
+        RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(roomEnterData->nextRoomId);
+        nextRoom->DoAsync(&Room::HandleEnterPlayer, leavePlayer, roomEnterData.value());
     }
     else
     {
@@ -371,6 +371,22 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer, objectId);
     }
+}
+
+void Room::HandleReturnByDeath(PlayerRef player)
+{
+    player->posInfo->CopyFrom(*returnPoint);
+
+    Protocol::S_RETURN_BY_DEATH returnByDeathPkt;
+    {
+        returnByDeathPkt.mutable_pos_info()->CopyFrom(*player->posInfo);
+        returnByDeathPkt.set_map_id(_roomId);
+        returnByDeathPkt.set_hp(player->statInfo->hp());
+    }
+
+    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(returnByDeathPkt);
+    if (auto session = player->session.lock())
+        session->Send(sendBuffer);
 }
 
 vector2D Room::GetRandomPos(bool usePadding)
@@ -534,6 +550,22 @@ void Room::CacheRoomData()
     for (int32 monsterId : _roomData[MonsterIds])
     {
         monsterIds.push_back(monsterId);
+    }
+
+    if (_roomData[HaveReturnPoint] && _roomData[ReturnPoint].is_null() == false)
+    {
+        returnPoint = make_shared<Protocol::PosInfo>();
+
+        const Json& point = _roomData[ReturnPoint];
+        float posX = point[PosX];
+        float posY = point[PosY];
+        float posZ = point[PosZ];
+
+        returnPoint->set_x(posX);
+        returnPoint->set_y(posY);
+        returnPoint->set_z(posZ);
+        returnPoint->set_yaw(0.f);
+        returnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
     }
 
 }

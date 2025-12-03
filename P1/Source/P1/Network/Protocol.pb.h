@@ -84,9 +84,9 @@ extern C_NORMAL_ATTACKDefaultTypeInternal _C_NORMAL_ATTACK_default_instance_;
 class C_PING;
 struct C_PINGDefaultTypeInternal;
 extern C_PINGDefaultTypeInternal _C_PING_default_instance_;
-class C_RESPAWN;
-struct C_RESPAWNDefaultTypeInternal;
-extern C_RESPAWNDefaultTypeInternal _C_RESPAWN_default_instance_;
+class C_RETURN_BY_DEATH;
+struct C_RETURN_BY_DEATHDefaultTypeInternal;
+extern C_RETURN_BY_DEATHDefaultTypeInternal _C_RETURN_BY_DEATH_default_instance_;
 class C_SELL_ITEM;
 struct C_SELL_ITEMDefaultTypeInternal;
 extern C_SELL_ITEMDefaultTypeInternal _C_SELL_ITEM_default_instance_;
@@ -141,9 +141,9 @@ extern S_NORMAL_ATTACKDefaultTypeInternal _S_NORMAL_ATTACK_default_instance_;
 class S_PONG;
 struct S_PONGDefaultTypeInternal;
 extern S_PONGDefaultTypeInternal _S_PONG_default_instance_;
-class S_RESPAWN;
-struct S_RESPAWNDefaultTypeInternal;
-extern S_RESPAWNDefaultTypeInternal _S_RESPAWN_default_instance_;
+class S_RETURN_BY_DEATH;
+struct S_RETURN_BY_DEATHDefaultTypeInternal;
+extern S_RETURN_BY_DEATHDefaultTypeInternal _S_RETURN_BY_DEATH_default_instance_;
 class S_SELL_ITEM;
 struct S_SELL_ITEMDefaultTypeInternal;
 extern S_SELL_ITEMDefaultTypeInternal _S_SELL_ITEM_default_instance_;
@@ -170,7 +170,7 @@ template<> ::Protocol::C_MOVE* Arena::CreateMaybeMessage<::Protocol::C_MOVE>(Are
 template<> ::Protocol::C_MOVE_ROOM* Arena::CreateMaybeMessage<::Protocol::C_MOVE_ROOM>(Arena*);
 template<> ::Protocol::C_NORMAL_ATTACK* Arena::CreateMaybeMessage<::Protocol::C_NORMAL_ATTACK>(Arena*);
 template<> ::Protocol::C_PING* Arena::CreateMaybeMessage<::Protocol::C_PING>(Arena*);
-template<> ::Protocol::C_RESPAWN* Arena::CreateMaybeMessage<::Protocol::C_RESPAWN>(Arena*);
+template<> ::Protocol::C_RETURN_BY_DEATH* Arena::CreateMaybeMessage<::Protocol::C_RETURN_BY_DEATH>(Arena*);
 template<> ::Protocol::C_SELL_ITEM* Arena::CreateMaybeMessage<::Protocol::C_SELL_ITEM>(Arena*);
 template<> ::Protocol::C_UNEQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::C_UNEQUIP_GEAR>(Arena*);
 template<> ::Protocol::C_USE_ITEM* Arena::CreateMaybeMessage<::Protocol::C_USE_ITEM>(Arena*);
@@ -189,7 +189,7 @@ template<> ::Protocol::S_MOVE* Arena::CreateMaybeMessage<::Protocol::S_MOVE>(Are
 template<> ::Protocol::S_MOVE_ROOM* Arena::CreateMaybeMessage<::Protocol::S_MOVE_ROOM>(Arena*);
 template<> ::Protocol::S_NORMAL_ATTACK* Arena::CreateMaybeMessage<::Protocol::S_NORMAL_ATTACK>(Arena*);
 template<> ::Protocol::S_PONG* Arena::CreateMaybeMessage<::Protocol::S_PONG>(Arena*);
-template<> ::Protocol::S_RESPAWN* Arena::CreateMaybeMessage<::Protocol::S_RESPAWN>(Arena*);
+template<> ::Protocol::S_RETURN_BY_DEATH* Arena::CreateMaybeMessage<::Protocol::S_RETURN_BY_DEATH>(Arena*);
 template<> ::Protocol::S_SELL_ITEM* Arena::CreateMaybeMessage<::Protocol::S_SELL_ITEM>(Arena*);
 template<> ::Protocol::S_SPAWN* Arena::CreateMaybeMessage<::Protocol::S_SPAWN>(Arena*);
 template<> ::Protocol::S_UNEQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::S_UNEQUIP_GEAR>(Arena*);
@@ -5717,23 +5717,23 @@ class S_MONSTER_KILL_RESULT final :
 };
 // -------------------------------------------------------------------
 
-class C_RESPAWN final :
-    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:Protocol.C_RESPAWN) */ {
+class C_RETURN_BY_DEATH final :
+    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:Protocol.C_RETURN_BY_DEATH) */ {
  public:
-  inline C_RESPAWN() : C_RESPAWN(nullptr) {}
-  explicit PROTOBUF_CONSTEXPR C_RESPAWN(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline C_RETURN_BY_DEATH() : C_RETURN_BY_DEATH(nullptr) {}
+  explicit PROTOBUF_CONSTEXPR C_RETURN_BY_DEATH(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  C_RESPAWN(const C_RESPAWN& from);
-  C_RESPAWN(C_RESPAWN&& from) noexcept
-    : C_RESPAWN() {
+  C_RETURN_BY_DEATH(const C_RETURN_BY_DEATH& from);
+  C_RETURN_BY_DEATH(C_RETURN_BY_DEATH&& from) noexcept
+    : C_RETURN_BY_DEATH() {
     *this = ::std::move(from);
   }
 
-  inline C_RESPAWN& operator=(const C_RESPAWN& from) {
+  inline C_RETURN_BY_DEATH& operator=(const C_RETURN_BY_DEATH& from) {
     CopyFrom(from);
     return *this;
   }
-  inline C_RESPAWN& operator=(C_RESPAWN&& from) noexcept {
+  inline C_RETURN_BY_DEATH& operator=(C_RETURN_BY_DEATH&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -5756,20 +5756,20 @@ class C_RESPAWN final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const C_RESPAWN& default_instance() {
+  static const C_RETURN_BY_DEATH& default_instance() {
     return *internal_default_instance();
   }
-  static inline const C_RESPAWN* internal_default_instance() {
-    return reinterpret_cast<const C_RESPAWN*>(
-               &_C_RESPAWN_default_instance_);
+  static inline const C_RETURN_BY_DEATH* internal_default_instance() {
+    return reinterpret_cast<const C_RETURN_BY_DEATH*>(
+               &_C_RETURN_BY_DEATH_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     34;
 
-  friend void swap(C_RESPAWN& a, C_RESPAWN& b) {
+  friend void swap(C_RETURN_BY_DEATH& a, C_RETURN_BY_DEATH& b) {
     a.Swap(&b);
   }
-  inline void Swap(C_RESPAWN* other) {
+  inline void Swap(C_RETURN_BY_DEATH* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -5782,7 +5782,7 @@ class C_RESPAWN final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(C_RESPAWN* other) {
+  void UnsafeArenaSwap(C_RETURN_BY_DEATH* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -5790,15 +5790,15 @@ class C_RESPAWN final :
 
   // implements Message ----------------------------------------------
 
-  C_RESPAWN* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<C_RESPAWN>(arena);
+  C_RETURN_BY_DEATH* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_RETURN_BY_DEATH>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyFrom;
-  inline void CopyFrom(const C_RESPAWN& from) {
+  inline void CopyFrom(const C_RETURN_BY_DEATH& from) {
     ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl(*this, from);
   }
   using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeFrom;
-  void MergeFrom(const C_RESPAWN& from) {
+  void MergeFrom(const C_RETURN_BY_DEATH& from) {
     ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl(*this, from);
   }
   public:
@@ -5806,10 +5806,10 @@ class C_RESPAWN final :
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.C_RESPAWN";
+    return "Protocol.C_RETURN_BY_DEATH";
   }
   protected:
-  explicit C_RESPAWN(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit C_RETURN_BY_DEATH(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -5822,7 +5822,7 @@ class C_RESPAWN final :
 
   // accessors -------------------------------------------------------
 
-  // @@protoc_insertion_point(class_scope:Protocol.C_RESPAWN)
+  // @@protoc_insertion_point(class_scope:Protocol.C_RETURN_BY_DEATH)
  private:
   class _Internal;
 
@@ -5835,24 +5835,24 @@ class C_RESPAWN final :
 };
 // -------------------------------------------------------------------
 
-class S_RESPAWN final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_RESPAWN) */ {
+class S_RETURN_BY_DEATH final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_RETURN_BY_DEATH) */ {
  public:
-  inline S_RESPAWN() : S_RESPAWN(nullptr) {}
-  ~S_RESPAWN() override;
-  explicit PROTOBUF_CONSTEXPR S_RESPAWN(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline S_RETURN_BY_DEATH() : S_RETURN_BY_DEATH(nullptr) {}
+  ~S_RETURN_BY_DEATH() override;
+  explicit PROTOBUF_CONSTEXPR S_RETURN_BY_DEATH(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  S_RESPAWN(const S_RESPAWN& from);
-  S_RESPAWN(S_RESPAWN&& from) noexcept
-    : S_RESPAWN() {
+  S_RETURN_BY_DEATH(const S_RETURN_BY_DEATH& from);
+  S_RETURN_BY_DEATH(S_RETURN_BY_DEATH&& from) noexcept
+    : S_RETURN_BY_DEATH() {
     *this = ::std::move(from);
   }
 
-  inline S_RESPAWN& operator=(const S_RESPAWN& from) {
+  inline S_RETURN_BY_DEATH& operator=(const S_RETURN_BY_DEATH& from) {
     CopyFrom(from);
     return *this;
   }
-  inline S_RESPAWN& operator=(S_RESPAWN&& from) noexcept {
+  inline S_RETURN_BY_DEATH& operator=(S_RETURN_BY_DEATH&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -5875,20 +5875,20 @@ class S_RESPAWN final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const S_RESPAWN& default_instance() {
+  static const S_RETURN_BY_DEATH& default_instance() {
     return *internal_default_instance();
   }
-  static inline const S_RESPAWN* internal_default_instance() {
-    return reinterpret_cast<const S_RESPAWN*>(
-               &_S_RESPAWN_default_instance_);
+  static inline const S_RETURN_BY_DEATH* internal_default_instance() {
+    return reinterpret_cast<const S_RETURN_BY_DEATH*>(
+               &_S_RETURN_BY_DEATH_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     35;
 
-  friend void swap(S_RESPAWN& a, S_RESPAWN& b) {
+  friend void swap(S_RETURN_BY_DEATH& a, S_RETURN_BY_DEATH& b) {
     a.Swap(&b);
   }
-  inline void Swap(S_RESPAWN* other) {
+  inline void Swap(S_RETURN_BY_DEATH* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -5901,7 +5901,7 @@ class S_RESPAWN final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(S_RESPAWN* other) {
+  void UnsafeArenaSwap(S_RETURN_BY_DEATH* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -5909,14 +5909,14 @@ class S_RESPAWN final :
 
   // implements Message ----------------------------------------------
 
-  S_RESPAWN* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<S_RESPAWN>(arena);
+  S_RETURN_BY_DEATH* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_RETURN_BY_DEATH>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const S_RESPAWN& from);
+  void CopyFrom(const S_RETURN_BY_DEATH& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const S_RESPAWN& from) {
-    S_RESPAWN::MergeImpl(*this, from);
+  void MergeFrom( const S_RETURN_BY_DEATH& from) {
+    S_RETURN_BY_DEATH::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -5934,15 +5934,15 @@ class S_RESPAWN final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(S_RESPAWN* other);
+  void InternalSwap(S_RETURN_BY_DEATH* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.S_RESPAWN";
+    return "Protocol.S_RETURN_BY_DEATH";
   }
   protected:
-  explicit S_RESPAWN(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit S_RETURN_BY_DEATH(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -5956,11 +5956,12 @@ class S_RESPAWN final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kPosInfoFieldNumber = 1,
+    kPosInfoFieldNumber = 3,
+    kReasonFieldNumber = 1,
     kMapIdFieldNumber = 2,
-    kHpFieldNumber = 3,
+    kHpFieldNumber = 4,
   };
-  // .Protocol.PosInfo pos_info = 1;
+  // .Protocol.PosInfo pos_info = 3;
   bool has_pos_info() const;
   private:
   bool _internal_has_pos_info() const;
@@ -5978,6 +5979,15 @@ class S_RESPAWN final :
       ::Protocol::PosInfo* pos_info);
   ::Protocol::PosInfo* unsafe_arena_release_pos_info();
 
+  // .Protocol.TeleportReason reason = 1;
+  void clear_reason();
+  ::Protocol::TeleportReason reason() const;
+  void set_reason(::Protocol::TeleportReason value);
+  private:
+  ::Protocol::TeleportReason _internal_reason() const;
+  void _internal_set_reason(::Protocol::TeleportReason value);
+  public:
+
   // uint32 map_id = 2;
   void clear_map_id();
   uint32_t map_id() const;
@@ -5987,7 +5997,7 @@ class S_RESPAWN final :
   void _internal_set_map_id(uint32_t value);
   public:
 
-  // uint32 hp = 3;
+  // uint32 hp = 4;
   void clear_hp();
   uint32_t hp() const;
   void set_hp(uint32_t value);
@@ -5996,7 +6006,7 @@ class S_RESPAWN final :
   void _internal_set_hp(uint32_t value);
   public:
 
-  // @@protoc_insertion_point(class_scope:Protocol.S_RESPAWN)
+  // @@protoc_insertion_point(class_scope:Protocol.S_RETURN_BY_DEATH)
  private:
   class _Internal;
 
@@ -6005,6 +6015,7 @@ class S_RESPAWN final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::Protocol::PosInfo* pos_info_;
+    int reason_;
     uint32_t map_id_;
     uint32_t hp_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -8956,29 +8967,69 @@ inline void S_MONSTER_KILL_RESULT::set_allocated_level_up_details(::Protocol::Le
 
 // -------------------------------------------------------------------
 
-// C_RESPAWN
+// C_RETURN_BY_DEATH
 
 // -------------------------------------------------------------------
 
-// S_RESPAWN
+// S_RETURN_BY_DEATH
 
-// .Protocol.PosInfo pos_info = 1;
-inline bool S_RESPAWN::_internal_has_pos_info() const {
+// .Protocol.TeleportReason reason = 1;
+inline void S_RETURN_BY_DEATH::clear_reason() {
+  _impl_.reason_ = 0;
+}
+inline ::Protocol::TeleportReason S_RETURN_BY_DEATH::_internal_reason() const {
+  return static_cast< ::Protocol::TeleportReason >(_impl_.reason_);
+}
+inline ::Protocol::TeleportReason S_RETURN_BY_DEATH::reason() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_RETURN_BY_DEATH.reason)
+  return _internal_reason();
+}
+inline void S_RETURN_BY_DEATH::_internal_set_reason(::Protocol::TeleportReason value) {
+  
+  _impl_.reason_ = value;
+}
+inline void S_RETURN_BY_DEATH::set_reason(::Protocol::TeleportReason value) {
+  _internal_set_reason(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_RETURN_BY_DEATH.reason)
+}
+
+// uint32 map_id = 2;
+inline void S_RETURN_BY_DEATH::clear_map_id() {
+  _impl_.map_id_ = 0u;
+}
+inline uint32_t S_RETURN_BY_DEATH::_internal_map_id() const {
+  return _impl_.map_id_;
+}
+inline uint32_t S_RETURN_BY_DEATH::map_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_RETURN_BY_DEATH.map_id)
+  return _internal_map_id();
+}
+inline void S_RETURN_BY_DEATH::_internal_set_map_id(uint32_t value) {
+  
+  _impl_.map_id_ = value;
+}
+inline void S_RETURN_BY_DEATH::set_map_id(uint32_t value) {
+  _internal_set_map_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_RETURN_BY_DEATH.map_id)
+}
+
+// .Protocol.PosInfo pos_info = 3;
+inline bool S_RETURN_BY_DEATH::_internal_has_pos_info() const {
   return this != internal_default_instance() && _impl_.pos_info_ != nullptr;
 }
-inline bool S_RESPAWN::has_pos_info() const {
+inline bool S_RETURN_BY_DEATH::has_pos_info() const {
   return _internal_has_pos_info();
 }
-inline const ::Protocol::PosInfo& S_RESPAWN::_internal_pos_info() const {
+inline const ::Protocol::PosInfo& S_RETURN_BY_DEATH::_internal_pos_info() const {
   const ::Protocol::PosInfo* p = _impl_.pos_info_;
   return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
       ::Protocol::_PosInfo_default_instance_);
 }
-inline const ::Protocol::PosInfo& S_RESPAWN::pos_info() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.pos_info)
+inline const ::Protocol::PosInfo& S_RETURN_BY_DEATH::pos_info() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_RETURN_BY_DEATH.pos_info)
   return _internal_pos_info();
 }
-inline void S_RESPAWN::unsafe_arena_set_allocated_pos_info(
+inline void S_RETURN_BY_DEATH::unsafe_arena_set_allocated_pos_info(
     ::Protocol::PosInfo* pos_info) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.pos_info_);
@@ -8989,9 +9040,9 @@ inline void S_RESPAWN::unsafe_arena_set_allocated_pos_info(
   } else {
     
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_RESPAWN.pos_info)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_RETURN_BY_DEATH.pos_info)
 }
-inline ::Protocol::PosInfo* S_RESPAWN::release_pos_info() {
+inline ::Protocol::PosInfo* S_RETURN_BY_DEATH::release_pos_info() {
   
   ::Protocol::PosInfo* temp = _impl_.pos_info_;
   _impl_.pos_info_ = nullptr;
@@ -9006,14 +9057,14 @@ inline ::Protocol::PosInfo* S_RESPAWN::release_pos_info() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::PosInfo* S_RESPAWN::unsafe_arena_release_pos_info() {
-  // @@protoc_insertion_point(field_release:Protocol.S_RESPAWN.pos_info)
+inline ::Protocol::PosInfo* S_RETURN_BY_DEATH::unsafe_arena_release_pos_info() {
+  // @@protoc_insertion_point(field_release:Protocol.S_RETURN_BY_DEATH.pos_info)
   
   ::Protocol::PosInfo* temp = _impl_.pos_info_;
   _impl_.pos_info_ = nullptr;
   return temp;
 }
-inline ::Protocol::PosInfo* S_RESPAWN::_internal_mutable_pos_info() {
+inline ::Protocol::PosInfo* S_RETURN_BY_DEATH::_internal_mutable_pos_info() {
   
   if (_impl_.pos_info_ == nullptr) {
     auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
@@ -9021,12 +9072,12 @@ inline ::Protocol::PosInfo* S_RESPAWN::_internal_mutable_pos_info() {
   }
   return _impl_.pos_info_;
 }
-inline ::Protocol::PosInfo* S_RESPAWN::mutable_pos_info() {
+inline ::Protocol::PosInfo* S_RETURN_BY_DEATH::mutable_pos_info() {
   ::Protocol::PosInfo* _msg = _internal_mutable_pos_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.S_RESPAWN.pos_info)
+  // @@protoc_insertion_point(field_mutable:Protocol.S_RETURN_BY_DEATH.pos_info)
   return _msg;
 }
-inline void S_RESPAWN::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
+inline void S_RETURN_BY_DEATH::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.pos_info_);
@@ -9044,47 +9095,27 @@ inline void S_RESPAWN::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
     
   }
   _impl_.pos_info_ = pos_info;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_RESPAWN.pos_info)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_RETURN_BY_DEATH.pos_info)
 }
 
-// uint32 map_id = 2;
-inline void S_RESPAWN::clear_map_id() {
-  _impl_.map_id_ = 0u;
-}
-inline uint32_t S_RESPAWN::_internal_map_id() const {
-  return _impl_.map_id_;
-}
-inline uint32_t S_RESPAWN::map_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.map_id)
-  return _internal_map_id();
-}
-inline void S_RESPAWN::_internal_set_map_id(uint32_t value) {
-  
-  _impl_.map_id_ = value;
-}
-inline void S_RESPAWN::set_map_id(uint32_t value) {
-  _internal_set_map_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.map_id)
-}
-
-// uint32 hp = 3;
-inline void S_RESPAWN::clear_hp() {
+// uint32 hp = 4;
+inline void S_RETURN_BY_DEATH::clear_hp() {
   _impl_.hp_ = 0u;
 }
-inline uint32_t S_RESPAWN::_internal_hp() const {
+inline uint32_t S_RETURN_BY_DEATH::_internal_hp() const {
   return _impl_.hp_;
 }
-inline uint32_t S_RESPAWN::hp() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.hp)
+inline uint32_t S_RETURN_BY_DEATH::hp() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_RETURN_BY_DEATH.hp)
   return _internal_hp();
 }
-inline void S_RESPAWN::_internal_set_hp(uint32_t value) {
+inline void S_RETURN_BY_DEATH::_internal_set_hp(uint32_t value) {
   
   _impl_.hp_ = value;
 }
-inline void S_RESPAWN::set_hp(uint32_t value) {
+inline void S_RETURN_BY_DEATH::set_hp(uint32_t value) {
   _internal_set_hp(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.hp)
+  // @@protoc_insertion_point(field_set:Protocol.S_RETURN_BY_DEATH.hp)
 }
 
 #ifdef __GNUC__

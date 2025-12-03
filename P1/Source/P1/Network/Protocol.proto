@@ -220,14 +220,15 @@ message S_MONSTER_KILL_RESULT
     LevelUpInfo level_up_details = 6;
 }
 
-message C_RESPAWN
+message C_RETURN_BY_DEATH
 {
-
+     
 }
 
-message S_RESPAWN
+message S_RETURN_BY_DEATH
 {
-    PosInfo pos_info = 1;
+    TeleportReason reason = 1;
     uint32 map_id = 2;
-    uint32 hp = 3;
+    PosInfo pos_info = 3;
+    uint32 hp = 4;
 }
