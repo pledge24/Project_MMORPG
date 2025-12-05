@@ -331,7 +331,7 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
-void Player::SetRespawnHp()
+void Player::OnRespawn()
 {
     int32 respawnHp = static_cast<int32>(statInfo->max_hp() * 0.5f);
     statInfo->set_hp(respawnHp);

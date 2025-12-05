@@ -155,13 +155,13 @@ bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MA
             roomEnterData.roomEnterType = Protocol::ROOM_ENTER_TYPE_ENTER_GAME;
             roomEnterData.enterPos->CopyFrom(player->objectInfo->pos_info());
         }
-        room->DoAsync(&Room::HandleEnterPlayer, player, roomEnterData);
+        room->DoAsync(&Room::EnterPlayer, player, roomEnterData);
     }
 
     return true;
 }
 
-bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
+bool Handle_C_CHANGE_ROOM(PacketSessionRef& session, Protocol::C_CHANGE_ROOM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
@@ -187,12 +187,12 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
         const Json& dst = portalData[Dst];
 
         // 1) Room 이동 데이터 설정
-        Optional<RoomEnterData> transitionData = RoomEnterData();
+        RoomEnterData transitionData = RoomEnterData();
         {
-            transitionData->nextRoomId = dst[TemplateId];
-            transitionData->roomEnterType = Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD;
+            transitionData.nextRoomId = dst[TemplateId];
+            transitionData.roomEnterType = Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD;
 
-            shared_ptr<Protocol::PosInfo> enterPos = transitionData->enterPos;
+            shared_ptr<Protocol::PosInfo> enterPos = transitionData.enterPos;
             enterPos->set_object_id(player->objectInfo->object_id());
             enterPos->set_x(dst[PosX]);
             enterPos->set_y(dst[PosY]);
@@ -202,7 +202,7 @@ bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
         }
 
         // 2) Room을 이동한다.
-        curRoom->DoAsync(&Room::HandleLeavePlayer, player, transitionData);
+        curRoom->DoAsync(&Room::TransferPlayer, player, transitionData);
     }
 
     return true;
@@ -221,10 +221,8 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 		return false;
 
     // Room 퇴장 처리
-    {
-        Optional<RoomEnterData> transitionData;    // Empty
-        room->DoAsync(&Room::HandleLeavePlayer, player, transitionData);
-	}
+    room->DoAsync(&Room::LeavePlayer, player, false);
+	
 
     // DB 업데이트 처리
 	{
@@ -396,7 +394,7 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
     return true;
 }
 
-bool Handle_C_RETURN_BY_DEATH(PacketSessionRef& session, Protocol::C_RETURN_BY_DEATH& pkt)
+bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
@@ -408,35 +406,7 @@ bool Handle_C_RETURN_BY_DEATH(PacketSessionRef& session, Protocol::C_RETURN_BY_D
     if (curRoom == nullptr)
         return false;
 
-    const Protocol::PosInfo& respawnPos = Gamedata::GetRespawnPoint();
-
-    // 리스폰 Hp 세팅
-    player->SetRespawnHp();
-
-    // Room 이동 처리
-    if (curRoom->GetRoomId() != Gamedata::TOWN_ROOM_ID)
-    {
-        using namespace JsonProperty::Map;
-
-        // 1) Room 이동 데이터 설정
-        Optional<RoomEnterData> transitionData = RoomEnterData();
-        {
-            transitionData->nextRoomId = Gamedata::TOWN_ROOM_ID;
-            transitionData->roomEnterType = Protocol::ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM;
-            transitionData->teleportReason = Protocol::TELEPORT_REASON_RETURN_BY_DEATH;
-
-            shared_ptr<Protocol::PosInfo> enterPos = transitionData->enterPos;
-            enterPos->CopyFrom(respawnPos);
-            enterPos->set_object_id(player->objectInfo->object_id());
-        }
-
-        // 2) Room을 이동한다.
-        curRoom->DoAsync(&Room::HandleLeavePlayer, player, transitionData);
-    }
-    else
-    {
-        curRoom->DoAsync(&Room::HandleReturnByDeath, player);
-    }
+    curRoom->DoAsync(&Room::HandleRespawn, pkt, player);
 
     return true;
 }

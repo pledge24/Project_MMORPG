@@ -93,11 +93,11 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 	return true;
 }
 
-bool Handle_S_MOVE_ROOM(PacketSessionRef& session, Protocol::S_MOVE_ROOM& pkt)
+bool Handle_S_CHANGE_ROOM(PacketSessionRef& session, Protocol::S_CHANGE_ROOM& pkt)
 {
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        GameInstance->HandleMove(pkt.info());   // Teleporting My Character
+        GameInstance->HandleMove(pkt.info());   // Teleport My Character
         GameInstance->HandleDespawnAll(true);
 
         for (auto& Object : pkt.objects())
@@ -261,13 +261,14 @@ bool Handle_S_MONSTER_KILL_RESULT(PacketSessionRef& session, Protocol::S_MONSTER
     return false;
 }
 
-bool Handle_S_RETURN_BY_DEATH(PacketSessionRef& session, Protocol::S_RETURN_BY_DEATH& pkt)
+bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 {
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        GameInstance->HandleReturnByDeath(pkt);
+        GameInstance->HandleRespawn(pkt);
         return true;
     }
 
     return false;
 }
+

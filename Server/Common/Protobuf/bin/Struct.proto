@@ -44,9 +44,17 @@ message PlayerInfo
     StatInfo stat_info = 7;
 
     // 소유 관련
+    // optional Possession possession = 8;
     uint64 gold = 8;
     Inventory inventory = 9;
-    map<int32, Slot> equipped_gear = 10; // <SlotId(or GearType), Slot>
+    map<int32, Slot> equipped_gear = 10;
+}
+
+message Possession
+{
+    uint64 gold = 1;
+    Inventory inventory = 2;
+    map<int32, Slot> equipped_gear = 3; // <SlotId(or GearType), Slot>
 }
 
 message MonsterInfo

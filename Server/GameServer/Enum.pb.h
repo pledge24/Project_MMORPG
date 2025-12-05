@@ -355,6 +355,38 @@ inline bool GearType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearType>(
     GearType_descriptor(), name, value);
 }
+enum RespawnType : int {
+  RESPAWN_TYPE_NONE = 0,
+  RESPAWN_TYPE_TOWN = 1,
+  RESPAWN_TYPE_CHECKPOINT = 2,
+  RESPAWN_TYPE_RESURRECTION_ITEM = 3,
+  RESPAWN_TYPE_IN_PLACE = 4,
+  RESPAWN_TYPE_PARTY_MEMBER = 5,
+  RESPAWN_TYPE_GUILD_BASE = 6,
+  RESPAWN_TYPE_CASH_ITEM = 7,
+  RESPAWN_TYPE_BATTLE_RESURRECTION = 8,
+  RespawnType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  RespawnType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool RespawnType_IsValid(int value);
+constexpr RespawnType RespawnType_MIN = RESPAWN_TYPE_NONE;
+constexpr RespawnType RespawnType_MAX = RESPAWN_TYPE_BATTLE_RESURRECTION;
+constexpr int RespawnType_ARRAYSIZE = RespawnType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RespawnType_descriptor();
+template<typename T>
+inline const std::string& RespawnType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, RespawnType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function RespawnType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    RespawnType_descriptor(), enum_t_value);
+}
+inline bool RespawnType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RespawnType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RespawnType>(
+    RespawnType_descriptor(), name, value);
+}
 enum TeleportReason : int {
   TELEPORT_REASON_NONE = 0,
   TELEPORT_REASON_RETURN_BY_DEATH = 1,
@@ -486,6 +518,11 @@ template <> struct is_proto_enum< ::Protocol::GearType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearType>() {
   return ::Protocol::GearType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::RespawnType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RespawnType>() {
+  return ::Protocol::RespawnType_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::TeleportReason> : ::std::true_type {};
 template <>

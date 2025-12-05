@@ -63,7 +63,7 @@ public:
     void HandleHit(const Protocol::S_HIT& HitPkt);
     void HandleDie(const Protocol::S_DIE& DiePkt);
     void HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RESULT& MonsterKillResultPkt);
-    void HandleReturnByDeath(const Protocol::S_RETURN_BY_DEATH& ReturnByDeathPkt);
+    void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
 
     /** Getter 함수 */
     FString GetToken() const { return _token; }

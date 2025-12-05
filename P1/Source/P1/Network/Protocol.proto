@@ -64,12 +64,12 @@ message C_ENTER_MAP_COMPLETE
 
 }
 
-message C_MOVE_ROOM
+message C_CHANGE_ROOM
 {
     uint32 portal_id = 1;
 }
 
-message S_MOVE_ROOM
+message S_CHANGE_ROOM
 {
     uint32 map_id = 1;
     PosInfo info = 2;
@@ -220,15 +220,25 @@ message S_MONSTER_KILL_RESULT
     LevelUpInfo level_up_details = 6;
 }
 
-message C_RETURN_BY_DEATH
+message C_RESPAWN
 {
-     
+    RespawnType respawn_type = 1;
+
+    // 리스폰 타입에 따라 사용
+    //optional int64 item_id = 2;           
+    //optional int32 checkpoint_id = 3;     
+    //optional int64 target_player_id = 4;  
+    //optional int32 town_id = 5;           
 }
 
-message S_RETURN_BY_DEATH
+message S_RESPAWN
 {
-    TeleportReason reason = 1;
-    uint32 map_id = 2;
-    PosInfo pos_info = 3;
-    uint32 hp = 4;
+    string error_message = 1;
+    RespawnType respawn_type = 2;
+
+    // 리스폰 결과
+    uint64 object_id = 3;
+    uint32 map_id = 4;
+    PosInfo pos_info = 5;
+    uint32 hp = 6;
 }

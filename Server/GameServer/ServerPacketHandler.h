@@ -23,8 +23,8 @@ enum : uint16
 	PKT_C_ENTER_GAME = 1008,
 	PKT_S_ENTER_GAME = 1009,
 	PKT_C_ENTER_MAP_COMPLETE = 1010,
-	PKT_C_MOVE_ROOM = 1011,
-	PKT_S_MOVE_ROOM = 1012,
+	PKT_C_CHANGE_ROOM = 1011,
+	PKT_S_CHANGE_ROOM = 1012,
 	PKT_C_LEAVE_GAME = 1013,
 	PKT_S_LEAVE_GAME = 1014,
 	PKT_S_SPAWN = 1015,
@@ -46,8 +46,8 @@ enum : uint16
 	PKT_S_USE_ITEM = 1031,
 	PKT_S_DIE = 1032,
 	PKT_S_MONSTER_KILL_RESULT = 1033,
-	PKT_C_RETURN_BY_DEATH = 1034,
-	PKT_S_RETURN_BY_DEATH = 1035,
+	PKT_C_RESPAWN = 1034,
+	PKT_S_RESPAWN = 1035,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -59,7 +59,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt);
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt);
 bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt);
-bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt);
+bool Handle_C_CHANGE_ROOM(PacketSessionRef& session, Protocol::C_CHANGE_ROOM& pkt);
 bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt);
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt);
 bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt);
@@ -68,7 +68,7 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt);
 bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt);
 bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt);
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt);
-bool Handle_C_RETURN_BY_DEATH(PacketSessionRef& session, Protocol::C_RETURN_BY_DEATH& pkt);
+bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt);
 
 class ServerPacketHandler
 {
@@ -85,7 +85,7 @@ public:
 		GPacketHandler[PKT_C_DELETE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_DELETE_CHARACTER>(Handle_C_DELETE_CHARACTER, session, buffer, len); };
 		GPacketHandler[PKT_C_ENTER_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ENTER_GAME>(Handle_C_ENTER_GAME, session, buffer, len); };
 		GPacketHandler[PKT_C_ENTER_MAP_COMPLETE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ENTER_MAP_COMPLETE>(Handle_C_ENTER_MAP_COMPLETE, session, buffer, len); };
-		GPacketHandler[PKT_C_MOVE_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MOVE_ROOM>(Handle_C_MOVE_ROOM, session, buffer, len); };
+		GPacketHandler[PKT_C_CHANGE_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CHANGE_ROOM>(Handle_C_CHANGE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_C_LEAVE_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LEAVE_GAME>(Handle_C_LEAVE_GAME, session, buffer, len); };
 		GPacketHandler[PKT_C_MOVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MOVE>(Handle_C_MOVE, session, buffer, len); };
 		GPacketHandler[PKT_C_NORMAL_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_NORMAL_ATTACK>(Handle_C_NORMAL_ATTACK, session, buffer, len); };
@@ -94,7 +94,7 @@ public:
 		GPacketHandler[PKT_C_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_EQUIP_GEAR>(Handle_C_EQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_UNEQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_UNEQUIP_GEAR>(Handle_C_UNEQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_USE_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_USE_ITEM>(Handle_C_USE_ITEM, session, buffer, len); };
-		GPacketHandler[PKT_C_RETURN_BY_DEATH] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_RETURN_BY_DEATH>(Handle_C_RETURN_BY_DEATH, session, buffer, len); };
+		GPacketHandler[PKT_C_RESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_RESPAWN>(Handle_C_RESPAWN, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -109,7 +109,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_S_CREATE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_S_DELETE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_ENTER_GAME); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_MOVE_ROOM& pkt) { return MakeSerializedPacket(pkt, PKT_S_MOVE_ROOM); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_CHANGE_ROOM& pkt) { return MakeSerializedPacket(pkt, PKT_S_CHANGE_ROOM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_S_LEAVE_GAME); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_SPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_SPAWN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_DESPAWN); }
@@ -123,7 +123,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_USE_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_MONSTER_KILL_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_MONSTER_KILL_RESULT); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_RETURN_BY_DEATH& pkt) { return MakeSerializedPacket(pkt, PKT_S_RETURN_BY_DEATH); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_RESPAWN); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

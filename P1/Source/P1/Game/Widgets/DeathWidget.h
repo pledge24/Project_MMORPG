@@ -29,7 +29,9 @@ public:
 
 protected:
     UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendReturnByDeathPacket();
+    void SendRespawnInTownPacket();
+
+    void SendRespawnPacket(Protocol::RespawnType respawnType);
 
     UFUNCTION(BlueprintCallable, Category = "Network")
     void Test();

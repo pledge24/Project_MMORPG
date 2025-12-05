@@ -31,15 +31,17 @@ protected:
     void ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime);
 
 public:
-    /** 핸들 함수(Network) */
-	void HandleEnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
-    void HandleLeavePlayer(PlayerRef leavePlayer, optional<RoomEnterData> roomEnterData);
+    /** 플레이어 입장/퇴장 관련 함수 */
+	void EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
+    void LeavePlayer(PlayerRef leavePlayer, bool moveRoom);
+    void TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
+    /** 패킷 핸들 함수 */
 	void HandleMove(Protocol::C_MOVE pkt);
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
     void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
     void HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
-    void HandleReturnByDeath(PlayerRef player);
+    void HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
 
     /** Getter 함수 */
     vector2D GetRandomPos(bool usePadding = true);
@@ -105,8 +107,8 @@ private:
     float _roomMinY;
     float _roomMaxY;
 
-    bool haveReturnPoint = false;
-    shared_ptr<Protocol::PosInfo> returnPoint;
+    bool hasRespawnPoint = false;
+    shared_ptr<Protocol::PosInfo> respawnPoint;
 
     /** Config */
     const float LOCATION_PADDING_X = 1000.f;

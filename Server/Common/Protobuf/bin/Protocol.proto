@@ -59,21 +59,42 @@ message S_ENTER_GAME
 	ObjectInfo player = 2;
 }
 
-message C_ENTER_MAP_COMPLETE
+message C_ENTER_MAP
 {
+    EnterType enter_type = 1;
 
+    oneof map_data
+    {
+        uint32 map_id = 2;
+        uint32 portal_id = 3;
+    }
 }
 
-message C_MOVE_ROOM
+message S_ENTER_MAP
 {
-    uint32 portal_id = 1;
+    bool success = 1;
+    uint32 map_id = 2;
 }
 
-message S_MOVE_ROOM
+message C_ENTER_ROOM
 {
-    uint32 map_id = 1;
-    PosInfo info = 2;
-    repeated ObjectInfo objects = 3;
+    EnterType enter_type = 1;
+
+    // Room 입장에 필요한 추가 데이터
+    oneof room_data
+    {
+        uint32 portal_id = 2;
+    }
+}
+
+message S_ENTER_ROOM
+{
+    bool success = 1;
+    EnterType enter_type = 2;
+
+    uint32 room_id = 3;
+    PosInfo info = 3;
+    repeated ObjectInfo other_objects = 4;
 }
 
 message C_LEAVE_GAME
@@ -220,15 +241,28 @@ message S_MONSTER_KILL_RESULT
     LevelUpInfo level_up_details = 6;
 }
 
-message C_RETURN_BY_DEATH
+message C_RESPAWN
 {
-     
+    RespawnType respawn_type = 1;
+
+    // 리스폰 타입에 따라 사용
+    oneof respawn_data
+    {
+        uint64 item_uid = 2;           
+        uint32 checkpoint_id = 3;     
+        uint64 target_player_id = 4;  
+        uint32 town_id = 5;           
+    }
 }
 
-message S_RETURN_BY_DEATH
+message S_RESPAWN
 {
-    TeleportReason reason = 1;
-    uint32 map_id = 2;
-    PosInfo pos_info = 3;
-    uint32 hp = 4;
+    string error_message = 1;
+    RespawnType respawn_type = 2;
+
+    // 리스폰 결과
+    uint64 object_id = 3;
+    uint32 map_id = 4;
+    PosInfo pos_info = 5;
+    uint32 hp = 6;
 }

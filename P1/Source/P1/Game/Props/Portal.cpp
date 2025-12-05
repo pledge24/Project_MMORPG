@@ -17,14 +17,16 @@ void APortal::BeginPlay()
 	Super::BeginPlay();	
 }
 
-void APortal::SendMoveRoomPacket()
+void APortal::SendChangeRoomPacket()
 {
     if (PortalId == 0)
         return;
 
-    Protocol::C_MOVE_ROOM Pkt;
-    Pkt.set_portal_id(PortalId);
-    SEND_PACKET(Pkt);
+    Protocol::C_CHANGE_ROOM ChangeRoomPkt; 
+    {
+        ChangeRoomPkt.set_portal_id(PortalId);
+        SEND_PACKET(ChangeRoomPkt);
+    }
 }
 
 

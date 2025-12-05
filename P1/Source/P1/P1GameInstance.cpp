@@ -491,7 +491,7 @@ void UP1GameInstance::HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RES
 
 }
 
-void UP1GameInstance::HandleReturnByDeath(const Protocol::S_RETURN_BY_DEATH& ReturnByDeathPkt)
+void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
 {
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
@@ -500,6 +500,10 @@ void UP1GameInstance::HandleReturnByDeath(const Protocol::S_RETURN_BY_DEATH& Ret
     if (World == nullptr)
         return;
 
+    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    {
+        StatefulObjectManager->RespawnObject(RespawnPkt);
+    }
 
 }
 

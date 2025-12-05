@@ -47,10 +47,18 @@ void UDeathWidget::OnMyPlayerDie(AActor* KilledCreature)
 
 }
 
-void UDeathWidget::SendReturnByDeathPacket()
+void UDeathWidget::SendRespawnInTownPacket()
 {
-    Protocol::C_RETURN_BY_DEATH Pkt;
-    SEND_PACKET(Pkt);
+    SendRespawnPacket(Protocol::RESPAWN_TYPE_TOWN);
+}
+
+void UDeathWidget::SendRespawnPacket(Protocol::RespawnType respawnType)
+{
+    Protocol::C_RESPAWN RespawnPkt; 
+    {
+        RespawnPkt.set_respawn_type(respawnType);
+        SEND_PACKET(RespawnPkt);
+    }
 }
 
 void UDeathWidget::Test()

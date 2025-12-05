@@ -44,7 +44,7 @@ public:
 
     void OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward);
     void OnLevelUp();
-    void SetRespawnHp();
+    void OnRespawn();
 
 private:
     /** 기타 함수 */

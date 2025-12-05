@@ -36,4 +36,7 @@ struct FMonsterData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftClassPtr<class AMonster> MonsterClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float MovementSpeed;
 };

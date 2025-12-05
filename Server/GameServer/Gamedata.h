@@ -12,7 +12,7 @@ class Gamedata
 {
 public:
     static bool LoadAllGamedata();
-    static const Protocol::PosInfo& GetRespawnPoint() { return RETURN_POINT; }
+    static const Protocol::PosInfo& GetTownRespawnPoint() { return TOWN_RESPAWN_POINT; }
 
 #ifdef _DEBUG
     static void PrintAllGamedata();
@@ -33,5 +33,5 @@ public:
     static DataTable QuestDataTable;
 
     static const int32 TOWN_ROOM_ID = 10;   // return room id
-    static Protocol::PosInfo RETURN_POINT;
+    static Protocol::PosInfo TOWN_RESPAWN_POINT;
 };

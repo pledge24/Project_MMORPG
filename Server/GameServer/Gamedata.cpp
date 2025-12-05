@@ -21,7 +21,7 @@ DataTable Gamedata::MapDataTable;
 DataTable Gamedata::MonsterDataTable;
 DataTable Gamedata::QuestDataTable;
 
-Protocol::PosInfo Gamedata::RETURN_POINT;
+Protocol::PosInfo Gamedata::TOWN_RESPAWN_POINT;
 
 bool Gamedata::LoadAllGamedata()
 {
@@ -85,19 +85,19 @@ bool Gamedata::LoadAllGamedata()
                 // 리스폰 포인트 저장
                 if (templateId == TOWN_ROOM_ID)
                 {
-                    if (row.contains(JsonProperty::Map::ReturnPoint) == false)
-                        throw wstring(L"Map JSON 파일에 returnPoint 정보가 존재하지 않음");
+                    if (row.contains(JsonProperty::Map::RespawnPoint) == false)
+                        throw wstring(L"Map JSON 파일에 respawnPoint 정보가 존재하지 않음");
 
-                    const Json& returnPoint = row[JsonProperty::Map::ReturnPoint];
-                    float posX = returnPoint[JsonProperty::Map::PosX];
-                    float posY = returnPoint[JsonProperty::Map::PosY];
-                    float posZ = returnPoint[JsonProperty::Map::PosZ];
+                    const Json& respawnPoint = row[JsonProperty::Map::RespawnPoint];
+                    float posX = respawnPoint[JsonProperty::Map::PosX];
+                    float posY = respawnPoint[JsonProperty::Map::PosY];
+                    float posZ = respawnPoint[JsonProperty::Map::PosZ];
 
-                    RETURN_POINT.set_x(posX);
-                    RETURN_POINT.set_y(posY);
-                    RETURN_POINT.set_z(posZ);
-                    RETURN_POINT.set_yaw(0.f);
-                    RETURN_POINT.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+                    TOWN_RESPAWN_POINT.set_x(posX);
+                    TOWN_RESPAWN_POINT.set_y(posY);
+                    TOWN_RESPAWN_POINT.set_z(posZ);
+                    TOWN_RESPAWN_POINT.set_yaw(0.f);
+                    TOWN_RESPAWN_POINT.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
                 }
             }
         }

@@ -151,6 +151,11 @@ void UStatefulObjectManager::DespawnObject(uint64 ObjectId)
     }
 }
 
+void UStatefulObjectManager::RespawnObject(const Protocol::S_RESPAWN& RespawnPkt)
+{
+
+}
+
 void UStatefulObjectManager::Clear()
 {
     Players.Empty();

@@ -46,7 +46,7 @@ namespace JsonProperty
         constexpr std::string_view TryAttackRange = "tryAttackRange";
         constexpr std::string_view DetectionRange = "detectionRange";
         constexpr std::string_view ChasingMaxRange = "chasingMaxRange";
-        constexpr std::string_view MonsterSpeed = "monsterSpeed";
+        constexpr std::string_view MonsterSpeed = "movementSpeed";
         constexpr std::string_view IsTargeting = "isTargeting";
     }
 
@@ -72,11 +72,11 @@ namespace JsonProperty
         constexpr std::string_view TemplateId = "templateId";
         constexpr std::string_view MapName = "mapName";
         constexpr std::string_view MapType = "mapType";
-        constexpr std::string_view HaveReturnPoint = "haveReturnPoint";
+        constexpr std::string_view HasRespawnPoint = "hasRespawnPoint";
         constexpr std::string_view CenterPos = "centerPos";
         constexpr std::string_view WidthHalfExtent = "widthHalfExtent";
         constexpr std::string_view HeightHalfExtent = "heightHalfExtent";
-        constexpr std::string_view ReturnPoint = "returnPoint";
+        constexpr std::string_view RespawnPoint = "respawnPoint";
         constexpr std::string_view PosX = "posX";
         constexpr std::string_view PosY = "posY";
         constexpr std::string_view PosZ = "posZ";
