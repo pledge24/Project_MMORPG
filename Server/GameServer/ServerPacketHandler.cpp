@@ -134,7 +134,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 	return true;
 }
 
-bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
+bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
@@ -142,90 +142,16 @@ bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MA
     if (player == nullptr)
         return false;
 
-    int32 roomId = player->objectInfo->map_id();
-    RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
+    RoomRef room = player->room.load().lock();
     if (room == nullptr)
         return false;
 
-    // Room 입장 처리
-    {
-        RoomEnterData roomEnterData;
-        {
-            roomEnterData.nextRoomId = roomId;
-            roomEnterData.roomEnterType = Protocol::ROOM_ENTER_TYPE_ENTER_GAME;
-            roomEnterData.enterPos->CopyFrom(player->objectInfo->pos_info());
-        }
-        room->DoAsync(&Room::EnterPlayer, player, roomEnterData);
-    }
-
-    return true;
-}
-
-bool Handle_C_CHANGE_ROOM(PacketSessionRef& session, Protocol::C_CHANGE_ROOM& pkt)
-{
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef curRoom = player->room.load().lock();
-    if (curRoom == nullptr)
-        return false;
-
-    optional<Json> opt = curRoom->GetPortalDataFromPortalId(pkt.portal_id());
-    if (opt.has_value() == false)
-    {
-        wcout << "플레이어가 현재 Room에 존재하지 않는 포탈사용 시도" << '\n';
-        return false;
-    }
-
-    // Room 이동 처리
-    {
-        using namespace JsonProperty::Map;
-        const Json& portalData = opt.value();
-        const Json& dst = portalData[Dst];
-
-        // 1) Room 이동 데이터 설정
-        RoomEnterData transitionData = RoomEnterData();
-        {
-            transitionData.nextRoomId = dst[TemplateId];
-            transitionData.roomEnterType = Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD;
-
-            shared_ptr<Protocol::PosInfo> enterPos = transitionData.enterPos;
-            enterPos->set_object_id(player->objectInfo->object_id());
-            enterPos->set_x(dst[PosX]);
-            enterPos->set_y(dst[PosY]);
-            enterPos->set_z(dst[PosZ]);
-            enterPos->set_yaw(dst[Yaw]);
-            enterPos->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-        }
-
-        // 2) Room을 이동한다.
-        curRoom->DoAsync(&Room::TransferPlayer, player, transitionData);
-    }
-
-    return true;
-}
-
-bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
-{
-	auto gameSession = static_pointer_cast<GameSession>(session);
-
-	PlayerRef player = gameSession->player.load();
-	if (player == nullptr)
-		return false;
-
-	RoomRef room = player->room.load().lock();
-	if (room == nullptr)
-		return false;
-
     // Room 퇴장 처리
     room->DoAsync(&Room::LeavePlayer, player, false);
-	
+
 
     // DB 업데이트 처리
-	{
+    {
         int64 characterId = player->playerInfo->character_id();
         DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
 
@@ -237,12 +163,123 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
             }
         );
         dbQueue->Push(std::move(job));
-	}
+    }
 
     // GameSession 네트워크 연결 해제
     gameSession->Disconnect("Exit Game");
 
-	return true;
+    return true;
+}
+
+bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
+{
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+    {
+        Protocol::S_ENTER_MAP enterMapPkt;
+        {
+            enterMapPkt.set_success(false);
+            enterMapPkt.set_map_id(pkt.map_id());
+        }
+        SEND_PACKET(enterMapPkt);
+        return false;
+    }
+
+    // Map 입장 처리
+    if (pkt.enter_type() == Protocol::ENTER_TYPE_ENTER_GAME)
+    {
+        Protocol::S_ENTER_MAP enterMapPkt;
+        {
+            enterMapPkt.set_success(true);
+            enterMapPkt.set_map_id(pkt.map_id());
+        }
+        SEND_PACKET(enterMapPkt);
+    }
+
+    return true;
+}
+
+bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
+{
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    switch (pkt.enter_type())
+    {
+    case Protocol::ENTER_TYPE_ENTER_GAME:
+    {
+        int32 roomId = player->objectInfo->room_id();
+        RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
+        if (room == nullptr)
+            return false;
+
+        // Room 입장 처리
+        {
+            RoomEnterData roomEnterData;
+            {
+                roomEnterData.nextRoomId = roomId;
+                roomEnterData.enterType = pkt.enter_type();
+                roomEnterData.enterPos->CopyFrom(player->objectInfo->pos_info());
+            }
+            room->DoAsync(&Room::EnterPlayer, player, roomEnterData);
+        }
+
+        break;
+    }
+    case Protocol::ENTER_TYPE_INNER_PORTAL:
+    case Protocol::ENTER_TYPE_OUTER_PORTAL:
+    {
+        RoomRef curRoom = player->room.load().lock();
+        if (curRoom == nullptr)
+            return false;
+
+        optional<Json> opt = curRoom->GetPortalDataFromPortalId(pkt.portal_id());
+        if (opt.has_value() == false)
+        {
+            wcout << "플레이어가 현재 Room에 존재하지 않는 포탈사용 시도" << '\n';
+            return false;
+        }
+
+        // Room 이동 처리
+        {
+            using namespace JsonProperty::Map;
+            const Json& portalData = opt.value();
+            const Json& dst = portalData[Dst];
+
+            // 1) Room 이동 데이터 설정
+            RoomEnterData roomEnterData = RoomEnterData();
+            {
+                roomEnterData.nextRoomId = dst[TemplateId];
+                roomEnterData.enterType = pkt.enter_type();
+
+                shared_ptr<Protocol::PosInfo> enterPos = roomEnterData.enterPos;
+                enterPos->set_object_id(player->objectInfo->object_id());
+                enterPos->set_x(dst[PosX]);
+                enterPos->set_y(dst[PosY]);
+                enterPos->set_z(dst[PosZ]);
+                enterPos->set_yaw(dst[Yaw]);
+                enterPos->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+            }
+
+            // 2) Room을 이동한다.
+            curRoom->DoAsync(&Room::TransferPlayer, player, roomEnterData);
+        }
+
+        break;
+    }
+    default:
+    {
+        cout << "Handle_C_ENTER_ROOM: Invalid Enter Type" << '\n';
+        break;
+    }
+    }
+
+    return true;
 }
 
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
@@ -278,8 +315,6 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
 
     return true;
 }
-
-
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
@@ -406,7 +441,71 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
     if (curRoom == nullptr)
         return false;
 
-    curRoom->DoAsync(&Room::HandleRespawn, pkt, player);
+    // Find Respawn Room
+    RoomRef respawnRoom = nullptr;
+    shared_ptr<Protocol::PosInfo> respawnPos = make_shared<Protocol::PosInfo>();
+    Protocol::RespawnType respawnType = pkt.respawn_type();
+
+    switch (respawnType)
+    {
+    case Protocol::RESPAWN_TYPE_TOWN:
+    case Protocol::RESPAWN_TYPE_CHECKPOINT:
+    case Protocol::RESPAWN_TYPE_IN_PLACE:
+    case Protocol::RESPAWN_TYPE_GUILD_BASE:
+    {
+        uint32 roomId = player->GetRespawnRoomId(respawnType);
+        respawnRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
+        respawnPos = respawnRoom->GetRespawnPoint();
+        break;
+    }
+    case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
+    case Protocol::RESPAWN_TYPE_CASH_ITEM:
+    {
+        // 아이템 사용
+        break;
+    }
+    case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
+    case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
+    {
+        // objectId가 존재하는 경우
+        break;
+    }
+
+    }
+
+    if (respawnRoom == nullptr)
+    {
+        wcout << L"리스폰할 룸을 찾지 못함" << '\n';
+        return;
+    }
+
+    if (curRoom == respawnRoom)
+    {
+        curRoom->DoAsync(&Room::HandleRespawn, pkt, player, respawnPos);
+    }
+    else
+    {
+        // 특정 장소로 리스폰하는 경우(현재는 town만 사용)
+        using namespace JsonProperty::Map;
+
+        RoomEnterData enterData = RoomEnterData{};
+        // 1) Room 이동 데이터 설정
+        {
+
+            shared_ptr<Protocol::PosInfo> enterPos = enterData.enterPos;
+            enterPos->CopyFrom(*respawnPos);
+            enterPos->set_object_id(player->objectInfo->object_id());
+        }
+
+        // 2) Room을 이동 -> 리스폰 패킷 전송 -> Room 정보 전송
+        curRoom->DoAsync([self = curRoom, respawnRoom, pkt, player, enterData]()
+            {
+                self->TransferPlayer(player, enterData);
+                respawnRoom->DoAsync(&Room::HandleRespawn, pkt, player);
+                respawnRoom->DoAsync(&Room::SendAllObjectsData, player, false);
+            });
+
+    }
 
     return true;
 }

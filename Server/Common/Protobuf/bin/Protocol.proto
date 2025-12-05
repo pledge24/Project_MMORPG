@@ -59,6 +59,16 @@ message S_ENTER_GAME
 	ObjectInfo player = 2;
 }
 
+message C_LEAVE_GAME
+{
+
+}
+
+message S_LEAVE_GAME
+{
+
+}
+
 message C_ENTER_MAP
 {
     EnterType enter_type = 1;
@@ -93,18 +103,6 @@ message S_ENTER_ROOM
     EnterType enter_type = 2;
 
     uint32 room_id = 3;
-    PosInfo info = 3;
-    repeated ObjectInfo other_objects = 4;
-}
-
-message C_LEAVE_GAME
-{
-
-}
-
-message S_LEAVE_GAME
-{
-
 }
 
 message S_SPAWN
@@ -257,12 +255,13 @@ message C_RESPAWN
 
 message S_RESPAWN
 {
-    string error_message = 1;
-    RespawnType respawn_type = 2;
+    bool success = 1;
+    string error_message = 2;
+    RespawnType respawn_type = 3;
 
-    // 리스폰 결과
-    uint64 object_id = 3;
-    uint32 map_id = 4;
-    PosInfo pos_info = 5;
-    uint32 hp = 6;
+    // 리스폰 성공 결과(해당 정보가 실제 스폰시에 사용되진 않음. preview용)
+    uint64 object_id = 4;
+    uint32 room_id = 5;
+    PosInfo pos_info = 6;
+    uint32 hp = 7;
 }

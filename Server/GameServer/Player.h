@@ -5,6 +5,7 @@ class GameSession;
 class Room;
 class Inventory;
 class EquippedGear;
+struct RoomEnterData;
 
 struct NextLevelUpData
 {
@@ -41,10 +42,14 @@ public:
 
     /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+    virtual void OnEnterRoom(RoomRef enterRoom, const RoomEnterData& roomEnterData);
 
     void OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward);
     void OnLevelUp();
     void OnRespawn();
+
+    /** Getter */
+    uint32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
 
 private:
     /** 기타 함수 */
@@ -62,5 +67,8 @@ public:
 private:
     const uint32 MAX_LEVEL = 50;
     NextLevelUpData _nextLevelUpData;
+
+    map<Protocol::RespawnType, uint32> respawnRoomMappings;
+    uint32 RESPAWN_TOWN_ID = 10;        // 고정으로 사용
 };
 

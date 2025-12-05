@@ -4,7 +4,7 @@
 
 EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {
-    equippedGearLookup = player->playerInfo->mutable_equipped_gear();
+    equippedGearLookup = player->playerInfo->mutable_equipped_gear_detail();
 
     for (int32 slotId = 0; slotId <= Protocol::GearType_MAX; slotId++)
     {

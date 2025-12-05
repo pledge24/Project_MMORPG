@@ -100,8 +100,9 @@ enum GearType
     GEAR_TYPE_WEAPON = 6;
 }
 
-enum RespawnType {
-    RESPAWN_TYPE_NONE = 0;                      // 기본값 (사용하지 않음)
+enum RespawnType 
+{
+    RESPAWN_TYPE_NONE = 0;
     RESPAWN_TYPE_TOWN = 1;                      // 마을로 귀환
     RESPAWN_TYPE_CHECKPOINT = 2;                // 체크포인트에서 부활
     RESPAWN_TYPE_RESURRECTION_ITEM = 3;         // 부활 아이템 사용
@@ -109,22 +110,31 @@ enum RespawnType {
     RESPAWN_TYPE_PARTY_MEMBER = 5;              // 파티원 위치로 부활
     RESPAWN_TYPE_GUILD_BASE = 6;                // 길드 거점으로 부활
     RESPAWN_TYPE_CASH_ITEM = 7;                 // 캐시 부활 아이템
-    RESPAWN_TYPE_BATTLE_RESURRECTION = 8;       // 전투 중 부활 (힐러 스킬 등)
+    RESPAWN_TYPE_BATTLE_RESURRECTION = 8;       // 전투 중 부활 (ex. 힐러 스킬)
 }
 
 enum TeleportReason
 {
+    // 리스폰은 텔레포트에 포함하지 않는다.
     TELEPORT_REASON_NONE = 0;
-    TELEPORT_REASON_RETURN_BY_DEATH = 1;        // 사망 귀환
-    TELEPORT_REASON_TELEPORT_BY_ITEM = 2;       // 아이템 사용
-    TELEPORT_REASON_ENTER_BY_QUEST = 3;         // 퀘스트 워프
-    TELEPORT_REASON_RECALL_BY_PARTY = 4;        // 파티원 소환
+    TELEPORT_REASON_TELEPORT_BY_ITEM = 1;       // 아이템 사용
+    TELEPORT_REASON_ENTER_BY_QUEST = 2;         // 퀘스트 워프
+    TELEPORT_REASON_RECALL_BY_PARTY = 3;        // 파티원 소환
 };
 
-enum RoomEnterType
+enum EnterType
 {
-    ROOM_ENTER_TYPE_NONE = 0;
-    ROOM_ENTER_TYPE_ENTER_GAME = 1;             // 게임 입장
-    ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD = 2;      // 같은 필드 내 이동
-    ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM = 3;   // 시스템에 의한 텔레포트
+    // EnterType: 플레이어가 요청한 Enter 방식
+    ENTER_TYPE_NONE = 0;
+    ENTER_TYPE_ENTER_GAME = 1;                  // 처음 게임 입장
+    ENTER_TYPE_INNER_PORTAL = 2;                // 맵 내부 입장
+    ENTER_TYPE_OUTER_PORTAL = 3;                // 맵 외부 입장
+    ENTER_TYPE_TELEPORT = 4;                    // 텔레포트(ex. 아이템 사용)
 }
+
+//enum EnterReason
+//{
+//    // EnterReason: 서버가 Enter를 결정시킨 이유
+//    ENTER_REASON_NONE = 0;
+//    ENTER_REASON_RESPAWN = 1;
+//}

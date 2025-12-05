@@ -8,9 +8,10 @@ struct RoomEnterData
     RoomEnterData() { enterPos = make_shared<Protocol::PosInfo>(); }
 
     int32 nextRoomId = -1;
-    Protocol::RoomEnterType roomEnterType = Protocol::ROOM_ENTER_TYPE_NONE;
+    Protocol::EnterType enterType = Protocol::ENTER_TYPE_NONE;
     Protocol::TeleportReason teleportReason = Protocol::TELEPORT_REASON_NONE;
     shared_ptr<Protocol::PosInfo> enterPos;
+    bool sendRoomData = true;
 };
 
 using Cell = set<uint64>;   // 특정 영역에 있는 ObjectId
@@ -31,23 +32,26 @@ protected:
     void ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime);
 
 public:
-    /** 플레이어 입장/퇴장 관련 함수 */
-	void EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
-    void LeavePlayer(PlayerRef leavePlayer, bool moveRoom);
+    /** 플레이어 관련 함수 */
+	bool EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
+    bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
     void TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
-    /** 패킷 핸들 함수 */
+    /** 네트워크 함수 */
 	void HandleMove(Protocol::C_MOVE pkt);
     void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
     void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
     void HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
-    void HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
+    void HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos);
+
+    void SendAllObjectsData(PlayerRef player, bool excludeThisPlayer);
 
     /** Getter 함수 */
     vector2D GetRandomPos(bool usePadding = true);
 	RoomRef GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
     int32 GetRoomId() const { return _roomId; }
     optional<Json> GetPortalDataFromPortalId(int32 portalId);
+    shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return hasRespawnPoint ? respawnPoint : nullptr; }
 
     /** Setter 함수 */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);

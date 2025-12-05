@@ -44,6 +44,11 @@ bool Player::PostInit()
 
     CacheNextLevelUpData();
 
+    respawnRoomMappings[Protocol::RESPAWN_TYPE_TOWN] = RESPAWN_TOWN_ID;
+    respawnRoomMappings[Protocol::RESPAWN_TYPE_CHECKPOINT] = -1;
+    respawnRoomMappings[Protocol::RESPAWN_TYPE_IN_PLACE] = -1;
+    respawnRoomMappings[Protocol::RESPAWN_TYPE_GUILD_BASE] = -1;
+
     return true;
 }
 
@@ -74,7 +79,7 @@ bool Player::CalculateFinalStat()
         finalStat.magical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack]);
 
     // 2. 장착 중이 장비 스텟 추가
-    for (const auto& pair : playerInfo->equipped_gear())
+    for (const auto& pair : playerInfo->equipped_gear_detail())
     {
         const Protocol::Item& item = pair.second.item();
 
@@ -120,7 +125,7 @@ bool Player::CalculateFinalStat()
 
 bool Player::HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
-    int64 gold = playerInfo->gold();
+    int64 gold = playerInfo->possession().gold();
     int64 buyPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
 
     if (gold < buyPrice)
@@ -130,14 +135,14 @@ bool Player::HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold
         return false;
 
     totalGold = gold - buyPrice;
-    playerInfo->set_gold(totalGold);
+    playerInfo->mutable_possession()->set_gold(totalGold);
 
     return true;
 }
 
 bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count)
 {
-    int64 gold = playerInfo->gold();
+    int64 gold = playerInfo->possession().gold();
     int32 templateId = targetSlot->item().template_id();
     int64 sellPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::SellPrice]) * count;
 
@@ -145,7 +150,7 @@ bool Player::HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* tar
         return false;
 
     totalGold = gold + sellPrice;
-    playerInfo->set_gold(totalGold);
+    playerInfo->mutable_possession()->set_gold(totalGold);
 
     return true;
 }
@@ -268,14 +273,23 @@ void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     }
 }
 
+void Player::OnEnterRoom(RoomRef enterRoom, const RoomEnterData& roomEnterData)
+{
+    room.store(enterRoom);
+    objectInfo->set_room_id(enterRoom->GetRoomId());
+    posInfo->CopyFrom(*roomEnterData.enterPos);
+}
+
 void Player::OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward)
 {
     bool levelUp = false;
 
     // Get Reward
     {
+        Protocol::Possession* possession = playerInfo->mutable_possession();
+
         playerInfo->set_cur_exp(playerInfo->cur_exp() + expReward);
-        playerInfo->set_gold(playerInfo->gold() + goldReward);
+        possession->set_gold(possession->gold() + goldReward);
 
         // Check Level Up
         if (playerInfo->cur_exp() >= playerInfo->max_exp())
@@ -289,11 +303,13 @@ void Player::OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 go
     // Send S_MONSTER_KILL_RESULT Packet
     Protocol::S_MONSTER_KILL_RESULT monsterKillResultPkt;
     {
+        Protocol::Possession* possession = playerInfo->mutable_possession();
+
         monsterKillResultPkt.set_object_id(objectInfo->object_id());
         monsterKillResultPkt.set_monster_object_id(killedMonster->objectInfo->object_id());
 
         monsterKillResultPkt.set_current_exp(playerInfo->cur_exp());
-        monsterKillResultPkt.set_current_gold(playerInfo->gold());
+        monsterKillResultPkt.set_current_gold(possession->gold());
 
         if (levelUp)
         {
@@ -335,6 +351,7 @@ void Player::OnRespawn()
 {
     int32 respawnHp = static_cast<int32>(statInfo->max_hp() * 0.5f);
     statInfo->set_hp(respawnHp);
+    idDead = false;
 }
 
 void Player::CacheNextLevelUpData()

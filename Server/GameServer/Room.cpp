@@ -128,145 +128,113 @@ void Room::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
     }
 }
 
-void Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
+bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 {
+    Protocol::S_ENTER_ROOM enterRoomPkt;
     uint64 enterPlayerId = enterPlayer->objectInfo->object_id();
 
     if (RegisterObject(enterPlayer) == false)
     {
-        if (roomEnterData.roomEnterType == Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD)
-            wcout << L"플레이어: " << enterPlayerId << "가 필드간 Room 이동을 실패했습니다" << '\n';
-        else
+        if (roomEnterData.enterType == Protocol::ENTER_TYPE_INNER_PORTAL)
             wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
+        else
+            wcout << L"플레이어: " << enterPlayerId << "가 필드간 Room 이동을 실패했습니다" << '\n';
 
-        return;
-    }
-    
-
-    // enterPlayer: Send Room's Objects
-    {
-        // 1) 플레이어 위치 세팅
-        enterPlayer->posInfo->CopyFrom(*roomEnterData.enterPos);
-
-
-        // 2) Room에 있는 모든 Object들을 가져온다.(본인 제외)
-        RepeatedPtrField<Protocol::ObjectInfo> roomObjects;
+        if (auto session = enterPlayer->session.lock())
         {
-            for (auto& item : _objects)
-            {
-                if (item.second->objectInfo->object_id() == enterPlayerId)
-                    continue;
+            enterRoomPkt.set_success(false);
+            enterRoomPkt.set_enter_type(roomEnterData.enterType);
+            enterRoomPkt.set_room_id(_roomId);
 
-                roomObjects.Add()->CopyFrom(*item.second->objectInfo);
-            }
+            SEND_PACKET(enterRoomPkt);
         }
 
-        // 3) 입장 사유에 맞게 패킷 전송
-        switch (roomEnterData.roomEnterType)
-        {
-        case Protocol::ROOM_ENTER_TYPE_ENTER_GAME:
-        {
-            // Spawn할 Object에 본인을 추가
-            roomObjects.Add()->CopyFrom(*enterPlayer->objectInfo);
+        return false;
+    }
 
+    // 플레이어 Room 입장 성공 처리
+    {
+        enterPlayer->OnEnterRoom(static_pointer_cast<Room>(shared_from_this()), roomEnterData);
+
+        if (auto session = enterPlayer->session.lock())
+        {
+            enterRoomPkt.set_success(true);
+            enterRoomPkt.set_enter_type(roomEnterData.enterType);
+            enterRoomPkt.set_room_id(_roomId);
+
+            SEND_PACKET(enterRoomPkt);
+        }
+
+        // OtherPlayer: Broadcast NewPlayer SpawnPkt In Room
+        {
             Protocol::S_SPAWN spawnPkt;
-            spawnPkt.mutable_objects()->Swap(&roomObjects);
+
+            Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
+            objectInfo->CopyFrom(*enterPlayer->objectInfo);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-            if (auto session = enterPlayer->session.lock())
-                session->Send(sendBuffer);
-
-            break;
-        }
-        case Protocol::ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD:
-        {
-            Protocol::S_CHANGE_ROOM changeRoomPkt;
-            changeRoomPkt.set_map_id(enterPlayer->objectInfo->map_id());
-            changeRoomPkt.mutable_info()->CopyFrom(*roomEnterData.enterPos);
-            changeRoomPkt.mutable_objects()->Swap(&roomObjects);
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(changeRoomPkt);
-            if (auto session = enterPlayer->session.lock())
-                session->Send(sendBuffer);
-
-            break;
-        }
-        case Protocol::ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM:
-        {
-            if (roomEnterData.teleportReason == Protocol::TELEPORT_REASON_RETURN_BY_DEATH)
-            {
-                Protocol::S_RESPAWN respawnPkt;
-                {
-                    respawnPkt.set_respawn_type(Protocol::RESPAWN_TYPE_TOWN);
-
-                    respawnPkt.set_object_id(enterPlayerId);
-                    respawnPkt.set_map_id(_roomId);
-                    respawnPkt.mutable_pos_info()->CopyFrom(*enterPlayer->posInfo);
-                    respawnPkt.set_hp(enterPlayer->statInfo->hp());
-                }
-
-                SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(respawnPkt);
-                if (auto session = enterPlayer->session.lock())
-                    session->Send(sendBuffer);
-                break;
-            }
-
-            break;
-        }
-        default:
-        {
-            break;
-        }
+            Broadcast(sendBuffer, enterPlayerId);
         }
     }
 
-    // OtherPlayer: Broadcast NewPlayer SpawnPkt In Room
+    // Room의 오브젝트 정보를 클라이언트에게 보내야 하는 경우 진입
+    if (roomEnterData.sendRoomData)
     {
-        Protocol::S_SPAWN spawnPkt;
-
-        Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
-        objectInfo->CopyFrom(*enterPlayer->objectInfo);
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer, enterPlayerId);
+        bool excludeThisPlayer = false;
+        switch(roomEnterData.enterType)
+        {
+        case Protocol::ENTER_TYPE_ENTER_GAME:
+        case Protocol::ENTER_TYPE_OUTER_PORTAL:
+        {
+            excludeThisPlayer = true;   // 본인 제외
+        }
+        }
+        
+        SendAllObjectsData(enterPlayer, false);
     }
-    
+   
+    return true;
 }
 
-void Room::LeavePlayer(PlayerRef leavePlayer, bool moveRoom)
+bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 {
     const uint64 leavePlayerId = leavePlayer->objectInfo->object_id();
 
-    // 방을 나간 Player를 제거
     if (UnRegisterObject(leavePlayerId) == false)
     {
-        if (moveRoom)
-            wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 시 이전 Room 퇴장에 실패했습니다" << '\n';
+        if (transferRoom)
+            wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 중 현재 Room 퇴장에 실패했습니다" << '\n';
         else
             wcout << L"플레이어: " << leavePlayerId << "가 Room 퇴장에 실패했습니다" << '\n';
 
-        return;
+        return false;
     }
 
-    // OtherPlayer: Broadcast Player Despawn In Room
+    // 플레이어 Room 퇴장 성공 처리
     {
-        Protocol::S_DESPAWN despawnPkt;
-        despawnPkt.add_object_ids(leavePlayerId);
+        // OtherPlayer: Broadcast Player Despawn In Room
+        {
+            Protocol::S_DESPAWN despawnPkt;
+            despawnPkt.add_object_ids(leavePlayerId);
 
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
-        Broadcast(sendBuffer);
-    }
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
+            Broadcast(sendBuffer);
+        }
 
-    // leavePlayer: Despawn Packet 전송
-    if (moveRoom == false)
-    {
-        Protocol::S_DESPAWN despawnPkt;
-        despawnPkt.add_object_ids(leavePlayerId);
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
+        // leavePlayer: Despawn Packet 전송
         if (auto session = leavePlayer->session.lock())
-            session->Send(sendBuffer);
+        {
+            if (transferRoom == false)
+            {
+                Protocol::S_DESPAWN despawnPkt;
+                despawnPkt.add_object_ids(leavePlayerId);
+
+                SEND_PACKET(despawnPkt);
+            }
+        }
     }
+
+    return true;
 }
 
 void Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
@@ -388,60 +356,65 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     }
 }
 
-void Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
+void Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos)
 {
-    Protocol::RespawnType respawnType = pkt.respawn_type();
-    RoomEnterData transitionData = RoomEnterData();
-    Protocol::PosInfo respawnPos;
+    uint64 playerId = player->objectInfo->object_id();
+    bool success = true;
 
-    switch (respawnType)
+    if (respawnPoint == nullptr)
     {
-    case Protocol::RESPAWN_TYPE_TOWN:
+        wcout << "리스폰 위치가 없는 Room에서 리스폰 시도" << '\n';
+        success = false;
+    }
+    else
     {
-        // 플레이어 리스폰 Hp 세팅
+        player->posInfo->CopyFrom(*respawnPoint);
         player->OnRespawn();
-
-        // 리스폰 데이터 세팅
-        respawnPos.CopyFrom(Gamedata::GetTownRespawnPoint());
-
-        transitionData.nextRoomId = Gamedata::TOWN_ROOM_ID;
-        transitionData.roomEnterType = Protocol::ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM;
-        transitionData.teleportReason = Protocol::TELEPORT_REASON_RETURN_BY_DEATH;
     }
-    case Protocol::RESPAWN_TYPE_CHECKPOINT:
-    case Protocol::RESPAWN_TYPE_IN_PLACE:
-    case Protocol::RESPAWN_TYPE_GUILD_BASE:
+    
+    // 리스폰 패킷 전송
+    if (auto session = player->session.lock())
     {
-        // 특정 장소로 리스폰하는 경우(현재는 town만 사용)
-        using namespace JsonProperty::Map;
+        Protocol::S_RESPAWN respawnPkt;
 
-        // 1) Room 이동 데이터 설정
+        respawnPkt.set_success(success);
+        respawnPkt.set_respawn_type(pkt.respawn_type());
+
+        respawnPkt.set_object_id(playerId);
+        respawnPkt.set_room_id(_roomId);
+        respawnPkt.mutable_pos_info()->CopyFrom(*player->posInfo);
+        respawnPkt.set_hp(player->statInfo->hp());
+
+        SEND_PACKET(respawnPkt);
+    }
+
+}
+
+void Room::SendAllObjectsData(PlayerRef player, bool excludeThisPlayer)
+{
+    uint64 playerId = player->objectInfo->object_id();
+
+    // Room에 있는 모든 Object들을 가져온다.(본인 제외)
+    RepeatedPtrField<Protocol::ObjectInfo> roomObjects;
+    {
+        for (auto& item : _objects)
         {
-            shared_ptr<Protocol::PosInfo> enterPos = transitionData.enterPos;
-            enterPos->CopyFrom(respawnPos);
-            enterPos->set_object_id(player->objectInfo->object_id());
+            if (!excludeThisPlayer && item.second->objectInfo->object_id() == playerId)
+                continue;
+
+            roomObjects.Add()->CopyFrom(*item.second->objectInfo);
+            // equipped_gear_summary 활용하기
+
         }
-
-        // 2) Room을 이동한다.
-        TransferPlayer(player, transitionData);
-
-        break;
-    }
-    case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
-    case Protocol::RESPAWN_TYPE_CASH_ITEM:
-    {
-        // 아이템 사용
-
-        break;
-    }
-    case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
-    case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
-    {
-        // objectId가 존재하는 경우
-        break;
     }
 
-    }
+    // 해당 플레이어에게 Room Object 전송
+    Protocol::S_SPAWN spawnPkt;
+    spawnPkt.mutable_objects()->Swap(&roomObjects);
+
+    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
+    if (auto session = player->session.lock())
+        session->Send(sendBuffer);
 }
 
 vector2D Room::GetRandomPos(bool usePadding)
@@ -607,6 +580,7 @@ void Room::CacheRoomData()
         monsterIds.push_back(monsterId);
     }
 
+    // 리스폰 포인트 저장
     if (_roomData[HasRespawnPoint] && _roomData[RespawnPoint].is_null() == false)
     {
         respawnPoint = make_shared<Protocol::PosInfo>();
@@ -732,7 +706,7 @@ bool Room::RegisterObject(ObjectRef object)
 
     // Object가 속한 Room에 대한 정보 갱신
 	object->room.store(GetRoomRef());
-    object->objectInfo->set_map_id(_roomId);
+    object->objectInfo->set_room_id(_roomId);
 
 	return true;
 }

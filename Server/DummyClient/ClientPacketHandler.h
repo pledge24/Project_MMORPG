@@ -22,32 +22,33 @@ enum : uint16
 	PKT_S_DELETE_CHARACTER = 1007,
 	PKT_C_ENTER_GAME = 1008,
 	PKT_S_ENTER_GAME = 1009,
-	PKT_C_ENTER_MAP_COMPLETE = 1010,
-	PKT_C_CHANGE_ROOM = 1011,
-	PKT_S_CHANGE_ROOM = 1012,
-	PKT_C_LEAVE_GAME = 1013,
-	PKT_S_LEAVE_GAME = 1014,
-	PKT_S_SPAWN = 1015,
-	PKT_S_DESPAWN = 1016,
-	PKT_C_MOVE = 1017,
-	PKT_S_MOVE = 1018,
-	PKT_C_NORMAL_ATTACK = 1019,
-	PKT_S_NORMAL_ATTACK = 1020,
-	PKT_S_HIT = 1021,
-	PKT_C_BUY_ITEM = 1022,
-	PKT_S_BUY_ITEM = 1023,
-	PKT_C_SELL_ITEM = 1024,
-	PKT_S_SELL_ITEM = 1025,
-	PKT_C_EQUIP_GEAR = 1026,
-	PKT_S_EQUIP_GEAR = 1027,
-	PKT_C_UNEQUIP_GEAR = 1028,
-	PKT_S_UNEQUIP_GEAR = 1029,
-	PKT_C_USE_ITEM = 1030,
-	PKT_S_USE_ITEM = 1031,
-	PKT_S_DIE = 1032,
-	PKT_S_MONSTER_KILL_RESULT = 1033,
-	PKT_C_RESPAWN = 1034,
-	PKT_S_RESPAWN = 1035,
+	PKT_C_LEAVE_GAME = 1010,
+	PKT_S_LEAVE_GAME = 1011,
+	PKT_C_ENTER_MAP = 1012,
+	PKT_S_ENTER_MAP = 1013,
+	PKT_C_ENTER_ROOM = 1014,
+	PKT_S_ENTER_ROOM = 1015,
+	PKT_S_SPAWN = 1016,
+	PKT_S_DESPAWN = 1017,
+	PKT_C_MOVE = 1018,
+	PKT_S_MOVE = 1019,
+	PKT_C_NORMAL_ATTACK = 1020,
+	PKT_S_NORMAL_ATTACK = 1021,
+	PKT_S_HIT = 1022,
+	PKT_C_BUY_ITEM = 1023,
+	PKT_S_BUY_ITEM = 1024,
+	PKT_C_SELL_ITEM = 1025,
+	PKT_S_SELL_ITEM = 1026,
+	PKT_C_EQUIP_GEAR = 1027,
+	PKT_S_EQUIP_GEAR = 1028,
+	PKT_C_UNEQUIP_GEAR = 1029,
+	PKT_S_UNEQUIP_GEAR = 1030,
+	PKT_C_USE_ITEM = 1031,
+	PKT_S_USE_ITEM = 1032,
+	PKT_S_DIE = 1033,
+	PKT_S_MONSTER_KILL_RESULT = 1034,
+	PKT_C_RESPAWN = 1035,
+	PKT_S_RESPAWN = 1036,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -58,8 +59,9 @@ bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt);
 bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt);
 bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt);
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt);
-bool Handle_S_CHANGE_ROOM(PacketSessionRef& session, Protocol::S_CHANGE_ROOM& pkt);
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt);
+bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt);
+bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt);
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt);
 bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt);
 bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt);
@@ -88,8 +90,9 @@ public:
 		GPacketHandler[PKT_S_CREATE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CREATE_CHARACTER>(Handle_S_CREATE_CHARACTER, session, buffer, len); };
 		GPacketHandler[PKT_S_DELETE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DELETE_CHARACTER>(Handle_S_DELETE_CHARACTER, session, buffer, len); };
 		GPacketHandler[PKT_S_ENTER_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ENTER_GAME>(Handle_S_ENTER_GAME, session, buffer, len); };
-		GPacketHandler[PKT_S_CHANGE_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHANGE_ROOM>(Handle_S_CHANGE_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_S_LEAVE_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_LEAVE_GAME>(Handle_S_LEAVE_GAME, session, buffer, len); };
+		GPacketHandler[PKT_S_ENTER_MAP] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ENTER_MAP>(Handle_S_ENTER_MAP, session, buffer, len); };
+		GPacketHandler[PKT_S_ENTER_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ENTER_ROOM>(Handle_S_ENTER_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_S_SPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_SPAWN>(Handle_S_SPAWN, session, buffer, len); };
 		GPacketHandler[PKT_S_DESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DESPAWN>(Handle_S_DESPAWN, session, buffer, len); };
 		GPacketHandler[PKT_S_MOVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_MOVE>(Handle_S_MOVE, session, buffer, len); };
@@ -117,9 +120,9 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_CREATE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_DELETE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_GAME); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_MAP_COMPLETE& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_MAP_COMPLETE); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_CHANGE_ROOM& pkt) { return MakeSerializedPacket(pkt, PKT_C_CHANGE_ROOM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_LEAVE_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_MAP& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_MAP); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_ROOM& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_ROOM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_MOVE& pkt) { return MakeSerializedPacket(pkt, PKT_C_MOVE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_NORMAL_ATTACK& pkt) { return MakeSerializedPacket(pkt, PKT_C_NORMAL_ATTACK); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_BUY_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_C_BUY_ITEM); }

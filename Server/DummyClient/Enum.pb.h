@@ -389,10 +389,9 @@ inline bool RespawnType_Parse(
 }
 enum TeleportReason : int {
   TELEPORT_REASON_NONE = 0,
-  TELEPORT_REASON_RETURN_BY_DEATH = 1,
-  TELEPORT_REASON_TELEPORT_BY_ITEM = 2,
-  TELEPORT_REASON_ENTER_BY_QUEST = 3,
-  TELEPORT_REASON_RECALL_BY_PARTY = 4,
+  TELEPORT_REASON_TELEPORT_BY_ITEM = 1,
+  TELEPORT_REASON_ENTER_BY_QUEST = 2,
+  TELEPORT_REASON_RECALL_BY_PARTY = 3,
   TeleportReason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   TeleportReason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
@@ -415,32 +414,33 @@ inline bool TeleportReason_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<TeleportReason>(
     TeleportReason_descriptor(), name, value);
 }
-enum RoomEnterType : int {
-  ROOM_ENTER_TYPE_NONE = 0,
-  ROOM_ENTER_TYPE_ENTER_GAME = 1,
-  ROOM_ENTER_TYPE_MOVE_WITHIN_FIELD = 2,
-  ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM = 3,
-  RoomEnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  RoomEnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+enum EnterType : int {
+  ENTER_TYPE_NONE = 0,
+  ENTER_TYPE_ENTER_GAME = 1,
+  ENTER_TYPE_INNER_PORTAL = 2,
+  ENTER_TYPE_OUTER_PORTAL = 3,
+  ENTER_TYPE_TELEPORT = 4,
+  EnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  EnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool RoomEnterType_IsValid(int value);
-constexpr RoomEnterType RoomEnterType_MIN = ROOM_ENTER_TYPE_NONE;
-constexpr RoomEnterType RoomEnterType_MAX = ROOM_ENTER_TYPE_TELEPORTED_BY_SYSTEM;
-constexpr int RoomEnterType_ARRAYSIZE = RoomEnterType_MAX + 1;
+bool EnterType_IsValid(int value);
+constexpr EnterType EnterType_MIN = ENTER_TYPE_NONE;
+constexpr EnterType EnterType_MAX = ENTER_TYPE_TELEPORT;
+constexpr int EnterType_ARRAYSIZE = EnterType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RoomEnterType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor();
 template<typename T>
-inline const std::string& RoomEnterType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, RoomEnterType>::value ||
+inline const std::string& EnterType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, EnterType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function RoomEnterType_Name.");
+    "Incorrect type passed to function EnterType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    RoomEnterType_descriptor(), enum_t_value);
+    EnterType_descriptor(), enum_t_value);
 }
-inline bool RoomEnterType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RoomEnterType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RoomEnterType>(
-    RoomEnterType_descriptor(), name, value);
+inline bool EnterType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EnterType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EnterType>(
+    EnterType_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -529,10 +529,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::TeleportReason>() {
   return ::Protocol::TeleportReason_descriptor();
 }
-template <> struct is_proto_enum< ::Protocol::RoomEnterType> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::EnterType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RoomEnterType>() {
-  return ::Protocol::RoomEnterType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::EnterType>() {
+  return ::Protocol::EnterType_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

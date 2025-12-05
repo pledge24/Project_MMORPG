@@ -577,7 +577,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
             dbBind.BindCol(2, _curMp);
             dbBind.BindCol(3, _curPhysicalAttack);
             dbBind.BindCol(4, _curMagicalAttack);
-            dbBind.BindCol(5, _mapId);
+            dbBind.BindCol(5, _roomId);
             dbBind.BindCol(6, _posX);
             dbBind.BindCol(7, _posY);
             dbBind.BindCol(8, _posZ);
@@ -594,7 +594,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         int32 _curMp;
         int32 _curPhysicalAttack;
         int32 _curMagicalAttack;
-        int32 _mapId;
+        int32 _roomId;
         float _posX;
         float _posY;
         float _posZ;
@@ -608,7 +608,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
     {
         // 해당 유저의 마지막 정보를 가져온다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-            SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
+            SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, pos_x, pos_y, pos_z, rot_yaw, gold
             FROM [dbo].[CharactersLastState] 
             WHERE character_id = (?)
         )SQL");
@@ -640,14 +640,14 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         statInfo->set_magical_attack(bindObject._curMagicalAttack);
 
         // 위치 설정
-        objectInfo->set_map_id(bindObject._mapId);
+        objectInfo->set_room_id(bindObject._roomId);
         posInfo->set_x(bindObject._posX);
         posInfo->set_y(bindObject._posY);
         posInfo->set_z(bindObject._posZ);
         posInfo->set_yaw(bindObject._rotYaw);
 
         // ==플레이어 골드 설정==
-        playerInfo->set_gold(bindObject._gold);
+        playerInfo->mutable_possession()->set_gold(bindObject._gold);
     }
     catch (DBCustomError error)
     {
@@ -1000,12 +1000,12 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             _curMp = playerInfo.stat_info().mp();
             _curPhysicalAttack = playerInfo.stat_info().physical_attack();
             _curMagicalAttack = playerInfo.stat_info().magical_attack();
-            _mapId = objectInfo->map_id();
+            _roomId = objectInfo->room_id();
             _posX = posInfo.x();
             _posY = posInfo.y();
             _posZ = posInfo.z();
             _rotYaw = posInfo.yaw();
-            _gold = playerInfo.gold();
+            _gold = playerInfo.possession().gold();
             _characterId = playerInfo.character_id();
 
             BindParam(dbBind);
@@ -1018,7 +1018,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             dbBind.BindParam(2, _curMp);
             dbBind.BindParam(3, _curPhysicalAttack);
             dbBind.BindParam(4, _curMagicalAttack);
-            dbBind.BindParam(5, _mapId);
+            dbBind.BindParam(5, _roomId);
             dbBind.BindParam(6, _posX);
             dbBind.BindParam(7, _posY);
             dbBind.BindParam(8, _posZ);
@@ -1033,7 +1033,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
         int32 _curMp;
         int32 _curPhysicalAttack;
         int32 _curMagicalAttack;
-        int32 _mapId;
+        int32 _roomId;
         float _posX;
         float _posY;
         float _posZ;
@@ -1049,7 +1049,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
         // 해당 유저의 마지막 정보를 가져온다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             UPDATE [dbo].[CharactersLastState]
-            SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
+            SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
             WHERE character_id = (?)
         )SQL");
 
@@ -1112,7 +1112,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
         BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32& rows)
         {
             const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.inventory();
+            const Protocol::Inventory& inven = playerInfo.possession().inventory();
             vector<bool>& gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
 
             // MemSet
@@ -1153,7 +1153,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
                 if (pair.second == true)
                 {
                     int32 slotId = pair.first;
-                    const Protocol::Slot& slot = playerInfo.equipped_gear().at(slotId);
+                    const Protocol::Slot& slot = playerInfo.equipped_gear_detail().at(slotId);
                     _characterId[rows] = playerInfo.character_id();
                     _slotId[rows] = slot.slot_id();
                     _itemUid[rows] = slot.item().item_uid();
@@ -1279,7 +1279,7 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
         BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
         {
             const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.inventory();
+            const Protocol::Inventory& inven = playerInfo.possession().inventory();
             vector<bool>& consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
 
             // MemSet
@@ -1398,7 +1398,7 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
         BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
         {
             const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.inventory();
+            const Protocol::Inventory& inven = playerInfo.possession().inventory();
             vector<bool>& miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
 
             // MemSet

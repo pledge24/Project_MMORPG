@@ -5,7 +5,7 @@
 
 Inventory::Inventory(PlayerRef player) : _player(player)
 {
-    Protocol::Inventory* inventory = player->playerInfo->mutable_inventory();
+    Protocol::Inventory* inventory = player->playerInfo->mutable_possession()->mutable_inventory();
     
     for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
     {
