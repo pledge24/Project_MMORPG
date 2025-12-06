@@ -49,6 +49,7 @@ enum : uint16
 	PKT_S_MONSTER_KILL_RESULT = 1034,
 	PKT_C_RESPAWN = 1035,
 	PKT_S_RESPAWN = 1036,
+	PKT_S_TELEPORT = 1037,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -126,6 +127,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_MONSTER_KILL_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_MONSTER_KILL_RESULT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_RESPAWN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_TELEPORT& pkt) { return MakeSerializedPacket(pkt, PKT_S_TELEPORT); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

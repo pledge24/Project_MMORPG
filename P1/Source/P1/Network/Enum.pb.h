@@ -387,45 +387,19 @@ inline bool RespawnType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RespawnType>(
     RespawnType_descriptor(), name, value);
 }
-enum TeleportReason : int {
-  TELEPORT_REASON_NONE = 0,
-  TELEPORT_REASON_TELEPORT_BY_ITEM = 1,
-  TELEPORT_REASON_ENTER_BY_QUEST = 2,
-  TELEPORT_REASON_RECALL_BY_PARTY = 3,
-  TeleportReason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  TeleportReason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool TeleportReason_IsValid(int value);
-constexpr TeleportReason TeleportReason_MIN = TELEPORT_REASON_NONE;
-constexpr TeleportReason TeleportReason_MAX = TELEPORT_REASON_RECALL_BY_PARTY;
-constexpr int TeleportReason_ARRAYSIZE = TeleportReason_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* TeleportReason_descriptor();
-template<typename T>
-inline const std::string& TeleportReason_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, TeleportReason>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function TeleportReason_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    TeleportReason_descriptor(), enum_t_value);
-}
-inline bool TeleportReason_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, TeleportReason* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<TeleportReason>(
-    TeleportReason_descriptor(), name, value);
-}
 enum EnterType : int {
   ENTER_TYPE_NONE = 0,
   ENTER_TYPE_ENTER_GAME = 1,
-  ENTER_TYPE_INNER_PORTAL = 2,
-  ENTER_TYPE_OUTER_PORTAL = 3,
-  ENTER_TYPE_TELEPORT = 4,
+  ENTER_TYPE_USE_PORTAL = 2,
+  ENTER_TYPE_USE_ITEM = 4,
+  ENTER_TYPE_QUEST = 5,
+  ENTER_TYPE_RECALL_BY_PARTY = 6,
   EnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EnterType_IsValid(int value);
 constexpr EnterType EnterType_MIN = ENTER_TYPE_NONE;
-constexpr EnterType EnterType_MAX = ENTER_TYPE_TELEPORT;
+constexpr EnterType EnterType_MAX = ENTER_TYPE_RECALL_BY_PARTY;
 constexpr int EnterType_ARRAYSIZE = EnterType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor();
@@ -523,11 +497,6 @@ template <> struct is_proto_enum< ::Protocol::RespawnType> : ::std::true_type {}
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RespawnType>() {
   return ::Protocol::RespawnType_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::TeleportReason> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::TeleportReason>() {
-  return ::Protocol::TeleportReason_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::EnterType> : ::std::true_type {};
 template <>

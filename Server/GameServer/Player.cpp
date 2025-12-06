@@ -273,11 +273,25 @@ void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     }
 }
 
-void Player::OnEnterRoom(RoomRef enterRoom, const RoomEnterData& roomEnterData)
+void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos)
 {
     room.store(enterRoom);
     objectInfo->set_room_id(enterRoom->GetRoomId());
-    posInfo->CopyFrom(*roomEnterData.enterPos);
+    if(enterPos.has_value())
+    {
+        posInfo->CopyFrom(enterPos.value());
+    }
+    else
+    {
+        // 만일을 대비한 posInfo 세팅
+        const vector3D& centerPos = enterRoom->GetCenterPoint();
+
+        posInfo->set_x(centerPos.x);
+        posInfo->set_y(centerPos.y);
+        posInfo->set_z(centerPos.z);
+        posInfo->set_yaw(0.f);
+        posInfo->set_state(Protocol::MOVE_STATE_IDLE);
+    }
 }
 
 void Player::OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward)

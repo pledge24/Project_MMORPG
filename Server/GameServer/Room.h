@@ -5,13 +5,9 @@
 
 struct RoomEnterData
 {
-    RoomEnterData() { enterPos = make_shared<Protocol::PosInfo>(); }
-
     int32 nextRoomId = -1;
     Protocol::EnterType enterType = Protocol::ENTER_TYPE_NONE;
-    Protocol::TeleportReason teleportReason = Protocol::TELEPORT_REASON_NONE;
-    shared_ptr<Protocol::PosInfo> enterPos;
-    bool sendRoomData = true;
+    optional<Protocol::PosInfo> enterPos;
 };
 
 using Cell = set<uint64>;   // 특정 영역에 있는 ObjectId
@@ -35,7 +31,7 @@ public:
     /** 플레이어 관련 함수 */
 	bool EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
     bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
-    void TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
+    bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
     /** 네트워크 함수 */
 	void HandleMove(Protocol::C_MOVE pkt);
@@ -44,7 +40,12 @@ public:
     void HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
     void HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos);
 
-    void SendAllObjectsData(PlayerRef player, bool excludeThisPlayer);
+    void ReplicateRoomData(PlayerRef player, bool excludeThisPlayer);
+
+    /** 오브젝트 관리 함수 */
+    MonsterRef SpawnMonster(int32 templateId);
+    PlayerRef SpawnPlayer(uint64 objectId);
+    PlayerRef SpawnPlayer(PlayerRef targetPlayer);
 
     /** Getter 함수 */
     vector2D GetRandomPos(bool usePadding = true);
@@ -52,6 +53,7 @@ public:
     int32 GetRoomId() const { return _roomId; }
     optional<Json> GetPortalDataFromPortalId(int32 portalId);
     shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return hasRespawnPoint ? respawnPoint : nullptr; }
+    const vector3D& GetCenterPoint() const { return _roomCenterPos; }
 
     /** Setter 함수 */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
@@ -82,8 +84,6 @@ protected:
     /* Object 관련*/
 	bool RegisterObject(ObjectRef object);
 	bool UnRegisterObject(uint64 objectId);
-
-    MonsterRef SpawnMonster(int32 templateId);
 
     /* 네트워크 관련 */
 	void Broadcast(SendBufferRef sendBuffer, uint64 exceptId = 0);

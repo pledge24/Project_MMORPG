@@ -42,7 +42,7 @@ public:
 
     /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
-    virtual void OnEnterRoom(RoomRef enterRoom, const RoomEnterData& roomEnterData);
+    virtual void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
 
     void OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward);
     void OnLevelUp();

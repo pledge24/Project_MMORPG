@@ -153,6 +153,9 @@ extern S_SELL_ITEMDefaultTypeInternal _S_SELL_ITEM_default_instance_;
 class S_SPAWN;
 struct S_SPAWNDefaultTypeInternal;
 extern S_SPAWNDefaultTypeInternal _S_SPAWN_default_instance_;
+class S_TELEPORT;
+struct S_TELEPORTDefaultTypeInternal;
+extern S_TELEPORTDefaultTypeInternal _S_TELEPORT_default_instance_;
 class S_UNEQUIP_GEAR;
 struct S_UNEQUIP_GEARDefaultTypeInternal;
 extern S_UNEQUIP_GEARDefaultTypeInternal _S_UNEQUIP_GEAR_default_instance_;
@@ -196,6 +199,7 @@ template<> ::Protocol::S_PONG* Arena::CreateMaybeMessage<::Protocol::S_PONG>(Are
 template<> ::Protocol::S_RESPAWN* Arena::CreateMaybeMessage<::Protocol::S_RESPAWN>(Arena*);
 template<> ::Protocol::S_SELL_ITEM* Arena::CreateMaybeMessage<::Protocol::S_SELL_ITEM>(Arena*);
 template<> ::Protocol::S_SPAWN* Arena::CreateMaybeMessage<::Protocol::S_SPAWN>(Arena*);
+template<> ::Protocol::S_TELEPORT* Arena::CreateMaybeMessage<::Protocol::S_TELEPORT>(Arena*);
 template<> ::Protocol::S_UNEQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::S_UNEQUIP_GEAR>(Arena*);
 template<> ::Protocol::S_USE_ITEM* Arena::CreateMaybeMessage<::Protocol::S_USE_ITEM>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
@@ -1994,10 +1998,10 @@ class C_ENTER_MAP final :
   static const C_ENTER_MAP& default_instance() {
     return *internal_default_instance();
   }
-  enum MapDataCase {
-    kMapId = 2,
-    kPortalId = 3,
-    MAP_DATA_NOT_SET = 0,
+  enum EnterDataCase {
+    kRoomId = 3,
+    kPortalId = 4,
+    ENTER_DATA_NOT_SET = 0,
   };
 
   static inline const C_ENTER_MAP* internal_default_instance() {
@@ -2080,7 +2084,8 @@ class C_ENTER_MAP final :
   enum : int {
     kEnterTypeFieldNumber = 1,
     kMapIdFieldNumber = 2,
-    kPortalIdFieldNumber = 3,
+    kRoomIdFieldNumber = 3,
+    kPortalIdFieldNumber = 4,
   };
   // .Protocol.EnterType enter_type = 1;
   void clear_enter_type();
@@ -2092,10 +2097,6 @@ class C_ENTER_MAP final :
   public:
 
   // uint32 map_id = 2;
-  bool has_map_id() const;
-  private:
-  bool _internal_has_map_id() const;
-  public:
   void clear_map_id();
   uint32_t map_id() const;
   void set_map_id(uint32_t value);
@@ -2104,7 +2105,20 @@ class C_ENTER_MAP final :
   void _internal_set_map_id(uint32_t value);
   public:
 
-  // uint32 portal_id = 3;
+  // uint32 room_id = 3;
+  bool has_room_id() const;
+  private:
+  bool _internal_has_room_id() const;
+  public:
+  void clear_room_id();
+  uint32_t room_id() const;
+  void set_room_id(uint32_t value);
+  private:
+  uint32_t _internal_room_id() const;
+  void _internal_set_room_id(uint32_t value);
+  public:
+
+  // uint32 portal_id = 4;
   bool has_portal_id() const;
   private:
   bool _internal_has_portal_id() const;
@@ -2117,28 +2131,29 @@ class C_ENTER_MAP final :
   void _internal_set_portal_id(uint32_t value);
   public:
 
-  void clear_map_data();
-  MapDataCase map_data_case() const;
+  void clear_enter_data();
+  EnterDataCase enter_data_case() const;
   // @@protoc_insertion_point(class_scope:Protocol.C_ENTER_MAP)
  private:
   class _Internal;
-  void set_has_map_id();
+  void set_has_room_id();
   void set_has_portal_id();
 
-  inline bool has_map_data() const;
-  inline void clear_has_map_data();
+  inline bool has_enter_data() const;
+  inline void clear_has_enter_data();
 
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
     int enter_type_;
-    union MapDataUnion {
-      constexpr MapDataUnion() : _constinit_{} {}
+    uint32_t map_id_;
+    union EnterDataUnion {
+      constexpr EnterDataUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
-      uint32_t map_id_;
+      uint32_t room_id_;
       uint32_t portal_id_;
-    } map_data_;
+    } enter_data_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
 
@@ -2350,9 +2365,10 @@ class C_ENTER_ROOM final :
   static const C_ENTER_ROOM& default_instance() {
     return *internal_default_instance();
   }
-  enum RoomDataCase {
-    kPortalId = 2,
-    ROOM_DATA_NOT_SET = 0,
+  enum EnterDataCase {
+    kRoomId = 2,
+    kPortalId = 3,
+    ENTER_DATA_NOT_SET = 0,
   };
 
   static inline const C_ENTER_ROOM* internal_default_instance() {
@@ -2434,7 +2450,8 @@ class C_ENTER_ROOM final :
 
   enum : int {
     kEnterTypeFieldNumber = 1,
-    kPortalIdFieldNumber = 2,
+    kRoomIdFieldNumber = 2,
+    kPortalIdFieldNumber = 3,
   };
   // .Protocol.EnterType enter_type = 1;
   void clear_enter_type();
@@ -2445,7 +2462,20 @@ class C_ENTER_ROOM final :
   void _internal_set_enter_type(::Protocol::EnterType value);
   public:
 
-  // uint32 portal_id = 2;
+  // uint32 room_id = 2;
+  bool has_room_id() const;
+  private:
+  bool _internal_has_room_id() const;
+  public:
+  void clear_room_id();
+  uint32_t room_id() const;
+  void set_room_id(uint32_t value);
+  private:
+  uint32_t _internal_room_id() const;
+  void _internal_set_room_id(uint32_t value);
+  public:
+
+  // uint32 portal_id = 3;
   bool has_portal_id() const;
   private:
   bool _internal_has_portal_id() const;
@@ -2458,26 +2488,28 @@ class C_ENTER_ROOM final :
   void _internal_set_portal_id(uint32_t value);
   public:
 
-  void clear_room_data();
-  RoomDataCase room_data_case() const;
+  void clear_enter_data();
+  EnterDataCase enter_data_case() const;
   // @@protoc_insertion_point(class_scope:Protocol.C_ENTER_ROOM)
  private:
   class _Internal;
+  void set_has_room_id();
   void set_has_portal_id();
 
-  inline bool has_room_data() const;
-  inline void clear_has_room_data();
+  inline bool has_enter_data() const;
+  inline void clear_has_enter_data();
 
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
     int enter_type_;
-    union RoomDataUnion {
-      constexpr RoomDataUnion() : _constinit_{} {}
+    union EnterDataUnion {
+      constexpr EnterDataUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      uint32_t room_id_;
       uint32_t portal_id_;
-    } room_data_;
+    } enter_data_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
 
@@ -2608,10 +2640,29 @@ class S_ENTER_ROOM final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kEnterPosFieldNumber = 4,
     kSuccessFieldNumber = 1,
     kEnterTypeFieldNumber = 2,
     kRoomIdFieldNumber = 3,
   };
+  // optional .Protocol.PosInfo enter_pos = 4;
+  bool has_enter_pos() const;
+  private:
+  bool _internal_has_enter_pos() const;
+  public:
+  void clear_enter_pos();
+  const ::Protocol::PosInfo& enter_pos() const;
+  PROTOBUF_NODISCARD ::Protocol::PosInfo* release_enter_pos();
+  ::Protocol::PosInfo* mutable_enter_pos();
+  void set_allocated_enter_pos(::Protocol::PosInfo* enter_pos);
+  private:
+  const ::Protocol::PosInfo& _internal_enter_pos() const;
+  ::Protocol::PosInfo* _internal_mutable_enter_pos();
+  public:
+  void unsafe_arena_set_allocated_enter_pos(
+      ::Protocol::PosInfo* enter_pos);
+  ::Protocol::PosInfo* unsafe_arena_release_enter_pos();
+
   // bool success = 1;
   void clear_success();
   bool success() const;
@@ -2647,10 +2698,12 @@ class S_ENTER_ROOM final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::Protocol::PosInfo* enter_pos_;
     bool success_;
     int enter_type_;
     uint32_t room_id_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
@@ -6430,6 +6483,174 @@ class S_RESPAWN final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
 };
+// -------------------------------------------------------------------
+
+class S_TELEPORT final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_TELEPORT) */ {
+ public:
+  inline S_TELEPORT() : S_TELEPORT(nullptr) {}
+  ~S_TELEPORT() override;
+  explicit PROTOBUF_CONSTEXPR S_TELEPORT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  S_TELEPORT(const S_TELEPORT& from);
+  S_TELEPORT(S_TELEPORT&& from) noexcept
+    : S_TELEPORT() {
+    *this = ::std::move(from);
+  }
+
+  inline S_TELEPORT& operator=(const S_TELEPORT& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_TELEPORT& operator=(S_TELEPORT&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_TELEPORT& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_TELEPORT* internal_default_instance() {
+    return reinterpret_cast<const S_TELEPORT*>(
+               &_S_TELEPORT_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    37;
+
+  friend void swap(S_TELEPORT& a, S_TELEPORT& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(S_TELEPORT* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_TELEPORT* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_TELEPORT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_TELEPORT>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const S_TELEPORT& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const S_TELEPORT& from) {
+    S_TELEPORT::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(S_TELEPORT* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.S_TELEPORT";
+  }
+  protected:
+  explicit S_TELEPORT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPosInfoFieldNumber = 2,
+    kObjectIdFieldNumber = 1,
+  };
+  // .Protocol.PosInfo pos_info = 2;
+  bool has_pos_info() const;
+  private:
+  bool _internal_has_pos_info() const;
+  public:
+  void clear_pos_info();
+  const ::Protocol::PosInfo& pos_info() const;
+  PROTOBUF_NODISCARD ::Protocol::PosInfo* release_pos_info();
+  ::Protocol::PosInfo* mutable_pos_info();
+  void set_allocated_pos_info(::Protocol::PosInfo* pos_info);
+  private:
+  const ::Protocol::PosInfo& _internal_pos_info() const;
+  ::Protocol::PosInfo* _internal_mutable_pos_info();
+  public:
+  void unsafe_arena_set_allocated_pos_info(
+      ::Protocol::PosInfo* pos_info);
+  ::Protocol::PosInfo* unsafe_arena_release_pos_info();
+
+  // uint64 object_id = 1;
+  void clear_object_id();
+  uint64_t object_id() const;
+  void set_object_id(uint64_t value);
+  private:
+  uint64_t _internal_object_id() const;
+  void _internal_set_object_id(uint64_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.S_TELEPORT)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::Protocol::PosInfo* pos_info_;
+    uint64_t object_id_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Protocol_2eproto;
+};
 // ===================================================================
 
 
@@ -6977,46 +7198,66 @@ inline void C_ENTER_MAP::set_enter_type(::Protocol::EnterType value) {
 }
 
 // uint32 map_id = 2;
-inline bool C_ENTER_MAP::_internal_has_map_id() const {
-  return map_data_case() == kMapId;
-}
-inline bool C_ENTER_MAP::has_map_id() const {
-  return _internal_has_map_id();
-}
-inline void C_ENTER_MAP::set_has_map_id() {
-  _impl_._oneof_case_[0] = kMapId;
-}
 inline void C_ENTER_MAP::clear_map_id() {
-  if (_internal_has_map_id()) {
-    _impl_.map_data_.map_id_ = 0u;
-    clear_has_map_data();
-  }
+  _impl_.map_id_ = 0u;
 }
 inline uint32_t C_ENTER_MAP::_internal_map_id() const {
-  if (_internal_has_map_id()) {
-    return _impl_.map_data_.map_id_;
-  }
-  return 0u;
-}
-inline void C_ENTER_MAP::_internal_set_map_id(uint32_t value) {
-  if (!_internal_has_map_id()) {
-    clear_map_data();
-    set_has_map_id();
-  }
-  _impl_.map_data_.map_id_ = value;
+  return _impl_.map_id_;
 }
 inline uint32_t C_ENTER_MAP::map_id() const {
   // @@protoc_insertion_point(field_get:Protocol.C_ENTER_MAP.map_id)
   return _internal_map_id();
+}
+inline void C_ENTER_MAP::_internal_set_map_id(uint32_t value) {
+  
+  _impl_.map_id_ = value;
 }
 inline void C_ENTER_MAP::set_map_id(uint32_t value) {
   _internal_set_map_id(value);
   // @@protoc_insertion_point(field_set:Protocol.C_ENTER_MAP.map_id)
 }
 
-// uint32 portal_id = 3;
+// uint32 room_id = 3;
+inline bool C_ENTER_MAP::_internal_has_room_id() const {
+  return enter_data_case() == kRoomId;
+}
+inline bool C_ENTER_MAP::has_room_id() const {
+  return _internal_has_room_id();
+}
+inline void C_ENTER_MAP::set_has_room_id() {
+  _impl_._oneof_case_[0] = kRoomId;
+}
+inline void C_ENTER_MAP::clear_room_id() {
+  if (_internal_has_room_id()) {
+    _impl_.enter_data_.room_id_ = 0u;
+    clear_has_enter_data();
+  }
+}
+inline uint32_t C_ENTER_MAP::_internal_room_id() const {
+  if (_internal_has_room_id()) {
+    return _impl_.enter_data_.room_id_;
+  }
+  return 0u;
+}
+inline void C_ENTER_MAP::_internal_set_room_id(uint32_t value) {
+  if (!_internal_has_room_id()) {
+    clear_enter_data();
+    set_has_room_id();
+  }
+  _impl_.enter_data_.room_id_ = value;
+}
+inline uint32_t C_ENTER_MAP::room_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_ENTER_MAP.room_id)
+  return _internal_room_id();
+}
+inline void C_ENTER_MAP::set_room_id(uint32_t value) {
+  _internal_set_room_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_ENTER_MAP.room_id)
+}
+
+// uint32 portal_id = 4;
 inline bool C_ENTER_MAP::_internal_has_portal_id() const {
-  return map_data_case() == kPortalId;
+  return enter_data_case() == kPortalId;
 }
 inline bool C_ENTER_MAP::has_portal_id() const {
   return _internal_has_portal_id();
@@ -7026,22 +7267,22 @@ inline void C_ENTER_MAP::set_has_portal_id() {
 }
 inline void C_ENTER_MAP::clear_portal_id() {
   if (_internal_has_portal_id()) {
-    _impl_.map_data_.portal_id_ = 0u;
-    clear_has_map_data();
+    _impl_.enter_data_.portal_id_ = 0u;
+    clear_has_enter_data();
   }
 }
 inline uint32_t C_ENTER_MAP::_internal_portal_id() const {
   if (_internal_has_portal_id()) {
-    return _impl_.map_data_.portal_id_;
+    return _impl_.enter_data_.portal_id_;
   }
   return 0u;
 }
 inline void C_ENTER_MAP::_internal_set_portal_id(uint32_t value) {
   if (!_internal_has_portal_id()) {
-    clear_map_data();
+    clear_enter_data();
     set_has_portal_id();
   }
-  _impl_.map_data_.portal_id_ = value;
+  _impl_.enter_data_.portal_id_ = value;
 }
 inline uint32_t C_ENTER_MAP::portal_id() const {
   // @@protoc_insertion_point(field_get:Protocol.C_ENTER_MAP.portal_id)
@@ -7052,14 +7293,14 @@ inline void C_ENTER_MAP::set_portal_id(uint32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.C_ENTER_MAP.portal_id)
 }
 
-inline bool C_ENTER_MAP::has_map_data() const {
-  return map_data_case() != MAP_DATA_NOT_SET;
+inline bool C_ENTER_MAP::has_enter_data() const {
+  return enter_data_case() != ENTER_DATA_NOT_SET;
 }
-inline void C_ENTER_MAP::clear_has_map_data() {
-  _impl_._oneof_case_[0] = MAP_DATA_NOT_SET;
+inline void C_ENTER_MAP::clear_has_enter_data() {
+  _impl_._oneof_case_[0] = ENTER_DATA_NOT_SET;
 }
-inline C_ENTER_MAP::MapDataCase C_ENTER_MAP::map_data_case() const {
-  return C_ENTER_MAP::MapDataCase(_impl_._oneof_case_[0]);
+inline C_ENTER_MAP::EnterDataCase C_ENTER_MAP::enter_data_case() const {
+  return C_ENTER_MAP::EnterDataCase(_impl_._oneof_case_[0]);
 }
 // -------------------------------------------------------------------
 
@@ -7129,9 +7370,47 @@ inline void C_ENTER_ROOM::set_enter_type(::Protocol::EnterType value) {
   // @@protoc_insertion_point(field_set:Protocol.C_ENTER_ROOM.enter_type)
 }
 
-// uint32 portal_id = 2;
+// uint32 room_id = 2;
+inline bool C_ENTER_ROOM::_internal_has_room_id() const {
+  return enter_data_case() == kRoomId;
+}
+inline bool C_ENTER_ROOM::has_room_id() const {
+  return _internal_has_room_id();
+}
+inline void C_ENTER_ROOM::set_has_room_id() {
+  _impl_._oneof_case_[0] = kRoomId;
+}
+inline void C_ENTER_ROOM::clear_room_id() {
+  if (_internal_has_room_id()) {
+    _impl_.enter_data_.room_id_ = 0u;
+    clear_has_enter_data();
+  }
+}
+inline uint32_t C_ENTER_ROOM::_internal_room_id() const {
+  if (_internal_has_room_id()) {
+    return _impl_.enter_data_.room_id_;
+  }
+  return 0u;
+}
+inline void C_ENTER_ROOM::_internal_set_room_id(uint32_t value) {
+  if (!_internal_has_room_id()) {
+    clear_enter_data();
+    set_has_room_id();
+  }
+  _impl_.enter_data_.room_id_ = value;
+}
+inline uint32_t C_ENTER_ROOM::room_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_ENTER_ROOM.room_id)
+  return _internal_room_id();
+}
+inline void C_ENTER_ROOM::set_room_id(uint32_t value) {
+  _internal_set_room_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_ENTER_ROOM.room_id)
+}
+
+// uint32 portal_id = 3;
 inline bool C_ENTER_ROOM::_internal_has_portal_id() const {
-  return room_data_case() == kPortalId;
+  return enter_data_case() == kPortalId;
 }
 inline bool C_ENTER_ROOM::has_portal_id() const {
   return _internal_has_portal_id();
@@ -7141,22 +7420,22 @@ inline void C_ENTER_ROOM::set_has_portal_id() {
 }
 inline void C_ENTER_ROOM::clear_portal_id() {
   if (_internal_has_portal_id()) {
-    _impl_.room_data_.portal_id_ = 0u;
-    clear_has_room_data();
+    _impl_.enter_data_.portal_id_ = 0u;
+    clear_has_enter_data();
   }
 }
 inline uint32_t C_ENTER_ROOM::_internal_portal_id() const {
   if (_internal_has_portal_id()) {
-    return _impl_.room_data_.portal_id_;
+    return _impl_.enter_data_.portal_id_;
   }
   return 0u;
 }
 inline void C_ENTER_ROOM::_internal_set_portal_id(uint32_t value) {
   if (!_internal_has_portal_id()) {
-    clear_room_data();
+    clear_enter_data();
     set_has_portal_id();
   }
-  _impl_.room_data_.portal_id_ = value;
+  _impl_.enter_data_.portal_id_ = value;
 }
 inline uint32_t C_ENTER_ROOM::portal_id() const {
   // @@protoc_insertion_point(field_get:Protocol.C_ENTER_ROOM.portal_id)
@@ -7167,14 +7446,14 @@ inline void C_ENTER_ROOM::set_portal_id(uint32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.C_ENTER_ROOM.portal_id)
 }
 
-inline bool C_ENTER_ROOM::has_room_data() const {
-  return room_data_case() != ROOM_DATA_NOT_SET;
+inline bool C_ENTER_ROOM::has_enter_data() const {
+  return enter_data_case() != ENTER_DATA_NOT_SET;
 }
-inline void C_ENTER_ROOM::clear_has_room_data() {
-  _impl_._oneof_case_[0] = ROOM_DATA_NOT_SET;
+inline void C_ENTER_ROOM::clear_has_enter_data() {
+  _impl_._oneof_case_[0] = ENTER_DATA_NOT_SET;
 }
-inline C_ENTER_ROOM::RoomDataCase C_ENTER_ROOM::room_data_case() const {
-  return C_ENTER_ROOM::RoomDataCase(_impl_._oneof_case_[0]);
+inline C_ENTER_ROOM::EnterDataCase C_ENTER_ROOM::enter_data_case() const {
+  return C_ENTER_ROOM::EnterDataCase(_impl_._oneof_case_[0]);
 }
 // -------------------------------------------------------------------
 
@@ -7238,6 +7517,93 @@ inline void S_ENTER_ROOM::_internal_set_room_id(uint32_t value) {
 inline void S_ENTER_ROOM::set_room_id(uint32_t value) {
   _internal_set_room_id(value);
   // @@protoc_insertion_point(field_set:Protocol.S_ENTER_ROOM.room_id)
+}
+
+// optional .Protocol.PosInfo enter_pos = 4;
+inline bool S_ENTER_ROOM::_internal_has_enter_pos() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.enter_pos_ != nullptr);
+  return value;
+}
+inline bool S_ENTER_ROOM::has_enter_pos() const {
+  return _internal_has_enter_pos();
+}
+inline const ::Protocol::PosInfo& S_ENTER_ROOM::_internal_enter_pos() const {
+  const ::Protocol::PosInfo* p = _impl_.enter_pos_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
+      ::Protocol::_PosInfo_default_instance_);
+}
+inline const ::Protocol::PosInfo& S_ENTER_ROOM::enter_pos() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_ENTER_ROOM.enter_pos)
+  return _internal_enter_pos();
+}
+inline void S_ENTER_ROOM::unsafe_arena_set_allocated_enter_pos(
+    ::Protocol::PosInfo* enter_pos) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.enter_pos_);
+  }
+  _impl_.enter_pos_ = enter_pos;
+  if (enter_pos) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_ENTER_ROOM.enter_pos)
+}
+inline ::Protocol::PosInfo* S_ENTER_ROOM::release_enter_pos() {
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Protocol::PosInfo* temp = _impl_.enter_pos_;
+  _impl_.enter_pos_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::Protocol::PosInfo* S_ENTER_ROOM::unsafe_arena_release_enter_pos() {
+  // @@protoc_insertion_point(field_release:Protocol.S_ENTER_ROOM.enter_pos)
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Protocol::PosInfo* temp = _impl_.enter_pos_;
+  _impl_.enter_pos_ = nullptr;
+  return temp;
+}
+inline ::Protocol::PosInfo* S_ENTER_ROOM::_internal_mutable_enter_pos() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  if (_impl_.enter_pos_ == nullptr) {
+    auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
+    _impl_.enter_pos_ = p;
+  }
+  return _impl_.enter_pos_;
+}
+inline ::Protocol::PosInfo* S_ENTER_ROOM::mutable_enter_pos() {
+  ::Protocol::PosInfo* _msg = _internal_mutable_enter_pos();
+  // @@protoc_insertion_point(field_mutable:Protocol.S_ENTER_ROOM.enter_pos)
+  return _msg;
+}
+inline void S_ENTER_ROOM::set_allocated_enter_pos(::Protocol::PosInfo* enter_pos) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.enter_pos_);
+  }
+  if (enter_pos) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
+                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(enter_pos));
+    if (message_arena != submessage_arena) {
+      enter_pos = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, enter_pos, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.enter_pos_ = enter_pos;
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_ENTER_ROOM.enter_pos)
 }
 
 // -------------------------------------------------------------------
@@ -9910,9 +10276,120 @@ inline void S_RESPAWN::set_hp(uint32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.hp)
 }
 
+// -------------------------------------------------------------------
+
+// S_TELEPORT
+
+// uint64 object_id = 1;
+inline void S_TELEPORT::clear_object_id() {
+  _impl_.object_id_ = uint64_t{0u};
+}
+inline uint64_t S_TELEPORT::_internal_object_id() const {
+  return _impl_.object_id_;
+}
+inline uint64_t S_TELEPORT::object_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_TELEPORT.object_id)
+  return _internal_object_id();
+}
+inline void S_TELEPORT::_internal_set_object_id(uint64_t value) {
+  
+  _impl_.object_id_ = value;
+}
+inline void S_TELEPORT::set_object_id(uint64_t value) {
+  _internal_set_object_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_TELEPORT.object_id)
+}
+
+// .Protocol.PosInfo pos_info = 2;
+inline bool S_TELEPORT::_internal_has_pos_info() const {
+  return this != internal_default_instance() && _impl_.pos_info_ != nullptr;
+}
+inline bool S_TELEPORT::has_pos_info() const {
+  return _internal_has_pos_info();
+}
+inline const ::Protocol::PosInfo& S_TELEPORT::_internal_pos_info() const {
+  const ::Protocol::PosInfo* p = _impl_.pos_info_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
+      ::Protocol::_PosInfo_default_instance_);
+}
+inline const ::Protocol::PosInfo& S_TELEPORT::pos_info() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_TELEPORT.pos_info)
+  return _internal_pos_info();
+}
+inline void S_TELEPORT::unsafe_arena_set_allocated_pos_info(
+    ::Protocol::PosInfo* pos_info) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.pos_info_);
+  }
+  _impl_.pos_info_ = pos_info;
+  if (pos_info) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_TELEPORT.pos_info)
+}
+inline ::Protocol::PosInfo* S_TELEPORT::release_pos_info() {
+  
+  ::Protocol::PosInfo* temp = _impl_.pos_info_;
+  _impl_.pos_info_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::Protocol::PosInfo* S_TELEPORT::unsafe_arena_release_pos_info() {
+  // @@protoc_insertion_point(field_release:Protocol.S_TELEPORT.pos_info)
+  
+  ::Protocol::PosInfo* temp = _impl_.pos_info_;
+  _impl_.pos_info_ = nullptr;
+  return temp;
+}
+inline ::Protocol::PosInfo* S_TELEPORT::_internal_mutable_pos_info() {
+  
+  if (_impl_.pos_info_ == nullptr) {
+    auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
+    _impl_.pos_info_ = p;
+  }
+  return _impl_.pos_info_;
+}
+inline ::Protocol::PosInfo* S_TELEPORT::mutable_pos_info() {
+  ::Protocol::PosInfo* _msg = _internal_mutable_pos_info();
+  // @@protoc_insertion_point(field_mutable:Protocol.S_TELEPORT.pos_info)
+  return _msg;
+}
+inline void S_TELEPORT::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.pos_info_);
+  }
+  if (pos_info) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
+                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(pos_info));
+    if (message_arena != submessage_arena) {
+      pos_info = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, pos_info, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.pos_info_ = pos_info;
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_TELEPORT.pos_info)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

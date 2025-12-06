@@ -72,11 +72,13 @@ message S_LEAVE_GAME
 message C_ENTER_MAP
 {
     EnterType enter_type = 1;
+    uint32 map_id = 2;
 
-    oneof map_data
+    // Room 입장에 필요한 추가 데이터
+    oneof enter_data
     {
-        uint32 map_id = 2;
-        uint32 portal_id = 3;
+        uint32 room_id = 3;         // 입장하고자 하는 방
+        uint32 portal_id = 4;       // 사용한 포탈 id
     }
 }
 
@@ -91,9 +93,10 @@ message C_ENTER_ROOM
     EnterType enter_type = 1;
 
     // Room 입장에 필요한 추가 데이터
-    oneof room_data
+    oneof enter_data
     {
-        uint32 portal_id = 2;
+        uint32 room_id = 2;
+        uint32 portal_id = 3;
     }
 }
 
@@ -103,6 +106,9 @@ message S_ENTER_ROOM
     EnterType enter_type = 2;
 
     uint32 room_id = 3;
+
+    // 게임에 참여하지 않고 단순 입장만 하는 경우 고려해서 optional 추가
+    optional PosInfo enter_pos = 4; 
 }
 
 message S_SPAWN
@@ -264,4 +270,10 @@ message S_RESPAWN
     uint32 room_id = 5;
     PosInfo pos_info = 6;
     uint32 hp = 7;
+}
+
+message S_TELEPORT
+{
+    uint64 object_id = 1;
+    PosInfo pos_info = 2;
 }

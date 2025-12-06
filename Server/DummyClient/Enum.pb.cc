@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[14];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[13];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -72,18 +72,15 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\004\022\035\n\031RESPAWN_TYPE_PARTY_MEMBER\020\005\022\033\n\027RESP"
   "AWN_TYPE_GUILD_BASE\020\006\022\032\n\026RESPAWN_TYPE_CA"
   "SH_ITEM\020\007\022$\n RESPAWN_TYPE_BATTLE_RESURRE"
-  "CTION\020\010*\231\001\n\016TeleportReason\022\030\n\024TELEPORT_R"
-  "EASON_NONE\020\000\022$\n TELEPORT_REASON_TELEPORT"
-  "_BY_ITEM\020\001\022\"\n\036TELEPORT_REASON_ENTER_BY_Q"
-  "UEST\020\002\022#\n\037TELEPORT_REASON_RECALL_BY_PART"
-  "Y\020\003*\216\001\n\tEnterType\022\023\n\017ENTER_TYPE_NONE\020\000\022\031"
-  "\n\025ENTER_TYPE_ENTER_GAME\020\001\022\033\n\027ENTER_TYPE_"
-  "INNER_PORTAL\020\002\022\033\n\027ENTER_TYPE_OUTER_PORTA"
-  "L\020\003\022\027\n\023ENTER_TYPE_TELEPORT\020\004b\006proto3"
+  "CTION\020\010*\245\001\n\tEnterType\022\023\n\017ENTER_TYPE_NONE"
+  "\020\000\022\031\n\025ENTER_TYPE_ENTER_GAME\020\001\022\031\n\025ENTER_T"
+  "YPE_USE_PORTAL\020\002\022\027\n\023ENTER_TYPE_USE_ITEM\020"
+  "\004\022\024\n\020ENTER_TYPE_QUEST\020\005\022\036\n\032ENTER_TYPE_RE"
+  "CALL_BY_PARTY\020\006b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 2036, descriptor_table_protodef_Enum_2eproto,
+    false, false, 1903, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -305,33 +302,18 @@ bool RespawnType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* TeleportReason_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[12];
-}
-bool TeleportReason_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[13];
+  return file_level_enum_descriptors_Enum_2eproto[12];
 }
 bool EnterType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
     case 2:
-    case 3:
     case 4:
+    case 5:
+    case 6:
       return true;
     default:
       return false;

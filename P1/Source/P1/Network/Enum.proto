@@ -113,28 +113,13 @@ enum RespawnType
     RESPAWN_TYPE_BATTLE_RESURRECTION = 8;       // 전투 중 부활 (ex. 힐러 스킬)
 }
 
-enum TeleportReason
-{
-    // 리스폰은 텔레포트에 포함하지 않는다.
-    TELEPORT_REASON_NONE = 0;
-    TELEPORT_REASON_TELEPORT_BY_ITEM = 1;       // 아이템 사용
-    TELEPORT_REASON_ENTER_BY_QUEST = 2;         // 퀘스트 워프
-    TELEPORT_REASON_RECALL_BY_PARTY = 3;        // 파티원 소환
-};
-
 enum EnterType
 {
-    // EnterType: 플레이어가 요청한 Enter 방식
+    // EnterType: 플레이어가 시도한 입장 방식
     ENTER_TYPE_NONE = 0;
     ENTER_TYPE_ENTER_GAME = 1;                  // 처음 게임 입장
-    ENTER_TYPE_INNER_PORTAL = 2;                // 맵 내부 입장
-    ENTER_TYPE_OUTER_PORTAL = 3;                // 맵 외부 입장
-    ENTER_TYPE_TELEPORT = 4;                    // 텔레포트(ex. 아이템 사용)
+    ENTER_TYPE_USE_PORTAL = 2;                  // 포탈 사용
+    ENTER_TYPE_USE_ITEM = 4;                    // 아이템 사용
+    ENTER_TYPE_QUEST = 5;                       // 퀘스트가 텔레포트 시킴
+    ENTER_TYPE_RECALL_BY_PARTY = 6;             // 파티원이 소환함
 }
-
-//enum EnterReason
-//{
-//    // EnterReason: 서버가 Enter를 결정시킨 이유
-//    ENTER_REASON_NONE = 0;
-//    ENTER_REASON_RESPAWN = 1;
-//}
