@@ -22,10 +22,10 @@ GO
 DROP TABLE IF EXISTS CharactersLastState;
 CREATE TABLE CharactersLastState(
     character_id            BIGINT PRIMARY KEY,
-    cur_hp                  INT NOT NULL DEFAULT 0,
-    cur_mp                  INT NOT NULL DEFAULT 0,
-    cur_physical_attack     INT NOT NULL DEFAULT 0,
-    cur_magical_attack      INT NOT NULL DEFAULT 0,
+    cur_hp                  BIGINT NOT NULL DEFAULT 0,
+    cur_mp                  BIGINT NOT NULL DEFAULT 0,
+    cur_physical_attack     BIGINT NOT NULL DEFAULT 0,
+    cur_magical_attack      BIGINT NOT NULL DEFAULT 0,
     room_id                 INT NOT NULL DEFAULT 10,
     pos_x                   FLOAT NOT NULL DEFAULT 0.0,
     pos_y                   FLOAT NOT NULL DEFAULT 0.0,
@@ -50,8 +50,8 @@ CREATE TABLE CharactersGearItems(
     is_equipped                     BIT NOT NULL,
     enhance                         INT NOT NULL DEFAULT 0,
     durability                      INT NOT NULL DEFAULT 0,
-    additional_physical_attack      INT NOT NULL DEFAULT 0,
-    additional_magical_attack       INT NOT NULL DEFAULT 0,
+    additional_physical_attack      BIGINT NOT NULL DEFAULT 0,
+    additional_magical_attack       BIGINT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE,

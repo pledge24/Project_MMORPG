@@ -176,49 +176,42 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
     auto gameSession = static_pointer_cast<GameSession>(session);
 
     PlayerRef player = gameSession->player.load();
+    int32 roomId = pkt.room_id();
+
+    // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
+    // ...
+
     if (player == nullptr)
     {
         Protocol::S_ENTER_MAP enterMapPkt;
         {
             enterMapPkt.set_success(false);
             enterMapPkt.set_map_id(pkt.map_id());
+            enterMapPkt.set_room_id(roomId);
+
+            SEND_PACKET(enterMapPkt);
         }
-        SEND_PACKET(enterMapPkt);
+
         return false;
     }
 
+    // TODO: Map 입장에 제한(ex. 인원수 제한)을 두고 싶다면 로직 추가
+    // ...
+
+    
     // 성공적인 Map 입장 처리
-    if (pkt.enter_type() == Protocol::ENTER_TYPE_ENTER_GAME)
     {
+        player->OnEnterMap(pkt.map_id(), roomId);
+
         Protocol::S_ENTER_MAP enterMapPkt;
         {
             enterMapPkt.set_success(true);
             enterMapPkt.set_map_id(pkt.map_id());
-        }
-        SEND_PACKET(enterMapPkt);
-    }
+            enterMapPkt.set_room_id(roomId);
 
-    Protocol::C_ENTER_ROOM enterRoomPkt;
-    {
-        enterRoomPkt.set_enter_type(pkt.enter_type());
-        
-        switch (pkt.enter_data_case())
-        {
-        case Protocol::C_ENTER_MAP::kRoomId:
-        {
-            enterRoomPkt.set_room_id(pkt.room_id());
-            break;
-        }
-        case Protocol::C_ENTER_MAP::kPortalId:
-        {
-            enterRoomPkt.set_portal_id(pkt.portal_id());
-            break;
-        }
+            SEND_PACKET(enterMapPkt);
         }
     }
-
-    // Enter Room으로 넘긴다.
-    Handle_C_ENTER_ROOM(session, enterRoomPkt);
 
     return true;
 }
@@ -237,12 +230,24 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
     Protocol::EnterType enterType = pkt.enter_type();
     switch (enterType)
     {
-    case Protocol::ENTER_TYPE_ENTER_GAME:
+    case Protocol::ENTER_TYPE_MAP_CHANGE:
     {
-        if (pkt.has_room_id() == false)
-            return false;
+        bool hasRoomID = pkt.has_room_id();
+        bool invalidRoomID = pkt.room_id() != player->GetEnteringRoomId();
+        if (!hasRoomID || invalidRoomID)
+        {
+            Protocol::S_ENTER_ROOM enterRoom;
+            {
+                enterRoom.set_success(false);
+                enterRoom.set_enter_type(Protocol::ENTER_TYPE_MAP_CHANGE);
 
-        uint32 roomId = pkt.room_id();
+                SEND_PACKET(enterRoom);
+            }
+
+            return false;
+        }
+
+        int32 roomId = pkt.room_id();
         enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
 
         // RoomEnterData 세팅
@@ -263,10 +268,21 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 
         break;
     }
-    case Protocol::ENTER_TYPE_USE_PORTAL:
+    case Protocol::ENTER_TYPE_ROOM_CHANGE:
     {
-        if (pkt.has_portal_id() == false)
+        bool hasPortalId = pkt.has_portal_id();
+        if (!hasPortalId)
+        {
+            Protocol::S_ENTER_ROOM enterRoom;
+            {
+                enterRoom.set_success(false);
+                enterRoom.set_enter_type(Protocol::ENTER_TYPE_ROOM_CHANGE);
+
+                SEND_PACKET(enterRoom);
+            }
+
             return false;
+        }
 
         RoomRef curRoom = player->room.load().lock();
         if (curRoom == nullptr)
@@ -288,15 +304,16 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
             roomEnterData.nextRoomId = dst[TemplateId];
             roomEnterData.enterType = pkt.enter_type();
 
-            Protocol::PosInfo enterPos;
-            enterPos.set_object_id(player->objectInfo->object_id());
-            enterPos.set_x(dst[PosX]);
-            enterPos.set_y(dst[PosY]);
-            enterPos.set_z(dst[PosZ]);
-            enterPos.set_yaw(dst[Yaw]);
-            enterPos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+            Protocol::PosInfo enterPosInfo;
+            Protocol::Vector& pos = *enterPosInfo.mutable_pos();
+            enterPosInfo.set_object_id(player->objectInfo->object_id());
+            pos.set_x(dst[PosX]);
+            pos.set_y(dst[PosY]);
+            pos.set_z(dst[PosZ]);
+            enterPosInfo.set_yaw(dst[Yaw]);
+            enterPosInfo.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
-            roomEnterData.enterPos->Swap(&enterPos);
+            roomEnterData.enterPos->Swap(&enterPosInfo);
         }
 
         
@@ -362,22 +379,8 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_BUY_ITEM buyItemPkt;
-    Protocol::Slot* updatedSlot = buyItemPkt.mutable_updated_slot();
-    int32 templateId = pkt.template_id();
-    int64 totalGold = 0;
-
-    if (player->HandleBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
-    {
-        buyItemPkt.set_success(false);
-        SEND_PACKET(buyItemPkt);
+    if (player->HandleBuyItem(pkt) == false)
         return false;
-    }
-
-    buyItemPkt.set_success(true);
-    buyItemPkt.set_gold(totalGold);
-    SEND_PACKET(buyItemPkt);
-    cout << buyItemPkt.DebugString() << endl;
 
     return true;
 }
@@ -390,21 +393,8 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_SELL_ITEM sellItemPkt;
-    Protocol::Slot* targetSlot = pkt.mutable_slot();
-    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
-
-    int64 totalGold = 0;
-    if (player->HandleSellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
-    {
-        sellItemPkt.set_success(false);
-        SEND_PACKET(sellItemPkt);
+    if (player->HandleSellItem(pkt) == false)
         return false;
-    }
-
-    sellItemPkt.set_success(true);
-    sellItemPkt.set_gold(totalGold);
-    SEND_PACKET(sellItemPkt);
     
     return true;
 }
@@ -452,17 +442,8 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_USE_ITEM useItemPkt;
-    Protocol::Slot* targetSlot = pkt.mutable_slot();
-    if (player->HandleUseItem(useItemPkt, targetSlot) == false)
-    {
-        useItemPkt.set_success(false);
-        SEND_PACKET(useItemPkt);
+    if (player->HandleUseItem(pkt) == false)
         return false;
-    }
-
-    useItemPkt.set_success(true);
-    SEND_PACKET(useItemPkt);
 
     return true;
 }
@@ -491,7 +472,7 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
     case Protocol::RESPAWN_TYPE_IN_PLACE:
     case Protocol::RESPAWN_TYPE_GUILD_BASE:
     {
-        uint32 roomId = player->GetRespawnRoomId(respawnType);
+        int32 roomId = player->GetRespawnRoomId(respawnType);
         respawnRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
         respawnPos = respawnRoom->GetRespawnPoint();
         break;

@@ -6,8 +6,8 @@ public:
     EquippedGear(PlayerRef player);
     ~EquippedGear();
 
-    bool EquipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Item& itemInstance, optional<int32> setSlotId = nullopt);
-    bool UnequipGear(OUT Protocol::Slot* reflectSlot, OUT Protocol::StatInfo* statInfo, Protocol::Slot* slot);
+    bool EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList, const Protocol::Item& itemInstance, optional<int32> setSlotId = nullopt);
+    bool UnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList);
 
     map<int32, bool>& GetDirtyFlagMappings() { return dirtyFlagMappings; }
     void ClearDirtyFlag();

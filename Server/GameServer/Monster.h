@@ -61,8 +61,8 @@ protected:
 
     /** Getter-Setter 함수 */
     const vector2D& GetDestination() { return _moveDest.value(); }
-    uint64 GetExpReward();
-    uint64 GetGoldReward();
+    int64 GetExpReward();
+    int64 GetGoldReward();
 
     void SetDestination(const vector2D& destPos, float minApproachDistance = 0.f);
     void SetMoveDirection(const vector2D& moveVec);

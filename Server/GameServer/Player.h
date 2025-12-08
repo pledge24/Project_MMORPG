@@ -9,12 +9,12 @@ struct RoomEnterData;
 
 struct NextLevelUpData
 {
-    uint32 level = 0;
-    uint64 maxHpIncrement = 0;
-    uint64 maxMpIncrement = 0;
-    uint64 paIncrement = 0;
-    uint64 maIncrement = 0;
-    uint64 expRequirement = 0;
+    int32 level = 0;
+    int64 maxHpIncrement = 0;
+    int64 maxMpIncrement = 0;
+    int64 paIncrement = 0;
+    int64 maIncrement = 0;
+    int64 expRequirement = 0;
 };
 
 class Player : public Creature
@@ -33,23 +33,33 @@ public:
     bool CalculateFinalStat();
 
     /* 핸들 함수 */
-    bool HandleBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count = 1);
-    bool HandleSellItem(OUT Protocol::Slot* updatedSlot, Protocol::Slot* targetSlot, OUT int64& totalGold, int32 count = 1);
-    bool HandleUseItem(OUT Protocol::S_USE_ITEM& pkt, Protocol::Slot* targetSlot);
+    bool HandleBuyItem(const Protocol::C_BUY_ITEM& pkt);
+    bool HandleSellItem(const Protocol::C_SELL_ITEM& pkt);
+    bool HandleUseItem(const Protocol::C_USE_ITEM& pkt);
 
-    bool HandleEquipGear(OUT Protocol::S_EQUIP_GEAR& pkt, Protocol::Slot* targetSlot);
-    bool HandleUnequipGear(OUT Protocol::S_UNEQUIP_GEAR& pkt, Protocol::Slot* targetSlot);
+    bool ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count = 1);
+    bool ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count = 1);
+    bool ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_USE_ITEM& pkt);
+    bool ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt);
+    bool ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt);
 
     /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
-    virtual void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
 
-    void OnMonsterKill(MonsterRef killedMonster, uint64 expReward, uint64 goldReward);
+    void OnEnterMap(int32 mapId, int32 roomId);
+    void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
+    void OnMonsterKill(MonsterRef killedMonster, int64 expReward, int64 goldReward);
     void OnLevelUp();
     void OnRespawn();
 
+    /** Setter */
+    void SetStatValue(Protocol::StatType statType, const int64& value);
+    
     /** Getter */
-    uint32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
+    int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
+    int32 GetEnteringRoomId() { return enteringRoomId; }
+    int64 GetStatValue(Protocol::StatType statType);
+    Protocol::Stat GetStat(Protocol::StatType statType);
 
 private:
     /** 기타 함수 */
@@ -60,15 +70,18 @@ public:
 
     Protocol::PlayerInfo* playerInfo;   // 플레이어의 모든 정보가 여기에 저장됨.
     Protocol::StatInfo* statInfo;
+    Protocol::Possession* possession;
 
     InventoryRef inventory;             // 인벤토리 헬퍼
     EquippedGearRef equippedGear;       // 장착 아이템 헬퍼
 
 private:
-    const uint32 MAX_LEVEL = 50;
+    int32 enteringRoomId = -1;             // 이동하고자 하는 Room id
+
+    const int32 MAX_LEVEL = 50;
     NextLevelUpData _nextLevelUpData;
 
-    map<Protocol::RespawnType, uint32> respawnRoomMappings;
-    uint32 RESPAWN_TOWN_ID = 10;        // 고정으로 사용
+    map<Protocol::RespawnType, int32> respawnRoomMappings;
+    int32 RESPAWN_TOWN_ID = 10;        // 고정으로 사용
 };
 

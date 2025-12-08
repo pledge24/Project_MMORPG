@@ -147,8 +147,8 @@ public:
 
     static float Distance(Protocol::PosInfo* src, Protocol::PosInfo* dst, bool noSqrt = false)
     {
-        float dx = dst->x() - src->x();
-        float dy = dst->y() - src->y();
+        float dx = dst->pos().x() - src->pos().x();
+        float dy = dst->pos().y() - src->pos().y();
         float squareDist = dx * dx + dy * dy;
 
         return noSqrt ? squareDist : sqrt(squareDist);
@@ -156,7 +156,7 @@ public:
 
     static vector2D PosInfoToVector2D(Protocol::PosInfo* posInfo)
     {
-        return { posInfo->x(), posInfo->y() };
+        return { posInfo->pos().x(), posInfo->pos().y() };
     }
 
     static bool InRange(Protocol::PosInfo* curPos, Protocol::PosInfo* target, float range)

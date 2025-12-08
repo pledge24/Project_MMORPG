@@ -103,7 +103,7 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     if (ownerRoom == nullptr)
         return;
 
-    uint64 damage = hitData.damage();
+    int64 damage = hitData.damage();
     int32 updated_hp = static_cast<int32>(monsterInfo->hp() - damage);
     monsterInfo->set_hp(max(0, updated_hp));
 
@@ -122,7 +122,7 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     }
     else
     {
-        uint64 objectId = objectInfo->object_id();
+        int64 objectId = objectInfo->object_id();
 
         // Make Die Packet
         Protocol::S_DIE DiePkt;
@@ -135,8 +135,8 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
         // Trigger OnMonsterKill
         if(PlayerRef player = dynamic_pointer_cast<Player>(attacker))
         {
-            uint64 expReward = GetExpReward();
-            uint64 goldReward = GetGoldReward();
+            int64 expReward = GetExpReward();
+            int64 goldReward = GetGoldReward();
 
             player->OnMonsterKill(static_pointer_cast<Monster>(shared_from_this()), expReward, goldReward);
         }
@@ -455,6 +455,7 @@ void Monster::ExecuteStateChasing(float deltaTime)
 
 void Monster::ExecuteStateDeath(float deltaTime)
 {
+
 }
 
 void Monster::Move(float deltaTime, bool orientRotationToMovement)
@@ -471,7 +472,7 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
 
     posInfo->set_state(Protocol::MoveState::MOVE_STATE_RUN);
 
-    vector2D curPos = { posInfo->x() , posInfo->y() };
+    vector2D curPos = { posInfo->pos().x() , posInfo->pos().y() };
     vector2D targetPos = _moveDest.value();
     vector2D moveVec = targetPos - curPos;
     vector2D moveUnitVec = moveVec.GetNormalize();
@@ -482,8 +483,8 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
     curPos.x += dx;
     curPos.y += dy;
 
-    posInfo->set_x(curPos.x);
-    posInfo->set_y(curPos.y);
+    posInfo->mutable_pos()->set_x(curPos.x);
+    posInfo->mutable_pos()->set_y(curPos.y);
 
     // 필요할지도 모르니까 매번 이동 방향 세팅
     SetMoveDirection(moveVec);
@@ -496,7 +497,7 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
 
 void Monster::LookAt(const vector2D& targetPos)
 {
-    vector2D curPos = { posInfo->x(), posInfo->y() };
+    vector2D curPos = { posInfo->pos().x(), posInfo->pos().y() };
     vector2D lookAtVec = targetPos - curPos;
 
     if(lookAtVec != vector2D::GetZeroVector())
@@ -554,15 +555,21 @@ void Monster::Attack()
 bool Monster::CanMove()
 {
     bool hasLeftAttackDelay = _timeSinceLastAttack <= attackInterval;
-    bool hasDest = _moveDest.has_value() == false;     // 반드시 목적지가 있을때만 이동한다.
+    bool hasDest = _moveDest.has_value();     // 반드시 목적지가 있을때만 이동한다.
 
-    return !hasLeftAttackDelay || !hasDest;
+    return !hasLeftAttackDelay && hasDest;
 }
 
 bool Monster::AlreadyArrive()
 {
-    vector2D monsterPos = vector2D{ posInfo->x(), posInfo->y() };
+    vector2D monsterPos = vector2D{ posInfo->pos().x(), posInfo->pos().y() };
     
+    if (_moveDest.has_value() == false)
+    {
+        cout << "AlreadyArrive: something wrong" << '\n';
+        return true;
+    }
+
     auto targetPos = _moveDest.value();
     return MathUtil::Distance(monsterPos, targetPos, true) < 1.f;
 }
@@ -601,7 +608,7 @@ void Monster::OnHitCheck()
         if (target == nullptr)
             return;
 
-        uint64 targetObjectId = target->objectInfo->object_id();
+        int64 targetObjectId = target->objectInfo->object_id();
 
         auto ownerRoom = room.load().lock();
         if (ownerRoom == nullptr || ownerRoom->Contains(targetObjectId) == false)
@@ -619,22 +626,22 @@ void Monster::OnHitCheck()
     }
 }
 
-uint64 Monster::GetExpReward()
+int64 Monster::GetExpReward()
 {
     using namespace JsonProperty::Monster;
 
-    uint64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<uint64>(_monsterData[ExpReward][MinExp]);
-    uint64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<uint64>(_monsterData[ExpReward][MaxExp]);
+    int64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<int64>(_monsterData[ExpReward][MinExp]);
+    int64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<int64>(_monsterData[ExpReward][MaxExp]);
     
     return Utils::GetRandom(minExp, maxExp);
 }
 
-uint64 Monster::GetGoldReward()
+int64 Monster::GetGoldReward()
 {
     using namespace JsonProperty::Monster;
 
-    uint64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<uint64>(_monsterData[GoldReward][MinGold]);
-    uint64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<uint64>(_monsterData[GoldReward][MaxGold]);
+    int64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<int64>(_monsterData[GoldReward][MinGold]);
+    int64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<int64>(_monsterData[GoldReward][MaxGold]);
 
     return Utils::GetRandom(minGold, maxGold);
 }

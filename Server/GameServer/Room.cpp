@@ -64,7 +64,7 @@ bool Room::Start()
 
 void Room::UpdateTick()
 {
-    uint64 curTickTime = GetTickCount64();
+    int64 curTickTime = GetTickCount64();
     float deltaTime = static_cast<float>(curTickTime - prevTickTime) / 1000.f;
     prevTickTime = curTickTime;
 
@@ -131,7 +131,7 @@ void Room::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 {
     Protocol::S_ENTER_ROOM enterRoomPkt;
-    uint64 enterPlayerId = enterPlayer->objectInfo->object_id();
+    int64 enterPlayerId = enterPlayer->objectInfo->object_id();
 
     if (RegisterObject(enterPlayer) == false)
     {
@@ -157,6 +157,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
             enterRoomPkt.set_success(true);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
             enterRoomPkt.set_room_id(_roomId);
+
             if(roomEnterData.enterPos.has_value())
                 enterRoomPkt.mutable_enter_pos()->CopyFrom(roomEnterData.enterPos.value());
 
@@ -169,7 +170,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
 bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 {
-    const uint64 leavePlayerId = leavePlayer->objectInfo->object_id();
+    const int64 leavePlayerId = leavePlayer->objectInfo->object_id();
 
     if (UnRegisterObject(leavePlayerId) == false)
     {
@@ -225,7 +226,7 @@ bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
 
 void Room::HandleMove(Protocol::C_MOVE pkt)
 {
-	const uint64 objectId = pkt.info().object_id();
+	const int64 objectId = pkt.info().object_id();
     if (_objects.contains(objectId) == false)
         return;
 
@@ -247,14 +248,20 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 
 void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
-    const uint64 objectId = player->objectInfo->object_id();
+    const int64 objectId = player->objectInfo->object_id();
     if (_objects.contains(objectId) == false)
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
-    equipGearPkt.set_object_id(objectId);
+    {
+        const Protocol::Slot& slot = pkt.slot();
 
-    if (player->HandleEquipGear(OUT equipGearPkt, pkt.mutable_slot()) == false)
+        equipGearPkt.set_object_id(objectId);
+        equipGearPkt.set_slot_id(slot.slot_id());
+        equipGearPkt.set_template_id(slot.item().template_id());
+    }
+
+    if (player->ProcessEquipGear(pkt.slot(), OUT equipGearPkt) == false)
     {
         SessionRef session = player->session.lock();
         equipGearPkt.set_success(false);
@@ -273,8 +280,8 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
-        equipGearPkt.clear_updated_inventory_slot();
-        equipGearPkt.clear_updated_stat_info();
+        equipGearPkt.clear_updated_slots();
+        equipGearPkt.clear_updated_stat();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(equipGearPkt);
         Broadcast(sendBuffer, objectId);
     }
@@ -282,14 +289,20 @@ void Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
 void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
-    const uint64 objectId = player->objectInfo->object_id();
+    const int64 objectId = player->objectInfo->object_id();
     if (_objects.contains(objectId) == false)
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
-    unequipGearPkt.set_object_id(objectId);
+    {
+        const Protocol::Slot& slot = pkt.slot();
 
-    if (player->HandleUnequipGear(OUT unequipGearPkt, pkt.mutable_slot()) == false)
+        unequipGearPkt.set_object_id(objectId);
+        unequipGearPkt.set_slot_id(slot.slot_id());
+        unequipGearPkt.set_template_id(slot.item().template_id());
+    }
+
+    if (player->ProcessUnequipGear(pkt.slot(), OUT unequipGearPkt) == false)
     {
         SessionRef session = player->session.lock();
         unequipGearPkt.set_success(false);
@@ -307,8 +320,8 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
     {
-        unequipGearPkt.clear_updated_inventory_slot();
-        unequipGearPkt.clear_updated_stat_info();
+        unequipGearPkt.clear_updated_slots();
+        unequipGearPkt.clear_updated_stat();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(unequipGearPkt);
         Broadcast(sendBuffer, objectId);
     }
@@ -316,7 +329,7 @@ void Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
 void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
-    const uint64 objectId = player->objectInfo->object_id();
+    const int64 objectId = player->objectInfo->object_id();
     if (_objects.contains(objectId) == false)
         return;
     
@@ -334,7 +347,7 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 
 void Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos)
 {
-    uint64 playerId = player->objectInfo->object_id();
+    int64 playerId = player->objectInfo->object_id();
     bool success = true;
 
     if (respawnPoint == nullptr)
@@ -359,7 +372,7 @@ void Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<P
         respawnPkt.set_object_id(playerId);
         respawnPkt.set_room_id(_roomId);
         respawnPkt.mutable_pos_info()->CopyFrom(*player->posInfo);
-        respawnPkt.set_hp(player->statInfo->hp());
+        respawnPkt.set_hp(player->GetStatValue(Protocol::STAT_TYPE_HP));
 
         SEND_PACKET(respawnPkt);
     }
@@ -368,7 +381,7 @@ void Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<P
 
 void Room::ReplicateRoomData(PlayerRef player, bool excludeThisPlayer)
 {
-    uint64 playerId = player->objectInfo->object_id();
+    int64 playerId = player->objectInfo->object_id();
 
     // 해당 플레이어에게 Room Object 전송
     Protocol::S_SPAWN spawnPkt;
@@ -405,7 +418,7 @@ MonsterRef Room::SpawnMonster(int32 templateId)
     return newMonster;
 }
 
-PlayerRef Room::SpawnPlayer(uint64 objectId)
+PlayerRef Room::SpawnPlayer(int64 objectId)
 {
     if (_objects.contains(objectId) == false)
         return nullptr;
@@ -469,10 +482,11 @@ optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
 void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYaw)
 {
     vector2D randomPos = GetRandomPos();
+    Protocol::Vector* pos = posInfo->mutable_pos();
 
-    posInfo->set_x(randomPos.x);
-    posInfo->set_y(randomPos.y);
-    posInfo->set_z(_roomCenterPos.z + LOCATION_PADDING_Z);
+    pos->set_x(randomPos.x);
+    pos->set_y(randomPos.y);
+    pos->set_z(_roomCenterPos.z + LOCATION_PADDING_Z);
 
     if(randYaw)
         posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
@@ -511,10 +525,12 @@ vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
 
 pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
 {
-    float minX = posInfo->x() - range;
-    float maxX = posInfo->x() + range;
-    float minY = posInfo->y() - range;
-    float maxY = posInfo->y() + range;
+    Protocol::Vector* pos = posInfo->mutable_pos();
+
+    float minX = pos->x() - range;
+    float maxX = pos->x() + range;
+    float minY = pos->y() - range;
+    float maxY = pos->y() + range;
 
     vector2D minPos = ClampLocation(minX, minY, false);
     vector2D maxPos = ClampLocation(maxX, maxY, false);
@@ -546,7 +562,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
     {
         const Cell& cell = _cellMatrix[indices.first][indices.second];
 
-        for (uint64 objectId : cell)
+        for (int64 objectId : cell)
         {
             if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]))
             {
@@ -604,9 +620,9 @@ void Room::CacheRoomData()
         float posY = point[PosY];
         float posZ = point[PosZ];
 
-        respawnPoint->set_x(posX);
-        respawnPoint->set_y(posY);
-        respawnPoint->set_z(posZ);
+        respawnPoint->mutable_pos()->set_x(posX);
+        respawnPoint->mutable_pos()->set_y(posY);
+        respawnPoint->mutable_pos()->set_z(posZ);
         respawnPoint->set_yaw(0.f);
         respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
     }
@@ -657,7 +673,7 @@ std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& objectPos)
 
 std::pair<int32, int32> Room::GetCellIndicesFromPos(Protocol::PosInfo* posInfo)
 {
-    return GetCellIndicesFromPos(vector2D(posInfo->x(), posInfo->y()));
+    return GetCellIndicesFromPos(vector2D(posInfo->pos().x(), posInfo->pos().y()));
 }
 
 Cell* Room::GetCellFromPos(const vector2D& pos)
@@ -677,7 +693,7 @@ Cell* Room::GetCellFromPos(const vector2D& pos)
 
 Cell* Room::GetCellFromPos(Protocol::PosInfo* posInfo)
 {
-    return GetCellFromPos(vector2D(posInfo->x(), posInfo->y()));
+    return GetCellFromPos(vector2D(posInfo->pos().x(), posInfo->pos().y()));
 }
 
 void Room::UpdateCellMatrix()
@@ -686,7 +702,7 @@ void Room::UpdateCellMatrix()
 
     for (auto& pair : _objects)
     {
-        uint64 objectId = pair.first;
+        int64 objectId = pair.first;
         ObjectRef object = pair.second;
 
         Protocol::PosInfo* objectPos = object->posInfo;
@@ -712,20 +728,16 @@ bool Room::RegisterObject(ObjectRef object)
     if (object == nullptr)
         return false;
 
-    uint64 objectId = object->objectInfo->object_id();
+    int64 objectId = object->objectInfo->object_id();
 	if (_objects.contains(objectId))
 		return false;
 
 	_objects.insert(make_pair(objectId, object));
 
-    // Object가 속한 Room에 대한 정보 갱신
-	object->room.store(GetRoomRef());
-    object->objectInfo->set_room_id(_roomId);
-
 	return true;
 }
 
-bool Room::UnRegisterObject(uint64 objectId)
+bool Room::UnRegisterObject(int64 objectId)
 {
 	if (_objects.contains(objectId) == false)
 		return false;
@@ -742,7 +754,7 @@ bool Room::UnRegisterObject(uint64 objectId)
 	return true;
 }
 
-void Room::Broadcast(SendBufferRef sendBuffer, uint64 exceptId)
+void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 {
 	for (auto& item : _objects)
 	{

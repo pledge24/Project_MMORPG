@@ -10,7 +10,7 @@ struct RoomEnterData
     optional<Protocol::PosInfo> enterPos;
 };
 
-using Cell = set<uint64>;   // 특정 영역에 있는 ObjectId
+using Cell = set<int64>;   // 특정 영역에 있는 ObjectId
 
 class Room : public JobQueue
 {
@@ -44,7 +44,7 @@ public:
 
     /** 오브젝트 관리 함수 */
     MonsterRef SpawnMonster(int32 templateId);
-    PlayerRef SpawnPlayer(uint64 objectId);
+    PlayerRef SpawnPlayer(int64 objectId);
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
 
     /** Getter 함수 */
@@ -60,7 +60,7 @@ public:
     void SetValid(bool isValid) { _isValid = isValid; }
 
     bool IsValid() const { return _isValid; }
-    bool Contains(uint64 objectId) { return _objects.contains(objectId); }
+    bool Contains(int64 objectId) { return _objects.contains(objectId); }
 
     /** 이벤트 함수 */
     void OnDie(Protocol::S_DIE& diePkt);
@@ -83,10 +83,10 @@ protected:
 
     /* Object 관련*/
 	bool RegisterObject(ObjectRef object);
-	bool UnRegisterObject(uint64 objectId);
+	bool UnRegisterObject(int64 objectId);
 
     /* 네트워크 관련 */
-	void Broadcast(SendBufferRef sendBuffer, uint64 exceptId = 0);
+	void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
 
 public:
     friend class Object;
@@ -94,7 +94,7 @@ public:
 
 private:
     /** 해당 Room 관련 정보 */
-	unordered_map<uint64, ObjectRef> _objects;
+	unordered_map<int64, ObjectRef> _objects;
     vector<vector<Cell>> _cellMatrix;
     vector2D _cellOffset = vector2D::GetZeroVector();
 
@@ -127,8 +127,8 @@ private:
     vector<int32> monsterIds;
 
     /** 네트워크 */
-    uint64 prevTickTime = GetTickCount64();
-    const uint64 ROOM_TICK = 50;
+    int64 prevTickTime = GetTickCount64();
+    const int64 ROOM_TICK = 50;
     const float SEND_MOVE_PACKET_TIME = 0.2f;
     float elapsedTime = 0.f;
 };

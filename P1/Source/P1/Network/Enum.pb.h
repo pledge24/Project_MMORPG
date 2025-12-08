@@ -276,12 +276,13 @@ enum StatType : int {
   STAT_TYPE_PHYSICAL_ATTACK = 5,
   STAT_TYPE_MAGICAL_ATTACK = 6,
   STAT_TYPE_EXP = 7,
+  STAT_TYPE_MAX_EXP = 8,
   StatType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   StatType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool StatType_IsValid(int value);
 constexpr StatType StatType_MIN = STAT_TYPE_NONE;
-constexpr StatType StatType_MAX = STAT_TYPE_EXP;
+constexpr StatType StatType_MAX = STAT_TYPE_MAX_EXP;
 constexpr int StatType_ARRAYSIZE = StatType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor();
@@ -389,17 +390,14 @@ inline bool RespawnType_Parse(
 }
 enum EnterType : int {
   ENTER_TYPE_NONE = 0,
-  ENTER_TYPE_ENTER_GAME = 1,
-  ENTER_TYPE_USE_PORTAL = 2,
-  ENTER_TYPE_USE_ITEM = 4,
-  ENTER_TYPE_QUEST = 5,
-  ENTER_TYPE_RECALL_BY_PARTY = 6,
+  ENTER_TYPE_MAP_CHANGE = 1,
+  ENTER_TYPE_ROOM_CHANGE = 2,
   EnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EnterType_IsValid(int value);
 constexpr EnterType EnterType_MIN = ENTER_TYPE_NONE;
-constexpr EnterType EnterType_MAX = ENTER_TYPE_RECALL_BY_PARTY;
+constexpr EnterType EnterType_MAX = ENTER_TYPE_ROOM_CHANGE;
 constexpr int EnterType_ARRAYSIZE = EnterType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor();

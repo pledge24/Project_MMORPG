@@ -390,11 +390,16 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
         return;
     
     // 패킷으로 만들어서 클라이언트에게 보낸다.
-    Protocol::S_ENTER_GAME pkt;
-    pkt.set_success(true);
-    pkt.mutable_player()->CopyFrom(*player->objectInfo);
+    Protocol::S_ENTER_GAME enterGamePkt;
+    {
+        enterGamePkt.set_success(true);
+        enterGamePkt.mutable_player()->CopyFrom(*player->objectInfo);
 
-    SEND_PACKET(pkt);
+        enterGamePkt.mutable_stat_info()->CopyFrom(*player->statInfo);
+        enterGamePkt.mutable_possession()->CopyFrom(*player->possession);
+    }
+
+    SEND_PACKET(enterGamePkt);
 }
 
 void DBRequestFunctions::UpdateAllCharactersData(SessionRef session)
@@ -590,10 +595,10 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
 
         /* Cols */
         int64 _exp;
-        int32 _curHp;
-        int32 _curMp;
-        int32 _curPhysicalAttack;
-        int32 _curMagicalAttack;
+        int64 _curHp;
+        int64 _curMp;
+        int64 _curPhysicalAttack;
+        int64 _curMagicalAttack;
         int32 _roomId;
         float _posX;
         float _posY;
@@ -624,30 +629,32 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
         Protocol::ObjectInfo* objectInfo = player->objectInfo;
         Protocol::PlayerInfo* playerInfo = player->playerInfo;
+        Protocol::StatInfo* statInfo = player->statInfo;
         Protocol::PosInfo* posInfo = player->posInfo;
+        Protocol::Vector* location = posInfo->mutable_pos();
+        auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
-        playerInfo->set_cur_exp(bindObject._exp);
         DataTable& classLevelDataTable = *Gamedata::ClassLevelDataTableMappings[playerInfo->class_()];
-        uint64 maxExp = classLevelDataTable[playerInfo->level()][JsonProperty::LevelTable::ExpRequirement];
-        playerInfo->set_max_exp(maxExp);
+        int64 maxExp = classLevelDataTable[playerInfo->level()][JsonProperty::LevelTable::ExpRequirement];
+        statMappings->insert({ (int32)Protocol::STAT_TYPE_EXP, bindObject._exp });
+        statMappings->insert({ (int32)Protocol::STAT_TYPE_MAX_EXP, maxExp });
 
         // 현재 Hp
-        Protocol::StatInfo* statInfo = player->statInfo;
-        statInfo->set_hp(bindObject._curHp);
-        statInfo->set_mp(bindObject._curMp);
-        statInfo->set_physical_attack(bindObject._curPhysicalAttack);
-        statInfo->set_magical_attack(bindObject._curMagicalAttack);
+        statMappings->insert({ (int32)Protocol::STAT_TYPE_HP, bindObject._curHp });
+        statMappings->insert({ (int32)Protocol::STAT_TYPE_MP, bindObject._curMp });
+        statMappings->insert({ (int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK, bindObject._curPhysicalAttack });
+        statMappings->insert({ (int32)Protocol::STAT_TYPE_MAGICAL_ATTACK, bindObject._curMagicalAttack });
 
         // 위치 설정
-        objectInfo->set_room_id(bindObject._roomId);
-        posInfo->set_x(bindObject._posX);
-        posInfo->set_y(bindObject._posY);
-        posInfo->set_z(bindObject._posZ);
+        playerInfo->set_room_id(bindObject._roomId);
+        location->set_x(bindObject._posX);
+        location->set_y(bindObject._posY);
+        location->set_z(bindObject._posZ);
         posInfo->set_yaw(bindObject._rotYaw);
 
         // ==플레이어 골드 설정==
-        playerInfo->mutable_possession()->set_gold(bindObject._gold);
+        player->possession->set_gold(bindObject._gold);
     }
     catch (DBCustomError error)
     {
@@ -963,8 +970,8 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
         )SQL");
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
-        Protocol::PlayerInfo* playerInfo = objectInfo->mutable_player_info();
+        Protocol::ObjectInfo* objectInfo = player->objectInfo;
+        Protocol::PlayerInfo* playerInfo = player->playerInfo;
 
         BindObject bindObject(dbBind, playerInfo->character_id(), playerInfo->level());
 
@@ -990,22 +997,25 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player)
         {
-            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::PosInfo& posInfo = objectInfo->pos_info();
+            const Protocol::ObjectInfo& objectInfo = *player->objectInfo;
+            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
+            const Protocol::StatInfo& statInfo = *player->statInfo;
+            const Protocol::PosInfo& posInfo = objectInfo.pos_info();
+            auto& statMappings = statInfo.info();
 
-            _exp = playerInfo.cur_exp();
-            _curHp = playerInfo.stat_info().hp();
-            _curMp = playerInfo.stat_info().mp();
-            _curPhysicalAttack = playerInfo.stat_info().physical_attack();
-            _curMagicalAttack = playerInfo.stat_info().magical_attack();
-            _roomId = objectInfo->room_id();
-            _posX = posInfo.x();
-            _posY = posInfo.y();
-            _posZ = posInfo.z();
+            _exp = statMappings.at(Protocol::STAT_TYPE_EXP);
+            _curHp = statMappings.at(Protocol::STAT_TYPE_HP);
+            _curMp = statMappings.at(Protocol::STAT_TYPE_MP);
+            _curPhysicalAttack = statMappings.at(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
+            _curMagicalAttack = statMappings.at(Protocol::STAT_TYPE_MAGICAL_ATTACK);
+            _roomId = playerInfo.room_id();
+            _posX = posInfo.pos().x();
+            _posY = posInfo.pos().y();
+            _posZ = posInfo.pos().z();
             _rotYaw = posInfo.yaw();
-            _gold = playerInfo.possession().gold();
+            _gold = player->possession->gold();
             _characterId = playerInfo.character_id();
 
             BindParam(dbBind);
@@ -1029,10 +1039,10 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
 
         /* Params */
         int64 _exp;
-        int32 _curHp;
-        int32 _curMp;
-        int32 _curPhysicalAttack;
-        int32 _curMagicalAttack;
+        int64 _curHp;
+        int64 _curMp;
+        int64 _curPhysicalAttack;
+        int64 _curMagicalAttack;
         int32 _roomId;
         float _posX;
         float _posY;
@@ -1054,9 +1064,8 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
         )SQL");
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
-        BindObject bindObject(dbBind, objectInfo);
+        BindObject bindObject(dbBind, player);
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -1109,10 +1118,11 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32& rows)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32& rows)
         {
-            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.possession().inventory();
+            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
+            const Protocol::Possession& possession = *player->possession;
+            const Protocol::Inventory& inven = possession.inventory();
             vector<bool>& gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
 
             // MemSet
@@ -1153,7 +1163,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
                 if (pair.second == true)
                 {
                     int32 slotId = pair.first;
-                    const Protocol::Slot& slot = playerInfo.equipped_gear_detail().at(slotId);
+                    const Protocol::Slot& slot = possession.equipped_gear().at(slotId);
                     _characterId[rows] = playerInfo.character_id();
                     _slotId[rows] = slot.slot_id();
                     _itemUid[rows] = slot.item().item_uid();
@@ -1244,10 +1254,9 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
         )SQL");
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
         int32 rows = 0;
-        BindObject bindObject(dbBind, objectInfo, player, OUT rows);
+        BindObject bindObject(dbBind, player, OUT rows);
 
         if (rows > 0)
         {
@@ -1276,10 +1285,11 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32 rows)
         {
-            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.possession().inventory();
+            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
+            const Protocol::Possession& possession = *player->possession;
+            const Protocol::Inventory& inven = possession.inventory();
             vector<bool>& consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
 
             // MemSet
@@ -1363,10 +1373,9 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
         )SQL");
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
         int32 rows = 0;
-        BindObject bindObject(dbBind, objectInfo, player, OUT rows);
+        BindObject bindObject(dbBind, player, OUT rows);
 
         if (rows > 0)
         {
@@ -1395,10 +1404,11 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, Protocol::ObjectInfo* objectInfo, PlayerRef player, int32 rows)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32 rows)
         {
-            const Protocol::PlayerInfo& playerInfo = objectInfo->player_info();
-            const Protocol::Inventory& inven = playerInfo.possession().inventory();
+            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
+            const Protocol::Possession& possession = *player->possession;
+            const Protocol::Inventory& inven = possession.inventory();
             vector<bool>& miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
 
             // MemSet
@@ -1482,10 +1492,9 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
         )SQL");
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = static_pointer_cast<Object>(player)->objectInfo;
 
         int32 rows = 0;
-        BindObject bindObject(dbBind, objectInfo, player, OUT rows);
+        BindObject bindObject(dbBind, player, OUT rows);
 
         if (rows > 0)
         {

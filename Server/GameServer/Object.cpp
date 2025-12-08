@@ -4,8 +4,7 @@
 Object::Object()
 {
 	objectInfo = new Protocol::ObjectInfo();
-	posInfo = new Protocol::PosInfo();
-	objectInfo->set_allocated_pos_info(posInfo);
+    posInfo = objectInfo->mutable_pos_info();
 
     tickGroupFuncs.resize(static_cast<int32>(ETickGroup::TG_COUNT));
 }
