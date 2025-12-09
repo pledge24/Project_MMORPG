@@ -86,47 +86,50 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
         if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
         {
             GameInstance->HandleEnterGame(pkt);
-            UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         }
     }
 
 	return true;
 }
 
-bool Handle_S_CHANGE_ROOM(PacketSessionRef& session, Protocol::S_CHANGE_ROOM& pkt)
+bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        GameInstance->HandleMove(pkt.info());   // Teleport My Character
-        GameInstance->HandleDespawnAll(true);
-
-        for (auto& Object : pkt.objects())
+        // 연결을 곧바로 끊음
+        if (FSocket* Socket = GameInstance->Socket)
         {
-            GameInstance->HandleSpawn(Object);
-        }
+            //ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
+            //SocketSubsystem->DestroySocket(Socket);
+            //Socket = nullptr;
 
+            Socket->Close();
+        }
+    }
+
+    return true;
+}
+
+bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleEnterMap(pkt);
         return true;
     }
 
     return false;
 }
 
-bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
+bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
-	{
-		// 연결을 곧바로 끊음
-        if (FSocket* Socket = GameInstance->Socket)
-        {
-        	//ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-        	//SocketSubsystem->DestroySocket(Socket);
-        	//Socket = nullptr;
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleEnterRoom(pkt);
+        return true;
+    }
 
-            Socket->Close();
-        }
-	}
-
-	return true;
+    return false;
 }
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)

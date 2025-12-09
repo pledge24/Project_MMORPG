@@ -519,9 +519,16 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
         // 2) Room을 이동 -> 리스폰 패킷 전송 -> Room 정보 전송
         curRoom->DoAsync([self = curRoom, respawnRoom, pkt, player, enterData, respawnPos]()
             {
-                self->TransferPlayer(player, enterData);
-                respawnRoom->DoAsync(&Room::HandleRespawn, pkt, player, respawnPos);
-                respawnRoom->DoAsync(&Room::ReplicateRoomData, player, false);
+                if (self->TransferPlayer(player, enterData) == false)
+                    return;
+
+                respawnRoom->DoAsync([self = respawnRoom, pkt, player, respawnPos]()
+                    {
+                        if (self->HandleRespawn(pkt, player, respawnPos) == false)
+                            return;
+
+                        self->ReplicateRoomData(player, false);
+                    });
             });
 
     }

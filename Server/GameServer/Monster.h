@@ -28,7 +28,11 @@ public:
     void PostInit();
     void PrintMonsterAllData() const;
 
+    /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+    virtual void OnDie(ObjectRef attacker) override;
+
+    int64 GetTemplateId() { return templateId; }
 
 protected:
     void CacheMonsterData();
@@ -56,10 +60,10 @@ protected:
     bool AlreadyArrive();
     bool HaveDestination() { return _moveDest.has_value(); }
 
-    /** 이벤트 */
+    /** 이벤트 함수 */
     void OnHitCheck();
 
-    /** Getter-Setter 함수 */
+    /** Getter-Setter 함수(Private) */
     const vector2D& GetDestination() { return _moveDest.value(); }
     int64 GetExpReward();
     int64 GetGoldReward();

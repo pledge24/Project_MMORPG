@@ -75,6 +75,7 @@ message S_LEAVE_GAME
 
 message C_ENTER_MAP
 {
+    // 이 패킷은 게임 입장 후에 사용한다.
     int32 map_id = 1;
     optional PosInfo info = 2;      // 서버 검증용
 
@@ -107,7 +108,7 @@ message C_ENTER_ROOM
 message S_ENTER_ROOM
 {
     bool success = 1;
-    EnterType enter_type = 2;
+    EnterType enter_type = 2;   // 요청 확인용
     int32 room_id = 3;
 
     // 게임에 참여하지 않고 단순 입장만 하는 경우 고려해서 optional 추가
@@ -151,11 +152,7 @@ message S_HIT
     HitData hit_data = 1;
 
     // 피격 결과
-    oneof hit_result
-    {
-        int64 hp = 2;
-        StatList updated_stat = 3;
-    }
+    repeated Stat updated_stat = 2;
 }
 
 message C_BUY_ITEM
@@ -240,21 +237,21 @@ message S_USE_ITEM
 message S_DIE
 {
     int64 object_id = 1;
-
-    DiePenaltyInfo die_penalty_details = 2;
 }
 
 message S_MONSTER_KILL_RESULT
 {
     int64 object_id = 1;
     int64 monster_object_id = 2;
+    int64 monster_template_id = 3;
 
-    // 보상 획득에 의한 갱신 데이터
-    int64 current_exp = 3;
-    int64 current_gold = 4;
+    Reward killReward = 4;
 
-    bool is_level_up = 5;
-    LevelUpInfo level_up_details = 6;
+    // 갱신된 데이터
+    int64 updated_exp = 5;
+    int64 updated_gold = 6;
+    bool is_level_up = 7;
+    LevelUpInfo level_up_details = 8;
 }
 
 message C_RESPAWN
@@ -273,13 +270,14 @@ message C_RESPAWN
 
 message S_RESPAWN
 {
+    // S_RESPAWN은 리스폰 요청의 결과만 알려주고 실제 스폰은 하지 않는다.
     bool success = 1;
     string error_message = 2;
     RespawnType respawn_type = 3;
-
-    // 리스폰 성공 결과(해당 정보가 실제 스폰에 사용되진 않음. preview용)
     int64 object_id = 4;
+
+    // 리스폰시 변경된 데이터
     int32 room_id = 5;
     PosInfo pos_info = 6;
-    int64 hp = 7;
+    repeated Stat updated_stat = 7;
 }

@@ -34,15 +34,19 @@ public:
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
     /** 네트워크 함수 */
-	void HandleMove(Protocol::C_MOVE pkt);
-    void HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
-    void HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
+    void HandleMove(Protocol::C_MOVE pkt);
+    bool HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
+    bool HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
     void HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
-    void HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos);
+    bool HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos);
 
     void ReplicateRoomData(PlayerRef player, bool excludeThisPlayer);
+    void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
 
-    /** 오브젝트 관리 함수 */
+    /* Object 관련 함수*/
+    bool AddObject(ObjectRef object);
+    bool RemoveObject(int64 objectId);
+
     MonsterRef SpawnMonster(int32 templateId);
     PlayerRef SpawnPlayer(int64 objectId);
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
@@ -62,9 +66,6 @@ public:
     bool IsValid() const { return _isValid; }
     bool Contains(int64 objectId) { return _objects.contains(objectId); }
 
-    /** 이벤트 함수 */
-    void OnDie(Protocol::S_DIE& diePkt);
-
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
     pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);  // pair<플레이어 참조, 거리^2> 
@@ -80,13 +81,6 @@ protected:
     Cell* GetCellFromPos(const vector2D& pos);
     Cell* GetCellFromPos(Protocol::PosInfo* posInfo);
     void UpdateCellMatrix();
-
-    /* Object 관련*/
-	bool RegisterObject(ObjectRef object);
-	bool UnRegisterObject(int64 objectId);
-
-    /* 네트워크 관련 */
-	void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
 
 public:
     friend class Object;
@@ -127,7 +121,7 @@ private:
     vector<int32> monsterIds;
 
     /** 네트워크 */
-    int64 prevTickTime = GetTickCount64();
+    uint64 prevTickTime = GetTickCount64();
     const int64 ROOM_TICK = 50;
     const float SEND_MOVE_PACKET_TIME = 0.2f;
     float elapsedTime = 0.f;

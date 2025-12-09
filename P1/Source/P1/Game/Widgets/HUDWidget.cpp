@@ -18,43 +18,22 @@ void UHUDWidget::NativeConstruct()
         if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
         {
             const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
-            const Protocol::StatInfo& StatInfo_ = MyPlayerData->GetStatInfo();
 
             Name_txt->SetText(FText::FromString(UTF8_TO_TCHAR(PlayerInfo_.name().c_str())));
             Level_txt->SetText(FText::AsNumber(PlayerInfo_.level()));
-            HpBar->Init(StatInfo_.hp(), StatInfo_.max_hp());
-            MpBar->Init(StatInfo_.mp(), StatInfo_.max_mp());
-            ExpBar->Init(PlayerInfo_.cur_exp(), PlayerInfo_.max_exp(), true);
+            HpBar->Init(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_HP), MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_HP));
+            MpBar->Init(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MP), MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_MP));
+            ExpBar->Init(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_EXP), MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), true);
 
-            // MyPlayer 스폰 이벤트에 함수 등록
-            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UHUDWidget::BindMyPlayerSpawned);
+            // 바인딩 셋업
+            MyPlayerData->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateLevel);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_HP].AddUObject(this, &UHUDWidget::UpdateMaxHp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_HP].AddUObject(this, &UHUDWidget::UpdateCurHp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_MP].AddUObject(this, &UHUDWidget::UpdateMaxMp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MP].AddUObject(this, &UHUDWidget::UpdateCurMp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_EXP].AddUObject(this, &UHUDWidget::UpdateMaxExp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_EXP].AddUObject(this, &UHUDWidget::UpdateCurExp);
         }
-    }
-}
-
-void UHUDWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
-{
-    // 바인딩 셋업
-    MyPlayer->OnLevelChanged.AddUObject(this, &UHUDWidget::UpdateLevel);
-    MyPlayer->OnExpChanged.AddUObject(this, &UHUDWidget::UpdateExpBar);
-    MyPlayer->OnStatInfoChanged.AddUObject(this, &UHUDWidget::UpdateAllStatsChanged);
-    MyPlayer->OnHpChanged.AddUObject(this, &UHUDWidget::UpdateCurHp);
-}
-
-void UHUDWidget::UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_)
-{
-    /** HP Bar*/
-    {
-        TOptional<int32> CurValue = StatInfo_.has_hp() ? TOptional<int32>(StatInfo_.hp()) : NullOpt;
-        TOptional<int32> MaxValue = StatInfo_.has_max_hp() ? TOptional<int32>(StatInfo_.max_hp()) : NullOpt;
-        UpdateHpBar(CurValue, MaxValue);
-    }
-
-    /** MP Bar*/
-    {
-        TOptional<int32> CurValue = StatInfo_.has_mp() ? TOptional<int32>(StatInfo_.mp()) : NullOpt;
-        TOptional<int32> MaxValue = StatInfo_.has_max_mp() ? TOptional<int32>(StatInfo_.max_mp()) : NullOpt;
-        UpdateMpBar(CurValue, MaxValue);
     }
 }
 
@@ -64,17 +43,17 @@ void UHUDWidget::UpdateLevel(int32 Level)
 }
 
 
-void UHUDWidget::UpdateMaxHp(int32 Value)
+void UHUDWidget::UpdateMaxHp(int64 Value)
 {
     HpBar->SetMaxValue(Value);
 }
 
-void UHUDWidget::UpdateCurHp(int32 Value)
+void UHUDWidget::UpdateCurHp(int64 Value)
 {
     HpBar->SetCurValue(Value);
 }
 
-void UHUDWidget::UpdateHpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue)
+void UHUDWidget::UpdateHpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue)
 {
     if (CurValue.IsSet() && MaxValue.IsSet())
         HpBar->SetBoth(CurValue.GetValue(), MaxValue.GetValue());
@@ -85,17 +64,17 @@ void UHUDWidget::UpdateHpBar(TOptional<int32> CurValue, TOptional<int32> MaxValu
         HpBar->SetMaxValue(MaxValue.GetValue());
 }
 
-void UHUDWidget::UpdateMaxMp(int32 Value)
+void UHUDWidget::UpdateMaxMp(int64 Value)
 {
     MpBar->SetMaxValue(Value);
 }
 
-void UHUDWidget::UpdateCurMp(int32 Value)
+void UHUDWidget::UpdateCurMp(int64 Value)
 {
     MpBar->SetCurValue(Value);
 }
 
-void UHUDWidget::UpdateMpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue)
+void UHUDWidget::UpdateMpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue)
 {
     if (CurValue.IsSet() && MaxValue.IsSet())
         MpBar->SetBoth(CurValue.GetValue(), MaxValue.GetValue());
@@ -106,7 +85,17 @@ void UHUDWidget::UpdateMpBar(TOptional<int32> CurValue, TOptional<int32> MaxValu
         MpBar->SetMaxValue(MaxValue.GetValue());
 }
 
-void UHUDWidget::UpdateExpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue)
+void UHUDWidget::UpdateMaxExp(int64 Value)
+{
+    ExpBar->SetMaxValue(Value);
+}
+
+void UHUDWidget::UpdateCurExp(int64 Value)
+{
+    ExpBar->SetCurValue(Value);
+}
+
+void UHUDWidget::UpdateExpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue)
 {
     if(CurValue.IsSet() && MaxValue.IsSet())
         ExpBar->SetBoth(CurValue.GetValue(), MaxValue.GetValue());

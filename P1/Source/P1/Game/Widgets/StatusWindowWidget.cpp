@@ -7,6 +7,7 @@
 #include "P1MyPlayer.h"
 #include "P1GameInstance.h"
 #include "MyPlayerData.h"
+#include "EquippedGear.h"
 
 void UStatusWindowWidget::NativeConstruct()
 {
@@ -19,28 +20,20 @@ void UStatusWindowWidget::NativeConstruct()
         {
             const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
 
-            UpdateAllStat(PlayerInfo_.stat_info());
+            UpdateAllStat(MyPlayerData);
 
-            for (const auto& Pair : PlayerInfo_.equipped_gear())
+            for (const auto& Pair : MyPlayerData->GetEquippedGear()->GetAllSlot())
             {
                 const Protocol::Slot& Slot_ = Pair.second;
                 UpdateSlotWidget(Slot_);
             }
 
-            // MyPlayer 스폰 이벤트에 함수 등록
-            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UStatusWindowWidget::BindMyPlayerSpawned);
+            // 바인딩 셋업
+            MyPlayerData->OnEquipmentSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
+            GameInstance->OnRecvUnequipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
         }
     }
 
-}
-
-void UStatusWindowWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
-{
-    // 바인딩 셋업
-    MyPlayer->OnStatInfoChanged.AddUObject(this, &UStatusWindowWidget::UpdateAllStat);
-    MyPlayer->OnGearSlotChanged.AddUObject(this, &UStatusWindowWidget::UpdateSlotWidget);
-
-    MyPlayer->OnRecvUnequipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
 }
 
 void UStatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)
@@ -74,16 +67,12 @@ void UStatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)
         SlotWidget->SetSlot(Slot_);
 }
 
-void UStatusWindowWidget::UpdateAllStat(const Protocol::StatInfo& StatInfo_)
+void UStatusWindowWidget::UpdateAllStat(UMyPlayerData* MyPlayerData)
 {
-    if(StatInfo_.has_max_hp())
-        UpdateMaxHp(StatInfo_.max_hp());
-    if(StatInfo_.has_max_mp())
-        UpdateMaxMp(StatInfo_.max_mp());
-    if(StatInfo_.has_physical_attack())
-        UpdatePhysicalAttack(StatInfo_.physical_attack());
-    if(StatInfo_.has_magical_attack())
-        UpdateMagicalAttack(StatInfo_.magical_attack());
+    UpdateMaxHp(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_HP));
+    UpdateMaxMp(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_MP));
+    UpdatePhysicalAttack(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK));
+    UpdateMagicalAttack(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK));
 }
 
 void UStatusWindowWidget::UpdateMaxHp(int32 Value)

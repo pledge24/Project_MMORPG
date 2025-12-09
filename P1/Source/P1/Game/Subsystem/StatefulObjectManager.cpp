@@ -151,12 +151,6 @@ void UStatefulObjectManager::DespawnObject(uint64 ObjectId)
     }
 }
 
-void UStatefulObjectManager::RespawnObject(const Protocol::S_RESPAWN& RespawnPkt)
-{
-    uint64 ObjectId = RespawnPkt.object_id();
-
-}
-
 void UStatefulObjectManager::Clear()
 {
     Players.Empty();

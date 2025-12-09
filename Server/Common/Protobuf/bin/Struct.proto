@@ -84,11 +84,6 @@ message StatInfo
     map<int32, int64> info = 1;   // <StatType, Value>
 }
 
-message StatList
-{
-    repeated Stat list = 1;
-}
-
 message Stat
 {
     StatType type = 1;
@@ -145,13 +140,12 @@ message LevelUpInfo
 //    int32 earned_skill_points = 3;
 //    int32 earned_stat_points = 4;
 
-    int64 new_max_hp = 5;
-    int64 new_max_mp = 6;
-    int64 new_physical_attack = 7;
-    int64 new_magical_attack = 8;
+    repeated Stat updatedStat = 5;
 }
 
-message DiePenaltyInfo
+message Reward
 {
-    int64 updated_exp = 1;
+    optional int64 exp = 1;
+    optional int64 gold = 2;
+    // repeated Item items = 3;
 }

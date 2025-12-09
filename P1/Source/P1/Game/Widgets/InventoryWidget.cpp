@@ -21,9 +21,9 @@ void UInventoryWidget::NativeConstruct()
         if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
         {
             const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
-            const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
+            const Protocol::Inventory& Inven_ = MyPlayerData->GetPossession()->inventory();
 
-            UpdateGold(PlayerInfo_.gold());
+            UpdateGold(MyPlayerData->GetGold());
 
             for (const Protocol::Slot& Slot_ : Inven_.gear())
             {
@@ -40,8 +40,13 @@ void UInventoryWidget::NativeConstruct()
                 UpdateSlotWidget(Slot_);
             }
 
-            // MyPlayer 스폰 이벤트에 함수 등록
-            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UInventoryWidget::BindMyPlayerSpawned);
+            // 바인딩 셋업
+            MyPlayerData->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
+            MyPlayerData->OnInvenSlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
+
+            GameInstance->OnRecvSellItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+            GameInstance->OnRecvUseItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+            GameInstance->OnRecvEquipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
         }
         
     }
@@ -69,17 +74,6 @@ void UInventoryWidget::Clear()
         if (Slot_)
             Slot_->ClearSlot();
     }
-}
-
-void UInventoryWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
-{
-    // 바인딩 셋업
-    MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
-    MyPlayer->OnInvenSlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
-
-    MyPlayer->OnRecvSellItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
-    MyPlayer->OnRecvUseItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
-    MyPlayer->OnRecvEquipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
 }
 
 void UInventoryWidget::UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse)

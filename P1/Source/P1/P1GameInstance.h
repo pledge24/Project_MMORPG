@@ -42,6 +42,8 @@ public:
 public:
 	/* 패킷 핸들 함수 */
 	void HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt);
+    void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
+    void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
     void HandleSpawn(const Protocol::ObjectInfo& ObjectInfo);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
@@ -74,6 +76,22 @@ public:
     void SetMyPlayer(AP1MyPlayer* MyPlayer) { _MyPlayer = MyPlayer; }
 
 public:
+    /** 패킷 수신 체크용 델리게이트 */
+    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
+    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
+    FOnRecvSellItemPkt OnRecvSellItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
+    FOnRecvUseItemPkt OnRecvUseItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
+    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
+    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
+
     /** GameServer Socket */
     class FSocket* Socket;
     const FString IpAddress = TEXT("127.0.0.1");

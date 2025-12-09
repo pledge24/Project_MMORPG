@@ -64,9 +64,9 @@ void ACreature::Tick(float DeltaTime)
     // Cache: 틱마다 플레이어의 이전 틱 위치 정보 저장
     {
         FVector Location = GetActorLocation();
-        ClientPos->set_x(Location.X);
-        ClientPos->set_y(Location.Y);
-        ClientPos->set_z(Location.Z);
+        ClientPos->mutable_pos()->set_x(Location.X);
+        ClientPos->mutable_pos()->set_y(Location.Y);
+        ClientPos->mutable_pos()->set_z(Location.Z);
         ClientPos->set_yaw(GetActorRotation().Yaw);
     }
 
@@ -123,7 +123,7 @@ void ACreature::SetClientPos(const Protocol::PosInfo& Info)
 
     ClientPos->CopyFrom(Info);
 
-    FVector Location(Info.x(), Info.y(), Info.z());
+    FVector Location(Info.pos().x(), Info.pos().y(), Info.pos().z());
     SetActorLocation(Location);
 
     FRotator CurrentRotation = GetActorRotation();
@@ -190,7 +190,7 @@ void ACreature::S_Move(float DeltaSeconds)
     }
 
     FVector ClientLocation = GetActorLocation();
-    FVector ServerLocation = FVector(ServerPos->x(), ServerPos->y(), ClientLocation.Z);
+    FVector ServerLocation = FVector(ServerPos->pos().x(), ServerPos->pos().y(), ClientLocation.Z);
     const float Dist = FVector::Distance(ClientLocation, ServerLocation);
 
     // 회전 보정.
@@ -237,7 +237,6 @@ void ACreature::S_NormalAttack(uint32 Combo, float Yaw)
 
 void ACreature::S_Hit(const Protocol::HitData& HitData_, uint32 updatedHp)
 {
-    OnHpChanged.Broadcast((int32)updatedHp);
     OnHit.Broadcast(HitData_.damage());
 }
 
@@ -250,7 +249,7 @@ void ACreature::S_Die()
 
 FVector ACreature::FindPerpendicularPoint() const
 {
-    FVector TargetPoint = FVector(ServerPos->x(), ServerPos->y(), ClientPos->z());
+    FVector TargetPoint = FVector(ServerPos->pos().x(), ServerPos->pos().y(), ClientPos->pos().z());
     FVector ClosestPoint = UKismetMathLibrary::FindClosestPointOnLine(GetActorLocation(), TargetPoint, MoveDirection);
 
     return ClosestPoint;

@@ -3761,12 +3761,6 @@ class S_HIT final :
   static const S_HIT& default_instance() {
     return *internal_default_instance();
   }
-  enum HitResultCase {
-    kHp = 2,
-    kUpdatedStat = 3,
-    HIT_RESULT_NOT_SET = 0,
-  };
-
   static inline const S_HIT* internal_default_instance() {
     return reinterpret_cast<const S_HIT*>(
                &_S_HIT_default_instance_);
@@ -3845,10 +3839,27 @@ class S_HIT final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kUpdatedStatFieldNumber = 2,
     kHitDataFieldNumber = 1,
-    kHpFieldNumber = 2,
-    kUpdatedStatFieldNumber = 3,
   };
+  // repeated .Protocol.Stat updated_stat = 2;
+  int updated_stat_size() const;
+  private:
+  int _internal_updated_stat_size() const;
+  public:
+  void clear_updated_stat();
+  ::Protocol::Stat* mutable_updated_stat(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >*
+      mutable_updated_stat();
+  private:
+  const ::Protocol::Stat& _internal_updated_stat(int index) const;
+  ::Protocol::Stat* _internal_add_updated_stat();
+  public:
+  const ::Protocol::Stat& updated_stat(int index) const;
+  ::Protocol::Stat* add_updated_stat();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
+      updated_stat() const;
+
   // .Protocol.HitData hit_data = 1;
   bool has_hit_data() const;
   private:
@@ -3867,62 +3878,17 @@ class S_HIT final :
       ::Protocol::HitData* hit_data);
   ::Protocol::HitData* unsafe_arena_release_hit_data();
 
-  // int64 hp = 2;
-  bool has_hp() const;
-  private:
-  bool _internal_has_hp() const;
-  public:
-  void clear_hp();
-  int64_t hp() const;
-  void set_hp(int64_t value);
-  private:
-  int64_t _internal_hp() const;
-  void _internal_set_hp(int64_t value);
-  public:
-
-  // .Protocol.StatList updated_stat = 3;
-  bool has_updated_stat() const;
-  private:
-  bool _internal_has_updated_stat() const;
-  public:
-  void clear_updated_stat();
-  const ::Protocol::StatList& updated_stat() const;
-  PROTOBUF_NODISCARD ::Protocol::StatList* release_updated_stat();
-  ::Protocol::StatList* mutable_updated_stat();
-  void set_allocated_updated_stat(::Protocol::StatList* updated_stat);
-  private:
-  const ::Protocol::StatList& _internal_updated_stat() const;
-  ::Protocol::StatList* _internal_mutable_updated_stat();
-  public:
-  void unsafe_arena_set_allocated_updated_stat(
-      ::Protocol::StatList* updated_stat);
-  ::Protocol::StatList* unsafe_arena_release_updated_stat();
-
-  void clear_hit_result();
-  HitResultCase hit_result_case() const;
   // @@protoc_insertion_point(class_scope:Protocol.S_HIT)
  private:
   class _Internal;
-  void set_has_hp();
-  void set_has_updated_stat();
-
-  inline bool has_hit_result() const;
-  inline void clear_has_hit_result();
 
   template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat > updated_stat_;
     ::Protocol::HitData* hit_data_;
-    union HitResultUnion {
-      constexpr HitResultUnion() : _constinit_{} {}
-        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
-      int64_t hp_;
-      ::Protocol::StatList* updated_stat_;
-    } hit_result_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    uint32_t _oneof_case_[1];
-
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
@@ -5847,27 +5813,8 @@ class S_DIE final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kDiePenaltyDetailsFieldNumber = 2,
     kObjectIdFieldNumber = 1,
   };
-  // .Protocol.DiePenaltyInfo die_penalty_details = 2;
-  bool has_die_penalty_details() const;
-  private:
-  bool _internal_has_die_penalty_details() const;
-  public:
-  void clear_die_penalty_details();
-  const ::Protocol::DiePenaltyInfo& die_penalty_details() const;
-  PROTOBUF_NODISCARD ::Protocol::DiePenaltyInfo* release_die_penalty_details();
-  ::Protocol::DiePenaltyInfo* mutable_die_penalty_details();
-  void set_allocated_die_penalty_details(::Protocol::DiePenaltyInfo* die_penalty_details);
-  private:
-  const ::Protocol::DiePenaltyInfo& _internal_die_penalty_details() const;
-  ::Protocol::DiePenaltyInfo* _internal_mutable_die_penalty_details();
-  public:
-  void unsafe_arena_set_allocated_die_penalty_details(
-      ::Protocol::DiePenaltyInfo* die_penalty_details);
-  ::Protocol::DiePenaltyInfo* unsafe_arena_release_die_penalty_details();
-
   // int64 object_id = 1;
   void clear_object_id();
   int64_t object_id() const;
@@ -5885,7 +5832,6 @@ class S_DIE final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::Protocol::DiePenaltyInfo* die_penalty_details_;
     int64_t object_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -6015,14 +5961,34 @@ class S_MONSTER_KILL_RESULT final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kLevelUpDetailsFieldNumber = 6,
+    kKillRewardFieldNumber = 4,
+    kLevelUpDetailsFieldNumber = 8,
     kObjectIdFieldNumber = 1,
     kMonsterObjectIdFieldNumber = 2,
-    kCurrentExpFieldNumber = 3,
-    kCurrentGoldFieldNumber = 4,
-    kIsLevelUpFieldNumber = 5,
+    kMonsterTemplateIdFieldNumber = 3,
+    kUpdatedExpFieldNumber = 5,
+    kUpdatedGoldFieldNumber = 6,
+    kIsLevelUpFieldNumber = 7,
   };
-  // .Protocol.LevelUpInfo level_up_details = 6;
+  // .Protocol.Reward killReward = 4;
+  bool has_killreward() const;
+  private:
+  bool _internal_has_killreward() const;
+  public:
+  void clear_killreward();
+  const ::Protocol::Reward& killreward() const;
+  PROTOBUF_NODISCARD ::Protocol::Reward* release_killreward();
+  ::Protocol::Reward* mutable_killreward();
+  void set_allocated_killreward(::Protocol::Reward* killreward);
+  private:
+  const ::Protocol::Reward& _internal_killreward() const;
+  ::Protocol::Reward* _internal_mutable_killreward();
+  public:
+  void unsafe_arena_set_allocated_killreward(
+      ::Protocol::Reward* killreward);
+  ::Protocol::Reward* unsafe_arena_release_killreward();
+
+  // .Protocol.LevelUpInfo level_up_details = 8;
   bool has_level_up_details() const;
   private:
   bool _internal_has_level_up_details() const;
@@ -6058,25 +6024,34 @@ class S_MONSTER_KILL_RESULT final :
   void _internal_set_monster_object_id(int64_t value);
   public:
 
-  // int64 current_exp = 3;
-  void clear_current_exp();
-  int64_t current_exp() const;
-  void set_current_exp(int64_t value);
+  // int64 monster_template_id = 3;
+  void clear_monster_template_id();
+  int64_t monster_template_id() const;
+  void set_monster_template_id(int64_t value);
   private:
-  int64_t _internal_current_exp() const;
-  void _internal_set_current_exp(int64_t value);
+  int64_t _internal_monster_template_id() const;
+  void _internal_set_monster_template_id(int64_t value);
   public:
 
-  // int64 current_gold = 4;
-  void clear_current_gold();
-  int64_t current_gold() const;
-  void set_current_gold(int64_t value);
+  // int64 updated_exp = 5;
+  void clear_updated_exp();
+  int64_t updated_exp() const;
+  void set_updated_exp(int64_t value);
   private:
-  int64_t _internal_current_gold() const;
-  void _internal_set_current_gold(int64_t value);
+  int64_t _internal_updated_exp() const;
+  void _internal_set_updated_exp(int64_t value);
   public:
 
-  // bool is_level_up = 5;
+  // int64 updated_gold = 6;
+  void clear_updated_gold();
+  int64_t updated_gold() const;
+  void set_updated_gold(int64_t value);
+  private:
+  int64_t _internal_updated_gold() const;
+  void _internal_set_updated_gold(int64_t value);
+  public:
+
+  // bool is_level_up = 7;
   void clear_is_level_up();
   bool is_level_up() const;
   void set_is_level_up(bool value);
@@ -6093,11 +6068,13 @@ class S_MONSTER_KILL_RESULT final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::Protocol::Reward* killreward_;
     ::Protocol::LevelUpInfo* level_up_details_;
     int64_t object_id_;
     int64_t monster_object_id_;
-    int64_t current_exp_;
-    int64_t current_gold_;
+    int64_t monster_template_id_;
+    int64_t updated_exp_;
+    int64_t updated_gold_;
     bool is_level_up_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -6458,14 +6435,32 @@ class S_RESPAWN final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kUpdatedStatFieldNumber = 7,
     kErrorMessageFieldNumber = 2,
     kPosInfoFieldNumber = 6,
     kSuccessFieldNumber = 1,
     kRespawnTypeFieldNumber = 3,
     kObjectIdFieldNumber = 4,
-    kHpFieldNumber = 7,
     kRoomIdFieldNumber = 5,
   };
+  // repeated .Protocol.Stat updated_stat = 7;
+  int updated_stat_size() const;
+  private:
+  int _internal_updated_stat_size() const;
+  public:
+  void clear_updated_stat();
+  ::Protocol::Stat* mutable_updated_stat(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >*
+      mutable_updated_stat();
+  private:
+  const ::Protocol::Stat& _internal_updated_stat(int index) const;
+  ::Protocol::Stat* _internal_add_updated_stat();
+  public:
+  const ::Protocol::Stat& updated_stat(int index) const;
+  ::Protocol::Stat* add_updated_stat();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
+      updated_stat() const;
+
   // string error_message = 2;
   void clear_error_message();
   const std::string& error_message() const;
@@ -6525,15 +6520,6 @@ class S_RESPAWN final :
   void _internal_set_object_id(int64_t value);
   public:
 
-  // int64 hp = 7;
-  void clear_hp();
-  int64_t hp() const;
-  void set_hp(int64_t value);
-  private:
-  int64_t _internal_hp() const;
-  void _internal_set_hp(int64_t value);
-  public:
-
   // int32 room_id = 5;
   void clear_room_id();
   int32_t room_id() const;
@@ -6551,12 +6537,12 @@ class S_RESPAWN final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat > updated_stat_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr error_message_;
     ::Protocol::PosInfo* pos_info_;
     bool success_;
     int respawn_type_;
     int64_t object_id_;
-    int64_t hp_;
     int32_t room_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -8174,119 +8160,43 @@ inline void S_HIT::set_allocated_hit_data(::Protocol::HitData* hit_data) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_HIT.hit_data)
 }
 
-// int64 hp = 2;
-inline bool S_HIT::_internal_has_hp() const {
-  return hit_result_case() == kHp;
+// repeated .Protocol.Stat updated_stat = 2;
+inline int S_HIT::_internal_updated_stat_size() const {
+  return _impl_.updated_stat_.size();
 }
-inline bool S_HIT::has_hp() const {
-  return _internal_has_hp();
+inline int S_HIT::updated_stat_size() const {
+  return _internal_updated_stat_size();
 }
-inline void S_HIT::set_has_hp() {
-  _impl_._oneof_case_[0] = kHp;
-}
-inline void S_HIT::clear_hp() {
-  if (_internal_has_hp()) {
-    _impl_.hit_result_.hp_ = int64_t{0};
-    clear_has_hit_result();
-  }
-}
-inline int64_t S_HIT::_internal_hp() const {
-  if (_internal_has_hp()) {
-    return _impl_.hit_result_.hp_;
-  }
-  return int64_t{0};
-}
-inline void S_HIT::_internal_set_hp(int64_t value) {
-  if (!_internal_has_hp()) {
-    clear_hit_result();
-    set_has_hp();
-  }
-  _impl_.hit_result_.hp_ = value;
-}
-inline int64_t S_HIT::hp() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_HIT.hp)
-  return _internal_hp();
-}
-inline void S_HIT::set_hp(int64_t value) {
-  _internal_set_hp(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_HIT.hp)
-}
-
-// .Protocol.StatList updated_stat = 3;
-inline bool S_HIT::_internal_has_updated_stat() const {
-  return hit_result_case() == kUpdatedStat;
-}
-inline bool S_HIT::has_updated_stat() const {
-  return _internal_has_updated_stat();
-}
-inline void S_HIT::set_has_updated_stat() {
-  _impl_._oneof_case_[0] = kUpdatedStat;
-}
-inline ::Protocol::StatList* S_HIT::release_updated_stat() {
-  // @@protoc_insertion_point(field_release:Protocol.S_HIT.updated_stat)
-  if (_internal_has_updated_stat()) {
-    clear_has_hit_result();
-    ::Protocol::StatList* temp = _impl_.hit_result_.updated_stat_;
-    if (GetArenaForAllocation() != nullptr) {
-      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-    }
-    _impl_.hit_result_.updated_stat_ = nullptr;
-    return temp;
-  } else {
-    return nullptr;
-  }
-}
-inline const ::Protocol::StatList& S_HIT::_internal_updated_stat() const {
-  return _internal_has_updated_stat()
-      ? *_impl_.hit_result_.updated_stat_
-      : reinterpret_cast< ::Protocol::StatList&>(::Protocol::_StatList_default_instance_);
-}
-inline const ::Protocol::StatList& S_HIT::updated_stat() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_HIT.updated_stat)
-  return _internal_updated_stat();
-}
-inline ::Protocol::StatList* S_HIT::unsafe_arena_release_updated_stat() {
-  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.S_HIT.updated_stat)
-  if (_internal_has_updated_stat()) {
-    clear_has_hit_result();
-    ::Protocol::StatList* temp = _impl_.hit_result_.updated_stat_;
-    _impl_.hit_result_.updated_stat_ = nullptr;
-    return temp;
-  } else {
-    return nullptr;
-  }
-}
-inline void S_HIT::unsafe_arena_set_allocated_updated_stat(::Protocol::StatList* updated_stat) {
-  clear_hit_result();
-  if (updated_stat) {
-    set_has_updated_stat();
-    _impl_.hit_result_.updated_stat_ = updated_stat;
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_HIT.updated_stat)
-}
-inline ::Protocol::StatList* S_HIT::_internal_mutable_updated_stat() {
-  if (!_internal_has_updated_stat()) {
-    clear_hit_result();
-    set_has_updated_stat();
-    _impl_.hit_result_.updated_stat_ = CreateMaybeMessage< ::Protocol::StatList >(GetArenaForAllocation());
-  }
-  return _impl_.hit_result_.updated_stat_;
-}
-inline ::Protocol::StatList* S_HIT::mutable_updated_stat() {
-  ::Protocol::StatList* _msg = _internal_mutable_updated_stat();
+inline ::Protocol::Stat* S_HIT::mutable_updated_stat(int index) {
   // @@protoc_insertion_point(field_mutable:Protocol.S_HIT.updated_stat)
-  return _msg;
+  return _impl_.updated_stat_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >*
+S_HIT::mutable_updated_stat() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_HIT.updated_stat)
+  return &_impl_.updated_stat_;
+}
+inline const ::Protocol::Stat& S_HIT::_internal_updated_stat(int index) const {
+  return _impl_.updated_stat_.Get(index);
+}
+inline const ::Protocol::Stat& S_HIT::updated_stat(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_HIT.updated_stat)
+  return _internal_updated_stat(index);
+}
+inline ::Protocol::Stat* S_HIT::_internal_add_updated_stat() {
+  return _impl_.updated_stat_.Add();
+}
+inline ::Protocol::Stat* S_HIT::add_updated_stat() {
+  ::Protocol::Stat* _add = _internal_add_updated_stat();
+  // @@protoc_insertion_point(field_add:Protocol.S_HIT.updated_stat)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
+S_HIT::updated_stat() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_HIT.updated_stat)
+  return _impl_.updated_stat_;
 }
 
-inline bool S_HIT::has_hit_result() const {
-  return hit_result_case() != HIT_RESULT_NOT_SET;
-}
-inline void S_HIT::clear_has_hit_result() {
-  _impl_._oneof_case_[0] = HIT_RESULT_NOT_SET;
-}
-inline S_HIT::HitResultCase S_HIT::hit_result_case() const {
-  return S_HIT::HitResultCase(_impl_._oneof_case_[0]);
-}
 // -------------------------------------------------------------------
 
 // C_BUY_ITEM
@@ -9423,91 +9333,6 @@ inline void S_DIE::set_object_id(int64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_DIE.object_id)
 }
 
-// .Protocol.DiePenaltyInfo die_penalty_details = 2;
-inline bool S_DIE::_internal_has_die_penalty_details() const {
-  return this != internal_default_instance() && _impl_.die_penalty_details_ != nullptr;
-}
-inline bool S_DIE::has_die_penalty_details() const {
-  return _internal_has_die_penalty_details();
-}
-inline const ::Protocol::DiePenaltyInfo& S_DIE::_internal_die_penalty_details() const {
-  const ::Protocol::DiePenaltyInfo* p = _impl_.die_penalty_details_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::DiePenaltyInfo&>(
-      ::Protocol::_DiePenaltyInfo_default_instance_);
-}
-inline const ::Protocol::DiePenaltyInfo& S_DIE::die_penalty_details() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_DIE.die_penalty_details)
-  return _internal_die_penalty_details();
-}
-inline void S_DIE::unsafe_arena_set_allocated_die_penalty_details(
-    ::Protocol::DiePenaltyInfo* die_penalty_details) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.die_penalty_details_);
-  }
-  _impl_.die_penalty_details_ = die_penalty_details;
-  if (die_penalty_details) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_DIE.die_penalty_details)
-}
-inline ::Protocol::DiePenaltyInfo* S_DIE::release_die_penalty_details() {
-  
-  ::Protocol::DiePenaltyInfo* temp = _impl_.die_penalty_details_;
-  _impl_.die_penalty_details_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
-}
-inline ::Protocol::DiePenaltyInfo* S_DIE::unsafe_arena_release_die_penalty_details() {
-  // @@protoc_insertion_point(field_release:Protocol.S_DIE.die_penalty_details)
-  
-  ::Protocol::DiePenaltyInfo* temp = _impl_.die_penalty_details_;
-  _impl_.die_penalty_details_ = nullptr;
-  return temp;
-}
-inline ::Protocol::DiePenaltyInfo* S_DIE::_internal_mutable_die_penalty_details() {
-  
-  if (_impl_.die_penalty_details_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::DiePenaltyInfo>(GetArenaForAllocation());
-    _impl_.die_penalty_details_ = p;
-  }
-  return _impl_.die_penalty_details_;
-}
-inline ::Protocol::DiePenaltyInfo* S_DIE::mutable_die_penalty_details() {
-  ::Protocol::DiePenaltyInfo* _msg = _internal_mutable_die_penalty_details();
-  // @@protoc_insertion_point(field_mutable:Protocol.S_DIE.die_penalty_details)
-  return _msg;
-}
-inline void S_DIE::set_allocated_die_penalty_details(::Protocol::DiePenaltyInfo* die_penalty_details) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.die_penalty_details_);
-  }
-  if (die_penalty_details) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
-                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(die_penalty_details));
-    if (message_arena != submessage_arena) {
-      die_penalty_details = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, die_penalty_details, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.die_penalty_details_ = die_penalty_details;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_DIE.die_penalty_details)
-}
-
 // -------------------------------------------------------------------
 
 // S_MONSTER_KILL_RESULT
@@ -9552,47 +9377,152 @@ inline void S_MONSTER_KILL_RESULT::set_monster_object_id(int64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.monster_object_id)
 }
 
-// int64 current_exp = 3;
-inline void S_MONSTER_KILL_RESULT::clear_current_exp() {
-  _impl_.current_exp_ = int64_t{0};
+// int64 monster_template_id = 3;
+inline void S_MONSTER_KILL_RESULT::clear_monster_template_id() {
+  _impl_.monster_template_id_ = int64_t{0};
 }
-inline int64_t S_MONSTER_KILL_RESULT::_internal_current_exp() const {
-  return _impl_.current_exp_;
+inline int64_t S_MONSTER_KILL_RESULT::_internal_monster_template_id() const {
+  return _impl_.monster_template_id_;
 }
-inline int64_t S_MONSTER_KILL_RESULT::current_exp() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_MONSTER_KILL_RESULT.current_exp)
-  return _internal_current_exp();
+inline int64_t S_MONSTER_KILL_RESULT::monster_template_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_MONSTER_KILL_RESULT.monster_template_id)
+  return _internal_monster_template_id();
 }
-inline void S_MONSTER_KILL_RESULT::_internal_set_current_exp(int64_t value) {
+inline void S_MONSTER_KILL_RESULT::_internal_set_monster_template_id(int64_t value) {
   
-  _impl_.current_exp_ = value;
+  _impl_.monster_template_id_ = value;
 }
-inline void S_MONSTER_KILL_RESULT::set_current_exp(int64_t value) {
-  _internal_set_current_exp(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.current_exp)
+inline void S_MONSTER_KILL_RESULT::set_monster_template_id(int64_t value) {
+  _internal_set_monster_template_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.monster_template_id)
 }
 
-// int64 current_gold = 4;
-inline void S_MONSTER_KILL_RESULT::clear_current_gold() {
-  _impl_.current_gold_ = int64_t{0};
+// .Protocol.Reward killReward = 4;
+inline bool S_MONSTER_KILL_RESULT::_internal_has_killreward() const {
+  return this != internal_default_instance() && _impl_.killreward_ != nullptr;
 }
-inline int64_t S_MONSTER_KILL_RESULT::_internal_current_gold() const {
-  return _impl_.current_gold_;
+inline bool S_MONSTER_KILL_RESULT::has_killreward() const {
+  return _internal_has_killreward();
 }
-inline int64_t S_MONSTER_KILL_RESULT::current_gold() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_MONSTER_KILL_RESULT.current_gold)
-  return _internal_current_gold();
+inline const ::Protocol::Reward& S_MONSTER_KILL_RESULT::_internal_killreward() const {
+  const ::Protocol::Reward* p = _impl_.killreward_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Reward&>(
+      ::Protocol::_Reward_default_instance_);
 }
-inline void S_MONSTER_KILL_RESULT::_internal_set_current_gold(int64_t value) {
+inline const ::Protocol::Reward& S_MONSTER_KILL_RESULT::killreward() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_MONSTER_KILL_RESULT.killReward)
+  return _internal_killreward();
+}
+inline void S_MONSTER_KILL_RESULT::unsafe_arena_set_allocated_killreward(
+    ::Protocol::Reward* killreward) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.killreward_);
+  }
+  _impl_.killreward_ = killreward;
+  if (killreward) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_MONSTER_KILL_RESULT.killReward)
+}
+inline ::Protocol::Reward* S_MONSTER_KILL_RESULT::release_killreward() {
   
-  _impl_.current_gold_ = value;
+  ::Protocol::Reward* temp = _impl_.killreward_;
+  _impl_.killreward_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
 }
-inline void S_MONSTER_KILL_RESULT::set_current_gold(int64_t value) {
-  _internal_set_current_gold(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.current_gold)
+inline ::Protocol::Reward* S_MONSTER_KILL_RESULT::unsafe_arena_release_killreward() {
+  // @@protoc_insertion_point(field_release:Protocol.S_MONSTER_KILL_RESULT.killReward)
+  
+  ::Protocol::Reward* temp = _impl_.killreward_;
+  _impl_.killreward_ = nullptr;
+  return temp;
+}
+inline ::Protocol::Reward* S_MONSTER_KILL_RESULT::_internal_mutable_killreward() {
+  
+  if (_impl_.killreward_ == nullptr) {
+    auto* p = CreateMaybeMessage<::Protocol::Reward>(GetArenaForAllocation());
+    _impl_.killreward_ = p;
+  }
+  return _impl_.killreward_;
+}
+inline ::Protocol::Reward* S_MONSTER_KILL_RESULT::mutable_killreward() {
+  ::Protocol::Reward* _msg = _internal_mutable_killreward();
+  // @@protoc_insertion_point(field_mutable:Protocol.S_MONSTER_KILL_RESULT.killReward)
+  return _msg;
+}
+inline void S_MONSTER_KILL_RESULT::set_allocated_killreward(::Protocol::Reward* killreward) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.killreward_);
+  }
+  if (killreward) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
+                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(killreward));
+    if (message_arena != submessage_arena) {
+      killreward = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, killreward, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.killreward_ = killreward;
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_MONSTER_KILL_RESULT.killReward)
 }
 
-// bool is_level_up = 5;
+// int64 updated_exp = 5;
+inline void S_MONSTER_KILL_RESULT::clear_updated_exp() {
+  _impl_.updated_exp_ = int64_t{0};
+}
+inline int64_t S_MONSTER_KILL_RESULT::_internal_updated_exp() const {
+  return _impl_.updated_exp_;
+}
+inline int64_t S_MONSTER_KILL_RESULT::updated_exp() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_MONSTER_KILL_RESULT.updated_exp)
+  return _internal_updated_exp();
+}
+inline void S_MONSTER_KILL_RESULT::_internal_set_updated_exp(int64_t value) {
+  
+  _impl_.updated_exp_ = value;
+}
+inline void S_MONSTER_KILL_RESULT::set_updated_exp(int64_t value) {
+  _internal_set_updated_exp(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.updated_exp)
+}
+
+// int64 updated_gold = 6;
+inline void S_MONSTER_KILL_RESULT::clear_updated_gold() {
+  _impl_.updated_gold_ = int64_t{0};
+}
+inline int64_t S_MONSTER_KILL_RESULT::_internal_updated_gold() const {
+  return _impl_.updated_gold_;
+}
+inline int64_t S_MONSTER_KILL_RESULT::updated_gold() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_MONSTER_KILL_RESULT.updated_gold)
+  return _internal_updated_gold();
+}
+inline void S_MONSTER_KILL_RESULT::_internal_set_updated_gold(int64_t value) {
+  
+  _impl_.updated_gold_ = value;
+}
+inline void S_MONSTER_KILL_RESULT::set_updated_gold(int64_t value) {
+  _internal_set_updated_gold(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.updated_gold)
+}
+
+// bool is_level_up = 7;
 inline void S_MONSTER_KILL_RESULT::clear_is_level_up() {
   _impl_.is_level_up_ = false;
 }
@@ -9612,7 +9542,7 @@ inline void S_MONSTER_KILL_RESULT::set_is_level_up(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_MONSTER_KILL_RESULT.is_level_up)
 }
 
-// .Protocol.LevelUpInfo level_up_details = 6;
+// .Protocol.LevelUpInfo level_up_details = 8;
 inline bool S_MONSTER_KILL_RESULT::_internal_has_level_up_details() const {
   return this != internal_default_instance() && _impl_.level_up_details_ != nullptr;
 }
@@ -10101,24 +10031,41 @@ inline void S_RESPAWN::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_RESPAWN.pos_info)
 }
 
-// int64 hp = 7;
-inline void S_RESPAWN::clear_hp() {
-  _impl_.hp_ = int64_t{0};
+// repeated .Protocol.Stat updated_stat = 7;
+inline int S_RESPAWN::_internal_updated_stat_size() const {
+  return _impl_.updated_stat_.size();
 }
-inline int64_t S_RESPAWN::_internal_hp() const {
-  return _impl_.hp_;
+inline int S_RESPAWN::updated_stat_size() const {
+  return _internal_updated_stat_size();
 }
-inline int64_t S_RESPAWN::hp() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.hp)
-  return _internal_hp();
+inline ::Protocol::Stat* S_RESPAWN::mutable_updated_stat(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.S_RESPAWN.updated_stat)
+  return _impl_.updated_stat_.Mutable(index);
 }
-inline void S_RESPAWN::_internal_set_hp(int64_t value) {
-  
-  _impl_.hp_ = value;
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >*
+S_RESPAWN::mutable_updated_stat() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_RESPAWN.updated_stat)
+  return &_impl_.updated_stat_;
 }
-inline void S_RESPAWN::set_hp(int64_t value) {
-  _internal_set_hp(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.hp)
+inline const ::Protocol::Stat& S_RESPAWN::_internal_updated_stat(int index) const {
+  return _impl_.updated_stat_.Get(index);
+}
+inline const ::Protocol::Stat& S_RESPAWN::updated_stat(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.updated_stat)
+  return _internal_updated_stat(index);
+}
+inline ::Protocol::Stat* S_RESPAWN::_internal_add_updated_stat() {
+  return _impl_.updated_stat_.Add();
+}
+inline ::Protocol::Stat* S_RESPAWN::add_updated_stat() {
+  ::Protocol::Stat* _add = _internal_add_updated_stat();
+  // @@protoc_insertion_point(field_add:Protocol.S_RESPAWN.updated_stat)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
+S_RESPAWN::updated_stat() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_RESPAWN.updated_stat)
+  return _impl_.updated_stat_;
 }
 
 #ifdef __GNUC__

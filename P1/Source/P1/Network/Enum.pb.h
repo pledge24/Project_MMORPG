@@ -275,14 +275,14 @@ enum StatType : int {
   STAT_TYPE_MP = 4,
   STAT_TYPE_PHYSICAL_ATTACK = 5,
   STAT_TYPE_MAGICAL_ATTACK = 6,
-  STAT_TYPE_EXP = 7,
-  STAT_TYPE_MAX_EXP = 8,
+  STAT_TYPE_MAX_EXP = 7,
+  STAT_TYPE_EXP = 8,
   StatType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   StatType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool StatType_IsValid(int value);
 constexpr StatType StatType_MIN = STAT_TYPE_NONE;
-constexpr StatType StatType_MAX = STAT_TYPE_MAX_EXP;
+constexpr StatType StatType_MAX = STAT_TYPE_EXP;
 constexpr int StatType_ARRAYSIZE = StatType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor();

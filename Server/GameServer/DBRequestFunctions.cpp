@@ -559,7 +559,7 @@ bool DBRequestFunctions::LoadCharacterData(SessionRef session, int64 characterId
 bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 characterId)
 {
     const int PARAMS = 1;
-    const int COLS = 11;
+    const int COLS = 12;
 
     struct BindObject
     {
@@ -583,11 +583,12 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
             dbBind.BindCol(3, _curPhysicalAttack);
             dbBind.BindCol(4, _curMagicalAttack);
             dbBind.BindCol(5, _roomId);
-            dbBind.BindCol(6, _posX);
-            dbBind.BindCol(7, _posY);
-            dbBind.BindCol(8, _posZ);
-            dbBind.BindCol(9, _rotYaw);
-            dbBind.BindCol(10, _gold);
+            dbBind.BindCol(6, _mapId);
+            dbBind.BindCol(7, _posX);
+            dbBind.BindCol(8, _posY);
+            dbBind.BindCol(9, _posZ);
+            dbBind.BindCol(10, _rotYaw);
+            dbBind.BindCol(12, _gold);
         }
 
         /* Params */
@@ -600,6 +601,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         int64 _curPhysicalAttack;
         int64 _curMagicalAttack;
         int32 _roomId;
+        int32 _mapId;
         float _posX;
         float _posY;
         float _posZ;
@@ -613,7 +615,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
     {
         // 해당 유저의 마지막 정보를 가져온다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
-            SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, pos_x, pos_y, pos_z, rot_yaw, gold
+            SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
             FROM [dbo].[CharactersLastState] 
             WHERE character_id = (?)
         )SQL");
@@ -648,6 +650,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
 
         // 위치 설정
         playerInfo->set_room_id(bindObject._roomId);
+        playerInfo->set_map_id(bindObject._mapId);
         location->set_x(bindObject._posX);
         location->set_y(bindObject._posY);
         location->set_z(bindObject._posZ);
@@ -992,7 +995,7 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
 
 bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
 {
-    const int PARAMS = 12;
+    const int PARAMS = 13;
     const int COLS = 0;
 
     struct BindObject
@@ -1011,6 +1014,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             _curPhysicalAttack = statMappings.at(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
             _curMagicalAttack = statMappings.at(Protocol::STAT_TYPE_MAGICAL_ATTACK);
             _roomId = playerInfo.room_id();
+            _mapId = playerInfo.map_id();
             _posX = posInfo.pos().x();
             _posY = posInfo.pos().y();
             _posZ = posInfo.pos().z();
@@ -1029,12 +1033,13 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             dbBind.BindParam(3, _curPhysicalAttack);
             dbBind.BindParam(4, _curMagicalAttack);
             dbBind.BindParam(5, _roomId);
-            dbBind.BindParam(6, _posX);
-            dbBind.BindParam(7, _posY);
-            dbBind.BindParam(8, _posZ);
-            dbBind.BindParam(9, _rotYaw);
-            dbBind.BindParam(10, _gold);
-            dbBind.BindParam(11, _characterId);
+            dbBind.BindParam(6, _mapId);
+            dbBind.BindParam(7, _posX);
+            dbBind.BindParam(8, _posY);
+            dbBind.BindParam(9, _posZ);
+            dbBind.BindParam(10, _rotYaw);
+            dbBind.BindParam(11, _gold);
+            dbBind.BindParam(12, _characterId);
         }
 
         /* Params */
@@ -1044,6 +1049,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
         int64 _curPhysicalAttack;
         int64 _curMagicalAttack;
         int32 _roomId;
+        int32 _mapId;
         float _posX;
         float _posY;
         float _posZ;
@@ -1059,7 +1065,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
         // 해당 유저의 마지막 정보를 가져온다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             UPDATE [dbo].[CharactersLastState]
-            SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
+            SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
             WHERE character_id = (?)
         )SQL");
 

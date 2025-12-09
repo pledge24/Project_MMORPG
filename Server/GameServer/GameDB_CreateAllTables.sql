@@ -27,12 +27,13 @@ CREATE TABLE CharactersLastState(
     cur_physical_attack     BIGINT NOT NULL DEFAULT 0,
     cur_magical_attack      BIGINT NOT NULL DEFAULT 0,
     room_id                 INT NOT NULL DEFAULT 10,
+    map_id                  INT NOT NULL DEFAULT 1111,
     pos_x                   FLOAT NOT NULL DEFAULT 0.0,
     pos_y                   FLOAT NOT NULL DEFAULT 0.0,
     pos_z                   FLOAT NOT NULL DEFAULT 0.0,
     rot_yaw                 FLOAT NOT NULL DEFAULT 0.0,
     exp                     BIGINT NOT NULL DEFAULT 0,
-    gold                    BIGINT NOT NULL DEFAULT 10000000,
+    gold                    BIGINT NOT NULL DEFAULT 10000,
 
     FOREIGN KEY (character_id) REFERENCES Characters(character_id)
     ON DELETE CASCADE

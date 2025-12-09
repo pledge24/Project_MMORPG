@@ -9,6 +9,7 @@
 
 class AP1MyPlayer;
 class UTextBlock;
+class UMyPlayerData;
 
 /**
  * 
@@ -21,11 +22,9 @@ class P1_API UStatusWindowWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
-    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
-
 public:
     void UpdateSlotWidget(const Protocol::Slot& Slot_);
-    void UpdateAllStat(const Protocol::StatInfo& StatInfo_);
+    void UpdateAllStat(UMyPlayerData* MyPlayerData);
 
     void UpdateMaxHp(int32 Value);
     void UpdateMaxMp(int32 Value);

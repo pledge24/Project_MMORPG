@@ -107,40 +107,52 @@ void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
     int32 updated_hp = static_cast<int32>(monsterInfo->hp() - damage);
     monsterInfo->set_hp(max(0, updated_hp));
 
-    if (updated_hp > 0)
+    // Broadcast Hit Packet
     {
-        // Broadcast Hit Packet
+        Protocol::S_HIT hitPkt;
+
+        hitPkt.mutable_hit_data()->CopyFrom(hitData);
+        Protocol::Stat* stat = hitPkt.add_updated_stat();
         {
-            Protocol::S_HIT hitPkt;
-
-            hitPkt.mutable_hit_data()->CopyFrom(hitData);
-            hitPkt.set_hp(updated_hp);
-
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
-            ownerRoom->Broadcast(sendBuffer);
+            stat->set_type(Protocol::STAT_TYPE_HP);
+            stat->set_value(updated_hp);
         }
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
+        ownerRoom->Broadcast(sendBuffer);
     }
-    else
+
+    if (updated_hp <= 0)
     {
-        int64 objectId = objectInfo->object_id();
-
-        // Make Die Packet
-        Protocol::S_DIE DiePkt;
-        {
-            DiePkt.set_object_id(objectId);
-        }
-
-        ownerRoom->OnDie(DiePkt);
         
-        // Trigger OnMonsterKill
-        if(PlayerRef player = dynamic_pointer_cast<Player>(attacker))
-        {
-            int64 expReward = GetExpReward();
-            int64 goldReward = GetGoldReward();
-
-            player->OnMonsterKill(static_pointer_cast<Monster>(shared_from_this()), expReward, goldReward);
-        }
     }
+}
+
+void Monster::OnDie(ObjectRef attacker)
+{
+    Creature::OnDie(attacker);
+
+    auto ownerRoom = room.load().lock();
+    if (ownerRoom == nullptr)
+        return;
+
+    int64 objectId = objectInfo->object_id();
+
+    // Trigger OnMonsterKill
+    if (PlayerRef player = dynamic_pointer_cast<Player>(attacker))
+    {
+        Protocol::Reward reward;
+        {
+            reward.set_exp(GetExpReward());
+            reward.set_gold(GetGoldReward());
+        }
+
+        player->OnMonsterKill(static_pointer_cast<Monster>(shared_from_this()), reward);
+    }
+
+    // 바로 Room에서 제거한다.
+    ownerRoom->RemoveObject(objectId);
+    
 }
 
 void Monster::CacheMonsterData()

@@ -82,8 +82,8 @@ enum StatType
     STAT_TYPE_MAGICAL_ATTACK = 6;
 
     // º∫¿Â Ω∫≈›
-    STAT_TYPE_EXP = 7;
-    STAT_TYPE_MAX_EXP = 8;
+    STAT_TYPE_MAX_EXP = 7;
+    STAT_TYPE_EXP = 8;
 }
 
 enum UpdateState

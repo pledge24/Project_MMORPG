@@ -22,26 +22,23 @@ class P1_API UHUDWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
-    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
-
 public:
-    void UpdateAllStatsChanged(const Protocol::StatInfo& StatInfo_);
     void UpdateLevel(int32 Value);
 
     /** HP Bar*/
-    void UpdateMaxHp(int32 Value);
-    void UpdateCurHp(int32 Value);
-    void UpdateHpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
+    void UpdateMaxHp(int64 Value);
+    void UpdateCurHp(int64 Value);
+    void UpdateHpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue);
 
     /** MP Bar*/
-    void UpdateMaxMp(int32 Value);
-    void UpdateCurMp(int32 Value);
-    void UpdateMpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
+    void UpdateMaxMp(int64 Value);
+    void UpdateCurMp(int64 Value);
+    void UpdateMpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue);
 
     /** EXP Bar*/
-    void UpdateMaxExp(int32 Value);
-    void UpdateCurExp(int32 Value);
-    void UpdateExpBar(TOptional<int32> CurValue, TOptional<int32> MaxValue);
+    void UpdateMaxExp(int64 Value);
+    void UpdateCurExp(int64 Value);
+    void UpdateExpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue);
 
     void SetBattleModeTxt(bool battleMode);
 
@@ -63,6 +60,4 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBarWidget> ExpBar;
-
-
 };

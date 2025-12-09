@@ -37,7 +37,6 @@ public:
     void SpawnObject(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId = 0);
     void DespawnAllObjects(bool ExceptMine);
     void DespawnObject(uint64 ObjectId);
-    void RespawnObject(const Protocol::S_RESPAWN& RespawnPkt);
 
 protected:
     void Clear();

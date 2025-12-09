@@ -4,9 +4,9 @@
 #include "P1MyPlayer.h"
 #include "P1.h"
 
-void UEquippedGear::Init(Protocol::PlayerInfo* PlayerInfo_)
+void UEquippedGear::Init(Map<int32, Protocol::Slot>* EquippedGear_)
 {
-    EquippedGearLookup = PlayerInfo_->equipped_gear();
+    EquippedGearLookup = EquippedGear_;
 }
 
 void UEquippedGear::Rep_SlotChanged(const Protocol::Slot& Slot_)
@@ -17,5 +17,5 @@ void UEquippedGear::Rep_SlotChanged(const Protocol::Slot& Slot_)
     if (SlotType_ != Protocol::SlotType::SLOT_TYPE_EQUIPPED)
         return;
 
-    EquippedGearLookup[SlotId_].CopyFrom(Slot_);
+    (*EquippedGearLookup)[SlotId_].CopyFrom(Slot_);
 }

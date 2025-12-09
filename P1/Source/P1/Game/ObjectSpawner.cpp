@@ -42,8 +42,9 @@ AActor* AObjectSpawner::SpawnMonster(const Protocol::ObjectInfo& InObjectInfo)
 {
     int32 TemplateId = InObjectInfo.monster_info().template_id();
     const Protocol::PosInfo& PosInfo_ = InObjectInfo.pos_info();
+    const Protocol::Vector& Pos = PosInfo_.pos();
 
-    FVector Location = FVector(PosInfo_.x(), PosInfo_.y(), PosInfo_.z());
+    FVector Location = FVector(Pos.x(), Pos.y(), Pos.z());
     FRotator Rotation = FRotator(0, PosInfo_.yaw(), 0);
 
     return SpawnMonster(TemplateId, Location, Rotation, InObjectInfo);
@@ -120,7 +121,7 @@ AActor* AObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
     uint64 MyPlayerId = MyPlayerData->GetPlayerId();
     bool IsMine = MyPlayerId == InObjectInfo.object_id();
 
-    FVector SpawnLocation(InObjectInfo.pos_info().x(), InObjectInfo.pos_info().y(), InObjectInfo.pos_info().z());
+    FVector SpawnLocation(InObjectInfo.pos_info().pos().x(), InObjectInfo.pos_info().pos().y(), InObjectInfo.pos_info().pos().z());
     FRotator SpawnRotation(0.f, InObjectInfo.pos_info().yaw(), 0.f);
 
     AP1Player* OutPlayer = nullptr;

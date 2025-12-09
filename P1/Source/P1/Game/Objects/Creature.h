@@ -7,6 +7,8 @@
 #include "Protocol.pb.h"
 #include "Creature.generated.h"
 
+
+
 UCLASS()
 class P1_API ACreature : public ACharacter
 {
@@ -55,20 +57,15 @@ public:
     FVector FindPerpendicularPoint() const;
 
 public:
-    /** 델리게이트 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
-    FOnStatInfoChanged OnStatInfoChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, int32);
-    FOnHpChanged OnHpChanged;
+    /** Action 델리게이트 */
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHit, const uint32&, damage);
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnHit OnHit;
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnDie OnDie;
 
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHit, const uint32&, damage);
-    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
-    FOnHit OnHit;
 
 protected:
     /** Attack System Component */

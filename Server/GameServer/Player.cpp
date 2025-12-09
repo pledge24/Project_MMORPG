@@ -10,13 +10,11 @@ Player::Player()
 	_isPlayer = true;
 
     playerInfo = objectInfo->mutable_player_info();
-    statInfo = new Protocol::StatInfo();
     possession = new Protocol::Possession();
 }
 
 Player::~Player()
 {
-    delete statInfo;
     delete possession;
 }
 
@@ -356,53 +354,14 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
 
 void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
 {
-    auto ownerRoom = room.load().lock();
-    if (ownerRoom == nullptr)
-        return;
+    Creature::OnHit(attacker, hitData);
 
-    int64 damage = hitData.damage();
-    int64 hp = GetStatValue(Protocol::STAT_TYPE_HP);
-    int64 updatedHp = hp - damage;
+}
 
-    SetStatValue(Protocol::STAT_TYPE_HP, max(0, updatedHp));
+void Player::OnDie(ObjectRef attacker)
+{
+    Creature::OnDie(attacker);
 
-    if (updatedHp > 0)
-    {
-        // Send Hit Packet
-        {
-            Protocol::S_HIT hitPkt;
-
-            hitPkt.mutable_hit_data()->CopyFrom(hitData);
-            hitPkt.set_hp(updatedHp);
-
-            if (auto ownerSession = session.lock())
-            {
-                SEND_PACKET_USING_THIS_SESSION(ownerSession, hitPkt);
-            }
-
-        }
-    }
-    else
-    {
-        // 죽으면 경험치 10% 감소
-        int64 exp = GetStatValue(Protocol::STAT_TYPE_EXP);
-        int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
-
-        int64 lossExp = static_cast<int64>(maxExp * 0.1f);
-        int64 curExp = exp;
-        int64 updatedExp = curExp <= lossExp ? 0 : curExp - lossExp;
-
-        SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp);
-
-        // Make and Pass On Die Packet
-        Protocol::S_DIE DiePkt;
-        {
-            DiePkt.set_object_id(objectInfo->object_id());
-            DiePkt.mutable_die_penalty_details()->set_updated_exp(updatedExp);
-        }
-
-        ownerRoom->OnDie(DiePkt);
-    }
 }
 
 void Player::OnEnterMap(int32 mapId, int32 roomId)
@@ -435,15 +394,15 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
     }
 }
 
-void Player::OnMonsterKill(MonsterRef killedMonster, int64 expReward, int64 goldReward)
+void Player::OnMonsterKill(MonsterRef killedMonster, Protocol::Reward& reward)
 {
     bool levelUp = false;
 
     // Get Reward
     {
-        int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + expReward;
+        int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + reward.exp();
         int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
-        possession->set_gold(possession->gold() + goldReward);
+        possession->set_gold(possession->gold() + reward.gold());
 
         // Check Level Up
         if (updatedExp >= maxExp)
@@ -459,9 +418,9 @@ void Player::OnMonsterKill(MonsterRef killedMonster, int64 expReward, int64 gold
     {
         monsterKillResultPkt.set_object_id(objectInfo->object_id());
         monsterKillResultPkt.set_monster_object_id(killedMonster->objectInfo->object_id());
+        monsterKillResultPkt.set_monster_template_id(killedMonster->GetTemplateId());
 
-        monsterKillResultPkt.set_current_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
-        monsterKillResultPkt.set_current_gold(possession->gold());
+        monsterKillResultPkt.mutable_killreward()->Swap(&reward);
 
         if (levelUp)
         {
@@ -470,10 +429,13 @@ void Player::OnMonsterKill(MonsterRef killedMonster, int64 expReward, int64 gold
             info.set_new_level(playerInfo->level() - 1);
             info.set_new_level(playerInfo->level());
 
-            info.set_new_max_hp(GetStatValue(Protocol::STAT_TYPE_MAX_HP));
-            info.set_new_max_mp(GetStatValue(Protocol::STAT_TYPE_MAX_MP));
-            info.set_new_physical_attack(GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK));
-            info.set_new_magical_attack(GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK));
+			RepeatedPtrField<Protocol::Stat>* updatedStatList = info.mutable_updatedstat();
+			{
+				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP));
+				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP));
+				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_PHYSICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK));
+				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAGICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK));
+			}
         }
     }
 
@@ -499,36 +461,71 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
-void Player::OnRespawn()
+void Player::OnRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos)
 {
-    int64 respawnHp = (int64)(GetStatValue(Protocol::STAT_TYPE_MAX_HP) * 0.5f);
-    SetStatValue(Protocol::STAT_TYPE_HP, respawnHp);
-    idDead = false;
-}
+    auto ownerRoom = room.load().lock();
+    if (ownerRoom == nullptr)
+        return;
 
-void Player::SetStatValue(Protocol::StatType statType, const int64& value)
-{
-    auto* statMappings = statInfo->mutable_info();
-    (*statMappings)[(int32)statType] = value;
-}
-
-int64 Player::GetStatValue(Protocol::StatType statType)
-{
-    auto* statMappings = statInfo->mutable_info();
-
-    return statMappings->at((int32)statType);
-}
-
-Protocol::Stat Player::GetStat(Protocol::StatType statType)
-{
-    int64 value = GetStatValue(statType);
-    Protocol::Stat stat;
+    isDead = false;
+    posInfo->CopyFrom(*respawnPos);
+    Protocol::S_RESPAWN respawnPkt;
     {
-        stat.set_type(statType);
-        stat.set_value(value);
+        respawnPkt.set_success(true);
+        respawnPkt.set_respawn_type(type);
+        respawnPkt.set_object_id(objectInfo->object_id());
+
+        respawnPkt.set_room_id(ownerRoom->GetRoomId());
+        respawnPkt.mutable_pos_info()->CopyFrom(*respawnPos);
     }
 
-    return stat;
+    switch (type)
+    {
+    case Protocol::RESPAWN_TYPE_TOWN:
+    {
+		RepeatedPtrField<Protocol::Stat>* updatedStatList = respawnPkt.mutable_updated_stat();
+
+        // 사망 패널티 적용(경험치 10% 감소) <- 리스폰 할때 적용
+        {
+            int64 exp = GetStatValue(Protocol::STAT_TYPE_EXP);
+            int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
+
+            int64 lossExp = static_cast<int64>(maxExp * 0.1f);
+            int64 curExp = exp;
+            int64 updatedExp = curExp <= lossExp ? 0 : curExp - lossExp;
+
+            SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp);
+			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_EXP, updatedExp);
+        }
+
+        // Hp는 절반만 가지고 리스폰
+        {
+            int64 respawnHp = (int64)(GetStatValue(Protocol::STAT_TYPE_MAX_HP) * 0.5f);
+
+            SetStatValue(Protocol::STAT_TYPE_HP, respawnHp);
+			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_HP, respawnHp);
+        }
+
+        break;
+    }
+    case Protocol::RESPAWN_TYPE_CHECKPOINT:
+    case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
+    case Protocol::RESPAWN_TYPE_IN_PLACE:
+    case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
+    case Protocol::RESPAWN_TYPE_GUILD_BASE:
+    case Protocol::RESPAWN_TYPE_CASH_ITEM:
+    case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+
+    // Broadcast Respawn Packet
+    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(respawnPkt);
+    ownerRoom->Broadcast(sendBuffer);
+
 }
 
 void Player::CacheNextLevelUpData()

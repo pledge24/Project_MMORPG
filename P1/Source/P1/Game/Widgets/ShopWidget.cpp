@@ -18,13 +18,15 @@ void UShopWidget::NativeConstruct()
         {
             // MyPlayer 스폰 이벤트에 함수 등록
             MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UShopWidget::BindMyPlayerSpawned);
+
+            GameInstance->OnRecvBuyItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
         }
     }
 }
 
 void UShopWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 {
-    MyPlayer->OnRecvBuyItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+    // MyPlayer->OnRecvBuyItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
 }
 
 void UShopWidget::SendBuyItemPacket(USlotWidget* Slot_)

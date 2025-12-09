@@ -45,21 +45,18 @@ public:
 
     /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+    virtual void OnDie(ObjectRef attacker) override;
 
     void OnEnterMap(int32 mapId, int32 roomId);
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
-    void OnMonsterKill(MonsterRef killedMonster, int64 expReward, int64 goldReward);
+    void OnMonsterKill(MonsterRef killedMonster, Protocol::Reward& reward);
     void OnLevelUp();
-    void OnRespawn();
-
-    /** Setter */
-    void SetStatValue(Protocol::StatType statType, const int64& value);
-    
+    void OnRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos);
+  
     /** Getter */
     int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
     int32 GetEnteringRoomId() { return enteringRoomId; }
-    int64 GetStatValue(Protocol::StatType statType);
-    Protocol::Stat GetStat(Protocol::StatType statType);
+
 
 private:
     /** 기타 함수 */
@@ -69,7 +66,6 @@ public:
 	weak_ptr<GameSession> session;
 
     Protocol::PlayerInfo* playerInfo;   // 플레이어의 모든 정보가 여기에 저장됨.
-    Protocol::StatInfo* statInfo;
     Protocol::Possession* possession;
 
     InventoryRef inventory;             // 인벤토리 헬퍼

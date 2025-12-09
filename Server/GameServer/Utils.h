@@ -2,6 +2,7 @@
 #include <random>
 #include <cmath>
 #include <numbers>
+//#include "Protocol.pb.h"
 
 struct vector2D
 {
@@ -173,5 +174,20 @@ public:
         bool zeroZ = vector->z() == 0.f;
 
         return (zeroX && zeroY && zeroZ);
+    }
+};
+
+using google::protobuf::RepeatedPtrField;
+
+class ProtoUtil
+{
+public:
+    static void AddStat(RepeatedPtrField<Protocol::Stat>* statList, Protocol::StatType type, int64 Value)
+    {
+        Protocol::Stat* stat = statList->Add();
+        {
+            stat->set_type(type);
+            stat->set_value(Value);
+        }
     }
 };
