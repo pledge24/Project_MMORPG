@@ -15,17 +15,18 @@ protected:
     virtual void Tick(float deltaTime) override;
 
 public:
+    /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(ObjectRef attacker);
 
     bool IsDead() { return isDead; }
 
-    /** Setter 함수 */
-    void SetStatValue(Protocol::StatType statType, const int64& value);
-
     /** Getter 함수 */
     int64 GetStatValue(Protocol::StatType statType);
     Protocol::Stat GetStat(Protocol::StatType statType);
+
+    /** Setter 함수 */
+    void SetStatValue(Protocol::StatType statType, const int64& value);
 
     Protocol::StatInfo* statInfo;
 

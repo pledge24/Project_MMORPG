@@ -41,7 +41,7 @@ bool Monster::Init(Protocol::PosInfo* spawnPos)
     _spawnPos = MathUtil::PosInfoToVector2D(posInfo);
 
     // set Idle State
-    ChangeState(MonsterState::Idle);
+    SwitchState(MonsterState::Idle);
 
     return true;
 }
@@ -71,24 +71,6 @@ void Monster::Tick(float deltaTime)
     ExecuteStateBehavior(deltaTime);
 }
 
-void Monster::PrintMonsterAllData() const
-{
-    cout << "=====================" << '\n';
-    cout << _monsterData.dump(2) << '\n';
-
-    cout << "templateId: " << templateId << '\n';
-    cout << "maxHp: " << maxHp << '\n';
-    cout << "attackInterval: " << attackInterval << '\n';
-    cout << "baseAttack: " << baseAttack << '\n';
-    cout << "attackRange: " << tryAttackRange << '\n';
-    cout << "detectionRange: " << detectionRange << '\n';
-    cout << "chaseRange: " << chasingMaxRange << '\n';
-
-    cout << objectInfo->Utf8DebugString() << '\n';
-
-    cout << "======Monster Data End ====" << '\n';
-}
-
 void Monster::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 {
     Creature::OnHit(attacker, attackInfo);
@@ -99,20 +81,24 @@ void Monster::OnDie(ObjectRef attacker)
     Creature::OnDie(attacker);
 }
 
-void Monster::CacheMonsterData()
+int64 Monster::GetExpReward()
 {
     using namespace JsonProperty::Monster;
 
-    templateId = _monsterData[TemplateId].is_null() ? 0 : static_cast<int32>(_monsterData[TemplateId]);
-    maxHp = _monsterData[MaxHp].is_null() ? 0 : static_cast<int32>(_monsterData[MaxHp]);
-    attackInterval = _monsterData[AttackInterval].is_null() ? 100000.f : static_cast<float>(_monsterData[AttackInterval]);
-    baseAttack = _monsterData[BaseAttack].is_null() ? 0 : static_cast<int32>(_monsterData[BaseAttack]);
+    int64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<int64>(_monsterData[ExpReward][MinExp]);
+    int64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<int64>(_monsterData[ExpReward][MaxExp]);
 
-    tryAttackRange = _monsterData[TryAttackRange].is_null() ? 0.f : static_cast<float>(_monsterData[TryAttackRange]);
-    detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
-    chasingMaxRange = _monsterData[ChasingMaxRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChasingMaxRange]);
-    monsterSpeed = _monsterData[MonsterSpeed].is_null() ? 0.f : static_cast<float>(_monsterData[MonsterSpeed]);
-    isTargeting = _monsterData[IsTargeting].is_null() ? false : static_cast<bool>(_monsterData[IsTargeting]);
+    return Utils::GetRandom(minExp, maxExp);
+}
+
+int64 Monster::GetGoldReward()
+{
+    using namespace JsonProperty::Monster;
+
+    int64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<int64>(_monsterData[GoldReward][MinGold]);
+    int64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<int64>(_monsterData[GoldReward][MaxGold]);
+
+    return Utils::GetRandom(minGold, maxGold);
 }
 
 void Monster::UpdateState()
@@ -136,11 +122,11 @@ void Monster::UpdateState()
                 // xxx -> Attacking 또는 Chasing으로 전환
                 if (bool InAttackRange = (squareDist <= (tryAttackRange * tryAttackRange)))
                 {
-                    ChangeState(MonsterState::Attacking);
+                    SwitchState(MonsterState::Attacking);
                 }
                 else
                 {
-                    ChangeState(MonsterState::Chasing);
+                    SwitchState(MonsterState::Chasing);
                 }
 
                 return;
@@ -150,7 +136,7 @@ void Monster::UpdateState()
         // Idle -> Wandering으로 상태 전환
         if (state == MonsterState::Idle && _stateTimer >= IDLE_TIME)
         {
-            ChangeState(MonsterState::Wandering);
+            SwitchState(MonsterState::Wandering);
             return;
         }
            
@@ -159,7 +145,7 @@ void Monster::UpdateState()
         {
             if (_stateTimer >= WANDERING_TIME || AlreadyArrive())
             {
-                ChangeState(MonsterState::Idle);
+                SwitchState(MonsterState::Idle);
                 return;
             }
         }
@@ -177,14 +163,14 @@ void Monster::UpdateState()
             // 전환 조건(attacking): 공격 범위 안에 들어옴
             if (bool InAttackRange = MathUtil::InRange(curPos, targetPos, tryAttackRange))
             {
-                ChangeState(MonsterState::Attacking);
+                SwitchState(MonsterState::Attacking);
                 return;
             }
 
             // 전환 조건(idle): 타겟이 추적 범위를 벗어남
             if (bool outOfChasingRange = !MathUtil::InRange(curPos, targetPos, chasingMaxRange))
             {
-                ChangeState(MonsterState::Idle);
+                SwitchState(MonsterState::Idle);
                 return;
             }
 
@@ -207,7 +193,7 @@ void Monster::UpdateState()
             // 전환 조건(Chasing): 공격 범위를 벗어남
             if (bool outOfAttackRange = !MathUtil::InRange(curPos, targetPos, tryAttackRange))
             {
-                ChangeState(MonsterState::Chasing);
+                SwitchState(MonsterState::Chasing);
                 return;
             }
 
@@ -220,7 +206,7 @@ void Monster::UpdateState()
             if (ownerRoom->Contains(target->objectInfo->object_id()) == false || outOfChasingRange)
             {
                 _target.reset();
-                ChangeState(MonsterState::Idle);
+                SwitchState(MonsterState::Idle);
                 return;
             }
 
@@ -229,7 +215,7 @@ void Monster::UpdateState()
         {
             // 전환 조건(Idle): 타겟이 유효하지 않음
             _target.reset();
-            ChangeState(MonsterState::Idle);
+            SwitchState(MonsterState::Idle);
             return;
         }
 
@@ -252,9 +238,9 @@ void Monster::UpdateState()
     }
 }
 
-void Monster::ChangeState(MonsterState changedState)
+void Monster::SwitchState(MonsterState nextState)
 {
-    state = changedState;
+    state = nextState;
     _stateTimer = 0.f;
 
     switch (state)
@@ -410,7 +396,7 @@ void Monster::ExecuteStateChasing(float deltaTime)
     if (bool tooClose = MathUtil::InRange(curPos, targetPos, MIN_APPROACH_DISTANCE))
     {
         //StopMoving("ExecuteStateChasing:: too Close");
-        ChangeState(MonsterState::Attacking);   // 이 경우, 예외로 상태를 변경한다.
+        SwitchState(MonsterState::Attacking);   // 이 경우, 예외로 상태를 변경한다.
     }
     else
     {
@@ -494,6 +480,28 @@ void Monster::StopMoving(string context, bool shouldBeIdle)
     }
 }
 
+void Monster::NormalAttack()
+{
+    if (auto ownerRoom = room.load().lock())
+    {
+        Protocol::AttackInfo attackInfo;
+        {
+            attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
+            if (IsTargetingAttack(Protocol::ATTACK_TYPE_NORMAL))
+            {
+                if (auto target = _target.lock())
+                {
+                    attackInfo.set_target_id(target->objectInfo->object_id());
+                }
+            }
+            attackInfo.set_combo(0);
+            attackInfo.set_damage(baseAttack);
+        }
+
+        ownerRoom->HandleNormalAttack(attackInfo, static_pointer_cast<Creature>(shared_from_this()));
+    }
+}
+
 bool Monster::CanMove()
 {
     bool hasLeftAttackDelay = _timeSinceLastAttack <= attackInterval;
@@ -514,6 +522,21 @@ bool Monster::AlreadyArrive()
 
     auto targetPos = _moveDest.value();
     return MathUtil::Distance(monsterPos, targetPos, true) < 1.f;
+}
+
+bool Monster::IsTargetingAttack(Protocol::AttackType type)
+{
+    switch (type)
+    {
+    case Protocol::ATTACK_TYPE_NORMAL:
+        return isTargeting;
+    case Protocol::ATTACK_TYPE_SKILL:
+    case Protocol::ATTACK_TYPE_EOT:
+    default:
+        break;
+    }
+
+    return false;
 }
 
 void Monster::SetDestination(const vector2D& destPos, float minApproachDistance)
@@ -542,63 +565,6 @@ void Monster::SetDestination(const vector2D& destPos, float minApproachDistance)
     }
 }
 
-bool Monster::IsTargetingAttack(Protocol::AttackType type)
-{
-    switch (type)
-    {
-    case Protocol::ATTACK_TYPE_NORMAL:
-        return isTargeting;
-    case Protocol::ATTACK_TYPE_SKILL:
-    case Protocol::ATTACK_TYPE_EOT:
-    default:
-        break;
-    }
-
-    return false;
-}
-
-void Monster::NormalAttack()
-{
-    if (auto ownerRoom = room.load().lock())
-    {
-        Protocol::AttackInfo attackInfo;
-        {
-            attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-            if (IsTargetingAttack(Protocol::ATTACK_TYPE_NORMAL))
-            {
-                if (auto target = _target.lock())
-                {
-                    attackInfo.set_target_id(target->objectInfo->object_id());
-                }
-            }
-            attackInfo.set_combo(0);
-            attackInfo.set_damage(baseAttack);
-        }
-
-        ownerRoom->HandleNormalAttack(attackInfo, static_pointer_cast<Creature>(shared_from_this()));
-    }
-}
-
-int64 Monster::GetExpReward()
-{
-    using namespace JsonProperty::Monster;
-
-    int64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<int64>(_monsterData[ExpReward][MinExp]);
-    int64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<int64>(_monsterData[ExpReward][MaxExp]);
-    
-    return Utils::GetRandom(minExp, maxExp);
-}
-
-int64 Monster::GetGoldReward()
-{
-    using namespace JsonProperty::Monster;
-
-    int64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<int64>(_monsterData[GoldReward][MinGold]);
-    int64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<int64>(_monsterData[GoldReward][MaxGold]);
-
-    return Utils::GetRandom(minGold, maxGold);
-}
-
 void Monster::SetMoveDirection(const vector2D& moveVec)
 {
     vector2D unitVec = moveVec.GetNormalize();
@@ -622,4 +588,38 @@ void Monster::ClearDestination()
 {
     _moveDest.reset();  // 목적지를 없앤다.
     SetMoveDirection(vector2D::GetZeroVector());   // 목적지가 없으니 이동도 X 
+}
+
+void Monster::PrintMonsterAllData() const
+{
+    cout << "=====================" << '\n';
+    cout << _monsterData.dump(2) << '\n';
+
+    cout << "templateId: " << templateId << '\n';
+    cout << "maxHp: " << maxHp << '\n';
+    cout << "attackInterval: " << attackInterval << '\n';
+    cout << "baseAttack: " << baseAttack << '\n';
+    cout << "attackRange: " << tryAttackRange << '\n';
+    cout << "detectionRange: " << detectionRange << '\n';
+    cout << "chaseRange: " << chasingMaxRange << '\n';
+
+    cout << objectInfo->Utf8DebugString() << '\n';
+
+    cout << "======Monster Data End ====" << '\n';
+}
+
+void Monster::CacheMonsterData()
+{
+    using namespace JsonProperty::Monster;
+
+    templateId = _monsterData[TemplateId].is_null() ? 0 : static_cast<int32>(_monsterData[TemplateId]);
+    maxHp = _monsterData[MaxHp].is_null() ? 0 : static_cast<int32>(_monsterData[MaxHp]);
+    attackInterval = _monsterData[AttackInterval].is_null() ? 100000.f : static_cast<float>(_monsterData[AttackInterval]);
+    baseAttack = _monsterData[BaseAttack].is_null() ? 0 : static_cast<int32>(_monsterData[BaseAttack]);
+
+    tryAttackRange = _monsterData[TryAttackRange].is_null() ? 0.f : static_cast<float>(_monsterData[TryAttackRange]);
+    detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
+    chasingMaxRange = _monsterData[ChasingMaxRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChasingMaxRange]);
+    monsterSpeed = _monsterData[MonsterSpeed].is_null() ? 0.f : static_cast<float>(_monsterData[MonsterSpeed]);
+    isTargeting = _monsterData[IsTargeting].is_null() ? false : static_cast<bool>(_monsterData[IsTargeting]);
 }

@@ -27,23 +27,20 @@ public:
 protected:
     virtual void Tick(float deltaTime) override;
 
-    void PrintMonsterAllData() const;
-
 public:
     /** 이벤트 함수 */
     virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(ObjectRef attacker) override;
 
+    /** Getter 함수 */
     int64 GetTemplateId() { return templateId; }
     int64 GetExpReward();
     int64 GetGoldReward();
 
 protected:
-    void CacheMonsterData();
-
     /** 상태 함수 */
     void UpdateState();
-    void ChangeState(MonsterState changedState);
+    void SwitchState(MonsterState nextState);
 
     void ExecuteStateBehavior(float deltaTime);
     void ExecuteStateNone();
@@ -58,13 +55,13 @@ protected:
     void LookAt(const vector2D& targetPos);
     void StartMovingTo(const vector2D& dest, float minApproachDistance = 0.f);
     void StopMoving(string context = "", bool shouldBeIdle = false);
+    void NormalAttack();
 
     /** Bool 함수 */
     bool CanMove();
     bool AlreadyArrive();
-    bool HaveDestination() { return _moveDest.has_value(); }
+    bool HasDestination() { return _moveDest.has_value(); }
     bool IsTargetingAttack(Protocol::AttackType type);
-    void NormalAttack();
 
     /** Getter 함수(Private) */
     const vector2D& GetDestination() { return _moveDest.value(); }
@@ -74,7 +71,10 @@ protected:
     void SetMoveDirection(const vector2D& moveVec);
     void SetYaw(float yaw);
 
+    /** 기타 함수 */
     void ClearDestination();
+    void PrintMonsterAllData() const;
+    void CacheMonsterData();
 
 private:
     Protocol::MonsterInfo* monsterInfo;

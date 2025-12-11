@@ -48,79 +48,6 @@ bool Player::Start()
 	return true;
 }
 
-bool Player::CalculateFinalStat()
-{
-    // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
-    struct FinalStat
-    {
-        int32 maxHp = 0;
-        int32 maxMp = 0;
-        int32 physical_attack = 0;
-        int32 magical_attack = 0;
-    } finalStat;
-
-    // 스킬 패시브, 내실 등 캐릭터 스텟을 올릴 수 있는 요소가 추가되면 여기에 작성...
-    // ===========================================================================
-    
-    // 1. 레벨당 캐릭터 기본 스텟
-    DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
-    int32 level = playerInfo->level();
-    if(classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxHp))
-        finalStat.maxHp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxHp]);
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxMp))
-        finalStat.maxMp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxMp]);
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::PhysicalAttack))
-        finalStat.physical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack]);
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MagicalAttack))
-        finalStat.magical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack]);
-
-    // 2. 장착 중이 장비 스텟 추가
-    for (const auto& pair : possession->equipped_gear())
-    {
-        const Protocol::Item& item = pair.second.item();
-
-        if (item.template_id() == 0)
-            continue;
-
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
-            finalStat.maxHp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Hp]);
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
-            finalStat.maxMp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Mp]);
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
-            finalStat.physical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack]);
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
-            finalStat.magical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
-    }
-
-    auto* statMappings = statInfo->mutable_info();
-
-    // validate
-    try
-    {
-        if (statMappings->at((int32)Protocol::STAT_TYPE_MAX_HP) > finalStat.maxHp)
-            throw wstring(L"현재 HP가 최대 HP를 초과");
-        if (statMappings->at((int32)Protocol::STAT_TYPE_MAX_MP) > finalStat.maxMp)
-            throw wstring(L"현재 MP가 최대 MP를 초과");
-        if(statMappings->at((int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat.physical_attack)
-            throw wstring(L"물리 공격력이 계산 결과와 일치하지 않음");
-        if (statMappings->at((int32)Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat.magical_attack)
-            throw wstring(L"마법 공격력이 계산 결과와 일치하지 않음");
-    }
-    catch (wstring& cause)
-    {
-        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: " << cause << endl;
-        return false;
-    }
-
-    // Protocol::statInfo에 최종 스텟 적용
-    (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_HP] = finalStat.maxHp;
-    (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_MP] = finalStat.maxMp;
-    (*statMappings)[(int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK] = finalStat.physical_attack;
-    (*statMappings)[(int32)Protocol::STAT_TYPE_MAGICAL_ATTACK] = finalStat.magical_attack;
-
-    return true;
-}
-
 bool Player::ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = possession->gold();
@@ -367,7 +294,7 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
     }
 }
 
-void Player::OnReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
+void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 {
     bool levelUp = false;
 
@@ -425,6 +352,78 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
+bool Player::CalculateFinalStat()
+{
+    // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
+    struct FinalStat
+    {
+        int32 maxHp = 0;
+        int32 maxMp = 0;
+        int32 physical_attack = 0;
+        int32 magical_attack = 0;
+    } finalStat;
+
+    // 스킬 패시브, 내실 등 캐릭터 스텟을 올릴 수 있는 요소가 추가되면 여기에 작성...
+    // ===========================================================================
+
+    // 1. 레벨당 캐릭터 기본 스텟
+    DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
+    int32 level = playerInfo->level();
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxHp))
+        finalStat.maxHp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxHp]);
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxMp))
+        finalStat.maxMp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxMp]);
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::PhysicalAttack))
+        finalStat.physical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack]);
+    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MagicalAttack))
+        finalStat.magical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack]);
+
+    // 2. 장착 중이 장비 스텟 추가
+    for (const auto& pair : possession->equipped_gear())
+    {
+        const Protocol::Item& item = pair.second.item();
+
+        if (item.template_id() == 0)
+            continue;
+
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
+            finalStat.maxHp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Hp]);
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
+            finalStat.maxMp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Mp]);
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
+            finalStat.physical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack]);
+        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
+            finalStat.magical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
+    }
+
+    auto* statMappings = statInfo->mutable_info();
+
+    // validate
+    try
+    {
+        if (statMappings->at((int32)Protocol::STAT_TYPE_MAX_HP) > finalStat.maxHp)
+            throw wstring(L"현재 HP가 최대 HP를 초과");
+        if (statMappings->at((int32)Protocol::STAT_TYPE_MAX_MP) > finalStat.maxMp)
+            throw wstring(L"현재 MP가 최대 MP를 초과");
+        if (statMappings->at((int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat.physical_attack)
+            throw wstring(L"물리 공격력이 계산 결과와 일치하지 않음");
+        if (statMappings->at((int32)Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat.magical_attack)
+            throw wstring(L"마법 공격력이 계산 결과와 일치하지 않음");
+    }
+    catch (wstring& cause)
+    {
+        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: " << cause << endl;
+        return false;
+    }
+
+    // Protocol::statInfo에 최종 스텟 적용
+    (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_HP] = finalStat.maxHp;
+    (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_MP] = finalStat.maxMp;
+    (*statMappings)[(int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK] = finalStat.physical_attack;
+    (*statMappings)[(int32)Protocol::STAT_TYPE_MAGICAL_ATTACK] = finalStat.magical_attack;
+
+    return true;
+}
 
 void Player::CacheNextLevelUpData()
 {

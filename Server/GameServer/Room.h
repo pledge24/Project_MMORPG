@@ -51,15 +51,14 @@ public:
 
     void ReplicateRoomData(PlayerRef player, bool excludeThisPlayer);
 
-    /** Getter 함수 */
-    vector2D GetRandomLocation(bool usePadding = true);
-    float GetRandomYaw() { return Utils::GetRandom(-180.f, 180.f); }
-
-	RoomRef GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
-    int32 GetRoomId() const { return _roomId; }
-    optional<Json> GetPortalDataFromPortalId(int32 portalId);
+    /** Getter 함수(Public) */
+    vector2D            GetRandomLocation(bool usePadding = true);
+    float               GetRandomYaw() { return Utils::GetRandom(-180.f, 180.f); }
+    RoomRef             GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
+    int32               GetRoomId() const { return _roomId; }
+    optional<Json>      GetPortalDataFromPortalId(int32 portalId);
     shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return hasRespawnPoint ? respawnPoint : nullptr; }
-    const vector3D& GetCenterPoint() const { return _roomCenterPos; }
+    const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
 
     /** Setter 함수 */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
@@ -86,20 +85,19 @@ protected:
     bool AddObject(ObjectRef object);
     bool RemoveObject(int64 objectId);
 
-
     /** Room 관련 */
     void CacheRoomData();
     void CreateCellMatrix();
     void ClearCellMatrix();
-
-    pair<int32, int32> GetCellIndicesFromPos(const vector2D& pos);
-    pair<int32, int32> GetCellIndicesFromPos(Protocol::PosInfo* posInfo);
-    Cell* GetCellFromPos(const vector2D& pos);
-    Cell* GetCellFromPos(Protocol::PosInfo* posInfo);
     void UpdateCellMatrix();
 
+    pair<int32, int32>      GetCellIndicesFromPos(const vector2D& pos);
+    pair<int32, int32>      GetCellIndicesFromPos(Protocol::PosInfo* posInfo);
+    Cell*                   GetCellFromPos(const vector2D& pos);
+    Cell*                   GetCellFromPos(Protocol::PosInfo* posInfo);
+
 private:
-    /** 해당 Room 관련 정보 */
+    /** Room 관련 */
 	unordered_map<int64, ObjectRef> _objects;
     vector<vector<Cell>> _cellMatrix;
     vector2D _cellOffset = vector2D::GetZeroVector();
@@ -126,13 +124,12 @@ private:
     const float LOCATION_PADDING_Z = 100.f;
 
     const float CELL_SIZE = 1000.f;    // 10M
+    const uint64 ROOM_UPDATE_INTERVAL_MS = 200;
 
     /** 몬스터 관련 정보 */
     int32 maxMonsterCount;
     float monsterRespawnTime;
     vector<int32> monsterIds;
 
-    /** 네트워크 */
-    const uint64 ROOM_UPDATE_TICK = 200;
 };
 

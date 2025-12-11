@@ -64,7 +64,7 @@ bool Room::Start()
 
 void Room::Update()
 {
-    DoTimer(ROOM_UPDATE_TICK, &Room::Update);
+    DoTimer(ROOM_UPDATE_INTERVAL_MS, &Room::Update);
 
     Protocol::S_MOVE movePkt;
     {
@@ -81,7 +81,6 @@ void Room::Update()
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
         Broadcast(sendBuffer);
     }
-
 }
 
 void Room::TickObject(ObjectRef object)
@@ -414,21 +413,6 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     }
 }
 
-void Room::HandleNormalAttack(Protocol::AttackInfo attackInfo, CreatureRef creature)
-{
-    Protocol::S_NORMAL_ATTACK normalAttackPkt;
-    {
-        normalAttackPkt.set_object_id(creature->objectInfo->object_id());
-        normalAttackPkt.set_combo(attackInfo.combo());
-        normalAttackPkt.set_yaw(creature->posInfo->yaw());
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-        Broadcast(sendBuffer);
-    }
-
-    DoTimer(200, &Room::HandleHit, static_pointer_cast<Object>(creature), attackInfo);
-}
-
 bool Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos)
 {
     int64 playerId = player->objectInfo->object_id();
@@ -467,6 +451,21 @@ bool Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr
     SEND_PACKET(respawnPkt);
 
     return true;
+}
+
+void Room::HandleNormalAttack(Protocol::AttackInfo attackInfo, CreatureRef creature)
+{
+    Protocol::S_NORMAL_ATTACK normalAttackPkt;
+    {
+        normalAttackPkt.set_object_id(creature->objectInfo->object_id());
+        normalAttackPkt.set_combo(attackInfo.combo());
+        normalAttackPkt.set_yaw(creature->posInfo->yaw());
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
+        Broadcast(sendBuffer);
+    }
+
+    DoTimer(200, &Room::HandleHit, static_pointer_cast<Object>(creature), attackInfo);
 }
 
 void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
@@ -531,7 +530,7 @@ void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
         rewardResultPkt.mutable_reward()->Swap(&reward);
     }
 
-    player->OnReward(rewardResultPkt);
+    player->OnGetReward(rewardResultPkt);
 
     if (auto session = player->session.lock())
     {
@@ -820,6 +819,33 @@ void Room::ClearCellMatrix()
     }
 }
 
+void Room::UpdateCellMatrix()
+{
+    ClearCellMatrix();
+
+    for (auto& pair : _objects)
+    {
+        int64 objectId = pair.first;
+        ObjectRef object = pair.second;
+
+        Protocol::PosInfo* objectPos = object->posInfo;
+        
+        auto indices = GetCellIndicesFromPos(objectPos);
+        if (indices == make_pair(-1, -1))
+        {
+            wcout << L"유효하지 않은 위치" << '\n';
+            continue;
+        }
+        
+        int32 indexX = indices.first;
+        int32 indexY = indices.second;
+
+        _cellMatrix[indexX][indexY].insert(objectId);
+
+        //printf("object: %d (%d, %d)\n", objectId, indexX, indexY);
+    }
+}
+
 std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& objectPos)
 {
     float offsetX = objectPos.x - _cellOffset.x;
@@ -860,33 +886,6 @@ Cell* Room::GetCellFromPos(const vector2D& pos)
 Cell* Room::GetCellFromPos(Protocol::PosInfo* posInfo)
 {
     return GetCellFromPos(vector2D(posInfo->pos().x(), posInfo->pos().y()));
-}
-
-void Room::UpdateCellMatrix()
-{
-    ClearCellMatrix();
-
-    for (auto& pair : _objects)
-    {
-        int64 objectId = pair.first;
-        ObjectRef object = pair.second;
-
-        Protocol::PosInfo* objectPos = object->posInfo;
-        
-        auto indices = GetCellIndicesFromPos(objectPos);
-        if (indices == make_pair(-1, -1))
-        {
-            wcout << L"유효하지 않은 위치" << '\n';
-            continue;
-        }
-        
-        int32 indexX = indices.first;
-        int32 indexY = indices.second;
-
-        _cellMatrix[indexX][indexY].insert(objectId);
-
-        //printf("object: %d (%d, %d)\n", objectId, indexX, indexY);
-    }
 }
 
 bool Room::AddObject(ObjectRef object)

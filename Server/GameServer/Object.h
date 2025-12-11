@@ -22,14 +22,18 @@ protected:
     virtual void Tick(float deltaTime);
 
 public:
+    /** 이벤트 함수 */
+    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) {};
+
+    /** Bool 함수 */
+	bool IsPlayer() { return _isPlayer; }
+
+    /** Getter 함수 */
     uint64 GetPrevTime() { return prevTime; }
     void GetNormalAttackData() {}
 
+    /** Setter 함수 */
     void SetPrevTime(uint64 time) { prevTime = time; }
-
-    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) {};
-
-	bool IsPlayer() { return _isPlayer; }
 
 public:
 	Protocol::ObjectInfo* objectInfo;

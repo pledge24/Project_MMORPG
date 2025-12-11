@@ -31,9 +31,7 @@ protected:
     virtual void Tick(float deltaTime) override {};
 
 public:
-    bool CalculateFinalStat();
-
-    /* 핸들 함수 */
+    /** 핸들 함수 */
     bool ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count = 1);
     bool ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count = 1);
     bool ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_USE_ITEM& pkt);
@@ -47,25 +45,26 @@ public:
 
     void OnEnterMap(int32 mapId, int32 roomId);
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
-    void OnReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
+    void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
     void OnLevelUp();
   
-    /** Getter */
+    /** Getter 함수*/
     int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
     int32 GetEnteringRoomId() { return enteringRoomId; }
 
 private:
     /** 기타 함수 */
+    bool CalculateFinalStat();
     void CacheNextLevelUpData();
 
 public:
 	weak_ptr<GameSession> session;
 
-    Protocol::PlayerInfo* playerInfo;   // 플레이어의 모든 정보가 여기에 저장됨.
+    Protocol::PlayerInfo* playerInfo;
     Protocol::Possession* possession;
 
-    InventoryRef inventory;             // 인벤토리 헬퍼
-    EquippedGearRef equippedGear;       // 장착 아이템 헬퍼
+    InventoryRef inventory;             
+    EquippedGearRef equippedGear;       
 
 private:
     int32 enteringRoomId = -1;          // 이동하고자 하는 Room id
@@ -74,6 +73,6 @@ private:
     NextLevelUpData _nextLevelUpData;
 
     map<Protocol::RespawnType, int32> respawnRoomMappings;
-    int32 RESPAWN_TOWN_ID = 10;        // 고정으로 사용
+    int32 RESPAWN_TOWN_ID = 10;         // 고정으로 사용
 };
 

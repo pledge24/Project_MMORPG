@@ -63,12 +63,6 @@ void Creature::OnDie(ObjectRef attacker)
     isDead = true;
 }
 
-void Creature::SetStatValue(Protocol::StatType statType, const int64& value)
-{
-    auto* statMappings = statInfo->mutable_info();
-    (*statMappings)[(int32)statType] = value;
-}
-
 int64 Creature::GetStatValue(Protocol::StatType statType)
 {
     auto* statMappings = statInfo->mutable_info();
@@ -87,4 +81,9 @@ Protocol::Stat Creature::GetStat(Protocol::StatType statType)
     return stat;
 }
 
+void Creature::SetStatValue(Protocol::StatType statType, const int64& value)
+{
+    auto* statMappings = statInfo->mutable_info();
+    (*statMappings)[(int32)statType] = value;
+}
 
