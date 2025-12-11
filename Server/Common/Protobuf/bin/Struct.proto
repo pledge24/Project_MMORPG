@@ -70,13 +70,29 @@ message PosInfo
 	MoveState state = 5;
 }
 
-message HitData
+message AttackInfo
 {
-    int64 attacker_id = 1;         // object_id
-    int64 target_id = 2;           // object_id
-
-    DamageType damage_type = 3;     // 물리 피해? 마법 피해?
+    AttackType type = 1;
+    optional int64 target_id = 2;   // object_id
+    optional int32 combo = 3;
     int64 damage = 4;
+
+    oneof details
+    {
+        int32 skill_id = 5;
+        int64 item_id = 6;
+    }
+}
+
+message HitInfo
+{
+    int64 attacker_id = 1;          // object_id
+    int64 target_id = 2;            // object_id
+
+    optional int64 damage = 3;
+    DamageType damage_type = 4;     // 물리 피해? 마법 피해?
+
+    repeated Stat updated_stat = 5;
 }
 
 message StatInfo
@@ -140,7 +156,7 @@ message LevelUpInfo
 //    int32 earned_skill_points = 3;
 //    int32 earned_stat_points = 4;
 
-    repeated Stat updatedStat = 5;
+    repeated Stat updated_stat = 5;
 }
 
 message Reward

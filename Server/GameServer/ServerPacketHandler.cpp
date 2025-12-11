@@ -114,8 +114,9 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-	// 플레이어 생성
+	// 플레이어 생성 및 초기화
 	PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
+    player->Init();
 
     // 유저 Id를 통해 DBQueue를 선택
     int64 userId = static_pointer_cast<GameSession>(session)->userId;
@@ -332,6 +333,12 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
         cout << "Handle_C_ENTER_ROOM: Invalid Enter Type" << '\n';
         return false;
     }
+    case Protocol::ENTER_TYPE_NONE:
+        break;
+    case Protocol::EnterType_INT_MIN_SENTINEL_DO_NOT_USE_:
+        break;
+    case Protocol::EnterType_INT_MAX_SENTINEL_DO_NOT_USE_:
+        break;
     }
 
     return true;
@@ -349,7 +356,7 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 	if (room == nullptr)
 		return false;
 
-    room->DoAsync(&Room::HandleMove, pkt);
+    room->DoAsync(&Room::C_HandleMove, pkt);
 
 	return true;
 }
@@ -366,7 +373,7 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleNormalAttack, pkt, player);
+    room->DoAsync(&Room::C_HandleNormalAttack, pkt, player);
 
     return true;
 }
@@ -379,8 +386,14 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    if (player->HandleBuyItem(pkt) == false)
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
         return false;
+
+    room->DoAsync([self = room, pkt, player]()
+        {
+            self->C_HandleBuyItem(pkt, player);
+        });
 
     return true;
 }
@@ -393,8 +406,14 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    if (player->HandleSellItem(pkt) == false)
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
         return false;
+
+    room->DoAsync([self = room, pkt, player]()
+        {
+            self->C_HandleSellItem(pkt, player);
+        });
     
     return true;
 }
@@ -411,7 +430,7 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleEquipGear, pkt, player);
+    room->DoAsync(&Room::C_HandleEquipGear, pkt, player);
 
     return true;
 }
@@ -429,7 +448,7 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleUnequipGear, pkt, player);
+    room->DoAsync(&Room::C_HandleUnequipGear, pkt, player);
 
     return true;
 }
@@ -442,8 +461,14 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    if (player->HandleUseItem(pkt) == false)
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
         return false;
+
+    room->DoAsync([self = room, pkt, player]()
+        {
+            self->C_HandleUseItem(pkt, player);
+        });
 
     return true;
 }
@@ -500,7 +525,7 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 
     if (curRoom == respawnRoom)
     {
-        curRoom->DoAsync(&Room::HandleRespawn, pkt, player, respawnPos);
+        curRoom->DoAsync(&Room::C_HandleRespawn, pkt, player, respawnPos);
     }
     else
     {
@@ -524,7 +549,7 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 
                 respawnRoom->DoAsync([self = respawnRoom, pkt, player, respawnPos]()
                     {
-                        if (self->HandleRespawn(pkt, player, respawnPos) == false)
+                        if (self->C_HandleRespawn(pkt, player, respawnPos) == false)
                             return;
 
                         self->ReplicateRoomData(player, false);

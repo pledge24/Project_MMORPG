@@ -20,19 +20,23 @@ public:
 	Monster();
 	virtual ~Monster();
 
+public:
+    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr) override;
+    virtual bool Start() override;
+
 protected:
-    virtual void PostConstructionSetup() override;
     virtual void Tick(float deltaTime) override;
 
-public:
-    void PostInit();
     void PrintMonsterAllData() const;
 
+public:
     /** 이벤트 함수 */
-    virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(ObjectRef attacker) override;
 
     int64 GetTemplateId() { return templateId; }
+    int64 GetExpReward();
+    int64 GetGoldReward();
 
 protected:
     void CacheMonsterData();
@@ -54,28 +58,23 @@ protected:
     void LookAt(const vector2D& targetPos);
     void StartMovingTo(const vector2D& dest, float minApproachDistance = 0.f);
     void StopMoving(string context = "", bool shouldBeIdle = false);
-    void Attack();  // normal attack
 
+    /** Bool 함수 */
     bool CanMove();
     bool AlreadyArrive();
     bool HaveDestination() { return _moveDest.has_value(); }
+    bool IsTargetingAttack(Protocol::AttackType type);
+    void NormalAttack();
 
-    /** 이벤트 함수 */
-    void OnHitCheck();
-
-    /** Getter-Setter 함수(Private) */
+    /** Getter 함수(Private) */
     const vector2D& GetDestination() { return _moveDest.value(); }
-    int64 GetExpReward();
-    int64 GetGoldReward();
-
+ 
+    /** Setter 함수(Private) */
     void SetDestination(const vector2D& destPos, float minApproachDistance = 0.f);
     void SetMoveDirection(const vector2D& moveVec);
     void SetYaw(float yaw);
 
     void ClearDestination();
-
-    /** 네트워크 함수 */
-    void ForceBroadcastMovePkt();
 
 private:
     Protocol::MonsterInfo* monsterInfo;
@@ -93,12 +92,12 @@ private:
     /** Monster AI Data(Common) */
     const float IDLE_TIME = 5.f;
     const float WANDERING_TIME = 2.f;
-    const float UPDATE_STATE_INTERVAL = 1.f;
+    const uint64 UPDATE_STATE_INTERVAL_MS = 200;
     const float MIN_APPROACH_DISTANCE = 120.f;
 
     /** Monster AI Data(Individual) */
     MonsterState state = MonsterState::Idle;
-    vector2D spawnPos;
+    vector2D _spawnPos;
     float tryAttackRange;                       // 공격 사거리
     float detectionRange;                       // 타겟 감지 범위
     float chasingMaxRange;                      // 추적 범위

@@ -590,6 +590,8 @@ void UP1GameInstance::HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RES
 
     if (IsValid(_MyPlayer))
     {
+        int64 MonsterId = 
+        UE_LOG(LogTemp, Warning, TEXT("몬스터(ObjectId %d) 처치하여 경험치는 %d, 골드는 %d가 됨"), );
 
     }
 

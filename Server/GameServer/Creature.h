@@ -7,13 +7,18 @@ public:
 	Creature();
 	virtual ~Creature();
 
+public:
+    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr) override;
+    virtual bool Start() override;
+
 protected:
-    virtual void PostConstructionSetup() override;
     virtual void Tick(float deltaTime) override;
 
 public:
-    virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(ObjectRef attacker);
+
+    bool IsDead() { return isDead; }
 
     /** Setter 함수 */
     void SetStatValue(Protocol::StatType statType, const int64& value);

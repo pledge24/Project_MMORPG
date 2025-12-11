@@ -8,6 +8,7 @@
 Player::Player()
 {
 	_isPlayer = true;
+    _isTickable = false;
 
     playerInfo = objectInfo->mutable_player_info();
     possession = new Protocol::Possession();
@@ -18,39 +19,33 @@ Player::~Player()
     delete possession;
 }
 
-void Player::PostConstructionSetup()
+bool Player::Init(Protocol::PosInfo* spawnPos)
 {
-    Creature::PostConstructionSetup();
+	if (Creature::Init(spawnPos) == false)
+		return false;
 
-    Init();
-}
-
-void Player::Tick(float deltaTime)
-{
-    Creature::Tick(deltaTime);
-
-
-}
-
-void Player::Init()
-{
     inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
     equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
+
+	return true;
 }
 
-bool Player::PostInit()
+bool Player::Start()
 {
-    if (CalculateFinalStat() == false)
-        return false;
+	if (Creature::Start() == false)
+		return false;
 
-    CacheNextLevelUpData();
+	if (CalculateFinalStat() == false)
+		return false;
 
-    respawnRoomMappings[Protocol::RESPAWN_TYPE_TOWN] = RESPAWN_TOWN_ID;
-    respawnRoomMappings[Protocol::RESPAWN_TYPE_CHECKPOINT] = -1;
-    respawnRoomMappings[Protocol::RESPAWN_TYPE_IN_PLACE] = -1;
-    respawnRoomMappings[Protocol::RESPAWN_TYPE_GUILD_BASE] = -1;
+	CacheNextLevelUpData();
 
-    return true;
+	respawnRoomMappings[Protocol::RESPAWN_TYPE_TOWN] = RESPAWN_TOWN_ID;
+	respawnRoomMappings[Protocol::RESPAWN_TYPE_CHECKPOINT] = -1;
+	respawnRoomMappings[Protocol::RESPAWN_TYPE_IN_PLACE] = -1;
+	respawnRoomMappings[Protocol::RESPAWN_TYPE_GUILD_BASE] = -1;
+
+	return true;
 }
 
 bool Player::CalculateFinalStat()
@@ -122,95 +117,6 @@ bool Player::CalculateFinalStat()
     (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_MP] = finalStat.maxMp;
     (*statMappings)[(int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK] = finalStat.physical_attack;
     (*statMappings)[(int32)Protocol::STAT_TYPE_MAGICAL_ATTACK] = finalStat.magical_attack;
-
-    return true;
-}
-
-bool Player::HandleBuyItem(const Protocol::C_BUY_ITEM& pkt)
-{
-    auto ownerSession = session.lock();
-    if (ownerSession == nullptr)
-        return false;
-
-    Protocol::S_BUY_ITEM buyItemPkt;
-    Protocol::Slot* updatedSlot = buyItemPkt.mutable_updated_slot();
-    int32 templateId = pkt.template_id();
-    int64 totalGold = 0;
-
-    if (ProcessBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
-    {
-        buyItemPkt.set_success(false);
-
-        SEND_PACKET_USING_THIS_SESSION(ownerSession, buyItemPkt);
-        return false;
-    }
-
-    // 아이템 구매 성공 처리
-    {
-        buyItemPkt.set_success(true);
-        buyItemPkt.set_gold(totalGold);
-
-        SEND_PACKET_USING_THIS_SESSION(ownerSession, buyItemPkt);
-        cout << buyItemPkt.DebugString() << endl;
-    }
-
-    return true;
-}
-
-bool Player::HandleSellItem(const Protocol::C_SELL_ITEM& pkt)
-{
-    auto ownerSession = session.lock();
-    if (ownerSession == nullptr)
-        return false;
-
-    Protocol::S_SELL_ITEM sellItemPkt;
-    const Protocol::Slot& requestSlot = pkt.slot();
-    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
-    int64 totalGold = 0;
-
-    if (ProcessSellItem(requestSlot, OUT updatedSlot, OUT totalGold) == false)
-    {
-        sellItemPkt.set_success(false);
-        SEND_PACKET_USING_THIS_SESSION(ownerSession, sellItemPkt);
-        return false;
-    }
-
-    // 아이템 판매 성공 처리
-    {
-        sellItemPkt.set_success(true);
-        sellItemPkt.set_gold(totalGold);
-
-        SEND_PACKET_USING_THIS_SESSION(ownerSession, sellItemPkt);
-        cout << sellItemPkt.DebugString() << endl;
-    }
-
-    return true;
-}
-
-bool Player::HandleUseItem(const Protocol::C_USE_ITEM& pkt)
-{
-    auto ownerSession = session.lock();
-    if (ownerSession == nullptr)
-        return false;
-
-    Protocol::S_USE_ITEM useItemPkt;
-    const Protocol::Slot& targetSlot = pkt.slot();
-
-    if (ProcessUseItem(targetSlot, OUT useItemPkt) == false)
-    {
-        useItemPkt.set_success(false);
-
-        SEND_PACKET_USING_THIS_SESSION(ownerSession, useItemPkt);
-        return false;
-    }
-
-    // 아이템 판매 성공 처리
-    {
-        useItemPkt.set_success(true);
-
-        SEND_PACKET_USING_THIS_SESSION(ownerSession, OUT useItemPkt);
-        cout << useItemPkt.DebugString() << endl;
-    }
 
     return true;
 }
@@ -352,9 +258,76 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     return true;
 }
 
-void Player::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
+bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt)
 {
-    Creature::OnHit(attacker, hitData);
+	auto ownerRoom = room.load().lock();
+	if (ownerRoom == nullptr)
+		return false;
+
+	posInfo->CopyFrom(*respawnPos);
+	{
+		pkt.set_success(true);
+		pkt.set_respawn_type(type);
+		pkt.set_object_id(objectInfo->object_id());
+
+		pkt.set_room_id(ownerRoom->GetRoomId());
+		pkt.mutable_pos_info()->CopyFrom(*respawnPos);
+	}
+
+	switch (type)
+	{
+	case Protocol::RESPAWN_TYPE_TOWN:
+	{
+		RepeatedPtrField<Protocol::Stat>* updatedStatList = pkt.mutable_updated_stat();
+
+		// 사망 패널티 적용(경험치 10% 감소) <- 리스폰 할때 적용
+		{
+			int64 exp = GetStatValue(Protocol::STAT_TYPE_EXP);
+			int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
+
+			int64 lossExp = static_cast<int64>(maxExp * 0.1f);
+			int64 curExp = exp;
+			int64 updatedExp = curExp <= lossExp ? 0 : curExp - lossExp;
+
+			SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp);
+			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_EXP, updatedExp);
+		}
+
+		// Hp는 절반만 가지고 리스폰
+		{
+			int64 respawnHp = (int64)(GetStatValue(Protocol::STAT_TYPE_MAX_HP) * 0.5f);
+
+			SetStatValue(Protocol::STAT_TYPE_HP, respawnHp);
+			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_HP, respawnHp);
+		}
+
+		break;
+	}
+	case Protocol::RESPAWN_TYPE_CHECKPOINT:
+	case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
+	case Protocol::RESPAWN_TYPE_IN_PLACE:
+	case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
+	case Protocol::RESPAWN_TYPE_GUILD_BASE:
+	case Protocol::RESPAWN_TYPE_CASH_ITEM:
+	case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
+	{
+		break;
+	}
+	default:
+		break;
+	}
+
+	// 리스폰 성공 처리
+	{
+		isDead = false;
+	}
+
+	return true;
+}
+
+void Player::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+{
+    Creature::OnHit(attacker, attackInfo);
 
 }
 
@@ -394,10 +367,11 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
     }
 }
 
-void Player::OnMonsterKill(MonsterRef killedMonster, Protocol::Reward& reward)
+void Player::OnReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 {
     bool levelUp = false;
 
+    const Protocol::Reward& reward = rewardResultPkt.reward();
     // Get Reward
     {
         int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + reward.exp();
@@ -413,23 +387,19 @@ void Player::OnMonsterKill(MonsterRef killedMonster, Protocol::Reward& reward)
         }
     }
 
-    // Send S_MONSTER_KILL_RESULT Packet
-    Protocol::S_MONSTER_KILL_RESULT monsterKillResultPkt;
+    // Set Reward Result Pkt
     {
-        monsterKillResultPkt.set_object_id(objectInfo->object_id());
-        monsterKillResultPkt.set_monster_object_id(killedMonster->objectInfo->object_id());
-        monsterKillResultPkt.set_monster_template_id(killedMonster->GetTemplateId());
-
-        monsterKillResultPkt.mutable_killreward()->Swap(&reward);
+        rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
+        rewardResultPkt.set_updated_gold(possession->gold());
 
         if (levelUp)
         {
-            monsterKillResultPkt.set_is_level_up(true);
+            rewardResultPkt.set_is_level_up(true);
             Protocol::LevelUpInfo info;
             info.set_new_level(playerInfo->level() - 1);
             info.set_new_level(playerInfo->level());
 
-			RepeatedPtrField<Protocol::Stat>* updatedStatList = info.mutable_updatedstat();
+			RepeatedPtrField<Protocol::Stat>* updatedStatList = info.mutable_updated_stat();
 			{
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP));
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP));
@@ -438,12 +408,6 @@ void Player::OnMonsterKill(MonsterRef killedMonster, Protocol::Reward& reward)
 			}
         }
     }
-
-    auto ownerSession = session.lock();
-    if (ownerSession == nullptr)
-        return;
-
-    SEND_PACKET_USING_THIS_SESSION(ownerSession, monsterKillResultPkt);
 }
 
 void Player::OnLevelUp()
@@ -461,72 +425,6 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
-void Player::OnRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos)
-{
-    auto ownerRoom = room.load().lock();
-    if (ownerRoom == nullptr)
-        return;
-
-    isDead = false;
-    posInfo->CopyFrom(*respawnPos);
-    Protocol::S_RESPAWN respawnPkt;
-    {
-        respawnPkt.set_success(true);
-        respawnPkt.set_respawn_type(type);
-        respawnPkt.set_object_id(objectInfo->object_id());
-
-        respawnPkt.set_room_id(ownerRoom->GetRoomId());
-        respawnPkt.mutable_pos_info()->CopyFrom(*respawnPos);
-    }
-
-    switch (type)
-    {
-    case Protocol::RESPAWN_TYPE_TOWN:
-    {
-		RepeatedPtrField<Protocol::Stat>* updatedStatList = respawnPkt.mutable_updated_stat();
-
-        // 사망 패널티 적용(경험치 10% 감소) <- 리스폰 할때 적용
-        {
-            int64 exp = GetStatValue(Protocol::STAT_TYPE_EXP);
-            int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
-
-            int64 lossExp = static_cast<int64>(maxExp * 0.1f);
-            int64 curExp = exp;
-            int64 updatedExp = curExp <= lossExp ? 0 : curExp - lossExp;
-
-            SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp);
-			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_EXP, updatedExp);
-        }
-
-        // Hp는 절반만 가지고 리스폰
-        {
-            int64 respawnHp = (int64)(GetStatValue(Protocol::STAT_TYPE_MAX_HP) * 0.5f);
-
-            SetStatValue(Protocol::STAT_TYPE_HP, respawnHp);
-			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_HP, respawnHp);
-        }
-
-        break;
-    }
-    case Protocol::RESPAWN_TYPE_CHECKPOINT:
-    case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
-    case Protocol::RESPAWN_TYPE_IN_PLACE:
-    case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
-    case Protocol::RESPAWN_TYPE_GUILD_BASE:
-    case Protocol::RESPAWN_TYPE_CASH_ITEM:
-    case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
-    {
-        break;
-    }
-    default:
-        break;
-    }
-
-    // Broadcast Respawn Packet
-    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(respawnPkt);
-    ownerRoom->Broadcast(sendBuffer);
-
-}
 
 void Player::CacheNextLevelUpData()
 {

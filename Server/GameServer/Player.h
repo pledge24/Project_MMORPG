@@ -23,40 +23,36 @@ public:
 	Player();
 	virtual ~Player();
 
+public:
+    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr) override;
+    virtual bool Start() override;
+
 protected:
-    virtual void PostConstructionSetup() override;
-    virtual void Tick(float deltaTime) override;
+    virtual void Tick(float deltaTime) override {};
 
 public:
-    void Init();
-    bool PostInit();
     bool CalculateFinalStat();
 
     /* 핸들 함수 */
-    bool HandleBuyItem(const Protocol::C_BUY_ITEM& pkt);
-    bool HandleSellItem(const Protocol::C_SELL_ITEM& pkt);
-    bool HandleUseItem(const Protocol::C_USE_ITEM& pkt);
-
     bool ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count = 1);
     bool ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count = 1);
     bool ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_USE_ITEM& pkt);
     bool ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt);
     bool ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt);
+    bool ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt);
 
     /** 이벤트 함수 */
-    virtual void OnHit(ObjectRef attacker, Protocol::HitData& hitData) override;
+    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(ObjectRef attacker) override;
 
     void OnEnterMap(int32 mapId, int32 roomId);
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
-    void OnMonsterKill(MonsterRef killedMonster, Protocol::Reward& reward);
+    void OnReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
     void OnLevelUp();
-    void OnRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos);
   
     /** Getter */
     int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
     int32 GetEnteringRoomId() { return enteringRoomId; }
-
 
 private:
     /** 기타 함수 */
@@ -72,7 +68,7 @@ public:
     EquippedGearRef equippedGear;       // 장착 아이템 헬퍼
 
 private:
-    int32 enteringRoomId = -1;             // 이동하고자 하는 Room id
+    int32 enteringRoomId = -1;          // 이동하고자 하는 Room id
 
     const int32 MAX_LEVEL = 50;
     NextLevelUpData _nextLevelUpData;

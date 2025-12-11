@@ -25,12 +25,12 @@ enum MoveState
     MOVE_STATE_ACTION = 3; // Root Motion이 들어간 애니메이션 실행
 }
 
-enum HitType
+enum AttackType
 {
-    HIT_TYPE_NONE = 0;
-    HIT_TYPE_NORMAL = 1;
-    HIT_TYPE_SKILL = 2;
-    HIT_TYPE_EOT = 3;           // Effect Over Time: 지속 효과 피해
+    ATTACK_TYPE_NONE = 0;
+    ATTACK_TYPE_NORMAL = 1;
+    ATTACK_TYPE_SKILL = 2;
+    ATTACK_TYPE_EOT = 3;        // Effect Over Time(지속 피해)
 }
 
 enum DamageType
@@ -123,4 +123,11 @@ enum EnterType
     ENTER_TYPE_NONE = 0;
     ENTER_TYPE_MAP_CHANGE = 1;  // 맵 로드에 사용
     ENTER_TYPE_ROOM_CHANGE = 2; // 맵 내부 이동에 사용
+}
+
+enum RewardType
+{
+    REWARD_TYPE_NONE = 0;
+    REWARD_TYPE_MONSTER_KILL = 1;
+    REWARD_TYPE_QUEST_COMPLETE = 2;
 }

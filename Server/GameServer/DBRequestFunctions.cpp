@@ -386,7 +386,7 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     }
 
     // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
-    if (player->PostInit() == false)
+    if (player->Start() == false)
         return;
     
     // 패킷으로 만들어서 클라이언트에게 보낸다.

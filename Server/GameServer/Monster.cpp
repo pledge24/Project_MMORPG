@@ -17,51 +17,16 @@ Monster::~Monster()
 {
 }
 
-void Monster::PostConstructionSetup()
+bool Monster::Init(Protocol::PosInfo* spawnPos)
 {
-    Creature::PostConstructionSetup();
+    if (Creature::Init(spawnPos) == false)
+        return false;
 
-    // 몬스터 AI 인터벌 타이머 초기화
-    weak_ptr<Monster> weakSelf = static_pointer_cast<Monster>(shared_from_this());
-    stateIntervalTimer->Init(UPDATE_STATE_INTERVAL, [weakSelf]()
-        {
-            if (auto self = weakSelf.lock())
-            {
-                self->UpdateState();
-            }
-            
-        });
-
-    // 틱마다 타이머 갱신
-    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PreObjectTick)].push_back(
-        [weakSelf](float deltaTime)
-        {
-            if (auto self = weakSelf.lock())
-            {
-                self->_stateTimer += deltaTime;
-                self->_timeSinceLastAttack += deltaTime;
-                self->stateIntervalTimer->Tick(deltaTime);
-            }
-        }
-    );
-}
-
-void Monster::Tick(float deltaTime)
-{
-    Creature::Tick(deltaTime);
-
-    // 몬스터 AI 실행
-    ExecuteStateBehavior(deltaTime);
-}
-
-void Monster::PostInit()
-{
     int32 templateId = objectInfo->monster_info().template_id();
-
     if (Gamedata::MonsterDataTable.contains(templateId) == false)
     {
         cout << "Monster's template id is Invalid" << '\n';
-        return;
+        return false;
     }
 
     const Json& monsterData = Gamedata::MonsterDataTable[templateId];
@@ -73,10 +38,37 @@ void Monster::PostInit()
     // set Init data
     monsterInfo->set_template_id(templateId);
     monsterInfo->set_hp(maxHp);
-    spawnPos = MathUtil::PosInfoToVector2D(posInfo);
+    _spawnPos = MathUtil::PosInfoToVector2D(posInfo);
 
     // set Idle State
     ChangeState(MonsterState::Idle);
+
+    return true;
+}
+
+bool Monster::Start()
+{
+    if (Creature::Start() == false)
+        return false;
+
+    UpdateState();
+
+    return true;
+}
+
+void Monster::Tick(float deltaTime)
+{
+    Creature::Tick(deltaTime);
+
+    // 틱마다 타이머 갱신
+    {
+        _stateTimer += deltaTime;
+        _timeSinceLastAttack += deltaTime;
+        stateIntervalTimer->Tick(deltaTime);
+    }
+
+    // 몬스터 AI 실행
+    ExecuteStateBehavior(deltaTime);
 }
 
 void Monster::PrintMonsterAllData() const
@@ -97,62 +89,14 @@ void Monster::PrintMonsterAllData() const
     cout << "======Monster Data End ====" << '\n';
 }
 
-void Monster::OnHit(ObjectRef attacker, Protocol::HitData& hitData)
+void Monster::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 {
-    auto ownerRoom = room.load().lock();
-    if (ownerRoom == nullptr)
-        return;
-
-    int64 damage = hitData.damage();
-    int32 updated_hp = static_cast<int32>(monsterInfo->hp() - damage);
-    monsterInfo->set_hp(max(0, updated_hp));
-
-    // Broadcast Hit Packet
-    {
-        Protocol::S_HIT hitPkt;
-
-        hitPkt.mutable_hit_data()->CopyFrom(hitData);
-        Protocol::Stat* stat = hitPkt.add_updated_stat();
-        {
-            stat->set_type(Protocol::STAT_TYPE_HP);
-            stat->set_value(updated_hp);
-        }
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
-        ownerRoom->Broadcast(sendBuffer);
-    }
-
-    if (updated_hp <= 0)
-    {
-        
-    }
+    Creature::OnHit(attacker, attackInfo);
 }
 
 void Monster::OnDie(ObjectRef attacker)
 {
     Creature::OnDie(attacker);
-
-    auto ownerRoom = room.load().lock();
-    if (ownerRoom == nullptr)
-        return;
-
-    int64 objectId = objectInfo->object_id();
-
-    // Trigger OnMonsterKill
-    if (PlayerRef player = dynamic_pointer_cast<Player>(attacker))
-    {
-        Protocol::Reward reward;
-        {
-            reward.set_exp(GetExpReward());
-            reward.set_gold(GetGoldReward());
-        }
-
-        player->OnMonsterKill(static_pointer_cast<Monster>(shared_from_this()), reward);
-    }
-
-    // 바로 Room에서 제거한다.
-    ownerRoom->RemoveObject(objectId);
-    
 }
 
 void Monster::CacheMonsterData()
@@ -294,6 +238,18 @@ void Monster::UpdateState()
     default:
         break;
     }
+
+    if (auto ownerRoom = room.load().lock())
+    {
+        ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
+            {
+                int64 objectId = self->objectInfo->object_id();
+
+                if(ownerRoom->Contains(objectId))
+                    self->UpdateState();
+            });
+
+    }
 }
 
 void Monster::ChangeState(MonsterState changedState)
@@ -322,7 +278,7 @@ void Monster::ChangeState(MonsterState changedState)
         if (ownerRoom == nullptr)
             return;
 
-        vector2D newDest = ownerRoom->GetRandomPos();
+        vector2D newDest = ownerRoom->GetRandomLocation();
         
         // 목적지로 이동 세팅(PosInfo 세팅)
         StartMovingTo(newDest);
@@ -433,7 +389,7 @@ void Monster::ExecuteStateAttacking(float deltaTime)
         if (bool InAttackRange = MathUtil::InRange(posInfo, targetPos, tryAttackRange))
         {
             _timeSinceLastAttack = 0.f;
-            Attack();
+            NormalAttack();  
         }
     }
 
@@ -475,12 +431,14 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
     if (AlreadyArrive())
     {
         StopMoving("Move:: AlreadyArrive");
-        ForceBroadcastMovePkt();
+        //ForceBroadcastMovePkt();
         return;
     }
 
     if (posInfo->state() == Protocol::MoveState::MOVE_STATE_IDLE)
-        ForceBroadcastMovePkt();
+    {
+        //ForceBroadcastMovePkt();
+    }
 
     posInfo->set_state(Protocol::MoveState::MOVE_STATE_RUN);
 
@@ -531,37 +489,9 @@ void Monster::StopMoving(string context, bool shouldBeIdle)
     if (posInfo->state() == Protocol::MoveState::MOVE_STATE_RUN || shouldBeIdle)
     {
         posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-        ForceBroadcastMovePkt();
+        //ForceBroadcastMovePkt();
         //cout << "StopMoving::set idle: " << context << '\n';
     }
-}
-
-void Monster::Attack()
-{
-    Protocol::S_NORMAL_ATTACK normalAttackPkt;
-    {
-        normalAttackPkt.set_object_id(objectInfo->object_id());
-        normalAttackPkt.set_combo(0);
-        normalAttackPkt.set_yaw(posInfo->yaw());
-    }
-
-    if (auto ownerRoom = room.load().lock())
-    {
-        weak_ptr<Monster> weakSelf = static_pointer_cast<Monster>(shared_from_this());
-        ownerRoom->DoTimer(200, [weakSelf]()
-            {
-                if (auto self = weakSelf.lock())
-                {
-                    self->OnHitCheck();
-                }
-            } );
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-        ownerRoom->Broadcast(sendBuffer);
-    }
-
-    // float dist = MathUtil::Distance(targetPos, posInfo);
-    // printf("Attack! MyPos(%.2f, %.2f) targetPos(%.2f, %.2f), CurYaw: %.2f, Distance: %.2f \n", posInfo->x(), posInfo->y(), targetPos->x(), targetPos->y(), posInfo->yaw(), dist);
 }
 
 bool Monster::CanMove()
@@ -612,29 +542,40 @@ void Monster::SetDestination(const vector2D& destPos, float minApproachDistance)
     }
 }
 
-void Monster::OnHitCheck()
+bool Monster::IsTargetingAttack(Protocol::AttackType type)
 {
-    if (isTargeting)
+    switch (type)
     {
-        auto target = _target.lock();
-        if (target == nullptr)
-            return;
+    case Protocol::ATTACK_TYPE_NORMAL:
+        return isTargeting;
+    case Protocol::ATTACK_TYPE_SKILL:
+    case Protocol::ATTACK_TYPE_EOT:
+    default:
+        break;
+    }
 
-        int64 targetObjectId = target->objectInfo->object_id();
+    return false;
+}
 
-        auto ownerRoom = room.load().lock();
-        if (ownerRoom == nullptr || ownerRoom->Contains(targetObjectId) == false)
-            return;
-
-        Protocol::HitData hitData; 
+void Monster::NormalAttack()
+{
+    if (auto ownerRoom = room.load().lock())
+    {
+        Protocol::AttackInfo attackInfo;
         {
-            hitData.set_attacker_id(objectInfo->object_id());
-            hitData.set_target_id(targetObjectId);
-            hitData.set_damage_type(Protocol::DamageType::DAMAGE_TYPE_PHYSICAL);
-            hitData.set_damage(baseAttack);
+            attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
+            if (IsTargetingAttack(Protocol::ATTACK_TYPE_NORMAL))
+            {
+                if (auto target = _target.lock())
+                {
+                    attackInfo.set_target_id(target->objectInfo->object_id());
+                }
+            }
+            attackInfo.set_combo(0);
+            attackInfo.set_damage(baseAttack);
         }
 
-        target->OnHit(shared_from_this(), hitData);
+        ownerRoom->HandleNormalAttack(attackInfo, static_pointer_cast<Creature>(shared_from_this()));
     }
 }
 
@@ -681,16 +622,4 @@ void Monster::ClearDestination()
 {
     _moveDest.reset();  // 목적지를 없앤다.
     SetMoveDirection(vector2D::GetZeroVector());   // 목적지가 없으니 이동도 X 
-}
-
-void Monster::ForceBroadcastMovePkt()
-{
-    if (auto ownerRoom = room.load().lock())
-    {
-        Protocol::S_MOVE movePkt;
-        movePkt.add_info()->CopyFrom(*posInfo);
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-        ownerRoom->Broadcast(sendBuffer);
-    }
 }

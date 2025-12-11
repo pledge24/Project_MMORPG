@@ -46,7 +46,7 @@ enum : uint16
 	PKT_C_USE_ITEM = 1031,
 	PKT_S_USE_ITEM = 1032,
 	PKT_S_DIE = 1033,
-	PKT_S_MONSTER_KILL_RESULT = 1034,
+	PKT_S_REWARD_RESULT = 1034,
 	PKT_C_RESPAWN = 1035,
 	PKT_S_RESPAWN = 1036,
 };
@@ -124,7 +124,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_UNEQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_UNEQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_USE_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_MONSTER_KILL_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_MONSTER_KILL_RESULT); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_REWARD_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_REWARD_RESULT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_RESPAWN); }
 
 private:

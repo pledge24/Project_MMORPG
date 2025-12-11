@@ -42,9 +42,9 @@ bool Room::Start()
     if (monsterIds.empty() == false && _roomId == 20)
     {
         int32 kindOfMonster = monsterIds.size();
-        SpawnMonster(5000);
+        //SpawnMonster(5000);
         //SpawnMonster(5002);
-        UpdateTick();
+        Update();
         return true;
 
         for (int32 i = 0; i < maxMonsterCount; i++)
@@ -57,33 +57,21 @@ bool Room::Start()
         }
     }
 
-    UpdateTick();
+    Update();
 
     return true;
 }
 
-void Room::UpdateTick()
+void Room::Update()
 {
-    uint64 curTickTime = GetTickCount64();
-    float deltaTime = static_cast<float>(curTickTime - prevTickTime) / 1000.f;
-    prevTickTime = curTickTime;
+    DoTimer(ROOM_UPDATE_TICK, &Room::Update);
 
-    // Tick All Objects In Room.
-    ProcessTickGroupFunc(ETickGroup::TG_PreObjectTick, deltaTime);
-    ProcessTickGroupFunc(ETickGroup::TG_PrePhysics, deltaTime);
-    ProcessTickGroupFunc(ETickGroup::TG_DuringPhysics, deltaTime);
-    ProcessTickGroupFunc(ETickGroup::TG_PostPhysics, deltaTime);
-
-    elapsedTime += deltaTime;
-    if (elapsedTime > SEND_MOVE_PACKET_TIME)
+    Protocol::S_MOVE movePkt;
     {
-        elapsedTime = 0.f;
-
-        Protocol::S_MOVE movePkt;
         for (auto pair : _objects)
         {
             ObjectRef object = pair.second;
-            if(PlayerRef player = dynamic_pointer_cast<Player>(object))
+            if (object->IsPlayer())
                 continue;
 
             Protocol::PosInfo* info = movePkt.add_info();
@@ -94,38 +82,20 @@ void Room::UpdateTick()
         Broadcast(sendBuffer);
     }
 
-    DoTimer(ROOM_TICK, &Room::UpdateTick);
 }
 
-void Room::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
+void Room::TickObject(ObjectRef object)
 {
-    for (auto pair : _objects)
-    {
-        ObjectRef object = pair.second;
-        object->ProcessTickGroupFunc(tickGroup, deltaTime);
-    }
+    int64 objectId = object->objectInfo->object_id();
+    if (Contains(objectId) == false)
+        return;
 
-    // Room Function
-    switch (tickGroup)
-    {
-    case ETickGroup::TG_PreObjectTick:
-    {
-        break;
-    }
-    case ETickGroup::TG_PrePhysics: 
-    {
-        UpdateCellMatrix();
-        break;
-    }
-    case ETickGroup::TG_DuringPhysics:
-    {
-        break;
-    }
-    case ETickGroup::TG_PostPhysics:
-    {
-        break;
-    }
-    }
+    uint64 curTime = GetTickCount64();
+    uint64 prevTime = object->GetPrevTime();
+    float deltaTime = (curTime - prevTime) / 1000.f;
+    object->SetPrevTime(curTime);
+
+    object->Tick(deltaTime);
 }
 
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
@@ -224,7 +194,7 @@ bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
     return true;
 }
 
-void Room::HandleMove(Protocol::C_MOVE pkt)
+void Room::C_HandleMove(Protocol::C_MOVE pkt)
 {
 	const int64 objectId = pkt.info().object_id();
     if (_objects.contains(objectId) == false)
@@ -246,7 +216,97 @@ void Room::HandleMove(Protocol::C_MOVE pkt)
 	}
 }
 
-bool Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
+bool Room::C_HandleBuyItem(const Protocol::C_BUY_ITEM& pkt, PlayerRef player)
+{
+    auto session = player->session.lock();
+    if (session == nullptr)
+        return false;
+
+    Protocol::S_BUY_ITEM buyItemPkt;
+    Protocol::Slot* updatedSlot = buyItemPkt.mutable_updated_slot();
+    int32 templateId = pkt.template_id();
+    int64 totalGold = 0;
+
+    if (player->ProcessBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
+    {
+        buyItemPkt.set_success(false);
+
+        SEND_PACKET(buyItemPkt);
+        return false;
+    }
+
+    // 아이템 구매 성공 처리
+    {
+        buyItemPkt.set_success(true);
+        buyItemPkt.set_gold(totalGold);
+
+        SEND_PACKET(buyItemPkt);
+        cout << buyItemPkt.DebugString() << endl;
+    }
+
+    return true;
+}
+
+bool Room::C_HandleSellItem(const Protocol::C_SELL_ITEM& pkt, PlayerRef player)
+{
+    auto session = player->session.lock();
+    if (session == nullptr)
+        return false;
+
+    Protocol::S_SELL_ITEM sellItemPkt;
+    const Protocol::Slot& requestSlot = pkt.slot();
+    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
+    int64 totalGold = 0;
+
+    if (player->ProcessSellItem(requestSlot, OUT updatedSlot, OUT totalGold) == false)
+    {
+        sellItemPkt.set_success(false);
+
+        SEND_PACKET(sellItemPkt);
+        return false;
+    }
+
+    // 아이템 판매 성공 처리
+    {
+        sellItemPkt.set_success(true);
+        sellItemPkt.set_gold(totalGold);
+
+        SEND_PACKET(sellItemPkt);
+        cout << sellItemPkt.DebugString() << endl;
+    }
+
+    return true;
+}
+
+bool Room::C_HandleUseItem(const Protocol::C_USE_ITEM& pkt, PlayerRef player)
+{
+    auto session = player->session.lock();
+    if (session == nullptr)
+        return false;
+
+    Protocol::S_USE_ITEM useItemPkt;
+    const Protocol::Slot& targetSlot = pkt.slot();
+
+    if (player->ProcessUseItem(targetSlot, OUT useItemPkt) == false)
+    {
+        useItemPkt.set_success(false);
+
+        SEND_PACKET(useItemPkt);
+        return false;
+    }
+
+    // 아이템 판매 성공 처리
+    {
+        useItemPkt.set_success(true);
+
+        SEND_PACKET(useItemPkt);
+        cout << useItemPkt.DebugString() << endl;
+    }
+
+    return true;
+}
+
+bool Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
     const int64 objectId = player->objectInfo->object_id();
     if (_objects.contains(objectId) == false)
@@ -256,6 +316,7 @@ bool Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     {
         const Protocol::Slot& slot = pkt.slot();
 
+        equipGearPkt.set_success(true);
         equipGearPkt.set_object_id(objectId);
         equipGearPkt.set_slot_id(slot.slot_id());
         equipGearPkt.set_template_id(slot.item().template_id());
@@ -263,13 +324,15 @@ bool Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
     if (player->ProcessEquipGear(pkt.slot(), OUT equipGearPkt) == false)
     {
-        SessionRef session = player->session.lock();
-        equipGearPkt.set_success(false);
-        SEND_PACKET(equipGearPkt);
+        if (SessionRef session = player->session.lock())
+        {
+            equipGearPkt.set_success(false);
+            SEND_PACKET(equipGearPkt);
+        }
+
         return false;
     }
 
-    equipGearPkt.set_success(true);
 
     // 장착한 유저에게만 그대로 전송.
     {
@@ -289,7 +352,7 @@ bool Room::HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     return true;
 }
 
-bool Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
+bool Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
     const int64 objectId = player->objectInfo->object_id();
     if (_objects.contains(objectId) == false)
@@ -299,6 +362,7 @@ bool Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     {
         const Protocol::Slot& slot = pkt.slot();
 
+        unequipGearPkt.set_success(true);
         unequipGearPkt.set_object_id(objectId);
         unequipGearPkt.set_slot_id(slot.slot_id());
         unequipGearPkt.set_template_id(slot.item().template_id());
@@ -306,13 +370,14 @@ bool Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
     if (player->ProcessUnequipGear(pkt.slot(), OUT unequipGearPkt) == false)
     {
-        SessionRef session = player->session.lock();
-        unequipGearPkt.set_success(false);
-        SEND_PACKET(unequipGearPkt);
+        if (SessionRef session = player->session.lock())
+        {
+            unequipGearPkt.set_success(false);
+
+            SEND_PACKET(unequipGearPkt);
+        }
         return false;
     }
-
-    unequipGearPkt.set_success(true);
 
     // 탈착한 유저에게만 그대로 전송.
     {
@@ -331,7 +396,7 @@ bool Room::HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     return true;
 }
 
-void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
+void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
     const int64 objectId = player->objectInfo->object_id();
     if (_objects.contains(objectId) == false)
@@ -349,17 +414,32 @@ void Room::HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     }
 }
 
-bool Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos)
+void Room::HandleNormalAttack(Protocol::AttackInfo attackInfo, CreatureRef creature)
+{
+    Protocol::S_NORMAL_ATTACK normalAttackPkt;
+    {
+        normalAttackPkt.set_object_id(creature->objectInfo->object_id());
+        normalAttackPkt.set_combo(attackInfo.combo());
+        normalAttackPkt.set_yaw(creature->posInfo->yaw());
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
+        Broadcast(sendBuffer);
+    }
+
+    DoTimer(200, &Room::HandleHit, static_pointer_cast<Object>(creature), attackInfo);
+}
+
+bool Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos)
 {
     int64 playerId = player->objectInfo->object_id();
     auto session = player->session.lock();
     if (session == nullptr)
         return false;
 
+    Protocol::S_RESPAWN respawnPkt;
     if (respawnPoint == nullptr)
     {
         wcout << "리스폰 위치가 없는 Room에서 리스폰 시도" << '\n';
-        Protocol::S_RESPAWN respawnPkt;
         {
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("No Respawn Point"));
@@ -370,10 +450,109 @@ bool Room::HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<P
         return false;
     }
 
+    if (player->ProcessRespawn(pkt.respawn_type(), respawnPoint, respawnPkt) == false)
+    {
+        wcout << "ProcessRespawn가 false를 반환" << '\n';
+        {
+            respawnPkt.set_success(false);
+            respawnPkt.set_error_message(string("Fail to Respawn"));
+
+            SEND_PACKET(respawnPkt);
+        }
+
+        return false;
+    }
+
     // 리스폰 성공 처리
-    player->OnRespawn(pkt.respawn_type(), respawnPoint);
+    SEND_PACKET(respawnPkt);
 
     return true;
+}
+
+void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+{
+    // 1) 해당 공격에 맞은 대상을 찾는다.
+    vector<CreatureRef> HitCreatures;
+    if (attackInfo.has_target_id())
+    {
+        int64 targetId = attackInfo.target_id();
+        if(Contains(targetId) == false)
+            return;
+
+        // TODO: 피격이 가능한 대상?
+        if (CreatureRef creature = dynamic_pointer_cast<Creature>(_objects[targetId]))
+        {
+            HitCreatures.push_back(creature);
+        }
+    }
+    else
+    {
+
+    }
+    
+    // 2) 피격 대상에게 결과를 적용한다.
+    for (CreatureRef creature : HitCreatures)
+    {
+        creature->OnHit(attacker, attackInfo);
+
+        Protocol::S_HIT HitPkt;
+        {
+            HitPkt.set_object_id(creature->objectInfo->object_id());
+            HitPkt.set_updated_hp(creature->GetStatValue(Protocol::STAT_TYPE_HP));
+
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(HitPkt);
+            Broadcast(sendBuffer);
+        }
+
+        if (creature->IsDead())
+        {
+            PlayerRef player = dynamic_pointer_cast<Player>(attacker);
+            MonsterRef monster = dynamic_pointer_cast<Monster>(creature);
+            if (player && monster)
+            {
+                HandleMonsterKill(player, monster);
+            }
+            HandleDie(creature);
+        }
+    }
+
+}
+
+void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
+{
+    Protocol::S_REWARD_RESULT rewardResultPkt;
+    {
+        rewardResultPkt.set_type(Protocol::REWARD_TYPE_MONSTER_KILL);
+        Protocol::Reward reward;
+        {
+            reward.set_exp(monster->GetExpReward());
+            reward.set_gold(monster->GetGoldReward());
+        }
+        rewardResultPkt.mutable_reward()->Swap(&reward);
+    }
+
+    player->OnReward(rewardResultPkt);
+
+    if (auto session = player->session.lock())
+    {
+        SEND_PACKET(rewardResultPkt);
+    }
+}
+
+void Room::HandleDie(CreatureRef creature)
+{
+    int64 objectId = creature->objectInfo->object_id();
+
+    Protocol::S_DIE diePkt;
+    {
+        diePkt.set_object_id(objectId);
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(diePkt);
+        Broadcast(sendBuffer);
+    }
+
+    // 바로 Room에서 제거한다.
+    RemoveObject(objectId);
 }
 
 void Room::ReplicateRoomData(PlayerRef player, bool excludeThisPlayer)
@@ -401,8 +580,13 @@ MonsterRef Room::SpawnMonster(int32 templateId)
 {
     MonsterRef newMonster = ObjectUtils::CreateMonster(templateId);
 
-    SetRandomPos(newMonster->posInfo, true, true);
-    newMonster->PostInit();
+    // Set PosInfo
+    {
+        Protocol::PosInfo respawnPos;
+        SetRandomPos(&respawnPos, true, true);
+
+        newMonster->Init(&respawnPos);
+    }
 
     if (AddObject(newMonster) == false)
     {
@@ -441,7 +625,7 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
     return targetPlayer;
 }
 
-vector2D Room::GetRandomPos(bool usePadding)
+vector2D Room::GetRandomLocation(bool usePadding)
 {
     float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
     float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
@@ -478,7 +662,7 @@ optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
 
 void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYaw)
 {
-    vector2D randomPos = GetRandomPos();
+    vector2D randomPos = GetRandomLocation(usePadding);
     Protocol::Vector* pos = posInfo->mutable_pos();
 
     pos->set_x(randomPos.x);
@@ -486,7 +670,7 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
     pos->set_z(_roomCenterPos.z + LOCATION_PADDING_Z);
 
     if(randYaw)
-        posInfo->set_yaw(Utils::GetRandom(-180.f, 180.f));
+        posInfo->set_yaw(GetRandomYaw());
 }
 
 vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
