@@ -332,7 +332,6 @@ bool Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
         return false;
     }
 
-
     // 장착한 유저에게만 그대로 전송.
     {
         SessionRef session = player->session.lock();
@@ -453,19 +452,17 @@ bool Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr
     return true;
 }
 
-void Room::HandleNormalAttack(Protocol::AttackInfo attackInfo, CreatureRef creature)
+void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 {
     Protocol::S_NORMAL_ATTACK normalAttackPkt;
     {
         normalAttackPkt.set_object_id(creature->objectInfo->object_id());
-        normalAttackPkt.set_combo(attackInfo.combo());
+        normalAttackPkt.set_combo(combo);
         normalAttackPkt.set_yaw(creature->posInfo->yaw());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer);
     }
-
-    DoTimer(200, &Room::HandleHit, static_pointer_cast<Object>(creature), attackInfo);
 }
 
 void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
@@ -497,6 +494,7 @@ void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
         Protocol::S_HIT HitPkt;
         {
             HitPkt.set_object_id(creature->objectInfo->object_id());
+            HitPkt.set_damage(attackInfo.damage());
             HitPkt.set_updated_hp(creature->GetStatValue(Protocol::STAT_TYPE_HP));
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(HitPkt);

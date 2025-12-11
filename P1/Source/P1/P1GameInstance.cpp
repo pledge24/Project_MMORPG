@@ -531,8 +531,7 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
     if (World == nullptr)
         return;
 
-    const Protocol::HitData& HitData_ = HitPkt.hit_data();
-    const uint64 ObjectId = HitData_.target_id();
+    int64 ObjectId = HitPkt.object_id();
     if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
@@ -544,7 +543,13 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
             return;
 
         // S_Hit?
-        Creature->S_Hit(HitData_, HitPkt.hp());
+        Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
+
+        if (Creature->IsMyPlayer())
+        {
+            FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_HP];
+            OnThisStatChanged.Broadcast(HitPkt.updated_hp());
+        }
     }
 }
 
@@ -572,7 +577,7 @@ void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
     }
 }
 
-void UP1GameInstance::HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RESULT& MonsterKillResultPkt)
+void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
 {
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
@@ -581,19 +586,7 @@ void UP1GameInstance::HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RES
     if (World == nullptr)
         return;
 
-    const uint64 ObjectId = MonsterKillResultPkt.object_id();
-    if (ObjectId != _MyPlayerData->GetPlayerId())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("S_MONSTER_KILL_RESULT: 잘못된 Object Id"));
-        return;
-    }
-
-    if (IsValid(_MyPlayer))
-    {
-        int64 MonsterId = 
-        UE_LOG(LogTemp, Warning, TEXT("몬스터(ObjectId %d) 처치하여 경험치는 %d, 골드는 %d가 됨"), );
-
-    }
+    
 
 }
 

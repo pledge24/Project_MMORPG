@@ -3840,7 +3840,8 @@ class S_HIT final :
 
   enum : int {
     kObjectIdFieldNumber = 1,
-    kUpdatedHpFieldNumber = 2,
+    kDamageFieldNumber = 2,
+    kUpdatedHpFieldNumber = 3,
   };
   // int64 object_id = 1;
   void clear_object_id();
@@ -3851,7 +3852,16 @@ class S_HIT final :
   void _internal_set_object_id(int64_t value);
   public:
 
-  // optional int64 updated_hp = 2;
+  // int64 damage = 2;
+  void clear_damage();
+  int64_t damage() const;
+  void set_damage(int64_t value);
+  private:
+  int64_t _internal_damage() const;
+  void _internal_set_damage(int64_t value);
+  public:
+
+  // optional int64 updated_hp = 3;
   bool has_updated_hp() const;
   private:
   bool _internal_has_updated_hp() const;
@@ -3875,6 +3885,7 @@ class S_HIT final :
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int64_t object_id_;
+    int64_t damage_;
     int64_t updated_hp_;
   };
   union { Impl_ _impl_; };
@@ -8060,7 +8071,27 @@ inline void S_HIT::set_object_id(int64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_HIT.object_id)
 }
 
-// optional int64 updated_hp = 2;
+// int64 damage = 2;
+inline void S_HIT::clear_damage() {
+  _impl_.damage_ = int64_t{0};
+}
+inline int64_t S_HIT::_internal_damage() const {
+  return _impl_.damage_;
+}
+inline int64_t S_HIT::damage() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_HIT.damage)
+  return _internal_damage();
+}
+inline void S_HIT::_internal_set_damage(int64_t value) {
+  
+  _impl_.damage_ = value;
+}
+inline void S_HIT::set_damage(int64_t value) {
+  _internal_set_damage(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_HIT.damage)
+}
+
+// optional int64 updated_hp = 3;
 inline bool S_HIT::_internal_has_updated_hp() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   return value;

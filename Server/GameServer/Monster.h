@@ -3,6 +3,7 @@
 #include "Utils.h"
 
 class TickIntervalTimer;
+class TickTimer;
 
 enum class MonsterState : uint8
 {
@@ -77,13 +78,11 @@ protected:
     void CacheMonsterData();
 
 private:
-    Protocol::MonsterInfo* monsterInfo;
-    TickIntervalTimerRef stateIntervalTimer = nullptr;
-
     /** Monster Raw Data */
     Json _monsterData;
 
     /** Monster Stat Data */
+    Protocol::MonsterInfo* monsterInfo;
     int32 templateId;
     int32 maxHp;
     float attackInterval;
@@ -106,7 +105,11 @@ private:
 
     weak_ptr<Object> _target;
     optional<vector2D> _moveDest;
+
+    /** Timer */
     float _stateTimer = 0.f;                    // 여러 용도로 사용됨
     float _timeSinceLastAttack = 0.f;
+
+    TickTimer* attackTimer = nullptr;           // 사용 안하는 중
 };
 

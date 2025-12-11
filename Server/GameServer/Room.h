@@ -34,7 +34,7 @@ public:
     bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
-    /** 핸들 함수 */
+    /** 핸들 함수(Client Only) */
     void C_HandleMove(Protocol::C_MOVE pkt);
     bool C_HandleBuyItem(const Protocol::C_BUY_ITEM& pkt, PlayerRef player);
     bool C_HandleSellItem(const Protocol::C_SELL_ITEM& pkt, PlayerRef player);
@@ -44,7 +44,7 @@ public:
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
     bool C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos);
     
-    void HandleNormalAttack(Protocol::AttackInfo attackInfo, CreatureRef creature);
+    void HandleNormalAttack(int32 combo, CreatureRef creature);
     void HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo);
     void HandleMonsterKill(PlayerRef player, MonsterRef monster);
     void HandleDie(CreatureRef creature);

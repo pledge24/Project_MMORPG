@@ -253,11 +253,11 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
     return false;
 }
 
-bool Handle_S_MONSTER_KILL_RESULT(PacketSessionRef& session, Protocol::S_MONSTER_KILL_RESULT& pkt)
+bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
 {
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        GameInstance->HandleMonsterKillResult(pkt);
+        GameInstance->HandleRewardResult(pkt);
         return true;
     }
 

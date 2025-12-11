@@ -4,17 +4,19 @@
 #include "Gamedata.h"
 #include "Room.h"
 #include "TickIntervalTimer.h"
+#include "TickTimer.h"
 
 Monster::Monster()
 {
     _isPlayer = false;
 
     monsterInfo = objectInfo->mutable_monster_info();
-    stateIntervalTimer = make_shared<TickIntervalTimer>();
+    attackTimer = new TickTimer();
 }
 
 Monster::~Monster()
 {
+    delete attackTimer;
 }
 
 bool Monster::Init(Protocol::PosInfo* spawnPos)
@@ -64,7 +66,6 @@ void Monster::Tick(float deltaTime)
     {
         _stateTimer += deltaTime;
         _timeSinceLastAttack += deltaTime;
-        stateIntervalTimer->Tick(deltaTime);
     }
 
     // 몬스터 AI 실행
@@ -484,21 +485,18 @@ void Monster::NormalAttack()
 {
     if (auto ownerRoom = room.load().lock())
     {
+        int32 combo = 0;
+        ownerRoom->HandleNormalAttack(combo, static_pointer_cast<Creature>(shared_from_this()));
+
+        // TEMP
         Protocol::AttackInfo attackInfo;
         {
             attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-            if (IsTargetingAttack(Protocol::ATTACK_TYPE_NORMAL))
-            {
-                if (auto target = _target.lock())
-                {
-                    attackInfo.set_target_id(target->objectInfo->object_id());
-                }
-            }
+            attackInfo.set_target_id(_target.lock()->objectInfo->object_id());
             attackInfo.set_combo(0);
             attackInfo.set_damage(baseAttack);
         }
-
-        ownerRoom->HandleNormalAttack(attackInfo, static_pointer_cast<Creature>(shared_from_this()));
+        ownerRoom->DoTimer(200, &Room::HandleHit, shared_from_this(), attackInfo);
     }
 }
 

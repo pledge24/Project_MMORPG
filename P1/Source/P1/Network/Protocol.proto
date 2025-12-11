@@ -150,7 +150,8 @@ message S_NORMAL_ATTACK
 message S_HIT
 {
     int64 object_id = 1;
-    optional int64 updated_hp = 2; 
+    int64 damage = 2;
+    optional int64 updated_hp = 3; 
 }
 
 message C_BUY_ITEM

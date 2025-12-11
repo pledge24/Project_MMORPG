@@ -326,6 +326,7 @@ PROTOBUF_CONSTEXPR S_HIT::S_HIT(
     /*decltype(_impl_._has_bits_)*/{}
   , /*decltype(_impl_._cached_size_)*/{}
   , /*decltype(_impl_.object_id_)*/int64_t{0}
+  , /*decltype(_impl_.damage_)*/int64_t{0}
   , /*decltype(_impl_.updated_hp_)*/int64_t{0}} {}
 struct S_HITDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_HITDefaultTypeInternal()
@@ -742,7 +743,9 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_HIT, _impl_.object_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_HIT, _impl_.damage_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_HIT, _impl_.updated_hp_),
+  ~0u,
   ~0u,
   0,
   ~0u,  // no _has_bits_
@@ -902,21 +905,21 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 156, -1, -1, sizeof(::Protocol::S_MOVE)},
   { 163, -1, -1, sizeof(::Protocol::C_NORMAL_ATTACK)},
   { 170, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
-  { 179, 187, -1, sizeof(::Protocol::S_HIT)},
-  { 189, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
-  { 197, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
-  { 206, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
-  { 214, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
-  { 223, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
-  { 230, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
-  { 242, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
-  { 249, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
-  { 261, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
-  { 268, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
-  { 278, -1, -1, sizeof(::Protocol::S_DIE)},
-  { 285, -1, -1, sizeof(::Protocol::S_REWARD_RESULT)},
-  { 297, -1, -1, sizeof(::Protocol::C_RESPAWN)},
-  { 309, -1, -1, sizeof(::Protocol::S_RESPAWN)},
+  { 179, 188, -1, sizeof(::Protocol::S_HIT)},
+  { 191, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
+  { 199, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
+  { 208, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
+  { 216, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
+  { 225, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
+  { 232, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
+  { 244, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
+  { 251, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
+  { 263, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
+  { 270, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
+  { 280, -1, -1, sizeof(::Protocol::S_DIE)},
+  { 287, -1, -1, sizeof(::Protocol::S_REWARD_RESULT)},
+  { 299, -1, -1, sizeof(::Protocol::C_RESPAWN)},
+  { 311, -1, -1, sizeof(::Protocol::S_RESPAWN)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -994,46 +997,47 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "\")\n\006S_MOVE\022\037\n\004info\030\001 \003(\0132\021.Protocol.PosI"
   "nfo\" \n\017C_NORMAL_ATTACK\022\r\n\005combo\030\001 \001(\005\"@\n"
   "\017S_NORMAL_ATTACK\022\021\n\tobject_id\030\001 \001(\003\022\r\n\005c"
-  "ombo\030\002 \001(\005\022\013\n\003yaw\030\003 \001(\002\"B\n\005S_HIT\022\021\n\tobje"
-  "ct_id\030\001 \001(\003\022\027\n\nupdated_hp\030\002 \001(\003H\000\210\001\001B\r\n\013"
-  "_updated_hp\"0\n\nC_BUY_ITEM\022\023\n\013template_id"
-  "\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"Q\n\nS_BUY_ITEM\022\017\n\007s"
+  "ombo\030\002 \001(\005\022\013\n\003yaw\030\003 \001(\002\"R\n\005S_HIT\022\021\n\tobje"
+  "ct_id\030\001 \001(\003\022\016\n\006damage\030\002 \001(\003\022\027\n\nupdated_h"
+  "p\030\003 \001(\003H\000\210\001\001B\r\n\013_updated_hp\"0\n\nC_BUY_ITE"
+  "M\022\023\n\013template_id\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"Q\n"
+  "\nS_BUY_ITEM\022\017\n\007success\030\001 \001(\010\022$\n\014updated_"
+  "slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004gold\030\003 \001(\003"
+  "\":\n\013C_SELL_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol"
+  ".Slot\022\r\n\005count\030\002 \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007s"
   "uccess\030\001 \001(\010\022$\n\014updated_slot\030\002 \001(\0132\016.Pro"
-  "tocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_ITEM\022"
-  "\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\022\r\n\005count\030\002"
-  " \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022$\n\014"
-  "updated_slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004go"
-  "ld\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016"
-  ".Protocol.Slot\"\245\001\n\014S_EQUIP_GEAR\022\017\n\007succe"
-  "ss\030\001 \001(\010\022\021\n\tobject_id\030\002 \001(\003\022\017\n\007slot_id\030\003"
-  " \001(\005\022\023\n\013template_id\030\004 \001(\005\022%\n\rupdated_slo"
-  "ts\030\005 \003(\0132\016.Protocol.Slot\022$\n\014updated_stat"
-  "\030\006 \003(\0132\016.Protocol.Stat\".\n\016C_UNEQUIP_GEAR"
-  "\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\247\001\n\016S_UNE"
-  "QUIP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tobject_id\030"
-  "\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004 "
-  "\001(\005\022%\n\rupdated_slots\030\005 \003(\0132\016.Protocol.Sl"
-  "ot\022$\n\014updated_stat\030\006 \003(\0132\016.Protocol.Stat"
-  "\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol."
-  "Slot\"}\n\nS_USE_ITEM\022\017\n\007success\030\001 \001(\010\022\021\n\to"
-  "bject_id\030\002 \001(\003\022%\n\rupdated_slots\030\003 \003(\0132\016."
-  "Protocol.Slot\022$\n\014updated_stat\030\004 \003(\0132\016.Pr"
-  "otocol.Stat\"\032\n\005S_DIE\022\021\n\tobject_id\030\001 \001(\003\""
-  "\310\001\n\017S_REWARD_RESULT\022\"\n\004type\030\001 \001(\0162\024.Prot"
-  "ocol.RewardType\022 \n\006reward\030\002 \001(\0132\020.Protoc"
-  "ol.Reward\022\023\n\013updated_exp\030\003 \001(\003\022\024\n\014update"
-  "d_gold\030\004 \001(\003\022\023\n\013is_level_up\030\005 \001(\010\022/\n\020lev"
-  "el_up_details\030\006 \001(\0132\025.Protocol.LevelUpIn"
-  "fo\"\244\001\n\tC_RESPAWN\022+\n\014respawn_type\030\001 \001(\0162\025"
-  ".Protocol.RespawnType\022\022\n\010item_uid\030\002 \001(\003H"
-  "\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022\032\n\020target_pla"
-  "yer_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005 \001(\005H\000B\016\n\014res"
-  "pawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007success\030\001 \001(\010"
-  "\022\025\n\rerror_message\030\002 \001(\t\022+\n\014respawn_type\030"
-  "\003 \001(\0162\025.Protocol.RespawnType\022\021\n\tobject_i"
-  "d\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n\010pos_info\030\006 \001"
-  "(\0132\021.Protocol.PosInfo\022$\n\014updated_stat\030\007 "
-  "\003(\0132\016.Protocol.Statb\006proto3"
+  "tocol.Slot\022\014\n\004gold\030\003 \001(\003\",\n\014C_EQUIP_GEAR"
+  "\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\245\001\n\014S_EQU"
+  "IP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tobject_id\030\002 "
+  "\001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004 \001("
+  "\005\022%\n\rupdated_slots\030\005 \003(\0132\016.Protocol.Slot"
+  "\022$\n\014updated_stat\030\006 \003(\0132\016.Protocol.Stat\"."
+  "\n\016C_UNEQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016.Protoco"
+  "l.Slot\"\247\001\n\016S_UNEQUIP_GEAR\022\017\n\007success\030\001 \001"
+  "(\010\022\021\n\tobject_id\030\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023"
+  "\n\013template_id\030\004 \001(\005\022%\n\rupdated_slots\030\005 \003"
+  "(\0132\016.Protocol.Slot\022$\n\014updated_stat\030\006 \003(\013"
+  "2\016.Protocol.Stat\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001"
+  " \001(\0132\016.Protocol.Slot\"}\n\nS_USE_ITEM\022\017\n\007su"
+  "ccess\030\001 \001(\010\022\021\n\tobject_id\030\002 \001(\003\022%\n\rupdate"
+  "d_slots\030\003 \003(\0132\016.Protocol.Slot\022$\n\014updated"
+  "_stat\030\004 \003(\0132\016.Protocol.Stat\"\032\n\005S_DIE\022\021\n\t"
+  "object_id\030\001 \001(\003\"\310\001\n\017S_REWARD_RESULT\022\"\n\004t"
+  "ype\030\001 \001(\0162\024.Protocol.RewardType\022 \n\006rewar"
+  "d\030\002 \001(\0132\020.Protocol.Reward\022\023\n\013updated_exp"
+  "\030\003 \001(\003\022\024\n\014updated_gold\030\004 \001(\003\022\023\n\013is_level"
+  "_up\030\005 \001(\010\022/\n\020level_up_details\030\006 \001(\0132\025.Pr"
+  "otocol.LevelUpInfo\"\244\001\n\tC_RESPAWN\022+\n\014resp"
+  "awn_type\030\001 \001(\0162\025.Protocol.RespawnType\022\022\n"
+  "\010item_uid\030\002 \001(\003H\000\022\027\n\rcheckpoint_id\030\003 \001(\005"
+  "H\000\022\032\n\020target_player_id\030\004 \001(\003H\000\022\021\n\007town_i"
+  "d\030\005 \001(\005H\000B\016\n\014respawn_data\"\317\001\n\tS_RESPAWN\022"
+  "\017\n\007success\030\001 \001(\010\022\025\n\rerror_message\030\002 \001(\t\022"
+  "+\n\014respawn_type\030\003 \001(\0162\025.Protocol.Respawn"
+  "Type\022\021\n\tobject_id\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005"
+  "\022#\n\010pos_info\030\006 \001(\0132\021.Protocol.PosInfo\022$\n"
+  "\014updated_stat\030\007 \003(\0132\016.Protocol.Statb\006pro"
+  "to3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -1041,7 +1045,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 2947, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 2963, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 37,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -5354,6 +5358,7 @@ S_HIT::S_HIT(const S_HIT& from)
       decltype(_impl_._has_bits_){from._impl_._has_bits_}
     , /*decltype(_impl_._cached_size_)*/{}
     , decltype(_impl_.object_id_){}
+    , decltype(_impl_.damage_){}
     , decltype(_impl_.updated_hp_){}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -5371,6 +5376,7 @@ inline void S_HIT::SharedCtor(
       decltype(_impl_._has_bits_){}
     , /*decltype(_impl_._cached_size_)*/{}
     , decltype(_impl_.object_id_){int64_t{0}}
+    , decltype(_impl_.damage_){int64_t{0}}
     , decltype(_impl_.updated_hp_){int64_t{0}}
   };
 }
@@ -5398,7 +5404,9 @@ void S_HIT::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.object_id_ = int64_t{0};
+  ::memset(&_impl_.object_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.damage_) -
+      reinterpret_cast<char*>(&_impl_.object_id_)) + sizeof(_impl_.damage_));
   _impl_.updated_hp_ = int64_t{0};
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
@@ -5419,9 +5427,17 @@ const char* S_HIT::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // optional int64 updated_hp = 2;
+      // int64 damage = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.damage_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional int64 updated_hp = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
           _Internal::set_has_updated_hp(&has_bits);
           _impl_.updated_hp_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
@@ -5464,10 +5480,16 @@ uint8_t* S_HIT::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_object_id(), target);
   }
 
-  // optional int64 updated_hp = 2;
+  // int64 damage = 2;
+  if (this->_internal_damage() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(2, this->_internal_damage(), target);
+  }
+
+  // optional int64 updated_hp = 3;
   if (_internal_has_updated_hp()) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt64ToArray(2, this->_internal_updated_hp(), target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(3, this->_internal_updated_hp(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -5491,7 +5513,12 @@ size_t S_HIT::ByteSizeLong() const {
     total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_object_id());
   }
 
-  // optional int64 updated_hp = 2;
+  // int64 damage = 2;
+  if (this->_internal_damage() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_damage());
+  }
+
+  // optional int64 updated_hp = 3;
   cached_has_bits = _impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
     total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_updated_hp());
@@ -5517,6 +5544,9 @@ void S_HIT::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF
 
   if (from._internal_object_id() != 0) {
     _this->_internal_set_object_id(from._internal_object_id());
+  }
+  if (from._internal_damage() != 0) {
+    _this->_internal_set_damage(from._internal_damage());
   }
   if (from._internal_has_updated_hp()) {
     _this->_internal_set_updated_hp(from._internal_updated_hp());

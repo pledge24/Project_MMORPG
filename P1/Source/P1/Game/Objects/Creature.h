@@ -51,14 +51,14 @@ public:
     /** 서버 패킷 핸들링 함수 */
     virtual void S_Move(float DeltaSeconds);
     virtual void S_NormalAttack(uint32 Combo, float Yaw);
-    virtual void S_Hit(const Protocol::HitData& HitData_, uint32 updatedHp);
+    virtual void S_Hit(int64 Damage, int64 UpdatedHp);
     virtual void S_Die();
 
     FVector FindPerpendicularPoint() const;
 
 public:
     /** Action 델리게이트 */
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHit, const uint32&, damage);
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnHit OnHit;
 

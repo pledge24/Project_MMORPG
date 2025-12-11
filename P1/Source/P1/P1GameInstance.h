@@ -64,7 +64,7 @@ public:
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
     void HandleHit(const Protocol::S_HIT& HitPkt);
     void HandleDie(const Protocol::S_DIE& DiePkt);
-    void HandleMonsterKillResult(const Protocol::S_MONSTER_KILL_RESULT& MonsterKillResultPkt);
+    void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
     void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
 
     /** Getter 함수 */

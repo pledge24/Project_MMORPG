@@ -235,9 +235,9 @@ void ACreature::S_NormalAttack(uint32 Combo, float Yaw)
     AttackSystemComponent->S_PerformNormalAttack(Combo);
 }
 
-void ACreature::S_Hit(const Protocol::HitData& HitData_, uint32 updatedHp)
+void ACreature::S_Hit(int64 Damage, int64 UpdatedHp)
 {
-    OnHit.Broadcast(HitData_.damage());
+    OnHit.Broadcast(Damage, UpdatedHp);
 }
 
 void ACreature::S_Die()
