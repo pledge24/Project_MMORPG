@@ -44,7 +44,8 @@ public:
     void C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
-    
+    void C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player);
+
     void HandleNormalAttack(int32 combo, CreatureRef creature);
     void HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo);
     void HandleMonsterKill(PlayerRef player, MonsterRef monster);

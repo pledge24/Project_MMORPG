@@ -282,3 +282,14 @@ message S_RESPAWN
     PosInfo pos_info = 6;
     repeated Stat updated_stat = 7;
 }
+
+message C_CHAT
+{
+    string msg = 1;
+}
+
+message S_CHAT
+{
+    int64 object_id = 1;
+    string msg = 2;
+}

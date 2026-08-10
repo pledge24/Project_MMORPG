@@ -382,6 +382,17 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
 	}
 }
 
+void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
+{
+	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
+	Protocol::S_CHAT chatPkt;
+	chatPkt.set_object_id(player->objectInfo->object_id());
+	chatPkt.set_msg(pkt.msg());
+
+	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
+	Broadcast(sendBuffer);
+}
+
 void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
 {
     auto session = player->session.lock();
