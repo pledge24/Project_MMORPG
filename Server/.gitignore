@@ -417,3 +417,6 @@ Queries/*
 
 # 환경 변수 파일 무시
 config.h
+
+# JetBrains Rider 프로젝트 캐시
+.idea/
