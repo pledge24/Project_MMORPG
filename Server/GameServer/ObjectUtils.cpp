@@ -8,18 +8,21 @@ atomic<int64> ObjectUtils::s_idGenerator = 1;
 
 PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
 {
-    // objectId 생성
-	const int64 newId = s_idGenerator.fetch_add(1);
-
-    PlayerRef player = static_pointer_cast<Player>(Object::Create<Player>());
+    PlayerRef player = static_pointer_cast<Player>(ObjectUtils::Create<Player>());
     if (player)
     {
-        player->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
-        player->objectInfo->set_object_id(newId);
-        player->posInfo->set_object_id(newId);
+        // objectId 생성
+	    const int64 newId = s_idGenerator.fetch_add(1);
 
-        player->session = session;
-        session->player.store(player);
+        // 추가 세팅
+        {
+            player->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
+            player->objectInfo->set_object_id(newId);
+            player->posInfo->set_object_id(newId);
+
+            player->session = session;
+            session->player.store(player);
+        }
     }
 
 	return player;
@@ -27,19 +30,22 @@ PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
 
 MonsterRef ObjectUtils::CreateMonster(int32 templateId)
 {
-    // objectId 생성
-    const int64 newId = s_idGenerator.fetch_add(1);
-
-    MonsterRef monster = static_pointer_cast<Monster>(Object::Create<Monster>());
+    MonsterRef monster = static_pointer_cast<Monster>(ObjectUtils::Create<Monster>());
     if (monster)
     {
-        monster->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_MONSTER);
-        monster->objectInfo->set_object_id(newId);
-        monster->posInfo->set_object_id(newId);
+        // objectId 생성
+        const int64 newId = s_idGenerator.fetch_add(1);
 
-        // MonsterInfo templateId만 세팅
-        Protocol::MonsterInfo* monsterInfo = monster->objectInfo->mutable_monster_info();
-        monsterInfo->set_template_id(templateId);
+        // 추가 세팅
+        {
+            monster->objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_MONSTER);
+            monster->objectInfo->set_object_id(newId);
+            monster->posInfo->set_object_id(newId);
+
+            // MonsterInfo templateId만 세팅
+            Protocol::MonsterInfo* monsterInfo = monster->objectInfo->mutable_monster_info();
+            monsterInfo->set_template_id(templateId);
+        }
     }
 
     return monster;

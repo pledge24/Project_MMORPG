@@ -7,15 +7,7 @@ public:
 	virtual ~Object();
 
 public:
-    template<typename SubClassType>
-    static ObjectRef Create()
-    {
-        ObjectRef object = make_shared<SubClassType>();
-
-        return object;
-    }
-
-    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr);
+    virtual bool Init();
     virtual bool Start();
 
 protected:
@@ -34,6 +26,8 @@ public:
 
     /** Setter 함수 */
     void SetPrevTime(uint64 time) { prevTime = time; }
+    void SetPosInfo(const Protocol::PosInfo& posInfo_) { posInfo->CopyFrom(posInfo_); }
+    void SetPos(const Protocol::Vector& pos) { posInfo->mutable_pos()->CopyFrom(pos); }
 
 public:
 	Protocol::ObjectInfo* objectInfo;

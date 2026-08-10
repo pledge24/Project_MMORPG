@@ -35,19 +35,21 @@ public:
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
     /** 핸들 함수(Client Only) */
+    void C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player);
     void C_HandleMove(Protocol::C_MOVE pkt);
-    bool C_HandleBuyItem(const Protocol::C_BUY_ITEM& pkt, PlayerRef player);
-    bool C_HandleSellItem(const Protocol::C_SELL_ITEM& pkt, PlayerRef player);
-    bool C_HandleUseItem(const Protocol::C_USE_ITEM& pkt, PlayerRef player);
-    bool C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
-    bool C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
+    void C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player);
+    void C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player);
+    void C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player);
+    void C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
+    void C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
-    bool C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player, shared_ptr<Protocol::PosInfo> respawnPos);
+    void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
     
     void HandleNormalAttack(int32 combo, CreatureRef creature);
     void HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo);
     void HandleMonsterKill(PlayerRef player, MonsterRef monster);
     void HandleDie(CreatureRef creature);
+    void HandleRespawn(PlayerRef player, Protocol::RespawnType& respawnType, Protocol::PosInfo& respawnPos);
 
     void ReplicateRoomData(PlayerRef player, bool excludeThisPlayer);
 

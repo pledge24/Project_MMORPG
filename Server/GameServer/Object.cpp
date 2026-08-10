@@ -13,12 +13,8 @@ Object::~Object()
 	delete objectInfo;
 }
 
-bool Object::Init(Protocol::PosInfo* spawnPos)
+bool Object::Init()
 {
-    if (spawnPos == nullptr)
-        return false;
-
-    posInfo->CopyFrom(*spawnPos);
 
     return true;
 }
