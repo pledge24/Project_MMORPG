@@ -80,22 +80,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
+    <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
