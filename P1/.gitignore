@@ -499,3 +499,9 @@ Saved/
 
 PNG/
 PSD/
+
+# JetBrains Rider 프로젝트 캐시
+.idea/
+
+# UBT가 생성하는 신형 솔루션 포맷 (위의 *.sln 과 동일 취급)
+*.slnx
