@@ -24,7 +24,7 @@ void APortal::SendEnterRoomPacket()
 
     Protocol::C_ENTER_ROOM EnterRoomPkt; 
     {
-        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_ROOM_CHANGE);
+        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
         EnterRoomPkt.set_portal_id(PortalId);
 
         SEND_PACKET(EnterRoomPkt);

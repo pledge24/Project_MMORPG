@@ -13,9 +13,9 @@ Creature::~Creature()
     delete statInfo;
 }
 
-bool Creature::Init(Protocol::PosInfo* spawnPos)
+bool Creature::Init()
 {
-    if (Object::Init(spawnPos) == false)
+    if (Object::Init() == false)
         return false;
 
     // ...
@@ -61,6 +61,11 @@ void Creature::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 void Creature::OnDie(ObjectRef attacker)
 {
     isDead = true;
+}
+
+bool Creature::HasStat(Protocol::StatType statType)
+{
+    return statInfo->mutable_info()->contains(statType);
 }
 
 int64 Creature::GetStatValue(Protocol::StatType statType)

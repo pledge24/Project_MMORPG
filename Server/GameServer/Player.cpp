@@ -19,9 +19,9 @@ Player::~Player()
     delete possession;
 }
 
-bool Player::Init(Protocol::PosInfo* spawnPos)
+bool Player::Init()
 {
-	if (Creature::Init(spawnPos) == false)
+	if (Creature::Init() == false)
 		return false;
 
     inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
@@ -34,6 +34,9 @@ bool Player::Start()
 {
 	if (Creature::Start() == false)
 		return false;
+
+    inventory->ClearDirtyFlags();
+    equippedGear->ClearDirtyFlag();
 
 	if (CalculateFinalStat() == false)
 		return false;
@@ -352,6 +355,36 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
+void Player::GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
+{
+    switch (respawnType)
+    {
+    case Protocol::RESPAWN_TYPE_TOWN:
+    case Protocol::RESPAWN_TYPE_CHECKPOINT:
+    case Protocol::RESPAWN_TYPE_IN_PLACE:
+    case Protocol::RESPAWN_TYPE_GUILD_BASE:
+    {
+        int32 roomId = GetRespawnRoomId(respawnType);
+        respawnRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
+        respawnPos = *respawnRoom->GetRespawnPoint();
+        break;
+    }
+    case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
+    case Protocol::RESPAWN_TYPE_CASH_ITEM:
+    {
+        // 아이템 사용
+        break;
+    }
+    case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
+    case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
+    {
+        // objectId가 존재하는 경우
+        break;
+    }
+
+    }
+}
+
 bool Player::CalculateFinalStat()
 {
     // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
@@ -396,18 +429,16 @@ bool Player::CalculateFinalStat()
             finalStat.magical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
     }
 
-    auto* statMappings = statInfo->mutable_info();
-
     // validate
     try
     {
-        if (statMappings->at((int32)Protocol::STAT_TYPE_MAX_HP) > finalStat.maxHp)
+        if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat.maxHp)
             throw wstring(L"현재 HP가 최대 HP를 초과");
-        if (statMappings->at((int32)Protocol::STAT_TYPE_MAX_MP) > finalStat.maxMp)
+        if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat.maxMp)
             throw wstring(L"현재 MP가 최대 MP를 초과");
-        if (statMappings->at((int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat.physical_attack)
+        if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat.physical_attack)
             throw wstring(L"물리 공격력이 계산 결과와 일치하지 않음");
-        if (statMappings->at((int32)Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat.magical_attack)
+        if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat.magical_attack)
             throw wstring(L"마법 공격력이 계산 결과와 일치하지 않음");
     }
     catch (wstring& cause)
@@ -417,10 +448,10 @@ bool Player::CalculateFinalStat()
     }
 
     // Protocol::statInfo에 최종 스텟 적용
-    (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_HP] = finalStat.maxHp;
-    (*statMappings)[(int32)Protocol::STAT_TYPE_MAX_MP] = finalStat.maxMp;
-    (*statMappings)[(int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK] = finalStat.physical_attack;
-    (*statMappings)[(int32)Protocol::STAT_TYPE_MAGICAL_ATTACK] = finalStat.magical_attack;
+    SetStatValue(Protocol::STAT_TYPE_MAX_HP, finalStat.maxHp);
+    SetStatValue(Protocol::STAT_TYPE_MAX_MP, finalStat.maxMp);
+    SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, finalStat.physical_attack);
+    SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, finalStat.magical_attack);
 
     return true;
 }

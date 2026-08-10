@@ -8,7 +8,7 @@ public:
 	virtual ~Creature();
 
 public:
-    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr) override;
+    virtual bool Init() override;
     virtual bool Start() override;
 
 protected:
@@ -20,6 +20,7 @@ public:
     virtual void OnDie(ObjectRef attacker);
 
     bool IsDead() { return isDead; }
+    bool HasStat(Protocol::StatType statType);
 
     /** Getter 함수 */
     int64 GetStatValue(Protocol::StatType statType);

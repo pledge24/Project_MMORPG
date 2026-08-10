@@ -24,7 +24,7 @@ public:
 	virtual ~Player();
 
 public:
-    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr) override;
+    virtual bool Init() override;
     virtual bool Start() override;
 
 protected:
@@ -47,10 +47,11 @@ public:
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
     void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
     void OnLevelUp();
-  
+
     /** Getter 함수*/
     int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
     int32 GetEnteringRoomId() { return enteringRoomId; }
+    void GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
 private:
     /** 기타 함수 */

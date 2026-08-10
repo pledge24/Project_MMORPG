@@ -16,8 +16,8 @@ struct FQuestObjectiveData
     FString Type;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 TemplateId;
+    int32 TemplateId = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Count;
+    int32 Count = 0;
 };

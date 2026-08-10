@@ -22,7 +22,7 @@ public:
 	virtual ~Monster();
 
 public:
-    virtual bool Init(Protocol::PosInfo* spawnPos = nullptr) override;
+    virtual bool Init() override;
     virtual bool Start() override;
 
 protected:

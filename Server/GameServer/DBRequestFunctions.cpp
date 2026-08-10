@@ -173,7 +173,7 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
     };
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
-    Protocol::S_CREATE_CHARACTER pkt;
+    Protocol::S_CREATE_CHARACTER createCharacterPkt;
 
     try
     {
@@ -237,31 +237,31 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
             throw DBCustomError::ALREADY_EXISTING_CHARACTER;
         }
 
-        pkt.set_success(true);
-        pkt.set_character_id(bindObject._characterId);
+        createCharacterPkt.set_success(true);
+        createCharacterPkt.set_character_id(bindObject._characterId);
     }
     catch (DBCustomError dbError)
     {
         PrintDBErrorLog(dbError);
 
-        pkt.Clear();
-        pkt.set_success(false);
+        createCharacterPkt.Clear();
+        createCharacterPkt.set_success(false);
         if (dbError == DBCustomError::ALREADY_EXISTING_CHARACTER)
-            pkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(dbError).c_str()));
+            createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(dbError).c_str()));
         else
-            pkt.set_cause("서버 내부 오류");
+            createCharacterPkt.set_cause("서버 내부 오류");
     }
     catch (exception& err)
     {
         cerr << "Unexpected Error(CreateCharacter): " << err.what() << endl;
 
-        pkt.Clear();
-        pkt.set_success(false);
-        pkt.set_cause("알 수 없는 오류");
+        createCharacterPkt.Clear();
+        createCharacterPkt.set_success(false);
+        createCharacterPkt.set_cause("알 수 없는 오류");
     }
 
     // 패킷 전송
-    SEND_PACKET(pkt);
+    SEND_PACKET(createCharacterPkt);
 
     GDBConnectionPool->Push(dbConn);
 }
@@ -293,7 +293,7 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
     };
 
     DBConnection* dbConn = GDBConnectionPool->Pop();
-    Protocol::S_DELETE_CHARACTER pkt;
+    Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
 
     try
     {
@@ -336,26 +336,26 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
             throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
 
         // 패킷으로 만들어서 클라이언트에게 보낸다.
-        pkt.set_success(true);
-        pkt.set_character_id(characterId);
+        deleteCharacterPkt.set_success(true);
+        deleteCharacterPkt.set_character_id(characterId);
     }
     catch (DBCustomError error)
     {
         PrintDBErrorLog(error);
 
-        pkt.Clear();
-        pkt.set_success(false);
+        deleteCharacterPkt.Clear();
+        deleteCharacterPkt.set_success(false);
     }
     catch (exception& err)
     {
         cerr << "Unexpected Error(CreateCharacter): " << err.what() << endl;
 
-        pkt.Clear();
-        pkt.set_success(false);
+        deleteCharacterPkt.Clear();
+        deleteCharacterPkt.set_success(false);
     }
 
     // 패킷 전송
-    SEND_PACKET(pkt);
+    SEND_PACKET(deleteCharacterPkt);
 
     GDBConnectionPool->Push(dbConn);
 }
@@ -588,7 +588,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
             dbBind.BindCol(8, _posY);
             dbBind.BindCol(9, _posZ);
             dbBind.BindCol(10, _rotYaw);
-            dbBind.BindCol(12, _gold);
+            dbBind.BindCol(11, _gold);
         }
 
         /* Params */
@@ -632,8 +632,6 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         Protocol::ObjectInfo* objectInfo = player->objectInfo;
         Protocol::PlayerInfo* playerInfo = player->playerInfo;
         Protocol::StatInfo* statInfo = player->statInfo;
-        Protocol::PosInfo* posInfo = player->posInfo;
-        Protocol::Vector* location = posInfo->mutable_pos();
         auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
@@ -648,16 +646,28 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         statMappings->insert({ (int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK, bindObject._curPhysicalAttack });
         statMappings->insert({ (int32)Protocol::STAT_TYPE_MAGICAL_ATTACK, bindObject._curMagicalAttack });
 
-        // 위치 설정
+        // 지역 설정
         playerInfo->set_room_id(bindObject._roomId);
         playerInfo->set_map_id(bindObject._mapId);
-        location->set_x(bindObject._posX);
-        location->set_y(bindObject._posY);
-        location->set_z(bindObject._posZ);
-        posInfo->set_yaw(bindObject._rotYaw);
+
+        // PosInfo 설정
+        {
+            Protocol::PosInfo spawnPosInfo;
+            Protocol::Vector& pos = *spawnPosInfo.mutable_pos();
+
+            spawnPosInfo.set_object_id(objectInfo->object_id());
+            pos.set_x(bindObject._posX);
+            pos.set_y(bindObject._posY);
+            pos.set_z(bindObject._posZ);
+            spawnPosInfo.set_yaw(bindObject._rotYaw);
+            spawnPosInfo.set_state(Protocol::MOVE_STATE_IDLE);
+
+            player->SetPosInfo(spawnPosInfo);
+        }
 
         // ==플레이어 골드 설정==
         player->possession->set_gold(bindObject._gold);
+
     }
     catch (DBCustomError error)
     {
@@ -686,11 +696,6 @@ bool DBRequestFunctions::LoadAllCharacterItems(SessionRef session, int64 charact
         // 3. 캐릭터 기타 아이템 가져오기
         if (LoadCharactersMiscItems(session, characterId) == false)
             throw string("Error In LoadCharactersMiscItems");
-
-        // 모든 dirtyFlag false로 초기화
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        player->inventory->ClearDirtyFlags();
-        player->equippedGear->ClearDirtyFlag();
     }
     catch (string cause)
     {
@@ -1062,7 +1067,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
 
     try
     {
-        // 해당 유저의 마지막 정보를 가져온다.
+        // 해당 유저의 마지막 정보를 DB에 갱신한다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             UPDATE [dbo].[CharactersLastState]
             SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)

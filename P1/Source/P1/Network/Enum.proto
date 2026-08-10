@@ -121,8 +121,10 @@ enum RespawnType
 enum EnterType
 {
     ENTER_TYPE_NONE = 0;
-    ENTER_TYPE_MAP_CHANGE = 1;  // 맵 로드에 사용
-    ENTER_TYPE_ROOM_CHANGE = 2; // 맵 내부 이동에 사용
+    ENTER_TYPE_INITIAL = 1;             // 최초 입장(Enter Game)
+    ENTER_TYPE_SAME_MAP_TRANSFER = 2;   // 같은 맵 내 이동
+    ENTER_TYPE_CROSS_MAP_TRANSFER = 3;  // 맵 간 이동
+    ENTER_TYPE_RESPAWN = 4;             // 리스폰
 }
 
 enum RewardType

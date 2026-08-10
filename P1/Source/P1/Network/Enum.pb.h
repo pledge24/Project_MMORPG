@@ -390,14 +390,16 @@ inline bool RespawnType_Parse(
 }
 enum EnterType : int {
   ENTER_TYPE_NONE = 0,
-  ENTER_TYPE_MAP_CHANGE = 1,
-  ENTER_TYPE_ROOM_CHANGE = 2,
+  ENTER_TYPE_INITIAL = 1,
+  ENTER_TYPE_SAME_MAP_TRANSFER = 2,
+  ENTER_TYPE_CROSS_MAP_TRANSFER = 3,
+  ENTER_TYPE_RESPAWN = 4,
   EnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EnterType_IsValid(int value);
 constexpr EnterType EnterType_MIN = ENTER_TYPE_NONE;
-constexpr EnterType EnterType_MAX = ENTER_TYPE_ROOM_CHANGE;
+constexpr EnterType EnterType_MAX = ENTER_TYPE_RESPAWN;
 constexpr int EnterType_ARRAYSIZE = EnterType_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor();

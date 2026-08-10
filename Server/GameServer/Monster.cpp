@@ -19,9 +19,9 @@ Monster::~Monster()
     delete attackTimer;
 }
 
-bool Monster::Init(Protocol::PosInfo* spawnPos)
+bool Monster::Init()
 {
-    if (Creature::Init(spawnPos) == false)
+    if (Creature::Init() == false)
         return false;
 
     int32 templateId = objectInfo->monster_info().template_id();
