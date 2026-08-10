@@ -8,6 +8,7 @@
     "Microsoft.VisualStudio.Component.Windows11SDK.22621",
     "Microsoft.VisualStudio.Component.VC.CMake.Project",
     "Microsoft.VisualStudio.Workload.Node",
-    "Microsoft.VisualStudio.Workload.Python"
+    "Microsoft.VisualStudio.Workload.Python",
+    "Microsoft.VisualStudio.Workload.Data"
   ]
 }
