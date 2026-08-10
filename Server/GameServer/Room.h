@@ -49,7 +49,7 @@ public:
     void HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo);
     void HandleMonsterKill(PlayerRef player, MonsterRef monster);
     void HandleDie(CreatureRef creature);
-    void HandleRespawn(PlayerRef player, Protocol::RespawnType& respawnType, Protocol::PosInfo& respawnPos);
+    void HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
 
     void ReplicateRoomData(PlayerRef player, bool excludeThisPlayer);
 

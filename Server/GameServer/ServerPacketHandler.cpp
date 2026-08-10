@@ -229,11 +229,28 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
-    if (room == nullptr)
-        return false;
+    RoomRef curRoom = player->room.load().lock();
+    if (curRoom == nullptr)
+    {
+        // 아직 어떤 Room에도 속하지 않은 최초 입장.
+        // player->room 은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
+        // 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고, 입장할 Room의 큐로 넘긴다.
+        pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 
-    room->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
+        int32 roomId = pkt.has_room_id() ? pkt.room_id() : player->GetEnteringRoomId();
+        RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
+        if (enterRoom == nullptr)
+        {
+            wcout << L"최초 입장할 Room을 찾지 못함. roomId: " << roomId << '\n';
+            return false;
+        }
+
+        enterRoom->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
+
+        return true;
+    }
+
+    curRoom->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
 
     return true;
 }
