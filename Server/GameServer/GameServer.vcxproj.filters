@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Main">
@@ -40,149 +40,149 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Main\pch.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="GameServer.cpp">
+    <ClCompile Include="Main\GameServer.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="GameSession.cpp">
+    <ClCompile Include="Main\GameSession.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="GameSessionManager.cpp">
+    <ClCompile Include="Main\GameSessionManager.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="ServerPacketHandler.cpp">
+    <ClCompile Include="Main\ServerPacketHandler.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="Protocol.pb.cc">
+    <ClCompile Include="Main\Global.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Protocol.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="Struct.pb.cc">
+    <ClCompile Include="Protocol\Struct.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="Enum.pb.cc">
+    <ClCompile Include="Protocol\Enum.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.cpp">
+    <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="ObjectUtils.cpp">
+    <ClCompile Include="Utils\ObjectUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
+    <ClCompile Include="Utils\TickIntervalTimer.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\TickTimer.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Object\Player.cpp">
       <Filter>Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="Monster.cpp">
+    <ClCompile Include="Game\Object\Monster.cpp">
       <Filter>Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="Object.cpp">
+    <ClCompile Include="Game\Object\Object.cpp">
       <Filter>Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="Creature.cpp">
+    <ClCompile Include="Game\Object\Creature.cpp">
       <Filter>Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="DBRequestFunctions.cpp">
+    <ClCompile Include="DB\DBRequestFunctions.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="Inventory.cpp">
+    <ClCompile Include="Game\System\Inventory.cpp">
       <Filter>Game\System</Filter>
     </ClCompile>
-    <ClCompile Include="EquippedGear.cpp">
+    <ClCompile Include="Game\System\EquippedGear.cpp">
       <Filter>Game\System</Filter>
     </ClCompile>
-    <ClCompile Include="Global.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
-    <ClCompile Include="Gamedata.cpp">
+    <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
-    <ClCompile Include="Room.cpp">
+    <ClCompile Include="Game\Room\Room.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
-    <ClCompile Include="RoomManager.cpp">
+    <ClCompile Include="Game\Room\RoomManager.cpp">
       <Filter>Game\Room</Filter>
-    </ClCompile>
-    <ClCompile Include="TickIntervalTimer.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="TickTimer.cpp">
-      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="config.h" />
+    <ClInclude Include="Main\pch.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="GameSession.h">
+    <ClInclude Include="Main\GameSession.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="GameSessionManager.h">
+    <ClInclude Include="Main\GameSessionManager.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="ServerPacketHandler.h">
+    <ClInclude Include="Main\ServerPacketHandler.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="Enum.pb.h">
+    <ClInclude Include="Main\Global.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Enum.pb.h">
       <Filter>Protocol</Filter>
     </ClInclude>
-    <ClInclude Include="Protocol.pb.h">
+    <ClInclude Include="Protocol\Protocol.pb.h">
       <Filter>Protocol</Filter>
     </ClInclude>
-    <ClInclude Include="Struct.pb.h">
+    <ClInclude Include="Protocol\Struct.pb.h">
       <Filter>Protocol</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="ObjectUtils.h">
+    <ClInclude Include="Utils\ObjectUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Player.h">
+    <ClInclude Include="Utils\EncodingConverter.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\TickIntervalTimer.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\TickTimer.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Object\Player.h">
       <Filter>Game\Object</Filter>
     </ClInclude>
-    <ClInclude Include="Monster.h">
+    <ClInclude Include="Game\Object\Monster.h">
       <Filter>Game\Object</Filter>
     </ClInclude>
-    <ClInclude Include="Object.h">
+    <ClInclude Include="Game\Object\Object.h">
       <Filter>Game\Object</Filter>
     </ClInclude>
-    <ClInclude Include="Creature.h">
+    <ClInclude Include="Game\Object\Creature.h">
       <Filter>Game\Object</Filter>
     </ClInclude>
-    <ClInclude Include="DBRequestFunctions.h">
+    <ClInclude Include="DB\DBRequestFunctions.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="config.h" />
-    <ClInclude Include="EncodingConverter.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Global.h">
-      <Filter>Main</Filter>
-    </ClInclude>
-    <ClInclude Include="Inventory.h">
+    <ClInclude Include="Game\System\Inventory.h">
       <Filter>Game\System</Filter>
     </ClInclude>
-    <ClInclude Include="EquippedGear.h">
+    <ClInclude Include="Game\System\EquippedGear.h">
       <Filter>Game\System</Filter>
     </ClInclude>
-    <ClInclude Include="JsonProperty.h">
+    <ClInclude Include="Game\Data\JsonProperty.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Gamedata.h">
+    <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Room.h">
+    <ClInclude Include="Game\Room\Room.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
-    <ClInclude Include="RoomManager.h">
+    <ClInclude Include="Game\Room\RoomManager.h">
       <Filter>Game\Room</Filter>
-    </ClInclude>
-    <ClInclude Include="TickIntervalTimer.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="TickTimer.h">
-      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -201,34 +201,34 @@
     <None Include="..\Queries\UserDB_CreateUsersTable.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="GameDB_CreateAllTables.sql">
+    <None Include="Queries\GameDB_CreateAllTables.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="AlterTable.sql">
+    <None Include="Queries\AlterTable.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="DEBUG.sql">
+    <None Include="Queries\DEBUG.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="GameDB_InsertAdminAccount.sql">
+    <None Include="Queries\GameDB_InsertAdminAccount.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="GameDB_GetMaxItemUid.sql">
+    <None Include="Queries\GameDB_GetMaxItemUid.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="S_Item.json">
+    <None Include="Game\Data\Json\S_Item.json">
       <Filter>Game\Data\Json</Filter>
     </None>
-    <None Include="S_Map.json">
+    <None Include="Game\Data\Json\S_Map.json">
       <Filter>Game\Data\Json</Filter>
     </None>
-    <None Include="S_Monster.json">
+    <None Include="Game\Data\Json\S_Monster.json">
       <Filter>Game\Data\Json</Filter>
     </None>
-    <None Include="S_Quest.json">
+    <None Include="Game\Data\Json\S_Quest.json">
       <Filter>Game\Data\Json</Filter>
     </None>
-    <None Include="S_Warrior_Level_Data.json">
+    <None Include="Game\Data\Json\S_Warrior_Level_Data.json">
       <Filter>Game\Data\Json</Filter>
     </None>
   </ItemGroup>

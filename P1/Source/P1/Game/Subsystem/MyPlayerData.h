@@ -53,7 +53,9 @@ public:
     UEquippedGear* GetEquippedGear() const { return EquippedGear; }
 
     uint64 GetPlayerId() const { return _PlayerId; }
-    int32 GetRoomId() const { return _PlayerInfo->map_id(); }
+    // 룸 ID와 맵 ID는 서로 다른 번호 공간이다(룸 10/20/30/40, 맵 1111).
+    int32 GetRoomId() const { return _PlayerInfo->room_id(); }
+    int32 GetMapId() const { return _PlayerInfo->map_id(); }
 
     /** Replication 함수 */
     void Rep_GoldChanged(int64 Gold) const;

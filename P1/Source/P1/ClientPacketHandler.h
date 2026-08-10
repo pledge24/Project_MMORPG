@@ -24,31 +24,34 @@ enum : uint16
 	PKT_S_ENTER_GAME = 1009,
 	PKT_C_LEAVE_GAME = 1010,
 	PKT_S_LEAVE_GAME = 1011,
-	PKT_C_ENTER_MAP = 1012,
-	PKT_S_ENTER_MAP = 1013,
-	PKT_C_ENTER_ROOM = 1014,
-	PKT_S_ENTER_ROOM = 1015,
-	PKT_S_SPAWN = 1016,
-	PKT_S_DESPAWN = 1017,
-	PKT_C_MOVE = 1018,
-	PKT_S_MOVE = 1019,
-	PKT_C_NORMAL_ATTACK = 1020,
-	PKT_S_NORMAL_ATTACK = 1021,
-	PKT_S_HIT = 1022,
-	PKT_C_BUY_ITEM = 1023,
-	PKT_S_BUY_ITEM = 1024,
-	PKT_C_SELL_ITEM = 1025,
-	PKT_S_SELL_ITEM = 1026,
-	PKT_C_EQUIP_GEAR = 1027,
-	PKT_S_EQUIP_GEAR = 1028,
-	PKT_C_UNEQUIP_GEAR = 1029,
-	PKT_S_UNEQUIP_GEAR = 1030,
-	PKT_C_USE_ITEM = 1031,
-	PKT_S_USE_ITEM = 1032,
-	PKT_S_DIE = 1033,
-	PKT_S_REWARD_RESULT = 1034,
-	PKT_C_RESPAWN = 1035,
-	PKT_S_RESPAWN = 1036,
+	PKT_C_MAP_LOAD_COMPLETE = 1012,
+	PKT_C_ENTER_MAP = 1013,
+	PKT_S_ENTER_MAP = 1014,
+	PKT_C_ENTER_ROOM = 1015,
+	PKT_S_ENTER_ROOM = 1016,
+	PKT_S_SPAWN = 1017,
+	PKT_S_DESPAWN = 1018,
+	PKT_C_MOVE = 1019,
+	PKT_S_MOVE = 1020,
+	PKT_C_NORMAL_ATTACK = 1021,
+	PKT_S_NORMAL_ATTACK = 1022,
+	PKT_S_HIT = 1023,
+	PKT_C_BUY_ITEM = 1024,
+	PKT_S_BUY_ITEM = 1025,
+	PKT_C_SELL_ITEM = 1026,
+	PKT_S_SELL_ITEM = 1027,
+	PKT_C_EQUIP_GEAR = 1028,
+	PKT_S_EQUIP_GEAR = 1029,
+	PKT_C_UNEQUIP_GEAR = 1030,
+	PKT_S_UNEQUIP_GEAR = 1031,
+	PKT_C_USE_ITEM = 1032,
+	PKT_S_USE_ITEM = 1033,
+	PKT_S_DIE = 1034,
+	PKT_S_REWARD_RESULT = 1035,
+	PKT_C_RESPAWN = 1036,
+	PKT_S_RESPAWN = 1037,
+	PKT_C_CHAT = 1038,
+	PKT_S_CHAT = 1039,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -75,6 +78,7 @@ bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt);
 bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt);
 bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt);
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt);
+bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt);
 
 class ClientPacketHandler
 {
@@ -106,6 +110,7 @@ public:
 		GPacketHandler[PKT_S_DIE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DIE>(Handle_S_DIE, session, buffer, len); };
 		GPacketHandler[PKT_S_REWARD_RESULT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_REWARD_RESULT>(Handle_S_REWARD_RESULT, session, buffer, len); };
 		GPacketHandler[PKT_S_RESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_RESPAWN>(Handle_S_RESPAWN, session, buffer, len); };
+		GPacketHandler[PKT_S_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHAT>(Handle_S_CHAT, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -121,6 +126,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_DELETE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_GAME); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_LEAVE_GAME); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_MAP_LOAD_COMPLETE& pkt) { return MakeSerializedPacket(pkt, PKT_C_MAP_LOAD_COMPLETE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_MAP& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_MAP); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_ROOM& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_ROOM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_MOVE& pkt) { return MakeSerializedPacket(pkt, PKT_C_MOVE); }
@@ -131,6 +137,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_UNEQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_C_UNEQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_C_RESPAWN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_C_CHAT); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

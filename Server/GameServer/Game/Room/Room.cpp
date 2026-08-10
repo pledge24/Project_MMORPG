@@ -334,7 +334,16 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         if (TransferPlayer(player, roomEnterData) == false)
             return;
 
-        enterRoom->DoAsync(&Room::ReplicateRoomData, player, true);
+        // TransferPlayer가 목적지 큐에 EnterPlayer를 넣은 뒤에 실행된다.
+        enterRoom->DoAsync([enterRoom, player]()
+            {
+                // 목적지 Room의 다른 플레이어들에게 내 등장을 알린다.
+                if (enterRoom->SpawnPlayer(player) == nullptr)
+                    return;
+
+                // 클라는 HandleDespawnAll(true)로 내 액터를 유지하므로 나는 제외한다.
+                enterRoom->ReplicateRoomData(player, false);
+            });
 
         break;
     }
@@ -371,6 +380,17 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
 		Broadcast(sendBuffer, objectId);
 	}
+}
+
+void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
+{
+	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
+	Protocol::S_CHAT chatPkt;
+	chatPkt.set_object_id(player->objectInfo->object_id());
+	chatPkt.set_msg(pkt.msg());
+
+	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
+	Broadcast(sendBuffer);
 }
 
 void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
@@ -610,7 +630,9 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         // TransferPlayer가 목적지 큐에 EnterPlayer를 넣은 뒤에 실행된다.
         respawnRoom->DoAsync([respawnRoom, player, respawnType, respawnPos]()
             {
+                // 부활 처리를 먼저 해야 다른 플레이어에게 죽은 상태가 나가지 않는다.
                 respawnRoom->HandleRespawn(player, respawnType, respawnPos);
+                respawnRoom->SpawnPlayer(player);
                 respawnRoom->ReplicateRoomData(player, false);
             });
     }
@@ -757,7 +779,7 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     SEND_PACKET(respawnPkt);
 }
 
-void Room::ReplicateRoomData(PlayerRef player, bool excludeThisPlayer)
+void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 {
     int64 playerId = player->objectInfo->object_id();
 
@@ -767,7 +789,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool excludeThisPlayer)
     {
         for (auto& item : _objects)
         {
-            if (!excludeThisPlayer && item.second->objectInfo->object_id() == playerId)
+            if (!includeThisPlayer && item.second->objectInfo->object_id() == playerId)
                 continue;
 
             spawnPkt.add_objects()->CopyFrom(*item.second->objectInfo);

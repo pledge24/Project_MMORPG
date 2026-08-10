@@ -9,11 +9,11 @@ ExcelToJsonConverter.exe --path=./Original_Quest.xlsx --s_output=S_Quest.json --
 
 IF ERRORLEVEL 1 PAUSE
 
-MOVE /Y S_Warrior_Level_Data.json		"../../GameServer"
-MOVE /Y S_Monster.json				    "../../GameServer"
-MOVE /Y S_Item.json				        "../../GameServer"
-MOVE /Y S_Map.json				        "../../GameServer"
-MOVE /Y S_Quest.json				    "../../GameServer"
+MOVE /Y S_Warrior_Level_Data.json		"../../GameServer/Game/Data/Json"
+MOVE /Y S_Monster.json				    "../../GameServer/Game/Data/Json"
+MOVE /Y S_Item.json				        "../../GameServer/Game/Data/Json"
+MOVE /Y S_Map.json				        "../../GameServer/Game/Data/Json"
+MOVE /Y S_Quest.json				    "../../GameServer/Game/Data/Json"
 
 MOVE /Y C_Monster.json				    "../../../P1/Content/Gamedata"
 MOVE /Y C_Item.json				        "../../../P1/Content/Gamedata"

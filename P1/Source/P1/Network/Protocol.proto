@@ -73,6 +73,11 @@ message S_LEAVE_GAME
 
 }
 
+message C_MAP_LOAD_COMPLETE
+{
+
+}
+
 message C_ENTER_MAP
 {
     // 이 패킷은 게임 입장 후에 사용한다.
@@ -276,4 +281,15 @@ message S_RESPAWN
     int32 room_id = 5;
     PosInfo pos_info = 6;
     repeated Stat updated_stat = 7;
+}
+
+message C_CHAT
+{
+    string msg = 1;
+}
+
+message S_CHAT
+{
+    int64 object_id = 1;
+    string msg = 2;
 }

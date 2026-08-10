@@ -275,3 +275,13 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
     return false;
 }
 
+bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
+{
+    /* 채팅 UI가 아직 없다. DummyClient 부하 테스트에서 서버 중계가 도는지
+       확인할 수 있게 로그만 남긴다. */
+    FString Msg = UTF8_TO_TCHAR(pkt.msg().c_str());
+    UE_LOG(LogTemp, Log, TEXT("S_CHAT object_id: %lld, msg: %s"), pkt.object_id(), *Msg);
+
+    return true;
+}
+

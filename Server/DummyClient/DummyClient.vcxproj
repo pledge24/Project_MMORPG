@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -70,23 +70,29 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <!-- GameServer 와 동일하게 프로젝트 폴더를 작업 디렉터리로 고정한다.
+       .vcxproj.user 는 gitignore 대상이라 여기에 둬야 VS·Rider 양쪽에 공유된다. -->
+  <PropertyGroup>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -105,9 +111,6 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>CALL $(SolutionDir)Common\Protobuf\bin\GenPackets.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -128,9 +131,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>CALL $(SolutionDir)Common\Protobuf\bin\GenPackets.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -147,9 +147,6 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>CALL $(SolutionDir)Common\Protobuf\bin\GenPackets.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -170,20 +167,17 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>CALL $(SolutionDir)Common\Protobuf\bin\GenPackets.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ClientPacketHandler.cpp" />
-    <ClCompile Include="DummyClient.cpp" />
-    <ClCompile Include="Enum.pb.cc">
+    <ClCompile Include="Main\ClientPacketHandler.cpp" />
+    <ClCompile Include="Main\DummyClient.cpp" />
+    <ClCompile Include="Protocol\Enum.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Main\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -193,13 +187,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Protocol.pb.cc">
+    <ClCompile Include="Protocol\Protocol.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Struct.pb.cc">
+    <ClCompile Include="Protocol\Struct.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -207,11 +201,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ClientPacketHandler.h" />
-    <ClInclude Include="Enum.pb.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="Protocol.pb.h" />
-    <ClInclude Include="Struct.pb.h" />
+    <ClInclude Include="Main\ClientPacketHandler.h" />
+    <ClInclude Include="Main\pch.h" />
+    <ClInclude Include="Protocol\Enum.pb.h" />
+    <ClInclude Include="Protocol\Protocol.pb.h" />
+    <ClInclude Include="Protocol\Struct.pb.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\Enum.proto" />
@@ -224,7 +218,28 @@
     <UpToDateCheckInput Include="..\Common\Protobuf\bin\Protocol.proto" />
     <UpToDateCheckInput Include="..\Common\Protobuf\bin\Struct.proto" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 하므로
+         LinkLibraryDependencies를 꺼서 중복 링크를 피한다. -->
+    <ProjectReference Include="..\ServerCore\ServerCore.vcxproj">
+      <Project>{06e33453-7277-4458-9eca-030e662c2598}</Project>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <!-- .proto가 바뀌었을 때만 GenPackets.bat을 돌린다.
+       MSBuild 타겟 그래프의 일부라 VS·Rider·CLI 어디서든 동일하게 동작한다.
+       (기존 PreBuildEvent + UpToDateCheckInput 조합은 Visual Studio IDE에서만 통했다)
+       < NUL: GenPackets.bat이 PAUSE로 끝나므로 stdin에 EOF를 먹여 멈추지 않게 한다.
+       .bat은 pushd %~dp0로 시작해 CWD 독립적이므로 WorkingDirectory가 불필요하다. -->
+  <Target Name="GenerateProtoPackets"
+          BeforeTargets="ClCompile"
+          Inputs="$(SolutionDir)Common\Protobuf\bin\Enum.proto;$(SolutionDir)Common\Protobuf\bin\Struct.proto;$(SolutionDir)Common\Protobuf\bin\Protocol.proto"
+          Outputs="$(MSBuildProjectDirectory)\Protocol\Enum.pb.h;$(MSBuildProjectDirectory)\Protocol\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol\Protocol.pb.h;$(MSBuildProjectDirectory)\Main\ClientPacketHandler.h">
+    <Message Importance="high" Text="[Proto] .proto changed - running GenPackets.bat" />
+    <Exec Command="set &quot;PATH=$(SolutionDir)Common\Protobuf\bin;%PATH%&quot; &amp;&amp; CALL &quot;$(SolutionDir)Common\Protobuf\bin\GenPackets.bat&quot; &lt; NUL"
+          WorkingDirectory="$(SolutionDir)Common\Protobuf\bin" />
+  </Target>
 </Project>
