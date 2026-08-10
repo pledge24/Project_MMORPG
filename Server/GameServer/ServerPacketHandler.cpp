@@ -23,6 +23,13 @@ bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
 	return false;
 }
 
+// TODO: 클라이언트 맵 로드 완료 처리. Protocol.proto에 선언만 되어 있어
+// 생성기가 만드는 핸들러 선언을 채우기 위한 스텁이다.
+bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_COMPLETE& pkt)
+{
+	return false;
+}
+
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
     // TODO : 해당 패킷이 유효한지 검증(Validate)
