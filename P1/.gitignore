@@ -505,3 +505,7 @@ PSD/
 
 # UBT가 생성하는 신형 솔루션 포맷 (위의 *.sln 과 동일 취급)
 *.slnx
+
+# Rider가 각 개발자 환경에 알아서 설치하는 언리얼 통합 플러그인.
+# 게임 코드가 아니라 IDE 도구이고 Rider 버전마다 갈리므로 추적하지 않는다.
+Plugins/Developer/RiderLink/
