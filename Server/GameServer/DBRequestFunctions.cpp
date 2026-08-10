@@ -648,7 +648,11 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
 
         // 지역 설정
         playerInfo->set_room_id(bindObject._roomId);
-        playerInfo->set_map_id(bindObject._mapId);
+
+        // map_id 세팅과 enteringRoomId 시딩을 함께 처리한다.
+        // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 채우지 않으면
+        // 최초 입장(INITIAL) 검증이 enteringRoomId == -1 로 실패한다.
+        player->OnEnterMap(bindObject._mapId, bindObject._roomId);
 
         // PosInfo 설정
         {
