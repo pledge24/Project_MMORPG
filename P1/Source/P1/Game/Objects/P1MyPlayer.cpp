@@ -45,7 +45,7 @@ void AP1MyPlayer::BeginPlay()
 		    }
 	    }
 
-        // Broadcast Spawn MyPlayer
+        // Broadcast Delegate
         if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
         {
             if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
@@ -54,6 +54,7 @@ void AP1MyPlayer::BeginPlay()
             }
         }
     }
+   
 }
 
 void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -2,6 +2,7 @@
 #include <random>
 #include <cmath>
 #include <numbers>
+//#include "Protocol.pb.h"
 
 struct vector2D
 {
@@ -147,8 +148,8 @@ public:
 
     static float Distance(Protocol::PosInfo* src, Protocol::PosInfo* dst, bool noSqrt = false)
     {
-        float dx = dst->x() - src->x();
-        float dy = dst->y() - src->y();
+        float dx = dst->pos().x() - src->pos().x();
+        float dy = dst->pos().y() - src->pos().y();
         float squareDist = dx * dx + dy * dy;
 
         return noSqrt ? squareDist : sqrt(squareDist);
@@ -156,7 +157,7 @@ public:
 
     static vector2D PosInfoToVector2D(Protocol::PosInfo* posInfo)
     {
-        return { posInfo->x(), posInfo->y() };
+        return { posInfo->pos().x(), posInfo->pos().y() };
     }
 
     static bool InRange(Protocol::PosInfo* curPos, Protocol::PosInfo* target, float range)
@@ -173,5 +174,20 @@ public:
         bool zeroZ = vector->z() == 0.f;
 
         return (zeroX && zeroY && zeroZ);
+    }
+};
+
+using google::protobuf::RepeatedPtrField;
+
+class ProtoUtil
+{
+public:
+    static void AddStat(RepeatedPtrField<Protocol::Stat>* statList, Protocol::StatType type, int64 Value)
+    {
+        Protocol::Stat* stat = statList->Add();
+        {
+            stat->set_type(type);
+            stat->set_value(Value);
+        }
     }
 };

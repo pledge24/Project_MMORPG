@@ -1,13 +1,11 @@
 #include "pch.h"
 #include "Object.h"
+#include "Room.h"
 
 Object::Object()
 {
 	objectInfo = new Protocol::ObjectInfo();
-	posInfo = new Protocol::PosInfo();
-	objectInfo->set_allocated_pos_info(posInfo);
-
-    tickGroupFuncs.resize(static_cast<int32>(ETickGroup::TG_COUNT));
+    posInfo = objectInfo->mutable_pos_info();
 }
 
 Object::~Object()
@@ -15,32 +13,34 @@ Object::~Object()
 	delete objectInfo;
 }
 
-void Object::ProcessTickGroupFunc(ETickGroup tickGroup, float deltaTime)
+bool Object::Init()
 {
-    if (_isTickable == false)
-        return;
 
-    for (auto tickFunc : tickGroupFuncs[static_cast<int32>(tickGroup)])
-    {
-        tickFunc(deltaTime);
-    }
+    return true;
 }
 
-void Object::PostConstructionSetup()
+bool Object::Start()
 {
-    weak_ptr<Object> weakSelf = shared_from_this();
-    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PrePhysics)].push_back(
-        [weakSelf](float deltaTime)
+    // TODO: Validate
+
+    if (_isTickable)
+    {
+        if (auto ownerRoom = room.load().lock())
         {
-            if (auto self = weakSelf.lock())
-            {
-                self->Tick(deltaTime);
-            }
+            ownerRoom->DoTimer(OBJECT_TICK_INTERVAL, &Room::TickObject, shared_from_this());
         }
-    );
+    }
+
+    return true;
 }
 
 void Object::Tick(float deltaTime)
 {
+    if (auto ownerRoom = room.load().lock())
+    {
+        ownerRoom->DoTimer(OBJECT_TICK_INTERVAL, &Room::TickObject, shared_from_this());
+    }
+
+
 }
 

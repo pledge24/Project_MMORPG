@@ -2,66 +2,33 @@
 #include "Monster.h"
 #include "Player.h"
 #include "Gamedata.h"
-#include "TickIntervalTimer.h"
 #include "Room.h"
+#include "TickIntervalTimer.h"
+#include "TickTimer.h"
 
 Monster::Monster()
 {
     _isPlayer = false;
 
     monsterInfo = objectInfo->mutable_monster_info();
-    stateIntervalTimer = make_shared<TickIntervalTimer>();
+    attackTimer = new TickTimer();
 }
 
 Monster::~Monster()
 {
+    delete attackTimer;
 }
 
-void Monster::PostConstructionSetup()
+bool Monster::Init()
 {
-    Creature::PostConstructionSetup();
+    if (Creature::Init() == false)
+        return false;
 
-    // 몬스터 AI 인터벌 타이머 초기화
-    weak_ptr<Monster> weakSelf = static_pointer_cast<Monster>(shared_from_this());
-    stateIntervalTimer->Init(UPDATE_STATE_INTERVAL, [weakSelf]()
-        {
-            if (auto self = weakSelf.lock())
-            {
-                self->UpdateState();
-            }
-            
-        });
-
-    // 틱마다 타이머 갱신
-    tickGroupFuncs[static_cast<int32>(ETickGroup::TG_PreObjectTick)].push_back(
-        [weakSelf](float deltaTime)
-        {
-            if (auto self = weakSelf.lock())
-            {
-                self->_stateTimer += deltaTime;
-                self->_timeSinceLastAttack += deltaTime;
-                self->stateIntervalTimer->Tick(deltaTime);
-            }
-        }
-    );
-}
-
-void Monster::Tick(float deltaTime)
-{
-    Creature::Tick(deltaTime);
-
-    // 몬스터 AI 실행
-    ExecuteStateBehavior(deltaTime);
-}
-
-void Monster::PostInit()
-{
     int32 templateId = objectInfo->monster_info().template_id();
-
     if (Gamedata::MonsterDataTable.contains(templateId) == false)
     {
         cout << "Monster's template id is Invalid" << '\n';
-        return;
+        return false;
     }
 
     const Json& monsterData = Gamedata::MonsterDataTable[templateId];
@@ -73,43 +40,66 @@ void Monster::PostInit()
     // set Init data
     monsterInfo->set_template_id(templateId);
     monsterInfo->set_hp(maxHp);
-    spawnPos = MathUtil::PosInfoToVector2D(posInfo);
+    _spawnPos = MathUtil::PosInfoToVector2D(posInfo);
 
     // set Idle State
-    ChangeState(MonsterState::Idle);
+    SwitchState(MonsterState::Idle);
+
+    return true;
 }
 
-void Monster::PrintMonsterAllData() const
+bool Monster::Start()
 {
-    cout << "=====================" << '\n';
-    cout << _monsterData.dump(2) << '\n';
+    if (Creature::Start() == false)
+        return false;
 
-    cout << "templateId: " << templateId << '\n';
-    cout << "maxHp: " << maxHp << '\n';
-    cout << "attackInterval: " << attackInterval << '\n';
-    cout << "baseAttack: " << baseAttack << '\n';
-    cout << "attackRange: " << tryAttackRange << '\n';
-    cout << "detectionRange: " << detectionRange << '\n';
-    cout << "chaseRange: " << chasingMaxRange << '\n';
+    UpdateState();
 
-    cout << objectInfo->Utf8DebugString() << '\n';
-
-    cout << "======Monster Data End ====" << '\n';
+    return true;
 }
 
-void Monster::CacheMonsterData()
+void Monster::Tick(float deltaTime)
+{
+    Creature::Tick(deltaTime);
+
+    // 틱마다 타이머 갱신
+    {
+        _stateTimer += deltaTime;
+        _timeSinceLastAttack += deltaTime;
+    }
+
+    // 몬스터 AI 실행
+    ExecuteStateBehavior(deltaTime);
+}
+
+void Monster::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+{
+    Creature::OnHit(attacker, attackInfo);
+}
+
+void Monster::OnDie(ObjectRef attacker)
+{
+    Creature::OnDie(attacker);
+}
+
+int64 Monster::GetExpReward()
 {
     using namespace JsonProperty::Monster;
 
-    templateId = _monsterData[TemplateId].is_null() ? 0 : static_cast<int32>(_monsterData[TemplateId]);
-    maxHp = _monsterData[MaxHp].is_null() ? 0 : static_cast<int32>(_monsterData[MaxHp]);
-    attackInterval = _monsterData[AttackInterval].is_null() ? 100000.f : static_cast<float>(_monsterData[AttackInterval]);
-    baseAttack = _monsterData[BaseAttack].is_null() ? 0 : static_cast<int32>(_monsterData[BaseAttack]);
+    int64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<int64>(_monsterData[ExpReward][MinExp]);
+    int64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<int64>(_monsterData[ExpReward][MaxExp]);
 
-    tryAttackRange = _monsterData[TryAttackRange].is_null() ? 0.f : static_cast<float>(_monsterData[TryAttackRange]);
-    detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
-    chasingMaxRange = _monsterData[ChasingMaxRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChasingMaxRange]);
-    monsterSpeed = _monsterData[MonsterSpeed].is_null() ? 0.f : static_cast<float>(_monsterData[MonsterSpeed]);
+    return Utils::GetRandom(minExp, maxExp);
+}
+
+int64 Monster::GetGoldReward()
+{
+    using namespace JsonProperty::Monster;
+
+    int64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<int64>(_monsterData[GoldReward][MinGold]);
+    int64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<int64>(_monsterData[GoldReward][MaxGold]);
+
+    return Utils::GetRandom(minGold, maxGold);
 }
 
 void Monster::UpdateState()
@@ -133,11 +123,11 @@ void Monster::UpdateState()
                 // xxx -> Attacking 또는 Chasing으로 전환
                 if (bool InAttackRange = (squareDist <= (tryAttackRange * tryAttackRange)))
                 {
-                    ChangeState(MonsterState::Attacking);
+                    SwitchState(MonsterState::Attacking);
                 }
                 else
                 {
-                    ChangeState(MonsterState::Chasing);
+                    SwitchState(MonsterState::Chasing);
                 }
 
                 return;
@@ -147,7 +137,7 @@ void Monster::UpdateState()
         // Idle -> Wandering으로 상태 전환
         if (state == MonsterState::Idle && _stateTimer >= IDLE_TIME)
         {
-            ChangeState(MonsterState::Wandering);
+            SwitchState(MonsterState::Wandering);
             return;
         }
            
@@ -156,7 +146,7 @@ void Monster::UpdateState()
         {
             if (_stateTimer >= WANDERING_TIME || AlreadyArrive())
             {
-                ChangeState(MonsterState::Idle);
+                SwitchState(MonsterState::Idle);
                 return;
             }
         }
@@ -174,14 +164,14 @@ void Monster::UpdateState()
             // 전환 조건(attacking): 공격 범위 안에 들어옴
             if (bool InAttackRange = MathUtil::InRange(curPos, targetPos, tryAttackRange))
             {
-                ChangeState(MonsterState::Attacking);
+                SwitchState(MonsterState::Attacking);
                 return;
             }
 
             // 전환 조건(idle): 타겟이 추적 범위를 벗어남
             if (bool outOfChasingRange = !MathUtil::InRange(curPos, targetPos, chasingMaxRange))
             {
-                ChangeState(MonsterState::Idle);
+                SwitchState(MonsterState::Idle);
                 return;
             }
 
@@ -204,7 +194,7 @@ void Monster::UpdateState()
             // 전환 조건(Chasing): 공격 범위를 벗어남
             if (bool outOfAttackRange = !MathUtil::InRange(curPos, targetPos, tryAttackRange))
             {
-                ChangeState(MonsterState::Chasing);
+                SwitchState(MonsterState::Chasing);
                 return;
             }
 
@@ -217,7 +207,7 @@ void Monster::UpdateState()
             if (ownerRoom->Contains(target->objectInfo->object_id()) == false || outOfChasingRange)
             {
                 _target.reset();
-                ChangeState(MonsterState::Idle);
+                SwitchState(MonsterState::Idle);
                 return;
             }
 
@@ -226,7 +216,7 @@ void Monster::UpdateState()
         {
             // 전환 조건(Idle): 타겟이 유효하지 않음
             _target.reset();
-            ChangeState(MonsterState::Idle);
+            SwitchState(MonsterState::Idle);
             return;
         }
 
@@ -235,11 +225,23 @@ void Monster::UpdateState()
     default:
         break;
     }
+
+    if (auto ownerRoom = room.load().lock())
+    {
+        ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
+            {
+                int64 objectId = self->objectInfo->object_id();
+
+                if(ownerRoom->Contains(objectId))
+                    self->UpdateState();
+            });
+
+    }
 }
 
-void Monster::ChangeState(MonsterState changedState)
+void Monster::SwitchState(MonsterState nextState)
 {
-    state = changedState;
+    state = nextState;
     _stateTimer = 0.f;
 
     switch (state)
@@ -263,7 +265,7 @@ void Monster::ChangeState(MonsterState changedState)
         if (ownerRoom == nullptr)
             return;
 
-        vector2D newDest = ownerRoom->GetRandomPos();
+        vector2D newDest = ownerRoom->GetRandomLocation();
         
         // 목적지로 이동 세팅(PosInfo 세팅)
         StartMovingTo(newDest);
@@ -371,30 +373,12 @@ void Monster::ExecuteStateAttacking(float deltaTime)
     
     if (_timeSinceLastAttack >= attackInterval)
     {
-        if (bool outOfAttackRange = !MathUtil::InRange(posInfo, targetPos, tryAttackRange))
+        if (bool InAttackRange = MathUtil::InRange(posInfo, targetPos, tryAttackRange))
         {
-            return;
+            _timeSinceLastAttack = 0.f;
+            NormalAttack();  
         }
-
-        Protocol::S_NORMAL_ATTACK normalAttackPkt;
-        {
-            normalAttackPkt.set_object_id(objectInfo->object_id());
-            normalAttackPkt.set_combo(0);
-            normalAttackPkt.set_yaw(posInfo->yaw());
-        }
-
-        if (auto ownerRoom = room.load().lock())
-        {
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-            ownerRoom->Broadcast(sendBuffer);
-        }
-
-        _timeSinceLastAttack = 0.f;
-
-        // float dist = MathUtil::Distance(targetPos, posInfo);
-        // printf("Attack! MyPos(%.2f, %.2f) targetPos(%.2f, %.2f), CurYaw: %.2f, Distance: %.2f \n", posInfo->x(), posInfo->y(), targetPos->x(), targetPos->y(), posInfo->yaw(), dist);
     }
-
 
 }
 
@@ -413,7 +397,7 @@ void Monster::ExecuteStateChasing(float deltaTime)
     if (bool tooClose = MathUtil::InRange(curPos, targetPos, MIN_APPROACH_DISTANCE))
     {
         //StopMoving("ExecuteStateChasing:: too Close");
-        ChangeState(MonsterState::Attacking);   // 이 경우, 예외로 상태를 변경한다.
+        SwitchState(MonsterState::Attacking);   // 이 경우, 예외로 상태를 변경한다.
     }
     else
     {
@@ -426,6 +410,7 @@ void Monster::ExecuteStateChasing(float deltaTime)
 
 void Monster::ExecuteStateDeath(float deltaTime)
 {
+
 }
 
 void Monster::Move(float deltaTime, bool orientRotationToMovement)
@@ -433,16 +418,18 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
     if (AlreadyArrive())
     {
         StopMoving("Move:: AlreadyArrive");
-        ForceBroadcastMovePkt();
+        //ForceBroadcastMovePkt();
         return;
     }
 
     if (posInfo->state() == Protocol::MoveState::MOVE_STATE_IDLE)
-        ForceBroadcastMovePkt();
+    {
+        //ForceBroadcastMovePkt();
+    }
 
     posInfo->set_state(Protocol::MoveState::MOVE_STATE_RUN);
 
-    vector2D curPos = { posInfo->x() , posInfo->y() };
+    vector2D curPos = { posInfo->pos().x() , posInfo->pos().y() };
     vector2D targetPos = _moveDest.value();
     vector2D moveVec = targetPos - curPos;
     vector2D moveUnitVec = moveVec.GetNormalize();
@@ -453,8 +440,8 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
     curPos.x += dx;
     curPos.y += dy;
 
-    posInfo->set_x(curPos.x);
-    posInfo->set_y(curPos.y);
+    posInfo->mutable_pos()->set_x(curPos.x);
+    posInfo->mutable_pos()->set_y(curPos.y);
 
     // 필요할지도 모르니까 매번 이동 방향 세팅
     SetMoveDirection(moveVec);
@@ -467,7 +454,7 @@ void Monster::Move(float deltaTime, bool orientRotationToMovement)
 
 void Monster::LookAt(const vector2D& targetPos)
 {
-    vector2D curPos = { posInfo->x(), posInfo->y() };
+    vector2D curPos = { posInfo->pos().x(), posInfo->pos().y() };
     vector2D lookAtVec = targetPos - curPos;
 
     if(lookAtVec != vector2D::GetZeroVector())
@@ -489,25 +476,65 @@ void Monster::StopMoving(string context, bool shouldBeIdle)
     if (posInfo->state() == Protocol::MoveState::MOVE_STATE_RUN || shouldBeIdle)
     {
         posInfo->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-        ForceBroadcastMovePkt();
+        //ForceBroadcastMovePkt();
         //cout << "StopMoving::set idle: " << context << '\n';
+    }
+}
+
+void Monster::NormalAttack()
+{
+    if (auto ownerRoom = room.load().lock())
+    {
+        int32 combo = 0;
+        ownerRoom->HandleNormalAttack(combo, static_pointer_cast<Creature>(shared_from_this()));
+
+        // TEMP
+        Protocol::AttackInfo attackInfo;
+        {
+            attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
+            attackInfo.set_target_id(_target.lock()->objectInfo->object_id());
+            attackInfo.set_combo(0);
+            attackInfo.set_damage(baseAttack);
+        }
+        ownerRoom->DoTimer(200, &Room::HandleHit, shared_from_this(), attackInfo);
     }
 }
 
 bool Monster::CanMove()
 {
     bool hasLeftAttackDelay = _timeSinceLastAttack <= attackInterval;
-    bool hasDest = _moveDest.has_value() == false;     // 반드시 목적지가 있을때만 이동한다.
+    bool hasDest = _moveDest.has_value();     // 반드시 목적지가 있을때만 이동한다.
 
-    return !hasLeftAttackDelay || !hasDest;
+    return !hasLeftAttackDelay && hasDest;
 }
 
 bool Monster::AlreadyArrive()
 {
-    vector2D monsterPos = vector2D{ posInfo->x(), posInfo->y() };
+    vector2D monsterPos = vector2D{ posInfo->pos().x(), posInfo->pos().y() };
     
+    if (_moveDest.has_value() == false)
+    {
+        cout << "AlreadyArrive: something wrong" << '\n';
+        return true;
+    }
+
     auto targetPos = _moveDest.value();
     return MathUtil::Distance(monsterPos, targetPos, true) < 1.f;
+}
+
+bool Monster::IsTargetingAttack(Protocol::AttackType type)
+{
+    switch (type)
+    {
+    case Protocol::ATTACK_TYPE_NORMAL:
+        return isTargeting;
+    case Protocol::ATTACK_TYPE_SKILL:
+    case Protocol::ATTACK_TYPE_EOT:
+    default:
+        break;
+    }
+
+    return false;
 }
 
 void Monster::SetDestination(const vector2D& destPos, float minApproachDistance)
@@ -561,14 +588,36 @@ void Monster::ClearDestination()
     SetMoveDirection(vector2D::GetZeroVector());   // 목적지가 없으니 이동도 X 
 }
 
-void Monster::ForceBroadcastMovePkt()
+void Monster::PrintMonsterAllData() const
 {
-    if (auto ownerRoom = room.load().lock())
-    {
-        Protocol::S_MOVE movePkt;
-        movePkt.add_info()->CopyFrom(*posInfo);
+    cout << "=====================" << '\n';
+    cout << _monsterData.dump(2) << '\n';
 
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-        ownerRoom->Broadcast(sendBuffer);
-    }
+    cout << "templateId: " << templateId << '\n';
+    cout << "maxHp: " << maxHp << '\n';
+    cout << "attackInterval: " << attackInterval << '\n';
+    cout << "baseAttack: " << baseAttack << '\n';
+    cout << "attackRange: " << tryAttackRange << '\n';
+    cout << "detectionRange: " << detectionRange << '\n';
+    cout << "chaseRange: " << chasingMaxRange << '\n';
+
+    cout << objectInfo->Utf8DebugString() << '\n';
+
+    cout << "======Monster Data End ====" << '\n';
+}
+
+void Monster::CacheMonsterData()
+{
+    using namespace JsonProperty::Monster;
+
+    templateId = _monsterData[TemplateId].is_null() ? 0 : static_cast<int32>(_monsterData[TemplateId]);
+    maxHp = _monsterData[MaxHp].is_null() ? 0 : static_cast<int32>(_monsterData[MaxHp]);
+    attackInterval = _monsterData[AttackInterval].is_null() ? 100000.f : static_cast<float>(_monsterData[AttackInterval]);
+    baseAttack = _monsterData[BaseAttack].is_null() ? 0 : static_cast<int32>(_monsterData[BaseAttack]);
+
+    tryAttackRange = _monsterData[TryAttackRange].is_null() ? 0.f : static_cast<float>(_monsterData[TryAttackRange]);
+    detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
+    chasingMaxRange = _monsterData[ChasingMaxRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChasingMaxRange]);
+    monsterSpeed = _monsterData[MonsterSpeed].is_null() ? 0.f : static_cast<float>(_monsterData[MonsterSpeed]);
+    isTargeting = _monsterData[IsTargeting].is_null() ? false : static_cast<bool>(_monsterData[IsTargeting]);
 }

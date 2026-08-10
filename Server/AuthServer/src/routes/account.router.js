@@ -12,15 +12,15 @@ router.post('/Register', async (req, res) => {
 
         // 1. 유효성 검사
         if (!username) {
-            return res.status(400).json({ errorMessage: '로그인할 아이디를 입력하여 주세요.' });
+            return res.status(400).json({ errorMessage: '아이디를 입력하지 않았습니다.' });
         }
 
         if (!password) {
-            return res.status(400).json({ errorMessage: '비밀번호를 입력하여 주세요.' });
+            return res.status(400).json({ errorMessage: '비밀번호를 입력하지 않았습니다' });
         }
 
         if (!/^[a-zA-Z0-9]{4,10}$/.test(username)) {
-            return res.status(400).json({ errorMessage: '아이디 조건: 영문자, 숫자로 이루어진 4~10 길의 문자열' });
+            return res.status(400).json({ errorMessage: '아이디 조건: 영문자, 숫자로 이루어진 4~10 길이의 문자열' });
         }
 
         if (!/^[a-zA-Z0-9]{4,20}$/.test(password)) {

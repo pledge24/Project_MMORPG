@@ -20,7 +20,7 @@ protected:
 	virtual void BeginPlay() override;
 
     UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendMoveRoomPacket();
+    void SendEnterRoomPacket();
 
 protected:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Portal")

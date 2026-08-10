@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[11];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[14];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -37,39 +37,53 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "CLASS_TYPE_WARRIOR\020\001\022\023\n\017CLASS_TYPE_MAGE\020"
   "\002*`\n\tMoveState\022\023\n\017MOVE_STATE_NONE\020\000\022\023\n\017M"
   "OVE_STATE_IDLE\020\001\022\022\n\016MOVE_STATE_RUN\020\002\022\025\n\021"
-  "MOVE_STATE_ACTION\020\003*W\n\007HitType\022\021\n\rHIT_TY"
-  "PE_NONE\020\000\022\023\n\017HIT_TYPE_NORMAL\020\001\022\022\n\016HIT_TY"
-  "PE_SKILL\020\002\022\020\n\014HIT_TYPE_EOT\020\003*j\n\nDamageTy"
-  "pe\022\024\n\020DAMAGE_TYPE_NONE\020\000\022\030\n\024DAMAGE_TYPE_"
-  "PHYSICAL\020\001\022\027\n\023DAMAGE_TYPE_MAGICAL\020\002\022\023\n\017D"
-  "AMAGE_TYPE_FIX\020\003*\240\001\n\nEffectType\022\024\n\020EFFEC"
-  "T_TYPE_NONE\020\000\022\030\n\024EFFECT_TYPE_BLEEDING\020\001\022"
-  "\024\n\020EFFECT_TYPE_BURN\020\002\022\026\n\022EFFECT_TYPE_POS"
-  "ION\020\003\022\030\n\024EFFECT_TYPE_SPEED_UP\020\004\022\032\n\026EFFEC"
-  "T_TYPE_SPEED_DOWN\020\005*i\n\010ItemType\022\022\n\016ITEM_"
-  "TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_GEAR\020\001\022\030\n\024ITEM_"
-  "TYPE_CONSUMABLE\020\002\022\033\n\027ITEM_TYPE_MISCELLAN"
-  "EOUS\020\003*\253\001\n\010SlotType\022\022\n\016SLOT_TYPE_NONE\020\000\022"
-  "\034\n\030SLOT_TYPE_INVENTORY_GEAR\020\001\022\"\n\036SLOT_TY"
-  "PE_INVENTORY_CONSUMABLE\020\002\022\034\n\030SLOT_TYPE_I"
-  "NVENTORY_MISC\020\003\022\026\n\022SLOT_TYPE_EQUIPPED\020\004\022"
-  "\023\n\017SLOT_TYPE_QUICK\020\005*\276\001\n\010StatType\022\022\n\016STA"
-  "T_TYPE_NONE\020\000\022\024\n\020STAT_TYPE_MAX_HP\020\001\022\020\n\014S"
-  "TAT_TYPE_HP\020\002\022\024\n\020STAT_TYPE_MAX_MP\020\003\022\020\n\014S"
-  "TAT_TYPE_MP\020\004\022\035\n\031STAT_TYPE_PHYSICAL_ATTA"
-  "CK\020\005\022\034\n\030STAT_TYPE_MAGICAL_ATTACK\020\006\022\021\n\rST"
-  "AT_TYPE_EXP\020\007*q\n\013UpdateState\022\025\n\021UPDATE_S"
-  "TATE_NONE\020\000\022\026\n\022UPDATE_STATE_ADDED\020\001\022\031\n\025U"
-  "PDATE_STATE_MODIFIED\020\002\022\030\n\024UPDATE_STATE_R"
-  "EMOVED\020\003*\234\001\n\010GearType\022\022\n\016GEAR_TYPE_NONE\020"
-  "\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017GEAR_TYPE_CHE"
-  "ST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016GEAR_TYPE_AR"
-  "MS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n\020GEAR_TYPE_W"
-  "EAPON\020\006b\006proto3"
+  "MOVE_STATE_ACTION\020\003*f\n\nAttackType\022\024\n\020ATT"
+  "ACK_TYPE_NONE\020\000\022\026\n\022ATTACK_TYPE_NORMAL\020\001\022"
+  "\025\n\021ATTACK_TYPE_SKILL\020\002\022\023\n\017ATTACK_TYPE_EO"
+  "T\020\003*j\n\nDamageType\022\024\n\020DAMAGE_TYPE_NONE\020\000\022"
+  "\030\n\024DAMAGE_TYPE_PHYSICAL\020\001\022\027\n\023DAMAGE_TYPE"
+  "_MAGICAL\020\002\022\023\n\017DAMAGE_TYPE_FIX\020\003*\240\001\n\nEffe"
+  "ctType\022\024\n\020EFFECT_TYPE_NONE\020\000\022\030\n\024EFFECT_T"
+  "YPE_BLEEDING\020\001\022\024\n\020EFFECT_TYPE_BURN\020\002\022\026\n\022"
+  "EFFECT_TYPE_POSION\020\003\022\030\n\024EFFECT_TYPE_SPEE"
+  "D_UP\020\004\022\032\n\026EFFECT_TYPE_SPEED_DOWN\020\005*i\n\010It"
+  "emType\022\022\n\016ITEM_TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_"
+  "GEAR\020\001\022\030\n\024ITEM_TYPE_CONSUMABLE\020\002\022\033\n\027ITEM"
+  "_TYPE_MISCELLANEOUS\020\003*\253\001\n\010SlotType\022\022\n\016SL"
+  "OT_TYPE_NONE\020\000\022\034\n\030SLOT_TYPE_INVENTORY_GE"
+  "AR\020\001\022\"\n\036SLOT_TYPE_INVENTORY_CONSUMABLE\020\002"
+  "\022\034\n\030SLOT_TYPE_INVENTORY_MISC\020\003\022\026\n\022SLOT_T"
+  "YPE_EQUIPPED\020\004\022\023\n\017SLOT_TYPE_QUICK\020\005*\325\001\n\010"
+  "StatType\022\022\n\016STAT_TYPE_NONE\020\000\022\024\n\020STAT_TYP"
+  "E_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020STAT_TYP"
+  "E_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031STAT_TYP"
+  "E_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYPE_MAGICAL"
+  "_ATTACK\020\006\022\025\n\021STAT_TYPE_MAX_EXP\020\007\022\021\n\rSTAT"
+  "_TYPE_EXP\020\010*q\n\013UpdateState\022\025\n\021UPDATE_STA"
+  "TE_NONE\020\000\022\026\n\022UPDATE_STATE_ADDED\020\001\022\031\n\025UPD"
+  "ATE_STATE_MODIFIED\020\002\022\030\n\024UPDATE_STATE_REM"
+  "OVED\020\003*\234\001\n\010GearType\022\022\n\016GEAR_TYPE_NONE\020\000\022"
+  "\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017GEAR_TYPE_CHEST"
+  "\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016GEAR_TYPE_ARMS"
+  "\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n\020GEAR_TYPE_WEA"
+  "PON\020\006*\225\002\n\013RespawnType\022\025\n\021RESPAWN_TYPE_NO"
+  "NE\020\000\022\025\n\021RESPAWN_TYPE_TOWN\020\001\022\033\n\027RESPAWN_T"
+  "YPE_CHECKPOINT\020\002\022\"\n\036RESPAWN_TYPE_RESURRE"
+  "CTION_ITEM\020\003\022\031\n\025RESPAWN_TYPE_IN_PLACE\020\004\022"
+  "\035\n\031RESPAWN_TYPE_PARTY_MEMBER\020\005\022\033\n\027RESPAW"
+  "N_TYPE_GUILD_BASE\020\006\022\032\n\026RESPAWN_TYPE_CASH"
+  "_ITEM\020\007\022$\n RESPAWN_TYPE_BATTLE_RESURRECT"
+  "ION\020\010*\225\001\n\tEnterType\022\023\n\017ENTER_TYPE_NONE\020\000"
+  "\022\026\n\022ENTER_TYPE_INITIAL\020\001\022 \n\034ENTER_TYPE_S"
+  "AME_MAP_TRANSFER\020\002\022!\n\035ENTER_TYPE_CROSS_M"
+  "AP_TRANSFER\020\003\022\026\n\022ENTER_TYPE_RESPAWN\020\004*`\n"
+  "\nRewardType\022\024\n\020REWARD_TYPE_NONE\020\000\022\034\n\030REW"
+  "ARD_TYPE_MONSTER_KILL\020\001\022\036\n\032REWARD_TYPE_Q"
+  "UEST_COMPLETE\020\002b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1455, descriptor_table_protodef_Enum_2eproto,
+    false, false, 2023, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -131,11 +145,11 @@ bool MoveState_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* HitType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* AttackType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[3];
 }
-bool HitType_IsValid(int value) {
+bool AttackType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
@@ -229,6 +243,7 @@ bool StatType_IsValid(int value) {
     case 5:
     case 6:
     case 7:
+    case 8:
       return true;
     default:
       return false;
@@ -264,6 +279,59 @@ bool GearType_IsValid(int value) {
     case 4:
     case 5:
     case 6:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RespawnType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[11];
+}
+bool RespawnType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[12];
+}
+bool EnterType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[13];
+}
+bool RewardType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
       return true;
     default:
       return false;

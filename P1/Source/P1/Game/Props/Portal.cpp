@@ -17,14 +17,18 @@ void APortal::BeginPlay()
 	Super::BeginPlay();	
 }
 
-void APortal::SendMoveRoomPacket()
+void APortal::SendEnterRoomPacket()
 {
     if (PortalId == 0)
         return;
 
-    Protocol::C_MOVE_ROOM Pkt;
-    Pkt.set_portal_id(PortalId);
-    SEND_PACKET(Pkt);
+    Protocol::C_ENTER_ROOM EnterRoomPkt; 
+    {
+        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
+        EnterRoomPkt.set_portal_id(PortalId);
+
+        SEND_PACKET(EnterRoomPkt);
+    }
 }
 
 

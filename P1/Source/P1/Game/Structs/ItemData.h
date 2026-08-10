@@ -14,10 +14,10 @@ struct FItemData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Name;
+    int32 Name = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 TemplateId;
+    int32 TemplateId = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemName;
@@ -29,25 +29,25 @@ struct FItemData : public FTableRowBase
     FString ItemSubType;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 LevelRequirement;
+    int32 LevelRequirement = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ClassRequirement;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 BuyPrice;
+    int32 BuyPrice = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 SellPrice;
+    int32 SellPrice = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool Sellable;
+    bool Sellable = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 MaxStack;
+    int32 MaxStack = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float Cooldown;
+    float Cooldown = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Description;
@@ -60,31 +60,31 @@ struct FItemData : public FTableRowBase
     ----------------------------*/
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float HpRestore;
+    float HpRestore = 0.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float MpRestore;
+    float MpRestore = 0.f;
     
     /*---------------------------
               Gear Field
     ----------------------------*/
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 PhysicalAttack;
+    int32 PhysicalAttack = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 MagicalAttack;
+    int32 MagicalAttack = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Hp;
+    int32 Hp = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Mp;
+    int32 Mp = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 HpRegenerate;
+    int32 HpRegenerate = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 MpRegenerate;
+    int32 MpRegenerate = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftObjectPtr<USkeletalMesh> SkeletalMesh;

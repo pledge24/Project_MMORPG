@@ -38,7 +38,6 @@ public:
     void DespawnAllObjects(bool ExceptMine);
     void DespawnObject(uint64 ObjectId);
 
-
 protected:
     void Clear();
     void SpawnMonster(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId);

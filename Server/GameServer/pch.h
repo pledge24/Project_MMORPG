@@ -59,4 +59,8 @@ USING_SHARED_PTR(TickIntervalTimer);
 
 #define SEND_PACKET(pkt)													    \
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);	\
-	session->Send(sendBuffer);												
+	session->Send(sendBuffer);	
+
+#define SEND_PACKET_USING_THIS_SESSION(session, pkt)										        \
+	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);	\
+	session->Send(sendBuffer);

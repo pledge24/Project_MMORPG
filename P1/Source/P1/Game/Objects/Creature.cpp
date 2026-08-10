@@ -64,9 +64,9 @@ void ACreature::Tick(float DeltaTime)
     // Cache: 틱마다 플레이어의 이전 틱 위치 정보 저장
     {
         FVector Location = GetActorLocation();
-        ClientPos->set_x(Location.X);
-        ClientPos->set_y(Location.Y);
-        ClientPos->set_z(Location.Z);
+        ClientPos->mutable_pos()->set_x(Location.X);
+        ClientPos->mutable_pos()->set_y(Location.Y);
+        ClientPos->mutable_pos()->set_z(Location.Z);
         ClientPos->set_yaw(GetActorRotation().Yaw);
     }
 
@@ -123,7 +123,7 @@ void ACreature::SetClientPos(const Protocol::PosInfo& Info)
 
     ClientPos->CopyFrom(Info);
 
-    FVector Location(Info.x(), Info.y(), Info.z());
+    FVector Location(Info.pos().x(), Info.pos().y(), Info.pos().z());
     SetActorLocation(Location);
 
     FRotator CurrentRotation = GetActorRotation();
@@ -154,6 +154,21 @@ void ACreature::SetCreatureName(const FText& InName)
     CreatureName = InName;
 }
 
+void ACreature::SetDeadState(bool IsDead)
+{
+    _IsDead = IsDead;
+
+    if (IsDead)
+    {
+        GetCharacterMovement()->DisableMovement();
+        GetCharacterMovement()->StopMovementImmediately();
+    }
+    else
+    {
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    }
+}
+
 void ACreature::S_Move(float DeltaSeconds)
 {
 
@@ -175,7 +190,7 @@ void ACreature::S_Move(float DeltaSeconds)
     }
 
     FVector ClientLocation = GetActorLocation();
-    FVector ServerLocation = FVector(ServerPos->x(), ServerPos->y(), ClientLocation.Z);
+    FVector ServerLocation = FVector(ServerPos->pos().x(), ServerPos->pos().y(), ClientLocation.Z);
     const float Dist = FVector::Distance(ClientLocation, ServerLocation);
 
     // 회전 보정.
@@ -220,9 +235,21 @@ void ACreature::S_NormalAttack(uint32 Combo, float Yaw)
     AttackSystemComponent->S_PerformNormalAttack(Combo);
 }
 
+void ACreature::S_Hit(int64 Damage, int64 UpdatedHp)
+{
+    OnHit.Broadcast(Damage, UpdatedHp);
+}
+
+void ACreature::S_Die()
+{
+    SetDeadState(true);
+    
+    OnDie.Broadcast(this);
+}
+
 FVector ACreature::FindPerpendicularPoint() const
 {
-    FVector TargetPoint = FVector(ServerPos->x(), ServerPos->y(), ClientPos->z());
+    FVector TargetPoint = FVector(ServerPos->pos().x(), ServerPos->pos().y(), ClientPos->pos().z());
     FVector ClosestPoint = UKismetMathLibrary::FindClosestPointOnLine(GetActorLocation(), TargetPoint, MoveDirection);
 
     return ClosestPoint;

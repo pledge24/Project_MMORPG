@@ -34,46 +34,33 @@ message S_CREATE_CHARACTER
 {
     bool success = 1;
     string cause = 2;
-    uint64 character_id = 3;
+    int64 character_id = 3;
 }
 
 message C_DELETE_CHARACTER
 {
-    uint64 character_id = 1;
+    int64 character_id = 1;
 }
 
 message S_DELETE_CHARACTER
 {
     bool success = 1;
-    uint64 character_id = 2;
+    int64 character_id = 2;
 }
 
 message C_ENTER_GAME
 {
-	uint64 character_id = 1;
+	int64 character_id = 1;
 }
 
 message S_ENTER_GAME
 {
 	bool success = 1;
-	ObjectInfo player = 2;
-}
+	ObjectInfo player = 2;  
 
-message C_ENTER_MAP_COMPLETE
-{
-
-}
-
-message C_MOVE_ROOM
-{
-    uint32 portal_id = 1;
-}
-
-message S_MOVE_ROOM
-{
-    uint32 map_id = 1;
-    PosInfo info = 2;
-    repeated ObjectInfo objects = 3;
+    // 캐릭터 개인 정보
+    StatInfo stat_info = 3;         // 스텟 정보
+    Possession possession = 4;      // 소유물
 }
 
 message C_LEAVE_GAME
@@ -86,6 +73,53 @@ message S_LEAVE_GAME
 
 }
 
+message C_MAP_LOAD_COMPLETE
+{
+
+}
+
+message C_ENTER_MAP
+{
+    // 이 패킷은 게임 입장 후에 사용한다.
+    int32 map_id = 1;
+    optional PosInfo info = 2;      // 서버 검증용
+
+    oneof enter_data
+    {
+        int32 portal_id = 3;       // 사용한 포탈 id
+        int32 room_id = 4;
+    }
+}
+
+message S_ENTER_MAP
+{
+    bool success = 1;
+    int32 map_id = 2;
+    int32 room_id = 3;
+}
+
+message C_ENTER_ROOM
+{
+    EnterType enter_type = 1;
+
+    // Room 입장에 필요한 추가 데이터
+    oneof enter_data
+    {
+        int32 room_id = 2;
+        int32 portal_id = 3;
+    }
+}
+
+message S_ENTER_ROOM
+{
+    bool success = 1;
+    EnterType enter_type = 2;   // 요청 확인용
+    int32 room_id = 3;
+
+    // 게임에 참여하지 않고 단순 입장만 하는 경우 고려해서 optional 추가
+    optional PosInfo enter_pos = 4; 
+}
+
 message S_SPAWN
 {
 	repeated ObjectInfo objects = 1;
@@ -93,7 +127,7 @@ message S_SPAWN
 
 message S_DESPAWN
 {
-	repeated uint64 object_ids = 1;
+	repeated int64 object_ids = 1;
 }
 
 message C_MOVE
@@ -108,29 +142,21 @@ message S_MOVE
 
 message C_NORMAL_ATTACK
 {
-    uint32 combo = 1;
+    int32 combo = 1;
 }
 
 message S_NORMAL_ATTACK
 {
-    uint64 object_id = 1;
-    uint32 combo = 2;
+    int64 object_id = 1;
+    int32 combo = 2;
     float yaw = 3;
 }
 
 message S_HIT
 {
-    uint64 attacker_id = 1;         // object_id
-    uint64 target_id = 2;           // object_id
-
-    DamageType damage_type = 3;     // 물리 피해? 마법 피해?
-
-    // 맞아서 바뀐 스텟들
-    oneof hit_result
-    {
-        uint32 hp = 4;
-        repeated Stat updated_stat = 5;
-    }
+    int64 object_id = 1;
+    int64 damage = 2;
+    optional int64 updated_hp = 3; 
 }
 
 message C_BUY_ITEM
@@ -167,11 +193,15 @@ message C_EQUIP_GEAR
 message S_EQUIP_GEAR
 {
     bool success = 1;
-    uint64 object_id = 2;
-    Slot updated_equipped_slot = 3;
+    int64 object_id = 2;
     
-    optional Slot updated_inventory_slot = 4;
-    optional StatInfo updated_stat_info = 5; // 바뀐 스탯
+    // 장착 결과
+    int32 slot_id = 3; 
+    int32 template_id = 4;
+
+    // 장착 결과(나에게만)
+    repeated Slot updated_slots = 5;
+    repeated Stat updated_stat = 6;     // 바뀐 스탯
 }
 
 message C_UNEQUIP_GEAR
@@ -182,11 +212,15 @@ message C_UNEQUIP_GEAR
 message S_UNEQUIP_GEAR
 {
     bool success = 1;
-    uint64 object_id = 2;
-    Slot updated_equipped_slot = 3;
-    
-    optional Slot updated_inventory_slot = 4;
-    optional StatInfo updated_stat_info = 5; // 바뀐 스탯
+    int64 object_id = 2;
+
+    // 장착 결과
+    int32 slot_id = 3; 
+    int32 template_id = 4;
+
+    // 탈착 결과(나에게만)
+    repeated Slot updated_slots = 5;
+    repeated Stat updated_stat = 6;     
 }
 
 message C_USE_ITEM
@@ -197,8 +231,54 @@ message C_USE_ITEM
 message S_USE_ITEM
 {
     bool success = 1;
-    uint64 object_id = 2;
+    int64 object_id = 2;
 
-    optional Slot updated_inventory_slot = 3;
-    optional StatInfo updated_stat_info = 4; // 바뀐 스탯
+    // 사용 결과
+    repeated Slot updated_slots = 3;
+    repeated Stat updated_stat = 4;     // 바뀐 스탯
+}
+
+message S_DIE
+{
+    int64 object_id = 1;
+}
+
+message S_REWARD_RESULT
+{
+    RewardType type = 1;
+    Reward reward = 2;
+
+    // 갱신된 데이터
+    int64 updated_exp = 3;
+    int64 updated_gold = 4;
+    bool is_level_up = 5;
+    LevelUpInfo level_up_details = 6;
+}
+
+message C_RESPAWN
+{
+    RespawnType respawn_type = 1;
+
+    // 리스폰 타입에 따라 사용
+    oneof respawn_data
+    {
+        int64 item_uid = 2;           
+        int32 checkpoint_id = 3;     
+        int64 target_player_id = 4;  
+        int32 town_id = 5;           
+    }
+}
+
+message S_RESPAWN
+{
+    // S_RESPAWN은 리스폰 요청의 결과만 알려주고 실제 스폰은 하지 않는다.
+    bool success = 1;
+    string error_message = 2;
+    RespawnType respawn_type = 3;
+    int64 object_id = 4;
+
+    // 리스폰시 변경된 데이터
+    int32 room_id = 5;
+    PosInfo pos_info = 6;
+    repeated Stat updated_stat = 7;
 }

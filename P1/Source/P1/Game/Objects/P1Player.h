@@ -27,7 +27,7 @@ public:
     virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override; // Server Only
 
     /** Setter함수 */
-    void EquipGear(const Protocol::Slot& InSlot);
+    void SetEquipmentSlot(const Protocol::Slot& InSlot);
     void SetPlayerName(const FText& InName);
 
     /** Getter함수 */
@@ -35,8 +35,8 @@ public:
 
 public:
     /** 델리게이트 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
-    FOnLevelChanged OnLevelChanged;
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelUp, int32);
+    FOnLevelUp OnLevelUp;
 
 protected:
     /** 이동 관련 함수 */

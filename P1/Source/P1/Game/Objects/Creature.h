@@ -7,6 +7,8 @@
 #include "Protocol.pb.h"
 #include "Creature.generated.h"
 
+
+
 UCLASS()
 class P1_API ACreature : public ACharacter
 {
@@ -19,6 +21,13 @@ protected:
 	virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    void SetDeadState(bool IsDead);
+
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    bool IsDead() const { return _IsDead; }
 
 public:
     virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);    // Server Only
@@ -39,23 +48,24 @@ public:
     FText GetCreatureName() const { return CreatureName; }
 
 public:
-    /** 이동 관련 함수 */
+    /** 서버 패킷 핸들링 함수 */
     virtual void S_Move(float DeltaSeconds);
     virtual void S_NormalAttack(uint32 Combo, float Yaw);
+    virtual void S_Hit(int64 Damage, int64 UpdatedHp);
+    virtual void S_Die();
 
     FVector FindPerpendicularPoint() const;
 
 public:
-    /** 델리게이트 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatInfoChanged, const Protocol::StatInfo&);
-    FOnStatInfoChanged OnStatInfoChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnHpChanged, const int32&);
-    FOnHpChanged OnHpChanged;
+    /** Action 델리게이트 */
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnHit OnHit;
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnDie OnDie;
+
 
 protected:
     /** Attack System Component */
@@ -80,4 +90,5 @@ private:
     const float CORR_INTERP_SPEED = 5.f;
     const float CORR_RINTERP_SPEED = 5.f;
 
+    bool _IsDead = false;
 };

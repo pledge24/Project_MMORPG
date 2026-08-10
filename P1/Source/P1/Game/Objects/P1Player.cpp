@@ -44,6 +44,7 @@ AP1Player::AP1Player()
     {
         WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
     }
+
 }
 
 void AP1Player::BeginPlay()
@@ -65,18 +66,15 @@ void AP1Player::Initialize(const Protocol::ObjectInfo& ObjectInfo)
 {
     Super::Initialize(ObjectInfo);
 
-    if (ObjectInfo.player_info().equipped_gear().empty())
-        return;
-
     // 장착한 장비를 메시로 표현
-    for (const auto& Pair : ObjectInfo.player_info().equipped_gear())
+    /*for (const auto& Pair : ObjectInfo.player_info().equipped_gear())
     {
         const Protocol::Slot& Slot_ = Pair.second;
         EquipGear(Slot_);
-    }
+    }*/
 }
 
-void AP1Player::EquipGear(const Protocol::Slot& InSlot)
+void AP1Player::SetEquipmentSlot(const Protocol::Slot& InSlot)
 {
     int32 SlotId = InSlot.slot_id();
     int32 TemplateId = InSlot.item().template_id();

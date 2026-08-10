@@ -21,5 +21,5 @@ struct FCharacterOverview
     FString CharacterName;
 
     UPROPERTY(BlueprintReadWrite, Category = "CharacterSelect")
-    int32 CharacterLevel;
+    int32 CharacterLevel = 0;
 };

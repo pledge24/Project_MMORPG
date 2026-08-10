@@ -128,32 +128,32 @@ inline bool MoveState_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<MoveState>(
     MoveState_descriptor(), name, value);
 }
-enum HitType : int {
-  HIT_TYPE_NONE = 0,
-  HIT_TYPE_NORMAL = 1,
-  HIT_TYPE_SKILL = 2,
-  HIT_TYPE_EOT = 3,
-  HitType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  HitType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+enum AttackType : int {
+  ATTACK_TYPE_NONE = 0,
+  ATTACK_TYPE_NORMAL = 1,
+  ATTACK_TYPE_SKILL = 2,
+  ATTACK_TYPE_EOT = 3,
+  AttackType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  AttackType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool HitType_IsValid(int value);
-constexpr HitType HitType_MIN = HIT_TYPE_NONE;
-constexpr HitType HitType_MAX = HIT_TYPE_EOT;
-constexpr int HitType_ARRAYSIZE = HitType_MAX + 1;
+bool AttackType_IsValid(int value);
+constexpr AttackType AttackType_MIN = ATTACK_TYPE_NONE;
+constexpr AttackType AttackType_MAX = ATTACK_TYPE_EOT;
+constexpr int AttackType_ARRAYSIZE = AttackType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* HitType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* AttackType_descriptor();
 template<typename T>
-inline const std::string& HitType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, HitType>::value ||
+inline const std::string& AttackType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, AttackType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function HitType_Name.");
+    "Incorrect type passed to function AttackType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    HitType_descriptor(), enum_t_value);
+    AttackType_descriptor(), enum_t_value);
 }
-inline bool HitType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, HitType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<HitType>(
-    HitType_descriptor(), name, value);
+inline bool AttackType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, AttackType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<AttackType>(
+    AttackType_descriptor(), name, value);
 }
 enum DamageType : int {
   DAMAGE_TYPE_NONE = 0,
@@ -275,7 +275,8 @@ enum StatType : int {
   STAT_TYPE_MP = 4,
   STAT_TYPE_PHYSICAL_ATTACK = 5,
   STAT_TYPE_MAGICAL_ATTACK = 6,
-  STAT_TYPE_EXP = 7,
+  STAT_TYPE_MAX_EXP = 7,
+  STAT_TYPE_EXP = 8,
   StatType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   StatType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
@@ -355,6 +356,92 @@ inline bool GearType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearType>(
     GearType_descriptor(), name, value);
 }
+enum RespawnType : int {
+  RESPAWN_TYPE_NONE = 0,
+  RESPAWN_TYPE_TOWN = 1,
+  RESPAWN_TYPE_CHECKPOINT = 2,
+  RESPAWN_TYPE_RESURRECTION_ITEM = 3,
+  RESPAWN_TYPE_IN_PLACE = 4,
+  RESPAWN_TYPE_PARTY_MEMBER = 5,
+  RESPAWN_TYPE_GUILD_BASE = 6,
+  RESPAWN_TYPE_CASH_ITEM = 7,
+  RESPAWN_TYPE_BATTLE_RESURRECTION = 8,
+  RespawnType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  RespawnType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool RespawnType_IsValid(int value);
+constexpr RespawnType RespawnType_MIN = RESPAWN_TYPE_NONE;
+constexpr RespawnType RespawnType_MAX = RESPAWN_TYPE_BATTLE_RESURRECTION;
+constexpr int RespawnType_ARRAYSIZE = RespawnType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RespawnType_descriptor();
+template<typename T>
+inline const std::string& RespawnType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, RespawnType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function RespawnType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    RespawnType_descriptor(), enum_t_value);
+}
+inline bool RespawnType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RespawnType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RespawnType>(
+    RespawnType_descriptor(), name, value);
+}
+enum EnterType : int {
+  ENTER_TYPE_NONE = 0,
+  ENTER_TYPE_INITIAL = 1,
+  ENTER_TYPE_SAME_MAP_TRANSFER = 2,
+  ENTER_TYPE_CROSS_MAP_TRANSFER = 3,
+  ENTER_TYPE_RESPAWN = 4,
+  EnterType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  EnterType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool EnterType_IsValid(int value);
+constexpr EnterType EnterType_MIN = ENTER_TYPE_NONE;
+constexpr EnterType EnterType_MAX = ENTER_TYPE_RESPAWN;
+constexpr int EnterType_ARRAYSIZE = EnterType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor();
+template<typename T>
+inline const std::string& EnterType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, EnterType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function EnterType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    EnterType_descriptor(), enum_t_value);
+}
+inline bool EnterType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EnterType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EnterType>(
+    EnterType_descriptor(), name, value);
+}
+enum RewardType : int {
+  REWARD_TYPE_NONE = 0,
+  REWARD_TYPE_MONSTER_KILL = 1,
+  REWARD_TYPE_QUEST_COMPLETE = 2,
+  RewardType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  RewardType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool RewardType_IsValid(int value);
+constexpr RewardType RewardType_MIN = REWARD_TYPE_NONE;
+constexpr RewardType RewardType_MAX = REWARD_TYPE_QUEST_COMPLETE;
+constexpr int RewardType_ARRAYSIZE = RewardType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor();
+template<typename T>
+inline const std::string& RewardType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, RewardType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function RewardType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    RewardType_descriptor(), enum_t_value);
+}
+inline bool RewardType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RewardType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RewardType>(
+    RewardType_descriptor(), name, value);
+}
 // ===================================================================
 
 
@@ -392,10 +479,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::MoveState>() {
   return ::Protocol::MoveState_descriptor();
 }
-template <> struct is_proto_enum< ::Protocol::HitType> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::AttackType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::HitType>() {
-  return ::Protocol::HitType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::AttackType>() {
+  return ::Protocol::AttackType_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::DamageType> : ::std::true_type {};
 template <>
@@ -431,6 +518,21 @@ template <> struct is_proto_enum< ::Protocol::GearType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearType>() {
   return ::Protocol::GearType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::RespawnType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RespawnType>() {
+  return ::Protocol::RespawnType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::EnterType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::EnterType>() {
+  return ::Protocol::EnterType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::RewardType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RewardType>() {
+  return ::Protocol::RewardType_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

@@ -1,9 +1,10 @@
 [
     {
         "templateId": 10,
+        "mapId": 1111,
         "mapName": "마을",
         "mapType": "safe zone",
-        "haveSpawnPoint": true,
+        "hasRespawnPoint": true,
         "centerPos": {
             "posX": 0,
             "posY": 0,
@@ -11,7 +12,7 @@
         },
         "widthHalfExtent": 1500,
         "heightHalfExtent": 1500,
-        "spawnPoint": {
+        "respawnPoint": {
             "posX": 0,
             "posY": 0,
             "posZ": 0
@@ -74,9 +75,10 @@
     },
     {
         "templateId": 20,
+        "mapId": 1111,
         "mapName": "초급 사냥터",
         "mapType": "hunting field",
-        "haveSpawnPoint": false,
+        "hasRespawnPoint": false,
         "centerPos": {
             "posX": -10000,
             "posY": 10000,
@@ -84,7 +86,7 @@
         },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
-        "spawnPoint": null,
+        "respawnPoint": null,
         "portals": {
             "lists": [
                 {
@@ -115,9 +117,10 @@
     },
     {
         "templateId": 30,
+        "mapId": 1111,
         "mapName": "중급 사냥터",
         "mapType": "hunting field",
-        "haveSpawnPoint": false,
+        "hasRespawnPoint": false,
         "centerPos": {
             "posX": -10000,
             "posY": 0,
@@ -125,7 +128,7 @@
         },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
-        "spawnPoint": null,
+        "respawnPoint": null,
         "portals": {
             "lists": [
                 {
@@ -156,9 +159,10 @@
     },
     {
         "templateId": 40,
+        "mapId": 1111,
         "mapName": "고급 사냥터",
         "mapType": "hunting field",
-        "haveSpawnPoint": false,
+        "hasRespawnPoint": false,
         "centerPos": {
             "posX": -10000,
             "posY": -10000,
@@ -166,7 +170,7 @@
         },
         "widthHalfExtent": 2500,
         "heightHalfExtent": 2500,
-        "spawnPoint": null,
+        "respawnPoint": null,
         "portals": {
             "lists": [
                 {

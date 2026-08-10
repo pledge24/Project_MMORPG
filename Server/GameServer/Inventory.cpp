@@ -5,7 +5,7 @@
 
 Inventory::Inventory(PlayerRef player) : _player(player)
 {
-    Protocol::Inventory* inventory = player->playerInfo->mutable_inventory();
+    Protocol::Inventory* inventory = player->possession->mutable_inventory();
     
     for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
     {
@@ -56,7 +56,7 @@ Inventory::~Inventory()
 {
 }
 
-bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
+bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
     //if (itemInstance.template_id() == 0)
     //    return false;
@@ -90,8 +90,8 @@ bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstanc
         int32 updatedCount = item->count() + count;
         item->set_count(updatedCount);
 
-        if(repSlot != nullptr)
-            repSlot->CopyFrom(*targetSlot);
+        if(replicatingSlot != nullptr)
+            replicatingSlot->CopyFrom(*targetSlot);
     }
     else
     {
@@ -105,14 +105,14 @@ bool Inventory::addItem(OUT Protocol::Slot* repSlot, Protocol::Item& itemInstanc
         if (itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
             item->set_item_uid(GNextItemUID.fetch_add(1));
         
-        if (repSlot != nullptr)
-            repSlot->CopyFrom(*targetSlot);
+        if (replicatingSlot != nullptr)
+            replicatingSlot->CopyFrom(*targetSlot);
     }
 
     return true;
 }
 
-bool Inventory::addItem(OUT Protocol::Slot* repSlot, int32 templateId, int32 count)
+bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count)
 {
     // -> 아직 인스턴스화된 아이템이 아닐때 진입(ex. 구매한 아이템)
     Protocol::Item itemInstance;
@@ -122,38 +122,39 @@ bool Inventory::addItem(OUT Protocol::Slot* repSlot, int32 templateId, int32 cou
     // TODO: generate inital instance data.
     // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
 
-    if (addItem(repSlot, itemInstance, count) == false)
+    if (addItem(replicatingSlot, itemInstance, count) == false)
         return false;
 
     return true; 
 }
 
-bool Inventory::removeItem(OUT Protocol::Slot* repSlot, Protocol::Slot* slot, int32 count)
+bool Inventory::removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
 {
-    Protocol::ItemType itemType = slotTypeToItemTypeMappings[slot->type()];
-    int32 slotId = slot->slot_id();
-    Protocol::Slot* targetSlot = inventorylookupMappings[itemType]->Mutable(slotId);
-    Protocol::Item* item = targetSlot->mutable_item();
+    Protocol::ItemType itemType = slotTypeToItemTypeMappings[requestSlot.type()];
+    int32 slotId = requestSlot.slot_id();
+
+    Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(requestSlot.slot_id());
+    Protocol::Item* item = updatedSlot->mutable_item();
 
     dirtyFlagsMappings[itemType][slotId] = true;
 
-    if (targetSlot->has_item() == false || item->count() < count)
+    if (updatedSlot->has_item() == false || item->count() < count)
         return false;
 
     int32 updatedCount = item->count() - count;
     if (updatedCount > 0)
     {
-        targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
+        updatedSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
         item->set_count(updatedCount);
 
-        repSlot->CopyFrom(*targetSlot);
+        replicatingSlot->CopyFrom(*updatedSlot);
     }
     else
     {
-        targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
-        targetSlot->clear_item();
+        updatedSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
+        updatedSlot->clear_item();
         
-        repSlot->CopyFrom(*targetSlot);
+        replicatingSlot->CopyFrom(*updatedSlot);
     }
     
     return true;
@@ -213,6 +214,14 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
     }
 
     return availableSlotId;
+}
+
+Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
+{
+    Protocol::ItemType itemType = slotTypeToItemTypeMappings[type];
+    RepeatedPtrField<Protocol::Slot>* lookupTable = inventorylookupMappings[itemType];
+
+    return &(lookupTable->at(slot_id));
 }
 
 void Inventory::ClearDirtyFlags()

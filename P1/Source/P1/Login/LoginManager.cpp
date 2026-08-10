@@ -18,8 +18,8 @@ void ULoginManager::RequestLogin(const FString& Username, const FString& Passwor
 
 	// JSON 데이터 생성
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-	JsonObject->SetStringField("username", Username);
-	JsonObject->SetStringField("password", Password);
+	JsonObject->SetStringField(TEXT("username"), Username);
+	JsonObject->SetStringField(TEXT("password"), Password);
 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
@@ -44,8 +44,8 @@ void ULoginManager::RequestRegister(const FString& Username, const FString& Pass
 
 	// JSON 데이터 생성
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-	JsonObject->SetStringField("username", Username);
-	JsonObject->SetStringField("password", Password);
+	JsonObject->SetStringField(TEXT("username"), Username);
+	JsonObject->SetStringField(TEXT("password"), Password);
 
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
@@ -85,7 +85,7 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
 				// 토큰을 GameInstance에 저장
-				token = JsonObject->GetStringField("accessToken");
+				token = JsonObject->GetStringField(TEXT("accessToken"));
 				if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
 				{
 					GameInstance->SetToken(token);
@@ -99,7 +99,7 @@ void ULoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Re
 		{
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
-				Message = JsonObject->GetStringField("errorMessage");
+				Message = JsonObject->GetStringField(TEXT("errorMessage"));
 			}
 		}
 	}
@@ -146,7 +146,7 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 			RegisterSuccess = true;
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
-				Message = JsonObject->GetStringField("message");
+				Message = JsonObject->GetStringField(TEXT("message"));
 			}
 		}
 		else
@@ -154,7 +154,7 @@ void ULoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr
 			RegisterSuccess = false;
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
-				Message = JsonObject->GetStringField("errorMessage");
+				Message = JsonObject->GetStringField(TEXT("errorMessage"));
 			}
 		}
 	}

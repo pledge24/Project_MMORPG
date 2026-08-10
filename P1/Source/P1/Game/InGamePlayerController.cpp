@@ -13,13 +13,25 @@
 #include "ShopWidget.h"
 #include "NameplateWidget.h"
 #include "WarningTextWidget.h"
+#include "DeathWidget.h"
+#include "MyPlayerData.h"
 
 void AInGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    Protocol::C_ENTER_MAP_COMPLETE pkt;
-    SEND_PACKET(pkt);
+    Protocol::C_ENTER_ROOM EnterRoomPkt;
+    {
+        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
+
+        if (UMyPlayerData* MyPlayerData = GetGameInstance()->GetSubsystem<UMyPlayerData>())
+        {
+            int32 RoomId = MyPlayerData->GetRoomId();
+            EnterRoomPkt.set_room_id(RoomId);
+        }
+
+        SEND_PACKET(EnterRoomPkt);
+    }
 
     // ==================== Widget들 추가 ======================
     if(HUDWidgetClass && !HUDWidget)
@@ -79,6 +91,16 @@ void AInGamePlayerController::BeginPlay()
         {
             WarningTextWidget->AddToViewport();
             WarningTextWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+        }
+    }
+
+    if (DeathWidgetClass && !DeathWidget)
+    {
+        DeathWidget = CreateWidget<UDeathWidget>(this, DeathWidgetClass);
+        if (DeathWidget)
+        {
+            DeathWidget->AddToViewport(DEATH_WIDGET_Z_ORDER);
+            DeathWidget->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
 

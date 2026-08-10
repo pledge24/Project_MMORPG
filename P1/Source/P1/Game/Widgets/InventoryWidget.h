@@ -26,8 +26,6 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
-
     void UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse = false);
     void UpdateGold(const int64 Gold);
     class USlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& InSlot);

@@ -7,6 +7,7 @@
 #include "ObjectUtils.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
+#include "Gamedata.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -113,8 +114,13 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-	// 플레이어 생성
+	// 플레이어 생성 및 초기화
 	PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
+    if (player == nullptr)
+    {
+        wcout << L"Warning: 플레이어 생성 실패" << '\n';
+        return false;
+    }
 
     // 유저 Id를 통해 DBQueue를 선택
     int64 userId = static_pointer_cast<GameSession>(session)->userId;
@@ -133,7 +139,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 	return true;
 }
 
-bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MAP_COMPLETE& pkt)
+bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
@@ -141,89 +147,16 @@ bool Handle_C_ENTER_MAP_COMPLETE(PacketSessionRef& session, Protocol::C_ENTER_MA
     if (player == nullptr)
         return false;
 
-    int32 roomId = player->objectInfo->map_id();
-    RoomRef room = GRoomManager->GetRoomRefFromRoomId(roomId);
+    RoomRef room = player->room.load().lock();
     if (room == nullptr)
         return false;
 
-    // Room 입장 처리
-    {
-        shared_ptr<Protocol::PosInfo> enterPos = make_shared<Protocol::PosInfo>();
-        enterPos->CopyFrom(player->objectInfo->pos_info());
-
-        room->DoAsync(&Room::HandleEnterPlayer, player, enterPos, false);
-    }
-
-    return true;
-}
-
-bool Handle_C_MOVE_ROOM(PacketSessionRef& session, Protocol::C_MOVE_ROOM& pkt)
-{
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef curRoom = player->room.load().lock();
-    if (curRoom == nullptr)
-        return false;
-
-    optional<Json> opt = curRoom->GetPortalDataFromPortalId(pkt.portal_id());
-    if (opt.has_value() == false)
-    {
-        wcout << "플레이어가 현재 Room에 존재하지 않는 포탈사용 시도" << '\n';
-        return false;
-    }
-
-    // Room 이동 처리
-    {
-        using namespace JsonProperty::Map;
-        const Json& portalData = opt.value();
-        const Json& dst = portalData[Dst];
-
-        // 1) 이동할 위치 설정
-        shared_ptr<Protocol::PosInfo> enterPos = make_shared<Protocol::PosInfo>();
-        {
-            enterPos->set_object_id(player->objectInfo->object_id());
-            enterPos->set_x(dst[PosX]);
-            enterPos->set_y(dst[PosY]);
-            enterPos->set_z(dst[PosZ]);
-            enterPos->set_yaw(dst[Yaw]);
-            enterPos->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-        }
-
-        // 2) Room 현재 room은 나가고, 다음 room은 들어간다.
-        {
-            RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(dst[TemplateId]);
-
-            curRoom->DoAsync(&Room::HandleLeavePlayer, player, true);
-            enterRoom->DoAsync(&Room::HandleEnterPlayer, player, enterPos, true);
-        }
-    }
-
-    return true;
-}
-
-bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
-{
-	auto gameSession = static_pointer_cast<GameSession>(session);
-
-	PlayerRef player = gameSession->player.load();
-	if (player == nullptr)
-		return false;
-
-	RoomRef room = player->room.load().lock();
-	if (room == nullptr)
-		return false;
-
     // Room 퇴장 처리
-    {
-        room->DoAsync(&Room::HandleLeavePlayer, player, false);
-	}
+    room->DoAsync(&Room::LeavePlayer, player, false);
+
 
     // DB 업데이트 처리
-	{
+    {
         int64 characterId = player->playerInfo->character_id();
         DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
 
@@ -235,12 +168,91 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
             }
         );
         dbQueue->Push(std::move(job));
-	}
+    }
 
     // GameSession 네트워크 연결 해제
     gameSession->Disconnect("Exit Game");
 
-	return true;
+    return true;
+}
+
+bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
+{
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    int32 roomId = pkt.room_id();
+
+    // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
+    // ...
+
+    if (player == nullptr)
+    {
+        Protocol::S_ENTER_MAP enterMapPkt;
+        {
+            enterMapPkt.set_success(false);
+            enterMapPkt.set_map_id(pkt.map_id());
+            enterMapPkt.set_room_id(roomId);
+
+            SEND_PACKET(enterMapPkt);
+        }
+
+        return false;
+    }
+
+    // TODO: Map 입장에 제한(ex. 인원수 제한)을 두고 싶다면 로직 추가
+    // ...
+
+    
+    // 성공적인 Map 입장 처리
+    {
+        player->OnEnterMap(pkt.map_id(), roomId);
+
+        Protocol::S_ENTER_MAP enterMapPkt;
+        {
+            enterMapPkt.set_success(true);
+            enterMapPkt.set_map_id(pkt.map_id());
+            enterMapPkt.set_room_id(roomId);
+
+            SEND_PACKET(enterMapPkt);
+        }
+    }
+
+    return true;
+}
+
+bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
+{
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef curRoom = player->room.load().lock();
+    if (curRoom == nullptr)
+    {
+        // 아직 어떤 Room에도 속하지 않은 최초 입장.
+        // player->room 은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
+        // 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고, 입장할 Room의 큐로 넘긴다.
+        pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
+
+        int32 roomId = pkt.has_room_id() ? pkt.room_id() : player->GetEnteringRoomId();
+        RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
+        if (enterRoom == nullptr)
+        {
+            wcout << L"최초 입장할 Room을 찾지 못함. roomId: " << roomId << '\n';
+            return false;
+        }
+
+        enterRoom->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
+
+        return true;
+    }
+
+    curRoom->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
+
+    return true;
 }
 
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
@@ -255,7 +267,7 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 	if (room == nullptr)
 		return false;
 
-    room->DoAsync(&Room::HandleMove, pkt);
+    room->DoAsync(&Room::C_HandleMove, pkt);
 
 	return true;
 }
@@ -272,12 +284,10 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleNormalAttack, pkt, player);
+    room->DoAsync(&Room::C_HandleNormalAttack, pkt, player);
 
     return true;
 }
-
-
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
@@ -287,22 +297,11 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_BUY_ITEM buyItemPkt;
-    Protocol::Slot* updatedSlot = buyItemPkt.mutable_updated_slot();
-    int32 templateId = pkt.template_id();
-    int64 totalGold = 0;
-
-    if (player->HandleBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
-    {
-        buyItemPkt.set_success(false);
-        SEND_PACKET(buyItemPkt);
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
         return false;
-    }
 
-    buyItemPkt.set_success(true);
-    buyItemPkt.set_gold(totalGold);
-    SEND_PACKET(buyItemPkt);
-    cout << buyItemPkt.DebugString() << endl;
+    room->DoAsync(&Room::C_HandleBuyItem, pkt, player);
 
     return true;
 }
@@ -315,22 +314,12 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_SELL_ITEM sellItemPkt;
-    Protocol::Slot* targetSlot = pkt.mutable_slot();
-    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
-
-    int64 totalGold = 0;
-    if (player->HandleSellItem(OUT updatedSlot, targetSlot, OUT totalGold) == false)
-    {
-        sellItemPkt.set_success(false);
-        SEND_PACKET(sellItemPkt);
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
         return false;
-    }
 
-    sellItemPkt.set_success(true);
-    sellItemPkt.set_gold(totalGold);
-    SEND_PACKET(sellItemPkt);
-    
+    room->DoAsync(&Room::C_HandleSellItem, pkt, player);
+
     return true;
 }
 
@@ -346,7 +335,7 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleEquipGear, pkt, player);
+    room->DoAsync(&Room::C_HandleEquipGear, pkt, player);
 
     return true;
 }
@@ -364,7 +353,7 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
     if (room == nullptr)
         return false;
 
-    room->DoAsync(&Room::HandleUnequipGear, pkt, player);
+    room->DoAsync(&Room::C_HandleUnequipGear, pkt, player);
 
     return true;
 }
@@ -377,17 +366,28 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
     if (player == nullptr)
         return false;
 
-    Protocol::S_USE_ITEM useItemPkt;
-    Protocol::Slot* targetSlot = pkt.mutable_slot();
-    if (player->HandleUseItem(useItemPkt, targetSlot) == false)
-    {
-        useItemPkt.set_success(false);
-        SEND_PACKET(useItemPkt);
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
         return false;
-    }
 
-    useItemPkt.set_success(true);
-    SEND_PACKET(useItemPkt);
+    room->DoAsync(&Room::C_HandleUseItem, pkt, player);
+
+    return true;
+}
+
+bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
+{
+    auto gameSession = static_pointer_cast<GameSession>(session);
+
+    PlayerRef player = gameSession->player.load();
+    if (player == nullptr)
+        return false;
+
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        return false;
+
+    room->DoAsync(&Room::C_HandleRespawn, pkt, player);
 
     return true;
 }

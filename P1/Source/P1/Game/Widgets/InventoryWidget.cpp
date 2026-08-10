@@ -21,9 +21,9 @@ void UInventoryWidget::NativeConstruct()
         if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
         {
             const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
-            const Protocol::Inventory& Inven_ = PlayerInfo_.inventory();
+            const Protocol::Inventory& Inven_ = MyPlayerData->GetPossession()->inventory();
 
-            UpdateGold(PlayerInfo_.gold());
+            UpdateGold(MyPlayerData->GetGold());
 
             for (const Protocol::Slot& Slot_ : Inven_.gear())
             {
@@ -40,8 +40,13 @@ void UInventoryWidget::NativeConstruct()
                 UpdateSlotWidget(Slot_);
             }
 
-            // MyPlayer 스폰 이벤트에 함수 등록
-            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UInventoryWidget::BindMyPlayerSpawned);
+            // 바인딩 셋업
+            MyPlayerData->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
+            MyPlayerData->OnInvenSlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
+
+            GameInstance->OnRecvSellItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+            GameInstance->OnRecvUseItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
+            GameInstance->OnRecvEquipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
         }
         
     }
@@ -69,17 +74,6 @@ void UInventoryWidget::Clear()
         if (Slot_)
             Slot_->ClearSlot();
     }
-}
-
-void UInventoryWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
-{
-    // 바인딩 셋업
-    MyPlayer->OnGoldChanged.AddUObject(this, &UInventoryWidget::UpdateGold);
-    MyPlayer->OnInvenSlotChanged.AddUObject(this, &UInventoryWidget::UpdateSlotWidget);
-
-    MyPlayer->OnRecvSellItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
-    MyPlayer->OnRecvUseItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
-    MyPlayer->OnRecvEquipGearPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
 }
 
 void UInventoryWidget::UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse)
@@ -147,10 +141,10 @@ void UInventoryWidget::SendSellItemPacket(USlotWidget* SlotWidget)
 
     const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
-    Protocol::C_SELL_ITEM pkt;
-    pkt.mutable_slot()->CopyFrom(SlotData);
-    pkt.set_count(1);
-    SEND_PACKET(pkt);
+    Protocol::C_SELL_ITEM Pkt;
+    Pkt.mutable_slot()->CopyFrom(SlotData);
+    Pkt.set_count(1);
+    SEND_PACKET(Pkt);
     
 }
 
@@ -181,9 +175,9 @@ void UInventoryWidget::SendUseItemPacket(USlotWidget* SlotWidget)
 
         if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
         {
-            Protocol::C_USE_ITEM pkt;
-            pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(pkt);
+            Protocol::C_USE_ITEM Pkt;
+            Pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(Pkt);
         }
         else
         {
@@ -218,9 +212,9 @@ void UInventoryWidget::SendEquipItemPacket(USlotWidget* SlotWidget)
 
         if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR)
         {
-            Protocol::C_EQUIP_GEAR pkt;
-            pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(pkt);
+            Protocol::C_EQUIP_GEAR Pkt;
+            Pkt.mutable_slot()->CopyFrom(SlotData);
+            SEND_PACKET(Pkt);
         }
         else
         {

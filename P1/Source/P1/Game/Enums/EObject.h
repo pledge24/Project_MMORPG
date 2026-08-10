@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 
 UENUM(BlueprintType)
-enum class EObjectType
+enum class EObjectType : uint8
 {
     None UMETA(DisplayName = "None"),
     Monster UMETA(DisplayName = "Monster"),

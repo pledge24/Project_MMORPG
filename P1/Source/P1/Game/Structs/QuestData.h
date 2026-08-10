@@ -16,25 +16,25 @@ struct FQuestData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Name;
+    int32 Name = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 TemplateId;
+    int32 TemplateId = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Title;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 LevelRequirement;
+    int32 LevelRequirement = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString QuestType;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 StartNpc;
+    int32 StartNpc = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 EndNpc;
+    int32 EndNpc = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FQuestObjectiveData Objectives;
@@ -43,7 +43,7 @@ struct FQuestData : public FTableRowBase
     FQuestRewardData Rewards;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool Repeatable;
+    bool Repeatable = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Description;

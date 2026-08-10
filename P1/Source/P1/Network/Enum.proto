@@ -25,12 +25,12 @@ enum MoveState
     MOVE_STATE_ACTION = 3; // Root Motion이 들어간 애니메이션 실행
 }
 
-enum HitType
+enum AttackType
 {
-    HIT_TYPE_NONE = 0;
-    HIT_TYPE_NORMAL = 1;
-    HIT_TYPE_SKILL = 2;
-    HIT_TYPE_EOT = 3;           // Effect Over Time: 지속 효과 피해
+    ATTACK_TYPE_NONE = 0;
+    ATTACK_TYPE_NORMAL = 1;
+    ATTACK_TYPE_SKILL = 2;
+    ATTACK_TYPE_EOT = 3;        // Effect Over Time(지속 피해)
 }
 
 enum DamageType
@@ -72,13 +72,18 @@ enum SlotType
 enum StatType
 {
     STAT_TYPE_NONE = 0;
+
+    // 전투 스텟
     STAT_TYPE_MAX_HP = 1;
     STAT_TYPE_HP = 2;
     STAT_TYPE_MAX_MP = 3;
     STAT_TYPE_MP = 4;
     STAT_TYPE_PHYSICAL_ATTACK = 5;
     STAT_TYPE_MAGICAL_ATTACK = 6;
-    STAT_TYPE_EXP = 7;
+
+    // 성장 스텟
+    STAT_TYPE_MAX_EXP = 7;
+    STAT_TYPE_EXP = 8;
 }
 
 enum UpdateState
@@ -98,4 +103,33 @@ enum GearType
     GEAR_TYPE_ARMS = 4;
     GEAR_TYPE_BOOTS = 5;
     GEAR_TYPE_WEAPON = 6;
+}
+
+enum RespawnType 
+{
+    RESPAWN_TYPE_NONE = 0;
+    RESPAWN_TYPE_TOWN = 1;                      // 마을로 귀환
+    RESPAWN_TYPE_CHECKPOINT = 2;                // 체크포인트에서 부활
+    RESPAWN_TYPE_RESURRECTION_ITEM = 3;         // 부활 아이템 사용
+    RESPAWN_TYPE_IN_PLACE = 4;                  // 제자리 부활 (프리미엄)
+    RESPAWN_TYPE_PARTY_MEMBER = 5;              // 파티원 위치로 부활
+    RESPAWN_TYPE_GUILD_BASE = 6;                // 길드 거점으로 부활
+    RESPAWN_TYPE_CASH_ITEM = 7;                 // 캐시 부활 아이템
+    RESPAWN_TYPE_BATTLE_RESURRECTION = 8;       // 전투 중 부활 (ex. 힐러 스킬)
+}
+
+enum EnterType
+{
+    ENTER_TYPE_NONE = 0;
+    ENTER_TYPE_INITIAL = 1;             // 최초 입장(Enter Game)
+    ENTER_TYPE_SAME_MAP_TRANSFER = 2;   // 같은 맵 내 이동
+    ENTER_TYPE_CROSS_MAP_TRANSFER = 3;  // 맵 간 이동
+    ENTER_TYPE_RESPAWN = 4;             // 리스폰
+}
+
+enum RewardType
+{
+    REWARD_TYPE_NONE = 0;
+    REWARD_TYPE_MONSTER_KILL = 1;
+    REWARD_TYPE_QUEST_COMPLETE = 2;
 }

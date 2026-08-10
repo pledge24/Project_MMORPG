@@ -12,6 +12,8 @@ enum
     MAX_EQUIPPED_SLOTS = 6
 };
 
+using namespace google::protobuf;
+
 /**
  *
  */
@@ -22,12 +24,13 @@ class P1_API UEquippedGear : public UObject
 
 public:
     UEquippedGear() = default;
+    void Init(Map<int32, Protocol::Slot>* EquippedGear_);
 
-    void Init(Protocol::PlayerInfo* PlayerInfo_);
-
+public:
     void Rep_SlotChanged(const Protocol::Slot& Slot_);
+    const Map<int32, Protocol::Slot>& GetAllSlot() { return *EquippedGearLookup; }
 
 private:
     /** 장착 아이템 LookUp */
-    google::protobuf::Map<int32, Protocol::Slot> EquippedGearLookup;
+    Map<int32, Protocol::Slot>* EquippedGearLookup;
 };

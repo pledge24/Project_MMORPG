@@ -55,35 +55,6 @@ protected:
     bool CanInputMovement() const;
 
 public:
-    /** 델리게이트 */
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnExpChanged, TOptional<int32>, TOptional<int32>);
-    FOnExpChanged OnExpChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, const int64);
-    FOnGoldChanged OnGoldChanged;
-
-    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInvenSlotChanged, const Protocol::Slot&, bool);
-    FOnInvenSlotChanged OnInvenSlotChanged;
-
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnGearSlotChanged, const Protocol::Slot&);
-    FOnGearSlotChanged OnGearSlotChanged;
-
-    /** 패킷 수신 체크용 델리게이트 */
-    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
-    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
-    FOnRecvSellItemPkt OnRecvSellItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
-    FOnRecvUseItemPkt OnRecvUseItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
-    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
-    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
-
     /** ETC */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     bool bBattleMode = false;

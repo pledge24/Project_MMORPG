@@ -5,7 +5,11 @@
         "maxMp": 100,
         "physicalAttack": 10,
         "magicalAttack": 2,
-        "expRequirement": 50
+        "expRequirement": 50,
+        "maxHpIncrement": 500,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 2,
@@ -13,7 +17,11 @@
         "maxMp": 200,
         "physicalAttack": 20,
         "magicalAttack": 4,
-        "expRequirement": 80
+        "expRequirement": 80,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 3,
@@ -21,7 +29,11 @@
         "maxMp": 300,
         "physicalAttack": 30,
         "magicalAttack": 6,
-        "expRequirement": 110
+        "expRequirement": 110,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 4,
@@ -29,7 +41,11 @@
         "maxMp": 400,
         "physicalAttack": 40,
         "magicalAttack": 8,
-        "expRequirement": 140
+        "expRequirement": 140,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 5,
@@ -37,7 +53,11 @@
         "maxMp": 500,
         "physicalAttack": 50,
         "magicalAttack": 10,
-        "expRequirement": 170
+        "expRequirement": 170,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 6,
@@ -45,7 +65,11 @@
         "maxMp": 600,
         "physicalAttack": 60,
         "magicalAttack": 12,
-        "expRequirement": 200
+        "expRequirement": 200,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 7,
@@ -53,7 +77,11 @@
         "maxMp": 700,
         "physicalAttack": 70,
         "magicalAttack": 14,
-        "expRequirement": 230
+        "expRequirement": 230,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 8,
@@ -61,7 +89,11 @@
         "maxMp": 800,
         "physicalAttack": 80,
         "magicalAttack": 16,
-        "expRequirement": 260
+        "expRequirement": 260,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 9,
@@ -69,7 +101,11 @@
         "maxMp": 900,
         "physicalAttack": 90,
         "magicalAttack": 18,
-        "expRequirement": 290
+        "expRequirement": 290,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 10,
@@ -77,7 +113,11 @@
         "maxMp": 1000,
         "physicalAttack": 100,
         "magicalAttack": 20,
-        "expRequirement": 320
+        "expRequirement": 320,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 11,
@@ -85,7 +125,11 @@
         "maxMp": 1100,
         "physicalAttack": 110,
         "magicalAttack": 22,
-        "expRequirement": 350
+        "expRequirement": 350,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 12,
@@ -93,7 +137,11 @@
         "maxMp": 1200,
         "physicalAttack": 120,
         "magicalAttack": 24,
-        "expRequirement": 380
+        "expRequirement": 380,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 13,
@@ -101,7 +149,11 @@
         "maxMp": 1300,
         "physicalAttack": 130,
         "magicalAttack": 26,
-        "expRequirement": 410
+        "expRequirement": 410,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 14,
@@ -109,7 +161,11 @@
         "maxMp": 1400,
         "physicalAttack": 140,
         "magicalAttack": 28,
-        "expRequirement": 440
+        "expRequirement": 440,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 15,
@@ -117,7 +173,11 @@
         "maxMp": 1500,
         "physicalAttack": 150,
         "magicalAttack": 30,
-        "expRequirement": 470
+        "expRequirement": 470,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 16,
@@ -125,7 +185,11 @@
         "maxMp": 1600,
         "physicalAttack": 160,
         "magicalAttack": 32,
-        "expRequirement": 500
+        "expRequirement": 500,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 17,
@@ -133,7 +197,11 @@
         "maxMp": 1700,
         "physicalAttack": 170,
         "magicalAttack": 34,
-        "expRequirement": 530
+        "expRequirement": 530,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 18,
@@ -141,7 +209,11 @@
         "maxMp": 1800,
         "physicalAttack": 180,
         "magicalAttack": 36,
-        "expRequirement": 560
+        "expRequirement": 560,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 19,
@@ -149,7 +221,11 @@
         "maxMp": 1900,
         "physicalAttack": 190,
         "magicalAttack": 38,
-        "expRequirement": 590
+        "expRequirement": 590,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 20,
@@ -157,7 +233,11 @@
         "maxMp": 2000,
         "physicalAttack": 200,
         "magicalAttack": 40,
-        "expRequirement": 620
+        "expRequirement": 620,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 21,
@@ -165,7 +245,11 @@
         "maxMp": 2100,
         "physicalAttack": 210,
         "magicalAttack": 42,
-        "expRequirement": 650
+        "expRequirement": 650,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 22,
@@ -173,7 +257,11 @@
         "maxMp": 2200,
         "physicalAttack": 220,
         "magicalAttack": 44,
-        "expRequirement": 680
+        "expRequirement": 680,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 23,
@@ -181,7 +269,11 @@
         "maxMp": 2300,
         "physicalAttack": 230,
         "magicalAttack": 46,
-        "expRequirement": 710
+        "expRequirement": 710,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 24,
@@ -189,7 +281,11 @@
         "maxMp": 2400,
         "physicalAttack": 240,
         "magicalAttack": 48,
-        "expRequirement": 740
+        "expRequirement": 740,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 25,
@@ -197,7 +293,11 @@
         "maxMp": 2500,
         "physicalAttack": 250,
         "magicalAttack": 50,
-        "expRequirement": 770
+        "expRequirement": 770,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 26,
@@ -205,7 +305,11 @@
         "maxMp": 2600,
         "physicalAttack": 260,
         "magicalAttack": 52,
-        "expRequirement": 800
+        "expRequirement": 800,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 27,
@@ -213,7 +317,11 @@
         "maxMp": 2700,
         "physicalAttack": 270,
         "magicalAttack": 54,
-        "expRequirement": 830
+        "expRequirement": 830,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 28,
@@ -221,7 +329,11 @@
         "maxMp": 2800,
         "physicalAttack": 280,
         "magicalAttack": 56,
-        "expRequirement": 860
+        "expRequirement": 860,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 29,
@@ -229,7 +341,11 @@
         "maxMp": 2900,
         "physicalAttack": 290,
         "magicalAttack": 58,
-        "expRequirement": 890
+        "expRequirement": 890,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 30,
@@ -237,7 +353,11 @@
         "maxMp": 3000,
         "physicalAttack": 300,
         "magicalAttack": 60,
-        "expRequirement": 920
+        "expRequirement": 920,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 31,
@@ -245,7 +365,11 @@
         "maxMp": 3100,
         "physicalAttack": 310,
         "magicalAttack": 62,
-        "expRequirement": 950
+        "expRequirement": 950,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 32,
@@ -253,7 +377,11 @@
         "maxMp": 3200,
         "physicalAttack": 320,
         "magicalAttack": 64,
-        "expRequirement": 980
+        "expRequirement": 980,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 33,
@@ -261,7 +389,11 @@
         "maxMp": 3300,
         "physicalAttack": 330,
         "magicalAttack": 66,
-        "expRequirement": 1010
+        "expRequirement": 1010,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 34,
@@ -269,7 +401,11 @@
         "maxMp": 3400,
         "physicalAttack": 340,
         "magicalAttack": 68,
-        "expRequirement": 1040
+        "expRequirement": 1040,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 35,
@@ -277,7 +413,11 @@
         "maxMp": 3500,
         "physicalAttack": 350,
         "magicalAttack": 70,
-        "expRequirement": 1070
+        "expRequirement": 1070,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 36,
@@ -285,7 +425,11 @@
         "maxMp": 3600,
         "physicalAttack": 360,
         "magicalAttack": 72,
-        "expRequirement": 1100
+        "expRequirement": 1100,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 37,
@@ -293,7 +437,11 @@
         "maxMp": 3700,
         "physicalAttack": 370,
         "magicalAttack": 74,
-        "expRequirement": 1130
+        "expRequirement": 1130,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 38,
@@ -301,7 +449,11 @@
         "maxMp": 3800,
         "physicalAttack": 380,
         "magicalAttack": 76,
-        "expRequirement": 1160
+        "expRequirement": 1160,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 39,
@@ -309,7 +461,11 @@
         "maxMp": 3900,
         "physicalAttack": 390,
         "magicalAttack": 78,
-        "expRequirement": 1190
+        "expRequirement": 1190,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 40,
@@ -317,7 +473,11 @@
         "maxMp": 4000,
         "physicalAttack": 400,
         "magicalAttack": 80,
-        "expRequirement": 1220
+        "expRequirement": 1220,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 41,
@@ -325,7 +485,11 @@
         "maxMp": 4100,
         "physicalAttack": 410,
         "magicalAttack": 82,
-        "expRequirement": 1250
+        "expRequirement": 1250,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 42,
@@ -333,7 +497,11 @@
         "maxMp": 4200,
         "physicalAttack": 420,
         "magicalAttack": 84,
-        "expRequirement": 1280
+        "expRequirement": 1280,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 43,
@@ -341,7 +509,11 @@
         "maxMp": 4300,
         "physicalAttack": 430,
         "magicalAttack": 86,
-        "expRequirement": 1310
+        "expRequirement": 1310,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 44,
@@ -349,7 +521,11 @@
         "maxMp": 4400,
         "physicalAttack": 440,
         "magicalAttack": 88,
-        "expRequirement": 1340
+        "expRequirement": 1340,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 45,
@@ -357,7 +533,11 @@
         "maxMp": 4500,
         "physicalAttack": 450,
         "magicalAttack": 90,
-        "expRequirement": 1370
+        "expRequirement": 1370,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 46,
@@ -365,7 +545,11 @@
         "maxMp": 4600,
         "physicalAttack": 460,
         "magicalAttack": 92,
-        "expRequirement": 1400
+        "expRequirement": 1400,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 47,
@@ -373,7 +557,11 @@
         "maxMp": 4700,
         "physicalAttack": 470,
         "magicalAttack": 94,
-        "expRequirement": 1430
+        "expRequirement": 1430,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 48,
@@ -381,7 +569,11 @@
         "maxMp": 4800,
         "physicalAttack": 480,
         "magicalAttack": 96,
-        "expRequirement": 1460
+        "expRequirement": 1460,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 49,
@@ -389,7 +581,11 @@
         "maxMp": 4900,
         "physicalAttack": 490,
         "magicalAttack": 98,
-        "expRequirement": 1490
+        "expRequirement": 1490,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     },
     {
         "level": 50,
@@ -397,6 +593,10 @@
         "maxMp": 5000,
         "physicalAttack": 500,
         "magicalAttack": 100,
-        "expRequirement": 0
+        "expRequirement": 0,
+        "maxHpIncrement": 100,
+        "maxMpIncrement": 100,
+        "paIncrement": 10,
+        "maIncrement": 2
     }
 ]

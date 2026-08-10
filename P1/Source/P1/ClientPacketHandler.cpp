@@ -86,47 +86,50 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
         if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
         {
             GameInstance->HandleEnterGame(pkt);
-            UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
         }
     }
 
 	return true;
 }
 
-bool Handle_S_MOVE_ROOM(PacketSessionRef& session, Protocol::S_MOVE_ROOM& pkt)
+bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
-        GameInstance->HandleMove(pkt.info());   // Teleporting My Character
-        GameInstance->HandleDespawnAll(true);
-
-        for (auto& Object : pkt.objects())
+        // 연결을 곧바로 끊음
+        if (FSocket* Socket = GameInstance->Socket)
         {
-            GameInstance->HandleSpawn(Object);
-        }
+            //ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
+            //SocketSubsystem->DestroySocket(Socket);
+            //Socket = nullptr;
 
+            Socket->Close();
+        }
+    }
+
+    return true;
+}
+
+bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleEnterMap(pkt);
         return true;
     }
 
     return false;
 }
 
-bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
+bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
-	{
-		// 연결을 곧바로 끊음
-        if (FSocket* Socket = GameInstance->Socket)
-        {
-        	//ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-        	//SocketSubsystem->DestroySocket(Socket);
-        	//Socket = nullptr;
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleEnterRoom(pkt);
+        return true;
+    }
 
-            Socket->Close();
-        }
-	}
-
-	return true;
+    return false;
 }
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
@@ -175,8 +178,13 @@ bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK
 
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 {
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleHit(pkt);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
@@ -233,3 +241,37 @@ bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 
     return false;
 }
+
+bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleDie(pkt);
+        return true;
+    }
+
+    return false;
+}
+
+bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleRewardResult(pkt);
+        return true;
+    }
+
+    return false;
+}
+
+bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
+{
+    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    {
+        GameInstance->HandleRespawn(pkt);
+        return true;
+    }
+
+    return false;
+}
+
