@@ -509,3 +509,7 @@ PSD/
 # Rider가 각 개발자 환경에 알아서 설치하는 언리얼 통합 플러그인.
 # 게임 코드가 아니라 IDE 도구이고 Rider 버전마다 갈리므로 추적하지 않는다.
 Plugins/Developer/RiderLink/
+
+# UE 5.8 ModelContextProtocol 플러그인이 만드는 MCP 클라이언트 설정.
+# localhost 주소가 박힌 개인 AI 도구 설정이라 추적하지 않는다.
+.mcp.json
