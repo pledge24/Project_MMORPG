@@ -75,6 +75,9 @@ extern C_LEAVE_GAMEDefaultTypeInternal _C_LEAVE_GAME_default_instance_;
 class C_LOGIN;
 struct C_LOGINDefaultTypeInternal;
 extern C_LOGINDefaultTypeInternal _C_LOGIN_default_instance_;
+class C_MAP_LOAD_COMPLETE;
+struct C_MAP_LOAD_COMPLETEDefaultTypeInternal;
+extern C_MAP_LOAD_COMPLETEDefaultTypeInternal _C_MAP_LOAD_COMPLETE_default_instance_;
 class C_MOVE;
 struct C_MOVEDefaultTypeInternal;
 extern C_MOVEDefaultTypeInternal _C_MOVE_default_instance_;
@@ -170,6 +173,7 @@ template<> ::Protocol::C_ENTER_ROOM* Arena::CreateMaybeMessage<::Protocol::C_ENT
 template<> ::Protocol::C_EQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::C_EQUIP_GEAR>(Arena*);
 template<> ::Protocol::C_LEAVE_GAME* Arena::CreateMaybeMessage<::Protocol::C_LEAVE_GAME>(Arena*);
 template<> ::Protocol::C_LOGIN* Arena::CreateMaybeMessage<::Protocol::C_LOGIN>(Arena*);
+template<> ::Protocol::C_MAP_LOAD_COMPLETE* Arena::CreateMaybeMessage<::Protocol::C_MAP_LOAD_COMPLETE>(Arena*);
 template<> ::Protocol::C_MOVE* Arena::CreateMaybeMessage<::Protocol::C_MOVE>(Arena*);
 template<> ::Protocol::C_NORMAL_ATTACK* Arena::CreateMaybeMessage<::Protocol::C_NORMAL_ATTACK>(Arena*);
 template<> ::Protocol::C_PING* Arena::CreateMaybeMessage<::Protocol::C_PING>(Arena*);
@@ -1991,6 +1995,124 @@ class S_LEAVE_GAME final :
 };
 // -------------------------------------------------------------------
 
+class C_MAP_LOAD_COMPLETE final :
+    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:Protocol.C_MAP_LOAD_COMPLETE) */ {
+ public:
+  inline C_MAP_LOAD_COMPLETE() : C_MAP_LOAD_COMPLETE(nullptr) {}
+  explicit PROTOBUF_CONSTEXPR C_MAP_LOAD_COMPLETE(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  C_MAP_LOAD_COMPLETE(const C_MAP_LOAD_COMPLETE& from);
+  C_MAP_LOAD_COMPLETE(C_MAP_LOAD_COMPLETE&& from) noexcept
+    : C_MAP_LOAD_COMPLETE() {
+    *this = ::std::move(from);
+  }
+
+  inline C_MAP_LOAD_COMPLETE& operator=(const C_MAP_LOAD_COMPLETE& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline C_MAP_LOAD_COMPLETE& operator=(C_MAP_LOAD_COMPLETE&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const C_MAP_LOAD_COMPLETE& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const C_MAP_LOAD_COMPLETE* internal_default_instance() {
+    return reinterpret_cast<const C_MAP_LOAD_COMPLETE*>(
+               &_C_MAP_LOAD_COMPLETE_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    12;
+
+  friend void swap(C_MAP_LOAD_COMPLETE& a, C_MAP_LOAD_COMPLETE& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(C_MAP_LOAD_COMPLETE* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(C_MAP_LOAD_COMPLETE* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  C_MAP_LOAD_COMPLETE* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_MAP_LOAD_COMPLETE>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyFrom;
+  inline void CopyFrom(const C_MAP_LOAD_COMPLETE& from) {
+    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl(*this, from);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeFrom;
+  void MergeFrom(const C_MAP_LOAD_COMPLETE& from) {
+    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl(*this, from);
+  }
+  public:
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.C_MAP_LOAD_COMPLETE";
+  }
+  protected:
+  explicit C_MAP_LOAD_COMPLETE(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:Protocol.C_MAP_LOAD_COMPLETE)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+  };
+  friend struct ::TableStruct_Protocol_2eproto;
+};
+// -------------------------------------------------------------------
+
 class C_ENTER_MAP final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_ENTER_MAP) */ {
  public:
@@ -2045,7 +2167,7 @@ class C_ENTER_MAP final :
                &_C_ENTER_MAP_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(C_ENTER_MAP& a, C_ENTER_MAP& b) {
     a.Swap(&b);
@@ -2257,7 +2379,7 @@ class S_ENTER_MAP final :
                &_S_ENTER_MAP_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(S_ENTER_MAP& a, S_ENTER_MAP& b) {
     a.Swap(&b);
@@ -2433,7 +2555,7 @@ class C_ENTER_ROOM final :
                &_C_ENTER_ROOM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(C_ENTER_ROOM& a, C_ENTER_ROOM& b) {
     a.Swap(&b);
@@ -2624,7 +2746,7 @@ class S_ENTER_ROOM final :
                &_S_ENTER_ROOM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(S_ENTER_ROOM& a, S_ENTER_ROOM& b) {
     a.Swap(&b);
@@ -2815,7 +2937,7 @@ class S_SPAWN final :
                &_S_SPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(S_SPAWN& a, S_SPAWN& b) {
     a.Swap(&b);
@@ -2972,7 +3094,7 @@ class S_DESPAWN final :
                &_S_DESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(S_DESPAWN& a, S_DESPAWN& b) {
     a.Swap(&b);
@@ -3134,7 +3256,7 @@ class C_MOVE final :
                &_C_MOVE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(C_MOVE& a, C_MOVE& b) {
     a.Swap(&b);
@@ -3291,7 +3413,7 @@ class S_MOVE final :
                &_S_MOVE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(S_MOVE& a, S_MOVE& b) {
     a.Swap(&b);
@@ -3448,7 +3570,7 @@ class C_NORMAL_ATTACK final :
                &_C_NORMAL_ATTACK_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(C_NORMAL_ATTACK& a, C_NORMAL_ATTACK& b) {
     a.Swap(&b);
@@ -3596,7 +3718,7 @@ class S_NORMAL_ATTACK final :
                &_S_NORMAL_ATTACK_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(S_NORMAL_ATTACK& a, S_NORMAL_ATTACK& b) {
     a.Swap(&b);
@@ -3766,7 +3888,7 @@ class S_HIT final :
                &_S_HIT_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(S_HIT& a, S_HIT& b) {
     a.Swap(&b);
@@ -3941,7 +4063,7 @@ class C_BUY_ITEM final :
                &_C_BUY_ITEM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(C_BUY_ITEM& a, C_BUY_ITEM& b) {
     a.Swap(&b);
@@ -4100,7 +4222,7 @@ class S_BUY_ITEM final :
                &_S_BUY_ITEM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(S_BUY_ITEM& a, S_BUY_ITEM& b) {
     a.Swap(&b);
@@ -4279,7 +4401,7 @@ class C_SELL_ITEM final :
                &_C_SELL_ITEM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(C_SELL_ITEM& a, C_SELL_ITEM& b) {
     a.Swap(&b);
@@ -4447,7 +4569,7 @@ class S_SELL_ITEM final :
                &_S_SELL_ITEM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(S_SELL_ITEM& a, S_SELL_ITEM& b) {
     a.Swap(&b);
@@ -4626,7 +4748,7 @@ class C_EQUIP_GEAR final :
                &_C_EQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(C_EQUIP_GEAR& a, C_EQUIP_GEAR& b) {
     a.Swap(&b);
@@ -4783,7 +4905,7 @@ class S_EQUIP_GEAR final :
                &_S_EQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(S_EQUIP_GEAR& a, S_EQUIP_GEAR& b) {
     a.Swap(&b);
@@ -5004,7 +5126,7 @@ class C_UNEQUIP_GEAR final :
                &_C_UNEQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(C_UNEQUIP_GEAR& a, C_UNEQUIP_GEAR& b) {
     a.Swap(&b);
@@ -5161,7 +5283,7 @@ class S_UNEQUIP_GEAR final :
                &_S_UNEQUIP_GEAR_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(S_UNEQUIP_GEAR& a, S_UNEQUIP_GEAR& b) {
     a.Swap(&b);
@@ -5382,7 +5504,7 @@ class C_USE_ITEM final :
                &_C_USE_ITEM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(C_USE_ITEM& a, C_USE_ITEM& b) {
     a.Swap(&b);
@@ -5539,7 +5661,7 @@ class S_USE_ITEM final :
                &_S_USE_ITEM_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(S_USE_ITEM& a, S_USE_ITEM& b) {
     a.Swap(&b);
@@ -5738,7 +5860,7 @@ class S_DIE final :
                &_S_DIE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(S_DIE& a, S_DIE& b) {
     a.Swap(&b);
@@ -5886,7 +6008,7 @@ class S_REWARD_RESULT final :
                &_S_REWARD_RESULT_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(S_REWARD_RESULT& a, S_REWARD_RESULT& b) {
     a.Swap(&b);
@@ -6115,7 +6237,7 @@ class C_RESPAWN final :
                &_C_RESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(C_RESPAWN& a, C_RESPAWN& b) {
     a.Swap(&b);
@@ -6338,7 +6460,7 @@ class S_RESPAWN final :
                &_S_RESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(S_RESPAWN& a, S_RESPAWN& b) {
     a.Swap(&b);
@@ -7216,6 +7338,10 @@ inline void S_ENTER_GAME::set_allocated_possession(::Protocol::Possession* posse
 // -------------------------------------------------------------------
 
 // S_LEAVE_GAME
+
+// -------------------------------------------------------------------
+
+// C_MAP_LOAD_COMPLETE
 
 // -------------------------------------------------------------------
 
@@ -9953,6 +10079,8 @@ S_RESPAWN::updated_stat() const {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
