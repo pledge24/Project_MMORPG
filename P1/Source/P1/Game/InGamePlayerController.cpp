@@ -22,7 +22,7 @@ void AInGamePlayerController::BeginPlay()
 
     Protocol::C_ENTER_ROOM EnterRoomPkt;
     {
-        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_MAP_CHANGE);
+        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
 
         if (UMyPlayerData* MyPlayerData = GetGameInstance()->GetSubsystem<UMyPlayerData>())
         {

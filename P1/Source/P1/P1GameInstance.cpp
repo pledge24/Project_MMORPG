@@ -127,6 +127,9 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
 
     // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다.
     MyPlayerData->InitMyPlayerData(EnterGamePkt);
+
+    // TEMP
+    UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
 }
 
 void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
@@ -161,7 +164,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
         MyPlayerData->SetRoomId(EnterRoomPkt.room_id());
 
         // 단순 방 이동이라면 나를 제외한 모든 오브젝트를 Despawn + 텔레포트
-        if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_ROOM_CHANGE)
+        if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER)
         {
             HandleDespawnAll(true);
             if (EnterRoomPkt.has_enter_pos() && IsValid(_MyPlayer))
