@@ -18,18 +18,18 @@
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",
-			"Enabled": false,
+			"Enabled": true,
 			"TargetAllowList": [
 				"Editor"
 			]
 		},
 		{
 			"Name": "SkeletalMeshModelingTools",
-			"Enabled": false
+			"Enabled": true
 		},
 		{
 			"Name": "StaticMeshEditorModeling",
-			"Enabled": false
+			"Enabled": true
 		}
 	]
 }
