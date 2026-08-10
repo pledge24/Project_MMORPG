@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Main">
@@ -22,159 +22,159 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
+    <ClInclude Include="Main\pch.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="CorePch.h">
+    <ClInclude Include="Main\CorePch.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="Types.h">
+    <ClInclude Include="Main\Types.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="SocketUtil.h">
+    <ClInclude Include="Main\CoreMacro.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Main\CoreGlobal.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Main\CoreTLS.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\SocketUtil.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Service.h">
+    <ClInclude Include="Network\Service.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="NetAddress.h">
+    <ClInclude Include="Network\NetAddress.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Listener.h">
+    <ClInclude Include="Network\Listener.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="CoreMacro.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Network\IocpCore.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="CoreGlobal.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Network\Session.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadManager.h">
+    <ClInclude Include="Network\NetworkEvent.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\RecvBuffer.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\SendBuffer.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Thread\ThreadManager.h">
       <Filter>Thread</Filter>
     </ClInclude>
-    <ClInclude Include="IocpCore.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Session.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="NetworkEvent.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="RecvBuffer.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="SendBuffer.h">
-      <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Job.h">
+    <ClInclude Include="Job\Job.h">
       <Filter>Job</Filter>
     </ClInclude>
-    <ClInclude Include="JobQueue.h">
+    <ClInclude Include="Job\JobQueue.h">
       <Filter>Job</Filter>
     </ClInclude>
-    <ClInclude Include="JobTimer.h">
+    <ClInclude Include="Job\JobTimer.h">
       <Filter>Job</Filter>
     </ClInclude>
-    <ClInclude Include="GlobalQueue.h">
+    <ClInclude Include="Job\GlobalQueue.h">
       <Filter>Job</Filter>
     </ClInclude>
-    <ClInclude Include="CoreTLS.h">
-      <Filter>Main</Filter>
-    </ClInclude>
-    <ClInclude Include="LockQueue.h">
+    <ClInclude Include="Utils\LockQueue.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="DBBind.h">
+    <ClInclude Include="DB\DBBind.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DBConnection.h">
+    <ClInclude Include="DB\DBConnection.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DBConnectionPool.h">
+    <ClInclude Include="DB\DBConnectionPool.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DBQueue.h">
+    <ClInclude Include="DB\DBQueue.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DBManager.h">
+    <ClInclude Include="DB\DBManager.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="RedisManager.h">
+    <ClInclude Include="DB\RedisManager.h">
       <Filter>DB</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Main\pch.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="CorePch.cpp">
+    <ClCompile Include="Main\CorePch.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="SocketUtil.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Service.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="NetAddress.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Listener.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="CoreGlobal.cpp">
+    <ClCompile Include="Main\CoreGlobal.cpp">
       <Filter>Main</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadManager.cpp">
+    <ClCompile Include="Main\CoreTLS.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\SocketUtil.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Service.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetAddress.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Listener.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\IocpCore.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\Session.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\NetworkEvent.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\SendBuffer.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\RecvBuffer.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Thread\ThreadManager.cpp">
       <Filter>Thread</Filter>
     </ClCompile>
-    <ClCompile Include="IocpCore.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Session.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="NetworkEvent.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="SendBuffer.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="RecvBuffer.cpp">
-      <Filter>Network</Filter>
-    </ClCompile>
-    <ClCompile Include="JobQueue.cpp">
+    <ClCompile Include="Job\JobQueue.cpp">
       <Filter>Job</Filter>
     </ClCompile>
-    <ClCompile Include="JobTimer.cpp">
+    <ClCompile Include="Job\JobTimer.cpp">
       <Filter>Job</Filter>
     </ClCompile>
-    <ClCompile Include="GlobalQueue.cpp">
+    <ClCompile Include="Job\GlobalQueue.cpp">
       <Filter>Job</Filter>
     </ClCompile>
-    <ClCompile Include="CoreTLS.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
-    <ClCompile Include="LockQueue.cpp">
+    <ClCompile Include="Utils\LockQueue.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="DBBind.cpp">
+    <ClCompile Include="DB\DBBind.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DBConnection.cpp">
+    <ClCompile Include="DB\DBConnection.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DBConnectionPool.cpp">
+    <ClCompile Include="DB\DBConnectionPool.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DBQueue.cpp">
+    <ClCompile Include="DB\DBQueue.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DBManager.cpp">
+    <ClCompile Include="DB\DBManager.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="RedisManager.cpp">
+    <ClCompile Include="DB\RedisManager.cpp">
       <Filter>DB</Filter>
     </ClCompile>
   </ItemGroup>

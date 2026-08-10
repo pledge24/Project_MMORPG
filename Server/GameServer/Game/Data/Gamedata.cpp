@@ -15,6 +15,10 @@ DataTable Gamedata::WarriorLevelDataTable;
 /* 레벨 테이블 매핑 */
 unordered_map<int32, DataTable*> Gamedata::ClassLevelDataTableMappings;
 
+/* 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이며
+   GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다. */
+static constexpr const char* GAMEDATA_DIR = "Game/Data/Json/";
+
 /* 게임 데이터 */
 DataTable Gamedata::ItemDataTable;
 DataTable Gamedata::MapDataTable;
@@ -33,7 +37,7 @@ bool Gamedata::LoadAllGamedata()
     {
         // 1. 캐릭터 정보
         {
-            ifstream file("S_Warrior_Level_Data.json");
+            ifstream file(string(GAMEDATA_DIR) + "S_Warrior_Level_Data.json");
             if (file.is_open() == false)
                 throw wstring(L"LevelTable JSON 파일 열기 실패");
    
@@ -50,7 +54,7 @@ bool Gamedata::LoadAllGamedata()
 
         // 2. 아이템 정보
         {
-            ifstream file("S_Item.json");
+            ifstream file(string(GAMEDATA_DIR) + "S_Item.json");
             if (file.is_open() == false)
                 throw wstring(L"Item JSON 파일 열기 실패");
 
@@ -67,7 +71,7 @@ bool Gamedata::LoadAllGamedata()
     
         // 3. 맵 정보
         {
-            ifstream file("S_Map.json");
+            ifstream file(string(GAMEDATA_DIR) + "S_Map.json");
             if (file.is_open() == false)
                 throw wstring(L"Map JSON 파일 열기 실패");
 
@@ -84,7 +88,7 @@ bool Gamedata::LoadAllGamedata()
 
         // 4. 몬스터 정보
         {
-            ifstream file("S_Monster.json");
+            ifstream file(string(GAMEDATA_DIR) + "S_Monster.json");
             if (file.is_open() == false)
                 throw wstring(L"Monster JSON 파일 열기 실패");
 
@@ -101,7 +105,7 @@ bool Gamedata::LoadAllGamedata()
 
         // 5. 퀘스트 정보(현재 사용하지 않음)
         {
-            ifstream file("S_Quest.json");
+            ifstream file(string(GAMEDATA_DIR) + "S_Quest.json");
             if (file.is_open() == false)
                 throw wstring(L"Quest JSON 파일 열기 실패");
 

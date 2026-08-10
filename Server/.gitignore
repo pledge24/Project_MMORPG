@@ -412,8 +412,9 @@ FodyWeavers.xsd
 !Libraries/**
 !Common/**
 
-# SQL 쿼리문 폴더 무시
-Queries/*
+# SQL 쿼리문 폴더 무시 (Server/Queries 한정 — 앵커를 붙이지 않으면
+# GameServer/Queries 같은 하위 폴더까지 잡아 추적 중인 스크립트가 사라진다)
+/Queries/*
 
 # 환경 변수 파일 무시
 config.h

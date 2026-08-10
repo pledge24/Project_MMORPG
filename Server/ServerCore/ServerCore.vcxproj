@@ -72,22 +72,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -167,64 +167,64 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CoreGlobal.h" />
-    <ClInclude Include="CoreMacro.h" />
-    <ClInclude Include="CorePch.h" />
-    <ClInclude Include="CoreTLS.h" />
-    <ClInclude Include="DBBind.h" />
-    <ClInclude Include="DBConnection.h" />
-    <ClInclude Include="DBConnectionPool.h" />
-    <ClInclude Include="DBManager.h" />
-    <ClInclude Include="DBQueue.h" />
-    <ClInclude Include="GlobalQueue.h" />
-    <ClInclude Include="IocpCore.h" />
-    <ClInclude Include="Job.h" />
-    <ClInclude Include="JobQueue.h" />
-    <ClInclude Include="JobTimer.h" />
-    <ClInclude Include="Listener.h" />
-    <ClInclude Include="LockQueue.h" />
-    <ClInclude Include="NetAddress.h" />
-    <ClInclude Include="NetworkEvent.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="RecvBuffer.h" />
-    <ClInclude Include="RedisManager.h" />
-    <ClInclude Include="SendBuffer.h" />
-    <ClInclude Include="Service.h" />
-    <ClInclude Include="Session.h" />
-    <ClInclude Include="SocketUtil.h" />
-    <ClInclude Include="ThreadManager.h" />
-    <ClInclude Include="Types.h" />
+    <ClInclude Include="Main\CoreGlobal.h" />
+    <ClInclude Include="Main\CoreMacro.h" />
+    <ClInclude Include="Main\CorePch.h" />
+    <ClInclude Include="Main\CoreTLS.h" />
+    <ClInclude Include="Main\pch.h" />
+    <ClInclude Include="Main\Types.h" />
+    <ClInclude Include="DB\DBBind.h" />
+    <ClInclude Include="DB\DBConnection.h" />
+    <ClInclude Include="DB\DBConnectionPool.h" />
+    <ClInclude Include="DB\DBManager.h" />
+    <ClInclude Include="DB\DBQueue.h" />
+    <ClInclude Include="DB\RedisManager.h" />
+    <ClInclude Include="Job\GlobalQueue.h" />
+    <ClInclude Include="Job\Job.h" />
+    <ClInclude Include="Job\JobQueue.h" />
+    <ClInclude Include="Job\JobTimer.h" />
+    <ClInclude Include="Network\IocpCore.h" />
+    <ClInclude Include="Network\Listener.h" />
+    <ClInclude Include="Network\NetAddress.h" />
+    <ClInclude Include="Network\NetworkEvent.h" />
+    <ClInclude Include="Network\RecvBuffer.h" />
+    <ClInclude Include="Network\SendBuffer.h" />
+    <ClInclude Include="Network\Service.h" />
+    <ClInclude Include="Network\Session.h" />
+    <ClInclude Include="Network\SocketUtil.h" />
+    <ClInclude Include="Thread\ThreadManager.h" />
+    <ClInclude Include="Utils\LockQueue.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CoreGlobal.cpp" />
-    <ClCompile Include="CorePch.cpp" />
-    <ClCompile Include="CoreTLS.cpp" />
-    <ClCompile Include="DBBind.cpp" />
-    <ClCompile Include="DBConnection.cpp" />
-    <ClCompile Include="DBConnectionPool.cpp" />
-    <ClCompile Include="DBManager.cpp" />
-    <ClCompile Include="DBQueue.cpp" />
-    <ClCompile Include="GlobalQueue.cpp" />
-    <ClCompile Include="IocpCore.cpp" />
-    <ClCompile Include="JobQueue.cpp" />
-    <ClCompile Include="JobTimer.cpp" />
-    <ClCompile Include="Listener.cpp" />
-    <ClCompile Include="LockQueue.cpp" />
-    <ClCompile Include="NetAddress.cpp" />
-    <ClCompile Include="NetworkEvent.cpp" />
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Main\CoreGlobal.cpp" />
+    <ClCompile Include="Main\CorePch.cpp" />
+    <ClCompile Include="Main\CoreTLS.cpp" />
+    <ClCompile Include="Main\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="RecvBuffer.cpp" />
-    <ClCompile Include="RedisManager.cpp" />
-    <ClCompile Include="SendBuffer.cpp" />
-    <ClCompile Include="Service.cpp" />
-    <ClCompile Include="Session.cpp" />
-    <ClCompile Include="SocketUtil.cpp" />
-    <ClCompile Include="ThreadManager.cpp" />
+    <ClCompile Include="DB\DBBind.cpp" />
+    <ClCompile Include="DB\DBConnection.cpp" />
+    <ClCompile Include="DB\DBConnectionPool.cpp" />
+    <ClCompile Include="DB\DBManager.cpp" />
+    <ClCompile Include="DB\DBQueue.cpp" />
+    <ClCompile Include="DB\RedisManager.cpp" />
+    <ClCompile Include="Job\GlobalQueue.cpp" />
+    <ClCompile Include="Job\JobQueue.cpp" />
+    <ClCompile Include="Job\JobTimer.cpp" />
+    <ClCompile Include="Network\IocpCore.cpp" />
+    <ClCompile Include="Network\Listener.cpp" />
+    <ClCompile Include="Network\NetAddress.cpp" />
+    <ClCompile Include="Network\NetworkEvent.cpp" />
+    <ClCompile Include="Network\RecvBuffer.cpp" />
+    <ClCompile Include="Network\SendBuffer.cpp" />
+    <ClCompile Include="Network\Service.cpp" />
+    <ClCompile Include="Network\Session.cpp" />
+    <ClCompile Include="Network\SocketUtil.cpp" />
+    <ClCompile Include="Thread\ThreadManager.cpp" />
+    <ClCompile Include="Utils\LockQueue.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -78,22 +78,22 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)</OutDir>
   </PropertyGroup>
@@ -175,51 +175,33 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
-    <ClInclude Include="Creature.h" />
-    <ClInclude Include="DBRequestFunctions.h" />
-    <ClInclude Include="EncodingConverter.h" />
-    <ClInclude Include="Enum.pb.h" />
-    <ClInclude Include="EquippedGear.h" />
-    <ClInclude Include="Gamedata.h" />
-    <ClInclude Include="GameSession.h" />
-    <ClInclude Include="GameSessionManager.h" />
-    <ClInclude Include="Global.h" />
-    <ClInclude Include="Inventory.h" />
-    <ClInclude Include="JsonProperty.h" />
-    <ClInclude Include="Monster.h" />
-    <ClInclude Include="Object.h" />
-    <ClInclude Include="ObjectUtils.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="Player.h" />
-    <ClInclude Include="Protocol.pb.h" />
-    <ClInclude Include="Room.h" />
-    <ClInclude Include="RoomManager.h" />
-    <ClInclude Include="ServerPacketHandler.h" />
-    <ClInclude Include="Struct.pb.h" />
-    <ClInclude Include="TickIntervalTimer.h" />
-    <ClInclude Include="TickTimer.h" />
-    <ClInclude Include="Utils.h" />
+    <ClInclude Include="Main\pch.h" />
+    <ClInclude Include="Main\GameSession.h" />
+    <ClInclude Include="Main\GameSessionManager.h" />
+    <ClInclude Include="Main\Global.h" />
+    <ClInclude Include="Main\ServerPacketHandler.h" />
+    <ClInclude Include="Protocol\Enum.pb.h" />
+    <ClInclude Include="Protocol\Protocol.pb.h" />
+    <ClInclude Include="Protocol\Struct.pb.h" />
+    <ClInclude Include="Utils\EncodingConverter.h" />
+    <ClInclude Include="Utils\ObjectUtils.h" />
+    <ClInclude Include="Utils\TickIntervalTimer.h" />
+    <ClInclude Include="Utils\TickTimer.h" />
+    <ClInclude Include="Utils\Utils.h" />
+    <ClInclude Include="Game\Object\Creature.h" />
+    <ClInclude Include="Game\Object\Monster.h" />
+    <ClInclude Include="Game\Object\Object.h" />
+    <ClInclude Include="Game\Object\Player.h" />
+    <ClInclude Include="Game\System\EquippedGear.h" />
+    <ClInclude Include="Game\System\Inventory.h" />
+    <ClInclude Include="Game\Data\Gamedata.h" />
+    <ClInclude Include="Game\Data\JsonProperty.h" />
+    <ClInclude Include="Game\Room\Room.h" />
+    <ClInclude Include="Game\Room\RoomManager.h" />
+    <ClInclude Include="DB\DBRequestFunctions.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Creature.cpp" />
-    <ClCompile Include="DBRequestFunctions.cpp" />
-    <ClCompile Include="Enum.pb.cc">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="EquippedGear.cpp" />
-    <ClCompile Include="Gamedata.cpp" />
-    <ClCompile Include="GameServer.cpp" />
-    <ClCompile Include="GameSession.cpp" />
-    <ClCompile Include="GameSessionManager.cpp" />
-    <ClCompile Include="Global.cpp" />
-    <ClCompile Include="Inventory.cpp" />
-    <ClCompile Include="Monster.cpp" />
-    <ClCompile Include="Object.cpp" />
-    <ClCompile Include="ObjectUtils.cpp" />
-    <ClCompile Include="pch.cpp">
+    <ClCompile Include="Main\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -229,25 +211,43 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Player.cpp" />
-    <ClCompile Include="Protocol.pb.cc">
+    <ClCompile Include="Main\GameServer.cpp" />
+    <ClCompile Include="Main\GameSession.cpp" />
+    <ClCompile Include="Main\GameSessionManager.cpp" />
+    <ClCompile Include="Main\Global.cpp" />
+    <ClCompile Include="Main\ServerPacketHandler.cpp" />
+    <ClCompile Include="Protocol\Enum.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Room.cpp" />
-    <ClCompile Include="RoomManager.cpp" />
-    <ClCompile Include="ServerPacketHandler.cpp" />
-    <ClCompile Include="Struct.pb.cc">
+    <ClCompile Include="Protocol\Protocol.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TickIntervalTimer.cpp" />
-    <ClCompile Include="TickTimer.cpp" />
-    <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="Protocol\Struct.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Utils\ObjectUtils.cpp" />
+    <ClCompile Include="Utils\TickIntervalTimer.cpp" />
+    <ClCompile Include="Utils\TickTimer.cpp" />
+    <ClCompile Include="Utils\Utils.cpp" />
+    <ClCompile Include="Game\Object\Creature.cpp" />
+    <ClCompile Include="Game\Object\Monster.cpp" />
+    <ClCompile Include="Game\Object\Object.cpp" />
+    <ClCompile Include="Game\Object\Player.cpp" />
+    <ClCompile Include="Game\System\EquippedGear.cpp" />
+    <ClCompile Include="Game\System\Inventory.cpp" />
+    <ClCompile Include="Game\Data\Gamedata.cpp" />
+    <ClCompile Include="Game\Room\Room.cpp" />
+    <ClCompile Include="Game\Room\RoomManager.cpp" />
+    <ClCompile Include="DB\DBRequestFunctions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\Protobuf\bin\Enum.proto" />
@@ -255,16 +255,16 @@
     <None Include="..\Common\Protobuf\bin\Protocol.proto" />
     <None Include="..\Common\Protobuf\bin\Struct.proto" />
     <None Include="..\Queries\UserDB_CreateUsersTable.sql" />
-    <None Include="AlterTable.sql" />
-    <None Include="DEBUG.sql" />
-    <None Include="GameDB_CreateAllTables.sql" />
-    <None Include="GameDB_GetMaxItemUid.sql" />
-    <None Include="GameDB_InsertAdminAccount.sql" />
-    <None Include="S_Item.json" />
-    <None Include="S_Map.json" />
-    <None Include="S_Monster.json" />
-    <None Include="S_Quest.json" />
-    <None Include="S_Warrior_Level_Data.json" />
+    <None Include="Queries\AlterTable.sql" />
+    <None Include="Queries\DEBUG.sql" />
+    <None Include="Queries\GameDB_CreateAllTables.sql" />
+    <None Include="Queries\GameDB_GetMaxItemUid.sql" />
+    <None Include="Queries\GameDB_InsertAdminAccount.sql" />
+    <None Include="Game\Data\Json\S_Item.json" />
+    <None Include="Game\Data\Json\S_Map.json" />
+    <None Include="Game\Data\Json\S_Monster.json" />
+    <None Include="Game\Data\Json\S_Quest.json" />
+    <None Include="Game\Data\Json\S_Warrior_Level_Data.json" />
   </ItemGroup>
   <ItemGroup>
     <UpToDateCheckInput Include="..\Common\Protobuf\bin\Enum.proto" />
@@ -290,7 +290,7 @@
   <Target Name="GenerateProtoPackets"
           BeforeTargets="ClCompile"
           Inputs="$(SolutionDir)Common\Protobuf\bin\Enum.proto;$(SolutionDir)Common\Protobuf\bin\Struct.proto;$(SolutionDir)Common\Protobuf\bin\Protocol.proto"
-          Outputs="$(MSBuildProjectDirectory)\Enum.pb.h;$(MSBuildProjectDirectory)\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol.pb.h;$(MSBuildProjectDirectory)\ServerPacketHandler.h">
+          Outputs="$(MSBuildProjectDirectory)\Protocol\Enum.pb.h;$(MSBuildProjectDirectory)\Protocol\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol\Protocol.pb.h;$(MSBuildProjectDirectory)\Main\ServerPacketHandler.h">
     <Message Importance="high" Text="[Proto] .proto changed - running GenPackets.bat" />
     <Exec Command="set &quot;PATH=$(SolutionDir)Common\Protobuf\bin;%PATH%&quot; &amp;&amp; CALL &quot;$(SolutionDir)Common\Protobuf\bin\GenPackets.bat&quot; &lt; NUL"
           WorkingDirectory="$(SolutionDir)Common\Protobuf\bin" />
