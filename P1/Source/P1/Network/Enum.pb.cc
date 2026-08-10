@@ -73,15 +73,17 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "\035\n\031RESPAWN_TYPE_PARTY_MEMBER\020\005\022\033\n\027RESPAW"
   "N_TYPE_GUILD_BASE\020\006\022\032\n\026RESPAWN_TYPE_CASH"
   "_ITEM\020\007\022$\n RESPAWN_TYPE_BATTLE_RESURRECT"
-  "ION\020\010*W\n\tEnterType\022\023\n\017ENTER_TYPE_NONE\020\000\022"
-  "\031\n\025ENTER_TYPE_MAP_CHANGE\020\001\022\032\n\026ENTER_TYPE"
-  "_ROOM_CHANGE\020\002*`\n\nRewardType\022\024\n\020REWARD_T"
-  "YPE_NONE\020\000\022\034\n\030REWARD_TYPE_MONSTER_KILL\020\001"
-  "\022\036\n\032REWARD_TYPE_QUEST_COMPLETE\020\002b\006proto3"
+  "ION\020\010*\225\001\n\tEnterType\022\023\n\017ENTER_TYPE_NONE\020\000"
+  "\022\026\n\022ENTER_TYPE_INITIAL\020\001\022 \n\034ENTER_TYPE_S"
+  "AME_MAP_TRANSFER\020\002\022!\n\035ENTER_TYPE_CROSS_M"
+  "AP_TRANSFER\020\003\022\026\n\022ENTER_TYPE_RESPAWN\020\004*`\n"
+  "\nRewardType\022\024\n\020REWARD_TYPE_NONE\020\000\022\034\n\030REW"
+  "ARD_TYPE_MONSTER_KILL\020\001\022\036\n\032REWARD_TYPE_Q"
+  "UEST_COMPLETE\020\002b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1960, descriptor_table_protodef_Enum_2eproto,
+    false, false, 2023, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -313,6 +315,8 @@ bool EnterType_IsValid(int value) {
     case 0:
     case 1:
     case 2:
+    case 3:
+    case 4:
       return true;
     default:
       return false;
