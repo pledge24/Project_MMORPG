@@ -103,7 +103,9 @@ void DBConnection::Unbind()
 
 void DBConnection::SetParamSetSize(int32& rows)
 {
-    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)rows, 0);
+    // SQL_ATTR_PARAMSET_SIZE는 값을 SQLULEN으로 읽는다. int32를 바로 포인터로
+    // 캐스팅하면 x64에서 크기가 달라 C4312가 나므로 포인터 폭으로 먼저 넓힌다.
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)(SQLULEN)rows, 0);
 }
 
 bool DBConnection::FindError(const SQLWCHAR* targetState)
