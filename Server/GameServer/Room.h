@@ -51,7 +51,9 @@ public:
     void HandleDie(CreatureRef creature);
     void HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
 
-    void ReplicateRoomData(PlayerRef player, bool excludeThisPlayer);
+    // includeThisPlayer: 자기 자신의 ObjectInfo도 S_SPAWN에 포함할지.
+    // 클라 월드가 비어 있는 최초 입장·맵 간 이동에서는 true, 액터가 살아 있는 경우 false.
+    void ReplicateRoomData(PlayerRef player, bool includeThisPlayer);
 
     /** Getter 함수(Public) */
     vector2D            GetRandomLocation(bool usePadding = true);
