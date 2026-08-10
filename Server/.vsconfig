@@ -9,6 +9,7 @@
     "Microsoft.VisualStudio.Component.VC.CMake.Project",
     "Microsoft.VisualStudio.Workload.Node",
     "Microsoft.VisualStudio.Workload.Python",
-    "Microsoft.VisualStudio.Workload.Data"
+    "Microsoft.VisualStudio.Workload.Data",
+    "Microsoft.VisualStudio.Component.SQL.SSDT"
   ]
 }
