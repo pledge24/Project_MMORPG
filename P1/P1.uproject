@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.3",
+	"EngineAssociation": "5.8",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -18,18 +18,18 @@
 	"Plugins": [
 		{
 			"Name": "ModelingToolsEditorMode",
-			"Enabled": true,
+			"Enabled": false,
 			"TargetAllowList": [
 				"Editor"
 			]
 		},
 		{
 			"Name": "SkeletalMeshModelingTools",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "StaticMeshEditorModeling",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }
