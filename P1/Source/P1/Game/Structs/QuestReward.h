@@ -13,10 +13,10 @@ struct FQuestRewardData
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Exp;
+    int32 Exp = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Gold;
+    int32 Gold = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FItemData> Items;

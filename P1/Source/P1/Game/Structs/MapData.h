@@ -14,10 +14,10 @@ struct FMapData : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 Name;
+    int32 Name = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int32 TemplateId;
+    int32 TemplateId = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString MapName;
@@ -26,7 +26,7 @@ struct FMapData : public FTableRowBase
     FString MapType;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool HaveStartPoint;
+    bool HaveStartPoint = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString MapPath;
