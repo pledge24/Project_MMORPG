@@ -1,4 +1,5 @@
 #pragma once
+#include <string_view>
 
 class EquippedGear
 {
@@ -17,6 +18,6 @@ public:
 private:
     google::protobuf::Map<int32, Protocol::Slot>* equippedGearLookup;
     map<int32, bool> dirtyFlagMappings;
-    unordered_map<string, Protocol::GearType> gearTypeMappings;
+    unordered_map<string_view, Protocol::GearType> gearTypeMappings;
 };
 
