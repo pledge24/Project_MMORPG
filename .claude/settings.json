@@ -17,7 +17,7 @@
         ]
       },
       {
-        "matcher": "mcp__rider__execute_terminal_command|mcp__rider__execute_sql_query",
+        "matcher": "mcp__rider__build_solution_start|mcp__rider__execute_run_configuration|mcp__rider__execute_terminal_command|mcp__rider__execute_sql_query|mcp__rider__apply_patch|mcp__rider__create_new_file|mcp__rider__rename_refactoring|mcp__rider__safe_delete|mcp__rider__move_type_to_namespace|mcp__rider__reformat_file|mcp__rider__reorganize_namespaces|mcp__rider__change_api_signature|mcp__rider__extract_base_class|mcp__rider__extract_interface|mcp__rider__extract_method|mcp__rider__ue_execute_python|mcp__rider__ue_import_blueprint_nodes|mcp__rider__ue_play|mcp__rider__spawn_actor|mcp__rider__create_database_connection|mcp__rider__edit_database_connection",
         "hooks": [
           {
             "type": "command",
@@ -27,7 +27,7 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_dangerous_cmd.py"
             ],
             "timeout": 10,
-            "statusMessage": "위험 명령 검사 중"
+            "statusMessage": "대상 솔루션·위험 명령 검사 중"
           }
         ]
       }

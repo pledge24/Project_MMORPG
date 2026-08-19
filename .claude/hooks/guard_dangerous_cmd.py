@@ -29,6 +29,41 @@ SQL_TOOLS = {
     "mcp__rider__execute_sql_query",
 }
 
+# rootFolder 없이 부르면 안 되는 Rider MCP 툴 — 상태를 바꾸는 것들만.
+#
+# 왜 필요한가: Rider 인스턴스 하나가 열린 솔루션 전부(P1, Server)를 한 엔드포인트로 서빙하고,
+# 어느 쪽을 대상으로 할지는 rootFolder 가 정한다. 솔루션이 둘 이상 열려 있으면 서버가
+# "Unable to determine the target project"로 거부해 주지만, **하나만 열려 있으면 거부하지 않는다.**
+# Server를 빌드하려 했는데 P1만 열려 있으면 그대로 P1을 빌드한다. 그 구멍은 여기서만 막힌다.
+#
+# 읽기 툴은 넣지 않는다 — 탐색할 때마다 rootFolder를 요구하면 실익 없이 번거롭기만 하다.
+ROOT_FOLDER_REQUIRED = {
+    # 빌드 · 실행
+    "mcp__rider__build_solution_start",
+    "mcp__rider__execute_run_configuration",
+    "mcp__rider__execute_terminal_command",
+    # 파일 · 심볼 수정
+    "mcp__rider__apply_patch",
+    "mcp__rider__create_new_file",
+    "mcp__rider__rename_refactoring",
+    "mcp__rider__safe_delete",
+    "mcp__rider__move_type_to_namespace",
+    "mcp__rider__reformat_file",
+    "mcp__rider__reorganize_namespaces",
+    "mcp__rider__change_api_signature",
+    "mcp__rider__extract_base_class",
+    "mcp__rider__extract_interface",
+    "mcp__rider__extract_method",
+    # 언리얼 에디터 상태 변경
+    "mcp__rider__ue_execute_python",
+    "mcp__rider__ue_import_blueprint_nodes",
+    "mcp__rider__ue_play",
+    "mcp__rider__spawn_actor",
+    # DB 연결 설정 변경
+    "mcp__rider__create_database_connection",
+    "mcp__rider__edit_database_connection",
+}
+
 # 셸에서 막을 것 — 파괴적 파일/git 조작 + Redis 전체 삭제.
 SHELL_PATTERNS = [
     (r"rm\s+-[a-zA-Z]*r[a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*r", "rm -rf"),
@@ -91,6 +126,23 @@ def check(text, is_sql):
     return hits
 
 
+def deny(reason):
+    """차단 결정을 내보낸다.
+
+    JSON(permissionDecision=deny)과 exit 2를 함께 쓴다. exit 2는 JSON 파싱 결과와
+    무관하게 차단하므로, 스키마가 어긋나도 통과로 새지 않는다.
+    """
+    sys.stdout.write(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }, ensure_ascii=False))
+    sys.stderr.write(reason)
+    return 2
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
@@ -102,6 +154,19 @@ def main():
     tool_name = payload.get("tool_name", "")
     tool_input = payload.get("tool_input", {}) or {}
 
+    # 1) 대상 솔루션이 명시됐는가 (Rider MCP 상태 변경 툴 한정)
+    if tool_name in ROOT_FOLDER_REQUIRED:
+        root = tool_input.get("rootFolder")
+        if not isinstance(root, str) or not root.strip():
+            return deny(
+                "BLOCKED: " + tool_name + " 를 rootFolder 없이 호출했다. "
+                "Rider 하나가 열린 솔루션 전부를 서빙하므로 대상을 명시해야 한다. "
+                "솔루션이 하나만 열려 있으면 서버가 거부하지 않고 그대로 실행하니 "
+                "의도한 솔루션이 실제로 열려 있는지도 확인할 것 "
+                "(인자 없이 get_run_configurations 를 부르면 열린 프로젝트 목록이 나온다)."
+            )
+
+    # 2) 위험 명령 패턴 검사
     if tool_name in SQL_TOOLS:
         target = tool_input.get("queryText", "")
         is_sql = True
@@ -118,20 +183,10 @@ def main():
     if not hits:
         return 0
 
-    reason = (
+    return deny(
         "BLOCKED: 위험 명령 감지 (" + ", ".join(dict.fromkeys(hits)) + "). "
         "CLAUDE.md '안전' 규칙에 걸린다. 정말 필요하면 사람에게 직접 실행을 요청할 것."
     )
-
-    sys.stdout.write(json.dumps({
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        }
-    }, ensure_ascii=False))
-    sys.stderr.write(reason)
-    return 2
 
 
 if __name__ == "__main__":
