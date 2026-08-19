@@ -25,6 +25,11 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
   `rebuild=true` 금지. UBT/Build.bat/MSBuild를 터미널로 직접 돌리지 않는다 — 출력 절단으로 에러가 유실된다.
   `build_solution_state`가 진단 없이 실패만 돌려주면 Rider 빌드 로그를 직접 읽는다
   (`%LOCALAPPDATA%/JetBrains/Rider<버전>/log/SolutionBuilder/`).
+  참고: Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는
+  `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(실측).
+  **판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다** — 문서에 있다는 이유로
+  위 이름을 `build_project`로 되돌리지 말 것. 반대로 노출 목록에 없다고 해서
+  "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
 - 클라(`P1`)와 서버(`Server`) 솔루션을 오가므로 Rider MCP 툴에는 projectPath를 항상 명시한다.
 - 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
 - 에디터·에셋·PIE 조작: UE MCP (도입 후. 도입 전에는 사람에게 요청).
@@ -32,7 +37,8 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 ## 완료 기준
 
-- C++ 편집 후 반드시 `build_project`로 검증한다. 빌드 통과 없이는 완료가 아니다.
+- C++ 편집 후 반드시 빌드로 검증한다(`build_solution_start` → `build_solution_state`).
+  빌드 통과 없이는 완료가 아니다.
 - 자동 테스트는 아직 없다 (구축 예정 — 아래 테스트 계층 참조). 그전까지:
   서버 프로토콜/핸들러 변경은 DummyClient로 스모크 확인, 인증 서버 변경은 `npm start` 기동 확인.
 - 검증 없이 "완료했다"고 보고하지 않는다. 검증 불가한 부분은 불가하다고 명시한다.
