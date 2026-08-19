@@ -30,7 +30,14 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
   **판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다** — 문서에 있다는 이유로
   위 이름을 `build_project`로 되돌리지 말 것. 반대로 노출 목록에 없다고 해서
   "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
-- 클라(`P1`)와 서버(`Server`) 솔루션을 오가므로 Rider MCP 툴에는 projectPath를 항상 명시한다.
+- 클라(`P1`)와 서버(`Server`) 솔루션을 오가므로 Rider MCP 툴에는 **`rootFolder`를 항상 명시한다**
+  (파라미터 이름이 `projectPath`가 아니다). Rider 인스턴스 하나가 열린 솔루션 전부를 한
+  엔드포인트로 서빙하고, 대상을 고르는 건 `rootFolder`뿐이다.
+  **함정: 솔루션이 하나만 열려 있으면 서버가 모호성을 못 느껴 거부하지 않고 그대로 실행한다.**
+  Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드된다. 그래서 빌드·실행·리팩토링 전에는
+  의도한 솔루션이 실제로 열려 있는지도 확인한다 — 인자 없이 `get_run_configurations`를 부르면
+  열린 프로젝트 목록이 에러 메시지로 돌아온다.
+  상태를 바꾸는 Rider 툴은 `rootFolder`가 없으면 `.claude/hooks/guard_dangerous_cmd.py`가 차단한다.
 - 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
 - 에디터·에셋·PIE 조작: UE MCP (도입 후. 도입 전에는 사람에게 요청).
 - 서버 변경 검증은 Unreal을 띄우지 않고 `Server/DummyClient/`로 가능하다 (실 클라와 동일 프로토콜).
