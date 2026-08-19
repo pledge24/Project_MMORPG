@@ -42,6 +42,10 @@
 		{
 			"Name": "ToolsetRegistry",
 			"Enabled": true
+		},
+		{
+			"Name": "Terminal",
+			"Enabled": true
 		}
 	]
 }
