@@ -1,15 +1,20 @@
 # Tech Debt
 
 세션 1(2026-08-19) 진단. 모든 항목은 실제 코드·라이브 DB·UE 에디터 실측 근거를 갖는다.
-**이 세션에서는 아무것도 고치지 않았다.** 수정은 `docs/plans/`에 계획을 세운 뒤에만 한다.
+수정은 `docs/plans/`에 계획을 세운 뒤에만 한다.
 
 표기: `[심각도: 상/중/하] [수정 난이도: 상/중/하]`
+
+**갱신 이력**
+- 세션 2(2026-08-27, `docs/plans/completed/verification-infra.md`) — L1 테스트 인프라를 세우고
+  **D-01·D-15 수정**(둘 다 실패 테스트 선행). D-14는 재조사로 난이도 상향(프로토콜 변경 필요),
+  D-22·D-23 신규 추가. D-05는 세션 1에서 수정됨.
 
 ---
 
 ## 상 — 먼저 볼 것
 
-### D-01. 인벤토리 슬롯 타입 매핑 오타 — 기타 아이템이 장비 테이블을 본다
+### D-01. 인벤토리 슬롯 타입 매핑 오타 — 기타 아이템이 장비 테이블을 본다 *(세션 2에서 수정 완료)*
 `[심각도: 상] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp:44`
 
 ```cpp
@@ -17,11 +22,14 @@
 //                                             ^^^^^^^^^^^^^^^^^^ MISCELLANEOUS 여야 한다
 ```
 
-- **왜 문제인가** — `removeItem`(`:133`)과 `GetSlot`(`:221`)이 이 표로 대상 테이블을 고르므로,
-  기타 아이템 슬롯을 지우거나 조회하면 **엉뚱하게 장비 인벤토리를 건드린다**.
-- **어디로 갈 것인가** — 값을 `ITEM_TYPE_MISCELLANEOUS`로 고치고, 세 슬롯 타입 왕복을 검증하는
-  L1 테스트를 같이 넣는다. 손으로 쓴 매핑 3종(`slotTypeToItemTypeMappings`,
-  `itemTypeMappings`, `inventorylookupMappings`)이 서로 어긋날 수 있는 구조 자체가 원인이다.
+- **왜 문제였나** — `removeItem`과 `GetSlot`이 이 표로 대상 테이블을 고르므로,
+  기타 아이템 슬롯을 지우거나 조회하면 **엉뚱하게 장비 인벤토리를 건드렸다**.
+- **어떻게 고쳤나** — 값을 `ITEM_TYPE_MISCELLANEOUS`로 수정. TDD로 진행했다 —
+  `Server/GameServerTests/InventoryTests.cpp`에 세 슬롯 타입 왕복 테스트를 먼저 쓰고
+  **MISC 케이스 3개만 빨강인 것을 확인한 뒤** 고쳤다. 특히
+  `RemovingMiscItemDoesNotTouchGearInventory`가 이 항목이 서술한 피해(기타 슬롯을 지웠는데
+  장비가 사라짐)를 그대로 재현했다. 수정 후 전체 통과.
+- **남은 것** — 아래 D-23. 오타는 증상이고, 손으로 쓴 매핑 3종이 어긋날 수 있는 구조가 원인이다.
 
 ### D-02. 네트워크 수신 펌프가 레벨 블루프린트에 있다
 `[심각도: 상] [난이도: 중]` · `P1/Source/P1/P1GameInstance.cpp:97` · `P1/Content/Maps/*.umap`
@@ -194,6 +202,9 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것:
 - **왜 문제인가** — 3티어 중 어느 하나만 깨져도 손으로 띄워보기 전에는 모른다.
 - **어디로 갈 것인가** — 세션 2에서 L1 테스트가 생긴 뒤에 붙인다. 순서는
   ServerCore/GameServer 빌드 → GoogleTest 실행 → AuthServer `npm ci` + 기동 스모크.
+- **세션 2 진행분** — 전제 조건이 갖춰졌다. `GameServerTests`는 **비밀 없이 빌드된다**
+  (gitignore된 `config.h`의 유일한 소비자인 `Main/GameServer.cpp`를 제외하므로),
+  판정은 종료 코드 하나다. AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐.
 
 ### D-13. `Server.sln` 빌드가 항상 실패한다 — 원인은 C++가 아니다
 `[심각도: 중] [난이도: 하]` · `Server/AuthServer/AuthServer.esproj`
@@ -215,25 +226,53 @@ AuthServer.esproj -> Microsoft.NuGet.targets(198,5): error :
   `AuthServer.esproj`를 솔루션에서 제거하고 `npm start`로만 다룬다.
   (`.pyproj` 2개도 같은 이유로 검토 대상.)
 
-### D-14. 스택 상한 없는 아이템 누적
-`[심각도: 중] [난이도: 중]` · `Server/GameServer/Game/System/Inventory.cpp:192`
+### D-14. 스택 상한 없는 아이템 누적 *(세션 2에서 재조사 — 난이도 상향, 프로토콜 변경 필요)*
+`[심각도: 중] [난이도: ~~중~~ → **상**]` · `Server/GameServer/Game/System/Inventory.cpp`
 
 `findFirstAvailableSlotId`는 비장비 아이템에서 같은 `template_id` 슬롯을 찾으면 무조건 거기 합친다.
-아이템 데이터의 최대 스택 수를 보지 않는다.
+아이템 데이터의 최대 스택 수를 보지 않는다. `JsonProperty::Item::MaxStack`은 선언만 돼 있고
+서버 코드 어디에서도 **한 번도 읽히지 않는다**(실측).
 
-- **왜 문제인가** — 포션을 계속 사면 한 슬롯에 무한히 쌓인다. 클라 UI 표시와 어긋날 수 있다.
-- **어디로 갈 것인가** — `Gamedata::ItemDataTable`의 스택 상한을 읽어 초과분은 다음 빈 슬롯으로 넘긴다.
+- **재현** — `InventoryTest.DISABLED_StackDoesNotExceedMaxStack`.
+  `maxStack: 10`인 소모품을 15개 구매하면 한 슬롯에 15개가 쌓인다. 실행해서 빨강임을 확인했다
+  (`--gtest_also_run_disabled_tests`). **`DISABLED_`로 둔 이유는 아래 범위 문제 때문이지
+  버그가 아니어서가 아니다.**
+- **왜 난이도가 올라갔나** — 초과분을 다음 슬롯으로 넘기면 **한 번의 구매가 슬롯 두 개를 바꾼다.**
+  그런데 `S_BUY_ITEM`은 `Slot updated_slot` **하나만** 나른다(`Protocol.proto:168-173`).
+  즉 서버가 두 번째 슬롯을 클라에 알릴 방법이 없다.
+- **어디로 갈 것인가** — 세 곳을 함께 고쳐야 한다:
+  (1) `Protocol.proto`의 `S_BUY_ITEM`(및 같은 성질의 응답)을 `repeated Slot`으로,
+  (2) `GenPackets.bat` 재실행,
+  (3) `Inventory::addItem`에 초과분 분할 루프 + 서버·클라 핸들러.
+  `DISABLED_`를 떼는 것이 완료 신호다.
 
 ---
 
 ## 하
 
-### D-15. `removeItem`이 검증 전에 더티 플래그를 세운다
-`[심각도: 하] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp:139` vs `:141`
+### D-15. `removeItem`이 검증 전에 더티 플래그를 세운다 *(세션 2에서 수정 완료 — 더 큰 버그가 같이 나왔다)*
+`[심각도: 하] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp`
 
-`dirtyFlagsMappings[...] = true`가 `has_item()==false || count < count` 조기 반환보다 위에 있다.
-실패한 제거도 슬롯을 더티로 만들어 불필요한 DB 저장/복제를 유발한다.
-→ 플래그 설정을 검증 뒤로 옮긴다.
+`dirtyFlagsMappings[...] = true`가 조기 반환보다 위에 있어서 실패한 제거도 슬롯을 더티로 만들었다.
+테스트를 붙이는 과정에서 **같은 자리에 더 심각한 문제가 하나 더 있었다**:
+
+```cpp
+Protocol::Item* item = updatedSlot->mutable_item();   // ← 검증보다 먼저
+...
+if (updatedSlot->has_item() == false || item->count() < count)
+    return false;
+```
+
+protobuf의 `mutable_item()`은 **없던 필드를 만들면서 `has_item()`을 켠다.** 그래서 빈 슬롯에
+제거를 한 번 시도하기만 해도 그 슬롯은 count 0짜리 빈 아이템에 점유되고,
+`findFirstAvailableSlotId`가 `has_item()==false`로 빈 슬롯을 찾으므로 **다시는 채워지지 않는다.**
+`has_item()` 검사는 항상 참이 되어 사실상 죽은 코드였다.
+
+- **어떻게 고쳤나** — 검증을 맨 앞으로 올리고(`updatedSlot->item().count()`로 읽기만 함),
+  더티 플래그와 `mutable_item()`을 그 뒤로 옮겼다. 한 번의 재구조화로 둘 다 해소된다.
+- **어떻게 드러났나** — `InventoryTest.FailedRemoveLeavesSlotUsable`.
+  빈 슬롯 제거 실패 후 아이템을 넣었더니 `slot_id`가 0이 아니라 **1**로 나왔다.
+  코드를 눈으로 읽어서는 안 나왔을 항목이다.
 
 ### D-16. `Users.user_id INT` vs `Characters.user_id BIGINT`
 `[심각도: 하] [난이도: 하]` · `Server/Queries/UserDB_CreateUsersTable.sql:7` ·
@@ -271,6 +310,49 @@ AuthServer.esproj -> Microsoft.NuGet.targets(198,5): error :
 `[심각도: 하] [난이도: 하]` · `P1/Content/Blueprints/UI/InGame/WBP_Nameplate_Old.uasset`
 
 부모는 `NameplateWidget`인데 구현된 이벤트도 변수도 없다(에디터 실측). 참조처 확인 후 삭제.
+
+### D-22. `Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다
+`[심각도: 중] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp` (`removeItem`, `GetSlot`)
+*(세션 2 발견 — 기록만. 즉시 고치지 않았다)*
+
+```cpp
+Protocol::ItemType itemType = slotTypeToItemTypeMappings[requestSlot.type()];  // unordered_map::operator[]
+Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId);
+```
+
+두 군데가 겹쳐 있다.
+
+1. `operator[]`는 **없는 키를 조회하면 기본값을 삽입한다.** 클라가 `SLOT_TYPE_EQUIPPED`나
+   `SLOT_TYPE_QUICK`처럼 이 표에 없는 슬롯 타입을 보내면 `ITEM_TYPE_NONE`(0)이 반환되고,
+   `inventorylookupMappings[ITEM_TYPE_NONE]` 역시 없는 키라 **nullptr**이 나온다.
+   그 다음 줄의 `->Mutable(...)`이 널 역참조다.
+2. `slotId`에 **범위 검사가 없다.** `MAX_SLOTS`(32) 밖의 값이 오면 `Mutable`이 범위를 벗어난다.
+
+- **왜 문제인가** — 둘 다 **클라가 보낸 값**으로 직행한다. 정상 클라는 안 보내지만, 신뢰 경계는
+  거기가 아니다. 서버가 죽는다.
+- **어디로 갈 것인가** — `find()` 기반 조회 + `slotId` 범위 검사로 조기 반환. D-23과 함께 처리하면
+  한 번에 정리된다.
+- **왜 지금 안 고쳤나** — 이 세션의 계획은 D-01·D-15까지였다. "발견한 부채는 즉시 고치지 말고 기록".
+
+### D-23. 인벤토리 매핑 3종이 손으로 유지된다 — D-01의 근본 원인
+`[심각도: 중] [난이도: 중]` · `Server/GameServer/Game/System/Inventory.cpp` 생성자
+*(세션 2에 D-01을 고치며 명시화. 구조는 그대로 남았다)*
+
+`Inventory`는 서로 정합해야 하는 표를 셋 들고 있고, 셋 다 생성자에서 손으로 채운다.
+
+| 표 | 방향 | 쓰는 곳 |
+|---|---|---|
+| `itemTypeMappings` | 아이템 데이터의 `"itemType"` 문자열 → `ItemType` | `addItem` |
+| `slotTypeToItemTypeMappings` | `SlotType` → `ItemType` | `removeItem`, `GetSlot` |
+| `inventorylookupMappings` | `ItemType` → 실제 슬롯 배열 | 전부 |
+
+- **왜 문제인가** — **넣을 때와 꺼낼 때가 다른 표를 본다.** 두 표가 한 글자만 어긋나도
+  아이템이 다른 인벤토리로 샌다. D-01이 정확히 그 사고였고, 컴파일러는 둘 다 유효한
+  enum 값이라 아무 말도 하지 않았다.
+- **어디로 갈 것인가** — `SlotType ↔ ItemType`을 한 곳에서 유도하게 만든다(둘의 정의가 1:1이므로
+  단일 변환 함수 + 컴파일 타임 검증이 가능하다). D-22와 같은 함수를 건드리므로 함께 처리한다.
+- **그때까지의 그물** — `Server/GameServerTests/InventoryTests.cpp`의 슬롯 타입 왕복 테스트가
+  세 타입을 전부 검사하므로, 표가 다시 어긋나면 테스트가 먼저 잡는다.
 
 ### D-21. `libprotobuf.lib`(16MB)이 gitignore를 뚫고 추적 중
 `[심각도: 하] [난이도: 하]` · `P1/Source/ProtobufCore/Lib/Win64/libprotobuf.lib`

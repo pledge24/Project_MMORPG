@@ -46,8 +46,10 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 - C++ 편집 후 반드시 빌드로 검증한다(`build_solution_start` → `build_solution_state`).
   빌드 통과 없이는 완료가 아니다.
-- 자동 테스트는 아직 없다 (구축 예정 — 아래 테스트 계층 참조). 그전까지:
-  서버 프로토콜/핸들러 변경은 DummyClient로 스모크 확인, 인증 서버 변경은 `npm start` 기동 확인.
+- **테스트가 존재하는 영역은 테스트 통과까지가 완료다.** 현재 적용 범위는 **게임 서버**와
+  **인증 서버**(아래 테스트 계층의 실행 경로). 빌드 초록은 그 영역에서 더 이상 완료 신호가 아니다.
+- 테스트가 없는 영역(UE 클라 전체, 서버의 룸·DB 경로)은 그전과 같다:
+  서버 프로토콜/핸들러 변경은 DummyClient로 스모크 확인, 인증 서버 기동은 `npm start`.
 - 검증 없이 "완료했다"고 보고하지 않는다. 검증 불가한 부분은 불가하다고 명시한다.
 - **자기신고를 믿지 않는다.** 검증 커맨드를 실제로 실행한 결과 없이 완료를 선언하지 않는다.
   "됐을 것이다"는 완료가 아니다 — 코드를 고친 사실과 그 코드가 도는 사실은 별개다.
@@ -170,14 +172,39 @@ devDependency로 설치돼 있지만 flat config도 lint 스크립트도 없어�
 - **클라/서버 클래스 계층이 대칭이다** (`Object → Creature → { Player, Monster }`).
   게임플레이 변경은 클라 + 서버 + 프로토콜, **3곳 수정을 기본으로 생각할 것.**
 
-## 테스트 계층 (구축 예정 — 현재 자동 테스트·CI 없음)
+## 테스트 계층
 
-- L1 순수 로직: 서버 GoogleTest / UE Low-Level Tests. 입력 없음. 재화·트랜잭션·직렬화는 여기서.
-  서버는 VS 솔루션 기반이므로 통합 방식(NuGet vs 프로젝트 추가)은 세션 2에서 결정한다.
+설계 근거는 `docs/decisions/2026-08-27-l1-test-infra.md`. 여기엔 실행 경로만 적는다.
+
+### 지금 도는 것
+
+| 대상 | 빌드 | 실행 (에이전트·CI) | 실행 (사람·IDE) |
+|---|---|---|---|
+| 게임 서버 L1 (GoogleTest) | `build_solution_start(rootFolder=.../Server)` → `build_solution_state` | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
+| 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
+
+**판정은 종료 코드다.** 0이 아니면 실패다. 테스트는 `Server/GameServerTests/`,
+gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음).
+
+**실행만 셸을 쓰는 이유** — `execute_run_configuration`은 호출마다 Rider가 확인 대화상자를 띄우고,
+그걸 끄는 수단은 Brave 모드(IDE 전역으로 셸·실행구성 확인 해제)뿐이라 쓰지 않는다.
+"UBT/MSBuild를 터미널로 직접 돌리지 않는다"는 규칙의 근거는 **출력 절단으로 에러가 유실되는 것**이고,
+그건 빌드에만 성립한다 — gtest 출력은 짧고 완결적이다. 그래서 **빌드는 Rider, 실행은 셸**로 가른다.
+`Server/Binary/`는 gitignore되어 있으므로 실행 전 빌드는 필수다.
+
+**테스트를 추가할 때** — `.cpp`를 `Server/GameServerTests/GameServerTests.vcxproj`의
+`<ItemGroup Label="테스트 소스">`에 등록해야 한다(이 프로젝트는 파일 자동 수집을 하지 않는다).
+
+### 아직 없는 것
+
+- **UE 클라 L1(LLT)** — `[B] blocked`. 런처 설치본 엔진에서는 빌드 자체가 거부된다
+  (UBT가 프로젝트 내 Program 타깃을 무조건 `Unique` 빌드 환경으로 잡고, 설치본에서 이를 거부).
+  작성해 둔 모듈·타깃과 해제 조건은 `docs/references/p1-lowlevel-tests/`.
+  **그전까지 UE 쪽은 L2부터 시작한다** — L2는 별도 타깃이 필요 없어 설치본에서 동작한다.
 - L2 게임 로직+입력: Simple Automation Test + `InjectInputForAction`.
 - L3 UI 입력: Automation Spec + Automation Driver. Live Coding 비호환 — TDD 루프 금지, 배치 전용.
 - L4 E2E: Gauntlet TestController. DummyClient 자산 재사용 검토. 병렬 실행 시 포트 파라미터화.
-- L1 UE(LLT) 실행은 Rider Run Configuration 호출로만 — Rider Unit Tests 창은 L2 전용이라 LLT를 인식 못 한다.
+- CI: D-12. 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다.
 
 ## 컨벤션
 
