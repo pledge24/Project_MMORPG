@@ -12,11 +12,28 @@
   stdin으로 PreToolUse JSON을 받아 tool_name에 맞는 필드를 골라 검사한다.
   위반이면 permissionDecision=deny JSON을 stdout에 쓰고 exit 2로 끝낸다.
   (exit 2는 JSON 파싱 결과와 무관하게 차단되므로 이중 안전장치다.)
+  차단 1건마다 block_counter.log 에 TSV 한 줄을 append 한다 (아래 COUNTER_ENV 주석 참조).
+
+테스트: py -3 .claude/hooks/test_guard_dangerous_cmd.py
 """
 
 import json
+import os
 import re
 import sys
+from datetime import datetime
+from pathlib import Path
+
+# 차단 카운터 — 차단이 일어난 그 자리에서 한 줄씩 append 한다.
+#
+# 왜 여기인가: 차단 건수는 소급 생성이 불가능한 데이터다. 지나간 차단은 다시 셀 수 없으므로
+# 세션 리포트에 손으로 누적하는 방식은 부패한다(집계를 잊은 세션은 영구 결손).
+# 발생 지점에서 자동으로 쌓아두고, 리포트는 이 파일을 조회만 한다.
+#
+# 경로를 환경변수로 덮어쓸 수 있게 둔 이유는 테스트다. 테스트가 실제 카운터를 오염시키면
+# 숫자가 거짓이 된다.
+COUNTER_ENV = "GUARD_BLOCK_COUNTER"
+COUNTER_DEFAULT = Path(__file__).with_name("block_counter.log")
 
 # 어떤 툴의 어느 필드를 볼 것인가.
 # 셸 계열은 command, Rider의 SQL 실행은 queryText.
@@ -126,12 +143,36 @@ def check(text, is_sql):
     return hits
 
 
-def deny(reason):
+def _record_block(tool_name, hits):
+    """차단 1건을 카운터 파일에 append 한다. TSV 한 줄: 시각 / 툴 / 걸린 패턴.
+
+    **실패해도 조용히 넘어간다.** 카운터는 통계일 뿐이고 차단이 본 임무다.
+    로그를 못 쓴다는 이유로 위험 명령이 통과하면 주객이 전도된다.
+    """
+    try:
+        override = os.environ.get(COUNTER_ENV)
+        path = Path(override) if override else COUNTER_DEFAULT
+        line = "\t".join((
+            datetime.now().astimezone().isoformat(timespec="seconds"),
+            tool_name or "(unknown)",
+            ";".join(hits) if hits else "(unknown)",
+        ))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except Exception:
+        pass
+
+
+def deny(reason, tool_name="", hits=()):
     """차단 결정을 내보낸다.
 
     JSON(permissionDecision=deny)과 exit 2를 함께 쓴다. exit 2는 JSON 파싱 결과와
     무관하게 차단하므로, 스키마가 어긋나도 통과로 새지 않는다.
+
+    카운터 기록을 먼저 시도하되 그 결과는 아래 흐름에 영향을 주지 않는다.
     """
+    _record_block(tool_name, hits)
+
     sys.stdout.write(json.dumps({
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
@@ -163,7 +204,9 @@ def main():
                 "Rider 하나가 열린 솔루션 전부를 서빙하므로 대상을 명시해야 한다. "
                 "솔루션이 하나만 열려 있으면 서버가 거부하지 않고 그대로 실행하니 "
                 "의도한 솔루션이 실제로 열려 있는지도 확인할 것 "
-                "(인자 없이 get_run_configurations 를 부르면 열린 프로젝트 목록이 나온다)."
+                "(인자 없이 get_run_configurations 를 부르면 열린 프로젝트 목록이 나온다).",
+                tool_name,
+                ["rootFolder 누락"],
             )
 
     # 2) 위험 명령 패턴 검사
@@ -183,9 +226,12 @@ def main():
     if not hits:
         return 0
 
+    unique = list(dict.fromkeys(hits))
     return deny(
-        "BLOCKED: 위험 명령 감지 (" + ", ".join(dict.fromkeys(hits)) + "). "
-        "CLAUDE.md '안전' 규칙에 걸린다. 정말 필요하면 사람에게 직접 실행을 요청할 것."
+        "BLOCKED: 위험 명령 감지 (" + ", ".join(unique) + "). "
+        "CLAUDE.md '안전' 규칙에 걸린다. 정말 필요하면 사람에게 직접 실행을 요청할 것.",
+        tool_name,
+        unique,
     )
 
 
