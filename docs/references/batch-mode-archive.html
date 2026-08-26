@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배치 실행 모드 보관 문서 — harness.md + execute.py</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --paper: #F1F3F5;
+    --card: #FFFFFF;
+    --ink: #1B2430;
+    --ink-soft: #4A5568;
+    --steel: #3D5A80;
+    --steel-soft: #E3EAF2;
+    --hold: #B7791F;
+    --hold-bg: #FBF3E4;
+    --ok: #2F855A;
+    --ok-bg: #E8F3ED;
+    --warn: #9B2C2C;
+    --warn-bg: #F8ECEC;
+    --line: #D6DCE3;
+    --mono: "JetBrains Mono", "D2Coding", "Consolas", monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Pretendard", "Noto Sans KR", -apple-system, sans-serif;
+    line-height: 1.75;
+    font-size: 16px;
+    padding: 48px 20px 96px;
+  }
+  .doc { max-width: 880px; margin: 0 auto; }
+
+  /* ── header ── */
+  header {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-top: 6px solid var(--steel);
+    border-radius: 8px;
+    padding: 36px 40px 32px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .doc-kind {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--steel);
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+    margin-bottom: 6px;
+  }
+  h1 code { font-family: var(--mono); font-size: 23px; font-weight: 700; }
+  .meta {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+  .stamp {
+    position: absolute;
+    top: 30px; right: 34px;
+    border: 2.5px solid var(--hold);
+    color: var(--hold);
+    background: var(--hold-bg);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transform: rotate(3deg);
+  }
+  @media (max-width: 640px) {
+    .stamp { position: static; display: inline-block; margin-top: 14px; transform: none; }
+    header { padding: 28px 22px; }
+  }
+
+  /* ── sections ── */
+  section {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 30px 40px 32px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 640px) { section { padding: 24px 22px; } }
+  h2 {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--steel-soft);
+  }
+  h2 .no {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--steel);
+    margin-right: 10px;
+    vertical-align: 2px;
+  }
+  h3 { font-size: 15.5px; font-weight: 700; margin: 22px 0 8px; }
+  p { margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 700; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--steel-soft);
+    padding: 1.5px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.7;
+    background: #212936;
+    color: #DCE3EC;
+    border-radius: 6px;
+    padding: 18px 22px;
+    overflow-x: auto;
+    margin: 14px 0;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  ul, ol { margin: 10px 0 14px 22px; }
+  li { margin-bottom: 8px; }
+  .note {
+    font-size: 14px;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--line);
+    padding-left: 14px;
+    margin: 14px 0;
+  }
+
+  /* ── pipeline ── */
+  .pipe { margin: 18px 0 6px; }
+  .pipe-step {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--line);
+  }
+  .pipe-step:last-child { border-bottom: none; }
+  .pipe-who {
+    flex: 0 0 92px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding-top: 3px;
+  }
+  .who-human { color: var(--ok); }
+  .who-exec { color: var(--steel); }
+  .who-claude { color: var(--hold); }
+  .pipe-what { font-size: 14.5px; }
+
+  /* ── verdict table ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14.5px; }
+  th {
+    text-align: left;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    font-weight: 700;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--line);
+  }
+  td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-weight: 700; white-space: nowrap; }
+
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-right: 6px;
+  }
+  .tag-warn { background: var(--warn-bg); color: var(--warn); }
+  .tag-ok { background: var(--ok-bg); color: var(--ok); }
+  .tag-hold { background: var(--hold-bg); color: var(--hold); }
+
+  /* ── thaw checklist (signature) ── */
+  .thaw {
+    border: 1.5px solid var(--hold);
+    background: var(--hold-bg);
+    border-radius: 8px;
+    padding: 22px 26px;
+    margin: 16px 0 4px;
+  }
+  .thaw-title {
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--hold);
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+  }
+  .thaw label {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 0;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .thaw input[type="checkbox"] {
+    width: 18px; height: 18px;
+    margin-top: 4px;
+    accent-color: var(--hold);
+    flex-shrink: 0;
+  }
+  .thaw .sub { font-size: 13px; color: var(--ink-soft); display: block; }
+
+  .harvest-item { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .harvest-item:last-child { border-bottom: none; }
+  .harvest-check { color: var(--ok); font-weight: 800; flex-shrink: 0; }
+
+  footer {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    margin-top: 36px;
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header>
+  <div class="doc-kind">HARNESS ARCHIVE · 냉동 보관 문서</div>
+  <h1>배치 실행 모드<br><code>harness.md</code> + <code>scripts/execute.py</code></h1>
+  <div class="meta">
+    <span>판정일: 2026-08-21 (판정표 토론 세션)</span>
+    <span>출처: harness_framework 레포 (소스 3)</span>
+    <span>연계 ADR: docs/decisions/2026-08-19-final-harness-verdict.md</span>
+  </div>
+  <div class="stamp">🔜 보류 · 해동 조건부</div>
+</header>
+
+<section>
+  <h2><span class="no">00</span>한 줄 요약</h2>
+  <p><strong>사람 없이 step들을 순차 실행하는 헤드리스 배치 모드.</strong> 웹 잔재가 아니라 언리얼 전용으로 정교하게 재작성된 물건이며, 설계 품질은 높다. 하지만 지금 들이면 하네스가 두 개의 실행 모드·두 개의 커밋 체제·두 개의 빌드 경로를 갖게 된다. <strong>하네스 복잡도 상한 초과로 보류.</strong> 즉시 가치가 있는 설계 4건은 현행 하네스에 이미 편입했다(§05 — 해동 시 중복 도입 금지).</p>
+</section>
+
+<section>
+  <h2><span class="no">01</span>이 물건의 정체</h2>
+  <p>두 파일은 한 세트다. <code>harness.md</code>는 사람과 함께 작업을 step 파일들로 설계하는 워크플로우 문서, <code>execute.py</code>는 그 step들을 사람 없이 순차 실행하는 executor다.</p>
+  <div class="pipe">
+    <div class="pipe-step"><div class="pipe-who who-human">사람+세션</div><div class="pipe-what"><strong>A~D 단계 (대화형, 사람 게이트 있음)</strong> — 탐색 → 논의(C++/BP 경계 합의) → step 설계(scope 최소화, 자기완결, 시그니처 수준 지시) → <code>phases/{task}/step{N}.md</code> + <code>index.json</code> 생성</div></div>
+    <div class="pipe-step"><div class="pipe-who who-exec">executor</div><div class="pipe-what"><code>feat-{task}</code> 브랜치 checkout → CLAUDE.md + docs/*.md 전문을 가드레일로 프롬프트에 주입 → 완료된 step의 summary 누적 전달</div></div>
+    <div class="pipe-step"><div class="pipe-who who-claude">Claude -p</div><div class="pipe-what"><code>claude -p --dangerously-skip-permissions</code> 헤드리스 세션이 step 하나를 수행하고 <code>index.json</code>에 completed / error / blocked 자기신고</div></div>
+    <div class="pipe-step"><div class="pipe-who who-exec">executor</div><div class="pipe-what"><strong>자기신고 불신</strong> — step 파일의 AC 코드블록에서 커맨드를 파싱해 직접 재실행, exit code로만 최종 판정 (AC 타임아웃 60분)</div></div>
+    <div class="pipe-step"><div class="pipe-who who-exec">executor</div><div class="pipe-what">실패 시: <code>Source/</code> <code>Config/</code>를 git checkout+clean으로 롤백 → 실패 로그 끝 6,000자를 프롬프트에 되먹여 재시도 (최대 3회)</div></div>
+    <div class="pipe-step"><div class="pipe-who who-exec">executor</div><div class="pipe-what">성공 시: 경로 화이트리스트 커밋 — 코드는 <code>feat</code>, phases 메타데이터는 <code>chore</code>로 분리. <strong>커밋은 executor 전담, 세션은 커밋 금지</strong></div></div>
+    <div class="pipe-step"><div class="pipe-who who-human">사람</div><div class="pipe-what"><strong>blocked = 정상 인계</strong> — 에디터 작업(BP 노드, 에셋, 레벨, ini)이 필요하면 <code>blocked_reason</code>(무엇을/어디서)을 남기고 중단. 사람이 처리 후 pending으로 되돌려 재개</div></div>
+  </div>
+  <p class="note">기타: <code>--no-vcs</code>(Perforce용, git 조작 전체 생략 — 단 롤백도 사라짐), <code>--push</code>(완료 후 브랜치 push), step별 stdout/stderr을 <code>step{N}-output.json</code>으로 보존.</p>
+</section>
+
+<section>
+  <h2><span class="no">02</span>왜 지금 들이지 않나</h2>
+  <p><strong>제1 근거는 복잡도 상한이다.</strong> 하네스는 이미 신경 쓸 것이 많고, 이 모드를 들이면 실행 모드 2개(대화형/배치), 커밋 체제 2개(세션 커밋/executor 커밋), 빌드 경로 2개(Rider MCP/CLI)를 동시에 유지해야 한다. 1인 프로젝트에서 유지비가 편익을 앞선다. 급하지도 않다 — 아래 충돌 3건이 보여주듯 전제 조건이 아직 하나도 성립하지 않았다.</p>
+  <table>
+    <tr><th style="width:110px">충돌</th><th>내용</th><th style="width:38%">해동 시 처리</th></tr>
+    <tr>
+      <td>빌드 경로</td>
+      <td>executor의 AC는 파이썬 subprocess라 <span class="tag tag-warn">Rider MCP 호출 불가</span>. AC가 shell 커맨드여야 하므로 CLI 빌드 경로(UBT/Build.bat, MSBuild) 재개방이 필수 — "Rider MCP 전용" 결정과 정면충돌</td>
+      <td>"CI 필요 시 재검토" 단서의 성립을 그때 판정. execute.py는 기능적으로 미니 CI(자동 빌드·판정·롤백)라는 해석과, 단서의 CI는 외부 CI(GitHub Actions류)를 뜻했다는 해석이 갈림 — <strong>해동 시점에 사용자가 확정</strong></td>
+    </tr>
+    <tr>
+      <td>사람 게이트</td>
+      <td>step 실행 중 사람 게이트 없음. 단 게이트가 사라진 게 아니라 <strong>상류(C~D 단계 step 설계·승인)로 이동</strong>한 구조. AC 기계 판정은 P-G-E Evaluator의 결정론적 버전이라 원칙과 모순은 아님</td>
+      <td>grilling을 C~D 단계에 꽂아 step 파일을 심문한 뒤 배치 실행. AC가 못 잡는 것(설계 일관성·명명·아키텍처 이탈)은 phase 종료 후 code-reviewer로 보완</td>
+    </tr>
+    <tr>
+      <td>커밋 체제</td>
+      <td>현행: 세션이 커밋(<code>git commit -F</code> 규칙 정비됨). 이 모드: 세션 커밋 금지 + executor 커밋. executor가 CLAUDE.md 전문을 주입하므로 <strong>한 프롬프트 안에서 두 규칙이 충돌</strong></td>
+      <td>CLAUDE.md 커밋 절에 "배치 모드에서는 executor가 커밋을 관리하며 세션은 커밋하지 않는다" 조건 분기 한 줄 추가</td>
+    </tr>
+  </table>
+  <p class="note">보안 메모: <code>--dangerously-skip-permissions</code>는 권한 프롬프트만 건너뛰고 PreToolUse 훅(block_dangerous.py)은 그대로 돈다. 단 <code>ue_execute_python</code> 구멍은 대화형에서 "보고 규칙+사람의 눈"이 방어인데 헤드리스에서는 눈이 빠짐 — 배치 채택 시 이 구멍의 위험도가 한 단계 오른다.</p>
+</section>
+
+<section>
+  <h2><span class="no">03</span>해동 조건</h2>
+  <p>시점: <strong>UE 클라이언트 신규 기능 국면 진입 시</strong> (판정표 #03 Unreal MCP 도입과 같은 시기). 근거: <code>CODE_PATHS = ["Source", "Config"]</code>라 서버는 커밋 대상조차 아니고, harness.md의 어휘 전체(UCLASS, Build.cs, GAS, 에디터 blocked)가 클라 전용. MMORPG 클라의 반복 구현 물량(어빌리티·어트리뷰트·서브시스템 계열)이 배치가 값어치를 하는 지형이다.</p>
+  <div class="thaw">
+    <div class="thaw-title">해동 전 체크리스트 — 전부 충족 후 재판정</div>
+    <label><input type="checkbox"><span>클라 기능 국면 진입 (리팩토링 완료 또는 신규 기능 phase 시작)<span class="sub">세션 2(서버 GoogleTest)·세션 3(리팩토링)에는 쓸 자리 없음</span></span></label>
+    <label><input type="checkbox"><span>CLI 빌드 경로 재개방 결정 <span class="sub">"Rider MCP 전용"의 재검토 단서("CI 필요 시") 해석 확정 포함. AC 커맨드로 쓸 UBT/Build.bat 커맨드를 CLAUDE.md 명령어 절에 등재</span></span></label>
+    <label><input type="checkbox"><span>AC 사다리 3단을 채울 테스트 인프라 존재 <span class="sub">테스트 없이 돌리면 사실상 "컴파일만 되면 통과" — 세션 2 이후에나 성립</span></span></label>
+    <label><input type="checkbox"><span>첫 적용은 저위험 phase 하나로 한정한 파일럿 <span class="sub">본선 투입 전에 blocked 인계·롤백·재시도 루프가 실제로 도는지 검증</span></span></label>
+    <label><input type="checkbox"><span>CLAUDE.md에 배치 모드 커밋 조건 분기 추가 (§02 충돌 3)</span></label>
+  </div>
+</section>
+
+<section>
+  <h2><span class="no">04</span>해동 시 사용법</h2>
+  <h3>실행 커맨드</h3>
+  <pre><code>python3 scripts/execute.py {task-name}           # 순차 실행
+python3 scripts/execute.py {task-name} --push    # 완료 후 push
+python3 scripts/execute.py {task-name} --no-vcs  # Perforce (롤백 없음 주의)</code></pre>
+
+  <h3>준비 순서</h3>
+  <ol>
+    <li><strong>대화형 세션에서 harness.md A~D를 수행한다.</strong> 특히 C 단계에서 C++/BP 경계 합의(자동화 가능 범위의 경계), step당 한 클래스 계열 원칙, 에디터 작업 지점의 blocked 사전 설계를 지킨다. grilling 채택 상태라면 여기서 step 파일들을 심문한다.</li>
+    <li><strong>AC는 실행 가능한 shell 커맨드로만 적는다.</strong> <code>## Acceptance Criteria</code> 제목 바로 아래 첫 코드블록에서 파싱되며, 커맨드 원문은 CLAUDE.md 명령어 절에서 그대로 복사한다. AC 사다리 1~3단만 넣는다(4단 인게임 검증은 phase 종료 후 사람이).</li>
+    <li><strong><code>phases/index.json</code>과 <code>phases/{task}/index.json</code>을 D-1·D-2 스키마대로 생성한다.</strong> status는 전부 <code>"pending"</code>, 타임스탬프는 넣지 않는다(executor가 기록).</li>
+    <li><strong>워킹 트리를 깨끗이 하고 실행한다.</strong> executor가 브랜치를 checkout하므로 미커밋 변경이 있으면 실패한다.</li>
+  </ol>
+
+  <h3>에러 복구</h3>
+  <ul>
+    <li><span class="tag tag-warn">error</span> 3회 재시도 후 실패. <code>index.json</code>에서 해당 step status를 <code>"pending"</code>으로 되돌리고 <code>error_message</code>를 지운 뒤 재실행. 원인 분석에는 <code>step{N}-output.json</code>과 되먹임 로그를 본다.</li>
+    <li><span class="tag tag-hold">blocked</span> 실패 아님. <code>blocked_reason</code>의 작업을 에디터에서 처리하고 <code>"pending"</code>으로 되돌린 뒤 재실행.</li>
+  </ul>
+
+  <h3>한계 (설계상 의도된 것)</h3>
+  <ul>
+    <li>AC가 잡는 것은 컴파일·테스트 통과뿐이다. 설계 일관성·명명·아키텍처 이탈은 phase 종료 후 리뷰(code-reviewer)로 잡는다.</li>
+    <li>diff를 실시간으로 보지 못한다. 이탈 발견이 step 단위로 늦어지는 것을 감수하는 대신 물량 처리 속도를 얻는 트레이드오프다.</li>
+    <li><code>--no-vcs</code>에서는 재시도 전 롤백이 사라져 이전 시도의 잔여 파일이 다음 시도를 오염시킬 수 있다.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="no">05</span>이미 수확한 것 — 해동 시 중복 도입 금지</h2>
+  <p>아래 4건은 배치 모드와 무관하게 가치가 있어 <strong>판정 시점에 현행 하네스로 편입했다.</strong> 해동할 때 이것들을 "이 모드의 기능"으로 다시 들이지 말 것.</p>
+  <div class="harvest-item"><div class="harvest-check">✓</div><div><strong>자기신고 불신 원칙</strong> — 완료 선언 전 검증 커맨드 실제 실행을 CLAUDE.md 검증 절에 원칙으로 등재. 세션 1 미완 항목("빌드 초록 최종 확인")이 이 원칙의 첫 사례.</div></div>
+  <div class="harvest-item"><div class="harvest-check">✓</div><div><strong>blocked = 정상 인계</strong> — plans 체크리스트에 <code>[B] blocked — 무엇을/어디서</code> 상태 도입. 세션에게 "에디터 작업은 우회하지 말고 blocked로 기록 후 중단" 지시.</div></div>
+  <div class="harvest-item"><div class="harvest-check">✓</div><div><strong>summary 한 줄 누적</strong> — plans 완료 항목 옆에 "생성 파일 경로 + 핵심 결정" 한 줄. 다음 세션 프롬프트는 이 줄들을 긁어모아 작성.</div></div>
+  <div class="harvest-item"><div class="harvest-check">✓</div><div><strong>AC 사다리 + step 설계 원칙 6종</strong> — 계획 파일과 세션 프롬프트 작성 지침으로 채택 (scope 최소화 / 자기완결성 / 사전 준비 강제 / 시그니처 수준 지시 / "X 하지 마라. 이유: Y" / 에디터 작업은 step이 아니라 종료 조건).</div></div>
+</section>
+
+<section>
+  <h2><span class="no">06</span>원본 위치</h2>
+  <p>원본 파일은 harness_framework 레포에 보존한다: <code>commands/harness.md</code>, <code>scripts/execute.py</code>. 이 문서와 원본 2개가 해동에 필요한 전부다. 해동 재판정 시 이 문서의 §02 충돌 표와 §03 체크리스트에서 시작하면 판정 경위를 복원할 필요가 없다.</p>
+</section>
+
+<footer>batch-mode-archive.html · 2026-08-21 · 판정표 토론 세션 산출물</footer>
+
+</div>
+</body>
+</html>
