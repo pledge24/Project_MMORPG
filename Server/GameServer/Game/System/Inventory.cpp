@@ -41,7 +41,7 @@ Inventory::Inventory(PlayerRef player) : _player(player)
     slotTypeToItemTypeMappings = {
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, Protocol::ItemType::ITEM_TYPE_GEAR},
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, Protocol::ItemType::ITEM_TYPE_GEAR}
+        {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS}
     };
 
     itemTypeMappings = {
@@ -133,14 +133,17 @@ bool Inventory::removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
     Protocol::ItemType itemType = slotTypeToItemTypeMappings[requestSlot.type()];
     int32 slotId = requestSlot.slot_id();
 
-    Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(requestSlot.slot_id());
-    Protocol::Item* item = updatedSlot->mutable_item();
+    Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId);
+
+    // 검증이 먼저다. mutable_item()은 없던 item을 만들면서 has_item()을 켜므로,
+    // 검증보다 먼저 부르면 빈 슬롯이 "아이템 있음"으로 오염돼 다시는 채워지지 않는다.
+    // 더티 플래그도 마찬가지 — 실패한 제거까지 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
+    if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
+        return false;
 
     dirtyFlagsMappings[itemType][slotId] = true;
 
-    if (updatedSlot->has_item() == false || item->count() < count)
-        return false;
-
+    Protocol::Item* item = updatedSlot->mutable_item();
     int32 updatedCount = item->count() - count;
     if (updatedCount > 0)
     {
