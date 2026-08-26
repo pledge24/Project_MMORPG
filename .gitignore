@@ -1,5 +1,9 @@
+# 이 리포는 CLAUDE.md·.claude/·docs/·prompts/ 를 의도적으로 추적한다 (커밋 01bd5a6).
+# 전역 커밋 규칙과 다르니 아래 두 줄 외의 무시 규칙을 되돌려 넣지 말 것.
 
+# 훅 차단 카운터 — 머신 로컬 통계. 커밋마다 diff가 끼면 잡음이 되고,
+# 브랜치를 오갈 때 합쳐질 수 없는 성질의 파일이다. 백업 대상에는 포함할 것.
+.claude/hooks/block_counter.log
 
-
-
-
+# 세션 transcript 아카이브 — jsonl 한 개가 수 MB라 추적하면 리포가 부푼다.
+.claude/transcripts-archive/

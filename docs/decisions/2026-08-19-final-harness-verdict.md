@@ -81,7 +81,7 @@ grilling: 리팩토링 착수 직전 채택 / improve-codebase-architecture: doc
 ### 5. 포트폴리오: 숫자 기록
 
 - **결정:** "세션 리포트에 손으로 누적" 폐기. 발생 지점 자동 집계로 수정 —
-  (a) 훅 차단 건수: block_dangerous.py가 차단 시 append-only 카운터 파일에 기록
+  (a) 훅 차단 건수: guard_dangerous_cmd.py가 차단 시 append-only 카운터 파일에 기록
   (훅에 소량 추가), (b) 문서 정정 건수·CLAUDE.md 변경 이력: git log가 이미 집계,
   (c) 테스트가 잡은 회귀 수: 유일한 수동 항목(실패 중 "회귀" 판별이 필요)으로 세션
   리포트에 기록. 세션 리포트는 집계 장부가 아니라 카운터·git에서 읽어오는 조회 창.
@@ -158,7 +158,7 @@ grilling: 리팩토링 착수 직전 채택 / improve-codebase-architecture: doc
 1. CLAUDE.md: 검증 절에 자기신고 불신 원칙 1줄, 커밋 절은 현행 유지(배치 조건 분기는
    해동 시).
 2. docs/plans/ 형식: `[B] blocked` 상태와 완료 항목 summary 한 줄 관행 추가.
-3. block_dangerous.py: 차단 카운터 append 추가(+테스트).
+3. guard_dangerous_cmd.py: 차단 카운터 append 추가(+테스트).
 4. Claude Code 설정: transcript 보존 기간 연장, 세션 종료 루틴에 jsonl 아카이브 단계.
 5. code-reviewer 서브에이전트(🔜 2단계) 지시문 초안에 레이어 경계 체크리스트 항목 예약.
 6. Im-not-ai·insane-search·revise-claude-md류 스킬: 내용 확인 후 형태 판정
