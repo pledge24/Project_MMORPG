@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>세션 1 — 하네스 검증과 코드베이스 진단</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --fg: #d8dee4;
+    --muted: #828c99;
+    --accent: #ffb86c;
+    --accent2: #82e0aa;
+    --danger: #f5837d;
+    --blue: #79b8ff;
+    --purple: #c8a2ff;
+    --line: #2a313a;
+    --code-bg: #1a2029;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "Noto Sans KR", sans-serif;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    line-height: 1.65;
+    font-size: 15px;
+  }
+  h1 { font-size: 27px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  h2 { font-size: 21px; margin-top: 46px; color: var(--accent); border-left: 4px solid var(--accent); padding-left: 10px; }
+  h3 { font-size: 16px; margin-top: 30px; color: var(--accent2); }
+  h4 { font-size: 14px; margin-top: 22px; color: var(--fg); letter-spacing: .02em; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: -8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13.5px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); color: var(--accent); font-weight: 600; }
+  td.col-key { white-space: nowrap; color: var(--accent2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--accent2); }
+  pre { background: var(--code-bg); padding: 14px 18px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; border: 1px solid var(--line); }
+  pre code { background: transparent; padding: 0; color: var(--fg); }
+  .fig { margin: 22px 0 26px; text-align: center; }
+  .fig svg { max-width: 100%; height: auto; }
+  .fig figcaption { color: var(--muted); font-size: 12.5px; margin-top: 8px; text-align: center; }
+  .callout { background: var(--code-bg); border-left: 3px solid var(--accent); padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+  .callout.bad { border-left-color: var(--danger); }
+  .callout.good { border-left-color: var(--accent2); }
+  .callout.info { border-left-color: var(--blue); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+  .toc { background: var(--code-bg); padding: 14px 22px; border-radius: 6px; }
+  .toc a { color: var(--accent2); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .status-ok { color: var(--accent2); }
+  .status-warn { color: var(--accent); }
+  .status-bad { color: var(--danger); }
+  .commit { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; background:#222b36; color:var(--accent); padding:1px 7px; border-radius:10px; border:1px solid var(--line); }
+  .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:10px; font-weight:600; }
+  .tag.what { background:#15302a; color:var(--accent2); border:1px solid #1f4a3e; }
+  .tag.how  { background:#332815; color:var(--accent); border:1px solid #4a3a1f; }
+  .tag.why  { background:#33181a; color:var(--danger); border:1px solid #4a2426; }
+  .why { border-left:3px solid var(--danger); background:var(--code-bg); padding:10px 16px; margin:14px 0; border-radius:4px; }
+  .why b { color:var(--danger); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px){ .grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<h1>세션 1 — 하네스 검증과 코드베이스 진단</h1>
+<p class="meta">2026-08-19 · 안전장치가 한 번도 작동한 적 없었다는 사실을 확인하고 고친 기록</p>
+
+<div class="callout bad">
+<b>이 세션의 한 줄</b> — <code>.claude/settings.json</code>의 위험 명령 차단 훅은 도입된 이래
+<b>단 한 번도 아무것도 막은 적이 없다.</b> 실제로 <code>rm -rf</code>를 쏘아 확인했고, 통과했다.
+원인은 정규식이 아니라 <b>인터프리터 이름 한 글자</b>였다.
+<span class="tag what">무엇이</span> <span class="tag how">왜 안 막혔나</span> <span class="tag why">어떻게 고쳤나</span>
+</div>
+
+<div class="toc">
+<b>목차</b>
+<ol start="0">
+  <li><a href="#overview">한눈에 — 무엇을 확인했나</a></li>
+  <li><a href="#hook">훅이 죽어 있었다 — <code>exit 49</code>의 정체</a></li>
+  <li><a href="#coverage">훅이 덮지 못하던 우회로 3개</a></li>
+  <li><a href="#tiers">3티어 신뢰 경계 — Redis가 유일한 연결점</a></li>
+  <li><a href="#packet">패킷 18개가 갈라지는 네 갈래</a></li>
+  <li><a href="#pump">수신 펌프가 레벨 블루프린트에 산다</a></li>
+  <li><a href="#build">빌드 실패의 범인은 C++가 아니었다</a></li>
+  <li><a href="#files">참고 파일 목록</a></li>
+</ol>
+</div>
+
+<!-- ==================== 0 ==================== -->
+<h2 id="overview">0. 한눈에 — 무엇을 확인했나</h2>
+
+<p>세션 목표는 세 가지였다: 하네스가 실제로 도는가, 문서가 코드와 맞는가, 부채가 어디에 있는가.
+제품 코드는 한 줄도 고치지 않았다. 산출물은 문서 3개와 하네스 설정 1개다.</p>
+
+<table>
+<tr><th>검증 대상</th><th>결과</th><th>근거</th></tr>
+<tr><td class="col-key">PreToolUse 훅</td><td class="status-bad">완전 무력 → 수정 완료</td><td>캐너리 디렉터리에 <code>rm -rf</code> 실행 → 삭제됨 (exit 0)</td></tr>
+<tr><td class="col-key">Rider MCP (P1)</td><td class="status-ok">정상</td><td><code>get_run_configurations</code> 응답</td></tr>
+<tr><td class="col-key">Rider MCP (Server)</td><td class="status-warn">세션 중 연결</td><td>처음엔 <code>no open project</code>, 사용자가 솔루션을 열어 해결</td></tr>
+<tr><td class="col-key">UE MCP</td><td class="status-warn">세션 중 연결</td><td>처음엔 <code>connected:false</code>, 에디터 기동 후 BP 41개 전수 조사</td></tr>
+<tr><td class="col-key">CLAUDE.md 서버 경로</td><td class="status-bad">9건 오류</td><td><code>GenPackets.bat</code> / <code>GenJsonFile.bat</code> 실물 대조</td></tr>
+<tr><td class="col-key">CLAUDE.md 툴 이름</td><td class="status-warn">1건 미실존 + 1건 미노출</td><td><code>execute_tool_script</code>는 실존하지 않음(실물 <code>execute_tool</code>). <code>build_project</code>는 <b>실존하나</b> 이 엔드포인트가 노출하지 않음 — <a href="#toolname" style="color:var(--accent2)">§6-1</a></td></tr>
+<tr><td class="col-key">DB 스키마</td><td class="status-ok">스크립트와 일치</td><td>라이브 introspect (GameDB 5테이블 + 루틴 1, UserDB 1테이블)</td></tr>
+<tr><td class="col-key">Server.sln 빌드</td><td class="status-bad">실패 — 원인은 Node 프로젝트</td><td>빌드 로그의 유일한 에러가 <code>AuthServer.esproj</code></td></tr>
+</table>
+
+<!-- ==================== 1 ==================== -->
+<h2 id="hook">1. 훅이 죽어 있었다 — <code>exit 49</code>의 정체</h2>
+
+<p>훅은 이렇게 생겨 있었다. 로직 자체는 멀쩡하다.</p>
+
+<p><code>.claude/settings.json</code> (수정 전)</p>
+<pre><code>"command": "python3 -c \"import json,sys,re; d=json.load(sys.stdin); ...
+             sys.exit(2 if hit else 0)\""</code></pre>
+
+<p>문제는 <code>python3</code>다. 이 머신에서 <code>where python3</code>는 다음을 가리킨다.</p>
+
+<pre><code>C:\Users\zmwps\AppData\Local\Microsoft\WindowsApps\python3.exe</code></pre>
+
+<p>실제 파이썬이 아니라 <b>Microsoft Store 앱 실행 별칭 스텁</b>이다. 스크립트를 실행하지 않고
+<code>Python</code> 한 단어를 출력한 뒤 <code>exit 49</code>로 죽는다. 같은 스크립트를 진짜
+인터프리터에 물리면 정상적으로 <code>exit 2</code>가 나온다.</p>
+
+<pre><code>$ echo '{"tool_input":{"command":"rm -rf /tmp/foo"}}' | python3 -c "...(훅 스크립트)..."
+Python
+EXIT=49
+
+$ echo '{"tool_input":{"command":"rm -rf /tmp/foo"}}' | \
+    C:/Users/zmwps/AppData/Local/Programs/Python/Python313/python.exe -c "...(동일)..."
+BLOCKED: rm\s+-rf
+EXIT=2</code></pre>
+
+<p>여기서 결정적인 것은 <b>49가 0이 아니라는 사실이 아무 도움이 안 된다</b>는 점이다.
+Claude Code의 PreToolUse 규약은 다음과 같다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 322" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="h1R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+    <marker id="h1G" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+  </defs>
+
+  <!-- 열 머리 -->
+  <text x="66"  y="24" fill="#828c99" text-anchor="middle">Bash 호출</text>
+  <text x="245" y="24" fill="#828c99" text-anchor="middle">훅 프로세스</text>
+  <text x="420" y="24" fill="#828c99" text-anchor="middle">종료 코드</text>
+  <text x="570" y="24" fill="#828c99" text-anchor="middle">하네스 판정</text>
+  <text x="739" y="24" fill="#828c99" text-anchor="middle">결과</text>
+
+  <!-- BEFORE 행 -->
+  <text x="14" y="52" fill="#f5837d" font-weight="600">수정 전</text>
+  <rect x="14"  y="62" width="104" height="46" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="66"  y="90" fill="#d8dee4" text-anchor="middle">rm -rf …</text>
+
+  <rect x="150" y="62" width="190" height="46" rx="5" fill="#1a2029" stroke="#f5837d" stroke-width="2"/>
+  <text x="245" y="82" fill="#f5837d" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11.5">python3 -c "…"</text>
+  <text x="245" y="99" fill="#828c99" text-anchor="middle" font-size="11">Store 별칭 스텁 · 미실행</text>
+
+  <rect x="372" y="62" width="96" height="46" rx="5" fill="#11161d" stroke="#f5837d" stroke-width="2"/>
+  <text x="420" y="90" fill="#f5837d" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="15" font-weight="700">49</text>
+
+  <rect x="500" y="62" width="140" height="46" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="570" y="82" fill="#ffb86c" text-anchor="middle" font-size="11.5">non-blocking error</text>
+  <text x="570" y="99" fill="#828c99" text-anchor="middle" font-size="11">경고만 찍고 진행</text>
+
+  <rect x="672" y="62" width="134" height="46" rx="5" fill="#11161d" stroke="#f5837d" stroke-width="2.5"/>
+  <text x="739" y="90" fill="#f5837d" text-anchor="middle" font-weight="700">디렉터리 삭제됨</text>
+
+  <line x1="118" y1="85" x2="146" y2="85" stroke="#f5837d" stroke-width="2" marker-end="url(#h1R)"/>
+  <line x1="340" y1="85" x2="368" y2="85" stroke="#f5837d" stroke-width="2" marker-end="url(#h1R)"/>
+  <line x1="468" y1="85" x2="496" y2="85" stroke="#f5837d" stroke-width="2" marker-end="url(#h1R)"/>
+  <line x1="640" y1="85" x2="668" y2="85" stroke="#f5837d" stroke-width="2" marker-end="url(#h1R)"/>
+
+  <!-- 판정 규칙 밴드 -->
+  <rect x="14" y="132" width="792" height="52" rx="5" fill="#11161d" stroke="#2a313a" stroke-width="2"/>
+  <text x="28" y="152" fill="#ffb86c" font-size="11.5" font-weight="600">PreToolUse 종료 코드 규약 — 여기가 함정이다</text>
+  <text x="28"  y="171" fill="#82e0aa" font-family="ui-monospace, Consolas, monospace" font-size="11.5">0 → 통과</text>
+  <text x="150" y="171" fill="#f5837d" font-family="ui-monospace, Consolas, monospace" font-size="11.5" font-weight="700">2 → 차단 (유일)</text>
+  <text x="320" y="171" fill="#828c99" font-family="ui-monospace, Consolas, monospace" font-size="11.5">그 외 전부 → 통과 (1, 49, 127 …)</text>
+  <text x="792" y="171" fill="#828c99" font-size="11" text-anchor="end">즉 "훅이 실패하면" 안전한 쪽이 아니라 열린 쪽으로 넘어간다</text>
+
+  <!-- AFTER 행 -->
+  <text x="14" y="214" fill="#82e0aa" font-weight="600">수정 후</text>
+  <rect x="14"  y="224" width="104" height="46" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="66"  y="252" fill="#d8dee4" text-anchor="middle">rm -rf …</text>
+
+  <rect x="150" y="224" width="190" height="46" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="245" y="244" fill="#82e0aa" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11.5">py -3 guard_….py</text>
+  <text x="245" y="261" fill="#828c99" text-anchor="middle" font-size="11">C:\Windows\py.exe · 실 exe</text>
+
+  <rect x="372" y="224" width="96" height="46" rx="5" fill="#11161d" stroke="#82e0aa" stroke-width="2"/>
+  <text x="420" y="252" fill="#82e0aa" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="15" font-weight="700">2</text>
+
+  <rect x="500" y="224" width="140" height="46" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="570" y="244" fill="#82e0aa" text-anchor="middle" font-size="11.5">permissionDecision</text>
+  <text x="570" y="261" fill="#82e0aa" text-anchor="middle" font-size="11.5" font-weight="700">deny</text>
+
+  <rect x="672" y="224" width="134" height="46" rx="5" fill="#11161d" stroke="#82e0aa" stroke-width="2.5"/>
+  <text x="739" y="252" fill="#82e0aa" text-anchor="middle" font-weight="700">차단 · 캐너리 생존</text>
+
+  <line x1="118" y1="247" x2="146" y2="247" stroke="#82e0aa" stroke-width="2" marker-end="url(#h1G)"/>
+  <line x1="340" y1="247" x2="368" y2="247" stroke="#82e0aa" stroke-width="2" marker-end="url(#h1G)"/>
+  <line x1="468" y1="247" x2="496" y2="247" stroke="#82e0aa" stroke-width="2" marker-end="url(#h1G)"/>
+  <line x1="640" y1="247" x2="668" y2="247" stroke="#82e0aa" stroke-width="2" marker-end="url(#h1G)"/>
+
+  <text x="14" y="298" fill="#828c99" font-size="11">두 행의 차이는 정규식이 아니라 2열의 실행 파일 하나뿐이다. 판정 밴드를 보면 왜 실패가 조용했는지 보인다.</text>
+</svg>
+<figcaption>그림 1 — 훅이 실패해도 명령은 통과한다. 가로축은 한 번의 툴 호출이 거치는 단계, 세로축은 수정 전/후. 가운데 밴드가 이 그림의 요점이다: <b>차단은 exit 2 하나뿐</b>이라 훅이 죽으면 시스템은 자동으로 열린다.</figcaption>
+</div>
+
+<div class="why">
+<b>왜 스크립트 파일로 뺐나</b> — 인터프리터만 <code>py -3</code>로 바꿔도 동작은 한다.
+그런데 인라인 <code>-c "…"</code>는 JSON 안에 파이썬 코드를 넣는 구조라, 정규식에 따옴표나 백슬래시가
+하나 늘 때마다 이스케이프가 깨진다. 그리고 <b>깨져도 조용히 통과한다</b>(위 밴드).
+같은 사고를 반복할 구조 자체를 없애려고 <code>.claude/hooks/guard_dangerous_cmd.py</code>로 분리했다.
+트레이드오프: 설정 파일 하나로 자족하지 않게 되고, 훅이 파일 경로에 의존한다
+(<code>${CLAUDE_PROJECT_DIR}</code>로 완화).
+</div>
+
+<div class="why">
+<b>왜 exec form(<code>args</code>)인가</b> — 셸 폼으로 두면 Git Bash를 한 번 더 거치면서
+경로의 공백·백슬래시가 재파싱된다. exec form은 실행 파일을 직접 spawn하고 각 <code>args</code>
+원소를 문자 그대로 넘긴다. 다만 exec form은 <b>실제 <code>.exe</code>만</b> 받는다
+(<code>.cmd</code>/<code>.bat</code> 심 불가) — 그래서 <code>python</code>(PATH 순서에 의존)이 아니라
+<code>py</code>(<code>C:\Windows\py.exe</code>, 파이썬 런처)를 골랐다.
+</div>
+
+<div class="why">
+<b>왜 exit 2와 deny JSON을 둘 다 쓰나</b> — JSON <code>permissionDecision: "deny"</code>만 쓰면
+스키마 검증에 실패했을 때 "비차단 오류"로 떨어져 통과한다. 반대로 exit 2만 쓰면 차단은 되지만
+사용자에게 보이는 사유가 stderr 원문이 된다. 공식 규약상 <b>exit 2는 JSON 파싱 결과와 무관하게
+차단</b>하고, 사유는 유효한 JSON이 있으면 거기서 가져간다. 둘을 겹치면 실패 모드가 사라진다.
+</div>
+
+<h3>1-1. 패턴도 CLAUDE.md와 어긋나 있었다</h3>
+
+<p>CLAUDE.md 안전 규칙은 <code>DROP</code>, <code>TRUNCATE</code>, WHERE 없는
+<code>DELETE</code>/<code>UPDATE</code>, <code>FLUSHALL</code>, <code>FLUSHDB</code>,
+<code>KEYS *</code>를 금지한다. 옛 훅이 실제로 보던 것은 <code>FLUSHALL</code>,
+<code>FLUSHDB</code>, <code>DROP TABLE</code> 세 개뿐이었다.</p>
+
+<div class="grid2">
+<div>
+<p><b>수정 전 — 커버되던 것</b></p>
+<pre><code>rm -rf
+git push --force / -f
+git reset --hard
+git clean -f
+git checkout . / git restore .
+git branch -D
+FLUSHALL / FLUSHDB
+DROP TABLE</code></pre>
+</div>
+<div>
+<p><b>수정 후 — 추가된 것</b></p>
+<pre><code>rd /s · rmdir /s · del /s
+Remove-Item -Recurse -Force
+TRUNCATE TABLE
+DROP DATABASE|SCHEMA|PROCEDURE|VIEW|INDEX
+ALTER TABLE / CREATE TABLE|DATABASE
+WHERE 없는 DELETE FROM
+WHERE 없는 UPDATE … SET
+KEYS *</code></pre>
+</div>
+</div>
+
+<p>WHERE 판정은 주석과 문자열 리터럴을 먼저 지운 뒤에 한다. 안 그러면
+<code>DELETE FROM x -- WHERE y</code> 같은 입력이 통과한다 (테스트 케이스에 포함).</p>
+
+<p><code>.claude/hooks/guard_dangerous_cmd.py:74-82</code></p>
+<pre><code>def _strip_sql_noise(text):
+    text = re.sub(r"--[^\n]*", " ", text)
+    text = re.sub(r"/\*[\s\S]*?\*/", " ", text)
+    text = re.sub(r"'(?:[^']|'')*'", " '' ", text)
+    return text</code></pre>
+
+<div class="callout good">
+<b>검증</b> — 단위 테스트 27케이스 전부 통과(차단 16 / 통과 11). 그 뒤 실제 하네스에서
+Bash <code>rm -rf</code>, PowerShell <code>Remove-Item -Recurse -Force</code>,
+MCP <code>execute_sql_query</code>의 WHERE 없는 <code>DELETE</code> 세 경로를 쏘아
+모두 차단되는 것과, <code>git status</code>·<code>rm -f</code>·<code>git checkout .gitignore</code>가
+통과하는 것을 확인했다.
+</div>
+
+<!-- ==================== 2 ==================== -->
+<h2 id="coverage">2. 훅이 덮지 못하던 우회로 3개</h2>
+
+<p>인터프리터를 고쳐도 남는 문제가 있었다. matcher가 <code>"Bash"</code> 하나였다.
+이 세션에는 <code>PowerShell</code> 툴이 별도로 있고, Rider MCP는 터미널과 SQL을 각각
+자기 툴로 실행한다. 전부 <code>"Bash"</code>에 걸리지 않는다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="h2R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+  </defs>
+
+  <!-- 훅 경계 -->
+  <rect x="14" y="52" width="792" height="86" rx="6" fill="#11161d" stroke="#82e0aa" stroke-width="2" stroke-dasharray="7,5"/>
+  <text x="26" y="46" fill="#82e0aa" font-size="11.5" font-weight="600">훅 검사 영역 (수정 후)</text>
+
+  <rect x="34"  y="74" width="168" height="44" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="118" y="93" fill="#82e0aa" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11.5">Bash</text>
+  <text x="118" y="109" fill="#828c99" text-anchor="middle" font-size="10.5">tool_input.command</text>
+
+  <rect x="222" y="74" width="168" height="44" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="306" y="93" fill="#82e0aa" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11.5">PowerShell</text>
+  <text x="306" y="109" fill="#828c99" text-anchor="middle" font-size="10.5">tool_input.command</text>
+
+  <rect x="410" y="74" width="182" height="44" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="501" y="93" fill="#82e0aa" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5">…execute_terminal_command</text>
+  <text x="501" y="109" fill="#828c99" text-anchor="middle" font-size="10.5">tool_input.command</text>
+
+  <rect x="612" y="74" width="174" height="44" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="699" y="93" fill="#82e0aa" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5">…execute_sql_query</text>
+  <text x="699" y="109" fill="#c8a2ff" text-anchor="middle" font-size="10.5">tool_input.queryText</text>
+
+  <!-- 수정 전 커버 표시 -->
+  <rect x="34" y="74" width="168" height="44" rx="5" fill="none" stroke="#ffb86c" stroke-width="2.5" stroke-dasharray="3,3"/>
+  <text x="118" y="64" fill="#ffb86c" font-size="10.5" text-anchor="middle">수정 전 유일한 matcher</text>
+
+  <!-- 아직 밖 -->
+  <rect x="14" y="176" width="792" height="62" rx="6" fill="#11161d" stroke="#f5837d" stroke-width="2" stroke-dasharray="7,5"/>
+  <text x="26" y="170" fill="#f5837d" font-size="11.5" font-weight="600">아직 훅 밖 — 남은 위험</text>
+
+  <rect x="34" y="190" width="230" height="34" rx="5" fill="#1a2029" stroke="#f5837d" stroke-width="2"/>
+  <text x="149" y="212" fill="#f5837d" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="10.5">mcp__rider__ue_execute_python</text>
+
+  <text x="284" y="205" fill="#828c99" font-size="11">에디터 안에서 임의 파이썬을 실행한다 — 에셋 삭제·저장 전부 가능.</text>
+  <text x="284" y="221" fill="#828c99" font-size="11">검사할 "명령 문자열"이 없어 정규식으로 막기 어렵다.</text>
+
+  <line x1="149" y1="138" x2="149" y2="172" stroke="#f5837d" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#h2R)"/>
+
+  <text x="14" y="268" fill="#828c99" font-size="11">세로축 = 훅 경계의 안/밖. 가로축 = 셸을 실행할 수 있는 툴들. 위 칸이 넓어진 만큼</text>
+  <text x="14" y="284" fill="#828c99" font-size="11">아래 칸이 줄었지만 0이 되지는 않았다.</text>
+</svg>
+<figcaption>그림 2 — 안전장치의 실제 경계. matcher 하나를 넓히는 것만으로 셸 4종이 덮였지만, <code>ue_execute_python</code>은 여전히 밖에 있다. 이 그림이 하는 말: <b>"훅을 달았다"와 "덮였다"는 다른 말이다.</b></figcaption>
+</div>
+
+<div class="callout info">
+<b>남은 구멍을 어떻게 다룰 것인가</b> — <code>ue_execute_python</code>은 임의 코드라
+문자열 패턴으로는 못 막는다. 현실적인 방어는 CLAUDE.md에 이미 있던 규칙
+("임의 코드를 실행하는 툴은 무엇을 실행할지 먼저 보고한다")을 실제 툴 이름으로 고쳐 유지하는 것과,
+에디터 조작 전 <code>git status</code> 클린 확인이다. 이 세션에서도 BP 전수 조사 전에 그 순서를 지켰다.
+(원문은 <code>execute_tool_script</code>라는 실존하지 않는 이름을 쓰고 있었다. 실물은 <code>execute_tool</code>.)
+</div>
+
+<!-- ==================== 3 ==================== -->
+<h2 id="tiers">3. 3티어 신뢰 경계 — Redis가 유일한 연결점</h2>
+
+<p>문서가 주장하던 "인증 티어와 게임 티어를 잇는 건 Redis뿐"은 <b>코드와 일치했다.</b>
+다만 흥미로운 것은 이 규칙을 강제하는 게 코드가 아니라는 점이다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 340" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="h3G" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+    <marker id="h3B" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#79b8ff"/></marker>
+    <marker id="h3P" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#c8a2ff"/></marker>
+  </defs>
+
+  <text x="14" y="22" fill="#828c99" font-size="11">위 = 프로세스 · 아래 = 저장소. 세로선 = 티어 경계.</text>
+
+  <!-- 티어 경계 -->
+  <line x1="277" y1="34" x2="277" y2="300" stroke="#f5837d" stroke-width="2" stroke-dasharray="6,5"/>
+  <text x="277" y="318" fill="#f5837d" font-size="11" text-anchor="middle">인증 티어 ┃ 게임 티어</text>
+
+  <!-- 프로세스 -->
+  <rect x="14"  y="46" width="120" height="48" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="74"  y="68" fill="#d8dee4" text-anchor="middle">클라 (UE 5.8)</text>
+  <text x="74"  y="84" fill="#828c99" text-anchor="middle" font-size="10.5">ULoginManager</text>
+
+  <rect x="164" y="46" width="150" height="48" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="239" y="68" fill="#d8dee4" text-anchor="middle">AuthServer :5000</text>
+  <text x="239" y="84" fill="#828c99" text-anchor="middle" font-size="10.5">Express · bcrypt</text>
+
+  <rect x="470" y="46" width="150" height="48" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="545" y="68" fill="#d8dee4" text-anchor="middle">GameServer :7777</text>
+  <text x="545" y="84" fill="#828c99" text-anchor="middle" font-size="10.5">IOCP · C++20</text>
+
+  <!-- 저장소 -->
+  <rect x="164" y="220" width="150" height="46" rx="5" fill="#11161d" stroke="#79b8ff" stroke-width="2"/>
+  <text x="239" y="241" fill="#79b8ff" text-anchor="middle">UserDB</text>
+  <text x="239" y="257" fill="#828c99" text-anchor="middle" font-size="10.5">(localdb)\MSSQLLocalDB</text>
+
+  <rect x="470" y="220" width="150" height="46" rx="5" fill="#11161d" stroke="#79b8ff" stroke-width="2"/>
+  <text x="545" y="241" fill="#79b8ff" text-anchor="middle">GameDB</text>
+  <text x="545" y="257" fill="#828c99" text-anchor="middle" font-size="10.5">(localdb)\ProjectModels</text>
+
+  <rect x="316" y="132" width="188" height="52" rx="5" fill="#11161d" stroke="#c8a2ff" stroke-width="2.5"/>
+  <text x="410" y="153" fill="#c8a2ff" text-anchor="middle" font-weight="700">Redis :6379</text>
+  <text x="410" y="170" fill="#828c99" text-anchor="middle" font-size="10.5">accessToken:&lt;uuid&gt; → {userId, username}</text>
+
+  <!-- 흐름 -->
+  <line x1="134" y1="62" x2="160" y2="62" stroke="#82e0aa" stroke-width="2" marker-end="url(#h3G)"/>
+  <text x="147" y="52" fill="#82e0aa" font-size="10.5" text-anchor="middle">①</text>
+  <text x="60" y="112" fill="#82e0aa" font-size="10.5">① POST /Login</text>
+
+  <line x1="239" y1="94" x2="239" y2="216" stroke="#79b8ff" stroke-width="2" marker-end="url(#h3B)"/>
+  <text x="245" y="200" fill="#79b8ff" font-size="10.5">② bcrypt 대조</text>
+
+  <line x1="310" y1="120" x2="352" y2="132" stroke="#c8a2ff" stroke-width="2" marker-end="url(#h3P)"/>
+  <text x="300" y="116" fill="#c8a2ff" font-size="10.5" text-anchor="end">③ SET TTL</text>
+
+  <line x1="134" y1="78" x2="134" y2="158" stroke="#82e0aa" stroke-width="2"/>
+  <line x1="134" y1="158" x2="466" y2="158" stroke="#82e0aa" stroke-width="2"/>
+  <line x1="466" y1="158" x2="466" y2="98" stroke="#82e0aa" stroke-width="2"/>
+  <line x1="466" y1="98" x2="466" y2="94" stroke="#82e0aa" stroke-width="2" marker-end="url(#h3G)"/>
+  <text x="150" y="150" fill="#82e0aa" font-size="10.5">④ C_LOGIN { access_token } — TCP</text>
+
+  <line x1="510" y1="132" x2="480" y2="120" stroke="#c8a2ff" stroke-width="2" marker-end="url(#h3P)"/>
+  <text x="522" y="116" fill="#c8a2ff" font-size="10.5">⑤ GET 재검증</text>
+
+  <line x1="545" y1="94" x2="545" y2="216" stroke="#79b8ff" stroke-width="2" marker-end="url(#h3B)"/>
+  <text x="551" y="200" fill="#79b8ff" font-size="10.5">⑥ 캐릭터 로드</text>
+
+  <!-- 금지된 연결 -->
+  <line x1="470" y1="243" x2="318" y2="243" stroke="#f5837d" stroke-width="2" stroke-dasharray="5,4"/>
+  <path d="M 386 233 L 402 253 M 402 233 L 386 253" stroke="#f5837d" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="394" y="284" fill="#f5837d" font-size="10.5" text-anchor="middle">GameServer는 UserDB에 접근하지 않는다</text>
+  <text x="394" y="299" fill="#828c99" font-size="10.5" text-anchor="middle">— 코드가 아니라 접속 문자열이 이걸 강제한다</text>
+</svg>
+<figcaption>그림 3 — 로그인이 지나가는 경로와 넘지 않는 선. 세로축은 프로세스/저장소 계층, 가로축은 티어. ⑤가 이 구조의 핵심이다: 게임 서버가 계정을 아는 유일한 방법이 Redis 한 칸이다.</figcaption>
+</div>
+
+<div class="why">
+<b>왜 두 DB가 서로 다른 LocalDB 인스턴스에 있나</b> — 진단 결과 <b>의도가 아니라 우연</b>으로 보인다.
+AuthServer는 기본 인스턴스(<code>MSSQLLocalDB</code>)를 <code>.env</code>로, GameServer는 별도 인스턴스
+(<code>ProjectModels</code>)를 <code>config.h</code> 컴파일 타임 상수로 잡았을 뿐이다.
+그런데 <b>결과적으로 이 우연이 아키텍처 규칙을 물리적으로 강제하고 있다</b> —
+게임 서버 프로세스는 UserDB 접속 문자열을 아예 갖고 있지 않아서, 실수로 조회하려 해도 못 한다.
+그래서 부채 목록에서 이 항목의 처방은 "합쳐라"가 아니라 <b>"의도임을 문서로 못 박아라"</b>가 됐다.
+</div>
+
+<!-- ==================== 4 ==================== -->
+<h2 id="packet">4. 패킷 18개가 갈라지는 네 갈래</h2>
+
+<p><code>Protocol.proto</code>의 메시지는 40개(<code>PKT_* 1000~1039</code>)다.
+접두사가 방향을 정한다 — <code>C_*</code> 18개가 클라→서버, <code>S_*</code> 22개가 서버→클라.
+서버가 받은 18개는 네 갈래로 갈린다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="h4A" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#828c99"/></marker>
+    <pattern id="h4hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#f5837d" stroke-width="1.4" opacity=".26"/>
+    </pattern>
+  </defs>
+
+  <text x="14" y="22" fill="#828c99" font-size="11">막대 폭 = 패킷 개수에 비례 (총 18개 = 640px)</text>
+
+  <!-- 수신 -->
+  <rect x="14" y="40" width="120" height="40" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="74" y="58" fill="#d8dee4" text-anchor="middle" font-size="11.5">IOCP 워커</text>
+  <text x="74" y="73" fill="#828c99" text-anchor="middle" font-size="10.5">64ms 틱 · 5+1 스레드</text>
+
+  <rect x="164" y="40" width="180" height="40" rx="5" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="254" y="58" fill="#d8dee4" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="11">GPacketHandler[id]</text>
+  <text x="254" y="73" fill="#828c99" text-anchor="middle" font-size="10.5">ServerPacketHandler.cpp</text>
+
+  <line x1="134" y1="60" x2="160" y2="60" stroke="#828c99" stroke-width="2" marker-end="url(#h4A)"/>
+  <line x1="254" y1="80" x2="254" y2="112" stroke="#828c99" stroke-width="2" marker-end="url(#h4A)"/>
+
+  <!-- 비례 막대 -->
+  <text x="90" y="128" fill="#828c99" font-size="11">C_* 18개</text>
+
+  <rect x="90"  y="136" width="356" height="46" rx="4" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="268" y="157" fill="#82e0aa" text-anchor="middle" font-weight="600">Room 큐 · 10개</text>
+  <text x="268" y="173" fill="#828c99" text-anchor="middle" font-size="10.5">room-&gt;DoAsync(&amp;Room::C_Handle*)</text>
+
+  <rect x="446" y="136" width="142" height="46" rx="4" fill="#1a2029" stroke="#c8a2ff" stroke-width="2"/>
+  <text x="517" y="157" fill="#c8a2ff" text-anchor="middle" font-weight="600">DBQueue · 4개</text>
+  <text x="517" y="173" fill="#828c99" text-anchor="middle" font-size="10.5">로그인·캐릭터 CRUD</text>
+
+  <rect x="588" y="136" width="71" height="46" rx="4" fill="#1a2029" stroke="#828c99" stroke-width="2"/>
+  <text x="623" y="157" fill="#828c99" text-anchor="middle" font-size="11">스텁 2</text>
+  <text x="623" y="173" fill="#828c99" text-anchor="middle" font-size="10">return false</text>
+
+  <rect x="659" y="136" width="71" height="46" rx="4" fill="url(#h4hatch)" stroke="#f5837d" stroke-width="2"/>
+  <text x="694" y="157" fill="#f5837d" text-anchor="middle" font-size="11" font-weight="600">큐 우회 2</text>
+  <text x="694" y="173" fill="#f5837d" text-anchor="middle" font-size="10">규약 위반</text>
+
+  <line x1="734" y1="159" x2="762" y2="159" stroke="#f5837d" stroke-width="2" marker-end="url(#h4A)"/>
+  <text x="744" y="205" fill="#f5837d" font-size="10.5" text-anchor="middle">여기</text>
+
+  <!-- 우회 상세 -->
+  <rect x="14" y="212" width="792" height="42" rx="5" fill="#11161d" stroke="#f5837d" stroke-width="2"/>
+  <text x="28" y="230" fill="#f5837d" font-size="11" font-weight="600">큐를 우회하는 2개 — "룸 상태는 큐 위에서 직렬화되므로 락이 없다"는 전제가 여기서 깨진다</text>
+  <text x="28" y="246" fill="#828c99" font-size="10.5" font-family="ui-monospace, Consolas, monospace">Handle_C_ENTER_GAME:125 → ObjectUtils::CreatePlayer() 인라인    ·    Handle_C_ENTER_MAP:216-225 → OnEnterMap() + SEND_PACKET 인라인</text>
+</svg>
+<figcaption>그림 4 — 막대 폭이 패킷 수에 비례한다. 대부분(10/18)은 룸 잡 큐로 제대로 넘어가지만, 빗금 친 2개는 IOCP 워커 스레드에서 직접 룸 상태를 만진다. 이 그림이 지목하는 것은 "잘 되는 10개"가 아니라 <b>오른쪽 끝 71px</b>이다.</figcaption>
+</div>
+
+<!-- ==================== 5 ==================== -->
+<h2 id="pump">5. 수신 펌프가 레벨 블루프린트에 산다</h2>
+
+<p>클라 네트워크 스레드는 UObject를 만지지 않는다. 수신 큐는 게임 스레드에서
+<code>UP1GameInstance::HandleRecvPackets()</code>가 비운다 — 여기까지는 문서대로다.
+그런데 <b>이 함수를 호출하는 C++ 코드가 없다.</b></p>
+
+<p><code>P1/Source/P1/</code> 전체 grep 결과 호출부는 정의 자신뿐이었다.
+UE 에디터를 붙여 확인하니 호출부는 <b>레벨 스크립트 블루프린트의 <code>ReceiveTick</code></b> 안에 있었다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 244" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <text x="14" y="22" fill="#828c99" font-size="11">가로 = 레벨 5개 · 세로 = 펌프가 살아 있으려면 모두 참이어야 하는 조건 3개</text>
+
+  <!-- 열 헤더 -->
+  <text x="214" y="52" fill="#d8dee4" text-anchor="middle" font-size="11.5">InGameMap</text>
+  <text x="342" y="52" fill="#d8dee4" text-anchor="middle" font-size="11.5">LoginMap</text>
+  <text x="470" y="52" fill="#d8dee4" text-anchor="middle" font-size="11.5">TestMap</text>
+  <text x="598" y="52" fill="#f5837d" text-anchor="middle" font-size="11.5">TownMap</text>
+  <text x="726" y="52" fill="#f5837d" text-anchor="middle" font-size="11.5">CrashTestMap</text>
+
+  <!-- 행 -->
+  <text x="140" y="86"  fill="#828c99" text-anchor="end" font-size="11">레벨 스크립트 BP 존재</text>
+  <text x="140" y="128" fill="#828c99" text-anchor="end" font-size="11">ReceiveTick 구현</text>
+  <text x="140" y="170" fill="#828c99" text-anchor="end" font-size="11">HandleRecvPackets 호출</text>
+
+  <!-- 셀 배경 -->
+  <rect x="150" y="66"  width="128" height="122" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="278" y="66"  width="128" height="122" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="406" y="66"  width="128" height="122" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="534" y="66"  width="128" height="122" fill="#1a1113" stroke="#f5837d" stroke-width="2"/>
+  <rect x="662" y="66"  width="128" height="122" fill="#1a1113" stroke="#f5837d" stroke-width="2"/>
+
+  <!-- ✓ / ✕ -->
+  <g fill="#82e0aa" font-size="19" font-weight="700" text-anchor="middle">
+    <text x="214" y="92">✓</text><text x="342" y="92">✓</text><text x="470" y="92">✓</text>
+    <text x="214" y="134">✓</text><text x="342" y="134">✓</text><text x="470" y="134">✓</text>
+    <text x="214" y="176">✓</text><text x="342" y="176">✓</text><text x="470" y="176">✓</text>
+  </g>
+  <g fill="#f5837d" font-size="19" font-weight="700" text-anchor="middle">
+    <text x="598" y="92">✕</text><text x="726" y="92">✕</text>
+    <text x="598" y="134">✕</text><text x="726" y="134">✕</text>
+    <text x="598" y="176">✕</text><text x="726" y="176">✕</text>
+  </g>
+
+  <text x="14" y="212" fill="#828c99" font-size="11">규약이 코드에 없고 레벨 에셋 3곳에 손으로 복제돼 있다. 새 레벨을 만들면 기본값은 왼쪽이 아니라</text>
+  <text x="14" y="228" fill="#f5837d" font-size="11">오른쪽 — 컴파일 에러도, 런타임 경고도 없이 네트워킹만 멈춘다.</text>
+</svg>
+<figcaption>그림 5 — 맵 × 조건 매트릭스. 초록 열과 빨강 열의 차이는 코드가 아니라 <b>누가 레벨 BP에 노드를 놓았는지</b>다. 이 그림이 하는 말: 새 맵의 기본 상태는 "네트워킹 꺼짐"이다.</figcaption>
+</div>
+
+<div class="callout">
+<b>지금 사고가 안 난 이유</b> — <code>C_Map.json</code>을 보면 게임플레이 룸 4개
+(마을 / 초·중·고급 사냥터, <code>TemplateId</code> 10·20·30·40)가 전부
+<code>MapId: 1111</code> 하나를 공유한다. 즉 서버의 "룸"은 UE 레벨이 아니라
+<code>InGameMap</code> <b>안의 논리 분할</b>이다. 펌프가 있는 레벨만 실제로 쓰이고 있어
+지뢰가 아직 안 밟혔을 뿐이다.
+</div>
+
+<div class="why">
+<b>왜 레벨 BP에 두면 안 되나</b> — 대안은 <code>UP1GameInstance::Init()</code>에서
+<code>FTSTicker</code>나 <code>UTickableWorldSubsystem</code>으로 자기가 도는 것이다.
+게임 인스턴스는 레벨 전환에 살아남으므로 소켓을 소유한 주체가 펌프도 소유하는 게 수명 주기상 맞다.
+레벨 BP 방식의 유일한 이점은 "레벨마다 켜고 끌 수 있다"인데, 이 프로젝트에서 그걸 원한 흔적은 없고
+<b>끄고 싶지 않은 레벨에서 꺼지는</b> 사고만 가능하다.
+</div>
+
+<!-- ==================== 6 ==================== -->
+<h2 id="build">6. 빌드 실패의 범인은 C++가 아니었다</h2>
+
+<p><code>Server.sln</code> 전체 빌드는 실패한다. 그런데 Rider의 Problems 뷰는 비어 있고
+MCP는 진단 없이 실패만 돌려준다.</p>
+
+<pre><code>{"state":"Completed","buildIsSuccess":false,"problems":[],
+ "errorMessage":"Build failed without diagnostic output (check Rider's build log)."}</code></pre>
+
+<p>빌드 로그 실물을 열어보니 에러는 정확히 하나였고, C++와 무관했다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="h5R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+  </defs>
+
+  <text x="14" y="22" fill="#828c99" font-size="11">가로 = 솔루션의 프로젝트 7개 · 세로 = 빌드 결과가 위로 모인다</text>
+
+  <!-- 프로젝트들 -->
+  <rect x="14"  y="40" width="110" height="42" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="69" y="60" fill="#82e0aa" text-anchor="middle" font-size="11">ServerCore</text>
+  <text x="69" y="75" fill="#828c99" text-anchor="middle" font-size="10">.lib 생성됨</text>
+
+  <rect x="132" y="40" width="110" height="42" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="187" y="60" fill="#82e0aa" text-anchor="middle" font-size="11">GameServer</text>
+  <text x="187" y="75" fill="#828c99" text-anchor="middle" font-size="10">최신 상태</text>
+
+  <rect x="250" y="40" width="110" height="42" rx="5" fill="#1a2029" stroke="#82e0aa" stroke-width="2"/>
+  <text x="305" y="60" fill="#82e0aa" text-anchor="middle" font-size="11">DummyClient</text>
+  <text x="305" y="75" fill="#828c99" text-anchor="middle" font-size="10">.exe 재링크됨</text>
+
+  <rect x="368" y="40" width="150" height="42" rx="5" fill="#1a2029" stroke="#828c99" stroke-width="2"/>
+  <text x="443" y="60" fill="#828c99" text-anchor="middle" font-size="11">*.pyproj × 2</text>
+  <text x="443" y="75" fill="#828c99" text-anchor="middle" font-size="10">코드 생성기 (빌드 대상 아님)</text>
+
+  <rect x="526" y="40" width="180" height="42" rx="5" fill="#1a1113" stroke="#f5837d" stroke-width="2.5"/>
+  <text x="616" y="60" fill="#f5837d" text-anchor="middle" font-size="11" font-weight="700">AuthServer.esproj</text>
+  <text x="616" y="75" fill="#f5837d" text-anchor="middle" font-size="10">Node.js 프로젝트</text>
+
+  <!-- 에러 -->
+  <rect x="526" y="112" width="280" height="52" rx="5" fill="#11161d" stroke="#f5837d" stroke-width="2"/>
+  <text x="540" y="130" fill="#f5837d" font-size="10.5" font-family="ui-monospace, Consolas, monospace">Microsoft.NuGet.targets(198,5): error :</text>
+  <text x="540" y="146" fill="#f5837d" font-size="10.5" font-family="ui-monospace, Consolas, monospace">does not reference ".NETCoreApp,Version=v6.0"</text>
+  <text x="540" y="160" fill="#828c99" font-size="10">→ NuGet restore가 .NET 타깃을 요구한다</text>
+
+  <line x1="616" y1="82" x2="616" y2="108" stroke="#f5837d" stroke-width="2" marker-end="url(#h5R)"/>
+
+  <!-- 합류 -->
+  <rect x="14" y="190" width="792" height="42" rx="5" fill="#11161d" stroke="#f5837d" stroke-width="2"/>
+  <text x="28" y="208" fill="#f5837d" font-size="11.5" font-weight="600">솔루션 결과 = buildIsSuccess: false</text>
+  <text x="28" y="224" fill="#828c99" font-size="10.5">C++ 3개가 전부 통과해도 결과는 빨강이다. 그래서 진짜 C++ 에러가 나도 구분이 안 된다.</text>
+
+  <line x1="616" y1="164" x2="616" y2="186" stroke="#f5837d" stroke-width="2" marker-end="url(#h5R)"/>
+  <line x1="69"  y1="82" x2="69"  y2="186" stroke="#82e0aa" stroke-width="2" opacity=".45"/>
+  <line x1="187" y1="82" x2="187" y2="186" stroke="#82e0aa" stroke-width="2" opacity=".45"/>
+  <line x1="305" y1="82" x2="305" y2="186" stroke="#82e0aa" stroke-width="2" opacity=".45"/>
+</svg>
+<figcaption>그림 6 — 초록 3개와 빨강 1개가 같은 결과 상자로 합류한다. 이 그림이 지목하는 것: <b>빌드 신호가 상시 빨강이면 신호가 아니다.</b> Node 프로젝트를 MSBuild 솔루션에 넣은 것이 원인이고, C++ 쪽에는 고칠 것이 없다.</figcaption>
+</div>
+
+<div class="callout good">
+<b>부수 소득</b> — DummyClient 빌드는 2026-08-11 커밋 <code>286eee9</code>에서 이미 복구됐고,
+이번 빌드에서 <code>Server/Binary/Debug/DummyClient.exe</code>가 정상 재생성되는 것으로 재확인했다.
+범위 빌드로 <code>DummyClient.cpp</code>·<code>GameServer.cpp</code>·<code>Inventory.cpp</code>·
+<code>JobQueue.cpp</code>를 각각 컴파일해도 전부 통과한다.
+</div>
+
+<div class="why">
+<b>왜 DummyClient가 아직 검증 도구가 아닌가</b> — 빌드는 되지만 하는 일이 문제다.
+<code>DummyClient.cpp</code>(86줄)는 접속 후 <b>토큰이 비어 있는 <code>C_LOGIN</code></b>을 보내고,
+<code>C_CHAT "Hello World !"</code>를 1초마다 무한 브로드캐스트한다. 서버에서 이 흐름은 반드시 실패한다 —
+Redis 조회 실패 → 플레이어 없음 → <code>Handle_C_CHAT</code>이 <code>return false</code>.
+거기에 <code>DummyClient/Main/ClientPacketHandler.cpp</code>의 <code>Handle_S_LOGIN</code>은
+본문이 <b>통째로 주석</b>이고, 주석 안의 코드마저 <code>set_playerindex(0)</code>라는
+현재 proto에 없는 필드를 쓴다(지금은 <code>character_id</code>). 즉 로그인이 통해도
+<code>C_ENTER_GAME</code>을 안 보내고, <code>session->player</code>가 끝내 <code>nullptr</code>이라
+<code>Handle_C_CHAT</code>이 항상 조기 반환한다.
+승격하려면 (1) 호스트·포트·세션 수 인자화, (2) AuthServer에서 받은 실 토큰 주입,
+(3) 봇 상태 머신(로그인→입장→맵) 복원, (4) 기대 패킷 수신 여부에 따른 종료 코드가 필요하다.
+</div>
+
+<h3 id="toolname">6-1. 정정 — "그런 툴은 없다"고 잘못 단정했다</h3>
+
+<div class="callout bad">
+<b>초판의 오류</b> — 이 문서는 처음에 <code>build_project</code>를 "실존하지 않는 툴 이름"으로 적고,
+그 근거로 CLAUDE.md를 고쳐 커밋했다(<span class="commit">063c7cb</span>). <b>틀렸다.</b>
+근거는 "세션에 주어진 툴 목록에 없다"뿐이었는데, 그 목록은 <b>이 클라이언트에 노출된 것</b>이지
+<b>툴이 존재하는지</b>가 아니다. 둘을 같은 것으로 취급했다.
+</div>
+
+<p>재조사 결과를 세 출처로 교차 확인했다.</p>
+
+<table>
+<tr><th>이름</th><th>Rider 2026.2 공식 문서</th><th>이 머신 IDE 설정</th><th>라이브 <code>tools/list</code></th></tr>
+<tr><td class="col-key">build_project</td><td class="status-ok">있음</td><td class="status-ok">있음</td><td class="status-bad">없음</td></tr>
+<tr><td class="col-key">get_project_modules</td><td class="status-ok">있음</td><td class="status-ok">있음</td><td class="status-bad">없음</td></tr>
+<tr><td class="col-key">build_solution_start / _state</td><td class="status-bad">없음</td><td class="status-bad">없음</td><td class="status-ok">있음</td></tr>
+<tr><td class="col-key">get_solution_projects</td><td class="status-bad">없음</td><td class="status-bad">없음</td><td class="status-ok">있음</td></tr>
+<tr><td class="col-key">execute_tool</td><td class="status-ok">있음</td><td>—</td><td class="status-ok">있음</td></tr>
+<tr><td class="col-key">execute_tool_script</td><td class="status-bad">없음</td><td class="status-bad">없음</td><td class="status-bad">없음</td></tr>
+</table>
+
+<ul>
+<li>라이브 서버(<code>http://127.0.0.1:64482/stream</code>, <code>rider64.exe</code>)에 직접
+    <code>initialize</code> → <code>tools/list</code> JSON-RPC를 쳐서 <b>툴 101개</b>를 받았다.</li>
+<li><code>%APPDATA%/JetBrains/Rider2026.2/options/mcpToolDisallowList.xml</code>에
+    <code>AnalysisToolset.build_project</code> 항목이 실재하고 <code>enabled=false</code>가 아니다.
+    사용자도 <code>Settings &gt; Tools &gt; MCP Server &gt; Exposed Tools</code>에서 직접 확인했다.</li>
+<li>문서 페이지 헤더가 <b>"JetBrains Rider 2026.2 Help"</b> — 실행 중인 버전과 같은 버전이다.</li>
+</ul>
+
+<p>같은 <code>AnalysisToolset</code> 6개 중 <b>딱 2개</b>(<code>build_project</code>,
+<code>get_project_modules</code>)만 라이브에 없고, 그 2개가 정확히 솔루션 지향 이름으로
+대체되어 있다. 일관된 치환 패턴이지만 <b>원인은 확정하지 않았다</b>(실사용에 지장이 없어 파지 않기로 결정).</p>
+
+<div class="why">
+<b>왜 이 오류가 났나</b> — "내가 호출할 수 있는 것"과 "존재하는 것"을 구분하지 않았다.
+에이전트에게는 노출된 목록이 세계의 전부처럼 보이기 때문에 이 착각은 구조적으로 재발한다.
+그래서 CLAUDE.md에 규칙을 양방향으로 박았다: 문서에 있다는 이유로 이름을 되돌리지 말 것,
+그리고 <b>노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것.</b>
+확정이 필요하면 <code>tools/list</code>를 직접 치거나 IDE 설정을 본다.
+</div>
+
+<div class="callout info">
+<b>부수 발견</b> — MCP 서버가 3개 등록돼 있다: <code>rider</code>(64482, 연결됨) ·
+<code>jetbrains</code>(64342, <b>연결 거부</b> — 같은 Rider를 가리키던 낡은 포트) ·
+<code>unreal-mcp</code>(8000, UE 에디터가 직접 서빙, <code>P1/.mcp.json</code>에만 있어 <b>미연결</b>).
+<code>unreal-mcp</code>는 toolset 55개 게이트웨이이고 그중 <b><code>AutomationTestToolset</code></b>이
+테스트 발견·실행·결과 조회를 제공한다 — 세션 2의 L2~L4 계층에 직결된다.
+</div>
+
+<!-- ==================== 7 ==================== -->
+<h2 id="files">7. 참고 파일 목록</h2>
+
+<table>
+<tr><th>파일</th><th>이 문서에서 쓰인 곳</th></tr>
+<tr><td class="col-key">.claude/settings.json</td><td>훅 matcher 2블록 · exec form</td></tr>
+<tr><td class="col-key">.claude/hooks/guard_dangerous_cmd.py</td><td>차단 로직 · SQL 주석 제거(<code>:74-82</code>)</td></tr>
+<tr><td class="col-key">Server/GameServer/Main/ServerPacketHandler.cpp</td><td>18개 핸들러 분기 · 큐 우회 2건(<code>:125</code>, <code>:216-225</code>)</td></tr>
+<tr><td class="col-key">Server/GameServer/Main/GameServer.cpp</td><td>워커 5+1 · <code>WORKER_TICK = 64</code></td></tr>
+<tr><td class="col-key">Server/GameServer/Game/Room/Room.h</td><td><code>Room : JobQueue</code> · <code>C_Handle*</code> 진입점</td></tr>
+<tr><td class="col-key">Server/AuthServer/src/routes/login.router.js</td><td>bcrypt 대조 · Redis TTL 저장</td></tr>
+<tr><td class="col-key">Server/AuthServer/AuthServer.esproj</td><td>솔루션 빌드 실패의 단일 원인</td></tr>
+<tr><td class="col-key">P1/Source/P1/P1GameInstance.cpp:97</td><td><code>HandleRecvPackets()</code> 정의 — 호출부 없음</td></tr>
+<tr><td class="col-key">P1/Source/P1/Login/LoginManager.cpp:29</td><td><code>POST /Login</code> URL 조립</td></tr>
+<tr><td class="col-key">P1/Content/Maps/*.umap</td><td>레벨 BP 5개 중 3개에만 펌프</td></tr>
+<tr><td class="col-key">P1/Content/Gamedata/C_Map.json</td><td>룸 4개가 <code>MapId: 1111</code> 공유</td></tr>
+<tr><td class="col-key">Server/Common/Protobuf/bin/GenPackets.bat</td><td>생성물 XCOPY 목적지 (CLAUDE.md 오류 대조 근거)</td></tr>
+</table>
+
+<div class="callout info">
+자세한 부채 목록은 <code>docs/tech-debt.md</code> (D-01 ~ D-21),
+검증된 구조 서술은 <code>docs/ARCHITECTURE.md</code>에 있다.
+</div>
+
+<hr>
+<p class="meta">직전 커밋: <span class="commit">01bd5a6</span> 🎉 add: 하네스 v1 도입 ·
+이 세션 변경: <code>.claude/settings.json</code> · <code>.claude/hooks/guard_dangerous_cmd.py</code> ·
+<code>docs/ARCHITECTURE.md</code> · <code>docs/tech-debt.md</code> · 제품 코드 변경 없음</p>
+
+</body>
+</html>
