@@ -1,4 +1,11 @@
 {
+  "cleanupPeriodDays": 365,
+  "permissions": {
+    "allow": [
+      "mcp__rider__build_solution_start",
+      "mcp__rider__build_solution_state"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -28,6 +35,23 @@
             ],
             "timeout": 10,
             "statusMessage": "대상 솔루션·위험 명령 검사 중"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "clear|resume|logout|prompt_input_exit|other",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py",
+            "args": [
+              "-3",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/archive_transcript.py"
+            ],
+            "timeout": 60,
+            "statusMessage": "transcript 아카이브 중"
           }
         ]
       }
