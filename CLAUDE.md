@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 티어 | 경로 | 스택 | 포트 |
 |---|---|---|---|
-| 게임 클라이언트 | `P1/` | Unreal Engine 5.8, 모듈명 `P1` | — |
+| 게임 클라이언트 | `P1/` | Unreal Engine 5.8 (**런처 설치본 고정**), 모듈명 `P1` | — |
 | 게임 서버 | `Server/GameServer/` | C++20, 자체 IOCP 코어 | `127.0.0.1:7777` |
 | 인증 서버 | `Server/AuthServer/` | Node.js / Express (ESM) | `.env`의 `PORT` (클라는 `5000`을 기대) |
 
@@ -159,6 +159,19 @@ devDependency로 설치돼 있지만 flat config도 lint 스크립트도 없어�
 **클라이언트** — `P1/P1.uproject`를 열거나(Unreal Engine 5.8), C++ 작업은 `P1/P1.sln`로 연다.
 소스 파일을 추가한 뒤에는 `.uproject` 우클릭 메뉴로 프로젝트 파일을 재생성한다.
 
+> **엔진은 런처 설치본(Installed Build)만 쓴다. 소스 빌드는 이 프로젝트의 선택지가 아니다.**
+> 확정된 제약이며 재검토하지 않는다. 무언가를 계획하기 전에 이것부터 본다.
+>
+> 그래서 **불가능한 것 두 가지**:
+> - **프로젝트 안의 `TargetType.Program` 타깃** — UBT가 이런 타깃을 무조건 고유 빌드 환경으로
+>   잡고 설치본이 이를 거부한다. UE Low-Level Tests(Catch2)가 여기 걸려 채택하지 않았다
+>   (`docs/decisions/2026-08-27-l1-test-infra.md` 결정 6). 스탠드얼론 툴이 필요하면
+>   `Server/DummyClient`처럼 UE 밖에서 만든다.
+> - **엔진 소스 패치** — 엔진 버그를 만나면 프로젝트 코드 안에서 우회하는 수밖에 없다.
+>
+> 영향이 **없는** 것: 게임 빌드·실행·패키징, 프로젝트 플러그인(플러그인 모듈은 프로젝트 쪽에서
+> 컴파일된다), 엔진 코드 디버깅(설치본도 `Engine/Source`를 딸려 준다), 서버·인증 티어 전부.
+
 **데이터베이스** — 스키마는 SQL 스크립트로 수동 적용한다. 인증은
 `Server/Queries/UserDB_CreateUsersTable.sql`, 게임은 `Server/GameServer/Queries/GameDB_CreateAllTables.sql`
 (및 같은 폴더의 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`).
@@ -200,23 +213,31 @@ gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock �
 **테스트를 추가할 때** — `.cpp`를 `Server/GameServerTests/GameServerTests.vcxproj`의
 `<ItemGroup Label="테스트 소스">`에 등록해야 한다(이 프로젝트는 파일 자동 수집을 하지 않는다).
 
-### 아직 없는 것
+### 아직 없는 것 — 무엇을 확인했고 무엇을 안 했는지
 
-**UE 클라의 기본 경로는 L2다.** 별도 빌드 타깃이 필요 없어 `P1` 모듈에 그대로 컴파일되고,
-지금 쓰는 런처 설치본 엔진에서 동작한다(`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본
-`Core/Public/Misc/AutomationTest.h`에 있다). UE 쪽 테스트는 여기서 시작한다.
+**UE 클라의 기본 경로는 L2다.** 별도 빌드 타깃이 필요 없어 `P1` 모듈에 그대로 컴파일된다.
 
-- L2 게임 로직+입력: Simple Automation Test + `InjectInputForAction`. 실행은 에디터
-  `Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."` — **에디터가 필요하다.**
-- L3 UI 입력: Automation Spec + Automation Driver. Live Coding 비호환 — TDD 루프 금지, 배치 전용.
-- L4 E2E: Gauntlet TestController. DummyClient 자산 재사용 검토. 병렬 실행 시 포트 파라미터화.
-- CI: D-12. 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다.
+아래는 전부 **미착수**다. 「완료 기준」의 "존재 ≠ 가능"을 여기에도 적용해, 확인한 것과
+확인하지 않은 것을 갈라 적는다. **착수할 때는 가장 싸게 실패하는 경로부터 돌린다** —
+파일이 있는지 여러 번 확인하는 것보다 한 번 빌드해 보는 게 싸다.
 
-**UE L1(LLT)만 보류 상태다.** 런처 설치본에서는 빌드가 거부된다 — LLT 타깃은 엔진과 정반대
-설정(`bCompileAgainstEngine=false`, `bBuildWithEditorOnlyData=false`, `STATS=0` 등)으로
-컴파일돼야 하는데 설치본은 프리빌트 바이너리만 주기 때문이다. 설정으로 우회할 수 없다.
-**막힌 범위는 이 한 계층뿐이고 게임 빌드·실행·패키징과는 무관하다.** 소스 빌드 엔진은
-필수가 아니라 선택이다 — 작성해 둔 모듈·타깃과 해동 절차는 `docs/references/p1-lowlevel-tests/`,
+| 계층 | 확인한 것 | 확인 안 한 것 |
+|---|---|---|
+| L2 게임 로직+입력 (Simple Automation Test + `InjectInputForAction`) | 설치본 `Core/Public/Misc/AutomationTest.h`에 `IMPLEMENT_SIMPLE_AUTOMATION_TEST` 존재 | **실행 전체.** 컴파일·에디터 실행 다 안 해봤다 |
+| L3 UI 입력 (Automation Spec + Automation Driver) | 없음 — **아직 안 봤다** | 전부 |
+| L4 E2E (Gauntlet TestController) | 설치본에 `Engine/Plugins/Experimental/Gauntlet` 플러그인 + public `GauntletTestController.h` + 컴파일된 `Gauntlet.Automation.dll` | **실행 전체** |
+
+- L2·L3 실행에는 **에디터가 필요하다** (`Window > Test Automation` 또는
+  `-ExecCmds="Automation RunTests ..."`). 서버처럼 무인 루프가 되지 않는다.
+- L3는 Live Coding 비호환 — TDD 루프 금지, 배치 전용.
+- L4는 DummyClient 자산 재사용 검토. 병렬 실행 시 포트 파라미터화.
+- CI: D-12. 서버 쪽 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다.
+  UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.
+
+**UE L1(Low-Level Tests)은 채택하지 않는다.** 런처 설치본에서 빌드가 거부되고
+(프로젝트 내 `TargetType.Program` 타깃 문제 — 위 「빌드 및 실행」의 엔진 제약 참조),
+이 프로젝트는 소스 빌드 엔진을 쓰지 않기로 확정했다. 손실은 작다 — L1으로 검증할 순수 로직은
+전투 판정·인벤토리·레벨 테이블처럼 대부분 서버 소유이고 그쪽은 GoogleTest가 덮는다.
 근거는 `docs/decisions/2026-08-27-l1-test-infra.md` 결정 6.
 
 ## 컨벤션
