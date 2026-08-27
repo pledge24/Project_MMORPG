@@ -66,7 +66,18 @@
 
       UBT 소스에서 원인 확인: `TargetRules.cs:2690-2693`이 프로젝트 폴더 안의 Program 타깃을
       **조건 없이** `Unique`로 잡고, `RulesAssembly.cs:677-680`이 설치본에서 `Unique`를 거부한다.
-      플래그가 아니라 검증 예외라 설정으로 우회 불가. **해제 조건: UE 5.8 소스 빌드 설치.**
+      `BuildEnvironment = Shared`로 저 분기를 건너뛸 수는 있으나 LLT에는 통하지 않는다 —
+      `TestTargetRules.SetupCommonProperties`가 잡는 속성 목록이 곧 빌드 환경의 정의이고
+      설치본 바이너리는 정반대 설정으로 컴파일돼 있다. 설정 문제가 아니라 설치본의 정의상 한계다.
+
+      **막힌 범위는 UE L1 한 계층뿐이다.** 게임 빌드·실행·패키징과 무관하고 L2/L3/L4는
+      설치본에서 그대로 된다. **소스 빌드 엔진은 필수가 아니라 선택이다** —
+      다른 이유로 필요해졌을 때 덤으로 가져가는 것이 맞다.
+
+      *이 판정에서 내가 틀렸던 것*: 계획 단계에서 설치본에 Catch2·LowLevelTestsRunner가 있는 것을
+      확인하고 "LLT 가능"이라고 적었다. 재료 존재로 능력을 추론했고, 같은 조사에서 구멍 하나
+      (`LowLevelTests.xml` 부재)를 찾아 메운 것이 나머지에 대한 확신을 오히려 높였다.
+      → CLAUDE.md 「완료 기준」에 **"존재 ≠ 가능"** 규칙으로 승격.
 
       작성한 파일 3개는 엔진 예제 구조를 그대로 따랐고 문제가 없다 →
       `docs/references/p1-lowlevel-tests/`에 README와 함께 보존.
@@ -109,9 +120,15 @@
 4. **CI (D-12)** — 전제가 충족됐다. `GameServerTests`는 `config.h` 없이 빌드되고 판정이 종료 코드다.
    AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐이라 비용이 작다.
 
-5. **UE 쪽 — L2 Automation Test부터**
-   L1(LLT)은 소스 빌드 엔진 전까지 막혀 있다. L2는 별도 타깃이 필요 없어 설치본에서 동작하므로,
-   UE 쪽 테스트는 여기서 시작하는 편이 비용 대비 효과가 낫다.
+5. **UE 쪽 — L2 Automation Test** *(경로 확정됨, 별도 세션으로 계획할 것)*
+   L1(LLT)은 보류지만 L2는 별도 타깃이 필요 없어 설치본에서 바로 된다
+   (`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본 `Core/Public/Misc/AutomationTest.h:4297`에 존재).
+   착수 단계:
+   `P1/Source/P1/Tests/`에 테스트 1개 → `build_solution_start(rootFolder=".../P1")`로 에디터 타깃
+   빌드 → 에디터 `Window > Test Automation`(사람) 또는 `-ExecCmds="Automation RunTests ..."`.
+   **실행에 에디터가 필요해 사람 손이 섞인다** — 서버 L1처럼 무인 루프가 되지 않으므로
+   착수 전에 별도 계획을 세운다. 첫 대상 후보는 이동 보간 수식(`ACreature`의 `MoveQueue`) 정도로,
+   클라 쪽에 남은 순수 로직이 얇다는 점도 함께 고려할 것.
 
 6. **리팩토링 착수 (grilling + improve-codebase-architecture 도입)**
    판정 ADR이 "리팩토링 착수 직전 채택"으로 예약한 것들. **D-03(Room 분해)은 Room에 테스트가 붙은

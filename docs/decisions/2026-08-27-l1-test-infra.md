@@ -155,25 +155,74 @@ NaN이라 커넥션 풀 설정이 조용히 무의미해진다. 그 사이의 �
 
 ---
 
-## 결정 6 — UE Low-Level Tests는 보류 (환경 제약, 설계 실패 아님)
+## 결정 6 — UE 클라의 테스트 경로는 L2다. LLT(L1)만 보류한다
 
-`[B] blocked` — 상세는 `docs/references/p1-lowlevel-tests/README.md`.
+**결론부터: 소스 빌드 엔진은 필수가 아니라 선택이다.** 막힌 것은 UE **L1 한 계층**이고,
+게임 빌드·실행·패키징과는 무관하다. L2/L3/L4는 지금 쓰는 런처 설치본에서 그대로 된다.
 
-작성한 모듈·타깃은 엔진 예제 구조를 그대로 따랐고 파일 자체에는 문제가 없다. 막은 것은
-**엔진 설치 형태**다. UBT 소스에서 확인한 두 줄이 전부다.
+### 왜 설치본에서 LLT가 안 되는가 (설정 문제가 아니다)
+
+표면의 거부는 두 줄이다.
 
 - `TargetRules.cs:2690-2693` — Program 타입 타깃이 `.uproject` 폴더 안에 있으면 **조건 없이** `Unique`
 - `RulesAssembly.cs:677-680` — `Unique` + 설치본 엔진이면 예외를 던지고 중단
 
-플래그가 아니라 검증 예외라 설정으로 우회할 수 없다. **해제 조건은 UE 5.8 소스 빌드 설치.**
+여기까지만 보면 "검사를 통과시키면 되지 않나"로 읽힌다. `TargetRules.cs:2678-2704`의 게터가
+`BuildEnvironmentOverride`를 **가장 먼저** 확인하므로, 타깃에서 `BuildEnvironment = Shared`를
+지정하면 실제로 저 분기를 건너뛴다. 커뮤니티에 도는 workaround도 그것이다.
 
-파일을 `P1/Source/`에 남기지 않은 이유: `ProjectFileGenerator.cs:3176`이 **프로젝트 파일 생성 시에도**
-같은 검증을 수행하므로, 두면 P1의 프로젝트 파일 재생성이 깨질 수 있다. 원인을 이 세션과 연결하기
-어려운 형태의 고장이라 지뢰를 남기는 대신 `docs/references/`로 옮겨 보존했다.
+**그런데 LLT에는 통하지 않는다.** `TestTargetRules.SetupCommonProperties`가 조건 없이 이렇게 잡는다:
 
-**그동안의 대안** — UE 쪽 테스트가 통째로 막힌 것은 아니다. **L2(Simple Automation Test)는 별도
-타깃이 필요 없다.** 게임/에디터 모듈 안에 컴파일되어 에디터 안에서 돌고, 설치본 엔진에서 동작한다.
-소스 빌드를 들이기 전까지 UE 쪽은 L2부터 시작하는 편이 비용 대비 효과가 낫다.
+```csharp
+Type = TargetType.Program;   LinkType = TargetLinkType.Monolithic;
+bCompileAgainstEngine = false;      bCompileAgainstEditor = false;
+bBuildWithEditorOnlyData = false;   bCompileICU = false;   bBuildDeveloperTools = false;
+bForceDisableAutomationTests = true;  bUseLoggingInShipping = true;  bForceEnableExceptions = true;
+GlobalDefinitions.Add("STATS=0");  // 외 다수
+```
+
+이 목록이 곧 **"빌드 환경"의 정의**다. 설치본이 주는 프리빌트 바이너리는 정반대 설정으로
+컴파일돼 있다. `Shared`로 강제한다는 것은 UBT에게 "그 바이너리를 재사용하라"고 시키는 것이라,
+검사를 통과시켜도 정의가 어긋난 산출물이 나온다. 커뮤니티 workaround는 *굳이 `Unique`를 선언할
+필요가 없던* 타깃(CookedEditor류)용이지, **환경이 다른 것 자체가 존재 이유인 LLT용이 아니다.**
+
+즉 이건 플래그로 우회할 성질이 아니라 설치본의 정의상 한계다. 해동하려면 소스 빌드 엔진이 필요하다
+(Epic–GitHub 계정 연결 → clone → `Setup.bat` → `GenerateProjectFiles.bat` → 빌드).
+디스크·시간 비용이 큰 작업이므로 **LLT 하나를 위해 치를 값은 아니라고 판단했다.**
+
+### 채택: L2를 UE의 기본 경로로
+
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본
+`Engine/Source/Runtime/Core/Public/Misc/AutomationTest.h:4297`에 있다(실측). 별도 타깃 없이
+`P1` 모듈에 컴파일되고 에디터 안에서 돈다. P1은 아직 하나도 쓰지 않고 있다.
+
+이 프로젝트에서는 **손실도 작다.** L1으로 테스트할 가치가 큰 순수 로직 — 전투 판정, 인벤토리,
+레벨 테이블 — 은 아키텍처상 대부분 서버 소유이고(§ 아키텍처 규칙), 그 계층은 결정 1~2로 이미
+gtest가 붙었다. 클라 쪽에 남는 L1 대상은 이동 보간 수식 정도로 얇다.
+
+**보류의 대가**는 에디터 의존이다. L2 실행에는 에디터가 필요해(`Window > Test Automation` 또는
+`-ExecCmds="Automation RunTests ..."`) 완전 무인 검증이 되지 않는다. CI에 붙일 때 이 점을 다시 본다.
+
+### 파일 보존 위치
+
+`P1/Source/`에 남기지 않았다. `ProjectFileGenerator.cs:3176`이 **프로젝트 파일 생성 시에도**
+같은 검증을 수행하므로, 두면 P1의 프로젝트 파일 재생성이 깨질 수 있다. 원인을 이 작업과 연결하기
+어려운 형태의 고장이라 지뢰를 남기는 대신 `docs/references/p1-lowlevel-tests/`로 옮겨 보존했다.
+소스 엔진을 들이면 그대로 되돌려 쓸 수 있다.
+
+### 판정 경위 — 이 결정에서 내가 틀렸던 것
+
+계획 단계에서 설치본에 `ThirdParty/Catch2`, `Developer/LowLevelTestsRunner`,
+`Programs/AutomationTool/LowLevelTests`가 있는 것을 확인하고 계획 파일에 **"LLT 가능"이라고 적었다.**
+재료가 있는 것과 빌드가 허용되는 것은 다른 문제인데, 앞을 확인하고 뒤를 추론했다.
+
+더 나쁜 부분은 그 다음이다. 같은 조사에서 `Engine/Build/LowLevelTests.xml`이 **없는 것**도
+발견했고 "그럼 BuildGraph 대신 UBT 직접 빌드로 가면 된다"고 처리했다. **구멍 하나를 찾아 메웠다는
+사실이 나머지에 대한 확신을 높였다.** 부분 확인이 전체 검증처럼 느껴지는 것 — 이게 이 실수의 형태다.
+
+기존 메모리 `tool-exposure-is-not-existence`("노출 ≠ 존재")와 같은 계열의 두 번째 사례라,
+CLAUDE.md 「완료 기준」에 **"존재 ≠ 가능"** 규칙으로 승격했다("두 번이면 문서, 세 번이면 규칙"
+사다리 적용). 대가는 약 20분과 실패한 빌드 1회였고, 그 실패가 규칙 하나를 만들었다.
 
 ---
 
@@ -183,7 +232,8 @@ NaN이라 커넥션 풀 설정이 조용히 무의미해진다. 그 사이의 �
 |---|---|---|
 | 게임 서버 L1 | ✅ 동작 | 14 통과 + 1 `DISABLED_`(D-14) |
 | 인증 서버 | ✅ 동작 | 2 통과 |
-| UE 클라 L1 | `[B] blocked` | 소스 빌드 엔진 필요 |
+| UE 클라 L2 | 🔜 경로 확정, 미착수 | 설치본에서 가능. 다음 세션 후보 |
+| UE 클라 L1(LLT) | 보류 | 소스 빌드 엔진을 들이게 되면 해동. **필수 아님** |
 
 이 인프라가 이 세션에 잡은 버그 **2건**: D-01(계획된 것), 그리고 `removeItem`의 슬롯 오염
 (계획에 없던 것 — 코드를 눈으로 읽어서는 나오지 않았다). 상세는 tech-debt D-01·D-15.

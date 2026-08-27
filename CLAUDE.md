@@ -53,6 +53,11 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 - 검증 없이 "완료했다"고 보고하지 않는다. 검증 불가한 부분은 불가하다고 명시한다.
 - **자기신고를 믿지 않는다.** 검증 커맨드를 실제로 실행한 결과 없이 완료를 선언하지 않는다.
   "됐을 것이다"는 완료가 아니다 — 코드를 고친 사실과 그 코드가 도는 사실은 별개다.
+- **존재 ≠ 가능.** 구성요소가 있는 것을 확인하고 "그러니 이 기능이 된다"고 쓰지 않는다.
+  가장 싸게 실패하는 경로를 먼저 돌려보고 나서 쓴다. 도구 라우팅 절의 `노출 ≠ 존재`와 짝이며,
+  **부분 확인이 오히려 확신을 키우는 것**이 이 실수의 공통 형태다(구멍 하나를 찾아 메우면
+  나머지를 검증했다고 느낀다). 실제 사례: UE LLT — 설치본에 Catch2·LowLevelTestsRunner가
+  있는 것을 확인하고 "가능"으로 계획에 적었으나 빌드 자체가 거부됐다(2026-08-27).
 
 ## 안전
 
@@ -197,14 +202,22 @@ gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock �
 
 ### 아직 없는 것
 
-- **UE 클라 L1(LLT)** — `[B] blocked`. 런처 설치본 엔진에서는 빌드 자체가 거부된다
-  (UBT가 프로젝트 내 Program 타깃을 무조건 `Unique` 빌드 환경으로 잡고, 설치본에서 이를 거부).
-  작성해 둔 모듈·타깃과 해제 조건은 `docs/references/p1-lowlevel-tests/`.
-  **그전까지 UE 쪽은 L2부터 시작한다** — L2는 별도 타깃이 필요 없어 설치본에서 동작한다.
-- L2 게임 로직+입력: Simple Automation Test + `InjectInputForAction`.
+**UE 클라의 기본 경로는 L2다.** 별도 빌드 타깃이 필요 없어 `P1` 모듈에 그대로 컴파일되고,
+지금 쓰는 런처 설치본 엔진에서 동작한다(`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본
+`Core/Public/Misc/AutomationTest.h`에 있다). UE 쪽 테스트는 여기서 시작한다.
+
+- L2 게임 로직+입력: Simple Automation Test + `InjectInputForAction`. 실행은 에디터
+  `Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."` — **에디터가 필요하다.**
 - L3 UI 입력: Automation Spec + Automation Driver. Live Coding 비호환 — TDD 루프 금지, 배치 전용.
 - L4 E2E: Gauntlet TestController. DummyClient 자산 재사용 검토. 병렬 실행 시 포트 파라미터화.
 - CI: D-12. 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다.
+
+**UE L1(LLT)만 보류 상태다.** 런처 설치본에서는 빌드가 거부된다 — LLT 타깃은 엔진과 정반대
+설정(`bCompileAgainstEngine=false`, `bBuildWithEditorOnlyData=false`, `STATS=0` 등)으로
+컴파일돼야 하는데 설치본은 프리빌트 바이너리만 주기 때문이다. 설정으로 우회할 수 없다.
+**막힌 범위는 이 한 계층뿐이고 게임 빌드·실행·패키징과는 무관하다.** 소스 빌드 엔진은
+필수가 아니라 선택이다 — 작성해 둔 모듈·타깃과 해동 절차는 `docs/references/p1-lowlevel-tests/`,
+근거는 `docs/decisions/2026-08-27-l1-test-infra.md` 결정 6.
 
 ## 컨벤션
 
