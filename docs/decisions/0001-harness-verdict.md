@@ -1,3 +1,13 @@
+---
+status: accepted
+date: 2026-08-19
+scope: [build]
+supersedes: ADR-0000
+superseded-by: null
+---
+
+> 2026-09-09 MADR 전환 시 프론트매터와 Confirmation 절만 추가. 본문 미변경.
+
 # ADR: Final_Harness 판정표 최종 확정
 
 - 상태: 확정
@@ -150,6 +160,52 @@ grilling: 리팩토링 착수 직전 채택 / improve-codebase-architecture: doc
 - **재검토 조건(=해동):** UE 클라 신규 기능 국면 진입 시. 전제: CLI 빌드 경로 결정,
   테스트 인프라 존재, 저위험 phase 파일럿, CLAUDE.md 배치 모드 커밋 조건 분기.
   상세는 batch-mode-archive.html §03.
+
+### Confirmation
+
+결정별로 나눈다. 괄호 안은 확인 명령 또는 확인 지점이다.
+
+* **결정 1 (P-G-E 축소형)** — Planner 역할의 서브에이전트를 만들지 않는다. 격리하는 것은
+  Evaluator뿐이다. (`ls .claude/agents` — 현재 디렉터리 자체가 없다. Planner·plan류 에이전트
+  정의가 생기면 이 결정을 벗어난 것이다.) 계획은 Plan Mode로 세우고 산출물을 `docs/work/`에 남긴다.
+* **결정 2 (transcript 아카이브 / reports 역할 복원)** — 세 가지가 함께 서야 한다.
+  (a) `.claude/settings.json`의 `SessionEnd` 훅이 `.claude/hooks/archive_transcript.py`를 부른다,
+  (b) `.gitignore`에 `.claude/transcripts-archive/`가 있다,
+  (c) `cleanupPeriodDays`가 기본값보다 크다 — 현재 365.
+  `docs/reports/`에 툴 로그·프롬프트 원문이 들어가면 역할 분리가 깨진 것이다. 거기 있는 것은
+  사람용 리포트여야 한다.
+* **결정 3 (프롬프트 획일화는 승격형)** — 같은 유형의 세션 프롬프트를 세 번째 쓰는 시점에
+  대응하는 슬래시 커맨드·스킬이 `.claude/commands/` 또는 `.claude/skills/`에 있어야 한다.
+  (`ls .claude/skills .claude/commands` — 현재 승격된 것은 `new-adr` 하나다.)
+  반대로 표본 2~3개 단계에서 프롬프트 템플릿을 고정한 파일이 새로 생기면 이 결정에 반한다.
+* **결정 4 (레이어 종속성 기계 강제)** — 지금은 1단계이므로 **없는 것이 정상이다.**
+  `#include` 경계 규칙을 검사하는 스크립트가 `.claude/hooks/`에 없다 (현재
+  `guard_dangerous_cmd.py`·`archive_transcript.py` 둘뿐). 서버 레이어 경계가 확정되기 전에
+  하드 규칙을 선언하면 예외 처리 속에서 규칙이 무의미해진다 — 2단계 착수 조건은
+  `docs/tech-debt.md` D-03 리팩토링의 완료다.
+* **결정 5 (숫자는 발생 지점 자동 집계)** — `.claude/hooks/guard_dangerous_cmd.py`가 차단 시
+  `.claude/hooks/block_counter.log`에 TSV 한 줄을 append 한다 (기록 함수는 실패해도 차단 흐름을
+  막지 않는다). 파일 존재와 append-only 여부로 확인. 세션 리포트에 차단 건수를 **손으로 누적한
+  표**가 있으면 이 결정에 반한다 — 리포트는 장부가 아니라 카운터·git에서 읽어오는 조회 창이다.
+* **결정 6 (CLAUDE.md 품질 패스는 이벤트 트리거)** — `git log --date=short -- CLAUDE.md`로
+  변경 커밋 날짜를 본다. 변경이 특정 주기일에 몰려 있으면 이벤트 구동이 주기 작업으로 퇴화한 것이다.
+  정기 작업 스킬이 CLAUDE.md를 함께 수정하고 있지 않은지도 같은 로그에서 확인한다.
+  (`revise-claude-md`류 스킬은 아직 `.claude/skills/`에 없다 — 형태 판정 미착수 상태.)
+* **결정 7 (Im-not-ai — 형태 판정 선행)** — 채택 형태가 코드에 드러나야 한다.
+  규칙 흡수형이면 CLAUDE.md 「컨벤션」에 문체 규칙이 있고(현행: "주석과 로그는 한국어로 작성한다"),
+  스킬형이면 `.claude/skills/`에 해당 스킬이 있다. 지금은 규칙만 있고 스킬은 없다 —
+  둘 다 있으면 같은 규칙이 두 곳에 사는 것이므로 한쪽을 지운다.
+* **결정 8 (insane-search — 조건부)** — `.claude/skills/`에 있는지로 상태를 읽는다(현재 없음 = 미도입).
+  승격 조건은 이 프로젝트에서 검색 실패 2회 재현, 제거 조건은 수 세션 호출 0회다.
+  판단 근거가 되는 실패 사례는 `docs/work/`의 해당 세션 기록에 남긴다.
+* **결정 9 (배치 실행 모드 — 해동 조건부 보류 + 편입 4건)** — 보류 확인은 "없어야 할 것"으로 한다.
+  배치 실행기(`scripts/execute.py` 등가물)가 리포에 없고, 실행 모드·커밋 체제·빌드 경로가
+  각각 하나뿐이다. 편입 4건은 CLAUDE.md에서 확인한다 — ① 「완료 기준」의 "자기신고를 믿지 않는다",
+  ② 「작업 방식」의 `[B] blocked — 무엇이/어디서` 표기, ③ 같은 절의 "완료 항목 옆에는 summary 한 줄",
+  ④ AC 사다리·step 설계 원칙이 `docs/work/`의 계획 파일에 실제로 적용돼 있는지.
+  해동 전제 중 "테스트 인프라 존재"는 ADR-0002로 **서버 한정** 충족이다. UE 클라 쪽이 남아 있으므로
+  아직 해동이 아니다.
+
 
 ---
 

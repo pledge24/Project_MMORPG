@@ -1,3 +1,13 @@
+---
+status: superseded
+date: 2026-08-19
+scope: [build]
+supersedes: null
+superseded-by: ADR-0001
+---
+
+> 2026-09-09 MADR 전환 시 프론트매터와 Confirmation 절만 추가. 본문 미변경.
+
 # Final_Harness 판정표 (2026-08-19, 세션 1 완료 시점)
 
 범례: ✅ 반영됨 · 🔜 예정(시점 명시) · 💬 토론 필요 · ❌ 폐기 제안

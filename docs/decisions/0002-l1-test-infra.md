@@ -1,3 +1,13 @@
+---
+status: accepted
+date: 2026-08-27
+scope: [build, server]
+supersedes: null
+superseded-by: null
+---
+
+> 2026-09-09 MADR 전환 시 프론트매터와 Confirmation 절만 추가. 본문 미변경.
+
 # ADR: L1 테스트 인프라 — GoogleTest 도입 방식과 실행 경로
 
 - 상태: 확정
@@ -51,6 +61,16 @@
 **재검토 조건.** 서버에 벤더링 대상 의존성이 3개 이상 더 늘거나, gtest 버전 갱신이 실제로
 번거롭게 느껴지는 시점. 그때 vcpkg를 다시 본다.
 
+### Confirmation
+
+* `Server/Libraries/googletest/`에 v1.18.0 소스가 있다 — `src/gtest-all.cc`와 `src/gtest_main.cc`가
+  존재하고, `README.ko.md`가 버전 v1.18.0 / 커밋 `063de7e`를 명시한다.
+* **gmock은 없다.** `Server/Libraries/googletest/include/gmock`이 존재하면 이 결정이 바뀐 것이다.
+* 리포에 vcpkg 매니페스트가 없다: `find . -name vcpkg.json` 결과 0건.
+* 서드파티 획득 메커니즘은 벤더링 하나다. `Server/Libraries/` 밖에서 서버 의존성을 끌어오는
+  단계(패키지 매니저 restore, 머신 설치 선행조건)가 새로 생기면 위반이다.
+
+
 ---
 
 ## 결정 2 — 테스트 프로젝트가 GameServer의 `.cpp`를 직접 포함한다
@@ -86,6 +106,23 @@ UE Low-Level Tests와 같은 패턴이다.
 DBConnectionPool/DBManager/RedisManager를 `new`만 하고 `SocketUtil::Init()`(WSAStartup)을 부른다.
 `Global.cpp`의 `GGameServerGlobal`은 `new RoomManager()`뿐이고 그 생성자는 비어 있다.
 **DB·Redis 접속은 일어나지 않는다** — 테스트 exe에서 안전하다.
+
+### Confirmation
+
+* `Server/GameServerTests/GameServerTests.vcxproj`의 `ClCompile` 항목에
+  `..\GameServer\Main\GameServer.cpp`가 **없다** (주석에는 언급이 있으므로 `ClCompile` 라인으로
+  한정해 확인한다).
+* `config.h`의 소비자는 한 곳뿐이다:
+  `grep -rn "config\.h" Server/GameServer Server/GameServerTests` 결과가
+  `Server/GameServer/Main/GameServer.cpp` 한 줄. 두 줄 이상이면 테스트 타깃이 "비밀 없이 빌드된다"는
+  성질을 잃고, D-12(CI)의 전제도 함께 무너진다.
+* `ProjectReference`는 `ServerCore.vcxproj` 하나이며 `LinkLibraryDependencies=false`다.
+  GameServer 참조가 추가되면 `config.h` 의존이 되살아난다.
+* GameServer에 `.cpp`를 추가하면 테스트 vcxproj의 `<ItemGroup Label="GameServer 본체 ...">`에도
+  등록한다 (이 프로젝트는 파일 자동 수집을 하지 않는다). 빠뜨리면 링크 에러로 드러난다.
+* `GenerateProtoPackets` 타깃을 테스트 vcxproj에 복제하지 않는다 — 같은 파일에 XCOPY하는 타깃이
+  둘이면 병렬 빌드에서 경합한다.
+
 
 ---
 
@@ -123,6 +160,20 @@ D-12(CI)에서 그대로 재사용된다. Brave 모드는 그 반대 방향 — 
 출력 절단으로 에러가 유실되기 때문이다. 그 근거는 빌드에만 성립한다 — gtest 실행 출력은 짧고
 완결적이며 판정은 종료 코드 하나다. 규칙의 문구가 아니라 근거를 기준으로 갈랐다.
 
+### Confirmation
+
+* **판정은 종료 코드다.** `Server/Binary/Debug/GameServerTests.exe`를 셸에서 직접 실행해
+  **종료 코드 0**이면 통과. (`Server/Binary/`는 gitignore이므로 실행 전 빌드가 선행돼야 한다.)
+* 빌드는 `mcp__rider__build_solution_start` → `build_solution_state`로만 한다. 세션 기록에
+  UBT·`Build.bat`·MSBuild 직접 호출이 있으면 위반이다.
+* `mcp__rider__execute_run_configuration`을 호출하지 않는다. 이 툴은 `.claude/settings.json`의
+  PreToolUse matcher에는 들어 있지만 `permissions.allow`에는 없다 — allow 목록에 이 이름이
+  추가되면 결정을 벗어난 것이다 (현재 allow는 빌드 2종뿐).
+* Brave 모드는 리포 밖 IDE 설정이라 파일로 확인할 수 없다. 사람이
+  `Settings | Tools | MCP Server | Command execution`의
+  "Run shell commands or run configurations without confirmation (brave mode)"가 꺼져 있는지 본다.
+
+
 ---
 
 ## 결정 4 — 회귀 그물은 목록이 아니라 리플렉션으로
@@ -141,6 +192,18 @@ D-12(CI)에서 그대로 재사용된다. Brave 모드는 그 반대 방향 — 
 계약 선언인 이유가 여기 있다 — 실패는 ".proto를 바꿨으니 목록도 의식적으로 갱신하라"는 신호다.
 40개 왕복 테스트를 손으로 쓰는 쪽은 같은 값을 40번 베끼는 것이라 반드시 부패한다.
 
+### Confirmation
+
+* `.proto`에 메시지를 추가·삭제했을 때 고치는 곳은 `Server/GameServerTests/ProtocolContractTests.cpp`의
+  `PROTOCOL_MESSAGES(X)` 목록 **한 곳뿐**이다. 목록 갱신은 의도된 신호라 정상이고,
+  같은 diff에 `EveryMessageRoundTrips` 수정이 함께 들어 있으면 그물이 목록으로 퇴화한 것이다.
+* 이름·ID 두 검사가 같은 목록에서 유도되는지: 파일 안에 `PROTOCOL_MESSAGES(AS_STRING)`와
+  `PROTOCOL_MESSAGES(AS_PACKET_ID)` 두 전개가 남아 있어야 한다. 어느 한쪽이 손으로 쓴 배열로
+  바뀌면 두 표가 어긋날 수 있는 구조로 되돌아간다.
+* `Server/Common/Protobuf/bin/GenPackets.bat` 재실행 후 `GameServerTests.exe` 종료 코드 0.
+  이것이 "생성기를 다시 돌렸더니 조용히 어긋났다"를 잡는 지점이다.
+
+
 ---
 
 ## 결정 5 — 인증 서버는 Node 내장 러너
@@ -152,6 +215,15 @@ D-12(CI)에서 그대로 재사용된다. Brave 모드는 그 반대 방향 — 
 첫 테스트를 `configs.js`에 건 이유: `.env`는 gitignore돼 있어 새 클론에 없다. 키가 하나 빠져도
 서버는 기동에 성공하고 DB·Redis 접속 시점에야 터진다. `parseInt(undefined)`는 예외가 아니라
 NaN이라 커넥션 풀 설정이 조용히 무의미해진다. 그 사이의 시간이 이 티어에서 가장 비싼 디버깅이었다.
+
+### Confirmation
+
+* `Server/AuthServer/package.json`의 `scripts.test`가 `"node --test"`다.
+* `devDependencies`에 테스트 러너(jest·mocha·vitest 등)가 없다 — 현재 `eslint` 하나뿐.
+  러너가 추가되면 "새 의존성 0개"라는 이 결정의 근거가 사라진다.
+* `cd Server/AuthServer && npm test` 종료 코드 0.
+* 테스트 파일은 `*.test.js`로 대상 소스 옆에 둔다 (현재 `src/Config/configs.test.js`).
+
 
 ---
 
@@ -244,6 +316,19 @@ L4도 살아 있다 — 설치본에 `Engine/Plugins/Experimental/Gauntlet` 플�
 기존 메모리 `tool-exposure-is-not-existence`("노출 ≠ 존재")와 같은 계열의 두 번째 사례라,
 CLAUDE.md 「완료 기준」에 **"존재 ≠ 가능"** 규칙으로 승격했다("두 번이면 문서, 세 번이면 규칙"
 사다리 적용). 대가는 약 20분과 실패한 빌드 1회였고, 그 실패가 규칙 하나를 만들었다.
+
+### Confirmation
+
+* `P1/` 아래에 `TargetType.Program` 타깃이 없다: `grep -rn "TargetType.Program" P1/` 결과 0건.
+* `P1/Source/`의 `*.Target.cs`는 `P1.Target.cs`·`P1Editor.Target.cs` 둘뿐이다.
+  `P1Tests.Target.cs`가 다시 생기면 빌드 이전에 **프로젝트 파일 재생성**부터 깨진다
+  (`ProjectFileGenerator.cs:3176`이 같은 검증을 수행한다).
+* `P1/`의 `.Build.cs`·`.Target.cs` 어디에도 Catch2·`LowLevelTestsRunner` 참조가 없다.
+* 새 클라 테스트는 L2로 쓴다 — `IMPLEMENT_SIMPLE_AUTOMATION_TEST`를 써서 별도 타깃 없이
+  `P1` 모듈에 컴파일되는 형태인지 확인한다.
+* **재검토 조건이 없는 결정이다.** 소스 빌드 엔진을 전제하는 제안(엔진 패치, 프로젝트 내 Program
+  타깃)이 계획에 올라오면 그 자체가 위반이다.
+
 
 ---
 
