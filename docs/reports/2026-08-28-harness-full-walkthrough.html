@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>하네스 전체 과정 — 세션 하나가 지나가는 길</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --fg: #d8dee4;
+    --muted: #828c99;
+    --accent: #ffb86c;
+    --accent2: #82e0aa;
+    --danger: #f5837d;
+    --blue: #79b8ff;
+    --purple: #c8a2ff;
+    --line: #2a313a;
+    --code-bg: #1a2029;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "Noto Sans KR", sans-serif;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    line-height: 1.65;
+    font-size: 15px;
+  }
+  h1 { font-size: 27px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  h2 { font-size: 21px; margin-top: 46px; color: var(--accent); border-left: 4px solid var(--accent); padding-left: 10px; }
+  h3 { font-size: 16px; margin-top: 30px; color: var(--accent2); }
+  h4 { font-size: 14px; margin-top: 22px; color: var(--fg); letter-spacing: .02em; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: -8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13.5px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); color: var(--accent); font-weight: 600; }
+  td.col-key { white-space: nowrap; color: var(--accent2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--accent2); }
+  pre { background: var(--code-bg); padding: 14px 18px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; border: 1px solid var(--line); }
+  pre code { background: transparent; padding: 0; color: var(--fg); }
+  .fig { margin: 22px 0 26px; text-align: center; }
+  .fig svg { max-width: 100%; height: auto; }
+  .fig figcaption { color: var(--muted); font-size: 12.5px; margin-top: 8px; text-align: center; }
+  .callout { background: var(--code-bg); border-left: 3px solid var(--accent); padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+  .callout.bad { border-left-color: var(--danger); }
+  .callout.good { border-left-color: var(--accent2); }
+  .callout.info { border-left-color: var(--blue); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+  .toc { background: var(--code-bg); padding: 14px 22px; border-radius: 6px; }
+  .toc a { color: var(--accent2); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .status-ok { color: var(--accent2); }
+  .status-warn { color: var(--accent); }
+  .status-bad { color: var(--danger); }
+  .commit { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; background:#222b36; color:var(--accent); padding:1px 7px; border-radius:10px; border:1px solid var(--line); }
+  .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:10px; font-weight:600; }
+  .tag.what { background:#15302a; color:var(--accent2); border:1px solid #1f4a3e; }
+  .tag.how  { background:#332815; color:var(--accent); border:1px solid #4a3a1f; }
+  .tag.why  { background:#33181a; color:var(--danger); border:1px solid #4a2426; }
+  .why { border-left:3px solid var(--danger); background:var(--code-bg); padding:10px 16px; margin:14px 0; border-radius:4px; }
+  .why b { color:var(--danger); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px){ .grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<h1>하네스 전체 과정 — 세션 하나가 지나가는 길</h1>
+<p class="meta">2026-08-28 · 이 프로젝트에서 지금 실제로 도는 하네스의 전 구간 기록</p>
+
+<div class="callout">
+질문 하나에 답하는 문서다 — <b>내가 프롬프트를 하나 던졌을 때, 그 요청이 코드와 문서에 닿기까지 어떤 관문을 몇 개 지나며, 그중 무엇이 기계가 강제하는 것이고 무엇이 그냥 약속인가.</b>
+<span class="tag what">무엇을</span> <span class="tag how">어떻게</span> <span class="tag why">왜</span>
+</div>
+
+<div class="callout good">
+<b>이 문서의 사실 확인 방식</b> — 「존재 ≠ 가능」 규칙에 따라, 파일이 있다는 것만으로 "작동한다"고 쓰지 않았다.
+훅은 실제로 테스트를 돌려 <b>45/45 통과</b>를 확인했고, MCP는 실제로 호출해 응답을 받았고,
+아카이브는 파일 목록을 대조해 <b>결손 1건</b>을 찾았다. 확인하지 않은 것은 "확인 안 함"이라고 적었다.
+</div>
+
+<div class="toc">
+<b>목차</b>
+<ol start="0">
+  <li><a href="#overview">한눈에 — 세션 하나의 생애</a></li>
+  <li><a href="#load">세션 시작 — 무엇이 로드되는가</a></li>
+  <li><a href="#plan">계획 — 파일 밖으로 나가는 계획은 없다</a></li>
+  <li><a href="#routing">도구 라우팅 — 왜 grep이 아닌가</a></li>
+  <li><a href="#gate">게이트 — PreToolUse 훅이 실제로 막는 것</a></li>
+  <li><a href="#verify">검증 — 완료를 선언할 자격</a></li>
+  <li><a href="#record">기록 — 원본 트랙과 색인 트랙</a></li>
+  <li><a href="#ladder">승격 — 실수가 규칙이 되고 규칙이 기계가 되는 길</a></li>
+  <li><a href="#gaps">아직 비어 있는 자리와 실측된 구멍</a></li>
+  <li><a href="#files">참고 파일 목록</a></li>
+</ol>
+</div>
+
+<!-- ==================== 0. 한눈에 ==================== -->
+<h2 id="overview">0. 한눈에 — 세션 하나의 생애</h2>
+
+<p>하네스는 "설정 파일 몇 개"가 아니라 <b>네 개의 레인이 세션 시간 위에서 각자 다른 일을 하는 구조</b>다.
+사람은 게이트 두 곳에만 등장하고, 훅은 도구 호출마다 등장하며, 저장소 산출물은 단계마다 다른 파일로 떨어진다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 264" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="11">
+  <defs>
+    <marker id="f1G" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+    <marker id="f1M" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#828c99"/></marker>
+    <marker id="f1R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+    <pattern id="f1hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#f5837d" stroke-width="1.4" opacity=".3"/>
+    </pattern>
+  </defs>
+
+  <!-- 단계 헤더 -->
+  <text x="151" y="22" text-anchor="middle" fill="#828c99">시작 · 로드</text>
+  <text x="242" y="22" text-anchor="middle" fill="#828c99">계획</text>
+  <text x="455" y="22" text-anchor="middle" fill="#ffb86c">도구 호출 루프 ↻ (세션 시간의 대부분)</text>
+  <text x="671" y="22" text-anchor="middle" fill="#828c99">기록</text>
+  <text x="765" y="22" text-anchor="middle" fill="#828c99">종료</text>
+  <line x1="110" y1="30" x2="806" y2="30" stroke="#2a313a" stroke-width="1"/>
+  <line x1="196" y1="32" x2="196" y2="232" stroke="#2a313a" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="288" y1="32" x2="288" y2="232" stroke="#2a313a" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="622" y1="32" x2="622" y2="232" stroke="#2a313a" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="720" y1="32" x2="720" y2="232" stroke="#2a313a" stroke-width="1" stroke-dasharray="3 4"/>
+
+  <!-- 레인 배경 -->
+  <rect x="110" y="42" width="696" height="36" fill="#11161d"/>
+  <rect x="110" y="86" width="696" height="44" fill="#11161d"/>
+  <rect x="110" y="138" width="696" height="40" fill="#11161d"/>
+  <rect x="110" y="186" width="696" height="44" fill="#11161d"/>
+  <text x="102" y="64" text-anchor="end" fill="#ffb86c">사람</text>
+  <text x="102" y="112" text-anchor="end" fill="#d8dee4">에이전트</text>
+  <text x="102" y="162" text-anchor="end" fill="#82e0aa">훅 (기계)</text>
+  <text x="102" y="212" text-anchor="end" fill="#c8a2ff">산출물</text>
+
+  <!-- 사람 레인 -->
+  <rect x="202" y="48" width="80" height="24" rx="3" fill="#332815" stroke="#ffb86c" stroke-width="1.6"/>
+  <text x="242" y="64" text-anchor="middle" fill="#ffb86c">계획 승인</text>
+  <rect x="470" y="48" width="146" height="24" rx="3" fill="#1a2029" stroke="#ffb86c" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="543" y="64" text-anchor="middle" fill="#ffb86c">권한 프롬프트 · 스키마/에디터 승인</text>
+
+  <!-- 에이전트 레인 -->
+  <rect x="114" y="92" width="78" height="32" rx="3" fill="#1a2029" stroke="#2a313a" stroke-width="1.6"/>
+  <text x="153" y="105" text-anchor="middle" fill="#d8dee4">규칙 3층</text>
+  <text x="153" y="117" text-anchor="middle" fill="#828c99">+ 기억 로드</text>
+  <rect x="202" y="92" width="80" height="32" rx="3" fill="#1a2029" stroke="#2a313a" stroke-width="1.6"/>
+  <text x="242" y="105" text-anchor="middle" fill="#d8dee4">Plan Mode</text>
+  <text x="242" y="117" text-anchor="middle" fill="#828c99">계획을 파일로</text>
+  <rect x="300" y="94" width="72" height="28" rx="3" fill="#1a2029" stroke="#79b8ff" stroke-width="1.6"/>
+  <text x="336" y="112" text-anchor="middle" fill="#79b8ff">탐색</text>
+  <rect x="380" y="94" width="72" height="28" rx="3" fill="#1a2029" stroke="#2a313a" stroke-width="1.6"/>
+  <text x="416" y="112" text-anchor="middle" fill="#d8dee4">편집</text>
+  <rect x="460" y="94" width="72" height="28" rx="3" fill="#1a2029" stroke="#79b8ff" stroke-width="1.6"/>
+  <text x="496" y="112" text-anchor="middle" fill="#79b8ff">빌드</text>
+  <rect x="540" y="94" width="72" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="576" y="112" text-anchor="middle" fill="#82e0aa">테스트</text>
+  <line x1="372" y1="108" x2="378" y2="108" stroke="#828c99" stroke-width="2" marker-end="url(#f1M)"/>
+  <line x1="452" y1="108" x2="458" y2="108" stroke="#828c99" stroke-width="2" marker-end="url(#f1M)"/>
+  <line x1="532" y1="108" x2="538" y2="108" stroke="#828c99" stroke-width="2" marker-end="url(#f1M)"/>
+  <rect x="628" y="92" width="86" height="32" rx="3" fill="#1a2029" stroke="#2a313a" stroke-width="1.6"/>
+  <text x="671" y="105" text-anchor="middle" fill="#d8dee4">ADR · 부채</text>
+  <text x="671" y="117" text-anchor="middle" fill="#828c99">· 리포트</text>
+
+  <!-- 훅 레인 -->
+  <line x1="336" y1="126" x2="336" y2="144" stroke="#82e0aa" stroke-width="2" marker-end="url(#f1G)"/>
+  <line x1="416" y1="126" x2="416" y2="144" stroke="#82e0aa" stroke-width="2" marker-end="url(#f1G)"/>
+  <line x1="496" y1="126" x2="496" y2="144" stroke="#82e0aa" stroke-width="2" marker-end="url(#f1G)"/>
+  <line x1="576" y1="126" x2="576" y2="144" stroke="#82e0aa" stroke-width="2" marker-end="url(#f1G)"/>
+  <rect x="296" y="146" width="320" height="26" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="456" y="163" text-anchor="middle" fill="#82e0aa">PreToolUse — 호출 하나마다 · 통과 못 하면 exit 2</text>
+  <rect x="726" y="146" width="76" height="26" rx="3" fill="url(#f1hatch)" stroke="#f5837d" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="764" y="163" text-anchor="middle" fill="#f5837d">SessionEnd</text>
+  <text x="153" y="162" text-anchor="middle" fill="#828c99">—</text>
+  <text x="242" y="162" text-anchor="middle" fill="#828c99">—</text>
+  <text x="671" y="162" text-anchor="middle" fill="#828c99">—</text>
+
+  <!-- 산출물 레인 -->
+  <rect x="202" y="192" width="80" height="32" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="242" y="205" text-anchor="middle" fill="#c8a2ff">plans/active</text>
+  <text x="242" y="217" text-anchor="middle" fill="#828c99">/*.md</text>
+  <rect x="300" y="192" width="152" height="32" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="376" y="212" text-anchor="middle" fill="#c8a2ff">코드 (git 추적)</text>
+  <rect x="462" y="192" width="150" height="32" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="537" y="212" text-anchor="middle" fill="#c8a2ff">block_counter.log</text>
+  <rect x="628" y="192" width="86" height="32" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="671" y="205" text-anchor="middle" fill="#c8a2ff">docs/ 3종</text>
+  <text x="671" y="217" text-anchor="middle" fill="#828c99">(git 추적)</text>
+  <rect x="726" y="192" width="76" height="32" rx="3" fill="url(#f1hatch)" stroke="#f5837d" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="764" y="205" text-anchor="middle" fill="#f5837d">transcripts</text>
+  <text x="764" y="217" text-anchor="middle" fill="#f5837d">-archive/</text>
+
+  <!-- 실측 지적 -->
+  <line x1="764" y1="228" x2="764" y2="240" stroke="#f5837d" stroke-width="1.6" stroke-dasharray="3 3" marker-end="url(#f1R)"/>
+  <text x="806" y="256" text-anchor="end" fill="#f5837d">실측: 훅 도입 후 종료된 세션 2건 중 1건만 기록됐다 — 유일하게 보장되지 않는 칸</text>
+</svg>
+<figcaption>그림 1 — 사람이 개입하는 칸은 두 개뿐이고, 훅은 호출마다 서지만, 세션 끝의 아카이브 한 칸만은 기계가 보장하지 못한다. 가로 폭은 그 단계가 세션 시간에서 차지하는 비중이다.</figcaption>
+</div>
+
+<h3>하네스 구성요소 전수 — 지금 상태</h3>
+
+<table>
+<tr><th>구성요소</th><th>실물</th><th>강제력</th><th>상태</th></tr>
+<tr><td class="col-key">프로젝트 규칙</td><td><code>CLAUDE.md</code></td><td>확률적 (모델이 읽음)</td><td class="status-ok">가동 · 커밋 10건</td></tr>
+<tr><td class="col-key">전역 규칙</td><td><code>~/.claude/rules/{commit,docs-format,research-discipline}.md</code></td><td>확률적</td><td class="status-ok">가동 · 3개</td></tr>
+<tr><td class="col-key">세션 간 기억</td><td><code>~/.claude/projects/…/memory/</code> + <code>MEMORY.md</code></td><td>확률적</td><td class="status-ok">가동 · 10개</td></tr>
+<tr><td class="col-key">위험 명령 게이트</td><td><code>.claude/hooks/guard_dangerous_cmd.py</code></td><td><b>결정적 (exit 2)</b></td><td class="status-ok">가동 · 테스트 45/45 · 차단 1건</td></tr>
+<tr><td class="col-key">transcript 아카이브</td><td><code>.claude/hooks/archive_transcript.py</code></td><td>최선 노력</td><td class="status-warn">가동 · 결손 1건</td></tr>
+<tr><td class="col-key">알림</td><td><code>~/.claude/settings.json</code> Notification 훅 (BurntToast)</td><td>—</td><td class="status-ok">가동</td></tr>
+<tr><td class="col-key">도구 라우팅</td><td>Rider MCP <code>http://127.0.0.1:64482/stream</code></td><td>확률적 + 훅 보조</td><td class="status-ok">가동 · 호출 응답 확인</td></tr>
+<tr><td class="col-key">테스트</td><td><code>GameServerTests.exe</code> · <code>npm test</code></td><td><b>결정적 (종료 코드)</b></td><td class="status-ok">가동 · 서버 2티어</td></tr>
+<tr><td class="col-key">계획·결정 기록</td><td><code>docs/{plans,decisions,tech-debt.md,reports}</code></td><td>관행</td><td class="status-ok">가동</td></tr>
+<tr><td class="col-key">문서 생성</td><td>스킬 <code>explain-html</code></td><td>관행</td><td class="status-ok">가동 (이 문서가 그 산출물)</td></tr>
+<tr><td class="col-key">서브에이전트</td><td><code>.claude/agents/README.md</code></td><td>—</td><td class="status-bad">빈 자리 (2단계 예약)</td></tr>
+<tr><td class="col-key">슬래시 커맨드</td><td><code>.claude/commands/README.md</code></td><td>—</td><td class="status-bad">빈 자리 (2단계 예약)</td></tr>
+<tr><td class="col-key">프로젝트 스킬</td><td><code>.claude/skills/{project,unreal-core}/README.md</code></td><td>—</td><td class="status-bad">빈 자리 — <code>SKILL.md</code>가 없어 스킬로 인식되지 않는다</td></tr>
+<tr><td class="col-key">CI</td><td><code>.github/</code> (비어 있음)</td><td>—</td><td class="status-bad">없음 (D-12)</td></tr>
+</table>
+
+<!-- ==================== 1. 로드 ==================== -->
+<h2 id="load">1. 세션 시작 — 무엇이 로드되는가</h2>
+
+<p>세션이 열릴 때 들어오는 것은 <b>성질이 다른 두 묶음</b>이다. 하나는 우선순위가 있어 위가 아래를 덮는 <b>설정</b>이고,
+다른 하나는 우선순위 없이 전부 합쳐지는 <b>지시문</b>이다. 이 둘을 같은 것으로 착각하면 "왜 내 설정이 안 먹지"에서 막힌다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 286" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="11">
+  <defs>
+    <marker id="f2M" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#828c99"/></marker>
+    <marker id="f2P" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c8a2ff"/></marker>
+  </defs>
+
+  <text x="40" y="20" fill="#ffb86c">설정 — 위가 아래를 덮는다</text>
+  <text x="500" y="20" fill="#c8a2ff">지시문 — 덮지 않고 전부 합쳐진다</text>
+
+  <!-- 우선순위 축 -->
+  <line x1="26" y1="34" x2="26" y2="226" stroke="#828c99" stroke-width="2" marker-end="url(#f2M)"/>
+  <text x="16" y="130" text-anchor="middle" fill="#828c99" transform="rotate(-90 16 130)">우선순위 낮아짐</text>
+
+  <!-- 스택 -->
+  <rect x="40" y="30" width="430" height="30" rx="3" fill="#11161d" stroke="#2a313a" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="52" y="49" fill="#828c99">1 · 관리형(조직) — 이 프로젝트는 미사용</text>
+  <rect x="40" y="66" width="430" height="30" rx="3" fill="#11161d" stroke="#2a313a" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="52" y="85" fill="#828c99">2 · 명령줄 --settings — 미사용</text>
+  <rect x="40" y="102" width="430" height="30" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.8"/>
+  <text x="52" y="121" fill="#82e0aa">3 · .claude/settings.local.json</text>
+  <text x="462" y="121" text-anchor="end" fill="#828c99">읽기 툴 7개 허용 · 병합</text>
+  <rect x="40" y="138" width="430" height="30" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.8"/>
+  <text x="52" y="157" fill="#82e0aa">4 · .claude/settings.json (git 추적)</text>
+  <text x="462" y="157" text-anchor="end" fill="#828c99">훅 2종 · 빌드 툴 2개 · 병합</text>
+  <rect x="40" y="174" width="430" height="30" rx="3" fill="#1a2029" stroke="#2a313a" stroke-width="1.6"/>
+  <text x="52" y="193" fill="#d8dee4">5 · ~/.claude/settings.json</text>
+  <text x="462" y="193" text-anchor="end" fill="#828c99">모델 · effort · 알림 훅</text>
+
+  <!-- 병합 결론 -->
+  <rect x="40" y="216" width="430" height="46" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="52" y="235" fill="#82e0aa">리스트 키는 덮어쓰지 않고 합쳐진다</text>
+  <text x="52" y="252" fill="#d8dee4">→ 권한 프롬프트 없이 도는 Rider 툴 = 7 + 2 = 9개</text>
+
+  <!-- 직관 배신 지점 -->
+  <text x="478" y="121" fill="#ffb86c">▲</text>
+  <text x="478" y="157" fill="#828c99">▼</text>
+
+  <!-- 지시문 -->
+  <rect x="516" y="30" width="290" height="42" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="528" y="48" fill="#c8a2ff">~/.claude/rules/*.md</text>
+  <text x="528" y="64" fill="#828c99">커밋 · 문서형식 · 조사규율 — 3개</text>
+  <rect x="516" y="80" width="290" height="42" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="528" y="98" fill="#c8a2ff">CLAUDE.md</text>
+  <text x="528" y="114" fill="#828c99">이 프로젝트의 규칙 · 목차</text>
+  <rect x="516" y="130" width="290" height="42" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6"/>
+  <text x="528" y="148" fill="#c8a2ff">memory/ + MEMORY.md</text>
+  <text x="528" y="164" fill="#828c99">세션 간 기억 — 10개</text>
+
+  <path d="M512,32 H504 V196 H514" fill="none" stroke="#c8a2ff" stroke-width="1.6"/>
+  <line x1="504" y1="196" x2="514" y2="196" stroke="#c8a2ff" stroke-width="1.6" marker-end="url(#f2P)"/>
+  <rect x="516" y="182" width="290" height="30" rx="3" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="528" y="201" fill="#c8a2ff">한 컨텍스트로 합류 — 서로 덮지 않는다</text>
+  <text x="516" y="232" fill="#ffb86c">충돌은 기계가 아니라 글로 해소한다 —</text>
+  <text x="516" y="248" fill="#828c99">CLAUDE.md 「git 추적」 절이 전역 커밋 규칙의</text>
+  <text x="516" y="262" fill="#828c99">docs·.claude 제외 조항을 명시적으로 뒤집는다.</text>
+</svg>
+<figcaption>그림 2 — 왼쪽은 순위가 있고 오른쪽은 없다. 직관을 배신하는 칸은 3번: <code>settings.local.json</code>이 팀이 공유하는 <code>settings.json</code>보다 <b>위</b>다. 그리고 규칙끼리 부딪히면 아무도 중재하지 않으므로 글로 이겨야 한다.</figcaption>
+</div>
+
+<h3>1-1. 설정 3층의 실제 내용</h3>
+
+<p><code>.claude/settings.json:2</code> — 첫 줄부터 하네스의 결정이다.</p>
+<pre><code>{
+  "cleanupPeriodDays": 365,</code></pre>
+
+<div class="why">
+<b>왜 365인가</b> — Claude Code는 세션 transcript를 <code>~/.claude/projects/</code>에 평문으로 <b>기본 30일</b> 보관하고 지운다.
+30일은 이 프로젝트의 세션 간격(수일~수주)에 비해 짧다. 판정 ADR §2가 "재현성 원본은 이미 전부 기록되고 있으니
+별도 로그 시스템을 만들지 말고 그 구멍만 메운다"고 결정했고, 구멍은 둘이었다 — <b>보존 기간</b>과 <b>위치</b>.
+365는 전자를 메운 값이고, 후자는 아래 6장의 아카이브 훅이 메운다. 트레이드오프: 디스크에 평문 대화 기록이 1년 쌓인다.
+</div>
+
+<h3>1-2. 지시문 3층 — 강제력이 없다는 점이 중요하다</h3>
+
+<p>규칙 파일은 모델이 <b>읽고 따르는</b> 것이지 기계가 검사하는 것이 아니다. 그래서 이 프로젝트는
+규칙을 두 부류로 나눠 관리한다. 위반이 드물고 손해가 작은 것은 글로 두고, <b>두 번 이상 반복됐거나 손해가 큰 것은 훅으로 내린다</b>(7장).</p>
+
+<table>
+<tr><th>규칙</th><th>어디에</th><th>강제 수단</th></tr>
+<tr><td>DB 파괴 명령 금지</td><td>CLAUDE.md 「안전」</td><td class="status-ok">훅 (결정적)</td></tr>
+<tr><td>Rider 툴에 <code>rootFolder</code> 명시</td><td>CLAUDE.md 「도구 라우팅」</td><td class="status-ok">훅 (결정적)</td></tr>
+<tr><td>커밋 메시지는 <code>-F</code> 파일로</td><td>CLAUDE.md 「안전」</td><td class="status-warn">글만 — 훅이 자기 커밋 메시지를 막은 사고에서 나온 규칙</td></tr>
+<tr><td>주석·로그는 한국어</td><td>CLAUDE.md 「컨벤션」</td><td class="status-warn">글만</td></tr>
+<tr><td>부채는 즉시 고치지 말고 기록</td><td>CLAUDE.md 「작업 방식」</td><td class="status-warn">글만</td></tr>
+<tr><td>설계 결정 시 외부 권위 자료 fetch</td><td>전역 <code>research-discipline.md</code></td><td class="status-warn">글만</td></tr>
+</table>
+
+<!-- ==================== 2. 계획 ==================== -->
+<h2 id="plan">2. 계획 — 파일 밖으로 나가는 계획은 없다</h2>
+
+<p>복잡한 작업은 <code>docs/plans/active/{작업명}.md</code>에 계획을 먼저 쓰고 시작한다. 완료하면 <code>completed/</code>로 옮긴다.
+지금 <code>completed/verification-infra.md</code> 하나가 그 형식의 실물이고, 여기에 세 가지 관행이 들어 있다.</p>
+
+<table>
+<tr><th>관행</th><th>표기</th><th>왜</th></tr>
+<tr><td class="col-key">[x] + summary 한 줄</td><td>완료 항목 옆에 생성·수정 파일 경로와 핵심 결정</td><td>체크박스만 남으면 <b>무엇이 왜 그렇게 됐는지가 사라진다.</b> 차기 세션 프롬프트의 원료다</td></tr>
+<tr><td class="col-key">[B] blocked</td><td><code>[B] blocked — 무엇이/어디서</code>로 표기하고 거기서 멈춤</td><td>우회는 계획에 없던 상태를 만들고, <b>그 상태를 다음 세션이 모른다</b></td></tr>
+<tr><td class="col-key">AC(완료 기준) 명시</td><td>단계마다 검증 가능한 종료 조건</td><td>"됐을 것이다"를 완료로 셀 수 없게 만든다</td></tr>
+</table>
+
+<div class="callout info">
+<b>실제로 작동한 사례</b> — <code>docs/plans/completed/verification-infra.md:62</code>의 Phase B가 <code>[B] blocked</code>로 멈췄다.
+UE Low-Level Tests가 런처 설치본에서 <code>Targets with a unique build environment cannot be built with an installed engine.</code>로 거부됐고,
+에이전트는 우회를 찾지 않고 UBT 소스에서 원인(<code>TargetRules.cs:2690-2693</code> + <code>RulesAssembly.cs:677-680</code>)까지만 확인한 뒤 기록하고 멈췄다.
+같은 날 사용자가 "이 프로젝트는 소스 빌드를 하지 않는다"고 확정하면서 <b>blocked가 폐기로 전환</b>됐고, 보류를 전제로 만든 파일들은 제거됐다 <span class="commit">a04b75d</span>.
+</div>
+
+<div class="why">
+<b>왜 계획을 대화가 아니라 파일에 쓰는가</b> — 세션 컨텍스트는 세션과 함께 사라진다.
+Planner/Generator/Evaluator를 서브에이전트로 쪼개는 대안(판정 ADR 결정 1)은 <b>기각</b>됐다.
+계획 품질은 사람과의 왕복에서 나오는데 서브에이전트는 자율 실행 후 결과 보고 모델이라 그 루프에 사람을 태울 수 없고,
+본 세션이 쌓은 코드베이스 이해를 격리된 Planner가 다시 탐색하는 토큰 비용도 든다.
+대신 <b>Plan Mode = Planner(쓰기 금지 + 사람 승인 게이트), 본 세션 = Generator</b>로 축소하고,
+컨텍스트 분리는 세션 경계와 <code>docs/plans/</code> 외부화가 담당한다. 격리가 정말 필요한 역할은 자기평가 편향이 걸리는 Evaluator 하나뿐이다 — 그 자리는 아직 비어 있다(8장).
+</div>
+
+<p><code>prompts/</code>의 세션 프롬프트 2개가 이 단계의 입력이다. 반복 골격(목표 선언 → 제약 명시 → 단계 → 산출물 정의 → 확인 질문)까지만 관행으로 인정되어 있고,
+같은 유형을 <b>세 번째</b> 쓰게 되는 시점에 <code>.claude/commands/</code> 슬래시 커맨드로 승격하기로 예약돼 있다.</p>
+
+<!-- ==================== 3. 라우팅 ==================== -->
+<h2 id="routing">3. 도구 라우팅 — 왜 grep이 아닌가</h2>
+
+<p>탐색·빌드·리팩토링은 Rider MCP로 간다. 이건 취향이 아니라 이 코드베이스의 성질에서 나온 결정이다.</p>
+
+<div class="why">
+<b>왜 grep 금지인가</b> — UE의 RPC는 선언과 구현의 이름이 다르다(<code>_Implementation</code> 접미사).
+텍스트 검색은 여기서 <b>호출 사슬이 끊긴 것을 알려주지 않고 그냥 조용히 놓친다.</b>
+<code>analyze_calls</code>는 심볼 해석 결과를 쓰므로 이 지점을 넘어간다. 트레이드오프: MCP 왕복이 grep보다 느리고, Rider가 떠 있어야 한다.
+</div>
+
+<div class="why">
+<b>왜 빌드는 터미널이 아니라 MCP인가</b> — UBT/MSBuild를 셸로 돌리면 <b>출력이 잘려 에러가 유실된다.</b>
+그래서 빌드는 <code>build_solution_start</code> → <code>build_solution_state</code> 폴링으로 간다.
+단 이 근거는 <b>빌드에만</b> 성립한다 — gtest 출력은 짧고 완결적이라 실행은 셸로 간다(5장). 같은 규칙을 기계적으로 확장하지 않은 자리다.
+</div>
+
+<p>여기에 하나 더 붙는 함정이 있고, 이건 글로는 못 막아서 훅으로 내려갔다.</p>
+
+<div class="callout bad">
+<b>Rider 인스턴스 하나가 열린 솔루션 전부(P1, Server)를 한 엔드포인트로 서빙한다.</b>
+대상을 고르는 건 <code>rootFolder</code> 인자뿐이다. 솔루션이 둘 이상 열려 있으면 서버가 모호성을 느껴 거부하지만,
+<b>하나만 열려 있으면 거부하지 않고 그대로 실행한다.</b> Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드되고, 아무도 그걸 알려주지 않는다.
+</div>
+
+<!-- ==================== 4. 게이트 ==================== -->
+<h2 id="gate">4. 게이트 — PreToolUse 훅이 실제로 막는 것</h2>
+
+<p>도구 호출 하나하나가 <code>guard_dangerous_cmd.py</code>를 지난다. 훅은 stdin으로 JSON을 받아
+<b>툴 이름에 따라 다른 필드를 다른 방식으로</b> 검사한다. 모든 툴이 같은 검사를 받는 게 아니라는 점이 핵심이다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 384" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="11">
+  <defs>
+    <marker id="f3G" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+    <marker id="f3R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+    <marker id="f3M" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#828c99"/></marker>
+    <pattern id="f3hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#f5837d" stroke-width="1.4" opacity=".32"/>
+    </pattern>
+  </defs>
+
+  <text x="8" y="20" fill="#828c99">툴 부류</text>
+  <text x="186" y="20" fill="#828c99">1차 · rootFolder 검사</text>
+  <text x="336" y="20" fill="#828c99">2차 · 명령 내용 검사</text>
+  <text x="580" y="20" fill="#828c99">결과</text>
+  <line x1="8" y1="28" x2="812" y2="28" stroke="#2a313a" stroke-width="1"/>
+
+  <!-- R1 -->
+  <text x="8" y="58" fill="#d8dee4">Bash · PowerShell</text>
+  <text x="240" y="58" text-anchor="middle" fill="#828c99">해당 없음</text>
+  <rect x="330" y="40" width="228" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="444" y="58" text-anchor="middle" fill="#82e0aa">셸 패턴 13종 + SQL DDL 4종</text>
+  <rect x="576" y="40" width="236" height="28" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="694" y="58" text-anchor="middle" fill="#82e0aa">차단 가능</text>
+  <line x1="560" y1="54" x2="574" y2="54" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+
+  <!-- R2 -->
+  <text x="8" y="98" fill="#d8dee4">execute_sql_query</text>
+  <text x="240" y="98" text-anchor="middle" fill="#828c99">해당 없음</text>
+  <rect x="330" y="80" width="228" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="444" y="98" text-anchor="middle" fill="#82e0aa">DDL 4종 + WHERE 없는 DELETE/UPDATE</text>
+  <rect x="576" y="80" width="236" height="28" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="694" y="98" text-anchor="middle" fill="#82e0aa">차단 가능 · 주석/문자열 제거 후 판정</text>
+  <line x1="560" y1="94" x2="574" y2="94" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+
+  <!-- R3 -->
+  <text x="8" y="138" fill="#d8dee4">execute_terminal_command</text>
+  <rect x="176" y="120" width="128" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="240" y="138" text-anchor="middle" fill="#82e0aa">검사함</text>
+  <rect x="330" y="120" width="228" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="444" y="138" text-anchor="middle" fill="#82e0aa">셸과 동일</text>
+  <rect x="576" y="120" width="236" height="28" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="694" y="138" text-anchor="middle" fill="#82e0aa">둘 다 통과해야 실행 — 유일하게 이중 검사</text>
+  <line x1="308" y1="134" x2="326" y2="134" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+  <line x1="560" y1="134" x2="574" y2="134" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+
+  <!-- R4 -->
+  <text x="8" y="178" fill="#d8dee4">Rider 상태변경 18종</text>
+  <text x="8" y="192" fill="#828c99" font-size="10">빌드 · 리팩토링 · DB연결 · ue_play …</text>
+  <rect x="176" y="164" width="128" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="240" y="182" text-anchor="middle" fill="#82e0aa">검사함</text>
+  <rect x="330" y="164" width="228" height="28" rx="3" fill="#11161d" stroke="#2a313a" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="444" y="182" text-anchor="middle" fill="#828c99">없음 — return 0</text>
+  <rect x="576" y="164" width="236" height="28" rx="3" fill="#1a2029" stroke="#ffb86c" stroke-width="1.6"/>
+  <text x="694" y="182" text-anchor="middle" fill="#ffb86c">대상 솔루션만 확인되면 그대로 실행</text>
+  <line x1="308" y1="178" x2="326" y2="178" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+
+  <!-- R5 -->
+  <text x="8" y="228" fill="#f5837d">ue_execute_python</text>
+  <text x="8" y="242" fill="#f5837d" font-size="10">에디터에서 임의 파이썬</text>
+  <rect x="176" y="214" width="128" height="28" rx="3" fill="#1a2029" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="240" y="232" text-anchor="middle" fill="#82e0aa">검사함</text>
+  <rect x="330" y="214" width="228" height="28" rx="3" fill="url(#f3hatch)" stroke="#f5837d" stroke-width="1.8"/>
+  <text x="444" y="232" text-anchor="middle" fill="#f5837d">✕ 검사 대상이 아니다</text>
+  <rect x="576" y="214" width="236" height="28" rx="3" fill="#33181a" stroke="#f5837d" stroke-width="1.8"/>
+  <text x="694" y="232" text-anchor="middle" fill="#f5837d">내용 무검사 실행 — 사람 판단에만 의존</text>
+  <line x1="308" y1="228" x2="326" y2="228" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+  <line x1="560" y1="228" x2="574" y2="228" stroke="#f5837d" stroke-width="2" marker-end="url(#f3R)"/>
+
+  <!-- R6 -->
+  <text x="8" y="272" fill="#828c99">그 외 (Read · search_symbol · git_status …)</text>
+  <rect x="176" y="258" width="636" height="28" rx="3" fill="#11161d" stroke="#2a313a" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="494" y="276" text-anchor="middle" fill="#828c99">검사 없이 통과 — 읽기 툴까지 rootFolder를 요구하면 실익 없이 번거롭기만 하다는 판단</text>
+
+  <!-- 차단 시 부수효과 -->
+  <line x1="694" y1="70" x2="694" y2="300" stroke="#82e0aa" stroke-width="1.4" stroke-dasharray="3 4"/>
+  <line x1="694" y1="300" x2="694" y2="312" stroke="#82e0aa" stroke-width="2" marker-end="url(#f3G)"/>
+  <rect x="470" y="316" width="342" height="30" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="641" y="335" text-anchor="middle" fill="#82e0aa">차단 = exit 2 + deny JSON + block_counter.log 1줄</text>
+
+  <!-- exit 코드 경고 -->
+  <rect x="8" y="316" width="440" height="56" rx="3" fill="#33181a" stroke="#f5837d" stroke-width="1.6"/>
+  <text x="20" y="334" fill="#f5837d">exit 2만 차단이다. 그 외 non-zero는 non-blocking error다.</text>
+  <text x="20" y="350" fill="#d8dee4">인라인 python3 버전은 매번 exit 49로 조용히 죽었고,</text>
+  <text x="20" y="366" fill="#d8dee4">그동안 rm -rf 가 그대로 실행됐다 (D-05, 실측).</text>
+</svg>
+<figcaption>그림 3 — 다섯 부류가 서로 다른 검사를 받는다. 지목할 칸은 <code>ue_execute_python</code> — 대상 솔루션은 확인받지만 <b>무슨 파이썬을 돌리는지는 아무도 안 본다.</b> 훅이 덮지 못하는 유일한 상태 변경 경로다.</figcaption>
+</div>
+
+<h3>4-1. 두 단계의 코드</h3>
+
+<p><code>.claude/hooks/guard_dangerous_cmd.py:199-210</code> — 1차. 상태를 바꾸는 Rider 툴 20종에만 건다.</p>
+<pre><code>if tool_name in ROOT_FOLDER_REQUIRED:
+    root = tool_input.get("rootFolder")
+    if not isinstance(root, str) or not root.strip():
+        return deny(
+            "BLOCKED: " + tool_name + " 를 rootFolder 없이 호출했다. …",
+            tool_name,
+            ["rootFolder 누락"],
+        )</code></pre>
+
+<p><code>.claude/hooks/guard_dangerous_cmd.py:213-220</code> — 2차. 여기서 <b>부류에 안 들면 즉시 통과</b>한다. <code>ue_execute_python</code>이 빠져나가는 지점이 정확히 이 <code>else</code>다.</p>
+<pre><code>if tool_name in SQL_TOOLS:
+    target = tool_input.get("queryText", "")
+    is_sql = True
+elif tool_name in SHELL_TOOLS:
+    target = tool_input.get("command", "")
+    is_sql = False
+else:
+    return 0</code></pre>
+
+<div class="why">
+<b>왜 인라인 한 줄이 아니라 파일인가</b> — 이전 버전은 <code>settings.json</code>에 <code>python3 -c "…"</code> 한 줄이었다.
+이 Windows에서 <code>python3</code>는 MS Store 앱 실행 별칭 스텁이라 스크립트를 실행하지 않고 <b>exit 49</b>로 죽는다.
+PreToolUse는 exit 2만 차단이고 그 외 non-zero는 non-blocking error라, 훅이 매번 조용히 실패하는 동안 위험 명령이 그대로 통과했다.
+파일로 빼면서 인터프리터를 <code>py -3</code>(실제 exe)로 바꿨고, 덤으로 JSON 이스케이프 문제도 없앴다.
+<b>실패하는 안전장치는 없는 안전장치보다 나쁘다</b> — 있다고 믿기 때문이다.
+</div>
+
+<div class="why">
+<b>왜 exit 2와 deny JSON을 둘 다 쓰는가</b> — <code>deny()</code>는 <code>permissionDecision=deny</code> JSON을 stdout에 쓰고 <b>동시에</b> exit 2로 끝낸다.
+exit 2는 JSON 파싱 결과와 무관하게 차단되므로, 스키마가 어긋나도 "통과"로 새지 않는다. 이중 안전장치다.
+반대 방향으로도 한 번 판단했다 — stdin을 못 읽으면 <code>return 0</code>으로 <b>통과</b>시킨다(<code>:187-193</code>).
+여기서 exit 2를 내면 판단 근거가 없는 상태에서 모든 툴 호출이 막힌다.
+</div>
+
+<h3>4-2. 차단 카운터 — 왜 발생 지점에서 세는가</h3>
+
+<p>차단 1건마다 <code>block_counter.log</code>에 TSV 한 줄이 append된다. 지금까지 누적 <b>1건</b>이다.</p>
+<pre><code>2026-08-26T17:35:50+09:00	mcp__rider__build_solution_start	rootFolder 누락</code></pre>
+
+<div class="why">
+<b>왜 세션 리포트에 손으로 누적하지 않는가</b> — 차단 건수는 <b>소급 생성이 불가능한 데이터</b>다. 지나간 차단은 다시 셀 수 없다.
+손 집계는 몇 세션 안에 부패한다(집계를 잊은 세션은 영구 결손). 그래서 발생 지점에서 자동으로 쌓고,
+세션 리포트는 집계 장부가 아니라 <b>카운터와 git에서 읽어오는 조회 창</b>이 된다(판정 ADR 결정 5).
+카운터 쓰기가 실패해도 조용히 넘어간다(<code>:146-163</code>) — 로그를 못 쓴다는 이유로 위험 명령이 통과하면 주객이 전도된다.
+</div>
+
+<div class="callout good">
+이 카운터의 첫 1건은 <b>훅이 스스로를 증명한 기록</b>이다. 3장에서 서술한 "솔루션 하나만 열려 있으면 Rider가 거부하지 않는다"는 구멍을
+글로만 막아뒀다면 이 호출은 그냥 잘못된 솔루션을 빌드했을 것이다. 실제로는 exit 2로 멈췄고 한 줄이 남았다.
+</div>
+
+<h3>4-3. 훅이 자기 커밋 메시지를 막은 사건</h3>
+
+<div class="callout bad">
+훅은 <b>명령 문자열 전체</b>를 본다. 그래서 위험 패턴을 <b>언급만</b> 하는 텍스트도 걸린다 — 대표적으로 그 패턴을 설명하는 커밋 메시지.
+<code>git commit -m "… FLUSHALL 차단 추가"</code>가 자기 자신에게 막혔다.
+해결책은 예외 추가가 아니라 텍스트를 명령에서 빼는 것 — <code>git commit -F &lt;파일&gt;</code>을 쓴다.
+<b>예외를 늘리면 규칙이 무의미해지고, 경로를 바꾸면 규칙이 유지된다.</b>
+</div>
+
+<!-- ==================== 5. 검증 ==================== -->
+<h2 id="verify">5. 검증 — 완료를 선언할 자격</h2>
+
+<p>이 하네스에서 "완료"는 선언이 아니라 <b>실행 결과</b>다. 그런데 증거의 강도는 영역마다 다르고, 그 차이가 이 프로젝트의 현재 한계다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 272" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="11">
+  <defs>
+    <marker id="f4M" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#828c99"/></marker>
+    <pattern id="f4hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#f5837d" stroke-width="1.4" opacity=".3"/>
+    </pattern>
+  </defs>
+
+  <line x1="16" y1="228" x2="16" y2="52" stroke="#828c99" stroke-width="2" marker-end="url(#f4M)"/>
+  <text x="7" y="140" text-anchor="middle" fill="#828c99" transform="rotate(-90 7 140)">증거 강도</text>
+
+  <text x="165" y="40" fill="#d8dee4">게임 서버</text>
+  <text x="329" y="40" fill="#d8dee4">인증 서버</text>
+  <text x="493" y="40" fill="#d8dee4">UE 클라</text>
+  <text x="657" y="40" fill="#d8dee4">서버 룸 · DB 경로</text>
+  <line x1="28" y1="46" x2="809" y2="46" stroke="#2a313a" stroke-width="1"/>
+
+  <!-- rung 4 -->
+  <text x="150" y="79" text-anchor="end" fill="#82e0aa">종료 코드 0 · 무인 반복</text>
+  <rect x="165" y="56" width="152" height="34" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.8"/>
+  <text x="241" y="78" text-anchor="middle" fill="#82e0aa">✓ GameServerTests.exe</text>
+  <rect x="329" y="56" width="152" height="34" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.8"/>
+  <text x="405" y="78" text-anchor="middle" fill="#82e0aa">✓ npm test</text>
+  <rect x="493" y="56" width="152" height="34" rx="3" fill="url(#f4hatch)" stroke="#f5837d" stroke-width="1.8"/>
+  <text x="569" y="78" text-anchor="middle" fill="#f5837d">✕ 에디터가 필요하다</text>
+  <rect x="657" y="56" width="152" height="34" rx="3" fill="url(#f4hatch)" stroke="#f5837d" stroke-width="1.8"/>
+  <text x="733" y="78" text-anchor="middle" fill="#f5837d">✕</text>
+
+  <!-- rung 3 -->
+  <text x="150" y="123" text-anchor="end" fill="#82e0aa">테스트 초록</text>
+  <rect x="165" y="100" width="152" height="34" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.8"/>
+  <text x="241" y="122" text-anchor="middle" fill="#82e0aa">✓ 인벤토리 · 프로토콜</text>
+  <rect x="329" y="100" width="152" height="34" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.8"/>
+  <text x="405" y="122" text-anchor="middle" fill="#82e0aa">✓ configs 2건</text>
+  <rect x="493" y="100" width="152" height="34" rx="3" fill="url(#f4hatch)" stroke="#f5837d" stroke-width="1.8"/>
+  <text x="569" y="122" text-anchor="middle" fill="#f5837d">✕ L2 미착수</text>
+  <rect x="657" y="100" width="152" height="34" rx="3" fill="url(#f4hatch)" stroke="#f5837d" stroke-width="1.8"/>
+  <text x="733" y="122" text-anchor="middle" fill="#f5837d">✕ DummyClient 스모크로 대체</text>
+
+  <!-- rung 2 -->
+  <text x="150" y="167" text-anchor="end" fill="#d8dee4">빌드 초록</text>
+  <rect x="165" y="144" width="152" height="34" rx="3" fill="#1a2029" stroke="#79b8ff" stroke-width="1.6"/>
+  <text x="241" y="166" text-anchor="middle" fill="#79b8ff">✓ Rider MCP</text>
+  <rect x="329" y="144" width="152" height="34" rx="3" fill="#11161d" stroke="#2a313a" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="405" y="166" text-anchor="middle" fill="#828c99">해당 없음 (Node)</text>
+  <rect x="493" y="144" width="152" height="34" rx="3" fill="#1a2029" stroke="#79b8ff" stroke-width="1.6"/>
+  <text x="569" y="166" text-anchor="middle" fill="#79b8ff">✓ Rider MCP</text>
+  <rect x="657" y="144" width="152" height="34" rx="3" fill="#1a2029" stroke="#79b8ff" stroke-width="1.6"/>
+  <text x="733" y="166" text-anchor="middle" fill="#79b8ff">✓ Rider MCP</text>
+
+  <!-- rung 1 -->
+  <text x="150" y="211" text-anchor="end" fill="#828c99">"고쳤다" (자기신고)</text>
+  <rect x="165" y="188" width="644" height="34" rx="3" fill="#11161d" stroke="#f5837d" stroke-width="1.6" stroke-dasharray="4 3"/>
+  <text x="487" y="210" text-anchor="middle" fill="#f5837d">완료 신호로 인정하지 않는다 — "코드를 고친 사실"과 "그 코드가 도는 사실"은 별개다</text>
+
+  <text x="809" y="248" text-anchor="end" fill="#f5837d">UE 열의 위 두 칸은 도구가 없어서가 아니라 실행에 사람 손이 섞여서 비어 있다 — 무인 루프가 성립하지 않는다</text>
+</svg>
+<figcaption>그림 4 — 같은 하네스 안에서도 완료 판정의 강도가 열마다 다르다. 게임 서버는 맨 위까지 닿고, UE 클라는 빌드에서 멈춘다. <b>초록 두 칸이 비어 있는 열에서는 "완료"라는 단어를 다르게 써야 한다.</b></figcaption>
+</div>
+
+<h3>5-1. 실행 경로</h3>
+
+<table>
+<tr><th>대상</th><th>빌드</th><th>실행 (에이전트)</th><th>판정</th></tr>
+<tr><td class="col-key">게임 서버 L1</td><td><code>build_solution_start(rootFolder=…/Server)</code> → <code>build_solution_state</code></td><td><code>Server/Binary/Debug/GameServerTests.exe</code></td><td>종료 코드</td></tr>
+<tr><td class="col-key">인증 서버</td><td>—</td><td><code>cd Server/AuthServer &amp;&amp; npm test</code></td><td>종료 코드</td></tr>
+<tr><td class="col-key">훅 자신</td><td>—</td><td><code>py -3 .claude/hooks/test_guard_dangerous_cmd.py</code></td><td>종료 코드 · <b>45/45 (이 문서 작성 중 실행)</b></td></tr>
+</table>
+
+<div class="why">
+<b>왜 빌드는 Rider인데 실행은 셸인가</b> — 셸 금지의 근거는 <b>출력 절단으로 에러가 유실되는 것</b>이고 그건 빌드에만 성립한다.
+반대로 Rider의 <code>execute_run_configuration</code>은 호출마다 확인 대화상자를 띄우고, 그걸 끄는 수단은 Brave 모드(IDE 전역으로 셸·실행구성 확인 해제)뿐이다.
+테스트 하나 돌리자고 IDE 전역 안전장치를 내리는 건 교환이 맞지 않는다. <b>그래서 빌드는 Rider, 실행은 셸로 갈랐다.</b>
+</div>
+
+<div class="callout info">
+<b>테스트를 추가할 때 걸리는 함정</b> — <code>GameServerTests.vcxproj</code>는 파일을 자동 수집하지 않는다.
+새 <code>.cpp</code>를 <code>&lt;ItemGroup Label="테스트 소스"&gt;</code>에 등록하지 않으면 <b>빌드는 초록인데 테스트가 안 도는</b> 상태가 된다.
+초록이 거짓말을 하는 자리다.
+</div>
+
+<!-- ==================== 6. 기록 ==================== -->
+<h2 id="record">6. 기록 — 원본 트랙과 색인 트랙</h2>
+
+<p>기록 시스템이 둘이다. 이건 실수가 아니라 결정이다 — 다만 "둘이면 한쪽이 부패한다"는 이 프로젝트의 다른 원칙과 정면으로 부딪히므로,
+<b>역할을 갈라 적는 것</b>으로 해소했다.</p>
+
+<div class="grid2">
+<div class="callout info">
+<b>원본 트랙 — 재현성</b><br>
+<code>.claude/transcripts-archive/*.jsonl</code><br>
+기계용 · 전량 · 자동 (SessionEnd 훅) · gitignore
+</div>
+<div class="callout">
+<b>색인 트랙 — 이해</b><br>
+<code>docs/reports/*.html</code> · <code>docs/decisions/*.md</code><br>
+사람용 · 선별 · 수동 · git 추적
+</div>
+</div>
+
+<div class="why">
+<b>왜 별도 로그 시스템을 만들지 않았나</b> — 재현성의 원본은 Claude Code가 <b>이미 전부 기록하고 있다</b>(세션 전체 transcript jsonl).
+그 위에 자체 로그를 얹으면 이중 기록이라 한쪽이 반드시 부패한다. 다만 자체 transcript에는 구멍이 둘 있었다 —
+보존 기간(기본 30일)과 위치(<code>~/.claude/projects/</code>, 레포 밖이라 백업을 따라오지 않음).
+훅은 <b>후자만</b> 메우고, 전자는 <code>cleanupPeriodDays: 365</code>가 메운다. <b>새 시스템이 아니라 기존 시스템의 구멍 두 개를 메운 것</b>이다.
+</div>
+
+<div class="fig">
+<svg viewBox="0 0 820 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="11">
+  <defs>
+    <marker id="f5R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+    <pattern id="f5hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#f5837d" stroke-width="1.3" opacity=".45"/>
+    </pattern>
+  </defs>
+
+  <!-- 훅 도입선 -->
+  <line x1="690" y1="44" x2="690" y2="204" stroke="#ffb86c" stroke-width="1.8" stroke-dasharray="5 4"/>
+  <text x="684" y="40" text-anchor="end" fill="#ffb86c">← 아카이브 훅 도입 (9c56aa8, 8/26)</text>
+
+  <!-- 시간축 -->
+  <line x1="80" y1="200" x2="800" y2="200" stroke="#828c99" stroke-width="2"/>
+  <line x1="90" y1="196" x2="90" y2="204" stroke="#828c99" stroke-width="1.6"/>
+  <text x="90" y="218" text-anchor="middle" fill="#828c99">8/11</text>
+  <line x1="410" y1="196" x2="410" y2="204" stroke="#828c99" stroke-width="1.6"/>
+  <text x="410" y="218" text-anchor="middle" fill="#828c99">8/19</text>
+  <line x1="530" y1="196" x2="530" y2="204" stroke="#828c99" stroke-width="1.6"/>
+  <text x="530" y="218" text-anchor="middle" fill="#828c99">8/22</text>
+  <line x1="690" y1="196" x2="690" y2="204" stroke="#828c99" stroke-width="1.6"/>
+  <text x="690" y="234" text-anchor="middle" fill="#828c99">8/26</text>
+  <line x1="730" y1="196" x2="730" y2="204" stroke="#828c99" stroke-width="1.6"/>
+  <text x="730" y="218" text-anchor="middle" fill="#828c99">8/27</text>
+  <line x1="770" y1="196" x2="770" y2="204" stroke="#828c99" stroke-width="1.6"/>
+  <text x="770" y="234" text-anchor="middle" fill="#828c99">8/28</text>
+
+  <!-- 트랙 라벨 -->
+  <text x="72" y="94" text-anchor="end" fill="#79b8ff">원본 (자동)</text>
+  <text x="72" y="164" text-anchor="end" fill="#c8a2ff">색인 (수동)</text>
+  <line x1="80" y1="90" x2="800" y2="90" stroke="#2a313a" stroke-width="1" stroke-dasharray="2 5"/>
+  <line x1="80" y1="160" x2="800" y2="160" stroke="#2a313a" stroke-width="1" stroke-dasharray="2 5"/>
+
+  <!-- 원본 트랙 마커 -->
+  <circle cx="90" cy="90" r="15" fill="url(#f5hatch)" stroke="#828c99" stroke-width="1.6"/>
+  <text x="90" y="64" text-anchor="middle" fill="#828c99">8.9MB</text>
+  <circle cx="530" cy="90" r="8.3" fill="url(#f5hatch)" stroke="#828c99" stroke-width="1.6"/>
+  <text x="530" y="70" text-anchor="middle" fill="#828c99">3.6MB</text>
+  <circle cx="690" cy="90" r="5.4" fill="#15302a" stroke="#82e0aa" stroke-width="2"/>
+  <text x="690" y="115" text-anchor="middle" fill="#82e0aa">1.2MB ✓</text>
+  <circle cx="730" cy="90" r="8.3" fill="url(#f5hatch)" stroke="#f5837d" stroke-width="2.2"/>
+  <text x="756" y="70" text-anchor="middle" fill="#f5837d">3.6MB ✕</text>
+  <circle cx="770" cy="90" r="4.7" fill="#11161d" stroke="#828c99" stroke-width="1.6" stroke-dasharray="3 2"/>
+  <text x="798" y="115" text-anchor="end" fill="#828c99">진행 중</text>
+
+  <!-- 색인 트랙 마커 -->
+  <rect x="402" y="152" width="16" height="16" rx="2" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.8"/>
+  <text x="410" y="184" text-anchor="middle" fill="#c8a2ff">리포트</text>
+  <path d="M530,146 L540,160 L530,174 L520,160 Z" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.8"/>
+  <text x="530" y="184" text-anchor="middle" fill="#c8a2ff">ADR</text>
+  <rect x="722" y="152" width="16" height="16" rx="2" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.8"/>
+  <path d="M700,146 L710,160 L700,174 L690,160 Z" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.8"/>
+  <text x="716" y="184" text-anchor="middle" fill="#c8a2ff">ADR+리포트</text>
+  <rect x="762" y="152" width="16" height="16" rx="2" fill="#1a2029" stroke="#c8a2ff" stroke-width="1.8" stroke-dasharray="3 2"/>
+  <text x="798" y="184" text-anchor="end" fill="#828c99">이 문서</text>
+
+  <!-- 결손 지적 -->
+  <line x1="640" y1="52" x2="716" y2="78" stroke="#f5837d" stroke-width="1.6" marker-end="url(#f5R)"/>
+  <text x="636" y="50" text-anchor="end" fill="#f5837d">훅이 있는데도 아카이브에 없다 — L1 인프라 세션 전체가 원본 결손</text>
+</svg>
+<figcaption>그림 5 — 가로는 실제 날짜, 원 넓이는 transcript 파일 크기다. 8/26 왼쪽의 결손은 훅이 없었으니 정상이고, <b>8/27의 결손만 사고다.</b> 하필 가장 큰 세션(L1 테스트 인프라 구축)이 빠졌다.</figcaption>
+</div>
+
+<h3>6-1. 아카이브 훅이 하는 일과, 하지 못하는 일</h3>
+
+<p><code>.claude/hooks/archive_transcript.py:40-43</code> — 같은 세션이 이미 아카이브돼 있으면 그 이름을 재사용한다.</p>
+<pre><code>existing = sorted(ARCHIVE_DIR.glob("*-" + session_id + ".jsonl"))
+if existing:
+    return existing[0]
+return ARCHIVE_DIR / (datetime.now().strftime("%Y-%m-%d") + "-" + session_id + ".jsonl")</code></pre>
+
+<p>SessionEnd는 한 세션에 여러 번 발동할 수 있어서(<code>clear</code> 후 재개 등) 매번 오늘 날짜를 붙이면 같은 세션의 사본이 날짜별로 흩어진다.
+기존 파일이 있으면 덮어쓴다 — <b>나중 사본이 항상 더 완전하기 때문</b>이다.</p>
+
+<div class="callout bad">
+<b>실측된 구멍</b> — <code>~/.claude/projects/D--Unreal-Projects-Project-MMORPG/</code>에 세션 jsonl이 5개 있는데
+<code>.claude/transcripts-archive/</code>에는 1개뿐이다. 8/11·8/22 세션은 훅 도입(8/26) 이전이라 정상이지만,
+<b>8/27 세션(3.6MB)은 훅이 있는 상태에서 종료됐는데도 빠졌다.</b><br><br>
+<b>추정</b>: <code>settings.json:44</code>의 matcher는 공식 문서가 정의한 종료 사유 5종(<code>clear|resume|logout|prompt_input_exit|other</code>)을 전부 덮는다.
+그러므로 사유 누락이 아니라 <b>훅이 돌 기회를 못 얻은 것</b>(터미널 강제 종료 등)으로 보인다.
+훅 자신의 주석도 이 한계를 인정하고 있다 — SessionEnd는 차단이 불가능한 이벤트라 실패해도 세션에 영향이 없고,
+프로세스가 강제 종료되면 애초에 훅이 실행되지 않는다. <b>이 아카이브는 최선 노력이지 보장이 아니다.</b>
+</div>
+
+<h3>6-2. git 추적 정책 — 전역 규칙의 의도적 예외</h3>
+
+<p>전역 커밋 규칙(<code>~/.claude/rules/commit.md</code>)은 <code>CLAUDE.md</code>·<code>.claude/</code>·<code>docs/</code>를 추적에서 빼라고 한다.
+이 리포는 <b>반대로 한다</b> — 커밋 <span class="commit">01bd5a6</span> 이후 넷 다 의도적으로 추적한다.</p>
+
+<div class="why">
+<b>왜 뒤집었나</b> — 이 프로젝트에서 하네스는 부수 설정이 아니라 <b>보여줄 산출물</b>이다(포트폴리오).
+"실수 → 문서 → 규칙 → 훅"의 승격 서사는 git 이력에 남아야 읽히고, 하네스 파일이 추적 밖이면 그 이력이 통째로 사라진다.
+그래서 루트 <code>.gitignore</code>에는 예외 두 줄만 남았다 — <code>block_counter.log</code>(머신 로컬 통계라 브랜치 간 병합이 불가능)와
+<code>transcripts-archive/</code>(jsonl 하나가 수 MB라 리포가 부푼다). 두 파일 다 <b>백업 대상에는 포함</b>이라고 주석에 명시돼 있다.
+</div>
+
+<!-- ==================== 7. 승격 ==================== -->
+<h2 id="ladder">7. 승격 — 실수가 규칙이 되고 규칙이 기계가 되는 길</h2>
+
+<p>CLAUDE.md의 규칙 하나: <b>같은 실수가 두 번 반복되면 규칙 한 줄을 제안하고, 세 번이면 훅·규칙으로 승격을 제안한다.</b>
+이 사다리가 실제로 어떻게 밟혔는지가 이 하네스의 이력 전부다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 276" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="11">
+  <defs>
+    <marker id="f6O" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#ffb86c"/></marker>
+    <marker id="f6R" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+  </defs>
+
+  <text x="135" y="22" text-anchor="middle" fill="#828c99">1회</text>
+  <text x="410" y="22" text-anchor="middle" fill="#828c99">2회</text>
+  <text x="685" y="22" text-anchor="middle" fill="#828c99">3회 이상</text>
+  <line x1="8" y1="30" x2="812" y2="30" stroke="#2a313a" stroke-width="1"/>
+
+  <!-- 행 라벨 -->
+  <text x="8" y="66" fill="#82e0aa">기계</text>
+  <text x="8" y="80" fill="#828c99" font-size="10">훅 · 테스트</text>
+  <text x="8" y="140" fill="#ffb86c">문서</text>
+  <text x="8" y="154" fill="#828c99" font-size="10">CLAUDE.md</text>
+  <text x="8" y="214" fill="#828c99">관행</text>
+  <text x="8" y="228" fill="#828c99" font-size="10">사람 기억</text>
+
+  <!-- 그리드 -->
+  <rect x="90" y="40" width="230" height="76" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="330" y="40" width="230" height="76" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="570" y="40" width="230" height="76" rx="4" fill="#11161d" stroke="#f5837d" stroke-width="1.6" stroke-dasharray="5 4"/>
+  <rect x="90" y="124" width="230" height="76" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="330" y="124" width="230" height="76" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="570" y="124" width="230" height="76" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="90" y="208" width="230" height="48" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+  <rect x="330" y="208" width="470" height="48" rx="4" fill="#11161d" stroke="#2a313a" stroke-width="1"/>
+
+  <!-- 기계 · 1회 -->
+  <rect x="98" y="48" width="214" height="28" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="205" y="66" text-anchor="middle" fill="#82e0aa">python3 exit 49 → 훅 파일화 + py -3</text>
+  <rect x="98" y="80" width="214" height="28" rx="3" fill="#15302a" stroke="#82e0aa" stroke-width="1.6"/>
+  <text x="205" y="98" text-anchor="middle" fill="#82e0aa">rootFolder 누락 → 훅 검사 (차단 1건)</text>
+
+  <!-- 기계 · 3회+ 빈칸 -->
+  <text x="685" y="72" text-anchor="middle" fill="#f5837d">비어 있음 — code-reviewer · /gc</text>
+  <text x="685" y="90" text-anchor="middle" fill="#828c99">자리(README)만 있고 SKILL/에이전트 정의가 없다</text>
+
+  <!-- 문서 · 1회 -->
+  <rect x="98" y="140" width="214" height="44" rx="3" fill="#332815" stroke="#ffb86c" stroke-width="1.6"/>
+  <text x="205" y="158" text-anchor="middle" fill="#ffb86c">훅이 자기 커밋 메시지를 막음</text>
+  <text x="205" y="174" text-anchor="middle" fill="#d8dee4">→ git commit -F 규칙</text>
+
+  <!-- 문서 · 2회 -->
+  <rect x="338" y="140" width="214" height="44" rx="3" fill="#332815" stroke="#ffb86c" stroke-width="1.6"/>
+  <text x="445" y="158" text-anchor="middle" fill="#ffb86c">존재 ≠ 가능 (오판 2건)</text>
+  <text x="445" y="174" text-anchor="middle" fill="#d8dee4">→ CLAUDE.md 「완료 기준」 + 기억</text>
+
+  <!-- 문서 · 3회+ -->
+  <text x="685" y="166" text-anchor="middle" fill="#828c99">—</text>
+
+  <!-- 관행 -->
+  <text x="205" y="237" text-anchor="middle" fill="#828c99">발견 즉시 tech-debt.md에 기록 (D-01 ~ D-23)</text>
+  <text x="565" y="237" text-anchor="middle" fill="#828c99">여기서 두 번째 발생을 기다린다 — 대부분의 항목이 아직 이 줄에 있다</text>
+
+  <!-- 설계된 사다리 -->
+  <path d="M320,232 H330 V184" fill="none" stroke="#ffb86c" stroke-width="2"/>
+  <path d="M560,140 H570 V116" fill="none" stroke="#ffb86c" stroke-width="2" marker-end="url(#f6O)"/>
+  <text x="576" y="132" fill="#ffb86c">설계된 경로</text>
+
+  <!-- 실제 지름길 -->
+  <path d="M84,236 V94 H94" fill="none" stroke="#f5837d" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#f6R)"/>
+  <text x="8" y="250" fill="#f5837d">실제 경로 —</text>
+  <text x="8" y="264" fill="#f5837d">1회에 기계로</text>
+</svg>
+<figcaption>그림 6 — 규칙대로면 3회에 기계로 가야 하지만, 실제 승격 2건은 <b>1회 만에 기계로 직행</b>했다. 사다리를 어긴 게 아니라 성질이 다르기 때문이다 — 반복될 습관이 아니라 <b>메커니즘 결함</b>이었고, 그건 두 번째를 기다릴 이유가 없다. 대신 오른쪽 위 칸(격리된 평가자)은 여전히 비어 있다.</figcaption>
+</div>
+
+<div class="why">
+<b>왜 어떤 것은 1회에 기계로 가고 어떤 것은 2회에 문서로 가는가</b> — 갈림길은 횟수가 아니라 <b>재발 확률</b>이다.
+<code>python3</code> 스텁과 <code>rootFolder</code> 누락은 환경·API의 구조적 성질이라 <b>다음에도 100% 재발</b>한다 — 기다릴 이유가 없다.
+반면 "존재를 능력으로 오해한다"는 판단 습관이라 재발 확률이 불확실했고, 실제로 두 번(노출 목록에 없는 <code>build_project</code>를 "없다"고 단정 / 설치본에 Catch2가 있으니 LLT "가능"이라고 계획)
+발생한 뒤에야 규칙이 됐다. <b>2회/3회는 상한이지 하한이 아니다.</b>
+</div>
+
+<!-- ==================== 8. 구멍 ==================== -->
+<h2 id="gaps">8. 아직 비어 있는 자리와 실측된 구멍</h2>
+
+<h3>8-1. 이 문서를 쓰면서 새로 확인된 것</h3>
+
+<table>
+<tr><th>항목</th><th>확인 방법</th><th>결과</th></tr>
+<tr><td class="col-key">훅 단위 테스트</td><td><code>py -3 .claude/hooks/test_guard_dangerous_cmd.py</code> 실행</td><td class="status-ok">45/45 통과 (문서가 인용하던 27건은 카운터 케이스 추가 전 숫자)</td></tr>
+<tr><td class="col-key">Rider MCP 생존</td><td><code>ue_health(rootFolder=…/P1)</code> 실호출</td><td class="status-ok">응답함</td></tr>
+<tr><td class="col-key">UE 에디터 연결</td><td>같은 호출의 응답 본문</td><td class="status-warn"><code>{"connected":true,"projectName":"P1","processId":8404}</code> — <b>기계적으로 이미 도달 가능</b></td></tr>
+<tr><td class="col-key">transcript 아카이브</td><td>세션 jsonl 5개 vs 아카이브 1개 대조</td><td class="status-bad">훅 도입 후 종료 2건 중 1건 결손</td></tr>
+<tr><td class="col-key">프로젝트 스킬 2개</td><td><code>.claude/skills/*/</code> 파일 목록</td><td class="status-bad"><code>README.md</code>만 있고 <code>SKILL.md</code>가 없어 스킬로 로드되지 않는다 — 자리 표시일 뿐</td></tr>
+</table>
+
+<div class="callout bad">
+<b>가장 날카로운 불일치</b> — CLAUDE.md 「도구 라우팅」은 UE MCP를 <b>"도입 후"</b>로 적어 두었고 판정표 항목 03·04도 🔜다.
+그런데 실측하면 <code>ue_*</code> 툴이 노출돼 있고 에디터가 RiderLink로 <b>이미 붙어 있다</b>.
+정책상 미도입 · 기계적으로 도달 가능 — <b>그 사이에 훅이 못 덮는 <code>ue_execute_python</code>이 있다</b>(그림 3).
+지금은 사람 판단만이 유일한 방어선이고, 이건 "도입 전이니 안전하다"는 가정이 성립하지 않는다는 뜻이다.
+</div>
+
+<h3>8-2. 의도적으로 비워 둔 자리 (2단계 예약)</h3>
+
+<table>
+<tr><th>자리</th><th>예약된 내용</th><th>착수 조건</th></tr>
+<tr><td class="col-key">.claude/agents/</td><td>code-reviewer — 깨끗한 격리 컨텍스트에서 리뷰해 자기평가 편향 제거</td><td>2단계. P-G-E의 Evaluator 축</td></tr>
+<tr><td class="col-key">.claude/commands/</td><td><code>/review</code> · <code>/gc</code>(주 1회 문서-코드 드리프트 대조)</td><td>2단계. 세션 프롬프트를 세 번째 쓰는 시점에 승격</td></tr>
+<tr><td class="col-key">.claude/skills/project/</td><td>이 MMORPG 전용 반복 지침 (Redis 키 규약, 프로토콜 규약)</td><td>반복이 증명되면</td></tr>
+<tr><td class="col-key">.claude/skills/unreal-core/</td><td>UE 어디서나 반복되는 지침 — 다음 UE 프로젝트로 복사되는 부분</td><td>CLAUDE.md 분량 예산을 압박할 때</td></tr>
+<tr><td class="col-key">레이어 경계 기계 강제</td><td><code>#include</code> 경로가 경계 규칙을 위반하는지 검사하는 자작 스크립트</td><td>리팩토링으로 <b>경계 자체가 확정된 뒤</b> — 지금 선언하면 위반 투성이라 예외 속에서 규칙이 무의미해진다</td></tr>
+<tr><td class="col-key">CI (.github/)</td><td>서버 빌드 → gtest → AuthServer <code>npm ci</code></td><td>전제는 충족됨. <code>GameServerTests</code>는 gitignore된 <code>config.h</code> 없이 빌드되고 판정이 종료 코드다</td></tr>
+</table>
+
+<div class="why">
+<b>왜 빈 자리를 지우지 않고 README로 남겨 두는가</b> — 빈 폴더는 "아직 안 함"과 "안 하기로 함"을 구분하지 못한다.
+README 한 줄이 <b>승격 조건</b>을 들고 있으면 다음 세션이 그 조건을 판정할 수 있다.
+다만 이 원칙에는 반대 사례가 있다 — UE LLT 보존 폴더는 <b>제거했다</b> <span class="commit">a04b75d</span>.
+해제 조건(소스 빌드 엔진)이 <b>오지 않을 것으로 확정</b>됐기 때문이다. <b>오지 않을 해동을 기다리는 절차는 살아 있는 부패다.</b>
+</div>
+
+<h3>8-3. 남아 있는 함정</h3>
+
+<div class="callout bad">
+<b>MCP 등록이 레포를 따라가지 않는다</b> — Rider MCP는 <code>.mcp.json</code>이 아니라
+<code>~/.claude.json</code>의 이 프로젝트 항목에 <code>{"type":"http","url":"http://127.0.0.1:64482/stream"}</code>로 박혀 있다.
+클론해도 안 따라오고, <b>포트가 Rider 인스턴스에 종속</b>이라 IDE 재시작 후 포트가 바뀌면 조용히 죽는다.
+CLAUDE.md의 도구 라우팅 규칙은 이 엔드포인트가 살아 있다는 전제 위에 서 있다.
+</div>
+
+<div class="callout bad">
+<b>실행 순서에 대한 침묵</b> — <code>Server/Binary/</code>는 gitignore다. 그래서 빌드 없이 <code>GameServerTests.exe</code>를 부르면
+<b>새 코드가 아니라 옛 exe가 돌거나 파일이 없다</b>. "테스트 초록"이 사실은 지난 빌드의 초록일 수 있는 자리다.
+</div>
+
+<div class="callout info">
+<b>인코딩</b> — <code>.proto</code>와 <code>.bat</code>만 cp949, 나머지는 UTF-8(<code>.gitattributes</code>가 강제).
+그래서 이 두 종류의 한국어 주석을 UTF-8로 읽으면 깨져 보인다. 정상이며, "고치면" 이 파일들을 소비하는 툴 쪽이 깨진다.
+테스트 러너도 같은 문제를 겪어서 <code>TestMain.cpp</code>가 <code>gtest_main.cc</code>를 대체하고 <code>SetConsoleOutputCP(CP_UTF8)</code>를 부른다 —
+<b>읽히지 않는 진단은 하네스로서 제 역할을 못 한다.</b>
+</div>
+
+<!-- ==================== 9. 파일 ==================== -->
+<h2 id="files">9. 참고 파일 목록</h2>
+
+<table>
+<tr><th>파일</th><th>역할</th></tr>
+<tr><td class="col-key">CLAUDE.md</td><td>프로젝트 규칙 본체 — 도구 라우팅 · 완료 기준 · 안전 · 작업 방식 · 테스트 계층</td></tr>
+<tr><td class="col-key">.claude/settings.json</td><td>보존 기간 365 · PreToolUse 2블록 · SessionEnd 1블록 · 빌드 툴 2개 허용</td></tr>
+<tr><td class="col-key">.claude/settings.local.json</td><td>읽기 전용 Rider 툴 7개 허용 (개인)</td></tr>
+<tr><td class="col-key">.claude/hooks/guard_dangerous_cmd.py</td><td>위험 명령 게이트 — 셸 13패턴 · SQL DDL 4패턴 · rootFolder 20툴 · 차단 카운터</td></tr>
+<tr><td class="col-key">.claude/hooks/test_guard_dangerous_cmd.py</td><td>훅 단위 테스트 45건</td></tr>
+<tr><td class="col-key">.claude/hooks/archive_transcript.py</td><td>SessionEnd — transcript jsonl을 레포 안으로 복사 (최선 노력)</td></tr>
+<tr><td class="col-key">.claude/hooks/block_counter.log</td><td>차단 누적 TSV (gitignore · 백업 대상)</td></tr>
+<tr><td class="col-key">~/.claude/rules/*.md</td><td>전역 3종 — 커밋 형식 · 문서 HTML 형식 · 조사/출처 규율</td></tr>
+<tr><td class="col-key">docs/decisions/2026-08-19-final-harness-verdict.md</td><td>하네스 판정표 ADR — 이 문서가 설명하는 결정 대부분의 출처</td></tr>
+<tr><td class="col-key">docs/decisions/final-harness-verdict.md</td><td>원 판정표 (4개 소스의 항목별 ✅/🔜/💬/❌)</td></tr>
+<tr><td class="col-key">docs/decisions/2026-08-27-l1-test-infra.md</td><td>L1 테스트 인프라 결정 6건 + 기각안</td></tr>
+<tr><td class="col-key">docs/plans/completed/verification-infra.md</td><td>계획 파일 형식의 실물 — <code>[x]</code>+summary, <code>[B] blocked</code></td></tr>
+<tr><td class="col-key">docs/tech-debt.md</td><td>부채 D-01 ~ D-23. 하네스 관련은 D-05(훅 미작동, 수정됨) · D-12(CI 없음)</td></tr>
+<tr><td class="col-key">prompts/session-{1,2-revised}.md</td><td>세션 프롬프트 — 슬래시 커맨드 승격 대기 중인 골격</td></tr>
+</table>
+
+<h3>숫자로 본 현재 상태</h3>
+
+<table>
+<tr><th>지표</th><th>값</th><th>출처</th></tr>
+<tr><td class="col-key">훅 차단 누적</td><td>1건</td><td><code>block_counter.log</code> (발생 지점 자동 집계)</td></tr>
+<tr><td class="col-key">훅 단위 테스트</td><td>45 / 45</td><td>이 문서 작성 중 실행</td></tr>
+<tr><td class="col-key">CLAUDE.md 변경 커밋</td><td>10건</td><td><code>git log --follow -- CLAUDE.md</code></td></tr>
+<tr><td class="col-key">.claude/ 변경 커밋</td><td>6건</td><td><code>git log -- .claude</code></td></tr>
+<tr><td class="col-key">테스트가 잡은 버그</td><td>3건 (D-01 · D-15 · <code>mutable_item</code> 조기 호출)</td><td>세션 2 · 수동 판별 항목</td></tr>
+<tr><td class="col-key">transcript 아카이브 성공률</td><td>1 / 2 (훅 도입 후 종료 기준)</td><td>파일 목록 대조</td></tr>
+</table>
+
+<hr>
+<p class="meta">
+관련 커밋:
+<span class="commit">01bd5a6</span> 하네스 v1 ·
+<span class="commit">2883228</span> 훅이 전혀 동작하지 않던 문제 ·
+<span class="commit">2e65b82</span> rootFolder 훅 ·
+<span class="commit">0082572</span> 차단 카운터 ·
+<span class="commit">8fbddc6</span> 훅 테스트 이관 ·
+<span class="commit">9c56aa8</span> 보존 연장 + 아카이브 훅 ·
+<span class="commit">46de746</span> 자기신고 불신 규칙<br>
+외부 근거: Claude Code 공식 문서 — <code>hooks</code>(이벤트별 차단 가능 여부와 exit 2 의미), <code>settings</code>(우선순위 5단 · 리스트 키 병합), <code>data-usage</code>(transcript 로컬 보관 기본 30일 · <code>cleanupPeriodDays</code>)
+</p>
+
+</body>
+</html>
