@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-반드시 함께 띄워야 하는 3티어 MMORPG. 포트폴리오용.
+반드시 함께 띄워야 하는 3티어 MMORPG.
 
 | 티어 | 경로 | 스택 | 포트 |
 |---|---|---|---|
@@ -27,7 +27,7 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다. 상세:
 - `docs/{build,codegen,testing}.md` — 해당 영역을 건드릴 때만
 - `docs/reports/` — 사람용 설명 자료
 
-**아키텍처 결정(ADR)**은 코드에 드러나지 않는 제약이다. 추측하지 말고 읽는다.
+**아키텍처 결정(ADR)** 은 코드에 드러나지 않는 제약이다. 추측하지 말고 읽는다.
 프로토콜 변경·서버 동시성·클라-서버 경계 타입 추가·빌드 구성 변경·새 의존성 도입 전에는
 `docs/decisions/index.md`를 읽고 해당 `scope`의 ADR만 연다. 전부 열지 않는다.
 각 ADR의 `Confirmation` 절이 실제 준수 항목이며, 작업 후 그 항목으로 자체 점검한 결과를 보고한다.
