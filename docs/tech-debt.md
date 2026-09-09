@@ -9,13 +9,14 @@
 - 세션 2(2026-08-27, `docs/plans/completed/verification-infra.md`) — L1 테스트 인프라를 세우고
   **D-01·D-15 수정**(둘 다 실패 테스트 선행). D-14는 재조사로 난이도 상향(프로토콜 변경 필요),
   D-22·D-23 신규 추가. D-05는 세션 1에서 수정됨.
+- 2026-09-08 하네스 전환: 전 항목에 scope 필드 추가, D-03 에 선행 조건 명시.
 
 ---
 
 ## 상 — 먼저 볼 것
 
 ### D-01. 인벤토리 슬롯 타입 매핑 오타 — 기타 아이템이 장비 테이블을 본다 *(세션 2에서 수정 완료)*
-`[심각도: 상] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp:44`
+`[심각도: 상] [난이도: 하] [scope: server]` · `Server/GameServer/Game/System/Inventory.cpp:44`
 
 ```cpp
 {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, Protocol::ItemType::ITEM_TYPE_GEAR}
@@ -32,7 +33,7 @@
 - **남은 것** — 아래 D-23. 오타는 증상이고, 손으로 쓴 매핑 3종이 어긋날 수 있는 구조가 원인이다.
 
 ### D-02. 네트워크 수신 펌프가 레벨 블루프린트에 있다
-`[심각도: 상] [난이도: 중]` · `P1/Source/P1/P1GameInstance.cpp:97` · `P1/Content/Maps/*.umap`
+`[심각도: 상] [난이도: 중] [scope: client]` · `P1/Source/P1/P1GameInstance.cpp:97` · `P1/Content/Maps/*.umap`
 
 `UP1GameInstance::HandleRecvPackets()`를 호출하는 **C++ 코드가 없다**. 호출부는 레벨 스크립트
 블루프린트의 `ReceiveTick` 안이고, 5개 맵 중 3개에만 있다 (UE 에디터 실측).
@@ -48,7 +49,7 @@
   펌프를 자기 자신이 돌리게 하고, 레벨 BP의 호출을 제거한다. 레벨과 무관하게 항상 도는 게 맞다.
 
 ### D-03. `Room` / `DBRequestFunctions` 갓 클래스
-`[심각도: 상] [난이도: 상]` · `Server/GameServer/Game/Room/Room.cpp` (1,161줄) ·
+`[심각도: 상] [난이도: 상] [scope: server]` · `Server/GameServer/Game/Room/Room.cpp` (1,161줄) ·
 `Server/GameServer/DB/DBRequestFunctions.cpp` (1,531줄)
 
 `Room` 하나가 입장·퇴장·이동·전투·피격·처치·사망·보상·리스폰·채팅·셀 행렬·몬스터 스폰을 전부 들고 있다
@@ -59,9 +60,10 @@
 - **어디로 갈 것인가** — `Room`에서 먼저 **셀 행렬(공간 분할)** 을 별도 타입으로 떼고, 그다음
   전투 판정을 `CombatSystem`으로 분리한다. `DBRequestFunctions`는 애그리게이트 단위
   (`CharacterRepository` / `InventoryRepository`)로 쪼갠다. 잡 큐 규약은 유지.
+- **선행 조건** — Room 에 테스트가 붙은 뒤. 현재 그물은 Inventory 와 프로토콜에만 있다.
 
 ### D-04. 몬스터 전체 계층과 전투 로직이 블루프린트에 있다
-`[심각도: 상] [난이도: 상]` · `P1/Content/Blueprints/Creatures/Monster/**` ·
+`[심각도: 상] [난이도: 상] [scope: client]` · `P1/Content/Blueprints/Creatures/Monster/**` ·
 `P1/Content/Blueprints/Components/BPC_*AttackSystem.uasset`
 
 UE 에디터 실측 결과:
@@ -82,7 +84,7 @@ UE 에디터 실측 결과:
   메시·스탯 데이터만 갖게 한다.
 
 ### D-05. PreToolUse 훅이 안전 규칙을 강제하지 못했다 *(세션 1에서 수정 완료)*
-`[심각도: 상] [난이도: 하]` · `.claude/settings.json` · `.claude/hooks/guard_dangerous_cmd.py`
+`[심각도: 상] [난이도: 하] [scope: ?]` · `.claude/settings.json` · `.claude/hooks/guard_dangerous_cmd.py`
 
 - **무엇이었나** — 훅이 `python3 -c "..."` 인라인이었는데 이 Windows에서 `python3`는
   MS Store 앱 실행 별칭 스텁이라 스크립트를 실행하지 않고 **exit 49**로 죽었다. PreToolUse는
@@ -100,7 +102,7 @@ UE 에디터 실측 결과:
 ## 중
 
 ### D-06. `UP1GameInstance`가 클라 측 갓 클래스
-`[심각도: 중] [난이도: 상]` · `P1/Source/P1/P1GameInstance.cpp` (620줄)
+`[심각도: 중] [난이도: 상] [scope: client]` · `P1/Source/P1/P1GameInstance.cpp` (620줄)
 
 소켓 소유 + 세션 관리 + `S_*` 핸들러 16개 + 스폰/디스폰 + 델리게이트 5종 브로드캐스트 + 토큰 보관.
 
@@ -109,7 +111,7 @@ UE 에디터 실측 결과:
   `UStatefulObjectManager`로 옮기고, `UP1GameInstance`는 소유권만 갖게 한다.
 
 ### D-07. 패킷 핸들러 2개가 룸 잡 큐를 우회한다
-`[심각도: 중] [난이도: 중]` · `Server/GameServer/Main/ServerPacketHandler.cpp:125`, `:216-225`
+`[심각도: 중] [난이도: 중] [scope: server]` · `Server/GameServer/Main/ServerPacketHandler.cpp:125`, `:216-225`
 
 `Handle_C_ENTER_GAME`은 `ObjectUtils::CreatePlayer()`를 IOCP 워커에서 인라인 호출하고,
 `Handle_C_ENTER_MAP`은 `player->OnEnterMap()` + `SEND_PACKET`을 룸 큐 밖에서 실행한다.
@@ -119,7 +121,7 @@ UE 에디터 실측 결과:
 - **어디로 갈 것인가** — `Room::C_HandleEnterMap` / `C_HandleEnterGame`을 만들어 `DoAsync`로 넘긴다.
 
 ### D-08. 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
-`[심각도: 중] [난이도: 중]`
+`[심각도: 중] [난이도: 중] [scope: client, server]`
 
 | 위치 | 값 | 형태 |
 |---|---|---|
@@ -139,7 +141,7 @@ UE 에디터 실측 결과:
   `DefaultGame.ini`의 `[/Script/P1.P1GameInstance]` 섹션으로 옮기면 재빌드 없이 바뀐다.
 
 ### D-09. 리다이렉터 스텁 18개가 커밋되어 있다
-`[심각도: 중] [난이도: 하]` · `P1/Content/Blueprints/**`
+`[심각도: 중] [난이도: 하] [scope: client]` · `P1/Content/Blueprints/**`
 
 폴더 재편 후 "Fix Up Redirectors"를 돌리지 않아 남은 `ObjectRedirector` 에셋:
 
@@ -156,7 +158,7 @@ Blueprints/Props/{BP_BoundaryWall,BP_Portal,BP_Shop,WBP_NameTag}
   `Fix Up Redirectors in Folder` 실행 후 스텁 삭제, 한 커밋으로 정리.
 
 ### D-10. C++ 베이스 없이 BP에만 사는 UI/액터
-`[심각도: 중] [난이도: 중]`
+`[심각도: 중] [난이도: 중] [scope: client]`
 
 UE 에디터로 41개 BP의 부모 클래스를 전수 확인한 결과, 대부분(위젯 12/15)은 이미 C++ 클래스로
 리페어런트되어 있다. 남은 것:
@@ -183,7 +185,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것:
   `WBP_DeathScreen` 카운트다운 → `WBP_CharacterSlot` 선택 로직. 메시 교체와 순수 표시 로직은 BP에 둔다.
 
 ### D-11. 캐릭터 클래스와 컨트롤러에 관심사가 뭉쳐 있다
-`[심각도: 중] [난이도: 중]`
+`[심각도: 중] [난이도: 중] [scope: client]`
 
 | 클래스 | 뭉쳐 있는 것 | 분리 후보 |
 |---|---|---|
@@ -197,7 +199,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것:
   한 파일에 모인다.
 
 ### D-12. CI가 없다
-`[심각도: 중] [난이도: 중]` · `.github/workflows/` (빈 디렉터리)
+`[심각도: 중] [난이도: 중] [scope: build]` · `.github/workflows/` (빈 디렉터리)
 
 - **왜 문제인가** — 3티어 중 어느 하나만 깨져도 손으로 띄워보기 전에는 모른다.
 - **어디로 갈 것인가** — 세션 2에서 L1 테스트가 생긴 뒤에 붙인다. 순서는
@@ -207,7 +209,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것:
   판정은 종료 코드 하나다. AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐.
 
 ### D-13. `Server.sln` 빌드가 항상 실패한다 — 원인은 C++가 아니다
-`[심각도: 중] [난이도: 하]` · `Server/AuthServer/AuthServer.esproj`
+`[심각도: 중] [난이도: 하] [scope: build]` · `Server/AuthServer/AuthServer.esproj`
 
 솔루션 전체 빌드 결과 `buildIsSuccess: false`. Rider의 Problems 뷰는 비어 있고 진단 출력도 없다.
 빌드 로그 실물에서 확인한 유일한 에러:
@@ -227,7 +229,7 @@ AuthServer.esproj -> Microsoft.NuGet.targets(198,5): error :
   (`.pyproj` 2개도 같은 이유로 검토 대상.)
 
 ### D-14. 스택 상한 없는 아이템 누적 *(세션 2에서 재조사 — 난이도 상향, 프로토콜 변경 필요)*
-`[심각도: 중] [난이도: ~~중~~ → **상**]` · `Server/GameServer/Game/System/Inventory.cpp`
+`[심각도: 중] [난이도: ~~중~~ → **상**] [scope: protocol]` · `Server/GameServer/Game/System/Inventory.cpp`
 
 `findFirstAvailableSlotId`는 비장비 아이템에서 같은 `template_id` 슬롯을 찾으면 무조건 거기 합친다.
 아이템 데이터의 최대 스택 수를 보지 않는다. `JsonProperty::Item::MaxStack`은 선언만 돼 있고
@@ -251,7 +253,7 @@ AuthServer.esproj -> Microsoft.NuGet.targets(198,5): error :
 ## 하
 
 ### D-15. `removeItem`이 검증 전에 더티 플래그를 세운다 *(세션 2에서 수정 완료 — 더 큰 버그가 같이 나왔다)*
-`[심각도: 하] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp`
+`[심각도: 하] [난이도: 하] [scope: server]` · `Server/GameServer/Game/System/Inventory.cpp`
 
 `dirtyFlagsMappings[...] = true`가 조기 반환보다 위에 있어서 실패한 제거도 슬롯을 더티로 만들었다.
 테스트를 붙이는 과정에서 **같은 자리에 더 심각한 문제가 하나 더 있었다**:
@@ -275,14 +277,14 @@ protobuf의 `mutable_item()`은 **없던 필드를 만들면서 `has_item()`을 
   코드를 눈으로 읽어서는 안 나왔을 항목이다.
 
 ### D-16. `Users.user_id INT` vs `Characters.user_id BIGINT`
-`[심각도: 하] [난이도: 하]` · `Server/Queries/UserDB_CreateUsersTable.sql:7` ·
+`[심각도: 하] [난이도: 하] [scope: ops]` · `Server/Queries/UserDB_CreateUsersTable.sql:7` ·
 `Server/GameServer/Queries/GameDB_CreateAllTables.sql:11`
 
 두 티어가 같은 개념을 다른 폭으로 저장한다(`GameSession::userId`는 `int64`).
 지금은 값이 작아 드러나지 않는다. → `Users.user_id`를 `BIGINT`로 맞춘다(스키마 변경이라 사람 승인 필요).
 
 ### D-17. DB가 서로 다른 LocalDB 인스턴스 2개에 분산
-`[심각도: 하] [난이도: 하]`
+`[심각도: 하] [난이도: 하] [scope: ops]`
 
 `GameDB`는 `(localdb)\ProjectModels`, `UserDB`는 `(localdb)\MSSQLLocalDB`.
 
@@ -293,26 +295,26 @@ protobuf의 `mutable_item()`은 **없던 필드를 만들면서 `has_item()`을 
   (`docs/ARCHITECTURE.md`에 반영 완료) 인스턴스 이름을 각 설정에 주석으로 남긴다.
 
 ### D-18. AuthServer의 eslint가 연결돼 있지 않다
-`[심각도: 하] [난이도: 하]` · `Server/AuthServer/package.json`
+`[심각도: 하] [난이도: 하] [scope: server, build]` · `Server/AuthServer/package.json`
 
 `eslint@^9.31.0`이 `devDependencies`에 있지만 flat config(`eslint.config.js`)도
 `scripts.lint`도 없다. 설치만 되고 한 번도 실행되지 않는다.
 → `eslint.config.js`(flat) + `"lint": "eslint src"` 추가. ESM 프로젝트이므로 `languageOptions.sourceType: "module"` 필요.
 
 ### D-19. 생성기가 만들지 않는 게임 데이터 JSON 2개
-`[심각도: 하] [난이도: 하]` · `P1/Content/Gamedata/C_Equipment.json`, `C_Gear.json`
+`[심각도: 하] [난이도: 하] [scope: client, shared]` · `P1/Content/Gamedata/C_Equipment.json`, `C_Gear.json`
 
 `GenJsonFile.bat`의 `MOVE` 목록에 없다(생성물은 `C_{Item,Map,Monster,Quest}.json` 4개뿐).
 손으로 만든 것인지, 이전 버전 생성기의 잔재인지 불명.
 → 참조 여부를 확인해 쓰이면 엑셀 원본으로 편입하고, 안 쓰이면 삭제.
 
 ### D-20. `WBP_Nameplate_Old` 데드 에셋
-`[심각도: 하] [난이도: 하]` · `P1/Content/Blueprints/UI/InGame/WBP_Nameplate_Old.uasset`
+`[심각도: 하] [난이도: 하] [scope: client]` · `P1/Content/Blueprints/UI/InGame/WBP_Nameplate_Old.uasset`
 
 부모는 `NameplateWidget`인데 구현된 이벤트도 변수도 없다(에디터 실측). 참조처 확인 후 삭제.
 
 ### D-22. `Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다
-`[심각도: 중] [난이도: 하]` · `Server/GameServer/Game/System/Inventory.cpp` (`removeItem`, `GetSlot`)
+`[심각도: 중] [난이도: 하] [scope: server]` · `Server/GameServer/Game/System/Inventory.cpp` (`removeItem`, `GetSlot`)
 *(세션 2 발견 — 기록만. 즉시 고치지 않았다)*
 
 ```cpp
@@ -335,7 +337,7 @@ Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId)
 - **왜 지금 안 고쳤나** — 이 세션의 계획은 D-01·D-15까지였다. "발견한 부채는 즉시 고치지 말고 기록".
 
 ### D-23. 인벤토리 매핑 3종이 손으로 유지된다 — D-01의 근본 원인
-`[심각도: 중] [난이도: 중]` · `Server/GameServer/Game/System/Inventory.cpp` 생성자
+`[심각도: 중] [난이도: 중] [scope: server]` · `Server/GameServer/Game/System/Inventory.cpp` 생성자
 *(세션 2에 D-01을 고치며 명시화. 구조는 그대로 남았다)*
 
 `Inventory`는 서로 정합해야 하는 표를 셋 들고 있고, 셋 다 생성자에서 손으로 채운다.
@@ -355,7 +357,7 @@ Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId)
   세 타입을 전부 검사하므로, 표가 다시 어긋나면 테스트가 먼저 잡는다.
 
 ### D-21. `libprotobuf.lib`(16MB)이 gitignore를 뚫고 추적 중
-`[심각도: 하] [난이도: 하]` · `P1/Source/ProtobufCore/Lib/Win64/libprotobuf.lib`
+`[심각도: 하] [난이도: 하] [scope: client, build]` · `P1/Source/ProtobufCore/Lib/Win64/libprotobuf.lib`
 
 `P1/.gitignore:30`의 `*.lib`에 걸리는데 과거에 `git add -f`로 강제 추가됐다.
 

@@ -1,216 +1,176 @@
-# ARCHITECTURE (as-is)
+# Architecture
 
-세션 1(2026-08-19)에서 실제 코드·라이브 DB·UE 에디터와 대조해 검증했다.
-`/init` 초안에 있던 서버 경로 오류를 바로잡고 "미작성" 3개 항목을 채웠다.
+이 문서는 코드를 읽어서 알 수 있는 내용을 반복하지 않는다.
+**왜 이렇게 되어 있는지**, 그리고 **깨면 안 되는 것**만 적는다.
 
-## 로그인은 3티어를 모두 거친다
+최종 수정: 2026-09-XX
+검증: 세션 1(2026-08-19)에서 실코드·라이브 DB·UE 에디터와 대조. 이후 구조 변경 없음.
 
-1. 클라의 `ULoginManager`(`P1/Source/P1/Login/LoginManager.cpp:29`)가 인증 서버로
-   `POST http://127.0.0.1:5000/Login`. 회원가입은 `POST /Account/Register`
-   (`Server/AuthServer/src/routes/account.router.js`)로 별도 라우터다.
-2. `Server/AuthServer/src/routes/login.router.js`가 `UserDB.dbo.Users`의 bcrypt 해시를 검증하고,
-   `last_login`을 갱신한 뒤 UUID 액세스 토큰을 발급해
-   `accessToken:<uuid>` → `{userId, username}`을 `ACCESS_TOKEN_TTL`과 함께 Redis에 저장.
-3. 클라는 토큰을 `UP1GameInstance::_token`에 보관하고, `LoginManager.cpp:122`에서
-   `ConnectToGameServer()`를 호출해 `127.0.0.1:7777`로 TCP 소켓을 연 뒤 `C_LOGIN { access_token }` 전송.
-4. `Handle_C_LOGIN`(`Server/GameServer/Main/ServerPacketHandler.cpp:33`)이 **DBQueue 위에서**
-   Redis를 되읽고, 맞으면 `GameSession::userId`를 채운 뒤
-   `DBRequestFunctions::LoadUserCharactersData()`로 `GameDB`에서 캐릭터를 로드.
-
-즉 인증 티어와 게임 티어를 잇는 건 Redis뿐이다. 게임 서버는 `UserDB`를 직접 건드리지 않는다.
-
-## 게임 서버 스레딩
-
-`Server/GameServer/Main/GameServer.cpp`의 `main()`은 패킷 핸들러 테이블 초기화 → 게임 데이터 로드 →
-맵 템플릿마다 `Room` 생성 → 리스너 시작 → DB/Redis 연결 순으로 부팅한 뒤, 워커 스레드 5개와
-DB 스레드 5개를 띄운다 (메인 스레드가 6번째 워커가 된다).
-
-각 워커는 64ms 틱 예산(`WORKER_TICK`)으로 `IocpCore::Dispatch(10)` →
-`ThreadManager::DistributeReservedJobs()` → `ThreadManager::DoGlobalQueueWork()`를 반복한다.
-따라서 패킷 핸들러는 IOCP 워커 스레드에서 돈다.
-
-동시성 모델: `Room`이 `JobQueue`를 상속한다(`Server/GameServer/Game/Room/Room.h:15`). 핸들러는
-인라인으로 일을 거의 하지 않고 잡만 밀어넣고 리턴한다. 예: `room->DoAsync(&Room::C_HandleMove, pkt)`.
-룸/오브젝트 상태 변경은 전부 해당 룸의 큐에서 직렬화되므로, 큐 위에 머무는 한 룸 소유 상태에는
-락이 필요 없다. DB 작업도 같은 식으로 분리한다 — 핸들러가 `DBQueue`에 `Job`을 push하고
-(유저 친화도가 필요하면 `GDBManager->GetDBQueueFromId(userId)`, 아니면 랜덤) 전용 DB 스레드가 소비한다.
-
-> **예외 2건 (부채로 기록됨)** — `Handle_C_ENTER_MAP`은 `player->OnEnterMap()`과 `SEND_PACKET`을
-> 룸 큐 밖에서 직접 실행하고(`ServerPacketHandler.cpp:216-225`), `Handle_C_ENTER_GAME`은
-> `ObjectUtils::CreatePlayer()`를 인라인 호출한다(`:125`).
-
-`Room`은 공간 분할용 셀 행렬(`CELL_SIZE = 1000.f`)도 유지하며 `FindClosestPlayer`와 브로드캐스트
-범위 계산에 쓴다. 룸 갱신 주기는 `ROOM_UPDATE_INTERVAL_MS = 200`.
-
-## 클라이언트 스레딩
-
-`PacketSession`(`P1/Source/P1/Network/PacketSession.h`)이 `RecvWorker`와 `SendWorker`를 소유하고,
-둘 다 `FRunnable` 스레드다. 수신 바이트는 큐에 쌓이고 게임 스레드의
-`UP1GameInstance::HandleRecvPackets()`(`P1GameInstance.cpp:97`)가 이를 비운다 —
-네트워크 스레드는 UObject를 절대 만지지 않는다.
-
-**이 펌프를 호출하는 C++ 코드는 없다.** `HandleRecvPackets()`는 `BlueprintCallable`이고,
-호출부는 **레벨 블루프린트의 `ReceiveTick`** 안에 있다. UE 에디터로 실측한 결과:
-
-| 레벨 | 레벨 스크립트 BP | 펌프 호출 |
-|---|---|---|
-| `Maps/InGameMap.umap` | 있음 (`ReceiveTick`, `ReceiveBeginPlay`, var `MyPlayer`) | ✅ |
-| `Maps/LoginMap.umap` | 있음 (`ReceiveTick`) | ✅ |
-| `Maps/TestMap.umap` | 있음 (`ReceiveTick`) | ✅ |
-| `Maps/TownMap.umap` | 없음 | ❌ |
-| `Maps/CrashTestMap.umap` | 없음 | ❌ |
-
-새 레벨을 만들면 레벨 BP에 이 호출을 손으로 넣어야 네트워킹이 산다. 잊으면 조용히 죽는다.
-(게임플레이 룸 4개는 전부 `MapId: 1111` = `InGameMap` 하나 안에 있는 논리 분할이라 지금은 사고가 안 났다.)
-
-`UP1GameInstance`가 허브 역할로 소켓과 세션을 소유하고 모든 `HandleXxx(const Protocol::S_XXX&)`
-핸들러를 구현하며, 게임플레이 액터와 UMG 위젯으로 멀티캐스트 델리게이트
-(`OnRecvBuyItemPkt`, `OnRecvSellItemPkt`, `OnRecvUseItemPkt`, `OnRecvEquipGearPkt`,
-`OnRecvUnequipGearPkt`)를 통해 전파한다.
-
-## 클라/서버 클래스 계층이 대칭이다
-
-양쪽 모두 `Object → Creature → { Player, Monster }` 형태를 공유한다.
-
-- 서버: `Server/GameServer/Game/Object/{Object,Creature,Player,Monster}.h`
-- 클라: `P1/Source/P1/Game/Objects/{Creature,P1Player,P1MyPlayer,Monster}.h`
-
-서버 오브젝트는 상태를 protobuf 메시지(`Protocol::ObjectInfo`, `PosInfo`, `StatInfo`)로 직접 들고
-있어서 복제가 변환이 아니라 복사다. 게임플레이를 바꾸면 보통 양쪽을 대칭으로 고치고 프로토콜도
-같이 손대야 한다 — 3곳 수정을 기본으로 생각할 것.
+불변식은 `**Architecture Invariant:**` 로 표시한다. 대부분 **무언가의 부재**로 표현된다 —
+코드를 읽어서 알아내기 가장 어려운 종류다.
 
 ---
 
-## DB 스키마
+## Bird's Eye View
 
-두 DB는 **서로 다른 LocalDB 인스턴스**에 있다. 접속 문자열도 출처가 다르다.
+UE5 클라이언트 · 외부 IOCP C++ 게임 서버 · Node 인증 서버의 3티어 MMORPG.
+세 티어를 반드시 함께 띄워야 동작한다.
 
-| DB | 인스턴스 | 설정 위치 | 소유 티어 |
-|---|---|---|---|
-| `UserDB` | `(localdb)\MSSQLLocalDB` | `Server/AuthServer/.env` (`DB_CONNECTION_STRING`) | 인증 서버 전용 |
-| `GameDB` | `(localdb)\ProjectModels` | `Server/GameServer/config.h` (`ENV_DB_CONNECTION_STRING`, 컴파일 타임 상수) | 게임 서버 전용 |
+**ground state**는 `UserDB`·`GameDB`의 행과 Redis의 액세스 토큰이다.
+**derived state**는 룸 안 오브젝트의 런타임 상태다 — 접속 종료 시 `CharactersLastState`로
+내려가고, 재접속으로 재생성된다. 진실의 원천으로 삼지 않는다.
 
-### UserDB — 테이블 1개
+세 티어를 잇는 선은 두 개뿐이다.
 
-`Server/Queries/UserDB_CreateUsersTable.sql`
-
-| 테이블 | 용도 | 키 컬럼 |
-|---|---|---|
-| `Users` | 계정. bcrypt 해시 보관 | `user_id INT IDENTITY` PK · `username NVARCHAR(50)` UNIQUE · `password_hash NVARCHAR(255)` · `created_at` · `last_login` |
-
-### GameDB — 테이블 5개 + 저장 프로시저 1개
-
-`Server/GameServer/Queries/GameDB_CreateAllTables.sql` (+ `AlterTable.sql` 적용 완료)
-
-| 테이블 | 용도 | 키 / 주요 컬럼 |
-|---|---|---|
-| `Characters` | 캐릭터 기본 정보 | PK `character_id BIGINT IDENTITY` · `user_id BIGINT` · `class_id` · `character_name NVARCHAR(50)` UNIQUE · `level SMALLINT` · `last_login` · `created_at` |
-| `CharactersLastState` | 접속 종료 시점의 상태 (1:1) | PK/FK `character_id` · `cur_hp` `cur_mp` `cur_physical_attack` `cur_magical_attack` · `room_id`(기본 10) `map_id`(기본 1111) · `pos_x/y/z` `rot_yaw` · `exp` · `gold`(기본 10000) |
-| `CharactersGearItems` | 장비 아이템 (인벤토리 + 착용) | PK `(character_id, slot_id, is_equipped)` · `item_uid BIGINT` · `template_id` · `enhance` · `durability` · `additional_physical_attack` · `additional_magical_attack` |
-| `CharactersConsumableItems` | 소비 아이템 | PK `(character_id, slot_id)` · `template_id` · `count` |
-| `CharactersMiscItems` | 기타 아이템 | PK `(character_id, slot_id)` · `template_id` · `count` |
-| `GetMaxItemUID` (routine) | 서버 부팅 시 `GNextItemUID` 시드 | `DBRequestFunctions::GetMaxItemUID()`가 `GameServer.cpp:102`에서 1회 호출 |
-
-아이템 4개 테이블 모두 `character_id`에 FK `ON DELETE CASCADE`.
-`sysdiagrams`는 SSMS 다이어그램용 자동 생성 테이블로 애플리케이션과 무관하다.
-
-> **교차 티어 타입 불일치** — `Users.user_id`는 `INT`인데 `Characters.user_id`와
-> `GameSession::userId`는 `BIGINT`/`int64`다. 지금은 값이 작아 문제가 안 드러난다.
+- 인증 티어 ↔ 게임 티어: **Redis의 토큰 키 하나**
+- 클라 ↔ 게임 서버: **`.proto`에서 생성된 패킷**
 
 ---
 
-## 클라 폴더 현황 (레이어 분리 관점)
+## Code Map
 
-`P1/Source/`에는 모듈이 **2개** 있다.
+### Server/AuthServer
 
-| 모듈 | 내용 |
-|---|---|
-| `P1/` | 게임 모듈. `.pb.*` 제외 6,546줄 |
-| `ProtobufCore/` | protobuf 벤더링. `Include/google/**` + `Lib/Win64/libprotobuf.lib`(16MB, `*.lib` ignore를 뚫고 강제 추적) |
+계정 생성과 로그인. bcrypt 해시를 `UserDB`에서 검증하고, `last_login`을 갱신한 뒤
+UUID 액세스 토큰을 발급해 TTL과 함께 Redis에 넣는다.
+로그인과 회원가입은 서로 다른 라우터다(`login.router` / `account.router`).
 
-`P1` 모듈 구조:
+**Architecture Invariant:** 게임 상태를 모른다. `GameDB`에 접근하지 않는다.
 
-```
-P1/Source/P1/
-├── P1GameInstance.{h,cpp}     620줄 — 소켓·세션 소유 + S_* 핸들러 16개 + 스폰/디스폰 + 델리게이트
-├── ClientPacketHandler.{h,cpp} 생성 헤더 + 손코딩 cpp (287줄)
-├── BP_Structs.h / Types.h / Macro.h / P1GameModeBase
-├── Network/                    PacketSession, NetworkWorker, SendBuffer, *.pb.*, *.proto
-├── Login/                      LoginManager, LoginMenuMode, LoginMenuPlayerController
-├── Log/                        LogCategory
-└── Game/
-    ├── Objects/                Creature(258) · P1Player · P1MyPlayer(257) · Monster
-    ├── Widgets/                12개 위젯 (Inventory 225 · Login 190 · HUD 121 · StatusWindow 113 …)
-    ├── Components/             AttackSystemComponent (유일한 컴포넌트)
-    ├── Subsystem/              MyPlayerData · StatefulObjectManager
-    ├── Structs/                ItemData · MapData · MonsterData · QuestData · SlotData …
-    ├── Props/                  Portal · FieldBoundaryWall
-    ├── Enums/                  EObject
-    ├── InGamePlayerController.{h,cpp}  위젯 7종의 클래스/인스턴스 쌍 + Z-order 관리
-    ├── Inventory / EquippedGear / ObjectSpawner
-```
+**API Boundary:** HTTP. 게임 티어와의 유일한 접점은 Redis의 토큰 키이며,
+이 키의 형태와 TTL이 사실상의 티어 간 계약이다.
 
-**진단**: 폴더가 도메인(전투·인벤토리·이동·UI)이 아니라 **UE 타입**(액터/위젯/컴포넌트/구조체)으로
-갈려 있다. `Inventory`와 `EquippedGear`가 `Game/` 바로 아래에 있고 그 데이터 구조체는
-`Game/Structs/`에 있는 식이라, 한 기능을 고치려면 3~4개 폴더를 오간다.
-`P1.Build.cs`의 `PrivateIncludePaths`가 이 하위 폴더를 전부 등록해 include를 평탄하게 만들어 두어서
-구조적 결합이 컴파일러에 드러나지 않는다 — 폴더를 옮겨도 빌드가 깨지지 않는 대신,
-경계 위반도 빌드가 잡아주지 않는다.
+### Server/GameServer
+
+**Architecture Invariant:** `UserDB`를 모른다. 로그인 검증은 Redis의 토큰을 되읽어서 하고,
+계정 정보를 DB에서 직접 조회하지 않는다.
+
+**Architecture Invariant:** 룸 소유 상태 변경은 그 룸의 큐 위에서만 일어난다. 락이 없다.
+`Room`이 `JobQueue`를 상속하고, 패킷 핸들러는 인라인으로 일하지 않고 `DoAsync`로 잡을
+밀어넣고 리턴한다. **다른 룸의 오브젝트에 직접 손대지 않는다.**
+DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB 스레드가 소비한다
+(유저 친화도가 필요하면 id 기반 큐, 아니면 랜덤).
+> 이 불변식을 어기는 핸들러가 둘 있다. tech-debt D-07.
+
+**Architecture Invariant:** 패킷 핸들러는 전용 스레드가 아니라 **IOCP 워커 스레드에서 돈다.**
+워커는 `WORKER_TICK` 예산 안에서 IOCP 디스패치 → 예약 잡 분배 → 글로벌 큐 소비를 반복한다.
+워커 풀과 DB 풀은 별개이고, **메인 스레드가 워커 풀의 마지막 하나로 합류한다.**
+핸들러 안에서 블로킹하면 IOCP 처리량이 그만큼 줄어든다.
+
+**Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
+Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
+
+**Architecture Invariant:** 서버 오브젝트는 상태를 protobuf 메시지로 직접 들고 있다.
+**복제가 변환이 아니라 복사다.** 새 상태 필드를 서버 클래스에 추가하는 것은
+곧 프로토콜 변경이다.
+
+`Room`은 브로드캐스트 범위 계산과 근접 탐색을 위해 `CELL_SIZE` 단위 셀 행렬을 유지하고,
+`ROOM_UPDATE_INTERVAL_MS` 주기로 갱신한다.
+
+**API Boundary:** 패킷 핸들러. `C_*` 로만 진입한다. 처리 경로는 네 가지뿐이다 —
+`DBQueue`(로그인·캐릭터 생성/삭제·게임 입장), 룸 큐(그 외 대부분), 혼합, 스텁.
+새 핸들러는 이 넷 중 하나에 들어가야 한다. **다섯 번째를 만들지 않는다.**
+
+일부 패킷은 의도적으로 스텁이다(핑/퐁, 맵 로드 완료). 채팅은 서버가 처리하지만
+클라에 UI가 없어 로그만 남는다. **미구현이 아니라 미완성 기능이다.**
+
+### P1 (UE 클라이언트)
+
+**Architecture Invariant:** 네트워크 스레드는 UObject를 절대 만지지 않는다.
+`PacketSession`이 소유한 두 `FRunnable` 워커는 바이트를 큐에 쌓기만 하고,
+게임 스레드의 수신 펌프가 그것을 비운다.
+
+**Architecture Invariant: 수신 펌프를 호출하는 C++ 코드가 없다.**
+`UP1GameInstance::HandleRecvPackets()`는 `BlueprintCallable`이고, 호출부는
+**레벨 블루프린트의 `ReceiveTick`** 안에 있다. 새 레벨을 만들면 손으로 넣어야 하고,
+잊으면 네트워킹이 조용히 죽는다.
+확인: 해당 레벨의 레벨 BP에 그 노드가 있는가.
+> 아직 사고가 안 난 이유는 게임플레이 룸들이 **전부 하나의 맵 안 논리 분할**이기 때문이다.
+> 맵을 늘리는 순간 이 불변식이 물린다.
+
+**Architecture Invariant:** `UP1GameInstance`가 소켓·세션을 소유하는 유일한 허브다.
+모든 `S_*` 핸들러가 여기 구현되고, 액터와 위젯에는 멀티캐스트 델리게이트로만 전파된다.
+액터가 세션을 직접 잡지 않는다.
+
+**Architecture Invariant:** 폴더가 도메인이 아니라 **UE 타입**(액터/위젯/컴포넌트/구조체)으로
+갈려 있다. 한 기능을 고치려면 서너 개 폴더를 오간다.
+`P1.Build.cs`의 `PrivateIncludePaths`가 이 하위 폴더를 전부 등록해 include를 평탄하게
+만들어 두어서, **구조적 결합이 컴파일러에 드러나지 않는다.** 폴더를 옮겨도 빌드가 깨지지
+않는 대신 경계 위반도 빌드가 잡아주지 않는다. 리뷰가 유일한 방어선이다. (tech-debt 참조)
+
+**API Boundary:** `P1/Source/`에는 모듈이 둘이고(`P1`, `ProtobufCore`), protobuf를 아는
+경계는 `ProtobufCore`다. 상세는 `docs/build.md`.
+
+### 생성물
+
+**Architecture Invariant:** 패킷 정의와 게임 데이터는 생성물이다.
+저장소에 커밋되어 있어 직접 고쳐도 되는 파일처럼 보이지만, 생성기를 다시 돌리면
+덮어써진다. **손으로 쓰는 것은 핸들러 `.cpp` 둘뿐이다.**
+절차와 목적지 목록은 `docs/codegen.md`.
+
+**Architecture Invariant:** 패킷 접두사가 방향을 정한다. `C_*`는 클라→서버,
+`S_*`는 서버→클라이며, 생성기가 이 접두사로 핸들러 테이블을 나눈다.
+요청/응답 쌍은 이름을 공유한다. **이름 규칙이 장식이 아니라 기능이다.**
 
 ---
 
-## 프로토콜 ↔ 핸들러 매핑
+## Layering Rules
 
-원본 `Server/Common/Protobuf/bin/Protocol.proto` — 메시지 **40개** = `PKT_* 1000~1039`.
-접두사가 방향을 정한다: `C_*` 18개(클라→서버), `S_*` 22개(서버→클라).
+**클라와 서버의 클래스 계층이 대칭이다.** `Object → Creature → { Player, Monster }`.
+서버는 상태를 protobuf로 들고 클라는 그것을 액터에 반영한다.
 
-### 서버 수신 (`C_*` 18개) — `Server/GameServer/Main/ServerPacketHandler.cpp`
+그래서 게임플레이 변경은 **클라 + 서버 + 프로토콜 3곳을 기본으로 잡는다.**
+한쪽만 고치면 어긋나고, 어긋남을 빌드가 잡아주지 않는다.
 
-| 처리 경로 | 패킷 |
-|---|---|
-| **DBQueue** (`GDBManager`) | `C_LOGIN` `C_CREATE_CHARACTER` `C_DELETE_CHARACTER` `C_ENTER_GAME` |
-| **Room 큐** (`room->DoAsync`) | `C_ENTER_ROOM` `C_MOVE` `C_CHAT` `C_NORMAL_ATTACK` `C_BUY_ITEM` `C_SELL_ITEM` `C_EQUIP_GEAR` `C_UNEQUIP_GEAR` `C_USE_ITEM` `C_RESPAWN` |
-| **혼합/인라인** | `C_LEAVE_GAME`(Room 큐 + DBQueue + `Disconnect`) · `C_ENTER_MAP`(**큐 밖 인라인**) |
-| **스텁** (`return false`) | `C_PING` `C_MAP_LOAD_COMPLETE` |
+**하나의 동작을 세 곳에 걸쳐 세로로 자른다.** 프로토콜을 전부 먼저 하고 서버를 전부 하는
+방식은 중간 상태가 검증 불가능해진다.
 
-`Room`의 대응 진입점은 `Room::C_Handle*`(`Room.h:38-47`)이고, 그 아래에 큐 내부 전용
-`HandleNormalAttack` / `HandleHit` / `HandleMonsterKill` / `HandleDie` / `HandleRespawn`이 있다.
+### 티어 간 계약
 
-### 클라 수신 (`S_*` 22개) — `P1/Source/P1/ClientPacketHandler.cpp`
+| 계약 | 형태 | 깨지면 |
+|---|---|---|
+| 인증 ↔ 게임 | Redis 토큰 키와 TTL | 로그인이 통과해도 게임 입장이 실패 |
+| 클라 ↔ 게임 서버 | 생성된 패킷 | 빌드는 통과하고 런타임에 어긋남 |
+| 게임 서버 ↔ GameDB | SQL 스크립트 | 부팅 또는 첫 쿼리에서 터짐 |
 
-| 처리 경로 | 패킷 |
-|---|---|
-| **`UP1GameInstance::HandleXxx()`** (16개) | `S_ENTER_GAME` `S_ENTER_MAP` `S_ENTER_ROOM` `S_SPAWN` `S_DESPAWN` `S_MOVE` `S_NORMAL_ATTACK` `S_HIT` `S_BUY_ITEM` `S_SELL_ITEM` `S_EQUIP_GEAR` `S_UNEQUIP_GEAR` `S_USE_ITEM` `S_DIE` `S_REWARD_RESULT` `S_RESPAWN` |
-| **`ULoginWidget`** (컨트롤러→`ULoginManager`→위젯 4단 캐스트) | `S_LOGIN` `S_CREATE_CHARACTER` `S_DELETE_CHARACTER` |
-| **소켓 직접 닫기** | `S_LEAVE_GAME` |
-| **로그만** | `S_CHAT` (채팅 UI 없음) |
-| **스텁** | `S_PONG` |
+**주의: 계정 id의 폭이 티어마다 다르다.** 인증 티어와 게임 티어가 같은 값을 다른 폭으로
+들고 있다. 지금은 값이 작아 드러나지 않는다. (tech-debt 참조)
 
-### 생성 파이프라인이 결과물을 뿌리는 곳
+---
 
-`Server/Common/Protobuf/bin/GenPackets.bat`의 `XCOPY` 목적지 (직접 수정하면 덮어써진다):
+## Cross-Cutting Concerns
 
-| 산출물 | 목적지 |
-|---|---|
-| `*.pb.{h,cc}` | `Server/GameServer/Protocol/` · `Server/DummyClient/Protocol/` · `P1/Source/P1/Network/` |
-| `ServerPacketHandler.h` | `Server/GameServer/Main/` |
-| `ClientPacketHandler.h` | `Server/DummyClient/Main/` · `P1/Source/P1/` (**모듈 루트**) |
-| `.proto` 3개 | `P1/Source/P1/Network/` |
+### 저장소
 
-`.cpp`(`Server/GameServer/Main/ServerPacketHandler.cpp`, `P1/Source/P1/ClientPacketHandler.cpp`)는
-손으로 작성한 파일이고 생성 대상이 아니다.
+두 DB는 **서로 다른 LocalDB 인스턴스**에 있고 접속 문자열의 출처도 다르다 —
+게임 쪽은 컴파일 타임 상수, 인증 쪽은 환경 파일.
+**Architecture Invariant:** 각 DB는 소유 티어만 접근한다. 교차 접근 경로가 없다.
+인스턴스·경로·스크립트 목록은 `docs/build.md`. 스키마의 원본은 SQL 스크립트다.
 
-### 게임 데이터 파이프라인
+### 코드 생성
 
-`Server/Common/GameDatasheet/GenJsonFile.bat`의 `MOVE` 목적지:
+`docs/codegen.md`. 생성물을 직접 고치지 않는다.
 
-| 산출물 | 목적지 |
-|---|---|
-| `S_{Item,Map,Monster,Quest,Warrior_Level_Data}.json` | `Server/GameServer/Game/Data/Json/` |
-| `C_{Item,Map,Monster,Quest}.json` | `P1/Content/Gamedata/` |
+### 테스트
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h:14`)로 읽어
-`using DataTable = unordered_map<int32, Json>` 형태의 정적 테이블
-(`ItemDataTable` `MapDataTable` `MonsterDataTable` `QuestDataTable` `WarriorLevelDataTable`)에 올린다.
+판정은 종료 코드다. 로그 문자열로 성공을 판단하지 않는다.
+계층별 실행 경로와 현재 커버리지는 `docs/testing.md`.
 
-> `P1/Content/Gamedata/`에는 생성기 목록에 없는 `C_Equipment.json` · `C_Gear.json`도 있다 (출처 불명).
+**Architecture Invariant:** 프로토콜 회귀 그물은 매크로 목록과 리플렉션으로 돈다.
+메시지가 늘어도 테스트를 고칠 필요가 없다. **고쳐야 한다면 뭔가 잘못된 것이다.**
+
+### 인코딩
+
+`.proto`와 `.bat`은 cp949, 나머지는 UTF-8. UTF-8로 읽으면 깨져 보이는 것이 정상이고,
+"고치면" 그 파일을 소비하는 툴이 깨진다.
+
+### 빌드 환경
+
+런처 설치본 엔진 고정. 엔진 소스 패치와 프로젝트 내 `TargetType.Program` 타깃이
+불가능하다. 무언가를 계획하기 전에 이 제약부터 본다. 상세는 `docs/build.md`.
+
+---
+
+## 이렇게 안 한 이유
+
+`docs/decisions/index.md` 참조.

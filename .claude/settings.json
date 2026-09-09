@@ -1,5 +1,6 @@
 {
   "cleanupPeriodDays": 365,
+  "autoMemoryEnabled": false,
   "permissions": {
     "allow": [
       "mcp__rider__build_solution_start",

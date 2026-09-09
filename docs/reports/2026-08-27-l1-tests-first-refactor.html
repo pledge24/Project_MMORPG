@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>L1 테스트 인프라 첫 실전 — 인벤토리 리팩토링 시험</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --fg: #d8dee4;
+    --muted: #828c99;
+    --accent: #ffb86c;
+    --accent2: #82e0aa;
+    --danger: #f5837d;
+    --blue: #79b8ff;
+    --purple: #c8a2ff;
+    --line: #2a313a;
+    --code-bg: #1a2029;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "Noto Sans KR", sans-serif;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    line-height: 1.65;
+    font-size: 15px;
+  }
+  h1 { font-size: 27px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  h2 { font-size: 21px; margin-top: 46px; color: var(--accent); border-left: 4px solid var(--accent); padding-left: 10px; }
+  h3 { font-size: 16px; margin-top: 30px; color: var(--accent2); }
+  h4 { font-size: 14px; margin-top: 22px; color: var(--fg); letter-spacing: .02em; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: -8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13.5px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); color: var(--accent); font-weight: 600; }
+  td.col-key { white-space: nowrap; color: var(--accent2); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--accent2); }
+  pre { background: var(--code-bg); padding: 14px 18px; border-radius: 6px; overflow-x: auto; font-size: 12.5px; line-height: 1.5; border: 1px solid var(--line); }
+  pre code { background: transparent; padding: 0; color: var(--fg); }
+  .fig { margin: 22px 0 26px; text-align: center; }
+  .fig svg { max-width: 100%; height: auto; }
+  .fig figcaption { color: var(--muted); font-size: 12.5px; margin-top: 8px; text-align: center; }
+  .callout { background: var(--code-bg); border-left: 3px solid var(--accent); padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+  .callout.bad { border-left-color: var(--danger); }
+  .callout.good { border-left-color: var(--accent2); }
+  .callout.info { border-left-color: var(--blue); }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  hr { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+  .toc { background: var(--code-bg); padding: 14px 22px; border-radius: 6px; }
+  .toc a { color: var(--accent2); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .status-ok { color: var(--accent2); }
+  .status-warn { color: var(--accent); }
+  .status-bad { color: var(--danger); }
+  .commit { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; background:#222b36; color:var(--accent); padding:1px 7px; border-radius:10px; border:1px solid var(--line); }
+  .tag { display:inline-block; font-size:11px; padding:1px 8px; border-radius:10px; font-weight:600; }
+  .tag.what { background:#15302a; color:var(--accent2); border:1px solid #1f4a3e; }
+  .tag.how  { background:#332815; color:var(--accent); border:1px solid #4a3a1f; }
+  .tag.why  { background:#33181a; color:var(--danger); border:1px solid #4a2426; }
+  .why { border-left:3px solid var(--danger); background:var(--code-bg); padding:10px 16px; margin:14px 0; border-radius:4px; }
+  .why b { color:var(--danger); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:720px){ .grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<h1>L1 테스트 인프라 첫 실전 — 인벤토리 리팩토링 시험</h1>
+<p class="meta">2026-08-27 · 세션 2 작업 보고서 · 서버 GoogleTest를 세우고 그것으로 인벤토리를 고쳐 본 기록</p>
+
+<div class="callout">
+<b>이 문서가 답하는 질문</b> — 테스트가 0개이던 코드베이스에 L1을 세우고, 그 파이프라인을 리팩토링에
+처음 써 봤을 때 <b>실제로 무엇이 잡혔는가.</b> 답은 두 건이고, 그중 하나는 계획에 없었다.
+<span class="tag what">무엇을</span> <span class="tag how">어떻게</span> <span class="tag why">왜</span>
+</div>
+
+<div class="toc">
+<b>목차</b>
+<ol start="0">
+  <li><a href="#overview">한눈에 — 여덟 번의 판정</a></li>
+  <li><a href="#setup">시험대를 세우다</a></li>
+  <li><a href="#d01">첫 실전 — 넣을 때와 꺼낼 때가 다른 표를 본다</a></li>
+  <li><a href="#unplanned">계획에 없던 수확 — 검증보다 먼저 부른 <code>mutable_item()</code></a></li>
+  <li><a href="#net">회귀 그물 — 목록 하나로 두 가지를 검사한다</a></li>
+  <li><a href="#why">왜 이렇게 했나</a></li>
+  <li><a href="#traps">시험이 드러낸 한계</a></li>
+  <li><a href="#files">참고 파일</a></li>
+</ol>
+</div>
+
+<!-- ==================== 0. 한눈에 ==================== -->
+<h2 id="overview">0. 한눈에 — 여덟 번의 판정</h2>
+
+<div class="fig">
+<svg viewBox="0 0 820 316" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="aR" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+    <marker id="aM" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#828c99"/></marker>
+  </defs>
+
+  <!-- 격자 -->
+  <line x1="76" y1="240" x2="800" y2="240" stroke="#2a313a" stroke-width="2"/>
+  <line x1="76" y1="156" x2="800" y2="156" stroke="#2a313a" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="76" y1="72"  x2="800" y2="72"  stroke="#2a313a" stroke-width="1" stroke-dasharray="3 4"/>
+  <text x="68" y="244" fill="#828c99" text-anchor="end" font-size="11">0</text>
+  <text x="68" y="160" fill="#828c99" text-anchor="end" font-size="11">7</text>
+  <text x="68" y="76"  fill="#828c99" text-anchor="end" font-size="11">14</text>
+  <text x="76" y="34" fill="#828c99" font-size="11">테스트 수 (세로) · 빌드-실행 회차 (가로)</text>
+
+  <!-- 범례 -->
+  <rect x="596" y="24" width="12" height="12" fill="#82e0aa" opacity=".75"/>
+  <text x="614" y="34" fill="#d8dee4" font-size="11">통과</text>
+  <rect x="662" y="24" width="12" height="12" fill="#f5837d" opacity=".75"/>
+  <text x="680" y="34" fill="#d8dee4" font-size="11">실패</text>
+
+  <!-- ① 1통과 -->
+  <rect x="110" y="228" width="62" height="12" fill="#82e0aa" opacity=".75"/>
+  <text x="141" y="258" fill="#828c99" text-anchor="middle" font-size="11">① 링크</text>
+  <text x="141" y="273" fill="#828c99" text-anchor="middle" font-size="11">1 / 1</text>
+
+  <!-- ② 2통과 -->
+  <rect x="196" y="216" width="62" height="24" fill="#82e0aa" opacity=".75"/>
+  <text x="227" y="258" fill="#828c99" text-anchor="middle" font-size="11">② 직렬화</text>
+  <text x="227" y="273" fill="#828c99" text-anchor="middle" font-size="11">2 / 2</text>
+
+  <!-- ③ 9중 6통과 3실패 -->
+  <rect x="282" y="168" width="62" height="72" fill="#82e0aa" opacity=".75"/>
+  <rect x="282" y="132" width="62" height="36" fill="#f5837d" opacity=".8" stroke="#f5837d" stroke-width="2"/>
+  <text x="313" y="258" fill="#f5837d" text-anchor="middle" font-size="11">③ D-01</text>
+  <text x="313" y="273" fill="#828c99" text-anchor="middle" font-size="11">6 / 9</text>
+
+  <!-- ④ 9통과 -->
+  <rect x="368" y="132" width="62" height="108" fill="#82e0aa" opacity=".75"/>
+  <text x="399" y="258" fill="#82e0aa" text-anchor="middle" font-size="11">④ 수정</text>
+  <text x="399" y="273" fill="#828c99" text-anchor="middle" font-size="11">9 / 9</text>
+
+  <!-- ⑤ 11중 9통과 2실패 -->
+  <rect x="454" y="132" width="62" height="108" fill="#82e0aa" opacity=".75"/>
+  <rect x="454" y="108" width="62" height="24" fill="#f5837d" opacity=".8" stroke="#f5837d" stroke-width="2"/>
+  <text x="485" y="258" fill="#f5837d" text-anchor="middle" font-size="11">⑤ D-15</text>
+  <text x="485" y="273" fill="#828c99" text-anchor="middle" font-size="11">9 / 11</text>
+
+  <!-- ⑥ 11통과 -->
+  <rect x="540" y="108" width="62" height="132" fill="#82e0aa" opacity=".75"/>
+  <text x="571" y="258" fill="#82e0aa" text-anchor="middle" font-size="11">⑥ 수정</text>
+  <text x="571" y="273" fill="#828c99" text-anchor="middle" font-size="11">11 / 11</text>
+
+  <!-- ⑦ 14중 13통과 1실패 -->
+  <rect x="626" y="84" width="62" height="156" fill="#82e0aa" opacity=".75"/>
+  <rect x="626" y="72" width="62" height="12" fill="#f5837d" opacity=".8" stroke="#f5837d" stroke-width="2"/>
+  <text x="657" y="258" fill="#828c99" text-anchor="middle" font-size="11">⑦ 계약</text>
+  <text x="657" y="273" fill="#828c99" text-anchor="middle" font-size="11">13 / 14</text>
+
+  <!-- ⑧ 14통과 -->
+  <rect x="712" y="72" width="62" height="168" fill="#82e0aa" opacity=".75"/>
+  <text x="743" y="258" fill="#82e0aa" text-anchor="middle" font-size="11">⑧ 수정</text>
+  <text x="743" y="273" fill="#828c99" text-anchor="middle" font-size="11">14 / 14</text>
+
+  <!-- 주석: 진짜 red→green 두 번 -->
+  <line x1="313" y1="126" x2="313" y2="112" stroke="#f5837d" stroke-width="2"/>
+  <line x1="313" y1="112" x2="399" y2="112" stroke="#f5837d" stroke-width="2" marker-end="url(#aR)"/>
+  <text x="356" y="106" fill="#f5837d" text-anchor="middle" font-size="11">프로덕션 버그 ①</text>
+
+  <line x1="485" y1="102" x2="485" y2="92" stroke="#f5837d" stroke-width="2"/>
+  <line x1="485" y1="92" x2="571" y2="92" stroke="#f5837d" stroke-width="2" marker-end="url(#aR)"/>
+  <text x="528" y="86" fill="#f5837d" text-anchor="middle" font-size="11">프로덕션 버그 ②</text>
+
+  <line x1="657" y1="66" x2="657" y2="56" stroke="#828c99" stroke-width="2"/>
+  <line x1="657" y1="56" x2="743" y2="56" stroke="#828c99" stroke-width="2" marker-end="url(#aM)"/>
+  <text x="700" y="50" fill="#828c99" text-anchor="middle" font-size="11">테스트 자체의 버그</text>
+
+  <text x="76" y="298" fill="#828c99" font-size="11">⑤→⑥ 사이에 실행 경로를 Rider 실행 구성에서 셸로 바꿨다 (§5)</text>
+</svg>
+<figcaption>그림 1 — 빨강은 세 번 떴지만 프로덕션 버그는 두 건이다. ⑦의 빨강은 내가 쓴 어서션이 필드 없는 메시지 5개를 고려하지 않아서 난 것으로, 그물이 자기 자신부터 잡은 사례다.</figcaption>
+</div>
+
+<p>세 줄 요약:</p>
+<ul>
+  <li>서버 L1(GoogleTest) 파이프라인을 세우고 <b>여덟 번의 빌드-실행 루프</b>로 인벤토리를 고쳤다.</li>
+  <li>테스트가 잡은 프로덕션 버그는 <b>2건</b>. 하나는 예약돼 있던 것(D-01), <b>하나는 계획에 없었다.</b></li>
+  <li>계획에 없던 쪽이 더 심각했다 — 코드를 눈으로 읽어서는 나오지 않는 종류였다.</li>
+</ul>
+
+<!-- ==================== 1. 시험대 ==================== -->
+<h2 id="setup">1. 시험대를 세우다</h2>
+
+<p><code>Server/GameServerTests/GameServerTests.vcxproj</code> — 콘솔 exe 하나. 구성의 핵심은 셋이다.</p>
+
+<table>
+  <tr><th>결정</th><th>내용</th><th>이유</th></tr>
+  <tr><td class="col-key">소스 편입</td><td><code>Main/GameServer.cpp</code>만 빼고 GameServer의 <code>.cpp</code> 전부를 직접 컴파일</td><td>GameServer는 exe라 링크할 수 없다. 그 한 파일이 <code>main</code>이자 gitignore된 <code>config.h</code>의 <b>유일한 소비자</b>라, 빼면 테스트 타깃은 비밀 없이 빌드된다</td></tr>
+  <tr><td class="col-key">gtest 도입</td><td><code>Server/Libraries/googletest/</code>에 v1.18.0 소스 벤더링 후 <code>gtest-all.cc</code> 직접 컴파일</td><td>이 리포는 이미 모든 서드파티를 벤더링한다. gtest만 vcpkg를 들이면 새 클론에 문서로만 존재하는 설치 단계가 하나 는다</td></tr>
+  <tr><td class="col-key">main 교체</td><td><code>gtest_main.cc</code> 대신 <code>TestMain.cpp</code></td><td>콘솔 코드페이지가 cp949라 한국어 실패 메시지가 깨졌다. 읽히지 않는 진단은 하네스로서 제 역할을 못 한다</td></tr>
+</table>
+
+<p><code>Server/GameServerTests/TestMain.cpp:15-20</code></p>
+<pre><code>int main(int argc, char** argv)
+{
+    SetConsoleOutputCP(CP_UTF8);
+
+    ::testing::InitGoogleTest(&amp;argc, argv);
+    return RUN_ALL_TESTS();
+}</code></pre>
+
+<div class="callout info">
+이 한 줄이 없을 때 실제로 나온 출력: <code>湲고? ?щ’ ??젣媛 ?λ퉬 ?몃깽?좊━瑜?吏?좊떎</code>.
+어서션 값은 읽히지만 <b>내가 붙인 설명 메시지가 전부 무의미해진다.</b> 실패 진단이 안 읽히면
+빨강이 떠도 원인을 코드에서 다시 찾아야 하고, 그러면 테스트를 쓴 이유가 절반 사라진다.
+</div>
+
+<!-- ==================== 2. D-01 ==================== -->
+<h2 id="d01">2. 첫 실전 — 넣을 때와 꺼낼 때가 다른 표를 본다</h2>
+
+<p><code>Inventory</code>는 서로 정합해야 하는 표를 <b>셋</b> 들고 있고, 셋 다 생성자에서 손으로 채운다.
+결정적으로 <b>아이템을 넣는 경로와 꺼내는 경로가 서로 다른 표를 본다.</b></p>
+
+<div class="fig">
+<svg viewBox="0 0 820 336" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="pG" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+    <marker id="pB" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#79b8ff"/></marker>
+    <marker id="pR" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+  </defs>
+
+  <!-- 범례 -->
+  <line x1="50" y1="30" x2="86" y2="30" stroke="#82e0aa" stroke-width="2.5" marker-end="url(#pG)"/>
+  <text x="94" y="34" fill="#d8dee4" font-size="11">넣기 — addItem 이 itemTypeMappings 로 결정</text>
+  <line x1="440" y1="30" x2="476" y2="30" stroke="#79b8ff" stroke-width="2.5" marker-end="url(#pB)"/>
+  <text x="484" y="34" fill="#d8dee4" font-size="11">꺼내기 — removeItem · GetSlot 이 slotTypeToItemTypeMappings 로 결정</text>
+
+  <text x="50" y="62" fill="#828c99" font-size="11">클라가 보낸 SlotType</text>
+  <text x="592" y="62" fill="#828c99" font-size="11">실제 저장소 (RepeatedPtrField)</text>
+
+  <!-- GEAR 행 -->
+  <rect x="50" y="76" width="180" height="40" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="140" y="101" fill="#d8dee4" text-anchor="middle" font-size="11.5">INVENTORY_GEAR</text>
+  <rect x="592" y="76" width="188" height="40" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="686" y="101" fill="#d8dee4" text-anchor="middle" font-size="11.5">gear</text>
+  <line x1="232" y1="88" x2="588" y2="88" stroke="#82e0aa" stroke-width="2.5" marker-end="url(#pG)"/>
+  <line x1="232" y1="106" x2="588" y2="106" stroke="#79b8ff" stroke-width="2.5" marker-end="url(#pB)"/>
+  <text x="800" y="101" fill="#82e0aa" text-anchor="end" font-size="14">✓</text>
+
+  <!-- CONSUMABLE 행 -->
+  <rect x="50" y="152" width="180" height="40" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="140" y="177" fill="#d8dee4" text-anchor="middle" font-size="11.5">INVENTORY_CONSUMABLE</text>
+  <rect x="592" y="152" width="188" height="40" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="686" y="177" fill="#d8dee4" text-anchor="middle" font-size="11.5">consumables</text>
+  <line x1="232" y1="164" x2="588" y2="164" stroke="#82e0aa" stroke-width="2.5" marker-end="url(#pG)"/>
+  <line x1="232" y1="182" x2="588" y2="182" stroke="#79b8ff" stroke-width="2.5" marker-end="url(#pB)"/>
+  <text x="800" y="177" fill="#82e0aa" text-anchor="end" font-size="14">✓</text>
+
+  <!-- MISC 행 -->
+  <rect x="50" y="228" width="180" height="40" fill="#1a2029" stroke="#f5837d" stroke-width="2.5" rx="4"/>
+  <text x="140" y="253" fill="#d8dee4" text-anchor="middle" font-size="11.5">INVENTORY_MISC</text>
+  <rect x="592" y="228" width="188" height="40" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="686" y="253" fill="#d8dee4" text-anchor="middle" font-size="11.5">miscellaneous</text>
+  <line x1="232" y1="240" x2="588" y2="240" stroke="#82e0aa" stroke-width="2.5" marker-end="url(#pG)"/>
+
+  <!-- 꺼내기가 GEAR 로 올라간다 -->
+  <path d="M232,258 L520,258 L520,136 L686,136 L686,120" fill="none" stroke="#f5837d" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#pR)"/>
+  <text x="532" y="210" fill="#f5837d" font-size="11">꺼내기만 gear 로 간다</text>
+  <text x="800" y="253" fill="#f5837d" text-anchor="end" font-size="14">✕</text>
+
+  <text x="50" y="300" fill="#828c99" font-size="11">Inventory.cpp:44 의 값이 ITEM_TYPE_GEAR 로 적혀 있었다 (ITEM_TYPE_MISCELLANEOUS 여야 한다)</text>
+  <text x="50" y="320" fill="#828c99" font-size="11">두 값 모두 유효한 enum 이라 컴파일러는 아무 말도 하지 않는다</text>
+</svg>
+<figcaption>그림 2 — 세 슬롯 타입 중 MISC 행에서만 두 경로가 갈라진다. 넣기는 <code>miscellaneous</code>에 넣고 꺼내기는 <code>gear</code>를 뒤진다 — 기타 아이템을 지우면 장비가 사라지는 이유.</figcaption>
+</div>
+
+<h3>2-1. 실패를 먼저 눈으로 봤다</h3>
+
+<p>수정 전에 테스트부터 썼다. 픽스처는 <code>Gamedata::ItemDataTable</code>을 손으로 시드하고
+<code>Player</code>를 <code>Init()</code>만 한다 — DB·Redis·Room·세션이 필요 없다.</p>
+
+<p><code>Server/GameServerTests/InventoryTests.cpp:115-135</code></p>
+<pre><code>TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
+{
+    Protocol::Slot gearAdded;
+    ASSERT_TRUE(player-&gt;inventory-&gt;addItem(&amp;gearAdded, GEAR_TEMPLATE_ID, 1));
+
+    Protocol::Slot miscAdded;
+    ASSERT_TRUE(player-&gt;inventory-&gt;addItem(&amp;miscAdded, MISC_TEMPLATE_ID, 1));
+    ASSERT_EQ(gearAdded.slot_id(), miscAdded.slot_id());   // 둘 다 0번
+
+    // 기타 슬롯만 지운다
+    Protocol::Slot request;
+    request.set_slot_id(miscAdded.slot_id());
+    request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
+    Protocol::Slot removed;
+    player-&gt;inventory-&gt;removeItem(request, &amp;removed, 1);
+
+    // 장비는 그대로여야 한다
+    Protocol::Slot* gearSlot = player-&gt;inventory-&gt;GetSlot(
+        Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, gearAdded.slot_id());
+    ASSERT_TRUE(gearSlot-&gt;has_item()) &lt;&lt; "기타 슬롯 삭제가 장비 인벤토리를 지웠다";</code></pre>
+
+<p>③회차 실행 결과 — <b>MISC 케이스 3개만</b> 빨강:</p>
+<pre><code>[  FAILED  ] InventoryTest.RemovingMiscItemDoesNotTouchGearInventory
+[  FAILED  ] AllSlotTypes/InventorySlotTypeTest.AddedItemIsVisibleThroughGetSlot/Misc
+[  FAILED  ] AllSlotTypes/InventorySlotTypeTest.RemoveItemEmptiesTheSameSlot/Misc
+[  PASSED  ] 6 tests.</code></pre>
+
+<div class="callout good">
+<b>왜 실패를 먼저 봐야 했나</b> — 값 하나를 고치는 수정이라 "고치고 테스트를 쓴다" 유혹이 컸다.
+그러면 <b>그 테스트가 정말 이 버그를 잡는지 알 수 없다.</b> 통과하는 테스트는 버그가 없어서
+통과한 것일 수도, 애초에 아무것도 검사하지 않아서 통과한 것일 수도 있다. 둘을 가르는 유일한
+방법은 빨강을 한 번 보는 것이다.
+</div>
+
+<p>수정은 <code>Server/GameServer/Game/System/Inventory.cpp:44</code> 한 줄이다.</p>
+
+<div class="grid2">
+<div>
+<p class="meta">before</p>
+<pre><code>{SLOT_TYPE_INVENTORY_MISC,
+ ItemType::ITEM_TYPE_GEAR}</code></pre>
+</div>
+<div>
+<p class="meta">after</p>
+<pre><code>{SLOT_TYPE_INVENTORY_MISC,
+ ItemType::ITEM_TYPE_MISCELLANEOUS}</code></pre>
+</div>
+</div>
+
+<!-- ==================== 3. 계획에 없던 수확 ==================== -->
+<h2 id="unplanned">3. 계획에 없던 수확 — 검증보다 먼저 부른 <code>mutable_item()</code></h2>
+
+<p>다음 예정 항목은 D-15("실패한 제거가 더티 플래그를 세운다")였다. 한 줄을 아래로 옮기면 끝나는
+일이라 생각했는데, <b>테스트를 붙이는 과정에서 같은 자리에 더 큰 것이 있었다.</b></p>
+
+<p>수정 전 <code>removeItem</code>의 앞 여섯 줄은 이랬다.</p>
+<pre><code>Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]-&gt;Mutable(slotId);
+Protocol::Item* item = updatedSlot-&gt;mutable_item();     // ← 검증보다 먼저
+
+dirtyFlagsMappings[itemType][slotId] = true;            // ← D-15: 이것도 먼저
+
+if (updatedSlot-&gt;has_item() == false || item-&gt;count() &lt; count)
+    return false;</code></pre>
+
+<p>protobuf의 <code>mutable_</code> 계열은 <b>없던 필드를 만들면서 presence 비트를 켠다.</b>
+그래서 저 줄이 실행된 뒤에는 <code>has_item()</code>이 <b>항상 참</b>이다 —
+바로 아래 검증의 첫 조건이 죽은 코드였다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 336" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="sR" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f5837d"/></marker>
+    <marker id="sP" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#c8a2ff"/></marker>
+  </defs>
+
+  <!-- 1행 before -->
+  <text x="50" y="46" fill="#828c99" font-size="11">before — 소모품 인벤토리, 전부 빈 슬롯</text>
+  <rect x="50"  y="58" width="94" height="38" fill="#11161d" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <rect x="158" y="58" width="94" height="38" fill="#11161d" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <rect x="266" y="58" width="94" height="38" fill="#11161d" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <rect x="374" y="58" width="94" height="38" fill="#11161d" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="97"  y="82" fill="#828c99" text-anchor="middle" font-size="11">슬롯 0 · 빈</text>
+  <text x="205" y="82" fill="#828c99" text-anchor="middle" font-size="11">슬롯 1 · 빈</text>
+  <text x="313" y="82" fill="#828c99" text-anchor="middle" font-size="11">슬롯 2 · 빈</text>
+  <text x="421" y="82" fill="#828c99" text-anchor="middle" font-size="11">슬롯 3 · 빈</text>
+
+  <!-- 2행 판정 -->
+  <text x="50" y="140" fill="#828c99" font-size="11">판정 — 빈 0번에 removeItem 을 한 번 시도한다 (실패해야 정상)</text>
+  <rect x="50" y="152" width="94" height="38" fill="#1a2029" stroke="#c8a2ff" stroke-width="2.5" rx="4"/>
+  <text x="97" y="176" fill="#c8a2ff" text-anchor="middle" font-size="11">슬롯 0</text>
+  <line x1="148" y1="171" x2="240" y2="171" stroke="#c8a2ff" stroke-width="2.5" marker-end="url(#sP)"/>
+  <text x="194" y="165" fill="#c8a2ff" text-anchor="middle" font-size="11">mutable_item()</text>
+  <rect x="248" y="152" width="196" height="38" fill="#1a2029" stroke="#c8a2ff" stroke-width="2" rx="4"/>
+  <text x="346" y="170" fill="#d8dee4" text-anchor="middle" font-size="11">빈 Item 생성 · presence 켜짐</text>
+  <text x="346" y="184" fill="#828c99" text-anchor="middle" font-size="11">has_item() 이 참이 된다</text>
+  <line x1="448" y1="171" x2="536" y2="171" stroke="#f5837d" stroke-width="2.5" marker-end="url(#sR)"/>
+  <text x="492" y="165" fill="#f5837d" text-anchor="middle" font-size="11">검증</text>
+  <rect x="544" y="152" width="236" height="38" fill="#1a2029" stroke="#f5837d" stroke-width="2" rx="4"/>
+  <text x="662" y="170" fill="#d8dee4" text-anchor="middle" font-size="11">count(0) &lt; 1 이라 return false</text>
+  <text x="662" y="184" fill="#f5837d" text-anchor="middle" font-size="11">has_item 조건은 죽은 코드</text>
+
+  <!-- 3행 after -->
+  <text x="50" y="238" fill="#828c99" font-size="11">after — 실패했는데 슬롯 0 이 점유 상태로 남는다</text>
+  <rect x="50"  y="250" width="94" height="38" fill="#1a2029" stroke="#f5837d" stroke-width="2.5" rx="4"/>
+  <text x="97"  y="268" fill="#f5837d" text-anchor="middle" font-size="11">슬롯 0 · 점유</text>
+  <text x="97"  y="282" fill="#828c99" text-anchor="middle" font-size="11">count 0</text>
+  <rect x="158" y="250" width="94" height="38" fill="#1a2029" stroke="#82e0aa" stroke-width="2.5" rx="4"/>
+  <text x="205" y="268" fill="#82e0aa" text-anchor="middle" font-size="11">슬롯 1</text>
+  <text x="205" y="282" fill="#828c99" text-anchor="middle" font-size="11">← 다음 addItem</text>
+  <rect x="266" y="250" width="94" height="38" fill="#11161d" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <rect x="374" y="250" width="94" height="38" fill="#11161d" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="313" y="274" fill="#828c99" text-anchor="middle" font-size="11">슬롯 2 · 빈</text>
+  <text x="421" y="274" fill="#828c99" text-anchor="middle" font-size="11">슬롯 3 · 빈</text>
+
+  <text x="486" y="266" fill="#f5837d" font-size="11">findFirstAvailableSlotId 는 has_item()==false 로 빈 칸을 찾는다</text>
+  <text x="486" y="282" fill="#f5837d" font-size="11">→ 슬롯 0 은 영구히 다시 채워지지 않는다</text>
+
+  <text x="50" y="318" fill="#828c99" font-size="11">테스트가 잡은 값: added.slot_id() 가 0 이 아니라 1 로 나왔다</text>
+</svg>
+<figcaption>그림 3 — 정상 동작이 아니라 <b>실패 경로</b>의 부작용을 그린 것이다. 제거를 한 번 실패시키기만 해도 슬롯 하나가 영구히 죽는다.</figcaption>
+</div>
+
+<p>이 버그를 드러낸 테스트는 다섯 줄이다.</p>
+
+<p><code>Server/GameServerTests/InventoryTests.cpp:160-172</code></p>
+<pre><code>TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
+{
+    // ... 빈 0번 슬롯에 removeItem 시도 (실패가 정상)
+    ASSERT_FALSE(player-&gt;inventory-&gt;removeItem(request, &amp;removed, 1));
+
+    Protocol::Slot added;
+    ASSERT_TRUE(player-&gt;inventory-&gt;addItem(&amp;added, CONSUMABLE_TEMPLATE_ID, 1));
+    EXPECT_EQ(added.slot_id(), 0) &lt;&lt; "실패한 제거가 빈 0번 슬롯을 점유 상태로 만들었다";
+}</code></pre>
+
+<p>수정은 순서를 바꾼 것뿐이고, 그 한 번의 재구조화가 <b>D-15와 이 오염을 동시에</b> 해소한다.</p>
+
+<p><code>Server/GameServer/Game/System/Inventory.cpp:136-146</code></p>
+<pre><code>Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]-&gt;Mutable(slotId);
+
+// 검증이 먼저다. mutable_item()은 없던 item을 만들면서 has_item()을 켜므로,
+// 검증보다 먼저 부르면 빈 슬롯이 "아이템 있음"으로 오염돼 다시는 채워지지 않는다.
+if (updatedSlot-&gt;has_item() == false || updatedSlot-&gt;item().count() &lt; count)
+    return false;
+
+dirtyFlagsMappings[itemType][slotId] = true;
+
+Protocol::Item* item = updatedSlot-&gt;mutable_item();</code></pre>
+
+<div class="callout bad">
+<b>이 세션에서 가장 값이 나간 지점.</b> D-01은 이미 진단서에 적혀 있던 것이고 테스트는 그것을
+확인했을 뿐이다. 반면 이 버그는 <b>아무도 찾고 있지 않았다.</b> 코드를 읽으면 "검증하고 있네"로
+보이고, 실제로 <code>return false</code>도 정상적으로 나온다. 부작용은 <b>다음 <code>addItem</code>이
+슬롯 1로 밀린다</b>는 관측으로만 드러난다 — 그건 실행해야 보이는 것이다.
+</div>
+
+<!-- ==================== 4. 회귀 그물 ==================== -->
+<h2 id="net">4. 회귀 그물 — 목록 하나로 두 가지를 검사한다</h2>
+
+<p>이 프로젝트 고유의 위험은 <b>생성기 팬아웃</b>이다. <code>.proto</code> 원본은 하나인데
+<code>GenPackets.bat</code>이 결과물을 여러 트리로 <code>XCOPY</code>한다.</p>
+
+<div class="fig">
+<svg viewBox="0 0 820 286" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', sans-serif" font-size="12">
+  <defs>
+    <marker id="fB" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#79b8ff"/></marker>
+    <marker id="fO" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#ffb86c"/></marker>
+    <marker id="fG" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+  </defs>
+
+  <text x="50" y="34" fill="#828c99" font-size="11">원본 1곳</text>
+  <rect x="50" y="46" width="150" height="76" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="125" y="72" fill="#d8dee4" text-anchor="middle" font-size="11">Common/Protobuf/bin</text>
+  <text x="125" y="90" fill="#828c99" text-anchor="middle" font-size="11">Enum · Struct</text>
+  <text x="125" y="106" fill="#828c99" text-anchor="middle" font-size="11">Protocol .proto</text>
+
+  <line x1="204" y1="84" x2="256" y2="84" stroke="#79b8ff" stroke-width="2.5" marker-end="url(#fB)"/>
+  <rect x="260" y="60" width="130" height="48" fill="#1a2029" stroke="#79b8ff" stroke-width="2" rx="4"/>
+  <text x="325" y="80" fill="#d8dee4" text-anchor="middle" font-size="11">GenPackets.bat</text>
+  <text x="325" y="96" fill="#828c99" text-anchor="middle" font-size="11">protoc + 생성기</text>
+
+  <text x="470" y="34" fill="#828c99" font-size="11">사본 3개 트리 · 6개 위치</text>
+
+  <!-- 목적지 -->
+  <line x1="394" y1="84" x2="466" y2="60" stroke="#ffb86c" stroke-width="2.5" marker-end="url(#fO)"/>
+  <rect x="470" y="42" width="230" height="36" fill="#1a2029" stroke="#82e0aa" stroke-width="2.5" rx="4"/>
+  <text x="585" y="65" fill="#d8dee4" text-anchor="middle" font-size="11">Server/GameServer/{Protocol,Main}</text>
+  <text x="716" y="65" fill="#82e0aa" font-size="14">✓</text>
+
+  <line x1="394" y1="84" x2="466" y2="104" stroke="#ffb86c" stroke-width="2.5" marker-end="url(#fO)"/>
+  <rect x="470" y="90" width="230" height="36" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="585" y="113" fill="#828c99" text-anchor="middle" font-size="11">Server/DummyClient/{Protocol,Main}</text>
+  <text x="716" y="113" fill="#ffb86c" font-size="14">✕</text>
+
+  <line x1="394" y1="90" x2="466" y2="152" stroke="#ffb86c" stroke-width="2.5" marker-end="url(#fO)"/>
+  <rect x="470" y="138" width="230" height="36" fill="#1a2029" stroke="#2a313a" stroke-width="2" rx="4"/>
+  <text x="585" y="161" fill="#828c99" text-anchor="middle" font-size="11">P1/Source/P1/{Network, 모듈 루트}</text>
+  <text x="716" y="161" fill="#ffb86c" font-size="14">✕</text>
+
+  <!-- 그물 위치 -->
+  <rect x="470" y="204" width="310" height="62" fill="#11161d" stroke="#82e0aa" stroke-width="2" rx="4"/>
+  <text x="625" y="226" fill="#82e0aa" text-anchor="middle" font-size="11">ProtocolContractTests.cpp</text>
+  <text x="625" y="242" fill="#828c99" text-anchor="middle" font-size="11">메시지 집합·선언 순서 · 패킷 ID 연속성</text>
+  <text x="625" y="258" fill="#828c99" text-anchor="middle" font-size="11">리플렉션 전수 왕복</text>
+  <path d="M740,204 L740,60 L704,60" fill="none" stroke="#82e0aa" stroke-width="2.5" stroke-dasharray="5 4" marker-end="url(#fG)"/>
+
+  <text x="50" y="212" fill="#ffb86c" font-size="11">✕ 표시는 "테스트가 안 닿는다"는 뜻이다.</text>
+  <text x="50" y="230" fill="#828c99" font-size="11">그물은 GameServer 사본 하나만 검사한다.</text>
+  <text x="50" y="248" fill="#828c99" font-size="11">한 트리만 낡는 사고는 아직 못 잡는다.</text>
+</svg>
+<figcaption>그림 4 — 그물이 어디에 걸려 있고 <b>어디가 비어 있는지</b>. 여섯 위치 중 두 곳(GameServer)만 덮인다.</figcaption>
+</div>
+
+<p>메시지가 40개인데 왕복 테스트를 40개 쓰지 않았다. 같은 값을 40번 베끼는 코드는 반드시 부패한다.
+대신 <b>이름 목록 하나</b>가 두 검사를 함께 구동하고, 왕복은 리플렉션으로 돈다.</p>
+
+<p><code>Server/GameServerTests/ProtocolContractTests.cpp:23</code></p>
+<pre><code>#define PROTOCOL_MESSAGES(X)                    \
+    X(C_PING) X(S_PONG)                         \
+    X(C_LOGIN) X(S_LOGIN)                       \
+    ...
+
+const char* const EXPECTED_MESSAGE_NAMES[] = { PROTOCOL_MESSAGES(AS_STRING) };
+const uint16   DECLARED_PACKET_IDS[]      = { PROTOCOL_MESSAGES(AS_PACKET_ID) };</code></pre>
+
+<table>
+  <tr><th>테스트</th><th>무엇이 깨지면 잡히나</th></tr>
+  <tr><td class="col-key">MessageSetMatchesDeclaredList</td><td><code>.proto</code>의 메시지가 추가·삭제·재정렬됐는데 의식하지 못한 경우</td></tr>
+  <tr><td class="col-key">PacketIdsAreContiguousAndUnique</td><td><code>PKT_*</code>가 겹치거나 1000부터의 연속성이 깨진 경우 — 클라와 서버가 다른 패킷을 읽게 되는 사고</td></tr>
+  <tr><td class="col-key">EveryMessageRoundTrips</td><td>생성된 메시지가 등록되지 않았거나 직렬화가 깨진 경우. <b>메시지가 늘어도 이 테스트는 고치지 않는다</b></td></tr>
+</table>
+
+<!-- ==================== 5. 왜 ==================== -->
+<h2 id="why">5. 왜 이렇게 했나</h2>
+
+<div class="why">
+<b>왜 vcpkg가 아니라 소스 벤더링인가</b> — 세션 1의 권고는 vcpkg manifest였고, 재확인 과정에서
+뒤집었다. 이 머신에 vcpkg가 없고, Microsoft 문서가 <b>gtest를 "MSBuild 자동 링크가 안 되는
+예외 라이브러리"로 명시</b>하며(<code>main()</code> 재정의 충돌), <code>VcpkgEnableManifest</code>는
+기본값이 <code>false</code>라 수동 설정이 세 군데 붙는다. 결정적인 건 마지막이다 —
+<b>이 리포는 이미 모든 서드파티를 벤더링한다.</b> gtest만 다른 메커니즘을 들이면 새 클론에
+"vcpkg를 설치하라"는 단계가 하나 늘고, 그 단계는 문서에만 존재하게 된다.
+트레이드오프: 리포에 1.1MB의 소스가 들어온다.
+</div>
+
+<div class="why">
+<b>왜 "필요한 파일만"이 아니라 "main 빼고 전부"인가</b> — <code>Inventory.cpp</code> →
+<code>Player.cpp</code> → <code>Room.cpp</code> → <code>DBRequestFunctions.cpp</code>로 전이 의존이
+이어져 결국 대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 하나씩 추가하는 루프는
+<b>비결정적이고 재현이 안 된다.</b> 덤으로 얻은 것: 제외한 <code>Main/GameServer.cpp</code>가
+gitignore된 <code>config.h</code>의 유일한 소비자라, 테스트 타깃은 비밀 없이 빌드된다.
+트레이드오프: 테스트 한 줄을 고쳐도 서버 소스 전부가 컴파일 대상이라 빌드가 길다.
+</div>
+
+<div class="why">
+<b>왜 실행만 셸로 뺐는가</b> — <code>execute_run_configuration</code>은 호출마다 Rider가 확인
+대화상자를 띄운다. TDD는 red→green으로 매 수정마다 실행하므로 루프가 사람 클릭에 묶인다.
+그걸 끄는 수단은 Brave 모드뿐인데, 그건 <b>셸 명령과 실행 구성 확인을 IDE 전역으로</b> 해제하는
+설정이라 쓰지 않기로 했다. CLAUDE.md의 "터미널로 직접 빌드 금지"는 근거가
+<b>출력 절단으로 에러가 유실되는 것</b>이고 그건 빌드에만 성립한다 — gtest 출력은 짧고 완결적이며
+판정은 종료 코드 하나다. 그래서 <b>빌드는 Rider, 실행은 셸</b>로 갈랐다.
+트레이드오프: 사람 클릭 게이트가 한 겹 없어진다. 대신 남는 게이트(위험 명령 훅)는 결정적이다.
+</div>
+
+<div class="why">
+<b>왜 D-14는 고치지 않고 <code>DISABLED_</code>로 남겼나</b> — 스택 상한을 지키려면 초과분이 다음
+슬롯으로 넘어가야 하는데, 그러면 <b>한 번의 구매가 슬롯 두 개를 바꾼다.</b> 그런데
+<code>S_BUY_ITEM</code>은 <code>Slot updated_slot</code> 하나만 나른다. 제대로 고치려면 프로토콜을
+<code>repeated</code>로 바꾸고 생성기를 다시 돌린 뒤 클라·서버 핸들러를 함께 고쳐야 한다 — 3곳 수정이다.
+계획된 범위를 넘으므로 <b>버그의 존재는 실행 가능한 형태로 남기고</b> 수정은 넘겼다.
+<code>--gtest_also_run_disabled_tests</code>로 실제 빨강임을 확인해 뒀다 — 미검증 스텁이 아니다.
+</div>
+
+<!-- ==================== 6. 함정 ==================== -->
+<h2 id="traps">6. 시험이 드러낸 한계</h2>
+
+<div class="callout bad">
+<b>그물이 닿는 범위가 좁다.</b> 현재 테스트는 <code>Inventory</code>와 프로토콜 계약에만 있다.
+<code>Room</code>·<code>DBRequestFunctions</code>는 비어 있고, 그 둘이 서버 코드의 27%다.
+<b>D-03(Room 분해)을 지금 착수하면 그물 없이 하는 리팩토링이 된다.</b>
+</div>
+
+<div class="callout bad">
+<b>남은 구조 문제는 그대로다.</b> D-01은 증상이었고 원인은 <b>손으로 유지되는 매핑 3종</b>이다
+(D-23으로 기록). 두 표가 한 글자만 어긋나도 아이템이 다른 인벤토리로 새고, 둘 다 유효한 enum이라
+컴파일러는 침묵한다. 지금은 테스트가 세 슬롯 타입을 전부 검사해 <b>재발을 잡아 주지만</b>,
+어긋날 수 있는 구조 자체는 남아 있다.
+</div>
+
+<div class="callout bad">
+<b>클라 입력이 검증 없이 인덱싱으로 직행한다.</b> <code>removeItem</code>은
+<code>slotTypeToItemTypeMappings</code>에 <code>unordered_map::operator[]</code>를 쓴다 —
+미등록 슬롯 타입(<code>SLOT_TYPE_EQUIPPED</code> 등)이 오면 <code>ITEM_TYPE_NONE</code>이 삽입되고
+<code>inventorylookupMappings[ITEM_TYPE_NONE]</code>은 nullptr이라 <b>널 역참조</b>다.
+<code>slotId</code> 범위 검사도 없다. D-22로 기록했고 이번엔 고치지 않았다.
+</div>
+
+<div class="callout info">
+<b>빌드가 루프의 비용 전부다.</b> 테스트 실행 자체는 실측 3~32ms인데, 한 회차의 체감 시간은
+거의 전부 빌드다. 테스트 한 줄만 고쳐도 서버 소스 전부가 컴파일 후보라 그렇다.
+정확한 빌드 시간은 <b>측정하지 않았다</b> — 다음에 루프가 답답해지면 그때 재 볼 것.
+</div>
+
+<!-- ==================== 7. 참고 ==================== -->
+<h2 id="files">7. 참고 파일</h2>
+
+<table>
+  <tr><th>파일</th><th>역할</th><th>줄</th></tr>
+  <tr><td class="col-key">Server/GameServerTests/GameServerTests.vcxproj</td><td>테스트 타깃. 새 <code>.cpp</code>는 여기 직접 등록해야 한다(자동 수집 없음)</td><td>—</td></tr>
+  <tr><td class="col-key">Server/GameServerTests/TestMain.cpp</td><td><code>gtest_main</code> 대체. 콘솔 UTF-8</td><td>20</td></tr>
+  <tr><td class="col-key">Server/GameServerTests/InventoryTests.cpp</td><td>D-01·D-15·슬롯 오염 검증 + D-14 <code>DISABLED_</code></td><td>203</td></tr>
+  <tr><td class="col-key">Server/GameServerTests/ProtocolContractTests.cpp</td><td>생성기 회귀 그물 3종</td><td>217</td></tr>
+  <tr><td class="col-key">Server/GameServerTests/PacketSerializationTests.cpp</td><td>프레이밍 왕복 2건</td><td>67</td></tr>
+  <tr><td class="col-key">Server/GameServer/Game/System/Inventory.cpp</td><td>수정 대상. <code>:44</code> 매핑, <code>:131-164</code> <code>removeItem</code></td><td>238</td></tr>
+  <tr><td class="col-key">docs/decisions/2026-08-27-l1-test-infra.md</td><td>설계 결정 6건과 기각안</td><td>—</td></tr>
+  <tr><td class="col-key">docs/plans/completed/verification-infra.md</td><td>계획과 실행 기록, 다음 세션 후보</td><td>—</td></tr>
+</table>
+
+<h3>숫자</h3>
+<table>
+  <tr><th>항목</th><th>값</th></tr>
+  <tr><td class="col-key">작성한 테스트</td><td>16 (서버 14 + 인증 2) + <code>DISABLED_</code> 1</td></tr>
+  <tr><td class="col-key">테스트가 잡은 프로덕션 버그</td><td><span class="status-ok">2</span> — D-01(예약됨), 슬롯 오염(계획에 없음)</td></tr>
+  <tr><td class="col-key">회귀</td><td><span class="status-ok">0</span></td></tr>
+  <tr><td class="col-key">빌드-실행 회차</td><td>8 (빨강 3회 중 1회는 테스트 자체의 버그)</td></tr>
+  <tr><td class="col-key">기록만 하고 안 고친 부채</td><td>D-14 · D-22 · D-23</td></tr>
+</table>
+
+<hr>
+<p class="meta">관련 커밋:
+<span class="commit">8e04a3f</span> 테스트 프로젝트·벤더링 ·
+<span class="commit">9e2be64</span> 직렬화·계약 ·
+<span class="commit">7f8df17</span> 인벤토리 수정 2건 ·
+<span class="commit">53fc5fe</span> 인증 서버 ·
+<span class="commit">4b34cae</span> ADR
+<br>코드: <code>Server/GameServerTests/</code> · <code>Server/GameServer/Game/System/Inventory.cpp</code></p>
+
+</body>
+</html>
