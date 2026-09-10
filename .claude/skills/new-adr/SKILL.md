@@ -24,7 +24,7 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 ## 2. 절차
 
 1. `docs/decisions/index.md` 를 읽어 다음 번호를 확인한다.
-2. `docs/decisions/adr-template.md` 를 `NNNN-title-with-dashes.md` 로 복사한다.
+2. `assets/adr-template.md` 를 `NNNN-title-with-dashes.md` 로 복사한다.
    파일명은 소문자와 대시만 쓴다.
 3. 아래 「작성 규칙」에 따라 채운다.
 4. `index.md` 결정 목록에 한 줄 추가한다. Scope 와 한 줄 요약을 채운다.
