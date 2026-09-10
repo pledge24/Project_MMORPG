@@ -42,7 +42,7 @@
 
 ### 불변식 검사
 
-`ProtocolContractTests`(`Server/GameServerTests/`)가 다음을 검사한다. 메시지를 추가하면 이 테스트가 먼저 알려준다.
+`ProtocolContractTests`(`Server/GameServerTests/`)가 아래 세 가지를 검사한다. 메시지를 추가하면 이 테스트가 먼저 알려준다.
 
 - `PROTOCOL_MESSAGES(X)` 매크로 목록과 실제 메시지 목록이 일치
 - 패킷 ID가 연속이고 유일

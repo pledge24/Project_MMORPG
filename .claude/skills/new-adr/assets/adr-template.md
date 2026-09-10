@@ -3,7 +3,7 @@
 # 이 블록은 기계가 읽는 메타데이터다. 키를 임의로 늘리지 않는다.
 # status : proposed | accepted | rejected | deprecated | superseded
 # scope  : client | server | protocol | shared | build | ops
-#          여러 개면 배열. protocol 은 클라·서버를 동시에 구속한다는 뜻이다.
+#          여러 개면 배열. protocol은 클라·서버를 동시에 구속한다는 뜻이다.
 # ─────────────────────────────────────────────────────────────
 status: proposed
 date: YYYY-MM-DD

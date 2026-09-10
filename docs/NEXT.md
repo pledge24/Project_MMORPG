@@ -1,7 +1,7 @@
 # 다음에 무엇을
 
 최종 갱신: 2026-09-XX (하네스 전환 시 이관)
-출처: `docs/work/2026-08-27-l1-test-infra.md` 의 「다음 세션 후보」
+출처: `docs/work/2026-08-27-l1-test-infra.md`의 「다음 세션 후보」
 
 ## 지금 하는 것
 
@@ -11,14 +11,14 @@
 
 ### 1. Inventory 정리
 
-**왜 지금**: 클라가 보낸 슬롯 타입/id 가 검증 없이 `operator[]` 와 `Mutable()` 로 직행해
+**왜 지금**: 클라가 보낸 슬롯 타입/id가 검증 없이 `operator[]`와 `Mutable()`로 직행해
 널 역참조가 가능하다. 손으로 유지되는 매핑 3종은 이미 한 번 사고를 낸 구조다.
-둘은 같은 함수를 건드리므로 한 번에 처리된다. **그물이 이미 있다** —
-`InventoryTests.cpp` 가 세 슬롯 타입을 전부 검사한다. 리팩토링 첫 대상 중 위험이 가장 낮다.
+둘은 같은 함수를 건드리므로 한 번에 끝난다. **그물이 이미 있다** —
+`InventoryTests.cpp`가 세 슬롯 타입을 전부 검사한다. 리팩토링 첫 대상 중 위험이 가장 낮다.
 
 **선행 조건**: 없음
 
-**완료 신호**: tech-debt 에서 「`Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다」와
+**완료 신호**: tech-debt에서 「`Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다」와
 「인벤토리 매핑 3종이 손으로 유지된다」 두 항목이 삭제되고 기존 14개 테스트가 유지된다.
 `GameServerTests.exe` 종료 코드 0.
 
@@ -26,8 +26,8 @@
 
 ### 2. 스택 상한 — 프로토콜 변경 연습
 
-**왜 지금**: `DISABLED_StackDoesNotExceedMaxStack` 이 이미 커밋되어 있고
-`--gtest_also_run_disabled_tests` 로 실제 빨강임이 확인됐다(미검증 스텁 아님).
+**왜 지금**: `DISABLED_StackDoesNotExceedMaxStack`이 이미 커밋되어 있고
+`--gtest_also_run_disabled_tests`로 실제 빨강임이 확인됐다(미검증 스텁 아님).
 `.proto` → 생성기 → 클라·서버 3곳 수정이 필요해 **"게임플레이 변경은 3곳"이라는
 이 프로젝트의 기본 규약을 테스트가 있는 상태에서 처음 밟아보는** 연습이 된다.
 규모가 작아 연습용으로 적절하다.
@@ -43,19 +43,19 @@
 
 인자화 → 실토큰 → 봇 상태머신 → 종료 코드.
 
-**왜 지금**: L4 의 재료다. 종료 코드를 갖게 되면
+**왜 지금**: L4의 재료다. 종료 코드를 갖게 되면
 "종료 코드가 판정"이라는 규약에 그대로 편입된다.
 
-**선행 조건**: 실토큰 단계에서 Redis·AuthServer 가 함께 떠 있어야 한다. L1 보다 환경 의존이 크다.
+**선행 조건**: 실토큰 단계에서 Redis·AuthServer가 함께 떠 있어야 한다. L1보다 환경 의존이 크다.
 
-**완료 신호**: 인자로 시나리오를 받아 실행하고 실패 시 0 이 아닌 코드로 종료한다.
+**완료 신호**: 인자로 시나리오를 받아 실행하고 실패 시 0이 아닌 코드로 종료한다.
 
 ---
 
 ### 4. CI
 
-**왜 지금**: 전제가 충족됐다. `GameServerTests` 는 `config.h` 없이 빌드되고 판정이 종료 코드다.
-AuthServer 도 `npm test` 가 생겼다. 남은 건 워크플로 작성뿐이라 비용이 작다.
+**왜 지금**: 전제가 충족됐다. `GameServerTests`는 `config.h` 없이 빌드되고 판정이 종료 코드다.
+AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐이라 비용이 작다.
 
 **선행 조건**: 없음
 
@@ -65,17 +65,17 @@ AuthServer 도 `npm test` 가 생겼다. 남은 건 워크플로 작성뿐이라
 
 ### 5. UE L2 Automation Test
 
-**왜 지금**: L1(LLT)은 폐기됐지만 L2 는 별도 타깃이 필요 없어 설치본에서 바로 된다
-(`IMPLEMENT_SIMPLE_AUTOMATION_TEST` 가 설치본 `Core/Public/Misc/AutomationTest.h:4297` 에 존재).
+**왜 지금**: L1(LLT)은 폐기됐지만 L2는 별도 타깃이 필요 없어 설치본에서 바로 된다
+(`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본 `Core/Public/Misc/AutomationTest.h:4297`에 존재).
 
-**선행 조건**: **실행에 에디터가 필요해 사람 손이 섞인다.** 서버 L1 처럼 무인 루프가 되지 않으므로
+**선행 조건**: **실행에 에디터가 필요해 사람 손이 섞인다.** 서버 L1처럼 무인 루프가 되지 않으므로
 착수 전에 별도 계획(work 파일)을 세운다.
 
-착수 단계: `P1/Source/P1/Tests/` 에 테스트 1개 →
-`build_solution_start(rootFolder=".../P1")` 로 에디터 타깃 빌드 →
+착수 단계: `P1/Source/P1/Tests/`에 테스트 1개 →
+`build_solution_start(rootFolder=".../P1")`로 에디터 타깃 빌드 →
 에디터 `Window > Test Automation`(사람) 또는 `-ExecCmds="Automation RunTests ..."`.
 
-첫 대상 후보는 이동 보간 수식(`ACreature` 의 `MoveQueue`) 정도. 클라 쪽에 남은 순수 로직이
+첫 대상 후보는 이동 보간 수식(`ACreature`의 `MoveQueue`) 정도. 클라 쪽에 남은 순수 로직이
 얇다는 점도 함께 고려할 것.
 
 **완료 신호**: 에디터에서 테스트 1개가 초록으로 뜬다.
@@ -86,7 +86,7 @@ AuthServer 도 `npm test` 가 생겼다. 남은 건 워크플로 작성뿐이라
 
 ## 하지 않기로 확인된 것
 
-- **배치 실행 모드 해동** — 판정 ADR §9 의 조건 "AC 사다리 3단을 채울 테스트 인프라"가
+- **배치 실행 모드 해동** — 판정 ADR §9의 조건 "AC 사다리 3단을 채울 테스트 인프라"가
   **서버 한정으로만** 충족됐고 UE 클라 쪽은 비어 있다.
   근거: `docs/work/2026-08-27-l1-test-infra.md`
 - **UE L1 (Low-Level Tests)** — 폐기. 런처 설치본 엔진이 프로젝트 폴더의 Program 타깃을

@@ -17,18 +17,18 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 
 > **다음 작업을 할 때 이 결정을 다시 봐야 하나?**
 
-아니면 `docs/work/` 의 「결정」 절에 남기고 **여기서 멈춘다.**
+아니면 `docs/work/`의 「결정」 절에 남기고 **여기서 멈춘다.**
 함수 하나의 에러 처리, 모듈의 재시도 로직, 네이밍은 ADR 대상이 아니다.
-애매하면 work 에 남긴다 — ADR 개수가 늘면 각각이 가벼워진다.
+애매하면 work에 남긴다 — ADR 개수가 늘면 각각이 가벼워진다.
 
 ## 2. 절차
 
-1. `docs/decisions/index.md` 를 읽어 다음 번호를 확인한다.
-2. `assets/adr-template.md` 를 `NNNN-title-with-dashes.md` 로 복사한다.
+1. `docs/decisions/index.md`를 읽어 다음 번호를 확인한다.
+2. `assets/adr-template.md`를 `NNNN-title-with-dashes.md`로 복사한다.
    파일명은 소문자와 대시만 쓴다.
 3. 아래 「작성 규칙」에 따라 채운다.
-4. `index.md` 결정 목록에 한 줄 추가한다. Scope 와 한 줄 요약을 채운다.
-5. **`status: proposed` 로 두고 멈춘다.** 사람 승인 없이 `accepted` 로 바꾸지 않는다.
+4. `index.md` 결정 목록에 한 줄 추가한다. Scope와 한 줄 요약을 채운다.
+5. **`status: proposed`로 두고 멈춘다.** 사람 승인 없이 `accepted`로 바꾸지 않는다.
 
 ## 3. 작성 규칙
 
@@ -57,7 +57,7 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 2. **파일 존재/부재로 확인되는 것** — 경로까지.
    예: 프로젝트에 `TargetType.Program` 타깃이 존재하지 않는다
 3. **리뷰 시 확인할 구체적 지점** — 무엇을 어디서 보는지.
-   예: `Server/GameServer/Main/ServerPacketHandler.cpp` 의 핸들러가 인라인으로 일하지 않는다
+   예: `Server/GameServer/Main/ServerPacketHandler.cpp`의 핸들러가 인라인으로 일하지 않는다
 
 **"코드 리뷰로 확인" 만 적으면 미완성이다.** 이 절은 에이전트가 자기 결과물을 점검하는
 체크리스트가 된다. 점검할 수 없는 문장은 여기 적지 않는다.
@@ -65,7 +65,7 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 ### 분량
 
 몇 페이지가 상한이다. 컴포넌트 책임과 협력 관계, 여러 다이어그램, 코드 스니펫을
-밀어 넣지 않는다. 그런 정보는 `docs/ARCHITECTURE.md` 나 `docs/work/` 의 몫이다.
+밀어 넣지 않는다. 그런 정보는 `docs/ARCHITECTURE.md`나 `docs/work/`의 몫이다.
 
 ### More Information
 
@@ -78,14 +78,14 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 
 - 새 ADR: `supersedes: ADR-00NN`
 - 옛 ADR: `status: superseded`, `superseded-by: ADR-00MM`
-- `index.md` 의 **두 줄을 모두** 갱신한다
+- `index.md`의 **두 줄을 모두** 갱신한다
 
 옛 ADR을 삭제하지 않는다. 이력이 ADR의 존재 이유다.
 
 ## 5. 마지막 확인
 
 - [ ] 옵션이 두 개 이상이고 같은 추상 수준인가
-- [ ] Consequences 의 Bad 칸이 비어 있지 않은가
-- [ ] Confirmation 의 각 항목이 실제로 점검 가능한가
-- [ ] `index.md` 에 등재했는가
-- [ ] `status` 가 `proposed` 인가
+- [ ] Consequences의 Bad 칸이 비어 있지 않은가
+- [ ] Confirmation의 각 항목이 실제로 점검 가능한가
+- [ ] `index.md`에 등재했는가
+- [ ] `status`가 `proposed`인가

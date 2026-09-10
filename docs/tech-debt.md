@@ -50,7 +50,7 @@
 - **어디로 갈 것인가** — `Room`에서 먼저 **셀 행렬(공간 분할)** 을 별도 타입으로 떼고, 그다음
   전투 판정을 `CombatSystem`으로 분리한다. `DBRequestFunctions`는 애그리게이트 단위
   (`CharacterRepository` / `InventoryRepository`)로 쪼갠다. 잡 큐 규약은 유지.
-- **선행 조건** — Room 에 테스트가 붙은 뒤. 현재 그물은 Inventory 와 프로토콜에만 있다.
+- **선행 조건** — Room에 테스트가 붙은 뒤. 현재 그물은 Inventory와 프로토콜에만 있다.
 
 ### 몬스터 전체 계층과 전투 로직이 블루프린트에 있다
 `[심각도: 상] [난이도: 상] [scope: client]` · `P1/Content/Blueprints/Creatures/Monster/**` ·
@@ -175,7 +175,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것:
   한 파일에 모인다.
 
 ### CI가 없다
-`[심각도: 중] [난이도: 중] [scope: build]` · `.github/workflows/` (빈 디렉터리)
+`[심각도: 중] [난이도: 중] [scope: build]` · `.github/workflows/` (빈 폴더)
 
 - **왜 문제인가** — 3티어 중 어느 하나만 깨져도 손으로 띄워보기 전에는 모른다.
 - **어디로 갈 것인가** — 순서는 ServerCore/GameServer 빌드 → GoogleTest 실행 →
@@ -256,7 +256,7 @@ Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId)
 | `inventorylookupMappings` | `ItemType` → 실제 슬롯 배열 | 전부 |
 
 - **왜 문제인가** — **넣을 때와 꺼낼 때가 다른 표를 본다.** 두 표가 한 글자만 어긋나도
-  아이템이 다른 인벤토리로 샌다. 두 값 모두 유효한 enum 이라 컴파일러가 아무 말도 하지 않는다.
+  아이템이 다른 인벤토리로 샌다. 두 값 모두 유효한 enum이라 컴파일러가 아무 말도 하지 않는다.
 - **어디로 갈 것인가** — `SlotType ↔ ItemType`을 한 곳에서 유도하게 만든다(둘의 정의가 1:1이므로
   단일 변환 함수 + 컴파일 타임 검증이 가능하다).
 - **그때까지의 그물** — `Server/GameServerTests/InventoryTests.cpp`의 슬롯 타입 왕복 테스트가

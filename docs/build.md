@@ -76,7 +76,7 @@ npm start                # = node src/app.js
 
 **`P1/Source/`에는 모듈이 두 개다.** 게임 모듈 `P1/` 외에 protobuf를 벤더링한 `ProtobufCore/`가 있고(`ProtobufCore.Build.cs`, `Include/google/**`, `Lib/Win64/libprotobuf.lib` 16MB), `P1.Build.cs`가 이를 `PrivateDependencyModuleNames`로 링크한다. `.lib`은 `P1/.gitignore`의 `*.lib`에 걸리지만 클론 즉시 빌드되도록 강제 추적 중이다 — 실수가 아니다.
 
-**클라이언트 include는 평탄하다.** `P1/Source/P1/P1.Build.cs`가 게임플레이 하위 디렉터리를 전부 `PrivateIncludePaths`에 등록해 두어서, 헤더는 상대 경로가 아니라 파일명만으로 include한다(`#include "Creature.h"`). **새 하위 디렉터리를 만들면 여기에도 등록해야 한다.**
+**클라이언트 include는 평탄하다.** `P1/Source/P1/P1.Build.cs`가 게임플레이 하위 폴더를 전부 `PrivateIncludePaths`에 등록해 두어서, 헤더는 상대 경로가 아니라 파일명만으로 include한다(`#include "Creature.h"`). **새 하위 폴더를 만들면 여기에도 등록해야 한다.**
 
 이 평탄화의 대가는 `docs/ARCHITECTURE.md`에 불변식으로 적혀 있다 — 폴더를 옮겨도 빌드가 깨지지 않는 대신 경계 위반도 빌드가 잡아주지 않는다.
 
