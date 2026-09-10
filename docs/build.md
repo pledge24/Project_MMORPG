@@ -50,7 +50,7 @@ npm start                # = node src/app.js
 | `REDIS_PORT` |
 | `ACCESS_TOKEN_TTL` |
 
-`eslint`가 devDependency로 설치돼 있지만 flat config도 lint 스크립트도 없어서 실제로 연결돼 있진 않다. (D-18)
+`eslint`가 devDependency로 설치돼 있지만 flat config도 lint 스크립트도 없어서 실제로 연결돼 있진 않다.
 
 ---
 

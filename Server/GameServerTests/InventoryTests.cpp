@@ -4,7 +4,7 @@
 #include "Inventory.h"
 
 /*--------------------------------------------------------------
-    인벤토리 슬롯 타입 매핑 테스트 (tech-debt D-01)
+    인벤토리 슬롯 타입 매핑 테스트
 
     Inventory는 아이템 타입을 고르는 표를 세 개 들고 있다.
       - itemTypeMappings            : 아이템 데이터의 "itemType" 문자열 → ItemType  (addItem이 사용)
@@ -110,7 +110,7 @@ INSTANTIATE_TEST_SUITE_P(
         SlotCase{Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, MISC_TEMPLATE_ID, "Misc"}),
     [](const ::testing::TestParamInfo<SlotCase>& info) { return string(info.param.name); });
 
-// D-01의 실제 피해: 기타 슬롯을 지웠는데 장비가 사라진다.
+// 실제 피해: 기타 슬롯을 지웠는데 장비가 사라진다.
 // 두 인벤토리의 0번 슬롯이 각각 차 있는 상태를 만들고, 기타 쪽만 지운다.
 TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
 {
@@ -136,10 +136,10 @@ TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
 }
 
 /*--------------------------------------------------------------
-    실패한 제거의 부작용 (tech-debt D-15 및 그 인접)
+    실패한 제거의 부작용
 ---------------------------------------------------------------*/
 
-// D-15: 실패한 제거가 슬롯을 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
+// 실패한 제거가 슬롯을 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
 TEST_F(InventoryTest, FailedRemoveDoesNotMarkSlotDirty)
 {
     player->inventory->ClearDirtyFlags();
@@ -172,7 +172,7 @@ TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
 }
 
 /*--------------------------------------------------------------
-    tech-debt D-14 — 스택 상한 없는 아이템 누적
+    스택 상한 없는 아이템 누적 (tech-debt 참조)
 
     DISABLED_ 로 둔다. 버그가 아니어서가 아니라, 올바른 수정이 이 세션의
     범위를 넘기 때문이다. 초과분을 다음 슬롯으로 넘기면 한 번의 구매가

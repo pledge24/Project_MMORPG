@@ -216,7 +216,7 @@
 <tr><td class="col-key">서브에이전트</td><td><code>.claude/agents/README.md</code></td><td>—</td><td class="status-bad">빈 자리 (2단계 예약)</td></tr>
 <tr><td class="col-key">슬래시 커맨드</td><td><code>.claude/commands/README.md</code></td><td>—</td><td class="status-bad">빈 자리 (2단계 예약)</td></tr>
 <tr><td class="col-key">프로젝트 스킬</td><td><code>.claude/skills/{project,unreal-core}/README.md</code></td><td>—</td><td class="status-bad">빈 자리 — <code>SKILL.md</code>가 없어 스킬로 인식되지 않는다</td></tr>
-<tr><td class="col-key">CI</td><td><code>.github/</code> (비어 있음)</td><td>—</td><td class="status-bad">없음 (D-12)</td></tr>
+<tr><td class="col-key">CI</td><td><code>.github/</code> (비어 있음)</td><td>—</td><td class="status-bad">없음</td></tr>
 </table>
 
 <!-- ==================== 1. 로드 ==================== -->
@@ -460,7 +460,7 @@ Planner/Generator/Evaluator를 서브에이전트로 쪼개는 대안(판정 ADR
   <rect x="8" y="316" width="440" height="56" rx="3" fill="#33181a" stroke="#f5837d" stroke-width="1.6"/>
   <text x="20" y="334" fill="#f5837d">exit 2만 차단이다. 그 외 non-zero는 non-blocking error다.</text>
   <text x="20" y="350" fill="#d8dee4">인라인 python3 버전은 매번 exit 49로 조용히 죽었고,</text>
-  <text x="20" y="366" fill="#d8dee4">그동안 rm -rf 가 그대로 실행됐다 (D-05, 실측).</text>
+  <text x="20" y="366" fill="#d8dee4">그동안 rm -rf 가 그대로 실행됐다 (실측).</text>
 </svg>
 <figcaption>그림 3 — 다섯 부류가 서로 다른 검사를 받는다. 지목할 칸은 <code>ue_execute_python</code> — 대상 솔루션은 확인받지만 <b>무슨 파이썬을 돌리는지는 아무도 안 본다.</b> 훅이 덮지 못하는 유일한 상태 변경 경로다.</figcaption>
 </div>
@@ -798,7 +798,7 @@ return ARCHIVE_DIR / (datetime.now().strftime("%Y-%m-%d") + "-" + session_id + "
   <text x="685" y="166" text-anchor="middle" fill="#828c99">—</text>
 
   <!-- 관행 -->
-  <text x="205" y="237" text-anchor="middle" fill="#828c99">발견 즉시 tech-debt.md에 기록 (D-01 ~ D-23)</text>
+  <text x="205" y="237" text-anchor="middle" fill="#828c99">발견 즉시 tech-debt.md에 기록</text>
   <text x="565" y="237" text-anchor="middle" fill="#828c99">여기서 두 번째 발생을 기다린다 — 대부분의 항목이 아직 이 줄에 있다</text>
 
   <!-- 설계된 사다리 -->
@@ -899,7 +899,7 @@ CLAUDE.md의 도구 라우팅 규칙은 이 엔드포인트가 살아 있다는 
 <tr><td class="col-key">docs/decisions/final-harness-verdict.md</td><td>원 판정표 (4개 소스의 항목별 ✅/🔜/💬/❌)</td></tr>
 <tr><td class="col-key">docs/decisions/2026-08-27-l1-test-infra.md</td><td>L1 테스트 인프라 결정 6건 + 기각안</td></tr>
 <tr><td class="col-key">docs/plans/completed/verification-infra.md</td><td>계획 파일 형식의 실물 — <code>[x]</code>+summary, <code>[B] blocked</code></td></tr>
-<tr><td class="col-key">docs/tech-debt.md</td><td>부채 D-01 ~ D-23. 하네스 관련은 D-05(훅 미작동, 수정됨) · D-12(CI 없음)</td></tr>
+<tr><td class="col-key">docs/tech-debt.md</td><td>부채 23건. 하네스 관련은 훅 미작동(수정됨) · CI 없음</td></tr>
 <tr><td class="col-key">prompts/session-{1,2-revised}.md</td><td>세션 프롬프트 — 슬래시 커맨드 승격 대기 중인 골격</td></tr>
 </table>
 
@@ -911,7 +911,7 @@ CLAUDE.md의 도구 라우팅 규칙은 이 엔드포인트가 살아 있다는 
 <tr><td class="col-key">훅 단위 테스트</td><td>45 / 45</td><td>이 문서 작성 중 실행</td></tr>
 <tr><td class="col-key">CLAUDE.md 변경 커밋</td><td>10건</td><td><code>git log --follow -- CLAUDE.md</code></td></tr>
 <tr><td class="col-key">.claude/ 변경 커밋</td><td>6건</td><td><code>git log -- .claude</code></td></tr>
-<tr><td class="col-key">테스트가 잡은 버그</td><td>3건 (D-01 · D-15 · <code>mutable_item</code> 조기 호출)</td><td>세션 2 · 수동 판별 항목</td></tr>
+<tr><td class="col-key">테스트가 잡은 버그</td><td>3건 (슬롯 타입 오타 · 더티 플래그 순서 · <code>mutable_item</code> 조기 호출)</td><td>세션 2 · 수동 판별 항목</td></tr>
 <tr><td class="col-key">transcript 아카이브 성공률</td><td>1 / 2 (훅 도입 후 종료 기준)</td><td>파일 목록 대조</td></tr>
 </table>
 

@@ -21,7 +21,7 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다. 상세:
 - `docs/NEXT.md` — 다음에 무엇을 왜. **세션 시작 시 읽는다.** 미래를 말하는 유일한 문서다.
 - `docs/harness.md` — 스킬 목록과 판단 기준
 - `docs/ARCHITECTURE.md` — 깨면 안 되는 불변식
-- `docs/tech-debt.md` — 알려진 부채 (D-NN)
+- `docs/tech-debt.md` — 알려진 부채
 - `docs/decisions/index.md` — ADR 표. 본문은 필요한 것만 연다
 - `docs/work/` — 세션별 작업 기록
 - `docs/{build,codegen,testing}.md` — 해당 영역을 건드릴 때만

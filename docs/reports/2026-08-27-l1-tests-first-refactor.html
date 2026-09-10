@@ -130,7 +130,7 @@
   <!-- ③ 9중 6통과 3실패 -->
   <rect x="282" y="168" width="62" height="72" fill="#82e0aa" opacity=".75"/>
   <rect x="282" y="132" width="62" height="36" fill="#f5837d" opacity=".8" stroke="#f5837d" stroke-width="2"/>
-  <text x="313" y="258" fill="#f5837d" text-anchor="middle" font-size="11">③ D-01</text>
+  <text x="313" y="258" fill="#f5837d" text-anchor="middle" font-size="11">③ 오타</text>
   <text x="313" y="273" fill="#828c99" text-anchor="middle" font-size="11">6 / 9</text>
 
   <!-- ④ 9통과 -->
@@ -141,7 +141,7 @@
   <!-- ⑤ 11중 9통과 2실패 -->
   <rect x="454" y="132" width="62" height="108" fill="#82e0aa" opacity=".75"/>
   <rect x="454" y="108" width="62" height="24" fill="#f5837d" opacity=".8" stroke="#f5837d" stroke-width="2"/>
-  <text x="485" y="258" fill="#f5837d" text-anchor="middle" font-size="11">⑤ D-15</text>
+  <text x="485" y="258" fill="#f5837d" text-anchor="middle" font-size="11">⑤ 플래그</text>
   <text x="485" y="273" fill="#828c99" text-anchor="middle" font-size="11">9 / 11</text>
 
   <!-- ⑥ 11통과 -->
@@ -181,7 +181,7 @@
 <p>세 줄 요약:</p>
 <ul>
   <li>서버 L1(GoogleTest) 파이프라인을 세우고 <b>여덟 번의 빌드-실행 루프</b>로 인벤토리를 고쳤다.</li>
-  <li>테스트가 잡은 프로덕션 버그는 <b>2건</b>. 하나는 예약돼 있던 것(D-01), <b>하나는 계획에 없었다.</b></li>
+  <li>테스트가 잡은 프로덕션 버그는 <b>2건</b>. 하나는 예약돼 있던 것, <b>하나는 계획에 없었다.</b></li>
   <li>계획에 없던 쪽이 더 심각했다 — 코드를 눈으로 읽어서는 나오지 않는 종류였다.</li>
 </ul>
 
@@ -212,7 +212,7 @@
 빨강이 떠도 원인을 코드에서 다시 찾아야 하고, 그러면 테스트를 쓴 이유가 절반 사라진다.
 </div>
 
-<!-- ==================== 2. D-01 ==================== -->
+<!-- ==================== 2. 슬롯 타입 매핑 오타 ==================== -->
 <h2 id="d01">2. 첫 실전 — 넣을 때와 꺼낼 때가 다른 표를 본다</h2>
 
 <p><code>Inventory</code>는 서로 정합해야 하는 표를 <b>셋</b> 들고 있고, 셋 다 생성자에서 손으로 채운다.
@@ -332,14 +332,14 @@
 <!-- ==================== 3. 계획에 없던 수확 ==================== -->
 <h2 id="unplanned">3. 계획에 없던 수확 — 검증보다 먼저 부른 <code>mutable_item()</code></h2>
 
-<p>다음 예정 항목은 D-15("실패한 제거가 더티 플래그를 세운다")였다. 한 줄을 아래로 옮기면 끝나는
+<p>다음 예정 항목은 "실패한 제거가 더티 플래그를 세운다"였다. 한 줄을 아래로 옮기면 끝나는
 일이라 생각했는데, <b>테스트를 붙이는 과정에서 같은 자리에 더 큰 것이 있었다.</b></p>
 
 <p>수정 전 <code>removeItem</code>의 앞 여섯 줄은 이랬다.</p>
 <pre><code>Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]-&gt;Mutable(slotId);
 Protocol::Item* item = updatedSlot-&gt;mutable_item();     // ← 검증보다 먼저
 
-dirtyFlagsMappings[itemType][slotId] = true;            // ← D-15: 이것도 먼저
+dirtyFlagsMappings[itemType][slotId] = true;            // ← 이것도 먼저
 
 if (updatedSlot-&gt;has_item() == false || item-&gt;count() &lt; count)
     return false;</code></pre>
@@ -417,7 +417,7 @@ if (updatedSlot-&gt;has_item() == false || item-&gt;count() &lt; count)
     EXPECT_EQ(added.slot_id(), 0) &lt;&lt; "실패한 제거가 빈 0번 슬롯을 점유 상태로 만들었다";
 }</code></pre>
 
-<p>수정은 순서를 바꾼 것뿐이고, 그 한 번의 재구조화가 <b>D-15와 이 오염을 동시에</b> 해소한다.</p>
+<p>수정은 순서를 바꾼 것뿐이고, 그 한 번의 재구조화가 <b>더티 플래그 순서와 이 오염을 동시에</b> 해소한다.</p>
 
 <p><code>Server/GameServer/Game/System/Inventory.cpp:136-146</code></p>
 <pre><code>Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]-&gt;Mutable(slotId);
@@ -432,7 +432,7 @@ dirtyFlagsMappings[itemType][slotId] = true;
 Protocol::Item* item = updatedSlot-&gt;mutable_item();</code></pre>
 
 <div class="callout bad">
-<b>이 세션에서 가장 값이 나간 지점.</b> D-01은 이미 진단서에 적혀 있던 것이고 테스트는 그것을
+<b>이 세션에서 가장 값이 나간 지점.</b> 슬롯 타입 오타는 이미 진단서에 적혀 있던 것이고 테스트는 그것을
 확인했을 뿐이다. 반면 이 버그는 <b>아무도 찾고 있지 않았다.</b> 코드를 읽으면 "검증하고 있네"로
 보이고, 실제로 <code>return false</code>도 정상적으로 나온다. 부작용은 <b>다음 <code>addItem</code>이
 슬롯 1로 밀린다</b>는 관측으로만 드러난다 — 그건 실행해야 보이는 것이다.
@@ -550,7 +550,7 @@ gitignore된 <code>config.h</code>의 유일한 소비자라, 테스트 타깃�
 </div>
 
 <div class="why">
-<b>왜 D-14는 고치지 않고 <code>DISABLED_</code>로 남겼나</b> — 스택 상한을 지키려면 초과분이 다음
+<b>왜 스택 상한은 고치지 않고 <code>DISABLED_</code>로 남겼나</b> — 스택 상한을 지키려면 초과분이 다음
 슬롯으로 넘어가야 하는데, 그러면 <b>한 번의 구매가 슬롯 두 개를 바꾼다.</b> 그런데
 <code>S_BUY_ITEM</code>은 <code>Slot updated_slot</code> 하나만 나른다. 제대로 고치려면 프로토콜을
 <code>repeated</code>로 바꾸고 생성기를 다시 돌린 뒤 클라·서버 핸들러를 함께 고쳐야 한다 — 3곳 수정이다.
@@ -564,12 +564,12 @@ gitignore된 <code>config.h</code>의 유일한 소비자라, 테스트 타깃�
 <div class="callout bad">
 <b>그물이 닿는 범위가 좁다.</b> 현재 테스트는 <code>Inventory</code>와 프로토콜 계약에만 있다.
 <code>Room</code>·<code>DBRequestFunctions</code>는 비어 있고, 그 둘이 서버 코드의 27%다.
-<b>D-03(Room 분해)을 지금 착수하면 그물 없이 하는 리팩토링이 된다.</b>
+<b>Room 분해를 지금 착수하면 그물 없이 하는 리팩토링이 된다.</b>
 </div>
 
 <div class="callout bad">
-<b>남은 구조 문제는 그대로다.</b> D-01은 증상이었고 원인은 <b>손으로 유지되는 매핑 3종</b>이다
-(D-23으로 기록). 두 표가 한 글자만 어긋나도 아이템이 다른 인벤토리로 새고, 둘 다 유효한 enum이라
+<b>남은 구조 문제는 그대로다.</b> 오타는 증상이었고 원인은 <b>손으로 유지되는 매핑 3종</b>이다
+(tech-debt 에 기록). 두 표가 한 글자만 어긋나도 아이템이 다른 인벤토리로 새고, 둘 다 유효한 enum이라
 컴파일러는 침묵한다. 지금은 테스트가 세 슬롯 타입을 전부 검사해 <b>재발을 잡아 주지만</b>,
 어긋날 수 있는 구조 자체는 남아 있다.
 </div>
@@ -579,7 +579,7 @@ gitignore된 <code>config.h</code>의 유일한 소비자라, 테스트 타깃�
 <code>slotTypeToItemTypeMappings</code>에 <code>unordered_map::operator[]</code>를 쓴다 —
 미등록 슬롯 타입(<code>SLOT_TYPE_EQUIPPED</code> 등)이 오면 <code>ITEM_TYPE_NONE</code>이 삽입되고
 <code>inventorylookupMappings[ITEM_TYPE_NONE]</code>은 nullptr이라 <b>널 역참조</b>다.
-<code>slotId</code> 범위 검사도 없다. D-22로 기록했고 이번엔 고치지 않았다.
+<code>slotId</code> 범위 검사도 없다. tech-debt 에 기록했고 이번엔 고치지 않았다.
 </div>
 
 <div class="callout info">
@@ -595,7 +595,7 @@ gitignore된 <code>config.h</code>의 유일한 소비자라, 테스트 타깃�
   <tr><th>파일</th><th>역할</th><th>줄</th></tr>
   <tr><td class="col-key">Server/GameServerTests/GameServerTests.vcxproj</td><td>테스트 타깃. 새 <code>.cpp</code>는 여기 직접 등록해야 한다(자동 수집 없음)</td><td>—</td></tr>
   <tr><td class="col-key">Server/GameServerTests/TestMain.cpp</td><td><code>gtest_main</code> 대체. 콘솔 UTF-8</td><td>20</td></tr>
-  <tr><td class="col-key">Server/GameServerTests/InventoryTests.cpp</td><td>D-01·D-15·슬롯 오염 검증 + D-14 <code>DISABLED_</code></td><td>203</td></tr>
+  <tr><td class="col-key">Server/GameServerTests/InventoryTests.cpp</td><td>슬롯 타입 오타·더티 플래그·슬롯 오염 검증 + 스택 상한 <code>DISABLED_</code></td><td>203</td></tr>
   <tr><td class="col-key">Server/GameServerTests/ProtocolContractTests.cpp</td><td>생성기 회귀 그물 3종</td><td>217</td></tr>
   <tr><td class="col-key">Server/GameServerTests/PacketSerializationTests.cpp</td><td>프레이밍 왕복 2건</td><td>67</td></tr>
   <tr><td class="col-key">Server/GameServer/Game/System/Inventory.cpp</td><td>수정 대상. <code>:44</code> 매핑, <code>:131-164</code> <code>removeItem</code></td><td>238</td></tr>
@@ -607,10 +607,10 @@ gitignore된 <code>config.h</code>의 유일한 소비자라, 테스트 타깃�
 <table>
   <tr><th>항목</th><th>값</th></tr>
   <tr><td class="col-key">작성한 테스트</td><td>16 (서버 14 + 인증 2) + <code>DISABLED_</code> 1</td></tr>
-  <tr><td class="col-key">테스트가 잡은 프로덕션 버그</td><td><span class="status-ok">2</span> — D-01(예약됨), 슬롯 오염(계획에 없음)</td></tr>
+  <tr><td class="col-key">테스트가 잡은 프로덕션 버그</td><td><span class="status-ok">2</span> — 슬롯 타입 오타(예약됨), 슬롯 오염(계획에 없음)</td></tr>
   <tr><td class="col-key">회귀</td><td><span class="status-ok">0</span></td></tr>
   <tr><td class="col-key">빌드-실행 회차</td><td>8 (빨강 3회 중 1회는 테스트 자체의 버그)</td></tr>
-  <tr><td class="col-key">기록만 하고 안 고친 부채</td><td>D-14 · D-22 · D-23</td></tr>
+  <tr><td class="col-key">기록만 하고 안 고친 부채</td><td>스택 상한 · 인벤토리 인덱싱 검증 · 매핑 3종</td></tr>
 </table>
 
 <hr>

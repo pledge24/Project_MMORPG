@@ -5,7 +5,7 @@
 세션: {N}
 날짜: YYYY-MM-DD
 상태: 진행중
-관련: decisions/000N-....md · tech-debt D-NN, D-NN
+관련: decisions/000N-....md · tech-debt 「{항목 제목}」
 ---
 
 # {작업 제목}

@@ -21,7 +21,7 @@
 |---|---|---|
 | `PacketSerialization` | 2 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 |
 | `ProtocolContract` | 3 | `PROTOCOL_MESSAGES(X)` 목록 대조 · 패킷 ID 연속·유일성 · 전 메시지 리플렉션 왕복 |
-| `InventoryTest` | 3 (+DISABLED 1) | 슬롯 타입 교차오염(D-01) · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 |
+| `InventoryTest` | 3 (+DISABLED 1) | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
 
@@ -62,7 +62,7 @@
 - L2·L3 실행에는 **에디터가 필요하다** (`Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."`). 서버처럼 무인 루프가 되지 않는다.
 - **L3는 Live Coding 비호환 — TDD 루프 금지, 배치 전용.**
 - L4는 DummyClient 자산 재사용 검토. 병렬 실행 시 포트 파라미터화.
-- CI: D-12. 서버 쪽 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다. UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.
+- CI: 서버 쪽 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다. UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.
 
 ---
 

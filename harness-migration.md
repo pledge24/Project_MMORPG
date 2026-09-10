@@ -15,7 +15,7 @@
 | `docs/plans/active/` | 비어 있음 | 삭제 |
 | `docs/plans/completed/` | `verification-infra.md` 1개 (139줄) | `docs/work/`로 |
 | `docs/decisions/` | 3개. 프론트매터 없음. 무날짜 중복본 1개 | MADR 전환 |
-| `docs/tech-debt.md` | 281줄. D-01~D-23. 수정 완료 3건 | scope 추가 |
+| `docs/tech-debt.md` | 281줄. 항목 23개. 수정 완료 3건 | scope 추가 |
 | `docs/reports/` | 사람용 HTML 리포트 3개 | 유지 |
 | `docs/references/` | 1개 | 유지 |
 | `prompts/` | 하네스 초기 구축 부산물 2개 | 삭제 |
@@ -44,7 +44,7 @@ docs/
 ├── ARCHITECTURE.md              # 불변식 중심. 코드에서 읽을 수 있는 것은 없음
 ├── NEXT.md                      # 미래를 말하는 유일한 문서
 ├── harness.md                   # 스킬 목록 + 판단 기준
-├── tech-debt.md                 # D-NN. scope 필드 추가
+├── tech-debt.md                 # scope 필드 추가
 ├── build.md                     # CLAUDE.md 에서 분리
 ├── codegen.md                   # CLAUDE.md 에서 분리
 ├── testing.md                   # CLAUDE.md 에서 분리
@@ -100,9 +100,9 @@ CONTEXT.md                       # tdd 스킬용 얇은 포인터
 |---|---|---|
 | 1 | 문서 골격 (1a~1e) | 2~3일 |
 | 2 | `new-work` · `end-session` 스킬 | 반나절 |
-| 3 | 첫 TDD 슬라이스 (D-22 + D-23), 수동 | 1세션 |
+| 3 | 첫 TDD 슬라이스 (Inventory 정리), 수동 | 1세션 |
 | 4 | `tdd-slice` 스킬 + 테스트 잠금 훅 | 반나절 |
-| 5 | D-14 3티어 + `three-tier-change` + `test-auditor` | 1~2세션 |
+| 5 | 스택 상한 3티어 + `three-tier-change` + `test-auditor` | 1~2세션 |
 | 6 | Room seam 만들기 | 2~4주 |
 
 3단계를 수동으로 두는 이유는 `tdd-slice`가 무엇을 감쌀지 한 번 돌려봐야 정해지기 때문이다. vcxproj 등록, 빌드 폴링, 종료 코드 판정 중 어디가 실제로 반복되는지 모르는 상태에서 스킬을 만들면 잘못된 것을 고정한다.
@@ -136,10 +136,10 @@ git rm .claude/skills/project/README.md .claude/skills/unreal-core/README.md
 세션: 2
 날짜: 2026-08-27
 상태: 완료                  # 진행중 / 완료 / 폐기
-관련: decisions/0002-l1-test-infra.md · tech-debt D-01, D-15
+관련: decisions/0002-l1-test-infra.md · docs/tech-debt.md
 ---
 
-# L1 테스트 인프라 구축 + 첫 실전 버그(D-01)
+# L1 테스트 인프라 구축 + 첫 실전 버그
 
 표기: `[x]` 완료(옆에 summary 한 줄) · `[B] blocked — 무엇이/어디서`
 
@@ -188,7 +188,7 @@ docs/work/YYYY-MM-DD-{작업명}.md
 항목 헤더에 scope를 넣는다.
 
 ```markdown
-### D-22. `Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다
+### `Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다
 `[심각도: 하] [난이도: 중] [scope: server]` · `Server/GameServer/Game/System/Inventory.cpp:44`
 
 - **왜 문제인가** — ...
@@ -196,7 +196,7 @@ docs/work/YYYY-MM-DD-{작업명}.md
 - **선행 조건** — (하드 의존이 있을 때만)
 ```
 
-scope 값은 `client` `server` `protocol` `shared` `build` `ops`. `protocol`은 클라와 서버를 동시에 구속한다는 뜻이다. D-14가 여기 해당한다.
+scope 값은 `client` `server` `protocol` `shared` `build` `ops`. `protocol`은 클라와 서버를 동시에 구속한다는 뜻이다. 스택 상한 항목이 여기 해당한다.
 
 **23개 전부에 「선행 조건」을 소급하지 않는다.** 대부분 "모름"이 된다. 순서는 `NEXT.md`가 담고 tech-debt는 카탈로그로 남는다. scope는 23개 전부에 붙인다. `파일:줄`에서 유추 가능하지만 기계가 읽을 수 없다.
 
@@ -229,7 +229,7 @@ scope 값은 `client` `server` `protocol` `shared` `build` `ops`. `protocol`은 
 - docs/NEXT.md — 다음에 무엇을 왜. **세션 시작 시 읽는다.**
 - docs/harness.md — 스킬 목록과 판단 기준
 - docs/ARCHITECTURE.md — 깨면 안 되는 불변식
-- docs/tech-debt.md — 알려진 부채 (D-NN)
+- docs/tech-debt.md — 알려진 부채
 - docs/decisions/index.md — ADR 표. 본문은 필요한 것만 연다
 - docs/work/ — 세션별 작업 기록
 - docs/{build,codegen,testing}.md — 해당 영역 건드릴 때만
@@ -286,7 +286,7 @@ gitmoji + 한국어: `<emoji> <type>: <설명>`
 최종 갱신: YYYY-MM-DD (세션 N 종료 시)
 
 ## 지금 하는 것
-docs/work/2026-09-10-inventory-cleanup.md — D-22 + D-23
+docs/work/2026-09-10-inventory-cleanup.md — Inventory 정리
 (없으면 "없음")
 
 ## 다음 후보 (우선순위 순)
@@ -553,7 +553,7 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 | 클라 폴더 트리 | 코드에서 읽힘 |
 | 파일:줄 번호 전부 | 썩는다 |
 | 레벨별 BP 유무 표 5행 | 불변식 한 줄 + 확인 방법으로 압축 |
-| 예외 2건 상세 | tech-debt D-07 참조로 |
+| 예외 2건 상세 | tech-debt 참조로 |
 | 「이렇게 안 한 이유」 | ADR로 나가 있음. `index.md` 링크만 |
 
 ### 살릴 불변식
@@ -561,7 +561,7 @@ description: 아키텍처 결정 기록(ADR)을 새로 작성한다. 되돌리�
 현 문서에서 추출한다. 이것이 재작성의 실질이다.
 
 1. 게임 서버는 `UserDB`를 모른다. 인증 티어와의 접점은 Redis 토큰 하나뿐이다.
-2. 룸 소유 상태 변경은 룸 큐 위에서만 일어난다. 락이 없다. (예외 2건 = D-07)
+2. 룸 소유 상태 변경은 룸 큐 위에서만 일어난다. 락이 없다. (예외 2건은 tech-debt 참조)
 3. 네트워크 스레드는 UObject를 만지지 않는다.
 4. `HandleRecvPackets`를 부르는 C++ 코드는 없다. 레벨 BP의 `ReceiveTick`만 부른다.
 5. 서버 오브젝트는 상태를 protobuf 메시지로 직접 들고 있다. 복제가 변환이 아니라 복사다.
@@ -603,7 +603,7 @@ ground state 는 UserDB·GameDB 의 행과 Redis 의 액세스 토큰이다.
 
 **Architecture Invariant:** UserDB 를 모른다. 인증 티어와의 접점은 Redis 토큰 하나뿐이다.
 **Architecture Invariant:** 룸 소유 상태 변경은 룸 큐 위에서만 일어난다. 락이 없다.
-   핸들러는 잡을 밀어넣고 리턴한다. 예외 2건은 tech-debt D-07.
+   핸들러는 잡을 밀어넣고 리턴한다. 예외 2건은 tech-debt 참조.
 **Architecture Invariant:** 서버 오브젝트는 상태를 protobuf 메시지로 직접 들고 있다.
    복제가 변환이 아니라 복사다. 게임플레이 변경은 대개 클라·서버·프로토콜 3곳을 건드린다.
 **API Boundary:** 패킷 핸들러. C_* 로 진입한다. 인라인으로 일하지 않는다.
@@ -810,7 +810,7 @@ description: 새 작업을 시작할 때 work 파일을 만든다. 며칠 걸리
 
 ### 3-4. tech-debt 확인
 
-`docs/tech-debt.md` 에서 이 작업이 건드리는 파일의 D-NN 항목을 찾아
+`docs/tech-debt.md` 에서 이 작업이 건드리는 파일의 항목을 찾아
 프론트매터 `관련:` 에 적는다. 같은 자리를 두 번 열지 않기 위해서다.
 
 ---
@@ -872,12 +872,10 @@ work 파일의 「증명」 절을 읽고 각 항목을 **실제로 실행한다
 
 ## 3. tech-debt 갱신
 
-- 이번에 발견한 것을 D-NN 으로 추가.
-  형식: `[심각도] [난이도] [scope]` · `파일:줄` · 왜 문제인가 / 어디로 갈 것인가
-- 수정한 것은 제목에 *(세션 N 에서 수정 완료)* 를 붙이고
-  불릿을 왜 문제였나 / 어떻게 고쳤나 / 남은 것 으로 바꾼다
-- 난이도가 바뀐 것이 있으면 갱신하고 이유를 적는다
-- 파일 최상단 「갱신 이력」 블록에 이번 세션 변경을 요약한다
+- 이번에 발견한 것을 파일 최상단 「양식」대로 추가한다. 번호는 붙이지 않는다
+- **해결이 확정된 항목은 지운다.** 수정 완료 표기를 남기지 않는다
+  — 무엇을 어떻게 고쳤는지는 work 파일과 커밋이 갖는다
+- 심각도나 난이도가 바뀐 것이 있으면 갱신하고 이유를 적는다
 
 ## 4. ADR
 
@@ -925,7 +923,7 @@ work 파일, tech-debt, ADR, NEXT.md 를 한 커밋에 담는다.
 
 ## 대상
 
-`NEXT.md` 1번, D-22 + D-23.
+`NEXT.md` 1번, Inventory 정리.
 
 첫 대상으로 적합한 이유:
 - 그물이 이미 있다 (`InventoryTests.cpp`가 세 슬롯 타입 전부 검사)
@@ -1028,7 +1026,7 @@ git diff main...HEAD 를 보고 docs/work/{작업}.md 와 대조해서 리뷰해
 | 스멜 | 어디로 |
 |---|---|
 | 이번 work 범위 안이고 30분 내 | 지금 고침 |
-| 범위 밖 | `docs/tech-debt.md` (D-NN 부여) |
+| 범위 밖 | `docs/tech-debt.md` |
 
 ## 머지
 
@@ -1043,7 +1041,7 @@ git branch -D '#<issue>-<Topic>'
 
 ## 완료 신호
 
-D-22·D-23 이 tech-debt 에서 수정 완료로 바뀌고 기존 14개가 유지된다.
+두 항목이 tech-debt 에서 삭제되고 기존 14개 테스트가 유지된다.
 
 ---
 
@@ -1149,7 +1147,7 @@ Phase 의 항목이 남았으면 1로 돌아간다.
 
 ## 계획 밖 발견
 
-즉석에서 고치지 않는다. `docs/tech-debt.md` 에 D-NN 으로 기록하고 넘어간다.
+즉석에서 고치지 않는다. `docs/tech-debt.md` 에 기록하고 넘어간다.
 work 파일 「작업 중 기록」에 한 줄 남긴다.
 
 구현이 계획에서 벗어나면 같은 커밋에서 work 파일의 Phase 도 갱신한다.
@@ -1263,7 +1261,7 @@ py -3 .claude/hooks/test_guard_test_files.py
 
 ## 대상
 
-`NEXT.md` 2번, D-14 (스택 상한).
+`NEXT.md` 2번, 스택 상한.
 
 `DISABLED_StackDoesNotExceedMaxStack` 이 이미 커밋된 실패 테스트다. `--gtest_also_run_disabled_tests` 로 실제 빨강임이 확인되어 있다.
 
@@ -1350,7 +1348,7 @@ description: 패킷 구조를 바꾸는 변경을 수행한다. .proto 수정이
 
 work 파일 「증명」의 항목을 실제로 실행하고 종료 코드를 기록한다.
 
-D-14 의 경우 완료 신호는 `DISABLED_` 접두어 제거 후 종료 코드 0 이다.
+스택 상한의 완료 신호는 `DISABLED_` 접두어 제거 후 종료 코드 0 이다.
 ```
 
 ## 5b. `.claude/agents/test-auditor.md`
@@ -1412,7 +1410,7 @@ seam 밖의 상태를 들여다보거나, 내부 자료구조의 형태를 가�
 
 # 6단계. Room seam
 
-D-03(Room 분해)의 전제다. Room 에 테스트가 붙기 전에는 분해가 안전하지 않다.
+Room 분해의 전제다. Room 에 테스트가 붙기 전에는 분해가 안전하지 않다.
 
 ## 왜 어려운가
 
@@ -1434,7 +1432,7 @@ D-03(Room 분해)의 전제다. Room 에 테스트가 붙기 전에는 분해가
 `NEXT.md` 의 나머지 후보가 순서대로다.
 
 - DummyClient 승격 (인자화 → 실토큰 → 봇 상태머신 → 종료 코드)
-- CI (D-12) — 전제는 충족. `GameServerTests` 가 `config.h` 없이 빌드되고 판정이 종료 코드
+- CI — 전제는 충족. `GameServerTests` 가 `config.h` 없이 빌드되고 판정이 종료 코드
 - AuthServer 라우터 — Redis·DB 의존이라 DummyClient 승격과 같은 계열
 - UE L2 — 에디터 필요라 무인 루프가 안 된다. 별도 계획
 
@@ -1458,7 +1456,7 @@ D-03(Room 분해)의 전제다. Room 에 테스트가 붙기 전에는 분해가
 | 2단계 | `new-work` | 순서를 틀리면 문제 정의가 구현 가능성에 오염된다 |
 | 2단계 | `end-session` | 매 세션 반복이고 마지막 항목을 빠뜨리면 진입점이 사라진다 |
 | 4단계 | `tdd-slice` | 3단계에서 무엇이 반복되는지 확인한 뒤 |
-| 5단계 | `three-tier-change` | D-14 를 한 번 밟아본 뒤 |
+| 5단계 | `three-tier-change` | 스택 상한을 한 번 밟아본 뒤 |
 | 5단계 | `test-auditor` (에이전트) | 슬라이스가 3티어에 걸치며 수평 슬라이싱이 실체화된 뒤 |
 | 6단계 이후 | `doc-garden` (선택) | ARCHITECTURE 가 코드와 어긋나기 시작한 뒤 |
 

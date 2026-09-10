@@ -13,7 +13,7 @@ superseded-by: null
 - 상태: 확정
 - 날짜: 2026-08-27 (세션 2)
 - 관련: `docs/plans/completed/verification-infra.md` · `docs/decisions/2026-08-19-final-harness-verdict.md` §9 ·
-  `docs/tech-debt.md` D-01/D-12/D-14/D-15/D-22/D-23
+  `docs/tech-debt.md`
 
 ## 컨텍스트
 
@@ -22,7 +22,7 @@ superseded-by: null
 1. **완료 기준이 "빌드 통과"에서 멈춘다.** CLAUDE.md의 "자기신고를 믿지 않는다"는 검증 커맨드를
    요구하는데 서버에는 실행할 커맨드가 없었다.
 2. 판정 ADR §9의 배치 실행 모드 **해동 조건 중 하나가 "AC 사다리 3단을 채울 테스트 인프라 존재"** 였다.
-3. D-03(갓 클래스) 같은 리팩토링에 회귀 그물이 없었다.
+3. 갓 클래스 같은 리팩토링에 회귀 그물이 없었다.
 
 ---
 
@@ -54,7 +54,7 @@ superseded-by: null
 - *vcpkg manifest* — 위 표. 특히 gtest는 vcpkg가 자동 링크해 주지 못하는 예외 라이브러리라
   `.vcxproj`에 수동 설정이 세 군데 붙는다. 자동화의 이점이 그만큼 줄어든다.
 - *MS NuGet(`Microsoft.googletest.v140.*`)* — GoogleTest 1.8.1은 C++20 코드베이스에 8년 낡았다.
-  더해 이 솔루션은 NuGet restore 때문에 빌드가 상시 실패한 전력이 있다(D-13).
+  더해 이 솔루션은 NuGet restore 때문에 빌드가 상시 실패한 전력이 있다.
 - *Catch2로 서버·UE 통일* — UE LLT가 Catch2라 어휘가 통일되는 이점은 실재한다. 다만 CLAUDE.md가
   서버=GoogleTest로 이미 확정했고, 결정 3의 결과로 UE LLT 자체가 보류됐으므로 통일할 대상이 없다.
 
@@ -84,7 +84,7 @@ UE Low-Level Tests와 같은 패턴이다.
 - `Inventory.cpp` → `Player.cpp` → `Room.cpp` → `DBRequestFunctions.cpp`로 전이 의존이 이어져 결국
   대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 추가하는 루프는 비결정적이고 재현이 안 된다.
 - `Main/GameServer.cpp`는 **gitignore된 `config.h`의 유일한 소비자**다(실측). 이것만 빼면
-  테스트 타깃은 **비밀 없이 빌드된다** — D-12(CI)에서 그대로 쓰인다.
+  테스트 타깃은 **비밀 없이 빌드된다** — CI에서 그대로 쓰인다.
 
 **부수 결정**
 
@@ -115,7 +115,7 @@ DBConnectionPool/DBManager/RedisManager를 `new`만 하고 `SocketUtil::Init()`(
 * `config.h`의 소비자는 한 곳뿐이다:
   `grep -rn "config\.h" Server/GameServer Server/GameServerTests` 결과가
   `Server/GameServer/Main/GameServer.cpp` 한 줄. 두 줄 이상이면 테스트 타깃이 "비밀 없이 빌드된다"는
-  성질을 잃고, D-12(CI)의 전제도 함께 무너진다.
+  성질을 잃고, CI의 전제도 함께 무너진다.
 * `ProjectReference`는 `ServerCore.vcxproj` 하나이며 `LinkLibraryDependencies=false`다.
   GameServer 참조가 추가되면 `config.h` 의존이 되살아난다.
 * GameServer에 `.cpp`를 추가하면 테스트 vcxproj의 `<ItemGroup Label="GameServer 본체 ...">`에도
@@ -154,7 +154,7 @@ per-command allowlist는 없다. 그래서 해법이 실행 경로 쪽에 있었
 | Brave 모드 | **꺼진 채 유지** | |
 
 사람 클릭 게이트 한 겹이 없어지는 것은 맞다. 대신 남는 게이트(훅)는 확률적이 아니라 결정적이고,
-D-12(CI)에서 그대로 재사용된다. Brave 모드는 그 반대 방향 — 게이트를 IDE 전역에서 없앤다.
+CI에서 그대로 재사용된다. Brave 모드는 그 반대 방향 — 게이트를 IDE 전역에서 없앤다.
 
 **빌드는 왜 셸로 옮기지 않았나.** CLAUDE.md의 "UBT/MSBuild를 터미널로 직접 돌리지 않는다"는
 출력 절단으로 에러가 유실되기 때문이다. 그 근거는 빌드에만 성립한다 — gtest 실행 출력은 짧고
@@ -286,7 +286,7 @@ L4도 살아 있다 — 설치본에 `Engine/Plugins/Experimental/Gauntlet` 플�
 계층별 검증 상태를 갈라 적어 뒀다.
 
 **대가**는 에디터 의존이다. L2 실행에는 에디터가 필요해(`Window > Test Automation` 또는
-`-ExecCmds="Automation RunTests ..."`) 완전 무인 검증이 되지 않는다. CI(D-12)에 붙일 때 다시 본다.
+`-ExecCmds="Automation RunTests ..."`) 완전 무인 검증이 되지 않는다. CI에 붙일 때 다시 본다.
 
 ### 작성했던 파일을 지운 이유
 
@@ -336,13 +336,13 @@ CLAUDE.md 「완료 기준」에 **"존재 ≠ 가능"** 규칙으로 승격했�
 
 | 티어 | 상태 | 테스트 |
 |---|---|---|
-| 게임 서버 L1 | ✅ 동작 | 14 통과 + 1 `DISABLED_`(D-14) |
+| 게임 서버 L1 | ✅ 동작 | 14 통과 + 1 `DISABLED_` |
 | 인증 서버 | ✅ 동작 | 2 통과 |
 | UE 클라 L2 | 🔜 경로 확정, 미착수 | 매크로 **존재 확인**까지. 실행 미검증 |
 | UE 클라 L1(LLT) | **채택 안 함** | 런처 엔진 고정이 프로젝트 제약. 재검토 조건 없음 |
 
-이 인프라가 이 세션에 잡은 버그 **2건**: D-01(계획된 것), 그리고 `removeItem`의 슬롯 오염
-(계획에 없던 것 — 코드를 눈으로 읽어서는 나오지 않았다). 상세는 tech-debt D-01·D-15.
+이 인프라가 이 세션에 잡은 버그 **2건**: 슬롯 타입 매핑 오타(계획된 것), 그리고 `removeItem`의 슬롯 오염
+(계획에 없던 것 — 코드를 눈으로 읽어서는 나오지 않았다). 상세는 이 세션의 work 파일에 있다.
 
 판정 ADR §9의 해동 조건 "AC 사다리 3단을 채울 테스트 인프라 존재"가 **서버 한정으로 충족**됐다.
 UE 클라 쪽은 아직이므로, 배치 모드 해동은 여전히 이르다.

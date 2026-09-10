@@ -3,7 +3,7 @@
 세션: 2
 날짜: 2026-08-27
 상태: 완료
-관련: decisions/0002-l1-test-infra.md · decisions/0001-harness-verdict.md §9 · tech-debt D-01, D-14, D-15, D-22, D-23
+관련: decisions/0002-l1-test-infra.md · decisions/0001-harness-verdict.md §9 · docs/tech-debt.md
 ---
 
 > **하네스 전환 시 처리 (2026-09-XX)**
@@ -16,7 +16,7 @@
 > `2026-08-19-final-harness-verdict.md` → `0001-harness-verdict.md`
 > `2026-08-27-l1-test-infra.md` → `0002-l1-test-infra.md`
 
-# L1 테스트 인프라 구축 + 첫 실전 버그(D-01)
+# L1 테스트 인프라 구축 + 첫 실전 버그
 
 표기: `[x]` 완료(옆에 summary 한 줄) · `[B] blocked — 무엇이/어디서`
 
@@ -27,9 +27,9 @@
 1. **완료 기준이 "빌드 통과"에서 멈춘다.** "자기신고를 믿지 않는다"는 검증 커맨드를 요구하는데
    서버에는 실행할 커맨드가 없었다.
 2. 판정 ADR §9의 배치 모드 해동 조건 중 하나가 "AC 사다리 3단을 채울 테스트 인프라 존재"였다.
-3. D-03(갓 클래스) 같은 리팩토링에 회귀 그물이 없었다.
+3. 갓 클래스 같은 리팩토링에 회귀 그물이 없었다.
 
-이 세션은 서버 L1 파이프라인을 세우고, 그 파이프라인으로 D-01을 TDD로 잡았다.
+이 세션은 서버 L1 파이프라인을 세우고, 그 파이프라인으로 슬롯 타입 매핑 오타를 TDD로 잡았다.
 
 ---
 
@@ -47,17 +47,17 @@
 - [x] **콘솔 UTF-8** *(계획에 없던 항목)* — `TestMain.cpp`가 `gtest_main.cc`를 대체하고
       `SetConsoleOutputCP(CP_UTF8)`를 부른다. cp949 콘솔에서 한국어 실패 메시지가 깨져
       (`湲고? ?щ’ ??젣媛`) 읽히지 않았다. 읽히지 않는 진단은 하네스로서 제 역할을 못 한다.
-- [x] **A-4 D-01 TDD** — `InventoryTests.cpp`. 실패 3개(MISC만) 확인 → `Inventory.cpp:44`
+- [x] **A-4 슬롯 타입 매핑 오타 TDD** — `InventoryTests.cpp`. 실패 3개(MISC만) 확인 → `Inventory.cpp:44`
       `ITEM_TYPE_GEAR`→`ITEM_TYPE_MISCELLANEOUS` → 9/9 통과.
-      `RemovingMiscItemDoesNotTouchGearInventory`가 D-01이 서술한 피해를 그대로 재현했다.
-- [x] **A-5 D-15 + 신규 버그** — 실패 2개 확인 → `removeItem` 재구조화 → 11/11 통과.
-      D-15(더티 플래그 순서)만 고치려 했는데 **같은 자리에서 더 큰 것이 나왔다**:
+      `RemovingMiscItemDoesNotTouchGearInventory`가 그 오타의 피해를 그대로 재현했다.
+- [x] **A-5 더티 플래그 순서 + 신규 버그** — 실패 2개 확인 → `removeItem` 재구조화 → 11/11 통과.
+      더티 플래그 순서만 고치려 했는데 **같은 자리에서 더 큰 것이 나왔다**:
       `mutable_item()`이 검증보다 먼저 불려 빈 슬롯을 영구 점유 상태로 만들고 있었다.
-      한 번의 재구조화로 둘 다 해소. 상세는 tech-debt D-15.
-- [x] **A-5 D-14 — 범위 판단으로 중단** — `DISABLED_StackDoesNotExceedMaxStack`로 남겼다.
+      한 번의 재구조화로 둘 다 해소.
+- [x] **A-5 스택 상한 — 범위 판단으로 중단** — `DISABLED_StackDoesNotExceedMaxStack`로 남겼다.
       `--gtest_also_run_disabled_tests`로 **실제 빨강임을 확인**했다(미검증 스텁 아님).
       중단 이유: 초과분을 다음 슬롯으로 넘기면 슬롯 두 개가 바뀌는데 `S_BUY_ITEM`은 `Slot` 하나만
-      나른다 → 프로토콜 변경이 필요하다. tech-debt D-14에 난이도 중→상으로 상향 기록.
+      나른다 → 프로토콜 변경이 필요하다. tech-debt 의 「스택 상한 없는 아이템 누적」에 난이도 중→상으로 상향 기록.
 - [x] **A-6 전수 왕복 + ID 불변식** — `ProtocolContractTests.cpp` 3개.
       수작업 40개 대신 `PROTOCOL_MESSAGES(X)` 매크로 목록 하나가 이름·순서 검사와 패킷 ID 검사를
       함께 구동하고, 왕복은 `DescriptorPool` 리플렉션으로 전 메시지를 돈다(메시지가 늘어도 안 고침).
@@ -69,7 +69,7 @@
       Node v20.12.2 내장 러너라 **새 의존성 0개**. 2/2 통과, 종료 코드 0.
       `configs.js`를 고른 이유: `.env`가 gitignore돼 새 클론에 없고, 키가 빠져도 기동은 성공한 뒤
       DB·Redis 접속 시점에야 터진다. `parseInt(undefined)`는 NaN이라 풀 설정이 조용히 무의미해진다.
-      *(D-18 eslint는 범위 밖 — 건드리지 않음)*
+      *(eslint 는 범위 밖 — 건드리지 않음)*
 
 ## Phase B — UE 클라 Low-Level Tests
 
@@ -105,6 +105,7 @@
       완료" 추가, 적용 범위를 게임 서버·인증 서버로 명시.
 - [x] **ADR** — `docs/decisions/2026-08-27-l1-test-infra.md`. 결정 6건과 기각안
       (vcpkg / MS NuGet / Catch2 통일 / Brave 모드), 재검토 조건.
-- [x] **tech-debt** — D-01·D-15 수정 완료 표기, D-14 난이도 상향, **D-22·D-23 신규**, D-12에 진행분 추가.
+- [x] **tech-debt** — 슬롯 타입 오타·더티 플래그 두 건에 수정 완료 표기, 스택 상한 난이도 상향,
+      **인벤토리 인덱싱 검증·매핑 3종 신규**, CI 항목에 진행분 추가.
 - [x] **메모리** — Rider Brave 모드 비활성화 약속을 feedback 메모리로 저장.
 - [x] 계획 파일 `completed/` 이동, 숫자 보고, 다음 세션 후보 제안.

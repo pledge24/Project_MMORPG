@@ -96,7 +96,7 @@ superseded-by: ADR-0001
 | 항목 | 판정 | 근거 |
 |---|---|---|
 | grilling / grill-me | 💬 | 채택 권장. 용도: 리팩토링 계획(docs/plans)을 구현 전에 심문. notion의 Grill me와 동일 개념이라 한 번에 결정. 시점: 리팩토링 착수(세션 3) 직전 |
-| improve-codebase-architecture | 💬 | 채택 권장(수정 필요). CONTEXT.md/docs/adr 의존을 우리 docs/ 구조로 치환. tech-debt D-01~D-21의 우선순위 산정 도구로 정확히 맞음 |
+| improve-codebase-architecture | 💬 | 채택 권장(수정 필요). CONTEXT.md/docs/adr 의존을 우리 docs/ 구조로 치환. tech-debt 항목의 우선순위 산정 도구로 정확히 맞음 |
 | handoff | ❌(보류) | 세션 연속성은 plans 파일이 이미 담당. 중복 시스템 회피 원칙 적용. plans가 부족하다고 느껴지면 재검토 |
 | git-guardrails | ✅(흡수) | 우리 훅이 이미 동등 이상. 차이 하나: 원본은 git push 전체 차단, 우리는 --force만. PR 워크플로우상 push가 필요하므로 현행 유지 |
 | tdd, code-review, domain-modeling 등 나머지 | ❌(보류) | 필요가 증명되면 개별 재검토. 지금 들이면 무게만 늘음 |

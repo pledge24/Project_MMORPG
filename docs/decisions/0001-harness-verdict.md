@@ -24,7 +24,7 @@ mattpocock/skills)의 항목별 판정표를 토론으로 최종 확정한다. �
 **적용 범위:** 아래 "수정·확정 항목"에 없는 판정표 항목은 전부 원안대로 확정한다.
 여기에는 ✅/❌/🔜 전체와, 토론 없이 수용된 💬(새니타이저 #10: ASan만 보류 /
 grilling: 리팩토링 착수 직전 채택 / improve-codebase-architecture: docs/ 구조로
-치환 후 채택, tech-debt D-01~D-21 우선순위 산정 도구 / TODO.md·handoff 등 폐기)이 포함된다.
+치환 후 채택, tech-debt 우선순위 산정 도구 / TODO.md·handoff 등 폐기)이 포함된다.
 
 ---
 
@@ -84,7 +84,7 @@ grilling: 리팩토링 착수 직전 채택 / improve-codebase-architecture: doc
   필요한 것은 include 검사 스크립트 수준이라 자작 가능하다(stdin JSON 훅+테스트 27개를
   자작한 전례). UE 클라 쪽은 UBT의 Build.cs 모듈 의존성이 일부를 이미 기계 강제 중.
   지금 만들지 않는 이유는 도구 부재가 아니라 **레이어 경계 자체가 미확정**이기 때문 —
-  D-01~D-21 리팩토링 전 코드에 규칙을 선언하면 위반 투성이라 예외 처리 속에서 규칙이
+  리팩토링 전 코드에 규칙을 선언하면 위반 투성이라 예외 처리 속에서 규칙이
   무의미해진다.
 - **재검토 조건(=2단계 착수):** 리팩토링으로 서버 레이어 경계가 확정되는 시점.
 
@@ -182,7 +182,7 @@ grilling: 리팩토링 착수 직전 채택 / improve-codebase-architecture: doc
   `#include` 경계 규칙을 검사하는 스크립트가 `.claude/hooks/`에 없다 (현재
   `guard_dangerous_cmd.py`·`archive_transcript.py` 둘뿐). 서버 레이어 경계가 확정되기 전에
   하드 규칙을 선언하면 예외 처리 속에서 규칙이 무의미해진다 — 2단계 착수 조건은
-  `docs/tech-debt.md` D-03 리팩토링의 완료다.
+  `docs/tech-debt.md` 의 `Room` 분해 리팩토링의 완료다.
 * **결정 5 (숫자는 발생 지점 자동 집계)** — `.claude/hooks/guard_dangerous_cmd.py`가 차단 시
   `.claude/hooks/block_counter.log`에 TSV 한 줄을 append 한다 (기록 함수는 실패해도 차단 흐름을
   막지 않는다). 파일 존재와 append-only 여부로 확인. 세션 리포트에 차단 건수를 **손으로 누적한
