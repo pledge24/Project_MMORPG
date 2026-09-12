@@ -114,31 +114,107 @@
 
 ## 위험 요소
 
-<!-- 3단계. 계획을 심문한 결과를 적는다.
-     무엇이 깨질 수 있는가 / 어느 Phase가 가장 위험한가 /
-     고려했지만 하지 않기로 한 방법. -->
+- **Phase C가 가장 위험하다.** A·B는 코드를 더하기만 하지만, C는 `addItem`,
+  `findFirstAvailableSlotId`, 생성자, DB 저장 경로가 함께 도는 자료구조를 바꾼다.
+- **기존 그물이 대칭 오류를 못 잡는다.** 왕복 테스트(넣기 → 조회 → 지우기)는 넣을 때와 꺼낼 때가
+  **같이** 틀리면 초록으로 통과한다. 이미 한 번 터진 사고가 바로 그 형태였다. 그래서 Phase C에
+  대응 방향을 직접 단언하는 테스트를 따로 넣는다.
+- **빈 `dataKeys` 칸.** `ITEM_TYPE_GEAR`만 문자열이 둘이라 나머지 카테고리는 빈 칸이 남는다.
+  조회에서 빈 문자열을 건너뛰지 않으면 `itemType` 없는 아이템이 엉뚱한 탭으로 분류된다.
+- **`static_assert`가 `.proto`의 enum 번호에 기댄다.** `ItemType_ARRAYSIZE`를 쓰는 이유가
+  이것이지만, 번호를 띄엄띄엄 매기면 여전히 어긋난다.
+- **`GetDirtyFlags`에도 같은 구멍이 있다.** `dirtyFlagsMappings[itemType]`가 `operator[]`라
+  `ITEM_TYPE_NONE`을 주면 빈 `vector`를 삽입해 반환하고, 호출자가 `[0]`을 읽으면 UB다.
+  호출자 3곳이 전부 `ITEM_TYPE_GEAR` 리터럴이라 실피해는 없다. 배열로 바꾸면 함께 닫힌다.
+- **확인한 것** — `player->possession`은 `Player` 생성자에서 한 번 만들어지고 교체되지 않는다
+  (`Player.cpp:14`). `mutable_inventory()`를 부르는 곳은 `Inventory` 생성자뿐이다
+  (`Inventory.cpp:8`). 캐시한 슬롯 배열 포인터가 낡을 경로가 없다.
 
--
--
+### 고려했지만 하지 않는 것
+
+- **`EquippedGear`까지 정리.** `SLOT_TYPE_EQUIPPED`가 같은 enum에 있어 묶고 싶지만
+  「변경에 의한 영향 범위」 밖이다. tech-debt로 넘긴다.
+- **`addItem`의 미검증 `templateId`.** `Gamedata::ItemDataTable[id]`가 `operator[]`라 없는 키를
+  삽입한다. `addItem` 맨 위에 주석 처리된 `template_id() == 0` 검사가 그 흔적이다.
+  같은 종류의 버그지만 이번 영향 범위에 없다. tech-debt로 넘긴다.
+- **범위 검사를 `Room` 핸들러로 올리기.** 핸들러 5곳에 같은 코드가 복제된다.
+  `Inventory`가 자기 불변식을 지키는 쪽이 맞다.
 
 ## 증명
 
-<!-- 각 Phase 완료를 무엇으로 확인하는가. 실행 가능한 검사로 적는다.
-     미리 정한다. 작업이 끝난 뒤 채우지 않는다. -->
+빌드는 `build_solution_start(rootFolder="D:\Unreal\Projects\Project_MMORPG\Server",
+filesToRebuild=["Inventory.cpp", "InventoryTests.cpp"])` → `build_solution_state` 폴링으로 한다.
+`rebuild=true`를 쓰지 않고 UBT·MSBuild를 터미널로 돌리지 않는다. 솔루션 전체 빌드는
+`AuthServer.esproj` 때문에 항상 빨강이므로 범위를 좁힌다.
 
-- Phase A:
-- Phase B:
+실행은 셸에서 한다. `Server/Binary/`는 gitignore이므로 실행 전 빌드가 필수다.
 
-## Phase A — {묶음 이름}
+| Phase | 검사 | 통과 기준 |
+| --- | --- | --- |
+| A | `Server/Binary/Debug/GameServerTests.exe` | 종료 코드 0, 14개 유지 (`DISABLED_`는 안 돈다) |
+| A | `GameServerTests.exe --gtest_also_run_disabled_tests --gtest_filter=*Rejected*:*ReturnsNull*` | 크래시 또는 실패. **여기서 초록이면 테스트가 구멍을 못 짚은 것이다** |
+| B | `GameServerTests.exe` | 종료 코드 0, 18개 (14 + 4) |
+| C | `GameServerTests.exe` | 종료 코드 0, 19개 (18 + 대응표 1) |
+| C | `CATEGORIES`에서 한 줄을 주석 처리하고 빌드 | `static_assert` 실패로 빌드가 멈춘다. 확인 후 되돌린다 |
 
-- [ ] **A-1 {항목}** — {바뀌는 파일 경로}
+전 Phase 공통: `git diff`에 기존 `TEST_F`·`TEST_P` 본문 변경이 있으면 「반드시 지킬 것」 위반이다.
 
-## Phase B — {묶음 이름}
+## Phase A — 지금 죽는 것을 테스트로 고정한다 (빨강)
 
-- [ ] **B-1 {항목}** —
+`DISABLED_` 접두어를 붙인다. 널 역참조가 gtest 프로세스를 통째로 죽여 나머지 13개 결과까지
+못 내놓기 때문이다. `DISABLED_StackDoesNotExceedMaxStack`과 같은 처리다.
 
-<!-- ===== 커밋 2: 📝 plan: {작업} 실행 계획 ===== -->
-<!-- 브랜치를 파기 전, `main`에서 커밋한다. -->
+- [ ] **A-1 `DISABLED_RemoveWithUnknownSlotTypeIsRejected`** — `SLOT_TYPE_EQUIPPED`로
+  `removeItem`을 부르면 `false` — `Server/GameServerTests/InventoryTests.cpp`
+- [ ] **A-2 `DISABLED_RemoveWithOutOfRangeSlotIdIsRejected`** — `slot_id`에 `MAX_SLOTS`와 `-1` —
+  `Server/GameServerTests/InventoryTests.cpp`
+- [ ] **A-3 `DISABLED_GetSlotWithUnknownSlotTypeReturnsNull`** — `SLOT_TYPE_QUICK`으로 `GetSlot` —
+  `Server/GameServerTests/InventoryTests.cpp`
+- [ ] **A-4 `DISABLED_GetSlotWithOutOfRangeSlotIdReturnsNull`** — `slot_id`에 `MAX_SLOTS` —
+  `Server/GameServerTests/InventoryTests.cpp`
+- [ ] **A-5 빨강 확인 후 커밋** — `🚧 wip: 잘못된 슬롯 입력이 Inventory를 죽이는 테스트 추가 (빨강)`
+
+## Phase B — 슬롯 입력 검증 (초록)
+
+- [ ] **B-1 판정 두 개를 선언한다** — `ToItemType(Protocol::SlotType)`은
+  `optional<Protocol::ItemType>`, `IsValidSlotId(int32)`는 `0 <= slotId && slotId < MAX_SLOTS` —
+  `Server/GameServer/Game/System/Inventory.h`
+- [ ] **B-2 `removeItem`이 인덱싱 전에 거른다** — 실패 시 한국어 경고를 `cout`으로 남기고
+  `false`. 로그 문투는 `findFirstAvailableSlotId`를 따른다 —
+  `Server/GameServer/Game/System/Inventory.cpp`
+- [ ] **B-3 `GetSlot`이 인덱싱 전에 거른다** — 실패 시 `nullptr`. `at(slot_id)`를
+  `Mutable(slot_id)`로 바꾼다 — `at()`은 범위를 벗어나면 `CHECK` 실패로 프로세스를 죽인다 —
+  `Server/GameServer/Game/System/Inventory.cpp`
+- [ ] **B-4 `DISABLED_` 접두어 4개를 뗀다** — `Server/GameServerTests/InventoryTests.cpp`
+- [ ] **B-5 초록 확인 후 커밋** — `✅ done: Inventory 슬롯 입력 검증 추가 (초록)`
+
+호출자는 고치지 않는다. `Player.cpp:77`, `Player.cpp:92`, `Player.cpp:156`이 이미 반환값을
+검사한다.
+
+## Phase C — 표 3종을 단일 카테고리 테이블로 합친다
+
+- [ ] **C-1 `InventoryCategory` 테이블과 `static_assert`** — `SlotType`·`ItemType`·아이템 데이터
+  문자열을 한 배열에 묶는다. `static_assert(std::size(CATEGORIES) == Protocol::ItemType_ARRAYSIZE - 1)`
+  — `ITEM_TYPE_MISCELLANEOUS`가 마지막이라는 가정을 코드에 박지 않는다 —
+  `Server/GameServer/Game/System/Inventory.h`
+- [ ] **C-2 `ToItemType` 둘을 테이블에서 유도한다** — `SlotType` 판을 테이블 순회로 바꾸고
+  `string_view` 판을 새로 만든다. 빈 `dataKeys` 칸을 건너뛴다 —
+  `Server/GameServer/Game/System/Inventory.h`
+- [ ] **C-3 런타임 표 둘을 고정 배열로 바꾼다** — `inventorylookupMappings`와 `dirtyFlagsMappings`를
+  `ItemType` 인덱스 배열(`ItemType_ARRAYSIZE` 크기, 0번은 빈 칸)로. `GetDirtyFlags`의
+  `vector<bool>&` 반환 계약은 유지해 `DBRequestFunctions.cpp:1141`·`:1308`·`:1427`을 건드리지
+  않는다 — `Server/GameServer/Game/System/Inventory.{h,cpp}`
+- [ ] **C-4 생성자의 표 초기화 3종을 지운다** — `Server/GameServer/Game/System/Inventory.cpp`
+- [ ] **C-5 `addItem`의 문자열 조회를 바꾼다** — `nlohmann::json`의 암묵 변환 대신
+  `itemData[JsonProperty::Item::ItemType].get_ref<const std::string&>()`로 꺼내 `string_view`
+  비교에 넘긴다 — `Server/GameServer/Game/System/Inventory.cpp`
+- [ ] **C-6 `SlotTypeMapsToItemTypeAsProtoDefines`** — `ToItemType`의 세 대응을 직접 단언하고
+  `SLOT_TYPE_NONE`·`SLOT_TYPE_EQUIPPED`·`SLOT_TYPE_QUICK`이 `nullopt`인지 본다.
+  **왕복 테스트로는 대칭 오류를 못 잡으므로 이 항목이 Phase C의 핵심이다** —
+  `Server/GameServerTests/InventoryTests.cpp`
+- [ ] **C-7 `static_assert`가 실제로 무는지 손으로 1회 확인** — `CATEGORIES` 한 줄을 주석 처리해
+  빌드가 멈추는지 보고 되돌린다
+- [ ] **C-8 초록 확인 후 커밋** — `♻️ refactor: 인벤토리 매핑 표 3종을 단일 카테고리 테이블로 통합`
 
 ## 작업 중 기록
 
