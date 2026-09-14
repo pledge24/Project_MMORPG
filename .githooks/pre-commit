@@ -1,0 +1,25 @@
+#!/bin/sh
+# staged된 파일 중 GitHub 제한을 넘는 것이 있으면 커밋을 막는다.
+#
+# 설치:
+#   git config core.hooksPath .githooks
+#   chmod +x .githooks/pre-commit
+
+block=$((100 * 1024 * 1024))
+warn=$((50 * 1024 * 1024))
+status=0
+
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+	blob=$(git rev-parse ":$file" 2>/dev/null) || continue
+	size=$(git cat-file -s "$blob" 2>/dev/null) || continue
+	mb=$((size / 1024 / 1024))
+
+	if [ "$size" -gt "$block" ]; then
+		echo "차단: $file (${mb}MB) — GitHub 100MB 제한을 넘는다. Git LFS로 추적한다."
+		status=1
+	elif [ "$size" -gt "$warn" ]; then
+		echo "경고: $file (${mb}MB) — 50MB를 넘는다. push는 되지만 경고가 나온다."
+	fi
+done
+
+exit $status
