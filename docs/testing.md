@@ -1,6 +1,6 @@
 # 테스트 계층
 
-설계 근거는 ADR-0002(`docs/decisions/0002-l1-test-infra.md`). 여기엔 실행 경로만 적는다.
+실행 경로와 그 근거를 함께 적는다.
 
 ---
 
@@ -29,6 +29,38 @@
 
 ---
 
+## TDD가 도는 범위
+
+| 대상 | 러너 | 루프 |
+|---|---|---|
+| GameServer 순수 로직 | `GameServerTests.exe`, 종료 코드 | 가능 |
+| AuthServer 설정 | `npm test` | 가능. 가장 빠름 |
+| GameServer Room·DB·IOCP | 없음 | **불가.** JobQueue 비동기 |
+| AuthServer 라우터·인증 | 없음 | 가능하나 비쌈 (bcrypt+MSSQL+Redis) |
+| UE 클라 | 없음 | **불가.** L2는 에디터 필요, L3는 Live Coding 비호환 |
+
+불가 영역은 빌드 통과 + DummyClient 스모크가 하한이다.
+
+---
+
+## seam
+
+관찰 가능한 공개 경계. 여기서 테스트하면 내부를 전부 다시 써도 동작이 살아남는다.
+
+**합의하지 않은 seam에는 테스트를 쓰지 않는다.** 사람이 먼저 승인한다.
+
+| seam | 상태 |
+|---|---|
+| `Inventory` 공개 API | 존재 |
+| protobuf 메시지 왕복 | 존재. 리플렉션으로 자동 확장 |
+| 프로토콜 ID 목록 | 존재 |
+| 전투 판정 | 없음. `Room` 안에 얽혀 있다 |
+| `Gamedata` 테이블 로딩 | 미확인 |
+
+seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므로 별도 계획을 세운다.
+
+---
+
 ## 빌드는 Rider, 실행은 셸
 
 `execute_run_configuration`은 호출마다 Rider가 확인 대화상자를 띄우고, 그걸 끄는 수단은 Brave 모드(IDE 전역으로 셸·실행구성 확인 해제)뿐이라 쓰지 않는다.
@@ -44,6 +76,29 @@
 `.cpp`를 `Server/GameServerTests/GameServerTests.vcxproj`의 `<ItemGroup Label="테스트 소스">`에 등록해야 한다. **이 프로젝트는 파일 자동 수집을 하지 않는다.**
 
 등록을 잊으면 테스트가 조용히 안 돌아간다.
+
+---
+
+## 왜 이 구조인가
+
+### gtest는 소스 벤더링이다. vcpkg를 쓰지 않는다
+
+`Server/Libraries/googletest/`에 v1.18.0(커밋 `063de7e`) 소스를 넣고 `gtest-all.cc`와 `gtest_main.cc`를 테스트 프로젝트가 직접 컴파일한다. gmock은 넣지 않았다.
+
+**근거는 이 저장소가 이미 모든 서드파티를 벤더링한다는 점이다.** `Server/Libraries/include/`의 `google`, `nlohmann`, `sw`, `hiredis`가 전부 그렇다. gtest만 다른 메커니즘을 들이면 새 클론에 "vcpkg를 설치한다"는 단계가 하나 늘고, 그 단계는 문서에만 존재하게 된다. 벤더링은 툴셋·CRT 완전 일치(v145로 같이 컴파일), 머신 선행조건 없음, 네트워크 없음을 동시에 만족한다. 대가는 저장소 용량 1.1MB다.
+
+gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하는 예외 라이브러리다. manifest를 쓰더라도 `.vcxproj`에 수동 설정이 세 군데 붙는다.
+
+**재검토 조건**: 서버에 벤더링할 의존성이 3개 이상 더 늘거나, gtest 버전 갱신이 번거로워지는 시점.
+
+### 테스트 프로젝트가 GameServer의 `.cpp`를 직접 포함한다
+
+`GameServer`는 exe라 링크할 수 없다. `GameServerTests.vcxproj`(콘솔 exe)가 **`Main/GameServer.cpp`를 제외한 GameServer `.cpp` 전부**를 `ClCompile`로 포함한다. UE Low-Level Tests와 같은 패턴이다.
+
+"필요한 것만"이 아니라 "main 빼고 전부"인 이유는 둘이다.
+
+- `Inventory.cpp` → `Player.cpp` → `Room.cpp` → `DBRequestFunctions.cpp`로 전이 의존이 이어져 결국 대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 추가하는 루프는 비결정적이라 재현되지 않는다.
+- `Main/GameServer.cpp`는 gitignore된 `config.h`의 유일한 소비자다(실측). 이것만 빼면 테스트 타깃이 **비밀 없이 빌드된다.** CI 전제가 여기서 나온다.
 
 ---
 
@@ -68,8 +123,21 @@
 
 ## UE L1(Low-Level Tests)은 채택하지 않는다
 
-런처 설치본에서 빌드가 거부되고(프로젝트 내 `TargetType.Program` 타깃 문제 — `docs/build.md`의 엔진 제약 참조), 이 프로젝트는 소스 빌드 엔진을 쓰지 않기로 확정했다.
+**재검토 조건은 없다.** 폐기다. 근거는 둘이고 순서가 중요하다.
 
-손실은 작다 — L1으로 검증할 순수 로직은 전투 판정·인벤토리·레벨 테이블처럼 대부분 서버 소유이고 그쪽은 GoogleTest가 덮는다.
+**1. 프로젝트 제약.** 이 프로젝트는 런처 설치본 엔진만 쓴다. 소스 빌드는 선택지가 아니다(2026-08-27 확정). 아래 2번이 뒤집히더라도 결론은 그대로다.
 
-근거는 ADR-0002 결정 6.
+**2. 기술적 불가.** 설치본에서 LLT 타깃은 빌드 자체가 거부되고 설정으로 우회할 수 없다.
+
+표면의 거부는 두 줄이다.
+
+- `TargetRules.cs:2690-2693` — Program 타입 타깃이 `.uproject` 폴더 안에 있으면 조건 없이 `Unique`
+- `RulesAssembly.cs:677-680` — `Unique` + 설치본 엔진이면 예외를 던지고 중단
+
+여기까지만 보면 검사를 통과시키면 될 것처럼 읽힌다. 타깃에서 `BuildEnvironment = Shared`를 지정하면 실제로 저 분기를 건너뛰고, 커뮤니티 workaround도 그것이다. **그런데 LLT에는 통하지 않는다.** `TestTargetRules.SetupCommonProperties`가 `bCompileAgainstEngine = false`, `bCompileAgainstEditor = false`, `LinkType = Monolithic`, `STATS=0` 외 다수를 조건 없이 잡는데, 이 목록이 곧 "빌드 환경"의 정의다. 설치본이 주는 프리빌트 바이너리는 정반대 설정으로 컴파일돼 있다. `Shared`로 강제한다는 것은 UBT에게 그 바이너리를 재사용하라고 시키는 것이라, 검사를 통과시켜도 정의가 어긋난 산출물이 나온다.
+
+플래그로 우회할 성질이 아니라 설치본의 정의상 한계다. 유일한 해제 수단인 소스 빌드 엔진은 근거 1에 의해 선택지가 아니다.
+
+손실은 작다 — L1으로 검증할 순수 로직은 전투 판정·인벤토리·레벨 테이블처럼 대부분 서버 소유이고 그쪽은 GoogleTest가 덮는다. 클라에 남는 L1 대상은 이동 보간 수식 정도로 얇다.
+
+**`P1/Source/`에 Program 타깃을 추가하지 않는다.** `ProjectFileGenerator.cs:3176`이 프로젝트 파일 생성 시에도 같은 검증을 하므로, 두면 P1의 프로젝트 파일 재생성이 깨진다.

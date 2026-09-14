@@ -3,7 +3,7 @@
   <!-- GameServer의 L1 단위 테스트 타깃 (GoogleTest).
        GameServer는 exe라 링크할 수 없으므로 GameServer의 .cpp를 이 프로젝트가 직접 컴파일한다.
        단 Main\GameServer.cpp(main + gitignore된 config.h의 유일한 소비자)는 제외한다.
-       설계 근거: docs/decisions/2026-08-27-l1-test-infra.md -->
+       설계 근거: docs/testing.md -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>

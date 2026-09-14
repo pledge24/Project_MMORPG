@@ -39,23 +39,6 @@
           }
         ]
       }
-    ],
-    "SessionEnd": [
-      {
-        "matcher": "clear|resume|logout|prompt_input_exit|other",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "py",
-            "args": [
-              "-3",
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/archive_transcript.py"
-            ],
-            "timeout": 60,
-            "statusMessage": "transcript 아카이브 중"
-          }
-        ]
-      }
     ]
   }
 }

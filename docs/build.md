@@ -1,6 +1,6 @@
 # 빌드 및 실행
 
-`CLAUDE.md`에서 분리한 문서. 빌드 구성을 건드릴 때만 읽는다.
+빌드 구성을 건드릴 때만 읽는다.
 
 ---
 
@@ -65,7 +65,7 @@ npm start                # = node src/app.js
 
 **불가능한 것 두 가지**
 
-- **프로젝트 안의 `TargetType.Program` 타깃** — UBT가 이런 타깃을 무조건 고유 빌드 환경으로 잡고 설치본이 이를 거부한다. UE Low-Level Tests(Catch2)가 여기 걸려 채택하지 않았다 (ADR-0002 결정 6). 스탠드얼론 툴이 필요하면 `Server/DummyClient`처럼 UE 밖에서 만든다.
+- **프로젝트 안의 `TargetType.Program` 타깃** — UBT가 이런 타깃을 무조건 고유 빌드 환경으로 잡고 설치본이 이를 거부한다. UE Low-Level Tests(Catch2)가 여기 걸려 채택하지 않았다 (`docs/testing.md` 「UE L1(Low-Level Tests)은 채택하지 않는다」). 스탠드얼론 툴이 필요하면 `Server/DummyClient`처럼 UE 밖에서 만든다.
 - **엔진 소스 패치** — 엔진 버그를 만나면 프로젝트 코드 안에서 우회하는 수밖에 없다.
 
 **영향이 없는 것**: 게임 빌드·실행·패키징, 프로젝트 플러그인(플러그인 모듈은 프로젝트 쪽에서 컴파일된다), 엔진 코드 디버깅(설치본도 `Engine/Source`를 딸려 준다), 서버·인증 티어 전부.
@@ -118,6 +118,12 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는 `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(실측).
 
 **판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다.** 문서에 있다는 이유로 `build_solution_start`를 `build_project`로 되돌리지 말 것. 반대로 노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
+
+### analyze_calls는 이 C++ 솔루션에서 실패한다
+
+`analyze_calls`가 심볼을 찾지 못하고 `No callable symbol found for symbolFqn`을 돌려준다(2026-09-12 실측).
+
+**호출자 확인은 `search_text`로 대신한다.** UE RPC의 `_Implementation` 접미사에서 호출 사슬이 끊기는 문제는 그대로 남으므로, 검색어를 접미사 없는 이름과 붙은 이름 양쪽으로 잡는다.
 
 ### rootFolder
 

@@ -14,7 +14,7 @@
 `Libraries/Libs/**`). gtest만 별도 획득 메커니즘(vcpkg/NuGet)을 들이면 의존성 경로가 둘이 된다.
 또 프리빌트 바이너리는 툴셋(v145)·CRT 조합을 맞춰줘야 하는데, 소스를 같이 컴파일하면
 그 문제가 원천적으로 사라진다. 상세 근거와 기각안은
-`docs/decisions/2026-08-27-l1-test-infra.md`.
+`docs/testing.md`.
 
 ## 어떻게 쓰이나
 
