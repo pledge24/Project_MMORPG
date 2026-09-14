@@ -25,6 +25,20 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 - `docs/reports/` — 사람용 설명 자료
 - `docs/references/` — 2026-09에 걷어낸 하네스 v1의 이력. **현행 제약이 아니다.** 현행 제약은 위 문서들의 본문에 있다
 
+## Agent skills
+
+### 이슈 트래커
+
+이슈와 명세는 GitHub Issues에 있다 (`gh` CLI). 상세: `docs/agents/issue-tracker.md`
+
+### 트리아지 라벨
+
+다섯 개 표준 역할을 저장소 라벨 문자열에 그대로 매핑한다. 상세: `docs/agents/triage-labels.md`
+
+### 도메인 문서
+
+single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/domain.md`
+
 ## 도구 라우팅 — Rider MCP 전용 원칙
 
 - 심볼 탐색: `search_symbol`, `search_text`. **grep 금지** — UE RPC의 `_Implementation` 접미사에서
