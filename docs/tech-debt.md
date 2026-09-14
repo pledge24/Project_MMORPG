@@ -1,7 +1,7 @@
 # Tech Debt
 
 **지금 틀린 것만 담는다.** 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
-무엇을 어떻게 고쳤는지는 `docs/work/`와 커밋이 갖는다.
+무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
 ## 양식
 
@@ -16,7 +16,18 @@
 - **선행 조건** — (있을 때만) 무엇이 먼저 있어야 안전한가
 ```
 
-심각도에 맞는 절(「상」·「중」·「하」)에 넣는다. `scope: protocol`은 클라와 서버를 동시에 구속한다는 뜻이다.
+심각도에 맞는 절(「상」·「중」·「하」)에 넣는다.
+
+`scope` 값은 아래 여섯 가지다.
+
+| 값 | 구속 대상 |
+|---|---|
+| `client` | `P1/` 아래. UE 클라이언트 |
+| `server` | `Server/GameServer`, `Server/AuthServer` |
+| `protocol` | `.proto`와 생성 파이프라인. 클라와 서버를 동시에 구속한다 |
+| `shared` | 양쪽이 쓰는 공용 코드 |
+| `build` | 빌드 구성, 솔루션, 의존성, 테스트 인프라 |
+| `ops` | DB 스키마, 배포, 운영 |
 
 ---
 
@@ -243,6 +254,11 @@ Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId)
 - **왜 문제인가** — 둘 다 **클라가 보낸 값**으로 직행한다. 정상 클라는 안 보내지만, 신뢰 경계는
   거기가 아니다. 서버가 죽는다.
 - **어디로 갈 것인가** — `find()` 기반 조회 + `slotId` 범위 검사로 조기 반환.
+- **실측(2026-09-12)** — `SlotType`에 `SLOT_TYPE_EQUIPPED`(4)와 `SLOT_TYPE_QUICK`(5)이 있는데
+  `slotTypeToItemTypeMappings`에는 없다. 널 역참조가 가설이 아니라 실재하는 입력 경로다.
+- **고려했으나 채택하지 않음** — 거부 시 `false`를 반환하고 한국어 경고 로그를 남기되 세션은
+  유지하는 안을 2026-09에 설계했다가 폐기했다. 설계 전문은
+  `docs/references/work/2026-09-10-inventory-cleanup.md`.
 
 ### 인벤토리 매핑 3종이 손으로 유지된다
 `[심각도: 중] [난이도: 중] [scope: server]` · `Server/GameServer/Game/System/Inventory.cpp` 생성자
@@ -259,6 +275,9 @@ Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId)
   아이템이 다른 인벤토리로 샌다. 두 값 모두 유효한 enum이라 컴파일러가 아무 말도 하지 않는다.
 - **어디로 갈 것인가** — `SlotType ↔ ItemType`을 한 곳에서 유도하게 만든다(둘의 정의가 1:1이므로
   단일 변환 함수 + 컴파일 타임 검증이 가능하다).
+- **고려했으나 채택하지 않음** — 표 셋을 단일 `constexpr` 카테고리 테이블로 합치고 누락을
+  `static_assert`가 빌드에서 막게 하는 안을 2026-09에 설계했다가 폐기했다. 설계 전문은
+  `docs/references/work/2026-09-10-inventory-cleanup.md`.
 - **그때까지의 그물** — `Server/GameServerTests/InventoryTests.cpp`의 슬롯 타입 왕복 테스트가
   세 타입을 전부 검사하므로, 표가 다시 어긋나면 테스트가 먼저 잡는다.
 
