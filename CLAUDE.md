@@ -96,6 +96,41 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 - **클라/서버 클래스 계층이 대칭이다.** 게임플레이 변경은 클라 + 서버 + 프로토콜,
   **3곳 수정을 기본으로 생각할 것.**
 
+## Git 작업 규칙
+
+Conventional Commits와 gitmoji를 기준으로 하고, 아래에 적힌 차이만 따른다.
+
+### 커밋
+
+형식: `<gitmoji> <type>: <제목>`
+
+예: `✨ feat: psmux 세션 자동 복구 옵션 추가`
+
+- 제목을 한국어 명령형으로 쓴다. `추가했음`처럼 과거형을 쓰지 않는다.
+- 이모지 매핑은 gitmoji 표준을 따른다. (참고: https://gitmoji.dev)
+- type은 Conventional Commits의 11개만 쓴다.
+
+### 브랜치
+
+형식: `<카테고리>/<이슈번호>-<요약>`
+
+예: `feature/APP-123-add-login-button`
+
+- 카테고리는 `feature`, `bugfix`, `hotfix`, `refactor`, `release`, `docs`, `chore` 중 하나를 쓴다.
+- `bugfix`는 개발 중 발견한 버그에, `hotfix`는 운영 환경 긴급 수정에 쓴다.
+- 이슈 번호가 없으면 생략한다.
+
+### PR
+
+- 제목을 커밋 메시지와 같은 형식으로 쓴다.
+— squash merge를 쓰므로 PR 제목이 커밋 메시지가 된다.
+- 본문은 `.github/pull_request_template.md`의 절 구성을 채운다.
+- `gh pr create`에 `--body`가 아니라 `--body-file`을 쓴다.
+— `--body`에 여러 줄을 넣으면 줄바꿈과 백틱이 깨진다.
+- 직접 실행해 확인한 것만 「검증」에 적는다. 실행하지 않았으면 `없음`이라고 적는다.
+- 「확인하지 못한 것」과 「머지 시 주의」를 비워두지 않는다. 없으면 `해당 없음`이라고 적는다.
+- 「먼저 볼 곳」에 확신이 낮은 판단을 함께 적는다.
+
 ## 컨벤션
 
 **인코딩 — `.proto`와 `.bat`은 cp949, 나머지는 전부 UTF-8.** `.gitattributes`와 두 개의
@@ -104,13 +139,6 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 
 **문서 파일명은 소문자와 대시**를 쓴다(`tech-debt.md`). 예외는 루트의 관례 파일과 각 폴더의
 진입점뿐이다 — `CLAUDE.md`, `README.md`, `docs/ARCHITECTURE.md`.
-
-**커밋**은 gitmoji + 한국어 설명: `<emoji> <type>: <설명>` — `🚧 wip:`, `✅ done:`, `♻️ refactor:`,
-`🧹 clean:`, `🎉 add:`, `🔥 remove:`, `📝 docs:`. wip 커밋에는 빌드 상태를 덧붙이는 경우가 많다.
-기능 브랜치는 `#<issue>-<Topic>` 이름을 쓰고 PR로 `dev`에 머지한다.
-
-**git 추적**: 이 저장소는 `CLAUDE.md`와 `.claude/`, `docs/`를 추적한다. 루트 `.gitignore`가 무시하는
-것은 훅 차단 카운터와 `custom-harness/` 둘뿐이다.
 
 **주석과 로그는 한국어로 작성한다.** 코드를 수정할 때 주변 언어에 맞출 것.
 
