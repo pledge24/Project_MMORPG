@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 15개 (높음 3 · 중간 10 · 낮음 2)
+항목 14개 (높음 3 · 중간 9 · 낮음 2)
 
 ## 작성 방법
 
@@ -150,28 +150,6 @@ Blueprints/Props/{BP_BoundaryWall,BP_Portal,BP_Shop,WBP_NameTag}
 **유지보수 어려움** · **변경 영향 범위 확대** — 같은 이름의 BP가 콘텐츠 브라우저 세 곳에 보여
 어느 것이 실물인지 알 수 없다. `BP_MyPlayer`, `BP_Portal`, `BP_Shop`, `WBP_NameTag`가 각각
 세 곳에 나타난다. 스텁을 실물로 착각해 열면 빈 에셋을 편집하게 된다.
-
-## `Server.sln` 빌드가 항상 실패한다 — 원인은 C++가 아니다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · build
-> 위치: `Server/AuthServer/AuthServer.esproj`
-> 등록일: 2026년 8월 19일
-
-솔루션 전체 빌드 결과가 `buildIsSuccess: false`다. Rider의 Problems 뷰는 비어 있고 진단 출력도
-없다. 빌드 로그 실물에서 확인한 유일한 에러는 아래와 같다.
-
-```
-AuthServer.esproj -> Microsoft.NuGet.targets(198,5): error :
-  Your project does not reference ".NETCoreApp,Version=v6.0" framework.
-```
-
-C++ 3개 프로젝트는 정상이다. `DummyClient.cpp`·`GameServer.cpp`·`Inventory.cpp`·`JobQueue.cpp`
-범위 빌드가 전부 성공했고 `Binary/Debug/DummyClient.exe`가 재생성됐다. DummyClient 빌드는
-2026-08-11 커밋 `286eee9`에서 이미 복구됐고 이번 실측으로 재확인했다.
-
-### 영향
-
-**변경 비용 증가** · **테스트 어려움** — 매 빌드가 빨간불이라 진짜 에러가 묻힌다.
-`build_solution_state`가 "실패"만 돌려주고 원인을 주지 않으므로 빌드 검증을 자동화할 수 없다.
 
 ## 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
