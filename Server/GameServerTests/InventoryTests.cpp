@@ -201,3 +201,124 @@ TEST_F(InventoryTest, DISABLED_StackDoesNotExceedMaxStack)
     ASSERT_TRUE(second->has_item()) << "초과분이 다음 슬롯으로 넘어가지 않았다";
     EXPECT_EQ(first->item().count() + second->item().count(), BUY_COUNT) << "수량이 유실됐다";
 }
+
+/*--------------------------------------------------------------
+    신뢰 경계 밖에서 온 슬롯 입력 (issue #25)
+
+    removeItem과 GetSlot이 받는 SlotType과 slot_id는 클라이언트가 보낸 값이
+    그대로 들어온다. 매핑 표에 없는 SlotType이나 범위 밖 slot_id가 와도
+    프로세스가 죽지 않고 정의된 실패로 거부돼야 한다.
+
+    SLOT_TYPE_EQUIPPED(4)와 SLOT_TYPE_QUICK(5)은 프로토콜에 정의돼 있으면서
+    slotTypeToItemTypeMappings에는 없다. 가설이 아니라 실재하는 입력 경로다.
+---------------------------------------------------------------*/
+
+namespace
+{
+    // 프로토콜에는 있으나 slotTypeToItemTypeMappings에는 없는 슬롯 타입들.
+    constexpr Protocol::SlotType UNKNOWN_SLOT_TYPES[] = {
+        Protocol::SlotType::SLOT_TYPE_NONE,
+        Protocol::SlotType::SLOT_TYPE_EQUIPPED,
+        Protocol::SlotType::SLOT_TYPE_QUICK};
+
+    constexpr int32 LAST_SLOT_ID = static_cast<int32>(MAX_SLOTS) - 1;
+    constexpr int32 OUT_OF_RANGE_SLOT_IDS[] = {
+        -1, static_cast<int32>(MAX_SLOTS), static_cast<int32>(MAX_SLOTS) + 1};
+}
+
+TEST_F(InventoryTest, RemoveWithUnknownSlotTypeIsRejected)
+{
+    Protocol::Slot removed;
+
+    for (Protocol::SlotType unknownType : UNKNOWN_SLOT_TYPES)
+    {
+        Protocol::Slot request;
+        request.set_slot_id(0);
+        request.set_type(unknownType);
+
+        EXPECT_FALSE(player->inventory->removeItem(request, &removed, 1))
+            << "매핑 표에 없는 SlotType(" << unknownType << ") 제거가 거부되지 않았다";
+    }
+}
+
+TEST_F(InventoryTest, RemoveWithOutOfRangeSlotIdIsRejected)
+{
+    Protocol::Slot removed;
+
+    for (int32 outOfRangeSlotId : OUT_OF_RANGE_SLOT_IDS)
+    {
+        Protocol::Slot request;
+        request.set_slot_id(outOfRangeSlotId);
+        request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
+
+        EXPECT_FALSE(player->inventory->removeItem(request, &removed, 1))
+            << "범위 밖 slot_id(" << outOfRangeSlotId << ") 제거가 거부되지 않았다";
+    }
+
+    // 경계 안쪽은 그대로 동작해야 한다. 거부가 유효 범위까지 먹으면 안 된다.
+    Protocol::Item gearInstance;
+    gearInstance.set_template_id(GEAR_TEMPLATE_ID);
+
+    Protocol::Slot added;
+    ASSERT_TRUE(player->inventory->addItem(&added, gearInstance, 1, LAST_SLOT_ID));
+
+    Protocol::Slot lastSlotRequest;
+    lastSlotRequest.set_slot_id(LAST_SLOT_ID);
+    lastSlotRequest.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
+    EXPECT_TRUE(player->inventory->removeItem(lastSlotRequest, &removed, 1))
+        << "마지막 유효 슬롯까지 거부됐다";
+}
+
+TEST_F(InventoryTest, GetSlotWithUnknownSlotTypeReturnsNull)
+{
+    for (Protocol::SlotType unknownType : UNKNOWN_SLOT_TYPES)
+    {
+        EXPECT_EQ(player->inventory->GetSlot(unknownType, 0), nullptr)
+            << "매핑 표에 없는 SlotType(" << unknownType << ") 조회가 널을 반환하지 않았다";
+    }
+}
+
+TEST_F(InventoryTest, GetSlotWithOutOfRangeSlotIdReturnsNull)
+{
+    for (int32 outOfRangeSlotId : OUT_OF_RANGE_SLOT_IDS)
+    {
+        EXPECT_EQ(player->inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, outOfRangeSlotId), nullptr)
+            << "범위 밖 slot_id(" << outOfRangeSlotId << ") 조회가 널을 반환하지 않았다";
+    }
+
+    // 경계 안쪽은 그대로 동작해야 한다. 거부가 유효 범위까지 먹으면 안 된다.
+    EXPECT_NE(player->inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, LAST_SLOT_ID), nullptr)
+        << "마지막 유효 슬롯 조회까지 거부됐다";
+}
+
+// 거부가 인벤토리를 건드리지 않아야 한다. 같은 입력을 두 번 넣어 판정이 그대로인지 보고,
+// 그 뒤 정상 왕복이 되는지로 확인한다.
+// (표에 키가 삽입됐는지 자체는 공개 인터페이스로 관측할 수 없다 — 삽입되더라도 판정은 같다.
+//  삽입을 막는 것은 ToItemType이 find를 쓴다는 사실이고, 여기서 보는 것은 그 결과인 동작이다.)
+TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
+{
+    constexpr Protocol::SlotType UNKNOWN_TYPE = Protocol::SlotType::SLOT_TYPE_QUICK;
+
+    Protocol::Slot request;
+    request.set_slot_id(0);
+    request.set_type(UNKNOWN_TYPE);
+
+    Protocol::Slot removed;
+    for (int32 attempt = 0; attempt < 2; attempt++)
+    {
+        EXPECT_FALSE(player->inventory->removeItem(request, &removed, 1))
+            << attempt << "번째 시도에서 판정이 달라졌다";
+        EXPECT_EQ(player->inventory->GetSlot(UNKNOWN_TYPE, 0), nullptr)
+            << attempt << "번째 조회에서 판정이 달라졌다";
+    }
+
+    // 거부가 정상 경로를 망가뜨리지 않았는지 왕복으로 확인한다.
+    Protocol::Slot added;
+    ASSERT_TRUE(player->inventory->addItem(&added, GEAR_TEMPLATE_ID, 1));
+
+    Protocol::Slot validRequest;
+    validRequest.set_slot_id(added.slot_id());
+    validRequest.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
+    EXPECT_TRUE(player->inventory->removeItem(validRequest, &removed, 1))
+        << "거부된 요청이 정상 경로를 망가뜨렸다";
+}

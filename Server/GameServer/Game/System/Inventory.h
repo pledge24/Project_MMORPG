@@ -30,6 +30,12 @@ public:
     weak_ptr<Player> _player;
 
 private:
+    /* 신뢰 경계 밖에서 온 슬롯 입력 판정 */
+    // 매핑 표에 없는 SlotType이면 nullopt. 표를 바꾸지 않고 조회만 한다.
+    optional<Protocol::ItemType> ToItemType(Protocol::SlotType slotType) const;
+    static bool IsValidSlotId(int32 slotId) { return slotId >= 0 && slotId < MAX_SLOTS; }
+
+private:
     unordered_map<Protocol::ItemType, RepeatedPtrField<Protocol::Slot>*> inventorylookupMappings;
     unordered_map<Protocol::ItemType, vector<bool>> dirtyFlagsMappings;
 
