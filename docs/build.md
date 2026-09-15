@@ -16,6 +16,20 @@
 
 ---
 
+## 새로 클론했을 때
+
+**git 훅을 켠다.** 저장소 루트에서 한 번 실행한다.
+
+```
+git config core.hooksPath .githooks
+```
+
+`.githooks/pre-commit`이 GitHub의 100MB 제한을 넘는 파일의 커밋을 막고, 50MB를 넘으면 경고한다. `core.hooksPath`는 로컬 git config에 들어가므로 커밋되지 않는다. **클론마다 한 번씩 직접 설정해야 한다.** 설정하지 않으면 훅이 없는 것과 같고, 그 상태에서는 경고도 실패도 남지 않으므로 누락을 알아챌 신호가 없다. 대용량 파일이 히스토리에 들어간 뒤에 되돌리려면 히스토리를 다시 써야 한다.
+
+게임 서버를 빌드하려면 `Server/GameServer/config.h`도 직접 만들어야 한다. 아래 「게임 서버」를 볼 것.
+
+---
+
 ## 게임 서버
 
 `Server/Server.sln` (x64)에는 C++ 3개(`ServerCore` · `GameServer` · `DummyClient`)와 파이썬 생성기 2개(`*.pyproj`)만 들어 있다.
