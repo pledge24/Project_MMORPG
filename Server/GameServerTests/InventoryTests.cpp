@@ -151,8 +151,9 @@ TEST_F(InventoryTest, FailedRemoveDoesNotMarkSlotDirty)
     Protocol::Slot removed;
     ASSERT_FALSE(player->inventory->removeItem(request, &removed, 1)) << "빈 슬롯 제거는 실패해야 한다";
 
-    const vector<bool>& flags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
-    EXPECT_FALSE(flags[0]) << "실패한 제거가 슬롯을 더티로 만들었다";
+    const vector<bool>* flags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+    ASSERT_NE(flags, nullptr) << "더티 플래그 표에 소비 아이템 타입이 없다";
+    EXPECT_FALSE((*flags)[0]) << "실패한 제거가 슬롯을 더티로 만들었다";
 }
 
 // 빈 슬롯에 제거를 시도한 것만으로 그 슬롯이 쓸 수 없게 되면 안 된다.
@@ -344,15 +345,19 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
     ---- 관측 수단과 그 한계 ----
 
     키가 표에 있는지는 공개 인터페이스로만 관측한다. 내부 상태를 들여다보지 않는다.
-    다만 두 표를 각각 따로 들여다볼 수는 없으므로, 관측이 무엇을 보장하는지 적어 둔다.
+    표는 셋이고 관측 경로가 표마다 다르므로, 무엇이 무엇을 보장하는지 적어 둔다.
 
     GetSlot은 슬롯 타입 표와 조회 표를 잇달아 find로 거친다. 그래서 유효한 slot_id에
     대한 반환값은 **두 표를 합친 결과**다. 널이 아니면 두 표에 키가 다 있다는 뜻이고,
     널이면 둘 중 적어도 하나에 없다는 뜻이다. 조회 표 쪽은 addItem으로도 관측된다 —
     addItem은 아이템 타입을 정한 뒤 조회 표를 find로 확인하고 없으면 거짓을 돌려준다.
 
-    여기서 못 잡는 변경이 둘 남는다. 공개 인터페이스에 관측 경로가 없어 이 티켓에서는
-    메우지 않는다. 새 seam을 만드는 일은 #24가 범위 밖으로 둔 리팩토링이다.
+    더티 플래그 표는 #30에서 GetDirtyFlags가 참조 대신 포인터를 돌려주게 되면서
+    단독으로 관측된다. 널이면 그 표에 키가 없다는 뜻이고, 다른 두 표가 섞이지 않는다.
+    아래 ItemTypeLookupKeySetMatchesDeclaration이 이 경로로 세 번째 표까지 고정한다.
+
+    조회 표와 슬롯 타입 표에서 못 잡는 변경이 둘 남는다. 공개 인터페이스에 관측 경로가
+    없어 이 티켓에서는 메우지 않는다. 새 seam을 만드는 일은 #24가 범위 밖으로 둔 리팩토링이다.
       - 슬롯 타입 표에 {SLOT_TYPE_QUICK, ITEM_TYPE_NONE} 같은 항목이 들어와도
         조회 표에 ITEM_TYPE_NONE이 없어 GetSlot은 여전히 널이다.
       - 조회 표에 ITEM_TYPE_NONE이 들어와도 거기에 닿는 슬롯 타입이 없고,
@@ -517,7 +522,18 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
 
         // 어느 아이템 타입으로 들어갔는지는 더티 플래그가 어느 표에 찍혔는지로 확인한다.
         // 이것까지 봐야 관측한 키가 선언한 아이템 타입이라고 말할 수 있다.
-        const vector<bool>& dirtyFlags = player->inventory->GetDirtyFlags(storedCase.itemType);
-        EXPECT_TRUE(dirtyFlags[added.slot_id()]) << "선언한 아이템 타입이 아닌 저장소에 아이템이 들어갔다";
+        const vector<bool>* dirtyFlags = player->inventory->GetDirtyFlags(storedCase.itemType);
+        ASSERT_NE(dirtyFlags, nullptr) << "더티 플래그 표에 이 아이템 타입이 없다";
+        EXPECT_TRUE((*dirtyFlags)[added.slot_id()]) << "선언한 아이템 타입이 아닌 저장소에 아이템이 들어갔다";
+    }
+
+    // 더티 플래그 표를 반대 방향으로도 본다. 제외하기로 선언한 아이템 타입이 표에
+    // 들어와 있으면 여기서 걸린다. 위 두 EXPECT는 "있어야 할 키가 있다"만 보므로
+    // 이 검사가 있어야 키 집합이 양쪽에서 고정된다.
+    for (Protocol::ItemType excludedItemType : EXCLUDED_ITEM_TYPES)
+    {
+        EXPECT_EQ(player->inventory->GetDirtyFlags(excludedItemType), nullptr)
+            << Protocol::ItemType_Name(excludedItemType)
+            << " 가 더티 플래그 표에 들어왔다. 의도한 변경이라면 위 기대 집합에서 자리를 옮겨라";
     }
 }

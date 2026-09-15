@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 22개 (높음 3 · 중간 12 · 낮음 7)
+항목 21개 (높음 3 · 중간 12 · 낮음 6)
 
 ## 작성 방법
 
@@ -381,25 +381,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **새 기능 개발 지연** · **버그 발생 가능성 증가** — `maxStack: 10`인 소모품을 15개 구매하면 한
 슬롯에 15개가 쌓인다. `--gtest_also_run_disabled_tests`로 실행해 빨강임을 확인했다. 스택 상한을
 전제하는 기능(거래, 창고, 제작)은 이 상태 위에 올릴 수 없다.
-
-## `Inventory::GetDirtyFlags`가 없는 키를 표에 삽입한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/System/Inventory.h` (`GetDirtyFlags`)
-> 등록일: 2026년 9월 15일
-
-```cpp
-vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMappings[itemType]; }
-```
-
-`unordered_map::operator[]`는 없는 키를 조회하면 기본값을 삽입한다. 표에 없는 `ItemType`이 오면
-빈 `vector`를 표에 넣고 그 참조를 돌려주므로, 호출자가 인덱싱하면 범위 밖 접근이다.
-`removeItem`과 `GetSlot`은 `find`로 바꿨지만 이 함수는 그대로다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 호출자 세 곳(`DBRequestFunctions.cpp` 1141·1308·1427줄)이 전부
-`ITEM_TYPE_GEAR`·`ITEM_TYPE_CONSUMABLE`·`ITEM_TYPE_MISCELLANEOUS` 리터럴을 넘기므로 지금은
-피해가 없다. 인자가 런타임 값으로 바뀌는 순간 터진다.
 
 ## `Users.user_id INT` vs `Characters.user_id BIGINT`
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · ops

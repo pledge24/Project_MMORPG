@@ -20,7 +20,18 @@ public:
 
     int32 findFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
 
-    vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMappings[itemType]; }
+    // 매핑 표에 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다.
+    // operator[]는 없는 키를 조회하면 빈 vector를 표에 삽입하므로,
+    // 그 참조를 호출자가 인덱싱하면 범위 밖 접근이 된다.
+    vector<bool>* GetDirtyFlags(Protocol::ItemType itemType)
+    {
+        auto dirtyFlagsIt = dirtyFlagsMappings.find(itemType);
+        if (dirtyFlagsIt == dirtyFlagsMappings.end())
+            return nullptr;
+
+        return &dirtyFlagsIt->second;
+    }
+
     Protocol::Slot* GetSlot(Protocol::SlotType type, int32 slot_id);
     
     void ClearDirtyFlags();
