@@ -10,10 +10,13 @@
 |---|---|---|---|
 | 게임 서버 L1 (GoogleTest) | `build_solution_start(rootFolder=.../Server)` → `build_solution_state` | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
 | 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
+| 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
 
-**판정은 종료 코드다.** 0이 아니면 실패다.
+**판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`와 `npm run lint`가 **둘 다** 0이어야 완료다.
 
 테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
+
+정적 검사는 ESLint 9다. flat config(`Server/AuthServer/eslint.config.js`)가 `@eslint/js`의 recommended를 쓰고, `node_modules/`와 `obj/`를 제외한다. `obj/`는 `.esproj`가 남긴 NuGet 복원 산출물이라 소스가 아니다.
 
 ### 현재 커버리지
 
