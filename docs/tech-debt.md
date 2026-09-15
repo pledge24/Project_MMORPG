@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 15개 (높음 3 · 중간 10 · 낮음 2)
+항목 15개 (높음 3 · 중간 11 · 낮음 1)
 
 ## 작성 방법
 
@@ -72,26 +72,32 @@
 
 ---
 
-## 네트워크 수신 펌프가 레벨 블루프린트에 있다
+## 인게임 진입 직후 캐릭터가 스스로 죽는다
 > **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/P1GameInstance.cpp` 97줄 · `P1/Content/Maps/`
-> 등록일: 2026년 8월 19일
+> 위치: `P1/Content/Blueprints/Creatures/Monster/` · `P1/Content/Blueprints/UI/InGame/WBP_DeathScreen.uasset`
+> 등록일: 2026년 9월 16일
 
-`UP1GameInstance::HandleRecvPackets()`를 호출하는 C++ 코드가 없다. 호출부는 레벨 스크립트
-블루프린트의 `ReceiveTick` 안이고, 5개 맵 중 3개에만 있다(UE 에디터 실측).
+인게임 맵에 진입하고 약 3초 뒤에 사망 화면이 뜬다. **서버는 `S_DIE`(1034)도 `S_HIT`(1023)도
+보내지 않는다.** 2026년 9월 16일 실측에서 그 세션이 받은 패킷은 아래가 전부다.
 
-| 맵 | 레벨 BP | 펌프 |
+| 패킷 | ID | 건수 |
 |---|---|---|
-| `InGameMap` `LoginMap` `TestMap` | 있음 | 돈다 |
-| `TownMap` `CrashTestMap` | 레벨 스크립트 BP 자체가 없음 | 돌지 않는다 |
+| `S_MOVE` | 1020 | 38 |
+| `S_SPAWN` | 1017 | 2 |
+| `S_LOGIN` | 1003 | 2 |
+| `S_ENTER_ROOM` `S_ENTER_GAME` `S_CREATE_CHARACTER` | 1016 1009 1005 | 각 1 |
 
-프레임워크가 강제하지 않는 규약이 5곳에 손으로 복제돼 있다.
+그럼에도 `WBP_DeathScreen_C_0`이 생성됐다. 즉 클라이언트가 서버 판정 없이 혼자 사망으로
+결론지었다. 전투 판정과 사망 화면이 모두 블루프린트에 있어 C++에서 추적할 수 없다.
+
+S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로토버프가 기본값 필드를 생략하므로,
+이는 좌표가 전부 0인 이동이 오갔다는 뜻이다.
 
 ### 영향
 
-**버그 발생 가능성 증가** · **동일한 문제의 반복** — 새 레벨을 추가하면 네트워킹이 에러 없이
-조용히 죽는다. `TownMap`과 `CrashTestMap`에서 이미 그 상태다. 로그도 경고도 남지 않으므로
-원인을 레벨 BP까지 따라가기 전에는 패킷 처리 코드를 먼저 의심하게 된다.
+**버그 발생 가능성 증가** · **테스트 어려움** — 인게임을 3초 넘게 유지할 수 없어 전투·인벤토리·
+상점 등 인게임 기능 전체를 손으로 확인할 수 없다. 서버 로그와 대조해도 원인이 클라 블루프린트
+안에 있어 좁혀지지 않는다.
 
 ## `Room` / `DBRequestFunctions` 갓 클래스
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 모듈 · server
@@ -131,32 +137,6 @@ UE 에디터로 실측한 결과는 아래 두 가지다.
 (`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
 잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
 
-## 리다이렉터 스텁 18개가 커밋되어 있다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 모듈 · client
-> 위치: `P1/Content/Blueprints/`
-> 등록일: 2026년 8월 19일
-
-폴더를 재편한 뒤 "Fix Up Redirectors"를 돌리지 않아 `ObjectRedirector` 에셋이 남았다.
-
-```
-Blueprints/{BP_BoundaryWall,BP_GameInstance,BP_GameMode,BP_LoginMenuMode,BP_MyPlayer,BP_Portal,BP_Shop}
-Blueprints/Creatures/{BP_MyPlayer,BP_Player,BP_RangedMonster}
-Blueprints/LevelObject/{BP_MonsterSpawner,WBP_NameTag,WBP_NameTag_C,Default__WBP_NameTag_C}
-Blueprints/Props/{BP_BoundaryWall,BP_Portal,BP_Shop,WBP_NameTag}
-```
-
-### 영향
-
-**유지보수 어려움** · **변경 영향 범위 확대** — 같은 이름의 BP가 콘텐츠 브라우저 세 곳에 보여
-어느 것이 실물인지 알 수 없다. `BP_MyPlayer`, `BP_Portal`, `BP_Shop`, `WBP_NameTag`가 각각
-세 곳에 나타난다. 스텁을 실물로 착각해 열면 빈 에셋을 편집하게 된다.
-
-### 선행 조건
-
-**UE 에디터에서 "Fix Up Redirectors"를 돌려야 한다.** 에이전트가 UE MCP를 쓰려면 Rider에 P1
-프로젝트가 열려 있어야 하는데, 2026년 9월 16일 실측으로는 `Server`만 열려 있어 `rootFolder`로
-P1을 지정하면 거부됐다. 착수하려면 사람이 먼저 P1을 열고 에디터를 띄운다.
-
 ## 로그인 라우터만 에러를 로그 없이 삼킨다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
 > 위치: `Server/AuthServer/src/routes/login.router.js` 64~66줄
@@ -181,6 +161,28 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 
 **유지보수 어려움** · **테스트 어려움** — 로그인은 가장 자주 도는 경로인데 500이 나면 원인을
 좁힐 방법이 없다. 세 의존성 중 무엇이 죽었는지 알려면 서버에 붙어 재현해야 한다.
+
+## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
+> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/ClientPacketHandler.cpp` (핸들러 23개 중 20개)
+> 등록일: 2026년 9월 16일
+
+`Handle_S_*` 23개 중 20개가 `Cast<UP1GameInstance>(GWorld->GetGameInstance())`로 시작한다.
+자기 자신의 월드를 인자로 받지 않고 전역에서 끌어온다.
+
+그래서 핸들러는 **호출되는 시점의 `GWorld`가 게임 월드일 때만** 동작한다. 레벨 스크립트
+블루프린트가 펌프를 부르던 동안에는 그 조건이 우연히 성립했다. 월드 틱 안에서 호출됐기
+때문이다. 펌프를 코어 티커로 옮기자 조건이 깨졌고, 에디터에서 `GWorld`가 에디터 월드를 가리켜
+20개 핸들러가 전부 첫 줄에서 탈락했다(2026년 9월 16일 실측).
+
+지금은 `UP1GameInstance::TickRecvPump`가 펌프 호출 구간에만 `GWorld`를 게임 월드로 바꿔
+우회한다. 전역을 직접 대입하는 코드라 그 자체가 부채다.
+
+### 영향
+
+**변경 영향 범위 확대** · **테스트 어려움** — 패킷 처리를 어디에서 부르느냐가 핸들러의 동작을
+바꾼다. 호출 지점을 옮길 때마다 20곳이 함께 깨지고, 컴파일러는 아무것도 잡지 못한다. 월드를
+인자로 받지 않으므로 핸들러 단위 테스트도 세울 수 없다.
 
 ## 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
@@ -253,6 +255,33 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 **변경 영향 범위 확대** · **버그 발생 가능성 증가** — 이동 동기화를 고칠 때 한쪽만 고치는 사고가
 나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
 드러난다.
+
+## 소켓과 세션이 해제되지 않는다
+> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
+> 위치: `P1/Source/P1/P1GameInstance.cpp` 52~100줄 · `P1/Source/P1/ClientPacketHandler.cpp` 100~107줄
+> 등록일: 2026년 9월 16일
+
+`Socket`과 `GameServerSession` 두 멤버에 `nullptr`을 대입하는 코드가 모듈 전체에 하나도 없다
+(2026년 9월 16일 실측). 연결을 끊는 경로가 아래처럼 어디에서도 멤버를 비우지 않는다.
+
+| 위치 | 하는 일 | 비우는가 |
+|---|---|---|
+| `DisconnectFromGameServer()` | `C_LEAVE_GAME` 패킷 전송 | 아니다 |
+| `Handle_S_LEAVE_GAME` | 지역 변수로 받아 `Socket->Close()` | 아니다 |
+| `PacketSession::Disconnect()` | 송수신 워커 스레드만 정리 | 소켓을 건드리지 않는다 |
+
+`ClientPacketHandler.cpp` 102~104줄에 `DestroySocket`과 `Socket = nullptr`이 주석으로 남아
+있다. 주석을 풀어도 지역 변수에 대입하는 형태라 멤버는 그대로다.
+
+`ConnectToGameServer()`는 기존 소켓을 검사하지 않고 매번 새로 만든다. 연결에 실패하면 방금 만든
+소켓을 닫지도 파괴하지도 않는다.
+
+### 영향
+
+**버그 발생 가능성 증가** · **변경 영향 범위 확대** — 재접속할 때마다 소켓이 샌다. 끊긴 뒤에도
+`Socket`이 유효한 포인터로 남아 `Socket == nullptr` 가드가 통과하므로, 닫힌 소켓에 계속 쓰기를
+시도한다. 수명을 고치려면 `P1GameInstance`와 `ClientPacketHandler`와 `PacketSession` 셋을 함께
+봐야 한다.
 
 ## CI가 없다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
@@ -380,21 +409,3 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 저장소의 SQL 스크립트 갱신과 함께만 실행하도록 정한다. 대상이 서로 다른 두 LocalDB 인스턴스에
 걸쳐 있다는 점도 함께 본다. UserDB는 `(localdb)\MSSQLLocalDB`, GameDB는 `(localdb)\ProjectModels`다.
 난이도가 낮다고 적혀 있지만 그것은 수정 범위의 크기이지 착수 조건의 무게가 아니다.
-
-## `WBP_Nameplate_Old` 데드 에셋
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Content/Blueprints/UI/InGame/WBP_Nameplate_Old.uasset`
-> 등록일: 2026년 8월 19일
-
-부모는 `NameplateWidget`인데 구현된 이벤트도 변수도 없다(에디터 실측).
-
-### 영향
-
-**유지보수 어려움** — 이름이 `_Old`라 현행 네임플레이트 위젯과 헷갈린다. 빈 에셋이라 열어봐도
-용도를 알 수 없어, 지워도 되는지 판단하려면 참조처를 매번 다시 확인해야 한다.
-
-### 선행 조건
-
-**UE 에디터에서 참조처를 확인하고 지워야 한다.** 위 「리다이렉터 스텁 18개가 커밋되어 있다」와
-같은 제약이 걸린다. 2026년 9월 16일 기준으로 Rider에 P1 프로젝트가 열려 있지 않아 UE MCP가
-P1을 대상으로 동작하지 않았다. 두 항목은 에디터를 한 번 띄울 때 함께 처리하는 편이 싸다.

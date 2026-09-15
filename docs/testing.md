@@ -79,6 +79,25 @@ seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므
 2026년 9월 15일 실측이다. `InventoryTests.cpp`를 23시 31분 26초에 고치고 빌드했으나 `.obj`는 23시 31분 11초에 멈춰 있었다. 그 상태로 돌린 테스트는 옛 바이너리의 결과였다. `.obj`를 지운 뒤 빌드해도 같은 증상이 재현됐다. `open_file_in_editor`로 파일을 열어 가상 파일 시스템을 갱신한 뒤 다시 빌드하는 회피가 그때 통했으나, 매번 통하지는 않았다.
 
 **C++ 소스를 셸로 고치지 않는다.**
+
+### 빌드 실패 보고가 실제 실패를 뜻하지도 않는다
+
+반대 방향도 성립한다. `build_solution_state`가 `buildIsSuccess: false`와 빈 `problems`, 그리고
+`Build failed without diagnostic output`을 돌려주는데 UBT는 성공한 상태일 때가 있다. 도구 쪽
+동작이라 저장소에서 고칠 수 없다. 절차로 막는다.
+
+2026년 9월 16일 실측이다. P1 에디터 타깃 빌드 3회가 모두 위 응답을 받았으나
+`%LOCALAPPDATA%\UnrealBuildTool\Log.txt`는 세 번 다 `Result: Succeeded`를 남겼고, 컴파일·링크
+에러가 0건이었으며, `UnrealEditor-P1.dll`도 매번 갱신됐다.
+
+**Rider가 빌드 실패를 보고하면 UBT 로그를 확인하고 판정한다.** 확인할 것은 아래 세 가지다.
+
+- `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`의 마지막 줄이 `Result: Succeeded`인지
+- 같은 파일에 `error C`, `error LNK`, `fatal error`가 있는지
+- `P1/Binaries/Win64/UnrealEditor-P1.dll`의 타임스탬프가 빌드 시각으로 갱신됐는지
+
+Live Coding 컴파일은 Rider가 아니라 `P1/Saved/Logs/P1.log`의 `LogLiveCoding`으로 판정한다.
+성공하면 `Live coding succeeded`를 남긴다.
 — 셸을 거치지 않는 편집 도구를 쓴다. 이것이 예방이다.
 
 **빌드한 뒤 `.obj`와 실행 파일의 수정 시각을 소스와 대조한다.**
