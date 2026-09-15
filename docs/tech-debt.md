@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 19개 (높음 3 · 중간 12 · 낮음 4)
+항목 19개 (높음 3 · 중간 11 · 낮음 5)
 
 ## 작성 방법
 
@@ -172,34 +172,6 @@ C++ 3개 프로젝트는 정상이다. `DummyClient.cpp`·`GameServer.cpp`·`Inv
 
 **변경 비용 증가** · **테스트 어려움** — 매 빌드가 빨간불이라 진짜 에러가 묻힌다.
 `build_solution_state`가 "실패"만 돌려주고 원인을 주지 않으므로 빌드 검증을 자동화할 수 없다.
-
-## `Inventory`가 검증 없는 인덱싱으로 널 역참조에 열려 있다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/System/Inventory.cpp` (`removeItem`, `GetSlot`)
-> 등록일: 2026년 8월 27일
-
-```cpp
-Protocol::ItemType itemType = slotTypeToItemTypeMappings[requestSlot.type()];  // unordered_map::operator[]
-Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId);
-```
-
-두 군데가 겹쳐 있다.
-
-1. `operator[]`는 없는 키를 조회하면 기본값을 삽입한다. 클라가 `SLOT_TYPE_EQUIPPED`나
-   `SLOT_TYPE_QUICK`처럼 이 표에 없는 슬롯 타입을 보내면 `ITEM_TYPE_NONE`(0)이 반환되고,
-   `inventorylookupMappings[ITEM_TYPE_NONE]` 역시 없는 키라 `nullptr`이 나온다. 그다음 줄의
-   `->Mutable(...)`이 널 역참조다.
-2. `slotId`에 범위 검사가 없다. `MAX_SLOTS`(32) 밖의 값이 오면 `Mutable`이 범위를 벗어난다.
-
-2026년 9월에 검토했다가 폐기한 설계가 `docs/references/work/2026-09-10-inventory-cleanup.md`에
-있다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **변경 영향 범위 확대** — 두 값 모두 클라가 보낸 것으로 직행한다.
-`SlotType`에 `SLOT_TYPE_EQUIPPED`(4)와 `SLOT_TYPE_QUICK`(5)이 있는데
-`slotTypeToItemTypeMappings`에는 없다(2026-09-12 실측). 널 역참조는 가설이 아니라 실재하는 입력
-경로이고, 그 입력이 오면 서버가 죽는다.
 
 ## pre-commit 훅이 클론마다 손으로 켜야 동작한다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · build
@@ -376,6 +348,25 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 **새 기능 개발 지연** · **버그 발생 가능성 증가** — `maxStack: 10`인 소모품을 15개 구매하면 한
 슬롯에 15개가 쌓인다. `--gtest_also_run_disabled_tests`로 실행해 빨강임을 확인했다. 스택 상한을
 전제하는 기능(거래, 창고, 제작)은 이 상태 위에 올릴 수 없다.
+
+## `Inventory::GetDirtyFlags`가 없는 키를 표에 삽입한다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/System/Inventory.h` (`GetDirtyFlags`)
+> 등록일: 2026년 9월 15일
+
+```cpp
+vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMappings[itemType]; }
+```
+
+`unordered_map::operator[]`는 없는 키를 조회하면 기본값을 삽입한다. 표에 없는 `ItemType`이 오면
+빈 `vector`를 표에 넣고 그 참조를 돌려주므로, 호출자가 인덱싱하면 범위 밖 접근이다.
+`removeItem`과 `GetSlot`은 `find`로 바꿨지만 이 함수는 그대로다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 호출자 세 곳(`DBRequestFunctions.cpp` 1141·1308·1427줄)이 전부
+`ITEM_TYPE_GEAR`·`ITEM_TYPE_CONSUMABLE`·`ITEM_TYPE_MISCELLANEOUS` 리터럴을 넘기므로 지금은
+피해가 없다. 인자가 런타임 값으로 바뀌는 순간 터진다.
 
 ## `Users.user_id INT` vs `Characters.user_id BIGINT`
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · ops

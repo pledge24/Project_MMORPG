@@ -130,10 +130,28 @@ bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, i
 
 bool Inventory::removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
 {
-    Protocol::ItemType itemType = slotTypeToItemTypeMappings[requestSlot.type()];
-    int32 slotId = requestSlot.slot_id();
+    // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.
+    // 인덱싱에 닿기 전에 거르지 않으면 널 역참조와 범위 밖 접근으로 프로세스가 죽는다.
+    optional<Protocol::ItemType> requestedItemType = ToItemType(requestSlot.type());
+    if (requestedItemType.has_value() == false)
+    {
+        cout << "removeItem() Error: 매핑 표에 없는 SlotType(" << requestSlot.type() << ")" << endl;
+        return false;
+    }
 
-    Protocol::Slot* updatedSlot = inventorylookupMappings[itemType]->Mutable(slotId);
+    int32 slotId = requestSlot.slot_id();
+    if (IsValidSlotId(slotId) == false)
+    {
+        cout << "removeItem() Error: 범위 밖 slot_id(" << slotId << ")" << endl;
+        return false;
+    }
+
+    // 슬롯 해석은 GetSlot 하나로 모은다. 두 함수가 같은 입력을 다르게 해석하면
+    // 이 티켓이 막으려는 사고가 그대로 돌아온다.
+    Protocol::ItemType itemType = requestedItemType.value();
+    Protocol::Slot* updatedSlot = GetSlot(requestSlot.type(), slotId);
+    if (updatedSlot == nullptr)
+        return false;
 
     // 검증이 먼저다. mutable_item()은 없던 item을 만들면서 has_item()을 켜므로,
     // 검증보다 먼저 부르면 빈 슬롯이 "아이템 있음"으로 오염돼 다시는 채워지지 않는다.
@@ -219,12 +237,34 @@ int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templat
     return availableSlotId;
 }
 
+optional<Protocol::ItemType> Inventory::ToItemType(Protocol::SlotType slotType) const
+{
+    // operator[]로 조회하면 없는 키를 표에 삽입하면서 ITEM_TYPE_NONE을 돌려준다.
+    // 조회는 반드시 find로 한다.
+    auto it = slotTypeToItemTypeMappings.find(slotType);
+    if (it == slotTypeToItemTypeMappings.end())
+        return nullopt;
+
+    return it->second;
+}
+
 Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
 {
-    Protocol::ItemType itemType = slotTypeToItemTypeMappings[type];
-    RepeatedPtrField<Protocol::Slot>* lookupTable = inventorylookupMappings[itemType];
+    // 슬롯 해석의 단일 창구다. removeItem도 여기로 들어온다.
+    // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
+    // Release에서 빠지므로, 실제로 안전을 보장하는 것은 아래 검증들이다.
+    optional<Protocol::ItemType> requestedItemType = ToItemType(type);
+    if (requestedItemType.has_value() == false)
+        return nullptr;
 
-    return &(lookupTable->at(slot_id));
+    if (IsValidSlotId(slot_id) == false)
+        return nullptr;
+
+    auto lookupIt = inventorylookupMappings.find(requestedItemType.value());
+    if (lookupIt == inventorylookupMappings.end())
+        return nullptr;
+
+    return lookupIt->second->Mutable(slot_id);
 }
 
 void Inventory::ClearDirtyFlags()
