@@ -242,16 +242,25 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 > 위치: `Server/GameServer/Game/System/Inventory.cpp` (생성자)
 > 등록일: 2026년 8월 27일
 
-`Inventory`는 서로 정합해야 하는 표를 셋 들고 있고, 셋 다 생성자에서 손으로 채운다.
+`Inventory`는 서로 정합해야 하는 표를 넷 들고 있고, 넷 다 생성자에서 손으로 채운다. 제목의
+"3종"은 서로 변환하는 표만 센 것이다.
 
 | 표 | 방향 | 쓰는 곳 |
 |---|---|---|
 | `itemTypeMappings` | 아이템 데이터의 `"itemType"` 문자열 → `ItemType` | `addItem` |
 | `slotTypeToItemTypeMappings` | `SlotType` → `ItemType` | `removeItem`, `GetSlot` |
 | `inventorylookupMappings` | `ItemType` → 실제 슬롯 배열 | 전부 |
+| `dirtyFlagsMappings` | `ItemType` → 슬롯별 더티 플래그 | `addItem`, `removeItem`, `GetDirtyFlags` |
 
-`Server/GameServerTests/InventoryTests.cpp`의 슬롯 타입 왕복 테스트가 세 타입을 전부 검사하므로,
-표가 다시 어긋나면 테스트가 먼저 잡는다. 2026년 9월에 검토했다가 폐기한 설계가
+**검사한 표와 인덱싱하는 표가 다른 자리가 둘 있다.**
+— `Inventory.cpp:83`은 `addItem`이 69~71줄에서 `inventorylookupMappings`를 `find`로 확인한 뒤
+`dirtyFlagsMappings`를 `operator[]`로 인덱싱한다. `Inventory.cpp:162`는 `removeItem`이 135줄에서
+`slotTypeToItemTypeMappings`를 확인한 뒤 같은 일을 한다. 지금 터지지 않는 것은 생성자가 네 표를
+같은 세 키로 채우기 때문이고, 코드가 그 사실을 보장하지는 않는다.
+
+`Server/GameServerTests/InventoryTests.cpp`가 네 표 중 셋의 키 집합을 기대 집합에 고정하므로,
+표가 다시 어긋나면 테스트가 먼저 잡는다. `itemTypeMappings`는 키가 문자열이라 열거형 리플렉션
+대조가 닿지 않고, 관측 경로도 없다. 2026년 9월에 검토했다가 폐기한 설계가
 `docs/references/work/2026-09-10-inventory-cleanup.md`에 있다.
 
 ### 영향
