@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 22개 (높음 3 · 중간 12 · 낮음 7)
+항목 15개 (높음 3 · 중간 10 · 낮음 2)
 
 ## 작성 방법
 
@@ -151,66 +151,36 @@ Blueprints/Props/{BP_BoundaryWall,BP_Portal,BP_Shop,WBP_NameTag}
 어느 것이 실물인지 알 수 없다. `BP_MyPlayer`, `BP_Portal`, `BP_Shop`, `WBP_NameTag`가 각각
 세 곳에 나타난다. 스텁을 실물로 착각해 열면 빈 에셋을 편집하게 된다.
 
-## `Server.sln` 빌드가 항상 실패한다 — 원인은 C++가 아니다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · build
-> 위치: `Server/AuthServer/AuthServer.esproj`
-> 등록일: 2026년 8월 19일
+### 선행 조건
 
-솔루션 전체 빌드 결과가 `buildIsSuccess: false`다. Rider의 Problems 뷰는 비어 있고 진단 출력도
-없다. 빌드 로그 실물에서 확인한 유일한 에러는 아래와 같다.
+**UE 에디터에서 "Fix Up Redirectors"를 돌려야 한다.** 에이전트가 UE MCP를 쓰려면 Rider에 P1
+프로젝트가 열려 있어야 하는데, 2026년 9월 16일 실측으로는 `Server`만 열려 있어 `rootFolder`로
+P1을 지정하면 거부됐다. 착수하려면 사람이 먼저 P1을 열고 에디터를 띄운다.
 
-```
-AuthServer.esproj -> Microsoft.NuGet.targets(198,5): error :
-  Your project does not reference ".NETCoreApp,Version=v6.0" framework.
-```
+## 로그인 라우터만 에러를 로그 없이 삼킨다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/AuthServer/src/routes/login.router.js` 64~66줄
+> 등록일: 2026년 9월 16일
 
-C++ 3개 프로젝트는 정상이다. `DummyClient.cpp`·`GameServer.cpp`·`Inventory.cpp`·`JobQueue.cpp`
-범위 빌드가 전부 성공했고 `Binary/Debug/DummyClient.exe`가 재생성됐다. DummyClient 빌드는
-2026-08-11 커밋 `286eee9`에서 이미 복구됐고 이번 실측으로 재확인했다.
+`POST /login`의 `catch`가 500만 돌려주고 원인을 어디에도 남기지 않는다. 같은 저장소의 다른 두
+곳은 남긴다(2026년 9월 16일 실측).
 
-### 영향
+| 위치 | 에러 처리 |
+|---|---|
+| `account.router.js` 58~60줄 | `console.log`로 원문을 남긴 뒤 500 |
+| `app.js` 29~31줄 | `console.error`로 원문을 남김 |
+| `login.router.js` 64~66줄 | **남기지 않고** 500 |
 
-**변경 비용 증가** · **테스트 어려움** — 매 빌드가 빨간불이라 진짜 에러가 묻힌다.
-`build_solution_state`가 "실패"만 돌려주고 원인을 주지 않으므로 빌드 검증을 자동화할 수 없다.
+이 핸들러가 부르는 것은 bcrypt 비교와 MSSQL 조회와 Redis 기록 셋이다. 셋 중 어디서 터져도
+클라이언트가 받는 응답과 서버에 남는 흔적이 똑같다.
 
-## pre-commit 훅이 클론마다 손으로 켜야 동작한다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · build
-> 위치: `.githooks/pre-commit`
-> 등록일: 2026년 9월 15일
-
-`.githooks/pre-commit`이 대용량 파일의 커밋을 막는다. 훅을 켜는 것은 `core.hooksPath` 설정이다.
-이 값은 로컬 git config에 들어가므로 커밋되지 않는다. 새로 클론한 사람에게는 훅이 없는 것과 같다.
-
-설정 방법을 적어 둔 문서도 없다. `grep -rn 'hooksPath' --include='*.md'`가 0건이다
-(2026-09-15 실측).
+ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catch (err)`의 `err`를 지워 경고만
+없앴고, 삼킴 자체는 그대로다.
 
 ### 영향
 
-**부채의 연쇄 증가** · **동일한 문제의 반복** — 막으려던 대용량 파일이 히스토리에 들어간다.
-되돌리려면 히스토리를 다시 써야 한다. 훅이 없는 클론에서는 경고도 실패도 남지 않으므로
-누락을 알아챌 신호가 없다.
-
-## Rider 빌드가 셸로 고친 파일을 건너뛰고 성공을 보고한다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · build
-> 위치: `docs/build.md` 「게임 서버」 · `CLAUDE.md` 「도구 라우팅」
-> 등록일: 2026년 9월 15일
-
-에이전트가 셸(`sed`, 리다이렉션)로 소스를 고친 뒤 `build_solution_start`를 부르면, Rider가
-바뀐 파일을 인식하지 못한 채 재컴파일 없이 `buildIsSuccess: true`를 돌려줄 때가 있다.
-
-2026-09-15 실측 기록이다. `InventoryTests.cpp`를 23시 31분 26초에 고치고 빌드했으나 `.obj`는
-23시 31분 11초에 멈춰 있었고, 그 상태로 돌린 테스트는 옛 바이너리의 결과였다. `.obj`를 지운
-뒤 빌드해도 같은 증상이 재현됐다. 이 세션에서 통한 회피는 `open_file_in_editor`로 파일을 열어
-가상 파일 시스템을 갱신한 뒤 다시 빌드하는 것 하나이며, 이것도 매번 통하지는 않았다.
-
-재컴파일 여부를 판정하는 방법은 `.obj`와 실행 파일의 수정 시각을 소스와 대조하는 것이다.
-빌드 결과의 `buildIsSuccess`만으로는 구별되지 않는다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **테스트 어려움** — 「완료 기준」이 요구하는 빌드 초록과 테스트
-초록이 변경을 반영하지 않은 채 나올 수 있다. 검증하지 않은 것을 검증했다고 적게 되는 경로이며,
-「자기신고를 믿지 않는다」가 막으려는 상황이 도구 쪽에서 그대로 발생한다.
+**유지보수 어려움** · **테스트 어려움** — 로그인은 가장 자주 도는 경로인데 500이 나면 원인을
+좁힐 방법이 없다. 세 의존성 중 무엇이 죽었는지 알려면 서버에 붙어 재현해야 한다.
 
 ## 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
@@ -303,16 +273,25 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 > 위치: `Server/GameServer/Game/System/Inventory.cpp` (생성자)
 > 등록일: 2026년 8월 27일
 
-`Inventory`는 서로 정합해야 하는 표를 셋 들고 있고, 셋 다 생성자에서 손으로 채운다.
+`Inventory`는 서로 정합해야 하는 표를 넷 들고 있고, 넷 다 생성자에서 손으로 채운다. 제목의
+"3종"은 서로 변환하는 표만 센 것이다.
 
 | 표 | 방향 | 쓰는 곳 |
 |---|---|---|
 | `itemTypeMappings` | 아이템 데이터의 `"itemType"` 문자열 → `ItemType` | `addItem` |
 | `slotTypeToItemTypeMappings` | `SlotType` → `ItemType` | `removeItem`, `GetSlot` |
 | `inventorylookupMappings` | `ItemType` → 실제 슬롯 배열 | 전부 |
+| `dirtyFlagsMappings` | `ItemType` → 슬롯별 더티 플래그 | `addItem`, `removeItem`, `GetDirtyFlags` |
 
-`Server/GameServerTests/InventoryTests.cpp`의 슬롯 타입 왕복 테스트가 세 타입을 전부 검사하므로,
-표가 다시 어긋나면 테스트가 먼저 잡는다. 2026년 9월에 검토했다가 폐기한 설계가
+**검사한 표와 인덱싱하는 표가 다른 자리가 둘 있다.**
+— `Inventory.cpp:83`은 `addItem`이 69~71줄에서 `inventorylookupMappings`를 `find`로 확인한 뒤
+`dirtyFlagsMappings`를 `operator[]`로 인덱싱한다. `Inventory.cpp:162`는 `removeItem`이 135줄에서
+`slotTypeToItemTypeMappings`를 확인한 뒤 같은 일을 한다. 지금 터지지 않는 것은 생성자가 네 표를
+같은 세 키로 채우기 때문이고, 코드가 그 사실을 보장하지는 않는다.
+
+`Server/GameServerTests/InventoryTests.cpp`가 네 표 중 셋의 키 집합을 기대 집합에 고정하므로,
+표가 다시 어긋나면 테스트가 먼저 잡는다. `itemTypeMappings`는 키가 문자열이라 열거형 리플렉션
+대조가 닿지 않고, 관측 경로도 없다. 2026년 9월에 검토했다가 폐기한 설계가
 `docs/references/work/2026-09-10-inventory-cleanup.md`에 있다.
 
 ### 영향
@@ -382,25 +361,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 슬롯에 15개가 쌓인다. `--gtest_also_run_disabled_tests`로 실행해 빨강임을 확인했다. 스택 상한을
 전제하는 기능(거래, 창고, 제작)은 이 상태 위에 올릴 수 없다.
 
-## `Inventory::GetDirtyFlags`가 없는 키를 표에 삽입한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/System/Inventory.h` (`GetDirtyFlags`)
-> 등록일: 2026년 9월 15일
-
-```cpp
-vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMappings[itemType]; }
-```
-
-`unordered_map::operator[]`는 없는 키를 조회하면 기본값을 삽입한다. 표에 없는 `ItemType`이 오면
-빈 `vector`를 표에 넣고 그 참조를 돌려주므로, 호출자가 인덱싱하면 범위 밖 접근이다.
-`removeItem`과 `GetSlot`은 `find`로 바꿨지만 이 함수는 그대로다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 호출자 세 곳(`DBRequestFunctions.cpp` 1141·1308·1427줄)이 전부
-`ITEM_TYPE_GEAR`·`ITEM_TYPE_CONSUMABLE`·`ITEM_TYPE_MISCELLANEOUS` 리터럴을 넘기므로 지금은
-피해가 없다. 인자가 런타임 값으로 바뀌는 순간 터진다.
-
 ## `Users.user_id INT` vs `Characters.user_id BIGINT`
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · ops
 > 위치: `Server/Queries/UserDB_CreateUsersTable.sql` 7줄 ·
@@ -414,31 +374,12 @@ vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMapp
 **버그 발생 가능성 증가** — 사용자 수가 `INT` 상한(2,147,483,647)에 닿으면 두 DB가 같은 사용자를
 다른 값으로 보게 된다. 지금은 값이 작아 드러나지 않는다.
 
-## AuthServer의 eslint가 연결돼 있지 않다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · build
-> 위치: `Server/AuthServer/package.json`
-> 등록일: 2026년 8월 19일
+### 선행 조건
 
-`eslint@^9.31.0`이 `devDependencies`에 있지만 flat config(`eslint.config.js`)도 `scripts.lint`도
-없다. 설치만 되고 한 번도 실행되지 않는다.
-
-### 영향
-
-**버그 발생 가능성 증가** — AuthServer 코드에 정적 검사가 사실상 없다. 미사용 변수, 잘못된 import
-경로, 오타가 런타임까지 살아서 간다.
-
-## 생성기가 만들지 않는 게임 데이터 JSON 2개
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · shared
-> 위치: `P1/Content/Gamedata/C_Equipment.json` · `P1/Content/Gamedata/C_Gear.json`
-> 등록일: 2026년 8월 19일
-
-`GenJsonFile.bat`의 `MOVE` 목록에 없다. 생성물은 `C_{Item,Map,Monster,Quest}.json` 4개뿐이다.
-손으로 만든 것인지 이전 버전 생성기의 잔재인지 불명이다.
-
-### 영향
-
-**유지보수 어려움** — 엑셀 원본을 고쳐도 이 두 파일은 갱신되지 않는다. 쓰이고 있다면 데이터가
-조용히 어긋나고, 안 쓰이고 있다면 어느 쪽이 진짜인지 매번 확인해야 한다.
+**스키마 변경이라 사람 승인이 먼저다.** CLAUDE.md 「안전」이 스키마 변경을 사람 승인 후에,
+저장소의 SQL 스크립트 갱신과 함께만 실행하도록 정한다. 대상이 서로 다른 두 LocalDB 인스턴스에
+걸쳐 있다는 점도 함께 본다. UserDB는 `(localdb)\MSSQLLocalDB`, GameDB는 `(localdb)\ProjectModels`다.
+난이도가 낮다고 적혀 있지만 그것은 수정 범위의 크기이지 착수 조건의 무게가 아니다.
 
 ## `WBP_Nameplate_Old` 데드 에셋
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
@@ -452,40 +393,8 @@ vector<bool>& GetDirtyFlags(Protocol::ItemType itemType) { return dirtyFlagsMapp
 **유지보수 어려움** — 이름이 `_Old`라 현행 네임플레이트 위젯과 헷갈린다. 빈 에셋이라 열어봐도
 용도를 알 수 없어, 지워도 되는지 판단하려면 참조처를 매번 다시 확인해야 한다.
 
-## 이슈 본문 전달 방식을 두 문서가 다르게 지시한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · build
-> 위치: `docs/agents/issue-tracker.md` 7·10·45줄 · `CLAUDE.md` 91·142줄
-> 등록일: 2026년 9월 15일
+### 선행 조건
 
-`docs/agents/issue-tracker.md:7`은 여러 줄 본문에 heredoc과 `--body`를 쓰라고 지시한다.
-
-> **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-
-`CLAUDE.md:91`은 그 반대를 지시한다. heredoc은 본문을 명령 문자열에 넣어 `guard_dangerous_cmd.py`가
-보게 되므로, 위험 패턴을 언급만 하는 본문도 차단된다는 이유다. 같은 이유로 `CLAUDE.md:142`가
-`gh pr create`에 `--body-file`을 쓰라고 못박았는데, 이슈에는 같은 지시가 없다.
-
-고치기 전에 결정할 것이 하나 있다. `docs/agents/` 세 파일은 스킬 본문과 문구를 맞추려고 시드 템플릿
-원문을 그대로 두기로 했다(커밋 `6b0bafe`). 문구를 고치면 그 결정이 깨진다.
-
-### 영향
-
-**동일한 문제의 반복** — 지시를 따른 에이전트가 훅에 막힌다. 막힌 뒤 해결책을 매번 다시 찾아야 하고,
-`--body`로 여러 줄을 넣으면 줄바꿈과 백틱이 깨진다.
-
-## 빌드 문서의 솔루션 프로젝트 개수가 낡았다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · build
-> 위치: `docs/build.md` 21줄
-> 등록일: 2026년 9월 15일
-
-`docs/build.md:21`이 `Server.sln`에 "C++ 3개(`ServerCore` · `GameServer` · `DummyClient`)와 파이썬
-생성기 2개"가 들어 있다고 적는다. 실제로는 C++가 4개다. `GameServerTests`가 빠져 있다
-(`Server/Server.sln` 6·8·10·12줄). 파이썬 생성기 2개는 맞다.
-
-같은 문서의 「게임 서버」 절이 빌드 순서를 설명하면서도 테스트 프로젝트를 언급하지 않는다.
-
-### 영향
-
-**변경 비용 증가** — 빌드 구성을 건드릴 때 읽는 문서가 테스트 프로젝트의 존재를 감춘다. 테스트
-프로젝트는 `.cpp`를 자동 수집하지 않아 등록을 빠뜨리면 테스트가 조용히 안 돌아가는데, 그 사실은
-`docs/testing.md`에만 적혀 있다.
+**UE 에디터에서 참조처를 확인하고 지워야 한다.** 위 「리다이렉터 스텁 18개가 커밋되어 있다」와
+같은 제약이 걸린다. 2026년 9월 16일 기준으로 Rider에 P1 프로젝트가 열려 있지 않아 UE MCP가
+P1을 대상으로 동작하지 않았다. 두 항목은 에디터를 한 번 띄울 때 함께 처리하는 편이 싸다.

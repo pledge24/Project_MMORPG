@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node src/app.js",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint ."
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -22,6 +23,8 @@
   },
   "type": "module",
   "devDependencies": {
-    "eslint": "^9.31.0"
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.31.0",
+    "globals": "^17.12.0"
   }
 }

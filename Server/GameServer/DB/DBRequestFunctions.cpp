@@ -13,7 +13,8 @@ enum DBCustomError
     SQL_FETCH_FAIL = 24002,
     ALREADY_EXISTING_CHARACTER = 24003,
     SQL_MISMATCHED_GET_ROW_COUNT = 24004,
-    SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE = 24005
+    SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE = 24005,
+    INVENTORY_DIRTY_FLAGS_NOT_FOUND = 24006
 };
 
 const unordered_map<DBCustomError, wstring> DBErrorCauseMappings =
@@ -24,6 +25,7 @@ const unordered_map<DBCustomError, wstring> DBErrorCauseMappings =
     {ALREADY_EXISTING_CHARACTER, L"이미 존재하는 캐릭터입니다."},
     {SQL_MISMATCHED_GET_ROW_COUNT, L"GetRowCount() 불일치 발생"},
     {SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE, L"파라미터 배열 처리 행 수 불일치 발생"},
+    {INVENTORY_DIRTY_FLAGS_NOT_FOUND, L"더티 플래그 표에 없는 아이템 타입"},
 };
 
 void PrintDBErrorLog(const DBCustomError error)
@@ -1138,7 +1140,11 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
             const Protocol::Possession& possession = *player->possession;
             const Protocol::Inventory& inven = possession.inventory();
-            vector<bool>& gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
+            // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면 뒤의
+            // 장착 장비 구간은 그대로 돌아, 일부 슬롯만 DB에 반영된 채 끝난다.
+            vector<bool>* gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
+            if (gearDirtyFlags == nullptr)
+                throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
             // MemSet
             ::memset(_characterId, 0, sizeof(_characterId));
@@ -1154,7 +1160,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             // 인벤에 들어있는 장비
             for (int i = 0; i < inven.gear_size(); i++)
             {
-                if (gearDirtyFlags[i] == true)
+                if ((*gearDirtyFlags)[i] == true)
                 {
                     const Protocol::Slot& slot = inven.gear().Get(i);
                     _characterId[rows] = playerInfo.character_id();
@@ -1305,7 +1311,11 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
             const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
             const Protocol::Possession& possession = *player->possession;
             const Protocol::Inventory& inven = possession.inventory();
-            vector<bool>& consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+            // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면
+            // 아무것도 반영되지 않은 것을 성공으로 보고하게 된다.
+            vector<bool>* consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+            if (consumableDirtyFlags == nullptr)
+                throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
             // MemSet
             ::memset(_characterId, 0, sizeof(_characterId));
@@ -1316,7 +1326,7 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
             // 인벤에 들어있는 소비 아이템
             for (int i = 0; i < inven.consumables_size(); i++)
             {
-                if (consumableDirtyFlags[i] == true)
+                if ((*consumableDirtyFlags)[i] == true)
                 {
                     const Protocol::Slot slot = inven.consumables().Get(i);
                     _characterId[rows] = playerInfo.character_id();
@@ -1424,7 +1434,11 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
             const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
             const Protocol::Possession& possession = *player->possession;
             const Protocol::Inventory& inven = possession.inventory();
-            vector<bool>& miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
+            // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면
+            // 아무것도 반영되지 않은 것을 성공으로 보고하게 된다.
+            vector<bool>* miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
+            if (miscDirtyFlags == nullptr)
+                throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
             // MemSet
             ::memset(_characterId, 0, sizeof(_characterId));
@@ -1435,7 +1449,7 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
             // 인벤에 들어있는 장비
             for (int i = 0; i < inven.miscellaneous_size(); i++)
             {
-                if (miscDirtyFlags[i] == true)
+                if ((*miscDirtyFlags)[i] == true)
                 {
                     const Protocol::Slot slot = inven.miscellaneous().Get(i);
                     _characterId[rows] = playerInfo.character_id();

@@ -60,10 +60,19 @@
 
 `Server/Common/GameDatasheet/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-| 산출물 | 목적지 |
+**산출물은 아래 표의 9개가 전부다.**
+— 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
+
+| 목적지 | 산출물 |
 |---|---|
-| `S_*.json` | `Server/GameServer/Game/Data/Json/` |
-| `C_*.json` | `P1/Content/Gamedata/` |
+| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
+| `P1/Content/Gamedata/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
+
+**이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
+갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
+
+장비 데이터는 `Original_Item.xlsx`의 첫 시트에 있다. 세 시트가 하나의 `C_Item.json`으로
+합쳐지므로 장비만 담는 산출물은 없다.
 
 ### 로딩
 

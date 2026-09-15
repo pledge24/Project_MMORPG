@@ -16,15 +16,34 @@
 
 ---
 
+## 새로 클론했을 때
+
+**git 훅을 켠다.** 저장소 루트에서 한 번 실행한다.
+
+```
+git config core.hooksPath .githooks
+```
+
+`.githooks/pre-commit`이 GitHub의 100MB 제한을 넘는 파일의 커밋을 막고, 50MB를 넘으면 경고한다. `core.hooksPath`는 로컬 git config에 들어가므로 커밋되지 않는다.
+
+**클론마다 한 번씩 직접 설정한다.**
+— 설정하지 않으면 훅이 없는 것과 같다. 그 상태에서는 경고도 실패도 남지 않아 누락을 알아챌 신호가 없다. 대용량 파일이 히스토리에 들어간 뒤 되돌리려면 히스토리를 다시 써야 한다.
+
+게임 서버를 빌드하려면 `Server/GameServer/config.h`도 직접 만든다. 아래 「게임 서버」에 적혀 있다.
+
+---
+
 ## 게임 서버
 
-`Server/Server.sln` (x64)에는 C++ 3개(`ServerCore` · `GameServer` · `DummyClient`)와 파이썬 생성기 2개(`*.pyproj`)만 들어 있다.
+`Server/Server.sln` (x64)에는 C++ 4개(`ServerCore` · `GameServer` · `DummyClient` · `GameServerTests`)와 파이썬 생성기 2개(`*.pyproj`)만 들어 있다. C++ 4개는 Debug와 Release 어느 구성에서도 빌드 대상이다. 파이썬 두 개는 `Build.0` 항목이 없어 빌드되지 않는다.
 
 **AuthServer는 솔루션에 없다.** Node 프로젝트라 MSBuild가 `.NETCoreApp,v6.0` 참조를 요구하며 실패해서, 솔루션 빌드 신호를 상시 빨강으로 만들었다. `npm start`로만 다룬다.
 
 `Server.slnLaunch.user`에 GameServer + DummyClient를 동시에 띄우는 다중 시작 프로필이 정의되어 있다.
 
 **빌드 순서가 중요하다.** `ServerCore`는 정적 라이브러리이고 `GameServer`와 `DummyClient`가 이를 링크한다.
+
+`GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `Main/GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
 
 접속 문자열은 환경변수가 아니라 `Server/GameServer/config.h`에 컴파일 타임 상수로 박혀 있다. **gitignore됨 — 새로 클론하면 직접 만들어야 한다.**
 

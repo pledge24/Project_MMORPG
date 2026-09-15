@@ -10,10 +10,13 @@
 |---|---|---|---|
 | 게임 서버 L1 (GoogleTest) | `build_solution_start(rootFolder=.../Server)` → `build_solution_state` | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
 | 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
+| 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
 
-**판정은 종료 코드다.** 0이 아니면 실패다.
+**판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`와 `npm run lint`가 둘 다 0이어야 완료다.
 
 테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
+
+정적 검사는 ESLint 9다. flat config(`Server/AuthServer/eslint.config.js`)가 `@eslint/js`의 recommended를 적용한다. `node_modules/`와 `obj/`는 검사하지 않는다. `obj/`는 `.esproj`가 남긴 NuGet 복원 산출물이라 소스가 아니다.
 
 ### 현재 커버리지
 
@@ -68,6 +71,20 @@ seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므
 "UBT/MSBuild를 터미널로 직접 돌리지 않는다"는 규칙의 근거는 **출력 절단으로 에러가 유실되는 것**이고, 그건 빌드에만 성립한다 — gtest 출력은 짧고 완결적이다.
 
 `Server/Binary/`는 gitignore되어 있으므로 **실행 전 빌드는 필수다.**
+
+### 빌드 성공이 재컴파일을 뜻하지는 않는다
+
+셸(`sed`, 리다이렉션)로 소스를 고친 뒤 `build_solution_start`를 부르면, Rider가 바뀐 파일을 인식하지 못한 채 재컴파일 없이 `buildIsSuccess: true`를 돌려줄 때가 있다. 도구 쪽 동작이라 저장소에서 고칠 수 없다. 절차로 막는다.
+
+2026년 9월 15일 실측이다. `InventoryTests.cpp`를 23시 31분 26초에 고치고 빌드했으나 `.obj`는 23시 31분 11초에 멈춰 있었다. 그 상태로 돌린 테스트는 옛 바이너리의 결과였다. `.obj`를 지운 뒤 빌드해도 같은 증상이 재현됐다. `open_file_in_editor`로 파일을 열어 가상 파일 시스템을 갱신한 뒤 다시 빌드하는 회피가 그때 통했으나, 매번 통하지는 않았다.
+
+**C++ 소스를 셸로 고치지 않는다.**
+— 셸을 거치지 않는 편집 도구를 쓴다. 이것이 예방이다.
+
+**빌드한 뒤 `.obj`와 실행 파일의 수정 시각을 소스와 대조한다.**
+— 산출물이 소스보다 오래됐으면 재컴파일되지 않은 것이다. `buildIsSuccess`만으로는 두 경우가 구별되지 않는다. 이것이 확인이다.
+
+위 두 절차 중 하나만 쓰지 않는다. 회피가 매번 통하지는 않으므로 예방과 확인을 함께 쓴다.
 
 ---
 
