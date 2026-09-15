@@ -35,6 +35,7 @@ public:
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
 
     /** 핸들 함수(Client Only) */
+    void C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player);
     void C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player);
     void C_HandleMove(Protocol::C_MOVE pkt);
     void C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player);

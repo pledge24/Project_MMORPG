@@ -121,21 +121,25 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-	// 플레이어 생성 및 초기화
-	PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
-    if (player == nullptr)
-    {
-        wcout << L"Warning: 플레이어 생성 실패" << '\n';
-        return false;
-    }
-
     // 유저 Id를 통해 DBQueue를 선택
     int64 userId = static_pointer_cast<GameSession>(session)->userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
+    // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
+    // room_id는 LoadAllCharactersData가 DB에서 읽어야 알 수 있으므로,
+    // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
+    // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
     JobRef job = make_shared<Job>(
         [session, pkt]()
         {
+            // 플레이어 생성 및 초기화
+            PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
+            if (player == nullptr)
+            {
+                wcout << L"Warning: 플레이어 생성 실패" << '\n';
+                return;
+            }
+
             int64 characterId = pkt.character_id();
             DBRequestFunctions::LoadAllCharactersData(session, characterId);
         }
@@ -190,11 +194,10 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
     PlayerRef player = gameSession->player.load();
     int32 roomId = pkt.room_id();
 
-    // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
-    // ...
-
     if (player == nullptr)
     {
+        // 플레이어가 없으면 잡을 올릴 룸 큐도 없다. 룸 소유 상태를 건드리지 않는
+        // 실패 응답만 이 자리에서 돌려준다.
         Protocol::S_ENTER_MAP enterMapPkt;
         {
             enterMapPkt.set_success(false);
@@ -207,23 +210,31 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
         return false;
     }
 
-    // TODO: Map 입장에 제한(ex. 인원수 제한)을 두고 싶다면 로직 추가
-    // ...
+    // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면
+    // OnEnterMap이 세팅한 enteringRoomId를 뒤이어 읽게 될 목적지 룸의 큐로 넘긴다.
+    RoomRef room = player->room.load().lock();
+    if (room == nullptr)
+        room = GRoomManager->GetRoomRefFromRoomId(roomId);
 
-    
-    // 성공적인 Map 입장 처리
+    if (room == nullptr)
     {
-        player->OnEnterMap(pkt.map_id(), roomId);
+        // 넘길 큐가 없으면 잡을 만들 수 없다. 이전 코드가 이 입력에도 응답을 돌려줬으므로
+        // 클라를 대기 상태로 남기지 않도록 실패 응답은 유지한다.
+        wcout << L"C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: " << roomId << '\n';
 
         Protocol::S_ENTER_MAP enterMapPkt;
         {
-            enterMapPkt.set_success(true);
+            enterMapPkt.set_success(false);
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
             SEND_PACKET(enterMapPkt);
         }
+
+        return false;
     }
+
+    room->DoAsync(&Room::C_HandleEnterMap, pkt, player);
 
     return true;
 }

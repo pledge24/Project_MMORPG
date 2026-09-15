@@ -193,6 +193,38 @@ bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
     return true;
 }
 
+// 이 함수는 Room의 데이터를 쓰지 않는다. Room에 두는 이유는 큐 하나뿐이다 —
+// 여기서 세팅하는 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
+void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
+{
+    // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
+    auto session = player->session.lock();
+    if (session == nullptr)
+        return;
+
+    const int32 roomId = pkt.room_id();
+
+    // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
+    // ...
+
+    // TODO: Map 입장에 제한(ex. 인원수 제한)을 두고 싶다면 로직 추가
+    // ...
+
+    // 성공적인 Map 입장 처리
+    {
+        player->OnEnterMap(pkt.map_id(), roomId);
+
+        Protocol::S_ENTER_MAP enterMapPkt;
+        {
+            enterMapPkt.set_success(true);
+            enterMapPkt.set_map_id(pkt.map_id());
+            enterMapPkt.set_room_id(roomId);
+
+            SEND_PACKET(enterMapPkt);
+        }
+    }
+}
+
 void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 {
     auto session = player->session.lock();
