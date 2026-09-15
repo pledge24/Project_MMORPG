@@ -21,7 +21,7 @@
 |---|---|---|
 | `PacketSerialization` | 2 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 |
 | `ProtocolContract` | 3 | `PROTOCOL_MESSAGES(X)` 목록 대조 · 패킷 ID 연속·유일성 · 전 메시지 리플렉션 왕복 |
-| `InventoryTest` | 8 (+DISABLED 1) | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 |
+| `InventoryTest` | 10 (+DISABLED 1) | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
 
