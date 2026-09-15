@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Containers/Ticker.h"
 #include "Types.h"
 #include "Protocol.pb.h"
 #include "StatefulObjectManager.h"
@@ -34,7 +35,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DisconnectFromGameServer();
 
-	UFUNCTION(BlueprintCallable)
+	// 블루프린트에서 부르지 않는다. Init에서 코어 티커에 등록한 펌프가 유일한 호출자다.
 	void HandleRecvPackets();
 
 	void SendPacket(SendBufferRef SendBuffer);
@@ -108,5 +109,13 @@ protected:
 
     UPROPERTY()
     UMyPlayerData* _MyPlayerData;
+
+private:
+    /** 네트워크 수신 펌프 */
+    // 코어 티커 콜백. true를 돌려주면 다음 프레임에도 호출된다.
+    bool TickRecvPump(float DeltaTime);
+
+    // Init에서 등록하고 Shutdown에서 해제한다. 게임 인스턴스와 수명이 같다.
+    FTSTicker::FDelegateHandle RecvPumpTickerHandle;
 
 };
