@@ -42,10 +42,12 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 
 ## 도구 라우팅 — Rider MCP 전용 원칙
 
-- 심볼 탐색: `search_symbol`, `search_text`. **grep 금지** — UE RPC의 `_Implementation` 접미사에서
-  호출 사슬이 끊긴다. 검색어는 접미사가 붙은 이름과 안 붙은 이름 양쪽으로 잡는다.
-- **`analyze_calls`는 이 C++ 솔루션에서 실패한다** (`No callable symbol found for symbolFqn`, 2026-09-12 실측).
-  호출자 확인은 `search_text`로 한다. 상세: `docs/build.md`
+- **쓸 수 있는 툴은 36종이다.** 나머지는 `.claude/settings.json`의 `permissions.deny`가 막는다.
+  판정 근거는 `docs/adr/0002-control-mcp-tools-via-permissions.md`.
+- 심볼 탐색: `skill_search`의 `mode=symbol`. 텍스트 탐색: `search_text`. **grep 금지** — UE RPC의
+  `_Implementation` 접미사에서 호출 사슬이 끊긴다. 검색어는 접미사가 붙은 이름과 안 붙은 이름
+  양쪽으로 잡는다. **`mode=symbol`의 좌표는 `1행 1열`로 고정되므로 파일 경로만 쓴다.**
+- 호출자 확인은 `search_text`로 한다. `analyze_calls`는 C++ 심볼을 색인하지 않아 막아 두었다.
 - 빌드 검증: **터미널에서 돌리고 종료 코드로 판정한다. 빌드에 Rider MCP를 쓰지 않는다.**
   클라이언트는 `Build.bat`, 서버는 `MSBuild`다. 0이 아니면 같은 출력에 에러가 코드와 파일과 줄과
   함께 찍혀 있다. **`Rebuild.bat`과 최초 전체 빌드는 출력이 커서 절단될 수 있다.** 그때는
@@ -56,10 +58,11 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드된다. 인자 없이 `get_run_configurations`를
   부르면 열린 프로젝트 목록이 에러 메시지로 돌아온다.
 - 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
-- 에디터·에셋·PIE 조작: UE MCP (도입 후. 도입 전에는 사람에게 요청).
+- UE 에셋 조회: `get_class_hierarchy`와 `search_assets`. **`search_assets`는 `baseClass`만 쓴다** —
+  `query`는 빈 결과만 돌려준다. 에디터 조작 툴은 막혀 있으므로 사람에게 요청한다.
 - 서버 변경 검증은 Unreal을 띄우지 않고 `Server/DummyClient/`로 가능하다 (실 클라와 동일 프로토콜).
-- **노출 ≠ 존재.** 판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다. 근거와 예외:
-  `docs/build.md`
+- **노출 ≠ 존재.** 판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다. **IDE 화면의 체크
+  상태도 근거가 아니다** — 이 엔드포인트에 반영되지 않는다. 근거와 예외: `docs/build.md`와 ADR-0002
 
 ## 완료 기준
 

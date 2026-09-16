@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 15개 (높음 3 · 중간 11 · 낮음 1)
+항목 16개 (높음 4 · 중간 11 · 낮음 1)
 
 ## 작성 방법
 
@@ -71,6 +71,37 @@
 유지보수 어려움 · 테스트 어려움 · 동일한 문제의 반복 · 부채의 연쇄 증가
 
 ---
+
+## Rider MCP의 DB 연결이 읽기 전용 계정을 쓰지 않는다
+> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 프로젝트 · ops
+> 위치: `P1/.idea/.idea.P1.dir/.idea/dataSources.xml` ·
+> `Server/.idea/.idea.Server/.idea/dataSources.xml`
+> 등록일: 2026년 9월 16일
+
+`CLAUDE.md` 17줄과 `docs/build.md` 117줄은 Rider의 DB 연결이 읽기 전용 계정(`claude_ro`)을
+쓴다고 적는다. 2026년 9월 16일 실측 결과는 다르다.
+
+| 확인 방법 | 결과 |
+|---|---|
+| `execute_sql_query`로 `SELECT SYSTEM_USER` | Windows 로그인 계정 |
+| `list_database_connections` | `UserDB`와 `GameDB` 모두 `readOnly: false` |
+| `preview_table_data`로 `Characters` 조회 | 행 2건 반환 |
+
+`dataSources.xml`은 `.gitignore` 대상이라 저장소에 없다. 이 설정은 컴퓨터마다 다를 수 있다.
+
+### 영향
+
+**버그 발생 가능성 증가** · **부채의 연쇄 증가** — 에이전트가 MCP로 여는 DB 세션이 쓰기 권한을
+갖는다. 지금 막는 것은 `.claude/hooks/guard_dangerous_cmd.py`의 패턴 검사뿐이고, 그 패턴에 걸리지
+않는 쓰기는 통과한다. `execute_sql_query`는 ADR-0002가 남긴 36종에 들어 있고 승인 절차도 없다.
+문서가 있지도 않은 방어선을 약속하고 있어서, 문서를 읽은 다음 세션이 그 방어선을 믿고 판단한다.
+
+### 선행 조건
+
+**`claude_ro` 계정이 두 LocalDB 인스턴스에 실제로 있는지 먼저 확인한다.** 계정을 만들어야 하면
+`CLAUDE.md` 「안전」이 정한 대로 사람 승인을 먼저 받는다. Rider의 데이터소스 설정은 IDE 화면에서만
+바꿀 수 있으므로 에이전트가 할 수 없다. 계정을 바꾼 뒤에는 두 문서의 서술이 사실이 되므로 함께
+확인한다.
 
 ## 인게임 진입 직후 캐릭터가 스스로 죽는다
 > **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
