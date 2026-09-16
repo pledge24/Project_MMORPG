@@ -26,6 +26,13 @@ SRV = str(REPO / "Server")
 
 RUN = ["py", "-3", str(HOOK)]
 
+# 언리얼 MCP 라우터 케이스에서 반복되는 긴 이름들.
+UE = "mcp__unreal__call_tool"
+OBJ = "editor_toolset.toolsets.object.ObjectTools"
+BP = "editor_toolset.toolsets.blueprint.BlueprintTools"
+AUTO = "AutomationTestToolset.AutomationTestToolset"
+PROG = "editor_toolset.toolsets.programmatic.ProgrammaticToolset"
+
 
 def run_hook(tool, tool_input, env=None):
     """훅을 한 번 실행하고 (returncode, stdout) 을 돌려준다."""
@@ -91,6 +98,23 @@ CASES = [
     ("터미널 rootFolder 없음", "mcp__rider__execute_terminal_command", {"command": "ls"}, True),
     ("터미널 정상", "mcp__rider__execute_terminal_command", {"command": "ls", "rootFolder": SRV}, False),
     ("터미널 위험명령", "mcp__rider__execute_terminal_command", {"command": "rd /s /q build", "rootFolder": SRV}, True),
+
+    # --- 언리얼 MCP 라우터: 허용 명단 밖은 막는다 (ADR-0003) ---
+    # 이 서버는 도구 수백 종이 call_tool 하나로 들어와서 permissions 로는 구분되지 않는다.
+    # 판정이 인자 안에서 이뤄지므로 툴 이름만 보는 다른 검사와 분리해 확인한다.
+    ("UE 조회 통과", UE, {"toolset_name": OBJ, "tool_name": "list_properties"}, False),
+    ("UE BP 조회 통과", UE, {"toolset_name": BP, "tool_name": "get_parent"}, False),
+    ("UE 테스트 실행 통과", UE, {"toolset_name": AUTO, "tool_name": "RunTests"}, False),
+    ("UE 최상위 조회 통과", UE, {"tool_name": "list_toolsets"}, False),
+    ("UE 속성 쓰기 차단", UE, {"toolset_name": OBJ, "tool_name": "set_properties"}, True),
+    ("UE 속성 초기화 차단", UE, {"toolset_name": OBJ, "tool_name": "reset_properties"}, True),
+    ("UE 그래프 쓰기 차단", UE, {"toolset_name": BP, "tool_name": "write_graph_dsl"}, True),
+    ("UE 부모 변경 차단", UE, {"toolset_name": BP, "tool_name": "set_parent"}, True),
+    ("UE 임의 파이썬 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script"}, True),
+    ("UE 모르는 툴셋 차단", UE, {"toolset_name": "Foo.Bar", "tool_name": "list_properties"}, True),
+    ("UE 최상위 명단밖 차단", UE, {"tool_name": "call_tool"}, True),
+    ("UE 인자 누락 차단", UE, {}, True),
+    ("UE 인자 형식오류 차단", UE, {"toolset_name": OBJ, "tool_name": 7}, True),
 
     # --- 관계없는 툴 ---
     ("Read 툴", "Read", {"file_path": "/etc/passwd"}, False),

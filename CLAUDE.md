@@ -40,10 +40,20 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 
 single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/domain.md`
 
-## 도구 라우팅 — Rider MCP 전용 원칙
+## 도구 라우팅 — MCP 서버 두 개, 통제 수단도 두 개
 
-- **쓸 수 있는 툴은 36종이다.** 나머지는 `.claude/settings.json`의 `permissions.deny`가 막는다.
-  판정 근거는 `docs/adr/0002-control-mcp-tools-via-permissions.md`.
+- **Rider MCP에서 쓸 수 있는 툴은 36종이다.** 나머지는 `.claude/settings.json`의
+  `permissions.deny`가 막는다. 판정 근거는 `docs/adr/0002-control-mcp-tools-via-permissions.md`.
+- **언리얼 MCP(`unreal`)는 `permissions`가 아니라 훅이 막는다.** 이 서버는 도구를
+  `list_toolsets`, `describe_toolset`, `call_tool` 세 개만 노출하고, 52개 툴셋의 수백 개
+  도구가 전부 `call_tool`의 인자로 들어온다. 이름이 하나뿐이라 `permissions`로는 구분되지
+  않는다. 허용 명단은 `.claude/hooks/guard_dangerous_cmd.py`의 `UE_ALLOWED_TOOLS`이고,
+  **명단에 없으면 막힌다.** 지금 열려 있는 것은 조회 계열과 자동화 테스트뿐이다. 쓰기가
+  필요하면 사람 승인을 받고 명단에 먼저 추가한다. 근거는
+  `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
+- **언리얼 MCP는 에디터가 떠 있어야 붙는다.** 사람이 에디터 콘솔에서
+  `ModelContextProtocol.StartServer`를 입력해야 `127.0.0.1:8000`이 열린다. 연결 확인은
+  `netstat`로 8000 포트를 보거나 `list_toolsets`를 한 번 부른다.
 - 심볼 탐색: `skill_search`의 `mode=symbol`. 텍스트 탐색: `search_text`. **grep 금지** — UE RPC의
   `_Implementation` 접미사에서 호출 사슬이 끊긴다. 검색어는 접미사가 붙은 이름과 안 붙은 이름
   양쪽으로 잡는다. **`mode=symbol`의 좌표는 `1행 1열`로 고정되므로 파일 경로만 쓴다.**
@@ -59,7 +69,10 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   부르면 열린 프로젝트 목록이 에러 메시지로 돌아온다.
 - 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
 - UE 에셋 조회: `get_class_hierarchy`와 `search_assets`. **`search_assets`는 `baseClass`만 쓴다** —
-  `query`는 빈 결과만 돌려준다. 에디터 조작 툴은 막혀 있으므로 사람에게 요청한다.
+  `query`는 빈 결과만 돌려준다. Rider의 에디터 조작 툴은 막혀 있으므로 사람에게 요청한다.
+- **에셋 속성은 Rider가 아니라 언리얼 MCP로 읽는다.** Rider의 `get_asset_properties`는 블루프린트
+  CDO에 `properties: []`를 돌려준다(ADR-0002). 같은 에셋을 `unreal`의 `ObjectTools.list_properties`로
+  읽으면 속성이 나온다 — `BP_MonsterBase`에서 115개를 실측했다.
 - 서버 변경 검증은 Unreal을 띄우지 않고 `Server/DummyClient/`로 가능하다 (실 클라와 동일 프로토콜).
 - **노출 ≠ 존재.** 판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다. **IDE 화면의 체크
   상태도 근거가 아니다** — 이 엔드포인트에 반영되지 않는다. 근거와 예외: `docs/build.md`와 ADR-0002
@@ -90,6 +103,7 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 - 스키마 변경(ALTER/CREATE/DROP)은 사람 승인 후, 저장소의 SQL 스크립트 갱신과 함께만 실행한다.
 - 위 두 줄은 `.claude/hooks/guard_dangerous_cmd.py`가 실제로 차단한다 (`Bash`·`PowerShell`·
   `execute_terminal_command`·`execute_sql_query` 4경로). 차단 패턴의 전체 목록은 그 파일에 있다.
+  같은 훅이 `mcp__unreal__call_tool`도 받아서 허용 명단으로 판정한다 (ADR-0003).
   **`ue_execute_python`은 훅이 못 덮으므로 사람 판단에만 의존한다.** 훅 인터프리터는 `py -3` —
   이 머신의 `python3`는 MS Store 별칭 스텁이라 실행되지 않는다(exit 49).
 - **훅은 명령 문자열 전체를 본다.** 위험 패턴을 *언급만* 하는 텍스트도 걸린다 — 대표적으로 그 패턴을

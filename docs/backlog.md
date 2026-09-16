@@ -71,6 +71,12 @@ AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐이라 �
 (`docs/build.md` 「빌드 명령」) → 에디터 `Window > Test Automation`(사람) 또는
 `-ExecCmds="Automation RunTests ..."`.
 
+**세 번째 실행 경로 후보**: 언리얼 MCP의 `AutomationTestToolset`이 `DiscoverTests`,
+`RunTests`, `GetTestResults`를 노출한다(ADR-0003에서 허용 명단에 넣었다). 이 경로가 되면
+위의 "사람 손이 섞인다"는 선행 조건이 바뀐다. **다만 툴셋이 목록에 있다는 것만 확인했고
+실제로 테스트를 돌리는지는 확인하지 않았다.** 착수 전에 이것부터 실행해 본다 — 에디터가
+떠 있는 상태에서 `DiscoverTests`를 한 번 부르는 것이 가장 싸게 실패하는 경로다.
+
 첫 대상 후보는 이동 보간 수식(`ACreature`의 `MoveQueue`) 정도다. 클라 쪽에 남은 순수 로직이
 얇다는 점도 함께 고려한다.
 

@@ -102,6 +102,21 @@
             "statusMessage": "대상 솔루션·위험 명령 검사 중"
           }
         ]
+      },
+      {
+        "matcher": "mcp__unreal__call_tool",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py",
+            "args": [
+              "-3",
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard_dangerous_cmd.py"
+            ],
+            "timeout": 10,
+            "statusMessage": "UE 도구 허용 명단 검사 중"
+          }
+        ]
       }
     ]
   }

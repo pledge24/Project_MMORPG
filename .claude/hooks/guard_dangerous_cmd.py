@@ -81,6 +81,81 @@ ROOT_FOLDER_REQUIRED = {
     "mcp__rider__edit_database_connection",
 }
 
+# 언리얼 엔진 MCP 서버의 라우터 툴 — 이 이름 하나로 수백 종이 전부 통과한다.
+#
+# 왜 여기서만 막을 수 있는가: 이 서버는 MCP 수준에 도구를 3종만 노출한다
+# (list_toolsets, describe_toolset, call_tool). 실제 도구는 call_tool 의 인자에
+# toolset_name 과 tool_name 으로 실려서 들어온다. 그래서 ADR-0002 가 쓴 수단인
+# settings.json 의 permissions 로는 도구를 하나도 구분해 낼 수 없다 — 이름이
+# mcp__unreal__call_tool 하나뿐이라 전부 허용하거나 전부 막는 선택만 남는다.
+# 세분화가 가능한 지점은 인자를 실제로 읽는 이 훅뿐이다. 근거는 ADR-0003.
+UE_ROUTER_TOOLS = {
+    "mcp__unreal__call_tool",
+}
+
+# 통과시킬 (toolset_name, tool_name) 조합. **명단에 없으면 막는다.**
+#
+# 왜 허용 명단인가: ADR-0002 의 차단 명단은 Rider 처럼 도구가 개별로 노출될 때만 성립한다.
+# 여기서는 엔진이 업데이트되면 툴셋과 도구가 조용히 늘어나고, 그것들이 전부 같은 이름으로
+# 들어오므로 차단 명단은 반드시 뒤처진다. 방향을 뒤집어 모르는 것은 막는다.
+#
+# 첫 판을 좁게 잡은 이유는 실측으로 값어치가 확인된 것이 조회 계열뿐이기 때문이다.
+# 쓰기 계열(write_graph_dsl, set_parent, delete_node 등)과 임의 파이썬 실행
+# (ProgrammaticToolset)은 넣지 않는다. .uasset 은 바이너리라 diff 로 검토할 수 없어서
+# 되돌림 비용이 가장 크다. 필요해지면 건별로 여기에 추가한다.
+#
+# 빈 문자열 키는 toolset_name 을 생략하고 최상위 도구를 부르는 경우다.
+UE_ALLOWED_TOOLS = {
+    "": {
+        "list_toolsets",
+        "describe_toolset",
+    },
+    # 오브젝트 속성 조회 — Rider 의 get_asset_properties 가 빈 결과만 내던 자리를 메운다.
+    "editor_toolset.toolsets.object.ObjectTools": {
+        "list_properties",
+        "get_properties",
+        "get_class",
+        "search_subclasses",
+    },
+    # 블루프린트 조회. 같은 툴셋의 쓰기 도구는 의도적으로 뺐다.
+    "editor_toolset.toolsets.blueprint.BlueprintTools": {
+        "get_parent",
+        "get_default_object",
+        "list_variables",
+        "get_variable_category",
+        "get_variable_replication",
+        "list_event_dispatchers",
+        "list_events",
+        "list_functions",
+        "list_graphs",
+        "get_graph",
+        "read_graph_dsl",
+        "get_graph_dsl_docs",
+        "find_nodes",
+        "find_node_types",
+        "find_node_categories",
+        "get_node_infos",
+        "get_node_type_pins",
+        "get_connected_subgraph",
+        "get_pin_value",
+        "list_component_events",
+        "list_compatible_event_functions",
+        "get_create_event_function",
+    },
+    # 자동화 테스트. 실행 도구까지 넣은 것은 의도적이다 — UE 클라 테스트를 무인으로 돌리는
+    # 것이 이 서버를 들인 목적 중 하나다(docs/backlog.md 의 L1 항목). 다만 이 경로가 실제로
+    # 도는지는 아직 확인하지 않았다.
+    "AutomationTestToolset.AutomationTestToolset": {
+        "DiscoverTests",
+        "ListTests",
+        "GetTestStatus",
+        "GetTestResults",
+        "RunTests",
+        "RunTestsByFilter",
+        "StopTests",
+    },
+}
+
 # 셸에서 막을 것 — 파괴적 파일/git 조작 + Redis 전체 삭제.
 SHELL_PATTERNS = [
     (r"rm\s+-[a-zA-Z]*r[a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*r", "rm -rf"),
@@ -209,7 +284,34 @@ def main():
                 ["rootFolder 누락"],
             )
 
-    # 2) 위험 명령 패턴 검사
+    # 2) 언리얼 MCP 라우터 — 허용 명단에 있는 조합만 통과시킨다
+    if tool_name in UE_ROUTER_TOOLS:
+        toolset = tool_input.get("toolset_name") or ""
+        target = tool_input.get("tool_name") or ""
+        if not isinstance(toolset, str) or not isinstance(target, str):
+            return deny(
+                "BLOCKED: call_tool 의 toolset_name/tool_name 이 문자열이 아니다. "
+                "판정할 근거가 없으므로 막는다.",
+                tool_name,
+                ["인자 형식 오류"],
+            )
+        toolset = toolset.strip()
+        target = target.strip()
+        allowed = UE_ALLOWED_TOOLS.get(toolset)
+        if allowed is None or target not in allowed:
+            shown = (toolset + "." + target) if toolset else target
+            return deny(
+                "BLOCKED: 언리얼 MCP 도구 '" + shown + "' 는 허용 명단에 없다. "
+                "이 서버는 도구 수백 종이 call_tool 하나로 들어와서 permissions 로 구분되지 않는다. "
+                "그래서 이 훅의 UE_ALLOWED_TOOLS 가 유일한 통제 지점이고, 모르는 것은 막는다 "
+                "(ADR-0003). 쓰기 계열이 필요하면 사람 승인을 받고 명단에 먼저 추가할 것. "
+                "허용된 조합은 describe_toolset 으로 확인할 수 있다.",
+                tool_name,
+                ["UE 허용 명단 밖: " + shown],
+            )
+        return 0
+
+    # 3) 위험 명령 패턴 검사
     if tool_name in SQL_TOOLS:
         target = tool_input.get("queryText", "")
         is_sql = True
