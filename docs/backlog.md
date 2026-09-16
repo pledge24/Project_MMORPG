@@ -64,23 +64,26 @@ AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐이라 �
 **왜 지금**: L1(LLT)은 폐기됐지만 L2는 별도 타깃이 필요 없어 설치본에서 바로 된다
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본 `Core/Public/Misc/AutomationTest.h:4297`에 존재).
 
-**선행 조건**: **실행에 에디터가 필요해 사람 손이 섞인다.** 서버 L1처럼 무인 루프가 되지 않으므로
-착수 전에 별도 계획을 세운다.
+**선행 조건**: **사람이 에디터를 띄우고 MCP 서버를 시작해야 한다.** 에디터 콘솔에
+`ModelContextProtocol.StartServer`를 한 번 입력하면 그 세션 동안은 사람 손이 더 들어가지
+않는다. 서버 L1처럼 터미널에서 종료 코드만 보고 도는 무인 루프는 아니다.
 
 착수 단계: `P1/Source/P1/Tests/`에 테스트 1개 → `Build.bat`으로 에디터 타깃 빌드
-(`docs/build.md` 「빌드 명령」) → 에디터 `Window > Test Automation`(사람) 또는
-`-ExecCmds="Automation RunTests ..."`.
+(`docs/build.md` 「빌드 명령」) → 언리얼 MCP로 `DiscoverTests`를 부른 뒤 `RunTests`.
 
-**세 번째 실행 경로 후보**: 언리얼 MCP의 `AutomationTestToolset`이 `DiscoverTests`,
-`RunTests`, `GetTestResults`를 노출한다(ADR-0003에서 허용 명단에 넣었다). 이 경로가 되면
-위의 "사람 손이 섞인다"는 선행 조건이 바뀐다. **다만 툴셋이 목록에 있다는 것만 확인했고
-실제로 테스트를 돌리는지는 확인하지 않았다.** 착수 전에 이것부터 실행해 본다 — 에디터가
-떠 있는 상태에서 `DiscoverTests`를 한 번 부르는 것이 가장 싸게 실패하는 경로다.
+**실행 경로는 실측으로 확인됐다.** 2026년 9월 16일에 `DiscoverTests`가 엔진 테스트 8,954개를
+열거했고, `RunTests`가 테스트 한 건을 돌려 `passed: 1`을 JSON으로 돌려줬다. 측정값은 ADR-0003의
+「실경로에서 무엇을 확인했는가」에 있다. 판정이 JSON이라 사람 눈이 필요하지 않다.
+**다만 돌려 본 것은 순수 수치 연산 테스트 한 건뿐이다.** 레벨을 열거나 PIE를 띄우는 테스트가
+이 경로에서 도는지는 모른다.
+
+대체 실행 경로 두 가지는 남겨 둔다. 에디터의 `Window > Test Automation`(사람)과
+`-ExecCmds="Automation RunTests ..."`다.
 
 첫 대상 후보는 이동 보간 수식(`ACreature`의 `MoveQueue`) 정도다. 클라 쪽에 남은 순수 로직이
 얇다는 점도 함께 고려한다.
 
-**완료 신호**: 에디터에서 테스트 1개가 초록으로 뜬다.
+**완료 신호**: `RunTests`가 이 저장소의 테스트 1개에 `passed: 1`을 돌려준다.
 
 ---
 

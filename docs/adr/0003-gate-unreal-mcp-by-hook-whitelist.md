@@ -74,15 +74,67 @@ Epic의 README가 직접 경고하는 경로다.
 넣었다. UE 클라이언트 테스트를 무인으로 돌리는 것이 이 서버를 들인 목적 중 하나이기
 때문이다. 근거는 `docs/backlog.md`의 클라이언트 L1 항목이다.
 
+## 실경로에서 무엇을 확인했는가
+
+위의 측정은 `curl`로 던진 것이라 Claude Code 계층이 빠져 있었다. 세션을 재시작한 뒤
+같은 날 Claude Code의 MCP 클라이언트로 같은 경로를 다시 쟀다.
+
+| 확인 항목 | 결과 |
+| --- | --- |
+| `describe_toolset`이 툴셋 정보를 돌려준다 | 통과 |
+| `list_properties`가 `BP_MonsterBase`의 속성을 돌려준다 | 통과 (115개, `curl` 측정값과 같다) |
+| 훅이 `set_properties`를 막는다 | 통과 (차단 메시지가 돌아왔다) |
+
+**훅이 실경로에서 막는다.** 이전까지 확인한 것은 훅 로직이 올바른 입력에 올바르게
+판정한다는 데까지였다. Claude Code가 그 입력을 훅에 넘기는지는 재지 않았다.
+
+`describe_toolset`에는 툴셋의 전체 경로 이름을 넘긴다.
+— `ObjectTools`처럼 짧게 넘기면 소켓이 끊긴다. `list_toolsets`가 돌려주는
+`editor_toolset.toolsets.object.ObjectTools`를 그대로 쓴다.
+
+### `AutomationTestToolset`은 테스트를 돌린다
+
+`DiscoverTests`에서 `RunTests`까지 끝까지 돌렸다.
+
+| 호출 | 결과 |
+| --- | --- |
+| `DiscoverTests` | `{"status": "ready"}` |
+| `ListTests` (필터 없음) | 8,954개 |
+| `ListTests` (`nameFilter`가 `P1`) | 0개 |
+| `RunTests` (`System.Core.Math.FColor.Smoke Test`) | `passed: 1`, `failed: 0`, 0.0075초 |
+
+`RunTests`는 테스트별 상태와 오류 목록, 통과·실패 개수를 JSON으로 돌려준다. 판정에 사람 눈이
+필요하지 않다. 이 결과에 맞춰 `docs/backlog.md`의 「5. UE L2 Automation Test」 선행 조건을
+고쳤다.
+
+`nameFilter`가 `P1`일 때 0개인 것은 이 저장소가 아직 UE 테스트를 하나도 쓰지 않았기 때문이다.
+8,954개는 전부 엔진과 플러그인의 테스트다.
+
+### 파생 블루프린트의 오버라이드는 조회된다
+
+ADR-0002가 기록한 Rider의 빈 결과는 이 서버에서 재현되지 않는다.
+`ObjectTools.search_subclasses`가 `BP_MonsterBase`의 파생 클래스 13개를 돌려준다. 값은 파생
+클래스마다 따로 읽히고, 서로 다른 값이 그대로 구분된다.
+
+| 대상 | `CharacterMesh0`의 `skeletalMeshAsset` |
+| --- | --- |
+| `BP_Beginner_MeleeMinion` | `Minion_Lane_Melee_Core_Dusk` |
+| `BP_Expert_MeleeMinion` | `Minion_Lane_Melee_Dusk` |
+
+**값을 읽을 때는 클래스가 아니라 CDO 경로를 넘긴다.**
+— `get_properties`에 `BP_MonsterBase_C`를 넘기면 `could not be read`로 실패한다.
+`Default__BP_MonsterBase_C`를 넘겨야 값이 나온다. `list_properties`는 클래스 경로로도
+동작하므로 이 차이가 드러나지 않는다.
+
 ## 무엇을 확인하지 못했는가
 
-**`AutomationTestToolset`이 실제로 테스트를 돌리는지 확인하지 않았다.**
-— 툴셋이 목록에 있다는 사실만 봤다. CLAUDE.md 「완료 기준」의 "존재 ≠ 가능"에 그대로
-해당한다. `docs/backlog.md`의 클라이언트 L1 제약이 풀렸다고 쓰지 않는다.
+**어떤 값이 이 단계에서 덮인 것인지 한 번에 알려주는 도구는 찾지 못했다.**
+— 부모와 자식의 CDO를 각각 읽어 비교하는 것이 지금 아는 유일한 방법이다. 값이 같으면 물려받은
+것인지 같은 값으로 덮은 것인지 구분되지 않는다.
 
-**파생 블루프린트의 오버라이드 조회를 측정하지 않았다.**
-— 속성 조회 결과가 판정을 확정해서 세 번째 기준을 재지 않았다. ADR-0002가 기록한
-`find_default_value_overrides`의 빈 결과가 이 경로에서도 재현되는지는 모른다.
+**`RunTests`가 에디터를 크게 건드리는 테스트에서도 도는지는 모른다.**
+— 실행해 본 것은 순수 수치 연산 테스트 한 건뿐이다. 레벨을 열거나 PIE를 띄우는 테스트는
+재지 않았다.
 
 ## 결과
 
