@@ -11,8 +11,17 @@
 | 게임 서버 L1 (GoogleTest) | `MSBuild Server.sln` (`docs/build.md` 「빌드 명령」) | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
 | 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
 | 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
+| UE 클라 L2 (Automation) | `Build.bat P1Editor` (`docs/build.md` 「빌드 명령」) | `pwsh P1/Scripts/Run-UeTests.ps1` | 에디터 `Window > Test Automation` |
 
 **판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`와 `npm run lint`가 둘 다 0이어야 완료다.
+
+**UE 클라만 예외다.** `UnrealEditor-Cmd`는 테스트가 실패해도, 필터가 아무것도 맞추지 못해도 종료
+코드 `0`을 돌려준다(2026년 9월 17일 실측, 두 경우 모두 확인). 그래서 `Run-UeTests.ps1`이 리포트의
+`index.json`을 읽어 판정하고 자기 종료 코드를 낸다. **에디터의 종료 코드를 보지 않는다.**
+실행 전에 지난 `index.json`을 지우므로 이전 결과가 초록으로 읽히지 않는다.
+
+UE 테스트는 에디터를 띄우지 않고 돈다. 다만 **빌드에는 에디터를 닫아야 한다**
+(`docs/build.md` 「빌드 명령」). 여기가 이 계층의 유일한 사람 손이다.
 
 테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
 
@@ -27,8 +36,9 @@
 | `InventoryTest` | 10 (+DISABLED 1) | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
+| `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
 
-**안 덮는 것**: Room · DBRequestFunctions · 세션/IOCP · 전투 판정 · Gamedata 로딩 · AuthServer 라우터/인증 흐름 · UE 클라 전 계층. 전부 0개.
+**안 덮는 것**: Room · DBRequestFunctions · 세션/IOCP · 전투 판정 · Gamedata 로딩 · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍 하나뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -40,7 +50,8 @@
 | AuthServer 설정 | `npm test` | 가능. 가장 빠름 |
 | GameServer Room·DB·IOCP | 없음 | **불가.** JobQueue 비동기 |
 | AuthServer 라우터·인증 | 없음 | 가능하나 비쌈 (bcrypt+MSSQL+Redis) |
-| UE 클라 | 없음 | **불가.** L2는 에디터 필요, L3는 Live Coding 비호환 |
+| UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
+| UE 클라 액터·월드 의존 로직 | 없음 | **불가.** 월드를 띄우는 테스트를 아직 써 보지 않았다 |
 
 불가 영역은 빌드 통과 + DummyClient 스모크가 하한이다.
 
