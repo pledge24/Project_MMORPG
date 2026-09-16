@@ -48,12 +48,14 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   `list_toolsets`, `describe_toolset`, `call_tool` 세 개만 노출하고, 52개 툴셋의 수백 개
   도구가 전부 `call_tool`의 인자로 들어온다. 이름이 하나뿐이라 `permissions`로는 구분되지
   않는다. 허용 명단은 `.claude/hooks/guard_dangerous_cmd.py`의 `UE_ALLOWED_TOOLS`이고,
-  **명단에 없으면 막힌다.** 지금 열려 있는 것은 조회 계열과 자동화 테스트뿐이다. 쓰기가
-  필요하면 사람 승인을 받고 명단에 먼저 추가한다. 근거는
-  `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
-- **언리얼 MCP는 에디터가 떠 있어야 붙는다.** 사람이 에디터 콘솔에서
-  `ModelContextProtocol.StartServer`를 입력해야 `127.0.0.1:8000`이 열린다. 연결 확인은
-  `netstat`로 8000 포트를 보거나 `list_toolsets`를 한 번 부른다.
+  **명단에 없으면 막힌다.** 지금 열려 있는 것은 조회 계열과 자동화 테스트, 그리고 PIE
+  제어(`StartPIE`·`StopPIE`)다. 에셋 쓰기는 전부 막혀 있다. **명단은 에이전트가 고칠 수
+  없다** — 훅 파일을 편집하려 하면 Claude Code의 auto mode classifier가 막으므로 사람이
+  직접 고친다. 근거는 `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
+- **언리얼 MCP는 에디터가 떠 있어야 붙는다.** 에디터를 띄우면 `127.0.0.1:8000`이 자동으로
+  열리므로 사람이 콘솔에 입력할 것은 없다. 연결 확인은 `netstat`로 8000 포트를 보거나
+  `list_toolsets`를 한 번 부른다. **UE 자동화 테스트는 이것과 무관하다** —
+  `P1/Scripts/Run-UeTests.ps1`이 에디터 없이 돌리고 종료 코드로 판정한다.
 - 심볼 탐색: `skill_search`의 `mode=symbol`. 텍스트 탐색: `search_text`. **grep 금지** — UE RPC의
   `_Implementation` 접미사에서 호출 사슬이 끊긴다. 검색어는 접미사가 붙은 이름과 안 붙은 이름
   양쪽으로 잡는다. **`mode=symbol`의 좌표는 `1행 1열`로 고정되므로 파일 경로만 쓴다.**
