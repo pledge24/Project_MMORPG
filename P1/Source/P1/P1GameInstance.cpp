@@ -28,14 +28,51 @@ void UP1GameInstance::Init()
     _MyPlayerData = GetSubsystem<UMyPlayerData>();
     if (IsValid(_MyPlayerData) == false)
         UE_LOG(LogTemp, Warning, TEXT("_MyPlayerData Is Invalid"));
+
+    // 수신 펌프를 코어 티커에 등록한다.
+    // 게임 인스턴스는 레벨 전환에 살아남으므로 펌프도 레벨과 무관하게 계속 돈다.
+    // 코어 티커는 게임 스레드에서 돌기 때문에 여기서 UObject를 만져도 된다.
+    RecvPumpTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+        FTickerDelegate::CreateUObject(this, &UP1GameInstance::TickRecvPump));
 }
 
 void UP1GameInstance::Shutdown()
 {
+    // 펌프를 먼저 멈춘다. 종료 중에 패킷을 처리하면 이미 정리된 오브젝트를 건드린다.
+    if (RecvPumpTickerHandle.IsValid())
+    {
+        FTSTicker::RemoveTicker(RecvPumpTickerHandle);
+        RecvPumpTickerHandle.Reset();
+    }
+
     Super::Shutdown();
 
     // 게임 서버 연결 해제
     DisconnectFromGameServer();
+}
+
+bool UP1GameInstance::TickRecvPump(float DeltaTime)
+{
+    UWorld* World = GetWorld();
+    if (World == nullptr)
+        return true;
+
+    // 월드가 준비되기 전과 정리 중에는 펌프를 돌리지 않는다.
+    // 레벨 블루프린트 틱은 레벨 전환 동안 죽어 있어서 그 사이 패킷이 큐에 쌓였다가
+    // 월드가 준비된 뒤 처리됐다. 코어 티커는 전환 중에도 돌기 때문에 그 버퍼링을
+    // 여기서 직접 복원한다. 큐는 비우지 않으므로 패킷은 유실되지 않는다.
+    if (World->bIsTearingDown || World->HasBegunPlay() == false)
+        return true;
+
+    // 코어 티커는 월드 틱 밖에서 돌기 때문에 이 시점의 GWorld는 게임 월드가 아니다.
+    // 에디터에서는 에디터 월드를 가리키고, 그 월드에는 게임 인스턴스가 없다.
+    // 패킷 핸들러 20개가 GWorld->GetGameInstance()로 시작하므로 호출 구간에만 맞춰 준다.
+    UWorld* PrevWorld = GWorld;
+    GWorld = World;
+    HandleRecvPackets();
+    GWorld = PrevWorld;
+
+    return true;
 }
 
 void UP1GameInstance::BeginDestroy()
