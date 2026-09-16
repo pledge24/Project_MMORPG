@@ -80,26 +80,13 @@ seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므
 
 **C++ 소스를 셸로 고치지 않는다.**
 
-### UE 빌드에서 `buildIsSuccess`는 성공을 알려주지 못한다
+### 클라이언트 빌드는 Build.bat으로 돌린다
 
-`build_solution_state`가 UE 타깃에서는 성공한 빌드에 `buildIsSuccess: false`와 빈 `problems`,
-그리고 `Build failed without diagnostic output`을 돌려준다. 도구 쪽 동작이라 저장소에서 고칠 수
-없다. 절차로 막는다.
+명령은 `docs/build.md` 「클라이언트 빌드 명령」에 있다. 종료 코드가 판정이다. 이 경로로 통일한
+이유는 `docs/adr/0001-unify-p1-build-path.md`에 있다.
 
-2026년 9월 16일에 같은 Rider 세션에서 대조 실험으로 범위를 좁혔다.
-
-| 대상 | 빌드 결과 | `problems` | `buildIsSuccess` |
-|---|---|---|---|
-| `Server` (MSBuild) | 성공 | 비어 있음 | `true` |
-| `P1` (UBT) | 성공 | 비어 있음 | `false` |
-| `P1` (UBT) | 실패(`static_assert`) | 파일·줄·열까지 정확 | `false` |
-
-**MSBuild 경로는 정상이고 UE 경로만 틀린다.** 진단 전달도 정상이다. 고장난 것은 UE 경로의 성공
-판정 하나다. Rider 내부에는 판정이 있다. 백엔드 로그가 빌드마다
-`Fire build result Kind: Successful`을 남긴다. 그 값이 MCP 계층까지 닿지 못하고 기본값인 실패로
-떨어진다.
-
-**응답을 세 상태로 읽는다.**
+`build_solution_state`를 쓰게 되는 경우를 위해 판독 규칙만 남긴다. **이 툴은 UE 타깃에서 성공을
+성공이라 답하지 못한다.**
 
 | 응답 | 뜻 |
 |---|---|
@@ -107,14 +94,8 @@ seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므
 | `buildIsSuccess: false` + `problems`에 `ERROR`가 있다 | 실패다. 그 내용이 원인이다 |
 | `buildIsSuccess: false` + `problems`가 비어 있다 | **판정 불가다. 실패가 아니다** |
 
-세 번째 경우에는 아래 둘 중 하나로 판정한다.
-
-- `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`의 마지막 줄이 `Result: Succeeded`인지 본다. 같은
-  파일에 `error C`, `error LNK`, `fatal error`가 있는지도 함께 본다.
-- Rider 백엔드 로그에서 판정을 직접 본다.
-  `grep "Fire build result" "$LOCALAPPDATA/JetBrains/Rider<버전>/log/backend.*.log" | tail -2`
-
-빌드가 실제로 돌았는지는 `P1/Binaries/Win64/UnrealEditor-P1.dll`의 타임스탬프로 확인한다.
+세 번째 경우에는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`의 마지막 줄이 `Result: Succeeded`인지
+본다. 빌드가 실제로 돌았는지는 `P1/Binaries/Win64/UnrealEditor-P1.dll`의 타임스탬프로 확인한다.
 
 ### Live Coding은 메인 DLL을 대체하지 않는다
 

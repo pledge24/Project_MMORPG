@@ -124,13 +124,24 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 규칙은 `CLAUDE.md` 「도구 라우팅」에 있다. 여기엔 근거와 예외를 적는다.
 
-### 빌드를 터미널로 돌리지 않는 이유
+### 클라이언트 빌드 명령
 
-출력 절단으로 에러가 유실된다. `build_solution_state`가 진단 없이 실패만 돌려주면 Rider 빌드 로그를 직접 읽는다.
+에디터를 닫고 아래를 돌린다. **종료 코드가 판정이다.**
 
+```powershell
+& "D:\Unreal\Editor\Launcher\UE_5.8\Engine\Build\BatchFiles\Build.bat" `
+    P1Editor Win64 Development `
+    -Project="D:\Unreal\Projects\Project_MMORPG\P1\P1.uproject" -WaitMutex
 ```
-%LOCALAPPDATA%/JetBrains/Rider<버전>/log/SolutionBuilder/
-```
+
+- 엔진 설치 경로는 머신마다 다르다. 위 경로는 이 머신의 런처 설치본이다.
+- 타깃은 `P1Editor`, 플랫폼은 `Win64`, 구성은 `Development`다. 셋 중 하나라도 틀리면 엉뚱한 타깃을 빌드하고도 종료 코드 `0`이 나온다.
+- 에디터가 떠 있으면 `UnrealEditor-P1.dll`을 덮어쓸 수 없어 실패한다.
+- 증분 빌드 출력은 30줄 안팎이라 잘리지 않는다. `Rebuild.bat`과 최초 전체 빌드는 모듈 수만큼 늘어나므로 절단될 수 있고, 그때는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다.
+
+이 경로로 통일한 이유는 `docs/adr/0001-unify-p1-build-path.md`에 있다.
+
+서버는 그대로 Rider MCP로 빌드한다. MSBuild 경로는 성공 판정이 정상이다.
 
 ### 노출 ≠ 존재
 
