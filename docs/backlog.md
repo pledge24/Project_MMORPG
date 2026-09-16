@@ -67,9 +67,9 @@ AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐이라 �
 **선행 조건**: **실행에 에디터가 필요해 사람 손이 섞인다.** 서버 L1처럼 무인 루프가 되지 않으므로
 착수 전에 별도 계획을 세운다.
 
-착수 단계: `P1/Source/P1/Tests/`에 테스트 1개 →
-`build_solution_start(rootFolder=".../P1")`로 에디터 타깃 빌드 →
-에디터 `Window > Test Automation`(사람) 또는 `-ExecCmds="Automation RunTests ..."`.
+착수 단계: `P1/Source/P1/Tests/`에 테스트 1개 → `Build.bat`으로 에디터 타깃 빌드
+(`docs/build.md` 「빌드 명령」) → 에디터 `Window > Test Automation`(사람) 또는
+`-ExecCmds="Automation RunTests ..."`.
 
 첫 대상 후보는 이동 보간 수식(`ACreature`의 `MoveQueue`) 정도다. 클라 쪽에 남은 순수 로직이
 얇다는 점도 함께 고려한다.

@@ -124,9 +124,11 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 규칙은 `CLAUDE.md` 「도구 라우팅」에 있다. 여기엔 근거와 예외를 적는다.
 
-### 클라이언트 빌드 명령
+### 빌드 명령
 
-에디터를 닫고 아래를 돌린다. **종료 코드가 판정이다.**
+**빌드는 터미널에서 돌리고 종료 코드로 판정한다. Rider MCP로 빌드하지 않는다.** 통일한 이유는 `docs/adr/0001-unify-build-path.md`에 있다.
+
+**클라이언트.** 에디터를 닫고 돌린다.
 
 ```powershell
 & "D:\Unreal\Editor\Launcher\UE_5.8\Engine\Build\BatchFiles\Build.bat" `
@@ -137,11 +139,27 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 - 엔진 설치 경로는 머신마다 다르다. 위 경로는 이 머신의 런처 설치본이다.
 - 타깃은 `P1Editor`, 플랫폼은 `Win64`, 구성은 `Development`다. 셋 중 하나라도 틀리면 엉뚱한 타깃을 빌드하고도 종료 코드 `0`이 나온다.
 - 에디터가 떠 있으면 `UnrealEditor-P1.dll`을 덮어쓸 수 없어 실패한다.
-- 증분 빌드 출력은 30줄 안팎이라 잘리지 않는다. `Rebuild.bat`과 최초 전체 빌드는 모듈 수만큼 늘어나므로 절단될 수 있고, 그때는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다.
 
-이 경로로 통일한 이유는 `docs/adr/0001-unify-p1-build-path.md`에 있다.
+**서버.** 구성은 `Debug|x64`이고 산출물은 `Server/Binary/Debug/`에 떨어진다.
 
-서버는 그대로 Rider MCP로 빌드한다. MSBuild 경로는 성공 판정이 정상이다.
+```powershell
+& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" `
+    "D:\Unreal\Projects\Project_MMORPG\Server\Server.sln" `
+    /p:Configuration=Debug /p:Platform=x64 /m /nologo /v:minimal
+```
+
+- MSBuild 경로는 `vswhere.exe -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe"`로 찾는다. 머신마다 다르다.
+- **`/v:minimal`을 빼지 않는다.** 기본 상세도는 출력이 훨씬 커진다.
+- 이 빌드는 추적 중인 `Server/Libraries/Libs/`의 `.lib`와 `.pdb`를 갱신한다. 커밋 전에 의도한 변경인지 확인한다.
+
+**출력 규모** (2026년 9월 16일 증분 빌드 실측)
+
+| 대상 | 성공 종료 코드 | 실패 종료 코드 | 성공 출력 | 실패 출력 |
+|---|---|---|---|---|
+| 클라이언트 | `0` | `6` | 30줄 | 33줄, 2,355바이트 |
+| 서버 | `0` | `1` | 117줄, 4,962바이트 | 20줄, 1,907바이트 |
+
+`Rebuild.bat`과 최초 전체 빌드는 모듈 수만큼 출력이 늘어나므로 절단될 수 있고, 그때는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다.
 
 ### 노출 ≠ 존재
 
