@@ -145,9 +145,12 @@ CASES = [
 def check_pattern_cases():
     """패턴·rootFolder 판정. 실패 개수를 돌려준다."""
     bad = 0
-    # 카운터가 실제 로그를 건드리지 않도록 통째로 임시 경로로 돌린다.
+    # 카운터와 감사 로그가 실제 파일을 건드리지 않도록 통째로 임시 경로로 돌린다.
     with tempfile.TemporaryDirectory() as tmp:
-        env = {"GUARD_BLOCK_COUNTER": str(Path(tmp) / "noise.log")}
+        env = {
+            "GUARD_BLOCK_COUNTER": str(Path(tmp) / "noise.log"),
+            "GUARD_UE_AUDIT": str(Path(tmp) / "noise-audit.log"),
+        }
         for desc, tool, tin, expect in CASES:
             code, _ = run_hook(tool, tin, env)
             blocked = (code == 2)
@@ -206,12 +209,73 @@ def check_counter_cases():
     return bad
 
 
+def check_audit_cases():
+    """언리얼 MCP 감사 로그 동작. 실패 개수를 돌려준다."""
+    bad = 0
+
+    def report(ok, desc, detail=""):
+        nonlocal bad
+        if not ok:
+            bad += 1
+        print(("PASS " if ok else "FAIL ") + "%-24s %s" % (desc, detail))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        log = Path(tmp) / "ue_audit.log"
+        noise = str(Path(tmp) / "noise.log")
+        env = {"GUARD_BLOCK_COUNTER": noise, "GUARD_UE_AUDIT": str(log)}
+
+        # 1) 통과한 UE 호출 1회 → 줄 1개, TSV 필드 4개, 인자 요약 포함
+        args = {"instance": {"refPath": "/Game/X.X_C"}}
+        code, _ = run_hook(
+            UE, {"toolset_name": OBJ, "tool_name": "list_properties", "arguments": args}, env)
+        lines = log.read_text(encoding="utf-8").splitlines() if log.exists() else []
+        fields = lines[0].split("\t") if lines else []
+        report(
+            code == 0 and len(lines) == 1 and len(fields) == 4
+            and fields[1] == OBJ and fields[2] == "list_properties"
+            and "/Game/X.X_C" in fields[3],
+            "UE 통과 → 감사 1줄",
+            "줄=%d 필드=%d" % (len(lines), len(fields)),
+        )
+
+        # 2) 차단된 호출은 여기 남기지 않는다. 차단은 block_counter 가 맡는다.
+        run_hook(UE, {"toolset_name": OBJ, "tool_name": "set_properties", "arguments": {}}, env)
+        after = log.read_text(encoding="utf-8").splitlines()
+        report(len(after) == 1, "차단은 감사에 안 남음", "줄=%d" % len(after))
+
+        # 3) 언리얼 MCP 가 아닌 툴은 감사 대상이 아니다
+        run_hook("Bash", {"command": "git status"}, env)
+        after = log.read_text(encoding="utf-8").splitlines()
+        report(len(after) == 1, "비 UE 툴은 감사 안 함", "줄=%d" % len(after))
+
+        # 4) 긴 인자를 잘라서 한 줄을 유지한다. 안 자르면 로그가 통째로 부푼다.
+        run_hook(UE, {"toolset_name": LOGS, "tool_name": "GetLogEntries",
+                      "arguments": {"pattern": "가" * 2000}}, env)
+        after = log.read_text(encoding="utf-8").splitlines()
+        long_len = len(after[1]) if len(after) > 1 else 0
+        report(
+            len(after) == 2 and "(잘림)" in after[1] and long_len < 700,
+            "긴 인자는 잘린다",
+            "줄=%d 길이=%d" % (len(after), long_len),
+        )
+
+        # 5) 감사 로그를 못 쓰는 상황에서도 통과 판정은 그대로 (핵심 안전 요건)
+        code, _ = run_hook(
+            UE, {"toolset_name": OBJ, "tool_name": "list_properties"},
+            {"GUARD_BLOCK_COUNTER": noise, "GUARD_UE_AUDIT": tmp})
+        report(code == 0, "감사 실패해도 통과", "exit=%s" % code)
+
+    return bad
+
+
 def main():
     bad = check_pattern_cases()
     print("")
     bad += check_counter_cases()
+    print("")
+    bad += check_audit_cases()
 
-    total = len(CASES) + 4
+    total = len(CASES) + 4 + 5
     print("")
     print("=== %d/%d ok ===" % (total - bad, total))
     return 1 if bad else 0

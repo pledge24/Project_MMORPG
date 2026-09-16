@@ -13,6 +13,7 @@
   위반이면 permissionDecision=deny JSON을 stdout에 쓰고 exit 2로 끝낸다.
   (exit 2는 JSON 파싱 결과와 무관하게 차단되므로 이중 안전장치다.)
   차단 1건마다 block_counter.log 에 TSV 한 줄을 append 한다 (아래 COUNTER_ENV 주석 참조).
+  언리얼 MCP 호출은 통과시킨 것도 ue_audit.log 에 인자 요약과 함께 남긴다 (AUDIT_ENV 주석 참조).
 
 테스트: py -3 .claude/hooks/test_guard_dangerous_cmd.py
 """
@@ -34,6 +35,21 @@ from pathlib import Path
 # 숫자가 거짓이 된다.
 COUNTER_ENV = "GUARD_BLOCK_COUNTER"
 COUNTER_DEFAULT = Path(__file__).with_name("block_counter.log")
+
+# 언리얼 MCP 감사 로그 — 통과시킨 호출도 한 줄씩 남긴다.
+#
+# 왜 필요한가: 위 카운터는 막힌 것만 센다. 그런데 사고는 막힌 호출이 아니라 통과한 호출에서
+# 난다. 무엇이 통과했는지 기록이 없으면 "사고가 나면 그때 대응한다"는 방침 자체가 성립하지
+# 않는다. 되짚을 근거가 없기 때문이다.
+#
+# 에디터 로그도 LogModelContextProtocol 항목으로 디스패치를 남기지만 둘이 다르다. 그쪽은
+# 인자를 적지 않고, P1/Saved 에 있어 세션마다 새로 시작하며, 저장소에 남지 않는다.
+# 여기서는 인자 요약까지 남기고 파일이 계속 누적된다.
+AUDIT_ENV = "GUARD_UE_AUDIT"
+AUDIT_DEFAULT = Path(__file__).with_name("ue_audit.log")
+# 인자 요약 길이 상한. refPath 하나가 200자를 넘는 경우가 있어 넉넉히 잡되, 스크립트나
+# 긴 배열이 통째로 들어와 로그가 부풀지 않도록 자른다.
+AUDIT_ARGS_MAX = 400
 
 # 어떤 툴의 어느 필드를 볼 것인가.
 # 셸 계열은 command, Rider의 SQL 실행은 queryText.
@@ -315,6 +331,37 @@ def _record_block(tool_name, hits):
         pass
 
 
+def _record_ue_call(toolset, tool, arguments):
+    """통과시킨 언리얼 MCP 호출 1건을 감사 로그에 append 한다.
+
+    TSV 한 줄: 시각 / 툴셋 / 도구 / 인자 요약.
+
+    **실패해도 조용히 넘어간다.** 기록을 못 썼다는 이유로 허용 판정을 뒤집지 않는다.
+    _record_block 과 같은 원칙이다.
+    """
+    try:
+        override = os.environ.get(AUDIT_ENV)
+        path = Path(override) if override else AUDIT_DEFAULT
+        try:
+            summary = json.dumps(arguments, ensure_ascii=False, sort_keys=True)
+        except Exception:
+            summary = repr(arguments)
+        # TSV 한 줄을 깨뜨리는 문자만 치환한다.
+        summary = summary.replace("\t", " ").replace("\r", " ").replace("\n", " ")
+        if len(summary) > AUDIT_ARGS_MAX:
+            summary = summary[:AUDIT_ARGS_MAX] + "...(잘림)"
+        line = "\t".join((
+            datetime.now().astimezone().isoformat(timespec="seconds"),
+            toolset or "(top-level)",
+            tool or "(unknown)",
+            summary,
+        ))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except Exception:
+        pass
+
+
 def deny(reason, tool_name="", hits=()):
     """차단 결정을 내보낸다.
 
@@ -386,6 +433,7 @@ def main():
                 tool_name,
                 ["UE 허용 명단 밖: " + shown],
             )
+        _record_ue_call(toolset, target, tool_input.get("arguments"))
         return 0
 
     # 3) 위험 명령 패턴 검사
