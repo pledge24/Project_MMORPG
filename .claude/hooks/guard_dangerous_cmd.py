@@ -99,10 +99,19 @@ UE_ROUTER_TOOLS = {
 # 여기서는 엔진이 업데이트되면 툴셋과 도구가 조용히 늘어나고, 그것들이 전부 같은 이름으로
 # 들어오므로 차단 명단은 반드시 뒤처진다. 방향을 뒤집어 모르는 것은 막는다.
 #
-# 첫 판을 좁게 잡은 이유는 실측으로 값어치가 확인된 것이 조회 계열뿐이기 때문이다.
-# 쓰기 계열(write_graph_dsl, set_parent, delete_node 등)과 임의 파이썬 실행
-# (ProgrammaticToolset)은 넣지 않는다. .uasset 은 바이너리라 diff 로 검토할 수 없어서
-# 되돌림 비용이 가장 크다. 필요해지면 건별로 여기에 추가한다.
+# 범위는 두 가지 기준으로 정한다.
+#   1. 테스트 판정은 헤드리스 커맨드렛이 한다 (P1/Scripts/Run-UeTests.ps1). MCP 는 그게
+#      깨졌을 때 로그와 화면을 보는 진단 경로다. 그래서 조회 계열은 넓게 연다.
+#   2. 되돌릴 수 없는 것은 열지 않는다. P1/Content 는 디스크의 3,438 개 중 47 개만 git 이
+#      추적하고 .uasset 은 diff 도 안 된다 (2026-09-17 실측). 그래서 에셋 쓰기, 특히
+#      폴더를 통째로 받는 delete 와 move 는 뺀다. LFS 전환 후에 다시 판단한다.
+#
+# 아래 둘은 열면 이 명단 자체가 무의미해지므로 따로 못 박아 둔다.
+#   - ProgrammaticToolset.execute_tool_script: 스크립트 안에서 다른 도구를 부르는 것이
+#     이 도구의 기능이다. 훅에는 호출 1 건으로 보이고 무엇을 불렀는지는 보이지 않는다.
+#   - SlateInspector 의 조작 8 종(Click, Type, PressKey, SelectOption, FillForm, Drag,
+#     Hover, Windows): 에디터 UI 로 사람이 할 수 있는 전부가 가능해진다. 우회 범위가
+#     ProgrammaticToolset 보다 넓다. Click(ref="w123") 은 기록에 남아도 의미를 복원할 수 없다.
 #
 # 빈 문자열 키는 toolset_name 을 생략하고 최상위 도구를 부르는 경우다.
 UE_ALLOWED_TOOLS = {
@@ -143,8 +152,8 @@ UE_ALLOWED_TOOLS = {
         "get_create_event_function",
     },
     # 자동화 테스트. 실행 도구까지 넣은 것은 의도적이다 — UE 클라 테스트를 무인으로 돌리는
-    # 것이 이 서버를 들인 목적 중 하나다(docs/backlog.md 의 L1 항목). 다만 이 경로가 실제로
-    # 도는지는 아직 확인하지 않았다.
+    # 것이 이 서버를 들인 목적 중 하나다(docs/backlog.md 의 L1 항목). 이 경로가 실제로 도는
+    # 것은 2026-09-16 에 확인했다. RunTests 가 통과·실패 개수를 JSON 으로 돌려준다.
     "AutomationTestToolset.AutomationTestToolset": {
         "DiscoverTests",
         "ListTests",
@@ -154,7 +163,75 @@ UE_ALLOWED_TOOLS = {
         "RunTestsByFilter",
         "StopTests",
     },
+    # 에디터 로그. 테스트나 에디터가 깨졌을 때 원인을 사람 손을 거치지 않고 읽는다.
+    # SetVerbosity 는 조회가 아니지만 메모리상의 로그 상세도만 바꾼다. 에셋이나 설정 파일에
+    # 남지 않는다.
+    "EditorToolset.LogsToolset": {
+        "GetLogEntries",
+        "GetLogCategories",
+        "GetVerbosity",
+        "SetVerbosity",
+    },
+    # 에디터 상태 조회와 화면 캡처, 그리고 PIE 제어.
+    # StartPIE 와 StopPIE 는 조회가 아니다. 넣은 이유는 이것이 열려야 UE 클라가 게임 서버와
+    # 인증 서버에 실제로 붙는 3 티어 통합 스모크가 무인으로 돌기 때문이다. 에셋은 바꾸지
+    # 않는다. 사람이 보고 있는 화면을 말없이 바꾸는 UI 조작 6 종은 뺐다
+    # (SetContentBrowserPath, SetCameraTransform, SelectAssets, SelectActors,
+    #  OpenEditorForAsset, FocusOnActors).
+    "EditorToolset.EditorAppToolset": {
+        "CaptureViewport",
+        "CaptureEditorImage",
+        "CaptureAssetImage",
+        "GetCameraTransform",
+        "GetContentBrowserPath",
+        "GetOpenAssets",
+        "GetSelectedActors",
+        "GetSelectedAssets",
+        "GetVisibleActors",
+        "IsPIERunning",
+        "ScreenCoordsToWorld",
+        "SearchCVars",
+        "WorldPosToScreenCoords",
+        "StartPIE",
+        "StopPIE",
+    },
+    # 에디터 UI 를 읽는다. MCP 도구로 노출되지 않는 패널 내용이 여기서 보인다.
+    # 조작 8 종은 위 주석의 이유로 뺐다. Observe 는 100 밀리초마다 서브트리를 걷는 관찰자를
+    # 남기므로 쓴 뒤에는 Unobserve 로 정리한다.
+    "SlateInspectorToolset.SlateInspectorToolset": {
+        "Snapshot",
+        "Screenshot",
+        "Observe",
+        "Unobserve",
+        "ListObservers",
+        "WaitFor",
+    },
+    # 에셋 조회. get_referencers 와 get_dependencies 가 "이걸 고치면 뭐가 깨지나"에 답한다.
+    # 쓰기 7 종(write_file, save_assets, update_metadata_tags, delete, move, duplicate,
+    # create_folder)은 뺐다. delete 와 move 는 에셋이 아니라 폴더를 통째로 받는다.
+    "editor_toolset.toolsets.asset.AssetTools": {
+        "can_edit_asset",
+        "exists",
+        "find_assets",
+        "get_asset_class",
+        "get_asset_tags",
+        "get_dependencies",
+        "get_metadata_tags",
+        "get_plugin_content_paths",
+        "get_referencers",
+        "is_checked_out",
+        "is_dirty",
+        "list_folders",
+        "load_asset",
+        "read_file",
+    },
+    # 프로젝트 스킬 에셋 조회. CreateSkill 과 UpdateSkill 은 뺐다.
+    "ToolsetRegistry.AgentSkillToolset": {
+        "ListSkills",
+        "GetSkills",
+    },
 }
+
 
 # 셸에서 막을 것 — 파괴적 파일/git 조작 + Redis 전체 삭제.
 SHELL_PATTERNS = [

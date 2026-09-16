@@ -32,6 +32,11 @@ OBJ = "editor_toolset.toolsets.object.ObjectTools"
 BP = "editor_toolset.toolsets.blueprint.BlueprintTools"
 AUTO = "AutomationTestToolset.AutomationTestToolset"
 PROG = "editor_toolset.toolsets.programmatic.ProgrammaticToolset"
+LOGS = "EditorToolset.LogsToolset"
+APP = "EditorToolset.EditorAppToolset"
+SLATE = "SlateInspectorToolset.SlateInspectorToolset"
+ASSET = "editor_toolset.toolsets.asset.AssetTools"
+SKILL = "ToolsetRegistry.AgentSkillToolset"
 
 
 def run_hook(tool, tool_input, env=None):
@@ -115,6 +120,22 @@ CASES = [
     ("UE 최상위 명단밖 차단", UE, {"tool_name": "call_tool"}, True),
     ("UE 인자 누락 차단", UE, {}, True),
     ("UE 인자 형식오류 차단", UE, {"toolset_name": OBJ, "tool_name": 7}, True),
+    # 2026-09-17 에 넓힌 다섯 툴셋. 무엇을 열었고 무엇을 닫았는지 여기서 고정한다.
+    ("UE 로그 조회 통과", UE, {"toolset_name": LOGS, "tool_name": "GetLogEntries"}, False),
+    ("UE 로그 상세도 변경 통과", UE, {"toolset_name": LOGS, "tool_name": "SetVerbosity"}, False),
+    ("UE 뷰포트 캡처 통과", UE, {"toolset_name": APP, "tool_name": "CaptureViewport"}, False),
+    ("UE PIE 시작 통과", UE, {"toolset_name": APP, "tool_name": "StartPIE"}, False),
+    ("UE 에디터 UI 조작 차단", UE, {"toolset_name": APP, "tool_name": "SelectActors"}, True),
+    ("UE 슬레이트 스냅샷 통과", UE, {"toolset_name": SLATE, "tool_name": "Snapshot"}, False),
+    ("UE 슬레이트 클릭 차단", UE, {"toolset_name": SLATE, "tool_name": "Click"}, True),
+    ("UE 슬레이트 타이핑 차단", UE, {"toolset_name": SLATE, "tool_name": "Type"}, True),
+    ("UE 슬레이트 창 조작 차단", UE, {"toolset_name": SLATE, "tool_name": "Windows"}, True),
+    ("UE 에셋 참조 조회 통과", UE, {"toolset_name": ASSET, "tool_name": "get_referencers"}, False),
+    ("UE 에셋 삭제 차단", UE, {"toolset_name": ASSET, "tool_name": "delete"}, True),
+    ("UE 에셋 이동 차단", UE, {"toolset_name": ASSET, "tool_name": "move"}, True),
+    ("UE 에셋 파일 쓰기 차단", UE, {"toolset_name": ASSET, "tool_name": "write_file"}, True),
+    ("UE 스킬 조회 통과", UE, {"toolset_name": SKILL, "tool_name": "ListSkills"}, False),
+    ("UE 스킬 생성 차단", UE, {"toolset_name": SKILL, "tool_name": "CreateSkill"}, True),
 
     # --- 관계없는 툴 ---
     ("Read 툴", "Read", {"file_path": "/etc/passwd"}, False),
