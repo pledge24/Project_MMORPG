@@ -19,6 +19,7 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 ## 문서 위치
 
 - `docs/ARCHITECTURE.md` — 깨면 안 되는 불변식
+- `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`
 - `docs/tech-debt.md` — 지금 틀린 것
 - `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
 - `docs/{build,codegen,testing}.md` — 해당 영역을 건드릴 때만
