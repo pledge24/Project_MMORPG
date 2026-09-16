@@ -68,6 +68,7 @@ UE 테스트는 에디터를 띄우지 않고 돈다. 다만 **빌드에는 에�
 | `Inventory` 공개 API | 존재 |
 | protobuf 메시지 왕복 | 존재. 리플렉션으로 자동 확장 |
 | 프로토콜 ID 목록 | 존재 |
+| 클라 패킷 프레이밍 | 존재. `ClientPacketHandler::MakeSerializedPacket`의 공개 오버로드 |
 | 전투 판정 | 없음. `Room` 안에 얽혀 있다 |
 | `Gamedata` 테이블 로딩 | 미확인 |
 
