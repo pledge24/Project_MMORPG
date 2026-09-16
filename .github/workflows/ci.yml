@@ -1,0 +1,66 @@
+# 호스티드 러너에서 돌 수 있는 티어만 담는다.
+#
+# 게임 서버와 UE 클라는 여기 없다. 둘 다 호스티드 러너에서 빌드되지 않는다.
+#   - 게임 서버: .vcxproj 의 PlatformToolset 이 v145 다. windows-2025 러너의 Visual Studio 는
+#     2022(17.14)이고 툴셋이 v143 까지다.
+#   - UE 클라: UE 5.8 런처 설치본이 필요하다. 러너에 엔진이 없다.
+# 둘을 CI 로 옮기려면 self-hosted 러너가 필요하다. 근거와 선택지는 docs/backlog.md 4번에 있다.
+
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+
+jobs:
+  auth-server:
+    name: 인증 서버 테스트와 정적 검사
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Server/AuthServer
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Server/AuthServer/package-lock.json
+
+      - name: 의존성 설치
+        run: npm ci
+
+      # .env 는 gitignore 대상이라 러너에 없다. 여기서 만든다.
+      #
+      # 이렇게 하면 configs.test.js 의 "필수 키 존재" 검사는 CI 에서 항상 통과한다. 방금
+      # 우리가 다 채워 넣었기 때문이다. 그 검사는 새로 클론한 사람의 손을 잡아 주는 것이
+      # 원래 목적이고 로컬에서만 의미가 있다.
+      #
+      # CI 에서 남는 값은 파싱 쪽이다. configs.js 가 parseInt 로 읽는 세 값이 정수가 되는지,
+      # min 이 max 를 넘지 않는지를 본다. parseInt(undefined) 는 예외가 아니라 NaN 이라
+      # 이 경로는 조용히 깨진다.
+      #
+      # DB 와 Redis 에는 붙지 않는다. configs.js 가 import 하는 것은 dotenv 뿐이다.
+      - name: 테스트용 .env 만들기
+        shell: bash
+        run: |
+          cat > .env <<'EOF'
+          PORT=5000
+          DB_CONNECTION_STRING=Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\MSSQLLocalDB;Database=UserDB;Trusted_Connection=yes;
+          DB_DRIVER=msnodesqlv8
+          DB_MAX_CONNECTION=10
+          DB_MIN_CONNECTION=1
+          DB_IDLE_TIMEOUT=30000
+          REDIS_HOST=127.0.0.1
+          REDIS_PORT=6379
+          ACCESS_TOKEN_TTL=3600
+          EOF
+
+      - name: 테스트
+        run: npm test
+
+      - name: 정적 검사
+        run: npm run lint
