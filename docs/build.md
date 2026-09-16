@@ -161,11 +161,22 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 `Rebuild.bat`과 최초 전체 빌드는 모듈 수만큼 출력이 늘어나므로 절단될 수 있고, 그때는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다.
 
-### 노출 ≠ 존재
+### 노출 ≠ 존재, 노출 ≠ 동작
 
-Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는 `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(실측).
+Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는 `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(2026년 9월 16일 재확인).
 
-**판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다.** 문서에 있다는 이유로 `build_solution_start`를 `build_project`로 되돌리지 말 것. 반대로 노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
+**판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다.** 문서에 있다는 이유로 없는 툴을 부르지 말 것. 반대로 노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
+
+**노출되어 있고 에러도 내지 않는데 결과가 틀린 툴이 있다.** 이쪽이 더 위험하다. 거부당하면 알아채지만, 조용히 빈 결과를 돌려주면 "문제가 없다"로 읽히기 때문이다. 2026년 9월 16일 실측으로 확인한 것은 아래 넷이다.
+
+| 툴 | 증상 |
+|---|---|
+| `build_solution_state` | UE 타깃에서 성공한 빌드에 `buildIsSuccess: false`. 상세는 `docs/adr/0001-unify-build-path.md` |
+| `get_file_problems`·`lint_files` | 컴파일 에러 2건이 있는 파일에 빈 배열. `open_file_in_editor`로 연 뒤에도 같다 |
+| `ue_export_blueprint_nodes` | 레벨 블루프린트 경로 두 형식 모두 `{"clipboardText":""}` |
+| `search_assets`의 `baseClass` | 필터가 걸리지 않고 텍스처와 폰트까지 돌려주며, `baseClass` 필드에 입력을 그대로 되비친다 |
+
+**빈 결과를 근거로 삼기 전에 반증을 한 번 만들어 본다.** 일부러 틀린 입력을 넣어 그 툴이 실제로 잡아내는지 보는 것이 가장 싸다. 위 넷 중 셋은 그렇게 해서 드러났다.
 
 ### analyze_calls는 이 C++ 솔루션에서 실패한다
 
