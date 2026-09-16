@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: proposed
 ---
 
 # 언리얼 엔진 MCP 서버를 훅 허용 명단으로 통제한다
