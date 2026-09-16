@@ -124,19 +124,59 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 규칙은 `CLAUDE.md` 「도구 라우팅」에 있다. 여기엔 근거와 예외를 적는다.
 
-### 빌드를 터미널로 돌리지 않는 이유
+### 빌드 명령
 
-출력 절단으로 에러가 유실된다. `build_solution_state`가 진단 없이 실패만 돌려주면 Rider 빌드 로그를 직접 읽는다.
+**빌드는 터미널에서 돌리고 종료 코드로 판정한다. Rider MCP로 빌드하지 않는다.** 통일한 이유는 `docs/adr/0001-unify-build-path.md`에 있다.
 
+**클라이언트.** 에디터를 닫고 돌린다.
+
+```powershell
+& "D:\Unreal\Editor\Launcher\UE_5.8\Engine\Build\BatchFiles\Build.bat" `
+    P1Editor Win64 Development `
+    -Project="D:\Unreal\Projects\Project_MMORPG\P1\P1.uproject" -WaitMutex
 ```
-%LOCALAPPDATA%/JetBrains/Rider<버전>/log/SolutionBuilder/
+
+- 엔진 설치 경로는 머신마다 다르다. 위 경로는 이 머신의 런처 설치본이다.
+- 타깃은 `P1Editor`, 플랫폼은 `Win64`, 구성은 `Development`다. 셋 중 하나라도 틀리면 엉뚱한 타깃을 빌드하고도 종료 코드 `0`이 나온다.
+- 에디터가 떠 있으면 `UnrealEditor-P1.dll`을 덮어쓸 수 없어 실패한다.
+
+**서버.** 구성은 `Debug|x64`이고 산출물은 `Server/Binary/Debug/`에 떨어진다.
+
+```powershell
+& "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" `
+    "D:\Unreal\Projects\Project_MMORPG\Server\Server.sln" `
+    /p:Configuration=Debug /p:Platform=x64 /m /nologo /v:minimal
 ```
 
-### 노출 ≠ 존재
+- MSBuild 경로는 `vswhere.exe -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe"`로 찾는다. 머신마다 다르다.
+- **`/v:minimal`을 빼지 않는다.** 기본 상세도는 출력이 훨씬 커진다.
+- 이 빌드는 추적 중인 `Server/Libraries/Libs/`의 `.lib`와 `.pdb`를 갱신한다. 커밋 전에 의도한 변경인지 확인한다.
 
-Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는 `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(실측).
+**출력 규모** (2026년 9월 16일 증분 빌드 실측)
 
-**판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다.** 문서에 있다는 이유로 `build_solution_start`를 `build_project`로 되돌리지 말 것. 반대로 노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
+| 대상 | 성공 종료 코드 | 실패 종료 코드 | 성공 출력 | 실패 출력 |
+|---|---|---|---|---|
+| 클라이언트 | `0` | `6` | 30줄 | 33줄, 2,355바이트 |
+| 서버 | `0` | `1` | 117줄, 4,962바이트 | 20줄, 1,907바이트 |
+
+`Rebuild.bat`과 최초 전체 빌드는 모듈 수만큼 출력이 늘어나므로 절단될 수 있고, 그때는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다.
+
+### 노출 ≠ 존재, 노출 ≠ 동작
+
+Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는 `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(2026년 9월 16일 재확인).
+
+**판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다.** 문서에 있다는 이유로 없는 툴을 부르지 말 것. 반대로 노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
+
+**노출되어 있고 에러도 내지 않는데 결과가 틀린 툴이 있다.** 이쪽이 더 위험하다. 거부당하면 알아채지만, 조용히 빈 결과를 돌려주면 "문제가 없다"로 읽히기 때문이다. 2026년 9월 16일 실측으로 확인한 것은 아래 넷이다.
+
+| 툴 | 증상 |
+|---|---|
+| `build_solution_state` | UE 타깃에서 성공한 빌드에 `buildIsSuccess: false`. 상세는 `docs/adr/0001-unify-build-path.md` |
+| `get_file_problems`·`lint_files` | 컴파일 에러 2건이 있는 파일에 빈 배열. `open_file_in_editor`로 연 뒤에도 같다 |
+| `ue_export_blueprint_nodes` | 레벨 블루프린트 경로 두 형식 모두 `{"clipboardText":""}` |
+| `search_assets`의 `baseClass` | 필터가 걸리지 않고 텍스처와 폰트까지 돌려주며, `baseClass` 필드에 입력을 그대로 되비친다 |
+
+**빈 결과를 근거로 삼기 전에 반증을 한 번 만들어 본다.** 일부러 틀린 입력을 넣어 그 툴이 실제로 잡아내는지 보는 것이 가장 싸다. 위 넷 중 셋은 그렇게 해서 드러났다.
 
 ### analyze_calls는 이 C++ 솔루션에서 실패한다
 

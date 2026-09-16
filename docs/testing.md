@@ -8,7 +8,7 @@
 
 | 대상 | 빌드 | 실행 (에이전트·CI) | 실행 (사람·IDE) |
 |---|---|---|---|
-| 게임 서버 L1 (GoogleTest) | `build_solution_start(rootFolder=.../Server)` → `build_solution_state` | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
+| 게임 서버 L1 (GoogleTest) | `MSBuild Server.sln` (`docs/build.md` 「빌드 명령」) | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
 | 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
 | 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
 
@@ -64,63 +64,21 @@ seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므
 
 ---
 
-## 빌드는 Rider, 실행은 셸
+## 빌드도 실행도 셸에서 한다
+
+**빌드는 터미널에서 돌리고 종료 코드로 판정한다. 빌드에 Rider MCP를 쓰지 않는다.** 두 티어의 명령은 `docs/build.md` 「빌드 명령」에 있다. 그렇게 정한 이유와 Rider 경로의 오보 사례는 `docs/adr/0001-unify-build-path.md`에 있다.
 
 `execute_run_configuration`은 호출마다 Rider가 확인 대화상자를 띄우고, 그걸 끄는 수단은 Brave 모드(IDE 전역으로 셸·실행구성 확인 해제)뿐이라 쓰지 않는다.
 
-"UBT/MSBuild를 터미널로 직접 돌리지 않는다"는 규칙의 근거는 **출력 절단으로 에러가 유실되는 것**이고, 그건 빌드에만 성립한다 — gtest 출력은 짧고 완결적이다.
-
 `Server/Binary/`는 gitignore되어 있으므로 **실행 전 빌드는 필수다.**
 
-### 빌드 성공이 재컴파일을 뜻하지는 않는다
-
-셸(`sed`, 리다이렉션)로 소스를 고친 뒤 `build_solution_start`를 부르면, Rider가 바뀐 파일을 인식하지 못한 채 재컴파일 없이 `buildIsSuccess: true`를 돌려줄 때가 있다. 도구 쪽 동작이라 저장소에서 고칠 수 없다. 절차로 막는다.
-
-2026년 9월 15일 실측이다. `InventoryTests.cpp`를 23시 31분 26초에 고치고 빌드했으나 `.obj`는 23시 31분 11초에 멈춰 있었다. 그 상태로 돌린 테스트는 옛 바이너리의 결과였다. `.obj`를 지운 뒤 빌드해도 같은 증상이 재현됐다. `open_file_in_editor`로 파일을 열어 가상 파일 시스템을 갱신한 뒤 다시 빌드하는 회피가 그때 통했으나, 매번 통하지는 않았다.
-
-**C++ 소스를 셸로 고치지 않는다.**
-
-### UE 빌드에서 `buildIsSuccess`는 성공을 알려주지 못한다
-
-`build_solution_state`가 UE 타깃에서는 성공한 빌드에 `buildIsSuccess: false`와 빈 `problems`,
-그리고 `Build failed without diagnostic output`을 돌려준다. 도구 쪽 동작이라 저장소에서 고칠 수
-없다. 절차로 막는다.
-
-2026년 9월 16일에 같은 Rider 세션에서 대조 실험으로 범위를 좁혔다.
-
-| 대상 | 빌드 결과 | `problems` | `buildIsSuccess` |
-|---|---|---|---|
-| `Server` (MSBuild) | 성공 | 비어 있음 | `true` |
-| `P1` (UBT) | 성공 | 비어 있음 | `false` |
-| `P1` (UBT) | 실패(`static_assert`) | 파일·줄·열까지 정확 | `false` |
-
-**MSBuild 경로는 정상이고 UE 경로만 틀린다.** 진단 전달도 정상이다. 고장난 것은 UE 경로의 성공
-판정 하나다. Rider 내부에는 판정이 있다. 백엔드 로그가 빌드마다
-`Fire build result Kind: Successful`을 남긴다. 그 값이 MCP 계층까지 닿지 못하고 기본값인 실패로
-떨어진다.
-
-**응답을 세 상태로 읽는다.**
-
-| 응답 | 뜻 |
-|---|---|
-| `buildIsSuccess: true` | 성공이다 |
-| `buildIsSuccess: false` + `problems`에 `ERROR`가 있다 | 실패다. 그 내용이 원인이다 |
-| `buildIsSuccess: false` + `problems`가 비어 있다 | **판정 불가다. 실패가 아니다** |
-
-세 번째 경우에는 아래 둘 중 하나로 판정한다.
-
-- `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`의 마지막 줄이 `Result: Succeeded`인지 본다. 같은
-  파일에 `error C`, `error LNK`, `fatal error`가 있는지도 함께 본다.
-- Rider 백엔드 로그에서 판정을 직접 본다.
-  `grep "Fire build result" "$LOCALAPPDATA/JetBrains/Rider<버전>/log/backend.*.log" | tail -2`
-
-빌드가 실제로 돌았는지는 `P1/Binaries/Win64/UnrealEditor-P1.dll`의 타임스탬프로 확인한다.
+파일 편집에는 셸이 아니라 편집 도구를 쓴다. 근거는 `CLAUDE.md` 「안전」에 있다.
 
 ### Live Coding은 메인 DLL을 대체하지 않는다
 
-에디터가 연결된 상태에서 `build_solution_start`를 부르면 UBT 대신 Live Coding 컴파일이 돈다.
-헤더 변경과 `UFUNCTION` 같은 리플렉션 변경은 이 경로로 반영되지 않는다. 결과는 Rider가 아니라
-`P1/Saved/Logs/P1.log`의 `LogLiveCoding`으로 판정한다. 성공하면 `Live coding succeeded`를 남긴다.
+에디터에서 Live Coding으로 컴파일하면 헤더 변경과 `UFUNCTION` 같은 리플렉션 변경이 반영되지
+않는다. 결과는 `P1/Saved/Logs/P1.log`의 `LogLiveCoding`으로 판정한다. 성공하면
+`Live coding succeeded`를 남긴다.
 
 **Live Coding으로 검증한 코드는 정식 빌드를 거친 것이 아니다.** 패치는
 `Binaries/Win64/UnrealEditor-P1.patch_N.*`로 따로 나가고 `UnrealEditor-P1.dll`은 그대로 남는다.
