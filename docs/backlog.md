@@ -64,26 +64,28 @@ AuthServer도 `npm test`가 생겼다. 남은 건 워크플로 작성뿐이라 �
 **왜 지금**: L1(LLT)은 폐기됐지만 L2는 별도 타깃이 필요 없어 설치본에서 바로 된다
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST`가 설치본 `Core/Public/Misc/AutomationTest.h:4297`에 존재).
 
-**선행 조건**: **사람이 에디터를 띄우고 MCP 서버를 시작해야 한다.** 에디터 콘솔에
-`ModelContextProtocol.StartServer`를 한 번 입력하면 그 세션 동안은 사람 손이 더 들어가지
-않는다. 서버 L1처럼 터미널에서 종료 코드만 보고 도는 무인 루프는 아니다.
+**선행 조건**: 없다. 사람 손이 필요하다고 적어 두었던 제약이 풀렸다.
+
+**실행 경로가 실측으로 확인됐다.** `P1/Scripts/Run-UeTests.ps1`이 `UnrealEditor-Cmd`로
+에디터를 띄우지 않고 돌린다. 리포트의 `index.json`을 읽어 판정하고 스스로 종료 코드를
+낸다. 벽시계 시간은 14.5초와 47.3초로 측정했다. 떠 있는 에디터와 충돌하지 않는다.
+
+**종료 코드만 보면 안 된다.** `UnrealEditor-Cmd`는 매칭된 테스트가 하나도 없어도 `0`을
+돌려준다. 필터 오타가 그대로 초록으로 보인다. 위 스크립트가 이 구멍을 막는다.
 
 착수 단계: `P1/Source/P1/Tests/`에 테스트 1개 → `Build.bat`으로 에디터 타깃 빌드
-(`docs/build.md` 「빌드 명령」) → 언리얼 MCP로 `DiscoverTests`를 부른 뒤 `RunTests`.
+(`docs/build.md` 「빌드 명령」, **에디터를 닫고 돌린다**) → `Run-UeTests.ps1`.
 
-**실행 경로는 실측으로 확인됐다.** 2026년 9월 16일에 `DiscoverTests`가 엔진 테스트 8,954개를
-열거했고, `RunTests`가 테스트 한 건을 돌려 `passed: 1`을 JSON으로 돌려줬다. 측정값은 ADR-0003의
-「실경로에서 무엇을 확인했는가」에 있다. 판정이 JSON이라 사람 눈이 필요하지 않다.
-**다만 돌려 본 것은 순수 수치 연산 테스트 한 건뿐이다.** 레벨을 열거나 PIE를 띄우는 테스트가
-이 경로에서 도는지는 모른다.
+첫 테스트는 빨강으로 먼저 쓴다. 테스트가 실제로 실패할 때 `failed` 필드가 올라가는지
+아직 재지 못했고, 그 자리에서 함께 측정된다.
 
-대체 실행 경로 두 가지는 남겨 둔다. 에디터의 `Window > Test Automation`(사람)과
-`-ExecCmds="Automation RunTests ..."`다.
+대체 실행 경로 둘은 남겨 둔다. 에디터가 이미 떠 있을 때 프로세스 시작 비용을 치르지 않는
+언리얼 MCP의 `RunTests`와, 사람이 쓰는 에디터의 `Window > Test Automation`이다.
 
 첫 대상 후보는 이동 보간 수식(`ACreature`의 `MoveQueue`) 정도다. 클라 쪽에 남은 순수 로직이
 얇다는 점도 함께 고려한다.
 
-**완료 신호**: `RunTests`가 이 저장소의 테스트 1개에 `passed: 1`을 돌려준다.
+**완료 신호**: `Run-UeTests.ps1`이 이 저장소의 테스트 1개에 종료 코드 `0`을 낸다.
 
 ---
 

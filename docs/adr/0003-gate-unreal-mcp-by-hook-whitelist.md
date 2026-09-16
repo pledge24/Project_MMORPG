@@ -53,7 +53,12 @@ ADR-0002는 65종을 골라 막는 차단 명단을 썼다. 이 서버에는 그
 
 ## 무엇을 허용했는가
 
-첫 판은 조회 계열로 좁게 잡는다. 실측으로 값어치가 확인된 것이 조회뿐이기 때문이다.
+범위는 두 번에 걸쳐 정했다. 첫 판은 조회 계열로 좁게 잡았고, 헤드리스 실행 경로를 확인한
+뒤에 진단 계열까지 넓혔다.
+
+넓힌 근거는 역할이 갈렸기 때문이다. **테스트 판정은 이 서버가 하지 않는다.**
+`P1/Scripts/Run-UeTests.ps1`이 `UnrealEditor-Cmd`로 에디터 없이 돌리고 리포트로 판정한다.
+이 서버는 그 경로가 깨졌을 때 로그와 화면을 보는 진단 수단이다.
 
 | 툴셋 | 허용 | 뺀 것 |
 | --- | --- | --- |
@@ -61,18 +66,46 @@ ADR-0002는 65종을 골라 막는 차단 명단을 썼다. 이 서버에는 그
 | `ObjectTools` | 조회 4종 | `set_properties`, `reset_properties` |
 | `BlueprintTools` | 조회 22종 | 쓰기 31종 |
 | `AutomationTestToolset` | 7종 전부 | - |
+| `LogsToolset` | 4종 전부 | - |
+| `EditorAppToolset` | 조회 13종과 `StartPIE`, `StopPIE` | UI 조작 6종 |
+| `SlateInspectorToolset` | 관찰 6종 | 조작 8종 |
+| `AssetTools` | 조회 14종 | 쓰기 7종 |
+| `AgentSkillToolset` | `ListSkills`, `GetSkills` | `CreateSkill`, `UpdateSkill` |
 
-나머지 49개 툴셋은 통째로 막힌다. `ProgrammaticToolset`도 여기 들어간다.
-— 이 툴셋의 `execute_tool_script`는 에디터 프로세스 안에서 임의의 파이썬을 실행한다.
-Epic의 README가 직접 경고하는 경로다.
+합계 76개 조합이다. 나머지 43개 툴셋은 통째로 막힌다.
 
-`BlueprintTools`의 쓰기 31종을 뺀 이유는 되돌림 비용이다. `.uasset`은 diff로 검토할 수
-없어서, 잘못 쓴 것을 사람이 눈으로 찾아내야 한다. 쓰기가 필요해지면 사람 승인을 받고
+조회가 아닌데 넣은 것이 셋이다.
+
+- `SetVerbosity`는 메모리상의 로그 상세도만 바꾼다. 에셋이나 설정 파일에 남지 않는다.
+- `StartPIE`와 `StopPIE`는 UE 클라가 게임 서버와 인증 서버에 실제로 붙는 3티어 통합
+  스모크를 무인으로 돌리기 위한 것이다. 에셋은 바꾸지 않는다.
+
+`AutomationTestToolset`은 실행 도구까지 전부 넣었다. 헤드리스 경로가 생긴 뒤로 판정
+수단은 아니지만, 에디터가 이미 떠 있을 때 프로세스 시작 비용을 치르지 않고 테스트만 다시
+돌리는 값이 남는다. 관련 항목은 `docs/backlog.md`의 「5. UE L2 Automation Test」다.
+
+### 열지 않은 것
+
+**`ProgrammaticToolset`과 `SlateInspector`의 조작 8종은 열면 이 명단 자체가 무의미해진다.**
+
+`execute_tool_script`는 스크립트 안에서 다른 도구를 부르는 것이 기능이다. 훅에는 호출
+한 건으로 보이고 무엇을 불렀는지는 보이지 않는다. 파이썬 자체는 모듈 허용 목록이 있는
+샌드박스라서 "임의의 파이썬 실행"은 정확한 표현이 아니다. 위험한 것은 언어가 아니라
+도구 단위 통제를 건너뛴다는 점이다.
+
+`SlateInspector`의 `Click`과 `Type`, `PressKey` 같은 조작은 우회 범위가 더 넓다. 에디터
+UI로 사람이 할 수 있는 전부가 가능해지고, 거기에는 MCP 도구로 노출되지 않은 메뉴도
+들어간다. `Click(ref="w123")`은 기록에 남아도 무엇을 눌렀는지 복원할 수 없다.
+
+**`AssetTools`의 `delete`와 `move`는 에셋이 아니라 폴더를 통째로 받는다.** 그런데
+`P1/Content/`는 디스크의 `.uasset`과 `.umap` 3,438개 중 47개만 git이 추적한다
+(`P1/.gitignore`의 `Content/*`). 커밋이나 셸브를 먼저 확인하라는 안전 규칙이 여기서는
+작동하지 않는다. 추적되지 않는 파일은 커밋에 없기 때문이다. `docs/backlog.md` 7번의 LFS
+전환 뒤에 다시 판단한다.
+
+`BlueprintTools`의 쓰기 31종을 뺀 이유도 같은 되돌림 비용이다. `.uasset`은 diff로 검토할
+수 없어서 잘못 쓴 것을 사람이 눈으로 찾아내야 한다. 쓰기가 필요해지면 사람 승인을 받고
 건별로 `UE_ALLOWED_TOOLS`에 추가한다.
-
-`AutomationTestToolset`은 실행 도구인 `RunTests`, `RunTestsByFilter`, `StopTests`까지
-넣었다. UE 클라이언트 테스트를 무인으로 돌리는 것이 이 서버를 들인 목적 중 하나이기
-때문이다. 근거는 `docs/backlog.md`의 클라이언트 L1 항목이다.
 
 ## 실경로에서 무엇을 확인했는가
 
@@ -141,9 +174,16 @@ ADR-0002가 기록한 Rider의 빈 결과는 이 서버에서 재현되지 않�
 - 엔진이 업데이트되어 도구가 늘어나도 통제가 뒤처지지 않는다. 허용 명단 방식이라 새
   도구는 기본으로 막힌다.
 - 대신 쓰기 작업을 하려면 매번 훅 파일을 고쳐야 한다. 이 마찰은 의도한 것이다.
-- **통제가 `permissions`와 훅 두 곳으로 갈라진다.** Rider MCP는 `.claude/settings.json`의
-  `permissions.deny`가 막고, 언리얼 MCP는 훅이 막는다. 도구가 왜 막혔는지 찾을 때 두 곳을
-  봐야 한다.
-- 서버는 사람이 에디터 콘솔에서 `ModelContextProtocol.StartServer`를 입력해야 뜬다.
-  에디터가 꺼져 있으면 도구 전체가 연결 오류로 돌아온다.
+- **통제가 세 곳으로 갈라진다.** Rider MCP는 `.claude/settings.json`의 `permissions.deny`가
+  막고, 언리얼 MCP는 훅이 막는다. 그리고 훅 파일 자체를 에이전트가 고치려 하면 Claude
+  Code의 auto mode classifier가 막는다. 세 번째 계층은 저장소가 만든 것이 아니라서 저장소
+  쪽에서 끌 수 없다. **허용 명단을 넓히려면 사람이 직접 파일을 고치거나 권한 규칙을
+  추가해야 한다.** 도구가 왜 막혔는지 찾을 때 세 곳을 봐야 한다.
+- 서버는 에디터를 띄우면 자동으로 뜬다. 사람이 콘솔에 `ModelContextProtocol.StartServer`를
+  입력하지 않아도 된다. 다만 자동 시작 설정이 `P1/Config/`에 없으므로 엔진 기본값이거나 이
+  머신의 에디터 설정이다. 다른 클론에서 같은 동작이 보장되지 않는다.
+- 에디터가 꺼져 있으면 도구 전체가 연결 오류로 돌아온다. 헤드리스 테스트 경로는 이것과
+  무관하게 돈다.
+- 에디터 로그가 `LogModelContextProtocol` 항목으로 디스패치된 도구 이름을 전부 남긴다.
+  인자는 남기지 않고, 로그는 `P1/Saved/`에 있어 저장소에 남지 않는다.
 - 엔진 쪽 구현은 `Engine/Plugins/Experimental/`에 있다. 5.9에서 API가 바뀔 수 있다.
