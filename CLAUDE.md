@@ -45,11 +45,11 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 - **Rider MCP에서 쓸 수 있는 툴은 36종이다.** 나머지는 `.claude/settings.json`의
   `permissions.deny`가 막는다. 판정 근거는 `docs/adr/0002-control-mcp-tools-via-permissions.md`.
 - **언리얼 MCP(`unreal`)는 `permissions`가 아니라 훅이 막는다.** 이 서버는 도구를
-  `list_toolsets`, `describe_toolset`, `call_tool` 세 개만 노출하고, 52개 툴셋의 수백 개
-  도구가 전부 `call_tool`의 인자로 들어온다. 이름이 하나뿐이라 `permissions`로는 구분되지
+  `list_toolsets`, `describe_toolset`, `call_tool` 세 개만 노출하고, **52개 툴셋의 830개
+  도구**가 전부 `call_tool`의 인자로 들어온다. 이름이 하나뿐이라 `permissions`로는 구분되지
   않는다. 허용 명단은 `.claude/hooks/guard_dangerous_cmd.py`의 `UE_ALLOWED_TOOLS`이고,
-  **명단에 없으면 막힌다.** 지금 열려 있는 것은 조회 계열과 자동화 테스트, 그리고 PIE
-  제어(`StartPIE`·`StopPIE`)다. 에셋 쓰기는 전부 막혀 있다. **명단은 에이전트가 고칠 수
+  **명단에 없으면 막힌다. 열려 있는 것은 74개(8.9%)뿐이다.** 조회 계열과 자동화 테스트,
+  그리고 PIE 제어(`StartPIE`·`StopPIE`)다. 에셋 쓰기는 전부 막혀 있다. **명단은 에이전트가 고칠 수
   없다** — 훅 파일을 편집하려 하면 Claude Code의 auto mode classifier가 막으므로 사람이
   직접 고친다. 근거는 `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
 - **언리얼 MCP는 에디터가 떠 있어야 붙는다.** 에디터를 띄우면 `127.0.0.1:8000`이 자동으로

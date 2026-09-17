@@ -32,7 +32,22 @@ UPROPERTY 메타데이터가 그대로 실려 있다. 스텁이 아니라 실제
 ## permissions로는 통제되지 않는다
 
 서버가 MCP 수준에 노출하는 도구는 `list_toolsets`, `describe_toolset`, `call_tool`
-세 개뿐이다. 52개 툴셋에 걸린 수백 개의 도구는 전부 `call_tool`의 인자로 들어온다.
+세 개뿐이다. **52개 툴셋에 걸린 830개의 도구가 전부 `call_tool`의 인자로 들어온다.**
+2026년 9월 17일에 툴셋 52개를 모두 `describe_toolset`으로 조회해 합산한 값이다. 최상위
+3개까지 더하면 이 서버가 내놓는 도구는 833개다.
+
+가장 큰 툴셋 다섯이 전체의 절반에 가깝다.
+
+| 툴셋 | 도구 수 |
+| --- | --- |
+| `SequencerTools` | 140 |
+| `SequencerControlRigTools` | 72 |
+| `BlueprintTools` | 53 |
+| `NiagaraToolset_System` | 46 |
+| `ControlRigTools` | 44 |
+
+시퀀서 계열 여섯 툴셋만 합쳐도 275개인데 이 프로젝트는 하나도 쓰지 않는다. 명단을 좁게
+잡는 비용이 크지 않은 이유다.
 
 ```
 call_tool(toolset_name="...ObjectTools", tool_name="list_properties", arguments={...})
@@ -72,7 +87,8 @@ ADR-0002는 65종을 골라 막는 차단 명단을 썼다. 이 서버에는 그
 | `AssetTools` | 조회 14종 | 쓰기 7종 |
 | `AgentSkillToolset` | `ListSkills`, `GetSkills` | `CreateSkill`, `UpdateSkill` |
 
-합계 76개 조합이다. 나머지 43개 툴셋은 통째로 막힌다.
+합계 76개 조합이다. 그중 둘은 최상위 도구이므로 **툴셋 도구 830개 가운데 열린 것은
+74개(8.9%)다.** 나머지 43개 툴셋은 통째로 막힌다.
 
 조회가 아닌데 넣은 것이 셋이다.
 
