@@ -22,9 +22,12 @@ jobs:
         working-directory: Server/AuthServer
 
     steps:
-      - uses: actions/checkout@v4
+      # v4 는 action.yml 에 using: node20 을 선언하는데 러너가 node20 을 더 이상 제공하지
+      # 않아 강제로 Node 24 에 얹히고 경고가 뜬다. v5 부터 node24 를 선언한다.
+      # 아래 node-version 과는 다른 축이다. 그쪽은 테스트가 도는 Node 다.
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
