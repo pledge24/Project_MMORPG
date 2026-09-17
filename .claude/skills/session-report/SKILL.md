@@ -1,6 +1,6 @@
 ---
 name: session-report
-description: Generate a human-readable report of the work actually performed during the current Codex session. Use when a long coding session is nearing completion and a developer wants to understand what changed, why it changed, what was discovered, how it was validated, and what should be reviewed before merging the work.
+description: Generate a human-readable report of the work actually performed during the current coding session. Use when a long coding session is nearing completion and a developer wants to understand what changed, why it changed, what was discovered, how it was validated, and what should be reviewed before accepting the work.
 disable-model-invocation: true
 ---
 
@@ -66,7 +66,7 @@ Assume the reader:
 - knows basic programming concepts
 - may be unfamiliar with this repository
 - did not see the investigation or implementation process
-- will inspect the PR before merging it
+- will inspect the change before accepting it, whether through a pull request, a direct review, or a handover to the next session
 
 Explain repository-specific concepts when they are necessary to understand the change.
 
@@ -87,6 +87,11 @@ Do not make the final implementation appear more certain or straightforward than
 Before writing the report, reconstruct the session as accurately as possible.
 
 Use the available conversation/session context first.
+
+**The session record may be unavailable.** Context can be compacted, or the session can be
+restarted, so the earlier part of the work may be gone. When that happens, reconstruct from the
+repository alone: commits, their messages, the diff, and the working tree. Then say so in the
+report, and mark anything you could not establish as `Unknown` rather than inferring it.
 
 Then inspect the repository and git state as necessary to verify the final result.
 
@@ -278,11 +283,28 @@ Commands, tests, builds, linting, type checks, manual checks, or other validatio
 
 For each meaningful validation, provide the result.
 
-Example:
+**State the result the way the tool actually reports it.** A test runner's pass count, a build's
+exit code, a report file's contents, a measured duration, and a response from an external system
+are all different kinds of evidence. Do not flatten them into "passed".
+
+**Do not assume the exit code is the verdict.** Some tools return `0` even when the work failed.
+If the session established how a tool actually signals failure, say so.
+
+Examples:
 
 ```text
-- `npm test -- foo.test.ts`
-  Result: passed
+- <test command for this project>
+  Result: 12 passed, 0 failed
+
+- <build command for this project>
+  Result: exit code 0
+
+- <runner that writes a report file>
+  Result: report says 1 succeeded, 0 failed. The tool's own exit code was 0 in both the
+  passing and the failing case, so the report is the verdict.
+
+- Manual check: opened the generated file and confirmed the header bytes
+  Result: matches the expected layout
 ```
 
 ### Not Executed
@@ -306,7 +328,7 @@ Never imply that unexecuted validation passed.
 
 ## 7. Risks and Open Questions
 
-Identify issues that a reviewer should be aware of before merging.
+Identify issues that a reviewer should be aware of before accepting the change.
 
 Include:
 
@@ -326,7 +348,7 @@ If no meaningful risks were identified, state that explicitly.
 
 ---
 
-## 8. PR Review Guide
+## 8. Review Guide
 
 Give practical guidance for reviewing the resulting changes.
 
@@ -334,14 +356,20 @@ Highlight the parts that deserve attention.
 
 For each item, explain why it deserves attention.
 
-Good examples:
+Good examples. The paths and subject matter belong to whatever this repository actually is, so
+these are shapes to follow, not domains to import:
 
 ```text
-- Review the request validation in `src/...`.
-  This is where malformed input is now rejected, and the behavior differs from the previous implementation.
+- Review the input validation in `<path>`.
+  This is where malformed input is now rejected, and the behavior differs from the previous
+  implementation.
 
-- Review the transaction boundary in `src/...`.
-  The implementation moved the database update into the same transaction as the related record creation.
+- Review the ordering in `<path>`.
+  The implementation moved one step inside the boundary that guarantees the two either both
+  take effect or neither does.
+
+- Review `<path>`, where the change depends on a value the session could not verify.
+  The session assumed a default; a reviewer who knows the real value should confirm it.
 ```
 
 Avoid generic advice such as:
@@ -362,36 +390,45 @@ Provide a concise map of the relevant changes.
 
 Group files by purpose where possible.
 
-Example:
+Use the repository's own paths and extensions. The shape:
 
 ```text
-src/foo/service.ts
+<implementation file>
   Main implementation of the new behavior.
 
-src/foo/service.test.ts
+<test file>
   Tests for the new behavior and edge cases.
 
-src/config/foo.ts
+<configuration or build file>
   Configuration required by the new implementation.
+
+<documentation file>
+  Records the constraint the implementation now depends on.
 ```
+
+When the change spans more than one language, runtime, or tier, group by that boundary first.
+A reviewer usually owns one of them.
 
 Do not include every generated or incidental file unless it matters to the review.
 
 ---
 
-## 10. Merge Checklist
+## 10. Handover Checklist
 
-Create a short checklist containing concrete things a human reviewer should verify before merging.
+Create a short checklist containing concrete things a human should verify before accepting the
+work. When the change goes through a pull request, this is the merge checklist. When it does not,
+it is what the next session or the next person needs to settle.
 
 Only include checks relevant to this session.
 
 Examples:
 
 ```text
-- [ ] Confirm the new behavior matches the intended product requirement.
-- [ ] Review the changed transaction boundary.
-- [ ] Confirm the new edge-case tests cover the expected failure mode.
-- [ ] Decide whether the unverified integration test should be run before merge.
+- [ ] Confirm the new behavior matches the intended requirement.
+- [ ] Review the one place where the session changed an ordering guarantee.
+- [ ] Confirm the new edge-case test covers the expected failure mode.
+- [ ] Decide whether the validation the session could not run should be run first.
+- [ ] Decide the open question the session recorded but did not resolve.
 ```
 
 Do not use the checklist as a generic software-engineering checklist.
@@ -404,7 +441,7 @@ Do not use the checklist as a generic software-engineering checklist.
 
 Prefer:
 
-> The API now rejects an invalid token before creating the database record.
+> The handler now rejects an invalid token before it writes anything.
 
 Over:
 
@@ -429,9 +466,10 @@ Avoid unnecessary corporate or abstract language.
 
 If a repository-specific term is important, briefly explain it the first time it appears.
 
-For example:
+For example, where "job queue" is this repository's own term:
 
-> The request passes through the "command handler", which is the layer responsible for validating the request and coordinating the database operation.
+> The work is pushed onto the "job queue", which is the mechanism that serializes everything a
+> single owner touches so the code does not need locks.
 
 Do not define common programming terms unnecessarily.
 
@@ -478,10 +516,15 @@ Do not hide incomplete validation in vague language.
 
 # Output Rules
 
-Unless the user explicitly asks for another format:
+Unless the user explicitly asks otherwise:
 
-- Output Markdown.
-- Use the report structure defined above.
+- **Write in the language the repository's existing documents use.** Look at the documents
+  already in the target directory, and at the project's own instruction files. Do not default to
+  English because this skill is written in English.
+- **Match the format the target directory already uses.** If the reports there are HTML, write
+  HTML; if they are Markdown, write Markdown. Default to Markdown only when there is no
+  precedent. Follow the directory's file-naming convention too.
+- Use the report structure defined above. Translate the section names into the report's language.
 - Keep the TL;DR short.
 - Prefer concise explanations over exhaustive detail.
 - Include code or command snippets only when they materially improve understanding.
@@ -491,6 +534,9 @@ Unless the user explicitly asks for another format:
 - Do not create a report file unless the user explicitly requests one.
 
 If the user asks to save the report, choose an appropriate repository location based on existing project conventions. Do not invent a documentation directory when the repository already has an established convention.
+
+If the repository has a writing-style guide for its documents, follow it. The rules above settle
+language and format; the style guide settles everything inside the sentences.
 
 ---
 
@@ -518,7 +564,7 @@ If the discrepancy cannot be resolved, explicitly describe the uncertainty.
 
 Before presenting the report, ask:
 
-> Could a developer who did not participate in this session read this report and understand what changed, why it changed, how the behavior changed, what was actually verified, and what they should inspect before merging?
+> Could a developer who did not participate in this session read this report and understand what changed, why it changed, how the behavior changed, what was actually verified, and what they should inspect before accepting it?
 
 If the answer is no, improve the report.
 
