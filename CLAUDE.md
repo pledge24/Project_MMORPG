@@ -19,9 +19,12 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 ## 문서 위치
 
 - `docs/ARCHITECTURE.md` — 깨면 안 되는 불변식
+- **코드를 쓰거나 고치기 전에 `docs/conventions.md`** — 이름, 주석, 멤버 배치, 타입 사용
+- **새 파일이나 에셋을 만들기 전에 `docs/folder-structure.md`** — 어디에 둘지, 무슨 이름을 붙일지
 - `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`
 - `docs/tech-debt.md` — 지금 틀린 것
 - `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
+- `docs/work/` — 여러 세션에 걸치는 작업의 계획과 결정. **진행 상태는 여기 없다.** 상태는 이슈 트래커에 있다
 - `docs/{build,codegen,testing}.md` — 해당 영역을 건드릴 때만
 - `docs/reports/` — 사람용 설명 자료
 - `docs/references/` — 2026-09에 걷어낸 하네스 v1의 이력. **현행 제약이 아니다.** 현행 제약은 위 문서들의 본문에 있다
@@ -173,20 +176,24 @@ Conventional Commits와 gitmoji를 기준으로 하고, 아래에 적힌 차이�
 
 ## 컨벤션
 
+코드 규칙은 `docs/conventions.md`, 배치 규칙은 `docs/folder-structure.md`에 있다. 아래 셋만
+여기 남긴다 — 읽기 전에 손이 먼저 나가는 자리다.
+
 **인코딩 — `.proto`와 `.bat`은 cp949, 나머지는 전부 UTF-8.** `.gitattributes`와 두 개의
 `.editorconfig`가 이를 강제한다. 이 파일들의 한국어 주석을 UTF-8로 읽으면 깨져 보인다.
 정상이며, UTF-8로 다시 저장해서 "고치면" 이 파일들을 소비하는 툴 쪽이 깨진다.
 
+**주석과 로그는 한국어로 작성한다.** 코드를 수정할 때 주변 언어에 맞출 것.
+
 **문서 파일명은 소문자와 대시**를 쓴다(`tech-debt.md`). 예외는 루트의 관례 파일과 각 폴더의
 진입점뿐이다 — `CLAUDE.md`, `README.md`, `docs/ARCHITECTURE.md`.
 
-**주석과 로그는 한국어로 작성한다.** 코드를 수정할 때 주변 언어에 맞출 것.
-
-빌드 구성·모듈·include 규칙은 `docs/build.md`.
+빌드 구성과 모듈 설정은 `docs/build.md`.
 
 ## 기존 코드베이스 방침
 
 - 이 프로젝트는 손코딩 베이스다. 뒤죽박죽인 부분이 많음을 전제한다.
 - 잘못된 설계 발견 시: 즉시 고치지 않는다 → `docs/tech-debt.md`에 기록 → 계획된 리팩토링에서만 수정.
-- 목표 구조: 관심사별 레이어 분리, BP 위젯 로직의 C++ 이관, 캐릭터 클래스의 컴포넌트 분리.
+- 목표 구조는 `docs/folder-structure.md`가 정의한다. BP 위젯 로직의 C++ 이관과 캐릭터 클래스의
+  컴포넌트 분리가 남아 있다.
 - 신규 코드는 목표 구조를 따른다. 기존 코드는 계획 없이 구조를 건드리지 않는다.
