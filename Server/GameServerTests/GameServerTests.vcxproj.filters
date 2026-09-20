@@ -9,26 +9,29 @@
     <Filter Include="GameServer\DB">
       <UniqueIdentifier>{618b8b54-5e90-54fe-9d05-af8f196a0622}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameServer\Data">
-      <UniqueIdentifier>{2e3a1063-1247-5b9b-a3ee-9d52f191566e}</UniqueIdentifier>
+    <Filter Include="GameServer\Game">
+      <UniqueIdentifier>{55ab06fe-0ade-5e9b-b11c-25963a7c3877}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameServer\Inventory">
-      <UniqueIdentifier>{7810b236-ecc8-58ac-b5c6-97197a69e93f}</UniqueIdentifier>
+    <Filter Include="GameServer\Game\Data">
+      <UniqueIdentifier>{06710011-f7d3-5871-a78a-f9846026c30c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Game\Inventory">
+      <UniqueIdentifier>{07cf74dd-b75d-5821-a5fd-7f0ec6092656}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Game\Object">
+      <UniqueIdentifier>{e5a6358a-dfd2-5357-8003-e1fdd1fd97cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Game\World">
+      <UniqueIdentifier>{73f65547-9259-5d43-a57c-08c51f73ba84}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Main">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GameServer\Object">
-      <UniqueIdentifier>{70a1c2e8-8486-5308-aa89-15068a9827c6}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Protocol">
       <UniqueIdentifier>{754f4db8-77f2-51d1-b0bd-84a6235e4ea0}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Utils">
       <UniqueIdentifier>{3c4e9978-eb04-54e2-89bd-f7dc6a5dc7dc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GameServer\World">
-      <UniqueIdentifier>{8ca8a65d-5f1a-5421-9d22-4555503baf64}</UniqueIdentifier>
     </Filter>
     <Filter Include="Libraries">
       <UniqueIdentifier>{a63dcec0-4069-593b-9fc6-ead277381222}</UniqueIdentifier>
@@ -84,32 +87,32 @@
     <ClCompile Include="..\GameServer\Utils\Utils.cpp">
       <Filter>GameServer\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Object\Creature.cpp">
-      <Filter>GameServer\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Object\Creature.cpp">
+      <Filter>GameServer\Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Object\Monster.cpp">
-      <Filter>GameServer\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Object\Monster.cpp">
+      <Filter>GameServer\Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Object\Object.cpp">
-      <Filter>GameServer\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Object\Object.cpp">
+      <Filter>GameServer\Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Object\Player.cpp">
-      <Filter>GameServer\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Object\Player.cpp">
+      <Filter>GameServer\Game\Object</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Inventory\EquippedGear.cpp">
-      <Filter>GameServer\Inventory</Filter>
+    <ClCompile Include="..\GameServer\Game\Inventory\EquippedGear.cpp">
+      <Filter>GameServer\Game\Inventory</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Inventory\Inventory.cpp">
-      <Filter>GameServer\Inventory</Filter>
+    <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp">
+      <Filter>GameServer\Game\Inventory</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Data\Gamedata.cpp">
-      <Filter>GameServer\Data</Filter>
+    <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
+      <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\World\Room.cpp">
-      <Filter>GameServer\World</Filter>
+    <ClCompile Include="..\GameServer\Game\World\Room.cpp">
+      <Filter>GameServer\Game\World</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\World\RoomManager.cpp">
-      <Filter>GameServer\World</Filter>
+    <ClCompile Include="..\GameServer\Game\World\RoomManager.cpp">
+      <Filter>GameServer\Game\World</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\DB\DBRequestFunctions.cpp">
       <Filter>GameServer\DB</Filter>

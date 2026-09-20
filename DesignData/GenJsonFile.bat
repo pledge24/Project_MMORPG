@@ -9,11 +9,11 @@ pushd %~dp0
 
 IF ERRORLEVEL 1 PAUSE
 
-MOVE /Y S_Warrior_Level_Data.json		"../Server/GameServer/Data/Json"
-MOVE /Y S_Monster.json				    "../Server/GameServer/Data/Json"
-MOVE /Y S_Item.json				        "../Server/GameServer/Data/Json"
-MOVE /Y S_Map.json				        "../Server/GameServer/Data/Json"
-MOVE /Y S_Quest.json				    "../Server/GameServer/Data/Json"
+MOVE /Y S_Warrior_Level_Data.json		"../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Monster.json				    "../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Item.json				        "../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Map.json				        "../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Quest.json				    "../Server/GameServer/Game/Data/Json"
 
 MOVE /Y C_Monster.json				    "../P1/Content/Gamedata"
 MOVE /Y C_Item.json				        "../P1/Content/Gamedata"

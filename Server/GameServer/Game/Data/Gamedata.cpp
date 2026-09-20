@@ -17,7 +17,7 @@ unordered_map<int32, DataTable*> Gamedata::s_classLevelDataTableMappings;
 
 /* 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이며
    GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다. */
-static constexpr const char* GAMEDATA_DIR = "Data/Json/";
+static constexpr const char* GAMEDATA_DIR = "Game/Data/Json/";
 
 /* 게임 데이터 */
 DataTable Gamedata::s_itemDataTable;
