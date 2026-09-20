@@ -75,6 +75,13 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드된다. 인자 없이 `get_run_configurations`를
   부르면 열린 프로젝트 목록이 에러 메시지로 돌아온다.
 - 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
+- **`rename_refactoring`의 `applied: true`는 반영을 뜻하지 않는다.** 한 건마다 디스크를 확인하고
+  파일 묶음이 끝나면 빌드로 판정한다. 2026-09-20에 실측한 실패 형태가 셋이다. **에디터에 탭으로
+  열린 파일은 디스크에 저장되지 않으면서 성공을 보고한다.** 시작 전에 사람에게 탭을 닫아 달라고
+  요청한다. **열 번 남짓 연속 호출하면 인덱스가 오염된다.** 직전까지 `클래스 필드`로 해석하던
+  심볼을 `no_renamable_symbol`로 거부하고, Rider 재시작으로만 회복된다. **생성된 protobuf 코드와
+  철자가 같은 이름은 거부된다**(`possession`·`inventory`·`player` 실측). 이런 이름은 사람이
+  IDE에서 `Shift+F6`으로 처리한다. 실패 사례: PR #62
 - UE 에셋 조회: `get_class_hierarchy`와 `search_assets`. **`search_assets`는 `baseClass`만 쓴다** —
   `query`는 빈 결과만 돌려준다. Rider의 에디터 조작 툴은 막혀 있으므로 사람에게 요청한다.
 - **에셋 속성은 Rider가 아니라 언리얼 MCP로 읽는다.** Rider의 `get_asset_properties`는 블루프린트
