@@ -18,3 +18,15 @@
 *.dll binary
 *.jpg binary
 *.png binary
+
+# git 훅은 줄바꿈을 LF로 고정한다.
+# core.autocrlf 가 true 인 환경에서 CRLF 로 체크아웃되면 `#!/bin/sh` 뒤에 \r 이 붙어
+# Git Bash 가 인터프리터를 찾지 못한다. LFS 의 pre-push 가 그렇게 죽으면 포인터만 push 되고
+# 에셋 본체가 올라가지 않는데, 그 실패는 다른 사람이 클론할 때까지 드러나지 않는다.
+.githooks/* text eol=lf
+
+# 언리얼 에셋은 Git LFS로 추적한다 (ADR-0006).
+# 추적 범위는 P1/.gitignore의 화이트리스트가 정한다. 여기서는 형식만 정한다.
+# -text 를 붙이는 이유는 위의 `* text=auto` 가 이 바이너리에 줄바꿈 변환을 걸지 못하게 막는 것이다.
+*.uasset filter=lfs diff=lfs merge=lfs -text
+*.umap filter=lfs diff=lfs merge=lfs -text

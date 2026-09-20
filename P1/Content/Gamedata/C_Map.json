@@ -1,0 +1,34 @@
+[
+    {
+        "Name": 10,
+        "TemplateId": 10,
+        "MapId": 1111,
+        "MapName": "마을",
+        "MapType": "safe zone",
+        "HasRespawnPoint": true
+    },
+    {
+        "Name": 20,
+        "TemplateId": 20,
+        "MapId": 1111,
+        "MapName": "초급 사냥터",
+        "MapType": "hunting field",
+        "HasRespawnPoint": false
+    },
+    {
+        "Name": 30,
+        "TemplateId": 30,
+        "MapId": 1111,
+        "MapName": "중급 사냥터",
+        "MapType": "hunting field",
+        "HasRespawnPoint": false
+    },
+    {
+        "Name": 40,
+        "TemplateId": 40,
+        "MapId": 1111,
+        "MapName": "고급 사냥터",
+        "MapType": "hunting field",
+        "HasRespawnPoint": false
+    }
+]
