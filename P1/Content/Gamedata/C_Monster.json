@@ -1,0 +1,101 @@
+[
+    {
+        "Name": 5000,
+        "TemplateId": 5000,
+        "Level": 3,
+        "MonsterName": "초급 근거리 미니언",
+        "AttackType": "melee",
+        "MaxHp": 200,
+        "BaseAttack": 1000,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/MeleeMonster/BP_Beginner_MeleeMinion.BP_Beginner_MeleeMinion_C"
+    },
+    {
+        "Name": 5001,
+        "TemplateId": 5001,
+        "Level": 5,
+        "MonsterName": "초급 원거리 미니언",
+        "AttackType": "ranged",
+        "MaxHp": 150,
+        "BaseAttack": 80,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/RangedMonster/BP_Beginner_RangedMinion.BP_Beginner_RangedMinion_C"
+    },
+    {
+        "Name": 5002,
+        "TemplateId": 5002,
+        "Level": 7,
+        "MonsterName": "초급 슈퍼 미니언",
+        "AttackType": "melee",
+        "MaxHp": 500,
+        "BaseAttack": 150,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/SuperMonster/BP_Beginner_SuperMinion.BP_Beginner_SuperMinion_C"
+    },
+    {
+        "Name": 5003,
+        "TemplateId": 5003,
+        "Level": 10,
+        "MonsterName": "중급 근거리 미니언",
+        "AttackType": "melee",
+        "MaxHp": 600,
+        "BaseAttack": 200,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/MeleeMonster/BP_Intermediate_MeleeMinion.BP_Intermediate_MeleeMinion_C"
+    },
+    {
+        "Name": 5004,
+        "TemplateId": 5004,
+        "Level": 15,
+        "MonsterName": "중급 원거리 미니언",
+        "AttackType": "ranged",
+        "MaxHp": 450,
+        "BaseAttack": 160,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/RangedMonster/BP_Intermediate_RangedMinion.BP_Intermediate_RangedMinion_C"
+    },
+    {
+        "Name": 5005,
+        "TemplateId": 5005,
+        "Level": 25,
+        "MonsterName": "중급 슈퍼 미니언",
+        "AttackType": "melee",
+        "MaxHp": 1500,
+        "BaseAttack": 300,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/SuperMonster/BP_Intermediate_SuperMinion.BP_Intermediate_SuperMinion_C"
+    },
+    {
+        "Name": 5006,
+        "TemplateId": 5006,
+        "Level": 30,
+        "MonsterName": "고급 근거리 미니언",
+        "AttackType": "melee",
+        "MaxHp": 1800,
+        "BaseAttack": 400,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/MeleeMonster/BP_Expert_MeleeMinion.BP_Expert_MeleeMinion_C"
+    },
+    {
+        "Name": 5007,
+        "TemplateId": 5007,
+        "Level": 40,
+        "MonsterName": "고급 원거리 미니언",
+        "AttackType": "ranged",
+        "MaxHp": 1400,
+        "BaseAttack": 320,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/RangedMonster/BP_Expert_RangedMinion.BP_Expert_RangedMinion_C"
+    },
+    {
+        "Name": 5008,
+        "TemplateId": 5008,
+        "Level": 45,
+        "MonsterName": "고급 슈퍼 미니언",
+        "AttackType": "melee",
+        "MaxHp": 4500,
+        "BaseAttack": 600,
+        "MovementSpeed": 300,
+        "MonsterClass": "/Game/Blueprints/Creatures/Monster/SuperMonster/BP_Expert_SuperMinion.BP_Expert_SuperMinion_C"
+    }
+]
