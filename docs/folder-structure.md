@@ -277,11 +277,13 @@ Server/
 │   ├── Inventory/          인벤토리, 장비
 │   ├── Data/               게임 데이터 로더
 │   ├── DB/                 DB 요청 함수
+│   ├── Queries/            GameDB 스키마 스크립트
 │   ├── Protocol/           생성물
 │   └── Utils/
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
+│   └── Queries/            UserDB 스키마 스크립트
 └── Libraries/              벤더링한 서드파티
 ```
 

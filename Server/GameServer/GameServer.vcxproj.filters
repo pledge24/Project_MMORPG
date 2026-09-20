@@ -8,16 +8,13 @@
     <Filter Include="Protocol">
       <UniqueIdentifier>{18e8ca97-d284-45fb-951a-71dc7236cb10}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game">
-      <UniqueIdentifier>{3b44e930-ad63-4510-a2be-d0ac43d54f19}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Protocol\Proto">
       <UniqueIdentifier>{38370f68-972e-460a-8868-4b670f253cf0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Utils">
       <UniqueIdentifier>{d4a3d086-a8c9-4324-91c6-ef2e7b671f5e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Object">
+    <Filter Include="Object">
       <UniqueIdentifier>{84ec1cf8-758e-4103-8f95-c50d842904eb}</UniqueIdentifier>
     </Filter>
     <Filter Include="DB">
@@ -26,16 +23,16 @@
     <Filter Include="Queries">
       <UniqueIdentifier>{16bdea6a-c160-4039-b349-dd326eaabaea}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Data">
+    <Filter Include="Data">
       <UniqueIdentifier>{c1cdcfa1-e243-42a2-ab0e-55ffd15cd2ac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\System">
+    <Filter Include="Inventory">
       <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Data\Json">
+    <Filter Include="Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Room">
+    <Filter Include="World">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -79,39 +76,41 @@
     <ClCompile Include="Utils\TickTimer.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Player.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Object\Player.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Monster.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Object\Monster.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Object.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Object\Object.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Creature.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Object\Creature.cpp">
+      <Filter>Object</Filter>
     </ClCompile>
     <ClCompile Include="DB\DBRequestFunctions.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="Game\System\Inventory.cpp">
-      <Filter>Game\System</Filter>
+    <ClCompile Include="Inventory\Inventory.cpp">
+      <Filter>Inventory</Filter>
     </ClCompile>
-    <ClCompile Include="Game\System\EquippedGear.cpp">
-      <Filter>Game\System</Filter>
+    <ClCompile Include="Inventory\EquippedGear.cpp">
+      <Filter>Inventory</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Data\Gamedata.cpp">
-      <Filter>Game\Data</Filter>
+    <ClCompile Include="Data\Gamedata.cpp">
+      <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Room\Room.cpp">
-      <Filter>Game\Room</Filter>
+    <ClCompile Include="World\Room.cpp">
+      <Filter>World</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Room\RoomManager.cpp">
-      <Filter>Game\Room</Filter>
+    <ClCompile Include="World\RoomManager.cpp">
+      <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
+    <ClInclude Include="DB\config.h">
+      <Filter>DB</Filter>
+    </ClInclude>
     <ClInclude Include="Main\pch.h">
       <Filter>Main</Filter>
     </ClInclude>
@@ -151,38 +150,38 @@
     <ClInclude Include="Utils\TickTimer.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Player.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Object\Player.h">
+      <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Monster.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Object\Monster.h">
+      <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Object.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Object\Object.h">
+      <Filter>Object</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Creature.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Object\Creature.h">
+      <Filter>Object</Filter>
     </ClInclude>
     <ClInclude Include="DB\DBRequestFunctions.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="Game\System\Inventory.h">
-      <Filter>Game\System</Filter>
+    <ClInclude Include="Inventory\Inventory.h">
+      <Filter>Inventory</Filter>
     </ClInclude>
-    <ClInclude Include="Game\System\EquippedGear.h">
-      <Filter>Game\System</Filter>
+    <ClInclude Include="Inventory\EquippedGear.h">
+      <Filter>Inventory</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Data\JsonProperty.h">
-      <Filter>Game\Data</Filter>
+    <ClInclude Include="Data\JsonProperty.h">
+      <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Data\Gamedata.h">
-      <Filter>Game\Data</Filter>
+    <ClInclude Include="Data\Gamedata.h">
+      <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Room\Room.h">
-      <Filter>Game\Room</Filter>
+    <ClInclude Include="World\Room.h">
+      <Filter>World</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Room\RoomManager.h">
-      <Filter>Game\Room</Filter>
+    <ClInclude Include="World\RoomManager.h">
+      <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -197,9 +196,6 @@
     </None>
     <None Include="..\Common\Protobuf\bin\Struct.proto">
       <Filter>Protocol\Proto</Filter>
-    </None>
-    <None Include="..\Queries\UserDB_CreateUsersTable.sql">
-      <Filter>Queries</Filter>
     </None>
     <None Include="Queries\GameDB_CreateAllTables.sql">
       <Filter>Queries</Filter>
@@ -216,20 +212,20 @@
     <None Include="Queries\GameDB_GetMaxItemUid.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Item.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Data\Json\S_Item.json">
+      <Filter>Data\Json</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Map.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Data\Json\S_Map.json">
+      <Filter>Data\Json</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Monster.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Data\Json\S_Monster.json">
+      <Filter>Data\Json</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Quest.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Data\Json\S_Quest.json">
+      <Filter>Data\Json</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Warrior_Level_Data.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Data\Json\S_Warrior_Level_Data.json">
+      <Filter>Data\Json</Filter>
     </None>
   </ItemGroup>
 </Project>

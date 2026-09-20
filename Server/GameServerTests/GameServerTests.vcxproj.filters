@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- 논리 폴더를 디스크 폴더와 일치시킨다. GameServer 본체의 .cpp 는 이 프로젝트가
+       직접 컴파일하므로 그 원래 위치가 그대로 드러나야 한다. -->
+  <ItemGroup>
+    <Filter Include="GameServer">
+      <UniqueIdentifier>{6f908130-0794-54ae-9b5d-c85d0c3df3a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\DB">
+      <UniqueIdentifier>{618b8b54-5e90-54fe-9d05-af8f196a0622}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Data">
+      <UniqueIdentifier>{2e3a1063-1247-5b9b-a3ee-9d52f191566e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Inventory">
+      <UniqueIdentifier>{7810b236-ecc8-58ac-b5c6-97197a69e93f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Main">
+      <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Object">
+      <UniqueIdentifier>{70a1c2e8-8486-5308-aa89-15068a9827c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Protocol">
+      <UniqueIdentifier>{754f4db8-77f2-51d1-b0bd-84a6235e4ea0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Utils">
+      <UniqueIdentifier>{3c4e9978-eb04-54e2-89bd-f7dc6a5dc7dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\World">
+      <UniqueIdentifier>{8ca8a65d-5f1a-5421-9d22-4555503baf64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{a63dcec0-4069-593b-9fc6-ead277381222}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\googletest">
+      <UniqueIdentifier>{ceb3691c-93f2-5e63-93ae-191c46309d4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\googletest\src">
+      <UniqueIdentifier>{97d62bca-617c-5a42-8dc3-875d40c2d287}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="TestMain.cpp" />
+    <ClCompile Include="PacketSerializationTests.cpp" />
+    <ClCompile Include="ProtocolContractTests.cpp" />
+    <ClCompile Include="InventoryTests.cpp" />
+    <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
+      <Filter>Libraries\googletest\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\pch.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\GameSession.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\Global.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\ServerPacketHandler.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Protocol.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Utils\ObjectUtils.cpp">
+      <Filter>GameServer\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">
+      <Filter>GameServer\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp">
+      <Filter>GameServer\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Utils\Utils.cpp">
+      <Filter>GameServer\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Object\Creature.cpp">
+      <Filter>GameServer\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Object\Monster.cpp">
+      <Filter>GameServer\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Object\Object.cpp">
+      <Filter>GameServer\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Object\Player.cpp">
+      <Filter>GameServer\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Inventory\EquippedGear.cpp">
+      <Filter>GameServer\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Inventory\Inventory.cpp">
+      <Filter>GameServer\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Data\Gamedata.cpp">
+      <Filter>GameServer\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\World\Room.cpp">
+      <Filter>GameServer\World</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\World\RoomManager.cpp">
+      <Filter>GameServer\World</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\DB\DBRequestFunctions.cpp">
+      <Filter>GameServer\DB</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

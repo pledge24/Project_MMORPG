@@ -107,7 +107,7 @@ npm start                # = node src/app.js
 
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
-| UserDB | `(localdb)\MSSQLLocalDB` | `Server/Queries/UserDB_CreateUsersTable.sql` |
+| UserDB | `(localdb)\MSSQLLocalDB` | `Server/AuthServer/Queries/UserDB_CreateUsersTable.sql` |
 | GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`도 있다.

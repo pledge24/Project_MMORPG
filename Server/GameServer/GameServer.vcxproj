@@ -78,22 +78,22 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Object;$(ProjectDir)Inventory;$(ProjectDir)Data;$(ProjectDir)World;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Object;$(ProjectDir)Inventory;$(ProjectDir)Data;$(ProjectDir)World;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Object;$(ProjectDir)Inventory;$(ProjectDir)Data;$(ProjectDir)World;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Object;$(ProjectDir)Game\System;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Object;$(ProjectDir)Inventory;$(ProjectDir)Data;$(ProjectDir)World;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -174,7 +174,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
+    <ClInclude Include="DB\config.h" />
     <ClInclude Include="Main\pch.h" />
     <ClInclude Include="Main\GameSession.h" />
     <ClInclude Include="Main\GameSessionManager.h" />
@@ -188,16 +188,16 @@
     <ClInclude Include="Utils\TickIntervalTimer.h" />
     <ClInclude Include="Utils\TickTimer.h" />
     <ClInclude Include="Utils\Utils.h" />
-    <ClInclude Include="Game\Object\Creature.h" />
-    <ClInclude Include="Game\Object\Monster.h" />
-    <ClInclude Include="Game\Object\Object.h" />
-    <ClInclude Include="Game\Object\Player.h" />
-    <ClInclude Include="Game\System\EquippedGear.h" />
-    <ClInclude Include="Game\System\Inventory.h" />
-    <ClInclude Include="Game\Data\Gamedata.h" />
-    <ClInclude Include="Game\Data\JsonProperty.h" />
-    <ClInclude Include="Game\Room\Room.h" />
-    <ClInclude Include="Game\Room\RoomManager.h" />
+    <ClInclude Include="Object\Creature.h" />
+    <ClInclude Include="Object\Monster.h" />
+    <ClInclude Include="Object\Object.h" />
+    <ClInclude Include="Object\Player.h" />
+    <ClInclude Include="Inventory\EquippedGear.h" />
+    <ClInclude Include="Inventory\Inventory.h" />
+    <ClInclude Include="Data\Gamedata.h" />
+    <ClInclude Include="Data\JsonProperty.h" />
+    <ClInclude Include="World\Room.h" />
+    <ClInclude Include="World\RoomManager.h" />
     <ClInclude Include="DB\DBRequestFunctions.h" />
   </ItemGroup>
   <ItemGroup>
@@ -238,15 +238,15 @@
     <ClCompile Include="Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="Utils\TickTimer.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
-    <ClCompile Include="Game\Object\Creature.cpp" />
-    <ClCompile Include="Game\Object\Monster.cpp" />
-    <ClCompile Include="Game\Object\Object.cpp" />
-    <ClCompile Include="Game\Object\Player.cpp" />
-    <ClCompile Include="Game\System\EquippedGear.cpp" />
-    <ClCompile Include="Game\System\Inventory.cpp" />
-    <ClCompile Include="Game\Data\Gamedata.cpp" />
-    <ClCompile Include="Game\Room\Room.cpp" />
-    <ClCompile Include="Game\Room\RoomManager.cpp" />
+    <ClCompile Include="Object\Creature.cpp" />
+    <ClCompile Include="Object\Monster.cpp" />
+    <ClCompile Include="Object\Object.cpp" />
+    <ClCompile Include="Object\Player.cpp" />
+    <ClCompile Include="Inventory\EquippedGear.cpp" />
+    <ClCompile Include="Inventory\Inventory.cpp" />
+    <ClCompile Include="Data\Gamedata.cpp" />
+    <ClCompile Include="World\Room.cpp" />
+    <ClCompile Include="World\RoomManager.cpp" />
     <ClCompile Include="DB\DBRequestFunctions.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -254,17 +254,16 @@
     <None Include="..\Common\Protobuf\bin\GenPackets.bat" />
     <None Include="..\Common\Protobuf\bin\Protocol.proto" />
     <None Include="..\Common\Protobuf\bin\Struct.proto" />
-    <None Include="..\Queries\UserDB_CreateUsersTable.sql" />
     <None Include="Queries\AlterTable.sql" />
     <None Include="Queries\DEBUG.sql" />
     <None Include="Queries\GameDB_CreateAllTables.sql" />
     <None Include="Queries\GameDB_GetMaxItemUid.sql" />
     <None Include="Queries\GameDB_InsertAdminAccount.sql" />
-    <None Include="Game\Data\Json\S_Item.json" />
-    <None Include="Game\Data\Json\S_Map.json" />
-    <None Include="Game\Data\Json\S_Monster.json" />
-    <None Include="Game\Data\Json\S_Quest.json" />
-    <None Include="Game\Data\Json\S_Warrior_Level_Data.json" />
+    <None Include="Data\Json\S_Item.json" />
+    <None Include="Data\Json\S_Map.json" />
+    <None Include="Data\Json\S_Monster.json" />
+    <None Include="Data\Json\S_Quest.json" />
+    <None Include="Data\Json\S_Warrior_Level_Data.json" />
   </ItemGroup>
   <ItemGroup>
     <UpToDateCheckInput Include="..\Common\Protobuf\bin\Enum.proto" />

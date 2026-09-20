@@ -64,7 +64,7 @@
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
+| `Server/GameServer/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
 | `P1/Content/Gamedata/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
@@ -75,7 +75,7 @@
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 이 파일들을 읽어 템플릿 ID를 키로 하는 `nlohmann::json` 기반 `DataTable`에 올린다.
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Data/Gamedata.h`)로 이 파일들을 읽어 템플릿 ID를 키로 하는 `nlohmann::json` 기반 `DataTable`에 올린다.
 
 ---
 

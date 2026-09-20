@@ -78,7 +78,7 @@
   <PropertyGroup Label="UserMacros" />
   <!-- 작업 디렉터리를 GameServer 프로젝트 폴더로 둔다.
        현재 테스트는 Gamedata::ItemDataTable을 손으로 시드하지만, 나중에 실 JSON을 읽는
-       테스트를 쓸 때 Gamedata의 상대 경로("Game/Data/Json/")가 그대로 맞도록. -->
+       테스트를 쓸 때 Gamedata의 상대 경로("Data/Json/")가 그대로 맞도록. -->
   <PropertyGroup>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)GameServer\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
@@ -87,7 +87,7 @@
     <!-- googletest 경로가 두 개인 이유:
          include\  → 테스트 코드의 #include <gtest/gtest.h>
          루트      → gtest-all.cc 안의 #include "src/gtest.cc" -->
-    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Main;$(SolutionDir)GameServer\Protocol;$(SolutionDir)GameServer\Utils;$(SolutionDir)GameServer\DB;$(SolutionDir)GameServer\Game\Object;$(SolutionDir)GameServer\Game\System;$(SolutionDir)GameServer\Game\Data;$(SolutionDir)GameServer\Game\Room;$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Main;$(SolutionDir)GameServer\Protocol;$(SolutionDir)GameServer\Utils;$(SolutionDir)GameServer\DB;$(SolutionDir)GameServer\Object;$(SolutionDir)GameServer\Inventory;$(SolutionDir)GameServer\Data;$(SolutionDir)GameServer\World;$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -202,15 +202,15 @@
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
-    <ClCompile Include="..\GameServer\Game\Object\Creature.cpp" />
-    <ClCompile Include="..\GameServer\Game\Object\Monster.cpp" />
-    <ClCompile Include="..\GameServer\Game\Object\Object.cpp" />
-    <ClCompile Include="..\GameServer\Game\Object\Player.cpp" />
-    <ClCompile Include="..\GameServer\Game\System\EquippedGear.cpp" />
-    <ClCompile Include="..\GameServer\Game\System\Inventory.cpp" />
-    <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
-    <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
-    <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
+    <ClCompile Include="..\GameServer\Object\Creature.cpp" />
+    <ClCompile Include="..\GameServer\Object\Monster.cpp" />
+    <ClCompile Include="..\GameServer\Object\Object.cpp" />
+    <ClCompile Include="..\GameServer\Object\Player.cpp" />
+    <ClCompile Include="..\GameServer\Inventory\EquippedGear.cpp" />
+    <ClCompile Include="..\GameServer\Inventory\Inventory.cpp" />
+    <ClCompile Include="..\GameServer\Data\Gamedata.cpp" />
+    <ClCompile Include="..\GameServer\World\Room.cpp" />
+    <ClCompile Include="..\GameServer\World\RoomManager.cpp" />
     <ClCompile Include="..\GameServer\DB\DBRequestFunctions.cpp" />
   </ItemGroup>
   <ItemGroup>
