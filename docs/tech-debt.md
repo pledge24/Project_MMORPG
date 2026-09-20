@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 17개 (높음 4 · 중간 11 · 낮음 2)
+항목 20개 (높음 4 · 중간 13 · 낮음 3)
 
 ## 작성 방법
 
@@ -193,6 +193,25 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 **유지보수 어려움** · **테스트 어려움** — 로그인은 가장 자주 도는 경로인데 500이 나면 원인을
 좁힐 방법이 없다. 세 의존성 중 무엇이 죽었는지 알려면 서버에 붙어 재현해야 한다.
 
+## 패킷 핸들러 템플릿이 두 곳에 같은 내용으로 추적된다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 모듈 · protocol
+> 위치: `Tools/PacketHandlerGenerator/Templates/PacketHandler.h` ·
+> `Protocol/Templates/PacketHandler.h`
+> 등록일: 2026년 9월 20일
+
+두 파일은 2,561바이트로 내용이 같고 git이 둘 다 추적한다.
+
+생성에 쓰이는 것은 `Protocol/Templates/PacketHandler.h` 하나다. `PacketHandlerGenerator.py`
+30줄이 `jinja2.FileSystemLoader('Templates')`로 상대 경로를 읽고, `Protocol/GenPackets.bat`이
+`pushd %~dp0`로 `Protocol/`에 들어간 뒤 생성기를 부르기 때문이다.
+`Tools/PacketHandlerGenerator/Templates/`는 읽히지 않는다.
+
+### 영향
+
+**동일한 문제의 반복** · **변경 비용 증가** — 생성기 폴더 안에 있는 사본이 더 그럴듯해 보인다.
+그쪽을 고치면 생성 결과가 바뀌지 않고, 바뀌지 않는 까닭이 파일 위치가 아니라 실행 시점의 작업
+디렉터리에 있어서 원인을 찾는 데 시간이 걸린다.
+
 ## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
 > 위치: `P1/Source/P1/ClientPacketHandler.cpp` (핸들러 23개 중 20개)
@@ -313,6 +332,34 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 `Socket`이 유효한 포인터로 남아 `Socket == nullptr` 가드가 통과하므로, 닫힌 소켓에 계속 쓰기를
 시도한다. 수명을 고치려면 `P1GameInstance`와 `ClientPacketHandler`와 `PacketSession` 셋을 함께
 봐야 한다.
+
+## DummyClient로는 로그인과 이동을 확인할 수 없다
+> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · build
+> 위치: `Server/DummyClient/Main/DummyClient.cpp` ·
+> `Server/DummyClient/Main/ClientPacketHandler.cpp`
+> 등록일: 2026년 9월 20일
+
+`CLAUDE.md` 「완료 기준」과 `docs/testing.md` 56줄은 테스트가 없는 서버 경로의 검증 하한으로
+DummyClient 스모크를 지목한다. 정작 DummyClient가 보내는 패킷은 빈 `C_LOGIN`과 `C_CHAT` 둘뿐이다.
+
+2026년 9월 20일 실측 결과는 아래와 같다.
+
+| 확인 항목 | 결과 |
+|---|---|
+| 세션 수립 | 100건 전부 성공 |
+| `C_LOGIN`이 핸들러에 도달 | 도달함 |
+| 로그인 성공(`userId:` 로그) | 0건 |
+| `Not Found AccessToken` | 95건 |
+| 이동 패킷 전송 | 코드 없음 |
+
+`Handle_C_LOGIN`은 `pkt.access_token()`으로 Redis를 조회한다. DummyClient는 이 필드를 채우지
+않으므로 조회가 전부 빗나간다. 유효한 토큰을 얻으려면 인증 서버에 먼저 로그인해야 한다.
+
+### 영향
+
+**테스트 어려움** · **변경 영향 범위 확대** — 스모크로 닿는 곳은 연결과 패킷 프레이밍과 핸들러
+디스패치까지다. 로그인 이후의 경로인 캐릭터 로드와 룸 입장과 이동 동기화는 닿지 않는데, 문서는 이
+도구를 검증 하한으로 약속한다. 「DummyClient로 확인했다」는 보고가 실제로 확인한 범위보다 넓게 읽힌다.
 
 ## CI가 없다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build

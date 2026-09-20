@@ -49,7 +49,7 @@ int main(void)
     ASSERT_CRASH(Gamedata::LoadAllGamedata());
 
     // Room 추가
-    for (auto& mapDataPair : Gamedata::MapDataTable)
+    for (auto& mapDataPair : Gamedata::s_mapDataTable)
     {
         int roomId = mapDataPair.first; // templateId
         RoomRef room = GRoomManager->CreateRoom(roomId);

@@ -63,7 +63,7 @@ public:
     RoomRef             GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
     int32               GetRoomId() const { return _roomId; }
     optional<Json>      GetPortalDataFromPortalId(int32 portalId);
-    shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return hasRespawnPoint ? respawnPoint : nullptr; }
+    shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return _hasRespawnPoint ? _respawnPoint : nullptr; }
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
 
     /** Setter 함수 */
@@ -121,8 +121,8 @@ private:
     float _roomMinY;
     float _roomMaxY;
 
-    bool hasRespawnPoint = false;
-    shared_ptr<Protocol::PosInfo> respawnPoint;
+    bool _hasRespawnPoint = false;
+    shared_ptr<Protocol::PosInfo> _respawnPoint;
 
     /** Config */
     const float LOCATION_PADDING_X = 1000.f;
@@ -133,9 +133,9 @@ private:
     const uint64 ROOM_UPDATE_INTERVAL_MS = 200;
 
     /** 몬스터 관련 정보 */
-    int32 maxMonsterCount;
-    float monsterRespawnTime;
-    vector<int32> monsterIds;
+    int32 _maxMonsterCount;
+    float _monsterRespawnTime;
+    vector<int32> _monsterIds;
 
 };
 

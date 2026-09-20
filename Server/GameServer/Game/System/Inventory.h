@@ -14,19 +14,19 @@ public:
     Inventory(PlayerRef player);
     ~Inventory();
 
-    bool addItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count = 1, optional<int32> setSlotId = nullopt);
-    bool addItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count = 1);
-    bool removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count = 1);
+    bool AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count = 1, optional<int32> setSlotId = nullopt);
+    bool AddItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count = 1);
+    bool RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count = 1);
 
-    int32 findFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
+    int32 FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
 
     // 매핑 표에 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다.
     // operator[]는 없는 키를 조회하면 빈 vector를 표에 삽입하므로,
     // 그 참조를 호출자가 인덱싱하면 범위 밖 접근이 된다.
     vector<bool>* GetDirtyFlags(Protocol::ItemType itemType)
     {
-        auto dirtyFlagsIt = dirtyFlagsMappings.find(itemType);
-        if (dirtyFlagsIt == dirtyFlagsMappings.end())
+        auto dirtyFlagsIt = _dirtyFlagsMappings.find(itemType);
+        if (dirtyFlagsIt == _dirtyFlagsMappings.end())
             return nullptr;
 
         return &dirtyFlagsIt->second;
@@ -47,11 +47,11 @@ private:
     static bool IsValidSlotId(int32 slotId) { return slotId >= 0 && slotId < MAX_SLOTS; }
 
 private:
-    unordered_map<Protocol::ItemType, RepeatedPtrField<Protocol::Slot>*> inventorylookupMappings;
-    unordered_map<Protocol::ItemType, vector<bool>> dirtyFlagsMappings;
+    unordered_map<Protocol::ItemType, RepeatedPtrField<Protocol::Slot>*> _inventoryLookupMappings;
+    unordered_map<Protocol::ItemType, vector<bool>> _dirtyFlagsMappings;
 
     /* 유틸 매핑 */
-    unordered_map<Protocol::SlotType, Protocol::ItemType> slotTypeToItemTypeMappings;
-    unordered_map<string, Protocol::ItemType> itemTypeMappings;
+    unordered_map<Protocol::SlotType, Protocol::ItemType> _slotTypeToItemTypeMappings;
+    unordered_map<string, Protocol::ItemType> _itemTypeMappings;
 };
 

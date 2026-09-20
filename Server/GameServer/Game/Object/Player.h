@@ -49,8 +49,8 @@ public:
     void OnLevelUp();
 
     /** Getter 함수*/
-    int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return respawnRoomMappings[respawnType]; }
-    int32 GetEnteringRoomId() { return enteringRoomId; }
+    int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return _respawnRoomMappings[respawnType]; }
+    int32 GetEnteringRoomId() { return _enteringRoomId; }
     void GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
 private:
@@ -59,21 +59,21 @@ private:
     void CacheNextLevelUpData();
 
 public:
-	weak_ptr<GameSession> session;
+	weak_ptr<GameSession> _session;
 
-    Protocol::PlayerInfo* playerInfo;
-    Protocol::Possession* possession;
+    Protocol::PlayerInfo* _playerInfo;
+    Protocol::Possession* _possession;
 
-    InventoryRef inventory;             
-    EquippedGearRef equippedGear;       
+    InventoryRef _inventory;             
+    EquippedGearRef _equippedGear;       
 
 private:
-    int32 enteringRoomId = -1;          // 이동하고자 하는 Room id
+    int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
 
     const int32 MAX_LEVEL = 50;
     NextLevelUpData _nextLevelUpData;
 
-    map<Protocol::RespawnType, int32> respawnRoomMappings;
-    int32 RESPAWN_TOWN_ID = 10;         // 고정으로 사용
+    map<Protocol::RespawnType, int32> _respawnRoomMappings;
+    const int32 RESPAWN_TOWN_ID = 10;   // 고정으로 사용
 };
 

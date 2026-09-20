@@ -21,26 +21,26 @@ public:
 	bool IsPlayer() { return _isPlayer; }
 
     /** Getter 함수 */
-    uint64 GetPrevTime() { return prevTime; }
+    uint64 GetPrevTime() { return _prevTime; }
     void GetNormalAttackData() {}
 
     /** Setter 함수 */
-    void SetPrevTime(uint64 time) { prevTime = time; }
-    void SetPosInfo(const Protocol::PosInfo& posInfo_) { posInfo->CopyFrom(posInfo_); }
-    void SetPos(const Protocol::Vector& pos) { posInfo->mutable_pos()->CopyFrom(pos); }
+    void SetPrevTime(uint64 time) { _prevTime = time; }
+    void SetPosInfo(const Protocol::PosInfo& posInfo_) { _posInfo->CopyFrom(posInfo_); }
+    void SetPos(const Protocol::Vector& pos) { _posInfo->mutable_pos()->CopyFrom(pos); }
 
 public:
-	Protocol::ObjectInfo* objectInfo;
-	Protocol::PosInfo* posInfo;
+	Protocol::ObjectInfo* _objectInfo;
+	Protocol::PosInfo* _posInfo;
 
     friend class Room;
-	atomic<weak_ptr<Room>> room;
+	atomic<weak_ptr<Room>> _room;
 
 protected:
 	bool _isPlayer = false;
     bool _isTickable = true;
 
-    uint64 prevTime = 0;
+    uint64 _prevTime = 0;
     const uint64 OBJECT_TICK_INTERVAL = 50;
 };
 

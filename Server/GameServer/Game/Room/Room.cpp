@@ -39,17 +39,17 @@ bool Room::Init(const Json& roomData)
 bool Room::Start()
 {
     // 몬스터를 Room에 스폰한다.
-    if (monsterIds.empty() == false && _roomId == 20)
+    if (_monsterIds.empty() == false && _roomId == 20)
     {
-        int32 kindOfMonster = monsterIds.size();
+        int32 kindOfMonster = _monsterIds.size();
         //SpawnMonster(5000);
         //SpawnMonster(5002);
         Update();
         return true;
 
-        for (int32 i = 0; i < maxMonsterCount; i++)
+        for (int32 i = 0; i < _maxMonsterCount; i++)
         {
-            int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster)];
+            int32 monsterTemplateId = _monsterIds[Utils::GetRandom(0, kindOfMonster)];
             if (SpawnMonster(monsterTemplateId) == nullptr)
                 return false;
 
@@ -75,7 +75,7 @@ void Room::Update()
                 continue;
 
             Protocol::PosInfo* info = movePkt.add_info();
-            info->CopyFrom(*object->posInfo);
+            info->CopyFrom(*object->_posInfo);
         }
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
@@ -85,7 +85,7 @@ void Room::Update()
 
 void Room::TickObject(ObjectRef object)
 {
-    int64 objectId = object->objectInfo->object_id();
+    int64 objectId = object->_objectInfo->object_id();
     if (Contains(objectId) == false)
         return;
 
@@ -100,13 +100,13 @@ void Room::TickObject(ObjectRef object)
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 {
     Protocol::S_ENTER_ROOM enterRoomPkt;
-    int64 enterPlayerId = enterPlayer->objectInfo->object_id();
+    int64 enterPlayerId = enterPlayer->_objectInfo->object_id();
 
     if (AddObject(enterPlayer) == false)
     {
         wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
 
-        if (auto session = enterPlayer->session.lock())
+        if (auto session = enterPlayer->_session.lock())
         {
             enterRoomPkt.set_success(false);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
@@ -121,7 +121,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     {
         enterPlayer->OnEnterRoom(static_pointer_cast<Room>(shared_from_this()), roomEnterData.enterPos);
 
-        if (auto session = enterPlayer->session.lock())
+        if (auto session = enterPlayer->_session.lock())
         {
             enterRoomPkt.set_success(true);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
@@ -139,7 +139,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
 bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 {
-    const int64 leavePlayerId = leavePlayer->objectInfo->object_id();
+    const int64 leavePlayerId = leavePlayer->_objectInfo->object_id();
 
     if (RemoveObject(leavePlayerId) == false)
     {
@@ -163,7 +163,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
         }
 
         // leavePlayer: Despawn Packet 전송
-        if (auto session = leavePlayer->session.lock())
+        if (auto session = leavePlayer->_session.lock())
         {
             if (transferRoom == false)
             {
@@ -198,7 +198,7 @@ bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
 void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
 {
     // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
-    auto session = player->session.lock();
+    auto session = player->_session.lock();
     if (session == nullptr)
         return;
 
@@ -227,7 +227,7 @@ void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
 
 void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 {
-    auto session = player->session.lock();
+    auto session = player->_session.lock();
     if (session == nullptr)
         return;
 
@@ -258,7 +258,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         // RoomEnterData 세팅
         roomEnterData.nextRoomId = _roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_INITIAL;
-        roomEnterData.enterPos = *player->posInfo;
+        roomEnterData.enterPos = *player->_posInfo;
 
         if (EnterPlayer(player, roomEnterData) == false)
             return;
@@ -296,7 +296,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         // RoomEnterData 세팅
         roomEnterData.nextRoomId = roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER;
-        roomEnterData.enterPos = *player->posInfo;
+        roomEnterData.enterPos = *player->_posInfo;
 
         if (TransferPlayer(player, roomEnterData) == false)
             return;
@@ -348,7 +348,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
             Protocol::PosInfo enterPosInfo;
             Protocol::Vector& pos = *enterPosInfo.mutable_pos();
-            enterPosInfo.set_object_id(player->objectInfo->object_id());
+            enterPosInfo.set_object_id(player->_objectInfo->object_id());
             pos.set_x(dst[PosX]);
             pos.set_y(dst[PosY]);
             pos.set_z(dst[PosZ]);
@@ -400,7 +400,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
 
 	// 적용
 	PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]);
-	player->posInfo->CopyFrom(pkt.info());
+	player->_posInfo->CopyFrom(pkt.info());
 
 	// 이동 사실을 알린다 (본인 빼고)
 	{
@@ -418,7 +418,7 @@ void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
 {
 	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
 	Protocol::S_CHAT chatPkt;
-	chatPkt.set_object_id(player->objectInfo->object_id());
+	chatPkt.set_object_id(player->_objectInfo->object_id());
 	chatPkt.set_msg(pkt.msg());
 
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
@@ -427,7 +427,7 @@ void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
 
 void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
 {
-    auto session = player->session.lock();
+    auto session = player->_session.lock();
     if (session == nullptr)
         return;
 
@@ -458,7 +458,7 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
 
 void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
 {
-    auto session = player->session.lock();
+    auto session = player->_session.lock();
     if (session == nullptr)
         return;
 
@@ -488,7 +488,7 @@ void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
 
 void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
 {
-    auto session = player->session.lock();
+    auto session = player->_session.lock();
     if (session == nullptr)
         return;
 
@@ -515,7 +515,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
 
 void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
-    const int64 objectId = player->objectInfo->object_id();
+    const int64 objectId = player->_objectInfo->object_id();
     if (_objects.contains(objectId) == false)
         return;
 
@@ -531,7 +531,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
     if (player->ProcessEquipGear(pkt.slot(), OUT equipGearPkt) == false)
     {
-        if (SessionRef session = player->session.lock())
+        if (SessionRef session = player->_session.lock())
         {
             equipGearPkt.set_success(false);
             SEND_PACKET(equipGearPkt);
@@ -542,7 +542,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
     // 장착한 유저에게만 그대로 전송.
     {
-        SessionRef session = player->session.lock();
+        SessionRef session = player->_session.lock();
         cout << equipGearPkt.DebugString() << endl;
         SEND_PACKET(equipGearPkt);
     }
@@ -559,7 +559,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
 void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
-    const int64 objectId = player->objectInfo->object_id();
+    const int64 objectId = player->_objectInfo->object_id();
     if (_objects.contains(objectId) == false)
         return;
 
@@ -575,7 +575,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
     if (player->ProcessUnequipGear(pkt.slot(), OUT unequipGearPkt) == false)
     {
-        if (SessionRef session = player->session.lock())
+        if (SessionRef session = player->_session.lock())
         {
             unequipGearPkt.set_success(false);
 
@@ -586,7 +586,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
     // 탈착한 유저에게만 그대로 전송.
     {
-        SessionRef session = player->session.lock();
+        SessionRef session = player->_session.lock();
         SEND_PACKET(unequipGearPkt);
     }
 
@@ -602,7 +602,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
-    const int64 objectId = player->objectInfo->object_id();
+    const int64 objectId = player->_objectInfo->object_id();
     if (_objects.contains(objectId) == false)
         return;
     
@@ -651,7 +651,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
             Protocol::PosInfo enterPos;
             enterPos.CopyFrom(respawnPos);
-            enterPos.set_object_id(player->objectInfo->object_id());
+            enterPos.set_object_id(player->_objectInfo->object_id());
             enterData.enterPos = std::move(enterPos);
         }
 
@@ -675,9 +675,9 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 {
     Protocol::S_NORMAL_ATTACK normalAttackPkt;
     {
-        normalAttackPkt.set_object_id(creature->objectInfo->object_id());
+        normalAttackPkt.set_object_id(creature->_objectInfo->object_id());
         normalAttackPkt.set_combo(combo);
-        normalAttackPkt.set_yaw(creature->posInfo->yaw());
+        normalAttackPkt.set_yaw(creature->_posInfo->yaw());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer);
@@ -712,7 +712,7 @@ void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 
         Protocol::S_HIT HitPkt;
         {
-            HitPkt.set_object_id(creature->objectInfo->object_id());
+            HitPkt.set_object_id(creature->_objectInfo->object_id());
             HitPkt.set_damage(attackInfo.damage());
             HitPkt.set_updated_hp(creature->GetStatValue(Protocol::STAT_TYPE_HP));
 
@@ -749,7 +749,7 @@ void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
 
     player->OnGetReward(rewardResultPkt);
 
-    if (auto session = player->session.lock())
+    if (auto session = player->_session.lock())
     {
         SEND_PACKET(rewardResultPkt);
     }
@@ -757,7 +757,7 @@ void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
 
 void Room::HandleDie(CreatureRef creature)
 {
-    int64 objectId = creature->objectInfo->object_id();
+    int64 objectId = creature->_objectInfo->object_id();
 
     Protocol::S_DIE diePkt;
     {
@@ -773,12 +773,12 @@ void Room::HandleDie(CreatureRef creature)
 
 void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
 {
-    auto session = player->session.lock();
+    auto session = player->_session.lock();
     if (session == nullptr)
         return;
 
     Protocol::S_RESPAWN respawnPkt;
-    if (respawnPoint == nullptr)
+    if (_respawnPoint == nullptr)
     {
         wcout << "리스폰 위치가 없는 Room에서 리스폰 시도" << '\n';
         {
@@ -813,18 +813,18 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
 
 void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 {
-    int64 playerId = player->objectInfo->object_id();
+    int64 playerId = player->_objectInfo->object_id();
 
     // 해당 플레이어에게 Room Object 전송
     Protocol::S_SPAWN spawnPkt;
-    if (auto session = player->session.lock())
+    if (auto session = player->_session.lock())
     {
         for (auto& item : _objects)
         {
-            if (!includeThisPlayer && item.second->objectInfo->object_id() == playerId)
+            if (!includeThisPlayer && item.second->_objectInfo->object_id() == playerId)
                 continue;
 
-            spawnPkt.add_objects()->CopyFrom(*item.second->objectInfo);
+            spawnPkt.add_objects()->CopyFrom(*item.second->_objectInfo);
             // equipped_gear_summary 활용하기
         }
 
@@ -870,7 +870,7 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
     Protocol::S_SPAWN spawnPkt;
     {
         Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
-        objectInfo->CopyFrom(*targetPlayer->objectInfo);
+        objectInfo->CopyFrom(*targetPlayer->_objectInfo);
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
         Broadcast(sendBuffer);
@@ -986,7 +986,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
         {
             if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]))
             {
-                float squareDist = MathUtil::Distance(posInfo, player->posInfo, true);
+                float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
                 if (squareRange < squareDist)
                     continue;
 
@@ -1022,33 +1022,33 @@ void Room::CacheRoomData()
     _roomMinY = _roomCenterPos.y - _widthHalfExtent;
     _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
-    maxMonsterCount = _roomData[MaxMonsterCount].is_null() ? 0 : static_cast<int32>(_roomData[MaxMonsterCount]);
-    monsterRespawnTime = _roomData[MonsterRespawnTime].is_null() ? 100000.f : static_cast<float>(_roomData[MonsterRespawnTime]);
+    _maxMonsterCount = _roomData[MaxMonsterCount].is_null() ? 0 : static_cast<int32>(_roomData[MaxMonsterCount]);
+    _monsterRespawnTime = _roomData[MonsterRespawnTime].is_null() ? 100000.f : static_cast<float>(_roomData[MonsterRespawnTime]);
 
     for (int32 monsterId : _roomData[MonsterIds])
     {
-        monsterIds.push_back(monsterId);
+        _monsterIds.push_back(monsterId);
     }
 
     // 리스폰 포인트 저장
     if (_roomData[HasRespawnPoint] && _roomData[RespawnPoint].is_null() == false)
     {
-        respawnPoint = make_shared<Protocol::PosInfo>();
+        _respawnPoint = make_shared<Protocol::PosInfo>();
 
         const Json& point = _roomData[RespawnPoint];
         float posX = point[PosX];
         float posY = point[PosY];
         float posZ = point[PosZ];
 
-        respawnPoint->mutable_pos()->set_x(posX);
-        respawnPoint->mutable_pos()->set_y(posY);
-        respawnPoint->mutable_pos()->set_z(posZ);
-        respawnPoint->set_yaw(0.f);
-        respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+        _respawnPoint->mutable_pos()->set_x(posX);
+        _respawnPoint->mutable_pos()->set_y(posY);
+        _respawnPoint->mutable_pos()->set_z(posZ);
+        _respawnPoint->set_yaw(0.f);
+        _respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
         // 이 플래그가 없으면 GetRespawnPoint()가 항상 nullptr을 반환해
         // Player::GetRespawnData가 널 역참조로 죽는다.
-        hasRespawnPoint = true;
+        _hasRespawnPoint = true;
     }
 
 }
@@ -1087,7 +1087,7 @@ void Room::UpdateCellMatrix()
         int64 objectId = pair.first;
         ObjectRef object = pair.second;
 
-        Protocol::PosInfo* objectPos = object->posInfo;
+        Protocol::PosInfo* objectPos = object->_posInfo;
         
         auto indices = GetCellIndicesFromPos(objectPos);
         if (indices == make_pair(-1, -1))
@@ -1152,7 +1152,7 @@ bool Room::AddObject(ObjectRef object)
     if (object == nullptr)
         return false;
 
-    int64 objectId = object->objectInfo->object_id();
+    int64 objectId = object->_objectInfo->object_id();
 	if (_objects.contains(objectId))
 		return false;
 
@@ -1169,7 +1169,7 @@ bool Room::RemoveObject(int64 objectId)
     ObjectRef object = _objects[objectId];
 
     // cellMatrix에 object 삭제
-    auto cellPos = GetCellIndicesFromPos(object->posInfo);
+    auto cellPos = GetCellIndicesFromPos(object->_posInfo);
     _cellMatrix[cellPos.first][cellPos.second].erase(objectId);
 
     // object 삭제
@@ -1185,10 +1185,10 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
 		if (player == nullptr)
 			continue;
-		if (player->objectInfo->object_id() == exceptId)
+		if (player->_objectInfo->object_id() == exceptId)
 			continue;
 
-		if (GameSessionRef session = player->session.lock())
+		if (GameSessionRef session = player->_session.lock())
 			session->Send(sendBuffer);
 	}
 }

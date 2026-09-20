@@ -135,7 +135,7 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
         BindObject(DBBind<PARAMS, COLS>& dbBind, const Protocol::CharacterOverview& character, int64 userId)
             : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name()))
         {
-            unordered_map<int32, Json>& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[_classId]);
+            unordered_map<int32, Json>& classLevelDataTable = (*Gamedata::s_classLevelDataTableMappings[_classId]);
             const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
             _curHp = classLevelDataTable[level][JsonProperty::LevelTable::MaxHp];
             _curMp = classLevelDataTable[level][JsonProperty::LevelTable::MaxMp];
@@ -329,7 +329,7 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
         )SQL");
 
         GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-        BindObject bindObject(dbBind, characterId, gameSession->userId);
+        BindObject bindObject(dbBind, characterId, gameSession->_userId);
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -364,7 +364,7 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
 
 void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 characterId)
 {
-    PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+    PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
     // 1. 캐릭터 기본 정보 다시 가져오기(이름, 레벨 등 필요)
     if (LoadCharacterData(session, characterId) == false)
@@ -395,10 +395,10 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     Protocol::S_ENTER_GAME enterGamePkt;
     {
         enterGamePkt.set_success(true);
-        enterGamePkt.mutable_player()->CopyFrom(*player->objectInfo);
+        enterGamePkt.mutable_player()->CopyFrom(*player->_objectInfo);
 
-        enterGamePkt.mutable_stat_info()->CopyFrom(*player->statInfo);
-        enterGamePkt.mutable_possession()->CopyFrom(*player->possession);
+        enterGamePkt.mutable_stat_info()->CopyFrom(*player->_statInfo);
+        enterGamePkt.mutable_possession()->CopyFrom(*player->_possession);
     }
 
     SEND_PACKET(enterGamePkt);
@@ -535,11 +535,11 @@ bool DBRequestFunctions::LoadCharacterData(SessionRef session, int64 characterId
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         dbConn->Fetch();
 
-        Protocol::PlayerInfo* playerInfo = player->playerInfo;
+        Protocol::PlayerInfo* playerInfo = player->_playerInfo;
 
         playerInfo->set_character_id(bindObject._characterId);
         playerInfo->set_class_((Protocol::CharacterClass)bindObject._classId);
@@ -630,14 +630,14 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         if (dbConn->Fetch() == false)
             return false;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = player->objectInfo;
-        Protocol::PlayerInfo* playerInfo = player->playerInfo;
-        Protocol::StatInfo* statInfo = player->statInfo;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
+        Protocol::ObjectInfo* objectInfo = player->_objectInfo;
+        Protocol::PlayerInfo* playerInfo = player->_playerInfo;
+        Protocol::StatInfo* statInfo = player->_statInfo;
         auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
-        DataTable& classLevelDataTable = *Gamedata::ClassLevelDataTableMappings[playerInfo->class_()];
+        DataTable& classLevelDataTable = *Gamedata::s_classLevelDataTableMappings[playerInfo->class_()];
         int64 maxExp = classLevelDataTable[playerInfo->level()][JsonProperty::LevelTable::ExpRequirement];
         statMappings->insert({ (int32)Protocol::STAT_TYPE_EXP, bindObject._exp });
         statMappings->insert({ (int32)Protocol::STAT_TYPE_MAX_EXP, maxExp });
@@ -651,9 +651,9 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         // 지역 설정
         playerInfo->set_room_id(bindObject._roomId);
 
-        // map_id 세팅과 enteringRoomId 시딩을 함께 처리한다.
+        // map_id 세팅과 _enteringRoomId 시딩을 함께 처리한다.
         // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 채우지 않으면
-        // 최초 입장(INITIAL) 검증이 enteringRoomId == -1 로 실패한다.
+        // 최초 입장(INITIAL) 검증이 _enteringRoomId == -1 로 실패한다.
         player->OnEnterMap(bindObject._mapId, bindObject._roomId);
 
         // PosInfo 설정
@@ -672,7 +672,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         }
 
         // ==플레이어 골드 설정==
-        player->possession->set_gold(bindObject._gold);
+        player->_possession->set_gold(bindObject._gold);
 
     }
     catch (DBCustomError error)
@@ -772,7 +772,7 @@ bool DBRequestFunctions::LoadCharactersGearItems(SessionRef session, int64 chara
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         while (dbConn->Fetch())
         {
@@ -788,9 +788,9 @@ bool DBRequestFunctions::LoadCharactersGearItems(SessionRef session, int64 chara
             gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
 
             if (bindObject._isEquipped == false)
-                player->inventory->addItem(nullptr, item, 1, bindObject._slotId);
+                player->_inventory->AddItem(nullptr, item, 1, bindObject._slotId);
             else
-                player->equippedGear->EquipGear(nullptr, nullptr, item, bindObject._slotId);
+                player->_equippedGear->EquipGear(nullptr, nullptr, item, bindObject._slotId);
         }
     }
     catch (DBCustomError error)
@@ -855,14 +855,14 @@ bool DBRequestFunctions::LoadCharactersConsumableItems(SessionRef session, int64
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         while (dbConn->Fetch())
         {
             Protocol::Item item;
 
             item.set_template_id(bindObject._templateId);
-            player->inventory->addItem(nullptr, item, bindObject._count, bindObject._slotId);
+            player->_inventory->AddItem(nullptr, item, bindObject._count, bindObject._slotId);
         }
     }
     catch (DBCustomError error)
@@ -927,14 +927,14 @@ bool DBRequestFunctions::LoadCharactersMiscItems(SessionRef session, int64 chara
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         while (dbConn->Fetch())
         {
             Protocol::Item item;
 
             item.set_template_id(bindObject._templateId);
-            player->inventory->addItem(nullptr, item, bindObject._count, bindObject._slotId);
+            player->_inventory->AddItem(nullptr, item, bindObject._count, bindObject._slotId);
         }
     }
     catch (DBCustomError error)
@@ -983,9 +983,9 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
             WHERE character_id = (?)
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
-        Protocol::ObjectInfo* objectInfo = player->objectInfo;
-        Protocol::PlayerInfo* playerInfo = player->playerInfo;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
+        Protocol::ObjectInfo* objectInfo = player->_objectInfo;
+        Protocol::PlayerInfo* playerInfo = player->_playerInfo;
 
         BindObject bindObject(dbBind, playerInfo->character_id(), playerInfo->level());
 
@@ -1013,9 +1013,9 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player)
         {
-            const Protocol::ObjectInfo& objectInfo = *player->objectInfo;
-            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
-            const Protocol::StatInfo& statInfo = *player->statInfo;
+            const Protocol::ObjectInfo& objectInfo = *player->_objectInfo;
+            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
+            const Protocol::StatInfo& statInfo = *player->_statInfo;
             const Protocol::PosInfo& posInfo = objectInfo.pos_info();
             auto& statMappings = statInfo.info();
 
@@ -1030,7 +1030,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             _posY = posInfo.pos().y();
             _posZ = posInfo.pos().z();
             _rotYaw = posInfo.yaw();
-            _gold = player->possession->gold();
+            _gold = player->_possession->gold();
             _characterId = playerInfo.character_id();
 
             BindParam(dbBind);
@@ -1080,7 +1080,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             WHERE character_id = (?)
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         BindObject bindObject(dbBind, player);
 
@@ -1137,12 +1137,12 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32& rows)
         {
-            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
-            const Protocol::Possession& possession = *player->possession;
+            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
+            const Protocol::Possession& possession = *player->_possession;
             const Protocol::Inventory& inven = possession.inventory();
             // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면 뒤의
             // 장착 장비 구간은 그대로 돌아, 일부 슬롯만 DB에 반영된 채 끝난다.
-            vector<bool>* gearDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
+            vector<bool>* gearDirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
             if (gearDirtyFlags == nullptr)
                 throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
@@ -1178,7 +1178,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             }
 
             // 장착 중인 장비
-            map<int32, bool>& equippedGearDirtyFlags = player->equippedGear->GetDirtyFlagMappings();
+            map<int32, bool>& equippedGearDirtyFlags = player->_equippedGear->GetDirtyFlagMappings();
             for (const auto& pair : equippedGearDirtyFlags)
             {
                 if (pair.second == true)
@@ -1274,7 +1274,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             DROP TABLE #TempTable;
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         int32 rows = 0;
         BindObject bindObject(dbBind, player, OUT rows);
@@ -1308,12 +1308,12 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32 rows)
         {
-            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
-            const Protocol::Possession& possession = *player->possession;
+            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
+            const Protocol::Possession& possession = *player->_possession;
             const Protocol::Inventory& inven = possession.inventory();
             // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면
             // 아무것도 반영되지 않은 것을 성공으로 보고하게 된다.
-            vector<bool>* consumableDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+            vector<bool>* consumableDirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
             if (consumableDirtyFlags == nullptr)
                 throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
@@ -1397,7 +1397,7 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
             DROP TABLE #TempTable;
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         int32 rows = 0;
         BindObject bindObject(dbBind, player, OUT rows);
@@ -1431,12 +1431,12 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32 rows)
         {
-            const Protocol::PlayerInfo& playerInfo = *player->playerInfo;
-            const Protocol::Possession& possession = *player->possession;
+            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
+            const Protocol::Possession& possession = *player->_possession;
             const Protocol::Inventory& inven = possession.inventory();
             // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면
             // 아무것도 반영되지 않은 것을 성공으로 보고하게 된다.
-            vector<bool>* miscDirtyFlags = player->inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
+            vector<bool>* miscDirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
             if (miscDirtyFlags == nullptr)
                 throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
@@ -1520,7 +1520,7 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
             DROP TABLE #TempTable;
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->player;
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
         int32 rows = 0;
         BindObject bindObject(dbBind, player, OUT rows);

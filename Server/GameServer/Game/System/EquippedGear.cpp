@@ -4,7 +4,7 @@
 
 EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {
-    equippedGearLookup = player->possession->mutable_equipped_gear();
+    _equippedGearLookup = player->_possession->mutable_equipped_gear();
 
     for (int32 slotId = 0; slotId <= Protocol::GearType_MAX; slotId++)
     {
@@ -13,10 +13,10 @@ EquippedGear::EquippedGear(PlayerRef player) : _player(player)
         slot.set_type(Protocol::SlotType::SLOT_TYPE_EQUIPPED);
         slot.set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
 
-        equippedGearLookup->emplace(slotId, std::move(slot));
+        _equippedGearLookup->emplace(slotId, std::move(slot));
     }
 
-    gearTypeMappings = {
+    _gearTypeMappings = {
         {JsonProperty::Item::GearSubtype_Helmet, Protocol::GearType::GEAR_TYPE_HELMET},
         {JsonProperty::Item::GearSubtype_Chest, Protocol::GearType::GEAR_TYPE_CHEST},
         {JsonProperty::Item::GearSubtype_Legs, Protocol::GearType::GEAR_TYPE_LEGS},
@@ -34,20 +34,20 @@ EquippedGear::~EquippedGear()
 bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList, const Protocol::Item& itemInstance, optional<int32> setSlotId)
 {
     int32 templateId = itemInstance.template_id();
-    const Json& ItemData = Gamedata::ItemDataTable[templateId];
+    const Json& ItemData = Gamedata::s_itemDataTable[templateId];
 
     // 장비 타입 아이템인지 체크
-    if (gearTypeMappings.find(ItemData[JsonProperty::Item::ItemSubtype]) == gearTypeMappings.end())
+    if (_gearTypeMappings.find(ItemData[JsonProperty::Item::ItemSubtype]) == _gearTypeMappings.end())
         return false;
     
-    Protocol::GearType type = setSlotId.has_value() ? (Protocol::GearType)setSlotId.value() : gearTypeMappings[ItemData[JsonProperty::Item::ItemSubtype]];
-    Protocol::Slot* targetSlot = equippedGearLookup->find(type) != equippedGearLookup->end() ? &(*equippedGearLookup)[type] : nullptr;
+    Protocol::GearType type = setSlotId.has_value() ? (Protocol::GearType)setSlotId.value() : _gearTypeMappings[ItemData[JsonProperty::Item::ItemSubtype]];
+    Protocol::Slot* targetSlot = _equippedGearLookup->find(type) != _equippedGearLookup->end() ? &(*_equippedGearLookup)[type] : nullptr;
 
     // 장착 중인 상태에서 다른 장비 장착 금지
     if (targetSlot == nullptr || targetSlot->has_item() == true)
         return false;
 
-    dirtyFlagMappings[type] = true;
+    _dirtyFlagMappings[type] = true;
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
     targetSlot->mutable_item()->CopyFrom(itemInstance);
@@ -101,19 +101,19 @@ bool EquippedGear::UnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::
 
     const Protocol::Item& item = requestSlot.item();
     int32 templateId = item.template_id();
-    const Json& ItemData = Gamedata::ItemDataTable[templateId];
+    const Json& ItemData = Gamedata::s_itemDataTable[templateId];
 
     // 장착 반영
-    if (gearTypeMappings.find(ItemData[JsonProperty::Item::ItemSubtype]) == gearTypeMappings.end())
+    if (_gearTypeMappings.find(ItemData[JsonProperty::Item::ItemSubtype]) == _gearTypeMappings.end())
         return false;
 
-    Protocol::GearType type = gearTypeMappings[ItemData[JsonProperty::Item::ItemSubtype]];
-    Protocol::Slot* targetSlot = &(*equippedGearLookup)[type];
+    Protocol::GearType type = _gearTypeMappings[ItemData[JsonProperty::Item::ItemSubtype]];
+    Protocol::Slot* targetSlot = &(*_equippedGearLookup)[type];
 
     if (targetSlot->has_item() == false)
         return false;
 
-    dirtyFlagMappings[type] = true;
+    _dirtyFlagMappings[type] = true;
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
     targetSlot->clear_item();
@@ -162,6 +162,6 @@ bool EquippedGear::UnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::
 
 void EquippedGear::ClearDirtyFlag()
 {
-    for (auto& dirtyFlagPair : dirtyFlagMappings)
+    for (auto& dirtyFlagPair : _dirtyFlagMappings)
         dirtyFlagPair.second = false;
 }
