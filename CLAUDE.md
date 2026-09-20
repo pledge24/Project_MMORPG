@@ -21,7 +21,9 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 - `docs/ARCHITECTURE.md` — 깨면 안 되는 불변식
 - **코드를 쓰거나 고치기 전에 `docs/conventions.md`** — 이름, 주석, 멤버 배치, 타입 사용
 - **새 파일이나 에셋을 만들기 전에 `docs/folder-structure.md`** — 어디에 둘지, 무슨 이름을 붙일지
-- `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`
+- `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`.
+  **기존 ADR에 덧붙일 때는 덧붙인 날짜를 그 자리에 적는다** — 본문이 측정 날짜에 묶여 있어서,
+  날짜가 없으면 처음부터 있던 내용으로 읽힌다
 - `docs/tech-debt.md` — 지금 틀린 것
 - `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
 - `docs/work/` — 여러 세션에 걸치는 작업의 계획과 결정. **진행 상태는 여기 없다.** 상태는 이슈 트래커에 있다
