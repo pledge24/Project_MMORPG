@@ -32,7 +32,7 @@ XCOPY /Y Struct.pb.h				"../P1/Source/P1/Network"
 XCOPY /Y Struct.pb.cc				"../P1/Source/P1/Network"
 XCOPY /Y Protocol.pb.h				"../P1/Source/P1/Network"
 XCOPY /Y Protocol.pb.cc				"../P1/Source/P1/Network"
-XCOPY /Y ClientPacketHandler.h		"../P1/Source/P1"
+XCOPY /Y ClientPacketHandler.h		"../P1/Source/P1/Network"
 
 XCOPY /Y Schema\Protocol.proto				"../P1/Source/P1/Network"
 XCOPY /Y Schema\Struct.proto				"../P1/Source/P1/Network"

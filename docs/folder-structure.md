@@ -79,7 +79,7 @@ P1/Source/
 
 | 폴더 | 담는 것 |
 | --- | --- |
-| `Core/` | GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
+| `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
 | `Characters/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
 | `Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
 | `Items/` | 아이템 정의와 아이템 인스턴스 |
@@ -93,6 +93,12 @@ P1/Source/
 | `Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
 | `Online/` | 로그인과 캐릭터 목록. 요청 하나에 응답 하나로 끝나는 비실시간 통신만 담는다 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
+| `World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+
+**`World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
+`Interaction/`에 둔다.
+— 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
+아니라 레벨이 놓아 둔 장치다.
 
 **`AI/`와 `Abilities/`를 만들지 않는다.** 몬스터의 행동은 게임 서버가 결정하고, 스킬 판정도
 서버가 한다. 클라이언트가 받는 것은 결과 상태뿐이다.

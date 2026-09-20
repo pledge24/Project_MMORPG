@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 20개 (높음 4 · 중간 13 · 낮음 3)
+항목 22개 (높음 4 · 중간 14 · 낮음 4)
 
 ## 작성 방법
 
@@ -212,9 +212,37 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 그쪽을 고치면 생성 결과가 바뀌지 않고, 바뀌지 않는 까닭이 파일 위치가 아니라 실행 시점의 작업
 디렉터리에 있어서 원인을 찾는 데 시간이 걸린다.
 
+## `docs/codegen.md`가 재배치 이전 경로를 가리킨다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 파일 · protocol
+> 위치: `docs/codegen.md` 11·17·57·61·85·87·88줄
+> 등록일: 2026년 9월 20일
+
+티켓 #43(PR #61)이 스키마 원본과 기획 수치와 생성기를 저장소 최상위로 올렸다.
+`docs/codegen.md`는 그 이동을 반영하지 않았다. 이 문서가 적은 경로 여섯 곳이 지금은 모두
+존재하지 않는다.
+
+| 문서의 기재 | 실제 위치 |
+|---|---|
+| `Server/Common/Protobuf/bin/{Enum,Struct,Protocol}.proto` | `Protocol/Schema/` |
+| `Server/Common/Protobuf/bin/GenPackets.bat` | `Protocol/GenPackets.bat` |
+| `Server/Common/GameDatasheet/Original_*.xlsx` | `DesignData/Original_*.xlsx` |
+| `Server/Common/GameDatasheet/GenJsonFile.bat` | `DesignData/GenJsonFile.bat` |
+| `Server/Tools/`의 파이썬 소스 | `Tools/`의 파이썬 소스 |
+| `Server/Tools/PacketHandlerGenerator/` · `Server/Tools/ExcelToJsonConverter/` | `Tools/` 아래 같은 이름의 두 폴더 |
+
+`Server/Common/`은 지금 존재하지 않는다. #46이 클라이언트 목적지 두 줄만 고쳤고 나머지는
+그대로 두었다.
+
+### 영향
+
+**변경 비용 증가** · **새 기능 개발 지연** — 이 문서는 「프로토콜·데이터 파일을 고치기 전에 반드시
+읽는다」로 시작한다. 패킷을 추가하려는 다음 세션이 이 문서를 먼저 읽고 없는 경로를 찾게 된다.
+생성기를 돌리는 자리는 두 티어가 공유하는 유일한 계약을 다시 만드는 자리여서, 경로를 못 찾으면
+거기서 막힌다.
+
 ## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/ClientPacketHandler.cpp` (핸들러 23개 중 20개)
+> 위치: `P1/Source/P1/Network/ClientPacketHandler.cpp` (핸들러 23개 중 20개)
 > 등록일: 2026년 9월 16일
 
 `Handle_S_*` 23개 중 20개가 `Cast<UP1GameInstance>(GWorld->GetGameInstance())`로 시작한다.
@@ -236,15 +264,15 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 
 ## 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
-> 위치: `Server/GameServer/config.h` · `P1/Source/P1/P1GameInstance.h` 97~98줄 ·
-> `P1/Source/P1/Login/LoginManager.h` 33~34줄
+> 위치: `Server/GameServer/config.h` · `P1/Source/P1/Core/P1GameInstance.h` 97~98줄 ·
+> `P1/Source/P1/Online/LoginManager.h` 33~34줄
 > 등록일: 2026년 8월 19일
 
 | 위치 | 값 | 형태 |
 |---|---|---|
 | `Server/GameServer/config.h` | GameDB 접속 문자열, Redis URI | `#define` (gitignore됨) |
-| `P1/Source/P1/P1GameInstance.h` 97~98줄 | `127.0.0.1` / `7777` | `const` 멤버 |
-| `P1/Source/P1/Login/LoginManager.h` 33~34줄 | `127.0.0.1` / `5000` | 멤버 초기값 |
+| `P1/Source/P1/Core/P1GameInstance.h` 97~98줄 | `127.0.0.1` / `7777` | `const` 멤버 |
+| `P1/Source/P1/Online/LoginManager.h` 33~34줄 | `127.0.0.1` / `5000` | 멤버 초기값 |
 | `Server/AuthServer/.env` | 나머지 전부 | 유일하게 런타임 설정 |
 
 `config.h` 방식의 실질 이점은 두 가지다. 오타가 컴파일 에러로 잡히고, 배포물에 설정 파일을
@@ -288,14 +316,14 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 ## 캐릭터 클래스와 컨트롤러에 관심사가 뭉쳐 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Game/`
+> 위치: `P1/Source/P1/Characters/` · `P1/Source/P1/Core/`
 > 등록일: 2026년 8월 19일
 
 | 클래스 | 뭉쳐 있는 것 |
 |---|---|
-| `ACreature` (`Game/Objects/Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
-| `AP1MyPlayer` (`Game/Objects/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
-| `AInGamePlayerController` (`Game/InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
+| `ACreature` (`Characters/Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
+| `AP1MyPlayer` (`Characters/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
+| `AInGamePlayerController` (`Core/InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
 
 이동 동기화 로직이 수신(`ACreature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
 스로틀 상수도 두 파일에 따로 산다.
@@ -308,7 +336,7 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 ## 소켓과 세션이 해제되지 않는다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/P1GameInstance.cpp` 52~100줄 · `P1/Source/P1/ClientPacketHandler.cpp` 100~107줄
+> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 52~100줄 · `P1/Source/P1/Network/ClientPacketHandler.cpp` 100~107줄
 > 등록일: 2026년 9월 16일
 
 `Socket`과 `GameServerSession` 두 멤버에 `nullptr`을 대입하는 코드가 모듈 전체에 하나도 없다
@@ -433,7 +461,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## `UP1GameInstance`가 클라 측 갓 클래스
 > **심각도:** 중간 · **난이도:** 높음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/P1GameInstance.cpp` (620줄)
+> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (620줄)
 > 등록일: 2026년 8월 19일
 
 소켓 소유 + 세션 관리 + `S_*` 핸들러 16개 + 스폰/디스폰 + 델리게이트 5종 브로드캐스트 + 토큰
@@ -529,3 +557,21 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **혼란 유발** — 이슈 #40이 이 파일을 "생성기 산출물이 아님"으로 판정해 지웠다. 실제로는
 생성기가 만드는 파일이었고, #43에서 스크립트를 새 위치에서 돌렸을 때 다시 나타났다. 이름에
 `Test`가 들어 있고 내용이 비어 있어서 시험 삼아 만든 파일로 읽히는 것이 원인이다.
+
+## `.gitignore`의 `[Ll]og/` 패턴이 클라이언트 소스 폴더까지 무시한다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · build
+> 위치: `P1/.gitignore` 127줄
+> 등록일: 2026년 9월 20일
+
+127줄의 `[Ll]og/`는 언리얼이 만드는 로그 출력 폴더를 무시하려고 쓴 패턴이다. 경로를 한정하지
+않아서 `P1/` 아래 어디에 있든 `Log`나 `log`라는 이름의 폴더를 전부 잡는다.
+
+이 패턴 때문에 `P1/Source/P1/Log/LogCategory.h`와 `LogCategory.cpp` 두 파일이 저장소에 들어간
+적이 없다. #46이 두 파일을 `Utils/`로 옮기자 git이 둘을 추적하기 시작했고, 지금 빠져 있는 파일은
+없다. 패턴은 그대로 남아 있다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 소스 폴더 이름을 `Log`로 지으면 그 폴더가 통째로 저장소에서 빠진다.
+빠진 사실은 커밋할 때 드러나지 않고 새로 클론한 쪽에서 빌드가 깨질 때 드러난다. 고치려면
+`/Saved/Logs/`처럼 경로를 한정한다.
