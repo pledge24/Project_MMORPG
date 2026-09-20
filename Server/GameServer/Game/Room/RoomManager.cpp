@@ -17,13 +17,13 @@ RoomManager::~RoomManager()
 
 RoomRef RoomManager::CreateRoom(int32 templateId)
 {
-    if (Gamedata::MapDataTable.find(templateId) == Gamedata::MapDataTable.end())
+    if (Gamedata::s_mapDataTable.find(templateId) == Gamedata::s_mapDataTable.end())
     {
         wcout << L"Gamedata에 해당 room에 대한 정보 누락" << '\n';
         return nullptr;
     }
 
-    const Json& roomData = Gamedata::MapDataTable[templateId];
+    const Json& roomData = Gamedata::s_mapDataTable[templateId];
     RoomRef room = Room::Create(roomData);
     
     if (room == nullptr)

@@ -3,41 +3,41 @@
 
 void TickTimer::Start()
 {
-    started = true;
+    _started = true;
 }
 
 void TickTimer::Tick(float deltaTime)
 {
-    if (started == false)
+    if (_started == false)
         return;
 
-    elapsedTime += deltaTime;
+    _elapsedTime += deltaTime;
 }
 
 void TickTimer::Restart()
 {
-    elapsedTime = 0.f;
+    _elapsedTime = 0.f;
 }
 
 void TickTimer::ClearTimer()
 {
-    elapsedTime = 0.f;
-    endTime = 0.f;
-    started = false;
-    checkPointMappings.clear();
+    _elapsedTime = 0.f;
+    _endTime = 0.f;
+    _started = false;
+    _checkPointMappings.clear();
 }
 
 void TickTimer::SetCheckPoint(float time, string name)
 {
-    checkPointMappings.insert(make_pair(name, time));
+    _checkPointMappings.insert(make_pair(name, time));
 }
 
 bool TickTimer::IsCompleted()
 {
-    return elapsedTime >= endTime; 
+    return _elapsedTime >= _endTime; 
 }
 
 bool TickTimer::IsCheckPointReached(const string& name)
 {
-    return elapsedTime >= checkPointMappings[name];
+    return _elapsedTime >= _checkPointMappings[name];
 }

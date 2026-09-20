@@ -5,7 +5,7 @@
 
 Inventory::Inventory(PlayerRef player) : _player(player)
 {
-    Protocol::Inventory* inventory = player->possession->mutable_inventory();
+    Protocol::Inventory* inventory = player->_possession->mutable_inventory();
     
     for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
     {
@@ -26,25 +26,25 @@ Inventory::Inventory(PlayerRef player) : _player(player)
         slotMisc->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
     }
 
-    inventorylookupMappings = {
+    _inventoryLookupMappings = {
         {Protocol::ItemType::ITEM_TYPE_GEAR, inventory->mutable_gear()},
         {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, inventory->mutable_consumables()},
         {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, inventory->mutable_miscellaneous()}
     };
 
-    dirtyFlagsMappings = {
+    _dirtyFlagsMappings = {
         {Protocol::ItemType::ITEM_TYPE_GEAR, vector<bool>(MAX_SLOTS)},
         {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, vector<bool>(MAX_SLOTS)},
         {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, vector<bool>(MAX_SLOTS)}
     };
 
-    slotTypeToItemTypeMappings = {
+    _slotTypeToItemTypeMappings = {
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, Protocol::ItemType::ITEM_TYPE_GEAR},
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS}
     };
 
-    itemTypeMappings = {
+    _itemTypeMappings = {
         {"armor", Protocol::ItemType::ITEM_TYPE_GEAR},
         {"weapon", Protocol::ItemType::ITEM_TYPE_GEAR},
         {"consumption", Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
@@ -56,31 +56,31 @@ Inventory::~Inventory()
 {
 }
 
-bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
+bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
     //if (itemInstance.template_id() == 0)
     //    return false;
 
-    const Json& itemData = Gamedata::ItemDataTable[itemInstance.template_id()];
+    const Json& itemData = Gamedata::s_itemDataTable[itemInstance.template_id()];
 
-    if (itemTypeMappings.find(itemData[JsonProperty::Item::ItemType]) == itemTypeMappings.end())
+    if (_itemTypeMappings.find(itemData[JsonProperty::Item::ItemType]) == _itemTypeMappings.end())
         return false;
 
-    Protocol::ItemType itemType = itemTypeMappings[itemData[JsonProperty::Item::ItemType]];
-    if (inventorylookupMappings.find(itemType) == inventorylookupMappings.end())
+    Protocol::ItemType itemType = _itemTypeMappings[itemData[JsonProperty::Item::ItemType]];
+    if (_inventoryLookupMappings.find(itemType) == _inventoryLookupMappings.end())
         return false;
 
-    int32 availableSlotId = setSlotId.has_value() ? setSlotId.value() : findFirstAvailableSlotId(itemType, itemInstance.template_id());
+    int32 availableSlotId = setSlotId.has_value() ? setSlotId.value() : FindFirstAvailableSlotId(itemType, itemInstance.template_id());
     if (availableSlotId == -1)
         return false;
 
     // 들어갈 슬롯 찾았으니 이제 진짜 추가해야함
-    RepeatedPtrField<Protocol::Slot>* lookupTable = inventorylookupMappings[itemType];
+    RepeatedPtrField<Protocol::Slot>* lookupTable = _inventoryLookupMappings[itemType];
     Protocol::Slot* targetSlot = lookupTable->Mutable(availableSlotId);
     if (targetSlot == nullptr)
         return false;
 
-    dirtyFlagsMappings[itemType][availableSlotId] = true;
+    _dirtyFlagsMappings[itemType][availableSlotId] = true;
     if (targetSlot->has_item())
     {
         // Modifiy slot data
@@ -112,7 +112,7 @@ bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
     return true;
 }
 
-bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count)
+bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count)
 {
     // -> 아직 인스턴스화된 아이템이 아닐때 진입(ex. 구매한 아이템)
     Protocol::Item itemInstance;
@@ -122,27 +122,27 @@ bool Inventory::addItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, i
     // TODO: generate inital instance data.
     // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
 
-    if (addItem(replicatingSlot, itemInstance, count) == false)
+    if (AddItem(replicatingSlot, itemInstance, count) == false)
         return false;
 
     return true; 
 }
 
-bool Inventory::removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
+bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
 {
     // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.
     // 인덱싱에 닿기 전에 거르지 않으면 널 역참조와 범위 밖 접근으로 프로세스가 죽는다.
     optional<Protocol::ItemType> requestedItemType = ToItemType(requestSlot.type());
     if (requestedItemType.has_value() == false)
     {
-        cout << "removeItem() Error: 매핑 표에 없는 SlotType(" << requestSlot.type() << ")" << endl;
+        cout << "RemoveItem() Error: 매핑 표에 없는 SlotType(" << requestSlot.type() << ")" << endl;
         return false;
     }
 
     int32 slotId = requestSlot.slot_id();
     if (IsValidSlotId(slotId) == false)
     {
-        cout << "removeItem() Error: 범위 밖 slot_id(" << slotId << ")" << endl;
+        cout << "RemoveItem() Error: 범위 밖 slot_id(" << slotId << ")" << endl;
         return false;
     }
 
@@ -159,7 +159,7 @@ bool Inventory::removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
     if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
         return false;
 
-    dirtyFlagsMappings[itemType][slotId] = true;
+    _dirtyFlagsMappings[itemType][slotId] = true;
 
     Protocol::Item* item = updatedSlot->mutable_item();
     int32 updatedCount = item->count() - count;
@@ -181,15 +181,15 @@ bool Inventory::removeItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
     return true;
 }
 
-int32 Inventory::findFirstAvailableSlotId(Protocol::ItemType type, int32 templateId)
+int32 Inventory::FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId)
 {
     if (type == Protocol::ItemType::ITEM_TYPE_NONE)
     {
-        cout << "findFirstAvailableSlotId() Error: Invalid ItemType" << endl;
+        cout << "FindFirstAvailableSlotId() Error: Invalid ItemType" << endl;
         return -1;
     }
 
-    RepeatedPtrField<Protocol::Slot>* lookupTable = inventorylookupMappings[type];
+    RepeatedPtrField<Protocol::Slot>* lookupTable = _inventoryLookupMappings[type];
     int32 availableSlotId = -1;
     if (type == Protocol::ItemType::ITEM_TYPE_GEAR)
     {
@@ -241,8 +241,8 @@ optional<Protocol::ItemType> Inventory::ToItemType(Protocol::SlotType slotType) 
 {
     // operator[]로 조회하면 없는 키를 표에 삽입하면서 ITEM_TYPE_NONE을 돌려준다.
     // 조회는 반드시 find로 한다.
-    auto it = slotTypeToItemTypeMappings.find(slotType);
-    if (it == slotTypeToItemTypeMappings.end())
+    auto it = _slotTypeToItemTypeMappings.find(slotType);
+    if (it == _slotTypeToItemTypeMappings.end())
         return nullopt;
 
     return it->second;
@@ -250,7 +250,7 @@ optional<Protocol::ItemType> Inventory::ToItemType(Protocol::SlotType slotType) 
 
 Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
 {
-    // 슬롯 해석의 단일 창구다. removeItem도 여기로 들어온다.
+    // 슬롯 해석의 단일 창구다. RemoveItem도 여기로 들어온다.
     // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
     // Release에서 빠지므로, 실제로 안전을 보장하는 것은 아래 검증들이다.
     optional<Protocol::ItemType> requestedItemType = ToItemType(type);
@@ -260,8 +260,8 @@ Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
     if (IsValidSlotId(slot_id) == false)
         return nullptr;
 
-    auto lookupIt = inventorylookupMappings.find(requestedItemType.value());
-    if (lookupIt == inventorylookupMappings.end())
+    auto lookupIt = _inventoryLookupMappings.find(requestedItemType.value());
+    if (lookupIt == _inventoryLookupMappings.end())
         return nullptr;
 
     return lookupIt->second->Mutable(slot_id);
@@ -269,7 +269,7 @@ Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
 
 void Inventory::ClearDirtyFlags()
 {
-    for (auto& mappingsPair : dirtyFlagsMappings)
+    for (auto& mappingsPair : _dirtyFlagsMappings)
     {
         vector<bool>& dirtyFlag = mappingsPair.second;
         std::fill(dirtyFlag.begin(), dirtyFlag.end(), false);

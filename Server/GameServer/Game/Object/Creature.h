@@ -19,7 +19,7 @@ public:
     virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(ObjectRef attacker);
 
-    bool IsDead() { return isDead; }
+    bool IsDead() { return _isDead; }
     bool HasStat(Protocol::StatType statType);
 
     /** Getter 함수 */
@@ -29,9 +29,9 @@ public:
     /** Setter 함수 */
     void SetStatValue(Protocol::StatType statType, const int64& value);
 
-    Protocol::StatInfo* statInfo;
+    Protocol::StatInfo* _statInfo;
 
 protected:
-    bool isDead = false;
+    bool _isDead = false;
 };
 

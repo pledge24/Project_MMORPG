@@ -10,13 +10,13 @@ Player::Player()
 	_isPlayer = true;
     _isTickable = false;
 
-    playerInfo = objectInfo->mutable_player_info();
-    possession = new Protocol::Possession();
+    _playerInfo = _objectInfo->mutable_player_info();
+    _possession = new Protocol::Possession();
 }
 
 Player::~Player()
 {
-    delete possession;
+    delete _possession;
 }
 
 bool Player::Init()
@@ -24,8 +24,8 @@ bool Player::Init()
 	if (Creature::Init() == false)
 		return false;
 
-    inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
-    equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
+    _inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
+    _equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
 
 	return true;
 }
@@ -35,50 +35,50 @@ bool Player::Start()
 	if (Creature::Start() == false)
 		return false;
 
-    inventory->ClearDirtyFlags();
-    equippedGear->ClearDirtyFlag();
+    _inventory->ClearDirtyFlags();
+    _equippedGear->ClearDirtyFlag();
 
 	if (CalculateFinalStat() == false)
 		return false;
 
 	CacheNextLevelUpData();
 
-	respawnRoomMappings[Protocol::RESPAWN_TYPE_TOWN] = RESPAWN_TOWN_ID;
-	respawnRoomMappings[Protocol::RESPAWN_TYPE_CHECKPOINT] = -1;
-	respawnRoomMappings[Protocol::RESPAWN_TYPE_IN_PLACE] = -1;
-	respawnRoomMappings[Protocol::RESPAWN_TYPE_GUILD_BASE] = -1;
+	_respawnRoomMappings[Protocol::RESPAWN_TYPE_TOWN] = RESPAWN_TOWN_ID;
+	_respawnRoomMappings[Protocol::RESPAWN_TYPE_CHECKPOINT] = -1;
+	_respawnRoomMappings[Protocol::RESPAWN_TYPE_IN_PLACE] = -1;
+	_respawnRoomMappings[Protocol::RESPAWN_TYPE_GUILD_BASE] = -1;
 
 	return true;
 }
 
 bool Player::ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
 {
-    int64 gold = possession->gold();
-    int64 buyPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
+    int64 gold = _possession->gold();
+    int64 buyPrice = static_cast<int64>(Gamedata::s_itemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
 
     if (gold < buyPrice)
         return false;
 
-    if (inventory->addItem(OUT updatedSlot, templateId, count) == false)
+    if (_inventory->AddItem(OUT updatedSlot, templateId, count) == false)
         return false;
 
     totalGold = gold - buyPrice;
-    possession->set_gold(totalGold);
+    _possession->set_gold(totalGold);
 
     return true;
 }
 
 bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count)
 {
-    int64 gold = possession->gold();
+    int64 gold = _possession->gold();
     int32 templateId = requestSlot.item().template_id();
-    int64 sellPrice = static_cast<int64>(Gamedata::ItemDataTable[templateId][JsonProperty::Item::SellPrice]) * count;
+    int64 sellPrice = static_cast<int64>(Gamedata::s_itemDataTable[templateId][JsonProperty::Item::SellPrice]) * count;
 
-    if (inventory->removeItem(requestSlot, OUT updatedSlot, count) == false)
+    if (_inventory->RemoveItem(requestSlot, OUT updatedSlot, count) == false)
         return false;
 
     totalGold = gold + sellPrice;
-    possession->set_gold(totalGold);
+    _possession->set_gold(totalGold);
 
     return true;
 }
@@ -89,17 +89,17 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_U
     auto* updatedStatList = pkt.mutable_updated_stat();
 
     // 아이템 사용으로 인한 슬롯 변경 정보 채우기
-    if (inventory->removeItem(requestSlot, OUT updatedSlotList->Add()) == false)
+    if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
         return false;
 
     // objectId 채우기
-    pkt.set_object_id(objectInfo->object_id());
+    pkt.set_object_id(_objectInfo->object_id());
 
     // 변경된 스텟 반영
     for (const Protocol::Stat& stat : pkt.updated_stat())
     {
         int32 templateId = requestSlot.item().template_id();
-        const Json& itemData = Gamedata::ItemDataTable[templateId];
+        const Json& itemData = Gamedata::s_itemDataTable[templateId];
 
         // HP
         if (itemData.contains(JsonProperty::Item::HpRestore))
@@ -150,10 +150,10 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
         return false;
 
     const Protocol::Item& itemInstance = requestSlot.item();
-    if (equippedGear->EquipGear(OUT updatedSlotList->Add(), OUT updatedStatList, itemInstance) == false)
+    if (_equippedGear->EquipGear(OUT updatedSlotList->Add(), OUT updatedStatList, itemInstance) == false)
         return false;
 
-    if (inventory->removeItem(requestSlot, OUT updatedSlotList->Add()) == false)
+    if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
         return false;
 
     // 변경된 스텟 적용
@@ -173,10 +173,10 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     if (requestSlot.has_item() == false)
         return false;
 
-    if (equippedGear->UnequipGear(requestSlot, OUT updatedSlotList->Add(), OUT updatedStatList) == false)
+    if (_equippedGear->UnequipGear(requestSlot, OUT updatedSlotList->Add(), OUT updatedStatList) == false)
         return false;
 
-    if (inventory->addItem(OUT updatedSlotList->Add(), requestSlot.item()) == false)
+    if (_inventory->AddItem(OUT updatedSlotList->Add(), requestSlot.item()) == false)
         return false;
 
     // 변경된 스텟 적용
@@ -190,15 +190,15 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
 
 bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt)
 {
-	auto ownerRoom = room.load().lock();
+	auto ownerRoom = _room.load().lock();
 	if (ownerRoom == nullptr)
 		return false;
 
-	posInfo->CopyFrom(*respawnPos);
+	_posInfo->CopyFrom(*respawnPos);
 	{
 		pkt.set_success(true);
 		pkt.set_respawn_type(type);
-		pkt.set_object_id(objectInfo->object_id());
+		pkt.set_object_id(_objectInfo->object_id());
 
 		pkt.set_room_id(ownerRoom->GetRoomId());
 		pkt.mutable_pos_info()->CopyFrom(*respawnPos);
@@ -249,7 +249,7 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 
 	// 리스폰 성공 처리
 	{
-		isDead = false;
+		_isDead = false;
 	}
 
 	return true;
@@ -269,31 +269,31 @@ void Player::OnDie(ObjectRef attacker)
 
 void Player::OnEnterMap(int32 mapId, int32 roomId)
 {
-    playerInfo->set_map_id(mapId);
-    enteringRoomId = roomId;
+    _playerInfo->set_map_id(mapId);
+    _enteringRoomId = roomId;
 }
 
 void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos)
 {
-    enteringRoomId = -1;
-    room.store(enterRoom);
-    playerInfo->set_room_id(enterRoom->GetRoomId());
+    _enteringRoomId = -1;
+    _room.store(enterRoom);
+    _playerInfo->set_room_id(enterRoom->GetRoomId());
 
     if(enterPos.has_value())
     {
-        posInfo->CopyFrom(enterPos.value());
+        _posInfo->CopyFrom(enterPos.value());
     }
     else
     {
-        // 만일을 대비한 posInfo 세팅
+        // 만일을 대비한 _posInfo 세팅
         const vector3D& centerPos = enterRoom->GetCenterPoint();
-        Protocol::Vector* pos = posInfo->mutable_pos();
+        Protocol::Vector* pos = _posInfo->mutable_pos();
 
         pos->set_x(centerPos.x);
         pos->set_y(centerPos.y);
         pos->set_z(centerPos.z);
-        posInfo->set_yaw(0.f);
-        posInfo->set_state(Protocol::MOVE_STATE_IDLE);
+        _posInfo->set_yaw(0.f);
+        _posInfo->set_state(Protocol::MOVE_STATE_IDLE);
     }
 }
 
@@ -306,7 +306,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     {
         int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + reward.exp();
         int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
-        possession->set_gold(possession->gold() + reward.gold());
+        _possession->set_gold(_possession->gold() + reward.gold());
 
         // Check Level Up
         if (updatedExp >= maxExp)
@@ -320,14 +320,14 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     // Set Reward Result Pkt
     {
         rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
-        rewardResultPkt.set_updated_gold(possession->gold());
+        rewardResultPkt.set_updated_gold(_possession->gold());
 
         if (levelUp)
         {
             rewardResultPkt.set_is_level_up(true);
             Protocol::LevelUpInfo info;
-            info.set_new_level(playerInfo->level() - 1);
-            info.set_new_level(playerInfo->level());
+            info.set_new_level(_playerInfo->level() - 1);
+            info.set_new_level(_playerInfo->level());
 
 			RepeatedPtrField<Protocol::Stat>* updatedStatList = info.mutable_updated_stat();
 			{
@@ -343,7 +343,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 void Player::OnLevelUp()
 {
     // Set Level
-    playerInfo->set_level(playerInfo->level() + 1);
+    _playerInfo->set_level(_playerInfo->level() + 1);
 
     // Set StatInfo
     SetStatValue(Protocol::STAT_TYPE_MAX_EXP, _nextLevelUpData.expRequirement);
@@ -400,8 +400,8 @@ bool Player::CalculateFinalStat()
     // ===========================================================================
 
     // 1. 레벨당 캐릭터 기본 스텟
-    DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
-    int32 level = playerInfo->level();
+    DataTable& classLevelDataTable = (*Gamedata::s_classLevelDataTableMappings[_playerInfo->class_()]);
+    int32 level = _playerInfo->level();
     if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxHp))
         finalStat.maxHp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxHp]);
     if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxMp))
@@ -412,21 +412,21 @@ bool Player::CalculateFinalStat()
         finalStat.magical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack]);
 
     // 2. 장착 중이 장비 스텟 추가
-    for (const auto& pair : possession->equipped_gear())
+    for (const auto& pair : _possession->equipped_gear())
     {
         const Protocol::Item& item = pair.second.item();
 
         if (item.template_id() == 0)
             continue;
 
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
-            finalStat.maxHp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Hp]);
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
-            finalStat.maxMp += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::Mp]);
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
-            finalStat.physical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack]);
-        if (Gamedata::ItemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
-            finalStat.magical_attack += static_cast<int32>(Gamedata::ItemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
+        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
+            finalStat.maxHp += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::Hp]);
+        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
+            finalStat.maxMp += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::Mp]);
+        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
+            finalStat.physical_attack += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack]);
+        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
+            finalStat.magical_attack += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
     }
 
     // validate
@@ -458,14 +458,14 @@ bool Player::CalculateFinalStat()
 
 void Player::CacheNextLevelUpData()
 {
-    int32 nextLevel = playerInfo->level() + 1;
+    int32 nextLevel = _playerInfo->level() + 1;
     if (nextLevel > (int32)MAX_LEVEL)
     {
         cout << "Current Level is Max! Can't Cache Level Up Data" << '\n';
         return;
     }
 
-    DataTable& classLevelDataTable = (*Gamedata::ClassLevelDataTableMappings[playerInfo->class_()]);
+    DataTable& classLevelDataTable = (*Gamedata::s_classLevelDataTableMappings[_playerInfo->class_()]);
     const Json& nextLevelData = classLevelDataTable[nextLevel];
 
     // Cache

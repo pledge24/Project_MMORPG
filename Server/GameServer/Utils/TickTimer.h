@@ -3,7 +3,7 @@ class TickTimer
 {
 public:
     TickTimer() = default;
-    TickTimer(float time) : endTime(time) {};
+    TickTimer(float time) : _endTime(time) {};
 
 public:
     void Start();
@@ -11,17 +11,17 @@ public:
     void Restart();
     void ClearTimer();
 
-    void SetEndTime(float time) { endTime = time; }
+    void SetEndTime(float time) { _endTime = time; }
     void SetCheckPoint(float time, string name);
 
     bool IsCompleted();
     bool IsCheckPointReached(const string& name);
-    bool IsRunning() { return started; }
+    bool IsRunning() { return _started; }
 
 private:
-    float elapsedTime = 0.f;
-    float endTime = 0.f;
-    bool started = false;
-    map<string, float> checkPointMappings;
+    float _elapsedTime = 0.f;
+    float _endTime = 0.f;
+    bool _started = false;
+    map<string, float> _checkPointMappings;
 };
 

@@ -364,6 +364,18 @@ void UP1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 언리얼 밖에서 도는 C++이다. UHT가 없으므로 클라이언트의 이름 규칙을 그대로 옮겨 쓰지 않는다.
 
+**적용 대상은 `Server/GameServer/`와 `Server/DummyClient/`다. `Server/ServerCore/`는 제외한다.**
+— ServerCore는 완성된 네트워크 코어다. 게임 로직이 바뀌어도 이 계층은 바뀌지 않으므로, 이름을
+고쳐서 얻는 것보다 이미 돌아가는 코드를 건드려서 잃는 것이 크다.
+
+2026년 9월 20일 기준으로 ServerCore에 남아 있는 미준수 항목은 아래 아홉 개다. 고치지 않는다.
+
+| 파일 | 멤버 |
+| --- | --- |
+| `DB/DBQueue.h` | `jobs` · `mtx` · `cv` · `stopFlag` |
+| `Network/NetworkEvent.h` | `eventType` · `owner` · `session` · `sendBuffers` |
+| `Network/SocketUtil.h` | `alreadyInit` |
+
 ### 3.1 타입 접두사를 붙이지 않는다
 
 클래스와 구조체 이름은 접두사 없는 파스칼 케이스로 짓는다.
@@ -400,6 +412,22 @@ struct PacketHeader
     uint16 id;
 };
 ```
+
+**static 멤버 변수에는 `_` 대신 `s_`를 붙인다.**
+
+```cpp
+class ObjectUtils
+{
+private:
+    static atomic<int64> s_idGenerator;
+};
+```
+
+— static 멤버는 객체 없이도 살아 있다. 수명이 다르므로 이름도 갈라 둔다.
+
+예외: 운영체제나 외부 라이브러리가 정한 이름을 그대로 담는 포인터는 그 이름을 지킨다.
+`SocketUtil`의 `ConnectEx`·`DisconnectEx`·`AcceptEx`가 여기 해당한다.
+— 이름을 바꾸면 Winsock 문서에서 같은 이름으로 찾을 수 없다.
 
 ### 3.3 함수는 파스칼 케이스로 쓴다
 

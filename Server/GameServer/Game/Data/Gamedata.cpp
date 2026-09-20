@@ -9,28 +9,28 @@
 ---------------------*/
 
 /* 직업별 레벨 테이블 */
-DataTable Gamedata::InvalidLevelDataTable;
-DataTable Gamedata::WarriorLevelDataTable;
+DataTable Gamedata::s_invalidLevelDataTable;
+DataTable Gamedata::s_warriorLevelDataTable;
 
 /* 레벨 테이블 매핑 */
-unordered_map<int32, DataTable*> Gamedata::ClassLevelDataTableMappings;
+unordered_map<int32, DataTable*> Gamedata::s_classLevelDataTableMappings;
 
 /* 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이며
    GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다. */
 static constexpr const char* GAMEDATA_DIR = "Game/Data/Json/";
 
 /* 게임 데이터 */
-DataTable Gamedata::ItemDataTable;
-DataTable Gamedata::MapDataTable;
-DataTable Gamedata::MonsterDataTable;
-DataTable Gamedata::QuestDataTable;
+DataTable Gamedata::s_itemDataTable;
+DataTable Gamedata::s_mapDataTable;
+DataTable Gamedata::s_monsterDataTable;
+DataTable Gamedata::s_questDataTable;
 
 bool Gamedata::LoadAllGamedata()
 {
     // 레벨 테이블 매핑 초기화
-    ClassLevelDataTableMappings = {
-        make_pair(Protocol::CharacterClass::CLASS_TYPE_NONE, &InvalidLevelDataTable),
-        make_pair(Protocol::CharacterClass::CLASS_TYPE_WARRIOR, &WarriorLevelDataTable)
+    s_classLevelDataTableMappings = {
+        make_pair(Protocol::CharacterClass::CLASS_TYPE_NONE, &s_invalidLevelDataTable),
+        make_pair(Protocol::CharacterClass::CLASS_TYPE_WARRIOR, &s_warriorLevelDataTable)
     };
 
     try
@@ -48,7 +48,7 @@ bool Gamedata::LoadAllGamedata()
                     throw wstring(L"LevelTable JSON 파일에 level 정보가 존재하지 않음");
 
                 int32 level = row[JsonProperty::LevelTable::Level];
-                WarriorLevelDataTable[level] = row;
+                s_warriorLevelDataTable[level] = row;
             }
         }
 
@@ -65,7 +65,7 @@ bool Gamedata::LoadAllGamedata()
                     throw wstring(L"Item JSON 파일에 templateId 정보가 존재하지 않음");
 
                 int32 templateId = row[JsonProperty::Item::TemplateId];
-                ItemDataTable[templateId] = row;
+                s_itemDataTable[templateId] = row;
             }
         }
     
@@ -82,7 +82,7 @@ bool Gamedata::LoadAllGamedata()
                     throw wstring(L"Map JSON 파일에 templateId 정보가 존재하지 않음");
 
                 int32 templateId = row[JsonProperty::Map::TemplateId];
-                MapDataTable[templateId] = row;
+                s_mapDataTable[templateId] = row;
             }
         }
 
@@ -99,7 +99,7 @@ bool Gamedata::LoadAllGamedata()
                     throw wstring(L"Monster JSON 파일에 templateId 정보가 존재하지 않음");
 
                 int32 templateId = row[JsonProperty::Monster::TemplateId];
-                MonsterDataTable[templateId] = row;
+                s_monsterDataTable[templateId] = row;
             }
         }
 
@@ -113,7 +113,7 @@ bool Gamedata::LoadAllGamedata()
             for (auto& row : json_data)
             {
                 int32 templateId = row["templateId"];
-                QuestDataTable[templateId] = row;
+                s_questDataTable[templateId] = row;
             }
         }
     
@@ -138,31 +138,31 @@ bool Gamedata::LoadAllGamedata()
 #ifdef _DEBUG
 void Gamedata::PrintAllGamedata()
 {
-    for (auto elem : WarriorLevelDataTable)
+    for (auto elem : s_warriorLevelDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';
     }
 
-    for (auto elem : ItemDataTable)
+    for (auto elem : s_itemDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';
     }
 
-    for (auto elem : MapDataTable)
+    for (auto elem : s_mapDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';
     }
 
-    for (auto elem : MonsterDataTable)
+    for (auto elem : s_monsterDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';
     }
 
-    for (auto elem : QuestDataTable)
+    for (auto elem : s_questDataTable)
     {
         string str = elem.second.dump();
         wcout << EncodingConverter::StringToWString(str) << '\n';

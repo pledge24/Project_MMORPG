@@ -5,12 +5,12 @@
 
 Creature::Creature()
 {
-    statInfo = new Protocol::StatInfo();
+    _statInfo = new Protocol::StatInfo();
 }
 
 Creature::~Creature()
 {
-    delete statInfo;
+    delete _statInfo;
 }
 
 bool Creature::Init()
@@ -41,7 +41,7 @@ void Creature::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 {
     Object::OnHit(attacker, attackInfo);
 
-    auto ownerRoom = room.load().lock();
+    auto ownerRoom = _room.load().lock();
     if (ownerRoom == nullptr)
         return;
 
@@ -60,17 +60,17 @@ void Creature::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 
 void Creature::OnDie(ObjectRef attacker)
 {
-    isDead = true;
+    _isDead = true;
 }
 
 bool Creature::HasStat(Protocol::StatType statType)
 {
-    return statInfo->mutable_info()->contains(statType);
+    return _statInfo->mutable_info()->contains(statType);
 }
 
 int64 Creature::GetStatValue(Protocol::StatType statType)
 {
-    auto* statMappings = statInfo->mutable_info();
+    auto* statMappings = _statInfo->mutable_info();
     return statMappings->at((int32)statType);
 }
 
@@ -88,7 +88,7 @@ Protocol::Stat Creature::GetStat(Protocol::StatType statType)
 
 void Creature::SetStatValue(Protocol::StatType statType, const int64& value)
 {
-    auto* statMappings = statInfo->mutable_info();
+    auto* statMappings = _statInfo->mutable_info();
     (*statMappings)[(int32)statType] = value;
 }
 

@@ -58,7 +58,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 
                 // 게임 세션에 userId 저장.
                 GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-                gameSession->userId = userId;
+                gameSession->_userId = userId;
 
                 // 있으면 DB에서 캐릭터 정보를 긁어온다.
                 DBRequestFunctions::LoadUserCharactersData(session, userId);
@@ -81,7 +81,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
     // ...
 
     // 유저 Id를 통해 DBQueue를 선택
-    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
@@ -103,7 +103,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
     // ...
 
     // 유저 Id를 통해 DBQueue를 선택
-    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
@@ -122,7 +122,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
     // 유저 Id를 통해 DBQueue를 선택
-    int64 userId = static_pointer_cast<GameSession>(session)->userId;
+    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
@@ -154,11 +154,11 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -168,7 +168,7 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 
     // DB 업데이트 처리
     {
-        int64 characterId = player->playerInfo->character_id();
+        int64 characterId = player->_playerInfo->character_id();
         DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
 
         // 게임 종료 플레이어 정보 DB에 저장.
@@ -191,7 +191,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     int32 roomId = pkt.room_id();
 
     if (player == nullptr)
@@ -212,7 +212,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 
     // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면
     // OnEnterMap이 세팅한 enteringRoomId를 뒤이어 읽게 될 목적지 룸의 큐로 넘긴다.
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         room = GRoomManager->GetRoomRefFromRoomId(roomId);
 
@@ -243,15 +243,15 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef curRoom = player->room.load().lock();
+    RoomRef curRoom = player->_room.load().lock();
     if (curRoom == nullptr)
     {
         // 아직 어떤 Room에도 속하지 않은 최초 입장.
-        // player->room 은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
+        // player->_room 은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
         // 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고, 입장할 Room의 큐로 넘긴다.
         pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 
@@ -277,11 +277,11 @@ bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 {
 	auto gameSession = static_pointer_cast<GameSession>(session);
 
-	PlayerRef player = gameSession->player.load();
+	PlayerRef player = gameSession->_player.load();
 	if (player == nullptr)
 		return false;
 
-	RoomRef room = player->room.load().lock();
+	RoomRef room = player->_room.load().lock();
 	if (room == nullptr)
 		return false;
 
@@ -294,11 +294,11 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
 	auto gameSession = static_pointer_cast<GameSession>(session);
 
-	PlayerRef player = gameSession->player.load();
+	PlayerRef player = gameSession->_player.load();
 	if (player == nullptr)
 		return false;
 
-	RoomRef room = player->room.load().lock();
+	RoomRef room = player->_room.load().lock();
 	if (room == nullptr)
 		return false;
 
@@ -311,11 +311,11 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -328,11 +328,11 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -345,11 +345,11 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -362,11 +362,11 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -380,11 +380,11 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -397,11 +397,11 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 
@@ -414,11 +414,11 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->player.load();
+    PlayerRef player = gameSession->_player.load();
     if (player == nullptr)
         return false;
 
-    RoomRef room = player->room.load().lock();
+    RoomRef room = player->_room.load().lock();
     if (room == nullptr)
         return false;
 

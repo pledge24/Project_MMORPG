@@ -20,7 +20,7 @@ public:
 	{
 		cout << "OnConnected" << endl;
 
-        // TEST
+        // 테스트용: 접속 직후 로그인 패킷을 한 번 보낸다.
 		Protocol::C_LOGIN pkt;
 		auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(pkt);
 		Send(sendBuffer);
@@ -71,7 +71,7 @@ int main()
 			});
 	}
 
-    // TEST
+    // 테스트용: 채팅 패킷을 1초 간격으로 계속 브로드캐스트한다.
 	Protocol::C_CHAT chatPkt;
 	chatPkt.set_msg("Hello World !");
 	auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(chatPkt);

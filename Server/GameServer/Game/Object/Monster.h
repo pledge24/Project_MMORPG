@@ -34,7 +34,7 @@ public:
     virtual void OnDie(ObjectRef attacker) override;
 
     /** Getter 함수 */
-    int64 GetTemplateId() { return templateId; }
+    int64 GetTemplateId() { return _templateId; }
     int64 GetExpReward();
     int64 GetGoldReward();
 
@@ -82,11 +82,11 @@ private:
     Json _monsterData;
 
     /** Monster Stat Data */
-    Protocol::MonsterInfo* monsterInfo;
-    int32 templateId;
-    int32 maxHp;
-    float attackInterval;
-    int32 baseAttack;
+    Protocol::MonsterInfo* _monsterInfo;
+    int32 _templateId;
+    int32 _maxHp;
+    float _attackInterval;
+    int32 _baseAttack;
 
     /** Monster AI Data(Common) */
     const float IDLE_TIME = 5.f;
@@ -95,13 +95,13 @@ private:
     const float MIN_APPROACH_DISTANCE = 120.f;
 
     /** Monster AI Data(Individual) */
-    MonsterState state = MonsterState::Idle;
+    MonsterState _state = MonsterState::Idle;
     vector2D _spawnPos;
-    float tryAttackRange;                       // 공격 사거리
-    float detectionRange;                       // 타겟 감지 범위
-    float chasingMaxRange;                      // 추적 범위
-    float monsterSpeed;                         // 몬스터 이동 속도
-    bool isTargeting;
+    float _tryAttackRange;                      // 공격 사거리
+    float _detectionRange;                      // 타겟 감지 범위
+    float _chasingMaxRange;                     // 추적 범위
+    float _monsterSpeed;                        // 몬스터 이동 속도
+    bool _isTargeting;
 
     weak_ptr<Object> _target;
     optional<vector2D> _moveDest;
@@ -110,6 +110,6 @@ private:
     float _stateTimer = 0.f;                    // 여러 용도로 사용됨
     float _timeSinceLastAttack = 0.f;
 
-    TickTimer* attackTimer = nullptr;           // 사용 안하는 중
+    TickTimer* _attackTimer = nullptr;          // 사용 안하는 중
 };
 

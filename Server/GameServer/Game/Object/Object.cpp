@@ -4,13 +4,13 @@
 
 Object::Object()
 {
-	objectInfo = new Protocol::ObjectInfo();
-    posInfo = objectInfo->mutable_pos_info();
+	_objectInfo = new Protocol::ObjectInfo();
+    _posInfo = _objectInfo->mutable_pos_info();
 }
 
 Object::~Object()
 {
-	delete objectInfo;
+	delete _objectInfo;
 }
 
 bool Object::Init()
@@ -25,7 +25,7 @@ bool Object::Start()
 
     if (_isTickable)
     {
-        if (auto ownerRoom = room.load().lock())
+        if (auto ownerRoom = _room.load().lock())
         {
             ownerRoom->DoTimer(OBJECT_TICK_INTERVAL, &Room::TickObject, shared_from_this());
         }
@@ -36,7 +36,7 @@ bool Object::Start()
 
 void Object::Tick(float deltaTime)
 {
-    if (auto ownerRoom = room.load().lock())
+    if (auto ownerRoom = _room.load().lock())
     {
         ownerRoom->DoTimer(OBJECT_TICK_INTERVAL, &Room::TickObject, shared_from_this());
     }
