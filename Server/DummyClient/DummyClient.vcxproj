@@ -236,10 +236,10 @@
        .bat은 pushd %~dp0로 시작해 CWD 독립적이므로 WorkingDirectory가 불필요하다. -->
   <Target Name="GenerateProtoPackets"
           BeforeTargets="ClCompile"
-          Inputs="$(SolutionDir)Common\Protobuf\bin\Enum.proto;$(SolutionDir)Common\Protobuf\bin\Struct.proto;$(SolutionDir)Common\Protobuf\bin\Protocol.proto"
+          Inputs="$(SolutionDir)..\Protocol\Schema\Enum.proto;$(SolutionDir)..\Protocol\Schema\Struct.proto;$(SolutionDir)..\Protocol\Schema\Protocol.proto"
           Outputs="$(MSBuildProjectDirectory)\Protocol\Enum.pb.h;$(MSBuildProjectDirectory)\Protocol\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol\Protocol.pb.h;$(MSBuildProjectDirectory)\Main\ClientPacketHandler.h">
     <Message Importance="high" Text="[Proto] .proto changed - running GenPackets.bat" />
-    <Exec Command="set &quot;PATH=$(SolutionDir)Common\Protobuf\bin;%PATH%&quot; &amp;&amp; CALL &quot;$(SolutionDir)Common\Protobuf\bin\GenPackets.bat&quot; &lt; NUL"
-          WorkingDirectory="$(SolutionDir)Common\Protobuf\bin" />
+    <Exec Command="CALL &quot;$(SolutionDir)..\Protocol\GenPackets.bat&quot; &lt; NUL"
+          WorkingDirectory="$(SolutionDir)..\Protocol" />
   </Target>
 </Project>

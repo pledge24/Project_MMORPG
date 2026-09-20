@@ -9,6 +9,18 @@
 # 걷어낸 하네스 v1 보관 — 로컬로 옮길 예정이라 추적하지 않는다.
 custom-harness/
 
+# 파이썬 생성기의 바이트코드 캐시.
+# Tools/ 가 Server/ 아래에 있을 때는 Server/.gitignore 가 덮었다. 루트로 올라오면서
+# 그 규칙 밖으로 나왔으므로 여기에 다시 적는다.
+__pycache__/
+*.pyc
+
+# GenJsonFile.bat 이 만드는 빈 부산물.
+# 그 파일의 첫 실행 줄이 Original_Warrior_Level_Data.xlsx 를 변환하면서 --c_output 을
+# 주지 않아, ExcelToJsonConverter 의 기본값인 이 이름으로 떨어진다. 내용은 빈 객체뿐이고
+# 쓰는 곳이 없다. 근본 원인은 docs/tech-debt.md 에 적어 두었다.
+DesignData/C_TestJsonfile.json
+
 # MSYS 도구가 죽으면서 작업 디렉터리에 떨어뜨리는 크래시 덤프.
 #
 # 실제 사례: Git Bash 의 GNU grep 3.0 은 `-i` 와 패턴 2개 이상을 함께 받으면 패턴을
