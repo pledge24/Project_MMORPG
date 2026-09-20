@@ -9,8 +9,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
-#include "Combat/AttackSystemComponent.h"
-#include "Core/MyPlayerData.h"
+#include "Combat/P1AttackSystemComponent.h"
+#include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
@@ -48,7 +48,7 @@ void AP1MyPlayer::BeginPlay()
         // Broadcast Delegate
         if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
         {
-            if (UMyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UMyPlayerData>())
+            if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
             {
                 MyPlayerData->OnMyPlayerSpawned.Broadcast(this);
             }
@@ -241,7 +241,7 @@ void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
 {
     bBattleMode = !bBattleMode;
 
-    if (AInGamePlayerController* PC = Cast<AInGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    if (AP1InGamePlayerController* PC = Cast<AP1InGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
     {
         PC->OnToggleBattleMode(bBattleMode);
     }

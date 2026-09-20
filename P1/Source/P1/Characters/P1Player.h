@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/Creature.h"
+#include "Characters/P1Creature.h"
 #include "P1Player.generated.h"
 
 
 UCLASS()
-class P1_API AP1Player : public ACreature
+class P1_API AP1Player : public AP1Creature
 {
 	GENERATED_BODY()
 

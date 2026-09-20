@@ -76,6 +76,20 @@ X  UInventoryWidget
 +ClassRedirects=(OldName="/Script/P1.InventoryWidget", NewName="/Script/P1.P1InventoryWidget")
 ```
 
+**예외: 생성물과 생성물이 이름으로 부르는 타입에는 약어를 붙이지 않는다.**
+— `Protocol/Templates/PacketHandler.h`가 아래 네 이름을 그대로 적는다. 템플릿은 한 벌뿐이고
+같은 출력이 DummyClient로도 복사되므로, 클라 쪽만 이름을 바꾸면 생성기를 다시 돌리는 순간
+빌드가 깨진다. 생성물 자체에 컨벤션을 적용하지 않는 이유는 `docs/folder-structure.md`에 있다.
+
+| 타입 | 무엇인가 |
+| --- | --- |
+| `ClientPacketHandler` | 생성물이다. 파일도 생성기가 만든다 |
+| `PacketSession` · `SendBuffer` · `PacketHeader` | 손으로 쓴 코드지만 생성물이 이름으로 부른다 |
+
+같은 폴더의 `FP1PacketHeader`와 `FP1RecvWorker`와 `FP1SendWorker`는 템플릿이 부르지 않으므로
+약어를 붙인다. **`PacketHeader`와 `FP1PacketHeader`는 서로 다른 구조체다.** 앞은 송신 버퍼를
+바이트로 읽는 뷰이고, 뒤는 수신 경로가 `FArchive`로 직렬화하는 헤더다.
+
 ### 2.3 `UUW` 형태의 이중 접두사를 쓰지 않는다
 
 `[엔진 제약]` 리플렉션 이름은 첫 글자 하나만 떼어낸 것이다. `AMyActor`의 리플렉션 이름은
