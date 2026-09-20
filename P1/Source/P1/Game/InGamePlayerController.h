@@ -13,7 +13,6 @@ class UStatusWindowWidget;
 class UHUDWidget;
 class UShopWidget;
 class UNameplateWidget;
-class UNameplateManager;
 class UWarningTextWidget;
 class UDeathWidget;
 
