@@ -2,7 +2,7 @@
 #include "Sockets.h"
 #include "Serialization/ArrayWriter.h"
 #include "PacketSession.h"
-#include "Log/LogCategory.h"
+#include "LogCategory.h"
 
 /*-----------------
 	 RecvWorker

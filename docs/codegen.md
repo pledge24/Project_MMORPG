@@ -22,15 +22,14 @@
 | `Server/GameServer/Main/` | `ServerPacketHandler.h` |
 | `Server/DummyClient/Protocol/` | `*.pb.{h,cc}` |
 | `Server/DummyClient/Main/` | `ClientPacketHandler.h` |
-| `P1/Source/P1/Network/` | `*.pb.{h,cc}` 및 `.proto` 3개 |
-| `P1/Source/P1/` | `ClientPacketHandler.h` (`Network/`가 아니라 **모듈 루트**) |
+| `P1/Source/P1/Network/` | `*.pb.{h,cc}` · `.proto` 3개 · `ClientPacketHandler.h` |
 
 ### 손으로 쓰는 것
 
 생성되는 건 패킷 핸들러 **헤더뿐**이다. `.cpp` 두 개는 손으로 작성한 파일이고, 새 패킷의 실제 동작은 여기에 구현한다.
 
 - `Server/GameServer/Main/ServerPacketHandler.cpp`
-- `P1/Source/P1/ClientPacketHandler.cpp`
+- `P1/Source/P1/Network/ClientPacketHandler.cpp`
 
 ### 이름 규칙
 

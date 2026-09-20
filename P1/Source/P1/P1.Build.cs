@@ -15,17 +15,18 @@ public class P1 : ModuleRules
         PrivateIncludePaths.AddRange(new string[]
         {
             "P1/",
-            "P1/Network/",
-            "P1/Game/",
-            "P1/Game/Objects",
-            "P1/Game/Props",
-            "P1/Game/Structs",
-            "P1/Game/Widgets",
-            "P1/Game/Components",
-            "P1/Game/Subsystem",
-            "P1/Game/Enums",
-            "P1/Log",
-            "P1/Login",
+            "P1/Characters",
+            "P1/Combat",
+            "P1/Core",
+            "P1/Data",
+            "P1/Entities",
+            "P1/Equipment",
+            "P1/Inventory",
+            "P1/Network",
+            "P1/Online",
+            "P1/UI",
+            "P1/Utils",
+            "P1/World",
         });
 
         // Uncomment if you are using Slate UI
