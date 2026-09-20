@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Protocol.pb.h"
-#include "ItemData.h"
+#include "Data/ItemData.h"
 #include "Inventory.generated.h"
 
 /**

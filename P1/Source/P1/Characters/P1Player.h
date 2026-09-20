@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Creature.h"
+#include "Characters/Creature.h"
 #include "P1Player.generated.h"
 
 

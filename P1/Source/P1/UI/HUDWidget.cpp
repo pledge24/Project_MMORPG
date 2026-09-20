@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HUDWidget.h"
-#include "ProgressBarWidget.h"
+#include "UI/HUDWidget.h"
+#include "UI/ProgressBarWidget.h"
 #include "Components/TextBlock.h"
-#include "P1MyPlayer.h"
-#include "P1GameInstance.h"
-#include "MyPlayerData.h"
+#include "Characters/P1MyPlayer.h"
+#include "Core/P1GameInstance.h"
+#include "Core/MyPlayerData.h"
 
 void UHUDWidget::NativeConstruct()
 {

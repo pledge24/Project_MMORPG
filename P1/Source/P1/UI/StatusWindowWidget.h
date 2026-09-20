@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "SlotWidget.h"
+#include "UI/SlotWidget.h"
 #include "StatusWindowWidget.generated.h"
 
 class AP1MyPlayer;

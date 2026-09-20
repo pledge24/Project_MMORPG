@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "MonsterData.h"
-#include "Creature.h"
+#include "Data/MonsterData.h"
+#include "Characters/Creature.h"
 #include "Monster.generated.h"
 
 UCLASS()

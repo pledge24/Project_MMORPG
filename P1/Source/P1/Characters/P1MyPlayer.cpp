@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "P1MyPlayer.h"
+#include "Characters/P1MyPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/Controller.h"
@@ -9,9 +9,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
-#include "AttackSystemComponent.h"
-#include "MyPlayerData.h"
-#include "LogCategory.h"
+#include "Combat/AttackSystemComponent.h"
+#include "Core/MyPlayerData.h"
+#include "Utils/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {

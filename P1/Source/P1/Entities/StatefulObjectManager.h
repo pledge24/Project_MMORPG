@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EObject.h"
+#include "Entities/EObject.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Protocol.pb.h"
 #include "StatefulObjectManager.generated.h"

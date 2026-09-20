@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "LoginManager.h"
-#include "LoginWidget.h"
+#include "Online/LoginManager.h"
+#include "UI/LoginWidget.h"
 #include "Http.h"
 #include "HttpModule.h"
 #include "P1.h"
-#include "LogCategory.h"
+#include "Utils/LogCategory.h"
 
 void ULoginManager::SetLoginWidget(ULoginWidget* Widget)
 {

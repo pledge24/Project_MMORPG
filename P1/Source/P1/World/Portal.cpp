@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Portal.h"
+#include "World/Portal.h"
 #include "P1.h"
 
 // Sets default values

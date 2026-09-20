@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Types.h"
+#include "Utils/Types.h"
 #include "NameplateWidget.generated.h"
 
 class AP1Player;

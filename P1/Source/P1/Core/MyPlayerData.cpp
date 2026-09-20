@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MyPlayerData.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
-#include "P1MyPlayer.h"
+#include "Core/MyPlayerData.h"
+#include "Inventory/Inventory.h"
+#include "Equipment/EquippedGear.h"
+#include "Characters/P1MyPlayer.h"
 
 void UMyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 {

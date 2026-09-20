@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Containers/Ticker.h"
-#include "Types.h"
+#include "Utils/Types.h"
 #include "Protocol.pb.h"
-#include "StatefulObjectManager.h"
+#include "Entities/StatefulObjectManager.h"
 #include "P1GameInstance.generated.h"
 
 class UMyPlayerData;

@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 
-#include "ClientPacketHandler.h"
-#include "P1GameInstance.h"
+#include "Network/ClientPacketHandler.h"
+#include "Core/P1GameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
-#include "Types.h"
-#include "InGamePlayerController.h"
+#include "Utils/Types.h"
+#include "Core/InGamePlayerController.h"
 
 #include "Kismet/KismetMathLibrary.h"
 

@@ -1,8 +1,8 @@
 #include "Network/NetworkWorker.h"
 #include "Sockets.h"
 #include "Serialization/ArrayWriter.h"
-#include "PacketSession.h"
-#include "LogCategory.h"
+#include "Network/PacketSession.h"
+#include "Utils/LogCategory.h"
 
 /*-----------------
 	 RecvWorker

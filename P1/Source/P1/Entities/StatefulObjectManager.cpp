@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "StatefulObjectManager.h"
+#include "Entities/StatefulObjectManager.h"
 
-#include "MyPlayerData.h"
-#include "ObjectSpawner.h"
-#include "P1Player.h"
+#include "Core/MyPlayerData.h"
+#include "Entities/ObjectSpawner.h"
+#include "Characters/P1Player.h"
 
 void UStatefulObjectManager::Initialize(FSubsystemCollectionBase& Collection)
 {

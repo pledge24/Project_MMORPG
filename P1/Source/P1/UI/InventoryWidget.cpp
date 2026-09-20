@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "InventoryWidget.h"
-#include "SlotWidget.h"
+#include "UI/InventoryWidget.h"
+#include "UI/SlotWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
-#include "P1GameInstance.h"
-#include "LogCategory.h"
-#include "P1MyPlayer.h"
-#include "MyPlayerData.h"
+#include "Core/P1GameInstance.h"
+#include "Utils/LogCategory.h"
+#include "Characters/P1MyPlayer.h"
+#include "Core/MyPlayerData.h"
 
 void UInventoryWidget::NativeConstruct()
 {

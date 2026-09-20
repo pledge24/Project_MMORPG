@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "ItemData.h"
-#include "ItemTooltipWidget.h"
+#include "Data/ItemData.h"
+#include "UI/ItemTooltipWidget.h"
 #include "Engine/DataTable.h"
 #include "Protocol.pb.h"
 #include "SlotWidget.generated.h"

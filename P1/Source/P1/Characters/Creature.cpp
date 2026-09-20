@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Creature.h"
-#include "InGamePlayerController.h"
-#include "AttackSystemComponent.h"
-#include "NameplateWidget.h"
-#include "P1MyPlayer.h"
+#include "Characters/Creature.h"
+#include "Core/InGamePlayerController.h"
+#include "Combat/AttackSystemComponent.h"
+#include "UI/NameplateWidget.h"
+#include "Characters/P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "LogCategory.h"
-#include "Monster.h"
+#include "Utils/LogCategory.h"
+#include "Characters/Monster.h"
 
 ACreature::ACreature()
 {

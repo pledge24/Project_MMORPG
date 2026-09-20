@@ -12,7 +12,7 @@
 
 #include "CoreMinimal.h"
 #include "Misc/AutomationTest.h"
-#include "ClientPacketHandler.h"
+#include "Network/ClientPacketHandler.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
