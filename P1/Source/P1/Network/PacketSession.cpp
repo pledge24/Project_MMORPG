@@ -1,5 +1,6 @@
 #include "Network/PacketSession.h"
-#include "Network/NetworkWorker.h"
+#include "Network/P1RecvWorker.h"
+#include "Network/P1SendWorker.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
@@ -18,8 +19,8 @@ PacketSession::~PacketSession()
 
 void PacketSession::Run()
 {
-	RecvWorkerThread = MakeShared<RecvWorker>(Socket, AsShared());
-	SendWorkerThread = MakeShared<SendWorker>(Socket, AsShared());
+	RecvWorkerThread = MakeShared<FP1RecvWorker>(Socket, AsShared());
+	SendWorkerThread = MakeShared<FP1SendWorker>(Socket, AsShared());
 }
 
 void PacketSession::HandleRecvPackets()

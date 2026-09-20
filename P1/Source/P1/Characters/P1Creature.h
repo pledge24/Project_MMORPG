@@ -1,0 +1,94 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
+#include "Protocol.pb.h"
+#include "P1Creature.generated.h"
+
+
+
+UCLASS()
+class P1_API AP1Creature : public ACharacter
+{
+	GENERATED_BODY()
+
+public:
+	AP1Creature();
+
+protected:
+	virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaTime) override;
+
+public:
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    void SetDeadState(bool IsDead);
+
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    bool IsDead() const { return _IsDead; }
+
+public:
+    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);    // Server Only
+
+    bool IsMyPlayer() const;
+    bool PushToMoveQueue(const Protocol::PosInfo& InInfo);
+
+    /** Setter함수 */
+    void SetMoveState(Protocol::MoveState State);
+    void SetClientPos(const Protocol::PosInfo& Info);
+    void SetServerPos(const Protocol::PosInfo& Info);
+    void SetCreatureName(const FText& InName);
+
+    /** Getter함수 */
+    Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
+    class UP1AttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
+    TSharedPtr<Protocol::PosInfo> GetPosInfo() const { return ClientPos; }
+    FText GetCreatureName() const { return CreatureName; }
+
+public:
+    /** 서버 패킷 핸들링 함수 */
+    virtual void S_Move(float DeltaSeconds);
+    virtual void S_NormalAttack(uint32 Combo, float Yaw);
+    virtual void S_Hit(int64 Damage, int64 UpdatedHp);
+    virtual void S_Die();
+
+    FVector FindPerpendicularPoint() const;
+
+public:
+    /** Action 델리게이트 */
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnHit OnHit;
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnDie OnDie;
+
+
+protected:
+    /** Attack System Component */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class UP1AttackSystemComponent* AttackSystemComponent;
+
+    /** Attack System Component */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    class UWidgetComponent* NameplateComponent;
+
+    /** Etc Data */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
+    FText CreatureName = FText::FromString("NULL");
+
+    TSharedPtr<Protocol::PosInfo> ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
+    TSharedPtr<Protocol::PosInfo> ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
+
+private:
+    TQueue<Protocol::PosInfo> MoveQueue;
+    FVector MoveDirection = FVector::ZeroVector;
+    const float CorrectionMaxThreshold = 800.f;
+    const float CORR_INTERP_SPEED = 5.f;
+    const float CORR_RINTERP_SPEED = 5.f;
+
+    bool _IsDead = false;
+};

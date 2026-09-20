@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 23개 (높음 4 · 중간 14 · 낮음 5)
+항목 24개 (높음 4 · 중간 15 · 낮음 5)
 
 ## 작성 방법
 
@@ -240,6 +240,36 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 생성기를 돌리는 자리는 두 티어가 공유하는 유일한 계약을 다시 만드는 자리여서, 경로를 못 찾으면
 거기서 막힌다.
 
+## 생성기가 만든 패킷 핸들러가 클라 모듈에서 컴파일되지 않는다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · protocol
+> 위치: `Protocol/Templates/PacketHandler.h` 5~6줄
+> 등록일: 2026년 9월 20일
+
+템플릿 5~6줄이 `#include "SendBuffer.h"`와 `#include "Types.h"`를 쓴다. 두 줄 모두 경로가 없다.
+클라이언트 쪽에서 이 include가 해결되는지는 `P1.Build.cs`의 `PrivateIncludePaths`에 달려 있는데,
+지금 남아 있는 것은 모듈 루트 `P1/`과 생성물 폴더 `P1/Network` 둘뿐이다.
+
+| 템플릿이 적는 것 | 실제 위치 | 찾히는가 |
+|---|---|---|
+| `#include "SendBuffer.h"` | `P1/Source/P1/Network/SendBuffer.h` | 찾힌다. `P1/Network`가 경로에 있다 |
+| `#include "Types.h"` | `P1/Source/P1/Utils/Types.h` | **찾히지 않는다** |
+
+#46이 `Types.h`를 `Utils/`로 옮겼고 #47이 include 평탄화를 없앴다. 둘을 합치면 이 상태가 된다.
+지금 저장소에 커밋된 클라 사본은 `#include "Utils/Types.h"`로 손이 가 있어서 빌드가 통과하지만,
+**`Protocol/GenPackets.bat`을 한 번 돌리면 그 사본이 템플릿 출력으로 덮어써지고 클라 빌드가 깨진다.**
+`docs/codegen.md`가 「생성기를 다시 돌리는 순간 덮어써진다」고 적은 그대로다.
+
+고치는 방법은 템플릿의 두 줄을 경로 한정으로 바꾸는 것인데, 같은 템플릿이 DummyClient용 출력도
+만들고 그쪽 트리는 include 경로가 다르다. 그래서 템플릿 한 벌로는 양쪽을 동시에 만족시킬 수 없다.
+생성기(`Tools/PacketHandlerGenerator/PacketHandlerGenerator.py`)는 템플릿 경로를 인자로 받지 않고
+`Templates/PacketHandler.h`로 고정한다.
+
+### 영향
+
+**버그 발생 가능성 증가** · **새 기능 개발 지연** — 패킷을 하나 추가하려면 생성기를 돌려야 하는데,
+돌리는 순간 클라가 빌드되지 않는다. 깨진 사실이 생성 시점에 드러나지 않고 다음 빌드에서 드러나서,
+원인을 생성기가 아니라 방금 추가한 패킷에서 찾게 된다.
+
 ## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
 > 위치: `P1/Source/P1/Network/ClientPacketHandler.cpp` (핸들러 23개 중 20개)
@@ -265,14 +295,14 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 ## 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
 > 위치: `Server/GameServer/config.h` · `P1/Source/P1/Core/P1GameInstance.h` 97~98줄 ·
-> `P1/Source/P1/Online/LoginManager.h` 33~34줄
+> `P1/Source/P1/Online/P1LoginManager.h` 33~34줄
 > 등록일: 2026년 8월 19일
 
 | 위치 | 값 | 형태 |
 |---|---|---|
 | `Server/GameServer/config.h` | GameDB 접속 문자열, Redis URI | `#define` (gitignore됨) |
 | `P1/Source/P1/Core/P1GameInstance.h` 97~98줄 | `127.0.0.1` / `7777` | `const` 멤버 |
-| `P1/Source/P1/Online/LoginManager.h` 33~34줄 | `127.0.0.1` / `5000` | 멤버 초기값 |
+| `P1/Source/P1/Online/P1LoginManager.h` 33~34줄 | `127.0.0.1` / `5000` | 멤버 초기값 |
 | `Server/AuthServer/.env` | 나머지 전부 | 유일하게 런타임 설정 |
 
 `config.h` 방식의 실질 이점은 두 가지다. 오타가 컴파일 에러로 잡히고, 배포물에 설정 파일을
@@ -295,8 +325,8 @@ UE 에디터로 41개 BP의 부모 클래스를 전수 확인한 결과, 위젯 
 | 에셋 | 부모 | BP에 있는 것 |
 |---|---|---|
 | `WBP_CharacterSlot` | `UserWidget` | 함수 그래프 `UpdateCharacterInfo`·`DisableHighlight`·`Clear`, 디스패처 `OnSlotButtonClicked`, 변수 `Characterid`·`ThisSlotId` |
-| `BP_Shop` | `Actor` | 오버랩 상호작용 + `PlayerController` 참조. C++에 `UShopWidget`은 있는데 상점 액터가 없다 |
-| `WBP_NameTag` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. `UNameplateWidget`과 역할이 겹친다 |
+| `BP_Shop` | `Actor` | 오버랩 상호작용 + `PlayerController` 참조. C++에 `UP1ShopWidget`은 있는데 상점 액터가 없다 |
+| `WBP_NameTag` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. `UP1NameplateWidget`과 역할이 겹친다 |
 | `WBP_Help` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. 순수 표시용 |
 
 C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 넷이다.
@@ -321,11 +351,11 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 | 클래스 | 뭉쳐 있는 것 |
 |---|---|
-| `ACreature` (`Characters/Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
+| `AP1Creature` (`Characters/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
 | `AP1MyPlayer` (`Characters/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
-| `AInGamePlayerController` (`Core/InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
+| `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
 
-이동 동기화 로직이 수신(`ACreature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
+이동 동기화 로직이 수신(`AP1Creature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
 스로틀 상수도 두 파일에 따로 산다.
 
 ### 영향
@@ -578,7 +608,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## 같은 헤더를 두 번 include하는 파일이 둘 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 13·18줄, `P1/Source/P1/UI/ShopWidget.cpp` 5·9줄
+> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 13·18줄, `P1/Source/P1/UI/P1ShopWidget.cpp` 5·9줄
 > 등록일: 2026년 9월 20일
 
 `P1GameInstance.cpp`가 `Characters/P1MyPlayer.h`를, `ShopWidget.cpp`가 `Core/MyPlayerData.h`를

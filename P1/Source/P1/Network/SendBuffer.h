@@ -8,10 +8,6 @@ struct PacketHeader
 	uint16 id; 		// 2 BYTE
 };
 
-/*-------------------
-	  SendBuffer
---------------------*/
-
 class SendBuffer
 {
 public:
@@ -37,5 +33,3 @@ private:
 	TArray<BYTE>	_buffer;
 	int32			_writePos = 0; // data가 들어있는 다음 위치를 가리킴.
 };
-
-

@@ -2,7 +2,7 @@
 
 #include "Core/P1GameInstance.h"
 
-#include "Combat/AttackSystemComponent.h"
+#include "Combat/P1AttackSystemComponent.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
@@ -12,8 +12,8 @@
 #include "Network/ClientPacketHandler.h"
 #include "Characters/P1MyPlayer.h"
 #include "P1.h"
-#include "Characters/Creature.h"
-#include "Core/MyPlayerData.h"
+#include "Characters/P1Creature.h"
+#include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 #include "Characters/P1MyPlayer.h"
 
@@ -25,7 +25,7 @@ void UP1GameInstance::Init()
 {
     Super::Init();
 
-    _MyPlayerData = GetSubsystem<UMyPlayerData>();
+    _MyPlayerData = GetSubsystem<UP1MyPlayerData>();
     if (IsValid(_MyPlayerData) == false)
         UE_LOG(LogTemp, Warning, TEXT("_MyPlayerData Is Invalid"));
 
@@ -159,7 +159,7 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     if (EnterGamePkt.success() == false)
         return;
 
-    UMyPlayerData* MyPlayerData = GetSubsystem<UMyPlayerData>();
+    UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>();
     const Protocol::ObjectInfo& ObjectInfo = EnterGamePkt.player();
 
     // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다.
@@ -178,7 +178,7 @@ void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
     }
 
     // 입장한 map + room 정보 저장
-    if(UMyPlayerData* MyPlayerData = GetSubsystem<UMyPlayerData>())
+    if(UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>())
     {
         MyPlayerData->SetRoomId(EnterMapPkt.room_id());
         MyPlayerData->SetMapId(EnterMapPkt.map_id());
@@ -196,7 +196,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
         return;
     }
 
-    if (UMyPlayerData* MyPlayerData = GetSubsystem<UMyPlayerData>())
+    if (UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>())
     {
         MyPlayerData->SetRoomId(EnterRoomPkt.room_id());
 
@@ -224,7 +224,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo)
     if (World == nullptr)
         return;
 
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         StatefulObjectManager->SpawnObject(ObjectInfo);
     }
@@ -239,7 +239,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
     if (World == nullptr)
         return;
 
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
 	    for (auto& Object : SpawnPkt.objects())
 	    {
@@ -257,7 +257,7 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
     if (World == nullptr)
         return;
 
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         for (auto& ObjectId : DespawnPkt.object_ids())
         {
@@ -276,7 +276,7 @@ void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
     if (World == nullptr)
         return;
 
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         StatefulObjectManager->DespawnAllObjects(ExceptMine);
     }
@@ -288,13 +288,13 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
     if (World == nullptr)
         return;
 
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(Info.object_id());
         if (FindActor == nullptr)
             return;
 
-        if (ACreature* Creature = Cast<ACreature>(FindActor))
+        if (AP1Creature* Creature = Cast<AP1Creature>(FindActor))
         {
             Creature->PushToMoveQueue(Info);
         }
@@ -364,7 +364,7 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         return;
 
     const uint64 ObjectId = UseItemPkt.object_id();
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
@@ -408,7 +408,7 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
         return;
 
     const uint64 ObjectId = EquipGearPkt.object_id();
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
@@ -475,7 +475,7 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
         return;
 
     const uint64 ObjectId = UnequipGearPkt.object_id();
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
@@ -544,13 +544,13 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
         return;
 
     const uint64 ObjectId = NormalAttackPkt.object_id();
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
             return;
         
-        ACreature* Creature = Cast<ACreature>(FindActor);
+        AP1Creature* Creature = Cast<AP1Creature>(FindActor);
         if (Creature == nullptr)
             return;
 
@@ -572,13 +572,13 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
         return;
 
     int64 ObjectId = HitPkt.object_id();
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
             return;
 
-        ACreature* Creature = Cast<ACreature>(FindActor);
+        AP1Creature* Creature = Cast<AP1Creature>(FindActor);
         if (Creature == nullptr)
             return;
 
@@ -603,13 +603,13 @@ void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
         return;
 
     const uint64 ObjectId = DiePkt.object_id();
-    if (UStatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UStatefulObjectManager>())
+    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
         AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
         if (FindActor == nullptr)
             return;
 
-        ACreature* Creature = Cast<ACreature>(FindActor);
+        AP1Creature* Creature = Cast<AP1Creature>(FindActor);
         if (Creature == nullptr)
             return;
 
@@ -648,10 +648,10 @@ void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
     UE_LOG(LogTemp, Warning, TEXT("서버에서 리스폰 성공!"));
 }
 
-UMyPlayerData* UP1GameInstance::GetMyPlayerData()
+UP1MyPlayerData* UP1GameInstance::GetMyPlayerData()
 {
     if (IsValid(_MyPlayerData) == false)
-        _MyPlayerData = GetSubsystem<UMyPlayerData>();
+        _MyPlayerData = GetSubsystem<UP1MyPlayerData>();
 
     return _MyPlayerData;
 }

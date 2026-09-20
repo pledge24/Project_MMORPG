@@ -10,7 +10,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Utils/Types.h"
-#include "Core/InGamePlayerController.h"
+#include "Core/P1InGamePlayerController.h"
 
 #include "Kismet/KismetMathLibrary.h"
 

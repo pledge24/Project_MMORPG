@@ -7,10 +7,10 @@
 #include "Containers/Ticker.h"
 #include "Utils/Types.h"
 #include "Protocol.pb.h"
-#include "Entities/StatefulObjectManager.h"
+#include "Entities/P1StatefulObjectManager.h"
 #include "P1GameInstance.generated.h"
 
-class UMyPlayerData;
+class UP1MyPlayerData;
 class AP1Player;
 class AP1MyPlayer;
 
@@ -70,7 +70,7 @@ public:
 
     /** Getter 함수 */
     FString GetToken() const { return _token; }
-    UMyPlayerData* GetMyPlayerData();
+    UP1MyPlayerData* GetMyPlayerData();
 
     /** Setter 함수 */
     void SetToken(FString token) { _token = token; }
@@ -108,7 +108,7 @@ protected:
 	AP1MyPlayer* _MyPlayer;
 
     UPROPERTY()
-    UMyPlayerData* _MyPlayerData;
+    UP1MyPlayerData* _MyPlayerData;
 
 private:
     /** 네트워크 수신 펌프 */
