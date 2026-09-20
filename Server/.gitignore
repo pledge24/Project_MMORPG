@@ -405,12 +405,11 @@ FodyWeavers.xsd
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio
 
 # 무시 해제 (예외 처리)
+# Common/ 은 비었다. .proto 는 Protocol/Schema/ 로, .xlsx 는 DesignData/ 로 올라갔다.
 !Libraries/
-!Common/
 
 # 하위 디렉토리와 파일들도 무시 해제
 !Libraries/**
-!Common/**
 
 # SQL 쿼리문 폴더 무시 (Server/Queries 한정 — 앵커를 붙이지 않으면
 # GameServer/Queries 같은 하위 폴더까지 잡아 추적 중인 스크립트가 사라진다)
