@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Monster.h"
+#include "Characters/Monster.h"
 
 #include "Components/WidgetComponent.h"
-#include "NameplateWidget.h"
+#include "UI/NameplateWidget.h"
 
 AMonster::AMonster()
 {

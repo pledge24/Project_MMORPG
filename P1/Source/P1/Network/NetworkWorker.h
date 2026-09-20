@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Containers/Queue.h"
-#include "Types.h"
+#include "Utils/Types.h"
 
 class FSocket;
 

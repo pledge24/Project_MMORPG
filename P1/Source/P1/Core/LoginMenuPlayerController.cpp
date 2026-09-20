@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "LoginMenuPlayerController.h"
+#include "Core/LoginMenuPlayerController.h"
 #include "Blueprint/UserWidget.h"
-#include "LoginManager.h"
-#include "LoginWidget.h"
+#include "Online/LoginManager.h"
+#include "UI/LoginWidget.h"
 
 ALoginMenuPlayerController::ALoginMenuPlayerController()
 {

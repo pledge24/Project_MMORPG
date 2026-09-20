@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Inventory.h"
+#include "Inventory/Inventory.h"
 #include "P1.h"
 
 UInventory::UInventory()

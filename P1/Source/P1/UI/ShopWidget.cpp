@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "ShopWidget.h"
+#include "UI/ShopWidget.h"
 
-#include "MyPlayerData.h"
-#include "SlotWidget.h"
+#include "Core/MyPlayerData.h"
+#include "UI/SlotWidget.h"
 #include "P1.h"
-#include "P1MyPlayer.h"
-#include "MyPlayerData.h"
+#include "Characters/P1MyPlayer.h"
+#include "Core/MyPlayerData.h"
 
 void UShopWidget::NativeConstruct()
 {

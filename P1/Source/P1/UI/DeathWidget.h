@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "P1MyPlayer.h"
+#include "Characters/P1MyPlayer.h"
 #include "DeathWidget.generated.h"
 
 /**

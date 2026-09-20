@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SendBuffer.h"
-#include "Types.h"
+#include "Network/SendBuffer.h"
+#include "Utils/Types.h"
 
 class P1_API PacketSession : public TSharedFromThis<PacketSession>
 {

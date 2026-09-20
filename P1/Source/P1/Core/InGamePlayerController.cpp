@@ -1,20 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "InGamePlayerController.h"
+#include "Core/InGamePlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/CanvasPanelSlot.h"
-#include "StatusWindowWidget.h"
-#include "InventoryWidget.h"
-#include "HUDWidget.h"
-#include "P1GameInstance.h"
-#include "P1Player.h"
-#include "P1MyPlayer.h"
+#include "UI/StatusWindowWidget.h"
+#include "UI/InventoryWidget.h"
+#include "UI/HUDWidget.h"
+#include "Core/P1GameInstance.h"
+#include "Characters/P1Player.h"
+#include "Characters/P1MyPlayer.h"
 #include "P1.h"
-#include "ShopWidget.h"
-#include "NameplateWidget.h"
-#include "WarningTextWidget.h"
-#include "DeathWidget.h"
-#include "MyPlayerData.h"
+#include "UI/ShopWidget.h"
+#include "UI/NameplateWidget.h"
+#include "UI/WarningTextWidget.h"
+#include "UI/DeathWidget.h"
+#include "Core/MyPlayerData.h"
 
 void AInGamePlayerController::BeginPlay()
 {

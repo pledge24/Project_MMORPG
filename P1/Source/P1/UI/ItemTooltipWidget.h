@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "BP_Structs.h"
+#include "Data/BP_Structs.h"
 #include "ItemTooltipWidget.generated.h"
 
 class UImage;

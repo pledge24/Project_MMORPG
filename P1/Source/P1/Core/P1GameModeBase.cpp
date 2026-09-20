@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "P1GameModeBase.h"
+#include "Core/P1GameModeBase.h"
 
 void AP1GameModeBase::StartPlay()
 {

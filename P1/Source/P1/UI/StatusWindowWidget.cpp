@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "StatusWindowWidget.h"
-#include "HUDWidget.h"
+#include "UI/StatusWindowWidget.h"
+#include "UI/HUDWidget.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
-#include "P1MyPlayer.h"
-#include "P1GameInstance.h"
-#include "MyPlayerData.h"
-#include "EquippedGear.h"
+#include "Characters/P1MyPlayer.h"
+#include "Core/P1GameInstance.h"
+#include "Core/MyPlayerData.h"
+#include "Equipment/EquippedGear.h"
 
 void UStatusWindowWidget::NativeConstruct()
 {

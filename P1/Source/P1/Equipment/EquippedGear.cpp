@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "EquippedGear.h"
-#include "P1MyPlayer.h"
+#include "Equipment/EquippedGear.h"
+#include "Characters/P1MyPlayer.h"
 #include "P1.h"
 
 void UEquippedGear::Init(Map<int32, Protocol::Slot>* EquippedGear_)

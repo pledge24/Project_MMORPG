@@ -91,11 +91,12 @@ Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 
 모든 `S_*` 핸들러가 여기 구현되고, 액터와 위젯에는 멀티캐스트 델리게이트로만 전파된다.
 액터가 세션을 직접 잡지 않는다.
 
-**Architecture Invariant:** 폴더가 도메인이 아니라 **UE 타입**(액터/위젯/컴포넌트/구조체)으로
-갈려 있다. 한 기능을 고치려면 서너 개 폴더를 오간다.
-`P1.Build.cs`의 `PrivateIncludePaths`가 이 하위 폴더를 전부 등록해 include를 평탄하게
-만들어 두어서, **구조적 결합이 컴파일러에 드러나지 않는다.** 폴더를 옮겨도 빌드가 깨지지
-않는 대신 경계 위반도 빌드가 잡아주지 않는다. 리뷰가 유일한 방어선이다. (tech-debt 참조)
+**Architecture Invariant:** 폴더가 도메인으로 갈려 있고 `#include`는 경로를 한정한다.
+`P1.Build.cs`의 `PrivateIncludePaths`에는 모듈 루트 `P1/`과 생성물 폴더 `P1/Network`만 남는다.
+도메인을 넘는 참조가 `#include` 줄에 드러나므로 **검색 한 번으로 잡힌다.**
+> 컴파일러는 경계 위반을 막지 않는다. UBT가 모듈 루트를 include 경로에 넣으므로, 경로만
+> 한정하면 어느 도메인이든 부른다. 차단하려면 도메인을 별도 모듈로 나눠야 하고 지금 규모에서는
+> 나누지 않는다. 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있다.
 
 **API Boundary:** `P1/Source/`에는 모듈이 둘이고(`P1`, `ProtobufCore`), protobuf를 아는
 경계는 `ProtobufCore`다. 상세는 `docs/build.md`.

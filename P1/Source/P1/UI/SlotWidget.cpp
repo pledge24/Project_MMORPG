@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SlotWidget.h"
-#include "ItemTooltipWidget.h"
+#include "UI/SlotWidget.h"
+#include "UI/ItemTooltipWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"

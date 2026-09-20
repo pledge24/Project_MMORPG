@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ObjectSpawner.h"
-#include "Monster.h"
-#include "MyPlayerData.h"
-#include "P1GameInstance.h"
-#include "StatefulObjectManager.h"
+#include "Entities/ObjectSpawner.h"
+#include "Characters/Monster.h"
+#include "Core/MyPlayerData.h"
+#include "Core/P1GameInstance.h"
+#include "Entities/StatefulObjectManager.h"
 
 AObjectSpawner::AObjectSpawner()
 {

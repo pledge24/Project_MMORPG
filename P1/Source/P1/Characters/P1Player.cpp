@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "P1Player.h"
+#include "Characters/P1Player.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
-#include "AttackSystemComponent.h"
+#include "Combat/AttackSystemComponent.h"
 #include "P1.h"
-#include "P1MyPlayer.h"
-#include "LogCategory.h"
+#include "Characters/P1MyPlayer.h"
+#include "Utils/LogCategory.h"
 
 AP1Player::AP1Player()
 {

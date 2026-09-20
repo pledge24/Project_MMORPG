@@ -12,21 +12,14 @@ public class P1 : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "ProtobufCore", "Slate", "SlateCore" });
 
+        // 도메인 폴더는 등록하지 않는다. `#include`를 경로 한정으로 쓰게 해서 경계를 넘는
+        // 참조가 include 줄에 드러나게 한다. 근거는 ADR-0005.
         PrivateIncludePaths.AddRange(new string[]
         {
             "P1/",
-            "P1/Characters",
-            "P1/Combat",
-            "P1/Core",
-            "P1/Data",
-            "P1/Entities",
-            "P1/Equipment",
-            "P1/Inventory",
+            // 생성물 폴더는 예외로 남긴다. protobuf 생성 코드가 서로를 `#include "Enum.pb.h"`
+            // 형태로 부르는데 생성물은 손으로 고치지 않는다.
             "P1/Network",
-            "P1/Online",
-            "P1/UI",
-            "P1/Utils",
-            "P1/World",
         });
 
         // Uncomment if you are using Slate UI

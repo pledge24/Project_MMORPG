@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "QuestObjectiveData.h"
-#include "QuestReward.h"
+#include "Data/QuestObjectiveData.h"
+#include "Data/QuestReward.h"
 #include "QuestData.generated.h"
 
 /*------------------

@@ -1,21 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "P1GameInstance.h"
+#include "Core/P1GameInstance.h"
 
-#include "AttackSystemComponent.h"
+#include "Combat/AttackSystemComponent.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
-#include "PacketSession.h"
+#include "Network/PacketSession.h"
 #include "Protocol.pb.h"
-#include "ClientPacketHandler.h"
-#include "P1MyPlayer.h"
+#include "Network/ClientPacketHandler.h"
+#include "Characters/P1MyPlayer.h"
 #include "P1.h"
-#include "Creature.h"
-#include "MyPlayerData.h"
-#include "LogCategory.h"
-#include "P1MyPlayer.h"
+#include "Characters/Creature.h"
+#include "Core/MyPlayerData.h"
+#include "Utils/LogCategory.h"
+#include "Characters/P1MyPlayer.h"
 
 UP1GameInstance::UP1GameInstance()
 {

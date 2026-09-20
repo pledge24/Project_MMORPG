@@ -1,8 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BP_Structs.h"
-#include "EObject.h"
+#include "Data/BP_Structs.h"
+#include "Entities/EObject.h"
 
 #define USING_SHARED_PTR(name)	using name##Ref = TSharedPtr<class name>;
 

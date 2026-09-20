@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "NameplateWidget.h"
-#include "Monster.h"
-#include "P1Player.h"
-#include "ProgressBarWidget.h"
+#include "UI/NameplateWidget.h"
+#include "Characters/Monster.h"
+#include "Characters/P1Player.h"
+#include "UI/ProgressBarWidget.h"
 #include "Components/TextBlock.h"
 
 void UNameplateWidget::NativeConstruct()
