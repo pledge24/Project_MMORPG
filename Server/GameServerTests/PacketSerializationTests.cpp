@@ -39,7 +39,7 @@ namespace
 TEST(PacketSerialization, ChatRoundTrip)
 {
     Protocol::S_CHAT pkt;
-    pkt.set_object_id(4242);
+    pkt.set_entity_id(4242);
     pkt.set_msg("한글과 ASCII가 섞인 채팅 메시지");   // /utf-8 이므로 좁은 리터럴이 UTF-8 바이트다
 
     ExpectRoundTrip(pkt, PKT_S_CHAT);
@@ -53,7 +53,7 @@ TEST(PacketSerialization, MoveRoundTrip)
     for (int32 i = 0; i < 3; i++)
     {
         Protocol::PosInfo* info = pkt.add_info();
-        info->set_object_id(1000 + i);
+        info->set_entity_id(1000 + i);
         info->set_yaw(90.5f * i);
         info->set_state(Protocol::MoveState::MOVE_STATE_RUN);
 

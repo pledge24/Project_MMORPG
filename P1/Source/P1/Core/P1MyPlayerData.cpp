@@ -19,8 +19,8 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("EquippedGear Is Not Exist"));
 
     // Proto
-    _ObjectInfo = new Protocol::ObjectInfo();
-    _PlayerInfo = _ObjectInfo->mutable_player_info();
+    _EntityInfo = new Protocol::EntityInfo();
+    _PlayerInfo = _EntityInfo->mutable_player_info();
     _StatInfo = new Protocol::StatInfo();
     _Possession = new Protocol::Possession();
 
@@ -43,11 +43,11 @@ void UP1MyPlayerData::Deinitialize()
     Inventory = nullptr;
     EquippedGear = nullptr;
 
-    delete _ObjectInfo;
+    delete _EntityInfo;
     delete _StatInfo;
     delete _Possession;
 
-    _ObjectInfo = nullptr;
+    _EntityInfo = nullptr;
     _PlayerInfo = nullptr;
     _StatInfo = nullptr;
     _Possession = nullptr;
@@ -59,13 +59,13 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
 {
     // 저장
     {
-        SetObjectInfo(EnterGamePkt.player());
+        SetEntityInfo(EnterGamePkt.player());
         _StatInfo->CopyFrom(EnterGamePkt.stat_info());
         _Possession->CopyFrom(EnterGamePkt.possession());
         
         // Cache
-        _PlayerId = _ObjectInfo->object_id();
-        _PlayerName = FText::FromString(UTF8_TO_TCHAR(_ObjectInfo->player_info().name().c_str()));
+        _PlayerId = _EntityInfo->entity_id();
+        _PlayerName = FText::FromString(UTF8_TO_TCHAR(_EntityInfo->player_info().name().c_str()));
     }
 
     // Initialize Possession Wrapper
@@ -93,11 +93,11 @@ void UP1MyPlayerData::BindMyPlayerDelegate(AP1MyPlayer* MyPlayer)
     OnEquipmentSlotChanged.AddUObject(EquippedGear, &UP1EquippedGear::Rep_SlotChanged);
 }
 
-void UP1MyPlayerData::SetObjectInfo(const Protocol::ObjectInfo& InObjectInfo)
+void UP1MyPlayerData::SetEntityInfo(const Protocol::EntityInfo& InEntityInfo)
 {
     // 프로토버프는 메세지를 CopyFrom할때마다 필트의 포인터가 달라질 수 있다.
-    _ObjectInfo->CopyFrom(InObjectInfo);
-    _PlayerInfo = _ObjectInfo->mutable_player_info();
+    _EntityInfo->CopyFrom(InEntityInfo);
+    _PlayerInfo = _EntityInfo->mutable_player_info();
 }
 
 void UP1MyPlayerData::SetStatValue(Protocol::StatType statType, const int64& value)

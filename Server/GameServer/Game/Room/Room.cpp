@@ -85,8 +85,8 @@ void Room::Update()
 
 void Room::TickObject(ObjectRef object)
 {
-    int64 objectId = object->_objectInfo->object_id();
-    if (Contains(objectId) == false)
+    int64 entityId = object->_entityInfo->entity_id();
+    if (Contains(entityId) == false)
         return;
 
     uint64 curTime = GetTickCount64();
@@ -100,7 +100,7 @@ void Room::TickObject(ObjectRef object)
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 {
     Protocol::S_ENTER_ROOM enterRoomPkt;
-    int64 enterPlayerId = enterPlayer->_objectInfo->object_id();
+    int64 enterPlayerId = enterPlayer->_entityInfo->entity_id();
 
     if (AddObject(enterPlayer) == false)
     {
@@ -139,7 +139,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
 bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 {
-    const int64 leavePlayerId = leavePlayer->_objectInfo->object_id();
+    const int64 leavePlayerId = leavePlayer->_entityInfo->entity_id();
 
     if (RemoveObject(leavePlayerId) == false)
     {
@@ -156,7 +156,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
         // OtherPlayer: Broadcast Player Despawn In Room
         {
             Protocol::S_DESPAWN despawnPkt;
-            despawnPkt.add_object_ids(leavePlayerId);
+            despawnPkt.add_entity_ids(leavePlayerId);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(despawnPkt);
             Broadcast(sendBuffer);
@@ -168,7 +168,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
             if (transferRoom == false)
             {
                 Protocol::S_DESPAWN despawnPkt;
-                despawnPkt.add_object_ids(leavePlayerId);
+                despawnPkt.add_entity_ids(leavePlayerId);
 
                 SEND_PACKET(despawnPkt);
             }
@@ -348,7 +348,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
             Protocol::PosInfo enterPosInfo;
             Protocol::Vector& pos = *enterPosInfo.mutable_pos();
-            enterPosInfo.set_object_id(player->_objectInfo->object_id());
+            enterPosInfo.set_entity_id(player->_entityInfo->entity_id());
             pos.set_x(dst[PosX]);
             pos.set_y(dst[PosY]);
             pos.set_z(dst[PosZ]);
@@ -394,12 +394,12 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
 void Room::C_HandleMove(Protocol::C_MOVE pkt)
 {
-	const int64 objectId = pkt.info().object_id();
-    if (_objects.contains(objectId) == false)
+	const int64 entityId = pkt.info().entity_id();
+    if (_objects.contains(entityId) == false)
         return;
 
 	// 적용
-	PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]);
+	PlayerRef player = dynamic_pointer_cast<Player>(_objects[entityId]);
 	player->_posInfo->CopyFrom(pkt.info());
 
 	// 이동 사실을 알린다 (본인 빼고)
@@ -410,7 +410,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
 			info->CopyFrom(pkt.info());
 		}
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-		Broadcast(sendBuffer, objectId);
+		Broadcast(sendBuffer, entityId);
 	}
 }
 
@@ -418,7 +418,7 @@ void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
 {
 	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
 	Protocol::S_CHAT chatPkt;
-	chatPkt.set_object_id(player->_objectInfo->object_id());
+	chatPkt.set_entity_id(player->_entityInfo->entity_id());
 	chatPkt.set_msg(pkt.msg());
 
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
@@ -515,8 +515,8 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
 
 void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
-    const int64 objectId = player->_objectInfo->object_id();
-    if (_objects.contains(objectId) == false)
+    const int64 entityId = player->_entityInfo->entity_id();
+    if (_objects.contains(entityId) == false)
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
@@ -524,7 +524,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
         const Protocol::Slot& slot = pkt.slot();
 
         equipGearPkt.set_success(true);
-        equipGearPkt.set_object_id(objectId);
+        equipGearPkt.set_entity_id(entityId);
         equipGearPkt.set_slot_id(slot.slot_id());
         equipGearPkt.set_template_id(slot.item().template_id());
     }
@@ -552,15 +552,15 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
         equipGearPkt.clear_updated_slots();
         equipGearPkt.clear_updated_stat();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(equipGearPkt);
-        Broadcast(sendBuffer, objectId);
+        Broadcast(sendBuffer, entityId);
     }
 
 }
 
 void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
-    const int64 objectId = player->_objectInfo->object_id();
-    if (_objects.contains(objectId) == false)
+    const int64 entityId = player->_entityInfo->entity_id();
+    if (_objects.contains(entityId) == false)
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
@@ -568,7 +568,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
         const Protocol::Slot& slot = pkt.slot();
 
         unequipGearPkt.set_success(true);
-        unequipGearPkt.set_object_id(objectId);
+        unequipGearPkt.set_entity_id(entityId);
         unequipGearPkt.set_slot_id(slot.slot_id());
         unequipGearPkt.set_template_id(slot.item().template_id());
     }
@@ -595,26 +595,26 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
         unequipGearPkt.clear_updated_slots();
         unequipGearPkt.clear_updated_stat();
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(unequipGearPkt);
-        Broadcast(sendBuffer, objectId);
+        Broadcast(sendBuffer, entityId);
     }
 
 }
 
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
-    const int64 objectId = player->_objectInfo->object_id();
-    if (_objects.contains(objectId) == false)
+    const int64 entityId = player->_entityInfo->entity_id();
+    if (_objects.contains(entityId) == false)
         return;
     
     // 일반 공격 사실을 Broadcast.
     {
         Protocol::S_NORMAL_ATTACK normalAttackPkt;
         {
-            normalAttackPkt.set_object_id(objectId);
+            normalAttackPkt.set_entity_id(entityId);
             normalAttackPkt.set_combo(pkt.combo());
         }
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-        Broadcast(sendBuffer, objectId);
+        Broadcast(sendBuffer, entityId);
     }
 }
 
@@ -651,7 +651,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
             Protocol::PosInfo enterPos;
             enterPos.CopyFrom(respawnPos);
-            enterPos.set_object_id(player->_objectInfo->object_id());
+            enterPos.set_entity_id(player->_entityInfo->entity_id());
             enterData.enterPos = std::move(enterPos);
         }
 
@@ -675,7 +675,7 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 {
     Protocol::S_NORMAL_ATTACK normalAttackPkt;
     {
-        normalAttackPkt.set_object_id(creature->_objectInfo->object_id());
+        normalAttackPkt.set_entity_id(creature->_entityInfo->entity_id());
         normalAttackPkt.set_combo(combo);
         normalAttackPkt.set_yaw(creature->_posInfo->yaw());
 
@@ -712,7 +712,7 @@ void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
 
         Protocol::S_HIT HitPkt;
         {
-            HitPkt.set_object_id(creature->_objectInfo->object_id());
+            HitPkt.set_entity_id(creature->_entityInfo->entity_id());
             HitPkt.set_damage(attackInfo.damage());
             HitPkt.set_updated_hp(creature->GetStatValue(Protocol::STAT_TYPE_HP));
 
@@ -757,18 +757,18 @@ void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
 
 void Room::HandleDie(CreatureRef creature)
 {
-    int64 objectId = creature->_objectInfo->object_id();
+    int64 entityId = creature->_entityInfo->entity_id();
 
     Protocol::S_DIE diePkt;
     {
-        diePkt.set_object_id(objectId);
+        diePkt.set_entity_id(entityId);
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(diePkt);
         Broadcast(sendBuffer);
     }
 
     // 바로 Room에서 제거한다.
-    RemoveObject(objectId);
+    RemoveObject(entityId);
 }
 
 void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
@@ -813,7 +813,7 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
 
 void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 {
-    int64 playerId = player->_objectInfo->object_id();
+    int64 playerId = player->_entityInfo->entity_id();
 
     // 해당 플레이어에게 Room Object 전송
     Protocol::S_SPAWN spawnPkt;
@@ -821,10 +821,10 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
     {
         for (auto& item : _objects)
         {
-            if (!includeThisPlayer && item.second->_objectInfo->object_id() == playerId)
+            if (!includeThisPlayer && item.second->_entityInfo->entity_id() == playerId)
                 continue;
 
-            spawnPkt.add_objects()->CopyFrom(*item.second->_objectInfo);
+            spawnPkt.add_entities()->CopyFrom(*item.second->_entityInfo);
             // equipped_gear_summary 활용하기
         }
 
@@ -853,12 +853,12 @@ MonsterRef Room::SpawnMonster(int32 templateId)
     return newMonster;
 }
 
-PlayerRef Room::SpawnPlayer(int64 objectId)
+PlayerRef Room::SpawnPlayer(int64 entityId)
 {
-    if (_objects.contains(objectId) == false)
+    if (_objects.contains(entityId) == false)
         return nullptr;
 
-    PlayerRef targetPlayer = dynamic_pointer_cast<Player>(_objects[objectId]);
+    PlayerRef targetPlayer = dynamic_pointer_cast<Player>(_objects[entityId]);
     if (targetPlayer == nullptr)
         return nullptr;
 
@@ -869,8 +869,8 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
 {
     Protocol::S_SPAWN spawnPkt;
     {
-        Protocol::ObjectInfo* objectInfo = spawnPkt.add_objects();
-        objectInfo->CopyFrom(*targetPlayer->_objectInfo);
+        Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
+        entityInfo->CopyFrom(*targetPlayer->_entityInfo);
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
         Broadcast(sendBuffer);
@@ -982,9 +982,9 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
     {
         const Cell& cell = _cellMatrix[indices.first][indices.second];
 
-        for (int64 objectId : cell)
+        for (int64 entityId : cell)
         {
-            if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[objectId]))
+            if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[entityId]))
             {
                 float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
                 if (squareRange < squareDist)
@@ -1084,7 +1084,7 @@ void Room::UpdateCellMatrix()
 
     for (auto& pair : _objects)
     {
-        int64 objectId = pair.first;
+        int64 entityId = pair.first;
         ObjectRef object = pair.second;
 
         Protocol::PosInfo* objectPos = object->_posInfo;
@@ -1099,9 +1099,9 @@ void Room::UpdateCellMatrix()
         int32 indexX = indices.first;
         int32 indexY = indices.second;
 
-        _cellMatrix[indexX][indexY].insert(objectId);
+        _cellMatrix[indexX][indexY].insert(entityId);
 
-        //printf("object: %d (%d, %d)\n", objectId, indexX, indexY);
+        //printf("object: %d (%d, %d)\n", entityId, indexX, indexY);
     }
 }
 
@@ -1152,28 +1152,28 @@ bool Room::AddObject(ObjectRef object)
     if (object == nullptr)
         return false;
 
-    int64 objectId = object->_objectInfo->object_id();
-	if (_objects.contains(objectId))
+    int64 entityId = object->_entityInfo->entity_id();
+	if (_objects.contains(entityId))
 		return false;
 
-	_objects.insert(make_pair(objectId, object));
+	_objects.insert(make_pair(entityId, object));
 
 	return true;
 }
 
-bool Room::RemoveObject(int64 objectId)
+bool Room::RemoveObject(int64 entityId)
 {
-	if (_objects.contains(objectId) == false)
+	if (_objects.contains(entityId) == false)
 		return false;
 
-    ObjectRef object = _objects[objectId];
+    ObjectRef object = _objects[entityId];
 
     // cellMatrix에 object 삭제
     auto cellPos = GetCellIndicesFromPos(object->_posInfo);
-    _cellMatrix[cellPos.first][cellPos.second].erase(objectId);
+    _cellMatrix[cellPos.first][cellPos.second].erase(entityId);
 
     // object 삭제
-	_objects.erase(objectId);
+	_objects.erase(entityId);
 
 	return true;
 }
@@ -1185,7 +1185,7 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
 		if (player == nullptr)
 			continue;
-		if (player->_objectInfo->object_id() == exceptId)
+		if (player->_entityInfo->entity_id() == exceptId)
 			continue;
 
 		if (GameSessionRef session = player->_session.lock())

@@ -36,19 +36,19 @@ AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FTransform& Trans
     return SpawnMonster(TemplateId, Location, Rotation);
 }
 
-AActor* AP1ObjectSpawner::SpawnMonster(const Protocol::ObjectInfo& InObjectInfo)
+AActor* AP1ObjectSpawner::SpawnMonster(const Protocol::EntityInfo& InEntityInfo)
 {
-    int32 TemplateId = InObjectInfo.monster_info().template_id();
-    const Protocol::PosInfo& PosInfo_ = InObjectInfo.pos_info();
+    int32 TemplateId = InEntityInfo.monster_info().template_id();
+    const Protocol::PosInfo& PosInfo_ = InEntityInfo.pos_info();
     const Protocol::Vector& Pos = PosInfo_.pos();
 
     FVector Location = FVector(Pos.x(), Pos.y(), Pos.z());
     FRotator Rotation = FRotator(0, PosInfo_.yaw(), 0);
 
-    return SpawnMonster(TemplateId, Location, Rotation, InObjectInfo);
+    return SpawnMonster(TemplateId, Location, Rotation, InEntityInfo);
 }
 
-AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo)
+AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo)
 {
     if (MonsterDataTable == nullptr)
         return nullptr;
@@ -108,7 +108,7 @@ bool AP1ObjectSpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonst
     return true;
 }
 
-AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
+AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
 {
     UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance());
     if (GameInstance == nullptr)
@@ -117,10 +117,10 @@ AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
     UWorld* World = GetWorld();
     UP1MyPlayerData* MyPlayerData = GameInstance->GetMyPlayerData();
     uint64 MyPlayerId = MyPlayerData->GetPlayerId();
-    bool IsMine = MyPlayerId == InObjectInfo.object_id();
+    bool IsMine = MyPlayerId == InEntityInfo.entity_id();
 
-    FVector SpawnLocation(InObjectInfo.pos_info().pos().x(), InObjectInfo.pos_info().pos().y(), InObjectInfo.pos_info().pos().z());
-    FRotator SpawnRotation(0.f, InObjectInfo.pos_info().yaw(), 0.f);
+    FVector SpawnLocation(InEntityInfo.pos_info().pos().x(), InEntityInfo.pos_info().pos().y(), InEntityInfo.pos_info().pos().z());
+    FRotator SpawnRotation(0.f, InEntityInfo.pos_info().yaw(), 0.f);
 
     AP1Player* OutPlayer = nullptr;
     if (IsMine)
@@ -163,11 +163,11 @@ AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
     if (OutPlayer != nullptr)
     {
         // 플레이어 데이터 설정(스폰 전 후로)
-        FString PlayerName = InObjectInfo.player_info().name().c_str();
+        FString PlayerName = InEntityInfo.player_info().name().c_str();
         OutPlayer->SetPlayerName(FText::FromString(PlayerName));
-        OutPlayer->SetServerPos(InObjectInfo.pos_info());
+        OutPlayer->SetServerPos(InEntityInfo.pos_info());
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
-        OutPlayer->Initialize(InObjectInfo);
+        OutPlayer->Initialize(InEntityInfo);
     }
     else
     {

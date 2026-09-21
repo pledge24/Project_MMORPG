@@ -10,7 +10,7 @@ Player::Player()
 	_isPlayer = true;
     _isTickable = false;
 
-    _playerInfo = _objectInfo->mutable_player_info();
+    _playerInfo = _entityInfo->mutable_player_info();
     _possession = new Protocol::Possession();
 }
 
@@ -92,8 +92,8 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_U
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
         return false;
 
-    // objectId 채우기
-    pkt.set_object_id(_objectInfo->object_id());
+    // entityId 채우기
+    pkt.set_entity_id(_entityInfo->entity_id());
 
     // 변경된 스텟 반영
     for (const Protocol::Stat& stat : pkt.updated_stat())
@@ -198,7 +198,7 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 	{
 		pkt.set_success(true);
 		pkt.set_respawn_type(type);
-		pkt.set_object_id(_objectInfo->object_id());
+		pkt.set_entity_id(_entityInfo->entity_id());
 
 		pkt.set_room_id(ownerRoom->GetRoomId());
 		pkt.mutable_pos_info()->CopyFrom(*respawnPos);
@@ -378,7 +378,7 @@ void Player::GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& resp
     case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
     case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
     {
-        // objectId가 존재하는 경우
+        // entityId가 존재하는 경우
         break;
     }
 

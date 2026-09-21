@@ -29,10 +29,10 @@ static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\nEnum.proto\022\010Protocol*\204\001\n\nObjectType\022\024\n"
-  "\020OBJECT_TYPE_NONE\020\000\022\026\n\022OBJECT_TYPE_PLAYE"
-  "R\020\001\022\027\n\023OBJECT_TYPE_MONSTER\020\002\022\032\n\026OBJECT_T"
-  "YPE_PROJECTILE\020\003\022\023\n\017OBJECT_TYPE_ENV\020\004*R\n"
+  "\n\nEnum.proto\022\010Protocol*\204\001\n\nEntityType\022\024\n"
+  "\020ENTITY_TYPE_NONE\020\000\022\026\n\022ENTITY_TYPE_PLAYE"
+  "R\020\001\022\027\n\023ENTITY_TYPE_MONSTER\020\002\022\032\n\026ENTITY_T"
+  "YPE_PROJECTILE\020\003\022\023\n\017ENTITY_TYPE_ENV\020\004*R\n"
   "\016CharacterClass\022\023\n\017CLASS_TYPE_NONE\020\000\022\026\n\022"
   "CLASS_TYPE_WARRIOR\020\001\022\023\n\017CLASS_TYPE_MAGE\020"
   "\002*`\n\tMoveState\022\023\n\017MOVE_STATE_NONE\020\000\022\023\n\017M"
@@ -97,11 +97,11 @@ PROTOBUF_ATTRIBUTE_WEAK const ::_pbi::DescriptorTable* descriptor_table_Enum_2ep
 // Force running AddDescriptors() at dynamic initialization time.
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY2 static ::_pbi::AddDescriptorsRunner dynamic_init_dummy_Enum_2eproto(&descriptor_table_Enum_2eproto);
 namespace Protocol {
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ObjectType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[0];
 }
-bool ObjectType_IsValid(int value) {
+bool EntityType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:

@@ -56,7 +56,7 @@ message C_ENTER_GAME
 message S_ENTER_GAME
 {
 	bool success = 1;
-	ObjectInfo player = 2;  
+	EntityInfo player = 2;  
 
     // 캐릭터 개인 정보
     StatInfo stat_info = 3;         // 스텟 정보
@@ -122,12 +122,12 @@ message S_ENTER_ROOM
 
 message S_SPAWN
 {
-	repeated ObjectInfo objects = 1;
+	repeated EntityInfo entities = 1;
 }
 
 message S_DESPAWN
 {
-	repeated int64 object_ids = 1;
+	repeated int64 entity_ids = 1;
 }
 
 message C_MOVE
@@ -147,14 +147,14 @@ message C_NORMAL_ATTACK
 
 message S_NORMAL_ATTACK
 {
-    int64 object_id = 1;
+    int64 entity_id = 1;
     int32 combo = 2;
     float yaw = 3;
 }
 
 message S_HIT
 {
-    int64 object_id = 1;
+    int64 entity_id = 1;
     int64 damage = 2;
     optional int64 updated_hp = 3; 
 }
@@ -193,7 +193,7 @@ message C_EQUIP_GEAR
 message S_EQUIP_GEAR
 {
     bool success = 1;
-    int64 object_id = 2;
+    int64 entity_id = 2;
     
     // 장착 결과
     int32 slot_id = 3; 
@@ -212,7 +212,7 @@ message C_UNEQUIP_GEAR
 message S_UNEQUIP_GEAR
 {
     bool success = 1;
-    int64 object_id = 2;
+    int64 entity_id = 2;
 
     // 장착 결과
     int32 slot_id = 3; 
@@ -231,7 +231,7 @@ message C_USE_ITEM
 message S_USE_ITEM
 {
     bool success = 1;
-    int64 object_id = 2;
+    int64 entity_id = 2;
 
     // 사용 결과
     repeated Slot updated_slots = 3;
@@ -240,7 +240,7 @@ message S_USE_ITEM
 
 message S_DIE
 {
-    int64 object_id = 1;
+    int64 entity_id = 1;
 }
 
 message S_REWARD_RESULT
@@ -275,7 +275,7 @@ message S_RESPAWN
     bool success = 1;
     string error_message = 2;
     RespawnType respawn_type = 3;
-    int64 object_id = 4;
+    int64 entity_id = 4;
 
     // 리스폰시 변경된 데이터
     int32 room_id = 5;
@@ -290,6 +290,6 @@ message C_CHAT
 
 message S_CHAT
 {
-    int64 object_id = 1;
+    int64 entity_id = 1;
     string msg = 2;
 }

@@ -4,13 +4,13 @@
 
 Object::Object()
 {
-	_objectInfo = new Protocol::ObjectInfo();
-    _posInfo = _objectInfo->mutable_pos_info();
+	_entityInfo = new Protocol::EntityInfo();
+    _posInfo = _entityInfo->mutable_pos_info();
 }
 
 Object::~Object()
 {
-	delete _objectInfo;
+	delete _entityInfo;
 }
 
 bool Object::Init()

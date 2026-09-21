@@ -37,7 +37,7 @@ public:
 
     //~ Player Info
 public:
-    void SetObjectInfo(const Protocol::ObjectInfo& InObjectInfo);
+    void SetEntityInfo(const Protocol::EntityInfo& InEntityInfo);
     void SetRoomId(int32 RoomId) { _PlayerInfo->set_room_id(RoomId); }
     void SetMapId(int32 MapId) { _PlayerInfo->set_map_id(MapId); }
 
@@ -54,7 +54,7 @@ public:
     FOnLevelChanged OnLevelChanged;
 
 protected:
-    Protocol::ObjectInfo* _ObjectInfo;
+    Protocol::EntityInfo* _EntityInfo;
     Protocol::PlayerInfo* _PlayerInfo;
 
     uint64 _PlayerId = 0;

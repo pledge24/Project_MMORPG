@@ -84,13 +84,13 @@ void AP1Creature::Tick(float DeltaTime)
 
 }
 
-void AP1Creature::Initialize(const Protocol::ObjectInfo& ObjectInfo)
+void AP1Creature::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
-    FText InName = FText::FromString(UTF8_TO_TCHAR(ObjectInfo.player_info().name().c_str()));
+    FText InName = FText::FromString(UTF8_TO_TCHAR(EntityInfo.player_info().name().c_str()));
     SetCreatureName(InName);
 
-    ClientPos->CopyFrom(ObjectInfo.pos_info());
-    ServerPos->CopyFrom(ObjectInfo.pos_info());
+    ClientPos->CopyFrom(EntityInfo.pos_info());
+    ServerPos->CopyFrom(EntityInfo.pos_info());
 }
 
 bool AP1Creature::IsMyPlayer() const
@@ -113,9 +113,9 @@ void AP1Creature::SetMoveState(Protocol::MoveState State)
 
 void AP1Creature::SetClientPos(const Protocol::PosInfo& Info)
 {
-    if (ClientPos->object_id() != 0)
+    if (ClientPos->entity_id() != 0)
     {
-        assert(SrcInfo->object_id() == Info.object_id());
+        assert(SrcInfo->entity_id() == Info.entity_id());
     }
 
     ClientPos->CopyFrom(Info);
@@ -130,9 +130,9 @@ void AP1Creature::SetClientPos(const Protocol::PosInfo& Info)
 
 void AP1Creature::SetServerPos(const Protocol::PosInfo& Info)
 {
-    if (ClientPos->object_id() != 0)
+    if (ClientPos->entity_id() != 0)
     {
-        assert(ClientPos->object_id() == Info.object_id());
+        assert(ClientPos->entity_id() == Info.entity_id());
     }
 
     if (ServerPos == nullptr)

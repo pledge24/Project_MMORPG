@@ -10,7 +10,7 @@ Monster::Monster()
 {
     _isPlayer = false;
 
-    _monsterInfo = _objectInfo->mutable_monster_info();
+    _monsterInfo = _entityInfo->mutable_monster_info();
     _attackTimer = new TickTimer();
 }
 
@@ -24,7 +24,7 @@ bool Monster::Init()
     if (Creature::Init() == false)
         return false;
 
-    int32 templateId = _objectInfo->monster_info().template_id();
+    int32 templateId = _entityInfo->monster_info().template_id();
     if (Gamedata::s_monsterDataTable.contains(templateId) == false)
     {
         cout << "Monster's template id is Invalid" << '\n';
@@ -204,7 +204,7 @@ void Monster::UpdateState()
 
             // 전환 조건(Idle): 타겟이 현재 Room에서 사라졌거나, 범위를 벗어남
             bool outOfChasingRange = MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false;
-            if (ownerRoom->Contains(target->_objectInfo->object_id()) == false || outOfChasingRange)
+            if (ownerRoom->Contains(target->_entityInfo->entity_id()) == false || outOfChasingRange)
             {
                 _target.reset();
                 SwitchState(MonsterState::Idle);
@@ -230,9 +230,9 @@ void Monster::UpdateState()
     {
         ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
             {
-                int64 objectId = self->_objectInfo->object_id();
+                int64 entityId = self->_entityInfo->entity_id();
 
-                if(ownerRoom->Contains(objectId))
+                if(ownerRoom->Contains(entityId))
                     self->UpdateState();
             });
 
@@ -492,7 +492,7 @@ void Monster::NormalAttack()
         Protocol::AttackInfo attackInfo;
         {
             attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-            attackInfo.set_target_id(_target.lock()->_objectInfo->object_id());
+            attackInfo.set_target_id(_target.lock()->_entityInfo->entity_id());
             attackInfo.set_combo(0);
             attackInfo.set_damage(_baseAttack);
         }
@@ -601,7 +601,7 @@ void Monster::PrintMonsterAllData() const
     cout << "detectionRange: " << _detectionRange << '\n';
     cout << "chaseRange: " << _chasingMaxRange << '\n';
 
-    cout << _objectInfo->Utf8DebugString() << '\n';
+    cout << _entityInfo->Utf8DebugString() << '\n';
 
     cout << "======Monster Data End ====" << '\n';
 }

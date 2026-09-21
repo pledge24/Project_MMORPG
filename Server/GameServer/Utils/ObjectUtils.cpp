@@ -12,14 +12,14 @@ PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
     if (player == nullptr)
         return nullptr;
 
-    // objectId 생성
+    // entityId 생성
     const int64 newId = s_idGenerator.fetch_add(1);
 
     // 추가 세팅
     {
-        player->_objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_PLAYER);
-        player->_objectInfo->set_object_id(newId);
-        player->_posInfo->set_object_id(newId);
+        player->_entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
+        player->_entityInfo->set_entity_id(newId);
+        player->_posInfo->set_entity_id(newId);
 
         player->_session = session;
         session->_player.store(player);
@@ -38,21 +38,21 @@ MonsterRef ObjectUtils::CreateMonster(int32 templateId, const Protocol::PosInfo&
     if (monster == nullptr)
         return nullptr;
 
-    // objectId 생성
+    // entityId 생성
     const int64 newId = s_idGenerator.fetch_add(1);
 
     // 추가 세팅
     {
-        monster->_objectInfo->set_object_type(Protocol::ObjectType::OBJECT_TYPE_MONSTER);
-        monster->_objectInfo->set_object_id(newId);
+        monster->_entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_MONSTER);
+        monster->_entityInfo->set_entity_id(newId);
 
         // MonsterInfo templateId만 세팅
-        Protocol::MonsterInfo* monsterInfo = monster->_objectInfo->mutable_monster_info();
+        Protocol::MonsterInfo* monsterInfo = monster->_entityInfo->mutable_monster_info();
         monsterInfo->set_template_id(templateId);
 
         // Monster::Init()이 posInfo로 _spawnPos를 계산하므로 Init 이전에 넣어야 한다.
         monster->SetPosInfo(spawnPos);
-        monster->_posInfo->set_object_id(newId);
+        monster->_posInfo->set_entity_id(newId);
     }
 
     // template_id와 posInfo가 모두 채워진 뒤에 초기화한다.

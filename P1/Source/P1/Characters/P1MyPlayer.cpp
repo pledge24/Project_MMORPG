@@ -151,9 +151,9 @@ void AP1MyPlayer::Tick(float DeltaTime)
     }
 }
 
-void AP1MyPlayer::Initialize(const Protocol::ObjectInfo& InObjectInfo)
+void AP1MyPlayer::Initialize(const Protocol::EntityInfo& InEntityInfo)
 {
-    Super::Initialize(InObjectInfo);
+    Super::Initialize(InEntityInfo);
 }
 
 void AP1MyPlayer::Move(const FInputActionValue& Value)
