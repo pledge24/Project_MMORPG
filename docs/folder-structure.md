@@ -273,7 +273,7 @@ Server/
 ├── GameServer/             게임 규칙
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인
-│   │   ├── World/          룸, 룸 매니저, 셀 행렬
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬
 │   │   ├── Object/         오브젝트 계층
 │   │   ├── Inventory/      인벤토리, 장비
 │   │   └── Data/           게임 데이터 로더
@@ -304,7 +304,7 @@ Server/
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
-`Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/World/`와
+`Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/Room/`와
 `Game/Object/`에 섞여 있다. 두 도메인을 분리할 때 만든다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가

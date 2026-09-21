@@ -132,7 +132,7 @@ S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로�
 
 ## `Room` / `DBRequestFunctions` 갓 클래스
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 모듈 · server
-> 위치: `Server/GameServer/Game/World/Room.cpp` (1,161줄) · `Server/GameServer/DB/DBRequestFunctions.cpp` (1,531줄)
+> 위치: `Server/GameServer/Game/Room/Room.cpp` (1,161줄) · `Server/GameServer/DB/DBRequestFunctions.cpp` (1,531줄)
 > 등록일: 2026년 8월 19일
 
 `Room` 하나가 입장·퇴장·이동·전투·피격·처치·사망·보상·리스폰·채팅·셀 행렬·몬스터 스폰을 전부

@@ -21,8 +21,8 @@
     <Filter Include="GameServer\Game\Object">
       <UniqueIdentifier>{e5a6358a-dfd2-5357-8003-e1fdd1fd97cd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameServer\Game\World">
-      <UniqueIdentifier>{73f65547-9259-5d43-a57c-08c51f73ba84}</UniqueIdentifier>
+    <Filter Include="GameServer\Game\Room">
+      <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Main">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
@@ -108,11 +108,11 @@
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
       <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\World\Room.cpp">
-      <Filter>GameServer\Game\World</Filter>
+    <ClCompile Include="..\GameServer\Game\Room\Room.cpp">
+      <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\World\RoomManager.cpp">
-      <Filter>GameServer\Game\World</Filter>
+    <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp">
+      <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\DB\DBRequestFunctions.cpp">
       <Filter>GameServer\DB</Filter>

@@ -35,7 +35,7 @@
     <Filter Include="Game\Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\World">
+    <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -103,11 +103,11 @@
     <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
-    <ClCompile Include="Game\World\Room.cpp">
-      <Filter>Game\World</Filter>
+    <ClCompile Include="Game\Room\Room.cpp">
+      <Filter>Game\Room</Filter>
     </ClCompile>
-    <ClCompile Include="Game\World\RoomManager.cpp">
-      <Filter>Game\World</Filter>
+    <ClCompile Include="Game\Room\RoomManager.cpp">
+      <Filter>Game\Room</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -180,11 +180,11 @@
     <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
-    <ClInclude Include="Game\World\Room.h">
-      <Filter>Game\World</Filter>
+    <ClInclude Include="Game\Room\Room.h">
+      <Filter>Game\Room</Filter>
     </ClInclude>
-    <ClInclude Include="Game\World\RoomManager.h">
-      <Filter>Game\World</Filter>
+    <ClInclude Include="Game\Room\RoomManager.h">
+      <Filter>Game\Room</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
