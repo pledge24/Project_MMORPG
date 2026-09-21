@@ -67,3 +67,30 @@ jobs:
 
       - name: 정적 검사
         run: npm run lint
+
+  conventions:
+    name: 규범 검사
+    runs-on: windows-latest
+
+    steps:
+      # LFS 콘텐츠를 받지 않는다. 에셋 접두사 검사는 파일 이름만 보고 내용을 열지 않으므로
+      # 포인터 파일만 있어도 판정이 같다.
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+
+      # v5 는 action.yml 에 using: node20 을 선언해서 위 setup-node 와 같은 경고가 뜬다.
+      # node24 를 선언하는 것은 v6 부터다. v7 의 파괴적 변경은 pip-install 입력 제거인데
+      # 여기서 쓰지 않는다.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      # 검사보다 먼저 돌린다. 위반 0건과 대상 0건은 출력이 같아서, 검사가 아무것도 검사하지
+      # 않으면서 통과하는 상태를 초록으로 착각하게 된다. 실제로 이 스크립트를 처음 쓸 때
+      # 다섯 검사 중 셋이 그 상태였다.
+      - name: 검사가 위반을 잡는지 확인
+        run: python Tools/ConventionLint/check_conventions.py --self-test
+
+      - name: 규범 검사
+        run: python Tools/ConventionLint/check_conventions.py
