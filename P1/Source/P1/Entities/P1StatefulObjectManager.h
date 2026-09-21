@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Entities/P1ObjectType.h"
+#include "Entities/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Protocol.pb.h"
 #include "P1StatefulObjectManager.generated.h"
@@ -36,13 +36,13 @@ protected:
     UPROPERTY()
     TArray<TObjectPtr<AP1ObjectSpawner>> ObjectSpawners;
 
-    //~ Object Registry
+    //~ Entity Registry
 public:
-    void RegisterObject(uint64 ObjectId, AActor* SpawnedActor);
-    void UnRegisterObject(uint64 ObjectId, EP1ObjectType ObjectType = EP1ObjectType::None);
+    void RegisterEntity(uint64 EntityId, AActor* SpawnedActor);
+    void UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType = EP1EntityType::None);
 
     /** 찾지 못하면 nullptr을 돌려준다. */
-    AActor* FindObject(uint64 ObjectId);
+    AActor* FindEntity(uint64 EntityId);
 
 protected:
     void Clear();
@@ -55,11 +55,11 @@ protected:
 
     //~ Spawn
 public:
-    void SpawnObject(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId = 0);
-    void DespawnAllObjects(bool ExceptMine);
-    void DespawnObject(uint64 ObjectId);
+    void SpawnEntity(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId = 0);
+    void DespawnAllEntities(bool ExceptMine);
+    void DespawnEntity(uint64 EntityId);
 
 protected:
-    void SpawnMonster(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId);
-    void SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId);
+    void SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
+    void SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
 };

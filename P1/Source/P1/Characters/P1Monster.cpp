@@ -35,17 +35,17 @@ void AP1Monster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 }
 
-void AP1Monster::Initialize(const Protocol::ObjectInfo& ObjectInfo)
+void AP1Monster::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
-    Super::Initialize(ObjectInfo);
+    Super::Initialize(EntityInfo);
 
-    if (ObjectInfo.has_monster_info() == false)
+    if (EntityInfo.has_monster_info() == false)
     {
         UE_LOG(LogP1CharacterComp, Warning, TEXT("몬스터 정보가 없는채로 몬스터 초기화 시도함"));
         return;
     }
 
-    _MonsterInfo.CopyFrom(ObjectInfo.monster_info());
+    _MonsterInfo.CopyFrom(EntityInfo.monster_info());
 
     TemplateId = _MonsterInfo.template_id();
     CurHp = _MonsterInfo.hp();

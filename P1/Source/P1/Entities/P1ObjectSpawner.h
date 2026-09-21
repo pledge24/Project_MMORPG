@@ -26,9 +26,9 @@ public:
     AActor* SpawnMonster(int32 TemplateId, const FTransform& Transform);
 
     /** 서버가 보낸 오브젝트 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
-    AActor* SpawnMonster(const Protocol::ObjectInfo& InObjectInfo);
+    AActor* SpawnMonster(const Protocol::EntityInfo& InEntityInfo);
 
-    AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo = NullOpt);
+    AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo = NullOpt);
 
     bool GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonsterData);
 
@@ -39,7 +39,7 @@ protected:
     //~ Player Spawn
 public:
     /** 서버가 보낸 오브젝트 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
-    AActor* SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo);
+    AActor* SpawnPlayer(const Protocol::EntityInfo& InEntityInfo);
 
 protected:
     UPROPERTY(EditAnywhere)

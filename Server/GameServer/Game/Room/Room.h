@@ -10,7 +10,7 @@ struct RoomEnterData
     optional<Protocol::PosInfo> enterPos;
 };
 
-using Cell = set<int64>;   // 특정 영역에 있는 ObjectId
+using Cell = set<int64>;   // 특정 영역에 있는 EntityId
 
 class Room : public JobQueue
 {
@@ -53,7 +53,7 @@ public:
     void HandleDie(CreatureRef creature);
     void HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
 
-    // includeThisPlayer: 자기 자신의 ObjectInfo도 S_SPAWN에 포함할지.
+    // includeThisPlayer: 자기 자신의 EntityInfo도 S_SPAWN에 포함할지.
     // 클라 월드가 비어 있는 최초 입장·맵 간 이동에서는 true, 액터가 살아 있는 경우 false.
     void ReplicateRoomData(PlayerRef player, bool includeThisPlayer);
 
@@ -72,7 +72,7 @@ public:
 
     /** Bool 함수 */
     bool IsValid() const { return _isValid; }
-    bool Contains(int64 objectId) { return _objects.contains(objectId); }
+    bool Contains(int64 entityId) { return _objects.contains(entityId); }
 
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
@@ -80,7 +80,7 @@ public:
 
     /** 스폰 관련 */
     MonsterRef SpawnMonster(int32 templateId);
-    PlayerRef SpawnPlayer(int64 objectId);
+    PlayerRef SpawnPlayer(int64 entityId);
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
 
 protected:
@@ -89,7 +89,7 @@ protected:
 
     /* Object 관련 함수*/
     bool AddObject(ObjectRef object);
-    bool RemoveObject(int64 objectId);
+    bool RemoveObject(int64 entityId);
 
     /** Room 관련 */
     void CacheRoomData();

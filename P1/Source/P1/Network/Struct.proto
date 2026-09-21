@@ -12,10 +12,10 @@ message CharacterOverview
     //map<int32, int32> equipped_gear_summary = 5;
 }
 
-message ObjectInfo
+message EntityInfo
 {
-	int64 object_id = 1;
-	ObjectType object_type = 2;
+	int64 entity_id = 1;
+	EntityType entity_type = 2;
 	PosInfo pos_info = 3;
 
     // ObjectType에 따른 정보
@@ -63,7 +63,7 @@ message Vector
 
 message PosInfo
 {
-	int64 object_id = 1;
+	int64 entity_id = 1;
 	Vector pos = 2;
     float yaw = 3;
 	Vector move_direction = 4;
@@ -73,7 +73,7 @@ message PosInfo
 message AttackInfo
 {
     AttackType type = 1;
-    optional int64 target_id = 2;   // object_id
+    optional int64 target_id = 2;   // entity_id
     optional int32 combo = 3;
     int64 damage = 4;
 
@@ -86,8 +86,8 @@ message AttackInfo
 
 message HitInfo
 {
-    int64 attacker_id = 1;          // object_id
-    int64 target_id = 2;            // object_id
+    int64 attacker_id = 1;          // entity_id
+    int64 target_id = 2;            // entity_id
 
     optional int64 damage = 3;
     DamageType damage_type = 4;     // 물리 피해? 마법 피해?

@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 30개 (높음 4 · 중간 16 · 낮음 10)
+항목 33개 (높음 5 · 중간 16 · 낮음 12)
 
 ## 작성 방법
 
@@ -753,3 +753,51 @@ Inputs로 삼기 때문이다. 어긋난 것은 IDE에 보이는 항목 목록�
 
 **#52가 목적지를 옮겼다** — 데이터 테이블이 `Content/Gamedata/`에서 `Content/P1/Data/DataTables/`로
 갔고 `C_*.json` 네 개가 함께 갔다. 생성기를 되살릴 때 출력 경로를 새 자리로 맞춰야 한다.
+
+## 동기화 대상을 가리키는 클래스 이름이 아직 「오브젝트」다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · shared
+> 위치: `Server/GameServer/Game/Object/Object.h` · `Server/GameServer/Utils/ObjectUtils.h` ·
+> `P1/Source/P1/Entities/P1StatefulObjectManager.h` · `P1/Source/P1/Entities/P1ObjectSpawner.h`
+> 등록일: 2026년 9월 21일
+
+#71이 프로토콜 스키마와 거기서 파생된 식별자를 「엔티티」로 바꿨다. 클래스 이름은 바꾸지 않았다.
+ADR-0007이 폴더 이름과 클래스 이름을 다른 층위로 두고, #72도 같은 근거로 클래스 이름을 범위에서
+뺐기 때문이다.
+
+옛 낱말로 남은 이름은 아래 다섯이다.
+
+| 티어 | 이름 |
+| --- | --- |
+| 게임 서버 | `Object` · `ObjectRef` · `ObjectUtils` |
+| 클라이언트 | `UP1StatefulObjectManager` · `AP1ObjectSpawner` |
+
+`Room`의 멤버 `_objects`와 메서드 `AddObject` · `RemoveObject` · `TickObject`는 `Object` 클래스의
+API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않는다.
+
+### 영향
+
+**유지보수 어려움** — 한 파일 안에 두 낱말이 섞인다. `Server/GameServer/Game/Object/Object.h` 33줄이
+`Protocol::EntityInfo* _entityInfo`를 `Object` 클래스의 멤버로 들고 있다. CONTEXT.md가 「오브젝트」를
+피할 말로 정해 두었으므로, 코드를 읽는 사람이 남은 이름을 실수로 볼지 결정으로 볼지 판정하게 된다.
+
+## 패킷 핸들러 템플릿이 두 벌로 중복되어 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
+> 위치: `Protocol/Templates/PacketHandler.h` ·
+> `Tools/PacketHandlerGenerator/Templates/PacketHandler.h`
+> 등록일: 2026년 9월 21일
+
+같은 내용의 Jinja2 템플릿이 두 자리에 있다. 생성기가 실제로 읽는 것은 한 벌뿐이다.
+`Tools/PacketHandlerGenerator/PacketHandlerGenerator.py` 30줄이
+`jinja2.FileSystemLoader('Templates')`로 **작업 디렉터리 기준 상대 경로**를 잡는데,
+`GenPackets.bat`이 `pushd %~dp0`로 `Protocol/`에 들어간 뒤 생성기를 부르므로 `Protocol/Templates/`가
+쓰인다. `Tools/PacketHandlerGenerator/Templates/`는 쓰이지 않는다.
+
+#71에서 이 중복이 실제로 어긋나 있었다. #66이 클라이언트 include를 경로 한정으로 바꾸면서 생성물인
+`P1/Source/P1/Network/ClientPacketHandler.h`만 고치고 템플릿 두 벌을 옛 평탄 include로 남겨 두었다.
+`GenPackets.bat`을 돌리자 옛 include가 되살아나 클라이언트 빌드가 `C1083`으로 깨졌다. #71이 두 벌을
+같은 내용으로 고쳤으므로 지금은 어긋나 있지 않다.
+
+### 영향
+
+**재발 가능** — 다음에 템플릿을 고치는 사람이 쓰이지 않는 쪽만 고치면 아무 일도 일어나지 않는다.
+생성기를 돌려 봐야 알 수 있고, 그 시점에는 이미 생성물 일곱 벌이 세 티어에 복사된 뒤다.

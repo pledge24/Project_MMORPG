@@ -35,49 +35,49 @@ void UP1StatefulObjectManager::RegisterSpawner(AP1ObjectSpawner* Spawner)
     ObjectSpawners.Add(Spawner);
 }
 
-void UP1StatefulObjectManager::RegisterObject(uint64 ObjectId, AActor* SpawnedActor)
+void UP1StatefulObjectManager::RegisterEntity(uint64 EntityId, AActor* SpawnedActor)
 {
     if (AP1Monster* Monster = Cast<AP1Monster>(SpawnedActor))
-        Monsters.Add(ObjectId, Monster);
+        Monsters.Add(EntityId, Monster);
     else if (AP1Player* Player = Cast<AP1Player>(SpawnedActor))
-        Players.Add(ObjectId, Player);
+        Players.Add(EntityId, Player);
 
-    //UE_LOG(LogP1Entity, Log, TEXT("Object {%d} 등록됨"), ObjectId);
+    //UE_LOG(LogP1Entity, Log, TEXT("엔티티 {%d} 등록됨"), EntityId);
 }
 
-void UP1StatefulObjectManager::UnRegisterObject(uint64 ObjectId, EP1ObjectType ObjectType)
+void UP1StatefulObjectManager::UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType)
 {
-    switch (ObjectType)
+    switch (EntityType)
     {
-    case EP1ObjectType::Monster:
-        Monsters.Remove(ObjectId);
+    case EP1EntityType::Monster:
+        Monsters.Remove(EntityId);
         break;
 
-    case EP1ObjectType::Player:
-        Players.Remove(ObjectId);
+    case EP1EntityType::Player:
+        Players.Remove(EntityId);
         break;
     default:
-        UE_LOG(LogP1Entity, Log, TEXT("ObjectType 지정 안 됨"))
+        UE_LOG(LogP1Entity, Log, TEXT("EntityType 지정 안 됨"))
     }
 }
 
-AActor* UP1StatefulObjectManager::FindObject(uint64 ObjectId)
+AActor* UP1StatefulObjectManager::FindEntity(uint64 EntityId)
 {
-    if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(ObjectId))
+    if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(EntityId))
     {
         return *FindPlayer;
     }
-    else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(ObjectId))
+    else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(EntityId))
     {
         return *FindMonster;
     }
 
-    UE_LOG(LogP1Entity, Warning, TEXT("해당 Object(Id:%d)를 ObjectManager에서 찾지 못했습니다"), (int32)ObjectId);
+    UE_LOG(LogP1Entity, Warning, TEXT("해당 엔티티(Id:%d)를 ObjectManager에서 찾지 못했습니다"), (int32)EntityId);
 
     return nullptr;
 }
 
-void UP1StatefulObjectManager::SpawnObject(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId)
+void UP1StatefulObjectManager::SpawnEntity(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
 {
     if (ObjectSpawners.IsValidIndex(SpawnerId) == false)
     {
@@ -85,25 +85,25 @@ void UP1StatefulObjectManager::SpawnObject(const Protocol::ObjectInfo& InObjectI
         return;
     }
 
-    Protocol::ObjectType ObjectType = InObjectInfo.object_type();
-    switch (ObjectType)
+    Protocol::EntityType EntityType = InEntityInfo.entity_type();
+    switch (EntityType)
     {
-    case Protocol::ObjectType::OBJECT_TYPE_MONSTER:
-        SpawnMonster(InObjectInfo, SpawnerId);
+    case Protocol::EntityType::ENTITY_TYPE_MONSTER:
+        SpawnMonster(InEntityInfo, SpawnerId);
         break;
 
-    case Protocol::ObjectType::OBJECT_TYPE_PLAYER:
-        SpawnPlayer(InObjectInfo, SpawnerId);
+    case Protocol::EntityType::ENTITY_TYPE_PLAYER:
+        SpawnPlayer(InEntityInfo, SpawnerId);
         break;
     default:
-        UE_LOG(LogP1Entity, Warning, TEXT("ObjectType 누락"))
+        UE_LOG(LogP1Entity, Warning, TEXT("EntityType 누락"))
         break;
 
     }
 
 }
 
-void UP1StatefulObjectManager::DespawnAllObjects(bool ExceptMine)
+void UP1StatefulObjectManager::DespawnAllEntities(bool ExceptMine)
 {
     UWorld* World = GetWorld();
     UP1MyPlayerData* MyPlayerData = World->GetGameInstance()->GetSubsystem<UP1MyPlayerData>();
@@ -130,20 +130,20 @@ void UP1StatefulObjectManager::DespawnAllObjects(bool ExceptMine)
     }
 
     Clear();
-    RegisterObject(MyPlayerId, MyPlayer);
+    RegisterEntity(MyPlayerId, MyPlayer);
 }
 
-void UP1StatefulObjectManager::DespawnObject(uint64 ObjectId)
+void UP1StatefulObjectManager::DespawnEntity(uint64 EntityId)
 {
-    if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(ObjectId))
+    if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(EntityId))
     {
-        UnRegisterObject(ObjectId, EP1ObjectType::Player);
+        UnRegisterEntity(EntityId, EP1EntityType::Player);
         (*FindPlayer)->Destroy();
         return;
     }
-    else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(ObjectId))
+    else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(EntityId))
     {
-        UnRegisterObject(ObjectId, EP1ObjectType::Monster);
+        UnRegisterEntity(EntityId, EP1EntityType::Monster);
         (*FindMonster)->Destroy();
         return;
     }
@@ -155,24 +155,24 @@ void UP1StatefulObjectManager::Clear()
     Monsters.Empty();
 }
 
-void UP1StatefulObjectManager::SpawnMonster(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId)
+void UP1StatefulObjectManager::SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
 {
     AP1ObjectSpawner* Spawner = ObjectSpawners[SpawnerId];
 
-    const uint64 ObjectId = InObjectInfo.object_id();
-    if (Monsters.Find(ObjectId) != nullptr)
+    const uint64 EntityId = InEntityInfo.entity_id();
+    if (Monsters.Find(EntityId) != nullptr)
         return;
 
-    if (Monsters.Find(ObjectId))
+    if (Monsters.Find(EntityId))
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 ObjectId를 가진 몬스터 스폰 시도"));
+        UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 EntityId를 가진 몬스터 스폰 시도"));
         return;
     }
 
-    if (AP1Monster* NewMonster = Cast<AP1Monster>(Spawner->SpawnMonster(InObjectInfo)))
+    if (AP1Monster* NewMonster = Cast<AP1Monster>(Spawner->SpawnMonster(InEntityInfo)))
     {
         // Register New Monster
-        RegisterObject(ObjectId, NewMonster);
+        RegisterEntity(EntityId, NewMonster);
     }
     else
     {
@@ -181,24 +181,24 @@ void UP1StatefulObjectManager::SpawnMonster(const Protocol::ObjectInfo& InObject
     
 }
 
-void UP1StatefulObjectManager::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo, int32 SpawnerId)
+void UP1StatefulObjectManager::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
 {
     AP1ObjectSpawner* Spawner = ObjectSpawners[SpawnerId];
 
-    const uint64 ObjectId = InObjectInfo.object_id();
-    if (Players.Find(ObjectId) != nullptr)
+    const uint64 EntityId = InEntityInfo.entity_id();
+    if (Players.Find(EntityId) != nullptr)
         return;
 
-    if (Players.Find(ObjectId))
+    if (Players.Find(EntityId))
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 ObjectId를 가진 플레이어 스폰 시도"));
+        UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 EntityId를 가진 플레이어 스폰 시도"));
         return;
     }
 
-    if (AP1Player* NewPlayer = Cast<AP1Player>(Spawner->SpawnPlayer(InObjectInfo)))
+    if (AP1Player* NewPlayer = Cast<AP1Player>(Spawner->SpawnPlayer(InEntityInfo)))
     {
         // Register New Player
-        RegisterObject(ObjectId, NewPlayer);
+        RegisterEntity(EntityId, NewPlayer);
     }
     else
     {

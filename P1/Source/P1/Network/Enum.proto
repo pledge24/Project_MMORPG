@@ -1,13 +1,13 @@
 syntax = "proto3";
 package Protocol;
 
-enum ObjectType
+enum EntityType
 {
-	OBJECT_TYPE_NONE = 0;
-	OBJECT_TYPE_PLAYER = 1;
-	OBJECT_TYPE_MONSTER = 2;
-	OBJECT_TYPE_PROJECTILE = 3;
-	OBJECT_TYPE_ENV = 4;
+	ENTITY_TYPE_NONE = 0;
+	ENTITY_TYPE_PLAYER = 1;
+	ENTITY_TYPE_MONSTER = 2;
+	ENTITY_TYPE_PROJECTILE = 3;
+	ENTITY_TYPE_ENV = 4;
 }
 
 enum CharacterClass

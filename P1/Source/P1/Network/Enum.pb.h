@@ -47,33 +47,33 @@ PROTOBUF_NAMESPACE_OPEN
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
-enum ObjectType : int {
-  OBJECT_TYPE_NONE = 0,
-  OBJECT_TYPE_PLAYER = 1,
-  OBJECT_TYPE_MONSTER = 2,
-  OBJECT_TYPE_PROJECTILE = 3,
-  OBJECT_TYPE_ENV = 4,
-  ObjectType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  ObjectType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+enum EntityType : int {
+  ENTITY_TYPE_NONE = 0,
+  ENTITY_TYPE_PLAYER = 1,
+  ENTITY_TYPE_MONSTER = 2,
+  ENTITY_TYPE_PROJECTILE = 3,
+  ENTITY_TYPE_ENV = 4,
+  EntityType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  EntityType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool ObjectType_IsValid(int value);
-constexpr ObjectType ObjectType_MIN = OBJECT_TYPE_NONE;
-constexpr ObjectType ObjectType_MAX = OBJECT_TYPE_ENV;
-constexpr int ObjectType_ARRAYSIZE = ObjectType_MAX + 1;
+bool EntityType_IsValid(int value);
+constexpr EntityType EntityType_MIN = ENTITY_TYPE_NONE;
+constexpr EntityType EntityType_MAX = ENTITY_TYPE_ENV;
+constexpr int EntityType_ARRAYSIZE = EntityType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ObjectType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityType_descriptor();
 template<typename T>
-inline const std::string& ObjectType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, ObjectType>::value ||
+inline const std::string& EntityType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, EntityType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function ObjectType_Name.");
+    "Incorrect type passed to function EntityType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    ObjectType_descriptor(), enum_t_value);
+    EntityType_descriptor(), enum_t_value);
 }
-inline bool ObjectType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, ObjectType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ObjectType>(
-    ObjectType_descriptor(), name, value);
+inline bool EntityType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EntityType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EntityType>(
+    EntityType_descriptor(), name, value);
 }
 enum CharacterClass : int {
   CLASS_TYPE_NONE = 0,
@@ -464,10 +464,10 @@ inline bool RewardType_Parse(
 
 PROTOBUF_NAMESPACE_OPEN
 
-template <> struct is_proto_enum< ::Protocol::ObjectType> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::EntityType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::ObjectType>() {
-  return ::Protocol::ObjectType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::EntityType>() {
+  return ::Protocol::EntityType_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::CharacterClass> : ::std::true_type {};
 template <>

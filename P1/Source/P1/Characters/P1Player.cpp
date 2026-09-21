@@ -58,12 +58,12 @@ void AP1Player::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AP1Player::Initialize(const Protocol::ObjectInfo& ObjectInfo)
+void AP1Player::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
-    Super::Initialize(ObjectInfo);
+    Super::Initialize(EntityInfo);
 
     // 장착한 장비를 메시로 표현
-    /*for (const auto& Pair : ObjectInfo.player_info().equipped_gear())
+    /*for (const auto& Pair : EntityInfo.player_info().equipped_gear())
     {
         const Protocol::Slot& Slot_ = Pair.second;
         EquipGear(Slot_);

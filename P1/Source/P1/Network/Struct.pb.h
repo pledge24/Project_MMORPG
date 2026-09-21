@@ -58,6 +58,9 @@ extern CharacterOverviewDefaultTypeInternal _CharacterOverview_default_instance_
 class Effect;
 struct EffectDefaultTypeInternal;
 extern EffectDefaultTypeInternal _Effect_default_instance_;
+class EntityInfo;
+struct EntityInfoDefaultTypeInternal;
+extern EntityInfoDefaultTypeInternal _EntityInfo_default_instance_;
 class GearInfo;
 struct GearInfoDefaultTypeInternal;
 extern GearInfoDefaultTypeInternal _GearInfo_default_instance_;
@@ -76,9 +79,6 @@ extern LevelUpInfoDefaultTypeInternal _LevelUpInfo_default_instance_;
 class MonsterInfo;
 struct MonsterInfoDefaultTypeInternal;
 extern MonsterInfoDefaultTypeInternal _MonsterInfo_default_instance_;
-class ObjectInfo;
-struct ObjectInfoDefaultTypeInternal;
-extern ObjectInfoDefaultTypeInternal _ObjectInfo_default_instance_;
 class PlayerInfo;
 struct PlayerInfoDefaultTypeInternal;
 extern PlayerInfoDefaultTypeInternal _PlayerInfo_default_instance_;
@@ -117,13 +117,13 @@ PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::AttackInfo* Arena::CreateMaybeMessage<::Protocol::AttackInfo>(Arena*);
 template<> ::Protocol::CharacterOverview* Arena::CreateMaybeMessage<::Protocol::CharacterOverview>(Arena*);
 template<> ::Protocol::Effect* Arena::CreateMaybeMessage<::Protocol::Effect>(Arena*);
+template<> ::Protocol::EntityInfo* Arena::CreateMaybeMessage<::Protocol::EntityInfo>(Arena*);
 template<> ::Protocol::GearInfo* Arena::CreateMaybeMessage<::Protocol::GearInfo>(Arena*);
 template<> ::Protocol::HitInfo* Arena::CreateMaybeMessage<::Protocol::HitInfo>(Arena*);
 template<> ::Protocol::Inventory* Arena::CreateMaybeMessage<::Protocol::Inventory>(Arena*);
 template<> ::Protocol::Item* Arena::CreateMaybeMessage<::Protocol::Item>(Arena*);
 template<> ::Protocol::LevelUpInfo* Arena::CreateMaybeMessage<::Protocol::LevelUpInfo>(Arena*);
 template<> ::Protocol::MonsterInfo* Arena::CreateMaybeMessage<::Protocol::MonsterInfo>(Arena*);
-template<> ::Protocol::ObjectInfo* Arena::CreateMaybeMessage<::Protocol::ObjectInfo>(Arena*);
 template<> ::Protocol::PlayerInfo* Arena::CreateMaybeMessage<::Protocol::PlayerInfo>(Arena*);
 template<> ::Protocol::PlayerInfo_EquippedGearSummaryEntry_DoNotUse* Arena::CreateMaybeMessage<::Protocol::PlayerInfo_EquippedGearSummaryEntry_DoNotUse>(Arena*);
 template<> ::Protocol::PosInfo* Arena::CreateMaybeMessage<::Protocol::PosInfo>(Arena*);
@@ -326,24 +326,24 @@ class CharacterOverview final :
 };
 // -------------------------------------------------------------------
 
-class ObjectInfo final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.ObjectInfo) */ {
+class EntityInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.EntityInfo) */ {
  public:
-  inline ObjectInfo() : ObjectInfo(nullptr) {}
-  ~ObjectInfo() override;
-  explicit PROTOBUF_CONSTEXPR ObjectInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline EntityInfo() : EntityInfo(nullptr) {}
+  ~EntityInfo() override;
+  explicit PROTOBUF_CONSTEXPR EntityInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  ObjectInfo(const ObjectInfo& from);
-  ObjectInfo(ObjectInfo&& from) noexcept
-    : ObjectInfo() {
+  EntityInfo(const EntityInfo& from);
+  EntityInfo(EntityInfo&& from) noexcept
+    : EntityInfo() {
     *this = ::std::move(from);
   }
 
-  inline ObjectInfo& operator=(const ObjectInfo& from) {
+  inline EntityInfo& operator=(const EntityInfo& from) {
     CopyFrom(from);
     return *this;
   }
-  inline ObjectInfo& operator=(ObjectInfo&& from) noexcept {
+  inline EntityInfo& operator=(EntityInfo&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -366,7 +366,7 @@ class ObjectInfo final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const ObjectInfo& default_instance() {
+  static const EntityInfo& default_instance() {
     return *internal_default_instance();
   }
   enum DetailsCase {
@@ -375,17 +375,17 @@ class ObjectInfo final :
     DETAILS_NOT_SET = 0,
   };
 
-  static inline const ObjectInfo* internal_default_instance() {
-    return reinterpret_cast<const ObjectInfo*>(
-               &_ObjectInfo_default_instance_);
+  static inline const EntityInfo* internal_default_instance() {
+    return reinterpret_cast<const EntityInfo*>(
+               &_EntityInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     1;
 
-  friend void swap(ObjectInfo& a, ObjectInfo& b) {
+  friend void swap(EntityInfo& a, EntityInfo& b) {
     a.Swap(&b);
   }
-  inline void Swap(ObjectInfo* other) {
+  inline void Swap(EntityInfo* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -398,7 +398,7 @@ class ObjectInfo final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(ObjectInfo* other) {
+  void UnsafeArenaSwap(EntityInfo* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -406,14 +406,14 @@ class ObjectInfo final :
 
   // implements Message ----------------------------------------------
 
-  ObjectInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<ObjectInfo>(arena);
+  EntityInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<EntityInfo>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const ObjectInfo& from);
+  void CopyFrom(const EntityInfo& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const ObjectInfo& from) {
-    ObjectInfo::MergeImpl(*this, from);
+  void MergeFrom( const EntityInfo& from) {
+    EntityInfo::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -431,15 +431,15 @@ class ObjectInfo final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(ObjectInfo* other);
+  void InternalSwap(EntityInfo* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.ObjectInfo";
+    return "Protocol.EntityInfo";
   }
   protected:
-  explicit ObjectInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit EntityInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -454,8 +454,8 @@ class ObjectInfo final :
 
   enum : int {
     kPosInfoFieldNumber = 3,
-    kObjectIdFieldNumber = 1,
-    kObjectTypeFieldNumber = 2,
+    kEntityIdFieldNumber = 1,
+    kEntityTypeFieldNumber = 2,
     kPlayerInfoFieldNumber = 4,
     kMonsterInfoFieldNumber = 5,
   };
@@ -477,22 +477,22 @@ class ObjectInfo final :
       ::Protocol::PosInfo* pos_info);
   ::Protocol::PosInfo* unsafe_arena_release_pos_info();
 
-  // int64 object_id = 1;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
-  // .Protocol.ObjectType object_type = 2;
-  void clear_object_type();
-  ::Protocol::ObjectType object_type() const;
-  void set_object_type(::Protocol::ObjectType value);
+  // .Protocol.EntityType entity_type = 2;
+  void clear_entity_type();
+  ::Protocol::EntityType entity_type() const;
+  void set_entity_type(::Protocol::EntityType value);
   private:
-  ::Protocol::ObjectType _internal_object_type() const;
-  void _internal_set_object_type(::Protocol::ObjectType value);
+  ::Protocol::EntityType _internal_entity_type() const;
+  void _internal_set_entity_type(::Protocol::EntityType value);
   public:
 
   // .Protocol.PlayerInfo player_info = 4;
@@ -533,7 +533,7 @@ class ObjectInfo final :
 
   void clear_details();
   DetailsCase details_case() const;
-  // @@protoc_insertion_point(class_scope:Protocol.ObjectInfo)
+  // @@protoc_insertion_point(class_scope:Protocol.EntityInfo)
  private:
   class _Internal;
   void set_has_player_info();
@@ -547,8 +547,8 @@ class ObjectInfo final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::Protocol::PosInfo* pos_info_;
-    int64_t object_id_;
-    int object_type_;
+    int64_t entity_id_;
+    int entity_type_;
     union DetailsUnion {
       constexpr DetailsUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
@@ -1492,7 +1492,7 @@ class PosInfo final :
   enum : int {
     kPosFieldNumber = 2,
     kMoveDirectionFieldNumber = 4,
-    kObjectIdFieldNumber = 1,
+    kEntityIdFieldNumber = 1,
     kYawFieldNumber = 3,
     kStateFieldNumber = 5,
   };
@@ -1532,13 +1532,13 @@ class PosInfo final :
       ::Protocol::Vector* move_direction);
   ::Protocol::Vector* unsafe_arena_release_move_direction();
 
-  // int64 object_id = 1;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // float yaw = 3;
@@ -1569,7 +1569,7 @@ class PosInfo final :
   struct Impl_ {
     ::Protocol::Vector* pos_;
     ::Protocol::Vector* move_direction_;
-    int64_t object_id_;
+    int64_t entity_id_;
     float yaw_;
     int state_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -3797,71 +3797,71 @@ inline void CharacterOverview::set_level(int32_t value) {
 
 // -------------------------------------------------------------------
 
-// ObjectInfo
+// EntityInfo
 
-// int64 object_id = 1;
-inline void ObjectInfo::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 1;
+inline void EntityInfo::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t ObjectInfo::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t EntityInfo::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t ObjectInfo::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.object_id)
-  return _internal_object_id();
+inline int64_t EntityInfo::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.EntityInfo.entity_id)
+  return _internal_entity_id();
 }
-inline void ObjectInfo::_internal_set_object_id(int64_t value) {
+inline void EntityInfo::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void ObjectInfo::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.ObjectInfo.object_id)
+inline void EntityInfo::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.EntityInfo.entity_id)
 }
 
-// .Protocol.ObjectType object_type = 2;
-inline void ObjectInfo::clear_object_type() {
-  _impl_.object_type_ = 0;
+// .Protocol.EntityType entity_type = 2;
+inline void EntityInfo::clear_entity_type() {
+  _impl_.entity_type_ = 0;
 }
-inline ::Protocol::ObjectType ObjectInfo::_internal_object_type() const {
-  return static_cast< ::Protocol::ObjectType >(_impl_.object_type_);
+inline ::Protocol::EntityType EntityInfo::_internal_entity_type() const {
+  return static_cast< ::Protocol::EntityType >(_impl_.entity_type_);
 }
-inline ::Protocol::ObjectType ObjectInfo::object_type() const {
-  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.object_type)
-  return _internal_object_type();
+inline ::Protocol::EntityType EntityInfo::entity_type() const {
+  // @@protoc_insertion_point(field_get:Protocol.EntityInfo.entity_type)
+  return _internal_entity_type();
 }
-inline void ObjectInfo::_internal_set_object_type(::Protocol::ObjectType value) {
+inline void EntityInfo::_internal_set_entity_type(::Protocol::EntityType value) {
   
-  _impl_.object_type_ = value;
+  _impl_.entity_type_ = value;
 }
-inline void ObjectInfo::set_object_type(::Protocol::ObjectType value) {
-  _internal_set_object_type(value);
-  // @@protoc_insertion_point(field_set:Protocol.ObjectInfo.object_type)
+inline void EntityInfo::set_entity_type(::Protocol::EntityType value) {
+  _internal_set_entity_type(value);
+  // @@protoc_insertion_point(field_set:Protocol.EntityInfo.entity_type)
 }
 
 // .Protocol.PosInfo pos_info = 3;
-inline bool ObjectInfo::_internal_has_pos_info() const {
+inline bool EntityInfo::_internal_has_pos_info() const {
   return this != internal_default_instance() && _impl_.pos_info_ != nullptr;
 }
-inline bool ObjectInfo::has_pos_info() const {
+inline bool EntityInfo::has_pos_info() const {
   return _internal_has_pos_info();
 }
-inline void ObjectInfo::clear_pos_info() {
+inline void EntityInfo::clear_pos_info() {
   if (GetArenaForAllocation() == nullptr && _impl_.pos_info_ != nullptr) {
     delete _impl_.pos_info_;
   }
   _impl_.pos_info_ = nullptr;
 }
-inline const ::Protocol::PosInfo& ObjectInfo::_internal_pos_info() const {
+inline const ::Protocol::PosInfo& EntityInfo::_internal_pos_info() const {
   const ::Protocol::PosInfo* p = _impl_.pos_info_;
   return p != nullptr ? *p : reinterpret_cast<const ::Protocol::PosInfo&>(
       ::Protocol::_PosInfo_default_instance_);
 }
-inline const ::Protocol::PosInfo& ObjectInfo::pos_info() const {
-  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.pos_info)
+inline const ::Protocol::PosInfo& EntityInfo::pos_info() const {
+  // @@protoc_insertion_point(field_get:Protocol.EntityInfo.pos_info)
   return _internal_pos_info();
 }
-inline void ObjectInfo::unsafe_arena_set_allocated_pos_info(
+inline void EntityInfo::unsafe_arena_set_allocated_pos_info(
     ::Protocol::PosInfo* pos_info) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.pos_info_);
@@ -3872,9 +3872,9 @@ inline void ObjectInfo::unsafe_arena_set_allocated_pos_info(
   } else {
     
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.ObjectInfo.pos_info)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.EntityInfo.pos_info)
 }
-inline ::Protocol::PosInfo* ObjectInfo::release_pos_info() {
+inline ::Protocol::PosInfo* EntityInfo::release_pos_info() {
   
   ::Protocol::PosInfo* temp = _impl_.pos_info_;
   _impl_.pos_info_ = nullptr;
@@ -3889,14 +3889,14 @@ inline ::Protocol::PosInfo* ObjectInfo::release_pos_info() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::PosInfo* ObjectInfo::unsafe_arena_release_pos_info() {
-  // @@protoc_insertion_point(field_release:Protocol.ObjectInfo.pos_info)
+inline ::Protocol::PosInfo* EntityInfo::unsafe_arena_release_pos_info() {
+  // @@protoc_insertion_point(field_release:Protocol.EntityInfo.pos_info)
   
   ::Protocol::PosInfo* temp = _impl_.pos_info_;
   _impl_.pos_info_ = nullptr;
   return temp;
 }
-inline ::Protocol::PosInfo* ObjectInfo::_internal_mutable_pos_info() {
+inline ::Protocol::PosInfo* EntityInfo::_internal_mutable_pos_info() {
   
   if (_impl_.pos_info_ == nullptr) {
     auto* p = CreateMaybeMessage<::Protocol::PosInfo>(GetArenaForAllocation());
@@ -3904,12 +3904,12 @@ inline ::Protocol::PosInfo* ObjectInfo::_internal_mutable_pos_info() {
   }
   return _impl_.pos_info_;
 }
-inline ::Protocol::PosInfo* ObjectInfo::mutable_pos_info() {
+inline ::Protocol::PosInfo* EntityInfo::mutable_pos_info() {
   ::Protocol::PosInfo* _msg = _internal_mutable_pos_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.ObjectInfo.pos_info)
+  // @@protoc_insertion_point(field_mutable:Protocol.EntityInfo.pos_info)
   return _msg;
 }
-inline void ObjectInfo::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
+inline void EntityInfo::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete _impl_.pos_info_;
@@ -3926,20 +3926,20 @@ inline void ObjectInfo::set_allocated_pos_info(::Protocol::PosInfo* pos_info) {
     
   }
   _impl_.pos_info_ = pos_info;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.ObjectInfo.pos_info)
+  // @@protoc_insertion_point(field_set_allocated:Protocol.EntityInfo.pos_info)
 }
 
 // .Protocol.PlayerInfo player_info = 4;
-inline bool ObjectInfo::_internal_has_player_info() const {
+inline bool EntityInfo::_internal_has_player_info() const {
   return details_case() == kPlayerInfo;
 }
-inline bool ObjectInfo::has_player_info() const {
+inline bool EntityInfo::has_player_info() const {
   return _internal_has_player_info();
 }
-inline void ObjectInfo::set_has_player_info() {
+inline void EntityInfo::set_has_player_info() {
   _impl_._oneof_case_[0] = kPlayerInfo;
 }
-inline void ObjectInfo::clear_player_info() {
+inline void EntityInfo::clear_player_info() {
   if (_internal_has_player_info()) {
     if (GetArenaForAllocation() == nullptr) {
       delete _impl_.details_.player_info_;
@@ -3947,8 +3947,8 @@ inline void ObjectInfo::clear_player_info() {
     clear_has_details();
   }
 }
-inline ::Protocol::PlayerInfo* ObjectInfo::release_player_info() {
-  // @@protoc_insertion_point(field_release:Protocol.ObjectInfo.player_info)
+inline ::Protocol::PlayerInfo* EntityInfo::release_player_info() {
+  // @@protoc_insertion_point(field_release:Protocol.EntityInfo.player_info)
   if (_internal_has_player_info()) {
     clear_has_details();
     ::Protocol::PlayerInfo* temp = _impl_.details_.player_info_;
@@ -3961,17 +3961,17 @@ inline ::Protocol::PlayerInfo* ObjectInfo::release_player_info() {
     return nullptr;
   }
 }
-inline const ::Protocol::PlayerInfo& ObjectInfo::_internal_player_info() const {
+inline const ::Protocol::PlayerInfo& EntityInfo::_internal_player_info() const {
   return _internal_has_player_info()
       ? *_impl_.details_.player_info_
       : reinterpret_cast< ::Protocol::PlayerInfo&>(::Protocol::_PlayerInfo_default_instance_);
 }
-inline const ::Protocol::PlayerInfo& ObjectInfo::player_info() const {
-  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.player_info)
+inline const ::Protocol::PlayerInfo& EntityInfo::player_info() const {
+  // @@protoc_insertion_point(field_get:Protocol.EntityInfo.player_info)
   return _internal_player_info();
 }
-inline ::Protocol::PlayerInfo* ObjectInfo::unsafe_arena_release_player_info() {
-  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.ObjectInfo.player_info)
+inline ::Protocol::PlayerInfo* EntityInfo::unsafe_arena_release_player_info() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.EntityInfo.player_info)
   if (_internal_has_player_info()) {
     clear_has_details();
     ::Protocol::PlayerInfo* temp = _impl_.details_.player_info_;
@@ -3981,15 +3981,15 @@ inline ::Protocol::PlayerInfo* ObjectInfo::unsafe_arena_release_player_info() {
     return nullptr;
   }
 }
-inline void ObjectInfo::unsafe_arena_set_allocated_player_info(::Protocol::PlayerInfo* player_info) {
+inline void EntityInfo::unsafe_arena_set_allocated_player_info(::Protocol::PlayerInfo* player_info) {
   clear_details();
   if (player_info) {
     set_has_player_info();
     _impl_.details_.player_info_ = player_info;
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.ObjectInfo.player_info)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.EntityInfo.player_info)
 }
-inline ::Protocol::PlayerInfo* ObjectInfo::_internal_mutable_player_info() {
+inline ::Protocol::PlayerInfo* EntityInfo::_internal_mutable_player_info() {
   if (!_internal_has_player_info()) {
     clear_details();
     set_has_player_info();
@@ -3997,23 +3997,23 @@ inline ::Protocol::PlayerInfo* ObjectInfo::_internal_mutable_player_info() {
   }
   return _impl_.details_.player_info_;
 }
-inline ::Protocol::PlayerInfo* ObjectInfo::mutable_player_info() {
+inline ::Protocol::PlayerInfo* EntityInfo::mutable_player_info() {
   ::Protocol::PlayerInfo* _msg = _internal_mutable_player_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.ObjectInfo.player_info)
+  // @@protoc_insertion_point(field_mutable:Protocol.EntityInfo.player_info)
   return _msg;
 }
 
 // .Protocol.MonsterInfo monster_info = 5;
-inline bool ObjectInfo::_internal_has_monster_info() const {
+inline bool EntityInfo::_internal_has_monster_info() const {
   return details_case() == kMonsterInfo;
 }
-inline bool ObjectInfo::has_monster_info() const {
+inline bool EntityInfo::has_monster_info() const {
   return _internal_has_monster_info();
 }
-inline void ObjectInfo::set_has_monster_info() {
+inline void EntityInfo::set_has_monster_info() {
   _impl_._oneof_case_[0] = kMonsterInfo;
 }
-inline void ObjectInfo::clear_monster_info() {
+inline void EntityInfo::clear_monster_info() {
   if (_internal_has_monster_info()) {
     if (GetArenaForAllocation() == nullptr) {
       delete _impl_.details_.monster_info_;
@@ -4021,8 +4021,8 @@ inline void ObjectInfo::clear_monster_info() {
     clear_has_details();
   }
 }
-inline ::Protocol::MonsterInfo* ObjectInfo::release_monster_info() {
-  // @@protoc_insertion_point(field_release:Protocol.ObjectInfo.monster_info)
+inline ::Protocol::MonsterInfo* EntityInfo::release_monster_info() {
+  // @@protoc_insertion_point(field_release:Protocol.EntityInfo.monster_info)
   if (_internal_has_monster_info()) {
     clear_has_details();
     ::Protocol::MonsterInfo* temp = _impl_.details_.monster_info_;
@@ -4035,17 +4035,17 @@ inline ::Protocol::MonsterInfo* ObjectInfo::release_monster_info() {
     return nullptr;
   }
 }
-inline const ::Protocol::MonsterInfo& ObjectInfo::_internal_monster_info() const {
+inline const ::Protocol::MonsterInfo& EntityInfo::_internal_monster_info() const {
   return _internal_has_monster_info()
       ? *_impl_.details_.monster_info_
       : reinterpret_cast< ::Protocol::MonsterInfo&>(::Protocol::_MonsterInfo_default_instance_);
 }
-inline const ::Protocol::MonsterInfo& ObjectInfo::monster_info() const {
-  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.monster_info)
+inline const ::Protocol::MonsterInfo& EntityInfo::monster_info() const {
+  // @@protoc_insertion_point(field_get:Protocol.EntityInfo.monster_info)
   return _internal_monster_info();
 }
-inline ::Protocol::MonsterInfo* ObjectInfo::unsafe_arena_release_monster_info() {
-  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.ObjectInfo.monster_info)
+inline ::Protocol::MonsterInfo* EntityInfo::unsafe_arena_release_monster_info() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.EntityInfo.monster_info)
   if (_internal_has_monster_info()) {
     clear_has_details();
     ::Protocol::MonsterInfo* temp = _impl_.details_.monster_info_;
@@ -4055,15 +4055,15 @@ inline ::Protocol::MonsterInfo* ObjectInfo::unsafe_arena_release_monster_info() 
     return nullptr;
   }
 }
-inline void ObjectInfo::unsafe_arena_set_allocated_monster_info(::Protocol::MonsterInfo* monster_info) {
+inline void EntityInfo::unsafe_arena_set_allocated_monster_info(::Protocol::MonsterInfo* monster_info) {
   clear_details();
   if (monster_info) {
     set_has_monster_info();
     _impl_.details_.monster_info_ = monster_info;
   }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.ObjectInfo.monster_info)
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.EntityInfo.monster_info)
 }
-inline ::Protocol::MonsterInfo* ObjectInfo::_internal_mutable_monster_info() {
+inline ::Protocol::MonsterInfo* EntityInfo::_internal_mutable_monster_info() {
   if (!_internal_has_monster_info()) {
     clear_details();
     set_has_monster_info();
@@ -4071,20 +4071,20 @@ inline ::Protocol::MonsterInfo* ObjectInfo::_internal_mutable_monster_info() {
   }
   return _impl_.details_.monster_info_;
 }
-inline ::Protocol::MonsterInfo* ObjectInfo::mutable_monster_info() {
+inline ::Protocol::MonsterInfo* EntityInfo::mutable_monster_info() {
   ::Protocol::MonsterInfo* _msg = _internal_mutable_monster_info();
-  // @@protoc_insertion_point(field_mutable:Protocol.ObjectInfo.monster_info)
+  // @@protoc_insertion_point(field_mutable:Protocol.EntityInfo.monster_info)
   return _msg;
 }
 
-inline bool ObjectInfo::has_details() const {
+inline bool EntityInfo::has_details() const {
   return details_case() != DETAILS_NOT_SET;
 }
-inline void ObjectInfo::clear_has_details() {
+inline void EntityInfo::clear_has_details() {
   _impl_._oneof_case_[0] = DETAILS_NOT_SET;
 }
-inline ObjectInfo::DetailsCase ObjectInfo::details_case() const {
-  return ObjectInfo::DetailsCase(_impl_._oneof_case_[0]);
+inline EntityInfo::DetailsCase EntityInfo::details_case() const {
+  return EntityInfo::DetailsCase(_impl_._oneof_case_[0]);
 }
 // -------------------------------------------------------------------
 
@@ -4528,24 +4528,24 @@ inline void Vector::set_z(float value) {
 
 // PosInfo
 
-// int64 object_id = 1;
-inline void PosInfo::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 1;
+inline void PosInfo::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t PosInfo::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t PosInfo::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t PosInfo::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.PosInfo.object_id)
-  return _internal_object_id();
+inline int64_t PosInfo::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.PosInfo.entity_id)
+  return _internal_entity_id();
 }
-inline void PosInfo::_internal_set_object_id(int64_t value) {
+inline void PosInfo::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void PosInfo::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.PosInfo.object_id)
+inline void PosInfo::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.PosInfo.entity_id)
 }
 
 // .Protocol.Vector pos = 2;

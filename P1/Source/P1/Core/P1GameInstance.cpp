@@ -152,7 +152,7 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
         return;
 
     UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>();
-    const Protocol::ObjectInfo& ObjectInfo = EnterGamePkt.player();
+    const Protocol::EntityInfo& EntityInfo = EnterGamePkt.player();
 
     // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다.
     MyPlayerData->InitMyPlayerData(EnterGamePkt);
@@ -207,7 +207,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
 
 }
 
-void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo)
+void UP1GameInstance::HandleSpawn(const Protocol::EntityInfo& EntityInfo)
 {
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
@@ -218,7 +218,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::ObjectInfo& ObjectInfo)
 
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        StatefulObjectManager->SpawnObject(ObjectInfo);
+        StatefulObjectManager->SpawnEntity(EntityInfo);
     }
 }
 
@@ -233,9 +233,9 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-	    for (auto& Object : SpawnPkt.objects())
+	    for (auto& Entity : SpawnPkt.entities())
 	    {
-            StatefulObjectManager->SpawnObject(Object);
+            StatefulObjectManager->SpawnEntity(Entity);
 	    }
     }
 }
@@ -251,9 +251,9 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        for (auto& ObjectId : DespawnPkt.object_ids())
+        for (auto& EntityId : DespawnPkt.entity_ids())
         {
-            StatefulObjectManager->DespawnObject(ObjectId);
+            StatefulObjectManager->DespawnEntity(EntityId);
         }
     }
 	
@@ -270,7 +270,7 @@ void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
 
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        StatefulObjectManager->DespawnAllObjects(ExceptMine);
+        StatefulObjectManager->DespawnAllEntities(ExceptMine);
     }
 }
 
@@ -282,7 +282,7 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
 
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(Info.object_id());
+        AActor* FindActor = StatefulObjectManager->FindEntity(Info.entity_id());
         if (FindActor == nullptr)
             return;
 
@@ -355,10 +355,10 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (World == nullptr)
         return;
 
-    const uint64 ObjectId = UseItemPkt.object_id();
+    const uint64 EntityId = UseItemPkt.entity_id();
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -399,10 +399,10 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     if (World == nullptr)
         return;
 
-    const uint64 ObjectId = EquipGearPkt.object_id();
+    const uint64 EntityId = EquipGearPkt.entity_id();
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -466,10 +466,10 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     if (World == nullptr)
         return;
 
-    const uint64 ObjectId = UnequipGearPkt.object_id();
+    const uint64 EntityId = UnequipGearPkt.entity_id();
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -535,10 +535,10 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
     if (World == nullptr)
         return;
 
-    const uint64 ObjectId = NormalAttackPkt.object_id();
+    const uint64 EntityId = NormalAttackPkt.entity_id();
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
         
@@ -563,10 +563,10 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
     if (World == nullptr)
         return;
 
-    int64 ObjectId = HitPkt.object_id();
+    int64 EntityId = HitPkt.entity_id();
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -594,10 +594,10 @@ void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
     if (World == nullptr)
         return;
 
-    const uint64 ObjectId = DiePkt.object_id();
+    const uint64 EntityId = DiePkt.entity_id();
     if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindObject(ObjectId);
+        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 

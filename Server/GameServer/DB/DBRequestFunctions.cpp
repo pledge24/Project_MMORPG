@@ -395,7 +395,7 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     Protocol::S_ENTER_GAME enterGamePkt;
     {
         enterGamePkt.set_success(true);
-        enterGamePkt.mutable_player()->CopyFrom(*player->_objectInfo);
+        enterGamePkt.mutable_player()->CopyFrom(*player->_entityInfo);
 
         enterGamePkt.mutable_stat_info()->CopyFrom(*player->_statInfo);
         enterGamePkt.mutable_possession()->CopyFrom(*player->_possession);
@@ -631,7 +631,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
             return false;
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-        Protocol::ObjectInfo* objectInfo = player->_objectInfo;
+        Protocol::EntityInfo* entityInfo = player->_entityInfo;
         Protocol::PlayerInfo* playerInfo = player->_playerInfo;
         Protocol::StatInfo* statInfo = player->_statInfo;
         auto* statMappings = statInfo->mutable_info();
@@ -661,7 +661,7 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
             Protocol::PosInfo spawnPosInfo;
             Protocol::Vector& pos = *spawnPosInfo.mutable_pos();
 
-            spawnPosInfo.set_object_id(objectInfo->object_id());
+            spawnPosInfo.set_entity_id(entityInfo->entity_id());
             pos.set_x(bindObject._posX);
             pos.set_y(bindObject._posY);
             pos.set_z(bindObject._posZ);
@@ -984,7 +984,7 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
         )SQL");
 
         PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-        Protocol::ObjectInfo* objectInfo = player->_objectInfo;
+        Protocol::EntityInfo* entityInfo = player->_entityInfo;
         Protocol::PlayerInfo* playerInfo = player->_playerInfo;
 
         BindObject bindObject(dbBind, playerInfo->character_id(), playerInfo->level());
@@ -1013,10 +1013,10 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player)
         {
-            const Protocol::ObjectInfo& objectInfo = *player->_objectInfo;
+            const Protocol::EntityInfo& entityInfo = *player->_entityInfo;
             const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
             const Protocol::StatInfo& statInfo = *player->_statInfo;
-            const Protocol::PosInfo& posInfo = objectInfo.pos_info();
+            const Protocol::PosInfo& posInfo = entityInfo.pos_info();
             auto& statMappings = statInfo.info();
 
             _exp = statMappings.at(Protocol::STAT_TYPE_EXP);
