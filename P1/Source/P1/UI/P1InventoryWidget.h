@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "Protocol.pb.h"
 #include "P1InventoryWidget.generated.h"
 
@@ -10,7 +10,7 @@ class UUniformGridPanel;
 class UTextBlock;
 
 UCLASS()
-class P1_API UP1InventoryWidget : public UUserWidget
+class P1_API UP1InventoryWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

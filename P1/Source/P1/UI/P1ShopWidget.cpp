@@ -10,7 +10,7 @@ void UP1ShopWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    if (auto* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
@@ -34,7 +34,7 @@ void UP1ShopWidget::SendBuyItemPacket(UP1SlotWidget* Slot_)
     else
         PendingPacket = true;
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    if (auto* GameInstance = GetP1GameInstance())
     {
 
         int64 Gold = GameInstance->GetMyPlayerData()->GetGold();

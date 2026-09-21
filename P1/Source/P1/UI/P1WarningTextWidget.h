@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "P1WarningTextWidget.generated.h"
 
 UCLASS()
-class P1_API UP1WarningTextWidget : public UUserWidget
+class P1_API UP1WarningTextWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

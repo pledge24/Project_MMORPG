@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "Data/P1ItemData.h"
 #include "UI/P1ItemTooltipWidget.h"
 #include "Engine/DataTable.h"
@@ -14,7 +14,7 @@ class UP1ItemTooltipWidget;
 class UButton;
 
 UCLASS()
-class P1_API UP1SlotWidget : public UUserWidget
+class P1_API UP1SlotWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

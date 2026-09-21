@@ -12,7 +12,7 @@ void UP1InventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    if (auto* GameInstance = GetP1GameInstance())
     {
         // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
@@ -157,7 +157,7 @@ void UP1InventoryWidget::SendUseItemPacket(UP1SlotWidget* SlotWidget)
         const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
         auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-        auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
+        auto* GameInstance = GetP1GameInstance();
         if (GameInstance == nullptr)
             return;
 
@@ -195,7 +195,7 @@ void UP1InventoryWidget::SendEquipItemPacket(UP1SlotWidget* SlotWidget)
         const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
         auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-        auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance());
+        auto* GameInstance = GetP1GameInstance();
         if (GameInstance == nullptr)
             return;
 

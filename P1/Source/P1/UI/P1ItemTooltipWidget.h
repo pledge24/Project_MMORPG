@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "Data/BP_Structs.h"
 #include "P1ItemTooltipWidget.generated.h"
 
@@ -10,7 +10,7 @@ class UTextBlock;
 class UVerticalBox;
 
 UCLASS()
-class P1_API UP1ItemTooltipWidget : public UUserWidget
+class P1_API UP1ItemTooltipWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

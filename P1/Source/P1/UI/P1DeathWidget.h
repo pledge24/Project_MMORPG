@@ -1,12 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "Characters/P1MyPlayer.h"
 #include "P1DeathWidget.generated.h"
 
 UCLASS()
-class P1_API UP1DeathWidget : public UUserWidget
+class P1_API UP1DeathWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 
