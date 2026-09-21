@@ -735,7 +735,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## 동기화 대상을 가리키는 클래스 이름이 아직 「오브젝트」다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · shared
-> 위치: `Server/GameServer/Game/Object/Object.h` · `Server/GameServer/Utils/ObjectUtils.h` ·
+> 위치: `Server/GameServer/Game/Entities/Object.h` · `Server/GameServer/Utils/ObjectUtils.h` ·
 > `P1/Source/P1/Entities/P1StatefulObjectManager.h` · `P1/Source/P1/Entities/P1ObjectSpawner.h`
 > 등록일: 2026년 9월 21일
 
@@ -753,14 +753,14 @@ ADR-0007이 폴더 이름과 클래스 이름을 다른 층위로 두고, #72도
 `Room`의 멤버 `_objects`와 메서드 `AddObject` · `RemoveObject` · `TickObject`는 `Object` 클래스의
 API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않는다.
 
-폴더 이름은 여기서 세지 않는다. `Server/GameServer/Game/Object/`를 `Game/Entities/`로 옮기는 것은
-#72가 맡는다.
+폴더 이름은 여기서 세지 않는다. #72가 `Server/GameServer/Game/Object/`를 `Game/Entities/`로 이미
+옮겼고, 남은 것은 그 폴더 안의 클래스 이름이다.
 
 이 항목을 갚는 티켓은 #87이다.
 
 ### 영향
 
-**유지보수 어려움** — 한 파일 안에 두 낱말이 섞인다. `Server/GameServer/Game/Object/Object.h` 33줄이
+**유지보수 어려움** — 한 파일 안에 두 낱말이 섞인다. `Server/GameServer/Game/Entities/Object.h` 33줄이
 `Protocol::EntityInfo* _entityInfo`를 `Object` 클래스의 멤버로 들고 있다. CONTEXT.md가 「오브젝트」를
 피할 말로 정해 두었으므로, 코드를 읽는 사람이 남은 이름을 실수로 볼지 결정으로 볼지 판정하게 된다.
 
@@ -788,7 +788,7 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 
 ## `Object`가 엔티티 식별자의 접근자를 주지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Object/Object.h` 33줄
+> 위치: `Server/GameServer/Game/Entities/Object.h` 33줄
 > 등록일: 2026년 9월 21일
 
 `Object`가 `Protocol::EntityInfo* _entityInfo`를 public 원시 포인터로 내놓고 식별자를 읽는 접근자를
@@ -798,10 +798,10 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 | 파일 | `_entityInfo->` 접근 |
 | --- | --- |
 | `Game/Room/Room.cpp` | 16 |
-| `Game/Object/Monster.cpp` | 6 |
+| `Game/Entities/Monster.cpp` | 6 |
 | `Utils/ObjectUtils.cpp` | 5 |
-| `Game/Object/Player.cpp` | 3 |
-| `Game/Object/Object.cpp` | 1 |
+| `Game/Entities/Player.cpp` | 3 |
+| `Game/Entities/Object.cpp` | 1 |
 
 ### 영향
 

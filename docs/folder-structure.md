@@ -339,8 +339,9 @@ Server/
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬
-│   │   ├── Object/         오브젝트 계층
-│   │   ├── Inventory/      인벤토리, 장비
+│   │   ├── Entities/       엔티티 계층
+│   │   ├── Inventory/      인벤토리
+│   │   ├── Equipment/      장비
 │   │   └── Data/           게임 데이터 로더
 │   ├── DB/                 DB 요청 함수
 │   ├── Queries/            GameDB 스키마 스크립트
@@ -357,8 +358,8 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Main/`, `Protocol/`, `DB/`,
-`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 넷은 게임 규칙이다. 이 층을 없애면
-폴더 아홉 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
+`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 다섯은 게임 규칙이다. 이 층을 없애면
+폴더 열 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트와 경로 모양이 한 단계 어긋나는 값은 치른다. 분류명은 양쪽이 같으므로
 `P1/Source/P1/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
@@ -370,7 +371,7 @@ Server/
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
 `Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/Room/`와
-`Game/Object/`에 섞여 있다. 두 도메인을 분리할 때 만든다.
+`Game/Entities/`에 섞여 있다. 두 도메인을 분리할 때 만든다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가
 소유한다.

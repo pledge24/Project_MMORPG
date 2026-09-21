@@ -17,7 +17,7 @@
     <Filter Include="Game">
       <UniqueIdentifier>{3b44e930-ad63-4510-a2be-d0ac43d54f19}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Object">
+    <Filter Include="Game\Entities">
       <UniqueIdentifier>{84ec1cf8-758e-4103-8f95-c50d842904eb}</UniqueIdentifier>
     </Filter>
     <Filter Include="DB">
@@ -31,6 +31,9 @@
     </Filter>
     <Filter Include="Game\Inventory">
       <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Equipment">
+      <UniqueIdentifier>{c36c017d-b07a-4db4-951a-8826a8aa4a9f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
@@ -79,17 +82,17 @@
     <ClCompile Include="Utils\TickTimer.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Player.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Game\Entities\Player.cpp">
+      <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Monster.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Game\Entities\Monster.cpp">
+      <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Object.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Game\Entities\Object.cpp">
+      <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Object\Creature.cpp">
-      <Filter>Game\Object</Filter>
+    <ClCompile Include="Game\Entities\Creature.cpp">
+      <Filter>Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="DB\DBRequestFunctions.cpp">
       <Filter>DB</Filter>
@@ -97,8 +100,8 @@
     <ClCompile Include="Game\Inventory\Inventory.cpp">
       <Filter>Game\Inventory</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Inventory\EquippedGear.cpp">
-      <Filter>Game\Inventory</Filter>
+    <ClCompile Include="Game\Equipment\EquippedGear.cpp">
+      <Filter>Game\Equipment</Filter>
     </ClCompile>
     <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
@@ -153,17 +156,17 @@
     <ClInclude Include="Utils\TickTimer.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Player.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Game\Entities\Player.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Monster.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Game\Entities\Monster.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Object.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Game\Entities\Object.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Object\Creature.h">
-      <Filter>Game\Object</Filter>
+    <ClInclude Include="Game\Entities\Creature.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="DB\DBRequestFunctions.h">
       <Filter>DB</Filter>
@@ -171,8 +174,8 @@
     <ClInclude Include="Game\Inventory\Inventory.h">
       <Filter>Game\Inventory</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Inventory\EquippedGear.h">
-      <Filter>Game\Inventory</Filter>
+    <ClInclude Include="Game\Equipment\EquippedGear.h">
+      <Filter>Game\Equipment</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\JsonProperty.h">
       <Filter>Game\Data</Filter>
