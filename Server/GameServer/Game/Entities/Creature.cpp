@@ -15,7 +15,7 @@ Creature::~Creature()
 
 bool Creature::Init()
 {
-    if (Object::Init() == false)
+    if (Entity::Init() == false)
         return false;
 
     // ...
@@ -24,7 +24,7 @@ bool Creature::Init()
 
 bool Creature::Start()
 {
-    if (Object::Start() == false)
+    if (Entity::Start() == false)
         return false;
 
     return true;
@@ -32,14 +32,14 @@ bool Creature::Start()
 
 void Creature::Tick(float deltaTime)
 {
-    Object::Tick(deltaTime);
+    Entity::Tick(deltaTime);
 
 
 }
 
-void Creature::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+void Creature::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
-    Object::OnHit(attacker, attackInfo);
+    Entity::OnHit(attacker, attackInfo);
 
     auto ownerRoom = _room.load().lock();
     if (ownerRoom == nullptr)
@@ -58,7 +58,7 @@ void Creature::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
     }
 }
 
-void Creature::OnDie(ObjectRef attacker)
+void Creature::OnDie(EntityRef attacker)
 {
     _isDead = true;
 }

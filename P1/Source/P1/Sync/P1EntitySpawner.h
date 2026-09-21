@@ -5,15 +5,15 @@
 #include "Game/Entities/P1Monster.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "GameFramework/Actor.h"
-#include "P1ObjectSpawner.generated.h"
+#include "P1EntitySpawner.generated.h"
 
 UCLASS()
-class P1_API AP1ObjectSpawner : public AActor
+class P1_API AP1EntitySpawner : public AActor
 {
     GENERATED_BODY()
 
 public:
-    AP1ObjectSpawner();
+    AP1EntitySpawner();
 
     //~ Begin AActor Interface
 protected:

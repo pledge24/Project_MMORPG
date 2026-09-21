@@ -3,7 +3,7 @@
 #include "Player.h"
 #include "GameSession.h"
 #include "Monster.h"
-#include "ObjectUtils.h"
+#include "EntityUtils.h"
 #include "EquippedGear.h"
 
 RoomRef Room::Create(const Json& roomData)
@@ -68,14 +68,14 @@ void Room::Update()
 
     Protocol::S_MOVE movePkt;
     {
-        for (auto pair : _objects)
+        for (auto pair : _entities)
         {
-            ObjectRef object = pair.second;
-            if (object->IsPlayer())
+            EntityRef entity = pair.second;
+            if (entity->IsPlayer())
                 continue;
 
             Protocol::PosInfo* info = movePkt.add_info();
-            info->CopyFrom(*object->_posInfo);
+            info->CopyFrom(*entity->_posInfo);
         }
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
@@ -83,18 +83,18 @@ void Room::Update()
     }
 }
 
-void Room::TickObject(ObjectRef object)
+void Room::TickEntity(EntityRef entity)
 {
-    int64 entityId = object->_entityInfo->entity_id();
+    int64 entityId = entity->_entityInfo->entity_id();
     if (Contains(entityId) == false)
         return;
 
     uint64 curTime = GetTickCount64();
-    uint64 prevTime = object->GetPrevTime();
+    uint64 prevTime = entity->GetPrevTime();
     float deltaTime = (curTime - prevTime) / 1000.f;
-    object->SetPrevTime(curTime);
+    entity->SetPrevTime(curTime);
 
-    object->Tick(deltaTime);
+    entity->Tick(deltaTime);
 }
 
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
@@ -102,7 +102,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     Protocol::S_ENTER_ROOM enterRoomPkt;
     int64 enterPlayerId = enterPlayer->_entityInfo->entity_id();
 
-    if (AddObject(enterPlayer) == false)
+    if (AddEntity(enterPlayer) == false)
     {
         wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
 
@@ -141,7 +141,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 {
     const int64 leavePlayerId = leavePlayer->_entityInfo->entity_id();
 
-    if (RemoveObject(leavePlayerId) == false)
+    if (RemoveEntity(leavePlayerId) == false)
     {
         if (transferRoom)
             wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 중 현재 Room 퇴장에 실패했습니다" << '\n';
@@ -395,11 +395,11 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 void Room::C_HandleMove(Protocol::C_MOVE pkt)
 {
 	const int64 entityId = pkt.info().entity_id();
-    if (_objects.contains(entityId) == false)
+    if (_entities.contains(entityId) == false)
         return;
 
 	// 적용
-	PlayerRef player = dynamic_pointer_cast<Player>(_objects[entityId]);
+	PlayerRef player = dynamic_pointer_cast<Player>(_entities[entityId]);
 	player->_posInfo->CopyFrom(pkt.info());
 
 	// 이동 사실을 알린다 (본인 빼고)
@@ -516,7 +516,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
 void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
     const int64 entityId = player->_entityInfo->entity_id();
-    if (_objects.contains(entityId) == false)
+    if (_entities.contains(entityId) == false)
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
@@ -560,7 +560,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
     const int64 entityId = player->_entityInfo->entity_id();
-    if (_objects.contains(entityId) == false)
+    if (_entities.contains(entityId) == false)
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
@@ -603,7 +603,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
     const int64 entityId = player->_entityInfo->entity_id();
-    if (_objects.contains(entityId) == false)
+    if (_entities.contains(entityId) == false)
         return;
     
     // 일반 공격 사실을 Broadcast.
@@ -684,7 +684,7 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
     }
 }
 
-void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     // 1) 해당 공격에 맞은 대상을 찾는다.
     vector<CreatureRef> HitCreatures;
@@ -695,7 +695,7 @@ void Room::HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
             return;
 
         // TODO: 피격이 가능한 대상?
-        if (CreatureRef creature = dynamic_pointer_cast<Creature>(_objects[targetId]))
+        if (CreatureRef creature = dynamic_pointer_cast<Creature>(_entities[targetId]))
         {
             HitCreatures.push_back(creature);
         }
@@ -768,7 +768,7 @@ void Room::HandleDie(CreatureRef creature)
     }
 
     // 바로 Room에서 제거한다.
-    RemoveObject(entityId);
+    RemoveEntity(entityId);
 }
 
 void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
@@ -815,11 +815,11 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 {
     int64 playerId = player->_entityInfo->entity_id();
 
-    // 해당 플레이어에게 Room Object 전송
+    // 해당 플레이어에게 Room 엔티티 전송
     Protocol::S_SPAWN spawnPkt;
     if (auto session = player->_session.lock())
     {
-        for (auto& item : _objects)
+        for (auto& item : _entities)
         {
             if (!includeThisPlayer && item.second->_entityInfo->entity_id() == playerId)
                 continue;
@@ -838,11 +838,11 @@ MonsterRef Room::SpawnMonster(int32 templateId)
     Protocol::PosInfo spawnPos;
     SetRandomPos(&spawnPos, true, true);
 
-    MonsterRef newMonster = ObjectUtils::CreateMonster(templateId, spawnPos);
+    MonsterRef newMonster = EntityUtils::CreateMonster(templateId, spawnPos);
     if (newMonster == nullptr)
         return nullptr;
 
-    if (AddObject(newMonster) == false)
+    if (AddEntity(newMonster) == false)
     {
         wcout << L"SpawnMonster 실패" << '\n';
         return nullptr;
@@ -855,10 +855,10 @@ MonsterRef Room::SpawnMonster(int32 templateId)
 
 PlayerRef Room::SpawnPlayer(int64 entityId)
 {
-    if (_objects.contains(entityId) == false)
+    if (_entities.contains(entityId) == false)
         return nullptr;
 
-    PlayerRef targetPlayer = dynamic_pointer_cast<Player>(_objects[entityId]);
+    PlayerRef targetPlayer = dynamic_pointer_cast<Player>(_entities[entityId]);
     if (targetPlayer == nullptr)
         return nullptr;
 
@@ -984,7 +984,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
 
         for (int64 entityId : cell)
         {
-            if (PlayerRef player = dynamic_pointer_cast<Player>(_objects[entityId]))
+            if (PlayerRef player = dynamic_pointer_cast<Player>(_entities[entityId]))
             {
                 float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
                 if (squareRange < squareDist)
@@ -1082,14 +1082,14 @@ void Room::UpdateCellMatrix()
 {
     ClearCellMatrix();
 
-    for (auto& pair : _objects)
+    for (auto& pair : _entities)
     {
         int64 entityId = pair.first;
-        ObjectRef object = pair.second;
+        EntityRef entity = pair.second;
 
-        Protocol::PosInfo* objectPos = object->_posInfo;
-        
-        auto indices = GetCellIndicesFromPos(objectPos);
+        Protocol::PosInfo* entityPos = entity->_posInfo;
+
+        auto indices = GetCellIndicesFromPos(entityPos);
         if (indices == make_pair(-1, -1))
         {
             wcout << L"유효하지 않은 위치" << '\n';
@@ -1101,14 +1101,14 @@ void Room::UpdateCellMatrix()
 
         _cellMatrix[indexX][indexY].insert(entityId);
 
-        //printf("object: %d (%d, %d)\n", entityId, indexX, indexY);
+        //printf("entity: %d (%d, %d)\n", entityId, indexX, indexY);
     }
 }
 
-std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& objectPos)
+std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& entityPos)
 {
-    float offsetX = objectPos.x - _cellOffset.x;
-    float offsetY = objectPos.y - _cellOffset.y;
+    float offsetX = entityPos.x - _cellOffset.x;
+    float offsetY = entityPos.y - _cellOffset.y;
 
     if (offsetX < 0.f || offsetY < 0.f)
         return make_pair(-1, -1);
@@ -1147,40 +1147,40 @@ Cell* Room::GetCellFromPos(Protocol::PosInfo* posInfo)
     return GetCellFromPos(vector2D(posInfo->pos().x(), posInfo->pos().y()));
 }
 
-bool Room::AddObject(ObjectRef object)
+bool Room::AddEntity(EntityRef entity)
 {
-    if (object == nullptr)
+    if (entity == nullptr)
         return false;
 
-    int64 entityId = object->_entityInfo->entity_id();
-	if (_objects.contains(entityId))
+    int64 entityId = entity->_entityInfo->entity_id();
+	if (_entities.contains(entityId))
 		return false;
 
-	_objects.insert(make_pair(entityId, object));
+	_entities.insert(make_pair(entityId, entity));
 
 	return true;
 }
 
-bool Room::RemoveObject(int64 entityId)
+bool Room::RemoveEntity(int64 entityId)
 {
-	if (_objects.contains(entityId) == false)
+	if (_entities.contains(entityId) == false)
 		return false;
 
-    ObjectRef object = _objects[entityId];
+    EntityRef entity = _entities[entityId];
 
-    // cellMatrix에 object 삭제
-    auto cellPos = GetCellIndicesFromPos(object->_posInfo);
+    // cellMatrix에서 엔티티를 삭제한다.
+    auto cellPos = GetCellIndicesFromPos(entity->_posInfo);
     _cellMatrix[cellPos.first][cellPos.second].erase(entityId);
 
-    // object 삭제
-	_objects.erase(entityId);
+    // 엔티티를 삭제한다.
+	_entities.erase(entityId);
 
 	return true;
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 {
-	for (auto& item : _objects)
+	for (auto& item : _entities)
 	{
 		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
 		if (player == nullptr)

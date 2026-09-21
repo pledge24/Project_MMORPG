@@ -1,7 +1,7 @@
 #pragma once
-#include "Object.h"
+#include "Entity.h"
 
-class Creature : public Object
+class Creature : public Entity
 {
 public:
 	Creature();
@@ -16,8 +16,8 @@ protected:
 
 public:
     /** 이벤트 함수 */
-    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
-    virtual void OnDie(ObjectRef attacker);
+    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
+    virtual void OnDie(EntityRef attacker);
 
     bool IsDead() { return _isDead; }
     bool HasStat(Protocol::StatType statType);

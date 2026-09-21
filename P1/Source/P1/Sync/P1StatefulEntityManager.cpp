@@ -1,41 +1,41 @@
-#include "Sync/P1StatefulObjectManager.h"
+#include "Sync/P1StatefulEntityManager.h"
 
 #include "Core/P1MyPlayerData.h"
-#include "Sync/P1ObjectSpawner.h"
+#include "Sync/P1EntitySpawner.h"
 #include "Game/Entities/P1Player.h"
 #include "Utils/LogCategory.h"
 
-void UP1StatefulObjectManager::Initialize(FSubsystemCollectionBase& Collection)
+void UP1StatefulEntityManager::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
     // BP로 설정한 property가 없음
     //UWorld* World = GetWorld();
-    //if (AP1ObjectSpawner* ObjectSpawner = World->SpawnActor<AP1ObjectSpawner>())
+    //if (AP1EntitySpawner* EntitySpawner = World->SpawnActor<AP1EntitySpawner>())
     //{
-    //    RegisterSpawner(ObjectSpawner);
+    //    RegisterSpawner(EntitySpawner);
     //}
     Clear();
 }
 
-void UP1StatefulObjectManager::Deinitialize()
+void UP1StatefulEntityManager::Deinitialize()
 {
     Super::Deinitialize();
 
     Clear();
 }
 
-void UP1StatefulObjectManager::OnWorldBeginPlay(UWorld& InWorld)
+void UP1StatefulEntityManager::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
 }
 
-void UP1StatefulObjectManager::RegisterSpawner(AP1ObjectSpawner* Spawner)
+void UP1StatefulEntityManager::RegisterSpawner(AP1EntitySpawner* Spawner)
 {
-    ObjectSpawners.Add(Spawner);
+    EntitySpawners.Add(Spawner);
 }
 
-void UP1StatefulObjectManager::RegisterEntity(uint64 EntityId, AActor* SpawnedActor)
+void UP1StatefulEntityManager::RegisterEntity(uint64 EntityId, AActor* SpawnedActor)
 {
     if (AP1Monster* Monster = Cast<AP1Monster>(SpawnedActor))
         Monsters.Add(EntityId, Monster);
@@ -45,7 +45,7 @@ void UP1StatefulObjectManager::RegisterEntity(uint64 EntityId, AActor* SpawnedAc
     //UE_LOG(LogP1Entity, Log, TEXT("엔티티 {%d} 등록됨"), EntityId);
 }
 
-void UP1StatefulObjectManager::UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType)
+void UP1StatefulEntityManager::UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType)
 {
     switch (EntityType)
     {
@@ -61,7 +61,7 @@ void UP1StatefulObjectManager::UnRegisterEntity(uint64 EntityId, EP1EntityType E
     }
 }
 
-AActor* UP1StatefulObjectManager::FindEntity(uint64 EntityId)
+AActor* UP1StatefulEntityManager::FindEntity(uint64 EntityId)
 {
     if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(EntityId))
     {
@@ -72,14 +72,14 @@ AActor* UP1StatefulObjectManager::FindEntity(uint64 EntityId)
         return *FindMonster;
     }
 
-    UE_LOG(LogP1Entity, Warning, TEXT("해당 엔티티(Id:%d)를 ObjectManager에서 찾지 못했습니다"), (int32)EntityId);
+    UE_LOG(LogP1Entity, Warning, TEXT("해당 엔티티(Id:%d)를 EntityManager에서 찾지 못했습니다"), (int32)EntityId);
 
     return nullptr;
 }
 
-void UP1StatefulObjectManager::SpawnEntity(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
+void UP1StatefulEntityManager::SpawnEntity(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
 {
-    if (ObjectSpawners.IsValidIndex(SpawnerId) == false)
+    if (EntitySpawners.IsValidIndex(SpawnerId) == false)
     {
         UE_LOG(LogP1Entity, Warning, TEXT("Not Found %d Spawner"), SpawnerId);
         return;
@@ -103,7 +103,7 @@ void UP1StatefulObjectManager::SpawnEntity(const Protocol::EntityInfo& InEntityI
 
 }
 
-void UP1StatefulObjectManager::DespawnAllEntities(bool ExceptMine)
+void UP1StatefulEntityManager::DespawnAllEntities(bool ExceptMine)
 {
     UWorld* World = GetWorld();
     UP1MyPlayerData* MyPlayerData = World->GetGameInstance()->GetSubsystem<UP1MyPlayerData>();
@@ -133,7 +133,7 @@ void UP1StatefulObjectManager::DespawnAllEntities(bool ExceptMine)
     RegisterEntity(MyPlayerId, MyPlayer);
 }
 
-void UP1StatefulObjectManager::DespawnEntity(uint64 EntityId)
+void UP1StatefulEntityManager::DespawnEntity(uint64 EntityId)
 {
     if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(EntityId))
     {
@@ -149,15 +149,15 @@ void UP1StatefulObjectManager::DespawnEntity(uint64 EntityId)
     }
 }
 
-void UP1StatefulObjectManager::Clear()
+void UP1StatefulEntityManager::Clear()
 {
     Players.Empty();
     Monsters.Empty();
 }
 
-void UP1StatefulObjectManager::SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
+void UP1StatefulEntityManager::SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
 {
-    AP1ObjectSpawner* Spawner = ObjectSpawners[SpawnerId];
+    AP1EntitySpawner* Spawner = EntitySpawners[SpawnerId];
 
     const uint64 EntityId = InEntityInfo.entity_id();
     if (Monsters.Find(EntityId) != nullptr)
@@ -181,9 +181,9 @@ void UP1StatefulObjectManager::SpawnMonster(const Protocol::EntityInfo& InEntity
     
 }
 
-void UP1StatefulObjectManager::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
+void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
 {
-    AP1ObjectSpawner* Spawner = ObjectSpawners[SpawnerId];
+    AP1EntitySpawner* Spawner = EntitySpawners[SpawnerId];
 
     const uint64 EntityId = InEntityInfo.entity_id();
     if (Players.Find(EntityId) != nullptr)

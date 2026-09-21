@@ -4,7 +4,7 @@
 #include "GameSession.h"
 #include "Player.h"
 #include "Room.h"
-#include "ObjectUtils.h"
+#include "EntityUtils.h"
 #include "Inventory.h"
 #include "EquippedGear.h"
 #include "Gamedata.h"
@@ -133,7 +133,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
         [session, pkt]()
         {
             // 플레이어 생성 및 초기화
-            PlayerRef player = ObjectUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
+            PlayerRef player = EntityUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
             if (player == nullptr)
             {
                 wcout << L"Warning: 플레이어 생성 실패" << '\n';

@@ -4,16 +4,16 @@
 #include "Sync/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Protocol.pb.h"
-#include "P1StatefulObjectManager.generated.h"
+#include "P1StatefulEntityManager.generated.h"
 
 class APlayerSpawner;
 class AP1Monster;
 class AP1Player;
-class AP1ObjectSpawner;
+class AP1EntitySpawner;
 
 /** 서버가 id로 관리하는 엔티티를 월드 액터와 이어 붙이는 서브시스템이다. */
 UCLASS()
-class P1_API UP1StatefulObjectManager : public UWorldSubsystem
+class P1_API UP1StatefulEntityManager : public UWorldSubsystem
 {
     GENERATED_BODY()
 
@@ -30,11 +30,11 @@ public:
 
     //~ Spawner Registry
 public:
-    void RegisterSpawner(AP1ObjectSpawner* Spawner);
+    void RegisterSpawner(AP1EntitySpawner* Spawner);
 
 protected:
     UPROPERTY()
-    TArray<TObjectPtr<AP1ObjectSpawner>> ObjectSpawners;
+    TArray<TObjectPtr<AP1EntitySpawner>> EntitySpawners;
 
     //~ Entity Registry
 public:

@@ -1,14 +1,14 @@
 #include "pch.h"
-#include "ObjectUtils.h"
+#include "EntityUtils.h"
 #include "Player.h"
 #include "Monster.h"
 #include "GameSession.h"
 
-atomic<int64> ObjectUtils::s_idGenerator = 1;
+atomic<int64> EntityUtils::s_idGenerator = 1;
 
-PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
+PlayerRef EntityUtils::CreatePlayer(GameSessionRef session)
 {
-    PlayerRef player = static_pointer_cast<Player>(ObjectUtils::Create<Player>());
+    PlayerRef player = static_pointer_cast<Player>(EntityUtils::Create<Player>());
     if (player == nullptr)
         return nullptr;
 
@@ -32,9 +32,9 @@ PlayerRef ObjectUtils::CreatePlayer(GameSessionRef session)
 	return player;
 }
 
-MonsterRef ObjectUtils::CreateMonster(int32 templateId, const Protocol::PosInfo& spawnPos)
+MonsterRef EntityUtils::CreateMonster(int32 templateId, const Protocol::PosInfo& spawnPos)
 {
-    MonsterRef monster = static_pointer_cast<Monster>(ObjectUtils::Create<Monster>());
+    MonsterRef monster = static_pointer_cast<Monster>(EntityUtils::Create<Monster>());
     if (monster == nullptr)
         return nullptr;
 

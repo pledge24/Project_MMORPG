@@ -72,12 +72,12 @@ void Monster::Tick(float deltaTime)
     ExecuteStateBehavior(deltaTime);
 }
 
-void Monster::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+void Monster::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     Creature::OnHit(attacker, attackInfo);
 }
 
-void Monster::OnDie(ObjectRef attacker)
+void Monster::OnDie(EntityRef attacker)
 {
     Creature::OnDie(attacker);
 }
@@ -118,7 +118,7 @@ void Monster::UpdateState()
 
             if (player != nullptr)
             {
-                _target = static_pointer_cast<Object>(player);
+                _target = static_pointer_cast<Entity>(player);
 
                 // xxx -> Attacking 또는 Chasing으로 전환
                 if (bool InAttackRange = (squareDist <= (_tryAttackRange * _tryAttackRange)))
@@ -274,11 +274,11 @@ void Monster::SwitchState(MonsterState nextState)
     }
     case MonsterState::Chasing: 
     {
-        ObjectRef object = _target.lock();
-        if (object == nullptr)
+        EntityRef entity = _target.lock();
+        if (entity == nullptr)
             return;
 
-        vector2D targetPos = MathUtil::PosInfoToVector2D(object->_posInfo);
+        vector2D targetPos = MathUtil::PosInfoToVector2D(entity->_posInfo);
 
         // 타겟으로 이동 세팅(PosInfo 세팅)
         StartMovingTo(targetPos, MIN_APPROACH_DISTANCE);
@@ -287,11 +287,11 @@ void Monster::SwitchState(MonsterState nextState)
     }
     case MonsterState::Attacking:
     {
-        ObjectRef object = _target.lock();
-        if (object == nullptr)
+        EntityRef entity = _target.lock();
+        if (entity == nullptr)
             return;
 
-        Protocol::PosInfo* targetPos = object->_posInfo;
+        Protocol::PosInfo* targetPos = entity->_posInfo;
 
         // 타겟 공격 세팅(PosInfo 세팅)
         {
@@ -384,7 +384,7 @@ void Monster::ExecuteStateAttacking(float deltaTime)
 
 void Monster::ExecuteStateChasing(float deltaTime)
 {
-    ObjectRef target = _target.lock();
+    EntityRef target = _target.lock();
     if (target == nullptr)
     {
         StopMoving("ExecuteStateChasing:: nullptr Target");

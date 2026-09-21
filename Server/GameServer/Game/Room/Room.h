@@ -1,7 +1,7 @@
 #pragma once
 #include "JobQueue.h"
 #include "Utils.h"
-#include "object.h"
+#include "Entity.h"
 
 struct RoomEnterData
 {
@@ -27,7 +27,7 @@ protected:
     void Update();
 
 public:
-    void TickObject(ObjectRef object);
+    void TickEntity(EntityRef entity);
 
     /** 플레이어 관련 함수 */
 	bool EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
@@ -48,7 +48,7 @@ public:
     void C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player);
 
     void HandleNormalAttack(int32 combo, CreatureRef creature);
-    void HandleHit(ObjectRef attacker, Protocol::AttackInfo attackInfo);
+    void HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo);
     void HandleMonsterKill(PlayerRef player, MonsterRef monster);
     void HandleDie(CreatureRef creature);
     void HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
@@ -72,7 +72,7 @@ public:
 
     /** Bool 함수 */
     bool IsValid() const { return _isValid; }
-    bool Contains(int64 entityId) { return _objects.contains(entityId); }
+    bool Contains(int64 entityId) { return _entities.contains(entityId); }
 
     /** Room 위치 관련 */
     vector2D ClampLocation(float posX, float posY, bool usePadding = true);
@@ -87,9 +87,9 @@ protected:
     /** 네트워크 함수 */
     void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
 
-    /* Object 관련 함수*/
-    bool AddObject(ObjectRef object);
-    bool RemoveObject(int64 entityId);
+    /** 엔티티 관련 함수 */
+    bool AddEntity(EntityRef entity);
+    bool RemoveEntity(int64 entityId);
 
     /** Room 관련 */
     void CacheRoomData();
@@ -104,7 +104,7 @@ protected:
 
 private:
     /** Room 관련 */
-	unordered_map<int64, ObjectRef> _objects;
+	unordered_map<int64, EntityRef> _entities;
     vector<vector<Cell>> _cellMatrix;
     vector2D _cellOffset = vector2D::GetZeroVector();
 

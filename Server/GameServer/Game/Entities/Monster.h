@@ -30,8 +30,8 @@ protected:
 
 public:
     /** 이벤트 함수 */
-    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
-    virtual void OnDie(ObjectRef attacker) override;
+    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
+    virtual void OnDie(EntityRef attacker) override;
 
     /** Getter 함수 */
     int64 GetTemplateId() { return _templateId; }
@@ -103,7 +103,7 @@ private:
     float _monsterSpeed;                        // 몬스터 이동 속도
     bool _isTargeting;
 
-    weak_ptr<Object> _target;
+    weak_ptr<Entity> _target;
     optional<vector2D> _moveDest;
 
     /** Timer */

@@ -78,7 +78,7 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\ObjectUtils.cpp">
+    <ClCompile Include="..\GameServer\Utils\EntityUtils.cpp">
       <Filter>GameServer\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">
@@ -93,10 +93,10 @@
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp">
+    <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\Object.cpp">
+    <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">
