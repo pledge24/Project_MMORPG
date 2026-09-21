@@ -777,6 +777,8 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 폴더 이름은 여기서 세지 않는다. `Server/GameServer/Game/Object/`를 `Game/Entities/`로 옮기는 것은
 #72가 맡는다.
 
+이 항목을 갚는 티켓은 #87이다.
+
 ### 영향
 
 **유지보수 어려움** — 한 파일 안에 두 낱말이 섞인다. `Server/GameServer/Game/Object/Object.h` 33줄이
