@@ -21,13 +21,19 @@
 
 **`Content`와 `Source`에서 같은 분류명을 쓴다.** 한쪽 경로를 알면 다른 쪽을 바로 찾을 수 있어야
 한다. 이 원칙을 게임 서버까지 넓힌다. 인벤토리를 고칠 때 `Server/GameServer/Game/Inventory/`와
-`P1/Source/P1/Inventory/`를 함께 열게 되기 때문이다.
+`P1/Source/P1/Game/Inventory/`를 함께 열게 되기 때문이다.
+
+**클라와 서버의 대칭은 `Game/` 아래에만 요구한다.** 그 아래에서 양쪽에 다 있는 폴더는 이름과
+경로가 같아야 한다. `Game/` 밖의 배선은 티어마다 다르므로 맞추지 않는다. 근거는
+`docs/adr/0007-limit-folder-symmetry-to-shared-domains.md`에 있다.
 
 **쓰지 않는 폴더를 미리 만들지 않는다.** 내용이 생기는 날 만든다.
 — 빈 폴더는 무엇을 넣어야 하는지 아무도 모른 채 남는다.
 
-**폴더 이름은 영어, 공백 없음, PascalCase로 짓는다.** 담는 대상이 여럿인 폴더는 복수형으로 쓴다
-(`Monsters`, `Weapons`). `Core`, `Data`, `UI`처럼 개념 이름인 폴더는 그대로 둔다.
+**폴더 이름은 영어, 공백 없음, PascalCase로 짓는다.** 담는 **클래스 종류**가 여럿인 폴더는
+복수형으로 쓴다(`Monsters`, `Weapons`). `Core`, `Data`, `UI`처럼 개념 이름인 폴더는 그대로 둔다.
+— 인스턴스가 여럿 생기는지는 판정에 넣지 않는다. 룸은 여럿 만들어지지만 클래스가 한 종류이므로
+`Room/`이다.
 
 ---
 
@@ -77,23 +83,59 @@ P1/Source/
 
 ### 3.2 도메인 폴더
 
+```
+P1/Source/P1/
+├── Core/                   배선
+├── Network/                배선
+├── Sync/                   배선
+├── Online/                 배선
+├── Utils/                  배선
+├── Tests/                  배선
+├── UI/                     표현
+└── Game/                   게임 도메인
+    ├── Entities/
+    ├── Combat/
+    ├── Inventory/
+    ├── Equipment/
+    ├── Data/
+    └── World/
+```
+
+**`Game/` 아래는 게임 도메인이다.**
+
+| 폴더 | 담는 것 |
+| --- | --- |
+| `Entities/` | 서버가 동기화하는 개체의 클래스 계층. 플레이어, 몬스터 |
+| `Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
+| `Items/` | 아이템 정의와 아이템 인스턴스. **아직 없다** |
+| `Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
+| `Equipment/` | 장비 컴포넌트와 장착 규칙 |
+| `Interaction/` | 상호작용 인터페이스와 플레이어 쪽 컴포넌트. **아직 없다** |
+| `Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
+| `World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+
+**`Game/` 밖은 배선과 표현이다.**
+
 | 폴더 | 담는 것 |
 | --- | --- |
 | `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
-| `Characters/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
-| `Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
-| `Items/` | 아이템 정의와 아이템 인스턴스 |
-| `Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
-| `Equipment/` | 장비 컴포넌트와 장착 규칙 |
-| `Interaction/` | 상호작용 인터페이스와 플레이어 쪽 컴포넌트 |
 | `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치 |
-| `Sync/` | 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
-| `Entities/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸 |
-| `UI/` | 위젯 베이스 클래스와 뷰모델 |
-| `Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
+| `Sync/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸. 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
 | `Online/` | 로그인과 캐릭터 목록. 요청 하나에 응답 하나로 끝나는 비실시간 통신만 담는다 |
+| `UI/` | 위젯 베이스 클래스와 뷰모델 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
-| `World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+| `Tests/` | 자동화 테스트 |
+
+**어느 쪽인지는 「함께 지워지는가」로 가른다.** 그 기능을 들어낼 때 함께 사라지면 게임 도메인이고,
+남으면 배선이다. 값만 들고 있는 타입 정의도 게임 규칙에 속할 수 있다 — 몬스터 공격력 수치는
+전투 규칙 그 자체이지 전투 규칙이 조회하는 외부 저장소가 아니다.
+
+**짝이 없어도 도메인이면 `Game/` 아래에 둔다.** `World/`의 포털과 경계 벽은 서버에 짝이 없지만
+게임 도메인이다. 대칭 검사는 양쪽에 다 있는 폴더만 대조한다.
+
+**`Game/` 층은 아직 없다.** 2026년 9월 21일 기준으로 도메인 폴더가 `P1/Source/P1/` 바로 아래에
+평평하게 있고, `Characters/`가 위 표의 `Entities/`에, `Entities/`가 `Sync/`에 해당한다. 위 트리는
+목표 구조다.
 
 **`World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
 `Interaction/`에 둔다.
@@ -111,10 +153,10 @@ P1/Source/
 도메인끼리 서로 참조하면 경계가 무너진다. 아래 방향으로만 참조한다.
 
 ```
-Protocol 모듈 → Network → Entities → Sync → 게임 도메인
-                                              ↑
+Protocol 모듈 → Network → Sync → 게임 도메인
+                                   ↑
 UI → 게임 도메인(Combat/Inventory/Equipment/Interaction) → Items → Data → Utils
-Core → Characters → 게임 도메인
+Core → Game/Entities → 게임 도메인
 ```
 
 **게임 도메인은 `Network/`를 직접 참조하지 않는다.** 요청을 보낼 때도 도메인이 소켓을 직접
@@ -274,8 +316,9 @@ Server/
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬
-│   │   ├── Object/         오브젝트 계층
-│   │   ├── Inventory/      인벤토리, 장비
+│   │   ├── Entities/       서버가 동기화하는 개체의 클래스 계층
+│   │   ├── Inventory/      인벤토리
+│   │   ├── Equipment/      장비
 │   │   └── Data/           게임 데이터 로더
 │   ├── DB/                 DB 요청 함수
 │   ├── Queries/            GameDB 스키마 스크립트
@@ -292,10 +335,9 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Main/`, `Protocol/`, `DB/`,
-`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 넷은 게임 규칙이다. 이 층을 없애면
-폴더 아홉 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
-— 클라이언트와 경로 모양이 한 단계 어긋나는 값은 치른다. 분류명은 양쪽이 같으므로
-`P1/Source/P1/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
+`Queries/`, `Utils/`는 서버를 돌리는 배선이고 `Game/` 아래는 게임 규칙이다. 이 층을 없애면 폴더
+아홉 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다. 클라이언트도 같은 이유로
+같은 층을 둔다 — 3.2의 트리가 그것이다.
 
 **`.vcxproj`에 파일이 하나씩 명시 등록된다.** 파일을 추가하거나 옮기면 `.vcxproj`와
 `.vcxproj.filters`를 함께 고친다. `GameServerTests.vcxproj`가 `GameServer`의 `.cpp`를 직접
@@ -304,8 +346,12 @@ Server/
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
-`Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/Room/`와
-`Game/Object/`에 섞여 있다. 두 도메인을 분리할 때 만든다.
+`Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/Room/`과
+엔티티 계층에 섞여 있다. 두 도메인을 분리할 때 만든다.
+
+**`Game/Entities/`와 `Game/Equipment/`도 아직 없다.** 2026년 9월 21일 기준으로 엔티티 계층이
+`Game/Object/`에 있고 장비가 `Game/Inventory/`에 동거한다. 위 트리는 목표 구조이며, 이행은
+`docs/adr/0007-limit-folder-symmetry-to-shared-domains.md`가 정한 순서를 따른다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가
 소유한다.
