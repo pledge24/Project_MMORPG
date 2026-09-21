@@ -128,7 +128,18 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 **빌드는 터미널에서 돌리고 종료 코드로 판정한다. Rider MCP로 빌드하지 않는다.** 통일한 이유는 `docs/adr/0001-unify-build-path.md`에 있다.
 
-**클라이언트.** 에디터를 닫고 돌린다.
+**클라이언트.** `P1/Scripts/Invoke-UeBuild.ps1`을 쓴다.
+
+```powershell
+pwsh P1/Scripts/Invoke-UeBuild.ps1 -CloseEditor
+```
+
+- **에디터가 떠 있으면 `UnrealEditor-P1.dll`을 덮어쓸 수 없어 실패한다.** 이 스크립트가 빌드 전에 확인한다.
+- **`-CloseEditor` 없이 부르면 에디터를 닫지 않고 `1`로 끝난다.** 강제 종료가 저장하지 않은 에셋 변경을 없애기 때문이다. 닫아도 되는 상태인지 사람이 판단한 뒤에 스위치를 붙인다.
+- `-Relaunch`를 함께 주면 빌드가 끝난 뒤 에디터를 다시 띄운다.
+- 실패하면 빌드 출력과 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`에서 오류 줄만 추려서 보여준다. 전체 출력은 `P1/Saved/UeBuild/build.log`에 있다.
+
+스크립트가 부르는 명령은 아래와 같다. 엔진 경로는 `UE_ENGINE_ROOT`로 덮을 수 있다.
 
 ```powershell
 & "D:\Unreal\Editor\Launcher\UE_5.8\Engine\Build\BatchFiles\Build.bat" `
@@ -138,7 +149,6 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 
 - 엔진 설치 경로는 머신마다 다르다. 위 경로는 이 머신의 런처 설치본이다.
 - 타깃은 `P1Editor`, 플랫폼은 `Win64`, 구성은 `Development`다. 셋 중 하나라도 틀리면 엉뚱한 타깃을 빌드하고도 종료 코드 `0`이 나온다.
-- 에디터가 떠 있으면 `UnrealEditor-P1.dll`을 덮어쓸 수 없어 실패한다.
 
 **서버.** 구성은 `Debug|x64`이고 산출물은 `Server/Binary/Debug/`에 떨어진다.
 

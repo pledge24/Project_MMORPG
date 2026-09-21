@@ -66,10 +66,11 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   양쪽으로 잡는다. **`mode=symbol`의 좌표는 `1행 1열`로 고정되므로 파일 경로만 쓴다.**
 - 호출자 확인은 `search_text`로 한다. `analyze_calls`는 C++ 심볼을 색인하지 않아 막아 두었다.
 - 빌드 검증: **터미널에서 돌리고 종료 코드로 판정한다. 빌드에 Rider MCP를 쓰지 않는다.**
-  클라이언트는 `Build.bat`, 서버는 `MSBuild`다. 0이 아니면 같은 출력에 에러가 코드와 파일과 줄과
-  함께 찍혀 있다. **`Rebuild.bat`과 최초 전체 빌드는 출력이 커서 절단될 수 있다.** 그때는
-  `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다. 명령 원문은 `docs/build.md`, 근거는
-  `docs/adr/0001-unify-build-path.md`.
+  클라이언트는 `P1/Scripts/Invoke-UeBuild.ps1`, 서버는 `MSBuild`다. 0이 아니면 같은 출력에 에러가
+  코드와 파일과 줄과 함께 찍혀 있다. **빌드 스크립트는 에디터가 떠 있으면 닫지 않고 1로 끝난다.**
+  `-CloseEditor`를 붙이는 것은 저장하지 않은 에셋 변경이 없다고 판단한 뒤다. 빌드 출력이 커서
+  절단되는 문제는 스크립트가 로그를 파일로 보내고 오류 줄만 추려서 푼다. 명령 원문은
+  `docs/build.md`, 근거는 `docs/adr/0001-unify-build-path.md`.
 - **Rider MCP 툴에는 `rootFolder`를 항상 명시한다** (파라미터 이름이 `projectPath`가 아니다).
   **함정: 솔루션이 하나만 열려 있으면 서버가 모호성을 못 느껴 거부하지 않고 그대로 실행한다.**
   Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드된다. 인자 없이 `get_run_configurations`를
