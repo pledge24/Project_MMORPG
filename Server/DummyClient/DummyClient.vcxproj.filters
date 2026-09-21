@@ -8,6 +8,9 @@
     <Filter Include="Protocol">
       <UniqueIdentifier>{6c4f2269-c95c-43b9-b17f-04b84bdfa2b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Protocol\Schema">
+      <UniqueIdentifier>{1570af4f-a988-4c08-b3f2-c55ba3f2bfe4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main\DummyClient.cpp">
@@ -48,16 +51,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Protocol\Schema\Enum.proto">
-      <Filter>Protocol</Filter>
+      <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\GenPackets.bat">
       <Filter>Protocol</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Protocol.proto">
-      <Filter>Protocol</Filter>
+      <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Struct.proto">
-      <Filter>Protocol</Filter>
+      <Filter>Protocol\Schema</Filter>
     </None>
   </ItemGroup>
 </Project>

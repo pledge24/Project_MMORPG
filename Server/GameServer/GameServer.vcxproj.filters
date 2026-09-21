@@ -8,7 +8,7 @@
     <Filter Include="Protocol">
       <UniqueIdentifier>{18e8ca97-d284-45fb-951a-71dc7236cb10}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Protocol\Proto">
+    <Filter Include="Protocol\Schema">
       <UniqueIdentifier>{38370f68-972e-460a-8868-4b670f253cf0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Utils">
@@ -195,13 +195,13 @@
       <Filter>Protocol</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Enum.proto">
-      <Filter>Protocol\Proto</Filter>
+      <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Protocol.proto">
-      <Filter>Protocol\Proto</Filter>
+      <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Struct.proto">
-      <Filter>Protocol\Proto</Filter>
+      <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="Queries\GameDB_CreateAllTables.sql">
       <Filter>Queries</Filter>
