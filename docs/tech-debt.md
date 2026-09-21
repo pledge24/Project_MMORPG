@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 30개 (높음 4 · 중간 16 · 낮음 10)
+항목 30개 (높음 5 · 중간 16 · 낮음 9)
 
 ## 작성 방법
 
@@ -694,27 +694,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **유지보수 어려움** — 드러난 손실은 없다. `#pragma once`가 중복 포함을 막고, 빌드 시간도
 재어 볼 만큼 늘지 않는다. include 목록으로 그 파일의 의존 관계를 셀 때 같은 항목이 두 번
 세어지는 것이 전부다.
-
-## 프로젝트 파일 넷이 없어진 `Server/Common/Protobuf/bin/`을 가리킨다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · build
-> 위치: `Server/GameServer/GameServer.vcxproj` 253~256·269~271줄 ·
-> `Server/DummyClient/DummyClient.vcxproj` 211~214·217~219줄
-> 등록일: 2026년 9월 20일
-
-#43이 `.proto` 원본 셋과 `GenPackets.bat`을 최상위 `Protocol/`로 올렸으나, 두 `.vcxproj`의 항목
-목록은 옛 경로에 그대로 남았다. `Server/Common/`은 폴더째 없다. 짝이 되는 `.vcxproj.filters` 둘도
-같은 경로를 논리 폴더 `Protocol`과 `Protocol\Proto`에 묶어 둔다.
-
-빌드는 이 참조를 타지 않는다. `GenerateProtoPackets` 타깃이 `$(SolutionDir)..\Protocol\Schema\`를
-Inputs로 삼기 때문이다. 어긋난 것은 IDE에 보이는 항목 목록과 `UpToDateCheckInput` 셋이다.
-
-#45가 서버 폴더를 옮기면서 `.vcxproj.filters`를 검사하다가 드러났다. 그 티켓의 범위가 아니어서
-항목을 남겨 두었다.
-
-### 영향
-
-**유지보수 어려움** — 솔루션 탐색기에서 `.proto` 셋과 `GenPackets.bat`이 빠진 파일로 뜬다. 두
-티어가 공유하는 계약 원본을 IDE에서 바로 열지 못하므로, 편집하려면 탐색기로 따로 찾아 연다.
 
 ## 인벤토리 위젯이 쓰지 않는 플레이어 컨트롤러를 두 번 얻는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client

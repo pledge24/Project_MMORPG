@@ -208,15 +208,15 @@
     <ClInclude Include="Protocol\Struct.pb.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Common\Protobuf\bin\Enum.proto" />
-    <None Include="..\Common\Protobuf\bin\GenPackets.bat" />
-    <None Include="..\Common\Protobuf\bin\Protocol.proto" />
-    <None Include="..\Common\Protobuf\bin\Struct.proto" />
+    <None Include="..\..\Protocol\Schema\Enum.proto" />
+    <None Include="..\..\Protocol\GenPackets.bat" />
+    <None Include="..\..\Protocol\Schema\Protocol.proto" />
+    <None Include="..\..\Protocol\Schema\Struct.proto" />
   </ItemGroup>
   <ItemGroup>
-    <UpToDateCheckInput Include="..\Common\Protobuf\bin\Enum.proto" />
-    <UpToDateCheckInput Include="..\Common\Protobuf\bin\Protocol.proto" />
-    <UpToDateCheckInput Include="..\Common\Protobuf\bin\Struct.proto" />
+    <UpToDateCheckInput Include="..\..\Protocol\Schema\Enum.proto" />
+    <UpToDateCheckInput Include="..\..\Protocol\Schema\Protocol.proto" />
+    <UpToDateCheckInput Include="..\..\Protocol\Schema\Struct.proto" />
   </ItemGroup>
   <ItemGroup>
     <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 하므로
