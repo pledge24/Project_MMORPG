@@ -28,7 +28,8 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 - `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
 - `docs/work/` — 여러 세션에 걸치는 작업의 계획과 결정. **진행 상태는 여기 없다.** 상태는 이슈 트래커에 있다
 - `docs/{build,codegen,testing}.md` — 해당 영역을 건드릴 때만
-- `docs/reports/` — 사람용 설명 자료
+- `docs/reports/` — 세션 리포트. 사람용 설명 자료이고 **git이 추적하지 않는다**(루트 `.gitignore`).
+  여기 적은 것 중 앞으로도 지켜야 할 결론은 규범 문서로 옮긴다. 리포트에만 적으면 저장소에 남지 않는다
 - `docs/references/` — 2026-09에 걷어낸 하네스 v1의 이력. **현행 제약이 아니다.** 현행 제약은 위 문서들의 본문에 있다
 
 ## Agent skills
