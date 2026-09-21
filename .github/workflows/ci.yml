@@ -79,7 +79,10 @@ jobs:
         with:
           lfs: false
 
-      - uses: actions/setup-python@v5
+      # v5 는 action.yml 에 using: node20 을 선언해서 위 setup-node 와 같은 경고가 뜬다.
+      # node24 를 선언하는 것은 v6 부터다. v7 의 파괴적 변경은 pip-install 입력 제거인데
+      # 여기서 쓰지 않는다.
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
 
