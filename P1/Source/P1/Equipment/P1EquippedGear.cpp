@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Equipment/P1EquippedGear.h"
 #include "Characters/P1MyPlayer.h"
 #include "P1.h"

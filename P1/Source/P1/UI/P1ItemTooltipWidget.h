@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -24,16 +22,16 @@ public:
 
 public:
     UPROPERTY(meta = (BindWidget))
-    UImage* ItemIcon;
+    TObjectPtr<UImage> ItemIcon;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* ItemNameText;
+    TObjectPtr<UTextBlock> ItemNameText;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* ItemDescriptionText;
+    TObjectPtr<UTextBlock> ItemDescriptionText;
 
     UPROPERTY(meta = (BindWidget))
-    UVerticalBox* VB_ItemInfo;
+    TObjectPtr<UVerticalBox> VB_ItemInfo;
 
 private:
     void SetItemDetailsToVerticalBox(int32& ChildIdx, FString InfoText, FString DetailsText);

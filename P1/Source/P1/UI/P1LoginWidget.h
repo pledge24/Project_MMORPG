@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -60,16 +58,16 @@ protected:
 protected:
     /** BindWidget */
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
-    UWidgetSwitcher* WidgetSwitcher;
+    TObjectPtr<UWidgetSwitcher> WidgetSwitcher;
 
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Login")
-    class UTextBlock* ResultText;
+    TObjectPtr<class UTextBlock> ResultText;
 
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
-    class UTextBlock* CC_DescriptionText;
+    TObjectPtr<class UTextBlock> CC_DescriptionText;
 
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
-    class UEditableTextBox* CC_CharacterNameText;
+    TObjectPtr<class UEditableTextBox> CC_CharacterNameText;
 
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
     int32 CC_CharacterClassId;

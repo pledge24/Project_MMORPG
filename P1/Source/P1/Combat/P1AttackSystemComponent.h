@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -40,7 +38,7 @@ public:
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
-    class USkeletalMeshComponent* CharacterMesh;
+    TObjectPtr<class USkeletalMeshComponent> CharacterMesh;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AttackSystem")
     bool bIsAttacking = false;

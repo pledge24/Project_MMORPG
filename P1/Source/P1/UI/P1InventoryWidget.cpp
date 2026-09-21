@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/P1InventoryWidget.h"
 #include "UI/P1SlotWidget.h"
 #include "Components/UniformGridPanel.h"
@@ -181,7 +178,7 @@ void UP1InventoryWidget::SendUseItemPacket(UP1SlotWidget* SlotWidget)
         }
         else
         {
-            UE_LOG(LogNetwork, Warning, TEXT("Something Wrong in SendUseItemPacket.."));
+            UE_LOG(LogP1Network, Warning, TEXT("Something Wrong in SendUseItemPacket.."));
         }
     }
 }
@@ -218,7 +215,7 @@ void UP1InventoryWidget::SendEquipItemPacket(UP1SlotWidget* SlotWidget)
         }
         else
         {
-            UE_LOG(LogNetwork, Warning, TEXT("Something Wrong in EquipGearPacket.."));
+            UE_LOG(LogP1Network, Warning, TEXT("Something Wrong in EquipGearPacket.."));
         }
         
     }

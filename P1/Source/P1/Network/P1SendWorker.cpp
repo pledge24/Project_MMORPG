@@ -17,7 +17,7 @@ FP1SendWorker::~FP1SendWorker()
 
 bool FP1SendWorker::Init()
 {
-    UE_LOG(LogSystem, Display, TEXT("Send Thread Init"));
+    UE_LOG(LogP1System, Display, TEXT("Send Thread Init"));
 	return true;
 }
 

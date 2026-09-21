@@ -1,10 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Characters/P1Monster.h"
 
 #include "Components/WidgetComponent.h"
 #include "UI/P1NameplateWidget.h"
+#include "Utils/LogCategory.h"
 
 AP1Monster::AP1Monster()
 {
@@ -43,7 +41,7 @@ void AP1Monster::Initialize(const Protocol::ObjectInfo& ObjectInfo)
 
     if (ObjectInfo.has_monster_info() == false)
     {
-        UE_LOG(LogTemp, Warning, TEXT("몬스터 정보가 없는채로 몬스터 초기화 시도함"));
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("몬스터 정보가 없는채로 몬스터 초기화 시도함"));
         return;
     }
 

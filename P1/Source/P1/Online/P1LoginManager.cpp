@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Online/P1LoginManager.h"
 #include "UI/P1LoginWidget.h"
 #include "Http.h"
@@ -115,7 +113,7 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 
 	if (loginSuccess)
 	{
-        UE_LOG(LogNetwork, Display, TEXT("AccessToken: %s"), *token);
+        UE_LOG(LogP1Network, Display, TEXT("AccessToken: %s"), *token);
 
 		if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
 		{
@@ -123,7 +121,7 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 		}
         else
         {
-            UE_LOG(LogNetwork, Error, TEXT("게임인스턴스가 없습니다"));
+            UE_LOG(LogP1Network, Error, TEXT("게임인스턴스가 없습니다"));
         }
 	}
 }

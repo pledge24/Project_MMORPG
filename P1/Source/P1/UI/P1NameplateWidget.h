@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -32,10 +30,10 @@ public:
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
-    UTextBlock* NameTextBlock;
+    TObjectPtr<UTextBlock> NameTextBlock;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
-    UP1ProgressBarWidget* HpBar;
+    TObjectPtr<UP1ProgressBarWidget> HpBar;
 
 private:
     ESlateVisibility NameTextInitVisibility;

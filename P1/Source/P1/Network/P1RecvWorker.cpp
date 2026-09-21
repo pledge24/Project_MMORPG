@@ -17,7 +17,7 @@ FP1RecvWorker::~FP1RecvWorker()
 
 bool FP1RecvWorker::Init()
 {
-    UE_LOG(LogSystem, Display, TEXT("Recv Thread Init"));
+    UE_LOG(LogP1System, Display, TEXT("Recv Thread Init"));
 	return true;
 }
 
@@ -67,7 +67,7 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
         
         if (Header.PacketID != 1018 /* MovePacketId */)
         {
-		    UE_LOG(LogTemp, Log, TEXT("Recv PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
+		    UE_LOG(LogP1Network, Log, TEXT("Recv PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
         }
 	}
 

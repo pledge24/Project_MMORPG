@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -68,53 +66,53 @@ protected:
     TSubclassOf<UP1HUDWidget> HUDWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UP1HUDWidget* HUDWidget;
+    TObjectPtr<UP1HUDWidget> HUDWidget;
 
     /** Control Help UI */
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UUserWidget> HelpWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UUserWidget* HelpWidget;
+    TObjectPtr<UUserWidget> HelpWidget;
 
     /** 상태창 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UP1StatusWindowWidget> StatusWindowWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UP1StatusWindowWidget* StatusWindowWidget;
+    TObjectPtr<UP1StatusWindowWidget> StatusWindowWidget;
 
     /** 인벤토리 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UP1InventoryWidget> InventoryWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UP1InventoryWidget* InventoryWidget;
+    TObjectPtr<UP1InventoryWidget> InventoryWidget;
 
     /** 상점 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UP1ShopWidget> ShopWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UP1ShopWidget* ShopWidget;
+    TObjectPtr<UP1ShopWidget> ShopWidget;
 
     /** 경고 메세지 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UP1WarningTextWidget> WarningTextWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UP1WarningTextWidget* WarningTextWidget;
+    TObjectPtr<UP1WarningTextWidget> WarningTextWidget;
 
     /** 사망 UI*/
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<UP1DeathWidget> DeathWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    UP1DeathWidget* DeathWidget;
+    TObjectPtr<UP1DeathWidget> DeathWidget;
 
 protected:
     UPROPERTY()
-    TMap<EP1WidgetType, UUserWidget*> WidgetMappings;
+    TMap<EP1WidgetType, TObjectPtr<UUserWidget>> WidgetMappings;
 
 private:
     int32 WidgetFlag = 0;

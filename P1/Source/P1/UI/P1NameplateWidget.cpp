@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/P1NameplateWidget.h"
 #include "Characters/P1Monster.h"
 #include "Characters/P1Player.h"

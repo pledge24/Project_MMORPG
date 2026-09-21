@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -39,7 +37,7 @@ public:
 
     // 데이터 테이블 애셋 포인터
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
-    UDataTable* ItemTable;
+    TObjectPtr<UDataTable> ItemTable;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
     FP1ItemData ItemData; // templateId가 바뀌면 변경됨
@@ -56,15 +54,15 @@ protected:
     TSubclassOf<UP1ItemTooltipWidget> TooltipClass;
 
     UPROPERTY()
-    UP1ItemTooltipWidget* SlotTooltipWidget;
+    TObjectPtr<UP1ItemTooltipWidget> SlotTooltipWidget;
 
     /** 슬롯 비쥬얼 */
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-    UImage* ItemIcon;
+    TObjectPtr<UImage> ItemIcon;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* ItemCountText;
+    TObjectPtr<UTextBlock> ItemCountText;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
-    UTexture2D* SlotDefaultIcon;
+    TObjectPtr<UTexture2D> SlotDefaultIcon;
 };

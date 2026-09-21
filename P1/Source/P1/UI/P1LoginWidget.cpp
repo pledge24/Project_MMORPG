@@ -1,12 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/P1LoginWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
 #include "P1.h"
 #include "Core/P1LoginMenuPlayerController.h"
 #include "Online/P1LoginManager.h"
+#include "Utils/LogCategory.h"
 
 // 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
 TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
@@ -70,9 +68,9 @@ void UP1LoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
         CharacterOverview.CharacterName = CC_CharacterNameText->GetText().ToString();
         CharacterOverview.CharacterLevel = 1;
 
-        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
+        UE_LOG(LogP1UI, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
         CharacterOverviews.Add(CharacterOverview);
-        UE_LOG(LogTemp, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
+        UE_LOG(LogP1UI, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
     }
 
     OnDisplayCharacterOverviews(CharacterOverviews);

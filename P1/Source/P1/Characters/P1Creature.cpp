@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Characters/P1Creature.h"
 #include "Core/P1InGamePlayerController.h"
 #include "Combat/P1AttackSystemComponent.h"
@@ -31,7 +28,7 @@ void AP1Creature::BeginPlay()
     // Set AttackSystem Component
     AttackSystemComponent = FindComponentByClass<UP1AttackSystemComponent>();
     if (AttackSystemComponent == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("AP1Creature {%s} AttackSystemComponent 누락"), *this->GetName());
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature {%s} AttackSystemComponent 누락"), *this->GetName());
 
     // Set and Initialize Nameplate Component
     NameplateComponent = FindComponentByClass<UWidgetComponent>();
@@ -40,11 +37,11 @@ void AP1Creature::BeginPlay()
         if (UP1NameplateWidget* NameplateWidget = Cast<UP1NameplateWidget>(NameplateComponent->GetWidget()))
             NameplateWidget->InitializeWidget(this);
         else
-            UE_LOG(LogTemp, Warning, TEXT("AP1Creature::BeginPlay() NameplateWidget 누락"));
+            UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature::BeginPlay() NameplateWidget 누락"));
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("AP1Creature::BeginPlay() NameplateComponent 누락"));
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature::BeginPlay() NameplateComponent 누락"));
     }
 
 }
@@ -140,7 +137,7 @@ void AP1Creature::SetServerPos(const Protocol::PosInfo& Info)
 
     if (ServerPos == nullptr)
     {
-        UE_LOG(LogProtobuf, Error, TEXT("ServerPos Is Nullptr"));
+        UE_LOG(LogP1Protobuf, Error, TEXT("ServerPos Is Nullptr"));
         return;
     }
 

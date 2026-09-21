@@ -1,11 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/P1DeathWidget.h"
 #include "P1.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1MyPlayerData.h"
 #include "Characters/P1MyPlayer.h"
+#include "Utils/LogCategory.h"
 
 void UP1DeathWidget::NativeConstruct()
 {
@@ -22,7 +20,7 @@ void UP1DeathWidget::NativeConstruct()
 
 void UP1DeathWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 {
-    UE_LOG(LogTemp, Log, TEXT("BindMyPlayerSpawned"));
+    UE_LOG(LogP1UI, Log, TEXT("BindMyPlayerSpawned"));
 
     // 바인딩 셋업
     MyPlayer->OnDie.AddDynamic(this, &UP1DeathWidget::OnMyPlayerDie);
@@ -73,6 +71,6 @@ void UP1DeathWidget::Test()
 
         PC->SetInputMode(InputMode);
         PC->bShowMouseCursor = true;
-        UE_LOG(LogTemp, Log, TEXT("?????"));
+        UE_LOG(LogP1UI, Log, TEXT("?????"));
     }
 }

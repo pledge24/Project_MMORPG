@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Core/P1GameInstance.h"
 
 #include "Combat/P1AttackSystemComponent.h"
@@ -27,7 +25,7 @@ void UP1GameInstance::Init()
 
     _MyPlayerData = GetSubsystem<UP1MyPlayerData>();
     if (IsValid(_MyPlayerData) == false)
-        UE_LOG(LogTemp, Warning, TEXT("_MyPlayerData Is Invalid"));
+        UE_LOG(LogP1System, Warning, TEXT("_MyPlayerData Is Invalid"));
 
     // 수신 펌프를 코어 티커에 등록한다.
     // 게임 인스턴스는 레벨 전환에 살아남으므로 펌프도 레벨과 무관하게 계속 돈다.
@@ -173,7 +171,7 @@ void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
 {
     if (EnterMapPkt.success() == false)
     {
-        UE_LOG(LogTemp, Warning, TEXT("맵 입장에 실패했습니다. map_id: %d"), EnterMapPkt.map_id());
+        UE_LOG(LogP1Network, Warning, TEXT("맵 입장에 실패했습니다. map_id: %d"), EnterMapPkt.map_id());
         return;
     }
 
@@ -192,7 +190,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
 {
     if (EnterRoomPkt.success() == false)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Room 입장에 실패했습니다. room_id: %d"), EnterRoomPkt.room_id());
+        UE_LOG(LogP1Network, Warning, TEXT("Room 입장에 실패했습니다. room_id: %d"), EnterRoomPkt.room_id());
         return;
     }
 
@@ -641,11 +639,11 @@ void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
 
     if (RespawnPkt.success() == false)
     {
-        UE_LOG(LogTemp, Warning, TEXT("서버에서 리스폰 실패"));
+        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패"));
         return;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("서버에서 리스폰 성공!"));
+    UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 성공!"));
 }
 
 UP1MyPlayerData* UP1GameInstance::GetMyPlayerData()

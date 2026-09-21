@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -70,11 +68,11 @@ public:
 protected:
     /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    class UP1AttackSystemComponent* AttackSystemComponent;
+    TObjectPtr<class UP1AttackSystemComponent> AttackSystemComponent;
 
     /** Attack System Component */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    class UWidgetComponent* NameplateComponent;
+    TObjectPtr<class UWidgetComponent> NameplateComponent;
 
     /** Etc Data */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")

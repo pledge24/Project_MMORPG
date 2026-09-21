@@ -1,11 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Entities/P1ObjectSpawner.h"
 #include "Characters/P1Monster.h"
 #include "Core/P1MyPlayerData.h"
 #include "Core/P1GameInstance.h"
 #include "Entities/P1StatefulObjectManager.h"
+#include "Utils/LogCategory.h"
 
 AP1ObjectSpawner::AP1ObjectSpawner()
 {
@@ -19,7 +17,7 @@ void AP1ObjectSpawner::BeginPlay()
 
     if (MonsterDataTable == nullptr)
     {
-        UE_LOG(LogTemp, Warning, TEXT("AMonsterSpawner에서 MonsterDataTable 누락"));
+        UE_LOG(LogP1Entity, Warning, TEXT("AMonsterSpawner에서 MonsterDataTable 누락"));
         return;
     }
 
@@ -90,7 +88,7 @@ bool AP1ObjectSpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonst
 
     if (MonsterDataTable == nullptr)
     {
-        UE_LOG(LogTemp, Warning, TEXT("MonsterDataTable Is Null"));
+        UE_LOG(LogP1Entity, Warning, TEXT("MonsterDataTable Is Null"));
         return false;
     }
 
@@ -98,7 +96,7 @@ bool AP1ObjectSpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonst
 
     if (!FoundRow)
     {
-        UE_LOG(LogTemp, Warning, TEXT("RowName{%s} Is Not Exist"), *RowName.ToString());
+        UE_LOG(LogP1Entity, Warning, TEXT("RowName{%s} Is Not Exist"), *RowName.ToString());
         return false;
     }
 
@@ -129,7 +127,7 @@ AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
     {
         if (!MyPlayerClass)
         {
-            UE_LOG(LogTemp, Warning, TEXT("MyPlayerClass가 설정되지 않았습니다"));
+            UE_LOG(LogP1Entity, Warning, TEXT("MyPlayerClass가 설정되지 않았습니다"));
             return nullptr;
         }
 
@@ -148,7 +146,7 @@ AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
     {
         if (!OtherPlayerClass)
         {
-            UE_LOG(LogTemp, Warning, TEXT("OtherPlayerClass가 설정되지 않았습니다"));
+            UE_LOG(LogP1Entity, Warning, TEXT("OtherPlayerClass가 설정되지 않았습니다"));
             return nullptr;
         }
 
@@ -173,7 +171,7 @@ AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo)
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("플레이어 SpawnActorDeferred<> NullPtr 반환"));
+        UE_LOG(LogP1Entity, Warning, TEXT("플레이어 SpawnActorDeferred<> NullPtr 반환"));
     }
 
     return OutPlayer;
