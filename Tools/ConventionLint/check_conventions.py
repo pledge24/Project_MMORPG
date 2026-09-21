@@ -1,17 +1,20 @@
 """저장소 규범을 텍스트로 검사한다.
 
 `docs/conventions.md`와 `docs/folder-structure.md`가 정한 규칙 중 빌드 없이 판정할 수 있는
-다섯 가지를 본다. 엔진도 v145 툴셋도 필요하지 않으므로 호스티드 러너에서 그대로 돈다.
+여덟 가지를 본다. 엔진도 v145 툴셋도 필요하지 않으므로 호스티드 러너에서 그대로 돈다.
 
 검사 항목과 근거는 아래와 같다.
 
-| 검사 이름       | 무엇을 보는가                       | 근거                        |
-| --------------- | ----------------------------------- | --------------------------- |
-| `file-type`     | 파일 이름과 그 안의 주 타입 이름    | `conventions.md` 2.4        |
-| `p1-prefix`     | 리플렉션 타입의 `P1` 약어           | `conventions.md` 2.2        |
-| `include-path`  | `#include`가 도메인 경로를 쓰는지   | `conventions.md` 2.6        |
-| `server-member` | 서버 멤버 변수의 `_camelCase`       | `conventions.md` 3.2        |
-| `asset-prefix`  | 추적 중인 에셋의 접두사             | `folder-structure.md` 4.3   |
+| 검사 이름              | 무엇을 보는가                          | 근거                        |
+| ---------------------- | -------------------------------------- | --------------------------- |
+| `file-type`            | 파일 이름과 그 안의 주 타입 이름       | `conventions.md` 2.4        |
+| `p1-prefix`            | 리플렉션 타입의 `P1` 약어              | `conventions.md` 2.2        |
+| `include-path`         | `#include`가 도메인 경로를 쓰는지      | `conventions.md` 2.6        |
+| `server-member`        | 서버 멤버 변수의 `_camelCase`          | `conventions.md` 3.2        |
+| `asset-prefix`         | 추적 중인 에셋의 접두사                | `folder-structure.md` 4.3   |
+| `folder-symmetry`      | `Game/` 하위 폴더가 ADR-0007의 표와 같은지 | ADR-0007                |
+| `project-item-exists`  | 프로젝트 파일의 등록 항목이 실재하는지 | #74                         |
+| `project-filter-path`  | `.filters`의 논리 폴더가 디스크와 같은지 | #74                       |
 
 사용법:
 
@@ -32,7 +35,7 @@ import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -111,6 +114,54 @@ PACK_COPY_DIRS = (
     "P1/Content/P1/Items/Equipment/Armors/Armor0R/SkeletalMeshes/PhysicsAssets05/",
 )
 
+# 게임 도메인 폴더가 사는 자리다. 이 아래 **한 단계**만 대칭 판정의 대상이다.
+CLIENT_GAME_ROOT = f"{CLIENT_SOURCE}/Game"
+SERVER_GAME_ROOT = "Server/GameServer/Game"
+
+# ADR-0007의 표를 그대로 옮긴 것이다
+# (`docs/adr/0007-limit-folder-symmetry-to-shared-domains.md` 31~39줄).
+#
+# **이 표를 고칠 때는 ADR도 함께 고친다.** 한쪽만 고치면 이 검사가 빨강이 되므로 어긋난 채로
+# 남지는 않지만, 어느 쪽이 의도인지는 사람이 정해야 한다.
+#
+# 표를 문서에서 파싱하지 않는 이유가 있다. `docs/folder-structure.md`의 클라이언트 표는
+# `Game/` 하위를 여덟 개 적는데 `Game/Items/`와 `Game/Interaction/`은 디스크에 없고 「아직
+# 없다」 표시도 없다. 같은 문서 3.3의 의존 방향 화살표도 같다. ADR-0007의 표만이 디스크와
+# 일치한다. 문서 쪽 어긋남은 `docs/tech-debt.md`에 있다.
+#
+# 짝이 `None`인 줄은 「한쪽에만 둔다」가 결정이라는 뜻이다. 빈 폴더를 만들어 맞추지 않는다.
+GAME_DOMAIN_FOLDERS = (
+    # (도메인, 게임 서버, 클라이언트)
+    ("엔티티", "Entities", "Entities"),
+    ("인벤토리", "Inventory", "Inventory"),
+    ("장비", "Equipment", "Equipment"),
+    ("게임 데이터", "Data", "Data"),
+    ("룸", "Room", None),
+    ("전투", None, "Combat"),
+    ("월드 액터", None, "World"),
+)
+
+# 항목을 하나씩 명시 등록하는 프로젝트 파일이다.
+#
+# `Server/AuthServer/AuthServer.esproj`는 뺀다. SDK 스타일이라 항목을 나열하지 않고 폴더째
+# 포함하므로 「등록한 것이 실재하는가」라는 명제가 성립하지 않는다. `P1`의 프로젝트 파일도
+# 뺀다. UBT가 생성하고 git이 추적하지 않는다.
+PROJECT_FILE_PATTERNS = ("*.vcxproj", "*.pyproj")
+
+# 프로젝트 파일이 파일 하나를 가리킬 때 쓰는 항목 유형이다. 빌드 대상과 그저 목록에 보이게
+# 하는 것이 섞여 있는데, 어느 쪽이든 경로가 실재해야 하는 것은 같다.
+PROJECT_ITEM_KINDS = (
+    "ClCompile",
+    "ClInclude",
+    "None",
+    "Content",
+    "UpToDateCheckInput",
+    "Text",
+    "Image",
+    "Natvis",
+    "Compile",
+)
+
 
 @dataclass(frozen=True)
 class Violation:
@@ -136,6 +187,35 @@ def run_git_ls_files(patterns: list[str]) -> list[str]:
     )
     raw = result.stdout.decode("utf-8")
     return [entry for entry in raw.split("\0") if entry]
+
+
+def run_git_check_ignore(paths: list[str]) -> set[str]:
+    """준 경로 중 `.gitignore`가 무시하는 것만 추려서 돌려준다.
+
+    **`git ls-files --others --ignored`를 쓰지 않는다.** 그쪽은 디스크를 훑어 실재하는
+    파일만 나열하므로, 파일 자체가 없는 환경에서는 무시 대상을 하나도 돌려주지 않는다.
+    러너가 그런 환경이다. 실제로 이 검사를 처음 올렸을 때 로컬에서 통과한 것이 CI에서
+    `DB/config.h` 1건으로 실패했다.
+
+    `check-ignore`는 경로 문자열을 규칙에 대조하므로 파일이 없어도 판정이 같다.
+    `--no-index`는 추적 여부를 보지 않고 규칙만 보게 한다.
+    """
+    if not paths:
+        return set()
+
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", "--stdin"],
+        cwd=REPO_ROOT,
+        input="\n".join(paths).encode("utf-8"),
+        capture_output=True,
+    )
+    # 하나도 무시되지 않으면 종료 코드가 1이다. 오류가 아니다. 진짜 오류는 128이다.
+    if result.returncode not in (0, 1):
+        raise RuntimeError(
+            f"git check-ignore가 {result.returncode}으로 끝났다: "
+            f"{result.stderr.decode('utf-8', errors='replace')}"
+        )
+    return {line for line in result.stdout.decode("utf-8").splitlines() if line}
 
 
 def read_text(rel_path: str) -> str:
@@ -573,6 +653,212 @@ def check_asset_prefix(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
+# 검사 6: `Game/` 하위 폴더의 클라이언트와 서버 대칭 (ADR-0007)
+# ----------------------------------------------------------------------------------
+
+
+def _game_subfolders(root: str) -> set[str]:
+    """`root` 바로 아래의 폴더 이름을 git이 추적하는 파일 경로에서 모은다.
+
+    디스크를 직접 훑지 않는다. self-test가 파일 목록만 바꿔 끼우는 구조라서, 디렉터리를
+    직접 보면 픽스처로 덮을 수 없다.
+
+    추적하는 파일이 하나도 없는 폴더는 여기 잡히지 않는다. 빈 폴더이거나 전부 무시되는
+    폴더인데 어느 쪽이든 저장소의 내용이 아니다.
+    """
+    prefix = f"{root}/"
+    folders: set[str] = set()
+    for rel_path in run_git_ls_files([f"{root}/*", f"{root}/**/*"]):
+        # 경로를 여기서 한 번 더 확인한다. self-test의 가짜 파일 목록은 패턴으로 거르지
+        # 않고 픽스처를 통째로 주기 때문에, 이 확인이 없으면 반대편 티어의 파일이 섞인다.
+        if not rel_path.startswith(prefix):
+            continue
+        parts = PurePosixPath(rel_path[len(prefix) :]).parts
+        # 폴더 하나와 그 안의 파일 하나가 있어야 한 단계 아래의 폴더로 센다.
+        if len(parts) >= 2:
+            folders.add(parts[0])
+    return folders
+
+
+def check_folder_symmetry(_: argparse.Namespace) -> list[Violation]:
+    """`Game/` 바로 아래 폴더 집합이 ADR-0007의 표와 같은지 본다.
+
+    **양쪽의 이름을 서로 대조하지 않는다.** 그렇게 하면 판정이 순환한다. 이름이 같아야
+    「양쪽에 다 있다」로 분류되므로, 이름이 같은 것만 남기고 이름을 비교하면 결과가 언제나
+    참이다. 2026년 9월에 실제로 일어난 어긋남(서버 `Game/Object/` 대 클라이언트
+    `Characters/`)이 그 방식으로는 「한쪽에만 있는 폴더 둘」이 되어 조용히 통과한다.
+
+    그래서 양쪽을 각각 표와 대조한다. 표에 없는 이름이 생기는 것과 표가 요구하는 폴더가
+    사라지는 것을 양방향으로 잡는다.
+    """
+    tiers = (
+        (SERVER_GAME_ROOT, {row[1] for row in GAME_DOMAIN_FOLDERS if row[1]}),
+        (CLIENT_GAME_ROOT, {row[2] for row in GAME_DOMAIN_FOLDERS if row[2]}),
+    )
+
+    violations: list[Violation] = []
+    for root, expected in tiers:
+        actual = _game_subfolders(root)
+
+        for name in sorted(actual - expected):
+            violations.append(
+                Violation(
+                    f"{root}/{name}",
+                    0,
+                    "ADR-0007의 표에 없는 폴더다. 반대편 티어와 이름을 맞추거나, "
+                    "한쪽에만 두기로 정했다면 ADR-0007의 표와 이 스크립트의 "
+                    "`GAME_DOMAIN_FOLDERS`에 줄을 더한다",
+                )
+            )
+
+        for name in sorted(expected - actual):
+            violations.append(
+                Violation(
+                    f"{root}/{name}",
+                    0,
+                    "ADR-0007의 표가 요구하는 폴더인데 추적하는 파일이 없다. "
+                    "폴더를 옮기거나 지웠다면 ADR-0007의 표와 이 스크립트의 "
+                    "`GAME_DOMAIN_FOLDERS`를 함께 고친다",
+                )
+            )
+    return violations
+
+
+# ----------------------------------------------------------------------------------
+# 검사 7·8: 프로젝트 파일의 등록 항목 (#74)
+# ----------------------------------------------------------------------------------
+
+PROJECT_ITEM_RE = re.compile(
+    r"<(" + "|".join(PROJECT_ITEM_KINDS) + r")\s+Include=\"([^\"]+)\"",
+    re.IGNORECASE,
+)
+
+# 논리 폴더는 여는 태그와 닫는 태그 사이의 `<Filter>`에 있다. 자기 닫는 태그
+# (`<ClCompile Include="..." />`)는 논리 폴더를 적지 않으므로 이 정규식에 걸리지 않는다.
+PROJECT_FILTER_RE = re.compile(
+    r"<(" + "|".join(PROJECT_ITEM_KINDS) + r")\s+Include=\"([^\"]+)\"\s*>(.*?)</\1>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+FILTER_TAG_RE = re.compile(r"<Filter>(.*?)</Filter>", re.IGNORECASE | re.DOTALL)
+
+
+def _resolve_project_item(project_path: str, include: str) -> str | None:
+    """항목의 `Include` 경로를 저장소 기준 경로로 푼다.
+
+    MSBuild 변수가 든 경로는 값을 모르므로 `None`을 돌려주고 건너뛴다.
+    """
+    if "$(" in include or "%(" in include:
+        return None
+
+    base = PurePosixPath(project_path).parent
+    parts: list[str] = []
+    for part in (base / include.replace("\\", "/")).parts:
+        if part == "..":
+            if parts:
+                parts.pop()
+        elif part != ".":
+            parts.append(part)
+    return "/".join(parts)
+
+
+def _item_disk_folder(include: str) -> str:
+    """항목 경로에서 논리 폴더와 대조할 디스크 폴더를 뽑는다.
+
+    **`..`를 벗긴다.** Visual Studio의 논리 트리에는 상대 경로라는 개념이 없어서 `..`를
+    논리 폴더 이름에 쓸 수 없다. 벗기지 않으면 솔루션 폴더 밖을 가리키는 항목이 전부
+    어긋난 것으로 잡힌다. 2026년 9월 22일에 재 보니 불일치 31건 중 27건이 그것이었다.
+    """
+    parts = [p for p in PurePosixPath(include.replace("\\", "/")).parts[:-1] if p != ".."]
+    return "\\".join(parts)
+
+
+def _project_files(suffix: str = "") -> list[str]:
+    """추적 중인 프로젝트 파일을 돌려준다. `suffix`로 `.filters`를 고른다.
+
+    확장자를 여기서 한 번 더 확인한다. self-test의 가짜 파일 목록은 패턴으로 거르지 않고
+    픽스처를 통째로 주기 때문에, 이 확인이 없으면 픽스처의 다른 파일까지 열게 된다.
+    """
+    patterns = [pattern + suffix for pattern in PROJECT_FILE_PATTERNS]
+    endings = tuple(pattern.lstrip("*") for pattern in patterns)
+    return sorted(path for path in run_git_ls_files(patterns) if path.endswith(endings))
+
+
+def check_project_item_exists(_: argparse.Namespace) -> list[Violation]:
+    """프로젝트 파일이 등록한 항목이 저장소에 실재하는지 본다.
+
+    **실재의 기준은 디스크가 아니라 git이다.** 디스크를 보면 로컬에서 통과한 것이 CI에서
+    실패한다. `GameServer.vcxproj`가 등록한 `DB/config.h`가 그런 파일인데, 디스크에 있고
+    `Server/.gitignore`가 의도적으로 무시하며 예시 파일이 없어서 러너에는 존재하지 않는다.
+
+    그래서 추적 중인 파일과 **`.gitignore`가 무시하기로 한 경로**를 둘 다 실재로 친다.
+    무시되는 경로는 저장소가 관리하지 않으므로 이 검사가 막으려는 사고(파일을 옮기고 프로젝트
+    파일을 안 고치는 것)의 대상이 아니다. 「무시하는 파일」이 아니라 「무시하기로 한 경로」인
+    것이 중요하다. 판정이 파일의 존재 여부를 타면 환경에 따라 결과가 갈린다.
+    """
+    tracked = {path.lower() for path in run_git_ls_files([])}
+
+    # 먼저 추적 목록으로 거르고, 남은 것만 무시 규칙에 대조한다. `check-ignore`를 한 번만
+    # 부르려고 경로를 모아 두었다가 한꺼번에 넘긴다.
+    unresolved: list[tuple[str, int, str, str, str]] = []
+    for project_path in _project_files():
+        text = read_text(project_path)
+        for match in PROJECT_ITEM_RE.finditer(text):
+            kind, include = match.group(1), match.group(2)
+            target = _resolve_project_item(project_path, include)
+            if target is None or target.lower() in tracked:
+                continue
+            line = text.count("\n", 0, match.start()) + 1
+            unresolved.append((project_path, line, kind, include, target))
+
+    ignored = run_git_check_ignore(sorted({row[4] for row in unresolved}))
+
+    return [
+        Violation(
+            project_path,
+            line,
+            f'<{kind} Include="{include}">가 가리키는 "{target}"이 저장소에 없다',
+        )
+        for project_path, line, kind, include, target in unresolved
+        if target not in ignored
+    ]
+
+
+def check_project_filter_path(_: argparse.Namespace) -> list[Violation]:
+    """`.filters`의 논리 폴더가 항목의 디스크 폴더와 같은지 본다.
+
+    논리 폴더를 적지 않은 항목은 프로젝트 루트에 놓인다는 뜻이므로 판정하지 않는다.
+    """
+    violations: list[Violation] = []
+    for filters_path in _project_files(".filters"):
+        text = read_text(filters_path)
+        for match in PROJECT_FILTER_RE.finditer(text):
+            kind, include, body = match.group(1), match.group(2), match.group(3)
+            if "$(" in include or "%(" in include:
+                continue
+
+            tag = FILTER_TAG_RE.search(body)
+            if tag is None:
+                continue
+
+            logical = tag.group(1).strip()
+            disk = _item_disk_folder(include)
+            if logical == disk:
+                continue
+
+            line = text.count("\n", 0, match.start()) + 1
+            violations.append(
+                Violation(
+                    filters_path,
+                    line,
+                    f'<{kind} Include="{include}">의 논리 폴더가 "{logical}"인데 '
+                    f'디스크 폴더는 "{disk}"다',
+                )
+            )
+    return violations
+
+
+# ----------------------------------------------------------------------------------
 # 진입점
 # ----------------------------------------------------------------------------------
 
@@ -582,6 +868,9 @@ CHECKS = {
     "include-path": ("#include의 도메인 경로 한정", check_include_path),
     "server-member": ("서버 멤버 변수의 _camelCase", check_server_member_names),
     "asset-prefix": ("추적 중인 에셋의 접두사", check_asset_prefix),
+    "folder-symmetry": ("Game/ 하위 폴더의 클라·서버 대칭", check_folder_symmetry),
+    "project-item-exists": ("프로젝트 파일 등록 항목의 실재", check_project_item_exists),
+    "project-filter-path": ("filters의 논리 폴더와 디스크 폴더", check_project_filter_path),
 }
 
 
@@ -639,6 +928,42 @@ SELF_TEST_FIXTURES: dict[str, dict[str, str | None]] = {
     "asset-prefix": {
         "P1/Content/P1/UI/Screens/Inventory.uasset": None,
     },
+    # 2026년 9월에 실제로 있던 어긋남이다. 서버가 엔티티 폴더를 `Object/`로 부르고 있고
+    # 클라이언트는 `Entities/`로 부른다. 잡혀야 할 위반은 둘이다. 표에 없는 `Object/`가
+    # 생긴 것과, 표가 요구하는 `Entities/`가 서버에 없는 것이다.
+    "folder-symmetry": {
+        f"{SERVER_GAME_ROOT}/Object/Object.cpp": None,
+        f"{SERVER_GAME_ROOT}/Inventory/Inventory.cpp": None,
+        f"{SERVER_GAME_ROOT}/Equipment/EquippedGear.cpp": None,
+        f"{SERVER_GAME_ROOT}/Data/Gamedata.cpp": None,
+        f"{SERVER_GAME_ROOT}/Room/Room.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Entities/P1Player.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Inventory/P1InventoryComponent.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Equipment/P1EquipmentComponent.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Data/P1ItemData.h": None,
+        f"{CLIENT_GAME_ROOT}/Combat/P1AttackSystemComponent.cpp": None,
+        f"{CLIENT_GAME_ROOT}/World/P1Portal.cpp": None,
+    },
+    "project-item-exists": {
+        "Server/GameServer/GameServer.vcxproj": (
+            "<Project>\n"
+            "  <ItemGroup>\n"
+            '    <ClCompile Include="Game\\Entities\\Gone.cpp" />\n'
+            "  </ItemGroup>\n"
+            "</Project>\n"
+        ),
+    },
+    "project-filter-path": {
+        "Server/GameServer/GameServer.vcxproj.filters": (
+            "<Project>\n"
+            "  <ItemGroup>\n"
+            '    <None Include="..\\..\\Protocol\\Schema\\Enum.proto">\n'
+            "      <Filter>Protocol\\Proto</Filter>\n"
+            "    </None>\n"
+            "  </ItemGroup>\n"
+            "</Project>\n"
+        ),
+    },
 }
 
 # 규범을 지키는 입력이다. 여기서 위반이 나오면 검사가 과하게 잡는 것이다.
@@ -688,14 +1013,66 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | None]] = {
         "P1/Content/P1/UI/Screens/WBP_Inventory.uasset": None,
         "P1/Content/P1/Maps/L_InGameMap.umap": None,
     },
+    # 위 픽스처에서 서버의 `Object/`만 `Entities/`로 고친 것이다. 서버에만 있는 `Room/`과
+    # 클라이언트에만 있는 `Combat/`·`World/`는 표가 허용하므로 위반이 아니다.
+    # `Data/Json/`은 두 단계 아래라 판정 대상이 아니다.
+    "folder-symmetry": {
+        f"{SERVER_GAME_ROOT}/Entities/Entity.cpp": None,
+        f"{SERVER_GAME_ROOT}/Inventory/Inventory.cpp": None,
+        f"{SERVER_GAME_ROOT}/Equipment/EquippedGear.cpp": None,
+        f"{SERVER_GAME_ROOT}/Data/Gamedata.cpp": None,
+        f"{SERVER_GAME_ROOT}/Data/Json/S_Item.json": None,
+        f"{SERVER_GAME_ROOT}/Room/Room.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Entities/P1Player.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Inventory/P1InventoryComponent.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Equipment/P1EquipmentComponent.cpp": None,
+        f"{CLIENT_GAME_ROOT}/Data/P1ItemData.h": None,
+        f"{CLIENT_GAME_ROOT}/Combat/P1AttackSystemComponent.cpp": None,
+        f"{CLIENT_GAME_ROOT}/World/P1Portal.cpp": None,
+    },
+    "project-item-exists": {
+        "Server/GameServer/GameServer.vcxproj": (
+            "<Project>\n"
+            "  <ItemGroup>\n"
+            '    <ClCompile Include="Game\\Entities\\Player.cpp" />\n'
+            "    <!-- MSBuild 변수가 든 경로는 값을 모르므로 건너뛴다 -->\n"
+            '    <ClCompile Include="$(IntDir)\\Generated.cpp" />\n'
+            "  </ItemGroup>\n"
+            "</Project>\n"
+        ),
+        "Server/GameServer/Game/Entities/Player.cpp": None,
+    },
+    "project-filter-path": {
+        "Server/GameServer/GameServer.vcxproj.filters": (
+            "<Project>\n"
+            "  <ItemGroup>\n"
+            '    <None Include="..\\..\\Protocol\\Schema\\Enum.proto">\n'
+            "      <Filter>Protocol\\Schema</Filter>\n"
+            "    </None>\n"
+            "    <!-- `..`를 벗기고 대조하는지 본다. 벗기지 않으면 여기가 잡힌다 -->\n"
+            '    <ClCompile Include="..\\GameServer\\Main\\pch.cpp">\n'
+            "      <Filter>GameServer\\Main</Filter>\n"
+            "    </ClCompile>\n"
+            "    <!-- 논리 폴더를 적지 않은 항목은 프로젝트 루트에 놓인다 -->\n"
+            '    <ClCompile Include="Main\\Global.cpp" />\n'
+            "  </ItemGroup>\n"
+            "</Project>\n"
+        ),
+    },
 }
 
 
 def _run_against_fixture(name: str, fixture: dict[str, str | None]) -> list[Violation]:
-    """파일 목록과 내용을 픽스처로 바꿔 끼우고 검사 하나를 돌린다."""
-    global run_git_ls_files, read_text
+    """파일 목록과 내용을 픽스처로 바꿔 끼우고 검사 하나를 돌린다.
 
-    original_ls, original_read = run_git_ls_files, read_text
+    저장소를 보는 함수는 이 셋뿐이다. 검사 본체가 이 셋만 거쳐서 바깥을 보게 두면 픽스처로
+    전부 덮을 수 있다. 디스크를 직접 훑는 코드를 검사에 넣으면 여기서 덮이지 않는다.
+    """
+    global run_git_ls_files, read_text, run_git_check_ignore
+
+    original_ls = run_git_ls_files
+    original_read = read_text
+    original_check_ignore = run_git_check_ignore
 
     def fake_ls(patterns: list[str]) -> list[str]:
         # 픽스처는 작으므로 패턴별로 거르지 않고 전부 준다. 검사 본체가 확장자와 경로로
@@ -708,11 +1085,17 @@ def _run_against_fixture(name: str, fixture: dict[str, str | None]) -> list[Viol
             raise AssertionError(f"픽스처에 내용이 없는 파일을 읽으려 했다: {rel_path}")
         return content
 
+    def fake_check_ignore(paths: list[str]) -> set[str]:
+        # 픽스처에 `.gitignore`가 없으므로 무시되는 경로도 없다.
+        return set()
+
     run_git_ls_files, read_text = fake_ls, fake_read
+    run_git_check_ignore = fake_check_ignore
     try:
         return CHECKS[name][1](argparse.Namespace())
     finally:
         run_git_ls_files, read_text = original_ls, original_read
+        run_git_check_ignore = original_check_ignore
 
 
 def run_self_test() -> int:
