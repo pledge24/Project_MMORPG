@@ -63,11 +63,11 @@ void UP1StatefulObjectManager::UnRegisterObject(uint64 ObjectId, EP1ObjectType O
 
 AActor* UP1StatefulObjectManager::FindObject(uint64 ObjectId)
 {
-    if (AP1Player** FindPlayer = Players.Find(ObjectId))
+    if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(ObjectId))
     {
         return *FindPlayer;
     }
-    else if (AP1Monster** FindMonster = Monsters.Find(ObjectId))
+    else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(ObjectId))
     {
         return *FindMonster;
     }
@@ -135,13 +135,13 @@ void UP1StatefulObjectManager::DespawnAllObjects(bool ExceptMine)
 
 void UP1StatefulObjectManager::DespawnObject(uint64 ObjectId)
 {
-    if (AP1Player** FindPlayer = Players.Find(ObjectId))
+    if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(ObjectId))
     {
         UnRegisterObject(ObjectId, EP1ObjectType::Player);
         (*FindPlayer)->Destroy();
         return;
     }
-    else if (AP1Monster** FindMonster = Monsters.Find(ObjectId))
+    else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(ObjectId))
     {
         UnRegisterObject(ObjectId, EP1ObjectType::Monster);
         (*FindMonster)->Destroy();
