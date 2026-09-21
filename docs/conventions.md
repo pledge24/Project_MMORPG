@@ -430,7 +430,7 @@ struct PacketHeader
 **static 멤버 변수에는 `_` 대신 `s_`를 붙인다.**
 
 ```cpp
-class ObjectUtils
+class EntityUtils
 {
 private:
     static atomic<int64> s_idGenerator;

@@ -216,9 +216,9 @@ void UP1GameInstance::HandleSpawn(const Protocol::EntityInfo& EntityInfo)
     if (World == nullptr)
         return;
 
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        StatefulObjectManager->SpawnEntity(EntityInfo);
+        StatefulEntityManager->SpawnEntity(EntityInfo);
     }
 }
 
@@ -231,11 +231,11 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
     if (World == nullptr)
         return;
 
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
 	    for (auto& Entity : SpawnPkt.entities())
 	    {
-            StatefulObjectManager->SpawnEntity(Entity);
+            StatefulEntityManager->SpawnEntity(Entity);
 	    }
     }
 }
@@ -249,11 +249,11 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
     if (World == nullptr)
         return;
 
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
         for (auto& EntityId : DespawnPkt.entity_ids())
         {
-            StatefulObjectManager->DespawnEntity(EntityId);
+            StatefulEntityManager->DespawnEntity(EntityId);
         }
     }
 	
@@ -268,9 +268,9 @@ void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
     if (World == nullptr)
         return;
 
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        StatefulObjectManager->DespawnAllEntities(ExceptMine);
+        StatefulEntityManager->DespawnAllEntities(ExceptMine);
     }
 }
 
@@ -280,9 +280,9 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
     if (World == nullptr)
         return;
 
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(Info.entity_id());
+        AActor* FindActor = StatefulEntityManager->FindEntity(Info.entity_id());
         if (FindActor == nullptr)
             return;
 
@@ -356,9 +356,9 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
         return;
 
     const uint64 EntityId = UseItemPkt.entity_id();
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
+        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -400,9 +400,9 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
         return;
 
     const uint64 EntityId = EquipGearPkt.entity_id();
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
+        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -467,9 +467,9 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
         return;
 
     const uint64 EntityId = UnequipGearPkt.entity_id();
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
+        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -536,9 +536,9 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
         return;
 
     const uint64 EntityId = NormalAttackPkt.entity_id();
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
+        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
         
@@ -564,9 +564,9 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
         return;
 
     int64 EntityId = HitPkt.entity_id();
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
+        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 
@@ -595,9 +595,9 @@ void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
         return;
 
     const uint64 EntityId = DiePkt.entity_id();
-    if (UP1StatefulObjectManager* StatefulObjectManager = World->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        AActor* FindActor = StatefulObjectManager->FindEntity(EntityId);
+        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
         if (FindActor == nullptr)
             return;
 

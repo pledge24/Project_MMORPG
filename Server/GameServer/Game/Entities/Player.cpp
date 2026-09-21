@@ -255,13 +255,13 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 	return true;
 }
 
-void Player::OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo)
+void Player::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     Creature::OnHit(attacker, attackInfo);
 
 }
 
-void Player::OnDie(ObjectRef attacker)
+void Player::OnDie(EntityRef attacker)
 {
     Creature::OnDie(attacker);
 

@@ -198,13 +198,13 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\ObjectUtils.cpp" />
+    <ClCompile Include="..\GameServer\Utils\EntityUtils.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
+    <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />
-    <ClCompile Include="..\GameServer\Game\Entities\Object.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp" />
     <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp" />
     <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp" />

@@ -1,34 +1,34 @@
-#include "Sync/P1ObjectSpawner.h"
+#include "Sync/P1EntitySpawner.h"
 #include "Game/Entities/P1Monster.h"
 #include "Core/P1MyPlayerData.h"
 #include "Core/P1GameInstance.h"
-#include "Sync/P1StatefulObjectManager.h"
+#include "Sync/P1StatefulEntityManager.h"
 #include "Utils/LogCategory.h"
 
-AP1ObjectSpawner::AP1ObjectSpawner()
+AP1EntitySpawner::AP1EntitySpawner()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
 }
 
-void AP1ObjectSpawner::BeginPlay()
+void AP1EntitySpawner::BeginPlay()
 {
     Super::BeginPlay();
 
     if (MonsterDataTable == nullptr)
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("AMonsterSpawner에서 MonsterDataTable 누락"));
+        UE_LOG(LogP1Entity, Warning, TEXT("AP1EntitySpawner에서 MonsterDataTable 누락"));
         return;
     }
 
-    if (UP1StatefulObjectManager* ObjectManager = GetWorld()->GetSubsystem<UP1StatefulObjectManager>())
+    if (UP1StatefulEntityManager* EntityManager = GetWorld()->GetSubsystem<UP1StatefulEntityManager>())
     {
-        ObjectManager->RegisterSpawner(this);
+        EntityManager->RegisterSpawner(this);
     }
 
 }
 
-AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FTransform& Transform)
+AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FTransform& Transform)
 {
     FVector Location = Transform.GetLocation();
     FRotator Rotation = Transform.GetRotation().Rotator();
@@ -36,7 +36,7 @@ AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FTransform& Trans
     return SpawnMonster(TemplateId, Location, Rotation);
 }
 
-AActor* AP1ObjectSpawner::SpawnMonster(const Protocol::EntityInfo& InEntityInfo)
+AActor* AP1EntitySpawner::SpawnMonster(const Protocol::EntityInfo& InEntityInfo)
 {
     int32 TemplateId = InEntityInfo.monster_info().template_id();
     const Protocol::PosInfo& PosInfo_ = InEntityInfo.pos_info();
@@ -48,7 +48,7 @@ AActor* AP1ObjectSpawner::SpawnMonster(const Protocol::EntityInfo& InEntityInfo)
     return SpawnMonster(TemplateId, Location, Rotation, InEntityInfo);
 }
 
-AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo)
+AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo)
 {
     if (MonsterDataTable == nullptr)
         return nullptr;
@@ -82,7 +82,7 @@ AActor* AP1ObjectSpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
     return OutMonster;
 }
 
-bool AP1ObjectSpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonsterData)
+bool AP1EntitySpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonsterData)
 {
     FName RowName = *FString::FromInt(TemplateId);
 
@@ -108,7 +108,7 @@ bool AP1ObjectSpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonst
     return true;
 }
 
-AActor* AP1ObjectSpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
+AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
 {
     UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance());
     if (GameInstance == nullptr)

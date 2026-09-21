@@ -1,10 +1,10 @@
 #pragma once
 
-class Object : public enable_shared_from_this<Object>
+class Entity : public enable_shared_from_this<Entity>
 {
 public:
-	Object();
-	virtual ~Object();
+	Entity();
+	virtual ~Entity();
 
 public:
     virtual bool Init();
@@ -15,7 +15,7 @@ protected:
 
 public:
     /** 이벤트 함수 */
-    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) {};
+    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) {};
 
     /** Bool 함수 */
 	bool IsPlayer() { return _isPlayer; }
@@ -41,6 +41,6 @@ protected:
     bool _isTickable = true;
 
     uint64 _prevTime = 0;
-    const uint64 OBJECT_TICK_INTERVAL = 50;
+    const uint64 ENTITY_TICK_INTERVAL = 50;
 };
 

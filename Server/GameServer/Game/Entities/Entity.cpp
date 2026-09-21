@@ -1,25 +1,25 @@
 #include "pch.h"
-#include "Object.h"
+#include "Entity.h"
 #include "Room.h"
 
-Object::Object()
+Entity::Entity()
 {
 	_entityInfo = new Protocol::EntityInfo();
     _posInfo = _entityInfo->mutable_pos_info();
 }
 
-Object::~Object()
+Entity::~Entity()
 {
 	delete _entityInfo;
 }
 
-bool Object::Init()
+bool Entity::Init()
 {
 
     return true;
 }
 
-bool Object::Start()
+bool Entity::Start()
 {
     // TODO: Validate
 
@@ -27,18 +27,18 @@ bool Object::Start()
     {
         if (auto ownerRoom = _room.load().lock())
         {
-            ownerRoom->DoTimer(OBJECT_TICK_INTERVAL, &Room::TickObject, shared_from_this());
+            ownerRoom->DoTimer(ENTITY_TICK_INTERVAL, &Room::TickEntity, shared_from_this());
         }
     }
 
     return true;
 }
 
-void Object::Tick(float deltaTime)
+void Entity::Tick(float deltaTime)
 {
     if (auto ownerRoom = _room.load().lock())
     {
-        ownerRoom->DoTimer(OBJECT_TICK_INTERVAL, &Room::TickObject, shared_from_this());
+        ownerRoom->DoTimer(ENTITY_TICK_INTERVAL, &Room::TickEntity, shared_from_this());
     }
 
 

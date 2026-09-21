@@ -507,11 +507,18 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 소켓 소유 + 세션 관리 + `S_*` 핸들러 16개 + 스폰/디스폰 + 델리게이트 5종 브로드캐스트 + 토큰
 보관을 한 클래스가 들고 있다.
 
+**2026년 9월 22일 덧붙임 — 엔티티 조회가 열한 곳에 흩어져 있다.** #87이 이 파일의 클래스 이름을
+옮기면서 세었다. `World->GetSubsystem<UP1StatefulEntityManager>()` 호출이 11회이고, 그중 7회는
+바로 뒤에서 `FindEntity(EntityId)`를 불러 `nullptr`을 검사하는 같은 세 단계를 되풀이한다. 나머지
+넷은 스폰과 디스폰이다. 핸들러마다 월드와 서브시스템과 액터를 차례로 타고 내려가므로, 이
+클래스를 쪼개지 않더라도 `AActor* FindEntityActor(uint64)` 하나를 두면 일곱 자리가 한 줄이 된다.
+
 ### 영향
 
 **변경 영향 범위 확대** · **테스트 어려움** — 게임 인스턴스는 레벨 전환에 살아남는 싱글턴이라
 여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
-함께 따져야 한다.
+함께 따져야 한다. 엔티티 조회가 흩어져 있어서 서브시스템 이름을 바꾸는 작업도 열한 자리를
+함께 연다.
 
 ## 스택 상한 없는 아이템 누적
 > **심각도:** 중간 · **난이도:** 높음 · **범위:** 함수 · protocol
@@ -734,37 +741,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **#52가 목적지를 옮겼다** — 데이터 테이블이 `Content/Gamedata/`에서 `Content/P1/Data/DataTables/`로
 갔고 `C_*.json` 네 개가 함께 갔다. 생성기를 되살릴 때 출력 경로를 새 자리로 맞춰야 한다.
 
-## 동기화 대상을 가리키는 클래스 이름이 아직 「오브젝트」다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · shared
-> 위치: `Server/GameServer/Game/Entities/Object.h` · `Server/GameServer/Utils/ObjectUtils.h` ·
-> `P1/Source/P1/Sync/P1StatefulObjectManager.h` · `P1/Source/P1/Sync/P1ObjectSpawner.h`
-> 등록일: 2026년 9월 21일
-
-#71이 프로토콜 스키마와 거기서 파생된 식별자를 「엔티티」로 바꿨다. 클래스 이름은 바꾸지 않았다.
-ADR-0007이 폴더 이름과 클래스 이름을 다른 층위로 두고, #72도 같은 근거로 클래스 이름을 범위에서
-뺐기 때문이다.
-
-옛 낱말로 남은 이름은 아래 다섯이다.
-
-| 티어 | 이름 |
-| --- | --- |
-| 게임 서버 | `Object` · `ObjectRef` · `ObjectUtils` |
-| 클라이언트 | `UP1StatefulObjectManager` · `AP1ObjectSpawner` |
-
-`Room`의 멤버 `_objects`와 메서드 `AddObject` · `RemoveObject` · `TickObject`는 `Object` 클래스의
-API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않는다.
-
-폴더 이름은 여기서 세지 않는다. 이 항목이 가리키는 것은 `Server/GameServer/Game/Entities/` 안의
-클래스 이름이다.
-
-이 항목을 갚는 티켓은 #87이다.
-
-### 영향
-
-**유지보수 어려움** — 한 파일 안에 두 낱말이 섞인다. `Server/GameServer/Game/Entities/Object.h` 33줄이
-`Protocol::EntityInfo* _entityInfo`를 `Object` 클래스의 멤버로 들고 있다. CONTEXT.md가 「오브젝트」를
-피할 말로 정해 두었으므로, 코드를 읽는 사람이 남은 이름을 실수로 볼지 결정으로 볼지 판정하게 된다.
-
 ## 패킷 핸들러 템플릿이 두 벌로 중복되어 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
 > 위치: `Protocol/Templates/PacketHandler.h` ·
@@ -787,26 +763,28 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 **재발 가능** — 다음에 템플릿을 고치는 사람이 쓰이지 않는 쪽만 고치면 아무 일도 일어나지 않는다.
 생성기를 돌려 봐야 알 수 있고, 그 시점에는 이미 생성물 일곱 벌이 세 티어에 복사된 뒤다.
 
-## `Object`가 엔티티 식별자의 접근자를 주지 않는다
+## `Entity`가 엔티티 식별자의 접근자를 주지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Entities/Object.h` 33줄
+> 위치: `Server/GameServer/Game/Entities/Entity.h` 33줄
 > 등록일: 2026년 9월 21일
+> 2026년 9월 22일에 #87이 클래스와 파일 이름을 옮겨서 이 항목의 참조를 함께 갱신했다.
+> 접근자를 두지 않는 상태 자체는 그대로다.
 
-`Object`가 `Protocol::EntityInfo* _entityInfo`를 public 원시 포인터로 내놓고 식별자를 읽는 접근자를
-두지 않는다. 그래서 부르는 쪽이 `object->_entityInfo->entity_id()`로 두 단계를 직접 탄다. 이 형태가
+`Entity`가 `Protocol::EntityInfo* _entityInfo`를 public 원시 포인터로 내놓고 식별자를 읽는 접근자를
+두지 않는다. 그래서 부르는 쪽이 `entity->_entityInfo->entity_id()`로 두 단계를 직접 탄다. 이 형태가
 게임 서버에 31곳 있고 그중 21곳이 식별자를 읽는다.
 
 | 파일 | `_entityInfo->` 접근 |
 | --- | --- |
 | `Game/Room/Room.cpp` | 16 |
 | `Game/Entities/Monster.cpp` | 6 |
-| `Utils/ObjectUtils.cpp` | 5 |
+| `Utils/EntityUtils.cpp` | 5 |
 | `Game/Entities/Player.cpp` | 3 |
-| `Game/Entities/Object.cpp` | 1 |
+| `Game/Entities/Entity.cpp` | 1 |
 
 ### 영향
 
-**변경 비용** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Object`에 식별자
+**변경 비용** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Entity`에 식별자
 접근자가 있었으면 한 줄이었다. 다음에 `entity_id`를 손대는 작업도 같은 규모를 다시 치른다.
 
 ## UI 하위 폴더의 판정 조건 둘이 실제 배치를 가리지 못한다
@@ -940,3 +918,102 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 **유지보수 어려움** — 지금 깨지는 것은 없다. 남는 것은 `GameServerTests.vcxproj.filters`를 도구가
 다시 생성하면 이 한 항목만 값이 달라져 diff가 튀는 것이다. 필터를 더하는 사람이 어느 방식을
 따라야 하는지도 파일만 보고는 알 수 없다.
+
+## `EntityUtils`가 배선 계층에서 게임 도메인을 부른다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · server
+> 위치: `Server/GameServer/Utils/EntityUtils.h` · `Server/GameServer/Utils/EntityUtils.cpp`
+> 등록일: 2026년 9월 22일
+
+`docs/folder-structure.md` 150줄의 의존 화살표가 `Utils`를 가장 아래 계층에 두고, 94줄이 「서버도
+같은 층으로 가른다」고 적는다. 그런데 `EntityUtils.cpp`가 `Player.h`와 `Monster.h`와
+`GameSession.h`를 include하고 `CreatePlayer`와 `CreateMonster`로 도메인 객체를 만든다. 화살표가
+가리키는 방향의 반대다.
+
+`Utils/`가 담기로 한 것은 104줄에 「함수 라이브러리, 로그 카테고리 선언, 공용 매크로」로 적혀
+있는데, 이 클래스가 하는 일은 엔티티 팩토리다. #87이 이름을 `ObjectUtils`에서 `EntityUtils`로
+옮기면서 이름이 도메인 쪽으로 더 다가섰고, 그래서 배치와의 어긋남이 눈에 띄게 됐다. 어긋남
+자체는 #87이 만든 것이 아니다.
+
+`Game/Entities/`로 옮기는 것이 후보다. 다만 옮기면 `.vcxproj` 네 벌의 등록 항목과 `#include`
+세 자리가 함께 움직이므로 별도 티켓으로 다룬다.
+
+### 영향
+
+**유지보수 어려움** — 폴더 이름이 그 파일이 하는 일을 알려주지 못한다. 엔티티를 어떻게 만드는지
+찾는 사람이 `Game/Entities/`를 먼저 열고, 거기 없으면 배선 폴더까지 뒤진다.
+
+## 엔티티 계층에 영어 로그가 남고 작성자 없는 TODO가 여덟 건이다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
+> 위치: `P1/Source/P1/Sync/P1EntitySpawner.cpp` 91·99줄 ·
+> `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 84줄 · 아래 TODO 표의 여덟 자리
+> 등록일: 2026년 9월 22일
+
+`docs/conventions.md` 1.1이 「주석과 로그는 한국어로 쓴다」를 정하는데 클라이언트 엔티티 스폰
+경로에 영어 로그 세 건이 남아 있다. 같은 파일의 다른 로그는 한국어다.
+
+| 위치 | 문구 |
+| --- | --- |
+| `P1StatefulEntityManager.cpp` 84줄 | `Not Found %d Spawner` |
+| `P1EntitySpawner.cpp` 91줄 | `MonsterDataTable Is Null` |
+| `P1EntitySpawner.cpp` 99줄 | `RowName{%s} Is Not Exist` |
+
+1.2가 정한 `// TODO(Name): 내용` 형식을 벗어난 TODO는 저장소 전체에 여덟 건이다. 그중 둘은
+내용까지 영어다.
+
+| 파일 | 줄 | 언어 |
+| --- | --- | --- |
+| `Server/GameServer/Game/Entities/Entity.cpp` | 24 | 영어 |
+| `Server/GameServer/Game/Inventory/Inventory.cpp` | 122 | 영어 |
+| `Server/GameServer/DB/DBRequestFunctions.cpp` | 303 | 한국어 |
+| `Server/GameServer/Game/Room/Room.cpp` | 207 · 210 · 623 · 697 | 한국어 |
+| `Server/GameServer/Main/ServerPacketHandler.cpp` | 26 | 한국어 |
+
+#87이 `Entity.cpp`와 `P1EntitySpawner.cpp`를 건드렸으므로 1.1의 「영어 주석이 남아 있는 파일을
+건드리면 그 파일의 주석도 한국어로 바꾼다」가 그때 적용될 수 있었으나, 리네임 차분과 문구
+수정을 섞지 않으려고 기록으로 넘겼다. 같은 차분에서 고친 것은 `P1EntitySpawner.cpp` 20줄
+하나인데, 그 로그가 두 번의 리네임 전 이름인 `AMonsterSpawner`를 부르고 있어서 이번 작업의
+대상에 해당했기 때문이다.
+
+### 영향
+
+**추적 어려움** — TODO에 작성자가 없으면 언제 누가 왜 남겼는지 알 수 없다. 로그 언어가 섞이면
+출력 창에서 한 흐름을 눈으로 따라가기 어렵다.
+
+## 엔티티 동기화 계층에 죽은 코드가 남아 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Sync/P1StatefulEntityManager.h` 9줄 ·
+> `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 11~17줄과 45줄
+> 등록일: 2026년 9월 22일
+
+세 자리가 있다.
+
+- `P1StatefulEntityManager.h` 9줄의 `class APlayerSpawner;`는 저장소 어디에도 정의가 없는 타입을
+  전방 선언한다. 전수 검색 결과 이 한 줄이 그 이름의 유일한 출현이다.
+- `P1StatefulEntityManager.cpp` 11~17줄은 스포너를 직접 스폰하던 코드가 통째로 주석 처리된
+  것이다. 바로 위에 「BP로 설정한 property가 없음」이라고 이유가 적혀 있다.
+- 같은 파일 45줄의 등록 로그도 주석 처리되어 있다.
+
+#87이 이 자리들의 식별자를 새 이름으로 갱신했다. 지우는 편이 나았을 수 있으나 리네임 차분에
+삭제를 섞지 않으려고 그대로 두었다.
+
+### 영향
+
+**판단 비용** — 읽는 사람이 남긴 것인지 잊은 것인지 매번 가려야 한다. `APlayerSpawner`는 특히
+그렇다. 이름만 보면 있어야 할 클래스처럼 읽혀서, 없는 것을 찾게 만든다.
+
+## `Room`의 진입 지점 다섯이 같은 존재 검사를 되풀이한다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` 398 · 519 · 563 · 606 · 858줄
+> 등록일: 2026년 9월 22일
+
+`if (_entities.contains(entityId) == false) return;` 형태의 조기 반환이 다섯 자리에 있고, 그중
+넷은 바로 뒤에서 `_entities[entityId]`를 다시 찾아 `dynamic_pointer_cast`로 내린다. 같은 맵을 두
+번 조회하는 셈이다.
+
+찾기와 형 변환을 함께 하는 함수 하나를 두면 다섯 자리가 한 줄이 된다. 759줄의 「`Entity`가
+엔티티 식별자의 접근자를 주지 않는다」와 함께 풀면 호출부를 한 번만 연다.
+
+### 영향
+
+**변경 비용** — 룸의 엔티티 보관 방식을 바꾸면 다섯 자리를 함께 고친다. 지금은 맵이지만 셀
+기반 조회로 옮기려는 시도가 있으면 이 형태가 먼저 걸린다.

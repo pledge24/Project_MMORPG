@@ -40,8 +40,8 @@ public:
     bool ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt);
 
     /** 이벤트 함수 */
-    virtual void OnHit(ObjectRef attacker, Protocol::AttackInfo attackInfo) override;
-    virtual void OnDie(ObjectRef attacker) override;
+    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
+    virtual void OnDie(EntityRef attacker) override;
 
     void OnEnterMap(int32 mapId, int32 roomId);
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
