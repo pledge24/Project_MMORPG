@@ -28,7 +28,7 @@ public:
 
     //~ Begin AP1Creature Interface
 public:
-    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override;
+    virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
     //~ End AP1Creature Interface
 
     //~ Monster Data

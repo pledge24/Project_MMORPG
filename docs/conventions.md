@@ -49,7 +49,7 @@
 | `UObject` 파생 | `U` | `UP1InventoryWidget` |
 | `AActor` 파생 | `A` | `AP1Character` |
 | 구조체 | `F` | `FP1ItemData` |
-| 열거형 | `E` | `EP1ObjectType` |
+| 열거형 | `E` | `EP1EntityType` |
 | 인터페이스 | `I` | `IP1Interactable` |
 | bool 변수 | `b` | `bIsDead` |
 

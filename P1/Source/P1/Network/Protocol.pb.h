@@ -1685,23 +1685,23 @@ class S_ENTER_GAME final :
     kPossessionFieldNumber = 4,
     kSuccessFieldNumber = 1,
   };
-  // .Protocol.ObjectInfo player = 2;
+  // .Protocol.EntityInfo player = 2;
   bool has_player() const;
   private:
   bool _internal_has_player() const;
   public:
   void clear_player();
-  const ::Protocol::ObjectInfo& player() const;
-  PROTOBUF_NODISCARD ::Protocol::ObjectInfo* release_player();
-  ::Protocol::ObjectInfo* mutable_player();
-  void set_allocated_player(::Protocol::ObjectInfo* player);
+  const ::Protocol::EntityInfo& player() const;
+  PROTOBUF_NODISCARD ::Protocol::EntityInfo* release_player();
+  ::Protocol::EntityInfo* mutable_player();
+  void set_allocated_player(::Protocol::EntityInfo* player);
   private:
-  const ::Protocol::ObjectInfo& _internal_player() const;
-  ::Protocol::ObjectInfo* _internal_mutable_player();
+  const ::Protocol::EntityInfo& _internal_player() const;
+  ::Protocol::EntityInfo* _internal_mutable_player();
   public:
   void unsafe_arena_set_allocated_player(
-      ::Protocol::ObjectInfo* player);
-  ::Protocol::ObjectInfo* unsafe_arena_release_player();
+      ::Protocol::EntityInfo* player);
+  ::Protocol::EntityInfo* unsafe_arena_release_player();
 
   // .Protocol.StatInfo stat_info = 3;
   bool has_stat_info() const;
@@ -1756,7 +1756,7 @@ class S_ENTER_GAME final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::Protocol::ObjectInfo* player_;
+    ::Protocol::EntityInfo* player_;
     ::Protocol::StatInfo* stat_info_;
     ::Protocol::Possession* possession_;
     bool success_;
@@ -3018,25 +3018,25 @@ class S_SPAWN final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kObjectsFieldNumber = 1,
+    kEntitiesFieldNumber = 1,
   };
-  // repeated .Protocol.ObjectInfo objects = 1;
-  int objects_size() const;
+  // repeated .Protocol.EntityInfo entities = 1;
+  int entities_size() const;
   private:
-  int _internal_objects_size() const;
+  int _internal_entities_size() const;
   public:
-  void clear_objects();
-  ::Protocol::ObjectInfo* mutable_objects(int index);
-  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ObjectInfo >*
-      mutable_objects();
+  void clear_entities();
+  ::Protocol::EntityInfo* mutable_entities(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::EntityInfo >*
+      mutable_entities();
   private:
-  const ::Protocol::ObjectInfo& _internal_objects(int index) const;
-  ::Protocol::ObjectInfo* _internal_add_objects();
+  const ::Protocol::EntityInfo& _internal_entities(int index) const;
+  ::Protocol::EntityInfo* _internal_add_entities();
   public:
-  const ::Protocol::ObjectInfo& objects(int index) const;
-  ::Protocol::ObjectInfo* add_objects();
-  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ObjectInfo >&
-      objects() const;
+  const ::Protocol::EntityInfo& entities(int index) const;
+  ::Protocol::EntityInfo* add_entities();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::EntityInfo >&
+      entities() const;
 
   // @@protoc_insertion_point(class_scope:Protocol.S_SPAWN)
  private:
@@ -3046,7 +3046,7 @@ class S_SPAWN final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ObjectInfo > objects_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::EntityInfo > entities_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -3175,29 +3175,29 @@ class S_DESPAWN final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kObjectIdsFieldNumber = 1,
+    kEntityIdsFieldNumber = 1,
   };
-  // repeated int64 object_ids = 1;
-  int object_ids_size() const;
+  // repeated int64 entity_ids = 1;
+  int entity_ids_size() const;
   private:
-  int _internal_object_ids_size() const;
+  int _internal_entity_ids_size() const;
   public:
-  void clear_object_ids();
+  void clear_entity_ids();
   private:
-  int64_t _internal_object_ids(int index) const;
+  int64_t _internal_entity_ids(int index) const;
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >&
-      _internal_object_ids() const;
-  void _internal_add_object_ids(int64_t value);
+      _internal_entity_ids() const;
+  void _internal_add_entity_ids(int64_t value);
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >*
-      _internal_mutable_object_ids();
+      _internal_mutable_entity_ids();
   public:
-  int64_t object_ids(int index) const;
-  void set_object_ids(int index, int64_t value);
-  void add_object_ids(int64_t value);
+  int64_t entity_ids(int index) const;
+  void set_entity_ids(int index, int64_t value);
+  void add_entity_ids(int64_t value);
   const ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >&
-      object_ids() const;
+      entity_ids() const;
   ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >*
-      mutable_object_ids();
+      mutable_entity_ids();
 
   // @@protoc_insertion_point(class_scope:Protocol.S_DESPAWN)
  private:
@@ -3207,8 +3207,8 @@ class S_DESPAWN final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t > object_ids_;
-    mutable std::atomic<int> _object_ids_cached_byte_size_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t > entity_ids_;
+    mutable std::atomic<int> _entity_ids_cached_byte_size_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -3799,17 +3799,17 @@ class S_NORMAL_ATTACK final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kObjectIdFieldNumber = 1,
+    kEntityIdFieldNumber = 1,
     kComboFieldNumber = 2,
     kYawFieldNumber = 3,
   };
-  // int64 object_id = 1;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // int32 combo = 2;
@@ -3838,7 +3838,7 @@ class S_NORMAL_ATTACK final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int64_t object_id_;
+    int64_t entity_id_;
     int32_t combo_;
     float yaw_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -3969,17 +3969,17 @@ class S_HIT final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kObjectIdFieldNumber = 1,
+    kEntityIdFieldNumber = 1,
     kDamageFieldNumber = 2,
     kUpdatedHpFieldNumber = 3,
   };
-  // int64 object_id = 1;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // int64 damage = 2;
@@ -4014,7 +4014,7 @@ class S_HIT final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    int64_t object_id_;
+    int64_t entity_id_;
     int64_t damage_;
     int64_t updated_hp_;
   };
@@ -4988,7 +4988,7 @@ class S_EQUIP_GEAR final :
   enum : int {
     kUpdatedSlotsFieldNumber = 5,
     kUpdatedStatFieldNumber = 6,
-    kObjectIdFieldNumber = 2,
+    kEntityIdFieldNumber = 2,
     kSuccessFieldNumber = 1,
     kSlotIdFieldNumber = 3,
     kTemplateIdFieldNumber = 4,
@@ -5029,13 +5029,13 @@ class S_EQUIP_GEAR final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
       updated_stat() const;
 
-  // int64 object_id = 2;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 2;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // bool success = 1;
@@ -5075,7 +5075,7 @@ class S_EQUIP_GEAR final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat > updated_stat_;
-    int64_t object_id_;
+    int64_t entity_id_;
     bool success_;
     int32_t slot_id_;
     int32_t template_id_;
@@ -5366,7 +5366,7 @@ class S_UNEQUIP_GEAR final :
   enum : int {
     kUpdatedSlotsFieldNumber = 5,
     kUpdatedStatFieldNumber = 6,
-    kObjectIdFieldNumber = 2,
+    kEntityIdFieldNumber = 2,
     kSuccessFieldNumber = 1,
     kSlotIdFieldNumber = 3,
     kTemplateIdFieldNumber = 4,
@@ -5407,13 +5407,13 @@ class S_UNEQUIP_GEAR final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
       updated_stat() const;
 
-  // int64 object_id = 2;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 2;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // bool success = 1;
@@ -5453,7 +5453,7 @@ class S_UNEQUIP_GEAR final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat > updated_stat_;
-    int64_t object_id_;
+    int64_t entity_id_;
     bool success_;
     int32_t slot_id_;
     int32_t template_id_;
@@ -5744,7 +5744,7 @@ class S_USE_ITEM final :
   enum : int {
     kUpdatedSlotsFieldNumber = 3,
     kUpdatedStatFieldNumber = 4,
-    kObjectIdFieldNumber = 2,
+    kEntityIdFieldNumber = 2,
     kSuccessFieldNumber = 1,
   };
   // repeated .Protocol.Slot updated_slots = 3;
@@ -5783,13 +5783,13 @@ class S_USE_ITEM final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat >&
       updated_stat() const;
 
-  // int64 object_id = 2;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 2;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // bool success = 1;
@@ -5811,7 +5811,7 @@ class S_USE_ITEM final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Stat > updated_stat_;
-    int64_t object_id_;
+    int64_t entity_id_;
     bool success_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -5941,15 +5941,15 @@ class S_DIE final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kObjectIdFieldNumber = 1,
+    kEntityIdFieldNumber = 1,
   };
-  // int64 object_id = 1;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_DIE)
@@ -5960,7 +5960,7 @@ class S_DIE final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int64_t object_id_;
+    int64_t entity_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -6546,7 +6546,7 @@ class S_RESPAWN final :
     kPosInfoFieldNumber = 6,
     kSuccessFieldNumber = 1,
     kRespawnTypeFieldNumber = 3,
-    kObjectIdFieldNumber = 4,
+    kEntityIdFieldNumber = 4,
     kRoomIdFieldNumber = 5,
   };
   // repeated .Protocol.Stat updated_stat = 7;
@@ -6617,13 +6617,13 @@ class S_RESPAWN final :
   void _internal_set_respawn_type(::Protocol::RespawnType value);
   public:
 
-  // int64 object_id = 4;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 4;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // int32 room_id = 5;
@@ -6648,7 +6648,7 @@ class S_RESPAWN final :
     ::Protocol::PosInfo* pos_info_;
     bool success_;
     int respawn_type_;
-    int64_t object_id_;
+    int64_t entity_id_;
     int32_t room_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -6932,7 +6932,7 @@ class S_CHAT final :
 
   enum : int {
     kMsgFieldNumber = 2,
-    kObjectIdFieldNumber = 1,
+    kEntityIdFieldNumber = 1,
   };
   // string msg = 2;
   void clear_msg();
@@ -6948,13 +6948,13 @@ class S_CHAT final :
   std::string* _internal_mutable_msg();
   public:
 
-  // int64 object_id = 1;
-  void clear_object_id();
-  int64_t object_id() const;
-  void set_object_id(int64_t value);
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
   private:
-  int64_t _internal_object_id() const;
-  void _internal_set_object_id(int64_t value);
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_CHAT)
@@ -6966,7 +6966,7 @@ class S_CHAT final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr msg_;
-    int64_t object_id_;
+    int64_t entity_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -7401,24 +7401,24 @@ inline void S_ENTER_GAME::set_success(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_ENTER_GAME.success)
 }
 
-// .Protocol.ObjectInfo player = 2;
+// .Protocol.EntityInfo player = 2;
 inline bool S_ENTER_GAME::_internal_has_player() const {
   return this != internal_default_instance() && _impl_.player_ != nullptr;
 }
 inline bool S_ENTER_GAME::has_player() const {
   return _internal_has_player();
 }
-inline const ::Protocol::ObjectInfo& S_ENTER_GAME::_internal_player() const {
-  const ::Protocol::ObjectInfo* p = _impl_.player_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::ObjectInfo&>(
-      ::Protocol::_ObjectInfo_default_instance_);
+inline const ::Protocol::EntityInfo& S_ENTER_GAME::_internal_player() const {
+  const ::Protocol::EntityInfo* p = _impl_.player_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::EntityInfo&>(
+      ::Protocol::_EntityInfo_default_instance_);
 }
-inline const ::Protocol::ObjectInfo& S_ENTER_GAME::player() const {
+inline const ::Protocol::EntityInfo& S_ENTER_GAME::player() const {
   // @@protoc_insertion_point(field_get:Protocol.S_ENTER_GAME.player)
   return _internal_player();
 }
 inline void S_ENTER_GAME::unsafe_arena_set_allocated_player(
-    ::Protocol::ObjectInfo* player) {
+    ::Protocol::EntityInfo* player) {
   if (GetArenaForAllocation() == nullptr) {
     delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.player_);
   }
@@ -7430,9 +7430,9 @@ inline void S_ENTER_GAME::unsafe_arena_set_allocated_player(
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_ENTER_GAME.player)
 }
-inline ::Protocol::ObjectInfo* S_ENTER_GAME::release_player() {
+inline ::Protocol::EntityInfo* S_ENTER_GAME::release_player() {
   
-  ::Protocol::ObjectInfo* temp = _impl_.player_;
+  ::Protocol::EntityInfo* temp = _impl_.player_;
   _impl_.player_ = nullptr;
 #ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
   auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
@@ -7445,27 +7445,27 @@ inline ::Protocol::ObjectInfo* S_ENTER_GAME::release_player() {
 #endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
   return temp;
 }
-inline ::Protocol::ObjectInfo* S_ENTER_GAME::unsafe_arena_release_player() {
+inline ::Protocol::EntityInfo* S_ENTER_GAME::unsafe_arena_release_player() {
   // @@protoc_insertion_point(field_release:Protocol.S_ENTER_GAME.player)
   
-  ::Protocol::ObjectInfo* temp = _impl_.player_;
+  ::Protocol::EntityInfo* temp = _impl_.player_;
   _impl_.player_ = nullptr;
   return temp;
 }
-inline ::Protocol::ObjectInfo* S_ENTER_GAME::_internal_mutable_player() {
+inline ::Protocol::EntityInfo* S_ENTER_GAME::_internal_mutable_player() {
   
   if (_impl_.player_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::ObjectInfo>(GetArenaForAllocation());
+    auto* p = CreateMaybeMessage<::Protocol::EntityInfo>(GetArenaForAllocation());
     _impl_.player_ = p;
   }
   return _impl_.player_;
 }
-inline ::Protocol::ObjectInfo* S_ENTER_GAME::mutable_player() {
-  ::Protocol::ObjectInfo* _msg = _internal_mutable_player();
+inline ::Protocol::EntityInfo* S_ENTER_GAME::mutable_player() {
+  ::Protocol::EntityInfo* _msg = _internal_mutable_player();
   // @@protoc_insertion_point(field_mutable:Protocol.S_ENTER_GAME.player)
   return _msg;
 }
-inline void S_ENTER_GAME::set_allocated_player(::Protocol::ObjectInfo* player) {
+inline void S_ENTER_GAME::set_allocated_player(::Protocol::EntityInfo* player) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
     delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.player_);
@@ -8192,92 +8192,92 @@ inline void S_ENTER_ROOM::set_allocated_enter_pos(::Protocol::PosInfo* enter_pos
 
 // S_SPAWN
 
-// repeated .Protocol.ObjectInfo objects = 1;
-inline int S_SPAWN::_internal_objects_size() const {
-  return _impl_.objects_.size();
+// repeated .Protocol.EntityInfo entities = 1;
+inline int S_SPAWN::_internal_entities_size() const {
+  return _impl_.entities_.size();
 }
-inline int S_SPAWN::objects_size() const {
-  return _internal_objects_size();
+inline int S_SPAWN::entities_size() const {
+  return _internal_entities_size();
 }
-inline ::Protocol::ObjectInfo* S_SPAWN::mutable_objects(int index) {
-  // @@protoc_insertion_point(field_mutable:Protocol.S_SPAWN.objects)
-  return _impl_.objects_.Mutable(index);
+inline ::Protocol::EntityInfo* S_SPAWN::mutable_entities(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.S_SPAWN.entities)
+  return _impl_.entities_.Mutable(index);
 }
-inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ObjectInfo >*
-S_SPAWN::mutable_objects() {
-  // @@protoc_insertion_point(field_mutable_list:Protocol.S_SPAWN.objects)
-  return &_impl_.objects_;
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::EntityInfo >*
+S_SPAWN::mutable_entities() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_SPAWN.entities)
+  return &_impl_.entities_;
 }
-inline const ::Protocol::ObjectInfo& S_SPAWN::_internal_objects(int index) const {
-  return _impl_.objects_.Get(index);
+inline const ::Protocol::EntityInfo& S_SPAWN::_internal_entities(int index) const {
+  return _impl_.entities_.Get(index);
 }
-inline const ::Protocol::ObjectInfo& S_SPAWN::objects(int index) const {
-  // @@protoc_insertion_point(field_get:Protocol.S_SPAWN.objects)
-  return _internal_objects(index);
+inline const ::Protocol::EntityInfo& S_SPAWN::entities(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SPAWN.entities)
+  return _internal_entities(index);
 }
-inline ::Protocol::ObjectInfo* S_SPAWN::_internal_add_objects() {
-  return _impl_.objects_.Add();
+inline ::Protocol::EntityInfo* S_SPAWN::_internal_add_entities() {
+  return _impl_.entities_.Add();
 }
-inline ::Protocol::ObjectInfo* S_SPAWN::add_objects() {
-  ::Protocol::ObjectInfo* _add = _internal_add_objects();
-  // @@protoc_insertion_point(field_add:Protocol.S_SPAWN.objects)
+inline ::Protocol::EntityInfo* S_SPAWN::add_entities() {
+  ::Protocol::EntityInfo* _add = _internal_add_entities();
+  // @@protoc_insertion_point(field_add:Protocol.S_SPAWN.entities)
   return _add;
 }
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ObjectInfo >&
-S_SPAWN::objects() const {
-  // @@protoc_insertion_point(field_list:Protocol.S_SPAWN.objects)
-  return _impl_.objects_;
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::EntityInfo >&
+S_SPAWN::entities() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_SPAWN.entities)
+  return _impl_.entities_;
 }
 
 // -------------------------------------------------------------------
 
 // S_DESPAWN
 
-// repeated int64 object_ids = 1;
-inline int S_DESPAWN::_internal_object_ids_size() const {
-  return _impl_.object_ids_.size();
+// repeated int64 entity_ids = 1;
+inline int S_DESPAWN::_internal_entity_ids_size() const {
+  return _impl_.entity_ids_.size();
 }
-inline int S_DESPAWN::object_ids_size() const {
-  return _internal_object_ids_size();
+inline int S_DESPAWN::entity_ids_size() const {
+  return _internal_entity_ids_size();
 }
-inline void S_DESPAWN::clear_object_ids() {
-  _impl_.object_ids_.Clear();
+inline void S_DESPAWN::clear_entity_ids() {
+  _impl_.entity_ids_.Clear();
 }
-inline int64_t S_DESPAWN::_internal_object_ids(int index) const {
-  return _impl_.object_ids_.Get(index);
+inline int64_t S_DESPAWN::_internal_entity_ids(int index) const {
+  return _impl_.entity_ids_.Get(index);
 }
-inline int64_t S_DESPAWN::object_ids(int index) const {
-  // @@protoc_insertion_point(field_get:Protocol.S_DESPAWN.object_ids)
-  return _internal_object_ids(index);
+inline int64_t S_DESPAWN::entity_ids(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DESPAWN.entity_ids)
+  return _internal_entity_ids(index);
 }
-inline void S_DESPAWN::set_object_ids(int index, int64_t value) {
-  _impl_.object_ids_.Set(index, value);
-  // @@protoc_insertion_point(field_set:Protocol.S_DESPAWN.object_ids)
+inline void S_DESPAWN::set_entity_ids(int index, int64_t value) {
+  _impl_.entity_ids_.Set(index, value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DESPAWN.entity_ids)
 }
-inline void S_DESPAWN::_internal_add_object_ids(int64_t value) {
-  _impl_.object_ids_.Add(value);
+inline void S_DESPAWN::_internal_add_entity_ids(int64_t value) {
+  _impl_.entity_ids_.Add(value);
 }
-inline void S_DESPAWN::add_object_ids(int64_t value) {
-  _internal_add_object_ids(value);
-  // @@protoc_insertion_point(field_add:Protocol.S_DESPAWN.object_ids)
-}
-inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >&
-S_DESPAWN::_internal_object_ids() const {
-  return _impl_.object_ids_;
+inline void S_DESPAWN::add_entity_ids(int64_t value) {
+  _internal_add_entity_ids(value);
+  // @@protoc_insertion_point(field_add:Protocol.S_DESPAWN.entity_ids)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >&
-S_DESPAWN::object_ids() const {
-  // @@protoc_insertion_point(field_list:Protocol.S_DESPAWN.object_ids)
-  return _internal_object_ids();
+S_DESPAWN::_internal_entity_ids() const {
+  return _impl_.entity_ids_;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >&
+S_DESPAWN::entity_ids() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_DESPAWN.entity_ids)
+  return _internal_entity_ids();
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >*
-S_DESPAWN::_internal_mutable_object_ids() {
-  return &_impl_.object_ids_;
+S_DESPAWN::_internal_mutable_entity_ids() {
+  return &_impl_.entity_ids_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< int64_t >*
-S_DESPAWN::mutable_object_ids() {
-  // @@protoc_insertion_point(field_mutable_list:Protocol.S_DESPAWN.object_ids)
-  return _internal_mutable_object_ids();
+S_DESPAWN::mutable_entity_ids() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_DESPAWN.entity_ids)
+  return _internal_mutable_entity_ids();
 }
 
 // -------------------------------------------------------------------
@@ -8438,24 +8438,24 @@ inline void C_NORMAL_ATTACK::set_combo(int32_t value) {
 
 // S_NORMAL_ATTACK
 
-// int64 object_id = 1;
-inline void S_NORMAL_ATTACK::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 1;
+inline void S_NORMAL_ATTACK::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_NORMAL_ATTACK::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_NORMAL_ATTACK::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_NORMAL_ATTACK::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_NORMAL_ATTACK.object_id)
-  return _internal_object_id();
+inline int64_t S_NORMAL_ATTACK::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_NORMAL_ATTACK.entity_id)
+  return _internal_entity_id();
 }
-inline void S_NORMAL_ATTACK::_internal_set_object_id(int64_t value) {
+inline void S_NORMAL_ATTACK::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_NORMAL_ATTACK::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_NORMAL_ATTACK.object_id)
+inline void S_NORMAL_ATTACK::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_NORMAL_ATTACK.entity_id)
 }
 
 // int32 combo = 2;
@@ -8502,24 +8502,24 @@ inline void S_NORMAL_ATTACK::set_yaw(float value) {
 
 // S_HIT
 
-// int64 object_id = 1;
-inline void S_HIT::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 1;
+inline void S_HIT::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_HIT::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_HIT::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_HIT::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_HIT.object_id)
-  return _internal_object_id();
+inline int64_t S_HIT::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_HIT.entity_id)
+  return _internal_entity_id();
 }
-inline void S_HIT::_internal_set_object_id(int64_t value) {
+inline void S_HIT::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_HIT::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_HIT.object_id)
+inline void S_HIT::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_HIT.entity_id)
 }
 
 // int64 damage = 2;
@@ -9094,24 +9094,24 @@ inline void S_EQUIP_GEAR::set_success(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_EQUIP_GEAR.success)
 }
 
-// int64 object_id = 2;
-inline void S_EQUIP_GEAR::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 2;
+inline void S_EQUIP_GEAR::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_EQUIP_GEAR::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_EQUIP_GEAR::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_EQUIP_GEAR::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_GEAR.object_id)
-  return _internal_object_id();
+inline int64_t S_EQUIP_GEAR::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_EQUIP_GEAR.entity_id)
+  return _internal_entity_id();
 }
-inline void S_EQUIP_GEAR::_internal_set_object_id(int64_t value) {
+inline void S_EQUIP_GEAR::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_EQUIP_GEAR::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_EQUIP_GEAR.object_id)
+inline void S_EQUIP_GEAR::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_EQUIP_GEAR.entity_id)
 }
 
 // int32 slot_id = 3;
@@ -9341,24 +9341,24 @@ inline void S_UNEQUIP_GEAR::set_success(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_UNEQUIP_GEAR.success)
 }
 
-// int64 object_id = 2;
-inline void S_UNEQUIP_GEAR::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 2;
+inline void S_UNEQUIP_GEAR::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_UNEQUIP_GEAR::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_UNEQUIP_GEAR::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_UNEQUIP_GEAR::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_GEAR.object_id)
-  return _internal_object_id();
+inline int64_t S_UNEQUIP_GEAR::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_UNEQUIP_GEAR.entity_id)
+  return _internal_entity_id();
 }
-inline void S_UNEQUIP_GEAR::_internal_set_object_id(int64_t value) {
+inline void S_UNEQUIP_GEAR::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_UNEQUIP_GEAR::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_UNEQUIP_GEAR.object_id)
+inline void S_UNEQUIP_GEAR::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_UNEQUIP_GEAR.entity_id)
 }
 
 // int32 slot_id = 3;
@@ -9588,24 +9588,24 @@ inline void S_USE_ITEM::set_success(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_USE_ITEM.success)
 }
 
-// int64 object_id = 2;
-inline void S_USE_ITEM::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 2;
+inline void S_USE_ITEM::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_USE_ITEM::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_USE_ITEM::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_USE_ITEM::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_USE_ITEM.object_id)
-  return _internal_object_id();
+inline int64_t S_USE_ITEM::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_USE_ITEM.entity_id)
+  return _internal_entity_id();
 }
-inline void S_USE_ITEM::_internal_set_object_id(int64_t value) {
+inline void S_USE_ITEM::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_USE_ITEM::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_USE_ITEM.object_id)
+inline void S_USE_ITEM::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_USE_ITEM.entity_id)
 }
 
 // repeated .Protocol.Slot updated_slots = 3;
@@ -9686,24 +9686,24 @@ S_USE_ITEM::updated_stat() const {
 
 // S_DIE
 
-// int64 object_id = 1;
-inline void S_DIE::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 1;
+inline void S_DIE::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_DIE::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_DIE::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_DIE::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_DIE.object_id)
-  return _internal_object_id();
+inline int64_t S_DIE::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DIE.entity_id)
+  return _internal_entity_id();
 }
-inline void S_DIE::_internal_set_object_id(int64_t value) {
+inline void S_DIE::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_DIE::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_DIE.object_id)
+inline void S_DIE::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DIE.entity_id)
 }
 
 // -------------------------------------------------------------------
@@ -10239,24 +10239,24 @@ inline void S_RESPAWN::set_respawn_type(::Protocol::RespawnType value) {
   // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.respawn_type)
 }
 
-// int64 object_id = 4;
-inline void S_RESPAWN::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 4;
+inline void S_RESPAWN::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_RESPAWN::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_RESPAWN::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_RESPAWN::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.object_id)
-  return _internal_object_id();
+inline int64_t S_RESPAWN::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_RESPAWN.entity_id)
+  return _internal_entity_id();
 }
-inline void S_RESPAWN::_internal_set_object_id(int64_t value) {
+inline void S_RESPAWN::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_RESPAWN::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.object_id)
+inline void S_RESPAWN::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_RESPAWN.entity_id)
 }
 
 // int32 room_id = 5;
@@ -10459,24 +10459,24 @@ inline void C_CHAT::set_allocated_msg(std::string* msg) {
 
 // S_CHAT
 
-// int64 object_id = 1;
-inline void S_CHAT::clear_object_id() {
-  _impl_.object_id_ = int64_t{0};
+// int64 entity_id = 1;
+inline void S_CHAT::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
 }
-inline int64_t S_CHAT::_internal_object_id() const {
-  return _impl_.object_id_;
+inline int64_t S_CHAT::_internal_entity_id() const {
+  return _impl_.entity_id_;
 }
-inline int64_t S_CHAT::object_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_CHAT.object_id)
-  return _internal_object_id();
+inline int64_t S_CHAT::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHAT.entity_id)
+  return _internal_entity_id();
 }
-inline void S_CHAT::_internal_set_object_id(int64_t value) {
+inline void S_CHAT::_internal_set_entity_id(int64_t value) {
   
-  _impl_.object_id_ = value;
+  _impl_.entity_id_ = value;
 }
-inline void S_CHAT::set_object_id(int64_t value) {
-  _internal_set_object_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_CHAT.object_id)
+inline void S_CHAT::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_CHAT.entity_id)
 }
 
 // string msg = 2;

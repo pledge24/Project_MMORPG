@@ -60,9 +60,9 @@ public:
     void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
-    //~ Object Packet Handlers
+    //~ Entity Packet Handlers
 public:
-    void HandleSpawn(const Protocol::ObjectInfo& ObjectInfo);
+    void HandleSpawn(const Protocol::EntityInfo& EntityInfo);
     void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
     void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);

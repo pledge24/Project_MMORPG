@@ -30,7 +30,7 @@ public:
     void SetPos(const Protocol::Vector& pos) { _posInfo->mutable_pos()->CopyFrom(pos); }
 
 public:
-	Protocol::ObjectInfo* _objectInfo;
+	Protocol::EntityInfo* _entityInfo;
 	Protocol::PosInfo* _posInfo;
 
     friend class Room;
