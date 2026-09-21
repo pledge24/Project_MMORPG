@@ -25,7 +25,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Spawn")
     AActor* SpawnMonster(int32 TemplateId, const FTransform& Transform);
 
-    /** 서버가 보낸 오브젝트 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
+    /** 서버가 보낸 엔티티 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
     AActor* SpawnMonster(const Protocol::EntityInfo& InEntityInfo);
 
     AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo = NullOpt);
@@ -38,7 +38,7 @@ protected:
 
     //~ Player Spawn
 public:
-    /** 서버가 보낸 오브젝트 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
+    /** 서버가 보낸 엔티티 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
     AActor* SpawnPlayer(const Protocol::EntityInfo& InEntityInfo);
 
 protected:

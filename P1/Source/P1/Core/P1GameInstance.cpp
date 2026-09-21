@@ -36,7 +36,7 @@ void UP1GameInstance::Init()
 
 void UP1GameInstance::Shutdown()
 {
-    // 펌프를 먼저 멈춘다. 종료 중에 패킷을 처리하면 이미 정리된 오브젝트를 건드린다.
+    // 펌프를 먼저 멈춘다. 종료 중에 패킷을 처리하면 이미 정리된 UObject를 건드린다.
     if (RecvPumpTickerHandle.IsValid())
     {
         FTSTicker::RemoveTicker(RecvPumpTickerHandle);
@@ -192,7 +192,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
     {
         MyPlayerData->SetRoomId(EnterRoomPkt.room_id());
 
-        // 단순 방 이동이라면 나를 제외한 모든 오브젝트를 Despawn + 텔레포트
+        // 단순 방 이동이라면 나를 제외한 모든 엔티티를 Despawn + 텔레포트
         if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER)
         {
             HandleDespawnAll(true);

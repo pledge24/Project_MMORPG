@@ -18,7 +18,7 @@ message EntityInfo
 	EntityType entity_type = 2;
 	PosInfo pos_info = 3;
 
-    // ObjectType에 따른 정보
+    // EntityType에 따른 정보
     oneof details
     {
         // oneof 그룹 내의 모든 필드는 기본적으로 optional 효과를 가짐

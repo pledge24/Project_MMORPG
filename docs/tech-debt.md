@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 33개 (높음 5 · 중간 16 · 낮음 12)
+항목 34개 (높음 5 · 중간 16 · 낮음 13)
 
 ## 작성 방법
 
@@ -774,6 +774,9 @@ ADR-0007이 폴더 이름과 클래스 이름을 다른 층위로 두고, #72도
 `Room`의 멤버 `_objects`와 메서드 `AddObject` · `RemoveObject` · `TickObject`는 `Object` 클래스의
 API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않는다.
 
+폴더 이름은 여기서 세지 않는다. `Server/GameServer/Game/Object/`를 `Game/Entities/`로 옮기는 것은
+#72가 맡는다.
+
 ### 영향
 
 **유지보수 어려움** — 한 파일 안에 두 낱말이 섞인다. `Server/GameServer/Game/Object/Object.h` 33줄이
@@ -801,3 +804,25 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 
 **재발 가능** — 다음에 템플릿을 고치는 사람이 쓰이지 않는 쪽만 고치면 아무 일도 일어나지 않는다.
 생성기를 돌려 봐야 알 수 있고, 그 시점에는 이미 생성물 일곱 벌이 세 티어에 복사된 뒤다.
+
+## `Object`가 엔티티 식별자의 접근자를 주지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Object/Object.h` 33줄
+> 등록일: 2026년 9월 21일
+
+`Object`가 `Protocol::EntityInfo* _entityInfo`를 public 원시 포인터로 내놓고 식별자를 읽는 접근자를
+두지 않는다. 그래서 부르는 쪽이 `object->_entityInfo->entity_id()`로 두 단계를 직접 탄다. 이 형태가
+게임 서버에 31곳 있고 그중 21곳이 식별자를 읽는다.
+
+| 파일 | `_entityInfo->` 접근 |
+| --- | --- |
+| `Game/Room/Room.cpp` | 16 |
+| `Game/Object/Monster.cpp` | 6 |
+| `Utils/ObjectUtils.cpp` | 5 |
+| `Game/Object/Player.cpp` | 3 |
+| `Game/Object/Object.cpp` | 1 |
+
+### 영향
+
+**변경 비용** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Object`에 식별자
+접근자가 있었으면 한 줄이었다. 다음에 `entity_id`를 손대는 작업도 같은 규모를 다시 치른다.

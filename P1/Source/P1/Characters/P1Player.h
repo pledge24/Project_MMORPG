@@ -21,7 +21,7 @@ protected:
 
     //~ Begin AP1Creature Interface
 public:
-    /** 서버가 보낸 오브젝트 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
+    /** 서버가 보낸 엔티티 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
 
 protected:
