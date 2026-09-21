@@ -240,7 +240,7 @@ G2의 근거는 ADR-0006에 쓴다. 7.6GB를 에디터에서 옮기는 결과가
 | I1 | 빌드 도구 | MSBuild | CMake | 기각 |
 | I2 | 프로젝트 분리 | `ServerCore` + `GameServer` | `Server/src/` 단일 | 기각 |
 | I3 | 네트워크 폴더 이름 | `ServerCore/Network/` | `Net/` | 기각 |
-| I4 | 월드 폴더 이름 | `GameServer/Game/Room/` | `World/` | 지금 |
+| I4 | 월드 폴더 이름 | `GameServer/Game/Room/` | `World/` | 기각 |
 | I5 | 인벤토리 폴더 이름 | `GameServer/Game/System/` | `Inventory/` | 지금 |
 | I6 | 전투 폴더 | 없음. `Room.cpp`와 `Monster.cpp`에 섞임 | `Combat/` | 유예 |
 | I7 | AI 폴더 | 없음. `Monster.cpp`에 섞임 | `AI/` | 유예 |
@@ -251,6 +251,11 @@ G2의 근거는 ADR-0006에 쓴다. 7.6GB를 에디터에서 옮기는 결과가
 I1·I2·I3의 근거는 `docs/adr/0001-unify-build-path.md`에 덧붙인다. 현행 분리가 규범 트리보다 낫다.
 I6과 I7은 파일을 쪼개는 기능 변경이라 유예한다. 규범 문서에는 목표 위치를 적는다.
 I8은 `UserDB_CreateUsersTable.sql`이 `Server/Queries/`에 있는데 `UserDB`의 소유 티어는 인증 서버다.
+
+**I4를 2026년 9월 21일에 기각으로 바꿨다.** `World/`로 바꾸면 클라이언트의 `P1/Source/P1/World/`와
+이름이 겹치는데 담는 것이 서로 다르다. 서버는 룸과 셀 행렬을 담고 클라이언트는 포털과 경계 벽을
+담는다. 폴더 이름이 개념을 가리키는 이상 같은 이름이 다른 개념을 가리켜서는 안 되므로 `Room/`을
+유지한다. 규범 문서 6절도 함께 고쳤다. 판단의 근거는 ADR-0007에 적는다.
 
 ### J. 서버 이름과 주석
 

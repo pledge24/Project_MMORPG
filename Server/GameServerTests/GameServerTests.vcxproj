@@ -87,7 +87,7 @@
     <!-- googletest 경로가 두 개인 이유:
          include\  → 테스트 코드의 #include <gtest/gtest.h>
          루트      → gtest-all.cc 안의 #include "src/gtest.cc" -->
-    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Main;$(SolutionDir)GameServer\Protocol;$(SolutionDir)GameServer\Utils;$(SolutionDir)GameServer\DB;$(SolutionDir)GameServer\Game\Object;$(SolutionDir)GameServer\Game\System;$(SolutionDir)GameServer\Game\Data;$(SolutionDir)GameServer\Game\Room;$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Main;$(SolutionDir)GameServer\Protocol;$(SolutionDir)GameServer\Utils;$(SolutionDir)GameServer\DB;$(SolutionDir)GameServer\Game\Object;$(SolutionDir)GameServer\Game\Inventory;$(SolutionDir)GameServer\Game\Data;$(SolutionDir)GameServer\Game\Room;$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -206,8 +206,8 @@
     <ClCompile Include="..\GameServer\Game\Object\Monster.cpp" />
     <ClCompile Include="..\GameServer\Game\Object\Object.cpp" />
     <ClCompile Include="..\GameServer\Game\Object\Player.cpp" />
-    <ClCompile Include="..\GameServer\Game\System\EquippedGear.cpp" />
-    <ClCompile Include="..\GameServer\Game\System\Inventory.cpp" />
+    <ClCompile Include="..\GameServer\Game\Inventory\EquippedGear.cpp" />
+    <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />

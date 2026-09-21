@@ -20,7 +20,7 @@
 번째로 쓰이는 시점에 가장 가까운 `Common/`으로 올린다.
 
 **`Content`와 `Source`에서 같은 분류명을 쓴다.** 한쪽 경로를 알면 다른 쪽을 바로 찾을 수 있어야
-한다. 이 원칙을 게임 서버까지 넓힌다. 인벤토리를 고칠 때 `Server/GameServer/Inventory/`와
+한다. 이 원칙을 게임 서버까지 넓힌다. 인벤토리를 고칠 때 `Server/GameServer/Game/Inventory/`와
 `P1/Source/P1/Inventory/`를 함께 열게 되기 때문이다.
 
 **쓰지 않는 폴더를 미리 만들지 않는다.** 내용이 생기는 날 만든다.
@@ -272,21 +272,30 @@ Server/
 │   └── Main/
 ├── GameServer/             게임 규칙
 │   ├── Main/               진입점, 세션, 패킷 핸들러
-│   ├── World/              룸, 룸 매니저, 셀 행렬
-│   ├── Object/             오브젝트 계층
-│   ├── Inventory/          인벤토리, 장비
-│   ├── Data/               게임 데이터 로더
+│   ├── Game/               게임 도메인
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬
+│   │   ├── Object/         오브젝트 계층
+│   │   ├── Inventory/      인벤토리, 장비
+│   │   └── Data/           게임 데이터 로더
 │   ├── DB/                 DB 요청 함수
+│   ├── Queries/            GameDB 스키마 스크립트
 │   ├── Protocol/           생성물
 │   └── Utils/
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
+│   └── Queries/            UserDB 스키마 스크립트
 └── Libraries/              벤더링한 서드파티
 ```
 
 **`ServerCore`와 `GameServer`의 분리를 유지한다.** `ServerCore`는 게임 규칙을 모른다. 게임 규칙이
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
+
+**`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Main/`, `Protocol/`, `DB/`,
+`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 넷은 게임 규칙이다. 이 층을 없애면
+폴더 아홉 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
+— 클라이언트와 경로 모양이 한 단계 어긋나는 값은 치른다. 분류명은 양쪽이 같으므로
+`P1/Source/P1/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
 **`.vcxproj`에 파일이 하나씩 명시 등록된다.** 파일을 추가하거나 옮기면 `.vcxproj`와
 `.vcxproj.filters`를 함께 고친다. `GameServerTests.vcxproj`가 `GameServer`의 `.cpp`를 직접
@@ -295,8 +304,8 @@ Server/
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
-`Combat/`과 `AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `World/`와 `Object/`에 섞여 있다.
-두 도메인을 분리할 때 만든다.
+`Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/Room/`와
+`Game/Object/`에 섞여 있다. 두 도메인을 분리할 때 만든다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가
 소유한다.
@@ -372,7 +381,7 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 | 물약 3D 모델 | Content `Items/` | 아이템 외형 |
 | 물약 가격과 회복량 | `DesignData/` 원본 → Content `Data/DataTables` | 기획 수치 |
 | 물약 사용 요청 생성 | Source `Inventory/` | 시스템 로직 |
-| 물약 사용 판정 | `Server/GameServer/Inventory/` | 판정은 서버 권한 |
+| 물약 사용 판정 | `Server/GameServer/Game/Inventory/` | 판정은 서버 권한 |
 | 아이템 행 구조체 | Source `Data/` | DataTable 행은 `USTRUCT` |
 | 데미지 공식 | `Server/GameServer/` | 판정은 서버 권한 |
 | 데미지 숫자 표시 위젯 | Content `UI/HUD` | 서버가 보낸 결과의 표시 |
