@@ -25,8 +25,8 @@
 — 판정 기준과 기각한 대안은 `docs/adr/0007-limit-folder-symmetry-to-shared-domains.md`에 있다.
 
 **`Content`는 `Source`의 분류명을 빌려 쓰되 강제하지 않는다.** 기준은 `Source`를 보며 작업할 때
-혼동을 주지 않는 것이다. 지금 빌리지 않는 자리는 하나다. `Source`가 엔티티 폴더를 `Entities/`로
-불러도 `Content`는 `Characters/`로 부른다.
+혼동을 주지 않는 것이다. 지금 빌리지 않는 자리는 하나다. `Source`가 엔티티 폴더를
+`Game/Entities/`로 불러도 `Content`는 `Characters/`로 부른다.
 
 **쓰지 않는 폴더를 미리 만들지 않는다.** 내용이 생기는 날 만든다. 예외는 `Content`의 예정된
 묶음이다. 에셋 이동이 에디터를 거쳐야 해서 나중에 옮기는 비용이 크다.
@@ -90,7 +90,7 @@ P1/Source/
 ### 3.2 도메인 폴더
 
 **`Game/`이 게임 도메인과 배선을 가른다.** 모듈 루트 바로 아래의 `Core/`, `Network/`, `Sync/`,
-`Online/`, `UI/`, `Utils/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
+`Online/`, `UI/`, `Utils/`, `Tests/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
 — 서버도 같은 층으로 가른다. 분류명이 양쪽에서 같으므로 `P1/Source/P1/Game/Inventory/`를 알면
 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
@@ -115,7 +115,7 @@ P1/Source/
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
 — 두 폴더로 나누면 스폰 하나를 고칠 때 양쪽을 함께 열게 된다.
 
-**`World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
+**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
 `Game/Interaction/`에 둔다.
 — 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
 아니라 레벨이 놓아 둔 장치다.
@@ -160,9 +160,8 @@ Core → Game/Entities → 게임 도메인
 — `Utils/Types.h`가 `Data/`와 `Entities/`를 부르던 두 줄을 #73이 지웠다. 그 두 헤더가 필요한
 자리는 각자 직접 부른다.
 
-**`Online/`과 `Game/` 아래는 서로를 부르지 않는다.** 로그인과 캐릭터 목록에 쓰는 자료형은
-`Online/`이 소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가
-이것이다.
+**`Game/` 아래는 `Online/`을 부르지 않는다.** 로그인과 캐릭터 목록에 쓰는 자료형은 `Online/`이
+소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가 이것이다.
 
 **`Sync/`는 판정하지 않고 표현만 맞춘다.** 예측을 구현하더라도 그 결과는 화면 표현일 뿐이고,
 서버 응답이 오면 서버 값으로 덮어쓴다.
@@ -470,9 +469,9 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 | 모든 직업의 감정표현 모션 | Content `Characters/Player/Common` | 직업 공용 |
 | 물약 3D 모델 | Content `Items/` | 아이템 외형 |
 | 물약 가격과 회복량 | `DesignData/` 원본 → Content `Data/DataTables` | 기획 수치 |
-| 물약 사용 요청 생성 | Source `Inventory/` | 시스템 로직 |
+| 물약 사용 요청 생성 | Source `Game/Inventory/` | 시스템 로직 |
 | 물약 사용 판정 | `Server/GameServer/Game/Inventory/` | 판정은 서버 권한 |
-| 아이템 행 구조체 | Source `Data/` | DataTable 행은 `USTRUCT` |
+| 아이템 행 구조체 | Source `Game/Data/` | DataTable 행은 `USTRUCT` |
 | 데미지 공식 | `Server/GameServer/` | 판정은 서버 권한 |
 | 데미지 숫자 표시 위젯 | Content `UI/HUD` | 서버가 보낸 결과의 표시 |
 | 몬스터 이동 보간 | Source `Sync/` | 표현만 맞추는 코드 |
