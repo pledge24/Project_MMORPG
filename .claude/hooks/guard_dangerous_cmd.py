@@ -223,10 +223,14 @@ UE_ALLOWED_TOOLS = {
         "WaitFor",
     },
     # 에셋 조회. get_referencers 와 get_dependencies 가 "이걸 고치면 뭐가 깨지나"에 답한다.
-    # 쓰기 7 종(write_file, save_assets, update_metadata_tags, delete, move, duplicate,
-    # create_folder)은 뺐다. delete 와 move 는 에셋이 아니라 폴더를 통째로 받는다.
+    # 쓰기 3 종(create_folder, move, save_assets)을 2026-09-21 에 열었다. #52 의 Content
+    # 도메인 트리 재배치를 에이전트가 직접 수행하기 위해서다. 나머지 쓰기 4 종
+    # (write_file, update_metadata_tags, delete, duplicate)은 계속 막는다.
+    # **move 는 에셋 하나와 폴더 통째를 같은 인자로 받는다.** 경로를 한 글자 틀리면
+    # 수천 개가 한 번에 움직인다. 부르기 전에 exists 로 양쪽을 확인한다.
     "editor_toolset.toolsets.asset.AssetTools": {
         "can_edit_asset",
+        "create_folder",
         "exists",
         "find_assets",
         "get_asset_class",
@@ -239,8 +243,10 @@ UE_ALLOWED_TOOLS = {
         "is_dirty",
         "list_folders",
         "load_asset",
+        "move",
         "read_file",
-    },
+        "save_assets",
+    }, 
     # 프로젝트 스킬 에셋 조회. CreateSkill 과 UpdateSkill 은 뺐다.
     "ToolsetRegistry.AgentSkillToolset": {
         "ListSkills",

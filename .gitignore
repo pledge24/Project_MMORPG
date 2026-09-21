@@ -21,6 +21,17 @@ __pycache__/
 # 쓰는 곳이 없다. 근본 원인은 docs/tech-debt.md 에 적어 두었다.
 DesignData/C_TestJsonfile.json
 
+# 세션 리포트는 추적하지 않는다 (2026년 9월 21일 결정).
+#
+# 한 세션이 무엇을 했는지 설명하는 사람용 자료다. 저장소의 현행 상태를 정의하지 않으므로
+# 클론한 사람에게 필요하지 않고, 시간이 지나면 당시 사실만 남아 현행 문서와 어긋난다.
+# 현행 제약은 docs/ 아래 다른 문서들의 본문에 있다.
+#
+# **리포트에 적을 만한 내용 중 앞으로도 지켜야 할 것은 규범 문서로 옮긴다.** 리포트에만 적으면
+# 그 결론이 저장소에서 사라진다. 옮길 자리는 docs/folder-structure.md, docs/conventions.md,
+# docs/tech-debt.md, docs/adr/ 다.
+docs/reports/
+
 # MSYS 도구가 죽으면서 작업 디렉터리에 떨어뜨리는 크래시 덤프.
 #
 # 실제 사례: Git Bash 의 GNU grep 3.0 은 `-i` 와 패턴 2개 이상을 함께 받으면 패턴을

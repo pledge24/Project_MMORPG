@@ -489,27 +489,12 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/unrealengine,visualstudio
 
-# Content는 자작 에셋만 추적한다. 기준은 용량이 아니라 복구 가능성이다 (ADR-0006).
-# 외부 팩 3,300여 개는 Fab에서 설치하면 같은 경로에 같은 에셋이 들어오므로 추적하지 않는다.
+# Content는 게임이 참조하는 것만 추적한다. 기준은 "게임이 참조하는가"다 (ADR-0006).
+# 게임이 참조하는 에셋은 전부 Content/P1/ 아래에 있다. Content/External/ 은 참고용
+# 보관소이고 아무것도 그것을 참조하지 않으므로 추적하지 않는다. 팩에서 쓸 것을 정하면
+# Content/P1/ 아래로 복사하고, 게임은 복사본만 참조한다.
 Content/*
-!Content/Blueprints/
-!Content/Fonts/
-!Content/Gamedata/
-!Content/Maps/
-
-# Assets 아래는 자작 아이콘만 추적한다. 나머지 7.6GB는 외부 팩이다.
-!Content/Assets/
-Content/Assets/*
-!Content/Assets/Icon/
-
-# Animations 아래는 자작 애니메이션만 추적한다.
-# GreatSwordAnimation/ 과 SwordAnimationPack/ 은 외부 팩이라 제외된 상태로 둔다.
-!Content/Animations/
-Content/Animations/*
-!Content/Animations/Attacks/
-!Content/Animations/Montages/
-!Content/Animations/ABP_Player.uasset
-!Content/Animations/Custom_Combo*.uasset
+!Content/P1/
 
 Binaries/
 Intermediate/

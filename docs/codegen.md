@@ -65,7 +65,7 @@
 | 목적지 | 산출물 |
 |---|---|
 | `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
-| `P1/Content/Gamedata/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
+| `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.

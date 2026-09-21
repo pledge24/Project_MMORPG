@@ -158,7 +158,7 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     MyPlayerData->InitMyPlayerData(EnterGamePkt);
 
     // TEMP
-    UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
+    UGameplayStatics::OpenLevel(GWorld, FName("L_InGameMap"));
 }
 
 void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
@@ -177,7 +177,7 @@ void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
     }
 
     // TEMP
-    UGameplayStatics::OpenLevel(GWorld, FName("InGameMap"));
+    UGameplayStatics::OpenLevel(GWorld, FName("L_InGameMap"));
 }
 
 void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)
