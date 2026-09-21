@@ -102,11 +102,11 @@
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp">
-      <Filter>GameServer\Game\Equipment</Filter>
-    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp">
       <Filter>GameServer\Game\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp">
+      <Filter>GameServer\Game\Equipment</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
       <Filter>GameServer\Game\Data</Filter>

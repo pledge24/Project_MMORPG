@@ -753,8 +753,8 @@ ADR-0007이 폴더 이름과 클래스 이름을 다른 층위로 두고, #72도
 `Room`의 멤버 `_objects`와 메서드 `AddObject` · `RemoveObject` · `TickObject`는 `Object` 클래스의
 API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않는다.
 
-폴더 이름은 여기서 세지 않는다. #72가 `Server/GameServer/Game/Object/`를 `Game/Entities/`로 이미
-옮겼고, 남은 것은 그 폴더 안의 클래스 이름이다.
+폴더 이름은 여기서 세지 않는다. 이 항목이 가리키는 것은 `Server/GameServer/Game/Entities/` 안의
+클래스 이름이다.
 
 이 항목을 갚는 티켓은 #87이다.
 
