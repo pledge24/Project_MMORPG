@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 33개 (높음 5 · 중간 16 · 낮음 12)
+항목 35개 (높음 5 · 중간 16 · 낮음 14)
 
 ## 작성 방법
 
@@ -807,3 +807,46 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 
 **변경 비용** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Object`에 식별자
 접근자가 있었으면 한 줄이었다. 다음에 `entity_id`를 손대는 작업도 같은 규모를 다시 치른다.
+
+## `.proto` 셋의 논리 폴더가 디스크 폴더와 다르다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · build
+> 위치: `Server/GameServer/GameServer.vcxproj.filters`
+> 등록일: 2026년 9월 21일
+
+`GameServer.vcxproj.filters`가 `Protocol/Schema/`에 있는 `.proto` 셋을 논리 폴더 `Protocol\Proto`에
+담는다. 디스크 폴더 이름은 `Schema`다.
+
+| 항목 | 논리 폴더 | 디스크 폴더 |
+| --- | --- | --- |
+| `Enum.proto` · `Protocol.proto` · `Struct.proto` | `Protocol\Proto` | `Protocol\Schema` |
+| `GenPackets.bat` | `Protocol` | `Protocol` (일치) |
+
+#88이 이 넷의 **파일 경로**를 현행으로 옮기면서 논리 폴더 이름은 옛 이름으로 두었다. 넷 다
+솔루션 폴더 밖(`..\..\Protocol\`)을 가리키므로 프로젝트 기준 상대 경로를 논리 폴더로 그대로 쓸
+수 없고, 그래서 규칙을 따로 정해야 한다.
+
+### 영향
+
+**동일한 문제의 반복** — #74가 만들 「`.vcxproj.filters`의 논리 폴더가 디스크 폴더와 같은가」
+검사가 이 넷을 잡는다. 그 티켓이 검사를 짜기 전에 이름을 맞추거나 솔루션 밖 항목을 판정에서
+뺄지 정해야 하고, 정하지 않으면 검사가 상시 빨강이 된다.
+
+## 필터 GUID의 생성 방식이 프로젝트마다 다르다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 파일 · build
+> 위치: `Server/GameServer/GameServer.vcxproj.filters` ·
+> `Server/GameServerTests/GameServerTests.vcxproj.filters`
+> 등록일: 2026년 9월 21일
+
+`GameServerTests.vcxproj.filters`의 필터 GUID는 전부 이름 기반(UUID 버전 5)이고
+`GameServer.vcxproj.filters`는 전부 무작위(버전 4)다. 저장소에 재생성 스크립트가 없어서 어느
+쪽이 의도인지 파일만 보고는 가릴 수 없다.
+
+#72가 `Game\Equipment` 필터를 더할 때 버전 5의 생성 규칙을 역산해 보았으나 실패했다. 표준
+네임스페이스 다섯(DNS · URL · OID · X500 · nil)과 이름 형태 여덟 가지를 조합해 기존 값 다섯 개와
+대조했고 한 건도 맞지 않았다. 그래서 새 항목은 버전 4로 넣었다.
+
+### 영향
+
+**유지보수 어려움** — 지금 깨지는 것은 없다. 남는 것은 `GameServerTests.vcxproj.filters`를 도구가
+다시 생성하면 이 한 항목만 값이 달라져 diff가 튀는 것이다. 필터를 더하는 사람이 어느 방식을
+따라야 하는지도 파일만 보고는 알 수 없다.
