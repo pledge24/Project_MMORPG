@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -29,7 +27,7 @@ protected:
 
 protected:
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category="ProgressBar")
-    class UProgressBar* ProgressBar;
+    TObjectPtr<class UProgressBar> ProgressBar;
 
     int32 _CurValue;
     int32 _MaxValue;

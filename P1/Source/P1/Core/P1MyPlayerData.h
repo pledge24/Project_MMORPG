@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -74,10 +72,10 @@ public:
 
 protected:
     UPROPERTY()
-    UP1Inventory* Inventory;
+    TObjectPtr<UP1Inventory> Inventory;
 
     UPROPERTY()
-    UP1EquippedGear* EquippedGear;
+    TObjectPtr<UP1EquippedGear> EquippedGear;
 
     Protocol::ObjectInfo* _ObjectInfo;
     Protocol::PlayerInfo* _PlayerInfo;

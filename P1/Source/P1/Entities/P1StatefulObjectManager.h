@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -45,11 +43,11 @@ protected:
 
 protected:
     UPROPERTY()
-    TArray<AP1ObjectSpawner*> ObjectSpawners;
+    TArray<TObjectPtr<AP1ObjectSpawner>> ObjectSpawners;
 
     UPROPERTY()
-    TMap<uint64, AP1Player*> Players;
+    TMap<uint64, TObjectPtr<AP1Player>> Players;
 
     UPROPERTY()
-    TMap<uint64, AP1Monster*> Monsters;
+    TMap<uint64, TObjectPtr<AP1Monster>> Monsters;
 };

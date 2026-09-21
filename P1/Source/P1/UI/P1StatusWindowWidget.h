@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -56,16 +54,16 @@ protected:
 
     // 상세 스텟 정보
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Details_MaxHp;
+    TObjectPtr<UTextBlock> Details_MaxHp;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Details_MaxMp;
+    TObjectPtr<UTextBlock> Details_MaxMp;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Details_Physical_Attack;
+    TObjectPtr<UTextBlock> Details_Physical_Attack;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Details_Magical_Attack;
+    TObjectPtr<UTextBlock> Details_Magical_Attack;
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
     bool PendingPacket = false;

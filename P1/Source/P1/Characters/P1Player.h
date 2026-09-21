@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -46,6 +44,6 @@ protected:
 protected:
     /** Weapon CharacterMesh Component*/
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    class UStaticMeshComponent* WeaponMesh;
+    TObjectPtr<class UStaticMeshComponent> WeaponMesh;
 
 };

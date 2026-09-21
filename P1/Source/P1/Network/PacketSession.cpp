@@ -6,6 +6,7 @@
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 #include "Network/ClientPacketHandler.h"
+#include "Utils/LogCategory.h"
 
 PacketSession::PacketSession(class FSocket* Socket) : Socket(Socket)
 {
@@ -36,7 +37,7 @@ void PacketSession::HandleRecvPackets()
         if (!bHandlePacket)
         {
             PacketHeader* header = reinterpret_cast<PacketHeader*>(Packet.GetData());
-            UE_LOG(LogTemp, Warning, TEXT("Fail to Handle Packet. Packet Id: %d"), header->id);
+            UE_LOG(LogP1Network, Warning, TEXT("Fail to Handle Packet. Packet Id: %d"), header->id);
         }
 	}
 }

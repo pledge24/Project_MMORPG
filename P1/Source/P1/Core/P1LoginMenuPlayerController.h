@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -28,9 +26,9 @@ public:
     TSubclassOf<class UP1LoginWidget> LoginMenuWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
-    UP1LoginWidget* LoginMenuWidget;
+    TObjectPtr<UP1LoginWidget> LoginMenuWidget;
 
 private:
     UPROPERTY()
-    UP1LoginManager* LoginManager;
+    TObjectPtr<UP1LoginManager> LoginManager;
 };

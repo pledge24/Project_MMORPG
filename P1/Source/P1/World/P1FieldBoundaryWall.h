@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -27,20 +25,20 @@ protected:
 
 private:
     UPROPERTY()
-    USceneComponent* Root;
+    TObjectPtr<USceneComponent> Root;
 
     /** 벽 Component */
     UPROPERTY(VisibleAnywhere, Category = "Boundary")
-    UBoxComponent* TopWall;
+    TObjectPtr<UBoxComponent> TopWall;
 
     UPROPERTY(VisibleAnywhere, Category = "Boundary")
-    UBoxComponent* BottomWall;
+    TObjectPtr<UBoxComponent> BottomWall;
 
     UPROPERTY(VisibleAnywhere, Category = "Boundary")
-    UBoxComponent* LeftWall;
+    TObjectPtr<UBoxComponent> LeftWall;
 
     UPROPERTY(VisibleAnywhere, Category = "Boundary")
-    UBoxComponent* RightWall;
+    TObjectPtr<UBoxComponent> RightWall;
 
     // 벽 두께와 높이
     UPROPERTY(EditAnywhere, Category = "Boundary")

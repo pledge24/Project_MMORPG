@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Characters/P1MyPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -152,7 +149,7 @@ void AP1MyPlayer::Tick(float DeltaTime)
 
         SEND_PACKET(MovePkt);
         //FString DebugMessage = MovePkt.Utf8DebugString().c_str();
-        //UE_LOG(LogTemp, Log, TEXT("%s"), *DebugMessage);
+        //UE_LOG(LogP1CharacterComp, Log, TEXT("%s"), *DebugMessage);
     }
 }
 
@@ -216,7 +213,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
     UStaticMesh* StaticMesh = WeaponMesh->GetStaticMesh();
     if (!StaticMesh)
     {
-        UE_LOG(LogCharacterComp, Display, TEXT("무기없이 일반 공격을 수행할 수 없습니다."));
+        UE_LOG(LogP1CharacterComp, Display, TEXT("무기없이 일반 공격을 수행할 수 없습니다."));
         return;
     }
 

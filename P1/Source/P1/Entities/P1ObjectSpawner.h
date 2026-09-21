@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -36,7 +34,7 @@ public:
 protected:
     /** Monster 정보 */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
-    UDataTable* MonsterDataTable;
+    TObjectPtr<UDataTable> MonsterDataTable;
 
     /** Player 정보 */
     UPROPERTY(EditAnywhere)

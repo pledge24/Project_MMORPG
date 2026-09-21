@@ -1,10 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Core/P1MyPlayerData.h"
 #include "Inventory/P1Inventory.h"
 #include "Equipment/P1EquippedGear.h"
 #include "Characters/P1MyPlayer.h"
+#include "Utils/LogCategory.h"
 
 void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -13,12 +11,12 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
     // Create a Inventory Object
     Inventory = NewObject<UP1Inventory>(this, UP1Inventory::StaticClass());
     if (Inventory == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("Inventory Is Not Exist"));
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("Inventory Is Not Exist"));
 
     // Create a EquippedGear Object
     EquippedGear = NewObject<UP1EquippedGear>(this, UP1EquippedGear::StaticClass());
     if (EquippedGear == nullptr)
-        UE_LOG(LogTemp, Warning, TEXT("EquippedGear Is Not Exist"));
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("EquippedGear Is Not Exist"));
 
     // Proto
     _ObjectInfo = new Protocol::ObjectInfo();
@@ -82,7 +80,7 @@ void UP1MyPlayerData::BindMyPlayerDelegate(AP1MyPlayer* MyPlayer)
 {
     if (IsValid(MyPlayer) == false)
     {
-        UE_LOG(LogTemp, Warning, TEXT("MyPlayer Is InValid"));
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("MyPlayer Is InValid"));
         return;
     }
 

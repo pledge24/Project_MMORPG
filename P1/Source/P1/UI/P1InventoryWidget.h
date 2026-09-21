@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -41,16 +39,16 @@ protected:
     void SendEquipItemPacket(UP1SlotWidget* SlotWidget);
 
     UPROPERTY(BlueprintReadWrite, meta=(BindWidget))
-    UUniformGridPanel* Gear_Inven;
+    TObjectPtr<UUniformGridPanel> Gear_Inven;
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-    UUniformGridPanel* Consumables_Inven;
+    TObjectPtr<UUniformGridPanel> Consumables_Inven;
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-    UUniformGridPanel* Misc_Inven;
+    TObjectPtr<UUniformGridPanel> Misc_Inven;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Gold_txt;
+    TObjectPtr<UTextBlock> Gold_txt;
 
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
     bool PendingPacket = false;

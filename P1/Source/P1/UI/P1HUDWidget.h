@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -44,13 +42,13 @@ public:
 
 protected:
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Name_txt;
+    TObjectPtr<UTextBlock> Name_txt;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* Level_txt;
+    TObjectPtr<UTextBlock> Level_txt;
 
     UPROPERTY(meta = (BindWidget))
-    UTextBlock* BattleMode_txt;
+    TObjectPtr<UTextBlock> BattleMode_txt;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UP1ProgressBarWidget> HpBar;

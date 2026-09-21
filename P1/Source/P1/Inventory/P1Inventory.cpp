@@ -1,7 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Inventory/P1Inventory.h"
 #include "P1.h"
+#include "Utils/LogCategory.h"
 
 UP1Inventory::UP1Inventory()
 {
@@ -69,6 +68,6 @@ void UP1Inventory::PrintInventoryData()
     for (auto Gear : GearLookup)
     {
         FString GearStr = UTF8_TO_TCHAR(Gear->DebugString().c_str());
-        UE_LOG(LogTemp, Log, TEXT("%s"), *GearStr);
+        UE_LOG(LogP1CharacterInventory, Log, TEXT("%s"), *GearStr);
     }
 }

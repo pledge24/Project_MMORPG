@@ -1,11 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Entities/P1StatefulObjectManager.h"
 
 #include "Core/P1MyPlayerData.h"
 #include "Entities/P1ObjectSpawner.h"
 #include "Characters/P1Player.h"
+#include "Utils/LogCategory.h"
 
 void UP1StatefulObjectManager::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -44,7 +42,7 @@ void UP1StatefulObjectManager::RegisterObject(uint64 ObjectId, AActor* SpawnedAc
     else if (AP1Player* Player = Cast<AP1Player>(SpawnedActor))
         Players.Add(ObjectId, Player);
 
-    //UE_LOG(LogTemp, Log, TEXT("Object {%d} 등록됨"), ObjectId);
+    //UE_LOG(LogP1Entity, Log, TEXT("Object {%d} 등록됨"), ObjectId);
 }
 
 void UP1StatefulObjectManager::UnRegisterObject(uint64 ObjectId, EP1ObjectType ObjectType)
@@ -59,7 +57,7 @@ void UP1StatefulObjectManager::UnRegisterObject(uint64 ObjectId, EP1ObjectType O
         Players.Remove(ObjectId);
         break;
     default:
-        UE_LOG(LogTemp, Log, TEXT("ObjectType 지정 안 됨"))
+        UE_LOG(LogP1Entity, Log, TEXT("ObjectType 지정 안 됨"))
     }
 }
 
@@ -74,7 +72,7 @@ AActor* UP1StatefulObjectManager::FindObject(uint64 ObjectId)
         return *FindMonster;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("해당 Object(Id:%d)를 ObjectManager에서 찾지 못했습니다"), (int32)ObjectId);
+    UE_LOG(LogP1Entity, Warning, TEXT("해당 Object(Id:%d)를 ObjectManager에서 찾지 못했습니다"), (int32)ObjectId);
 
     return nullptr;
 }
@@ -83,7 +81,7 @@ void UP1StatefulObjectManager::SpawnObject(const Protocol::ObjectInfo& InObjectI
 {
     if (ObjectSpawners.IsValidIndex(SpawnerId) == false)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Not Found %d Spawner"), SpawnerId);
+        UE_LOG(LogP1Entity, Warning, TEXT("Not Found %d Spawner"), SpawnerId);
         return;
     }
 
@@ -98,7 +96,7 @@ void UP1StatefulObjectManager::SpawnObject(const Protocol::ObjectInfo& InObjectI
         SpawnPlayer(InObjectInfo, SpawnerId);
         break;
     default:
-        UE_LOG(LogTemp, Warning, TEXT("ObjectType 누락"))
+        UE_LOG(LogP1Entity, Warning, TEXT("ObjectType 누락"))
         break;
 
     }
@@ -167,7 +165,7 @@ void UP1StatefulObjectManager::SpawnMonster(const Protocol::ObjectInfo& InObject
 
     if (Monsters.Find(ObjectId))
     {
-        UE_LOG(LogTemp, Warning, TEXT("이미 존재하는 ObjectId를 가진 몬스터 스폰 시도"));
+        UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 ObjectId를 가진 몬스터 스폰 시도"));
         return;
     }
 
@@ -178,7 +176,7 @@ void UP1StatefulObjectManager::SpawnMonster(const Protocol::ObjectInfo& InObject
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("몬스터 스폰 실패"));
+        UE_LOG(LogP1Entity, Warning, TEXT("몬스터 스폰 실패"));
     }
     
 }
@@ -193,7 +191,7 @@ void UP1StatefulObjectManager::SpawnPlayer(const Protocol::ObjectInfo& InObjectI
 
     if (Players.Find(ObjectId))
     {
-        UE_LOG(LogTemp, Warning, TEXT("이미 존재하는 ObjectId를 가진 플레이어 스폰 시도"));
+        UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 ObjectId를 가진 플레이어 스폰 시도"));
         return;
     }
 
@@ -204,7 +202,7 @@ void UP1StatefulObjectManager::SpawnPlayer(const Protocol::ObjectInfo& InObjectI
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("플레이어 스폰 실패"));
+        UE_LOG(LogP1Entity, Warning, TEXT("플레이어 스폰 실패"));
     }
 }
 

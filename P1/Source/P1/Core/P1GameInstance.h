@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -105,10 +103,10 @@ public:
 protected:
     /** MyPlayer Data */
     UPROPERTY()
-	AP1MyPlayer* _MyPlayer;
+	TObjectPtr<AP1MyPlayer> _MyPlayer;
 
     UPROPERTY()
-    UP1MyPlayerData* _MyPlayerData;
+    TObjectPtr<UP1MyPlayerData> _MyPlayerData;
 
 private:
     /** 네트워크 수신 펌프 */
