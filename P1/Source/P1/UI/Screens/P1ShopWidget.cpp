@@ -1,7 +1,7 @@
-#include "UI/P1ShopWidget.h"
+#include "UI/Screens/P1ShopWidget.h"
 
 #include "Core/P1MyPlayerData.h"
-#include "UI/P1SlotWidget.h"
+#include "UI/Common/P1SlotWidget.h"
 #include "P1.h"
 #include "Characters/P1MyPlayer.h"
 #include "Core/P1MyPlayerData.h"

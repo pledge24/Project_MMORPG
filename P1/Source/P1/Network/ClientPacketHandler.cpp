@@ -1,6 +1,6 @@
 #include "Network/ClientPacketHandler.h"
 #include "Core/P1LoginMenuMode.h"
-#include "UI/P1LoginWidget.h"
+#include "UI/Frontend/P1LoginWidget.h"
 #include "Core/P1LoginMenuPlayerController.h"
 #include "Online/P1LoginManager.h"
 #include "Sockets.h"

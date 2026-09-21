@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 35개 (높음 5 · 중간 16 · 낮음 14)
+항목 35개 (높음 4 · 중간 16 · 낮음 15)
 
 ## 작성 방법
 
@@ -559,7 +559,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 ## 리플렉션 매크로가 아무 일도 하지 않는 자리에 붙어 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
 > 위치: `P1/Source/P1/Network/PacketSession.h` 26줄,
-> `P1/Source/P1/UI/P1LoginWidget.h` 84줄
+> `P1/Source/P1/UI/Frontend/P1LoginWidget.h` 84줄
 > 등록일: 2026년 9월 21일
 
 두 자리에서 리플렉션 매크로가 효과 없이 붙어 있다.
@@ -681,7 +681,8 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## 같은 헤더를 두 번 include하는 파일이 둘 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 13·18줄, `P1/Source/P1/UI/P1ShopWidget.cpp` 5·9줄
+> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 11·16줄,
+> `P1/Source/P1/UI/Screens/P1ShopWidget.cpp` 3·7줄
 > 등록일: 2026년 9월 20일
 
 `P1GameInstance.cpp`가 `Characters/P1MyPlayer.h`를, `ShopWidget.cpp`가 `Core/MyPlayerData.h`를
@@ -697,7 +698,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## 인벤토리 위젯이 쓰지 않는 플레이어 컨트롤러를 두 번 얻는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/UI/P1InventoryWidget.cpp` 159·197줄
+> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` 159·197줄
 > 등록일: 2026년 9월 21일
 
 `SendUseItemPacket`과 `SendEquipItemPacket`이 각각 `UGameplayStatics::GetPlayerController(this, 0)`
@@ -807,6 +808,34 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 
 **변경 비용** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Object`에 식별자
 접근자가 있었으면 한 줄이었다. 다음에 `entity_id`를 손대는 작업도 같은 규모를 다시 치른다.
+
+## UI 하위 폴더의 판정 조건 둘이 실제 배치를 가리지 못한다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · client
+> 위치: `docs/folder-structure.md` 117~122줄
+> 등록일: 2026년 9월 21일
+
+3.2의 판정 조건 표가 `Common/`과 `Screens/`에 조건을 하나씩 준다. #65가 위젯 11쌍을 옮기고 나서
+보니 두 조건 모두 실제 배치의 일부를 거짓으로 판정한다. 배치는 ADR-0008이 의도한 대로이고
+어긋난 쪽은 조건 문구다.
+
+| 하위 폴더 | 문서의 조건 | 조건을 만족하지 않는 것 |
+| --- | --- | --- |
+| `Common/` | 두 곳 이상이 품는가 | `P1ItemTooltipWidget` — 품는 곳이 `P1SlotWidget` 하나뿐이다 |
+| `Screens/` | 플레이어 컨트롤러가 위젯 종류 열거형으로 여닫는가 | `P1HUDWidget` · `P1DeathWidget` · `P1WarningTextWidget` — `EP1WidgetType`에 없고 컨트롤러의 개별 멤버로 다뤄진다 |
+
+`EP1WidgetType`이 갖는 값은 `WIDGET_STATUS_WINDOW`와 `WIDGET_INVENTORY`와 `WIDGET_SHOP` 셋이다
+(`P1/Source/P1/Core/P1InGamePlayerController.h` 18~24줄). 나머지 하나인 `WIDGET_NONE`은
+`UMETA(Hidden)`이라 화면을 가리키지 않는다. ADR-0008은 「여닫는 위젯 일곱」을 `Screens/`로
+두므로 위 셋의 자리는 의도대로다.
+
+**`P1HUDWidget`은 앞으로도 이 조건을 만족할 수 없다.** HUD는 조작 없이 늘 떠 있어서 여닫는
+대상이 아니고, 같은 ADR이 그 점을 근거로 `HUD`를 분류 이름에서 뺐다.
+
+### 영향
+
+**동일한 문제의 반복** — 새 위젯을 어디에 둘지 판정할 때 조건을 글자대로 적용하면 지금 배치와
+다른 답이 나온다. 판정에 시간을 쓰지 않게 하는 것이 ADR-0008이 조건을 준 이유인데, 조건이
+그 일을 하지 못하고 ADR 본문을 다시 읽게 만든다.
 
 ## `.proto` 셋의 논리 폴더가 디스크 폴더와 다르다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · build

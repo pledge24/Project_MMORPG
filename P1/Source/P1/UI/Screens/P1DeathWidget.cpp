@@ -1,4 +1,4 @@
-#include "UI/P1DeathWidget.h"
+#include "UI/Screens/P1DeathWidget.h"
 #include "P1.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1MyPlayerData.h"

@@ -1,5 +1,5 @@
-#include "UI/P1SlotWidget.h"
-#include "UI/P1ItemTooltipWidget.h"
+#include "UI/Common/P1SlotWidget.h"
+#include "UI/Common/P1ItemTooltipWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
