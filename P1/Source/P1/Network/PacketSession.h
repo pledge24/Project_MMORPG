@@ -7,25 +7,28 @@
 class P1_API PacketSession : public TSharedFromThis<PacketSession>
 {
 public:
-	PacketSession(class FSocket* Socket);
-	~PacketSession();
+    PacketSession(class FSocket* Socket);
+    ~PacketSession();
 
-	void Run();
-
-	UFUNCTION(BlueprintCallable)
-	void HandleRecvPackets();
-
-	void SendPacket(SendBufferRef SendBuffer);
-
-	void Disconnect();
-
+    //~ Session Lifecycle
 public:
-	class FSocket* Socket;
+    void Run();
+    void Disconnect();
 
-	FP1RecvWorkerRef RecvWorkerThread;
-	FP1SendWorkerRef SendWorkerThread;
+    class FSocket* Socket;
 
-	// GameThread랑 NetworkThread가 통신할때 사용하는 패킷 저장 큐
-	TQueue<TArray<uint8>> RecvPacketQueue;
-	TQueue<SendBufferRef> SendPacketQueue;
+    FP1RecvWorkerRef RecvWorkerThread;
+    FP1SendWorkerRef SendWorkerThread;
+
+    //~ Packet Queues
+public:
+    /** 게임 스레드에서 부른다. 수신 큐를 비우면서 핸들러를 돌린다. */
+    UFUNCTION(BlueprintCallable)
+    void HandleRecvPackets();
+
+    void SendPacket(SendBufferRef SendBuffer);
+
+    // 게임 스레드와 네트워크 스레드가 주고받을 때 쓰는 패킷 저장 큐
+    TQueue<TArray<uint8>> RecvPacketQueue;
+    TQueue<SendBufferRef> SendPacketQueue;
 };

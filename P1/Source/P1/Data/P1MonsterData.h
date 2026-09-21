@@ -4,10 +4,6 @@
 #include "Engine/DataTable.h"
 #include "P1MonsterData.generated.h"
 
-/*------------------
-     MonsterData
--------------------*/
-
 USTRUCT(BlueprintType)
 struct FP1MonsterData : public FTableRowBase
 {

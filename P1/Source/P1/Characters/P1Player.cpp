@@ -10,7 +10,7 @@
 
 AP1Player::AP1Player()
 {
-	//============================import by TPS=========================
+	// 아래 WeaponMesh 생성 전까지는 UE의 3인칭 템플릿에서 그대로 가져온 설정이다.
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -32,7 +32,6 @@ AP1Player::AP1Player()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
 	//GetCharacterMovement()->bRunPhysicsWithNoController = true;
-	//====================================================================
 
     WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
     USkeletalMeshComponent* CharacterMesh = GetMesh();

@@ -4,10 +4,6 @@
 #include "Engine/DataTable.h"
 #include "P1MapData.generated.h"
 
-/*------------------
-       MapData
--------------------*/
-
 USTRUCT(BlueprintType)
 struct FP1MapData : public FTableRowBase
 {

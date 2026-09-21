@@ -9,18 +9,15 @@ class UImage;
 class UTextBlock;
 class UVerticalBox;
 
-/**
- * 
- */
 UCLASS()
 class P1_API UP1ItemTooltipWidget : public UUserWidget
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
+    //~ Item Display
 public:
     void Init(const FP1ItemData& Item);
 
-public:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UImage> ItemIcon;
 
@@ -30,10 +27,13 @@ public:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> ItemDescriptionText;
 
+    //~ Item Details
+public:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UVerticalBox> VB_ItemInfo;
 
 private:
+    /** ChildIdx는 채운 칸의 다음 자리로 옮겨진다. */
     void SetItemDetailsToVerticalBox(int32& ChildIdx, FString InfoText, FString DetailsText);
     void SetItemStatToVerticalBox(int32& ChildIdx, FString InfoText, int32 Value, bool IsPercent = false);
     void SetItemStatToVerticalBox(int32& ChildIdx, FString InfoText, float Value, bool IsPercent = false);

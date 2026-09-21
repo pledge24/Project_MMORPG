@@ -59,9 +59,7 @@ void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-/**--------------------
-*        Input
-*--------------------*/
+//~ Input
 
 void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {

@@ -2,10 +2,6 @@
 
 #include "P1CharacterOverview.generated.h"
 
-/*--------------------
-   CharacterOverview
---------------------*/
-
 USTRUCT(BlueprintType)
 struct FP1CharacterOverview
 {

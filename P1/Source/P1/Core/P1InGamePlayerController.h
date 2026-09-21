@@ -23,26 +23,25 @@ enum class EP1WidgetType : uint8
     WIDGET_SHOP = 3 UMETA(DisplayName = "Shop"),
 };
 
-/**
- * 
- */
 UCLASS()
 class P1_API AP1InGamePlayerController : public APlayerController
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
     AP1InGamePlayerController() = default;
 
+    //~ Begin AActor Interface
 protected:
     virtual void BeginPlay() override;
+    //~ End AActor Interface
+
+    //~ Begin APlayerController Interface
+protected:
     virtual void SetupInputComponent() override;
+    //~ End APlayerController Interface
 
-private:
-    /** 위젯 토글 관련*/
-    void OnToggleStatusWindowWidget();
-    void OnToggleInventoryWidget();
-
+    //~ Widget Control
 public:
     UFUNCTION(BlueprintCallable, Category = "Widget")
     void TurnOnWidget(EP1WidgetType Type);
@@ -58,57 +57,9 @@ public:
 
     void ToggleWidget(EP1WidgetType Type);
 
-    void OnToggleBattleMode(bool BattleMode);
-
-protected:
-    /** HUD UI */
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UP1HUDWidget> HUDWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UP1HUDWidget> HUDWidget;
-
-    /** Control Help UI */
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UUserWidget> HelpWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UUserWidget> HelpWidget;
-
-    /** 상태창 UI*/
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UP1StatusWindowWidget> StatusWindowWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UP1StatusWindowWidget> StatusWindowWidget;
-
-    /** 인벤토리 UI*/
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UP1InventoryWidget> InventoryWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UP1InventoryWidget> InventoryWidget;
-
-    /** 상점 UI*/
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UP1ShopWidget> ShopWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UP1ShopWidget> ShopWidget;
-
-    /** 경고 메세지 UI*/
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UP1WarningTextWidget> WarningTextWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UP1WarningTextWidget> WarningTextWidget;
-
-    /** 사망 UI*/
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UP1DeathWidget> DeathWidgetClass;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-    TObjectPtr<UP1DeathWidget> DeathWidget;
+private:
+    void OnToggleStatusWindowWidget();
+    void OnToggleInventoryWidget();
 
 protected:
     UPROPERTY()
@@ -118,4 +69,59 @@ private:
     int32 WidgetFlag = 0;
     int32 CurrentMaxZOrder = 0;
     const int32 DEATH_WIDGET_Z_ORDER = 10000;
+
+    //~ Widget Instances
+protected:
+    /** HUD UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UP1HUDWidget> HUDWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UP1HUDWidget> HUDWidget;
+
+    /** 조작 도움말 UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UUserWidget> HelpWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UUserWidget> HelpWidget;
+
+    /** 상태창 UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UP1StatusWindowWidget> StatusWindowWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UP1StatusWindowWidget> StatusWindowWidget;
+
+    /** 인벤토리 UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UP1InventoryWidget> InventoryWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UP1InventoryWidget> InventoryWidget;
+
+    /** 상점 UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UP1ShopWidget> ShopWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UP1ShopWidget> ShopWidget;
+
+    /** 경고 메시지 UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UP1WarningTextWidget> WarningTextWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UP1WarningTextWidget> WarningTextWidget;
+
+    /** 사망 UI */
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UP1DeathWidget> DeathWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+    TObjectPtr<UP1DeathWidget> DeathWidget;
+
+    //~ Battle Mode
+public:
+    void OnToggleBattleMode(bool BattleMode);
 };

@@ -3,10 +3,6 @@
 #include "CoreMinimal.h"
 #include "P1QuestObjectiveData.generated.h"
 
-/*----------------------
-    QuestObjectiveData
------------------------*/
-
 USTRUCT(BlueprintType)
 struct FP1QuestObjectiveData
 {
