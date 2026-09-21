@@ -177,20 +177,45 @@ class Violation:
         return f"{self.path}: {self.message}"
 
 
-def run_git_ls_files(patterns: list[str], extra_flags: tuple[str, ...] = ()) -> list[str]:
-    """git이 추적하는 파일 중 패턴에 맞는 것을 저장소 기준 경로로 돌려준다.
-
-    `extra_flags`에 `--others --ignored --exclude-standard`를 주면 추적 파일 대신
-    `.gitignore`가 무시하는 파일을 돌려준다. `project-item-exists`가 쓴다.
-    """
+def run_git_ls_files(patterns: list[str]) -> list[str]:
+    """git이 추적하는 파일 중 패턴에 맞는 것을 저장소 기준 경로로 돌려준다."""
     result = subprocess.run(
-        ["git", "ls-files", "-z", *extra_flags, "--"] + patterns,
+        ["git", "ls-files", "-z", "--"] + patterns,
         cwd=REPO_ROOT,
         capture_output=True,
         check=True,
     )
     raw = result.stdout.decode("utf-8")
     return [entry for entry in raw.split("\0") if entry]
+
+
+def run_git_check_ignore(paths: list[str]) -> set[str]:
+    """준 경로 중 `.gitignore`가 무시하는 것만 추려서 돌려준다.
+
+    **`git ls-files --others --ignored`를 쓰지 않는다.** 그쪽은 디스크를 훑어 실재하는
+    파일만 나열하므로, 파일 자체가 없는 환경에서는 무시 대상을 하나도 돌려주지 않는다.
+    러너가 그런 환경이다. 실제로 이 검사를 처음 올렸을 때 로컬에서 통과한 것이 CI에서
+    `DB/config.h` 1건으로 실패했다.
+
+    `check-ignore`는 경로 문자열을 규칙에 대조하므로 파일이 없어도 판정이 같다.
+    `--no-index`는 추적 여부를 보지 않고 규칙만 보게 한다.
+    """
+    if not paths:
+        return set()
+
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", "--stdin"],
+        cwd=REPO_ROOT,
+        input="\n".join(paths).encode("utf-8"),
+        capture_output=True,
+    )
+    # 하나도 무시되지 않으면 종료 코드가 1이다. 오류가 아니다. 진짜 오류는 128이다.
+    if result.returncode not in (0, 1):
+        raise RuntimeError(
+            f"git check-ignore가 {result.returncode}으로 끝났다: "
+            f"{result.stderr.decode('utf-8', errors='replace')}"
+        )
+    return {line for line in result.stdout.decode("utf-8").splitlines() if line}
 
 
 def read_text(rel_path: str) -> str:
@@ -766,36 +791,37 @@ def check_project_item_exists(_: argparse.Namespace) -> list[Violation]:
     실패한다. `GameServer.vcxproj`가 등록한 `DB/config.h`가 그런 파일인데, 디스크에 있고
     `Server/.gitignore`가 의도적으로 무시하며 예시 파일이 없어서 러너에는 존재하지 않는다.
 
-    그래서 추적 중인 파일과 **`.gitignore`가 무시하는 파일**을 둘 다 실재로 친다. 무시되는
-    파일은 저장소가 관리하지 않으므로 이 검사가 막으려는 사고(파일을 옮기고 프로젝트 파일을
-    안 고치는 것)의 대상이 아니다.
+    그래서 추적 중인 파일과 **`.gitignore`가 무시하기로 한 경로**를 둘 다 실재로 친다.
+    무시되는 경로는 저장소가 관리하지 않으므로 이 검사가 막으려는 사고(파일을 옮기고 프로젝트
+    파일을 안 고치는 것)의 대상이 아니다. 「무시하는 파일」이 아니라 「무시하기로 한 경로」인
+    것이 중요하다. 판정이 파일의 존재 여부를 타면 환경에 따라 결과가 갈린다.
     """
     tracked = {path.lower() for path in run_git_ls_files([])}
-    ignored = {
-        path.lower()
-        for path in run_git_ls_files([], ("--others", "--ignored", "--exclude-standard"))
-    }
 
-    violations: list[Violation] = []
+    # 먼저 추적 목록으로 거르고, 남은 것만 무시 규칙에 대조한다. `check-ignore`를 한 번만
+    # 부르려고 경로를 모아 두었다가 한꺼번에 넘긴다.
+    unresolved: list[tuple[str, int, str, str, str]] = []
     for project_path in _project_files():
         text = read_text(project_path)
         for match in PROJECT_ITEM_RE.finditer(text):
             kind, include = match.group(1), match.group(2)
             target = _resolve_project_item(project_path, include)
-            if target is None:
+            if target is None or target.lower() in tracked:
                 continue
-            if target.lower() in tracked or target.lower() in ignored:
-                continue
-
             line = text.count("\n", 0, match.start()) + 1
-            violations.append(
-                Violation(
-                    project_path,
-                    line,
-                    f'<{kind} Include="{include}">가 가리키는 "{target}"이 저장소에 없다',
-                )
-            )
-    return violations
+            unresolved.append((project_path, line, kind, include, target))
+
+    ignored = run_git_check_ignore(sorted({row[4] for row in unresolved}))
+
+    return [
+        Violation(
+            project_path,
+            line,
+            f'<{kind} Include="{include}">가 가리키는 "{target}"이 저장소에 없다',
+        )
+        for project_path, line, kind, include, target in unresolved
+        if target not in ignored
+    ]
 
 
 def check_project_filter_path(_: argparse.Namespace) -> list[Violation]:
@@ -1037,19 +1063,20 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | None]] = {
 
 
 def _run_against_fixture(name: str, fixture: dict[str, str | None]) -> list[Violation]:
-    """파일 목록과 내용을 픽스처로 바꿔 끼우고 검사 하나를 돌린다."""
-    global run_git_ls_files, read_text
+    """파일 목록과 내용을 픽스처로 바꿔 끼우고 검사 하나를 돌린다.
 
-    original_ls, original_read = run_git_ls_files, read_text
+    저장소를 보는 함수는 이 셋뿐이다. 검사 본체가 이 셋만 거쳐서 바깥을 보게 두면 픽스처로
+    전부 덮을 수 있다. 디스크를 직접 훑는 코드를 검사에 넣으면 여기서 덮이지 않는다.
+    """
+    global run_git_ls_files, read_text, run_git_check_ignore
 
-    def fake_ls(patterns: list[str], extra_flags: tuple[str, ...] = ()) -> list[str]:
+    original_ls = run_git_ls_files
+    original_read = read_text
+    original_check_ignore = run_git_check_ignore
+
+    def fake_ls(patterns: list[str]) -> list[str]:
         # 픽스처는 작으므로 패턴별로 거르지 않고 전부 준다. 검사 본체가 확장자와 경로로
         # 다시 거르기 때문에 이것으로 충분하다.
-        #
-        # 무시되는 파일을 묻는 호출에는 빈 목록을 준다. 픽스처에 `.gitignore`가 없으므로
-        # 무시되는 파일도 없다.
-        if "--ignored" in extra_flags:
-            return []
         return sorted(fixture)
 
     def fake_read(rel_path: str) -> str:
@@ -1058,11 +1085,17 @@ def _run_against_fixture(name: str, fixture: dict[str, str | None]) -> list[Viol
             raise AssertionError(f"픽스처에 내용이 없는 파일을 읽으려 했다: {rel_path}")
         return content
 
+    def fake_check_ignore(paths: list[str]) -> set[str]:
+        # 픽스처에 `.gitignore`가 없으므로 무시되는 경로도 없다.
+        return set()
+
     run_git_ls_files, read_text = fake_ls, fake_read
+    run_git_check_ignore = fake_check_ignore
     try:
         return CHECKS[name][1](argparse.Namespace())
     finally:
         run_git_ls_files, read_text = original_ls, original_read
+        run_git_check_ignore = original_check_ignore
 
 
 def run_self_test() -> int:
