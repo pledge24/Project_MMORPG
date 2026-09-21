@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Data/BP_Structs.h"
+#include "Game/Data/BP_Structs.h"
 #include "P1ItemTooltipWidget.generated.h"
 
 class UImage;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/P1Player.h"
+#include "Game/Entities/P1Player.h"
 #include "InputActionValue.h"
 #include "Logging/LogMacros.h"
 #include "P1MyPlayer.generated.h"

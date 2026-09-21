@@ -1,11 +1,11 @@
-#include "Characters/P1Player.h"
+#include "Game/Entities/P1Player.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
-#include "Combat/P1AttackSystemComponent.h"
+#include "Game/Combat/P1AttackSystemComponent.h"
 #include "P1.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
 
 AP1Player::AP1Player()

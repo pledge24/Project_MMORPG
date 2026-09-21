@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "Data/P1QuestObjectiveData.h"
-#include "Data/P1QuestRewardData.h"
+#include "Game/Data/P1QuestObjectiveData.h"
+#include "Game/Data/P1QuestRewardData.h"
 #include "P1QuestData.generated.h"
 
 USTRUCT(BlueprintType)

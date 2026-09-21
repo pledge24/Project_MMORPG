@@ -1,6 +1,6 @@
 #include "UI/WorldSpace/P1NameplateWidget.h"
-#include "Characters/P1Monster.h"
-#include "Characters/P1Player.h"
+#include "Game/Entities/P1Monster.h"
+#include "Game/Entities/P1Player.h"
 #include "UI/Common/P1ProgressBarWidget.h"
 #include "Components/TextBlock.h"
 

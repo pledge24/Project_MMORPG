@@ -5,7 +5,7 @@
 #include "P1.h"
 #include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Core/P1MyPlayerData.h"
 
 void UP1InventoryWidget::NativeConstruct()

@@ -1,4 +1,4 @@
-#include "Inventory/P1Inventory.h"
+#include "Game/Inventory/P1Inventory.h"
 #include "P1.h"
 #include "Utils/LogCategory.h"
 

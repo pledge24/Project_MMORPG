@@ -1,6 +1,6 @@
 #include "Core/P1GameInstance.h"
 
-#include "Combat/P1AttackSystemComponent.h"
+#include "Game/Combat/P1AttackSystemComponent.h"
 #include "Sockets.h"
 #include "Common/TcpSocketBuilder.h"
 #include "Serialization/ArrayWriter.h"
@@ -8,12 +8,12 @@
 #include "Network/PacketSession.h"
 #include "Protocol.pb.h"
 #include "Network/ClientPacketHandler.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "P1.h"
-#include "Characters/P1Creature.h"
+#include "Game/Entities/P1Creature.h"
 #include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 
 UP1GameInstance::UP1GameInstance()
 {

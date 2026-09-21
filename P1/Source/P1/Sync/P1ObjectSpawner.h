@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/P1MonsterData.h"
-#include "Characters/P1Monster.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Data/P1MonsterData.h"
+#include "Game/Entities/P1Monster.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "GameFramework/Actor.h"
 #include "P1ObjectSpawner.generated.h"
 

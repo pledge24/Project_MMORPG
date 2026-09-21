@@ -370,13 +370,13 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 ## 캐릭터 클래스와 컨트롤러에 관심사가 뭉쳐 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Characters/` · `P1/Source/P1/Core/`
+> 위치: `P1/Source/P1/Game/Entities/` · `P1/Source/P1/Core/`
 > 등록일: 2026년 8월 19일
 
 | 클래스 | 뭉쳐 있는 것 |
 |---|---|
-| `AP1Creature` (`Characters/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
-| `AP1MyPlayer` (`Characters/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
+| `AP1Creature` (`Game/Entities/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
+| `AP1MyPlayer` (`Game/Entities/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
 | `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
 
 이동 동기화 로직이 수신(`AP1Creature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
@@ -737,7 +737,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 ## 동기화 대상을 가리키는 클래스 이름이 아직 「오브젝트」다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · shared
 > 위치: `Server/GameServer/Game/Entities/Object.h` · `Server/GameServer/Utils/ObjectUtils.h` ·
-> `P1/Source/P1/Entities/P1StatefulObjectManager.h` · `P1/Source/P1/Entities/P1ObjectSpawner.h`
+> `P1/Source/P1/Sync/P1StatefulObjectManager.h` · `P1/Source/P1/Sync/P1ObjectSpawner.h`
 > 등록일: 2026년 9월 21일
 
 #71이 프로토콜 스키마와 거기서 파생된 식별자를 「엔티티」로 바꿨다. 클래스 이름은 바꾸지 않았다.

@@ -1,4 +1,4 @@
-#include "World/P1FieldBoundaryWall.h"
+#include "Game/World/P1FieldBoundaryWall.h"
 #include "Components/BoxComponent.h"
 
 AP1FieldBoundaryWall::AP1FieldBoundaryWall()

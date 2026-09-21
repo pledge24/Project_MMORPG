@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/P1Creature.h"
+#include "Game/Entities/P1Creature.h"
 #include "P1Player.generated.h"
 
 UCLASS()

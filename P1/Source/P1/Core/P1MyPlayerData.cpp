@@ -1,7 +1,7 @@
 #include "Core/P1MyPlayerData.h"
-#include "Inventory/P1Inventory.h"
-#include "Equipment/P1EquippedGear.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Inventory/P1Inventory.h"
+#include "Game/Equipment/P1EquippedGear.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
 
 void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)

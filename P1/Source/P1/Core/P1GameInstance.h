@@ -5,7 +5,7 @@
 #include "Containers/Ticker.h"
 #include "Utils/Types.h"
 #include "Protocol.pb.h"
-#include "Entities/P1StatefulObjectManager.h"
+#include "Sync/P1StatefulObjectManager.h"
 #include "P1GameInstance.generated.h"
 
 class UP1MyPlayerData;
