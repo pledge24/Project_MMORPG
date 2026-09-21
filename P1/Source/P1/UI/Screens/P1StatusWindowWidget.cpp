@@ -1,5 +1,5 @@
-#include "UI/P1StatusWindowWidget.h"
-#include "UI/P1HUDWidget.h"
+#include "UI/Screens/P1StatusWindowWidget.h"
+#include "UI/Screens/P1HUDWidget.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
 #include "Characters/P1MyPlayer.h"

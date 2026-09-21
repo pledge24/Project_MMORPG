@@ -1,7 +1,7 @@
 #include "Characters/P1Creature.h"
 #include "Core/P1InGamePlayerController.h"
 #include "Combat/P1AttackSystemComponent.h"
-#include "UI/P1NameplateWidget.h"
+#include "UI/WorldSpace/P1NameplateWidget.h"
 #include "Characters/P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"

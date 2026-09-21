@@ -559,7 +559,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 ## 리플렉션 매크로가 아무 일도 하지 않는 자리에 붙어 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
 > 위치: `P1/Source/P1/Network/PacketSession.h` 26줄,
-> `P1/Source/P1/UI/P1LoginWidget.h` 84줄
+> `P1/Source/P1/UI/Frontend/P1LoginWidget.h` 84줄
 > 등록일: 2026년 9월 21일
 
 두 자리에서 리플렉션 매크로가 효과 없이 붙어 있다.
@@ -681,7 +681,8 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## 같은 헤더를 두 번 include하는 파일이 둘 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 13·18줄, `P1/Source/P1/UI/P1ShopWidget.cpp` 5·9줄
+> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 11·16줄,
+> `P1/Source/P1/UI/Screens/P1ShopWidget.cpp` 3·7줄
 > 등록일: 2026년 9월 20일
 
 `P1GameInstance.cpp`가 `Characters/P1MyPlayer.h`를, `ShopWidget.cpp`가 `Core/MyPlayerData.h`를
@@ -697,7 +698,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ## 인벤토리 위젯이 쓰지 않는 플레이어 컨트롤러를 두 번 얻는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/UI/P1InventoryWidget.cpp` 159·197줄
+> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` 159·197줄
 > 등록일: 2026년 9월 21일
 
 `SendUseItemPacket`과 `SendEquipItemPacket`이 각각 `UGameplayStatics::GetPlayerController(this, 0)`

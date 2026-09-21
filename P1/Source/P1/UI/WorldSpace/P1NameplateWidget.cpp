@@ -1,7 +1,7 @@
-#include "UI/P1NameplateWidget.h"
+#include "UI/WorldSpace/P1NameplateWidget.h"
 #include "Characters/P1Monster.h"
 #include "Characters/P1Player.h"
-#include "UI/P1ProgressBarWidget.h"
+#include "UI/Common/P1ProgressBarWidget.h"
 #include "Components/TextBlock.h"
 
 void UP1NameplateWidget::NativeConstruct()

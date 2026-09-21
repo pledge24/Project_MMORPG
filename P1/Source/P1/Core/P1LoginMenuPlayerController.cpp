@@ -1,7 +1,7 @@
 #include "Core/P1LoginMenuPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Online/P1LoginManager.h"
-#include "UI/P1LoginWidget.h"
+#include "UI/Frontend/P1LoginWidget.h"
 
 AP1LoginMenuPlayerController::AP1LoginMenuPlayerController()
 {

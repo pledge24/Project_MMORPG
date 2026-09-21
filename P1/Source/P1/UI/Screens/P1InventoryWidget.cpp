@@ -1,5 +1,5 @@
-#include "UI/P1InventoryWidget.h"
-#include "UI/P1SlotWidget.h"
+#include "UI/Screens/P1InventoryWidget.h"
+#include "UI/Common/P1SlotWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
 #include "P1.h"

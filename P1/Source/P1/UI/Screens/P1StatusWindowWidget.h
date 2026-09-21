@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "UI/P1SlotWidget.h"
+#include "UI/Common/P1SlotWidget.h"
 #include "P1StatusWindowWidget.generated.h"
 
 class AP1MyPlayer;
