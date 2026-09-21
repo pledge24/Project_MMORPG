@@ -1,8 +1,8 @@
-#include "Entities/P1ObjectSpawner.h"
-#include "Characters/P1Monster.h"
+#include "Sync/P1ObjectSpawner.h"
+#include "Game/Entities/P1Monster.h"
 #include "Core/P1MyPlayerData.h"
 #include "Core/P1GameInstance.h"
-#include "Entities/P1StatefulObjectManager.h"
+#include "Sync/P1StatefulObjectManager.h"
 #include "Utils/LogCategory.h"
 
 AP1ObjectSpawner::AP1ObjectSpawner()

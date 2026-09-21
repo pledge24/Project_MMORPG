@@ -1,13 +1,13 @@
-#include "Characters/P1Creature.h"
+#include "Game/Entities/P1Creature.h"
 #include "Core/P1InGamePlayerController.h"
-#include "Combat/P1AttackSystemComponent.h"
+#include "Game/Combat/P1AttackSystemComponent.h"
 #include "UI/WorldSpace/P1NameplateWidget.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Utils/LogCategory.h"
-#include "Characters/P1Monster.h"
+#include "Game/Entities/P1Monster.h"
 
 AP1Creature::AP1Creature()
 {

@@ -20,13 +20,13 @@
 번째로 쓰이는 시점에 가장 가까운 `Common/`으로 올린다.
 
 **클라이언트 `Source`와 게임 서버에서 같은 분류명을 쓴다.** 인벤토리를 고칠 때
-`P1/Source/P1/Inventory/`와 `Server/GameServer/Game/Inventory/`를 함께 열게 되기 때문이다. 양쪽에
+`P1/Source/P1/Game/Inventory/`와 `Server/GameServer/Game/Inventory/`를 함께 열게 되기 때문이다. 양쪽에
 모두 있는 도메인만 맞추고, 한쪽에만 있는 도메인의 상대 폴더는 만들지 않는다.
 — 판정 기준과 기각한 대안은 `docs/adr/0007-limit-folder-symmetry-to-shared-domains.md`에 있다.
 
 **`Content`는 `Source`의 분류명을 빌려 쓰되 강제하지 않는다.** 기준은 `Source`를 보며 작업할 때
-혼동을 주지 않는 것이다. 지금 빌리지 않는 자리는 하나다. `Source`가 엔티티 폴더를 `Entities/`로
-불러도 `Content`는 `Characters/`로 부른다.
+혼동을 주지 않는 것이다. 지금 빌리지 않는 자리는 하나다. `Source`가 엔티티 폴더를
+`Game/Entities/`로 불러도 `Content`는 `Characters/`로 부른다.
 
 **쓰지 않는 폴더를 미리 만들지 않는다.** 내용이 생기는 날 만든다. 예외는 `Content`의 예정된
 묶음이다. 에셋 이동이 에디터를 거쳐야 해서 나중에 옮기는 비용이 크다.
@@ -89,26 +89,34 @@ P1/Source/
 
 ### 3.2 도메인 폴더
 
+**`Game/`이 게임 도메인과 배선을 가른다.** 모듈 루트 바로 아래의 `Core/`, `Network/`, `Sync/`,
+`Online/`, `UI/`, `Utils/`, `Tests/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
+— 서버도 같은 층으로 가른다. 분류명이 양쪽에서 같으므로 `P1/Source/P1/Game/Inventory/`를 알면
+`Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
+
 | 폴더 | 담는 것 |
 | --- | --- |
 | `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
-| `Characters/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
-| `Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
-| `Items/` | 아이템 정의와 아이템 인스턴스 |
-| `Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
-| `Equipment/` | 장비 컴포넌트와 장착 규칙 |
-| `Interaction/` | 상호작용 인터페이스와 플레이어 쪽 컴포넌트 |
 | `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치 |
-| `Sync/` | 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
-| `Entities/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸 |
-| `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
-| `Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
+| `Sync/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸, 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
 | `Online/` | 로그인과 캐릭터 목록. 요청 하나에 응답 하나로 끝나는 비실시간 통신만 담는다 |
+| `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
-| `World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+| `Game/Entities/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
+| `Game/Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
+| `Game/Items/` | 아이템 정의와 아이템 인스턴스 |
+| `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
+| `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
+| `Game/Interaction/` | 상호작용 인터페이스와 플레이어 쪽 컴포넌트 |
+| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
+| `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
 
-**`World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
-`Interaction/`에 둔다.
+**`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
+액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
+— 두 폴더로 나누면 스폰 하나를 고칠 때 양쪽을 함께 열게 된다.
+
+**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
+`Game/Interaction/`에 둔다.
 — 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
 아니라 레벨이 놓아 둔 장치다.
 
@@ -136,15 +144,24 @@ P1/Source/
 도메인끼리 서로 참조하면 경계가 무너진다. 아래 방향으로만 참조한다.
 
 ```
-Protocol 모듈 → Network → Entities → Sync → 게임 도메인
-                                              ↑
-UI → 게임 도메인(Combat/Inventory/Equipment/Interaction) → Items → Data → Utils
-Core → Characters → 게임 도메인
+Protocol 모듈 → Network → Sync → 게임 도메인
+                                   ↑
+UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment, Game/Interaction)
+     → Game/Items → Game/Data → Utils
+Core → Game/Entities → 게임 도메인
 ```
 
 **게임 도메인은 `Network/`를 직접 참조하지 않는다.** 요청을 보낼 때도 도메인이 소켓을 직접
 다루지 않고, 요청 자료형을 만들어 `Network/`에 넘기는 인터페이스만 부른다.
 — 이 경계가 무너지면 통신 방식을 바꿀 때 게임 코드 전체를 함께 고쳐야 한다.
+
+**`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.
+공용 매크로를 쓰려고 `Utils/`의 헤더를 여는 자리가 게임 도메인 전체를 딸려 끌고 온다.
+— `Utils/Types.h`가 `Data/`와 `Entities/`를 부르던 두 줄을 #73이 지웠다. 그 두 헤더가 필요한
+자리는 각자 직접 부른다.
+
+**`Game/` 아래는 `Online/`을 부르지 않는다.** 로그인과 캐릭터 목록에 쓰는 자료형은 `Online/`이
+소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가 이것이다.
 
 **`Sync/`는 판정하지 않고 표현만 맞춘다.** 예측을 구현하더라도 그 결과는 화면 표현일 뿐이고,
 서버 응답이 오면 서버 값으로 덮어쓴다.
@@ -360,8 +377,8 @@ Server/
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Main/`, `Protocol/`, `DB/`,
 `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 다섯은 게임 규칙이다. 이 층을 없애면
 폴더 열 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
-— 클라이언트와 경로 모양이 한 단계 어긋나는 값은 치른다. 분류명은 양쪽이 같으므로
-`P1/Source/P1/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
+— 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
+`P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
 **`.vcxproj`에 파일이 하나씩 명시 등록된다.** 파일을 추가하거나 옮기면 `.vcxproj`와
 `.vcxproj.filters`를 함께 고친다. `GameServerTests.vcxproj`가 `GameServer`의 `.cpp`를 직접
@@ -452,9 +469,9 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 | 모든 직업의 감정표현 모션 | Content `Characters/Player/Common` | 직업 공용 |
 | 물약 3D 모델 | Content `Items/` | 아이템 외형 |
 | 물약 가격과 회복량 | `DesignData/` 원본 → Content `Data/DataTables` | 기획 수치 |
-| 물약 사용 요청 생성 | Source `Inventory/` | 시스템 로직 |
+| 물약 사용 요청 생성 | Source `Game/Inventory/` | 시스템 로직 |
 | 물약 사용 판정 | `Server/GameServer/Game/Inventory/` | 판정은 서버 권한 |
-| 아이템 행 구조체 | Source `Data/` | DataTable 행은 `USTRUCT` |
+| 아이템 행 구조체 | Source `Game/Data/` | DataTable 행은 `USTRUCT` |
 | 데미지 공식 | `Server/GameServer/` | 판정은 서버 권한 |
 | 데미지 숫자 표시 위젯 | Content `UI/HUD` | 서버가 보낸 결과의 표시 |
 | 몬스터 이동 보간 | Source `Sync/` | 표현만 맞추는 코드 |

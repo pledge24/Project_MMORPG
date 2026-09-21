@@ -1,4 +1,4 @@
-#include "Characters/P1Monster.h"
+#include "Game/Entities/P1Monster.h"
 
 #include "Components/WidgetComponent.h"
 #include "UI/WorldSpace/P1NameplateWidget.h"

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Data/P1ItemData.h"
+#include "Game/Data/P1ItemData.h"
 #include "UI/Common/P1ItemTooltipWidget.h"
 #include "Engine/DataTable.h"
 #include "Protocol.pb.h"

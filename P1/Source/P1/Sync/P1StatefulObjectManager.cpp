@@ -1,8 +1,8 @@
-#include "Entities/P1StatefulObjectManager.h"
+#include "Sync/P1StatefulObjectManager.h"
 
 #include "Core/P1MyPlayerData.h"
-#include "Entities/P1ObjectSpawner.h"
-#include "Characters/P1Player.h"
+#include "Sync/P1ObjectSpawner.h"
+#include "Game/Entities/P1Player.h"
 #include "Utils/LogCategory.h"
 
 void UP1StatefulObjectManager::Initialize(FSubsystemCollectionBase& Collection)

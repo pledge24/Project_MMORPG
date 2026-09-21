@@ -1,4 +1,4 @@
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/Controller.h"
@@ -6,7 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "P1.h"
-#include "Combat/P1AttackSystemComponent.h"
+#include "Game/Combat/P1AttackSystemComponent.h"
 #include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 

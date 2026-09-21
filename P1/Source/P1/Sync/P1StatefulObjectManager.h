@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Entities/P1EntityType.h"
+#include "Sync/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Protocol.pb.h"
 #include "P1StatefulObjectManager.generated.h"

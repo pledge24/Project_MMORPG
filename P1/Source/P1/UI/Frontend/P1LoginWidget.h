@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
+#include "Online/P1CharacterOverview.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
 #include "P1LoginWidget.generated.h"

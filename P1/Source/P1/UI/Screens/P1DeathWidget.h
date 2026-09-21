@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "P1DeathWidget.generated.h"
 
 UCLASS()

@@ -132,7 +132,7 @@ X  UUWP1Inventory
 ### 2.6 `#include`는 경로를 한정한다
 
 ```cpp
-O  #include "Combat/P1AttackSystemComponent.h"
+O  #include "Game/Combat/P1AttackSystemComponent.h"
 X  #include "P1AttackSystemComponent.h"
 ```
 

@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Data/P1MonsterData.h"
-#include "Characters/P1Creature.h"
+#include "Game/Data/P1MonsterData.h"
+#include "Game/Entities/P1Creature.h"
 #include "P1Monster.generated.h"
 
 UCLASS()

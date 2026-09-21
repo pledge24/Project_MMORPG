@@ -2,10 +2,10 @@
 #include "UI/Screens/P1HUDWidget.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
-#include "Characters/P1MyPlayer.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1MyPlayerData.h"
-#include "Equipment/P1EquippedGear.h"
+#include "Game/Equipment/P1EquippedGear.h"
 
 void UP1StatusWindowWidget::NativeConstruct()
 {

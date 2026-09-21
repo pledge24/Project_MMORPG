@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 35개 (높음 4 · 중간 16 · 낮음 15)
+항목 37개 (높음 4 · 중간 16 · 낮음 17)
 
 ## 작성 방법
 
@@ -370,13 +370,13 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 ## 캐릭터 클래스와 컨트롤러에 관심사가 뭉쳐 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Characters/` · `P1/Source/P1/Core/`
+> 위치: `P1/Source/P1/Game/Entities/` · `P1/Source/P1/Core/`
 > 등록일: 2026년 8월 19일
 
 | 클래스 | 뭉쳐 있는 것 |
 |---|---|
-| `AP1Creature` (`Characters/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
-| `AP1MyPlayer` (`Characters/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
+| `AP1Creature` (`Game/Entities/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
+| `AP1MyPlayer` (`Game/Entities/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
 | `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
 
 이동 동기화 로직이 수신(`AP1Creature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
@@ -737,7 +737,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 ## 동기화 대상을 가리키는 클래스 이름이 아직 「오브젝트」다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · shared
 > 위치: `Server/GameServer/Game/Entities/Object.h` · `Server/GameServer/Utils/ObjectUtils.h` ·
-> `P1/Source/P1/Entities/P1StatefulObjectManager.h` · `P1/Source/P1/Entities/P1ObjectSpawner.h`
+> `P1/Source/P1/Sync/P1StatefulObjectManager.h` · `P1/Source/P1/Sync/P1ObjectSpawner.h`
 > 등록일: 2026년 9월 21일
 
 #71이 프로토콜 스키마와 거기서 파생된 식별자를 「엔티티」로 바꿨다. 클래스 이름은 바꾸지 않았다.
@@ -859,6 +859,53 @@ API라서 그 클래스와 함께 움직인다. 이것들을 따로 세지 않�
 **동일한 문제의 반복** — #74가 만들 「`.vcxproj.filters`의 논리 폴더가 디스크 폴더와 같은가」
 검사가 이 넷을 잡는다. 그 티켓이 검사를 짜기 전에 이름을 맞추거나 솔루션 밖 항목을 판정에서
 뺄지 정해야 하고, 정하지 않으면 검사가 상시 빨강이 된다.
+
+## `BP_Structs.h`가 전달만 하는 헤더로 남았다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Source/P1/Game/Data/BP_Structs.h` (10줄)
+> 등록일: 2026년 9월 22일
+
+타입 선언이 하나도 없고 같은 폴더의 헤더 여섯을 모아 부르기만 한다. #73이
+`P1CharacterOverview.h`를 `Online/`으로 옮기면서 소비자가 `UI/Common/P1ItemTooltipWidget.h`
+하나만 남았다. 그 파일이 이 헤더에서 얻는 타입도 `FP1ItemData` 하나다.
+
+**이 헤더를 경유해야만 얻는 타입은 없다.** `FP1ItemData`와 `FP1MonsterData`는 쓰는 자리가
+`Game/Data/`의 헤더를 직접 부르고 있고, 나머지 네 헤더가 담는 타입은 저장소 안에 쓰는 곳이
+없다. 소비자 한 곳을 직접 부르기로 바꾸면 이 파일이 사라진다.
+
+이름도 규칙과 어긋난다. `docs/folder-structure.md` 4.3이 `BP_`를 `Content`의 블루프린트
+접두사로 정하는데 이 파일은 `Source`의 헤더다.
+
+### 영향
+
+**변경 비용 증가** — 소비자 하나가 쓰지 않는 헤더 다섯을 함께 컴파일한다. 무엇을 부르는지가
+`#include` 줄에 드러나야 한다는 ADR-0005의 목적도 이 헤더를 거치는 자리에서 사라진다.
+
+## 게임 도메인이 배선 계층을 거꾸로 부른다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/Game/`
+> 등록일: 2026년 9월 22일
+
+`docs/folder-structure.md` 3.3이 정한 화살표는 `Core → Game/Entities → 게임 도메인` 한 방향인데,
+`Game/` 아래 열두 자리가 반대로 배선을 부른다. #73이 폴더를 옮기면서 드러났고 그 티켓이 만든
+것은 아니다.
+
+| 부르는 쪽 | 부르는 것 | 건수 |
+|---|---|---|
+| `Game/Entities/`의 `.cpp` 둘 | `Core/P1InGamePlayerController.h` · `Core/P1MyPlayerData.h` | 2 |
+| `Game/Entities/`의 `.cpp` 둘 | `UI/WorldSpace/P1NameplateWidget.h` | 2 |
+| `Game/` 아래 `.cpp` 다섯 | 모듈 헤더 `P1.h` | 5 |
+| `Game/` 아래 헤더 셋 | `Protocol.pb.h` | 3 |
+
+`P1.h`를 부르는 다섯 자리의 원인은 `SEND_PACKET` 매크로다. 그 매크로가 `P1.h`에 있고 안에서
+`ClientPacketHandler`와 `UP1GameInstance`를 함께 부르므로, 패킷 하나를 보내려는 게임 코드가
+네트워크와 `Core/`를 통째로 끌어온다.
+
+### 영향
+
+**변경 영향 범위 확대** · **테스트 어려움** — 3.3이 「게임 도메인은 `Network/`를 직접 참조하지
+않는다」를 불변식으로 적는데 매크로 하나가 그것을 우회한다. 통신 방식을 바꾸면 게임 도메인의
+열두 자리를 함께 연다.
 
 ## 필터 GUID의 생성 방식이 프로젝트마다 다르다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 파일 · build

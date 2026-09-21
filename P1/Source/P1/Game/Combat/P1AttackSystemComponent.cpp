@@ -1,4 +1,4 @@
-#include "Combat/P1AttackSystemComponent.h"
+#include "Game/Combat/P1AttackSystemComponent.h"
 
 // Sets default values for this component's properties
 UP1AttackSystemComponent::UP1AttackSystemComponent()
