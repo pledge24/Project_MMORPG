@@ -108,7 +108,7 @@ void UP1LoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
 
 void UP1LoginWidget::SendLoginRequest(FString Username, FString Password)
 {
-    if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    if (AP1LoginMenuPlayerController* Controller = GetP1PlayerController<AP1LoginMenuPlayerController>())
     {
         UP1LoginManager* Manager = Controller->GetLoginManager();
         if (Manager)
@@ -120,7 +120,7 @@ void UP1LoginWidget::SendLoginRequest(FString Username, FString Password)
 
 void UP1LoginWidget::SendRegisterRequest(FString Username, FString Password)
 {
-    if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
+    if (AP1LoginMenuPlayerController* Controller = GetP1PlayerController<AP1LoginMenuPlayerController>())
     {
         UP1LoginManager* Manager = Controller->GetLoginManager();
         if (Manager)

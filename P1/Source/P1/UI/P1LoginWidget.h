@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
 #include "P1LoginWidget.generated.h"
@@ -14,7 +14,7 @@ namespace Protocol
 }
 
 UCLASS()
-class P1_API UP1LoginWidget : public UUserWidget
+class P1_API UP1LoginWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "UI/P1SlotWidget.h"
 #include "P1StatusWindowWidget.generated.h"
 
@@ -10,7 +10,7 @@ class UTextBlock;
 class UP1MyPlayerData;
 
 UCLASS()
-class P1_API UP1StatusWindowWidget : public UUserWidget
+class P1_API UP1StatusWindowWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

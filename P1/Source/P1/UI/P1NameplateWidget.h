@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "Utils/Types.h"
 #include "P1NameplateWidget.generated.h"
 
@@ -11,7 +11,7 @@ class UTextBlock;
 class UP1ProgressBarWidget;
 
 UCLASS()
-class P1_API UP1NameplateWidget : public UUserWidget
+class P1_API UP1NameplateWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

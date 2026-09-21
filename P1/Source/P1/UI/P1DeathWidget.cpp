@@ -9,7 +9,7 @@ void UP1DeathWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    if (auto* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
@@ -28,7 +28,7 @@ void UP1DeathWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 
 void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
 {
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    if (APlayerController* PC = GetP1PlayerController())
     {
         SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
@@ -61,7 +61,7 @@ void UP1DeathWidget::SendRespawnPacket(Protocol::RespawnType respawnType)
 
 void UP1DeathWidget::Test()
 {
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    if (APlayerController* PC = GetP1PlayerController())
     {
         SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 

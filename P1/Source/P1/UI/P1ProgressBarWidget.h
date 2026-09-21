@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "P1ProgressBarWidget.generated.h"
 
 UCLASS()
-class P1_API UP1ProgressBarWidget : public UUserWidget
+class P1_API UP1ProgressBarWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

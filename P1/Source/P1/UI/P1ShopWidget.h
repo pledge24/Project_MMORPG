@@ -1,14 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "UI/P1UserWidget.h"
 #include "P1ShopWidget.generated.h"
 
 class AP1MyPlayer;
 class UP1SlotWidget;
 
 UCLASS()
-class P1_API UP1ShopWidget : public UUserWidget
+class P1_API UP1ShopWidget : public UP1UserWidget
 {
     GENERATED_BODY()
 

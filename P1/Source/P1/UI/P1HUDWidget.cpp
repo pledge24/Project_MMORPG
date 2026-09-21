@@ -9,7 +9,7 @@ void UP1HUDWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+    if (auto* GameInstance = GetP1GameInstance())
     {
         // MyPlayerData에서 스텟 정보를 가져와 갱신한다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
