@@ -105,8 +105,8 @@
 
 ## 인게임 진입 직후 캐릭터가 스스로 죽는다
 > **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Content/Blueprints/Creatures/Monster/` · `P1/Content/Blueprints/UI/InGame/WBP_DeathScreen.uasset`
-> 등록일: 2026년 9월 16일
+> 위치: `P1/Content/P1/Characters/Monsters/` · `P1/Content/P1/UI/Screens/WBP_DeathScreen.uasset`
+> 등록일: 2026년 9월 16일 · 경로 갱신: 2026년 9월 21일 (#52)
 
 인게임 맵에 진입하고 약 3초 뒤에 사망 화면이 뜬다. **서버는 `S_DIE`(1034)도 `S_HIT`(1023)도
 보내지 않는다.** 2026년 9월 16일 실측에서 그 세션이 받은 패킷은 아래가 전부다.
@@ -148,8 +148,8 @@ S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로�
 
 ## 몬스터 전체 계층과 전투 로직이 블루프린트에 있다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · client
-> 위치: `P1/Content/Blueprints/`
-> 등록일: 2026년 8월 19일
+> 위치: `P1/Content/P1/Characters/Monsters/`
+> 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
 
 UE 에디터로 실측한 결과는 아래 두 가지다.
 
@@ -340,8 +340,8 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 
 ## C++ 베이스 없이 BP에만 사는 UI/액터
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Content/Blueprints/`
-> 등록일: 2026년 8월 19일
+> 위치: `P1/Content/P1/` 아래 (`UI/`, `World/`, `Characters/`)
+> 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
 
 UE 에디터로 41개 BP의 부모 클래스를 전수 확인한 결과, 위젯 12/15는 이미 C++ 클래스로
 리페어런트되어 있다. 남은 것은 아래 넷이다.
