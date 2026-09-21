@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 26개 (높음 4 · 중간 15 · 낮음 7)
+항목 28개 (높음 4 · 중간 16 · 낮음 8)
 
 ## 작성 방법
 
@@ -167,6 +167,30 @@ UE 에디터로 실측한 결과는 아래 두 가지다.
 **버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
 (`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
 잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
+
+## `UP1LoginManager`가 위젯 포인터를 `UPROPERTY` 없이 들고 있다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Online/P1LoginManager.h` 32줄
+> 등록일: 2026년 9월 21일
+
+`LoginWidget`은 `UP1LoginWidget*`인데 `UPROPERTY`가 붙어 있지 않다. GC는 이 포인터를 참조로
+세지 않고, 위젯이 수거되어도 포인터를 비워 주지 않는다.
+
+지금 이 포인터는 `AP1LoginMenuPlayerController`가 `UPROPERTY`로 붙들고 있는 위젯과 같은 객체를
+가리킨다. 그래서 컨트롤러가 살아 있는 동안에는 수거되지 않는다.
+
+문제는 이 포인터를 읽는 두 자리가 HTTP 응답 콜백이라는 것이다.
+
+| 위치 | 읽는 방식 |
+|---|---|
+| `P1LoginManager.cpp` 109~111줄 | `if (LoginWidget)` 뒤에 `SetResultText` 호출 |
+| `P1LoginManager.cpp` 164~166줄 | 같은 형태 |
+
+### 영향
+
+**버그 발생 가능성 증가** — 로그인 화면을 벗어난 뒤에 응답이 도착하면 이미 파괴된 위젯을
+가리키는 포인터가 남는다. 널 검사는 통과하므로 그대로 역참조한다. 고치려면 `UPROPERTY()`를
+붙이거나 `TWeakObjectPtr`로 바꾼다.
 
 ## 로그인 라우터만 에러를 로그 없이 삼킨다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
@@ -545,6 +569,26 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 저장소의 SQL 스크립트 갱신과 함께만 실행하도록 정한다. 대상이 서로 다른 두 LocalDB 인스턴스에
 걸쳐 있다는 점도 함께 본다. UserDB는 `(localdb)\MSSQLLocalDB`, GameDB는 `(localdb)\ProjectModels`다.
 난이도가 낮다고 적혀 있지만 그것은 수정 범위의 크기이지 착수 조건의 무게가 아니다.
+
+## 리플렉션 매크로가 아무 일도 하지 않는 자리에 붙어 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Source/P1/Network/PacketSession.h` 26줄,
+> `P1/Source/P1/UI/P1LoginWidget.h` 84줄
+> 등록일: 2026년 9월 21일
+
+두 자리에서 리플렉션 매크로가 효과 없이 붙어 있다.
+
+| 위치 | 붙은 것 | 왜 효과가 없는가 |
+|---|---|---|
+| `PacketSession::HandleRecvPackets` | `UFUNCTION(BlueprintCallable)` | `PacketSession`은 `UObject`가 아니고 `.generated.h`도 없다. UHT가 이 파일을 처리하지 않는다 |
+| `UP1LoginWidget::CC_CharacterClassId` | `meta = (BindWidget)` | `BindWidget`은 위젯 타입에만 의미가 있다. 이 멤버는 `int32`다 |
+
+#50에서 멤버를 재정렬하다가 드러났다. 그 티켓의 범위가 아니어서 그대로 두었다.
+
+### 영향
+
+**유지보수 어려움** — 드러난 손실은 없다. 둘 다 빌드를 막지 않고 동작도 바꾸지 않는다. 다만
+읽는 쪽이 블루프린트에서 부를 수 있는 함수로, 또는 WBP와 이름을 맞춰야 하는 멤버로 잘못 읽는다.
 
 ## `SendBuffer::Append`와 `Copy`를 부르는 곳이 없다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
