@@ -6,9 +6,6 @@
 #include "Data/P1ItemData.h"
 #include "P1Inventory.generated.h"
 
-/**
- *
- */
 UCLASS()
 class P1_API UP1Inventory : public UObject
 {
@@ -17,15 +14,17 @@ class P1_API UP1Inventory : public UObject
 public:
     UP1Inventory();
 
+    //~ Slots
+public:
     void Init(Protocol::Inventory* Inventory_);
 
     void Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse = false);
 
 private:
-    // DEBUG
-    void PrintInventoryData();
-
-private:
-    /** 카테고리별 인벤토리 Lookup 매핑 정보*/
+    /** 카테고리별로 슬롯을 모아 둔 조회용 표다. */
     TMap<Protocol::SlotType, TArray<Protocol::Slot*>> InventoryLookupMappings;
+
+    //~ Debug
+private:
+    void PrintInventoryData();
 };

@@ -5,81 +5,49 @@
 #include "Protocol.pb.h"
 #include "P1Creature.generated.h"
 
-
-
 UCLASS()
 class P1_API AP1Creature : public ACharacter
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AP1Creature();
+    AP1Creature();
 
+    //~ Begin AActor Interface
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Tick(float DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
+    //~ End AActor Interface
 
+    //~ Initialization
 public:
-    UFUNCTION(BlueprintCallable, Category = "Creature")
-    void SetDeadState(bool IsDead);
-
-    UFUNCTION(BlueprintCallable, Category = "Creature")
-    bool IsDead() const { return _IsDead; }
-
-public:
-    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);    // Server Only
+    /** 서버가 보낸 오브젝트 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
+    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo);
 
     bool IsMyPlayer() const;
+
+    //~ Movement
+public:
     bool PushToMoveQueue(const Protocol::PosInfo& InInfo);
 
-    /** Setter함수 */
     void SetMoveState(Protocol::MoveState State);
     void SetClientPos(const Protocol::PosInfo& Info);
     void SetServerPos(const Protocol::PosInfo& Info);
-    void SetCreatureName(const FText& InName);
 
-    /** Getter함수 */
     Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
-    class UP1AttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
     TSharedPtr<Protocol::PosInfo> GetPosInfo() const { return ClientPos; }
-    FText GetCreatureName() const { return CreatureName; }
-
-public:
-    /** 서버 패킷 핸들링 함수 */
-    virtual void S_Move(float DeltaSeconds);
-    virtual void S_NormalAttack(uint32 Combo, float Yaw);
-    virtual void S_Hit(int64 Damage, int64 UpdatedHp);
-    virtual void S_Die();
 
     FVector FindPerpendicularPoint() const;
 
-public:
-    /** Action 델리게이트 */
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
-    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
-    FOnHit OnHit;
-
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
-    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
-    FOnDie OnDie;
-
+    virtual void S_Move(float DeltaSeconds);
 
 protected:
-    /** Attack System Component */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<class UP1AttackSystemComponent> AttackSystemComponent;
+    /** 클라이언트 위치다. 지금 화면에 보이는 캐릭터의 위치다. */
+    TSharedPtr<Protocol::PosInfo> ClientPos;
 
-    /** Attack System Component */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<class UWidgetComponent> NameplateComponent;
-
-    /** Etc Data */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
-    FText CreatureName = FText::FromString("NULL");
-
-    TSharedPtr<Protocol::PosInfo> ClientPos;     // 클라이언트 위치(현재 캐릭터 위치)
-    TSharedPtr<Protocol::PosInfo> ServerPos;     // 서버로부터 수신받은 위치(Only Use Other Player)
+    /** 서버에서 받은 위치다. 내 플레이어가 아닌 캐릭터에만 쓴다. */
+    TSharedPtr<Protocol::PosInfo> ServerPos;
 
 private:
     TQueue<Protocol::PosInfo> MoveQueue;
@@ -88,5 +56,49 @@ private:
     const float CORR_INTERP_SPEED = 5.f;
     const float CORR_RINTERP_SPEED = 5.f;
 
+    //~ Combat
+public:
+    virtual void S_NormalAttack(uint32 Combo, float Yaw);
+    virtual void S_Hit(int64 Damage, int64 UpdatedHp);
+
+    class UP1AttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
+
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnHit OnHit;
+
+protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<class UP1AttackSystemComponent> AttackSystemComponent;
+
+    //~ Death
+public:
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    void SetDeadState(bool IsDead);
+
+    UFUNCTION(BlueprintCallable, Category = "Creature")
+    bool IsDead() const { return _IsDead; }
+
+    virtual void S_Die();
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDie, AActor*, KilledCreature);
+
+    UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
+    FOnDie OnDie;
+
+private:
     bool _IsDead = false;
+
+    //~ Nameplate
+public:
+    void SetCreatureName(const FText& InName);
+    FText GetCreatureName() const { return CreatureName; }
+
+protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character")
+    FText CreatureName = FText::FromString("NULL");
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<class UWidgetComponent> NameplateComponent;
 };

@@ -4,10 +4,6 @@
 #include "Engine/DataTable.h"
 #include "P1ItemData.generated.h"
 
-/*-----------------
-      ItemData
------------------*/
-
 USTRUCT(BlueprintType)
 struct FP1ItemData : public FTableRowBase
 {
@@ -55,9 +51,7 @@ struct FP1ItemData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSoftObjectPtr<UTexture2D> Icon;
 
-    /*---------------------------
-           Conumption Field
-    ----------------------------*/
+    //~ Consumable Field
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float HpRestore = 0.f;
@@ -65,9 +59,7 @@ struct FP1ItemData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float MpRestore = 0.f;
     
-    /*---------------------------
-              Gear Field
-    ----------------------------*/
+    //~ Gear Field
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 PhysicalAttack = 0;
 

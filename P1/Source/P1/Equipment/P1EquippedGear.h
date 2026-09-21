@@ -12,9 +12,6 @@ enum
 
 using namespace google::protobuf;
 
-/**
- *
- */
 UCLASS()
 class P1_API UP1EquippedGear : public UObject
 {
@@ -22,13 +19,15 @@ class P1_API UP1EquippedGear : public UObject
 
 public:
     UP1EquippedGear() = default;
+
+    //~ Equipped Slots
+public:
     void Init(Map<int32, Protocol::Slot>* EquippedGear_);
 
-public:
     void Rep_SlotChanged(const Protocol::Slot& Slot_);
     const Map<int32, Protocol::Slot>& GetAllSlot() { return *EquippedGearLookup; }
 
 private:
-    /** 장착 아이템 LookUp */
+    /** 장착 슬롯을 가리킨다. 실제 데이터는 MyPlayerData가 갖는다. */
     Map<int32, Protocol::Slot>* EquippedGearLookup;
 };

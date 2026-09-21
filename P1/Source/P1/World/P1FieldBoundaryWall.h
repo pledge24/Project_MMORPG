@@ -9,25 +9,27 @@ class UBoxComponent;
 UCLASS()
 class P1_API AP1FieldBoundaryWall : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AP1FieldBoundaryWall();
+    GENERATED_BODY()
 
+public:
+    AP1FieldBoundaryWall();
+
+    //~ Begin AActor Interface
+protected:
+    virtual void BeginPlay() override;
+    virtual void OnConstruction(const FTransform& Transform) override;
+    //~ End AActor Interface
+
+    //~ Boundary Walls
+public:
+    /** 아래 크기 값으로 벽 넷의 위치와 크기를 다시 계산한다. */
     UFUNCTION(BlueprintCallable, Category = "Boundary")
     void UpdateWalls();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-    virtual void OnConstruction(const FTransform& Transform) override;
 
 private:
     UPROPERTY()
     TObjectPtr<USceneComponent> Root;
 
-    /** 벽 Component */
     UPROPERTY(VisibleAnywhere, Category = "Boundary")
     TObjectPtr<UBoxComponent> TopWall;
 
@@ -40,14 +42,17 @@ private:
     UPROPERTY(VisibleAnywhere, Category = "Boundary")
     TObjectPtr<UBoxComponent> RightWall;
 
-    // 벽 두께와 높이
+    //~ Boundary Size
+private:
+    /** 벽 두께다. */
     UPROPERTY(EditAnywhere, Category = "Boundary")
     float WallThickness = 100.f;
 
+    /** 벽 높이다. */
     UPROPERTY(EditAnywhere, Category = "Boundary")
     float WallHeight = 500.f;
 
-    // 현재 필드 크기 (한 변 길이)
+    /** 필드 한 변의 길이다. */
     UPROPERTY(EditAnywhere, Category = "Boundary")
     float BoundaryWidth = 100.f;
 

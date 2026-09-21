@@ -4,46 +4,49 @@
 #include "Characters/P1Creature.h"
 #include "P1Player.generated.h"
 
-
 UCLASS()
 class P1_API AP1Player : public AP1Creature
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AP1Player();
+    AP1Player();
+
+    //~ Begin AActor Interface
+protected:
+    virtual void BeginPlay();
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick(float DeltaTime) override;
+    //~ End AActor Interface
+
+    //~ Begin AP1Creature Interface
+public:
+    /** 서버가 보낸 오브젝트 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
+    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override;
 
 protected:
-	virtual void BeginPlay();
-    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void Tick(float DeltaTime) override;
+    virtual void S_Move(float DeltaSeconds) override;
+    //~ End AP1Creature Interface
 
+    //~ Equipment
 public:
+    /** 슬롯에 맞는 메시로 바꾼다. 구현은 블루프린트에 있다. */
     UFUNCTION(BlueprintImplementableEvent, Category = "Character")
     void ChangeMesh(int32 SlotId, int32 TemplateId);
 
-    virtual void Initialize(const Protocol::ObjectInfo& ObjectInfo) override; // Server Only
-
-    /** Setter함수 */
     void SetEquipmentSlot(const Protocol::Slot& InSlot);
-    void SetPlayerName(const FText& InName);
-
-    /** Getter함수 */
-    FText GetPlayerName() const { return GetCreatureName(); }
-
-public:
-    /** 델리게이트 */
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelUp, int32);
-    FOnLevelUp OnLevelUp;
 
 protected:
-    /** 이동 관련 함수 */
-    virtual void S_Move(float DeltaSeconds) override;
-
-
-protected:
-    /** Weapon CharacterMesh Component*/
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<class UStaticMeshComponent> WeaponMesh;
 
+    //~ Identity
+public:
+    void SetPlayerName(const FText& InName);
+    FText GetPlayerName() const { return GetCreatureName(); }
+
+    //~ Progression
+public:
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelUp, int32);
+    FOnLevelUp OnLevelUp;
 };

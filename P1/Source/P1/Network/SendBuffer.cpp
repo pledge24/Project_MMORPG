@@ -1,9 +1,5 @@
 #include "Network/SendBuffer.h"
 
-/*-------------------
-	  SendBuffer
---------------------*/
-
 SendBuffer::SendBuffer(int32 bufferSize)
 {
 	_buffer.SetNum(bufferSize);

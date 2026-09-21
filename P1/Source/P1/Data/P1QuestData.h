@@ -6,10 +6,6 @@
 #include "Data/P1QuestRewardData.h"
 #include "P1QuestData.generated.h"
 
-/*------------------
-      QuestData
--------------------*/
-
 USTRUCT(BlueprintType)
 struct FP1QuestData : public FTableRowBase
 {

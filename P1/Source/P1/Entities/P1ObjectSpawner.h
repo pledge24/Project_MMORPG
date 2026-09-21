@@ -10,37 +10,41 @@
 UCLASS()
 class P1_API AP1ObjectSpawner : public AActor
 {
-	GENERATED_BODY()
-	
-public:	
-	AP1ObjectSpawner();
-
-protected:
-	virtual void BeginPlay() override;
+    GENERATED_BODY()
 
 public:
-    /** Monster 관련 함수 */
-    UFUNCTION(BlueprintCallable, Category="Spawn")
+    AP1ObjectSpawner();
+
+    //~ Begin AActor Interface
+protected:
+    virtual void BeginPlay() override;
+    //~ End AActor Interface
+
+    //~ Monster Spawn
+public:
+    UFUNCTION(BlueprintCallable, Category = "Spawn")
     AActor* SpawnMonster(int32 TemplateId, const FTransform& Transform);
 
-    AActor* SpawnMonster(const Protocol::ObjectInfo& InObjectInfo); // Server Only
+    /** 서버가 보낸 오브젝트 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
+    AActor* SpawnMonster(const Protocol::ObjectInfo& InObjectInfo);
+
     AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::ObjectInfo> ServerInfo = NullOpt);
 
     bool GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonsterData);
 
-    /** Player 관련 함수 */
-    AActor* SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo); // Server Only
-
 protected:
-    /** Monster 정보 */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Data")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
     TObjectPtr<UDataTable> MonsterDataTable;
 
-    /** Player 정보 */
+    //~ Player Spawn
+public:
+    /** 서버가 보낸 오브젝트 정보로 스폰한다. 서버가 보낸 값으로만 부른다. */
+    AActor* SpawnPlayer(const Protocol::ObjectInfo& InObjectInfo);
+
+protected:
     UPROPERTY(EditAnywhere)
     TSubclassOf<AP1MyPlayer> MyPlayerClass;
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<AP1Player> OtherPlayerClass;
-
 };

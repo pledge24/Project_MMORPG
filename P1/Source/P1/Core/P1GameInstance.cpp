@@ -78,10 +78,7 @@ void UP1GameInstance::BeginDestroy()
     Super::BeginDestroy();
 }
 
-
-/*-------------------------
-*       Network Method
- -------------------------*/
+//~ Network Method
 #pragma region Network Method
 
 void UP1GameInstance::ConnectToGameServer()
@@ -147,10 +144,7 @@ void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
 
 #pragma endregion Network Method
 
-
-/*-------------------------
- *  Handle Packet Method
- -------------------------*/
+//~ Handle Packet Method
 
 void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt)
 {
