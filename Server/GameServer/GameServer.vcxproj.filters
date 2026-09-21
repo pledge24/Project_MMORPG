@@ -188,16 +188,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Common\Protobuf\bin\GenPackets.bat">
+    <None Include="..\..\Protocol\GenPackets.bat">
       <Filter>Protocol</Filter>
     </None>
-    <None Include="..\Common\Protobuf\bin\Enum.proto">
+    <None Include="..\..\Protocol\Schema\Enum.proto">
       <Filter>Protocol\Proto</Filter>
     </None>
-    <None Include="..\Common\Protobuf\bin\Protocol.proto">
+    <None Include="..\..\Protocol\Schema\Protocol.proto">
       <Filter>Protocol\Proto</Filter>
     </None>
-    <None Include="..\Common\Protobuf\bin\Struct.proto">
+    <None Include="..\..\Protocol\Schema\Struct.proto">
       <Filter>Protocol\Proto</Filter>
     </None>
     <None Include="Queries\GameDB_CreateAllTables.sql">
