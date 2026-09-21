@@ -15,11 +15,14 @@
     <Filter Include="GameServer\Game\Data">
       <UniqueIdentifier>{06710011-f7d3-5871-a78a-f9846026c30c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\Entities">
+      <UniqueIdentifier>{e5a6358a-dfd2-5357-8003-e1fdd1fd97cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Game\Equipment">
+      <UniqueIdentifier>{f5558365-b878-4854-9d36-43c09c1a2c66}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Inventory">
       <UniqueIdentifier>{07cf74dd-b75d-5821-a5fd-7f0ec6092656}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GameServer\Game\Object">
-      <UniqueIdentifier>{e5a6358a-dfd2-5357-8003-e1fdd1fd97cd}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
@@ -87,23 +90,23 @@
     <ClCompile Include="..\GameServer\Utils\Utils.cpp">
       <Filter>GameServer\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Object\Creature.cpp">
-      <Filter>GameServer\Game\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Object\Monster.cpp">
-      <Filter>GameServer\Game\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Object\Object.cpp">
-      <Filter>GameServer\Game\Object</Filter>
+    <ClCompile Include="..\GameServer\Game\Entities\Object.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Object\Player.cpp">
-      <Filter>GameServer\Game\Object</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Inventory\EquippedGear.cpp">
-      <Filter>GameServer\Game\Inventory</Filter>
+    <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp">
       <Filter>GameServer\Game\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp">
+      <Filter>GameServer\Game\Equipment</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
       <Filter>GameServer\Game\Data</Filter>
