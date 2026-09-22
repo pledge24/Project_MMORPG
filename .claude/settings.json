@@ -1,6 +1,9 @@
 {
   "cleanupPeriodDays": 365,
   "autoMemoryEnabled": false,
+  "enabledPlugins": {
+    "unreal-engine-skills-for-claude-code@claude-plugins-official": true
+  },
   "permissions": {
     "allow": [],
     "deny": [
