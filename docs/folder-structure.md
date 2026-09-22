@@ -314,6 +314,41 @@ P1/Content/
 에디터를 닫고 `git checkout`을 거친 뒤 다시 띄운다. 에디터가 떠 있는 채로 되돌리면 메모리의
 옛 상태가 디스크를 다시 덮는다.
 
+**참조를 바꿀 때 그 참조가 들어 있는 자리는 에셋 종류마다 다르다.** #81에서 실측했다
+(2026-09-23).
+
+| 참조하는 쪽 | 참조가 들어 있는 자리 |
+| --- | --- |
+| 애니메이션 블루프린트 | 애님 그래프 노드의 속성 (`node.sequence`) |
+| 블루프린트 변수 | CDO (`<에셋>.Default__<에셋>_C`) |
+| 블루프린트에서 추가한 컴포넌트 | SCS 템플릿 (`<에셋>.<에셋>_C:<이름>_GEN_VARIABLE`) |
+| C++로 선언한 컴포넌트 | CDO의 서브오브젝트 (`<에셋>.Default__<에셋>_C:<이름>`) |
+| 위젯 | 위젯 트리의 위젯 속성과 CDO 양쪽 |
+| 머티리얼과 머티리얼 함수 | 그래프 노드의 `texture`·`materialFunction`·`collection` |
+| 머티리얼 인스턴스 | `parent`와 `textureParameterValues` 배열 |
+| 메시 | `staticMaterials` 배열과 `skeleton` |
+
+**자리를 추측하지 않는다.** `ObjectTools.list_properties`로 스키마를 받고 그중 에셋 참조를
+담는 속성만 골라 읽는다. 위젯은 클래스마다 속성 이름이 달라서 추측이 특히 위험하다.
+
+**이름이 같아도 참조 대상은 제각각이다.** `WBP_Help`의 `Image_KeyboardBg` 계열 여덟 개 중
+여섯은 팩 텍스처를, 하나는 자작 텍스처를 가리켰고 하나는 비어 있었다. 값을 먼저 읽고 바꿀
+것만 고른다.
+
+**중첩 속성과 배열 요소는 부분 설정이 듣는다.** `brush.resourceObject` 하나만 지정해도
+`imageSize`와 `tintColor`가 유지되고, `staticMaterials[0].materialInterface`만 지정해도
+`materialSlotName`이 남는다.
+
+**`MaterialInstanceTools.set_parent`를 쓰지 않는다.**
+— 메모리의 `parent`는 바꾸지만 `dirty`를 세우지 않아서 이어지는 `save_assets`가 건너뛴다.
+반환값도 `null`이라 성공과 실패를 가리지 못한다. 같은 일을 `ObjectTools.set_properties`로
+하면 `dirty`가 서고 `true`가 돌아온다.
+
+**머티리얼 인스턴스는 부모를 고친 뒤에도 옛 참조를 계속 보고할 수 있다.** 부모의
+`get_dependencies`가 깨끗하고 인스턴스의 편집 가능한 속성에도 옛 경로가 없는데
+`get_dependencies`만 옛 경로를 돌려주는 상태다. `recompile`은 인스턴스를 받지 않는다.
+**에디터를 다시 띄워서 판정한다.**
+
 ### 4.6 UI 텍스처 임포트 설정
 
 아이콘 텍스처는 텍스처 그룹을 UI로, 밉맵 생성을 끔으로, 압축을 UserInterface2D로 지정한다.
