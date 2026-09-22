@@ -1,7 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## 프로젝트 개요
 
 반드시 함께 띄워야 하는 3티어 MMORPG.
@@ -22,8 +18,7 @@ Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 쓴다. 상세: `docs
 - **코드를 쓰거나 고치기 전에 `docs/conventions.md`** — 이름, 주석, 멤버 배치, 타입 사용
 - **새 파일이나 에셋을 만들기 전에 `docs/folder-structure.md`** — 어디에 둘지, 무슨 이름을 붙일지
 - `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`.
-  **기존 ADR에 덧붙일 때는 덧붙인 날짜를 그 자리에 적는다** — 본문이 측정 날짜에 묶여 있어서,
-  날짜가 없으면 처음부터 있던 내용으로 읽힌다
+  **기존 ADR에 덧붙일 때는 덧붙인 날짜를 그 자리에 적는다** — 본문이 측정 날짜에 묶여 있다
 - `docs/tech-debt.md` — 지금 틀린 것
 - `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
 - `docs/work/` — 여러 세션에 걸치는 작업의 계획과 결정. **진행 상태는 여기 없다.** 상태는 이슈 트래커에 있다
@@ -50,14 +45,12 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 
 - **Rider MCP에서 쓸 수 있는 툴은 36종이다.** 나머지는 `.claude/settings.json`의
   `permissions.deny`가 막는다. 판정 근거는 `docs/adr/0002-control-mcp-tools-via-permissions.md`.
-- **언리얼 MCP(`unreal`)는 `permissions`가 아니라 훅이 막는다.** 이 서버는 도구를
-  `list_toolsets`, `describe_toolset`, `call_tool` 세 개만 노출하고, **52개 툴셋의 830개
-  도구**가 전부 `call_tool`의 인자로 들어온다. 이름이 하나뿐이라 `permissions`로는 구분되지
-  않는다. 허용 명단은 `.claude/hooks/guard_dangerous_cmd.py`의 `UE_ALLOWED_TOOLS`이고,
-  **명단에 없으면 막힌다. 열려 있는 것은 74개(8.9%)뿐이다.** 조회 계열과 자동화 테스트,
-  그리고 PIE 제어(`StartPIE`·`StopPIE`)다. 에셋 쓰기는 전부 막혀 있다. **명단은 에이전트가 고칠 수
-  없다** — 훅 파일을 편집하려 하면 Claude Code의 auto mode classifier가 막으므로 사람이
-  직접 고친다. 근거는 `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
+- **언리얼 MCP(`unreal`)는 `permissions`가 아니라 훅이 막는다.** `call_tool` 하나로 830개가
+  들어오므로 `permissions`로는 구분되지 않는다. `.claude/hooks/guard_dangerous_cmd.py`가 툴셋
+  허용 명단(`UE_ALLOWED_TOOLSETS`, 27개)을 1층으로, 보관소 경로와 슬레이트 조작과
+  `execute_tool_script`를 아래 세 층으로 본다. **에셋 쓰기는 열려 있다.** **명단은 사람만
+  고친다** — 훅 파일 편집은 auto mode classifier가 막는다. 층별 판정과 근거는
+  `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
 - **언리얼 MCP는 에디터가 떠 있어야 붙는다.** 에디터를 띄우면 `127.0.0.1:8000`이 자동으로
   열리므로 사람이 콘솔에 입력할 것은 없다. 연결 확인은 `netstat`로 8000 포트를 보거나
   `list_toolsets`를 한 번 부른다. **UE 자동화 테스트는 이것과 무관하다** —
@@ -72,23 +65,19 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   `-CloseEditor`를 붙이는 것은 저장하지 않은 에셋 변경이 없다고 판단한 뒤다. 빌드 출력이 커서
   절단되는 문제는 스크립트가 로그를 파일로 보내고 오류 줄만 추려서 푼다. 명령 원문은
   `docs/build.md`, 근거는 `docs/adr/0001-unify-build-path.md`.
-- **Rider MCP 툴에는 `rootFolder`를 항상 명시한다** (파라미터 이름이 `projectPath`가 아니다).
-  **함정: 솔루션이 하나만 열려 있으면 서버가 모호성을 못 느껴 거부하지 않고 그대로 실행한다.**
-  Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드된다. 인자 없이 `get_run_configurations`를
-  부르면 열린 프로젝트 목록이 에러 메시지로 돌아온다.
+- **Rider MCP 툴에는 `rootFolder`를 항상 명시한다**(파라미터 이름이 `projectPath`가 아니다).
+  솔루션이 하나만 열려 있으면 서버가 모호성을 못 느끼고 그대로 실행하므로, 생략해도 에러가
+  나지 않는다. 열린 프로젝트 목록은 인자 없이 `get_run_configurations`를 부르면 에러로 돌아온다.
 - 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
 - **`rename_refactoring`의 `applied: true`는 반영을 뜻하지 않는다.** 한 건마다 디스크를 확인하고
-  파일 묶음이 끝나면 빌드로 판정한다. 2026-09-20에 실측한 실패 형태가 셋이다. **에디터에 탭으로
-  열린 파일은 디스크에 저장되지 않으면서 성공을 보고한다.** 시작 전에 사람에게 탭을 닫아 달라고
-  요청한다. **열 번 남짓 연속 호출하면 인덱스가 오염된다.** 직전까지 `클래스 필드`로 해석하던
-  심볼을 `no_renamable_symbol`로 거부하고, Rider 재시작으로만 회복된다. **생성된 protobuf 코드와
-  철자가 같은 이름은 거부된다**(`possession`·`inventory`·`player` 실측). 이런 이름은 사람이
-  IDE에서 `Shift+F6`으로 처리한다. 실패 사례: PR #62
+  파일 묶음이 끝나면 빌드로 판정한다. 시작 전에 사람에게 에디터 탭을 닫아 달라고 요청한다 —
+  열린 탭은 저장되지 않으면서 성공을 보고한다. `no_renamable_symbol`로 거부되면 사람에게
+  넘긴다. 실패 형태 셋과 사례: ADR-0002의 「`rename_refactoring`의 실패 형태 셋」
 - UE 에셋 조회: `get_class_hierarchy`와 `search_assets`. **`search_assets`는 `baseClass`만 쓴다** —
   `query`는 빈 결과만 돌려준다. Rider의 에디터 조작 툴은 막혀 있으므로 사람에게 요청한다.
 - **에셋 속성은 Rider가 아니라 언리얼 MCP로 읽는다.** Rider의 `get_asset_properties`는 블루프린트
-  CDO에 `properties: []`를 돌려준다(ADR-0002). 같은 에셋을 `unreal`의 `ObjectTools.list_properties`로
-  읽으면 속성이 나온다 — `BP_MonsterBase`에서 115개를 실측했다.
+  CDO에 `properties: []`를 돌려준다(ADR-0002). 같은 에셋을 `unreal`의
+  `ObjectTools.list_properties`로 읽으면 속성이 나온다.
 - 서버 변경 검증은 Unreal을 띄우지 않고 `Server/DummyClient/`로 가능하다 (실 클라와 동일 프로토콜).
 - **노출 ≠ 존재.** 판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다. **IDE 화면의 체크
   상태도 근거가 아니다** — 이 엔드포인트에 반영되지 않는다. 근거와 예외: `docs/build.md`와 ADR-0002
@@ -108,10 +97,8 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 - **자기신고를 믿지 않는다.** 검증 커맨드를 실제로 실행한 결과 없이 완료를 선언하지 않는다.
   "됐을 것이다"는 완료가 아니다 — 코드를 고친 사실과 그 코드가 도는 사실은 별개다.
 - **존재 ≠ 가능.** 구성요소가 있는 것을 확인하고 "그러니 이 기능이 된다"고 쓰지 않는다.
-  가장 싸게 실패하는 경로를 먼저 돌려보고 나서 쓴다. **부분 확인이 오히려 확신을 키우는 것**이
-  이 실수의 공통 형태다(구멍 하나를 찾아 메우면 나머지를 검증했다고 느낀다).
-  실제 사례: UE LLT — 설치본에 재료가 있는 것을 확인하고 "가능"으로 계획에 적었으나
-  빌드 자체가 거부됐다(2026-08-27).
+  가장 싸게 실패하는 경로를 먼저 돌려보고 나서 쓴다. **부분 확인이 확신을 키운다** — 구멍
+  하나를 메우면 나머지를 검증했다고 느낀다.
 
 ## 안전
 
