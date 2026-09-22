@@ -176,6 +176,20 @@ UE_READONLY_PREFIXES = (
 # 참고용 보관소. 콘텐츠 경로와 디스크 경로 양쪽을 잡는다 (ADR-0006).
 UE_EXTERNAL_RE = re.compile(r"/Game/External\b|[/\\]Content[/\\]External\b", re.IGNORECASE)
 
+# 3층이 검사하지 않을 인자. 보관소를 **읽기만** 하는 출발지다.
+#
+# duplicate 는 원본을 남기고 import_file 은 디스크의 이미지를 읽기만 한다. 목적지
+# 인자(new_path, folder_path)는 그대로 검사하므로 보관소를 목적지로 쓰는 것은 막힌다.
+# move 는 출발지를 비우므로 여기 넣지 않는다.
+#
+# **이 예외는 직접 호출에만 적용된다.** execute_tool_script 안의 호출은 인자가 JSON
+# 문자열이라 어느 쪽이 목적지인지 정적으로 가릴 수 없다. 그래서 스크립트로 묶지 않고
+# 한 건씩 부른다.
+UE_EXTERNAL_SOURCE_ARGS = {
+    "duplicate": ("path",),
+    "import_file": ("source_file",),
+}
+
 # 4층 — 슬레이트 조작. 막지 않는 대신 워킹 트리가 깨끗할 때만 통과시킨다.
 # ref 는 익명이고 관찰자가 계속 재할당하므로 Click(ref="i1") 은 로그로 복원되지 않는다.
 # 직전 상태가 커밋되어 있으면 결과를 diff 로 읽을 수 있다.
@@ -329,6 +343,17 @@ def _ue_touches_external(blob):
     return bool(UE_EXTERNAL_RE.search(blob))
 
 
+def _ue_guarded_args(target, arguments):
+    """3층이 검사할 인자만 남긴다. 보관소를 읽기만 하는 출발지는 뺀다.
+
+    인자가 dict 가 아니면(스크립트 본문 등) 그대로 돌려주므로 예외가 걸리지 않는다.
+    """
+    skip = UE_EXTERNAL_SOURCE_ARGS.get(target)
+    if not skip or not isinstance(arguments, dict):
+        return arguments
+    return {k: v for k, v in arguments.items() if k not in skip}
+
+
 def _ue_gate(toolset, target, arguments):
     """1~3층 판정. 막을 이유를 돌려주고, 통과면 빈 문자열을 돌려준다.
 
@@ -350,7 +375,7 @@ def _ue_gate(toolset, target, arguments):
     # 4층이 호출을 하나씩 뜯어 조회와 쓰기를 가른다.
     if toolset == UE_PROG_TOOLSET and target == UE_PROG_SCRIPT_TOOL:
         return ""
-    if not _ue_is_readonly(target) and _ue_touches_external(arguments):
+    if not _ue_is_readonly(target) and _ue_touches_external(_ue_guarded_args(target, arguments)):
         return ("'" + target + "' 는 조회가 아닌데 인자가 Content/External 경로를 담고 "
                 "있다. 참고용 보관소는 조회만 허용한다 (ADR-0006)")
     return ""
