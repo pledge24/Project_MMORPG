@@ -37,6 +37,73 @@ APP = "EditorToolset.EditorAppToolset"
 SLATE = "SlateInspectorToolset.SlateInspectorToolset"
 ASSET = "editor_toolset.toolsets.asset.AssetTools"
 SKILL = "ToolsetRegistry.AgentSkillToolset"
+SEQ = "animation_toolset.toolsets.sequencer.SequencerTools"
+NIA = "NiagaraToolsets.NiagaraToolset_System"
+TEX = "editor_toolset.toolsets.texture.TextureTools"
+
+# 참고용 보관소 경로. 콘텐츠 경로와 디스크 경로 양쪽을 검사한다.
+EXT = "/Game/External/ClassicMMOUI/Textures/0_common/Btn1_normal"
+EXT_DISK = "D:/Unreal/Projects/Project_MMORPG/P1/Content/External/ClassicMMOUI/a.png"
+P1PATH = "/Game/P1/UI/Frontend/WBP_LoginMenu"
+
+# execute_tool_script 판정용 스크립트들.
+# 규약은 execute_tool(전체이름, JSON문자열) 이고 run() 을 정의해야 한다.
+SCRIPT_OK = '''
+import json
+def dup(src, dst):
+    return execute_tool("editor_toolset.toolsets.asset.AssetTools.duplicate",
+                        json.dumps({"path": src, "new_path": dst}))
+def run():
+    dup("/Game/P1/a", "/Game/P1/b")
+    return {"ok": 1}
+'''
+
+SCRIPT_EXT_READ = '''
+import json
+def run():
+    return {"r": execute_tool("editor_toolset.toolsets.asset.AssetTools.get_referencers",
+                              json.dumps({"asset_path": "/Game/External/ClassicMMOUI/x"}))}
+'''
+
+SCRIPT_EXT_WRITE = '''
+import json
+def run():
+    execute_tool("editor_toolset.toolsets.asset.AssetTools.delete",
+                 json.dumps({"path": "/Game/External/ClassicMMOUI"}))
+    return {}
+'''
+
+SCRIPT_CLOSED = '''
+def run():
+    execute_tool("animation_toolset.toolsets.sequencer.SequencerTools.create_sequence", "{}")
+    return {}
+'''
+
+SCRIPT_EVAL = '''
+def run():
+    eval("execute_tool('x', '{}')")
+    return {}
+'''
+
+SCRIPT_DUNDER = '''
+def run():
+    execute_tool.__globals__["x"] = 1
+    return {}
+'''
+
+SCRIPT_DYNAMIC = '''
+def run():
+    name = "editor_toolset.toolsets.asset.AssetTools.delete"
+    execute_tool(name, "{}")
+    return {}
+'''
+
+SCRIPT_RECURSE = '''
+def run():
+    execute_tool(
+        "editor_toolset.toolsets.programmatic.ProgrammaticToolset.execute_tool_script", "{}")
+    return {}
+'''
 
 
 def run_hook(tool, tool_input, env=None):
@@ -104,38 +171,75 @@ CASES = [
     ("터미널 정상", "mcp__rider__execute_terminal_command", {"command": "ls", "rootFolder": SRV}, False),
     ("터미널 위험명령", "mcp__rider__execute_terminal_command", {"command": "rd /s /q build", "rootFolder": SRV}, True),
 
-    # --- 언리얼 MCP 라우터: 허용 명단 밖은 막는다 (ADR-0003) ---
-    # 이 서버는 도구 수백 종이 call_tool 하나로 들어와서 permissions 로는 구분되지 않는다.
-    # 판정이 인자 안에서 이뤄지므로 툴 이름만 보는 다른 검사와 분리해 확인한다.
+    # --- 언리얼 MCP 1층: 툴셋 허용 명단 (ADR-0003) ---
+    # 쓰기가 열려 있다는 것 자체가 판정 대상이다. 무엇이 열렸는지 여기서 고정한다.
     ("UE 조회 통과", UE, {"toolset_name": OBJ, "tool_name": "list_properties"}, False),
-    ("UE BP 조회 통과", UE, {"toolset_name": BP, "tool_name": "get_parent"}, False),
+    ("UE 속성 쓰기 통과", UE, {"toolset_name": OBJ, "tool_name": "set_properties"}, False),
+    ("UE BP 그래프 쓰기 통과", UE, {"toolset_name": BP, "tool_name": "write_graph_dsl"}, False),
+    ("UE 에셋 삭제 통과", UE, {"toolset_name": ASSET, "tool_name": "delete"}, False),
+    ("UE 에셋 복사 통과", UE, {"toolset_name": ASSET, "tool_name": "duplicate"}, False),
+    ("UE 텍스처 임포트 통과", UE, {"toolset_name": TEX, "tool_name": "import_file"}, False),
+    ("UE 스킬 생성 통과", UE, {"toolset_name": SKILL, "tool_name": "CreateSkill"}, False),
+    ("UE 에디터 UI 조작 통과", UE, {"toolset_name": APP, "tool_name": "SelectActors"}, False),
+    ("UE PIE 시작 통과", UE, {"toolset_name": APP, "tool_name": "StartPIE"}, False),
     ("UE 테스트 실행 통과", UE, {"toolset_name": AUTO, "tool_name": "RunTests"}, False),
+    ("UE 로그 상세도 변경 통과", UE, {"toolset_name": LOGS, "tool_name": "SetVerbosity"}, False),
     ("UE 최상위 조회 통과", UE, {"tool_name": "list_toolsets"}, False),
-    ("UE 속성 쓰기 차단", UE, {"toolset_name": OBJ, "tool_name": "set_properties"}, True),
-    ("UE 속성 초기화 차단", UE, {"toolset_name": OBJ, "tool_name": "reset_properties"}, True),
-    ("UE 그래프 쓰기 차단", UE, {"toolset_name": BP, "tool_name": "write_graph_dsl"}, True),
-    ("UE 부모 변경 차단", UE, {"toolset_name": BP, "tool_name": "set_parent"}, True),
-    ("UE 임의 파이썬 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script"}, True),
+
+    # 1층 밖은 막는다. 이 프로젝트가 쓰지 않는 툴셋이 열리지 않았는지 고정한다.
+    ("UE 시퀀서 툴셋 차단", UE, {"toolset_name": SEQ, "tool_name": "create_sequence"}, True),
+    ("UE 나이아가라 툴셋 차단", UE, {"toolset_name": NIA, "tool_name": "AddModule"}, True),
     ("UE 모르는 툴셋 차단", UE, {"toolset_name": "Foo.Bar", "tool_name": "list_properties"}, True),
-    ("UE 최상위 명단밖 차단", UE, {"tool_name": "call_tool"}, True),
+    ("UE 최상위 재귀 차단", UE, {"tool_name": "call_tool"}, True),
     ("UE 인자 누락 차단", UE, {}, True),
     ("UE 인자 형식오류 차단", UE, {"toolset_name": OBJ, "tool_name": 7}, True),
-    # 2026-09-17 에 넓힌 다섯 툴셋. 무엇을 열었고 무엇을 닫았는지 여기서 고정한다.
-    ("UE 로그 조회 통과", UE, {"toolset_name": LOGS, "tool_name": "GetLogEntries"}, False),
-    ("UE 로그 상세도 변경 통과", UE, {"toolset_name": LOGS, "tool_name": "SetVerbosity"}, False),
-    ("UE 뷰포트 캡처 통과", UE, {"toolset_name": APP, "tool_name": "CaptureViewport"}, False),
-    ("UE PIE 시작 통과", UE, {"toolset_name": APP, "tool_name": "StartPIE"}, False),
-    ("UE 에디터 UI 조작 차단", UE, {"toolset_name": APP, "tool_name": "SelectActors"}, True),
-    ("UE 슬레이트 스냅샷 통과", UE, {"toolset_name": SLATE, "tool_name": "Snapshot"}, False),
-    ("UE 슬레이트 클릭 차단", UE, {"toolset_name": SLATE, "tool_name": "Click"}, True),
-    ("UE 슬레이트 타이핑 차단", UE, {"toolset_name": SLATE, "tool_name": "Type"}, True),
-    ("UE 슬레이트 창 조작 차단", UE, {"toolset_name": SLATE, "tool_name": "Windows"}, True),
-    ("UE 에셋 참조 조회 통과", UE, {"toolset_name": ASSET, "tool_name": "get_referencers"}, False),
-    ("UE 에셋 삭제 차단", UE, {"toolset_name": ASSET, "tool_name": "delete"}, True),
-    ("UE 에셋 이동 차단", UE, {"toolset_name": ASSET, "tool_name": "move"}, True),
-    ("UE 에셋 파일 쓰기 차단", UE, {"toolset_name": ASSET, "tool_name": "write_file"}, True),
-    ("UE 스킬 조회 통과", UE, {"toolset_name": SKILL, "tool_name": "ListSkills"}, False),
-    ("UE 스킬 생성 차단", UE, {"toolset_name": SKILL, "tool_name": "CreateSkill"}, True),
+
+    # --- 언리얼 MCP 3층: 참고용 보관소 경로 가드 (ADR-0006) ---
+    # Content/External/ 은 사람이 관리하고 git 이 추적하지 않는다. 되돌릴 방법이
+    # 마켓플레이스 재설치뿐이라 조회만 허용한다.
+    ("UE External 조회 통과", UE, {"toolset_name": ASSET, "tool_name": "get_referencers",
+                                   "arguments": {"asset_path": EXT}}, False),
+    ("UE External 의존성 조회 통과", UE, {"toolset_name": ASSET, "tool_name": "get_dependencies",
+                                          "arguments": {"asset_path": EXT}}, False),
+    ("UE External 삭제 차단", UE, {"toolset_name": ASSET, "tool_name": "delete",
+                                   "arguments": {"path": EXT}}, True),
+    ("UE External 에서 이동 차단", UE, {"toolset_name": ASSET, "tool_name": "move",
+                                        "arguments": {"path": EXT, "new_path": P1PATH}}, True),
+    ("UE External 로 이동 차단", UE, {"toolset_name": ASSET, "tool_name": "move",
+                                      "arguments": {"path": P1PATH, "new_path": EXT}}, True),
+    ("UE External 속성 쓰기 차단", UE, {"toolset_name": OBJ, "tool_name": "set_properties",
+                                        "arguments": {"object": {"refPath": EXT}}}, True),
+    ("UE External 디스크경로 차단", UE, {"toolset_name": TEX, "tool_name": "import_file",
+                                         "arguments": {"source_file": EXT_DISK}}, True),
+    ("UE P1 삭제는 통과", UE, {"toolset_name": ASSET, "tool_name": "delete",
+                               "arguments": {"path": P1PATH}}, False),
+
+    # --- 언리얼 MCP 4층: execute_tool_script 의 정적 판정 ---
+    # 스크립트 안의 호출에도 같은 판정이 걸리는지 본다.
+    ("UE 환경 조회 통과", UE, {"toolset_name": PROG,
+                               "tool_name": "get_execution_environment"}, False),
+    ("UE 스크립트 정상 통과", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                   "arguments": {"script": SCRIPT_OK}}, False),
+    ("UE 스크립트 External 조회 통과", UE, {"toolset_name": PROG,
+                                            "tool_name": "execute_tool_script",
+                                            "arguments": {"script": SCRIPT_EXT_READ}}, False),
+    ("UE 스크립트 External 쓰기 차단", UE, {"toolset_name": PROG,
+                                            "tool_name": "execute_tool_script",
+                                            "arguments": {"script": SCRIPT_EXT_WRITE}}, True),
+    ("UE 스크립트 닫힌툴셋 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                       "arguments": {"script": SCRIPT_CLOSED}}, True),
+    ("UE 스크립트 eval 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                   "arguments": {"script": SCRIPT_EVAL}}, True),
+    ("UE 스크립트 던더 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                   "arguments": {"script": SCRIPT_DUNDER}}, True),
+    ("UE 스크립트 동적이름 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                       "arguments": {"script": SCRIPT_DYNAMIC}}, True),
+    ("UE 스크립트 재귀 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                   "arguments": {"script": SCRIPT_RECURSE}}, True),
+    ("UE 스크립트 문법오류 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                       "arguments": {"script": "def run(:"}}, True),
+    ("UE 스크립트 빈인자 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
+                                     "arguments": {}}, True),
 
     # --- 관계없는 툴 ---
     ("Read 툴", "Read", {"file_path": "/etc/passwd"}, False),
@@ -239,7 +343,8 @@ def check_audit_cases():
         )
 
         # 2) 차단된 호출은 여기 남기지 않는다. 차단은 block_counter 가 맡는다.
-        run_hook(UE, {"toolset_name": OBJ, "tool_name": "set_properties", "arguments": {}}, env)
+        # set_properties 는 2026-09-22 에 열렸으므로 1층 밖 툴셋으로 막는다.
+        run_hook(UE, {"toolset_name": SEQ, "tool_name": "create_sequence", "arguments": {}}, env)
         after = log.read_text(encoding="utf-8").splitlines()
         report(len(after) == 1, "차단은 감사에 안 남음", "줄=%d" % len(after))
 
@@ -268,14 +373,74 @@ def check_audit_cases():
     return bad
 
 
+def check_slate_cases():
+    """슬레이트 조작이 커밋 상태에 따라 갈리는지. 실패 개수를 돌려준다.
+
+    GUARD_REPO_ROOT 로 임시 저장소를 주입한다. 실제 저장소를 보면 판정이 그날의 워킹
+    트리 상태에 따라 흔들려 테스트가 재현되지 않는다.
+    """
+    bad = 0
+
+    def report(ok, desc, detail=""):
+        nonlocal bad
+        if not ok:
+            bad += 1
+        print(("PASS " if ok else "FAIL ") + "%-24s %s" % (desc, detail))
+
+    git = ["git", "-c", "user.email=t@t", "-c", "user.name=t"]
+
+    def make_repo(root, dirty):
+        root.mkdir()
+        subprocess.run(["git", "init", "-q", str(root)], capture_output=True)
+        (root / "a.txt").write_text("x", encoding="utf-8")
+        subprocess.run(git + ["add", "."], cwd=str(root), capture_output=True)
+        subprocess.run(git + ["commit", "-qm", "init"], cwd=str(root), capture_output=True)
+        if dirty:
+            (root / "a.txt").write_text("changed", encoding="utf-8")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        base = {
+            "GUARD_BLOCK_COUNTER": str(Path(tmp) / "c.log"),
+            "GUARD_UE_AUDIT": str(Path(tmp) / "a.log"),
+        }
+        clean = Path(tmp) / "clean"
+        dirty = Path(tmp) / "dirty"
+        norepo = Path(tmp) / "norepo"
+        make_repo(clean, False)
+        make_repo(dirty, True)
+        norepo.mkdir()
+
+        click = {"toolset_name": SLATE, "tool_name": "Click", "arguments": {"ref": "i1"}}
+        snap = {"toolset_name": SLATE, "tool_name": "Snapshot", "arguments": {"ref": ""}}
+
+        # git status 를 읽지 못하는 상황은 막는 쪽으로 기운다. 커밋 상태를 모르면
+        # 조작 결과를 diff 로 읽을 수 있다는 전제가 깨지기 때문이다.
+        states = (("깨끗", clean, False), ("미커밋", dirty, True), ("git아님", norepo, True))
+        for label, root, expect_block in states:
+            env = dict(base)
+            env["GUARD_REPO_ROOT"] = str(root)
+            code, _ = run_hook(UE, click, env)
+            report(
+                (code == 2) == expect_block,
+                "슬레이트 조작 (%s)" % label,
+                "exit=%s 기대=%s" % (code, "차단" if expect_block else "통과"),
+            )
+            code, _ = run_hook(UE, snap, env)
+            report(code == 0, "슬레이트 관찰 (%s)" % label, "exit=%s" % code)
+
+    return bad
+
+
 def main():
     bad = check_pattern_cases()
     print("")
     bad += check_counter_cases()
     print("")
     bad += check_audit_cases()
+    print("")
+    bad += check_slate_cases()
 
-    total = len(CASES) + 4 + 5
+    total = len(CASES) + 4 + 5 + 6
     print("")
     print("=== %d/%d ok ===" % (total - bad, total))
     return 1 if bad else 0

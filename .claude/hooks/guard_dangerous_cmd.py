@@ -18,9 +18,11 @@
 테스트: py -3 .claude/hooks/test_guard_dangerous_cmd.py
 """
 
+import ast
 import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -50,6 +52,12 @@ AUDIT_DEFAULT = Path(__file__).with_name("ue_audit.log")
 # 인자 요약 길이 상한. refPath 하나가 200자를 넘는 경우가 있어 넉넉히 잡되, 스크립트나
 # 긴 배열이 통째로 들어와 로그가 부풀지 않도록 자른다.
 AUDIT_ARGS_MAX = 400
+
+# 저장소 루트 — 슬레이트 조작 전에 git status 를 읽을 때 쓴다.
+# 환경변수로 덮어쓸 수 있게 둔 이유는 위 둘과 같다. 테스트가 실제 저장소를 보면
+# 판정이 그날의 워킹 트리 상태에 따라 흔들린다.
+REPO_ENV = "GUARD_REPO_ROOT"
+REPO_DEFAULT = Path(__file__).resolve().parent.parent.parent
 
 # 어떤 툴의 어느 필드를 볼 것인가.
 # 셸 계열은 command, Rider의 SQL 실행은 queryText.
@@ -97,161 +105,96 @@ ROOT_FOLDER_REQUIRED = {
     "mcp__rider__edit_database_connection",
 }
 
-# 언리얼 엔진 MCP 서버의 라우터 툴 — 이 이름 하나로 수백 종이 전부 통과한다.
+# 언리얼 엔진 MCP 서버의 라우터 툴 — 이 이름 하나로 830 종이 전부 통과한다.
 #
-# 왜 여기서만 막을 수 있는가: 이 서버는 MCP 수준에 도구를 3종만 노출한다
-# (list_toolsets, describe_toolset, call_tool). 실제 도구는 call_tool 의 인자에
-# toolset_name 과 tool_name 으로 실려서 들어온다. 그래서 ADR-0002 가 쓴 수단인
-# settings.json 의 permissions 로는 도구를 하나도 구분해 낼 수 없다 — 이름이
-# mcp__unreal__call_tool 하나뿐이라 전부 허용하거나 전부 막는 선택만 남는다.
-# 세분화가 가능한 지점은 인자를 실제로 읽는 이 훅뿐이다. 근거는 ADR-0003.
+# 이 서버는 MCP 수준에 도구를 3종만 노출하고(list_toolsets, describe_toolset, call_tool)
+# 실제 도구는 call_tool 의 인자로 실려 온다. settings.json 의 permissions 는 이름
+# 하나만 보므로 전부 허용과 전부 차단 두 가지뿐이다. 판정이 가능한 지점은 인자를 읽는
+# 이 훅뿐이다. 근거와 판정 층의 설계 의도는 ADR-0003.
 UE_ROUTER_TOOLS = {
     "mcp__unreal__call_tool",
 }
 
-# 통과시킬 (toolset_name, tool_name) 조합. **명단에 없으면 막는다.**
+# 판정은 네 층이다. 위에서 걸리면 거기서 막는다.
+#   1층 UE_ALLOWED_TOOLSETS  툴셋이 열려 있는가. 모르는 툴셋은 막는다
+#   2층 UE_DENIED_TOOLS      그 안에서 개별 도구를 막는가
+#   3층 UE_EXTERNAL_RE       조회가 아닌 도구가 참고용 보관소를 인자로 받았는가
+#   4층                      슬레이트 조작과 execute_tool_script 의 전용 판정
+
+# toolset_name 없이 부르는 최상위 도구. call_tool 자신은 재귀가 되므로 뺀다.
+UE_TOP_LEVEL_TOOLS = {
+    "list_toolsets",
+    "describe_toolset",
+}
+
+# 1층 — 열어 둔 툴셋. 이 안의 도구는 2층부터의 판정만 거친다.
+UE_ALLOWED_TOOLSETS = {
+    "editor_toolset.toolsets.asset.AssetTools",
+    "editor_toolset.toolsets.object.ObjectTools",
+    "editor_toolset.toolsets.texture.TextureTools",
+    "editor_toolset.toolsets.blueprint.BlueprintTools",
+    "editor_toolset.toolsets.material.MaterialTools",
+    "editor_toolset.toolsets.material_instance.MaterialInstanceTools",
+    "editor_toolset.toolsets.static_mesh.StaticMeshTools",
+    "editor_toolset.toolsets.skeletal_mesh.SkeletalMeshTools",
+    "editor_toolset.toolsets.data_table.DataTableTools",
+    "editor_toolset.toolsets.data_asset.DataAssetTools",
+    "editor_toolset.toolsets.curve_table.CurveTableTools",
+    "editor_toolset.toolsets.string_table.StringTableTools",
+    "editor_toolset.toolsets.scene.SceneTools",
+    "editor_toolset.toolsets.actor.ActorTools",
+    "editor_toolset.toolsets.primitive.PrimitiveTools",
+    "editor_toolset.toolsets.programmatic.ProgrammaticToolset",
+    "UMGToolSet.UMGToolSet",
+    "PhysicsToolsets.PhysicsAssetToolset",
+    "EditorToolset.EditorAppToolset",
+    "EditorToolset.LogsToolset",
+    "AutomationTestToolset.AutomationTestToolset",
+    "SlateInspectorToolset.SlateInspectorToolset",
+    "ToolsetRegistry.AgentSkillToolset",
+    "SemanticSearchToolset.SemanticSearchToolset",
+    "ConfigSettingsToolset.ConfigSettingsToolset",
+    "PluginToolset.PluginToolset",
+    "GameFeaturesToolset.GameFeaturesToolset",
+}
+
+# 2층 — 열린 툴셋 안에서 개별로 막을 도구. {툴셋: {도구, ...}}.
+# 비어 있는 것이 정상이다. 사고가 나면 여기에 한 줄 적어 막는다.
+UE_DENIED_TOOLS = {}
+
+# 3층 — 조회로 볼 도구 이름의 접두사. 서버가 snake_case 와 PascalCase 를 섞어 쓰므로
+# 소문자로 낮춰 비교한다.
 #
-# 왜 허용 명단인가: ADR-0002 의 차단 명단은 Rider 처럼 도구가 개별로 노출될 때만 성립한다.
-# 여기서는 엔진이 업데이트되면 툴셋과 도구가 조용히 늘어나고, 그것들이 전부 같은 이름으로
-# 들어오므로 차단 명단은 반드시 뒤처진다. 방향을 뒤집어 모르는 것은 막는다.
-#
-# 범위는 두 가지 기준으로 정한다.
-#   1. 테스트 판정은 헤드리스 커맨드렛이 한다 (P1/Scripts/Run-UeTests.ps1). MCP 는 그게
-#      깨졌을 때 로그와 화면을 보는 진단 경로다. 그래서 조회 계열은 넓게 연다.
-#   2. 되돌릴 수 없는 것은 열지 않는다. P1/Content 는 디스크의 3,438 개 중 47 개만 git 이
-#      추적하고 .uasset 은 diff 도 안 된다 (2026-09-17 실측). 그래서 에셋 쓰기, 특히
-#      폴더를 통째로 받는 delete 와 move 는 뺀다. LFS 전환 후에 다시 판단한다.
-#
-# 아래 둘은 열면 이 명단 자체가 무의미해지므로 따로 못 박아 둔다.
-#   - ProgrammaticToolset.execute_tool_script: 스크립트 안에서 다른 도구를 부르는 것이
-#     이 도구의 기능이다. 훅에는 호출 1 건으로 보이고 무엇을 불렀는지는 보이지 않는다.
-#   - SlateInspector 의 조작 8 종(Click, Type, PressKey, SelectOption, FillForm, Drag,
-#     Hover, Windows): 에디터 UI 로 사람이 할 수 있는 전부가 가능해진다. 우회 범위가
-#     ProgrammaticToolset 보다 넓다. Click(ref="w123") 은 기록에 남아도 의미를 복원할 수 없다.
-#
-# 빈 문자열 키는 toolset_name 을 생략하고 최상위 도구를 부르는 경우다.
-UE_ALLOWED_TOOLS = {
-    "": {
-        "list_toolsets",
-        "describe_toolset",
-    },
-    # 오브젝트 속성 조회 — Rider 의 get_asset_properties 가 빈 결과만 내던 자리를 메운다.
-    "editor_toolset.toolsets.object.ObjectTools": {
-        "list_properties",
-        "get_properties",
-        "get_class",
-        "search_subclasses",
-    },
-    # 블루프린트 조회. 같은 툴셋의 쓰기 도구는 의도적으로 뺐다.
-    "editor_toolset.toolsets.blueprint.BlueprintTools": {
-        "get_parent",
-        "get_default_object",
-        "list_variables",
-        "get_variable_category",
-        "get_variable_replication",
-        "list_event_dispatchers",
-        "list_events",
-        "list_functions",
-        "list_graphs",
-        "get_graph",
-        "read_graph_dsl",
-        "get_graph_dsl_docs",
-        "find_nodes",
-        "find_node_types",
-        "find_node_categories",
-        "get_node_infos",
-        "get_node_type_pins",
-        "get_connected_subgraph",
-        "get_pin_value",
-        "list_component_events",
-        "list_compatible_event_functions",
-        "get_create_event_function",
-    },
-    # 자동화 테스트. 실행 도구까지 넣은 것은 의도적이다 — UE 클라 테스트를 무인으로 돌리는
-    # 것이 이 서버를 들인 목적 중 하나다(docs/backlog.md 의 L1 항목). 이 경로가 실제로 도는
-    # 것은 2026-09-16 에 확인했다. RunTests 가 통과·실패 개수를 JSON 으로 돌려준다.
-    "AutomationTestToolset.AutomationTestToolset": {
-        "DiscoverTests",
-        "ListTests",
-        "GetTestStatus",
-        "GetTestResults",
-        "RunTests",
-        "RunTestsByFilter",
-        "StopTests",
-    },
-    # 에디터 로그. 테스트나 에디터가 깨졌을 때 원인을 사람 손을 거치지 않고 읽는다.
-    # SetVerbosity 는 조회가 아니지만 메모리상의 로그 상세도만 바꾼다. 에셋이나 설정 파일에
-    # 남지 않는다.
-    "EditorToolset.LogsToolset": {
-        "GetLogEntries",
-        "GetLogCategories",
-        "GetVerbosity",
-        "SetVerbosity",
-    },
-    # 에디터 상태 조회와 화면 캡처, 그리고 PIE 제어.
-    # StartPIE 와 StopPIE 는 조회가 아니다. 넣은 이유는 이것이 열려야 UE 클라가 게임 서버와
-    # 인증 서버에 실제로 붙는 3 티어 통합 스모크가 무인으로 돌기 때문이다. 에셋은 바꾸지
-    # 않는다. 사람이 보고 있는 화면을 말없이 바꾸는 UI 조작 6 종은 뺐다
-    # (SetContentBrowserPath, SetCameraTransform, SelectAssets, SelectActors,
-    #  OpenEditorForAsset, FocusOnActors).
-    "EditorToolset.EditorAppToolset": {
-        "CaptureViewport",
-        "CaptureEditorImage",
-        "CaptureAssetImage",
-        "GetCameraTransform",
-        "GetContentBrowserPath",
-        "GetOpenAssets",
-        "GetSelectedActors",
-        "GetSelectedAssets",
-        "GetVisibleActors",
-        "IsPIERunning",
-        "ScreenCoordsToWorld",
-        "SearchCVars",
-        "WorldPosToScreenCoords",
-        "StartPIE",
-        "StopPIE",
-    },
-    # 에디터 UI 를 읽는다. MCP 도구로 노출되지 않는 패널 내용이 여기서 보인다.
-    # 조작 8 종은 위 주석의 이유로 뺐다. Observe 는 100 밀리초마다 서브트리를 걷는 관찰자를
-    # 남기므로 쓴 뒤에는 Unobserve 로 정리한다.
-    "SlateInspectorToolset.SlateInspectorToolset": {
-        "Snapshot",
-        "Screenshot",
-        "Observe",
-        "Unobserve",
-        "ListObservers",
-        "WaitFor",
-    },
-    # 에셋 조회. get_referencers 와 get_dependencies 가 "이걸 고치면 뭐가 깨지나"에 답한다.
-    # 쓰기 3 종(create_folder, move, save_assets)을 2026-09-21 에 열었다. #52 의 Content
-    # 도메인 트리 재배치를 에이전트가 직접 수행하기 위해서다. 나머지 쓰기 4 종
-    # (write_file, update_metadata_tags, delete, duplicate)은 계속 막는다.
-    # **move 는 에셋 하나와 폴더 통째를 같은 인자로 받는다.** 경로를 한 글자 틀리면
-    # 수천 개가 한 번에 움직인다. 부르기 전에 exists 로 양쪽을 확인한다.
-    "editor_toolset.toolsets.asset.AssetTools": {
-        "can_edit_asset",
-        "create_folder",
-        "exists",
-        "find_assets",
-        "get_asset_class",
-        "get_asset_tags",
-        "get_dependencies",
-        "get_metadata_tags",
-        "get_plugin_content_paths",
-        "get_referencers",
-        "is_checked_out",
-        "is_dirty",
-        "list_folders",
-        "load_asset",
-        "move",
-        "read_file",
-        "save_assets",
-    }, 
-    # 프로젝트 스킬 에셋 조회. CreateSkill 과 UpdateSkill 은 뺐다.
-    "ToolsetRegistry.AgentSkillToolset": {
-        "ListSkills",
-        "GetSkills",
-    },
+# 이름 규칙을 안 따르는 조회 도구(Snapshot 등)는 쓰기로 분류되지만, 3층은 인자에 보관소
+# 경로가 있을 때만 발동하므로 실제로 막히지 않는다.
+UE_READONLY_PREFIXES = (
+    "get", "list", "find", "search", "query", "read", "load", "describe", "discover",
+    "is", "can", "has", "exists", "preview", "inspect", "snapshot", "screenshot",
+    "capture", "observe", "unobserve", "waitfor",
+)
+
+# 참고용 보관소. 콘텐츠 경로와 디스크 경로 양쪽을 잡는다 (ADR-0006).
+UE_EXTERNAL_RE = re.compile(r"/Game/External\b|[/\\]Content[/\\]External\b", re.IGNORECASE)
+
+# 4층 — 슬레이트 조작. 막지 않는 대신 워킹 트리가 깨끗할 때만 통과시킨다.
+# ref 는 익명이고 관찰자가 계속 재할당하므로 Click(ref="i1") 은 로그로 복원되지 않는다.
+# 직전 상태가 커밋되어 있으면 결과를 diff 로 읽을 수 있다.
+UE_SLATE_TOOLSET = "SlateInspectorToolset.SlateInspectorToolset"
+UE_SLATE_MUTATORS = {
+    "Click", "Type", "PressKey", "SelectOption", "FillForm", "Drag", "Hover", "Windows",
+}
+
+# 4층 — execute_tool_script 는 스크립트 안에서 다른 도구를 부르는 것이 기능이라
+# 그대로 열면 위 세 층을 건너뛴다. 스크립트를 ast 로 파싱해 호출을 추출하고 같은
+# 판정을 적용한다. 규약은 execute_tool(전체이름, JSON문자열).
+UE_PROG_TOOLSET = "editor_toolset.toolsets.programmatic.ProgrammaticToolset"
+UE_PROG_SCRIPT_TOOL = "execute_tool_script"
+
+# 샌드박스가 import 를 여섯 모듈로 제한하지만 빌트인은 별개다. 이것들이 살아 있으면
+# 정적 판정을 건너뛸 수 있으므로 여기서 막는다.
+UE_SCRIPT_FORBIDDEN = {
+    "eval", "exec", "compile", "__import__", "globals", "locals", "vars",
+    "getattr", "setattr", "delattr", "open", "input", "breakpoint",
 }
 
 
@@ -368,6 +311,112 @@ def _record_ue_call(toolset, tool, arguments):
         pass
 
 
+def _ue_is_readonly(target):
+    """도구 이름만 보고 조회인지 판정한다."""
+    low = target.lower().lstrip("_")
+    return any(low.startswith(p) for p in UE_READONLY_PREFIXES)
+
+
+def _ue_touches_external(blob):
+    """인자나 스크립트 본문이 참고용 보관소 경로를 담고 있는지 본다."""
+    if blob is None:
+        return False
+    if not isinstance(blob, str):
+        try:
+            blob = json.dumps(blob, ensure_ascii=False)
+        except Exception:
+            blob = repr(blob)
+    return bool(UE_EXTERNAL_RE.search(blob))
+
+
+def _ue_gate(toolset, target, arguments):
+    """1~3층 판정. 막을 이유를 돌려주고, 통과면 빈 문자열을 돌려준다.
+
+    스크립트 안의 호출도 이 함수를 쓴다. 판정이 두 곳으로 갈라지면 한쪽만 고쳐진다.
+    """
+    if not toolset:
+        if target not in UE_TOP_LEVEL_TOOLS:
+            return "최상위 도구 '" + target + "' 는 열려 있지 않다"
+        return ""
+    if toolset not in UE_ALLOWED_TOOLSETS:
+        return "툴셋 '" + toolset + "' 는 1층 허용 명단에 없다"
+
+    denied = UE_DENIED_TOOLS.get(toolset)
+    if denied and target in denied:
+        return "도구 '" + target + "' 는 2층 거부 명단에 있다"
+
+    # execute_tool_script 는 3층을 건너뛴다. 인자를 통째로 훑는 이 검사는 스크립트
+    # 본문에 보관소 경로가 한 번이라도 나오면 걸려서, 읽기만 하는 스크립트까지 막는다.
+    # 4층이 호출을 하나씩 뜯어 조회와 쓰기를 가른다.
+    if toolset == UE_PROG_TOOLSET and target == UE_PROG_SCRIPT_TOOL:
+        return ""
+    if not _ue_is_readonly(target) and _ue_touches_external(arguments):
+        return ("'" + target + "' 는 조회가 아닌데 인자가 Content/External 경로를 담고 "
+                "있다. 참고용 보관소는 조회만 허용한다 (ADR-0006)")
+    return ""
+
+
+def _ue_git_is_clean():
+    """워킹 트리가 깨끗한지 본다. 판정할 수 없으면 None."""
+    root = os.environ.get(REPO_ENV) or str(REPO_DEFAULT)
+    try:
+        p = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=root,
+            capture_output=True, text=True, encoding="utf-8", timeout=15,
+        )
+    except Exception:
+        return None
+    if p.returncode != 0:
+        return None
+    return not (p.stdout or "").strip()
+
+
+def _ue_check_script(arguments):
+    """execute_tool_script 의 스크립트를 정적 판정한다. 막을 이유를 돌려준다.
+
+    런타임에 조합한 문자열은 잡지 못한다. 막으려는 것이 의도적 우회가 아니라 오판이다.
+    """
+    script = arguments.get("script") if isinstance(arguments, dict) else None
+    if not isinstance(script, str) or not script.strip():
+        return "script 인자가 비어 있거나 문자열이 아니다"
+    try:
+        tree = ast.parse(script)
+    except SyntaxError as e:
+        return "스크립트를 파싱할 수 없다: " + str(e)
+
+    calls = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id in UE_SCRIPT_FORBIDDEN:
+            return "금지 식별자 '" + node.id + "' 를 쓴다"
+        if isinstance(node, ast.Attribute) and node.attr.startswith("__"):
+            return "던더 속성 '" + node.attr + "' 에 접근한다"
+        if not isinstance(node, ast.Call):
+            continue
+        if not (isinstance(node.func, ast.Name) and node.func.id == "execute_tool"):
+            continue
+        if not node.args:
+            return "execute_tool 을 인자 없이 부른다"
+        first = node.args[0]
+        if not (isinstance(first, ast.Constant) and isinstance(first.value, str)):
+            return ("execute_tool 의 첫 인자가 문자열 리터럴이 아니다. 무엇을 부르는지 "
+                    "판정할 수 없으므로 막는다")
+        calls.append(first.value)
+
+    # 조회에만 쓰인 경로인지 정적으로 가릴 수 없으므로, 보관소 경로가 본문에 있으면
+    # 쓰기 호출 전체를 막는다.
+    external = _ue_touches_external(script)
+    for full in calls:
+        sub_toolset, _, sub_target = full.rpartition(".")
+        if not sub_toolset:
+            sub_target = full
+        if sub_toolset == UE_PROG_TOOLSET and sub_target == UE_PROG_SCRIPT_TOOL:
+            return "스크립트가 execute_tool_script 를 다시 부른다"
+        reason = _ue_gate(sub_toolset, sub_target, script if external else None)
+        if reason:
+            return "스크립트가 부르는 '" + full + "' 가 막힌다 — " + reason
+    return ""
+
+
 def deny(reason, tool_name="", hits=()):
     """차단 결정을 내보낸다.
 
@@ -414,7 +463,7 @@ def main():
                 ["rootFolder 누락"],
             )
 
-    # 2) 언리얼 MCP 라우터 — 허용 명단에 있는 조합만 통과시킨다
+    # 2) 언리얼 MCP 라우터 — 네 층으로 판정한다 (ADR-0003)
     if tool_name in UE_ROUTER_TOOLS:
         toolset = tool_input.get("toolset_name") or ""
         target = tool_input.get("tool_name") or ""
@@ -427,19 +476,32 @@ def main():
             )
         toolset = toolset.strip()
         target = target.strip()
-        allowed = UE_ALLOWED_TOOLS.get(toolset)
-        if allowed is None or target not in allowed:
-            shown = (toolset + "." + target) if toolset else target
+        arguments = tool_input.get("arguments")
+        shown = (toolset + "." + target) if toolset else target
+
+        reason = _ue_gate(toolset, target, arguments)
+        if not reason and toolset == UE_SLATE_TOOLSET and target in UE_SLATE_MUTATORS:
+            # 판정할 수 없으면 막는 쪽으로 기운다. 커밋 상태를 모르면 조작 결과를
+            # diff 로 읽을 수 있다는 전제가 깨진다.
+            clean = _ue_git_is_clean()
+            if clean is False:
+                reason = "워킹 트리에 커밋되지 않은 변경이 있다. 조작 전에 커밋할 것"
+            elif clean is None:
+                reason = "git status 를 읽지 못해 커밋 상태를 알 수 없다"
+        if not reason and toolset == UE_PROG_TOOLSET and target == UE_PROG_SCRIPT_TOOL:
+            reason = _ue_check_script(arguments)
+
+        if reason:
             return deny(
-                "BLOCKED: 언리얼 MCP 도구 '" + shown + "' 는 허용 명단에 없다. "
-                "이 서버는 도구 수백 종이 call_tool 하나로 들어와서 permissions 로 구분되지 않는다. "
-                "그래서 이 훅의 UE_ALLOWED_TOOLS 가 유일한 통제 지점이고, 모르는 것은 막는다 "
-                "(ADR-0003). 쓰기 계열이 필요하면 사람 승인을 받고 명단에 먼저 추가할 것. "
-                "허용된 조합은 describe_toolset 으로 확인할 수 있다.",
+                "BLOCKED: 언리얼 MCP 도구 '" + shown + "' — " + reason + ". "
+                "이 서버는 도구 830 종이 call_tool 하나로 들어와 permissions 로는 "
+                "구분되지 않으므로 이 훅이 유일한 통제 지점이다 (ADR-0003). "
+                "열려 있는 툴셋은 list_toolsets 로 확인할 수 있다.",
                 tool_name,
-                ["UE 허용 명단 밖: " + shown],
+                ["UE 판정: " + shown],
             )
-        _record_ue_call(toolset, target, tool_input.get("arguments"))
+
+        _record_ue_call(toolset, target, arguments)
         return 0
 
     # 3) 위험 명령 패턴 검사
