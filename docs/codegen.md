@@ -69,10 +69,6 @@
 | `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
 
-**지금의 `GenJsonFile.bat`은 이 표와 다르다.** 스크립트가 `C_*.json` 넷을 옛 목적지인
-`P1/Content/Gamedata`로 옮기는데, 그 폴더는 없다. 상세는 `docs/tech-debt.md`의
-「`GenJsonFile.bat`이 클라이언트 JSON을 없는 폴더로 옮긴다」에 있다.
-
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
 
