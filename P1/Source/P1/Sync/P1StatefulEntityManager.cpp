@@ -9,12 +9,6 @@ void UP1StatefulEntityManager::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    // BP로 설정한 property가 없음
-    //UWorld* World = GetWorld();
-    //if (AP1EntitySpawner* EntitySpawner = World->SpawnActor<AP1EntitySpawner>())
-    //{
-    //    RegisterSpawner(EntitySpawner);
-    //}
     Clear();
 }
 
@@ -41,8 +35,6 @@ void UP1StatefulEntityManager::RegisterEntity(uint64 EntityId, AActor* SpawnedAc
         Monsters.Add(EntityId, Monster);
     else if (AP1Player* Player = Cast<AP1Player>(SpawnedActor))
         Players.Add(EntityId, Player);
-
-    //UE_LOG(LogP1Entity, Log, TEXT("엔티티 {%d} 등록됨"), EntityId);
 }
 
 void UP1StatefulEntityManager::UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType)
@@ -81,7 +73,7 @@ void UP1StatefulEntityManager::SpawnEntity(const Protocol::EntityInfo& InEntityI
 {
     if (EntitySpawners.IsValidIndex(SpawnerId) == false)
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("Not Found %d Spawner"), SpawnerId);
+        UE_LOG(LogP1Entity, Warning, TEXT("스포너 %d를 찾지 못함"), SpawnerId);
         return;
     }
 

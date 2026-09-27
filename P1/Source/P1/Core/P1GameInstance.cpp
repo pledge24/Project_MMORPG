@@ -13,7 +13,6 @@
 #include "Game/Entities/P1Creature.h"
 #include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
-#include "Game/Entities/P1MyPlayer.h"
 
 UP1GameInstance::UP1GameInstance()
 {

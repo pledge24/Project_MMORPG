@@ -23,7 +23,6 @@ public:
     //~ Packet Queues
 public:
     /** 게임 스레드에서 부른다. 수신 큐를 비우면서 핸들러를 돌린다. */
-    UFUNCTION(BlueprintCallable)
     void HandleRecvPackets();
 
     void SendPacket(SendBufferRef SendBuffer);

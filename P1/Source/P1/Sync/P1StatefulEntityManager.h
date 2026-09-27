@@ -6,7 +6,6 @@
 #include "Protocol.pb.h"
 #include "P1StatefulEntityManager.generated.h"
 
-class APlayerSpawner;
 class AP1Monster;
 class AP1Player;
 class AP1EntitySpawner;

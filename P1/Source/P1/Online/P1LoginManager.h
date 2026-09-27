@@ -29,5 +29,6 @@ public:
     UP1LoginWidget* GetLoginWidget() { return LoginWidget; }
 
 private:
-    UP1LoginWidget* LoginWidget;
+    UPROPERTY()
+    TObjectPtr<UP1LoginWidget> LoginWidget;
 };
