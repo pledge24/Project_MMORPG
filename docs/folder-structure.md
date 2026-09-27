@@ -364,10 +364,25 @@ P1/Content/
 반환값도 `null`이라 성공과 실패를 가리지 못한다. 같은 일을 `ObjectTools.set_properties`로
 하면 `dirty`가 서고 `true`가 돌아온다.
 
-**머티리얼 인스턴스는 부모를 고친 뒤에도 옛 참조를 계속 보고할 수 있다.** 부모의
-`get_dependencies`가 깨끗하고 인스턴스의 편집 가능한 속성에도 옛 경로가 없는데
-`get_dependencies`만 옛 경로를 돌려주는 상태다. `recompile`은 인스턴스를 받지 않는다.
-**에디터를 다시 띄워서 판정한다.**
+**머티리얼 인스턴스는 파라미터를 고친 뒤에도 옛 텍스처 참조를 계속 들고 있다.** 편집 가능한
+속성에는 옛 경로가 없는데 `get_dependencies`만 옛 경로를 돌려주는 상태다.
+— 2026년 9월 27일에 원인을 찾았다(#97). 옛 경로는 `TextureStreamingData`에 소프트 경로로 남아 있다.
+에디터가 텍스처 스트리밍용으로 저장해 두는 배열이고, 편집할 수 없는 속성이라 `ObjectTools`로
+읽거나 비울 수 없다. 파라미터 변경, 부모 `recompile`, 에디터 재시작, 스태틱 스위치 변경으로는
+다시 계산되지 않는다. 이 배열은 에셋마다 따로 저장되고 부모에게서 물려받지 않는다.
+
+**그래서 인스턴스를 새로 만들어 교체한다.** 새 인스턴스는 이 배열이 비어 있다. #97에서 인스턴스
+18개를 이 절차로 교체했다.
+
+1. 원본의 오버라이드 배열(`scalarParameterValues`, `vectorParameterValues`, `textureParameterValues` 등)과
+   `basePropertyOverrides`, `subsurfaceProfile`을 읽는다
+2. 같은 부모로 `<이름>_New`를 만들고 읽은 값을 `set_properties`로 쓴다
+3. 스태틱 스위치는 `editorOnlyData`에 있어 읽히지 않는다. `get_static_switch_parameter`로 원본과
+   부모를 비교해 다른 것만 설정한다. 부모가 머티리얼이면 비교할 수 없으므로 전부 원본 값으로 설정한다
+4. 원본과 속성 전체, 스위치 전체를 대조한 뒤 저장한다
+5. 참조자를 돌린다. 메시는 `staticMaterials`나 `materials`, 자식 인스턴스는 `parent`다. 자식은
+   바꾸기 전후의 속성과 스위치를 대조한다
+6. 원본을 지우고 새 인스턴스를 원래 이름으로 옮긴다
 
 ### 4.6 UI 텍스처 임포트 설정
 
