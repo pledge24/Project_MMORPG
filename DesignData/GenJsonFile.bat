@@ -15,10 +15,10 @@ MOVE /Y S_Item.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Map.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Quest.json				    "../Server/GameServer/Game/Data/Json"
 
-MOVE /Y C_Monster.json				    "../P1/Content/Gamedata"
-MOVE /Y C_Item.json				        "../P1/Content/Gamedata"
-MOVE /Y C_Map.json				        "../P1/Content/Gamedata"
-MOVE /Y C_Quest.json				    "../P1/Content/Gamedata"
+MOVE /Y C_Monster.json				    "../P1/Content/P1/Data/DataTables"
+MOVE /Y C_Item.json				        "../P1/Content/P1/Data/DataTables"
+MOVE /Y C_Map.json				        "../P1/Content/P1/Data/DataTables"
+MOVE /Y C_Quest.json				    "../P1/Content/P1/Data/DataTables"
 
 echo [INFO] 완료되었습니다.
 PAUSE
