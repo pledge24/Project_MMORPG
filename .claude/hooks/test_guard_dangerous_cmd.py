@@ -105,6 +105,17 @@ def run():
     return {}
 '''
 
+# 출발지 예외는 직접 호출에만 적용된다. 스크립트 안에서는 인자가 JSON 문자열이라
+# 어느 쪽이 목적지인지 가릴 수 없으므로 그대로 막힌다.
+SCRIPT_EXT_DUP = '''
+import json
+def run():
+    execute_tool("editor_toolset.toolsets.asset.AssetTools.duplicate",
+                 json.dumps({"path": "/Game/External/ClassicMMOUI/x",
+                             "new_path": "/Game/P1/UI/Common/x"}))
+    return {}
+'''
+
 
 def run_hook(tool, tool_input, env=None):
     """훅을 한 번 실행하고 (returncode, stdout) 을 돌려준다."""
@@ -209,10 +220,21 @@ CASES = [
                                       "arguments": {"path": P1PATH, "new_path": EXT}}, True),
     ("UE External 속성 쓰기 차단", UE, {"toolset_name": OBJ, "tool_name": "set_properties",
                                         "arguments": {"object": {"refPath": EXT}}}, True),
-    ("UE External 디스크경로 차단", UE, {"toolset_name": TEX, "tool_name": "import_file",
-                                         "arguments": {"source_file": EXT_DISK}}, True),
     ("UE P1 삭제는 통과", UE, {"toolset_name": ASSET, "tool_name": "delete",
                                "arguments": {"path": P1PATH}}, False),
+
+    # 보관소를 읽기만 하는 출발지는 가드에서 뺀다. 방향이 갈리는지 한 쌍으로 고정한다.
+    # 팩에서 골라 Content/P1/ 로 복사하는 것이 #81 의 본체다.
+    ("UE External 에서 복사 통과", UE, {"toolset_name": ASSET, "tool_name": "duplicate",
+                                        "arguments": {"path": EXT, "new_path": P1PATH}}, False),
+    ("UE External 로 복사 차단", UE, {"toolset_name": ASSET, "tool_name": "duplicate",
+                                      "arguments": {"path": P1PATH, "new_path": EXT}}, True),
+    ("UE External 에서 임포트 통과", UE, {"toolset_name": TEX, "tool_name": "import_file",
+                                          "arguments": {"source_file": EXT_DISK,
+                                                        "folder_path": "/Game/P1/UI/Common"}}, False),
+    ("UE External 로 임포트 차단", UE, {"toolset_name": TEX, "tool_name": "import_file",
+                                        "arguments": {"source_file": "D:/x/a.png",
+                                                      "folder_path": "/Game/External/x"}}, True),
 
     # --- 언리얼 MCP 4층: execute_tool_script 의 정적 판정 ---
     # 스크립트 안의 호출에도 같은 판정이 걸리는지 본다.
@@ -226,6 +248,9 @@ CASES = [
     ("UE 스크립트 External 쓰기 차단", UE, {"toolset_name": PROG,
                                             "tool_name": "execute_tool_script",
                                             "arguments": {"script": SCRIPT_EXT_WRITE}}, True),
+    ("UE 스크립트 External 복사도 차단", UE, {"toolset_name": PROG,
+                                              "tool_name": "execute_tool_script",
+                                              "arguments": {"script": SCRIPT_EXT_DUP}}, True),
     ("UE 스크립트 닫힌툴셋 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
                                        "arguments": {"script": SCRIPT_CLOSED}}, True),
     ("UE 스크립트 eval 차단", UE, {"toolset_name": PROG, "tool_name": "execute_tool_script",
