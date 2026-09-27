@@ -81,7 +81,7 @@ protected:
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
     TObjectPtr<class UEditableTextBox> CC_CharacterNameText;
 
-    UPROPERTY(meta = (BindWidget), BlueprintReadWrite, Category = "Character Create")
+    UPROPERTY(BlueprintReadWrite, Category = "Character Create")
     int32 CC_CharacterClassId;
 
     //~ Character Delete

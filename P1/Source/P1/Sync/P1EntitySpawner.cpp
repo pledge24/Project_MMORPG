@@ -88,7 +88,7 @@ bool AP1EntitySpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonst
 
     if (MonsterDataTable == nullptr)
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("MonsterDataTable Is Null"));
+        UE_LOG(LogP1Entity, Warning, TEXT("MonsterDataTable이 비어 있음"));
         return false;
     }
 
@@ -96,7 +96,7 @@ bool AP1EntitySpawner::GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonst
 
     if (!FoundRow)
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("RowName{%s} Is Not Exist"), *RowName.ToString());
+        UE_LOG(LogP1Entity, Warning, TEXT("RowName{%s}에 해당하는 행이 없음"), *RowName.ToString());
         return false;
     }
 

@@ -61,7 +61,8 @@ router.post('/Login', async (req, res) => {
 
         return res.status(200).json({ accessToken: token });
     }
-    catch {
+    catch (err) {
+        console.error('로그인 처리 중 오류:', err);
         return res.status(500).json({ errorMessage: 'Internal Error' });
     };
 });

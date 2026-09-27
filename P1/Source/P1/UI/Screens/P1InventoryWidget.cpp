@@ -156,7 +156,6 @@ void UP1InventoryWidget::SendUseItemPacket(UP1SlotWidget* SlotWidget)
     {
         const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
-        auto* PC = UGameplayStatics::GetPlayerController(this, 0);
         auto* GameInstance = GetP1GameInstance();
         if (GameInstance == nullptr)
             return;
@@ -194,7 +193,6 @@ void UP1InventoryWidget::SendEquipItemPacket(UP1SlotWidget* SlotWidget)
     {
         const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
-        auto* PC = UGameplayStatics::GetPlayerController(this, 0);
         auto* GameInstance = GetP1GameInstance();
         if (GameInstance == nullptr)
             return;
