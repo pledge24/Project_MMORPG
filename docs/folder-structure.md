@@ -133,6 +133,12 @@ P1/Source/
 — 도메인으로 나누지 않는 이유와 `HUD/`를 분류 이름으로 쓰지 않는 이유는
 `docs/adr/0008-split-ui-by-presentation.md`에 있다.
 
+**위젯 하나만 쓰는 텍스처는 그 위젯이 있는 폴더의 `Textures/`에 둔다.** `WBP_LoginMenu`만 쓰는
+버튼 이미지는 `Frontend/Textures/`에, `WBP_HUD`만 쓰는 이미지는 `Screens/HUD/Textures/`에 둔다.
+두 위젯 이상이 쓰게 되면 `Styles/`로 옮긴다.
+— 4.2의 「에셋 하나가 폴더 하나로 완결된다」를 위젯에 적용한 것이다. 위젯을 지울 때 그 폴더의
+`Textures/`에서 이 위젯이 쓰던 것을 찾으면 된다.
+
 **`AI/`와 `Abilities/`를 만들지 않는다.** 몬스터의 행동은 게임 서버가 결정하고, 스킬 판정도
 서버가 한다. 클라이언트가 받는 것은 결과 상태뿐이다.
 
@@ -208,7 +214,7 @@ P1/Content/
 │   │   ├── Screens/        플레이 중 여는 화면
 │   │   │   └── HUD/        상시 표시 요소와 그 전용 파츠
 │   │   ├── WorldSpace/     월드에 붙는 위젯
-│   │   └── Styles/         폰트와 공용 UI 텍스처
+│   │   └── Styles/         폰트와 여러 위젯이 공유하는 UI 텍스처
 │   ├── Data/
 │   │   └── DataTables/
 │   ├── Maps/
