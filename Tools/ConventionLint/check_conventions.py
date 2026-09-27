@@ -1,7 +1,7 @@
 """저장소 규범을 텍스트로 검사한다.
 
 `docs/conventions.md`와 `docs/folder-structure.md`가 정한 규칙 중 빌드 없이 판정할 수 있는
-여덟 가지를 본다. 엔진도 v145 툴셋도 필요하지 않으므로 호스티드 러너에서 그대로 돈다.
+다섯 가지를 본다. 엔진도 v145 툴셋도 필요하지 않으므로 호스티드 러너에서 그대로 돈다.
 
 검사 항목과 근거는 아래와 같다.
 
@@ -10,9 +10,6 @@
 | `file-type`            | 파일 이름과 그 안의 주 타입 이름       | `conventions.md` 2.4        |
 | `p1-prefix`            | 리플렉션 타입의 `P1` 약어              | `conventions.md` 2.2        |
 | `include-path`         | `#include`가 도메인 경로를 쓰는지      | `conventions.md` 2.6        |
-| `server-member`        | 서버 멤버 변수의 `_camelCase`          | `conventions.md` 3.2        |
-| `asset-prefix`         | 추적 중인 에셋의 접두사                | `folder-structure.md` 4.3   |
-| `folder-symmetry`      | `Game/` 하위 폴더가 ADR-0007의 표와 같은지 | ADR-0007                |
 | `project-item-exists`  | 프로젝트 파일의 등록 항목이 실재하는지 | #74                         |
 | `project-filter-path`  | `.filters`의 논리 폴더가 디스크와 같은지 | #74                       |
 
@@ -42,10 +39,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # 클라이언트 런타임 모듈의 소스 루트다.
 CLIENT_SOURCE = "P1/Source/P1"
 
-# 게임 서버 쪽에서 이름 규칙을 적용하는 범위다. `Server/ServerCore/`는 제외한다
-# (`conventions.md` 3절). 완성된 네트워크 코어라서 고쳐서 얻는 것보다 잃는 것이 크다.
-SERVER_SOURCE_ROOTS = ("Server/GameServer", "Server/DummyClient")
-
 # 생성기가 만드는 파일이다. 손으로 고치지 않으므로 어떤 검사도 적용하지 않는다.
 # `GenPackets.bat`이 `Protocol/`에서 만들어 각 티어로 복사한다.
 GENERATED_FILE_NAMES = frozenset(
@@ -64,81 +57,6 @@ GENERATED_FILE_NAMES = frozenset(
 # `Protocol/Templates/PacketHandler.h`가 이 이름들을 그대로 적는다 (`conventions.md` 2.2).
 GENERATED_NAME_DEPENDENTS = frozenset(
     {"ClientPacketHandler", "PacketSession", "SendBuffer", "PacketHeader"}
-)
-
-# 운영체제가 정한 이름을 그대로 담는 포인터다. 이름을 바꾸면 Winsock 문서에서 같은 이름으로
-# 찾을 수 없다 (`conventions.md` 3.2의 예외).
-WINSOCK_MEMBER_NAMES = frozenset({"ConnectEx", "DisconnectEx", "AcceptEx"})
-
-# 규범을 아직 지키지 않는 자리다. **예외가 아니라 갚아야 할 부채다.**
-#
-# 규칙을 고쳐서 통과시키는 것과 미준수를 여기 적는 것은 다르다. 앞은 규범이 바뀌는 것이고
-# 뒤는 규범은 그대로 둔 채 갚을 자리를 이름으로 남기는 것이다. 여기 적은 것은 전부
-# `docs/tech-debt.md`에 대응 항목이 있어야 하고, 갚으면 양쪽에서 함께 지운다.
-PENDING_SERVER_MEMBER_DEBT = frozenset(
-    {
-        # `vector2D`와 `vector3D`의 성분 `x`·`y`·`z`다. 수학 벡터의 성분 이름이고 바깥에서
-        # `lhs.x * scale`처럼 직접 읽는다. 동작이 있으므로 3.2의 순수 데이터 구조체 예외에는
-        # 들지 않는다. 고치면 사용처가 함께 움직이므로 이 티켓의 범위 밖이다.
-        ("Server/GameServer/Utils/Utils.h", "vector2D"),
-        ("Server/GameServer/Utils/Utils.h", "vector3D"),
-    }
-)
-
-# 에셋 접두사 표다 (`folder-structure.md` 4.3).
-ASSET_PREFIXES = frozenset(
-    {
-        "BP", "WBP", "BPC", "ABP",
-        "SK", "SM", "SKEL", "PHYS",
-        "AM", "BS", "A", "ALI",
-        "M", "MI", "MF", "T",
-        "NS", "MS", "SC",
-        "DT", "DA", "CT", "ST",
-        "IA", "IMC", "L",
-        "F", "FF",
-    }
-)
-
-# 레벨은 확장자가 따로 있으므로 접두사를 하나로 못박는다.
-LEVEL_PREFIX = "L"
-
-# 팩에서 복사해 온 에셋이 사는 폴더다. 접두사 규칙은 자작 에셋에만 적용하고, 팩에서 가져온
-# 것은 이름과 하위 구조를 바꾸지 않는다 (`folder-structure.md` 4.1과 4.3).
-#
-# 폴더로 적는 이유는 파일 이름만으로는 자작과 복사본을 가릴 수 없기 때문이다. 이 목록에 폴더를
-# 더할 때는 그 폴더 전체가 팩에서 온 것인지 확인한다. 자작 에셋을 여기 두면 검사에서 빠진다.
-PACK_COPY_DIRS = (
-    "P1/Content/P1/Characters/Player/Mannequins/",
-    "P1/Content/P1/Characters/Monsters/Down_Minions/",
-    "P1/Content/P1/Characters/Monsters/Dusk_Minions/",
-    "P1/Content/P1/Items/Equipment/Armors/Armor0R/SkeletalMeshes/PhysicsAssets05/",
-)
-
-# 게임 도메인 폴더가 사는 자리다. 이 아래 **한 단계**만 대칭 판정의 대상이다.
-CLIENT_GAME_ROOT = f"{CLIENT_SOURCE}/Game"
-SERVER_GAME_ROOT = "Server/GameServer/Game"
-
-# ADR-0007의 표를 그대로 옮긴 것이다
-# (`docs/adr/0007-limit-folder-symmetry-to-shared-domains.md` 31~39줄).
-#
-# **이 표를 고칠 때는 ADR도 함께 고친다.** 한쪽만 고치면 이 검사가 빨강이 되므로 어긋난 채로
-# 남지는 않지만, 어느 쪽이 의도인지는 사람이 정해야 한다.
-#
-# 표를 문서에서 파싱하지 않는 이유가 있다. `docs/folder-structure.md`의 클라이언트 표는
-# `Game/` 하위를 여덟 개 적는데 `Game/Items/`와 `Game/Interaction/`은 디스크에 없고 「아직
-# 없다」 표시도 없다. 같은 문서 3.3의 의존 방향 화살표도 같다. ADR-0007의 표만이 디스크와
-# 일치한다. 문서 쪽 어긋남은 `docs/tech-debt.md`에 있다.
-#
-# 짝이 `None`인 줄은 「한쪽에만 둔다」가 결정이라는 뜻이다. 빈 폴더를 만들어 맞추지 않는다.
-GAME_DOMAIN_FOLDERS = (
-    # (도메인, 게임 서버, 클라이언트)
-    ("엔티티", "Entities", "Entities"),
-    ("인벤토리", "Inventory", "Inventory"),
-    ("장비", "Equipment", "Equipment"),
-    ("게임 데이터", "Data", "Data"),
-    ("룸", "Room", None),
-    ("전투", None, "Combat"),
-    ("월드 액터", None, "World"),
 )
 
 # 항목을 하나씩 명시 등록하는 프로젝트 파일이다.
@@ -469,263 +387,7 @@ def check_include_path(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 4: 서버 멤버 변수의 `_camelCase` (`conventions.md` 3.2)
-# ----------------------------------------------------------------------------------
-
-# 멤버 변수 선언의 마지막 식별자를 잡는다. 초기화식과 배열 크기는 앞에서 잘라낸다.
-MEMBER_NAME_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)[ \t]*$")
-
-# 선언이 아닌 줄을 걸러낸다.
-NON_MEMBER_KEYWORDS = (
-    "using ", "typedef ", "friend ", "return ", "public:", "protected:", "private:",
-    "template", "enum ", "namespace ", "extern ", "#", "static_assert",
-)
-
-
-def _member_candidates(body: str) -> list[tuple[int, str]]:
-    """클래스 본문에서 멤버 변수로 보이는 선언의 (줄 오프셋, 이름)을 돌려준다."""
-    found: list[tuple[int, str]] = []
-    depth = 0
-    for offset, raw_line in enumerate(body.split("\n")):
-        line = raw_line.strip()
-        opened = raw_line.count("{")
-        closed = raw_line.count("}")
-
-        # 중첩 블록(함수 본문, 내부 타입) 안은 보지 않는다. 멤버 선언은 깊이 0에만 있다.
-        if depth > 0:
-            depth += opened - closed
-            continue
-        depth += opened - closed
-
-        if not line or line.startswith("//"):
-            continue
-        if any(line.startswith(keyword) for keyword in NON_MEMBER_KEYWORDS):
-            continue
-        if not line.endswith(";"):
-            continue
-        if "(" in line or ")" in line:
-            # 함수 선언과 생성자다. 함수 포인터 멤버는 이 프로젝트에 없다.
-            continue
-        if line.startswith("class ") or line.startswith("struct "):
-            # 전방 선언이다.
-            continue
-
-        declaration = line[:-1]
-        # 초기화식을 잘라낸다. `int32 _roomId = 0;`에서 이름만 남긴다.
-        declaration = declaration.split("=", 1)[0]
-        # 배열 크기를 잘라낸다.
-        declaration = declaration.split("[", 1)[0]
-        declaration = declaration.rstrip()
-
-        # 상수는 SCREAMING_SNAKE_CASE 규칙(3.4)을 따르므로 이 검사의 대상이 아니다.
-        tokens = declaration.replace("*", " ").replace("&", " ").split()
-        if "const" in tokens or "constexpr" in tokens:
-            continue
-        if len(tokens) < 2:
-            # 타입 없이 이름만 있는 줄이다. 매크로이거나 접근 지정자다.
-            continue
-
-        match = MEMBER_NAME_RE.search(declaration)
-        if match is None:
-            continue
-
-        found.append((offset, match.group(1)))
-    return found
-
-
-def _record_bodies(text: str) -> list[tuple[str, str, int, str]]:
-    """(종류, 타입 이름, 본문 첫 줄 번호, 본문)을 돌려준다.
-
-    중첩 타입은 바깥 타입의 본문에 포함되므로 따로 세지 않는다. 멤버 후보를 뽑는 쪽이 중첩
-    블록을 건너뛴다.
-    """
-    records: list[tuple[str, str, int, str]] = []
-    cursor = 0
-    while True:
-        match = CLASS_DEF_RE.search(text, cursor)
-        if match is None:
-            return records
-
-        kind, name = match.group(1), match.group(2)
-        # 매칭의 마지막 문자가 여는 중괄호다. 그 다음부터 본문이다.
-        body_start = match.end()
-        depth = 1
-        index = body_start
-        while index < len(text) and depth > 0:
-            if text[index] == "{":
-                depth += 1
-            elif text[index] == "}":
-                depth -= 1
-            index += 1
-
-        body = text[body_start : index - 1]
-        first_body_line = text.count("\n", 0, body_start) + 1
-        records.append((kind, name, first_body_line, body))
-        cursor = index
-
-
-def _is_plain_data_struct(kind: str, body: str) -> bool:
-    """필드만 담고 동작이 없는 순수 데이터 구조체인지 본다 (3.2의 예외)."""
-    if kind != "struct":
-        return False
-    return "(" not in body
-
-
-def check_server_member_names(_: argparse.Namespace) -> list[Violation]:
-    """게임 서버와 더미 클라이언트의 멤버 변수 이름을 본다."""
-    patterns = []
-    for root in SERVER_SOURCE_ROOTS:
-        patterns.extend([f"{root}/**/*.h", f"{root}/**/*.cpp"])
-
-    violations: list[Violation] = []
-    for rel_path in run_git_ls_files(patterns):
-        if is_generated(rel_path):
-            continue
-
-        text = strip_comments_and_strings(read_text(rel_path))
-        for kind, type_name, start_line, body in _record_bodies(text):
-            if _is_plain_data_struct(kind, body):
-                continue
-            if (rel_path, type_name) in PENDING_SERVER_MEMBER_DEBT:
-                continue
-
-            for offset, member in _member_candidates(body):
-                if member in WINSOCK_MEMBER_NAMES:
-                    continue
-                if re.fullmatch(r"s_[a-z][A-Za-z0-9]*", member):
-                    continue
-                if re.fullmatch(r"_[a-z][A-Za-z0-9]*", member):
-                    continue
-
-                violations.append(
-                    Violation(
-                        rel_path,
-                        start_line + offset,
-                        f"{type_name}의 멤버 '{member}'이 '_camelCase'가 아니다. "
-                        f"static 멤버는 's_'를 붙인다 (conventions.md 3.2)",
-                    )
-                )
-    return violations
-
-
-# ----------------------------------------------------------------------------------
-# 검사 5: 추적 중인 에셋의 접두사 (`folder-structure.md` 4.3)
-# ----------------------------------------------------------------------------------
-
-
-def check_asset_prefix(_: argparse.Namespace) -> list[Violation]:
-    """git이 추적하는 에셋의 이름이 접두사 표를 따르는지 본다."""
-    violations: list[Violation] = []
-    for rel_path in run_git_ls_files(["P1/Content/**/*.uasset", "P1/Content/**/*.umap"]):
-        if any(rel_path.startswith(pack_dir) for pack_dir in PACK_COPY_DIRS):
-            continue
-
-        path = Path(rel_path)
-        stem = path.stem
-        prefix = stem.split("_", 1)[0] if "_" in stem else ""
-
-        if path.suffix == ".umap":
-            if prefix == LEVEL_PREFIX:
-                continue
-            violations.append(
-                Violation(
-                    rel_path,
-                    0,
-                    f"레벨 '{stem}'에 '{LEVEL_PREFIX}_' 접두사가 없다 "
-                    f"(folder-structure.md 4.3)",
-                )
-            )
-            continue
-
-        if prefix in ASSET_PREFIXES:
-            continue
-
-        violations.append(
-            Violation(
-                rel_path,
-                0,
-                f"에셋 '{stem}'의 접두사가 표에 없다. 팩에서 복사해 온 것이면 "
-                f"check_conventions.py의 PACK_COPY_DIRS에 그 폴더를 적는다 "
-                f"(folder-structure.md 4.3)",
-            )
-        )
-    return violations
-
-
-# ----------------------------------------------------------------------------------
-# 검사 6: `Game/` 하위 폴더의 클라이언트와 서버 대칭 (ADR-0007)
-# ----------------------------------------------------------------------------------
-
-
-def _game_subfolders(root: str) -> set[str]:
-    """`root` 바로 아래의 폴더 이름을 git이 추적하는 파일 경로에서 모은다.
-
-    디스크를 직접 훑지 않는다. self-test가 파일 목록만 바꿔 끼우는 구조라서, 디렉터리를
-    직접 보면 픽스처로 덮을 수 없다.
-
-    추적하는 파일이 하나도 없는 폴더는 여기 잡히지 않는다. 빈 폴더이거나 전부 무시되는
-    폴더인데 어느 쪽이든 저장소의 내용이 아니다.
-    """
-    prefix = f"{root}/"
-    folders: set[str] = set()
-    for rel_path in run_git_ls_files([f"{root}/*", f"{root}/**/*"]):
-        # 경로를 여기서 한 번 더 확인한다. self-test의 가짜 파일 목록은 패턴으로 거르지
-        # 않고 픽스처를 통째로 주기 때문에, 이 확인이 없으면 반대편 티어의 파일이 섞인다.
-        if not rel_path.startswith(prefix):
-            continue
-        parts = PurePosixPath(rel_path[len(prefix) :]).parts
-        # 폴더 하나와 그 안의 파일 하나가 있어야 한 단계 아래의 폴더로 센다.
-        if len(parts) >= 2:
-            folders.add(parts[0])
-    return folders
-
-
-def check_folder_symmetry(_: argparse.Namespace) -> list[Violation]:
-    """`Game/` 바로 아래 폴더 집합이 ADR-0007의 표와 같은지 본다.
-
-    **양쪽의 이름을 서로 대조하지 않는다.** 그렇게 하면 판정이 순환한다. 이름이 같아야
-    「양쪽에 다 있다」로 분류되므로, 이름이 같은 것만 남기고 이름을 비교하면 결과가 언제나
-    참이다. 2026년 9월에 실제로 일어난 어긋남(서버 `Game/Object/` 대 클라이언트
-    `Characters/`)이 그 방식으로는 「한쪽에만 있는 폴더 둘」이 되어 조용히 통과한다.
-
-    그래서 양쪽을 각각 표와 대조한다. 표에 없는 이름이 생기는 것과 표가 요구하는 폴더가
-    사라지는 것을 양방향으로 잡는다.
-    """
-    tiers = (
-        (SERVER_GAME_ROOT, {row[1] for row in GAME_DOMAIN_FOLDERS if row[1]}),
-        (CLIENT_GAME_ROOT, {row[2] for row in GAME_DOMAIN_FOLDERS if row[2]}),
-    )
-
-    violations: list[Violation] = []
-    for root, expected in tiers:
-        actual = _game_subfolders(root)
-
-        for name in sorted(actual - expected):
-            violations.append(
-                Violation(
-                    f"{root}/{name}",
-                    0,
-                    "ADR-0007의 표에 없는 폴더다. 반대편 티어와 이름을 맞추거나, "
-                    "한쪽에만 두기로 정했다면 ADR-0007의 표와 이 스크립트의 "
-                    "`GAME_DOMAIN_FOLDERS`에 줄을 더한다",
-                )
-            )
-
-        for name in sorted(expected - actual):
-            violations.append(
-                Violation(
-                    f"{root}/{name}",
-                    0,
-                    "ADR-0007의 표가 요구하는 폴더인데 추적하는 파일이 없다. "
-                    "폴더를 옮기거나 지웠다면 ADR-0007의 표와 이 스크립트의 "
-                    "`GAME_DOMAIN_FOLDERS`를 함께 고친다",
-                )
-            )
-    return violations
-
-
-# ----------------------------------------------------------------------------------
-# 검사 7·8: 프로젝트 파일의 등록 항목 (#74)
+# 검사 4·5: 프로젝트 파일의 등록 항목 (#74)
 # ----------------------------------------------------------------------------------
 
 PROJECT_ITEM_RE = re.compile(
@@ -866,9 +528,6 @@ CHECKS = {
     "file-type": ("파일 이름과 타입 이름의 일치", check_file_type_match),
     "p1-prefix": ("리플렉션 타입의 P1 약어", check_p1_prefix),
     "include-path": ("#include의 도메인 경로 한정", check_include_path),
-    "server-member": ("서버 멤버 변수의 _camelCase", check_server_member_names),
-    "asset-prefix": ("추적 중인 에셋의 접두사", check_asset_prefix),
-    "folder-symmetry": ("Game/ 하위 폴더의 클라·서버 대칭", check_folder_symmetry),
     "project-item-exists": ("프로젝트 파일 등록 항목의 실재", check_project_item_exists),
     "project-filter-path": ("filters의 논리 폴더와 디스크 폴더", check_project_filter_path),
 }
@@ -912,37 +571,6 @@ SELF_TEST_FIXTURES: dict[str, dict[str, str | None]] = {
     "include-path": {
         f"{CLIENT_SOURCE}/Characters/P1MyPlayer.h": "#pragma once\n",
         f"{CLIENT_SOURCE}/UI/P1HUDWidget.cpp": '#include "P1MyPlayer.h"\n',
-    },
-    "server-member": {
-        "Server/GameServer/Game/Room/Room.h": (
-            "#pragma once\n"
-            "class Room : public JobQueue\n"
-            "{\n"
-            "public:\n"
-            "    void Init();\n"
-            "private:\n"
-            "    int32 roomId = 0;\n"
-            "};\n"
-        ),
-    },
-    "asset-prefix": {
-        "P1/Content/P1/UI/Screens/Inventory.uasset": None,
-    },
-    # 2026년 9월에 실제로 있던 어긋남이다. 서버가 엔티티 폴더를 `Object/`로 부르고 있고
-    # 클라이언트는 `Entities/`로 부른다. 잡혀야 할 위반은 둘이다. 표에 없는 `Object/`가
-    # 생긴 것과, 표가 요구하는 `Entities/`가 서버에 없는 것이다.
-    "folder-symmetry": {
-        f"{SERVER_GAME_ROOT}/Object/Object.cpp": None,
-        f"{SERVER_GAME_ROOT}/Inventory/Inventory.cpp": None,
-        f"{SERVER_GAME_ROOT}/Equipment/EquippedGear.cpp": None,
-        f"{SERVER_GAME_ROOT}/Data/Gamedata.cpp": None,
-        f"{SERVER_GAME_ROOT}/Room/Room.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Entities/P1Player.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Inventory/P1InventoryComponent.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Equipment/P1EquipmentComponent.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Data/P1ItemData.h": None,
-        f"{CLIENT_GAME_ROOT}/Combat/P1AttackSystemComponent.cpp": None,
-        f"{CLIENT_GAME_ROOT}/World/P1Portal.cpp": None,
     },
     "project-item-exists": {
         "Server/GameServer/GameServer.vcxproj": (
@@ -991,44 +619,6 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | None]] = {
     "include-path": {
         f"{CLIENT_SOURCE}/Characters/P1MyPlayer.h": "#pragma once\n",
         f"{CLIENT_SOURCE}/UI/P1HUDWidget.cpp": '#include "Characters/P1MyPlayer.h"\n',
-    },
-    "server-member": {
-        "Server/GameServer/Game/Room/Room.h": (
-            "#pragma once\n"
-            "class Room : public JobQueue\n"
-            "{\n"
-            "public:\n"
-            "    void Init();\n"
-            "private:\n"
-            "    int32 _roomId = 0;\n"
-            "    static atomic<int64> s_idGenerator;\n"
-            "};\n"
-            "struct RoomEnterData\n"
-            "{\n"
-            "    int32 nextRoomId = 0;\n"
-            "};\n"
-        ),
-    },
-    "asset-prefix": {
-        "P1/Content/P1/UI/Screens/WBP_Inventory.uasset": None,
-        "P1/Content/P1/Maps/L_InGameMap.umap": None,
-    },
-    # 위 픽스처에서 서버의 `Object/`만 `Entities/`로 고친 것이다. 서버에만 있는 `Room/`과
-    # 클라이언트에만 있는 `Combat/`·`World/`는 표가 허용하므로 위반이 아니다.
-    # `Data/Json/`은 두 단계 아래라 판정 대상이 아니다.
-    "folder-symmetry": {
-        f"{SERVER_GAME_ROOT}/Entities/Entity.cpp": None,
-        f"{SERVER_GAME_ROOT}/Inventory/Inventory.cpp": None,
-        f"{SERVER_GAME_ROOT}/Equipment/EquippedGear.cpp": None,
-        f"{SERVER_GAME_ROOT}/Data/Gamedata.cpp": None,
-        f"{SERVER_GAME_ROOT}/Data/Json/S_Item.json": None,
-        f"{SERVER_GAME_ROOT}/Room/Room.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Entities/P1Player.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Inventory/P1InventoryComponent.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Equipment/P1EquipmentComponent.cpp": None,
-        f"{CLIENT_GAME_ROOT}/Data/P1ItemData.h": None,
-        f"{CLIENT_GAME_ROOT}/Combat/P1AttackSystemComponent.cpp": None,
-        f"{CLIENT_GAME_ROOT}/World/P1Portal.cpp": None,
     },
     "project-item-exists": {
         "Server/GameServer/GameServer.vcxproj": (

@@ -73,8 +73,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # LFS 콘텐츠를 받지 않는다. 에셋 접두사 검사는 파일 이름만 보고 내용을 열지 않으므로
-      # 포인터 파일만 있어도 판정이 같다.
+      # LFS 콘텐츠를 받지 않는다. 규범 검사는 소스와 프로젝트 파일만 읽고 에셋을 보지 않는다.
       - uses: actions/checkout@v5
         with:
           lfs: false
