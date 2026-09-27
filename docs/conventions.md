@@ -143,7 +143,7 @@ X  #include "P1AttackSystemComponent.h"
 
 ### 2.7 로그는 선언한 카테고리로 남긴다
 
-`Log/` 아래에 선언한 카테고리만 쓴다. **`LogTemp`을 쓰지 않는다.**
+`Utils/LogCategory.h`에 선언한 카테고리만 쓴다. **`LogTemp`을 쓰지 않는다.**
 — `LogTemp`은 필터로 걸러낼 수 없다. 한 곳에서 쓰기 시작하면 로그 창에서 그 줄을 다시 찾을
 방법이 없어진다.
 

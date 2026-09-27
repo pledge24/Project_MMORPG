@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 39개 (높음 5 · 중간 17 · 낮음 17)
+항목 36개 (높음 4 · 중간 16 · 낮음 16)
 
 ## 작성 방법
 
@@ -230,39 +230,16 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 `pushd %~dp0`로 `Protocol/`에 들어간 뒤 생성기를 부르기 때문이다.
 `Tools/PacketHandlerGenerator/Templates/`는 읽히지 않는다.
 
+#71에서 이 중복이 실제로 어긋나 있었다. #66이 클라이언트 include를 경로 한정으로 바꾸면서 생성물인
+`P1/Source/P1/Network/ClientPacketHandler.h`만 고치고 템플릿 두 벌을 옛 평탄 include로 남겨 두었다.
+`GenPackets.bat`을 돌리자 옛 include가 되살아나 클라이언트 빌드가 `C1083`으로 깨졌다. #71이 두 벌을
+같은 내용으로 고쳤으므로 지금은 어긋나 있지 않다.
+
 ### 영향
 
 **동일한 문제의 반복** · **변경 비용 증가** — 생성기 폴더 안에 있는 사본이 더 그럴듯해 보인다.
 그쪽을 고치면 생성 결과가 바뀌지 않고, 바뀌지 않는 까닭이 파일 위치가 아니라 실행 시점의 작업
 디렉터리에 있어서 원인을 찾는 데 시간이 걸린다.
-
-## `docs/codegen.md`가 재배치 이전 경로를 가리킨다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 파일 · protocol
-> 위치: `docs/codegen.md` 11·17·57·61·85·87·88줄
-> 등록일: 2026년 9월 20일
-
-티켓 #43(PR #61)이 스키마 원본과 기획 수치와 생성기를 저장소 최상위로 올렸다.
-`docs/codegen.md`는 그 이동을 반영하지 않았다. 이 문서가 적은 경로 여섯 곳이 지금은 모두
-존재하지 않는다.
-
-| 문서의 기재 | 실제 위치 |
-|---|---|
-| `Server/Common/Protobuf/bin/{Enum,Struct,Protocol}.proto` | `Protocol/Schema/` |
-| `Server/Common/Protobuf/bin/GenPackets.bat` | `Protocol/GenPackets.bat` |
-| `Server/Common/GameDatasheet/Original_*.xlsx` | `DesignData/Original_*.xlsx` |
-| `Server/Common/GameDatasheet/GenJsonFile.bat` | `DesignData/GenJsonFile.bat` |
-| `Server/Tools/`의 파이썬 소스 | `Tools/`의 파이썬 소스 |
-| `Server/Tools/PacketHandlerGenerator/` · `Server/Tools/ExcelToJsonConverter/` | `Tools/` 아래 같은 이름의 두 폴더 |
-
-`Server/Common/`은 지금 존재하지 않는다. #46이 클라이언트 목적지 두 줄만 고쳤고 나머지는
-그대로 두었다.
-
-### 영향
-
-**변경 비용 증가** · **새 기능 개발 지연** — 이 문서는 「프로토콜·데이터 파일을 고치기 전에 반드시
-읽는다」로 시작한다. 패킷을 추가하려는 다음 세션이 이 문서를 먼저 읽고 없는 경로를 찾게 된다.
-생성기를 돌리는 자리는 두 티어가 공유하는 유일한 계약을 다시 만드는 자리여서, 경로를 못 찾으면
-거기서 막힌다.
 
 ## 생성기가 만든 패킷 핸들러가 클라 모듈에서 컴파일되지 않는다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · protocol
@@ -313,6 +290,28 @@ ESLint를 붙이자 `no-unused-vars`가 이 자리를 잡았다. 그때는 `catc
 **버그 발생 가능성 증가** · **변경 비용 증가** — 아이템 수치를 바꾸려고 엑셀에서 JSON을 다시
 만들어 `DT_Item`을 재임포트하면, 75건의 참조가 없는 경로로 되돌아갈 것으로 보인다. 재임포트는
 실행해 보지 않았다. 수치 변경이라는 평범한 작업이 외형 참조를 조용히 끊는다.
+
+## `GenJsonFile.bat`이 클라이언트 JSON을 없는 폴더로 옮긴다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 기능 · protocol
+> 위치: `DesignData/GenJsonFile.bat` 18~21줄
+> 등록일: 2026년 9월 27일
+
+스크립트가 `C_Monster.json`·`C_Item.json`·`C_Map.json`·`C_Quest.json` 넷을 `../P1/Content/Gamedata`로
+`MOVE`한다. 그 폴더는 지금 없다. #52가 데이터 테이블과 `C_*.json`을 `P1/Content/P1/Data/DataTables/`로
+옮겼고, 스크립트의 목적지는 따라오지 않았다. `docs/codegen.md`의 산출물 표는 새 자리를 적는다.
+
+`MOVE`의 목적지 폴더가 없으면 목적지 경로가 파일 이름으로 해석된다. 그러면 네 파일이 차례로
+`P1/Content/Gamedata`라는 파일 하나로 이름이 바뀌며 서로를 덮어쓰고, 마지막 `C_Quest.json`의 내용만
+남을 것으로 보인다. 스크립트는 실행해 보지 않았다.
+
+이 내용은 원래 「codegen 문서가 저장소에 없는 생성기를 가리킨다」 항목의 끝에 붙어 있었다. 그 항목의
+나머지(생성기가 없다는 판정)는 생성기가 `Tools/`에 있음을 확인해 지웠다.
+
+### 영향
+
+**버그 발생 가능성 증가** · **변경 비용 증가** — 엑셀 원본을 고쳐 JSON을 다시 만들어도 클라이언트
+데이터 테이블 옆의 JSON은 바뀌지 않는다. 스크립트가 에러 없이 끝나므로 갱신이 빠진 사실은 재임포트한
+뒤 값이 그대로인 것을 보고서야 드러난다.
 
 ## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
@@ -626,7 +625,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 쓰이지 않는 절반을 함께 고려해야 한다.
 
 ## `GenJsonFile.bat`의 첫 줄이 빈 클라이언트 JSON을 부산물로 남긴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · tools
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · protocol
 > 위치: `DesignData/GenJsonFile.bat` 4줄
 > 등록일: 2026년 9월 20일
 
@@ -641,7 +640,7 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ### 영향
 
-**혼란 유발** — 이슈 #40이 이 파일을 "생성기 산출물이 아님"으로 판정해 지웠다. 실제로는
+**유지보수 어려움** — 이슈 #40이 이 파일을 "생성기 산출물이 아님"으로 판정해 지웠다. 실제로는
 생성기가 만드는 파일이었고, #43에서 스크립트를 새 위치에서 돌렸을 때 다시 나타났다. 이름에
 `Test`가 들어 있고 내용이 비어 있어서 시험 삼아 만든 파일로 읽히는 것이 원인이다.
 
@@ -662,28 +661,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **버그 발생 가능성 증가** — 소스 폴더 이름을 `Log`로 지으면 그 폴더가 통째로 저장소에서 빠진다.
 빠진 사실은 커밋할 때 드러나지 않고 새로 클론한 쪽에서 빌드가 깨질 때 드러난다. 고치려면
 `/Saved/Logs/`처럼 경로를 한정한다.
-
-## `conventions.md`가 로그 카테고리 선언 위치를 옮기기 전 경로로 적는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `docs/conventions.md` 146줄
-> 등록일: 2026년 9월 21일
-
-146줄의 「2.7 로그는 선언한 카테고리로 남긴다」는 `Log/` 아래에 선언한 카테고리만 쓴다고 적는다.
-그 폴더는 지금 없다. #46이 `.gitignore`의 `[Ll]og/` 패턴을 피해 두 파일을 `Utils/`로 옮겼다.
-
-| 문서 | 적힌 위치 |
-|---|---|
-| `docs/conventions.md` 146줄 | `Log/` |
-| `docs/folder-structure.md` 95줄 | `Utils/` |
-| 실제 선언 | `P1/Source/P1/Utils/LogCategory.h` |
-
-이슈 #49의 본문도 `Log/LogCategory.h`라고 적어 같은 경로를 되풀이한다.
-
-### 영향
-
-**변경 비용 증가** — 카테고리를 새로 선언하려는 사람이 어느 폴더를 열어야 하는지 규범 문서
-둘만으로는 판정할 수 없다. 2026년 9월 21일 #49 작업에서 `Log/`를 먼저 찾다가 실패해 폴더를
-한 번 더 뒤졌다.
 
 ## `vector2D`와 `vector3D`의 성분 이름이 멤버 규칙을 따르지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
@@ -740,49 +717,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 플레이어 컨트롤러를 쓴다고 읽히는 것이다. 위젯의 컨트롤러 취득 경로를 세는 검색에도 이 두 줄이
 함께 걸린다.
 
-## codegen 문서가 저장소에 없는 생성기를 가리킨다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 문서 · shared
-> 위치: `docs/codegen.md` 55~70줄
-> 등록일: 2026년 9월 21일
-
-`docs/codegen.md`가 JSON 생성기의 원본을 `Server/Common/GameDatasheet/Original_*.xlsx`로,
-실행 파일을 같은 폴더의 `GenJsonFile.bat`으로 적는다. **`Server/Common/` 폴더가 저장소에 없다.**
-`Server` 아래에 `.bat` 파일도 하나도 없다.
-
-#52에서 `P1/Content/Gamedata/`의 `C_*.json` 네 개가 데이터 테이블을 따라 움직이길래, 그 경로를
-생성기가 어떻게 잡는지 확인하려다 드러났다. 그 티켓의 범위가 아니어서 항목을 남겨 두었다.
-
-### 영향
-
-**재현 불가** — 엑셀 원본을 고쳐 JSON을 다시 만드는 경로가 이 저장소를 클론한 사람에게 없다.
-생성기가 누군가의 로컬에만 있는지, 아직 만들지 않았는지, 지웠는지 문서로는 알 수 없다.
-`C_*.json`과 `S_*.json` 아홉 개는 지금 손으로 고치는 수밖에 없다.
-
-**#52가 목적지를 옮겼다** — 데이터 테이블이 `Content/Gamedata/`에서 `Content/P1/Data/DataTables/`로
-갔고 `C_*.json` 네 개가 함께 갔다. 생성기를 되살릴 때 출력 경로를 새 자리로 맞춰야 한다.
-
-## 패킷 핸들러 템플릿이 두 벌로 중복되어 있다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
-> 위치: `Protocol/Templates/PacketHandler.h` ·
-> `Tools/PacketHandlerGenerator/Templates/PacketHandler.h`
-> 등록일: 2026년 9월 21일
-
-같은 내용의 Jinja2 템플릿이 두 자리에 있다. 생성기가 실제로 읽는 것은 한 벌뿐이다.
-`Tools/PacketHandlerGenerator/PacketHandlerGenerator.py` 30줄이
-`jinja2.FileSystemLoader('Templates')`로 **작업 디렉터리 기준 상대 경로**를 잡는데,
-`GenPackets.bat`이 `pushd %~dp0`로 `Protocol/`에 들어간 뒤 생성기를 부르므로 `Protocol/Templates/`가
-쓰인다. `Tools/PacketHandlerGenerator/Templates/`는 쓰이지 않는다.
-
-#71에서 이 중복이 실제로 어긋나 있었다. #66이 클라이언트 include를 경로 한정으로 바꾸면서 생성물인
-`P1/Source/P1/Network/ClientPacketHandler.h`만 고치고 템플릿 두 벌을 옛 평탄 include로 남겨 두었다.
-`GenPackets.bat`을 돌리자 옛 include가 되살아나 클라이언트 빌드가 `C1083`으로 깨졌다. #71이 두 벌을
-같은 내용으로 고쳤으므로 지금은 어긋나 있지 않다.
-
-### 영향
-
-**재발 가능** — 다음에 템플릿을 고치는 사람이 쓰이지 않는 쪽만 고치면 아무 일도 일어나지 않는다.
-생성기를 돌려 봐야 알 수 있고, 그 시점에는 이미 생성물 일곱 벌이 세 티어에 복사된 뒤다.
-
 ## `Entity`가 엔티티 식별자의 접근자를 주지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
 > 위치: `Server/GameServer/Game/Entities/Entity.h` 33줄
@@ -804,58 +738,8 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 ### 영향
 
-**변경 비용** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Entity`에 식별자
+**변경 비용 증가** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Entity`에 식별자
 접근자가 있었으면 한 줄이었다. 다음에 `entity_id`를 손대는 작업도 같은 규모를 다시 치른다.
-
-## UI 하위 폴더의 판정 조건 둘이 실제 배치를 가리지 못한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · client
-> 위치: `docs/folder-structure.md` 117~122줄
-> 등록일: 2026년 9월 21일
-
-3.2의 판정 조건 표가 `Common/`과 `Screens/`에 조건을 하나씩 준다. #65가 위젯 11쌍을 옮기고 나서
-보니 두 조건 모두 실제 배치의 일부를 거짓으로 판정한다. 배치는 ADR-0008이 의도한 대로이고
-어긋난 쪽은 조건 문구다.
-
-| 하위 폴더 | 문서의 조건 | 조건을 만족하지 않는 것 |
-| --- | --- | --- |
-| `Common/` | 두 곳 이상이 품는가 | `P1ItemTooltipWidget` — 품는 곳이 `P1SlotWidget` 하나뿐이다 |
-| `Screens/` | 플레이어 컨트롤러가 위젯 종류 열거형으로 여닫는가 | `P1HUDWidget` · `P1DeathWidget` · `P1WarningTextWidget` — `EP1WidgetType`에 없고 컨트롤러의 개별 멤버로 다뤄진다 |
-
-`EP1WidgetType`이 갖는 값은 `WIDGET_STATUS_WINDOW`와 `WIDGET_INVENTORY`와 `WIDGET_SHOP` 셋이다
-(`P1/Source/P1/Core/P1InGamePlayerController.h` 18~24줄). 나머지 하나인 `WIDGET_NONE`은
-`UMETA(Hidden)`이라 화면을 가리키지 않는다. ADR-0008은 「여닫는 위젯 일곱」을 `Screens/`로
-두므로 위 셋의 자리는 의도대로다.
-
-**`P1HUDWidget`은 앞으로도 이 조건을 만족할 수 없다.** HUD는 조작 없이 늘 떠 있어서 여닫는
-대상이 아니고, 같은 ADR이 그 점을 근거로 `HUD`를 분류 이름에서 뺐다.
-
-### 영향
-
-**동일한 문제의 반복** — 새 위젯을 어디에 둘지 판정할 때 조건을 글자대로 적용하면 지금 배치와
-다른 답이 나온다. 판정에 시간을 쓰지 않게 하는 것이 ADR-0008이 조건을 준 이유인데, 조건이
-그 일을 하지 못하고 ADR 본문을 다시 읽게 만든다.
-
-## `folder-structure.md`가 없는 폴더 둘을 있는 것처럼 적는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 문서 · client
-> 위치: `docs/folder-structure.md` 90~141줄(3.2) · 142~170줄(3.3)
-> 등록일: 2026년 9월 22일
-
-3.2의 클라이언트 도메인 폴더 표가 `Game/` 하위를 여덟 개 적는데 디스크에는 여섯 개뿐이다.
-`Game/Items/`와 `Game/Interaction/`이 없고, 「아직 없다」는 표시도 없어서 나머지 여섯과 구별되지
-않는다. 같은 둘이 3.3의 의존 방향 화살표에도 들어 있다.
-
-**서버 쪽은 같은 상황을 본문에 적는다.** 6절의 서버 트리는 없는 폴더를 그리지 않고
-「`Game/Combat/`과 `Game/AI/`는 아직 없다」를 따로 적는다. 두 티어의 서술 방식이 어긋나 있다.
-
-**폴더를 만드는 쪽으로 해소하지 않는다.** 같은 문서 31줄이 「쓰지 않는 폴더를 미리 만들지
-않는다」를 분류 원칙으로 적는다.
-
-### 영향
-
-**변경 비용 증가** · **동일한 문제의 반복** — 새 파일의 자리를 찾는 사람이 없는 폴더를 실재하는
-것으로 읽는다. #74가 이 표를 폴더 대칭 검사의 정답 목록으로 쓰려다 쓸 수 없어서 ADR-0007의 표를
-스크립트 상수로 옮겼다. 그 검사는 2026년 9월 27일에 걷어냈으므로 지금은 같은 목록이 두 곳
-(ADR-0007 · 이 문서)에 산다. 앞으로 만들 의존 방향 검사도 3.3을 그대로 읽을 수 없다.
 
 ## `BP_Structs.h`가 전달만 하는 헤더로 남았다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
@@ -877,6 +761,82 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 **변경 비용 증가** — 소비자 하나가 쓰지 않는 헤더 다섯을 함께 컴파일한다. 무엇을 부르는지가
 `#include` 줄에 드러나야 한다는 ADR-0005의 목적도 이 헤더를 거치는 자리에서 사라진다.
+
+## 엔티티 계층에 영어 로그가 남고 작성자 없는 TODO가 여덟 건이다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
+> 위치: `P1/Source/P1/Sync/P1EntitySpawner.cpp` 91·99줄 ·
+> `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 84줄 · 아래 TODO 표의 여덟 자리
+> 등록일: 2026년 9월 22일
+
+`docs/conventions.md` 1.1이 「주석과 로그는 한국어로 쓴다」를 정하는데 클라이언트 엔티티 스폰
+경로에 영어 로그 세 건이 남아 있다. 같은 파일의 다른 로그는 한국어다.
+
+| 위치 | 문구 |
+| --- | --- |
+| `P1StatefulEntityManager.cpp` 84줄 | `Not Found %d Spawner` |
+| `P1EntitySpawner.cpp` 91줄 | `MonsterDataTable Is Null` |
+| `P1EntitySpawner.cpp` 99줄 | `RowName{%s} Is Not Exist` |
+
+1.2가 정한 `// TODO(Name): 내용` 형식을 벗어난 TODO는 저장소 전체에 여덟 건이다. 그중 둘은
+내용까지 영어다.
+
+| 파일 | 줄 | 언어 |
+| --- | --- | --- |
+| `Server/GameServer/Game/Entities/Entity.cpp` | 24 | 영어 |
+| `Server/GameServer/Game/Inventory/Inventory.cpp` | 122 | 영어 |
+| `Server/GameServer/DB/DBRequestFunctions.cpp` | 303 | 한국어 |
+| `Server/GameServer/Game/Room/Room.cpp` | 207 · 210 · 623 · 697 | 한국어 |
+| `Server/GameServer/Main/ServerPacketHandler.cpp` | 26 | 한국어 |
+
+#87이 `Entity.cpp`와 `P1EntitySpawner.cpp`를 건드렸으므로 1.1의 「영어 주석이 남아 있는 파일을
+건드리면 그 파일의 주석도 한국어로 바꾼다」가 그때 적용될 수 있었으나, 리네임 차분과 문구
+수정을 섞지 않으려고 기록으로 넘겼다. 같은 차분에서 고친 것은 `P1EntitySpawner.cpp` 20줄
+하나인데, 그 로그가 두 번의 리네임 전 이름인 `AMonsterSpawner`를 부르고 있어서 이번 작업의
+대상에 해당했기 때문이다.
+
+### 영향
+
+**유지보수 어려움** — TODO에 작성자가 없으면 언제 누가 왜 남겼는지 알 수 없다. 로그 언어가 섞이면
+출력 창에서 한 흐름을 눈으로 따라가기 어렵다.
+
+## 엔티티 동기화 계층에 죽은 코드가 남아 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Sync/P1StatefulEntityManager.h` 9줄 ·
+> `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 11~17줄과 45줄
+> 등록일: 2026년 9월 22일
+
+세 자리가 있다.
+
+- `P1StatefulEntityManager.h` 9줄의 `class APlayerSpawner;`는 저장소 어디에도 정의가 없는 타입을
+  전방 선언한다. 전수 검색 결과 이 한 줄이 그 이름의 유일한 출현이다.
+- `P1StatefulEntityManager.cpp` 11~17줄은 스포너를 직접 스폰하던 코드가 통째로 주석 처리된
+  것이다. 바로 위에 「BP로 설정한 property가 없음」이라고 이유가 적혀 있다.
+- 같은 파일 45줄의 등록 로그도 주석 처리되어 있다.
+
+#87이 이 자리들의 식별자를 새 이름으로 갱신했다. 지우는 편이 나았을 수 있으나 리네임 차분에
+삭제를 섞지 않으려고 그대로 두었다.
+
+### 영향
+
+**유지보수 어려움** — 읽는 사람이 남긴 것인지 잊은 것인지 매번 가려야 한다. `APlayerSpawner`는 특히
+그렇다. 이름만 보면 있어야 할 클래스처럼 읽혀서, 없는 것을 찾게 만든다.
+
+## `Room`의 진입 지점 다섯이 같은 존재 검사를 되풀이한다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` 398 · 519 · 563 · 606 · 858줄
+> 등록일: 2026년 9월 22일
+
+`if (_entities.contains(entityId) == false) return;` 형태의 조기 반환이 다섯 자리에 있고, 그중
+넷은 바로 뒤에서 `_entities[entityId]`를 다시 찾아 `dynamic_pointer_cast`로 내린다. 같은 맵을 두
+번 조회하는 셈이다.
+
+찾기와 형 변환을 함께 하는 함수 하나를 두면 다섯 자리가 한 줄이 된다. 「`Entity`가 엔티티
+식별자의 접근자를 주지 않는다」와 함께 풀면 호출부를 한 번만 연다.
+
+### 영향
+
+**변경 비용 증가** — 룸의 엔티티 보관 방식을 바꾸면 다섯 자리를 함께 고친다. 지금은 맵이지만 셀
+기반 조회로 옮기려는 시도가 있으면 이 형태가 먼저 걸린다.
 
 ## 게임 도메인이 배선 계층을 거꾸로 부른다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · client
@@ -961,79 +921,3 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 
 **유지보수 어려움** — 폴더 이름이 그 파일이 하는 일을 알려주지 못한다. 엔티티를 어떻게 만드는지
 찾는 사람이 `Game/Entities/`를 먼저 열고, 거기 없으면 배선 폴더까지 뒤진다.
-
-## 엔티티 계층에 영어 로그가 남고 작성자 없는 TODO가 여덟 건이다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
-> 위치: `P1/Source/P1/Sync/P1EntitySpawner.cpp` 91·99줄 ·
-> `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 84줄 · 아래 TODO 표의 여덟 자리
-> 등록일: 2026년 9월 22일
-
-`docs/conventions.md` 1.1이 「주석과 로그는 한국어로 쓴다」를 정하는데 클라이언트 엔티티 스폰
-경로에 영어 로그 세 건이 남아 있다. 같은 파일의 다른 로그는 한국어다.
-
-| 위치 | 문구 |
-| --- | --- |
-| `P1StatefulEntityManager.cpp` 84줄 | `Not Found %d Spawner` |
-| `P1EntitySpawner.cpp` 91줄 | `MonsterDataTable Is Null` |
-| `P1EntitySpawner.cpp` 99줄 | `RowName{%s} Is Not Exist` |
-
-1.2가 정한 `// TODO(Name): 내용` 형식을 벗어난 TODO는 저장소 전체에 여덟 건이다. 그중 둘은
-내용까지 영어다.
-
-| 파일 | 줄 | 언어 |
-| --- | --- | --- |
-| `Server/GameServer/Game/Entities/Entity.cpp` | 24 | 영어 |
-| `Server/GameServer/Game/Inventory/Inventory.cpp` | 122 | 영어 |
-| `Server/GameServer/DB/DBRequestFunctions.cpp` | 303 | 한국어 |
-| `Server/GameServer/Game/Room/Room.cpp` | 207 · 210 · 623 · 697 | 한국어 |
-| `Server/GameServer/Main/ServerPacketHandler.cpp` | 26 | 한국어 |
-
-#87이 `Entity.cpp`와 `P1EntitySpawner.cpp`를 건드렸으므로 1.1의 「영어 주석이 남아 있는 파일을
-건드리면 그 파일의 주석도 한국어로 바꾼다」가 그때 적용될 수 있었으나, 리네임 차분과 문구
-수정을 섞지 않으려고 기록으로 넘겼다. 같은 차분에서 고친 것은 `P1EntitySpawner.cpp` 20줄
-하나인데, 그 로그가 두 번의 리네임 전 이름인 `AMonsterSpawner`를 부르고 있어서 이번 작업의
-대상에 해당했기 때문이다.
-
-### 영향
-
-**추적 어려움** — TODO에 작성자가 없으면 언제 누가 왜 남겼는지 알 수 없다. 로그 언어가 섞이면
-출력 창에서 한 흐름을 눈으로 따라가기 어렵다.
-
-## 엔티티 동기화 계층에 죽은 코드가 남아 있다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/Sync/P1StatefulEntityManager.h` 9줄 ·
-> `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 11~17줄과 45줄
-> 등록일: 2026년 9월 22일
-
-세 자리가 있다.
-
-- `P1StatefulEntityManager.h` 9줄의 `class APlayerSpawner;`는 저장소 어디에도 정의가 없는 타입을
-  전방 선언한다. 전수 검색 결과 이 한 줄이 그 이름의 유일한 출현이다.
-- `P1StatefulEntityManager.cpp` 11~17줄은 스포너를 직접 스폰하던 코드가 통째로 주석 처리된
-  것이다. 바로 위에 「BP로 설정한 property가 없음」이라고 이유가 적혀 있다.
-- 같은 파일 45줄의 등록 로그도 주석 처리되어 있다.
-
-#87이 이 자리들의 식별자를 새 이름으로 갱신했다. 지우는 편이 나았을 수 있으나 리네임 차분에
-삭제를 섞지 않으려고 그대로 두었다.
-
-### 영향
-
-**판단 비용** — 읽는 사람이 남긴 것인지 잊은 것인지 매번 가려야 한다. `APlayerSpawner`는 특히
-그렇다. 이름만 보면 있어야 할 클래스처럼 읽혀서, 없는 것을 찾게 만든다.
-
-## `Room`의 진입 지점 다섯이 같은 존재 검사를 되풀이한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 398 · 519 · 563 · 606 · 858줄
-> 등록일: 2026년 9월 22일
-
-`if (_entities.contains(entityId) == false) return;` 형태의 조기 반환이 다섯 자리에 있고, 그중
-넷은 바로 뒤에서 `_entities[entityId]`를 다시 찾아 `dynamic_pointer_cast`로 내린다. 같은 맵을 두
-번 조회하는 셈이다.
-
-찾기와 형 변환을 함께 하는 함수 하나를 두면 다섯 자리가 한 줄이 된다. 759줄의 「`Entity`가
-엔티티 식별자의 접근자를 주지 않는다」와 함께 풀면 호출부를 한 번만 연다.
-
-### 영향
-
-**변경 비용** — 룸의 엔티티 보관 방식을 바꾸면 다섯 자리를 함께 고친다. 지금은 맵이지만 셀
-기반 조회로 옮기려는 시도가 있으면 이 형태가 먼저 걸린다.
