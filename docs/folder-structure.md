@@ -104,19 +104,21 @@ P1/Source/
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
 | `Game/Entities/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
 | `Game/Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
-| `Game/Items/` | 아이템 정의와 아이템 인스턴스 |
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
-| `Game/Interaction/` | 상호작용 인터페이스와 플레이어 쪽 컴포넌트 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
 | `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+
+`Game/Items/`와 `Game/Interaction/`은 아직 없다. 아이템 정의와 아이템 인스턴스가 생기면
+`Game/Items/`를 만든다. 상호작용 인터페이스와 플레이어 쪽 컴포넌트가 생기면 `Game/Interaction/`을
+만든다.
 
 **`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
 — 두 폴더로 나누면 스폰 하나를 고칠 때 양쪽을 함께 열게 된다.
 
 **`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
-`Game/Interaction/`에 둔다.
+`Game/World/`에 두지 않는다. 그런 대상이 처음 생길 때 `Game/Interaction/`을 만들어 거기 둔다.
 — 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
 아니라 레벨이 놓아 둔 장치다.
 
@@ -124,10 +126,17 @@ P1/Source/
 
 | 하위 폴더 | 담는 것 | 판정 조건 |
 | --- | --- | --- |
-| `Common/` | 다른 위젯이 품는 조각 | 두 곳 이상이 품는가 |
+| `Common/` | 다른 위젯이 품는 조각 | 다른 위젯이 품는가 |
 | `Frontend/` | 월드 입장 전 화면 | 월드에 들어가기 전에 뜨는가 |
-| `Screens/` | 여닫는 화면 | 플레이어 컨트롤러가 위젯 종류 열거형으로 여닫는가 |
+| `Screens/` | 플레이 중 띄우는 화면 | 플레이어 컨트롤러가 멤버로 들고 화면에 띄우는가 |
 | `WorldSpace/` | 월드 공간에 붙는 위젯 | 화면이 아니라 월드 좌표를 따라가는가 |
+
+`Common/`의 조건은 품는 곳의 수를 보지 않는다. 조각을 품는 위젯이 하나뿐이면 1절의 원칙대로
+그 위젯 가까이에 둔다. `P1ItemTooltipWidget`을 품는 것은 `P1SlotWidget` 하나뿐인데, 그 슬롯
+위젯이 `Common/`에 있으므로 툴팁도 `Common/`에 있다.
+— `Screens/`의 조건은 HUD처럼 늘 떠 있는 화면도 참으로 판정한다. 컨트롤러가 위젯 종류
+열거형으로 여닫는 것은 스탯 창과 인벤토리와 상점 셋뿐이고, HUD와 사망 화면과 경고 문구는
+컨트롤러의 개별 멤버로 다뤄진다.
 
 `Styles/`는 `Content`에만 만들고 폰트만 담는다. 폰트는 `Source`에 짝이 없다.
 — 도메인으로 나누지 않는 이유와 `HUD/`를 분류 이름으로 쓰지 않는 이유는
@@ -154,8 +163,7 @@ P1/Source/
 ```
 Protocol 모듈 → Network → Sync → 게임 도메인
                                    ↑
-UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment, Game/Interaction)
-     → Game/Items → Game/Data → Utils
+UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment) → Game/Data → Utils
 Core → Game/Entities → 게임 도메인
 ```
 

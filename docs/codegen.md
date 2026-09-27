@@ -8,13 +8,15 @@
 
 ## 와이어 프로토콜
 
-**원본**: `Server/Common/Protobuf/bin/{Enum,Struct,Protocol}.proto`
+**원본**: `Protocol/Schema/{Enum,Struct,Protocol}.proto`
 
 `.proto`는 cp949다. UTF-8로 저장하지 않는다.
 
 ### 재생성
 
-`Server/Common/Protobuf/bin/GenPackets.bat` 실행. 이 스크립트는 `protoc.exe`를 돌리고, `PacketHandlerGenerator.exe`를 방향별로 두 번 실행한 뒤, 결과를 `XCOPY`로 아래에 뿌린다.
+`Protocol/GenPackets.bat` 실행. 이 스크립트는 `Tools/protoc.exe`를 돌리고, `PacketHandlerGenerator.exe`를 방향별로 두 번 실행한 뒤, 결과를 `XCOPY`로 아래에 뿌린다.
+
+생성기가 읽는 템플릿은 `Protocol/Templates/PacketHandler.h`다. 생성기가 템플릿 폴더를 작업 디렉터리 기준 상대 경로로 찾고, 스크립트가 `Protocol/`로 들어간 뒤 생성기를 부르기 때문이다. `Tools/PacketHandlerGenerator/Templates/`의 사본은 읽히지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
@@ -53,11 +55,11 @@
 
 ## 게임 데이터
 
-**원본**: `Server/Common/GameDatasheet/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data)
+**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data)
 
 ### 재생성
 
-`Server/Common/GameDatasheet/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
+`DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
 **산출물은 아래 표의 9개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
@@ -66,6 +68,10 @@
 |---|---|
 | `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
+
+**지금의 `GenJsonFile.bat`은 이 표와 다르다.** 스크립트가 `C_*.json` 넷을 옛 목적지인
+`P1/Content/Gamedata`로 옮기는데, 그 폴더는 없다. 상세는 `docs/tech-debt.md`의
+「`GenJsonFile.bat`이 클라이언트 JSON을 없는 폴더로 옮긴다」에 있다.
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
@@ -81,9 +87,9 @@
 
 ## 생성기 자체
 
-두 생성기 exe는 `Server/Tools/`의 파이썬 소스를 각 툴의 `MakeExe.bat`으로 PyInstaller 번들링해서 만든다.
+두 생성기 exe는 `Tools/`의 파이썬 소스를 각 툴의 `MakeExe.bat`으로 PyInstaller 번들링해서 만든다.
 
-- `Server/Tools/PacketHandlerGenerator/`
-- `Server/Tools/ExcelToJsonConverter/`
+- `Tools/PacketHandlerGenerator/`
+- `Tools/ExcelToJsonConverter/`
 
-결과 exe는 호출하는 `.bat` 옆에 놓인다. `.bat`도 cp949다.
+결과 exe는 각 툴 폴더 안에 놓이고, 호출하는 `.bat`이 `..\Tools\<툴>\<툴>.exe`로 부른다. `.bat`도 cp949다.
