@@ -60,7 +60,7 @@ int main(void)
 	ServerServiceRef service = make_shared<ServerService>(
 		NetAddress("127.0.0.1"s, 7777),
 		make_shared<IocpCore>(),
-		[=]() { return make_shared<GameSession>(); }, // TODO : SessionManager 등
+		[=]() { return make_shared<GameSession>(); }, // TODO: SessionManager 등
 		maxSessionCount
 	);
 

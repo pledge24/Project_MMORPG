@@ -73,8 +73,8 @@
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Utils\EntityUtils.cpp">
-      <Filter>Utils</Filter>
+    <ClCompile Include="Game\Entities\EntityUtils.cpp">
+      <Filter>Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Utils\TickIntervalTimer.cpp">
       <Filter>Utils</Filter>
@@ -144,8 +144,8 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Utils\EntityUtils.h">
-      <Filter>Utils</Filter>
+    <ClInclude Include="Game\Entities\EntityUtils.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Utils\EncodingConverter.h">
       <Filter>Utils</Filter>

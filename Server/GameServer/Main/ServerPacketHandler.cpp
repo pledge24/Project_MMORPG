@@ -14,7 +14,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX];
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 {
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO : Log
+	// TODO: Log
 	return false;
 }
 
@@ -32,7 +32,7 @@ bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_
 
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
-    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // TODO: 해당 패킷이 유효한지 검증(Validate)
     // ...
 
     // 랜덤으로 아무 DBQueue에게 Job을 준다.
@@ -77,7 +77,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
-    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // TODO: 해당 패킷이 유효한지 검증(Validate)
     // ...
 
     // 유저 Id를 통해 DBQueue를 선택
@@ -99,7 +99,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
-    // TODO : 해당 패킷이 유효한지 검증(Validate)
+    // TODO: 해당 패킷이 유효한지 검증(Validate)
     // ...
 
     // 유저 Id를 통해 DBQueue를 선택

@@ -16,7 +16,7 @@
 
 `Protocol/GenPackets.bat` 실행. 이 스크립트는 `Tools/protoc.exe`를 돌리고, `PacketHandlerGenerator.exe`를 방향별로 두 번 실행한 뒤, 결과를 `XCOPY`로 아래에 뿌린다.
 
-생성기가 읽는 템플릿은 `Protocol/Templates/PacketHandler.h`다. 생성기가 템플릿 폴더를 작업 디렉터리 기준 상대 경로로 찾고, 스크립트가 `Protocol/`로 들어간 뒤 생성기를 부르기 때문이다. `Tools/PacketHandlerGenerator/Templates/`의 사본은 읽히지 않는다.
+생성기가 읽는 템플릿은 `Protocol/Templates/PacketHandler.h`다. 생성기가 템플릿 폴더를 작업 디렉터리 기준 상대 경로로 찾고, 스크립트가 `Protocol/`로 들어간 뒤 생성기를 부르기 때문이다.
 
 | 목적지 | 산출물 |
 |---|---|

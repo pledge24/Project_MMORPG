@@ -21,7 +21,7 @@ bool Entity::Init()
 
 bool Entity::Start()
 {
-    // TODO: Validate
+    // TODO: 검증
 
     if (_isTickable)
     {

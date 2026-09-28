@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 27개 (높음 4 · 중간 13 · 낮음 10)
+항목 17개 (높음 4 · 중간 10 · 낮음 3)
 
 ## 작성 방법
 
@@ -168,65 +168,6 @@ UE 에디터로 실측한 결과는 아래 두 가지다.
 (`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
 잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
 
-## 패킷 핸들러 템플릿이 두 곳에 같은 내용으로 추적된다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 모듈 · protocol
-> 위치: `Tools/PacketHandlerGenerator/Templates/PacketHandler.h` ·
-> `Protocol/Templates/PacketHandler.h`
-> 등록일: 2026년 9월 20일
-
-두 파일은 2,561바이트로 내용이 같고 git이 둘 다 추적한다.
-
-생성에 쓰이는 것은 `Protocol/Templates/PacketHandler.h` 하나다. `PacketHandlerGenerator.py`
-30줄이 `jinja2.FileSystemLoader('Templates')`로 상대 경로를 읽고, `Protocol/GenPackets.bat`이
-`pushd %~dp0`로 `Protocol/`에 들어간 뒤 생성기를 부르기 때문이다.
-`Tools/PacketHandlerGenerator/Templates/`는 읽히지 않는다.
-
-#71에서 이 중복이 실제로 어긋나 있었다. #66이 클라이언트 include를 경로 한정으로 바꾸면서 생성물인
-`P1/Source/P1/Network/ClientPacketHandler.h`만 고치고 템플릿 두 벌을 옛 평탄 include로 남겨 두었다.
-`GenPackets.bat`을 돌리자 옛 include가 되살아나 클라이언트 빌드가 `C1083`으로 깨졌다. #71이 두 벌을
-같은 내용으로 고쳤으므로 지금은 어긋나 있지 않다.
-
-**2026년 9월 27일 덧붙임 — `Tools` 쪽 사본도 쓰인다.** 생성기를 돌릴 때는 읽히지 않지만,
-`Tools/PacketHandlerGenerator/MakeExe.bat`이 exe를 만든 뒤 `robocopy`로 `Tools` 쪽 `Templates/`를
-`Protocol/Templates/`에 덮어쓴다. exe를 다시 만드는 경로에서는 `Tools` 쪽이 원본 역할을 한다.
-그래서 어느 쪽을 지울지는 `MakeExe.bat`의 복사 줄을 어떻게 할지와 함께 정해야 한다.
-
-### 영향
-
-**동일한 문제의 반복** · **변경 비용 증가** — 생성기 폴더 안에 있는 사본이 더 그럴듯해 보인다.
-그쪽을 고치면 생성 결과가 바뀌지 않고, 바뀌지 않는 까닭이 파일 위치가 아니라 실행 시점의 작업
-디렉터리에 있어서 원인을 찾는 데 시간이 걸린다.
-
-## 생성기가 만든 패킷 핸들러가 클라 모듈에서 컴파일되지 않는다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · protocol
-> 위치: `Protocol/Templates/PacketHandler.h` 5~6줄
-> 등록일: 2026년 9월 20일
-
-템플릿 5~6줄이 `#include "SendBuffer.h"`와 `#include "Types.h"`를 쓴다. 두 줄 모두 경로가 없다.
-클라이언트 쪽에서 이 include가 해결되는지는 `P1.Build.cs`의 `PrivateIncludePaths`에 달려 있는데,
-지금 남아 있는 것은 모듈 루트 `P1/`과 생성물 폴더 `P1/Network` 둘뿐이다.
-
-| 템플릿이 적는 것 | 실제 위치 | 찾히는가 |
-|---|---|---|
-| `#include "SendBuffer.h"` | `P1/Source/P1/Network/SendBuffer.h` | 찾힌다. `P1/Network`가 경로에 있다 |
-| `#include "Types.h"` | `P1/Source/P1/Utils/Types.h` | **찾히지 않는다** |
-
-#46이 `Types.h`를 `Utils/`로 옮겼고 #47이 include 평탄화를 없앴다. 둘을 합치면 이 상태가 된다.
-지금 저장소에 커밋된 클라 사본은 `#include "Utils/Types.h"`로 손이 가 있어서 빌드가 통과하지만,
-**`Protocol/GenPackets.bat`을 한 번 돌리면 그 사본이 템플릿 출력으로 덮어써지고 클라 빌드가 깨진다.**
-`docs/codegen.md`가 「생성기를 다시 돌리는 순간 덮어써진다」고 적은 그대로다.
-
-고치는 방법은 템플릿의 두 줄을 경로 한정으로 바꾸는 것인데, 같은 템플릿이 DummyClient용 출력도
-만들고 그쪽 트리는 include 경로가 다르다. 그래서 템플릿 한 벌로는 양쪽을 동시에 만족시킬 수 없다.
-생성기(`Tools/PacketHandlerGenerator/PacketHandlerGenerator.py`)는 템플릿 경로를 인자로 받지 않고
-`Templates/PacketHandler.h`로 고정한다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **새 기능 개발 지연** — 패킷을 하나 추가하려면 생성기를 돌려야 하는데,
-돌리는 순간 클라가 빌드되지 않는다. 깨진 사실이 생성 시점에 드러나지 않고 다음 빌드에서 드러나서,
-원인을 생성기가 아니라 방금 추가한 패킷에서 찾게 된다.
-
 ## 아이템 원본 데이터가 Content 재배치 이전의 에셋 경로를 적는다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 기능 · client
 > 위치: `DesignData/Original_Item.xlsx` · `P1/Content/P1/Data/DataTables/C_Item.json`
@@ -368,34 +309,6 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 시도한다. 수명을 고치려면 `P1GameInstance`와 `ClientPacketHandler`와 `PacketSession` 셋을 함께
 봐야 한다.
 
-## DummyClient로는 로그인과 이동을 확인할 수 없다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · build
-> 위치: `Server/DummyClient/Main/DummyClient.cpp` ·
-> `Server/DummyClient/Main/ClientPacketHandler.cpp`
-> 등록일: 2026년 9월 20일
-
-`CLAUDE.md` 「완료 기준」과 `docs/testing.md` 56줄은 테스트가 없는 서버 경로의 검증 하한으로
-DummyClient 스모크를 지목한다. 정작 DummyClient가 보내는 패킷은 빈 `C_LOGIN`과 `C_CHAT` 둘뿐이다.
-
-2026년 9월 20일 실측 결과는 아래와 같다.
-
-| 확인 항목 | 결과 |
-|---|---|
-| 세션 수립 | 100건 전부 성공 |
-| `C_LOGIN`이 핸들러에 도달 | 도달함 |
-| 로그인 성공(`userId:` 로그) | 0건 |
-| `Not Found AccessToken` | 95건 |
-| 이동 패킷 전송 | 코드 없음 |
-
-`Handle_C_LOGIN`은 `pkt.access_token()`으로 Redis를 조회한다. DummyClient는 이 필드를 채우지
-않으므로 조회가 전부 빗나간다. 유효한 토큰을 얻으려면 인증 서버에 먼저 로그인해야 한다.
-
-### 영향
-
-**테스트 어려움** · **변경 영향 범위 확대** — 스모크로 닿는 곳은 연결과 패킷 프레이밍과 핸들러
-디스패치까지다. 로그인 이후의 경로인 캐릭터 로드와 룸 입장과 이동 동기화는 닿지 않는데, 문서는 이
-도구를 검증 하한으로 약속한다. 「DummyClient로 확인했다」는 보고가 실제로 확인한 범위보다 넓게 읽힌다.
-
 ## 인벤토리 매핑 3종이 손으로 유지된다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 파일 · server
 > 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (생성자)
@@ -516,28 +429,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 걸쳐 있다는 점도 함께 본다. UserDB는 `(localdb)\MSSQLLocalDB`, GameDB는 `(localdb)\ProjectModels`다.
 난이도가 낮다고 적혀 있지만 그것은 수정 범위의 크기이지 착수 조건의 무게가 아니다.
 
-## `SendBuffer::Append`와 `Copy`를 부르는 곳이 없다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Source/P1/Network/SendBuffer.cpp` 20~43줄
-> 등록일: 2026년 9월 17일
-
-모든 송신이 `ClientPacketHandler::MakeSerializedPacket`을 거치는데, 이 함수는 `Buffer()`로 받은
-포인터에 직접 쓰고 `Close()`로 기록 위치만 맞춘다. `Append`와 `Copy`는 거치지 않는다. 저장소
-전체에서 두 함수를 부르는 곳은 없다.
-
-두 함수의 가드 조건도 서로 다르다. `Copy`는 `Len()`을 보고 `Append`는 `FreeSize()`를 본다.
-쓰는 쪽이 없어서 이 차이가 의도인지 실수인지 확인할 수 없다.
-
-`Append`에는 경계 결함도 있다. 버퍼가 가득 찬 상태(`_writePos == Len()`)에서 `len`이 0 이하면
-가드를 통과한 뒤 `WritePos()`가 `_buffer[Num()]`을 인덱싱한다. 지금은 부르는 곳이 없어 드러나지
-않는다.
-
-### 영향
-
-**유지보수 어려움** · **변경 비용 증가** — 서버 쪽 `SendBuffer`와 이름이 같아서 같은 역할이라고
-읽히지만 클라에서는 동작하지 않는 코드다. 지우든 쓰든 정하기 전에는 이 클래스를 고칠 때마다
-쓰이지 않는 절반을 함께 고려해야 한다.
-
 ## `GenJsonFile.bat`의 첫 줄이 빈 클라이언트 JSON을 부산물로 남긴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · protocol
 > 위치: `DesignData/GenJsonFile.bat` 4줄
@@ -557,97 +448,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **유지보수 어려움** — 이슈 #40이 이 파일을 "생성기 산출물이 아님"으로 판정해 지웠다. 실제로는
 생성기가 만드는 파일이었고, #43에서 스크립트를 새 위치에서 돌렸을 때 다시 나타났다. 이름에
 `Test`가 들어 있고 내용이 비어 있어서 시험 삼아 만든 파일로 읽히는 것이 원인이다.
-
-## `vector2D`와 `vector3D`의 성분 이름이 멤버 규칙을 따르지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/GameServer/Utils/Utils.h` 57~58줄 · 81~83줄
-> 등록일: 2026년 9월 21일
-
-두 구조체의 성분이 `x`·`y`·`z`다. `conventions.md` 3.2는 서버 멤버 변수를 `_camelCase`로 쓰라고
-정하고, 예외를 「필드만 담고 동작이 없는 순수 데이터 구조체」로 한정한다. 두 구조체는 생성자와
-`GetMagnitude`와 `GetNormalize`와 연산자 오버로드를 가지므로 그 예외에 들지 않는다.
-
-이 규칙을 기계로 확인하던 `server-member` 검사는 2026년 9월 27일에 CI에서 걷어냈다. 이 항목은
-**예외가 아니라 갚을 자리로 남긴다.**
-
-고치는 쪽에는 선택지가 둘이다. 성분을 `_x`로 바꾸고 사용처를 함께 옮기거나, 수학 벡터의 성분
-이름을 규범의 예외로 올리고 `conventions.md` 3.2에 그 예외를 적는 것이다. 어느 쪽이든 규범과
-코드 중 하나는 움직인다.
-
-### 영향
-
-**동일한 문제의 반복** — 규범과 코드가 어긋난 자리가 검사 스크립트의 예외 목록으로만 남아
-있다. 다음에 벡터 비슷한 값 타입을 새로 만들 때 어느 쪽을 따라야 하는지 규범이 답하지 않는다.
-
-## `Entity`가 엔티티 식별자의 접근자를 주지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Entities/Entity.h` 33줄
-> 등록일: 2026년 9월 21일
-> 2026년 9월 22일에 #87이 클래스와 파일 이름을 옮겨서 이 항목의 참조를 함께 갱신했다.
-> 접근자를 두지 않는 상태 자체는 그대로다.
-
-`Entity`가 `Protocol::EntityInfo* _entityInfo`를 public 원시 포인터로 내놓고 식별자를 읽는 접근자를
-두지 않는다. 그래서 부르는 쪽이 `entity->_entityInfo->entity_id()`로 두 단계를 직접 탄다. 이 형태가
-게임 서버에 31곳 있고 그중 21곳이 식별자를 읽는다.
-
-| 파일 | `_entityInfo->` 접근 |
-| --- | --- |
-| `Game/Room/Room.cpp` | 16 |
-| `Game/Entities/Monster.cpp` | 6 |
-| `Utils/EntityUtils.cpp` | 5 |
-| `Game/Entities/Player.cpp` | 3 |
-| `Game/Entities/Entity.cpp` | 1 |
-
-### 영향
-
-**변경 비용 증가** — #71이 스키마 필드 이름 하나를 바꾸자 21곳이 함께 움직였다. `Entity`에 식별자
-접근자가 있었으면 한 줄이었다. 다음에 `entity_id`를 손대는 작업도 같은 규모를 다시 치른다.
-
-## 작성자 없는 TODO가 여덟 건이다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
-> 위치: `Server/GameServer/` 아래 TODO 표의 여덟 자리
-> 등록일: 2026년 9월 22일
-> 2026년 9월 27일에 같은 항목에 있던 클라이언트 영어 로그 세 건을 한국어로 바꿔서 그 부분을
-> 지웠다. 작성자 이름을 알아야 고칠 수 있는 TODO만 남는다.
-
-`docs/conventions.md` 1.2가 정한 `// TODO(Name): 내용` 형식을 벗어난 TODO는 저장소 전체에 여덟 건이다. 그중 둘은
-내용까지 영어다.
-
-| 파일 | 줄 | 언어 |
-| --- | --- | --- |
-| `Server/GameServer/Game/Entities/Entity.cpp` | 24 | 영어 |
-| `Server/GameServer/Game/Inventory/Inventory.cpp` | 122 | 영어 |
-| `Server/GameServer/DB/DBRequestFunctions.cpp` | 303 | 한국어 |
-| `Server/GameServer/Game/Room/Room.cpp` | 207 · 210 · 623 · 697 | 한국어 |
-| `Server/GameServer/Main/ServerPacketHandler.cpp` | 26 | 한국어 |
-
-#87이 `Entity.cpp`와 `P1EntitySpawner.cpp`를 건드렸으므로 1.1의 「영어 주석이 남아 있는 파일을
-건드리면 그 파일의 주석도 한국어로 바꾼다」가 그때 적용될 수 있었으나, 리네임 차분과 문구
-수정을 섞지 않으려고 기록으로 넘겼다. 같은 차분에서 고친 것은 `P1EntitySpawner.cpp` 20줄
-하나인데, 그 로그가 두 번의 리네임 전 이름인 `AMonsterSpawner`를 부르고 있어서 이번 작업의
-대상에 해당했기 때문이다.
-
-### 영향
-
-**유지보수 어려움** — TODO에 작성자가 없으면 언제 누가 왜 남겼는지 알 수 없다. 영어로 적힌 두
-건은 1.1의 「주석은 한국어로 쓴다」도 어긴다.
-
-## `Room`의 진입 지점 다섯이 같은 존재 검사를 되풀이한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 398 · 519 · 563 · 606 · 858줄
-> 등록일: 2026년 9월 22일
-
-`if (_entities.contains(entityId) == false) return;` 형태의 조기 반환이 다섯 자리에 있고, 그중
-넷은 바로 뒤에서 `_entities[entityId]`를 다시 찾아 `dynamic_pointer_cast`로 내린다. 같은 맵을 두
-번 조회하는 셈이다.
-
-찾기와 형 변환을 함께 하는 함수 하나를 두면 다섯 자리가 한 줄이 된다. 「`Entity`가 엔티티
-식별자의 접근자를 주지 않는다」와 함께 풀면 호출부를 한 번만 연다.
-
-### 영향
-
-**변경 비용 증가** — 룸의 엔티티 보관 방식을 바꾸면 다섯 자리를 함께 고친다. 지금은 맵이지만 셀
-기반 조회로 옮기려는 시도가 있으면 이 형태가 먼저 걸린다.
 
 ## 게임 도메인이 배선 계층을 거꾸로 부른다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · client
@@ -689,46 +489,3 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 **변경 영향 범위 확대** · **테스트 어려움** — 3.3이 「게임 도메인은 `Network/`를 직접 참조하지
 않는다」를 불변식으로 적는데 매크로 하나가 그것을 우회한다. 통신 방식을 바꾸면 게임 도메인의
 열두 자리를 함께 연다.
-
-## 필터 GUID의 생성 방식이 프로젝트마다 다르다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 파일 · build
-> 위치: `Server/GameServer/GameServer.vcxproj.filters` ·
-> `Server/GameServerTests/GameServerTests.vcxproj.filters`
-> 등록일: 2026년 9월 21일
-
-`GameServerTests.vcxproj.filters`의 필터 GUID는 전부 이름 기반(UUID 버전 5)이고
-`GameServer.vcxproj.filters`는 전부 무작위(버전 4)다. 저장소에 재생성 스크립트가 없어서 어느
-쪽이 의도인지 파일만 보고는 가릴 수 없다.
-
-#72가 `Game\Equipment` 필터를 더할 때 버전 5의 생성 규칙을 역산해 보았으나 실패했다. 표준
-네임스페이스 다섯(DNS · URL · OID · X500 · nil)과 이름 형태 여덟 가지를 조합해 기존 값 다섯 개와
-대조했고 한 건도 맞지 않았다. 그래서 새 항목은 버전 4로 넣었다.
-
-### 영향
-
-**유지보수 어려움** — 지금 깨지는 것은 없다. 남는 것은 `GameServerTests.vcxproj.filters`를 도구가
-다시 생성하면 이 한 항목만 값이 달라져 diff가 튀는 것이다. 필터를 더하는 사람이 어느 방식을
-따라야 하는지도 파일만 보고는 알 수 없다.
-
-## `EntityUtils`가 배선 계층에서 게임 도메인을 부른다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · server
-> 위치: `Server/GameServer/Utils/EntityUtils.h` · `Server/GameServer/Utils/EntityUtils.cpp`
-> 등록일: 2026년 9월 22일
-
-`docs/folder-structure.md` 150줄의 의존 화살표가 `Utils`를 가장 아래 계층에 두고, 94줄이 「서버도
-같은 층으로 가른다」고 적는다. 그런데 `EntityUtils.cpp`가 `Player.h`와 `Monster.h`와
-`GameSession.h`를 include하고 `CreatePlayer`와 `CreateMonster`로 도메인 객체를 만든다. 화살표가
-가리키는 방향의 반대다.
-
-`Utils/`가 담기로 한 것은 104줄에 「함수 라이브러리, 로그 카테고리 선언, 공용 매크로」로 적혀
-있는데, 이 클래스가 하는 일은 엔티티 팩토리다. #87이 이름을 `ObjectUtils`에서 `EntityUtils`로
-옮기면서 이름이 도메인 쪽으로 더 다가섰고, 그래서 배치와의 어긋남이 눈에 띄게 됐다. 어긋남
-자체는 #87이 만든 것이 아니다.
-
-`Game/Entities/`로 옮기는 것이 후보다. 다만 옮기면 `.vcxproj` 네 벌의 등록 항목과 `#include`
-세 자리가 함께 움직이므로 별도 티켓으로 다룬다.
-
-### 영향
-
-**유지보수 어려움** — 폴더 이름이 그 파일이 하는 일을 알려주지 못한다. 엔티티를 어떻게 만드는지
-찾는 사람이 `Game/Entities/`를 먼저 열고, 거기 없으면 배선 폴더까지 뒤진다.

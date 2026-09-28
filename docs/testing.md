@@ -67,7 +67,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
 | UE 클라 액터·월드 의존 로직 | 없음 | **불가.** 월드를 띄우는 테스트를 아직 써 보지 않았다 |
 
-불가 영역은 빌드 통과 + DummyClient 스모크가 하한이다.
+불가 영역은 지금 마땅한 테스트가 없다.
 
 ---
 
@@ -170,7 +170,7 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 
 - L2·L3 실행에는 **에디터가 필요하다** (`Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."`). 서버처럼 무인 루프가 되지 않는다.
 - **L3는 Live Coding 비호환 — TDD 루프 금지, 배치 전용.**
-- L4는 DummyClient 자산 재사용 검토. 병렬 실행 시 포트 파라미터화.
+- L4는 병렬 실행 시 포트 파라미터화.
 - CI: 서버 쪽 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다. UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.
 
 ---

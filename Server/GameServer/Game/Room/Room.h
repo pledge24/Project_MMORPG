@@ -91,6 +91,17 @@ protected:
     bool AddEntity(EntityRef entity);
     bool RemoveEntity(int64 entityId);
 
+    /** 엔티티를 찾아 T로 내린다. 없거나 T가 아니면 nullptr */
+    template<typename T>
+    shared_ptr<T> FindEntityAs(int64 entityId)
+    {
+        auto it = _entities.find(entityId);
+        if (it == _entities.end())
+            return nullptr;
+
+        return dynamic_pointer_cast<T>(it->second);
+    }
+
     /** Room 관련 */
     void CacheRoomData();
     void CreateCellMatrix();

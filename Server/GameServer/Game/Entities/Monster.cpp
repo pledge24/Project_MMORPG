@@ -204,7 +204,7 @@ void Monster::UpdateState()
 
             // 전환 조건(Idle): 타겟이 현재 Room에서 사라졌거나, 범위를 벗어남
             bool outOfChasingRange = MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false;
-            if (ownerRoom->Contains(target->_entityInfo->entity_id()) == false || outOfChasingRange)
+            if (ownerRoom->Contains(target->GetEntityId()) == false || outOfChasingRange)
             {
                 _target.reset();
                 SwitchState(MonsterState::Idle);
@@ -230,7 +230,7 @@ void Monster::UpdateState()
     {
         ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
             {
-                int64 entityId = self->_entityInfo->entity_id();
+                int64 entityId = self->GetEntityId();
 
                 if(ownerRoom->Contains(entityId))
                     self->UpdateState();
@@ -492,7 +492,7 @@ void Monster::NormalAttack()
         Protocol::AttackInfo attackInfo;
         {
             attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-            attackInfo.set_target_id(_target.lock()->_entityInfo->entity_id());
+            attackInfo.set_target_id(_target.lock()->GetEntityId());
             attackInfo.set_combo(0);
             attackInfo.set_damage(_baseAttack);
         }

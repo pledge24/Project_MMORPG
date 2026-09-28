@@ -93,7 +93,7 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_U
         return false;
 
     // entityId 채우기
-    pkt.set_entity_id(_entityInfo->entity_id());
+    pkt.set_entity_id(GetEntityId());
 
     // 변경된 스텟 반영
     for (const Protocol::Stat& stat : pkt.updated_stat())
@@ -198,7 +198,7 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 	{
 		pkt.set_success(true);
 		pkt.set_respawn_type(type);
-		pkt.set_entity_id(_entityInfo->entity_id());
+		pkt.set_entity_id(GetEntityId());
 
 		pkt.set_room_id(ownerRoom->GetRoomId());
 		pkt.mutable_pos_info()->CopyFrom(*respawnPos);

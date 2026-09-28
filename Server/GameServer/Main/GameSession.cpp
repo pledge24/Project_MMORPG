@@ -19,7 +19,7 @@ void GameSession::OnRecvPacket(BYTE* buffer, int32 len)
 
 	// 게임 서버가 아닌 다른 서버(ex. DB 서버)에 넘겨줄때 id 대역 체크용
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO : packetId 대역 체크...
+	// TODO: packetId 대역 체크...
 
 	ServerPacketHandler::HandlePacket(session, buffer, len);
 }

@@ -20,8 +20,6 @@ RD /S /Q ".\build"
 RD /S /Q ".\dist"
 DEL /F /Q ".\PacketHandlerGenerator.spec"
 
-robocopy ".\Templates"                              "../../Protocol/Templates" /E
-
 echo [INFO] 완료되었습니다.
 PAUSE
 popd

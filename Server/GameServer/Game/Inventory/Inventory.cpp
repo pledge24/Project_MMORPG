@@ -119,7 +119,7 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, i
     itemInstance.set_template_id(templateId);
     itemInstance.set_count(count);
 
-    // TODO: generate inital instance data.
+    // TODO: 초기 인스턴스 데이터 생성
     // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
 
     if (AddItem(replicatingSlot, itemInstance, count) == false)
