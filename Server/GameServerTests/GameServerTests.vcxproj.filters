@@ -78,8 +78,8 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\EntityUtils.cpp">
-      <Filter>GameServer\Utils</Filter>
+    <ClCompile Include="..\GameServer\Game\Entities\EntityUtils.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">
       <Filter>GameServer\Utils</Filter>

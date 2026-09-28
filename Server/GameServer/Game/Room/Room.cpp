@@ -85,8 +85,8 @@ void Room::Update()
 
 void Room::TickEntity(EntityRef entity)
 {
-    int64 entityId = entity->_entityInfo->entity_id();
-    if (Contains(entityId) == false)
+    int64 entityId = entity->GetEntityId();
+    if (_entities.contains(entityId) == false)
         return;
 
     uint64 curTime = GetTickCount64();
@@ -100,7 +100,7 @@ void Room::TickEntity(EntityRef entity)
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 {
     Protocol::S_ENTER_ROOM enterRoomPkt;
-    int64 enterPlayerId = enterPlayer->_entityInfo->entity_id();
+    int64 enterPlayerId = enterPlayer->GetEntityId();
 
     if (AddEntity(enterPlayer) == false)
     {
@@ -139,7 +139,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
 bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 {
-    const int64 leavePlayerId = leavePlayer->_entityInfo->entity_id();
+    const int64 leavePlayerId = leavePlayer->GetEntityId();
 
     if (RemoveEntity(leavePlayerId) == false)
     {
@@ -348,7 +348,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
             Protocol::PosInfo enterPosInfo;
             Protocol::Vector& pos = *enterPosInfo.mutable_pos();
-            enterPosInfo.set_entity_id(player->_entityInfo->entity_id());
+            enterPosInfo.set_entity_id(player->GetEntityId());
             pos.set_x(dst[PosX]);
             pos.set_y(dst[PosY]);
             pos.set_z(dst[PosZ]);
@@ -394,12 +394,11 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
 void Room::C_HandleMove(Protocol::C_MOVE pkt)
 {
-	const int64 entityId = pkt.info().entity_id();
-    if (_entities.contains(entityId) == false)
+	PlayerRef player = FindEntityAs<Player>(pkt.info().entity_id());
+    if (player == nullptr)
         return;
 
 	// 적용
-	PlayerRef player = dynamic_pointer_cast<Player>(_entities[entityId]);
 	player->_posInfo->CopyFrom(pkt.info());
 
 	// 이동 사실을 알린다 (본인 빼고)
@@ -410,7 +409,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
 			info->CopyFrom(pkt.info());
 		}
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-		Broadcast(sendBuffer, entityId);
+		Broadcast(sendBuffer, player->GetEntityId());
 	}
 }
 
@@ -418,7 +417,7 @@ void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
 {
 	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
 	Protocol::S_CHAT chatPkt;
-	chatPkt.set_entity_id(player->_entityInfo->entity_id());
+	chatPkt.set_entity_id(player->GetEntityId());
 	chatPkt.set_msg(pkt.msg());
 
 	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
@@ -515,8 +514,8 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
 
 void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 {
-    const int64 entityId = player->_entityInfo->entity_id();
-    if (_entities.contains(entityId) == false)
+    const int64 entityId = player->GetEntityId();
+    if (Contains(entityId) == false)
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
@@ -559,8 +558,8 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
 
 void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 {
-    const int64 entityId = player->_entityInfo->entity_id();
-    if (_entities.contains(entityId) == false)
+    const int64 entityId = player->GetEntityId();
+    if (Contains(entityId) == false)
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
@@ -602,8 +601,8 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
 
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 {
-    const int64 entityId = player->_entityInfo->entity_id();
-    if (_entities.contains(entityId) == false)
+    const int64 entityId = player->GetEntityId();
+    if (Contains(entityId) == false)
         return;
     
     // 일반 공격 사실을 Broadcast.
@@ -651,7 +650,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
             Protocol::PosInfo enterPos;
             enterPos.CopyFrom(respawnPos);
-            enterPos.set_entity_id(player->_entityInfo->entity_id());
+            enterPos.set_entity_id(player->GetEntityId());
             enterData.enterPos = std::move(enterPos);
         }
 
@@ -675,7 +674,7 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 {
     Protocol::S_NORMAL_ATTACK normalAttackPkt;
     {
-        normalAttackPkt.set_entity_id(creature->_entityInfo->entity_id());
+        normalAttackPkt.set_entity_id(creature->GetEntityId());
         normalAttackPkt.set_combo(combo);
         normalAttackPkt.set_yaw(creature->_posInfo->yaw());
 
@@ -712,7 +711,7 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 
         Protocol::S_HIT HitPkt;
         {
-            HitPkt.set_entity_id(creature->_entityInfo->entity_id());
+            HitPkt.set_entity_id(creature->GetEntityId());
             HitPkt.set_damage(attackInfo.damage());
             HitPkt.set_updated_hp(creature->GetStatValue(Protocol::STAT_TYPE_HP));
 
@@ -757,7 +756,7 @@ void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
 
 void Room::HandleDie(CreatureRef creature)
 {
-    int64 entityId = creature->_entityInfo->entity_id();
+    int64 entityId = creature->GetEntityId();
 
     Protocol::S_DIE diePkt;
     {
@@ -813,7 +812,7 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
 
 void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 {
-    int64 playerId = player->_entityInfo->entity_id();
+    int64 playerId = player->GetEntityId();
 
     // 해당 플레이어에게 Room 엔티티 전송
     Protocol::S_SPAWN spawnPkt;
@@ -821,7 +820,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
     {
         for (auto& item : _entities)
         {
-            if (!includeThisPlayer && item.second->_entityInfo->entity_id() == playerId)
+            if (!includeThisPlayer && item.second->GetEntityId() == playerId)
                 continue;
 
             spawnPkt.add_entities()->CopyFrom(*item.second->_entityInfo);
@@ -855,10 +854,7 @@ MonsterRef Room::SpawnMonster(int32 templateId)
 
 PlayerRef Room::SpawnPlayer(int64 entityId)
 {
-    if (_entities.contains(entityId) == false)
-        return nullptr;
-
-    PlayerRef targetPlayer = dynamic_pointer_cast<Player>(_entities[entityId]);
+    PlayerRef targetPlayer = FindEntityAs<Player>(entityId);
     if (targetPlayer == nullptr)
         return nullptr;
 
@@ -1152,7 +1148,7 @@ bool Room::AddEntity(EntityRef entity)
     if (entity == nullptr)
         return false;
 
-    int64 entityId = entity->_entityInfo->entity_id();
+    int64 entityId = entity->GetEntityId();
 	if (_entities.contains(entityId))
 		return false;
 
@@ -1185,7 +1181,7 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
 		if (player == nullptr)
 			continue;
-		if (player->_entityInfo->entity_id() == exceptId)
+		if (player->GetEntityId() == exceptId)
 			continue;
 
 		if (GameSessionRef session = player->_session.lock())

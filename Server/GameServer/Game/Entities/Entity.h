@@ -21,6 +21,7 @@ public:
 	bool IsPlayer() { return _isPlayer; }
 
     /** Getter 함수 */
+    int64 GetEntityId() const { return _entityInfo->entity_id(); }
     uint64 GetPrevTime() { return _prevTime; }
     void GetNormalAttackData() {}
 
