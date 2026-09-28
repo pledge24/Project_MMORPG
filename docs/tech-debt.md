@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 17개 (높음 4 · 중간 10 · 낮음 3)
+항목 10개 (높음 3 · 중간 6 · 낮음 1)
 
 ## 작성 방법
 
@@ -72,37 +72,6 @@
 
 ---
 
-## Rider MCP의 DB 연결이 읽기 전용 계정을 쓰지 않는다
-> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 프로젝트 · ops
-> 위치: `P1/.idea/.idea.P1.dir/.idea/dataSources.xml` ·
-> `Server/.idea/.idea.Server/.idea/dataSources.xml`
-> 등록일: 2026년 9월 16일
-
-`CLAUDE.md` 17줄과 `docs/build.md` 117줄은 Rider의 DB 연결이 읽기 전용 계정(`claude_ro`)을
-쓴다고 적는다. 2026년 9월 16일 실측 결과는 다르다.
-
-| 확인 방법 | 결과 |
-|---|---|
-| `execute_sql_query`로 `SELECT SYSTEM_USER` | Windows 로그인 계정 |
-| `list_database_connections` | `UserDB`와 `GameDB` 모두 `readOnly: false` |
-| `preview_table_data`로 `Characters` 조회 | 행 2건 반환 |
-
-`dataSources.xml`은 `.gitignore` 대상이라 저장소에 없다. 이 설정은 컴퓨터마다 다를 수 있다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **부채의 연쇄 증가** — 에이전트가 MCP로 여는 DB 세션이 쓰기 권한을
-갖는다. 지금 막는 것은 `.claude/hooks/guard_dangerous_cmd.py`의 패턴 검사뿐이고, 그 패턴에 걸리지
-않는 쓰기는 통과한다. `execute_sql_query`는 ADR-0002가 남긴 36종에 들어 있고 승인 절차도 없다.
-문서가 있지도 않은 방어선을 약속하고 있어서, 문서를 읽은 다음 세션이 그 방어선을 믿고 판단한다.
-
-### 선행 조건
-
-**`claude_ro` 계정이 두 LocalDB 인스턴스에 실제로 있는지 먼저 확인한다.** 계정을 만들어야 하면
-`CLAUDE.md` 「안전」이 정한 대로 사람 승인을 먼저 받는다. Rider의 데이터소스 설정은 IDE 화면에서만
-바꿀 수 있으므로 에이전트가 할 수 없다. 계정을 바꾼 뒤에는 두 문서의 서술이 사실이 되므로 함께
-확인한다.
-
 ## 인게임 진입 직후 캐릭터가 스스로 죽는다
 > **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
 > 위치: `P1/Content/P1/Characters/Monsters/` · `P1/Content/P1/UI/Screens/WBP_DeathScreen.uasset`
@@ -167,26 +136,6 @@ UE 에디터로 실측한 결과는 아래 두 가지다.
 **버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
 (`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
 잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
-
-## 아이템 원본 데이터가 Content 재배치 이전의 에셋 경로를 적는다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 기능 · client
-> 위치: `DesignData/Original_Item.xlsx` · `P1/Content/P1/Data/DataTables/C_Item.json`
-> 등록일: 2026년 9월 27일
-
-`C_Item.json`의 에셋 경로 75건이 전부 `/Game/Assets/...`를 가리킨다. 방어구 메시 30건, 아이콘
-39건, 검 메시 6건이다. #83이 Content를 `/Game/P1/...` 아래로 재배치하기 전의 경로이고, 지금 그 경로에는
-아무것도 없다. 이 JSON은 `Original_Item.xlsx`에서 생성되므로(`docs/codegen.md`) 엑셀 원본도
-같은 경로를 적는다.
-
-`DT_Item.uasset`은 에디터가 에셋을 옮길 때마다 참조를 고쳐 왔기 때문에 지금은 올바른 경로를
-가리킨다. 2026년 9월 27일에 검 메시 여섯 개를 `Weapons/SwordNR/`로 옮긴 뒤 확인한 결과도 같다.
-그런데 `DT_Item`은 `C_Item.json`을 임포트 원본으로 기억하고 있다(에셋의 `AssetImportData`).
-
-### 영향
-
-**버그 발생 가능성 증가** · **변경 비용 증가** — 아이템 수치를 바꾸려고 엑셀에서 JSON을 다시
-만들어 `DT_Item`을 재임포트하면, 75건의 참조가 없는 경로로 되돌아갈 것으로 보인다. 재임포트는
-실행해 보지 않았다. 수치 변경이라는 평범한 작업이 외형 참조를 조용히 끊는다.
 
 ## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
@@ -282,33 +231,6 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
 드러난다.
 
-## 소켓과 세션이 해제되지 않는다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 52~100줄 · `P1/Source/P1/Network/ClientPacketHandler.cpp` 100~107줄
-> 등록일: 2026년 9월 16일
-
-`Socket`과 `GameServerSession` 두 멤버에 `nullptr`을 대입하는 코드가 모듈 전체에 하나도 없다
-(2026년 9월 16일 실측). 연결을 끊는 경로가 아래처럼 어디에서도 멤버를 비우지 않는다.
-
-| 위치 | 하는 일 | 비우는가 |
-|---|---|---|
-| `DisconnectFromGameServer()` | `C_LEAVE_GAME` 패킷 전송 | 아니다 |
-| `Handle_S_LEAVE_GAME` | 지역 변수로 받아 `Socket->Close()` | 아니다 |
-| `PacketSession::Disconnect()` | 송수신 워커 스레드만 정리 | 소켓을 건드리지 않는다 |
-
-`ClientPacketHandler.cpp` 102~104줄에 `DestroySocket`과 `Socket = nullptr`이 주석으로 남아
-있다. 주석을 풀어도 지역 변수에 대입하는 형태라 멤버는 그대로다.
-
-`ConnectToGameServer()`는 기존 소켓을 검사하지 않고 매번 새로 만든다. 연결에 실패하면 방금 만든
-소켓을 닫지도 파괴하지도 않는다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **변경 영향 범위 확대** — 재접속할 때마다 소켓이 샌다. 끊긴 뒤에도
-`Socket`이 유효한 포인터로 남아 `Socket == nullptr` 가드가 통과하므로, 닫힌 소켓에 계속 쓰기를
-시도한다. 수명을 고치려면 `P1GameInstance`와 `ClientPacketHandler`와 `PacketSession` 셋을 함께
-봐야 한다.
-
 ## 인벤토리 매핑 3종이 손으로 유지된다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 파일 · server
 > 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (생성자)
@@ -341,30 +263,6 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 글자만 어긋나도 아이템이 다른 인벤토리로 샌다. 두 값 모두 유효한 enum이라 컴파일러가 아무 말도
 하지 않는다.
 
-## 에이전트의 파일 편집을 가로채는 층이 없다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
-> 위치: `.claude/settings.json` · `.claude/hooks/guard_dangerous_cmd.py`
-> 등록일: 2026년 9월 15일
-
-`guard_dangerous_cmd.py`가 위험한 명령을 차단한다. 이 훅을 부르는 `PreToolUse` 매처는 둘이다.
-
-| 매처 | 덮는 것 |
-|---|---|
-| `Bash\|PowerShell` | 셸 명령 |
-| Rider MCP 툴 21종 | `apply_patch`, `create_new_file`, `rename_refactoring`, `safe_delete` 등 |
-
-두 매처 어디에도 내장 편집 도구인 `Edit`, `Write`, `NotebookEdit`가 없다(2026년 9월 15일 실측).
-Rider를 거친 편집은 걸리지만 에이전트가 파일을 직접 고치는 경로는 걸리지 않는다.
-
-CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 도구를 쓴다"고 지시하므로, 권장 경로가
-곧 검사받지 않는 경로다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **동일한 문제의 반복** — 파일을 어디까지 고쳐도 되는지가 모델의 준수에만
-달려 있다. 훅이 덮는 셸 경로와 덮지 않는 편집 경로 사이에 안전 수준의 단차가 생기고, 그 단차는
-에이전트가 권장 경로를 쓸수록 커진다.
-
 ## `UP1GameInstance`가 클라 측 갓 클래스
 > **심각도:** 중간 · **난이도:** 높음 · **범위:** 모듈 · client
 > 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (620줄)
@@ -385,69 +283,6 @@ CLAUDE.md 「안전」이 "파일 편집에는 셸을 거치지 않는 편집 �
 여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
 함께 따져야 한다. 엔티티 조회가 흩어져 있어서 서브시스템 이름을 바꾸는 작업도 열한 자리를
 함께 연다.
-
-## 스택 상한 없는 아이템 누적
-> **심각도:** 중간 · **난이도:** 높음 · **범위:** 함수 · protocol
-> 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` 166줄
-> 등록일: 2026년 8월 19일
-
-`findFirstAvailableSlotId`는 비장비 아이템에서 같은 `template_id` 슬롯을 찾으면 무조건 거기
-합친다. 아이템 데이터의 최대 스택 수를 보지 않는다. `JsonProperty::Item::MaxStack`은 선언만
-돼 있고 서버 코드 어디에서도 한 번도 읽히지 않는다(실측).
-
-난이도가 높은 이유는 수정 범위가 함수 밖으로 나가기 때문이다. 초과분을 다음 슬롯으로 넘기면
-한 번의 구매가 슬롯 두 개를 바꾸는데, `S_BUY_ITEM`은 `Slot updated_slot` 하나만 나른다
-(`P1/Source/P1/Network/Protocol.proto` 168~173줄). 서버가 두 번째 슬롯을 클라에 알릴 방법이
-없다.
-
-재현 테스트는 `InventoryTest.DISABLED_StackDoesNotExceedMaxStack`에 있다. `DISABLED_`로 둔
-이유는 이 범위 문제 때문이지 버그가 아니어서가 아니다.
-
-### 영향
-
-**새 기능 개발 지연** · **버그 발생 가능성 증가** — `maxStack: 10`인 소모품을 15개 구매하면 한
-슬롯에 15개가 쌓인다. `--gtest_also_run_disabled_tests`로 실행해 빨강임을 확인했다. 스택 상한을
-전제하는 기능(거래, 창고, 제작)은 이 상태 위에 올릴 수 없다.
-
-## `Users.user_id INT` vs `Characters.user_id BIGINT`
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · ops
-> 위치: `Server/AuthServer/Queries/UserDB_CreateUsersTable.sql` 7줄 ·
-> `Server/GameServer/Queries/GameDB_CreateAllTables.sql` 11줄
-> 등록일: 2026년 8월 19일
-
-두 티어가 같은 개념을 다른 폭으로 저장한다. `GameSession::userId`는 `int64`다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 사용자 수가 `INT` 상한(2,147,483,647)에 닿으면 두 DB가 같은 사용자를
-다른 값으로 보게 된다. 지금은 값이 작아 드러나지 않는다.
-
-### 선행 조건
-
-**스키마 변경이라 사람 승인이 먼저다.** CLAUDE.md 「안전」이 스키마 변경을 사람 승인 후에,
-저장소의 SQL 스크립트 갱신과 함께만 실행하도록 정한다. 대상이 서로 다른 두 LocalDB 인스턴스에
-걸쳐 있다는 점도 함께 본다. UserDB는 `(localdb)\MSSQLLocalDB`, GameDB는 `(localdb)\ProjectModels`다.
-난이도가 낮다고 적혀 있지만 그것은 수정 범위의 크기이지 착수 조건의 무게가 아니다.
-
-## `GenJsonFile.bat`의 첫 줄이 빈 클라이언트 JSON을 부산물로 남긴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · protocol
-> 위치: `DesignData/GenJsonFile.bat` 4줄
-> 등록일: 2026년 9월 20일
-
-그 줄은 `Original_Warrior_Level_Data.xlsx`를 변환하면서 `--s_output`만 주고 `--c_output`을 주지
-않는다. `Tools/ExcelToJsonConverter/ExcelToJsonConverter.py` 25줄의 argparse 기본값이 그 자리를
-메워서, 스크립트를 돌릴 때마다 `C_TestJsonfile.json`이 생성 폴더에 떨어진다. 내용은 빈 객체
-50개뿐이고 읽는 곳이 없다. 나머지 네 줄은 `--c_output`을 명시해서 이 부산물을 만들지 않는다.
-
-지금은 `.gitignore`가 이 파일을 가린다. 가리는 것과 만들지 않는 것은 다르다. 고치는 방법은 두
-가지다. 그 줄에 `--c_output`을 주고 산출물을 목적지로 옮기거나, 클라이언트 출력이 필요 없음을
-생성기에 알리는 인자를 만든다. 후자가 맞지만 생성기를 고치는 일이다.
-
-### 영향
-
-**유지보수 어려움** — 이슈 #40이 이 파일을 "생성기 산출물이 아님"으로 판정해 지웠다. 실제로는
-생성기가 만드는 파일이었고, #43에서 스크립트를 새 위치에서 돌렸을 때 다시 나타났다. 이름에
-`Test`가 들어 있고 내용이 비어 있어서 시험 삼아 만든 파일로 읽히는 것이 원인이다.
 
 ## 게임 도메인이 배선 계층을 거꾸로 부른다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · client

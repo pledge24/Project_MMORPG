@@ -21,21 +21,6 @@
 
 ---
 
-## 2. 스택 상한 — 프로토콜 변경 연습
-
-**왜 지금**: `DISABLED_StackDoesNotExceedMaxStack`이 이미 커밋되어 있고
-`--gtest_also_run_disabled_tests`로 실제 빨강임이 확인됐다(미검증 스텁이 아니다).
-`.proto` → 생성기 → 클라·서버 3곳 수정이 필요해 **"게임플레이 변경은 3곳"이라는
-이 프로젝트의 기본 규약을 테스트가 있는 상태에서 처음 밟아보는** 연습이 된다.
-규모가 작아 연습용으로 적절하다.
-
-**선행 조건**: 없음. 1번을 먼저 하면 같은 파일을 두 번 열지 않는다.
-
-**완료 신호**: `DISABLED_` 접두어 제거 후 종료 코드 0.
-`ProtocolContractTests` 3개가 수정 없이 통과한다.
-
----
-
 ## 3. DummyClient 승격
 
 인자화 → 실토큰 → 봇 상태머신 → 종료 코드.
@@ -298,3 +283,4 @@
 |---|---|
 | UE L1 (Low-Level Tests) | `docs/testing.md` 「UE L1(Low-Level Tests)은 채택하지 않는다」 |
 | 엔진 소스 패치 | `docs/build.md` 「엔진 제약」 |
+| `Users.user_id`를 `BIGINT`로 넓히기 | 개인 프로젝트라 `INT` 상한에 닿을 일이 없다. 넓히면 `mssql` 드라이버가 `BIGINT`를 문자열로 돌려줘서, 인증 서버가 Redis에 쓰는 `userId`를 게임 서버가 `int64`로 읽는 자리(`ServerPacketHandler.cpp`)가 깨진다 |
