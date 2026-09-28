@@ -51,7 +51,7 @@ bool Player::Start()
 	return true;
 }
 
-bool Player::ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 templateId, int32 count)
+bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
 {
     int64 gold = _possession->gold();
     int64 buyPrice = static_cast<int64>(Gamedata::s_itemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
@@ -59,7 +59,7 @@ bool Player::ProcessBuyItem(OUT Protocol::Slot* updatedSlot, OUT int64& totalGol
     if (gold < buyPrice)
         return false;
 
-    if (_inventory->AddItem(OUT updatedSlot, templateId, count) == false)
+    if (_inventory->AddItem(OUT updatedSlots, templateId, count) == false)
         return false;
 
     totalGold = gold - buyPrice;

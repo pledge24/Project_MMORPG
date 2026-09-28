@@ -15,7 +15,9 @@ public:
     ~Inventory();
 
     bool AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count = 1, optional<int32> setSlotId = nullopt);
-    bool AddItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count = 1);
+    // 스택 상한을 넘는 수량은 다음 슬롯으로 나눠 넣는다. 다 넣을 수 없으면 아무것도 바꾸지 않고 false.
+    // 바뀐 슬롯마다 replicatingSlots에 하나씩 추가한다.
+    bool AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count = 1);
     bool RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count = 1);
 
     int32 FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
