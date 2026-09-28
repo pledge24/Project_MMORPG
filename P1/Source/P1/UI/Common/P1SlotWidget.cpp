@@ -72,16 +72,24 @@ void UP1SlotWidget::InsertData(const Protocol::Slot& _Slot)
 
 void UP1SlotWidget::ApplyIcon(int32 TemplateId)
 {
-    if (ItemAssetTable == nullptr || ItemIcon == nullptr)
+    if (ItemIcon == nullptr)
         return;
+
+    if (UTexture2D* LoadedIcon = LoadIcon(TemplateId))
+        ItemIcon->SetBrushFromTexture(LoadedIcon);
+}
+
+UTexture2D* UP1SlotWidget::LoadIcon(int32 TemplateId) const
+{
+    if (ItemAssetTable == nullptr)
+        return nullptr;
 
     const FP1ItemAssetData* AssetData = ItemAssetTable->FindRow<FP1ItemAssetData>(
-        FName(*FString::FromInt(TemplateId)), TEXT("UP1SlotWidget::ApplyIcon"));
+        FName(*FString::FromInt(TemplateId)), TEXT("UP1SlotWidget::LoadIcon"));
     if (AssetData == nullptr || AssetData->Icon.IsNull())
-        return;
+        return nullptr;
 
-    if (UTexture2D* LoadedIcon = AssetData->Icon.LoadSynchronous())
-        ItemIcon->SetBrushFromTexture(LoadedIcon);
+    return AssetData->Icon.LoadSynchronous();
 }
 
 UWidget* UP1SlotWidget::GetToolTipWidget_Implementation() const
@@ -90,7 +98,7 @@ UWidget* UP1SlotWidget::GetToolTipWidget_Implementation() const
     {
         if (SlotTooltipWidget)
         {
-            SlotTooltipWidget->Init(ItemData); // 아이템 정보 전달
+            SlotTooltipWidget->Init(ItemData, LoadIcon(ItemData.TemplateId)); // 아이템 정보 전달
             return SlotTooltipWidget;
         }
     }

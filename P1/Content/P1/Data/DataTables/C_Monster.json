@@ -7,8 +7,7 @@
         "AttackType": "melee",
         "MaxHp": 200,
         "BaseAttack": 1000,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/MeleeMonster/BP_Beginner_MeleeMinion.BP_Beginner_MeleeMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5001,
@@ -18,8 +17,7 @@
         "AttackType": "ranged",
         "MaxHp": 150,
         "BaseAttack": 80,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/RangedMonster/BP_Beginner_RangedMinion.BP_Beginner_RangedMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5002,
@@ -29,8 +27,7 @@
         "AttackType": "melee",
         "MaxHp": 500,
         "BaseAttack": 150,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/SuperMonster/BP_Beginner_SuperMinion.BP_Beginner_SuperMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5003,
@@ -40,8 +37,7 @@
         "AttackType": "melee",
         "MaxHp": 600,
         "BaseAttack": 200,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/MeleeMonster/BP_Intermediate_MeleeMinion.BP_Intermediate_MeleeMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5004,
@@ -51,8 +47,7 @@
         "AttackType": "ranged",
         "MaxHp": 450,
         "BaseAttack": 160,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/RangedMonster/BP_Intermediate_RangedMinion.BP_Intermediate_RangedMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5005,
@@ -62,8 +57,7 @@
         "AttackType": "melee",
         "MaxHp": 1500,
         "BaseAttack": 300,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/SuperMonster/BP_Intermediate_SuperMinion.BP_Intermediate_SuperMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5006,
@@ -73,8 +67,7 @@
         "AttackType": "melee",
         "MaxHp": 1800,
         "BaseAttack": 400,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/MeleeMonster/BP_Expert_MeleeMinion.BP_Expert_MeleeMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5007,
@@ -84,8 +77,7 @@
         "AttackType": "ranged",
         "MaxHp": 1400,
         "BaseAttack": 320,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/RangedMonster/BP_Expert_RangedMinion.BP_Expert_RangedMinion_C"
+        "MovementSpeed": 300
     },
     {
         "Name": 5008,
@@ -95,7 +87,6 @@
         "AttackType": "melee",
         "MaxHp": 4500,
         "BaseAttack": 600,
-        "MovementSpeed": 300,
-        "MonsterClass": "/Game/Blueprints/Creatures/Monster/SuperMonster/BP_Expert_SuperMinion.BP_Expert_SuperMinion_C"
+        "MovementSpeed": 300
     }
 ]

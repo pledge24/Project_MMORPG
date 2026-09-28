@@ -31,8 +31,5 @@ struct FP1MonsterData : public FTableRowBase
     int64 BaseAttack = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftClassPtr<class AP1Monster> MonsterClass;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float MovementSpeed = 0.f;
 };

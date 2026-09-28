@@ -66,6 +66,9 @@ private:
     /** 에셋 테이블에서 아이콘을 찾아 표시한다. */
     void ApplyIcon(int32 TemplateId);
 
+    /** 에셋 테이블에서 아이콘을 찾아 로드한다. 행이 없으면 nullptr */
+    UTexture2D* LoadIcon(int32 TemplateId) const;
+
     //~ Tooltip
 protected:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)

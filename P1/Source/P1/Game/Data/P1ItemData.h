@@ -48,9 +48,6 @@ struct FP1ItemData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Description;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftObjectPtr<UTexture2D> Icon;
-
     //~ Consumable Field
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -77,10 +74,4 @@ struct FP1ItemData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 MpRegenerate = 0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftObjectPtr<USkeletalMesh> SkeletalMesh;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftObjectPtr<UStaticMesh> StaticMesh;
 };
