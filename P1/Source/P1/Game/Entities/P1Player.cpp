@@ -7,6 +7,8 @@
 #include "P1.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
+#include "Game/Data/P1ItemAssetData.h"
+#include "Engine/DataTable.h"
 
 AP1Player::AP1Player()
 {
@@ -75,6 +77,24 @@ void AP1Player::SetEquipmentSlot(const Protocol::Slot& InSlot)
     int32 SlotId = InSlot.slot_id();
     int32 TemplateId = InSlot.item().template_id();
     ChangeMesh(SlotId, TemplateId);
+}
+
+bool AP1Player::GetItemMeshes(int32 TemplateId, TSoftObjectPtr<USkeletalMesh>& OutSkeletalMesh, TSoftObjectPtr<UStaticMesh>& OutStaticMesh) const
+{
+    if (ItemAssetTable == nullptr)
+    {
+        UE_LOG(LogP1Entity, Warning, TEXT("AP1Player에 ItemAssetTable이 지정되지 않음"));
+        return false;
+    }
+
+    const FP1ItemAssetData* AssetData = ItemAssetTable->FindRow<FP1ItemAssetData>(
+        FName(*FString::FromInt(TemplateId)), TEXT("AP1Player::GetItemMeshes"));
+    if (AssetData == nullptr)
+        return false;
+
+    OutSkeletalMesh = AssetData->SkeletalMesh;
+    OutStaticMesh = AssetData->StaticMesh;
+    return true;
 }
 
 void AP1Player::SetPlayerName(const FText& InName)

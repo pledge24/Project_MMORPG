@@ -40,6 +40,10 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
     TObjectPtr<UDataTable> ItemTable;
 
+    /** 아이템 아이콘을 담은 에셋 테이블이다. 행 구조체는 FP1ItemAssetData다. */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
+    TObjectPtr<UDataTable> ItemAssetTable;
+
     /** SlotData의 templateId가 바뀌면 함께 바뀐다. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
     FP1ItemData ItemData;
@@ -57,6 +61,10 @@ protected:
     /** 슬롯이 비었을 때 쓰는 아이콘이다. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
     TObjectPtr<UTexture2D> SlotDefaultIcon;
+
+private:
+    /** 에셋 테이블에서 아이콘을 찾아 표시한다. */
+    void ApplyIcon(int32 TemplateId);
 
     //~ Tooltip
 protected:
