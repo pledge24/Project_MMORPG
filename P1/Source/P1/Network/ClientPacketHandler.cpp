@@ -98,14 +98,7 @@ bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
     if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
     {
         // 연결을 곧바로 끊음
-        if (FSocket* Socket = GameInstance->Socket)
-        {
-            //ISocketSubsystem* SocketSubsystem = ISocketSubsystem::Get();
-            //SocketSubsystem->DestroySocket(Socket);
-            //Socket = nullptr;
-
-            Socket->Close();
-        }
+        GameInstance->CloseGameServerConnection();
     }
 
     return true;

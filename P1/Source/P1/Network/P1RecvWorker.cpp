@@ -47,6 +47,14 @@ void FP1RecvWorker::Exit()
 void FP1RecvWorker::Destroy()
 {
 	Running = false;
+
+	// 스레드가 끝난 뒤에 소켓이 파괴되도록 여기서 기다린다. 소켓이 먼저 닫혀 있어야 진행 중인 Recv가 끝난다.
+	if (Thread)
+	{
+		Thread->WaitForCompletion();
+		delete Thread;
+		Thread = nullptr;
+	}
 }
 
 bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
