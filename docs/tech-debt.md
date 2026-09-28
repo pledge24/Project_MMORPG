@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 22개 (높음 4 · 중간 12 · 낮음 6)
+항목 20개 (높음 4 · 중간 10 · 낮음 6)
 
 ## 작성 방법
 
@@ -167,65 +167,6 @@ UE 에디터로 실측한 결과는 아래 두 가지다.
 **버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
 (`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
 잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
-
-## 패킷 핸들러 템플릿이 두 곳에 같은 내용으로 추적된다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 모듈 · protocol
-> 위치: `Tools/PacketHandlerGenerator/Templates/PacketHandler.h` ·
-> `Protocol/Templates/PacketHandler.h`
-> 등록일: 2026년 9월 20일
-
-두 파일은 2,561바이트로 내용이 같고 git이 둘 다 추적한다.
-
-생성에 쓰이는 것은 `Protocol/Templates/PacketHandler.h` 하나다. `PacketHandlerGenerator.py`
-30줄이 `jinja2.FileSystemLoader('Templates')`로 상대 경로를 읽고, `Protocol/GenPackets.bat`이
-`pushd %~dp0`로 `Protocol/`에 들어간 뒤 생성기를 부르기 때문이다.
-`Tools/PacketHandlerGenerator/Templates/`는 읽히지 않는다.
-
-#71에서 이 중복이 실제로 어긋나 있었다. #66이 클라이언트 include를 경로 한정으로 바꾸면서 생성물인
-`P1/Source/P1/Network/ClientPacketHandler.h`만 고치고 템플릿 두 벌을 옛 평탄 include로 남겨 두었다.
-`GenPackets.bat`을 돌리자 옛 include가 되살아나 클라이언트 빌드가 `C1083`으로 깨졌다. #71이 두 벌을
-같은 내용으로 고쳤으므로 지금은 어긋나 있지 않다.
-
-**2026년 9월 27일 덧붙임 — `Tools` 쪽 사본도 쓰인다.** 생성기를 돌릴 때는 읽히지 않지만,
-`Tools/PacketHandlerGenerator/MakeExe.bat`이 exe를 만든 뒤 `robocopy`로 `Tools` 쪽 `Templates/`를
-`Protocol/Templates/`에 덮어쓴다. exe를 다시 만드는 경로에서는 `Tools` 쪽이 원본 역할을 한다.
-그래서 어느 쪽을 지울지는 `MakeExe.bat`의 복사 줄을 어떻게 할지와 함께 정해야 한다.
-
-### 영향
-
-**동일한 문제의 반복** · **변경 비용 증가** — 생성기 폴더 안에 있는 사본이 더 그럴듯해 보인다.
-그쪽을 고치면 생성 결과가 바뀌지 않고, 바뀌지 않는 까닭이 파일 위치가 아니라 실행 시점의 작업
-디렉터리에 있어서 원인을 찾는 데 시간이 걸린다.
-
-## 생성기가 만든 패킷 핸들러가 클라 모듈에서 컴파일되지 않는다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 프로젝트 · protocol
-> 위치: `Protocol/Templates/PacketHandler.h` 5~6줄
-> 등록일: 2026년 9월 20일
-
-템플릿 5~6줄이 `#include "SendBuffer.h"`와 `#include "Types.h"`를 쓴다. 두 줄 모두 경로가 없다.
-클라이언트 쪽에서 이 include가 해결되는지는 `P1.Build.cs`의 `PrivateIncludePaths`에 달려 있는데,
-지금 남아 있는 것은 모듈 루트 `P1/`과 생성물 폴더 `P1/Network` 둘뿐이다.
-
-| 템플릿이 적는 것 | 실제 위치 | 찾히는가 |
-|---|---|---|
-| `#include "SendBuffer.h"` | `P1/Source/P1/Network/SendBuffer.h` | 찾힌다. `P1/Network`가 경로에 있다 |
-| `#include "Types.h"` | `P1/Source/P1/Utils/Types.h` | **찾히지 않는다** |
-
-#46이 `Types.h`를 `Utils/`로 옮겼고 #47이 include 평탄화를 없앴다. 둘을 합치면 이 상태가 된다.
-지금 저장소에 커밋된 클라 사본은 `#include "Utils/Types.h"`로 손이 가 있어서 빌드가 통과하지만,
-**`Protocol/GenPackets.bat`을 한 번 돌리면 그 사본이 템플릿 출력으로 덮어써지고 클라 빌드가 깨진다.**
-`docs/codegen.md`가 「생성기를 다시 돌리는 순간 덮어써진다」고 적은 그대로다.
-
-고치는 방법은 템플릿의 두 줄을 경로 한정으로 바꾸는 것인데, 같은 템플릿이 DummyClient용 출력도
-만들고 그쪽 트리는 include 경로가 다르다. 그래서 템플릿 한 벌로는 양쪽을 동시에 만족시킬 수 없다.
-생성기(`Tools/PacketHandlerGenerator/PacketHandlerGenerator.py`)는 템플릿 경로를 인자로 받지 않고
-`Templates/PacketHandler.h`로 고정한다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **새 기능 개발 지연** — 패킷을 하나 추가하려면 생성기를 돌려야 하는데,
-돌리는 순간 클라가 빌드되지 않는다. 깨진 사실이 생성 시점에 드러나지 않고 다음 빌드에서 드러나서,
-원인을 생성기가 아니라 방금 추가한 패킷에서 찾게 된다.
 
 ## 아이템 원본 데이터가 Content 재배치 이전의 에셋 경로를 적는다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 기능 · client
