@@ -78,7 +78,6 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 - **에셋 속성은 Rider가 아니라 언리얼 MCP로 읽는다.** Rider의 `get_asset_properties`는 블루프린트
   CDO에 `properties: []`를 돌려준다(ADR-0002). 같은 에셋을 `unreal`의
   `ObjectTools.list_properties`로 읽으면 속성이 나온다.
-- 서버 변경 검증은 Unreal을 띄우지 않고 `Server/DummyClient/`로 가능하다 (실 클라와 동일 프로토콜).
 - **노출 ≠ 존재.** 판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다. **IDE 화면의 체크
   상태도 근거가 아니다** — 이 엔드포인트에 반영되지 않는다. 근거와 예외: `docs/build.md`와 ADR-0002
 
@@ -91,8 +90,8 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 - **UE 테스트는 종료 코드로 판정하지 않는다.** `UnrealEditor-Cmd`는 테스트가 실패해도, 필터가
   아무것도 못 맞춰도 `0`을 돌려준다. `pwsh P1/Scripts/Run-UeTests.ps1`을 쓰고 그 스크립트의
   종료 코드를 본다. 빌드에는 에디터를 닫는다.
-- 테스트가 없는 영역(UE 클라의 나머지 계층, 서버의 룸·DB 경로)은 서버 프로토콜·핸들러 변경을
-  DummyClient로 스모크 확인하고, 인증 서버 기동은 `npm start`로 확인한다.
+- 테스트가 없는 영역(UE 클라의 나머지 계층, 서버의 룸·DB 경로)은 지금 마땅한 테스트가 없다.
+  인증 서버 기동은 `npm start`로 확인한다.
 - 검증 없이 "완료했다"고 보고하지 않는다. 검증 불가한 부분은 불가하다고 명시한다.
 - **자기신고를 믿지 않는다.** 검증 커맨드를 실제로 실행한 결과 없이 완료를 선언하지 않는다.
   "됐을 것이다"는 완료가 아니다 — 코드를 고친 사실과 그 코드가 도는 사실은 별개다.

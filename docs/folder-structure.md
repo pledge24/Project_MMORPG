@@ -97,7 +97,7 @@ P1/Source/
 | 폴더 | 담는 것 |
 | --- | --- |
 | `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
-| `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치 |
+| `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치. `Server/ServerCore/Network/`와 대칭을 유지한다. 쓰이지 않는 함수도 지우지 않는다 |
 | `Sync/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸, 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
 | `Online/` | 로그인과 캐릭터 목록. 요청 하나에 응답 하나로 끝나는 비실시간 통신만 담는다 |
 | `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
@@ -476,7 +476,7 @@ Server/
 
 **`.vcxproj`에 파일이 하나씩 명시 등록된다.** 파일을 추가하거나 옮기면 `.vcxproj`와
 `.vcxproj.filters`를 함께 고친다. `GameServerTests.vcxproj`가 `GameServer`의 `.cpp`를 직접
-컴파일하므로 고칠 목록이 두 벌이다.
+컴파일하므로 고칠 목록이 두 벌이다. 필터 GUID는 VS가 만드는 무작위 값을 쓴다.
 
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
