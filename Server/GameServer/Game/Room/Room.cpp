@@ -641,7 +641,20 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
     // 2. Process Respawn
     if (shared_from_this() == respawnRoom)
     {
-        HandleRespawn(player, respawnType, respawnPos);
+        if (HandleRespawn(player, respawnType, respawnPos) == false)
+            return;
+
+        // 같은 룸이면 룸 이동이 없어서 다른 플레이어에게 알릴 경로가 없다.
+        // 사망한 모습을 지우고 리스폰 위치에 다시 스폰시킨다. 룸이 다를 때와 같은 결과다.
+        const int64 playerId = player->GetEntityId();
+
+        Protocol::S_DESPAWN despawnPkt;
+        despawnPkt.add_entity_ids(playerId);
+        Broadcast(ServerPacketHandler::MakeSerializedPacket(despawnPkt), playerId);
+
+        Protocol::S_SPAWN spawnPkt;
+        spawnPkt.add_entities()->CopyFrom(*player->_entityInfo);
+        Broadcast(ServerPacketHandler::MakeSerializedPacket(spawnPkt), playerId);
     }
     else
     {
@@ -774,11 +787,11 @@ void Room::HandleDie(CreatureRef creature)
     RemoveEntity(entityId);
 }
 
-void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
+bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
 {
     auto session = player->_session.lock();
     if (session == nullptr)
-        return;
+        return false;
 
     Protocol::S_RESPAWN respawnPkt;
     if (_respawnPoint == nullptr)
@@ -791,7 +804,7 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
             SEND_PACKET(respawnPkt)
         }
 
-        return;
+        return false;
     }
 
     // 호출자가 GetRespawnData로 계산해 넘겨준 위치를 쓴다.
@@ -807,11 +820,13 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
             SEND_PACKET(respawnPkt)
         }
 
-        return;
+        return false;
     }
 
     // 리스폰 성공 처리
     SEND_PACKET(respawnPkt)
+
+    return true;
 }
 
 void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)

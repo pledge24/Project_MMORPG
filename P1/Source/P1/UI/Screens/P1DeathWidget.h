@@ -24,6 +24,10 @@ public:
     UFUNCTION()
     void OnMyPlayerDie(AActor* KilledCreature);
 
+    /** 사망 화면을 숨기고 입력을 게임으로 돌려준다. */
+    UFUNCTION()
+    void OnMyPlayerRespawn(AActor* RespawnedCreature);
+
 protected:
     void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 

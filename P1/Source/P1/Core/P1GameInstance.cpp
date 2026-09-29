@@ -215,8 +215,10 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
     {
         MyPlayerData->SetRoomId(EnterRoomPkt.room_id());
 
-        // 단순 방 이동이라면 나를 제외한 모든 엔티티를 Despawn + 텔레포트
-        if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER)
+        // 같은 맵 안의 방 이동이라면 나를 제외한 모든 엔티티를 Despawn + 텔레포트.
+        // 다른 룸으로 리스폰하는 경우도 룸이 한 맵 안의 논리 분할이라 같은 처리다.
+        if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER
+            || EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_RESPAWN)
         {
             HandleDespawnAll(true);
             if (EnterRoomPkt.has_enter_pos() && IsValid(_MyPlayer))
@@ -390,8 +392,8 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
             }
         }
     }
-
 }
+
 void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
 {
     if (Socket == nullptr || GameServerSession == nullptr)
@@ -432,8 +434,6 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
                     _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
                     break;
                 }
-
-            }
                 }
             }
 
@@ -441,9 +441,11 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
             {
                 FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
                 OnThisStatChanged.Broadcast(Stat_.value());
-        }
-    }
+            }
 
+        }
+
+    }
 
 }
 
@@ -489,20 +491,20 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
                     break;
                 }
                 }
-
-            }
             }
 
             for (auto& Stat_ : UnequipGearPkt.updated_stat())
             {
                 FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
                 OnThisStatChanged.Broadcast(Stat_.value());
+            }
+
         }
 
     }
 
-}
 
+}
 
 void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
 {
@@ -575,11 +577,25 @@ void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
 
     if (RespawnPkt.success() == false)
     {
-        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패"));
+        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패: %hs"), RespawnPkt.error_message().c_str());
         return;
     }
 
-    UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 성공!"));
+    // 서버는 같은 액터가 살아나는 것으로 다룬다. 새로 스폰하지 않는다.
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(RespawnPkt.entity_id());
+    if (Creature == nullptr)
+        return;
+
+    Creature->S_Respawn(RespawnPkt.pos_info());
+
+    if (Creature->IsMyPlayer())
+    {
+        for (const Protocol::Stat& Stat_ : RespawnPkt.updated_stat())
+        {
+            _MyPlayerData->SetStatValue(Stat_.type(), Stat_.value());
+            _MyPlayerData->OnStatChangedMappings[Stat_.type()].Broadcast(Stat_.value());
+        }
+    }
 }
 
 UP1MyPlayerData* UP1GameInstance::GetMyPlayerData()
