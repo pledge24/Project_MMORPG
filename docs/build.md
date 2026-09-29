@@ -118,7 +118,19 @@ GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetM
 
 **인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `ServerConfig`의 기본값과 환경 변수, UserDB는 `.env`.
 
-Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
+Rider의 DB 연결은 두 벌이다.
+
+| 데이터 소스 | 계정 | 쓰는 쪽 |
+|---|---|---|
+| `GameDB` · `UserDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP) |
+| `GameDB (사용자 전용)` · `UserDB (사용자 전용)` | Windows 인증 | 사람. 행 편집은 여기서 한다 |
+
+Claude는 `claude_ro` 연결로만 SQL을 실행한다. `.claude/hooks/guard_dangerous_cmd.py`의
+`SQL_ALLOWED_CONNECTIONS`가 `execute_sql_query`의 `connectionId`를 허용 목록과 대조해 나머지를 막는다.
+LocalDB는 Windows 인증이라 셸에서 붙으면 관리자가 되므로, 같은 훅이 `sqlcmd`·`osql`·`Invoke-Sqlcmd`·
+`sqllocaldb`·`SqlClient` 직접 접속도 막는다(2026년 9월 30일 차단 확인).
+**`claude_ro` 데이터 소스를 다시 만들면 ID가 바뀌어 Claude의 조회가 전부 막힌다.** 그때는 새 ID를 허용
+목록에 넣는다. 파이썬 등 임의 코드로 여는 ODBC 연결은 문자열 검사로 완전히 막을 수 없다.
 
 두 서버가 공유하는 액세스 토큰 저장소로 Redis(`127.0.0.1:6379`).
 
