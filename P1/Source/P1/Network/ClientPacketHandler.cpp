@@ -1,4 +1,5 @@
 #include "Network/ClientPacketHandler.h"
+#include "Network/PacketSession.h"
 #include "Core/P1LoginMenuMode.h"
 #include "UI/Frontend/P1LoginWidget.h"
 #include "Core/P1LoginMenuPlayerController.h"
@@ -22,7 +23,7 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+	if (auto* GameInstance = session->GetGameInstance())
 	{
 		if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
 		{
@@ -42,7 +43,7 @@ bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 
 bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt) {
 	
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+	if (auto* GameInstance = session->GetGameInstance())
 	{
         if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
 		{
@@ -62,7 +63,7 @@ bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHA
 
 bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt) {
 
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
         {
@@ -82,12 +83,9 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
-    if (GWorld)
+    if (auto* GameInstance = session->GetGameInstance())
     {
-        if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
-        {
-            GameInstance->HandleEnterGame(pkt);
-        }
+        GameInstance->HandleEnterGame(pkt);
     }
 
 	return true;
@@ -95,7 +93,7 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         // 연결을 곧바로 끊음
         GameInstance->CloseGameServerConnection();
@@ -106,7 +104,7 @@ bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 
 bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleEnterMap(pkt);
         return true;
@@ -117,7 +115,7 @@ bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
 
 bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleEnterRoom(pkt);
         return true;
@@ -128,7 +126,7 @@ bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+	if (auto* GameInstance = session->GetGameInstance())
 	{
 		GameInstance->HandleSpawn(pkt);
         return true;
@@ -139,7 +137,7 @@ bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
 
 bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+	if (auto* GameInstance = session->GetGameInstance())
 	{
 		GameInstance->HandleDespawn(pkt);
         return true;
@@ -150,7 +148,7 @@ bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 
 bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 {
-	if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+	if (auto* GameInstance = session->GetGameInstance())
 	{
 		GameInstance->HandleMove(pkt);
         return true;
@@ -161,7 +159,7 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 
 bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleNormalAttack(pkt);
         return true;
@@ -172,7 +170,7 @@ bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK
 
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleHit(pkt);
         return true;
@@ -183,7 +181,7 @@ bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleBuyItem(pkt);
         return true;
@@ -194,7 +192,7 @@ bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
 
 bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleSellItem(pkt);
         return true;
@@ -205,7 +203,7 @@ bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleEquipGear(pkt);
         return true;
@@ -216,7 +214,7 @@ bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleUnequipGear(pkt);
         return true;
@@ -227,7 +225,7 @@ bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& 
 
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleUseItem(pkt);
         return true;
@@ -238,7 +236,7 @@ bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 
 bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleDie(pkt);
         return true;
@@ -249,7 +247,7 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 
 bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleRewardResult(pkt);
         return true;
@@ -260,7 +258,7 @@ bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT
 
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 {
-    if (auto* GameInstance = Cast<UP1GameInstance>(GWorld->GetGameInstance()))
+    if (auto* GameInstance = session->GetGameInstance())
     {
         GameInstance->HandleRespawn(pkt);
         return true;
