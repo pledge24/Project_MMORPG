@@ -58,19 +58,3 @@ void UP1DeathWidget::SendRespawnPacket(Protocol::RespawnType respawnType)
         SEND_PACKET(RespawnPkt);
     }
 }
-
-void UP1DeathWidget::Test()
-{
-    if (APlayerController* PC = GetP1PlayerController())
-    {
-        SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-
-        FInputModeUIOnly InputMode;
-        InputMode.SetWidgetToFocus(TakeWidget());
-        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = true;
-        UE_LOG(LogP1UI, Log, TEXT("?????"));
-    }
-}

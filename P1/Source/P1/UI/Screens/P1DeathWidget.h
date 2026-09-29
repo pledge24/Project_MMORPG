@@ -33,7 +33,4 @@ protected:
     void SendRespawnInTownPacket();
 
     void SendRespawnPacket(Protocol::RespawnType respawnType);
-
-    UFUNCTION(BlueprintCallable, Category = "Network")
-    void Test();
 };
