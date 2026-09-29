@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include "Player.h"
 #include "Inventory.h"
+#include "EquippedGear.h"
 
 /*--------------------------------------------------------------
     장비 장착·탈착 결과 테스트
@@ -28,10 +29,12 @@ protected:
         sword[string(JsonProperty::Item::ItemType)] = "weapon";
         sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
         sword[string(JsonProperty::Item::MaxStack)] = 1;
+        sword[string(JsonProperty::Item::PhysicalAttack)] = 10;
         Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = sword;
 
         player = make_shared<Player>();
         ASSERT_TRUE(player->Init());
+        player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, 5);
     }
 
     void TearDown() override
@@ -81,4 +84,17 @@ TEST_F(GearEquipTest, UnequipReportsEmptiedGearType)
     EXPECT_EQ(pkt.slot_id(), Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(pkt.template_id(), 0) << "뺀 아이템의 템플릿이 실려 가면 클라가 그 아이템을 다시 입힌다";
     EXPECT_FALSE(player->_playerInfo->equipped_gear_summary().contains(Protocol::GEAR_TYPE_WEAPON));
+}
+
+// DB에서 장착 장비를 불러올 때는 스텟 목록 없이 부른다. 스텟은 CalculateFinalStat이 따로 계산한다.
+TEST_F(GearEquipTest, LoadingEquippedGearPlacesItemWithoutTouchingStats)
+{
+    Protocol::Item sword;
+    sword.set_template_id(SWORD_TEMPLATE_ID);
+
+    ASSERT_TRUE(player->_equippedGear->EquipGear(nullptr, nullptr, sword, Protocol::GEAR_TYPE_WEAPON));
+
+    const Protocol::Slot& weaponSlot = player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
+    EXPECT_EQ(weaponSlot.item().template_id(), SWORD_TEMPLATE_ID);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), 5) << "불러오기에서 장비 스텟을 더하면 CalculateFinalStat 검증과 어긋난다";
 }
