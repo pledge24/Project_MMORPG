@@ -112,7 +112,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
             enterRoomPkt.set_room_id(_roomId);
 
-            SEND_PACKET(enterRoomPkt);
+            SEND_PACKET(enterRoomPkt)
         }
 
         return false;
@@ -130,7 +130,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
             if(roomEnterData.enterPos.has_value())
                 enterRoomPkt.mutable_enter_pos()->CopyFrom(roomEnterData.enterPos.value());
 
-            SEND_PACKET(enterRoomPkt);
+            SEND_PACKET(enterRoomPkt)
         }
     }
   
@@ -170,7 +170,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
                 Protocol::S_DESPAWN despawnPkt;
                 despawnPkt.add_entity_ids(leavePlayerId);
 
-                SEND_PACKET(despawnPkt);
+                SEND_PACKET(despawnPkt)
             }
         }
     }
@@ -220,7 +220,7 @@ void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt);
+            SEND_PACKET(enterMapPkt)
         }
     }
 }
@@ -249,7 +249,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
                 enterRoomPkt.set_success(false);
                 enterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 
-                SEND_PACKET(enterRoomPkt);
+                SEND_PACKET(enterRoomPkt)
             }
 
             return;
@@ -282,7 +282,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
                 enterRoomPkt.set_success(false);
                 enterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
 
-                SEND_PACKET(enterRoomPkt);
+                SEND_PACKET(enterRoomPkt)
             }
 
             return;
@@ -324,7 +324,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
                 enterRoomPkt.set_success(false);
                 enterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
 
-                SEND_PACKET(enterRoomPkt);
+                SEND_PACKET(enterRoomPkt)
             }
 
             return;
@@ -439,7 +439,7 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
         buyItemPkt.set_success(false);
         buyItemPkt.clear_updated_slots();
 
-        SEND_PACKET(buyItemPkt);
+        SEND_PACKET(buyItemPkt)
         return;
     }
 
@@ -448,7 +448,7 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
         buyItemPkt.set_success(true);
         buyItemPkt.set_gold(totalGold);
 
-        SEND_PACKET(buyItemPkt);
+        SEND_PACKET(buyItemPkt)
         cout << buyItemPkt.DebugString() << endl;
     }
 
@@ -470,7 +470,7 @@ void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
     {
         sellItemPkt.set_success(false);
 
-        SEND_PACKET(sellItemPkt);
+        SEND_PACKET(sellItemPkt)
         return;
     }
 
@@ -479,7 +479,7 @@ void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
         sellItemPkt.set_success(true);
         sellItemPkt.set_gold(totalGold);
 
-        SEND_PACKET(sellItemPkt);
+        SEND_PACKET(sellItemPkt)
         cout << sellItemPkt.DebugString() << endl;
     }
 
@@ -498,7 +498,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
     {
         useItemPkt.set_success(false);
 
-        SEND_PACKET(useItemPkt);
+        SEND_PACKET(useItemPkt)
         return;
     }
 
@@ -506,7 +506,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
     {
         useItemPkt.set_success(true);
 
-        SEND_PACKET(useItemPkt);
+        SEND_PACKET(useItemPkt)
         cout << useItemPkt.DebugString() << endl;
     }
 
@@ -533,7 +533,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
         if (SessionRef session = player->_session.lock())
         {
             equipGearPkt.set_success(false);
-            SEND_PACKET(equipGearPkt);
+            SEND_PACKET(equipGearPkt)
         }
 
         return;
@@ -543,7 +543,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     {
         SessionRef session = player->_session.lock();
         cout << equipGearPkt.DebugString() << endl;
-        SEND_PACKET(equipGearPkt);
+        SEND_PACKET(equipGearPkt)
     }
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
@@ -578,7 +578,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
         {
             unequipGearPkt.set_success(false);
 
-            SEND_PACKET(unequipGearPkt);
+            SEND_PACKET(unequipGearPkt)
         }
         return;
     }
@@ -586,7 +586,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     // 탈착한 유저에게만 그대로 전송.
     {
         SessionRef session = player->_session.lock();
-        SEND_PACKET(unequipGearPkt);
+        SEND_PACKET(unequipGearPkt)
     }
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
@@ -750,7 +750,7 @@ void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
 
     if (auto session = player->_session.lock())
     {
-        SEND_PACKET(rewardResultPkt);
+        SEND_PACKET(rewardResultPkt)
     }
 }
 
@@ -784,7 +784,7 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("No Respawn Point"));
 
-            SEND_PACKET(respawnPkt);
+            SEND_PACKET(respawnPkt)
         }
 
         return;
@@ -800,14 +800,14 @@ void Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("Fail to Respawn"));
 
-            SEND_PACKET(respawnPkt);
+            SEND_PACKET(respawnPkt)
         }
 
         return;
     }
 
     // 리스폰 성공 처리
-    SEND_PACKET(respawnPkt);
+    SEND_PACKET(respawnPkt)
 }
 
 void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
@@ -827,7 +827,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
             // equipped_gear_summary 활용하기
         }
 
-        SEND_PACKET(spawnPkt);
+        SEND_PACKET(spawnPkt)
     }
 }
 

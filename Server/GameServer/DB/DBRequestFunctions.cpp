@@ -120,7 +120,7 @@ void DBRequestFunctions::LoadUserCharactersData(SessionRef session, int64 userId
     }
     
     // 패킷 전송
-    SEND_PACKET(pkt);
+    SEND_PACKET(pkt)
 
     GDBConnectionPool->Push(dbConn);   
 }
@@ -263,7 +263,7 @@ void DBRequestFunctions::CreateCharacter(SessionRef session, const Protocol::Cha
     }
 
     // 패킷 전송
-    SEND_PACKET(createCharacterPkt);
+    SEND_PACKET(createCharacterPkt)
 
     GDBConnectionPool->Push(dbConn);
 }
@@ -357,7 +357,7 @@ void DBRequestFunctions::DeleteCharacter(SessionRef session, int64 characterId)
     }
 
     // 패킷 전송
-    SEND_PACKET(deleteCharacterPkt);
+    SEND_PACKET(deleteCharacterPkt)
 
     GDBConnectionPool->Push(dbConn);
 }
@@ -401,7 +401,7 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
         enterGamePkt.mutable_possession()->CopyFrom(*player->_possession);
     }
 
-    SEND_PACKET(enterGamePkt);
+    SEND_PACKET(enterGamePkt)
 }
 
 void DBRequestFunctions::UpdateAllCharactersData(SessionRef session)

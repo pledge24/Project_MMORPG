@@ -204,7 +204,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt);
+            SEND_PACKET(enterMapPkt)
         }
 
         return false;
@@ -228,7 +228,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt);
+            SEND_PACKET(enterMapPkt)
         }
 
         return false;
