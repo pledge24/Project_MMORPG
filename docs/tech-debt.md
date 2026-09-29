@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 10개 (높음 3 · 중간 6 · 낮음 1)
+항목 11개 (높음 3 · 중간 6 · 낮음 2)
 
 ## 작성 방법
 
@@ -72,32 +72,25 @@
 
 ---
 
-## 인게임 진입 직후 캐릭터가 스스로 죽는다
+## 사망한 플레이어가 부활하지 못한다
 > **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Content/P1/Characters/Monsters/` · `P1/Content/P1/UI/Screens/WBP_DeathScreen.uasset`
-> 등록일: 2026년 9월 16일 · 경로 갱신: 2026년 9월 21일 (#52)
+> 위치: `P1/Content/P1/UI/Screens/WBP_DeathScreen.uasset` · `P1/Source/P1/Core/P1GameInstance.cpp`
+> (`HandleRespawn`) · `P1/Source/P1/Game/Entities/P1Creature.cpp`
+> 등록일: 2026년 9월 29일
 
-인게임 맵에 진입하고 약 3초 뒤에 사망 화면이 뜬다. **서버는 `S_DIE`(1034)도 `S_HIT`(1023)도
-보내지 않는다.** 2026년 9월 16일 실측에서 그 세션이 받은 패킷은 아래가 전부다.
+사망 화면의 카운트다운이 끝나면 `WBP_DeathScreen`의 `ReturnToTown`이 불린다. 그런데 이 이벤트는
+문구를 「마을로 귀환 중...」으로 바꿀 뿐이고 `C_RESPAWN`을 보내지 않는다. 보내는 함수
+`UP1DeathWidget::SendRespawnInTownPacket`은 있지만 부르는 곳이 없다. 서버 쪽
+`Room::C_HandleRespawn`은 구현되어 있다.
 
-| 패킷 | ID | 건수 |
-|---|---|---|
-| `S_MOVE` | 1020 | 38 |
-| `S_SPAWN` | 1017 | 2 |
-| `S_LOGIN` | 1003 | 2 |
-| `S_ENTER_ROOM` `S_ENTER_GAME` `S_CREATE_CHARACTER` | 1016 1009 1005 | 각 1 |
-
-그럼에도 `WBP_DeathScreen_C_0`이 생성됐다. 즉 클라이언트가 서버 판정 없이 혼자 사망으로
-결론지었다. 전투 판정과 사망 화면이 모두 블루프린트에 있어 C++에서 추적할 수 없다.
-
-S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로토버프가 기본값 필드를 생략하므로,
-이는 좌표가 전부 0인 이동이 오갔다는 뜻이다.
+패킷이 오가더라도 클라이언트가 사망 상태를 풀지 않는다. `UP1GameInstance::HandleRespawn`은 로그만
+남기고, `SetDeadState(false)`를 부르는 곳이 코드 전체에 없다. 애니메이션 블루프린트 넷도 `OnDie`에서
+사망 플래그를 켜기만 하고 끄지 않는다.
 
 ### 영향
 
-**버그 발생 가능성 증가** · **테스트 어려움** — 인게임을 3초 넘게 유지할 수 없어 전투·인벤토리·
-상점 등 인게임 기능 전체를 손으로 확인할 수 없다. 서버 로그와 대조해도 원인이 클라 블루프린트
-안에 있어 좁혀지지 않는다.
+**버그 발생 가능성 증가** · **테스트 어려움** — 한 번 죽으면 사망 화면에서 빠져나올 수 없어
+클라이언트를 다시 띄워야 한다. 사망 이후의 흐름(부활 위치, 부활 뒤 전투)을 손으로 확인할 수 없다.
 
 ## `Room` / `DBRequestFunctions` 갓 클래스
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 모듈 · server
@@ -115,27 +108,25 @@ S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로�
 **테스트 어려움** · **변경 영향 범위 확대** — 두 파일이 서버 코드 10,009줄의 27%다. 어느 기능을
 고쳐도 같은 파일을 만지므로 변경이 서로 부딪히고, 테스트 대상을 잘라내기가 불가능하다.
 
-## 몬스터 전체 계층과 전투 로직이 블루프린트에 있다
+## 공격 콤보와 몽타주 선택이 블루프린트에 있다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · client
 > 위치: `P1/Content/P1/Characters/Monsters/`
 > 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
 
-UE 에디터로 실측한 결과는 아래 두 가지다.
-
-`BP_MonsterBase`(부모 C++ `Monster`)가 `ReceiveBeginPlay`·`ReceiveTick`·`ReceiveActorBeginOverlap`·
-`OnPostDie`를 BP로 구현한다. 그 아래 `BP_{Melee,Ranged,Super}MonsterBase` 3개와 미니언 9개가
-각자 다시 같은 3개 이벤트를 구현한다. BP 클래스 13개가 몬스터 틱 로직을 나눠 갖고 있다.
-
 `BPC_MonsterAttackSystem`과 `BPC_WarriorAttackSystem`(부모 C++ `AttackSystemComponent`)이
-`S_PerformNormalAttack`·`PerformNormalAttack`·`Reset Attack Combo`·`TestAttack`을 BP로 구현하고
-`NormalAttacks` 배열을 들고 있다. 콤보 상태 머신과 몽타주 선택이 전부 BP에 있다. C++
-`AttackSystemComponent`는 56+52줄뿐이다.
+`S_PerformNormalAttack`·`PerformNormalAttack`·`ResetAttackCombo`를 BP로 구현하고 `NormalAttacks`
+배열을 들고 있다. 콤보 상태 머신과 몽타주 선택이 전부 BP에 있다. C++ `AttackSystemComponent`는
+56+52줄뿐이다.
+
+몬스터 쪽 BP 클래스는 `BP_MonsterBase`(부모 C++ `Monster`) 아래로 `BP_{Melee,Ranged,Super}MonsterBase`
+3개와 미니언 9개, 모두 13개다. 2026년 9월 29일에 다시 읽은 결과 이 클래스들의 `BeginPlay`·`Tick`·
+`ActorBeginOverlap`은 비어 있거나 부모를 부르기만 한다. 몬스터 행동 로직은 BP에 없다.
 
 ### 영향
 
 **버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
-(`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
-잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
+(`Room::HandleNormalAttack`) 클라이언트의 콤보 규칙은 BP에 있어서, 양쪽 규칙이 갈라져도
+컴파일러도 테스트도 잡지 못한다.
 
 ## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
@@ -324,3 +315,20 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 **변경 영향 범위 확대** · **테스트 어려움** — 3.3이 「게임 도메인은 `Network/`를 직접 참조하지
 않는다」를 불변식으로 적는데 매크로 하나가 그것을 우회한다. 통신 방식을 바꾸면 게임 도메인의
 열두 자리를 함께 연다.
+
+## 인게임에서 받은 `S_MOVE`가 전부 빈 페이로드였다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · protocol
+> 위치: `Server/GameServer/Game/Room/Room.cpp` · `P1/Source/P1/Network/ClientPacketHandler.cpp`
+> 등록일: 2026년 9월 16일 · 분리: 2026년 9월 29일
+
+2026년 9월 16일에 인게임 세션 하나가 받은 패킷을 세었을 때 `S_MOVE`(1020) 38건이 전부 페이로드
+0바이트였다. 프로토버프는 설정하지 않은 필드를 직렬화하지 않으므로, 좌표를 담는 `PosInfo`가 한
+번도 채워지지 않았다는 뜻이다. 좌표가 0인 `PosInfo`를 채웠다면 필드 헤더만큼은 바이트가 남는다.
+
+이 측정은 캐릭터가 3초 만에 스스로 죽던 시기에 했다. 그 원인은 `BP_MyPlayer`의 테스트 노드였고
+2026년 9월 29일에 지웠다. 그 뒤로는 다시 재지 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 원인이 서버의 송신 쪽에 있다면 다른 클라이언트에게 위치가 전달되지
+않는다. 캐릭터가 오래 살아 있는 상태에서 다시 재야 틀렸는지가 확정된다.
