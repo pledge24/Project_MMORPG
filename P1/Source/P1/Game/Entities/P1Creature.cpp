@@ -1,7 +1,6 @@
 #include "Game/Entities/P1Creature.h"
-#include "Core/P1InGamePlayerController.h"
 #include "Game/Combat/P1AttackSystemComponent.h"
-#include "UI/WorldSpace/P1NameplateWidget.h"
+#include "Game/Entities/P1CreatureBoundWidget.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -34,8 +33,8 @@ void AP1Creature::BeginPlay()
     NameplateComponent = FindComponentByClass<UWidgetComponent>();
     if (NameplateComponent)
     {
-        if (UP1NameplateWidget* NameplateWidget = Cast<UP1NameplateWidget>(NameplateComponent->GetWidget()))
-            NameplateWidget->InitializeWidget(this);
+        if (IP1CreatureBoundWidget* NameplateWidget = Cast<IP1CreatureBoundWidget>(NameplateComponent->GetWidget()))
+            NameplateWidget->BindCreature(this);
         else
             UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature::BeginPlay() NameplateWidget 누락"));
     }

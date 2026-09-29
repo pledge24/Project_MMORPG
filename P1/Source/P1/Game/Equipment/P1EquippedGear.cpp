@@ -1,6 +1,5 @@
 #include "Game/Equipment/P1EquippedGear.h"
 #include "Game/Entities/P1MyPlayer.h"
-#include "P1.h"
 
 void UP1EquippedGear::Init(Map<int32, Protocol::Slot>* EquippedGear_)
 {

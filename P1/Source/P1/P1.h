@@ -16,6 +16,4 @@
 
 #include "Protocol.pb.h"
 
-#define SEND_PACKET(Pkt)															\
-	SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);		\
-	Cast<UP1GameInstance>(GWorld->GetGameInstance())->SendPacket(SendBuffer);
+// 패킷 전송은 Network/P1PacketSender.h의 FP1PacketSender::Send를 쓴다.

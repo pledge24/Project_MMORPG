@@ -120,6 +120,9 @@ protected:
 
     //~ Battle Mode
 public:
+    DECLARE_MULTICAST_DELEGATE_OneParam(FOnBattleModeChanged, bool /*bBattleMode*/);
+    FOnBattleModeChanged OnBattleModeChanged;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     bool bBattleMode = false;
 

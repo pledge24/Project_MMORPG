@@ -9,13 +9,13 @@ void UP1NameplateWidget::NativeConstruct()
     Super::NativeConstruct();
 }
 
-void UP1NameplateWidget::InitializeWidget(AActor* Actor)
+void UP1NameplateWidget::BindCreature(AP1Creature* Creature)
 {
-    if (AP1Player* Player = Cast<AP1Player>(Actor))
+    if (AP1Player* Player = Cast<AP1Player>(Creature))
     {
         InitializePlayerNameplate(Player);
     }
-    else if (AP1Monster* Monster = Cast<AP1Monster>(Actor))
+    else if (AP1Monster* Monster = Cast<AP1Monster>(Creature))
     {
         InitializeMonsterNameplate(Monster);
     }

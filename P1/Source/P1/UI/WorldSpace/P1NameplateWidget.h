@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
 #include "Utils/Types.h"
+#include "Game/Entities/P1CreatureBoundWidget.h"
 #include "P1NameplateWidget.generated.h"
 
 class AP1Player;
@@ -11,7 +12,7 @@ class UTextBlock;
 class UP1ProgressBarWidget;
 
 UCLASS()
-class P1_API UP1NameplateWidget : public UP1UserWidget
+class P1_API UP1NameplateWidget : public UP1UserWidget, public IP1CreatureBoundWidget
 {
     GENERATED_BODY()
 
@@ -20,12 +21,14 @@ public:
     virtual void NativeConstruct() override;
     //~ End UUserWidget Interface
 
+    //~ Begin IP1CreatureBoundWidget Interface
+public:
+    /** 크리처의 종류를 보고 플레이어용과 몬스터용 중 하나로 초기화한다. */
+    virtual void BindCreature(AP1Creature* Creature) override;
+    //~ End IP1CreatureBoundWidget Interface
+
     //~ Target Binding
 public:
-    /** 넘긴 액터의 종류를 보고 플레이어용과 몬스터용 중 하나로 초기화한다. */
-    UFUNCTION(BlueprintCallable)
-    void InitializeWidget(AActor* Actor);
-
     void InitializePlayerNameplate(AP1Player* TargetPlayer);
     void InitializeMonsterNameplate(AP1Monster* TargetMonster);
 

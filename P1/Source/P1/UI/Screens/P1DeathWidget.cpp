@@ -1,5 +1,6 @@
 #include "UI/Screens/P1DeathWidget.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1MyPlayerData.h"
 #include "Core/P1InGamePlayerController.h"
@@ -68,6 +69,6 @@ void UP1DeathWidget::SendRespawnPacket(Protocol::RespawnType respawnType)
     Protocol::C_RESPAWN RespawnPkt; 
     {
         RespawnPkt.set_respawn_type(respawnType);
-        SEND_PACKET(RespawnPkt);
+        FP1PacketSender::Send(this, RespawnPkt);
     }
 }

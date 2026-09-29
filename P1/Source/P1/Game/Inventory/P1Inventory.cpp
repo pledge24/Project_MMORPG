@@ -1,5 +1,4 @@
 #include "Game/Inventory/P1Inventory.h"
-#include "P1.h"
 #include "Utils/LogCategory.h"
 
 UP1Inventory::UP1Inventory()

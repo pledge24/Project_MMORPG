@@ -184,6 +184,13 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
         OutPlayer->SetServerPos(InEntityInfo.pos_info());
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
         OutPlayer->Initialize(InEntityInfo);
+
+        // 구독자가 초기화를 마친 내 플레이어를 받도록 Initialize 뒤에 알린다.
+        if (IsMine)
+        {
+            if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(OutPlayer))
+                MyPlayerData->OnMyPlayerSpawned.Broadcast(MyPlayer);
+        }
     }
     else
     {
