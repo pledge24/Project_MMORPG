@@ -167,9 +167,15 @@ UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment) → Game/Da
 Core → Game/Entities → 게임 도메인
 ```
 
-**게임 도메인은 `Network/`를 직접 참조하지 않는다.** 요청을 보낼 때도 도메인이 소켓을 직접
-다루지 않고, 요청 자료형을 만들어 `Network/`에 넘기는 인터페이스만 부른다.
+**게임 도메인이 `Network/`에서 부르는 것은 송신 창구 `Network/P1PacketSender.h` 하나뿐이다.**
+도메인은 요청 자료형(`Protocol::C_*`)을 만들어 `FP1PacketSender::Send(this, Pkt)`에 넘긴다. 게임
+인스턴스, 세션, 소켓은 그 헤더에 드러나지 않는다.
 — 이 경계가 무너지면 통신 방식을 바꿀 때 게임 코드 전체를 함께 고쳐야 한다.
+
+**게임 도메인은 `Core/`, `UI/`, 모듈 헤더 `P1.h`를 부르지 않는다.** 배선에 알려야 할 일은
+델리게이트로 알리고 배선이 구독한다(예: `AP1MyPlayer::OnBattleModeChanged`를 컨트롤러가
+`OnPossess`에서 구독). 배선의 객체를 도메인이 호출해야 하면 `Game/`에 인터페이스를 두고 배선이
+구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`).
 
 **`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.
 공용 매크로를 쓰려고 `Utils/`의 헤더를 여는 자리가 게임 도메인 전체를 딸려 끌고 온다.
