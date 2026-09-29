@@ -174,7 +174,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="DB\config.h" />
+    <ClInclude Include="Main\ServerConfig.h" />
     <ClInclude Include="Main\pch.h" />
     <ClInclude Include="Main\GameSession.h" />
     <ClInclude Include="Main\GameSessionManager.h" />
@@ -215,6 +215,7 @@
     <ClCompile Include="Main\GameSession.cpp" />
     <ClCompile Include="Main\GameSessionManager.cpp" />
     <ClCompile Include="Main\Global.cpp" />
+    <ClCompile Include="Main\ServerConfig.cpp" />
     <ClCompile Include="Main\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
