@@ -411,8 +411,5 @@ FodyWeavers.xsd
 # 하위 디렉토리와 파일들도 무시 해제
 !Libraries/**
 
-# 환경 변수 파일 무시
-/GameServer/DB/config.h
-
 # JetBrains Rider 프로젝트 캐시
 .idea/

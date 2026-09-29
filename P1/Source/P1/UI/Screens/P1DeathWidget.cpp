@@ -2,6 +2,7 @@
 #include "P1.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1MyPlayerData.h"
+#include "Core/P1InGamePlayerController.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
 
@@ -24,6 +25,7 @@ void UP1DeathWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 
     // 바인딩 셋업
     MyPlayer->OnDie.AddDynamic(this, &UP1DeathWidget::OnMyPlayerDie);
+    MyPlayer->OnRespawn.AddDynamic(this, &UP1DeathWidget::OnMyPlayerRespawn);
 }
 
 void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
@@ -45,6 +47,17 @@ void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
 
 }
 
+void UP1DeathWidget::OnMyPlayerRespawn(AActor* RespawnedCreature)
+{
+    SetVisibility(ESlateVisibility::Collapsed);
+
+    // 사망 중에 열려 있던 위젯이 있으면 UI 모드로 돌아가야 하므로 판단을 컨트롤러에 맡긴다.
+    if (AP1InGamePlayerController* PC = Cast<AP1InGamePlayerController>(GetP1PlayerController()))
+    {
+        PC->RefreshInputMode();
+    }
+}
+
 void UP1DeathWidget::SendRespawnInTownPacket()
 {
     SendRespawnPacket(Protocol::RESPAWN_TYPE_TOWN);
@@ -56,21 +69,5 @@ void UP1DeathWidget::SendRespawnPacket(Protocol::RespawnType respawnType)
     {
         RespawnPkt.set_respawn_type(respawnType);
         SEND_PACKET(RespawnPkt);
-    }
-}
-
-void UP1DeathWidget::Test()
-{
-    if (APlayerController* PC = GetP1PlayerController())
-    {
-        SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-
-        FInputModeUIOnly InputMode;
-        InputMode.SetWidgetToFocus(TakeWidget());
-        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = true;
-        UE_LOG(LogP1UI, Log, TEXT("?????"));
     }
 }

@@ -1,4 +1,5 @@
 #include "Online/P1LoginManager.h"
+#include "Network/P1NetworkSettings.h"
 #include "UI/Frontend/P1LoginWidget.h"
 #include "Http.h"
 #include "HttpModule.h"
@@ -8,6 +9,12 @@
 void UP1LoginManager::SetLoginWidget(UP1LoginWidget* Widget)
 {
 	LoginWidget = Widget;
+}
+
+FString UP1LoginManager::MakeAuthUrl(const TCHAR* Path)
+{
+    const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
+    return FString::Printf(TEXT("http://%s:%d%s"), *NetworkSettings->AuthServerIp, NetworkSettings->AuthServerPort, Path);
 }
 
 void UP1LoginManager::RequestLogin(const FString& Username, const FString& Password)
@@ -24,7 +31,7 @@ void UP1LoginManager::RequestLogin(const FString& Username, const FString& Passw
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
 	// 요청 설정
-	FString URL = FString::Printf(TEXT("http://%s:%d/Login"), *ServerIP, ServerPort);
+	FString URL = MakeAuthUrl(TEXT("/Login"));
 
     RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnLoginResponse);
     RequestRef->SetURL(URL);
@@ -50,7 +57,7 @@ void UP1LoginManager::RequestRegister(const FString& Username, const FString& Pa
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
 	// 요청 설정
-	FString URL = FString::Printf(TEXT("http://%s:%d/Account/Register"), *ServerIP, ServerPort);
+	FString URL = MakeAuthUrl(TEXT("/Account/Register"));
 
     RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnRegisterResponse);
     RequestRef->SetURL(URL);

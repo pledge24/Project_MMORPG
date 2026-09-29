@@ -19,9 +19,8 @@ public:
     void OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
 
 private:
-    // 인증 서버 주소
-    FString ServerIP = TEXT("127.0.0.1");
-    int32 ServerPort = 5000;
+    /** 인증 서버 주소에 경로를 붙인 URL. 주소는 UP1NetworkSettings에서 읽는다. */
+    static FString MakeAuthUrl(const TCHAR* Path);
 
     //~ Login Widget
 public:

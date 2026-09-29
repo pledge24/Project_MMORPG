@@ -161,17 +161,22 @@ void AP1InGamePlayerController::TurnOffWidget(EP1WidgetType Type)
         // Update Widget Flag
         WidgetFlag &= ~(1 << FlagIdx);
 
-        // 켜진 UI가 1개 이상이면 UI모드 유지
-        if (WidgetFlag > 0)
-        {
-            bShowMouseCursor = true;
-            SetInputMode(FInputModeGameAndUI());
-        }
-        else
-        {
-            bShowMouseCursor = false;
-            SetInputMode(FInputModeGameOnly());
-        }
+        RefreshInputMode();
+    }
+}
+
+void AP1InGamePlayerController::RefreshInputMode()
+{
+    // 켜진 UI가 1개 이상이면 UI모드 유지
+    if (WidgetFlag > 0)
+    {
+        bShowMouseCursor = true;
+        SetInputMode(FInputModeGameAndUI());
+    }
+    else
+    {
+        bShowMouseCursor = false;
+        SetInputMode(FInputModeGameOnly());
     }
 }
 

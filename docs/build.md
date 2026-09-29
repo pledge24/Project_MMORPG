@@ -29,8 +29,6 @@ git config core.hooksPath .githooks
 **클론마다 한 번씩 직접 설정한다.**
 — 설정하지 않으면 훅이 없는 것과 같다. 그 상태에서는 경고도 실패도 남지 않아 누락을 알아챌 신호가 없다. 대용량 파일이 히스토리에 들어간 뒤 되돌리려면 히스토리를 다시 써야 한다.
 
-게임 서버를 빌드하려면 `Server/GameServer/config.h`도 직접 만든다. 아래 「게임 서버」에 적혀 있다.
-
 ---
 
 ## 게임 서버
@@ -45,7 +43,13 @@ git config core.hooksPath .githooks
 
 `GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `Main/GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
 
-접속 문자열은 환경변수가 아니라 `Server/GameServer/config.h`에 컴파일 타임 상수로 박혀 있다. **gitignore됨 — 새로 클론하면 직접 만들어야 한다.**
+접속 정보는 `Server/GameServer/Main/ServerConfig.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
+
+| 환경 변수 | 기본값 |
+|---|---|
+| `P1_GAME_DB_CONNECTION_STRING` | `(localdb)\ProjectModels`의 `GameDB`, 통합 인증 |
+| `P1_REDIS_URI` | `tcp://127.0.0.1:6379` |
+| `P1_GAME_SERVER_PORT` | `7777` |
 
 ---
 
@@ -112,7 +116,7 @@ npm start                # = node src/app.js
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`도 있다.
 
-**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `config.h`(컴파일 타임 상수), UserDB는 `.env`.
+**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `ServerConfig`의 기본값과 환경 변수, UserDB는 `.env`.
 
 Rider의 DB 연결은 읽기 전용 계정(`claude_ro`)을 사용한다.
 

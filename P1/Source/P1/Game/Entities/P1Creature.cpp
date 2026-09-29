@@ -240,8 +240,18 @@ void AP1Creature::S_Hit(int64 Damage, int64 UpdatedHp)
 void AP1Creature::S_Die()
 {
     SetDeadState(true);
-    
+
     OnDie.Broadcast(this);
+}
+
+void AP1Creature::S_Respawn(const Protocol::PosInfo& RespawnPos)
+{
+    SetDeadState(false);
+
+    SetClientPos(RespawnPos);
+    SetServerPos(RespawnPos);
+
+    OnRespawn.Broadcast(this);
 }
 
 FVector AP1Creature::FindPerpendicularPoint() const

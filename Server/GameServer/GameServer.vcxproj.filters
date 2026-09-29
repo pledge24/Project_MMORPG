@@ -58,6 +58,9 @@
     <ClCompile Include="Main\ServerPacketHandler.cpp">
       <Filter>Main</Filter>
     </ClCompile>
+    <ClCompile Include="Main\ServerConfig.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
     <ClCompile Include="Main\Global.cpp">
       <Filter>Main</Filter>
     </ClCompile>
@@ -114,8 +117,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DB\config.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="Main\ServerConfig.h">
+      <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="Main\pch.h">
       <Filter>Main</Filter>

@@ -51,6 +51,7 @@
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
+    <ClCompile Include="ServerConfigTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
@@ -61,6 +62,9 @@
       <Filter>GameServer\Main</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\ServerConfig.cpp">
       <Filter>GameServer\Main</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Main\Global.cpp">

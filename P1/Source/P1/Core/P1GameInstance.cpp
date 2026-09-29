@@ -6,6 +6,7 @@
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 #include "Network/PacketSession.h"
+#include "Network/P1NetworkSettings.h"
 #include "Protocol.pb.h"
 #include "Network/ClientPacketHandler.h"
 #include "Game/Entities/P1MyPlayer.h"
@@ -63,12 +64,8 @@ bool UP1GameInstance::TickRecvPump(float DeltaTime)
         return true;
 
     // 코어 티커는 월드 틱 밖에서 돌기 때문에 이 시점의 GWorld는 게임 월드가 아니다.
-    // 에디터에서는 에디터 월드를 가리키고, 그 월드에는 게임 인스턴스가 없다.
-    // 패킷 핸들러 20개가 GWorld->GetGameInstance()로 시작하므로 호출 구간에만 맞춰 준다.
-    UWorld* PrevWorld = GWorld;
-    GWorld = World;
+    // 패킷 핸들러는 GWorld를 보지 않고 세션이 들고 있는 게임 인스턴스를 쓴다.
     HandleRecvPackets();
-    GWorld = PrevWorld;
 
     return true;
 }
@@ -88,12 +85,14 @@ void UP1GameInstance::ConnectToGameServer()
 
 	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("Stream"), TEXT("Client Socket"));
 
+	const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
+
 	FIPv4Address Ip;
-	FIPv4Address::Parse(IpAddress, Ip);
+	FIPv4Address::Parse(NetworkSettings->GameServerIp, Ip);
 
 	TSharedRef<FInternetAddr> InternetAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 	InternetAddr->SetIp(Ip.Value);
-	InternetAddr->SetPort(Port);
+	InternetAddr->SetPort(NetworkSettings->GameServerPort);
 
 	bool Connected = Socket->Connect(*InternetAddr);
 
@@ -102,7 +101,7 @@ void UP1GameInstance::ConnectToGameServer()
 		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Success To Connect GameServer")));
 
 		// Session
-		GameServerSession = MakeShared<PacketSession>(Socket);
+		GameServerSession = MakeShared<PacketSession>(Socket, this);
 		GameServerSession->Run();
 
 		// AuthServer로부터 받은 AccessToken과 함께 로그인 패킷 전송
@@ -182,7 +181,7 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     MyPlayerData->InitMyPlayerData(EnterGamePkt);
 
     // TEMP
-    UGameplayStatics::OpenLevel(GWorld, FName("L_InGameMap"));
+    UGameplayStatics::OpenLevel(GetWorld(), FName("L_InGameMap"));
 }
 
 void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
@@ -201,7 +200,7 @@ void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
     }
 
     // TEMP
-    UGameplayStatics::OpenLevel(GWorld, FName("L_InGameMap"));
+    UGameplayStatics::OpenLevel(GetWorld(), FName("L_InGameMap"));
 }
 
 void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)
@@ -216,8 +215,10 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
     {
         MyPlayerData->SetRoomId(EnterRoomPkt.room_id());
 
-        // 단순 방 이동이라면 나를 제외한 모든 엔티티를 Despawn + 텔레포트
-        if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER)
+        // 같은 맵 안의 방 이동이라면 나를 제외한 모든 엔티티를 Despawn + 텔레포트.
+        // 다른 룸으로 리스폰하는 경우도 룸이 한 맵 안의 논리 분할이라 같은 처리다.
+        if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER
+            || EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_RESPAWN)
         {
             HandleDespawnAll(true);
             if (EnterRoomPkt.has_enter_pos() && IsValid(_MyPlayer))
@@ -300,20 +301,9 @@ void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
 
 void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
 {
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
+    if (AP1Creature* Creature = FindEntityAs<AP1Creature>(Info.entity_id()))
     {
-        AActor* FindActor = StatefulEntityManager->FindEntity(Info.entity_id());
-        if (FindActor == nullptr)
-            return;
-
-        if (AP1Creature* Creature = Cast<AP1Creature>(FindActor))
-        {
-            Creature->PushToMoveQueue(Info);
-        }
+        Creature->PushToMoveQueue(Info);
     }
 }
 
@@ -378,43 +368,30 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 
-    auto* World = GetWorld();
-    if (World == nullptr)
+    AP1Player* Player = FindEntityAs<AP1Player>(UseItemPkt.entity_id());
+    if (Player == nullptr)
         return;
 
-    const uint64 EntityId = UseItemPkt.entity_id();
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
+    if (Player->IsMyPlayer() == false)
+        return;
+
+    if (IsValid(_MyPlayer) == true)
     {
-        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
-        if (FindActor == nullptr)
-            return;
-
-        AP1Player* Player = Cast<AP1Player>(FindActor);
-        if (Player == nullptr)
-            return;
-
-        if (Player->IsMyPlayer() == false)
-            return;
-
-        if (IsValid(_MyPlayer) == true)
+        OnRecvUseItemPkt.Broadcast();
+        if (UseItemPkt.success() == true)
         {
-            OnRecvUseItemPkt.Broadcast();
-            if (UseItemPkt.success() == true)
+            for (auto& Slot_ : UseItemPkt.updated_slots())
             {
-                for (auto& Slot_ : UseItemPkt.updated_slots())
-                {
-                    _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, true);
-                }
+                _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, true);
+            }
 
-                for (const auto& Stat_ : UseItemPkt.updated_stat())
-                {
-                    FOnStatChanged& OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
-                    OnThisStatChanged.Broadcast(Stat_.value());
-                }
+            for (const auto& Stat_ : UseItemPkt.updated_stat())
+            {
+                FOnStatChanged& OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
+                OnThisStatChanged.Broadcast(Stat_.value());
             }
         }
     }
-
 }
 
 void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
@@ -422,64 +399,52 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 
-    auto* World = GetWorld();
-    if (World == nullptr)
+    AP1Player* Player = FindEntityAs<AP1Player>(EquipGearPkt.entity_id());
+    if (Player == nullptr)
         return;
 
-    const uint64 EntityId = EquipGearPkt.entity_id();
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
+    // 공통: 장착 부위 매쉬 변경
+    if(EquipGearPkt.success() == true){
+        int32 SlotId = EquipGearPkt.slot_id();
+        int32 TemplateId = EquipGearPkt.template_id();
+
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(SlotId, TemplateId);
+    }
+
+    // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
+    if (Player->IsMyPlayer())
     {
-        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
-        if (FindActor == nullptr)
-            return;
-
-        AP1Player* Player = Cast<AP1Player>(FindActor);
-        if (Player == nullptr)
-            return;
-
-        // 공통: 장착 부위 매쉬 변경
-        if(EquipGearPkt.success() == true){
-            int32 SlotId = EquipGearPkt.slot_id();
-            int32 TemplateId = EquipGearPkt.template_id();
-
-            // 장착한 갑옷 메시 적용
-            Player->ChangeMesh(SlotId, TemplateId);
-        }
-
-        // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
-        if (Player->IsMyPlayer())
+        OnRecvEquipGearPkt.Broadcast();
+        if (EquipGearPkt.success() == true)
         {
-            OnRecvEquipGearPkt.Broadcast();
-            if (EquipGearPkt.success() == true)
+            for (auto& Slot_ : EquipGearPkt.updated_slots())
             {
-                for (auto& Slot_ : EquipGearPkt.updated_slots())
+                switch (Slot_.type())
                 {
-                    switch (Slot_.type())
-                    {
-                    case Protocol::SLOT_TYPE_EQUIPPED:
-                    {
-                        _MyPlayerData->OnEquipmentSlotChanged.Broadcast(Slot_);
-                        break;
-                    }
-                    case Protocol::SLOT_TYPE_INVENTORY_GEAR:
-                    case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
-                    case Protocol::SLOT_TYPE_INVENTORY_MISC:
-                    {
-                        _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
-                        break;
-                    }
-                    }
-                }
-
-                for (auto& Stat_ : EquipGearPkt.updated_stat())
+                case Protocol::SLOT_TYPE_EQUIPPED:
                 {
-                    FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
-                    OnThisStatChanged.Broadcast(Stat_.value());
+                    _MyPlayerData->OnEquipmentSlotChanged.Broadcast(Slot_);
+                    break;
                 }
+                case Protocol::SLOT_TYPE_INVENTORY_GEAR:
+                case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
+                case Protocol::SLOT_TYPE_INVENTORY_MISC:
+                {
+                    _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
+                    break;
+                }
+                }
+            }
 
+            for (auto& Stat_ : EquipGearPkt.updated_stat())
+            {
+                FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
+                OnThisStatChanged.Broadcast(Stat_.value());
             }
 
         }
+
     }
 
 }
@@ -489,67 +454,55 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 
-    auto* World = GetWorld();
-    if (World == nullptr)
+    AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id());
+    if (Player == nullptr)
         return;
 
-    const uint64 EntityId = UnequipGearPkt.entity_id();
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
+    // 공통: 장착 부위 매쉬 변경
+    if (UnequipGearPkt.success() == true)
     {
-        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
-        if (FindActor == nullptr)
-            return;
+        int32 SlotId = UnequipGearPkt.slot_id();
+        int32 TemplateId = UnequipGearPkt.template_id();
 
-        AP1Player* Player = Cast<AP1Player>(FindActor);
-        if (Player == nullptr)
-            return;
+        // 장착한 갑옷 메시 적용
+        Player->ChangeMesh(SlotId, TemplateId);
+    }
 
-        // 공통: 장착 부위 매쉬 변경
+    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
+    if (Player->IsMyPlayer())
+    {
+        OnRecvUnequipGearPkt.Broadcast();
         if (UnequipGearPkt.success() == true)
         {
-            int32 SlotId = UnequipGearPkt.slot_id();
-            int32 TemplateId = UnequipGearPkt.template_id();
-
-            // 장착한 갑옷 메시 적용
-            Player->ChangeMesh(SlotId, TemplateId);
-        }
-
-        // 장착해서 갱신된 인벤 슬롯 정보를 반영.
-        if (Player->IsMyPlayer())
-        {
-            OnRecvUnequipGearPkt.Broadcast();
-            if (UnequipGearPkt.success() == true)
+            for (auto& Slot_ : UnequipGearPkt.updated_slots())
             {
-                for (auto& Slot_ : UnequipGearPkt.updated_slots())
+                switch (Slot_.type())
                 {
-                    switch (Slot_.type())
-                    {
-                    case Protocol::SLOT_TYPE_EQUIPPED:
-                    {
-                        _MyPlayerData->OnEquipmentSlotChanged.Broadcast(Slot_);
-                        break;
-                    }
-                    case Protocol::SLOT_TYPE_INVENTORY_GEAR:
-                    case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
-                    case Protocol::SLOT_TYPE_INVENTORY_MISC:
-                    {
-                        _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
-                        break;
-                    }
-                    }
-                }
-
-                for (auto& Stat_ : UnequipGearPkt.updated_stat())
+                case Protocol::SLOT_TYPE_EQUIPPED:
                 {
-                    FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
-                    OnThisStatChanged.Broadcast(Stat_.value());
+                    _MyPlayerData->OnEquipmentSlotChanged.Broadcast(Slot_);
+                    break;
                 }
+                case Protocol::SLOT_TYPE_INVENTORY_GEAR:
+                case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
+                case Protocol::SLOT_TYPE_INVENTORY_MISC:
+                {
+                    _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
+                    break;
+                }
+                }
+            }
 
+            for (auto& Stat_ : UnequipGearPkt.updated_stat())
+            {
+                FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
+                OnThisStatChanged.Broadcast(Stat_.value());
             }
 
         }
 
     }
+
 
 }
 
@@ -558,26 +511,14 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 
-    auto* World = GetWorld();
-    if (World == nullptr)
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(NormalAttackPkt.entity_id());
+    if (Creature == nullptr)
         return;
 
-    const uint64 EntityId = NormalAttackPkt.entity_id();
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
-    {
-        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
-        if (FindActor == nullptr)
-            return;
-        
-        AP1Creature* Creature = Cast<AP1Creature>(FindActor);
-        if (Creature == nullptr)
-            return;
+    uint32 Combo = NormalAttackPkt.combo();
+    float Yaw = NormalAttackPkt.yaw();
 
-        uint32 Combo = NormalAttackPkt.combo();
-        float Yaw = NormalAttackPkt.yaw();
-
-        Creature->S_NormalAttack(Combo, Yaw);
-    }
+    Creature->S_NormalAttack(Combo, Yaw);
 
 }
 
@@ -586,29 +527,17 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 
-    auto* World = GetWorld();
-    if (World == nullptr)
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(HitPkt.entity_id());
+    if (Creature == nullptr)
         return;
 
-    int64 EntityId = HitPkt.entity_id();
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
+    // S_Hit?
+    Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
+
+    if (Creature->IsMyPlayer())
     {
-        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
-        if (FindActor == nullptr)
-            return;
-
-        AP1Creature* Creature = Cast<AP1Creature>(FindActor);
-        if (Creature == nullptr)
-            return;
-
-        // S_Hit?
-        Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
-
-        if (Creature->IsMyPlayer())
-        {
-            FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_HP];
-            OnThisStatChanged.Broadcast(HitPkt.updated_hp());
-        }
+        FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_HP];
+        OnThisStatChanged.Broadcast(HitPkt.updated_hp());
     }
 }
 
@@ -617,23 +546,11 @@ void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
 
-    auto* World = GetWorld();
-    if (World == nullptr)
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(DiePkt.entity_id());
+    if (Creature == nullptr)
         return;
 
-    const uint64 EntityId = DiePkt.entity_id();
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
-    {
-        AActor* FindActor = StatefulEntityManager->FindEntity(EntityId);
-        if (FindActor == nullptr)
-            return;
-
-        AP1Creature* Creature = Cast<AP1Creature>(FindActor);
-        if (Creature == nullptr)
-            return;
-
-        Creature->S_Die();
-    }
+    Creature->S_Die();
 }
 
 void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
@@ -660,11 +577,25 @@ void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
 
     if (RespawnPkt.success() == false)
     {
-        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패"));
+        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패: %hs"), RespawnPkt.error_message().c_str());
         return;
     }
 
-    UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 성공!"));
+    // 서버는 같은 액터가 살아나는 것으로 다룬다. 새로 스폰하지 않는다.
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(RespawnPkt.entity_id());
+    if (Creature == nullptr)
+        return;
+
+    Creature->S_Respawn(RespawnPkt.pos_info());
+
+    if (Creature->IsMyPlayer())
+    {
+        for (const Protocol::Stat& Stat_ : RespawnPkt.updated_stat())
+        {
+            _MyPlayerData->SetStatValue(Stat_.type(), Stat_.value());
+            _MyPlayerData->OnStatChangedMappings[Stat_.type()].Broadcast(Stat_.value());
+        }
+    }
 }
 
 UP1MyPlayerData* UP1GameInstance::GetMyPlayerData()

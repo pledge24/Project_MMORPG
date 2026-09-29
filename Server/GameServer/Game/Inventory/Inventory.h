@@ -22,20 +22,11 @@ public:
 
     int32 FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
 
-    // 매핑 표에 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다.
-    // operator[]는 없는 키를 조회하면 빈 vector를 표에 삽입하므로,
-    // 그 참조를 호출자가 인덱싱하면 범위 밖 접근이 된다.
-    vector<bool>* GetDirtyFlags(Protocol::ItemType itemType)
-    {
-        auto dirtyFlagsIt = _dirtyFlagsMappings.find(itemType);
-        if (dirtyFlagsIt == _dirtyFlagsMappings.end())
-            return nullptr;
-
-        return &dirtyFlagsIt->second;
-    }
+    // 저장소가 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다.
+    vector<bool>* GetDirtyFlags(Protocol::ItemType itemType);
 
     Protocol::Slot* GetSlot(Protocol::SlotType type, int32 slot_id);
-    
+
     void ClearDirtyFlags();
 
 
@@ -43,17 +34,25 @@ public:
     weak_ptr<Player> _player;
 
 private:
-    /* 신뢰 경계 밖에서 온 슬롯 입력 판정 */
-    // 매핑 표에 없는 SlotType이면 nullopt. 표를 바꾸지 않고 조회만 한다.
-    optional<Protocol::ItemType> ToItemType(Protocol::SlotType slotType) const;
+    // 아이템 타입 하나가 쓰는 저장소다. 슬롯 배열과 더티 플래그와 슬롯 타입을 한 곳에 두어,
+    // 넣을 때와 꺼낼 때 서로 다른 표를 보다가 어긋나는 일이 생기지 않게 한다.
+    struct Bag
+    {
+        Protocol::ItemType itemType;
+        Protocol::SlotType slotType;
+        RepeatedPtrField<Protocol::Slot>* slots;
+        vector<bool> dirtyFlags;
+    };
+
+    // 저장소가 없는 타입이면 nullptr. 신뢰 경계 밖에서 온 SlotType도 여기서 걸러진다.
+    Bag* FindBag(Protocol::ItemType itemType);
+    Bag* FindBag(Protocol::SlotType slotType);
+
+    // 아이템 데이터의 "itemType" 문자열을 ItemType으로 바꾼다. 필드가 없거나 모르는 값이면 nullopt.
+    static optional<Protocol::ItemType> ToItemType(const Json& itemData);
     static bool IsValidSlotId(int32 slotId) { return slotId >= 0 && slotId < MAX_SLOTS; }
 
 private:
-    unordered_map<Protocol::ItemType, RepeatedPtrField<Protocol::Slot>*> _inventoryLookupMappings;
-    unordered_map<Protocol::ItemType, vector<bool>> _dirtyFlagsMappings;
-
-    /* 유틸 매핑 */
-    unordered_map<Protocol::SlotType, Protocol::ItemType> _slotTypeToItemTypeMappings;
-    unordered_map<string, Protocol::ItemType> _itemTypeMappings;
+    vector<Bag> _bags;
 };
 

@@ -87,6 +87,14 @@ public:
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnDie OnDie;
 
+    /** 사망 상태를 풀고 리스폰 위치로 옮긴다. 같은 액터를 다시 쓴다. */
+    virtual void S_Respawn(const Protocol::PosInfo& RespawnPos);
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRespawn, AActor*, RespawnedCreature);
+
+    UPROPERTY(BlueprintAssignable, Category = "Delegate")
+    FOnRespawn OnRespawn;
+
 private:
     bool _IsDead = false;
 

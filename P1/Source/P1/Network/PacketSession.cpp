@@ -6,11 +6,17 @@
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 #include "Network/ClientPacketHandler.h"
+#include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
 
-PacketSession::PacketSession(class FSocket* Socket) : Socket(Socket)
+PacketSession::PacketSession(class FSocket* Socket, UP1GameInstance* InGameInstance) : GameInstance(InGameInstance), Socket(Socket)
 {
 	ClientPacketHandler::Init();
+}
+
+UP1GameInstance* PacketSession::GetGameInstance() const
+{
+	return GameInstance.Get();
 }
 
 PacketSession::~PacketSession()

@@ -152,7 +152,7 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 "필요한 것만"이 아니라 "main 빼고 전부"인 이유는 둘이다.
 
 - `Inventory.cpp` → `Player.cpp` → `Room.cpp` → `DBRequestFunctions.cpp`로 전이 의존이 이어져 결국 대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 추가하는 루프는 비결정적이라 재현되지 않는다.
-- `Main/GameServer.cpp`는 gitignore된 `config.h`의 유일한 소비자다(실측). 이것만 빼면 테스트 타깃이 **비밀 없이 빌드된다.** CI 전제가 여기서 나온다.
+- `Main/GameServer.cpp`에는 `main`이 있다. 테스트 타깃은 자기 `main`(`TestMain.cpp`)을 쓰므로 이 파일만 뺀다.
 
 ---
 
@@ -171,7 +171,7 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 - L2·L3 실행에는 **에디터가 필요하다** (`Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."`). 서버처럼 무인 루프가 되지 않는다.
 - **L3는 Live Coding 비호환 — TDD 루프 금지, 배치 전용.**
 - L4는 병렬 실행 시 포트 파라미터화.
-- CI: 서버 쪽 전제는 갖춰졌다 — `GameServerTests`는 gitignore된 `config.h` 없이 빌드된다. UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.
+- CI: 서버 쪽 전제는 갖춰졌다. 저장소에 없는 파일 없이 `GameServerTests`가 빌드된다. UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.
 
 ---
 

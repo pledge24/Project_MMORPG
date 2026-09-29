@@ -4,11 +4,19 @@
 #include "Network/SendBuffer.h"
 #include "Utils/Types.h"
 
+class UP1GameInstance;
+
 class P1_API PacketSession : public TSharedFromThis<PacketSession>
 {
 public:
-    PacketSession(class FSocket* Socket);
+    PacketSession(class FSocket* Socket, UP1GameInstance* InGameInstance);
     ~PacketSession();
+
+    /** 이 세션을 연 게임 인스턴스다. 패킷 핸들러는 전역 월드 대신 여기서 게임 인스턴스를 얻는다. */
+    UP1GameInstance* GetGameInstance() const;
+
+private:
+    TWeakObjectPtr<UP1GameInstance> GameInstance;
 
     //~ Session Lifecycle
 public:

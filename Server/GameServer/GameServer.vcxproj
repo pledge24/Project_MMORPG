@@ -174,7 +174,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="DB\config.h" />
+    <ClInclude Include="Main\ServerConfig.h" />
     <ClInclude Include="Main\pch.h" />
     <ClInclude Include="Main\GameSession.h" />
     <ClInclude Include="Main\GameSessionManager.h" />
@@ -215,6 +215,7 @@
     <ClCompile Include="Main\GameSession.cpp" />
     <ClCompile Include="Main\GameSessionManager.cpp" />
     <ClCompile Include="Main\Global.cpp" />
+    <ClCompile Include="Main\ServerConfig.cpp" />
     <ClCompile Include="Main\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -250,8 +251,8 @@
     <ClCompile Include="DB\DBRequestFunctions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Protocol\Schema\Enum.proto" />
     <None Include="..\..\Protocol\GenPackets.bat" />
+    <None Include="..\..\Protocol\Schema\Enum.proto" />
     <None Include="..\..\Protocol\Schema\Protocol.proto" />
     <None Include="..\..\Protocol\Schema\Struct.proto" />
     <None Include="Queries\AlterTable.sql" />
@@ -264,11 +265,6 @@
     <None Include="Game\Data\Json\S_Monster.json" />
     <None Include="Game\Data\Json\S_Quest.json" />
     <None Include="Game\Data\Json\S_Warrior_Level_Data.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <UpToDateCheckInput Include="..\..\Protocol\Schema\Enum.proto" />
-    <UpToDateCheckInput Include="..\..\Protocol\Schema\Protocol.proto" />
-    <UpToDateCheckInput Include="..\..\Protocol\Schema\Struct.proto" />
   </ItemGroup>
   <ItemGroup>
     <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 하므로

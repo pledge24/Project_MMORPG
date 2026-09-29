@@ -26,29 +26,10 @@ Inventory::Inventory(PlayerRef player) : _player(player)
         slotMisc->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
     }
 
-    _inventoryLookupMappings = {
-        {Protocol::ItemType::ITEM_TYPE_GEAR, inventory->mutable_gear()},
-        {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, inventory->mutable_consumables()},
-        {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, inventory->mutable_miscellaneous()}
-    };
-
-    _dirtyFlagsMappings = {
-        {Protocol::ItemType::ITEM_TYPE_GEAR, vector<bool>(MAX_SLOTS)},
-        {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, vector<bool>(MAX_SLOTS)},
-        {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, vector<bool>(MAX_SLOTS)}
-    };
-
-    _slotTypeToItemTypeMappings = {
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, Protocol::ItemType::ITEM_TYPE_GEAR},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS}
-    };
-
-    _itemTypeMappings = {
-        {"armor", Protocol::ItemType::ITEM_TYPE_GEAR},
-        {"weapon", Protocol::ItemType::ITEM_TYPE_GEAR},
-        {"consumption", Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
-        {"miscellaneous", Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS},
+    _bags = {
+        {Protocol::ItemType::ITEM_TYPE_GEAR, Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, inventory->mutable_gear(), vector<bool>(MAX_SLOTS)},
+        {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, inventory->mutable_consumables(), vector<bool>(MAX_SLOTS)},
+        {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, inventory->mutable_miscellaneous(), vector<bool>(MAX_SLOTS)}
     };
 }
 
@@ -63,24 +44,24 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
 
     const Json& itemData = Gamedata::s_itemDataTable[itemInstance.template_id()];
 
-    if (_itemTypeMappings.find(itemData[JsonProperty::Item::ItemType]) == _itemTypeMappings.end())
+    optional<Protocol::ItemType> itemType = ToItemType(itemData);
+    if (itemType.has_value() == false)
         return false;
 
-    Protocol::ItemType itemType = _itemTypeMappings[itemData[JsonProperty::Item::ItemType]];
-    if (_inventoryLookupMappings.find(itemType) == _inventoryLookupMappings.end())
+    Bag* bag = FindBag(itemType.value());
+    if (bag == nullptr)
         return false;
 
-    int32 availableSlotId = setSlotId.has_value() ? setSlotId.value() : FindFirstAvailableSlotId(itemType, itemInstance.template_id());
+    int32 availableSlotId = setSlotId.has_value() ? setSlotId.value() : FindFirstAvailableSlotId(bag->itemType, itemInstance.template_id());
     if (availableSlotId == -1)
         return false;
 
     // 들어갈 슬롯 찾았으니 이제 진짜 추가해야함
-    RepeatedPtrField<Protocol::Slot>* lookupTable = _inventoryLookupMappings[itemType];
-    Protocol::Slot* targetSlot = lookupTable->Mutable(availableSlotId);
+    Protocol::Slot* targetSlot = bag->slots->Mutable(availableSlotId);
     if (targetSlot == nullptr)
         return false;
 
-    _dirtyFlagsMappings[itemType][availableSlotId] = true;
+    bag->dirtyFlags[availableSlotId] = true;
     if (targetSlot->has_item())
     {
         // Modifiy slot data
@@ -102,7 +83,7 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
         item->CopyFrom(itemInstance);
         item->set_count(count);
 
-        if (itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
+        if (bag->itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
             item->set_item_uid(GNextItemUID.fetch_add(1));
         
         if (replicatingSlot != nullptr)
@@ -120,17 +101,17 @@ bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, 
 
     const Json& itemData = Gamedata::s_itemDataTable[templateId];
 
-    auto itemTypeIt = _itemTypeMappings.find(itemData[JsonProperty::Item::ItemType]);
-    if (itemTypeIt == _itemTypeMappings.end())
+    optional<Protocol::ItemType> itemTypeOpt = ToItemType(itemData);
+    if (itemTypeOpt.has_value() == false)
         return false;
 
-    Protocol::ItemType itemType = itemTypeIt->second;
-    auto lookupIt = _inventoryLookupMappings.find(itemType);
-    if (lookupIt == _inventoryLookupMappings.end())
+    const Bag* bag = FindBag(itemTypeOpt.value());
+    if (bag == nullptr)
         return false;
 
+    const Protocol::ItemType itemType = bag->itemType;
     const int32 maxStack = (std::max)(1, itemData.value(JsonProperty::Item::MaxStack, 1));
-    const RepeatedPtrField<Protocol::Slot>& lookupTable = *lookupIt->second;
+    const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
 
     // 슬롯을 바꾸기 전에 넣을 자리를 전부 정한다. 도중에 모자라면 이미 바꾼 슬롯을 되돌릴 방법이 없다.
     vector<pair<int32, int32>> fills; // <slotId, 넣을 수량>
@@ -189,10 +170,10 @@ bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
 {
     // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.
     // 인덱싱에 닿기 전에 거르지 않으면 널 역참조와 범위 밖 접근으로 프로세스가 죽는다.
-    optional<Protocol::ItemType> requestedItemType = ToItemType(requestSlot.type());
-    if (requestedItemType.has_value() == false)
+    Bag* bag = FindBag(requestSlot.type());
+    if (bag == nullptr)
     {
-        cout << "RemoveItem() Error: 매핑 표에 없는 SlotType(" << requestSlot.type() << ")" << endl;
+        cout << "RemoveItem() Error: 저장소가 없는 SlotType(" << requestSlot.type() << ")" << endl;
         return false;
     }
 
@@ -203,10 +184,9 @@ bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
         return false;
     }
 
-    // 슬롯 해석은 GetSlot 하나로 모은다. 두 함수가 같은 입력을 다르게 해석하면
-    // 이 티켓이 막으려는 사고가 그대로 돌아온다.
-    Protocol::ItemType itemType = requestedItemType.value();
-    Protocol::Slot* updatedSlot = GetSlot(requestSlot.type(), slotId);
+    // 슬롯 해석은 GetSlot과 같이 FindBag 하나를 거친다. 두 함수가 같은 입력을 다르게
+    // 해석하면 슬롯은 한 저장소에서 꺼내고 더티 플래그는 다른 저장소에 찍게 된다.
+    Protocol::Slot* updatedSlot = bag->slots->Mutable(slotId);
     if (updatedSlot == nullptr)
         return false;
 
@@ -216,7 +196,7 @@ bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
     if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
         return false;
 
-    _dirtyFlagsMappings[itemType][slotId] = true;
+    bag->dirtyFlags[slotId] = true;
 
     Protocol::Item* item = updatedSlot->mutable_item();
     int32 updatedCount = item->count() - count;
@@ -246,7 +226,11 @@ int32 Inventory::FindFirstAvailableSlotId(Protocol::ItemType type, int32 templat
         return -1;
     }
 
-    RepeatedPtrField<Protocol::Slot>* lookupTable = _inventoryLookupMappings[type];
+    Bag* bag = FindBag(type);
+    if (bag == nullptr)
+        return -1;
+
+    RepeatedPtrField<Protocol::Slot>* lookupTable = bag->slots;
     int32 availableSlotId = -1;
     if (type == Protocol::ItemType::ITEM_TYPE_GEAR)
     {
@@ -294,42 +278,75 @@ int32 Inventory::FindFirstAvailableSlotId(Protocol::ItemType type, int32 templat
     return availableSlotId;
 }
 
-optional<Protocol::ItemType> Inventory::ToItemType(Protocol::SlotType slotType) const
+vector<bool>* Inventory::GetDirtyFlags(Protocol::ItemType itemType)
 {
-    // operator[]로 조회하면 없는 키를 표에 삽입하면서 ITEM_TYPE_NONE을 돌려준다.
-    // 조회는 반드시 find로 한다.
-    auto it = _slotTypeToItemTypeMappings.find(slotType);
-    if (it == _slotTypeToItemTypeMappings.end())
+    Bag* bag = FindBag(itemType);
+    return bag != nullptr ? &bag->dirtyFlags : nullptr;
+}
+
+Inventory::Bag* Inventory::FindBag(Protocol::ItemType itemType)
+{
+    for (Bag& bag : _bags)
+    {
+        if (bag.itemType == itemType)
+            return &bag;
+    }
+
+    return nullptr;
+}
+
+Inventory::Bag* Inventory::FindBag(Protocol::SlotType slotType)
+{
+    for (Bag& bag : _bags)
+    {
+        if (bag.slotType == slotType)
+            return &bag;
+    }
+
+    return nullptr;
+}
+
+optional<Protocol::ItemType> Inventory::ToItemType(const Json& itemData)
+{
+    static const unordered_map<string, Protocol::ItemType> itemTypeNames = {
+        {"armor", Protocol::ItemType::ITEM_TYPE_GEAR},
+        {"weapon", Protocol::ItemType::ITEM_TYPE_GEAR},
+        {"consumption", Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
+        {"miscellaneous", Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS},
+    };
+
+    if (itemData.is_object() == false)
         return nullopt;
 
-    return it->second;
+    auto fieldIt = itemData.find(string(JsonProperty::Item::ItemType));
+    if (fieldIt == itemData.end() || fieldIt->is_string() == false)
+        return nullopt;
+
+    auto nameIt = itemTypeNames.find(fieldIt->get<string>());
+    if (nameIt == itemTypeNames.end())
+        return nullopt;
+
+    return nameIt->second;
 }
 
 Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
 {
-    // 슬롯 해석의 단일 창구다. RemoveItem도 여기로 들어온다.
+    // 슬롯 해석의 단일 창구다. RemoveItem도 같은 FindBag을 거친다.
     // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
     // Release에서 빠지므로, 실제로 안전을 보장하는 것은 아래 검증들이다.
-    optional<Protocol::ItemType> requestedItemType = ToItemType(type);
-    if (requestedItemType.has_value() == false)
+    Bag* bag = FindBag(type);
+    if (bag == nullptr)
         return nullptr;
 
     if (IsValidSlotId(slot_id) == false)
         return nullptr;
 
-    auto lookupIt = _inventoryLookupMappings.find(requestedItemType.value());
-    if (lookupIt == _inventoryLookupMappings.end())
-        return nullptr;
-
-    return lookupIt->second->Mutable(slot_id);
+    return bag->slots->Mutable(slot_id);
 }
 
 void Inventory::ClearDirtyFlags()
 {
-    for (auto& mappingsPair : _dirtyFlagsMappings)
-    {
-        vector<bool>& dirtyFlag = mappingsPair.second;
-        std::fill(dirtyFlag.begin(), dirtyFlag.end(), false);
-    }
+    for (Bag& bag : _bags)
+        std::fill(bag.dirtyFlags.begin(), bag.dirtyFlags.end(), false);
 }
 

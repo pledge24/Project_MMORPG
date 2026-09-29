@@ -57,6 +57,9 @@ public:
 
     void ToggleWidget(EP1WidgetType Type);
 
+    /** 켜진 위젯이 하나라도 있으면 UI 모드, 없으면 게임 모드로 입력을 맞춘다. */
+    void RefreshInputMode();
+
 private:
     void OnToggleStatusWindowWidget();
     void OnToggleInventoryWidget();

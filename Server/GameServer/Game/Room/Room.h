@@ -51,7 +51,8 @@ public:
     void HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo);
     void HandleMonsterKill(PlayerRef player, MonsterRef monster);
     void HandleDie(CreatureRef creature);
-    void HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
+    // 리스폰에 성공하면 true. 실패 응답은 이 함수가 보낸다.
+    bool HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
 
     // includeThisPlayer: 자기 자신의 EntityInfo도 S_SPAWN에 포함할지.
     // 클라 월드가 비어 있는 최초 입장·맵 간 이동에서는 true, 액터가 살아 있는 경우 false.

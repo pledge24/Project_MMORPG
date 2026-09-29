@@ -3,7 +3,7 @@
 #include "Service.h"
 #include "IocpCore.h"
 #include "GameSession.h"
-#include "config.h"
+#include "ServerConfig.h"
 #include "Global.h"
 #include "EncodingConverter.h"
 
@@ -48,6 +48,8 @@ int main(void)
 	ServerPacketHandler::Init();
     ASSERT_CRASH(Gamedata::LoadAllGamedata());
 
+    const ServerConfig config = ServerConfig::Load(&ServerConfig::ReadProcessEnv);
+
     // Room 추가
     for (auto& mapDataPair : Gamedata::s_mapDataTable)
     {
@@ -58,7 +60,7 @@ int main(void)
 
 	const int maxSessionCount = 30;
 	ServerServiceRef service = make_shared<ServerService>(
-		NetAddress("127.0.0.1"s, 7777),
+		NetAddress("127.0.0.1"s, config.port),
 		make_shared<IocpCore>(),
 		[=]() { return make_shared<GameSession>(); }, // TODO: SessionManager 등
 		maxSessionCount
@@ -70,11 +72,10 @@ int main(void)
     {
         // SQL Server
         int32 maxDBConnections = 1;
-        const WCHAR* connectionString = ENV_DB_CONNECTION_STRING;
-        ASSERT_CRASH(GDBConnectionPool->Connect(maxDBConnections, connectionString));
+        ASSERT_CRASH(GDBConnectionPool->Connect(maxDBConnections, config.dbConnectionString.c_str()));
 
         // Redis
-        ASSERT_CRASH(GRedisManager->Connect(ENV_REDIS_URI));
+        ASSERT_CRASH(GRedisManager->Connect(config.redisUri));
     }
 
 	// worker thread

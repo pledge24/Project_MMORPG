@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 10개 (높음 3 · 중간 6 · 낮음 1)
+항목 9개 (높음 4 · 중간 4 · 낮음 1)
 
 ## 작성 방법
 
@@ -72,32 +72,44 @@
 
 ---
 
-## 인게임 진입 직후 캐릭터가 스스로 죽는다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Content/P1/Characters/Monsters/` · `P1/Content/P1/UI/Screens/WBP_DeathScreen.uasset`
-> 등록일: 2026년 9월 16일 · 경로 갱신: 2026년 9월 21일 (#52)
+## 어느 룸에도 몬스터가 스폰되지 않는다
+> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` (`Room::Start`)
+> 등록일: 2026년 9월 29일
 
-인게임 맵에 진입하고 약 3초 뒤에 사망 화면이 뜬다. **서버는 `S_DIE`(1034)도 `S_HIT`(1023)도
-보내지 않는다.** 2026년 9월 16일 실측에서 그 세션이 받은 패킷은 아래가 전부다.
+`S_Map.json`은 필드 룸 20·30·40에 `maxMonsterCount: 10`을 준다. 그런데 `Room::Start`는 테스트하던
+모양 그대로 남아 있어서 몬스터를 한 마리도 스폰하지 않는다.
 
-| 패킷 | ID | 건수 |
-|---|---|---|
-| `S_MOVE` | 1020 | 38 |
-| `S_SPAWN` | 1017 | 2 |
-| `S_LOGIN` | 1003 | 2 |
-| `S_ENTER_ROOM` `S_ENTER_GAME` `S_CREATE_CHARACTER` | 1016 1009 1005 | 각 1 |
+- 스폰 조건이 `_roomId == 20`으로 고정되어 있다.
+- 조건 안에서 `Update(); return true;`로 먼저 빠져나가 스폰 반복문에 닿지 않는다.
+- 반복문 안에 `break`가 있어서, 닿더라도 한 마리만 스폰한다.
 
-그럼에도 `WBP_DeathScreen_C_0`이 생성됐다. 즉 클라이언트가 서버 판정 없이 혼자 사망으로
-결론지었다. 전투 판정과 사망 화면이 모두 블루프린트에 있어 C++에서 추적할 수 없다.
-
-S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로토버프가 기본값 필드를 생략하므로,
-이는 좌표가 전부 0인 이동이 오갔다는 뜻이다.
+고치는 코드는 한 함수에 있다. 난이도를 중간으로 둔 것은 몬스터를 되살리면 한동안 돌지 않던 몬스터
+행동과 전투 판정 경로가 함께 살아나기 때문이다.
 
 ### 영향
 
-**버그 발생 가능성 증가** · **테스트 어려움** — 인게임을 3초 넘게 유지할 수 없어 전투·인벤토리·
-상점 등 인게임 기능 전체를 손으로 확인할 수 없다. 서버 로그와 대조해도 원인이 클라 블루프린트
-안에 있어 좁혀지지 않는다.
+**테스트 어려움** · **버그 발생 가능성 증가** — 전투, 사망, 리스폰, 보상을 손으로 확인할 수단이 없다.
+리스폰 수정(2026년 9월 29일)도 이 때문에 PIE에서 사망부터 재현하지 못했다.
+
+## 레벨 표 범위를 벗어난 캐릭터가 인게임에 들어가지 못한다
+> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · server
+> 위치: `Server/GameServer/DB/DBRequestFunctions.cpp` 640~641줄
+> 등록일: 2026년 9월 29일
+
+`asdasdasd` 계정의 유일한 캐릭터(`character_id` 1)로 게임을 시작하면 인게임 화면으로 넘어가지
+않는다. 이 캐릭터의 `Characters.level`이 **10002**인데, 레벨 표 `S_Warrior_Level_Data.json`에는 1~50만
+있다. 입장 때 `classLevelDataTable[level][ExpRequirement]`가 없는 행을 조회해 빈 JSON에서 값을
+꺼내려다 실패하는 것으로 본다. 서버 로그로는 확인하지 않았다.
+
+10002는 다른 캐릭터(`test1`)의 `character_id`와 같은 값이다. 어떤 쓰기 경로가 `character_id`를
+`level` 열에 넣었을 가능성이 있지만, 그 경로는 아직 찾지 않았다. 해당 행은 2025년 12월 12일에
+만들어졌다.
+
+### 영향
+
+**버그 발생 가능성 증가** · **동일한 문제의 반복** — DB 값 하나가 틀리면 그 캐릭터는 입장 자체가
+막히고, 클라이언트에는 아무 표시도 없다. 쓰기 경로가 원인이라면 다른 캐릭터에도 같은 손상이 생긴다.
 
 ## `Room` / `DBRequestFunctions` 갓 클래스
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 모듈 · server
@@ -115,71 +127,43 @@ S_MOVE 38건이 전부 페이로드 0바이트인 점도 같이 본다. 프로�
 **테스트 어려움** · **변경 영향 범위 확대** — 두 파일이 서버 코드 10,009줄의 27%다. 어느 기능을
 고쳐도 같은 파일을 만지므로 변경이 서로 부딪히고, 테스트 대상을 잘라내기가 불가능하다.
 
-## 몬스터 전체 계층과 전투 로직이 블루프린트에 있다
+## 공격 콤보와 몽타주 선택이 블루프린트에 있다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · client
 > 위치: `P1/Content/P1/Characters/Monsters/`
 > 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
 
-UE 에디터로 실측한 결과는 아래 두 가지다.
-
-`BP_MonsterBase`(부모 C++ `Monster`)가 `ReceiveBeginPlay`·`ReceiveTick`·`ReceiveActorBeginOverlap`·
-`OnPostDie`를 BP로 구현한다. 그 아래 `BP_{Melee,Ranged,Super}MonsterBase` 3개와 미니언 9개가
-각자 다시 같은 3개 이벤트를 구현한다. BP 클래스 13개가 몬스터 틱 로직을 나눠 갖고 있다.
-
 `BPC_MonsterAttackSystem`과 `BPC_WarriorAttackSystem`(부모 C++ `AttackSystemComponent`)이
-`S_PerformNormalAttack`·`PerformNormalAttack`·`Reset Attack Combo`·`TestAttack`을 BP로 구현하고
-`NormalAttacks` 배열을 들고 있다. 콤보 상태 머신과 몽타주 선택이 전부 BP에 있다. C++
-`AttackSystemComponent`는 56+52줄뿐이다.
+`S_PerformNormalAttack`·`PerformNormalAttack`·`ResetAttackCombo`를 BP로 구현하고 `NormalAttacks`
+배열을 들고 있다. 콤보 상태 머신과 몽타주 선택이 전부 BP에 있다. C++ `AttackSystemComponent`는
+56+52줄뿐이다.
+
+몬스터 쪽 BP 클래스는 `BP_MonsterBase`(부모 C++ `Monster`) 아래로 `BP_{Melee,Ranged,Super}MonsterBase`
+3개와 미니언 9개, 모두 13개다. 2026년 9월 29일에 다시 읽은 결과 이 클래스들의 `BeginPlay`·`Tick`·
+`ActorBeginOverlap`은 비어 있거나 부모를 부르기만 한다. 몬스터 행동 로직은 BP에 없다.
 
 ### 영향
 
 **버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
-(`Room::HandleNormalAttack`) 클라 판정 로직은 BP라, 양쪽 규칙이 갈라져도 컴파일러도 테스트도
-잡지 못한다. 13개 BP에 흩어진 틱은 호출 순서를 추적할 수 없어 디버깅이 불가능하다.
+(`Room::HandleNormalAttack`) 클라이언트의 콤보 규칙은 BP에 있어서, 양쪽 규칙이 갈라져도
+컴파일러도 테스트도 잡지 못한다.
 
-## 패킷 핸들러 20개가 `GWorld` 전역에 묶여 있다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Network/ClientPacketHandler.cpp` (핸들러 23개 중 20개)
-> 등록일: 2026년 9월 16일
+## 무기를 장착하면 캐릭터 메시가 한 박자 늦게 바뀐다
+> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
+> 위치: `P1/Content/P1/Characters/Player/BP_MyPlayer.uasset` (`ChangeMesh`) ·
+> `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleEquipGear`, `HandleUnequipGear`)
+> 등록일: 2026년 9월 29일
 
-`Handle_S_*` 23개 중 20개가 `Cast<UP1GameInstance>(GWorld->GetGameInstance())`로 시작한다.
-자기 자신의 월드를 인자로 받지 않고 전역에서 끌어온다.
+칼을 장착하면 UI에는 반영되지만 캐릭터가 칼을 들지 않는다. 탈착하면 도리어 칼이 생기기도 한다.
+처음 장착·탈착할 때 나타나는 것으로 보이며, 갑옷은 확인하지 않았다(2026년 9월 29일, PIE).
 
-그래서 핸들러는 **호출되는 시점의 `GWorld`가 게임 월드일 때만** 동작한다. 레벨 스크립트
-블루프린트가 펌프를 부르던 동안에는 그 조건이 우연히 성립했다. 월드 틱 안에서 호출됐기
-때문이다. 펌프를 코어 티커로 옮기자 조건이 깨졌고, 에디터에서 `GWorld`가 에디터 월드를 가리켜
-20개 핸들러가 전부 첫 줄에서 탈락했다(2026년 9월 16일 실측).
-
-지금은 `UP1GameInstance::TickRecvPump`가 펌프 호출 구간에만 `GWorld`를 게임 월드로 바꿔
-우회한다. 전역을 직접 대입하는 코드라 그 자체가 부채다.
+확인한 것은 하나다. 메시를 불러오는 `Load And Set ST Mesh`는 `LoadAsset_Blocking`을 쓰므로 비동기
+로딩 때문은 아니다. `ChangeMesh`의 데이터 조회는 #103에서 `GetItemMeshes`로 바꿨고, 그때 PIE
+확인을 건너뛰었으므로 그 변경이 원인일 가능성도 남아 있다.
 
 ### 영향
 
-**변경 영향 범위 확대** · **테스트 어려움** — 패킷 처리를 어디에서 부르느냐가 핸들러의 동작을
-바꾼다. 호출 지점을 옮길 때마다 20곳이 함께 깨지고, 컴파일러는 아무것도 잡지 못한다. 월드를
-인자로 받지 않으므로 핸들러 단위 테스트도 세울 수 없다.
-
-## 접속 정보가 3곳에 컴파일 타임 상수로 흩어져 있다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 프로젝트 · build
-> 위치: `Server/GameServer/config.h` · `P1/Source/P1/Core/P1GameInstance.h` 97~98줄 ·
-> `P1/Source/P1/Online/P1LoginManager.h` 33~34줄
-> 등록일: 2026년 8월 19일
-
-| 위치 | 값 | 형태 |
-|---|---|---|
-| `Server/GameServer/config.h` | GameDB 접속 문자열, Redis URI | `#define` (gitignore됨) |
-| `P1/Source/P1/Core/P1GameInstance.h` 97~98줄 | `127.0.0.1` / `7777` | `const` 멤버 |
-| `P1/Source/P1/Online/P1LoginManager.h` 33~34줄 | `127.0.0.1` / `5000` | 멤버 초기값 |
-| `Server/AuthServer/.env` | 나머지 전부 | 유일하게 런타임 설정 |
-
-`config.h` 방식의 실질 이점은 두 가지다. 오타가 컴파일 에러로 잡히고, 배포물에 설정 파일을
-딸려 보낼 필요가 없다.
-
-### 영향
-
-**새 기능 개발 지연** · **변경 비용 증가** — `config.h`가 gitignore돼 있고 예제 파일도 없어 새로
-클론한 사람은 빌드 자체가 안 된다. 테스트용 DB를 가리키게 할 방법이 없어 L1 이상의 통합 테스트를
-막는다. 접속처를 바꾸려면 재빌드해야 한다.
+**버그 발생 가능성 증가** — 다른 플레이어에게도 같은 `ChangeMesh`가 쓰이므로 장비 외형이 서로 어긋나
+보일 수 있다.
 
 ## C++ 베이스 없이 BP에만 사는 UI/액터
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
@@ -231,38 +215,6 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
 드러난다.
 
-## 인벤토리 매핑 3종이 손으로 유지된다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 파일 · server
-> 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (생성자)
-> 등록일: 2026년 8월 27일
-
-`Inventory`는 서로 정합해야 하는 표를 넷 들고 있고, 넷 다 생성자에서 손으로 채운다. 제목의
-"3종"은 서로 변환하는 표만 센 것이다.
-
-| 표 | 방향 | 쓰는 곳 |
-|---|---|---|
-| `itemTypeMappings` | 아이템 데이터의 `"itemType"` 문자열 → `ItemType` | `addItem` |
-| `slotTypeToItemTypeMappings` | `SlotType` → `ItemType` | `removeItem`, `GetSlot` |
-| `inventorylookupMappings` | `ItemType` → 실제 슬롯 배열 | 전부 |
-| `dirtyFlagsMappings` | `ItemType` → 슬롯별 더티 플래그 | `addItem`, `removeItem`, `GetDirtyFlags` |
-
-**검사한 표와 인덱싱하는 표가 다른 자리가 둘 있다.**
-— `Inventory.cpp:83`은 `addItem`이 69~71줄에서 `inventorylookupMappings`를 `find`로 확인한 뒤
-`dirtyFlagsMappings`를 `operator[]`로 인덱싱한다. `Inventory.cpp:162`는 `removeItem`이 135줄에서
-`slotTypeToItemTypeMappings`를 확인한 뒤 같은 일을 한다. 지금 터지지 않는 것은 생성자가 네 표를
-같은 세 키로 채우기 때문이고, 코드가 그 사실을 보장하지는 않는다.
-
-`Server/GameServerTests/InventoryTests.cpp`가 네 표 중 셋의 키 집합을 기대 집합에 고정하므로,
-표가 다시 어긋나면 테스트가 먼저 잡는다. `itemTypeMappings`는 키가 문자열이라 열거형 리플렉션
-대조가 닿지 않고, 관측 경로도 없다. 2026년 9월에 검토했다가 폐기한 설계가
-`docs/references/work/2026-09-10-inventory-cleanup.md`에 있다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 넣을 때와 꺼낼 때가 다른 표를 본다. 두 표가 한
-글자만 어긋나도 아이템이 다른 인벤토리로 샌다. 두 값 모두 유효한 enum이라 컴파일러가 아무 말도
-하지 않는다.
-
 ## `UP1GameInstance`가 클라 측 갓 클래스
 > **심각도:** 중간 · **난이도:** 높음 · **범위:** 모듈 · client
 > 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (620줄)
@@ -271,18 +223,11 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 소켓 소유 + 세션 관리 + `S_*` 핸들러 16개 + 스폰/디스폰 + 델리게이트 5종 브로드캐스트 + 토큰
 보관을 한 클래스가 들고 있다.
 
-**2026년 9월 22일 덧붙임 — 엔티티 조회가 열한 곳에 흩어져 있다.** #87이 이 파일의 클래스 이름을
-옮기면서 세었다. `World->GetSubsystem<UP1StatefulEntityManager>()` 호출이 11회이고, 그중 7회는
-바로 뒤에서 `FindEntity(EntityId)`를 불러 `nullptr`을 검사하는 같은 세 단계를 되풀이한다. 나머지
-넷은 스폰과 디스폰이다. 핸들러마다 월드와 서브시스템과 액터를 차례로 타고 내려가므로, 이
-클래스를 쪼개지 않더라도 `AActor* FindEntityActor(uint64)` 하나를 두면 일곱 자리가 한 줄이 된다.
-
 ### 영향
 
 **변경 영향 범위 확대** · **테스트 어려움** — 게임 인스턴스는 레벨 전환에 살아남는 싱글턴이라
 여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
-함께 따져야 한다. 엔티티 조회가 흩어져 있어서 서브시스템 이름을 바꾸는 작업도 열한 자리를
-함께 연다.
+함께 따져야 한다.
 
 ## 게임 도메인이 배선 계층을 거꾸로 부른다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · client
