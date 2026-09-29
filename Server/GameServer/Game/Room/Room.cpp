@@ -78,6 +78,10 @@ void Room::Update()
             info->CopyFrom(*entity->_posInfo);
         }
 
+        // 몬스터가 없는 룸에서는 목록이 비어 틱마다 빈 패킷이 나간다.
+        if (movePkt.info_size() == 0)
+            return;
+
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
         Broadcast(sendBuffer);
     }
