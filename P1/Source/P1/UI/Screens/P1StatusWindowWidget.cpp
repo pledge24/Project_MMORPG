@@ -2,6 +2,7 @@
 #include "UI/Screens/P1HUDWidget.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1MyPlayerData.h"
@@ -106,6 +107,6 @@ void UP1StatusWindowWidget::SendUnequipPacket(UP1SlotWidget* Slot_)
 
         Protocol::C_UNEQUIP_GEAR pkt;
         pkt.mutable_slot()->CopyFrom(SlotData);
-        SEND_PACKET(pkt);
+        FP1PacketSender::Send(this, pkt);
     }
 }

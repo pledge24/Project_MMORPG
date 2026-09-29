@@ -41,6 +41,7 @@ public:
 protected:
     /** 상태 함수 */
     void UpdateState();
+    void EvaluateStateTransition();
     void SwitchState(MonsterState nextState);
 
     void ExecuteStateBehavior(float deltaTime);
@@ -59,6 +60,7 @@ protected:
     void NormalAttack();
 
     /** Bool 함수 */
+    bool IsTargetLost();
     bool CanMove();
     bool AlreadyArrive();
     bool HasDestination() { return _moveDest.has_value(); }

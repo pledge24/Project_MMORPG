@@ -48,7 +48,14 @@ protected:
 public:
     void FetchCharacterOverviews(Protocol::S_LOGIN& pkt);
 
+    /** 서버가 게임 입장을 거절하면 캐릭터 선택 화면에 알린다. */
+    void ShowEnterGameFailed();
+
 protected:
+    /** 캐릭터 선택 화면의 결과 문구다. WBP에 없으면 로그인 결과 문구를 대신 쓴다. */
+    UPROPERTY(meta = (BindWidgetOptional), BlueprintReadWrite, Category = "Character Select")
+    TObjectPtr<class UTextBlock> CS_ResultText;
+
     UFUNCTION(BlueprintCallable, Category = "Character Select")
     void SendEnterGamePkt();
 

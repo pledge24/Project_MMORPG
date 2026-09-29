@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 9개 (높음 4 · 중간 4 · 낮음 1)
+항목 13개 (높음 3 · 중간 4 · 낮음 6)
 
 ## 작성 방법
 
@@ -72,44 +72,28 @@
 
 ---
 
-## 어느 룸에도 몬스터가 스폰되지 않는다
+## 연결이 끊기면 플레이어가 룸에 남고 진행이 저장되지 않는다
 > **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` (`Room::Start`)
-> 등록일: 2026년 9월 29일
+> 위치: `Server/GameServer/Main/GameSession.cpp` (`OnDisconnected`) ·
+> `Server/GameServer/Main/ServerPacketHandler.cpp` (`Handle_C_LEAVE_GAME`) ·
+> `P1/Source/P1/Core/P1GameInstance.cpp` (`Shutdown`)
+> 등록일: 2026년 9월 30일
 
-`S_Map.json`은 필드 룸 20·30·40에 `maxMonsterCount: 10`을 준다. 그런데 `Room::Start`는 테스트하던
-모양 그대로 남아 있어서 몬스터를 한 마리도 스폰하지 않는다.
+룸 퇴장과 캐릭터 저장(`UpdateAllCharactersData`)은 `Handle_C_LEAVE_GAME` 한 곳에서만 일어난다.
+세션이 `C_LEAVE_GAME` 없이 끊기면 `GameSession::OnDisconnected`는 세션 관리자에서 세션을 지우기만
+한다. 그래서 플레이어 엔티티가 룸에 남아 다른 플레이어에게 계속 보이고, 레벨·경험치·위치가
+저장되지 않는다.
 
-- 스폰 조건이 `_roomId == 20`으로 고정되어 있다.
-- 조건 안에서 `Update(); return true;`로 먼저 빠져나가 스폰 반복문에 닿지 않는다.
-- 반복문 안에 `break`가 있어서, 닿더라도 한 마리만 스폰한다.
-
-고치는 코드는 한 함수에 있다. 난이도를 중간으로 둔 것은 몬스터를 되살리면 한동안 돌지 않던 몬스터
-행동과 전투 판정 경로가 함께 살아나기 때문이다.
+클라이언트가 정상 종료할 때도 `C_LEAVE_GAME`이 나가지 않을 수 있다. `UP1GameInstance::Shutdown`은
+`DisconnectFromGameServer`로 패킷을 송신 큐에 넣은 직후 `CloseGameServerConnection`으로 소켓을 닫는다.
+송신 스레드가 큐를 비우기 전에 소켓이 닫히면 패킷이 사라진다. 코드를 읽고 판단했고, 실행해서
+확인하지는 않았다(2026년 9월 30일). 같은 날 PIE에서 `test1`의 종료 저장이 실제로 일어난 흔적은
+있다(레벨 손상 사고의 원인이 이 저장 경로였다).
 
 ### 영향
 
-**테스트 어려움** · **버그 발생 가능성 증가** — 전투, 사망, 리스폰, 보상을 손으로 확인할 수단이 없다.
-리스폰 수정(2026년 9월 29일)도 이 때문에 PIE에서 사망부터 재현하지 못했다.
-
-## 레벨 표 범위를 벗어난 캐릭터가 인게임에 들어가지 못한다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/DBRequestFunctions.cpp` 640~641줄
-> 등록일: 2026년 9월 29일
-
-`asdasdasd` 계정의 유일한 캐릭터(`character_id` 1)로 게임을 시작하면 인게임 화면으로 넘어가지
-않는다. 이 캐릭터의 `Characters.level`이 **10002**인데, 레벨 표 `S_Warrior_Level_Data.json`에는 1~50만
-있다. 입장 때 `classLevelDataTable[level][ExpRequirement]`가 없는 행을 조회해 빈 JSON에서 값을
-꺼내려다 실패하는 것으로 본다. 서버 로그로는 확인하지 않았다.
-
-10002는 다른 캐릭터(`test1`)의 `character_id`와 같은 값이다. 어떤 쓰기 경로가 `character_id`를
-`level` 열에 넣었을 가능성이 있지만, 그 경로는 아직 찾지 않았다. 해당 행은 2025년 12월 12일에
-만들어졌다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **동일한 문제의 반복** — DB 값 하나가 틀리면 그 캐릭터는 입장 자체가
-막히고, 클라이언트에는 아무 표시도 없다. 쓰기 경로가 원인이라면 다른 캐릭터에도 같은 손상이 생긴다.
+**버그 발생 가능성 증가** · **동일한 문제의 반복** — 클라이언트 크래시, 네트워크 단절, 창 닫기
+순서에 따라 진행이 사라지고 유령 플레이어가 남는다. 유령은 몬스터의 추적 대상으로도 남는다.
 
 ## `Room` / `DBRequestFunctions` 갓 클래스
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 모듈 · server
@@ -120,7 +104,7 @@
 들고 있다(`Room.h` 32~83줄). `DBRequestFunctions`는 캐릭터·상태·인벤토리·장비의 모든 쿼리를 한
 파일에 담는다.
 
-`Room`에는 테스트가 없다. 현재 테스트 그물은 Inventory와 프로토콜에만 있다.
+`Room`에는 테스트가 없다. 현재 테스트 그물은 Inventory, Player(레벨 상한과 장비 결과), 프로토콜에만 있다.
 
 ### 영향
 
@@ -147,23 +131,28 @@
 (`Room::HandleNormalAttack`) 클라이언트의 콤보 규칙은 BP에 있어서, 양쪽 규칙이 갈라져도
 컴파일러도 테스트도 잡지 못한다.
 
-## 무기를 장착하면 캐릭터 메시가 한 박자 늦게 바뀐다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Content/P1/Characters/Player/BP_MyPlayer.uasset` (`ChangeMesh`) ·
-> `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleEquipGear`, `HandleUnequipGear`)
-> 등록일: 2026년 9월 29일
+## 몬스터 처치 뒤 경로에 잠복한 결함이 쌓여 있다
+> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Entities/Monster.cpp` · `Server/GameServer/Game/Entities/Player.cpp` ·
+> `Server/GameServer/Game/Room/Room.cpp` (`HandleHit`, `HandleDie`)
+> 등록일: 2026년 9월 30일
 
-칼을 장착하면 UI에는 반영되지만 캐릭터가 칼을 들지 않는다. 탈착하면 도리어 칼이 생기기도 한다.
-처음 장착·탈착할 때 나타나는 것으로 보이며, 갑옷은 확인하지 않았다(2026년 9월 29일, PIE).
+플레이어가 몬스터를 때리는 서버 경로가 아직 없다(`C_NORMAL_ATTACK`에 대상이 없고
+`Room::C_HandleNormalAttack`은 브로드캐스트만 한다). 그래서 아래 결함은 지금 드러나지 않는다.
+공격 판정을 넣는 순간 한꺼번에 드러난다.
 
-확인한 것은 하나다. 메시를 불러오는 `Load And Set ST Mesh`는 `LoadAsset_Blocking`을 쓰므로 비동기
-로딩 때문은 아니다. `ChangeMesh`의 데이터 조회는 #103에서 `GetItemMeshes`로 바꿨고, 그때 PIE
-확인을 건너뛰었으므로 그 변경이 원인일 가능성도 남아 있다.
+- `Monster::Init`이 `_statInfo`에 HP를 넣지 않는다. 피격되면 `Creature::GetStatValue`의
+  `Map::at`이 실패해 서버가 죽는다(`Creature::OnHit`, `Room::HandleHit`).
+- `Player::OnGetReward`에 `else`가 없어서, 레벨업하지 않는 보상의 경험치가 저장되지 않는다.
+- `OnGetReward`가 만든 `LevelUpInfo`를 보상 패킷에 싣지 않는다.
+- 사망한 몬스터는 서버에서 지워지지만 `S_DESPAWN`을 보내지 않아서 클라이언트에 액터가 남는다.
+- 보상 계산의 `Utils::GetRandom(min, max)`는 정수일 때 `[min, max)`라서 최댓값이 나오지 않는다.
+  `min == max`면 분포가 `(min, min-1)`이 되어 정의되지 않은 동작이다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 다른 플레이어에게도 같은 `ChangeMesh`가 쓰이므로 장비 외형이 서로 어긋나
-보일 수 있다.
+**버그 발생 가능성 증가** · **부채의 연쇄 증가** — 전투 기능을 붙이는 작업이 결함 다섯을 먼저
+고쳐야 시작된다. 그중 하나는 서버 크래시다.
 
 ## C++ 베이스 없이 BP에만 사는 UI/액터
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
@@ -180,14 +169,13 @@ UE 에디터로 41개 BP의 부모 클래스를 전수 확인한 결과, 위젯 
 | `WBP_NameTag` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. `UP1NameplateWidget`과 역할이 겹친다 |
 | `WBP_Help` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. 순수 표시용 |
 
-C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 넷이다.
+C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
 | `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체 |
 | `WBP_LoginMenu` | `LoginWidget` | 그래프 4개(`CC_Init`·`DisableAllSlotsHighlight`·`ClearAllSlots`·`IsValidCharacter`) + `OnDisplayCharacterOverviews` |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
-| `BP_MyPlayer` / `BP_Player` | `P1MyPlayer` / `P1Player` | `Load and Set SK Mesh`·`Load And Set ST Mesh` + `ChangeMesh`. 장비 메시 교체 |
 
 ### 영향
 
@@ -229,43 +217,83 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
 함께 따져야 한다.
 
-## 게임 도메인이 배선 계층을 거꾸로 부른다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Game/`
-> 등록일: 2026년 9월 22일
+## `ARCHITECTURE.md`가 수신 펌프를 레벨 블루프린트가 부른다고 적는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `docs/ARCHITECTURE.md` 82~88줄
+> 등록일: 2026년 9월 30일
 
-`docs/folder-structure.md` 3.3이 정한 화살표는 `Core → Game/Entities → 게임 도메인` 한 방향인데,
-`Game/` 아래 열두 자리가 반대로 배선을 부른다. #73이 폴더를 옮기면서 드러났고 그 티켓이 만든
-것은 아니다.
-
-| 부르는 쪽 | 부르는 것 | 건수 |
-|---|---|---|
-| `Game/Entities/`의 `.cpp` 둘 | `Core/P1InGamePlayerController.h` · `Core/P1MyPlayerData.h` | 2 |
-| `Game/Entities/`의 `.cpp` 둘 | `UI/WorldSpace/P1NameplateWidget.h` | 2 |
-| `Game/` 아래 `.cpp` 다섯 | 모듈 헤더 `P1.h` | 5 |
-| `Game/` 아래 헤더 셋 | `Protocol.pb.h` | 3 |
-
-`P1.h`를 부르는 다섯 자리의 원인은 `SEND_PACKET` 매크로다. 그 매크로가 `P1.h`에 있고 안에서
-`ClientPacketHandler`와 `UP1GameInstance`를 함께 부르므로, 패킷 하나를 보내려는 게임 코드가
-네트워크와 `Core/`를 통째로 끌어온다.
-
-**2026년 9월 22일 덧붙임 — 전수로 다시 세었다.** 위 표는 헤더만 세어서 생성물 참조가 3건으로
-적혀 있다. `.cpp`를 함께 세면 3.3이 금지한 방향의 `#include`가 모두 27건이고 구성은 아래와 같다.
-
-| 부르는 쪽 | 부르는 것 | 건수 |
-| --- | --- | --- |
-| `Game/` 아래 여섯 폴더 | `.pb.h` (`Data` 6 · `Entities` 5 · `Equipment` 2 · `Inventory` 2 · `World` 2 · `Combat` 1) | 18 |
-| `Game/` 아래 네 폴더 | 모듈 헤더 `P1.h` (`Entities` 2 · `Equipment` 1 · `Inventory` 1 · `World` 1) | 5 |
-| `Game/Entities/` | `Core/` | 2 |
-| `Game/Entities/` | `UI/` | 2 |
-
-**생성물을 부르는 18건은 모듈 경계의 문제가 아니라 자료형 설계의 문제다.** 도메인이 프로토콜
-자료형을 그대로 쓰고 있어서, `P1`을 여러 모듈로 쪼개도 게임 모듈이 프로토콜 모듈에 의존하는
-형태로 그대로 남는다. 그래서 앞으로 만들 의존 방향 검사에서 이 18건을 대상에서 빼고 나머지
-9건을 본다.
+그 절은 「수신 펌프를 호출하는 C++ 코드가 없다」를 불변식으로 적고, 호출부가 레벨 블루프린트의
+`ReceiveTick`에 있다고 한다. 지금 코드는 `UP1GameInstance::Init`이 코어 티커에 `TickRecvPump`를
+등록해서 레벨과 무관하게 펌프를 돌린다(`P1GameInstance.cpp` 30~35줄). 불변식이 사실과 반대다.
 
 ### 영향
 
-**변경 영향 범위 확대** · **테스트 어려움** — 3.3이 「게임 도메인은 `Network/`를 직접 참조하지
-않는다」를 불변식으로 적는데 매크로 하나가 그것을 우회한다. 통신 방식을 바꾸면 게임 도메인의
-열두 자리를 함께 연다.
+**유지보수 어려움** — 불변식 문서가 틀리면 새 레벨을 만들 때 쓸모없는 노드를 손으로 넣거나,
+문서의 다른 불변식까지 의심하게 된다.
+
+## 몬스터가 룸 경계에 붙어 스폰될 수 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` (`GetRandomLocation`)
+> 등록일: 2026년 9월 30일
+
+`GetRandomLocation`이 여백을 뺀 경계(`paddedMinX` 등)를 계산해 놓고, 실제 난수는 여백 없는
+`_roomMinX`~`_roomMaxX`에서 뽑는다. 몬스터 스폰 위치와 배회 목적지가 이 함수를 쓴다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 경계 밖으로 조금만 밀려도 그 엔티티는 셀 행렬에 들어가지 않아 몬스터의
+탐지에서 빠진다.
+
+## 맵을 옮길 때마다 내 플레이어 델리게이트가 한 번 더 바인딩된다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Core/P1MyPlayerData.cpp` (`BindMyPlayerDelegate`)
+> 등록일: 2026년 9월 30일
+
+`UP1MyPlayerData`는 게임 인스턴스 서브시스템이라 레벨 전환에 살아남는다. 그런데 내 플레이어가
+스폰될 때마다 `OnGoldChanged`·`OnInvenSlotChanged`·`OnEquipmentSlotChanged`에 같은 핸들러를
+`AddUObject`로 다시 붙인다. 맵을 두 번 옮기면 슬롯 변경 하나가 인벤토리에 세 번 반영된다.
+지금 핸들러는 값을 덮어쓰기만 해서 겉으로 드러나지 않는다(코드를 읽고 판단했다).
+
+### 영향
+
+**버그 발생 가능성 증가** — 누적되는 처리(개수 더하기, 알림 띄우기)를 핸들러에 넣는 순간 맵
+이동 횟수만큼 중복 실행된다.
+
+## 몬스터 5000의 공격력이 사망 확인용 값이다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
+> 위치: `DesignData/Original_Monster.xlsx` → `S_Monster.json` (템플릿 5000 `baseAttack`)
+> 등록일: 2026년 9월 30일
+
+초급 근거리 몬스터 5000의 `baseAttack`이 1000이다. 다른 몬스터는 80~600이다. 리스폰을 PIE로
+확인하려고 사람이 올려 둔 값이다. 원래 값은 기록에 없다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 초급 사냥터에서 한 대에 죽는다. 밸런스를 볼 때 이 값을 원래대로
+돌려야 한다.
+
+## 송신 워커가 큐가 비어도 쉬지 않고 돈다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Network/P1SendWorker.cpp` (`Run`)
+> 등록일: 2026년 9월 30일
+
+`FP1SendWorker::Run`은 `while (Running)` 안에서 큐를 꺼내 보기만 하고 잠들지 않는다. 보낼 패킷이
+없어도 코어 하나를 계속 쓴다. 전송 실패(`SendDesiredBytes`의 false)도 무시한다.
+
+### 영향
+
+**유지보수 어려움** — PIE 창을 여럿 띄우면 창마다 코어 하나씩 헛돈다. 연결이 끊겨도 송신 쪽은
+알아채지 못한다.
+
+## 장비를 불러올 때 추가 물리 공격력에 추가 마법 공격력을 넣는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/DB/DBRequestFunctions.cpp` (`LoadCharactersGearItems`)
+> 등록일: 2026년 9월 30일
+
+`gearInfo->set_additional_physical_attack(bindObject._additionalMagicalAttack)`로 물리 공격력 자리에
+마법 공격력 값을 넣는다. 인벤토리와 장착 장비 모두 이 경로로 불러온다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 추가 공격력이 붙은 장비가 생기면 입장할 때마다 물리 수치가 틀린다.
+지금은 추가 공격력을 부여하는 경로가 없어 값이 0이라 드러나지 않는다.

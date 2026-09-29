@@ -366,10 +366,19 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
 {
     PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
+    // 실패해도 클라에 알려야 로그인 화면에서 기다리지 않는다.
+    auto sendEnterGameFail = [&session]()
+        {
+            Protocol::S_ENTER_GAME enterGameFailPkt;
+            enterGameFailPkt.set_success(false);
+            SEND_PACKET(enterGameFailPkt)
+        };
+
     // 1. 캐릭터 기본 정보 다시 가져오기(이름, 레벨 등 필요)
     if (LoadCharacterData(session, characterId) == false)
     {
         cout << "Error In GetCharacterData" << endl;
+        sendEnterGameFail();
         return;
     }
 
@@ -377,6 +386,7 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     if (LoadCharacterLastStateData(session, characterId) == false)
     {
         cout << "Error In GetCharacterLastStateData" << endl;
+        sendEnterGameFail();
         return;
     }
 
@@ -384,12 +394,16 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     if (LoadAllCharacterItems(session, characterId) == false)
     {
         cout << "Error In GetCharacterInventoryData" << endl;
+        sendEnterGameFail();
         return;
     }
 
     // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
     if (player->Start() == false)
+    {
+        sendEnterGameFail();
         return;
+    }
     
     // 패킷으로 만들어서 클라이언트에게 보낸다.
     Protocol::S_ENTER_GAME enterGamePkt;
@@ -637,8 +651,28 @@ bool DBRequestFunctions::LoadCharacterLastStateData(SessionRef session, int64 ch
         auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
-        DataTable& classLevelDataTable = *Gamedata::s_classLevelDataTableMappings[playerInfo->class_()];
-        int64 maxExp = classLevelDataTable[playerInfo->level()][JsonProperty::LevelTable::ExpRequirement];
+        // 전역 표는 여러 DB 스레드가 함께 읽는다. operator[]는 없는 키를 끼워 넣으므로 find로만 조회한다.
+        auto classIt = Gamedata::s_classLevelDataTableMappings.find(playerInfo->class_());
+        if (classIt == Gamedata::s_classLevelDataTableMappings.end())
+        {
+            wcout << L"캐릭터 " << characterId << L"의 클래스 " << playerInfo->class_() << L"에 레벨 표가 없습니다" << '\n';
+            GDBConnectionPool->Push(dbConn);
+            return false;
+        }
+
+        const DataTable& classLevelDataTable = *classIt->second;
+        auto levelIt = classLevelDataTable.find(playerInfo->level());
+        const bool hasExpRequirement = levelIt != classLevelDataTable.end()
+            && levelIt->second.contains(JsonProperty::LevelTable::ExpRequirement)
+            && levelIt->second.at(JsonProperty::LevelTable::ExpRequirement).is_number();
+        if (hasExpRequirement == false)
+        {
+            wcout << L"캐릭터 " << characterId << L"의 레벨 " << playerInfo->level() << L"이 레벨 표 범위 밖입니다" << '\n';
+            GDBConnectionPool->Push(dbConn);
+            return false;
+        }
+
+        int64 maxExp = levelIt->second.at(JsonProperty::LevelTable::ExpRequirement);
         statMappings->insert({ (int32)Protocol::STAT_TYPE_EXP, bindObject._exp });
         statMappings->insert({ (int32)Protocol::STAT_TYPE_MAX_EXP, maxExp });
 
@@ -961,10 +995,11 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
             BindParam(dbBind);
         }
 
+        // 번호는 아래 SQL의 물음표 순서다. SET이 먼저, WHERE가 나중이다.
         void BindParam(DBBind<PARAMS, COLS>& dbBind)
         {
-            dbBind.BindParam(0, _characterId);
-            dbBind.BindParam(1, _level);
+            dbBind.BindParam(0, _level);
+            dbBind.BindParam(1, _characterId);
         }
 
         /* Params */

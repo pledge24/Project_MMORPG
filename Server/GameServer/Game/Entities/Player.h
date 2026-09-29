@@ -51,12 +51,14 @@ public:
     /** Getter 함수*/
     int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return _respawnRoomMappings[respawnType]; }
     int32 GetEnteringRoomId() { return _enteringRoomId; }
+    bool IsMaxLevel() const;
     void GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
 private:
     /** 기타 함수 */
     bool CalculateFinalStat();
     void CacheNextLevelUpData();
+    void RefreshEquippedGearSummary();
 
 public:
 	weak_ptr<GameSession> _session;

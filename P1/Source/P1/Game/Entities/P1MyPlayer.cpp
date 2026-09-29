@@ -5,9 +5,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Game/Combat/P1AttackSystemComponent.h"
-#include "Core/P1MyPlayerData.h"
+#include "Kismet/GameplayStatics.h"
 #include "Utils/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
@@ -41,17 +41,9 @@ void AP1MyPlayer::BeginPlay()
 			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		    }
 	    }
-
-        // Broadcast Delegate
-        if (UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance()))
-        {
-            if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
-            {
-                MyPlayerData->OnMyPlayerSpawned.Broadcast(this);
-            }
-        }
     }
-   
+
+    // 스폰 알림(OnMyPlayerSpawned)은 스포너가 Initialize를 마친 뒤에 보낸다.
 }
 
 void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -145,7 +137,7 @@ void AP1MyPlayer::Tick(float DeltaTime)
             Info->set_state(GetMoveState());
         }
 
-        SEND_PACKET(MovePkt);
+        FP1PacketSender::Send(this, MovePkt);
         //FString DebugMessage = MovePkt.Utf8DebugString().c_str();
         //UE_LOG(LogP1CharacterComp, Log, TEXT("%s"), *DebugMessage);
     }
@@ -226,7 +218,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
                 Protocol::C_NORMAL_ATTACK NormalAttackPkt;
                 NormalAttackPkt.set_combo(Combo);
 
-                SEND_PACKET(NormalAttackPkt);
+                FP1PacketSender::Send(this, NormalAttackPkt);
             }
         }
     }
@@ -236,10 +228,8 @@ void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
 {
     bBattleMode = !bBattleMode;
 
-    if (AP1InGamePlayerController* PC = Cast<AP1InGamePlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0)))
-    {
-        PC->OnToggleBattleMode(bBattleMode);
-    }
+    // 화면 표시는 컨트롤러가 이 알림을 구독해서 맡는다.
+    OnBattleModeChanged.Broadcast(bBattleMode);
 }
 
 bool AP1MyPlayer::CanInputMovement() const

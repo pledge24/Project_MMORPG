@@ -4,9 +4,9 @@
 #include "Game/Entities/P1Creature.h"
 #include "P1Player.generated.h"
 
-class UDataTable;
-class USkeletalMesh;
-class UStaticMesh;
+class USkeletalMeshComponent;
+class UStaticMeshComponent;
+class UP1GearAppearanceComponent;
 
 UCLASS()
 class P1_API AP1Player : public AP1Creature
@@ -21,6 +21,7 @@ protected:
     virtual void BeginPlay();
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void Tick(float DeltaTime) override;
+    virtual void PostInitializeComponents() override;
     //~ End AActor Interface
 
     //~ Begin AP1Creature Interface
@@ -34,23 +35,31 @@ protected:
 
     //~ Equipment
 public:
-    /** 슬롯에 맞는 메시로 바꾼다. 구현은 블루프린트에 있다. */
-    UFUNCTION(BlueprintImplementableEvent, Category = "Character")
-    void ChangeMesh(int32 SlotId, int32 TemplateId);
-
-    void SetEquipmentSlot(const Protocol::Slot& InSlot);
-
-    /** 아이템의 장착 메시를 에셋 테이블에서 찾는다. 행이 없으면 false */
-    UFUNCTION(BlueprintCallable, Category = "Character")
-    bool GetItemMeshes(int32 TemplateId, TSoftObjectPtr<USkeletalMesh>& OutSkeletalMesh, TSoftObjectPtr<UStaticMesh>& OutStaticMesh) const;
+    /** 장비 부위(GearType)에 아이템 외형을 입힌다. TemplateId가 0이면 그 부위를 비운다. */
+    void ApplyGear(int32 GearType, int32 TemplateId);
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<class UStaticMeshComponent> WeaponMesh;
+    TObjectPtr<UStaticMeshComponent> WeaponMesh;
 
-    /** 아이템 메시를 담은 에셋 테이블이다. 행 구조체는 FP1ItemAssetData다. */
-    UPROPERTY(EditDefaultsOnly, Category = "Data")
-    TObjectPtr<UDataTable> ItemAssetTable;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<USkeletalMeshComponent> HelmetMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<USkeletalMeshComponent> ChestMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<USkeletalMeshComponent> LegsMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<USkeletalMeshComponent> ArmsMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<USkeletalMeshComponent> BootsMesh;
+
+    /** 부위별 메시 컴포넌트를 장착한 아이템의 메시로 바꾼다. 에셋 테이블은 여기서 지정한다. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    TObjectPtr<UP1GearAppearanceComponent> GearAppearance;
 
     //~ Identity
 public:

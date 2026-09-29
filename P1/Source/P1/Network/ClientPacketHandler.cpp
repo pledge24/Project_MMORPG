@@ -85,6 +85,21 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
     if (auto* GameInstance = session->GetGameInstance())
     {
+        // 거절되면 아직 캐릭터 선택 화면이므로 그 화면에 알린다.
+        if (pkt.success() == false)
+        {
+            if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
+            {
+                if (UP1LoginManager* Manager = Controller->GetLoginManager())
+                {
+                    if (UP1LoginWidget* LoginWidget = Manager->GetLoginWidget())
+                        LoginWidget->ShowEnterGameFailed();
+                }
+            }
+
+            return true;
+        }
+
         GameInstance->HandleEnterGame(pkt);
     }
 

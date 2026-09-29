@@ -8,6 +8,7 @@
 #include "Game/Entities/P1Player.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "UI/Screens/P1ShopWidget.h"
 #include "UI/WorldSpace/P1NameplateWidget.h"
 #include "UI/Screens/P1WarningTextWidget.h"
@@ -28,7 +29,7 @@ void AP1InGamePlayerController::BeginPlay()
             EnterRoomPkt.set_room_id(RoomId);
         }
 
-        SEND_PACKET(EnterRoomPkt);
+        FP1PacketSender::Send(this, EnterRoomPkt);
     }
 
     // ==================== Widget들 추가 ======================
@@ -116,6 +117,17 @@ void AP1InGamePlayerController::SetupInputComponent()
 
     InputComponent->BindAction("ToggleStatusWindow", IE_Pressed, this, &AP1InGamePlayerController::OnToggleStatusWindowWidget);
     InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AP1InGamePlayerController::OnToggleInventoryWidget);
+}
+
+void AP1InGamePlayerController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+
+    // 전투 모드는 내 플레이어가 갖고, 컨트롤러는 알림을 받아 화면에 보여 준다.
+    if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(InPawn))
+    {
+        MyPlayer->OnBattleModeChanged.AddUObject(this, &AP1InGamePlayerController::OnToggleBattleMode);
+    }
 }
 
 void AP1InGamePlayerController::OnToggleStatusWindowWidget()

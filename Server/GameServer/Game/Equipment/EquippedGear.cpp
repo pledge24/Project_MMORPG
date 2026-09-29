@@ -56,6 +56,10 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPt
         replicatingSlot->CopyFrom(*targetSlot);
 
     // 스텟 반영(반드시 증가함)
+    // DB에서 불러올 때는 updatedStatList가 없다. 그때 스텟은 Player::CalculateFinalStat이 장비까지 한 번에 계산한다.
+    if (updatedStatList == nullptr)
+        return true;
+
     if (PlayerRef ownerPlayer = _player.lock())
     {
         const string_view& maxHpProperty = JsonProperty::Item::Hp;
@@ -122,6 +126,9 @@ bool EquippedGear::UnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::
         replicatingSlot->CopyFrom(*targetSlot);
 
     // 스텟 반영(반드시 감소함)
+    if (updatedStatList == nullptr)
+        return true;
+
     if (PlayerRef ownerPlayer = _player.lock())
     {
         const string_view& maxHpProperty = JsonProperty::Item::Hp;

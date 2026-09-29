@@ -4,11 +4,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Game/Combat/P1AttackSystemComponent.h"
-#include "P1.h"
 #include "Game/Entities/P1MyPlayer.h"
+#include "Game/Equipment/P1GearAppearanceComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Utils/LogCategory.h"
-#include "Game/Data/P1ItemAssetData.h"
-#include "Engine/DataTable.h"
 
 AP1Player::AP1Player()
 {
@@ -36,13 +36,39 @@ AP1Player::AP1Player()
 	//GetCharacterMovement()->bRunPhysicsWithNoController = true;
 
     WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-    USkeletalMeshComponent* CharacterMesh = GetMesh();
+    WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
 
-    if (WeaponMesh && CharacterMesh)
+    // 방어구는 캐릭터 메시의 포즈를 그대로 따르는 스켈레탈 메시다. 리더 포즈는 PostInitializeComponents에서 건다.
+    HelmetMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh"));
+    HelmetMesh->SetupAttachment(GetMesh());
+    ChestMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestMesh"));
+    ChestMesh->SetupAttachment(GetMesh());
+    LegsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegsMesh"));
+    LegsMesh->SetupAttachment(GetMesh());
+    ArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmsMesh"));
+    ArmsMesh->SetupAttachment(GetMesh());
+    BootsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsMesh"));
+    BootsMesh->SetupAttachment(GetMesh());
+
+    GearAppearance = CreateDefaultSubobject<UP1GearAppearanceComponent>(TEXT("GearAppearance"));
+}
+
+void AP1Player::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    for (USkeletalMeshComponent* ArmorMesh : { HelmetMesh.Get(), ChestMesh.Get(), LegsMesh.Get(), ArmsMesh.Get(), BootsMesh.Get() })
     {
-        WeaponMesh->SetupAttachment(GetMesh(), FName("weapon_r"));
+        ArmorMesh->SetLeaderPoseComponent(GetMesh());
     }
 
+    // 서버가 보내는 부위 번호(GearType)와 메시 컴포넌트를 잇는다.
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_HELMET, HelmetMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_CHEST, ChestMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_LEGS, LegsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_ARMS, ArmsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_BOOTS, BootsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_WEAPON, WeaponMesh);
 }
 
 void AP1Player::BeginPlay()
@@ -64,37 +90,16 @@ void AP1Player::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
     Super::Initialize(EntityInfo);
 
-    // 장착한 장비를 메시로 표현
-    /*for (const auto& Pair : EntityInfo.player_info().equipped_gear())
+    // 입장할 때 이미 장착 중인 장비를 입힌다. 다른 플레이어도 이 요약으로 외형을 받는다.
+    for (const auto& Pair : EntityInfo.player_info().equipped_gear_summary())
     {
-        const Protocol::Slot& Slot_ = Pair.second;
-        EquipGear(Slot_);
-    }*/
-}
-
-void AP1Player::SetEquipmentSlot(const Protocol::Slot& InSlot)
-{
-    int32 SlotId = InSlot.slot_id();
-    int32 TemplateId = InSlot.item().template_id();
-    ChangeMesh(SlotId, TemplateId);
-}
-
-bool AP1Player::GetItemMeshes(int32 TemplateId, TSoftObjectPtr<USkeletalMesh>& OutSkeletalMesh, TSoftObjectPtr<UStaticMesh>& OutStaticMesh) const
-{
-    if (ItemAssetTable == nullptr)
-    {
-        UE_LOG(LogP1Entity, Warning, TEXT("AP1Player에 ItemAssetTable이 지정되지 않음"));
-        return false;
+        ApplyGear(Pair.first, Pair.second);
     }
+}
 
-    const FP1ItemAssetData* AssetData = ItemAssetTable->FindRow<FP1ItemAssetData>(
-        FName(*FString::FromInt(TemplateId)), TEXT("AP1Player::GetItemMeshes"));
-    if (AssetData == nullptr)
-        return false;
-
-    OutSkeletalMesh = AssetData->SkeletalMesh;
-    OutStaticMesh = AssetData->StaticMesh;
-    return true;
+void AP1Player::ApplyGear(int32 GearType, int32 TemplateId)
+{
+    GearAppearance->ApplyGear(GearType, TemplateId);
 }
 
 void AP1Player::SetPlayerName(const FText& InName)

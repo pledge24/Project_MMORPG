@@ -69,6 +69,13 @@ SHELL_TOOLS = {
 SQL_TOOLS = {
     "mcp__rider__execute_sql_query",
 }
+# Claude가 SQL을 실행해도 되는 Rider 데이터 소스. 읽기 전용 계정 claude_ro로 붙는 연결만 넣는다.
+# 사람이 편집용으로 만든 데이터 소스(Windows 인증)는 여기 넣지 않는다.
+# id는 mcp__rider__list_database_connections 의 결과에서 가져온다.
+SQL_ALLOWED_CONNECTIONS = {
+    "66d76225-1a17-423c-9e47-c279ba1cf5cc",  # UserDB (claude_ro)
+    "fb62fcf6-27f1-42eb-97d1-9d5139bab77f",  # GameDB (claude_ro)
+}
 
 # rootFolder 없이 부르면 안 되는 Rider MCP 툴 — 상태를 바꾸는 것들만.
 #
@@ -214,19 +221,28 @@ UE_SCRIPT_FORBIDDEN = {
 
 # 셸에서 막을 것 — 파괴적 파일/git 조작 + Redis 전체 삭제.
 SHELL_PATTERNS = [
+    # 삭제
     (r"rm\s+-[a-zA-Z]*r[a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*r", "rm -rf"),
     (r"\brd\s+/s\b|\brmdir\s+/s\b", "rd /s (재귀 삭제)"),
     (r"\bdel\s+/[a-zA-Z]*s\b", "del /s (재귀 삭제)"),
     (r"Remove-Item\b(?=[\s\S]*-Recurse)(?=[\s\S]*-Force)", "Remove-Item -Recurse -Force"),
+    # git
     (r"git\s+push\s+.*(--force\b|(?<!-)-f\b)", "git push --force"),
     (r"git\s+reset\s+--hard", "git reset --hard"),
     (r"git\s+clean\s+.*-[a-zA-Z]*f", "git clean -f"),
     (r"git\s+checkout\s+\.(\s|$)", "git checkout ."),
     (r"git\s+restore\s+\.(\s|$)", "git restore ."),
     (r"git\s+branch\s+-D\b", "git branch -D"),
+    # Redis
     (r"\bFLUSHALL\b", "Redis FLUSHALL"),
     (r"\bFLUSHDB\b", "Redis FLUSHDB"),
     (r"\bKEYS\s+['\"]?\*", "Redis KEYS *"),
+    # sql
+    (r"\bsqlcmd\b", "sqlcmd (DB는 Rider의 claude_ro 연결로만 조회한다)"),
+    (r"\bosql\b", "osql"),
+    (r"\bInvoke-Sqlcmd\b", "Invoke-Sqlcmd"),
+    (r"\bsqllocaldb\b", "sqllocaldb"),
+    (r"System\.Data\.SqlClient|Microsoft\.Data\.SqlClient", "SqlClient 직접 접속"),
 ]
 
 # 스키마·데이터를 통째로 날리는 SQL. 셸(sqlcmd 등)과 SQL 툴 양쪽에 적용한다.
@@ -529,6 +545,17 @@ def main():
         _record_ue_call(toolset, target, arguments)
         return 0
 
+    # 2.5) SQL은 허용된 연결로만 실행한다 (쓰기 권한이 있는 연결 차단)
+    if tool_name in SQL_TOOLS:
+        conn = tool_input.get("connectionId")
+        if conn not in SQL_ALLOWED_CONNECTIONS:
+            return deny(
+                "BLOCKED: execute_sql_query 의 connectionId(" + str(conn) + ")가 허용 목록에 없다. "
+                "Claude는 claude_ro 연결로만 SQL을 실행한다. 쓰기가 필요하면 사람에게 요청할 것.",
+                tool_name,
+                ("허용되지 않은 DB 연결",),
+            )
+          
     # 3) 위험 명령 패턴 검사
     if tool_name in SQL_TOOLS:
         target = tool_input.get("queryText", "")

@@ -1,5 +1,5 @@
 #include "Game/World/P1Portal.h"
-#include "P1.h"
+#include "Network/P1PacketSender.h"
 
 // Sets default values
 AP1Portal::AP1Portal()
@@ -24,7 +24,7 @@ void AP1Portal::SendEnterRoomPacket()
         EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
         EnterRoomPkt.set_portal_id(PortalId);
 
-        SEND_PACKET(EnterRoomPkt);
+        FP1PacketSender::Send(this, EnterRoomPkt);
     }
 }
 

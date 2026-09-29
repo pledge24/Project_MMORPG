@@ -37,6 +37,7 @@ bool Player::Start()
 
     _inventory->ClearDirtyFlags();
     _equippedGear->ClearDirtyFlag();
+    RefreshEquippedGearSummary();
 
 	if (CalculateFinalStat() == false)
 		return false;
@@ -150,8 +151,14 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
         return false;
 
     const Protocol::Item& itemInstance = requestSlot.item();
-    if (_equippedGear->EquipGear(OUT updatedSlotList->Add(), OUT updatedStatList, itemInstance) == false)
+    Protocol::Slot* equippedSlot = updatedSlotList->Add();
+    if (_equippedGear->EquipGear(OUT equippedSlot, OUT updatedStatList, itemInstance) == false)
         return false;
+
+    // 외형을 바꾸는 쪽은 요청 슬롯(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
+    pkt.set_slot_id(equippedSlot->slot_id());
+    pkt.set_template_id(equippedSlot->item().template_id());
+    RefreshEquippedGearSummary();
 
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
         return false;
@@ -173,8 +180,14 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     if (requestSlot.has_item() == false)
         return false;
 
-    if (_equippedGear->UnequipGear(requestSlot, OUT updatedSlotList->Add(), OUT updatedStatList) == false)
+    Protocol::Slot* unequippedSlot = updatedSlotList->Add();
+    if (_equippedGear->UnequipGear(requestSlot, OUT unequippedSlot, OUT updatedStatList) == false)
         return false;
+
+    // 탈착 뒤 그 부위는 비어 있으므로 template_id는 0이다.
+    pkt.set_slot_id(unequippedSlot->slot_id());
+    pkt.set_template_id(unequippedSlot->item().template_id());
+    RefreshEquippedGearSummary();
 
     if (_inventory->AddItem(OUT updatedSlotList->Add(), requestSlot.item()) == false)
         return false;
@@ -308,8 +321,8 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
         int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
         _possession->set_gold(_possession->gold() + reward.gold());
 
-        // Check Level Up
-        if (updatedExp >= maxExp)
+        // Check Level Up. 최대 레벨이면 경험치만 쌓는다. 레벨이 레벨 표 밖으로 나가면 다음 입장이 막힌다.
+        if (updatedExp >= maxExp && IsMaxLevel() == false)
         {
             SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp - maxExp);
             OnLevelUp();
@@ -326,7 +339,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
         {
             rewardResultPkt.set_is_level_up(true);
             Protocol::LevelUpInfo info;
-            info.set_new_level(_playerInfo->level() - 1);
+            info.set_old_level(_playerInfo->level() - 1);
             info.set_new_level(_playerInfo->level());
 
 			RepeatedPtrField<Protocol::Stat>* updatedStatList = info.mutable_updated_stat();
@@ -340,8 +353,30 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     }
 }
 
+void Player::RefreshEquippedGearSummary()
+{
+    // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
+    auto* summary = _playerInfo->mutable_equipped_gear_summary();
+    summary->clear();
+
+    for (const auto& pair : _possession->equipped_gear())
+    {
+        const Protocol::Slot& slot = pair.second;
+        if (slot.has_item() && slot.item().template_id() != 0)
+            (*summary)[slot.slot_id()] = slot.item().template_id();
+    }
+}
+
+bool Player::IsMaxLevel() const
+{
+    return _playerInfo->level() >= MAX_LEVEL;
+}
+
 void Player::OnLevelUp()
 {
+    if (IsMaxLevel())
+        return;
+
     // Set Level
     _playerInfo->set_level(_playerInfo->level() + 1);
 

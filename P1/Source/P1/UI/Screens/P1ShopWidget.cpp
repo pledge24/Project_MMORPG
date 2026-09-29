@@ -3,6 +3,7 @@
 #include "Core/P1MyPlayerData.h"
 #include "UI/Common/P1SlotWidget.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Game/Entities/P1MyPlayer.h"
 
 void UP1ShopWidget::NativeConstruct()
@@ -47,6 +48,6 @@ void UP1ShopWidget::SendBuyItemPacket(UP1SlotWidget* Slot_)
         Protocol::C_BUY_ITEM pkt;
         pkt.set_template_id(Slot_->ItemData.TemplateId);
         pkt.set_count(1);
-        SEND_PACKET(pkt)
+        FP1PacketSender::Send(this, pkt);
     }
 }

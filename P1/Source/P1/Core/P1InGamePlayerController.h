@@ -39,6 +39,7 @@ protected:
     //~ Begin APlayerController Interface
 protected:
     virtual void SetupInputComponent() override;
+    virtual void OnPossess(APawn* InPawn) override;
     //~ End APlayerController Interface
 
     //~ Widget Control

@@ -3,6 +3,7 @@
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
 #include "Game/Entities/P1MyPlayer.h"
@@ -141,7 +142,7 @@ void UP1InventoryWidget::SendSellItemPacket(UP1SlotWidget* SlotWidget)
     Protocol::C_SELL_ITEM Pkt;
     Pkt.mutable_slot()->CopyFrom(SlotData);
     Pkt.set_count(1);
-    SEND_PACKET(Pkt);
+    FP1PacketSender::Send(this, Pkt);
     
 }
 
@@ -173,7 +174,7 @@ void UP1InventoryWidget::SendUseItemPacket(UP1SlotWidget* SlotWidget)
         {
             Protocol::C_USE_ITEM Pkt;
             Pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(Pkt);
+            FP1PacketSender::Send(this, Pkt);
         }
         else
         {
@@ -209,7 +210,7 @@ void UP1InventoryWidget::SendEquipItemPacket(UP1SlotWidget* SlotWidget)
         {
             Protocol::C_EQUIP_GEAR Pkt;
             Pkt.mutable_slot()->CopyFrom(SlotData);
-            SEND_PACKET(Pkt);
+            FP1PacketSender::Send(this, Pkt);
         }
         else
         {

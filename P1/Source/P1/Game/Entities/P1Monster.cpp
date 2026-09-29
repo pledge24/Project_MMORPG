@@ -1,7 +1,6 @@
 #include "Game/Entities/P1Monster.h"
 
 #include "Components/WidgetComponent.h"
-#include "UI/WorldSpace/P1NameplateWidget.h"
 #include "Utils/LogCategory.h"
 
 AP1Monster::AP1Monster()

@@ -104,6 +104,24 @@ int64 Monster::GetGoldReward()
 
 void Monster::UpdateState()
 {
+    // 전환 판정은 중간에 return으로 빠져나가므로, 다음 판정 예약을 판정 함수 밖에 둔다.
+    EvaluateStateTransition();
+
+    if (auto ownerRoom = _room.load().lock())
+    {
+        ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
+            {
+                int64 entityId = self->GetEntityId();
+
+                if(ownerRoom->Contains(entityId))
+                    self->UpdateState();
+            });
+
+    }
+}
+
+void Monster::EvaluateStateTransition()
+{
     switch (_state)
     {
     case MonsterState::Idle:
@@ -155,6 +173,12 @@ void Monster::UpdateState()
     }
     case MonsterState::Chasing:
     {
+        if (IsTargetLost())
+        {
+            SwitchState(MonsterState::Idle);
+            return;
+        }
+
         if (auto target = _target.lock())
         {
             Protocol::PosInfo* curPos = _posInfo;
@@ -186,6 +210,12 @@ void Monster::UpdateState()
     }
     case MonsterState::Attacking:
     {
+        if (IsTargetLost())
+        {
+            SwitchState(MonsterState::Idle);
+            return;
+        }
+
         if (auto target = _target.lock())
         {
             Protocol::PosInfo* curPos = _posInfo;
@@ -224,18 +254,6 @@ void Monster::UpdateState()
     }
     default:
         break;
-    }
-
-    if (auto ownerRoom = _room.load().lock())
-    {
-        ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
-            {
-                int64 entityId = self->GetEntityId();
-
-                if(ownerRoom->Contains(entityId))
-                    self->UpdateState();
-            });
-
     }
 }
 
@@ -337,20 +355,10 @@ void Monster::ExecuteStateBehavior(float deltaTime)
 
 void Monster::ExecuteStateNone()
 {
-    cout << "Invalid State: State None" << '\n';
 }
 
 void Monster::ExecuteStateIdle(float deltaTime)
 {
-    // Just Validate
-    Protocol::Vector* moveDirection = _posInfo->mutable_move_direction();
-    if (MathUtil::IsZeroVector(moveDirection) == false)
-    {
-        cout << "State is Idle. But, moveDirection is not zero vector" << '\n';
-
-        return;
-    }
-
 }
 
 void Monster::ExecuteStateWandering(float deltaTime)
@@ -483,6 +491,10 @@ void Monster::StopMoving(string context, bool shouldBeIdle)
 
 void Monster::NormalAttack()
 {
+    EntityRef target = _target.lock();
+    if (target == nullptr)
+        return;
+
     if (auto ownerRoom = _room.load().lock())
     {
         int32 combo = 0;
@@ -492,12 +504,26 @@ void Monster::NormalAttack()
         Protocol::AttackInfo attackInfo;
         {
             attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-            attackInfo.set_target_id(_target.lock()->GetEntityId());
+            attackInfo.set_target_id(target->GetEntityId());
             attackInfo.set_combo(0);
             attackInfo.set_damage(_baseAttack);
         }
         ownerRoom->DoTimer(200, &Room::HandleHit, shared_from_this(), attackInfo);
     }
+}
+
+bool Monster::IsTargetLost()
+{
+    // 대상이 사망했거나 룸을 떠났으면 추적을 그만둔다. 사망한 플레이어는 룸에 남으므로 사망을 따로 본다.
+    EntityRef target = _target.lock();
+    if (target == nullptr)
+        return true;
+
+    if (CreatureRef creature = dynamic_pointer_cast<Creature>(target); creature && creature->IsDead())
+        return true;
+
+    RoomRef ownerRoom = _room.load().lock();
+    return ownerRoom == nullptr || ownerRoom->Contains(target->GetEntityId()) == false;
 }
 
 bool Monster::CanMove()
@@ -513,10 +539,7 @@ bool Monster::AlreadyArrive()
     vector2D monsterPos = vector2D{ _posInfo->pos().x(), _posInfo->pos().y() };
     
     if (_moveDest.has_value() == false)
-    {
-        cout << "AlreadyArrive: something wrong" << '\n';
         return true;
-    }
 
     auto targetPos = _moveDest.value();
     return MathUtil::Distance(monsterPos, targetPos, true) < 1.f;
@@ -574,11 +597,6 @@ void Monster::SetMoveDirection(const vector2D& moveVec)
 
 void Monster::SetYaw(float yaw)
 {
-    if (yaw == 0.f)
-    {
-        cout << "Warning: Yaw is 0.f" << '\n';
-    }
-
     _posInfo->set_yaw(yaw);
 }
 
