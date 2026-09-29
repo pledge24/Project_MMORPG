@@ -6,13 +6,10 @@
 /*--------------------------------------------------------------
     인벤토리 슬롯 타입 매핑 테스트
 
-    Inventory는 아이템 타입을 고르는 표를 세 개 들고 있다.
-      - itemTypeMappings            : 아이템 데이터의 "itemType" 문자열 → ItemType  (AddItem이 사용)
-      - slotTypeToItemTypeMappings  : SlotType → ItemType                           (RemoveItem/GetSlot이 사용)
-      - inventorylookupMappings     : ItemType → 실제 슬롯 배열
-    넣을 때와 꺼낼 때가 서로 다른 표를 보므로, 두 표가 어긋나면 아이템이 엉뚱한
-    인벤토리로 샌다. 아래 테스트는 세 슬롯 타입 전부에 대해 넣기→조회→지우기
-    왕복이 같은 저장소를 가리키는지 확인한다.
+    넣을 때는 아이템 데이터의 "itemType" 문자열로, 꺼낼 때는 SlotType으로 저장소를
+    찾는다. 두 경로가 다른 저장소를 가리키면 아이템이 엉뚱한 인벤토리로 샌다.
+    아래 테스트는 세 슬롯 타입 전부에 대해 넣기→조회→지우기 왕복이 같은 저장소를
+    가리키는지 확인한다.
 
     픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 Init()만
     한다. DB·Redis·Room·세션이 필요 없다 (Player::Init은 Inventory/EquippedGear
@@ -240,12 +237,12 @@ TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
     프로세스가 죽지 않고 정의된 실패로 거부돼야 한다.
 
     SLOT_TYPE_EQUIPPED(4)와 SLOT_TYPE_QUICK(5)은 프로토콜에 정의돼 있으면서
-    slotTypeToItemTypeMappings에는 없다. 가설이 아니라 실재하는 입력 경로다.
+    저장소 목록에는 없다. 가설이 아니라 실재하는 입력 경로다.
 ---------------------------------------------------------------*/
 
 namespace
 {
-    // 프로토콜에는 있으나 slotTypeToItemTypeMappings에는 없는 슬롯 타입들.
+    // 프로토콜에는 있으나 저장소 목록에는 없는 슬롯 타입들.
     constexpr Protocol::SlotType UNKNOWN_SLOT_TYPES[] = {
         Protocol::SlotType::SLOT_TYPE_NONE,
         Protocol::SlotType::SLOT_TYPE_EQUIPPED,
@@ -374,26 +371,11 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
     ---- 관측 수단과 그 한계 ----
 
     키가 표에 있는지는 공개 인터페이스로만 관측한다. 내부 상태를 들여다보지 않는다.
-    표는 셋이고 관측 경로가 표마다 다르므로, 무엇이 무엇을 보장하는지 적어 둔다.
 
-    GetSlot은 슬롯 타입 표와 조회 표를 잇달아 find로 거친다. 그래서 유효한 slot_id에
-    대한 반환값은 **두 표를 합친 결과**다. 널이 아니면 두 표에 키가 다 있다는 뜻이고,
-    널이면 둘 중 적어도 하나에 없다는 뜻이다. 조회 표 쪽은 AddItem으로도 관측된다 —
-    AddItem은 아이템 타입을 정한 뒤 조회 표를 find로 확인하고 없으면 거짓을 돌려준다.
-
-    더티 플래그 표는 #30에서 GetDirtyFlags가 참조 대신 포인터를 돌려주게 되면서
-    단독으로 관측된다. 널이면 그 표에 키가 없다는 뜻이고, 다른 두 표가 섞이지 않는다.
-    아래 ItemTypeLookupKeySetMatchesDeclaration이 이 경로로 세 번째 표까지 고정한다.
-
-    조회 표와 슬롯 타입 표에서 못 잡는 변경이 둘 남는다. 공개 인터페이스에 관측 경로가
-    없어 이 티켓에서는 메우지 않는다. 새 seam을 만드는 일은 #24가 범위 밖으로 둔 리팩토링이다.
-      - 슬롯 타입 표에 {SLOT_TYPE_QUICK, ITEM_TYPE_NONE} 같은 항목이 들어와도
-        조회 표에 ITEM_TYPE_NONE이 없어 GetSlot은 여전히 널이다.
-      - 조회 표에 ITEM_TYPE_NONE이 들어와도 거기에 닿는 슬롯 타입이 없고,
-        FindFirstAvailableSlotId는 표를 보기 전에 그 값을 거부한다.
-    둘 다 "제외하기로 한 값을 표에 넣는" 변경이고, 그 변경을 하는 사람은 아래 선언도
-    함께 고치게 된다. 반면 프로토콜에 값이 새로 생기는 경우는 리플렉션 대조가 빠짐없이
-    잡는다. 이 티켓이 막으려는 것이 후자다.
+    Inventory는 아이템 타입마다 저장소(Bag) 하나를 두고, 그 안에 슬롯 타입과 슬롯 배열과
+    더티 플래그를 함께 담는다. 슬롯 타입으로 찾든 아이템 타입으로 찾든 같은 목록을 본다.
+    GetSlot은 슬롯 타입으로, GetDirtyFlags와 AddItem은 아이템 타입으로 저장소를 찾으므로,
+    아래 두 테스트가 두 방향의 키 집합을 각각 고정한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -412,7 +394,7 @@ namespace
     };
 
     // 인벤토리가 저장소를 갖는 슬롯 타입이다.
-    // slotTypeToItemTypeMappings와 inventorylookupMappings의 키 집합이 이 선언과 같아야 한다.
+    // 저장소 목록의 슬롯 타입과 아이템 타입이 이 선언과 같아야 한다.
     const StoredSlotCase STORED_SLOT_CASES[] = {
         {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR,
          Protocol::ItemType::ITEM_TYPE_GEAR,

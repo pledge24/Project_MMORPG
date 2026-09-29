@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 11개 (높음 3 · 중간 6 · 낮음 2)
+항목 10개 (높음 3 · 중간 5 · 낮음 2)
 
 ## 작성 방법
 
@@ -221,38 +221,6 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 **변경 영향 범위 확대** · **버그 발생 가능성 증가** — 이동 동기화를 고칠 때 한쪽만 고치는 사고가
 나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
 드러난다.
-
-## 인벤토리 매핑 3종이 손으로 유지된다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 파일 · server
-> 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (생성자)
-> 등록일: 2026년 8월 27일
-
-`Inventory`는 서로 정합해야 하는 표를 넷 들고 있고, 넷 다 생성자에서 손으로 채운다. 제목의
-"3종"은 서로 변환하는 표만 센 것이다.
-
-| 표 | 방향 | 쓰는 곳 |
-|---|---|---|
-| `itemTypeMappings` | 아이템 데이터의 `"itemType"` 문자열 → `ItemType` | `addItem` |
-| `slotTypeToItemTypeMappings` | `SlotType` → `ItemType` | `removeItem`, `GetSlot` |
-| `inventorylookupMappings` | `ItemType` → 실제 슬롯 배열 | 전부 |
-| `dirtyFlagsMappings` | `ItemType` → 슬롯별 더티 플래그 | `addItem`, `removeItem`, `GetDirtyFlags` |
-
-**검사한 표와 인덱싱하는 표가 다른 자리가 둘 있다.**
-— `Inventory.cpp:83`은 `addItem`이 69~71줄에서 `inventorylookupMappings`를 `find`로 확인한 뒤
-`dirtyFlagsMappings`를 `operator[]`로 인덱싱한다. `Inventory.cpp:162`는 `removeItem`이 135줄에서
-`slotTypeToItemTypeMappings`를 확인한 뒤 같은 일을 한다. 지금 터지지 않는 것은 생성자가 네 표를
-같은 세 키로 채우기 때문이고, 코드가 그 사실을 보장하지는 않는다.
-
-`Server/GameServerTests/InventoryTests.cpp`가 네 표 중 셋의 키 집합을 기대 집합에 고정하므로,
-표가 다시 어긋나면 테스트가 먼저 잡는다. `itemTypeMappings`는 키가 문자열이라 열거형 리플렉션
-대조가 닿지 않고, 관측 경로도 없다. 2026년 9월에 검토했다가 폐기한 설계가
-`docs/references/work/2026-09-10-inventory-cleanup.md`에 있다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 넣을 때와 꺼낼 때가 다른 표를 본다. 두 표가 한
-글자만 어긋나도 아이템이 다른 인벤토리로 샌다. 두 값 모두 유효한 enum이라 컴파일러가 아무 말도
-하지 않는다.
 
 ## `UP1GameInstance`가 클라 측 갓 클래스
 > **심각도:** 중간 · **난이도:** 높음 · **범위:** 모듈 · client
