@@ -46,6 +46,7 @@ void UP1GameInstance::Shutdown()
 
     // 게임 서버 연결 해제
     DisconnectFromGameServer();
+    CloseGameServerConnection();
 }
 
 bool UP1GameInstance::TickRecvPump(float DeltaTime)
@@ -82,6 +83,9 @@ void UP1GameInstance::BeginDestroy()
 
 void UP1GameInstance::ConnectToGameServer()
 {
+	// 로그인을 다시 누르면 이 함수가 또 불린다. 이전 연결을 정리하지 않으면 소켓이 샌다.
+	CloseGameServerConnection();
+
 	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("Stream"), TEXT("Client Socket"));
 
 	FIPv4Address Ip;
@@ -113,6 +117,27 @@ void UP1GameInstance::ConnectToGameServer()
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Fail To Connect GameServer")));
+
+		CloseGameServerConnection();
+	}
+}
+
+void UP1GameInstance::CloseGameServerConnection()
+{
+	// 소켓을 먼저 닫아야 수신 스레드가 진행 중인 Recv에서 빠져나와 끝날 수 있다.
+	if (Socket)
+		Socket->Close();
+
+	if (GameServerSession)
+	{
+		GameServerSession->Disconnect();
+		GameServerSession = nullptr;
+	}
+
+	if (Socket)
+	{
+		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
+		Socket = nullptr;
 	}
 }
 
@@ -319,7 +344,10 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
         OnRecvBuyItemPkt.Broadcast();
         if (BuyItemPkt.success() == true)
         {
-            _MyPlayerData->OnInvenSlotChanged.Broadcast(BuyItemPkt.updated_slot(), false);
+            for (const Protocol::Slot& UpdatedSlot : BuyItemPkt.updated_slots())
+            {
+                _MyPlayerData->OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
+            }
             _MyPlayerData->OnGoldChanged.Broadcast(BuyItemPkt.gold());
         }
     }

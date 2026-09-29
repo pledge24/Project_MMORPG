@@ -35,6 +35,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void DisconnectFromGameServer();
 
+    /** 소켓을 닫고 세션 스레드가 끝나기를 기다린 뒤 소켓을 파괴한다. 연결이 없으면 아무것도 하지 않는다. */
+    void CloseGameServerConnection();
+
     class FSocket* Socket;
     const FString IpAddress = TEXT("127.0.0.1");
     const int16 Port = 7777;

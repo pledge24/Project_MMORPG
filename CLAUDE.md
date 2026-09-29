@@ -147,7 +147,7 @@ Conventional Commits와 gitmoji를 기준으로 하고, 아래에 적힌 차이�
 예: `✨ feat: psmux 세션 자동 복구 옵션 추가`
 
 - 제목을 한국어 명령형으로 쓴다. `추가했음`처럼 과거형을 쓰지 않는다.
-- 이모지 매핑은 gitmoji 표준을 따른다. (참고: https://gitmoji.dev)
+- 이모지는 type마다 하나로 고정한다: `✨ feat` · `🐛 fix` · `📝 docs` · `🎨 style` · `♻️ refactor` · `⚡️ perf` · `✅ test` · `🏗️ build` · `👷 ci` · `🔧 chore` · `⏪️ revert`.
 - type은 Conventional Commits의 11개만 쓴다.
 
 ### 브랜치

@@ -364,7 +364,7 @@ struct C_BUY_ITEMDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_BUY_ITEMDefaultTypeInternal _C_BUY_ITEM_default_instance_;
 PROTOBUF_CONSTEXPR S_BUY_ITEM::S_BUY_ITEM(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.updated_slot_)*/nullptr
+    /*decltype(_impl_.updated_slots_)*/{}
   , /*decltype(_impl_.gold_)*/int64_t{0}
   , /*decltype(_impl_.success_)*/false
   , /*decltype(_impl_._cached_size_)*/{}} {}
@@ -807,7 +807,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_BUY_ITEM, _impl_.success_),
-  PROTOBUF_FIELD_OFFSET(::Protocol::S_BUY_ITEM, _impl_.updated_slot_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_BUY_ITEM, _impl_.updated_slots_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_BUY_ITEM, _impl_.gold_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _internal_metadata_),
@@ -1066,45 +1066,45 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "w\030\003 \001(\002\"R\n\005S_HIT\022\021\n\tentity_id\030\001 \001(\003\022\016\n\006d"
   "amage\030\002 \001(\003\022\027\n\nupdated_hp\030\003 \001(\003H\000\210\001\001B\r\n\013"
   "_updated_hp\"0\n\nC_BUY_ITEM\022\023\n\013template_id"
-  "\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"Q\n\nS_BUY_ITEM\022\017\n\007s"
-  "uccess\030\001 \001(\010\022$\n\014updated_slot\030\002 \001(\0132\016.Pro"
-  "tocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_ITEM\022"
-  "\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\022\r\n\005count\030\002"
-  " \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022$\n\014"
-  "updated_slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004go"
-  "ld\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016"
-  ".Protocol.Slot\"\245\001\n\014S_EQUIP_GEAR\022\017\n\007succe"
-  "ss\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003\022\017\n\007slot_id\030\003"
-  " \001(\005\022\023\n\013template_id\030\004 \001(\005\022%\n\rupdated_slo"
-  "ts\030\005 \003(\0132\016.Protocol.Slot\022$\n\014updated_stat"
-  "\030\006 \003(\0132\016.Protocol.Stat\".\n\016C_UNEQUIP_GEAR"
-  "\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\247\001\n\016S_UNE"
-  "QUIP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tentity_id\030"
-  "\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004 "
-  "\001(\005\022%\n\rupdated_slots\030\005 \003(\0132\016.Protocol.Sl"
-  "ot\022$\n\014updated_stat\030\006 \003(\0132\016.Protocol.Stat"
-  "\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol."
-  "Slot\"}\n\nS_USE_ITEM\022\017\n\007success\030\001 \001(\010\022\021\n\te"
-  "ntity_id\030\002 \001(\003\022%\n\rupdated_slots\030\003 \003(\0132\016."
-  "Protocol.Slot\022$\n\014updated_stat\030\004 \003(\0132\016.Pr"
-  "otocol.Stat\"\032\n\005S_DIE\022\021\n\tentity_id\030\001 \001(\003\""
-  "\310\001\n\017S_REWARD_RESULT\022\"\n\004type\030\001 \001(\0162\024.Prot"
-  "ocol.RewardType\022 \n\006reward\030\002 \001(\0132\020.Protoc"
-  "ol.Reward\022\023\n\013updated_exp\030\003 \001(\003\022\024\n\014update"
-  "d_gold\030\004 \001(\003\022\023\n\013is_level_up\030\005 \001(\010\022/\n\020lev"
-  "el_up_details\030\006 \001(\0132\025.Protocol.LevelUpIn"
-  "fo\"\244\001\n\tC_RESPAWN\022+\n\014respawn_type\030\001 \001(\0162\025"
-  ".Protocol.RespawnType\022\022\n\010item_uid\030\002 \001(\003H"
-  "\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022\032\n\020target_pla"
-  "yer_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005 \001(\005H\000B\016\n\014res"
-  "pawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007success\030\001 \001(\010"
-  "\022\025\n\rerror_message\030\002 \001(\t\022+\n\014respawn_type\030"
-  "\003 \001(\0162\025.Protocol.RespawnType\022\021\n\tentity_i"
-  "d\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n\010pos_info\030\006 \001"
-  "(\0132\021.Protocol.PosInfo\022$\n\014updated_stat\030\007 "
-  "\003(\0132\016.Protocol.Stat\"\025\n\006C_CHAT\022\013\n\003msg\030\001 \001"
-  "(\t\"(\n\006S_CHAT\022\021\n\tentity_id\030\001 \001(\003\022\013\n\003msg\030\002"
-  " \001(\tb\006proto3"
+  "\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"R\n\nS_BUY_ITEM\022\017\n\007s"
+  "uccess\030\001 \001(\010\022%\n\rupdated_slots\030\002 \003(\0132\016.Pr"
+  "otocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_ITEM"
+  "\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\022\r\n\005count\030"
+  "\002 \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022$\n"
+  "\014updated_slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004g"
+  "old\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132"
+  "\016.Protocol.Slot\"\245\001\n\014S_EQUIP_GEAR\022\017\n\007succ"
+  "ess\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003\022\017\n\007slot_id\030"
+  "\003 \001(\005\022\023\n\013template_id\030\004 \001(\005\022%\n\rupdated_sl"
+  "ots\030\005 \003(\0132\016.Protocol.Slot\022$\n\014updated_sta"
+  "t\030\006 \003(\0132\016.Protocol.Stat\".\n\016C_UNEQUIP_GEA"
+  "R\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\247\001\n\016S_UN"
+  "EQUIP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tentity_id"
+  "\030\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004"
+  " \001(\005\022%\n\rupdated_slots\030\005 \003(\0132\016.Protocol.S"
+  "lot\022$\n\014updated_stat\030\006 \003(\0132\016.Protocol.Sta"
+  "t\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol"
+  ".Slot\"}\n\nS_USE_ITEM\022\017\n\007success\030\001 \001(\010\022\021\n\t"
+  "entity_id\030\002 \001(\003\022%\n\rupdated_slots\030\003 \003(\0132\016"
+  ".Protocol.Slot\022$\n\014updated_stat\030\004 \003(\0132\016.P"
+  "rotocol.Stat\"\032\n\005S_DIE\022\021\n\tentity_id\030\001 \001(\003"
+  "\"\310\001\n\017S_REWARD_RESULT\022\"\n\004type\030\001 \001(\0162\024.Pro"
+  "tocol.RewardType\022 \n\006reward\030\002 \001(\0132\020.Proto"
+  "col.Reward\022\023\n\013updated_exp\030\003 \001(\003\022\024\n\014updat"
+  "ed_gold\030\004 \001(\003\022\023\n\013is_level_up\030\005 \001(\010\022/\n\020le"
+  "vel_up_details\030\006 \001(\0132\025.Protocol.LevelUpI"
+  "nfo\"\244\001\n\tC_RESPAWN\022+\n\014respawn_type\030\001 \001(\0162"
+  "\025.Protocol.RespawnType\022\022\n\010item_uid\030\002 \001(\003"
+  "H\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022\032\n\020target_pl"
+  "ayer_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005 \001(\005H\000B\016\n\014re"
+  "spawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007success\030\001 \001("
+  "\010\022\025\n\rerror_message\030\002 \001(\t\022+\n\014respawn_type"
+  "\030\003 \001(\0162\025.Protocol.RespawnType\022\021\n\tentity_"
+  "id\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n\010pos_info\030\006 "
+  "\001(\0132\021.Protocol.PosInfo\022$\n\014updated_stat\030\007"
+  " \003(\0132\016.Protocol.Stat\"\025\n\006C_CHAT\022\013\n\003msg\030\001 "
+  "\001(\t\"(\n\006S_CHAT\022\021\n\tentity_id\030\001 \001(\003\022\013\n\003msg\030"
+  "\002 \001(\tb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -1112,7 +1112,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 3052, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 3053, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 40,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -5905,18 +5905,10 @@ void C_BUY_ITEM::InternalSwap(C_BUY_ITEM* other) {
 
 class S_BUY_ITEM::_Internal {
  public:
-  static const ::Protocol::Slot& updated_slot(const S_BUY_ITEM* msg);
 };
 
-const ::Protocol::Slot&
-S_BUY_ITEM::_Internal::updated_slot(const S_BUY_ITEM* msg) {
-  return *msg->_impl_.updated_slot_;
-}
-void S_BUY_ITEM::clear_updated_slot() {
-  if (GetArenaForAllocation() == nullptr && _impl_.updated_slot_ != nullptr) {
-    delete _impl_.updated_slot_;
-  }
-  _impl_.updated_slot_ = nullptr;
+void S_BUY_ITEM::clear_updated_slots() {
+  _impl_.updated_slots_.Clear();
 }
 S_BUY_ITEM::S_BUY_ITEM(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
@@ -5928,15 +5920,12 @@ S_BUY_ITEM::S_BUY_ITEM(const S_BUY_ITEM& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   S_BUY_ITEM* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.updated_slot_){nullptr}
+      decltype(_impl_.updated_slots_){from._impl_.updated_slots_}
     , decltype(_impl_.gold_){}
     , decltype(_impl_.success_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  if (from._internal_has_updated_slot()) {
-    _this->_impl_.updated_slot_ = new ::Protocol::Slot(*from._impl_.updated_slot_);
-  }
   ::memcpy(&_impl_.gold_, &from._impl_.gold_,
     static_cast<size_t>(reinterpret_cast<char*>(&_impl_.success_) -
     reinterpret_cast<char*>(&_impl_.gold_)) + sizeof(_impl_.success_));
@@ -5948,7 +5937,7 @@ inline void S_BUY_ITEM::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.updated_slot_){nullptr}
+      decltype(_impl_.updated_slots_){arena}
     , decltype(_impl_.gold_){int64_t{0}}
     , decltype(_impl_.success_){false}
     , /*decltype(_impl_._cached_size_)*/{}
@@ -5966,7 +5955,7 @@ S_BUY_ITEM::~S_BUY_ITEM() {
 
 inline void S_BUY_ITEM::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  if (this != internal_default_instance()) delete _impl_.updated_slot_;
+  _impl_.updated_slots_.~RepeatedPtrField();
 }
 
 void S_BUY_ITEM::SetCachedSize(int size) const {
@@ -5979,10 +5968,7 @@ void S_BUY_ITEM::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaForAllocation() == nullptr && _impl_.updated_slot_ != nullptr) {
-    delete _impl_.updated_slot_;
-  }
-  _impl_.updated_slot_ = nullptr;
+  _impl_.updated_slots_.Clear();
   ::memset(&_impl_.gold_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.success_) -
       reinterpret_cast<char*>(&_impl_.gold_)) + sizeof(_impl_.success_));
@@ -6003,11 +5989,16 @@ const char* S_BUY_ITEM::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
         } else
           goto handle_unusual;
         continue;
-      // .Protocol.Slot updated_slot = 2;
+      // repeated .Protocol.Slot updated_slots = 2;
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
-          ptr = ctx->ParseMessage(_internal_mutable_updated_slot(), ptr);
-          CHK_(ptr);
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_updated_slots(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
         } else
           goto handle_unusual;
         continue;
@@ -6054,11 +6045,12 @@ uint8_t* S_BUY_ITEM::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
   }
 
-  // .Protocol.Slot updated_slot = 2;
-  if (this->_internal_has_updated_slot()) {
+  // repeated .Protocol.Slot updated_slots = 2;
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_updated_slots_size()); i < n; i++) {
+    const auto& repfield = this->_internal_updated_slots(i);
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(2, _Internal::updated_slot(this),
-        _Internal::updated_slot(this).GetCachedSize(), target, stream);
+        InternalWriteMessage(2, repfield, repfield.GetCachedSize(), target, stream);
   }
 
   // int64 gold = 3;
@@ -6083,11 +6075,11 @@ size_t S_BUY_ITEM::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .Protocol.Slot updated_slot = 2;
-  if (this->_internal_has_updated_slot()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *_impl_.updated_slot_);
+  // repeated .Protocol.Slot updated_slots = 2;
+  total_size += 1UL * this->_internal_updated_slots_size();
+  for (const auto& msg : this->_impl_.updated_slots_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // int64 gold = 3;
@@ -6118,10 +6110,7 @@ void S_BUY_ITEM::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from._internal_has_updated_slot()) {
-    _this->_internal_mutable_updated_slot()->::Protocol::Slot::MergeFrom(
-        from._internal_updated_slot());
-  }
+  _this->_impl_.updated_slots_.MergeFrom(from._impl_.updated_slots_);
   if (from._internal_gold() != 0) {
     _this->_internal_set_gold(from._internal_gold());
   }
@@ -6145,12 +6134,13 @@ bool S_BUY_ITEM::IsInitialized() const {
 void S_BUY_ITEM::InternalSwap(S_BUY_ITEM* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.updated_slots_.InternalSwap(&other->_impl_.updated_slots_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(S_BUY_ITEM, _impl_.success_)
       + sizeof(S_BUY_ITEM::_impl_.success_)
-      - PROTOBUF_FIELD_OFFSET(S_BUY_ITEM, _impl_.updated_slot_)>(
-          reinterpret_cast<char*>(&_impl_.updated_slot_),
-          reinterpret_cast<char*>(&other->_impl_.updated_slot_));
+      - PROTOBUF_FIELD_OFFSET(S_BUY_ITEM, _impl_.gold_)>(
+          reinterpret_cast<char*>(&_impl_.gold_),
+          reinterpret_cast<char*>(&other->_impl_.gold_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_BUY_ITEM::GetMetadata() const {

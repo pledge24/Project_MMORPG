@@ -1,7 +1,8 @@
 @echo off
 setlocal
 pushd %~dp0
-..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Warrior_Level_Data.xlsx --s_output=S_Warrior_Level_Data.json
+..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Warrior_Level_Data.xlsx --s_output=S_Warrior_Level_Data.json --c_output=C_Warrior_Level_Data.json
+DEL /Q C_Warrior_Level_Data.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Monster.xlsx --s_output=S_Monster.json --c_output=C_Monster.json 
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Item.xlsx --s_output=S_Item.json --c_output=C_Item.json 
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Map.xlsx --s_output=S_Map.json --c_output=C_Map.json 

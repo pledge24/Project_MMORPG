@@ -3,18 +3,14 @@
 #include "Components/Image.h"
 #include "Components/VerticalBox.h"
 
-void UP1ItemTooltipWidget::Init(const FP1ItemData& Item)
+void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
 {
     if (Item.TemplateId <= 0)
         return;
 
-    if (Item.Icon.IsValid() || Item.Icon.ToSoftObjectPath().IsValid())
+    if (Icon && ItemIcon)
     {
-        UTexture2D* LoadedIcon = Item.Icon.LoadSynchronous();
-        if (LoadedIcon && ItemIcon)
-        {
-            ItemIcon->SetBrushFromTexture(LoadedIcon);
-        }
+        ItemIcon->SetBrushFromTexture(Icon);
     }
 
     if (ItemNameText)

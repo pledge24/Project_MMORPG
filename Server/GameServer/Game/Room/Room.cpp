@@ -431,13 +431,13 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
         return;
 
     Protocol::S_BUY_ITEM buyItemPkt;
-    Protocol::Slot* updatedSlot = buyItemPkt.mutable_updated_slot();
     int32 templateId = pkt.template_id();
     int64 totalGold = 0;
 
-    if (player->ProcessBuyItem(OUT updatedSlot, OUT totalGold, templateId) == false)
+    if (player->ProcessBuyItem(OUT buyItemPkt.mutable_updated_slots(), OUT totalGold, templateId) == false)
     {
         buyItemPkt.set_success(false);
+        buyItemPkt.clear_updated_slots();
 
         SEND_PACKET(buyItemPkt);
         return;

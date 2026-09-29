@@ -71,7 +71,9 @@
       "mcp__rider__xdebug_set_breakpoint",
       "mcp__rider__xdebug_set_variable",
       "mcp__rider__xdebug_start_debugger_session",
-      "mcp__rider__xdebug_start_mixed_mode_debug"
+      "mcp__rider__xdebug_start_mixed_mode_debug",
+      "Edit(.claude/hooks/**)",
+      "Edit(.claude/settings.json)"
     ]
   },
   "hooks": {

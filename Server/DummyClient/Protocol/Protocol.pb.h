@@ -4303,27 +4303,27 @@ class S_BUY_ITEM final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kUpdatedSlotFieldNumber = 2,
+    kUpdatedSlotsFieldNumber = 2,
     kGoldFieldNumber = 3,
     kSuccessFieldNumber = 1,
   };
-  // .Protocol.Slot updated_slot = 2;
-  bool has_updated_slot() const;
+  // repeated .Protocol.Slot updated_slots = 2;
+  int updated_slots_size() const;
   private:
-  bool _internal_has_updated_slot() const;
+  int _internal_updated_slots_size() const;
   public:
-  void clear_updated_slot();
-  const ::Protocol::Slot& updated_slot() const;
-  PROTOBUF_NODISCARD ::Protocol::Slot* release_updated_slot();
-  ::Protocol::Slot* mutable_updated_slot();
-  void set_allocated_updated_slot(::Protocol::Slot* updated_slot);
+  void clear_updated_slots();
+  ::Protocol::Slot* mutable_updated_slots(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >*
+      mutable_updated_slots();
   private:
-  const ::Protocol::Slot& _internal_updated_slot() const;
-  ::Protocol::Slot* _internal_mutable_updated_slot();
+  const ::Protocol::Slot& _internal_updated_slots(int index) const;
+  ::Protocol::Slot* _internal_add_updated_slots();
   public:
-  void unsafe_arena_set_allocated_updated_slot(
-      ::Protocol::Slot* updated_slot);
-  ::Protocol::Slot* unsafe_arena_release_updated_slot();
+  const ::Protocol::Slot& updated_slots(int index) const;
+  ::Protocol::Slot* add_updated_slots();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
+      updated_slots() const;
 
   // int64 gold = 3;
   void clear_gold();
@@ -4351,7 +4351,7 @@ class S_BUY_ITEM final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::Protocol::Slot* updated_slot_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot > updated_slots_;
     int64_t gold_;
     bool success_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -8638,89 +8638,41 @@ inline void S_BUY_ITEM::set_success(bool value) {
   // @@protoc_insertion_point(field_set:Protocol.S_BUY_ITEM.success)
 }
 
-// .Protocol.Slot updated_slot = 2;
-inline bool S_BUY_ITEM::_internal_has_updated_slot() const {
-  return this != internal_default_instance() && _impl_.updated_slot_ != nullptr;
+// repeated .Protocol.Slot updated_slots = 2;
+inline int S_BUY_ITEM::_internal_updated_slots_size() const {
+  return _impl_.updated_slots_.size();
 }
-inline bool S_BUY_ITEM::has_updated_slot() const {
-  return _internal_has_updated_slot();
+inline int S_BUY_ITEM::updated_slots_size() const {
+  return _internal_updated_slots_size();
 }
-inline const ::Protocol::Slot& S_BUY_ITEM::_internal_updated_slot() const {
-  const ::Protocol::Slot* p = _impl_.updated_slot_;
-  return p != nullptr ? *p : reinterpret_cast<const ::Protocol::Slot&>(
-      ::Protocol::_Slot_default_instance_);
+inline ::Protocol::Slot* S_BUY_ITEM::mutable_updated_slots(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.S_BUY_ITEM.updated_slots)
+  return _impl_.updated_slots_.Mutable(index);
 }
-inline const ::Protocol::Slot& S_BUY_ITEM::updated_slot() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_BUY_ITEM.updated_slot)
-  return _internal_updated_slot();
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >*
+S_BUY_ITEM::mutable_updated_slots() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_BUY_ITEM.updated_slots)
+  return &_impl_.updated_slots_;
 }
-inline void S_BUY_ITEM::unsafe_arena_set_allocated_updated_slot(
-    ::Protocol::Slot* updated_slot) {
-  if (GetArenaForAllocation() == nullptr) {
-    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_slot_);
-  }
-  _impl_.updated_slot_ = updated_slot;
-  if (updated_slot) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.S_BUY_ITEM.updated_slot)
+inline const ::Protocol::Slot& S_BUY_ITEM::_internal_updated_slots(int index) const {
+  return _impl_.updated_slots_.Get(index);
 }
-inline ::Protocol::Slot* S_BUY_ITEM::release_updated_slot() {
-  
-  ::Protocol::Slot* temp = _impl_.updated_slot_;
-  _impl_.updated_slot_ = nullptr;
-#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
-  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
-  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  if (GetArenaForAllocation() == nullptr) { delete old; }
-#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
-  if (GetArenaForAllocation() != nullptr) {
-    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
-  }
-#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
-  return temp;
+inline const ::Protocol::Slot& S_BUY_ITEM::updated_slots(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_BUY_ITEM.updated_slots)
+  return _internal_updated_slots(index);
 }
-inline ::Protocol::Slot* S_BUY_ITEM::unsafe_arena_release_updated_slot() {
-  // @@protoc_insertion_point(field_release:Protocol.S_BUY_ITEM.updated_slot)
-  
-  ::Protocol::Slot* temp = _impl_.updated_slot_;
-  _impl_.updated_slot_ = nullptr;
-  return temp;
+inline ::Protocol::Slot* S_BUY_ITEM::_internal_add_updated_slots() {
+  return _impl_.updated_slots_.Add();
 }
-inline ::Protocol::Slot* S_BUY_ITEM::_internal_mutable_updated_slot() {
-  
-  if (_impl_.updated_slot_ == nullptr) {
-    auto* p = CreateMaybeMessage<::Protocol::Slot>(GetArenaForAllocation());
-    _impl_.updated_slot_ = p;
-  }
-  return _impl_.updated_slot_;
+inline ::Protocol::Slot* S_BUY_ITEM::add_updated_slots() {
+  ::Protocol::Slot* _add = _internal_add_updated_slots();
+  // @@protoc_insertion_point(field_add:Protocol.S_BUY_ITEM.updated_slots)
+  return _add;
 }
-inline ::Protocol::Slot* S_BUY_ITEM::mutable_updated_slot() {
-  ::Protocol::Slot* _msg = _internal_mutable_updated_slot();
-  // @@protoc_insertion_point(field_mutable:Protocol.S_BUY_ITEM.updated_slot)
-  return _msg;
-}
-inline void S_BUY_ITEM::set_allocated_updated_slot(::Protocol::Slot* updated_slot) {
-  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
-  if (message_arena == nullptr) {
-    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.updated_slot_);
-  }
-  if (updated_slot) {
-    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
-                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(updated_slot));
-    if (message_arena != submessage_arena) {
-      updated_slot = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
-          message_arena, updated_slot, submessage_arena);
-    }
-    
-  } else {
-    
-  }
-  _impl_.updated_slot_ = updated_slot;
-  // @@protoc_insertion_point(field_set_allocated:Protocol.S_BUY_ITEM.updated_slot)
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::Slot >&
+S_BUY_ITEM::updated_slots() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_BUY_ITEM.updated_slots)
+  return _impl_.updated_slots_;
 }
 
 // int64 gold = 3;

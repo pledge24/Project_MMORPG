@@ -6,6 +6,7 @@
 #include "P1ItemTooltipWidget.generated.h"
 
 class UImage;
+class UTexture2D;
 class UTextBlock;
 class UVerticalBox;
 
@@ -16,7 +17,8 @@ class P1_API UP1ItemTooltipWidget : public UP1UserWidget
 
     //~ Item Display
 public:
-    void Init(const FP1ItemData& Item);
+    /** 아이콘은 에셋 테이블에서 찾은 것을 부르는 쪽이 넘긴다. */
+    void Init(const FP1ItemData& Item, UTexture2D* Icon);
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UImage> ItemIcon;

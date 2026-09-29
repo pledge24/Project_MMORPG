@@ -112,20 +112,77 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
     return true;
 }
 
-bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, int32 templateId, int32 count)
+bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count)
 {
     // -> 아직 인스턴스화된 아이템이 아닐때 진입(ex. 구매한 아이템)
-    Protocol::Item itemInstance;
-    itemInstance.set_template_id(templateId);
-    itemInstance.set_count(count);
-
-    // TODO: 초기 인스턴스 데이터 생성
-    // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
-
-    if (AddItem(replicatingSlot, itemInstance, count) == false)
+    if (count <= 0)
         return false;
 
-    return true; 
+    const Json& itemData = Gamedata::s_itemDataTable[templateId];
+
+    auto itemTypeIt = _itemTypeMappings.find(itemData[JsonProperty::Item::ItemType]);
+    if (itemTypeIt == _itemTypeMappings.end())
+        return false;
+
+    Protocol::ItemType itemType = itemTypeIt->second;
+    auto lookupIt = _inventoryLookupMappings.find(itemType);
+    if (lookupIt == _inventoryLookupMappings.end())
+        return false;
+
+    const int32 maxStack = (std::max)(1, itemData.value(JsonProperty::Item::MaxStack, 1));
+    const RepeatedPtrField<Protocol::Slot>& lookupTable = *lookupIt->second;
+
+    // 슬롯을 바꾸기 전에 넣을 자리를 전부 정한다. 도중에 모자라면 이미 바꾼 슬롯을 되돌릴 방법이 없다.
+    vector<pair<int32, int32>> fills; // <slotId, 넣을 수량>
+    int32 remaining = count;
+
+    // 장비는 합치지 않는다. 나머지는 같은 아이템이 든 슬롯의 남은 칸부터 채운다.
+    if (itemType != Protocol::ItemType::ITEM_TYPE_GEAR)
+    {
+        for (int32 slotId = 0; slotId < lookupTable.size() && remaining > 0; slotId++)
+        {
+            const Protocol::Slot& slot = lookupTable[slotId];
+            if (slot.has_item() == false || slot.item().template_id() != templateId)
+                continue;
+
+            const int32 space = maxStack - slot.item().count();
+            if (space <= 0)
+                continue;
+
+            const int32 amount = (std::min)(space, remaining);
+            fills.emplace_back(slotId, amount);
+            remaining -= amount;
+        }
+    }
+
+    for (int32 slotId = 0; slotId < lookupTable.size() && remaining > 0; slotId++)
+    {
+        if (lookupTable[slotId].has_item())
+            continue;
+
+        const int32 amount = (std::min)(maxStack, remaining);
+        fills.emplace_back(slotId, amount);
+        remaining -= amount;
+    }
+
+    if (remaining > 0)
+        return false;
+
+    for (const auto& [slotId, amount] : fills)
+    {
+        Protocol::Item itemInstance;
+        itemInstance.set_template_id(templateId);
+        itemInstance.set_count(amount);
+
+        // TODO: 초기 인스턴스 데이터 생성
+        // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
+
+        Protocol::Slot* replicatingSlot = replicatingSlots != nullptr ? replicatingSlots->Add() : nullptr;
+        if (AddItem(replicatingSlot, itemInstance, amount, slotId) == false)
+            return false;
+    }
+
+    return true;
 }
 
 bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)

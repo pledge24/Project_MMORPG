@@ -57,6 +57,10 @@
 
 **원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data)
 
+**원본에는 수치만 둔다. 에셋 경로 열을 만들지 않는다.** 아이콘, 메시, 몬스터 클래스는
+`DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
+행 이름이 `TemplateId`다. 근거는 `docs/adr/0009-keep-asset-references-out-of-design-data.md`에 있다.
+
 ### 재생성
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.

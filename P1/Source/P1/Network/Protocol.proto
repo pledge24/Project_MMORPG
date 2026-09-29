@@ -168,7 +168,7 @@ message C_BUY_ITEM
 message S_BUY_ITEM
 {
     bool success = 1;
-    Slot updated_slot = 2;
+    repeated Slot updated_slots = 2;
     int64 gold = 3;
 }
 

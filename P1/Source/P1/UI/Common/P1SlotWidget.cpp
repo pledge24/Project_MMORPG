@@ -5,6 +5,7 @@
 #include "Components/Button.h"
 #include "P1.h"
 #include "Engine/DataTable.h"
+#include "Game/Data/P1ItemAssetData.h"
 
 void UP1SlotWidget::NativeConstruct()
 {
@@ -19,13 +20,7 @@ void UP1SlotWidget::SetSlot(const FP1ItemData& Item, int32 Count)
     ItemData = Item;
     SlotData.mutable_item()->set_count(Count);
 
-    if (!Item.Icon.IsNull())
-    {
-        if (UTexture2D* LoadedIcon = Item.Icon.LoadSynchronous())
-        {
-            ItemIcon->SetBrushFromTexture(LoadedIcon);
-        }
-    }
+    ApplyIcon(Item.TemplateId);
 
     if (Count > 1)
         ItemCountText->SetText(FText::AsNumber(Count));
@@ -70,15 +65,31 @@ void UP1SlotWidget::InsertData(const Protocol::Slot& _Slot)
     if (ItemTable)
     {
         ItemData = *ItemTable->FindRow<FP1ItemData>(FName(*TemplateId_Str), FString("UP1SlotWidget::InsertData"));
-
-        if (!ItemData.Icon.IsNull())
-        {
-            if (UTexture2D* LoadedIcon = ItemData.Icon.LoadSynchronous())
-            {
-                ItemIcon->SetBrushFromTexture(LoadedIcon);
-            }
-        }
     }
+
+    ApplyIcon(_Slot.item().template_id());
+}
+
+void UP1SlotWidget::ApplyIcon(int32 TemplateId)
+{
+    if (ItemIcon == nullptr)
+        return;
+
+    if (UTexture2D* LoadedIcon = LoadIcon(TemplateId))
+        ItemIcon->SetBrushFromTexture(LoadedIcon);
+}
+
+UTexture2D* UP1SlotWidget::LoadIcon(int32 TemplateId) const
+{
+    if (ItemAssetTable == nullptr)
+        return nullptr;
+
+    const FP1ItemAssetData* AssetData = ItemAssetTable->FindRow<FP1ItemAssetData>(
+        FName(*FString::FromInt(TemplateId)), TEXT("UP1SlotWidget::LoadIcon"));
+    if (AssetData == nullptr || AssetData->Icon.IsNull())
+        return nullptr;
+
+    return AssetData->Icon.LoadSynchronous();
 }
 
 UWidget* UP1SlotWidget::GetToolTipWidget_Implementation() const
@@ -87,7 +98,7 @@ UWidget* UP1SlotWidget::GetToolTipWidget_Implementation() const
     {
         if (SlotTooltipWidget)
         {
-            SlotTooltipWidget->Init(ItemData); // 아이템 정보 전달
+            SlotTooltipWidget->Init(ItemData, LoadIcon(ItemData.TemplateId)); // 아이템 정보 전달
             return SlotTooltipWidget;
         }
     }

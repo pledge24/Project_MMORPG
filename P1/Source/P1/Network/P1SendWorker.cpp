@@ -55,6 +55,14 @@ bool FP1SendWorker::SendPacket(SendBufferRef SendBuffer)
 void FP1SendWorker::Destroy()
 {
 	Running = false;
+
+	// 스레드가 끝난 뒤에 소켓이 파괴되도록 여기서 기다린다.
+	if (Thread)
+	{
+		Thread->WaitForCompletion();
+		delete Thread;
+		Thread = nullptr;
+	}
 }
 
 bool FP1SendWorker::SendDesiredBytes(const uint8* Buffer, int32 Size)

@@ -4,6 +4,10 @@
 #include "Game/Entities/P1Creature.h"
 #include "P1Player.generated.h"
 
+class UDataTable;
+class USkeletalMesh;
+class UStaticMesh;
+
 UCLASS()
 class P1_API AP1Player : public AP1Creature
 {
@@ -36,9 +40,17 @@ public:
 
     void SetEquipmentSlot(const Protocol::Slot& InSlot);
 
+    /** 아이템의 장착 메시를 에셋 테이블에서 찾는다. 행이 없으면 false */
+    UFUNCTION(BlueprintCallable, Category = "Character")
+    bool GetItemMeshes(int32 TemplateId, TSoftObjectPtr<USkeletalMesh>& OutSkeletalMesh, TSoftObjectPtr<UStaticMesh>& OutStaticMesh) const;
+
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<class UStaticMeshComponent> WeaponMesh;
+
+    /** 아이템 메시를 담은 에셋 테이블이다. 행 구조체는 FP1ItemAssetData다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Data")
+    TObjectPtr<UDataTable> ItemAssetTable;
 
     //~ Identity
 public:

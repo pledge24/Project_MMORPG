@@ -60,6 +60,17 @@ protected:
         Gamedata::s_itemDataTable.clear();
     }
 
+    // 템플릿 ID로 넣고, 바뀐 슬롯 가운데 첫 번째를 돌려준다.
+    bool AddByTemplate(int32 templateId, int32 count, OUT Protocol::Slot* firstAdded)
+    {
+        RepeatedPtrField<Protocol::Slot> addedSlots;
+        if (player->_inventory->AddItem(&addedSlots, templateId, count) == false || addedSlots.empty())
+            return false;
+
+        firstAdded->CopyFrom(addedSlots[0]);
+        return true;
+    }
+
     PlayerRef player;
 };
 
@@ -73,7 +84,7 @@ TEST_P(InventorySlotTypeTest, AddedItemIsVisibleThroughGetSlot)
     const SlotCase& slotCase = GetParam();
 
     Protocol::Slot added;
-    ASSERT_TRUE(player->_inventory->AddItem(&added, slotCase.templateId, 1));
+    ASSERT_TRUE(AddByTemplate(slotCase.templateId, 1, &added));
 
     Protocol::Slot* stored = player->_inventory->GetSlot(slotCase.slotType, added.slot_id());
     ASSERT_NE(stored, nullptr);
@@ -88,7 +99,7 @@ TEST_P(InventorySlotTypeTest, RemoveItemEmptiesTheSameSlot)
     const SlotCase& slotCase = GetParam();
 
     Protocol::Slot added;
-    ASSERT_TRUE(player->_inventory->AddItem(&added, slotCase.templateId, 1));
+    ASSERT_TRUE(AddByTemplate(slotCase.templateId, 1, &added));
 
     Protocol::Slot request;
     request.set_slot_id(added.slot_id());
@@ -115,10 +126,10 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
 {
     Protocol::Slot gearAdded;
-    ASSERT_TRUE(player->_inventory->AddItem(&gearAdded, GEAR_TEMPLATE_ID, 1));
+    ASSERT_TRUE(AddByTemplate(GEAR_TEMPLATE_ID, 1, &gearAdded));
 
     Protocol::Slot miscAdded;
-    ASSERT_TRUE(player->_inventory->AddItem(&miscAdded, MISC_TEMPLATE_ID, 1));
+    ASSERT_TRUE(AddByTemplate(MISC_TEMPLATE_ID, 1, &miscAdded));
     ASSERT_EQ(gearAdded.slot_id(), miscAdded.slot_id()) << "두 인벤토리 모두 0번이 비어 있었어야 한다";
 
     Protocol::Slot request;
@@ -168,30 +179,25 @@ TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
     ASSERT_FALSE(player->_inventory->RemoveItem(request, &removed, 1));
 
     Protocol::Slot added;
-    ASSERT_TRUE(player->_inventory->AddItem(&added, CONSUMABLE_TEMPLATE_ID, 1));
+    ASSERT_TRUE(AddByTemplate(CONSUMABLE_TEMPLATE_ID, 1, &added));
     EXPECT_EQ(added.slot_id(), 0) << "실패한 제거가 빈 0번 슬롯을 점유 상태로 만들었다";
 }
 
 /*--------------------------------------------------------------
-    스택 상한 없는 아이템 누적 (tech-debt 참조)
+    스택 상한
 
-    DISABLED_ 로 둔다. 버그가 아니어서가 아니라, 올바른 수정이 이 세션의
-    범위를 넘기 때문이다. 초과분을 다음 슬롯으로 넘기면 한 번의 구매가
-    슬롯 두 개를 바꾸는데, S_BUY_ITEM은 `Slot updated_slot` 하나만 나른다
-    (Protocol.proto:168-173). 즉 제대로 고치려면 프로토콜을 `repeated`로 바꾸고
-    생성기를 다시 돌린 뒤 클라·서버 핸들러를 함께 고쳐야 한다 — 3곳 수정이다.
-
-    버그의 존재는 여기 실행 가능한 형태로 남기고, 수정은 계획된 작업으로 넘긴다.
-    확인: GameServerTests.exe --gtest_also_run_disabled_tests
+    상한을 넘는 수량은 다음 슬롯으로 넘어가고, 바뀐 슬롯은 전부 복제 목록에
+    실린다(S_BUY_ITEM.updated_slots). 다 넣을 수 없으면 아무 슬롯도 바뀌지 않는다.
 ---------------------------------------------------------------*/
-TEST_F(InventoryTest, DISABLED_StackDoesNotExceedMaxStack)
+TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
 {
     constexpr int32 MAX_STACK = 10;
     constexpr int32 BUY_COUNT = 15;
     SeedItem(CONSUMABLE_TEMPLATE_ID, "consumption", MAX_STACK);
 
-    Protocol::Slot added;
-    ASSERT_TRUE(player->_inventory->AddItem(&added, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
+    RepeatedPtrField<Protocol::Slot> addedSlots;
+    ASSERT_TRUE(player->_inventory->AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
+    EXPECT_EQ(addedSlots.size(), 2) << "바뀐 슬롯이 복제 목록에 전부 실리지 않았다";
 
     Protocol::Slot* first =
         player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 0);
@@ -201,6 +207,29 @@ TEST_F(InventoryTest, DISABLED_StackDoesNotExceedMaxStack)
     EXPECT_LE(first->item().count(), MAX_STACK) << "한 슬롯에 스택 상한을 넘겨 쌓았다";
     ASSERT_TRUE(second->has_item()) << "초과분이 다음 슬롯으로 넘어가지 않았다";
     EXPECT_EQ(first->item().count() + second->item().count(), BUY_COUNT) << "수량이 유실됐다";
+}
+
+TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
+{
+    constexpr int32 MAX_STACK = 10;
+    SeedItem(CONSUMABLE_TEMPLATE_ID, "consumption", MAX_STACK);
+
+    ASSERT_TRUE(player->_inventory->AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
+    player->_inventory->ClearDirtyFlags();
+
+    RepeatedPtrField<Protocol::Slot> addedSlots;
+    EXPECT_FALSE(player->_inventory->AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, 2))
+        << "빈 칸이 1개뿐인데 2개를 받아들였다";
+    EXPECT_TRUE(addedSlots.empty()) << "거절한 추가가 복제 목록을 채웠다";
+
+    Protocol::Slot* last =
+        player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS - 1);
+    ASSERT_NE(last, nullptr);
+    EXPECT_EQ(last->item().count(), MAX_STACK - 1) << "거절한 추가가 슬롯 일부를 바꿨다";
+
+    vector<bool>* dirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+    ASSERT_NE(dirtyFlags, nullptr);
+    EXPECT_EQ(std::count(dirtyFlags->begin(), dirtyFlags->end(), true), 0) << "거절한 추가가 더티 플래그를 켰다";
 }
 
 /*--------------------------------------------------------------
@@ -315,7 +344,7 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
 
     // 거부가 정상 경로를 망가뜨리지 않았는지 왕복으로 확인한다.
     Protocol::Slot added;
-    ASSERT_TRUE(player->_inventory->AddItem(&added, GEAR_TEMPLATE_ID, 1));
+    ASSERT_TRUE(AddByTemplate(GEAR_TEMPLATE_ID, 1, &added));
 
     Protocol::Slot validRequest;
     validRequest.set_slot_id(added.slot_id());
@@ -517,7 +546,7 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
         // AddItem은 아이템 타입을 정한 뒤 조회 표를 find로 확인하고, 없으면 거짓을
         // 돌려준다. 그러므로 추가 성공은 "그 아이템 타입의 키가 조회 표에 있다"는 관측이다.
         Protocol::Slot added;
-        ASSERT_TRUE(player->_inventory->AddItem(&added, storedCase.templateId, 1))
+        ASSERT_TRUE(AddByTemplate(storedCase.templateId, 1, &added))
             << "조회 표에 이 아이템 타입의 저장소가 없다";
 
         // 어느 아이템 타입으로 들어갔는지는 더티 플래그가 어느 표에 찍혔는지로 확인한다.

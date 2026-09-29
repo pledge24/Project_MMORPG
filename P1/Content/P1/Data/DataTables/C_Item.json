@@ -14,15 +14,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "허름한 두건. 입지 않은 것보다 나은 정도다.",
-        "Icon": "/Game/Assets/Icon/Helmet_1.Helmet_1",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 100,
         "Mp": 50,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor0R/SkeletalMeshes/SK_Level0_Helmet.SK_Level0_Helmet",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1001,
@@ -39,15 +36,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "허름한 상의. 입지 않은 것보다 나은 정도다.",
-        "Icon": "/Game/Assets/Icon/Chest_1.Chest_1",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 200,
         "Mp": 100,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor0R/SkeletalMeshes/SK_Level0_Chest.SK_Level0_Chest",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1002,
@@ -64,15 +58,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "허름한 하의. 입지 않은 것보다 나은 정도다.",
-        "Icon": "/Game/Assets/Icon/Legs_1.Legs_1",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 200,
         "Mp": 100,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor0R/SkeletalMeshes/SK_Level0_Legs.SK_Level0_Legs",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1003,
@@ -89,15 +80,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "허름한 장갑. 입지 않은 것보다 나은 정도다.",
-        "Icon": "/Game/Assets/Icon/Gloves_1.Gloves_1",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 100,
         "Mp": 50,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor0R/SkeletalMeshes/SK_Level0_Arms.SK_Level0_Arms",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1004,
@@ -114,15 +102,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "허름한 신발. 입지 않은 것보다 나은 정도다.",
-        "Icon": "/Game/Assets/Icon/Boots_1.Boots_1",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 100,
         "Mp": 50,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor0R/SkeletalMeshes/SK_Level0_Boots.SK_Level0_Boots",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1005,
@@ -139,15 +124,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "흔해 빠진 검. 보급형이라 적당히 쓰기 좋다.",
-        "Icon": "/Game/Assets/Icon/Sword_1.Sword_1",
         "PhysicalAttack": 10,
         "MagicalAttack": 0,
         "Hp": 0,
         "Mp": 0,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": null,
-        "StaticMesh": "/Game/Assets/Swords/SM_Level0_Sword.SM_Level0_Sword"
+        "MpRegenerate": 0
     },
     {
         "Name": 1006,
@@ -164,15 +146,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "흑기사가 임무를 수행할때 착용하는 복면. 암살용이라 방어력은 그닥 높지 않다.",
-        "Icon": "/Game/Assets/Icon/Helmet_2.Helmet_2",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 200,
         "Mp": 100,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor10R/SkeletalMeshes/SK_Level10_Helmet.SK_Level10_Helmet",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1007,
@@ -189,15 +168,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "흑기사가 임무를 수행할때 착용하는 상의. 암살용이라 방어력은 그닥 높지 않다.",
-        "Icon": "/Game/Assets/Icon/Chest_2.Chest_2",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 400,
         "Mp": 200,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor10R/SkeletalMeshes/SK_Level10_Chest.SK_Level10_Chest",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1008,
@@ -214,15 +190,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "흑기사가 임무를 수행할때 착용하는 하의. 암살용이라 방어력은 그닥 높지 않다.",
-        "Icon": "/Game/Assets/Icon/Legs_2.Legs_2",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 400,
         "Mp": 200,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor10R/SkeletalMeshes/SK_Level10_Legs.SK_Level10_Legs",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1009,
@@ -239,15 +212,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "흑기사가 임무를 수행할때 착용하는 건틀릿. 암살용이라 방어력은 그닥 높지 않다.",
-        "Icon": "/Game/Assets/Icon/Gloves_2.Gloves_2",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 200,
         "Mp": 100,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor10R/SkeletalMeshes/SK_Level10_Arms.SK_Level10_Arms",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1010,
@@ -264,15 +234,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "흑기사가 임무를 수행할때 착용하는 신발. 암살용이라 방어력은 그닥 높지 않다.",
-        "Icon": "/Game/Assets/Icon/Boots_2.Boots_2",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 200,
         "Mp": 100,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor10R/SkeletalMeshes/SK_Level10_Boots.SK_Level10_Boots",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1011,
@@ -289,15 +256,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "검은날이 매력적인 검. 밤에 휘두르면 잘 보이지 않는다.",
-        "Icon": "/Game/Assets/Icon/Sword_2.Sword_2",
         "PhysicalAttack": 35,
         "MagicalAttack": 0,
         "Hp": 0,
         "Mp": 0,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": null,
-        "StaticMesh": "/Game/Assets/Swords/SM_Level10_Sword.SM_Level10_Sword"
+        "MpRegenerate": 0
     },
     {
         "Name": 1012,
@@ -314,15 +278,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "간단한 디자인의 투구. 판금으로 제작되어 꽤 단단하다.",
-        "Icon": "/Game/Assets/Icon/Helmet_3.Helmet_3",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 400,
         "Mp": 200,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor20R/SkeletalMeshes/SK_Level20_Helmet.SK_Level20_Helmet",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1013,
@@ -339,15 +300,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "간단한 디자인의 상의. 판금으로 제작되어 꽤 단단하다.",
-        "Icon": "/Game/Assets/Icon/Chest_3.Chest_3",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 800,
         "Mp": 400,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor20R/SkeletalMeshes/SK_Level20_Chest.SK_Level20_Chest",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1014,
@@ -364,15 +322,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "간단한 디자인의 하의. 판금으로 제작되어 꽤 단단하다.",
-        "Icon": "/Game/Assets/Icon/Legs_3.Legs_3",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 800,
         "Mp": 400,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor20R/SkeletalMeshes/SK_Level20_Legs.SK_Level20_Legs",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1015,
@@ -389,15 +344,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "간단한 디자인의 건틀릿. 판금으로 제작되어 꽤 단단하다.",
-        "Icon": "/Game/Assets/Icon/Gloves_3.Gloves_3",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 400,
         "Mp": 200,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor20R/SkeletalMeshes/SK_Level20_Arms.SK_Level20_Arms",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1016,
@@ -414,15 +366,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "간단한 디자인의 신발. 판금으로 제작되어 꽤 단단하다.",
-        "Icon": "/Game/Assets/Icon/Boots_3.Boots_3",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 400,
         "Mp": 200,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor20R/SkeletalMeshes/SK_Level20_Boots.SK_Level20_Boots",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1017,
@@ -439,15 +388,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "견습 기사의 A급 검. 사용감이 적어서 그런지 날이 날렵하다.",
-        "Icon": "/Game/Assets/Icon/Sword_3.Sword_3",
         "PhysicalAttack": 80,
         "MagicalAttack": 0,
         "Hp": 0,
         "Mp": 0,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": null,
-        "StaticMesh": "/Game/Assets/Swords/SM_Level20_Sword.SM_Level20_Sword"
+        "MpRegenerate": 0
     },
     {
         "Name": 1018,
@@ -464,15 +410,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "선봉대의 투구. 실력있는 기사만이 입을 수 있다.",
-        "Icon": "/Game/Assets/Icon/Helmet_4.Helmet_4",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 800,
         "Mp": 400,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor30R/SkeletalMeshes/SK_Level30_Helmet.SK_Level30_Helmet",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1019,
@@ -489,15 +432,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "선봉대의 상의. 실력있는 기사만이 입을 수 있다.",
-        "Icon": "/Game/Assets/Icon/Chest_4.Chest_4",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 1600,
         "Mp": 800,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor30R/SkeletalMeshes/SK_Level30_Chest.SK_Level30_Chest",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1020,
@@ -514,15 +454,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "선봉대의 하의. 실력있는 기사만이 입을 수 있다.",
-        "Icon": "/Game/Assets/Icon/Legs_4.Legs_4",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 1600,
         "Mp": 800,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor30R/SkeletalMeshes/SK_Level30_Legs.SK_Level30_Legs",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1021,
@@ -539,15 +476,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "선봉대의 건틀릿. 실력있는 기사만이 입을 수 있다.",
-        "Icon": "/Game/Assets/Icon/Gloves_4.Gloves_4",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 800,
         "Mp": 400,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor30R/SkeletalMeshes/SK_Level30_Arms.SK_Level30_Arms",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1022,
@@ -564,15 +498,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "선봉대의 신발. 실력있는 기사만이 입을 수 있다.",
-        "Icon": "/Game/Assets/Icon/Boots_4.Boots_4",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 800,
         "Mp": 400,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor30R/SkeletalMeshes/SK_Level30_Boots.SK_Level30_Boots",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1023,
@@ -589,15 +520,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "전설로 내려오는 엑스칼리버를 본떠 만든 모조품. 선봉대들 사이에서 인기이다.",
-        "Icon": "/Game/Assets/Icon/Sword_4.Sword_4",
         "PhysicalAttack": 120,
         "MagicalAttack": 0,
         "Hp": 0,
         "Mp": 0,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": null,
-        "StaticMesh": "/Game/Assets/Swords/SM_Level30_Sword.SM_Level30_Sword"
+        "MpRegenerate": 0
     },
     {
         "Name": 1024,
@@ -614,15 +542,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "왕실 기사단에 입단할때 수여받는 투구. 품질이 우수한걸로 유명하다.",
-        "Icon": "/Game/Assets/Icon/Helmet_5.Helmet_5",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 1600,
         "Mp": 800,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor40R/SkeletalMeshes/SK_Level40_Helmet.SK_Level40_Helmet",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1025,
@@ -639,15 +564,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "왕실 기사단에 입단할때 수여받는 상의. 품질이 우수한걸로 유명하다.",
-        "Icon": "/Game/Assets/Icon/Chest_5.Chest_5",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 3200,
         "Mp": 1600,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor40R/SkeletalMeshes/SK_Level40_Chest.SK_Level40_Chest",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1026,
@@ -664,15 +586,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "왕실 기사단에 입단할때 수여받는 하의. 품질이 우수한걸로 유명하다.",
-        "Icon": "/Game/Assets/Icon/Legs_5.Legs_5",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 3200,
         "Mp": 1600,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor40R/SkeletalMeshes/SK_Level40_Legs.SK_Level40_Legs",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1027,
@@ -689,15 +608,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "왕실 기사단에 입단할때 수여받는 건틀릿. 품질이 우수한걸로 유명하다.",
-        "Icon": "/Game/Assets/Icon/Gloves_5.Gloves_5",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 1600,
         "Mp": 800,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor40R/SkeletalMeshes/SK_Level40_Arms.SK_Level40_Arms",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1028,
@@ -714,15 +630,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "왕실 기사단에 입단할때 수여받는 신발. 품질이 우수한걸로 유명하다.",
-        "Icon": "/Game/Assets/Icon/Boots_5.Boots_5",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 1600,
         "Mp": 800,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor40R/SkeletalMeshes/SK_Level40_Boots.SK_Level40_Boots",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1029,
@@ -739,15 +652,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "금으로 장식된 화려한 검. 세게 휘두르면 나무도 자를 수 있다.",
-        "Icon": "/Game/Assets/Icon/Sword_5.Sword_5",
         "PhysicalAttack": 180,
         "MagicalAttack": 0,
         "Hp": 0,
         "Mp": 0,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": null,
-        "StaticMesh": "/Game/Assets/Swords/SM_Level40_Sword.SM_Level40_Sword"
+        "MpRegenerate": 0
     },
     {
         "Name": 1030,
@@ -764,15 +674,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "압도적인 무게감을 가진 투구. 보기만해도 두려워진다.",
-        "Icon": "/Game/Assets/Icon/Helmet_6.Helmet_6",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 4000,
         "Mp": 2000,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor50R/SkeletalMeshes/SK_Level50_Helmet.SK_Level50_Helmet",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1031,
@@ -789,15 +696,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "압도적인 무게감을 가진 상의. 보기만해도 두려워진다.",
-        "Icon": "/Game/Assets/Icon/Chest_6.Chest_6",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 8000,
         "Mp": 4000,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor50R/SkeletalMeshes/SK_Level50_Chest.SK_Level50_Chest",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1032,
@@ -814,15 +718,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "압도적인 무게감을 가진 하의. 보기만해도 두려워진다.",
-        "Icon": "/Game/Assets/Icon/Legs_6.Legs_6",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 8000,
         "Mp": 4000,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor50R/SkeletalMeshes/SK_Level50_Legs.SK_Level50_Legs",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1033,
@@ -839,15 +740,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "압도적인 무게감을 가진 건틀릿. 보기만해도 두려워진다.",
-        "Icon": "/Game/Assets/Icon/Gloves_6.Gloves_6",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 4000,
         "Mp": 2000,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor50R/SkeletalMeshes/SK_Level50_Arms.SK_Level50_Arms",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1034,
@@ -864,15 +762,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "압도적인 무게감을 가진 신발. 보기만해도 두려워진다.",
-        "Icon": "/Game/Assets/Icon/Boots_6.Boots_6",
         "PhysicalAttack": 0,
         "MagicalAttack": 0,
         "Hp": 4000,
         "Mp": 2000,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": "/Game/Assets/Armors/Armor50R/SkeletalMeshes/SK_Level50_Boots.SK_Level50_Boots",
-        "StaticMesh": null
+        "MpRegenerate": 0
     },
     {
         "Name": 1035,
@@ -889,15 +784,12 @@
         "MaxStack": 1,
         "Cooldown": -1,
         "Description": "왕가의 숨겨진 유물 중 하나. 악마와 계약해 얻은 검이라는 소문이 돈다.",
-        "Icon": "/Game/Assets/Icon/Sword_6.Sword_6",
         "PhysicalAttack": 300,
         "MagicalAttack": 0,
         "Hp": 0,
         "Mp": 0,
         "HpRegenerate": 0,
-        "MpRegenerate": 0,
-        "SkeletalMesh": null,
-        "StaticMesh": "/Game/Assets/Swords/SM_Level50_Sword.SM_Level50_Sword"
+        "MpRegenerate": 0
     },
     {
         "Name": 2000,
@@ -914,7 +806,6 @@
         "MaxStack": 10,
         "Cooldown": 10,
         "Description": "빨간색 물약. 먹으면 HP가 회복된다.",
-        "Icon": "/Game/Assets/Icon/HpPotion.HpPotion",
         "HpRestore": 0.3,
         "MpRestore": 0
     },
@@ -933,7 +824,6 @@
         "MaxStack": 10,
         "Cooldown": 10,
         "Description": "파란색 물약. 먹으면 MP가 회복된다.",
-        "Icon": "/Game/Assets/Icon/MpPotion.MpPotion",
         "HpRestore": 0,
         "MpRestore": 0.3
     },
@@ -952,7 +842,6 @@
         "MaxStack": 10,
         "Cooldown": 10,
         "Description": "보라색 물약. 먹으면 HP와 MP가 회복된다.",
-        "Icon": "/Game/Assets/Icon/MixPotion.MixPotion",
         "HpRestore": 0.4,
         "MpRestore": 0.4
     }

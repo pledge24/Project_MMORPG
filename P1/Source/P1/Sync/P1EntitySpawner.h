@@ -32,9 +32,16 @@ public:
 
     bool GetMonsterData(int32 TemplateId, FP1MonsterData& OutMonsterData);
 
+    /** 몬스터 클래스를 에셋 테이블에서 찾아 로드한다. 행이 없으면 nullptr */
+    TSubclassOf<AP1Monster> GetMonsterClass(int32 TemplateId) const;
+
 protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
     TObjectPtr<UDataTable> MonsterDataTable;
+
+    /** 몬스터 클래스를 담은 에셋 테이블이다. 행 구조체는 FP1MonsterAssetData다. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
+    TObjectPtr<UDataTable> MonsterAssetTable;
 
     //~ Player Spawn
 public:
