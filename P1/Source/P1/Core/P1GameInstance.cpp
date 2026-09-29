@@ -6,6 +6,7 @@
 #include "Serialization/ArrayWriter.h"
 #include "SocketSubsystem.h"
 #include "Network/PacketSession.h"
+#include "Network/P1NetworkSettings.h"
 #include "Protocol.pb.h"
 #include "Network/ClientPacketHandler.h"
 #include "Game/Entities/P1MyPlayer.h"
@@ -84,12 +85,14 @@ void UP1GameInstance::ConnectToGameServer()
 
 	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("Stream"), TEXT("Client Socket"));
 
+	const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
+
 	FIPv4Address Ip;
-	FIPv4Address::Parse(IpAddress, Ip);
+	FIPv4Address::Parse(NetworkSettings->GameServerIp, Ip);
 
 	TSharedRef<FInternetAddr> InternetAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 	InternetAddr->SetIp(Ip.Value);
-	InternetAddr->SetPort(Port);
+	InternetAddr->SetPort(NetworkSettings->GameServerPort);
 
 	bool Connected = Socket->Connect(*InternetAddr);
 
@@ -431,9 +434,6 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
                 }
 
             }
-
-        }
-    }
                 }
             }
 
@@ -441,10 +441,13 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
             {
                 FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
                 OnThisStatChanged.Broadcast(Stat_.value());
+        }
+    }
+
+
 }
 
 void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
-
 {
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
@@ -488,22 +491,22 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
                 }
 
             }
-
-        }
-
             }
-    }
+
             for (auto& Stat_ : UnequipGearPkt.updated_stat())
             {
                 FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
                 OnThisStatChanged.Broadcast(Stat_.value());
+        }
+
+    }
 
 }
+
 
 void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
 {
     if (Socket == nullptr || GameServerSession == nullptr)
-
         return;
 
     AP1Creature* Creature = FindEntityAs<AP1Creature>(NormalAttackPkt.entity_id());

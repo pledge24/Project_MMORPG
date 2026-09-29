@@ -39,8 +39,6 @@ public:
     void CloseGameServerConnection();
 
     class FSocket* Socket;
-    const FString IpAddress = TEXT("127.0.0.1");
-    const int16 Port = 7777;
     PacketSessionRef GameServerSession;
 
     //~ Packet Pump
@@ -61,6 +59,8 @@ private:
 public:
     void HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt);
     void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
+    void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
+
     //~ Entity Lookup
 public:
     /** 현재 월드에 스폰된 엔티티를 찾아 T로 캐스트한다. 없거나 타입이 다르면 nullptr. */
@@ -77,8 +77,6 @@ public:
 
         return Cast<T>(StatefulEntityManager->FindEntity(EntityId));
     }
-
-    void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
     //~ Entity Packet Handlers
 public:
