@@ -38,22 +38,18 @@ bool Room::Init(const Json& roomData)
 
 bool Room::Start()
 {
-    // 몬스터를 Room에 스폰한다.
-    if (_monsterIds.empty() == false && _roomId == 20)
+    // 몬스터를 Room에 스폰한다. 마을처럼 몬스터 목록이 빈 룸은 건너뛴다.
+    if (_monsterIds.empty() == false)
     {
-        int32 kindOfMonster = _monsterIds.size();
-        //SpawnMonster(5000);
-        //SpawnMonster(5002);
-        Update();
-        return true;
-
+        int32 kindOfMonster = static_cast<int32>(_monsterIds.size());
         for (int32 i = 0; i < _maxMonsterCount; i++)
         {
             int32 monsterTemplateId = _monsterIds[Utils::GetRandom(0, kindOfMonster)];
             if (SpawnMonster(monsterTemplateId) == nullptr)
+            {
+                wcout << L"Room " << _roomId << L": 몬스터 " << monsterTemplateId << L" 스폰에 실패했습니다" << '\n';
                 return false;
-
-            break;
+            }
         }
     }
 
@@ -65,6 +61,9 @@ bool Room::Start()
 void Room::Update()
 {
     DoTimer(ROOM_UPDATE_INTERVAL_MS, &Room::Update);
+
+    // 몬스터가 플레이어를 찾을 때 셀을 본다. 위치가 틱마다 바뀌므로 여기서 다시 채운다.
+    UpdateCellMatrix();
 
     Protocol::S_MOVE movePkt;
     {
@@ -522,14 +521,11 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
 
+    // slot_id와 template_id는 처리 결과(장비 부위와 그 부위의 아이템)라서 ProcessEquipGear가 채운다.
     Protocol::S_EQUIP_GEAR equipGearPkt;
     {
-        const Protocol::Slot& slot = pkt.slot();
-
         equipGearPkt.set_success(true);
         equipGearPkt.set_entity_id(entityId);
-        equipGearPkt.set_slot_id(slot.slot_id());
-        equipGearPkt.set_template_id(slot.item().template_id());
     }
 
     if (player->ProcessEquipGear(pkt.slot(), OUT equipGearPkt) == false)
@@ -546,7 +542,6 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     // 장착한 유저에게만 그대로 전송.
     {
         SessionRef session = player->_session.lock();
-        cout << equipGearPkt.DebugString() << endl;
         SEND_PACKET(equipGearPkt)
     }
 
@@ -566,14 +561,11 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
 
+    // slot_id와 template_id는 처리 결과(장비 부위와 그 부위의 아이템)라서 ProcessUnequipGear가 채운다.
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
     {
-        const Protocol::Slot& slot = pkt.slot();
-
         unequipGearPkt.set_success(true);
         unequipGearPkt.set_entity_id(entityId);
-        unequipGearPkt.set_slot_id(slot.slot_id());
-        unequipGearPkt.set_template_id(slot.item().template_id());
     }
 
     if (player->ProcessUnequipGear(pkt.slot(), OUT unequipGearPkt) == false)
@@ -711,7 +703,9 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
             return;
 
         // TODO: 피격이 가능한 대상?
-        if (CreatureRef creature = dynamic_pointer_cast<Creature>(_entities[targetId]))
+        // 이미 사망한 대상은 다시 맞지 않는다. 사망한 플레이어가 룸에 남기 때문이다.
+        CreatureRef creature = dynamic_pointer_cast<Creature>(_entities[targetId]);
+        if (creature && creature->IsDead() == false)
         {
             HitCreatures.push_back(creature);
         }
@@ -783,7 +777,10 @@ void Room::HandleDie(CreatureRef creature)
         Broadcast(sendBuffer);
     }
 
-    // 바로 Room에서 제거한다.
+    // 사망한 플레이어는 리스폰할 때까지 룸에 남는다. 리스폰이 이 룸에서 떠나는 것부터 시작하기 때문이다.
+    if (creature->IsPlayer())
+        return;
+
     RemoveEntity(entityId);
 }
 
@@ -842,8 +839,8 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
             if (!includeThisPlayer && item.second->GetEntityId() == playerId)
                 continue;
 
+            // 플레이어의 장비 외형은 _entityInfo의 equipped_gear_summary에 실려 간다.
             spawnPkt.add_entities()->CopyFrom(*item.second->_entityInfo);
-            // equipped_gear_summary 활용하기
         }
 
         SEND_PACKET(spawnPkt)
@@ -866,7 +863,10 @@ MonsterRef Room::SpawnMonster(int32 templateId)
         return nullptr;
     }
 
-    //newMonster->PrintMonsterAllData(); // DEBUG
+    // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
+    newMonster->_room.store(GetRoomRef());
+    newMonster->SetPrevTime(GetTickCount64());
+    newMonster->Start();
 
     return newMonster;
 }
@@ -999,8 +999,16 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
 
         for (int64 entityId : cell)
         {
-            if (PlayerRef player = dynamic_pointer_cast<Player>(_entities[entityId]))
+            auto it = _entities.find(entityId);
+            if (it == _entities.end())
+                continue;
+
+            if (PlayerRef player = dynamic_pointer_cast<Player>(it->second))
             {
+                // 사망한 플레이어는 리스폰할 때까지 룸에 남지만 대상이 아니다.
+                if (player->IsDead())
+                    continue;
+
                 float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
                 if (squareRange < squareDist)
                     continue;
@@ -1015,7 +1023,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
 
     }
 
-    return make_pair(closestPlayer, squareRange);
+    return make_pair(closestPlayer, minDist);
 }
 
 void Room::CacheRoomData()
@@ -1183,9 +1191,10 @@ bool Room::RemoveEntity(int64 entityId)
 
     EntityRef entity = _entities[entityId];
 
-    // cellMatrix에서 엔티티를 삭제한다.
+    // cellMatrix에서 엔티티를 삭제한다. 룸 경계 밖에 있으면 어느 셀에도 없다.
     auto cellPos = GetCellIndicesFromPos(entity->_posInfo);
-    _cellMatrix[cellPos.first][cellPos.second].erase(entityId);
+    if (cellPos != make_pair(-1, -1))
+        _cellMatrix[cellPos.first][cellPos.second].erase(entityId);
 
     // 엔티티를 삭제한다.
 	_entities.erase(entityId);

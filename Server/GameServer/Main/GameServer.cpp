@@ -55,6 +55,13 @@ int main(void)
     {
         int roomId = mapDataPair.first; // templateId
         RoomRef room = GRoomManager->CreateRoom(roomId);
+        if (room == nullptr)
+        {
+            // 룸 데이터가 틀렸다는 뜻이다. 룸 하나가 빠진 채로 뜨면 그 룸으로 가는 요청이 모두 깨진다.
+            wcout << L"Room " << roomId << L" 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요" << '\n';
+            return 1;
+        }
+
         GRoomManager->AddRoom(roomId, room);
     }
 
