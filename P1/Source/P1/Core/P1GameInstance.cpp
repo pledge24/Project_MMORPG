@@ -11,6 +11,7 @@
 #include "Network/ClientPacketHandler.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Game/Entities/P1Creature.h"
 #include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
@@ -146,7 +147,7 @@ void UP1GameInstance::DisconnectFromGameServer()
 		return;
 
 	Protocol::C_LEAVE_GAME LeavePkt;
-	SEND_PACKET(LeavePkt);
+	FP1PacketSender::Send(this, LeavePkt);
 }
 
 void UP1GameInstance::HandleRecvPackets()
@@ -408,8 +409,8 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
         int32 SlotId = EquipGearPkt.slot_id();
         int32 TemplateId = EquipGearPkt.template_id();
 
-        // 장착한 갑옷 메시 적용
-        Player->ChangeMesh(SlotId, TemplateId);
+        // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
+        Player->ApplyGear(SlotId, TemplateId);
     }
 
     // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
@@ -464,8 +465,8 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
         int32 SlotId = UnequipGearPkt.slot_id();
         int32 TemplateId = UnequipGearPkt.template_id();
 
-        // 장착한 갑옷 메시 적용
-        Player->ChangeMesh(SlotId, TemplateId);
+        // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
+        Player->ApplyGear(SlotId, TemplateId);
     }
 
     // 장착해서 갱신된 인벤 슬롯 정보를 반영.

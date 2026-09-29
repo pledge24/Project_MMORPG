@@ -2,6 +2,7 @@
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
 #include "P1.h"
+#include "Network/P1PacketSender.h"
 #include "Core/P1LoginMenuPlayerController.h"
 #include "Online/P1LoginManager.h"
 #include "Utils/LogCategory.h"
@@ -29,6 +30,19 @@ void UP1LoginWidget::SetResultText(bool bSuccess, const FString& Message)
 
     ResultText->SetColorAndOpacity(FSlateColor(Color));
     ResultText->SetText(FText::FromString(Message));
+}
+
+void UP1LoginWidget::ShowEnterGameFailed()
+{
+    UE_LOG(LogP1UI, Warning, TEXT("서버가 게임 입장을 거절함"));
+
+    UTextBlock* TargetText = CS_ResultText ? CS_ResultText.Get() : ResultText.Get();
+    if (TargetText == nullptr)
+        return;
+
+    TargetText->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+    TargetText->SetText(FText::FromString(TEXT("게임에 입장하지 못했습니다. 캐릭터 데이터를 확인해 주세요.")));
+    TargetText->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void UP1LoginWidget::FetchCharacterOverviews(Protocol::S_LOGIN& pkt)
@@ -142,7 +156,7 @@ void UP1LoginWidget::SendEnterGamePkt()
     Protocol::C_ENTER_GAME pkt;
     pkt.set_character_id(CharacterOverview.CharacterId);
 
-    SEND_PACKET(pkt);
+    FP1PacketSender::Send(this, pkt);
 }
 
 void UP1LoginWidget::SendCreateCharacterPkt(FString CharacterName, int32 CharacterClassId)
@@ -166,7 +180,7 @@ void UP1LoginWidget::SendCreateCharacterPkt(FString CharacterName, int32 Charact
     Protocol::C_CREATE_CHARACTER pkt;
     pkt.set_allocated_character(CharacterOverview);
 
-    SEND_PACKET(pkt);
+    FP1PacketSender::Send(this, pkt);
 }
 
 void UP1LoginWidget::SendDeleteCharacterPkt()
@@ -182,7 +196,7 @@ void UP1LoginWidget::SendDeleteCharacterPkt()
     Protocol::C_DELETE_CHARACTER pkt;
     pkt.set_character_id(CharacterOverview.CharacterId);
 
-    SEND_PACKET(pkt);
+    FP1PacketSender::Send(this, pkt);
 }
 
 
