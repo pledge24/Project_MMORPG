@@ -67,6 +67,18 @@ TEST_F(GameSessionManagerTest, RemovingCurrentSessionReleasesUser)
     EXPECT_EQ(manager.RegisterUser(USER_ID, nextSession), nullptr);
 }
 
+TEST_F(GameSessionManagerTest, RebindingSessionToOtherUserReleasesPreviousUser)
+{
+    GameSessionRef session = make_shared<GameSession>();
+    manager.RegisterUser(USER_ID, session);
+
+    // 한 세션이 다른 계정의 토큰으로 C_LOGIN을 다시 보냈다.
+    manager.RegisterUser(OTHER_USER_ID, session);
+
+    // 이전 계정의 새 로그인이 이 세션을 밀어내면 안 된다.
+    EXPECT_EQ(manager.RegisterUser(USER_ID, make_shared<GameSession>()), nullptr);
+}
+
 TEST_F(GameSessionManagerTest, DifferentUsersDoNotReplaceEachOther)
 {
     GameSessionRef session = make_shared<GameSession>();

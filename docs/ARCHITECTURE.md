@@ -101,7 +101,7 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 월드가 `BeginPlay` 전이거나 해체 중이면 그 틱을 건너뛰고 큐를 비우지 않는다. 그래서 레벨 전환 중에 온
 패킷은 새 월드가 준비된 뒤에 처리된다. 레벨 블루프린트에서 펌프를 부르지 않는다.
 
-**Architecture Invariant:** 연결이 끊기면 워커는 `PacketSession`에 끊김 표시만 세운다. 펌프는 표시를
+**Architecture Invariant:** 연결이 끊기면 수신 워커만 `PacketSession`에 끊김 표시를 세운다. 펌프는 표시를
 먼저 읽고 큐를 비운 뒤, 표시가 서 있었으면 `UP1GameInstance::ReturnToLogin`으로 로그인 맵을 연다.
 수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로 끊기기 직전에 온 `S_LEAVE_GAME`을 놓치지
 않는다. 서버가 `S_LEAVE_GAME`으로 끊어도 같은 함수로 간다. 사용자가 게임을 끄는 `Shutdown`은 이

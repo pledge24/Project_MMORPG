@@ -16,6 +16,12 @@
 #include "Core/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
+namespace
+{
+    /** 사유를 모르는 끊김에 보여 줄 문구다. 서버가 먼저 내려갔거나 사유 패킷을 잃은 경우다. */
+    const TCHAR* const CONNECTION_LOST_NOTICE = TEXT("게임 서버와 연결이 끊겼습니다.");
+}
+
 UP1GameInstance::UP1GameInstance()
 {
 }
@@ -171,7 +177,7 @@ void UP1GameInstance::HandleRecvPackets()
 
 	// S_LEAVE_GAME을 처리했으면 핸들러가 이미 로그인 화면으로 돌려보내 세션이 없다.
 	if (bConnectionLost && GameServerSession)
-		ReturnToLogin(TEXT("게임 서버와 연결이 끊겼습니다."));
+		ReturnToLogin(CONNECTION_LOST_NOTICE);
 }
 
 void UP1GameInstance::HandleLeaveGame(const Protocol::S_LEAVE_GAME& LeaveGamePkt)
@@ -185,7 +191,7 @@ void UP1GameInstance::HandleLeaveGame(const Protocol::S_LEAVE_GAME& LeaveGamePkt
 		ReturnToLogin(TEXT("로그인 정보가 만료되었습니다. 다시 로그인하세요."));
 		break;
 	default:
-		ReturnToLogin(TEXT("게임 서버와 연결이 끊겼습니다."));
+		ReturnToLogin(CONNECTION_LOST_NOTICE);
 		break;
 	}
 }

@@ -23,10 +23,17 @@ void GameSessionManager::Remove(GameSessionRef session)
 		_userSessions.erase(it);
 }
 
-// 확인과 교체를 락 하나 안에서 한다. C_LOGIN은 무작위 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있다.
+// 확인과 교체를 락 하나 안에서 한다. C_LOGIN은 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있다.
 GameSessionRef GameSessionManager::RegisterUser(int64 userId, GameSessionRef session)
 {
 	USE_LOCK;
+
+	// 한 세션이 다른 계정으로 다시 로그인하면 이전 계정의 등록을 거둔다. 남겨 두면 Remove가 찾지 못해
+	// 새고, 이전 계정의 다음 로그인이 이 세션을 끊는다.
+	auto previous = _userSessions.find(session->_userId);
+	if (session->_userId != userId && previous != _userSessions.end() && previous->second == session)
+		_userSessions.erase(previous);
+
 	session->_userId = userId;
 
 	GameSessionRef& current = _userSessions[userId];
