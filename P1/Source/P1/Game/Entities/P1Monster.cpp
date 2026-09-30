@@ -1,6 +1,7 @@
 #include "Game/Entities/P1Monster.h"
 
 #include "Components/WidgetComponent.h"
+#include "Sync/P1StatefulEntityManager.h"
 #include "Utils/LogCategory.h"
 
 AP1Monster::AP1Monster()
@@ -48,6 +49,24 @@ void AP1Monster::Initialize(const Protocol::EntityInfo& EntityInfo)
 
     TemplateId = _MonsterInfo.template_id();
     CurHp = _MonsterInfo.hp();
+}
+
+void AP1Monster::S_Die()
+{
+    Super::S_Die();
+
+    // 사망 애니메이션은 ABP가 OnDie를 받아 재생한다. 그 시간을 준 뒤 지운다.
+    // 그사이 룸 이동으로 먼저 지워지면 AActor::EndPlay가 이 타이머를 함께 지운다.
+    GetWorldTimerManager().SetTimer(DespawnTimerHandle, this, &AP1Monster::DespawnAfterDeath, DESPAWN_DELAY_SECONDS, false);
+}
+
+void AP1Monster::DespawnAfterDeath()
+{
+    // Destroy만 하면 매니저의 등록이 남는다. 매니저를 거쳐 등록과 액터를 함께 지운다.
+    if (UP1StatefulEntityManager* StatefulEntityManager = GetWorld()->GetSubsystem<UP1StatefulEntityManager>())
+    {
+        StatefulEntityManager->DespawnEntity(GetPosInfo()->entity_id());
+    }
 }
 
 void AP1Monster::SetDefaultMonsterData(const FP1MonsterData& InMonsterData)

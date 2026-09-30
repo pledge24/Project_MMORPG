@@ -312,22 +312,23 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
 
 void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 {
-    bool levelUp = false;
+    const int32 oldLevel = _playerInfo->level();
 
     const Protocol::Reward& reward = rewardResultPkt.reward();
     // Get Reward
     {
-        int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + reward.exp();
-        int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
         _possession->set_gold(_possession->gold() + reward.gold());
 
-        // Check Level Up. 최대 레벨이면 경험치만 쌓는다. 레벨이 레벨 표 밖으로 나가면 다음 입장이 막힌다.
-        if (updatedExp >= maxExp && IsMaxLevel() == false)
+        // 경험치가 남는 만큼 여러 레벨을 한 번에 올린다. 레벨이 레벨 표 밖으로 나가면 다음 입장이 막힌다.
+        int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + reward.exp();
+        while (IsMaxLevel() == false && updatedExp >= GetStatValue(Protocol::STAT_TYPE_MAX_EXP))
         {
-            SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp - maxExp);
+            updatedExp -= GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
             OnLevelUp();
-            levelUp = true;
         }
+
+        // 최대 레벨에서는 경험치를 쌓지 않는다. 남은 경험치와 이후 보상은 버린다.
+        SetStatValue(Protocol::STAT_TYPE_EXP, IsMaxLevel() ? 0 : updatedExp);
     }
 
     // Set Reward Result Pkt
@@ -335,14 +336,14 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
         rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
         rewardResultPkt.set_updated_gold(_possession->gold());
 
-        if (levelUp)
+        if (_playerInfo->level() > oldLevel)
         {
             rewardResultPkt.set_is_level_up(true);
-            Protocol::LevelUpInfo info;
-            info.set_old_level(_playerInfo->level() - 1);
-            info.set_new_level(_playerInfo->level());
+            Protocol::LevelUpInfo* info = rewardResultPkt.mutable_level_up_details();
+            info->set_old_level(oldLevel);
+            info->set_new_level(_playerInfo->level());
 
-			RepeatedPtrField<Protocol::Stat>* updatedStatList = info.mutable_updated_stat();
+			RepeatedPtrField<Protocol::Stat>* updatedStatList = info->mutable_updated_stat();
 			{
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP));
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP));

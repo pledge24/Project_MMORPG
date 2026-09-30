@@ -29,7 +29,18 @@ public:
     //~ Begin AP1Creature Interface
 public:
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
+    /** 사망 연출 뒤 스스로 디스폰한다. 서버는 사망한 몬스터에 S_DESPAWN을 보내지 않는다. */
+    virtual void S_Die() override;
     //~ End AP1Creature Interface
+
+    //~ Death
+private:
+    void DespawnAfterDeath();
+
+    /** 초 단위. 사망 애니메이션(약 2.1초)이 끝나고 잠시 뒤에 지운다. */
+    static constexpr float DESPAWN_DELAY_SECONDS = 3.0f;
+
+    FTimerHandle DespawnTimerHandle;
 
     //~ Monster Data
 public:

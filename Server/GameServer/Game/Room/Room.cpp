@@ -44,7 +44,7 @@ bool Room::Start()
         int32 kindOfMonster = static_cast<int32>(_monsterIds.size());
         for (int32 i = 0; i < _maxMonsterCount; i++)
         {
-            int32 monsterTemplateId = _monsterIds[Utils::GetRandom(0, kindOfMonster)];
+            int32 monsterTemplateId = _monsterIds[Utils::GetRandom(0, kindOfMonster - 1)];
             if (SpawnMonster(monsterTemplateId) == nullptr)
             {
                 wcout << L"Room " << _roomId << L": 몬스터 " << monsterTemplateId << L" 스폰에 실패했습니다" << '\n';
@@ -721,6 +721,12 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 
 void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
+    // 공격은 판정을 뒤로 미뤄 예약된다. 그사이 공격자가 죽거나 룸을 떠났으면 공격은 없던 것이 된다.
+    if (Contains(attacker->GetEntityId()) == false)
+        return;
+    if (CreatureRef attackerCreature = dynamic_pointer_cast<Creature>(attacker); attackerCreature && attackerCreature->IsDead())
+        return;
+
     // 1) 해당 공격에 맞은 대상을 찾는다.
     vector<CreatureRef> HitCreatures;
     if (attackInfo.has_target_id())
@@ -938,8 +944,8 @@ vector2D Room::GetRandomLocation(bool usePadding)
 
     vector2D randomPos;
 
-    randomPos.x = Utils::GetRandom(_roomMinX, _roomMaxX);
-    randomPos.y = Utils::GetRandom(_roomMinY, _roomMaxY);
+    randomPos.x = Utils::GetRandom(paddedMinX, paddedMaxX);
+    randomPos.y = Utils::GetRandom(paddedMinY, paddedMaxY);
 
     return randomPos;
 }

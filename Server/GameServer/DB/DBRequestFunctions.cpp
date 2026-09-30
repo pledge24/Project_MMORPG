@@ -818,7 +818,7 @@ bool DBRequestFunctions::LoadCharactersGearItems(SessionRef session, int64 chara
 
             gearInfo->set_enhance_level(bindObject._enhance);
             gearInfo->set_durability(bindObject._durability);
-            gearInfo->set_additional_physical_attack(bindObject._additionalMagicalAttack);
+            gearInfo->set_additional_physical_attack(bindObject._additionalPhysicalAttack);
             gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
 
             if (bindObject._isEquipped == false)
