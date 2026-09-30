@@ -16,6 +16,13 @@
 namespace
 {
     constexpr int32 MAX_LEVEL = 50;
+
+    Protocol::S_REWARD_RESULT MakeExpReward(int64 exp)
+    {
+        Protocol::S_REWARD_RESULT pkt;
+        pkt.mutable_reward()->set_exp(exp);
+        return pkt;
+    }
 }
 
 class PlayerLevelTest : public ::testing::Test
@@ -28,13 +35,6 @@ protected:
 
         player->SetStatValue(Protocol::STAT_TYPE_EXP, 90);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, 100);
-    }
-
-    Protocol::S_REWARD_RESULT MakeExpReward(int64 exp)
-    {
-        Protocol::S_REWARD_RESULT pkt;
-        pkt.mutable_reward()->set_exp(exp);
-        return pkt;
     }
 
     PlayerRef player;
@@ -70,6 +70,20 @@ TEST_F(PlayerLevelTest, RewardBelowMaxExpAccumulates)
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 95) << "레벨업하지 않는 보상의 경험치가 버려지면 안 된다";
     EXPECT_EQ(pkt.updated_exp(), 95);
+    EXPECT_FALSE(pkt.is_level_up());
+}
+
+TEST_F(PlayerLevelTest, MissingMaxExpDoesNotLevelUp)
+{
+    // 레벨 표에 다음 레벨 행이 없으면 maxExp가 0으로 캐시된다.
+    player->_playerInfo->set_level(1);
+    player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, 0);
+
+    Protocol::S_REWARD_RESULT pkt = MakeExpReward(10);
+    player->OnGetReward(pkt);
+
+    EXPECT_EQ(player->_playerInfo->level(), 1) << "maxExp가 0일 때 레벨을 올리면 보상 한 번에 최대 레벨까지 간다";
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 100);
     EXPECT_FALSE(pkt.is_level_up());
 }
 
@@ -135,13 +149,6 @@ protected:
         player->_playerInfo->set_level(level);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, level * 100);
         ASSERT_TRUE(player->Start());
-    }
-
-    Protocol::S_REWARD_RESULT MakeExpReward(int64 exp)
-    {
-        Protocol::S_REWARD_RESULT pkt;
-        pkt.mutable_reward()->set_exp(exp);
-        return pkt;
     }
 
     PlayerRef player;

@@ -722,7 +722,8 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     // 공격은 판정을 뒤로 미뤄 예약된다. 그사이 공격자가 죽거나 룸을 떠났으면 공격은 없던 것이 된다.
-    if (Contains(attacker->GetEntityId()) == false)
+    // id만 보면 그사이 나갔다 다시 들어온 같은 엔티티도 통과하므로 객체까지 대조한다.
+    if (FindEntityAs<Entity>(attacker->GetEntityId()) != attacker)
         return;
     if (CreatureRef attackerCreature = dynamic_pointer_cast<Creature>(attacker); attackerCreature && attackerCreature->IsDead())
         return;

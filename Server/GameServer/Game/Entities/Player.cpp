@@ -320,10 +320,15 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
         _possession->set_gold(_possession->gold() + reward.gold());
 
         // 경험치가 남는 만큼 여러 레벨을 한 번에 올린다. 레벨이 레벨 표 밖으로 나가면 다음 입장이 막힌다.
+        // 레벨 표에 다음 레벨 행이 없으면 maxExp가 0이 된다. 그때 레벨을 올리면 보상 한 번에 최대 레벨까지 간다.
         int64 updatedExp = GetStatValue(Protocol::STAT_TYPE_EXP) + reward.exp();
-        while (IsMaxLevel() == false && updatedExp >= GetStatValue(Protocol::STAT_TYPE_MAX_EXP))
+        while (IsMaxLevel() == false)
         {
-            updatedExp -= GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
+            const int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
+            if (maxExp <= 0 || updatedExp < maxExp)
+                break;
+
+            updatedExp -= maxExp;
             OnLevelUp();
         }
 
