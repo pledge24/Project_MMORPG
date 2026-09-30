@@ -174,6 +174,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
+    <ClCompile Include="ItemSaveRowsTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="MonsterTests.cpp" />
@@ -223,7 +224,11 @@
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
-    <ClCompile Include="..\GameServer\DB\DBRequestFunctions.cpp" />
+    <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />
+    <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp" />
+    <ClCompile Include="..\GameServer\DB\ItemDAO.cpp" />
+    <ClCompile Include="..\GameServer\DB\ProgressDAO.cpp" />
+    <ClCompile Include="..\GameServer\DB\ItemSaveRows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 한다.

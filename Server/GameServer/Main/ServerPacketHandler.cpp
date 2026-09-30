@@ -9,6 +9,8 @@
 #include "Inventory.h"
 #include "EquippedGear.h"
 #include "Gamedata.h"
+#include "CharacterListDAO.h"
+#include "ProgressDAO.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -87,7 +89,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 return;
             }
 
-            DBRequestFunctions::LoadUserCharactersData(session, userId);
+            CharacterListDAO::LoadCharacterList(session, userId);
         }
     );
 
@@ -109,7 +111,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
         [session, pkt, userId]()
         {
             const Protocol::CharacterOverview& character = pkt.character();
-            DBRequestFunctions::CreateCharacter(session, character, userId);
+            CharacterListDAO::CreateCharacter(session, character, userId);
         }
     );
 
@@ -131,7 +133,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
         [session, pkt]()
         {
             int64 characterId = pkt.character_id();
-            DBRequestFunctions::DeleteCharacter(session, characterId);
+            CharacterListDAO::DeleteCharacter(session, characterId);
         }
     );
 
@@ -162,7 +164,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             }
 
             int64 characterId = pkt.character_id();
-            DBRequestFunctions::LoadAllCharactersData(session, characterId);
+            ProgressDAO::Load(session, characterId);
         }
     );
 

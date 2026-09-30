@@ -100,7 +100,19 @@
     <ClCompile Include="Game\Entities\Creature.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="DB\DBRequestFunctions.cpp">
+    <ClCompile Include="DB\CharacterListDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\CharacterStateDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ItemDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ProgressDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\ItemSaveRows.cpp">
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="Game\Inventory\Inventory.cpp">
@@ -180,7 +192,22 @@
     <ClInclude Include="Game\Entities\Creature.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="DB\DBRequestFunctions.h">
+    <ClInclude Include="DB\CharacterListDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\CharacterStateDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ItemDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ProgressDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\ItemSaveRows.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DAOCommon.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="Game\Inventory\Inventory.h">

@@ -200,7 +200,12 @@
     <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
-    <ClInclude Include="DB\DBRequestFunctions.h" />
+    <ClInclude Include="DB\CharacterListDAO.h" />
+    <ClInclude Include="DB\CharacterStateDAO.h" />
+    <ClInclude Include="DB\ItemDAO.h" />
+    <ClInclude Include="DB\ProgressDAO.h" />
+    <ClInclude Include="DB\ItemSaveRows.h" />
+    <ClInclude Include="DB\DAOCommon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main\pch.cpp">
@@ -251,7 +256,11 @@
     <ClCompile Include="Game\Data\Gamedata.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
-    <ClCompile Include="DB\DBRequestFunctions.cpp" />
+    <ClCompile Include="DB\CharacterListDAO.cpp" />
+    <ClCompile Include="DB\CharacterStateDAO.cpp" />
+    <ClCompile Include="DB\ItemDAO.cpp" />
+    <ClCompile Include="DB\ProgressDAO.cpp" />
+    <ClCompile Include="DB\ItemSaveRows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Protocol\GenPackets.bat" />

@@ -57,6 +57,11 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 워커 풀과 DB 풀은 별개이고, **메인 스레드가 워커 풀의 마지막 하나로 합류한다.**
 핸들러 안에서 블로킹하면 IOCP 처리량이 그만큼 줄어든다.
 
+**Architecture Invariant:** DB 접근은 `DB/`의 DAO가 데이터별로 맡는다. DAO는 연결을 `DBConnectionGuard`로
+빌려 함수가 어떻게 끝나든 풀로 돌려준다. 접속 종료 때 저장할 아이템 행은 DB를 모르는 `ItemSaveRows`가
+고른다.
+— 저장할 행을 잘못 고르면 진행이 사라지는데, SQL 실행은 테스트할 수 없어 이 판정만 떼어 테스트한다.
+
 **Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
 Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
 
