@@ -6,6 +6,7 @@
 #include "ServerConfig.h"
 #include "Global.h"
 #include "EncodingConverter.h"
+#include "ItemDAO.h"
 
 enum
 {
@@ -107,7 +108,7 @@ int main(void)
     }
 
     // DB에서 서버 메모리에 올릴거 가져오기
-    DBRequestFunctions::GetMaxItemUID();
+    ItemDAO::GetMaxItemUID();
 
     // Main Thread
     DoWorkerJob(service);

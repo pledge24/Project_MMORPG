@@ -185,7 +185,7 @@
 `docs/folder-structure.md`가 이미 적고 있다.
 
 **선행 조건**: `Room`이 갓 클래스라는 부채와 같은 파일을 건드린다
-(`docs/tech-debt.md`의 「`Room` / `DBRequestFunctions` 갓 클래스」). 어느 쪽을 먼저 할지 정한다.
+(`docs/tech-debt.md`의 「`Room` 갓 클래스」). 어느 쪽을 먼저 할지 정한다.
 
 **완료 신호**: 미정.
 

@@ -52,7 +52,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
 
-**안 덮는 것**: Room · DBRequestFunctions · 세션/IOCP · 전투 판정 · Gamedata 로딩 · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍 하나뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: Room · DAO의 SQL 실행 · 세션/IOCP · Gamedata 로딩 · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍 하나뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -151,7 +151,7 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 
 "필요한 것만"이 아니라 "main 빼고 전부"인 이유는 둘이다.
 
-- `Inventory.cpp` → `Player.cpp` → `Room.cpp` → `DBRequestFunctions.cpp`로 전이 의존이 이어져 결국 대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 추가하는 루프는 비결정적이라 재현되지 않는다.
+- `Inventory.cpp` → `Player.cpp` → `Room.cpp` → `GameSession.cpp` → `ProgressStorage.cpp`로 전이 의존이 이어져 결국 대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 추가하는 루프는 비결정적이라 재현되지 않는다.
 - `Main/GameServer.cpp`에는 `main`이 있다. 테스트 타깃은 자기 `main`(`TestMain.cpp`)을 쓰므로 이 파일만 뺀다.
 
 ---

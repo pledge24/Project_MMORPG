@@ -35,7 +35,6 @@
 #include "DBQueue.h"
 #include "DBManager.h"
 #include "RedisManager.h"
-#include "DBRequestFunctions.h"
 
 /*-------------------
          Using
