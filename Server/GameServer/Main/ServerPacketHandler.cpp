@@ -2,6 +2,7 @@
 #include "ServerPacketHandler.h"
 #include "Protocol.pb.h"
 #include "GameSession.h"
+#include "GameSessionManager.h"
 #include "Player.h"
 #include "Room.h"
 #include "EntityUtils.h"
@@ -30,11 +31,22 @@ bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_
 	return false;
 }
 
+namespace
+{
+    // 사유를 알린 뒤 곧바로 끊는다. 다른 송신이 진행 중이면 사유 패킷은 송신 큐에서 기다리다 버려질 수 있다.
+    // 그때 클라이언트는 사유 없이 끊긴 것으로 보고 일반 문구를 띄운다.
+    void KickSession(const GameSessionRef& target, Protocol::LeaveReason reason, const char* cause)
+    {
+        Protocol::S_LEAVE_GAME leavePkt;
+        leavePkt.set_reason(reason);
+        SEND_PACKET_USING_THIS_SESSION(target, leavePkt)
+
+        target->Disconnect(cause);
+    }
+}
+
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
-    // TODO: 해당 패킷이 유효한지 검증(Validate)
-    // ...
-
     // 랜덤으로 아무 DBQueue에게 Job을 준다.
     int32 dbQueueCount = GDBManager->GetDBQueueCount();
     DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount - 1));
@@ -42,31 +54,40 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
     JobRef job = make_shared<Job>(
         [session, pkt]()
         {
-            // 클라로부터 받은 AccessToken을 Redis와 비교
-            string accessToken = pkt.access_token();
+            GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
+            // 액세스 토큰은 한 번만 쓴다. 같은 토큰의 로그인이 다른 DB 큐에서 동시에 와도
+            // 키를 지운 쪽 하나만 통과한다.
+            const string tokenKey = "accessToken:" + pkt.access_token();
             RedisRef redis = GRedisManager->GetRedis();
-            auto val = redis->get("accessToken:" + accessToken);
-            if (val)
+            auto val = redis->get(tokenKey);
+            if (val.has_value() == false || redis->del(tokenKey) == 0)
             {
-                Json json = Json::parse(*val);
-                string username = json["username"];
-                int64 userId = json["userId"];
-
-                cout << "userId: " << userId << endl;
-                cout << "username: " << username << endl;
-                
-                // 게임 세션에 userId 저장.
-                GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-                gameSession->_userId = userId;
-
-                // 있으면 DB에서 캐릭터 정보를 긁어온다.
-                DBRequestFunctions::LoadUserCharactersData(session, userId);
+                wcout << L"액세스 토큰이 없거나 이미 쓰였다" << '\n';
+                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
+                return;
             }
-            else
+
+            Json json = Json::parse(*val);
+            string username = json["username"];
+            int64 userId = json["userId"];
+
+            cout << "userId: " << userId << endl;
+            cout << "username: " << username << endl;
+
+            // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
+            // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
+            if (GameSessionRef replaced = GSessionManager.RegisterUser(userId, gameSession))
+                KickSession(replaced, Protocol::LEAVE_REASON_DUPLICATE_LOGIN, "Duplicate Login");
+
+            // 등록하기 전에 이 세션이 이미 끊겼다면 접속 종료의 Remove가 먼저 지나갔다. 등록을 여기서 거둔다.
+            if (gameSession->IsConnected() == false)
             {
-                cout << "Not Found AccessToken" << endl;
+                GSessionManager.Remove(gameSession);
+                return;
             }
+
+            DBRequestFunctions::LoadUserCharactersData(session, userId);
         }
     );
 

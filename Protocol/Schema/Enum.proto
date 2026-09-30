@@ -133,3 +133,11 @@ enum RewardType
     REWARD_TYPE_MONSTER_KILL = 1;
     REWARD_TYPE_QUEST_COMPLETE = 2;
 }
+
+// 서버가 연결을 끊는 사유. 클라이언트는 이 값으로 로그인 화면의 문구를 고른다.
+enum LeaveReason
+{
+    LEAVE_REASON_NONE = 0;
+    LEAVE_REASON_DUPLICATE_LOGIN = 1;   // 같은 계정이 다른 곳에서 로그인했다
+    LEAVE_REASON_INVALID_TOKEN = 2;     // 액세스 토큰이 없거나 이미 쓰였다
+}

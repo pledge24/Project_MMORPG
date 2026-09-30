@@ -1886,9 +1886,10 @@ class C_LEAVE_GAME final :
 // -------------------------------------------------------------------
 
 class S_LEAVE_GAME final :
-    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:Protocol.S_LEAVE_GAME) */ {
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_LEAVE_GAME) */ {
  public:
   inline S_LEAVE_GAME() : S_LEAVE_GAME(nullptr) {}
+  ~S_LEAVE_GAME() override;
   explicit PROTOBUF_CONSTEXPR S_LEAVE_GAME(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
   S_LEAVE_GAME(const S_LEAVE_GAME& from);
@@ -1961,15 +1962,29 @@ class S_LEAVE_GAME final :
   S_LEAVE_GAME* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
     return CreateMaybeMessage<S_LEAVE_GAME>(arena);
   }
-  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyFrom;
-  inline void CopyFrom(const S_LEAVE_GAME& from) {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl(*this, from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const S_LEAVE_GAME& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const S_LEAVE_GAME& from) {
+    S_LEAVE_GAME::MergeImpl(*this, from);
   }
-  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeFrom;
-  void MergeFrom(const S_LEAVE_GAME& from) {
-    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl(*this, from);
-  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
   public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(S_LEAVE_GAME* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
@@ -1990,6 +2005,18 @@ class S_LEAVE_GAME final :
 
   // accessors -------------------------------------------------------
 
+  enum : int {
+    kReasonFieldNumber = 1,
+  };
+  // .Protocol.LeaveReason reason = 1;
+  void clear_reason();
+  ::Protocol::LeaveReason reason() const;
+  void set_reason(::Protocol::LeaveReason value);
+  private:
+  ::Protocol::LeaveReason _internal_reason() const;
+  void _internal_set_reason(::Protocol::LeaveReason value);
+  public:
+
   // @@protoc_insertion_point(class_scope:Protocol.S_LEAVE_GAME)
  private:
   class _Internal;
@@ -1998,7 +2025,10 @@ class S_LEAVE_GAME final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    int reason_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
+  union { Impl_ _impl_; };
   friend struct ::TableStruct_Protocol_2eproto;
 };
 // -------------------------------------------------------------------
@@ -7663,6 +7693,26 @@ inline void S_ENTER_GAME::set_allocated_possession(::Protocol::Possession* posse
 // -------------------------------------------------------------------
 
 // S_LEAVE_GAME
+
+// .Protocol.LeaveReason reason = 1;
+inline void S_LEAVE_GAME::clear_reason() {
+  _impl_.reason_ = 0;
+}
+inline ::Protocol::LeaveReason S_LEAVE_GAME::_internal_reason() const {
+  return static_cast< ::Protocol::LeaveReason >(_impl_.reason_);
+}
+inline ::Protocol::LeaveReason S_LEAVE_GAME::reason() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_LEAVE_GAME.reason)
+  return _internal_reason();
+}
+inline void S_LEAVE_GAME::_internal_set_reason(::Protocol::LeaveReason value) {
+  
+  _impl_.reason_ = value;
+}
+inline void S_LEAVE_GAME::set_reason(::Protocol::LeaveReason value) {
+  _internal_set_reason(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_LEAVE_GAME.reason)
+}
 
 // -------------------------------------------------------------------
 

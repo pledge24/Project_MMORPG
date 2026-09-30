@@ -203,7 +203,7 @@ TEST(ProtocolContract, EveryMessageRoundTrips)
 
         // 필드가 있는 메시지인데 바이트가 0이면 채우기가 실패한 것이고, 그 왕복은
         // 아무것도 검증하지 못한다. 필드 없는 메시지(C_PING, S_PONG, C_LEAVE_GAME,
-        // S_LEAVE_GAME, C_MAP_LOAD_COMPLETE)는 0바이트가 정상이므로 여기서 제외한다.
+        // C_MAP_LOAD_COMPLETE)는 0바이트가 정상이므로 여기서 제외한다.
         if (descriptor->field_count() > 0)
             ASSERT_GT(original->ByteSizeLong(), 0u) << "필드를 하나도 채우지 못해 검증이 무의미하다";
 

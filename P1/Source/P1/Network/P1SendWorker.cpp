@@ -36,6 +36,8 @@ uint32 FP1SendWorker::Run()
 
 		if (FlushQueue() == false)
 		{
+			// 끊김은 수신 워커만 알린다. 여기서 알리면 소켓에 아직 읽히지 않은 S_LEAVE_GAME을 두고
+			// 게임 스레드가 연결을 닫아 사유를 잃는다. 연결이 끊겼으면 수신도 곧 실패한다.
 			UE_LOG(LogP1Network, Warning, TEXT("게임 서버로 송신하지 못해 송신 스레드를 멈춘다"));
 			return 0;
 		}

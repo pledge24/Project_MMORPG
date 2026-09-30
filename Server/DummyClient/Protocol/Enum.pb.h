@@ -442,6 +442,32 @@ inline bool RewardType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RewardType>(
     RewardType_descriptor(), name, value);
 }
+enum LeaveReason : int {
+  LEAVE_REASON_NONE = 0,
+  LEAVE_REASON_DUPLICATE_LOGIN = 1,
+  LEAVE_REASON_INVALID_TOKEN = 2,
+  LeaveReason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  LeaveReason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool LeaveReason_IsValid(int value);
+constexpr LeaveReason LeaveReason_MIN = LEAVE_REASON_NONE;
+constexpr LeaveReason LeaveReason_MAX = LEAVE_REASON_INVALID_TOKEN;
+constexpr int LeaveReason_ARRAYSIZE = LeaveReason_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* LeaveReason_descriptor();
+template<typename T>
+inline const std::string& LeaveReason_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, LeaveReason>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function LeaveReason_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    LeaveReason_descriptor(), enum_t_value);
+}
+inline bool LeaveReason_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, LeaveReason* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<LeaveReason>(
+    LeaveReason_descriptor(), name, value);
+}
 // ===================================================================
 
 
@@ -533,6 +559,11 @@ template <> struct is_proto_enum< ::Protocol::RewardType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RewardType>() {
   return ::Protocol::RewardType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::LeaveReason> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::LeaveReason>() {
+  return ::Protocol::LeaveReason_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

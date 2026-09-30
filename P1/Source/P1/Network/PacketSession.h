@@ -28,6 +28,17 @@ public:
     FP1RecvWorkerRef RecvWorkerThread;
     FP1SendWorkerRef SendWorkerThread;
 
+    //~ Connection Loss
+public:
+    /** 수신 워커가 연결이 끊긴 것을 알게 되면 부른다. 게임 스레드에 알리는 유일한 경로다. */
+    void MarkConnectionLost();
+
+    /** 게임 스레드가 읽는다. 수신 워커는 마지막으로 받은 패킷을 큐에 넣은 뒤에 표시를 세운다. */
+    bool IsConnectionLost() const;
+
+private:
+    std::atomic<bool> bConnectionLost = false;
+
     //~ Packet Queues
 public:
     /** 게임 스레드에서 부른다. 수신 큐를 비우면서 핸들러를 돌린다. */

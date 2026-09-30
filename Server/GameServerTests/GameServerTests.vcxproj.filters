@@ -58,6 +58,7 @@
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
+    <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>

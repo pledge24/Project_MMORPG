@@ -30,8 +30,22 @@ void PacketSession::Run()
 	SendWorkerThread = MakeShared<FP1SendWorker>(Socket, AsShared());
 }
 
+void PacketSession::MarkConnectionLost()
+{
+	bConnectionLost = true;
+}
+
+bool PacketSession::IsConnectionLost() const
+{
+	return bConnectionLost;
+}
+
 void PacketSession::HandleRecvPackets()
 {
+	// 핸들러(S_LEAVE_GAME)가 게임 인스턴스의 세션 참조를 놓아도 이 함수가 끝날 때까지 세션이 살아 있어야 한다.
+	// 루프 몸체 안에서 잡으면 몸체가 끝날 때 세션이 파괴되고, 다음 조건 검사가 해제된 Socket을 읽는다.
+	PacketSessionRef ThisPtr = AsShared();
+
 	// 핸들러(S_LEAVE_GAME)가 연결을 끊으면 Socket이 비고, 남은 패킷은 처리하지 않는다.
 	while (Socket)
 	{
@@ -39,7 +53,6 @@ void PacketSession::HandleRecvPackets()
 		if (RecvPacketQueue.Dequeue(OUT Packet) == false)
 			break;
 
-		PacketSessionRef ThisPtr = AsShared();
 		bool bHandlePacket = ClientPacketHandler::HandlePacket(ThisPtr, Packet.GetData(), Packet.Num());
         if (!bHandlePacket)
         {

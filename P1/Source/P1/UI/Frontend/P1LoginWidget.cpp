@@ -3,6 +3,7 @@
 #include "Components/EditableTextBox.h"
 #include "P1.h"
 #include "Network/P1PacketSender.h"
+#include "Core/P1GameInstance.h"
 #include "Core/P1LoginMenuPlayerController.h"
 #include "Online/P1LoginManager.h"
 #include "Utils/LogCategory.h"
@@ -21,6 +22,14 @@ void UP1LoginWidget::NativeConstruct()
     if (WidgetSwitcher)
     {
         WidgetSwitcher->SetActiveWidgetIndex(0); // 0번 위젯으로 시작
+    }
+
+    // 게임 서버와 연결이 끊겨 돌아왔으면 그 사유를 보여 준다.
+    if (UP1GameInstance* GameInstance = GetGameInstance<UP1GameInstance>())
+    {
+        const FString Notice = GameInstance->ConsumeLoginNotice();
+        if (Notice.IsEmpty() == false)
+            SetResultText(false, Notice);
     }
 }
 

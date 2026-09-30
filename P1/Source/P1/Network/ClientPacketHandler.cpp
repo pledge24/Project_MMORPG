@@ -110,8 +110,7 @@ bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
     if (auto* GameInstance = session->GetGameInstance())
     {
-        // 연결을 곧바로 끊음
-        GameInstance->CloseGameServerConnection();
+        GameInstance->HandleLeaveGame(pkt);
     }
 
     return true;
