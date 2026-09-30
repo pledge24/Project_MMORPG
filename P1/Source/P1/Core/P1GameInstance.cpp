@@ -124,10 +124,7 @@ void UP1GameInstance::ConnectToGameServer()
 
 void UP1GameInstance::CloseGameServerConnection()
 {
-	// 소켓을 먼저 닫아야 수신 스레드가 진행 중인 Recv에서 빠져나와 끝날 수 있다.
-	if (Socket)
-		Socket->Close();
-
+	// 세션이 송신 큐를 비운 뒤 소켓을 닫고 수신 스레드를 끝낸다. 순서는 PacketSession::Disconnect에 있다.
 	if (GameServerSession)
 	{
 		GameServerSession->Disconnect();
@@ -136,6 +133,8 @@ void UP1GameInstance::CloseGameServerConnection()
 
 	if (Socket)
 	{
+		// 연결에 실패해 세션이 없었으면 여기서 처음 닫힌다. 세션이 이미 닫았으면 두 번째 Close는 무시된다.
+		Socket->Close();
 		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
 		Socket = nullptr;
 	}
@@ -148,6 +147,15 @@ void UP1GameInstance::DisconnectFromGameServer()
 
 	Protocol::C_LEAVE_GAME LeavePkt;
 	FP1PacketSender::Send(this, LeavePkt);
+}
+
+void UP1GameInstance::RemovePacketListener(const UObject* Listener)
+{
+    OnRecvBuyItemPkt.RemoveAll(Listener);
+    OnRecvSellItemPkt.RemoveAll(Listener);
+    OnRecvUseItemPkt.RemoveAll(Listener);
+    OnRecvEquipGearPkt.RemoveAll(Listener);
+    OnRecvUnequipGearPkt.RemoveAll(Listener);
 }
 
 void UP1GameInstance::HandleRecvPackets()

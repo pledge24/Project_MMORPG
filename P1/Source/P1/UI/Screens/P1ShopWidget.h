@@ -4,7 +4,6 @@
 #include "UI/P1UserWidget.h"
 #include "P1ShopWidget.generated.h"
 
-class AP1MyPlayer;
 class UP1SlotWidget;
 
 UCLASS()
@@ -18,9 +17,6 @@ public:
     //~ End UUserWidget Interface
 
     //~ Purchase
-public:
-    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
-
 protected:
     UFUNCTION(BlueprintCallable, Category = "Network")
     void SendBuyItemPacket(UP1SlotWidget* Slot_);

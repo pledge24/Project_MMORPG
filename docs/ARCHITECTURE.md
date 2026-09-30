@@ -90,13 +90,9 @@ Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 
 `PacketSession`이 소유한 두 `FRunnable` 워커는 바이트를 큐에 쌓기만 하고,
 게임 스레드의 수신 펌프가 그것을 비운다.
 
-**Architecture Invariant: 수신 펌프를 호출하는 C++ 코드가 없다.**
-`UP1GameInstance::HandleRecvPackets()`는 `BlueprintCallable`이고, 호출부는
-**레벨 블루프린트의 `ReceiveTick`** 안에 있다. 새 레벨을 만들면 손으로 넣어야 하고,
-잊으면 네트워킹이 조용히 죽는다.
-확인: 해당 레벨의 레벨 BP에 그 노드가 있는가.
-> 아직 사고가 안 난 이유는 게임플레이 룸들이 **전부 하나의 맵 안 논리 분할**이기 때문이다.
-> 맵을 늘리는 순간 이 불변식이 물린다.
+**Architecture Invariant:** 수신 펌프는 `UP1GameInstance`가 코어 티커로 돌린다. 레벨과 무관하게 돈다.
+월드가 `BeginPlay` 전이거나 해체 중이면 그 틱을 건너뛰고 큐를 비우지 않는다. 그래서 레벨 전환 중에 온
+패킷은 새 월드가 준비된 뒤에 처리된다. 레벨 블루프린트에서 펌프를 부르지 않는다.
 
 **Architecture Invariant:** `UP1GameInstance`가 소켓·세션을 소유하는 유일한 허브다.
 모든 `S_*` 핸들러가 여기 구현되고, 액터와 위젯에는 멀티캐스트 델리게이트로만 전파된다.

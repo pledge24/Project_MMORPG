@@ -33,6 +33,12 @@ public:
     void InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePkt);
     void BindMyPlayerDelegate(AP1MyPlayer* MyPlayer);
 
+    /**
+     * 이 서브시스템의 델리게이트에서 Listener가 붙인 것을 모두 뗀다.
+     * 서브시스템은 레벨보다 오래 살기 때문에, 레벨과 함께 사라지는 객체는 사라지기 전에 불러야 한다.
+     */
+    void RemoveListener(const UObject* Listener);
+
     FOnMyPlayerSpawned OnMyPlayerSpawned;
 
     //~ Player Info
@@ -67,7 +73,6 @@ public:
     const Protocol::StatInfo& GetStatInfo() const { return *_StatInfo; }
     int64 GetStatValue(Protocol::StatType statType);
 
-    void Rep_StatChanged(const Protocol::StatInfo& InStatInfo) const;
     void Rep_HpChanged(int64 UpdatedHp);
 
     TMap<Protocol::StatType, FOnStatChanged> OnStatChangedMappings;

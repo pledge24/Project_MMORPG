@@ -115,6 +115,12 @@ public:
     DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
     FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
 
+    /**
+     * 위 패킷 수신 델리게이트에서 Listener가 붙인 것을 모두 뗀다.
+     * 게임 인스턴스는 레벨보다 오래 살기 때문에, 레벨과 함께 사라지는 객체는 사라지기 전에 불러야 한다.
+     */
+    void RemovePacketListener(const UObject* Listener);
+
     //~ Combat Packet Handlers
 public:
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);

@@ -15,6 +15,12 @@ class P1_API UP1UserWidget : public UUserWidget
 {
     GENERATED_BODY()
 
+    //~ Begin UUserWidget Interface
+protected:
+    /** 게임 인스턴스와 내 플레이어 데이터의 델리게이트에서 이 위젯을 모두 뗀다. 오버라이드하면 Super를 부른다. */
+    virtual void NativeDestruct() override;
+    //~ End UUserWidget Interface
+
     //~ Owning Context
 public:
     /** 이 위젯을 만든 플레이어 컨트롤러다. 소유자 없이 만든 위젯에서는 nullptr을 돌려준다. */
