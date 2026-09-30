@@ -36,6 +36,12 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 
     // Bind Delegate
     OnMyPlayerSpawned.AddUObject(this, &UP1MyPlayerData::BindMyPlayerDelegate);
+
+    // 소지품 델리게이트는 이 서브시스템과 함께 사는 객체끼리 잇는다. 플레이어 액터와 무관하므로 한 번만 붙인다.
+    // 내 플레이어가 스폰될 때마다 붙이면 맵을 옮길 때마다 핸들러가 하나씩 늘어난다.
+    OnGoldChanged.AddUObject(this, &UP1MyPlayerData::Rep_GoldChanged);
+    OnInvenSlotChanged.AddUObject(Inventory, &UP1Inventory::Rep_SlotChanged);
+    OnEquipmentSlotChanged.AddUObject(EquippedGear, &UP1EquippedGear::Rep_SlotChanged);
 }
 
 void UP1MyPlayerData::Deinitialize()
@@ -84,13 +90,20 @@ void UP1MyPlayerData::BindMyPlayerDelegate(AP1MyPlayer* MyPlayer)
         return;
     }
 
-    /** Player Class Delegate */
+    // 내 플레이어 액터는 맵마다 새로 스폰되므로 액터의 델리게이트는 스폰 때마다 붙인다.
     MyPlayer->OnLevelUp.AddUObject(this, &UP1MyPlayerData::Rep_LevelChanged);
+}
 
-    /** Possession Delegate */
-    OnGoldChanged.AddUObject(this, &UP1MyPlayerData::Rep_GoldChanged);
-    OnInvenSlotChanged.AddUObject(Inventory, &UP1Inventory::Rep_SlotChanged);
-    OnEquipmentSlotChanged.AddUObject(EquippedGear, &UP1EquippedGear::Rep_SlotChanged);
+void UP1MyPlayerData::RemoveListener(const UObject* Listener)
+{
+    OnMyPlayerSpawned.RemoveAll(Listener);
+    OnLevelChanged.RemoveAll(Listener);
+    OnGoldChanged.RemoveAll(Listener);
+    OnInvenSlotChanged.RemoveAll(Listener);
+    OnEquipmentSlotChanged.RemoveAll(Listener);
+
+    for (auto& Pair : OnStatChangedMappings)
+        Pair.Value.RemoveAll(Listener);
 }
 
 void UP1MyPlayerData::SetEntityInfo(const Protocol::EntityInfo& InEntityInfo)
@@ -120,11 +133,6 @@ void UP1MyPlayerData::Rep_GoldChanged(const int64 Gold) const
 void UP1MyPlayerData::Rep_LevelChanged(int32 Level) const
 {
     _PlayerInfo->set_level(Level);
-}
-
-void UP1MyPlayerData::Rep_StatChanged(const Protocol::StatInfo& InStatInfo) const
-{
-    _PlayerInfo->CopyFrom(InStatInfo);
 }
 
 void UP1MyPlayerData::Rep_HpChanged(int64 UpdatedHp)

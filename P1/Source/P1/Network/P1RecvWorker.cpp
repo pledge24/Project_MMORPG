@@ -25,14 +25,22 @@ uint32 FP1RecvWorker::Run()
 {
 	while (Running)
 	{
-		TArray<uint8> Packet;
+		// 읽을 데이터가 올 때까지 잠든다. 타임아웃으로 깨어나면 Running을 다시 본다.
+		if (Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromSeconds(WAIT_FOR_READ_SECONDS)) == false)
+			continue;
 
-		if (ReceivePacket(OUT Packet))
+		TArray<uint8> Packet;
+		if (ReceivePacket(OUT Packet) == false)
 		{
-			if (PacketSessionRef Session = SessionRef.Pin())
-			{
-				Session->RecvPacketQueue.Enqueue(Packet);
-			}
+			// 읽을 수 있다고 깨어났는데 읽지 못했으면 연결이 끊긴 것이다. 다시 돌면 헛돌기만 한다.
+			if (Running)
+				UE_LOG(LogP1Network, Warning, TEXT("게임 서버에서 수신하지 못해 수신 스레드를 멈춘다"));
+			break;
+		}
+
+		if (PacketSessionRef Session = SessionRef.Pin())
+		{
+			Session->RecvPacketQueue.Enqueue(Packet);
 		}
 	}
 
@@ -98,10 +106,8 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 
 bool FP1RecvWorker::ReceiveDesiredBytes(uint8* Results, int32 Size)
 {
-	uint32 PendingDataSize;
-	if (Socket->HasPendingData(OUT PendingDataSize) == false || PendingDataSize <= 0)
-		return false;
-
+	// 소켓은 블로킹이다. 헤더 뒤의 페이로드가 아직 도착하지 않았어도 여기서 기다린다.
+	// 예전처럼 대기 중인 데이터가 없다고 바로 돌아가면 읽은 헤더를 버리게 되어 스트림이 어긋난다.
 	int32 Offset = 0;
 
 	while (Size > 0)

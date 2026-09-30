@@ -18,9 +18,6 @@ public:
     //~ End UUserWidget Interface
 
     //~ Purchase
-public:
-    void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
-
 protected:
     UFUNCTION(BlueprintCallable, Category = "Network")
     void SendBuyItemPacket(UP1SlotWidget* Slot_);

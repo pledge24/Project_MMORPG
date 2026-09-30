@@ -12,19 +12,8 @@ void UP1ShopWidget::NativeConstruct()
 
     if (auto* GameInstance = GetP1GameInstance())
     {
-        if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
-        {
-            // MyPlayer 스폰 이벤트에 함수 등록
-            MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1ShopWidget::BindMyPlayerSpawned);
-
-            GameInstance->OnRecvBuyItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
-        }
+        GameInstance->OnRecvBuyItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
     }
-}
-
-void UP1ShopWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
-{
-    // MyPlayer->OnRecvBuyItemPkt.AddLambda([this]() { if (IsValid(this)) this->PendingPacket = false; });
 }
 
 void UP1ShopWidget::SendBuyItemPacket(UP1SlotWidget* Slot_)

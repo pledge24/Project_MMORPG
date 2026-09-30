@@ -51,20 +51,28 @@ void PacketSession::HandleRecvPackets()
 void PacketSession::SendPacket(SendBufferRef SendBuffer)
 {
 	SendPacketQueue.Enqueue(SendBuffer);
+
+	if (SendWorkerThread)
+		SendWorkerThread->Wake();
 }
 
 void PacketSession::Disconnect()
 {
-	if (RecvWorkerThread)
-	{
-		RecvWorkerThread->Destroy();
-		RecvWorkerThread = nullptr;
-	}
-
+	// 순서가 중요하다. 송신 스레드가 남은 큐(C_LEAVE_GAME 등)를 보낸 뒤에 소켓을 닫고,
+	// 소켓이 닫혀야 페이로드를 기다리며 블로킹된 Recv가 풀려 수신 스레드가 끝난다.
 	if (SendWorkerThread)
 	{
 		SendWorkerThread->Destroy();
 		SendWorkerThread = nullptr;
+	}
+
+	if (Socket)
+		Socket->Close();
+
+	if (RecvWorkerThread)
+	{
+		RecvWorkerThread->Destroy();
+		RecvWorkerThread = nullptr;
 	}
 }
 
