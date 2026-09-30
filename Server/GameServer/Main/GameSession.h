@@ -22,5 +22,5 @@ public:
 
 public:
 	atomic<shared_ptr<Player>> _player; // PlayerRef
-    int64 _userId;
+    int64 _userId = 0; // GameSessionManager::RegisterUser가 채운다
 };

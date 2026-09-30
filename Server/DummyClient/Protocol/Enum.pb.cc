@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[14];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[15];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -79,11 +79,14 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "AP_TRANSFER\020\003\022\026\n\022ENTER_TYPE_RESPAWN\020\004*`\n"
   "\nRewardType\022\024\n\020REWARD_TYPE_NONE\020\000\022\034\n\030REW"
   "ARD_TYPE_MONSTER_KILL\020\001\022\036\n\032REWARD_TYPE_Q"
-  "UEST_COMPLETE\020\002b\006proto3"
+  "UEST_COMPLETE\020\002*f\n\013LeaveReason\022\025\n\021LEAVE_"
+  "REASON_NONE\020\000\022 \n\034LEAVE_REASON_DUPLICATE_"
+  "LOGIN\020\001\022\036\n\032LEAVE_REASON_INVALID_TOKEN\020\002b"
+  "\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 2023, descriptor_table_protodef_Enum_2eproto,
+    false, false, 2127, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -328,6 +331,21 @@ const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor() {
   return file_level_enum_descriptors_Enum_2eproto[13];
 }
 bool RewardType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* LeaveReason_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[14];
+}
+bool LeaveReason_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:

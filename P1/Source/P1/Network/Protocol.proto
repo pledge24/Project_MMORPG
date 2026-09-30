@@ -70,7 +70,7 @@ message C_LEAVE_GAME
 
 message S_LEAVE_GAME
 {
-
+    LeaveReason reason = 1;
 }
 
 message C_MAP_LOAD_COMPLETE
