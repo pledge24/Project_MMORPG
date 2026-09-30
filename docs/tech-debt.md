@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 9개 (높음 3 · 중간 3 · 낮음 3)
+항목 8개 (높음 2 · 중간 3 · 낮음 3)
 
 ## 작성 방법
 
@@ -72,27 +72,6 @@
 
 ---
 
-## 물약을 써도 HP와 MP가 회복되지 않는다
-> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Entities/Player.cpp` (`Player::ProcessUseItem`)
-> 등록일: 2026년 9월 30일
-
-`ProcessUseItem`은 회복량을 계산하는 루프를 `pkt.updated_stat()`에 대해 돈다. 이 목록은 그 루프가
-채우는 결과라서 루프에 들어갈 때 비어 있다. 그래서 몸체가 한 번도 돌지 않고, 서버는 물약 개수만 줄이고
-HP와 MP를 바꾸지 않는다. `S_USE_ITEM`에도 바뀐 스탯이 실리지 않아 HUD가 그대로다. 재로그인해도 HP와
-MP가 그대로인 것이 서버가 바꾸지 않았다는 증거다. 2026년 9월 30일 PIE에서 사람이 확인했다.
-
-같은 함수에 두 가지가 더 있다.
-- 함수 끝에 `return true;`가 없다. 반환값이 정의되지 않는다
-- 회복량을 요청 슬롯의 `template_id`로 찾는다. 인벤토리의 실제 아이템이 아니라 클라이언트가 보낸 값이다
-
-클라이언트의 `UP1GameInstance::HandleUseItem`은 받은 스탯을 델리게이트로만 알리고
-`UP1MyPlayerData`의 스탯 사본은 고치지 않는다. 서버를 고친 뒤 HUD가 갱신되는지 따로 확인해야 한다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 물약을 사고 써도 효과 없이 개수만 사라진다. 전투에서 회복 수단이 없다.
-
 ## `Room` / `DBRequestFunctions` 갓 클래스
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 모듈 · server
 > 위치: `Server/GameServer/Game/Room/Room.cpp` (1,161줄) · `Server/GameServer/DB/DBRequestFunctions.cpp` (1,531줄)
@@ -150,7 +129,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
-| `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체 |
+| `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 쿨다운이 슬롯마다 따로 돌아서, 서버가 템플릿마다 판정하는 재사용 대기와 어긋난다. 같은 물약이 두 칸에 있으면 다른 칸은 쓸 수 있어 보이지만 서버가 거부한다 |
 | `WBP_LoginMenu` | `LoginWidget` | 그래프 4개(`CC_Init`·`DisableAllSlotsHighlight`·`ClearAllSlots`·`IsValidCharacter`) + `OnDisplayCharacterOverviews` |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
 
@@ -194,26 +173,19 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
 함께 따져야 한다.
 
-## 인벤토리를 다시 열면 개수가 바뀐 슬롯의 아이콘이 빈다
+## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/UI/Common/P1SlotWidget.cpp` (`SetSlot(const Protocol::Slot&)`)
+> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleRewardResult`)
 > 등록일: 2026년 9월 30일
 
-2026년 9월 30일 PIE에서 사람이 확인한 증상이다. 복합 물약(2002)을 사면 인벤토리에 들어오고, 쓰면 개수가
-줄고 쿨다운도 표시된다. 그런데 인벤토리에서 아이콘 없이 빈 슬롯처럼 보인다.
-
-데이터는 정상이다. 언리얼 MCP로 읽은 결과, `DT_ItemAssets`의 2002 행은 `T_MixPotion`을 가리키고
-`DT_Item`에도 2002 행이 있다. `T_MixPotion`의 텍스처 설정은 정상적으로 보이는 `T_HpPotion`과 같다.
-
-원인은 추정이다. `SetSlot`은 슬롯의 `state`가 `ADDED`일 때만 `InsertData`로 아이콘을 입히고, `MODIFIED`면
-데이터만 복사한다. 인벤토리 위젯은 열릴 때 `UP1MyPlayerData`에 저장된 슬롯으로 다시 그린다. 그런데 이
-사본의 `state`는 마지막으로 받은 변경분의 값이다. 같은 물약을 더 사서 쌓이거나 써서 줄어든 슬롯은
-`MODIFIED`로 남고, 다시 열면 아이콘을 입히지 않는다. 실행해서 확인하지는 않았다.
+`HandleRewardResult`는 소켓과 월드를 확인한 뒤 아무것도 하지 않는다. 서버는 `S_REWARD_RESULT`에 경험치,
+골드, 레벨업 결과(`level_up_details`)를 싣지만, 클라이언트의 HUD와 내 플레이어 데이터에는 반영되지 않는다.
+지금은 플레이어가 몬스터를 때리는 경로가 없어 보상이 오지 않는다. 코드를 읽고 판단했다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 가진 아이템이 빈 칸처럼 보인다. 개수와 쿨다운만 보여서 무슨 아이템인지
-알 수 없다.
+**새 기능 개발 지연** — 공격 판정을 넣으면 몬스터를 잡아도 경험치와 골드가 화면에 바뀌지 않는다. 재접속해야
+서버에 저장된 값이 보인다.
 
 ## 밀려난 세션의 저장보다 새 세션의 불러오기가 먼저 끝날 수 있다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server

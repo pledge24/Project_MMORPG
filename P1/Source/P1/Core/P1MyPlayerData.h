@@ -70,10 +70,14 @@ protected:
 public:
     void SetStatValue(Protocol::StatType statType, const int64& value);
 
+    /**
+     * 서버가 알려 준 스탯을 사본에 쓰고 구독자에게 알린다. 게임 스레드 전용.
+     * HUD는 생성될 때 사본을 읽으므로, 알리기만 하고 사본을 두면 맵을 옮긴 뒤 옛 값이 보인다.
+     */
+    void ApplyStat(Protocol::StatType statType, int64 value);
+
     const Protocol::StatInfo& GetStatInfo() const { return *_StatInfo; }
     int64 GetStatValue(Protocol::StatType statType);
-
-    void Rep_HpChanged(int64 UpdatedHp);
 
     TMap<Protocol::StatType, FOnStatChanged> OnStatChangedMappings;
 

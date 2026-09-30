@@ -119,6 +119,14 @@ void UP1MyPlayerData::SetStatValue(Protocol::StatType statType, const int64& val
     (*statMappings)[(int32)statType] = value;
 }
 
+void UP1MyPlayerData::ApplyStat(Protocol::StatType statType, int64 value)
+{
+    SetStatValue(statType, value);
+
+    if (FOnStatChanged* OnThisStatChanged = OnStatChangedMappings.Find(statType))
+        OnThisStatChanged->Broadcast(value);
+}
+
 int64 UP1MyPlayerData::GetStatValue(Protocol::StatType statType)
 {
     auto* statMappings = _StatInfo->mutable_info();
@@ -133,9 +141,4 @@ void UP1MyPlayerData::Rep_GoldChanged(const int64 Gold) const
 void UP1MyPlayerData::Rep_LevelChanged(int32 Level) const
 {
     _PlayerInfo->set_level(Level);
-}
-
-void UP1MyPlayerData::Rep_HpChanged(int64 UpdatedHp)
-{
-    SetStatValue(Protocol::STAT_TYPE_HP, UpdatedHp);
 }
