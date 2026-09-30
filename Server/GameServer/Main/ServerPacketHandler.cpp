@@ -11,6 +11,7 @@
 #include "Gamedata.h"
 #include "CharacterListDAO.h"
 #include "ProgressStorage.h"
+#include "CharacterCreation.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -100,8 +101,15 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
-    // TODO: 해당 패킷이 유효한지 검증(Validate)
-    // ...
+    // 거절하면 DB 큐로 넘기지 않고 사유를 곧바로 돌려준다. 클라이언트가 사유를 생성 화면에 띄운다.
+    if (optional<string> cause = CharacterCreation::Validate(pkt.character()))
+    {
+        Protocol::S_CREATE_CHARACTER createCharacterPkt;
+        createCharacterPkt.set_success(false);
+        createCharacterPkt.set_cause(cause.value());
+        SEND_PACKET(createCharacterPkt)
+        return true;
+    }
 
     // 유저 Id를 통해 DBQueue를 선택
     int64 userId = static_pointer_cast<GameSession>(session)->_userId;
@@ -122,8 +130,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
-    // TODO: 해당 패킷이 유효한지 검증(Validate)
-    // ...
+    // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
 
     // 유저 Id를 통해 DBQueue를 선택
     int64 userId = static_pointer_cast<GameSession>(session)->_userId;

@@ -72,6 +72,10 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
 `S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고 끊는다. 그 세션의 저장은 아래의 접속 종료 경로를 탄다.
 
+**Architecture Invariant:** 캐릭터를 다루는 요청(입장, 삭제)은 그 계정이 가진 캐릭터에만 동작한다.
+클라이언트가 보낸 `character_id`를 믿지 않고, SQL이 세션의 `user_id`를 함께 대조한다. 생성 요청은
+`Handle_C_CREATE_CHARACTER`가 `CharacterCreation::Validate`로 먼저 거른다.
+
 **Architecture Invariant:** 룸 퇴장과 진행 저장은 `GameSession::OnDisconnected`에서만 시작한다.
 `C_LEAVE_GAME`도 연결을 끊어서 이 경로로 온다. 그래서 정상 종료와 크래시, 네트워크 단절이 같은
 처리를 받는다. 저장은 룸 큐 위에서 뜬 `PlayerSaveData` 사본으로 하고, DB 스레드는 살아 있는

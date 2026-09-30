@@ -79,6 +79,9 @@
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Entities\CharacterCreation.cpp">
+      <Filter>Game\Entities</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Entities\EntityUtils.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
@@ -164,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\CharacterCreation.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityUtils.h">
       <Filter>Game\Entities</Filter>
