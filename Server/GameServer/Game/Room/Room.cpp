@@ -524,7 +524,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
     Protocol::S_USE_ITEM useItemPkt;
     const Protocol::Slot& targetSlot = pkt.slot();
 
-    if (player->ProcessUseItem(targetSlot, OUT useItemPkt) == false)
+    if (player->ProcessUseItem(targetSlot, ::GetTickCount64(), OUT useItemPkt) == false)
     {
         useItemPkt.set_success(false);
 
@@ -532,7 +532,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
         return;
     }
 
-    // 아이템 판매 성공 처리
+    // 아이템 사용 성공 처리
     {
         useItemPkt.set_success(true);
 

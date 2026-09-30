@@ -35,7 +35,8 @@ public:
     /** 핸들 함수 */
     bool ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count = 1);
     bool ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count = 1);
-    bool ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_USE_ITEM& pkt);
+    // nowMs는 재사용 대기 판정에 쓰는 현재 시각이다. 룸은 GetTickCount64()를 넘긴다.
+    bool ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT Protocol::S_USE_ITEM& pkt);
     bool ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt);
     bool ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt);
     bool ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt);
@@ -87,6 +88,9 @@ private:
     NextLevelUpData _nextLevelUpData;
 
     map<Protocol::RespawnType, int32> _respawnRoomMappings;
+
+    // 소모품 템플릿 id → 마지막으로 쓴 시각(ms). 재사용 대기 판정에 쓴다. 저장하지 않으므로 재접속하면 사라진다.
+    map<int32, uint64> _lastUseTimeMs;
     const int32 RESPAWN_TOWN_ID = 10;   // 고정으로 사용
 };
 
