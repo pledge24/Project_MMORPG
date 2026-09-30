@@ -32,6 +32,9 @@
     <Filter Include="Game\Inventory">
       <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Combat">
+      <UniqueIdentifier>{fa0fd672-07c0-466c-8912-9015a727cb9c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Equipment">
       <UniqueIdentifier>{c36c017d-b07a-4db4-951a-8826a8aa4a9f}</UniqueIdentifier>
     </Filter>
@@ -102,6 +105,9 @@
     </ClCompile>
     <ClCompile Include="Game\Inventory\Inventory.cpp">
       <Filter>Game\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Combat\Combat.cpp">
+      <Filter>Game\Combat</Filter>
     </ClCompile>
     <ClCompile Include="Game\Equipment\EquippedGear.cpp">
       <Filter>Game\Equipment</Filter>
@@ -179,6 +185,9 @@
     </ClInclude>
     <ClInclude Include="Game\Inventory\Inventory.h">
       <Filter>Game\Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Combat\Combat.h">
+      <Filter>Game\Combat</Filter>
     </ClInclude>
     <ClInclude Include="Game\Equipment\EquippedGear.h">
       <Filter>Game\Equipment</Filter>
