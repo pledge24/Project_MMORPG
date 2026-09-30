@@ -86,19 +86,19 @@ bool ItemDAO::LoadItems(SessionRef session, int64 characterId)
     {
         // 1. 캐릭터 장비 아이템 가져오기
         if (LoadGearItems(session, characterId) == false)
-            throw string("Error In LoadGearItems");
+            throw wstring(L"장비 아이템 불러오기 실패");
 
         // 2. 캐릭터 소비 아이템 가져오기
         if (LoadStackableItems(session, characterId, Protocol::ITEM_TYPE_CONSUMABLE) == false)
-            throw string("Error In LoadStackableItems(Consumable)");
+            throw wstring(L"소비 아이템 불러오기 실패");
 
         // 3. 캐릭터 기타 아이템 가져오기
         if (LoadStackableItems(session, characterId, Protocol::ITEM_TYPE_MISCELLANEOUS) == false)
-            throw string("Error In LoadStackableItems(Miscellaneous)");
+            throw wstring(L"기타 아이템 불러오기 실패");
     }
-    catch (string cause)
+    catch (const wstring& cause)
     {
-        cout << cause << endl;
+        wcout << cause << endl;
         return false;
     }
 
@@ -111,19 +111,19 @@ bool ItemDAO::SaveItems(const PlayerSaveData& data)
     {
         // 1. 캐릭터 장비 아이템 갱신하기
         if (SaveGearItems(data) == false)
-            throw string("Error In SaveGearItems");
+            throw wstring(L"장비 아이템 저장 실패");
 
         // 2. 캐릭터 소비 아이템 갱신하기
         if (SaveStackableItems(data, Protocol::ITEM_TYPE_CONSUMABLE) == false)
-            throw string("Error In SaveStackableItems(Consumable)");
+            throw wstring(L"소비 아이템 저장 실패");
 
         // 3. 캐릭터 기타 아이템 갱신하기
         if (SaveStackableItems(data, Protocol::ITEM_TYPE_MISCELLANEOUS) == false)
-            throw string("Error In SaveStackableItems(Miscellaneous)");
+            throw wstring(L"기타 아이템 저장 실패");
     }
-    catch (string cause)
+    catch (const wstring& cause)
     {
-        cout << cause << endl;
+        wcout << cause << endl;
         return false;
     }
 

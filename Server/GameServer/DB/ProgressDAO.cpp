@@ -24,7 +24,7 @@ void ProgressDAO::Load(SessionRef session, int64 characterId)
     // 1. 캐릭터 기본 정보 다시 가져오기(이름, 레벨 등 필요)
     if (CharacterStateDAO::LoadCharacter(session, characterId) == false)
     {
-        cout << "Error In LoadCharacter" << endl;
+        wcout << L"캐릭터 기본 정보 불러오기 실패" << endl;
         sendEnterGameFail();
         return;
     }
@@ -32,7 +32,7 @@ void ProgressDAO::Load(SessionRef session, int64 characterId)
     // 2. 캐릭터 마지막 상태(LastState)가져오기
     if (CharacterStateDAO::LoadLastState(session, characterId) == false)
     {
-        cout << "Error In LoadLastState" << endl;
+        wcout << L"캐릭터 마지막 상태(LastState) 불러오기 실패" << endl;
         sendEnterGameFail();
         return;
     }
@@ -40,7 +40,7 @@ void ProgressDAO::Load(SessionRef session, int64 characterId)
     // 3. 캐릭터 소유 아이템 정보 가져오기
     if (ItemDAO::LoadItems(session, characterId) == false)
     {
-        cout << "Error In LoadItems" << endl;
+        wcout << L"캐릭터 소유 아이템 정보 불러오기 실패" << endl;
         sendEnterGameFail();
         return;
     }

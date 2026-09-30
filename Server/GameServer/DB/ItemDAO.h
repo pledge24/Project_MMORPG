@@ -17,6 +17,7 @@ public:
     static bool LoadItems(SessionRef session, int64 characterId);
     static bool SaveItems(const PlayerSaveData& data);
 
+private:
     static bool LoadGearItems(SessionRef session, int64 characterId);
     static bool LoadStackableItems(SessionRef session, int64 characterId, Protocol::ItemType itemType);
 
