@@ -3,13 +3,13 @@
 struct PlayerSaveData;
 
 /*-------------------------
-    ProgressPersistence
+    ProgressStorage
 
     플레이어의 진행을 불러오고 저장한다. SQL은 들고 있지 않고, 캐릭터 상태와 아이템의 DAO를
     차례로 부른다.
 --------------------------*/
 
-class ProgressPersistence
+class ProgressStorage
 {
 public:
     // 입장할 때 부른다. 결과로 S_ENTER_GAME을 보낸다.

@@ -2,7 +2,7 @@
 #include "GameSession.h"
 #include "GameSessionManager.h"
 #include "ServerPacketHandler.h"
-#include "ProgressPersistence.h"
+#include "ProgressStorage.h"
 #include "Player.h"
 #include "Room.h"
 
@@ -46,7 +46,7 @@ void GameSession::LeaveGame(RoomRef room, PlayerRef player)
 	dbQueue->Push(make_shared<Job>(
 		[data = std::move(saveData.value())]()
 		{
-			ProgressPersistence::Save(data);
+			ProgressStorage::Save(data);
 		}));
 }
 

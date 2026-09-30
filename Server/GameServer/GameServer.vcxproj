@@ -203,7 +203,7 @@
     <ClInclude Include="DB\CharacterListDAO.h" />
     <ClInclude Include="DB\CharacterStateDAO.h" />
     <ClInclude Include="DB\ItemDAO.h" />
-    <ClInclude Include="DB\ProgressPersistence.h" />
+    <ClInclude Include="DB\ProgressStorage.h" />
     <ClInclude Include="DB\ItemSaveRows.h" />
     <ClInclude Include="DB\DAOCommon.h" />
   </ItemGroup>
@@ -259,7 +259,7 @@
     <ClCompile Include="DB\CharacterListDAO.cpp" />
     <ClCompile Include="DB\CharacterStateDAO.cpp" />
     <ClCompile Include="DB\ItemDAO.cpp" />
-    <ClCompile Include="DB\ProgressPersistence.cpp" />
+    <ClCompile Include="DB\ProgressStorage.cpp" />
     <ClCompile Include="DB\ItemSaveRows.cpp" />
   </ItemGroup>
   <ItemGroup>
