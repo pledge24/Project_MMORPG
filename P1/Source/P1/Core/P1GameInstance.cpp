@@ -443,11 +443,7 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
                 _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, true);
             }
 
-            for (const auto& Stat_ : UseItemPkt.updated_stat())
-            {
-                FOnStatChanged& OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
-                OnThisStatChanged.Broadcast(Stat_.value());
-            }
+            _MyPlayerData->ApplyStats(UseItemPkt.updated_stat());
         }
     }
 }
@@ -495,11 +491,7 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
                 }
             }
 
-            for (auto& Stat_ : EquipGearPkt.updated_stat())
-            {
-                FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
-                OnThisStatChanged.Broadcast(Stat_.value());
-            }
+            _MyPlayerData->ApplyStats(EquipGearPkt.updated_stat());
 
         }
 
@@ -551,11 +543,7 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
                 }
             }
 
-            for (auto& Stat_ : UnequipGearPkt.updated_stat())
-            {
-                FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Stat_.type()];
-                OnThisStatChanged.Broadcast(Stat_.value());
-            }
+            _MyPlayerData->ApplyStats(UnequipGearPkt.updated_stat());
 
         }
 
@@ -594,8 +582,7 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
 
     if (Creature->IsMyPlayer())
     {
-        FOnStatChanged OnThisStatChanged = _MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_HP];
-        OnThisStatChanged.Broadcast(HitPkt.updated_hp());
+        _MyPlayerData->ApplyStat(Protocol::STAT_TYPE_HP, HitPkt.updated_hp());
     }
 }
 
@@ -648,11 +635,7 @@ void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
 
     if (Creature->IsMyPlayer())
     {
-        for (const Protocol::Stat& Stat_ : RespawnPkt.updated_stat())
-        {
-            _MyPlayerData->SetStatValue(Stat_.type(), Stat_.value());
-            _MyPlayerData->OnStatChangedMappings[Stat_.type()].Broadcast(Stat_.value());
-        }
+        _MyPlayerData->ApplyStats(RespawnPkt.updated_stat());
     }
 }
 

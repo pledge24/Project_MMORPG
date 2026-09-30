@@ -84,60 +84,65 @@ bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Sl
     return true;
 }
 
-bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, OUT Protocol::S_USE_ITEM& pkt)
+bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT Protocol::S_USE_ITEM& pkt)
 {
-    auto* updatedSlotList = pkt.mutable_updated_slots();
-    auto* updatedStatList = pkt.mutable_updated_stat();
-
-    // 아이템 사용으로 인한 슬롯 변경 정보 채우기
-    if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
-        return false;
-
-    // entityId 채우기
+    // 거부 응답에도 싣는다. 클라이언트는 이 id로 내 플레이어를 찾은 뒤에야 요청 대기를 푼다.
     pkt.set_entity_id(GetEntityId());
 
-    // 변경된 스텟 반영
-    for (const Protocol::Stat& stat : pkt.updated_stat())
-    {
-        int32 templateId = requestSlot.item().template_id();
-        const Json& itemData = Gamedata::s_itemDataTable[templateId];
+    // 사망한 크리처는 행동을 멈춘다.
+    if (IsDead())
+        return false;
 
-        // HP
-        if (itemData.contains(JsonProperty::Item::HpRestore))
+    // 소모품 슬롯의 아이템만 쓴다. 장비나 기타 아이템을 받으면 효과 없이 사라진다.
+    if (requestSlot.type() != Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE)
+        return false;
+
+    // 효과는 요청이 아니라 슬롯에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
+    const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
+    if (ownedSlot == nullptr || ownedSlot->has_item() == false)
+        return false;
+
+    const int32 templateId = ownedSlot->item().template_id();
+    auto itemIt = Gamedata::s_itemDataTable.find(templateId);
+    if (itemIt == Gamedata::s_itemDataTable.end())
+        return false;
+
+    const Json& itemData = itemIt->second;
+
+    // 재사용 대기는 템플릿마다 따로 돈다. 데이터의 cooldown은 초 단위다.
+    const uint64 cooldownMs = static_cast<uint64>(itemData.value(JsonProperty::Item::Cooldown, 0.0) * 1000);
+    auto lastUseIt = _lastUseTimeMs.find(templateId);
+    if (lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + cooldownMs)
+        return false;
+
+    // 제거에 성공했을 때만 응답에 슬롯을 싣는다. 거부 응답에는 슬롯이 없다.
+    Protocol::Slot updatedSlot;
+    if (_inventory->RemoveItem(requestSlot, OUT &updatedSlot) == false)
+        return false;
+
+    *pkt.mutable_updated_slots()->Add() = std::move(updatedSlot);
+
+    _lastUseTimeMs[templateId] = nowMs;
+
+    // 회복률이 있는 스탯만 바꾸고 싣는다. 이미 가득 차 있어도 소비하고 값은 최대로 둔다.
+    auto restore = [&](string_view restoreKey, Protocol::StatType maxType, Protocol::StatType curType)
         {
-            float ratio = itemData[JsonProperty::Item::HpRestore];
-            int64 maxHp = GetStatValue(Protocol::STAT_TYPE_MAX_HP);
-            int64 hp = GetStatValue(Protocol::STAT_TYPE_HP);
-            int64 amount = static_cast<int64>(maxHp * ratio);
-            int64 updatedHp = min(maxHp, hp + amount);
+            const double ratio = itemData.value(restoreKey, 0.0);
+            if (ratio <= 0)
+                return;
 
-            // Set Updated stat
-            SetStatValue(Protocol::STAT_TYPE_HP, updatedHp);
-            Protocol::Stat* updatedStat = updatedStatList->Add();
-            {
-                updatedStat->set_type(Protocol::STAT_TYPE_HP);
-                updatedStat->set_value(updatedHp);
-            }
-        }
+            const int64 maxValue = GetStatValue(maxType);
+            const int64 amount = static_cast<int64>(maxValue * ratio);
+            const int64 updatedValue = min(maxValue, GetStatValue(curType) + amount);
+            SetStatValue(curType, updatedValue);
 
-        // MP
-        if (itemData.contains(JsonProperty::Item::MpRestore))
-        {
-            float ratio = itemData[JsonProperty::Item::MpRestore];
-            int64 maxMp = GetStatValue(Protocol::STAT_TYPE_MAX_MP);
-            int64 mp = GetStatValue(Protocol::STAT_TYPE_MP);
-            int64 amount = static_cast<int64>(maxMp * ratio);
-            int64 updatedMp = min(maxMp, mp + amount);
+            Protocol::Stat* updatedStat = pkt.mutable_updated_stat()->Add();
+            updatedStat->set_type(curType);
+            updatedStat->set_value(updatedValue);
+        };
 
-            // Set Updated stat
-            SetStatValue(Protocol::STAT_TYPE_MP, updatedMp);
-            Protocol::Stat* updatedStat = updatedStatList->Add();
-            {
-                updatedStat->set_type(Protocol::STAT_TYPE_MP);
-                updatedStat->set_value(updatedMp);
-            }
-        }
-    }
+    restore(JsonProperty::Item::HpRestore, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
+    restore(JsonProperty::Item::MpRestore, Protocol::STAT_TYPE_MAX_MP, Protocol::STAT_TYPE_MP);
 
     return true;
 }

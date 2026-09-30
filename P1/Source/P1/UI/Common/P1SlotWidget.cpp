@@ -30,19 +30,14 @@ void UP1SlotWidget::SetSlot(const FP1ItemData& Item, int32 Count)
 
 void UP1SlotWidget::SetSlot(const Protocol::Slot& _Slot)
 {
-    // 슬롯 정보 저장(언리얼 방식으로)
-    switch (_Slot.state())
-    {
-    case Protocol::UpdateState::UPDATE_STATE_ADDED:
+    // 아이템이 있으면 state와 무관하게 데이터와 아이콘을 입힌다. state는 서버가 보낸 변경분의 표시인데
+    // 내 플레이어 데이터의 사본에 그대로 남는다. 위젯이 다시 붙으면 WBP의 PreConstruct가 아이콘을
+    // 초기 텍스처로 되돌리고, 사본의 MODIFIED 슬롯으로 다시 그리면 아이콘이 빈 채로 남았다.
+    // 한 번도 채워진 적 없는 빈 슬롯(NONE)은 건드리지 않아 WBP의 초기 텍스처를 남긴다.
+    if (_Slot.has_item())
         InsertData(_Slot);
-        break;
-    case Protocol::UpdateState::UPDATE_STATE_MODIFIED:
-        SlotData.CopyFrom(_Slot);
-        break;
-    case Protocol::UpdateState::UPDATE_STATE_REMOVED:
+    else if (_Slot.state() == Protocol::UpdateState::UPDATE_STATE_REMOVED)
         ClearSlot();
-        break;
-    }
     
     if (SlotData.item().count() > 1)
         ItemCountText->SetText(FText::AsNumber(SlotData.item().count()));

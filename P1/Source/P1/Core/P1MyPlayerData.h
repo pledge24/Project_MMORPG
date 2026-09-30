@@ -70,10 +70,14 @@ protected:
 public:
     void SetStatValue(Protocol::StatType statType, const int64& value);
 
+    /** 서버가 알려 준 스탯을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 스탯은 이 함수로만 바꾼다. 게임 스레드 전용. */
+    void ApplyStat(Protocol::StatType statType, int64 value);
+
+    /** 패킷에 실린 스탯 목록을 ApplyStat으로 차례로 반영한다. 게임 스레드 전용. */
+    void ApplyStats(const google::protobuf::RepeatedPtrField<Protocol::Stat>& Stats);
+
     const Protocol::StatInfo& GetStatInfo() const { return *_StatInfo; }
     int64 GetStatValue(Protocol::StatType statType);
-
-    void Rep_HpChanged(int64 UpdatedHp);
 
     TMap<Protocol::StatType, FOnStatChanged> OnStatChangedMappings;
 
