@@ -461,7 +461,7 @@ Server/
 │   │   ├── Inventory/      인벤토리
 │   │   ├── Equipment/      장비
 │   │   └── Data/           게임 데이터 로더
-│   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템, 진행)
+│   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템)와 진행 영속화
 │   ├── Queries/            GameDB 스키마 스크립트
 │   ├── Protocol/           생성물
 │   └── Utils/

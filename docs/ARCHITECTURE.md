@@ -57,7 +57,8 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 워커 풀과 DB 풀은 별개이고, **메인 스레드가 워커 풀의 마지막 하나로 합류한다.**
 핸들러 안에서 블로킹하면 IOCP 처리량이 그만큼 줄어든다.
 
-**Architecture Invariant:** DB 접근은 `DB/`의 DAO가 데이터별로 맡는다. DAO는 연결을 `DBConnectionGuard`로
+**Architecture Invariant:** DB 접근은 `DB/`의 DAO가 데이터별로 맡는다. SQL을 실행하는 클래스만 DAO라고
+부른다. 여러 DAO를 차례로 부르는 `ProgressPersistence`는 DAO가 아니다. DAO는 연결을 `DBConnectionGuard`로
 빌려 함수가 어떻게 끝나든 풀로 돌려준다. 접속 종료 때 저장할 아이템 행은 DB를 모르는 `ItemSaveRows`가
 고른다.
 — 저장할 행을 잘못 고르면 진행이 사라지는데, SQL 실행은 테스트할 수 없어 이 판정만 떼어 테스트한다.

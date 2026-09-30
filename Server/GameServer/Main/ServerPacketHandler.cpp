@@ -10,7 +10,7 @@
 #include "EquippedGear.h"
 #include "Gamedata.h"
 #include "CharacterListDAO.h"
-#include "ProgressDAO.h"
+#include "ProgressPersistence.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -164,7 +164,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             }
 
             int64 characterId = pkt.character_id();
-            ProgressDAO::Load(session, characterId);
+            ProgressPersistence::Load(session, characterId);
         }
     );
 

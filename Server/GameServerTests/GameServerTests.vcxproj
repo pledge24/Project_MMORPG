@@ -227,7 +227,7 @@
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\ItemDAO.cpp" />
-    <ClCompile Include="..\GameServer\DB\ProgressDAO.cpp" />
+    <ClCompile Include="..\GameServer\DB\ProgressPersistence.cpp" />
     <ClCompile Include="..\GameServer\DB\ItemSaveRows.cpp" />
   </ItemGroup>
   <ItemGroup>

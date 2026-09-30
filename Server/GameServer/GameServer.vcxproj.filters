@@ -109,7 +109,7 @@
     <ClCompile Include="DB\ItemDAO.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DB\ProgressDAO.cpp">
+    <ClCompile Include="DB\ProgressPersistence.cpp">
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="DB\ItemSaveRows.cpp">
@@ -201,7 +201,7 @@
     <ClInclude Include="DB\ItemDAO.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DB\ProgressDAO.h">
+    <ClInclude Include="DB\ProgressPersistence.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\ItemSaveRows.h">

@@ -1,15 +1,15 @@
 #include "pch.h"
-#include "ProgressDAO.h"
+#include "ProgressPersistence.h"
 #include "CharacterStateDAO.h"
 #include "ItemDAO.h"
 #include "Player.h"
 #include "PlayerSaveData.h"
 
 /*-------------------------
-    ProgressDAO
+    ProgressPersistence
 --------------------------*/
 
-void ProgressDAO::Load(SessionRef session, int64 characterId)
+void ProgressPersistence::Load(SessionRef session, int64 characterId)
 {
     PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
 
@@ -65,7 +65,7 @@ void ProgressDAO::Load(SessionRef session, int64 characterId)
     SEND_PACKET(enterGamePkt)
 }
 
-void ProgressDAO::Save(const PlayerSaveData& data)
+void ProgressPersistence::Save(const PlayerSaveData& data)
 {
     // 1. 캐릭터 기본 정보 업데이트(이름, 레벨 등 필요)
     if (CharacterStateDAO::SaveCharacter(data) == false)

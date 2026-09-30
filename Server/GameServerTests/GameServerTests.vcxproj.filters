@@ -146,7 +146,7 @@
     <ClCompile Include="..\GameServer\DB\ItemDAO.cpp">
       <Filter>GameServer\DB</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\DB\ProgressDAO.cpp">
+    <ClCompile Include="..\GameServer\DB\ProgressPersistence.cpp">
       <Filter>GameServer\DB</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\DB\ItemSaveRows.cpp">
