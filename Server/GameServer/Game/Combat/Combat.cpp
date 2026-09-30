@@ -18,8 +18,6 @@ optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const 
 
     HitResult result;
     {
-        result.target = target;
-        result.damage = attackInfo.damage();
         result.updatedHp = target->GetStatValue(Protocol::STAT_TYPE_HP);
         result.isDead = target->IsDead();
     }
@@ -28,12 +26,13 @@ optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const 
     MonsterRef monster = dynamic_pointer_cast<Monster>(target);
     if (result.isDead && player && monster)
     {
-        Protocol::Reward reward;
+        KillResult kill;
         {
-            reward.set_exp(monster->GetExpReward());
-            reward.set_gold(monster->GetGoldReward());
+            kill.killer = player;
+            kill.reward.set_exp(monster->GetExpReward());
+            kill.reward.set_gold(monster->GetGoldReward());
         }
-        result.killReward = std::move(reward);
+        result.kill = std::move(kill);
     }
 
     return result;

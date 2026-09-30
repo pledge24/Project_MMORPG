@@ -78,8 +78,6 @@ TEST_F(CombatTest, HitReducesHpByDamage)
     const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), 100));
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->target, player);
-    EXPECT_EQ(result->damage, 100);
     EXPECT_EQ(result->updatedHp, PLAYER_HP - 100);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_HP - 100);
     EXPECT_FALSE(result->isDead);
@@ -91,7 +89,7 @@ TEST_F(CombatTest, OverkillClampsHpToZeroAndDies)
     const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), PLAYER_HP + 1000));
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->updatedHp, 0) << "HP가 음수로 복제되면 안 된다";
+    EXPECT_EQ(result->updatedHp, 0) << "HP가 0 아래로 내려가면 안 된다";
     EXPECT_TRUE(result->isDead);
     EXPECT_TRUE(player->IsDead());
 }
@@ -124,11 +122,12 @@ TEST_F(CombatTest, PlayerKillingMonsterGetsReward)
 
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->isDead);
-    ASSERT_TRUE(result->killReward.has_value());
-    EXPECT_GE(result->killReward->exp(), MIN_EXP);
-    EXPECT_LE(result->killReward->exp(), MAX_EXP);
-    EXPECT_GE(result->killReward->gold(), MIN_GOLD);
-    EXPECT_LE(result->killReward->gold(), MAX_GOLD);
+    ASSERT_TRUE(result->kill.has_value());
+    EXPECT_EQ(result->kill->killer, player);
+    EXPECT_GE(result->kill->reward.exp(), MIN_EXP);
+    EXPECT_LE(result->kill->reward.exp(), MAX_EXP);
+    EXPECT_GE(result->kill->reward.gold(), MIN_GOLD);
+    EXPECT_LE(result->kill->reward.gold(), MAX_GOLD);
 }
 
 TEST_F(CombatTest, MonsterKillingPlayerIsNotKill)
@@ -137,7 +136,7 @@ TEST_F(CombatTest, MonsterKillingPlayerIsNotKill)
 
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->isDead);
-    EXPECT_FALSE(result->killReward.has_value()) << "몬스터가 플레이어를 사망시키는 것은 처치가 아니다";
+    EXPECT_FALSE(result->kill.has_value()) << "몬스터가 플레이어를 사망시키는 것은 처치가 아니다";
 }
 
 TEST_F(CombatTest, NonLethalHitHasNoReward)
@@ -146,7 +145,7 @@ TEST_F(CombatTest, NonLethalHitHasNoReward)
 
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->isDead);
-    EXPECT_FALSE(result->killReward.has_value());
+    EXPECT_FALSE(result->kill.has_value());
 }
 
 TEST_F(CombatTest, MonsterInfoHpFollowsStatAfterHit)

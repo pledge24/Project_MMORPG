@@ -753,20 +753,19 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
         if (result.has_value() == false)
             continue;
 
-        Protocol::S_HIT HitPkt;
+        Protocol::S_HIT hitPkt;
         {
-            HitPkt.set_entity_id(target->GetEntityId());
-            HitPkt.set_damage(result->damage);
-            HitPkt.set_updated_hp(result->updatedHp);
+            hitPkt.set_entity_id(target->GetEntityId());
+            hitPkt.set_damage(attackInfo.damage());
+            hitPkt.set_updated_hp(result->updatedHp);
 
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(HitPkt);
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
             Broadcast(sendBuffer);
         }
 
-        // 처치 보상은 공격자가 플레이어일 때만 붙는다.
-        if (result->killReward.has_value())
+        if (result->kill.has_value())
         {
-            HandleMonsterKill(static_pointer_cast<Player>(attacker), *result->killReward);
+            HandleMonsterKill(result->kill->killer, result->kill->reward);
         }
 
         if (result->isDead)
