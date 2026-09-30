@@ -192,6 +192,7 @@
     <ClInclude Include="Game\Entities\Entity.h" />
     <ClInclude Include="Game\Entities\Monster.h" />
     <ClInclude Include="Game\Entities\Player.h" />
+    <ClInclude Include="Game\Entities\PlayerSaveData.h" />
     <ClInclude Include="Game\Inventory\Inventory.h" />
     <ClInclude Include="Game\Equipment\EquippedGear.h" />
     <ClInclude Include="Game\Data\Gamedata.h" />

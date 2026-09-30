@@ -174,6 +174,7 @@
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
+    <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
   </ItemGroup>
   <ItemGroup Label="googletest — PCH 금지(서버 pch가 using namespace std를 전역에 푼다)">

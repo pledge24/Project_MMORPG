@@ -1,5 +1,6 @@
 #pragma once
 #include "Creature.h"
+#include "PlayerSaveData.h"
 
 class GameSession;
 class Room;
@@ -54,6 +55,11 @@ public:
     bool IsMaxLevel() const;
     void GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
+    /** 접속 종료 */
+    // 룸 큐 위에서만 부른다.
+    PlayerSaveData MakeSaveData() const;
+    bool ApplyTownRespawnForSave();
+
 private:
     /** 기타 함수 */
     bool CalculateFinalStat();
@@ -62,6 +68,11 @@ private:
 
 public:
 	weak_ptr<GameSession> _session;
+    int64 _userId = 0;                   // 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 값을 따로 들고 있다
+
+    // 접속 종료 표시. 세션 스레드가 쓰고 룸 큐가 읽는다.
+    // 룸 이동 중에 끊기면 다음 룸의 EnterPlayer가 이 표시를 보고 퇴장과 저장을 이어 받는다.
+    atomic<bool> _disconnected = false;
 
     Protocol::PlayerInfo* _playerInfo;
     Protocol::Possession* _possession;

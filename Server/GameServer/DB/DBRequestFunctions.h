@@ -1,5 +1,7 @@
 #pragma once
 
+struct PlayerSaveData;
+
 /*-------------------------
     DBRequestFunctions
 --------------------------*/
@@ -13,7 +15,7 @@ public:
     static void DeleteCharacter(SessionRef session, int64 characterId);
 
     static void LoadAllCharactersData(SessionRef session, int64 characterId);
-    static void UpdateAllCharactersData(SessionRef session);
+    static void UpdateAllCharactersData(const PlayerSaveData& data);
 
     static bool GetMaxItemUID();
 
@@ -29,13 +31,13 @@ private:
     static bool LoadCharactersMiscItems(SessionRef session, int64 characterId);
 
     /* UpdateAllCharactersData가 호출 */
-    static bool UpdateCharacterData(SessionRef session);
-    static bool UpdateCharacterLastStateData(SessionRef session);
-    static bool UpdateAllCharacterItems(SessionRef session);
+    static bool UpdateCharacterData(const PlayerSaveData& data);
+    static bool UpdateCharacterLastStateData(const PlayerSaveData& data);
+    static bool UpdateAllCharacterItems(const PlayerSaveData& data);
 
     /* UpdateAllCharacterItems가 호출 */
-    static bool UpdateCharactersGearItems(SessionRef session);
-    static bool UpdateCharactersConsumableItems(SessionRef session);
-    static bool UpdateCharactersMiscItems(SessionRef session);
+    static bool UpdateCharactersGearItems(const PlayerSaveData& data);
+    static bool UpdateCharactersConsumableItems(const PlayerSaveData& data);
+    static bool UpdateCharactersMiscItems(const PlayerSaveData& data);
 };
 

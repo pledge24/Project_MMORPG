@@ -2,6 +2,7 @@
 #include "JobQueue.h"
 #include "Utils.h"
 #include "Entity.h"
+#include "PlayerSaveData.h"
 
 struct RoomEnterData
 {
@@ -33,6 +34,7 @@ public:
 	bool EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
     bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
+    optional<PlayerSaveData> HandleDisconnect(PlayerRef player);
 
     /** 핸들 함수(Client Only) */
     void C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player);

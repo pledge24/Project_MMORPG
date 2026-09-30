@@ -154,34 +154,7 @@ bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    // Room 퇴장 처리
-    room->DoAsync(&Room::LeavePlayer, player, false);
-
-
-    // DB 업데이트 처리
-    {
-        int64 characterId = player->_playerInfo->character_id();
-        DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(characterId);
-
-        // 게임 종료 플레이어 정보 DB에 저장.
-        JobRef job = make_shared<Job>(
-            [session, player]()
-            {
-                DBRequestFunctions::UpdateAllCharactersData(session);
-            }
-        );
-        dbQueue->Push(std::move(job));
-    }
-
-    // GameSession 네트워크 연결 해제
+    // 룸 퇴장과 저장은 GameSession::OnDisconnected가 한다. 비정상 종료와 같은 경로를 탄다.
     gameSession->Disconnect("Exit Game");
 
     return true;

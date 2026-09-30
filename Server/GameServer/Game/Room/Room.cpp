@@ -124,6 +124,15 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     {
         enterPlayer->OnEnterRoom(static_pointer_cast<Room>(shared_from_this()), roomEnterData.enterPos);
 
+        // 룸 이동 중에 접속이 끊겼으면 이전 룸은 이 플레이어를 찾지 못한다. 퇴장과 저장을 여기서 이어 받는다.
+        // OnEnterRoom이 _room을 먼저 쓰고 여기서 표시를 읽는다. OnDisconnected는 표시를 먼저 쓰고 _room을 읽는다.
+        // 그래서 둘 중 적어도 한쪽은 상대를 본다. 둘 다 보면 이 룸 큐에서 두 번 돌고, 두 번째는 퇴장에 실패해 저장하지 않는다.
+        if (enterPlayer->_disconnected.load())
+        {
+            GameSession::LeaveGame(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
+            return false;
+        }
+
         if (auto session = enterPlayer->_session.lock())
         {
             enterRoomPkt.set_success(true);
@@ -179,6 +188,24 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
     }
 
     return true;
+}
+
+// 접속 종료한 플레이어를 룸에서 빼고 저장할 상태를 돌려준다.
+// 이 룸에 없으면(룸 이동 중이거나 이미 처리됨) 빈 값을 돌려준다. 저장은 퇴장에 성공한 쪽이 한 번만 한다.
+optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
+{
+    const int64 playerId = player->GetEntityId();
+
+    if (Contains(playerId) == false)
+        return nullopt;
+
+    if (LeavePlayer(player, false) == false)
+        return nullopt;
+
+    if (player->IsDead() && player->ApplyTownRespawnForSave() == false)
+        wcout << L"플레이어: " << playerId << L"에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다" << '\n';
+
+    return player->MakeSaveData();
 }
 
 bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
@@ -882,6 +909,11 @@ PlayerRef Room::SpawnPlayer(int64 entityId)
 
 PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
 {
+    // 룸 이동 뒤에 예약한 스폰 잡은 그사이 EnterPlayer가 접속 종료로 플레이어를 뺐어도 돈다.
+    // 룸에 없는 플레이어를 알리면 다른 클라이언트에 유령이 남는다.
+    if (Contains(targetPlayer->GetEntityId()) == false)
+        return nullptr;
+
     Protocol::S_SPAWN spawnPkt;
     {
         Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
