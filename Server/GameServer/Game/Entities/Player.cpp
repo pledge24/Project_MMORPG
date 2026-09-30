@@ -420,6 +420,47 @@ void Player::GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& resp
     }
 }
 
+PlayerSaveData Player::MakeSaveData() const
+{
+    PlayerSaveData data;
+    data.userId = _userId;
+    data.playerInfo.CopyFrom(*_playerInfo);
+    data.posInfo.CopyFrom(*_posInfo);
+    data.statInfo.CopyFrom(*_statInfo);
+    data.possession.CopyFrom(*_possession);
+
+    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR))
+        data.gearDirtyFlags = *flags;
+    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE))
+        data.consumableDirtyFlags = *flags;
+    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS))
+        data.miscDirtyFlags = *flags;
+
+    data.equippedGearDirtyFlags = _equippedGear->GetDirtyFlagMappings();
+
+    return data;
+}
+
+// 사망한 채 접속이 끊기면 사망 화면에서 마을 리스폰을 누른 것과 같은 상태로 저장한다.
+// 사망 여부는 저장되지 않으므로, 그대로 저장하면 다시 접속했을 때 HP 0으로 살아서 들어온다.
+bool Player::ApplyTownRespawnForSave()
+{
+    RoomRef respawnRoom = nullptr;
+    Protocol::PosInfo respawnPos;
+    GetRespawnData(Protocol::RESPAWN_TYPE_TOWN, OUT respawnRoom, OUT respawnPos);
+    if (respawnRoom == nullptr)
+        return false;
+
+    respawnPos.set_entity_id(GetEntityId());
+
+    Protocol::S_RESPAWN unusedPkt;
+    if (ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, make_shared<Protocol::PosInfo>(respawnPos), OUT unusedPkt) == false)
+        return false;
+
+    _playerInfo->set_room_id(respawnRoom->GetRoomId());
+    return true;
+}
+
 bool Player::CalculateFinalStat()
 {
     // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기

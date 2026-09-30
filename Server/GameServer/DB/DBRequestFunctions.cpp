@@ -418,24 +418,24 @@ void DBRequestFunctions::LoadAllCharactersData(SessionRef session, int64 charact
     SEND_PACKET(enterGamePkt)
 }
 
-void DBRequestFunctions::UpdateAllCharactersData(SessionRef session)
+void DBRequestFunctions::UpdateAllCharactersData(const PlayerSaveData& data)
 {
     // 1. 캐릭터 기본 정보 업데이트(이름, 레벨 등 필요)
-    if (UpdateCharacterData(session) == false)
+    if (UpdateCharacterData(data) == false)
     {
         wcout << L"캐릭터 기본 정보 업데이트 실패" << endl;
         return;
     }
 
     // 2. 캐릭터 마지막 상태(LastState) 업데이트
-    if (UpdateCharacterLastStateData(session) == false)
+    if (UpdateCharacterLastStateData(data) == false)
     {
         wcout << L"캐릭터 마지막 상태(LastState) 업데이트 실패" << endl;
         return;
     }
 
     // 3. 캐릭터 소유 아이템 정보 업데이트
-    if (UpdateAllCharacterItems(session) == false)
+    if (UpdateAllCharacterItems(data) == false)
     {
         wcout << L"캐릭터 소유 아이템 정보 업데이트 실패" << endl;
         return;
@@ -983,7 +983,7 @@ bool DBRequestFunctions::LoadCharactersMiscItems(SessionRef session, int64 chara
     return true;
 }
 
-bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
+bool DBRequestFunctions::UpdateCharacterData(const PlayerSaveData& data)
 {
     const int PARAMS = 2;
     const int COLS = 0;
@@ -1018,11 +1018,7 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
             WHERE character_id = (?)
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-        Protocol::EntityInfo* entityInfo = player->_entityInfo;
-        Protocol::PlayerInfo* playerInfo = player->_playerInfo;
-
-        BindObject bindObject(dbBind, playerInfo->character_id(), playerInfo->level());
+        BindObject bindObject(dbBind, data.playerInfo.character_id(), data.playerInfo.level());
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -1039,19 +1035,18 @@ bool DBRequestFunctions::UpdateCharacterData(SessionRef session)
     return true;
 }
 
-bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
+bool DBRequestFunctions::UpdateCharacterLastStateData(const PlayerSaveData& data)
 {
     const int PARAMS = 13;
     const int COLS = 0;
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerSaveData& data)
         {
-            const Protocol::EntityInfo& entityInfo = *player->_entityInfo;
-            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
-            const Protocol::StatInfo& statInfo = *player->_statInfo;
-            const Protocol::PosInfo& posInfo = entityInfo.pos_info();
+            const Protocol::PlayerInfo& playerInfo = data.playerInfo;
+            const Protocol::StatInfo& statInfo = data.statInfo;
+            const Protocol::PosInfo& posInfo = data.posInfo;
             auto& statMappings = statInfo.info();
 
             _exp = statMappings.at(Protocol::STAT_TYPE_EXP);
@@ -1065,7 +1060,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             _posY = posInfo.pos().y();
             _posZ = posInfo.pos().z();
             _rotYaw = posInfo.yaw();
-            _gold = player->_possession->gold();
+            _gold = data.possession.gold();
             _characterId = playerInfo.character_id();
 
             BindParam(dbBind);
@@ -1115,9 +1110,7 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
             WHERE character_id = (?)
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-
-        BindObject bindObject(dbBind, player);
+        BindObject bindObject(dbBind, data);
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -1137,20 +1130,20 @@ bool DBRequestFunctions::UpdateCharacterLastStateData(SessionRef session)
     return true;
 }
 
-bool DBRequestFunctions::UpdateAllCharacterItems(SessionRef session)
+bool DBRequestFunctions::UpdateAllCharacterItems(const PlayerSaveData& data)
 {
     try
     {
         // 1. 캐릭터 장비 아이템 갱신하기
-        if (UpdateCharactersGearItems(session) == false)
+        if (UpdateCharactersGearItems(data) == false)
             throw string("Error In UpdateCharactersGearItems");
 
         // 2. 캐릭터 소비 아이템 갱신하기
-        if (UpdateCharactersConsumableItems(session) == false)
+        if (UpdateCharactersConsumableItems(data) == false)
             throw string("Error In UpdateCharactersConsumableItems");
 
         // 3. 캐릭터 기타 아이템 갱신하기
-        if (UpdateCharactersMiscItems(session) == false)
+        if (UpdateCharactersMiscItems(data) == false)
             throw string("Error In UpdateCharactersMiscItems");
     }
     catch (string cause)
@@ -1162,7 +1155,7 @@ bool DBRequestFunctions::UpdateAllCharacterItems(SessionRef session)
     return true;
 }
 
-bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
+bool DBRequestFunctions::UpdateCharactersGearItems(const PlayerSaveData& data)
 {
     const int PARAMS = 9;
     const int COLS = 0;
@@ -1170,14 +1163,14 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32& rows)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerSaveData& data, int32& rows)
         {
-            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
-            const Protocol::Possession& possession = *player->_possession;
+            const Protocol::PlayerInfo& playerInfo = data.playerInfo;
+            const Protocol::Possession& possession = data.possession;
             const Protocol::Inventory& inven = possession.inventory();
             // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면 뒤의
             // 장착 장비 구간은 그대로 돌아, 일부 슬롯만 DB에 반영된 채 끝난다.
-            vector<bool>* gearDirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR);
+            const vector<bool>* gearDirtyFlags = data.gearDirtyFlags.has_value() ? &data.gearDirtyFlags.value() : nullptr;
             if (gearDirtyFlags == nullptr)
                 throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
@@ -1213,7 +1206,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             }
 
             // 장착 중인 장비
-            map<int32, bool>& equippedGearDirtyFlags = player->_equippedGear->GetDirtyFlagMappings();
+            const map<int32, bool>& equippedGearDirtyFlags = data.equippedGearDirtyFlags;
             for (const auto& pair : equippedGearDirtyFlags)
             {
                 if (pair.second == true)
@@ -1309,10 +1302,8 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
             DROP TABLE #TempTable;
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-
         int32 rows = 0;
-        BindObject bindObject(dbBind, player, OUT rows);
+        BindObject bindObject(dbBind, data, OUT rows);
 
         if (rows > 0)
         {
@@ -1333,7 +1324,7 @@ bool DBRequestFunctions::UpdateCharactersGearItems(SessionRef session)
     return true;
 }
 
-bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
+bool DBRequestFunctions::UpdateCharactersConsumableItems(const PlayerSaveData& data)
 {
     const int PARAMS = 4;
     const int COLS = 0;
@@ -1341,14 +1332,14 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32 rows)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerSaveData& data, int32 rows)
         {
-            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
-            const Protocol::Possession& possession = *player->_possession;
+            const Protocol::PlayerInfo& playerInfo = data.playerInfo;
+            const Protocol::Possession& possession = data.possession;
             const Protocol::Inventory& inven = possession.inventory();
             // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면
             // 아무것도 반영되지 않은 것을 성공으로 보고하게 된다.
-            vector<bool>* consumableDirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+            const vector<bool>* consumableDirtyFlags = data.consumableDirtyFlags.has_value() ? &data.consumableDirtyFlags.value() : nullptr;
             if (consumableDirtyFlags == nullptr)
                 throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
@@ -1432,10 +1423,8 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
             DROP TABLE #TempTable;
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-
         int32 rows = 0;
-        BindObject bindObject(dbBind, player, OUT rows);
+        BindObject bindObject(dbBind, data, OUT rows);
 
         if (rows > 0)
         {
@@ -1456,7 +1445,7 @@ bool DBRequestFunctions::UpdateCharactersConsumableItems(SessionRef session)
     return true;
 }
 
-bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
+bool DBRequestFunctions::UpdateCharactersMiscItems(const PlayerSaveData& data)
 {
     const int PARAMS = 4;
     const int COLS = 0;
@@ -1464,14 +1453,14 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, PlayerRef player, int32 rows)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerSaveData& data, int32 rows)
         {
-            const Protocol::PlayerInfo& playerInfo = *player->_playerInfo;
-            const Protocol::Possession& possession = *player->_possession;
+            const Protocol::PlayerInfo& playerInfo = data.playerInfo;
+            const Protocol::Possession& possession = data.possession;
             const Protocol::Inventory& inven = possession.inventory();
             // 표에 없는 타입이면 이 요청을 실패로 끝낸다. 순회만 건너뛰면
             // 아무것도 반영되지 않은 것을 성공으로 보고하게 된다.
-            vector<bool>* miscDirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS);
+            const vector<bool>* miscDirtyFlags = data.miscDirtyFlags.has_value() ? &data.miscDirtyFlags.value() : nullptr;
             if (miscDirtyFlags == nullptr)
                 throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
@@ -1555,10 +1544,8 @@ bool DBRequestFunctions::UpdateCharactersMiscItems(SessionRef session)
             DROP TABLE #TempTable;
         )SQL");
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-
         int32 rows = 0;
-        BindObject bindObject(dbBind, player, OUT rows);
+        BindObject bindObject(dbBind, data, OUT rows);
 
         if (rows > 0)
         {

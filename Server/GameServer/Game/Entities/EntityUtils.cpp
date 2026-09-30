@@ -22,6 +22,7 @@ PlayerRef EntityUtils::CreatePlayer(GameSessionRef session)
         player->_posInfo->set_entity_id(newId);
 
         player->_session = session;
+        player->_userId = session->_userId;
         session->_player.store(player);
     }
 

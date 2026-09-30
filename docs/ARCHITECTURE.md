@@ -59,6 +59,12 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 **Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
 Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
 
+**Architecture Invariant:** 룸 퇴장과 진행 저장은 `GameSession::OnDisconnected`에서만 시작한다.
+`C_LEAVE_GAME`도 연결을 끊어서 이 경로로 온다. 그래서 정상 종료와 크래시, 네트워크 단절이 같은
+처리를 받는다. 저장은 룸 큐 위에서 뜬 `PlayerSaveData` 사본으로 하고, DB 스레드는 살아 있는
+`Player`를 읽지 않는다. 저장 잡은 입장 불러오기와 같은 `userId` 큐에 넣는다. 그래야 곧바로 다시
+접속해도 저장이 끝난 뒤에 불러온다.
+
 **Architecture Invariant:** 서버 오브젝트는 상태를 protobuf 메시지로 직접 들고 있다.
 **복제가 변환이 아니라 복사다.** 새 상태 필드를 서버 클래스에 추가하는 것은
 곧 프로토콜 변경이다.

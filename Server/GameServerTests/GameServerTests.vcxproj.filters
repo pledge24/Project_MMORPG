@@ -53,6 +53,7 @@
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
+    <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
