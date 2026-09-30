@@ -37,7 +37,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
     // 랜덤으로 아무 DBQueue에게 Job을 준다.
     int32 dbQueueCount = GDBManager->GetDBQueueCount();
-    DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount));
+    DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount - 1));
 
     JobRef job = make_shared<Job>(
         [session, pkt]()

@@ -38,6 +38,9 @@ bool Monster::Init()
     CacheMonsterData();
 
     // set Init data
+    // 피격 처리는 스탯의 HP를 읽는다. monster_info의 hp는 스폰 정보에 실리는 사본이다.
+    SetStatValue(Protocol::STAT_TYPE_MAX_HP, _maxHp);
+    SetStatValue(Protocol::STAT_TYPE_HP, _maxHp);
     _monsterInfo->set_template_id(templateId);
     _monsterInfo->set_hp(_maxHp);
     _spawnPos = MathUtil::PosInfoToVector2D(_posInfo);
@@ -75,6 +78,9 @@ void Monster::Tick(float deltaTime)
 void Monster::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     Creature::OnHit(attacker, attackInfo);
+
+    // 나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실리도록 맞춘다.
+    _monsterInfo->set_hp(static_cast<int32>(GetStatValue(Protocol::STAT_TYPE_HP)));
 }
 
 void Monster::OnDie(EntityRef attacker)

@@ -86,6 +86,7 @@ struct vector3D
 class Utils
 {
 public:
+	// [min, max]에서 뽑는다. 정수도 max를 포함한다. 배열 인덱스를 뽑을 때는 size - 1을 넘긴다.
 	template<typename T>
 	static T GetRandom(T min, T max)
 	{
@@ -97,7 +98,7 @@ public:
 		// 균등하게 나타나는 난수열을 생성하기 위해 균등 분포 정의.
 		if constexpr (std::is_integral_v<T>)
 		{
-			std::uniform_int_distribution<T> distribution(min, max-1);
+			std::uniform_int_distribution<T> distribution(min, max);
 			return distribution(generator);
 		}
 		else

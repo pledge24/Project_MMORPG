@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 13개 (높음 2 · 중간 5 · 낮음 6)
+항목 10개 (높음 2 · 중간 4 · 낮음 4)
 
 ## 작성 방법
 
@@ -81,7 +81,9 @@
 들고 있다(`Room.h` 32~83줄). `DBRequestFunctions`는 캐릭터·상태·인벤토리·장비의 모든 쿼리를 한
 파일에 담는다.
 
-`Room`에는 테스트가 없다. 현재 테스트 그물은 Inventory, Player(레벨 상한과 장비 결과), 프로토콜에만 있다.
+`Room`의 테스트는 무작위 위치 하나뿐이다. 입장·전투·리스폰은 룸 큐와 세션을 함께 띄워야 해서 테스트가
+없다. 나머지 테스트 그물은 Inventory, Player(레벨과 보상, 장비 결과, 저장 사본), Monster 초기화,
+프로토콜에 있다.
 
 ### 영향
 
@@ -107,29 +109,6 @@
 **버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
 (`Room::HandleNormalAttack`) 클라이언트의 콤보 규칙은 BP에 있어서, 양쪽 규칙이 갈라져도
 컴파일러도 테스트도 잡지 못한다.
-
-## 몬스터 처치 뒤 경로에 잠복한 결함이 쌓여 있다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Entities/Monster.cpp` · `Server/GameServer/Game/Entities/Player.cpp` ·
-> `Server/GameServer/Game/Room/Room.cpp` (`HandleHit`, `HandleDie`)
-> 등록일: 2026년 9월 30일
-
-플레이어가 몬스터를 때리는 서버 경로가 아직 없다(`C_NORMAL_ATTACK`에 대상이 없고
-`Room::C_HandleNormalAttack`은 브로드캐스트만 한다). 그래서 아래 결함은 지금 드러나지 않는다.
-공격 판정을 넣는 순간 한꺼번에 드러난다.
-
-- `Monster::Init`이 `_statInfo`에 HP를 넣지 않는다. 피격되면 `Creature::GetStatValue`의
-  `Map::at`이 실패해 서버가 죽는다(`Creature::OnHit`, `Room::HandleHit`).
-- `Player::OnGetReward`에 `else`가 없어서, 레벨업하지 않는 보상의 경험치가 저장되지 않는다.
-- `OnGetReward`가 만든 `LevelUpInfo`를 보상 패킷에 싣지 않는다.
-- 사망한 몬스터는 서버에서 지워지지만 `S_DESPAWN`을 보내지 않아서 클라이언트에 액터가 남는다.
-- 보상 계산의 `Utils::GetRandom(min, max)`는 정수일 때 `[min, max)`라서 최댓값이 나오지 않는다.
-  `min == max`면 분포가 `(min, min-1)`이 되어 정의되지 않은 동작이다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **부채의 연쇄 증가** — 전투 기능을 붙이는 작업이 결함 다섯을 먼저
-고쳐야 시작된다. 그중 하나는 서버 크래시다.
 
 ## 같은 계정으로 두 번 로그인해도 막지 않는다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · server
@@ -226,19 +205,6 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 **유지보수 어려움** — 불변식 문서가 틀리면 새 레벨을 만들 때 쓸모없는 노드를 손으로 넣거나,
 문서의 다른 불변식까지 의심하게 된다.
 
-## 몬스터가 룸 경계에 붙어 스폰될 수 있다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` (`GetRandomLocation`)
-> 등록일: 2026년 9월 30일
-
-`GetRandomLocation`이 여백을 뺀 경계(`paddedMinX` 등)를 계산해 놓고, 실제 난수는 여백 없는
-`_roomMinX`~`_roomMaxX`에서 뽑는다. 몬스터 스폰 위치와 배회 목적지가 이 함수를 쓴다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 경계 밖으로 조금만 밀려도 그 엔티티는 셀 행렬에 들어가지 않아 몬스터의
-탐지에서 빠진다.
-
 ## 맵을 옮길 때마다 내 플레이어 델리게이트가 한 번 더 바인딩된다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
 > 위치: `P1/Source/P1/Core/P1MyPlayerData.cpp` (`BindMyPlayerDelegate`)
@@ -285,15 +251,3 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 「Exit Game」이 아니라 「Recv 0」으로 남는다. 서버가 보내지 않는 `S_LEAVE_GAME`의 클라이언트 핸들러
 (`ClientPacketHandler.cpp`)도 남아 있다.
 
-## 장비를 불러올 때 추가 물리 공격력에 추가 마법 공격력을 넣는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/DB/DBRequestFunctions.cpp` (`LoadCharactersGearItems`)
-> 등록일: 2026년 9월 30일
-
-`gearInfo->set_additional_physical_attack(bindObject._additionalMagicalAttack)`로 물리 공격력 자리에
-마법 공격력 값을 넣는다. 인벤토리와 장착 장비 모두 이 경로로 불러온다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 추가 공격력이 붙은 장비가 생기면 입장할 때마다 물리 수치가 틀린다.
-지금은 추가 공격력을 부여하는 경로가 없어 값이 0이라 드러나지 않는다.
