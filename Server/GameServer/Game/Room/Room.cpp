@@ -5,6 +5,7 @@
 #include "Monster.h"
 #include "EntityUtils.h"
 #include "EquippedGear.h"
+#include "Combat.h"
 
 RoomRef Room::Create(const Json& roomData)
 {
@@ -721,15 +722,13 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 
 void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
-    // 공격은 판정을 뒤로 미뤄 예약된다. 그사이 공격자가 죽거나 룸을 떠났으면 공격은 없던 것이 된다.
+    // 그사이 룸을 떠났으면 공격은 없던 것이 된다.
     // id만 보면 그사이 나갔다 다시 들어온 같은 엔티티도 통과하므로 객체까지 대조한다.
     if (FindEntityAs<Entity>(attacker->GetEntityId()) != attacker)
         return;
-    if (CreatureRef attackerCreature = dynamic_pointer_cast<Creature>(attacker); attackerCreature && attackerCreature->IsDead())
-        return;
 
     // 1) 해당 공격에 맞은 대상을 찾는다.
-    vector<CreatureRef> HitCreatures;
+    vector<CreatureRef> targets;
     if (attackInfo.has_target_id())
     {
         int64 targetId = attackInfo.target_id();
@@ -737,11 +736,9 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
             return;
 
         // TODO: 피격이 가능한 대상?
-        // 이미 사망한 대상은 다시 맞지 않는다. 사망한 플레이어가 룸에 남기 때문이다.
-        CreatureRef creature = dynamic_pointer_cast<Creature>(_entities[targetId]);
-        if (creature && creature->IsDead() == false)
+        if (CreatureRef creature = FindEntityAs<Creature>(targetId))
         {
-            HitCreatures.push_back(creature);
+            targets.push_back(creature);
         }
     }
     else
@@ -749,46 +746,42 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 
     }
     
-    // 2) 피격 대상에게 결과를 적용한다.
-    for (CreatureRef creature : HitCreatures)
+    // 2) 판정 결과를 알린다.
+    for (const CreatureRef& target : targets)
     {
-        creature->OnHit(attacker, attackInfo);
+        optional<Combat::HitResult> result = Combat::ResolveHit(attacker, target, attackInfo);
+        if (result.has_value() == false)
+            continue;
 
-        Protocol::S_HIT HitPkt;
+        Protocol::S_HIT hitPkt;
         {
-            HitPkt.set_entity_id(creature->GetEntityId());
-            HitPkt.set_damage(attackInfo.damage());
-            HitPkt.set_updated_hp(creature->GetStatValue(Protocol::STAT_TYPE_HP));
+            hitPkt.set_entity_id(target->GetEntityId());
+            hitPkt.set_damage(attackInfo.damage());
+            hitPkt.set_updated_hp(result->updatedHp);
 
-            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(HitPkt);
+            SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
             Broadcast(sendBuffer);
         }
 
-        if (creature->IsDead())
+        if (result->kill.has_value())
         {
-            PlayerRef player = dynamic_pointer_cast<Player>(attacker);
-            MonsterRef monster = dynamic_pointer_cast<Monster>(creature);
-            if (player && monster)
-            {
-                HandleMonsterKill(player, monster);
-            }
-            HandleDie(creature);
+            HandleMonsterKill(result->kill->killer, result->kill->reward);
+        }
+
+        if (result->isDead)
+        {
+            HandleDie(target);
         }
     }
 
 }
 
-void Room::HandleMonsterKill(PlayerRef player, MonsterRef monster)
+void Room::HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward)
 {
     Protocol::S_REWARD_RESULT rewardResultPkt;
     {
         rewardResultPkt.set_type(Protocol::REWARD_TYPE_MONSTER_KILL);
-        Protocol::Reward reward;
-        {
-            reward.set_exp(monster->GetExpReward());
-            reward.set_gold(monster->GetGoldReward());
-        }
-        rewardResultPkt.mutable_reward()->Swap(&reward);
+        rewardResultPkt.mutable_reward()->CopyFrom(reward);
     }
 
     player->OnGetReward(rewardResultPkt);

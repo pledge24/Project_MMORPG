@@ -18,6 +18,9 @@
     <Filter Include="GameServer\Game\Entities">
       <UniqueIdentifier>{e5a6358a-dfd2-5357-8003-e1fdd1fd97cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\Combat">
+      <UniqueIdentifier>{4a73e681-a0c0-4209-be7d-05fbf6e6f7ca}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Equipment">
       <UniqueIdentifier>{f5558365-b878-4854-9d36-43c09c1a2c66}</UniqueIdentifier>
     </Filter>
@@ -50,6 +53,7 @@
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
+    <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
@@ -116,6 +120,9 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp">
       <Filter>GameServer\Game\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp">
+      <Filter>GameServer\Game\Combat</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp">
       <Filter>GameServer\Game\Equipment</Filter>

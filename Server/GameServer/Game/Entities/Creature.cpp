@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "Creature.h"
 #include "Player.h"
-#include "Room.h"
 
 Creature::Creature()
 {
@@ -40,10 +39,6 @@ void Creature::Tick(float deltaTime)
 void Creature::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     Entity::OnHit(attacker, attackInfo);
-
-    auto ownerRoom = _room.load().lock();
-    if (ownerRoom == nullptr)
-        return;
 
     // TEMP: Hit 발생시 Hp만 깎도록 설정
     int64 damage = attackInfo.damage();

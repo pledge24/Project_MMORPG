@@ -51,7 +51,7 @@ public:
 
     void HandleNormalAttack(int32 combo, CreatureRef creature);
     void HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo);
-    void HandleMonsterKill(PlayerRef player, MonsterRef monster);
+    void HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward);
     void HandleDie(CreatureRef creature);
     // 리스폰에 성공하면 true. 실패 응답은 이 함수가 보낸다.
     bool HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);

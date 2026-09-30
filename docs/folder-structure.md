@@ -456,6 +456,7 @@ Server/
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬
+│   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층
 │   │   ├── Inventory/      인벤토리
 │   │   ├── Equipment/      장비
@@ -475,7 +476,7 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Main/`, `Protocol/`, `DB/`,
-`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 다섯은 게임 규칙이다. 이 층을 없애면
+`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 여섯은 게임 규칙이다. 이 층을 없애면
 폴더 열 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
@@ -487,8 +488,9 @@ Server/
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
-`Game/Combat/`과 `Game/AI/`는 아직 없다. 전투 판정과 몬스터 행동 결정이 `Game/Room/`와
-`Game/Entities/`에 섞여 있다. 두 도메인을 분리할 때 만든다.
+`Game/Combat/`은 피격과 처치를 판정한다. 룸과 세션을 모르고, 대상 찾기와 결과 전송은 `Game/Room/`이
+맡는다. `Game/AI/`는 아직 없다. 몬스터 행동 결정이 `Game/Entities/`에 섞여 있다. 이 도메인을 분리할
+때 만든다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가
 소유한다.
