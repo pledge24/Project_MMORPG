@@ -4,7 +4,6 @@
 #include "UI/P1UserWidget.h"
 #include "P1ShopWidget.generated.h"
 
-class AP1MyPlayer;
 class UP1SlotWidget;
 
 UCLASS()

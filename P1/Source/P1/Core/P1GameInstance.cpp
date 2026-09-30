@@ -133,7 +133,7 @@ void UP1GameInstance::CloseGameServerConnection()
 
 	if (Socket)
 	{
-		// 연결에 실패해 세션이 없었으면 여기서 처음 닫힌다.
+		// 연결에 실패해 세션이 없었으면 여기서 처음 닫힌다. 세션이 이미 닫았으면 두 번째 Close는 무시된다.
 		Socket->Close();
 		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
 		Socket = nullptr;

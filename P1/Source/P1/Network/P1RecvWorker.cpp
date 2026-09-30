@@ -23,17 +23,25 @@ bool FP1RecvWorker::Init()
 
 uint32 FP1RecvWorker::Run()
 {
-	while (Running)
+	while (bRunning)
 	{
-		// 읽을 데이터가 올 때까지 잠든다. 타임아웃으로 깨어나면 Running을 다시 본다.
+		// 읽을 데이터가 올 때까지 잠든다. 타임아웃으로 깨어나면 bRunning을 다시 본다.
 		if (Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromSeconds(WAIT_FOR_READ_SECONDS)) == false)
+		{
+			// 타임아웃이 아니라 소켓 오류로 돌아왔으면 곧바로 다시 돌아와 헛돈다. 연결이 끊긴 것으로 본다.
+			if (bRunning && Socket->GetConnectionState() == SCS_ConnectionError)
+			{
+				UE_LOG(LogP1Network, Warning, TEXT("게임 서버와 연결이 끊겨 수신 스레드를 멈춘다"));
+				break;
+			}
 			continue;
+		}
 
 		TArray<uint8> Packet;
 		if (ReceivePacket(OUT Packet) == false)
 		{
 			// 읽을 수 있다고 깨어났는데 읽지 못했으면 연결이 끊긴 것이다. 다시 돌면 헛돌기만 한다.
-			if (Running)
+			if (bRunning)
 				UE_LOG(LogP1Network, Warning, TEXT("게임 서버에서 수신하지 못해 수신 스레드를 멈춘다"));
 			break;
 		}
@@ -52,9 +60,14 @@ void FP1RecvWorker::Exit()
 
 }
 
+void FP1RecvWorker::RequestStop()
+{
+	bRunning = false;
+}
+
 void FP1RecvWorker::Destroy()
 {
-	Running = false;
+	RequestStop();
 
 	// 스레드가 끝난 뒤에 소켓이 파괴되도록 여기서 기다린다. 소켓이 먼저 닫혀 있어야 진행 중인 Recv가 끝난다.
 	if (Thread)

@@ -29,7 +29,7 @@ bool FP1SendWorker::Init()
 
 uint32 FP1SendWorker::Run()
 {
-	while (Running)
+	while (bRunning)
 	{
 		// 보낼 것이 없으면 잠든다. Wake나 타임아웃으로 깨어나 큐를 비운다.
 		WakeEvent->Wait(WAKE_TIMEOUT_MS);
@@ -41,7 +41,8 @@ uint32 FP1SendWorker::Run()
 		}
 	}
 
-	// 종료 요청 뒤에도 큐에 남은 패킷을 보낸다. C_LEAVE_GAME이 여기서 나간다.
+	// 종료 요청 뒤에도 큐에 남은 패킷을 보낸다. 게임 인스턴스가 연결을 닫을 때 C_LEAVE_GAME이 여기서 나간다.
+	// 세션 소멸자에서 온 종료라면 세션을 붙잡을 수 없어 보내지 못한다.
 	FlushQueue();
 
 	return 0;
@@ -84,7 +85,7 @@ bool FP1SendWorker::SendPacket(SendBufferRef SendBuffer)
 
 void FP1SendWorker::Destroy()
 {
-	Running = false;
+	bRunning = false;
 	Wake();
 
 	// 스레드가 남은 큐를 보내고 끝난 뒤에 소켓이 닫히도록 여기서 기다린다.

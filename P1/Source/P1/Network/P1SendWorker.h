@@ -33,13 +33,13 @@ private:
     // 큐가 빌 때까지 보낸다. 송신에 실패하면 false.
     bool FlushQueue();
 
-    /** 깨울 사람이 없어도 이 간격마다 Running을 다시 본다. 밀리초 단위다. */
+    /** 깨울 사람이 없어도 이 간격마다 bRunning을 다시 본다. 밀리초 단위다. */
     static constexpr uint32 WAKE_TIMEOUT_MS = 100;
 
 protected:
     FRunnableThread* Thread = nullptr;
     // 게임 스레드가 끄고 송신 스레드가 읽는다.
-    std::atomic<bool> Running = true;
+    std::atomic<bool> bRunning = true;
     FEvent* WakeEvent = nullptr;
 
     // 생성자 초기화 리스트가 Socket, SessionRef 순서로 적혀 있다. 둘의 선언 순서를 지킨다.
