@@ -164,15 +164,14 @@ bool CharacterStateDAO::LoadLastState(SessionRef session, int64 characterId)
         auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
-        // 전역 표는 여러 DB 스레드가 함께 읽는다. operator[]는 없는 키를 끼워 넣으므로 find로만 조회한다.
-        auto classIt = Gamedata::s_classLevelDataTableMappings.find(playerInfo->class_());
-        if (classIt == Gamedata::s_classLevelDataTableMappings.end())
+        const DataTable* classLevelTable = Gamedata::FindClassLevelTable(playerInfo->class_());
+        if (classLevelTable == nullptr)
         {
             wcout << L"캐릭터 " << characterId << L"의 클래스 " << playerInfo->class_() << L"에 레벨 표가 없습니다" << '\n';
             return false;
         }
 
-        const DataTable& classLevelDataTable = *classIt->second;
+        const DataTable& classLevelDataTable = *classLevelTable;
         auto levelIt = classLevelDataTable.find(playerInfo->level());
         const bool hasExpRequirement = levelIt != classLevelDataTable.end()
             && levelIt->second.contains(JsonProperty::LevelTable::ExpRequirement)

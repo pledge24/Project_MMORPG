@@ -104,12 +104,11 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name()))
         {
             // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 끼워 넣지 않고 실패로 끝낸다.
-            // 전역 표는 여러 DB 스레드가 함께 읽으므로 operator[]를 쓰지 않는다.
-            auto classIt = Gamedata::s_classLevelDataTableMappings.find(_classId);
-            if (classIt == Gamedata::s_classLevelDataTableMappings.end() || classIt->second == nullptr)
+            const DataTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
+            if (classLevelTable == nullptr)
                 throw DBCustomError::UNKNOWN_CHARACTER_CLASS;
 
-            const DataTable& classLevelDataTable = *classIt->second;
+            const DataTable& classLevelDataTable = *classLevelTable;
             const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
             const Json& levelData = classLevelDataTable.at(level);
             _curHp = levelData.at(JsonProperty::LevelTable::MaxHp);
