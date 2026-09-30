@@ -177,6 +177,18 @@ TEST_F(PlayerUseItemTest, EmptySlotIsRejected)
     Protocol::S_USE_ITEM pkt;
     EXPECT_FALSE(player->ProcessUseItem(slot, NOW_MS, pkt));
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
+    EXPECT_EQ(pkt.updated_slots_size(), 0);
+}
+
+TEST_F(PlayerUseItemTest, UnknownTemplateIsRejected)
+{
+    Protocol::Slot slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 1);
+    Gamedata::s_itemDataTable.erase(HP_POTION_TEMPLATE_ID); // 데이터에서 빠진 아이템이 인벤토리에 남아 있다
+
+    Protocol::S_USE_ITEM pkt;
+    EXPECT_FALSE(player->ProcessUseItem(slot, NOW_MS, pkt));
+    EXPECT_EQ(CountIn(slot), 1);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
 }
 
 TEST_F(PlayerUseItemTest, DeadPlayerIsRejected)
@@ -187,6 +199,7 @@ TEST_F(PlayerUseItemTest, DeadPlayerIsRejected)
     Protocol::S_USE_ITEM pkt;
     EXPECT_FALSE(player->ProcessUseItem(slot, NOW_MS, pkt));
     EXPECT_EQ(CountIn(slot), 1);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
 }
 
 TEST_F(PlayerUseItemTest, SameTemplateWaitsForCooldown)
@@ -198,8 +211,11 @@ TEST_F(PlayerUseItemTest, SameTemplateWaitsForCooldown)
     const uint64 cooldownMs = COOLDOWN_SECONDS * 1000ull;
 
     Protocol::S_USE_ITEM tooEarly;
+    const int64 hpAfterFirst = player->GetStatValue(Protocol::STAT_TYPE_HP);
     EXPECT_FALSE(player->ProcessUseItem(slot, NOW_MS + cooldownMs - 1, tooEarly));
     EXPECT_EQ(CountIn(slot), 2) << "재사용 대기 중에 거부하면 개수가 그대로다";
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), hpAfterFirst);
+    EXPECT_EQ(tooEarly.updated_slots_size(), 0) << "거부 응답에 슬롯을 싣지 않는다";
 
     Protocol::S_USE_ITEM afterCooldown;
     EXPECT_TRUE(player->ProcessUseItem(slot, NOW_MS + cooldownMs, afterCooldown));

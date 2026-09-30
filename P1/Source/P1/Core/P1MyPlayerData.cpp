@@ -121,10 +121,17 @@ void UP1MyPlayerData::SetStatValue(Protocol::StatType statType, const int64& val
 
 void UP1MyPlayerData::ApplyStat(Protocol::StatType statType, int64 value)
 {
+    // 알리기만 하고 사본을 두면 안 된다. HUD는 생성될 때 사본을 읽으므로 맵을 옮긴 뒤 옛 값이 보인다.
     SetStatValue(statType, value);
 
     if (FOnStatChanged* OnThisStatChanged = OnStatChangedMappings.Find(statType))
         OnThisStatChanged->Broadcast(value);
+}
+
+void UP1MyPlayerData::ApplyStats(const google::protobuf::RepeatedPtrField<Protocol::Stat>& Stats)
+{
+    for (const Protocol::Stat& Stat_ : Stats)
+        ApplyStat(Stat_.type(), Stat_.value());
 }
 
 int64 UP1MyPlayerData::GetStatValue(Protocol::StatType statType)

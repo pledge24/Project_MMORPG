@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 8개 (높음 2 · 중간 3 · 낮음 3)
+항목 9개 (높음 2 · 중간 3 · 낮음 4)
 
 ## 작성 방법
 
@@ -129,7 +129,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
-| `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 쿨다운이 슬롯마다 따로 돌아서, 서버가 템플릿마다 판정하는 재사용 대기와 어긋난다. 같은 물약이 두 칸에 있으면 다른 칸은 쓸 수 있어 보이지만 서버가 거부한다 |
+| `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
 | `WBP_LoginMenu` | `LoginWidget` | 그래프 4개(`CC_Init`·`DisableAllSlotsHighlight`·`ClearAllSlots`·`IsValidCharacter`) + `OnDisplayCharacterOverviews` |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
 
@@ -172,6 +172,21 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 **변경 영향 범위 확대** · **테스트 어려움** — 게임 인스턴스는 레벨 전환에 살아남는 싱글턴이라
 여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
 함께 따져야 한다.
+
+## 인벤토리의 요청 대기가 풀리지 않는 경로가 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
+> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` (`SendUseItemPacket`) · `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleUseItem`)
+> 등록일: 2026년 9월 30일
+
+인벤토리 위젯은 요청을 보내기 전에 `PendingPacket`을 켜고, 응답이 오면 끈다. 그런데 켠 채로 남는 경로가 있다.
+- `SendUseItemPacket`에서 게임 인스턴스가 없을 때와 소모품이 아닌 분기에서는 켜기만 하고 요청을 보내지 않는다
+- `HandleUseItem`에서 `FindEntityAs`로 내 플레이어를 찾지 못하면 `OnRecvUseItemPkt`를 알리지 않는다
+
+코드를 읽고 판단했고 실행해서 확인하지는 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 한 번 이 경로를 타면 인벤토리를 다시 열어도 아이템을 쓰거나 팔 수 없다.
 
 ## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client

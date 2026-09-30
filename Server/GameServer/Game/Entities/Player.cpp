@@ -93,7 +93,7 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     if (IsDead())
         return false;
 
-    // 소모품 가방에 든 것만 쓴다. 다른 가방의 아이템을 받으면 효과 없이 사라진다.
+    // 소모품 슬롯의 아이템만 쓴다. 장비나 기타 아이템을 받으면 효과 없이 사라진다.
     if (requestSlot.type() != Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE)
         return false;
 
@@ -115,8 +115,12 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     if (lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + cooldownMs)
         return false;
 
-    if (_inventory->RemoveItem(requestSlot, OUT pkt.mutable_updated_slots()->Add()) == false)
+    // 제거에 성공했을 때만 응답에 슬롯을 싣는다. 거부 응답에는 슬롯이 없다.
+    Protocol::Slot updatedSlot;
+    if (_inventory->RemoveItem(requestSlot, OUT &updatedSlot) == false)
         return false;
+
+    *pkt.mutable_updated_slots()->Add() = std::move(updatedSlot);
 
     _lastUseTimeMs[templateId] = nowMs;
 
