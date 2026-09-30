@@ -6,7 +6,7 @@
         "MonsterName": "초급 근거리 미니언",
         "AttackType": "melee",
         "MaxHp": 200,
-        "BaseAttack": 1000,
+        "BaseAttack": 100,
         "MovementSpeed": 300
     },
     {

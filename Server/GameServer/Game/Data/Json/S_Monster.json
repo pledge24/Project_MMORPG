@@ -5,7 +5,7 @@
         "monsterName": "초급 근거리 미니언",
         "attackType": "melee",
         "maxHp": 200,
-        "baseAttack": 1000,
+        "baseAttack": 100,
         "movementSpeed": 300,
         "isTargeting": true,
         "expReward": {
