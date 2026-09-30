@@ -38,7 +38,8 @@ UUID 액세스 토큰을 발급해 TTL과 함께 Redis에 넣는다.
 **Architecture Invariant:** 게임 상태를 모른다. `GameDB`에 접근하지 않는다.
 
 **API Boundary:** HTTP. 게임 티어와의 유일한 접점은 Redis의 토큰 키이며,
-이 키의 형태와 TTL이 사실상의 티어 간 계약이다.
+이 키의 형태와 TTL이 사실상의 티어 간 계약이다. 게임 서버는 토큰을 한 번 쓰면 지운다. 그래서 TTL은
+인증 서버 로그인에서 게임 서버 접속까지의 유효 시간이고, 게임 세션의 길이와 무관하다.
 
 ### Server/GameServer
 
@@ -58,6 +59,12 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 
 **Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
 Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
+
+**Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
+Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager.RegisterUser`가
+계정에 세션을 묶고 기존 세션을 돌려준다. 확인과 교체는 관리자의 락 하나 안에서 한다. 로그인 잡은
+랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
+`S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고 끊는다. 그 세션의 저장은 아래의 접속 종료 경로를 탄다.
 
 **Architecture Invariant:** 룸 퇴장과 진행 저장은 `GameSession::OnDisconnected`에서만 시작한다.
 `C_LEAVE_GAME`도 연결을 끊어서 이 경로로 온다. 그래서 정상 종료와 크래시, 네트워크 단절이 같은
@@ -93,6 +100,12 @@ Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 
 **Architecture Invariant:** 수신 펌프는 `UP1GameInstance`가 코어 티커로 돌린다. 레벨과 무관하게 돈다.
 월드가 `BeginPlay` 전이거나 해체 중이면 그 틱을 건너뛰고 큐를 비우지 않는다. 그래서 레벨 전환 중에 온
 패킷은 새 월드가 준비된 뒤에 처리된다. 레벨 블루프린트에서 펌프를 부르지 않는다.
+
+**Architecture Invariant:** 연결이 끊기면 워커는 `PacketSession`에 끊김 표시만 세운다. 펌프는 표시를
+먼저 읽고 큐를 비운 뒤, 표시가 서 있었으면 `UP1GameInstance::ReturnToLogin`으로 로그인 맵을 연다.
+수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로 끊기기 직전에 온 `S_LEAVE_GAME`을 놓치지
+않는다. 서버가 `S_LEAVE_GAME`으로 끊어도 같은 함수로 간다. 사용자가 게임을 끄는 `Shutdown`은 이
+경로를 타지 않는다.
 
 **Architecture Invariant:** `UP1GameInstance`가 소켓·세션을 소유하는 유일한 허브다.
 모든 `S_*` 핸들러가 여기 구현되고, 액터와 위젯에는 멀티캐스트 델리게이트로만 전파된다.

@@ -27,6 +27,7 @@ public:
     void Destroy();
 
 private:
+    void NotifyConnectionLost();
     bool ReceivePacket(TArray<uint8>& OutPacket);
     bool ReceiveDesiredBytes(uint8* Results, int32 Size);
 

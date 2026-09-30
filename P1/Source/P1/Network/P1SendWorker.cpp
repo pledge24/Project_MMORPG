@@ -37,6 +37,8 @@ uint32 FP1SendWorker::Run()
 		if (FlushQueue() == false)
 		{
 			UE_LOG(LogP1Network, Warning, TEXT("게임 서버로 송신하지 못해 송신 스레드를 멈춘다"));
+			if (PacketSessionRef Session = SessionRef.Pin())
+				Session->MarkConnectionLost();
 			return 0;
 		}
 	}

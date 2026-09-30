@@ -32,6 +32,7 @@ uint32 FP1RecvWorker::Run()
 			if (bRunning && Socket->GetConnectionState() == SCS_ConnectionError)
 			{
 				UE_LOG(LogP1Network, Warning, TEXT("게임 서버와 연결이 끊겨 수신 스레드를 멈춘다"));
+				NotifyConnectionLost();
 				break;
 			}
 			continue;
@@ -41,8 +42,12 @@ uint32 FP1RecvWorker::Run()
 		if (ReceivePacket(OUT Packet) == false)
 		{
 			// 읽을 수 있다고 깨어났는데 읽지 못했으면 연결이 끊긴 것이다. 다시 돌면 헛돌기만 한다.
+			// 게임 스레드가 멈추라고 한 뒤라면 소켓을 닫아서 생긴 실패이므로 끊김으로 알리지 않는다.
 			if (bRunning)
+			{
 				UE_LOG(LogP1Network, Warning, TEXT("게임 서버에서 수신하지 못해 수신 스레드를 멈춘다"));
+				NotifyConnectionLost();
+			}
 			break;
 		}
 
@@ -58,6 +63,14 @@ uint32 FP1RecvWorker::Run()
 void FP1RecvWorker::Exit()
 {
 
+}
+
+void FP1RecvWorker::NotifyConnectionLost()
+{
+	// 받은 패킷은 모두 큐에 넣은 뒤에 부른다. 게임 스레드는 이 표시를 본 뒤 큐를 비우므로
+	// 끊기기 직전에 온 S_LEAVE_GAME을 놓치지 않는다.
+	if (PacketSessionRef Session = SessionRef.Pin())
+		Session->MarkConnectionLost();
 }
 
 void FP1RecvWorker::RequestStop()

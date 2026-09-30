@@ -41,6 +41,21 @@ public:
     class FSocket* Socket;
     PacketSessionRef GameServerSession;
 
+    //~ Connection Loss
+public:
+    /** 서버가 S_LEAVE_GAME으로 연결을 끊었다. 사유에 맞는 문구와 함께 로그인 화면으로 돌아간다. */
+    void HandleLeaveGame(const Protocol::S_LEAVE_GAME& LeaveGamePkt);
+
+    /** 로그인 화면이 한 번 꺼내 보여 준다. 꺼내면 비워진다. 연결이 끊겨 돌아온 것이 아니면 비어 있다. */
+    FString ConsumeLoginNotice();
+
+private:
+    /** 연결을 정리하고 로그인 맵을 연다. 사용자가 스스로 종료할 때(Shutdown)는 이 경로를 타지 않는다. */
+    void ReturnToLogin(const FString& Notice);
+
+    /** 로그인 맵이 열린 뒤 로그인 화면에 보여 줄 문구다. 게임 인스턴스가 레벨 전환을 건너 들고 간다. */
+    FString PendingLoginNotice;
+
     //~ Packet Pump
 public:
     /** 블루프린트에서 부르지 않는다. Init에서 코어 티커에 등록한 펌프가 유일한 호출자다. */

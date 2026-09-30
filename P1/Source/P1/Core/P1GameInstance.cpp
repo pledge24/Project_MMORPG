@@ -163,7 +163,50 @@ void UP1GameInstance::HandleRecvPackets()
 	if (Socket == nullptr || GameServerSession == nullptr)
 		return;
 
+	// 끊김 표시를 큐보다 먼저 읽는다. 수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로,
+	// 표시를 본 뒤에 큐를 비우면 끊기기 직전에 온 S_LEAVE_GAME까지 처리한다.
+	const bool bConnectionLost = GameServerSession->IsConnectionLost();
+
 	GameServerSession->HandleRecvPackets();
+
+	// S_LEAVE_GAME을 처리했으면 핸들러가 이미 로그인 화면으로 돌려보내 세션이 없다.
+	if (bConnectionLost && GameServerSession)
+		ReturnToLogin(TEXT("게임 서버와 연결이 끊겼습니다."));
+}
+
+void UP1GameInstance::HandleLeaveGame(const Protocol::S_LEAVE_GAME& LeaveGamePkt)
+{
+	switch (LeaveGamePkt.reason())
+	{
+	case Protocol::LEAVE_REASON_DUPLICATE_LOGIN:
+		ReturnToLogin(TEXT("다른 곳에서 같은 계정으로 로그인해 연결이 끊겼습니다."));
+		break;
+	case Protocol::LEAVE_REASON_INVALID_TOKEN:
+		ReturnToLogin(TEXT("로그인 정보가 만료되었습니다. 다시 로그인하세요."));
+		break;
+	default:
+		ReturnToLogin(TEXT("게임 서버와 연결이 끊겼습니다."));
+		break;
+	}
+}
+
+FString UP1GameInstance::ConsumeLoginNotice()
+{
+	return MoveTemp(PendingLoginNotice);
+}
+
+void UP1GameInstance::ReturnToLogin(const FString& Notice)
+{
+	UE_LOG(LogP1Network, Warning, TEXT("게임 서버 연결이 끊겨 로그인 화면으로 돌아간다: %s"), *Notice);
+
+	CloseGameServerConnection();
+
+	// 토큰은 게임 서버가 한 번 쓰고 지웠다. 다시 들어가려면 인증 서버에 다시 로그인해야 한다.
+	_token.Empty();
+	_MyPlayer = nullptr;
+
+	PendingLoginNotice = Notice;
+	UGameplayStatics::OpenLevel(GetWorld(), FName("L_LoginMap"));
 }
 
 void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
