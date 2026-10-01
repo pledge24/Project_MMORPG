@@ -8,8 +8,6 @@
     몬스터가 가까운 플레이어를 찾는 근접 탐색에 쓴다. 어떤 엔티티를 대상으로 삼을지는 룸이 판정한다.
 ---------------------------------------------------------------*/
 
-using Cell = set<int64>;   // 특정 영역에 있는 EntityId
-
 class CellMatrix
 {
 public:
@@ -27,6 +25,8 @@ public:
     vector<int64> QueryRange(const vector2D& center, float range) const;
 
 private:
+    using Cell = set<int64>;   // 특정 영역에 있는 EntityId
+
     // 격자 밖이면 nullopt.
     optional<pair<int32, int32>> FindCellIndices(const vector2D& pos) const;
 

@@ -7,6 +7,15 @@
 #include "EquippedGear.h"
 #include "Combat.h"
 
+namespace
+{
+    // 셀 행렬은 평면 좌표만 본다.
+    vector2D ToPlanePos(const Protocol::PosInfo& posInfo)
+    {
+        return vector2D(posInfo.pos().x(), posInfo.pos().y());
+    }
+}
+
 RoomRef Room::Create(const Json& roomData)
 {
     RoomRef newRoom = make_shared<Room>();
@@ -945,7 +954,7 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
 
 pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
 {
-    const vector2D center(posInfo->pos().x(), posInfo->pos().y());
+    const vector2D center = ToPlanePos(*posInfo);
 
     PlayerRef closestPlayer = nullptr;
     float minDist = -1.f;
@@ -1034,7 +1043,7 @@ void Room::UpdateCellMatrix()
     positions.reserve(_entities.size());
 
     for (auto& [entityId, entity] : _entities)
-        positions.emplace_back(entityId, vector2D(entity->_posInfo->pos().x(), entity->_posInfo->pos().y()));
+        positions.emplace_back(entityId, ToPlanePos(*entity->_posInfo));
 
     _cellMatrix.Rebuild(positions);
 }
@@ -1060,8 +1069,8 @@ bool Room::RemoveEntity(int64 entityId)
 
     EntityRef entity = _entities[entityId];
 
-    // 셀 행렬에서 엔티티를 삭제한다. 룸 경계 밖에 있으면 어느 셀에도 없다.
-    _cellMatrix.Remove(entityId, vector2D(entity->_posInfo->pos().x(), entity->_posInfo->pos().y()));
+    // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
+    _cellMatrix.Remove(entityId, ToPlanePos(*entity->_posInfo));
 
     // 엔티티를 삭제한다.
 	_entities.erase(entityId);

@@ -48,6 +48,17 @@ TEST_F(CellMatrixTest, QueryReturnsOnlyEntitiesInOverlappingCells)
     EXPECT_FALSE(Contains(found, ENTITY_B)) << "탐색 상자에 걸치지 않은 칸의 엔티티는 돌려주지 않는다";
 }
 
+TEST_F(CellMatrixTest, CellBoundaryBelongsToUpperCell)
+{
+    cellMatrix.Rebuild({ { ENTITY_A, vector2D(999.f, 0.f) }, { ENTITY_B, vector2D(1000.f, 0.f) } });
+
+    // 상자 [100, 900]은 첫 칸에만 걸친다.
+    const vector<int64> found = cellMatrix.QueryRange(vector2D(500.f, 500.f), 400.f);
+
+    EXPECT_TRUE(Contains(found, ENTITY_A));
+    EXPECT_FALSE(Contains(found, ENTITY_B)) << "칸 경계 위의 좌표는 다음 칸에 속한다";
+}
+
 TEST_F(CellMatrixTest, EntitiesOnMinAndMaxEdgesAreIndexed)
 {
     cellMatrix.Rebuild({ { ENTITY_A, vector2D(MIN, MIN) }, { ENTITY_B, vector2D(MAX, MAX) } });
