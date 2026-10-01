@@ -29,6 +29,9 @@ public:
     // 전역 표는 여러 스레드가 함께 읽는다. operator[]는 없는 키를 끼워 넣으므로 이 함수로만 조회한다.
     static const DataTable* FindClassLevelTable(int32 classId);
 
+    // 아이템 표에서 찾는다. 없는 번호면 nullptr. 레벨 표와 같은 이유로 이 함수로만 조회한다.
+    static const Json* FindItemData(int32 templateId);
+
     /* 게임 데이터 */
     static DataTable s_itemDataTable;
     static DataTable s_mapDataTable;

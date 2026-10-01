@@ -5,6 +5,27 @@
 #include "Monster.h"
 #include "Room.h"
 
+namespace
+{
+    // 아이템 요청은 서버 슬롯에 든 아이템으로 판정한다. 요청에 실린 아이템은 클라이언트 슬롯이
+    // 어긋났는지 대조하는 데만 쓴다. 서버 아이템에 uid가 있으면 uid까지 같아야 같은 아이템이다.
+    bool MatchesRequest(const Protocol::Slot* ownedSlot, const Protocol::Slot& requestSlot)
+    {
+        if (ownedSlot == nullptr || ownedSlot->has_item() == false || requestSlot.has_item() == false)
+            return false;
+
+        const Protocol::Item& owned = ownedSlot->item();
+        const Protocol::Item& requested = requestSlot.item();
+        if (owned.template_id() != requested.template_id())
+            return false;
+
+        if (owned.has_item_uid() && owned.item_uid() != requested.item_uid())
+            return false;
+
+        return true;
+    }
+}
+
 Player::Player()
 {
 	_isPlayer = true;
@@ -49,8 +70,12 @@ bool Player::Start()
 
 bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
 {
+    const Json* itemData = Gamedata::FindItemData(templateId);
+    if (itemData == nullptr || itemData->contains(JsonProperty::Item::BuyPrice) == false)
+        return false;
+
     int64 gold = _possession->gold();
-    int64 buyPrice = static_cast<int64>(Gamedata::s_itemDataTable[templateId][JsonProperty::Item::BuyPrice]) * count;
+    int64 buyPrice = itemData->value(JsonProperty::Item::BuyPrice, int64(0)) * count;
 
     if (gold < buyPrice)
         return false;
@@ -66,9 +91,17 @@ bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, 
 
 bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count)
 {
+    // 가격은 요청이 아니라 슬롯에 든 아이템으로 정한다.
+    const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
+    if (MatchesRequest(ownedSlot, requestSlot) == false)
+        return false;
+
+    const Json* itemData = Gamedata::FindItemData(ownedSlot->item().template_id());
+    if (itemData == nullptr || itemData->value(JsonProperty::Item::Sellable, false) == false)
+        return false;
+
     int64 gold = _possession->gold();
-    int32 templateId = requestSlot.item().template_id();
-    int64 sellPrice = static_cast<int64>(Gamedata::s_itemDataTable[templateId][JsonProperty::Item::SellPrice]) * count;
+    int64 sellPrice = itemData->value(JsonProperty::Item::SellPrice, int64(0)) * count;
 
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlot, count) == false)
         return false;
@@ -94,15 +127,15 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
 
     // 효과는 요청이 아니라 슬롯에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
     const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
-    if (ownedSlot == nullptr || ownedSlot->has_item() == false)
+    if (MatchesRequest(ownedSlot, requestSlot) == false)
         return false;
 
     const int32 templateId = ownedSlot->item().template_id();
-    auto itemIt = Gamedata::s_itemDataTable.find(templateId);
-    if (itemIt == Gamedata::s_itemDataTable.end())
+    const Json* itemDataPtr = Gamedata::FindItemData(templateId);
+    if (itemDataPtr == nullptr)
         return false;
 
-    const Json& itemData = itemIt->second;
+    const Json& itemData = *itemDataPtr;
 
     // 재사용 대기는 템플릿마다 따로 돈다. 데이터의 cooldown은 초 단위다.
     const uint64 cooldownMs = static_cast<uint64>(itemData.value(JsonProperty::Item::Cooldown, 0.0) * 1000);
@@ -147,12 +180,15 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
     auto* updatedSlotList = pkt.mutable_updated_slots();
     auto* updatedStatList = pkt.mutable_updated_stat();
 
-    if (requestSlot.has_item() == false)
+    // 입는 것은 요청이 아니라 인벤토리 슬롯에 든 장비다.
+    const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
+    if (MatchesRequest(ownedSlot, requestSlot) == false || ownedSlot->item().count() < 1)
         return false;
 
-    const Protocol::Item& itemInstance = requestSlot.item();
+    // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 슬롯이라 제거는 실패하지 않는다.
+    const Protocol::Item ownedItem = ownedSlot->item();
     Protocol::Slot* equippedSlot = updatedSlotList->Add();
-    if (_equippedGear->EquipGear(OUT equippedSlot, OUT updatedStatList, itemInstance) == false)
+    if (_equippedGear->EquipGear(OUT equippedSlot, OUT updatedStatList, ownedItem) == false)
         return false;
 
     // 외형을 바꾸는 쪽은 요청 슬롯(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
@@ -177,11 +213,21 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     auto* updatedSlotList = pkt.mutable_updated_slots();
     auto* updatedStatList = pkt.mutable_updated_stat();
 
-    if (requestSlot.has_item() == false)
+    // 돌려받는 것은 요청이 아니라 장비 칸에 든 장비다.
+    if (requestSlot.type() != Protocol::SLOT_TYPE_EQUIPPED)
+        return false;
+
+    const Protocol::Slot* ownedSlot = _equippedGear->GetSlot(requestSlot.slot_id());
+    if (MatchesRequest(ownedSlot, requestSlot) == false)
+        return false;
+
+    // 넣을 자리가 없으면 장비 칸을 비우기 전에 거절한다. 비운 뒤에 실패하면 장비가 사라진다.
+    const Protocol::Item ownedItem = ownedSlot->item();
+    if (_inventory->FindFirstAvailableSlotId(Protocol::ItemType::ITEM_TYPE_GEAR, ownedItem.template_id()) == -1)
         return false;
 
     Protocol::Slot* unequippedSlot = updatedSlotList->Add();
-    if (_equippedGear->UnequipGear(requestSlot, OUT unequippedSlot, OUT updatedStatList) == false)
+    if (_equippedGear->UnequipGear(requestSlot.slot_id(), OUT unequippedSlot, OUT updatedStatList) == false)
         return false;
 
     // 탈착 뒤 그 부위는 비어 있으므로 template_id는 0이다.
@@ -189,7 +235,7 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     pkt.set_template_id(unequippedSlot->item().template_id());
     RefreshEquippedGearSummary();
 
-    if (_inventory->AddItem(OUT updatedSlotList->Add(), requestSlot.item()) == false)
+    if (_inventory->AddItem(OUT updatedSlotList->Add(), ownedItem) == false)
         return false;
 
     // 변경된 스텟 적용
@@ -466,16 +512,25 @@ bool Player::CalculateFinalStat()
     // ===========================================================================
 
     // 1. 레벨당 캐릭터 기본 스텟
-    DataTable& classLevelDataTable = (*Gamedata::s_classLevelDataTableMappings[_playerInfo->class_()]);
-    int32 level = _playerInfo->level();
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxHp))
-        finalStat.maxHp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxHp]);
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MaxMp))
-        finalStat.maxMp += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MaxMp]);
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::PhysicalAttack))
-        finalStat.physical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack]);
-    if (classLevelDataTable[level].contains(JsonProperty::LevelTable::MagicalAttack))
-        finalStat.magical_attack += static_cast<int32>(classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack]);
+    const DataTable* classLevelDataTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    if (classLevelDataTable == nullptr)
+    {
+        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업" << endl;
+        return false;
+    }
+
+    auto levelIt = classLevelDataTable->find(_playerInfo->level());
+    if (levelIt == classLevelDataTable->end())
+    {
+        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 레벨" << endl;
+        return false;
+    }
+
+    const Json& levelData = levelIt->second;
+    finalStat.maxHp += levelData.value(JsonProperty::LevelTable::MaxHp, 0);
+    finalStat.maxMp += levelData.value(JsonProperty::LevelTable::MaxMp, 0);
+    finalStat.physical_attack += levelData.value(JsonProperty::LevelTable::PhysicalAttack, 0);
+    finalStat.magical_attack += levelData.value(JsonProperty::LevelTable::MagicalAttack, 0);
 
     // 2. 장착 중이 장비 스텟 추가
     for (const auto& pair : _possession->equipped_gear())
@@ -485,14 +540,15 @@ bool Player::CalculateFinalStat()
         if (item.template_id() == 0)
             continue;
 
-        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::Hp))
-            finalStat.maxHp += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::Hp]);
-        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::Mp))
-            finalStat.maxMp += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::Mp]);
-        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::PhysicalAttack))
-            finalStat.physical_attack += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::PhysicalAttack]);
-        if (Gamedata::s_itemDataTable[item.template_id()].contains(JsonProperty::Item::MagicalAttack))
-            finalStat.magical_attack += static_cast<int32>(Gamedata::s_itemDataTable[item.template_id()][JsonProperty::Item::MagicalAttack]);
+        // 장비 칸에는 표에 있는 아이템만 들어간다(EquipGear가 거른다).
+        const Json* itemData = Gamedata::FindItemData(item.template_id());
+        if (itemData == nullptr)
+            continue;
+
+        finalStat.maxHp += itemData->value(JsonProperty::Item::Hp, 0);
+        finalStat.maxMp += itemData->value(JsonProperty::Item::Mp, 0);
+        finalStat.physical_attack += itemData->value(JsonProperty::Item::PhysicalAttack, 0);
+        finalStat.magical_attack += itemData->value(JsonProperty::Item::MagicalAttack, 0);
     }
 
     // validate
@@ -531,18 +587,28 @@ void Player::CacheNextLevelUpData()
         return;
     }
 
-    DataTable& classLevelDataTable = (*Gamedata::s_classLevelDataTableMappings[_playerInfo->class_()]);
-    const Json& nextLevelData = classLevelDataTable[nextLevel];
+    // 다음 레벨 행이 없으면 빈 값으로 둔다. 전역 표에 빈 행을 끼워 넣지 않는다.
+    _nextLevelUpData = NextLevelUpData{};
+
+    const DataTable* classLevelDataTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    if (classLevelDataTable == nullptr)
+        return;
+
+    auto nextLevelIt = classLevelDataTable->find(nextLevel);
+    if (nextLevelIt == classLevelDataTable->end())
+        return;
+
+    const Json& nextLevelData = nextLevelIt->second;
 
     // Cache
     {
         using namespace JsonProperty::LevelTable;
 
-        _nextLevelUpData.level = nextLevelData[Level].is_null() ? 0 : static_cast<int32>(nextLevelData[Level]);
-        _nextLevelUpData.maxHpIncrement = nextLevelData[MaxHp_Increment].is_null() ? 0 : static_cast<int64>(nextLevelData[MaxHp_Increment]);
-        _nextLevelUpData.maxMpIncrement = nextLevelData[MaxMp_Increment].is_null() ? 0 : static_cast<int64>(nextLevelData[MaxMp_Increment]);
-        _nextLevelUpData.paIncrement = nextLevelData[PA_Increment].is_null() ? 0 : static_cast<int64>(nextLevelData[PA_Increment]);
-        _nextLevelUpData.maIncrement = nextLevelData[MA_Increment].is_null() ? 0 : static_cast<int64>(nextLevelData[MA_Increment]);
-        _nextLevelUpData.expRequirement = nextLevelData[ExpRequirement].is_null() ? 0 : static_cast<int64>(nextLevelData[ExpRequirement]);
+        _nextLevelUpData.level = nextLevelData.value(Level, 0);
+        _nextLevelUpData.maxHpIncrement = nextLevelData.value(MaxHp_Increment, int64(0));
+        _nextLevelUpData.maxMpIncrement = nextLevelData.value(MaxMp_Increment, int64(0));
+        _nextLevelUpData.paIncrement = nextLevelData.value(PA_Increment, int64(0));
+        _nextLevelUpData.maIncrement = nextLevelData.value(MA_Increment, int64(0));
+        _nextLevelUpData.expRequirement = nextLevelData.value(ExpRequirement, int64(0));
     }
 }

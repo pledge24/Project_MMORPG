@@ -6,7 +6,8 @@
 /*--------------------------------------------------------------
     소모품 사용 테스트
 
-    소모품 가방에 든 아이템만 쓸 수 있다. 회복량은 요청이 아니라 슬롯에 든 아이템으로 정한다.
+    소모품 가방에 든 아이템만 쓸 수 있다. 회복량은 요청이 아니라 슬롯에 든 아이템으로 정하고,
+    요청의 아이템이 슬롯과 다르면 쓰지 않는다.
     HP나 MP가 가득 차 있어도 소비한다. 재사용 대기는 템플릿마다 따로 돌고 서버가 판정한다.
 
     픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 Init()만 한다.
@@ -131,16 +132,18 @@ TEST_F(PlayerUseItemTest, MixPotionRestoresBoth)
     EXPECT_EQ(CountIn(slot), 0) << "마지막 한 개를 쓰면 슬롯이 빈다";
 }
 
-TEST_F(PlayerUseItemTest, RestoreFollowsSlotNotRequest)
+// 요청의 아이템은 클라이언트 슬롯이 어긋났는지 대조하는 데만 쓴다. 다르면 쓰지 않는다.
+TEST_F(PlayerUseItemTest, RequestNotMatchingSlotIsRejected)
 {
     Protocol::Slot slot = AddAndGetSlot(MP_POTION_TEMPLATE_ID, 1);
     slot.mutable_item()->set_template_id(MIX_POTION_TEMPLATE_ID); // 요청의 템플릿을 속인다
 
     Protocol::S_USE_ITEM pkt;
-    ASSERT_TRUE(player->ProcessUseItem(slot, NOW_MS, pkt));
+    EXPECT_FALSE(player->ProcessUseItem(slot, NOW_MS, pkt));
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
-    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MP), 250);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MP), 100);
+    EXPECT_EQ(CountIn(slot), 1) << "어긋난 요청으로 엉뚱한 물약을 소비하면 안 된다";
 }
 
 TEST_F(PlayerUseItemTest, FullStatsStillConsume)
