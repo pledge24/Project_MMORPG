@@ -33,14 +33,14 @@ EquippedGear::~EquippedGear()
 
 bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList, const Protocol::Item& itemInstance, optional<int32> setSlotId)
 {
-    const Json* itemData = Gamedata::FindItemData(itemInstance.template_id());
-    if (itemData == nullptr)
+    const Json* itemDataPtr = Gamedata::FindItemData(itemInstance.template_id());
+    if (itemDataPtr == nullptr)
         return false;
 
-    const Json& ItemData = *itemData;
+    const Json& itemData = *itemDataPtr;
 
     // 장비 타입 아이템인지 체크
-    optional<Protocol::GearType> gearType = FindGearType(ItemData);
+    optional<Protocol::GearType> gearType = FindGearType(itemData);
     if (gearType.has_value() == false)
         return false;
     
@@ -67,33 +67,33 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPt
     if (PlayerRef ownerPlayer = _player.lock())
     {
         const string_view& maxHpProperty = JsonProperty::Item::Hp;
-        if (ItemData.contains(maxHpProperty) && ItemData[maxHpProperty] > 0)
+        if (itemData.contains(maxHpProperty) && itemData[maxHpProperty] > 0)
         {
-            int64 updatedMaxHp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_HP) + ItemData[maxHpProperty];
+            int64 updatedMaxHp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_HP) + itemData[maxHpProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_MAX_HP, updatedMaxHp);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_MAX_HP));
         }
 
         const string_view& maxMpProperty = JsonProperty::Item::Mp;
-        if (ItemData.contains(maxMpProperty) && ItemData[maxMpProperty] > 0)
+        if (itemData.contains(maxMpProperty) && itemData[maxMpProperty] > 0)
         {
-            int64 updatedMaxMp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_MP) + ItemData[maxMpProperty];
+            int64 updatedMaxMp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_MP) + itemData[maxMpProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_MAX_MP, updatedMaxMp);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_MAX_MP));
         }
 
         const string_view& paProperty = JsonProperty::Item::PhysicalAttack;
-        if (ItemData.contains(paProperty) && ItemData[paProperty] > 0)
+        if (itemData.contains(paProperty) && itemData[paProperty] > 0)
         {
-            int64 updatedPA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) + ItemData[paProperty];
+            int64 updatedPA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) + itemData[paProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, updatedPA);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_PHYSICAL_ATTACK));
         }
 
         const string_view& maProperty = JsonProperty::Item::MagicalAttack;
-        if (ItemData.contains(maProperty) && ItemData[maProperty] > 0)
+        if (itemData.contains(maProperty) && itemData[maProperty] > 0)
         {
-            int64 updatedMA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) + ItemData[maProperty];
+            int64 updatedMA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) + itemData[maProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, updatedMA);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_MAGICAL_ATTACK));
         }
@@ -109,15 +109,14 @@ bool EquippedGear::UnequipGear(int32 gearType, OUT Protocol::Slot* replicatingSl
         return false;
 
     // 스텟은 그 부위에 실제로 든 장비의 수치로 뺀다.
-    const Json* itemData = Gamedata::FindItemData(slotIt->second.item().template_id());
-    if (itemData == nullptr)
+    const Json* itemDataPtr = Gamedata::FindItemData(slotIt->second.item().template_id());
+    if (itemDataPtr == nullptr)
         return false;
 
-    const Json& ItemData = *itemData;
-    const int32 type = gearType;
+    const Json& itemData = *itemDataPtr;
     Protocol::Slot* targetSlot = &slotIt->second;
 
-    _dirtyFlagMappings[type] = true;
+    _dirtyFlagMappings[gearType] = true;
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
     targetSlot->clear_item();
@@ -132,33 +131,33 @@ bool EquippedGear::UnequipGear(int32 gearType, OUT Protocol::Slot* replicatingSl
     if (PlayerRef ownerPlayer = _player.lock())
     {
         const string_view& maxHpProperty = JsonProperty::Item::Hp;
-        if (ItemData.contains(maxHpProperty) && ItemData[maxHpProperty] > 0)
+        if (itemData.contains(maxHpProperty) && itemData[maxHpProperty] > 0)
         {
-            int64 updatedMaxHp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_HP) - ItemData[maxHpProperty];
+            int64 updatedMaxHp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_HP) - itemData[maxHpProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_MAX_HP, updatedMaxHp);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_MAX_HP));
         }
 
         const string_view& maxMpProperty = JsonProperty::Item::Mp;
-        if (ItemData.contains(maxMpProperty) && ItemData[maxMpProperty] > 0)
+        if (itemData.contains(maxMpProperty) && itemData[maxMpProperty] > 0)
         {
-            int64 updatedMaxMp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_MP) - ItemData[maxMpProperty];
+            int64 updatedMaxMp = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAX_MP) - itemData[maxMpProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_MAX_MP, updatedMaxMp);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_MAX_MP));
         }
 
         const string_view& paProperty = JsonProperty::Item::PhysicalAttack;
-        if (ItemData.contains(paProperty) && ItemData[paProperty] > 0)
+        if (itemData.contains(paProperty) && itemData[paProperty] > 0)
         {
-            int64 updatedPA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) - ItemData[paProperty];
+            int64 updatedPA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) - itemData[paProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, updatedPA);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_PHYSICAL_ATTACK));
         }
 
         const string_view& maProperty = JsonProperty::Item::MagicalAttack;
-        if (ItemData.contains(maProperty) && ItemData[maProperty] > 0)
+        if (itemData.contains(maProperty) && itemData[maProperty] > 0)
         {
-            int64 updatedMA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) - ItemData[maProperty];
+            int64 updatedMA = ownerPlayer->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) - itemData[maProperty];
             ownerPlayer->SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, updatedMA);
             updatedStatList->Add()->CopyFrom(ownerPlayer->GetStat(Protocol::STAT_TYPE_MAGICAL_ATTACK));
         }
