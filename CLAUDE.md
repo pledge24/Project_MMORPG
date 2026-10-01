@@ -44,45 +44,16 @@
 
 single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/domain.md`
 
-## 도구 라우팅 — MCP 서버 두 개, 통제 수단도 두 개
+## 빌드와 도구
 
-- **Rider MCP에서 쓸 수 있는 툴은 36종이다.** 나머지는 `.claude/settings.json`의
-  `permissions.deny`가 막는다. 판정 근거는 `docs/adr/0002-control-mcp-tools-via-permissions.md`.
-- **언리얼 MCP(`unreal`)는 `permissions`가 아니라 훅이 막는다.** `call_tool` 하나로 830개가
-  들어오므로 `permissions`로는 구분되지 않는다. `.claude/hooks/guard_dangerous_cmd.py`가 툴셋
-  허용 명단(`UE_ALLOWED_TOOLSETS`, 27개)을 1층으로, 보관소 경로와 슬레이트 조작과
-  `execute_tool_script`를 아래 세 층으로 본다. **에셋 쓰기는 열려 있다.** **명단은 사람만
-  고친다** — 훅 파일 편집은 auto mode classifier가 막는다. 층별 판정과 근거는
-  `docs/adr/0003-gate-unreal-mcp-by-hook-whitelist.md`.
-- **언리얼 MCP는 에디터가 떠 있어야 붙는다.** 에디터를 띄우면 `127.0.0.1:8000`이 자동으로
-  열리므로 사람이 콘솔에 입력할 것은 없다. 연결 확인은 `netstat`로 8000 포트를 보거나
-  `list_toolsets`를 한 번 부른다. **UE 자동화 테스트는 이것과 무관하다** —
-  `P1/Scripts/Run-UeTests.ps1`이 에디터 없이 돌리고 종료 코드로 판정한다.
-- 심볼 탐색: `skill_search`의 `mode=symbol`. 텍스트 탐색: `search_text`. **grep 금지** — UE RPC의
-  `_Implementation` 접미사에서 호출 사슬이 끊긴다. 검색어는 접미사가 붙은 이름과 안 붙은 이름
-  양쪽으로 잡는다. **`mode=symbol`의 좌표는 `1행 1열`로 고정되므로 파일 경로만 쓴다.**
-- 호출자 확인은 `search_text`로 한다. `analyze_calls`는 C++ 심볼을 색인하지 않아 막아 두었다.
-- 빌드 검증: **터미널에서 돌리고 종료 코드로 판정한다. 빌드에 Rider MCP를 쓰지 않는다.**
-  클라이언트는 `P1/Scripts/Invoke-UeBuild.ps1`, 서버는 `MSBuild`다. 0이 아니면 같은 출력에 에러가
-  코드와 파일과 줄과 함께 찍혀 있다. **빌드 스크립트는 에디터가 떠 있으면 닫지 않고 1로 끝난다.**
-  `-CloseEditor`를 붙이는 것은 저장하지 않은 에셋 변경이 없다고 판단한 뒤다. 빌드 출력이 커서
-  절단되는 문제는 스크립트가 로그를 파일로 보내고 오류 줄만 추려서 푼다. 명령 원문은
-  `docs/build.md`, 근거는 `docs/adr/0001-unify-build-path.md`.
-- **Rider MCP 툴에는 `rootFolder`를 항상 명시한다**(파라미터 이름이 `projectPath`가 아니다).
-  솔루션이 하나만 열려 있으면 서버가 모호성을 못 느끼고 그대로 실행하므로, 생략해도 에러가
-  나지 않는다. 열린 프로젝트 목록은 인자 없이 `get_run_configurations`를 부르면 에러로 돌아온다.
-- 린트·진단: `lint_files`, `get_file_problems`. 심볼 리네임: `rename_refactoring` (텍스트 치환 금지).
-- **`rename_refactoring`의 `applied: true`는 반영을 뜻하지 않는다.** 한 건마다 디스크를 확인하고
-  파일 묶음이 끝나면 빌드로 판정한다. 시작 전에 사람에게 에디터 탭을 닫아 달라고 요청한다 —
-  열린 탭은 저장되지 않으면서 성공을 보고한다. `no_renamable_symbol`로 거부되면 사람에게
-  넘긴다. 실패 형태 셋과 사례: ADR-0002의 「`rename_refactoring`의 실패 형태 셋」
-- UE 에셋 조회: `get_class_hierarchy`와 `search_assets`. **`search_assets`는 `baseClass`만 쓴다** —
-  `query`는 빈 결과만 돌려준다. Rider의 에디터 조작 툴은 막혀 있으므로 사람에게 요청한다.
-- **에셋 속성은 Rider가 아니라 언리얼 MCP로 읽는다.** Rider의 `get_asset_properties`는 블루프린트
-  CDO에 `properties: []`를 돌려준다(ADR-0002). 같은 에셋을 `unreal`의
-  `ObjectTools.list_properties`로 읽으면 속성이 나온다.
-- **노출 ≠ 존재.** 판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다. **IDE 화면의 체크
-  상태도 근거가 아니다** — 이 엔드포인트에 반영되지 않는다. 근거와 예외: `docs/build.md`와 ADR-0002
+- 빌드는 터미널에서 돌리고 종료 코드로 판정한다. 빌드에 Rider MCP를 쓰지 않는다. 클라이언트는
+  `pwsh P1/Scripts/Invoke-UeBuild.ps1`, 서버는 `MSBuild`다. 명령 원문은 `docs/build.md`에 있다.
+- 클라이언트 빌드 스크립트는 에디터가 떠 있으면 닫지 않고 1로 끝난다. `-CloseEditor`는 저장하지 않은
+  에셋 변경이 없다고 판단한 뒤에만 붙인다.
+- Rider MCP나 언리얼 MCP(`unreal`) 툴을 쓰기 전에 `ide-tools` 스킬을 읽는다. 두 서버 모두 이 저장소에서만
+  통하는 함정이 있다.
+- Rider MCP는 `.claude/settings.json`의 `permissions.deny`가, 언리얼 MCP는 훅의 툴셋 허용 명단이 막는다.
+  둘 다 사람만 고친다. 막힌 툴은 우회하지 않고 사람에게 요청한다.
 
 ## 완료 기준
 
@@ -149,6 +120,7 @@ Conventional Commits와 gitmoji를 기준으로 하고, 아래에 적힌 차이�
 - 카테고리는 `feature`, `bugfix`, `hotfix`, `refactor`, `release`, `docs`, `chore` 중 하나를 쓴다.
 - `bugfix`는 개발 중 발견한 버그에, `hotfix`는 운영 환경 긴급 수정에 쓴다.
 - 이슈 번호가 없으면 생략한다.
+- 로컬 브랜치 삭제는 `-d`도 훅이 막는다(대소문자를 구분하지 않는다). 머지된 브랜치 정리는 사람에게 맡긴다.
 
 ### PR
 
