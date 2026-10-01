@@ -142,6 +142,12 @@ CASES = [
     ("git checkout .", "Bash", {"command": "git checkout ."}, True),
     ("git checkout .gitignore", "Bash", {"command": "git checkout .gitignore"}, False),
     ("git branch -D", "Bash", {"command": "git branch -D feature"}, True),
+    ("git branch -d -f", "Bash", {"command": "git branch -d -f feature"}, True),
+    ("git branch -df", "Bash", {"command": "git branch -df feature"}, True),
+    ("git branch --delete --force", "Bash", {"command": "git branch --delete --force feature"}, True),
+    ("git branch -d", "Bash", {"command": "git branch -d feature"}, False),
+    ("git branch --delete", "Bash", {"command": "git branch --delete feature"}, False),
+    ("git branch -f 이동", "Bash", {"command": "git branch -f feature HEAD"}, False),
     ("FLUSHALL", "Bash", {"command": "redis-cli FLUSHALL"}, True),
     ("KEYS *", "Bash", {"command": "redis-cli KEYS *"}, True),
     ("git status", "Bash", {"command": "git status"}, False),
@@ -151,15 +157,18 @@ CASES = [
     ("PS 재귀조회", "PowerShell", {"command": "Get-ChildItem -Recurse"}, False),
 
     # --- SQL ---
-    ("SELECT", "mcp__rider__execute_sql_query", {"queryText": "SELECT * FROM Users WHERE user_id=1"}, False),
-    ("WHERE 없는 DELETE", "mcp__rider__execute_sql_query", {"queryText": "DELETE FROM Characters"}, True),
-    ("WHERE 있는 DELETE", "mcp__rider__execute_sql_query", {"queryText": "DELETE FROM Characters WHERE character_id=5"}, False),
-    ("WHERE 없는 UPDATE", "mcp__rider__execute_sql_query", {"queryText": "UPDATE Users SET last_login=GETDATE()"}, True),
-    ("WHERE 있는 UPDATE", "mcp__rider__execute_sql_query", {"queryText": "UPDATE Users SET last_login=GETDATE() WHERE username='a'"}, False),
-    ("DROP TABLE", "mcp__rider__execute_sql_query", {"queryText": "DROP TABLE Users"}, True),
-    ("TRUNCATE", "mcp__rider__execute_sql_query", {"queryText": "TRUNCATE TABLE Characters"}, True),
-    ("ALTER TABLE", "mcp__rider__execute_sql_query", {"queryText": "ALTER TABLE Characters ADD col INT"}, True),
-    ("주석 속 WHERE", "mcp__rider__execute_sql_query", {"queryText": "DELETE FROM x -- WHERE y"}, True),
+    # 연결 id를 허용 목록의 GameDB(claude_ro)로 고정한다. 없으면 연결 검사에서 먼저 막혀 패턴을 
+    # 시험하지 못한다.
+    ("SELECT", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "SELECT * FROM Users WHERE user_id=1"}, False),
+    ("WHERE 없는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DELETE FROM Characters"}, True),
+    ("WHERE 있는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DELETE FROM Characters WHERE character_id=5"}, False),
+    ("WHERE 없는 UPDATE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "UPDATE Users SET last_login=GETDATE()"}, True),
+    ("WHERE 있는 UPDATE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "UPDATE Users SET last_login=GETDATE() WHERE username='a'"}, False),
+    ("DROP TABLE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DROP TABLE Users"}, True),
+    ("TRUNCATE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "TRUNCATE TABLE Characters"}, True),
+    ("ALTER TABLE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "ALTER TABLE Characters ADD col INT"}, True),
+    ("주석 속 WHERE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DELETE FROM x -- WHERE y"}, True),
+    ("허용 목록 밖 연결", "mcp__rider__execute_sql_query", {"connectionId": "00000000-0000-0000-0000-000000000000", "queryText": "SELECT 1"}, True),
 
     # --- rootFolder 강제 ---
     ("빌드 rootFolder 없음", "mcp__rider__build_solution_start", {"rebuild": False}, True),
