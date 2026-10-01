@@ -34,6 +34,15 @@ const DataTable* Gamedata::FindClassLevelTable(int32 classId)
     return it->second;
 }
 
+const Json* Gamedata::FindItemData(int32 templateId)
+{
+    auto it = s_itemDataTable.find(templateId);
+    if (it == s_itemDataTable.end())
+        return nullptr;
+
+    return &it->second;
+}
+
 bool Gamedata::LoadAllGamedata()
 {
     // 레벨 테이블 매핑 초기화

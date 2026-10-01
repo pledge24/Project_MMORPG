@@ -39,12 +39,11 @@ Inventory::~Inventory()
 
 bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
-    //if (itemInstance.template_id() == 0)
-    //    return false;
+    const Json* itemData = Gamedata::FindItemData(itemInstance.template_id());
+    if (itemData == nullptr)
+        return false;
 
-    const Json& itemData = Gamedata::s_itemDataTable[itemInstance.template_id()];
-
-    optional<Protocol::ItemType> itemType = ToItemType(itemData);
+    optional<Protocol::ItemType> itemType = ToItemType(*itemData);
     if (itemType.has_value() == false)
         return false;
 
@@ -99,8 +98,11 @@ bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, 
     if (count <= 0)
         return false;
 
-    const Json& itemData = Gamedata::s_itemDataTable[templateId];
+    const Json* itemDataPtr = Gamedata::FindItemData(templateId);
+    if (itemDataPtr == nullptr)
+        return false;
 
+    const Json& itemData = *itemDataPtr;
     optional<Protocol::ItemType> itemTypeOpt = ToItemType(itemData);
     if (itemTypeOpt.has_value() == false)
         return false;
