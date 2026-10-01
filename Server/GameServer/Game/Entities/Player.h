@@ -51,10 +51,10 @@ public:
     void OnLevelUp();
 
     /** Getter 함수*/
-    int32 GetRespawnRoomId(Protocol::RespawnType respawnType) { return _respawnRoomMappings[respawnType]; }
     int32 GetEnteringRoomId() { return _enteringRoomId; }
     bool IsMaxLevel() const;
-    void GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
+    // 마을 리스폰의 룸과 위치를 찾는다. 마을 룸이나 그 룸의 리스폰 지점이 없으면 false.
+    bool FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
     /** 접속 종료 */
     // 룸 큐 위에서만 부른다.
@@ -86,8 +86,6 @@ private:
 
     const int32 MAX_LEVEL = 50;
     NextLevelUpData _nextLevelUpData;
-
-    map<Protocol::RespawnType, int32> _respawnRoomMappings;
 
     // 소모품 템플릿 id → 마지막으로 쓴 시각(ms). 재사용 대기 판정에 쓴다. 저장하지 않으므로 재접속하면 사라진다.
     map<int32, uint64> _lastUseTimeMs;

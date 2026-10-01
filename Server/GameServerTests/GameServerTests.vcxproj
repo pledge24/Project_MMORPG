@@ -173,6 +173,7 @@
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
+    <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="ItemSaveRowsTests.cpp" />
@@ -225,6 +226,7 @@
     <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
+    <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp" />

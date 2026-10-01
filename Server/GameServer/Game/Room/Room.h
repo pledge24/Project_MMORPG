@@ -3,13 +3,7 @@
 #include "Utils.h"
 #include "Entity.h"
 #include "PlayerSaveData.h"
-
-struct RoomEnterData
-{
-    int32 nextRoomId = -1;
-    Protocol::EnterType enterType = Protocol::ENTER_TYPE_NONE;
-    optional<Protocol::PosInfo> enterPos;
-};
+#include "RoomTransfer.h"
 
 using Cell = set<int64>;   // 특정 영역에 있는 EntityId
 

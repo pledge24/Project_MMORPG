@@ -455,7 +455,7 @@ Server/
 ├── GameServer/             게임 규칙
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인
-│   │   ├── Room/           룸, 룸 매니저, 셀 행렬
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬, 룸 이동 판정
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층
 │   │   ├── Inventory/      인벤토리
@@ -489,7 +489,8 @@ Server/
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
 `Game/Combat/`은 피격과 처치를 판정한다. 룸과 세션을 모르고, 대상 찾기와 결과 전송은 `Game/Room/`이
-맡는다. `Game/AI/`는 아직 없다. 몬스터 행동 결정이 `Game/Entities/`에 섞여 있다. 이 도메인을 분리할
+맡는다. `Game/Room/`의 `RoomTransfer`도 같은 모양이다. 룸 이동과 리스폰 요청을 판정하고, 퇴장과 입장,
+결과 전송은 `Room`이 맡는다. `Game/AI/`는 아직 없다. 몬스터 행동 결정이 `Game/Entities/`에 섞여 있다. 이 도메인을 분리할
 때 만든다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가

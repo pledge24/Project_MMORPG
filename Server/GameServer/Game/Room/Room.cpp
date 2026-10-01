@@ -262,31 +262,32 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     if (session == nullptr)
         return;
 
-    RoomEnterData roomEnterData{};
+    const Protocol::EnterType enterType = pkt.enter_type();
 
-    Protocol::EnterType enterType = pkt.enter_type();
+    // 입장 실패는 거절 사유와 무관하게 같은 모양으로 알린다. 클라이언트는 실패를 로그로만 남긴다.
+    auto sendEnterRoomFailure = [&session, enterType]()
+        {
+            Protocol::S_ENTER_ROOM enterRoomPkt;
+            enterRoomPkt.set_success(false);
+            enterRoomPkt.set_enter_type(enterType);
+
+            SEND_PACKET(enterRoomPkt)
+        };
+
+    if (optional<string> rejection = RoomTransfer::ValidateEnterRequest(pkt, player->GetEnteringRoomId()))
+    {
+        cout << "C_HandleEnterRoom: " << rejection.value() << '\n';
+        sendEnterRoomFailure();
+        return;
+    }
+
     switch (enterType)
     {
     case Protocol::ENTER_TYPE_INITIAL:
     {
         // 최초 입장. ServerPacketHandler가 목적지 Room의 JobQueue로 넘겨주므로
         // 여기서는 이미 입장할 Room 위에서 실행 중이다. 떠날 Room이 없다.
-        bool hasRoomID = pkt.has_room_id();
-        bool invalidRoomID = pkt.room_id() != player->GetEnteringRoomId();
-        if (!hasRoomID || invalidRoomID)
-        {
-            Protocol::S_ENTER_ROOM enterRoomPkt;
-            {
-                enterRoomPkt.set_success(false);
-                enterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
-
-                SEND_PACKET(enterRoomPkt)
-            }
-
-            return;
-        }
-
-        // RoomEnterData 세팅
+        RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = _roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_INITIAL;
         roomEnterData.enterPos = *player->_posInfo;
@@ -304,27 +305,16 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     case Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER:
     {
         // 맵 간 이동. 현재 Room의 JobQueue 위에서 실행되므로 퇴장까지 직접 처리한다.
-        bool hasRoomID = pkt.has_room_id();
-        bool invalidRoomID = pkt.room_id() != player->GetEnteringRoomId();
-        if (!hasRoomID || invalidRoomID)
+        const int32 roomId = pkt.room_id();
+        RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
+        if (enterRoom == nullptr)
         {
-            Protocol::S_ENTER_ROOM enterRoomPkt;
-            {
-                enterRoomPkt.set_success(false);
-                enterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
-
-                SEND_PACKET(enterRoomPkt)
-            }
-
+            wcout << L"맵 간 이동할 Room을 찾지 못함. roomId: " << roomId << '\n';
+            sendEnterRoomFailure();
             return;
         }
 
-        int32 roomId = pkt.room_id();
-        RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
-        if (enterRoom == nullptr)
-            return;
-
-        // RoomEnterData 세팅
+        RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER;
         roomEnterData.enterPos = *player->_posInfo;
@@ -347,52 +337,23 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     case Protocol::ENTER_TYPE_SAME_MAP_TRANSFER:
     {
         // 포탈을 통한 같은 맵 내 이동. 현재 Room의 JobQueue 위에서 실행된다.
-        bool hasPortalId = pkt.has_portal_id();
-        if (!hasPortalId)
-        {
-            Protocol::S_ENTER_ROOM enterRoomPkt;
-            {
-                enterRoomPkt.set_success(false);
-                enterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
-
-                SEND_PACKET(enterRoomPkt)
-            }
-
-            return;
-        }
-
         optional<Json> portalDataOpt = GetPortalDataFromPortalId(pkt.portal_id());
         if (portalDataOpt.has_value() == false)
         {
-            wcout << "플레이어가 현재 Room에 존재하지 않는 포탈사용 시도" << '\n';
+            wcout << L"플레이어가 현재 Room에 존재하지 않는 포털 사용 시도" << '\n';
+            sendEnterRoomFailure();
             return;
         }
 
-        // RoomEnterData 세팅
-        {
-            using namespace JsonProperty::Map;
-            const Json& portalData = portalDataOpt.value();
-            const Json& dst = portalData[Dst];
-
-            roomEnterData.nextRoomId = dst[TemplateId];
-            roomEnterData.enterType = Protocol::ENTER_TYPE_SAME_MAP_TRANSFER;
-
-            Protocol::PosInfo enterPosInfo;
-            Protocol::Vector& pos = *enterPosInfo.mutable_pos();
-            enterPosInfo.set_entity_id(player->GetEntityId());
-            pos.set_x(dst[PosX]);
-            pos.set_y(dst[PosY]);
-            pos.set_z(dst[PosZ]);
-            enterPosInfo.set_yaw(dst[Yaw]);
-            enterPosInfo.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-
-            // 클라이언트는 이 enter_pos로 텔레포트하므로 반드시 채워야 한다.
-            roomEnterData.enterPos = std::move(enterPosInfo);
-        }
+        const RoomEnterData roomEnterData = RoomTransfer::MakePortalEnterData(portalDataOpt.value(), player->GetEntityId());
 
         RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomEnterData.nextRoomId);
         if (enterRoom == nullptr)
+        {
+            wcout << L"포탈 목적지 Room을 찾지 못함. roomId: " << roomEnterData.nextRoomId << '\n';
+            sendEnterRoomFailure();
             return;
+        }
 
         if (TransferPlayer(player, roomEnterData) == false)
             return;
@@ -410,15 +371,8 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
         break;
     }
-    case Protocol::ENTER_TYPE_RESPAWN:
-        // 서버가 리스폰 처리 중에만 만드는 값이다. 클라이언트 요청으로는 올 수 없다.
-        cout << "C_HandleEnterRoom: 클라이언트가 RESPAWN 입장을 요청함" << '\n';
-        break;
-    case Protocol::ENTER_TYPE_NONE:
-    case Protocol::EnterType_INT_MIN_SENTINEL_DO_NOT_USE_:
-    case Protocol::EnterType_INT_MAX_SENTINEL_DO_NOT_USE_:
     default:
-        cout << "C_HandleEnterRoom: Invalid Enter Type" << '\n';
+        // ValidateEnterRequest가 나머지 유형을 거절한다.
         break;
     }
 }
@@ -643,18 +597,33 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 
 void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 {
-    // TODO: Validation(Ex. 해당 캐릭터가 리스폰 조건을 만족했는가?)
-
-    // 1. Find Respawn Room
+    // 1. Validate + Find Respawn Room
     RoomRef respawnRoom = nullptr;
     Protocol::PosInfo respawnPos;
-    Protocol::RespawnType respawnType = pkt.respawn_type();
+    const Protocol::RespawnType respawnType = pkt.respawn_type();
 
-    player->GetRespawnData(respawnType, OUT respawnRoom, OUT respawnPos);
-
-    if (respawnRoom == nullptr)
+    // 지원하는 유형은 마을 리스폰뿐이라 판정을 통과하면 마을의 리스폰 지점을 찾는다.
+    optional<string> rejection = RoomTransfer::ValidateRespawn(player->IsDead(), respawnType);
+    if (rejection.has_value() == false
+        && player->FindTownRespawnPoint(OUT respawnRoom, OUT respawnPos) == false)
     {
-        wcout << L"리스폰할 룸을 찾지 못함" << '\n';
+        rejection = "리스폰할 위치를 찾지 못했습니다.";
+    }
+
+    if (rejection.has_value())
+    {
+        cout << "C_HandleRespawn: " << rejection.value() << '\n';
+
+        if (auto session = player->_session.lock())
+        {
+            Protocol::S_RESPAWN respawnPkt;
+            respawnPkt.set_success(false);
+            respawnPkt.set_respawn_type(respawnType);
+            respawnPkt.set_error_message(rejection.value());
+
+            SEND_PACKET(respawnPkt)
+        }
+
         return;
     }
 
@@ -831,7 +800,7 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
         return false;
     }
 
-    // 호출자가 GetRespawnData로 계산해 넘겨준 위치를 쓴다.
+    // 호출자가 FindTownRespawnPoint로 찾아 넘겨준 위치를 쓴다.
     shared_ptr<Protocol::PosInfo> targetPos = make_shared<Protocol::PosInfo>(std::move(respawnPos));
 
     if (player->ProcessRespawn(respawnType, targetPos, respawnPkt) == false)
@@ -1101,8 +1070,7 @@ void Room::CacheRoomData()
         _respawnPoint->set_yaw(0.f);
         _respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
-        // 이 플래그가 없으면 GetRespawnPoint()가 항상 nullptr을 반환해
-        // Player::GetRespawnData가 널 역참조로 죽는다.
+        // 이 플래그가 없으면 GetRespawnPoint()가 항상 nullptr을 반환해 마을 리스폰이 실패한다.
         _hasRespawnPoint = true;
     }
 
