@@ -200,6 +200,7 @@
     <ClInclude Include="Game\Data\Gamedata.h" />
     <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Room\Room.h" />
+    <ClInclude Include="Game\Room\RoomTransfer.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
     <ClInclude Include="DB\CharacterListDAO.h" />
     <ClInclude Include="DB\CharacterStateDAO.h" />
@@ -257,6 +258,7 @@
     <ClCompile Include="Game\Equipment\EquippedGear.cpp" />
     <ClCompile Include="Game\Data\Gamedata.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />
+    <ClCompile Include="Game\Room\RoomTransfer.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
     <ClCompile Include="DB\CharacterListDAO.cpp" />
     <ClCompile Include="DB\CharacterStateDAO.cpp" />

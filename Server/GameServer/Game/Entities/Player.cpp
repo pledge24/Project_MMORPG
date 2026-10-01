@@ -44,11 +44,6 @@ bool Player::Start()
 
 	CacheNextLevelUpData();
 
-	_respawnRoomMappings[Protocol::RESPAWN_TYPE_TOWN] = RESPAWN_TOWN_ID;
-	_respawnRoomMappings[Protocol::RESPAWN_TYPE_CHECKPOINT] = -1;
-	_respawnRoomMappings[Protocol::RESPAWN_TYPE_IN_PLACE] = -1;
-	_respawnRoomMappings[Protocol::RESPAWN_TYPE_GUILD_BASE] = -1;
-
 	return true;
 }
 
@@ -401,34 +396,23 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
-void Player::GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
+bool Player::GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
 {
-    switch (respawnType)
-    {
-    case Protocol::RESPAWN_TYPE_TOWN:
-    case Protocol::RESPAWN_TYPE_CHECKPOINT:
-    case Protocol::RESPAWN_TYPE_IN_PLACE:
-    case Protocol::RESPAWN_TYPE_GUILD_BASE:
-    {
-        int32 roomId = GetRespawnRoomId(respawnType);
-        respawnRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
-        respawnPos = *respawnRoom->GetRespawnPoint();
-        break;
-    }
-    case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
-    case Protocol::RESPAWN_TYPE_CASH_ITEM:
-    {
-        // 아이템 사용
-        break;
-    }
-    case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
-    case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
-    {
-        // entityId가 존재하는 경우
-        break;
-    }
+    // 다른 유형은 목적지 규칙이 아직 없다. RoomTransfer::ValidateRespawn이 먼저 거절한다.
+    if (respawnType != Protocol::RESPAWN_TYPE_TOWN)
+        return false;
 
-    }
+    RoomRef townRoom = GRoomManager->GetRoomRefFromRoomId(RESPAWN_TOWN_ID);
+    if (townRoom == nullptr)
+        return false;
+
+    shared_ptr<Protocol::PosInfo> respawnPoint = townRoom->GetRespawnPoint();
+    if (respawnPoint == nullptr)
+        return false;
+
+    respawnRoom = townRoom;
+    respawnPos = *respawnPoint;
+    return true;
 }
 
 PlayerSaveData Player::MakeSaveData() const
@@ -458,8 +442,7 @@ bool Player::ApplyTownRespawnForSave()
 {
     RoomRef respawnRoom = nullptr;
     Protocol::PosInfo respawnPos;
-    GetRespawnData(Protocol::RESPAWN_TYPE_TOWN, OUT respawnRoom, OUT respawnPos);
-    if (respawnRoom == nullptr)
+    if (GetRespawnData(Protocol::RESPAWN_TYPE_TOWN, OUT respawnRoom, OUT respawnPos) == false)
         return false;
 
     respawnPos.set_entity_id(GetEntityId());

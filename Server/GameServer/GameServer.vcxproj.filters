@@ -133,6 +133,9 @@
     <ClCompile Include="Game\Room\Room.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Room\RoomTransfer.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Room\RoomManager.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
@@ -232,6 +235,9 @@
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\Room.h">
+      <Filter>Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Room\RoomTransfer.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\RoomManager.h">
