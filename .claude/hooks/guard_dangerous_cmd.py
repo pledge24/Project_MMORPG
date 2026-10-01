@@ -221,23 +221,31 @@ UE_SCRIPT_FORBIDDEN = {
 
 # 셸에서 막을 것 — 파괴적 파일/git 조작 + Redis 전체 삭제.
 SHELL_PATTERNS = [
-    # 삭제
+    # --삭제--
     (r"rm\s+-[a-zA-Z]*r[a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*r", "rm -rf"),
     (r"\brd\s+/s\b|\brmdir\s+/s\b", "rd /s (재귀 삭제)"),
     (r"\bdel\s+/[a-zA-Z]*s\b", "del /s (재귀 삭제)"),
     (r"Remove-Item\b(?=[\s\S]*-Recurse)(?=[\s\S]*-Force)", "Remove-Item -Recurse -Force"),
-    # git
+    # --git--
     (r"git\s+push\s+.*(--force\b|(?<!-)-f\b)", "git push --force"),
     (r"git\s+reset\s+--hard", "git reset --hard"),
     (r"git\s+clean\s+.*-[a-zA-Z]*f", "git clean -f"),
     (r"git\s+checkout\s+\.(\s|$)", "git checkout ."),
     (r"git\s+restore\s+\.(\s|$)", "git restore ."),
-    (r"git\s+branch\s+-D\b", "git branch -D"),
-    # Redis
+    #(r"git\s+branch\s+-D\b", "git branch -D"), 
+    # 머지 여부를 보지 않는 강제 삭제만 막는다. -d(--delete)는 git이 머지되지 않은 브랜치를 거부하므로 통과시킨다.
+    # 판정 루프가 re.IGNORECASE로 돌므로 옵션 부분만 (?-i:...)로 대소문자를 구분한다.
+    (r"git\s+branch\b(?-i:"
+    r"(?=[^\n;&|]*\s-[a-zA-Z]*D)" 
+    r"|(?=[^\n;&|]*\s-[a-zA-Z]*d[a-zA-Z]*f)"
+    r"|(?=[^\n;&|]*\s-[a-zA-Z]*f[a-zA-Z]*d)"
+    r"|(?=[^\n;&|]*\s(?:-d|--delete)\b)(?=[^\n;&|]*\s(?:-f|--force)\b)"
+    r")", "git branch 강제 삭제"),
+    # --Redis--
     (r"\bFLUSHALL\b", "Redis FLUSHALL"),
     (r"\bFLUSHDB\b", "Redis FLUSHDB"),
     (r"\bKEYS\s+['\"]?\*", "Redis KEYS *"),
-    # sql
+    # --sql--
     (r"\bsqlcmd\b", "sqlcmd (DB는 Rider의 claude_ro 연결로만 조회한다)"),
     (r"\bosql\b", "osql"),
     (r"\bInvoke-Sqlcmd\b", "Invoke-Sqlcmd"),
