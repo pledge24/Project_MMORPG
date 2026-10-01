@@ -184,8 +184,8 @@
 **왜 유예했나**: 파일을 쪼개는 기능 변경이다. 폴더를 옮기는 이행과 성격이 다르다. 목표 위치는
 `docs/folder-structure.md`가 이미 적고 있다.
 
-**선행 조건**: `Room.cpp`의 부채와 같은 파일을 건드린다
-(`docs/tech-debt.md`의 「셀 행렬이 `Room`에 섞여 있다」). 어느 쪽을 먼저 할지 정한다.
+**선행 조건**: 없음. `Room`의 판정과 셀 행렬은 `Game/Combat/`, `Game/Room/RoomTransfer`, `Game/Room/CellMatrix`로
+이미 빠졌다.
 
 **완료 신호**: 미정.
 
