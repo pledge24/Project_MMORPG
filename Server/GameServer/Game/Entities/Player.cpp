@@ -396,12 +396,8 @@ void Player::OnLevelUp()
     CacheNextLevelUpData();
 }
 
-bool Player::GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
+bool Player::FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
 {
-    // 다른 유형은 목적지 규칙이 아직 없다. RoomTransfer::ValidateRespawn이 먼저 거절한다.
-    if (respawnType != Protocol::RESPAWN_TYPE_TOWN)
-        return false;
-
     RoomRef townRoom = GRoomManager->GetRoomRefFromRoomId(RESPAWN_TOWN_ID);
     if (townRoom == nullptr)
         return false;
@@ -442,7 +438,7 @@ bool Player::ApplyTownRespawnForSave()
 {
     RoomRef respawnRoom = nullptr;
     Protocol::PosInfo respawnPos;
-    if (GetRespawnData(Protocol::RESPAWN_TYPE_TOWN, OUT respawnRoom, OUT respawnPos) == false)
+    if (FindTownRespawnPoint(OUT respawnRoom, OUT respawnPos) == false)
         return false;
 
     respawnPos.set_entity_id(GetEntityId());

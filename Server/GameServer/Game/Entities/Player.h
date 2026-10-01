@@ -53,8 +53,8 @@ public:
     /** Getter 함수*/
     int32 GetEnteringRoomId() { return _enteringRoomId; }
     bool IsMaxLevel() const;
-    // 리스폰할 룸과 위치를 찾는다. 지원하지 않는 유형이거나 룸이나 리스폰 지점이 없으면 false.
-    bool GetRespawnData(Protocol::RespawnType respawnType, OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
+    // 마을 리스폰의 룸과 위치를 찾는다. 마을 룸이나 그 룸의 리스폰 지점이 없으면 false.
+    bool FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
     /** 접속 종료 */
     // 룸 큐 위에서만 부른다.

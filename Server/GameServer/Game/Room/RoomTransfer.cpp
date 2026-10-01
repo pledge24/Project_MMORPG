@@ -7,7 +7,9 @@ optional<string> RoomTransfer::ValidateEnterRequest(const Protocol::C_ENTER_ROOM
     {
     case Protocol::ENTER_TYPE_INITIAL:
     case Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER:
-        if (pkt.has_room_id() == false || pkt.room_id() != enteringRoomId)
+        if (pkt.has_room_id() == false)
+            return string("룸 번호가 없는 입장 요청");
+        if (pkt.room_id() != enteringRoomId)
             return string("C_ENTER_MAP으로 받아 둔 룸 번호와 다른 입장 요청");
         return nullopt;
     case Protocol::ENTER_TYPE_SAME_MAP_TRANSFER:
@@ -39,7 +41,7 @@ RoomEnterData RoomTransfer::MakePortalEnterData(const Json& portal, int64 entity
     enterPos.set_yaw(dst[Yaw]);
     enterPos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
-    // 클라이언트는 이 enter_pos로 텔레포트하므로 반드시 채워야 한다.
+    // 클라이언트는 내 플레이어를 이 enter_pos로 옮기므로 반드시 채워야 한다.
     enterData.enterPos = std::move(enterPos);
 
     return enterData;

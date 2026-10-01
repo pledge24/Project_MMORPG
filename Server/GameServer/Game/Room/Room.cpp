@@ -340,7 +340,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         optional<Json> portalDataOpt = GetPortalDataFromPortalId(pkt.portal_id());
         if (portalDataOpt.has_value() == false)
         {
-            wcout << L"플레이어가 현재 Room에 존재하지 않는 포탈사용 시도" << '\n';
+            wcout << L"플레이어가 현재 Room에 존재하지 않는 포털 사용 시도" << '\n';
             sendEnterRoomFailure();
             return;
         }
@@ -602,9 +602,10 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
     Protocol::PosInfo respawnPos;
     const Protocol::RespawnType respawnType = pkt.respawn_type();
 
+    // 지원하는 유형은 마을 리스폰뿐이라 판정을 통과하면 마을의 리스폰 지점을 찾는다.
     optional<string> rejection = RoomTransfer::ValidateRespawn(player->IsDead(), respawnType);
     if (rejection.has_value() == false
-        && player->GetRespawnData(respawnType, OUT respawnRoom, OUT respawnPos) == false)
+        && player->FindTownRespawnPoint(OUT respawnRoom, OUT respawnPos) == false)
     {
         rejection = "리스폰할 위치를 찾지 못했습니다.";
     }
@@ -799,7 +800,7 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
         return false;
     }
 
-    // 호출자가 GetRespawnData로 계산해 넘겨준 위치를 쓴다.
+    // 호출자가 FindTownRespawnPoint로 찾아 넘겨준 위치를 쓴다.
     shared_ptr<Protocol::PosInfo> targetPos = make_shared<Protocol::PosInfo>(std::move(respawnPos));
 
     if (player->ProcessRespawn(respawnType, targetPos, respawnPkt) == false)
@@ -1069,8 +1070,7 @@ void Room::CacheRoomData()
         _respawnPoint->set_yaw(0.f);
         _respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
-        // 이 플래그가 없으면 GetRespawnPoint()가 항상 nullptr을 반환해
-        // Player::GetRespawnData가 널 역참조로 죽는다.
+        // 이 플래그가 없으면 GetRespawnPoint()가 항상 nullptr을 반환해 마을 리스폰이 실패한다.
         _hasRespawnPoint = true;
     }
 

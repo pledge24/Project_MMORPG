@@ -75,7 +75,7 @@ TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
 
     EXPECT_EQ(enterData.nextRoomId, 20);
     EXPECT_EQ(enterData.enterType, Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
-    ASSERT_TRUE(enterData.enterPos.has_value()) << "클라이언트는 enter_pos로 텔레포트하므로 반드시 채워야 한다";
+    ASSERT_TRUE(enterData.enterPos.has_value()) << "클라이언트는 내 플레이어를 enter_pos로 옮기므로 반드시 채워야 한다";
     EXPECT_EQ(enterData.enterPos->entity_id(), 7);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().x(), -8000.f);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().y(), 10000.f);
