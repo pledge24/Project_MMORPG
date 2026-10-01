@@ -4,8 +4,7 @@
 #include "Entity.h"
 #include "PlayerSaveData.h"
 #include "RoomTransfer.h"
-
-using Cell = set<int64>;   // 특정 영역에 있는 EntityId
+#include "CellMatrix.h"
 
 class Room : public JobQueue
 {
@@ -72,7 +71,6 @@ public:
     bool Contains(int64 entityId) { return _entities.contains(entityId); }
 
     /** Room 위치 관련 */
-    vector2D ClampLocation(float posX, float posY, bool usePadding = true);
     pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);  // pair<플레이어 참조, 거리^2> 
 
     /** 스폰 관련 */
@@ -101,20 +99,13 @@ protected:
 
     /** Room 관련 */
     void CacheRoomData();
-    void CreateCellMatrix();
-    void ClearCellMatrix();
+    // 엔티티 위치로 셀 행렬을 다시 채운다.
     void UpdateCellMatrix();
-
-    pair<int32, int32>      GetCellIndicesFromPos(const vector2D& pos);
-    pair<int32, int32>      GetCellIndicesFromPos(Protocol::PosInfo* posInfo);
-    Cell*                   GetCellFromPos(const vector2D& pos);
-    Cell*                   GetCellFromPos(Protocol::PosInfo* posInfo);
 
 private:
     /** Room 관련 */
 	unordered_map<int64, EntityRef> _entities;
-    vector<vector<Cell>> _cellMatrix;
-    vector2D _cellOffset = vector2D::GetZeroVector();
+    CellMatrix _cellMatrix;
 
     int32 _roomId;
     Json _roomData;

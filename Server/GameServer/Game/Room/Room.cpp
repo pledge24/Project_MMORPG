@@ -32,7 +32,7 @@ bool Room::Init(const Json& roomData)
     // 자주 사용하는 JsonProperty Cache
     CacheRoomData();
 
-    CreateCellMatrix();
+    _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
 
     return true;
 }
@@ -943,85 +943,37 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(GetRandomYaw());
 }
 
-vector2D Room::ClampLocation(float posX, float posY, bool usePadding)
-{
-    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
-    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
-
-    float minX = _roomMinX + widthPadding;
-    float maxX = _roomMaxX - widthPadding;
-    float minY = _roomMinY + heightPadding;
-    float maxY = _roomMaxY - heightPadding;
-
-    float clampedPosX = std::clamp(posX, minX, maxX);
-    float clampedPosY = std::clamp(posY, minY, maxY);
-
-    return { clampedPosX, clampedPosY };
-}
-
 pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
 {
-    Protocol::Vector* pos = posInfo->mutable_pos();
-
-    float minX = pos->x() - range;
-    float maxX = pos->x() + range;
-    float minY = pos->y() - range;
-    float maxY = pos->y() + range;
-
-    vector2D minPos = ClampLocation(minX, minY, false);
-    vector2D maxPos = ClampLocation(maxX, maxY, false);
-
-    auto minIndices = GetCellIndicesFromPos(minPos);
-    auto maxIndices = GetCellIndicesFromPos(maxPos);
-
-    if (minIndices == make_pair(-1, -1) || maxIndices == make_pair(-1, -1))
-    {
-        wcout << L"FindClosestPlayer 실패" << '\n';
-        return make_pair(nullptr, -1.f);
-    }
-
-    // Find Interested Of Cell
-    using Indices = pair<int32, int32>;
-    vector<Indices> indicesList;
-    for (int32 indexX = minIndices.first; indexX <= maxIndices.first; indexX++)
-    {
-        for (int32 indexY = minIndices.second; indexY <= maxIndices.second; indexY++)
-        {
-            indicesList.push_back(make_pair(indexX, indexY));
-        }
-    }
+    const vector2D center(posInfo->pos().x(), posInfo->pos().y());
 
     PlayerRef closestPlayer = nullptr;
     float minDist = -1.f;
     float squareRange = range * range;
-    for (Indices indices : indicesList)
-    {
-        const Cell& cell = _cellMatrix[indices.first][indices.second];
 
-        for (int64 entityId : cell)
+    // 셀 행렬은 탐색 상자에 걸친 칸의 엔티티를 준다. 대상인지와 실제 거리는 여기서 판정한다.
+    for (int64 entityId : _cellMatrix.QueryRange(center, range))
+    {
+        auto it = _entities.find(entityId);
+        if (it == _entities.end())
+            continue;
+
+        if (PlayerRef player = dynamic_pointer_cast<Player>(it->second))
         {
-            auto it = _entities.find(entityId);
-            if (it == _entities.end())
+            // 사망한 플레이어는 리스폰할 때까지 룸에 남지만 대상이 아니다.
+            if (player->IsDead())
                 continue;
 
-            if (PlayerRef player = dynamic_pointer_cast<Player>(it->second))
+            float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
+            if (squareRange < squareDist)
+                continue;
+
+            if (minDist < 0.f || squareDist < minDist)
             {
-                // 사망한 플레이어는 리스폰할 때까지 룸에 남지만 대상이 아니다.
-                if (player->IsDead())
-                    continue;
-
-                float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
-                if (squareRange < squareDist)
-                    continue;
-
-                if (minDist < 0.f || squareDist < minDist)
-                {
-                    minDist = squareDist;
-                    closestPlayer = player;
-                }
+                minDist = squareDist;
+                closestPlayer = player;
             }
         }
-
     }
 
     return make_pair(closestPlayer, minDist);
@@ -1076,98 +1028,15 @@ void Room::CacheRoomData()
 
 }
 
-void Room::CreateCellMatrix()
-{
-    float snappedMinX = static_cast<float>(std::floor(_roomMinX / CELL_SIZE)) * CELL_SIZE;
-    float snappedMaxX = static_cast<float>(std::ceil(_roomMaxX / CELL_SIZE)) * CELL_SIZE;
-    float snappedMinY = static_cast<float>(std::floor(_roomMinY / CELL_SIZE)) * CELL_SIZE;
-    float snappedMaxY = static_cast<float>(std::ceil(_roomMaxY / CELL_SIZE)) * CELL_SIZE;
-
-    int32 cellCountX = static_cast<int32>((snappedMaxX - snappedMinX) / CELL_SIZE);
-    int32 cellCountY = static_cast<int32>((snappedMaxY - snappedMinY) / CELL_SIZE);
-
-    _cellMatrix.resize(cellCountX, vector<Cell>(cellCountY));
-    _cellOffset = vector2D(snappedMinX, snappedMinY);
-}
-
-void Room::ClearCellMatrix()
-{
-    for (auto& inner_vec : _cellMatrix)
-    {
-        for (auto& s : inner_vec)
-        {
-            s.clear();
-        }
-    }
-}
-
 void Room::UpdateCellMatrix()
 {
-    ClearCellMatrix();
+    vector<pair<int64, vector2D>> positions;
+    positions.reserve(_entities.size());
 
-    for (auto& pair : _entities)
-    {
-        int64 entityId = pair.first;
-        EntityRef entity = pair.second;
+    for (auto& [entityId, entity] : _entities)
+        positions.emplace_back(entityId, vector2D(entity->_posInfo->pos().x(), entity->_posInfo->pos().y()));
 
-        Protocol::PosInfo* entityPos = entity->_posInfo;
-
-        auto indices = GetCellIndicesFromPos(entityPos);
-        if (indices == make_pair(-1, -1))
-        {
-            wcout << L"유효하지 않은 위치" << '\n';
-            continue;
-        }
-        
-        int32 indexX = indices.first;
-        int32 indexY = indices.second;
-
-        _cellMatrix[indexX][indexY].insert(entityId);
-
-        //printf("entity: %d (%d, %d)\n", entityId, indexX, indexY);
-    }
-}
-
-std::pair<int32, int32> Room::GetCellIndicesFromPos(const vector2D& entityPos)
-{
-    float offsetX = entityPos.x - _cellOffset.x;
-    float offsetY = entityPos.y - _cellOffset.y;
-
-    if (offsetX < 0.f || offsetY < 0.f)
-        return make_pair(-1, -1);
-
-    int32 indexX = static_cast<int32>(offsetX / CELL_SIZE);
-    int32 indexY = static_cast<int32>(offsetY / CELL_SIZE);
-
-    if(indexX < 0 || indexX >= _cellMatrix.size() || indexY < 0 || indexY >= _cellMatrix[0].size())
-        return make_pair(-1, -1);
-
-    return make_pair(indexX, indexY);
-}
-
-std::pair<int32, int32> Room::GetCellIndicesFromPos(Protocol::PosInfo* posInfo)
-{
-    return GetCellIndicesFromPos(vector2D(posInfo->pos().x(), posInfo->pos().y()));
-}
-
-Cell* Room::GetCellFromPos(const vector2D& pos)
-{
-    auto cellIndices = GetCellIndicesFromPos(pos);
-    if (cellIndices == make_pair(-1, -1))
-    {
-        wcout << L"GetCellFromPos: 유효하지 않는 위치입니다" << '\n';
-        return nullptr;
-    }
-
-    int32 indexX = cellIndices.first;
-    int32 indexY = cellIndices.second;
-
-    return &_cellMatrix[indexX][indexY];
-}
-
-Cell* Room::GetCellFromPos(Protocol::PosInfo* posInfo)
-{
-    return GetCellFromPos(vector2D(posInfo->pos().x(), posInfo->pos().y()));
+    _cellMatrix.Rebuild(positions);
 }
 
 bool Room::AddEntity(EntityRef entity)
@@ -1191,10 +1060,8 @@ bool Room::RemoveEntity(int64 entityId)
 
     EntityRef entity = _entities[entityId];
 
-    // cellMatrix에서 엔티티를 삭제한다. 룸 경계 밖에 있으면 어느 셀에도 없다.
-    auto cellPos = GetCellIndicesFromPos(entity->_posInfo);
-    if (cellPos != make_pair(-1, -1))
-        _cellMatrix[cellPos.first][cellPos.second].erase(entityId);
+    // 셀 행렬에서 엔티티를 삭제한다. 룸 경계 밖에 있으면 어느 셀에도 없다.
+    _cellMatrix.Remove(entityId, vector2D(entity->_posInfo->pos().x(), entity->_posInfo->pos().y()));
 
     // 엔티티를 삭제한다.
 	_entities.erase(entityId);

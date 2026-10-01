@@ -175,6 +175,7 @@
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
+    <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="ItemSaveRowsTests.cpp" />
@@ -228,6 +229,7 @@
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp" />
+    <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp" />

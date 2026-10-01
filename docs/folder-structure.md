@@ -455,7 +455,7 @@ Server/
 ├── GameServer/             게임 규칙
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인
-│   │   ├── Room/           룸, 룸 매니저, 셀 행렬, 룸 이동 판정
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층
 │   │   ├── Inventory/      인벤토리
