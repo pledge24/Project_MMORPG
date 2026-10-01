@@ -184,6 +184,7 @@
     <ClInclude Include="Protocol\Protocol.pb.h" />
     <ClInclude Include="Protocol\Struct.pb.h" />
     <ClInclude Include="Utils\EncodingConverter.h" />
+    <ClInclude Include="Game\Entities\CharacterCreation.h" />
     <ClInclude Include="Game\Entities\EntityUtils.h" />
     <ClInclude Include="Utils\TickIntervalTimer.h" />
     <ClInclude Include="Utils\TickTimer.h" />
@@ -242,6 +243,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Game\Entities\CharacterCreation.cpp" />
     <ClCompile Include="Game\Entities\EntityUtils.cpp" />
     <ClCompile Include="Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="Utils\TickTimer.cpp" />

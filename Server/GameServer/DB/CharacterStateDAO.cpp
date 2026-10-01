@@ -11,12 +11,12 @@
 
 bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
 {
-    const int PARAMS = 1;
+    const int PARAMS = 2;
     const int COLS = 3;
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId) : _characterId(characterId)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId, int64 userId) : _characterId(characterId), _userId(userId)
         {
             BindParam(dbBind);
             BindCol(dbBind);
@@ -25,6 +25,7 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
         void BindParam(DBBind<PARAMS, COLS>& dbBind)
         {
             dbBind.BindParam(0, _characterId);
+            dbBind.BindParam(1, _userId);
         }
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
@@ -36,6 +37,7 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
 
         /* Params */
         int64 _characterId;
+        int64 _userId;
 
         /* Cols */
         int32 _classId;
@@ -48,21 +50,24 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
     try
     {
         // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+        // 이 계정의 캐릭터가 아니면 행이 없다. 클라이언트가 보낸 character_id를 믿지 않는다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             SELECT class_id, character_name, level
             FROM [dbo].[Characters]
-            WHERE character_id = (?)
-            ORDER BY created_at
+            WHERE character_id = (?) AND user_id = (?)
         )SQL");
 
-        BindObject bindObject(dbBind, characterId);
+        GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+        BindObject bindObject(dbBind, characterId, gameSession->_userId);
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
+        // 행이 없으면 바인딩 버퍼는 초기화되지 않은 값이다. 채우지 않고 실패로 끝낸다.
+        if (dbConn->Fetch() == false)
+            throw DBCustomError::SQL_FETCH_FAIL;
 
-        dbConn->Fetch();
+        PlayerRef player = gameSession->_player;
 
         Protocol::PlayerInfo* playerInfo = player->_playerInfo;
 
@@ -159,15 +164,14 @@ bool CharacterStateDAO::LoadLastState(SessionRef session, int64 characterId)
         auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
-        // 전역 표는 여러 DB 스레드가 함께 읽는다. operator[]는 없는 키를 끼워 넣으므로 find로만 조회한다.
-        auto classIt = Gamedata::s_classLevelDataTableMappings.find(playerInfo->class_());
-        if (classIt == Gamedata::s_classLevelDataTableMappings.end())
+        const DataTable* classLevelTable = Gamedata::FindClassLevelTable(playerInfo->class_());
+        if (classLevelTable == nullptr)
         {
             wcout << L"캐릭터 " << characterId << L"의 클래스 " << playerInfo->class_() << L"에 레벨 표가 없습니다" << '\n';
             return false;
         }
 
-        const DataTable& classLevelDataTable = *classIt->second;
+        const DataTable& classLevelDataTable = *classLevelTable;
         auto levelIt = classLevelDataTable.find(playerInfo->level());
         const bool hasExpRequirement = levelIt != classLevelDataTable.end()
             && levelIt->second.contains(JsonProperty::LevelTable::ExpRequirement)

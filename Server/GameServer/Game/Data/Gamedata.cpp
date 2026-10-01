@@ -25,6 +25,15 @@ DataTable Gamedata::s_mapDataTable;
 DataTable Gamedata::s_monsterDataTable;
 DataTable Gamedata::s_questDataTable;
 
+const DataTable* Gamedata::FindClassLevelTable(int32 classId)
+{
+    auto it = s_classLevelDataTableMappings.find(classId);
+    if (it == s_classLevelDataTableMappings.end())
+        return nullptr;
+
+    return it->second;
+}
+
 bool Gamedata::LoadAllGamedata()
 {
     // 레벨 테이블 매핑 초기화

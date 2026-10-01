@@ -103,12 +103,18 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         BindObject(DBBind<PARAMS, COLS>& dbBind, const Protocol::CharacterOverview& character, int64 userId)
             : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name()))
         {
-            unordered_map<int32, Json>& classLevelDataTable = (*Gamedata::s_classLevelDataTableMappings[_classId]);
+            // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 끼워 넣지 않고 실패로 끝낸다.
+            const DataTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
+            if (classLevelTable == nullptr)
+                throw DBCustomError::UNKNOWN_CHARACTER_CLASS;
+
+            const DataTable& classLevelDataTable = *classLevelTable;
             const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
-            _curHp = classLevelDataTable[level][JsonProperty::LevelTable::MaxHp];
-            _curMp = classLevelDataTable[level][JsonProperty::LevelTable::MaxMp];
-            _curPhysicalAttack = classLevelDataTable[level][JsonProperty::LevelTable::PhysicalAttack];
-            _curMagicalAttack = classLevelDataTable[level][JsonProperty::LevelTable::MagicalAttack];
+            const Json& levelData = classLevelDataTable.at(level);
+            _curHp = levelData.at(JsonProperty::LevelTable::MaxHp);
+            _curMp = levelData.at(JsonProperty::LevelTable::MaxMp);
+            _curPhysicalAttack = levelData.at(JsonProperty::LevelTable::PhysicalAttack);
+            _curMagicalAttack = levelData.at(JsonProperty::LevelTable::MagicalAttack);
             BindParam(dbBind);
             BindCol(dbBind);
         }
@@ -265,8 +271,7 @@ void CharacterListDAO::DeleteCharacter(SessionRef session, int64 characterId)
 
     try
     {
-        // 캐릭터 삭제
-        // TODO: 다른 유저가 내 캐릭터를 지워버리지 못하도록 해야함
+        // 캐릭터 삭제. user_id를 함께 대조하므로 이 계정의 캐릭터만 지운다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             BEGIN TRANSACTION;
 

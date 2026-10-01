@@ -14,7 +14,8 @@ enum DBCustomError
     ALREADY_EXISTING_CHARACTER = 24003,
     SQL_MISMATCHED_GET_ROW_COUNT = 24004,
     SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE = 24005,
-    INVENTORY_DIRTY_FLAGS_NOT_FOUND = 24006
+    INVENTORY_DIRTY_FLAGS_NOT_FOUND = 24006,
+    UNKNOWN_CHARACTER_CLASS = 24007
 };
 
 inline const unordered_map<DBCustomError, wstring> DBErrorCauseMappings =
@@ -26,6 +27,7 @@ inline const unordered_map<DBCustomError, wstring> DBErrorCauseMappings =
     {SQL_MISMATCHED_GET_ROW_COUNT, L"GetRowCount() 불일치 발생"},
     {SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE, L"파라미터 배열 처리 행 수 불일치 발생"},
     {INVENTORY_DIRTY_FLAGS_NOT_FOUND, L"더티 플래그 표에 없는 아이템 타입"},
+    {UNKNOWN_CHARACTER_CLASS, L"레벨 표에 없는 직업"},
 };
 
 inline void PrintDBErrorLog(const DBCustomError error)

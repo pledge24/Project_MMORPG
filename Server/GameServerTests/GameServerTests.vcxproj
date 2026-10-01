@@ -172,6 +172,7 @@
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
+    <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="ItemSaveRowsTests.cpp" />
@@ -210,6 +211,7 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityUtils.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />

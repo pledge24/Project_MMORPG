@@ -54,6 +54,7 @@
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
+    <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
     <ClCompile Include="ItemSaveRowsTests.cpp" />
@@ -94,6 +95,9 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\EntityUtils.cpp">
       <Filter>GameServer\Game\Entities</Filter>
