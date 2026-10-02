@@ -100,4 +100,4 @@
   - `P1Creature.cpp`의 `assert`가 없는 식별자 `SrcInfo`를 가리킨다
   - `P1QuestRewardData.h`가 `FP1ItemData`의 헤더를 부르지 않는다
   - 헤더 6개에 쓰지 않는 include가 남아 있다. 부르는 쪽이 전이적으로 기댈 수 있어 #123에서는 `.cpp`의 것만 지웠다
-- 2026-10-02: #124에서 새 파일을 더해 makefile이 다시 만들어지자 UHT가 `P1.cpp(1): error: Expected P1.h to be first header included.`를 출력했다. 빌드는 종료 코드 0으로 통과한다. #123의 A10(`P1.cpp`가 `P1.h`를 부르지 않는다)에서 생겼다. 고치지 않고 `docs/tech-debt.md`에 적었다. `P1.h`를 지우거나 `P1.cpp`가 다시 부르는 것 중 하나를 사람이 정해야 한다
+- 2026-10-02: #124에서 새 파일을 더해 makefile이 다시 만들어지자 UHT가 `P1.cpp(1): error: Expected P1.h to be first header included.`를 출력했다. 빌드는 종료 코드 0으로 통과한다. #123의 A10(`P1.cpp`가 `P1.h`를 부르지 않는다)에서 생겼다. 사람이 `P1.h`를 지우기로 정했고 #124에서 지웠다
