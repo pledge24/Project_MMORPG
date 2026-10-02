@@ -5,18 +5,22 @@
 #include "Utils/Types.h"
 
 class UP1GameInstance;
+class UP1ConnectionSubsystem;
 
 class P1_API PacketSession : public TSharedFromThis<PacketSession>
 {
 public:
-    PacketSession(class FSocket* Socket, UP1GameInstance* InGameInstance);
+    PacketSession(class FSocket* Socket, UP1ConnectionSubsystem* InConnection);
     ~PacketSession();
 
-    /** 이 세션을 연 게임 인스턴스다. 패킷 핸들러는 전역 월드 대신 여기서 게임 인스턴스를 얻는다. */
+    /**
+     * 이 세션을 연 연결 서브시스템의 게임 인스턴스다. 패킷 핸들러는 전역 월드 대신 여기서 게임 인스턴스를 얻는다.
+     * 핸들러가 게임 인스턴스에서 상태를 소유한 곳으로 옮겨 가면 지운다(#125~#127). 연결 서브시스템이 사라졌으면 nullptr.
+     */
     UP1GameInstance* GetGameInstance() const;
 
 private:
-    TWeakObjectPtr<UP1GameInstance> GameInstance;
+    TWeakObjectPtr<UP1ConnectionSubsystem> Connection;
 
     //~ Session Lifecycle
 public:

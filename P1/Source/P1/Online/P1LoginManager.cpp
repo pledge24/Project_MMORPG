@@ -3,7 +3,7 @@
 #include "UI/Frontend/P1LoginWidget.h"
 #include "Http.h"
 #include "HttpModule.h"
-#include "Core/P1GameInstance.h"
+#include "Network/P1ConnectionSubsystem.h"
 #include "Utils/LogCategory.h"
 
 void UP1LoginManager::SetLoginWidget(UP1LoginWidget* Widget)
@@ -89,12 +89,7 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 		{
 			if (FJsonSerializer::Deserialize(Reader, JsonObject))
 			{
-				// 토큰을 GameInstance에 저장
 				token = JsonObject->GetStringField(TEXT("accessToken"));
-				if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
-				{
-					GameInstance->SetToken(token);
-				}
 
 				Message = TEXT("로그인 성공! 캐릭터 불러오는 중...");
 				loginSuccess = true;
@@ -123,13 +118,15 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
         // 토큰 값은 로그 파일에 남기지 않는다.
         UE_LOG(LogP1Network, Display, TEXT("인증 서버에서 액세스 토큰을 받았다"));
 
-		if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
+		// 토큰은 저장하지 않고 게임 서버 로그인에 바로 넘긴다. 게임 서버가 한 번 쓰고 지운다.
+		UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+		if (UP1ConnectionSubsystem* Connection = GameInstance ? GameInstance->GetSubsystem<UP1ConnectionSubsystem>() : nullptr)
 		{
-            GameInstance->ConnectToGameServer();
+            Connection->Connect(token);
 		}
         else
         {
-            UE_LOG(LogP1Network, Error, TEXT("게임인스턴스가 없습니다"));
+            UE_LOG(LogP1Network, Error, TEXT("게임 서버 연결 서브시스템이 없습니다"));
         }
 	}
 }
