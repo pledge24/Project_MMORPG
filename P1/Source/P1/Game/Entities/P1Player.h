@@ -18,7 +18,7 @@ public:
 
     //~ Begin AActor Interface
 protected:
-    virtual void BeginPlay();
+    virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     virtual void PostInitializeComponents() override;
     //~ End AActor Interface

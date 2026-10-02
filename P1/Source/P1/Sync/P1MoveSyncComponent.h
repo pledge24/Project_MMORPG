@@ -42,7 +42,7 @@ public:
     uint64 GetEntityId() const { return ClientPos.entity_id(); }
 
 private:
-    EP1MoveSyncMode Mode = EP1MoveSyncMode::Remote;
+    EP1MoveSyncMode Mode = EP1MoveSyncMode::RemotePlayer;
 
     //~ Server Position
 public:

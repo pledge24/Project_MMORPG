@@ -3,8 +3,6 @@
 #include "Sync/P1MoveSendThrottle.h"
 #include "Sync/P1MoveSyncConstants.h"
 #include "Game/Entities/P1MyPlayer.h"
-#include "Game/Entities/P1Monster.h"
-#include "Game/Combat/P1AttackSystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Network/P1PacketSender.h"
 
@@ -146,8 +144,8 @@ void UP1MoveSyncComponent::TickRemote(float DeltaSeconds)
         //return;
     }
 
-    const bool bIsMonster = Character->IsA<AP1Monster>();
-    const bool bIsIdlePlayer = ServerPos.state() == Protocol::MOVE_STATE_IDLE && Character->IsA<AP1Player>();
+    const bool bIsMonster = Mode == EP1MoveSyncMode::RemoteMonster;
+    const bool bIsIdlePlayer = ServerPos.state() == Protocol::MOVE_STATE_IDLE && Mode == EP1MoveSyncMode::RemotePlayer;
 
     const FP1MoveCorrection Correction = FP1MoveCorrection::Compute(
         Character->GetActorLocation(),
@@ -177,8 +175,7 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     const bool bInputChanged = LastDesiredInput != DesiredInput;
     LastDesiredInput = DesiredInput;
 
-    // 공격 컴포넌트를 null 확인 없이 쓰는 것은 옮기기 전과 같다. #129가 고친다.
-    const bool bAttacking = MyPlayer->GetAttackSystemComponent()->IsAttacking();
+    const bool bAttacking = MyPlayer->IsAttacking();
 
     // 이동 상태 판정
     if (bAttacking)

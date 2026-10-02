@@ -24,7 +24,8 @@ public:
     /** 서버가 보낸 엔티티 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo);
 
-    bool IsMyPlayer() const;
+    /** 로컬 플레이어가 조종하는 크리처면 true다. 내 플레이어가 재정의한다. */
+    virtual bool IsMyPlayer() const { return false; }
 
     //~ Combat
 public:
@@ -32,6 +33,9 @@ public:
     virtual void S_Hit(int64 Damage, int64 UpdatedHp);
 
     class UP1AttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
+
+    /** 공격 컴포넌트가 없으면 false다. */
+    bool IsAttacking() const;
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
 
