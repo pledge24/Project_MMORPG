@@ -1,17 +1,8 @@
 #include "Sync/P1MoveCorrection.h"
+#include "Sync/P1MoveSyncConstants.h"
 #include "Kismet/KismetMathLibrary.h"
 
-namespace
-{
-    /** 이 거리(cm) 이상 벌어지면 보간하지 않고 서버 위치로 옮긴다. */
-    constexpr float SNAP_DISTANCE = 800.f;
-
-    /** FMath::VInterpTo에 넘기는 보간 속도다. */
-    constexpr float LOCATION_INTERP_SPEED = 5.f;
-
-    /** FMath::RInterpTo에 넘기는 보간 속도다. */
-    constexpr float ROTATION_INTERP_SPEED = 5.f;
-}
+using namespace P1MoveSync;
 
 FP1MoveCorrection FP1MoveCorrection::Compute(
     const FVector& ClientLocation,

@@ -20,7 +20,6 @@ public:
 protected:
     virtual void BeginPlay();
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void Tick(float DeltaTime) override;
     virtual void PostInitializeComponents() override;
     //~ End AActor Interface
 
@@ -28,9 +27,6 @@ protected:
 public:
     /** 서버가 보낸 엔티티 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
-
-protected:
-    virtual void S_Move(float DeltaSeconds) override;
     //~ End AP1Creature Interface
 
     //~ Equipment

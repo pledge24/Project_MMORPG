@@ -23,7 +23,6 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void Tick(float DeltaTime) override;
     //~ End AActor Interface
 
     //~ Begin APawn Interface
@@ -37,9 +36,6 @@ public:
     virtual void Initialize(const Protocol::EntityInfo& InEntityInfo) override;
 
 protected:
-    /** 내 캐릭터는 서버가 보낸 위치를 되받지 않는다. 입력이 곧 위치다. */
-    virtual void S_Move(float DeltaSeconds) override final {};
-
     /** 내 캐릭터의 공격은 입력이 시작한다. 서버 통지로 다시 재생하지 않는다. */
     virtual void S_NormalAttack(uint32 Combo, float Yaw) override final {};
     //~ End AP1Creature Interface
@@ -81,35 +77,26 @@ private:
     TObjectPtr<UInputAction> ToggleBattleModeAction;
 
     //~ Movement
+public:
+    /** 공격 중이면 false다. 이동 동기화 컴포넌트가 이동 상태와 송신을 판정할 때 읽는다. */
+    bool CanInputMovement() const;
+
+    /** 이동 입력의 원본 값이다. 입력이 없으면 0 벡터다. */
+    FVector2D GetDesiredInput() const { return DesiredInput; }
+
+    /** 입력을 카메라 기준으로 바꾼 이동 방향의 단위 벡터다. 입력이 없으면 0 벡터다. */
+    FVector GetDesiredMoveDirection() const { return DesiredMoveDirectionVec; }
+
+    /** 이동 방향의 Yaw(도)다. */
+    float GetDesiredMoveDirectionYaw() const { return DesiredMoveDirectionYaw; }
+
 protected:
     void Move(const FInputActionValue& Value);
 
-    bool CanInputMovement() const;
-
 private:
-    Protocol::C_MOVE MovePkt;
-
-    /**
-     * 초 단위 이동 패킷 전송 주기다.
-     * MovePacketSendTimer가 이 값으로 초기화되므로 그보다 먼저 선언한다.
-     */
-    const float MOVE_PACKET_SEND_DELAY = 0.2f;
-    const float YAW_TOLERANCE = 60.f;
-    float MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
-
     FVector2D DesiredInput;
     FVector DesiredMoveDirectionVec;    // 이동할 방향(단위 벡터)
     float DesiredMoveDirectionYaw;      // 이동할 방향(Yaw)
-
-    /** 직전 프레임의 입력이다. 값이 바뀌었을 때만 패킷을 보낸다. */
-    FVector2D LastDesiredInput;
-
-    //~ Movement Debug
-private:
-    /** 켜면 평균 전송 속도를 로그로 남긴다. */
-    const bool Activate = false;
-    int32 SendCounter = 1;
-    float TotalSecond = 0.2f;
 
     //~ Combat
 protected:

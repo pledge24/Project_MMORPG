@@ -17,7 +17,6 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    virtual void Tick(float DeltaTime) override;
     //~ End AActor Interface
 
     //~ Initialization
@@ -26,30 +25,6 @@ public:
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo);
 
     bool IsMyPlayer() const;
-
-    //~ Movement
-public:
-    bool PushToMoveQueue(const Protocol::PosInfo& InInfo);
-
-    void SetMoveState(Protocol::MoveState State);
-    void SetClientPos(const Protocol::PosInfo& Info);
-    void SetServerPos(const Protocol::PosInfo& Info);
-
-    Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
-    TSharedPtr<Protocol::PosInfo> GetPosInfo() const { return ClientPos; }
-
-    virtual void S_Move(float DeltaSeconds);
-
-protected:
-    /** 클라이언트 위치다. 지금 화면에 보이는 캐릭터의 위치다. */
-    TSharedPtr<Protocol::PosInfo> ClientPos;
-
-    /** 서버에서 받은 위치다. 내 플레이어가 아닌 캐릭터에만 쓴다. */
-    TSharedPtr<Protocol::PosInfo> ServerPos;
-
-private:
-    TQueue<Protocol::PosInfo> MoveQueue;
-    FVector MoveDirection = FVector::ZeroVector;
 
     //~ Combat
 public:
@@ -82,8 +57,8 @@ public:
     UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Delegate")
     FOnDie OnDie;
 
-    /** 사망 상태를 풀고 리스폰 위치로 옮긴다. 같은 액터를 다시 쓴다. */
-    virtual void S_Respawn(const Protocol::PosInfo& RespawnPos);
+    /** 사망 상태를 풀고 OnRespawn을 알린다. 같은 액터를 다시 쓴다. 리스폰 위치는 부르는 쪽이 먼저 옮겨 둔다. */
+    virtual void S_Respawn();
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRespawn, AActor*, RespawnedCreature);
 
