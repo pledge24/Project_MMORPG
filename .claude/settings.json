@@ -120,9 +120,29 @@
             ],
             "timeout": 10,
             "statusMessage": "UE 도구 허용 명단 검사 중"
-          }
-        ]
-      }
-    ]
-  }
-}
+          },
+          {
+              "type": "command",
+              "command": "py",
+              "args": ["-3", "${CLAUDE_PROJECT_DIR}/.claude/hooks/ue_briefing.py"],
+              "timeout": 10,
+              "statusMessage": "언리얼 MCP 브리핑 확인 중"
+            } 
+          ]   
+        }   
+      ],  
+    "SessionStart": [
+      { 
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "py",
+            "args": ["-3", "${CLAUDE_PROJECT_DIR}/.claude/hooks/ue_briefing.py"],
+            "timeout": 10
+          } 
+        ]   
+      }   
+    ]   
+  }   
+}   
