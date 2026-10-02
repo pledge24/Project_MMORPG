@@ -9,6 +9,7 @@
 class AP1Monster;
 class AP1Player;
 class AP1EntitySpawner;
+class UP1MyPlayerData;
 
 /** 서버가 id로 관리하는 엔티티를 월드 액터와 이어 붙이는 서브시스템이다. */
 UCLASS()
@@ -78,6 +79,9 @@ public:
     void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
     void HandleMove(const Protocol::S_MOVE& MovePkt);
 
+protected:
+    void HandleMove(const Protocol::PosInfo& Info);
+
     //~ Combat Packet Handlers
 public:
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
@@ -91,5 +95,6 @@ public:
     void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
 
 protected:
-    void HandleMove(const Protocol::PosInfo& Info);
+    /** 게임 인스턴스가 없으면 nullptr. */
+    UP1MyPlayerData* GetMyPlayerData() const;
 };

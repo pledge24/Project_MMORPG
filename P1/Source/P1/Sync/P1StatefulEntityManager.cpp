@@ -263,7 +263,7 @@ void UP1StatefulEntityManager::HandleHit(const Protocol::S_HIT& HitPkt)
 
     if (Creature->IsMyPlayer())
     {
-        if (UP1MyPlayerData* MyPlayerData = GetWorld()->GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
+        if (UP1MyPlayerData* MyPlayerData = GetMyPlayerData())
             MyPlayerData->ApplyStat(Protocol::STAT_TYPE_HP, HitPkt.updated_hp());
     }
 }
@@ -294,7 +294,15 @@ void UP1StatefulEntityManager::HandleRespawn(const Protocol::S_RESPAWN& RespawnP
 
     if (Creature->IsMyPlayer())
     {
-        if (UP1MyPlayerData* MyPlayerData = GetWorld()->GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
+        if (UP1MyPlayerData* MyPlayerData = GetMyPlayerData())
             MyPlayerData->ApplyStats(RespawnPkt.updated_stat());
     }
+}
+
+UP1MyPlayerData* UP1StatefulEntityManager::GetMyPlayerData() const
+{
+    if (UGameInstance* GameInstance = GetWorld()->GetGameInstance())
+        return GameInstance->GetSubsystem<UP1MyPlayerData>();
+
+    return nullptr;
 }

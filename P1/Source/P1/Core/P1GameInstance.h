@@ -59,7 +59,8 @@ public:
 
     //~ Entity Lookup
 private:
-    /** 현재 월드의 엔티티 관리자다. 월드가 없으면 nullptr. #126과 #127이 남은 핸들러를 옮기면 지운다. */
+    // TODO: #126과 #127이 남은 핸들러를 옮기면 지운다
+    /** 현재 월드의 엔티티 관리자다. 월드가 없으면 nullptr. */
     UP1StatefulEntityManager* GetEntityManager() const;
 
     //~ Trade Packet Handlers
