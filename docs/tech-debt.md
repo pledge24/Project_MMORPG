@@ -153,8 +153,7 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 |---|---|
 | `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
 
-캐릭터 쪽은 갚았다. 이동 동기화는 #128이 `Sync/P1MoveSyncComponent`로 옮겼고, #129가 크리처의 하위 클래스 분기를
-가상 함수로 바꾸고 내 플레이어에 카메라, 입력, 전투 모드만 남겼다. 남은 것은 위 표의 컨트롤러이고 #130이 갚는다.
+#130이 갚는다.
 
 ### 영향
 
@@ -246,7 +245,7 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 
 **유지보수 어려움** — `assert`를 켜는 구성에서는 빌드가 깨진다. 지금은 검사하려던 조건을 아무도 검사하지 않는다.
 
-## 이동 패킷의 회전 판정이 각도를 감싸지 않는다
+## 이동 패킷 송신 판정의 회전 비교가 틀린다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
 > 위치: `P1/Source/P1/Sync/P1MoveSendThrottle.cpp` (`FP1MoveSendThrottle::Decide`)
 > 등록일: 2026년 10월 3일

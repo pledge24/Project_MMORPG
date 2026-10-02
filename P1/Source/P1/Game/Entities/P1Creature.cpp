@@ -18,12 +18,12 @@ void AP1Creature::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Set AttackSystem Component
+    // 공격 컴포넌트를 찾는다
     AttackSystemComponent = FindComponentByClass<UP1AttackSystemComponent>();
     if (AttackSystemComponent == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature {%s} AttackSystemComponent 누락"), *this->GetName());
 
-    // Set and Initialize Nameplate Component
+    // 네임플레이트 컴포넌트를 찾아 이 크리처를 바인딩한다
     NameplateComponent = FindComponentByClass<UWidgetComponent>();
     if (NameplateComponent)
     {
