@@ -30,15 +30,10 @@ void UP1GameInstance::Init()
     else
         UE_LOG(LogP1System, Warning, TEXT("내 플레이어 데이터 서브시스템을 찾지 못했다"));
 
-    _Connection = GetSubsystem<UP1ConnectionSubsystem>();
-    if (IsValid(_Connection) == false)
-    {
-        UE_LOG(LogP1System, Warning, TEXT("연결 서브시스템을 찾지 못했다"));
-    }
+    if (UP1ConnectionSubsystem* Connection = GetSubsystem<UP1ConnectionSubsystem>())
+        Connection->OnConnectionLost.AddUObject(this, &UP1GameInstance::HandleConnectionLost);
     else
-    {
-        _Connection->OnConnectionLost.AddUObject(this, &UP1GameInstance::HandleConnectionLost);
-    }
+        UE_LOG(LogP1System, Warning, TEXT("연결 서브시스템을 찾지 못했다"));
 }
 
 void UP1GameInstance::OpenInGameMap()
@@ -72,11 +67,8 @@ void UP1GameInstance::ReturnToLogin(const FString& Notice)
 {
     UE_LOG(LogP1Network, Warning, TEXT("게임 서버 연결이 끊겨 로그인 화면으로 돌아간다: %s"), *Notice);
 
-    // 토큰은 게임 서버가 한 번 쓰고 지웠다. 다시 들어가려면 인증 서버에 다시 로그인해야 한다.
-    // 그래서 연결만 닫고 다시 잇지 않는다. 알리기 전에 연결 서브시스템이 이미 닫았으므로 이 Close는 아무것도 하지 않는다.
-    if (_Connection)
-        _Connection->Close();
-
+    // 토큰은 게임 서버가 한 번 쓰고 지웠다. 다시 들어가려면 인증 서버에 다시 로그인해야 하므로 다시 잇지 않는다.
+    // 연결은 끊김을 알리기 전에 연결 서브시스템이 닫았다.
     PendingLoginNotice = Notice;
     UGameplayStatics::OpenLevel(GetWorld(), FName("L_LoginMap"));
 }

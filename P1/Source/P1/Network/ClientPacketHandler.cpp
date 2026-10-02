@@ -75,7 +75,7 @@ bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
     if (EntityManager == nullptr || MyPlayerData == nullptr)
         return false;
 
-    // 룸 id를 먼저 저장하고, 같은 맵 이동과 리스폰이면 엔티티를 정리하고 내 플레이어를 옮긴다.
+    // 룸 id는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 위치는 엔티티 관리자가 맡는다.
     MyPlayerData->HandleEnterRoom(pkt);
     EntityManager->HandleEnterRoom(pkt);
     return true;
