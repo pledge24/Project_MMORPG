@@ -47,9 +47,10 @@ private:
 
     //~ Windows
 public:
-    /** 창을 보이고 다른 창보다 앞에 그린다. 이미 열려 있어도 앞으로 올린다. */
+    /** 창을 보이고 다른 창보다 앞에 그린다. 이미 열려 있어도 앞으로 올린다. UI 입력 모드로 바꾸고 커서를 보인다. */
     void OpenWindow(EP1WidgetType Type);
 
+    /** 창을 숨긴다. 열린 창이 남지 않으면 게임 입력 모드로 돌리고 커서를 숨긴다. */
     void CloseWindow(EP1WidgetType Type);
     void ToggleWindow(EP1WidgetType Type);
     bool IsWindowOpen(EP1WidgetType Type) const;

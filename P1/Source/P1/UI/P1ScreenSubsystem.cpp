@@ -19,16 +19,22 @@ namespace
     constexpr int32 DEATH_SCREEN_Z_ORDER = 10000;
 
     template <typename T>
-    T* CreateScreen(APlayerController* OwningPlayer, const TSoftClassPtr<T>& WidgetClass, int32 ZOrder, ESlateVisibility Visibility)
+    T* LoadAndCreate(APlayerController* OwningPlayer, const TSoftClassPtr<T>& WidgetClass)
     {
         UClass* LoadedClass = WidgetClass.LoadSynchronous();
         if (LoadedClass == nullptr)
         {
-            UE_LOG(LogP1UI, Warning, TEXT("P1 UI 설정에 위젯 클래스가 비어 있다: %s"), *WidgetClass.ToString());
+            UE_LOG(LogP1UI, Warning, TEXT("P1 UI 설정의 위젯 클래스가 비어 있거나 불러오지 못했다: %s"), *WidgetClass.ToString());
             return nullptr;
         }
 
-        T* Widget = CreateWidget<T>(OwningPlayer, LoadedClass);
+        return CreateWidget<T>(OwningPlayer, LoadedClass);
+    }
+
+    template <typename T>
+    T* CreateScreen(APlayerController* OwningPlayer, const TSoftClassPtr<T>& WidgetClass, int32 ZOrder, ESlateVisibility Visibility)
+    {
+        T* Widget = LoadAndCreate(OwningPlayer, WidgetClass);
         if (Widget)
         {
             Widget->AddToViewport(ZOrder);
@@ -40,14 +46,7 @@ namespace
     template <typename T>
     T* CreateWindowWidget(APlayerController* OwningPlayer, const TSoftClassPtr<T>& WidgetClass, UP1WindowLayerWidget* WindowLayer)
     {
-        UClass* LoadedClass = WidgetClass.LoadSynchronous();
-        if (LoadedClass == nullptr)
-        {
-            UE_LOG(LogP1UI, Warning, TEXT("P1 UI 설정에 창 클래스가 비어 있다: %s"), *WidgetClass.ToString());
-            return nullptr;
-        }
-
-        T* Window = CreateWidget<T>(OwningPlayer, LoadedClass);
+        T* Window = LoadAndCreate(OwningPlayer, WidgetClass);
         if (Window)
         {
             WindowLayer->AddWindow(Window);
@@ -112,12 +111,7 @@ void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
 
     OpenWindowFlags |= (1 << static_cast<uint8>(Type));
 
-    // 열린 창이 생겼으니 UI 모드로 맞춘다
-    if (APlayerController* PC = OwningPlayer.Get())
-    {
-        PC->bShowMouseCursor = true;
-        PC->SetInputMode(FInputModeGameAndUI());
-    }
+    RefreshInputMode();
 }
 
 void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)

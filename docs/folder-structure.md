@@ -176,7 +176,7 @@ Core → Game/Entities → 게임 도메인
 
 **게임 도메인은 `Core/`와 `UI/`를 부르지 않는다.** 배선에 알려야 할 일은
 델리게이트로 알리고 배선이 구독한다(예: `AP1MyPlayer::OnBattleModeChanged`를 컨트롤러가
-`OnPossess`에서 구독). 배선의 객체를 도메인이 호출해야 하면 `Game/`에 인터페이스를 두고 배선이
+`OnPossess`에서 화면 서브시스템에 이어 준다). 배선의 객체를 도메인이 호출해야 하면 `Game/`에 인터페이스를 두고 배선이
 구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`).
 
 **`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.

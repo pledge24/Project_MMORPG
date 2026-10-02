@@ -9,7 +9,7 @@ class UInputAction;
 class UInputMappingContext;
 class UP1ScreenSubsystem;
 
-/** 인게임 맵의 컨트롤러다. 룸 입장을 요청하고, 화면 단축키를 화면 서브시스템에 넘긴다. 화면은 화면 서브시스템이 맡는다. */
+/** 인게임 맵의 컨트롤러다. 룸 입장을 요청하고, 화면 서브시스템을 만들고 치우는 시점과 화면 단축키를 넘긴다. */
 UCLASS()
 class P1_API AP1InGamePlayerController : public APlayerController
 {
