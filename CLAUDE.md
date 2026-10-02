@@ -85,8 +85,8 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 - 계획 밖에서 발견한 부채는 즉석에서 고치지 않는다. `docs/tech-debt.md`에 기록하고 넘어간다.
   즉석 수정은 계획과 실제 diff의 대조를 무의미하게 만들고 범위를 두 배로 키운다.
 - 아직 착수하지 않은 작업 후보는 `docs/backlog.md`에 적는다. `tech-debt.md`에 순서를 적지 않는다.
-- 진행 상태는 work 파일의 진행 표로 판단하고, 이슈의 열림·닫힘으로 판단하지 않는다 — 티켓 PR은 통합
-  브랜치로 머지되므로 이슈가 자동으로 닫히지 않는다.
+- 진행 상태는 work 파일의 진행 표로 판단한다. 통합 브랜치로 머지된 티켓의 이슈는 `close-merged-issues`
+  워크플로가 닫으므로, 워크플로가 실패하면 머지된 티켓의 이슈도 열려 있다.
 
 ## 아키텍처 핵심 규칙 (상세: `docs/ARCHITECTURE.md`)
 
