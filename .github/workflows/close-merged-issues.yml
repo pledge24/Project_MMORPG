@@ -1,0 +1,61 @@
+# 기본 브랜치가 아닌 브랜치로 머지된 PR의 닫기 키워드를 처리한다.
+#
+# GitHub 는 PR 본문의 `Closes #N` 을 기본 브랜치(dev)로 머지될 때만 처리한다. 여러 세션에 걸친
+# 작업은 티켓 PR 을 통합 브랜치로 머지하므로(docs/work/), 이 워크플로가 없으면 이슈가 열린 채 남는다.
+# dev 로 가는 PR 은 GitHub 가 처리하므로 여기서 건드리지 않는다.
+#
+# pull_request_target 을 쓰는 이유: 워크플로 파일을 머지 대상 브랜치에서 읽는다. 통합 브랜치가 이
+# 파일을 가지고 있으면 그 브랜치로 머지되는 모든 티켓 PR 에서 돈다. 통합 브랜치를 dev 에서 따면
+# 파일이 함께 따라오므로 따로 할 일이 없다.
+#
+# 이 이벤트는 쓰기 권한 토큰으로 돈다. 그래서 PR 의 코드를 체크아웃하지 않고, PR 본문은 env 로만
+# 넘겨 스크립트 문자열에 끼워 넣지 않는다.
+
+name: 머지된 PR의 이슈 닫기
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  close:
+    name: 닫기 키워드의 이슈 닫기
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref != github.event.repository.default_branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 본문에서 이슈 번호를 뽑아 닫기
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # GitHub 의 닫기 키워드 아홉 개를 대소문자 구분 없이 맞춘다. 키워드 앞이 단어 경계여야 하므로
+          # disclose #3 은 맞지 않는다. 다른 저장소를 가리키는 owner/repo#N 도 맞지 않는다.
+          numbers=$(printf '%s\n' "$PR_BODY" \
+            | grep -oiE '(^|[^[:alnum:]_])(close[sd]?|fix(e[sd])?|resolve[sd]?):?[[:space:]]+#[0-9]+' \
+            | grep -oE '[0-9]+$' \
+            | sort -un || true)
+
+          if [ -z "$numbers" ]; then
+            echo "본문에 닫기 키워드가 없다."
+            exit 0
+          fi
+
+          for n in $numbers; do
+            # 없는 번호처럼 조회가 실패하면 그 번호만 건너뛰고 나머지는 계속 닫는다.
+            state=$(gh issue view "$n" --json state --jq .state 2>/dev/null || echo "조회 실패")
+            if [ "$state" = "OPEN" ]; then
+              gh issue close "$n" --comment "PR #$PR_NUMBER 머지(\`$BASE_REF\`)로 닫는다."
+              echo "#$n: 닫았다."
+            else
+              echo "#$n: 건너뛴다 ($state)."
+            fi
+          done
