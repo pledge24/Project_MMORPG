@@ -23,14 +23,14 @@ void UP1GameInstance::Init()
 {
     Super::Init();
 
-    _MyPlayerData = GetSubsystem<UP1MyPlayerData>();
-    if (IsValid(_MyPlayerData) == false)
+    UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>();
+    if (IsValid(MyPlayerData) == false)
     {
-        UE_LOG(LogP1System, Warning, TEXT("_MyPlayerData Is Invalid"));
+        UE_LOG(LogP1System, Warning, TEXT("내 플레이어 데이터 서브시스템을 찾지 못했다"));
     }
     else
     {
-        _MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1GameInstance::HandleMyPlayerSpawned);
+        MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1GameInstance::HandleMyPlayerSpawned);
     }
 
     _Connection = GetSubsystem<UP1ConnectionSubsystem>();
@@ -55,15 +55,6 @@ void UP1GameInstance::BeginDestroy()
 bool UP1GameInstance::IsConnected() const
 {
 	return _Connection && _Connection->IsConnected();
-}
-
-void UP1GameInstance::RemovePacketListener(const UObject* Listener)
-{
-    OnRecvBuyItemPkt.RemoveAll(Listener);
-    OnRecvSellItemPkt.RemoveAll(Listener);
-    OnRecvUseItemPkt.RemoveAll(Listener);
-    OnRecvEquipGearPkt.RemoveAll(Listener);
-    OnRecvUnequipGearPkt.RemoveAll(Listener);
 }
 
 void UP1GameInstance::HandleConnectionLost()
@@ -182,192 +173,6 @@ UP1StatefulEntityManager* UP1GameInstance::GetEntityManager() const
     return nullptr;
 }
 
-void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (IsValid(_MyPlayer) == true)
-    {
-        OnRecvBuyItemPkt.Broadcast();
-        if (BuyItemPkt.success() == true)
-        {
-            for (const Protocol::Slot& UpdatedSlot : BuyItemPkt.updated_slots())
-            {
-                _MyPlayerData->OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
-            }
-            _MyPlayerData->OnGoldChanged.Broadcast(BuyItemPkt.gold());
-        }
-    }
-}
-
-void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (IsValid(_MyPlayer) == true)
-    {
-        OnRecvSellItemPkt.Broadcast();
-        if (SellItemPkt.success() == true)
-        {
-            _MyPlayerData->OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
-            _MyPlayerData->OnGoldChanged.Broadcast(SellItemPkt.gold());
-        }
-    }
-}
-
-void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    UP1StatefulEntityManager* EntityManager = GetEntityManager();
-    if (EntityManager == nullptr)
-        return;
-
-    AP1Player* Player = EntityManager->FindEntityAs<AP1Player>(UseItemPkt.entity_id());
-    if (Player == nullptr)
-        return;
-
-    if (Player->IsMyPlayer() == false)
-        return;
-
-    if (IsValid(_MyPlayer) == true)
-    {
-        OnRecvUseItemPkt.Broadcast();
-        if (UseItemPkt.success() == true)
-        {
-            for (auto& Slot_ : UseItemPkt.updated_slots())
-            {
-                _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, true);
-            }
-
-            _MyPlayerData->ApplyStats(UseItemPkt.updated_stat());
-        }
-    }
-}
-
-void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    UP1StatefulEntityManager* EntityManager = GetEntityManager();
-    if (EntityManager == nullptr)
-        return;
-
-    AP1Player* Player = EntityManager->FindEntityAs<AP1Player>(EquipGearPkt.entity_id());
-    if (Player == nullptr)
-        return;
-
-    // 공통: 장착 부위 매쉬 변경
-    if(EquipGearPkt.success() == true){
-        int32 SlotId = EquipGearPkt.slot_id();
-        int32 TemplateId = EquipGearPkt.template_id();
-
-        // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
-        Player->ApplyGear(SlotId, TemplateId);
-    }
-
-    // 내 플레이어: 장비창 + 인벤창 + 스텟 변경
-    if (Player->IsMyPlayer())
-    {
-        OnRecvEquipGearPkt.Broadcast();
-        if (EquipGearPkt.success() == true)
-        {
-            for (auto& Slot_ : EquipGearPkt.updated_slots())
-            {
-                switch (Slot_.type())
-                {
-                case Protocol::SLOT_TYPE_EQUIPPED:
-                {
-                    _MyPlayerData->OnEquipmentSlotChanged.Broadcast(Slot_);
-                    break;
-                }
-                case Protocol::SLOT_TYPE_INVENTORY_GEAR:
-                case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
-                case Protocol::SLOT_TYPE_INVENTORY_MISC:
-                {
-                    _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
-                    break;
-                }
-                }
-            }
-
-            _MyPlayerData->ApplyStats(EquipGearPkt.updated_stat());
-
-        }
-
-    }
-
-}
-
-void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    UP1StatefulEntityManager* EntityManager = GetEntityManager();
-    if (EntityManager == nullptr)
-        return;
-
-    AP1Player* Player = EntityManager->FindEntityAs<AP1Player>(UnequipGearPkt.entity_id());
-    if (Player == nullptr)
-        return;
-
-    // 공통: 장착 부위 매쉬 변경
-    if (UnequipGearPkt.success() == true)
-    {
-        int32 SlotId = UnequipGearPkt.slot_id();
-        int32 TemplateId = UnequipGearPkt.template_id();
-
-        // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
-        Player->ApplyGear(SlotId, TemplateId);
-    }
-
-    // 장착해서 갱신된 인벤 슬롯 정보를 반영.
-    if (Player->IsMyPlayer())
-    {
-        OnRecvUnequipGearPkt.Broadcast();
-        if (UnequipGearPkt.success() == true)
-        {
-            for (auto& Slot_ : UnequipGearPkt.updated_slots())
-            {
-                switch (Slot_.type())
-                {
-                case Protocol::SLOT_TYPE_EQUIPPED:
-                {
-                    _MyPlayerData->OnEquipmentSlotChanged.Broadcast(Slot_);
-                    break;
-                }
-                case Protocol::SLOT_TYPE_INVENTORY_GEAR:
-                case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
-                case Protocol::SLOT_TYPE_INVENTORY_MISC:
-                {
-                    _MyPlayerData->OnInvenSlotChanged.Broadcast(Slot_, false);
-                    break;
-                }
-                }
-            }
-
-            _MyPlayerData->ApplyStats(UnequipGearPkt.updated_stat());
-
-        }
-
-    }
-
-
-}
-
 void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
 {
     if (IsConnected() == false)
@@ -384,12 +189,4 @@ void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& Reward
 void UP1GameInstance::HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 {
     _MyPlayer = MyPlayer;
-}
-
-UP1MyPlayerData* UP1GameInstance::GetMyPlayerData()
-{
-    if (IsValid(_MyPlayerData) == false)
-        _MyPlayerData = GetSubsystem<UP1MyPlayerData>();
-
-    return _MyPlayerData;
 }

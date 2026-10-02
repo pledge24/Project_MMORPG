@@ -306,3 +306,23 @@ UP1MyPlayerData* UP1StatefulEntityManager::GetMyPlayerData() const
 
     return nullptr;
 }
+
+void UP1StatefulEntityManager::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+{
+    if (EquipGearPkt.success() == false)
+        return;
+
+    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
+    if (AP1Player* Player = FindEntityAs<AP1Player>(EquipGearPkt.entity_id()))
+        Player->ApplyGear(EquipGearPkt.slot_id(), EquipGearPkt.template_id());
+}
+
+void UP1StatefulEntityManager::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
+{
+    if (UnequipGearPkt.success() == false)
+        return;
+
+    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
+    if (AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id()))
+        Player->ApplyGear(UnequipGearPkt.slot_id(), UnequipGearPkt.template_id());
+}

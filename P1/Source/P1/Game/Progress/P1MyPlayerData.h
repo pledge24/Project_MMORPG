@@ -87,7 +87,7 @@ protected:
     //~ Possession
 public:
     Protocol::Possession* GetPossession() { return _Possession.Get(); }
-    int32 GetGold() const { return _Possession->gold(); };
+    int64 GetGold() const { return _Possession->gold(); };
 
     void Rep_GoldChanged(int64 Gold) const;
 
@@ -116,4 +116,39 @@ public:
 protected:
     UPROPERTY()
     TObjectPtr<UP1EquippedGear> EquippedGear;
+
+    //~ Item Packet Handlers
+public:
+    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 아래 핸들러도 같다. */
+    void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
+    void HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt);
+
+    /** 내 플레이어의 사용 응답이 아니면 무시한다. */
+    void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
+
+    /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
+    void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
+
+    /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
+    void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
+
+    /** 응답이 왔다는 알림이다. 성공 여부와 무관하게 알린다. */
+    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
+    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
+    FOnRecvSellItemPkt OnRecvSellItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
+    FOnRecvUseItemPkt OnRecvUseItemPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
+    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
+
+    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
+    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
+
+protected:
+    /** 장착과 해제 응답이 실어 온 슬롯을 종류에 맞는 델리게이트로 알린다. */
+    void ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots);
 };

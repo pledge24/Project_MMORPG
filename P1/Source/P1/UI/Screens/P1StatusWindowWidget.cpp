@@ -24,7 +24,7 @@ void UP1StatusWindowWidget::NativeConstruct()
 
             // 바인딩 셋업
             MyPlayerData->OnEquipmentSlotChanged.AddUObject(this, &UP1StatusWindowWidget::UpdateSlotWidget);
-            GameInstance->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
         }
     }
 

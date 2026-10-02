@@ -82,6 +82,14 @@ public:
 protected:
     void HandleMove(const Protocol::PosInfo& Info);
 
+    //~ Gear Packet Handlers
+public:
+    /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
+    void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
+
+    /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
+    void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
+
     //~ Combat Packet Handlers
 public:
     void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);

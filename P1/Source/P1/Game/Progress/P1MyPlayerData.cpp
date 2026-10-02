@@ -98,6 +98,11 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
     OnGoldChanged.RemoveAll(Listener);
     OnInvenSlotChanged.RemoveAll(Listener);
     OnEquipmentSlotChanged.RemoveAll(Listener);
+    OnRecvBuyItemPkt.RemoveAll(Listener);
+    OnRecvSellItemPkt.RemoveAll(Listener);
+    OnRecvUseItemPkt.RemoveAll(Listener);
+    OnRecvEquipGearPkt.RemoveAll(Listener);
+    OnRecvUnequipGearPkt.RemoveAll(Listener);
 
     for (auto& Pair : OnStatChangedMappings)
         Pair.Value.RemoveAll(Listener);
@@ -145,4 +150,88 @@ void UP1MyPlayerData::Rep_GoldChanged(const int64 Gold) const
 void UP1MyPlayerData::Rep_LevelChanged(int32 Level) const
 {
     _PlayerInfo->set_level(Level);
+}
+
+void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
+{
+    OnRecvBuyItemPkt.Broadcast();
+    if (BuyItemPkt.success() == false)
+        return;
+
+    for (const Protocol::Slot& UpdatedSlot : BuyItemPkt.updated_slots())
+    {
+        OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
+    }
+    OnGoldChanged.Broadcast(BuyItemPkt.gold());
+}
+
+void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
+{
+    OnRecvSellItemPkt.Broadcast();
+    if (SellItemPkt.success() == false)
+        return;
+
+    OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
+    OnGoldChanged.Broadcast(SellItemPkt.gold());
+}
+
+void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
+{
+    if (UseItemPkt.entity_id() != _PlayerId)
+        return;
+
+    OnRecvUseItemPkt.Broadcast();
+    if (UseItemPkt.success() == false)
+        return;
+
+    for (const Protocol::Slot& UpdatedSlot : UseItemPkt.updated_slots())
+    {
+        OnInvenSlotChanged.Broadcast(UpdatedSlot, true);
+    }
+    ApplyStats(UseItemPkt.updated_stat());
+}
+
+void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+{
+    if (EquipGearPkt.entity_id() != _PlayerId)
+        return;
+
+    OnRecvEquipGearPkt.Broadcast();
+    if (EquipGearPkt.success() == false)
+        return;
+
+    ApplyGearSlots(EquipGearPkt.updated_slots());
+    ApplyStats(EquipGearPkt.updated_stat());
+}
+
+void UP1MyPlayerData::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
+{
+    if (UnequipGearPkt.entity_id() != _PlayerId)
+        return;
+
+    OnRecvUnequipGearPkt.Broadcast();
+    if (UnequipGearPkt.success() == false)
+        return;
+
+    ApplyGearSlots(UnequipGearPkt.updated_slots());
+    ApplyStats(UnequipGearPkt.updated_stat());
+}
+
+void UP1MyPlayerData::ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots)
+{
+    for (const Protocol::Slot& UpdatedSlot : UpdatedSlots)
+    {
+        switch (UpdatedSlot.type())
+        {
+        case Protocol::SLOT_TYPE_EQUIPPED:
+            OnEquipmentSlotChanged.Broadcast(UpdatedSlot);
+            break;
+
+        case Protocol::SLOT_TYPE_INVENTORY_GEAR:
+        case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
+        case Protocol::SLOT_TYPE_INVENTORY_MISC:
+            OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
+            break;
+        }
+    }
 }
