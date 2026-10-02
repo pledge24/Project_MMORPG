@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 17개 (높음 2 · 중간 2 · 낮음 13)
+항목 17개 (높음 2 · 중간 1 · 낮음 14)
 
 ## 작성 방법
 
@@ -120,15 +120,12 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 > 위치: `P1/Content/P1/` 아래 (`UI/`, `World/`, `Characters/`)
 > 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
 
-UE 에디터로 41개 BP의 부모 클래스를 전수 확인한 결과, 위젯 12/15는 이미 C++ 클래스로
-리페어런트되어 있다. 남은 것은 아래 넷이다.
+C++ 부모 클래스가 없는 BP는 아래 둘이다.
 
 | 에셋 | 부모 | BP에 있는 것 |
 |---|---|---|
 | `WBP_CharacterSlot` | `UserWidget` | 함수 그래프 `UpdateCharacterInfo`·`DisableHighlight`·`Clear`, 디스패처 `OnSlotButtonClicked`, 변수 `Characterid`·`ThisSlotId` |
 | `BP_Shop` | `Actor` | 오버랩 상호작용 + `PlayerController` 참조. C++에 `UP1ShopWidget`은 있는데 상점 액터가 없다 |
-| `WBP_NameTag` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. `UP1NameplateWidget`과 역할이 겹친다 |
-| `WBP_Help` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. 순수 표시용 |
 
 C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
 
@@ -143,21 +140,6 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
 **테스트 어려움** · **유지보수 어려움** — 쿨다운과 카운트다운처럼 시간과 상태를 다루는 로직이
 BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증할 수 없다. `WBP_Slot`의 쿨다운
 상태 머신과 `WBP_DeathScreen`의 리스폰 카운트다운이 여기 해당한다.
-
-## 캐릭터 클래스와 컨트롤러에 관심사가 뭉쳐 있다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Core/`
-> 등록일: 2026년 8월 19일
-
-| 클래스 | 뭉쳐 있는 것 |
-|---|---|
-| `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
-
-#130이 갚는다.
-
-### 영향
-
-**변경 영향 범위 확대** — 한 클래스를 고치려면 그 안의 무관한 관심사를 함께 따져야 한다.
 
 ## 인벤토리의 요청 대기가 풀리지 않는 경로가 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
@@ -266,6 +248,21 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 **버그 발생 가능성 증가** — ±180도 경계 근처를 바라보며 움직이면 이동 패킷이 의도한 주기(0.2초)보다 자주 나갈 수 있다.
 입력 없이 서 있는 동안에는 프레임마다 `C_MOVE`가 나갈 수 있다. 둘 다 실측하지 않았다.
 
+## 쓰이지 않는 레거시 입력 매핑이 남아 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Config/DefaultInput.ini` (`ActionMappings`, `AxisMappings`)
+> 등록일: 2026년 10월 3일
+
+`Jump` 액션 매핑 2줄과 축 매핑 10줄(`Move Forward / Backward`, `Move Right / Left`, `Turn Right / Left ...`,
+`Look Up / Down ...`)이 남아 있다. 입력은 모두 Enhanced Input(`IMC_Default`, `IMC_InGameUI`)으로 받고,
+이 이름들을 바인딩하는 코드가 없다. 3인칭 템플릿에서 온 것으로 보인다.
+
+#130에서 화면 단축키 매핑 둘을 지우며 찾았다.
+
+### 영향
+
+**유지보수 어려움** — 입력을 고치려는 사람이 이 매핑이 실제로 쓰이는지 따로 확인해야 한다.
+
 ## `P1QuestRewardData.h`가 쓰는 타입의 헤더를 부르지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
 > 위치: `P1/Source/P1/Game/Data/P1QuestRewardData.h` 18줄
@@ -296,7 +293,6 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 | `UI/WorldSpace/P1NameplateWidget.h` | `Utils/Types.h` |
 | `UI/Frontend/P1LoginWidget.h` | `Components/Button.h` |
 | `Game/Inventory/P1Inventory.h` | `Game/Data/P1ItemData.h` |
-| `Core/P1InGamePlayerController.h` | `Protocol.pb.h` |
 | `UI/Screens/P1HUDWidget.h` | `Protocol.pb.h` |
 
 `P1Inventory.h`의 `P1ItemData.h`는 위 `P1QuestRewardData.h` 항목과 엮여 있을 수 있다.

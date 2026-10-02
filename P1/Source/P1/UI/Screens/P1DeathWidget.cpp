@@ -2,7 +2,7 @@
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
-#include "Core/P1InGamePlayerController.h"
+#include "UI/P1ScreenSubsystem.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
 
@@ -51,10 +51,10 @@ void UP1DeathWidget::OnMyPlayerRespawn(AActor* RespawnedCreature)
 {
     SetVisibility(ESlateVisibility::Collapsed);
 
-    // 사망 중에 열려 있던 위젯이 있으면 UI 모드로 돌아가야 하므로 판단을 컨트롤러에 맡긴다.
-    if (AP1InGamePlayerController* PC = Cast<AP1InGamePlayerController>(GetP1PlayerController()))
+    // 사망 중에 열려 있던 창이 있으면 UI 모드로 돌아가야 하므로 판단을 화면 서브시스템에 맡긴다.
+    if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
     {
-        PC->RefreshInputMode();
+        Screens->RefreshInputMode();
     }
 }
 

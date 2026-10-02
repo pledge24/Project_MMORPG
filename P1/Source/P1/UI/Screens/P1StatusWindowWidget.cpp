@@ -24,6 +24,12 @@ void UP1StatusWindowWidget::NativeConstruct()
 
             // 바인딩 셋업
             MyPlayerData->OnEquipmentSlotChanged.AddUObject(this, &UP1StatusWindowWidget::UpdateSlotWidget);
+
+            // 창은 한 번 만들고 표시 여부만 바꾸므로, 수치도 열 때 다시 읽지 않고 바뀔 때마다 받는다.
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_HP].AddUObject(this, &UP1StatusWindowWidget::UpdateMaxHp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_MP].AddUObject(this, &UP1StatusWindowWidget::UpdateMaxMp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_PHYSICAL_ATTACK].AddUObject(this, &UP1StatusWindowWidget::UpdatePhysicalAttack);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAGICAL_ATTACK].AddUObject(this, &UP1StatusWindowWidget::UpdateMagicalAttack);
             MyPlayerData->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
         }
     }
@@ -69,22 +75,22 @@ void UP1StatusWindowWidget::UpdateAllStat(UP1MyPlayerData* MyPlayerData)
     UpdateMagicalAttack(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK));
 }
 
-void UP1StatusWindowWidget::UpdateMaxHp(int32 Value)
+void UP1StatusWindowWidget::UpdateMaxHp(int64 Value)
 {
     Details_MaxHp->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::UpdateMaxMp(int32 Value)
+void UP1StatusWindowWidget::UpdateMaxMp(int64 Value)
 {
     Details_MaxMp->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::UpdatePhysicalAttack(int32 Value)
+void UP1StatusWindowWidget::UpdatePhysicalAttack(int64 Value)
 {
     Details_Physical_Attack->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::UpdateMagicalAttack(int32 Value)
+void UP1StatusWindowWidget::UpdateMagicalAttack(int64 Value)
 {
     Details_Magical_Attack->SetText(FText::AsNumber(Value));
 }

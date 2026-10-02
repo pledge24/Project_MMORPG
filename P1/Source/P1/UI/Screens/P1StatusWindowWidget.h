@@ -53,10 +53,10 @@ protected:
 public:
     void UpdateAllStat(UP1MyPlayerData* MyPlayerData);
 
-    void UpdateMaxHp(int32 Value);
-    void UpdateMaxMp(int32 Value);
-    void UpdatePhysicalAttack(int32 Value);
-    void UpdateMagicalAttack(int32 Value);
+    void UpdateMaxHp(int64 Value);
+    void UpdateMaxMp(int64 Value);
+    void UpdatePhysicalAttack(int64 Value);
+    void UpdateMagicalAttack(int64 Value);
 
 protected:
     UPROPERTY(meta = (BindWidget))
