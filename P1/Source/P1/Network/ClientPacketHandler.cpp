@@ -1,13 +1,8 @@
 #include "Network/ClientPacketHandler.h"
 #include "Network/PacketSession.h"
-#include "Core/P1LoginMenuMode.h"
-#include "UI/Frontend/P1LoginWidget.h"
-#include "Core/P1LoginMenuPlayerController.h"
-#include "Online/P1LoginManager.h"
+#include "Network/P1ConnectionSubsystem.h"
 #include "Sockets.h"
 #include "SocketSubsystem.h"
-#include "Kismet/GameplayStatics.h"
-#include "Core/P1GameInstance.h"
 #include "Sync/P1StatefulEntityManager.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
@@ -48,106 +43,25 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 	return true;
 }
 
-bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
-{
-	if (auto* GameInstance = session->GetGameInstance())
-	{
-		if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
-		{
-			if (UP1LoginManager* Manager = Controller->GetLoginManager())
-			{
-				if (UP1LoginWidget* LoginWidget = Manager->GetLoginWidget())
-				{
-                    LoginWidget->FetchCharacterOverviews(pkt);
-                    return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt) {
-	
-	if (auto* GameInstance = session->GetGameInstance())
-	{
-        if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
-		{
-			if (UP1LoginManager* Manager = Controller->GetLoginManager())
-			{
-				if (UP1LoginWidget* LoginWidget = Manager->GetLoginWidget())
-				{
-                    LoginWidget->AddCharacterOverview(pkt);
-                    return true;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt) {
-
-    if (auto* GameInstance = session->GetGameInstance())
-    {
-        if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
-        {
-            if (UP1LoginManager* Manager = Controller->GetLoginManager())
-            {
-                if (UP1LoginWidget* LoginWidget = Manager->GetLoginWidget())
-                {
-                    LoginWidget->RemoveCharacterOverview(pkt);
-                    return true;
-                }
-            }
-        }
-    }
-
-	return false;
-}
-
-bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
-{
-    if (auto* GameInstance = session->GetGameInstance())
-    {
-        // 거절되면 아직 캐릭터 선택 화면이므로 그 화면에 알린다.
-        if (pkt.success() == false)
-        {
-            if (AP1LoginMenuPlayerController* Controller = Cast<AP1LoginMenuPlayerController>(UGameplayStatics::GetPlayerController(GameInstance->GetWorld(), 0)))
-            {
-                if (UP1LoginManager* Manager = Controller->GetLoginManager())
-                {
-                    if (UP1LoginWidget* LoginWidget = Manager->GetLoginWidget())
-                        LoginWidget->ShowEnterGameFailed();
-                }
-            }
-
-            return true;
-        }
-
-        GameInstance->HandleEnterGame(pkt);
-    }
-
-	return true;
-}
+// 로그인 계열(S_LOGIN, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
+// Online/P1LoginPacketHandlers.cpp에 있다. Network/는 Online/을 부르지 않는다.
 
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* Connection = session->GetConnection())
     {
-        GameInstance->HandleLeaveGame(pkt);
+        Connection->HandleLeaveGame(pkt.reason());
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        GameInstance->HandleEnterMap(pkt);
+        MyPlayerData->HandleEnterMap(pkt);
         return true;
     }
 
@@ -156,13 +70,15 @@ bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
 
 bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
-    {
-        GameInstance->HandleEnterRoom(pkt);
-        return true;
-    }
+    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
+    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
+    if (EntityManager == nullptr || MyPlayerData == nullptr)
+        return false;
 
-    return false;
+    // 룸 id는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 위치는 엔티티 관리자가 맡는다.
+    MyPlayerData->HandleEnterRoom(pkt);
+    EntityManager->HandleEnterRoom(pkt);
+    return true;
 }
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
@@ -292,13 +208,8 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 
 bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
-    {
-        GameInstance->HandleRewardResult(pkt);
-        return true;
-    }
-
-    return false;
+    // TODO: #137이 내 플레이어 데이터에 반영한다
+    return true;
 }
 
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)

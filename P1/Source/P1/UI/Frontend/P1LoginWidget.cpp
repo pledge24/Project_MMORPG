@@ -3,7 +3,6 @@
 #include "Components/EditableTextBox.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1LoginMenuPlayerController.h"
 #include "Online/P1LoginManager.h"
 #include "Utils/LogCategory.h"
 
@@ -30,6 +29,21 @@ void UP1LoginWidget::NativeConstruct()
         if (Notice.IsEmpty() == false)
             SetResultText(false, Notice);
     }
+
+    if (UP1LoginManager* LoginManager = GetLoginManager())
+    {
+        LoginManager->OnAuthResult.AddUObject(this, &UP1LoginWidget::SetResultText);
+        LoginManager->OnCharacterListReceived.AddUObject(this, &UP1LoginWidget::FetchCharacterOverviews);
+        LoginManager->OnCreateCharacterResult.AddUObject(this, &UP1LoginWidget::AddCharacterOverview);
+        LoginManager->OnDeleteCharacterResult.AddUObject(this, &UP1LoginWidget::RemoveCharacterOverview);
+        LoginManager->OnEnterGameFailed.AddUObject(this, &UP1LoginWidget::ShowEnterGameFailed);
+    }
+}
+
+UP1LoginManager* UP1LoginWidget::GetLoginManager() const
+{
+    UGameInstance* GameInstance = GetGameInstance();
+    return GameInstance ? GameInstance->GetSubsystem<UP1LoginManager>() : nullptr;
 }
 
 void UP1LoginWidget::SetResultText(bool bSuccess, const FString& Message)
@@ -53,7 +67,7 @@ void UP1LoginWidget::ShowEnterGameFailed()
     TargetText->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
-void UP1LoginWidget::FetchCharacterOverviews(Protocol::S_LOGIN& pkt)
+void UP1LoginWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
 {
     CharacterOverviews.Empty();
 
@@ -73,7 +87,7 @@ void UP1LoginWidget::FetchCharacterOverviews(Protocol::S_LOGIN& pkt)
     OnDisplayCharacterOverviews(CharacterOverviews);
 }
 
-void UP1LoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
+void UP1LoginWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER& pkt)
 {
     if (pkt.success() == false)
     {
@@ -98,7 +112,7 @@ void UP1LoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
     OnDisplayCharacterOverviews(CharacterOverviews);
 }
 
-void UP1LoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
+void UP1LoginWidget::RemoveCharacterOverview(const Protocol::S_DELETE_CHARACTER& pkt)
 {
     bool Success = pkt.success();
     if (Success == false)
@@ -130,25 +144,17 @@ void UP1LoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
 
 void UP1LoginWidget::SendLoginRequest(FString Username, FString Password)
 {
-    if (AP1LoginMenuPlayerController* Controller = GetP1PlayerController<AP1LoginMenuPlayerController>())
+    if (UP1LoginManager* LoginManager = GetLoginManager())
     {
-        UP1LoginManager* Manager = Controller->GetLoginManager();
-        if (Manager)
-        {
-            Manager->RequestLogin(Username, Password);
-        }
+        LoginManager->RequestLogin(Username, Password);
     }
 }
 
 void UP1LoginWidget::SendRegisterRequest(FString Username, FString Password)
 {
-    if (AP1LoginMenuPlayerController* Controller = GetP1PlayerController<AP1LoginMenuPlayerController>())
+    if (UP1LoginManager* LoginManager = GetLoginManager())
     {
-        UP1LoginManager* Manager = Controller->GetLoginManager();
-        if (Manager)
-        {
-            Manager->RequestRegister(Username, Password);
-        }
+        LoginManager->RequestRegister(Username, Password);
     }
 }
 

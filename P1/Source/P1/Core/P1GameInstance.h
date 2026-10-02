@@ -2,13 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Protocol.pb.h"
+#include "Enum.pb.h"
 #include "P1GameInstance.generated.h"
 
-class UP1ConnectionSubsystem;
-class AP1MyPlayer;
-class UP1StatefulEntityManager;
-
+/** 레벨 전환을 맡는다. 인게임 맵을 열고, 연결이 끊기면 사유 문구와 함께 로그인 맵으로 돌아간다. */
 UCLASS()
 class P1_API UP1GameInstance : public UGameInstance
 {
@@ -20,55 +17,25 @@ public:
     //~ Begin UGameInstance Interface
 public:
     virtual void Init() override;
-    virtual void BeginDestroy() override;
     //~ End UGameInstance Interface
 
-    //~ Connection
+    //~ Level Transition
 private:
-    /** 게임 서버와 연결되어 있는지다. 연결은 UP1ConnectionSubsystem이 소유한다. */
-    bool IsConnected() const;
-
-    UPROPERTY()
-    TObjectPtr<UP1ConnectionSubsystem> _Connection;
+    /** 입장 성공과 맵 입장에서 부른다. 게임 스레드 전용. */
+    void OpenInGameMap();
 
     //~ Connection Loss
 public:
-    /** 서버가 S_LEAVE_GAME으로 연결을 끊었다. 사유에 맞는 문구와 함께 로그인 화면으로 돌아간다. 게임 스레드 전용. */
-    void HandleLeaveGame(const Protocol::S_LEAVE_GAME& LeaveGamePkt);
-
     /** 로그인 화면이 한 번 꺼내 보여 준다. 꺼내면 비워진다. 연결이 끊겨 돌아온 것이 아니면 비어 있다. 게임 스레드 전용. */
     FString ConsumeLoginNotice();
 
 private:
-    /** 연결 서브시스템이 수신 펌프에서 끊김을 알아챘다. 사유를 모르므로 기본 문구로 돌아간다. */
-    void HandleConnectionLost();
+    /** 연결 서브시스템이 끊김을 알렸다. 사유에 맞는 문구로 로그인 화면에 돌아간다. */
+    void HandleConnectionLost(Protocol::LeaveReason Reason);
 
-    /** 연결을 정리하고 로그인 맵을 연다. 사용자가 게임을 끄는 경로(연결 서브시스템의 Deinitialize)는 이 경로를 타지 않는다. 게임 스레드 전용. */
+    /** 로그인 맵을 연다. 연결은 연결 서브시스템이 이미 닫았다. 사용자가 게임을 끄는 경로(연결 서브시스템의 Deinitialize)는 이 경로를 타지 않는다. 게임 스레드 전용. */
     void ReturnToLogin(const FString& Notice);
 
     /** 로그인 맵이 열린 뒤 로그인 화면에 보여 줄 문구다. 게임 인스턴스가 레벨 전환을 건너 들고 간다. */
     FString PendingLoginNotice;
-
-    //~ Session Packet Handlers
-public:
-    void HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt);
-    void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
-    void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
-
-    //~ Entity Lookup
-private:
-    // TODO: #127이 입장 처리를 옮기면 지운다
-    /** 현재 월드의 엔티티 관리자다. 월드가 없으면 nullptr. */
-    UP1StatefulEntityManager* GetEntityManager() const;
-
-    //~ Reward Packet Handlers
-public:
-    void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
-
-    //~ My Player
-protected:
-    void HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer);
-
-    UPROPERTY()
-    TObjectPtr<AP1MyPlayer> _MyPlayer;
 };

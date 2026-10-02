@@ -1,6 +1,7 @@
 #include "UI/P1UserWidget.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
+#include "Online/P1LoginManager.h"
 
 void UP1UserWidget::NativeDestruct()
 {
@@ -10,6 +11,9 @@ void UP1UserWidget::NativeDestruct()
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
             MyPlayerData->RemoveListener(this);
+
+        if (UP1LoginManager* LoginManager = GameInstance->GetSubsystem<UP1LoginManager>())
+            LoginManager->RemoveListener(this);
     }
 
     Super::NativeDestruct();

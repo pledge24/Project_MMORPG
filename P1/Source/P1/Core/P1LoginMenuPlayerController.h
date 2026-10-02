@@ -4,8 +4,6 @@
 #include "GameFramework/PlayerController.h"
 #include "P1LoginMenuPlayerController.generated.h"
 
-class UP1LoginManager;
-
 UCLASS()
 class P1_API AP1LoginMenuPlayerController : public APlayerController
 {
@@ -26,12 +24,4 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
     TObjectPtr<UP1LoginWidget> LoginMenuWidget;
-
-    //~ Login
-public:
-    UP1LoginManager* GetLoginManager() { return LoginManager; }
-
-private:
-    UPROPERTY()
-    TObjectPtr<UP1LoginManager> LoginManager;
 };

@@ -4,7 +4,7 @@
 #include "Sockets.h"
 #include "Network/ClientPacketHandler.h"
 #include "Network/P1ConnectionSubsystem.h"
-#include "Core/P1GameInstance.h"
+#include "Engine/GameInstance.h"
 #include "Utils/LogCategory.h"
 
 PacketSession::PacketSession(class FSocket* Socket, UP1ConnectionSubsystem* InConnection) : Connection(InConnection), Socket(Socket)
@@ -12,12 +12,9 @@ PacketSession::PacketSession(class FSocket* Socket, UP1ConnectionSubsystem* InCo
 	ClientPacketHandler::Init();
 }
 
-UP1GameInstance* PacketSession::GetGameInstance() const
+UP1ConnectionSubsystem* PacketSession::GetConnection() const
 {
-	if (UP1ConnectionSubsystem* ConnectionPtr = Connection.Get())
-		return Cast<UP1GameInstance>(ConnectionPtr->GetGameInstance());
-
-	return nullptr;
+	return Connection.Get();
 }
 
 UWorld* PacketSession::GetWorld() const

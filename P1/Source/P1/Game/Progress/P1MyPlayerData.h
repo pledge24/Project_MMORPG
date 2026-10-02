@@ -10,6 +10,7 @@ class UP1Inventory;
 class UP1EquippedGear;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
+DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChanged, int64);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
@@ -116,6 +117,17 @@ public:
 protected:
     UPROPERTY()
     TObjectPtr<UP1EquippedGear> EquippedGear;
+
+    //~ Enter Packet Handlers
+public:
+    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 성공하면 맵과 룸 id를 저장하고 OnMapEntered를 알린다. */
+    void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
+
+    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 성공하면 룸 id를 저장한다. 엔티티 정리는 엔티티 관리자가 맡는다. */
+    void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
+
+    /** 게임 인스턴스가 구독해 인게임 맵을 연다. */
+    FOnMapEntered OnMapEntered;
 
     //~ Item Packet Handlers
 public:
