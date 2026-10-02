@@ -80,9 +80,7 @@ X  UInventoryWidget
 — 리다이렉트가 남으면 옛 이름으로 다시 저장되는 에셋이 없어도 줄은 계속 쌓이고, 옛 이름을 새 클래스에
 쓸 수 없게 된다. 2026년 10월 3일 #131에서 정했다. 그전에 넣은 리다이렉트의 정리는 `docs/backlog.md`에 있다.
 
-`[MCP 제약]` 리다이렉트로 불러온 에셋에는 변경 표시가 붙지 않아서 `AssetTools.save_assets`가 저장을
-건너뛴다. 같은 부모로 `set_parent`를 다시 불러도 표시가 붙지 않는다. 위젯 하나의 변수 표시를
-`UMGToolSet.ToggleWidgetAsVariable`로 켰다 끄면 값은 그대로 두고 표시만 붙는다.
+리다이렉트로 불러온 에셋을 MCP로 다시 저장할 때의 함정은 `.claude/skills/ide-tools/SKILL.md`의 「실측한 함정」에 있다.
 
 **예외: 델리게이트 타입에는 약어를 붙이지 않는다.** `DECLARE_*DELEGATE*` 매크로로 선언하는 타입은
 `FOnMyPlayerSpawned`, `FOnDespawnReady`처럼 `FOn` 뒤에 사건 이름을 붙인다.

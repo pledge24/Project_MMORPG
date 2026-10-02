@@ -50,3 +50,34 @@ description: Rider MCP와 언리얼 MCP(`unreal`) 툴의 이 저장소 전용 �
 - 블루프린트의 부모 클래스는 `BlueprintTools.get_parent`로, 그래프는 `list_graphs`와 `read_graph_dsl`로
   읽는다. DSL에는 노드 수가 나오지 않는다.
 - UE 자동화 테스트는 언리얼 MCP와 무관하다. `P1/Scripts/Run-UeTests.ps1`이 에디터 없이 돌린다.
+
+### 호출하기 전에
+
+- 세션에서 언리얼 MCP를 처음 부르기 전에 이 스킬과 플러그인 스킬 `unreal-mcp`를 읽는다. 컨텍스트가
+  압축된 뒤에도 다시 읽는다. 이어서 `AgentSkillToolset.ListSkills`로 프로젝트가 등록한 스킬을 확인한다.
+- `call_tool`의 `toolset_name`에는 전체 이름을 쓴다(`editor_toolset.toolsets.blueprint.BlueprintTools`).
+  짧은 이름(`BlueprintTools`)은 훅의 허용 명단과 맞지 않아 막힌다. 전체 이름은 `list_toolsets`가 돌려준다.
+- 인자는 `describe_toolset`이 돌려준 스키마대로 쓴다. 추측한 이름은 스키마 오류로 돌아온다. 자주 쓰는 형식은
+  아래와 같다.
+  - 블루프린트, 그래프, 노드, 객체: `{"refPath": "/Game/.../WBP_X.WBP_X"}`. 그래프는 `...WBP_X:EventGraph`
+  - `BlueprintTools`는 `blueprint`·`graph`·`node`, `ObjectTools.get_properties`는 `instance`·`properties`
+  - `AssetTools.save_assets`는 `asset_paths`(패키지 경로 문자열 배열, `/Game/.../WBP_X`)
+- 같은 에셋을 바꾸는 호출은 직렬로 보낸다. 병렬 호출은 서로 다른 에셋을 읽을 때만 쓴다.
+- 상태를 바꾸는 호출을 하기 전에, 그것을 되돌리는 호출의 스키마를 먼저 확인한다.
+
+### 실측한 함정
+
+- 이벤트 그래프를 통째로 지우는 툴은 없다. `BlueprintTools.find_nodes`(제목 빈 문자열)로 노드를 찾아
+  `delete_node`로 하나씩 지운다. 함수 그래프와 이벤트 디스패처는 `remove_function_graph`, 멤버 변수는
+  `remove_variable`로 지운다. 블루프린트 멤버 변수 목록(`list_variables`)에는 위젯 변수가 나오지 않는다.
+- 변경 표시(dirty)가 없는 에셋은 `save_assets`가 `true`를 돌려주면서 저장을 건너뛴다. 저장 뒤에는 파일 수정
+  시각이나 내용으로 확인한다. 리다이렉트로 불러온 에셋에는 변경 표시가 붙지 않고, 같은 부모로 `set_parent`를
+  다시 불러도 붙지 않는다. 위젯 하나의 변수 표시를 `UMGToolSet.ToggleWidgetAsVariable`로 켰다 끄면 값은 그대로
+  두고 표시만 붙는다.
+- `AssetTools.update_metadata_tags`의 `remove_tags`는 `could not convert incoming function input params Json
+  to a UStruct`로 실패한다. 붙인 태그를 지울 수 없으니 변경 표시를 붙이려고 태그를 쓰지 않는다.
+- `ObjectTools.set_properties`는 배열 요소를 바꾸면서 개수도 줄이는 변경을 `ArrayRemove: elements changed
+  alongside the size change`로 거부한다. `reset_properties`로 비운 뒤 새 요소를 넣는다.
+- 범용 에셋 생성 툴은 없다. 비슷한 에셋을 `AssetTools.duplicate`로 복제해 고친다.
+- 에디터를 닫을 때는 `CloseMainWindow`를 쓴다. 저장하지 않은 변경이 있으면 에디터가 저장 대화상자를 띄우고
+  멈추므로 변경을 잃지 않는다. 강제 종료는 권한 분류기가 막는다.
