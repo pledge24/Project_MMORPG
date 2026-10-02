@@ -143,10 +143,16 @@ void UP1ConnectionSubsystem::HandleRecvPackets()
 
     Session->HandleRecvPackets();
 
-    // S_LEAVE_GAME을 처리했으면 핸들러가 이미 연결을 닫아 세션이 없다.
+    // S_LEAVE_GAME을 처리했으면 HandleLeaveGame이 이미 연결을 닫고 알려서 세션이 없다.
     if (bConnectionLost && Session)
     {
         Close();
-        OnConnectionLost.Broadcast();
+        OnConnectionLost.Broadcast(Protocol::LEAVE_REASON_NONE);
     }
+}
+
+void UP1ConnectionSubsystem::HandleLeaveGame(Protocol::LeaveReason Reason)
+{
+    Close();
+    OnConnectionLost.Broadcast(Reason);
 }

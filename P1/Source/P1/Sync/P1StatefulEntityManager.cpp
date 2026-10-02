@@ -3,6 +3,7 @@
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1EntitySpawner.h"
 #include "Game/Entities/P1Creature.h"
+#include "Game/Entities/P1MyPlayer.h"
 #include "Game/Entities/P1Player.h"
 #include "Game/Entities/P1Monster.h"
 #include "Utils/LogCategory.h"
@@ -325,4 +326,30 @@ void UP1StatefulEntityManager::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR&
     // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
     if (AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id()))
         Player->ApplyGear(UnequipGearPkt.slot_id(), UnequipGearPkt.template_id());
+}
+
+void UP1StatefulEntityManager::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)
+{
+    if (EnterRoomPkt.success() == false)
+        return;
+
+    // 다른 룸으로 리스폰하는 경우도 룸이 한 맵 안의 논리 분할이라 같은 맵 이동과 같은 처리다.
+    if (EnterRoomPkt.enter_type() != Protocol::ENTER_TYPE_SAME_MAP_TRANSFER
+        && EnterRoomPkt.enter_type() != Protocol::ENTER_TYPE_RESPAWN)
+        return;
+
+    DespawnAllEntities();
+
+    if (EnterRoomPkt.has_enter_pos() == false)
+        return;
+
+    UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
+    if (MyPlayerData == nullptr)
+        return;
+
+    if (AP1MyPlayer* MyPlayer = FindEntityAs<AP1MyPlayer>(MyPlayerData->GetPlayerId()))
+    {
+        MyPlayer->SetClientPos(EnterRoomPkt.enter_pos());
+        MyPlayer->SetServerPos(EnterRoomPkt.enter_pos());
+    }
 }

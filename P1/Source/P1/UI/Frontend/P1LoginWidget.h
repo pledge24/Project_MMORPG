@@ -35,6 +35,9 @@ public:
     void SetResultText(bool success, const FString& Message);
 
 protected:
+    /** 게임 인스턴스가 없으면 nullptr을 돌려준다. */
+    class UP1LoginManager* GetLoginManager() const;
+
     UFUNCTION(BlueprintCallable, Category = "Login")
     void SendLoginRequest(FString Username, FString Password);
 
@@ -46,7 +49,7 @@ protected:
 
     //~ Character Select
 public:
-    void FetchCharacterOverviews(Protocol::S_LOGIN& pkt);
+    void FetchCharacterOverviews(const Protocol::S_LOGIN& pkt);
 
     /** 서버가 게임 입장을 거절하면 캐릭터 선택 화면에 알린다. */
     void ShowEnterGameFailed();
@@ -72,7 +75,7 @@ protected:
 
     //~ Character Create
 public:
-    void AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt);
+    void AddCharacterOverview(const Protocol::S_CREATE_CHARACTER& pkt);
 
     /** 생성 응답을 블루프린트에 전달한다. 구현은 블루프린트에 있다. */
     UFUNCTION(BlueprintImplementableEvent, Category = "Character Create")
@@ -93,7 +96,7 @@ protected:
 
     //~ Character Delete
 public:
-    void RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt);
+    void RemoveCharacterOverview(const Protocol::S_DELETE_CHARACTER& pkt);
 
 protected:
     UFUNCTION(BlueprintCallable, Category = "Character Delete")

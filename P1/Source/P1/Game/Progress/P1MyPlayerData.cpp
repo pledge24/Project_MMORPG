@@ -94,6 +94,7 @@ void UP1MyPlayerData::BindMyPlayerDelegate(AP1MyPlayer* MyPlayer)
 void UP1MyPlayerData::RemoveListener(const UObject* Listener)
 {
     OnMyPlayerSpawned.RemoveAll(Listener);
+    OnMapEntered.RemoveAll(Listener);
     OnLevelChanged.RemoveAll(Listener);
     OnGoldChanged.RemoveAll(Listener);
     OnInvenSlotChanged.RemoveAll(Listener);
@@ -150,6 +151,31 @@ void UP1MyPlayerData::Rep_GoldChanged(const int64 Gold) const
 void UP1MyPlayerData::Rep_LevelChanged(int32 Level) const
 {
     _PlayerInfo->set_level(Level);
+}
+
+void UP1MyPlayerData::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
+{
+    if (EnterMapPkt.success() == false)
+    {
+        UE_LOG(LogP1Network, Warning, TEXT("맵 입장에 실패했습니다. map_id: %d"), EnterMapPkt.map_id());
+        return;
+    }
+
+    SetRoomId(EnterMapPkt.room_id());
+    SetMapId(EnterMapPkt.map_id());
+
+    OnMapEntered.Broadcast();
+}
+
+void UP1MyPlayerData::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)
+{
+    if (EnterRoomPkt.success() == false)
+    {
+        UE_LOG(LogP1Network, Warning, TEXT("Room 입장에 실패했습니다. room_id: %d"), EnterRoomPkt.room_id());
+        return;
+    }
+
+    SetRoomId(EnterRoomPkt.room_id());
 }
 
 void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)

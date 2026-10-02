@@ -82,6 +82,14 @@ public:
 protected:
     void HandleMove(const Protocol::PosInfo& Info);
 
+    //~ Room Packet Handlers
+public:
+    /**
+     * 같은 맵 안의 룸 이동이나 리스폰으로 룸에 들어왔으면 내 플레이어만 남기고 디스폰한 뒤 내 플레이어를 입장 위치로 옮긴다.
+     * 실패 응답이면 아무것도 하지 않는다. 룸 id는 내 플레이어 데이터가 저장한다.
+     */
+    void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
+
     //~ Gear Packet Handlers
 public:
     /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */

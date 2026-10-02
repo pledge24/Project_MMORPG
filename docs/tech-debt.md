@@ -164,28 +164,13 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
 드러난다.
 
-## `UP1GameInstance`가 클라 측 갓 클래스
-> **심각도:** 중간 · **난이도:** 높음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (620줄)
-> 등록일: 2026년 8월 19일
-
-소켓 소유 + 세션 관리 + `S_*` 핸들러 16개 + 스폰/디스폰 + 델리게이트 5종 브로드캐스트 + 토큰
-보관을 한 클래스가 들고 있다.
-
-### 영향
-
-**변경 영향 범위 확대** · **테스트 어려움** — 게임 인스턴스는 레벨 전환에 살아남는 싱글턴이라
-여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
-함께 따져야 한다.
-
 ## 인벤토리의 요청 대기가 풀리지 않는 경로가 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` (`SendUseItemPacket`) · `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleUseItem`)
+> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` (`SendUseItemPacket`)
 > 등록일: 2026년 9월 30일
 
 인벤토리 위젯은 요청을 보내기 전에 `PendingPacket`을 켜고, 응답이 오면 끈다. 그런데 켠 채로 남는 경로가 있다.
 - `SendUseItemPacket`에서 게임 인스턴스가 없을 때와 소모품이 아닌 분기에서는 켜기만 하고 요청을 보내지 않는다
-- `HandleUseItem`에서 `FindEntityAs`로 내 플레이어를 찾지 못하면 `OnRecvUseItemPkt`를 알리지 않는다
 
 코드를 읽고 판단했고 실행해서 확인하지는 않았다.
 
@@ -195,10 +180,10 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 ## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleRewardResult`)
+> 위치: `P1/Source/P1/Network/ClientPacketHandler.cpp` (`Handle_S_REWARD_RESULT`)
 > 등록일: 2026년 9월 30일
 
-`HandleRewardResult`는 소켓과 월드를 확인한 뒤 아무것도 하지 않는다. 서버는 `S_REWARD_RESULT`에 경험치,
+`Handle_S_REWARD_RESULT`는 아무것도 하지 않고 `true`를 돌려준다. 서버는 `S_REWARD_RESULT`에 경험치,
 골드, 레벨업 결과(`level_up_details`)를 싣지만, 클라이언트의 HUD와 내 플레이어 데이터에는 반영되지 않는다.
 지금은 플레이어가 몬스터를 때리는 경로가 없어 보상이 오지 않는다. 코드를 읽고 판단했다.
 
