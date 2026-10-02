@@ -6,6 +6,7 @@
 #include "P1ScreenSubsystem.generated.h"
 
 class UUserWidget;
+class UP1UserWidget;
 class UP1HUDWidget;
 class UP1WarningTextWidget;
 class UP1DeathWidget;
@@ -36,7 +37,7 @@ private:
     TObjectPtr<UP1HUDWidget> HUDWidget;
 
     UPROPERTY()
-    TObjectPtr<UUserWidget> HelpWidget;
+    TObjectPtr<UP1UserWidget> HelpWidget;
 
     UPROPERTY()
     TObjectPtr<UP1WarningTextWidget> WarningTextWidget;

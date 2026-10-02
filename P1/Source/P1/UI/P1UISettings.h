@@ -4,7 +4,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "P1UISettings.generated.h"
 
-class UUserWidget;
+class UP1UserWidget;
 class UP1HUDWidget;
 class UP1StatusWindowWidget;
 class UP1InventoryWidget;
@@ -25,9 +25,9 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
     TSoftClassPtr<UP1HUDWidget> HUDWidgetClass;
 
-    /** 조작 도움말이다. 블루프린트에만 있는 표시 위젯이라 C++ 타입이 없다. */
+    /** 조작 도움말이다. 로직 없는 표시 위젯이라 공용 베이스를 그대로 쓴다. */
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
-    TSoftClassPtr<UUserWidget> HelpWidgetClass;
+    TSoftClassPtr<UP1UserWidget> HelpWidgetClass;
 
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
     TSoftClassPtr<UP1WarningTextWidget> WarningTextWidgetClass;
