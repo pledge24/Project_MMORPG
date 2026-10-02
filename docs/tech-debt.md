@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 13개 (높음 2 · 중간 3 · 낮음 8)
+항목 17개 (높음 2 · 중간 3 · 낮음 12)
 
 ## 작성 방법
 
@@ -233,6 +233,76 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 ### 영향
 
 **버그 발생 가능성 증가** — 가로세로가 다른 룸을 만들면 몬스터 스폰과 배회, 셀 행렬의 범위가 실제 룸과 어긋난다.
+
+## 스포너가 플레이어 이름을 UTF-8로 풀지 않고 네임플레이트에 넘긴다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Sync/P1EntitySpawner.cpp` 174~175줄 (`AP1EntitySpawner::SpawnPlayer`)
+> 등록일: 2026년 10월 2일
+
+스포너는 서버가 보낸 UTF-8 이름을 `FString(const char*)`로 바꾼다. 이 생성자는 바이트를 UTF-8이 아니라
+ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에서 이 값을 읽는다. 그 뒤
+`AP1Creature::Initialize`가 `UTF8_TO_TCHAR`로 이름을 다시 넣지만, 네임플레이트는 이미 글자를 정한 뒤다.
+코드를 읽고 판단했고 실행해서 확인하지는 않았다.
+
+#123에서 찾았다. 그 티켓은 동작을 바꾸지 않는 정리라서 고치지 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 한국어 이름을 쓴 플레이어의 네임플레이트 글자가 깨져 보일 수 있다.
+
+## `AP1Creature`의 assert가 없는 식별자를 가리킨다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Game/Entities/P1Creature.cpp` 117줄 (`AP1Creature::SetClientPos`)
+> 등록일: 2026년 10월 2일
+
+`assert(SrcInfo->entity_id() == Info.entity_id())`의 `SrcInfo`는 어디에도 선언되어 있지 않다. 이 빌드에서
+`assert`가 빈 매크로로 펼쳐지므로 컴파일만 될 뿐이다. 같은 함수의 다른 줄은 `ClientPos`를 쓴다.
+이름을 바꾸면서 남은 흔적으로 보인다.
+
+#123에서 찾았다.
+
+### 영향
+
+**유지보수 어려움** — `assert`를 켜는 구성에서는 빌드가 깨진다. 지금은 검사하려던 조건을 아무도 검사하지 않는다.
+
+## `P1QuestRewardData.h`가 쓰는 타입의 헤더를 부르지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Source/P1/Game/Data/P1QuestRewardData.h` 18줄
+> 등록일: 2026년 10월 2일
+
+`TArray<FP1ItemData>` 멤버를 두면서 `Game/Data/P1ItemData.h`를 부르지 않는다. 이 헤더보다 먼저
+`P1ItemData.h`를 부른 파일이 있어야 컴파일된다.
+
+#123에서 찾았다.
+
+### 영향
+
+**변경 영향 범위 확대** — 다른 파일의 include를 정리하거나 유니티 빌드 묶음이 바뀌면 관계없어 보이는 곳에서
+빌드가 깨진다.
+
+## 헤더에 쓰지 않는 include가 남아 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/`
+> 등록일: 2026년 10월 2일
+
+#123은 `.cpp`의 쓰지 않는 include만 지웠다. 아래 헤더의 include는 그 헤더 자신은 쓰지 않지만, 그 헤더를
+부르는 파일이 전이적으로 기대고 있을 수 있어서 남겼다. 유니티 빌드가 누락을 가릴 수 있으므로 하나씩
+지우고 유니티 빌드를 끈 빌드로 확인해야 한다.
+
+| 헤더 | 쓰지 않는 include |
+|---|---|
+| `Network/P1SendWorker.h` | `Containers/Queue.h` |
+| `UI/WorldSpace/P1NameplateWidget.h` | `Utils/Types.h` |
+| `UI/Frontend/P1LoginWidget.h` | `Components/Button.h` |
+| `Game/Inventory/P1Inventory.h` | `Game/Data/P1ItemData.h` |
+| `Core/P1InGamePlayerController.h` | `Protocol.pb.h` |
+| `UI/Screens/P1HUDWidget.h` | `Protocol.pb.h` |
+
+`P1Inventory.h`의 `P1ItemData.h`는 위 `P1QuestRewardData.h` 항목과 엮여 있을 수 있다.
+
+### 영향
+
+**변경 영향 범위 확대** — 헤더 하나를 고치면 그 헤더를 부르는 파일이 모두 다시 컴파일된다.
 
 ## 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server

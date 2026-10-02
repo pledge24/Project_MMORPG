@@ -1,11 +1,8 @@
 #include "UI/Screens/P1StatusWindowWidget.h"
-#include "UI/Screens/P1HUDWidget.h"
 #include "Components/TextBlock.h"
-#include "P1.h"
 #include "Network/P1PacketSender.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Game/Equipment/P1EquippedGear.h"
 
 void UP1StatusWindowWidget::NativeConstruct()
@@ -17,8 +14,6 @@ void UP1StatusWindowWidget::NativeConstruct()
         // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
-            const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
-
             UpdateAllStat(MyPlayerData);
 
             for (const auto& Pair : MyPlayerData->GetEquippedGear()->GetAllSlot())

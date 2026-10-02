@@ -9,14 +9,6 @@ class P1_API AP1Portal : public AActor
 {
     GENERATED_BODY()
 
-public:
-    AP1Portal();
-
-    //~ Begin AActor Interface
-protected:
-    virtual void BeginPlay() override;
-    //~ End AActor Interface
-
     //~ Room Transfer
 protected:
     /** PortalId가 가리키는 룸으로 입장을 요청한다. */

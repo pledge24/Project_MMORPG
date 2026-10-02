@@ -16,7 +16,6 @@ public:
 
     //~ Begin AActor Interface
 protected:
-    virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
     //~ End AActor Interface
 

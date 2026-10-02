@@ -108,6 +108,7 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
 | `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+| `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비)을 들고 있는 서브시스템 |
 
 `Game/Items/`와 `Game/Interaction/`은 아직 없다. 아이템 정의와 아이템 인스턴스가 생기면
 `Game/Items/`를 만든다. 상호작용 인터페이스와 플레이어 쪽 컴포넌트가 생기면 `Game/Interaction/`을
@@ -163,7 +164,7 @@ P1/Source/
 ```
 Protocol 모듈 → Network → Sync → 게임 도메인
                                    ↑
-UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment) → Game/Data → Utils
+UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment, Game/Progress) → Game/Data → Utils
 Core → Game/Entities → 게임 도메인
 ```
 

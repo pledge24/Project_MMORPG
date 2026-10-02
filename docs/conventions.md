@@ -74,6 +74,10 @@ X  UInventoryWidget
 +ClassRedirects=(OldName="/Script/P1.InventoryWidget", NewName="/Script/P1.P1InventoryWidget")
 ```
 
+**예외: 델리게이트 타입에는 약어를 붙이지 않는다.** `DECLARE_*DELEGATE*` 매크로로 선언하는 타입은
+`FOnMyPlayerSpawned`, `FOnDespawnReady`처럼 `FOn` 뒤에 사건 이름을 붙인다.
+— 2026년 10월 2일 #123의 리뷰에서 정했다. 이 모듈의 델리게이트 타입은 그전부터 모두 이 형태였다.
+
 **예외: 생성물과 생성물이 이름으로 부르는 타입에는 약어를 붙이지 않는다.**
 — `Protocol/Templates/PacketHandler.h`가 아래 네 이름을 그대로 적는다. 템플릿은 한 벌뿐이고
 같은 출력이 DummyClient로도 복사되므로, 클라 쪽만 이름을 바꾸면 생성기를 다시 돌리는 순간

@@ -1,39 +1,6 @@
 #include "Game/Entities/P1Monster.h"
 
-#include "Components/WidgetComponent.h"
-#include "Sync/P1StatefulEntityManager.h"
 #include "Utils/LogCategory.h"
-
-AP1Monster::AP1Monster()
-{
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-}
-
-void AP1Monster::BeginPlay()
-{
-	Super::BeginPlay();
-
-}
-
-void AP1Monster::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-    Super::EndPlay(EndPlayReason);
-
-}
-
-void AP1Monster::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-void AP1Monster::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
 
 void AP1Monster::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
@@ -62,11 +29,8 @@ void AP1Monster::S_Die()
 
 void AP1Monster::DespawnAfterDeath()
 {
-    // Destroy만 하면 매니저의 등록이 남는다. 매니저를 거쳐 등록과 액터를 함께 지운다.
-    if (UP1StatefulEntityManager* StatefulEntityManager = GetWorld()->GetSubsystem<UP1StatefulEntityManager>())
-    {
-        StatefulEntityManager->DespawnEntity(GetPosInfo()->entity_id());
-    }
+    // Destroy만 하면 매니저의 등록이 남는다. 등록을 가진 매니저가 구독해서 등록과 액터를 함께 지운다.
+    OnDespawnReady.Broadcast(this);
 }
 
 void AP1Monster::SetDefaultMonsterData(const FP1MonsterData& InMonsterData)

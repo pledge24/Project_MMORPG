@@ -1,4 +1,4 @@
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Game/Inventory/P1Inventory.h"
 #include "Game/Equipment/P1EquippedGear.h"
 #include "Game/Entities/P1MyPlayer.h"
@@ -8,23 +8,23 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    // Create a Inventory Object
+    // 인벤토리 객체를 만든다
     Inventory = NewObject<UP1Inventory>(this, UP1Inventory::StaticClass());
     if (Inventory == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("Inventory Is Not Exist"));
 
-    // Create a EquippedGear Object
+    // 장비 객체를 만든다
     EquippedGear = NewObject<UP1EquippedGear>(this, UP1EquippedGear::StaticClass());
     if (EquippedGear == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("EquippedGear Is Not Exist"));
 
-    // Proto
+    // 프로토콜 사본
     _EntityInfo = MakeUnique<Protocol::EntityInfo>();
     _PlayerInfo = _EntityInfo->mutable_player_info();
     _StatInfo = MakeUnique<Protocol::StatInfo>();
     _Possession = MakeUnique<Protocol::Possession>();
 
-    // Add Stat Delegate(Common)
+    // 스탯마다 변경 델리게이트 자리를 만든다(공통)
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_HP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_HP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_MP);
@@ -34,7 +34,7 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_EXP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_EXP);
 
-    // Bind Delegate
+    // 델리게이트를 바인딩한다
     OnMyPlayerSpawned.AddUObject(this, &UP1MyPlayerData::BindMyPlayerDelegate);
 
     // 소지품 델리게이트는 이 서브시스템과 함께 사는 객체끼리 잇는다. 플레이어 액터와 무관하므로 한 번만 붙인다.
@@ -66,12 +66,12 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
         _StatInfo->CopyFrom(EnterGamePkt.stat_info());
         _Possession->CopyFrom(EnterGamePkt.possession());
         
-        // Cache
+        // 자주 읽는 값을 캐시한다
         _PlayerId = _EntityInfo->entity_id();
         _PlayerName = FText::FromString(UTF8_TO_TCHAR(_EntityInfo->player_info().name().c_str()));
     }
 
-    // Initialize Possession Wrapper
+    // 소지품 래퍼를 초기화한다
     {
         Inventory->Init(_Possession->mutable_inventory());
         EquippedGear->Init(_Possession->mutable_equipped_gear());

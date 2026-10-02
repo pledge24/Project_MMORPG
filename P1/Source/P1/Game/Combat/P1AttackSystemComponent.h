@@ -9,9 +9,6 @@ class P1_API UP1AttackSystemComponent : public UActorComponent
 {
     GENERATED_BODY()
 
-public:
-    UP1AttackSystemComponent();
-
     //~ Begin UActorComponent Interface
 protected:
     virtual void BeginPlay() override;

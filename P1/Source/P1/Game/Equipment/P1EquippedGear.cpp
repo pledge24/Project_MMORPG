@@ -1,7 +1,6 @@
 #include "Game/Equipment/P1EquippedGear.h"
-#include "Game/Entities/P1MyPlayer.h"
 
-void UP1EquippedGear::Init(Map<int32, Protocol::Slot>* EquippedGear_)
+void UP1EquippedGear::Init(google::protobuf::Map<int32, Protocol::Slot>* EquippedGear_)
 {
     EquippedGearLookup = EquippedGear_;
 }

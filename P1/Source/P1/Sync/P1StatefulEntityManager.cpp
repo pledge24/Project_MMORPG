@@ -1,8 +1,9 @@
 #include "Sync/P1StatefulEntityManager.h"
 
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1EntitySpawner.h"
 #include "Game/Entities/P1Player.h"
+#include "Game/Entities/P1Monster.h"
 #include "Utils/LogCategory.h"
 
 void UP1StatefulEntityManager::Initialize(FSubsystemCollectionBase& Collection)
@@ -95,7 +96,7 @@ void UP1StatefulEntityManager::SpawnEntity(const Protocol::EntityInfo& InEntityI
 
 }
 
-void UP1StatefulEntityManager::DespawnAllEntities(bool ExceptMine)
+void UP1StatefulEntityManager::DespawnAllEntities()
 {
     UWorld* World = GetWorld();
     UP1MyPlayerData* MyPlayerData = World->GetGameInstance()->GetSubsystem<UP1MyPlayerData>();
@@ -168,14 +169,20 @@ void UP1StatefulEntityManager::SpawnMonster(const Protocol::EntityInfo& InEntity
 
     if (AP1Monster* NewMonster = Cast<AP1Monster>(Spawner->SpawnMonster(InEntityInfo)))
     {
-        // Register New Monster
+        // 새 몬스터를 등록한다
         RegisterEntity(EntityId, NewMonster);
+        NewMonster->OnDespawnReady.AddUObject(this, &UP1StatefulEntityManager::HandleMonsterDespawnReady);
     }
     else
     {
         UE_LOG(LogP1Entity, Warning, TEXT("몬스터 스폰 실패"));
     }
     
+}
+
+void UP1StatefulEntityManager::HandleMonsterDespawnReady(AP1Monster* Monster)
+{
+    DespawnEntity(Monster->GetPosInfo()->entity_id());
 }
 
 void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
@@ -194,7 +201,7 @@ void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityI
 
     if (AP1Player* NewPlayer = Cast<AP1Player>(Spawner->SpawnPlayer(InEntityInfo)))
     {
-        // Register New Player
+        // 새 플레이어를 등록한다
         RegisterEntity(EntityId, NewPlayer);
     }
     else

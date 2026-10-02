@@ -23,8 +23,4 @@ public:
 private:
     /** 카테고리별로 슬롯을 모아 둔 조회용 표다. */
     TMap<Protocol::SlotType, TArray<Protocol::Slot*>> InventoryLookupMappings;
-
-    //~ Debug
-private:
-    void PrintInventoryData();
 };

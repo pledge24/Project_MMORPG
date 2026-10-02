@@ -3,15 +3,12 @@
 #include "CoreMinimal.h"
 #include "Game/Entities/P1Player.h"
 #include "InputActionValue.h"
-#include "Logging/LogMacros.h"
 #include "P1MyPlayer.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-class UInventoryComponent;
-class UEquippedGearComponent;
 
 /** 로컬 플레이어가 조종하는 캐릭터다. 입력과 카메라를 이 클래스가 갖는다. */
 UCLASS()

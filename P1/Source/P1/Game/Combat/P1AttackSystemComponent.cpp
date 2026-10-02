@@ -1,16 +1,5 @@
 #include "Game/Combat/P1AttackSystemComponent.h"
 
-// Sets default values for this component's properties
-UP1AttackSystemComponent::UP1AttackSystemComponent()
-{
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
-}
-
-// Called when the game starts
 void UP1AttackSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();

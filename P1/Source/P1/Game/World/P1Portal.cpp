@@ -1,19 +1,6 @@
 #include "Game/World/P1Portal.h"
 #include "Network/P1PacketSender.h"
 
-// Sets default values
-AP1Portal::AP1Portal()
-{
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-}
-
-// Called when the game starts or when spawned
-void AP1Portal::BeginPlay()
-{
-	Super::BeginPlay();	
-}
-
 void AP1Portal::SendEnterRoomPacket()
 {
     if (PortalId == 0)

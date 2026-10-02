@@ -6,7 +6,8 @@
 #include "Online/P1LoginManager.h"
 #include "Sockets.h"
 #include "SocketSubsystem.h"
-#include "P1.h"
+#include "Kismet/GameplayStatics.h"
+#include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
