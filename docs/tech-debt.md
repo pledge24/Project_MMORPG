@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 17개 (높음 2 · 중간 1 · 낮음 14)
+항목 19개 (높음 2 · 중간 1 · 낮음 16)
 
 ## 작성 방법
 
@@ -120,19 +120,17 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 > 위치: `P1/Content/P1/` 아래 (`UI/`, `World/`, `Characters/`)
 > 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
 
-C++ 부모 클래스가 없는 BP는 아래 둘이다.
+C++ 부모 클래스가 없는 BP는 아래 하나다.
 
 | 에셋 | 부모 | BP에 있는 것 |
 |---|---|---|
-| `WBP_CharacterSlot` | `UserWidget` | 함수 그래프 `UpdateCharacterInfo`·`DisableHighlight`·`Clear`, 디스패처 `OnSlotButtonClicked`, 변수 `Characterid`·`ThisSlotId` |
 | `BP_Shop` | `Actor` | 오버랩 상호작용 + `PlayerController` 참조. C++에 `UP1ShopWidget`은 있는데 상점 액터가 없다 |
 
-C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
+C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 둘이다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
 | `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
-| `WBP_LoginMenu` | `LoginWidget` | 그래프 4개(`CC_Init`·`DisableAllSlotsHighlight`·`ClearAllSlots`·`IsValidCharacter`) + `OnDisplayCharacterOverviews` |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
 
 ### 영향
@@ -171,12 +169,12 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 ## 캐릭터 수 한도가 클라이언트에만 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` (`CreateCharacter`) · `P1/Content/P1/UI/Frontend/WBP_LoginMenu`
-> 등록일: 2026년 10월 1일
+> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` (`CreateCharacter`) · `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`OnCreateButtonClicked`)
+> 등록일: 2026년 10월 1일 · 위치 갱신: 2026년 10월 3일 (#131)
 
-계정당 캐릭터 수는 `WBP_LoginMenu`가 캐릭터 목록 길이를 슬롯 수와 비교해 막을 뿐이다. 게임 서버의 생성 요청은
-한도를 보지 않는다. 한도 값이 BP의 슬롯 수에만 있어서 서버가 참조할 원천도 없다. 코드와 BP 그래프를 읽고
-판단했다.
+계정당 캐릭터 수는 로그인 메뉴 위젯이 캐릭터 목록 길이를 슬롯 수와 비교해 막을 뿐이다. 게임 서버의 생성 요청은
+한도를 보지 않는다. 한도 값이 `WBP_LoginMenu` 디자이너에 놓인 슬롯 수에만 있어서 서버가 참조할 원천도 없다.
+코드와 BP 그래프를 읽고 판단했다. #131이 비교를 BP 그래프에서 C++로 옮겼다.
 
 ### 영향
 
@@ -263,6 +261,38 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 
 **유지보수 어려움** — 입력을 고치려는 사람이 이 매핑이 실제로 쓰이는지 따로 확인해야 한다.
 
+## 생성한 캐릭터의 이름을 응답이 온 시점의 입력 칸에서 읽는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`UP1LoginMenuWidget::AddCharacterOverview`)
+> 등록일: 2026년 10월 3일
+
+캐릭터 생성 응답(`S_CREATE_CHARACTER`)이 오면 로그인 메뉴는 목록에 더할 이름을 그 시점의 이름 입력 칸에서
+읽는다. 직업도 그 시점에 고른 값을 쓴다. 요청을 보낸 뒤 응답이 오기 전에 입력을 고치면, 서버에는 보낸 이름과
+직업이 저장되고 목록에는 고친 값이 보인다. 응답 패킷에는 캐릭터 id만 있다. 코드를 읽고 판단했고 실행해서
+확인하지는 않았다.
+
+#131에서 찾았다. 그 티켓은 동작을 바꾸지 않는 이관이라서 고치지 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 다시 로그인해 목록을 받기 전까지 캐릭터 선택 화면에 서버와 다른 이름이나 직업이 보일 수 있다.
+
+## 모르는 직업 값을 받으면 로그인 메뉴가 멈춘다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`ClassEnumToStringMappings`를 읽는 `FetchCharacterOverviews`, `SelectClass`, `AddCharacterOverview`)
+> 등록일: 2026년 10월 3일
+
+직업 값을 직업 이름으로 바꿀 때 `TMap::operator[]`를 쓴다. 이 연산자는 키가 없으면 `check`로 멈춘다. 맵에는
+전사와 마법사만 있으므로, 서버가 캐릭터 목록(`S_LOGIN`)에 `CLASS_TYPE_NONE`이나 새로 더한 직업을 실어 보내면
+클라이언트가 멈춘다. 지금 서버는 생성 요청을 `CharacterCreation::Validate`로 걸러 표에 있는 직업만 저장한다.
+코드를 읽고 판단했다.
+
+#131에서 찾았다. 그 티켓은 동작을 바꾸지 않는 이관이라서 고치지 않았다.
+
+### 영향
+
+**변경 영향 범위 확대** — 서버 데이터에 직업을 더하면 클라이언트의 이 맵도 함께 고치지 않는 한 로그인 화면에서 멈춘다.
+
 ## `P1QuestRewardData.h`가 쓰는 타입의 헤더를 부르지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
 > 위치: `P1/Source/P1/Game/Data/P1QuestRewardData.h` 18줄
@@ -291,7 +321,6 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 |---|---|
 | `Network/P1SendWorker.h` | `Containers/Queue.h` |
 | `UI/WorldSpace/P1NameplateWidget.h` | `Utils/Types.h` |
-| `UI/Frontend/P1LoginWidget.h` | `Components/Button.h` |
 | `Game/Inventory/P1Inventory.h` | `Game/Data/P1ItemData.h` |
 | `UI/Screens/P1HUDWidget.h` | `Protocol.pb.h` |
 

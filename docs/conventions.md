@@ -74,6 +74,16 @@ X  UInventoryWidget
 +ClassRedirects=(OldName="/Script/P1.InventoryWidget", NewName="/Script/P1.P1InventoryWidget")
 ```
 
+**리다이렉트는 이름을 바꾼 작업 안에서 지운다.** 리다이렉트를 넣고 에디터에서 그 클래스를 참조하는 에셋을
+모두 다시 저장한 뒤, `Content`와 `Config`에서 옛 이름 문자열이 나오지 않는 것을 확인하고 리다이렉트 줄을
+지운다. 지운 상태로 에디터를 다시 띄워 그 에셋들이 경고 없이 컴파일되는지 본다.
+— 리다이렉트가 남으면 옛 이름으로 다시 저장되는 에셋이 없어도 줄은 계속 쌓이고, 옛 이름을 새 클래스에
+쓸 수 없게 된다. 2026년 10월 3일 #131에서 정했다. 그전에 넣은 리다이렉트의 정리는 `docs/backlog.md`에 있다.
+
+`[MCP 제약]` 리다이렉트로 불러온 에셋에는 변경 표시가 붙지 않아서 `AssetTools.save_assets`가 저장을
+건너뛴다. 같은 부모로 `set_parent`를 다시 불러도 표시가 붙지 않는다. 위젯 하나의 변수 표시를
+`UMGToolSet.ToggleWidgetAsVariable`로 켰다 끄면 값은 그대로 두고 표시만 붙는다.
+
 **예외: 델리게이트 타입에는 약어를 붙이지 않는다.** `DECLARE_*DELEGATE*` 매크로로 선언하는 타입은
 `FOnMyPlayerSpawned`, `FOnDespawnReady`처럼 `FOn` 뒤에 사건 이름을 붙인다.
 — 2026년 10월 2일 #123의 리뷰에서 정했다. 이 모듈의 델리게이트 타입은 그전부터 모두 이 형태였다.
