@@ -15,7 +15,6 @@
 static const TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
     {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
-    //
 };
 
 void UP1LoginMenuWidget::NativeOnInitialized()
@@ -121,7 +120,6 @@ void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
 {
     CharacterOverviews.Empty();
 
-    // 언리얼 엔진에서 사용할 수 있는 형식으로 변경
     for (auto& Character : pkt.characters())
     {
         FP1CharacterOverview CharacterOverview;
@@ -203,7 +201,7 @@ void UP1LoginMenuWidget::OnCreateButtonClicked()
     const int32 CharacterCount = CharacterOverviews.Num();
     const int32 SlotCount = CharacterSlots.Num();
 
-    // 슬롯이 꼭 맞게 찼을 때(==)는 아무것도 하지 않는다. 안내가 나오지 않는 결함이고 따로 고친다.
+    // TODO: #159 슬롯이 꼭 맞게 찼을 때(==)는 안내 없이 아무것도 하지 않는다.
     if (CharacterCount > SlotCount)
     {
         CS_Description->SetText(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
@@ -217,7 +215,7 @@ void UP1LoginMenuWidget::OnCreateButtonClicked()
 
 void UP1LoginMenuWidget::OnDeleteButtonClicked()
 {
-    // 빈 슬롯을 골라도 확인 화면으로 넘어간다. 확인을 누르면 삭제 요청 쪽에서 거른다.
+    // TODO: #159 빈 슬롯을 골라도 확인 화면으로 넘어가고, 거른 뒤의 문구가 확인 화면에 보이지 않는다.
     if (SelectedSlotIndex != -1)
     {
         WidgetSwitcher->SetActiveWidget(CharacterDeleteScreen);
@@ -261,7 +259,6 @@ void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER
         return;
     }
 
-    // 새 캐릭터 요약을 더한다
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = pkt.character_id();
@@ -269,9 +266,9 @@ void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER
         CharacterOverview.CharacterName = CC_CharacterNameText->GetText().ToString();
         CharacterOverview.CharacterLevel = 1;
 
-        UE_LOG(LogP1UI, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
+        UE_LOG(LogP1UI, Log, TEXT("캐릭터 요약 수: %d"), CharacterOverviews.Num());
         CharacterOverviews.Add(CharacterOverview);
-        UE_LOG(LogP1UI, Log, TEXT("Character Size :: %d"), CharacterOverviews.Num());
+        UE_LOG(LogP1UI, Log, TEXT("캐릭터 요약 수: %d"), CharacterOverviews.Num());
     }
 
     DisplayCharacterOverviews();
@@ -323,8 +320,8 @@ void UP1LoginMenuWidget::OnCreateCancelButtonClicked()
 
 void UP1LoginMenuWidget::RemoveCharacterOverview(const Protocol::S_DELETE_CHARACTER& pkt)
 {
-    bool Success = pkt.success();
-    if (Success == false)
+    bool bSuccess = pkt.success();
+    if (bSuccess == false)
     {
         CC_DescriptionText->SetText(FText::FromString(TEXT("서버 오류: 캐릭터 삭제 실패")));
         return;
@@ -335,7 +332,7 @@ void UP1LoginMenuWidget::RemoveCharacterOverview(const Protocol::S_DELETE_CHARAC
     {
         CharacterOverviews.RemoveAt(SelectedSlotIndex);
     }
-    else /* 방어 코드 */
+    else
     {
         for (int32 i = 0; i < CharacterOverviews.Num(); i++)
         {
