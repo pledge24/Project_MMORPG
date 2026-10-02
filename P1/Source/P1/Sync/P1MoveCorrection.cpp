@@ -38,7 +38,7 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
         return Result;
     }
 
-    // float를 !=로 비교하는 것도 옮기기 전의 동작 그대로다. 결과가 같으면 RInterpTo가 그대로 돌려준다.
+    // float를 !=로 비교한다. 같은 값이 들어가도 RInterpTo가 현재 회전을 그대로 돌려주므로 무해하다.
     if (bCorrectRotation && ServerYaw != ClientRotation.Yaw)
     {
         const FRotator TargetRotation(0.f, ServerYaw, 0.f);
