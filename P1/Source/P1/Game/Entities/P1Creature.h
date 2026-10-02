@@ -38,8 +38,6 @@ public:
     Protocol::MoveState GetMoveState() const { return ClientPos->state(); }
     TSharedPtr<Protocol::PosInfo> GetPosInfo() const { return ClientPos; }
 
-    FVector FindPerpendicularPoint() const;
-
     virtual void S_Move(float DeltaSeconds);
 
 protected:
@@ -52,9 +50,6 @@ protected:
 private:
     TQueue<Protocol::PosInfo> MoveQueue;
     FVector MoveDirection = FVector::ZeroVector;
-    const float CorrectionMaxThreshold = 800.f;
-    const float CORR_INTERP_SPEED = 5.f;
-    const float CORR_RINTERP_SPEED = 5.f;
 
     //~ Combat
 public:
