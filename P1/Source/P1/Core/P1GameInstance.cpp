@@ -35,7 +35,7 @@ void UP1GameInstance::Init()
     _Connection = GetSubsystem<UP1ConnectionSubsystem>();
     if (IsValid(_Connection) == false)
     {
-        UE_LOG(LogP1System, Warning, TEXT("_Connection Is Invalid"));
+        UE_LOG(LogP1System, Warning, TEXT("연결 서브시스템을 찾지 못했다"));
     }
     else
     {

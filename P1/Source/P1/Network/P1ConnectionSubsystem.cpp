@@ -126,7 +126,7 @@ bool UP1ConnectionSubsystem::TickRecvPump(float DeltaTime)
         return true;
 
     // 코어 티커는 월드 틱 밖에서 돌기 때문에 이 시점의 GWorld는 게임 월드가 아니다.
-    // 패킷 핸들러는 GWorld를 보지 않고 세션이 들고 있는 게임 인스턴스를 쓴다.
+    // 패킷 핸들러는 GWorld를 보지 않고 세션에서 얻은 게임 인스턴스를 쓴다(PacketSession::GetGameInstance).
     HandleRecvPackets();
 
     return true;
