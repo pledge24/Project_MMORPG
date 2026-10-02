@@ -4,7 +4,7 @@
 #include "Game/Entities/P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Kismet/KismetMathLibrary.h"
+#include "Sync/P1MoveCorrection.h"
 #include "Utils/LogCategory.h"
 #include "Game/Entities/P1Monster.h"
 
@@ -185,41 +185,23 @@ void AP1Creature::S_Move(float DeltaSeconds)
         //return;
     }
 
-    FVector ClientLocation = GetActorLocation();
-    FVector ServerLocation = FVector(ServerPos->pos().x(), ServerPos->pos().y(), ClientLocation.Z);
-    const float Dist = FVector::Distance(ClientLocation, ServerLocation);
+    const bool IsMonster = this->IsA<AP1Monster>();
+    const bool IsIdlePlayer = ServerPos->state() == Protocol::MOVE_STATE_IDLE && this->IsA<AP1Player>();
 
-    // 회전 보정.
-    bool IsMonster = this->IsA<AP1Monster>();
-    bool IsIdlePlayer = ServerPos->state() == Protocol::MOVE_STATE_IDLE && this->IsA<AP1Player>();
-    if (IsMonster || IsIdlePlayer)
-    {
-        if (ServerPos->yaw() != GetActorRotation().Yaw)
-        {
-            FRotator TargetRot = FRotator(0, ServerPos->yaw(), 0);
-            FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRot, DeltaSeconds, CORR_RINTERP_SPEED);
+    const FP1MoveCorrection Correction = FP1MoveCorrection::Compute(
+        GetActorLocation(),
+        GetActorRotation(),
+        FVector(ServerPos->pos().x(), ServerPos->pos().y(), ServerPos->pos().z()),
+        ServerPos->yaw(),
+        MoveDirection,
+        IsMonster || IsIdlePlayer,
+        DeltaSeconds);
 
-            SetActorRotation(NewRot);
-        }
-    }
+    // 옮기기 전에는 회전이 바뀌는 경우에만 SetActorRotation을 불렀다. 그 동작을 지킨다.
+    if (Correction.Rotation != GetActorRotation())
+        SetActorRotation(Correction.Rotation);
 
-    // 위치 보정
-    if (Dist >= CorrectionMaxThreshold)
-    {
-        // 보정 거리 초과 시 Reposition
-        SetActorLocation(ServerLocation);
-        SetActorRotation(FRotator(0, ServerPos->yaw(), 0));
-    }
-    else
-    {
-        FVector CurPos = ClientLocation;
-        FVector TargetPos = FVector(ServerLocation.X, ServerLocation.Y, ClientLocation.Z);
-
-        FVector CorrectionPoint = MoveDirection == FVector::Zero() ? TargetPos : FindPerpendicularPoint();
-        FVector CorrectedClientLocation = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, CORR_INTERP_SPEED);
-
-        SetActorLocation(CorrectedClientLocation);
-    }
+    SetActorLocation(Correction.Location);
 }
 
 void AP1Creature::S_NormalAttack(uint32 Combo, float Yaw)
@@ -251,14 +233,6 @@ void AP1Creature::S_Respawn(const Protocol::PosInfo& RespawnPos)
     SetServerPos(RespawnPos);
 
     OnRespawn.Broadcast(this);
-}
-
-FVector AP1Creature::FindPerpendicularPoint() const
-{
-    FVector TargetPoint = FVector(ServerPos->pos().x(), ServerPos->pos().y(), ClientPos->pos().z());
-    FVector ClosestPoint = UKismetMathLibrary::FindClosestPointOnLine(GetActorLocation(), TargetPoint, MoveDirection);
-
-    return ClosestPoint;
 }
 
 
