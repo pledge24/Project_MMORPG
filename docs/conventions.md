@@ -80,7 +80,7 @@ X  UInventoryWidget
 — 리다이렉트가 남으면 옛 이름으로 다시 저장되는 에셋이 없어도 줄은 계속 쌓이고, 옛 이름을 새 클래스에
 쓸 수 없게 된다. 2026년 10월 3일 #131에서 정했다. 그전에 넣은 리다이렉트의 정리는 `docs/backlog.md`에 있다.
 
-리다이렉트로 불러온 에셋을 MCP로 다시 저장할 때의 함정은 `.claude/skills/ide-tools/SKILL.md`의 「언리얼 MCP」 절에 있다.
+리다이렉트로 불러온 에셋을 MCP로 다시 저장할 때의 함정은 `.claude/skills/ue-mcp/SKILL.md`에 있다.
 
 **예외: 델리게이트 타입에는 약어를 붙이지 않는다.** `DECLARE_*DELEGATE*` 매크로로 선언하는 타입은
 `FOnMyPlayerSpawned`, `FOnDespawnReady`처럼 `FOn` 뒤에 사건 이름을 붙인다.
