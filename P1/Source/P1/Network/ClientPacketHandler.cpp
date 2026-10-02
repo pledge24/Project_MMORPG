@@ -8,9 +8,22 @@
 #include "SocketSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Core/P1GameInstance.h"
+#include "Sync/P1StatefulEntityManager.h"
 #include "Utils/LogCategory.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
+
+namespace
+{
+    /** 세션이 속한 월드의 엔티티 관리자다. 월드가 없으면 nullptr. */
+    UP1StatefulEntityManager* GetEntityManager(const PacketSessionRef& session)
+    {
+        if (UWorld* World = session->GetWorld())
+            return World->GetSubsystem<UP1StatefulEntityManager>();
+
+        return nullptr;
+    }
+}
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 {
@@ -141,42 +154,42 @@ bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
 {
-	if (auto* GameInstance = session->GetGameInstance())
-	{
-		GameInstance->HandleSpawn(pkt);
+    if (auto* EntityManager = GetEntityManager(session))
+    {
+        EntityManager->HandleSpawn(pkt);
         return true;
-	}
+    }
 
-	return false;
+    return false;
 }
 
 bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 {
-	if (auto* GameInstance = session->GetGameInstance())
-	{
-		GameInstance->HandleDespawn(pkt);
+    if (auto* EntityManager = GetEntityManager(session))
+    {
+        EntityManager->HandleDespawn(pkt);
         return true;
-	}
+    }
 
-	return false;
+    return false;
 }
 
 bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 {
-	if (auto* GameInstance = session->GetGameInstance())
-	{
-		GameInstance->HandleMove(pkt);
+    if (auto* EntityManager = GetEntityManager(session))
+    {
+        EntityManager->HandleMove(pkt);
         return true;
-	}
+    }
 
-	return false;
+    return false;
 }
 
 bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* EntityManager = GetEntityManager(session))
     {
-        GameInstance->HandleNormalAttack(pkt);
+        EntityManager->HandleNormalAttack(pkt);
         return true;
     }
 
@@ -185,9 +198,9 @@ bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK
 
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* EntityManager = GetEntityManager(session))
     {
-        GameInstance->HandleHit(pkt);
+        EntityManager->HandleHit(pkt);
         return true;
     }
 
@@ -251,9 +264,9 @@ bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 
 bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* EntityManager = GetEntityManager(session))
     {
-        GameInstance->HandleDie(pkt);
+        EntityManager->HandleDie(pkt);
         return true;
     }
 
@@ -273,9 +286,9 @@ bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT
 
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* EntityManager = GetEntityManager(session))
     {
-        GameInstance->HandleRespawn(pkt);
+        EntityManager->HandleRespawn(pkt);
         return true;
     }
 

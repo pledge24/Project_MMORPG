@@ -1,6 +1,7 @@
 #include "Core/P1GameInstance.h"
 
 #include "Network/P1ConnectionSubsystem.h"
+#include "Sync/P1StatefulEntityManager.h"
 #include "Protocol.pb.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Kismet/GameplayStatics.h"
@@ -160,7 +161,8 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
         if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER
             || EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_RESPAWN)
         {
-            HandleDespawnAll();
+            if (UP1StatefulEntityManager* EntityManager = GetEntityManager())
+                EntityManager->DespawnAllEntities();
             if (EnterRoomPkt.has_enter_pos() && IsValid(_MyPlayer))
             {
                 _MyPlayer->SetClientPos(EnterRoomPkt.enter_pos());
@@ -172,77 +174,12 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
 
 }
 
-void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
+UP1StatefulEntityManager* UP1GameInstance::GetEntityManager() const
 {
-    if (IsConnected() == false)
-        return;
+    if (UWorld* World = GetWorld())
+        return World->GetSubsystem<UP1StatefulEntityManager>();
 
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
-    {
-	    for (auto& Entity : SpawnPkt.entities())
-	    {
-            StatefulEntityManager->SpawnEntity(Entity);
-	    }
-    }
-}
-
-void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
-    {
-        for (auto& EntityId : DespawnPkt.entity_ids())
-        {
-            StatefulEntityManager->DespawnEntity(EntityId);
-        }
-    }
-	
-}
-
-void UP1GameInstance::HandleDespawnAll()
-{
-    if (IsConnected() == false)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
-    {
-        StatefulEntityManager->DespawnAllEntities();
-    }
-}
-
-void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
-{
-    if (AP1Creature* Creature = FindEntityAs<AP1Creature>(Info.entity_id()))
-    {
-        Creature->PushToMoveQueue(Info);
-    }
-}
-
-void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
-{
-	if (IsConnected() == false)
-		return;
-
-	//auto* World = GetWorld();
-	//if (World == nullptr)
-	//	return;
-
-    for(auto& info : MovePkt.info())
-        HandleMove(info);
+    return nullptr;
 }
 
 void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
@@ -293,7 +230,11 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (IsConnected() == false)
         return;
 
-    AP1Player* Player = FindEntityAs<AP1Player>(UseItemPkt.entity_id());
+    UP1StatefulEntityManager* EntityManager = GetEntityManager();
+    if (EntityManager == nullptr)
+        return;
+
+    AP1Player* Player = EntityManager->FindEntityAs<AP1Player>(UseItemPkt.entity_id());
     if (Player == nullptr)
         return;
 
@@ -320,7 +261,11 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     if (IsConnected() == false)
         return;
 
-    AP1Player* Player = FindEntityAs<AP1Player>(EquipGearPkt.entity_id());
+    UP1StatefulEntityManager* EntityManager = GetEntityManager();
+    if (EntityManager == nullptr)
+        return;
+
+    AP1Player* Player = EntityManager->FindEntityAs<AP1Player>(EquipGearPkt.entity_id());
     if (Player == nullptr)
         return;
 
@@ -371,7 +316,11 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     if (IsConnected() == false)
         return;
 
-    AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id());
+    UP1StatefulEntityManager* EntityManager = GetEntityManager();
+    if (EntityManager == nullptr)
+        return;
+
+    AP1Player* Player = EntityManager->FindEntityAs<AP1Player>(UnequipGearPkt.entity_id());
     if (Player == nullptr)
         return;
 
@@ -419,52 +368,6 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
 
 }
 
-void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(NormalAttackPkt.entity_id());
-    if (Creature == nullptr)
-        return;
-
-    uint32 Combo = NormalAttackPkt.combo();
-    float Yaw = NormalAttackPkt.yaw();
-
-    Creature->S_NormalAttack(Combo, Yaw);
-
-}
-
-void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(HitPkt.entity_id());
-    if (Creature == nullptr)
-        return;
-
-    // 피격 연출과 HP 갱신
-    Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
-
-    if (Creature->IsMyPlayer())
-    {
-        _MyPlayerData->ApplyStat(Protocol::STAT_TYPE_HP, HitPkt.updated_hp());
-    }
-}
-
-void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(DiePkt.entity_id());
-    if (Creature == nullptr)
-        return;
-
-    Creature->S_Die();
-}
-
 void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
 {
     if (IsConnected() == false)
@@ -476,34 +379,6 @@ void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& Reward
 
     
 
-}
-
-void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
-{
-    if (IsConnected() == false)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (RespawnPkt.success() == false)
-    {
-        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패: %hs"), RespawnPkt.error_message().c_str());
-        return;
-    }
-
-    // 서버는 같은 액터가 살아나는 것으로 다룬다. 새로 스폰하지 않는다.
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(RespawnPkt.entity_id());
-    if (Creature == nullptr)
-        return;
-
-    Creature->S_Respawn(RespawnPkt.pos_info());
-
-    if (Creature->IsMyPlayer())
-    {
-        _MyPlayerData->ApplyStats(RespawnPkt.updated_stat());
-    }
 }
 
 void UP1GameInstance::HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer)

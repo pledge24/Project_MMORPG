@@ -3,13 +3,13 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "Protocol.pb.h"
-#include "Sync/P1StatefulEntityManager.h"
 #include "P1GameInstance.generated.h"
 
 class UP1MyPlayerData;
 class UP1ConnectionSubsystem;
 class AP1Player;
 class AP1MyPlayer;
+class UP1StatefulEntityManager;
 
 UCLASS()
 class P1_API UP1GameInstance : public UGameInstance
@@ -58,31 +58,10 @@ public:
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
     //~ Entity Lookup
-public:
-    /** 현재 월드에 스폰된 엔티티를 찾아 T로 캐스트한다. 없거나 타입이 다르면 nullptr. */
-    template <typename T>
-    T* FindEntityAs(uint64 EntityId) const
-    {
-        UWorld* World = GetWorld();
-        if (World == nullptr)
-            return nullptr;
-
-        UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>();
-        if (StatefulEntityManager == nullptr)
-            return nullptr;
-
-        return Cast<T>(StatefulEntityManager->FindEntity(EntityId));
-    }
-
-    //~ Entity Packet Handlers
-public:
-    void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
-
-    void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
-    void HandleDespawnAll();
-
-    void HandleMove(const Protocol::PosInfo& Info);
-    void HandleMove(const Protocol::S_MOVE& MovePkt);
+private:
+    // TODO: #126과 #127이 남은 핸들러를 옮기면 지운다
+    /** 현재 월드의 엔티티 관리자다. 월드가 없으면 nullptr. */
+    UP1StatefulEntityManager* GetEntityManager() const;
 
     //~ Trade Packet Handlers
 public:
@@ -116,13 +95,9 @@ public:
      */
     void RemovePacketListener(const UObject* Listener);
 
-    //~ Combat Packet Handlers
+    //~ Reward Packet Handlers
 public:
-    void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
-    void HandleHit(const Protocol::S_HIT& HitPkt);
-    void HandleDie(const Protocol::S_DIE& DiePkt);
     void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
-    void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
 
     //~ My Player
 public:
