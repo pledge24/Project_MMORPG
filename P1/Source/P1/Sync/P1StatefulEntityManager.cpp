@@ -2,6 +2,7 @@
 
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1EntitySpawner.h"
+#include "Game/Entities/P1Creature.h"
 #include "Game/Entities/P1Player.h"
 #include "Game/Entities/P1Monster.h"
 #include "Utils/LogCategory.h"
@@ -211,3 +212,89 @@ void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityI
 }
 
     
+
+void UP1StatefulEntityManager::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
+{
+    for (auto& Entity : SpawnPkt.entities())
+    {
+        SpawnEntity(Entity);
+    }
+}
+
+void UP1StatefulEntityManager::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
+{
+    for (auto& EntityId : DespawnPkt.entity_ids())
+    {
+        DespawnEntity(EntityId);
+    }
+}
+
+void UP1StatefulEntityManager::HandleMove(const Protocol::S_MOVE& MovePkt)
+{
+    for (auto& Info : MovePkt.info())
+        HandleMove(Info);
+}
+
+void UP1StatefulEntityManager::HandleMove(const Protocol::PosInfo& Info)
+{
+    if (AP1Creature* Creature = FindEntityAs<AP1Creature>(Info.entity_id()))
+    {
+        Creature->PushToMoveQueue(Info);
+    }
+}
+
+void UP1StatefulEntityManager::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
+{
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(NormalAttackPkt.entity_id());
+    if (Creature == nullptr)
+        return;
+
+    Creature->S_NormalAttack(NormalAttackPkt.combo(), NormalAttackPkt.yaw());
+}
+
+void UP1StatefulEntityManager::HandleHit(const Protocol::S_HIT& HitPkt)
+{
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(HitPkt.entity_id());
+    if (Creature == nullptr)
+        return;
+
+    // 피격 연출과 HP 갱신
+    Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
+
+    if (Creature->IsMyPlayer())
+    {
+        if (UP1MyPlayerData* MyPlayerData = GetWorld()->GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
+            MyPlayerData->ApplyStat(Protocol::STAT_TYPE_HP, HitPkt.updated_hp());
+    }
+}
+
+void UP1StatefulEntityManager::HandleDie(const Protocol::S_DIE& DiePkt)
+{
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(DiePkt.entity_id());
+    if (Creature == nullptr)
+        return;
+
+    Creature->S_Die();
+}
+
+void UP1StatefulEntityManager::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
+{
+    if (RespawnPkt.success() == false)
+    {
+        UE_LOG(LogP1Network, Warning, TEXT("서버에서 리스폰 실패: %hs"), RespawnPkt.error_message().c_str());
+        return;
+    }
+
+    // 서버는 같은 액터가 살아나는 것으로 다룬다. 새로 스폰하지 않는다.
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(RespawnPkt.entity_id());
+    if (Creature == nullptr)
+        return;
+
+    Creature->S_Respawn(RespawnPkt.pos_info());
+
+    if (Creature->IsMyPlayer())
+    {
+        if (UP1MyPlayerData* MyPlayerData = GetWorld()->GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
+            MyPlayerData->ApplyStats(RespawnPkt.updated_stat());
+    }
+}

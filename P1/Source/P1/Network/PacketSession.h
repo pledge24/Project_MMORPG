@@ -19,6 +19,9 @@ public:
      */
     UP1GameInstance* GetGameInstance() const;
 
+    /** 이 세션을 연 연결 서브시스템의 게임 인스턴스가 들고 있는 월드다. 연결 서브시스템이 사라졌거나 월드가 없으면 nullptr. */
+    UWorld* GetWorld() const;
+
 private:
     TWeakObjectPtr<UP1ConnectionSubsystem> Connection;
 

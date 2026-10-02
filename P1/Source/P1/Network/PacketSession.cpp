@@ -20,6 +20,17 @@ UP1GameInstance* PacketSession::GetGameInstance() const
 	return nullptr;
 }
 
+UWorld* PacketSession::GetWorld() const
+{
+	if (UP1ConnectionSubsystem* ConnectionPtr = Connection.Get())
+	{
+		if (UGameInstance* GameInstance = ConnectionPtr->GetGameInstance())
+			return GameInstance->GetWorld();
+	}
+
+	return nullptr;
+}
+
 PacketSession::~PacketSession()
 {
 	Disconnect();
