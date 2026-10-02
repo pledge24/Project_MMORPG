@@ -1,19 +1,17 @@
 #include "Core/P1GameInstance.h"
 
-#include "Game/Combat/P1AttackSystemComponent.h"
 #include "Sockets.h"
-#include "Common/TcpSocketBuilder.h"
-#include "Serialization/ArrayWriter.h"
+#include "Interfaces/IPv4/IPv4Address.h"
 #include "SocketSubsystem.h"
 #include "Network/PacketSession.h"
 #include "Network/P1NetworkSettings.h"
 #include "Protocol.pb.h"
 #include "Network/ClientPacketHandler.h"
 #include "Game/Entities/P1MyPlayer.h"
-#include "P1.h"
+#include "Kismet/GameplayStatics.h"
 #include "Network/P1PacketSender.h"
 #include "Game/Entities/P1Creature.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
 namespace
@@ -32,7 +30,13 @@ void UP1GameInstance::Init()
 
     _MyPlayerData = GetSubsystem<UP1MyPlayerData>();
     if (IsValid(_MyPlayerData) == false)
+    {
         UE_LOG(LogP1System, Warning, TEXT("_MyPlayerData Is Invalid"));
+    }
+    else
+    {
+        _MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1GameInstance::HandleMyPlayerSpawned);
+    }
 
     // 수신 펌프를 코어 티커에 등록한다.
     // 게임 인스턴스는 레벨 전환에 살아남으므로 펌프도 레벨과 무관하게 계속 돈다.
@@ -233,7 +237,6 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
         return;
 
     UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>();
-    const Protocol::EntityInfo& EntityInfo = EnterGamePkt.player();
 
     // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다.
     MyPlayerData->InitMyPlayerData(EnterGamePkt);
@@ -278,7 +281,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
         if (EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_SAME_MAP_TRANSFER
             || EnterRoomPkt.enter_type() == Protocol::ENTER_TYPE_RESPAWN)
         {
-            HandleDespawnAll(true);
+            HandleDespawnAll();
             if (EnterRoomPkt.has_enter_pos() && IsValid(_MyPlayer))
             {
                 _MyPlayer->SetClientPos(EnterRoomPkt.enter_pos());
@@ -288,21 +291,6 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
         
     }
 
-}
-
-void UP1GameInstance::HandleSpawn(const Protocol::EntityInfo& EntityInfo)
-{
-    if (Socket == nullptr || GameServerSession == nullptr)
-        return;
-
-    auto* World = GetWorld();
-    if (World == nullptr)
-        return;
-
-    if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
-    {
-        StatefulEntityManager->SpawnEntity(EntityInfo);
-    }
 }
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
@@ -342,7 +330,7 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 	
 }
 
-void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
+void UP1GameInstance::HandleDespawnAll()
 {
     if (Socket == nullptr || GameServerSession == nullptr)
         return;
@@ -353,7 +341,7 @@ void UP1GameInstance::HandleDespawnAll(bool ExceptMine)
 
     if (UP1StatefulEntityManager* StatefulEntityManager = World->GetSubsystem<UP1StatefulEntityManager>())
     {
-        StatefulEntityManager->DespawnAllEntities(ExceptMine);
+        StatefulEntityManager->DespawnAllEntities();
     }
 }
 
@@ -637,6 +625,11 @@ void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
     {
         _MyPlayerData->ApplyStats(RespawnPkt.updated_stat());
     }
+}
+
+void UP1GameInstance::HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer)
+{
+    _MyPlayer = MyPlayer;
 }
 
 UP1MyPlayerData* UP1GameInstance::GetMyPlayerData()

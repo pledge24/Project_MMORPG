@@ -1,19 +1,14 @@
 #include "Core/P1InGamePlayerController.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/CanvasPanelSlot.h"
 #include "UI/Screens/P1StatusWindowWidget.h"
 #include "UI/Screens/P1InventoryWidget.h"
 #include "UI/Screens/P1HUDWidget.h"
-#include "Core/P1GameInstance.h"
-#include "Game/Entities/P1Player.h"
 #include "Game/Entities/P1MyPlayer.h"
-#include "P1.h"
 #include "Network/P1PacketSender.h"
 #include "UI/Screens/P1ShopWidget.h"
-#include "UI/WorldSpace/P1NameplateWidget.h"
 #include "UI/Screens/P1WarningTextWidget.h"
 #include "UI/Screens/P1DeathWidget.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 
 void AP1InGamePlayerController::BeginPlay()
 {

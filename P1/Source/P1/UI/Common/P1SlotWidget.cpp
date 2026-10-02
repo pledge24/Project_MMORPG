@@ -2,8 +2,6 @@
 #include "UI/Common/P1ItemTooltipWidget.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-#include "Components/Button.h"
-#include "P1.h"
 #include "Engine/DataTable.h"
 #include "Game/Data/P1ItemAssetData.h"
 

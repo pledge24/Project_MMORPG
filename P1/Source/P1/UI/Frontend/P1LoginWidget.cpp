@@ -1,7 +1,6 @@
 #include "UI/Frontend/P1LoginWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/EditableTextBox.h"
-#include "P1.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Core/P1LoginMenuPlayerController.h"
@@ -9,7 +8,7 @@
 #include "Utils/LogCategory.h"
 
 // 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
-TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
+static const TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
     {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
     //

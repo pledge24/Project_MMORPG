@@ -1,9 +1,8 @@
 #include "UI/Screens/P1HUDWidget.h"
 #include "UI/Common/P1ProgressBarWidget.h"
 #include "Components/TextBlock.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 
 void UP1HUDWidget::NativeConstruct()
 {

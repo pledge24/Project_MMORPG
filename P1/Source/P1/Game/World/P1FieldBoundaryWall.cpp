@@ -3,8 +3,6 @@
 
 AP1FieldBoundaryWall::AP1FieldBoundaryWall()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
     Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     RootComponent = Root;
 
@@ -53,11 +51,6 @@ void AP1FieldBoundaryWall::UpdateWalls()
     // 우측
     RightWall->SetBoxExtent(FVector(WallThickness, WidthHalfExtent, WallHeight));
     RightWall->SetRelativeLocation(FVector(WidthHalfExtent + WallThickness, 0, WallHeight));
-}
-
-void AP1FieldBoundaryWall::BeginPlay()
-{
-	Super::BeginPlay();
 }
 
 void AP1FieldBoundaryWall::OnConstruction(const FTransform& Transform)

@@ -1,5 +1,4 @@
 #include "Game/Inventory/P1Inventory.h"
-#include "Utils/LogCategory.h"
 
 UP1Inventory::UP1Inventory()
 {
@@ -57,16 +56,5 @@ void UP1Inventory::Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse)
     {
         TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
         InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
-    }
-}
-
-void UP1Inventory::PrintInventoryData()
-{
-    TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
-
-    for (auto Gear : GearLookup)
-    {
-        FString GearStr = UTF8_TO_TCHAR(Gear->DebugString().c_str());
-        UE_LOG(LogP1CharacterInventory, Log, TEXT("%s"), *GearStr);
     }
 }

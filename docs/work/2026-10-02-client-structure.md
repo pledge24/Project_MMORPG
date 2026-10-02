@@ -41,7 +41,7 @@
 |---|---|---|---|---|---|
 | 1 | #121 이동 보간 계산을 떼어 UE L2 테스트로 고정하기 | — | 머지 | #140 | 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 2건 성공 종료 코드 0, 빨강 단계 4회 종료 코드 1 · PIE 미확인 |
 | 2 | #122 크래시 위험과 보안 결함 고치기 | — | 머지 | #144 | 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 2건 성공 종료 코드 0 · 서버 MSBuild 종료 코드 0 · `GameServerTests.exe` 113건 성공 종료 코드 0, `PacketDispatch` 빨강 1회 종료 코드 1 · PIE 미확인 |
-| 3 | #123 죽은 코드를 걷어내고 의존 방향 맞추기 | — | 대기 | | |
+| 3 | #123 죽은 코드를 걷어내고 의존 방향 맞추기 | — | 머지 | | 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 2건 성공 종료 코드 0 · PIE 미확인 |
 | 4 | #124 연결을 Network의 서브시스템으로 옮기기 | 3 | 대기 | | |
 | 5 | #125 엔티티 핸들러를 Sync로 옮기기 | 4 | 대기 | | |
 | 6 | #126 아이템 핸들러를 내 플레이어 데이터로 옮기기 | 4 | 대기 | | |
@@ -87,3 +87,12 @@
   - `UP1MyPlayerData::GetGold`가 `int64` 골드를 `int32`로 돌려준다. #126 본문에 더했다
   - `UP1StatefulEntityManager::DespawnAllEntities`가 `ExceptMine` 인자를 보지 않고 언제나 내 플레이어를 남긴다. 부르는 곳은 `true`만 넘긴다. #123 본문에 더했다
   - #121에서 만든 `MoveCorrectionTest.cpp`도 파일 이름에 약어가 빠졌다. #123 본문에 더했다
+- 2026-10-02: #123에서 이슈 목록과 다르게 처리한 것이 셋 있다.
+  - 몬스터의 Tick은 끄지 않았다. 부모 `AP1Creature`가 Tick에서 원격 이동 보정을 한다. 빈 오버라이드와 중복된 `bCanEverTick = true`만 지웠다
+  - 스포너가 `Initialize` 전에 이름을 넣는 것은 중복이 아니었다. `FinishSpawning` 안의 `BeginPlay`가 네임플레이트에 이름을 넣는다. 순서를 주석으로 남겼다
+  - `EP1EntityType::Projectile`은 남겼다. `WBP_Nameplate`의 Switch 노드가 이 값의 핀을 쓴다. 지우려면 블루프린트를 고쳐야 한다
+- 2026-10-02: #123에서 목록에 없던 결함을 찾았고 고치지 않았다. 넷 모두 `docs/tech-debt.md`에 적었다.
+  - 스포너가 UTF-8 이름을 ANSI로 읽어 네임플레이트에 넘긴다. 한국어 이름이 깨져 보일 수 있다. 실행해서 확인하지는 않았다
+  - `P1Creature.cpp`의 `assert`가 없는 식별자 `SrcInfo`를 가리킨다
+  - `P1QuestRewardData.h`가 `FP1ItemData`의 헤더를 부르지 않는다
+  - 헤더 6개에 쓰지 않는 include가 남아 있다. 부르는 쪽이 전이적으로 기댈 수 있어 #123에서는 `.cpp`의 것만 지웠다

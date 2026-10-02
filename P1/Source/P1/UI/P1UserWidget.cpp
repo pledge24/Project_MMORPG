@@ -1,6 +1,6 @@
 #include "UI/P1UserWidget.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 
 void UP1UserWidget::NativeDestruct()
 {

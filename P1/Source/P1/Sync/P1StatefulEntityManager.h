@@ -55,10 +55,12 @@ protected:
     //~ Spawn
 public:
     void SpawnEntity(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId = 0);
-    void DespawnAllEntities(bool ExceptMine);
+    /** 내 플레이어만 남기고 모든 엔티티를 디스폰한다. */
+    void DespawnAllEntities();
     void DespawnEntity(uint64 EntityId);
 
 protected:
     void SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
+    void HandleMonsterDespawnReady(AP1Monster* Monster);
     void SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
 };

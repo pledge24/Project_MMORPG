@@ -1,16 +1,9 @@
 #include "Sync/P1EntitySpawner.h"
 #include "Game/Entities/P1Monster.h"
-#include "Core/P1MyPlayerData.h"
-#include "Core/P1GameInstance.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1StatefulEntityManager.h"
 #include "Utils/LogCategory.h"
 #include "Game/Data/P1MonsterAssetData.h"
-
-AP1EntitySpawner::AP1EntitySpawner()
-{
-	PrimaryActorTick.bCanEverTick = true;
-
-}
 
 void AP1EntitySpawner::BeginPlay()
 {
@@ -126,12 +119,12 @@ TSubclassOf<AP1Monster> AP1EntitySpawner::GetMonsterClass(int32 TemplateId) cons
 
 AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
 {
-    UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance());
+    UGameInstance* GameInstance = GetGameInstance();
     if (GameInstance == nullptr)
         return nullptr;
 
     UWorld* World = GetWorld();
-    UP1MyPlayerData* MyPlayerData = GameInstance->GetMyPlayerData();
+    UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>();
     uint64 MyPlayerId = MyPlayerData->GetPlayerId();
     bool IsMine = MyPlayerId == InEntityInfo.entity_id();
 
@@ -154,9 +147,6 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
             nullptr,
             ESpawnActorCollisionHandlingMethod::AlwaysSpawn
         );
-
-        // 내 플레이어 Pawn은 GameInstance가 알고 있게한다.
-        GameInstance->SetMyPlayer(Cast<AP1MyPlayer>(OutPlayer));
     }
     else
     {
@@ -179,6 +169,8 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
     if (OutPlayer != nullptr)
     {
         // 플레이어 데이터 설정(스폰 전 후로)
+        // 이름은 Initialize도 다시 넣지만 여기서 먼저 넣어야 한다. FinishSpawning 안의 BeginPlay가
+        // 네임플레이트를 바인딩하면서 이름을 읽는데, Initialize는 그 뒤에 불린다.
         FString PlayerName = InEntityInfo.player_info().name().c_str();
         OutPlayer->SetPlayerName(FText::FromString(PlayerName));
         OutPlayer->SetServerPos(InEntityInfo.pos_info());

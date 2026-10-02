@@ -3,7 +3,7 @@
 #include "UI/Frontend/P1LoginWidget.h"
 #include "Http.h"
 #include "HttpModule.h"
-#include "P1.h"
+#include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
 
 void UP1LoginManager::SetLoginWidget(UP1LoginWidget* Widget)

@@ -95,11 +95,10 @@ public:
 
     //~ Entity Packet Handlers
 public:
-    void HandleSpawn(const Protocol::EntityInfo& EntityInfo);
     void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
     void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
-    void HandleDespawnAll(bool ExceptMine = false);
+    void HandleDespawnAll();
 
     void HandleMove(const Protocol::PosInfo& Info);
     void HandleMove(const Protocol::S_MOVE& MovePkt);
@@ -155,9 +154,10 @@ public:
     //~ My Player
 public:
     UP1MyPlayerData* GetMyPlayerData();
-    void SetMyPlayer(AP1MyPlayer* MyPlayer) { _MyPlayer = MyPlayer; }
 
 protected:
+    void HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer);
+
     UPROPERTY()
     TObjectPtr<AP1MyPlayer> _MyPlayer;
 

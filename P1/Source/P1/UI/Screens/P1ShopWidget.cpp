@@ -1,10 +1,9 @@
 #include "UI/Screens/P1ShopWidget.h"
 
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "UI/Common/P1SlotWidget.h"
-#include "P1.h"
 #include "Network/P1PacketSender.h"
-#include "Game/Entities/P1MyPlayer.h"
+#include "Core/P1GameInstance.h"
 
 void UP1ShopWidget::NativeConstruct()
 {

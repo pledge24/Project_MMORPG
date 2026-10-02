@@ -1,14 +1,9 @@
 #include "Game/Entities/P1Player.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
-#include "Game/Combat/P1AttackSystemComponent.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Game/Equipment/P1GearAppearanceComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Utils/LogCategory.h"
 
 AP1Player::AP1Player()
 {

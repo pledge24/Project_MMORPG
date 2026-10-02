@@ -2,12 +2,10 @@
 #include "UI/Common/P1SlotWidget.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
-#include "P1.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
-#include "Game/Entities/P1MyPlayer.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 
 void UP1InventoryWidget::NativeConstruct()
 {
@@ -18,7 +16,6 @@ void UP1InventoryWidget::NativeConstruct()
         // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
-            const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
             const Protocol::Inventory& Inven_ = MyPlayerData->GetPossession()->inventory();
 
             UpdateGold(MyPlayerData->GetGold());
