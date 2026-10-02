@@ -53,8 +53,8 @@ description: Rider MCP와 언리얼 MCP(`unreal`) 툴의 이 저장소 전용 �
 
 ### 호출하기 전에
 
-- 세션에서 언리얼 MCP를 처음 부르기 전에 이 스킬과 플러그인 스킬 `unreal-mcp`를 읽는다. 컨텍스트가
-  압축된 뒤에도 다시 읽는다. 이어서 `AgentSkillToolset.ListSkills`로 프로젝트가 등록한 스킬을 확인한다.
+- 낯선 작업을 시작할 때 `AgentSkillToolset.ListSkills`로 프로젝트가 등록한 스킬을 확인한다. 범용 사용법은
+  플러그인 스킬 `unreal-mcp`에 있다.
 - `call_tool`의 `toolset_name`에는 전체 이름을 쓴다(`editor_toolset.toolsets.blueprint.BlueprintTools`).
   짧은 이름(`BlueprintTools`)은 훅의 허용 명단과 맞지 않아 막힌다. 전체 이름은 `list_toolsets`가 돌려준다.
 - 인자는 `describe_toolset`이 돌려준 스키마대로 쓴다. 추측한 이름은 스키마 오류로 돌아온다. 자주 쓰는 형식은
