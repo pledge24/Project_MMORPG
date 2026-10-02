@@ -1,15 +1,9 @@
 #include "Core/P1GameInstance.h"
 
-#include "Sockets.h"
-#include "Interfaces/IPv4/IPv4Address.h"
-#include "SocketSubsystem.h"
-#include "Network/PacketSession.h"
-#include "Network/P1NetworkSettings.h"
+#include "Network/P1ConnectionSubsystem.h"
 #include "Protocol.pb.h"
-#include "Network/ClientPacketHandler.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Kismet/GameplayStatics.h"
-#include "Network/P1PacketSender.h"
 #include "Game/Entities/P1Creature.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
@@ -38,47 +32,15 @@ void UP1GameInstance::Init()
         _MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1GameInstance::HandleMyPlayerSpawned);
     }
 
-    // 수신 펌프를 코어 티커에 등록한다.
-    // 게임 인스턴스는 레벨 전환에 살아남으므로 펌프도 레벨과 무관하게 계속 돈다.
-    // 코어 티커는 게임 스레드에서 돌기 때문에 여기서 UObject를 만져도 된다.
-    RecvPumpTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
-        FTickerDelegate::CreateUObject(this, &UP1GameInstance::TickRecvPump));
-}
-
-void UP1GameInstance::Shutdown()
-{
-    // 펌프를 먼저 멈춘다. 종료 중에 패킷을 처리하면 이미 정리된 UObject를 건드린다.
-    if (RecvPumpTickerHandle.IsValid())
+    _Connection = GetSubsystem<UP1ConnectionSubsystem>();
+    if (IsValid(_Connection) == false)
     {
-        FTSTicker::RemoveTicker(RecvPumpTickerHandle);
-        RecvPumpTickerHandle.Reset();
+        UE_LOG(LogP1System, Warning, TEXT("연결 서브시스템을 찾지 못했다"));
     }
-
-    Super::Shutdown();
-
-    // 게임 서버 연결 해제
-    DisconnectFromGameServer();
-    CloseGameServerConnection();
-}
-
-bool UP1GameInstance::TickRecvPump(float DeltaTime)
-{
-    UWorld* World = GetWorld();
-    if (World == nullptr)
-        return true;
-
-    // 월드가 준비되기 전과 정리 중에는 펌프를 돌리지 않는다.
-    // 레벨 블루프린트 틱은 레벨 전환 동안 죽어 있어서 그 사이 패킷이 큐에 쌓였다가
-    // 월드가 준비된 뒤 처리됐다. 코어 티커는 전환 중에도 돌기 때문에 그 버퍼링을
-    // 여기서 직접 복원한다. 큐는 비우지 않으므로 패킷은 유실되지 않는다.
-    if (World->bIsTearingDown || World->HasBegunPlay() == false)
-        return true;
-
-    // 코어 티커는 월드 틱 밖에서 돌기 때문에 이 시점의 GWorld는 게임 월드가 아니다.
-    // 패킷 핸들러는 GWorld를 보지 않고 세션이 들고 있는 게임 인스턴스를 쓴다.
-    HandleRecvPackets();
-
-    return true;
+    else
+    {
+        _Connection->OnConnectionLost.AddUObject(this, &UP1GameInstance::HandleConnectionLost);
+    }
 }
 
 void UP1GameInstance::BeginDestroy()
@@ -89,74 +51,9 @@ void UP1GameInstance::BeginDestroy()
 //~ Network Method
 #pragma region Network Method
 
-void UP1GameInstance::ConnectToGameServer()
+bool UP1GameInstance::IsConnected() const
 {
-	// 로그인을 다시 누르면 이 함수가 또 불린다. 이전 연결을 정리하지 않으면 소켓이 샌다.
-	CloseGameServerConnection();
-
-	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("Stream"), TEXT("Client Socket"));
-
-	const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
-
-	FIPv4Address Ip;
-	FIPv4Address::Parse(NetworkSettings->GameServerIp, Ip);
-
-	TSharedRef<FInternetAddr> InternetAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-	InternetAddr->SetIp(Ip.Value);
-	InternetAddr->SetPort(NetworkSettings->GameServerPort);
-
-	bool Connected = Socket->Connect(*InternetAddr);
-
-	if (Connected)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Success To Connect GameServer")));
-
-		// 세션
-		GameServerSession = MakeShared<PacketSession>(Socket, this);
-		GameServerSession->Run();
-
-		// AuthServer로부터 받은 AccessToken과 함께 로그인 패킷 전송
-		{
-			Protocol::C_LOGIN Pkt;
-			Pkt.set_access_token(TCHAR_TO_UTF8(*_token));
-
-			SendBufferRef SendBuffer = ClientPacketHandler::MakeSerializedPacket(Pkt);
-			SendPacket(SendBuffer);
-		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Fail To Connect GameServer")));
-
-		CloseGameServerConnection();
-	}
-}
-
-void UP1GameInstance::CloseGameServerConnection()
-{
-	// 세션이 송신 큐를 비운 뒤 소켓을 닫고 수신 스레드를 끝낸다. 순서는 PacketSession::Disconnect에 있다.
-	if (GameServerSession)
-	{
-		GameServerSession->Disconnect();
-		GameServerSession = nullptr;
-	}
-
-	if (Socket)
-	{
-		// 연결에 실패해 세션이 없었으면 여기서 처음 닫힌다. 세션이 이미 닫았으면 두 번째 Close는 무시된다.
-		Socket->Close();
-		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
-		Socket = nullptr;
-	}
-}
-
-void UP1GameInstance::DisconnectFromGameServer()
-{
-	if (Socket == nullptr || GameServerSession == nullptr)
-		return;
-
-	Protocol::C_LEAVE_GAME LeavePkt;
-	FP1PacketSender::Send(this, LeavePkt);
+	return _Connection && _Connection->IsConnected();
 }
 
 void UP1GameInstance::RemovePacketListener(const UObject* Listener)
@@ -168,20 +65,9 @@ void UP1GameInstance::RemovePacketListener(const UObject* Listener)
     OnRecvUnequipGearPkt.RemoveAll(Listener);
 }
 
-void UP1GameInstance::HandleRecvPackets()
+void UP1GameInstance::HandleConnectionLost()
 {
-	if (Socket == nullptr || GameServerSession == nullptr)
-		return;
-
-	// 끊김 표시를 큐보다 먼저 읽는다. 수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로,
-	// 표시를 본 뒤에 큐를 비우면 끊기기 직전에 온 S_LEAVE_GAME까지 처리한다.
-	const bool bConnectionLost = GameServerSession->IsConnectionLost();
-
-	GameServerSession->HandleRecvPackets();
-
-	// S_LEAVE_GAME을 처리했으면 핸들러가 이미 로그인 화면으로 돌려보내 세션이 없다.
-	if (bConnectionLost && GameServerSession)
-		ReturnToLogin(CONNECTION_LOST_NOTICE);
+	ReturnToLogin(CONNECTION_LOST_NOTICE);
 }
 
 void UP1GameInstance::HandleLeaveGame(const Protocol::S_LEAVE_GAME& LeaveGamePkt)
@@ -209,22 +95,15 @@ void UP1GameInstance::ReturnToLogin(const FString& Notice)
 {
 	UE_LOG(LogP1Network, Warning, TEXT("게임 서버 연결이 끊겨 로그인 화면으로 돌아간다: %s"), *Notice);
 
-	CloseGameServerConnection();
-
 	// 토큰은 게임 서버가 한 번 쓰고 지웠다. 다시 들어가려면 인증 서버에 다시 로그인해야 한다.
-	_token.Empty();
+	// 그래서 연결만 닫고 다시 잇지 않는다.
+	if (_Connection)
+		_Connection->Close();
+
 	_MyPlayer = nullptr;
 
 	PendingLoginNotice = Notice;
 	UGameplayStatics::OpenLevel(GetWorld(), FName("L_LoginMap"));
-}
-
-void UP1GameInstance::SendPacket(SendBufferRef SendBuffer)
-{
-	if (Socket == nullptr || GameServerSession == nullptr)
-		return;
-
-	GameServerSession->SendPacket(SendBuffer);
 }
 
 #pragma endregion Network Method
@@ -295,7 +174,7 @@ void UP1GameInstance::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
 
 void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();
@@ -313,7 +192,7 @@ void UP1GameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 
 void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();
@@ -332,7 +211,7 @@ void UP1GameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 
 void UP1GameInstance::HandleDespawnAll()
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();
@@ -355,7 +234,7 @@ void UP1GameInstance::HandleMove(const Protocol::PosInfo& Info)
 
 void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 {
-	if (Socket == nullptr || GameServerSession == nullptr)
+	if (IsConnected() == false)
 		return;
 
 	//auto* World = GetWorld();
@@ -368,7 +247,7 @@ void UP1GameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
 
 void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();
@@ -391,7 +270,7 @@ void UP1GameInstance::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
 void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();
@@ -411,7 +290,7 @@ void UP1GameInstance::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
 void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     AP1Player* Player = FindEntityAs<AP1Player>(UseItemPkt.entity_id());
@@ -438,7 +317,7 @@ void UP1GameInstance::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 
 void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     AP1Player* Player = FindEntityAs<AP1Player>(EquipGearPkt.entity_id());
@@ -489,7 +368,7 @@ void UP1GameInstance::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
 
 void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id());
@@ -542,7 +421,7 @@ void UP1GameInstance::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
 
 void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     AP1Creature* Creature = FindEntityAs<AP1Creature>(NormalAttackPkt.entity_id());
@@ -558,7 +437,7 @@ void UP1GameInstance::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& Normal
 
 void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     AP1Creature* Creature = FindEntityAs<AP1Creature>(HitPkt.entity_id());
@@ -576,7 +455,7 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
 
 void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     AP1Creature* Creature = FindEntityAs<AP1Creature>(DiePkt.entity_id());
@@ -588,7 +467,7 @@ void UP1GameInstance::HandleDie(const Protocol::S_DIE& DiePkt)
 
 void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();
@@ -601,7 +480,7 @@ void UP1GameInstance::HandleRewardResult(const Protocol::S_REWARD_RESULT& Reward
 
 void UP1GameInstance::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
 {
-    if (Socket == nullptr || GameServerSession == nullptr)
+    if (IsConnected() == false)
         return;
 
     auto* World = GetWorld();

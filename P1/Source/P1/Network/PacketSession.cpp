@@ -3,17 +3,21 @@
 #include "Network/P1SendWorker.h"
 #include "Sockets.h"
 #include "Network/ClientPacketHandler.h"
+#include "Network/P1ConnectionSubsystem.h"
 #include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
 
-PacketSession::PacketSession(class FSocket* Socket, UP1GameInstance* InGameInstance) : GameInstance(InGameInstance), Socket(Socket)
+PacketSession::PacketSession(class FSocket* Socket, UP1ConnectionSubsystem* InConnection) : Connection(InConnection), Socket(Socket)
 {
 	ClientPacketHandler::Init();
 }
 
 UP1GameInstance* PacketSession::GetGameInstance() const
 {
-	return GameInstance.Get();
+	if (UP1ConnectionSubsystem* ConnectionPtr = Connection.Get())
+		return Cast<UP1GameInstance>(ConnectionPtr->GetGameInstance());
+
+	return nullptr;
 }
 
 PacketSession::~PacketSession()

@@ -2,13 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Containers/Ticker.h"
-#include "Utils/Types.h"
 #include "Protocol.pb.h"
 #include "Sync/P1StatefulEntityManager.h"
 #include "P1GameInstance.generated.h"
 
 class UP1MyPlayerData;
+class UP1ConnectionSubsystem;
 class AP1Player;
 class AP1MyPlayer;
 
@@ -23,23 +22,16 @@ public:
     //~ Begin UGameInstance Interface
 public:
     virtual void Init() override;
-    virtual void Shutdown() override;
     virtual void BeginDestroy() override;
     //~ End UGameInstance Interface
 
     //~ Connection
-public:
-    UFUNCTION(BlueprintCallable)
-    void ConnectToGameServer();
+private:
+    /** 게임 서버와 연결되어 있는지다. 연결은 UP1ConnectionSubsystem이 소유한다. */
+    bool IsConnected() const;
 
-    UFUNCTION(BlueprintCallable)
-    void DisconnectFromGameServer();
-
-    /** 소켓을 닫고 세션 스레드가 끝나기를 기다린 뒤 소켓을 파괴한다. 연결이 없으면 아무것도 하지 않는다. */
-    void CloseGameServerConnection();
-
-    class FSocket* Socket;
-    PacketSessionRef GameServerSession;
+    UPROPERTY()
+    TObjectPtr<UP1ConnectionSubsystem> _Connection;
 
     //~ Connection Loss
 public:
@@ -50,25 +42,14 @@ public:
     FString ConsumeLoginNotice();
 
 private:
-    /** 연결을 정리하고 로그인 맵을 연다. 사용자가 스스로 종료할 때(Shutdown)는 이 경로를 타지 않는다. 게임 스레드 전용. */
+    /** 연결 서브시스템이 수신 펌프에서 끊김을 알아챘다. 사유를 모르므로 기본 문구로 돌아간다. */
+    void HandleConnectionLost();
+
+    /** 연결을 정리하고 로그인 맵을 연다. 사용자가 게임을 끄는 경로(연결 서브시스템의 Deinitialize)는 이 경로를 타지 않는다. 게임 스레드 전용. */
     void ReturnToLogin(const FString& Notice);
 
     /** 로그인 맵이 열린 뒤 로그인 화면에 보여 줄 문구다. 게임 인스턴스가 레벨 전환을 건너 들고 간다. */
     FString PendingLoginNotice;
-
-    //~ Packet Pump
-public:
-    /** 블루프린트에서 부르지 않는다. Init에서 코어 티커에 등록한 펌프가 유일한 호출자다. */
-    void HandleRecvPackets();
-
-    void SendPacket(SendBufferRef SendBuffer);
-
-private:
-    /** 코어 티커 콜백이다. true를 돌려주면 다음 프레임에도 호출된다. */
-    bool TickRecvPump(float DeltaTime);
-
-    /** Init에서 등록하고 Shutdown에서 해제한다. 게임 인스턴스와 수명이 같다. */
-    FTSTicker::FDelegateHandle RecvPumpTickerHandle;
 
     //~ Session Packet Handlers
 public:
@@ -142,14 +123,6 @@ public:
     void HandleDie(const Protocol::S_DIE& DiePkt);
     void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
     void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
-
-    //~ Auth Token
-public:
-    FString GetToken() const { return _token; }
-    void SetToken(FString token) { _token = token; }
-
-    /** 게임 서버 접속에 쓰는 토큰이다. 인증 서버가 발급한다. */
-    FString _token = "";
 
     //~ My Player
 public:
