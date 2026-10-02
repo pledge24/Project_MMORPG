@@ -10,16 +10,17 @@ class P1_API UP1ProgressBarWidget : public UP1UserWidget
     GENERATED_BODY()
 
     //~ Value
+    // 아래 세 함수 모두 최대값이 0 이하이면 막대를 비운다.
 public:
-    void Init(int32 CurValue, int32 MaxValue, bool IsPercentFormat = false);
+    void Init(int64 CurValue, int64 MaxValue, bool IsPercentFormat = false);
 
-    void SetCurValue(int32 Value);
-    void SetMaxValue(int32 Value);
-    void SetBoth(int32 CurValue, int32 MaxValue);
+    void SetCurValue(int64 Value);
+    void SetMaxValue(int64 Value);
+    void SetBoth(int64 CurValue, int64 MaxValue);
 
 protected:
-    int32 _CurValue;
-    int32 _MaxValue;
+    int64 _CurValue = 0;
+    int64 _MaxValue = 0;
 
     //~ Display
 protected:

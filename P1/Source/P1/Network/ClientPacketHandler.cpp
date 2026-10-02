@@ -18,7 +18,7 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 
 bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 {
-	return false;
+	return true;
 }
 
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
@@ -78,7 +78,7 @@ bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHA
         }
     }
 
-	return true;
+	return false;
 }
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)

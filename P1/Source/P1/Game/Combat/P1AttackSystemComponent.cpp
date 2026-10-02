@@ -36,7 +36,7 @@ void UP1AttackSystemComponent::InRestrictedArea()
 
 void UP1AttackSystemComponent::OutRestrictedArea()
 {
-    RestrictedArea = FMath::Min(RestrictedArea - 1, 0);
+    RestrictedArea = FMath::Max(RestrictedArea - 1, 0);
 }
 
 bool UP1AttackSystemComponent::IsAttacking() const

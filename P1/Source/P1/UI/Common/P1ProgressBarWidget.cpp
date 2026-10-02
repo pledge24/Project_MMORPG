@@ -2,7 +2,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
-void UP1ProgressBarWidget::Init(int32 CurValue, int32 MaxValue, bool IsPercentFormat)
+void UP1ProgressBarWidget::Init(int64 CurValue, int64 MaxValue, bool IsPercentFormat)
 {
     _CurValue = CurValue;
     _MaxValue = MaxValue;
@@ -11,19 +11,19 @@ void UP1ProgressBarWidget::Init(int32 CurValue, int32 MaxValue, bool IsPercentFo
     UpdateBar();
 }
 
-void UP1ProgressBarWidget::SetCurValue(int32 Value)
+void UP1ProgressBarWidget::SetCurValue(int64 Value)
 {
     _CurValue = Value;
     UpdateBar();
 }
 
-void UP1ProgressBarWidget::SetMaxValue(int32 Value)
+void UP1ProgressBarWidget::SetMaxValue(int64 Value)
 {
     _MaxValue = Value;
     UpdateBar();
 }
 
-void UP1ProgressBarWidget::SetBoth(int32 CurValue, int32 MaxValue)
+void UP1ProgressBarWidget::SetBoth(int64 CurValue, int64 MaxValue)
 {
     _CurValue = CurValue;
     _MaxValue = MaxValue;
@@ -33,11 +33,11 @@ void UP1ProgressBarWidget::SetBoth(int32 CurValue, int32 MaxValue)
 
 void UP1ProgressBarWidget::UpdateBar()
 {
-    float Percent = _CurValue / (float)_MaxValue;
+    const float Percent = _MaxValue > 0 ? static_cast<float>(static_cast<double>(_CurValue) / _MaxValue) : 0.f;
     ProgressBar->SetPercent(Percent);
 
-    FString ProgressText = !bIsPercentFormat ? FString::Printf(TEXT("%d/%d"), _CurValue, _MaxValue)
-        : FString::Printf(TEXT("%.2f%%"), Percent);;
+    FString ProgressText = !bIsPercentFormat ? FString::Printf(TEXT("%lld/%lld"), _CurValue, _MaxValue)
+        : FString::Printf(TEXT("%.2f%%"), Percent * 100.f);
 
     SetProgressBarText(ProgressText);
 }

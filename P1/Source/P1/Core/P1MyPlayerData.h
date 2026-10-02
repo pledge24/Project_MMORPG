@@ -60,7 +60,7 @@ public:
     FOnLevelChanged OnLevelChanged;
 
 protected:
-    Protocol::EntityInfo* _EntityInfo;
+    TUniquePtr<Protocol::EntityInfo> _EntityInfo;
     Protocol::PlayerInfo* _PlayerInfo;
 
     uint64 _PlayerId = 0;
@@ -82,11 +82,11 @@ public:
     TMap<Protocol::StatType, FOnStatChanged> OnStatChangedMappings;
 
 protected:
-    Protocol::StatInfo* _StatInfo;
+    TUniquePtr<Protocol::StatInfo> _StatInfo;
 
     //~ Possession
 public:
-    Protocol::Possession* GetPossession() { return _Possession; }
+    Protocol::Possession* GetPossession() { return _Possession.Get(); }
     int32 GetGold() const { return _Possession->gold(); };
 
     void Rep_GoldChanged(int64 Gold) const;
@@ -94,7 +94,8 @@ public:
     FOnGoldChanged OnGoldChanged;
 
 protected:
-    Protocol::Possession* _Possession;
+    /** Inventory와 EquippedGear가 이 객체의 하위 메시지 주소를 들고 있다. 새 객체로 바꾸지 않는다. */
+    TUniquePtr<Protocol::Possession> _Possession;
 
     //~ Inventory
 public:

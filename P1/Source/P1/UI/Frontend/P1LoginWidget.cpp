@@ -109,7 +109,7 @@ void UP1LoginWidget::RemoveCharacterOverview(Protocol::S_DELETE_CHARACTER& pkt)
     }
 
     int64 CharacterId = pkt.character_id();
-    if (CharacterOverviews[LastClickedSlotIdx].CharacterId == CharacterId)
+    if (CharacterOverviews.IsValidIndex(LastClickedSlotIdx) && CharacterOverviews[LastClickedSlotIdx].CharacterId == CharacterId)
     {
         CharacterOverviews.RemoveAt(LastClickedSlotIdx);
     }
