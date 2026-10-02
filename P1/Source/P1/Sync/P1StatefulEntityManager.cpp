@@ -100,7 +100,10 @@ void UP1StatefulEntityManager::DespawnAllEntities(bool ExceptMine)
     UWorld* World = GetWorld();
     UP1MyPlayerData* MyPlayerData = World->GetGameInstance()->GetSubsystem<UP1MyPlayerData>();
     uint64 MyPlayerId = MyPlayerData->GetPlayerId();
-    AP1Player* MyPlayer = Players[MyPlayerId];
+
+    // 내 플레이어가 아직 스폰되지 않았거나 이미 빠졌을 수 있다. 그때는 전부 디스폰하고 다시 등록하지 않는다.
+    TObjectPtr<AP1Player>* FoundMyPlayer = Players.Find(MyPlayerId);
+    AP1Player* MyPlayer = FoundMyPlayer ? FoundMyPlayer->Get() : nullptr;
 
     for (auto Pair : Players)
     {
@@ -122,7 +125,9 @@ void UP1StatefulEntityManager::DespawnAllEntities(bool ExceptMine)
     }
 
     Clear();
-    RegisterEntity(MyPlayerId, MyPlayer);
+
+    if (MyPlayer)
+        RegisterEntity(MyPlayerId, MyPlayer);
 }
 
 void UP1StatefulEntityManager::DespawnEntity(uint64 EntityId)

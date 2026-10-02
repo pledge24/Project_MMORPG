@@ -19,10 +19,10 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("EquippedGear Is Not Exist"));
 
     // Proto
-    _EntityInfo = new Protocol::EntityInfo();
+    _EntityInfo = MakeUnique<Protocol::EntityInfo>();
     _PlayerInfo = _EntityInfo->mutable_player_info();
-    _StatInfo = new Protocol::StatInfo();
-    _Possession = new Protocol::Possession();
+    _StatInfo = MakeUnique<Protocol::StatInfo>();
+    _Possession = MakeUnique<Protocol::Possession>();
 
     // Add Stat Delegate(Common)
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_HP);
@@ -49,14 +49,11 @@ void UP1MyPlayerData::Deinitialize()
     Inventory = nullptr;
     EquippedGear = nullptr;
 
-    delete _EntityInfo;
-    delete _StatInfo;
-    delete _Possession;
-
-    _EntityInfo = nullptr;
+    // _PlayerInfo는 _EntityInfo 안을 가리키므로 먼저 끊는다.
     _PlayerInfo = nullptr;
-    _StatInfo = nullptr;
-    _Possession = nullptr;
+    _EntityInfo.Reset();
+    _StatInfo.Reset();
+    _Possession.Reset();
 
     Super::Deinitialize();
 }

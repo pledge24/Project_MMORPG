@@ -1,6 +1,7 @@
 #include "Network/P1RecvWorker.h"
 #include "Network/P1PacketHeader.h"
 #include "Network/PacketSession.h"
+#include "Network/ClientPacketHandler.h"
 #include "Sockets.h"
 #include "Serialization/ArrayWriter.h"
 #include "Utils/LogCategory.h"
@@ -107,7 +108,7 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 		FMemoryReader Reader(HeaderBuffer);
 		Reader << Header;
         
-        if (Header.PacketID != 1018 /* MovePacketId */)
+        if (Header.PacketID != PKT_S_MOVE)
         {
 		    UE_LOG(LogP1Network, Log, TEXT("Recv PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
         }

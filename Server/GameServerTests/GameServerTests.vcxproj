@@ -171,6 +171,7 @@
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
+    <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />

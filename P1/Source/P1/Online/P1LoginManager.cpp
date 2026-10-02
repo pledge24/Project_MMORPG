@@ -120,7 +120,8 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 
 	if (loginSuccess)
 	{
-        UE_LOG(LogP1Network, Display, TEXT("AccessToken: %s"), *token);
+        // 토큰 값은 로그 파일에 남기지 않는다.
+        UE_LOG(LogP1Network, Display, TEXT("인증 서버에서 액세스 토큰을 받았다"));
 
 		if (auto* GameInstance = Cast<UP1GameInstance>(GetWorld()->GetGameInstance()))
 		{

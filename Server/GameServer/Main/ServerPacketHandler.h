@@ -108,6 +108,11 @@ public:
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
 	{
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
+
+		// 테이블은 UINT16_MAX 칸이라 id 65535는 범위 밖이다. id는 상대가 보낸 값이므로 믿지 않는다.
+		if (header->id >= UINT16_MAX)
+			return Handle_INVALID(session, buffer, len);
+
 		return GPacketHandler[header->id](session, buffer, len);
 	}
 
