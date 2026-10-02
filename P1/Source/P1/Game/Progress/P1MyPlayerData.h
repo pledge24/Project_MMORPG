@@ -87,7 +87,7 @@ protected:
     //~ Possession
 public:
     Protocol::Possession* GetPossession() { return _Possession.Get(); }
-    int64 GetGold() const { return _Possession->gold(); };
+    int64 GetGold() const { return _Possession->gold(); }
 
     void Rep_GoldChanged(int64 Gold) const;
 
@@ -148,7 +148,9 @@ public:
     DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
     FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
 
-protected:
+private:
+    bool IsMyPlayer(uint64 EntityId) const { return EntityId == _PlayerId; }
+
     /** 장착과 해제 응답이 실어 온 슬롯을 종류에 맞는 델리게이트로 알린다. */
     void ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots);
 };

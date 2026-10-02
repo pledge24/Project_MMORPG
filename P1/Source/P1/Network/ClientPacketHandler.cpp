@@ -25,7 +25,7 @@ namespace
         return nullptr;
     }
 
-    /** 세션을 연 게임 인스턴스의 내 플레이어 데이터다. 게임 인스턴스가 없으면 nullptr. */
+    /** 세션을 연 게임 인스턴스의 내 플레이어 데이터다. 월드나 게임 인스턴스가 없으면 nullptr. */
     UP1MyPlayerData* GetMyPlayerData(const PacketSessionRef& session)
     {
         if (UWorld* World = session->GetWorld())

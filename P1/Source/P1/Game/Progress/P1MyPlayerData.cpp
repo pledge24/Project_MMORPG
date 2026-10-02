@@ -177,7 +177,7 @@ void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
 void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 {
-    if (UseItemPkt.entity_id() != _PlayerId)
+    if (IsMyPlayer(UseItemPkt.entity_id()) == false)
         return;
 
     OnRecvUseItemPkt.Broadcast();
@@ -193,7 +193,7 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 
 void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
 {
-    if (EquipGearPkt.entity_id() != _PlayerId)
+    if (IsMyPlayer(EquipGearPkt.entity_id()) == false)
         return;
 
     OnRecvEquipGearPkt.Broadcast();
@@ -206,7 +206,7 @@ void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
 
 void UP1MyPlayerData::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
 {
-    if (UnequipGearPkt.entity_id() != _PlayerId)
+    if (IsMyPlayer(UnequipGearPkt.entity_id()) == false)
         return;
 
     OnRecvUnequipGearPkt.Broadcast();

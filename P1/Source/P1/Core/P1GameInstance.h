@@ -6,7 +6,6 @@
 #include "P1GameInstance.generated.h"
 
 class UP1ConnectionSubsystem;
-class AP1Player;
 class AP1MyPlayer;
 class UP1StatefulEntityManager;
 

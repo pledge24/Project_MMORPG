@@ -5,7 +5,6 @@
 #include "Protocol.pb.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Kismet/GameplayStatics.h"
-#include "Game/Entities/P1Creature.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
