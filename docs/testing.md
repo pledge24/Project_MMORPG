@@ -87,7 +87,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 프로토콜 ID 목록 | 존재 |
 | 패킷 디스패치 | 존재. `ServerPacketHandler::HandlePacket`. 서버 생성물만 테스트한다. 클라이언트와 DummyClient의 헤더는 같은 템플릿에서 생성되지만 테스트하지 않는다 |
 | 클라 패킷 프레이밍 | 존재. `ClientPacketHandler::MakeSerializedPacket`의 공개 오버로드 |
-| 원격 크리처 이동 보정 | 존재. `FP1MoveCorrection::Compute`. 이동 상태 분기와 크리처 종류 판정은 액터에 남아 있다 |
+| 원격 크리처 이동 보정 | 존재. `FP1MoveCorrection::Compute`. 이동 상태 분기와 크리처 종류 판정은 `UP1MoveSyncComponent::TickRemote`에 있다 |
+| 내 플레이어 이동 패킷 송신 판정 | 존재. `FP1MoveSendThrottle::Decide`. 이동 상태 판정과 패킷 구성은 `UP1MoveSyncComponent::TickMyPlayer`에 있다 |
 | 전투 판정 | 없음. `Room` 안에 얽혀 있다 |
 | `Gamedata` 테이블 로딩 | 미확인 |
 

@@ -2,8 +2,6 @@
 #include "Sync/P1MoveSyncConstants.h"
 #include "Kismet/KismetMathLibrary.h"
 
-using namespace P1MoveSync;
-
 FP1MoveCorrection FP1MoveCorrection::Compute(
     const FVector& ClientLocation,
     const FRotator& ClientRotation,
@@ -21,7 +19,7 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
     // (docs/backlog.md 「높이(Z) 판정 도입」). 그때 이 줄부터 고친다.
     const FVector Target(ServerLocation.X, ServerLocation.Y, ClientLocation.Z);
 
-    if (FVector::Distance(ClientLocation, Target) >= SNAP_DISTANCE)
+    if (FVector::Distance(ClientLocation, Target) >= P1MoveSync::SNAP_DISTANCE)
     {
         Result.Location = Target;
         Result.Rotation = FRotator(0.f, ServerYaw, 0.f);
@@ -33,14 +31,14 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
     if (bCorrectRotation && ServerYaw != ClientRotation.Yaw)
     {
         const FRotator TargetRotation(0.f, ServerYaw, 0.f);
-        Result.Rotation = FMath::RInterpTo(ClientRotation, TargetRotation, DeltaSeconds, ROTATION_INTERP_SPEED);
+        Result.Rotation = FMath::RInterpTo(ClientRotation, TargetRotation, DeltaSeconds, P1MoveSync::ROTATION_INTERP_SPEED);
     }
 
     const FVector CorrectionPoint = MoveDirection == FVector::ZeroVector
         ? Target
         : UKismetMathLibrary::FindClosestPointOnLine(ClientLocation, Target, MoveDirection);
 
-    Result.Location = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, LOCATION_INTERP_SPEED);
+    Result.Location = FMath::VInterpTo(ClientLocation, CorrectionPoint, DeltaSeconds, P1MoveSync::LOCATION_INTERP_SPEED);
 
     return Result;
 }

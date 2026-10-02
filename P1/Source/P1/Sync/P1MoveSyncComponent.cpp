@@ -11,6 +11,11 @@
 UP1MoveSyncComponent::UP1MoveSyncComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
+
+    // 캐릭터 이동 컴포넌트가 이 컴포넌트를 선행 조건으로 기다린다. 기본 그룹(DuringPhysics)이면
+    // 엔진이 캐릭터 이동 컴포넌트까지 그 그룹으로 미루므로, 캐릭터 이동 컴포넌트와 같은 PrePhysics에 둔다.
+    PrimaryComponentTick.TickGroup = TG_PrePhysics;
+
     MovePacketSendTimer = P1MoveSync::MOVE_PACKET_SEND_DELAY;
 }
 
@@ -18,8 +23,7 @@ void UP1MoveSyncComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 이동 처리는 원래 크리처의 액터 Tick 안에서 돌았다. 그 순서를 지킨다.
-    // 액터 Tick 뒤에 돌고, 여기서 넣은 이동 입력과 보정을 캐릭터 이동 컴포넌트가 같은 프레임에 이어받는다.
+    // 액터 Tick 뒤에 돌고, 여기서 넣은 이동 입력과 보정을 캐릭터 이동 컴포넌트가 같은 프레임에 이어받아야 한다.
     if (ACharacter* Character = GetOwner<ACharacter>())
     {
         AddTickPrerequisiteActor(Character);
@@ -173,8 +177,8 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     const bool bInputChanged = LastDesiredInput != DesiredInput;
     LastDesiredInput = DesiredInput;
 
-    UP1AttackSystemComponent* AttackSystem = MyPlayer->GetAttackSystemComponent();
-    const bool bAttacking = AttackSystem != nullptr && AttackSystem->IsAttacking();
+    // 공격 컴포넌트를 null 확인 없이 쓰는 것은 옮기기 전과 같다. #129가 고친다.
+    const bool bAttacking = MyPlayer->GetAttackSystemComponent()->IsAttacking();
 
     // 이동 상태 판정
     if (bAttacking)
@@ -184,7 +188,7 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     else
         SetMoveState(Protocol::MOVE_STATE_IDLE);
 
-    const FP1MoveSendDecision Decision = FP1MoveSendThrottle::Decide(
+    const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(
         MovePacketSendTimer,
         DeltaSeconds,
         bInputChanged,

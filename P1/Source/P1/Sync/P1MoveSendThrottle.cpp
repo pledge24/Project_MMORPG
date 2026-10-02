@@ -1,7 +1,7 @@
 #include "Sync/P1MoveSendThrottle.h"
 #include "Sync/P1MoveSyncConstants.h"
 
-FP1MoveSendDecision FP1MoveSendThrottle::Decide(
+FP1MoveSendThrottle FP1MoveSendThrottle::Decide(
     float RemainingTimer,
     float DeltaSeconds,
     bool bInputChanged,
@@ -20,7 +20,7 @@ FP1MoveSendDecision FP1MoveSendThrottle::Decide(
     if (bAttacking)
         bForceSend = false;
 
-    FP1MoveSendDecision Decision;
+    FP1MoveSendThrottle Decision;
     Decision.NextTimer = RemainingTimer - DeltaSeconds;
 
     if (Decision.NextTimer <= 0.f || bForceSend)

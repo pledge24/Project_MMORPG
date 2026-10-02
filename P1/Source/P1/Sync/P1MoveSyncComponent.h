@@ -4,17 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "Containers/Queue.h"
 #include "Protocol.pb.h"
+#include "Sync/P1MoveSyncMode.h"
 #include "P1MoveSyncComponent.generated.h"
-
-/** 이동 동기화 컴포넌트가 맡는 쪽이다. */
-enum class EP1MoveSyncMode : uint8
-{
-    /** 서버가 보낸 위치로 화면 위치를 끌어당긴다. 다른 플레이어와 몬스터다. */
-    Remote,
-
-    /** 입력으로 움직이고 이동 패킷을 보낸다. 내 플레이어다. */
-    MyPlayer,
-};
 
 /**
  * 크리처 하나의 이동 동기화를 맡는다. 원격 크리처의 수신 보간과 내 플레이어의 이동 패킷 송신이 여기 있다.
@@ -84,7 +75,7 @@ private:
 private:
     void TickMyPlayer(float DeltaSeconds);
 
-    /** 초 단위로 다음 주기 송신까지 남은 시간이다. */
+    /** 초 단위로 다음 주기 송신까지 남은 시간이다. 생성자가 전송 주기로 맞춘다. */
     float MovePacketSendTimer;
 
     /** 직전 프레임의 입력이다. 값이 바뀌었는지 볼 때 쓴다. */
