@@ -7,7 +7,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "Network/P1PacketSender.h"
 #include "Game/Combat/P1AttackSystemComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Utils/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
@@ -22,6 +21,9 @@ AP1MyPlayer::AP1MyPlayer()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
     FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+    // 엔진이 FinishSpawning 안(PreInitializeComponents)에서 0번 컨트롤러에 빙의시킨다. BeginPlay에서는 Controller가 채워져 있다.
+    AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
 void AP1MyPlayer::BeginPlay()
@@ -29,18 +31,13 @@ void AP1MyPlayer::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
-    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+    // Add Input Mapping Context
+    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
     {
-        PC->Possess(this);
-
-	    // Add Input Mapping Context
-	    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	    {
-		    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		    {
-			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		    }
-	    }
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+        {
+            Subsystem->AddMappingContext(DefaultMappingContext, 0);
+        }
     }
 
     // 스폰 알림(OnMyPlayerSpawned)은 스포너가 Initialize를 마친 뒤에 보낸다.
@@ -170,9 +167,6 @@ void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
 
 bool AP1MyPlayer::CanInputMovement() const
 {
-    if (AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking() == true)
-        return false;
-
-    return true;
+    return IsAttacking() == false;
 }
 

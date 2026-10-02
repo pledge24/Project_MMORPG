@@ -1,7 +1,6 @@
 #include "Game/Entities/P1Creature.h"
 #include "Game/Combat/P1AttackSystemComponent.h"
 #include "Game/Entities/P1CreatureBoundWidget.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Utils/LogCategory.h"
@@ -51,9 +50,9 @@ void AP1Creature::Initialize(const Protocol::EntityInfo& EntityInfo)
     SetCreatureName(InName);
 }
 
-bool AP1Creature::IsMyPlayer() const
+bool AP1Creature::IsAttacking() const
 {
-    return IsA<AP1MyPlayer>();
+    return AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking();
 }
 
 void AP1Creature::SetCreatureName(const FText& InName)

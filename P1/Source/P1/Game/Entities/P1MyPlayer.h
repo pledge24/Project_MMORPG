@@ -35,6 +35,8 @@ public:
     /** 서버가 보낸 엔티티 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
     virtual void Initialize(const Protocol::EntityInfo& InEntityInfo) override;
 
+    virtual bool IsMyPlayer() const override { return true; }
+
 protected:
     /** 내 캐릭터의 공격은 입력이 시작한다. 서버 통지로 다시 재생하지 않는다. */
     virtual void S_NormalAttack(uint32 Combo, float Yaw) override final {};
@@ -94,9 +96,9 @@ protected:
     void Move(const FInputActionValue& Value);
 
 private:
-    FVector2D DesiredInput;
-    FVector DesiredMoveDirectionVec;    // 이동할 방향(단위 벡터)
-    float DesiredMoveDirectionYaw;      // 이동할 방향(Yaw)
+    FVector2D DesiredInput = FVector2D::ZeroVector;
+    FVector DesiredMoveDirectionVec = FVector::ZeroVector;    // 이동할 방향(단위 벡터)
+    float DesiredMoveDirectionYaw = 0.f;                      // 이동할 방향(Yaw)
 
     //~ Combat
 protected:
