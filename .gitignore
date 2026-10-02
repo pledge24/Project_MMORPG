@@ -41,3 +41,6 @@ docs/reports/
 # **파이프 안에서 죽으면 bash 가 Aborted 를 찍지 않는다.** 빈 출력이 정상 결과처럼 보이므로
 # 덤프 파일이 사실상 유일한 단서다. 그래서 무시하되 지우지는 말 것.
 *.stackdump
+
+# ue-mcp 브리핑 세션 id 담긴 파일.
+.claude/hooks/.ue_briefed/
