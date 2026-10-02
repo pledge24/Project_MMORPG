@@ -82,7 +82,7 @@ void UP1LoginWidget::AddCharacterOverview(Protocol::S_CREATE_CHARACTER& pkt)
         return;
     }
 
-    // Add New CharacterOverview
+    // 새 캐릭터 요약을 더한다
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = pkt.character_id();

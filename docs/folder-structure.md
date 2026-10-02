@@ -164,7 +164,7 @@ P1/Source/
 ```
 Protocol 모듈 → Network → Sync → 게임 도메인
                                    ↑
-UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment) → Game/Data → Utils
+UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment, Game/Progress) → Game/Data → Utils
 Core → Game/Entities → 게임 도메인
 ```
 

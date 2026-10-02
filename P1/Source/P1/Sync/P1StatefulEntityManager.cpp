@@ -169,7 +169,7 @@ void UP1StatefulEntityManager::SpawnMonster(const Protocol::EntityInfo& InEntity
 
     if (AP1Monster* NewMonster = Cast<AP1Monster>(Spawner->SpawnMonster(InEntityInfo)))
     {
-        // Register New Monster
+        // 새 몬스터를 등록한다
         RegisterEntity(EntityId, NewMonster);
         NewMonster->OnDespawnReady.AddUObject(this, &UP1StatefulEntityManager::HandleMonsterDespawnReady);
     }
@@ -201,7 +201,7 @@ void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityI
 
     if (AP1Player* NewPlayer = Cast<AP1Player>(Spawner->SpawnPlayer(InEntityInfo)))
     {
-        // Register New Player
+        // 새 플레이어를 등록한다
         RegisterEntity(EntityId, NewPlayer);
     }
     else

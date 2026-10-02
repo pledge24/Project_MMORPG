@@ -144,7 +144,7 @@ void AP1InGamePlayerController::TurnOnWidget(EP1WidgetType Type)
         Widget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
         uint8 FlagIdx = (uint8)Type;
 
-        // Update Widget Flag
+        // 위젯 표시 상태를 갱신한다
         WidgetFlag |= (1 << FlagIdx);
 
         // 켜진 UI가 1개 이상이면 UI모드 유지
@@ -165,7 +165,7 @@ void AP1InGamePlayerController::TurnOffWidget(EP1WidgetType Type)
 
         uint8 FlagIdx = (uint8)Type;
 
-        // Update Widget Flag
+        // 위젯 표시 상태를 갱신한다
         WidgetFlag &= ~(1 << FlagIdx);
 
         RefreshInputMode();

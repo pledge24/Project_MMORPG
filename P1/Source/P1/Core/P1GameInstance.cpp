@@ -111,7 +111,7 @@ void UP1GameInstance::ConnectToGameServer()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Success To Connect GameServer")));
 
-		// Session
+		// 세션
 		GameServerSession = MakeShared<PacketSession>(Socket, this);
 		GameServerSession->Run();
 
@@ -241,7 +241,7 @@ void UP1GameInstance::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다.
     MyPlayerData->InitMyPlayerData(EnterGamePkt);
 
-    // TEMP
+    // 임시
     UGameplayStatics::OpenLevel(GetWorld(), FName("L_InGameMap"));
 }
 
@@ -260,7 +260,7 @@ void UP1GameInstance::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
         MyPlayerData->SetMapId(EnterMapPkt.map_id());
     }
 
-    // TEMP
+    // 임시
     UGameplayStatics::OpenLevel(GetWorld(), FName("L_InGameMap"));
 }
 
@@ -565,7 +565,7 @@ void UP1GameInstance::HandleHit(const Protocol::S_HIT& HitPkt)
     if (Creature == nullptr)
         return;
 
-    // S_Hit?
+    // 피격 연출과 HP 갱신
     Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
 
     if (Creature->IsMyPlayer())
