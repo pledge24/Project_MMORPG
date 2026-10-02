@@ -26,8 +26,8 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
     Result.Location = ClientLocation;
     Result.Rotation = ClientRotation;
 
-    // 서버의 Z를 버리는 것은 AP1Creature에서 옮기기 전의 동작 그대로다. 의도인지는 확인하지 못했다
-    // (docs/work/2026-10-02-client-structure.md 「기록」).
+    // 지금은 높이를 판정하지 않으므로 보정은 XY에만 적용한다. 서버 Z는 높이를 다룰 때를 위해 받아 둔다
+    // (docs/backlog.md 「높이(Z) 판정 도입」). 그때 이 줄부터 고친다.
     const FVector Target(ServerLocation.X, ServerLocation.Y, ClientLocation.Z);
 
     if (FVector::Distance(ClientLocation, Target) >= SNAP_DISTANCE)

@@ -40,7 +40,6 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
     }
 
     // 2) 800 미만이고 정지 중이면 서버 위치를 향해 다가가되 한 틱에 도달하지 않는다.
-    //    결과의 Z는 서버가 보낸 Z가 아니라 클라이언트의 Z다.
     {
         const FVector Client(0.f, 0.f, 100.f);
         const FVector Server(100.f, 0.f, 999.f);
@@ -52,7 +51,6 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("서버 쪽으로 움직인다"), Result.Location.X > 0.f);
         TestTrue(TEXT("한 틱에 서버 위치까지 가지 않는다"), Result.Location.X < 100.f);
         TestEqual(TEXT("목표 직선을 벗어나지 않는다"), Result.Location.Y, 0.0);
-        TestEqual(TEXT("Z는 클라이언트의 Z다"), Result.Location.Z, 100.0);
     }
 
     // 3) 이동 중이면 서버 위치 자체가 아니라, 서버 위치를 지나 이동 방향과 평행한 직선 위에서
@@ -70,14 +68,27 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("이동 방향 성분은 그대로다"), Result.Location.X, 0.0);
         TestTrue(TEXT("서버 직선 쪽으로 당겨진다"), Result.Location.Y > 0.f);
         TestTrue(TEXT("한 틱에 직선까지 가지 않는다"), Result.Location.Y < 50.f);
-        TestEqual(TEXT("Z는 클라이언트의 Z다"), Result.Location.Z, 100.0);
     }
 
-    // 4) 회전 보정을 켜면 서버 yaw 쪽으로 돌되 한 틱에 다 돌지 않는다.
+    // 4) 지금은 높이를 판정하지 않으므로 서버가 보낸 Z를 쓰지 않는다. 순간이동하든 다가가든 Z는
+    //    클라이언트의 Z 그대로다. 높이를 다루게 되면 이 단계의 기대값을 바꾼다.
+    {
+        const FVector Client(0.f, 0.f, 100.f);
+
+        const FP1MoveCorrection Snapped = FP1MoveCorrection::Compute(
+            Client, ClientRotation, FVector(900.f, 0.f, 999.f), 10.f, FVector::ZeroVector, false, DeltaSeconds);
+        const FP1MoveCorrection Approached = FP1MoveCorrection::Compute(
+            Client, ClientRotation, FVector(100.f, 50.f, 999.f), 10.f, FVector(1.f, 0.f, 0.f), false, DeltaSeconds);
+
+        TestEqual(TEXT("순간이동해도 Z는 그대로다"), Snapped.Location.Z, 100.0);
+        TestEqual(TEXT("다가가도 Z는 그대로다"), Approached.Location.Z, 100.0);
+    }
+
+    // 5) 회전 보정을 켜면 서버 yaw 쪽으로 돌되 한 틱에 다 돌지 않는다.
     //    꺼져 있으면 800 미만에서는 회전이 그대로다.
     {
         const FVector Client(0.f, 0.f, 100.f);
-        const FVector Server(100.f, 0.f, 100.f);
+        const FVector Server(100.f, 0.f, 999.f);
 
         const FP1MoveCorrection On = FP1MoveCorrection::Compute(
             Client, ClientRotation, Server, 90.f, FVector::ZeroVector, true, DeltaSeconds);

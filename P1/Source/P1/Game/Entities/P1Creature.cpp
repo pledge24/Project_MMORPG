@@ -185,8 +185,8 @@ void AP1Creature::S_Move(float DeltaSeconds)
         //return;
     }
 
-    const bool IsMonster = this->IsA<AP1Monster>();
-    const bool IsIdlePlayer = ServerPos->state() == Protocol::MOVE_STATE_IDLE && this->IsA<AP1Player>();
+    const bool bIsMonster = this->IsA<AP1Monster>();
+    const bool bIsIdlePlayer = ServerPos->state() == Protocol::MOVE_STATE_IDLE && this->IsA<AP1Player>();
 
     const FP1MoveCorrection Correction = FP1MoveCorrection::Compute(
         GetActorLocation(),
@@ -194,10 +194,10 @@ void AP1Creature::S_Move(float DeltaSeconds)
         FVector(ServerPos->pos().x(), ServerPos->pos().y(), ServerPos->pos().z()),
         ServerPos->yaw(),
         MoveDirection,
-        IsMonster || IsIdlePlayer,
+        bIsMonster || bIsIdlePlayer,
         DeltaSeconds);
 
-    // 옮기기 전에는 회전이 바뀌는 경우에만 SetActorRotation을 불렀다. 그 동작을 지킨다.
+    // 회전이 그대로면 SetActorRotation을 부르지 않는다.
     if (Correction.Rotation != GetActorRotation())
         SetActorRotation(Correction.Rotation);
 

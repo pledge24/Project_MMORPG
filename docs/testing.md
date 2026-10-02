@@ -166,7 +166,7 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 
 | 계층 | 확인한 것 | 확인 안 한 것 |
 |---|---|---|
-| L2 게임 로직+입력 (Simple Automation Test + `InjectInputForAction`) | 순수 로직 테스트의 컴파일과 실행. `Run-UeTests.ps1`이 실패한 테스트를 `failed`로 세고 종료 코드 1을 낸다(2026년 10월 2일, `P1.Sync.MoveCorrection`의 빨강 단계에서 실측) | `InjectInputForAction`으로 입력을 넣는 테스트. 월드를 띄우는 테스트 |
+| L2 게임 로직+입력 (Simple Automation Test + `InjectInputForAction`) | 순수 로직 테스트의 컴파일과 실행 · 실패한 테스트의 `failed` 집계와 `Run-UeTests.ps1`의 종료 코드 1 (2026년 10월 2일, `P1.Sync.MoveCorrection`의 빨강 단계에서 실측) | `InjectInputForAction`으로 입력을 넣는 테스트. 월드를 띄우는 테스트 |
 | L3 UI 입력 (Automation Spec + Automation Driver) | 없음 — **아직 안 봤다** | 전부 |
 | L4 E2E (Gauntlet TestController) | 설치본에 `Engine/Plugins/Experimental/Gauntlet` 플러그인 + public `GauntletTestController.h` + 컴파일된 `Gauntlet.Automation.dll` | **실행 전체** |
 
