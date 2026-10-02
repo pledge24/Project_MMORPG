@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Core/P1GameInstance.h"
 #include "Sync/P1StatefulEntityManager.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -20,6 +21,18 @@ namespace
     {
         if (UWorld* World = session->GetWorld())
             return World->GetSubsystem<UP1StatefulEntityManager>();
+
+        return nullptr;
+    }
+
+    /** 세션을 연 게임 인스턴스의 내 플레이어 데이터다. 월드나 게임 인스턴스가 없으면 nullptr. */
+    UP1MyPlayerData* GetMyPlayerData(const PacketSessionRef& session)
+    {
+        if (UWorld* World = session->GetWorld())
+        {
+            if (UGameInstance* GameInstance = World->GetGameInstance())
+                return GameInstance->GetSubsystem<UP1MyPlayerData>();
+        }
 
         return nullptr;
     }
@@ -209,9 +222,9 @@ bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        GameInstance->HandleBuyItem(pkt);
+        MyPlayerData->HandleBuyItem(pkt);
         return true;
     }
 
@@ -220,9 +233,9 @@ bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt)
 
 bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        GameInstance->HandleSellItem(pkt);
+        MyPlayerData->HandleSellItem(pkt);
         return true;
     }
 
@@ -231,31 +244,35 @@ bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
-    {
-        GameInstance->HandleEquipGear(pkt);
-        return true;
-    }
+    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
+    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
+    if (EntityManager == nullptr || MyPlayerData == nullptr)
+        return false;
 
-    return false;
+    // 외형은 모든 플레이어에 적용하고, 슬롯과 스탯은 내 플레이어일 때만 반영한다.
+    EntityManager->HandleEquipGear(pkt);
+    MyPlayerData->HandleEquipGear(pkt);
+    return true;
 }
 
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
-    {
-        GameInstance->HandleUnequipGear(pkt);
-        return true;
-    }
+    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
+    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
+    if (EntityManager == nullptr || MyPlayerData == nullptr)
+        return false;
 
-    return false;
+    // 외형은 모든 플레이어에 적용하고, 슬롯과 스탯은 내 플레이어일 때만 반영한다.
+    EntityManager->HandleUnequipGear(pkt);
+    MyPlayerData->HandleUnequipGear(pkt);
+    return true;
 }
 
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 {
-    if (auto* GameInstance = session->GetGameInstance())
+    if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        GameInstance->HandleUseItem(pkt);
+        MyPlayerData->HandleUseItem(pkt);
         return true;
     }
 

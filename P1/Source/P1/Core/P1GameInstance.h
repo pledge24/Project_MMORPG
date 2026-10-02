@@ -5,9 +5,7 @@
 #include "Protocol.pb.h"
 #include "P1GameInstance.generated.h"
 
-class UP1MyPlayerData;
 class UP1ConnectionSubsystem;
-class AP1Player;
 class AP1MyPlayer;
 class UP1StatefulEntityManager;
 
@@ -59,56 +57,18 @@ public:
 
     //~ Entity Lookup
 private:
-    // TODO: #126과 #127이 남은 핸들러를 옮기면 지운다
+    // TODO: #127이 입장 처리를 옮기면 지운다
     /** 현재 월드의 엔티티 관리자다. 월드가 없으면 nullptr. */
     UP1StatefulEntityManager* GetEntityManager() const;
-
-    //~ Trade Packet Handlers
-public:
-    void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
-    void HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt);
-    void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
-    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
-    FOnRecvSellItemPkt OnRecvSellItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
-    FOnRecvUseItemPkt OnRecvUseItemPkt;
-
-    //~ Equipment Packet Handlers
-public:
-    void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
-    void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
-    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
-    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
-
-    /**
-     * 위 패킷 수신 델리게이트에서 Listener가 붙인 것을 모두 뗀다.
-     * 게임 인스턴스는 레벨보다 오래 살기 때문에, 레벨과 함께 사라지는 객체는 사라지기 전에 불러야 한다.
-     */
-    void RemovePacketListener(const UObject* Listener);
 
     //~ Reward Packet Handlers
 public:
     void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
 
     //~ My Player
-public:
-    UP1MyPlayerData* GetMyPlayerData();
-
 protected:
     void HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 
     UPROPERTY()
     TObjectPtr<AP1MyPlayer> _MyPlayer;
-
-    UPROPERTY()
-    TObjectPtr<UP1MyPlayerData> _MyPlayerData;
 };

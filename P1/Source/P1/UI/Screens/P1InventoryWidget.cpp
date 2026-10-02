@@ -39,9 +39,9 @@ void UP1InventoryWidget::NativeConstruct()
             MyPlayerData->OnGoldChanged.AddUObject(this, &UP1InventoryWidget::UpdateGold);
             MyPlayerData->OnInvenSlotChanged.AddUObject(this, &UP1InventoryWidget::UpdateSlotWidget);
 
-            GameInstance->OnRecvSellItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
-            GameInstance->OnRecvUseItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
-            GameInstance->OnRecvEquipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvSellItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvUseItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvEquipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
         }
         
     }

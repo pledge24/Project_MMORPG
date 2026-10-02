@@ -17,7 +17,7 @@ class P1_API UP1UserWidget : public UUserWidget
 
     //~ Begin UUserWidget Interface
 protected:
-    /** 게임 인스턴스와 내 플레이어 데이터의 델리게이트에서 이 위젯을 모두 뗀다. 오버라이드하면 Super를 부른다. */
+    /** 내 플레이어 데이터의 델리게이트에서 이 위젯을 모두 뗀다. 오버라이드하면 Super를 부른다. */
     virtual void NativeDestruct() override;
     //~ End UUserWidget Interface
 

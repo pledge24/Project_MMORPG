@@ -11,7 +11,8 @@ void UP1ShopWidget::NativeConstruct()
 
     if (auto* GameInstance = GetP1GameInstance())
     {
-        GameInstance->OnRecvBuyItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+        if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
+            MyPlayerData->OnRecvBuyItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
     }
 }
 
@@ -19,7 +20,7 @@ void UP1ShopWidget::SendBuyItemPacket(UP1SlotWidget* Slot_)
 {
     // null은 PendingPacket을 올리기 전에 거른다. 올린 뒤에 돌아가면 응답이 오지 않아 구매가 막힌다.
     auto* GameInstance = GetP1GameInstance();
-    UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetMyPlayerData() : nullptr;
+    UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
     if (Slot_ == nullptr || MyPlayerData == nullptr)
         return;
 
