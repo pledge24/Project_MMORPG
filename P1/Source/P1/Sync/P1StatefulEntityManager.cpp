@@ -2,6 +2,7 @@
 
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1EntitySpawner.h"
+#include "Sync/P1MoveSyncComponent.h"
 #include "Game/Entities/P1Creature.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Game/Entities/P1Player.h"
@@ -184,7 +185,8 @@ void UP1StatefulEntityManager::SpawnMonster(const Protocol::EntityInfo& InEntity
 
 void UP1StatefulEntityManager::HandleMonsterDespawnReady(AP1Monster* Monster)
 {
-    DespawnEntity(Monster->GetPosInfo()->entity_id());
+    if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(Monster))
+        DespawnEntity(MoveSync->GetEntityId());
 }
 
 void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
@@ -240,7 +242,8 @@ void UP1StatefulEntityManager::HandleMove(const Protocol::PosInfo& Info)
 {
     if (AP1Creature* Creature = FindEntityAs<AP1Creature>(Info.entity_id()))
     {
-        Creature->PushToMoveQueue(Info);
+        if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(Creature))
+            MoveSync->PushToMoveQueue(Info);
     }
 }
 
@@ -291,7 +294,14 @@ void UP1StatefulEntityManager::HandleRespawn(const Protocol::S_RESPAWN& RespawnP
     if (Creature == nullptr)
         return;
 
-    Creature->S_Respawn(RespawnPkt.pos_info());
+    // 위치를 먼저 옮긴 뒤 사망을 풀고 알린다. OnRespawn을 받는 쪽이 옮겨진 위치를 본다.
+    if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(Creature))
+    {
+        MoveSync->SetClientPos(RespawnPkt.pos_info());
+        MoveSync->SetServerPos(RespawnPkt.pos_info());
+    }
+
+    Creature->S_Respawn();
 
     if (Creature->IsMyPlayer())
     {
@@ -349,7 +359,10 @@ void UP1StatefulEntityManager::HandleEnterRoom(const Protocol::S_ENTER_ROOM& Ent
 
     if (AP1MyPlayer* MyPlayer = FindEntityAs<AP1MyPlayer>(MyPlayerData->GetPlayerId()))
     {
-        MyPlayer->SetClientPos(EnterRoomPkt.enter_pos());
-        MyPlayer->SetServerPos(EnterRoomPkt.enter_pos());
+        if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(MyPlayer))
+        {
+            MoveSync->SetClientPos(EnterRoomPkt.enter_pos());
+            MoveSync->SetServerPos(EnterRoomPkt.enter_pos());
+        }
     }
 }

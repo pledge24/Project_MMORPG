@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 16개 (높음 2 · 중간 2 · 낮음 12)
+항목 17개 (높음 2 · 중간 2 · 낮음 13)
 
 ## 작성 방법
 
@@ -151,18 +151,15 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 | 클래스 | 뭉쳐 있는 것 |
 |---|---|
-| `AP1Creature` (`Game/Entities/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
-| `AP1MyPlayer` (`Game/Entities/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
+| `AP1Creature` (`Game/Entities/P1Creature.h`) | 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
+| `AP1MyPlayer` (`Game/Entities/P1MyPlayer.h`) | 카메라 붐 + Enhanced Input 액션 5종 + 전투 모드 |
 | `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
 
-이동 동기화 로직이 수신(`AP1Creature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
-스로틀 상수도 두 파일에 따로 산다.
+이동 동기화(수신 보간과 송신 스로틀)는 #128이 `Sync/P1MoveSyncComponent`로 옮겼다. 남은 것은 위 표의 관심사다.
 
 ### 영향
 
-**변경 영향 범위 확대** · **버그 발생 가능성 증가** — 이동 동기화를 고칠 때 한쪽만 고치는 사고가
-나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
-드러난다.
+**변경 영향 범위 확대** — 한 클래스를 고치려면 그 안의 무관한 관심사를 함께 따져야 한다.
 
 ## 인벤토리의 요청 대기가 풀리지 않는 경로가 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
@@ -237,7 +234,7 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 
 ## `AP1Creature`의 assert가 없는 식별자를 가리킨다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/Game/Entities/P1Creature.cpp` 117줄 (`AP1Creature::SetClientPos`)
+> 위치: `P1/Source/P1/Sync/P1MoveSyncComponent.cpp` (`UP1MoveSyncComponent::SetClientPos`). #128이 `AP1Creature::SetClientPos`에서 그대로 옮겼다
 > 등록일: 2026년 10월 2일
 
 `assert(SrcInfo->entity_id() == Info.entity_id())`의 `SrcInfo`는 어디에도 선언되어 있지 않다. 이 빌드에서
@@ -249,6 +246,21 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 ### 영향
 
 **유지보수 어려움** — `assert`를 켜는 구성에서는 빌드가 깨진다. 지금은 검사하려던 조건을 아무도 검사하지 않는다.
+
+## 이동 패킷의 회전 판정이 각도를 감싸지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Sync/P1MoveSendThrottle.cpp` (`FP1MoveSendThrottle::Decide`)
+> 등록일: 2026년 10월 3일
+
+원하는 이동 Yaw와 현재 Yaw의 차이를 두 값의 차의 절댓값으로 잰다. 179도와 -179도는 실제로 2도 차이인데
+358도로 재서, 허용치(60도)를 넘었다고 보고 주기를 기다리지 않고 보낸다. `P1.Sync.MoveSendThrottle`이 이
+동작을 그대로 고정하고 있다. 고칠 때는 테스트의 기대값도 함께 바꾼다.
+
+#128에서 판정을 떼어 내며 찾았다. 실행해서 송신 빈도를 재지는 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — ±180도 경계 근처를 바라보며 움직이면 이동 패킷이 의도한 주기(0.2초)보다 자주 나갈 수 있다. 실측하지 않았다.
 
 ## `P1QuestRewardData.h`가 쓰는 타입의 헤더를 부르지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client

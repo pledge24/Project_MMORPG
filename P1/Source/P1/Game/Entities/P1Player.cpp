@@ -75,11 +75,6 @@ void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void AP1Player::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-}
-
 void AP1Player::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
     Super::Initialize(EntityInfo);
@@ -99,9 +94,4 @@ void AP1Player::ApplyGear(int32 GearType, int32 TemplateId)
 void AP1Player::SetPlayerName(const FText& InName)
 {
     SetCreatureName(InName);
-}
-
-void AP1Player::S_Move(float DeltaSeconds)
-{
-    Super::S_Move(DeltaSeconds);
 }

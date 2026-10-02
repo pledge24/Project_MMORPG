@@ -2,8 +2,22 @@
 #include "Game/Entities/P1Monster.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1StatefulEntityManager.h"
+#include "Sync/P1MoveSyncComponent.h"
 #include "Utils/LogCategory.h"
 #include "Game/Data/P1MonsterAssetData.h"
+
+namespace
+{
+    /** 이동 동기화 컴포넌트를 붙인다. FinishSpawning 전에 불러야 액터의 BeginPlay와 함께 시작한다. */
+    UP1MoveSyncComponent* AttachMoveSync(AActor* Actor, EP1MoveSyncMode Mode)
+    {
+        UP1MoveSyncComponent* MoveSync = NewObject<UP1MoveSyncComponent>(Actor, TEXT("MoveSync"));
+        MoveSync->SetMode(Mode);
+        Actor->AddInstanceComponent(MoveSync);
+        MoveSync->RegisterComponent();
+        return MoveSync;
+    }
+}
 
 void AP1EntitySpawner::BeginPlay()
 {
@@ -66,8 +80,11 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
     // 스폰 전에 몬스터 데이터 설정
     if (OutMonster != nullptr)
     {
+        UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutMonster, EP1MoveSyncMode::Remote);
+
         if (ServerInfo.IsSet())
         {
+            MoveSync->InitPos(ServerInfo.GetValue().pos_info());
             OutMonster->Initialize(ServerInfo.GetValue());
         }
 
@@ -173,7 +190,10 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
         // 네임플레이트를 바인딩하면서 이름을 읽는데, Initialize는 그 뒤에 불린다.
         FString PlayerName = InEntityInfo.player_info().name().c_str();
         OutPlayer->SetPlayerName(FText::FromString(PlayerName));
-        OutPlayer->SetServerPos(InEntityInfo.pos_info());
+        // 서버 위치를 보간 목표로도 넣어 이동 방향까지 채운다. 몬스터는 위치만 넣는다.
+        UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutPlayer, IsMine ? EP1MoveSyncMode::MyPlayer : EP1MoveSyncMode::Remote);
+        MoveSync->InitPos(InEntityInfo.pos_info());
+        MoveSync->SetServerPos(InEntityInfo.pos_info());
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
         OutPlayer->Initialize(InEntityInfo);
 
