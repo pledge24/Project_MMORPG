@@ -20,8 +20,8 @@ protected:
     //~ Login Menu UI
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-    TSubclassOf<class UP1LoginWidget> LoginMenuWidgetClass;
+    TSubclassOf<class UP1LoginMenuWidget> LoginMenuWidgetClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "UI")
-    TObjectPtr<UP1LoginWidget> LoginMenuWidget;
+    TObjectPtr<UP1LoginMenuWidget> LoginMenuWidget;
 };

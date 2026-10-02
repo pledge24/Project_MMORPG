@@ -373,6 +373,23 @@ Z 순서를 올린다. 창이 마우스 입력을 받았을 때 화면 서브시
 
 ---
 
+## 21. 남은 리다이렉트 정리
+
+**왜 지금**: #131부터 이름을 바꾼 작업 안에서 리다이렉트를 지운다(`docs/conventions.md` 2.2). 그전에 넣은
+리다이렉트는 남아 있다. `DefaultEngine.ini`의 `[CoreRedirects]`에 `Class`·`Property`·`FunctionRedirects`가
+65줄 있고, 그중 24줄은 같은 줄이 두 번 들어 있다. `[/Script/Engine.Engine]`에도 템플릿 이름을 옮기는
+`ActiveGameNameRedirects`와 `ActiveClassRedirects`가 13줄 있다.
+
+**알려진 자리**: 각 리다이렉트의 옛 이름을 `Content`의 `.uasset`·`.umap`에서 문자열로 찾아, 옛 이름으로 저장된
+에셋을 다시 저장한다. #131에서 쓴 절차와 MCP 제약은 `docs/conventions.md` 2.2에 있다.
+
+**선행 조건**: 없다. 에셋을 많이 다시 저장하므로 다른 티켓과 같은 에셋을 건드리지 않는 시점에 한다.
+
+**완료 신호**: `Content`와 `Config`에서 옛 이름 문자열이 나오지 않고, 리다이렉트를 지운 상태로 띄운 에디터에서
+블루프린트가 경고 없이 컴파일된다.
+
+---
+
 ## 하지 않기로 확인된 것
 
 다시 제안하지 않는다. 근거는 각 문서에 있다.
