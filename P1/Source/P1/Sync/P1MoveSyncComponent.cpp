@@ -106,7 +106,8 @@ void UP1MoveSyncComponent::SetServerPos(const Protocol::PosInfo& Info)
 {
     if (ClientPos.entity_id() != 0)
     {
-        assert(ClientPos.entity_id() == Info.entity_id());
+        ensureMsgf(ClientPos.entity_id() == Info.entity_id(), TEXT("다른 엔티티의 서버 위치를 받았다. 기존 %lld, 새 %lld"),
+            ClientPos.entity_id(), Info.entity_id());
     }
 
     ServerPos.CopyFrom(Info);
