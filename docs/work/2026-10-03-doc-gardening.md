@@ -31,7 +31,7 @@
 
 | # | 티켓 | 차단 | 상태 | PR | 검증 |
 |---|---|---|---|---|---|
-| 1 | #185 문서 규칙을 기계적으로 검사하는 스크립트 만들기 | — | 진행 | — | `check_docs.py --self-test` 10건 통과 종료 코드 0 · `check_docs.py` 위반 4건 종료 코드 1(정답지 1·2·7번, 오탐 0건) · `check_conventions.py --self-test` 종료 코드 0 |
+| 1 | #185 문서 규칙을 기계적으로 검사하는 스크립트 만들기 | — | 머지 | #188 | `check_docs.py --self-test` 10건 통과 종료 코드 0 · `check_docs.py` 위반 4건 종료 코드 1(정답지 1·2·7번, 오탐 0건) · `check_conventions.py --self-test` 종료 코드 0 |
 | 2 | #186 문서 최신화와 리뷰를 하는 my-doc-gardening 스킬 만들기 | 1 | 대기 | — | — |
 | 3 | #187 문서 gardening 첫 전수 실행과 CI 검사 켜기 | 2 | 대기 | — | — |
 
