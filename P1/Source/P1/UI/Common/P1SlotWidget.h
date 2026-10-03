@@ -114,7 +114,8 @@ private:
 
     //~ Tooltip
 protected:
-    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    /** 아이콘에 마우스를 올리면 아이콘의 툴팁 델리게이트가 부른다. 빈 칸이면 nullptr을 돌려 툴팁을 띄우지 않는다. */
+    UFUNCTION()
     UWidget* GetToolTipWidget() const;
 
     /** 툴팁으로 띄울 위젯 클래스다. */

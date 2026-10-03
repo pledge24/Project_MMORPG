@@ -17,6 +17,10 @@ void UP1SlotWidget::NativeConstruct()
     if (TooltipClass && !SlotTooltipWidget)
         SlotTooltipWidget = CreateWidget<UP1ItemTooltipWidget>(this, TooltipClass);
 
+    // 툴팁은 띄울 때마다 지금 칸의 아이템으로 채운다. 디자이너 바인딩 대신 여기서 묶는다.
+    if (ItemIcon)
+        ItemIcon->ToolTipWidgetDelegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UP1SlotWidget, GetToolTipWidget));
+
     if (UP1GameInstance* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
@@ -186,7 +190,7 @@ void UP1SlotWidget::RefreshCooldown()
         World->GetTimerManager().SetTimer(CooldownTimerHandle, this, &UP1SlotWidget::RefreshCooldown, CooldownBarIntervalSeconds, true);
 }
 
-UWidget* UP1SlotWidget::GetToolTipWidget_Implementation() const
+UWidget* UP1SlotWidget::GetToolTipWidget() const
 {
     if (ItemData.TemplateId > 0 && TooltipClass)
     {
