@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 25개 (높음 2 · 중간 0 · 낮음 23)
+항목 25개 (높음 1 · 중간 0 · 낮음 24)
 
 ## 작성 방법
 
@@ -94,26 +94,6 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 
 **버그 발생 가능성 증가** — 클라이언트 하나가 `size` 0인 헤더를 보내면 서버의 IOCP 스레드 하나가
 무한 루프에 빠진다. 클라이언트 쪽은 서버가 보낸 값이라 위험이 낮다.
-
-## 공격 콤보와 몽타주 선택이 블루프린트에 있다
-> **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · client
-> 위치: `P1/Content/P1/Characters/Monsters/`
-> 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
-
-`BPC_MonsterAttackSystem`과 `BPC_WarriorAttackSystem`(부모 C++ `AttackSystemComponent`)이
-`S_PerformNormalAttack`·`PerformNormalAttack`·`ResetAttackCombo`를 BP로 구현하고 `NormalAttacks`
-배열을 들고 있다. 콤보 상태 머신과 몽타주 선택이 전부 BP에 있다. C++ `AttackSystemComponent`는
-56+52줄뿐이다.
-
-몬스터 쪽 BP 클래스는 `BP_MonsterBase`(부모 C++ `Monster`) 아래로 `BP_{Melee,Ranged,Super}MonsterBase`
-3개와 미니언 9개, 모두 13개다. 2026년 9월 29일에 다시 읽은 결과 이 클래스들의 `BeginPlay`·`Tick`·
-`ActorBeginOverlap`은 비어 있거나 부모를 부르기만 한다. 몬스터 행동 로직은 BP에 없다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
-(`Room::HandleNormalAttack`) 클라이언트의 콤보 규칙은 BP에 있어서, 양쪽 규칙이 갈라져도
-컴파일러도 테스트도 잡지 못한다.
 
 ## 슬롯을 비워도 아이템 데이터가 지난 아이템을 들고 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
@@ -357,6 +337,20 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 ### 영향
 
 **변경 영향 범위 확대** — 헤더 하나를 고치면 그 헤더를 부르는 파일이 모두 다시 컴파일된다.
+
+## 다른 플레이어의 일반 공격이 yaw 0으로 알려진다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` (`C_HandleNormalAttack`)
+> 등록일: 2026년 10월 3일
+
+서버는 플레이어의 일반 공격을 다른 플레이어에게 알릴 때 `S_NORMAL_ATTACK`의 `yaw`를 채우지 않는다.
+`C_NORMAL_ATTACK`에도 yaw가 없다. 받는 클라이언트의 `AP1Creature::S_NormalAttack`은 받은 yaw로 늘 회전하므로,
+다른 플레이어가 공격할 때마다 그 캐릭터가 yaw 0 방향으로 돌아선다. 몬스터 공격은 `Room::HandleNormalAttack`이
+yaw를 채운다. 코드를 읽고 판단했고 실행해서 확인하지는 않았다(#173).
+
+### 영향
+
+**버그 발생 가능성 증가** — 여럿이 함께 싸울 때 다른 플레이어의 공격 방향이 엉뚱하게 보인다.
 
 ## 상점 범위를 누가 나가도 상점 창이 닫힌다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
