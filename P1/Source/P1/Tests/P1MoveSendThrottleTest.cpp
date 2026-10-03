@@ -50,28 +50,53 @@ bool FP1MoveSendThrottleTest::RunTest(const FString& Parameters)
         TestFalse(TEXT("이동 입력이 막혀 있으면 입력 변화로 보내지 않는다"), Blocked.bSend);
     }
 
-    // 4) 원하는 이동 Yaw와 현재 Yaw가 60도 이상 벌어지면 바로 보낸다. 경계값 60도 보내는 쪽이다.
-    //    이 판정은 이동 입력이 막혀 있어도 한다. 차이는 각도를 감싸지 않고 두 값의 차의 절댓값으로 잰다.
+    // 4) 입력이 있으면 원하는 이동 Yaw와 현재 Yaw가 60도 이상 벌어질 때 바로 보낸다. 경계값 60도 보내는 쪽이다.
+    //    이 판정은 이동 입력이 막혀 있어도 한다. 차이는 ±180도에서 감싸서 짧은 쪽으로 잰다(#156).
     {
         TestTrue(TEXT("60도 차이면 바로 보낸다"),
-            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f}).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .bHasMoveInput = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f}).bSend);
         TestFalse(TEXT("60도 미만이면 보내지 않는다"),
-            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true, .DesiredYaw = 69.f, .CurrentYaw = 10.f}).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .bHasMoveInput = true, .DesiredYaw = 69.f, .CurrentYaw = 10.f}).bSend);
         TestTrue(TEXT("이동 입력이 막혀 있어도 회전으로는 보낸다"),
-            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .DesiredYaw = 70.f, .CurrentYaw = 10.f}).bSend);
-        TestTrue(TEXT("179도와 -179도는 358도 차이로 잰다"),
-            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true, .DesiredYaw = 179.f, .CurrentYaw = -179.f}).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f,
+                .bHasMoveInput = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f}).bSend);
+        TestFalse(TEXT("179도와 -179도는 2도 차이라 보내지 않는다"),
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .bHasMoveInput = true, .DesiredYaw = 179.f, .CurrentYaw = -179.f}).bSend);
+        TestTrue(TEXT("150도와 -150도는 감싸서 60도 차이라 보낸다"),
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .bHasMoveInput = true, .DesiredYaw = 150.f, .CurrentYaw = -150.f}).bSend);
     }
 
     // 5) 공격 중에는 입력 변화와 회전으로 바로 보내지 않는다. 주기가 끝나면 공격 중이어도 보낸다.
     {
         const FP1MoveSendThrottle Suppressed = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f,
-            .bInputChanged = true, .bCanInputMovement = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f, .bAttacking = true});
+            .bInputChanged = true, .bCanInputMovement = true, .bHasMoveInput = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f,
+            .bAttacking = true});
         TestFalse(TEXT("공격 중에는 바로 보내지 않는다"), Suppressed.bSend);
         TestEqual(TEXT("보내지 않았으면 타이머만 준다"), Suppressed.NextTimer, 0.19f, KINDA_SMALL_NUMBER);
 
         TestTrue(TEXT("공격 중이어도 주기가 끝나면 보낸다"),
             FP1MoveSendThrottle::Decide({.RemainingTimer = 0.05f, .DeltaSeconds = 0.1f, .bCanInputMovement = true, .bAttacking = true}).bSend);
+    }
+
+    // 6) 입력이 없으면 원하는 이동 Yaw를 보지 않는다. 입력을 떼면 그 값이 0이 되기 때문이다(#156).
+    //    대신 서버가 마지막으로 받은 yaw와 현재 yaw가 60도 이상 벌어지면 바로 보낸다. 공격 중에는 보내지 않는다.
+    {
+        TestFalse(TEXT("입력을 뗀 뒤 원하는 이동 Yaw가 0이어도 회전으로 보내지 않는다"),
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .DesiredYaw = 0.f, .CurrentYaw = 90.f, .LastSentYaw = 90.f}).bSend);
+        TestTrue(TEXT("입력이 없어도 마지막으로 보낸 yaw에서 60도 이상 돌면 보낸다"),
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .CurrentYaw = 90.f, .LastSentYaw = 30.f}).bSend);
+        TestFalse(TEXT("마지막으로 보낸 yaw와의 차이도 감싸서 잰다"),
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .CurrentYaw = -179.f, .LastSentYaw = 179.f}).bSend);
+        TestFalse(TEXT("공격 중에는 마지막으로 보낸 yaw에서 돌아도 바로 보내지 않는다"),
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
+                .CurrentYaw = 90.f, .LastSentYaw = 30.f, .bAttacking = true}).bSend);
     }
 
     return true;

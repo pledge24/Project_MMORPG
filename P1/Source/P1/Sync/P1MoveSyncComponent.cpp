@@ -73,6 +73,7 @@ void UP1MoveSyncComponent::InitPos(const Protocol::PosInfo& Info)
 {
     ClientPos.CopyFrom(Info);
     ServerPos.CopyFrom(Info);
+    LastSentYaw = Info.yaw();
 }
 
 bool UP1MoveSyncComponent::PushToMoveQueue(const Protocol::PosInfo& Info)
@@ -89,6 +90,7 @@ void UP1MoveSyncComponent::SetClientPos(const Protocol::PosInfo& Info)
     }
 
     ClientPos.CopyFrom(Info);
+    LastSentYaw = Info.yaw();
 
     AActor* Owner = GetOwner();
     if (Owner == nullptr)
@@ -189,8 +191,10 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     SendInput.DeltaSeconds = DeltaSeconds;
     SendInput.bInputChanged = bInputChanged;
     SendInput.bCanInputMovement = bCanInputMovement;
+    SendInput.bHasMoveInput = DesiredInput != FVector2D::Zero();
     SendInput.DesiredYaw = MyPlayer->GetDesiredMoveDirectionYaw();
     SendInput.CurrentYaw = MyPlayer->GetActorRotation().Yaw;
+    SendInput.LastSentYaw = LastSentYaw;
     SendInput.bAttacking = bAttacking;
 
     const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(SendInput);
@@ -209,4 +213,5 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     Info->set_state(ClientPos.state());
 
     FP1PacketSender::Send(this, MovePkt);
+    LastSentYaw = Info->yaw();
 }

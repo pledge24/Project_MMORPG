@@ -53,7 +53,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
 | `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · Z 유지 · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
-| `P1.Sync.MoveSendThrottle` | 1 | 내 플레이어 이동 패킷의 주기 송신(0.2초)과 타이머 리셋 · 입력 변화 즉시 송신(이동 가능할 때만) · 회전 허용치(60도) 경계 · 공격 중 즉시 송신 억제 |
+| `P1.Sync.MoveSendThrottle` | 1 | 내 플레이어 이동 패킷의 주기 송신(0.2초)과 타이머 리셋 · 입력 변화 즉시 송신(이동 가능할 때만) · 회전 허용치(60도) 경계와 ±180도 감싸기 · 입력이 없을 때 마지막으로 보낸 yaw와의 비교 · 공격 중 즉시 송신 억제 |
 | `P1.Inventory.SlotAction` | 1 | 인벤토리 칸 더블클릭의 요청 판정. 빈 칸 · 소모품 사용 · 무기와 방어구 착용 · 요구 레벨 경계 · 기타 칸과 착용 장비 칸 · 재사용 대기 중인 소모품 |
 | `P1.Inventory.ItemCooldown` | 1 | 아이템 재사용 대기의 남은 시간과 남은 비율(1 → 0) · 끝나는 순간의 경계 · 길이가 0 이하인 아이템 |
 | `P1.Combat.NormalAttackCombo` | 1 | 일반 공격의 콤보 순번 순환(1→N→1) · 몽타주가 하나이거나 없을 때 · 순번 N의 몽타주 인덱스 · 서버가 보낸 순번 0 · 범위 밖 순번 |
