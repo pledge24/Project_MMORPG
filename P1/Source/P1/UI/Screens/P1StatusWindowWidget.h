@@ -6,6 +6,7 @@
 #include "P1StatusWindowWidget.generated.h"
 
 class AP1MyPlayer;
+class UButton;
 class UTextBlock;
 class UP1MyPlayerData;
 
@@ -24,9 +25,6 @@ public:
     void UpdateSlotWidget(const Protocol::Slot& Slot_);
 
 protected:
-    UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendUnequipPacket(UP1SlotWidget* Slot_);
-
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<UP1SlotWidget> Equipped_Helmet;
 
@@ -49,6 +47,10 @@ protected:
     UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
     bool PendingPacket = false;
 
+private:
+    /** 더블클릭한 착용 장비를 벗는다. */
+    void HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget);
+
     //~ Stat Details
 public:
     void UpdateAllStat(UP1MyPlayerData* MyPlayerData);
@@ -70,4 +72,16 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> Details_Magical_Attack;
+
+    //~ Tips
+private:
+    /** 팁 패널이 보이면 숨기고, 숨어 있으면 보인다. */
+    UFUNCTION()
+    void ToggleTips();
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UButton> Button_Details;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UWidget> CanvasPanel_Tips;
 };

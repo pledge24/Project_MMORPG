@@ -12,6 +12,9 @@ class UImage;
 class UTextBlock;
 class UP1ItemTooltipWidget;
 class UButton;
+class UP1SlotWidget;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSlotClicked, UP1SlotWidget*);
 
 UCLASS()
 class P1_API UP1SlotWidget : public UP1UserWidget
@@ -21,7 +24,22 @@ class P1_API UP1SlotWidget : public UP1UserWidget
     //~ Begin UUserWidget Interface
 public:
     virtual void NativeConstruct() override;
+
+protected:
+    virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    virtual FReply NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
     //~ End UUserWidget Interface
+
+    //~ Click
+public:
+    /** 아이콘 위에서 우클릭하면 알린다. 빈 칸에서도 알린다. */
+    FOnSlotClicked OnRightClicked;
+
+    /** 아이콘 위에서 좌클릭으로 더블클릭하면 알린다. 빈 칸에서도 알린다. */
+    FOnSlotClicked OnDoubleClicked;
+
+private:
+    bool IsOverIcon(const FPointerEvent& InMouseEvent) const;
 
     //~ Slot Data
 public:

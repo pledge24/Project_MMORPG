@@ -2,12 +2,20 @@
 
 #include "Game/Progress/P1MyPlayerData.h"
 #include "UI/Common/P1SlotWidget.h"
+#include "Components/PanelWidget.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
+#include "Utils/LogCategory.h"
 
 void UP1ShopWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    for (UWidget* Child : UGP_Shop->GetAllChildren())
+    {
+        if (UP1SlotWidget* SlotWidget = Cast<UP1SlotWidget>(Child))
+            SlotWidget->OnRightClicked.AddUObject(this, &UP1ShopWidget::HandleSlotRightClicked);
+    }
 
     if (auto* GameInstance = GetP1GameInstance())
     {
@@ -16,30 +24,24 @@ void UP1ShopWidget::NativeConstruct()
     }
 }
 
-void UP1ShopWidget::SendBuyItemPacket(UP1SlotWidget* Slot_)
+void UP1ShopWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
 {
-    // null은 PendingPacket을 올리기 전에 거른다. 올린 뒤에 돌아가면 응답이 오지 않아 구매가 막힌다.
-    auto* GameInstance = GetP1GameInstance();
+    UP1GameInstance* GameInstance = GetP1GameInstance();
     UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
-    if (Slot_ == nullptr || MyPlayerData == nullptr)
+    if (MyPlayerData == nullptr || PendingPacket)
         return;
 
-    if (PendingPacket)
-        return;
-    else
-        PendingPacket = true;
-
-    int64 Gold = MyPlayerData->GetGold();
-    int64 BuyPrice = Slot_->ItemData.BuyPrice;
-
-    // TODO: 골드가 모자란 분기는 PendingPacket을 올린 채 돌아가 구매를 막는다. #132가 고친다.
-    if (Gold < BuyPrice)
+    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 구매가 막힌다.
+    if (MyPlayerData->GetGold() < SlotWidget->ItemData.BuyPrice)
     {
+        UE_LOG(LogP1UI, Log, TEXT("골드가 모자라 살 수 없다. 템플릿 %d"), SlotWidget->ItemData.TemplateId);
         return;
     }
 
-    Protocol::C_BUY_ITEM pkt;
-    pkt.set_template_id(Slot_->ItemData.TemplateId);
-    pkt.set_count(1);
-    FP1PacketSender::Send(this, pkt);
+    Protocol::C_BUY_ITEM Pkt;
+    Pkt.set_template_id(SlotWidget->ItemData.TemplateId);
+    Pkt.set_count(1);
+
+    PendingPacket = true;
+    FP1PacketSender::Send(this, Pkt);
 }

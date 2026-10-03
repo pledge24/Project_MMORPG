@@ -13,6 +13,34 @@ void UP1SlotWidget::NativeConstruct()
         SlotTooltipWidget = CreateWidget<UP1ItemTooltipWidget>(this, TooltipClass);
 }
 
+FReply UP1SlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+    if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton && IsOverIcon(InMouseEvent))
+    {
+        OnRightClicked.Broadcast(this);
+        return FReply::Handled();
+    }
+
+    return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
+FReply UP1SlotWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+    if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && IsOverIcon(InMouseEvent))
+    {
+        OnDoubleClicked.Broadcast(this);
+        return FReply::Handled();
+    }
+
+    return Super::NativeOnMouseButtonDoubleClick(InGeometry, InMouseEvent);
+}
+
+bool UP1SlotWidget::IsOverIcon(const FPointerEvent& InMouseEvent) const
+{
+    // 슬롯 테두리가 아니라 아이콘 영역만 받는다. 블루프린트에서 옮긴 조건이다.
+    return ItemIcon && ItemIcon->GetCachedGeometry().IsUnderLocation(InMouseEvent.GetScreenSpacePosition());
+}
+
 void UP1SlotWidget::SetSlot(const FP1ItemData& Item, int32 Count)
 {
     ItemData = Item;
