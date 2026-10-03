@@ -37,9 +37,6 @@ public:
     void UpdateMaxHp(int64 Value);
     void UpdateCurHp(int64 Value);
 
-    /** 값을 넘기지 않은 쪽은 지금 값을 그대로 쓴다. */
-    void UpdateHpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue);
-
 protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UP1ProgressBarWidget> HpBar;
@@ -49,9 +46,6 @@ public:
     void UpdateMaxMp(int64 Value);
     void UpdateCurMp(int64 Value);
 
-    /** 값을 넘기지 않은 쪽은 지금 값을 그대로 쓴다. */
-    void UpdateMpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue);
-
 protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UP1ProgressBarWidget> MpBar;
@@ -60,9 +54,6 @@ protected:
 public:
     void UpdateMaxExp(int64 Value);
     void UpdateCurExp(int64 Value);
-
-    /** 값을 넘기지 않은 쪽은 지금 값을 그대로 쓴다. */
-    void UpdateExpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue);
 
 protected:
     UPROPERTY(meta = (BindWidget))

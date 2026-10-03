@@ -61,9 +61,4 @@ protected:
 public:
     void SetPlayerName(const FText& InName);
     FText GetPlayerName() const { return GetCreatureName(); }
-
-    //~ Progression
-public:
-    DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelUp, int32);
-    FOnLevelUp OnLevelUp;
 };

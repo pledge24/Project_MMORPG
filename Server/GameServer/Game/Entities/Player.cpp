@@ -396,6 +396,8 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 
 			RepeatedPtrField<Protocol::Stat>* updatedStatList = info->mutable_updated_stat();
 			{
+				// 클라이언트에는 레벨 표가 없어 새 최대 경험치를 이 패킷으로만 안다.
+				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_EXP, GetStatValue(Protocol::STAT_TYPE_MAX_EXP));
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP));
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP));
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_PHYSICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK));

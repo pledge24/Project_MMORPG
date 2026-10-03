@@ -25,6 +25,9 @@ class P1_API UP1MyPlayerData : public UGameInstanceSubsystem
 {
     GENERATED_BODY()
 
+public:
+    UP1MyPlayerData();
+
     //~ Begin USubsystem Interface
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -34,7 +37,6 @@ public:
     //~ Lifecycle
 public:
     void InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePkt);
-    void BindMyPlayerDelegate(AP1MyPlayer* MyPlayer);
 
     /**
      * 이 서브시스템의 델리게이트에서 Listener가 붙인 것을 모두 뗀다.
@@ -58,7 +60,8 @@ public:
     int32 GetRoomId() const { return _PlayerInfo->room_id(); }
     int32 GetMapId() const { return _PlayerInfo->map_id(); }
 
-    void Rep_LevelChanged(int32 Level) const;
+    /** 레벨을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 레벨은 이 함수로만 바꾼다. 게임 스레드 전용. */
+    void ApplyLevel(int32 Level);
 
     FOnLevelChanged OnLevelChanged;
 
@@ -92,7 +95,8 @@ public:
     Protocol::Possession* GetPossession() { return _Possession.Get(); }
     int64 GetGold() const { return _Possession->gold(); }
 
-    void Rep_GoldChanged(int64 Gold) const;
+    /** 골드를 사본에 쓰고 구독자에게 알린다. 내 플레이어의 골드는 이 함수로만 바꾼다. 게임 스레드 전용. */
+    void ApplyGold(int64 Gold);
 
     FOnGoldChanged OnGoldChanged;
 
@@ -184,4 +188,12 @@ private:
 
     /** 장착과 해제 응답이 실어 온 슬롯을 종류에 맞는 델리게이트로 알린다. */
     void ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots);
+
+    //~ Reward Packet Handlers
+public:
+    /**
+     * 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 경험치와 레벨은 서버가 계산한 최종 값을 그대로 쓴다.
+     * 레벨이 올랐으면 레벨과 레벨업 스탯을 경험치보다 먼저 반영한다. 경험치를 알릴 때 최대 경험치가 이미 새 값이어야 한다.
+     */
+    void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
 };

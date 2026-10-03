@@ -16,7 +16,6 @@ public:
 
     void SetCurValue(int64 Value);
     void SetMaxValue(int64 Value);
-    void SetBoth(int64 CurValue, int64 MaxValue);
 
 protected:
     int64 _CurValue = 0;

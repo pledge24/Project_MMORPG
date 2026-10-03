@@ -208,8 +208,13 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 
 bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
 {
-    // TODO: #137이 내 플레이어 데이터에 반영한다
-    return true;
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleRewardResult(pkt);
+        return true;
+    }
+
+    return false;
 }
 
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
