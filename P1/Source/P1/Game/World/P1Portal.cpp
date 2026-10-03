@@ -1,14 +1,27 @@
 #include "Game/World/P1Portal.h"
 #include "Components/PrimitiveComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Game/World/P1NameTagDisplay.h"
 #include "GameFramework/Pawn.h"
 #include "Network/P1PacketSender.h"
 #include "Utils/LogCategory.h"
 
 const FName AP1Portal::RangeComponentName(TEXT("PortalCollision"));
+const FName AP1Portal::NameTagComponentName(TEXT("PortalNamePanel"));
+
+void AP1Portal::OnConstruction(const FTransform& Transform)
+{
+    Super::OnConstruction(Transform);
+
+    // 에디터에서 배치하거나 값을 고칠 때도 이름표가 바로 보이게 한다. 블루프린트의 생성 스크립트가 하던 일이다.
+    ApplyNameTag();
+}
 
 void AP1Portal::BeginPlay()
 {
     Super::BeginPlay();
+
+    ApplyNameTag();
 
     TInlineComponentArray<UPrimitiveComponent*> Components(this);
     UPrimitiveComponent* const* Found = Components.FindByPredicate(
@@ -30,6 +43,18 @@ void AP1Portal::HandleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AAc
     const APawn* Pawn = Cast<APawn>(OtherActor);
     if (Pawn && Pawn->IsPlayerControlled() && Pawn->IsLocallyControlled())
         RequestRoomTransfer();
+}
+
+void AP1Portal::ApplyNameTag()
+{
+    TInlineComponentArray<UWidgetComponent*> Components(this);
+    UWidgetComponent* const* Found = Components.FindByPredicate(
+        [](const UWidgetComponent* Component) { return Component->GetFName() == NameTagComponentName; });
+    if (Found == nullptr)
+        return;
+
+    if (IP1NameTagDisplay* Display = Cast<IP1NameTagDisplay>((*Found)->GetWidget()))
+        Display->SetNameTag(NameTagText, NameTagColor);
 }
 
 void AP1Portal::RequestRoomTransfer()
