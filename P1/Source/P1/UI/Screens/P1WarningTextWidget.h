@@ -18,7 +18,7 @@ public:
 
     //~ Warning Message
 public:
-    /** 경고 문구를 띄우고 3초 뒤에 숨긴다. 보이는 중에 새 경고가 오면 문구를 바꾸고 3초를 다시 센다. */
+    /** 경고 문구를 띄우고 DisplaySeconds 뒤에 숨긴다. 보이는 중에 새 경고가 오면 문구를 바꾸고 처음부터 다시 센다. */
     void DisplayWarningMessage(const FText& WarningMessage);
 
 private:

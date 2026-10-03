@@ -31,7 +31,7 @@ protected:
 
     //~ Countdown
 private:
-    /** 남은 초를 대기 시간으로 채우고 1초마다 줄인다. */
+    /** 남은 초를 대기 시간으로 채우고 CountdownIntervalSeconds마다 1씩 줄인다. */
     void StartCountdown();
 
     void TickCountdown();
@@ -41,8 +41,8 @@ private:
 
     void ShowRemainingSeconds();
 
-    /** 사망한 뒤 마을 리스폰을 요청하기까지 기다리는 초다. */
-    UPROPERTY(EditDefaultsOnly, Category = "Respawn", meta = (ClampMin = "0"))
+    /** 사망한 뒤 마을 리스폰을 요청하기까지 기다리는 초다. 1 이상이다. 1이면 첫 타이머에서 요청한다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Respawn", meta = (ClampMin = "1"))
     int32 TownRespawnDelaySeconds = 10;
 
     static constexpr float CountdownIntervalSeconds = 1.f;
