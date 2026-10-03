@@ -598,6 +598,8 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
         {
             normalAttackPkt.set_entity_id(entityId);
             normalAttackPkt.set_combo(pkt.combo());
+            // 공격한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
+            normalAttackPkt.set_yaw(pkt.yaw());
         }
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer, entityId);
@@ -677,7 +679,10 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         respawnRoom->DoAsync([respawnRoom, player, respawnType, respawnPos]()
             {
                 // 부활 처리를 먼저 해야 다른 플레이어에게 죽은 상태가 나가지 않는다.
-                respawnRoom->HandleRespawn(player, respawnType, respawnPos);
+                // 룸 이동 중에 접속이 끊기면 세션이 없어 실패한다. 같은 룸 경로처럼 실패하면 멈춘다.
+                if (respawnRoom->HandleRespawn(player, respawnType, respawnPos) == false)
+                    return;
+
                 respawnRoom->SpawnPlayer(player);
                 respawnRoom->ReplicateRoomData(player, false);
             });

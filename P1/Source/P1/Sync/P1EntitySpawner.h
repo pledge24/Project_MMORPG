@@ -12,9 +12,6 @@ class P1_API AP1EntitySpawner : public AActor
 {
     GENERATED_BODY()
 
-public:
-    AP1EntitySpawner();
-
     //~ Begin AActor Interface
 protected:
     virtual void BeginPlay() override;

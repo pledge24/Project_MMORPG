@@ -5,6 +5,8 @@
 #include "Game/Entities/P1MyPlayer.h"
 #include "P1DeathWidget.generated.h"
 
+class UTextBlock;
+
 UCLASS()
 class P1_API UP1DeathWidget : public UP1UserWidget
 {
@@ -17,10 +19,6 @@ protected:
 
     //~ Death Event
 public:
-    /** 부활까지 남은 시간을 센다. 구현은 블루프린트에 있다. */
-    UFUNCTION(BlueprintImplementableEvent, Category = "UI")
-    void StartCountdown();
-
     UFUNCTION()
     void OnMyPlayerDie(AActor* KilledCreature);
 
@@ -31,10 +29,37 @@ public:
 protected:
     void BindMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 
-    //~ Respawn
-protected:
-    UFUNCTION(BlueprintCallable, Category = "Network")
-    void SendRespawnInTownPacket();
+    //~ Countdown
+private:
+    /** 남은 초를 대기 시간으로 채우고 CountdownIntervalSeconds마다 1씩 줄인다. */
+    void StartCountdown();
 
-    void SendRespawnPacket(Protocol::RespawnType respawnType);
+    void TickCountdown();
+
+    /** 문구를 요청 중으로 바꾸고 마을 리스폰을 요청한다. */
+    void HandleCountdownFinished();
+
+    void ShowRemainingSeconds();
+
+    /** 사망한 뒤 마을 리스폰을 요청하기까지 기다리는 초다. 1 이상이다. 1이면 첫 타이머에서 요청한다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Respawn", meta = (ClampMin = "1"))
+    int32 TownRespawnDelaySeconds = 10;
+
+    static constexpr float CountdownIntervalSeconds = 1.f;
+
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UTextBlock> ReturnText;
+
+    int32 RemainingSeconds = 0;
+
+    FTimerHandle CountdownTimerHandle;
+
+    //~ Respawn
+private:
+    void RequestTownRespawn();
+
+    /** 사망 화면이 떠 있으면, 거절을 받을 때마다 TownRespawnDelaySeconds 뒤에 다시 요청한다. */
+    void HandleTownRespawnRejected();
+
+    FTimerHandle RetryTimerHandle;
 };

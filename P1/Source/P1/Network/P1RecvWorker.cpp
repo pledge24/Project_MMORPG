@@ -1,8 +1,8 @@
 #include "Network/P1RecvWorker.h"
 #include "Network/P1PacketHeader.h"
 #include "Network/PacketSession.h"
+#include "Network/ClientPacketHandler.h"
 #include "Sockets.h"
-#include "Serialization/ArrayWriter.h"
 #include "Utils/LogCategory.h"
 
 FP1RecvWorker::FP1RecvWorker(FSocket* Socket, PacketSessionRef Session) : Socket(Socket), SessionRef(Session)
@@ -107,7 +107,7 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 		FMemoryReader Reader(HeaderBuffer);
 		Reader << Header;
         
-        if (Header.PacketID != 1018 /* MovePacketId */)
+        if (Header.PacketID != PKT_S_MOVE)
         {
 		    UE_LOG(LogP1Network, Log, TEXT("Recv PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
         }
@@ -117,7 +117,6 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 	OutPacket = HeaderBuffer;
 
 	// 페이로드
-	TArray<uint8> PayloadBuffer;
 	const int32 PayloadSize = Header.PacketSize - HeaderSize;
 	if (PayloadSize == 0)
 		return true;

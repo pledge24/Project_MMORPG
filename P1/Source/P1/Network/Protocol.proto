@@ -143,6 +143,7 @@ message S_MOVE
 message C_NORMAL_ATTACK
 {
     int32 combo = 1;
+    float yaw = 2;
 }
 
 message S_NORMAL_ATTACK

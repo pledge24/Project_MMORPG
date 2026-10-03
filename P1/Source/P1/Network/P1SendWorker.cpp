@@ -2,7 +2,6 @@
 #include "Network/SendBuffer.h"
 #include "Network/PacketSession.h"
 #include "Sockets.h"
-#include "Serialization/ArrayWriter.h"
 #include "Utils/LogCategory.h"
 
 FP1SendWorker::FP1SendWorker(FSocket* Socket, PacketSessionRef Session) : Socket(Socket), SessionRef(Session)

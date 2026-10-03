@@ -171,6 +171,13 @@ TEST_F(PlayerMultiLevelUpTest, LargeRewardRaisesSeveralLevelsAtOnce)
     EXPECT_EQ(pkt.level_up_details().old_level(), 1);
     EXPECT_EQ(pkt.level_up_details().new_level(), 3);
     EXPECT_EQ(pkt.updated_exp(), 50);
+
+    // 클라이언트에는 레벨 표가 없어 새 최대 경험치를 이 패킷으로만 안다.
+    const auto& updatedStats = pkt.level_up_details().updated_stat();
+    const auto maxExp = std::find_if(updatedStats.begin(), updatedStats.end(),
+        [](const Protocol::Stat& stat) { return stat.type() == Protocol::STAT_TYPE_MAX_EXP; });
+    ASSERT_NE(maxExp, updatedStats.end()) << "레벨업 정보에 최대 경험치가 없으면 클라의 경험치 막대가 옛 최대치로 그린다";
+    EXPECT_EQ(maxExp->value(), 300);
 }
 
 TEST_F(PlayerMultiLevelUpTest, ReachingMaxLevelDropsLeftoverExp)

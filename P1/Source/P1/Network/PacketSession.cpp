@@ -2,21 +2,30 @@
 #include "Network/P1RecvWorker.h"
 #include "Network/P1SendWorker.h"
 #include "Sockets.h"
-#include "Common/TcpSocketBuilder.h"
-#include "Serialization/ArrayWriter.h"
-#include "SocketSubsystem.h"
 #include "Network/ClientPacketHandler.h"
-#include "Core/P1GameInstance.h"
+#include "Network/P1ConnectionSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "Utils/LogCategory.h"
 
-PacketSession::PacketSession(class FSocket* Socket, UP1GameInstance* InGameInstance) : GameInstance(InGameInstance), Socket(Socket)
+PacketSession::PacketSession(class FSocket* Socket, UP1ConnectionSubsystem* InConnection) : Connection(InConnection), Socket(Socket)
 {
 	ClientPacketHandler::Init();
 }
 
-UP1GameInstance* PacketSession::GetGameInstance() const
+UP1ConnectionSubsystem* PacketSession::GetConnection() const
 {
-	return GameInstance.Get();
+	return Connection.Get();
+}
+
+UWorld* PacketSession::GetWorld() const
+{
+	if (UP1ConnectionSubsystem* ConnectionPtr = Connection.Get())
+	{
+		if (UGameInstance* GameInstance = ConnectionPtr->GetGameInstance())
+			return GameInstance->GetWorld();
+	}
+
+	return nullptr;
 }
 
 PacketSession::~PacketSession()

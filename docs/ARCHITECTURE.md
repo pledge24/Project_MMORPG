@@ -128,23 +128,34 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 `PacketSession`이 소유한 두 `FRunnable` 워커는 바이트를 큐에 쌓기만 하고,
 게임 스레드의 수신 펌프가 그것을 비운다.
 
-**Architecture Invariant:** 수신 펌프는 `UP1GameInstance`가 코어 티커로 돌린다. 레벨과 무관하게 돈다.
+**Architecture Invariant:** 수신 펌프는 `UP1ConnectionSubsystem`이 코어 티커로 돌린다. 게임 인스턴스 서브시스템이라 레벨과 무관하게 돈다.
 월드가 `BeginPlay` 전이거나 해체 중이면 그 틱을 건너뛰고 큐를 비우지 않는다. 그래서 레벨 전환 중에 온
 패킷은 새 월드가 준비된 뒤에 처리된다. 레벨 블루프린트에서 펌프를 부르지 않는다.
 
 **Architecture Invariant:** 연결이 끊기면 수신 워커만 `PacketSession`에 끊김 표시를 세운다. 펌프는 표시를
-먼저 읽고 큐를 비운 뒤, 표시가 서 있었으면 `UP1GameInstance::ReturnToLogin`으로 로그인 맵을 연다.
+먼저 읽고 큐를 비운 뒤, 표시가 서 있었으면 연결을 정리하고 `UP1ConnectionSubsystem::OnConnectionLost`를
+`LEAVE_REASON_NONE`으로 알린다. 서버가 `S_LEAVE_GAME`으로 끊으면 그 핸들러가
+`UP1ConnectionSubsystem::HandleLeaveGame`을 부른다. 이 함수가 연결을 닫고 같은 델리게이트를 그 사유로 알린다.
+끊김을 알리는 델리게이트는 이 하나뿐이다. 게임 인스턴스가 이것을 구독해 사유를 문구로 바꾸고
+`UP1GameInstance::ReturnToLogin`으로 로그인 맵을 연다.
 수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로 끊기기 직전에 온 `S_LEAVE_GAME`을 놓치지
-않는다. 서버가 `S_LEAVE_GAME`으로 끊어도 같은 함수로 간다. 사용자가 게임을 끄는 `Shutdown`은 이
-경로를 타지 않는다.
+않는다. 사용자가 게임을 끄는 경로(서브시스템의 `Deinitialize`)는 `C_LEAVE_GAME`만 보내고 이 경로를 타지 않는다.
+— `Network/`는 끊김과 사유를 알리기만 하고, 화면 문구와 레벨 전환은 게임 인스턴스가 갖는다.
 
-**Architecture Invariant:** `UP1GameInstance`가 소켓·세션을 소유하는 유일한 허브다.
-모든 `S_*` 핸들러가 여기 구현되고, 액터와 위젯에는 멀티캐스트 델리게이트로만 전파된다.
-액터가 세션을 직접 잡지 않는다.
+**Architecture Invariant:** 소켓과 세션은 `UP1ConnectionSubsystem`만 소유한다. 게임 코드는
+`FP1PacketSender`로 보내고, 액터가 세션을 직접 잡지 않는다.
+`S_*` 핸들러는 그 상태를 소유한 곳을 부른다. 엔티티는 `UP1StatefulEntityManager`가, 내 플레이어의 정보와
+소지품은 `UP1MyPlayerData`가, 로그인과 캐릭터 목록은 `UP1LoginManager`가 맡는다. 액터와 위젯에는
+멀티캐스트 델리게이트로만 전파된다. 게임 인스턴스는 핸들러를 갖지 않고, 그 델리게이트를 구독해 레벨을 전환한다.
 
-**Architecture Invariant:** 내 플레이어의 스탯은 `UP1MyPlayerData::ApplyStat`으로만 바꾼다. 이 함수가
-사본에 쓰고 델리게이트로 알린다.
+**Architecture Invariant:** 내 플레이어의 스탯, 레벨, 골드는 `UP1MyPlayerData`의 `ApplyStat`, `ApplyLevel`,
+`ApplyGold`로만 바꾼다. 이 함수들이 사본에 쓰고 델리게이트로 알린다.
 — 위젯은 생성될 때 사본을 읽는다. 알리기만 하고 사본을 두면 레벨을 옮긴 뒤 옛 값이 보인다.
+
+**Architecture Invariant:** 위젯과 액터의 블루프린트에는 레이아웃, 스타일, 에셋 참조만 둔다. 게임 로직은
+C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. 애님 블루프린트는 예외로, 게임 판정 없이 이동
+컴포넌트와 `OnDie`를 읽기만 한다.
+— 그래프에 로직이 있으면 검색과 리뷰와 테스트가 닿지 않는다. 블루프린트를 C++로 옮긴 경위는 #120에 있다.
 
 **Architecture Invariant:** 폴더가 도메인으로 갈려 있고 `#include`는 경로를 한정한다.
 `P1.Build.cs`의 `PrivateIncludePaths`에는 모듈 루트 `P1/`과 생성물 폴더 `P1/Network`만 남는다.
@@ -160,7 +171,7 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 
 **Architecture Invariant:** 패킷 정의와 게임 데이터는 생성물이다.
 저장소에 커밋되어 있어 직접 고쳐도 되는 파일처럼 보이지만, 생성기를 다시 돌리면
-덮어써진다. **손으로 쓰는 것은 핸들러 `.cpp` 둘뿐이다.**
+덮어써진다. **손으로 쓰는 것은 핸들러 `.cpp` 셋뿐이다.**
 절차와 목적지 목록은 `docs/codegen.md`.
 
 **Architecture Invariant:** 패킷 접두사가 방향을 정한다. `C_*`는 클라→서버,

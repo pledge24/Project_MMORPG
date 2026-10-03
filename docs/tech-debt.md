@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 12개 (높음 1 · 중간 3 · 낮음 8)
+항목 14개 (높음 1 · 중간 0 · 낮음 13)
 
 ## 작성 방법
 
@@ -33,6 +33,7 @@
 - 영역은 하나만 고른다. 나머지는 본문에서 언급한다
 - 문제 유형은 최대 두 개까지 적는다
 - 항목을 추가하거나 지우면 파일 맨 위의 개수 줄을 함께 고친다
+- 항목을 고칠 GitHub 이슈에는 `tech-debt` 라벨을 붙인다. 이슈를 먼저 열고 나중에 항목을 적었으면 그때 붙인다
 
 ### 심각도와 난이도
 
@@ -72,126 +73,76 @@
 
 ---
 
-## 공격 콤보와 몽타주 선택이 블루프린트에 있다
-> **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · client
-> 위치: `P1/Content/P1/Characters/Monsters/`
-> 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
+## 받은 패킷의 길이를 헤더 크기와 비교하지 않는다
+> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · protocol
+> 위치: `Server/ServerCore/Network/Session.cpp` 321~345줄 (`PacketSession::OnRecv`)
+> 등록일: 2026년 10월 2일
 
-`BPC_MonsterAttackSystem`과 `BPC_WarriorAttackSystem`(부모 C++ `AttackSystemComponent`)이
-`S_PerformNormalAttack`·`PerformNormalAttack`·`ResetAttackCombo`를 BP로 구현하고 `NormalAttacks`
-배열을 들고 있다. 콤보 상태 머신과 몽타주 선택이 전부 BP에 있다. C++ `AttackSystemComponent`는
-56+52줄뿐이다.
+헤더의 `size`가 헤더 크기(4)보다 작은지 아무 곳에서도 확인하지 않는다. 같은 결함이 세 곳에 있다.
 
-몬스터 쪽 BP 클래스는 `BP_MonsterBase`(부모 C++ `Monster`) 아래로 `BP_{Melee,Ranged,Super}MonsterBase`
-3개와 미니언 9개, 모두 13개다. 2026년 9월 29일에 다시 읽은 결과 이 클래스들의 `BeginPlay`·`Tick`·
-`ActorBeginOverlap`은 비어 있거나 부모를 부르기만 한다. 몬스터 행동 로직은 BP에 없다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 서버가 전투를 판정하는데
-(`Room::HandleNormalAttack`) 클라이언트의 콤보 규칙은 BP에 있어서, 양쪽 규칙이 갈라져도
-컴파일러도 테스트도 잡지 못한다.
-
-## C++ 베이스 없이 BP에만 사는 UI/액터
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Content/P1/` 아래 (`UI/`, `World/`, `Characters/`)
-> 등록일: 2026년 8월 19일 · 경로 갱신: 2026년 9월 21일 (#52)
-
-UE 에디터로 41개 BP의 부모 클래스를 전수 확인한 결과, 위젯 12/15는 이미 C++ 클래스로
-리페어런트되어 있다. 남은 것은 아래 넷이다.
-
-| 에셋 | 부모 | BP에 있는 것 |
-|---|---|---|
-| `WBP_CharacterSlot` | `UserWidget` | 함수 그래프 `UpdateCharacterInfo`·`DisableHighlight`·`Clear`, 디스패처 `OnSlotButtonClicked`, 변수 `Characterid`·`ThisSlotId` |
-| `BP_Shop` | `Actor` | 오버랩 상호작용 + `PlayerController` 참조. C++에 `UP1ShopWidget`은 있는데 상점 액터가 없다 |
-| `WBP_NameTag` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. `UP1NameplateWidget`과 역할이 겹친다 |
-| `WBP_Help` | `UserWidget` | `Tick`·`PreConstruct`·`Construct`. 순수 표시용 |
-
-C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 셋이다.
-
-| 에셋 | 부모(C++) | BP에 남은 로직 |
-|---|---|---|
-| `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
-| `WBP_LoginMenu` | `LoginWidget` | 그래프 4개(`CC_Init`·`DisableAllSlotsHighlight`·`ClearAllSlots`·`IsValidCharacter`) + `OnDisplayCharacterOverviews` |
-| `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
-
-### 영향
-
-**테스트 어려움** · **유지보수 어려움** — 쿨다운과 카운트다운처럼 시간과 상태를 다루는 로직이
-BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증할 수 없다. `WBP_Slot`의 쿨다운
-상태 머신과 `WBP_DeathScreen`의 리스폰 카운트다운이 여기 해당한다.
-
-## 캐릭터 클래스와 컨트롤러에 관심사가 뭉쳐 있다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Game/Entities/` · `P1/Source/P1/Core/`
-> 등록일: 2026년 8월 19일
-
-| 클래스 | 뭉쳐 있는 것 |
+| 위치 | `size`가 4보다 작을 때 |
 |---|---|
-| `AP1Creature` (`Game/Entities/P1Creature.h`, 258줄) | 이동 보간(`MoveQueue`·`CorrectionMaxThreshold`·`CORR_INTERP_SPEED`) + 어택 컴포넌트 + 네임플레이트 위젯 + 사망 상태 + `S_*` 수신 처리 |
-| `AP1MyPlayer` (`Game/Entities/P1MyPlayer.h`, 126+257줄) | 카메라 붐 + Enhanced Input 액션 5종 + 이동 패킷 스로틀(`MOVE_PACKET_SEND_DELAY`·`YAW_TOLERANCE`·더티 플래그) + 전투 모드 + 디버그 카운터 |
-| `AP1InGamePlayerController` (`Core/P1InGamePlayerController.h`, 124+219줄) | 위젯 7종의 `TSubclassOf`/인스턴스 쌍 + `WidgetMappings` + `WidgetFlag` 비트마스크 + `CurrentMaxZOrder` 관리 |
+| 서버 `PacketSession::OnRecv` | `size`가 0이면 `processLen`이 늘지 않아 루프가 끝나지 않는다. 1~3이면 핸들러가 받은 길이를 넘어 헤더를 읽는다 |
+| 클라이언트 `P1RecvWorker::ReceivePacket` (`P1/Source/P1/Network/P1RecvWorker.cpp`) | 음수 `PayloadSize`를 `AddZeroed`에 넘긴다 |
+| 생성된 `HandlePacket` (`Protocol/Templates/PacketHandler.h`) | `len`이 헤더 크기 이상인지 보지 않고 헤더를 읽는다 |
 
-이동 동기화 로직이 수신(`AP1Creature`)과 송신(`AP1MyPlayer`) 양쪽에 갈라져 있다. 보간 상수와
-스로틀 상수도 두 파일에 따로 산다.
+`OnRecv`가 음수를 돌려주면 `ProcessRecv`가 연결을 끊는 규약이 이미 있다. 클라이언트도 `ReceivePacket`이
+false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단했고 실행해서 확인하지는 않았다.
 
-### 영향
-
-**변경 영향 범위 확대** · **버그 발생 가능성 증가** — 이동 동기화를 고칠 때 한쪽만 고치는 사고가
-나기 쉽다. 두 파일의 상수가 어긋나도 컴파일러가 잡지 않고, 증상은 특정 지연 구간에서만
-드러난다.
-
-## `UP1GameInstance`가 클라 측 갓 클래스
-> **심각도:** 중간 · **난이도:** 높음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (620줄)
-> 등록일: 2026년 8월 19일
-
-소켓 소유 + 세션 관리 + `S_*` 핸들러 16개 + 스폰/디스폰 + 델리게이트 5종 브로드캐스트 + 토큰
-보관을 한 클래스가 들고 있다.
+#122에서 찾았다. 그 티켓은 id 범위만 고치기로 했다.
 
 ### 영향
 
-**변경 영향 범위 확대** · **테스트 어려움** — 게임 인스턴스는 레벨 전환에 살아남는 싱글턴이라
-여기 붙은 모든 것이 전역 상태가 된다. 핸들러 하나를 고치려 해도 소켓 수명과 델리게이트 구독을
-함께 따져야 한다.
+**버그 발생 가능성 증가** — 클라이언트 하나가 `size` 0인 헤더를 보내면 서버의 IOCP 스레드 하나가
+무한 루프에 빠진다. 클라이언트 쪽은 서버가 보낸 값이라 위험이 낮다.
 
-## 인벤토리의 요청 대기가 풀리지 않는 경로가 있다
+## 응답 대기 플래그 이름에 `b` 접두사가 없다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/UI/Screens/` (`P1InventoryWidget.h` · `P1ShopWidget.h` · `P1StatusWindowWidget.h`)
+> 등록일: 2026년 10월 3일
+
+인벤토리, 상점, 스탯 창 위젯의 `bool PendingPacket`이 `docs/conventions.md` 2.1의 「bool 변수 `b`」를 따르지
+않는다. `Content`의 에셋 가운데 이 이름을 담은 것은 없으므로, 이름을 바꿔도 리다이렉트는 필요 없다.
+규범 검사(`check_conventions.py`)는 이 규칙을 잡지 않는다.
+
+### 영향
+
+**동일한 문제의 반복** — 새 위젯이 같은 이름으로 대기 플래그를 베껴 쓴다.
+
+## 인벤토리 칸 변경 알림의 `OnUse` 인자를 읽는 곳이 없다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/Game/Progress/P1MyPlayerData.h` (`FOnInvenSlotChanged`) · `P1/Source/P1/Game/Inventory/P1Inventory.h` (`Rep_SlotChanged`) · `P1/Source/P1/UI/Screens/P1InventoryWidget.h` (`UpdateSlotWidget`)
+> 등록일: 2026년 10월 3일
+
+`FOnInvenSlotChanged`는 칸과 함께 `bool`을 싣는다. 사용 응답이면 참이다. 재사용 대기를 내 플레이어 데이터가
+아이템마다 세게 되면서, 이 값을 읽던 슬롯의 `OnUse` 호출이 사라졌다. 구독자 둘(`UP1Inventory::Rep_SlotChanged`,
+`UP1InventoryWidget::UpdateSlotWidget`)은 인자를 받기만 하고 읽지 않는다.
+
+### 영향
+
+**유지보수 어려움** — 인자 이름만 보면 사용 여부로 무언가를 하는 것처럼 읽힌다.
+
+## 아이템 데이터 테이블을 가리키는 곳이 둘이다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` (`SendUseItemPacket`) · `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleUseItem`)
-> 등록일: 2026년 9월 30일
+> 위치: `P1/Source/P1/UI/Common/P1SlotWidget.h` (`ItemTable`) · `P1/Source/P1/Game/Data/P1GameDataSettings.h` (`ItemTable`)
+> 등록일: 2026년 10월 3일
 
-인벤토리 위젯은 요청을 보내기 전에 `PendingPacket`을 켜고, 응답이 오면 끈다. 그런데 켠 채로 남는 경로가 있다.
-- `SendUseItemPacket`에서 게임 인스턴스가 없을 때와 소모품이 아닌 분기에서는 켜기만 하고 요청을 보내지 않는다
-- `HandleUseItem`에서 `FindEntityAs`로 내 플레이어를 찾지 못하면 `OnRecvUseItemPkt`를 알리지 않는다
-
-코드를 읽고 판단했고 실행해서 확인하지는 않았다.
+슬롯 위젯은 블루프린트 기본값으로 지정한 `ItemTable`에서 아이템 정의를 읽고, 내 플레이어 데이터는
+`UP1GameDataSettings`가 `DefaultGame.ini`에서 가리키는 테이블에서 읽는다. 지금은 둘 다 `DT_Item`이다. 템플릿 id로
+행 이름을 만들어 찾는 코드도 두 곳에 있다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 한 번 이 경로를 타면 인벤토리를 다시 열어도 아이템을 쓰거나 팔 수 없다.
-
-## 클라이언트가 보상 결과를 반영하지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` (`HandleRewardResult`)
-> 등록일: 2026년 9월 30일
-
-`HandleRewardResult`는 소켓과 월드를 확인한 뒤 아무것도 하지 않는다. 서버는 `S_REWARD_RESULT`에 경험치,
-골드, 레벨업 결과(`level_up_details`)를 싣지만, 클라이언트의 HUD와 내 플레이어 데이터에는 반영되지 않는다.
-지금은 플레이어가 몬스터를 때리는 경로가 없어 보상이 오지 않는다. 코드를 읽고 판단했다.
-
-### 영향
-
-**새 기능 개발 지연** — 공격 판정을 넣으면 몬스터를 잡아도 경험치와 골드가 화면에 바뀌지 않는다. 재접속해야
-서버에 저장된 값이 보인다.
+**버그 발생 가능성 증가** — 한쪽만 다른 테이블로 바꾸면 슬롯이 보이는 아이템 정보와 재사용 대기 길이가 어긋난다.
 
 ## 캐릭터 수 한도가 클라이언트에만 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` (`CreateCharacter`) · `P1/Content/P1/UI/Frontend/WBP_LoginMenu`
-> 등록일: 2026년 10월 1일
+> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` (`CreateCharacter`) · `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`OnCreateButtonClicked`)
+> 등록일: 2026년 10월 1일 · 위치 갱신: 2026년 10월 3일 (#131)
 
-계정당 캐릭터 수는 `WBP_LoginMenu`가 캐릭터 목록 길이를 슬롯 수와 비교해 막을 뿐이다. 게임 서버의 생성 요청은
-한도를 보지 않는다. 한도 값이 BP의 슬롯 수에만 있어서 서버가 참조할 원천도 없다. 코드와 BP 그래프를 읽고
-판단했다.
+계정당 캐릭터 수는 로그인 메뉴 위젯이 캐릭터 목록 길이를 슬롯 수와 비교해 막을 뿐이다. 게임 서버의 생성 요청은
+한도를 보지 않는다. 한도 값이 `WBP_LoginMenu` 디자이너에 놓인 슬롯 수에만 있어서 서버가 참조할 원천도 없다.
+코드와 BP 그래프를 읽고 판단했다. #131이 비교를 BP 그래프에서 C++로 옮겼다.
 
 ### 영향
 
@@ -210,6 +161,76 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 ### 영향
 
 **버그 발생 가능성 증가** — 가로세로가 다른 룸을 만들면 몬스터 스폰과 배회, 셀 행렬의 범위가 실제 룸과 어긋난다.
+
+## 쓰이지 않는 레거시 입력 매핑이 남아 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Config/DefaultInput.ini` (`ActionMappings`, `AxisMappings`)
+> 등록일: 2026년 10월 3일
+
+`Jump` 액션 매핑 2줄과 축 매핑 10줄(`Move Forward / Backward`, `Move Right / Left`, `Turn Right / Left ...`,
+`Look Up / Down ...`)이 남아 있다. 입력은 모두 Enhanced Input(`IMC_Default`, `IMC_InGameUI`)으로 받고,
+이 이름들을 바인딩하는 코드가 없다. 3인칭 템플릿에서 온 것으로 보인다.
+
+#130에서 화면 단축키 매핑 둘을 지우며 찾았다.
+
+### 영향
+
+**유지보수 어려움** — 입력을 고치려는 사람이 이 매핑이 실제로 쓰이는지 따로 확인해야 한다.
+
+## 생성한 캐릭터의 이름을 응답이 온 시점의 입력 칸에서 읽는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`UP1LoginMenuWidget::AddCharacterOverview`)
+> 등록일: 2026년 10월 3일
+
+캐릭터 생성 응답(`S_CREATE_CHARACTER`)이 오면 로그인 메뉴는 목록에 더할 이름을 그 시점의 이름 입력 칸에서
+읽는다. 직업도 그 시점에 고른 값을 쓴다. 요청을 보낸 뒤 응답이 오기 전에 입력을 고치면, 서버에는 보낸 이름과
+직업이 저장되고 목록에는 고친 값이 보인다. 응답 패킷에는 캐릭터 id만 있다. 코드를 읽고 판단했고 실행해서
+확인하지는 않았다.
+
+#131에서 찾았다. 그 티켓은 동작을 바꾸지 않는 이관이라서 고치지 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 다시 로그인해 목록을 받기 전까지 캐릭터 선택 화면에 서버와 다른 이름이나 직업이 보일 수 있다.
+
+## 모르는 직업 값을 받으면 로그인 메뉴가 멈춘다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`ClassEnumToStringMappings`를 읽는 `FetchCharacterOverviews`, `SelectClass`, `AddCharacterOverview`)
+> 등록일: 2026년 10월 3일
+
+직업 값을 직업 이름으로 바꿀 때 `TMap::operator[]`를 쓴다. 이 연산자는 키가 없으면 `check`로 멈춘다. 맵에는
+전사와 마법사만 있으므로, 서버가 캐릭터 목록(`S_LOGIN`)에 `CLASS_TYPE_NONE`이나 새로 더한 직업을 실어 보내면
+클라이언트가 멈춘다. 지금 서버는 생성 요청을 `CharacterCreation::Validate`로 걸러 표에 있는 직업만 저장한다.
+코드를 읽고 판단했다.
+
+#131에서 찾았다. 그 티켓은 동작을 바꾸지 않는 이관이라서 고치지 않았다.
+
+### 영향
+
+**변경 영향 범위 확대** — 서버 데이터에 직업을 더하면 클라이언트의 이 맵도 함께 고치지 않는 한 로그인 화면에서 멈춘다.
+
+## 아이템 기획 원본의 분류 열 이름이 한 단계씩 밀려 있다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · protocol
+> 위치: `DesignData/Original_Item.xlsx` · `P1/Source/P1/Game/Data/P1ItemData.h` · `Server/GameServer/Game/Inventory/Inventory.cpp` (`ToItemType`)
+> 등록일: 2026년 10월 3일
+
+`CONTEXT.md`의 아이템 분류는 세 단계다. 아이템 종류(장비·소모품·기타), 아이템 분류(방어구·무기·소비), 그리고
+장비 부위나 물약 같은 셋째 단계다. 기획 원본과 두 티어의 이름은 이와 한 단계씩 어긋난다.
+
+| 단계 | 기획 원본의 열 | 값 |
+|---|---|---|
+| 아이템 종류 | 없음. 서버가 `ToItemType`으로 분류에서 만든다 | — |
+| 아이템 분류 | `ItemType` | `armor` · `weapon` · `consumption` |
+| 셋째 단계 | `ItemSubtype` | `helmet` · `sword` · `potion` 등 |
+
+클라이언트의 `FP1ItemData::ItemType`도 분류를 담는다. 클라이언트는 아이템 종류를 데이터에서 얻지 못하므로
+슬롯 종류로 가른다. 기획 원본에 종류 열을 더하는 안은 `docs/backlog.md`에 있다.
+
+### 영향
+
+**버그 발생 가능성 증가** — `ItemType`이라는 이름을 보고 아이템 종류로 읽으면, 프로토콜의 `ItemType`
+(`GEAR`·`CONSUMABLE`·`MISCELLANEOUS`)과 값이 맞지 않는다. 블루프린트가 이 문자열을 `Switch on String`으로
+가르던 것이 그 예다.
 
 ## 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server

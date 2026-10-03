@@ -7,40 +7,36 @@
 #include "EnhancedInputSubsystems.h"
 #include "Network/P1PacketSender.h"
 #include "Game/Combat/P1AttackSystemComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "Utils/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
 {
-    // Create a camera boom (pulls in towards the player if there is a collision)
+    // 카메라 붐을 만든다. 벽에 막히면 플레이어 쪽으로 당겨진다
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-    CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+    CameraBoom->TargetArmLength = 400.0f; // 카메라가 캐릭터 뒤에서 따라오는 거리다	
+    CameraBoom->bUsePawnControlRotation = true; // 암은 컨트롤러 회전을 따른다
 
-    // Create a follow camera
+    // 따라가는 카메라를 만든다
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-    FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // 붐 끝에 붙여 붐이 컨트롤러 방향에 맞춰 돌게 한다
+    FollowCamera->bUsePawnControlRotation = false; // 카메라는 암에 대해 따로 돌지 않는다
+
+    // 엔진이 FinishSpawning 안(PreInitializeComponents)에서 0번 컨트롤러에 빙의시킨다. BeginPlay에서는 Controller가 채워져 있다.
+    AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
 void AP1MyPlayer::BeginPlay()
 {
-	// Call the base class  
 	Super::BeginPlay();
 
-    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+    // 입력 매핑 컨텍스트를 붙인다
+    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
     {
-        PC->Possess(this);
-
-	    // Add Input Mapping Context
-	    if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	    {
-		    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		    {
-			    Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		    }
-	    }
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+        {
+            Subsystem->AddMappingContext(DefaultMappingContext, 0);
+        }
     }
 
     // 스폰 알림(OnMyPlayerSpawned)은 스포너가 Initialize를 마친 뒤에 보낸다.
@@ -55,92 +51,28 @@ void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// Set up action bindings
+	// 입력 액션을 바인딩한다
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Jumping
+		// 점프
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// Moving
+		// 이동
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Move);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AP1MyPlayer::Move);
 
-		// Looking
+		// 시점 회전
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
 
-        // Attacking
+        // 공격
         EnhancedInputComponent->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &AP1MyPlayer::NormalAttack);
 
-        // Toggle BattleMode
+        // 전투 모드 전환
         EnhancedInputComponent->BindAction(ToggleBattleModeAction, ETriggerEvent::Started, this, &AP1MyPlayer::ToggleBattleMode);
 
 	}
 
-}
-
-void AP1MyPlayer::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-    bool bForceSendPacket = false; // MovePacket 강제 전송 판정 변수
-    bool bCanInputMovement = CanInputMovement();
-
-    // bForceSendPacket 판정
-	{
-        // 입력 변화 감지
-	    if (LastDesiredInput != DesiredInput)
-	    {
-            if (bCanInputMovement)
-		        bForceSendPacket = true;
-            LastDesiredInput = DesiredInput;
-	    }
-
-        // 급격한 회전 감지
-        float DeltaYaw = FMath::Abs(DesiredMoveDirectionYaw - GetActorRotation().Yaw);
-        if (DeltaYaw >= YAW_TOLERANCE)
-        {
-            bForceSendPacket = true;
-        }
-	}
-
-	// State 판정
-    if (AttackSystemComponent->IsAttacking() == true)
-    {
-        SetMoveState(Protocol::MOVE_STATE_ACTION);
-        bForceSendPacket = false;
-    }
-    else if (bCanInputMovement && DesiredInput != FVector2D::Zero())
-		SetMoveState(Protocol::MOVE_STATE_RUN);
-    else
-		SetMoveState(Protocol::MOVE_STATE_IDLE);
-
-    // Send 판정
-    MovePacketSendTimer -= DeltaTime;
-
-    if (MovePacketSendTimer <= 0 || bForceSendPacket)
-    {
-        /*SendCounter++;
-        TotalSecond += MOVE_PACKET_SEND_DELAY - MovePacketSendTimer;
-        GEngine->AddOnScreenDebugMessage(-1, 0.2f, FColor::Red, FString::Printf(TEXT("AvgSendSpeed: %f"), TotalSecond / SendCounter));*/
-
-        MovePacketSendTimer = MOVE_PACKET_SEND_DELAY;
-
-        // 현재 위치 정보
-        {
-            MovePkt.Clear();
-
-            Protocol::PosInfo* Info = MovePkt.mutable_info();
-            Info->CopyFrom(*ClientPos);
-            Info->mutable_move_direction()->set_x(DesiredMoveDirectionVec.X);
-            Info->mutable_move_direction()->set_y(DesiredMoveDirectionVec.Y);
-            Info->set_state(GetMoveState());
-        }
-
-        FP1PacketSender::Send(this, MovePkt);
-        //FString DebugMessage = MovePkt.Utf8DebugString().c_str();
-        //UE_LOG(LogP1CharacterComp, Log, TEXT("%s"), *DebugMessage);
-    }
 }
 
 void AP1MyPlayer::Initialize(const Protocol::EntityInfo& InEntityInfo)
@@ -154,24 +86,22 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		// find out which way is forward
+		// 카메라 기준의 앞 방향을 구한다
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
         if (CanInputMovement() == true)
         {
-		    // add movement 
+		    // 이동 입력을 넣는다
 		    AddMovementInput(ForwardDirection, MovementVector.Y);
 		    AddMovementInput(RightDirection, MovementVector.X);
         }
 
-		// Cache Movement Input
+		// 이동 입력을 캐시한다
 		{
 			DesiredInput = MovementVector;
 
@@ -187,12 +117,12 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 
 void AP1MyPlayer::Look(const FInputActionValue& Value)
 {
-	// input is a Vector2D
+	// 입력은 2D 벡터다
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
-		// add yaw and pitch input to controller
+		// 컨트롤러에 Yaw와 Pitch 입력을 넣는다
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
@@ -209,17 +139,16 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
 
     if (AttackSystemComponent != nullptr && bBattleMode == true)
     {
-        if (AttackSystemComponent->EnableInputAttack() == true)
+        // 입력을 받을 수 없으면 0이 돌아온다.
+        const int32 Combo = AttackSystemComponent->StartNormalAttack();
+        if (Combo > 0)
         {
-            AttackSystemComponent->PerformNormalAttack();
-            int32 Combo = AttackSystemComponent->GetLastCombo();
+            Protocol::C_NORMAL_ATTACK NormalAttackPkt;
+            NormalAttackPkt.set_combo(Combo);
+            // 서버의 yaw는 마지막 이동 패킷의 값이라 늦을 수 있다. 다른 클라이언트는 이 값으로 돌려 세운다.
+            NormalAttackPkt.set_yaw(GetActorRotation().Yaw);
 
-            if (Combo > 0){
-                Protocol::C_NORMAL_ATTACK NormalAttackPkt;
-                NormalAttackPkt.set_combo(Combo);
-
-                FP1PacketSender::Send(this, NormalAttackPkt);
-            }
+            FP1PacketSender::Send(this, NormalAttackPkt);
         }
     }
 }
@@ -234,9 +163,6 @@ void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
 
 bool AP1MyPlayer::CanInputMovement() const
 {
-    if (AttackSystemComponent != nullptr && AttackSystemComponent->IsAttacking() == true)
-        return false;
-
-    return true;
+    return IsAttacking() == false;
 }
 

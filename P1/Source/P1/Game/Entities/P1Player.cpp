@@ -1,32 +1,26 @@
 #include "Game/Entities/P1Player.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
-#include "Game/Combat/P1AttackSystemComponent.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Game/Equipment/P1GearAppearanceComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Utils/LogCategory.h"
 
 AP1Player::AP1Player()
 {
 	// 아래 WeaponMesh 생성 전까지는 UE의 3인칭 템플릿에서 그대로 가져온 설정이다.
-	// Set size for collision capsule
+	// 충돌 캡슐의 크기를 정한다
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	// Don't rotate when the controller rotates. Let that just affect the camera.
+	// 컨트롤러가 회전해도 캐릭터는 돌지 않는다. 컨트롤러 회전은 카메라에만 적용한다.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+	// 캐릭터 이동을 설정한다
+	GetCharacterMovement()->bOrientRotationToMovement = true; // 입력 방향으로 몸을 돌린다	
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // 몸을 돌리는 속도다
 
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
-	// instead of recompiling to adjust them
+	// 이 값들은 다시 컴파일하지 않고 캐릭터 블루프린트에서 조정할 수 있다
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
@@ -81,11 +75,6 @@ void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void AP1Player::Tick(float DeltaTime)
-{
-    Super::Tick(DeltaTime);
-}
-
 void AP1Player::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
     Super::Initialize(EntityInfo);
@@ -105,9 +94,4 @@ void AP1Player::ApplyGear(int32 GearType, int32 TemplateId)
 void AP1Player::SetPlayerName(const FText& InName)
 {
     SetCreatureName(InName);
-}
-
-void AP1Player::S_Move(float DeltaSeconds)
-{
-    Super::S_Move(DeltaSeconds);
 }

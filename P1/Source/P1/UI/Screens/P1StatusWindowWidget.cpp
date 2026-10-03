@@ -1,24 +1,25 @@
 #include "UI/Screens/P1StatusWindowWidget.h"
-#include "UI/Screens/P1HUDWidget.h"
+#include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "P1.h"
 #include "Network/P1PacketSender.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Game/Equipment/P1EquippedGear.h"
 
 void UP1StatusWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    for (UP1SlotWidget* SlotWidget : { Equipped_Helmet, Equipped_Chest, Equipped_Arms, Equipped_Legs, Equipped_Boots, Equipped_Weapon })
+        SlotWidget->OnDoubleClicked.AddUObject(this, &UP1StatusWindowWidget::HandleSlotDoubleClicked);
+
+    Button_Details->OnClicked.AddUniqueDynamic(this, &UP1StatusWindowWidget::ToggleTips);
+
     if (auto* GameInstance = GetP1GameInstance())
     {
         // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
-            const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
-
             UpdateAllStat(MyPlayerData);
 
             for (const auto& Pair : MyPlayerData->GetEquippedGear()->GetAllSlot())
@@ -29,7 +30,13 @@ void UP1StatusWindowWidget::NativeConstruct()
 
             // 바인딩 셋업
             MyPlayerData->OnEquipmentSlotChanged.AddUObject(this, &UP1StatusWindowWidget::UpdateSlotWidget);
-            GameInstance->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+
+            // 창은 한 번 만들고 표시 여부만 바꾸므로, 수치도 열 때 다시 읽지 않고 바뀔 때마다 받는다.
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_HP].AddUObject(this, &UP1StatusWindowWidget::UpdateMaxHp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_MP].AddUObject(this, &UP1StatusWindowWidget::UpdateMaxMp);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_PHYSICAL_ATTACK].AddUObject(this, &UP1StatusWindowWidget::UpdatePhysicalAttack);
+            MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAGICAL_ATTACK].AddUObject(this, &UP1StatusWindowWidget::UpdateMagicalAttack);
+            MyPlayerData->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
         }
     }
 
@@ -74,39 +81,41 @@ void UP1StatusWindowWidget::UpdateAllStat(UP1MyPlayerData* MyPlayerData)
     UpdateMagicalAttack(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK));
 }
 
-void UP1StatusWindowWidget::UpdateMaxHp(int32 Value)
+void UP1StatusWindowWidget::UpdateMaxHp(int64 Value)
 {
     Details_MaxHp->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::UpdateMaxMp(int32 Value)
+void UP1StatusWindowWidget::UpdateMaxMp(int64 Value)
 {
     Details_MaxMp->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::UpdatePhysicalAttack(int32 Value)
+void UP1StatusWindowWidget::UpdatePhysicalAttack(int64 Value)
 {
     Details_Physical_Attack->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::UpdateMagicalAttack(int32 Value)
+void UP1StatusWindowWidget::UpdateMagicalAttack(int64 Value)
 {
     Details_Magical_Attack->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::SendUnequipPacket(UP1SlotWidget* Slot_)
+void UP1StatusWindowWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
 {
+    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 해제가 막힌다.
     if (PendingPacket)
         return;
-    else
-        PendingPacket = true;
 
-    if (Slot_)
-    {
-        const Protocol::Slot& SlotData = Slot_->SlotData;
+    Protocol::C_UNEQUIP_GEAR Pkt;
+    Pkt.mutable_slot()->CopyFrom(SlotWidget->SlotData);
 
-        Protocol::C_UNEQUIP_GEAR pkt;
-        pkt.mutable_slot()->CopyFrom(SlotData);
-        FP1PacketSender::Send(this, pkt);
-    }
+    PendingPacket = true;
+    FP1PacketSender::Send(this, Pkt);
+}
+
+void UP1StatusWindowWidget::ToggleTips()
+{
+    CanvasPanel_Tips->SetVisibility(
+        CanvasPanel_Tips->IsVisible() ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
 }

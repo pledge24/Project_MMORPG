@@ -1,6 +1,7 @@
 #include "UI/P1UserWidget.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
+#include "Online/P1LoginManager.h"
 
 void UP1UserWidget::NativeDestruct()
 {
@@ -8,10 +9,11 @@ void UP1UserWidget::NativeDestruct()
     // 맵을 옮길 때마다 레벨보다 오래 사는 델리게이트에 죽은 위젯의 항목이 쌓인다.
     if (UP1GameInstance* GameInstance = GetP1GameInstance())
     {
-        GameInstance->RemovePacketListener(this);
-
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
             MyPlayerData->RemoveListener(this);
+
+        if (UP1LoginManager* LoginManager = GameInstance->GetSubsystem<UP1LoginManager>())
+            LoginManager->RemoveListener(this);
     }
 
     Super::NativeDestruct();

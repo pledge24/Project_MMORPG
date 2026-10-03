@@ -3682,6 +3682,7 @@ class C_NORMAL_ATTACK final :
 
   enum : int {
     kComboFieldNumber = 1,
+    kYawFieldNumber = 2,
   };
   // int32 combo = 1;
   void clear_combo();
@@ -3690,6 +3691,15 @@ class C_NORMAL_ATTACK final :
   private:
   int32_t _internal_combo() const;
   void _internal_set_combo(int32_t value);
+  public:
+
+  // float yaw = 2;
+  void clear_yaw();
+  float yaw() const;
+  void set_yaw(float value);
+  private:
+  float _internal_yaw() const;
+  void _internal_set_yaw(float value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.C_NORMAL_ATTACK)
@@ -3701,6 +3711,7 @@ class C_NORMAL_ATTACK final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     int32_t combo_;
+    float yaw_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -8482,6 +8493,26 @@ inline void C_NORMAL_ATTACK::_internal_set_combo(int32_t value) {
 inline void C_NORMAL_ATTACK::set_combo(int32_t value) {
   _internal_set_combo(value);
   // @@protoc_insertion_point(field_set:Protocol.C_NORMAL_ATTACK.combo)
+}
+
+// float yaw = 2;
+inline void C_NORMAL_ATTACK::clear_yaw() {
+  _impl_.yaw_ = 0;
+}
+inline float C_NORMAL_ATTACK::_internal_yaw() const {
+  return _impl_.yaw_;
+}
+inline float C_NORMAL_ATTACK::yaw() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_NORMAL_ATTACK.yaw)
+  return _internal_yaw();
+}
+inline void C_NORMAL_ATTACK::_internal_set_yaw(float value) {
+  
+  _impl_.yaw_ = value;
+}
+inline void C_NORMAL_ATTACK::set_yaw(float value) {
+  _internal_set_yaw(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_NORMAL_ATTACK.yaw)
 }
 
 // -------------------------------------------------------------------

@@ -47,12 +47,19 @@ py -3 Tools/ConventionLint/check_conventions.py
 |---|---|---|
 | `PacketSerialization` | 2 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 |
 | `ProtocolContract` | 3 | `PROTOCOL_MESSAGES(X)` 목록 대조 · 패킷 ID 연속·유일성 · 전 메시지 리플렉션 왕복 |
+| `PacketDispatch` | 1 | 핸들러 테이블 밖의 id(65535)를 디스패치하지 않고 거절 |
 | `InventoryTest` | 10 (+DISABLED 1) | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
+| `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · Z 유지 · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
+| `P1.Sync.MoveSendThrottle` | 1 | 내 플레이어 이동 패킷의 주기 송신(0.2초)과 타이머 리셋 · 입력 변화 즉시 송신(이동 가능할 때만) · 회전 허용치(60도) 경계와 ±180도 감싸기 · 입력이 없을 때 서버와 마지막으로 맞춘 yaw와의 비교 · 공격 중 즉시 송신 억제 |
+| `P1.Inventory.SlotAction` | 1 | 인벤토리 칸 더블클릭의 요청 판정. 빈 칸 · 소모품 사용 · 무기와 방어구 착용 · 요구 레벨 경계 · 기타 칸과 착용 장비 칸 · 재사용 대기 중인 소모품 |
+| `P1.Inventory.ItemCooldown` | 1 | 아이템 재사용 대기의 남은 시간과 남은 비율(1 → 0) · 끝나는 순간의 경계 · 길이가 0 이하인 아이템 |
+| `P1.Combat.NormalAttackCombo` | 1 | 일반 공격의 콤보 순번 순환(1→N→1) · 몽타주가 하나이거나 없을 때 · 순번 N의 몽타주 인덱스 · 서버가 보낸 순번 0 · 범위 밖 순번 |
+| `P1.Progress.RewardResult` | 1 | 보상 결과의 반영. 경험치만 쌓일 때 레벨을 알리지 않음 · 여러 레벨 상승의 레벨, 레벨업 스탯, 최대 경험치 · 경험치를 알릴 때 최대 경험치가 이미 새 값 · 골드를 사본에 쓴 뒤 알림 |
 
-**안 덮는 것**: Room · DAO의 SQL 실행 · 세션/IOCP · Gamedata 로딩 · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍 하나뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: Room · DAO의 SQL 실행 · 세션/IOCP · Gamedata 로딩 · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -82,7 +89,14 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `Inventory` 공개 API | 존재 |
 | protobuf 메시지 왕복 | 존재. 리플렉션으로 자동 확장 |
 | 프로토콜 ID 목록 | 존재 |
+| 패킷 디스패치 | 존재. `ServerPacketHandler::HandlePacket`. 서버 생성물만 테스트한다. 클라이언트와 DummyClient의 헤더는 같은 템플릿에서 생성되지만 테스트하지 않는다 |
 | 클라 패킷 프레이밍 | 존재. `ClientPacketHandler::MakeSerializedPacket`의 공개 오버로드 |
+| 원격 크리처 이동 보정 | 존재. `FP1MoveCorrection::Compute`. 이동 상태 분기와 크리처 종류 판정은 `UP1MoveSyncComponent::TickRemote`에 있다 |
+| 내 플레이어 이동 패킷 송신 판정 | 존재. `FP1MoveSendThrottle::Decide`. 이동 상태 판정과 패킷 구성은 `UP1MoveSyncComponent::TickMyPlayer`에 있다 |
+| 인벤토리 칸 더블클릭의 요청 판정 | 존재. `FP1InventorySlotAction::Decide`. 응답 대기와 패킷 구성은 `UP1InventoryWidget::HandleSlotDoubleClicked`에 있다 |
+| 아이템 재사용 대기 계산 | 존재. `FP1ItemCooldown`. 템플릿별 대기의 보관과 시작은 `UP1MyPlayerData`에, 막대 갱신은 `UP1SlotWidget::RefreshCooldown`에 있다 |
+| 일반 공격 콤보 순번과 몽타주 선택 | 존재. `FP1NormalAttackCombo`. 몽타주 재생, 입력 가능 상태, 2초 초기화 타이머는 `UP1AttackSystemComponent`에 있다 |
+| 보상 결과 반영 | 존재. `UP1MyPlayerData::HandleRewardResult`. 경험치와 레벨은 서버가 계산하므로 클라이언트는 사본에 쓰고 알리기만 한다 |
 | 전투 판정 | 없음. `Room` 안에 얽혀 있다 |
 | `Gamedata` 테이블 로딩 | 미확인 |
 
@@ -160,15 +174,16 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 
 **UE 클라의 기본 경로는 L2다.** 별도 빌드 타깃이 필요 없어 `P1` 모듈에 그대로 컴파일된다.
 
-아래 표의 L2·L3·L4 세 계층은 전부 **미착수**다. 「완료 기준」의 "존재 ≠ 가능"을 여기에도 적용해, 확인한 것과 확인하지 않은 것을 갈라 적는다. **착수할 때는 가장 싸게 실패하는 경로부터 돌린다** — 파일이 있는지 여러 번 확인하는 것보다 한 번 빌드해 보는 게 싸다.
+아래 표의 L3·L4는 **미착수**다. L2는 순수 로직 테스트만 돌고 입력과 월드를 쓰는 테스트는 미착수다. 「완료 기준」의 "존재 ≠ 가능"을 여기에도 적용해, 확인한 것과 확인하지 않은 것을 갈라 적는다. **착수할 때는 가장 싸게 실패하는 경로부터 돌린다** — 파일이 있는지 여러 번 확인하는 것보다 한 번 빌드해 보는 게 싸다.
 
 | 계층 | 확인한 것 | 확인 안 한 것 |
 |---|---|---|
-| L2 게임 로직+입력 (Simple Automation Test + `InjectInputForAction`) | 설치본 `Core/Public/Misc/AutomationTest.h`에 `IMPLEMENT_SIMPLE_AUTOMATION_TEST` 존재 | **실행 전체.** 컴파일·에디터 실행 다 안 해봤다 |
+| L2 게임 로직+입력 (Simple Automation Test + `InjectInputForAction`) | 순수 로직 테스트의 컴파일과 실행 · 실패한 테스트의 `failed` 집계와 `Run-UeTests.ps1`의 종료 코드 1 (2026년 10월 2일, `P1.Sync.MoveCorrection`의 빨강 단계에서 실측) | `InjectInputForAction`으로 입력을 넣는 테스트. 월드를 띄우는 테스트 |
 | L3 UI 입력 (Automation Spec + Automation Driver) | 없음 — **아직 안 봤다** | 전부 |
 | L4 E2E (Gauntlet TestController) | 설치본에 `Engine/Plugins/Experimental/Gauntlet` 플러그인 + public `GauntletTestController.h` + 컴파일된 `Gauntlet.Automation.dll` | **실행 전체** |
 
-- L2·L3 실행에는 **에디터가 필요하다** (`Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."`). 서버처럼 무인 루프가 되지 않는다.
+- L2의 기본 실행 경로는 `Run-UeTests.ps1`이다. 에디터를 띄우지 않는다. 대체 경로는 둘이다. 하나는 사람이 쓰는 에디터의 `Window > Test Automation`이고, 다른 하나는 에디터가 이미 떠 있을 때 프로세스 시작 비용을 치르지 않는 언리얼 MCP의 `RunTests`다. 두 대체 경로는 리포트를 판정하지 않으므로 완료 판정에 쓰지 않는다.
+- L3 실행에는 **에디터가 필요하다** (`Window > Test Automation` 또는 `-ExecCmds="Automation RunTests ..."`). 서버처럼 무인 루프가 되지 않는다.
 - **L3는 Live Coding 비호환 — TDD 루프 금지, 배치 전용.**
 - L4는 병렬 실행 시 포트 파라미터화.
 - CI: 서버 쪽 전제는 갖춰졌다. 저장소에 없는 파일 없이 `GameServerTests`가 빌드된다. UE 쪽은 에디터 의존 때문에 별도 검토가 필요하다.

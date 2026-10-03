@@ -50,8 +50,8 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
   `pwsh P1/Scripts/Invoke-UeBuild.ps1`, 서버는 `MSBuild`다. 명령 원문은 `docs/build.md`에 있다.
 - 클라이언트 빌드 스크립트는 에디터가 떠 있으면 닫지 않고 1로 끝난다. `-CloseEditor`는 저장하지 않은
   에셋 변경이 없다고 판단한 뒤에만 붙인다.
-- Rider MCP나 언리얼 MCP(`unreal`) 툴을 쓰기 전에 `ide-tools` 스킬을 읽는다. 두 서버 모두 이 저장소에서만
-  통하는 함정이 있다.
+- Rider MCP 툴을 쓰기 전에 `rider-mcp` 스킬을, 언리얼 MCP(`unreal`) 툴을 쓰기 전에 `ue-mcp` 스킬을 읽는다.
+  두 서버 모두 이 저장소에서만 통하는 함정이 있다.
 - Rider MCP는 `.claude/settings.json`의 `permissions.deny`가, 언리얼 MCP는 훅의 툴셋 허용 명단이 막는다.
   둘 다 사람만 고친다. 막힌 툴은 우회하지 않고 사람에게 요청한다.
 

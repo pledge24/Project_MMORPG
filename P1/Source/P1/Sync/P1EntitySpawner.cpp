@@ -1,15 +1,22 @@
 #include "Sync/P1EntitySpawner.h"
 #include "Game/Entities/P1Monster.h"
-#include "Core/P1MyPlayerData.h"
-#include "Core/P1GameInstance.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1StatefulEntityManager.h"
+#include "Sync/P1MoveSyncComponent.h"
 #include "Utils/LogCategory.h"
 #include "Game/Data/P1MonsterAssetData.h"
 
-AP1EntitySpawner::AP1EntitySpawner()
+namespace
 {
-	PrimaryActorTick.bCanEverTick = true;
-
+    /** 이동 동기화 컴포넌트를 붙인다. FinishSpawning 전에 불러야 액터의 BeginPlay와 함께 시작한다. */
+    UP1MoveSyncComponent* AttachMoveSync(AActor* Actor, EP1MoveSyncMode Mode)
+    {
+        UP1MoveSyncComponent* MoveSync = NewObject<UP1MoveSyncComponent>(Actor, TEXT("MoveSync"));
+        MoveSync->SetMode(Mode);
+        Actor->AddInstanceComponent(MoveSync);
+        MoveSync->RegisterComponent();
+        return MoveSync;
+    }
 }
 
 void AP1EntitySpawner::BeginPlay()
@@ -73,8 +80,11 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
     // 스폰 전에 몬스터 데이터 설정
     if (OutMonster != nullptr)
     {
+        UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutMonster, EP1MoveSyncMode::RemoteMonster);
+
         if (ServerInfo.IsSet())
         {
+            MoveSync->InitPos(ServerInfo.GetValue().pos_info());
             OutMonster->Initialize(ServerInfo.GetValue());
         }
 
@@ -126,12 +136,12 @@ TSubclassOf<AP1Monster> AP1EntitySpawner::GetMonsterClass(int32 TemplateId) cons
 
 AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
 {
-    UP1GameInstance* GameInstance = Cast<UP1GameInstance>(GetGameInstance());
+    UGameInstance* GameInstance = GetGameInstance();
     if (GameInstance == nullptr)
         return nullptr;
 
     UWorld* World = GetWorld();
-    UP1MyPlayerData* MyPlayerData = GameInstance->GetMyPlayerData();
+    UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>();
     uint64 MyPlayerId = MyPlayerData->GetPlayerId();
     bool IsMine = MyPlayerId == InEntityInfo.entity_id();
 
@@ -154,9 +164,6 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
             nullptr,
             ESpawnActorCollisionHandlingMethod::AlwaysSpawn
         );
-
-        // 내 플레이어 Pawn은 GameInstance가 알고 있게한다.
-        GameInstance->SetMyPlayer(Cast<AP1MyPlayer>(OutPlayer));
     }
     else
     {
@@ -179,9 +186,13 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
     if (OutPlayer != nullptr)
     {
         // 플레이어 데이터 설정(스폰 전 후로)
-        FString PlayerName = InEntityInfo.player_info().name().c_str();
-        OutPlayer->SetPlayerName(FText::FromString(PlayerName));
-        OutPlayer->SetServerPos(InEntityInfo.pos_info());
+        // 이름은 Initialize도 다시 넣지만 여기서 먼저 넣어야 한다. FinishSpawning 안의 BeginPlay가
+        // 네임플레이트를 바인딩하면서 이름을 읽는데, Initialize는 그 뒤에 불린다.
+        OutPlayer->SetPlayerName(FText::FromString(UTF8_TO_TCHAR(InEntityInfo.player_info().name().c_str())));
+        // 서버 위치를 보간 목표로도 넣어 이동 방향까지 채운다. 몬스터는 위치만 넣는다.
+        UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutPlayer, IsMine ? EP1MoveSyncMode::MyPlayer : EP1MoveSyncMode::RemotePlayer);
+        MoveSync->InitPos(InEntityInfo.pos_info());
+        MoveSync->SetServerPos(InEntityInfo.pos_info());
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
         OutPlayer->Initialize(InEntityInfo);
 

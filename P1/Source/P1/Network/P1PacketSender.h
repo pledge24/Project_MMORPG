@@ -10,7 +10,7 @@
 class P1_API FP1PacketSender
 {
 public:
-    /** WorldContext가 속한 게임 인스턴스의 세션으로 보낸다. 연결이 없으면 경고만 남기고 버린다. */
+    /** WorldContext가 속한 게임 인스턴스의 연결로 보낸다. 연결 서브시스템을 찾지 못하면 경고를 남기고, 연결이 없으면 그냥 버린다. */
     static void Send(const UObject* WorldContext, SendBufferRef SendBuffer);
 
     template <typename T>

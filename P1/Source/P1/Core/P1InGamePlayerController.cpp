@@ -1,19 +1,10 @@
 #include "Core/P1InGamePlayerController.h"
-#include "Blueprint/UserWidget.h"
-#include "Components/CanvasPanelSlot.h"
-#include "UI/Screens/P1StatusWindowWidget.h"
-#include "UI/Screens/P1InventoryWidget.h"
-#include "UI/Screens/P1HUDWidget.h"
-#include "Core/P1GameInstance.h"
-#include "Game/Entities/P1Player.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 #include "Game/Entities/P1MyPlayer.h"
-#include "P1.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Network/P1PacketSender.h"
-#include "UI/Screens/P1ShopWidget.h"
-#include "UI/WorldSpace/P1NameplateWidget.h"
-#include "UI/Screens/P1WarningTextWidget.h"
-#include "UI/Screens/P1DeathWidget.h"
-#include "Core/P1MyPlayerData.h"
+#include "UI/P1ScreenSubsystem.h"
 
 void AP1InGamePlayerController::BeginPlay()
 {
@@ -32,203 +23,83 @@ void AP1InGamePlayerController::BeginPlay()
         FP1PacketSender::Send(this, EnterRoomPkt);
     }
 
-    // ==================== Widget들 추가 ======================
-    if(HUDWidgetClass && !HUDWidget)
+    if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
     {
-        HUDWidget = CreateWidget<UP1HUDWidget>(this, HUDWidgetClass);
-        if (HUDWidget)
-        {
-            HUDWidget->AddToViewport();
-            HUDWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-        }
+        if (InGameUIMappingContext)
+            InputSubsystem->AddMappingContext(InGameUIMappingContext, 0);
     }
 
-    if (HelpWidgetClass && !HelpWidget)
-    {
-        HelpWidget = CreateWidget<UUserWidget>(this, HelpWidgetClass);
-        if (HelpWidget)
-        {
-            HelpWidget->AddToViewport();
-            HelpWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-        }
-    }
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->CreateScreens(this);
+}
 
-    if (StatusWindowWidgetClass && !StatusWindowWidget)
-    {
-        StatusWindowWidget = CreateWidget<UP1StatusWindowWidget>(this, StatusWindowWidgetClass);
-        if (StatusWindowWidget)
-        {
-            StatusWindowWidget->AddToViewport();
-            StatusWindowWidget->SetVisibility(ESlateVisibility::Collapsed);
-        }
-    }
+void AP1InGamePlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    // 로컬 플레이어는 맵보다 오래 산다. 이 맵의 위젯을 서브시스템이 쥐고 남지 않게 놓는다.
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->ReleaseScreens();
 
-    if (InventoryWidgetClass && !InventoryWidget)
-    {
-        InventoryWidget = CreateWidget<UP1InventoryWidget>(this, InventoryWidgetClass);
-        if (InventoryWidget)
-        {
-            InventoryWidget->AddToViewport();
-            InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
-        }
-    }
-
-    if (ShopWidgetClass && !ShopWidget)
-    {
-        ShopWidget = CreateWidget<UP1ShopWidget>(this, ShopWidgetClass);
-        if (ShopWidget)
-        {
-            ShopWidget->AddToViewport();
-            ShopWidget->SetVisibility(ESlateVisibility::Collapsed);
-        }
-    }
-
-    if (WarningTextWidgetClass && !WarningTextWidget)
-    {
-        WarningTextWidget = CreateWidget<UP1WarningTextWidget>(this, WarningTextWidgetClass);
-        if (WarningTextWidget)
-        {
-            WarningTextWidget->AddToViewport();
-            WarningTextWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-        }
-    }
-
-    if (DeathWidgetClass && !DeathWidget)
-    {
-        DeathWidget = CreateWidget<UP1DeathWidget>(this, DeathWidgetClass);
-        if (DeathWidget)
-        {
-            DeathWidget->AddToViewport(DEATH_WIDGET_Z_ORDER);
-            DeathWidget->SetVisibility(ESlateVisibility::Collapsed);
-        }
-    }
-
-    WidgetMappings = {
-        {EP1WidgetType::WIDGET_STATUS_WINDOW, StatusWindowWidget},
-        {EP1WidgetType::WIDGET_INVENTORY, InventoryWidget},
-        {EP1WidgetType::WIDGET_SHOP, ShopWidget},
-    };
-    
+    Super::EndPlay(EndPlayReason);
 }
 
 void AP1InGamePlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
-    InputComponent->BindAction("ToggleStatusWindow", IE_Pressed, this, &AP1InGamePlayerController::OnToggleStatusWindowWidget);
-    InputComponent->BindAction("ToggleInventory", IE_Pressed, this, &AP1InGamePlayerController::OnToggleInventoryWidget);
+    if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
+    {
+        if (ToggleStatusWindowAction)
+            EnhancedInputComponent->BindAction(ToggleStatusWindowAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleStatusWindowWidget);
+
+        if (ToggleInventoryAction)
+            EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleInventoryWidget);
+    }
 }
 
 void AP1InGamePlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    // 전투 모드는 내 플레이어가 갖고, 컨트롤러는 알림을 받아 화면에 보여 준다.
-    if (AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(InPawn))
+    // 전투 모드는 내 플레이어가 갖고, 화면 서브시스템이 알림을 받아 화면에 보여 준다.
+    AP1MyPlayer* MyPlayer = Cast<AP1MyPlayer>(InPawn);
+    UP1ScreenSubsystem* Screens = GetScreens();
+    if (MyPlayer && Screens)
     {
-        MyPlayer->OnBattleModeChanged.AddUObject(this, &AP1InGamePlayerController::OnToggleBattleMode);
+        MyPlayer->OnBattleModeChanged.AddUObject(Screens, &UP1ScreenSubsystem::ShowBattleMode);
     }
 }
 
 void AP1InGamePlayerController::OnToggleStatusWindowWidget()
 {
-    ToggleWidget(EP1WidgetType::WIDGET_STATUS_WINDOW);
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->ToggleWindow(EP1WidgetType::WIDGET_STATUS_WINDOW);
 }
 
 void AP1InGamePlayerController::OnToggleInventoryWidget()
 {
-    ToggleWidget(EP1WidgetType::WIDGET_INVENTORY);
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->ToggleWindow(EP1WidgetType::WIDGET_INVENTORY);
 }
 
-void AP1InGamePlayerController::TurnOnWidget(EP1WidgetType Type)
+UP1ScreenSubsystem* AP1InGamePlayerController::GetScreens() const
 {
-    if (UUserWidget* Widget = WidgetMappings[Type])
-    {
-        Widget->RemoveFromParent();
-        Widget->AddToViewport(CurrentMaxZOrder++);
-        Widget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-        uint8 FlagIdx = (uint8)Type;
-
-        // Update Widget Flag
-        WidgetFlag |= (1 << FlagIdx);
-
-        // 켜진 UI가 1개 이상이면 UI모드 유지
-        bShowMouseCursor = true;
-        SetInputMode(FInputModeGameAndUI());
-    }
+    return ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetLocalPlayer());
 }
 
-void AP1InGamePlayerController::TurnOffWidget(EP1WidgetType Type)
+void AP1InGamePlayerController::OpenShopWindow()
 {
-    if (UUserWidget* Widget = WidgetMappings[Type])
-    {
-        ESlateVisibility Visibility = Widget->GetVisibility();
-        if (Visibility == ESlateVisibility::Collapsed || Visibility == ESlateVisibility::Hidden)
-            return;
-
-        Widget->SetVisibility(ESlateVisibility::Collapsed);
-
-        uint8 FlagIdx = (uint8)Type;
-
-        // Update Widget Flag
-        WidgetFlag &= ~(1 << FlagIdx);
-
-        RefreshInputMode();
-    }
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->OpenWindow(EP1WidgetType::WIDGET_SHOP);
 }
 
-void AP1InGamePlayerController::RefreshInputMode()
+void AP1InGamePlayerController::CloseShopWindow()
 {
-    // 켜진 UI가 1개 이상이면 UI모드 유지
-    if (WidgetFlag > 0)
-    {
-        bShowMouseCursor = true;
-        SetInputMode(FInputModeGameAndUI());
-    }
-    else
-    {
-        bShowMouseCursor = false;
-        SetInputMode(FInputModeGameOnly());
-    }
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->CloseWindow(EP1WidgetType::WIDGET_SHOP);
 }
 
-bool AP1InGamePlayerController::IsTurnOnThisWidget(EP1WidgetType Type) const
+void AP1InGamePlayerController::ShowShopWarning(const FText& Message)
 {
-    return WidgetFlag & (1 << (uint8)Type); 
-}
-
-void AP1InGamePlayerController::DisplayWarningText(const FText& Message)
-{
-    WarningTextWidget->DisplayWarningMessage(Message);
-}
-
-void AP1InGamePlayerController::ToggleWidget(EP1WidgetType Type)
-{
-    uint8 FlagIdx = (uint8)Type;
-    bool IsActive = (WidgetFlag & (1 << FlagIdx)) > 0;
-
-    if (!IsActive)
-    {
-        TurnOnWidget(Type);
-    }
-    else
-    {
-        TurnOffWidget(Type);
-    }
-}
-
-void AP1InGamePlayerController::OnToggleBattleMode(bool BattleMode)
-{
-    HUDWidget->SetBattleModeTxt(BattleMode);
-
-    if (BattleMode)
-    {
-        FString WarningMessage = TEXT("전투모드를 활성화합니다");
-        DisplayWarningText(FText::FromString(WarningMessage));
-    }
-    else
-    {
-        FString WarningMessage = TEXT("전투모드를 비활성화합니다");
-        DisplayWarningText(FText::FromString(WarningMessage));
-    }
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->DisplayWarningText(Message);
 }

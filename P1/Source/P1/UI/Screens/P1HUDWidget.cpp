@@ -1,9 +1,9 @@
 #include "UI/Screens/P1HUDWidget.h"
 #include "UI/Common/P1ProgressBarWidget.h"
 #include "Components/TextBlock.h"
-#include "Game/Entities/P1MyPlayer.h"
+#include "Protocol.pb.h"
 #include "Core/P1GameInstance.h"
-#include "Core/P1MyPlayerData.h"
+#include "Game/Progress/P1MyPlayerData.h"
 
 void UP1HUDWidget::NativeConstruct()
 {
@@ -50,17 +50,6 @@ void UP1HUDWidget::UpdateCurHp(int64 Value)
     HpBar->SetCurValue(Value);
 }
 
-void UP1HUDWidget::UpdateHpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue)
-{
-    if (CurValue.IsSet() && MaxValue.IsSet())
-        HpBar->SetBoth(CurValue.GetValue(), MaxValue.GetValue());
-
-    if (CurValue.IsSet())
-        HpBar->SetCurValue(CurValue.GetValue());
-    else if (MaxValue.IsSet())
-        HpBar->SetMaxValue(MaxValue.GetValue());
-}
-
 void UP1HUDWidget::UpdateMaxMp(int64 Value)
 {
     MpBar->SetMaxValue(Value);
@@ -71,17 +60,6 @@ void UP1HUDWidget::UpdateCurMp(int64 Value)
     MpBar->SetCurValue(Value);
 }
 
-void UP1HUDWidget::UpdateMpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue)
-{
-    if (CurValue.IsSet() && MaxValue.IsSet())
-        MpBar->SetBoth(CurValue.GetValue(), MaxValue.GetValue());
-
-    if (CurValue.IsSet())
-        MpBar->SetCurValue(CurValue.GetValue());
-    else if (MaxValue.IsSet())
-        MpBar->SetMaxValue(MaxValue.GetValue());
-}
-
 void UP1HUDWidget::UpdateMaxExp(int64 Value)
 {
     ExpBar->SetMaxValue(Value);
@@ -90,17 +68,6 @@ void UP1HUDWidget::UpdateMaxExp(int64 Value)
 void UP1HUDWidget::UpdateCurExp(int64 Value)
 {
     ExpBar->SetCurValue(Value);
-}
-
-void UP1HUDWidget::UpdateExpBar(TOptional<int64> CurValue, TOptional<int64> MaxValue)
-{
-    if(CurValue.IsSet() && MaxValue.IsSet())
-        ExpBar->SetBoth(CurValue.GetValue(), MaxValue.GetValue());
-
-    if (CurValue.IsSet())
-        ExpBar->SetCurValue(CurValue.GetValue());
-    else if(MaxValue.IsSet())
-        ExpBar->SetMaxValue(MaxValue.GetValue());
 }
 
 void UP1HUDWidget::SetBattleModeTxt(bool battleMode)

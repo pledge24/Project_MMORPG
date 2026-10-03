@@ -28,10 +28,15 @@
 
 ### 손으로 쓰는 것
 
-생성되는 건 패킷 핸들러 **헤더뿐**이다. `.cpp` 두 개는 손으로 작성한 파일이고, 새 패킷의 실제 동작은 여기에 구현한다.
+생성되는 건 패킷 핸들러 **헤더뿐**이다. 아래 `.cpp`는 손으로 작성한 파일이고, 새 패킷의 실제 동작은 여기에 구현한다.
 
 - `Server/GameServer/Main/ServerPacketHandler.cpp`
 - `P1/Source/P1/Network/ClientPacketHandler.cpp`
+- `P1/Source/P1/Online/P1LoginPacketHandlers.cpp`
+
+마지막 파일에는 로그인 관리자를 부르는 클라이언트 핸들러(`S_LOGIN`, `S_CREATE_CHARACTER`, `S_DELETE_CHARACTER`,
+`S_ENTER_GAME`)의 정의만 둔다. `Network/`는 `Online/`을 부르지 않으므로 이 정의를 `Online/`에 둔다. 선언은 생성된
+`ClientPacketHandler.h`의 것을 그대로 쓴다.
 
 ### 이름 규칙
 

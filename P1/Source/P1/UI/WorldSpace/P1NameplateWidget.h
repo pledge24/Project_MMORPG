@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Utils/Types.h"
 #include "Game/Entities/P1CreatureBoundWidget.h"
 #include "P1NameplateWidget.generated.h"
 
