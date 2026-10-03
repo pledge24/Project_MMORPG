@@ -43,7 +43,10 @@ void AP1Shop::HandleRangeBeginOverlap(UPrimitiveComponent* OverlappedComponent, 
 void AP1Shop::HandleRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
     int32 OtherBodyIndex)
 {
-    // 블루프린트도 나간 액터를 보지 않았다. 다른 액터가 나가도 닫히는 결함은 #170이 고친다.
+    // 몬스터나 다른 플레이어가 나가도 내 상점 창은 닫지 않는다.
+    if (Cast<AP1MyPlayer>(OtherActor) == nullptr)
+        return;
+
     if (IP1ShopScreen* ShopScreen = FindShopScreen())
         ShopScreen->CloseShopWindow();
 }

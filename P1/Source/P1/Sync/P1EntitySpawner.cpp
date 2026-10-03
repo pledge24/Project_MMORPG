@@ -188,8 +188,7 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
         // 플레이어 데이터 설정(스폰 전 후로)
         // 이름은 Initialize도 다시 넣지만 여기서 먼저 넣어야 한다. FinishSpawning 안의 BeginPlay가
         // 네임플레이트를 바인딩하면서 이름을 읽는데, Initialize는 그 뒤에 불린다.
-        FString PlayerName = InEntityInfo.player_info().name().c_str();
-        OutPlayer->SetPlayerName(FText::FromString(PlayerName));
+        OutPlayer->SetPlayerName(FText::FromString(UTF8_TO_TCHAR(InEntityInfo.player_info().name().c_str())));
         // 서버 위치를 보간 목표로도 넣어 이동 방향까지 채운다. 몬스터는 위치만 넣는다.
         UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutPlayer, IsMine ? EP1MoveSyncMode::MyPlayer : EP1MoveSyncMode::RemotePlayer);
         MoveSync->InitPos(InEntityInfo.pos_info());

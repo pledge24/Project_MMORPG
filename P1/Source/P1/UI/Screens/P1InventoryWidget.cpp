@@ -173,8 +173,7 @@ void UP1InventoryWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     if (Screens == nullptr || !Screens->IsWindowOpen(EP1WidgetType::WIDGET_SHOP))
         return;
 
-    // 블루프린트와 같이 ItemData로 빈 칸을 가린다. 비운 칸의 ItemData에는 지난 아이템이 남아 있어 요청이 나가고,
-    // 서버가 거절한다. docs/tech-debt.md 「슬롯을 비워도 아이템 데이터가 지난 아이템을 들고 있다」.
+    // 블루프린트와 같이 ItemData로 빈 칸을 가린다. 칸을 비우면 ItemData도 비워진다.
     const Protocol::Slot& SlotData = SlotWidget->SlotData;
     if (SlotWidget->ItemData.TemplateId <= 0)
     {

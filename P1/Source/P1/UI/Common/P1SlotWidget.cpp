@@ -110,6 +110,8 @@ void UP1SlotWidget::ClearSlot()
     if (ItemIcon) ItemIcon->SetBrushFromTexture(SlotDefaultIcon);
     if (ItemCountText) ItemCountText->SetText(FText::GetEmpty());
     SlotData.Clear();
+    // 판매 판정과 툴팁이 ItemData.TemplateId로 빈 칸을 가린다.
+    ItemData = FP1ItemData();
 }
 
 void UP1SlotWidget::InsertData(const Protocol::Slot& _Slot)
@@ -149,7 +151,7 @@ UTexture2D* UP1SlotWidget::LoadIcon(int32 TemplateId) const
 
 int32 UP1SlotWidget::GetHeldTemplateId() const
 {
-    // ItemData가 아니라 SlotData로 본다. 칸을 비워도 ItemData에는 지난 아이템이 남는다(#163).
+    // ItemData가 아니라 SlotData로 본다. 상점의 진열 칸은 ItemData만 채우고 아이템을 들지 않는다.
     return SlotData.has_item() ? SlotData.item().template_id() : 0;
 }
 

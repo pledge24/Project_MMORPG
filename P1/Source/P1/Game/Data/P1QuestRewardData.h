@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Game/Data/P1ItemData.h"
 #include "P1QuestRewardData.generated.h"
 
 USTRUCT(BlueprintType)

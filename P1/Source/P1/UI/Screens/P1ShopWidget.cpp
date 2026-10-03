@@ -31,6 +31,13 @@ void UP1ShopWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     if (MyPlayerData == nullptr || PendingPacket)
         return;
 
+    // 빈 진열 칸은 가격이 0이라 골드 검사를 통과하므로 먼저 가린다.
+    if (SlotWidget->ItemData.TemplateId <= 0)
+    {
+        UE_LOG(LogP1UI, Log, TEXT("빈 진열 칸은 살 수 없다."));
+        return;
+    }
+
     // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 구매가 막힌다.
     if (MyPlayerData->GetGold() < SlotWidget->ItemData.BuyPrice)
     {
