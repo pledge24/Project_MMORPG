@@ -44,7 +44,7 @@ protected:
     TObjectPtr<UP1SlotWidget> Equipped_Weapon;
 
     /** 장착 해제 응답을 기다리는 동안 참이다. 중복 요청을 막는다. */
-    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    UPROPERTY(VisibleAnywhere)
     bool PendingPacket = false;
 
 private:

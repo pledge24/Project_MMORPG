@@ -74,11 +74,11 @@ protected:
     //~ Item Request
 protected:
     /** 응답을 기다리는 동안 참이다. 판매·사용·착용이 함께 쓴다. */
-    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+    UPROPERTY(VisibleAnywhere)
     bool PendingPacket = false;
 
 private:
-    void BindSlotClicks(UUniformGridPanel* Inven);
+    void BindSlotClicks(UUniformGridPanel* SlotGrid);
 
     /** 상점이 열려 있을 때만 판다. */
     void HandleSlotRightClicked(UP1SlotWidget* SlotWidget);

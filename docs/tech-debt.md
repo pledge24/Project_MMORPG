@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 20개 (높음 2 · 중간 1 · 낮음 17)
+항목 21개 (높음 2 · 중간 1 · 낮음 18)
 
 ## 작성 방법
 
@@ -130,7 +130,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 둘이다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
-| `WBP_Slot` | `SlotWidget` | 이벤트 그래프와 `GetToolTipWidget`(부모 호출만), 이벤트 `PreConstruct`(진열 칸 채우기)·`OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 7개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 마우스 입력과 디스패처는 #132가 C++로 옮겼다(2026년 10월 3일). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
+| `WBP_Slot` | `SlotWidget` | 이벤트 그래프와 `GetToolTipWidget`(부모 호출만), 이벤트 `PreConstruct`(진열 칸 채우기)·`OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 7개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
 
 ### 영향
@@ -152,6 +152,19 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 
 **버그 발생 가능성 증가** — 비운 칸을 상점에서 우클릭하면 지난 아이템으로 판매 요청이 나가고 서버가 거절한다.
 빈 칸에 지난 아이템의 툴팁이 뜰 수 있다.
+
+## 응답 대기 플래그 이름에 `b` 접두사가 없다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/UI/Screens/` (`P1InventoryWidget.h` · `P1ShopWidget.h` · `P1StatusWindowWidget.h`)
+> 등록일: 2026년 10월 3일
+
+인벤토리, 상점, 스탯 창 위젯의 `bool PendingPacket`이 `docs/conventions.md` 2.1의 「bool 변수 `b`」를 따르지
+않는다. `Content`의 에셋 가운데 이 이름을 담은 것은 없으므로, 이름을 바꿔도 리다이렉트는 필요 없다.
+규범 검사(`check_conventions.py`)는 이 규칙을 잡지 않는다.
+
+### 영향
+
+**동일한 문제의 반복** — 새 위젯이 같은 이름으로 대기 플래그를 베껴 쓴다.
 
 ## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
@@ -345,7 +358,7 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 | 셋째 단계 | `ItemSubtype` | `helmet` · `sword` · `potion` 등 |
 
 클라이언트의 `FP1ItemData::ItemType`도 분류를 담는다. 클라이언트는 아이템 종류를 데이터에서 얻지 못하므로
-#132는 슬롯 종류로 가른다. 기획 원본에 종류 열을 더하는 안은 `docs/backlog.md`에 있다.
+슬롯 종류로 가른다. 기획 원본에 종류 열을 더하는 안은 `docs/backlog.md`에 있다.
 
 ### 영향
 

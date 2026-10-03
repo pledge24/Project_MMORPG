@@ -160,9 +160,9 @@ void UP1InventoryWidget::SendItemRequest(TPacket& Pkt)
     FP1PacketSender::Send(this, Pkt);
 }
 
-void UP1InventoryWidget::BindSlotClicks(UUniformGridPanel* Inven)
+void UP1InventoryWidget::BindSlotClicks(UUniformGridPanel* SlotGrid)
 {
-    for (UWidget* Child : Inven->GetAllChildren())
+    for (UWidget* Child : SlotGrid->GetAllChildren())
     {
         if (UP1SlotWidget* SlotWidget = Cast<UP1SlotWidget>(Child))
         {
