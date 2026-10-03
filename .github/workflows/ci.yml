@@ -93,3 +93,8 @@ jobs:
 
       - name: 규범 검사
         run: python Tools/ConventionLint/check_conventions.py
+
+      # 문서 검사는 자기 검증만 돌린다. 기존 문서 위반이 남아 있어서 실제 검사를 붙이면 바로
+      # 실패한다. 기존 위반을 정리하는 #187에서 실제 검사 단계를 붙인다.
+      - name: 문서 검사가 위반을 잡는지 확인
+        run: python Tools/DocLint/check_docs.py --self-test

@@ -13,6 +13,7 @@
 | 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
 | UE 클라 L2 (Automation) | `Build.bat P1Editor` (`docs/build.md` 「빌드 명령」) | `pwsh P1/Scripts/Run-UeTests.ps1` | 에디터 `Window > Test Automation` |
 | 규범 검사 | — | `py -3 Tools/ConventionLint/check_conventions.py` | 같은 명령 |
+| 문서 검사 | — | `py -3 Tools/DocLint/check_docs.py` | 같은 명령 |
 
 **판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`와 `npm run lint`가 둘 다 0이어야 완료다.
 
@@ -36,6 +37,17 @@ py -3 Tools/ConventionLint/check_conventions.py
 
 검사 대상은 git이 추적하는 파일뿐이다. 빌드도 엔진도 필요 없으므로 호스티드 러너에서 그대로
 돈다. 검사 항목과 그 근거 조항은 스크립트 첫머리의 표에 있다.
+
+**문서 검사도 같은 순서로 돌린다.** 문서의 파일 이름, 다른 문서의 절과 경로 참조, backlog 번호
+참조, ADR과 tech-debt의 양식, 인코딩을 본다. 검사 항목과 근거는 스크립트 첫머리의 표에 있다.
+
+```
+py -3 Tools/DocLint/check_docs.py --self-test
+py -3 Tools/DocLint/check_docs.py
+```
+
+CI는 아직 `--self-test`만 돌린다. 기존 위반이 남아 있어서 실제 검사를 붙이면 CI가 바로 실패한다.
+기존 위반은 #187에서 정리하고 그때 실제 검사를 붙인다.
 
 테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
 
