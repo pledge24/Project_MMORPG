@@ -251,7 +251,8 @@ void UP1MyPlayerData::StartItemCooldown(int32 TemplateId)
     if (ItemData == nullptr || ItemData->Cooldown <= 0.f)
         return;
 
-    // 서버는 요청을 처리한 시각부터 센다. 응답을 받은 시각부터 세면 클라이언트의 대기가 늘 조금 늦게 끝난다.
+    // 응답을 받은 지금부터 센다. 서버는 요청을 처리한 시각부터 세므로 클라이언트의 대기가 늘 조금 늦게 끝나고,
+    // 클라이언트가 쓸 수 있다고 보일 때 서버가 거절하는 일이 없다.
     ItemCooldowns.Add(TemplateId, FP1ItemCooldown{ FP1ItemCooldown::GetClockSeconds(), ItemData->Cooldown });
     OnItemCooldownStarted.Broadcast(TemplateId);
 }

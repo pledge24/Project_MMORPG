@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 22개 (높음 2 · 중간 1 · 낮음 19)
+항목 24개 (높음 2 · 중간 1 · 낮음 21)
 
 ## 작성 방법
 
@@ -177,6 +177,32 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 ### 영향
 
 **버그 발생 가능성 증가** — 거절될 요청이 나가는 동안 응답 대기가 켜져, 그 사이의 구매 클릭이 무시된다.
+
+## 인벤토리 칸 변경 알림의 `OnUse` 인자를 읽는 곳이 없다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/Game/Progress/P1MyPlayerData.h` (`FOnInvenSlotChanged`) · `P1/Source/P1/Game/Inventory/P1Inventory.h` (`Rep_SlotChanged`) · `P1/Source/P1/UI/Screens/P1InventoryWidget.h` (`UpdateSlotWidget`)
+> 등록일: 2026년 10월 3일
+
+`FOnInvenSlotChanged`는 칸과 함께 `bool`을 싣는다. 사용 응답이면 참이다. 재사용 대기를 내 플레이어 데이터가
+아이템마다 세게 되면서, 이 값을 읽던 슬롯의 `OnUse` 호출이 사라졌다. 구독자 둘(`UP1Inventory::Rep_SlotChanged`,
+`UP1InventoryWidget::UpdateSlotWidget`)은 인자를 받기만 하고 읽지 않는다.
+
+### 영향
+
+**유지보수 어려움** — 인자 이름만 보면 사용 여부로 무언가를 하는 것처럼 읽힌다.
+
+## 아이템 데이터 테이블을 가리키는 곳이 둘이다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
+> 위치: `P1/Source/P1/UI/Common/P1SlotWidget.h` (`ItemTable`) · `P1/Source/P1/Game/Data/P1GameDataSettings.h` (`ItemTable`)
+> 등록일: 2026년 10월 3일
+
+슬롯 위젯은 블루프린트 기본값으로 지정한 `ItemTable`에서 아이템 정의를 읽고, 내 플레이어 데이터는
+`UP1GameDataSettings`가 `DefaultGame.ini`에서 가리키는 테이블에서 읽는다. 지금은 둘 다 `DT_Item`이다. 템플릿 id로
+행 이름을 만들어 찾는 코드도 두 곳에 있다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 한쪽만 다른 테이블로 바꾸면 슬롯이 보이는 아이템 정보와 재사용 대기 길이가 어긋난다.
 
 ## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client

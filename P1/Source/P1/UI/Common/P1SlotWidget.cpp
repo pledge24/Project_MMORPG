@@ -29,19 +29,19 @@ void UP1SlotWidget::NativePreConstruct()
     Super::NativePreConstruct();
 
     // 디자이너 미리보기에서도 돈다. 테이블이나 위젯이 없을 수 있다.
-    if (DisplayTemplateId > 0)
+    if (DisplayTemplateId > 0 && ItemTable)
     {
-        if (ItemTable == nullptr)
-            return;
-
         if (const FP1ItemData* Row = ItemTable->FindRow<FP1ItemData>(
             FName(*FString::FromInt(DisplayTemplateId)), TEXT("UP1SlotWidget::NativePreConstruct"), false))
+        {
             SetSlot(*Row, 1);
+            return;
+        }
     }
-    else if (ItemIcon)
-    {
+
+    // 진열 템플릿이 없거나 행을 찾지 못하면 그림만 입힌다.
+    if (ItemIcon)
         ItemIcon->SetBrushFromTexture(DisplayIcon ? DisplayIcon.Get() : SlotDefaultIcon.Get());
-    }
 }
 
 FReply UP1SlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
