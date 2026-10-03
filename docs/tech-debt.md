@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 21개 (높음 2 · 중간 1 · 낮음 18)
+항목 22개 (높음 2 · 중간 1 · 낮음 19)
 
 ## 작성 방법
 
@@ -126,18 +126,17 @@ C++ 부모 클래스가 없는 BP는 아래 하나다.
 |---|---|---|
 | `BP_Shop` | `Actor` | 오버랩 상호작용 + `PlayerController` 참조. C++에 `UP1ShopWidget`은 있는데 상점 액터가 없다 |
 
-C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 둘이다.
+C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 하나다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
-| `WBP_Slot` | `SlotWidget` | 이벤트 그래프와 `GetToolTipWidget`(부모 호출만), 이벤트 `PreConstruct`(진열 칸 채우기)·`OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 7개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
 
 ### 영향
 
 **테스트 어려움** · **유지보수 어려움** — 쿨다운과 카운트다운처럼 시간과 상태를 다루는 로직이
-BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증할 수 없다. `WBP_Slot`의 쿨다운
-상태 머신과 `WBP_DeathScreen`의 리스폰 카운트다운이 여기 해당한다.
+BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증할 수 없다. `WBP_DeathScreen`의 리스폰
+카운트다운이 여기 해당한다.
 
 ## 슬롯을 비워도 아이템 데이터가 지난 아이템을 들고 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
@@ -165,6 +164,19 @@ BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증�
 ### 영향
 
 **동일한 문제의 반복** — 새 위젯이 같은 이름으로 대기 플래그를 베껴 쓴다.
+
+## 상점의 빈 진열 칸을 우클릭하면 구매 요청이 나간다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/UI/Screens/P1ShopWidget.cpp` (`HandleSlotRightClicked`)
+> 등록일: 2026년 10월 3일
+
+`WBP_Shop`의 진열 칸 56개 가운데 17개는 비어 있다. 빈 칸의 `ItemData`는 `TemplateId`와 `BuyPrice`가 0이라
+골드 검사를 통과하고, `C_BUY_ITEM(template_id=0)`이 나간다. 서버는 아이템 정의를 찾지 못해 거절할 것으로 본다.
+블루프린트 시절부터 같은 동작이다. 코드를 읽고 판단했고 실행해서 확인하지는 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 거절될 요청이 나가는 동안 응답 대기가 켜져, 그 사이의 구매 클릭이 무시된다.
 
 ## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client

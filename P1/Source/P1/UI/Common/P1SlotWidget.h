@@ -45,7 +45,6 @@ private:
 
     //~ Slot Data
 public:
-    UFUNCTION(BlueprintCallable, Category = "Slot")
     void SetSlot(const FP1ItemData& Item, int32 Count = 1);
     void SetSlot(const Protocol::Slot& _Slot);
 
