@@ -24,6 +24,16 @@ void UP1SlotWidget::NativeConstruct()
     }
 }
 
+void UP1SlotWidget::NativeOnInitialized()
+{
+    Super::NativeOnInitialized();
+
+    // 툴팁은 띄울 때마다 지금 칸의 아이템으로 채운다. 디자이너 바인딩 대신 여기서 묶는다.
+    // 슬레이트 위젯을 만들 때 델리게이트가 묶여 있어야 툴팁이 걸리므로 NativeConstruct보다 앞인 여기서 묶는다.
+    if (ItemIcon)
+        ItemIcon->ToolTipWidgetDelegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UP1SlotWidget, GetToolTipWidget));
+}
+
 void UP1SlotWidget::NativePreConstruct()
 {
     Super::NativePreConstruct();
@@ -186,7 +196,7 @@ void UP1SlotWidget::RefreshCooldown()
         World->GetTimerManager().SetTimer(CooldownTimerHandle, this, &UP1SlotWidget::RefreshCooldown, CooldownBarIntervalSeconds, true);
 }
 
-UWidget* UP1SlotWidget::GetToolTipWidget_Implementation() const
+UWidget* UP1SlotWidget::GetToolTipWidget() const
 {
     if (ItemData.TemplateId > 0 && TooltipClass)
     {

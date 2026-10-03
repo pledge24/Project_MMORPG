@@ -1,6 +1,7 @@
 #include "UI/Screens/P1HUDWidget.h"
 #include "UI/Common/P1ProgressBarWidget.h"
 #include "Components/TextBlock.h"
+#include "Protocol.pb.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
 

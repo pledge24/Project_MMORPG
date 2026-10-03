@@ -159,19 +159,34 @@ P1/Source/
 
 ### 3.3 의존 방향
 
-도메인끼리 서로 참조하면 경계가 무너진다. 아래 방향으로만 참조한다.
+도메인끼리 서로 참조하면 경계가 무너진다. 각 폴더는 아래 표에 적힌 곳만 부른다. 게임 도메인은
+`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`다.
 
-```
-Protocol 모듈 → Network → Sync → 게임 도메인
-                                   ↑
-UI → 게임 도메인(Game/Combat, Game/Inventory, Game/Equipment, Game/Progress) → Game/Data → Utils
-Core → Game/Entities → 게임 도메인
-```
+| 폴더 | 부를 수 있는 곳 |
+| --- | --- |
+| `Core/`, `UI/` (배선) | 서로, 그리고 아래의 모든 폴더 |
+| `Online/` | `Network/`, `Game/Progress`, `Utils/` |
+| `Network/` | `Sync/`, `Game/Progress`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
+| `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
+| `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
+| `Game/Entities` | 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
+| 게임 도메인 | `Game/Data`, `Utils/`, 송신 창구 |
+| `Game/Data` | `Utils/` |
+| `Utils/` | 없음 |
+| `Tests/` | 테스트하는 대상 폴더 전부. 제품 코드는 `Tests/`를 부르지 않는다 |
 
-**게임 도메인이 `Network/`에서 부르는 것은 송신 창구 `Network/P1PacketSender.h` 하나뿐이다.**
-도메인은 요청 자료형(`Protocol::C_*`)을 만들어 `FP1PacketSender::Send(this, Pkt)`에 넘긴다. 게임
-인스턴스, 세션, 소켓은 그 헤더에 드러나지 않는다.
+이 표는 #138이 클라이언트의 `#include`를 전수 대조한 결과에 맞춘 것이다.
+
+**생성된 프로토콜 자료형(`Protocol.pb.h`)은 어디서나 부른다.** 생성기가 `Network/`에 복사해 둘 뿐
+`Network/`의 코드가 아니다. 요청을 만드는 쪽도 응답을 받는 쪽도 이 자료형을 쓴다.
+
+**`Sync/`와 `Game/` 아래가 `Network/`에서 부르는 것은 송신 창구 `Network/P1PacketSender.h` 하나뿐이다.**
+표의 「송신 창구」가 이것이다. 요청 자료형(`Protocol::C_*`)을 만들어 `FP1PacketSender::Send(this, Pkt)`에
+넘긴다. 게임 인스턴스, 세션, 소켓은 그 헤더에 드러나지 않는다.
 — 이 경계가 무너지면 통신 방식을 바꿀 때 게임 코드 전체를 함께 고쳐야 한다.
+
+**`Core/`와 `UI/`는 배선이다. 배선끼리는 서로 부른다.** 위젯은 서브시스템을 얻으려고 게임 인스턴스를 부르고,
+게임 인스턴스와 컨트롤러는 화면을 띄우려고 위젯을 부른다. 게임 규칙은 둘 어느 쪽에도 두지 않는다.
 
 **게임 도메인은 `Core/`와 `UI/`를 부르지 않는다.** 배선에 알려야 할 일은
 델리게이트로 알리고 배선이 구독한다(예: `AP1MyPlayer::OnBattleModeChanged`를 컨트롤러가
@@ -179,10 +194,18 @@ Core → Game/Entities → 게임 도메인
 구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`, 인게임 컨트롤러가 구현하는 `IP1ShopScreen`).
 
 **레벨에 놓인 액터(`Game/World/`, `Game/Interaction/`)는 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
-내 플레이어인지, 그 상태가 어떤지를 보고 반응하기 때문이다. 두 폴더는 위 그림에 없고, `Game/Entities/`를 읽는
-쪽에 있다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
-— `Game/Progress/P1MyPlayerData.h`도 스폰 알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를 전방 선언한다.
-이것이 규칙인지 예외인지는 의존 방향을 전수 확인하는 #138이 정한다.
+내 플레이어인지, 그 상태가 어떤지를 보고 반응하기 때문이다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
+
+**`#include` 없이 포인터나 소프트 참조의 타입으로만 쓰는 전방 선언은 방향을 따지지 않는다.** 그 타입의
+멤버를 쓰려면 헤더를 불러야 하므로 그때는 표를 지킨다. `Game/Progress/P1MyPlayerData.h`는 스폰
+알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를, `Game/Data/P1MonsterAssetData.h`는 몬스터 클래스의
+소프트 참조로 `AP1Monster`를 전방 선언한다.
+— 알림을 받는 쪽이 그 액터를 쓰고, 보내는 쪽은 이름만 넘긴다. 이 알림을 다른 폴더로 옮기면 구독하는
+화면의 경로까지 바뀐다.
+
+**`Game/Progress`는 인벤토리와 착용 장비를 소유하므로 `Game/Inventory`와 `Game/Equipment`를 부른다.**
+이 절 끝의 「같은 층의 도메인끼리 호출하는 자리는 인터페이스나 델리게이트로 연결한다」의 예외다.
+— 소유 관계는 인터페이스로 끊을 이유가 없다.
 
 **`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.
 공용 매크로를 쓰려고 `Utils/`의 헤더를 여는 자리가 게임 도메인 전체를 딸려 끌고 온다.
@@ -190,7 +213,8 @@ Core → Game/Entities → 게임 도메인
 자리는 각자 직접 부른다.
 
 **`Game/` 아래는 `Online/`을 부르지 않는다.** 로그인과 캐릭터 목록에 쓰는 자료형은 `Online/`이
-소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가 이것이다.
+소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가 이것이다. `Online/`은 입장에
+성공하면 내 플레이어 데이터를 채우려고 `Game/Progress`를 부른다.
 
 **`Sync/`는 판정하지 않고 표현만 맞춘다.** 예측을 구현하더라도 그 결과는 화면 표현일 뿐이고,
 서버 응답이 오면 서버 값으로 덮어쓴다.

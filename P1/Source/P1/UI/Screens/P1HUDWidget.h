@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Protocol.pb.h"
 #include "P1HUDWidget.generated.h"
 
 class AP1MyPlayer;
