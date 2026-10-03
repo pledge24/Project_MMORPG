@@ -81,6 +81,6 @@ private:
     /** 직전 프레임의 입력이다. 값이 바뀌었는지 볼 때 쓴다. */
     FVector2D LastDesiredInput = FVector2D::ZeroVector;
 
-    /** 서버가 마지막으로 아는 내 플레이어의 yaw다. 보낼 때와, 서버가 위치를 정해 줄 때 바뀐다. */
-    float LastSentYaw = 0.f;
+    /** 서버와 마지막으로 맞춘 yaw다. 보낼 때와, 서버가 위치를 정해 줄 때 바뀐다. 내 플레이어 모드에서만 읽는다. */
+    float LastSyncedYaw = 0.f;
 };
