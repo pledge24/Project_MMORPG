@@ -32,7 +32,7 @@
 | # | 단계 | 상태 | 검증 |
 |---|---|---|---|
 | 1 | 기계 검사 스크립트 `check_docs.py` | 완료 | `check_docs.py --self-test` 10건 통과 종료 코드 0 · `check_docs.py` 위반 4건 종료 코드 1(정답지 1·2·7번, 오탐 0건) · `check_conventions.py --self-test` 종료 코드 0 · PR #188 CI 두 잡 통과 |
-| 2 | `my-doc-gardening` 스킬 | 대기 | — |
+| 2 | `my-doc-gardening` 스킬 | 완료 | 실행 검증은 3단계의 `--all` 실행으로 한다 |
 | 3 | 첫 전수 실행, 기존 위반 수정, CI 실제 검사 켜기 | 대기 | — |
 
 ## 결정
