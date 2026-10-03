@@ -34,7 +34,7 @@ int32 UP1AttackSystemComponent::StartNormalAttack()
 
     if (UAnimInstance* AnimInstance = PlayMontage(Montage))
     {
-        // 블루프린트의 몽타주 재생 노드처럼 이 공격의 몽타주에서 온 끝과 노티파이만 받는다.
+        // 이 공격의 몽타주 인스턴스에서 온 끝과 노티파이만 받는다. 다음 타격이 끊은 앞 몽타주의 이벤트는 섞이지 않는다.
         FOnMontageEnded EndDelegate;
         EndDelegate.BindUObject(this, &UP1AttackSystemComponent::HandleMontageEnded);
         AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);
@@ -44,20 +44,20 @@ int32 UP1AttackSystemComponent::StartNormalAttack()
         AnimInstance->OnPlayMontageNotifyBegin.AddUniqueDynamic(this, &UP1AttackSystemComponent::HandleMontageNotifyBegin);
     }
 
-    // 재생에 실패해도 블루프린트처럼 공격 상태로 들어가고, 초기화 타이머가 풀어 준다.
+    // 재생에 실패해도 공격 상태로 들어간다. 끝 이벤트가 오지 않으므로 초기화 타이머가 풀어 준다.
     bIsAttacking = true;
     bEnableInputAttack = false;
 
-    // 같은 핸들로 다시 걸면 남은 시간을 버리고 처음부터 센다. 블루프린트의 RetriggerableDelay와 같다.
+    // 같은 핸들로 다시 걸면 남은 시간을 버리고 처음부터 센다. 공격을 이어 가는 동안에는 초기화되지 않는다.
     if (UWorld* World = GetWorld())
         World->GetTimerManager().SetTimer(ComboResetTimerHandle, this, &UP1AttackSystemComponent::ResetCombo, ComboResetSeconds, false);
 
     return NormalAttackCombo;
 }
 
-void UP1AttackSystemComponent::PlayNotifiedNormalAttack(int32 Combo)
+void UP1AttackSystemComponent::PlayRemoteNormalAttack(int32 Combo)
 {
-    // 블루프린트는 소유자를 내 플레이어로 캐스트해 걸렀다. 로컬 플레이어 컨트롤러가 조종하는 폰은 내 플레이어뿐이다.
+    // 내 플레이어는 입력에서 이미 재생했다. 로컬 플레이어 컨트롤러가 조종하는 폰은 내 플레이어뿐이다.
     const APawn* OwnerPawn = Cast<APawn>(GetOwner());
     if (OwnerPawn && OwnerPawn->IsPlayerControlled() && OwnerPawn->IsLocallyControlled())
         return;
@@ -88,7 +88,7 @@ void UP1AttackSystemComponent::ResetCombo()
 
 void UP1AttackSystemComponent::HandleMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-    // 다음 타격이 앞 몽타주를 끊으면 중단으로 끝난다. 블루프린트도 중단에는 연결이 없었다.
+    // 다음 타격이 앞 몽타주를 끊으면 중단으로 끝난다. 이때는 새 공격이 상태를 쥐고 있으므로 건드리지 않는다.
     if (bInterrupted)
         return;
 
@@ -98,8 +98,8 @@ void UP1AttackSystemComponent::HandleMontageEnded(UAnimMontage* Montage, bool bI
 
 void UP1AttackSystemComponent::HandleMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
 {
-    // 노티파이 이름은 보지 않는다. 블루프린트도 이름과 무관하게 다음 입력을 열었다.
-    if (Payload.MontageInstanceID == AttackMontageInstanceId)
+    // 노티파이 이름은 보지 않는다. 공격 몽타주의 어떤 노티파이든 다음 입력을 연다.
+    if (AttackMontageInstanceId != INDEX_NONE && Payload.MontageInstanceID == AttackMontageInstanceId)
         bEnableInputAttack = true;
 }
 

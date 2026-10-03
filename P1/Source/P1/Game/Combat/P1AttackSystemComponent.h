@@ -11,7 +11,7 @@ struct FBranchingPointNotifyPayload;
 
 /**
  * 크리처의 일반 공격 동작을 맡는다. 내 입력으로 시작하는 공격은 콤보 순번을 돌리고 입력 가능 여부를 관리한다.
- * 서버가 알린 다른 크리처의 공격은 순번에 맞는 몽타주만 재생한다. 몽타주 배열은 블루프린트 기본값에 있다.
+ * 서버가 알린 원격 크리처의 공격은 순번에 맞는 몽타주만 재생한다. 몽타주 배열은 블루프린트 기본값에 있다.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class P1_API UP1AttackSystemComponent : public UActorComponent
@@ -31,8 +31,8 @@ public:
      */
     int32 StartNormalAttack();
 
-    /** 서버가 알린 일반 공격의 동작을 재생한다. 내 플레이어는 입력에서 이미 재생했으므로 무시한다. 상태는 바꾸지 않는다. */
-    void PlayNotifiedNormalAttack(int32 Combo);
+    /** 서버가 알린 원격 크리처의 일반 공격 동작을 재생한다. 내 플레이어는 입력에서 이미 재생했으므로 무시한다. 상태는 바꾸지 않는다. */
+    void PlayRemoteNormalAttack(int32 Combo);
 
     bool IsAttacking() const;
     bool CanStartNormalAttack() const;
