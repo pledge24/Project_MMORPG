@@ -24,5 +24,8 @@ description: 언리얼 MCP(`unreal`)의 이 저장소 전용 함정. `mcp__unrea
   에디터를 「저장 안 함」으로 닫아 달라고 요청한다.
 - `AssetTools.update_metadata_tags`의 `remove_tags`는 `could not convert incoming function input params Json
   to a UStruct`로 실패한다. 붙인 태그를 지울 수 없으니 변경 표시를 붙이려고 태그를 쓰지 않는다.
+- `ObjectTools.set_properties`의 인자는 `instance`와 `values`이고, `values`는 속성 이름과 값을 담은 JSON
+  문자열이다(`"{\"DisplayTemplateId\":1000}"`). 읽는 `get_properties`는 `instance`와 `properties`(이름 배열)를 받는다.
+  객체 참조 값은 `{"refPath": "<경로>"}`로 쓴다.
 - `ObjectTools.set_properties`는 배열 요소를 바꾸면서 개수도 줄이는 변경을 `ArrayRemove: elements changed
   alongside the size change`로 거부한다. `reset_properties`로 비운 뒤 새 요소를 넣는다.
