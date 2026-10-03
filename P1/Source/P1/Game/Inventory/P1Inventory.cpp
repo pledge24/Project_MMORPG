@@ -50,6 +50,15 @@ void UP1Inventory::Init(Protocol::Inventory* Inventory_)
 
 }
 
+const Protocol::Slot* UP1Inventory::FindSlot(Protocol::SlotType Type, int32 SlotId) const
+{
+    const TArray<Protocol::Slot*>* InvenLookup = InventoryLookupMappings.Find(Type);
+    if (InvenLookup == nullptr || InvenLookup->IsValidIndex(SlotId) == false)
+        return nullptr;
+
+    return (*InvenLookup)[SlotId];
+}
+
 void UP1Inventory::Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse)
 {
     if (InventoryLookupMappings.Contains(Slot_.type()))

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Protocol.pb.h"
+#include "Game/Inventory/P1ItemCooldown.h"
 #include "P1MyPlayerData.generated.h"
 
 class AP1MyPlayer;
@@ -16,6 +17,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInvenSlotChanged, const Protocol::Slot&, bool);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::Slot&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemCooldownStarted, int32);
 
 /** 내 플레이어의 정보를 담는 서브시스템이다. */
 UCLASS()
@@ -107,6 +109,23 @@ public:
 protected:
     UPROPERTY()
     TObjectPtr<UP1Inventory> Inventory;
+
+    //~ Item Cooldown
+public:
+    /** 템플릿이 재사용 대기 중이 아니면 nullptr을 돌려준다. 시각은 FP1ItemCooldown::GetClockSeconds()로 잰다. */
+    const FP1ItemCooldown* FindActiveItemCooldown(int32 TemplateId) const;
+
+    bool IsItemCoolingDown(int32 TemplateId) const { return FindActiveItemCooldown(TemplateId) != nullptr; }
+
+    /** 사용 성공 응답으로 템플릿의 재사용 대기가 시작되면 템플릿 id를 알린다. 같은 아이템이 든 칸이 모두 대기 막대를 돌린다. */
+    FOnItemCooldownStarted OnItemCooldownStarted;
+
+private:
+    /** 아이템 정의의 Cooldown(초)으로 대기를 시작한다. 대기가 없는 아이템이면 아무것도 하지 않는다. */
+    void StartItemCooldown(int32 TemplateId);
+
+    /** 템플릿 id별 재사용 대기다. 서버처럼 재접속하면 비운다. */
+    TMap<int32, FP1ItemCooldown> ItemCooldowns;
 
     //~ Equipment
 public:

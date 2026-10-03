@@ -106,7 +106,7 @@ P1/Source/
 | `Game/Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
-| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스 |
+| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
 | `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비)을 들고 있는 서브시스템 |
 

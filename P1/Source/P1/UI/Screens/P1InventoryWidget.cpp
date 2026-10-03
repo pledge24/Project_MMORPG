@@ -86,14 +86,9 @@ void UP1InventoryWidget::Clear()
 
 void UP1InventoryWidget::UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse)
 {
-    UP1SlotWidget* SlotWidget = GetSlotWidgetFromSlot(InSlot);
-
-    if (SlotWidget)
-    {
+    // 재사용 대기는 칸이 아니라 내 플레이어 데이터가 아이템마다 센다. OnUse는 델리게이트의 서명에만 남았다.
+    if (UP1SlotWidget* SlotWidget = GetSlotWidgetFromSlot(InSlot))
         SlotWidget->SetSlot(InSlot);
-        if (OnUse)
-            SlotWidget->OnUse();
-    }
 }
 
 void UP1InventoryWidget::UpdateGold(const int64 Gold)
@@ -204,7 +199,8 @@ void UP1InventoryWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
     const int32 TemplateId = SlotWidget->ItemData.TemplateId;
 
     switch (FP1InventorySlotAction::Decide(
-        SlotData.type(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel()))
+        SlotData.type(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel(),
+        MyPlayerData->IsItemCoolingDown(TemplateId)))
     {
     case FP1InventorySlotAction::EKind::Use:
     {
@@ -222,6 +218,9 @@ void UP1InventoryWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
     }
     case FP1InventorySlotAction::EKind::LevelTooLow:
         UE_LOG(LogP1UI, Log, TEXT("요구 레벨이 모자라 쓸 수 없다. 템플릿 %d"), TemplateId);
+        break;
+    case FP1InventorySlotAction::EKind::CoolingDown:
+        UE_LOG(LogP1UI, Log, TEXT("재사용 대기 중이라 쓸 수 없다. 템플릿 %d"), TemplateId);
         break;
     default:
         break;
