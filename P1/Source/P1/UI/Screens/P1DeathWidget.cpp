@@ -101,7 +101,12 @@ void UP1DeathWidget::ShowRemainingSeconds()
 
 void UP1DeathWidget::HandleTownRespawnRejected()
 {
+    // 살아 있는 동안 온 거절에 다시 요청하면 서버가 또 거절해 요청이 끝없이 오간다.
+    if (GetVisibility() == ESlateVisibility::Collapsed)
+        return;
+
     // 거절은 잘못된 상황이라 플레이어에게 사유를 알리지 않는다. 요청 중 문구를 둔 채 대기 시간 뒤에 다시 요청한다.
+    // 리스폰하면 OnMyPlayerRespawn이 대기를 거둔다.
     if (UWorld* World = GetWorld())
         World->GetTimerManager().SetTimer(RetryTimerHandle, this, &UP1DeathWidget::RequestTownRespawn, TownRespawnDelaySeconds, false);
 }

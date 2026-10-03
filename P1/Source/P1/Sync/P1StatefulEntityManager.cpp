@@ -286,7 +286,7 @@ void UP1StatefulEntityManager::HandleRespawn(const Protocol::S_RESPAWN& RespawnP
     if (RespawnPkt.success() == false)
     {
         // 실패 응답은 요청한 세션에만 오므로 내 플레이어의 것이다.
-        UE_LOG(LogP1Network, Error, TEXT("서버에서 리스폰 실패: %hs"), RespawnPkt.error_message().c_str());
+        UE_LOG(LogP1Network, Error, TEXT("서버에서 리스폰 실패: %s"), UTF8_TO_TCHAR(RespawnPkt.error_message().c_str()));
         if (UP1MyPlayerData* MyPlayerData = GetMyPlayerData())
             MyPlayerData->OnTownRespawnRejected.Broadcast();
         return;

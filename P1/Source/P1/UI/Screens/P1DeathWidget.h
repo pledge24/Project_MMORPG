@@ -58,7 +58,7 @@ private:
 private:
     void RequestTownRespawn();
 
-    /** 거절을 받으면 TownRespawnDelaySeconds 뒤에 한 번 더 요청한다. 리스폰하면 대기를 거둔다. */
+    /** 사망 화면이 떠 있으면, 거절을 받을 때마다 TownRespawnDelaySeconds 뒤에 다시 요청한다. */
     void HandleTownRespawnRejected();
 
     FTimerHandle RetryTimerHandle;

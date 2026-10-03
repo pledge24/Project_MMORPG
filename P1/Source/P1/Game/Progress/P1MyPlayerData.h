@@ -201,7 +201,7 @@ public:
 public:
     /**
      * 서버가 마을 리스폰 요청을 거절했다는 알림이다. 정상 흐름에서는 일어나지 않는다.
-     * 사망 화면이 구독해 다시 요청한다. 거절 사유는 엔티티 관리자가 로그로만 남긴다.
+     * 엔티티 관리자가 거절 응답을 받으면 알린다. 거절 사유는 엔티티 관리자가 로그로만 남긴다.
      */
     DECLARE_MULTICAST_DELEGATE(FOnTownRespawnRejected);
     FOnTownRespawnRejected OnTownRespawnRejected;
