@@ -23,14 +23,6 @@ void UP1ProgressBarWidget::SetMaxValue(int64 Value)
     UpdateBar();
 }
 
-void UP1ProgressBarWidget::SetBoth(int64 CurValue, int64 MaxValue)
-{
-    _CurValue = CurValue;
-    _MaxValue = MaxValue;
-
-    UpdateBar();
-}
-
 void UP1ProgressBarWidget::UpdateBar()
 {
     const float Percent = _MaxValue > 0 ? static_cast<float>(static_cast<double>(_CurValue) / _MaxValue) : 0.f;

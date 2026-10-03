@@ -181,8 +181,9 @@ Core → Game/Entities → 게임 도메인
 **레벨에 놓인 액터(`Game/World/`, `Game/Interaction/`)는 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
 내 플레이어인지, 그 상태가 어떤지를 보고 반응하기 때문이다. 두 폴더는 위 그림에 없고, `Game/Entities/`를 읽는
 쪽에 있다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
-— `Game/Progress/P1MyPlayerData.cpp`도 `P1MyPlayer.h`를 부른다. 이것이 규칙인지 예외인지는 의존 방향을 전수
-확인하는 #138이 정한다.
+— `Game/Progress/P1MyPlayerData.h`도 스폰 알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를 전방 선언한다.
+`P1MyPlayer.h`를 부르던 `.cpp`의 include는 #137이 지웠다. 이것이 규칙인지 예외인지는 의존 방향을 전수 확인하는
+#138이 정한다.
 
 **`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.
 공용 매크로를 쓰려고 `Utils/`의 헤더를 여는 자리가 게임 도메인 전체를 딸려 끌고 온다.

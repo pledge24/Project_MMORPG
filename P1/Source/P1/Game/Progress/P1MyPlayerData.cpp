@@ -3,8 +3,26 @@
 #include "Game/Data/P1ItemData.h"
 #include "Game/Inventory/P1Inventory.h"
 #include "Game/Equipment/P1EquippedGear.h"
-#include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
+
+UP1MyPlayerData::UP1MyPlayerData()
+{
+    // 프로토콜 사본과 스탯 델리게이트 자리는 서브시스템이 초기화되기 전에도 쓸 수 있게 여기서 만든다.
+    _EntityInfo = MakeUnique<Protocol::EntityInfo>();
+    _PlayerInfo = _EntityInfo->mutable_player_info();
+    _StatInfo = MakeUnique<Protocol::StatInfo>();
+    _Possession = MakeUnique<Protocol::Possession>();
+
+    // 스탯마다 변경 델리게이트 자리를 만든다(공통)
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_HP);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_HP);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_MP);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MP);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAGICAL_ATTACK);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_EXP);
+    OnStatChangedMappings.Add(Protocol::STAT_TYPE_EXP);
+}
 
 void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -20,28 +38,8 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
     if (EquippedGear == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("EquippedGear Is Not Exist"));
 
-    // 프로토콜 사본
-    _EntityInfo = MakeUnique<Protocol::EntityInfo>();
-    _PlayerInfo = _EntityInfo->mutable_player_info();
-    _StatInfo = MakeUnique<Protocol::StatInfo>();
-    _Possession = MakeUnique<Protocol::Possession>();
-
-    // 스탯마다 변경 델리게이트 자리를 만든다(공통)
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_HP);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_HP);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_MP);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MP);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAGICAL_ATTACK);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_EXP);
-    OnStatChangedMappings.Add(Protocol::STAT_TYPE_EXP);
-
-    // 델리게이트를 바인딩한다
-    OnMyPlayerSpawned.AddUObject(this, &UP1MyPlayerData::BindMyPlayerDelegate);
-
     // 소지품 델리게이트는 이 서브시스템과 함께 사는 객체끼리 잇는다. 플레이어 액터와 무관하므로 한 번만 붙인다.
     // 내 플레이어가 스폰될 때마다 붙이면 맵을 옮길 때마다 핸들러가 하나씩 늘어난다.
-    OnGoldChanged.AddUObject(this, &UP1MyPlayerData::Rep_GoldChanged);
     OnInvenSlotChanged.AddUObject(Inventory, &UP1Inventory::Rep_SlotChanged);
     OnEquipmentSlotChanged.AddUObject(EquippedGear, &UP1EquippedGear::Rep_SlotChanged);
 }
@@ -82,18 +80,6 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
     // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.
     ItemCooldowns.Reset();
 
-}
-
-void UP1MyPlayerData::BindMyPlayerDelegate(AP1MyPlayer* MyPlayer)
-{
-    if (IsValid(MyPlayer) == false)
-    {
-        UE_LOG(LogP1CharacterComp, Warning, TEXT("MyPlayer Is InValid"));
-        return;
-    }
-
-    // 내 플레이어 액터는 맵마다 새로 스폰되므로 액터의 델리게이트는 스폰 때마다 붙인다.
-    MyPlayer->OnLevelUp.AddUObject(this, &UP1MyPlayerData::Rep_LevelChanged);
 }
 
 void UP1MyPlayerData::RemoveListener(const UObject* Listener)
@@ -149,14 +135,16 @@ int64 UP1MyPlayerData::GetStatValue(Protocol::StatType statType)
     return statMappings->at((int32)statType);
 }
 
-void UP1MyPlayerData::Rep_GoldChanged(const int64 Gold) const
-{
-    _Possession->set_gold(Gold);
-}
-
-void UP1MyPlayerData::Rep_LevelChanged(int32 Level) const
+void UP1MyPlayerData::ApplyLevel(int32 Level)
 {
     _PlayerInfo->set_level(Level);
+    OnLevelChanged.Broadcast(Level);
+}
+
+void UP1MyPlayerData::ApplyGold(int64 Gold)
+{
+    _Possession->set_gold(Gold);
+    OnGoldChanged.Broadcast(Gold);
 }
 
 void UP1MyPlayerData::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
@@ -194,7 +182,7 @@ void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
     {
         OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
     }
-    OnGoldChanged.Broadcast(BuyItemPkt.gold());
+    ApplyGold(BuyItemPkt.gold());
 }
 
 void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
@@ -204,7 +192,7 @@ void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
         return;
 
     OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
-    OnGoldChanged.Broadcast(SellItemPkt.gold());
+    ApplyGold(SellItemPkt.gold());
 }
 
 void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
@@ -300,4 +288,17 @@ void UP1MyPlayerData::ApplyGearSlots(const google::protobuf::RepeatedPtrField<Pr
             break;
         }
     }
+}
+
+void UP1MyPlayerData::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
+{
+    if (RewardResultPkt.is_level_up())
+    {
+        const Protocol::LevelUpInfo& LevelUpInfo = RewardResultPkt.level_up_details();
+        ApplyLevel(LevelUpInfo.new_level());
+        ApplyStats(LevelUpInfo.updated_stat());
+    }
+
+    ApplyStat(Protocol::STAT_TYPE_EXP, RewardResultPkt.updated_exp());
+    ApplyGold(RewardResultPkt.updated_gold());
 }
