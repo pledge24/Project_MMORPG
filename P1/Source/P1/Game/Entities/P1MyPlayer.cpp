@@ -145,6 +145,8 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
         {
             Protocol::C_NORMAL_ATTACK NormalAttackPkt;
             NormalAttackPkt.set_combo(Combo);
+            // 서버의 yaw는 마지막 이동 패킷의 값이라 늦을 수 있다. 다른 클라이언트는 이 값으로 돌려 세운다.
+            NormalAttackPkt.set_yaw(GetActorRotation().Yaw);
 
             FP1PacketSender::Send(this, NormalAttackPkt);
         }

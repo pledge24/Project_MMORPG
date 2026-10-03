@@ -598,6 +598,8 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
         {
             normalAttackPkt.set_entity_id(entityId);
             normalAttackPkt.set_combo(pkt.combo());
+            // 공격한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
+            normalAttackPkt.set_yaw(pkt.yaw());
         }
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer, entityId);

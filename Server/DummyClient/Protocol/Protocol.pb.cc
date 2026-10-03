@@ -309,6 +309,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR C_NORMAL_ATTACK::C_NORMAL_ATTACK(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.combo_)*/0
+  , /*decltype(_impl_.yaw_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_NORMAL_ATTACKDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_NORMAL_ATTACKDefaultTypeInternal()
@@ -774,6 +775,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_NORMAL_ATTACK, _impl_.combo_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_NORMAL_ATTACK, _impl_.yaw_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_NORMAL_ATTACK, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -967,24 +969,24 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 156, -1, -1, sizeof(::Protocol::C_MOVE)},
   { 163, -1, -1, sizeof(::Protocol::S_MOVE)},
   { 170, -1, -1, sizeof(::Protocol::C_NORMAL_ATTACK)},
-  { 177, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
-  { 186, 195, -1, sizeof(::Protocol::S_HIT)},
-  { 198, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
-  { 206, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
-  { 215, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
-  { 223, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
-  { 232, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
-  { 239, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
-  { 251, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
-  { 258, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
-  { 270, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
-  { 277, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
-  { 287, -1, -1, sizeof(::Protocol::S_DIE)},
-  { 294, -1, -1, sizeof(::Protocol::S_REWARD_RESULT)},
-  { 306, -1, -1, sizeof(::Protocol::C_RESPAWN)},
-  { 318, -1, -1, sizeof(::Protocol::S_RESPAWN)},
-  { 331, -1, -1, sizeof(::Protocol::C_CHAT)},
-  { 338, -1, -1, sizeof(::Protocol::S_CHAT)},
+  { 178, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
+  { 187, 196, -1, sizeof(::Protocol::S_HIT)},
+  { 199, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
+  { 207, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
+  { 216, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
+  { 224, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
+  { 233, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
+  { 240, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
+  { 252, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
+  { 259, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
+  { 271, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
+  { 278, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
+  { 288, -1, -1, sizeof(::Protocol::S_DIE)},
+  { 295, -1, -1, sizeof(::Protocol::S_REWARD_RESULT)},
+  { 307, -1, -1, sizeof(::Protocol::C_RESPAWN)},
+  { 319, -1, -1, sizeof(::Protocol::S_RESPAWN)},
+  { 332, -1, -1, sizeof(::Protocol::C_CHAT)},
+  { 339, -1, -1, sizeof(::Protocol::S_CHAT)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -1064,51 +1066,51 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "\001 \003(\0132\024.Protocol.EntityInfo\"\037\n\tS_DESPAWN"
   "\022\022\n\nentity_ids\030\001 \003(\003\")\n\006C_MOVE\022\037\n\004info\030\001"
   " \001(\0132\021.Protocol.PosInfo\")\n\006S_MOVE\022\037\n\004inf"
-  "o\030\001 \003(\0132\021.Protocol.PosInfo\" \n\017C_NORMAL_A"
-  "TTACK\022\r\n\005combo\030\001 \001(\005\"@\n\017S_NORMAL_ATTACK\022"
-  "\021\n\tentity_id\030\001 \001(\003\022\r\n\005combo\030\002 \001(\005\022\013\n\003yaw"
-  "\030\003 \001(\002\"R\n\005S_HIT\022\021\n\tentity_id\030\001 \001(\003\022\016\n\006da"
-  "mage\030\002 \001(\003\022\027\n\nupdated_hp\030\003 \001(\003H\000\210\001\001B\r\n\013_"
-  "updated_hp\"0\n\nC_BUY_ITEM\022\023\n\013template_id\030"
-  "\001 \001(\005\022\r\n\005count\030\002 \001(\005\"R\n\nS_BUY_ITEM\022\017\n\007su"
-  "ccess\030\001 \001(\010\022%\n\rupdated_slots\030\002 \003(\0132\016.Pro"
-  "tocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_ITEM\022"
-  "\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\022\r\n\005count\030\002"
-  " \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022$\n\014"
-  "updated_slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n\004go"
-  "ld\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016"
-  ".Protocol.Slot\"\245\001\n\014S_EQUIP_GEAR\022\017\n\007succe"
-  "ss\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003\022\017\n\007slot_id\030\003"
-  " \001(\005\022\023\n\013template_id\030\004 \001(\005\022%\n\rupdated_slo"
-  "ts\030\005 \003(\0132\016.Protocol.Slot\022$\n\014updated_stat"
-  "\030\006 \003(\0132\016.Protocol.Stat\".\n\016C_UNEQUIP_GEAR"
-  "\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\247\001\n\016S_UNE"
-  "QUIP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tentity_id\030"
-  "\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004 "
-  "\001(\005\022%\n\rupdated_slots\030\005 \003(\0132\016.Protocol.Sl"
-  "ot\022$\n\014updated_stat\030\006 \003(\0132\016.Protocol.Stat"
-  "\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol."
-  "Slot\"}\n\nS_USE_ITEM\022\017\n\007success\030\001 \001(\010\022\021\n\te"
-  "ntity_id\030\002 \001(\003\022%\n\rupdated_slots\030\003 \003(\0132\016."
-  "Protocol.Slot\022$\n\014updated_stat\030\004 \003(\0132\016.Pr"
-  "otocol.Stat\"\032\n\005S_DIE\022\021\n\tentity_id\030\001 \001(\003\""
-  "\310\001\n\017S_REWARD_RESULT\022\"\n\004type\030\001 \001(\0162\024.Prot"
-  "ocol.RewardType\022 \n\006reward\030\002 \001(\0132\020.Protoc"
-  "ol.Reward\022\023\n\013updated_exp\030\003 \001(\003\022\024\n\014update"
-  "d_gold\030\004 \001(\003\022\023\n\013is_level_up\030\005 \001(\010\022/\n\020lev"
-  "el_up_details\030\006 \001(\0132\025.Protocol.LevelUpIn"
-  "fo\"\244\001\n\tC_RESPAWN\022+\n\014respawn_type\030\001 \001(\0162\025"
-  ".Protocol.RespawnType\022\022\n\010item_uid\030\002 \001(\003H"
-  "\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022\032\n\020target_pla"
-  "yer_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005 \001(\005H\000B\016\n\014res"
-  "pawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007success\030\001 \001(\010"
-  "\022\025\n\rerror_message\030\002 \001(\t\022+\n\014respawn_type\030"
-  "\003 \001(\0162\025.Protocol.RespawnType\022\021\n\tentity_i"
-  "d\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n\010pos_info\030\006 \001"
-  "(\0132\021.Protocol.PosInfo\022$\n\014updated_stat\030\007 "
-  "\003(\0132\016.Protocol.Stat\"\025\n\006C_CHAT\022\013\n\003msg\030\001 \001"
-  "(\t\"(\n\006S_CHAT\022\021\n\tentity_id\030\001 \001(\003\022\013\n\003msg\030\002"
-  " \001(\tb\006proto3"
+  "o\030\001 \003(\0132\021.Protocol.PosInfo\"-\n\017C_NORMAL_A"
+  "TTACK\022\r\n\005combo\030\001 \001(\005\022\013\n\003yaw\030\002 \001(\002\"@\n\017S_N"
+  "ORMAL_ATTACK\022\021\n\tentity_id\030\001 \001(\003\022\r\n\005combo"
+  "\030\002 \001(\005\022\013\n\003yaw\030\003 \001(\002\"R\n\005S_HIT\022\021\n\tentity_i"
+  "d\030\001 \001(\003\022\016\n\006damage\030\002 \001(\003\022\027\n\nupdated_hp\030\003 "
+  "\001(\003H\000\210\001\001B\r\n\013_updated_hp\"0\n\nC_BUY_ITEM\022\023\n"
+  "\013template_id\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"R\n\nS_B"
+  "UY_ITEM\022\017\n\007success\030\001 \001(\010\022%\n\rupdated_slot"
+  "s\030\002 \003(\0132\016.Protocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n"
+  "\013C_SELL_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Sl"
+  "ot\022\r\n\005count\030\002 \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007succ"
+  "ess\030\001 \001(\010\022$\n\014updated_slot\030\002 \001(\0132\016.Protoc"
+  "ol.Slot\022\014\n\004gold\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n"
+  "\004slot\030\001 \001(\0132\016.Protocol.Slot\"\245\001\n\014S_EQUIP_"
+  "GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003"
+  "\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004 \001(\005\022%"
+  "\n\rupdated_slots\030\005 \003(\0132\016.Protocol.Slot\022$\n"
+  "\014updated_stat\030\006 \003(\0132\016.Protocol.Stat\".\n\016C"
+  "_UNEQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016.Protocol.S"
+  "lot\"\247\001\n\016S_UNEQUIP_GEAR\022\017\n\007success\030\001 \001(\010\022"
+  "\021\n\tentity_id\030\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013t"
+  "emplate_id\030\004 \001(\005\022%\n\rupdated_slots\030\005 \003(\0132"
+  "\016.Protocol.Slot\022$\n\014updated_stat\030\006 \003(\0132\016."
+  "Protocol.Stat\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001("
+  "\0132\016.Protocol.Slot\"}\n\nS_USE_ITEM\022\017\n\007succe"
+  "ss\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003\022%\n\rupdated_s"
+  "lots\030\003 \003(\0132\016.Protocol.Slot\022$\n\014updated_st"
+  "at\030\004 \003(\0132\016.Protocol.Stat\"\032\n\005S_DIE\022\021\n\tent"
+  "ity_id\030\001 \001(\003\"\310\001\n\017S_REWARD_RESULT\022\"\n\004type"
+  "\030\001 \001(\0162\024.Protocol.RewardType\022 \n\006reward\030\002"
+  " \001(\0132\020.Protocol.Reward\022\023\n\013updated_exp\030\003 "
+  "\001(\003\022\024\n\014updated_gold\030\004 \001(\003\022\023\n\013is_level_up"
+  "\030\005 \001(\010\022/\n\020level_up_details\030\006 \001(\0132\025.Proto"
+  "col.LevelUpInfo\"\244\001\n\tC_RESPAWN\022+\n\014respawn"
+  "_type\030\001 \001(\0162\025.Protocol.RespawnType\022\022\n\010it"
+  "em_uid\030\002 \001(\003H\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022"
+  "\032\n\020target_player_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005"
+  " \001(\005H\000B\016\n\014respawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007"
+  "success\030\001 \001(\010\022\025\n\rerror_message\030\002 \001(\t\022+\n\014"
+  "respawn_type\030\003 \001(\0162\025.Protocol.RespawnTyp"
+  "e\022\021\n\tentity_id\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n"
+  "\010pos_info\030\006 \001(\0132\021.Protocol.PosInfo\022$\n\014up"
+  "dated_stat\030\007 \003(\0132\016.Protocol.Stat\"\025\n\006C_CH"
+  "AT\022\013\n\003msg\030\001 \001(\t\"(\n\006S_CHAT\022\021\n\tentity_id\030\001"
+  " \001(\003\022\013\n\003msg\030\002 \001(\tb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -1116,7 +1118,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 3092, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 3105, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 40,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -5179,10 +5181,13 @@ C_NORMAL_ATTACK::C_NORMAL_ATTACK(const C_NORMAL_ATTACK& from)
   C_NORMAL_ATTACK* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.combo_){}
+    , decltype(_impl_.yaw_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.combo_ = from._impl_.combo_;
+  ::memcpy(&_impl_.combo_, &from._impl_.combo_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.yaw_) -
+    reinterpret_cast<char*>(&_impl_.combo_)) + sizeof(_impl_.yaw_));
   // @@protoc_insertion_point(copy_constructor:Protocol.C_NORMAL_ATTACK)
 }
 
@@ -5192,6 +5197,7 @@ inline void C_NORMAL_ATTACK::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.combo_){0}
+    , decltype(_impl_.yaw_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -5219,7 +5225,9 @@ void C_NORMAL_ATTACK::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.combo_ = 0;
+  ::memset(&_impl_.combo_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.yaw_) -
+      reinterpret_cast<char*>(&_impl_.combo_)) + sizeof(_impl_.yaw_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -5234,6 +5242,14 @@ const char* C_NORMAL_ATTACK::_InternalParse(const char* ptr, ::_pbi::ParseContex
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.combo_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // float yaw = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.yaw_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
         } else
           goto handle_unusual;
         continue;
@@ -5272,6 +5288,16 @@ uint8_t* C_NORMAL_ATTACK::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_combo(), target);
   }
 
+  // float yaw = 2;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_yaw = this->_internal_yaw();
+  uint32_t raw_yaw;
+  memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
+  if (raw_yaw != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_yaw(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -5291,6 +5317,15 @@ size_t C_NORMAL_ATTACK::ByteSizeLong() const {
   // int32 combo = 1;
   if (this->_internal_combo() != 0) {
     total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_combo());
+  }
+
+  // float yaw = 2;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_yaw = this->_internal_yaw();
+  uint32_t raw_yaw;
+  memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
+  if (raw_yaw != 0) {
+    total_size += 1 + 4;
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -5314,6 +5349,13 @@ void C_NORMAL_ATTACK::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const 
   if (from._internal_combo() != 0) {
     _this->_internal_set_combo(from._internal_combo());
   }
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_yaw = from._internal_yaw();
+  uint32_t raw_yaw;
+  memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
+  if (raw_yaw != 0) {
+    _this->_internal_set_yaw(from._internal_yaw());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -5331,7 +5373,12 @@ bool C_NORMAL_ATTACK::IsInitialized() const {
 void C_NORMAL_ATTACK::InternalSwap(C_NORMAL_ATTACK* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_.combo_, other->_impl_.combo_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(C_NORMAL_ATTACK, _impl_.yaw_)
+      + sizeof(C_NORMAL_ATTACK::_impl_.yaw_)
+      - PROTOBUF_FIELD_OFFSET(C_NORMAL_ATTACK, _impl_.combo_)>(
+          reinterpret_cast<char*>(&_impl_.combo_),
+          reinterpret_cast<char*>(&other->_impl_.combo_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_NORMAL_ATTACK::GetMetadata() const {
