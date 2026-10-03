@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 24개 (높음 1 · 중간 0 · 낮음 23)
+항목 23개 (높음 1 · 중간 0 · 낮음 22)
 
 ## 작성 방법
 
@@ -287,21 +287,6 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 
 **변경 영향 범위 확대** — 서버 데이터에 직업을 더하면 클라이언트의 이 맵도 함께 고치지 않는 한 로그인 화면에서 멈춘다.
 
-## `P1QuestRewardData.h`가 쓰는 타입의 헤더를 부르지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Source/P1/Game/Data/P1QuestRewardData.h` 18줄
-> 등록일: 2026년 10월 2일
-
-`TArray<FP1ItemData>` 멤버를 두면서 `Game/Data/P1ItemData.h`를 부르지 않는다. 이 헤더보다 먼저
-`P1ItemData.h`를 부른 파일이 있어야 컴파일된다.
-
-#123에서 찾았다.
-
-### 영향
-
-**변경 영향 범위 확대** — 다른 파일의 include를 정리하거나 유니티 빌드 묶음이 바뀌면 관계없어 보이는 곳에서
-빌드가 깨진다.
-
 ## 헤더에 쓰지 않는 include가 남아 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
 > 위치: `P1/Source/P1/`
@@ -318,7 +303,7 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 | `Game/Inventory/P1Inventory.h` | `Game/Data/P1ItemData.h` |
 | `UI/Screens/P1HUDWidget.h` | `Protocol.pb.h` |
 
-`P1Inventory.h`의 `P1ItemData.h`는 위 `P1QuestRewardData.h` 항목과 엮여 있을 수 있다.
+`P1QuestRewardData.h`가 이제 `P1ItemData.h`를 직접 부르므로(#148) `P1Inventory.h`의 `P1ItemData.h`를 지워도 그 헤더는 깨지지 않는다.
 
 ### 영향
 
