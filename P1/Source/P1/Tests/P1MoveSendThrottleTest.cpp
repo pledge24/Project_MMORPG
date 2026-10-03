@@ -21,30 +21,32 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FP1MoveSendThrottleTest::RunTest(const FString& Parameters)
 {
+    // 적지 않은 입력 필드는 FInput의 기본값(false, 0)이다.
+
     // 1) 주기가 남았고 즉시 보낼 이유가 없으면 보내지 않고 타이머만 줄인다.
     {
-        const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(0.2f, 0.05f, false, true, 0.f, 0.f, false);
+        const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.05f, .bCanInputMovement = true});
         TestFalse(TEXT("주기가 남았으면 보내지 않는다"), Decision.bSend);
         TestEqual(TEXT("타이머가 프레임 시간만큼 준다"), Decision.NextTimer, 0.15f, KINDA_SMALL_NUMBER);
     }
 
     // 2) 주기가 끝나면 보내고 타이머를 전송 주기로 되돌린다. 0에 딱 닿아도 보낸다.
     {
-        const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(0.05f, 0.1f, false, true, 0.f, 0.f, false);
+        const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.05f, .DeltaSeconds = 0.1f, .bCanInputMovement = true});
         TestTrue(TEXT("주기가 끝나면 보낸다"), Decision.bSend);
         TestEqual(TEXT("보낸 뒤 타이머는 0.2초다"), Decision.NextTimer, 0.2f, KINDA_SMALL_NUMBER);
 
-        const FP1MoveSendThrottle Exact = FP1MoveSendThrottle::Decide(0.1f, 0.1f, false, true, 0.f, 0.f, false);
+        const FP1MoveSendThrottle Exact = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.1f, .DeltaSeconds = 0.1f, .bCanInputMovement = true});
         TestTrue(TEXT("타이머가 0에 닿으면 보낸다"), Exact.bSend);
     }
 
     // 3) 입력이 바뀌면 주기를 기다리지 않고 보낸다. 이동 입력이 막혀 있으면 입력 변화로는 보내지 않는다.
     {
-        const FP1MoveSendThrottle Changed = FP1MoveSendThrottle::Decide(0.2f, 0.01f, true, true, 0.f, 0.f, false);
+        const FP1MoveSendThrottle Changed = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bInputChanged = true, .bCanInputMovement = true});
         TestTrue(TEXT("입력이 바뀌면 바로 보낸다"), Changed.bSend);
         TestEqual(TEXT("바로 보내도 타이머는 0.2초로 돌아간다"), Changed.NextTimer, 0.2f, KINDA_SMALL_NUMBER);
 
-        const FP1MoveSendThrottle Blocked = FP1MoveSendThrottle::Decide(0.2f, 0.01f, true, false, 0.f, 0.f, false);
+        const FP1MoveSendThrottle Blocked = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bInputChanged = true});
         TestFalse(TEXT("이동 입력이 막혀 있으면 입력 변화로 보내지 않는다"), Blocked.bSend);
     }
 
@@ -52,23 +54,24 @@ bool FP1MoveSendThrottleTest::RunTest(const FString& Parameters)
     //    이 판정은 이동 입력이 막혀 있어도 한다. 차이는 각도를 감싸지 않고 두 값의 차의 절댓값으로 잰다.
     {
         TestTrue(TEXT("60도 차이면 바로 보낸다"),
-            FP1MoveSendThrottle::Decide(0.2f, 0.01f, false, true, 70.f, 10.f, false).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f}).bSend);
         TestFalse(TEXT("60도 미만이면 보내지 않는다"),
-            FP1MoveSendThrottle::Decide(0.2f, 0.01f, false, true, 69.f, 10.f, false).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true, .DesiredYaw = 69.f, .CurrentYaw = 10.f}).bSend);
         TestTrue(TEXT("이동 입력이 막혀 있어도 회전으로는 보낸다"),
-            FP1MoveSendThrottle::Decide(0.2f, 0.01f, false, false, 70.f, 10.f, false).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .DesiredYaw = 70.f, .CurrentYaw = 10.f}).bSend);
         TestTrue(TEXT("179도와 -179도는 358도 차이로 잰다"),
-            FP1MoveSendThrottle::Decide(0.2f, 0.01f, false, true, 179.f, -179.f, false).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true, .DesiredYaw = 179.f, .CurrentYaw = -179.f}).bSend);
     }
 
     // 5) 공격 중에는 입력 변화와 회전으로 바로 보내지 않는다. 주기가 끝나면 공격 중이어도 보낸다.
     {
-        const FP1MoveSendThrottle Suppressed = FP1MoveSendThrottle::Decide(0.2f, 0.01f, true, true, 70.f, 10.f, true);
+        const FP1MoveSendThrottle Suppressed = FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f,
+            .bInputChanged = true, .bCanInputMovement = true, .DesiredYaw = 70.f, .CurrentYaw = 10.f, .bAttacking = true});
         TestFalse(TEXT("공격 중에는 바로 보내지 않는다"), Suppressed.bSend);
         TestEqual(TEXT("보내지 않았으면 타이머만 준다"), Suppressed.NextTimer, 0.19f, KINDA_SMALL_NUMBER);
 
         TestTrue(TEXT("공격 중이어도 주기가 끝나면 보낸다"),
-            FP1MoveSendThrottle::Decide(0.05f, 0.1f, false, true, 0.f, 0.f, true).bSend);
+            FP1MoveSendThrottle::Decide({.RemainingTimer = 0.05f, .DeltaSeconds = 0.1f, .bCanInputMovement = true, .bAttacking = true}).bSend);
     }
 
     return true;

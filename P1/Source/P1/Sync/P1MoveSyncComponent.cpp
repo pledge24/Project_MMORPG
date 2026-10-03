@@ -184,14 +184,16 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     else
         SetMoveState(Protocol::MOVE_STATE_IDLE);
 
-    const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(
-        MovePacketSendTimer,
-        DeltaSeconds,
-        bInputChanged,
-        bCanInputMovement,
-        MyPlayer->GetDesiredMoveDirectionYaw(),
-        MyPlayer->GetActorRotation().Yaw,
-        bAttacking);
+    FP1MoveSendThrottle::FInput SendInput;
+    SendInput.RemainingTimer = MovePacketSendTimer;
+    SendInput.DeltaSeconds = DeltaSeconds;
+    SendInput.bInputChanged = bInputChanged;
+    SendInput.bCanInputMovement = bCanInputMovement;
+    SendInput.DesiredYaw = MyPlayer->GetDesiredMoveDirectionYaw();
+    SendInput.CurrentYaw = MyPlayer->GetActorRotation().Yaw;
+    SendInput.bAttacking = bAttacking;
+
+    const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(SendInput);
 
     MovePacketSendTimer = Decision.NextTimer;
     if (Decision.bSend == false)
