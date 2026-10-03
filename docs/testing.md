@@ -47,7 +47,7 @@ py -3 Tools/DocLint/check_docs.py
 ```
 
 CI는 아직 `--self-test`만 돌린다. 기존 위반이 남아 있어서 실제 검사를 붙이면 CI가 바로 실패한다.
-기존 위반은 #187에서 정리하고 그때 실제 검사를 붙인다.
+기존 위반은 #185에서 정리하고 그때 실제 검사를 붙인다.
 
 테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
 
