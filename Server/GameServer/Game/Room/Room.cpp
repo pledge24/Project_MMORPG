@@ -679,7 +679,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         respawnRoom->DoAsync([respawnRoom, player, respawnType, respawnPos]()
             {
                 // 부활 처리를 먼저 해야 다른 플레이어에게 죽은 상태가 나가지 않는다.
-                // 룸 이동 중에 접속이 끊기면 세션이 없어 실패한다. 같은 룸 경로처럼 스폰하지 않는다.
+                // 룸 이동 중에 접속이 끊기면 세션이 없어 실패한다. 같은 룸 경로처럼 실패하면 멈춘다.
                 if (respawnRoom->HandleRespawn(player, respawnType, respawnPos) == false)
                     return;
 
