@@ -139,17 +139,14 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
 
     if (AttackSystemComponent != nullptr && bBattleMode == true)
     {
-        if (AttackSystemComponent->EnableInputAttack() == true)
+        // 입력을 받을 수 없으면 0이 돌아온다.
+        const int32 Combo = AttackSystemComponent->StartNormalAttack();
+        if (Combo > 0)
         {
-            AttackSystemComponent->PerformNormalAttack();
-            int32 Combo = AttackSystemComponent->GetLastCombo();
+            Protocol::C_NORMAL_ATTACK NormalAttackPkt;
+            NormalAttackPkt.set_combo(Combo);
 
-            if (Combo > 0){
-                Protocol::C_NORMAL_ATTACK NormalAttackPkt;
-                NormalAttackPkt.set_combo(Combo);
-
-                FP1PacketSender::Send(this, NormalAttackPkt);
-            }
+            FP1PacketSender::Send(this, NormalAttackPkt);
         }
     }
 }

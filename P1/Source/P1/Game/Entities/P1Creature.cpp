@@ -81,7 +81,7 @@ void AP1Creature::S_NormalAttack(uint32 Combo, float Yaw)
         return;
 
     SetActorRotation(FRotator(0, Yaw, 0));
-    AttackSystemComponent->S_PerformNormalAttack(Combo);
+    AttackSystemComponent->PlayRemoteNormalAttack(Combo);
 }
 
 void AP1Creature::S_Hit(int64 Damage, int64 UpdatedHp)

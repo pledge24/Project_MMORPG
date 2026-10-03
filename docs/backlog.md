@@ -424,6 +424,22 @@ Z 순서를 올린다. 창이 마우스 입력을 받았을 때 화면 서브시
 
 ---
 
+## 24. 몬스터의 일반 공격 콤보 순번을 서버가 돌리기
+
+**왜 지금**: 서버는 몬스터의 일반 공격을 언제나 콤보 순번 0으로 알린다(`Monster::NormalAttack`). 클라이언트는
+순번 0을 첫 몽타주로 재생한다(#136). 지금 몬스터는 공격 몽타주가 하나뿐이라 보이는 차이가 없다. 몬스터에게
+공격 동작을 여러 개 줄 때 함께 한다.
+
+**알려진 자리**: 서버 `Server/GameServer/Game/Entities/Monster.cpp`의 `NormalAttack`(순번 0과 `AttackInfo`의
+`combo`). 클라이언트는 `FP1NormalAttackCombo::MontageIndexFor`가 순번 1..N을 N−1번째 몽타주로 고르므로 고칠
+것이 없다. 몽타주는 `BP_{Melee,Ranged,Super}MonsterBase`의 공격 컴포넌트 `NormalAttackMontages`에 넣는다.
+
+**선행 조건**: 몬스터용 공격 몽타주가 둘 이상 있어야 한다.
+
+**완료 신호**: PIE에서 몬스터가 공격할 때마다 몽타주가 차례로 바뀐다.
+
+---
+
 ## 하지 않기로 확인된 것
 
 다시 제안하지 않는다. 근거는 각 문서에 있다.
