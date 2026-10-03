@@ -17,6 +17,11 @@ description: 언리얼 MCP(`unreal`)의 이 저장소 전용 함정. `mcp__unrea
   파일 수정 시각이나 내용으로 확인한다. 리다이렉트로 불러온 에셋에는 변경 표시가 붙지 않고, 같은 부모로
   `set_parent`를 다시 불러도 붙지 않는다. 위젯 하나의 변수 표시를 `UMGToolSet.ToggleWidgetAsVariable`로 켰다
   끄면 값은 그대로 두고 표시만 붙는다.
+- 블루프린트 그래프를 조회할 때는 `BlueprintTools.find_nodes`(`title`을 빈 문자열로 주면 전부)와 `get_node_infos`를
+  쓴다. 둘은 변경 표시를 붙이지 않는다. `read_graph_dsl`은 읽기만 해도 변경 표시를 붙이고, 같은 내용으로 저장해도
+  `.uasset`의 바이트가 바뀌어 git에 차이가 남는다. 그래서 `read_graph_dsl`은 이어서 고치고 저장할 에셋에만 쓴다.
+  MCP에는 변경을 버리거나 디스크에서 다시 불러오는 툴이 없다. 조회하다 변경 표시가 붙었으면 저장하지 말고, 사람에게
+  에디터를 「저장 안 함」으로 닫아 달라고 요청한다.
 - `AssetTools.update_metadata_tags`의 `remove_tags`는 `could not convert incoming function input params Json
   to a UStruct`로 실패한다. 붙인 태그를 지울 수 없으니 변경 표시를 붙이려고 태그를 쓰지 않는다.
 - `ObjectTools.set_properties`는 배열 요소를 바꾸면서 개수도 줄이는 변경을 `ArrayRemove: elements changed
