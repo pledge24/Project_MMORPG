@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 19개 (높음 2 · 중간 1 · 낮음 16)
+항목 20개 (높음 2 · 중간 1 · 낮음 17)
 
 ## 작성 방법
 
@@ -130,7 +130,7 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 둘이다.
 
 | 에셋 | 부모(C++) | BP에 남은 로직 |
 |---|---|---|
-| `WBP_Slot` | `SlotWidget` | 그래프 6개(`GetToolTipWidget`·`OnMouseButtonDown`·`OnMouseButtonDoubleClick` 외), 이벤트 `OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 9개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
+| `WBP_Slot` | `SlotWidget` | 이벤트 그래프와 `GetToolTipWidget`(부모 호출만), 이벤트 `PreConstruct`(진열 칸 채우기)·`OnStartCooldown`·`OnUpdateCooldown`·`OnUse`, 변수 7개(`CooldownTimerHandle`·`ElapsedTime`·`IntervalTime` 외). 마우스 입력과 디스패처는 #132가 C++로 옮겼다(2026년 10월 3일). 쿨다운 상태 머신 전체. 슬롯마다 도는 쿨다운(서버는 템플릿마다 판정). 같은 물약이 두 칸이면 다른 칸이 쓸 수 있어 보이나 서버가 거부 |
 | `WBP_DeathScreen` | `DeathWidget` | `Countdown`·`StartCountdown`·`ReturnToTown` + `ReturnCountdown`·`ElapsedTime`·`Timer`. 리스폰 카운트다운 |
 
 ### 영향
@@ -139,19 +139,20 @@ C++ 부모가 있는데도 BP 쪽 로직이 무거운 것은 아래 둘이다.
 BP에 있으면 단위 테스트가 불가능하고 Live Coding으로도 검증할 수 없다. `WBP_Slot`의 쿨다운
 상태 머신과 `WBP_DeathScreen`의 리스폰 카운트다운이 여기 해당한다.
 
-## 인벤토리의 요청 대기가 풀리지 않는 경로가 있다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/UI/Screens/P1InventoryWidget.cpp` (`SendUseItemPacket`)
-> 등록일: 2026년 9월 30일
+## 슬롯을 비워도 아이템 데이터가 지난 아이템을 들고 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/UI/Common/P1SlotWidget.cpp` (`ClearSlot`)
+> 등록일: 2026년 10월 3일
 
-인벤토리 위젯은 요청을 보내기 전에 `PendingPacket`을 켜고, 응답이 오면 끈다. 그런데 켠 채로 남는 경로가 있다.
-- `SendUseItemPacket`에서 게임 인스턴스가 없을 때와 소모품이 아닌 분기에서는 켜기만 하고 요청을 보내지 않는다
-
-코드를 읽고 판단했고 실행해서 확인하지는 않았다.
+`UP1SlotWidget::ClearSlot`은 아이콘과 개수 문구, `SlotData`만 비우고 `ItemData`는 그대로 둔다. 칸이 빈 뒤에도
+`ItemData`의 템플릿 id, 요구 레벨, 가격이 지난 아이템의 값으로 남는다. #132는 인벤토리의 빈 칸 판정을
+`SlotData`로 바꿔 이 값을 읽지 않게 했다. 툴팁(`GetToolTipWidget`)은 여전히 `ItemData`를 읽는다. 코드를 읽고
+판단했고 빈 칸의 툴팁을 실행해서 보지는 않았다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 한 번 이 경로를 타면 인벤토리를 다시 열어도 아이템을 쓰거나 팔 수 없다.
+**버그 발생 가능성 증가** — 새 코드가 빈 칸 판정에 `ItemData`를 쓰면 지난 아이템으로 요청을 보낸다. 빈 칸에
+지난 아이템의 툴팁이 뜰 수 있다.
 
 ## 클라이언트가 보상 결과를 반영하지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
@@ -329,6 +330,29 @@ ANSI로 읽는다. 네임플레이트는 `FinishSpawning` 안의 `BeginPlay`에�
 ### 영향
 
 **변경 영향 범위 확대** — 헤더 하나를 고치면 그 헤더를 부르는 파일이 모두 다시 컴파일된다.
+
+## 아이템 기획 원본의 분류 열 이름이 한 단계씩 밀려 있다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · protocol
+> 위치: `DesignData/Original_Item.xlsx` · `P1/Source/P1/Game/Data/P1ItemData.h` · `Server/GameServer/Game/Inventory/Inventory.cpp` (`ToItemType`)
+> 등록일: 2026년 10월 3일
+
+`CONTEXT.md`의 아이템 분류는 세 단계다. 아이템 종류(장비·소모품·기타), 아이템 분류(방어구·무기·소비), 그리고
+장비 부위나 물약 같은 셋째 단계다. 기획 원본과 두 티어의 이름은 이와 한 단계씩 어긋난다.
+
+| 단계 | 기획 원본의 열 | 값 |
+|---|---|---|
+| 아이템 종류 | 없음. 서버가 `ToItemType`으로 분류에서 만든다 | — |
+| 아이템 분류 | `ItemType` | `armor` · `weapon` · `consumption` |
+| 셋째 단계 | `ItemSubtype` | `helmet` · `sword` · `potion` 등 |
+
+클라이언트의 `FP1ItemData::ItemType`도 분류를 담는다. 클라이언트는 아이템 종류를 데이터에서 얻지 못하므로
+#132는 슬롯 종류로 가른다. 기획 원본에 종류 열을 더하는 안은 `docs/backlog.md`에 있다.
+
+### 영향
+
+**버그 발생 가능성 증가** — `ItemType`이라는 이름을 보고 아이템 종류로 읽으면, 프로토콜의 `ItemType`
+(`GEAR`·`CONSUMABLE`·`MISCELLANEOUS`)과 값이 맞지 않는다. 블루프린트가 이 문자열을 `Switch on String`으로
+가르던 것이 그 예다.
 
 ## 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server

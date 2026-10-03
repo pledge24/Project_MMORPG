@@ -51,7 +51,7 @@
 | 10 | #130 화면 관리를 UI 서브시스템으로 옮기기 | 3 | 머지 | #158 | 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 3건 성공 종료 코드 0 · PIE 미확인 |
 | 11 | #131 로그인 화면 로직을 C++로 옮기기 | 7, 10 | 머지 | #160 | 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 3건 성공 종료 코드 0 · PIE 미확인 |
 | 12 | #132 인벤토리·상점·스탯 창 로직을 C++로 옮기기 | 6, 10 | 대기 | | |
-| 13 | #133 슬롯의 재사용 대기를 C++로 옮기고 종류 단위로 맞추기 | 12 | 대기 | | |
+| 13 | #133 슬롯의 재사용 대기를 C++로 옮기고 아이템 단위로 맞추기 | 12 | 대기 | | |
 | 14 | #134 사망 화면과 경고 문구의 타이머를 C++로 옮기기 | 10 | 대기 | | |
 | 15 | #135 상점 액터와 포털의 로직을 C++로 옮기기 | 10 | 대기 | | |
 | 16 | #136 콤보를 C++로 옮기기 | 9 | 대기 | | |
@@ -149,3 +149,12 @@
   - 생성 응답이 오면 목록에 더할 이름과 직업을 그 시점의 입력 칸과 선택에서 읽는다
   - 직업 이름 맵을 `operator[]`로 읽어서, 맵에 없는 직업 값을 받으면 `check`로 멈춘다
 - 2026-10-03: #131에서 `UP1LoginMenuWidget.h`가 위젯 형식을 전방 선언하게 바꾸면서 쓰지 않던 `Components/Button.h`와 `Components/WidgetSwitcher.h` include가 빠졌다. #149가 지울 목록의 한 줄이라 tech-debt 표에서 그 줄을 지웠다. 블루프린트가 부르지 않게 된 `BlueprintCallable`, `BlueprintImplementableEvent`, `BlueprintReadWrite`도 모두 걷어냈다. 어디서도 부르지 않던 `OnRecvCreateCharacterRes`는 지웠다
+- 2026-10-03: #132에서 무기 장착 결함을 재현하지 못했다. 디스크에 저장된 `WBP_Inventory`의 `Switch on String`에서 `weapon` 핀은 `armor` 핀과 같은 `SendEquipItemPacket` 노드에 연결되어 있었다. C++과 서버에서도 무기만 막는 분기를 찾지 못했다. 이제 더블클릭 판정은 분류 문자열이 아니라 슬롯 종류로 가르므로, 무기와 방어구가 같은 경로를 탄다. PIE에서 무기 장착을 확인하는 것으로 마무리한다
+- 2026-10-03: #132를 준비하며 `BlueprintTools.read_graph_dsl`이 읽기만 해도 에셋에 변경 표시를 붙이는 것을 실측했다. 같은 내용으로 저장해도 `.uasset`의 바이트가 바뀐다. 조회에는 `find_nodes`와 `get_node_infos`를 쓴다고 `ue-mcp` 스킬에 적었다(#162)
+- 2026-10-03: #132에서 아이템 분류를 글로서리로 정했다. 아이템 종류(장비·소모품·기타), 아이템 분류(방어구·무기·소비), 장비 부위의 세 단계다. 「장비」는 착용할 수 있는 종류의 아이템이고, 착용 중인 것은 「착용 장비」다. 기획 원본의 열 이름이 이와 한 단계씩 밀려 있어 `docs/tech-debt.md`에 적었다. 클라이언트는 아이템 종류를 데이터에서 얻지 못하므로 슬롯 종류로 가른다
+- 2026-10-03: #132에서 빈 칸 판정을 `ItemData.TemplateId`가 아니라 `SlotData`로 바꿨다. `ClearSlot`은 `SlotData`만 비우고 `ItemData`에 지난 아이템을 남긴다. 블루프린트에서는 비워진 칸을 우클릭하면 지난 아이템으로 판매 요청이 나가 서버가 거절했고, 이제는 보내지 않는다. `ClearSlot`의 결함은 고치지 않고 `docs/tech-debt.md`에 적었다
+- 2026-10-03: #132에서 개발 확인용 화면 출력 둘(「Level Restricted!」와 「This Slot is Empty」)을 `LogP1UI` 로그로 바꿨다. 사용할 수 없는 아이템을 슬롯에서 덮어 클릭을 막는 원래 설계는 `docs/backlog.md` 22번에 적었다
+- 2026-10-03: #132에서 블루프린트 그래프를 비웠다. `WBP_Inventory` 노드 50개, `WBP_Shop` 9개, `WBP_Status` 27개를 `delete_node`로 지웠다. `WBP_Slot`에서는 `remove_function_graph`로 마우스 오버라이드 둘과 디스패처 둘을 지웠다. 저장한 `WBP_Slot.uasset`에는 지운 디스패처와 오버라이드의 이름 문자열이 하나씩 남아 있다. 클래스 기본 객체의 속성 목록과 MCP 조회에는 나오지 않아 패키지 이름 표의 흔적으로 봤다. 네 블루프린트는 오류 없이 컴파일됐다
+- 2026-10-03: #132에서 `Button_Details`의 FlipFlop을 C++의 보임 여부 토글로 옮겼다. 팁 패널의 초기 표시가 `SelfHitTestInvisible`이라, 첫 클릭에 `Hidden`, 다음 클릭에 `Visible`이 되는 순서가 블루프린트와 같다
+- 2026-10-03: #132에서 컨트롤러의 전달 함수 `IsTurnOnThisWidget`을 지웠다. `Content`의 에셋 가운데 이 이름을 담은 것은 `WBP_Inventory`뿐이었다. 남은 `TurnOnWidget`, `TurnOffWidget`, `DisplayWarningText`는 `BP_Shop`이 부르므로 #135가 지운다
+- 2026-10-03: #132에서 서버가 응답하지 않는 경로를 봤고 고치지 않았다. `Room::C_HandleEquipGear`와 `C_HandleUnequipGear`는 플레이어가 룸에 없으면 응답 없이 돌아간다. 클라이언트의 응답 대기는 그대로 남지만, 내 플레이어가 룸에 없을 때 창을 조작하는 경로라서 티켓을 만들지 않았다

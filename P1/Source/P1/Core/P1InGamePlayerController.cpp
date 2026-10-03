@@ -98,12 +98,6 @@ void AP1InGamePlayerController::TurnOffWidget(EP1WidgetType Type)
         Screens->CloseWindow(Type);
 }
 
-bool AP1InGamePlayerController::IsTurnOnThisWidget(EP1WidgetType Type) const
-{
-    const UP1ScreenSubsystem* Screens = GetScreens();
-    return Screens && Screens->IsWindowOpen(Type);
-}
-
 void AP1InGamePlayerController::DisplayWarningText(const FText& Message)
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
