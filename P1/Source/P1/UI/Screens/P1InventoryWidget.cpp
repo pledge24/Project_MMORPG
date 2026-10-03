@@ -178,9 +178,10 @@ void UP1InventoryWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     if (Screens == nullptr || !Screens->IsWindowOpen(EP1WidgetType::WIDGET_SHOP))
         return;
 
-    // 빈 칸은 ItemData가 아니라 SlotData로 가린다. 칸을 비울 때 ItemData는 지난 아이템을 그대로 들고 있다.
+    // 블루프린트와 같이 ItemData로 빈 칸을 가린다. 비운 칸의 ItemData에는 지난 아이템이 남아 있어 요청이 나가고,
+    // 서버가 거절한다. docs/tech-debt.md 「슬롯을 비워도 아이템 데이터가 지난 아이템을 들고 있다」.
     const Protocol::Slot& SlotData = SlotWidget->SlotData;
-    if (!SlotData.has_item() || SlotData.item().template_id() <= 0)
+    if (SlotWidget->ItemData.TemplateId <= 0)
     {
         UE_LOG(LogP1UI, Log, TEXT("빈 칸은 팔 수 없다."));
         return;
@@ -200,7 +201,7 @@ void UP1InventoryWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
         return;
 
     const Protocol::Slot& SlotData = SlotWidget->SlotData;
-    const int32 TemplateId = SlotData.has_item() ? SlotData.item().template_id() : 0;
+    const int32 TemplateId = SlotWidget->ItemData.TemplateId;
 
     switch (FP1InventorySlotAction::Decide(
         SlotData.type(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel()))
