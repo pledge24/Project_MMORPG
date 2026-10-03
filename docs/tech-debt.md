@@ -245,7 +245,8 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 | `Game/Inventory/P1Inventory.h` | `Game/Data/P1ItemData.h` |
 | `UI/Screens/P1HUDWidget.h` | `Protocol.pb.h` |
 
-`P1QuestRewardData.h`가 이제 `P1ItemData.h`를 직접 부르므로(#148) `P1Inventory.h`의 `P1ItemData.h`를 지워도 그 헤더는 깨지지 않는다.
+`P1QuestRewardData.h`가 이제 `P1ItemData.h`를 직접 부른다(#148). 그래서 `P1Inventory.h`의 `P1ItemData.h`를 지워도
+그 헤더는 깨지지 않는다.
 
 ### 영향
 
