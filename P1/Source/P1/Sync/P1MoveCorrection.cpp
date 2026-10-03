@@ -9,6 +9,7 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
     float ServerYaw,
     const FVector& MoveDirection,
     bool bCorrectRotation,
+    bool bInAction,
     float DeltaSeconds)
 {
     FP1MoveCorrection Result;
@@ -26,6 +27,10 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
         Result.bSnapped = true;
         return Result;
     }
+
+    // 루트 모션이 들어간 공격 중에는 몽타주가 위치와 방향을 정한다.
+    if (bInAction)
+        return Result;
 
     // float를 !=로 비교한다. 같은 값이 들어가도 RInterpTo가 현재 회전을 그대로 돌려주므로 무해하다.
     if (bCorrectRotation && ServerYaw != ClientRotation.Yaw)

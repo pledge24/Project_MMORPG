@@ -140,14 +140,10 @@ void UP1MoveSyncComponent::TickRemote(float DeltaSeconds)
             Character->GetCharacterMovement()->StopMovementImmediately();
         }
     }
-    else if (ServerPos.state() == Protocol::MOVE_STATE_ACTION)
-    {
-        // 루트 모션이 들어간 Action 중에는 보정 안 함.
-        //return;
-    }
 
     const bool bIsMonster = Mode == EP1MoveSyncMode::RemoteMonster;
     const bool bIsIdlePlayer = ServerPos.state() == Protocol::MOVE_STATE_IDLE && Mode == EP1MoveSyncMode::RemotePlayer;
+    const bool bInAction = ServerPos.state() == Protocol::MOVE_STATE_ACTION;
 
     const FP1MoveCorrection Correction = FP1MoveCorrection::Compute(
         Character->GetActorLocation(),
@@ -156,6 +152,7 @@ void UP1MoveSyncComponent::TickRemote(float DeltaSeconds)
         ServerPos.yaw(),
         MoveDirection,
         bIsMonster || bIsIdlePlayer,
+        bInAction,
         DeltaSeconds);
 
     // 회전이 그대로면 SetActorRotation을 부르지 않는다.

@@ -32,7 +32,7 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         const FVector Server(800.f, 0.f, 999.f);
 
         const FP1MoveCorrection Result = FP1MoveCorrection::Compute(
-            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, false, DeltaSeconds);
+            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, false, false, DeltaSeconds);
 
         TestTrue(TEXT("경계값 800에서 순간이동한다"), Result.bSnapped);
         TestEqual(TEXT("서버의 XY로 옮긴다"), Result.Location, FVector(800.f, 0.f, 100.f));
@@ -45,7 +45,7 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         const FVector Server(100.f, 0.f, 999.f);
 
         const FP1MoveCorrection Result = FP1MoveCorrection::Compute(
-            Client, ClientRotation, Server, 10.f, FVector::ZeroVector, false, DeltaSeconds);
+            Client, ClientRotation, Server, 10.f, FVector::ZeroVector, false, false, DeltaSeconds);
 
         TestFalse(TEXT("800 미만이면 순간이동하지 않는다"), Result.bSnapped);
         TestTrue(TEXT("서버 쪽으로 움직인다"), Result.Location.X > 0.f);
@@ -62,7 +62,7 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         const FVector MoveDirection(1.f, 0.f, 0.f);
 
         const FP1MoveCorrection Result = FP1MoveCorrection::Compute(
-            Client, ClientRotation, Server, 10.f, MoveDirection, false, DeltaSeconds);
+            Client, ClientRotation, Server, 10.f, MoveDirection, false, false, DeltaSeconds);
 
         TestFalse(TEXT("800 미만이면 순간이동하지 않는다"), Result.bSnapped);
         TestEqual(TEXT("이동 방향 성분은 그대로다"), Result.Location.X, 0.0);
@@ -76,9 +76,9 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         const FVector Client(0.f, 0.f, 100.f);
 
         const FP1MoveCorrection Snapped = FP1MoveCorrection::Compute(
-            Client, ClientRotation, FVector(900.f, 0.f, 999.f), 10.f, FVector::ZeroVector, false, DeltaSeconds);
+            Client, ClientRotation, FVector(900.f, 0.f, 999.f), 10.f, FVector::ZeroVector, false, false, DeltaSeconds);
         const FP1MoveCorrection Approached = FP1MoveCorrection::Compute(
-            Client, ClientRotation, FVector(100.f, 50.f, 999.f), 10.f, FVector(1.f, 0.f, 0.f), false, DeltaSeconds);
+            Client, ClientRotation, FVector(100.f, 50.f, 999.f), 10.f, FVector(1.f, 0.f, 0.f), false, false, DeltaSeconds);
 
         TestEqual(TEXT("순간이동해도 Z는 그대로다"), Snapped.Location.Z, 100.0);
         TestEqual(TEXT("다가가도 Z는 그대로다"), Approached.Location.Z, 100.0);
@@ -91,15 +91,41 @@ bool FP1MoveCorrectionTest::RunTest(const FString& Parameters)
         const FVector Server(100.f, 0.f, 999.f);
 
         const FP1MoveCorrection On = FP1MoveCorrection::Compute(
-            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, true, DeltaSeconds);
+            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, true, false, DeltaSeconds);
 
         TestTrue(TEXT("켜면 서버 yaw 쪽으로 돈다"), On.Rotation.Yaw > ClientRotation.Yaw);
         TestTrue(TEXT("한 틱에 서버 yaw까지 돌지 않는다"), On.Rotation.Yaw < 90.f);
 
         const FP1MoveCorrection Off = FP1MoveCorrection::Compute(
-            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, false, DeltaSeconds);
+            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, false, false, DeltaSeconds);
 
         TestEqual(TEXT("끄면 회전이 그대로다"), Off.Rotation, ClientRotation);
+    }
+
+    // 6) 서버 상태가 ACTION이면 루트 모션 공격에 맡기고 위치와 회전을 보정하지 않는다(#139).
+    //    회전 보정을 켠 크리처도 돌지 않는다.
+    {
+        const FVector Client(0.f, 0.f, 100.f);
+        const FVector Server(100.f, 50.f, 999.f);
+
+        const FP1MoveCorrection Result = FP1MoveCorrection::Compute(
+            Client, ClientRotation, Server, 90.f, FVector::ZeroVector, true, true, DeltaSeconds);
+
+        TestFalse(TEXT("ACTION 중에는 순간이동하지 않는다"), Result.bSnapped);
+        TestEqual(TEXT("ACTION 중에는 위치가 그대로다"), Result.Location, Client);
+        TestEqual(TEXT("ACTION 중에는 회전이 그대로다"), Result.Rotation, ClientRotation);
+    }
+
+    // 7) ACTION 중이어도 800 이상 벌어지면 서버 위치로 옮기고 회전을 서버 yaw로 맞춘다.
+    {
+        const FVector Client(0.f, 0.f, 100.f);
+
+        const FP1MoveCorrection Result = FP1MoveCorrection::Compute(
+            Client, ClientRotation, FVector(800.f, 0.f, 999.f), 90.f, FVector::ZeroVector, false, true, DeltaSeconds);
+
+        TestTrue(TEXT("ACTION 중이어도 800에서 순간이동한다"), Result.bSnapped);
+        TestEqual(TEXT("서버의 XY로 옮긴다"), Result.Location, FVector(800.f, 0.f, 100.f));
+        TestEqual(TEXT("회전을 서버 yaw로 맞춘다"), Result.Rotation, FRotator(0.f, 90.f, 0.f));
     }
 
     return true;
