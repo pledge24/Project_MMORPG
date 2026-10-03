@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Protocol.pb.h"
-#include "Game/Data/P1ItemData.h"
 #include "P1Inventory.generated.h"
 
 UCLASS()

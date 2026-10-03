@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Containers/Queue.h"
 #include "Utils/Types.h"
 
 class FSocket;

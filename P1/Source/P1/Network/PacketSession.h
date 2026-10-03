@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Queue.h"
 #include "Network/SendBuffer.h"
 #include "Utils/Types.h"
 
