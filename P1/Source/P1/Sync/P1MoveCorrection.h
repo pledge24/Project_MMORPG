@@ -18,6 +18,7 @@ struct P1_API FP1MoveCorrection
      * MoveDirection이 0 벡터면 정지 중으로 보고 서버 위치를 향한다. 이동 중이면 서버 위치를 지나
      * MoveDirection과 평행한 직선 위의, 현재 위치에서 가장 가까운 점을 향한다.
      * bCorrectRotation이 false면 순간이동할 때 말고는 회전을 바꾸지 않는다.
+     * bInAction이 true면 루트 모션 공격에 맡기므로 순간이동할 때 말고는 위치도 회전도 바꾸지 않는다.
      * DeltaSeconds는 초 단위다.
      */
     static FP1MoveCorrection Compute(
@@ -27,5 +28,6 @@ struct P1_API FP1MoveCorrection
         float ServerYaw,
         const FVector& MoveDirection,
         bool bCorrectRotation,
+        bool bInAction,
         float DeltaSeconds);
 };

@@ -73,6 +73,7 @@ void UP1MoveSyncComponent::InitPos(const Protocol::PosInfo& Info)
 {
     ClientPos.CopyFrom(Info);
     ServerPos.CopyFrom(Info);
+    LastSyncedYaw = Info.yaw();
 }
 
 bool UP1MoveSyncComponent::PushToMoveQueue(const Protocol::PosInfo& Info)
@@ -89,6 +90,7 @@ void UP1MoveSyncComponent::SetClientPos(const Protocol::PosInfo& Info)
     }
 
     ClientPos.CopyFrom(Info);
+    LastSyncedYaw = Info.yaw();
 
     AActor* Owner = GetOwner();
     if (Owner == nullptr)
@@ -106,7 +108,8 @@ void UP1MoveSyncComponent::SetServerPos(const Protocol::PosInfo& Info)
 {
     if (ClientPos.entity_id() != 0)
     {
-        assert(ClientPos.entity_id() == Info.entity_id());
+        ensureMsgf(ClientPos.entity_id() == Info.entity_id(), TEXT("다른 엔티티의 서버 위치를 받았다. 기존 %lld, 새 %lld"),
+            ClientPos.entity_id(), Info.entity_id());
     }
 
     ServerPos.CopyFrom(Info);
@@ -139,14 +142,10 @@ void UP1MoveSyncComponent::TickRemote(float DeltaSeconds)
             Character->GetCharacterMovement()->StopMovementImmediately();
         }
     }
-    else if (ServerPos.state() == Protocol::MOVE_STATE_ACTION)
-    {
-        // 루트 모션이 들어간 Action 중에는 보정 안 함.
-        //return;
-    }
 
     const bool bIsMonster = Mode == EP1MoveSyncMode::RemoteMonster;
     const bool bIsIdlePlayer = ServerPos.state() == Protocol::MOVE_STATE_IDLE && Mode == EP1MoveSyncMode::RemotePlayer;
+    const bool bInAction = ServerPos.state() == Protocol::MOVE_STATE_ACTION;
 
     const FP1MoveCorrection Correction = FP1MoveCorrection::Compute(
         Character->GetActorLocation(),
@@ -155,6 +154,7 @@ void UP1MoveSyncComponent::TickRemote(float DeltaSeconds)
         ServerPos.yaw(),
         MoveDirection,
         bIsMonster || bIsIdlePlayer,
+        bInAction,
         DeltaSeconds);
 
     // 회전이 그대로면 SetActorRotation을 부르지 않는다.
@@ -186,14 +186,18 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     else
         SetMoveState(Protocol::MOVE_STATE_IDLE);
 
-    const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(
-        MovePacketSendTimer,
-        DeltaSeconds,
-        bInputChanged,
-        bCanInputMovement,
-        MyPlayer->GetDesiredMoveDirectionYaw(),
-        MyPlayer->GetActorRotation().Yaw,
-        bAttacking);
+    FP1MoveSendThrottle::FInput SendInput;
+    SendInput.RemainingTimer = MovePacketSendTimer;
+    SendInput.DeltaSeconds = DeltaSeconds;
+    SendInput.bInputChanged = bInputChanged;
+    SendInput.bCanInputMovement = bCanInputMovement;
+    SendInput.bHasMoveInput = DesiredInput != FVector2D::Zero();
+    SendInput.DesiredYaw = MyPlayer->GetDesiredMoveDirectionYaw();
+    SendInput.CurrentYaw = MyPlayer->GetActorRotation().Yaw;
+    SendInput.LastSyncedYaw = LastSyncedYaw;
+    SendInput.bAttacking = bAttacking;
+
+    const FP1MoveSendThrottle Decision = FP1MoveSendThrottle::Decide(SendInput);
 
     MovePacketSendTimer = Decision.NextTimer;
     if (Decision.bSend == false)
@@ -209,4 +213,5 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     Info->set_state(ClientPos.state());
 
     FP1PacketSender::Send(this, MovePkt);
+    LastSyncedYaw = Info->yaw();
 }
