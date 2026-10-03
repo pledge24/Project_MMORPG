@@ -108,18 +108,17 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
 | `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
+| `Game/Interaction/` | 플레이어가 다가가 쓰는 월드 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비)을 들고 있는 서브시스템 |
 
-`Game/Items/`와 `Game/Interaction/`은 아직 없다. 아이템 정의와 아이템 인스턴스가 생기면
-`Game/Items/`를 만든다. 상호작용 인터페이스와 플레이어 쪽 컴포넌트가 생기면 `Game/Interaction/`을
-만든다.
+`Game/Items/`는 아직 없다. 아이템 정의와 아이템 인스턴스가 생기면 `Game/Items/`를 만든다.
 
 **`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
 — 두 폴더로 나누면 스폰 하나를 고칠 때 양쪽을 함께 열게 된다.
 
-**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 말을 걸거나 집는 대상은
-`Game/World/`에 두지 않는다. 그런 대상이 처음 생길 때 `Game/Interaction/`을 만들어 거기 둔다.
+**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 상점처럼 플레이어가 골라서 다가가 쓰는 대상은
+`Game/Interaction/`에 둔다.
 — 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
 아니라 레벨이 놓아 둔 장치다.
 
@@ -177,7 +176,13 @@ Core → Game/Entities → 게임 도메인
 **게임 도메인은 `Core/`와 `UI/`를 부르지 않는다.** 배선에 알려야 할 일은
 델리게이트로 알리고 배선이 구독한다(예: `AP1MyPlayer::OnBattleModeChanged`를 컨트롤러가
 `OnPossess`에서 화면 서브시스템에 이어 준다). 배선의 객체를 도메인이 호출해야 하면 `Game/`에 인터페이스를 두고 배선이
-구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`).
+구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`, 인게임 컨트롤러가 구현하는 `IP1ShopScreen`).
+
+**레벨에 놓인 액터(`Game/World/`, `Game/Interaction/`)는 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
+내 플레이어인지, 그 상태가 어떤지를 보고 반응하기 때문이다. 두 폴더는 위 그림에 없고, `Game/Entities/`를 읽는
+쪽에 있다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
+— `Game/Progress/P1MyPlayerData.cpp`도 `P1MyPlayer.h`를 부른다. 이것이 규칙인지 예외인지는 의존 방향을 전수
+확인하는 #138이 정한다.
 
 **`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.
 공용 매크로를 쓰려고 `Utils/`의 헤더를 여는 자리가 게임 도메인 전체를 딸려 끌고 온다.

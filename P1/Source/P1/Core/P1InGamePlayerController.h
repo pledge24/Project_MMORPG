@@ -2,16 +2,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "UI/P1WidgetType.h"
+#include "Game/Interaction/P1ShopScreen.h"
 #include "P1InGamePlayerController.generated.h"
 
 class UInputAction;
 class UInputMappingContext;
 class UP1ScreenSubsystem;
 
-/** 인게임 맵의 컨트롤러다. 룸 입장을 요청하고, 화면 서브시스템을 만들고 치우는 시점과 화면 단축키를 넘긴다. */
+/**
+ * 인게임 맵의 컨트롤러다. 룸 입장을 요청하고, 화면 서브시스템을 만들고 치우는 시점과 화면 단축키를 넘긴다.
+ * 상점이 부르는 상점 창 여닫기와 경고도 화면 서브시스템에 넘긴다.
+ */
 UCLASS()
-class P1_API AP1InGamePlayerController : public APlayerController
+class P1_API AP1InGamePlayerController : public APlayerController, public IP1ShopScreen
 {
     GENERATED_BODY()
 
@@ -30,6 +33,13 @@ protected:
     virtual void OnPossess(APawn* InPawn) override;
     //~ End APlayerController Interface
 
+    //~ Begin IP1ShopScreen Interface
+public:
+    virtual void OpenShopWindow() override;
+    virtual void CloseShopWindow() override;
+    virtual void ShowShopWarning(const FText& Message) override;
+    //~ End IP1ShopScreen Interface
+
     //~ Screen Input
 private:
     void OnToggleStatusWindowWidget();
@@ -46,17 +56,4 @@ private:
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TObjectPtr<UInputAction> ToggleInventoryAction;
-
-    //~ Blueprint Widget Control
-    // TODO: #135가 블루프린트 호출을 걷어내면 지운다
-public:
-    /** 화면 서브시스템에 넘긴다. BP_Shop이 부른다. 아래 둘도 같다. */
-    UFUNCTION(BlueprintCallable, Category = "Widget")
-    void TurnOnWidget(EP1WidgetType Type);
-
-    UFUNCTION(BlueprintCallable, Category = "Widget")
-    void TurnOffWidget(EP1WidgetType Type);
-
-    UFUNCTION(BlueprintCallable, Category = "Widget")
-    void DisplayWarningText(const FText& Message);
 };
