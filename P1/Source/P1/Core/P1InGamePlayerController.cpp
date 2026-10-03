@@ -86,19 +86,19 @@ UP1ScreenSubsystem* AP1InGamePlayerController::GetScreens() const
     return ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetLocalPlayer());
 }
 
-void AP1InGamePlayerController::TurnOnWidget(EP1WidgetType Type)
+void AP1InGamePlayerController::OpenShopWindow()
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
-        Screens->OpenWindow(Type);
+        Screens->OpenWindow(EP1WidgetType::WIDGET_SHOP);
 }
 
-void AP1InGamePlayerController::TurnOffWidget(EP1WidgetType Type)
+void AP1InGamePlayerController::CloseShopWindow()
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
-        Screens->CloseWindow(Type);
+        Screens->CloseWindow(EP1WidgetType::WIDGET_SHOP);
 }
 
-void AP1InGamePlayerController::DisplayWarningText(const FText& Message)
+void AP1InGamePlayerController::ShowShopWarning(const FText& Message)
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->DisplayWarningText(Message);
