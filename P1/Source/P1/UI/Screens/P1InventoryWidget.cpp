@@ -1,15 +1,28 @@
 #include "UI/Screens/P1InventoryWidget.h"
 #include "UI/Common/P1SlotWidget.h"
+#include "UI/P1ScreenSubsystem.h"
+#include "Components/Button.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h"
+#include "Components/WidgetSwitcher.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
+#include "Game/Inventory/P1InventorySlotAction.h"
 #include "Game/Progress/P1MyPlayerData.h"
 
 void UP1InventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    InventoryTabSwitcher->SetActiveWidgetIndex(0);
+    GearTabButton->OnClicked.AddUniqueDynamic(this, &UP1InventoryWidget::ShowGearTab);
+    ConsumableTabButton->OnClicked.AddUniqueDynamic(this, &UP1InventoryWidget::ShowConsumableTab);
+    MiscTabButton->OnClicked.AddUniqueDynamic(this, &UP1InventoryWidget::ShowMiscTab);
+
+    BindSlotClicks(Gear_Inven);
+    BindSlotClicks(Consumables_Inven);
+    BindSlotClicks(Misc_Inven);
 
     if (auto* GameInstance = GetP1GameInstance())
     {
@@ -121,98 +134,96 @@ UP1SlotWidget* UP1InventoryWidget::GetSlotWidgetFromSlot(const Protocol::Slot& I
     return nullptr;
 }
 
-void UP1InventoryWidget::SendSellItemPacket(UP1SlotWidget* SlotWidget)
+void UP1InventoryWidget::ShowGearTab()
 {
+    InventoryTabSwitcher->SetActiveWidgetIndex(0);
+}
+
+void UP1InventoryWidget::ShowConsumableTab()
+{
+    InventoryTabSwitcher->SetActiveWidgetIndex(1);
+}
+
+void UP1InventoryWidget::ShowMiscTab()
+{
+    InventoryTabSwitcher->SetActiveWidgetIndex(2);
+}
+
+template <typename TPacket>
+void UP1InventoryWidget::SendItemRequest(TPacket& Pkt)
+{
+    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 켠다. 켜고 보내지 않으면 응답이 오지 않아 대기가 풀리지 않는다.
     if (PendingPacket)
         return;
-    else
-        PendingPacket = true;
 
-    if (SlotWidget == nullptr)
+    PendingPacket = true;
+    FP1PacketSender::Send(this, Pkt);
+}
+
+void UP1InventoryWidget::BindSlotClicks(UUniformGridPanel* SlotGrid)
+{
+    for (UWidget* Child : SlotGrid->GetAllChildren())
     {
-        PendingPacket = false;
+        if (UP1SlotWidget* SlotWidget = Cast<UP1SlotWidget>(Child))
+        {
+            SlotWidget->OnRightClicked.AddUObject(this, &UP1InventoryWidget::HandleSlotRightClicked);
+            SlotWidget->OnDoubleClicked.AddUObject(this, &UP1InventoryWidget::HandleSlotDoubleClicked);
+        }
+    }
+}
+
+void UP1InventoryWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
+{
+    const UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer());
+    if (Screens == nullptr || !Screens->IsWindowOpen(EP1WidgetType::WIDGET_SHOP))
+        return;
+
+    // 블루프린트와 같이 ItemData로 빈 칸을 가린다. 비운 칸의 ItemData에는 지난 아이템이 남아 있어 요청이 나가고,
+    // 서버가 거절한다. docs/tech-debt.md 「슬롯을 비워도 아이템 데이터가 지난 아이템을 들고 있다」.
+    const Protocol::Slot& SlotData = SlotWidget->SlotData;
+    if (SlotWidget->ItemData.TemplateId <= 0)
+    {
+        UE_LOG(LogP1UI, Log, TEXT("빈 칸은 팔 수 없다."));
         return;
     }
-
-    const Protocol::Slot& SlotData = SlotWidget->SlotData;
 
     Protocol::C_SELL_ITEM Pkt;
     Pkt.mutable_slot()->CopyFrom(SlotData);
     Pkt.set_count(1);
-    FP1PacketSender::Send(this, Pkt);
-    
+    SendItemRequest(Pkt);
 }
 
-void UP1InventoryWidget::SendUseItemPacket(UP1SlotWidget* SlotWidget)
+void UP1InventoryWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
 {
-    if (PendingPacket)
+    UP1GameInstance* GameInstance = GetP1GameInstance();
+    UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
+    if (MyPlayerData == nullptr)
         return;
-    else
-        PendingPacket = true;
 
-    if (SlotWidget)
+    const Protocol::Slot& SlotData = SlotWidget->SlotData;
+    const int32 TemplateId = SlotWidget->ItemData.TemplateId;
+
+    switch (FP1InventorySlotAction::Decide(
+        SlotData.type(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel()))
     {
-        const Protocol::Slot& SlotData = SlotWidget->SlotData;
-
-        auto* GameInstance = GetP1GameInstance();
-        if (GameInstance == nullptr)
-            return;
-
-        UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>();
-        int32 Level = MyPlayerData->GetPlayerLevel();
-        if (Level < SlotWidget->ItemData.LevelRequirement)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Level Restricted!")));
-            PendingPacket = false;
-            return;
-        }
-
-        if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE)
-        {
-            Protocol::C_USE_ITEM Pkt;
-            Pkt.mutable_slot()->CopyFrom(SlotData);
-            FP1PacketSender::Send(this, Pkt);
-        }
-        else
-        {
-            UE_LOG(LogP1Network, Warning, TEXT("Something Wrong in SendUseItemPacket.."));
-        }
+    case FP1InventorySlotAction::EKind::Use:
+    {
+        Protocol::C_USE_ITEM Pkt;
+        Pkt.mutable_slot()->CopyFrom(SlotData);
+        SendItemRequest(Pkt);
+        break;
     }
-}
-
-void UP1InventoryWidget::SendEquipItemPacket(UP1SlotWidget* SlotWidget)
-{
-    if (PendingPacket)
-        return;
-    else
-        PendingPacket = true;
-
-    if (SlotWidget)
+    case FP1InventorySlotAction::EKind::Equip:
     {
-        const Protocol::Slot& SlotData = SlotWidget->SlotData;
-
-        auto* GameInstance = GetP1GameInstance();
-        if (GameInstance == nullptr)
-            return;
-
-        UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>();
-        int32 Level = MyPlayerData->GetPlayerLevel();
-        if (Level < SlotWidget->ItemData.LevelRequirement)
-        {
-            PendingPacket = false;
-            return;
-        }
-
-        if (SlotData.type() == Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR)
-        {
-            Protocol::C_EQUIP_GEAR Pkt;
-            Pkt.mutable_slot()->CopyFrom(SlotData);
-            FP1PacketSender::Send(this, Pkt);
-        }
-        else
-        {
-            UE_LOG(LogP1Network, Warning, TEXT("Something Wrong in EquipGearPacket.."));
-        }
-        
+        Protocol::C_EQUIP_GEAR Pkt;
+        Pkt.mutable_slot()->CopyFrom(SlotData);
+        SendItemRequest(Pkt);
+        break;
+    }
+    case FP1InventorySlotAction::EKind::LevelTooLow:
+        UE_LOG(LogP1UI, Log, TEXT("요구 레벨이 모자라 쓸 수 없다. 템플릿 %d"), TemplateId);
+        break;
+    default:
+        break;
     }
 }

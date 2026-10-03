@@ -48,17 +48,14 @@ private:
     TObjectPtr<UInputAction> ToggleInventoryAction;
 
     //~ Blueprint Widget Control
-    // TODO: #132와 #135가 블루프린트 호출을 걷어내면 지운다
+    // TODO: #135가 블루프린트 호출을 걷어내면 지운다
 public:
-    /** 화면 서브시스템에 넘긴다. WBP_Inventory와 BP_Shop이 부른다. 아래 셋도 같다. */
+    /** 화면 서브시스템에 넘긴다. BP_Shop이 부른다. 아래 둘도 같다. */
     UFUNCTION(BlueprintCallable, Category = "Widget")
     void TurnOnWidget(EP1WidgetType Type);
 
     UFUNCTION(BlueprintCallable, Category = "Widget")
     void TurnOffWidget(EP1WidgetType Type);
-
-    UFUNCTION(BlueprintCallable, Category = "Widget")
-    bool IsTurnOnThisWidget(EP1WidgetType Type) const;
 
     UFUNCTION(BlueprintCallable, Category = "Widget")
     void DisplayWarningText(const FText& Message);

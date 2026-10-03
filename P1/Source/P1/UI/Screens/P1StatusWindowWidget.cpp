@@ -1,4 +1,5 @@
 #include "UI/Screens/P1StatusWindowWidget.h"
+#include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
@@ -8,6 +9,11 @@
 void UP1StatusWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    for (UP1SlotWidget* SlotWidget : { Equipped_Helmet, Equipped_Chest, Equipped_Arms, Equipped_Legs, Equipped_Boots, Equipped_Weapon })
+        SlotWidget->OnDoubleClicked.AddUObject(this, &UP1StatusWindowWidget::HandleSlotDoubleClicked);
+
+    Button_Details->OnClicked.AddUniqueDynamic(this, &UP1StatusWindowWidget::ToggleTips);
 
     if (auto* GameInstance = GetP1GameInstance())
     {
@@ -95,19 +101,21 @@ void UP1StatusWindowWidget::UpdateMagicalAttack(int64 Value)
     Details_Magical_Attack->SetText(FText::AsNumber(Value));
 }
 
-void UP1StatusWindowWidget::SendUnequipPacket(UP1SlotWidget* Slot_)
+void UP1StatusWindowWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
 {
+    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 해제가 막힌다.
     if (PendingPacket)
         return;
-    else
-        PendingPacket = true;
 
-    if (Slot_)
-    {
-        const Protocol::Slot& SlotData = Slot_->SlotData;
+    Protocol::C_UNEQUIP_GEAR Pkt;
+    Pkt.mutable_slot()->CopyFrom(SlotWidget->SlotData);
 
-        Protocol::C_UNEQUIP_GEAR pkt;
-        pkt.mutable_slot()->CopyFrom(SlotData);
-        FP1PacketSender::Send(this, pkt);
-    }
+    PendingPacket = true;
+    FP1PacketSender::Send(this, Pkt);
+}
+
+void UP1StatusWindowWidget::ToggleTips()
+{
+    CanvasPanel_Tips->SetVisibility(
+        CanvasPanel_Tips->IsVisible() ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
 }
