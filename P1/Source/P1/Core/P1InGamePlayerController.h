@@ -33,6 +33,13 @@ protected:
     virtual void OnPossess(APawn* InPawn) override;
     //~ End APlayerController Interface
 
+    //~ Begin IP1ShopScreen Interface
+public:
+    virtual void OpenShopWindow() override;
+    virtual void CloseShopWindow() override;
+    virtual void ShowShopWarning(const FText& Message) override;
+    //~ End IP1ShopScreen Interface
+
     //~ Screen Input
 private:
     void OnToggleStatusWindowWidget();
@@ -49,11 +56,4 @@ private:
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TObjectPtr<UInputAction> ToggleInventoryAction;
-
-    //~ Begin IP1ShopScreen Interface
-public:
-    virtual void OpenShopWindow() override;
-    virtual void CloseShopWindow() override;
-    virtual void ShowShopWarning(const FText& Message) override;
-    //~ End IP1ShopScreen Interface
 };

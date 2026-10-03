@@ -27,7 +27,7 @@ private:
     void HandleRangeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-    /** 누가 나가든 상점 창을 닫는다. 블루프린트와 같은 동작이고 결함으로 기록했다. */
+    /** 범위에서 나간 액터가 누구든 상점 창을 닫는다. */
     UFUNCTION()
     void HandleRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex);
