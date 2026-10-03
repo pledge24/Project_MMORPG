@@ -201,22 +201,20 @@ void UP1LoginMenuWidget::OnCreateButtonClicked()
     const int32 CharacterCount = CharacterOverviews.Num();
     const int32 SlotCount = CharacterSlots.Num();
 
-    // TODO: #159 슬롯이 꼭 맞게 찼을 때(==)는 안내 없이 아무것도 하지 않는다.
-    if (CharacterCount > SlotCount)
+    if (CharacterCount >= SlotCount)
     {
-        CS_Description->SetText(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
+        ShowDescription(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
+        return;
     }
-    else if (CharacterCount < SlotCount)
-    {
-        ResetCharacterCreateScreen();
-        WidgetSwitcher->SetActiveWidget(CharacterCreateScreen);
-    }
+
+    ResetCharacterCreateScreen();
+    WidgetSwitcher->SetActiveWidget(CharacterCreateScreen);
 }
 
 void UP1LoginMenuWidget::OnDeleteButtonClicked()
 {
-    // TODO: #159 빈 슬롯을 골라도 확인 화면으로 넘어가고, 거른 뒤의 문구가 확인 화면에 보이지 않는다.
-    if (SelectedSlotIndex != -1)
+    // 확인 화면에는 문구를 띄울 자리가 없으므로 빈 칸은 여기서 거른다.
+    if (IsSelectedSlotOccupied())
     {
         WidgetSwitcher->SetActiveWidget(CharacterDeleteScreen);
         return;
@@ -323,7 +321,8 @@ void UP1LoginMenuWidget::RemoveCharacterOverview(const Protocol::S_DELETE_CHARAC
     bool bSuccess = pkt.success();
     if (bSuccess == false)
     {
-        CC_DescriptionText->SetText(FText::FromString(TEXT("서버 오류: 캐릭터 삭제 실패")));
+        WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
+        ShowDescription(FText::FromString(TEXT("서버 오류: 캐릭터 삭제 실패")));
         return;
     }
 
@@ -352,7 +351,8 @@ void UP1LoginMenuWidget::SendDeleteCharacterPkt()
 {
     if (CharacterOverviews.IsValidIndex(SelectedSlotIndex) == false)
     {
-        CC_DescriptionText->SetText(FText::FromString(TEXT("삭제할 캐릭터가 없습니다.")));
+        WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
+        ShowDescription(FText::FromString(TEXT("삭제할 캐릭터가 없습니다.")));
         return;
     }
 

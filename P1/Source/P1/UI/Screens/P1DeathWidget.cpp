@@ -17,6 +17,7 @@ void UP1DeathWidget::NativeConstruct()
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
             MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1DeathWidget::BindMyPlayerSpawned);
+            MyPlayerData->OnTownRespawnRejected.AddUObject(this, &UP1DeathWidget::HandleTownRespawnRejected);
         }
     }
 }
@@ -52,6 +53,9 @@ void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
 void UP1DeathWidget::OnMyPlayerRespawn(AActor* RespawnedCreature)
 {
     SetVisibility(ESlateVisibility::Collapsed);
+
+    if (UWorld* World = GetWorld())
+        World->GetTimerManager().ClearTimer(RetryTimerHandle);
 
     // 사망 중에 열려 있던 창이 있으면 UI 모드로 돌아가야 하므로 판단을 화면 서브시스템에 맡긴다.
     if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
@@ -93,6 +97,18 @@ void UP1DeathWidget::HandleCountdownFinished()
 void UP1DeathWidget::ShowRemainingSeconds()
 {
     ReturnText->SetText(FText::FromString(FString::Printf(TEXT("%d초 뒤에 마을에서 리스폰합니다."), RemainingSeconds)));
+}
+
+void UP1DeathWidget::HandleTownRespawnRejected()
+{
+    // 살아 있는 동안 온 거절에 다시 요청하면 서버가 또 거절해 요청이 끝없이 오간다.
+    if (GetVisibility() == ESlateVisibility::Collapsed)
+        return;
+
+    // 거절은 잘못된 상황이라 플레이어에게 사유를 알리지 않는다. 요청 중 문구를 둔 채 대기 시간 뒤에 다시 요청한다.
+    // 리스폰하면 OnMyPlayerRespawn이 대기를 거둔다.
+    if (UWorld* World = GetWorld())
+        World->GetTimerManager().SetTimer(RetryTimerHandle, this, &UP1DeathWidget::RequestTownRespawn, TownRespawnDelaySeconds, false);
 }
 
 void UP1DeathWidget::RequestTownRespawn()

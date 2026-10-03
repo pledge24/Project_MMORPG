@@ -57,4 +57,9 @@ private:
     //~ Respawn
 private:
     void RequestTownRespawn();
+
+    /** 사망 화면이 떠 있으면, 거절을 받을 때마다 TownRespawnDelaySeconds 뒤에 다시 요청한다. */
+    void HandleTownRespawnRejected();
+
+    FTimerHandle RetryTimerHandle;
 };
