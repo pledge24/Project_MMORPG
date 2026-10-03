@@ -1,4 +1,6 @@
 #include "UI/Screens/P1DeathWidget.h"
+#include "Components/TextBlock.h"
+#include "TimerManager.h"
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
@@ -58,16 +60,44 @@ void UP1DeathWidget::OnMyPlayerRespawn(AActor* RespawnedCreature)
     }
 }
 
-void UP1DeathWidget::SendRespawnInTownPacket()
+void UP1DeathWidget::StartCountdown()
 {
-    SendRespawnPacket(Protocol::RESPAWN_TYPE_TOWN);
+    RemainingSeconds = TownRespawnDelaySeconds;
+    ShowRemainingSeconds();
+
+    if (UWorld* World = GetWorld())
+        World->GetTimerManager().SetTimer(CountdownTimerHandle, this, &UP1DeathWidget::TickCountdown, CountdownIntervalSeconds, true);
 }
 
-void UP1DeathWidget::SendRespawnPacket(Protocol::RespawnType respawnType)
+void UP1DeathWidget::TickCountdown()
 {
-    Protocol::C_RESPAWN RespawnPkt; 
-    {
-        RespawnPkt.set_respawn_type(respawnType);
-        FP1PacketSender::Send(this, RespawnPkt);
-    }
+    // 실제 시각이 아니라 타이머가 울린 횟수로 센다. 블루프린트와 같다.
+    --RemainingSeconds;
+    ShowRemainingSeconds();
+
+    if (RemainingSeconds > 0)
+        return;
+
+    if (UWorld* World = GetWorld())
+        World->GetTimerManager().ClearTimer(CountdownTimerHandle);
+
+    HandleCountdownFinished();
+}
+
+void UP1DeathWidget::HandleCountdownFinished()
+{
+    ReturnText->SetText(FText::FromString(TEXT("마을에서 리스폰하는 중...")));
+    RequestTownRespawn();
+}
+
+void UP1DeathWidget::ShowRemainingSeconds()
+{
+    ReturnText->SetText(FText::FromString(FString::Printf(TEXT("%d초 뒤에 마을에서 리스폰합니다."), RemainingSeconds)));
+}
+
+void UP1DeathWidget::RequestTownRespawn()
+{
+    Protocol::C_RESPAWN RespawnPkt;
+    RespawnPkt.set_respawn_type(Protocol::RESPAWN_TYPE_TOWN);
+    FP1PacketSender::Send(this, RespawnPkt);
 }
