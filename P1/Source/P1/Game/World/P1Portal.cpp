@@ -21,6 +21,7 @@ void AP1Portal::BeginPlay()
 {
     Super::BeginPlay();
 
+    // 게임 월드에서는 위젯 컴포넌트가 BeginPlay에서야 위젯을 만들어, OnConstruction 때는 입힐 위젯이 없다.
     ApplyNameTag();
 
     TInlineComponentArray<UPrimitiveComponent*> Components(this);

@@ -16,7 +16,7 @@ class P1_API UP1ProgressBarWidget : public UP1UserWidget
 
     //~ Begin UUserWidget Interface
 protected:
-    /** 에디터 디자이너에서도 불린다. 텍스처와 자리 문구를 위젯에 입힌다. */
+    /** 에디터 디자이너에서도 불린다. 텍스처를 끼우고, 값이 아직 없으면 자리 문구를 적는다. */
     virtual void NativePreConstruct() override;
     //~ End UUserWidget Interface
 
@@ -49,6 +49,9 @@ protected:
 
     /** 켜면 문구를 백분율로 적는다. 끄면 현재값과 최대값을 적는다. */
     bool bIsPercentFormat = false;
+
+    /** 값이 한 번이라도 들어왔으면 true다. 그 뒤로는 자리 문구를 보이지 않는다. */
+    bool bHasValue = false;
 
     //~ Appearance
 protected:

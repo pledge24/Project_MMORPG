@@ -27,6 +27,7 @@ public:
     virtual void NativeConstruct() override;
 
 protected:
+    virtual void NativeOnInitialized() override;
     virtual void NativePreConstruct() override;
     virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
     virtual FReply NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
