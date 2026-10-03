@@ -84,7 +84,8 @@ void UP1MoveSyncComponent::SetClientPos(const Protocol::PosInfo& Info)
 {
     if (ClientPos.entity_id() != 0)
     {
-        assert(SrcInfo->entity_id() == Info.entity_id());
+        ensureMsgf(ClientPos.entity_id() == Info.entity_id(), TEXT("다른 엔티티의 위치로 덮어쓴다. 기존 %lld, 새 %lld"),
+            ClientPos.entity_id(), Info.entity_id());
     }
 
     ClientPos.CopyFrom(Info);
