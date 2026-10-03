@@ -57,4 +57,9 @@ private:
     //~ Respawn
 private:
     void RequestTownRespawn();
+
+    /** 거절을 받으면 TownRespawnDelaySeconds 뒤에 한 번 더 요청한다. 리스폰하면 대기를 거둔다. */
+    void HandleTownRespawnRejected();
+
+    FTimerHandle RetryTimerHandle;
 };

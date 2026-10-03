@@ -196,4 +196,13 @@ public:
      * 레벨이 올랐으면 레벨과 레벨업 스탯을 경험치보다 먼저 반영한다. 경험치를 알릴 때 최대 경험치가 이미 새 값이어야 한다.
      */
     void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
+
+    //~ Respawn
+public:
+    /**
+     * 서버가 마을 리스폰 요청을 거절했다는 알림이다. 정상 흐름에서는 일어나지 않는다.
+     * 사망 화면이 구독해 다시 요청한다. 거절 사유는 엔티티 관리자가 로그로만 남긴다.
+     */
+    DECLARE_MULTICAST_DELEGATE(FOnTownRespawnRejected);
+    FOnTownRespawnRejected OnTownRespawnRejected;
 };
