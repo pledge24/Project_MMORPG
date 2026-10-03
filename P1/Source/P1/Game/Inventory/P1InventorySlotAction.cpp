@@ -1,7 +1,7 @@
 #include "Game/Inventory/P1InventorySlotAction.h"
 
 FP1InventorySlotAction::EKind FP1InventorySlotAction::Decide(
-    Protocol::SlotType SlotType, int32 TemplateId, int32 LevelRequirement, int32 PlayerLevel)
+    Protocol::SlotType SlotType, int32 TemplateId, int32 LevelRequirement, int32 PlayerLevel, bool bCoolingDown)
 {
     if (TemplateId <= 0)
         return EKind::Empty;
@@ -12,5 +12,8 @@ FP1InventorySlotAction::EKind FP1InventorySlotAction::Decide(
     if (LevelRequirement > PlayerLevel)
         return EKind::LevelTooLow;
 
-    return SlotType == Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE ? EKind::Use : EKind::Equip;
+    if (SlotType == Protocol::SLOT_TYPE_INVENTORY_GEAR)
+        return EKind::Equip;
+
+    return bCoolingDown ? EKind::CoolingDown : EKind::Use;
 }

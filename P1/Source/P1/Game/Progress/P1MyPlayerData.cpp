@@ -1,4 +1,6 @@
 #include "Game/Progress/P1MyPlayerData.h"
+#include "Game/Data/P1GameDataSettings.h"
+#include "Game/Data/P1ItemData.h"
 #include "Game/Inventory/P1Inventory.h"
 #include "Game/Equipment/P1EquippedGear.h"
 #include "Game/Entities/P1MyPlayer.h"
@@ -77,6 +79,9 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
         EquippedGear->Init(_Possession->mutable_equipped_gear());
     }
 
+    // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.
+    ItemCooldowns.Reset();
+
 }
 
 void UP1MyPlayerData::BindMyPlayerDelegate(AP1MyPlayer* MyPlayer)
@@ -104,6 +109,7 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
     OnRecvUseItemPkt.RemoveAll(Listener);
     OnRecvEquipGearPkt.RemoveAll(Listener);
     OnRecvUnequipGearPkt.RemoveAll(Listener);
+    OnItemCooldownStarted.RemoveAll(Listener);
 
     for (auto& Pair : OnStatChangedMappings)
         Pair.Value.RemoveAll(Listener);
@@ -210,11 +216,44 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (UseItemPkt.success() == false)
         return;
 
+    // 마지막 한 개를 쓰면 응답의 슬롯에 아이템이 없다. 사본이 바뀌기 전에 쓴 아이템의 템플릿을 읽는다.
+    TArray<int32, TInlineAllocator<1>> UsedTemplateIds;
+    for (const Protocol::Slot& UpdatedSlot : UseItemPkt.updated_slots())
+    {
+        const Protocol::Slot* Before = Inventory->FindSlot(UpdatedSlot.type(), UpdatedSlot.slot_id());
+        if (Before && Before->has_item())
+            UsedTemplateIds.Add(Before->item().template_id());
+    }
+
     for (const Protocol::Slot& UpdatedSlot : UseItemPkt.updated_slots())
     {
         OnInvenSlotChanged.Broadcast(UpdatedSlot, true);
     }
     ApplyStats(UseItemPkt.updated_stat());
+
+    // 칸이 먼저 바뀌어야 대기를 알릴 때 칸들이 지금 든 아이템으로 판단한다.
+    for (const int32 TemplateId : UsedTemplateIds)
+        StartItemCooldown(TemplateId);
+}
+
+const FP1ItemCooldown* UP1MyPlayerData::FindActiveItemCooldown(int32 TemplateId) const
+{
+    const FP1ItemCooldown* Cooldown = ItemCooldowns.Find(TemplateId);
+    if (Cooldown && Cooldown->IsCoolingDown(FP1ItemCooldown::GetClockSeconds()))
+        return Cooldown;
+
+    return nullptr;
+}
+
+void UP1MyPlayerData::StartItemCooldown(int32 TemplateId)
+{
+    const FP1ItemData* ItemData = UP1GameDataSettings::FindItemData(TemplateId);
+    if (ItemData == nullptr || ItemData->Cooldown <= 0.f)
+        return;
+
+    // 서버는 요청을 처리한 시각부터 센다. 응답을 받은 시각부터 세면 클라이언트의 대기가 늘 조금 늦게 끝난다.
+    ItemCooldowns.Add(TemplateId, FP1ItemCooldown{ FP1ItemCooldown::GetClockSeconds(), ItemData->Cooldown });
+    OnItemCooldownStarted.Broadcast(TemplateId);
 }
 
 void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
