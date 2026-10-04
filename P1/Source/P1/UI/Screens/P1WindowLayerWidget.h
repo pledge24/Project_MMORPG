@@ -20,6 +20,9 @@ class P1_API UP1WindowLayerWidget : public UP1UserWidget
 protected:
     /** 위젯 트리의 루트 캔버스를 만든다. */
     virtual void NativeOnInitialized() override;
+
+    /** 좌클릭이 닿은 창을 앞으로 올린다. 클릭은 소비하지 않으므로 창 안의 위젯이 그대로 받는다. */
+    virtual FReply NativeOnPreviewMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
     //~ End UUserWidget Interface
 
     //~ Windows
