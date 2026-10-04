@@ -60,6 +60,7 @@ PROTOBUF_CONSTEXPR S_LOGIN::S_LOGIN(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.characters_)*/{}
   , /*decltype(_impl_.success_)*/false
+  , /*decltype(_impl_.character_slot_count_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_LOGINDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_LOGINDefaultTypeInternal()
@@ -625,6 +626,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_LOGIN, _impl_.success_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_LOGIN, _impl_.characters_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_LOGIN, _impl_.character_slot_count_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_CREATE_CHARACTER, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -951,42 +953,42 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 6, -1, -1, sizeof(::Protocol::S_PONG)},
   { 12, -1, -1, sizeof(::Protocol::C_LOGIN)},
   { 19, -1, -1, sizeof(::Protocol::S_LOGIN)},
-  { 27, -1, -1, sizeof(::Protocol::C_CREATE_CHARACTER)},
-  { 34, -1, -1, sizeof(::Protocol::S_CREATE_CHARACTER)},
-  { 43, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
-  { 50, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
-  { 58, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
-  { 65, -1, -1, sizeof(::Protocol::S_ENTER_GAME)},
-  { 75, -1, -1, sizeof(::Protocol::C_LEAVE_GAME)},
-  { 81, -1, -1, sizeof(::Protocol::S_LEAVE_GAME)},
-  { 88, -1, -1, sizeof(::Protocol::C_MAP_LOAD_COMPLETE)},
-  { 94, 105, -1, sizeof(::Protocol::C_ENTER_MAP)},
-  { 109, -1, -1, sizeof(::Protocol::S_ENTER_MAP)},
-  { 118, -1, -1, sizeof(::Protocol::C_ENTER_ROOM)},
-  { 128, 138, -1, sizeof(::Protocol::S_ENTER_ROOM)},
-  { 142, -1, -1, sizeof(::Protocol::S_SPAWN)},
-  { 149, -1, -1, sizeof(::Protocol::S_DESPAWN)},
-  { 156, -1, -1, sizeof(::Protocol::C_MOVE)},
-  { 163, -1, -1, sizeof(::Protocol::S_MOVE)},
-  { 170, -1, -1, sizeof(::Protocol::C_NORMAL_ATTACK)},
-  { 178, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
-  { 187, 196, -1, sizeof(::Protocol::S_HIT)},
-  { 199, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
-  { 207, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
-  { 216, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
-  { 224, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
-  { 233, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
-  { 240, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
-  { 252, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
-  { 259, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
-  { 271, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
-  { 278, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
-  { 288, -1, -1, sizeof(::Protocol::S_DIE)},
-  { 295, -1, -1, sizeof(::Protocol::S_REWARD_RESULT)},
-  { 307, -1, -1, sizeof(::Protocol::C_RESPAWN)},
-  { 319, -1, -1, sizeof(::Protocol::S_RESPAWN)},
-  { 332, -1, -1, sizeof(::Protocol::C_CHAT)},
-  { 339, -1, -1, sizeof(::Protocol::S_CHAT)},
+  { 28, -1, -1, sizeof(::Protocol::C_CREATE_CHARACTER)},
+  { 35, -1, -1, sizeof(::Protocol::S_CREATE_CHARACTER)},
+  { 44, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
+  { 51, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
+  { 59, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
+  { 66, -1, -1, sizeof(::Protocol::S_ENTER_GAME)},
+  { 76, -1, -1, sizeof(::Protocol::C_LEAVE_GAME)},
+  { 82, -1, -1, sizeof(::Protocol::S_LEAVE_GAME)},
+  { 89, -1, -1, sizeof(::Protocol::C_MAP_LOAD_COMPLETE)},
+  { 95, 106, -1, sizeof(::Protocol::C_ENTER_MAP)},
+  { 110, -1, -1, sizeof(::Protocol::S_ENTER_MAP)},
+  { 119, -1, -1, sizeof(::Protocol::C_ENTER_ROOM)},
+  { 129, 139, -1, sizeof(::Protocol::S_ENTER_ROOM)},
+  { 143, -1, -1, sizeof(::Protocol::S_SPAWN)},
+  { 150, -1, -1, sizeof(::Protocol::S_DESPAWN)},
+  { 157, -1, -1, sizeof(::Protocol::C_MOVE)},
+  { 164, -1, -1, sizeof(::Protocol::S_MOVE)},
+  { 171, -1, -1, sizeof(::Protocol::C_NORMAL_ATTACK)},
+  { 179, -1, -1, sizeof(::Protocol::S_NORMAL_ATTACK)},
+  { 188, 197, -1, sizeof(::Protocol::S_HIT)},
+  { 200, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
+  { 208, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
+  { 217, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
+  { 225, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
+  { 234, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
+  { 241, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
+  { 253, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
+  { 260, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
+  { 272, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
+  { 279, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
+  { 289, -1, -1, sizeof(::Protocol::S_DIE)},
+  { 296, -1, -1, sizeof(::Protocol::S_REWARD_RESULT)},
+  { 308, -1, -1, sizeof(::Protocol::C_RESPAWN)},
+  { 320, -1, -1, sizeof(::Protocol::S_RESPAWN)},
+  { 333, -1, -1, sizeof(::Protocol::C_CHAT)},
+  { 340, -1, -1, sizeof(::Protocol::S_CHAT)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -1035,82 +1037,83 @@ static const ::_pb::Message* const file_default_instances[] = {
 const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\016Protocol.proto\022\010Protocol\032\nEnum.proto\032\014"
   "Struct.proto\"\010\n\006C_PING\"\010\n\006S_PONG\"\037\n\007C_LO"
-  "GIN\022\024\n\014access_token\030\001 \001(\t\"K\n\007S_LOGIN\022\017\n\007"
+  "GIN\022\024\n\014access_token\030\001 \001(\t\"i\n\007S_LOGIN\022\017\n\007"
   "success\030\001 \001(\010\022/\n\ncharacters\030\002 \003(\0132\033.Prot"
-  "ocol.CharacterOverview\"D\n\022C_CREATE_CHARA"
-  "CTER\022.\n\tcharacter\030\001 \001(\0132\033.Protocol.Chara"
-  "cterOverview\"J\n\022S_CREATE_CHARACTER\022\017\n\007su"
-  "ccess\030\001 \001(\010\022\r\n\005cause\030\002 \001(\t\022\024\n\014character_"
-  "id\030\003 \001(\003\"*\n\022C_DELETE_CHARACTER\022\024\n\014charac"
-  "ter_id\030\001 \001(\003\";\n\022S_DELETE_CHARACTER\022\017\n\007su"
-  "ccess\030\001 \001(\010\022\024\n\014character_id\030\002 \001(\003\"$\n\014C_E"
-  "NTER_GAME\022\024\n\014character_id\030\001 \001(\003\"\226\001\n\014S_EN"
-  "TER_GAME\022\017\n\007success\030\001 \001(\010\022$\n\006player\030\002 \001("
-  "\0132\024.Protocol.EntityInfo\022%\n\tstat_info\030\003 \001"
-  "(\0132\022.Protocol.StatInfo\022(\n\npossession\030\004 \001"
-  "(\0132\024.Protocol.Possession\"\016\n\014C_LEAVE_GAME"
-  "\"5\n\014S_LEAVE_GAME\022%\n\006reason\030\001 \001(\0162\025.Proto"
-  "col.LeaveReason\"\025\n\023C_MAP_LOAD_COMPLETE\"\202"
-  "\001\n\013C_ENTER_MAP\022\016\n\006map_id\030\001 \001(\005\022$\n\004info\030\002"
-  " \001(\0132\021.Protocol.PosInfoH\001\210\001\001\022\023\n\tportal_i"
-  "d\030\003 \001(\005H\000\022\021\n\007room_id\030\004 \001(\005H\000B\014\n\nenter_da"
-  "taB\007\n\005_info\"\?\n\013S_ENTER_MAP\022\017\n\007success\030\001 "
-  "\001(\010\022\016\n\006map_id\030\002 \001(\005\022\017\n\007room_id\030\003 \001(\005\"m\n\014"
-  "C_ENTER_ROOM\022\'\n\nenter_type\030\001 \001(\0162\023.Proto"
-  "col.EnterType\022\021\n\007room_id\030\002 \001(\005H\000\022\023\n\tport"
-  "al_id\030\003 \001(\005H\000B\014\n\nenter_data\"\222\001\n\014S_ENTER_"
-  "ROOM\022\017\n\007success\030\001 \001(\010\022\'\n\nenter_type\030\002 \001("
-  "\0162\023.Protocol.EnterType\022\017\n\007room_id\030\003 \001(\005\022"
-  ")\n\tenter_pos\030\004 \001(\0132\021.Protocol.PosInfoH\000\210"
-  "\001\001B\014\n\n_enter_pos\"1\n\007S_SPAWN\022&\n\010entities\030"
-  "\001 \003(\0132\024.Protocol.EntityInfo\"\037\n\tS_DESPAWN"
-  "\022\022\n\nentity_ids\030\001 \003(\003\")\n\006C_MOVE\022\037\n\004info\030\001"
-  " \001(\0132\021.Protocol.PosInfo\")\n\006S_MOVE\022\037\n\004inf"
-  "o\030\001 \003(\0132\021.Protocol.PosInfo\"-\n\017C_NORMAL_A"
-  "TTACK\022\r\n\005combo\030\001 \001(\005\022\013\n\003yaw\030\002 \001(\002\"@\n\017S_N"
-  "ORMAL_ATTACK\022\021\n\tentity_id\030\001 \001(\003\022\r\n\005combo"
-  "\030\002 \001(\005\022\013\n\003yaw\030\003 \001(\002\"R\n\005S_HIT\022\021\n\tentity_i"
-  "d\030\001 \001(\003\022\016\n\006damage\030\002 \001(\003\022\027\n\nupdated_hp\030\003 "
-  "\001(\003H\000\210\001\001B\r\n\013_updated_hp\"0\n\nC_BUY_ITEM\022\023\n"
-  "\013template_id\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"R\n\nS_B"
-  "UY_ITEM\022\017\n\007success\030\001 \001(\010\022%\n\rupdated_slot"
-  "s\030\002 \003(\0132\016.Protocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n"
-  "\013C_SELL_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Sl"
-  "ot\022\r\n\005count\030\002 \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007succ"
-  "ess\030\001 \001(\010\022$\n\014updated_slot\030\002 \001(\0132\016.Protoc"
-  "ol.Slot\022\014\n\004gold\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n"
-  "\004slot\030\001 \001(\0132\016.Protocol.Slot\"\245\001\n\014S_EQUIP_"
-  "GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003"
-  "\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id\030\004 \001(\005\022%"
-  "\n\rupdated_slots\030\005 \003(\0132\016.Protocol.Slot\022$\n"
-  "\014updated_stat\030\006 \003(\0132\016.Protocol.Stat\".\n\016C"
-  "_UNEQUIP_GEAR\022\034\n\004slot\030\001 \001(\0132\016.Protocol.S"
-  "lot\"\247\001\n\016S_UNEQUIP_GEAR\022\017\n\007success\030\001 \001(\010\022"
-  "\021\n\tentity_id\030\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013t"
-  "emplate_id\030\004 \001(\005\022%\n\rupdated_slots\030\005 \003(\0132"
-  "\016.Protocol.Slot\022$\n\014updated_stat\030\006 \003(\0132\016."
-  "Protocol.Stat\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001("
-  "\0132\016.Protocol.Slot\"}\n\nS_USE_ITEM\022\017\n\007succe"
-  "ss\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003\022%\n\rupdated_s"
-  "lots\030\003 \003(\0132\016.Protocol.Slot\022$\n\014updated_st"
-  "at\030\004 \003(\0132\016.Protocol.Stat\"\032\n\005S_DIE\022\021\n\tent"
-  "ity_id\030\001 \001(\003\"\310\001\n\017S_REWARD_RESULT\022\"\n\004type"
-  "\030\001 \001(\0162\024.Protocol.RewardType\022 \n\006reward\030\002"
-  " \001(\0132\020.Protocol.Reward\022\023\n\013updated_exp\030\003 "
-  "\001(\003\022\024\n\014updated_gold\030\004 \001(\003\022\023\n\013is_level_up"
-  "\030\005 \001(\010\022/\n\020level_up_details\030\006 \001(\0132\025.Proto"
-  "col.LevelUpInfo\"\244\001\n\tC_RESPAWN\022+\n\014respawn"
-  "_type\030\001 \001(\0162\025.Protocol.RespawnType\022\022\n\010it"
-  "em_uid\030\002 \001(\003H\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022"
-  "\032\n\020target_player_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005"
-  " \001(\005H\000B\016\n\014respawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007"
-  "success\030\001 \001(\010\022\025\n\rerror_message\030\002 \001(\t\022+\n\014"
-  "respawn_type\030\003 \001(\0162\025.Protocol.RespawnTyp"
-  "e\022\021\n\tentity_id\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n"
-  "\010pos_info\030\006 \001(\0132\021.Protocol.PosInfo\022$\n\014up"
-  "dated_stat\030\007 \003(\0132\016.Protocol.Stat\"\025\n\006C_CH"
-  "AT\022\013\n\003msg\030\001 \001(\t\"(\n\006S_CHAT\022\021\n\tentity_id\030\001"
-  " \001(\003\022\013\n\003msg\030\002 \001(\tb\006proto3"
+  "ocol.CharacterOverview\022\034\n\024character_slot"
+  "_count\030\003 \001(\005\"D\n\022C_CREATE_CHARACTER\022.\n\tch"
+  "aracter\030\001 \001(\0132\033.Protocol.CharacterOvervi"
+  "ew\"J\n\022S_CREATE_CHARACTER\022\017\n\007success\030\001 \001("
+  "\010\022\r\n\005cause\030\002 \001(\t\022\024\n\014character_id\030\003 \001(\003\"*"
+  "\n\022C_DELETE_CHARACTER\022\024\n\014character_id\030\001 \001"
+  "(\003\";\n\022S_DELETE_CHARACTER\022\017\n\007success\030\001 \001("
+  "\010\022\024\n\014character_id\030\002 \001(\003\"$\n\014C_ENTER_GAME\022"
+  "\024\n\014character_id\030\001 \001(\003\"\226\001\n\014S_ENTER_GAME\022\017"
+  "\n\007success\030\001 \001(\010\022$\n\006player\030\002 \001(\0132\024.Protoc"
+  "ol.EntityInfo\022%\n\tstat_info\030\003 \001(\0132\022.Proto"
+  "col.StatInfo\022(\n\npossession\030\004 \001(\0132\024.Proto"
+  "col.Possession\"\016\n\014C_LEAVE_GAME\"5\n\014S_LEAV"
+  "E_GAME\022%\n\006reason\030\001 \001(\0162\025.Protocol.LeaveR"
+  "eason\"\025\n\023C_MAP_LOAD_COMPLETE\"\202\001\n\013C_ENTER"
+  "_MAP\022\016\n\006map_id\030\001 \001(\005\022$\n\004info\030\002 \001(\0132\021.Pro"
+  "tocol.PosInfoH\001\210\001\001\022\023\n\tportal_id\030\003 \001(\005H\000\022"
+  "\021\n\007room_id\030\004 \001(\005H\000B\014\n\nenter_dataB\007\n\005_inf"
+  "o\"\?\n\013S_ENTER_MAP\022\017\n\007success\030\001 \001(\010\022\016\n\006map"
+  "_id\030\002 \001(\005\022\017\n\007room_id\030\003 \001(\005\"m\n\014C_ENTER_RO"
+  "OM\022\'\n\nenter_type\030\001 \001(\0162\023.Protocol.EnterT"
+  "ype\022\021\n\007room_id\030\002 \001(\005H\000\022\023\n\tportal_id\030\003 \001("
+  "\005H\000B\014\n\nenter_data\"\222\001\n\014S_ENTER_ROOM\022\017\n\007su"
+  "ccess\030\001 \001(\010\022\'\n\nenter_type\030\002 \001(\0162\023.Protoc"
+  "ol.EnterType\022\017\n\007room_id\030\003 \001(\005\022)\n\tenter_p"
+  "os\030\004 \001(\0132\021.Protocol.PosInfoH\000\210\001\001B\014\n\n_ent"
+  "er_pos\"1\n\007S_SPAWN\022&\n\010entities\030\001 \003(\0132\024.Pr"
+  "otocol.EntityInfo\"\037\n\tS_DESPAWN\022\022\n\nentity"
+  "_ids\030\001 \003(\003\")\n\006C_MOVE\022\037\n\004info\030\001 \001(\0132\021.Pro"
+  "tocol.PosInfo\")\n\006S_MOVE\022\037\n\004info\030\001 \003(\0132\021."
+  "Protocol.PosInfo\"-\n\017C_NORMAL_ATTACK\022\r\n\005c"
+  "ombo\030\001 \001(\005\022\013\n\003yaw\030\002 \001(\002\"@\n\017S_NORMAL_ATTA"
+  "CK\022\021\n\tentity_id\030\001 \001(\003\022\r\n\005combo\030\002 \001(\005\022\013\n\003"
+  "yaw\030\003 \001(\002\"R\n\005S_HIT\022\021\n\tentity_id\030\001 \001(\003\022\016\n"
+  "\006damage\030\002 \001(\003\022\027\n\nupdated_hp\030\003 \001(\003H\000\210\001\001B\r"
+  "\n\013_updated_hp\"0\n\nC_BUY_ITEM\022\023\n\013template_"
+  "id\030\001 \001(\005\022\r\n\005count\030\002 \001(\005\"R\n\nS_BUY_ITEM\022\017\n"
+  "\007success\030\001 \001(\010\022%\n\rupdated_slots\030\002 \003(\0132\016."
+  "Protocol.Slot\022\014\n\004gold\030\003 \001(\003\":\n\013C_SELL_IT"
+  "EM\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\022\r\n\005coun"
+  "t\030\002 \001(\005\"R\n\013S_SELL_ITEM\022\017\n\007success\030\001 \001(\010\022"
+  "$\n\014updated_slot\030\002 \001(\0132\016.Protocol.Slot\022\014\n"
+  "\004gold\030\003 \001(\003\",\n\014C_EQUIP_GEAR\022\034\n\004slot\030\001 \001("
+  "\0132\016.Protocol.Slot\"\245\001\n\014S_EQUIP_GEAR\022\017\n\007su"
+  "ccess\030\001 \001(\010\022\021\n\tentity_id\030\002 \001(\003\022\017\n\007slot_i"
+  "d\030\003 \001(\005\022\023\n\013template_id\030\004 \001(\005\022%\n\rupdated_"
+  "slots\030\005 \003(\0132\016.Protocol.Slot\022$\n\014updated_s"
+  "tat\030\006 \003(\0132\016.Protocol.Stat\".\n\016C_UNEQUIP_G"
+  "EAR\022\034\n\004slot\030\001 \001(\0132\016.Protocol.Slot\"\247\001\n\016S_"
+  "UNEQUIP_GEAR\022\017\n\007success\030\001 \001(\010\022\021\n\tentity_"
+  "id\030\002 \001(\003\022\017\n\007slot_id\030\003 \001(\005\022\023\n\013template_id"
+  "\030\004 \001(\005\022%\n\rupdated_slots\030\005 \003(\0132\016.Protocol"
+  ".Slot\022$\n\014updated_stat\030\006 \003(\0132\016.Protocol.S"
+  "tat\"*\n\nC_USE_ITEM\022\034\n\004slot\030\001 \001(\0132\016.Protoc"
+  "ol.Slot\"}\n\nS_USE_ITEM\022\017\n\007success\030\001 \001(\010\022\021"
+  "\n\tentity_id\030\002 \001(\003\022%\n\rupdated_slots\030\003 \003(\013"
+  "2\016.Protocol.Slot\022$\n\014updated_stat\030\004 \003(\0132\016"
+  ".Protocol.Stat\"\032\n\005S_DIE\022\021\n\tentity_id\030\001 \001"
+  "(\003\"\310\001\n\017S_REWARD_RESULT\022\"\n\004type\030\001 \001(\0162\024.P"
+  "rotocol.RewardType\022 \n\006reward\030\002 \001(\0132\020.Pro"
+  "tocol.Reward\022\023\n\013updated_exp\030\003 \001(\003\022\024\n\014upd"
+  "ated_gold\030\004 \001(\003\022\023\n\013is_level_up\030\005 \001(\010\022/\n\020"
+  "level_up_details\030\006 \001(\0132\025.Protocol.LevelU"
+  "pInfo\"\244\001\n\tC_RESPAWN\022+\n\014respawn_type\030\001 \001("
+  "\0162\025.Protocol.RespawnType\022\022\n\010item_uid\030\002 \001"
+  "(\003H\000\022\027\n\rcheckpoint_id\030\003 \001(\005H\000\022\032\n\020target_"
+  "player_id\030\004 \001(\003H\000\022\021\n\007town_id\030\005 \001(\005H\000B\016\n\014"
+  "respawn_data\"\317\001\n\tS_RESPAWN\022\017\n\007success\030\001 "
+  "\001(\010\022\025\n\rerror_message\030\002 \001(\t\022+\n\014respawn_ty"
+  "pe\030\003 \001(\0162\025.Protocol.RespawnType\022\021\n\tentit"
+  "y_id\030\004 \001(\003\022\017\n\007room_id\030\005 \001(\005\022#\n\010pos_info\030"
+  "\006 \001(\0132\021.Protocol.PosInfo\022$\n\014updated_stat"
+  "\030\007 \003(\0132\016.Protocol.Stat\"\025\n\006C_CHAT\022\013\n\003msg\030"
+  "\001 \001(\t\"(\n\006S_CHAT\022\021\n\tentity_id\030\001 \001(\003\022\013\n\003ms"
+  "g\030\002 \001(\tb\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -1118,7 +1121,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_de
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 3105, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 3135, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
     &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 40,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
@@ -1437,10 +1440,13 @@ S_LOGIN::S_LOGIN(const S_LOGIN& from)
   new (&_impl_) Impl_{
       decltype(_impl_.characters_){from._impl_.characters_}
     , decltype(_impl_.success_){}
+    , decltype(_impl_.character_slot_count_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.success_ = from._impl_.success_;
+  ::memcpy(&_impl_.success_, &from._impl_.success_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.character_slot_count_) -
+    reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.character_slot_count_));
   // @@protoc_insertion_point(copy_constructor:Protocol.S_LOGIN)
 }
 
@@ -1451,6 +1457,7 @@ inline void S_LOGIN::SharedCtor(
   new (&_impl_) Impl_{
       decltype(_impl_.characters_){arena}
     , decltype(_impl_.success_){false}
+    , decltype(_impl_.character_slot_count_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -1480,7 +1487,9 @@ void S_LOGIN::Clear() {
   (void) cached_has_bits;
 
   _impl_.characters_.Clear();
-  _impl_.success_ = false;
+  ::memset(&_impl_.success_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.character_slot_count_) -
+      reinterpret_cast<char*>(&_impl_.success_)) + sizeof(_impl_.character_slot_count_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1508,6 +1517,14 @@ const char* S_LOGIN::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) 
             CHK_(ptr);
             if (!ctx->DataAvailable(ptr)) break;
           } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 character_slot_count = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _impl_.character_slot_count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
@@ -1554,6 +1571,12 @@ uint8_t* S_LOGIN::_InternalSerialize(
         InternalWriteMessage(2, repfield, repfield.GetCachedSize(), target, stream);
   }
 
+  // int32 character_slot_count = 3;
+  if (this->_internal_character_slot_count() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_character_slot_count(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1582,6 +1605,11 @@ size_t S_LOGIN::ByteSizeLong() const {
     total_size += 1 + 1;
   }
 
+  // int32 character_slot_count = 3;
+  if (this->_internal_character_slot_count() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_character_slot_count());
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -1604,6 +1632,9 @@ void S_LOGIN::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOB
   if (from._internal_success() != 0) {
     _this->_internal_set_success(from._internal_success());
   }
+  if (from._internal_character_slot_count() != 0) {
+    _this->_internal_set_character_slot_count(from._internal_character_slot_count());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -1622,7 +1653,12 @@ void S_LOGIN::InternalSwap(S_LOGIN* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   _impl_.characters_.InternalSwap(&other->_impl_.characters_);
-  swap(_impl_.success_, other->_impl_.success_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(S_LOGIN, _impl_.character_slot_count_)
+      + sizeof(S_LOGIN::_impl_.character_slot_count_)
+      - PROTOBUF_FIELD_OFFSET(S_LOGIN, _impl_.success_)>(
+          reinterpret_cast<char*>(&_impl_.success_),
+          reinterpret_cast<char*>(&other->_impl_.success_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_LOGIN::GetMetadata() const {
