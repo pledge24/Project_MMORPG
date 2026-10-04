@@ -111,9 +111,10 @@ private:
     Json _roomData;
     bool _isValid = false;
 
+    // 언리얼 좌표를 따른다. depth가 x 방향, width가 y 방향의 반폭이다.
     vector3D _roomCenterPos;
+    float _depthHalfExtent;
     float _widthHalfExtent;
-    float _heightHalfExtent;
 
     float _roomMinX;
     float _roomMaxX;

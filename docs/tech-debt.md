@@ -96,32 +96,34 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 **버그 발생 가능성 증가** — 클라이언트 하나가 `size` 0인 헤더를 보내면 서버의 IOCP 스레드 하나가
 무한 루프에 빠진다. 클라이언트 쪽은 서버가 보낸 값이라 위험이 낮다.
 
-## 캐릭터 수 한도가 클라이언트에만 있다
+## 캐릭터 슬롯 수를 서버 상수와 로그인 메뉴의 위젯 수로 따로 정한다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` (`CreateCharacter`) · `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`OnCreateButtonClicked`)
-> 등록일: 2026년 10월 1일 · 위치 갱신: 2026년 10월 3일 (#131)
+> 위치: `Server/GameServer/Game/Entities/CharacterCreation.h` 16줄 (`DEFAULT_CHARACTER_SLOT_COUNT`) · `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`OnCreateButtonClicked`)
+> 등록일: 2026년 10월 4일
 
-계정당 캐릭터 수는 로그인 메뉴 위젯이 캐릭터 목록 길이를 슬롯 수와 비교해 막을 뿐이다. 게임 서버의 생성 요청은
-한도를 보지 않는다. 한도 값이 `WBP_LoginMenu` 디자이너에 놓인 슬롯 수에만 있어서 서버가 참조할 원천도 없다.
-코드와 BP 그래프를 읽고 판단했다. #131이 비교를 BP 그래프에서 C++로 옮겼다.
+서버는 생성 요청을 `DEFAULT_CHARACTER_SLOT_COUNT`(4)로 막고, 클라이언트는 `WBP_LoginMenu` 디자이너에 놓인
+슬롯 위젯 수로 막는다. 두 값을 맞춰야 한다는 사실은 양쪽 주석에만 있고, 어긋나도 빌드나 테스트가 알려 주지 않는다.
+서버가 슬롯 수를 패킷으로 내려 주는 방식은 프로토콜을 바꿔야 해서 「캐릭터 수 한도가 클라이언트에만 있다」를
+고칠 때 범위에서 뺐다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 조작한 클라이언트는 캐릭터를 한도 없이 만들 수 있다. 로그인 목록이 슬롯 수보다
-길면 넘친 캐릭터는 화면에 나오지 않는다.
+**버그 발생 가능성 증가** — 서버 값만 늘리면 넘친 캐릭터가 로그인 화면에 나오지 않고, 위젯만 늘리면 빈 슬롯이
+보이는데도 서버가 생성을 거절한다.
 
-## 룸의 X·Y 범위가 반폭을 뒤바꿔 쓴다
+## 캐릭터 생성 쿼리의 거절 표시를 SQL과 C++가 따로 적는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` (`CacheRoomData`)
-> 등록일: 2026년 10월 1일
+> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` 103~104줄, 190줄, 218줄, 247줄 (`CreateCharacter`)
+> 등록일: 2026년 10월 4일
 
-`CacheRoomData`는 룸의 X 범위를 `heightHalfExtent`로, Y 범위를 `widthHalfExtent`로 계산한다. 지금 맵 데이터는
-두 값이 같아서 드러나지 않는다. 고치려면 기획이 width를 어느 축으로 의도했는지 확인하고, 클라이언트 레벨의 경계
-벽과도 맞춰 봐야 한다. 코드를 읽고 판단했다.
+생성 쿼리는 거절할 때 `character_id` 자리에 `-1`(이름 중복)이나 `-2`(빈 슬롯 없음)를 리터럴로 돌려준다. C++는
+같은 값을 `DUPLICATE_NAME`과 `NO_EMPTY_SLOT` 상수로 따로 적는다. 화면에 사유를 보여 줄 오류도 catch 블록이
+`ALREADY_EXISTING_CHARACTER || NO_EMPTY_CHARACTER_SLOT`처럼 하나씩 나열한다. 「캐릭터 수 한도가 클라이언트에만 있다」를 고친 작업의 코드 리뷰에서 찾았다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 가로세로가 다른 룸을 만들면 몬스터 스폰과 배회, 셀 행렬의 범위가 실제 룸과 어긋난다.
+**동일한 문제의 반복** — 거절 사유를 더할 때마다 SQL 리터럴, C++ 상수, catch 조건 세 곳을 함께 고쳐야 하고,
+한 곳을 빠뜨리면 사유가 「서버 내부 오류」로 바뀌어 보인다.
 
 ## 아이템 기획 원본의 분류 열 이름이 한 단계씩 밀려 있다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · protocol

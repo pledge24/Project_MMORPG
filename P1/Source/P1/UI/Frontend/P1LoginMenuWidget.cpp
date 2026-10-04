@@ -208,6 +208,7 @@ void UP1LoginMenuWidget::SendEnterGamePkt()
 
 void UP1LoginMenuWidget::OnCreateButtonClicked()
 {
+    // 서버도 생성 요청을 CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT로 막는다. 디자이너의 슬롯 수와 그 값을 손으로 맞춘다.
     const int32 CharacterCount = CharacterOverviews.Num();
     const int32 SlotCount = CharacterSlots.Num();
 
