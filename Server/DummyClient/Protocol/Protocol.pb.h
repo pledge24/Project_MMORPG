@@ -727,6 +727,7 @@ class S_LOGIN final :
   enum : int {
     kCharactersFieldNumber = 2,
     kSuccessFieldNumber = 1,
+    kCharacterSlotCountFieldNumber = 3,
   };
   // repeated .Protocol.CharacterOverview characters = 2;
   int characters_size() const;
@@ -755,6 +756,15 @@ class S_LOGIN final :
   void _internal_set_success(bool value);
   public:
 
+  // int32 character_slot_count = 3;
+  void clear_character_slot_count();
+  int32_t character_slot_count() const;
+  void set_character_slot_count(int32_t value);
+  private:
+  int32_t _internal_character_slot_count() const;
+  void _internal_set_character_slot_count(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:Protocol.S_LOGIN)
  private:
   class _Internal;
@@ -765,6 +775,7 @@ class S_LOGIN final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::CharacterOverview > characters_;
     bool success_;
+    int32_t character_slot_count_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -7141,6 +7152,26 @@ inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::CharacterOve
 S_LOGIN::characters() const {
   // @@protoc_insertion_point(field_list:Protocol.S_LOGIN.characters)
   return _impl_.characters_;
+}
+
+// int32 character_slot_count = 3;
+inline void S_LOGIN::clear_character_slot_count() {
+  _impl_.character_slot_count_ = 0;
+}
+inline int32_t S_LOGIN::_internal_character_slot_count() const {
+  return _impl_.character_slot_count_;
+}
+inline int32_t S_LOGIN::character_slot_count() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_LOGIN.character_slot_count)
+  return _internal_character_slot_count();
+}
+inline void S_LOGIN::_internal_set_character_slot_count(int32_t value) {
+  
+  _impl_.character_slot_count_ = value;
+}
+inline void S_LOGIN::set_character_slot_count(int32_t value) {
+  _internal_set_character_slot_count(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_LOGIN.character_slot_count)
 }
 
 // -------------------------------------------------------------------

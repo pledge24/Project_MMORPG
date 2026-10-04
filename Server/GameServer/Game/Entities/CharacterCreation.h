@@ -12,7 +12,7 @@ namespace CharacterCreation
     constexpr int32 MAX_NAME_LENGTH = 50;
 
     // 모든 계정이 처음부터 갖는 캐릭터 슬롯 수다. 계정마다 슬롯을 늘리게 되면 이 값은 그 기본값이 된다.
-    // 클라이언트의 WBP_LoginMenu에 놓인 슬롯 위젯 수와 손으로 맞춘다.
+    // 클라이언트는 캐릭터 목록 응답(S_LOGIN)의 character_slot_count로 이 값을 받는다.
     constexpr int32 DEFAULT_CHARACTER_SLOT_COUNT = 4;
 
     // 통과하면 nullopt, 거절하면 화면에 보일 사유를 돌려준다.

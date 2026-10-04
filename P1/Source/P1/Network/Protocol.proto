@@ -23,6 +23,7 @@ message S_LOGIN
 {
 	bool success = 1;
 	repeated CharacterOverview characters = 2; // 캐릭터 아이디 발급 전
+	int32 character_slot_count = 3; // 계정이 가질 수 있는 캐릭터 수. 서버의 생성 한도와 같다
 }
 
 message C_CREATE_CHARACTER

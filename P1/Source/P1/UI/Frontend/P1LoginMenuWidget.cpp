@@ -141,7 +141,31 @@ void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
         CharacterOverviews.Add(CharacterOverview);
     }
 
+    ApplyCharacterSlotCount(pkt.character_slot_count());
     DisplayCharacterOverviews();
+}
+
+void UP1LoginMenuWidget::ApplyCharacterSlotCount(int32 SlotCount)
+{
+    CharacterSlotCount = SlotCount;
+
+    // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 생성도 보이는 슬롯 수까지만 허용한다.
+    if (CharacterSlots.Num() < CharacterSlotCount)
+    {
+        UE_LOG(LogP1UI, Warning, TEXT("슬롯 위젯이 서버의 슬롯 수보다 적습니다. 위젯 수: %d, 서버 슬롯 수: %d"), CharacterSlots.Num(), CharacterSlotCount);
+    }
+
+    for (int32 i = 0; i < CharacterSlots.Num(); i++)
+        CharacterSlots[i]->SetVisibility(i < CharacterSlotCount ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+
+    // 숨긴 슬롯을 고른 채로 남기지 않는다.
+    if (SelectedSlotIndex >= GetUsableSlotCount())
+        SelectSlot(-1);
+}
+
+int32 UP1LoginMenuWidget::GetUsableSlotCount() const
+{
+    return FMath::Min(CharacterSlotCount, CharacterSlots.Num());
 }
 
 void UP1LoginMenuWidget::DisplayCharacterOverviews()
@@ -149,8 +173,8 @@ void UP1LoginMenuWidget::DisplayCharacterOverviews()
     for (UP1CharacterSlotWidget* CharacterSlot : CharacterSlots)
         CharacterSlot->Clear();
 
-    // 슬롯보다 많은 캐릭터는 보이지 않는다.
-    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), CharacterSlots.Num());
+    // 보이는 슬롯보다 많은 캐릭터는 보이지 않는다.
+    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), GetUsableSlotCount());
     for (int32 i = 0; i < VisibleCount; i++)
         CharacterSlots[i]->ShowCharacter(CharacterOverviews[i]);
 
@@ -208,11 +232,8 @@ void UP1LoginMenuWidget::SendEnterGamePkt()
 
 void UP1LoginMenuWidget::OnCreateButtonClicked()
 {
-    // 서버도 생성 요청을 CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT로 막는다. 디자이너의 슬롯 수와 그 값을 손으로 맞춘다.
-    const int32 CharacterCount = CharacterOverviews.Num();
-    const int32 SlotCount = CharacterSlots.Num();
-
-    if (CharacterCount >= SlotCount)
+    // 서버도 생성 요청을 같은 슬롯 수로 막는다. 여기서 먼저 막는 것은 생성 화면을 열지 않기 위해서다.
+    if (CharacterOverviews.Num() >= GetUsableSlotCount())
     {
         ShowDescription(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
         return;

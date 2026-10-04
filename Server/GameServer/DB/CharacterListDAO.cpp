@@ -75,6 +75,8 @@ void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
             character->set_level(bindObject._level);
         }
 
+        // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. CreateCharacter가 막는 한도와 같은 값이다.
+        pkt.set_character_slot_count(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT);
         pkt.set_success(true);
     }
     catch (DBCustomError dbError)

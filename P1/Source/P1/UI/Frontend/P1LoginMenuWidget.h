@@ -89,6 +89,12 @@ private:
 private:
     void FetchCharacterOverviews(const Protocol::S_LOGIN& pkt);
 
+    /** 서버가 보낸 슬롯 수만큼 슬롯 위젯을 보이고 나머지는 숨긴다. */
+    void ApplyCharacterSlotCount(int32 SlotCount);
+
+    /** 보이는 슬롯 수다. 서버가 보낸 슬롯 수와 디자이너에 놓인 슬롯 위젯 수 중 작은 값이다. */
+    int32 GetUsableSlotCount() const;
+
     /** 슬롯을 모두 비우고 캐릭터 요약을 앞에서부터 채운 뒤 캐릭터 선택 화면으로 넘어간다. */
     void DisplayCharacterOverviews();
 
@@ -140,6 +146,9 @@ private:
     TArray<TObjectPtr<UP1CharacterSlotWidget>> CharacterSlots;
 
     TArray<FP1CharacterOverview> CharacterOverviews;
+
+    /** 계정이 가질 수 있는 캐릭터 수다. 캐릭터 목록을 받기 전에는 0이다. */
+    int32 CharacterSlotCount = 0;
 
     /** 고른 슬롯이 없으면 -1이다. 캐릭터 목록을 다시 그려도 바뀌지 않는다. */
     int32 SelectedSlotIndex = -1;
