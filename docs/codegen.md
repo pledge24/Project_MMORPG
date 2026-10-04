@@ -84,6 +84,23 @@
 장비 데이터는 `Original_Item.xlsx`의 첫 시트에 있다. 세 시트가 하나의 `C_Item.json`으로
 합쳐지므로 장비만 담는 산출물은 없다.
 
+### 클라이언트 데이터 테이블 재임포트
+
+`C_*.json`을 다시 만들면 그 JSON을 소스로 쓰는 데이터 테이블을 다시 임포트한다. 아이템은 `DT_Item`이다.
+**재임포트하기 전까지 클라이언트는 옛 값을 읽는다.** UE 테스트는 데이터 테이블을 읽지 않으므로 이 상태에서도
+통과한다.
+
+1. 에디터의 콘텐츠 브라우저에서 데이터 테이블(`Content/P1/Data/DataTables/DT_Item`)을 우클릭해 Reimport를 실행한다.
+2. 테이블을 열어 바뀐 열의 값을 확인하고 저장한다.
+3. `.uasset`이 `C_*.json`보다 나중에 저장됐는지 수정 시각으로 확인한다.
+
+**사람이 에디터에서 한다.** 언리얼 MCP의 `DataTableTools`에는 재임포트 툴이 없다(2026년 10월 4일 확인).
+`import_file`은 새 에셋을 만드는 툴이고, `set_rows`로 값을 고치면 JSON과 테이블이 따로 바뀌므로 쓰지 않는다.
+재임포트 뒤 값의 확인은 MCP의 `DataTableTools.get_rows`로 할 수 있다.
+
+필드 이름을 바꿀 때는 대소문자만 다른 이름(`ItemSubType` → `ItemSubtype`)이면 기존 값이 그대로 읽힌다.
+언리얼이 속성 이름의 대소문자를 가리지 않기 때문이다.
+
 ### 로딩
 
 서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 이 파일들을 읽어 템플릿 ID를 키로 하는 `nlohmann::json` 기반 `DataTable`에 올린다.

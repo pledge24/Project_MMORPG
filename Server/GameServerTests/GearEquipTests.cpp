@@ -26,7 +26,7 @@ protected:
     void SetUp() override
     {
         Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "weapon";
+        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
         sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
         sword[string(JsonProperty::Item::MaxStack)] = 1;
         sword[string(JsonProperty::Item::PhysicalAttack)] = 10;

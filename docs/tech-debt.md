@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 14개 (높음 1 · 중간 0 · 낮음 13)
+항목 3개 (높음 0 · 중간 0 · 낮음 3)
 
 ## 작성 방법
 
@@ -73,165 +73,6 @@
 
 ---
 
-## 받은 패킷의 길이를 헤더 크기와 비교하지 않는다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · protocol
-> 위치: `Server/ServerCore/Network/Session.cpp` 321~345줄 (`PacketSession::OnRecv`)
-> 등록일: 2026년 10월 2일
-
-헤더의 `size`가 헤더 크기(4)보다 작은지 아무 곳에서도 확인하지 않는다. 같은 결함이 세 곳에 있다.
-
-| 위치 | `size`가 4보다 작을 때 |
-|---|---|
-| 서버 `PacketSession::OnRecv` | `size`가 0이면 `processLen`이 늘지 않아 루프가 끝나지 않는다. 1~3이면 핸들러가 받은 길이를 넘어 헤더를 읽는다 |
-| 클라이언트 `P1RecvWorker::ReceivePacket` (`P1/Source/P1/Network/P1RecvWorker.cpp`) | 음수 `PayloadSize`를 `AddZeroed`에 넘긴다 |
-| 생성된 `HandlePacket` (`Protocol/Templates/PacketHandler.h`) | `len`이 헤더 크기 이상인지 보지 않고 헤더를 읽는다 |
-
-`OnRecv`가 음수를 돌려주면 `ProcessRecv`가 연결을 끊는 규약이 이미 있다. 클라이언트도 `ReceivePacket`이
-false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단했고 실행해서 확인하지는 않았다.
-
-#122에서 찾았다. 그 티켓은 id 범위만 고치기로 했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 클라이언트 하나가 `size` 0인 헤더를 보내면 서버의 IOCP 스레드 하나가
-무한 루프에 빠진다. 클라이언트 쪽은 서버가 보낸 값이라 위험이 낮다.
-
-## 응답 대기 플래그 이름에 `b` 접두사가 없다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/UI/Screens/` (`P1InventoryWidget.h` · `P1ShopWidget.h` · `P1StatusWindowWidget.h`)
-> 등록일: 2026년 10월 3일
-
-인벤토리, 상점, 스탯 창 위젯의 `bool PendingPacket`이 `docs/conventions.md` 2.1의 「bool 변수 `b`」를 따르지
-않는다. `Content`의 에셋 가운데 이 이름을 담은 것은 없으므로, 이름을 바꿔도 리다이렉트는 필요 없다.
-규범 검사(`check_conventions.py`)는 이 규칙을 잡지 않는다.
-
-### 영향
-
-**동일한 문제의 반복** — 새 위젯이 같은 이름으로 대기 플래그를 베껴 쓴다.
-
-## 인벤토리 칸 변경 알림의 `OnUse` 인자를 읽는 곳이 없다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Game/Progress/P1MyPlayerData.h` (`FOnInvenSlotChanged`) · `P1/Source/P1/Game/Inventory/P1Inventory.h` (`Rep_SlotChanged`) · `P1/Source/P1/UI/Screens/P1InventoryWidget.h` (`UpdateSlotWidget`)
-> 등록일: 2026년 10월 3일
-
-`FOnInvenSlotChanged`는 칸과 함께 `bool`을 싣는다. 사용 응답이면 참이다. 재사용 대기를 내 플레이어 데이터가
-아이템마다 세게 되면서, 이 값을 읽던 슬롯의 `OnUse` 호출이 사라졌다. 구독자 둘(`UP1Inventory::Rep_SlotChanged`,
-`UP1InventoryWidget::UpdateSlotWidget`)은 인자를 받기만 하고 읽지 않는다.
-
-### 영향
-
-**유지보수 어려움** — 인자 이름만 보면 사용 여부로 무언가를 하는 것처럼 읽힌다.
-
-## 아이템 데이터 테이블을 가리키는 곳이 둘이다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/UI/Common/P1SlotWidget.h` (`ItemTable`) · `P1/Source/P1/Game/Data/P1GameDataSettings.h` (`ItemTable`)
-> 등록일: 2026년 10월 3일
-
-슬롯 위젯은 블루프린트 기본값으로 지정한 `ItemTable`에서 아이템 정의를 읽고, 내 플레이어 데이터는
-`UP1GameDataSettings`가 `DefaultGame.ini`에서 가리키는 테이블에서 읽는다. 지금은 둘 다 `DT_Item`이다. 템플릿 id로
-행 이름을 만들어 찾는 코드도 두 곳에 있다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 한쪽만 다른 테이블로 바꾸면 슬롯이 보이는 아이템 정보와 재사용 대기 길이가 어긋난다.
-
-## 캐릭터 수 한도가 클라이언트에만 있다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` (`CreateCharacter`) · `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`OnCreateButtonClicked`)
-> 등록일: 2026년 10월 1일 · 위치 갱신: 2026년 10월 3일 (#131)
-
-계정당 캐릭터 수는 로그인 메뉴 위젯이 캐릭터 목록 길이를 슬롯 수와 비교해 막을 뿐이다. 게임 서버의 생성 요청은
-한도를 보지 않는다. 한도 값이 `WBP_LoginMenu` 디자이너에 놓인 슬롯 수에만 있어서 서버가 참조할 원천도 없다.
-코드와 BP 그래프를 읽고 판단했다. #131이 비교를 BP 그래프에서 C++로 옮겼다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 조작한 클라이언트는 캐릭터를 한도 없이 만들 수 있다. 로그인 목록이 슬롯 수보다
-길면 넘친 캐릭터는 화면에 나오지 않는다.
-
-## 룸의 X·Y 범위가 반폭을 뒤바꿔 쓴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` (`CacheRoomData`)
-> 등록일: 2026년 10월 1일
-
-`CacheRoomData`는 룸의 X 범위를 `heightHalfExtent`로, Y 범위를 `widthHalfExtent`로 계산한다. 지금 맵 데이터는
-두 값이 같아서 드러나지 않는다. 고치려면 기획이 width를 어느 축으로 의도했는지 확인하고, 클라이언트 레벨의 경계
-벽과도 맞춰 봐야 한다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 가로세로가 다른 룸을 만들면 몬스터 스폰과 배회, 셀 행렬의 범위가 실제 룸과 어긋난다.
-
-## 쓰이지 않는 레거시 입력 매핑이 남아 있다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
-> 위치: `P1/Config/DefaultInput.ini` (`ActionMappings`, `AxisMappings`)
-> 등록일: 2026년 10월 3일
-
-`Jump` 액션 매핑 2줄과 축 매핑 10줄(`Move Forward / Backward`, `Move Right / Left`, `Turn Right / Left ...`,
-`Look Up / Down ...`)이 남아 있다. 입력은 모두 Enhanced Input(`IMC_Default`, `IMC_InGameUI`)으로 받고,
-이 이름들을 바인딩하는 코드가 없다. 3인칭 템플릿에서 온 것으로 보인다.
-
-#130에서 화면 단축키 매핑 둘을 지우며 찾았다.
-
-### 영향
-
-**유지보수 어려움** — 입력을 고치려는 사람이 이 매핑이 실제로 쓰이는지 따로 확인해야 한다.
-
-## 생성한 캐릭터의 이름을 응답이 온 시점의 입력 칸에서 읽는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`UP1LoginMenuWidget::AddCharacterOverview`)
-> 등록일: 2026년 10월 3일
-
-캐릭터 생성 응답(`S_CREATE_CHARACTER`)이 오면 로그인 메뉴는 목록에 더할 이름을 그 시점의 이름 입력 칸에서
-읽는다. 직업도 그 시점에 고른 값을 쓴다. 요청을 보낸 뒤 응답이 오기 전에 입력을 고치면, 서버에는 보낸 이름과
-직업이 저장되고 목록에는 고친 값이 보인다. 응답 패킷에는 캐릭터 id만 있다. 코드를 읽고 판단했고 실행해서
-확인하지는 않았다.
-
-#131에서 찾았다. 그 티켓은 동작을 바꾸지 않는 이관이라서 고치지 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 다시 로그인해 목록을 받기 전까지 캐릭터 선택 화면에 서버와 다른 이름이나 직업이 보일 수 있다.
-
-## 모르는 직업 값을 받으면 로그인 메뉴가 멈춘다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
-> 위치: `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`ClassEnumToStringMappings`를 읽는 `FetchCharacterOverviews`, `SelectClass`, `AddCharacterOverview`)
-> 등록일: 2026년 10월 3일
-
-직업 값을 직업 이름으로 바꿀 때 `TMap::operator[]`를 쓴다. 이 연산자는 키가 없으면 `check`로 멈춘다. 맵에는
-전사와 마법사만 있으므로, 서버가 캐릭터 목록(`S_LOGIN`)에 `CLASS_TYPE_NONE`이나 새로 더한 직업을 실어 보내면
-클라이언트가 멈춘다. 지금 서버는 생성 요청을 `CharacterCreation::Validate`로 걸러 표에 있는 직업만 저장한다.
-코드를 읽고 판단했다.
-
-#131에서 찾았다. 그 티켓은 동작을 바꾸지 않는 이관이라서 고치지 않았다.
-
-### 영향
-
-**변경 영향 범위 확대** — 서버 데이터에 직업을 더하면 클라이언트의 이 맵도 함께 고치지 않는 한 로그인 화면에서 멈춘다.
-
-## 아이템 기획 원본의 분류 열 이름이 한 단계씩 밀려 있다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · protocol
-> 위치: `DesignData/Original_Item.xlsx` · `P1/Source/P1/Game/Data/P1ItemData.h` · `Server/GameServer/Game/Inventory/Inventory.cpp` (`ToItemType`)
-> 등록일: 2026년 10월 3일
-
-`CONTEXT.md`의 아이템 분류는 세 단계다. 아이템 종류(장비·소모품·기타), 아이템 분류(방어구·무기·소비), 그리고
-장비 부위나 물약 같은 셋째 단계다. 기획 원본과 두 티어의 이름은 이와 한 단계씩 어긋난다.
-
-| 단계 | 기획 원본의 열 | 값 |
-|---|---|---|
-| 아이템 종류 | 없음. 서버가 `ToItemType`으로 분류에서 만든다 | — |
-| 아이템 분류 | `ItemType` | `armor` · `weapon` · `consumption` |
-| 셋째 단계 | `ItemSubtype` | `helmet` · `sword` · `potion` 등 |
-
-클라이언트의 `FP1ItemData::ItemType`도 분류를 담는다. 클라이언트는 아이템 종류를 데이터에서 얻지 못하므로
-슬롯 종류로 가른다. 기획 원본에 종류 열을 더하는 안은 `docs/backlog.md`에 있다.
-
-### 영향
-
-**버그 발생 가능성 증가** — `ItemType`이라는 이름을 보고 아이템 종류로 읽으면, 프로토콜의 `ItemType`
-(`GEAR`·`CONSUMABLE`·`MISCELLANEOUS`)과 값이 맞지 않는다. 블루프린트가 이 문자열을 `Switch on String`으로
-가르던 것이 그 예다.
-
 ## 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/Player.cpp` (`ProcessBuyItem`, `ProcessSellItem`)
@@ -262,31 +103,19 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 
 **버그 발생 가능성 증가** — 조작한 클라이언트는 룸 안 어디서든 포털을 타고, 아무 룸으로나 맵 간 이동을 할 수 있다.
 
-## 밀려난 세션의 저장보다 새 세션의 불러오기가 먼저 끝날 수 있다
+## 저장 대기가 덮지 못하는 틈 두 곳에서 저장 전의 진행을 불러올 수 있다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Main/ServerPacketHandler.cpp` (`Handle_C_LOGIN`, `Handle_C_ENTER_GAME`) · `Server/GameServer/Main/GameSession.cpp`
-> 등록일: 2026년 9월 30일
+> 위치: `Server/GameServer/Main/GameSession.cpp` (`OnDisconnected`, `LeaveGame`) · `Server/GameServer/Main/ServerPacketHandler.cpp` (`Handle_C_ENTER_GAME`)
+> 등록일: 2026년 10월 4일
 
-같은 계정의 새 로그인이 기존 세션을 끊으면, 기존 세션의 저장은 IOCP 완료 → `OnDisconnected` → 룸 잡 →
-`userId` DB 큐 순서로 늦게 들어간다. 새 세션의 `C_ENTER_GAME` 불러오기도 같은 `userId` DB 큐로 가지만,
-끊기 전에 큐에 들어가면 저장 전의 진행을 불러온다. 사람은 캐릭터를 고르는 몇 초가 있어 드러나지 않는다.
-코드를 읽고 판단했고 실행해서 확인하지는 않았다.
+`SaveGate`는 접속 종료 저장이 끝나기 전의 입장 불러오기를 막는다. 다만 아래 두 경우에는 대기 없이 불러온다.
+설계할 때 드물다고 보고 받아들였다. 코드를 읽고 판단했고 실행해서 확인하지는 않았다.
 
-### 영향
-
-**버그 발생 가능성 증가** — 로그인 직후 곧바로 입장하는 클라이언트(DummyClient 등)에서 밀려난 세션의
-마지막 진행이 사라지고, 새 세션이 끊길 때 낡은 진행으로 덮어쓴다.
-
-## 서버가 연결을 끊을 때 보낸 사유 패킷이 버려질 수 있다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 함수 · server
-> 위치: `Server/ServerCore/Network/Session.cpp` (`Disconnect`, `RegisterSend`)
-> 등록일: 2026년 9월 30일
-
-`Session::Disconnect`는 `_connected`를 곧바로 내린다. 다른 송신이 진행 중이라 송신 큐에서 기다리던
-패킷은, 앞선 송신이 끝난 뒤 `RegisterSend`가 연결이 끊긴 것을 보고 버린다. `Handle_C_LOGIN`의
-`KickSession`은 `S_LEAVE_GAME`을 보낸 직후 끊으므로 이 경로를 탈 수 있다. 코드를 읽고 판단했다.
+| 틈 | 무슨 일이 일어나는가 |
+|---|---|
+| 룸 입장 잡이 큐에 있는 동안 끊긴다 | 끊길 때 룸이 없어 `OnDisconnected`는 대기를 걸지 않는다. 그 룸 잡이 돌아 `LeaveGame`이 대기를 걸기 전에 새 세션의 불러오기가 `userId` 큐에 들어가면 먼저 불러온다 |
+| 5초 상한이 지난 뒤 저장이 도착한다 | 상한이 지나면 입장을 거절하고 대기를 지운다. 그 뒤의 입장이 늦게 도착한 저장보다 먼저 불러온다 |
 
 ### 영향
 
-**유지보수 어려움** — 사유를 잃은 클라이언트는 「게임 서버와 연결이 끊겼습니다」만 보여 준다. 중복 로그인으로
-밀려났는지 서버가 내려갔는지 화면으로 구분하지 못한다.
+**버그 발생 가능성 증가** — 밀려나거나 끊긴 세션의 마지막 진행이 사라지고, 새 세션이 끊길 때 낡은 진행으로 덮어쓴다.

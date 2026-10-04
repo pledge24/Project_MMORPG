@@ -10,6 +10,8 @@ atomic<int64> GNextItemUID = 0;
 
 RoomManager* GRoomManager = nullptr;
 
+JobQueueRef GSessionJobQueue = make_shared<JobQueue>();
+
 /*----------------------
      GameServerGlobal
 -----------------------*/

@@ -59,7 +59,7 @@ const Protocol::Slot* UP1Inventory::FindSlot(Protocol::SlotType Type, int32 Slot
     return (*InvenLookup)[SlotId];
 }
 
-void UP1Inventory::Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse)
+void UP1Inventory::Rep_SlotChanged(const Protocol::Slot& Slot_)
 {
     if (InventoryLookupMappings.Contains(Slot_.type()))
     {

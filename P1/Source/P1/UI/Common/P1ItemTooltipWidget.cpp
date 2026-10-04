@@ -3,6 +3,18 @@
 #include "Components/Image.h"
 #include "Components/VerticalBox.h"
 
+// 툴팁에 보일 아이템 종류의 이름이다. 종류를 모르면 빈 문자열이고, 그 줄은 비워 둔다.
+static FString GetItemTypeDisplayName(Protocol::ItemType ItemType)
+{
+    switch (ItemType)
+    {
+    case Protocol::ITEM_TYPE_GEAR:          return TEXT("장비");
+    case Protocol::ITEM_TYPE_CONSUMABLE:    return TEXT("소모품");
+    case Protocol::ITEM_TYPE_MISCELLANEOUS: return TEXT("기타");
+    default:                                return FString();
+    }
+}
+
 void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
 {
     if (Item.TemplateId <= 0)
@@ -33,7 +45,7 @@ void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
     }
 
     int32 ChildIdx = 0;
-    SetItemDetailsToVerticalBox(ChildIdx, TEXT("아이템 타입: "), Item.ItemType);
+    SetItemDetailsToVerticalBox(ChildIdx, TEXT("아이템 종류: "), GetItemTypeDisplayName(Item.GetItemType()));
 
     SetItemStatToVerticalBox(ChildIdx, TEXT("레벨 제한: "), Item.LevelRequirement);
     SetItemStatToVerticalBox(ChildIdx, TEXT("쿨타임: "), Item.Cooldown);

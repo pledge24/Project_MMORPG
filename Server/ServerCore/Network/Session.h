@@ -36,6 +36,10 @@ public:
 							/* 통신 함수(외부 사용) */
 	bool					Connect();								// Only-use Client
 	void					Disconnect(const char* cause);
+	// 이미 송신 큐에 넣은 패킷을 다 보낸 뒤에 끊는다. 이 뒤의 Send는 버린다.
+	// 상대가 받지 않으면 송신이 끝나지 않으므로, 상한이 필요하면 호출자가 Disconnect로 끊는다.
+	// cause는 끊을 때까지 살아 있어야 한다(문자열 리터럴).
+	void					DisconnectAfterSend(const char* cause);
 	void					Send(SendBufferRef sendBuffer);
 
 public:
@@ -84,6 +88,7 @@ private:
 							/* sendEvent 관련 */
 	queue<SendBufferRef>	_sendQueue;
 	atomic<bool>			_sendRegistered = false;
+	const char*				_disconnectAfterSendCause = nullptr; // 락 안에서만 읽고 쓴다
 
 private:
 							/* IocpEvent 재사용 */

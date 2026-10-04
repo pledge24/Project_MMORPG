@@ -33,7 +33,6 @@ namespace JsonProperty
         constexpr std::string_view GearSubtype_Arms = "arms";
         constexpr std::string_view GearSubtype_Boots = "boots";
         constexpr std::string_view GearSubtype_Sword = "sword";
-        constexpr std::string_view GearType_Weapon = "weapon";
 
     }
 
@@ -83,8 +82,8 @@ namespace JsonProperty
         constexpr std::string_view MapType = "mapType";
         constexpr std::string_view HasRespawnPoint = "hasRespawnPoint";
         constexpr std::string_view CenterPos = "centerPos";
+        constexpr std::string_view DepthHalfExtent = "depthHalfExtent";
         constexpr std::string_view WidthHalfExtent = "widthHalfExtent";
-        constexpr std::string_view HeightHalfExtent = "heightHalfExtent";
         constexpr std::string_view RespawnPoint = "respawnPoint";
         constexpr std::string_view PosX = "posX";
         constexpr std::string_view PosY = "posY";

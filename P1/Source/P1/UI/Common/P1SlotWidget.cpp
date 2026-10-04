@@ -6,9 +6,11 @@
 #include "Engine/DataTable.h"
 #include "TimerManager.h"
 #include "Core/P1GameInstance.h"
+#include "Game/Data/P1GameDataSettings.h"
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Inventory/P1ItemCooldown.h"
 #include "Game/Progress/P1MyPlayerData.h"
+#include "Utils/LogCategory.h"
 
 void UP1SlotWidget::NativeConstruct()
 {
@@ -39,10 +41,9 @@ void UP1SlotWidget::NativePreConstruct()
     Super::NativePreConstruct();
 
     // 디자이너 미리보기에서도 돈다. 테이블이나 위젯이 없을 수 있다.
-    if (DisplayTemplateId > 0 && ItemTable)
+    if (DisplayTemplateId > 0)
     {
-        if (const FP1ItemData* Row = ItemTable->FindRow<FP1ItemData>(
-            FName(*FString::FromInt(DisplayTemplateId)), TEXT("UP1SlotWidget::NativePreConstruct"), false))
+        if (const FP1ItemData* Row = UP1GameDataSettings::FindItemData(DisplayTemplateId))
         {
             SetSlot(*Row, 1);
             return;
@@ -127,11 +128,13 @@ void UP1SlotWidget::ClearSlot()
 void UP1SlotWidget::InsertData(const Protocol::Slot& _Slot)
 {
     SlotData.CopyFrom(_Slot);
-    FString TemplateId_Str = FString::FromInt(_Slot.item().template_id());
 
-    if (ItemTable)
+    if (const FP1ItemData* Row = UP1GameDataSettings::FindItemData(_Slot.item().template_id()))
+        ItemData = *Row;
+    else
     {
-        ItemData = *ItemTable->FindRow<FP1ItemData>(FName(*TemplateId_Str), FString("UP1SlotWidget::InsertData"));
+        UE_LOG(LogP1UI, Warning, TEXT("아이템 정의가 없는 템플릿 id: %d"), _Slot.item().template_id());
+        ItemData = FP1ItemData();
     }
 
     ApplyIcon(_Slot.item().template_id());

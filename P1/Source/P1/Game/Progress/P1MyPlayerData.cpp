@@ -180,7 +180,7 @@ void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
     for (const Protocol::Slot& UpdatedSlot : BuyItemPkt.updated_slots())
     {
-        OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
+        OnInvenSlotChanged.Broadcast(UpdatedSlot);
     }
     ApplyGold(BuyItemPkt.gold());
 }
@@ -191,7 +191,7 @@ void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
     if (SellItemPkt.success() == false)
         return;
 
-    OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot(), false);
+    OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot());
     ApplyGold(SellItemPkt.gold());
 }
 
@@ -215,7 +215,7 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 
     for (const Protocol::Slot& UpdatedSlot : UseItemPkt.updated_slots())
     {
-        OnInvenSlotChanged.Broadcast(UpdatedSlot, true);
+        OnInvenSlotChanged.Broadcast(UpdatedSlot);
     }
     ApplyStats(UseItemPkt.updated_stat());
 
@@ -284,7 +284,7 @@ void UP1MyPlayerData::ApplyGearSlots(const google::protobuf::RepeatedPtrField<Pr
         case Protocol::SLOT_TYPE_INVENTORY_GEAR:
         case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
         case Protocol::SLOT_TYPE_INVENTORY_MISC:
-            OnInvenSlotChanged.Broadcast(UpdatedSlot, false);
+            OnInvenSlotChanged.Broadcast(UpdatedSlot);
             break;
         }
     }

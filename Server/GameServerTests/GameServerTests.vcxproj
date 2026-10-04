@@ -188,6 +188,7 @@
     <ClCompile Include="ServerConfigTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
+    <ClCompile Include="SaveGateTests.cpp" />
   </ItemGroup>
   <ItemGroup Label="googletest — PCH 금지(서버 pch가 using namespace std를 전역에 푼다)">
     <!-- gtest_main.cc는 쓰지 않는다. 콘솔 코드페이지를 UTF-8로 돌려야 한국어
@@ -204,6 +205,7 @@
     <ClCompile Include="..\GameServer\Main\GameSession.cpp" />
     <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp" />
     <ClCompile Include="..\GameServer\Main\Global.cpp" />
+    <ClCompile Include="..\GameServer\Main\SaveGate.cpp" />
     <ClCompile Include="..\GameServer\Main\ServerConfig.cpp" />
     <ClCompile Include="..\GameServer\Main\ServerPacketHandler.cpp" />
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">

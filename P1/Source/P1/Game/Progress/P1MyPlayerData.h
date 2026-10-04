@@ -15,7 +15,7 @@ DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChanged, int64);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnInvenSlotChanged, const Protocol::Slot&, bool);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnInvenSlotChanged, const Protocol::Slot&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::Slot&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemCooldownStarted, int32);
 

@@ -17,6 +17,16 @@ static const TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings =
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
 };
 
+// 서버 데이터에 직업이 더해져도 화면이 멈추지 않도록, 맵에 없는 값은 대체 이름으로 보여 준다.
+static FString GetClassDisplayName(Protocol::CharacterClass CharacterClass)
+{
+    if (const FString* ClassName = ClassEnumToStringMappings.Find(CharacterClass))
+        return *ClassName;
+
+    UE_LOG(LogP1UI, Warning, TEXT("이름이 없는 직업 값: %d"), static_cast<int32>(CharacterClass));
+    return TEXT("알 수 없음");
+}
+
 void UP1LoginMenuWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
@@ -118,20 +128,59 @@ void UP1LoginMenuWidget::OnRegisterButtonClicked()
 
 void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
 {
+    // 실패 응답은 서버가 비워서 보내므로 슬롯 수가 0이다. 그대로 적용하면 슬롯이 모두 숨은 선택 화면이 뜬다.
+    if (pkt.success() == false)
+    {
+        UE_LOG(LogP1UI, Warning, TEXT("서버가 캐릭터 목록을 불러오지 못함"));
+        SetResultText(false, TEXT("캐릭터 목록을 불러오지 못했습니다."));
+        return;
+    }
+
     CharacterOverviews.Empty();
 
     for (auto& Character : pkt.characters())
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = Character.character_id();
-        CharacterOverview.CharacterClass = ClassEnumToStringMappings[Character.class_()];
+        CharacterOverview.CharacterClass = GetClassDisplayName(Character.class_());
         CharacterOverview.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
         CharacterOverview.CharacterLevel = Character.level();
 
         CharacterOverviews.Add(CharacterOverview);
     }
 
+    // DisplayCharacterOverviews가 보이는 슬롯 수까지만 채우므로 슬롯 수를 먼저 적용한다.
+    ApplyCharacterSlotCount(pkt.character_slot_count());
     DisplayCharacterOverviews();
+}
+
+void UP1LoginMenuWidget::ApplyCharacterSlotCount(int32 SlotCount)
+{
+    CharacterSlotCount = SlotCount;
+
+    // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 0 이하는 이 필드를 모르는 서버가 보낸 기본값이다.
+    if (CharacterSlots.Num() < CharacterSlotCount || CharacterSlotCount <= 0)
+    {
+        UE_LOG(LogP1UI, Warning, TEXT("슬롯 위젯 수와 서버의 슬롯 수가 맞지 않습니다. 위젯 수: %d, 서버 슬롯 수: %d"), CharacterSlots.Num(), CharacterSlotCount);
+    }
+
+    // 보일 슬롯은 숨겼던 것만 되살린다. 디자이너가 정한 표시 상태를 덮어쓰지 않는다.
+    const int32 VisibleCount = GetVisibleSlotCount();
+    for (int32 i = 0; i < CharacterSlots.Num(); i++)
+    {
+        if (i >= VisibleCount)
+            CharacterSlots[i]->SetVisibility(ESlateVisibility::Collapsed);
+        else if (CharacterSlots[i]->GetVisibility() == ESlateVisibility::Collapsed)
+            CharacterSlots[i]->SetVisibility(ESlateVisibility::Visible);
+    }
+
+    if (SelectedSlotIndex >= VisibleCount)
+        SelectSlot(-1);
+}
+
+int32 UP1LoginMenuWidget::GetVisibleSlotCount() const
+{
+    return FMath::Min(CharacterSlotCount, CharacterSlots.Num());
 }
 
 void UP1LoginMenuWidget::DisplayCharacterOverviews()
@@ -139,8 +188,8 @@ void UP1LoginMenuWidget::DisplayCharacterOverviews()
     for (UP1CharacterSlotWidget* CharacterSlot : CharacterSlots)
         CharacterSlot->Clear();
 
-    // 슬롯보다 많은 캐릭터는 보이지 않는다.
-    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), CharacterSlots.Num());
+    // 보이는 슬롯보다 많은 캐릭터는 보이지 않는다.
+    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), GetVisibleSlotCount());
     for (int32 i = 0; i < VisibleCount; i++)
         CharacterSlots[i]->ShowCharacter(CharacterOverviews[i]);
 
@@ -198,10 +247,8 @@ void UP1LoginMenuWidget::SendEnterGamePkt()
 
 void UP1LoginMenuWidget::OnCreateButtonClicked()
 {
-    const int32 CharacterCount = CharacterOverviews.Num();
-    const int32 SlotCount = CharacterSlots.Num();
-
-    if (CharacterCount >= SlotCount)
+    // 서버도 생성 요청을 같은 슬롯 수로 막는다. 여기서 먼저 막는 것은 생성 화면을 열지 않기 위해서다.
+    if (CharacterOverviews.Num() >= GetVisibleSlotCount())
     {
         ShowDescription(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
         return;
@@ -245,7 +292,7 @@ void UP1LoginMenuWidget::ResetCharacterCreateScreen()
 void UP1LoginMenuWidget::SelectClass(int32 ClassId)
 {
     SelectedClassId = ClassId;
-    SelectedClassText->SetText(FText::FromString(ClassEnumToStringMappings[Protocol::CharacterClass(ClassId)]));
+    SelectedClassText->SetText(FText::FromString(GetClassDisplayName(Protocol::CharacterClass(ClassId))));
 }
 
 void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER& pkt)
@@ -260,8 +307,8 @@ void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = pkt.character_id();
-        CharacterOverview.CharacterClass = ClassEnumToStringMappings[Protocol::CharacterClass(SelectedClassId)];
-        CharacterOverview.CharacterName = CC_CharacterNameText->GetText().ToString();
+        CharacterOverview.CharacterClass = GetClassDisplayName(Protocol::CharacterClass(RequestedClassId));
+        CharacterOverview.CharacterName = RequestedCharacterName;
         CharacterOverview.CharacterLevel = 1;
 
         UE_LOG(LogP1UI, Log, TEXT("캐릭터 요약 수: %d"), CharacterOverviews.Num());
@@ -292,6 +339,10 @@ void UP1LoginMenuWidget::SendCreateCharacterPkt(const FString& CharacterName, in
 
     Protocol::C_CREATE_CHARACTER pkt;
     pkt.set_allocated_character(CharacterOverview);
+
+    // 응답에는 캐릭터 id만 온다. 응답을 기다리는 동안 입력 칸이 바뀌어도 서버에 보낸 값을 목록에 넣는다.
+    RequestedCharacterName = CharacterName;
+    RequestedClassId = CharacterClassId;
 
     FP1PacketSender::Send(this, pkt);
 }

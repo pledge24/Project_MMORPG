@@ -17,7 +17,7 @@ public:
 public:
     void Init(Protocol::Inventory* Inventory_);
 
-    void Rep_SlotChanged(const Protocol::Slot& Slot_, bool OnUse = false);
+    void Rep_SlotChanged(const Protocol::Slot& Slot_);
 
     /** 종류와 번호에 맞는 칸이 없으면 nullptr을 돌려준다. */
     const Protocol::Slot* FindSlot(Protocol::SlotType Type, int32 SlotId) const;

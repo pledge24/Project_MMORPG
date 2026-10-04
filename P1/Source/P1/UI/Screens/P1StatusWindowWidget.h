@@ -45,7 +45,7 @@ protected:
 
     /** 장착 해제 응답을 기다리는 동안 참이다. 중복 요청을 막는다. */
     UPROPERTY(VisibleAnywhere)
-    bool PendingPacket = false;
+    bool bPendingPacket = false;
 
 private:
     /** 더블클릭한 착용 장비를 벗는다. */

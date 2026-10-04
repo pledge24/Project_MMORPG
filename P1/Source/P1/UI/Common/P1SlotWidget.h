@@ -52,10 +52,6 @@ public:
     void ClearSlot();
     void InsertData(const Protocol::Slot& _Slot);
 
-    /** 아이템 원본을 담은 데이터 테이블이다. */
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
-    TObjectPtr<UDataTable> ItemTable;
-
     /** 아이템 아이콘을 담은 에셋 테이블이다. 행 구조체는 FP1ItemAssetData다. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
     TObjectPtr<UDataTable> ItemAssetTable;

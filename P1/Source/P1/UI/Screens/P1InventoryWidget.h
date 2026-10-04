@@ -26,7 +26,7 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    void UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse = false);
+    void UpdateSlotWidget(const Protocol::Slot& InSlot);
 
     /** 맞는 슬롯이 없으면 nullptr을 돌려준다. */
     UP1SlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& InSlot);
@@ -75,7 +75,7 @@ protected:
 protected:
     /** 응답을 기다리는 동안 참이다. 판매·사용·착용이 함께 쓴다. */
     UPROPERTY(VisibleAnywhere)
-    bool PendingPacket = false;
+    bool bPendingPacket = false;
 
 private:
     void BindSlotClicks(UUniformGridPanel* SlotGrid);
