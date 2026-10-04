@@ -310,13 +310,6 @@ Inventory::Bag* Inventory::FindBag(Protocol::SlotType slotType)
 
 optional<Protocol::ItemType> Inventory::ToItemType(const Json& itemData)
 {
-    static const unordered_map<string, Protocol::ItemType> itemTypeNames = {
-        {"armor", Protocol::ItemType::ITEM_TYPE_GEAR},
-        {"weapon", Protocol::ItemType::ITEM_TYPE_GEAR},
-        {"consumption", Protocol::ItemType::ITEM_TYPE_CONSUMABLE},
-        {"miscellaneous", Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS},
-    };
-
     if (itemData.is_object() == false)
         return nullopt;
 
@@ -324,11 +317,15 @@ optional<Protocol::ItemType> Inventory::ToItemType(const Json& itemData)
     if (fieldIt == itemData.end() || fieldIt->is_string() == false)
         return nullopt;
 
-    auto nameIt = itemTypeNames.find(fieldIt->get<string>());
-    if (nameIt == itemTypeNames.end())
+    // 기획 원본은 열거형 이름에서 접두사를 뺀 값(GEAR)을 적는다. 이름 표는 protobuf가 만든 것을 쓴다.
+    Protocol::ItemType itemType;
+    if (Protocol::ItemType_Parse(string(ITEM_TYPE_NAME_PREFIX) + fieldIt->get<string>(), &itemType) == false)
         return nullopt;
 
-    return nameIt->second;
+    if (itemType == Protocol::ItemType::ITEM_TYPE_NONE)
+        return nullopt;
+
+    return itemType;
 }
 
 Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)

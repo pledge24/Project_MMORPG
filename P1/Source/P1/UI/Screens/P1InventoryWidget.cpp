@@ -197,7 +197,7 @@ void UP1InventoryWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
     const int32 TemplateId = SlotWidget->ItemData.TemplateId;
 
     switch (FP1InventorySlotAction::Decide(
-        SlotData.type(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel(),
+        SlotData.type(), SlotWidget->ItemData.GetItemType(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel(),
         MyPlayerData->IsItemCoolingDown(TemplateId)))
     {
     case FP1InventorySlotAction::EKind::Use:

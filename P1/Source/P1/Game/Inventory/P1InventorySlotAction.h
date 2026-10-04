@@ -23,8 +23,8 @@ struct P1_API FP1InventorySlotAction
     };
 
     /**
-     * 아이템 종류는 슬롯 종류로 가른다. 서버가 인벤토리 칸을 아이템 종류별로 나눠 두었기 때문이다.
+     * 착용할지 사용할지는 아이템 데이터의 종류(ItemType)로 가른다. 슬롯 종류는 칸이 인벤토리에 있는지만 본다.
      * TemplateId가 0 이하이면 빈 칸이다. bCoolingDown은 그 아이템이 재사용 대기 중인지이고, 소모품에만 쓴다.
      */
-    static EKind Decide(Protocol::SlotType SlotType, int32 TemplateId, int32 LevelRequirement, int32 PlayerLevel, bool bCoolingDown);
+    static EKind Decide(Protocol::SlotType SlotType, Protocol::ItemType ItemType, int32 TemplateId, int32 LevelRequirement, int32 PlayerLevel, bool bCoolingDown);
 };

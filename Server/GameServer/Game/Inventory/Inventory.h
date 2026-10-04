@@ -48,8 +48,9 @@ private:
     Bag* FindBag(Protocol::ItemType itemType);
     Bag* FindBag(Protocol::SlotType slotType);
 
-    // 아이템 데이터의 "itemType" 문자열을 ItemType으로 바꾼다. 필드가 없거나 모르는 값이면 nullopt.
+    // 아이템 데이터의 "itemType"(아이템 종류, 예: "GEAR")을 ItemType으로 바꾼다. 필드가 없거나 종류가 아니면 nullopt.
     static optional<Protocol::ItemType> ToItemType(const Json& itemData);
+    static constexpr string_view ITEM_TYPE_NAME_PREFIX = "ITEM_TYPE_";
     static bool IsValidSlotId(int32 slotId) { return slotId >= 0 && slotId < MAX_SLOTS; }
 
 private:

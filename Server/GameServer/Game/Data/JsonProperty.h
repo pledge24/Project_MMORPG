@@ -33,7 +33,6 @@ namespace JsonProperty
         constexpr std::string_view GearSubtype_Arms = "arms";
         constexpr std::string_view GearSubtype_Boots = "boots";
         constexpr std::string_view GearSubtype_Sword = "sword";
-        constexpr std::string_view GearType_Weapon = "weapon";
 
     }
 

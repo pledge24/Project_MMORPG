@@ -2,12 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "Enum.pb.h"
 #include "P1ItemData.generated.h"
 
 USTRUCT(BlueprintType)
 struct FP1ItemData : public FTableRowBase
 {
     GENERATED_BODY()
+
+    /** ItemType 문자열을 열거형으로 바꾼다. 종류가 아니거나 비었으면 ITEM_TYPE_NONE이다. */
+    Protocol::ItemType GetItemType() const;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 Name = 0;
@@ -18,11 +22,13 @@ struct FP1ItemData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemName;
 
+    /** 아이템 종류다. 기획 원본의 값(GEAR, CONSUMABLE, MISCELLANEOUS)을 그대로 담는다. 판정에는 GetItemType을 쓴다. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemType;
 
+    /** 아이템 분류다(helmet, sword, potion 등). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FString ItemSubType;
+    FString ItemSubtype;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 LevelRequirement = 0;
