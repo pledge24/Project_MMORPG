@@ -11,7 +11,7 @@
             "posZ": 0
         },
         "widthHalfExtent": 1500,
-        "heightHalfExtent": 1500,
+        "depthHalfExtent": 1500,
         "respawnPoint": {
             "posX": 0,
             "posY": 0,
@@ -85,7 +85,7 @@
             "posZ": 0
         },
         "widthHalfExtent": 2500,
-        "heightHalfExtent": 2500,
+        "depthHalfExtent": 2500,
         "respawnPoint": null,
         "portals": {
             "lists": [
@@ -127,7 +127,7 @@
             "posZ": 0
         },
         "widthHalfExtent": 2500,
-        "heightHalfExtent": 2500,
+        "depthHalfExtent": 2500,
         "respawnPoint": null,
         "portals": {
             "lists": [
@@ -169,7 +169,7 @@
             "posZ": 0
         },
         "widthHalfExtent": 2500,
-        "heightHalfExtent": 2500,
+        "depthHalfExtent": 2500,
         "respawnPoint": null,
         "portals": {
             "lists": [

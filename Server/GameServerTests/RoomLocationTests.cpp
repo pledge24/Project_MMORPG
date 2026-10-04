@@ -10,6 +10,9 @@
 
     픽스처 결합도: Room::Create에 최소한의 룸 데이터를 넘긴다. Start()는 부르지 않으므로
     몬스터 스폰과 틱 타이머는 돌지 않는다. 여백 값은 Room.h의 LOCATION_PADDING_X·Y와 같다.
+
+    축: 언리얼 좌표를 따라 x가 depth, y가 width다. 맵 데이터의 depthHalfExtent가 x 범위를,
+    widthHalfExtent가 y 범위를 정한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -19,12 +22,8 @@ namespace
     constexpr float HALF_EXTENT = 1500.f;
     constexpr float PADDING = 1000.f;
     constexpr int32 DRAW_COUNT = 1000;
-}
 
-class RoomLocationTest : public ::testing::Test
-{
-protected:
-    void SetUp() override
+    RoomRef MakeRoom(float depthHalfExtent, float widthHalfExtent)
     {
         using namespace JsonProperty::Map;
 
@@ -33,12 +32,21 @@ protected:
         roomData[string(CenterPos)][string(PosX)] = CENTER_X;
         roomData[string(CenterPos)][string(PosY)] = CENTER_Y;
         roomData[string(CenterPos)][string(PosZ)] = 0.f;
-        roomData[string(WidthHalfExtent)] = HALF_EXTENT;
-        roomData[string(HeightHalfExtent)] = HALF_EXTENT;
+        roomData[string(DepthHalfExtent)] = depthHalfExtent;
+        roomData[string(WidthHalfExtent)] = widthHalfExtent;
         roomData[string(MonsterIds)] = Json::array();
         roomData[string(HasRespawnPoint)] = false;
 
-        room = Room::Create(roomData);
+        return Room::Create(roomData);
+    }
+}
+
+class RoomLocationTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        room = MakeRoom(HALF_EXTENT, HALF_EXTENT);
         ASSERT_NE(room, nullptr);
     }
 
@@ -69,4 +77,27 @@ TEST_F(RoomLocationTest, RandomLocationWithoutPaddingUsesWholeRoom)
         ASSERT_GE(pos.y, CENTER_Y - HALF_EXTENT);
         ASSERT_LE(pos.y, CENTER_Y + HALF_EXTENT);
     }
+}
+
+TEST(RoomAxisTest, DepthBoundsXAndWidthBoundsY)
+{
+    constexpr float DEPTH_HALF = 3000.f;
+    constexpr float WIDTH_HALF = 500.f;
+
+    RoomRef room = MakeRoom(DEPTH_HALF, WIDTH_HALF);
+    ASSERT_NE(room, nullptr);
+
+    float maxOffsetX = 0.f;
+    for (int32 i = 0; i < DRAW_COUNT; i++)
+    {
+        const vector2D pos = room->GetRandomLocation(false);
+        ASSERT_GE(pos.x, CENTER_X - DEPTH_HALF);
+        ASSERT_LE(pos.x, CENTER_X + DEPTH_HALF);
+        ASSERT_GE(pos.y, CENTER_Y - WIDTH_HALF) << "width가 x를 정하면 y가 룸 밖으로 나간다";
+        ASSERT_LE(pos.y, CENTER_Y + WIDTH_HALF);
+        maxOffsetX = max(maxOffsetX, abs(pos.x - CENTER_X));
+    }
+
+    // 1000번 뽑으면 x가 width 반폭을 넘는 값이 나와야 한다. 나오지 않으면 depth가 x 범위를 정하지 않는 것이다.
+    EXPECT_GT(maxOffsetX, WIDTH_HALF);
 }
