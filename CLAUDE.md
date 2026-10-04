@@ -15,13 +15,13 @@
 
 ## 문서 위치
 
-- `docs/ARCHITECTURE.md` — 깨면 안 되는 불변식
+- 티어 경계, 스레드, 패킷 경로, DB 접근을 바꾸기 전에 `docs/ARCHITECTURE.md` — 깨면 안 되는 불변식
 - 코드를 쓰거나 고치기 전에 `docs/conventions.md` — 이름, 주석, 멤버 배치, 타입 사용
 - 새 파일이나 에셋을 만들기 전에 `docs/folder-structure.md` — 어디에 둘지, 무슨 이름을 붙일지
-- `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`.
+- 구조를 바꾸거나 ADR을 쓰기 전에 `docs/adr/` — 되돌리기 어려운 결정의 기록. 판정 기준과 형식은 `.claude/skills/domain-modeling/ADR-FORMAT.md`.
   기존 ADR에 덧붙일 때는 덧붙인 날짜를 그 자리에 적는다 — 본문이 측정 날짜에 묶여 있다
-- `docs/tech-debt.md` — 지금 틀린 것
-- `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
+- 결함을 찾았거나 고치기 전에 `docs/tech-debt.md` — 지금 틀린 것
+- 다음 작업을 고르거나 작업 후보를 적기 전에 `docs/backlog.md` — 아직 착수하지 않은 작업 후보와 하지 않기로 확인된 것
 - `docs/work/` — 여러 세션에 걸치는 작업의 진행 현황. 그 작업의 티켓을 집기 전에 해당 work 파일을 읽는다
 - `.Build.cs`, `.Target.cs`, `.vcxproj`, 빌드 스크립트를 고치기 전에 `docs/build.md`
 - `.proto`, `DesignData/`, 생성기를 고치기 전에 `docs/codegen.md`

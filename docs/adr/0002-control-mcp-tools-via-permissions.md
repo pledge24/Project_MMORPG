@@ -72,6 +72,10 @@ UE 에셋은 `.uasset`이 바이너리라 파일로 읽을 수 없다. `execute_
 | 연속 호출로 인덱스가 오염된다 | 직전까지 `클래스 필드`로 해석하던 심볼을 `no_renamable_symbol`로 거부한다. 열 번 남짓에서 나타난다 | Rider 재시작으로만 회복된다 |
 | 생성된 protobuf와 철자가 같다 | 거부된다(`possession`·`inventory`·`player` 실측) | 사람이 IDE에서 `Shift+F6`으로 처리한다 |
 
+**2026년 10월 4일 덧붙임 — 「도구 라우팅」의 grep 금지는 사라졌다.** 지금 `CLAUDE.md`에는 「도구 라우팅」 절도
+grep 금지도 없다. 내장 Grep과 셸 검색이 탐색의 대체 경로가 됐으므로, 탐색 계열을 남긴 근거는
+「대체 경로가 없다」에서 「심볼 단위로 조회한다」로 약해졌다.
+
 ## 무엇을 막았는가
 
 | 계열 | 개수 | 차단 근거 |
@@ -127,3 +131,7 @@ UE 에셋은 `.uasset`이 바이너리라 파일로 읽을 수 없다. `execute_
   쓰기 권한을 가진 계정을 쓴다. 방어선은 `.claude/hooks/guard_dangerous_cmd.py`뿐이다.
 - Rider가 이 결함을 고치면 IDE 설정이 갑자기 반영된다. 그때 IDE에서 꺼 둔 21종이 `deny`와
   겹칠 뿐이므로 해롭지 않다.
+
+**2026년 10월 4일 덧붙임 — SQL은 읽기 전용 연결로만 나간다.** #105(`f54c178`)부터 Claude는 `claude_ro`
+데이터 소스로만 `execute_sql_query`를 부르고, 훅의 `SQL_ALLOWED_CONNECTIONS`가 나머지 연결을 막는다.
+위의 「쓰기 권한을 가진 계정을 쓴다」는 그 전의 상태다. 상세는 `docs/build.md`에 있다.

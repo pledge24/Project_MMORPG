@@ -483,12 +483,7 @@ static constexpr int32 CELL_SIZE = 200;
 
 ### 3.6 룸 소유 상태를 인라인으로 고치지 않는다
 
-`Room`이 `JobQueue`를 상속한다. 패킷 핸들러는 인라인으로 일하지 않고 `room->DoAsync(...)`로 잡만
-밀어넣고 리턴한다. 룸 소유 상태는 큐 위에서 직렬화되므로 락이 없다.
-
-**다른 룸의 오브젝트에 직접 손대지 않는다.** DB 작업도 `DBQueue`에 push한다.
-
-상세는 `docs/ARCHITECTURE.md`에 있다.
+룸 소유 상태 규칙은 `docs/ARCHITECTURE.md` 「Server/GameServer」에 있다.
 
 ---
 
