@@ -2,6 +2,7 @@
 #include "CharacterListDAO.h"
 #include "DAOCommon.h"
 #include "EncodingConverter.h"
+#include "CharacterCreation.h"
 
 /*-------------------------
     CharacterListDAO
@@ -95,13 +96,18 @@ void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
 
 void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::CharacterOverview& character, int64 userId)
 {
-    const int PARAMS = 7;
+    const int PARAMS = 8;
     const int COLS = 1;
+
+    // 쿼리가 character_id 대신 돌려주는 거절 표시다.
+    const int64 DUPLICATE_NAME = -1;
+    const int64 NO_EMPTY_SLOT = -2;
 
     struct BindObject
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, const Protocol::CharacterOverview& character, int64 userId)
-            : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name()))
+            : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name())),
+              _slotCount(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT)
         {
             // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 끼워 넣지 않고 실패로 끝낸다.
             const DataTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
@@ -124,10 +130,11 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             dbBind.BindParam(0, _userId);
             dbBind.BindParam(1, _classId);
             dbBind.BindParam(2, _name.c_str());
-            dbBind.BindParam(3, _curHp);
-            dbBind.BindParam(4, _curMp);
-            dbBind.BindParam(5, _curPhysicalAttack);
-            dbBind.BindParam(6, _curMagicalAttack);
+            dbBind.BindParam(3, _slotCount);
+            dbBind.BindParam(4, _curHp);
+            dbBind.BindParam(5, _curMp);
+            dbBind.BindParam(6, _curPhysicalAttack);
+            dbBind.BindParam(7, _curMagicalAttack);
         }
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
@@ -139,6 +146,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         int64 _userId;
         int32 _classId;
         wstring _name;
+        int32 _slotCount;
         int32 _curHp = 0;
         int32 _curMp = 0;
         int32 _curPhysicalAttack = 0;
@@ -153,25 +161,38 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
 
     try
     {
-        // 전달받은 이름이 중복인지 확인하고, 아니라면 INSERT한다.
+        // 계정에 빈 슬롯이 있고 이름이 중복이 아니면 INSERT한다.
         DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
             SET NOCOUNT ON;
 
-            BEGIN TRANSACTION; 
-            
-            DECLARE @existing_character_id BIGINT; 
-            DECLARE @character_id BIGINT; 
-            DECLARE @user_id BIGINT = (?); 
-            DECLARE @class_id INT = (?); 
-            DECLARE @character_name NVARCHAR(50) = (?); 
-            
+            BEGIN TRANSACTION;
+
+            DECLARE @existing_character_id BIGINT;
+            DECLARE @character_id BIGINT;
+            DECLARE @user_id BIGINT = (?);
+            DECLARE @class_id INT = (?);
+            DECLARE @character_name NVARCHAR(50) = (?);
+            DECLARE @slot_count INT = (?);
+            DECLARE @character_count INT;
+
+            -- 계정의 캐릭터 수 확인 (트랜잭션 락). 같은 계정의 생성 요청이 겹쳐도 한도를 넘지 않는다
+            SELECT @character_count = COUNT(*)
+            FROM [dbo].[Characters] WITH(UPDLOCK, HOLDLOCK)
+            WHERE user_id = @user_id;
+
             -- 중복 이름 확인 (트랜잭션 락)
-            SELECT @existing_character_id = character_id 
-            FROM [dbo].[Characters] WITH(UPDLOCK, HOLDLOCK) 
-            WHERE character_name = @character_name; 
-            
-            IF @existing_character_id IS NULL
-            BEGIN 
+            SELECT @existing_character_id = character_id
+            FROM [dbo].[Characters] WITH(UPDLOCK, HOLDLOCK)
+            WHERE character_name = @character_name;
+
+            IF @character_count >= @slot_count
+            BEGIN
+                SELECT -2 AS character_id;
+
+                ROLLBACK TRANSACTION;
+            END
+            ELSE IF @existing_character_id IS NULL
+            BEGIN
                 -- 1. 캐릭터 기본 정보 삽입 
                 INSERT INTO [dbo].[Characters]([user_id], [class_id], [character_name])
                 VALUES(@user_id, @class_id, @character_name);
@@ -208,10 +229,11 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         if (dbConn->Fetch() == false)
             throw DBCustomError::SQL_FETCH_FAIL;
 
-        if (bindObject._characterId == -1)
-        {
+        if (bindObject._characterId == NO_EMPTY_SLOT)
+            throw DBCustomError::NO_EMPTY_CHARACTER_SLOT;
+
+        if (bindObject._characterId == DUPLICATE_NAME)
             throw DBCustomError::ALREADY_EXISTING_CHARACTER;
-        }
 
         createCharacterPkt.set_success(true);
         createCharacterPkt.set_character_id(bindObject._characterId);
@@ -222,7 +244,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
 
         createCharacterPkt.Clear();
         createCharacterPkt.set_success(false);
-        if (dbError == DBCustomError::ALREADY_EXISTING_CHARACTER)
+        if (dbError == DBCustomError::ALREADY_EXISTING_CHARACTER || dbError == DBCustomError::NO_EMPTY_CHARACTER_SLOT)
             createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(dbError).c_str()));
         else
             createCharacterPkt.set_cause("서버 내부 오류");

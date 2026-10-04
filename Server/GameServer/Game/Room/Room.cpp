@@ -911,13 +911,13 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
 
 vector2D Room::GetRandomLocation(bool usePadding)
 {
-    float widthPadding = usePadding ? LOCATION_PADDING_X : 0.f;
-    float heightPadding = usePadding ? LOCATION_PADDING_Y : 0.f;
+    float paddingX = usePadding ? LOCATION_PADDING_X : 0.f;
+    float paddingY = usePadding ? LOCATION_PADDING_Y : 0.f;
 
-    float paddedMinX = _roomMinX + widthPadding;
-    float paddedMaxX = _roomMaxX - widthPadding;
-    float paddedMinY = _roomMinY + heightPadding;
-    float paddedMaxY = _roomMaxY - heightPadding;
+    float paddedMinX = _roomMinX + paddingX;
+    float paddedMaxX = _roomMaxX - paddingX;
+    float paddedMinY = _roomMinY + paddingY;
+    float paddedMaxY = _roomMaxY - paddingY;
 
     vector2D randomPos;
 
@@ -1004,11 +1004,11 @@ void Room::CacheRoomData()
     _roomCenterPos.y = centerPos[PosY].is_null() ? 0 : static_cast<float>(centerPos[PosY]);
     _roomCenterPos.z = centerPos[PosZ].is_null() ? 0 : static_cast<float>(centerPos[PosZ]);
 
+    _depthHalfExtent = _roomData[DepthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[DepthHalfExtent]);
     _widthHalfExtent = _roomData[WidthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[WidthHalfExtent]);
-    _heightHalfExtent = _roomData[HeightHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[HeightHalfExtent]);
 
-    _roomMinX = _roomCenterPos.x - _heightHalfExtent;
-    _roomMaxX = _roomCenterPos.x + _heightHalfExtent;
+    _roomMinX = _roomCenterPos.x - _depthHalfExtent;
+    _roomMaxX = _roomCenterPos.x + _depthHalfExtent;
     _roomMinY = _roomCenterPos.y - _widthHalfExtent;
     _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
