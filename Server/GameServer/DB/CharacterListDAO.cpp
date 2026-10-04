@@ -96,12 +96,8 @@ void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
 
 void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::CharacterOverview& character, int64 userId)
 {
-    const int PARAMS = 8;
+    const int PARAMS = 10;
     const int COLS = 1;
-
-    // 쿼리가 character_id 대신 돌려주는 거절 표시다.
-    const int64 DUPLICATE_NAME = -1;
-    const int64 NO_EMPTY_SLOT = -2;
 
     struct BindObject
     {
@@ -131,10 +127,12 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             dbBind.BindParam(1, _classId);
             dbBind.BindParam(2, _name.c_str());
             dbBind.BindParam(3, _slotCount);
-            dbBind.BindParam(4, _curHp);
-            dbBind.BindParam(5, _curMp);
-            dbBind.BindParam(6, _curPhysicalAttack);
-            dbBind.BindParam(7, _curMagicalAttack);
+            dbBind.BindParam(4, _duplicateNameError);
+            dbBind.BindParam(5, _noEmptySlotError);
+            dbBind.BindParam(6, _curHp);
+            dbBind.BindParam(7, _curMp);
+            dbBind.BindParam(8, _curPhysicalAttack);
+            dbBind.BindParam(9, _curMagicalAttack);
         }
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
@@ -147,6 +145,9 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         int32 _classId;
         wstring _name;
         int32 _slotCount;
+        // 쿼리가 거절할 때 character_id 자리에 부호를 뒤집어 돌려주는 사유다.
+        int32 _duplicateNameError = DBCustomError::ALREADY_EXISTING_CHARACTER;
+        int32 _noEmptySlotError = DBCustomError::NO_EMPTY_CHARACTER_SLOT;
         int32 _curHp = 0;
         int32 _curMp = 0;
         int32 _curPhysicalAttack = 0;
@@ -173,6 +174,8 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             DECLARE @class_id INT = (?);
             DECLARE @character_name NVARCHAR(50) = (?);
             DECLARE @slot_count INT = (?);
+            DECLARE @duplicate_name_error INT = (?);
+            DECLARE @no_empty_slot_error INT = (?);
             DECLARE @character_count INT;
 
             -- 계정의 캐릭터 수 확인 (트랜잭션 락). 같은 계정의 생성 요청이 겹쳐도 한도를 넘지 않는다
@@ -187,7 +190,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
 
             IF @character_count >= @slot_count
             BEGIN
-                SELECT -2 AS character_id;
+                SELECT -@no_empty_slot_error AS character_id;
 
                 ROLLBACK TRANSACTION;
             END
@@ -215,7 +218,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             END
             ELSE
             BEGIN
-                SELECT -1 as character_id;
+                SELECT -@duplicate_name_error AS character_id;
 
                 ROLLBACK TRANSACTION;
             END
@@ -229,14 +232,21 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         if (dbConn->Fetch() == false)
             throw DBCustomError::SQL_FETCH_FAIL;
 
-        if (bindObject._characterId == NO_EMPTY_SLOT)
-            throw DBCustomError::NO_EMPTY_CHARACTER_SLOT;
+        // character_id는 identity라 양수다. 음수면 쿼리가 거절한 것이고, 부호를 뒤집으면 사유가 된다.
+        // 거절 사유는 화면에 그대로 보여 준다. 거절을 예외로 던지지 않으므로 catch에 오는 것은 모두 서버 내부 오류다.
+        if (bindObject._characterId < 0)
+        {
+            const DBCustomError rejection = static_cast<DBCustomError>(-bindObject._characterId);
+            PrintDBErrorLog(rejection);
 
-        if (bindObject._characterId == DUPLICATE_NAME)
-            throw DBCustomError::ALREADY_EXISTING_CHARACTER;
-
-        createCharacterPkt.set_success(true);
-        createCharacterPkt.set_character_id(bindObject._characterId);
+            createCharacterPkt.set_success(false);
+            createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(rejection).c_str()));
+        }
+        else
+        {
+            createCharacterPkt.set_success(true);
+            createCharacterPkt.set_character_id(bindObject._characterId);
+        }
     }
     catch (DBCustomError dbError)
     {
@@ -244,10 +254,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
 
         createCharacterPkt.Clear();
         createCharacterPkt.set_success(false);
-        if (dbError == DBCustomError::ALREADY_EXISTING_CHARACTER || dbError == DBCustomError::NO_EMPTY_CHARACTER_SLOT)
-            createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(dbError).c_str()));
-        else
-            createCharacterPkt.set_cause("서버 내부 오류");
+        createCharacterPkt.set_cause("서버 내부 오류");
     }
     catch (exception& err)
     {
