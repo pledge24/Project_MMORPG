@@ -20,7 +20,7 @@ void GameSession::OnDisconnected()
 	// 저장 대기는 Remove보다 먼저 건다. 반대로 하면 그 사이에 온 새 로그인이 대기 없이 입장해 저장 전의 진행을 불러온다.
 	// 룸이 없으면 저장하지 않으므로 걸지 않는다. 걸면 풀어 줄 저장이 없어 다음 입장이 만료까지 막힌다.
 	// 룸 입장 잡이 큐에 남아 있다가 저장하는 경우는 LeaveGame이 건다.
-	if (player != nullptr && player->_room.load().lock() != nullptr)
+	if (IsPlayerInRoom())
 		GSaveGate.Hold(_userId);
 
 	GSessionManager.Remove(static_pointer_cast<GameSession>(shared_from_this()));
@@ -41,6 +41,12 @@ void GameSession::OnDisconnected()
 		{
 			GameSession::LeaveGame(room, player);
 		});
+}
+
+bool GameSession::IsPlayerInRoom()
+{
+	PlayerRef player = _player.load();
+	return player != nullptr && player->_room.load().lock() != nullptr;
 }
 
 void GameSession::LeaveGame(RoomRef room, PlayerRef player)

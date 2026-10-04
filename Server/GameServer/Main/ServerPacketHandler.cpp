@@ -103,9 +103,8 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             {
                 // 기존 세션의 접속 종료는 송신을 마친 뒤에야 오지만, 새 세션은 곧 목록을 받고 입장할 수 있다.
                 // 그 사이의 입장이 저장 전의 진행을 불러오지 않도록 대기를 여기서 먼저 건다.
-                // 룸에 없는 세션은 저장하지 않으므로 걸지 않는다(GameSession::OnDisconnected와 같은 기준).
-                PlayerRef replacedPlayer = replaced->_player.load();
-                if (replacedPlayer != nullptr && replacedPlayer->_room.load().lock() != nullptr)
+                // 룸에 없는 세션은 저장하지 않으므로 걸지 않는다.
+                if (replaced->IsPlayerInRoom())
                     GSaveGate.Hold(userId);
 
                 KickSession(replaced, Protocol::LEAVE_REASON_DUPLICATE_LOGIN, "Duplicate Login");
