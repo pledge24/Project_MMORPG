@@ -2,7 +2,7 @@
     {
         "templateId": 1000,
         "itemName": "초보자의 두건",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "helmet",
         "levelRequirement": 1,
         "classRequirement": "warrior",
@@ -22,7 +22,7 @@
     {
         "templateId": 1001,
         "itemName": "초보자의 상의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "chest",
         "levelRequirement": 1,
         "classRequirement": "warrior",
@@ -42,7 +42,7 @@
     {
         "templateId": 1002,
         "itemName": "초보자의 하의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "legs",
         "levelRequirement": 1,
         "classRequirement": "warrior",
@@ -62,7 +62,7 @@
     {
         "templateId": 1003,
         "itemName": "초보자의 장갑",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "arms",
         "levelRequirement": 1,
         "classRequirement": "warrior",
@@ -82,7 +82,7 @@
     {
         "templateId": 1004,
         "itemName": "초보자의 신발",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "boots",
         "levelRequirement": 1,
         "classRequirement": "warrior",
@@ -102,7 +102,7 @@
     {
         "templateId": 1005,
         "itemName": "초보자의 검",
-        "itemType": "weapon",
+        "itemType": "GEAR",
         "itemSubtype": "sword",
         "levelRequirement": 1,
         "classRequirement": "warrior",
@@ -122,7 +122,7 @@
     {
         "templateId": 1006,
         "itemName": "흑기사의 복면",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "helmet",
         "levelRequirement": 10,
         "classRequirement": "warrior",
@@ -142,7 +142,7 @@
     {
         "templateId": 1007,
         "itemName": "흑기사의 상의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "chest",
         "levelRequirement": 10,
         "classRequirement": "warrior",
@@ -162,7 +162,7 @@
     {
         "templateId": 1008,
         "itemName": "흑기사의 하의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "legs",
         "levelRequirement": 10,
         "classRequirement": "warrior",
@@ -182,7 +182,7 @@
     {
         "templateId": 1009,
         "itemName": "흑기사의 건틀릿",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "arms",
         "levelRequirement": 10,
         "classRequirement": "warrior",
@@ -202,7 +202,7 @@
     {
         "templateId": 1010,
         "itemName": "흑기사의 신발",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "boots",
         "levelRequirement": 10,
         "classRequirement": "warrior",
@@ -222,7 +222,7 @@
     {
         "templateId": 1011,
         "itemName": "흑기사의 검",
-        "itemType": "weapon",
+        "itemType": "GEAR",
         "itemSubtype": "sword",
         "levelRequirement": 10,
         "classRequirement": "warrior",
@@ -242,7 +242,7 @@
     {
         "templateId": 1012,
         "itemName": "견습 기사의 투구",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "helmet",
         "levelRequirement": 20,
         "classRequirement": "warrior",
@@ -262,7 +262,7 @@
     {
         "templateId": 1013,
         "itemName": "견습 기사의 상의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "chest",
         "levelRequirement": 20,
         "classRequirement": "warrior",
@@ -282,7 +282,7 @@
     {
         "templateId": 1014,
         "itemName": "견습 기사의 하의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "legs",
         "levelRequirement": 20,
         "classRequirement": "warrior",
@@ -302,7 +302,7 @@
     {
         "templateId": 1015,
         "itemName": "견습 기사의 건틀릿",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "arms",
         "levelRequirement": 20,
         "classRequirement": "warrior",
@@ -322,7 +322,7 @@
     {
         "templateId": 1016,
         "itemName": "견습 기사의 신발",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "boots",
         "levelRequirement": 20,
         "classRequirement": "warrior",
@@ -342,7 +342,7 @@
     {
         "templateId": 1017,
         "itemName": "기사의 검",
-        "itemType": "weapon",
+        "itemType": "GEAR",
         "itemSubtype": "sword",
         "levelRequirement": 20,
         "classRequirement": "warrior",
@@ -362,7 +362,7 @@
     {
         "templateId": 1018,
         "itemName": "선봉대의 투구",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "helmet",
         "levelRequirement": 30,
         "classRequirement": "warrior",
@@ -382,7 +382,7 @@
     {
         "templateId": 1019,
         "itemName": "선봉대의 상의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "chest",
         "levelRequirement": 30,
         "classRequirement": "warrior",
@@ -402,7 +402,7 @@
     {
         "templateId": 1020,
         "itemName": "선봉대의 하의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "legs",
         "levelRequirement": 30,
         "classRequirement": "warrior",
@@ -422,7 +422,7 @@
     {
         "templateId": 1021,
         "itemName": "선봉대의 건틀릿",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "arms",
         "levelRequirement": 30,
         "classRequirement": "warrior",
@@ -442,7 +442,7 @@
     {
         "templateId": 1022,
         "itemName": "선봉대의 신발",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "boots",
         "levelRequirement": 30,
         "classRequirement": "warrior",
@@ -462,7 +462,7 @@
     {
         "templateId": 1023,
         "itemName": "엑스칼리버(모조품)",
-        "itemType": "weapon",
+        "itemType": "GEAR",
         "itemSubtype": "sword",
         "levelRequirement": 30,
         "classRequirement": "warrior",
@@ -482,7 +482,7 @@
     {
         "templateId": 1024,
         "itemName": "왕실 기사단의 투구",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "helmet",
         "levelRequirement": 40,
         "classRequirement": "warrior",
@@ -502,7 +502,7 @@
     {
         "templateId": 1025,
         "itemName": "왕실 기사단의 상의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "chest",
         "levelRequirement": 40,
         "classRequirement": "warrior",
@@ -522,7 +522,7 @@
     {
         "templateId": 1026,
         "itemName": "왕실 기사단의 하의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "legs",
         "levelRequirement": 40,
         "classRequirement": "warrior",
@@ -542,7 +542,7 @@
     {
         "templateId": 1027,
         "itemName": "왕실 기사단의 건틀릿",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "arms",
         "levelRequirement": 40,
         "classRequirement": "warrior",
@@ -562,7 +562,7 @@
     {
         "templateId": 1028,
         "itemName": "왕실 기사단의 신발",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "boots",
         "levelRequirement": 40,
         "classRequirement": "warrior",
@@ -582,7 +582,7 @@
     {
         "templateId": 1029,
         "itemName": "글라디우스",
-        "itemType": "weapon",
+        "itemType": "GEAR",
         "itemSubtype": "sword",
         "levelRequirement": 40,
         "classRequirement": "warrior",
@@ -602,7 +602,7 @@
     {
         "templateId": 1030,
         "itemName": "기사 단장의 투구",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "helmet",
         "levelRequirement": 50,
         "classRequirement": "warrior",
@@ -622,7 +622,7 @@
     {
         "templateId": 1031,
         "itemName": "기사 단장의 상의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "chest",
         "levelRequirement": 50,
         "classRequirement": "warrior",
@@ -642,7 +642,7 @@
     {
         "templateId": 1032,
         "itemName": "기사 단장의 하의",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "legs",
         "levelRequirement": 50,
         "classRequirement": "warrior",
@@ -662,7 +662,7 @@
     {
         "templateId": 1033,
         "itemName": "기사 단장의 건틀릿",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "arms",
         "levelRequirement": 50,
         "classRequirement": "warrior",
@@ -682,7 +682,7 @@
     {
         "templateId": 1034,
         "itemName": "기사 단장의 신발",
-        "itemType": "armor",
+        "itemType": "GEAR",
         "itemSubtype": "boots",
         "levelRequirement": 50,
         "classRequirement": "warrior",
@@ -702,7 +702,7 @@
     {
         "templateId": 1035,
         "itemName": "저주받은 파멸의 검",
-        "itemType": "weapon",
+        "itemType": "GEAR",
         "itemSubtype": "sword",
         "levelRequirement": 50,
         "classRequirement": "warrior",
@@ -722,7 +722,7 @@
     {
         "templateId": 2000,
         "itemName": "HP 물약",
-        "itemType": "consumption",
+        "itemType": "CONSUMABLE",
         "itemSubtype": "potion",
         "levelRequirement": 0,
         "classRequirement": "all",
@@ -738,7 +738,7 @@
     {
         "templateId": 2001,
         "itemName": "MP 물약",
-        "itemType": "consumption",
+        "itemType": "CONSUMABLE",
         "itemSubtype": "potion",
         "levelRequirement": 0,
         "classRequirement": "all",
@@ -754,7 +754,7 @@
     {
         "templateId": 2002,
         "itemName": "복합 물약",
-        "itemType": "consumption",
+        "itemType": "CONSUMABLE",
         "itemSubtype": "potion",
         "levelRequirement": 0,
         "classRequirement": "all",

@@ -22,8 +22,7 @@ EquippedGear::EquippedGear(PlayerRef player) : _player(player)
         {JsonProperty::Item::GearSubtype_Legs, Protocol::GearType::GEAR_TYPE_LEGS},
         {JsonProperty::Item::GearSubtype_Arms, Protocol::GearType::GEAR_TYPE_ARMS},
         {JsonProperty::Item::GearSubtype_Boots, Protocol::GearType::GEAR_TYPE_BOOTS},
-        {JsonProperty::Item::GearSubtype_Sword, Protocol::GearType::GEAR_TYPE_WEAPON},
-        {JsonProperty::Item::GearType_Weapon, Protocol::GearType::GEAR_TYPE_WEAPON}
+        {JsonProperty::Item::GearSubtype_Sword, Protocol::GearType::GEAR_TYPE_WEAPON}
     };
 }
 

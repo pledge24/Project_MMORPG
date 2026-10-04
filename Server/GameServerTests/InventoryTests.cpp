@@ -43,9 +43,9 @@ class InventoryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        SeedItem(GEAR_TEMPLATE_ID, "weapon");
-        SeedItem(CONSUMABLE_TEMPLATE_ID, "consumption");
-        SeedItem(MISC_TEMPLATE_ID, "miscellaneous");
+        SeedItem(GEAR_TEMPLATE_ID, "GEAR");
+        SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE");
+        SeedItem(MISC_TEMPLATE_ID, "MISCELLANEOUS");
 
         player = make_shared<Player>();
         ASSERT_TRUE(player->Init());
@@ -190,7 +190,7 @@ TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
 {
     constexpr int32 MAX_STACK = 10;
     constexpr int32 BUY_COUNT = 15;
-    SeedItem(CONSUMABLE_TEMPLATE_ID, "consumption", MAX_STACK);
+    SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE", MAX_STACK);
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
     ASSERT_TRUE(player->_inventory->AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
@@ -209,7 +209,7 @@ TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
 TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
 {
     constexpr int32 MAX_STACK = 10;
-    SeedItem(CONSUMABLE_TEMPLATE_ID, "consumption", MAX_STACK);
+    SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE", MAX_STACK);
 
     ASSERT_TRUE(player->_inventory->AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
     player->_inventory->ClearDirtyFlags();
@@ -546,5 +546,21 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
         EXPECT_EQ(player->_inventory->GetDirtyFlags(excludedItemType), nullptr)
             << Protocol::ItemType_Name(excludedItemType)
             << " 가 더티 플래그 표에 들어왔다. 의도한 변경이라면 위 기대 집합에서 자리를 옮겨라";
+    }
+}
+
+// itemType에는 아이템 종류만 온다. 없앤 단계의 값(방어구·무기·소비)이나 종류가 아닌 값을 종류로 읽으면
+// 기획 원본이 다시 어긋나도 알아채지 못한다.
+TEST_F(InventoryTest, ItemTypeOtherThanKindIsRejected)
+{
+    constexpr int32 REJECTED_TEMPLATE_ID = 1999;
+    const char* REJECTED_ITEM_TYPES[] = { "weapon", "consumption", "NONE", "gear", "" };
+
+    for (const char* itemType : REJECTED_ITEM_TYPES)
+    {
+        SeedItem(REJECTED_TEMPLATE_ID, itemType);
+
+        Protocol::Slot added;
+        EXPECT_FALSE(AddByTemplate(REJECTED_TEMPLATE_ID, 1, &added)) << "itemType \"" << itemType << "\"를 받아들였다";
     }
 }

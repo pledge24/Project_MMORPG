@@ -29,7 +29,7 @@ namespace
     Json MakeSword(int64 buyPrice, int64 sellPrice, bool sellable, int32 physicalAttack)
     {
         Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "weapon";
+        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
         sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
         sword[string(JsonProperty::Item::MaxStack)] = 1;
         sword[string(JsonProperty::Item::BuyPrice)] = buyPrice;

@@ -29,7 +29,7 @@ namespace
     Json MakePotion(double hpRestore, double mpRestore)
     {
         Json potion;
-        potion[string(JsonProperty::Item::ItemType)] = "consumption";
+        potion[string(JsonProperty::Item::ItemType)] = "CONSUMABLE";
         potion[string(JsonProperty::Item::ItemSubtype)] = "potion";
         potion[string(JsonProperty::Item::MaxStack)] = 10;
         potion[string(JsonProperty::Item::Cooldown)] = COOLDOWN_SECONDS;
@@ -49,7 +49,7 @@ protected:
         Gamedata::s_itemDataTable[MIX_POTION_TEMPLATE_ID] = MakePotion(0.4, 0.4);
 
         Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "weapon";
+        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
         sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
         sword[string(JsonProperty::Item::MaxStack)] = 1;
         sword[string(JsonProperty::Item::HpRestore)] = 1.0;
