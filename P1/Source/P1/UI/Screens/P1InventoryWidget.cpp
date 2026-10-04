@@ -52,9 +52,9 @@ void UP1InventoryWidget::NativeConstruct()
             MyPlayerData->OnGoldChanged.AddUObject(this, &UP1InventoryWidget::UpdateGold);
             MyPlayerData->OnInvenSlotChanged.AddUObject(this, &UP1InventoryWidget::UpdateSlotWidget);
 
-            MyPlayerData->OnRecvSellItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
-            MyPlayerData->OnRecvUseItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
-            MyPlayerData->OnRecvEquipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvSellItemPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
+            MyPlayerData->OnRecvUseItemPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
+            MyPlayerData->OnRecvEquipGearPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
         }
         
     }
@@ -84,9 +84,8 @@ void UP1InventoryWidget::Clear()
     }
 }
 
-void UP1InventoryWidget::UpdateSlotWidget(const Protocol::Slot& InSlot, bool OnUse)
+void UP1InventoryWidget::UpdateSlotWidget(const Protocol::Slot& InSlot)
 {
-    // 재사용 대기는 칸이 아니라 내 플레이어 데이터가 아이템마다 센다. OnUse는 델리게이트의 서명에만 남았다.
     if (UP1SlotWidget* SlotWidget = GetSlotWidgetFromSlot(InSlot))
         SlotWidget->SetSlot(InSlot);
 }
@@ -148,10 +147,10 @@ template <typename TPacket>
 void UP1InventoryWidget::SendItemRequest(TPacket& Pkt)
 {
     // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 켠다. 켜고 보내지 않으면 응답이 오지 않아 대기가 풀리지 않는다.
-    if (PendingPacket)
+    if (bPendingPacket)
         return;
 
-    PendingPacket = true;
+    bPendingPacket = true;
     FP1PacketSender::Send(this, Pkt);
 }
 

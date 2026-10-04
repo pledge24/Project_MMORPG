@@ -20,7 +20,7 @@ void UP1ShopWidget::NativeConstruct()
     if (auto* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
-            MyPlayerData->OnRecvBuyItemPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvBuyItemPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
     }
 }
 
@@ -28,7 +28,7 @@ void UP1ShopWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
 {
     UP1GameInstance* GameInstance = GetP1GameInstance();
     UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
-    if (MyPlayerData == nullptr || PendingPacket)
+    if (MyPlayerData == nullptr || bPendingPacket)
         return;
 
     // 빈 진열 칸은 가격이 0이라 골드 검사를 통과하므로 먼저 가린다.
@@ -49,6 +49,6 @@ void UP1ShopWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     Pkt.set_template_id(SlotWidget->ItemData.TemplateId);
     Pkt.set_count(1);
 
-    PendingPacket = true;
+    bPendingPacket = true;
     FP1PacketSender::Send(this, Pkt);
 }

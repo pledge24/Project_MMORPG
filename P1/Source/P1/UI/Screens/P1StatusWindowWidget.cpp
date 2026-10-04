@@ -36,7 +36,7 @@ void UP1StatusWindowWidget::NativeConstruct()
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_MP].AddUObject(this, &UP1StatusWindowWidget::UpdateMaxMp);
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_PHYSICAL_ATTACK].AddUObject(this, &UP1StatusWindowWidget::UpdatePhysicalAttack);
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAGICAL_ATTACK].AddUObject(this, &UP1StatusWindowWidget::UpdateMagicalAttack);
-            MyPlayerData->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { PendingPacket = false; });
+            MyPlayerData->OnRecvUnequipGearPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
         }
     }
 
@@ -104,13 +104,13 @@ void UP1StatusWindowWidget::UpdateMagicalAttack(int64 Value)
 void UP1StatusWindowWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
 {
     // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 해제가 막힌다.
-    if (PendingPacket)
+    if (bPendingPacket)
         return;
 
     Protocol::C_UNEQUIP_GEAR Pkt;
     Pkt.mutable_slot()->CopyFrom(SlotWidget->SlotData);
 
-    PendingPacket = true;
+    bPendingPacket = true;
     FP1PacketSender::Send(this, Pkt);
 }
 
