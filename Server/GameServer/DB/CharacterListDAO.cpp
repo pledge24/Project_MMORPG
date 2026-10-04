@@ -127,8 +127,8 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             dbBind.BindParam(1, _classId);
             dbBind.BindParam(2, _name.c_str());
             dbBind.BindParam(3, _slotCount);
-            dbBind.BindParam(4, _duplicateNameError);
-            dbBind.BindParam(5, _noEmptySlotError);
+            dbBind.BindParam(4, _rejections[0]);
+            dbBind.BindParam(5, _rejections[1]);
             dbBind.BindParam(6, _curHp);
             dbBind.BindParam(7, _curMp);
             dbBind.BindParam(8, _curPhysicalAttack);
@@ -145,9 +145,9 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         int32 _classId;
         wstring _name;
         int32 _slotCount;
-        // 쿼리가 거절할 때 character_id 자리에 부호를 뒤집어 돌려주는 사유다.
-        int32 _duplicateNameError = DBCustomError::ALREADY_EXISTING_CHARACTER;
-        int32 _noEmptySlotError = DBCustomError::NO_EMPTY_CHARACTER_SLOT;
+        // 쿼리가 거절할 때 character_id 자리에 부호를 뒤집어 돌려주는 사유다. 화면에 그대로 보여 준다.
+        // 순서는 쿼리의 @duplicate_name_error, @no_empty_slot_error 순서와 같다.
+        int32 _rejections[2] = { DBCustomError::ALREADY_EXISTING_CHARACTER, DBCustomError::NO_EMPTY_CHARACTER_SLOT };
         int32 _curHp = 0;
         int32 _curMp = 0;
         int32 _curPhysicalAttack = 0;
@@ -233,14 +233,24 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             throw DBCustomError::SQL_FETCH_FAIL;
 
         // character_id는 identity라 양수다. 음수면 쿼리가 거절한 것이고, 부호를 뒤집으면 사유가 된다.
-        // 거절 사유는 화면에 그대로 보여 준다. 거절을 예외로 던지지 않으므로 catch에 오는 것은 모두 서버 내부 오류다.
+        // 거절을 예외로 던지지 않으므로 catch에 오는 것은 모두 서버 내부 오류다.
         if (bindObject._characterId < 0)
         {
-            const DBCustomError rejection = static_cast<DBCustomError>(-bindObject._characterId);
-            PrintDBErrorLog(rejection);
-
             createCharacterPkt.set_success(false);
-            createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(rejection).c_str()));
+
+            // 바인딩한 사유만 화면에 보여 준다. 그 밖의 음수는 쿼리가 잘못된 것이므로 내부 문구를 내보내지 않는다.
+            const int64 code = -bindObject._characterId;
+            if (ranges::find(bindObject._rejections, code) != end(bindObject._rejections))
+            {
+                const DBCustomError rejection = static_cast<DBCustomError>(code);
+                PrintDBErrorLog(rejection);
+                createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(rejection).c_str()));
+            }
+            else
+            {
+                cerr << "Unexpected Rejection(CreateCharacter): " << code << endl;
+                createCharacterPkt.set_cause("서버 내부 오류");
+            }
         }
         else
         {
