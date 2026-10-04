@@ -17,6 +17,16 @@ static const TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings =
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
 };
 
+// 서버 데이터에 직업이 더해져도 화면이 멈추지 않도록, 맵에 없는 값은 대체 이름으로 보여 준다.
+static FString GetClassDisplayName(Protocol::CharacterClass CharacterClass)
+{
+    if (const FString* ClassName = ClassEnumToStringMappings.Find(CharacterClass))
+        return *ClassName;
+
+    UE_LOG(LogP1UI, Warning, TEXT("이름이 없는 직업 값: %d"), static_cast<int32>(CharacterClass));
+    return TEXT("알 수 없음");
+}
+
 void UP1LoginMenuWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
@@ -124,7 +134,7 @@ void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = Character.character_id();
-        CharacterOverview.CharacterClass = ClassEnumToStringMappings[Character.class_()];
+        CharacterOverview.CharacterClass = GetClassDisplayName(Character.class_());
         CharacterOverview.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
         CharacterOverview.CharacterLevel = Character.level();
 
@@ -246,7 +256,7 @@ void UP1LoginMenuWidget::ResetCharacterCreateScreen()
 void UP1LoginMenuWidget::SelectClass(int32 ClassId)
 {
     SelectedClassId = ClassId;
-    SelectedClassText->SetText(FText::FromString(ClassEnumToStringMappings[Protocol::CharacterClass(ClassId)]));
+    SelectedClassText->SetText(FText::FromString(GetClassDisplayName(Protocol::CharacterClass(ClassId))));
 }
 
 void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER& pkt)
@@ -261,8 +271,8 @@ void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = pkt.character_id();
-        CharacterOverview.CharacterClass = ClassEnumToStringMappings[Protocol::CharacterClass(SelectedClassId)];
-        CharacterOverview.CharacterName = CC_CharacterNameText->GetText().ToString();
+        CharacterOverview.CharacterClass = GetClassDisplayName(Protocol::CharacterClass(RequestedClassId));
+        CharacterOverview.CharacterName = RequestedCharacterName;
         CharacterOverview.CharacterLevel = 1;
 
         UE_LOG(LogP1UI, Log, TEXT("캐릭터 요약 수: %d"), CharacterOverviews.Num());
@@ -293,6 +303,10 @@ void UP1LoginMenuWidget::SendCreateCharacterPkt(const FString& CharacterName, in
 
     Protocol::C_CREATE_CHARACTER pkt;
     pkt.set_allocated_character(CharacterOverview);
+
+    // 응답에는 캐릭터 id만 온다. 응답을 기다리는 동안 입력 칸이 바뀌어도 서버에 보낸 값을 목록에 넣는다.
+    RequestedCharacterName = CharacterName;
+    RequestedClassId = CharacterClassId;
 
     FP1PacketSender::Send(this, pkt);
 }
