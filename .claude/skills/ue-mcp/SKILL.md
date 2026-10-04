@@ -7,6 +7,9 @@ description: 언리얼 MCP(`unreal`)의 이 저장소 전용 함정. `mcp__unrea
 
 범용 사용법은 플러그인 스킬 `unreal-mcp`에 있다. 아래는 이 저장소에서만 걸리는 것이다.
 
+- 언리얼 MCP로 새 작업을 시작할 때마다 `ToolsetRegistry.AgentSkillToolset`의 `ListSkills`를 부르고, 작업에 맞는
+  스킬이 있으면 `GetSkills`로 본문을 읽는다. 세션에 한 번이 아니라 작업마다 부른다. 엔진에 내장된 스킬이 있다
+  (`BlueprintBasicsSkill`, `MaterialBasicsSkill`).
 - `call_tool`의 `toolset_name`에는 전체 이름을 쓴다(`editor_toolset.toolsets.blueprint.BlueprintTools`).
   `unreal-mcp`의 예시처럼 짧은 이름(`BlueprintTools`)을 쓰면 훅의 허용 명단과 맞지 않아 막힌다. 전체 이름은
   `list_toolsets`가 돌려준다.
