@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "GameSession.h"
 #include "GameSessionManager.h"
+#include "SaveGate.h"
 #include "ServerPacketHandler.h"
 #include "ProgressStorage.h"
 #include "Player.h"
@@ -14,9 +15,16 @@ void GameSession::OnConnected()
 // 룸 퇴장과 저장은 이유와 무관하게 여기서만 시작한다. C_LEAVE_GAME도 연결을 끊어 이 경로로 온다.
 void GameSession::OnDisconnected()
 {
+	PlayerRef player = _player.load();
+
+	// 저장 대기는 Remove보다 먼저 건다. 반대로 하면 그 사이에 온 새 로그인이 대기 없이 입장해 저장 전의 진행을 불러온다.
+	// 룸이 없으면 저장하지 않으므로 걸지 않는다. 걸면 풀어 줄 저장이 없어 다음 입장이 만료까지 막힌다.
+	// 룸 입장 잡이 큐에 남아 있다가 저장하는 경우는 LeaveGame이 건다.
+	if (player != nullptr && player->_room.load().lock() != nullptr)
+		GSaveGate.Hold(_userId);
+
 	GSessionManager.Remove(static_pointer_cast<GameSession>(shared_from_this()));
 
-	PlayerRef player = _player.load();
 	if (player == nullptr)
 		return;
 
@@ -41,12 +49,20 @@ void GameSession::LeaveGame(RoomRef room, PlayerRef player)
 	if (saveData.has_value() == false)
 		return;
 
-	// 입장 불러오기와 같은 userId 큐에 넣는다. 곧바로 다시 접속해도 저장이 끝난 뒤에 불러온다.
+	// 끊길 때 룸이 없어 OnDisconnected가 대기를 걸지 않은 경우(룸 입장 잡이 큐에 남아 있던 경우)를 여기서 덮는다.
+	// 이미 걸려 있으면 아무것도 하지 않는다.
+	GSaveGate.Hold(saveData->userId);
+
+	// 입장 불러오기와 같은 userId 큐에 넣는다. 그사이 맡겨 둔 불러오기는 저장이 끝난 뒤 이 잡에서 실행한다.
 	DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(saveData->userId);
 	dbQueue->Push(make_shared<Job>(
 		[data = std::move(saveData.value())]()
 		{
 			ProgressStorage::Save(data);
+
+			// 저장이 실패해도 대기를 푼다. 실패한 저장은 다시 시도하지 않으므로 기다려도 결과가 같다.
+			if (optional<SaveGate::ParkedLoad> parked = GSaveGate.Release(data.userId))
+				parked->run();
 		}));
 }
 

@@ -63,6 +63,26 @@ void Session::Disconnect(const char* cause)
 	RegisterDisconnect();
 }
 
+void Session::DisconnectAfterSend(const char* cause)
+{
+	{
+		USE_LOCK;
+
+		if (_disconnectAfterSendCause != nullptr)
+			return;
+
+		// 송신이 걸려 있으면 ProcessSend가 큐를 비운 뒤 끊는다. Disconnect를 바로 부르면 _connected가 내려가
+		// 큐에서 기다리던 패킷을 RegisterSend가 버린다.
+		if (_sendRegistered.load())
+		{
+			_disconnectAfterSendCause = cause;
+			return;
+		}
+	}
+
+	Disconnect(cause);
+}
+
 void Session::Send(SendBufferRef sendBuffer)
 {
 	if (IsConnected() == false)
@@ -73,6 +93,10 @@ void Session::Send(SendBufferRef sendBuffer)
 	// 현재 RegisterSend가 걸리지 않은 상태라면, 걸어준다.
 	{
 		USE_LOCK;
+
+		// 끊기로 한 세션이다. 받으면 큐가 비지 않아 끊는 시점이 늦어진다.
+		if (_disconnectAfterSendCause != nullptr)
+			return;
 
 		_sendQueue.push(sendBuffer);
 
@@ -282,12 +306,24 @@ void Session::ProcessSend(int32 numOfBytes)
 	// 컨텐츠 코드에서 재정의
 	OnSend(numOfBytes);
 
-	USE_LOCK;
+	const char* disconnectCause = nullptr;
+	{
+		USE_LOCK;
 
-	if (_sendQueue.empty())
-		_sendRegistered.store(false);
-	else
-		RegisterSend();
+		if (_sendQueue.empty())
+		{
+			_sendRegistered.store(false);
+			disconnectCause = _disconnectAfterSendCause;
+		}
+		else
+		{
+			RegisterSend();
+		}
+	}
+
+	// 끊기로 한 세션의 마지막 송신이 끝났다. Disconnect는 락 밖에서 부른다.
+	if (disconnectCause != nullptr)
+		Disconnect(disconnectCause);
 }
 
 void Session::HandleError(int32 errorCode)

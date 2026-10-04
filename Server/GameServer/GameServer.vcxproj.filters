@@ -58,6 +58,9 @@
     <ClCompile Include="Main\GameSessionManager.cpp">
       <Filter>Main</Filter>
     </ClCompile>
+    <ClCompile Include="Main\SaveGate.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
     <ClCompile Include="Main\ServerPacketHandler.cpp">
       <Filter>Main</Filter>
     </ClCompile>
@@ -154,6 +157,9 @@
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="Main\GameSessionManager.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Main\SaveGate.h">
       <Filter>Main</Filter>
     </ClInclude>
     <ClInclude Include="Main\ServerPacketHandler.h">
