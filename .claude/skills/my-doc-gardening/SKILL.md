@@ -7,6 +7,8 @@ disable-model-invocation: true
 
 # 문서 gardening
 
+사람이 일주일에 한 번이나 생각날 때 돌리는 문서 리뷰다. CI나 훅에 묶지 않는다.
+
 문서를 두 축으로 리뷰한다.
 
 - **드리프트**: 문서의 주장이 지금의 코드, 환경, GitHub 상태와 맞는가

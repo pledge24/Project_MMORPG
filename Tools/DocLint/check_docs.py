@@ -1,23 +1,21 @@
 """저장소 문서를 텍스트로 검사한다.
 
-문서에 걸리는 규칙 중 정규식과 파일 존재 확인만으로 판정할 수 있는 것을 본다. 낡은 내용을
-찾거나 문서가 담을 것을 지키는지 판단하는 일은 이 스크립트가 하지 않는다. 그쪽은
-`/my-doc-gardening` 스킬이 이 스크립트의 결과 위에 얹는다.
+`/my-doc-gardening` 스킬이 리뷰 앞단에서 돌린다. 문서가 가리키는 대상이 실제로 있는지와, 도구가
+깨지는 인코딩만 본다. 낡은 내용과 문서 정책은 스킬의 두 축이 판단한다.
+
+**문서의 양식(절 구성, 표의 열, 파일 이름 패턴, 항목 순서)은 보지 않는다.** 양식은 수시로 바뀌고
+엄격하게 지킬 대상이 아니다. 양식을 스크립트에 옮겨 두면 양식을 바꿀 때마다 스크립트가 걸림돌이 된다.
+같은 이유로 CI에 붙이지 않는다.
 
 검사 항목과 근거는 아래와 같다.
 
 | 검사 이름            | 무엇을 보는가                                  | 근거                                  |
 | -------------------- | ---------------------------------------------- | ------------------------------------- |
-| `doc-filename`       | 문서 파일 이름이 소문자와 대시인지             | `CLAUDE.md` 「컨벤션」                |
 | `section-ref`        | 「절」로 가리킨 다른 문서의 절이 있는지        | 문서 전반의 상호 참조                 |
 | `path-ref`           | 백틱으로 적은 저장소 경로가 있는지             | 문서 전반의 상호 참조                 |
 | `backlog-ref`        | backlog 번호 참조가 실제 항목을 가리키는지     | `docs/backlog.md`                     |
 | `references-mention` | 규범 문서와 ADR이 `docs/references`를 안 쓰는지 | `docs/references/README.md`           |
-| `adr-format`         | ADR 파일 이름, 번호 연속, `status` 값          | `ADR-FORMAT.md`                       |
-| `tech-debt-format`   | 개수 줄, 정렬, 항목 양식과 어휘                | `docs/tech-debt.md` 「작성 방법」     |
-| `context-map-absent` | `CONTEXT-MAP.md`가 없는지                      | `CLAUDE.md` 「도메인 문서」           |
 | `encoding`           | `.md`는 UTF-8, `.proto`·`.bat`은 cp949인지     | `docs/conventions.md` 1.3             |
-| `doc-pointer`        | 규범 문서마다 `CLAUDE.md`에 포인터가 있는지    | `CLAUDE.md` 「문서 위치」             |
 
 사용법:
 
@@ -48,10 +46,6 @@ from pathlib import Path, PurePosixPath
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SELF_PATH = Path(__file__).resolve().relative_to(REPO_ROOT).as_posix()
 
-# 파일 이름 규칙의 예외다. 루트의 관례 파일과 폴더 진입점이다 (`CLAUDE.md` 「컨벤션」).
-# `CONTEXT.md`는 `domain-modeling` 스킬이 정한 이름이라 루트 관례 파일에 넣는다.
-FILENAME_EXCEPTIONS = frozenset({"CLAUDE.md", "CONTEXT.md", "README.md", "docs/ARCHITECTURE.md"})
-
 # 저장소 경로로 보고 존재를 확인할 백틱 토큰의 시작이다. 최상위 폴더와 루트 문서만 둔다.
 # 이 밖의 토큰(`Room.cpp`, `Game/Combat/`)은 기준 폴더를 알 수 없어서 판정하지 않는다.
 PATH_PREFIXES = (
@@ -70,13 +64,6 @@ ROOT_FILES = ("CLAUDE.md", "CONTEXT.md", "README.md", ".gitignore", ".gitattribu
 # 빌드 산출물의 루트 폴더다. 하위의 `Debug/`, `Release/`만 무시 규칙에 걸리고 이 폴더 자체는
 # 규칙에 이름이 없어서, 「무시하기로 한 경로」로 판정되지 않는다 (`Server/.gitignore`).
 BUILD_OUTPUT_DIRS = ("Server/Binary",)
-
-# ADR의 `status` 값이다 (`ADR-FORMAT.md` 「Optional sections」).
-ADR_STATUS_RE = re.compile(r"^(proposed|accepted|deprecated|superseded by ADR-\d{4})$")
-
-TECH_DEBT_LEVELS = ("높음", "중간", "낮음")
-TECH_DEBT_SCOPES = ("함수", "파일", "모듈", "기능", "프로젝트")
-TECH_DEBT_AREAS = ("client", "server", "protocol", "shared", "build", "ops")
 
 
 @dataclass(frozen=True)
@@ -208,34 +195,7 @@ def normalize_title(title: str) -> str:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 1: 문서 파일 이름 (`CLAUDE.md` 「컨벤션」)
-# ----------------------------------------------------------------------------------
-
-DOC_FILENAME_RE = re.compile(r"^[a-z0-9]+(?:[-.][a-z0-9]+)*\.md$")
-
-
-def check_doc_filename(_: argparse.Namespace) -> list[Violation]:
-    """루트와 `docs/`의 문서 파일 이름이 소문자와 대시인지 본다.
-
-    `.claude/skills/`는 보지 않는다. 스킬 폴더는 상류 관례(`SKILL.md`, `ADR-FORMAT.md`)를 따른다.
-    """
-    violations = []
-    for path in tracked_markdown():
-        in_root = "/" not in path
-        if not (in_root or path.startswith("docs/")):
-            continue
-        if path in FILENAME_EXCEPTIONS or PurePosixPath(path).name == "README.md":
-            continue
-        if DOC_FILENAME_RE.match(PurePosixPath(path).name):
-            continue
-        violations.append(
-            Violation(path, 0, "문서 파일 이름은 소문자와 대시로 쓴다 (CLAUDE.md 「컨벤션」)")
-        )
-    return violations
-
-
-# ----------------------------------------------------------------------------------
-# 검사 2: 다른 문서의 절 참조
+# 검사 1: 다른 문서의 절 참조
 # ----------------------------------------------------------------------------------
 
 # 문서 이름 바로 뒤에 「절」이 붙은 참조다. `CLAUDE.md` 「컨벤션」, `docs/build.md`의 「빌드 명령」.
@@ -288,7 +248,7 @@ def check_section_ref(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 3: 저장소 경로 참조
+# 검사 2: 저장소 경로 참조
 # ----------------------------------------------------------------------------------
 
 BACKTICK_RE = re.compile(r"`([^`\n]+)`")
@@ -377,7 +337,7 @@ def check_path_ref(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 4: backlog 번호 참조
+# 검사 3: backlog 번호 참조
 # ----------------------------------------------------------------------------------
 
 # `backlog.md` 7번, backlog 4번(제목), `docs/backlog.md`의 「5. 제목」
@@ -439,7 +399,7 @@ def check_backlog_ref(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 5: `docs/references` 언급 (`docs/references/README.md`)
+# 검사 4: `docs/references` 언급 (`docs/references/README.md`)
 # ----------------------------------------------------------------------------------
 
 REFERENCES_RE = re.compile(r"docs/references\b")
@@ -468,184 +428,7 @@ def check_references_mention(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 6: ADR 형식 (`ADR-FORMAT.md`)
-# ----------------------------------------------------------------------------------
-
-ADR_FILENAME_RE = re.compile(r"^(\d{4})-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
-FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
-
-
-def check_adr_format(_: argparse.Namespace) -> list[Violation]:
-    """ADR 파일 이름, 번호 연속, `status` 값을 본다. `status`는 선택이라 없어도 된다."""
-    violations = []
-    numbers: dict[int, str] = {}
-    for doc in adr_docs():
-        name = PurePosixPath(doc).name
-        match = ADR_FILENAME_RE.match(name)
-        if match is None:
-            violations.append(Violation(doc, 0, "ADR 파일 이름은 NNNN-slug.md로 쓴다"))
-            continue
-        number = int(match.group(1))
-        if number in numbers:
-            violations.append(Violation(doc, 0, f"ADR 번호 {number:04d}이 {numbers[number]}와 겹친다"))
-        numbers.setdefault(number, doc)
-
-        text = read_text(doc).replace("\r\n", "\n")
-        front = FRONTMATTER_RE.match(text)
-        if front is None:
-            continue
-        for offset, line in enumerate(front.group(1).splitlines(), 2):
-            key, _, value = line.partition(":")
-            if key.strip() == "status" and not ADR_STATUS_RE.match(value.strip()):
-                violations.append(
-                    Violation(
-                        doc,
-                        offset,
-                        f"status 값 '{value.strip()}'이 어휘에 없다. "
-                        "proposed, accepted, deprecated, superseded by ADR-NNNN 중 하나다",
-                    )
-                )
-
-    expected = 1
-    for number in sorted(numbers):
-        if number != expected:
-            violations.append(
-                Violation(numbers[number], 0, f"ADR 번호가 {expected:04d}을 건너뛰었다")
-            )
-        expected = number + 1
-    return violations
-
-
-# ----------------------------------------------------------------------------------
-# 검사 7: tech-debt 양식 (`docs/tech-debt.md` 「작성 방법」)
-# ----------------------------------------------------------------------------------
-
-COUNT_LINE_RE = re.compile(r"^항목 (\d+)개 \(높음 (\d+) · 중간 (\d+) · 낮음 (\d+)\)$")
-META_RE = re.compile(
-    r"^> \*\*심각도:\*\* (\S+) · \*\*난이도:\*\* (\S+) · \*\*범위:\*\* (\S+) · (\S+)\s*$"
-)
-REGISTERED_RE = re.compile(r"^> 등록일: \d{4}년 \d{1,2}월 \d{1,2}일")
-
-
-@dataclass
-class DebtItem:
-    title: str
-    line: int
-    meta: tuple[str, str, str, str] | None
-    body: list[str]
-
-
-def parse_debt_items(text: str) -> tuple[tuple[int, str] | None, list[DebtItem]]:
-    """개수 줄과 항목을 읽는다. 항목은 `> **심각도:**` 줄이 바로 뒤따르는 `##` 제목이다."""
-    lines = code_lines(text)
-    count_line = next(((n, l) for n, l in lines if COUNT_LINE_RE.match(l)), None)
-    items: list[DebtItem] = []
-    current: DebtItem | None = None
-    for index, (number, line) in enumerate(lines):
-        if line.startswith("## "):
-            # 항목이 아닌 `##`(`## 작성 방법`)가 나오면 앞 항목의 본문이 끝난다.
-            current = None
-            nxt = lines[index + 1][1] if index + 1 < len(lines) else ""
-            if nxt.startswith("> **심각도:**"):
-                match = META_RE.match(nxt)
-                current = DebtItem(line[3:].strip(), number, match.groups() if match else None, [])
-                items.append(current)
-            continue
-        if line.strip() == "---":
-            current = None
-            continue
-        if current is not None:
-            current.body.append(line)
-    return count_line, items
-
-
-def check_tech_debt_format(_: argparse.Namespace) -> list[Violation]:
-    """개수 줄과 실제 항목, 정렬, 항목마다 양식과 어휘를 본다."""
-    doc = "docs/tech-debt.md"
-    count_line, items = parse_debt_items(read_text(doc))
-    violations = []
-
-    for item in items:
-        if item.meta is None:
-            violations.append(
-                Violation(doc, item.line + 1, f"「{item.title}」의 심각도 줄이 양식과 다르다")
-            )
-            continue
-        severity, difficulty, scope, area = item.meta
-        for label, value, vocabulary in (
-            ("심각도", severity, TECH_DEBT_LEVELS),
-            ("난이도", difficulty, TECH_DEBT_LEVELS),
-            ("범위", scope, TECH_DEBT_SCOPES),
-            ("영역", area, TECH_DEBT_AREAS),
-        ):
-            if value not in vocabulary:
-                violations.append(
-                    Violation(doc, item.line + 1, f"「{item.title}」의 {label} '{value}'이 어휘에 없다")
-                )
-        if not any(line.startswith("> 위치:") for line in item.body):
-            violations.append(Violation(doc, item.line, f"「{item.title}」에 위치 줄이 없다"))
-        if not any(REGISTERED_RE.match(line) for line in item.body):
-            violations.append(
-                Violation(doc, item.line, f"「{item.title}」에 「등록일: YYYY년 M월 D일」 줄이 없다")
-            )
-        if not any(line.strip() == "### 영향" for line in item.body):
-            violations.append(Violation(doc, item.line, f"「{item.title}」에 「영향」 절이 없다"))
-
-    rank = {level: index for index, level in enumerate(TECH_DEBT_LEVELS)}
-    ordered = [item for item in items if item.meta and item.meta[0] in rank and item.meta[1] in rank]
-    for previous, current in zip(ordered, ordered[1:]):
-        key_previous = (rank[previous.meta[0]], -rank[previous.meta[1]])
-        key_current = (rank[current.meta[0]], -rank[current.meta[1]])
-        if key_current < key_previous:
-            violations.append(
-                Violation(
-                    doc,
-                    current.line,
-                    f"「{current.title}」이 「{previous.title}」보다 위에 와야 한다. "
-                    "심각도가 높은 항목, 같으면 난이도가 낮은 항목을 위에 둔다",
-                )
-            )
-
-    if count_line is None:
-        violations.append(Violation(doc, 0, "맨 위에 「항목 N개 (높음 N · 중간 N · 낮음 N)」 줄이 없다"))
-    else:
-        number, line = count_line
-        written = tuple(int(value) for value in COUNT_LINE_RE.match(line).groups())
-        severities = [item.meta[0] for item in items if item.meta]
-        actual = (
-            len(items),
-            severities.count("높음"),
-            severities.count("중간"),
-            severities.count("낮음"),
-        )
-        if written != actual:
-            violations.append(
-                Violation(
-                    doc,
-                    number,
-                    f"개수 줄이 실제와 다르다. 실제는 항목 {actual[0]}개 "
-                    f"(높음 {actual[1]} · 중간 {actual[2]} · 낮음 {actual[3]})",
-                )
-            )
-    return violations
-
-
-# ----------------------------------------------------------------------------------
-# 검사 8: `CONTEXT-MAP.md`가 없는지 (`CLAUDE.md` 「도메인 문서」)
-# ----------------------------------------------------------------------------------
-
-
-def check_context_map_absent(_: argparse.Namespace) -> list[Violation]:
-    """이 저장소는 single-context다. `CONTEXT-MAP.md`가 생기면 스킬이 multi-context로 읽는다."""
-    return [
-        Violation(path, 0, "single-context 저장소에 CONTEXT-MAP.md가 있다 (CLAUDE.md 「도메인 문서」)")
-        for path in tracked_markdown()
-        if PurePosixPath(path).name == "CONTEXT-MAP.md"
-    ]
-
-
-# ----------------------------------------------------------------------------------
-# 검사 9: 인코딩 (`docs/conventions.md` 1.3)
+# 검사 5: 인코딩 (`docs/conventions.md` 1.3)
 # ----------------------------------------------------------------------------------
 
 UTF8_BOM = b"\xef\xbb\xbf"
@@ -688,39 +471,15 @@ def check_encoding(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 10: `CLAUDE.md`의 문서 포인터 (`CLAUDE.md` 「문서 위치」)
-# ----------------------------------------------------------------------------------
-
-
-def check_doc_pointer(_: argparse.Namespace) -> list[Violation]:
-    """`docs/`의 규범 문서마다 `CLAUDE.md`가 경로를 적었는지 본다.
-
-    포인터가 없는 문서는 에이전트가 언제 읽어야 하는지 모른다. 새 규범 문서를 만들고
-    `CLAUDE.md`에 줄을 더하지 않는 일을 막는다.
-    """
-    index = read_text("CLAUDE.md")
-    return [
-        Violation(doc, 0, f"CLAUDE.md에 `{doc}` 포인터가 없다. 언제 읽는지와 함께 적는다")
-        for doc in normative_docs()
-        if doc.startswith("docs/") and doc not in index
-    ]
-
-
-# ----------------------------------------------------------------------------------
 # 진입점
 # ----------------------------------------------------------------------------------
 
 CHECKS = {
-    "doc-filename": ("문서 파일 이름", check_doc_filename),
     "section-ref": ("다른 문서의 절 참조", check_section_ref),
     "path-ref": ("저장소 경로 참조", check_path_ref),
     "backlog-ref": ("backlog 번호 참조", check_backlog_ref),
     "references-mention": ("docs/references 언급", check_references_mention),
-    "adr-format": ("ADR 파일 이름과 status", check_adr_format),
-    "tech-debt-format": ("tech-debt 개수 줄과 양식", check_tech_debt_format),
-    "context-map-absent": ("CONTEXT-MAP.md 부재", check_context_map_absent),
     "encoding": ("문서와 cp949 파일의 인코딩", check_encoding),
-    "doc-pointer": ("CLAUDE.md의 문서 포인터", check_doc_pointer),
 }
 
 
@@ -734,21 +493,8 @@ CHECKS = {
 # 코드 그대로다.
 
 _BACKLOG = "# Backlog\n\n## 1. 첫 항목\n\n## 3. 셋째 항목\n"
-_TECH_DEBT_HEAD = "# Tech Debt\n\n{count}\n\n## 작성 방법\n\n```markdown\n## 양식\n> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client\n```\n\n---\n\n"
-
-
-def _debt(title: str, severity: str, difficulty: str, area: str = "server") -> str:
-    return (
-        f"## {title}\n"
-        f"> **심각도:** {severity} · **난이도:** {difficulty} · **범위:** 함수 · {area}\n"
-        "> 위치: `Server/GameServer/Main/Global.cpp`\n"
-        "> 등록일: 2026년 10월 3일\n\n"
-        "설명.\n\n### 영향\n\n**변경 비용 증가** — 설명.\n\n"
-    )
-
 
 SELF_TEST_FIXTURES: dict[str, dict[str, str | bytes | None]] = {
-    "doc-filename": {"docs/Tech_Debt.md": "# x\n"},
     "section-ref": {
         "docs/build.md": "# 빌드\n\n상세는 `CLAUDE.md` 「도구 라우팅」에 있다.\n",
         "CLAUDE.md": "# CLAUDE\n\n## 빌드와 도구\n",
@@ -767,37 +513,14 @@ SELF_TEST_FIXTURES: dict[str, dict[str, str | bytes | None]] = {
         "docs/ARCHITECTURE.md": "`docs/references/decisions/index.md` 참조.\n",
         "CLAUDE.md": "# CLAUDE\n",
     },
-    "adr-format": {
-        "docs/adr/0001-first.md": "---\nstatus: done\n---\n\n# 첫 결정\n",
-        "docs/adr/0003-third.md": "# 셋째 결정\n",
-    },
-    "tech-debt-format": {
-        "docs/tech-debt.md": _TECH_DEBT_HEAD.format(count="항목 3개 (높음 1 · 중간 0 · 낮음 1)")
-        + _debt("낮은 것", "낮음", "낮음")
-        + _debt("높은 것", "높음", "중간", area="backend"),
-    },
-    "context-map-absent": {"CONTEXT-MAP.md": "# map\n"},
     "encoding": {
         "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("utf-8"),
         "docs/build.md": UTF8_BOM + "# 빌드\n".encode("utf-8"),
-    },
-    "doc-pointer": {
-        "docs/testing.md": "# 테스트\n",
-        "CLAUDE.md": "# CLAUDE\n\n- `docs/build.md`\n",
     },
 }
 
 # 규칙을 지키는 입력이다. 여기서 위반이 나오면 검사가 과하게 잡는 것이다.
 SELF_TEST_CLEAN: dict[str, dict[str, str | bytes | None]] = {
-    "doc-filename": {
-        "docs/tech-debt.md": "# x\n",
-        "docs/ARCHITECTURE.md": "# x\n",
-        "docs/adr/0001-unify-build-path.md": "# x\n",
-        "docs/work/2026-10-02-client-structure.md": "# x\n",
-        "CLAUDE.md": "# x\n",
-        # 스킬 폴더는 상류 관례를 따르므로 보지 않는다.
-        ".claude/skills/domain-modeling/ADR-FORMAT.md": "# x\n",
-    },
     "section-ref": {
         "docs/build.md": (
             "# 빌드\n\n상세는 `CLAUDE.md` 「빌드와 도구」에 있다.\n"
@@ -830,26 +553,10 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | bytes | None]] = {
         "docs/codegen.md": "근거는 `docs/adr/0009-keep-asset-references-out-of-design-data.md`에 있다.\n",
         "CLAUDE.md": "- `docs/references/` — 하네스 v1의 이력\n",
     },
-    "adr-format": {
-        "docs/adr/0001-first.md": "---\nstatus: accepted\n---\n\n# 첫 결정\n",
-        "docs/adr/0002-second.md": "---\nstatus: superseded by ADR-0003\n---\n\n# 둘째\n",
-        "docs/adr/0003-third.md": "# 셋째 결정\n",
-    },
-    "tech-debt-format": {
-        "docs/tech-debt.md": _TECH_DEBT_HEAD.format(count="항목 3개 (높음 1 · 중간 0 · 낮음 2)")
-        + _debt("높은 것", "높음", "중간")
-        + _debt("낮고 쉬운 것", "낮음", "낮음")
-        + _debt("낮고 어려운 것", "낮음", "중간"),
-    },
-    "context-map-absent": {"CONTEXT.md": "# 용어집\n"},
     "encoding": {
         "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("cp949"),
         "P1/Source/ProtobufCore/any.proto": b"syntax = \"proto3\";\n",
         "docs/build.md": "# 빌드\n".encode("utf-8"),
-    },
-    "doc-pointer": {
-        "docs/testing.md": "# 테스트\n",
-        "CLAUDE.md": "# CLAUDE\n\n- `docs/testing.md`\n",
     },
 }
 
