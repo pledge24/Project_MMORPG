@@ -179,6 +179,7 @@
     <ClInclude Include="Main\GameSession.h" />
     <ClInclude Include="Main\GameSessionManager.h" />
     <ClInclude Include="Main\Global.h" />
+    <ClInclude Include="Main\SaveGate.h" />
     <ClInclude Include="Main\ServerPacketHandler.h" />
     <ClInclude Include="Protocol\Enum.pb.h" />
     <ClInclude Include="Protocol\Protocol.pb.h" />
@@ -225,6 +226,7 @@
     <ClCompile Include="Main\GameSession.cpp" />
     <ClCompile Include="Main\GameSessionManager.cpp" />
     <ClCompile Include="Main\Global.cpp" />
+    <ClCompile Include="Main\SaveGate.cpp" />
     <ClCompile Include="Main\ServerConfig.cpp" />
     <ClCompile Include="Main\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">

@@ -50,6 +50,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `PacketDispatch` | 2 | 핸들러 테이블 밖의 id(65535)를 디스패치하지 않고 거절 · 헤더보다 짧은 입력(0~3바이트)을 디스패치하지 않고 거절 |
 | `InventoryTest` | 10 (+DISABLED 1) | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
+| `SaveGateTest` | 9 | 접속 종료 저장 대기. 대기 없는 계정은 맡지 않음 · 해제가 맡긴 불러오기를 돌려줌 · 두 번째 맡기기 거절 · 두 번 걸어도 한 번에 풀림 · 만료 · 해제 뒤 늦게 온 만료와 지난 토큰의 만료 무시 · 계정별 분리 |
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
 | `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · Z 유지 · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
@@ -97,6 +98,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 아이템 재사용 대기 계산 | 존재. `FP1ItemCooldown`. 템플릿별 대기의 보관과 시작은 `UP1MyPlayerData`에, 막대 갱신은 `UP1SlotWidget::RefreshCooldown`에 있다 |
 | 일반 공격 콤보 순번과 몽타주 선택 | 존재. `FP1NormalAttackCombo`. 몽타주 재생, 입력 가능 상태, 2초 초기화 타이머는 `UP1AttackSystemComponent`에 있다 |
 | 보상 결과 반영 | 존재. `UP1MyPlayerData::HandleRewardResult`. 경험치와 레벨은 서버가 계산하므로 클라이언트는 사본에 쓰고 알리기만 한다 |
+| 접속 종료 저장 대기 | 존재. `SaveGate` 공개 API. 대기를 거는 시점, 맡긴 불러오기의 실행, 만료 타이머는 `GameSession`과 `ServerPacketHandler`에 있고 테스트하지 않는다 |
 | 전투 판정 | 없음. `Room` 안에 얽혀 있다 |
 | `Gamedata` 테이블 로딩 | 미확인 |
 

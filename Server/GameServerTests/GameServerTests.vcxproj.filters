@@ -70,6 +70,7 @@
     <ClCompile Include="ServerConfigTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
+    <ClCompile Include="SaveGateTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
@@ -80,6 +81,9 @@
       <Filter>GameServer\Main</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp">
+      <Filter>GameServer\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Main\SaveGate.cpp">
       <Filter>GameServer\Main</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Main\ServerConfig.cpp">
