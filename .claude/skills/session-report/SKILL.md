@@ -1,6 +1,6 @@
 ---
 name: session-report
-description: Generate a human-readable report of the work actually performed during the current coding session. Use when a long coding session is nearing completion and a developer wants to understand what changed, why it changed, what was discovered, how it was validated, and what should be reviewed before accepting the work.
+description: Generate a human-readable report of the work actually performed during the current coding session.
 disable-model-invocation: true
 ---
 

@@ -73,7 +73,7 @@ npm start                # = node src/app.js
 | `REDIS_PORT` |
 | `ACCESS_TOKEN_TTL` |
 
-`eslint`가 devDependency로 설치돼 있지만 flat config도 lint 스크립트도 없어서 실제로 연결돼 있진 않다.
+정적 검사는 ESLint 9이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
 
 ---
 
@@ -114,7 +114,7 @@ npm start                # = node src/app.js
 | UserDB | `(localdb)\MSSQLLocalDB` | `Server/AuthServer/Queries/UserDB_CreateUsersTable.sql` |
 | GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
 
-GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`도 있다.
+GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
 
 **인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `ServerConfig`의 기본값과 환경 변수, UserDB는 `.env`.
 
@@ -138,7 +138,7 @@ LocalDB는 Windows 인증이라 셸에서 붙으면 관리자가 되므로, 같�
 
 ## Rider MCP 상세
 
-규칙은 `CLAUDE.md` 「도구 라우팅」에 있다. 여기엔 근거와 예외를 적는다.
+규칙은 `CLAUDE.md` 「빌드와 도구」에 있다. 여기엔 근거와 예외를 적는다.
 
 ### 빌드 명령
 
@@ -187,24 +187,4 @@ pwsh P1/Scripts/Invoke-UeBuild.ps1 -CloseEditor
 
 `Rebuild.bat`과 최초 전체 빌드는 모듈 수만큼 출력이 늘어나므로 절단될 수 있고, 그때는 `%LOCALAPPDATA%\UnrealBuildTool\Log.txt`를 읽는다.
 
-### 노출 ≠ 존재, 노출 ≠ 동작
-
-Rider 공식 문서와 IDE의 `Settings > Tools > MCP Server > Exposed Tools`에는 `build_project`도 있다. 다만 이 세션이 붙는 엔드포인트는 그걸 내놓지 않는다(2026년 9월 16일 재확인).
-
-**판단 기준은 문서가 아니라 세션에 실제로 노출된 툴 목록이다.** 문서에 있다는 이유로 없는 툴을 부르지 말 것. 반대로 노출 목록에 없다고 해서 "그런 툴은 없다"고 단정하지도 말 것. 둘은 다른 얘기다.
-
-**IDE 화면의 체크 상태도 근거가 아니다.** IDE의 노출 툴 설정은 이 엔드포인트에 반영되지 않는다. 21종을 끄고 Rider를 완전 재시작해도 `tools/list`가 101종을 그대로 내놨다(2026년 9월 16일 실측). 실측 전문과 처분은 `docs/adr/0002-control-mcp-tools-via-permissions.md`에 있다.
-
-**노출되어 있고 에러도 내지 않는데 결과가 틀린 툴이 있다.** 이쪽이 더 위험하다. 거부당하면 알아채지만, 조용히 빈 결과를 돌려주면 "문제가 없다"로 읽히기 때문이다. 그런 툴의 목록과 증상은 ADR-0002에 있고, 대체 경로가 없는 것을 빼고는 `permissions.deny`로 막아 두었다.
-
-**빈 결과를 근거로 삼기 전에 반증을 한 번 만들어 본다.** 일부러 틀린 입력을 넣어 그 툴이 실제로 잡아내는지 보는 것이 가장 싸다.
-
-### rootFolder
-
-Rider 인스턴스 하나가 열린 솔루션 전부를 한 엔드포인트로 서빙하고, 대상을 고르는 건 `rootFolder`뿐이다. 파라미터 이름이 `projectPath`가 아니다.
-
-**함정**: 솔루션이 하나만 열려 있으면 서버가 모호성을 못 느껴 거부하지 않고 그대로 실행한다. Server를 빌드하려는데 P1만 열려 있으면 P1이 빌드된다.
-
-빌드·실행·리팩토링 전에 의도한 솔루션이 실제로 열려 있는지 확인한다. 인자 없이 `get_run_configurations`를 부르면 열린 프로젝트 목록이 에러 메시지로 돌아온다.
-
-상태를 바꾸는 Rider 툴은 `rootFolder`가 없으면 `.claude/hooks/guard_dangerous_cmd.py`가 차단한다.
+Rider MCP 툴의 사용법과 함정은 `.claude/skills/rider-mcp/SKILL.md`에 있다.

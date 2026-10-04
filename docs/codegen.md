@@ -33,6 +33,7 @@
 - `Server/GameServer/Main/ServerPacketHandler.cpp`
 - `P1/Source/P1/Network/ClientPacketHandler.cpp`
 - `P1/Source/P1/Online/P1LoginPacketHandlers.cpp`
+- `Server/DummyClient/Main/ClientPacketHandler.cpp`
 
 마지막 파일에는 로그인 관리자를 부르는 클라이언트 핸들러(`S_LOGIN`, `S_CREATE_CHARACTER`, `S_DELETE_CHARACTER`,
 `S_ENTER_GAME`)의 정의만 둔다. `Network/`는 `Online/`을 부르지 않으므로 이 정의를 `Online/`에 둔다. 선언은 생성된
