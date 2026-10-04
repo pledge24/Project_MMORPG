@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "Enum.pb.h"
+#include "Network/Enum.pb.h"
 #include "P1ItemData.generated.h"
 
 USTRUCT(BlueprintType)
