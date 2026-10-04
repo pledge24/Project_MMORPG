@@ -177,8 +177,8 @@ P1/Source/
 
 이 표는 #138이 클라이언트의 `#include`를 전수 대조한 결과에 맞춘 것이다.
 
-**생성된 프로토콜 자료형(`Protocol.pb.h`)은 어디서나 부른다.** 생성기가 `Network/`에 복사해 둘 뿐
-`Network/`의 코드가 아니다. 요청을 만드는 쪽도 응답을 받는 쪽도 이 자료형을 쓴다.
+**생성된 프로토콜 자료형(`Enum.pb.h`, `Struct.pb.h`, `Protocol.pb.h`)은 어디서나 부른다.** 생성기가
+`Network/`에 복사해 둘 뿐 `Network/`의 코드가 아니다. 요청을 만드는 쪽도 응답을 받는 쪽도 이 자료형을 쓴다.
 
 **`Sync/`와 `Game/` 아래가 `Network/`에서 부르는 것은 송신 창구 `Network/P1PacketSender.h` 하나뿐이다.**
 표의 「송신 창구」가 이것이다. 요청 자료형(`Protocol::C_*`)을 만들어 `FP1PacketSender::Send(this, Pkt)`에

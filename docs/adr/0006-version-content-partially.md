@@ -74,6 +74,22 @@ LFS로 보낸다. 같은 확장자의 파일이 두 형태로 섞이지만 동�
 **이 이동은 git에 남지 않는다.** 참고용 팩은 추적 대상이 아니라서 폴더가 통째로 움직여도 diff가 비어
 있다. 되돌리려면 에디터에서 다시 옮긴다.
 
+## 보관소의 복구 경로 (2026년 10월 4일 덧붙임)
+
+**`Content/External/`을 되돌리는 경로는 팩 재설치 하나다.** Fab 라이브러리에서 팩을 다시 받아
+`Content/External/` 아래에 같은 이름의 폴더로 둔다. 2026년 10월 4일 기준 폴더는 11개다.
+
+`Armors`, `ClassicMMOUI`, `DARK_F_GREATSWORD`, `FantasyArmor`, `GreatSwordAnimation`, `Monsters`,
+`ParagonMinions`, `Polygon-MedievalCamp`, `SwordAnimationPack`, `Swords`, `TPS_Characters`
+
+이 가운데 `Armors`, `Monsters`, `Swords`는 팩에서 골라 손으로 정리한 폴더다. 재설치하면 원본 팩은
+돌아오지만 그 정리는 돌아오지 않는다. 그래도 잃어도 되는 것으로 판정했다. 보관소는 참고용이고,
+게임이 쓰는 것은 이미 `Content/P1/` 아래에 복사되어 있다.
+
+저장소 밖에 `Content` 전체를 미러로 뜨던 `P1/Scripts/Backup-UeContent.ps1`은 이날 걷어냈다.
+LFS 전환 전에 둔 임시 수단이었다. 전환 뒤에는 보관소만 지키는 셈이었는데, 위 판정으로 지킬 것이
+남지 않았다. 마지막 스냅샷은 9월 21일 것이어서 남겨 두면 최신 백업으로 오해할 수 있었다.
+
 ## 이 결정을 다시 볼 때
 
 참고용 보관소의 팩을 직접 고치기 시작하면 그 팩은 재설치로 복구되지 않는다. 그 시점에 고친 것을
