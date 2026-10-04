@@ -193,6 +193,12 @@ private:
     /** Protocol::CharacterClass 값이다. 고르지 않았으면 -1이다. */
     int32 SelectedClassId = -1;
 
+    /** 마지막으로 보낸 생성 요청의 이름이다. 응답이 오면 이 값을 목록에 넣는다. */
+    FString RequestedCharacterName;
+
+    /** 마지막으로 보낸 생성 요청의 직업이다. Protocol::CharacterClass 값이다. */
+    int32 RequestedClassId = -1;
+
     //~ Character Delete
 private:
     void RemoveCharacterOverview(const Protocol::S_DELETE_CHARACTER& pkt);
