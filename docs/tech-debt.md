@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 8개 (높음 1 · 중간 0 · 낮음 7)
+항목 6개 (높음 0 · 중간 0 · 낮음 6)
 
 ## 작성 방법
 
@@ -73,29 +73,6 @@
 
 ---
 
-## 받은 패킷의 길이를 헤더 크기와 비교하지 않는다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · protocol
-> 위치: `Server/ServerCore/Network/Session.cpp` 321~345줄 (`PacketSession::OnRecv`)
-> 등록일: 2026년 10월 2일
-
-헤더의 `size`가 헤더 크기(4)보다 작은지 아무 곳에서도 확인하지 않는다. 같은 결함이 세 곳에 있다.
-
-| 위치 | `size`가 4보다 작을 때 |
-|---|---|
-| 서버 `PacketSession::OnRecv` | `size`가 0이면 `processLen`이 늘지 않아 루프가 끝나지 않는다. 1~3이면 핸들러가 받은 길이를 넘어 헤더를 읽는다 |
-| 클라이언트 `P1RecvWorker::ReceivePacket` (`P1/Source/P1/Network/P1RecvWorker.cpp`) | 음수 `PayloadSize`를 `AddZeroed`에 넘긴다 |
-| 생성된 `HandlePacket` (`Protocol/Templates/PacketHandler.h`) | `len`이 헤더 크기 이상인지 보지 않고 헤더를 읽는다 |
-
-`OnRecv`가 음수를 돌려주면 `ProcessRecv`가 연결을 끊는 규약이 이미 있다. 클라이언트도 `ReceivePacket`이
-false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단했고 실행해서 확인하지는 않았다.
-
-#122에서 찾았다. 그 티켓은 id 범위만 고치기로 했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 클라이언트 하나가 `size` 0인 헤더를 보내면 서버의 IOCP 스레드 하나가
-무한 루프에 빠진다. 클라이언트 쪽은 서버가 보낸 값이라 위험이 낮다.
-
 ## 캐릭터 슬롯 수를 서버 상수와 로그인 메뉴의 위젯 수로 따로 정한다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/CharacterCreation.h` 16줄 (`DEFAULT_CHARACTER_SLOT_COUNT`) · `P1/Source/P1/UI/Frontend/P1LoginMenuWidget.cpp` (`OnCreateButtonClicked`)
@@ -110,20 +87,6 @@ false를 돌려주면 연결 끊김으로 처리한다. 코드를 읽고 판단�
 
 **버그 발생 가능성 증가** — 서버 값만 늘리면 넘친 캐릭터가 로그인 화면에 나오지 않고, 위젯만 늘리면 빈 슬롯이
 보이는데도 서버가 생성을 거절한다.
-
-## 캐릭터 생성 쿼리의 거절 표시를 SQL과 C++가 따로 적는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/DB/CharacterListDAO.cpp` 103~104줄, 190줄, 218줄, 247줄 (`CreateCharacter`)
-> 등록일: 2026년 10월 4일
-
-생성 쿼리는 거절할 때 `character_id` 자리에 `-1`(이름 중복)이나 `-2`(빈 슬롯 없음)를 리터럴로 돌려준다. C++는
-같은 값을 `DUPLICATE_NAME`과 `NO_EMPTY_SLOT` 상수로 따로 적는다. 화면에 사유를 보여 줄 오류도 catch 블록이
-`ALREADY_EXISTING_CHARACTER || NO_EMPTY_CHARACTER_SLOT`처럼 하나씩 나열한다. 「캐릭터 수 한도가 클라이언트에만 있다」를 고친 작업의 코드 리뷰에서 찾았다.
-
-### 영향
-
-**동일한 문제의 반복** — 거절 사유를 더할 때마다 SQL 리터럴, C++ 상수, catch 조건 세 곳을 함께 고쳐야 하고,
-한 곳을 빠뜨리면 사유가 「서버 내부 오류」로 바뀌어 보인다.
 
 ## 아이템 기획 원본의 분류 열 이름이 한 단계씩 밀려 있다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · protocol
