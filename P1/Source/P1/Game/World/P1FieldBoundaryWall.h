@@ -51,10 +51,11 @@ private:
     UPROPERTY(EditAnywhere, Category = "Boundary")
     float WallHeight = 500.f;
 
-    /** 필드 한 변의 길이다. */
+    /** 필드의 x 방향 길이다. 서버 맵 데이터의 depthHalfExtent의 두 배와 같아야 한다. */
+    UPROPERTY(EditAnywhere, Category = "Boundary")
+    float BoundaryDepth = 100.f;
+
+    /** 필드의 y 방향 길이다. 서버 맵 데이터의 widthHalfExtent의 두 배와 같아야 한다. */
     UPROPERTY(EditAnywhere, Category = "Boundary")
     float BoundaryWidth = 100.f;
-
-    UPROPERTY(EditAnywhere, Category = "Boundary")
-    float BoundaryHeight = 100.f;
 };
