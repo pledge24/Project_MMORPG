@@ -3,8 +3,8 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-    // 빌드 산출물과 의존성은 검사하지 않는다. obj/는 .esproj의 NuGet 복원 산출물이다.
-    { ignores: ['node_modules/**', 'obj/**'] },
+    // 의존성은 검사하지 않는다.
+    { ignores: ['node_modules/**'] },
 
     js.configs.recommended,
 

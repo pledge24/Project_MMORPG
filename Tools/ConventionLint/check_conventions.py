@@ -61,9 +61,7 @@ GENERATED_NAME_DEPENDENTS = frozenset(
 
 # 항목을 하나씩 명시 등록하는 프로젝트 파일이다.
 #
-# `Server/AuthServer/AuthServer.esproj`는 뺀다. SDK 스타일이라 항목을 나열하지 않고 폴더째
-# 포함하므로 「등록한 것이 실재하는가」라는 명제가 성립하지 않는다. `P1`의 프로젝트 파일도
-# 뺀다. UBT가 생성하고 git이 추적하지 않는다.
+# `P1`의 프로젝트 파일은 뺀다. UBT가 생성하고 git이 추적하지 않는다.
 PROJECT_FILE_PATTERNS = ("*.vcxproj", "*.pyproj")
 
 # 프로젝트 파일이 파일 하나를 가리킬 때 쓰는 항목 유형이다. 빌드 대상과 그저 목록에 보이게
