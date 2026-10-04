@@ -118,6 +118,14 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 
 	// 페이로드
 	const int32 PayloadSize = Header.PacketSize - HeaderSize;
+
+	// PacketSize는 헤더를 포함한 길이다. 헤더보다 작으면 스트림이 어긋난 것이므로 연결을 끊는다.
+	if (PayloadSize < 0)
+	{
+		UE_LOG(LogP1Network, Warning, TEXT("패킷 크기가 헤더보다 작습니다. PacketID : %d, PacketSize : %d"), Header.PacketID, Header.PacketSize);
+		return false;
+	}
+
 	if (PayloadSize == 0)
 		return true;
 
