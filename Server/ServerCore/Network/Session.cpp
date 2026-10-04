@@ -331,6 +331,11 @@ int32 PacketSession::OnRecv(BYTE* buffer, int32 len)
 
 		PacketHeader header = *(reinterpret_cast<PacketHeader*>(&buffer[processLen]));
 
+		// size는 헤더를 포함한 길이다. 헤더보다 작으면 processLen이 늘지 않거나 덜 늘어 스트림이 깨진다.
+		// 음수를 돌려주면 ProcessRecv가 연결을 끊는다.
+		if (header.size < sizeof(PacketHeader))
+			return -1;
+
 		if (dataSize < header.size)
 			break;
 

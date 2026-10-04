@@ -115,6 +115,10 @@ public:
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
 	{
+		// 헤더보다 짧으면 헤더를 읽을 수 없다. 읽으면 받은 길이 밖의 바이트를 id로 쓰고, 본문 길이가 음수가 된다.
+		if (len < static_cast<int32>(sizeof(PacketHeader)))
+			return Handle_INVALID(session, buffer, len);
+
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 
 		// 테이블은 UINT16_MAX 칸이라 id 65535는 범위 밖이다. id는 상대가 보낸 값이므로 믿지 않는다.
