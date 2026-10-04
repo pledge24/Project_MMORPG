@@ -500,9 +500,6 @@ Binaries/
 Intermediate/
 Saved/
 
-PNG/
-PSD/
-
 # JetBrains Rider 프로젝트 캐시
 .idea/
 
