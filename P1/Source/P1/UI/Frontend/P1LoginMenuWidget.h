@@ -89,11 +89,14 @@ private:
 private:
     void FetchCharacterOverviews(const Protocol::S_LOGIN& pkt);
 
-    /** 서버가 보낸 슬롯 수만큼 슬롯 위젯을 보이고 나머지는 숨긴다. */
+    /**
+     * 서버가 보낸 슬롯 수만큼 슬롯 위젯을 보이고 나머지는 숨긴다.
+     * 숨긴 슬롯을 고른 상태였으면 선택을 푼다.
+     */
     void ApplyCharacterSlotCount(int32 SlotCount);
 
-    /** 보이는 슬롯 수다. 서버가 보낸 슬롯 수와 디자이너에 놓인 슬롯 위젯 수 중 작은 값이다. */
-    int32 GetUsableSlotCount() const;
+    /** 서버가 보낸 슬롯 수와 디자이너에 놓인 슬롯 위젯 수 중 작은 값이다. 생성 가능 여부도 이 값으로 판정한다. */
+    int32 GetVisibleSlotCount() const;
 
     /** 슬롯을 모두 비우고 캐릭터 요약을 앞에서부터 채운 뒤 캐릭터 선택 화면으로 넘어간다. */
     void DisplayCharacterOverviews();

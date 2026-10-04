@@ -128,6 +128,14 @@ void UP1LoginMenuWidget::OnRegisterButtonClicked()
 
 void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
 {
+    // 실패 응답은 서버가 비워서 보내므로 슬롯 수가 0이다. 그대로 적용하면 슬롯이 모두 숨은 선택 화면이 뜬다.
+    if (pkt.success() == false)
+    {
+        UE_LOG(LogP1UI, Warning, TEXT("서버가 캐릭터 목록을 불러오지 못함"));
+        SetResultText(false, TEXT("캐릭터 목록을 불러오지 못했습니다."));
+        return;
+    }
+
     CharacterOverviews.Empty();
 
     for (auto& Character : pkt.characters())
@@ -141,6 +149,7 @@ void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
         CharacterOverviews.Add(CharacterOverview);
     }
 
+    // DisplayCharacterOverviews가 보이는 슬롯 수까지만 채우므로 슬롯 수를 먼저 적용한다.
     ApplyCharacterSlotCount(pkt.character_slot_count());
     DisplayCharacterOverviews();
 }
@@ -149,21 +158,27 @@ void UP1LoginMenuWidget::ApplyCharacterSlotCount(int32 SlotCount)
 {
     CharacterSlotCount = SlotCount;
 
-    // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 생성도 보이는 슬롯 수까지만 허용한다.
-    if (CharacterSlots.Num() < CharacterSlotCount)
+    // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 0 이하는 이 필드를 모르는 서버가 보낸 기본값이다.
+    if (CharacterSlots.Num() < CharacterSlotCount || CharacterSlotCount <= 0)
     {
-        UE_LOG(LogP1UI, Warning, TEXT("슬롯 위젯이 서버의 슬롯 수보다 적습니다. 위젯 수: %d, 서버 슬롯 수: %d"), CharacterSlots.Num(), CharacterSlotCount);
+        UE_LOG(LogP1UI, Warning, TEXT("슬롯 위젯 수와 서버의 슬롯 수가 맞지 않습니다. 위젯 수: %d, 서버 슬롯 수: %d"), CharacterSlots.Num(), CharacterSlotCount);
     }
 
+    // 보일 슬롯은 숨겼던 것만 되살린다. 디자이너가 정한 표시 상태를 덮어쓰지 않는다.
+    const int32 VisibleCount = GetVisibleSlotCount();
     for (int32 i = 0; i < CharacterSlots.Num(); i++)
-        CharacterSlots[i]->SetVisibility(i < CharacterSlotCount ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    {
+        if (i >= VisibleCount)
+            CharacterSlots[i]->SetVisibility(ESlateVisibility::Collapsed);
+        else if (CharacterSlots[i]->GetVisibility() == ESlateVisibility::Collapsed)
+            CharacterSlots[i]->SetVisibility(ESlateVisibility::Visible);
+    }
 
-    // 숨긴 슬롯을 고른 채로 남기지 않는다.
-    if (SelectedSlotIndex >= GetUsableSlotCount())
+    if (SelectedSlotIndex >= VisibleCount)
         SelectSlot(-1);
 }
 
-int32 UP1LoginMenuWidget::GetUsableSlotCount() const
+int32 UP1LoginMenuWidget::GetVisibleSlotCount() const
 {
     return FMath::Min(CharacterSlotCount, CharacterSlots.Num());
 }
@@ -174,7 +189,7 @@ void UP1LoginMenuWidget::DisplayCharacterOverviews()
         CharacterSlot->Clear();
 
     // 보이는 슬롯보다 많은 캐릭터는 보이지 않는다.
-    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), GetUsableSlotCount());
+    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), GetVisibleSlotCount());
     for (int32 i = 0; i < VisibleCount; i++)
         CharacterSlots[i]->ShowCharacter(CharacterOverviews[i]);
 
@@ -233,7 +248,7 @@ void UP1LoginMenuWidget::SendEnterGamePkt()
 void UP1LoginMenuWidget::OnCreateButtonClicked()
 {
     // 서버도 생성 요청을 같은 슬롯 수로 막는다. 여기서 먼저 막는 것은 생성 화면을 열지 않기 위해서다.
-    if (CharacterOverviews.Num() >= GetUsableSlotCount())
+    if (CharacterOverviews.Num() >= GetVisibleSlotCount())
     {
         ShowDescription(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
         return;
