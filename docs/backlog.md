@@ -361,22 +361,6 @@ Z 순서를 올린다. 창이 마우스 입력을 받았을 때 화면 서브시
 
 ---
 
-## 25. 의존 방향을 린트 규칙으로 검사하기
-
-**왜 지금**: #138이 클라이언트의 `#include`를 손으로 전수 대조하고 `docs/folder-structure.md` 3.3을 폴더별
-「부를 수 있는 곳」 표로 바꿨다. 컴파일러는 경계 위반을 막지 않으므로(`docs/ARCHITECTURE.md`) 다음 위반은 다시
-손으로 찾아야 한다. 표가 생긴 지금이 규칙으로 옮기기 가장 쉬운 때다.
-
-**알려진 자리**: `Tools/ConventionLint/check_conventions.py`에 규칙을 더한다. 기존 `check_include_path`가
-`#include` 줄을 이미 읽는다. 표 밖의 예외 셋을 규칙에 함께 담아야 한다. 생성 자료형 `Protocol.pb.h`, 송신 창구
-`Network/P1PacketSender.h`, `#include` 없는 전방 선언이다.
-
-**선행 조건**: 없다.
-
-**완료 신호**: 표를 어기는 `#include`를 하나 넣으면 린트가 그 줄을 짚고 종료 코드 1로 끝난다. `--self-test`에 그 경우가 있다.
-
----
-
 ## 하지 않기로 확인된 것
 
 다시 제안하지 않는다. 근거는 각 문서에 있다.
@@ -386,4 +370,5 @@ Z 순서를 올린다. 창이 마우스 입력을 받았을 때 화면 서브시
 | UE L1 (Low-Level Tests) | `docs/testing.md` 「UE L1(Low-Level Tests)은 채택하지 않는다」 |
 | 엔진 소스 패치 | `docs/build.md` 「엔진 제약」 |
 | `Users.user_id`를 `BIGINT`로 넓히기 | `docs/ARCHITECTURE.md` 「티어 간 계약」 |
+| 의존 방향(`docs/folder-structure.md` 3.3)을 규범 린트로 검사하기 | 2026년 10월 4일 결정. 검사를 만들었다가 걷어냈다. 3.3의 표는 손으로 대조한다 |
 | `AuthServer`를 `Server.sln`에 등록하기(`K4`) | 2026년 10월 4일 결정. 인증 서버는 VS Code에서 따로 연다. Visual Studio 프로젝트 파일 `AuthServer.esproj`도 함께 지웠다 |
