@@ -3,7 +3,7 @@
 /*-------------------
  *      CorePch
  *------------------*/
-// ServerCore 외부와 공유할 pch. 
+// ServerCore와 외부 프로젝트가 공유할 pch. 
 // 자주 사용하는 헤더들을 넣되, ServerCore 내부 전용 헤더들은 넣지 않는다.
 
 #pragma warning(disable : 4200)

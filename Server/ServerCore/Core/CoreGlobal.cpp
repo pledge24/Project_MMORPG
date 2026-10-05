@@ -16,10 +16,6 @@ DBConnectionPool* GDBConnectionPool = nullptr;
 DBManager* GDBManager = nullptr;
 RedisManager* GRedisManager = nullptr;
 
-/*----------------------
-		CoreGlobal
------------------------*/
-
 class CoreGlobal
 {
 public:

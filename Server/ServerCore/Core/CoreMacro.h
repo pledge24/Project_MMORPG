@@ -33,7 +33,7 @@
 
 #define CHECK(expr)                 \
 {                                   \
-    if(expr)                        \
+    if(!(expr))                     \
     {                               \
         return false;               \
     }                               \
