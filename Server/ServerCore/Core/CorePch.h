@@ -1,29 +1,26 @@
-// 자주 사용하는 헤더는 여기에 포함.
 #pragma once
+
+/*-------------------
+ *      CorePch
+ *------------------*/
+// ServerCore 외부와 공유할 pch. 
+// 자주 사용하는 헤더들을 넣되, ServerCore 내부 전용 헤더들은 넣지 않는다.
 
 #pragma warning(disable : 4200)
 
 using namespace std;
 
-/*-----------------
-	   Core
-------------------*/
+//~ Core
 #include "Types.h"
 #include "CoreMacro.h"
 #include "CoreTLS.h"
 #include "CoreGlobal.h"
 
-
-/*-----------------
-	   Debug
-------------------*/
+//~ Debug
 #include <iostream>
 #include <assert.h>
 
-
-/*-----------------
-	STL Container
-------------------*/
+//~ STL Container
 #include <array>
 #include <vector>
 #include <list>
@@ -33,19 +30,17 @@ using namespace std;
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+
+//~ Util
 #include <algorithm>
 
-/*-----------------
-	Window Socket 
-------------------*/
+//~ Window Socket(Iocp)
 #include <winsock2.h>
 #include <mswsock.h>
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
-/*-----------------
-        Redis
-------------------*/
+// Redis
 #define HIREDIS_STATIC
 
 #ifdef _DEBUG
@@ -59,16 +54,11 @@ using namespace std;
 #include "sw/redis++/redis++.h"
 using namespace sw::redis;
 
-/*-----------------
-	   Network
-------------------*/
+//~ Network
 #include "SendBuffer.h"
 #include "Session.h"
 
-
-/*-----------------
-	    Etc
-------------------*/
+//~ Job
 #include "JobQueue.h"
 
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Main">
+    <Filter Include="Core">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
@@ -22,23 +22,23 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Main\pch.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\pch.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\CorePch.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\CorePch.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\Types.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\Types.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\CoreMacro.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\CoreMacro.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\CoreGlobal.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\CoreGlobal.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\CoreTLS.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\CoreTLS.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Network\SocketUtil.h">
       <Filter>Network</Filter>
@@ -105,17 +105,14 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main\pch.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\pch.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\CorePch.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\CoreGlobal.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\CoreGlobal.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
-    <ClCompile Include="Main\CoreTLS.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\CoreTLS.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Network\SocketUtil.cpp">
       <Filter>Network</Filter>

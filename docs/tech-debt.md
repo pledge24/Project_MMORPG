@@ -356,7 +356,7 @@
 
 ## TD-022 `RETURN_FALSE_UNLESS` 매크로가 이름과 반대로 동작한다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/ServerCore/Main/CoreMacro.h` 9줄
+> 위치: `Server/ServerCore/Core/CoreMacro.h` 9줄
 > 등록일: 2026년 10월 5일
 
 `#define RETURN_FALSE_UNLESS(expr) if(expr) return false;`라서 식이 참일 때 `false`를 돌려준다. 이름대로라면 거짓일 때
