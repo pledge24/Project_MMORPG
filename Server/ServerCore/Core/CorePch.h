@@ -3,8 +3,10 @@
 /*-------------------
  *      CorePch
  *------------------*/
-// ServerCore와 외부 프로젝트가 공유할 pch. 
-// 자주 사용하는 헤더들을 넣되, ServerCore 내부 전용 헤더들은 넣지 않는다.
+/**
+ * ServerCore와 외부 프로젝트가 공유할 pch.
+ * 자주 사용하는 헤더들을 넣되, ServerCore 내부 전용 헤더들은 넣지 않는다.
+ */
 
 #pragma warning(disable : 4200)
 
@@ -40,7 +42,7 @@ using namespace std;
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
-// Redis
+/** Redis */
 #define HIREDIS_STATIC
 
 #ifdef _DEBUG

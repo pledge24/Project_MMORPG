@@ -4,7 +4,7 @@
 /*----------------------
 		CoreGlobal
 -----------------------*/
-// 전역 객체들을 모아둔 파일. 전역 객체들은 유일하다(unique).
+/** 전역 객체들을 모아둔 파일. 전역 객체들은 유일하다(unique). */
 
 //~ Thread-Job 관련
 extern class ThreadManager* GThreadManager;

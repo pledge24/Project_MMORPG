@@ -18,11 +18,10 @@ bool SocketUtil::Init()
 	else
 		alreadyInit = true;
 			
-	/* Winsock 시작 */
+	// Winsock은 초기화가 필수다. WSAStartup으로 초기화를 해준다.
 	WSADATA wsaData;
 	ASSERT_CRASH(::WSAStartup(MAKEWORD(2, 2), OUT & wsaData) == 0)
 
-	/* 런타임에 API확장 함수를 가져온다 */
 	SOCKET dummySocket = CreateSocket();
 	ASSERT_CRASH(BindWindowsFunction(dummySocket, WSAID_CONNECTEX, reinterpret_cast<LPVOID*>(&ConnectEx)))
 	ASSERT_CRASH(BindWindowsFunction(dummySocket, WSAID_DISCONNECTEX, reinterpret_cast<LPVOID*>(&DisconnectEx)))
@@ -44,7 +43,6 @@ bool SocketUtil::BindWindowsFunction(SOCKET socket, GUID guid, LPVOID* fn)
 	return SOCKET_ERROR != ::WSAIoctl(socket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), fn, sizeof(*fn), OUT & bytes, NULL, NULL);
 }
 
-/* Create Async TCP Socket */
 SOCKET SocketUtil::CreateSocket()
 {
 	return ::WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);

@@ -14,7 +14,7 @@ NetAddress::NetAddress(string ip, uint16 port)
 	::memset(&_sockAddr, 0, sizeof(_sockAddr));
 	_sockAddr.sin_family = AF_INET;
 	_sockAddr.sin_addr = IPToAddress(ip.c_str());
-	_sockAddr.sin_port = ::htons(7777);
+	_sockAddr.sin_port = ::htons(port); 
 }
 
 SOCKADDR_IN& NetAddress::GetSockAddr()
