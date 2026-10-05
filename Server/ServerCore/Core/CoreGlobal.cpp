@@ -16,6 +16,8 @@ DBConnectionPool* GDBConnectionPool = nullptr;
 DBManager* GDBManager = nullptr;
 RedisManager* GRedisManager = nullptr;
 
+// 전역 객체를 만들고 지우는 정적 객체. GCoreGlobal 하나가 main보다 먼저 만들어지고 프로세스가 끝날 때 소멸한다.
+// 전역 객체를 추가하면 생성자와 소멸자에 함께 넣는다.
 class CoreGlobal
 {
 public:

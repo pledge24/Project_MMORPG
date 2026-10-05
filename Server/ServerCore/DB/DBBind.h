@@ -5,6 +5,7 @@
       DBBind
 -----------------*/
 
+// 하위 C개 비트가 모두 켜진 값. DBBind가 바인딩 누락을 검사할 때 쓴다.
 template<int32 C>
 struct FullBits { enum { value = (1 << (C - 1)) | FullBits<C-1>::value }; };
 
@@ -14,10 +15,14 @@ struct FullBits<1> { enum { value = 1 }; };
 template<>
 struct FullBits<0> { enum { value = 0 }; };
 
+// 파라미터와 컬럼 개수를 템플릿 인자로 받아 쿼리 하나를 바인딩하고 실행한다.
+// 바인딩한 인덱스를 비트로 기록해서, 하나라도 빠지면 Execute에서 크래시한다.
+// 바인딩한 변수는 Execute와 Fetch가 끝날 때까지 살아 있어야 한다. 인덱스는 0부터 센다.
 template<int32 ParamCount, int32 ColumnCount>
 class DBBind
 {
 public:
+	// 연결의 이전 바인딩을 모두 푼다(Unbind). 배열 파라미터의 SetParamSetSize는 이 뒤에 부른다.
 	DBBind(DBConnection& dbConnection, const WCHAR* query)
 		: _dbConnection(dbConnection), _query(query)
 	{
@@ -33,6 +38,7 @@ public:
 		return _paramFlag == FullBits<ParamCount>::value && _columnFlag == FullBits<ColumnCount>::value;
 	}
 
+	// 바인딩이 모두 되지 않았으면 크래시한다.
 	bool Execute()
 	{
 		ASSERT_CRASH(Validate());
@@ -78,6 +84,7 @@ public:
 
     /* 파라미터 배열: 배열 + 실제 데이터 개수를 넘겨주는 경우 */
     template<typename T, int32 N>
+    // rows 뒤의 행은 NULL로 표시한다. 최대 MAX_ROWS(100)행이다.
     void BindParamSet(int32 idx, T(&value)[N], int32 rows)
     {
         for (int32 i = 0; i < MAX_ROWS; i++)
