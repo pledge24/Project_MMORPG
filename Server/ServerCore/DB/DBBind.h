@@ -85,8 +85,8 @@ public:
 	}
 
     /** 파라미터 배열: 배열 + 실제 데이터 개수를 넘겨주는 경우 */
-    template<typename T, int32 N>
     /** rows 뒤의 행은 NULL로 표시한다. 최대 MAX_ROWS(100)행이다. */
+    template<typename T, int32 N>
     void BindParamSet(int32 idx, T(&value)[N], int32 rows)
     {
         for (int32 i = 0; i < MAX_ROWS; i++)

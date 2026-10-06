@@ -20,9 +20,9 @@ using SessionFactory = function<SessionRef(void)>;
 --------------------*/
 
 /**
- * 세션 팩토리와 IocpCore, 연결된 세션 집합을 소유하는 네트워크 진입점.
- * 서버는 ServerService, 클라이언트(DummyClient)는 ClientService를 쓴다. shared_from_this를 쓰므로 shared_ptr로 만든다.
- * 연결된 세션은 _sessions가 붙잡고, 끊기면 RemoveSession이 놓는다.
+ * 네트워크 진입점 역할의 Service 인터페이스. 
+ * Iocp 통신에 필요한 요소(세션, IocpCore 등)및 운영 기능이 포함되어 있다.
+ * 생성자에서 서비스 필요한 여러 요소를 인자로 건네주는게 특징.
  */
 class Service : public enable_shared_from_this<Service>
 {
@@ -33,24 +33,21 @@ public:
 	virtual bool		Start() abstract;
 	bool				CanStart() { return _sessionFactory != nullptr; }
 
-	/** 아직 구현이 없다. */
+	                    /** 아직 구현이 없다. */
 	virtual void		CloseService();
 	void				SetSessionFactory(SessionFactory func) { _sessionFactory = func; }
 			
 	//~ Session 관리 관련
-	/**
-	 * 서비스 락을 잡은 채 각 세션의 Send를 부른다. 락 순서는 Service → Session이다.
-	 * DummyClient만 쓴다. 처음 작성할 때 임시(TEMP?)로 표시해 두었다.
-	 */
+	/** 모든 세션에 패킷을 보낸다. */
 	void				Broadcast(SendBufferRef sendBuffer);
-	/** 팩토리로 세션을 만들어 IOCP에 등록한다. 등록에 실패하면 nullptr를 돌려준다. 세션 집합에는 넣지 않는다. */
+	/** 세션 팩토리로 세션을 만들어 IOCP에 등록한다. 등록에 실패하면 nullptr를 돌려준다. */
 	SessionRef			CreateSession();
-	/** 연결이 완료된 세션을 붙잡는다. Session::ProcessConnect가 부른다. */
+	/** 연결이 완료된 세션을 추가한다. Session::ProcessConnect가 부른다. */
 	void				AddSession(SessionRef session);
-	/** 끊긴 세션을 놓는다. 마지막 참조였다면 세션이 소멸한다. 집합에 없는 세션이면 크래시한다. */
+	/** 연결이 끊긴 세션을 제거한다. */
 	void				RemoveSession(SessionRef session);
 	int32				GetCurrentSessionCount() { return _sessionCount; }
-	/** 서버에서는 동시에 걸어 두는 AcceptEx의 수이고 접속 수 상한이 아니다. 클라이언트에서는 만들 세션 수다. */
+	/** 최대 세션 수를 반환한다. 서버에서는 "동시에 걸어 두는 AcceptEx의 수"이며, 최대 젒속 인원수와 관련이 없다 */
 	int32				GetMaxSessionCount() { return _maxSessionCount; }
 
 public:
@@ -60,7 +57,7 @@ public:
 	IocpCoreRef&		GetIocpCore() { return _iocpCore; }
 
 protected:
-	MAKE_LOCK;
+	MAKE_LOCK
 	ServiceType			_type;
 	NetAddress			_netAddress = {};
 	IocpCoreRef			_iocpCore;
@@ -75,7 +72,10 @@ protected:
 	ClientService
 --------------------*/
 
-/** 대상 주소로 GetMaxSessionCount()개의 세션을 접속시키는 서비스. DummyClient가 쓴다. */
+/** 
+ * 대상 주소로 GetMaxSessionCount개의 세션을 접속시키는 클라이언트 서비스. 
+ * 테스트용이며, DummyClient가 사용한다.
+ */
 class ClientService : public Service
 {
 public:
@@ -90,7 +90,7 @@ public:
 	ServerService
 --------------------*/
 
-/** Listener를 만들어 접속을 받는 서비스. GameServer가 쓴다. */
+/** Listener를 만들어 접속을 받는 서버 서비스. */
 class ServerService : public Service
 {
 public:

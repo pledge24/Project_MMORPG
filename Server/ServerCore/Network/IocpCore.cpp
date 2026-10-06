@@ -9,7 +9,7 @@
 IocpCore::IocpCore()
 {
 	_iocpHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, 0, 0, 0);
-	ASSERT_CRASH(_iocpHandle != INVALID_HANDLE_VALUE);
+	ASSERT_CRASH(_iocpHandle != INVALID_HANDLE_VALUE)
 }
 
 IocpCore::~IocpCore()
@@ -31,7 +31,7 @@ bool IocpCore::Dispatch(uint32 timeoutMs)
 	if (::GetQueuedCompletionStatus(_iocpHandle, OUT &numOfBytes, OUT &key, OUT reinterpret_cast<LPOVERLAPPED*>(&networkEvent), timeoutMs))
 	{
 		IocpObjectRef iocpObject = networkEvent->owner;
-		iocpObject->Dispatch(networkEvent, numOfBytes);
+		iocpObject->Dispatch(networkEvent, static_cast<int32>(numOfBytes));
 	}
 	else
 	{
@@ -42,9 +42,12 @@ bool IocpCore::Dispatch(uint32 timeoutMs)
 			return false;
 		default:
 			// TODO : 로그 찍기
-			cout << "errcode: " << errCode << endl; // 64
+			cout << "errcode: " << errCode << '\n'; // 64
+		    
+		    // 실패한 완료도 owner의 Dispatch로 넘겨 onwer가 이를 처리하도록 한다.
+		    // owner는 numOfBytes 0으로 실패를 판단할 수 있다.
 			IocpObjectRef iocpObject = networkEvent->owner;
-			iocpObject->Dispatch(networkEvent, numOfBytes);
+			iocpObject->Dispatch(networkEvent, static_cast<int32>(numOfBytes));
 			break;
 		}
 	}

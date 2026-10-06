@@ -15,8 +15,10 @@ enum class EventType
 -------------------*/
 
 /**
- * 비동기 I/O 하나에 넘기는 OVERLAPPED. WSAOVERLAPPED를 상속하므로 GQCS가 돌려준 OVERLAPPED*를
- * 그대로 NetworkEvent*로 캐스팅한다. Session과 Listener는 이 객체를 만들어 두고 재사용한다.
+ * OVERLAPPED 포인터를 확장한 클래스.
+ * 비동기 I/O를 요청할 때 넘겨주면 GQCS 함수가 되돌려준다.
+ * 되돌려받은 해당 클래스를 통해 어떤 종류의 I/O가 끝났는지(eventType)와 누가 처리할지(owner)를 알아낸다.
+ * Session과 Listener는 이 객체를 멤버로 만들어 두고 재사용한다.
  */
 class NetworkEvent : public WSAOVERLAPPED
 {
@@ -58,7 +60,7 @@ public:
 	AcceptEvent
 --------------------*/
 
-/** AcceptEx로 건 접속 수락의 완료. Listener가 미리 여러 개 만들어 두고 재사용한다. */
+/** AcceptEx로 건 접속 수락의 완료. */
 class AcceptEvent : public NetworkEvent
 {
 public:

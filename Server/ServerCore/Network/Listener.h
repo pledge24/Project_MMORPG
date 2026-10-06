@@ -5,12 +5,13 @@ class AcceptEvent;
 class ServerService;
 
 /*------------------
-	Listener
+	  Listener
 -------------------*/
 
 /**
- * 리슨 소켓을 열고 AcceptEx를 미리 여러 개 걸어 두는 객체. ServerService::Start가 만든다.
+ * 리슨 소켓을 여는 리스너 클래스. AcceptEx를 미리 여러 개 등록해두는 것이 특징.
  * 접속이 완료되면 미리 만들어 둔 세션을 연결 상태로 만들고, 같은 이벤트로 다음 AcceptEx를 다시 건다.
+ * ServerService::Start가 사용한다. 
  */
 class Listener : public IocpObject
 {
@@ -22,10 +23,14 @@ public:
 	//~ 인터페이스 구현
 	virtual HANDLE		GetHandle() override;
 	virtual void		Dispatch(class NetworkEvent* networkEvent, int32 numOfBytes = 0) override;
-
+    
 	/** 소켓을 열어 리슨하고 AcceptEx를 서비스의 GetMaxSessionCount()개만큼 걸어 둔다. */
 	bool				Start();
-
+    
+private:
+	bool				Listen();
+    
+public:
 	//~ 수신 관련
 	/** 새 세션을 만들어 AcceptEx를 건다. 실패하면 같은 이벤트로 다시 시도한다. */
 	void				RegisterAccept(AcceptEvent* acceptEvent);
@@ -34,9 +39,6 @@ public:
 
 	void				SetService(ServerServiceRef service) { _service = service; }
 
-private:
-	bool				Listen();
-	bool				Accept();
 
 private:
 	SOCKET _listenSocket = INVALID_SOCKET;

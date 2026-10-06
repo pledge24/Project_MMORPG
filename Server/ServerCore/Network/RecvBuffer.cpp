@@ -16,10 +16,11 @@ RecvBuffer::~RecvBuffer()
 {
 }
 
-// [--------XXXX__________] ('--': 읽은 메모리, 'XXX': 안읽은 메모리, '__': free 메모리 )
-// [XXXX__________________]
 void RecvBuffer::Clean()
 {
+    // 작동 예시 ('O': 읽은 메모리, 'X': 안읽은 메모리, '_': free 메모리 )
+    // Clean() 전: [OOOOOOOOXXXX__________] 
+    // Clean() 후: [XXXX__________________]
 	int32 dataSize = UnreadSize();
 	if (dataSize == 0)
 	{

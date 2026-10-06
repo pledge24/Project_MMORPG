@@ -48,8 +48,6 @@ SOCKET SocketUtil::CreateSocket()
 	return ::WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 }
 
-/*====== [Set SockOpt] ======*/
-
 bool SocketUtil::SetLinger(SOCKET socket, uint16 onoff, uint16 linger)
 {
 	LINGER option;
@@ -75,16 +73,13 @@ bool SocketUtil::SetSendBufferSize(SOCKET socket, int32 size)
 
 bool SocketUtil::SetTcpNoDelay(SOCKET socket, bool flag)
 {
-	return SetSockOpt(socket, SOL_SOCKET, TCP_NODELAY, flag);
+	return SetSockOpt(socket, IPPROTO_TCP, TCP_NODELAY, flag);
 }
 
-/* ListenSocket의 특성을 ClientSocket에 그대로 적용 */ 
 bool SocketUtil::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)
 {
 	return SetSockOpt(socket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, listenSocket);
 }
-
-/*====== [소켓 기본 함수] ======*/
 
 bool SocketUtil::Bind(SOCKET socket, NetAddress netAddr)
 {

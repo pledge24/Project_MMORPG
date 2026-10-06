@@ -24,9 +24,10 @@ void Service::CloseService()
 
 void Service::Broadcast(SendBufferRef sendBuffer)
 {
-	USE_LOCK;
+	USE_LOCK
 	for (const auto& session : _sessions)
 	{
+	    // Send에서도 락을 건다. Broadcast -> Send순으로 락이 걸림에 주의.
 		session->Send(sendBuffer);
 	}
 }
@@ -44,15 +45,16 @@ SessionRef Service::CreateSession()
 
 void Service::AddSession(SessionRef session)
 {
-	USE_LOCK;
+	USE_LOCK
 	_sessionCount++;
 	_sessions.insert(session);
 }
 
 void Service::RemoveSession(SessionRef session)
 {
-	USE_LOCK;
-	ASSERT_CRASH(_sessions.erase(session) != 0);
+	USE_LOCK
+    // 서비스에 등록되지 않은 세션을 지우는 경우가 발생해선 안된다. (ASSERT_CRASH는 좀 과할 수 있다)
+	ASSERT_CRASH(_sessions.erase(session) != 0)
 	_sessionCount--;
 }
 

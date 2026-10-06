@@ -1,7 +1,7 @@
 #pragma once
 
 /*------------------
-	DBManager
+	  DBManager
 -------------------*/
 
 /**
@@ -14,7 +14,7 @@ public:
     DBManager();
     ~DBManager();
 
-    /** 큐를 dbQueueCount개 만든다. 부르기 전에는 큐가 0개라 Get 함수를 쓰면 안 된다. */
+    /** 큐를 _dbQueueCount 만든다. 부르기 전에는 큐가 0개라 Get 함수를 쓰면 안 된다. */
     void                            Init(int32 dbQueueCount);
     void                            Clear();
 

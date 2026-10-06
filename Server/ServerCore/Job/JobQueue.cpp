@@ -2,9 +2,9 @@
 #include "JobQueue.h"
 #include "GlobalQueue.h"
 
-/*--------------
-	JobQueue
----------------*/
+/*----------------
+      JobQueue
+-----------------*/
 
 void JobQueue::Push(JobRef job, bool pushOnly)
 {
@@ -27,10 +27,12 @@ void JobQueue::Push(JobRef job, bool pushOnly)
 	}
 }
 
-// 1) 일감이 너~무 몰리면?
 void JobQueue::Execute()
 {
-	LCurrentJobQueue = this;
+    // LCurrentJobQueue 포인터는 소유권도 없고 역참조되지 않는 표시값으로 사용되기 때문에 
+    // this를 사용해도 괜찮다. 역으로 shared_ptr로 변경 시 Queue 수명을 불필요하게 늘리고, 
+    // weak_ptr로 변경 시 확인 비용이 추가되므로 오히려 손해다.
+    LCurrentJobQueue = this;
 
 	while (true)
 	{
@@ -53,7 +55,7 @@ void JobQueue::Execute()
 		if (now >= LEndTickCount)
 		{
 			LCurrentJobQueue = nullptr;
-			// 들어있는 일감을 다른 쓰레드가 실행할 수 있도록 GlobalQueue에 떠넘긴다
+			// 남은 Job들을 다른 쓰레드가 처리할 수 있도록 GlobalQueue에 이 JobQueue의 참조를 넘긴다.
 			GGlobalQueue->Push(shared_from_this());
 			break;
 		}			

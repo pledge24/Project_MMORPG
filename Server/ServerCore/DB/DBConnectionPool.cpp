@@ -17,7 +17,7 @@ DBConnectionPool::~DBConnectionPool()
 
 bool DBConnectionPool::Connect(int32 connectionCount, const WCHAR* connectionString)
 {
-	USE_LOCK;
+	USE_LOCK
 
 	if (::SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &_environment) != SQL_SUCCESS)
 		return false;
@@ -39,7 +39,7 @@ bool DBConnectionPool::Connect(int32 connectionCount, const WCHAR* connectionStr
 
 void DBConnectionPool::Clear()
 {
-    USE_LOCK;
+    USE_LOCK
 
 	if (_environment != SQL_NULL_HANDLE)
 	{
@@ -55,7 +55,7 @@ void DBConnectionPool::Clear()
 
 DBConnection* DBConnectionPool::Pop()
 {
-    USE_LOCK;
+    USE_LOCK
 
 	if (_connections.empty())
 		return nullptr;
@@ -67,6 +67,6 @@ DBConnection* DBConnectionPool::Pop()
 
 void DBConnectionPool::Push(DBConnection* connection)
 {
-    USE_LOCK;
+    USE_LOCK
 	_connections.push_back(connection);
 }

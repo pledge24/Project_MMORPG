@@ -37,6 +37,7 @@ public:
 	bool			Execute(const WCHAR* query);
 	/** 다음 행을 바인딩한 변수로 읽는다. 행이 더 없거나 실패하면 false를 돌려준다. */
 	bool			Fetch();
+    /** 수정 쿼리(UPDATE, INSERT, DELETE)에 영향을 받은 행의 수 반환(SELECT는 -1 반환)*/
 	int32			GetRowCount();
 	/** 바인딩을 모두 풀고 커서를 닫는다. PARAMSET_SIZE와 ROW_ARRAY_SIZE도 1로 되돌린다. */
 	void			Unbind();

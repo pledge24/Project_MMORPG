@@ -12,7 +12,7 @@ class IocpObject : public enable_shared_from_this<IocpObject>
 {
 public:
 	virtual HANDLE GetHandle() = 0;
-	/** IocpCore::Dispatch가 IOCP 워커 스레드에서 부른다. 실패한 I/O도 들어오며, 그때 numOfBytes는 대개 0이다. */
+	/** IocpCore::Dispatch가 IOCP 워커 스레드에서 호출한다. 실패한 I/O도 들어오며, 그때 numOfBytes는 대개 0이다. */
 	virtual void Dispatch(class NetworkEvent* iocpEvent, int32 numOfBytes = 0) = 0;
 };
 
@@ -21,8 +21,9 @@ public:
 ------------------*/
 
 /**
- * IOCP 핸들 하나를 소유한다. Service가 shared_ptr로 들고, 워커 스레드들이 Dispatch를 반복해서 부른다.
- * 완료 키는 쓰지 않는다. 완료된 NetworkEvent의 owner가 그 완료를 처리할 객체다.
+ * IOCP 소켓 모델 클래스. CICP로 받아온 IOCP 핸들 하나를 소유한다.
+ * Service가 shared_ptr로 참조하며, 워커 스레드들이 Dispatch를 반복해서 부른다.
+ * 완료 키(Completion Key)는 쓰지 않는다. 완료된 NetworkEvent의 owner(Listener, Session)가 완료 처리 역할을 대신한다.
  */
 class IocpCore
 {
@@ -33,10 +34,7 @@ public:
 public:
 	/** 완료 키 0으로 소켓을 이 IOCP에 연결한다. */
 	bool		RegisterSocket(SOCKET socket);
-	/**
-	 * 완료 하나를 꺼내 owner의 Dispatch로 넘긴다. timeoutMs(ms) 안에 완료가 없으면 false를 돌려준다.
-	 * GQCS가 실패한 완료도 owner에게 넘기므로, 받는 쪽은 numOfBytes 0으로 실패를 판단한다.
-	 */
+	/** 완료 패킷 하나를 꺼내 owner의 Dispatch로 넘긴다. timeoutMs(ms) 안에 완료가 없으면 false를 돌려준다. */
 	bool		Dispatch(uint32 timeoutMs = INFINITE);
 
 private:

@@ -24,7 +24,7 @@ public:
 	void					Push(DBConnection* connection);
 
 private:
-	MAKE_LOCK;
+	MAKE_LOCK
 	SQLHENV					_environment = SQL_NULL_HANDLE;
 	vector<DBConnection*>	_connections;
 };

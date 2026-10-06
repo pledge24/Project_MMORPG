@@ -5,7 +5,8 @@
 -----------------*/
 
 /**
- * 실행할 잡이 남았지만 지금 스레드가 맡지 못한 JobQueue를 모아 두는 대기열. 전역 객체 GGlobalQueue 하나만 있다.
+ * 전역으로 "딱 하나" 존재하는 LockQueue.
+ * 처리할 Job이 남아있지만 스레드 배정을 받지 못한 JobQueue들을 모아두는 대기열 역할을 한다.
  * 워커 스레드가 ThreadManager::DoGlobalQueueWork에서 꺼내 실행한다.
  */
 class GlobalQueue

@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "RedisManager.h"
 
+/*------------------
+    RedisManager
+-------------------*/
+
 RedisManager::RedisManager()
 {
 }
@@ -15,11 +19,11 @@ bool RedisManager::Connect(const string& uri)
     {
         _uri = uri;
         _redis = make_shared<Redis>(uri);
-        wcout << L"Redis++로 레디스 연결 성공!" << endl;
+        wcout << L"Redis++로 레디스 연결 성공!" << '\n';
     }
     catch (const Error& err)
     {
-        wcerr << L"Redis 오류: " << err.what() << endl;
+        wcerr << L"Redis 오류: " << err.what() << '\n';
         return false;
     }
 

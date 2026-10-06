@@ -21,7 +21,7 @@ HANDLE Listener::GetHandle()
 
 void Listener::Dispatch(NetworkEvent* networkEvent, int32 numOfBytes)
 {
-	ASSERT_CRASH(networkEvent->eventType == EventType::Accept);
+	ASSERT_CRASH(networkEvent->eventType == EventType::Accept)
 	AcceptEvent* acceptEvent = static_cast<AcceptEvent*>(networkEvent);
 	ProcessAccept(acceptEvent);
 }
@@ -31,10 +31,55 @@ bool Listener::Start()
 	if (Listen() == false)
 		return false;
 
-	if (Accept() == false)
-		return false;
-
 	return true;
+}
+
+bool Listener::Listen()
+{
+    // Socket
+    _listenSocket = SocketUtil::CreateSocket();
+    if (_listenSocket == INVALID_SOCKET)
+        return false;
+
+    // Set SocketOpt: 주소 재사용 가능(개발 편함용)
+    if (SocketUtil::SetReuseAddress(_listenSocket, true) == false)
+        return false;
+
+    // Set SocketOpt: 잉여 송신 데이터 무시.
+    if (SocketUtil::SetLinger(_listenSocket, 1, 0) == false)
+        return false;
+
+    // Set SocketOpt: 네이글 알고리즘 비활성화
+    if (SocketUtil::SetTcpNoDelay(_listenSocket, false) == false)
+        return false;
+
+    // 소켓을 IOCP에 등록
+    if (_service->GetIocpCore()->RegisterSocket(_listenSocket) == false)
+        return false;
+
+    // Bind 
+    if (SocketUtil::Bind(_listenSocket, _service->GetNetAddress()) == false)
+        return false;
+
+    // Listen
+    if (SocketUtil::Listen(_listenSocket) == false)
+        return false;
+
+    cout << "Success to generate listen Socket" << '\n';
+    
+    // GetMaxSessionCount개의 acceptEx를 미리 걸어둔다.
+    const int32 acceptCount = _service->GetMaxSessionCount();
+    for (int32 i = 0; i < acceptCount; i++)
+    {
+        AcceptEvent* acceptEvent = new AcceptEvent();
+        acceptEvent->owner = shared_from_this();
+        _acceptEvents.push_back(acceptEvent);
+        RegisterAccept(acceptEvent);
+    }
+
+    cout << "Success to register AcceptEvent: " << acceptCount << '\n';
+
+    return true;
 }
 
 void Listener::RegisterAccept(AcceptEvent* acceptEvent)
@@ -59,7 +104,7 @@ void Listener::RegisterAccept(AcceptEvent* acceptEvent)
 
 void Listener::ProcessAccept(AcceptEvent* acceptEvent)
 {
-	cout << "New Client Arrived" << endl;
+	cout << "New Client Arrived" << '\n';
 
 	SessionRef session = acceptEvent->session;
 
@@ -80,57 +125,7 @@ void Listener::ProcessAccept(AcceptEvent* acceptEvent)
 	session->SetNetAddress(NetAddress(sockAddress));
 	session->ProcessConnect();
 
+    // Accept가 완료되자마자 바로 AcceptEx를 다시 걸어준다. 
+    // GetMaxSessionCount가 최대 세션 개수를 의미하지 않는다는 것이다.
 	RegisterAccept(acceptEvent);
-}
-
-bool Listener::Listen()
-{
-	// Socket
-	_listenSocket = SocketUtil::CreateSocket();
-	if (_listenSocket == INVALID_SOCKET)
-		return false;
-
-	// Set SocketOpt: 주소 재사용 가능(개발 편함용)
-	if (SocketUtil::SetReuseAddress(_listenSocket, true) == false)
-		return false;
-
-	// Set SocketOpt: 잉여 송신 데이터 무시.
-	if (SocketUtil::SetLinger(_listenSocket, 0, 0) == false)
-		return false;
-
-	// Set SocketOpt: 네이글 알고리즘 비활성화
-	if (SocketUtil::SetTcpNoDelay(_listenSocket, false) == false)
-		return false;
-
-	// IOCP에 등록
-	if (_service->GetIocpCore()->RegisterSocket(_listenSocket) == false)
-		return false;
-
-	// Bind 
-	if (SocketUtil::Bind(_listenSocket, _service->GetNetAddress()) == false)
-		return false;
-
-	// Listen
-	if (SocketUtil::Listen(_listenSocket) == false)
-		return false;
-
-	cout << "Success to generate listen Socket" << endl;
-
-	return true;
-}
-
-bool Listener::Accept()
-{
-	const int32 acceptCount = _service->GetMaxSessionCount();
-	for (int32 i = 0; i < acceptCount; i++)
-	{
-		AcceptEvent* acceptEvent = new AcceptEvent();
-		acceptEvent->owner = shared_from_this();
-		_acceptEvents.push_back(acceptEvent);
-		RegisterAccept(acceptEvent);
-	}
-
-	cout << "Success to register AcceptEvent: " << acceptCount << endl;
-
-	return true;
 }

@@ -29,14 +29,24 @@ public:
 	/** 비동기 I/O용(WSA_FLAG_OVERLAPPED) TCP 소켓을 만든다. */
 	static SOCKET CreateSocket();
 
-	//~ Set SockOpt
-	static bool SetLinger(SOCKET socket, uint16 onoff, uint16 linger);
+	//~ 소켓 옵션 설정 관련
+    /**
+     * SetLinger: 소켓을 닫을때(closesocket) 송신 버퍼에 남은 데이터 처리 방식을 설정한다.
+     * - onoff = 0이면 기본 동작. 남은 데이터를 백그라운드에서 전송하고 정상 종료(FIN)한다.
+     * - onoff = 1, linger = 0이면 남은 데이터를 버리고 RST를 보내 연결을 즉시 끊는다.
+     * - onoff = 1, linger > 0이면 최대 linger초만큼 대기 후 연결을 끊는다.
+     * SetReuseAddress: 이미 사용 중인 주소와 포트에 bind 할 수 있도록 허용한다.
+     * SetRecvBufferSize: 운영체제 커널이 소켓마다 관리하는 "수신" 버퍼의 크기를 설정한다.
+     * SetSendBufferSize: 운영체제 커널이 소켓마다 관리하는 "송신" 버퍼의 크기를 설정한다.
+     * SetTcpNoDelay: Nagle 알고리즘을 비활성화하여 작은 패킷을 지연 없이 전송하도록 한다.
+     * SetUpdateAcceptSocket: AcceptEx로 받은 클라 소켓에 리슨 소켓의 속성을 물려준다.
+     * -> 그래야 getpeername 같은 함수가 동작한다.
+     */
+    static bool SetLinger(SOCKET socket, uint16 onoff, uint16 linger);
 	static bool SetReuseAddress(SOCKET socket, bool flag);
 	static bool SetRecvBufferSize(SOCKET socket, int32 size);
 	static bool SetSendBufferSize(SOCKET socket, int32 size);
-	/** 지금은 레벨을 SOL_SOCKET으로 넘겨서 옵션이 적용되지 않는다(TD-010). */
 	static bool SetTcpNoDelay(SOCKET socket, bool flag);
-	/** AcceptEx로 받은 소켓에 리슨 소켓의 속성을 물려준다. 그래야 getpeername 같은 함수가 동작한다. */
 	static bool SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket);
 
 	//~ 소켓 기본 함수

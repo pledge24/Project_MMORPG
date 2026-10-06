@@ -160,18 +160,13 @@
 **버그 발생 가능성 증가** — 지금은 설정값과 기본값이 같아서 동작한다. Redis 주소나 포트를 바꾸면 인증 서버만
 옛 주소로 붙고, 게임 서버는 토큰을 찾지 못해 모든 로그인이 `INVALID_TOKEN`으로 끝난다.
 
-## TD-010 리슨 소켓의 옵션 설정이 주석과 다르게 동작한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/ServerCore/Network/Listener.cpp` 96~103줄 · `Server/ServerCore/Network/SocketUtil.cpp` 78~81줄
+## TD-010 리슨 소켓의 네이글 비활성화가 주석과 반대로 동작한다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/ServerCore/Network/Listener.cpp` 52~54줄 (`Listen`)
 > 등록일: 2026년 10월 5일
 
-세 군데가 어긋난다. 코드를 읽고 판단했고 패킷 지연은 측정하지 않았다.
-
-| 위치 | 주석이나 이름 | 실제 동작 |
-|---|---|---|
-| `SocketUtil::SetTcpNoDelay` | `TCP_NODELAY`를 설정한다 | 레벨을 `SOL_SOCKET`으로 넘긴다. `TCP_NODELAY`의 레벨은 `IPPROTO_TCP`다 |
-| `Listener::Listen`의 `SetTcpNoDelay` | 「네이글 알고리즘 비활성화」 | 값으로 `false`를 넘긴다. 대상도 리슨 소켓뿐이고 세션 소켓에는 걸지 않는다 |
-| `Listener::Listen`의 `SetLinger(0, 0)` | 「잉여 송신 데이터 무시」 | `l_onoff = 0`이라 linger를 끈다. 기본 동작과 같다 |
+`Listener::Listen`은 주석이 「네이글 알고리즘 비활성화」인데 `SetTcpNoDelay(_listenSocket, false)`로 `false`를 넘긴다.
+대상도 리슨 소켓뿐이고 세션 소켓에는 걸지 않는다. 코드를 읽고 판단했고 패킷 지연은 측정하지 않았다.
 
 ### 영향
 
