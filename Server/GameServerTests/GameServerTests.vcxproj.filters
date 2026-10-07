@@ -33,6 +33,9 @@
     <Filter Include="GameServer\Core">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Network">
+      <UniqueIdentifier>{0c0d90fb-17ea-4dcf-9e13-39cf2aef86a0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Protocol">
       <UniqueIdentifier>{754f4db8-77f2-51d1-b0bd-84a6235e4ea0}</UniqueIdentifier>
     </Filter>
@@ -77,14 +80,14 @@
     <ClCompile Include="..\GameServer\Core\pch.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Core\GameSession.cpp">
-      <Filter>GameServer\Core</Filter>
+    <ClCompile Include="..\GameServer\Network\GameSession.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Core\GameSessionManager.cpp">
-      <Filter>GameServer\Core</Filter>
+    <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Core\SaveGate.cpp">
-      <Filter>GameServer\Core</Filter>
+    <ClCompile Include="..\GameServer\Network\SaveGate.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Core\ServerConfig.cpp">
       <Filter>GameServer\Core</Filter>
@@ -92,8 +95,8 @@
     <ClCompile Include="..\GameServer\Core\Global.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Core\ServerPacketHandler.cpp">
-      <Filter>GameServer\Core</Filter>
+    <ClCompile Include="..\GameServer\Network\ServerPacketHandler.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
       <Filter>GameServer\Protocol</Filter>

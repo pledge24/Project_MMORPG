@@ -485,7 +485,9 @@ Server/
 │   ├── Utils/
 │   └── Core/               타입, 매크로, TLS, 전역 객체, pch
 ├── GameServer/             게임 규칙
-│   ├── Core/               진입점, 세션, 패킷 핸들러, pch, 전역 타입과 매크로
+│   ├── GameServer.cpp      진입점
+│   ├── Core/               pch, 전역 타입과 매크로, 전역 객체, 서버 설정
+│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 저장 게이트
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정
 │   │   ├── Combat/         피격과 처치 판정
@@ -507,8 +509,8 @@ Server/
 **`ServerCore`와 `GameServer`의 분리를 유지한다.** `ServerCore`는 게임 규칙을 모른다. 게임 규칙이
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
-**`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Protocol/`, `DB/`,
-`Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 여섯은 게임 규칙이다. 이 층을 없애면
+**`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
+`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 여섯은 게임 규칙이다. 이 층을 없애면
 폴더 열 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
