@@ -1,8 +1,8 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Player.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
+#include "Game/Entities/Player.h"
+#include "Game/Inventory/Inventory.h"
+#include "Game/Equipment/EquippedGear.h"
 
 /*--------------------------------------------------------------
     아이템 요청 판정 테스트

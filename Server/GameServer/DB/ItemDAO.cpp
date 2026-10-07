@@ -1,10 +1,10 @@
-#include "pch.h"
-#include "ItemDAO.h"
-#include "DAOCommon.h"
-#include "ItemSaveRows.h"
-#include "Player.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
+#include "Core/pch.h"
+#include "DB/ItemDAO.h"
+#include "DB/DAOCommon.h"
+#include "DB/ItemSaveRows.h"
+#include "Game/Entities/Player.h"
+#include "Game/Inventory/Inventory.h"
+#include "Game/Equipment/EquippedGear.h"
 
 namespace
 {

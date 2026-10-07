@@ -1,7 +1,7 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "CharacterCreation.h"
-#include "EncodingConverter.h"
+#include "Game/Entities/CharacterCreation.h"
+#include "Utils/EncodingConverter.h"
 
 /*--------------------------------------------------------------
     캐릭터 생성 검증 테스트

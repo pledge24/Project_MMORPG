@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "GlobalQueue.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Job/GlobalQueue.h"
 
 /*----------------
 	GlobalQueue

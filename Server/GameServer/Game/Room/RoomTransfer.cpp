@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "RoomTransfer.h"
+#include "Core/pch.h"
+#include "Game/Room/RoomTransfer.h"
 
 optional<string> RoomTransfer::ValidateEnterRequest(const Protocol::C_ENTER_ROOM& pkt, int32 enteringRoomId)
 {

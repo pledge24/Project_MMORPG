@@ -1,10 +1,10 @@
-#include "pch.h"
+#include "Main/pch.h"
 #include <iostream>
-#include "ThreadManager.h"
-#include "Service.h"
-#include "Session.h"
-#include "ClientPacketHandler.h"
-#include "SocketUtil.h"
+#include "ServerCore/Thread/ThreadManager.h"
+#include "ServerCore/Network/Service.h"
+#include "ServerCore/Network/Session.h"
+#include "Main/ClientPacketHandler.h"
+#include "ServerCore/Network/SocketUtil.h"
 
 char sendData[] = "Hello World";
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "NetAddress.h"
+#include "ServerCore/Network/NetAddress.h"
 
 /*------------------
 	  SocketUtil

@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "GameSessionManager.h"
+#include "Network/GameSessionManager.h"
 
 /*--------------------------------------------------------------
     계정 세션 교체 테스트

@@ -1,8 +1,8 @@
-#include "pch.h"
-#include "Session.h"
-#include "SocketUtil.h"
-#include "NetworkEvent.h"
-#include "Service.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/Session.h"
+#include "ServerCore/Network/SocketUtil.h"
+#include "ServerCore/Network/NetworkEvent.h"
+#include "ServerCore/Network/Service.h"
 
 /*---------------------
 		Session

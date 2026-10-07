@@ -77,22 +77,22 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -103,7 +103,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Main/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -121,7 +121,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Main/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -139,7 +139,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Main/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -157,7 +157,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Main/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -179,13 +179,13 @@
     </ClCompile>
     <ClCompile Include="Main\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Main/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Main/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Main/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Main/pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Protocol\Protocol.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

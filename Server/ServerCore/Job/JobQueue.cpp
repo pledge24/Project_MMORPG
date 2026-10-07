@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "JobQueue.h"
-#include "GlobalQueue.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Job/JobQueue.h"
+#include "ServerCore/Job/GlobalQueue.h"
 
 /*----------------
       JobQueue

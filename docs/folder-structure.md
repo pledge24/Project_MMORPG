@@ -518,6 +518,7 @@ Server/
 **`.vcxproj`에 파일이 하나씩 명시 등록된다.** 파일을 추가하거나 옮기면 `.vcxproj`와
 `.vcxproj.filters`를 함께 고친다. `GameServerTests.vcxproj`가 `GameServer`의 `.cpp`를 직접
 컴파일하므로 고칠 목록이 두 벌이다. 필터 GUID는 VS가 만드는 무작위 값을 쓴다.
+새 폴더는 `IncludePath`에 등록하지 않는다. include 규칙은 `docs/conventions.md` 3.7에 있다.
 
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.

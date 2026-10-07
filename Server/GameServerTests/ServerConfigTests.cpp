@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "ServerConfig.h"
+#include "Core/ServerConfig.h"
 
 /*--------------------------------------------------------------
     서버 접속 정보 로더 테스트

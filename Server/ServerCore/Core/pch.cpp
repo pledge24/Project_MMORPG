@@ -1,5 +1,5 @@
 ﻿// pch.cpp: 미리 컴파일된 헤더에 해당하는 소스 파일
 // 절대 지우지 말것 - pch.h로 .pch 파일을 만들기 위해선 이 소스 파일이 필요하다. 
 // -> 삭제시 .pch가 생기지 않아 오류 발생.
-#include "pch.h"
+#include "ServerCore/Core/pch.h"
 

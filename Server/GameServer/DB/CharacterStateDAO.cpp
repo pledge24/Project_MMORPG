@@ -1,9 +1,9 @@
-#include "pch.h"
-#include "CharacterStateDAO.h"
-#include "DAOCommon.h"
-#include "EncodingConverter.h"
-#include "Player.h"
-#include "PlayerSaveData.h"
+#include "Core/pch.h"
+#include "DB/CharacterStateDAO.h"
+#include "DB/DAOCommon.h"
+#include "Utils/EncodingConverter.h"
+#include "Game/Entities/Player.h"
+#include "Game/Entities/PlayerSaveData.h"
 
 /*-------------------------
     CharacterStateDAO

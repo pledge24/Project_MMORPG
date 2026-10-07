@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "SocketUtil.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/SocketUtil.h"
 
 /*------------------
 	  SocketUtil

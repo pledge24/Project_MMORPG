@@ -103,6 +103,10 @@ npm start                # = node src/app.js
 
 생성물 폴더만 예외로 남겼다. protobuf 생성 코드가 서로를 `#include "Enum.pb.h"` 형태로 부르는데 생성물은 손으로 고치지 않으므로, 이 폴더를 빼면 생성기를 다시 돌릴 때마다 빌드가 깨진다. 이 결정의 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있고, 얻는 것과 얻지 못하는 것은 `docs/ARCHITECTURE.md`에 불변식으로 적혀 있다.
 
+**서버 include도 경로를 한정한다.** `Server/`의 네 `.vcxproj`는 `IncludePath`에 프로젝트 루트와 솔루션 폴더(`$(SolutionDir)`), 생성물 폴더 `Protocol`, 서드파티 경로만 둔다. GameServerTests는 프로젝트 루트 대신 `$(SolutionDir)GameServer`와 `$(SolutionDir)GameServer\Protocol`을 쓴다. ServerCore 헤더는 `#include "ServerCore/Network/Session.h"`처럼 솔루션 폴더 기준으로 부른다. **새 폴더를 만들어도 `IncludePath`에 등록하지 않는다.**
+
+`PrecompiledHeaderFile`도 경로다(`Core/pch.h`, `ServerCore/Core/pch.h`, `Main/pch.h`). `/Yu`는 `.cpp`의 include 문자열과 이 값이 글자 그대로 같아야 하므로, 한쪽만 바꾸면 C1010으로 컴파일이 멈춘다.
+
 ---
 
 ## 데이터베이스

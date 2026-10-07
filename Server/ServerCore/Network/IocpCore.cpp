@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "IocpCore.h"
-#include "NetworkEvent.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/IocpCore.h"
+#include "ServerCore/Network/NetworkEvent.h"
 
 /*-----------------
 	  IocpCore

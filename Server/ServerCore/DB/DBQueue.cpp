@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "DBQueue.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/DB/DBQueue.h"
 
 /*------------------
        DBQueue

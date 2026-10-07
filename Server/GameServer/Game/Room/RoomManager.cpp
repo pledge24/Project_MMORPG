@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "RoomManager.h"
-#include "Room.h"
+#include "Core/pch.h"
+#include "Game/Room/RoomManager.h"
+#include "Game/Room/Room.h"
 
 /*----------------
     RoomManager

@@ -1,2 +1,2 @@
-#include "pch.h"
-#include "DBBind.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/DB/DBBind.h"

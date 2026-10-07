@@ -11,5 +11,5 @@
 
 #endif
 
-#include "CorePch.h"
+#include "ServerCore/Core/CorePch.h"
 

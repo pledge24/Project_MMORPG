@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "SaveGate.h"
+#include "Core/pch.h"
+#include "Network/SaveGate.h"
 
 SaveGate GSaveGate;
 

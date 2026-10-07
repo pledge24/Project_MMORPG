@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "SaveGate.h"
+#include "Network/SaveGate.h"
 
 /*--------------------------------------------------------------
     저장 대기 테스트

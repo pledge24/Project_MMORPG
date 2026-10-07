@@ -1,8 +1,8 @@
-#include "pch.h"
-#include "Gamedata.h"
-#include "Global.h"
+#include "Core/pch.h"
+#include "Game/Data/Gamedata.h"
+#include "Core/Global.h"
 #include <fstream>
-#include "EncodingConverter.h"
+#include "Utils/EncodingConverter.h"
 
 /*-------------------
        Gamedata

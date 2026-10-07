@@ -1,7 +1,7 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Player.h"
-#include "Inventory.h"
+#include "Game/Entities/Player.h"
+#include "Game/Inventory/Inventory.h"
 
 /*--------------------------------------------------------------
     인벤토리 슬롯 타입 매핑 테스트

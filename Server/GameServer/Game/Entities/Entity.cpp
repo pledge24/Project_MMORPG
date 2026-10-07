@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "Entity.h"
-#include "Room.h"
+#include "Core/pch.h"
+#include "Game/Entities/Entity.h"
+#include "Game/Room/Room.h"
 
 Entity::Entity()
 {

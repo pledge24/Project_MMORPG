@@ -1,9 +1,9 @@
-#include "pch.h"
-#include "ProgressStorage.h"
-#include "CharacterStateDAO.h"
-#include "ItemDAO.h"
-#include "Player.h"
-#include "PlayerSaveData.h"
+#include "Core/pch.h"
+#include "DB/ProgressStorage.h"
+#include "DB/CharacterStateDAO.h"
+#include "DB/ItemDAO.h"
+#include "Game/Entities/Player.h"
+#include "Game/Entities/PlayerSaveData.h"
 
 /*-------------------------
     ProgressStorage

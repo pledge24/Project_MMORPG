@@ -1,7 +1,7 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Monster.h"
-#include "EntityUtils.h"
+#include "Game/Entities/Monster.h"
+#include "Game/Entities/EntityUtils.h"
 
 /*--------------------------------------------------------------
     몬스터 초기화 테스트

@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "RecvBuffer.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/RecvBuffer.h"
 
 /*-------------------
 	  RecvBuffer

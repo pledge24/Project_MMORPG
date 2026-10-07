@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "TickTimer.h"
+#include "Core/pch.h"
+#include "Utils/TickTimer.h"
 
 void TickTimer::Start()
 {

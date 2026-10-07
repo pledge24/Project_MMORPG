@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "ServerConfig.h"
-#include "EncodingConverter.h"
+#include "Core/pch.h"
+#include "Core/ServerConfig.h"
+#include "Utils/EncodingConverter.h"
 #include <cstdlib>
 
 namespace

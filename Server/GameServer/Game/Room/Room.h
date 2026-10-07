@@ -1,10 +1,10 @@
 #pragma once
-#include "JobQueue.h"
-#include "Utils.h"
-#include "Entity.h"
-#include "PlayerSaveData.h"
-#include "RoomTransfer.h"
-#include "CellMatrix.h"
+#include "ServerCore/Job/JobQueue.h"
+#include "Utils/Utils.h"
+#include "Game/Entities/Entity.h"
+#include "Game/Entities/PlayerSaveData.h"
+#include "Game/Room/RoomTransfer.h"
+#include "Game/Room/CellMatrix.h"
 
 class Room : public JobQueue
 {

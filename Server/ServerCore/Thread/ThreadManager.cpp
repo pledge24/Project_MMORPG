@@ -1,7 +1,7 @@
-#include "pch.h"
-#include "ThreadManager.h"
-#include "CoreTLS.h"
-#include "GlobalQueue.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Thread/ThreadManager.h"
+#include "ServerCore/Core/CoreTLS.h"
+#include "ServerCore/Job/GlobalQueue.h"
 
 /*------------------
 	ThreadManager

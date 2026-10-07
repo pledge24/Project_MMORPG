@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "NetworkEvent.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/NetworkEvent.h"
 
 /*----------------
 	NetworkEvent

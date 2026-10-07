@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "DBConnectionPool.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/DB/DBConnectionPool.h"
 
 /*-------------------
 	DBConnectionPool

@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "Global.h"
+#include "Core/pch.h"
+#include "Core/Global.h"
 
 const map<string, int32> GClassMappings = {
     make_pair("warrior", 1)

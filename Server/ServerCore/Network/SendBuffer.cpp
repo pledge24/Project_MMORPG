@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "SendBuffer.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/SendBuffer.h"
 
 /*-------------------
 	  SendBuffer

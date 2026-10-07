@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "ItemSaveRows.h"
+#include "DB/ItemSaveRows.h"
 
 /*--------------------------------------------------------------
     저장할 아이템 행 고르기 테스트

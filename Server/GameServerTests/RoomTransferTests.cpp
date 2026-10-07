@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "RoomTransfer.h"
+#include "Game/Room/RoomTransfer.h"
 
 /*--------------------------------------------------------------
     룸 이동 판정 테스트

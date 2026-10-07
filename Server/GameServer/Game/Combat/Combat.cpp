@@ -1,8 +1,8 @@
-#include "pch.h"
-#include "Combat.h"
-#include "Creature.h"
-#include "Player.h"
-#include "Monster.h"
+#include "Core/pch.h"
+#include "Game/Combat/Combat.h"
+#include "Game/Entities/Creature.h"
+#include "Game/Entities/Player.h"
+#include "Game/Entities/Monster.h"
 
 optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const CreatureRef& target, const Protocol::AttackInfo& attackInfo)
 {

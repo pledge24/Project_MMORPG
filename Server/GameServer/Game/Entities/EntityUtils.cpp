@@ -1,8 +1,8 @@
-#include "pch.h"
-#include "EntityUtils.h"
-#include "Player.h"
-#include "Monster.h"
-#include "GameSession.h"
+#include "Core/pch.h"
+#include "Game/Entities/EntityUtils.h"
+#include "Game/Entities/Player.h"
+#include "Game/Entities/Monster.h"
+#include "Network/GameSession.h"
 
 atomic<int64> EntityUtils::s_idGenerator = 1;
 

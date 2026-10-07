@@ -12,27 +12,27 @@
 #endif
 
 //~ Core
-#include "CorePch.h"
-#include "Types.h"
-#include "Macro.h"
-#include "Global.h"
+#include "ServerCore/Core/CorePch.h"
+#include "Core/Types.h"
+#include "Core/Macro.h"
+#include "Core/Global.h"
 
 //~ DB
-#include "DBConnectionPool.h"
-#include "DBBind.h"
-#include "DBQueue.h"
-#include "DBManager.h"
-#include "RedisManager.h"
+#include "ServerCore/DB/DBConnectionPool.h"
+#include "ServerCore/DB/DBBind.h"
+#include "ServerCore/DB/DBQueue.h"
+#include "ServerCore/DB/DBManager.h"
+#include "ServerCore/DB/RedisManager.h"
 
 //~ GameData
-#include "Gamedata.h"
-#include "JsonProperty.h"
+#include "Game/Data/Gamedata.h"
+#include "Game/Data/JsonProperty.h"
 
 //~ Network
-#include "Protocol.pb.h"
-#include "Enum.pb.h"
-#include "Struct.pb.h"
-#include "ServerPacketHandler.h"
-#include "Utils.h"
-#include "GameSession.h"
-#include "RoomManager.h"
+#include "Protocol/Protocol.pb.h"
+#include "Protocol/Enum.pb.h"
+#include "Protocol/Struct.pb.h"
+#include "Network/ServerPacketHandler.h"
+#include "Utils/Utils.h"
+#include "Network/GameSession.h"
+#include "Game/Room/RoomManager.h"

@@ -1,11 +1,11 @@
-#include "pch.h"
-#include "GameSession.h"
-#include "GameSessionManager.h"
-#include "SaveGate.h"
-#include "ServerPacketHandler.h"
-#include "ProgressStorage.h"
-#include "Player.h"
-#include "Room.h"
+#include "Core/pch.h"
+#include "Network/GameSession.h"
+#include "Network/GameSessionManager.h"
+#include "Network/SaveGate.h"
+#include "Network/ServerPacketHandler.h"
+#include "DB/ProgressStorage.h"
+#include "Game/Entities/Player.h"
+#include "Game/Room/Room.h"
 
 void GameSession::OnConnected()
 {

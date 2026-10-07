@@ -1,6 +1,6 @@
 #pragma once
-#include "Creature.h"
-#include "PlayerSaveData.h"
+#include "Game/Entities/Creature.h"
+#include "Game/Entities/PlayerSaveData.h"
 
 class GameSession;
 class Room;

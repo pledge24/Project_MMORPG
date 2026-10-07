@@ -1,8 +1,8 @@
-#include "pch.h"
-#include "CharacterListDAO.h"
-#include "DAOCommon.h"
-#include "EncodingConverter.h"
-#include "CharacterCreation.h"
+#include "Core/pch.h"
+#include "DB/CharacterListDAO.h"
+#include "DB/DAOCommon.h"
+#include "Utils/EncodingConverter.h"
+#include "Game/Entities/CharacterCreation.h"
 
 /*-------------------------
     CharacterListDAO

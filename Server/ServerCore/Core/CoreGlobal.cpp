@@ -1,11 +1,11 @@
-#include "pch.h"
-#include "CoreGlobal.h"
-#include "SocketUtil.h"
-#include "GlobalQueue.h"
-#include "JobTimer.h"
-#include "DBConnectionPool.h"
-#include "DBManager.h"
-#include "RedisManager.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Core/CoreGlobal.h"
+#include "ServerCore/Network/SocketUtil.h"
+#include "ServerCore/Job/GlobalQueue.h"
+#include "ServerCore/Job/JobTimer.h"
+#include "ServerCore/DB/DBConnectionPool.h"
+#include "ServerCore/DB/DBManager.h"
+#include "ServerCore/DB/RedisManager.h"
 
 // 전역 객체 추가 시, 여기에 하나씩 기입
 ThreadManager* GThreadManager = nullptr;

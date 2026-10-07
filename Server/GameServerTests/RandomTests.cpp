@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Utils.h"
+#include "Utils/Utils.h"
 
 /*--------------------------------------------------------------
     난수 범위 테스트

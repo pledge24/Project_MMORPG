@@ -1,6 +1,6 @@
 #pragma once
-#include "Creature.h"
-#include "Utils.h"
+#include "Game/Entities/Creature.h"
+#include "Utils/Utils.h"
 
 class TickIntervalTimer;
 class TickTimer;
