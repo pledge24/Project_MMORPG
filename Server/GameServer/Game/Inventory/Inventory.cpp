@@ -1,6 +1,5 @@
 #include "Core/pch.h"
 #include "Game/Inventory/Inventory.h"
-#include "Core/Global.h"
 #include "Game/Entities/Player.h"
 
 Inventory::Inventory(PlayerRef player) : _player(player)

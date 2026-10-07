@@ -1,6 +1,5 @@
 #include "Core/pch.h"
 #include "Game/Data/Gamedata.h"
-#include "Core/Global.h"
 #include <fstream>
 #include "Utils/EncodingConverter.h"
 

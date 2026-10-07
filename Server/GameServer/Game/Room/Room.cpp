@@ -1,10 +1,8 @@
 #include "Core/pch.h"
 #include "Game/Room/Room.h"
 #include "Game/Entities/Player.h"
-#include "Network/GameSession.h"
 #include "Game/Entities/Monster.h"
 #include "Game/Entities/EntityUtils.h"
-#include "Game/Equipment/EquippedGear.h"
 #include "Game/Combat/Combat.h"
 
 namespace

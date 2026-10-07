@@ -1,6 +1,5 @@
 #include "Core/pch.h"
 #include "Game/Entities/Creature.h"
-#include "Game/Entities/Player.h"
 
 Creature::Creature()
 {

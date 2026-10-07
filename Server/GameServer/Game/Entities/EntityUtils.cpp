@@ -2,7 +2,6 @@
 #include "Game/Entities/EntityUtils.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
-#include "Network/GameSession.h"
 
 atomic<int64> EntityUtils::s_idGenerator = 1;
 

@@ -1,11 +1,7 @@
 #include "Core/pch.h"
-#include <thread>
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/IocpCore.h"
-#include "Network/GameSession.h"
 #include "Core/ServerConfig.h"
-#include "Core/Global.h"
-#include "Utils/EncodingConverter.h"
 #include "DB/ItemDAO.h"
 
 enum

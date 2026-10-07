@@ -2,7 +2,6 @@
 #include "Game/Entities/Player.h"
 #include "Game/Inventory/Inventory.h"
 #include "Game/Equipment/EquippedGear.h"
-#include "Game/Entities/Monster.h"
 #include "Game/Room/Room.h"
 
 namespace
