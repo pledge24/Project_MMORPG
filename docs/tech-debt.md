@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 31개 (높음 1 · 중간 3 · 낮음 27) · 다음 번호 TD-034
+항목 34개 (높음 1 · 중간 3 · 낮음 30) · 다음 번호 TD-037
 
 ## 작성 방법
 
@@ -465,6 +465,60 @@ IOCP 워커가 진다는 사실이 빠진다.
 
 **유지보수 어려움** — 룸 잡에 무거운 일을 넣어도 IOCP와 무관하다고 오해하게 된다. 클라이언트에 엔티티가 아닌 동기화 대상을 넣을
 때 서버와 같은 계층이 있다고 가정하게 된다.
+
+## TD-034 아이템 UID의 최댓값을 `int32`로 읽는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/DB/ItemDAO.cpp` (`GetMaxItemUID`의 `BindObject`) · `Server/GameServer/Queries/GameDB_GetMaxItemUid.sql`
+> 등록일: 2026년 10월 7일
+
+`item_uid` 컬럼은 `BIGINT`이고 `GNextItemUID`도 `atomic<int64>`다. 그런데 `GetMaxItemUID`는 프로시저의 결과를
+`int32 _maxItemUID`에 바인딩한다. `DBConnection::BindCol(int32)`은 `SQL_C_LONG`으로 묶는다. 최댓값이 `int32` 범위를 넘을 때
+ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인하지 않았다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 지금은 UID가 작아서 드러나지 않는다. 범위를 넘으면 값이 잘려서 새로 발급하는 UID가 기존 아이템과
+겹치거나, `Fetch` 실패가 TD-017 「게임 서버가 DB를 준비하기 전에 접속을 받는다」의 잡히지 않는 예외로 이어져 서버가 시작하지 못한다.
+
+## TD-035 DB에서 읽은 슬롯 번호를 검증 없이 인벤토리와 장비 칸에 쓴다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquippedGear.cpp` (`EquipGear`)
+> 등록일: 2026년 10월 7일
+
+`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 `setSlotId`로 넘긴다. 두 함수는 이 값을 그대로 믿는다.
+
+- `Inventory::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
+  `Mutable`의 범위 검사는 `GOOGLE_DCHECK`라서 Release 빌드에서 빠진다
+- 같은 함수는 그 칸에 이미 아이템이 있으면 템플릿이 같은지 보지 않고 수량을 더한다
+- `EquippedGear::EquipGear`는 `setSlotId`를 그대로 `GearType`으로 바꿔 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
+  없는 부위면 칸을 찾지 못해 실패하므로 범위 밖 접근은 없다
+
+코드를 읽고 판단했다. 잘못된 행을 넣어 재현하지는 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 수동 수정이나 마이그레이션 실수로 DB에 잘못된 슬롯이 들어가면, 그 캐릭터가 입장할 때 Debug 빌드는
+중단되고 Release 빌드는 범위 밖 메모리를 쓴다. 범위 안이어도 다른 아이템이 합쳐지거나 무기가 다른 부위에 장착된 채로 저장된다.
+
+## TD-036 쓰이지 않거나 이름과 다르게 동작하는 코드가 남아 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
+> 위치: `Server/GameServer/Utils/`, `Server/GameServer/Game/`
+> 등록일: 2026년 10월 7일
+
+| 위치 | 상태 |
+|---|---|
+| `Utils/Utils.h`의 `vector2D::operator-=` | lhs를 바꾸지 않고 차를 새로 돌려준다. `operator-`와 같다. 부르는 곳은 없다 |
+| `Utils/TickIntervalTimer.h/.cpp` | 쓰는 곳이 없다. `Clear`가 `_repeatingCount`를 되돌리지 않아서, 한 번 발동한 타이머를 `doOnce`로 다시 `Init`하면 발동하지 않는다. `Clear`만 부르면 `_state`도 그대로 남는다 |
+| `Game/Room/Room.h`의 `IsValid` | 읽는 곳이 없다 |
+| `Game/Room/Room.cpp`의 `_monsterRespawnTime` | 룸 데이터에서 읽어 두기만 하고 쓰지 않는다 |
+| `Game/Entities/Monster.h`의 `_attackTimer` | 생성자에서 할당하고 소멸자에서 해제할 뿐 쓰지 않는다(주석 「사용 안하는 중」) |
+
+코드를 읽고 판단했다.
+
+### 영향
+
+**유지보수 어려움** · **버그 발생 가능성 증가** — 기능이 있는 것처럼 보여서 읽는 사람이 동작을 잘못 짐작한다.
+`operator-=`나 `TickIntervalTimer`를 새로 쓰기 시작하면 그 자리에서 바로 버그가 된다.
 
 ## TD-001 룸 이동 요청이 플레이어의 위치를 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
