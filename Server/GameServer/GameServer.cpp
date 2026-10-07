@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/IocpCore.h"
-#include "Core/ServerConfig.h"
+#include "Core/Config.h"
 #include "DB/ItemDAO.h"
 
 enum
@@ -43,9 +43,9 @@ int main(void)
 {
     // Init
 	ServerPacketHandler::Init();
-    ASSERT_CRASH(Gamedata::LoadAllGamedata());
+    ASSERT_CRASH(Gamedata::LoadAllGamedata())
 
-    const ServerConfig config = ServerConfig::Load(&ServerConfig::ReadProcessEnv);
+    const Config config = Config::Load(&Config::ReadProcessEnv);
 
     // Room 추가
     for (auto& mapDataPair : Gamedata::s_mapDataTable)
@@ -70,7 +70,7 @@ int main(void)
 		maxSessionCount
 	);
 
-	ASSERT_CRASH(service->Start());
+	ASSERT_CRASH(service->Start())
 
     // DB 연결
     {

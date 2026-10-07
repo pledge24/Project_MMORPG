@@ -1,5 +1,5 @@
 #include "Core/pch.h"
-#include "Core/ServerConfig.h"
+#include "Core/Config.h"
 #include "Utils/EncodingConverter.h"
 #include <cstdlib>
 
@@ -29,9 +29,9 @@ namespace
     }
 }
 
-ServerConfig ServerConfig::Load(const EnvLookup& lookup)
+Config Config::Load(const EnvLookup& lookup)
 {
-    ServerConfig config;
+    Config config;
     config.dbConnectionString = DEFAULT_DB_CONNECTION_STRING;
     config.redisUri = DEFAULT_REDIS_URI;
     config.port = DEFAULT_PORT;
@@ -53,7 +53,7 @@ ServerConfig ServerConfig::Load(const EnvLookup& lookup)
     return config;
 }
 
-std::optional<string> ServerConfig::ReadProcessEnv(const char* name)
+std::optional<string> Config::ReadProcessEnv(const char* name)
 {
     char* buffer = nullptr;
     size_t length = 0;

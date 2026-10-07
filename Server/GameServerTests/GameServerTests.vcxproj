@@ -206,7 +206,7 @@
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp" />
     <ClCompile Include="..\GameServer\Core\Global.cpp" />
     <ClCompile Include="..\GameServer\Network\SaveGate.cpp" />
-    <ClCompile Include="..\GameServer\Core\ServerConfig.cpp" />
+    <ClCompile Include="..\GameServer\Core\Config.cpp" />
     <ClCompile Include="..\GameServer\Network\ServerPacketHandler.cpp" />
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>

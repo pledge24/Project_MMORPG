@@ -89,7 +89,7 @@
     <ClCompile Include="..\GameServer\Network\SaveGate.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Core\ServerConfig.cpp">
+    <ClCompile Include="..\GameServer\Core\Config.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Core\Global.cpp">
