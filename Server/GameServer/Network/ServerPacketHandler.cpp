@@ -4,7 +4,7 @@
 #include "Network/SaveGate.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
-#include "Game/Entities/EntityUtils.h"
+#include "Game/Entities/EntityFactory.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/ProgressStorage.h"
 #include "Game/Entities/CharacterCreation.h"
@@ -190,8 +190,11 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             if (session->IsConnected() == false)
                 return;
 
-            // 플레이어 생성 및 초기화
-            PlayerRef player = EntityUtils::CreatePlayer(static_pointer_cast<GameSession>(session));
+            // 플레이어 생성 및 초기화. 룸에는 불러오기가 끝난 뒤 EnterPlayer로 들어간다.
+            PlayerSpawnParams spawnParams;
+            spawnParams.session = static_pointer_cast<GameSession>(session);
+
+            PlayerRef player = EntityFactory::Create<Player>(spawnParams);
             if (player == nullptr)
             {
                 wcout << L"Warning: 플레이어 생성 실패" << '\n';

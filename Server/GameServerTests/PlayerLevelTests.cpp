@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
+#include "Game/Entities/EntityFactory.h"
 
 /*--------------------------------------------------------------
     레벨 상한 테스트
@@ -9,7 +10,7 @@
     조회가 실패해 그 캐릭터는 게임에 들어오지 못한다. 최대 레벨에서 경험치 보상을
     받아도 레벨이 오르지 않는지 확인한다.
 
-    픽스처 결합도: Player를 Init()만 하고 스탯은 손으로 넣는다. 최대 레벨에서는
+    픽스처 결합도: Player를 세션 없이 EntityFactory로만 만들고 스탯은 손으로 넣는다. 최대 레벨에서는
     다음 레벨 데이터를 읽지 않으므로 레벨 표를 시드할 필요가 없다.
 ---------------------------------------------------------------*/
 
@@ -30,8 +31,8 @@ class PlayerLevelTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
 
         player->SetStatValue(Protocol::STAT_TYPE_EXP, 90);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, 100);
@@ -104,7 +105,7 @@ TEST_F(PlayerLevelTest, MaxLevelDiscardsRewardExp)
     한 번의 보상으로 여러 레벨을 올릴 수 있어야 한다. 레벨 표의 expRequirement는
     그 레벨에서 다음 레벨로 가는 데 필요한 경험치다.
 
-    픽스처 결합도: 전사 레벨 표를 손으로 시드하고 Player::Start()로 다음 레벨 데이터를
+    픽스처 결합도: 전사 레벨 표를 손으로 시드하고 Player::OnLoaded()로 다음 레벨 데이터를
     캐시한다. 레벨 표에 스탯 값을 넣지 않으므로 최종 스탯 검증이 0으로 통과한다.
 ---------------------------------------------------------------*/
 
@@ -127,8 +128,8 @@ protected:
             Gamedata::s_warriorLevelDataTable[level] = row;
         }
 
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
         player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
 
         for (Protocol::StatType type : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP,
@@ -144,11 +145,11 @@ protected:
         Gamedata::s_classLevelDataTableMappings.clear();
     }
 
-    void StartAtLevel(int32 level)
+    void LoadAtLevel(int32 level)
     {
         player->_playerInfo->set_level(level);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, level * 100);
-        ASSERT_TRUE(player->Start());
+        ASSERT_TRUE(player->OnLoaded());
     }
 
     PlayerRef player;
@@ -156,7 +157,7 @@ protected:
 
 TEST_F(PlayerMultiLevelUpTest, LargeRewardRaisesSeveralLevelsAtOnce)
 {
-    StartAtLevel(1);
+    LoadAtLevel(1);
 
     // 1→2에 100, 2→3에 200, 남는 50
     Protocol::S_REWARD_RESULT pkt = MakeExpReward(350);
@@ -182,7 +183,7 @@ TEST_F(PlayerMultiLevelUpTest, LargeRewardRaisesSeveralLevelsAtOnce)
 
 TEST_F(PlayerMultiLevelUpTest, ReachingMaxLevelDropsLeftoverExp)
 {
-    StartAtLevel(MAX_LEVEL - 1);
+    LoadAtLevel(MAX_LEVEL - 1);
 
     Protocol::S_REWARD_RESULT pkt = MakeExpReward((MAX_LEVEL - 1) * 100 + 70);
     player->OnGetReward(pkt);

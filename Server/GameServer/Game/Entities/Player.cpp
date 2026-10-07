@@ -30,6 +30,7 @@ Player::Player()
 	_isPlayer = true;
     _isTickable = false;
 
+    _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
     _playerInfo = _entityInfo->mutable_player_info();
     _possession = new Protocol::Possession();
 }
@@ -39,22 +40,30 @@ Player::~Player()
     delete _possession;
 }
 
-bool Player::Init()
+bool Player::Init(const SpawnParams& params)
 {
-	if (Creature::Init() == false)
+	if (Creature::Init(params) == false)
 		return false;
 
-    _inventory = make_shared<Inventory>(static_pointer_cast<Player>(shared_from_this()));
-    _equippedGear = make_shared<EquippedGear>(static_pointer_cast<Player>(shared_from_this()));
+    PlayerRef self = static_pointer_cast<Player>(shared_from_this());
+
+    // 세션 연결을 인벤토리 생성보다 먼저 한다. 팩토리가 nullptr를 돌려줘도 세션의 _player는 이미
+    // 바뀌어 있는 동작을 옮겨 온 것이다(TD-019).
+    if (params.session != nullptr)
+    {
+        _session = params.session;
+        _userId = params.session->_userId;
+        params.session->_player.store(self);
+    }
+
+    _inventory = make_shared<Inventory>(self);
+    _equippedGear = make_shared<EquippedGear>(self);
 
 	return true;
 }
 
-bool Player::Start()
+bool Player::OnLoaded()
 {
-	if (Creature::Start() == false)
-		return false;
-
     _inventory->ClearDirtyFlags();
     _equippedGear->ClearDirtyFlag();
     RefreshEquippedGearSummary();
@@ -334,7 +343,6 @@ void Player::OnEnterMap(int32 mapId, int32 roomId)
 void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos)
 {
     _enteringRoomId = -1;
-    _room.store(enterRoom);
     _playerInfo->set_room_id(enterRoom->GetRoomId());
 
     if(enterPos.has_value())

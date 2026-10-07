@@ -74,6 +74,7 @@
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
+    <ClCompile Include="EntityFactoryTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
@@ -110,7 +111,7 @@
     <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\EntityUtils.cpp">
+    <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">

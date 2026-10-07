@@ -2,7 +2,6 @@
 #include "Game/Room/Room.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
-#include "Game/Entities/EntityUtils.h"
 #include "Game/Combat/Combat.h"
 
 namespace
@@ -53,7 +52,12 @@ bool Room::Start()
         for (int32 i = 0; i < _maxMonsterCount; i++)
         {
             int32 monsterTemplateId = _monsterIds[Utils::GetRandom(0, kindOfMonster - 1)];
-            if (SpawnMonster(monsterTemplateId) == nullptr)
+
+            MonsterSpawnParams spawnParams;
+            spawnParams.templateId = monsterTemplateId;
+            SetRandomPos(&spawnParams.spawnPos, true, true);
+
+            if (SpawnEntity<Monster>(spawnParams) == nullptr)
             {
                 wcout << L"Room " << _roomId << L": 몬스터 " << monsterTemplateId << L" 스폰에 실패했습니다" << '\n';
                 return false;
@@ -133,7 +137,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
         enterPlayer->OnEnterRoom(static_pointer_cast<Room>(shared_from_this()), roomEnterData.enterPos);
 
         // 룸 이동 중에 접속이 끊겼으면 이전 룸은 이 플레이어를 찾지 못한다. 퇴장과 저장을 여기서 이어 받는다.
-        // OnEnterRoom이 _room을 먼저 쓰고 여기서 표시를 읽는다. OnDisconnected는 표시를 먼저 쓰고 _room을 읽는다.
+        // AddEntity가 _room을 먼저 쓰고 여기서 표시를 읽는다. OnDisconnected는 표시를 먼저 쓰고 _room을 읽는다.
         // 그래서 둘 중 적어도 한쪽은 상대를 본다. 둘 다 보면 이 룸 큐에서 두 번 돌고, 두 번째는 퇴장에 실패해 저장하지 않는다.
         if (enterPlayer->_disconnected.load())
         {
@@ -853,30 +857,6 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
     }
 }
 
-MonsterRef Room::SpawnMonster(int32 templateId)
-{
-    // Monster::Init()이 posInfo로 _spawnPos를 계산하므로 위치를 먼저 정해서 넘긴다.
-    Protocol::PosInfo spawnPos;
-    SetRandomPos(&spawnPos, true, true);
-
-    MonsterRef newMonster = EntityUtils::CreateMonster(templateId, spawnPos);
-    if (newMonster == nullptr)
-        return nullptr;
-
-    if (AddEntity(newMonster) == false)
-    {
-        wcout << L"SpawnMonster 실패" << '\n';
-        return nullptr;
-    }
-
-    // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
-    newMonster->_room.store(GetRoomRef());
-    newMonster->SetPrevTime(GetTickCount64());
-    newMonster->Start();
-
-    return newMonster;
-}
-
 PlayerRef Room::SpawnPlayer(int64 entityId)
 {
     PlayerRef targetPlayer = FindEntityAs<Player>(entityId);
@@ -1059,6 +1039,15 @@ bool Room::AddEntity(EntityRef entity)
 		return false;
 
 	_entities.insert(make_pair(entityId, entity));
+
+    // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
+    entity->_room.store(GetRoomRef());
+
+    if (entity->_hasBegunPlay == false)
+    {
+        entity->_hasBegunPlay = true;
+        entity->Start();
+    }
 
 	return true;
 }

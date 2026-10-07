@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/Entities/Entity.h"
+#include "Game/Entities/EntityFactory.h"
 #include "Game/Entities/PlayerSaveData.h"
 #include "Game/Room/RoomTransfer.h"
 #include "Game/Room/CellMatrix.h"
@@ -117,8 +118,25 @@ public:
     pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);
 
     //~ 스폰
-    /** 룸 안의 무작위 위치에 몬스터를 만들어 넣고 틱을 시작한다. 실패하면 nullptr. */
-    MonsterRef SpawnMonster(int32 templateId);
+    /**
+     * 엔티티를 만들어 이 룸에 넣는다. 언리얼의 UWorld::SpawnActor에 대응한다.
+     * AddEntity가 Start까지 부른다. T의 정의가 보이는 곳에서 부른다. 생성이나 등록에 실패하면 nullptr.
+     */
+    template<typename T>
+    shared_ptr<T> SpawnEntity(const typename T::SpawnParams& params)
+    {
+        shared_ptr<T> entity = EntityFactory::Create<T>(params);
+        if (entity == nullptr)
+            return nullptr;
+
+        if (AddEntity(entity) == false)
+        {
+            wcout << L"Room " << _roomId << L": 엔티티 " << entity->GetEntityId() << L" 등록에 실패했습니다" << '\n';
+            return nullptr;
+        }
+
+        return entity;
+    }
     /** 다른 플레이어에게 S_SPAWN을 알린다. 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(int64 entityId);
     /** 다른 플레이어에게 S_SPAWN을 알린다. 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
@@ -130,7 +148,10 @@ protected:
     void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
 
     //~ 엔티티
-    /** 이미 있는 id면 false. 셀 행렬에는 다음 Update에서 들어간다. */
+    /**
+     * 이미 있는 id면 false. 셀 행렬에는 다음 Update에서 들어간다.
+     * 엔티티의 _room을 이 룸으로 바꾸고, 처음 룸에 들어가는 엔티티면 Start를 부른다.
+     */
     bool AddEntity(EntityRef entity);
     bool RemoveEntity(int64 entityId);
 

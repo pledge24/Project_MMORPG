@@ -23,8 +23,18 @@ struct NextLevelUpData
 };
 
 /**
+ * 플레이어의 스폰 매개변수.
+ * session이 비어 있으면 세션에 연결하지 않는다. 운영 코드는 언제나 세션을 넘기고, 빈 세션은 테스트만 쓴다.
+ */
+struct PlayerSpawnParams : public Creature::SpawnParams
+{
+    GameSessionRef session;
+};
+
+/**
  * 접속한 캐릭터 하나를 나타내는 크리처.
- * 게임 입장 때 DB 스레드의 불러오기 잡에서 만들고(EntityUtils::CreatePlayer) DB 값을 채운 뒤 Start한다.
+ * 게임 입장 때 DB 스레드의 불러오기 잡에서 만들고(EntityFactory::Create) DB 값을 채운 뒤 OnLoaded를 부른다.
+ * 룸에는 그 뒤 Room::EnterPlayer로 들어간다. 소속 룸을 DB에서 읽어야 알기 때문에 룸이 직접 만들지 않는다.
  * 룸에 들어간 뒤로는 소속 룸 큐 위에서만 다룬다. 예외는 atomic인 _room과 _disconnected다.
  * GameSession::_player와 룸의 _entities가 붙잡는다. 인벤토리와 장비는 플레이어를 weak_ptr로 가리킨다.
  * 틱을 돌지 않는다.
@@ -32,19 +42,25 @@ struct NextLevelUpData
 class Player : public Creature
 {
 public:
+    using SpawnParams = PlayerSpawnParams;
+
 	Player();
 	virtual ~Player();
 
-public:
-    /** 인벤토리와 장비를 만든다. shared_from_this를 쓰므로 shared_ptr로 만든 뒤에만 부를 수 있다. */
-    virtual bool Init() override;
     /**
-     * DB 값을 모두 채운 뒤에 부른다. dirty flag를 지우고 최종 스탯을 다시 계산해 DB 값과 대조한다.
+     * DB 값을 모두 채운 뒤 DB 스레드에서 부른다. 언리얼의 FinishSpawning에 대응한다.
+     * dirty flag를 지우고 최종 스탯을 다시 계산해 DB 값과 대조한다.
      * 레벨 표에 없는 직업이나 레벨이거나, 저장된 스탯이 계산 결과와 어긋나면 false.
      */
-    virtual bool Start() override;
+    bool OnLoaded();
 
 protected:
+    friend class EntityFactory;
+    /**
+     * 세션을 연결하고 인벤토리와 장비를 만든다.
+     * session을 넘기면 Init이 끝나기 전에 GameSession::_player가 이 플레이어로 바뀐다.
+     */
+    bool Init(const SpawnParams& params);
     virtual void Tick(float deltaTime) override {};
 
 public:

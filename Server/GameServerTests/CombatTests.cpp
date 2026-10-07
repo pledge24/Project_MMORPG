@@ -3,7 +3,7 @@
 #include "Game/Combat/Combat.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
-#include "Game/Entities/EntityUtils.h"
+#include "Game/Entities/EntityFactory.h"
 
 /*--------------------------------------------------------------
     피격과 처치 판정 테스트
@@ -12,9 +12,8 @@
     룸에 남기 때문이다. 처치는 플레이어의 공격으로 몬스터가 사망하는 것이고, 처치일
     때만 보상이 붙는다.
 
-    픽스처 결합도: Gamedata::s_monsterDataTable을 손으로 시드하고 몬스터는
-    EntityUtils::CreateMonster로, 플레이어는 Init()만 하고 HP 스탯을 손으로 넣는다.
-    룸에는 넣지 않는다.
+    픽스처 결합도: Gamedata::s_monsterDataTable을 손으로 시드하고 두 엔티티를 EntityFactory로
+    만든다. 플레이어는 세션 없이 만들고 HP 스탯을 손으로 넣는다. 룸에는 넣지 않는다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -53,11 +52,13 @@ protected:
         data[string(GoldReward)][string(MaxGold)] = MAX_GOLD;
         Gamedata::s_monsterDataTable[MONSTER_TEMPLATE_ID] = data;
 
-        monster = EntityUtils::CreateMonster(MONSTER_TEMPLATE_ID, Protocol::PosInfo());
+        MonsterSpawnParams monsterParams;
+        monsterParams.templateId = MONSTER_TEMPLATE_ID;
+        monster = EntityFactory::Create<Monster>(monsterParams);
         ASSERT_NE(monster, nullptr);
 
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
         player->SetStatValue(Protocol::STAT_TYPE_HP, PLAYER_HP);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_HP, PLAYER_HP);
     }

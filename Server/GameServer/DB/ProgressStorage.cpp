@@ -42,7 +42,7 @@ void ProgressStorage::Load(SessionRef session, int64 characterId)
     }
 
     // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
-    if (player->Start() == false)
+    if (player->OnLoaded() == false)
     {
         sendEnterGameFail();
         return;

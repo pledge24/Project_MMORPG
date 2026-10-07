@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
+#include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/Inventory.h"
 
 /*--------------------------------------------------------------
@@ -10,7 +11,7 @@
     요청의 아이템이 슬롯과 다르면 쓰지 않는다.
     HP나 MP가 가득 차 있어도 소비한다. 재사용 대기는 템플릿마다 따로 돌고 서버가 판정한다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 Init()만 한다.
+    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
     시각은 ProcessUseItem의 인자로 넘긴다.
 ---------------------------------------------------------------*/
 
@@ -55,8 +56,8 @@ protected:
         sword[string(JsonProperty::Item::HpRestore)] = 1.0;
         Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = sword;
 
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_HP, MAX_HP);
         player->SetStatValue(Protocol::STAT_TYPE_HP, 100);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_MP, MAX_MP);

@@ -11,21 +11,17 @@ Creature::~Creature()
     delete _statInfo;
 }
 
-bool Creature::Init()
+bool Creature::Init(const SpawnParams& params)
 {
-    if (Entity::Init() == false)
+    if (Entity::Init(params) == false)
         return false;
 
-    // ...
     return true;
 }
 
-bool Creature::Start()
+void Creature::Start()
 {
-    if (Entity::Start() == false)
-        return false;
-
-    return true;
+    Entity::Start();
 }
 
 void Creature::Tick(float deltaTime)
