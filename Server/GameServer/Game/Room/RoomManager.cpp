@@ -2,10 +2,6 @@
 #include "Game/Room/RoomManager.h"
 #include "Game/Room/Room.h"
 
-/*----------------
-    RoomManager
------------------*/
-
 RoomManager::RoomManager()
 {
 }

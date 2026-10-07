@@ -33,7 +33,6 @@ namespace JsonProperty
         constexpr std::string_view GearSubtype_Arms = "arms";
         constexpr std::string_view GearSubtype_Boots = "boots";
         constexpr std::string_view GearSubtype_Sword = "sword";
-
     }
 
     namespace Monster
@@ -72,7 +71,6 @@ namespace JsonProperty
         constexpr std::string_view MaxMp_Increment = "maxMpIncrement";
         constexpr std::string_view PA_Increment = "paIncrement";
         constexpr std::string_view MA_Increment = "maIncrement";
-
     }
 
     namespace Map
@@ -100,7 +98,5 @@ namespace JsonProperty
         constexpr std::string_view MonsterRespawnTime = "monsterRespawnTime";
         //constexpr std::string_view SummonCount = "summonCount";
         constexpr std::string_view Yaw = "yaw";
-
-
     }
 }

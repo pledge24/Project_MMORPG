@@ -5,10 +5,6 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerSaveData.h"
 
-/*-------------------------
-    CharacterStateDAO
---------------------------*/
-
 bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
 {
     const int PARAMS = 2;
@@ -35,11 +31,11 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
             dbBind.BindCol(2, _level);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId;
         int64 _userId;
 
-        /* Cols */
+        //~ Cols
         int32 _classId;
         WCHAR _characterName[100];
         int16 _level;
@@ -120,10 +116,10 @@ bool CharacterStateDAO::LoadLastState(SessionRef session, int64 characterId)
             dbBind.BindCol(11, _gold);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId;
 
-        /* Cols */
+        //~ Cols
         int64 _exp;
         int64 _curHp;
         int64 _curMp;
@@ -247,7 +243,7 @@ bool CharacterStateDAO::SaveCharacter(const PlayerSaveData& data)
             dbBind.BindParam(1, _characterId);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId;
         int16 _level;
     };
@@ -325,7 +321,7 @@ bool CharacterStateDAO::SaveLastState(const PlayerSaveData& data)
             dbBind.BindParam(12, _characterId);
         }
 
-        /* Params */
+        //~ Params
         int64 _exp;
         int64 _curHp;
         int64 _curMp;

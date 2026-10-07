@@ -3,44 +3,24 @@
 #include <fstream>
 #include "Utils/EncodingConverter.h"
 
-/*-------------------
-       Gamedata
----------------------*/
-
-/* 직업별 레벨 테이블 */
+/** 직업별 레벨 테이블 */
 DataTable Gamedata::s_invalidLevelDataTable;
 DataTable Gamedata::s_warriorLevelDataTable;
 
-/* 레벨 테이블 매핑 */
+/** 레벨 테이블 매핑 */
 unordered_map<int32, DataTable*> Gamedata::s_classLevelDataTableMappings;
 
-/* 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이며
-   GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다. */
+/**
+ * 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이다.
+ * GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다. 
+ */
 static constexpr const char* GAMEDATA_DIR = "Game/Data/Json/";
 
-/* 게임 데이터 */
+/** 게임 데이터 */
 DataTable Gamedata::s_itemDataTable;
 DataTable Gamedata::s_mapDataTable;
 DataTable Gamedata::s_monsterDataTable;
 DataTable Gamedata::s_questDataTable;
-
-const DataTable* Gamedata::FindClassLevelTable(int32 classId)
-{
-    auto it = s_classLevelDataTableMappings.find(classId);
-    if (it == s_classLevelDataTableMappings.end())
-        return nullptr;
-
-    return it->second;
-}
-
-const Json* Gamedata::FindItemData(int32 templateId)
-{
-    auto it = s_itemDataTable.find(templateId);
-    if (it == s_itemDataTable.end())
-        return nullptr;
-
-    return &it->second;
-}
 
 bool Gamedata::LoadAllGamedata()
 {
@@ -137,15 +117,15 @@ bool Gamedata::LoadAllGamedata()
     }
     catch (const wstring cause)
     {
-        wcout << L"Gamedata JSON 파일 로드 중 오류 발생: " << cause << endl;
+        wcout << L"Gamedata JSON 파일 로드 중 오류 발생: " << cause << '\n';
         return false;
     }
     catch (const Json::parse_error& e)
     {
         // JSON 파싱 실패 시 예외 처리
-        wcout << L"JSON 파싱 오류 발생: " << e.what() << endl;
-        wcout << L"오류 코드: " << e.id << endl;
-        wcout << L"오류 발생 위치 (byte offset): " << e.byte << endl;
+        wcout << L"JSON 파싱 오류 발생: " << e.what() << '\n';
+        wcout << L"오류 코드: " << e.id << '\n';
+        wcout << L"오류 발생 위치 (byte offset): " << e.byte << '\n';
         return false;
     }
 
@@ -186,3 +166,21 @@ void Gamedata::PrintAllGamedata()
     }
 }
 #endif
+
+const DataTable* Gamedata::FindClassLevelTable(int32 classId)
+{
+    auto it = s_classLevelDataTableMappings.find(classId);
+    if (it == s_classLevelDataTableMappings.end())
+        return nullptr;
+
+    return it->second;
+}
+
+const Json* Gamedata::FindItemData(int32 templateId)
+{
+    auto it = s_itemDataTable.find(templateId);
+    if (it == s_itemDataTable.end())
+        return nullptr;
+
+    return &it->second;
+}

@@ -1,11 +1,9 @@
 #pragma once
 
-/*--------------------------------------------------------------
-    DAOCommon
-
-    DAO들이 함께 쓰는 오류 코드와 연결 가드다.
----------------------------------------------------------------*/
-
+/**
+ * DAO가 DB 작업 중에 던지고 받는 오류 코드. 값마다 DBErrorCauseMappings에 사유 문구가 있다.
+ * 새 값을 더하면 DBErrorCauseMappings에도 넣는다. 빠지면 PrintDBErrorLog의 at()이 예외를 던진다.
+ */
 enum DBCustomError
 {
     NONE = 24000,
@@ -37,13 +35,10 @@ inline void PrintDBErrorLog(const DBCustomError error)
     wcout << L"오류 발생: " << error << L"(" << DBErrorCauseMappings.at(error) << L")" << endl;
 }
 
-/*--------------------------------------------------------------
-    DBConnectionGuard
-
-    연결 풀에서 연결을 빌리고, 가드가 사라질 때 돌려준다.
-    예외로 함수를 빠져나가도 연결이 풀로 돌아간다.
----------------------------------------------------------------*/
-
+/**
+ * 연결 풀에서 연결을 빌리고, 가드가 사라질 때 돌려준다.
+ * 예외로 함수를 빠져나가도 연결이 풀로 돌아간다. DAO 함수 안의 지역 변수로만 쓴다.
+ */
 class DBConnectionGuard
 {
 public:

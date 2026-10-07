@@ -11,7 +11,6 @@ void GameSession::OnConnected()
 	GSessionManager.Add(static_pointer_cast<GameSession>(shared_from_this()));
 }
 
-// 룸 퇴장과 저장은 이유와 무관하게 여기서만 시작한다. C_LEAVE_GAME도 연결을 끊어 이 경로로 온다.
 void GameSession::OnDisconnected()
 {
 	PlayerRef player = _player.load();

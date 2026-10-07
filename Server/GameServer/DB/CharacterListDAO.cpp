@@ -4,10 +4,6 @@
 #include "Utils/EncodingConverter.h"
 #include "Game/Entities/CharacterCreation.h"
 
-/*-------------------------
-    CharacterListDAO
---------------------------*/
-
 void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
 {
     const int PARAMS = 1;
@@ -34,10 +30,10 @@ void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
             dbBind.BindCol(3, _level);
         }
 
-        /* Params */
+        //~ Params
         int64 _userId;
 
-        /* Cols */
+        //~ Cols
         int64 _characterId;
         int32 _classId;
         WCHAR _characterName[100];
@@ -142,7 +138,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             dbBind.BindCol(0, _characterId);
         }
 
-        /* Params */
+        //~ Params
         int64 _userId;
         int32 _classId;
         wstring _name;
@@ -155,7 +151,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         int32 _curPhysicalAttack = 0;
         int32 _curMagicalAttack = 0;
 
-        /* Cols */
+        //~ Cols
         int64 _characterId;
     };
 
@@ -302,7 +298,7 @@ void CharacterListDAO::DeleteCharacter(SessionRef session, int64 characterId)
             dbBind.BindParam(1, _userId);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId;
         int64 _userId;
     };

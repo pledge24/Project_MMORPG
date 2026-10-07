@@ -5,10 +5,6 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerSaveData.h"
 
-/*-------------------------
-    ProgressStorage
---------------------------*/
-
 void ProgressStorage::Load(SessionRef session, int64 characterId)
 {
     PlayerRef player = static_pointer_cast<GameSession>(session)->_player;

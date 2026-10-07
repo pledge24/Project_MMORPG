@@ -40,7 +40,5 @@ void Entity::Tick(float deltaTime)
     {
         ownerRoom->DoTimer(ENTITY_TICK_INTERVAL, &Room::TickEntity, shared_from_this());
     }
-
-
 }
 

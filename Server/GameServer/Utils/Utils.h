@@ -2,8 +2,8 @@
 #include <random>
 #include <cmath>
 #include <numbers>
-//#include "Protocol.pb.h"
 
+/** 평면(x, y) 벡터. 좌표는 언리얼 단위(cm)를 따른다. 셀 행렬과 몬스터 이동이 높이를 빼고 계산할 때 쓴다. */
 struct vector2D
 {
     vector2D() {};
@@ -11,6 +11,7 @@ struct vector2D
 
     static vector2D GetZeroVector() { return vector2D(0.f, 0.f); }
     float GetMagnitude() const { return sqrt(x * x + y * y); }
+    /** 길이가 0이면 영벡터를 돌려준다. */
     vector2D GetNormalize() const {
         float magnitude = GetMagnitude();
 
@@ -19,10 +20,11 @@ struct vector2D
             return GetZeroVector();
         }
 
-        // 각 성분을 크기로 나눕니다.
+        // 각 성분을 크기로 나눈다.
         return vector2D(x / magnitude, y / magnitude);
     }
 
+    /** x, y만 쓴다. vector의 z는 그대로 둔다. */
     void CopyTo(Protocol::Vector* vector)
     {
         vector->set_x(x);
@@ -44,6 +46,7 @@ struct vector2D
         return { lhs.x - rhs.x, lhs.y - rhs.y };
     }
 
+    /** 이름과 달리 lhs를 바꾸지 않고 차를 새로 돌려준다. operator-와 같다. */
     friend vector2D operator-=(const vector2D& lhs, const vector2D& rhs)
     {
         return { lhs.x - rhs.x, lhs.y - rhs.y };
@@ -58,6 +61,7 @@ struct vector2D
     float y = 0.f;
 };
 
+/** 3차원 벡터. 좌표는 언리얼 단위(cm)를 따른다. */
 struct vector3D
 {
     vector3D() {};
@@ -65,6 +69,7 @@ struct vector3D
 
     static vector3D GetZeroVector() { return vector3D(0.f, 0.f, 0.f); }
     float GetMagnitude() { return sqrt(x * x + y * y + z * z); }
+    /** 길이가 0이면 영벡터를 돌려준다. */
     vector3D GetNormalize()
     {
         float magnitude = GetMagnitude();
@@ -74,7 +79,7 @@ struct vector3D
             return GetZeroVector();
         }
 
-        // 각 성분을 크기로 나눕니다.
+        // 각 성분을 크기로 나눈다.
         return vector3D(x / magnitude, y / magnitude, z /magnitude);
     }
 
@@ -83,10 +88,14 @@ struct vector3D
     float z = 0.f;
 };
 
+/** 상태 없는 범용 함수 모음. */
 class Utils
 {
 public:
-	// [min, max]에서 뽑는다. 정수도 max를 포함한다. 배열 인덱스를 뽑을 때는 size - 1을 넘긴다.
+	/**
+	 * [min, max]에서 뽑는다. 정수도 max를 포함한다. 배열 인덱스를 뽑을 때는 size - 1을 넘긴다.
+	 * 호출마다 엔진을 새로 만들므로 여러 스레드에서 불러도 된다. min이 max보다 크면 동작이 정의되지 않는다.
+	 */
 	template<typename T>
 	static T GetRandom(T min, T max)
 	{
@@ -109,6 +118,7 @@ public:
 	}
 };
 
+/** 평면 거리와 방향 계산. yaw는 언리얼과 같이 도(degree) 단위이고 +x 축이 0도다. */
 class MathUtil
 {
 public:
@@ -123,6 +133,7 @@ public:
         return vector2D{ dirX, dirY };
     }
 
+    /** -180도에서 180도 사이로 돌려준다. */
     static float VectorToYaw(const vector2D& vec)
     {
         float yaw_radians = std::atan2f(vec.y, vec.x);
@@ -138,6 +149,7 @@ public:
         return yaw_degrees;
     }
 
+    /** 평면 거리다. noSqrt면 제곱 거리를 돌려준다. */
     static float Distance(const vector2D& src, const vector2D& dst, bool noSqrt = false)
     {
         float dx = dst.x - src.x;
@@ -147,6 +159,7 @@ public:
         return noSqrt ? squareDist : sqrt(squareDist);
     }
 
+    /** z를 빼고 잰 평면 거리다. noSqrt면 제곱 거리를 돌려준다. */
     static float Distance(Protocol::PosInfo* src, Protocol::PosInfo* dst, bool noSqrt = false)
     {
         float dx = dst->pos().x() - src->pos().x();
@@ -161,6 +174,7 @@ public:
         return { posInfo->pos().x(), posInfo->pos().y() };
     }
 
+    /** 평면 거리가 range 이하면 true. */
     static bool InRange(Protocol::PosInfo* curPos, Protocol::PosInfo* target, float range)
     {
         float squareDist = MathUtil::Distance(curPos, target, true);
@@ -180,6 +194,7 @@ public:
 
 using google::protobuf::RepeatedPtrField;
 
+/** protobuf 메시지를 채우는 보조 함수 모음. */
 class ProtoUtil
 {
 public:
