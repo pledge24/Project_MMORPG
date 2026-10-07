@@ -176,7 +176,7 @@ pwsh P1/Scripts/Invoke-UeBuild.ps1 -CloseEditor
 
 - MSBuild 경로는 `vswhere.exe -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe"`로 찾는다. 머신마다 다르다.
 - **`/v:minimal`을 빼지 않는다.** 기본 상세도는 출력이 훨씬 커진다.
-- 이 빌드는 추적 중인 `Server/Libraries/Libs/`의 `.lib`와 `.pdb`를 갱신한다. 커밋 전에 의도한 변경인지 확인한다.
+- 이 빌드는 `Server/Libraries/Libs/ServerCore/`에 `ServerCore.lib`를 만든다. 이 폴더는 git이 추적하지 않으므로, 새로 클론한 뒤에는 솔루션을 한 번 빌드해야 게임 서버가 링크된다. GameServer·GameServerTests·DummyClient가 ServerCore를 `ProjectReference`로 참조해서 솔루션 빌드는 ServerCore를 먼저 빌드한다.
 
 **출력 규모** (2026년 9월 16일 증분 빌드 실측)
 
