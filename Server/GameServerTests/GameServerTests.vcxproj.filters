@@ -30,7 +30,7 @@
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameServer\Main">
+    <Filter Include="GameServer\Core">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Protocol">
@@ -74,26 +74,26 @@
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\pch.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\pch.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\GameSession.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\GameSession.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\GameSessionManager.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\SaveGate.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\SaveGate.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\ServerConfig.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\ServerConfig.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\Global.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\Global.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\ServerPacketHandler.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\ServerPacketHandler.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
       <Filter>GameServer\Protocol</Filter>

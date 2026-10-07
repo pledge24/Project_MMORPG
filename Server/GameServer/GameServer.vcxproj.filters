@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Main">
+    <Filter Include="Core">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
@@ -46,29 +46,29 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main\pch.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\pch.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\GameServer.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\GameServer.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\GameSession.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\GameSession.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\GameSessionManager.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\GameSessionManager.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\SaveGate.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\SaveGate.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\ServerPacketHandler.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\ServerPacketHandler.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\ServerConfig.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\ServerConfig.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\Global.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\Global.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Protocol\Protocol.pb.cc">
       <Filter>Protocol</Filter>
@@ -147,26 +147,32 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Main\ServerConfig.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\ServerConfig.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\pch.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\pch.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\GameSession.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\Types.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\GameSessionManager.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\Macro.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\SaveGate.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\GameSession.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\ServerPacketHandler.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\GameSessionManager.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\Global.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\SaveGate.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ServerPacketHandler.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Global.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Protocol\Enum.pb.h">
       <Filter>Protocol</Filter>

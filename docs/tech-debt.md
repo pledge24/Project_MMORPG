@@ -81,7 +81,7 @@
 
 ## TD-004 DB 연결은 하나인데 DB 스레드 다섯이 동시에 빌린다
 > **심각도:** 높음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Main/GameServer.cpp` 82~106줄 · `Server/GameServer/DB/DAOCommon.h` (`DBConnectionGuard`)
+> 위치: `Server/GameServer/Core/GameServer.cpp` 82~106줄 · `Server/GameServer/DB/DAOCommon.h` (`DBConnectionGuard`)
 > 등록일: 2026년 10월 4일
 
 `main`은 연결 풀에 연결을 하나만 넣는다(`maxDBConnections = 1`). DB 스레드는 다섯이고, 스레드마다 자기
@@ -114,7 +114,7 @@
 
 ## TD-007 이동 요청이 보낸 사람이 아니라 패킷의 엔티티 번호로 플레이어를 찾는다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 389~400줄 (`C_HandleMove`) · `Server/GameServer/Main/ServerPacketHandler.cpp` 336~351줄 (`Handle_C_MOVE`)
+> 위치: `Server/GameServer/Game/Room/Room.cpp` 389~400줄 (`C_HandleMove`) · `Server/GameServer/Core/ServerPacketHandler.cpp` 336~351줄 (`Handle_C_MOVE`)
 > 등록일: 2026년 10월 5일
 
 `Handle_C_MOVE`는 보낸 세션의 플레이어를 룸 잡에 넘기지 않고 패킷만 넘긴다. `Room::C_HandleMove`는
@@ -263,7 +263,7 @@
 
 ## TD-017 게임 서버가 DB를 준비하기 전에 접속을 받는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/GameServer/Main/GameServer.cpp` 70~112줄 · `Server/GameServer/DB/ItemDAO.cpp` 35~80줄 (`GetMaxItemUID`)
+> 위치: `Server/GameServer/Core/GameServer.cpp` 70~112줄 · `Server/GameServer/DB/ItemDAO.cpp` 35~80줄 (`GetMaxItemUID`)
 > 등록일: 2026년 10월 5일
 
 `main`은 `service->Start()`로 리슨을 연 뒤에 DB에 연결하고, 워커 스레드를 띄운 뒤에 `GDBManager->Init`과
@@ -283,7 +283,7 @@
 
 ## TD-018 로그인 잡이 Redis 값의 JSON 파싱 예외를 받지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Main/ServerPacketHandler.cpp` 93~95줄 (`Handle_C_LOGIN`)
+> 위치: `Server/GameServer/Core/ServerPacketHandler.cpp` 93~95줄 (`Handle_C_LOGIN`)
 > 등록일: 2026년 10월 5일
 
 `Json::parse(*val)`와 `json["userId"]`가 `try` 밖에 있다. 이 코드는 DB 스레드의 잡 안에서 돌고, DB 스레드 루프에도
@@ -295,7 +295,7 @@
 
 ## TD-019 캐릭터 요청이 세션의 로그인과 입장 상태를 보지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Main/ServerPacketHandler.cpp` 129~238줄 · `Server/GameServer/Game/Entities/EntityUtils.cpp` 15~33줄
+> 위치: `Server/GameServer/Core/ServerPacketHandler.cpp` 129~238줄 · `Server/GameServer/Game/Entities/EntityUtils.cpp` 15~33줄
 > 등록일: 2026년 10월 5일
 
 - `Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`은 `_userId`가 0이어도, 즉 `C_LOGIN`을
@@ -313,7 +313,7 @@
 
 ## TD-020 패킷 핸들러의 반환값을 아무도 읽지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Main/GameSession.cpp` 76~84줄 (`OnRecvPacket`)
+> 위치: `Server/GameServer/Core/GameSession.cpp` 76~84줄 (`OnRecvPacket`)
 > 등록일: 2026년 10월 5일
 
 `OnRecvPacket`은 `ServerPacketHandler::HandlePacket`의 반환값을 버린다. 그래서 `ParseFromArray`가 실패하거나 핸들러가
@@ -498,7 +498,7 @@ IOCP 워커가 진다는 사실이 빠진다.
 
 ## TD-003 저장 대기가 덮지 못하는 틈 두 곳에서 저장 전의 진행을 불러올 수 있다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Main/GameSession.cpp` (`OnDisconnected`, `LeaveGame`) · `Server/GameServer/Main/ServerPacketHandler.cpp` (`Handle_C_ENTER_GAME`)
+> 위치: `Server/GameServer/Core/GameSession.cpp` (`OnDisconnected`, `LeaveGame`) · `Server/GameServer/Core/ServerPacketHandler.cpp` (`Handle_C_ENTER_GAME`)
 > 등록일: 2026년 10월 4일
 
 `SaveGate`는 접속 종료 저장이 끝나기 전의 입장 불러오기를 막는다. 다만 아래 두 경우에는 대기 없이 불러온다.

@@ -41,9 +41,9 @@ git config core.hooksPath .githooks
 
 **빌드 순서가 중요하다.** `ServerCore`는 정적 라이브러리이고 `GameServer`와 `DummyClient`가 이를 링크한다.
 
-`GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `Main/GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
+`GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `Core/GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
 
-접속 정보는 `Server/GameServer/Main/ServerConfig.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
+접속 정보는 `Server/GameServer/Core/ServerConfig.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
 
 | 환경 변수 | 기본값 |
 |---|---|

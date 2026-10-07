@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- GameServer의 L1 단위 테스트 타깃 (GoogleTest).
        GameServer는 exe라 링크할 수 없으므로 GameServer의 .cpp를 이 프로젝트가 직접 컴파일한다.
-       단 Main\GameServer.cpp(main)는 제외한다.
+       단 Core\GameServer.cpp(main)는 제외한다.
        설계 근거: docs/testing.md -->
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -87,7 +87,7 @@
     <!-- googletest 경로가 두 개인 이유:
          include\  → 테스트 코드의 #include <gtest/gtest.h>
          루트      → gtest-all.cc 안의 #include "src/gtest.cc" -->
-    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Main;$(SolutionDir)GameServer\Protocol;$(SolutionDir)GameServer\Utils;$(SolutionDir)GameServer\DB;$(SolutionDir)GameServer\Game\Entities;$(SolutionDir)GameServer\Game\Inventory;$(SolutionDir)GameServer\Game\Equipment;$(SolutionDir)GameServer\Game\Combat;$(SolutionDir)GameServer\Game\Data;$(SolutionDir)GameServer\Game\Room;$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Core;$(SolutionDir)GameServer\Protocol;$(SolutionDir)GameServer\Utils;$(SolutionDir)GameServer\DB;$(SolutionDir)GameServer\Game\Entities;$(SolutionDir)GameServer\Game\Inventory;$(SolutionDir)GameServer\Game\Equipment;$(SolutionDir)GameServer\Game\Combat;$(SolutionDir)GameServer\Game\Data;$(SolutionDir)GameServer\Game\Room;$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -197,17 +197,17 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup Label="GameServer 본체 — Main\GameServer.cpp(main)만 제외">
-    <ClCompile Include="..\GameServer\Main\pch.cpp">
+  <ItemGroup Label="GameServer 본체 — Core\GameServer.cpp(main)만 제외">
+    <ClCompile Include="..\GameServer\Core\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\GameSession.cpp" />
-    <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp" />
-    <ClCompile Include="..\GameServer\Main\Global.cpp" />
-    <ClCompile Include="..\GameServer\Main\SaveGate.cpp" />
-    <ClCompile Include="..\GameServer\Main\ServerConfig.cpp" />
-    <ClCompile Include="..\GameServer\Main\ServerPacketHandler.cpp" />
+    <ClCompile Include="..\GameServer\Core\GameSession.cpp" />
+    <ClCompile Include="..\GameServer\Core\GameSessionManager.cpp" />
+    <ClCompile Include="..\GameServer\Core\Global.cpp" />
+    <ClCompile Include="..\GameServer\Core\SaveGate.cpp" />
+    <ClCompile Include="..\GameServer\Core\ServerConfig.cpp" />
+    <ClCompile Include="..\GameServer\Core\ServerPacketHandler.cpp" />
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
