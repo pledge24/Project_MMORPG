@@ -15,25 +15,33 @@ enum class MonsterState : uint8
     StateCount
 };
 
+/** 몬스터의 스폰 매개변수. spawnPos는 위치와 함께 배회의 기준점이 된다. */
+struct MonsterSpawnParams : public Creature::SpawnParams
+{
+    int32 templateId = 0;
+    Protocol::PosInfo spawnPos;
+};
+
 /**
  * 게임 기획 데이터의 몬스터 표로 만드는 AI 크리처.
- * 소속 룸 큐 위에서 Room::SpawnMonster가 만들고, 모든 처리가 그 룸 큐 위에서 돈다.
+ * Room::SpawnEntity가 만들어 룸에 넣고, 모든 처리가 그 룸 큐 위에서 돈다.
  * 이동과 행동은 틱(ENTITY_TICK_INTERVAL)마다, 상태 전환 판정은 UPDATE_STATE_INTERVAL_MS마다 룸 타이머로 돈다.
  * 룸의 _entities가 붙잡고, 사망하면 룸이 빼낸다. 빠지면 두 타이머 모두 다음 차례에 멈춘다.
  */
 class Monster : public Creature
 {
 public:
+    using SpawnParams = MonsterSpawnParams;
+
 	Monster();
 	virtual ~Monster();
 
-public:
-    /** template_id와 posInfo를 먼저 채운다. 스폰 위치를 posInfo에서 정한다. 몬스터 표에 없는 template_id면 false. */
-    virtual bool Init() override;
-    /** _room을 정한 뒤에 부른다. 틱과 상태 전환 판정을 예약한다. */
-    virtual bool Start() override;
-
 protected:
+    friend class EntityFactory;
+    /** 몬스터 표에 없는 templateId면 false. */
+    bool Init(const SpawnParams& params);
+    /** 틱과 상태 전환 판정을 예약한다. */
+    virtual void Start() override;
     virtual void Tick(float deltaTime) override;
 
 public:

@@ -13,15 +13,15 @@ Entity::~Entity()
 	delete _entityInfo;
 }
 
-bool Entity::Init()
+bool Entity::Init(const SpawnParams&)
 {
-
     return true;
 }
 
-bool Entity::Start()
+void Entity::Start()
 {
-    // TODO: 검증
+    // 첫 틱의 deltaTime은 Start부터 잰다.
+    _prevTime = GetTickCount64();
 
     if (_isTickable)
     {
@@ -30,8 +30,6 @@ bool Entity::Start()
             ownerRoom->DoTimer(ENTITY_TICK_INTERVAL, &Room::TickEntity, shared_from_this());
         }
     }
-
-    return true;
 }
 
 void Entity::Tick(float deltaTime)

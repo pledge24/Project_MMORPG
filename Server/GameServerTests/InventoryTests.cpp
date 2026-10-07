@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
+#include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/Inventory.h"
 
 /*--------------------------------------------------------------
@@ -11,9 +12,9 @@
     아래 테스트는 세 슬롯 타입 전부에 대해 넣기→조회→지우기 왕복이 같은 저장소를
     가리키는지 확인한다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 Init()만
-    한다. DB·Redis·Room·세션이 필요 없다 (Player::Init은 Inventory/EquippedGear
-    생성이 전부).
+    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이
+    EntityFactory로만 만든다. DB·Redis·Room·세션이 필요 없다 (세션이 없으면 Player::Init은
+    Inventory/EquippedGear 생성이 전부).
 ---------------------------------------------------------------*/
 
 namespace
@@ -47,8 +48,8 @@ protected:
         SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE");
         SeedItem(MISC_TEMPLATE_ID, "MISCELLANEOUS");
 
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
     }
 
     void TearDown() override

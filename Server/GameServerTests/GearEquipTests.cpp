@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
+#include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/Inventory.h"
 #include "Game/Equipment/EquippedGear.h"
 
@@ -11,7 +12,7 @@
     그래서 두 값은 요청 슬롯이 아니라 처리 결과여야 한다. slot_id는 장비 부위, template_id는
     처리 뒤 그 부위의 아이템이다. 다른 플레이어가 보는 외형은 equipped_gear_summary로 간다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 Init()만 한다.
+    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
     시드한 무기에는 스탯 속성이 없으므로 스탯 계산을 타지 않는다.
 ---------------------------------------------------------------*/
 
@@ -32,8 +33,8 @@ protected:
         sword[string(JsonProperty::Item::PhysicalAttack)] = 10;
         Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = sword;
 
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, 5);
     }
 

@@ -189,6 +189,7 @@
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
+    <ClCompile Include="EntityFactoryTests.cpp" />
   </ItemGroup>
   <ItemGroup Label="googletest — PCH 금지(서버 pch가 using namespace std를 전역에 푼다)">
     <!-- gtest_main.cc는 쓰지 않는다. 콘솔 코드페이지를 UTF-8로 돌려야 한국어
@@ -218,7 +219,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp" />
-    <ClCompile Include="..\GameServer\Game\Entities\EntityUtils.cpp" />
+    <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />

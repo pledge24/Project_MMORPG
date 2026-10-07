@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Entities/Monster.h"
-#include "Game/Entities/EntityUtils.h"
+#include "Game/Entities/EntityFactory.h"
 
 /*--------------------------------------------------------------
     몬스터 초기화 테스트
@@ -10,7 +10,7 @@
     서버가 죽는다. 보상은 기획 데이터의 최솟값과 최댓값 사이에서 뽑는다.
 
     픽스처 결합도: Gamedata::s_monsterDataTable을 손으로 시드하고
-    EntityUtils::CreateMonster로 만든다. 룸에는 넣지 않는다.
+    EntityFactory로 만든다. 룸에는 넣지 않는다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -37,7 +37,9 @@ protected:
         data[string(GoldReward)][string(MaxGold)] = GOLD_REWARD;
         Gamedata::s_monsterDataTable[MONSTER_TEMPLATE_ID] = data;
 
-        monster = EntityUtils::CreateMonster(MONSTER_TEMPLATE_ID, Protocol::PosInfo());
+        MonsterSpawnParams spawnParams;
+        spawnParams.templateId = MONSTER_TEMPLATE_ID;
+        monster = EntityFactory::Create<Monster>(spawnParams);
         ASSERT_NE(monster, nullptr);
     }
 

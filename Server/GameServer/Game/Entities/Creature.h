@@ -8,14 +8,15 @@
 class Creature : public Entity
 {
 public:
+    using SpawnParams = EntitySpawnParams;
+
 	Creature();
 	virtual ~Creature();
 
-public:
-    virtual bool Init() override;
-    virtual bool Start() override;
-
 protected:
+    friend class EntityFactory;
+    bool Init(const SpawnParams& params);
+    virtual void Start() override;
     virtual void Tick(float deltaTime) override;
 
 public:

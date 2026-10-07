@@ -1,27 +1,38 @@
 #pragma once
 
+/** 모든 엔티티에 공통인 스폰 매개변수. 지금은 공통으로 넘길 값이 없다. */
+struct EntitySpawnParams
+{
+};
+
 /**
  * 룸에 놓이는 모든 오브젝트(플레이어, 몬스터)의 기반 클래스.
  * 룸에 들어간 뒤의 상태는 소속 룸의 JobQueue 위에서만 읽고 쓴다.
  * 룸에 있는 동안은 Room의 _entities가 붙잡고, RemoveEntity로 빠지면 다른 참조가 없는 한 사라진다.
- * 게임 코드는 EntityUtils의 팩토리로 만든다. id 발급과 Init 전 준비를 팩토리가 맡는다.
+ * 생명주기는 언리얼의 스폰 순서를 따른다(docs/adr/0010). EntityFactory::Create가 만들어 Init을 부르고,
+ * Room::AddEntity가 룸에 넣으면서 엔티티 수명에서 한 번만 Start를 부른다.
  */
 class Entity : public enable_shared_from_this<Entity>
 {
 public:
+    using SpawnParams = EntitySpawnParams;
+
 	Entity();
 	virtual ~Entity();
 
-public:
-    /** EntityUtils 팩토리로 채운 값에 대한 초기화 작업을 진행한다. */
-    virtual bool Init();
-    /**
-     * _isTickable이면 소속 룸 큐에 첫 틱을 예약한다.
-     * 이때 _room이 비어 있으면 틱이 시작되지 않으므로, 틱을 도는 엔티티는 _room을 정한 뒤에 부른다.
-     */
-    virtual bool Start();
-
 protected:
+    friend class EntityFactory;
+    /**
+     * EntityFactory가 id를 쓴 뒤에 부른다. 스폰 매개변수를 멤버에 연결한다.
+     * 파생 클래스는 자기 SpawnParams를 받는 Init을 따로 두고, 맨 앞에서 부모의 Init을 부른다.
+     */
+    bool Init(const SpawnParams& params);
+    /**
+     * 언리얼의 BeginPlay에 대응한다. Room::AddEntity가 _room을 정한 뒤, 엔티티 수명에서 한 번만 부른다.
+     * _isTickable이면 소속 룸 큐에 첫 틱을 예약한다. 재정의하면 부모의 Start를 불러야 틱이 시작된다.
+     */
+    virtual void Start();
+
     /**
      * 소속 룸 큐 위에서 Room::TickEntity가 부른다. deltaTime은 초 단위다.
      * 다음 틱을 여기서 예약하므로, 재정의하면 부모의 Tick을 불러야 틱이 이어진다.
@@ -63,5 +74,9 @@ protected:
     uint64 _prevTime = 0;
     /** 틱 간격(ms) */
     const uint64 ENTITY_TICK_INTERVAL = 50;
+
+private:
+    /** Start를 이미 불렀으면 true. Room::AddEntity만 읽고 쓴다. 룸 이동 때 Start가 다시 불리지 않게 막는다. */
+    bool _hasBegunPlay = false;
 };
 

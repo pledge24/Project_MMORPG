@@ -8,6 +8,7 @@ Monster::Monster()
 {
     _isPlayer = false;
 
+    _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_MONSTER);
     _monsterInfo = _entityInfo->mutable_monster_info();
     _attackTimer = new TickTimer();
 }
@@ -17,12 +18,16 @@ Monster::~Monster()
     delete _attackTimer;
 }
 
-bool Monster::Init()
+bool Monster::Init(const SpawnParams& params)
 {
-    if (Creature::Init() == false)
+    if (Creature::Init(params) == false)
         return false;
 
-    int32 templateId = _entityInfo->monster_info().template_id();
+    // 스폰 위치를 통째로 복사하면 팩토리가 써 둔 위치의 엔티티 id가 지워지므로 다시 쓴다.
+    SetPosInfo(params.spawnPos);
+    _posInfo->set_entity_id(GetEntityId());
+
+    int32 templateId = params.templateId;
     if (Gamedata::s_monsterDataTable.contains(templateId) == false)
     {
         cout << "Monster's template id is Invalid" << '\n';
@@ -49,14 +54,11 @@ bool Monster::Init()
     return true;
 }
 
-bool Monster::Start()
+void Monster::Start()
 {
-    if (Creature::Start() == false)
-        return false;
+    Creature::Start();
 
     UpdateState();
-
-    return true;
 }
 
 void Monster::Tick(float deltaTime)

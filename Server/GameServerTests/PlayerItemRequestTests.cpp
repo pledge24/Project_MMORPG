@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
+#include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/Inventory.h"
 #include "Game/Equipment/EquippedGear.h"
 
@@ -12,7 +13,7 @@
     있었다. 판정은 서버 슬롯에 든 아이템으로 하고, 요청의 아이템은 클라이언트 슬롯이 어긋났는지
     대조하는 데만 쓴다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 Init()만 한다.
+    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
     시드한 장비에는 물리 공격력만 있다.
 ---------------------------------------------------------------*/
 
@@ -49,8 +50,8 @@ protected:
         Gamedata::s_itemDataTable[GREATSWORD_TEMPLATE_ID] = MakeSword(80000, 8000, true, 500);
         Gamedata::s_itemDataTable[UNSELLABLE_SWORD_TEMPLATE_ID] = MakeSword(100, 10, false, 10);
 
-        player = make_shared<Player>();
-        ASSERT_TRUE(player->Init());
+        player = EntityFactory::Create<Player>(PlayerSpawnParams());
+        ASSERT_NE(player, nullptr);
         player->_possession->set_gold(START_GOLD);
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, BASE_PHYSICAL_ATTACK);
     }

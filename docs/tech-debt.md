@@ -295,13 +295,13 @@
 
 ## TD-019 캐릭터 요청이 세션의 로그인과 입장 상태를 보지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Network/ServerPacketHandler.cpp` 129~238줄 · `Server/GameServer/Game/Entities/EntityUtils.cpp` 15~33줄
+> 위치: `Server/GameServer/Network/ServerPacketHandler.cpp` 126~238줄 · `Server/GameServer/Game/Entities/Player.cpp` 43~63줄 (`Init`)
 > 등록일: 2026년 10월 5일
 
 - `Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`은 `_userId`가 0이어도, 즉 `C_LOGIN`을
   거치지 않은 세션이어도 진행한다. 삭제와 입장은 SQL의 `user_id` 대조로 실패하지만, 생성은 `user_id` 0으로 INSERT를 시도한다.
   DB 제약이 막는지는 확인하지 않았다
-- `Handle_C_ENTER_GAME`은 세션에 이미 플레이어가 있는지 보지 않는다. `EntityUtils::CreatePlayer`가 `session->_player`를
+- `Handle_C_ENTER_GAME`은 세션에 이미 플레이어가 있는지 보지 않는다. `Player::Init`이 `session->_player`를
   덮어쓰므로, 룸에 들어간 뒤 `C_ENTER_GAME`을 다시 보내면 이전 `Player`가 룸에 남는다. `OnDisconnected`는 새 플레이어만
   보므로 이전 플레이어는 퇴장하지 않는다
 
