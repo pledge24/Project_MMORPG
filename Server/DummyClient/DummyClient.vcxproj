@@ -77,22 +77,22 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Main;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>

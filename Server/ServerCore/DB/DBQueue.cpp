@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "DBQueue.h"
 
+/*------------------
+       DBQueue
+-------------------*/
+
 DBQueue::DBQueue(int32 dbQueueId) : _dbQueueId(dbQueueId)
 {
 }

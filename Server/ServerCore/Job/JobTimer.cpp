@@ -11,21 +11,23 @@ void JobTimer::Reserve(uint64 tickAfter, weak_ptr<JobQueue> owner, JobRef job)
 	const uint64 executeTick = ::GetTickCount64() + tickAfter;
 	JobData* jobData = new JobData(owner, job);
 
-	USE_LOCK;
+    // pq 보호
+	USE_LOCK
 
 	_items.push(TimerItem{ executeTick, jobData });
 }
 
 void JobTimer::Distribute(uint64 now)
 {
-	// 한 번에 1 쓰레드만 통과
+	// 한 번에 한 쓰레드만 통과
 	if (_distributing.exchange(true) == true)
 		return;
 
 	vector<TimerItem> items;
 
 	{
-		USE_LOCK;
+	    // pq 보호
+		USE_LOCK
 
 		while (_items.empty() == false)
 		{
@@ -52,7 +54,8 @@ void JobTimer::Distribute(uint64 now)
 
 void JobTimer::Clear()
 {
-	USE_LOCK;
+    // pq 보호
+	USE_LOCK
 
 	while (_items.empty() == false)
 	{

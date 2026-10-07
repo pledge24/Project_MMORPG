@@ -1,10 +1,6 @@
 #include "pch.h"
 #include "CoreTLS.h"
 
-/*----------------------
-   Thread Local Storage
------------------------*/
-
 // TLS 변수 추가 시, 여기에 하나씩 기입
 thread_local uint32				LThreadId = 0;
 thread_local uint64				LEndTickCount = 0;

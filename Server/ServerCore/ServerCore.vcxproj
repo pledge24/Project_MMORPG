@@ -72,22 +72,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Core;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Core;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Core;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Libraries\Libs\ServerCore\$(Configuration)\</OutDir>
-    <IncludePath>$(ProjectDir)Main;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Core;$(ProjectDir)Network;$(ProjectDir)Thread;$(ProjectDir)Job;$(ProjectDir)Utils;$(ProjectDir)DB;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -167,12 +167,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Main\CoreGlobal.h" />
-    <ClInclude Include="Main\CoreMacro.h" />
-    <ClInclude Include="Main\CorePch.h" />
-    <ClInclude Include="Main\CoreTLS.h" />
-    <ClInclude Include="Main\pch.h" />
-    <ClInclude Include="Main\Types.h" />
+    <ClInclude Include="Core\CoreGlobal.h" />
+    <ClInclude Include="Core\CoreMacro.h" />
+    <ClInclude Include="Core\CorePch.h" />
+    <ClInclude Include="Core\CoreTLS.h" />
+    <ClInclude Include="Core\pch.h" />
+    <ClInclude Include="Core\Types.h" />
     <ClInclude Include="DB\DBBind.h" />
     <ClInclude Include="DB\DBConnection.h" />
     <ClInclude Include="DB\DBConnectionPool.h" />
@@ -196,10 +196,9 @@
     <ClInclude Include="Utils\LockQueue.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main\CoreGlobal.cpp" />
-    <ClCompile Include="Main\CorePch.cpp" />
-    <ClCompile Include="Main\CoreTLS.cpp" />
-    <ClCompile Include="Main\pch.cpp">
+    <ClCompile Include="Core\CoreGlobal.cpp" />
+    <ClCompile Include="Core\CoreTLS.cpp" />
+    <ClCompile Include="Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

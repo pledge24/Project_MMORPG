@@ -52,6 +52,7 @@ bool Session::Connect()
 
 void Session::Disconnect(const char* cause)
 {
+    // 설계 특성상 여러 스레드가 동시에 진입할 수 있다. atomic으로 한 번만 실행하도록 막아준다.
 	if (_connected.exchange(false) == false)
 		return;
 
@@ -66,7 +67,7 @@ void Session::Disconnect(const char* cause)
 void Session::DisconnectAfterSend(const char* cause)
 {
 	{
-		USE_LOCK;
+		USE_LOCK
 
 		if (_disconnectAfterSendCause != nullptr)
 			return;
@@ -92,14 +93,14 @@ void Session::Send(SendBufferRef sendBuffer)
 
 	// 현재 RegisterSend가 걸리지 않은 상태라면, 걸어준다.
 	{
-		USE_LOCK;
+		USE_LOCK
 
-		// 끊기로 한 세션이다. 받으면 큐가 비지 않아 끊는 시점이 늦어진다.
+		// 연결을 끊기로 한 세션이므로 송신하지 않는다.
 		if (_disconnectAfterSendCause != nullptr)
 			return;
 
 		_sendQueue.push(sendBuffer);
-
+	    
 		if (_sendRegistered.exchange(true) == false)
 			registerSend = true;
 
@@ -182,7 +183,6 @@ void Session::RegisterRecv()
 	}
 }
 
-// 직렬화(serialized)된 패킷을 받아서 비동기 송신.
 void Session::RegisterSend()
 {
 	if (IsConnected() == false)
@@ -254,7 +254,7 @@ void Session::ProcessDisconnect()
 {
 	_disconnectEvent.owner = nullptr; // RELEASE_REF
 
-	OnDisconnected(); // 컨텐츠 코드에서 재정의
+	OnDisconnected();
 	GetService()->RemoveSession(GetSessionRef());
 }
 
@@ -262,6 +262,7 @@ void Session::ProcessRecv(int32 numOfBytes)
 {
 	_recvEvent.owner = nullptr; // RELEASE_REF
 
+    // 수신한 바이트가 0이라는건 오류가 발생했음을 의미한다. 연결을 끊어준다.
 	if (numOfBytes == 0)
 	{
 		Disconnect("Recv 0");

@@ -4,6 +4,10 @@
 	NetAddress
 ---------------*/
 
+/**
+ * 소켓 주소(SOCKADDR_IN) Wrapper 클래스(사실상 구조체).
+ * 소켓 주소를 넘기면 복사해서 들고있는다.
+ */
 class NetAddress
 {
 public:

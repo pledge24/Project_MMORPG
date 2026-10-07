@@ -79,7 +79,6 @@ bool DBConnection::Fetch()
 	}
 }
 
-/* 수정 쿼리(UPDATE, INSERT, DELETE)에 영향을 받은 행의 수 반환(SELECT는 -1 반환)*/
 int32 DBConnection::GetRowCount()
 {
 	SQLLEN count = 0;

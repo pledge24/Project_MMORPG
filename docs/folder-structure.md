@@ -483,7 +483,7 @@ Server/
 │   ├── Thread/
 │   ├── DB/                 커넥션 풀, 바인딩, DB 큐, Redis
 │   ├── Utils/
-│   └── Main/
+│   └── Core/               타입, 매크로, TLS, 전역 객체, pch
 ├── GameServer/             게임 규칙
 │   ├── Main/               진입점, 세션, 패킷 핸들러
 │   ├── Game/               게임 도메인

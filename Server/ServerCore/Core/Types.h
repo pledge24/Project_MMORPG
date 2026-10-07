@@ -5,10 +5,11 @@
 #include "sw/redis++/redis.h"
 
 /*-------------------
-	   Type 관련
+         Type
 ---------------------*/
+/** 타입 컨벤션 통일을 위한 파일. 타입 별칭을 정의한다. */
 
-/* 언리얼이랑 컨벤션 통일 */ 
+//~ Primitive Type(언리얼과 동일한 컨벤션 사용)
 using BYTE = unsigned char;
 using int8 = __int8;
 using int16 = __int16;
@@ -19,9 +20,7 @@ using uint16 = unsigned __int16;
 using uint32 = unsigned __int32;
 using uint64 = unsigned __int64;
 
-/*-------------------
-	   Lock 관련
----------------------*/
+//~ Lock
 template<typename T>
 using Atomic = std::atomic<T>;
 using Mutex = std::mutex;
@@ -29,11 +28,8 @@ using CondVar = std::condition_variable;
 using UniqueLock = std::unique_lock<std::mutex>;
 using LockGuard = std::lock_guard<std::mutex>;
 
-/*-------------------
-	   SharedPtr
----------------------*/
+//~ SharedPtr
 #define USING_SHARED_PTR(name)	using name##Ref = std::shared_ptr<class name>;
-
 USING_SHARED_PTR(ServerService);
 USING_SHARED_PTR(ClientService);
 USING_SHARED_PTR(IocpCore);

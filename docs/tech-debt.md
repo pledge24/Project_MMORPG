@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 33개 (높음 1 · 중간 3 · 낮음 29) · 다음 번호 TD-034
+항목 31개 (높음 1 · 중간 3 · 낮음 27) · 다음 번호 TD-034
 
 ## 작성 방법
 
@@ -160,31 +160,13 @@
 **버그 발생 가능성 증가** — 지금은 설정값과 기본값이 같아서 동작한다. Redis 주소나 포트를 바꾸면 인증 서버만
 옛 주소로 붙고, 게임 서버는 토큰을 찾지 못해 모든 로그인이 `INVALID_TOKEN`으로 끝난다.
 
-## TD-009 게임 서버의 포트 설정이 무시되고 늘 7777을 연다
+## TD-010 리슨 소켓의 네이글 비활성화가 주석과 반대로 동작한다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/ServerCore/Network/NetAddress.cpp` 17줄
+> 위치: `Server/ServerCore/Network/Listener.cpp` 52~54줄 (`Listen`)
 > 등록일: 2026년 10월 5일
 
-`NetAddress(string ip, uint16 port)` 생성자가 `sin_port = ::htons(7777)`로 포트를 고정하고 인자 `port`를 쓰지 않는다.
-`ServerConfig`는 `P1_GAME_SERVER_PORT` 환경 변수로 포트를 바꿀 수 있게 읽어서 `NetAddress`에 넘긴다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 포트를 바꿔 서버를 띄워도 7777을 연다. 클라이언트의 `GameServerPort`만 바꾸면 접속이 실패하고,
-같은 머신에 서버를 둘 띄우면 두 번째가 바인드에 실패한다.
-
-## TD-010 리슨 소켓의 옵션 설정이 주석과 다르게 동작한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/ServerCore/Network/Listener.cpp` 96~103줄 · `Server/ServerCore/Network/SocketUtil.cpp` 78~81줄
-> 등록일: 2026년 10월 5일
-
-세 군데가 어긋난다. 코드를 읽고 판단했고 패킷 지연은 측정하지 않았다.
-
-| 위치 | 주석이나 이름 | 실제 동작 |
-|---|---|---|
-| `SocketUtil::SetTcpNoDelay` | `TCP_NODELAY`를 설정한다 | 레벨을 `SOL_SOCKET`으로 넘긴다. `TCP_NODELAY`의 레벨은 `IPPROTO_TCP`다 |
-| `Listener::Listen`의 `SetTcpNoDelay` | 「네이글 알고리즘 비활성화」 | 값으로 `false`를 넘긴다. 대상도 리슨 소켓뿐이고 세션 소켓에는 걸지 않는다 |
-| `Listener::Listen`의 `SetLinger(0, 0)` | 「잉여 송신 데이터 무시」 | `l_onoff = 0`이라 linger를 끈다. 기본 동작과 같다 |
+`Listener::Listen`은 주석이 「네이글 알고리즘 비활성화」인데 `SetTcpNoDelay(_listenSocket, false)`로 `false`를 넘긴다.
+대상도 리슨 소켓뿐이고 세션 소켓에는 걸지 않는다. 코드를 읽고 판단했고 패킷 지연은 측정하지 않았다.
 
 ### 영향
 
@@ -353,18 +335,6 @@
 ### 영향
 
 **버그 발생 가능성 증가** — 클라이언트의 중복 검사를 지우거나 스폰에 부수 효과를 붙이면 내 플레이어가 두 번 처리된다.
-
-## TD-022 `RETURN_FALSE_UNLESS` 매크로가 이름과 반대로 동작한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/ServerCore/Main/CoreMacro.h` 9줄
-> 등록일: 2026년 10월 5일
-
-`#define RETURN_FALSE_UNLESS(expr) if(expr) return false;`라서 식이 참일 때 `false`를 돌려준다. 이름대로라면 거짓일 때
-돌려줘야 한다. 지금 쓰는 곳은 없다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 이름을 믿고 쓰면 검사가 뒤집힌다.
 
 ## TD-023 생성된 패킷 직렬화가 크기를 `uint16`으로 자른다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · protocol
