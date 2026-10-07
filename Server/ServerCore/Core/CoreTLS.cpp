@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "CoreTLS.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Core/CoreTLS.h"
 
 // TLS 변수 추가 시, 여기에 하나씩 기입
 thread_local uint32				LThreadId = 0;

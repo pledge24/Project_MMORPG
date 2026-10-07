@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Main">
+    <Filter Include="Core">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{3cd4fb45-1e01-41dd-b826-c9fad7d76551}</UniqueIdentifier>
     </Filter>
     <Filter Include="Protocol">
       <UniqueIdentifier>{18e8ca97-d284-45fb-951a-71dc7236cb10}</UniqueIdentifier>
@@ -46,29 +49,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main\pch.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\pch.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\GameServer.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="Network\GameSession.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Main\GameSession.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Network\GameSessionManager.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Main\GameSessionManager.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Network\SaveGate.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Main\SaveGate.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Network\ServerPacketHandler.cpp">
+      <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Main\ServerPacketHandler.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\Config.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Main\ServerConfig.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
-    <ClCompile Include="Main\Global.cpp">
-      <Filter>Main</Filter>
+    <ClCompile Include="Core\Global.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Protocol\Protocol.pb.cc">
       <Filter>Protocol</Filter>
@@ -147,26 +148,32 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Main\ServerConfig.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\Config.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\pch.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\pch.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\GameSession.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\Types.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\GameSessionManager.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Core\Macro.h">
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Main\SaveGate.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Network\GameSession.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Main\ServerPacketHandler.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Network\GameSessionManager.h">
+      <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Main\Global.h">
-      <Filter>Main</Filter>
+    <ClInclude Include="Network\SaveGate.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ServerPacketHandler.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Global.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Protocol\Enum.pb.h">
       <Filter>Protocol</Filter>

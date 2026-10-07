@@ -78,22 +78,22 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Entities;$(ProjectDir)Game\Inventory;$(ProjectDir)Game\Equipment;$(ProjectDir)Game\Combat;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Entities;$(ProjectDir)Game\Inventory;$(ProjectDir)Game\Equipment;$(ProjectDir)Game\Combat;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Entities;$(ProjectDir)Game\Inventory;$(ProjectDir)Game\Equipment;$(ProjectDir)Game\Combat;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir);$(ProjectDir)Main;$(ProjectDir)Protocol;$(ProjectDir)Utils;$(ProjectDir)DB;$(ProjectDir)Game\Entities;$(ProjectDir)Game\Inventory;$(ProjectDir)Game\Equipment;$(ProjectDir)Game\Combat;$(ProjectDir)Game\Data;$(ProjectDir)Game\Room;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)ServerCore\Core;$(SolutionDir)ServerCore\Network;$(SolutionDir)ServerCore\Thread;$(SolutionDir)ServerCore\Job;$(SolutionDir)ServerCore\Utils;$(SolutionDir)ServerCore\DB;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)Protocol;$(SolutionDir);$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -104,7 +104,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Core/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
@@ -123,7 +123,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Core/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
@@ -142,7 +142,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Core/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
@@ -161,7 +161,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>Core/pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalOptions>/utf-8 /D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>4267;</DisableSpecificWarnings>
@@ -174,13 +174,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Main\ServerConfig.h" />
-    <ClInclude Include="Main\pch.h" />
-    <ClInclude Include="Main\GameSession.h" />
-    <ClInclude Include="Main\GameSessionManager.h" />
-    <ClInclude Include="Main\Global.h" />
-    <ClInclude Include="Main\SaveGate.h" />
-    <ClInclude Include="Main\ServerPacketHandler.h" />
+    <ClInclude Include="Core\Config.h" />
+    <ClInclude Include="Core\pch.h" />
+    <ClInclude Include="Core\Types.h" />
+    <ClInclude Include="Core\Macro.h" />
+    <ClInclude Include="Core\Global.h" />
+    <ClInclude Include="Network\GameSession.h" />
+    <ClInclude Include="Network\GameSessionManager.h" />
+    <ClInclude Include="Network\SaveGate.h" />
+    <ClInclude Include="Network\ServerPacketHandler.h" />
     <ClInclude Include="Protocol\Enum.pb.h" />
     <ClInclude Include="Protocol\Protocol.pb.h" />
     <ClInclude Include="Protocol\Struct.pb.h" />
@@ -212,23 +214,23 @@
     <ClInclude Include="DB\DAOCommon.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main\pch.cpp">
+    <ClCompile Include="Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Core/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Core/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Core/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Core/pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Main\GameServer.cpp" />
-    <ClCompile Include="Main\GameSession.cpp" />
-    <ClCompile Include="Main\GameSessionManager.cpp" />
-    <ClCompile Include="Main\Global.cpp" />
-    <ClCompile Include="Main\SaveGate.cpp" />
-    <ClCompile Include="Main\ServerConfig.cpp" />
-    <ClCompile Include="Main\ServerPacketHandler.cpp" />
+    <ClCompile Include="Core\Global.cpp" />
+    <ClCompile Include="Core\Config.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="Network\GameSession.cpp" />
+    <ClCompile Include="Network\GameSessionManager.cpp" />
+    <ClCompile Include="Network\SaveGate.cpp" />
+    <ClCompile Include="Network\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -305,7 +307,7 @@
   <Target Name="GenerateProtoPackets"
           BeforeTargets="ClCompile"
           Inputs="$(SolutionDir)..\Protocol\Schema\Enum.proto;$(SolutionDir)..\Protocol\Schema\Struct.proto;$(SolutionDir)..\Protocol\Schema\Protocol.proto"
-          Outputs="$(MSBuildProjectDirectory)\Protocol\Enum.pb.h;$(MSBuildProjectDirectory)\Protocol\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol\Protocol.pb.h;$(MSBuildProjectDirectory)\Main\ServerPacketHandler.h">
+          Outputs="$(MSBuildProjectDirectory)\Protocol\Enum.pb.h;$(MSBuildProjectDirectory)\Protocol\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol\Protocol.pb.h;$(MSBuildProjectDirectory)\Network\ServerPacketHandler.h">
     <Message Importance="high" Text="[Proto] .proto changed - running GenPackets.bat" />
     <Exec Command="CALL &quot;$(SolutionDir)..\Protocol\GenPackets.bat&quot; &lt; NUL"
           WorkingDirectory="$(SolutionDir)..\Protocol" />

@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "NetAddress.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/NetAddress.h"
 
 /*--------------
 	NetAddress

@@ -13,10 +13,10 @@
 using namespace std;
 
 //~ Core
-#include "Types.h"
-#include "CoreMacro.h"
-#include "CoreTLS.h"
-#include "CoreGlobal.h"
+#include "ServerCore/Core/Types.h"
+#include "ServerCore/Core/CoreMacro.h"
+#include "ServerCore/Core/CoreTLS.h"
+#include "ServerCore/Core/CoreGlobal.h"
 
 //~ Debug
 #include <iostream>
@@ -57,10 +57,10 @@ using namespace std;
 using namespace sw::redis;
 
 //~ Network
-#include "SendBuffer.h"
-#include "Session.h"
+#include "ServerCore/Network/SendBuffer.h"
+#include "ServerCore/Network/Session.h"
 
 //~ Job
-#include "JobQueue.h"
+#include "ServerCore/Job/JobQueue.h"
 
 

@@ -1,10 +1,10 @@
-#include "pch.h"
-#include "ItemDAO.h"
-#include "DAOCommon.h"
-#include "ItemSaveRows.h"
-#include "Player.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
+#include "Core/pch.h"
+#include "DB/ItemDAO.h"
+#include "DB/DAOCommon.h"
+#include "DB/ItemSaveRows.h"
+#include "Game/Entities/Player.h"
+#include "Game/Inventory/Inventory.h"
+#include "Game/Equipment/EquippedGear.h"
 
 namespace
 {
@@ -22,10 +22,6 @@ namespace
         }
     }
 }
-
-/*-------------------------
-    ItemDAO
---------------------------*/
 
 bool ItemDAO::GetMaxItemUID()
 {
@@ -49,7 +45,7 @@ bool ItemDAO::GetMaxItemUID()
             dbBind.BindCol(0, _maxItemUID);
         }
 
-        /* Cols */
+        //~ Cols
         int32 _maxItemUID;
     };
 
@@ -160,10 +156,10 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
             dbBind.BindCol(7, _additionalMagicalAttack);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId;
 
-        /* Cols */
+        //~ Cols
         int64 _itemUid;
         int32 _templateId;
         bool _isEquipped;
@@ -245,10 +241,10 @@ bool ItemDAO::LoadStackableItems(SessionRef session, int64 characterId, Protocol
             dbBind.BindCol(2, _count);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId;
 
-        /* Cols */
+        //~ Cols
         int32 _slotId;
         int32 _templateId;
         int32 _count;
@@ -348,7 +344,7 @@ bool ItemDAO::SaveGearItems(const PlayerSaveData& data)
             dbBind.BindParamSet(8, _additionalMagicalAttack, rows);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId[MAX_ROWS];
         int32 _slotId[MAX_ROWS];
         int64 _itemUid[MAX_ROWS];
@@ -469,7 +465,7 @@ bool ItemDAO::SaveStackableItems(const PlayerSaveData& data, Protocol::ItemType 
             dbBind.BindParamSet(3, _count, rows);
         }
 
-        /* Params */
+        //~ Params
         int64 _characterId[MAX_ROWS];
         int32 _slotId[MAX_ROWS];
         int32 _templateId[MAX_ROWS];

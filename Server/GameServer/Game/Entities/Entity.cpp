@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "Entity.h"
-#include "Room.h"
+#include "Core/pch.h"
+#include "Game/Entities/Entity.h"
+#include "Game/Room/Room.h"
 
 Entity::Entity()
 {
@@ -40,7 +40,5 @@ void Entity::Tick(float deltaTime)
     {
         ownerRoom->DoTimer(ENTITY_TICK_INTERVAL, &Room::TickEntity, shared_from_this());
     }
-
-
 }
 

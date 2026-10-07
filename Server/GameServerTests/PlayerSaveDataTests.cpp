@@ -1,7 +1,7 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Player.h"
-#include "Inventory.h"
+#include "Game/Entities/Player.h"
+#include "Game/Inventory/Inventory.h"
 
 /*--------------------------------------------------------------
     저장 스냅숏 테스트

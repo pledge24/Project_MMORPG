@@ -180,12 +180,12 @@ gtest는 `main()`을 재정의하므로 vcpkg가 자동 링크해 주지 못하�
 
 ### 테스트 프로젝트가 GameServer의 `.cpp`를 직접 포함한다
 
-`GameServer`는 exe라 링크할 수 없다. `GameServerTests.vcxproj`(콘솔 exe)가 **`Main/GameServer.cpp`를 제외한 GameServer `.cpp` 전부**를 `ClCompile`로 포함한다. UE Low-Level Tests와 같은 패턴이다.
+`GameServer`는 exe라 링크할 수 없다. `GameServerTests.vcxproj`(콘솔 exe)가 **`GameServer.cpp`를 제외한 GameServer `.cpp` 전부**를 `ClCompile`로 포함한다. UE Low-Level Tests와 같은 패턴이다.
 
 "필요한 것만"이 아니라 "main 빼고 전부"인 이유는 둘이다.
 
 - `Inventory.cpp` → `Player.cpp` → `Room.cpp` → `GameSession.cpp` → `ProgressStorage.cpp`로 전이 의존이 이어져 결국 대부분을 넣게 된다. 링크 에러가 날 때마다 파일을 추가하는 루프는 비결정적이라 재현되지 않는다.
-- `Main/GameServer.cpp`에는 `main`이 있다. 테스트 타깃은 자기 `main`(`TestMain.cpp`)을 쓰므로 이 파일만 뺀다.
+- `GameServer.cpp`에는 `main`이 있다. 테스트 타깃은 자기 `main`(`TestMain.cpp`)을 쓰므로 이 파일만 뺀다.
 
 ---
 

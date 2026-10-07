@@ -1,5 +1,5 @@
 #pragma once
-#include "DBConnection.h"
+#include "ServerCore/DB/DBConnection.h"
 
 /*-------------------
 	DBConnectionPool

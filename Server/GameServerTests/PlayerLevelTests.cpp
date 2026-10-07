@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Player.h"
+#include "Game/Entities/Player.h"
 
 /*--------------------------------------------------------------
     레벨 상한 테스트

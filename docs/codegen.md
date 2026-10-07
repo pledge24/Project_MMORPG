@@ -21,7 +21,7 @@
 | 목적지 | 산출물 |
 |---|---|
 | `Server/GameServer/Protocol/` | `*.pb.{h,cc}` |
-| `Server/GameServer/Main/` | `ServerPacketHandler.h` |
+| `Server/GameServer/Network/` | `ServerPacketHandler.h` |
 | `Server/DummyClient/Protocol/` | `*.pb.{h,cc}` |
 | `Server/DummyClient/Main/` | `ClientPacketHandler.h` |
 | `P1/Source/P1/Network/` | `*.pb.{h,cc}` · `.proto` 3개 · `ClientPacketHandler.h` |
@@ -30,7 +30,7 @@
 
 생성되는 건 패킷 핸들러 **헤더뿐**이다. 아래 `.cpp`는 손으로 작성한 파일이고, 새 패킷의 실제 동작은 여기에 구현한다.
 
-- `Server/GameServer/Main/ServerPacketHandler.cpp`
+- `Server/GameServer/Network/ServerPacketHandler.cpp`
 - `P1/Source/P1/Network/ClientPacketHandler.cpp`
 - `P1/Source/P1/Online/P1LoginPacketHandlers.cpp`
 - `Server/DummyClient/Main/ClientPacketHandler.cpp`

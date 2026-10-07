@@ -1,10 +1,6 @@
-#include "pch.h"
-#include "RoomManager.h"
-#include "Room.h"
-
-/*----------------
-    RoomManager
------------------*/
+#include "Core/pch.h"
+#include "Game/Room/RoomManager.h"
+#include "Game/Room/Room.h"
 
 RoomManager::RoomManager()
 {

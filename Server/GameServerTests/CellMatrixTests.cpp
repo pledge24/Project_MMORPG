@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "CellMatrix.h"
+#include "Game/Room/CellMatrix.h"
 
 /*--------------------------------------------------------------
     셀 행렬 테스트

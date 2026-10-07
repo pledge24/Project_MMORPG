@@ -1,18 +1,16 @@
 #pragma once
 
-#include "nlohmann/json.hpp"
-
-/*-------------------
-       Gamedata
----------------------*/
-using Json = nlohmann::json;
 using DataTable = unordered_map<int32, Json>;
 
+/**
+ * Json 형태로 되어있는 게임 기획 데이터를 가져와 저장하는 클래스.
+ * 
+ */
 class Gamedata
 {
 public:
+    /** 모든 게임 기획 데이터를 가져온다. */
     static bool LoadAllGamedata();
-
 #ifdef _DEBUG
     static void PrintAllGamedata();
 #endif

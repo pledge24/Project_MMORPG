@@ -389,6 +389,7 @@ void UP1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 언리얼 밖에서 도는 C++이다. UHT가 없으므로 클라이언트의 이름 규칙을 그대로 옮겨 쓰지 않는다.
 
 **적용 대상은 `Server/GameServer/`와 `Server/DummyClient/`다. `Server/ServerCore/`는 제외한다.**
+3.7의 include 규칙만은 ServerCore에도 적용한다.
 — ServerCore는 완성된 네트워크 코어다. 게임 로직이 바뀌어도 이 계층은 바뀌지 않으므로, 이름을
 고쳐서 얻는 것보다 이미 돌아가는 코드를 건드려서 잃는 것이 크다.
 
@@ -484,6 +485,28 @@ static constexpr int32 CELL_SIZE = 200;
 ### 3.6 룸 소유 상태를 인라인으로 고치지 않는다
 
 룸 소유 상태 규칙은 `docs/ARCHITECTURE.md` 「Server/GameServer」에 있다.
+
+### 3.7 `#include`는 경로를 한정한다
+
+**이 절은 `Server/ServerCore/`에도 적용한다.**
+
+```cpp
+O  #include "Game/Room/Room.h"
+O  #include "ServerCore/Network/Session.h"
+X  #include "Room.h"
+X  #include "Network/Session.h"        // ServerCore 헤더
+```
+
+- 자기 프로젝트 헤더: 프로젝트 루트 기준
+- ServerCore 헤더: `ServerCore/`로 시작하는 솔루션 폴더 기준. ServerCore 안에서도 같다
+- pch: GameServer·GameServerTests는 `"Core/pch.h"`, ServerCore는 `"ServerCore/Core/pch.h"`, DummyClient는 `"Main/pch.h"`
+
+— GameServer와 ServerCore에 `Core/Types.h`가 하나씩 있다. ServerCore 헤더에 접두사가 없으면 GameServer에서
+컴파일할 때 엉뚱한 파일이 잡힌다. 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있다.
+
+**새 폴더를 만들어도 `.vcxproj`의 `IncludePath`에 등록하지 않는다.**
+
+예외: 생성물끼리 부르는 `#include`는 생성기가 만든다. 손으로 고치지 않는다.
 
 ---
 

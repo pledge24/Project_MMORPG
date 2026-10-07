@@ -16,7 +16,7 @@ XCOPY /Y Struct.pb.h				"../Server/GameServer/Protocol"
 XCOPY /Y Struct.pb.cc				"../Server/GameServer/Protocol"
 XCOPY /Y Protocol.pb.h				"../Server/GameServer/Protocol"
 XCOPY /Y Protocol.pb.cc				"../Server/GameServer/Protocol"
-XCOPY /Y ServerPacketHandler.h		"../Server/GameServer/Main"
+XCOPY /Y ServerPacketHandler.h		"../Server/GameServer/Network"
 
 XCOPY /Y Enum.pb.h					"../Server/DummyClient/Protocol"
 XCOPY /Y Enum.pb.cc					"../Server/DummyClient/Protocol"

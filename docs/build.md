@@ -41,9 +41,9 @@ git config core.hooksPath .githooks
 
 **빌드 순서가 중요하다.** `ServerCore`는 정적 라이브러리이고 `GameServer`와 `DummyClient`가 이를 링크한다.
 
-`GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `Main/GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
+`GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
 
-접속 정보는 `Server/GameServer/Main/ServerConfig.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
+접속 정보는 `Server/GameServer/Core/Config.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
 
 | 환경 변수 | 기본값 |
 |---|---|
@@ -103,6 +103,10 @@ npm start                # = node src/app.js
 
 생성물 폴더만 예외로 남겼다. protobuf 생성 코드가 서로를 `#include "Enum.pb.h"` 형태로 부르는데 생성물은 손으로 고치지 않으므로, 이 폴더를 빼면 생성기를 다시 돌릴 때마다 빌드가 깨진다. 이 결정의 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있고, 얻는 것과 얻지 못하는 것은 `docs/ARCHITECTURE.md`에 불변식으로 적혀 있다.
 
+**서버 include도 경로를 한정한다.** `Server/`의 네 `.vcxproj`는 `IncludePath`에 프로젝트 루트와 솔루션 폴더(`$(SolutionDir)`), 생성물 폴더 `Protocol`, 서드파티 경로만 둔다. GameServerTests는 프로젝트 루트 대신 `$(SolutionDir)GameServer`와 `$(SolutionDir)GameServer\Protocol`을 쓴다. ServerCore 헤더는 `#include "ServerCore/Network/Session.h"`처럼 솔루션 폴더 기준으로 부른다. **새 폴더를 만들어도 `IncludePath`에 등록하지 않는다.**
+
+`PrecompiledHeaderFile`도 경로다(`Core/pch.h`, `ServerCore/Core/pch.h`, `Main/pch.h`). `/Yu`는 `.cpp`의 include 문자열과 이 값이 글자 그대로 같아야 하므로, 한쪽만 바꾸면 C1010으로 컴파일이 멈춘다.
+
 ---
 
 ## 데이터베이스
@@ -116,7 +120,7 @@ npm start                # = node src/app.js
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
 
-**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `ServerConfig`의 기본값과 환경 변수, UserDB는 `.env`.
+**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, UserDB는 `.env`.
 
 Rider의 DB 연결은 두 벌이다.
 
@@ -176,7 +180,7 @@ pwsh P1/Scripts/Invoke-UeBuild.ps1 -CloseEditor
 
 - MSBuild 경로는 `vswhere.exe -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe"`로 찾는다. 머신마다 다르다.
 - **`/v:minimal`을 빼지 않는다.** 기본 상세도는 출력이 훨씬 커진다.
-- 이 빌드는 추적 중인 `Server/Libraries/Libs/`의 `.lib`와 `.pdb`를 갱신한다. 커밋 전에 의도한 변경인지 확인한다.
+- 이 빌드는 `Server/Libraries/Libs/ServerCore/`에 `ServerCore.lib`를 만든다. 이 폴더는 git이 추적하지 않으므로, 새로 클론한 뒤에는 솔루션을 한 번 빌드해야 게임 서버가 링크된다. GameServer·GameServerTests·DummyClient가 ServerCore를 `ProjectReference`로 참조해서 솔루션 빌드는 ServerCore를 먼저 빌드한다.
 
 **출력 규모** (2026년 9월 16일 증분 빌드 실측)
 

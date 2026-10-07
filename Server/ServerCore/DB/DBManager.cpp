@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "DBQueue.h"
-#include "DBManager.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/DB/DBQueue.h"
+#include "ServerCore/DB/DBManager.h"
 #include <functional>
 
 DBManager::DBManager()

@@ -30,8 +30,11 @@
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameServer\Main">
+    <Filter Include="GameServer\Core">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Network">
+      <UniqueIdentifier>{0c0d90fb-17ea-4dcf-9e13-39cf2aef86a0}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Protocol">
       <UniqueIdentifier>{754f4db8-77f2-51d1-b0bd-84a6235e4ea0}</UniqueIdentifier>
@@ -74,26 +77,26 @@
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\pch.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\pch.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\GameSession.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Network\GameSession.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\GameSessionManager.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\SaveGate.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Network\SaveGate.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\ServerConfig.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\Config.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\Global.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Core\Global.cpp">
+      <Filter>GameServer\Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Main\ServerPacketHandler.cpp">
-      <Filter>GameServer\Main</Filter>
+    <ClCompile Include="..\GameServer\Network\ServerPacketHandler.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
       <Filter>GameServer\Protocol</Filter>

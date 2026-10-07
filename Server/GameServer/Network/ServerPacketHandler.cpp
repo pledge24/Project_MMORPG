@@ -1,19 +1,16 @@
-#include "pch.h"
-#include "ServerPacketHandler.h"
-#include "Protocol.pb.h"
-#include "GameSession.h"
-#include "GameSessionManager.h"
-#include "SaveGate.h"
-#include "Player.h"
-#include "Room.h"
-#include "EntityUtils.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
-#include "Gamedata.h"
-#include "CharacterListDAO.h"
-#include "ProgressStorage.h"
-#include "CharacterCreation.h"
+#include "Core/pch.h"
+#include "Network/ServerPacketHandler.h"
+#include "Network/GameSessionManager.h"
+#include "Network/SaveGate.h"
+#include "Game/Entities/Player.h"
+#include "Game/Room/Room.h"
+#include "Game/Entities/EntityUtils.h"
+#include "DB/CharacterListDAO.h"
+#include "DB/ProgressStorage.h"
+#include "Game/Entities/CharacterCreation.h"
 
+// 핸들러는 모두 IOCP 워커 스레드에서 불린다. C_ 패킷의 값은 클라이언트가 보낸 것이므로 전부 검증 대상이다.
+// 룸 소유 상태는 여기서 건드리지 않는다. 룸 일은 room->DoAsync로, DB 일은 DB 큐로 넘기고 바로 리턴한다.
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -69,7 +66,7 @@ namespace
 
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 {
-    // 랜덤으로 아무 DBQueue에게 Job을 준다.
+    // 토큰을 확인하기 전에는 userId를 모르므로 아무 DB 큐나 고른다.
     int32 dbQueueCount = GDBManager->GetDBQueueCount();
     DBQueueRef dbQueue = GDBManager->GetDBQueue(Utils::GetRandom(0, dbQueueCount - 1));
 
@@ -138,7 +135,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
         return true;
     }
 
-    // 유저 Id를 통해 DBQueue를 선택
+    // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
     int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
@@ -159,7 +156,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 {
     // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
 
-    // 유저 Id를 통해 DBQueue를 선택
+    // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
     int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
@@ -178,7 +175,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-    // 유저 Id를 통해 DBQueue를 선택
+    // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
     int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 

@@ -1,6 +1,6 @@
 #pragma once
-#include "NetAddress.h"
-#include "IocpCore.h"
+#include "ServerCore/Network/NetAddress.h"
+#include "ServerCore/Network/IocpCore.h"
 #include <functional>
 
 class Listener;

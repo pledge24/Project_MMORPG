@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "ServerConfig.h"
+#include "Core/Config.h"
 
 /*--------------------------------------------------------------
     서버 접속 정보 로더 테스트
@@ -11,7 +11,7 @@
 
 namespace
 {
-    ServerConfig::EnvLookup FakeEnv(map<string, string> values)
+    Config::EnvLookup FakeEnv(map<string, string> values)
     {
         return [values](const char* name) -> std::optional<string>
             {
@@ -26,7 +26,7 @@ namespace
 
 TEST(ServerConfigTest, UsesLocalDefaultsWithoutEnv)
 {
-    const ServerConfig config = ServerConfig::Load(FakeEnv({}));
+    const Config config = Config::Load(FakeEnv({}));
 
     EXPECT_NE(config.dbConnectionString.find(L"(localdb)\\ProjectModels"), wstring::npos);
     EXPECT_NE(config.dbConnectionString.find(L"Database=GameDB"), wstring::npos);
@@ -36,7 +36,7 @@ TEST(ServerConfigTest, UsesLocalDefaultsWithoutEnv)
 
 TEST(ServerConfigTest, EnvOverridesEachValue)
 {
-    const ServerConfig config = ServerConfig::Load(FakeEnv({
+    const Config config = Config::Load(FakeEnv({
         {"P1_GAME_DB_CONNECTION_STRING", "Driver={ODBC Driver 17 for SQL Server};Database=GameDB_Test;"},
         {"P1_REDIS_URI", "tcp://127.0.0.1:6380"},
         {"P1_GAME_SERVER_PORT", "7778"}}));
@@ -53,7 +53,7 @@ TEST(ServerConfigTest, InvalidPortFallsBackToDefault)
     {
         SCOPED_TRACE(invalidPort);
 
-        const ServerConfig config = ServerConfig::Load(FakeEnv({{"P1_GAME_SERVER_PORT", invalidPort}}));
+        const Config config = Config::Load(FakeEnv({{"P1_GAME_SERVER_PORT", invalidPort}}));
         EXPECT_EQ(config.port, 7777);
     }
 }

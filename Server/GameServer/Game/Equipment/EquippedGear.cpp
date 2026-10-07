@@ -1,6 +1,6 @@
-#include "pch.h"
-#include "EquippedGear.h"
-#include "Player.h"
+#include "Core/pch.h"
+#include "Game/Equipment/EquippedGear.h"
+#include "Game/Entities/Player.h"
 
 EquippedGear::EquippedGear(PlayerRef player) : _player(player)
 {

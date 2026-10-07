@@ -1,10 +1,8 @@
-#include "pch.h"
-#include "Monster.h"
-#include "Player.h"
-#include "Gamedata.h"
-#include "Room.h"
-#include "TickIntervalTimer.h"
-#include "TickTimer.h"
+#include "Core/pch.h"
+#include "Game/Entities/Monster.h"
+#include "Game/Entities/Player.h"
+#include "Game/Room/Room.h"
+#include "Utils/TickTimer.h"
 
 Monster::Monster()
 {

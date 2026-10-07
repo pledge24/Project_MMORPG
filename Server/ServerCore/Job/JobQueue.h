@@ -1,7 +1,7 @@
 #pragma once
-#include "Job.h"
-#include "LockQueue.h"
-#include "JobTimer.h"
+#include "ServerCore/Job/Job.h"
+#include "ServerCore/Utils/LockQueue.h"
+#include "ServerCore/Job/JobTimer.h"
 
 /*----------------
       JobQueue

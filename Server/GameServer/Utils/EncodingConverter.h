@@ -2,9 +2,15 @@
 #include <string>
 #include <Windows.h>
 
+/**
+ * UTF-8 string과 UTF-16 wstring 사이를 바꾼다. DB와 Windows API가 쓰는 wchar 문자열을
+ * protobuf와 설정값의 UTF-8 문자열로 옮길 때 쓴다.
+ * 상태가 없으므로 여러 스레드에서 불러도 된다.
+ */
 class EncodingConverter
 {
 public:
+    /** wstr이 nullptr이거나 변환에 실패하면 빈 문자열을 돌려준다. */
     static string WCharToString(const wchar_t* wstr)
     {
         if (!wstr)
@@ -46,6 +52,7 @@ public:
         return result;
     }
 
+    /** str은 UTF-8이어야 한다. 비어 있거나 변환에 실패하면 빈 문자열을 돌려준다. */
     static wstring StringToWString(const std::string& str)
     {
         if (str.empty())

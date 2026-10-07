@@ -1,11 +1,9 @@
-#include "pch.h"
-#include "Room.h"
-#include "Player.h"
-#include "GameSession.h"
-#include "Monster.h"
-#include "EntityUtils.h"
-#include "EquippedGear.h"
-#include "Combat.h"
+#include "Core/pch.h"
+#include "Game/Room/Room.h"
+#include "Game/Entities/Player.h"
+#include "Game/Entities/Monster.h"
+#include "Game/Entities/EntityUtils.h"
+#include "Game/Combat/Combat.h"
 
 namespace
 {
@@ -87,7 +85,7 @@ void Room::Update()
             info->CopyFrom(*entity->_posInfo);
         }
 
-        // 몬스터가 없는 룸에서는 목록이 비어 틱마다 빈 패킷이 나간다.
+        // 몬스터가 없는 룸에서는 목록이 빈다. 틱마다 빈 패킷을 보내지 않도록 여기서 끝낸다.
         if (movePkt.info_size() == 0)
             return;
 
@@ -200,8 +198,6 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
     return true;
 }
 
-// 접속 종료한 플레이어를 룸에서 빼고 저장할 상태를 돌려준다.
-// 이 룸에 없으면(룸 이동 중이거나 이미 처리됨) 빈 값을 돌려준다. 저장은 퇴장에 성공한 쪽이 한 번만 한다.
 optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
 {
     const int64 playerId = player->GetEntityId();
@@ -233,7 +229,7 @@ bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
     return true;
 }
 
-// 이 함수는 Room의 데이터를 쓰지 않는다. Room에 두는 이유는 큐 하나뿐이다 —
+// 이 함수는 Room의 데이터를 쓰지 않는다. Room에 두는 이유는 큐 하나뿐이다.
 // 여기서 세팅하는 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
 void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
 {

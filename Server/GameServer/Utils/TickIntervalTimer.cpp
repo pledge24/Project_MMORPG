@@ -1,5 +1,5 @@
-#include "pch.h"
-#include "TickIntervalTimer.h"
+#include "Core/pch.h"
+#include "Utils/TickIntervalTimer.h"
 
 void TickIntervalTimer::Init(float intervalTime, IntervalFunc func, bool doOnce)
 {

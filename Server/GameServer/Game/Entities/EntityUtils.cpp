@@ -1,14 +1,13 @@
-#include "pch.h"
-#include "EntityUtils.h"
-#include "Player.h"
-#include "Monster.h"
-#include "GameSession.h"
+#include "Core/pch.h"
+#include "Game/Entities/EntityUtils.h"
+#include "Game/Entities/Player.h"
+#include "Game/Entities/Monster.h"
 
 atomic<int64> EntityUtils::s_idGenerator = 1;
 
 PlayerRef EntityUtils::CreatePlayer(GameSessionRef session)
 {
-    PlayerRef player = static_pointer_cast<Player>(EntityUtils::Create<Player>());
+    PlayerRef player = static_pointer_cast<Player>(EntityUtils::CreateEntity<Player>());
     if (player == nullptr)
         return nullptr;
 
@@ -35,7 +34,7 @@ PlayerRef EntityUtils::CreatePlayer(GameSessionRef session)
 
 MonsterRef EntityUtils::CreateMonster(int32 templateId, const Protocol::PosInfo& spawnPos)
 {
-    MonsterRef monster = static_pointer_cast<Monster>(EntityUtils::Create<Monster>());
+    MonsterRef monster = static_pointer_cast<Monster>(EntityUtils::CreateEntity<Monster>());
     if (monster == nullptr)
         return nullptr;
 

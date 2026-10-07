@@ -1,9 +1,8 @@
-#include "pch.h"
-#include "Player.h"
-#include "Inventory.h"
-#include "EquippedGear.h"
-#include "Monster.h"
-#include "Room.h"
+#include "Core/pch.h"
+#include "Game/Entities/Player.h"
+#include "Game/Inventory/Inventory.h"
+#include "Game/Equipment/EquippedGear.h"
+#include "Game/Room/Room.h"
 
 namespace
 {

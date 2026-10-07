@@ -1,6 +1,6 @@
-#include "pch.h"
+#include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Room.h"
+#include "Game/Room/Room.h"
 
 /*--------------------------------------------------------------
     룸 무작위 위치 테스트

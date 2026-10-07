@@ -1,7 +1,7 @@
-#include "pch.h"
-#include "Service.h"
-#include "Session.h"
-#include "Listener.h"
+#include "ServerCore/Core/pch.h"
+#include "ServerCore/Network/Service.h"
+#include "ServerCore/Network/Session.h"
+#include "ServerCore/Network/Listener.h"
 
 /*-------------------
 		Service

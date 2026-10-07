@@ -1,7 +1,6 @@
-#include "pch.h"
-#include "Inventory.h"
-#include "Global.h"
-#include "Player.h"
+#include "Core/pch.h"
+#include "Game/Inventory/Inventory.h"
+#include "Game/Entities/Player.h"
 
 Inventory::Inventory(PlayerRef player) : _player(player)
 {
@@ -55,7 +54,6 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
     if (availableSlotId == -1)
         return false;
 
-    // 들어갈 슬롯 찾았으니 이제 진짜 추가해야함
     Protocol::Slot* targetSlot = bag->slots->Mutable(availableSlotId);
     if (targetSlot == nullptr)
         return false;
@@ -63,7 +61,7 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
     bag->dirtyFlags[availableSlotId] = true;
     if (targetSlot->has_item())
     {
-        // Modifiy slot data
+        // 이미 든 아이템에 수량을 더한다.
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
 
         Protocol::Item* item = targetSlot->mutable_item();
@@ -75,7 +73,7 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
     }
     else
     {
-        // Add new slot data
+        // 빈 슬롯에 새로 넣는다.
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
 
         Protocol::Item* item = targetSlot->mutable_item();
@@ -94,7 +92,6 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
 
 bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count)
 {
-    // -> 아직 인스턴스화된 아이템이 아닐때 진입(ex. 구매한 아이템)
     if (count <= 0)
         return false;
 
@@ -194,7 +191,7 @@ bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
 
     // 검증이 먼저다. mutable_item()은 없던 item을 만들면서 has_item()을 켜므로,
     // 검증보다 먼저 부르면 빈 슬롯이 "아이템 있음"으로 오염돼 다시는 채워지지 않는다.
-    // 더티 플래그도 마찬가지 — 실패한 제거까지 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
+    // 더티 플래그도 마찬가지다. 실패한 제거까지 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
     if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
         return false;
 

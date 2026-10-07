@@ -1,9 +1,9 @@
 #pragma once
 
-#include "IocpCore.h"
-#include "NetworkEvent.h"
-#include "NetAddress.h"
-#include "RecvBuffer.h"
+#include "ServerCore/Network/IocpCore.h"
+#include "ServerCore/Network/NetworkEvent.h"
+#include "ServerCore/Network/NetAddress.h"
+#include "ServerCore/Network/RecvBuffer.h"
 
 class Service;
 
