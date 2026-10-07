@@ -1,9 +1,13 @@
 #pragma once
 
-/** GameServer 전역 타입 별칭을 정의한다. pch.h에서 ServerCore와 json 헤더 뒤에 포함한다. */
+/** GameServer 전역 타입 별칭을 정의한다. */
 
-//~ Vendor Lib
+//~ Vendor Libraries
+#include "nlohmann/json.hpp"
+#include "google/protobuf/repeated_ptr_field.h" 
+    
 using Json = nlohmann::json;
+namespace Protobuf = google::protobuf;
 
 //~ SharedPtr
 USING_SHARED_PTR(GameSession);
