@@ -9,29 +9,6 @@
 #include "DB/ProgressStorage.h"
 #include "Game/Entities/CharacterCreation.h"
 
-// 핸들러는 모두 IOCP 워커 스레드에서 불린다. C_ 패킷의 값은 클라이언트가 보낸 것이므로 전부 검증 대상이다.
-// 룸 소유 상태는 여기서 건드리지 않는다. 룸 일은 room->DoAsync로, DB 일은 DB 큐로 넘기고 바로 리턴한다.
-PacketHandlerFunc GPacketHandler[UINT16_MAX];
-
-bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
-{
-	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO: Log
-	return false;
-}
-
-bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
-{
-	return false;
-}
-
-// TODO: 클라이언트 맵 로드 완료 처리. Protocol.proto에 선언만 되어 있어
-// 생성기가 만드는 핸들러 선언을 채우기 위한 스텁이다.
-bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_COMPLETE& pkt)
-{
-	return false;
-}
-
 namespace
 {
     // 사유 패킷을 보낼 때까지 끊기를 미루는 상한이다. 넘기면 상대가 받지 않는 것으로 보고 끊는다.
@@ -62,6 +39,29 @@ namespace
         enterGameFailPkt.set_success(false);
         SEND_PACKET(enterGameFailPkt)
     }
+}
+
+// 핸들러는 모두 IOCP 워커 스레드에서 불린다. C_ 패킷의 값은 클라이언트가 보낸 것이므로 전부 검증 대상이다.
+// 룸 소유 상태는 여기서 건드리지 않는다. 룸 일은 room->DoAsync로, DB 일은 DB 큐로 넘기고 바로 리턴한다.
+PacketHandlerFunc GPacketHandler[UINT16_MAX];
+
+bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
+{
+	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
+	// TODO: Log
+	return false;
+}
+
+bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
+{
+	return false;
+}
+
+// TODO: 클라이언트 맵 로드 완료 처리. Protocol.proto에 선언만 되어 있어
+// 생성기가 만드는 핸들러 선언을 채우기 위한 스텁이다.
+bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_COMPLETE& pkt)
+{
+	return false;
 }
 
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
