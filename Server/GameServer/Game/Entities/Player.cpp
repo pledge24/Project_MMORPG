@@ -40,6 +40,20 @@ Player::~Player()
     delete _possession;
 }
 
+bool Player::OnLoaded()
+{
+    _inventory->ClearDirtyFlags();
+    _equippedGear->ClearDirtyFlag();
+    RefreshEquippedGearSummary();
+
+	if (CalculateFinalStat() == false)
+		return false;
+
+	CacheNextLevelUpData();
+
+	return true;
+}
+
 bool Player::Init(const SpawnParams& params)
 {
 	if (Creature::Init(params) == false)
@@ -58,20 +72,6 @@ bool Player::Init(const SpawnParams& params)
 
     _inventory = make_shared<Inventory>(self);
     _equippedGear = make_shared<EquippedGear>(self);
-
-	return true;
-}
-
-bool Player::OnLoaded()
-{
-    _inventory->ClearDirtyFlags();
-    _equippedGear->ClearDirtyFlag();
-    RefreshEquippedGearSummary();
-
-	if (CalculateFinalStat() == false)
-		return false;
-
-	CacheNextLevelUpData();
 
 	return true;
 }
@@ -414,25 +414,6 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     }
 }
 
-void Player::RefreshEquippedGearSummary()
-{
-    // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
-    auto* summary = _playerInfo->mutable_equipped_gear_summary();
-    summary->clear();
-
-    for (const auto& pair : _possession->equipped_gear())
-    {
-        const Protocol::Slot& slot = pair.second;
-        if (slot.has_item() && slot.item().template_id() != 0)
-            (*summary)[slot.slot_id()] = slot.item().template_id();
-    }
-}
-
-bool Player::IsMaxLevel() const
-{
-    return _playerInfo->level() >= MAX_LEVEL;
-}
-
 void Player::OnLevelUp()
 {
     if (IsMaxLevel())
@@ -449,6 +430,11 @@ void Player::OnLevelUp()
     SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) + _nextLevelUpData.maIncrement);
 
     CacheNextLevelUpData();
+}
+
+bool Player::IsMaxLevel() const
+{
+    return _playerInfo->level() >= MAX_LEVEL;
 }
 
 bool Player::FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
@@ -619,5 +605,19 @@ void Player::CacheNextLevelUpData()
         _nextLevelUpData.paIncrement = nextLevelData.value(PA_Increment, int64(0));
         _nextLevelUpData.maIncrement = nextLevelData.value(MA_Increment, int64(0));
         _nextLevelUpData.expRequirement = nextLevelData.value(ExpRequirement, int64(0));
+    }
+}
+
+void Player::RefreshEquippedGearSummary()
+{
+    // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
+    auto* summary = _playerInfo->mutable_equipped_gear_summary();
+    summary->clear();
+
+    for (const auto& pair : _possession->equipped_gear())
+    {
+        const Protocol::Slot& slot = pair.second;
+        if (slot.has_item() && slot.item().template_id() != 0)
+            (*summary)[slot.slot_id()] = slot.item().template_id();
     }
 }

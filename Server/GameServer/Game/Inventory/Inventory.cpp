@@ -283,6 +283,27 @@ vector<bool>* Inventory::GetDirtyFlags(Protocol::ItemType itemType)
     return bag != nullptr ? &bag->dirtyFlags : nullptr;
 }
 
+Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
+{
+    // 슬롯 해석의 단일 창구다. RemoveItem도 같은 FindBag을 거친다.
+    // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
+    // Release에서 빠지므로, 실제로 안전을 보장하는 것은 아래 검증들이다.
+    Bag* bag = FindBag(type);
+    if (bag == nullptr)
+        return nullptr;
+
+    if (IsValidSlotId(slot_id) == false)
+        return nullptr;
+
+    return bag->slots->Mutable(slot_id);
+}
+
+void Inventory::ClearDirtyFlags()
+{
+    for (Bag& bag : _bags)
+        std::fill(bag.dirtyFlags.begin(), bag.dirtyFlags.end(), false);
+}
+
 Inventory::Bag* Inventory::FindBag(Protocol::ItemType itemType)
 {
     for (Bag& bag : _bags)
@@ -323,26 +344,5 @@ optional<Protocol::ItemType> Inventory::ToItemType(const Json& itemData)
         return nullopt;
 
     return itemType;
-}
-
-Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
-{
-    // 슬롯 해석의 단일 창구다. RemoveItem도 같은 FindBag을 거친다.
-    // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
-    // Release에서 빠지므로, 실제로 안전을 보장하는 것은 아래 검증들이다.
-    Bag* bag = FindBag(type);
-    if (bag == nullptr)
-        return nullptr;
-
-    if (IsValidSlotId(slot_id) == false)
-        return nullptr;
-
-    return bag->slots->Mutable(slot_id);
-}
-
-void Inventory::ClearDirtyFlags()
-{
-    for (Bag& bag : _bags)
-        std::fill(bag.dirtyFlags.begin(), bag.dirtyFlags.end(), false);
 }
 

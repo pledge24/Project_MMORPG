@@ -174,6 +174,12 @@ const Protocol::Slot* EquippedGear::GetSlot(int32 gearType) const
     return &it->second;
 }
 
+void EquippedGear::ClearDirtyFlag()
+{
+    for (auto& dirtyFlagPair : _dirtyFlagMappings)
+        dirtyFlagPair.second = false;
+}
+
 optional<Protocol::GearType> EquippedGear::FindGearType(const Json& itemData) const
 {
     auto subtypeIt = itemData.find(JsonProperty::Item::ItemSubtype);
@@ -185,10 +191,4 @@ optional<Protocol::GearType> EquippedGear::FindGearType(const Json& itemData) co
         return nullopt;
 
     return it->second;
-}
-
-void EquippedGear::ClearDirtyFlag()
-{
-    for (auto& dirtyFlagPair : _dirtyFlagMappings)
-        dirtyFlagPair.second = false;
 }

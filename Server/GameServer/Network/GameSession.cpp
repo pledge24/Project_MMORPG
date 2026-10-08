@@ -41,6 +41,21 @@ void GameSession::OnDisconnected()
 		});
 }
 
+void GameSession::OnRecvPacket(BYTE* buffer, int32 len)
+{
+	PacketSessionRef session = GetPacketSessionRef();
+
+	// 게임 서버가 아닌 다른 서버(ex. DB 서버)에 넘겨줄때 id 대역 체크용
+	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
+	// TODO: packetId 대역 체크...
+
+	ServerPacketHandler::HandlePacket(session, buffer, len);
+}
+
+void GameSession::OnSend(int32 len)
+{
+}
+
 bool GameSession::IsPlayerInRoom()
 {
 	PlayerRef player = _player.load();
@@ -68,19 +83,4 @@ void GameSession::LeaveGame(RoomRef room, PlayerRef player)
 			if (optional<SaveGate::ParkedLoad> parked = GSaveGate.Release(data.userId))
 				parked->run();
 		}));
-}
-
-void GameSession::OnRecvPacket(BYTE* buffer, int32 len)
-{
-	PacketSessionRef session = GetPacketSessionRef();
-
-	// 게임 서버가 아닌 다른 서버(ex. DB 서버)에 넘겨줄때 id 대역 체크용
-	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO: packetId 대역 체크...
-
-	ServerPacketHandler::HandlePacket(session, buffer, len);
-}
-
-void GameSession::OnSend(int32 len)
-{
 }
