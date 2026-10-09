@@ -146,3 +146,35 @@ TEST_F(MonsterAITest, LosesTargetOnFirstTickAfterTargetLeavesRoom)
     EXPECT_EQ(monster->GetAI().GetTarget(), nullptr) << "다음 상태 전환 판정까지 떠난 대상의 위치를 읽는다";
     EXPECT_EQ(monster->GetAI().GetState(), MonsterState::Idle);
 }
+
+// 일반 공격은 공격을 알린 뒤 0.2초가 지나서 판정한다.
+TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
+{
+    EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
+    room->Tick(STATE_UPDATE_TIME);
+    ASSERT_EQ(monster->GetAI().GetState(), MonsterState::Attacking);
+
+    // 공격 간격(2.5초)을 채워 공격을 시작한다. 피격은 다음 틱 이후로 예약된다.
+    room->Tick(2.5f);
+    ASSERT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
+
+    room->Tick(STATE_UPDATE_TIME);
+    EXPECT_LT(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
+}
+
+// TD-043: 피격 판정이 공격자가 룸에 남았는지만 보고 대상과의 거리를 다시 보지 않았다.
+// 공격을 알린 뒤 0.2초 안에 사거리를 빠져나간 플레이어도 맞았다.
+TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
+{
+    EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
+    room->Tick(STATE_UPDATE_TIME);
+    ASSERT_EQ(monster->GetAI().GetState(), MonsterState::Attacking);
+    room->Tick(2.5f);
+
+    Protocol::C_MOVE movePkt;
+    movePkt.mutable_info()->mutable_pos()->set_x(ATTACK_RANGE + 250.f);
+    room->C_HandleMove(movePkt, player);
+    room->Tick(STATE_UPDATE_TIME);
+
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "피한 공격에 맞으면 클라이언트가 보여 주는 거리와 판정이 어긋난다";
+}

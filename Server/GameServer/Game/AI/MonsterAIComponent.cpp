@@ -468,7 +468,7 @@ void MonsterAIComponent::NormalAttack()
             attackInfo.set_combo(0);
             attackInfo.set_damage(_baseAttack);
         }
-        _pendingHit = PendingHit{ attackInfo, NORMAL_ATTACK_HIT_DELAY };
+        _pendingHit = PendingHit{ attackInfo, target, NORMAL_ATTACK_HIT_DELAY };
     }
 }
 
@@ -481,15 +481,26 @@ void MonsterAIComponent::UpdatePendingHit(float deltaTime)
     if (_pendingHit->remainingTime > 0.f)
         return;
 
-    const Protocol::AttackInfo attackInfo = _pendingHit->attackInfo;
+    const PendingHit hit = std::move(_pendingHit.value());
     _pendingHit.reset();
 
     MonsterRef owner = GetOwner();
-    if (owner == nullptr)
+    EntityRef target = hit.target.lock();
+    if (owner == nullptr || target == nullptr)
         return;
 
-    if (auto ownerRoom = owner->GetRoom())
-        ownerRoom->HandleHit(owner, attackInfo);
+    RoomRef ownerRoom = owner->GetRoom();
+    if (ownerRoom == nullptr)
+        return;
+
+    // 거리는 피격 시점에 다시 본다. 공격을 알린 뒤 사거리를 빠져나간 대상은 공격을 피한 것이다.
+    // 대상이 이 룸을 떠났으면 그 위치를 읽지 않는다.
+    if (ownerRoom->Contains(target->GetEntityId()) == false)
+        return;
+    if (MathUtil::InRange(&owner->GetPosInfo(), &target->GetPosInfo(), _tryAttackRange) == false)
+        return;
+
+    ownerRoom->HandleHit(owner, hit.attackInfo);
 }
 
 bool MonsterAIComponent::IsTargetLost()

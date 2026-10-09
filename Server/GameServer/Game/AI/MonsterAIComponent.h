@@ -63,7 +63,10 @@ private:
     //~ 공격
     /** 룸에 일반 공격을 알리고, NORMAL_ATTACK_HIT_DELAY 뒤의 피격 판정을 예약한다. */
     void NormalAttack();
-    /** 예약한 피격의 남은 시간을 줄이고, 다 됐으면 Room::HandleHit에 넘긴다. */
+    /**
+     * 예약한 피격의 남은 시간을 줄이고, 다 됐으면 Room::HandleHit에 넘긴다.
+     * 그때 대상이 이 룸에 없거나 사거리(_tryAttackRange) 밖이면 피격을 버린다.
+     */
     void UpdatePendingHit(float deltaTime);
 
     //~ 상태 확인
@@ -111,6 +114,8 @@ private:
     struct PendingHit
     {
         Protocol::AttackInfo attackInfo;
+        /** 공격을 알릴 때의 대상. 그사이 _target이 바뀌어도 이 대상으로 판정한다. */
+        weak_ptr<Entity> target;
         float remainingTime = 0.f;
     };
     optional<PendingHit> _pendingHit;
