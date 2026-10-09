@@ -76,7 +76,7 @@ TEST_F(EntityFactoryTest, PlayerWithoutSessionGetsIdAndInventory)
     EXPECT_EQ(player->_entityInfo->entity_type(), Protocol::ENTITY_TYPE_PLAYER);
     EXPECT_EQ(player->_posInfo->entity_id(), player->GetEntityId());
     EXPECT_NE(player->_inventory, nullptr);
-    EXPECT_NE(player->_equippedGear, nullptr);
+    EXPECT_NE(player->_equipment, nullptr);
     EXPECT_EQ(player->_session.lock(), nullptr);
 }
 

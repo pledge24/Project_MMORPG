@@ -230,9 +230,9 @@
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp" />
-    <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp" />
+    <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
-    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp" />
+    <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />

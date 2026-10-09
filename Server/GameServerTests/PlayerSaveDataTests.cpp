@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
-#include "Game/Inventory/Inventory.h"
+#include "Game/Inventory/InventoryComponent.h"
 
 /*--------------------------------------------------------------
     저장 스냅숏 테스트

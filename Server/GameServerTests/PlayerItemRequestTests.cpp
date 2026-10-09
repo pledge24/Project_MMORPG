@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
-#include "Game/Inventory/Inventory.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Inventory/InventoryComponent.h"
+#include "Game/Equipment/EquipmentComponent.h"
 
 /*--------------------------------------------------------------
     아이템 요청 판정 테스트
@@ -13,8 +13,8 @@
     있었다. 판정은 서버 슬롯에 든 아이템으로 하고, 요청의 아이템은 클라이언트 슬롯이 어긋났는지
     대조하는 데만 쓴다.
 
-    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
-    시드한 장비에는 물리 공격력만 있다.
+    픽스처 결합도: 아이템 템플릿과 1레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    EntityFactory로만 만든다. 시드한 장비에는 물리 공격력만 있다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -25,7 +25,7 @@ namespace
     constexpr int32 UNKNOWN_TEMPLATE_ID = 9999;
 
     constexpr int64 START_GOLD = 1000;
-    constexpr int64 BASE_PHYSICAL_ATTACK = 5;
+    constexpr int32 BASE_PHYSICAL_ATTACK = 5;
 
     ItemTemplate MakeSword(int32 templateId, int64 buyPrice, int64 sellPrice, bool sellable, int32 physicalAttack)
     {
@@ -50,10 +50,16 @@ protected:
         tables.items[SWORD_TEMPLATE_ID] = MakeSword(SWORD_TEMPLATE_ID, 100, 10, true, 10);
         tables.items[GREATSWORD_TEMPLATE_ID] = MakeSword(GREATSWORD_TEMPLATE_ID, 80000, 8000, true, 500);
         tables.items[UNSELLABLE_SWORD_TEMPLATE_ID] = MakeSword(UNSELLABLE_SWORD_TEMPLATE_ID, 100, 10, false, 10);
+        LevelTemplate level1;
+        level1.level = 1;
+        level1.physicalAttack = BASE_PHYSICAL_ATTACK;
+        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
+        player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        player->_playerInfo->set_level(1);
         player->_possession->set_gold(START_GOLD);
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, BASE_PHYSICAL_ATTACK);
     }
@@ -77,7 +83,7 @@ protected:
     {
         Protocol::S_EQUIP_GEAR pkt;
         EXPECT_TRUE(player->ProcessEquipGear(AddToInventory(SWORD_TEMPLATE_ID), pkt));
-        return *player->_equippedGear->GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
     const Protocol::Slot& InventorySlot(const Protocol::Slot& slot)
@@ -87,7 +93,7 @@ protected:
 
     const Protocol::Slot& WeaponSlot()
     {
-        return *player->_equippedGear->GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
     PlayerRef player;

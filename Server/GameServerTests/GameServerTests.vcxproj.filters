@@ -140,13 +140,13 @@
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp">
+    <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp">
       <Filter>GameServer\Game\Inventory</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp">
       <Filter>GameServer\Game\Combat</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp">
+    <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp">
       <Filter>GameServer\Game\Equipment</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">

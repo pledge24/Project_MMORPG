@@ -8,7 +8,7 @@
 
 class AP1MyPlayer;
 class UP1Inventory;
-class UP1EquippedGear;
+class UP1Equipment;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
 DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
@@ -101,7 +101,7 @@ public:
     FOnGoldChanged OnGoldChanged;
 
 protected:
-    /** Inventory와 EquippedGear가 이 객체의 하위 메시지 주소를 들고 있다. 새 객체로 바꾸지 않는다. */
+    /** Inventory와 Equipment가 이 객체의 하위 메시지 주소를 들고 있다. 새 객체로 바꾸지 않는다. */
     TUniquePtr<Protocol::Possession> _Possession;
 
     //~ Inventory
@@ -133,13 +133,13 @@ private:
 
     //~ Equipment
 public:
-    UP1EquippedGear* GetEquippedGear() const { return EquippedGear; }
+    UP1Equipment* GetEquipment() const { return Equipment; }
 
     FOnEquipmentSlotChanged OnEquipmentSlotChanged;
 
 protected:
     UPROPERTY()
-    TObjectPtr<UP1EquippedGear> EquippedGear;
+    TObjectPtr<UP1Equipment> Equipment;
 
     //~ Enter Packet Handlers
 public:

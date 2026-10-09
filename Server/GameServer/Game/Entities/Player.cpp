@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include "Game/Entities/Player.h"
-#include "Game/Inventory/Inventory.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Inventory/InventoryComponent.h"
+#include "Game/Equipment/EquipmentComponent.h"
 #include "Game/Room/Room.h"
 
 namespace
@@ -43,11 +43,13 @@ Player::~Player()
 bool Player::OnLoaded()
 {
     _inventory->ClearDirtyFlags();
-    _equippedGear->ClearDirtyFlag();
+    _equipment->ClearDirtyFlags();
     RefreshEquippedGearSummary();
 
-	if (CalculateFinalStat() == false)
+	if (ValidateLoadedStat() == false)
 		return false;
+
+	RefreshFinalStat(nullptr);
 
 	CacheNextLevelUpData();
 
@@ -70,10 +72,25 @@ bool Player::Init(const SpawnParams& params)
         params.session->_player.store(self);
     }
 
-    _inventory = make_shared<Inventory>(self);
-    _equippedGear = make_shared<EquippedGear>(self);
+    _inventory = make_shared<InventoryComponent>(self);
+    _equipment = make_shared<EquipmentComponent>(self);
 
 	return true;
+}
+
+void Player::Start()
+{
+    Creature::Start();
+
+    _inventory->Start();
+    _equipment->Start();
+}
+
+void Player::Tick(float deltaTime)
+{
+    // 플레이어는 틱을 돌리지 않는다. Creature::Tick은 다음 틱을 예약하므로 부르지 않는다.
+    _inventory->Tick(deltaTime);
+    _equipment->Tick(deltaTime);
 }
 
 bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
@@ -143,9 +160,7 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     if (itemTemplate == nullptr)
         return false;
 
-    // 재사용 대기는 템플릿마다 따로 돈다.
-    auto lastUseIt = _lastUseTimeMs.find(templateId);
-    if (lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs)
+    if (_inventory->IsCoolingDown(templateId, nowMs))
         return false;
 
     // 제거에 성공했을 때만 응답에 슬롯을 싣는다. 거부 응답에는 슬롯이 없다.
@@ -155,7 +170,7 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
 
     *pkt.mutable_updated_slots()->Add() = std::move(updatedSlot);
 
-    _lastUseTimeMs[templateId] = nowMs;
+    _inventory->StartCooldown(templateId, nowMs);
 
     // 회복률이 있는 스탯만 바꾸고 싣는다. 이미 가득 차 있어도 소비하고 값은 최대로 둔다.
     auto restore = [&](double ratio, Protocol::StatType maxType, Protocol::StatType curType)
@@ -182,7 +197,6 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
 bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt)
 {
     auto* updatedSlotList = pkt.mutable_updated_slots();
-    auto* updatedStatList = pkt.mutable_updated_stat();
 
     // 입는 것은 요청이 아니라 인벤토리 슬롯에 든 장비다.
     const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
@@ -192,7 +206,7 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
     // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 슬롯이라 제거는 실패하지 않는다.
     const Protocol::Item ownedItem = ownedSlot->item();
     Protocol::Slot* equippedSlot = updatedSlotList->Add();
-    if (_equippedGear->EquipGear(OUT equippedSlot, OUT updatedStatList, ownedItem) == false)
+    if (_equipment->Equip(OUT equippedSlot, ownedItem) == false)
         return false;
 
     // 외형을 바꾸는 쪽은 요청 슬롯(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
@@ -203,11 +217,7 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
         return false;
 
-    // 변경된 스텟 적용
-    for (const Protocol::Stat& stat : *updatedStatList)
-    {
-        SetStatValue(stat.type(), stat.value());
-    }
+    RefreshFinalStat(OUT pkt.mutable_updated_stat());
 
     return true;
 }
@@ -215,13 +225,12 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
 bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt)
 {
     auto* updatedSlotList = pkt.mutable_updated_slots();
-    auto* updatedStatList = pkt.mutable_updated_stat();
 
     // 돌려받는 것은 요청이 아니라 장비 칸에 든 장비다.
     if (requestSlot.type() != Protocol::SLOT_TYPE_EQUIPPED)
         return false;
 
-    const Protocol::Slot* ownedSlot = _equippedGear->GetSlot(requestSlot.slot_id());
+    const Protocol::Slot* ownedSlot = _equipment->GetSlot(requestSlot.slot_id());
     if (MatchesRequest(ownedSlot, requestSlot) == false)
         return false;
 
@@ -231,7 +240,7 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
         return false;
 
     Protocol::Slot* unequippedSlot = updatedSlotList->Add();
-    if (_equippedGear->UnequipGear(requestSlot.slot_id(), OUT unequippedSlot, OUT updatedStatList) == false)
+    if (_equipment->Unequip(requestSlot.slot_id(), OUT unequippedSlot) == false)
         return false;
 
     // 탈착 뒤 그 부위는 비어 있으므로 template_id는 0이다.
@@ -242,11 +251,7 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     if (_inventory->AddItem(OUT updatedSlotList->Add(), ownedItem) == false)
         return false;
 
-    // 변경된 스텟 적용
-    for (const Protocol::Stat& stat : *updatedStatList)
-    {
-        SetStatValue(stat.type(), stat.value());
-    }
+    RefreshFinalStat(OUT pkt.mutable_updated_stat());
 
     return true;
 }
@@ -466,7 +471,7 @@ PlayerSaveData Player::MakeSaveData() const
     if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS))
         data.miscDirtyFlags = *flags;
 
-    data.equippedGearDirtyFlags = _equippedGear->GetDirtyFlagMappings();
+    data.equippedGearDirtyFlags = _equipment->GetDirtyFlagMappings();
 
     return data;
 }
@@ -490,82 +495,82 @@ bool Player::ApplyTownRespawnForSave()
     return true;
 }
 
-bool Player::CalculateFinalStat()
+optional<CombatStats> Player::CalculateFinalStat()
 {
-    // 최종 스텟 계산 + playerInfo에 계산 결과 채워넣기
-    struct FinalStat
-    {
-        int32 maxHp = 0;
-        int32 maxMp = 0;
-        int32 physical_attack = 0;
-        int32 magical_attack = 0;
-    } finalStat;
-
-    // 스킬 패시브, 내실 등 캐릭터 스텟을 올릴 수 있는 요소가 추가되면 여기에 작성...
-    // ===========================================================================
+    // 스킬 패시브, 내실 등 캐릭터 스텟을 올릴 수 있는 요소가 추가되면 여기에 더한다.
 
     // 1. 레벨당 캐릭터 기본 스텟
     const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
     if (classLevelTable == nullptr)
     {
         GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_playerInfo->class_()));
-        return false;
+        return nullopt;
     }
 
     const LevelTemplate* levelTemplate = classLevelTable->Find(_playerInfo->level());
     if (levelTemplate == nullptr)
     {
         GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 레벨 {}", _playerInfo->level());
+        return nullopt;
+    }
+
+    CombatStats finalStat{ levelTemplate->maxHp, levelTemplate->maxMp, levelTemplate->physicalAttack, levelTemplate->magicalAttack };
+
+    // 2. 착용 장비의 증감량
+    finalStat += _equipment->SumStatDelta();
+
+    return finalStat;
+}
+
+void Player::RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats)
+{
+    const optional<CombatStats> finalStat = CalculateFinalStat();
+    if (finalStat.has_value() == false)
+        return;
+
+    // 값이 바뀐 스탯만 싣는다. 클라이언트는 받은 스탯만 고친다.
+    auto apply = [&](Protocol::StatType statType, int64 value)
+        {
+            const bool changed = HasStat(statType) == false || GetStatValue(statType) != value;
+            SetStatValue(statType, value);
+
+            if (changed && updatedStats != nullptr)
+                ProtoUtil::AddStat(updatedStats, statType, value);
+        };
+
+    apply(Protocol::STAT_TYPE_MAX_HP, finalStat->maxHp);
+    apply(Protocol::STAT_TYPE_MAX_MP, finalStat->maxMp);
+    apply(Protocol::STAT_TYPE_PHYSICAL_ATTACK, finalStat->physicalAttack);
+    apply(Protocol::STAT_TYPE_MAGICAL_ATTACK, finalStat->magicalAttack);
+
+    // 최대치가 줄면 현재 값도 따라 줄인다. 넘는 채로 저장되면 다음 입장의 대조가 거절한다.
+    if (HasStat(Protocol::STAT_TYPE_HP) && GetStatValue(Protocol::STAT_TYPE_HP) > finalStat->maxHp)
+        apply(Protocol::STAT_TYPE_HP, finalStat->maxHp);
+    if (HasStat(Protocol::STAT_TYPE_MP) && GetStatValue(Protocol::STAT_TYPE_MP) > finalStat->maxMp)
+        apply(Protocol::STAT_TYPE_MP, finalStat->maxMp);
+}
+
+bool Player::ValidateLoadedStat()
+{
+    const optional<CombatStats> finalStat = CalculateFinalStat();
+    if (finalStat.has_value() == false)
         return false;
-    }
 
-    finalStat.maxHp += levelTemplate->maxHp;
-    finalStat.maxMp += levelTemplate->maxMp;
-    finalStat.physical_attack += levelTemplate->physicalAttack;
-    finalStat.magical_attack += levelTemplate->magicalAttack;
+    string cause;
+    if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat->maxHp)
+        cause = "현재 HP가 최대 HP를 초과";
+    else if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat->maxMp)
+        cause = "현재 MP가 최대 MP를 초과";
+    else if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat->physicalAttack)
+        cause = "물리 공격력이 계산 결과와 일치하지 않음";
+    else if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat->magicalAttack)
+        cause = "마법 공격력이 계산 결과와 일치하지 않음";
 
-    // 2. 장착 중이 장비 스텟 추가
-    for (const auto& pair : _possession->equipped_gear())
-    {
-        const Protocol::Item& item = pair.second.item();
-
-        if (item.template_id() == 0)
-            continue;
-
-        // 장비 칸에는 표에 있는 아이템만 들어간다(EquipGear가 거른다).
-        const ItemTemplate* itemTemplate = Gamedata::FindItem(item.template_id());
-        if (itemTemplate == nullptr)
-            continue;
-
-        finalStat.maxHp += itemTemplate->hp;
-        finalStat.maxMp += itemTemplate->mp;
-        finalStat.physical_attack += itemTemplate->physicalAttack;
-        finalStat.magical_attack += itemTemplate->magicalAttack;
-    }
-
-    // validate
-    try
-    {
-        if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat.maxHp)
-            throw string("현재 HP가 최대 HP를 초과");
-        if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat.maxMp)
-            throw string("현재 MP가 최대 MP를 초과");
-        if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat.physical_attack)
-            throw string("물리 공격력이 계산 결과와 일치하지 않음");
-        if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat.magical_attack)
-            throw string("마법 공격력이 계산 결과와 일치하지 않음");
-    }
-    catch (const string& cause)
+    if (cause.empty() == false)
     {
         GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: {}", cause);
         return false;
     }
-
-    // Protocol::statInfo에 최종 스텟 적용
-    SetStatValue(Protocol::STAT_TYPE_MAX_HP, finalStat.maxHp);
-    SetStatValue(Protocol::STAT_TYPE_MAX_MP, finalStat.maxMp);
-    SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, finalStat.physical_attack);
-    SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, finalStat.magical_attack);
 
     return true;
 }

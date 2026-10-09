@@ -125,13 +125,13 @@
     <ClCompile Include="DB\ItemSaveRows.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Inventory\Inventory.cpp">
+    <ClCompile Include="Game\Inventory\InventoryComponent.cpp">
       <Filter>Game\Inventory</Filter>
     </ClCompile>
     <ClCompile Include="Game\Combat\Combat.cpp">
       <Filter>Game\Combat</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Equipment\EquippedGear.cpp">
+    <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
     </ClCompile>
     <ClCompile Include="Game\Data\Gamedata.cpp">
@@ -241,13 +241,19 @@
     <ClInclude Include="DB\DAOCommon.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Inventory\Inventory.h">
+    <ClInclude Include="Game\Entities\EntityComponent.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\CombatStats.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Inventory\InventoryComponent.h">
       <Filter>Game\Inventory</Filter>
     </ClInclude>
     <ClInclude Include="Game\Combat\Combat.h">
       <Filter>Game\Combat</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Equipment\EquippedGear.h">
+    <ClInclude Include="Game\Equipment\EquipmentComponent.h">
       <Filter>Game\Equipment</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\JsonProperty.h">

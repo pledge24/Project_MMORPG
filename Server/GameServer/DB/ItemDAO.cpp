@@ -3,8 +3,8 @@
 #include "DB/DAOCommon.h"
 #include "DB/ItemSaveRows.h"
 #include "Game/Entities/Player.h"
-#include "Game/Inventory/Inventory.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Inventory/InventoryComponent.h"
+#include "Game/Equipment/EquipmentComponent.h"
 
 namespace
 {
@@ -204,7 +204,7 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
             if (bindObject._isEquipped == false)
                 player->_inventory->AddItem(nullptr, item, 1, bindObject._slotId);
             else
-                player->_equippedGear->EquipGear(nullptr, nullptr, item, bindObject._slotId);
+                player->_equipment->LoadEquipped(item, bindObject._slotId);
         }
     }
     catch (DBCustomError error)

@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
-#include "Game/Inventory/Inventory.h"
+#include "Game/Inventory/InventoryComponent.h"
 
 /*--------------------------------------------------------------
     소모품 사용 테스트

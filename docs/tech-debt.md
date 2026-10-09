@@ -94,20 +94,6 @@
 **버그 발생 가능성 증가** — 두 계정이 동시에 로그인하거나, 한 계정의 저장과 다른 계정의 입장이 겹치면
 나중에 연결을 빌린 쪽이 널 포인터를 역참조해 게임 서버가 죽는다. 접속자가 적을 때는 겹치는 일이 드물어서 드러나지 않는다.
 
-## TD-037 장비를 벗어도 현재 HP와 MP가 줄지 않아 다음 입장이 실패한다
-> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Equipment/EquippedGear.cpp` 130~146줄 (`UnequipGear`) · `Server/GameServer/Game/Entities/Player.cpp` 549~559줄 (`CalculateFinalStat`)
-> 등록일: 2026년 10월 9일
-
-`UnequipGear`는 장비의 hp와 mp만큼 최대 HP와 최대 MP를 빼고, 현재 HP와 MP는 그대로 둔다. 현재 값이 새 최대치를 넘은 채로
-접속이 끊기면 그 값이 저장된다. 다음 입장에서 `OnLoaded` → `CalculateFinalStat`이 「현재 HP가 최대 HP를 초과」로 false를 돌려주고,
-`ProgressStorage::Load`가 입장 실패를 보낸다. 장비 데이터의 1000번대에 hp와 mp가 있으므로, HP가 가득 찬 상태에서 그런 장비를
-벗고 접속을 끊으면 바로 이 상황이 된다. 코드를 읽고 판단했고 실행해서 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 그 캐릭터는 DB를 손으로 고치기 전까지 게임에 들어가지 못한다.
-
 ## TD-044 서버를 종료하면 접속 중인 플레이어의 진행이 사라진다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/GameServer.cpp` 25~38줄 (`DoWorkerJob`), 105~116줄
@@ -430,12 +416,12 @@ DAO의 오류 처리가 네 방식으로 갈려 있다.
 
 ## TD-025 클라이언트가 서버의 슬롯 번호를 범위 검사 없이 배열 인덱스로 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Game/Inventory/P1Inventory.cpp` 15~67줄 · `P1/Source/P1/Game/Equipment/P1EquippedGear.h` 25줄
+> 위치: `P1/Source/P1/Game/Inventory/P1Inventory.cpp` 15~67줄 · `P1/Source/P1/Game/Equipment/P1Equipment.h` 29줄
 > 등록일: 2026년 10월 5일
 
 - `UP1Inventory::Init`은 `slot_id`가 `[0, 칸 수)` 안이라고 가정하고 `GearLookup[Slot_->slot_id()]`에 넣는다
 - `UP1Inventory::Rep_SlotChanged`는 범위를 보지 않고 `InvenLookup[Slot_.slot_id()]`를 역참조한다
-- `UP1EquippedGear::EquippedGearLookup` 원시 포인터에 초기값이 없다. `Init` 전에 `GetAllSlot`이나 `Rep_SlotChanged`가
+- `UP1Equipment::EquippedGearLookup` 원시 포인터에 초기값이 없다. `Init` 전에 `GetAllSlot`이나 `Rep_SlotChanged`가
   불리면 쓰레기 값을 역참조한다
 
 코드를 읽고 판단했다.
@@ -548,15 +534,15 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 
 ## TD-035 DB에서 읽은 슬롯 번호를 검증 없이 인벤토리와 장비 칸에 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquippedGear.cpp` (`EquipGear`)
+> 위치: `Server/GameServer/Game/Inventory/InventoryComponent.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquipmentComponent.cpp` (`LoadEquipped`)
 > 등록일: 2026년 10월 7일
 
-`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 `setSlotId`로 넘긴다. 두 함수는 이 값을 그대로 믿는다.
+`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 두 함수에 넘긴다. 두 함수는 이 값을 그대로 믿는다.
 
-- `Inventory::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
+- `InventoryComponent::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
   `Mutable`의 범위 검사는 `GOOGLE_DCHECK`라서 Release 빌드에서 빠진다
 - 같은 함수는 그 칸에 이미 아이템이 있으면 템플릿이 같은지 보지 않고 수량을 더한다
-- `EquippedGear::EquipGear`는 `setSlotId`를 그대로 `GearType`으로 바꿔 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
+- `EquipmentComponent::LoadEquipped`는 받은 `gearType`을 그대로 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
   없는 부위면 칸을 찾지 못해 실패하므로 범위 밖 접근은 없다
 
 코드를 읽고 판단했다. 잘못된 행을 넣어 재현하지는 않았다.
@@ -585,19 +571,6 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 
 **유지보수 어려움** · **버그 발생 가능성 증가** — 기능이 있는 것처럼 보여서 읽는 사람이 동작을 잘못 짐작한다.
 `operator-=`나 `TickIntervalTimer`를 새로 쓰기 시작하면 그 자리에서 바로 버그가 된다.
-
-## TD-038 장비 착용이 요구 레벨과 요구 직업을 보지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Equipment/EquippedGear.cpp` 33~51줄 (`EquipGear`)
-> 등록일: 2026년 10월 9일
-
-`EquipGear`는 아이템이 장비인지와 부위가 비었는지만 본다. 아이템 표의 `levelRequirement`와 `classRequirement`는
-`JsonProperty::Item`에 이름만 정의되어 있고 읽는 곳이 없다. 요구 레벨은 클라이언트의 `FP1InventorySlotAction::Decide`만 판정한다.
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 조작한 클라이언트는 레벨이 모자라거나 직업이 맞지 않는 장비를 입는다.
 
 ## TD-041 세션의 계정 번호를 락 없이 여러 스레드가 읽고 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server

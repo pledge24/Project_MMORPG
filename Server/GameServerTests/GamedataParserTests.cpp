@@ -38,6 +38,7 @@ namespace
     {
         return Json{
             {"templateId", SWORD_ID}, {"itemName", "초보자의 검"}, {"itemType", "GEAR"}, {"itemSubtype", "sword"},
+            {"levelRequirement", 10}, {"classRequirement", "warrior"},
             {"buyPrice", 100}, {"sellPrice", 10}, {"sellable", true}, {"stackable", false}, {"maxStack", 1},
             {"cooldown", -1}, {"physicalAttack", 15}, {"magicalAttack", 0}, {"hp", 0}, {"mp", 0},
         };
@@ -47,6 +48,7 @@ namespace
     {
         return Json{
             {"templateId", POTION_ID}, {"itemName", "HP 포션"}, {"itemType", "CONSUMABLE"}, {"itemSubtype", "potion"},
+            {"levelRequirement", 0}, {"classRequirement", "all"},
             {"buyPrice", 50}, {"sellPrice", 5}, {"sellable", true}, {"stackable", true}, {"maxStack", 99},
             {"cooldown", 10}, {"hpRestore", 0.3}, {"mpRestore", 0},
         };
@@ -141,6 +143,9 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(sword.gearType.value(), Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(sword.physicalAttack, 15);
     EXPECT_EQ(sword.cooldownMs, 0u) << "장비의 cooldown -1은 대기가 없다는 뜻이다";
+    EXPECT_EQ(sword.levelRequirement, 10);
+    ASSERT_TRUE(sword.classRequirement.has_value());
+    EXPECT_EQ(sword.classRequirement.value(), Protocol::CLASS_TYPE_WARRIOR);
 
     const ItemTemplate& potion = tables.items.at(POTION_ID);
     EXPECT_EQ(potion.itemType, Protocol::ITEM_TYPE_CONSUMABLE);
@@ -149,6 +154,7 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(potion.cooldownMs, 10000u);
     EXPECT_DOUBLE_EQ(potion.hpRestoreRatio, 0.3);
     EXPECT_EQ(potion.hp, 0) << "표에 없는 스탯은 0이다";
+    EXPECT_FALSE(potion.classRequirement.has_value()) << "\"all\"은 직업을 가리지 않는다";
 
     const MonsterTemplate& monster = tables.monsters.at(MONSTER_ID);
     EXPECT_EQ(monster.maxHp, 200);
@@ -231,6 +237,18 @@ TEST(GamedataParserTest, GearWithUnknownSubtypeIsRejected)
     documents.items[0]["itemSubtype"] = "shield";
 
     ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "itemSubtype", "shield"});
+}
+
+TEST(GamedataParserTest, UnknownClassRequirementIsRejected)
+{
+    for (const char* classRequirement : { "archer", "none", "" })
+    {
+        GamedataDocuments documents = MakeValidDocuments();
+        documents.items[0]["classRequirement"] = classRequirement;
+
+        SCOPED_TRACE(classRequirement);
+        ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "1번째 행", "classRequirement"});
+    }
 }
 
 TEST(GamedataParserTest, MaxStackBelowOneIsRejected)
