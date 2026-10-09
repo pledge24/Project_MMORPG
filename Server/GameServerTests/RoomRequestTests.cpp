@@ -4,6 +4,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Network/ItemRequests.h"
+#include "RecordingSession.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -122,6 +123,35 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
     EXPECT_FLOAT_EQ(victim->GetPosInfo().pos().x(), victimX) << "다른 플레이어의 위치가 바뀌면 그 계정의 진행이 손상된다";
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), victimX + 777.f);
     EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
+}
+
+// TD-021: 처음 입장하면 다른 플레이어 알림(SpawnPlayer)과 룸 정보 복제(ReplicateRoomData)가 둘 다 본인을 실었다.
+TEST_F(RoomRequestTest, InitialEntrySpawnsSelfOnce)
+{
+    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+    const PlayerProgress progress = MakeProgressWithSword();
+    PlayerSpawnParams params;
+    params.session = session;
+    params.progress = &progress;
+    PlayerRef newcomer = EntityFactory::Create<Player>(params);
+    ASSERT_NE(newcomer, nullptr);
+
+    Protocol::C_ENTER_ROOM enterPkt;
+    enterPkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
+    enterPkt.set_room_id(ROOM_ID);
+    room->C_HandleEnterRoom(enterPkt, newcomer);
+
+    int32 selfSpawnCount = 0;
+    for (const Protocol::S_SPAWN& spawnPkt : session->SentPackets<Protocol::S_SPAWN>(PKT_S_SPAWN))
+    {
+        for (const Protocol::EntityInfo& entity : spawnPkt.entities())
+        {
+            if (entity.entity_id() == newcomer->GetEntityId())
+                selfSpawnCount++;
+        }
+    }
+
+    EXPECT_EQ(selfSpawnCount, 1) << "클라이언트의 중복 검사를 지우면 내 플레이어가 두 번 처리된다";
 }
 
 // TD-006: 착용과 해제는 실패 응답 전에만 세션을 확인하고, 성공 응답은 확인 없이 보냈다.

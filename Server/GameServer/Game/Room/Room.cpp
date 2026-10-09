@@ -464,7 +464,9 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
                     return;
 
                 respawnRoom->SpawnPlayer(player);
-                respawnRoom->ReplicateRoomData(player, false);
+
+                // 다른 룸에서 리스폰하면 월드를 새로 받으므로 자기 자신까지 다시 스폰해야 한다.
+                respawnRoom->ReplicateRoomData(player, true);
             });
     }
 
@@ -737,13 +739,14 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
     if (Contains(targetPlayer->GetEntityId()) == false)
         return nullptr;
 
+    // 본인은 빼고 알린다. 본인에게 자기 스폰을 보낼지는 ReplicateRoomData의 includeThisPlayer가 정한다.
     Protocol::S_SPAWN spawnPkt;
     {
         Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
         entityInfo->CopyFrom(targetPlayer->GetEntityInfo());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer);
+        Broadcast(sendBuffer, targetPlayer->GetEntityId());
     }
 
     return targetPlayer;

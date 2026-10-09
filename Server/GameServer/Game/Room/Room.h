@@ -121,9 +121,9 @@ public:
 
         return entity;
     }
-    /** 다른 플레이어에게 S_SPAWN을 알린다. 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
+    /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(int64 entityId);
-    /** 다른 플레이어에게 S_SPAWN을 알린다. 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
+    /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
 
     //~ 네트워크
