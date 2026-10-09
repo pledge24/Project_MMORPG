@@ -110,9 +110,16 @@ int main(void)
     }
 
     // DB에서 서버 메모리에 올릴거 가져오기
+    try
     {
         DBConnectionGuard conn;
         ItemDAO::GetMaxItemUID(*conn);
+    }
+    catch (const DBError& error)
+    {
+        // 다음 아이템 UID를 모르면 새 아이템이 기존 아이템과 UID가 겹친다.
+        GLogger->Error("아이템 UID의 최댓값을 읽지 못해 서버를 종료합니다: {}", error.what());
+        return 1;
     }
 
     // Main Thread

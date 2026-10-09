@@ -82,7 +82,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             auto val = redis->get(tokenKey);
             if (val.has_value() == false || redis->del(tokenKey) == 0)
             {
-                wcout << L"액세스 토큰이 없거나 이미 쓰였다" << '\n';
+                GLogger->Warning("액세스 토큰이 없거나 이미 쓰였다");
                 KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
                 return;
             }
@@ -91,8 +91,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             string username = json["username"];
             int64 userId = json["userId"];
 
-            cout << "userId: " << userId << endl;
-            cout << "username: " << username << endl;
+            GLogger->Info("로그인 userId: {}, username: {}", userId, username);
 
             // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
             // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
@@ -115,10 +114,12 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             }
 
             Protocol::S_LOGIN loginPkt;
-            vector<Protocol::CharacterOverview> characters;
-            DBConnectionGuard conn;
-            if (CharacterListDAO::LoadCharacterList(*conn, userId, OUT characters))
+            try
             {
+                vector<Protocol::CharacterOverview> characters;
+                DBConnectionGuard conn;
+                CharacterListDAO::LoadCharacterList(*conn, userId, OUT characters);
+
                 for (Protocol::CharacterOverview& character : characters)
                     *loginPkt.add_characters() = std::move(character);
 
@@ -126,8 +127,10 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 loginPkt.set_character_slot_count(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT);
                 loginPkt.set_success(true);
             }
-            else
+            catch (const DBError& error)
             {
+                GLogger->Error("계정 {} 캐릭터 목록 불러오기 실패: {}", userId, error.what());
+                loginPkt.Clear();
                 loginPkt.set_success(false);
             }
 
@@ -160,22 +163,27 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
         [session, pkt, userId]()
         {
             Protocol::S_CREATE_CHARACTER createCharacterPkt;
-            CreateCharacterResult result;
-            DBConnectionGuard conn;
-            if (CharacterListDAO::CreateCharacter(*conn, pkt.character(), userId, OUT result) == false)
+            try
             {
+                DBConnectionGuard conn;
+                const CreateCharacterResult result = CharacterListDAO::CreateCharacter(*conn, pkt.character(), userId);
+                if (result.rejection.has_value())
+                {
+                    createCharacterPkt.set_success(false);
+                    createCharacterPkt.set_cause(string(ToMessage(result.rejection.value())));
+                }
+                else
+                {
+                    createCharacterPkt.set_success(true);
+                    createCharacterPkt.set_character_id(result.characterId);
+                }
+            }
+            catch (const DBError& error)
+            {
+                GLogger->Error("계정 {} 캐릭터 생성 실패: {}", userId, error.what());
+                createCharacterPkt.Clear();
                 createCharacterPkt.set_success(false);
                 createCharacterPkt.set_cause("서버 내부 오류");
-            }
-            else if (result.rejection.has_value())
-            {
-                createCharacterPkt.set_success(false);
-                createCharacterPkt.set_cause(result.rejection.value());
-            }
-            else
-            {
-                createCharacterPkt.set_success(true);
-                createCharacterPkt.set_character_id(result.characterId);
             }
 
             SEND_PACKET(createCharacterPkt)
@@ -203,10 +211,18 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
             const int64 characterId = pkt.character_id();
 
             Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
-            DBConnectionGuard conn;
-            deleteCharacterPkt.set_success(CharacterListDAO::DeleteCharacter(*conn, userId, characterId));
-            if (deleteCharacterPkt.success())
-                deleteCharacterPkt.set_character_id(characterId);
+            try
+            {
+                DBConnectionGuard conn;
+                deleteCharacterPkt.set_success(CharacterListDAO::DeleteCharacter(*conn, userId, characterId));
+                if (deleteCharacterPkt.success())
+                    deleteCharacterPkt.set_character_id(characterId);
+            }
+            catch (const DBError& error)
+            {
+                GLogger->Error("계정 {} 캐릭터 {} 삭제 실패: {}", userId, characterId, error.what());
+                deleteCharacterPkt.set_success(false);
+            }
 
             SEND_PACKET(deleteCharacterPkt)
         }
@@ -257,7 +273,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             {
                 if (optional<SaveGate::ParkedLoad> expired = GSaveGate.Expire(userId, token))
                 {
-                    wcout << L"접속 종료 저장을 기다리다 입장을 거절합니다. userId: " << userId << '\n';
+                    GLogger->Warning("접속 종료 저장을 기다리다 입장을 거절합니다. userId: {}", userId);
                     expired->reject();
                 }
             });

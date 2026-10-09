@@ -13,7 +13,8 @@ class ProgressStorage
 public:
     /**
      * 입장할 때 부른다. userId 계정의 캐릭터 characterId의 진행을 progress에 채운다.
-     * 한 단계라도 실패하면 사유를 로그에 남기고 false를 돌려준다. 그때 progress는 일부만 채워져 있으므로 쓰지 않는다.
+     * 그 계정의 캐릭터가 아니거나 DB 작업이 실패하면 사유를 로그에 남기고 false를 돌려준다.
+     * 그때 progress는 일부만 채워져 있으므로 쓰지 않는다.
      */
     static bool Load(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress);
 

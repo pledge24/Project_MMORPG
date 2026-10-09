@@ -42,42 +42,34 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
     };
 
 
-    try
-    {
-        // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-        // 이 계정의 캐릭터가 아니면 행이 없다. 클라이언트가 보낸 character_id를 믿지 않는다.
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            SELECT class_id, character_name, level
-            FROM [dbo].[Characters]
-            WHERE character_id = (?) AND user_id = (?)
-        )SQL");
+    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
+    // 이 계정의 캐릭터가 아니면 행이 없다. 클라이언트가 보낸 character_id를 믿지 않는다.
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        SELECT class_id, character_name, level
+        FROM [dbo].[Characters]
+        WHERE character_id = (?) AND user_id = (?)
+    )SQL");
 
-        BindObject bindObject(dbBind, characterId, userId);
+    BindObject bindObject(dbBind, characterId, userId);
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
 
-        // 행이 없으면 바인딩 버퍼는 초기화되지 않은 값이다. 채우지 않고 실패로 끝낸다.
-        if (conn.Fetch() == false)
-            throw DBCustomError::SQL_FETCH_FAIL;
-
-        Protocol::PlayerInfo* playerInfo = &progress.playerInfo;
-
-        playerInfo->set_character_id(bindObject._characterId);
-        playerInfo->set_class_((Protocol::CharacterClass)bindObject._classId);
-        playerInfo->set_name(EncodingConverter::WCharToString(bindObject._characterName));
-        playerInfo->set_level(bindObject._level);
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
+    // 행이 없으면 이 계정의 캐릭터가 아니다. 바인딩 버퍼는 초기화되지 않은 값이므로 채우지 않는다.
+    if (conn.Fetch() == false)
         return false;
-    }
+
+    Protocol::PlayerInfo* playerInfo = &progress.playerInfo;
+
+    playerInfo->set_character_id(bindObject._characterId);
+    playerInfo->set_class_((Protocol::CharacterClass)bindObject._classId);
+    playerInfo->set_name(EncodingConverter::WCharToString(bindObject._characterName));
+    playerInfo->set_level(bindObject._level);
 
     return true;
 }
 
-bool CharacterStateDAO::LoadLastState(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
+void CharacterStateDAO::LoadLastState(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 12;
@@ -131,52 +123,42 @@ bool CharacterStateDAO::LoadLastState(DBConnection& conn, int64 characterId, OUT
     };
 
 
-    try
-    {
-        // 해당 유저의 마지막 정보를 가져온다.
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
-            FROM [dbo].[CharactersLastState] 
-            WHERE character_id = (?)
-        )SQL");
+    // 해당 유저의 마지막 정보를 가져온다.
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
+        FROM [dbo].[CharactersLastState] 
+        WHERE character_id = (?)
+    )SQL");
 
-        BindObject bindObject(dbBind, characterId);
+    BindObject bindObject(dbBind, characterId);
 
-        if (dbBind.Execute() == false)
-            return false;
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
 
-        if (conn.Fetch() == false)
-            return false;
+    // 캐릭터를 만들 때 함께 넣는 행이다. 없으면 DB가 어긋난 것이다.
+    if (conn.Fetch() == false)
+        throw DBError(__func__, "결과 행이 없다");
 
-        auto* statMappings = progress.statInfo.mutable_info();
-        (*statMappings)[Protocol::STAT_TYPE_EXP] = bindObject._exp;
-        (*statMappings)[Protocol::STAT_TYPE_HP] = bindObject._curHp;
-        (*statMappings)[Protocol::STAT_TYPE_MP] = bindObject._curMp;
-        (*statMappings)[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = bindObject._curPhysicalAttack;
-        (*statMappings)[Protocol::STAT_TYPE_MAGICAL_ATTACK] = bindObject._curMagicalAttack;
+    auto* statMappings = progress.statInfo.mutable_info();
+    (*statMappings)[Protocol::STAT_TYPE_EXP] = bindObject._exp;
+    (*statMappings)[Protocol::STAT_TYPE_HP] = bindObject._curHp;
+    (*statMappings)[Protocol::STAT_TYPE_MP] = bindObject._curMp;
+    (*statMappings)[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = bindObject._curPhysicalAttack;
+    (*statMappings)[Protocol::STAT_TYPE_MAGICAL_ATTACK] = bindObject._curMagicalAttack;
 
-        progress.playerInfo.set_room_id(bindObject._roomId);
-        progress.playerInfo.set_map_id(bindObject._mapId);
+    progress.playerInfo.set_room_id(bindObject._roomId);
+    progress.playerInfo.set_map_id(bindObject._mapId);
 
-        Protocol::Vector* pos = progress.posInfo.mutable_pos();
-        pos->set_x(bindObject._posX);
-        pos->set_y(bindObject._posY);
-        pos->set_z(bindObject._posZ);
-        progress.posInfo.set_yaw(bindObject._rotYaw);
+    Protocol::Vector* pos = progress.posInfo.mutable_pos();
+    pos->set_x(bindObject._posX);
+    pos->set_y(bindObject._posY);
+    pos->set_z(bindObject._posZ);
+    progress.posInfo.set_yaw(bindObject._rotYaw);
 
-        progress.possession.set_gold(bindObject._gold);
-
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
+    progress.possession.set_gold(bindObject._gold);
 }
 
-bool CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& data)
+void CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& data)
 {
     const int PARAMS = 2;
     const int COLS = 0;
@@ -201,30 +183,20 @@ bool CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& 
     };
 
 
-    try
-    {
-        // 해당 유저의 캐릭터 기본 정보들을 갱신한다(지금은 레벨만 갱신).
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            UPDATE [dbo].[Characters]
-            SET level = (?)
-            WHERE character_id = (?)
-        )SQL");
+    // 해당 유저의 캐릭터 기본 정보들을 갱신한다(지금은 레벨만 갱신).
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        UPDATE [dbo].[Characters]
+        SET level = (?)
+        WHERE character_id = (?)
+    )SQL");
 
-        BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.playerInfo.level());
+    BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.playerInfo.level());
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
 }
 
-bool CharacterStateDAO::SaveLastState(DBConnection& conn, const PlayerSaveData& data)
+void CharacterStateDAO::SaveLastState(DBConnection& conn, const PlayerSaveData& data)
 {
     const int PARAMS = 13;
     const int COLS = 0;
@@ -289,29 +261,19 @@ bool CharacterStateDAO::SaveLastState(DBConnection& conn, const PlayerSaveData& 
     };
 
 
-    try
-    {
-        // 해당 유저의 마지막 정보를 DB에 갱신한다.
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            UPDATE [dbo].[CharactersLastState]
-            SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
-            WHERE character_id = (?)
-        )SQL");
+    // 해당 유저의 마지막 정보를 DB에 갱신한다.
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        UPDATE [dbo].[CharactersLastState]
+        SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
+        WHERE character_id = (?)
+    )SQL");
 
-        BindObject bindObject(dbBind, data);
+    BindObject bindObject(dbBind, data);
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
 
-        // 행이 없으면 UPDATE는 성공하고 아무것도 바꾸지 않는다. 저장이 사라진 것을 실패로 알린다.
-        if (conn.GetRowCount() != 1)
-            throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
+    // 행이 없으면 UPDATE는 성공하고 아무것도 바꾸지 않는다. 저장이 사라진 것을 실패로 알린다.
+    if (conn.GetRowCount() != 1)
+        throw DBError(__func__, "바뀐 행 수가 맞지 않는다");
 }

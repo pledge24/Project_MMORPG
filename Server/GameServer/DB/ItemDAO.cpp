@@ -31,7 +31,7 @@ namespace
     }
 }
 
-bool ItemDAO::GetMaxItemUID(DBConnection& conn)
+void ItemDAO::GetMaxItemUID(DBConnection& conn)
 {
     const int PARAMS = 0;
     const int COLS = 1;
@@ -58,82 +58,36 @@ bool ItemDAO::GetMaxItemUID(DBConnection& conn)
     };
 
 
-    try
-    {
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            EXEC GetMaxItemUID;
-        )SQL");
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        EXEC GetMaxItemUID;
+    )SQL");
 
-        BindObject bindObject(dbBind);
+    BindObject bindObject(dbBind);
 
-        if (dbBind.Execute() == false)
-            throw wstring(L"Execute() 실패");
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
 
-        if (conn.Fetch() == false)
-            throw wstring(L"Fetch() 실패");
+    if (conn.Fetch() == false)
+        throw DBError(__func__, "결과 행이 없다");
 
-        GNextItemUID = bindObject._maxItemUID + 1; // itemUid저장
-    }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
+    GNextItemUID = bindObject._maxItemUID + 1; // itemUid저장
 }
 
-bool ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
+void ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
-    try
-    {
-        // 1. 캐릭터 장비 아이템 가져오기
-        if (LoadGearItems(conn, characterId, progress) == false)
-            throw wstring(L"장비 아이템 불러오기 실패");
-
-        // 2. 캐릭터 소비 아이템 가져오기
-        if (LoadStackableItems(conn, characterId, Protocol::ITEM_TYPE_CONSUMABLE, progress) == false)
-            throw wstring(L"소비 아이템 불러오기 실패");
-
-        // 3. 캐릭터 기타 아이템 가져오기
-        if (LoadStackableItems(conn, characterId, Protocol::ITEM_TYPE_MISCELLANEOUS, progress) == false)
-            throw wstring(L"기타 아이템 불러오기 실패");
-    }
-    catch (const wstring& cause)
-    {
-        wcout << cause << endl;
-        return false;
-    }
-
-    return true;
+    LoadGearItems(conn, characterId, progress);
+    LoadStackableItems(conn, characterId, Protocol::ITEM_TYPE_CONSUMABLE, progress);
+    LoadStackableItems(conn, characterId, Protocol::ITEM_TYPE_MISCELLANEOUS, progress);
 }
 
-bool ItemDAO::SaveItems(DBConnection& conn, const PlayerSaveData& data)
+void ItemDAO::SaveItems(DBConnection& conn, const PlayerSaveData& data)
 {
-    try
-    {
-        // 1. 캐릭터 장비 아이템 갱신하기
-        if (SaveGearItems(conn, data) == false)
-            throw wstring(L"장비 아이템 저장 실패");
-
-        // 2. 캐릭터 소비 아이템 갱신하기
-        if (SaveStackableItems(conn, data, Protocol::ITEM_TYPE_CONSUMABLE) == false)
-            throw wstring(L"소비 아이템 저장 실패");
-
-        // 3. 캐릭터 기타 아이템 갱신하기
-        if (SaveStackableItems(conn, data, Protocol::ITEM_TYPE_MISCELLANEOUS) == false)
-            throw wstring(L"기타 아이템 저장 실패");
-    }
-    catch (const wstring& cause)
-    {
-        wcout << cause << endl;
-        return false;
-    }
-
-    return true;
+    SaveGearItems(conn, data);
+    SaveStackableItems(conn, data, Protocol::ITEM_TYPE_CONSUMABLE);
+    SaveStackableItems(conn, data, Protocol::ITEM_TYPE_MISCELLANEOUS);
 }
 
-bool ItemDAO::LoadGearItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
+void ItemDAO::LoadGearItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 8;
@@ -178,50 +132,40 @@ bool ItemDAO::LoadGearItems(DBConnection& conn, int64 characterId, OUT PlayerPro
     };
 
 
-    try
+    // 해당 캐릭터의 장비 아이템 정보를 가져온다.
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        SELECT item_uid, template_id, is_equipped, slot_id, enhance, durability, additional_physical_attack, additional_magical_attack
+        FROM [dbo].[CharactersGearItems]
+        WHERE character_id = (?)
+    )SQL");
+
+    BindObject bindObject(dbBind, characterId);
+
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
+
+    while (conn.Fetch())
     {
-        // 해당 캐릭터의 장비 아이템 정보를 가져온다.
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            SELECT item_uid, template_id, is_equipped, slot_id, enhance, durability, additional_physical_attack, additional_magical_attack
-            FROM [dbo].[CharactersGearItems]
-            WHERE character_id = (?)
-        )SQL");
+        Protocol::Item item;
+        Protocol::GearInfo* gearInfo = item.mutable_gearinfo();
 
-        BindObject bindObject(dbBind, characterId);
+        item.set_template_id(bindObject._templateId);
+        item.set_item_uid(bindObject._itemUid);
+        item.set_count(1);
 
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
+        gearInfo->set_enhance_level(bindObject._enhance);
+        gearInfo->set_durability(bindObject._durability);
+        gearInfo->set_additional_physical_attack(bindObject._additionalPhysicalAttack);
+        gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
 
-        while (conn.Fetch())
-        {
-            Protocol::Item item;
-            Protocol::GearInfo* gearInfo = item.mutable_gearinfo();
-
-            item.set_template_id(bindObject._templateId);
-            item.set_item_uid(bindObject._itemUid);
-            item.set_count(1);
-
-            gearInfo->set_enhance_level(bindObject._enhance);
-            gearInfo->set_durability(bindObject._durability);
-            gearInfo->set_additional_physical_attack(bindObject._additionalPhysicalAttack);
-            gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
-
-            if (bindObject._isEquipped == false)
-                *progress.possession.mutable_inventory()->add_gear() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, bindObject._slotId, item);
-            else
-                (*progress.possession.mutable_equipped_gear())[bindObject._slotId] = MakeLoadedSlot(Protocol::SLOT_TYPE_EQUIPPED, bindObject._slotId, item);
-        }
+        if (bindObject._isEquipped == false)
+            *progress.possession.mutable_inventory()->add_gear() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, bindObject._slotId, item);
+        else
+            (*progress.possession.mutable_equipped_gear())[bindObject._slotId] = MakeLoadedSlot(Protocol::SLOT_TYPE_EQUIPPED, bindObject._slotId, item);
     }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
 }
 
-bool ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol::ItemType itemType, OUT PlayerProgress& progress)
+void ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol::ItemType itemType, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 3;
@@ -257,50 +201,40 @@ bool ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol
 
     const WCHAR* table = GetStackableItemTable(itemType);
     if (table == nullptr)
-        return false;
+        throw DBError(__func__, "쌓이는 아이템 종류가 아니다");
 
 
-    try
+    // 해당 캐릭터의 소비 아이템이나 기타 아이템 정보를 가져온다.
+    // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다.
+    const wstring query = wstring(LR"SQL(
+        SELECT slot_id, template_id, count
+        FROM )SQL") + table + LR"SQL(
+        WHERE character_id = (?)
+    )SQL";
+    DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
+
+    BindObject bindObject(dbBind, characterId);
+
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
+
+    Protocol::Inventory* inventory = progress.possession.mutable_inventory();
+    const bool isConsumable = itemType == Protocol::ITEM_TYPE_CONSUMABLE;
+
+    while (conn.Fetch())
     {
-        // 해당 캐릭터의 소비 아이템이나 기타 아이템 정보를 가져온다.
-        // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다.
-        const wstring query = wstring(LR"SQL(
-            SELECT slot_id, template_id, count
-            FROM )SQL") + table + LR"SQL(
-            WHERE character_id = (?)
-        )SQL";
-        DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
+        Protocol::Item item;
+        item.set_template_id(bindObject._templateId);
+        item.set_count(bindObject._count);
 
-        BindObject bindObject(dbBind, characterId);
-
-        if (dbBind.Execute() == false)
-            throw DBCustomError::SQL_EXECUTE_FAIL;
-
-        Protocol::Inventory* inventory = progress.possession.mutable_inventory();
-        const bool isConsumable = itemType == Protocol::ITEM_TYPE_CONSUMABLE;
-
-        while (conn.Fetch())
-        {
-            Protocol::Item item;
-            item.set_template_id(bindObject._templateId);
-            item.set_count(bindObject._count);
-
-            if (isConsumable)
-                *inventory->add_consumables() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, bindObject._slotId, item);
-            else
-                *inventory->add_miscellaneous() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_MISC, bindObject._slotId, item);
-        }
+        if (isConsumable)
+            *inventory->add_consumables() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, bindObject._slotId, item);
+        else
+            *inventory->add_miscellaneous() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_MISC, bindObject._slotId, item);
     }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
 }
 
-bool ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
+void ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
 {
     const int PARAMS = 9;
     const int COLS = 0;
@@ -366,76 +300,66 @@ bool ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
     };
 
 
-    try
+    // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
+    optional<vector<GearSaveRow>> rows = ItemSaveRows::BuildGearRows(data);
+    if (rows.has_value() == false)
+        throw DBError(__func__, "가방의 더티 플래그가 없다");
+
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        -- 1. 임시 테이블 생성
+        SELECT *
+        INTO #TempTable
+        FROM [dbo].[CharactersGearItems]
+        WHERE 1 = 0;
+
+        -- 2. 임시 테이블에 INSERT
+        INSERT INTO #TempTable (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+        -- 3. MERGE 진행
+        MERGE INTO [dbo].[CharactersGearItems] AS T
+        USING #TempTable AS S
+        ON (T.character_id = S.character_id
+            AND T.slot_id = S.slot_id
+            AND T.is_equipped = S.is_equipped)
+
+        -- 3-1. 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+        WHEN MATCHED AND S.template_id = 0 THEN
+            DELETE
+
+        -- 3-2. 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
+        WHEN MATCHED THEN
+            UPDATE SET
+                item_uid = S.item_uid,
+                template_id = S.template_id,
+                is_equipped = S.is_equipped,
+                enhance = S.enhance,
+                durability = S.durability,
+                additional_physical_attack = S.additional_physical_attack,
+                additional_magical_attack = S.additional_magical_attack
+
+        -- 3-3. DB 테이블에 행이 없으면서 #TempTable의 template_id > 0 -> INSERT
+        WHEN NOT MATCHED BY TARGET AND S.template_id > 0 THEN
+            INSERT (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
+            VALUES (S.character_id, S.slot_id, S.item_uid, S.template_id, S.is_equipped, S.enhance, S.durability, S.additional_physical_attack, S.additional_magical_attack);
+
+        -- 4. 임시 테이블 삭제
+        DROP TABLE #TempTable;
+    )SQL");
+
+    BindObject bindObject(dbBind, rows.value());
+
+    int32 rowCount = static_cast<int32>(rows->size());
+    if (rowCount > 0)
     {
-        // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
-        optional<vector<GearSaveRow>> rows = ItemSaveRows::BuildGearRows(data);
-        if (rows.has_value() == false)
-            throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
+        conn.SetParamSetSize(rowCount);
 
-        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-            -- 1. 임시 테이블 생성
-            SELECT *
-            INTO #TempTable
-            FROM [dbo].[CharactersGearItems]
-            WHERE 1 = 0;
-
-            -- 2. 임시 테이블에 INSERT
-            INSERT INTO #TempTable (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-
-            -- 3. MERGE 진행
-            MERGE INTO [dbo].[CharactersGearItems] AS T
-            USING #TempTable AS S
-            ON (T.character_id = S.character_id
-                AND T.slot_id = S.slot_id
-                AND T.is_equipped = S.is_equipped)
-
-            -- 3-1. 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
-            WHEN MATCHED AND S.template_id = 0 THEN
-                DELETE
-
-            -- 3-2. 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
-            WHEN MATCHED THEN
-                UPDATE SET
-                    item_uid = S.item_uid,
-                    template_id = S.template_id,
-                    is_equipped = S.is_equipped,
-                    enhance = S.enhance,
-                    durability = S.durability,
-                    additional_physical_attack = S.additional_physical_attack,
-                    additional_magical_attack = S.additional_magical_attack
-
-            -- 3-3. DB 테이블에 행이 없으면서 #TempTable의 template_id > 0 -> INSERT
-            WHEN NOT MATCHED BY TARGET AND S.template_id > 0 THEN
-                INSERT (character_id, slot_id, item_uid, template_id, is_equipped, enhance, durability, additional_physical_attack, additional_magical_attack)
-                VALUES (S.character_id, S.slot_id, S.item_uid, S.template_id, S.is_equipped, S.enhance, S.durability, S.additional_physical_attack, S.additional_magical_attack);
-
-            -- 4. 임시 테이블 삭제
-            DROP TABLE #TempTable;
-        )SQL");
-
-        BindObject bindObject(dbBind, rows.value());
-
-        int32 rowCount = static_cast<int32>(rows->size());
-        if (rowCount > 0)
-        {
-            conn.SetParamSetSize(rowCount);
-
-            if (dbBind.Execute() == false)
-                throw DBCustomError::SQL_EXECUTE_FAIL;
-        }
+        if (dbBind.Execute() == false)
+            throw DBError(__func__, "쿼리 실행 실패");
     }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
 }
 
-bool ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data, Protocol::ItemType itemType)
+void ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data, Protocol::ItemType itemType)
 {
     const int PARAMS = 4;
     const int COLS = 0;
@@ -482,71 +406,61 @@ bool ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data,
 
     const WCHAR* table = GetStackableItemTable(itemType);
     if (table == nullptr)
-        return false;
+        throw DBError(__func__, "쌓이는 아이템 종류가 아니다");
 
 
-    try
+    // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
+    optional<vector<StackableItemSaveRow>> rows = ItemSaveRows::BuildStackableRows(data, itemType);
+    if (rows.has_value() == false)
+        throw DBError(__func__, "가방의 더티 플래그가 없다");
+
+    // 해당 캐릭터의 소비 아이템이나 기타 아이템 정보를 갱신한다.
+    // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다.
+    // MERGE는 세미콜론으로 끝나야 한다.
+    const wstring query = wstring(LR"SQL(
+        -- 1. 임시 테이블 생성
+        SELECT *
+        INTO #TempTable
+        FROM )SQL") + table + LR"SQL(
+        WHERE 1 = 0;
+
+        -- 2. 임시 테이블에 INSERT
+        INSERT INTO #TempTable (character_id, slot_id, template_id, count)
+        VALUES (?, ?, ?, ?);
+
+        -- 3. MERGE 진행
+        MERGE INTO )SQL" + table + LR"SQL( AS T
+        USING #TempTable AS S
+        ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
+
+        -- 3-1. 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
+        WHEN MATCHED AND S.template_id = 0 THEN
+            DELETE
+
+        -- 3-2. 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
+        WHEN MATCHED THEN
+            UPDATE SET
+                template_id = S.template_id,
+                count = S.count
+
+        -- 3-3. DB 테이블에 행이 없으면서 #TempTable의 template_id > 0 -> INSERT
+        WHEN NOT MATCHED BY TARGET AND S.template_id > 0 THEN
+            INSERT (character_id, slot_id, template_id, count)
+            VALUES (S.character_id, S.slot_id, S.template_id, S.count);
+
+        -- 4. 임시 테이블 삭제
+        DROP TABLE #TempTable;
+    )SQL";
+    DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
+
+    BindObject bindObject(dbBind, rows.value());
+
+    int32 rowCount = static_cast<int32>(rows->size());
+    if (rowCount > 0)
     {
-        // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
-        optional<vector<StackableItemSaveRow>> rows = ItemSaveRows::BuildStackableRows(data, itemType);
-        if (rows.has_value() == false)
-            throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
+        conn.SetParamSetSize(rowCount);
 
-        // 해당 캐릭터의 소비 아이템이나 기타 아이템 정보를 갱신한다.
-        // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다.
-        // MERGE는 세미콜론으로 끝나야 한다.
-        const wstring query = wstring(LR"SQL(
-            -- 1. 임시 테이블 생성
-            SELECT *
-            INTO #TempTable
-            FROM )SQL") + table + LR"SQL(
-            WHERE 1 = 0;
-
-            -- 2. 임시 테이블에 INSERT
-            INSERT INTO #TempTable (character_id, slot_id, template_id, count)
-            VALUES (?, ?, ?, ?);
-
-            -- 3. MERGE 진행
-            MERGE INTO )SQL" + table + LR"SQL( AS T
-            USING #TempTable AS S
-            ON (T.character_id = S.character_id AND T.slot_id = S.slot_id)
-
-            -- 3-1. 매칭된 행이면서 #TempTable의 template_id = 0 -> DELETE
-            WHEN MATCHED AND S.template_id = 0 THEN
-                DELETE
-
-            -- 3-2. 매칭된 행이면서 #TempTable의 template_id > 0 -> UPDATE
-            WHEN MATCHED THEN
-                UPDATE SET
-                    template_id = S.template_id,
-                    count = S.count
-
-            -- 3-3. DB 테이블에 행이 없으면서 #TempTable의 template_id > 0 -> INSERT
-            WHEN NOT MATCHED BY TARGET AND S.template_id > 0 THEN
-                INSERT (character_id, slot_id, template_id, count)
-                VALUES (S.character_id, S.slot_id, S.template_id, S.count);
-
-            -- 4. 임시 테이블 삭제
-            DROP TABLE #TempTable;
-        )SQL";
-        DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
-
-        BindObject bindObject(dbBind, rows.value());
-
-        int32 rowCount = static_cast<int32>(rows->size());
-        if (rowCount > 0)
-        {
-            conn.SetParamSetSize(rowCount);
-
-            if (dbBind.Execute() == false)
-                throw DBCustomError::SQL_EXECUTE_FAIL;
-        }
+        if (dbBind.Execute() == false)
+            throw DBError(__func__, "쿼리 실행 실패");
     }
-    catch (DBCustomError error)
-    {
-        PrintDBErrorLog(error);
-        return false;
-    }
-
-    return true;
 }
