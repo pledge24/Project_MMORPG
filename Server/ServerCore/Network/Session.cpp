@@ -3,6 +3,8 @@
 #include "ServerCore/Network/SocketUtil.h"
 #include "ServerCore/Network/NetworkEvent.h"
 #include "ServerCore/Network/Service.h"
+#include "ServerCore/Job/JobQueue.h"
+#include "ServerCore/Job/JobTimer.h"
 
 /*---------------------
 		Session
@@ -15,7 +17,7 @@ Session::Session() : _recvBuffer(BUFFER_SIZE)
 
 Session::~Session()
 {
-	SocketUtil::Close(_socket);
+	CloseSocket();
 }
 
 HANDLE Session::GetHandle()
@@ -66,7 +68,31 @@ void Session::Disconnect(const char* cause)
 
 	GLogger->Info("연결을 끊는다: {}", cause);
 
-	RegisterDisconnect();
+	// 끊기를 걸지 못하면 완료 통지가 오지 않는다. 소켓을 닫고 끊기 처리를 여기서 한다.
+	if (RegisterDisconnect() == false)
+	{
+		GLogger->Warning("끊기를 걸지 못해 소켓을 닫는다(오류 {})", ::WSAGetLastError());
+		CloseSocket();
+		ProcessDisconnect();
+		return;
+	}
+
+	// 상대가 소켓을 닫지 않으면 DisconnectEx가 끝나지 않는다. 상한이 지나도 끝나지 않았으면 소켓을 닫는다.
+	// 걸려 있던 DisconnectEx가 오류로 완료되어 ProcessDisconnect로 간다.
+	shared_ptr<Service> service = GetService();
+	if (service == nullptr)
+		return;
+
+	weak_ptr<Session> weakSelf = GetSessionRef();
+	GJobTimer->Reserve(DISCONNECT_TIMEOUT_MS, service->GetTimerQueue(), make_shared<Job>([weakSelf]()
+		{
+			SessionRef self = weakSelf.lock();
+			if (self == nullptr || self->_disconnectCompleted.load())
+				return;
+
+			GLogger->Warning("끊기가 {}ms 안에 끝나지 않아 소켓을 닫는다", static_cast<int32>(DISCONNECT_TIMEOUT_MS));
+			self->CloseSocket();
+		}));
 }
 
 void Session::DisconnectAfterSend(const char* cause)
@@ -268,6 +294,7 @@ void Session::ProcessConnect()
 void Session::ProcessDisconnect()
 {
 	_disconnectEvent.owner = nullptr; // RELEASE_REF
+	_disconnectCompleted.store(true);
 
 	OnDisconnected();
 	GetService()->RemoveSession(GetSessionRef());
@@ -350,6 +377,14 @@ void Session::HandleError(int32 errorCode)
 		GLogger->Warning("소켓 I/O를 걸지 못해 연결을 끊는다(오류 {})", errorCode);
 
 	Disconnect("HandleError");
+}
+
+void Session::CloseSocket()
+{
+	if (_socketClosed.exchange(true))
+		return;
+
+	::closesocket(_socket);
 }
 
 /*---------------------

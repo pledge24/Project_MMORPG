@@ -50,6 +50,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `PacketDispatch` | 2 | 핸들러 테이블 밖의 id(65535)를 디스패치하지 않고 거절 · 헤더보다 짧은 입력(0~3바이트)을 디스패치하지 않고 거절 |
 | `InventoryTest` | 12 | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
+| `SessionDisconnectTest` | 1 | 서버가 건 끊기. 받기만 하고 소켓을 닫지 않는 루프백 상대도 상한 안에 `OnDisconnected`까지 가고 세션 집합에서 빠짐 |
 | `SaveGateTest` | 9 | 접속 종료 저장 대기. 대기 없는 계정은 맡지 않음 · 해제가 맡긴 불러오기를 돌려줌 · 두 번째 맡기기 거절 · 두 번 걸어도 한 번에 풀림 · 만료가 입장만 돌려주고 대기는 남김 · 해제 뒤 늦게 온 만료와 지난 토큰의 만료 무시 · 계정별 분리 |
 | `ProgressCoordinatorTest` | 14 | 저장 대기와 입장 불러오기의 순서. 대기 없는 입장은 곧바로 불러옴 · 접속 종료 중 재입장은 저장 뒤에 불러옴 · 중복 로그인은 밀려난 세션의 저장을 기다림 · 대기 만료는 입장 거절 · 기다리는 중의 두 번째 입장 거절 · 실패한 저장도 대기를 풂 · 룸에 들어간 적 없는 플레이어는 저장하지 않음 · 룸 이동 중 끊긴 플레이어는 들어갈 룸이 저장하고, 들어가지 못해도 저장 · 첫 룸 입장 전에 끊긴 플레이어는 재입장 뒤에 저장되지 않음 · 만료 뒤의 입장도 저장을 기다림 · 끊긴 세션을 늦게 밀어내도 입장이 막히지 않음(저장 전, 저장 뒤, 룸 입장 전) |
 | `AccessToken` | 4 | Redis 토큰 값 해석. 계정 번호와 이름을 읽음 · 형식이 틀린 값, 빠진 키, 틀린 타입은 예외 없이 거절 |
@@ -144,6 +145,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | DB 연결 | 존재. `DBConnection`의 가상 함수. 테스트는 `GameServerTests/FakeDBConnection.h`를 DAO와 `ProgressStorage`에 넘긴다. 결과 행과 실행 실패를 미리 넣고, 바인딩한 파라미터와 트랜잭션 호출을 기록한다 |
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
 | 액세스 토큰 값 | 존재. `AccessToken::ParsePayload`. Redis 읽기와 지우기, 밀어내기는 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
+| 세션 끊기 | 존재. 루프백(127.0.0.1)의 고정 포트 47913에 `ServerService`를 띄우고 Winsock 소켓으로 접속한다. 테스트가 IOCP 디스패치, 예약 잡 분배, 글로벌 큐 소비를 직접 돈다. 그 포트를 다른 프로세스가 쓰고 있으면 준비 단계에서 실패한다 |
 | 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |
 | 세션 송수신 | 존재. `Session::Send`가 가상이다. 테스트는 `GameServerTests/RecordingSession.h`로 보낸 패킷을 기록하고, `Receive`로 받은 패킷을 흉내 낸다 |

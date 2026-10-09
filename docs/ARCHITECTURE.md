@@ -105,6 +105,9 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
 `S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).
 상대가 받지 않아 송신이 끝나지 않으면 1초 뒤에 끊는다. 그 세션의 저장은 아래의 접속 종료 경로를 탄다.
+서버가 건 끊기(`DisconnectEx`)는 상대가 소켓을 닫아야 끝나므로, `Session::DISCONNECT_TIMEOUT_MS`(1초) 안에 끝나지 않으면
+세션이 소켓을 닫아 `OnDisconnected`까지 가게 한다. 이 상한은 서비스의 타이머 큐로 예약하고 워커의 `JobTimer` 분배로 돈다.
+— 끊기가 끝나지 않으면 저장 대기가 풀리지 않아 그 계정은 서버를 다시 띄울 때까지 입장하지 못한다.
 
 **Architecture Invariant:** 캐릭터를 다루는 요청(입장, 삭제)은 그 계정이 가진 캐릭터에만 동작한다.
 클라이언트가 보낸 `character_id`를 믿지 않고, SQL이 세션의 `user_id`를 함께 대조한다. 생성 요청은

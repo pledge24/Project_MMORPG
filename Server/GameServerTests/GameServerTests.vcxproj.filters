@@ -80,6 +80,7 @@
       <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="SessionDisconnectTests.cpp" />
     <ClCompile Include="..\GameServer\Network\AccessToken.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>

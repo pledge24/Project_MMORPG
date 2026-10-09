@@ -48,8 +48,9 @@ bool IocpCore::Dispatch(uint32 timeoutMs)
 	}
 
 	// I/O가 실패한 완료다. 처리는 owner가 오류 코드를 보고 정한다.
-	// 상대가 끊었거나(64) 소켓을 닫아 취소된(995) I/O는 흔하므로 로그를 남기지 않는다.
-	if (errorCode != ERROR_NETNAME_DELETED && errorCode != ERROR_OPERATION_ABORTED)
+	// 상대가 끊었거나(64) 소켓을 닫아 취소된(995, 1236) I/O는 흔하므로 로그를 남기지 않는다.
+	// 1236은 끊기 상한이 지나 세션이 소켓을 닫았을 때 걸려 있던 DisconnectEx가 받는다.
+	if (errorCode != ERROR_NETNAME_DELETED && errorCode != ERROR_OPERATION_ABORTED && errorCode != ERROR_CONNECTION_ABORTED)
 		GLogger->Warning("I/O가 오류 {}로 끝났다", errorCode);
 
 	IocpObjectRef iocpObject = networkEvent->owner;

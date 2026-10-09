@@ -58,12 +58,15 @@ public:
 	ServiceType			GetServiceType() { return _type; }
 	NetAddress			GetNetAddress() { return _netAddress; }
 	IocpCoreRef&		GetIocpCore() { return _iocpCore; }
+	/** 세션의 시간 제한(끊기 상한)을 예약하는 큐. JobTimer는 큐를 weak_ptr로 쥐므로 서비스가 소유한다. */
+	JobQueueRef			GetTimerQueue() { return _timerQueue; }
 
 protected:
 	MAKE_LOCK
 	ServiceType			_type;
 	NetAddress			_netAddress = {};
 	IocpCoreRef			_iocpCore;
+	JobQueueRef			_timerQueue;
 
 	set<SessionRef>		_sessions;
 	int32				_sessionCount = 0;

@@ -2,13 +2,14 @@
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/Session.h"
 #include "ServerCore/Network/Listener.h"
+#include "ServerCore/Job/JobQueue.h"
 
 /*-------------------
 		Service
 --------------------*/
 
 Service::Service(ServiceType type, NetAddress address, IocpCoreRef core, SessionFactory factory, int32 maxSessionCount)
-	: _type(type), _netAddress(address), _iocpCore(core), _sessionFactory(factory), _maxSessionCount(maxSessionCount)
+	: _type(type), _netAddress(address), _iocpCore(core), _timerQueue(make_shared<JobQueue>()), _sessionFactory(factory), _maxSessionCount(maxSessionCount)
 {
 
 }

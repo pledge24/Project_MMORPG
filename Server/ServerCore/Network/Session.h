@@ -26,6 +26,8 @@ class Session : public IocpObject
 	{
 		/** 수신 버퍼 한 청크의 크기(64KB). 수신 버퍼 전체는 이 값의 10배다. */
 		BUFFER_SIZE = 0x10000,
+		/** 끊기를 건 뒤 이 시간(ms)이 지나도 끝나지 않으면 소켓을 닫아 끝낸다. */
+		DISCONNECT_TIMEOUT_MS = 1000,
 	};
 
 public:
@@ -42,9 +44,11 @@ public:
 	/** ConnectEx로 서비스 주소에 접속을 건다. ClientService에서만 쓴다. */
 	bool					Connect();
 	/**
-	 * DisconnectEx로 연결을 끊는다. 
+	 * DisconnectEx로 연결을 끊는다.
 	 * 딱 한 번만 실행되며, 아직 보내지 못한 송신 큐의 패킷은 버려진다.
 	 * 끊기가 완료되면 OnDisconnected가 불리고 서비스의 세션 집합에서 빠진다.
+	 * DisconnectEx는 상대가 소켓을 닫아야 끝난다. DISCONNECT_TIMEOUT_MS 안에 끝나지 않으면 소켓을 닫아 끝낸다.
+	 * 이 상한은 서비스의 타이머 큐로 예약하므로 워커가 JobTimer를 분배해야 돈다.
 	 */
 	void					Disconnect(const char* cause);
 	/**
@@ -88,6 +92,11 @@ private:
 
 	/** 수신이나 송신을 걸지 못했을 때 부른다. 오류 종류와 무관하게 끊는다. 걸리지 않은 I/O는 다시 걸리지 않기 때문이다. */
 	void					HandleError(int32 errorCode);
+	/**
+	 * 소켓을 한 번만 닫는다. 끊기 상한의 타이머와 소멸자가 부른다. 걸려 있던 I/O는 오류로 완료된다.
+	 * _socket 값은 그대로 둔다. 다른 워커가 같은 변수를 읽고 있을 수 있다.
+	 */
+	void					CloseSocket();
 
 protected:
 	//~ 완료 이벤트 핸들러(컨텐츠 코드에서 재정의)
@@ -106,7 +115,10 @@ private:
 	weak_ptr<Service>		_service;
 	NetAddress				_netAddress;
 	SOCKET					_socket = INVALID_SOCKET;
+	atomic<bool>			_socketClosed = false;
 	atomic<bool>			_connected = false;
+	/** ProcessDisconnect가 세운다. 끊기 상한의 타이머가 이미 끝난 끊기에 경고를 남기지 않도록 본다. */
+	atomic<bool>			_disconnectCompleted = false;
 
 private:
 	//~ recvEvent 관련
@@ -120,7 +132,7 @@ private:
 	const char*				_disconnectAfterSendCause = nullptr;
 
 private:
-	//~ IocpEvent 재사용
+	//~ NetworkEvent 재사용
 	ConnectEvent			_connectEvent;
 	DisconnectEvent			_disconnectEvent;
 	RecvEvent				_recvEvent;

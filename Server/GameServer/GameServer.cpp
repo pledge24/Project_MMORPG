@@ -16,6 +16,7 @@ enum
 namespace
 {
     // 접속 중인 세션이 모두 끊기기를 기다리는 상한(ms). 창 닫기 신호는 약 5초 뒤에 프로세스를 끝내므로 그 안에 저장까지 마친다.
+    // 상대가 소켓을 닫지 않는 세션도 Session::DISCONNECT_TIMEOUT_MS(1초) 뒤에 끊기가 끝나므로 그보다 길게 둔다.
     constexpr uint64 SESSION_CLOSE_TIMEOUT_MS = 2000;
     // 룸 큐 하나가 비기를 기다리는 상한(ms).
     constexpr uint64 ROOM_DRAIN_TIMEOUT_MS = 1000;
