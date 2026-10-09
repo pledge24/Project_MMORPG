@@ -166,13 +166,14 @@ TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
 // 공격을 알린 뒤 0.2초 안에 사거리를 빠져나간 플레이어도 맞았다.
 TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
 {
-    EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
+    // 한 번의 이동이 서버의 이동 판정(MoveValidation)에 걸리지 않도록 사거리 경계 가까이에서 시작한다.
+    EnterPlayerAt(ATTACK_RANGE - 20.f, 0.f);
     room->Tick(STATE_UPDATE_TIME);
     ASSERT_EQ(monster->GetAI().GetState(), MonsterState::Attacking);
     room->Tick(2.5f);
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->mutable_pos()->set_x(ATTACK_RANGE + 250.f);
+    movePkt.mutable_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
     room->C_HandleMove(movePkt, player);
     room->Tick(STATE_UPDATE_TIME);
 

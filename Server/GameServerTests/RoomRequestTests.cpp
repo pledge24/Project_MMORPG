@@ -114,6 +114,19 @@ protected:
     PlayerRef player;
 };
 
+// TD-045: 클라이언트가 보낸 위치를 그대로 썼다. 조작한 클라이언트는 룸 안 어디로든 순간이동했다.
+// 판정 기준은 MoveValidationTests가 덮는다. 여기서는 룸이 그 판정으로 패킷을 버리는지만 본다.
+TEST_F(RoomRequestTest, MoveFartherThanAllowedIsIgnored)
+{
+    const float startX = player->GetPosInfo().pos().x();
+
+    Protocol::C_MOVE movePkt;
+    movePkt.mutable_info()->mutable_pos()->set_x(startX + 3000.f);
+    room->C_HandleMove(movePkt, player);
+
+    EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), startX) << "한 번에 허용 거리를 넘는 이동은 버린다";
+}
+
 // TD-007: 이동은 보낸 사람의 위치만 바꾼다. 패킷의 엔티티 번호로 대상을 찾으면 같은 룸의 다른 플레이어를 옮길 수 있다.
 TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
 {
@@ -130,11 +143,11 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
 
     Protocol::C_MOVE movePkt;
     movePkt.mutable_info()->set_entity_id(victim->GetEntityId());
-    movePkt.mutable_info()->mutable_pos()->set_x(victimX + 777.f);
+    movePkt.mutable_info()->mutable_pos()->set_x(victimX + 30.f);
     room->C_HandleMove(movePkt, player);
 
     EXPECT_FLOAT_EQ(victim->GetPosInfo().pos().x(), victimX) << "다른 플레이어의 위치가 바뀌면 그 계정의 진행이 손상된다";
-    EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), victimX + 777.f);
+    EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), victimX + 30.f);
     EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
 }
 

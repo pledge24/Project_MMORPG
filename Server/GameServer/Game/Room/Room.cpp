@@ -3,6 +3,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
 #include "Game/Combat/Combat.h"
+#include "Game/Room/MoveValidation.h"
 #include "Network/ProgressCoordinator.h"
 
 namespace
@@ -444,10 +445,18 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
     if (Contains(playerId) == false)
         return;
 
-    // 적용. 위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것으로 둔다.
-    Protocol::PosInfo posInfo = pkt.info();
-    posInfo.set_entity_id(playerId);
-    player->SetPosInfo(posInfo);
+    // 직전에 받아들인 위치에서 흐른 시간으로 갈 수 있는 곳인지 본다. 어기면 버리고, 서버의 위치는 그대로 둔다.
+    const uint64 now = ::GetTickCount64();
+    const vector2D from = MathUtil::PosInfoToVector2D(&player->GetPosInfo());
+    const vector2D to = MathUtil::PosInfoToVector2D(&pkt.info());
+    if (optional<string> rejection = MoveValidation::Validate(from, to, now - player->GetLastPositionTick(),
+        MoveValidation::Bounds{ _roomMinX, _roomMaxX, _roomMinY, _roomMaxY }))
+    {
+        GLogger->Warning("플레이어 {}의 이동을 버린다: {}", playerId, rejection.value());
+        return;
+    }
+
+    player->ApplyMove(pkt.info(), now);
 
     // 이동 사실을 알린다(본인 빼고).
     Protocol::S_MOVE movePkt;

@@ -91,6 +91,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
@@ -192,6 +193,9 @@
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp">
+      <Filter>GameServer\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp">

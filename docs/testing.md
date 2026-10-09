@@ -82,7 +82,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `RandomTest` | 2 | 정수 범위 난수의 같은 경계와 최대값 포함 |
 | `RoomAxisTest` | 1 | 룸의 X 범위는 깊이, Y 범위는 폭으로 계산 |
 | `RoomLocationTest` | 2 | 룸 안 무작위 위치가 여백 안에 머묾 · 여백이 없으면 룸 전체 |
-| `RoomRequestTest` | 6 | 룸 큐의 요청 처리. 이동은 보낸 사람의 위치만 바꿈 · 처음 입장한 플레이어는 자기 스폰을 한 번 받음 · 룸을 떠난 플레이어의 아이템 요청 무시 · 세션이 사라진 플레이어의 착용과 해제는 응답 없이 끝남 · 사망한 채 끊긴 플레이어는 마을 리스폰 상태로 저장 · 첫 입장 전 다른 룸으로의 맵 입장 거절 |
+| `RoomRequestTest` | 7 | 룸 큐의 요청 처리. 이동은 보낸 사람의 위치만 바꿈 · 허용 거리를 넘는 이동은 버림 · 처음 입장한 플레이어는 자기 스폰을 한 번 받음 · 룸을 떠난 플레이어의 아이템 요청 무시 · 세션이 사라진 플레이어의 착용과 해제는 응답 없이 끝남 · 사망한 채 끊긴 플레이어는 마을 리스폰 상태로 저장 · 첫 입장 전 다른 룸으로의 맵 입장 거절 |
+| `MoveValidation` | 5 | 이동 위치 판정. 허용 거리 안은 통과하고 넘으면 거절 · 오래 서 있어도 경과 시간은 상한에서 자름 · 평면 거리로 잼 · 룸 경계 밖 거절(경계 위는 안쪽) |
 | `RoomTransferTest` | 12 | 룸 이동 판정. 첫 입장 · 다른 맵의 다른 룸 거절 · 같은 맵 이동에 포털 필요 · 포털 목적지 · 사망한 플레이어의 마을 리스폰만 허용 · 맵 표에서 찾는 마을 리스폰 지점 |
 | `RoomTransferMapTest` | 6 | 위치를 보는 룸 이동 판정. 포털 반경 경계와 높이 무시 · 반경 밖 포털 이동 거절 · 첫 맵 입장은 불러온 룸으로만 · 맵 간 이동은 다른 맵으로 가는 포털 반경 안에서만 · 맵 번호 대조 |
 | `ServerConfigTest` | 7 | 서버 설정 로더. 환경 변수가 없을 때 기본값 · 환경 변수가 각 값을 덮음 · 연결 수의 기본값은 DB 스레드 수를 따라감 · 연결 수가 DB 스레드 수보다 작으면 거절 · IPv4가 아닌 바인드 주소 거절 · 잘못된 개수와 포트는 기본값 |
@@ -139,6 +140,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 전투 판정 | 존재. `Combat`(`Game/Combat/`). 룸 대조와 패킷 전송은 `Room`에 있다 |
 | 룸 틱 | 존재. `Room::Tick(deltaTime)`. 테스트는 타이머를 기다리지 않고 시간을 넘긴다. 틱 예약(`RunScheduledTick`)은 테스트하지 않는다 |
 | 몬스터 AI | 존재. `MonsterAIComponent`의 `GetState`와 `GetTarget`, 그리고 룸 틱 뒤의 엔티티 상태. 몬스터는 `Room::SpawnEntity`로 넣는다 |
+| 이동 위치 판정 | 존재. `MoveValidation::Validate`. 기준 시각과 위치의 보관, 패킷 버리기는 `Room::C_HandleMove`와 `Player`에 있다 |
 | 룸 이동 판정 | 존재. `RoomTransfer`의 자유 함수. 퇴장과 입장, 목적지 큐로 넘기기는 `Room`에 있다 |
 | 기획표 검증과 변환 | 존재. `GamedataParser::Parse`와 `Gamedata::Load`. 파일 읽기는 `Gamedata::LoadAllGamedata`에 있고 테스트하지 않는다 |
 | 기획 데이터 주입 | 존재. `Gamedata::Install`. 테스트는 전역 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 설치한다 |

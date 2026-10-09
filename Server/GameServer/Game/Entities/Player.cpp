@@ -395,6 +395,16 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
         _posInfo->set_yaw(0.f);
         _posInfo->set_state(Protocol::MOVE_STATE_IDLE);
     }
+
+    _lastPositionTick = ::GetTickCount64();
+}
+
+void Player::ApplyMove(const Protocol::PosInfo& posInfo, uint64 now)
+{
+    // 위치의 엔티티 id는 패킷 값이 아니라 이 플레이어의 것으로 둔다.
+    _posInfo->CopyFrom(posInfo);
+    _posInfo->set_entity_id(GetEntityId());
+    _lastPositionTick = now;
 }
 
 void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)

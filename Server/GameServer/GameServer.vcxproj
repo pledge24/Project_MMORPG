@@ -214,6 +214,7 @@
     <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomTransfer.h" />
+    <ClInclude Include="Game\Room\MoveValidation.h" />
     <ClInclude Include="Game\Room\CellMatrix.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
     <ClInclude Include="DB\CharacterListDAO.h" />
@@ -280,6 +281,7 @@
     <ClCompile Include="Game\Data\GamedataParser.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />
     <ClCompile Include="Game\Room\RoomTransfer.cpp" />
+    <ClCompile Include="Game\Room\MoveValidation.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
     <ClCompile Include="DB\CharacterListDAO.cpp" />
