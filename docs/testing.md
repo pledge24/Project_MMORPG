@@ -63,6 +63,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `GameSessionManagerTest` | 6 | 계정별 세션 등록. 같은 계정의 새 로그인이 밀어낸 세션 반환 · 밀려난 세션 제거가 새 등록을 지우지 않음 · 다른 계정끼리 밀어내지 않음 |
 | `GamedataParserTest` | 19 | 기획표 검증과 변환. 행이 템플릿으로 바뀜(아이템 종류, 장비 부위, 착용 조건, 재사용 대기 ms, 최대 레벨, 마을, 맵 번호, 포털 출발 위치와 반경) · 틀린 행의 파일·행 번호·필드를 알림(누락, 타입, 중첩 필드, 아이템 종류가 아닌 itemType, 부위 없는 장비, 직업이 아닌 착용 조건, maxStack, 보상 최솟값, 중복 templateId, 끊긴 레벨, 0 이하의 포털 반경) · 마을이 하나가 아님 · 없는 포털 목적지와 스폰 몬스터 · 실패한 불러오기가 이전 표를 남김 · 저장소의 실제 기획표 통과 |
 | `GearEquipTest` | 8 | 장비 착용과 해제가 알리는 장비 종류 · 착용과 해제가 다시 계산해 싣는 스탯 · HP가 가득 찬 채 벗은 뒤의 저장 사본이 다음 입장을 통과 · 요구 레벨과 요구 직업 · DB에서 불러온 장착 장비가 스탯을 건드리지 않음 |
+| `JobTimerTest` | 2 | 예약 잡 분배. 만기 잡을 실행하지 않고 글로벌 큐로 넘김 · 만기 전 잡은 남김 |
 | `ItemDAOTest` | 1 | 아이템 UID 최댓값을 int64로 읽음(가짜 연결) |
 | `ItemSaveRowsTest` | 8 | 저장할 아이템 행 생성. 더티 칸만 행이 됨 · 비운 칸은 템플릿 0 · 기타 칸의 플래그 · 장비는 쌓이지 않음 · 착용 여부 · 플래그 누락은 실패 |
 | `LoggerTest` | 5 | 로그 한 줄의 형식. 시각·레벨·스레드 표시와 밀리초 세 자리 · 레벨마다 다섯 칸 표시 · 쓰는 스레드의 id와 줄바꿈 · 여러 스레드가 동시에 써도 줄이 섞이지 않음 |
@@ -141,6 +142,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 기획 데이터 주입 | 존재. `Gamedata::Install`. 테스트는 전역 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 설치한다 |
 | DB 연결 | 존재. `DBConnection`의 가상 함수. 테스트는 `GameServerTests/FakeDBConnection.h`를 DAO와 `ProgressStorage`에 넘긴다. 결과 행과 실행 실패를 미리 넣고, 바인딩한 파라미터와 트랜잭션 호출을 기록한다 |
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
+| 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |
 | 세션 송수신 | 존재. `Session::Send`가 가상이다. 테스트는 `GameServerTests/RecordingSession.h`로 보낸 패킷을 기록하고, `Receive`로 받은 패킷을 흉내 낸다 |
 | 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호, 소지품(인벤토리와 장비 컴포넌트)을 직접 바꾸는 길은 이것 하나다. Player는 컴포넌트를 읽기 전용으로만 연다 |
