@@ -3,6 +3,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
 #include "Game/Combat/Combat.h"
+#include "Network/ProgressCoordinator.h"
 
 namespace
 {
@@ -151,7 +152,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
         // 그래서 둘 중 적어도 한쪽은 상대를 본다. 둘 다 보면 이 룸 큐에서 두 번 돌고, 두 번째는 퇴장에 실패해 저장하지 않는다.
         if (enterPlayer->IsDisconnected())
         {
-            GameSession::LeaveGame(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
+            GProgressCoordinator->LeaveRoomAndSave(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
             return false;
         }
 

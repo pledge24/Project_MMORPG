@@ -74,6 +74,9 @@
     <ClCompile Include="Network\GameSessionManager.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\ProgressCoordinator.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Network\SaveGate.cpp">
       <Filter>Network</Filter>
     </ClCompile>
@@ -194,6 +197,9 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\GameSessionManager.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ProgressCoordinator.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\SaveGate.h">

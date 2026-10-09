@@ -184,6 +184,7 @@
     <ClInclude Include="Core\Global.h" />
     <ClInclude Include="Network\GameSession.h" />
     <ClInclude Include="Network\GameSessionManager.h" />
+    <ClInclude Include="Network\ProgressCoordinator.h" />
     <ClInclude Include="Network\SaveGate.h" />
     <ClInclude Include="Network\ServerPacketHandler.h" />
     <ClInclude Include="Protocol\Enum.pb.h" />
@@ -241,6 +242,7 @@
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp" />
     <ClCompile Include="Network\GameSessionManager.cpp" />
+    <ClCompile Include="Network\ProgressCoordinator.cpp" />
     <ClCompile Include="Network\SaveGate.cpp" />
     <ClCompile Include="Network\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">
