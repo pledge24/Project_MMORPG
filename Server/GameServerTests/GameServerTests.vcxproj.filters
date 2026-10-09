@@ -56,6 +56,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\GameServer\Network\ItemRequests.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="ItemDAOTests.cpp" />

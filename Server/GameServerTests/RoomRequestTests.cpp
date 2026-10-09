@@ -3,6 +3,7 @@
 #include "Game/Room/Room.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
+#include "Network/ItemRequests.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -105,7 +106,7 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
 {
     Protocol::C_EQUIP_GEAR equipPkt;
     *equipPkt.mutable_slot() = SwordSlot();
-    room->C_HandleEquipGear(equipPkt, player);
+    ItemRequests::HandleEquipGear(*room, player, equipPkt);
 
     Protocol::C_UNEQUIP_GEAR unequipPkt;
     Protocol::Slot equippedSlot;
@@ -114,7 +115,7 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
     equippedSlot.mutable_item()->set_template_id(SWORD_TEMPLATE_ID);
     equippedSlot.mutable_item()->set_item_uid(500);
     *unequipPkt.mutable_slot() = equippedSlot;
-    room->C_HandleUnequipGear(unequipPkt, player);
+    ItemRequests::HandleUnequipGear(*room, player, unequipPkt);
 
     SUCCEED() << "세션이 없어도 응답을 건너뛰고 끝나야 한다";
 }

@@ -52,6 +52,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Network\ItemRequests.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="DB\DBWorker.cpp">
       <Filter>DB</Filter>
     </ClCompile>
@@ -160,6 +163,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Network\ItemRequests.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Network\PacketSend.h">
       <Filter>Network</Filter>
     </ClInclude>

@@ -5,6 +5,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
+#include "Network/ItemRequests.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Game/Characters/CharacterCreation.h"
@@ -383,7 +384,23 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
         return false;
     }
 
-    room->DoAsync(&Room::C_HandleEnterMap, pkt, player);
+    // 룸 상태를 쓰지 않지만, 여기서 기록한 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
+    room->DoAsync([pkt, player]()
+        {
+            // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
+            GameSessionRef session = player->_session.lock();
+            if (session == nullptr)
+                return;
+
+            // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
+            player->OnEnterMap(pkt.map_id(), pkt.room_id());
+
+            Protocol::S_ENTER_MAP enterMapPkt;
+            enterMapPkt.set_success(true);
+            enterMapPkt.set_map_id(pkt.map_id());
+            enterMapPkt.set_room_id(pkt.room_id());
+            SendPacket(session, enterMapPkt);
+        });
 
     return true;
 }
@@ -434,7 +451,12 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            room->C_HandleChat(pkt, player);
+            // 같은 Room의 모든 플레이어에게 그대로 중계한다(본인 포함).
+            Protocol::S_CHAT chatPkt;
+            chatPkt.set_entity_id(player->GetEntityId());
+            chatPkt.set_msg(pkt.msg());
+
+            room->Broadcast(ServerPacketHandler::MakeSerializedPacket(chatPkt));
         });
 }
 
@@ -448,17 +470,17 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef&, const PlayerRef& player)
         {
-            room->C_HandleBuyItem(pkt, player);
+            ItemRequests::HandleBuyItem(player, pkt);
         });
 }
 
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef&, const PlayerRef& player)
         {
-            room->C_HandleSellItem(pkt, player);
+            ItemRequests::HandleSellItem(player, pkt);
         });
 }
 
@@ -466,7 +488,7 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            room->C_HandleEquipGear(pkt, player);
+            ItemRequests::HandleEquipGear(*room, player, pkt);
         });
 }
 
@@ -475,15 +497,15 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            room->C_HandleUnequipGear(pkt, player);
+            ItemRequests::HandleUnequipGear(*room, player, pkt);
         });
 }
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef&, const PlayerRef& player)
         {
-            room->C_HandleUseItem(pkt, player);
+            ItemRequests::HandleUseItem(player, pkt);
         });
 }
 
