@@ -88,8 +88,7 @@ void Player::Start()
 
 void Player::Tick(float deltaTime)
 {
-    Creature::Tick(deltaTime);
-
+    // 플레이어는 틱을 돌리지 않는다. Creature::Tick은 다음 틱을 예약하므로 부르지 않는다.
     _inventory->Tick(deltaTime);
     _equipment->Tick(deltaTime);
 }

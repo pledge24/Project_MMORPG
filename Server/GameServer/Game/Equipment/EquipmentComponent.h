@@ -12,7 +12,7 @@ class EquipmentComponent : public EntityComponent
 {
 public:
     /** owner의 _possession에 부위별 빈 슬롯을 만든다. */
-    EquipmentComponent(PlayerRef owner);
+    explicit EquipmentComponent(PlayerRef owner);
     virtual ~EquipmentComponent();
 
     /**
