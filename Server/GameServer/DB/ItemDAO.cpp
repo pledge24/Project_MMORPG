@@ -204,7 +204,7 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
             if (bindObject._isEquipped == false)
                 player->_inventory->AddItem(nullptr, item, 1, bindObject._slotId);
             else
-                player->_equipment->EquipGear(nullptr, nullptr, item, bindObject._slotId);
+                player->_equipment->LoadEquipped(item, bindObject._slotId);
         }
     }
     catch (DBCustomError error)

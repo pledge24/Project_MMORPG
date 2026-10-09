@@ -244,6 +244,9 @@
     <ClInclude Include="Game\Entities\EntityComponent.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Entities\CombatStats.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Inventory\InventoryComponent.h">
       <Filter>Game\Inventory</Filter>
     </ClInclude>

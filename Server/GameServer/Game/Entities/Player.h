@@ -1,6 +1,7 @@
 #pragma once
 #include "Game/Entities/Creature.h"
 #include "Game/Entities/PlayerSaveData.h"
+#include "Game/Entities/CombatStats.h"
 
 class GameSession;
 class Room;
@@ -45,7 +46,7 @@ public:
 
     /**
      * 플레이어 정보를 모두 채운 시점에 호출하는 함수. 언리얼의 FinishSpawning에 대응한다.
-     * 채운 플레이어 정보 검증까지 진행한다. 검증 결과가 맞지 않는다면 false. 
+     * 불러온 스탯을 계산 결과와 대조하고 최종 스탯을 쓴다. 대조 결과가 맞지 않는다면 false.
      */
     bool OnLoaded();
 
@@ -110,8 +111,21 @@ public:
     bool ApplyTownRespawnForSave();
 
 private:
+    //~ 스탯
+    /**
+     * 레벨 표의 기본 스탯에 착용 장비의 증감량을 더한다. 최종 스탯은 이 함수로만 계산한다.
+     * 레벨 표에 없는 직업이나 레벨이면 nullopt.
+     */
+    optional<CombatStats> CalculateFinalStat();
+    /**
+     * 최종 스탯을 다시 계산해 쓴다. 장착, 해제, 입장이 모두 이 함수를 거친다.
+     * 값이 바뀐 스탯을 updatedStats에 싣는다. nullptr이면 싣지 않는다. 계산할 수 없으면 아무것도 바꾸지 않는다.
+     */
+    void RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats);
+    /** 불러온 현재 HP와 MP가 최대치를 넘지 않고 공격력이 계산 결과와 같은지 본다. 어긋나면 사유를 남기고 false. */
+    bool ValidateLoadedStat();
+
     //~ 내부 계산
-    bool CalculateFinalStat();
     void CacheNextLevelUpData();
     /** 다른 플레이어에게 보일 장비 외형 요약을 _playerInfo에 다시 쓴다. */
     void RefreshEquippedGearSummary();

@@ -195,6 +195,7 @@
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
     <ClInclude Include="Game\Entities\EntityComponent.h" />
+    <ClInclude Include="Game\Entities\CombatStats.h" />
     <ClInclude Include="Game\Entities\Monster.h" />
     <ClInclude Include="Game\Entities\Player.h" />
     <ClInclude Include="Game\Entities\PlayerSaveData.h" />
