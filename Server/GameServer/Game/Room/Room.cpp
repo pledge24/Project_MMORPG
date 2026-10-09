@@ -514,8 +514,9 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     }
 
     // 장착한 유저에게만 그대로 전송.
+    // 잡이 기다리는 사이 끊겼으면 세션이 없다. 실패 응답과 같이 확인하고 보낸다.
+    if (SessionRef session = player->_session.lock())
     {
-        SessionRef session = player->_session.lock();
         SEND_PACKET(equipGearPkt)
     }
 
@@ -554,8 +555,9 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     }
 
     // 탈착한 유저에게만 그대로 전송.
+    // 잡이 기다리는 사이 끊겼으면 세션이 없다. 실패 응답과 같이 확인하고 보낸다.
+    if (SessionRef session = player->_session.lock())
     {
-        SessionRef session = player->_session.lock();
         SEND_PACKET(unequipGearPkt)
     }
 

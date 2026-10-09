@@ -97,20 +97,6 @@
 
 # 중간
 
-## TD-006 장비 착용·해제의 성공 응답이 끊긴 세션을 검사하지 않고 보낸다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 531~536줄, 571~576줄 (`C_HandleEquipGear`, `C_HandleUnequipGear`)
-> 등록일: 2026년 10월 5일
-
-두 함수는 실패 응답을 보낼 때 `player->_session.lock()`의 결과를 `if`로 검사한다. 성공 응답을 보낼 때는 같은
-결과를 검사하지 않고 `SEND_PACKET`으로 `session->Send`를 부른다. `Handle_C_EQUIP_GEAR`와 `Handle_C_UNEQUIP_GEAR`는
-세션을 잡에 담지 않고 플레이어만 넘긴다. 그래서 잡이 룸 큐에서 기다리는 사이에 연결이 끊겨 세션이 소멸하면
-`lock()`이 널을 돌려준다. 코드를 읽고 판단했고 실행해서 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 착용이나 해제를 요청한 직후에 연결이 끊기면 룸 잡이 널 포인터를 역참조해 게임 서버가 죽는다.
-
 ## TD-007 이동 요청이 보낸 사람이 아니라 패킷의 엔티티 번호로 플레이어를 찾는다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
 > 위치: `Server/GameServer/Game/Room/Room.cpp` 389~400줄 (`C_HandleMove`) · `Server/GameServer/Network/ServerPacketHandler.cpp` 336~351줄 (`Handle_C_MOVE`)
