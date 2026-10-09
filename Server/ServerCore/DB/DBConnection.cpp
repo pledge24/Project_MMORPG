@@ -116,6 +116,13 @@ void DBConnection::Unbind()
 
     ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0);
     ::SQLSetStmtAttr(_statement, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);
+    SetParamStatusArray(nullptr, nullptr);
+}
+
+void DBConnection::SetParamStatusArray(SQLUSMALLINT* statuses, SQLULEN* processedCount)
+{
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAM_STATUS_PTR, statuses, 0);
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMS_PROCESSED_PTR, processedCount, 0);
 }
 
 void DBConnection::SetParamSetSize(int32& rows)

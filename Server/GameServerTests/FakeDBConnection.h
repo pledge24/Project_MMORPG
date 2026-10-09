@@ -27,6 +27,17 @@ public:
         _results.push_back(Result{ true, {}, -1 });
     }
 
+    /**
+     * 다음 Execute를 배열 파라미터의 일부 행만 실패한 실행으로 만든다. 실제 드라이버(ODBC Driver 17)처럼 Execute는 성공을 돌려주고,
+     * 행별 상태 배열에만 실패가 드러난다. failedRows는 0부터 센 행 번호다.
+     */
+    void QueuePartialParamSetFailure(vector<int32> failedRows)
+    {
+        Result result;
+        result.failedParamRows = std::move(failedRows);
+        _results.push_back(std::move(result));
+    }
+
     /** 다음 Execute가 DBError가 아닌 표준 예외를 던진다. 드라이버나 바인딩 코드가 던지는 경우를 흉내 낸다. */
     void QueueExecuteException()
     {
@@ -61,6 +72,17 @@ public:
         if (_current.raise)
             throw runtime_error("FakeDBConnection이 던진 예외");
 
+        // 드라이버는 실행한 행마다 상태를 쓴다. 실패한 행이 있어도 Execute는 SQL_SUCCESS_WITH_INFO로 성공한다.
+        if (_paramStatuses != nullptr)
+        {
+            for (int32 i = 0; i < _paramSetSize; i++)
+                _paramStatuses[i] = SQL_PARAM_SUCCESS;
+            for (int32 failedRow : _current.failedParamRows)
+                _paramStatuses[failedRow] = SQL_PARAM_ERROR;
+        }
+        if (_processedCount != nullptr)
+            *_processedCount = static_cast<SQLULEN>(_paramSetSize);
+
         return _current.fail == false;
     }
 
@@ -82,8 +104,20 @@ public:
     }
 
     virtual int32 GetRowCount() override { return _current.rowCount; }
-    virtual void Unbind() override { _params.clear(); _columns.clear(); }
-    virtual void SetParamSetSize(int32& rows) override {}
+    virtual void Unbind() override
+    {
+        _params.clear();
+        _columns.clear();
+        _paramSetSize = 1;
+        _paramStatuses = nullptr;
+        _processedCount = nullptr;
+    }
+    virtual void SetParamSetSize(int32& rows) override { _paramSetSize = rows; }
+    virtual void SetParamStatusArray(SQLUSMALLINT* statuses, SQLULEN* processedCount) override
+    {
+        _paramStatuses = statuses;
+        _processedCount = processedCount;
+    }
 
     virtual bool BeginTransaction() override { beginCount++; return true; }
     virtual bool Commit() override { commitCount++; return true; }
@@ -117,6 +151,7 @@ private:
         vector<FakeDBRow> rows;
         int32 rowCount = 1;
         bool raise = false;
+        vector<int32> failedParamRows;
     };
 
     static FakeDBValue Read(const Binding& binding)
@@ -161,4 +196,7 @@ private:
     map<int32, Binding> _columns;
     deque<Result> _results;
     Result _current;
+    int32 _paramSetSize = 1;
+    SQLUSMALLINT* _paramStatuses = nullptr;
+    SQLULEN* _processedCount = nullptr;
 };

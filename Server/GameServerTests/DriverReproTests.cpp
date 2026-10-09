@@ -16,6 +16,10 @@
 
         GameServerTests.exe --gtest_also_run_disabled_tests --gtest_filter=DriverReproTest.*
 
+    2026년 10월 9일 결과(ODBC Driver 17 for SQL Server, LocalDB): 두 경우 모두 SQLExecDirect가 SQL_SUCCESS_WITH_INFO를
+    돌려주고, 처리한 행은 3/3, 두 번째 행의 상태만 SQL_PARAM_ERROR, 대상 테이블에는 두 행이 남았다. 그래서
+    ExecuteParamSet(DB/DAOCommon.h)이 행별 상태를 대조한다. 드라이버를 바꾸면 다시 돌려 본다.
+
     픽스처 결합도: 실제 DB가 필요하다. 결과를 판정하지 않고 출력만 한다.
 ---------------------------------------------------------------*/
 

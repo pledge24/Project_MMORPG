@@ -78,6 +78,6 @@
 - 2026-10-09: #209에서 이슈의 커밋 순서 ①~④를 지키되, TD-032(저장 트랜잭션)는 ③ 「연결 주입과 트랜잭션」 커밋에서 빨강 단계를 거쳐
   고쳤다. 트랜잭션을 거는 일 자체가 그 결함의 수정이라 ⑤로 미루면 ③이 쓰이지 않는 API만 더하게 된다
 - 2026-10-09: #209에서 TD-019의 제목을 「캐릭터 요청이 세션의 로그인 상태를 보지 않는다」로 바꿨다. 입장 줄을 지우고 로그인 줄만 남았다
-- 2026-10-09: #209의 TD-040은 실제 ODBC 드라이버로 재현해야 한다. Claude는 `claude_ro` 연결로만 SQL을 실행하므로 재현을
-  사람에게 넘겼다. `GameServerTests.exe --gtest_also_run_disabled_tests --gtest_filter=DriverReproTest.*`가 세션 임시 테이블만 써서
-  두 경우(INSERT 한 문장, 아이템 저장 모양의 배치)의 반환값과 행별 상태를 출력한다. 결과를 받기 전까지 TD-040은 남는다
+- 2026-10-09: #209의 TD-040은 실제 ODBC 드라이버로 재현해야 해서 사람이 돌렸다. `GameServerTests.exe --gtest_also_run_disabled_tests
+  --gtest_filter=DriverReproTest.*`가 세션 임시 테이블만 써서 INSERT 한 문장과 아이템 저장 모양의 배치를 실행한다. 두 경우 모두
+  SQL_SUCCESS_WITH_INFO, 두 번째 행만 SQL_PARAM_ERROR, 세 행 중 두 행 저장으로 재현됐다. 행별 상태를 대조하도록 고치고 TD-040을 지웠다

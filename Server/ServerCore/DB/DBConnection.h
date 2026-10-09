@@ -48,6 +48,11 @@ public:
 	virtual void	Unbind();
     /** 배열 파라미터의 행 수를 정한다. DBBind 생성자가 Unbind로 1로 되돌리므로 DBBind를 만든 뒤에 부른다. */
     virtual void    SetParamSetSize(int32& rows);
+    /**
+     * 배열 파라미터의 행별 결과를 받을 곳을 정한다. 실행하면 드라이버가 행마다 SQL_PARAM_* 상태를 쓰고, 처리한 행 수를 쓴다.
+     * 일부 행만 실패해도 실행은 SQL_SUCCESS_WITH_INFO로 끝나므로, 행별 결과를 봐야 실패를 안다. Unbind가 해제한다.
+     */
+    virtual void    SetParamStatusArray(SQLUSMALLINT* statuses, SQLULEN* processedCount);
 
     //~ 트랜잭션
     /** 자동 커밋을 끈다. 이 뒤의 쿼리는 Commit이나 Rollback까지 한 트랜잭션이다. */
