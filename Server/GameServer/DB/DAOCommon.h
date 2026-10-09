@@ -7,7 +7,7 @@
 class DBError : public runtime_error
 {
 public:
-    /** where에는 던진 함수 이름(__func__)을 넣는다. */
+    /** where에는 던진 곳의 이름을 넣는다. 보통 __func__이고, 생성자 안처럼 __func__이 다른 이름을 내면 문자열로 적는다. */
     DBError(string_view where, string_view cause) : runtime_error(format("{}: {}", where, cause)) {}
 };
 

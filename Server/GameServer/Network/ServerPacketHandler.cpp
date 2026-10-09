@@ -127,7 +127,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 loginPkt.set_character_slot_count(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT);
                 loginPkt.set_success(true);
             }
-            catch (const DBError& error)
+            catch (const exception& error)
             {
                 GLogger->Error("계정 {} 캐릭터 목록 불러오기 실패: {}", userId, error.what());
                 loginPkt.Clear();
@@ -178,7 +178,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
                     createCharacterPkt.set_character_id(result.characterId);
                 }
             }
-            catch (const DBError& error)
+            catch (const exception& error)
             {
                 GLogger->Error("계정 {} 캐릭터 생성 실패: {}", userId, error.what());
                 createCharacterPkt.Clear();
@@ -218,7 +218,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
                 if (deleteCharacterPkt.success())
                     deleteCharacterPkt.set_character_id(characterId);
             }
-            catch (const DBError& error)
+            catch (const exception& error)
             {
                 GLogger->Error("계정 {} 캐릭터 {} 삭제 실패: {}", userId, characterId, error.what());
                 deleteCharacterPkt.set_success(false);
@@ -264,7 +264,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
                 DBConnectionGuard conn;
                 enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), pkt.character_id());
             }
-            catch (const DBError& error)
+            catch (const exception& error)
             {
                 // 실패해도 응답을 보내야 클라이언트가 캐릭터 선택 화면에서 기다리지 않는다.
                 GLogger->Error("캐릭터 {} 입장 실패: {}", pkt.character_id(), error.what());

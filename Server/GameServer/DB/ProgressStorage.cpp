@@ -22,7 +22,7 @@ bool ProgressStorage::Load(DBConnection& conn, int64 userId, int64 characterId, 
         // 3. 캐릭터 소유 아이템
         ItemDAO::LoadItems(conn, characterId, OUT progress);
     }
-    catch (const DBError& error)
+    catch (const exception& error)
     {
         GLogger->Error("캐릭터 {} 불러오기 실패: {}", characterId, error.what());
         return false;
@@ -36,6 +36,7 @@ bool ProgressStorage::Save(DBConnection& conn, const PlayerSaveData& data)
     const int64 characterId = data.progress.playerInfo.character_id();
 
     // 세 단계가 따로 확정되면 레벨은 오르고 아이템은 저장되지 않는 식으로 진행이 어긋난다.
+    // DBError가 아닌 예외도 받아 되돌린다. 열린 트랜잭션을 둔 채 연결을 풀에 돌려주면 다음 잡이 그 위에서 돈다.
     if (conn.BeginTransaction() == false)
     {
         GLogger->Error("캐릭터 {} 저장 트랜잭션을 시작하지 못했습니다", characterId);
@@ -48,7 +49,7 @@ bool ProgressStorage::Save(DBConnection& conn, const PlayerSaveData& data)
         CharacterStateDAO::SaveLastState(conn, data);
         ItemDAO::SaveItems(conn, data);
     }
-    catch (const DBError& error)
+    catch (const exception& error)
     {
         GLogger->Error("캐릭터 {} 저장 실패. 이번 저장을 모두 되돌립니다: {}", characterId, error.what());
         conn.Rollback();

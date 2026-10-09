@@ -72,7 +72,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `PlayerMultiLevelUpTest` | 2 | 큰 보상의 여러 레벨 상승 · 최대 레벨 도달 시 남는 경험치 버림 |
 | `PlayerSaveDataTest` | 2 | 저장 스냅샷이 이후 변경을 따라가지 않음 · 더티 플래그를 싣음 |
 | `PlayerUseItemTest` | 11 | 소모품 사용. HP·MP 회복과 최대치 고정 · 요청과 칸이 어긋나면 거절 · 장비 칸, 빈 칸, 모르는 템플릿, 죽은 플레이어 거절 · 템플릿별 재사용 대기 |
-| `ProgressStorageTest` | 5 | 진행 저장소와 DAO(가짜 연결). 캐릭터 기본 정보 행과 계정 대조 파라미터 · 다른 계정의 캐릭터 · 불러오기 실패 뒤 빈 세션 · 저장 하나가 트랜잭션 하나 · 아이템 저장 실패의 되돌림 |
+| `ProgressStorageTest` | 6 | 진행 저장소와 DAO(가짜 연결). 캐릭터 기본 정보 행과 계정 대조 파라미터 · 다른 계정의 캐릭터 · 불러오기 실패 뒤 빈 세션 · 저장 하나가 트랜잭션 하나 · 아이템 저장 실패와 DBError가 아닌 예외의 되돌림 |
 | `RandomTest` | 2 | 정수 범위 난수의 같은 경계와 최대값 포함 |
 | `RoomAxisTest` | 1 | 룸의 X 범위는 깊이, Y 범위는 폭으로 계산 |
 | `RoomLocationTest` | 2 | 룸 안 무작위 위치가 여백 안에 머묾 · 여백이 없으면 룸 전체 |

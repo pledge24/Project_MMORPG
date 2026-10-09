@@ -79,7 +79,7 @@ void GameSession::LeaveGame(RoomRef room, PlayerRef player)
 				DBConnectionGuard conn;
 				ProgressStorage::Save(*conn, data);
 			}
-			catch (const DBError& error)
+			catch (const exception& error)
 			{
 				GLogger->Error("계정 {} 접속 종료 저장 실패: {}", data.userId, error.what());
 			}

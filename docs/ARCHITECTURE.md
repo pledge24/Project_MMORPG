@@ -65,8 +65,8 @@ DB 잡이 `DBConnectionGuard`로 빌려 DAO에 넘기고, 잡이 어떻게 끝�
 DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`)로 테스트한다.
 
 **Architecture Invariant:** DB 작업의 실패는 `DBError` 예외이고, 클라이언트에 보낼 거절(캐릭터 생성의 이름 중복 등)은
-예외가 아니라 결과다. DB 잡은 `DBError`를 받아 실패 응답을 보낸다. DB 스레드(`DBWorker::RunJob`)는 잡이 던진
-예외를 종류에 상관없이 받아 로그를 남기고 다음 잡을 돌린다.
+예외가 아니라 결과다. DB 잡은 `DBError`를 포함한 표준 예외를 받아 실패 응답을 보내고, 접속 종료 저장 잡은
+저장 대기를 푼다. DB 스레드(`DBWorker::RunJob`)는 잡이 던진 예외를 종류에 상관없이 받아 로그를 남기고 다음 잡을 돌린다.
 — 잡 밖으로 나간 예외는 `std::terminate`로 서버 전체를 내린다.
 
 **Architecture Invariant:** 입장은 진행을 모두 불러오고 검증을 통과한 뒤에야 세션에 플레이어를 등록한다

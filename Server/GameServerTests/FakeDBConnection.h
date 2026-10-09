@@ -27,6 +27,12 @@ public:
         _results.push_back(Result{ true, {}, -1 });
     }
 
+    /** 다음 Execute가 DBError가 아닌 표준 예외를 던진다. 드라이버나 바인딩 코드가 던지는 경우를 흉내 낸다. */
+    void QueueExecuteException()
+    {
+        _results.push_back(Result{ false, {}, -1, true });
+    }
+
     //~ 기록
     vector<wstring> executedQueries;
     /** Execute 때 읽은 파라미터. 실행마다 한 줄이고, 파라미터 번호는 0부터 센다. */
@@ -51,6 +57,9 @@ public:
             _current = std::move(_results.front());
             _results.pop_front();
         }
+
+        if (_current.raise)
+            throw runtime_error("FakeDBConnection이 던진 예외");
 
         return _current.fail == false;
     }
@@ -107,6 +116,7 @@ private:
         bool fail = false;
         vector<FakeDBRow> rows;
         int32 rowCount = 1;
+        bool raise = false;
     };
 
     static FakeDBValue Read(const Binding& binding)
