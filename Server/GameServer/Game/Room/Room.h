@@ -49,7 +49,8 @@ public:
      * 룸에는 룸 상태를 쓰는 요청(입장, 이동, 전투, 리스폰)만 둔다. 아이템 요청은 ItemRequests에 있다.
      */
     void C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player);
-    void C_HandleMove(Protocol::C_MOVE pkt);
+    /** 보낸 사람(player)의 위치만 바꾼다. 패킷의 엔티티 번호는 보지 않는다. */
+    void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
 

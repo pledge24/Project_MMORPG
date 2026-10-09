@@ -348,25 +348,22 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     }
 }
 
-void Room::C_HandleMove(Protocol::C_MOVE pkt)
+void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
 {
-	PlayerRef player = FindEntityAs<Player>(pkt.info().entity_id());
-    if (player == nullptr)
+    // 대상은 패킷의 엔티티 번호가 아니라 보낸 사람이다. 그사이 룸을 떠났으면 버린다.
+    const int64 playerId = player->GetEntityId();
+    if (Contains(playerId) == false)
         return;
 
-	// 적용
-	player->SetPosInfo(pkt.info());
+    // 적용. 위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것으로 둔다.
+    Protocol::PosInfo posInfo = pkt.info();
+    posInfo.set_entity_id(playerId);
+    player->SetPosInfo(posInfo);
 
-	// 이동 사실을 알린다 (본인 빼고)
-	{
-		Protocol::S_MOVE movePkt;
-		{
-            Protocol::PosInfo* info = movePkt.add_info();
-			info->CopyFrom(pkt.info());
-		}
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-		Broadcast(sendBuffer, player->GetEntityId());
-	}
+    // 이동 사실을 알린다(본인 빼고).
+    Protocol::S_MOVE movePkt;
+    *movePkt.add_info() = player->GetPosInfo();
+    Broadcast(ServerPacketHandler::MakeSerializedPacket(movePkt), playerId);
 }
 
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)

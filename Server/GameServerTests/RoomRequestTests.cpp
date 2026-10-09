@@ -100,6 +100,30 @@ protected:
     PlayerRef player;
 };
 
+// TD-007: 이동은 보낸 사람의 위치만 바꾼다. 패킷의 엔티티 번호로 대상을 찾으면 같은 룸의 다른 플레이어를 옮길 수 있다.
+TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
+{
+    const PlayerProgress progress = MakeProgressWithSword();
+    PlayerSpawnParams params;
+    params.progress = &progress;
+    PlayerRef victim = EntityFactory::Create<Player>(params);
+    ASSERT_NE(victim, nullptr);
+    RoomEnterData enterData{};
+    enterData.nextRoomId = ROOM_ID;
+    enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
+    ASSERT_TRUE(room->EnterPlayer(victim, enterData));
+    const float victimX = victim->GetPosInfo().pos().x();
+
+    Protocol::C_MOVE movePkt;
+    movePkt.mutable_info()->set_entity_id(victim->GetEntityId());
+    movePkt.mutable_info()->mutable_pos()->set_x(victimX + 777.f);
+    room->C_HandleMove(movePkt, player);
+
+    EXPECT_FLOAT_EQ(victim->GetPosInfo().pos().x(), victimX) << "다른 플레이어의 위치가 바뀌면 그 계정의 진행이 손상된다";
+    EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), victimX + 777.f);
+    EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
+}
+
 // TD-006: 착용과 해제는 실패 응답 전에만 세션을 확인하고, 성공 응답은 확인 없이 보냈다.
 // 세션이 없는 플레이어(잡이 기다리는 사이 끊긴 세션)로 성공 경로를 타면 널 세션을 역참조했다.
 TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)

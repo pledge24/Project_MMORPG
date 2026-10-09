@@ -441,9 +441,9 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef&)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            room->C_HandleMove(pkt);
+            room->C_HandleMove(pkt, player);
         });
 }
 
