@@ -156,28 +156,6 @@
 **버그 발생 가능성 증가** — 엔진 버전이나 할당 패턴이 바뀌면 디스폰할 때 다른 액터를 지우거나 클라이언트가 죽는다.
 원인이 디스폰과 떨어진 곳에서 드러나서 추적하기 어렵다.
 
-## TD-039 DB 스레드가 예상하지 못한 예외를 받지 않아 서버가 종료된다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · server
-> 위치: `Server/GameServer/GameServer.cpp` 12~23줄 (`DoDBJob`) · `Server/GameServer/DB/`
-> 등록일: 2026년 10월 9일
-
-DAO의 오류 처리가 네 방식으로 갈려 있다.
-
-| 방식 | 위치 |
-|---|---|
-| `throw DBCustomError` 후 `PrintDBErrorLog` | `CharacterStateDAO.cpp` |
-| `throw wstring`을 흐름 제어로 씀 | `ItemDAO.cpp`의 `LoadItems`, `GetMaxItemUID` |
-| 로그 없이 `return false` | `CharacterStateDAO::LoadLastState`, `ItemDAO`의 일부 |
-| `catch (exception&)` 후 `cerr` | `CharacterListDAO.cpp`에만 있음 |
-
-`CharacterStateDAO`와 `ItemDAO`는 `DBCustomError`만 받고, `DoDBJob`에도 catch가 없다. 그래서 Json의 `type_error`, `bad_alloc`,
-인벤토리 코드가 던지는 예외가 DB 스레드 밖으로 나가면 `std::terminate`로 서버가 끝난다. 예외가 실제로 나는 경로는 확인하지
-않았다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 한 계정의 잘못된 데이터가 서버 전체를 내린다. 로그 없는 실패는 원인을 남기지 않는다.
-
 ## TD-042 몬스터의 틱이 다른 룸으로 떠난 플레이어의 위치를 읽는다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/Monster.cpp` 378~386줄 (`ExecuteStateAttacking`), 399~423줄 (`ExecuteStateChasing`), 521~533줄 (`IsTargetLost`)

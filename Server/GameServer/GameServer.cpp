@@ -4,24 +4,12 @@
 #include "Core/Config.h"
 #include "DB/ItemDAO.h"
 #include "DB/DAOCommon.h"
+#include "DB/DBWorker.h"
 
 enum
 {
 	WORKER_TICK = 64
 };
-
-void DoDBJob(int dbQueueId)
-{
-    DBQueueRef dbQueue = GDBManager->GetDBQueue(dbQueueId);
-    wcout << dbQueue->GetId() << L"번째 DBQueue가 작업을 시작함" << endl;
-
-    while (dbQueue->IsStop() == false)
-    {
-        JobRef job = dbQueue->WaitForSingleJob();
-        wcout << dbQueue->GetId() << L"번째 DBQueue가 작업을 받음" << endl;
-        job->Execute();
-    }
-}
 
 void DoWorkerJob(ServerServiceRef& service)
 {
@@ -105,7 +93,7 @@ int main(void)
     {
         GThreadManager->Launch([i]()
             {
-                DoDBJob(i);
+                DBWorker::Run(GDBManager->GetDBQueue(i));
             });
     }
 

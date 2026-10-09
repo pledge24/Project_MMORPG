@@ -52,6 +52,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DB\DBWorker.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
     <ClCompile Include="Network\GameEntry.cpp">
       <Filter>Network</Filter>
     </ClCompile>
@@ -157,6 +160,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DB\DBWorker.h">
+      <Filter>DB</Filter>
+    </ClInclude>
     <ClInclude Include="Network\GameEntry.h">
       <Filter>Network</Filter>
     </ClInclude>

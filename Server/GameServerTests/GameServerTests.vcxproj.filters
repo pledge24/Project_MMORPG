@@ -56,6 +56,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DBWorkerTests.cpp" />
+    <ClCompile Include="..\GameServer\DB\DBWorker.cpp">
+      <Filter>GameServer\DB</Filter>
+    </ClCompile>
     <ClCompile Include="ParamSetTests.cpp" />
     <ClCompile Include="CharacterListDAOTests.cpp" />
     <ClCompile Include="ProgressStorageTests.cpp" />
