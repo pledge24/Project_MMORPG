@@ -255,7 +255,7 @@ bool CharacterStateDAO::SaveCharacter(const PlayerSaveData& data)
             WHERE character_id = (?)
         )SQL");
 
-        BindObject bindObject(dbBind, data.playerInfo.character_id(), data.playerInfo.level());
+        BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.playerInfo.level());
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -278,9 +278,9 @@ bool CharacterStateDAO::SaveLastState(const PlayerSaveData& data)
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerSaveData& data)
         {
-            const Protocol::PlayerInfo& playerInfo = data.playerInfo;
-            const Protocol::StatInfo& statInfo = data.statInfo;
-            const Protocol::PosInfo& posInfo = data.posInfo;
+            const Protocol::PlayerInfo& playerInfo = data.progress.playerInfo;
+            const Protocol::StatInfo& statInfo = data.progress.statInfo;
+            const Protocol::PosInfo& posInfo = data.progress.posInfo;
             auto& statMappings = statInfo.info();
 
             _exp = statMappings.at(Protocol::STAT_TYPE_EXP);
@@ -294,7 +294,7 @@ bool CharacterStateDAO::SaveLastState(const PlayerSaveData& data)
             _posY = posInfo.pos().y();
             _posZ = posInfo.pos().z();
             _rotYaw = posInfo.yaw();
-            _gold = data.possession.gold();
+            _gold = data.progress.possession.gold();
             _characterId = playerInfo.character_id();
 
             BindParam(dbBind);

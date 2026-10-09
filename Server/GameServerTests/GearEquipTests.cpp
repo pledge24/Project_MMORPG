@@ -104,13 +104,13 @@ protected:
     PlayerRef LoadFromSaveData(const PlayerSaveData& data)
     {
         PlayerRef loaded = EntityFactory::Create<Player>(PlayerSpawnParams());
-        loaded->_playerInfo->set_class_(data.playerInfo.class_());
-        loaded->_playerInfo->set_level(data.playerInfo.level());
+        loaded->_playerInfo->set_class_(data.progress.playerInfo.class_());
+        loaded->_playerInfo->set_level(data.progress.playerInfo.level());
 
         for (Protocol::StatType statType : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP, Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
-            loaded->SetStatValue(statType, data.statInfo.info().at(statType));
+            loaded->SetStatValue(statType, data.progress.statInfo.info().at(statType));
 
-        for (const auto& [gearType, slot] : data.possession.equipped_gear())
+        for (const auto& [gearType, slot] : data.progress.possession.equipped_gear())
         {
             if (slot.has_item())
                 EXPECT_TRUE(loaded->_equipment->LoadEquipped(slot.item(), gearType));

@@ -459,10 +459,10 @@ PlayerSaveData Player::MakeSaveData() const
 {
     PlayerSaveData data;
     data.userId = _userId;
-    data.playerInfo.CopyFrom(*_playerInfo);
-    data.posInfo.CopyFrom(*_posInfo);
-    data.statInfo.CopyFrom(*_statInfo);
-    data.possession.CopyFrom(*_possession);
+    data.progress.playerInfo.CopyFrom(*_playerInfo);
+    data.progress.posInfo.CopyFrom(*_posInfo);
+    data.progress.statInfo.CopyFrom(*_statInfo);
+    data.progress.possession.CopyFrom(*_possession);
 
     if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR))
         data.gearDirtyFlags = *flags;

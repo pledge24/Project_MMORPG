@@ -29,8 +29,8 @@ optional<vector<GearSaveRow>> ItemSaveRows::BuildGearRows(const PlayerSaveData& 
     if (data.gearDirtyFlags.has_value() == false)
         return nullopt;
 
-    const int64 characterId = data.playerInfo.character_id();
-    const Protocol::Possession& possession = data.possession;
+    const int64 characterId = data.progress.playerInfo.character_id();
+    const Protocol::Possession& possession = data.progress.possession;
     const vector<bool>& gearDirtyFlags = data.gearDirtyFlags.value();
 
     vector<GearSaveRow> rows;
@@ -55,7 +55,7 @@ optional<vector<GearSaveRow>> ItemSaveRows::BuildGearRows(const PlayerSaveData& 
 
 optional<vector<StackableItemSaveRow>> ItemSaveRows::BuildStackableRows(const PlayerSaveData& data, Protocol::ItemType itemType)
 {
-    const Protocol::Inventory& inven = data.possession.inventory();
+    const Protocol::Inventory& inven = data.progress.possession.inventory();
 
     const RepeatedPtrField<Protocol::Slot>* slots = nullptr;
     const optional<vector<bool>>* dirtyFlags = nullptr;
@@ -77,7 +77,7 @@ optional<vector<StackableItemSaveRow>> ItemSaveRows::BuildStackableRows(const Pl
     if (dirtyFlags->has_value() == false)
         return nullopt;
 
-    const int64 characterId = data.playerInfo.character_id();
+    const int64 characterId = data.progress.playerInfo.character_id();
     const vector<bool>& flags = dirtyFlags->value();
 
     vector<StackableItemSaveRow> rows;

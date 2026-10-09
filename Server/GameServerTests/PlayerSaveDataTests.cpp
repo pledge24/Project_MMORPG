@@ -58,8 +58,8 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
     player->_possession->set_gold(0);
 
     EXPECT_EQ(data.userId, USER_ID);
-    EXPECT_EQ(data.statInfo.info().at(Protocol::STAT_TYPE_HP), 100) << "사본이 살아 있는 스탯을 따라가면 DB 스레드가 룸 스레드와 경쟁한다";
-    EXPECT_EQ(data.possession.gold(), 500);
+    EXPECT_EQ(data.progress.statInfo.info().at(Protocol::STAT_TYPE_HP), 100) << "사본이 살아 있는 스탯을 따라가면 DB 스레드가 룸 스레드와 경쟁한다";
+    EXPECT_EQ(data.progress.possession.gold(), 500);
 }
 
 TEST_F(PlayerSaveDataTest, SnapshotCarriesDirtyFlags)
@@ -75,5 +75,5 @@ TEST_F(PlayerSaveDataTest, SnapshotCarriesDirtyFlags)
     ASSERT_TRUE(data.gearDirtyFlags.has_value());
     ASSERT_LT(slotId, (int32)data.gearDirtyFlags->size());
     EXPECT_TRUE((*data.gearDirtyFlags)[slotId]) << "dirty flag가 빠지면 새로 얻은 아이템이 저장되지 않는다";
-    EXPECT_EQ(data.possession.inventory().gear(slotId).item().template_id(), SWORD_TEMPLATE_ID);
+    EXPECT_EQ(data.progress.possession.inventory().gear(slotId).item().template_id(), SWORD_TEMPLATE_ID);
 }
