@@ -62,11 +62,8 @@ bool Player::Init(const SpawnParams& params)
 
     PlayerRef self = static_pointer_cast<Player>(shared_from_this());
 
-    if (params.session != nullptr)
-    {
-        _session = params.session;
-        _userId = params.session->GetUserId();
-    }
+    _session = params.session;
+    _userId = params.userId;
 
     _inventory = make_shared<InventoryComponent>(self, _possession->mutable_inventory());
     _equipment = make_shared<EquipmentComponent>(self, _possession->mutable_equipped_gear());

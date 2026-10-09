@@ -5,16 +5,16 @@
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Entities/PlayerProgress.h"
 
-Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef& session, int64 characterId)
+Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef& session, int64 userId, int64 characterId)
 {
     Protocol::S_ENTER_GAME enterGamePkt;
     enterGamePkt.set_success(false);
 
     PlayerProgress progress;
-    if (ProgressStorage::Load(conn, session->GetUserId(), characterId, OUT progress) == false)
+    if (ProgressStorage::Load(conn, userId, characterId, OUT progress) == false)
         return enterGamePkt;
 
-    PlayerRef player = SpawnPlayer(session, progress);
+    PlayerRef player = SpawnPlayer(session, userId, progress);
     if (player == nullptr)
         return enterGamePkt;
 
@@ -26,10 +26,11 @@ Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef
     return enterGamePkt;
 }
 
-PlayerRef GameEntry::SpawnPlayer(const GameSessionRef& session, const PlayerProgress& progress)
+PlayerRef GameEntry::SpawnPlayer(const GameSessionRef& session, int64 userId, const PlayerProgress& progress)
 {
     PlayerSpawnParams spawnParams;
     spawnParams.session = session;
+    spawnParams.userId = userId;
     spawnParams.progress = &progress;
 
     // 팩토리는 진행을 채우고 검증까지 한다. 검증에 실패하면 nullptr이고, 그때 세션은 아직 바뀌지 않았다.
@@ -43,7 +44,7 @@ PlayerRef GameEntry::SpawnPlayer(const GameSessionRef& session, const PlayerProg
     // 비어 있을 때만 등록한다. 이미 있는 플레이어를 덮어쓰면 그 플레이어는 룸에 남고, 끊길 때 퇴장하지 않는다.
     if (session->TryRegisterPlayer(player) == false)
     {
-        GLogger->Warning("계정 {}의 세션에 이미 플레이어가 있어 입장을 거절합니다", session->GetUserId());
+        GLogger->Warning("계정 {}의 세션에 이미 플레이어가 있어 입장을 거절합니다", userId);
         return nullptr;
     }
 

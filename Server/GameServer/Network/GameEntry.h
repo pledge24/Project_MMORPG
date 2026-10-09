@@ -9,12 +9,15 @@ struct PlayerProgress;
  */
 namespace GameEntry
 {
-    /** conn으로 session 계정의 characterId 진행을 불러와 입장시키고, 클라이언트에 보낼 응답을 돌려준다. */
-    Protocol::S_ENTER_GAME Enter(DBConnection& conn, const GameSessionRef& session, int64 characterId);
+    /**
+     * conn으로 userId 계정의 characterId 진행을 불러와 session에 입장시키고, 클라이언트에 보낼 응답을 돌려준다.
+     * userId는 핸들러가 읽은 값이다. 세션에서 다시 읽지 않는다.
+     */
+    Protocol::S_ENTER_GAME Enter(DBConnection& conn, const GameSessionRef& session, int64 userId, int64 characterId);
 
     /**
      * progress로 플레이어를 만들어 검증하고 session에 등록한다.
      * 검증에 실패하거나 세션에 이미 플레이어가 있으면 세션을 건드리지 않고 nullptr를 돌려준다.
      */
-    PlayerRef SpawnPlayer(const GameSessionRef& session, const PlayerProgress& progress);
+    PlayerRef SpawnPlayer(const GameSessionRef& session, int64 userId, const PlayerProgress& progress);
 }

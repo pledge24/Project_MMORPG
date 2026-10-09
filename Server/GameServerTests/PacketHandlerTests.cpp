@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include "RecordingSession.h"
+#include "Network/GameSessionManager.h"
 
 /*--------------------------------------------------------------
     패킷 핸들러의 세션 상태 검사 테스트
@@ -71,6 +72,36 @@ TEST_F(PacketHandlerTest, FailedPacketIsLogged)
 
     EXPECT_NE(captured.str().find(format("패킷 {}", static_cast<int32>(PKT_C_CHAT))), string::npos)
         << "처리에 실패한 패킷의 id가 로그에 남아야 한다. 실제 출력: " << captured.str();
+}
+
+// TD-041: 삭제 잡이 실행될 때 세션에서 계정 번호를 다시 읽었다. 그사이 세션의 계정이 바뀌면 다른 계정으로 일한다.
+// 테스트 실행 파일에는 DB 연결이 없으므로 잡은 연결을 빌리지 못하고, 실패 로그에 쓴 계정 번호를 남긴다.
+TEST_F(PacketHandlerTest, DeleteJobUsesAccountReadByHandler)
+{
+    constexpr int64 FIRST_USER_ID = 100;
+    constexpr int64 SECOND_USER_ID = 200;
+    GameSessionManager sessionManager;
+    sessionManager.RegisterUser(FIRST_USER_ID, recordingSession);
+
+    Protocol::C_DELETE_CHARACTER pkt;
+    pkt.set_character_id(42);
+    Handle_C_DELETE_CHARACTER(session, pkt);
+
+    // 잡이 돌기 전에 세션의 계정이 바뀐다.
+    sessionManager.RegisterUser(SECOND_USER_ID, recordingSession);
+
+    DBQueueRef dbQueue = GDBManager->GetDBQueue(0);
+    dbQueue->Stop();
+    JobRef job = dbQueue->WaitForSingleJob();
+    ASSERT_NE(job, nullptr);
+
+    stringstream captured;
+    streambuf* original = cout.rdbuf(captured.rdbuf());
+    job->Execute();
+    cout.rdbuf(original);
+
+    EXPECT_NE(captured.str().find(format("계정 {}", FIRST_USER_ID)), string::npos)
+        << "잡은 핸들러가 읽은 계정 번호로 일해야 한다. 실제 출력: " << captured.str();
 }
 
 TEST_F(PacketHandlerTest, CreateCharacterBeforeLoginIsRejected)

@@ -38,13 +38,17 @@ public:
 	bool TryRegisterPlayer(const PlayerRef& player);
 
 	//~ 계정
-	/** 로그인하기 전이면 0. 쓰는 곳은 GameSessionManager::RegisterUser뿐이다. */
-	int64 GetUserId() const { return _userId; }
+	/**
+	 * 로그인하기 전이면 0. 로그인 잡(DB 스레드)이 GameSessionManager의 락 안에서 쓰고,
+	 * IOCP 스레드(핸들러, 접속 종료)가 락 없이 읽는다. 그래서 atomic이다.
+	 * 요청 하나는 핸들러가 한 번 읽은 값을 잡에 넘겨 쓴다. 잡 안에서 다시 읽지 않는다.
+	 */
+	int64 GetUserId() const { return _userId.load(); }
 
 private:
 	friend class GameSessionManager;
-	void SetUserId(int64 userId) { _userId = userId; }
+	void SetUserId(int64 userId) { _userId.store(userId); }
 
 	atomic<PlayerRef> _player;
-	int64 _userId = 0;
+	atomic<int64> _userId = 0;
 };

@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 29개 (높음 1 · 중간 2 · 낮음 26) · 다음 번호 TD-046
+항목 28개 (높음 1 · 중간 2 · 낮음 25) · 다음 번호 TD-046
 
 ## 작성 방법
 
@@ -412,19 +412,6 @@ IOCP 워커가 진다는 사실이 빠진다.
 
 **유지보수 어려움** · **버그 발생 가능성 증가** — 기능이 있는 것처럼 보여서 읽는 사람이 동작을 잘못 짐작한다.
 `operator-=`나 `TickIntervalTimer`를 새로 쓰기 시작하면 그 자리에서 바로 버그가 된다.
-
-## TD-041 세션의 계정 번호를 락 없이 여러 스레드가 읽고 쓴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Network/GameSessionManager.cpp` 12줄 · `Server/GameServer/Network/GameSession.cpp` 17줄 · `Server/GameServer/Network/ServerPacketHandler.cpp` (`Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`)
-> 등록일: 2026년 10월 9일
-
-`GameSession::_userId`는 원자적이지 않은 `int64`다. 로그인 잡(DB 스레드)이 관리자의 락 안에서 쓰고, IOCP 스레드의 핸들러와
-`OnDisconnected`는 락 없이 읽는다. 계정 번호를 읽는 시점도 요청마다 다르다. 캐릭터 생성은 핸들러가 읽은 값을 잡에 넘기고,
-삭제와 입장 불러오기의 DAO는 잡이 실행될 때 세션에서 다시 읽는다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 정의되지 않은 동작인 데이터 경합이다. 로그인 직후의 요청이 0이나 찢어진 계정 번호로 처리될 수 있다.
 
 ## TD-043 몬스터의 일반 공격이 피격 시점에 거리를 다시 보지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server

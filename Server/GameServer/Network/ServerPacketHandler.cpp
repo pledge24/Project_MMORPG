@@ -55,12 +55,6 @@ namespace
         return true;
     }
 
-    // 로그인(C_LOGIN)을 마친 세션이면 true. 계정 번호는 로그인 잡이 등록할 때 쓴다.
-    bool IsLoggedIn(const PacketSessionRef& session)
-    {
-        return static_pointer_cast<GameSession>(session)->GetUserId() != 0;
-    }
-
     void SendEnterGameFail(const PacketSessionRef& session)
     {
         Protocol::S_ENTER_GAME enterGameFailPkt;
@@ -173,8 +167,11 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
+    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
+
     // 세션 상태는 핸들러가 본다. 로그인하지 않은 세션은 계정 번호 0으로 INSERT를 시도하게 된다.
-    if (IsLoggedIn(session) == false)
+    if (userId == 0)
     {
         Protocol::S_CREATE_CHARACTER createCharacterPkt;
         createCharacterPkt.set_success(false);
@@ -194,7 +191,6 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
@@ -235,7 +231,10 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
-    if (IsLoggedIn(session) == false)
+    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
+
+    if (userId == 0)
     {
         Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
         deleteCharacterPkt.set_success(false);
@@ -246,14 +245,12 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
     // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
+    // 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
     JobRef job = make_shared<Job>(
-        [session, pkt]()
+        [session, pkt, userId]()
         {
-            // 계정 번호는 잡이 실행될 때 세션에서 읽는다.
-            const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
             const int64 characterId = pkt.character_id();
 
             Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
@@ -281,16 +278,18 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
+    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
+
     // 로그인하지 않았거나 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다.
     // 이미 입장했는지는 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
-    if (IsLoggedIn(session) == false || static_pointer_cast<GameSession>(session)->GetPlayer() != nullptr)
+    if (userId == 0 || static_pointer_cast<GameSession>(session)->GetPlayer() != nullptr)
     {
         SendEnterGameFail(session);
         return false;
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
@@ -298,7 +297,8 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
     // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
     // 이 계정의 접속 종료 저장이 남아 있으면 저장 잡이 같은 userId 큐에서 이 불러오기를 실행한다.
-    auto load = [session, pkt]()
+    // 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.
+    auto load = [session, pkt, userId]()
         {
             // 저장을 기다리는 사이에 끊겼으면 불러올 이유가 없다. 불러오면 끊긴 것을 알아챈 뒤 또 저장한다.
             if (session->IsConnected() == false)
@@ -309,7 +309,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             try
             {
                 DBConnectionGuard conn;
-                enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), pkt.character_id());
+                enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), userId, pkt.character_id());
             }
             catch (const exception& error)
             {

@@ -84,7 +84,7 @@ TEST(ProgressStorageTest, FailedLoadLeavesSessionWithoutPlayer)
     GameSessionManager sessionManager;
     sessionManager.RegisterUser(USER_ID, session);
 
-    const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, CHARACTER_ID);
+    const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
     EXPECT_FALSE(pkt.success());
     EXPECT_EQ(session->GetPlayer(), nullptr) << "불러오기에 실패한 세션에 플레이어가 남으면 끊길 때 반쯤 채운 진행을 저장한다";

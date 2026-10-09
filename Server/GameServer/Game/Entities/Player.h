@@ -72,6 +72,8 @@ struct RespawnResult
 struct PlayerSpawnParams : public Creature::SpawnParams
 {
     GameSessionRef session;
+    /** 입장 요청을 받은 핸들러가 읽은 계정 번호. 세션에서 다시 읽지 않는다. */
+    int64 userId = 0;
     /** 불러온 진행. Init 안에서만 읽으므로 Init이 끝날 때까지만 살아 있으면 된다. */
     const PlayerProgress* progress = nullptr;
 };
