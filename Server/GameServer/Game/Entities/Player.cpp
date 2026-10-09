@@ -149,82 +149,78 @@ void Player::Tick(float deltaTime)
     _equipment->Tick(deltaTime);
 }
 
-bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
+optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
 {
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
-        return false;
+        return nullopt;
 
-    int64 gold = _possession->gold();
-    int64 buyPrice = itemTemplate->buyPrice * count;
+    const int64 gold = _possession->gold();
+    const int64 buyPrice = itemTemplate->buyPrice * count;
 
     if (gold < buyPrice)
-        return false;
+        return nullopt;
 
     // 실제 "아이템 구매" 적용 시점.
-    if (_inventory->AddItem(OUT updatedSlots, templateId, count) == false)
-        return false;
+    BuyItemResult result;
+    if (_inventory->AddItem(OUT &result.updatedSlots, templateId, count) == false)
+        return nullopt;
 
-    totalGold = gold - buyPrice;
-    _possession->set_gold(totalGold);
+    result.gold = gold - buyPrice;
+    _possession->set_gold(result.gold);
 
-    return true;
+    return result;
 }
 
-bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count)
+optional<SellItemResult> Player::ProcessSellItem(const Protocol::Slot& requestSlot, int32 count)
 {
     // 가격은 요청이 아니라 슬롯에 든 아이템으로 정한다.
     const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
     if (MatchesRequest(ownedSlot, requestSlot) == false)
-        return false;
+        return nullopt;
 
     const ItemTemplate* itemTemplate = Gamedata::FindItem(ownedSlot->item().template_id());
     if (itemTemplate == nullptr || itemTemplate->sellable == false)
-        return false;
+        return nullopt;
 
-    int64 gold = _possession->gold();
-    int64 sellPrice = itemTemplate->sellPrice * count;
+    const int64 gold = _possession->gold();
+    const int64 sellPrice = itemTemplate->sellPrice * count;
 
     // 실제 "아이템 판매" 적용 시점.
-    if (_inventory->RemoveItem(requestSlot, OUT updatedSlot, count) == false)
-        return false;
+    SellItemResult result;
+    if (_inventory->RemoveItem(requestSlot, OUT &result.updatedSlot, count) == false)
+        return nullopt;
 
-    totalGold = gold + sellPrice;
-    _possession->set_gold(totalGold);
+    result.gold = gold + sellPrice;
+    _possession->set_gold(result.gold);
 
-    return true;
+    return result;
 }
 
-bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT Protocol::S_USE_ITEM& pkt)
+optional<UseItemResult> Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs)
 {
-    // 거부 응답에도 싣는다. 클라이언트는 이 id로 내 플레이어를 찾은 뒤에야 요청 대기를 푼다.
-    pkt.set_entity_id(GetEntityId());
-
     if (IsDead())
-        return false;
+        return nullopt;
 
     if (requestSlot.type() != Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE)
-        return false;
+        return nullopt;
 
     // 효과는 요청이 아니라 슬롯에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
     const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
     if (MatchesRequest(ownedSlot, requestSlot) == false)
-        return false;
+        return nullopt;
 
     const int32 templateId = ownedSlot->item().template_id();
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
-        return false;
+        return nullopt;
 
     if (_inventory->IsCoolingDown(templateId, nowMs))
-        return false;
+        return nullopt;
 
-    // 제거에 성공했을 때만 응답에 슬롯을 싣는다. 거부 응답에는 슬롯이 없다.
-    Protocol::Slot updatedSlot;
-    if (_inventory->RemoveItem(requestSlot, OUT &updatedSlot) == false)
-        return false;
-
-    *pkt.mutable_updated_slots()->Add() = std::move(updatedSlot);
+    UseItemResult result;
+    if (_inventory->RemoveItem(requestSlot, OUT &result.updatedSlot) == false)
+        return nullopt;
 
     _inventory->StartCooldown(templateId, nowMs);
 
@@ -239,101 +235,89 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
             const int64 updatedValue = min(maxValue, GetStatValue(curType) + amount);
             SetStatValue(curType, updatedValue);
 
-            Protocol::Stat* updatedStat = pkt.mutable_updated_stat()->Add();
-            updatedStat->set_type(curType);
-            updatedStat->set_value(updatedValue);
+            ProtoUtil::AddStat(&result.updatedStats, curType, updatedValue);
         };
 
     restore(itemTemplate->hpRestoreRatio, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
     restore(itemTemplate->mpRestoreRatio, Protocol::STAT_TYPE_MAX_MP, Protocol::STAT_TYPE_MP);
 
-    return true;
+    return result;
 }
 
-bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt)
+optional<GearChangeResult> Player::ProcessEquipGear(const Protocol::Slot& requestSlot)
 {
-    auto* updatedSlotList = pkt.mutable_updated_slots();
-
     // 입는 것은 요청이 아니라 인벤토리 슬롯에 든 장비다.
     const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
     if (MatchesRequest(ownedSlot, requestSlot) == false || ownedSlot->item().count() < 1)
-        return false;
+        return nullopt;
 
     // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 슬롯이라 제거는 실패하지 않는다.
     const Protocol::Item ownedItem = ownedSlot->item();
-    Protocol::Slot* equippedSlot = updatedSlotList->Add();
+    GearChangeResult result;
+    Protocol::Slot* equippedSlot = result.updatedSlots.Add();
     if (_equipment->Equip(OUT equippedSlot, ownedItem) == false)
-        return false;
+        return nullopt;
 
     // 외형을 바꾸는 쪽은 요청 슬롯(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
-    pkt.set_slot_id(equippedSlot->slot_id());
-    pkt.set_template_id(equippedSlot->item().template_id());
+    result.gearType = equippedSlot->slot_id();
+    result.templateId = equippedSlot->item().template_id();
     RefreshEquippedGearSummary();
 
-    if (_inventory->RemoveItem(requestSlot, OUT updatedSlotList->Add()) == false)
-        return false;
+    if (_inventory->RemoveItem(requestSlot, OUT result.updatedSlots.Add()) == false)
+        return nullopt;
 
-    RefreshFinalStat(OUT pkt.mutable_updated_stat());
+    RefreshFinalStat(OUT &result.updatedStats);
 
-    return true;
+    return result;
 }
 
-bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt)
+optional<GearChangeResult> Player::ProcessUnequipGear(const Protocol::Slot& requestSlot)
 {
-    auto* updatedSlotList = pkt.mutable_updated_slots();
-
     // 돌려받는 것은 요청이 아니라 장비 칸에 든 장비다.
     if (requestSlot.type() != Protocol::SLOT_TYPE_EQUIPPED)
-        return false;
+        return nullopt;
 
     const Protocol::Slot* ownedSlot = _equipment->GetSlot(requestSlot.slot_id());
     if (MatchesRequest(ownedSlot, requestSlot) == false)
-        return false;
+        return nullopt;
 
     // 넣을 자리가 없으면 장비 칸을 비우기 전에 거절한다. 비운 뒤에 실패하면 장비가 사라진다.
     const Protocol::Item ownedItem = ownedSlot->item();
     if (_inventory->FindFirstAvailableSlotId(Protocol::ItemType::ITEM_TYPE_GEAR, ownedItem.template_id()) == -1)
-        return false;
+        return nullopt;
 
-    Protocol::Slot* unequippedSlot = updatedSlotList->Add();
+    GearChangeResult result;
+    Protocol::Slot* unequippedSlot = result.updatedSlots.Add();
     if (_equipment->Unequip(requestSlot.slot_id(), OUT unequippedSlot) == false)
-        return false;
+        return nullopt;
 
     // 탈착 뒤 그 부위는 비어 있으므로 template_id는 0이다.
-    pkt.set_slot_id(unequippedSlot->slot_id());
-    pkt.set_template_id(unequippedSlot->item().template_id());
+    result.gearType = unequippedSlot->slot_id();
+    result.templateId = unequippedSlot->item().template_id();
     RefreshEquippedGearSummary();
 
-    if (_inventory->AddItem(OUT updatedSlotList->Add(), ownedItem) == false)
-        return false;
+    if (_inventory->AddItem(OUT result.updatedSlots.Add(), ownedItem) == false)
+        return nullopt;
 
-    RefreshFinalStat(OUT pkt.mutable_updated_stat());
+    RefreshFinalStat(OUT &result.updatedStats);
 
-    return true;
+    return result;
 }
 
-bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt)
+optional<RespawnResult> Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
 	auto ownerRoom = _room.load().lock();
 	if (ownerRoom == nullptr)
-		return false;
+		return nullopt;
 
-	_posInfo->CopyFrom(*respawnPos);
-	{
-		pkt.set_success(true);
-		pkt.set_respawn_type(type);
-		pkt.set_entity_id(GetEntityId());
+	_posInfo->CopyFrom(respawnPos);
 
-		pkt.set_room_id(ownerRoom->GetRoomId());
-		pkt.mutable_pos_info()->CopyFrom(*respawnPos);
-	}
+    RespawnResult result;
 
 	switch (type)
 	{
 	case Protocol::RESPAWN_TYPE_TOWN:
 	{
-		RepeatedPtrField<Protocol::Stat>* updatedStatList = pkt.mutable_updated_stat();
-
 		// 사망 패널티 적용(경험치 10% 감소) <- 리스폰 할때 적용
 		{
 			int64 exp = GetStatValue(Protocol::STAT_TYPE_EXP);
@@ -344,7 +328,7 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 			int64 updatedExp = curExp <= lossExp ? 0 : curExp - lossExp;
 
 			SetStatValue(Protocol::STAT_TYPE_EXP, updatedExp);
-			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_EXP, updatedExp);
+			ProtoUtil::AddStat(&result.updatedStats, Protocol::STAT_TYPE_EXP, updatedExp);
 		}
 
 		// Hp는 절반만 가지고 리스폰
@@ -352,7 +336,7 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 			int64 respawnHp = (int64)(GetStatValue(Protocol::STAT_TYPE_MAX_HP) * 0.5f);
 
 			SetStatValue(Protocol::STAT_TYPE_HP, respawnHp);
-			ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_HP, respawnHp);
+			ProtoUtil::AddStat(&result.updatedStats, Protocol::STAT_TYPE_HP, respawnHp);
 		}
 
 		break;
@@ -376,7 +360,7 @@ bool Player::ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::Pos
 		_isDead = false;
 	}
 
-	return true;
+	return result;
 }
 
 void Player::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
@@ -543,8 +527,7 @@ bool Player::ApplyTownRespawnForSave()
 
     respawnPos.set_entity_id(GetEntityId());
 
-    Protocol::S_RESPAWN unusedPkt;
-    if (ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, make_shared<Protocol::PosInfo>(respawnPos), OUT unusedPkt) == false)
+    if (ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos).has_value() == false)
         return false;
 
     _playerInfo->set_room_id(respawnRoom->GetRoomId());

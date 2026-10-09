@@ -408,28 +408,15 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
         return;
 
     Protocol::S_BUY_ITEM buyItemPkt;
-    int32 templateId = pkt.template_id();
-    int64 totalGold = 0;
-
-    if (player->ProcessBuyItem(OUT buyItemPkt.mutable_updated_slots(), OUT totalGold, templateId) == false)
+    optional<BuyItemResult> result = player->ProcessBuyItem(pkt.template_id());
+    buyItemPkt.set_success(result.has_value());
+    if (result.has_value())
     {
-        buyItemPkt.set_success(false);
-        buyItemPkt.clear_updated_slots();
-
-        SendPacket(session, buyItemPkt);
-        return;
+        *buyItemPkt.mutable_updated_slots() = std::move(result->updatedSlots);
+        buyItemPkt.set_gold(result->gold);
     }
 
-    // 아이템 구매 성공 처리
-    {
-        buyItemPkt.set_success(true);
-        buyItemPkt.set_gold(totalGold);
-
-        SendPacket(session, buyItemPkt);
-        cout << buyItemPkt.DebugString() << endl;
-    }
-
-    return;
+    SendPacket(session, buyItemPkt);
 }
 
 void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
@@ -439,27 +426,15 @@ void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
         return;
 
     Protocol::S_SELL_ITEM sellItemPkt;
-    const Protocol::Slot& requestSlot = pkt.slot();
-    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
-    int64 totalGold = 0;
-
-    if (player->ProcessSellItem(requestSlot, OUT updatedSlot, OUT totalGold) == false)
+    optional<SellItemResult> result = player->ProcessSellItem(pkt.slot());
+    sellItemPkt.set_success(result.has_value());
+    if (result.has_value())
     {
-        sellItemPkt.set_success(false);
-
-        SendPacket(session, sellItemPkt);
-        return;
+        *sellItemPkt.mutable_updated_slot() = std::move(result->updatedSlot);
+        sellItemPkt.set_gold(result->gold);
     }
 
-    // 아이템 판매 성공 처리
-    {
-        sellItemPkt.set_success(true);
-        sellItemPkt.set_gold(totalGold);
-
-        SendPacket(session, sellItemPkt);
-        cout << sellItemPkt.DebugString() << endl;
-    }
-
+    SendPacket(session, sellItemPkt);
 }
 
 void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
@@ -468,25 +443,20 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
     if (session == nullptr)
         return;
 
+    // 거부 응답에도 싣는다. 클라이언트는 이 id로 내 플레이어를 찾은 뒤에야 요청 대기를 푼다.
     Protocol::S_USE_ITEM useItemPkt;
-    const Protocol::Slot& targetSlot = pkt.slot();
+    useItemPkt.set_entity_id(player->GetEntityId());
 
-    if (player->ProcessUseItem(targetSlot, ::GetTickCount64(), OUT useItemPkt) == false)
+    // 슬롯과 스탯은 성공했을 때만 싣는다.
+    optional<UseItemResult> result = player->ProcessUseItem(pkt.slot(), ::GetTickCount64());
+    useItemPkt.set_success(result.has_value());
+    if (result.has_value())
     {
-        useItemPkt.set_success(false);
-
-        SendPacket(session, useItemPkt);
-        return;
+        *useItemPkt.mutable_updated_slots()->Add() = std::move(result->updatedSlot);
+        *useItemPkt.mutable_updated_stat() = std::move(result->updatedStats);
     }
 
-    // 아이템 사용 성공 처리
-    {
-        useItemPkt.set_success(true);
-
-        SendPacket(session, useItemPkt);
-        cout << useItemPkt.DebugString() << endl;
-    }
-
+    SendPacket(session, useItemPkt);
 }
 
 void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
@@ -495,39 +465,30 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
 
-    // slot_id와 template_id는 처리 결과(장비 부위와 그 부위의 아이템)라서 ProcessEquipGear가 채운다.
     Protocol::S_EQUIP_GEAR equipGearPkt;
-    {
-        equipGearPkt.set_success(true);
-        equipGearPkt.set_entity_id(entityId);
-    }
+    equipGearPkt.set_entity_id(entityId);
 
-    if (player->ProcessEquipGear(pkt.slot(), OUT equipGearPkt) == false)
+    optional<GearChangeResult> result = player->ProcessEquipGear(pkt.slot());
+    equipGearPkt.set_success(result.has_value());
+    if (result.has_value() == false)
     {
-        if (SessionRef session = player->_session.lock())
-        {
-            equipGearPkt.set_success(false);
-            SendPacket(session, equipGearPkt);
-        }
-
+        // 잡이 기다리는 사이 끊겼으면 세션이 없다. SendPacket이 확인한다.
+        SendPacket(player->_session.lock(), equipGearPkt);
         return;
     }
 
-    // 장착한 유저에게만 그대로 전송.
-    // 잡이 기다리는 사이 끊겼으면 세션이 없다. 실패 응답과 같이 확인하고 보낸다.
-    if (SessionRef session = player->_session.lock())
-    {
-        SendPacket(session, equipGearPkt);
-    }
+    // slot_id와 template_id는 요청 슬롯이 아니라 처리 결과(장비 부위와 그 부위의 아이템)다.
+    equipGearPkt.set_slot_id(result->gearType);
+    equipGearPkt.set_template_id(result->templateId);
 
-    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
-    {
-        equipGearPkt.clear_updated_slots();
-        equipGearPkt.clear_updated_stat();
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(equipGearPkt);
-        Broadcast(sendBuffer, entityId);
-    }
+    // 다른 유저들한테는 외형만 알리고 칸과 스탯은 보내지 않는다.
+    SendBufferRef othersBuffer = ServerPacketHandler::MakeSerializedPacket(equipGearPkt);
 
+    *equipGearPkt.mutable_updated_slots() = std::move(result->updatedSlots);
+    *equipGearPkt.mutable_updated_stat() = std::move(result->updatedStats);
+    SendPacket(player->_session.lock(), equipGearPkt);
+
+    Broadcast(othersBuffer, entityId);
 }
 
 void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
@@ -536,39 +497,30 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
 
-    // slot_id와 template_id는 처리 결과(장비 부위와 그 부위의 아이템)라서 ProcessUnequipGear가 채운다.
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
-    {
-        unequipGearPkt.set_success(true);
-        unequipGearPkt.set_entity_id(entityId);
-    }
+    unequipGearPkt.set_entity_id(entityId);
 
-    if (player->ProcessUnequipGear(pkt.slot(), OUT unequipGearPkt) == false)
+    optional<GearChangeResult> result = player->ProcessUnequipGear(pkt.slot());
+    unequipGearPkt.set_success(result.has_value());
+    if (result.has_value() == false)
     {
-        if (SessionRef session = player->_session.lock())
-        {
-            unequipGearPkt.set_success(false);
-
-            SendPacket(session, unequipGearPkt);
-        }
+        // 잡이 기다리는 사이 끊겼으면 세션이 없다. SendPacket이 확인한다.
+        SendPacket(player->_session.lock(), unequipGearPkt);
         return;
     }
 
-    // 탈착한 유저에게만 그대로 전송.
-    // 잡이 기다리는 사이 끊겼으면 세션이 없다. 실패 응답과 같이 확인하고 보낸다.
-    if (SessionRef session = player->_session.lock())
-    {
-        SendPacket(session, unequipGearPkt);
-    }
+    // slot_id와 template_id는 요청 슬롯이 아니라 처리 결과(장비 부위와 그 부위의 아이템)다.
+    unequipGearPkt.set_slot_id(result->gearType);
+    unequipGearPkt.set_template_id(result->templateId);
 
-    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
-    {
-        unequipGearPkt.clear_updated_slots();
-        unequipGearPkt.clear_updated_stat();
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(unequipGearPkt);
-        Broadcast(sendBuffer, entityId);
-    }
+    // 다른 유저들한테는 외형만 알리고 칸과 스탯은 보내지 않는다.
+    SendBufferRef othersBuffer = ServerPacketHandler::MakeSerializedPacket(unequipGearPkt);
 
+    *unequipGearPkt.mutable_updated_slots() = std::move(result->updatedSlots);
+    *unequipGearPkt.mutable_updated_stat() = std::move(result->updatedStats);
+    SendPacket(player->_session.lock(), unequipGearPkt);
+
+    Broadcast(othersBuffer, entityId);
 }
 
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
@@ -811,9 +763,8 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     }
 
     // 호출자가 FindTownRespawnPoint로 찾아 넘겨준 위치를 쓴다.
-    shared_ptr<Protocol::PosInfo> targetPos = make_shared<Protocol::PosInfo>(std::move(respawnPos));
-
-    if (player->ProcessRespawn(respawnType, targetPos, respawnPkt) == false)
+    optional<RespawnResult> result = player->ProcessRespawn(respawnType, respawnPos);
+    if (result.has_value() == false)
     {
         wcout << "ProcessRespawn가 false를 반환" << '\n';
         {
@@ -827,6 +778,13 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     }
 
     // 리스폰 성공 처리
+    respawnPkt.set_success(true);
+    respawnPkt.set_respawn_type(respawnType);
+    respawnPkt.set_entity_id(player->GetEntityId());
+    respawnPkt.set_room_id(_roomId);
+    *respawnPkt.mutable_pos_info() = respawnPos;
+    *respawnPkt.mutable_updated_stat() = std::move(result->updatedStats);
+
     SendPacket(session, respawnPkt);
 
     return true;

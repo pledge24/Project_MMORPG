@@ -81,8 +81,8 @@ protected:
     // 칼을 입히고, 클라이언트가 해제를 요청할 때 보내는 장비 슬롯 사본을 돌려준다.
     Protocol::Slot EquipSword()
     {
-        Protocol::S_EQUIP_GEAR pkt;
-        EXPECT_TRUE(player->ProcessEquipGear(AddToInventory(SWORD_TEMPLATE_ID), pkt));
+        auto result = player->ProcessEquipGear(AddToInventory(SWORD_TEMPLATE_ID));
+        EXPECT_TRUE(result.has_value());
         return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
@@ -103,10 +103,7 @@ protected:
 
 TEST_F(PlayerItemRequestTest, BuyingUnknownTemplateIsRejectedWithoutTouchingTable)
 {
-    RepeatedPtrField<Protocol::Slot> updatedSlots;
-    int64 totalGold = 0;
-
-    EXPECT_FALSE(player->ProcessBuyItem(&updatedSlots, totalGold, UNKNOWN_TEMPLATE_ID));
+    EXPECT_FALSE(player->ProcessBuyItem(UNKNOWN_TEMPLATE_ID).has_value());
     EXPECT_EQ(Gamedata::FindItem(UNKNOWN_TEMPLATE_ID), nullptr)
         << "없는 번호를 표에 끼워 넣으면 여러 룸 스레드가 전역 표를 동시에 바꾼다";
     EXPECT_EQ(player->_possession->gold(), START_GOLD);
@@ -118,11 +115,10 @@ TEST_F(PlayerItemRequestTest, SellPriceComesFromOwnedItem)
 {
     Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
 
-    Protocol::Slot updatedSlot;
-    int64 totalGold = 0;
-    ASSERT_TRUE(player->ProcessSellItem(requestSlot, &updatedSlot, totalGold));
+    optional<SellItemResult> result = player->ProcessSellItem(requestSlot);
+    ASSERT_TRUE(result.has_value());
 
-    EXPECT_EQ(totalGold, START_GOLD + 10);
+    EXPECT_EQ(result->gold, START_GOLD + 10);
     EXPECT_FALSE(InventorySlot(requestSlot).has_item());
 }
 
@@ -131,9 +127,7 @@ TEST_F(PlayerItemRequestTest, SellingWithForgedTemplateIsRejected)
     Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
     requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
 
-    Protocol::Slot updatedSlot;
-    int64 totalGold = 0;
-    EXPECT_FALSE(player->ProcessSellItem(requestSlot, &updatedSlot, totalGold))
+    EXPECT_FALSE(player->ProcessSellItem(requestSlot).has_value())
         << "싼 칼을 비싼 칼 번호로 팔면 골드가 생긴다";
 
     EXPECT_EQ(player->_possession->gold(), START_GOLD);
@@ -144,9 +138,7 @@ TEST_F(PlayerItemRequestTest, SellingUnsellableItemIsRejected)
 {
     Protocol::Slot requestSlot = AddToInventory(UNSELLABLE_SWORD_TEMPLATE_ID);
 
-    Protocol::Slot updatedSlot;
-    int64 totalGold = 0;
-    EXPECT_FALSE(player->ProcessSellItem(requestSlot, &updatedSlot, totalGold));
+    EXPECT_FALSE(player->ProcessSellItem(requestSlot).has_value());
 
     EXPECT_EQ(player->_possession->gold(), START_GOLD);
     EXPECT_TRUE(InventorySlot(requestSlot).has_item());
@@ -159,8 +151,8 @@ TEST_F(PlayerItemRequestTest, EquipPutsOwnedItemOnWithItsUid)
     Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
     const int64 ownedUid = InventorySlot(requestSlot).item().item_uid();
 
-    Protocol::S_EQUIP_GEAR pkt;
-    ASSERT_TRUE(player->ProcessEquipGear(requestSlot, pkt));
+    auto result = player->ProcessEquipGear(requestSlot);
+    ASSERT_TRUE(result.has_value());
 
     EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
     EXPECT_EQ(WeaponSlot().item().item_uid(), ownedUid);
@@ -172,8 +164,8 @@ TEST_F(PlayerItemRequestTest, EquippingWithForgedTemplateChangesNothing)
     Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
     requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
 
-    Protocol::S_EQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "인벤토리의 칼 대신 요청에 실린 대검을 입으면 안 된다";
+    auto result = player->ProcessEquipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "인벤토리의 칼 대신 요청에 실린 대검을 입으면 안 된다";
 
     EXPECT_FALSE(WeaponSlot().has_item());
     EXPECT_TRUE(InventorySlot(requestSlot).has_item());
@@ -185,8 +177,8 @@ TEST_F(PlayerItemRequestTest, EquippingWithForgedUidChangesNothing)
     Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
     requestSlot.mutable_item()->set_item_uid(requestSlot.item().item_uid() + 1);
 
-    Protocol::S_EQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "uid가 다르면 클라이언트 슬롯이 어긋난 것이다";
+    auto result = player->ProcessEquipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "uid가 다르면 클라이언트 슬롯이 어긋난 것이다";
 
     EXPECT_FALSE(WeaponSlot().has_item());
     EXPECT_TRUE(InventorySlot(requestSlot).has_item());
@@ -199,8 +191,8 @@ TEST_F(PlayerItemRequestTest, EquippingFromEmptySlotChangesNothing)
     requestSlot.set_slot_id(0);
     requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
 
-    Protocol::S_EQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "빈 칸을 보내고 대검을 공짜로 입으면 안 된다";
+    auto result = player->ProcessEquipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "빈 칸을 보내고 대검을 공짜로 입으면 안 된다";
 
     EXPECT_FALSE(WeaponSlot().has_item());
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
@@ -213,8 +205,8 @@ TEST_F(PlayerItemRequestTest, UnequipReturnsEquippedItem)
     Protocol::Slot requestSlot = EquipSword();
     const int64 equippedUid = requestSlot.item().item_uid();
 
-    Protocol::S_UNEQUIP_GEAR pkt;
-    ASSERT_TRUE(player->ProcessUnequipGear(requestSlot, pkt));
+    auto result = player->ProcessUnequipGear(requestSlot);
+    ASSERT_TRUE(result.has_value());
 
     EXPECT_FALSE(WeaponSlot().has_item());
     const Protocol::Slot* returnedSlot = player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0);
@@ -230,8 +222,8 @@ TEST_F(PlayerItemRequestTest, UnequippingWithForgedTemplateChangesNothing)
     const int64 equippedAttack = player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
     requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
 
-    Protocol::S_UNEQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessUnequipGear(requestSlot, pkt)) << "칼을 빼고 대검을 돌려받으면 안 된다";
+    auto result = player->ProcessUnequipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "칼을 빼고 대검을 돌려받으면 안 된다";
 
     EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
     EXPECT_FALSE(player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item());
@@ -245,8 +237,8 @@ TEST_F(PlayerItemRequestTest, UnequippingIntoFullInventoryChangesNothing)
     for (int32 i = 0; i < MAX_SLOTS; i++)
         AddToInventory(SWORD_TEMPLATE_ID);
 
-    Protocol::S_UNEQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessUnequipGear(requestSlot, pkt)) << "넣을 자리가 없는데 장비 칸만 비우면 칼이 사라진다";
+    auto result = player->ProcessUnequipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "넣을 자리가 없는데 장비 칸만 비우면 칼이 사라진다";
 
     EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), equippedAttack);

@@ -23,6 +23,47 @@ struct NextLevelUpData
     int64 expRequirement = 0;
 };
 
+//~ 요청 처리 결과. 응답 패킷은 핸들러가 이 결과로 만든다.
+
+/** 구매 결과. updatedSlots는 수량이 바뀐 인벤토리 칸이다. */
+struct BuyItemResult
+{
+    RepeatedPtrField<Protocol::Slot> updatedSlots;
+    int64 gold = 0;
+};
+
+/** 판매 결과. */
+struct SellItemResult
+{
+    Protocol::Slot updatedSlot;
+    int64 gold = 0;
+};
+
+/** 소모품 사용 결과. updatedStats는 회복으로 바뀐 스탯만 담는다. */
+struct UseItemResult
+{
+    Protocol::Slot updatedSlot;
+    RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
+/**
+ * 장비 착용과 해제의 결과. gearType은 바뀐 장비 부위이고, templateId는 처리 뒤 그 부위의 아이템이다(해제면 0).
+ * updatedSlots는 바뀐 장비 칸과 인벤토리 칸, updatedStats는 값이 바뀐 스탯이다.
+ */
+struct GearChangeResult
+{
+    int32 gearType = 0;
+    int32 templateId = 0;
+    RepeatedPtrField<Protocol::Slot> updatedSlots;
+    RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
+/** 리스폰 결과. updatedStats는 사망 패널티와 회복으로 바뀐 스탯이다. */
+struct RespawnResult
+{
+    RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
 /**
  * 플레이어의 스폰 매개변수.
  * session이 비어 있으면 세션에 연결하지 않는다. 운영 코드는 언제나 세션을 넘기고, 빈 세션은 테스트만 쓴다.
@@ -71,23 +112,23 @@ public:
     //~ 요청 처리
 
     /** 골드가 모자라거나 가방에 넣지 못하면 false. 성공하면 totalGold에 남은 골드를 채운다. */
-    bool ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count = 1);
+    optional<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
     /** 팔 수 없는 아이템이면 false. 성공하면 totalGold에 남은 골드를 채운다. */
-    bool ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count = 1);
+    optional<SellItemResult> ProcessSellItem(const Protocol::Slot& requestSlot, int32 count = 1);
     /**
      * nowMs는 재사용 대기 판정에 쓰는 현재 시각(ms)이다. 룸은 GetTickCount64()를 넘긴다.
      * 거절해도 pkt에 entity_id를 싣는다. 슬롯은 성공했을 때만 싣는다.
      */
-    bool ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT Protocol::S_USE_ITEM& pkt);
+    optional<UseItemResult> ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs);
     /** pkt의 slot_id에는 요청한 인벤토리 칸이 아니라 장착된 장비 부위가 실린다. */
-    bool ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt);
+    optional<GearChangeResult> ProcessEquipGear(const Protocol::Slot& requestSlot);
     /** 가방에 자리가 없으면 장비 칸을 비우기 전에 거절한다. 성공하면 pkt의 template_id는 0이다. */
-    bool ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt);
+    optional<GearChangeResult> ProcessUnequipGear(const Protocol::Slot& requestSlot);
     /**
      * 소속 룸이 없으면 false. 위치를 respawnPos로 옮기고 사망 표시를 지운다.
      * 마을 리스폰만 경험치 감소(최대 경험치의 10%)와 HP 절반 회복을 적용한다.
      */
-    bool ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt);
+    optional<RespawnResult> ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos);
 
     //~ 이벤트
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
