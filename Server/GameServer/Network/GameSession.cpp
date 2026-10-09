@@ -6,22 +6,17 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 
-void GameSession::OnConnected()
-{
-	GSessionManager.Add(static_pointer_cast<GameSession>(shared_from_this()));
-}
-
 void GameSession::OnDisconnected()
 {
 	PlayerRef player = _player.load();
 
-	// 저장 대기는 Remove보다 먼저 건다. 반대로 하면 그 사이에 온 새 로그인이 대기 없이 입장해 저장 전의 진행을 불러온다.
+	// 저장 대기는 UnregisterUser보다 먼저 건다. 반대로 하면 그 사이에 온 새 로그인이 대기 없이 입장해 저장 전의 진행을 불러온다.
 	// 룸이 없으면 저장하지 않으므로 걸지 않는다. 걸면 풀어 줄 저장이 없어 다음 입장이 만료까지 막힌다.
 	// 룸 입장 잡이 큐에 남아 있다가 저장하는 경우는 LeaveGame이 건다.
 	if (IsPlayerInRoom())
 		GSaveGate.Hold(_userId);
 
-	GSessionManager.Remove(static_pointer_cast<GameSession>(shared_from_this()));
+	GSessionManager.UnregisterUser(static_pointer_cast<GameSession>(shared_from_this()));
 
 	if (player == nullptr)
 		return;
@@ -43,13 +38,13 @@ void GameSession::OnDisconnected()
 
 void GameSession::OnRecvPacket(BYTE* buffer, int32 len)
 {
-	PacketSessionRef session = GetPacketSessionRef();
+	PacketSessionRef self = GetPacketSessionRef();
 
 	// 게임 서버가 아닌 다른 서버(ex. DB 서버)에 넘겨줄때 id 대역 체크용
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 	// TODO: packetId 대역 체크...
 
-	ServerPacketHandler::HandlePacket(session, buffer, len);
+	ServerPacketHandler::HandlePacket(self, buffer, len);
 }
 
 void GameSession::OnSend(int32 len)

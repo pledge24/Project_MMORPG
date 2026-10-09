@@ -107,10 +107,10 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 KickSession(replaced, Protocol::LEAVE_REASON_DUPLICATE_LOGIN, "Duplicate Login");
             }
 
-            // 등록하기 전에 이 세션이 이미 끊겼다면 접속 종료의 Remove가 먼저 지나갔다. 등록을 여기서 거둔다.
+            // 등록하기 전에 이 세션이 이미 끊겼다면 접속 종료의 UnregisterUser가 먼저 지나갔다. 등록을 여기서 거둔다.
             if (gameSession->IsConnected() == false)
             {
-                GSessionManager.Remove(gameSession);
+                GSessionManager.UnregisterUser(gameSession);
                 return;
             }
 
