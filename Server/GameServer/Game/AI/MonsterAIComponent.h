@@ -20,7 +20,7 @@ enum class MonsterState : uint8
 class MonsterAIComponent : public EntityComponent
 {
 public:
-    /** 몬스터 표의 AI 값을 읽어 두고 Idle 상태로 시작한다. 소유자의 현재 위치가 배회의 기준점이 된다. */
+    /** 몬스터 표의 AI 값을 읽어 두고 Idle 상태로 시작한다. 배회 목적지는 룸 안의 무작위 위치다. */
     MonsterAIComponent(MonsterRef owner, const MonsterTemplate& monsterTemplate);
     virtual ~MonsterAIComponent() = default;
 
@@ -38,7 +38,7 @@ private:
     /** 소유 몬스터. 소유자가 이미 사라졌으면 nullptr. */
     MonsterRef GetOwner() const;
 
-    //~ 상태
+    //~ 상태 전환
     void EvaluateStateTransition();
     /** _stateTimer를 0으로 돌리고 새 상태의 진입 처리(목적지, 방향, 이동 상태)를 한다. */
     void SwitchState(MonsterState nextState);
@@ -98,13 +98,12 @@ private:
     float _chasingMaxRange;                     // 추적 범위
     float _monsterSpeed;                        // 몬스터 이동 속도
 
-    //~ 상태
+    //~ 상태 기계의 값
     MonsterState _state = MonsterState::Idle;
-    vector2D _spawnPos;
     weak_ptr<Entity> _target;
     optional<vector2D> _moveDest;
 
-    //~ Timer
+    //~ 타이머
     /** 아래 세 타이머의 단위는 초다. */
     float _stateTimer = 0.f;                    // 여러 용도로 사용됨
     float _timeSinceLastAttack = 0.f;

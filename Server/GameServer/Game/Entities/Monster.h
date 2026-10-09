@@ -5,7 +5,7 @@ class TickIntervalTimer;
 class TickTimer;
 class MonsterAIComponent;
 
-/** 몬스터의 스폰 매개변수. spawnPos는 위치와 함께 배회의 기준점이 된다. */
+/** 몬스터의 스폰 매개변수. spawnPos는 스폰 위치와 방향이다. */
 struct MonsterSpawnParams : public Creature::SpawnParams
 {
     int32 templateId = 0;

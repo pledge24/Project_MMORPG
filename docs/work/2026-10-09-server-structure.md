@@ -97,8 +97,8 @@
 - 2026-10-09: #211은 퇴장할 때 엔티티의 소속 룸 참조(`_room`)를 비우지 않았다. 이슈의 함정(사망한 채 끊긴 플레이어의 저장)은 리스폰
   규칙을 맵 표로 옮겨 없앴지만, 비우면 룸을 옮기는 사이에 끊긴 세션은 `OnDisconnected`가 저장 대기를 걸지 못해 TD-003의 틈이 넓어진다.
   몬스터의 대상 확인은 `_room` 대신 룸의 `Contains`로 한다
-- 2026-10-09: #211에서 AI를 옮기며 쓰이지 않던 함수(빈 상태 행동, `IsTargetingAttack`, `GetDestination`, `HasDestination`)와 `_isTargeting`을
-  버렸다. TD-036에 적힌 `Monster::_attackTimer`와 `PrintMonsterAllData`는 #213 몫이라 남겼다
+- 2026-10-09: #211에서 AI를 옮기며 쓰이지 않던 함수(빈 상태 행동, `IsTargetingAttack`, `GetDestination`, `HasDestination`)와 `_isTargeting`,
+  쓰기만 하던 `_spawnPos`를 버렸다. 배회 목적지는 그 전에도 룸 안의 무작위 위치였다. TD-036에 적힌 `Monster::_attackTimer`와 `PrintMonsterAllData`는 #213 몫이라 남겼다
 - 2026-10-09: #211의 포털 반경은 네 룸 모두 500으로 정했다. 클라이언트 `AP1Portal`의 `PortalCollision` 크기와 레벨에 놓인 포털 위치를
   보지 못했다(언리얼 MCP 연결 실패). 서버의 플레이어 위치는 마지막 `C_MOVE`라 최대 0.2초 늦으므로, PIE에서 포털을 밟았는데 거절되면
   반경을 늘린다

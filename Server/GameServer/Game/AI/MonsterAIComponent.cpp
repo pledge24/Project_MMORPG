@@ -14,8 +14,6 @@ MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const MonsterTemplate& 
     _chasingMaxRange = monsterTemplate.chasingMaxRange;
     _monsterSpeed = monsterTemplate.movementSpeed;
 
-    _spawnPos = MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
-
     // 스폰 정보에 Idle 이동 상태가 실리도록 룸에 들어가기 전에 맞춰 둔다.
     SwitchState(MonsterState::Idle);
 }
@@ -65,7 +63,7 @@ void MonsterAIComponent::EvaluateStateTransition()
     case MonsterState::Idle:
     case MonsterState::Wandering:
     {
-        // (Idle, Wandering) -> (chasing, attacking): detection 안에 플레이어 감지
+        // 대기와 배회 중에 감지 범위 안의 플레이어를 찾으면 추적이나 공격으로 바꾼다.
         if (RoomRef ownerRoom = owner->GetRoom())
         {
             PlayerRef player = nullptr;
@@ -76,8 +74,8 @@ void MonsterAIComponent::EvaluateStateTransition()
             {
                 _target = static_pointer_cast<Entity>(player);
 
-                // xxx -> Attacking 또는 Chasing으로 전환
-                if (bool InAttackRange = (squareDist <= (_tryAttackRange * _tryAttackRange)))
+                // 공격 사거리 안이면 공격, 밖이면 추적으로 바꾼다.
+                if (bool inAttackRange = (squareDist <= (_tryAttackRange * _tryAttackRange)))
                 {
                     SwitchState(MonsterState::Attacking);
                 }
@@ -121,21 +119,21 @@ void MonsterAIComponent::EvaluateStateTransition()
         {
             const Protocol::PosInfo* targetPos = &target->GetPosInfo();
 
-            // 전환 조건(attacking): 공격 범위 안에 들어옴
-            if (bool InAttackRange = MathUtil::InRange(curPos, targetPos, _tryAttackRange))
+            // 전환 조건(공격): 공격 범위 안에 들어옴
+            if (bool inAttackRange = MathUtil::InRange(curPos, targetPos, _tryAttackRange))
             {
                 SwitchState(MonsterState::Attacking);
                 return;
             }
 
-            // 전환 조건(idle): 타겟이 추적 범위를 벗어남
+            // 전환 조건(대기): 타겟이 추적 범위를 벗어남
             if (bool outOfChasingRange = !MathUtil::InRange(curPos, targetPos, _chasingMaxRange))
             {
                 SwitchState(MonsterState::Idle);
                 return;
             }
 
-            // 전환이 일어나지 않음(Chasing): 목적지를 갱신한다.
+            // 전환이 일어나지 않음(추적): 목적지를 갱신한다.
             SetDestination(MathUtil::PosInfoToVector2D(targetPos), MIN_APPROACH_DISTANCE);
         }
 
@@ -153,7 +151,7 @@ void MonsterAIComponent::EvaluateStateTransition()
         {
             const Protocol::PosInfo* targetPos = &target->GetPosInfo();
 
-            // 전환 조건(Chasing): 공격 범위를 벗어남
+            // 전환 조건(추적): 공격 범위를 벗어남
             if (bool outOfAttackRange = !MathUtil::InRange(curPos, targetPos, _tryAttackRange))
             {
                 SwitchState(MonsterState::Chasing);
@@ -164,7 +162,7 @@ void MonsterAIComponent::EvaluateStateTransition()
             if (ownerRoom == nullptr)
                 return;
 
-            // 전환 조건(Idle): 타겟이 현재 Room에서 사라졌거나, 범위를 벗어남
+            // 전환 조건(대기): 타겟이 현재 룸에서 사라졌거나, 범위를 벗어남
             bool outOfChasingRange = MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false;
             if (ownerRoom->Contains(target->GetEntityId()) == false || outOfChasingRange)
             {
@@ -176,7 +174,7 @@ void MonsterAIComponent::EvaluateStateTransition()
         }
         else
         {
-            // 전환 조건(Idle): 타겟이 유효하지 않음
+            // 전환 조건(대기): 타겟이 유효하지 않음
             _target.reset();
             SwitchState(MonsterState::Idle);
             return;
@@ -205,7 +203,7 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
         // 서있기 세팅(PosInfo 세팅)
         StopMoving(true);
 
-        // Clear Target
+        // 타겟을 놓는다.
         {
             ClearDestination();
             _target.reset();
@@ -293,13 +291,13 @@ void MonsterAIComponent::ExecuteStateAttacking(float deltaTime)
     if (owner == nullptr || target == nullptr)
         return;
 
-    // Look Target
+    // 타겟을 바라본다.
     const Protocol::PosInfo* targetPos = &target->GetPosInfo();
     LookAt(MathUtil::PosInfoToVector2D(targetPos));
 
     if (_timeSinceLastAttack >= _attackInterval)
     {
-        if (bool InAttackRange = MathUtil::InRange(&owner->GetPosInfo(), targetPos, _tryAttackRange))
+        if (bool inAttackRange = MathUtil::InRange(&owner->GetPosInfo(), targetPos, _tryAttackRange))
         {
             _timeSinceLastAttack = 0.f;
             NormalAttack();
@@ -460,7 +458,7 @@ void MonsterAIComponent::NormalAttack()
         int32 combo = 0;
         ownerRoom->HandleNormalAttack(combo, owner);
 
-        // TEMP
+        // 일반 공격은 아직 콤보가 없다. 데미지는 몬스터 표의 기본 공격력이다.
         Protocol::AttackInfo attackInfo;
         {
             attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
