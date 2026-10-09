@@ -22,12 +22,6 @@ protected:
 	virtual void OnSend(int32 len) override;
     
 public:
-	/** 플레이어가 룸에 있으면 끊길 때 진행을 저장한다. 저장 대기(SaveGate)를 걸지 정할 때 쓴다. */
-	bool IsPlayerInRoom();
-
-	/** 접속 종료한 플레이어를 룸에서 빼고, 룸이 저장할 데이터를 내주면 DB 큐에 저장을 넣는다. room의 큐 위에서만 부른다. */
-	static void LeaveGame(RoomRef room, PlayerRef player);
-
 	//~ 플레이어
 	/** 입장한 플레이어. 입장 전이면 nullptr. 입장 잡(DB 스레드)이 쓰고, IOCP 스레드(핸들러, 접속 종료)와 룸 큐가 읽는다. */
 	PlayerRef GetPlayer() const { return _player.load(); }

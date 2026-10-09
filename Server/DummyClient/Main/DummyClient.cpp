@@ -48,6 +48,9 @@ public:
 
 int main()
 {
+	// ServerCore 전역 객체를 만들고 main이 끝날 때 역순으로 지운다.
+	CoreGlobal core;
+
 	ClientPacketHandler::Init();
 
 	this_thread::sleep_for(1s);

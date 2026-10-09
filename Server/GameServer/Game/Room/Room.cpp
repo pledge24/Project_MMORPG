@@ -3,6 +3,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
 #include "Game/Combat/Combat.h"
+#include "Network/ProgressCoordinator.h"
 
 namespace
 {
@@ -146,13 +147,27 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     {
         enterPlayer->OnEnterRoom(static_pointer_cast<Room>(shared_from_this()), roomEnterData.enterPos);
 
-        // 룸 이동 중에 접속이 끊겼으면 이전 룸은 이 플레이어를 찾지 못한다. 퇴장과 저장을 여기서 이어 받는다.
-        // AddEntity가 _room을 먼저 쓰고 여기서 표시를 읽는다. OnDisconnected는 표시를 먼저 쓰고 _room을 읽는다.
-        // 그래서 둘 중 적어도 한쪽은 상대를 본다. 둘 다 보면 이 룸 큐에서 두 번 돌고, 두 번째는 퇴장에 실패해 저장하지 않는다.
-        if (enterPlayer->IsDisconnected())
+        // 들어오는 사이에 접속이 끊겼는지 여기서 판정한다. AddEntity가 _room을 먼저 쓰고 진행 표시를 바꾼다.
+        // 접속 종료(ProgressCoordinator::OnDisconnected)는 진행 표시를 먼저 바꾸고 _room을 읽는다.
+        // 그래서 접속 종료가 IN_ROOM을 보았다면 _room이 이미 이 룸이다. 둘 다 이 룸 큐에 퇴장을 넣으면 두 번째는 퇴장에 실패해 저장하지 않는다.
+        switch (enterPlayer->MarkEnteredRoom())
         {
-            GameSession::LeaveGame(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
+        case Player::Presence::IN_ROOM:
+            break;
+
+        case Player::Presence::LEFT_BEFORE_ROOM:
+            // 첫 입장 전에 끊겼다. 바뀐 것이 없으므로 저장하지 않고, 접속 종료가 이미 저장 대기를 풀었다.
+            // 여기서 저장하면 그사이 대기 없이 입장한 새 세션의 불러오기 뒤에 이 저장이 돈다(TD-003).
+            RemoveEntity(enterPlayerId);
             return false;
+
+        case Player::Presence::LEFT_IN_ROOM:
+            // 룸 이동 중에 끊겼다. 이전 룸은 이 플레이어를 찾지 못하므로 퇴장과 저장을 여기서 이어 받는다.
+            GProgressCoordinator->LeaveRoomAndSave(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
+            return false;
+
+        default:
+            break;
         }
 
         if (auto session = enterPlayer->GetSession())

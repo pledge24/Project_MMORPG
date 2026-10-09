@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include "Network/ServerPacketHandler.h"
 #include "Network/GameSessionManager.h"
-#include "Network/SaveGate.h"
+#include "Network/ProgressCoordinator.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
@@ -14,9 +14,6 @@ namespace
 {
     // 사유 패킷을 보낼 때까지 끊기를 미루는 상한이다. 넘기면 상대가 받지 않는 것으로 보고 끊는다.
     constexpr uint64 KICK_SEND_TIMEOUT_MS = 1000;
-
-    // 접속 종료 저장을 기다리는 불러오기의 상한이다. 넘기면 입장을 거절한다.
-    constexpr uint64 PARKED_LOAD_TIMEOUT_MS = 5000;
 
     // 사유를 알리고, 그 패킷을 보낸 뒤에 끊는다. 클라이언트는 사유를 받아야 밀려난 이유를 화면에 띄운다.
     void KickSession(const GameSessionRef& target, Protocol::LeaveReason reason, const char* cause)
@@ -117,13 +114,10 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
             // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
             // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
-            if (GameSessionRef replaced = GSessionManager.RegisterUser(userId, gameSession))
+            if (GameSessionRef replaced = GSessionManager->RegisterUser(userId, gameSession))
             {
-                // 기존 세션의 접속 종료는 송신을 마친 뒤에야 오지만, 새 세션은 곧 목록을 받고 입장할 수 있다.
-                // 그 사이의 입장이 저장 전의 진행을 불러오지 않도록 대기를 여기서 먼저 건다.
-                // 룸에 없는 세션은 저장하지 않으므로 걸지 않는다.
-                if (replaced->IsPlayerInRoom())
-                    GSaveGate.Hold(userId);
+                // 밀어내기 전에 조율자에 알린다. 기존 세션의 저장이 끝나기 전에 새 세션이 입장하지 않게 한다.
+                GProgressCoordinator->OnDuplicateLogin(userId, replaced->GetPlayer());
 
                 KickSession(replaced, Protocol::LEAVE_REASON_DUPLICATE_LOGIN, "Duplicate Login");
             }
@@ -131,7 +125,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             // 등록하기 전에 이 세션이 이미 끊겼다면 접속 종료의 UnregisterUser가 먼저 지나갔다. 등록을 여기서 거둔다.
             if (gameSession->IsConnected() == false)
             {
-                GSessionManager.UnregisterUser(gameSession);
+                GSessionManager->UnregisterUser(gameSession);
                 return;
             }
 
@@ -289,15 +283,11 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
         return false;
     }
 
-    // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
-
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
     // room_id는 LoadAllCharactersData가 DB에서 읽어야 알 수 있으므로,
     // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
     // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
-    // 이 계정의 접속 종료 저장이 남아 있으면 저장 잡이 같은 userId 큐에서 이 불러오기를 실행한다.
-    // 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.
+    // 언제 어느 DB 큐에서 돌지는 조율자가 정한다. 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.
     auto load = [session, pkt, userId]()
         {
             // 저장을 기다리는 사이에 끊겼으면 불러올 이유가 없다. 불러오면 끊긴 것을 알아챈 뒤 또 저장한다.
@@ -325,29 +315,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             SendEnterGameFail(session);
         };
 
-    SaveGate::ParkTicket ticket = GSaveGate.Park(userId, { load, reject });
-    switch (ticket.result)
-    {
-    case SaveGate::ParkResult::NOT_HELD:
-        dbQueue->Push(make_shared<Job>(std::move(load)));
-        break;
-
-    case SaveGate::ParkResult::PARKED:
-        GSessionJobQueue->DoTimer(PARKED_LOAD_TIMEOUT_MS, [userId, token = ticket.token]()
-            {
-                if (optional<SaveGate::ParkedLoad> expired = GSaveGate.Expire(userId, token))
-                {
-                    GLogger->Warning("접속 종료 저장을 기다리다 입장을 거절합니다. userId: {}", userId);
-                    expired->reject();
-                }
-            });
-        break;
-
-    case SaveGate::ParkResult::BUSY:
-        // 저장을 기다리는 입장 요청이 이미 있다. 쌓으면 요청마다 플레이어가 만들어진다.
-        reject();
-        break;
-    }
+    GProgressCoordinator->RequestEnter(userId, { std::move(load), std::move(reject) });
 
 	return true;
 }

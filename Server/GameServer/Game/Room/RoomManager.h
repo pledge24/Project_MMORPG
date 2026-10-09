@@ -21,6 +21,8 @@ public:
 
     /** 등록되지 않은 번호면 nullptr. */
     RoomRef FindRoom(int32 roomId) const;
+    /** 등록된 룸 전부. 서버 종료 절차가 룸 큐를 비울 때 쓴다. */
+    vector<RoomRef> GetAllRooms() const;
 
 private:
     unordered_map<int32, RoomRef> _rooms; // <RoomId, RoomRef>

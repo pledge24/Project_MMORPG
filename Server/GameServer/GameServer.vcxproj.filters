@@ -74,6 +74,9 @@
     <ClCompile Include="Network\GameSessionManager.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\ProgressCoordinator.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Network\SaveGate.cpp">
       <Filter>Network</Filter>
     </ClCompile>
@@ -81,6 +84,9 @@
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\Config.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ServerContext.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Global.cpp">
@@ -196,11 +202,17 @@
     <ClInclude Include="Network\GameSessionManager.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Network\ProgressCoordinator.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Network\SaveGate.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\ServerPacketHandler.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ServerContext.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Global.h">
       <Filter>Core</Filter>

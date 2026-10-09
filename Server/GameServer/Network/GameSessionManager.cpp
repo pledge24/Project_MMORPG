@@ -1,8 +1,6 @@
 #include "Core/pch.h"
 #include "Network/GameSessionManager.h"
 
-GameSessionManager GSessionManager;
-
 GameSessionRef GameSessionManager::RegisterUser(int64 userId, GameSessionRef session)
 {
     USE_LOCK

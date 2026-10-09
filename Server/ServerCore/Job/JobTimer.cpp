@@ -40,10 +40,12 @@ void JobTimer::Distribute(uint64 now)
 		}
 	}
 
+	// 넣기만 하고 실행은 글로벌 큐를 꺼내는 워커에 맡긴다. 여기서 실행하면 잡이 끝날 때까지 _distributing이 서 있어
+	// 다른 워커가 분배를 건너뛰고 같은 묶음의 뒤쪽 잡도 늦는다.
 	for (TimerItem& item : items)
 	{
 		if (JobQueueRef owner = item.jobData->owner.lock())
-			owner->Push(item.jobData->job);
+			owner->Push(item.jobData->job, true);
 
 		delete item.jobData;		
 	}

@@ -100,6 +100,8 @@
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
+    <ClCompile Include="ProgressCoordinatorTests.cpp" />
+    <ClCompile Include="JobTimerTests.cpp" />
     <ClCompile Include="EntityFactoryTests.cpp" />
     <ClCompile Include="LoggerTests.cpp" />
     <ClCompile Include="GamedataParserTests.cpp" />
@@ -115,10 +117,16 @@
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Network\ProgressCoordinator.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Network\SaveGate.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Core\Config.cpp">
+      <Filter>GameServer\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Core\ServerContext.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Core\Global.cpp">

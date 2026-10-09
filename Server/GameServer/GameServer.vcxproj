@@ -182,8 +182,10 @@
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
     <ClInclude Include="Core\Global.h" />
+    <ClInclude Include="Core\ServerContext.h" />
     <ClInclude Include="Network\GameSession.h" />
     <ClInclude Include="Network\GameSessionManager.h" />
+    <ClInclude Include="Network\ProgressCoordinator.h" />
     <ClInclude Include="Network\SaveGate.h" />
     <ClInclude Include="Network\ServerPacketHandler.h" />
     <ClInclude Include="Protocol\Enum.pb.h" />
@@ -237,10 +239,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Core/pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Core\Global.cpp" />
+    <ClCompile Include="Core\ServerContext.cpp" />
     <ClCompile Include="Core\Config.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp" />
     <ClCompile Include="Network\GameSessionManager.cpp" />
+    <ClCompile Include="Network\ProgressCoordinator.cpp" />
     <ClCompile Include="Network\SaveGate.cpp" />
     <ClCompile Include="Network\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">
