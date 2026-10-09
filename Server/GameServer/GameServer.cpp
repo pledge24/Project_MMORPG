@@ -143,6 +143,11 @@ int main(void)
     }
 
     const Config config = Config::Load(&Config::ReadProcessEnv);
+    if (optional<string> error = config.Validate())
+    {
+        GLogger->Error("설정이 틀려 서버를 종료합니다: {}", error.value());
+        return 1;
+    }
 
     // 룸은 여기서 한 번만 만든다. 워커 스레드가 뜬 뒤로는 룸 목록을 읽기만 한다.
     if (GRoomManager->CreateAllRooms() == false)
@@ -151,33 +156,26 @@ int main(void)
         return 1;
     }
 
-	const int maxSessionCount = 30;
 	ServerServiceRef service = make_shared<ServerService>(
-		NetAddress("127.0.0.1"s, config.port),
+		NetAddress(config.bindAddress, config.port),
 		make_shared<IocpCore>(),
 		[=]() { return make_shared<GameSession>(); }, // TODO: SessionManager 등
-		maxSessionCount
+		config.maxSessionCount
 	);
 
 	ASSERT_CRASH(service->Start())
 
-    // DB 스레드 수. 큐마다 DB 스레드가 하나씩 붙는다.
-    constexpr int32 DB_THREAD_COUNT = 5;
-
     // DB 연결
     {
-        // SQL Server. DB 스레드마다 하나, 시작할 때 main이 아이템 UID를 읽는 데 하나를 쓴다.
-        // 모자라면 동시에 돈 잡 하나가 연결을 빌리지 못한다.
-        const int32 dbConnectionCount = DB_THREAD_COUNT + 1;
-        ASSERT_CRASH(GDBConnectionPool->Connect(dbConnectionCount, config.dbConnectionString.c_str()));
+        // SQL Server. 풀 크기가 DB 스레드 수보다 넉넉한지는 Config::Validate가 봤다.
+        ASSERT_CRASH(GDBConnectionPool->Connect(config.dbConnectionCount, config.dbConnectionString.c_str()));
 
         // Redis
         ASSERT_CRASH(GRedisManager->Connect(config.redisUri));
     }
 
-	// worker thread
-	const int workerThreadN = 5;
-	for (int32 i = 0; i < workerThreadN; i++)
+	// worker thread. 메인 스레드가 마지막 하나로 합류한다.
+	for (int32 i = 0; i < config.workerThreadCount; i++)
 	{
 		GThreadManager->Launch([&service]()
 			{
@@ -186,8 +184,8 @@ int main(void)
 	}
 
     // DB thread
-    GDBManager->Init(DB_THREAD_COUNT);
-    for (int32 i = 0; i < DB_THREAD_COUNT; i++)
+    GDBManager->Init(config.dbThreadCount);
+    for (int32 i = 0; i < config.dbThreadCount; i++)
     {
         GThreadManager->Launch([i]()
             {

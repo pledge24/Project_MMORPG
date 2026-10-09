@@ -43,13 +43,23 @@ git config core.hooksPath .githooks
 
 `GameServerTests`는 `GameServer`를 링크하지 않는다. `GameServer`가 exe라 링크할 수 없으므로, `GameServer.cpp`를 제외한 GameServer의 `.cpp`를 직접 컴파일한다. **이 프로젝트는 `.cpp`를 자동으로 모으지 않는다.** 테스트 파일을 추가하고 `.vcxproj`에 등록하지 않으면 그 테스트는 조용히 돌지 않는다. 자세한 것은 [테스트 계층](./testing.md)에 있다.
 
-접속 정보는 `Server/GameServer/Core/Config.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
+접속 정보와 부팅 설정은 `Server/GameServer/Core/Config.cpp`의 기본값을 쓰고, 아래 환경 변수가 있으면 그 값으로 덮어쓴다. 기본값이 이 저장소의 로컬 개발 환경이므로 새로 클론해도 따로 설정할 것이 없다. 테스트 DB를 가리킬 때는 환경 변수를 준다.
 
 | 환경 변수 | 기본값 |
 |---|---|
 | `P1_GAME_DB_CONNECTION_STRING` | `(localdb)\ProjectModels`의 `GameDB`, 통합 인증 |
 | `P1_REDIS_URI` | `tcp://127.0.0.1:6379` |
+| `P1_GAME_SERVER_BIND_ADDRESS` | `127.0.0.1` |
 | `P1_GAME_SERVER_PORT` | `7777` |
+| `P1_GAME_SERVER_MAX_SESSIONS` | `30` |
+| `P1_GAME_SERVER_WORKER_THREADS` | `5`. 메인 스레드가 하나 더 합류한다 |
+| `P1_GAME_DB_THREADS` | `5` |
+| `P1_GAME_DB_CONNECTIONS` | DB 스레드 수 + 1 |
+
+숫자가 아니거나 범위 밖인 값은 경고를 남기고 기본값을 쓴다. 바인드 주소가 IPv4 주소가 아니거나, 연결 수가 DB 스레드 수 + 1보다
+작으면 서버가 사유를 로그에 남기고 종료 코드 1로 멈춘다.
+— 연결 풀은 DB 스레드마다 하나와 부팅 때 `main`이 아이템 번호를 읽는 데 쓰는 하나가 있어야 한다. 모자라면 동시에 돈 DB 잡
+하나가 연결을 빌리지 못하고 실패한다.
 
 ---
 
