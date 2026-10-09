@@ -2,10 +2,10 @@
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
 #include "Utils/EncodingConverter.h"
-#include "Game/Entities/Player.h"
+#include "Game/Entities/PlayerProgress.h"
 #include "Game/Entities/PlayerSaveData.h"
 
-bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
+bool CharacterStateDAO::LoadCharacter(int64 userId, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 2;
     const int COLS = 3;
@@ -53,8 +53,7 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
             WHERE character_id = (?) AND user_id = (?)
         )SQL");
 
-        GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-        BindObject bindObject(dbBind, characterId, gameSession->_userId);
+        BindObject bindObject(dbBind, characterId, userId);
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -63,9 +62,7 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
         if (dbConn->Fetch() == false)
             throw DBCustomError::SQL_FETCH_FAIL;
 
-        PlayerRef player = gameSession->_player;
-
-        Protocol::PlayerInfo* playerInfo = player->_playerInfo;
+        Protocol::PlayerInfo* playerInfo = &progress.playerInfo;
 
         playerInfo->set_character_id(bindObject._characterId);
         playerInfo->set_class_((Protocol::CharacterClass)bindObject._classId);
@@ -81,7 +78,7 @@ bool CharacterStateDAO::LoadCharacter(SessionRef session, int64 characterId)
     return true;
 }
 
-bool CharacterStateDAO::LoadLastState(SessionRef session, int64 characterId)
+bool CharacterStateDAO::LoadLastState(int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 12;
@@ -153,62 +150,23 @@ bool CharacterStateDAO::LoadLastState(SessionRef session, int64 characterId)
         if (dbConn->Fetch() == false)
             return false;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-        Protocol::EntityInfo* entityInfo = player->_entityInfo;
-        Protocol::PlayerInfo* playerInfo = player->_playerInfo;
-        Protocol::StatInfo* statInfo = player->_statInfo;
-        auto* statMappings = statInfo->mutable_info();
+        auto* statMappings = progress.statInfo.mutable_info();
+        (*statMappings)[Protocol::STAT_TYPE_EXP] = bindObject._exp;
+        (*statMappings)[Protocol::STAT_TYPE_HP] = bindObject._curHp;
+        (*statMappings)[Protocol::STAT_TYPE_MP] = bindObject._curMp;
+        (*statMappings)[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = bindObject._curPhysicalAttack;
+        (*statMappings)[Protocol::STAT_TYPE_MAGICAL_ATTACK] = bindObject._curMagicalAttack;
 
-        // ==성장 및 스텟 관련==
-        const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(playerInfo->class_());
-        if (classLevelTable == nullptr)
-        {
-            GLogger->Error("캐릭터 {}의 클래스 {}에 레벨 표가 없습니다", characterId, static_cast<int32>(playerInfo->class_()));
-            return false;
-        }
+        progress.playerInfo.set_room_id(bindObject._roomId);
+        progress.playerInfo.set_map_id(bindObject._mapId);
 
-        const LevelTemplate* levelTemplate = classLevelTable->Find(playerInfo->level());
-        if (levelTemplate == nullptr)
-        {
-            GLogger->Error("캐릭터 {}의 레벨 {}이 레벨 표 범위 밖입니다", characterId, playerInfo->level());
-            return false;
-        }
+        Protocol::Vector* pos = progress.posInfo.mutable_pos();
+        pos->set_x(bindObject._posX);
+        pos->set_y(bindObject._posY);
+        pos->set_z(bindObject._posZ);
+        progress.posInfo.set_yaw(bindObject._rotYaw);
 
-        int64 maxExp = levelTemplate->expRequirement;
-        statMappings->insert({ (int32)Protocol::STAT_TYPE_EXP, bindObject._exp });
-        statMappings->insert({ (int32)Protocol::STAT_TYPE_MAX_EXP, maxExp });
-
-        // 현재 Hp
-        statMappings->insert({ (int32)Protocol::STAT_TYPE_HP, bindObject._curHp });
-        statMappings->insert({ (int32)Protocol::STAT_TYPE_MP, bindObject._curMp });
-        statMappings->insert({ (int32)Protocol::STAT_TYPE_PHYSICAL_ATTACK, bindObject._curPhysicalAttack });
-        statMappings->insert({ (int32)Protocol::STAT_TYPE_MAGICAL_ATTACK, bindObject._curMagicalAttack });
-
-        // 지역 설정
-        playerInfo->set_room_id(bindObject._roomId);
-
-        // map_id 세팅과 _enteringRoomId 시딩을 함께 처리한다.
-        // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 채우지 않으면
-        // 최초 입장(INITIAL) 검증이 _enteringRoomId == -1 로 실패한다.
-        player->OnEnterMap(bindObject._mapId, bindObject._roomId);
-
-        // PosInfo 설정
-        {
-            Protocol::PosInfo spawnPosInfo;
-            Protocol::Vector& pos = *spawnPosInfo.mutable_pos();
-
-            spawnPosInfo.set_entity_id(entityInfo->entity_id());
-            pos.set_x(bindObject._posX);
-            pos.set_y(bindObject._posY);
-            pos.set_z(bindObject._posZ);
-            spawnPosInfo.set_yaw(bindObject._rotYaw);
-            spawnPosInfo.set_state(Protocol::MOVE_STATE_IDLE);
-
-            player->SetPosInfo(spawnPosInfo);
-        }
-
-        // ==플레이어 골드 설정==
-        player->_possession->set_gold(bindObject._gold);
+        progress.possession.set_gold(bindObject._gold);
 
     }
     catch (DBCustomError error)

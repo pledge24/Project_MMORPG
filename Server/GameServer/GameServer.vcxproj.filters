@@ -52,6 +52,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Network\GameEntry.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Core\pch.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -154,6 +157,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Network\GameEntry.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Core\Config.h">
       <Filter>Core</Filter>
     </ClInclude>

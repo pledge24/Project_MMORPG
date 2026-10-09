@@ -4,7 +4,7 @@
 #include "Utils/EncodingConverter.h"
 #include "Game/Characters/CharacterCreation.h"
 
-void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
+bool CharacterListDAO::LoadCharacterList(int64 userId, OUT vector<Protocol::CharacterOverview>& characters)
 {
     const int PARAMS = 1;
     const int COLS = 4;
@@ -41,7 +41,6 @@ void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
     };
     
     DBConnectionGuard dbConn;
-    Protocol::S_LOGIN pkt;
 
     try
     {
@@ -58,41 +57,33 @@ void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        int32 records = 0;
         while(dbConn->Fetch())
         {
-            records++;
-
-            Protocol::CharacterOverview* character = pkt.add_characters();
+            Protocol::CharacterOverview* character = &characters.emplace_back();
 
             character->set_character_id(bindObject._characterId);
             character->set_class_((Protocol::CharacterClass)bindObject._classId);
             character->set_name(EncodingConverter::WCharToString(bindObject._characterName));
             character->set_level(bindObject._level);
         }
-
-        // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. CreateCharacter가 막는 한도와 같은 값이다.
-        pkt.set_character_slot_count(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT);
-        pkt.set_success(true);
     }
     catch (DBCustomError dbError)
     {
         PrintDBErrorLog(dbError);
-        pkt.Clear();
-        pkt.set_success(false);
+        characters.clear();
+        return false;
     }
     catch (exception& err)
     {
-        cerr << "Unexpected Error(LoadCharacterList): " << err.what() << endl;
-        pkt.Clear();
-        pkt.set_success(false);
+        GLogger->Error("Unexpected Error(LoadCharacterList): {}", err.what());
+        characters.clear();
+        return false;
     }
-    
-    // 패킷 전송
-    SEND_PACKET(pkt)
+
+    return true;
 }
 
-void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::CharacterOverview& character, int64 userId)
+bool CharacterListDAO::CreateCharacter(const Protocol::CharacterOverview& character, int64 userId, OUT CreateCharacterResult& result)
 {
     const int PARAMS = 10;
     const int COLS = 1;
@@ -155,7 +146,6 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
     };
 
     DBConnectionGuard dbConn;
-    Protocol::S_CREATE_CHARACTER createCharacterPkt;
 
     try
     {
@@ -233,53 +223,39 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
         // 거절을 예외로 던지지 않으므로 catch에 오는 것은 모두 서버 내부 오류다.
         if (bindObject._characterId < 0)
         {
-            createCharacterPkt.set_success(false);
-
-            // 바인딩한 사유만 화면에 보여 준다. 그 밖의 음수는 쿼리가 잘못된 것이므로 내부 문구를 내보내지 않는다.
+            // 바인딩한 사유만 화면에 보여 준다. 그 밖의 음수는 쿼리가 잘못된 것이므로 내부 오류로 본다.
             const int64 code = -bindObject._characterId;
-            if (ranges::find(bindObject._rejections, code) != end(bindObject._rejections))
-            {
-                const DBCustomError rejection = static_cast<DBCustomError>(code);
-                PrintDBErrorLog(rejection);
-                createCharacterPkt.set_cause(EncodingConverter::WCharToString(DBErrorCauseMappings.at(rejection).c_str()));
-            }
-            else
+            if (ranges::find(bindObject._rejections, code) == end(bindObject._rejections))
             {
                 GLogger->Error("Unexpected Rejection(CreateCharacter): {}", code);
-                createCharacterPkt.set_cause("서버 내부 오류");
+                return false;
             }
+
+            const DBCustomError rejection = static_cast<DBCustomError>(code);
+            PrintDBErrorLog(rejection);
+            result.rejection = EncodingConverter::WCharToString(DBErrorCauseMappings.at(rejection).c_str());
         }
         else
         {
-            createCharacterPkt.set_success(true);
-            createCharacterPkt.set_character_id(bindObject._characterId);
+            result.characterId = bindObject._characterId;
         }
     }
     catch (DBCustomError dbError)
     {
         PrintDBErrorLog(dbError);
-
-        createCharacterPkt.Clear();
-        createCharacterPkt.set_success(false);
-        createCharacterPkt.set_cause("서버 내부 오류");
+        return false;
     }
     catch (exception& err)
     {
         GLogger->Error("Unexpected Error(CreateCharacter): {}", err.what());
-
-        createCharacterPkt.Clear();
-        createCharacterPkt.set_success(false);
-        createCharacterPkt.set_cause("알 수 없는 오류");
+        return false;
     }
 
-    // 패킷 전송
-    SEND_PACKET(createCharacterPkt)
+    return true;
 }
 
-void CharacterListDAO::DeleteCharacter(SessionRef session, int64 characterId)
+bool CharacterListDAO::DeleteCharacter(int64 userId, int64 characterId)
 {
-    cout << "DeleteCharacter!" << endl;
-
     const int PARAMS = 2;
     const int COLS = 0;
 
@@ -303,7 +279,6 @@ void CharacterListDAO::DeleteCharacter(SessionRef session, int64 characterId)
     };
 
     DBConnectionGuard dbConn;
-    Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
 
     try
     {
@@ -335,34 +310,24 @@ void CharacterListDAO::DeleteCharacter(SessionRef session, int64 characterId)
             END
         )SQL");
 
-        GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-        BindObject bindObject(dbBind, characterId, gameSession->_userId);
+        BindObject bindObject(dbBind, characterId, userId);
 
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
         if (dbConn->GetRowCount() <= 0)
             throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
-
-        // 패킷으로 만들어서 클라이언트에게 보낸다.
-        deleteCharacterPkt.set_success(true);
-        deleteCharacterPkt.set_character_id(characterId);
     }
     catch (DBCustomError error)
     {
         PrintDBErrorLog(error);
-
-        deleteCharacterPkt.Clear();
-        deleteCharacterPkt.set_success(false);
+        return false;
     }
     catch (exception& err)
     {
-        cerr << "Unexpected Error(CreateCharacter): " << err.what() << endl;
-
-        deleteCharacterPkt.Clear();
-        deleteCharacterPkt.set_success(false);
+        GLogger->Error("Unexpected Error(DeleteCharacter): {}", err.what());
+        return false;
     }
 
-    // 패킷 전송
-    SEND_PACKET(deleteCharacterPkt)
+    return true;
 }

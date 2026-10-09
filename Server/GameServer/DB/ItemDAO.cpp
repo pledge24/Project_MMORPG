@@ -2,12 +2,20 @@
 #include "DB/ItemDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/ItemSaveRows.h"
-#include "Game/Entities/Player.h"
-#include "Game/Inventory/InventoryComponent.h"
-#include "Game/Equipment/EquipmentComponent.h"
+#include "Game/Entities/PlayerProgress.h"
 
 namespace
 {
+    // 불러온 행 하나를 슬롯으로 만든다. 칸 번호는 slot_id에 싣는다.
+    Protocol::Slot MakeLoadedSlot(Protocol::SlotType slotType, int32 slotId, const Protocol::Item& item)
+    {
+        Protocol::Slot slot;
+        slot.set_type(slotType);
+        slot.set_slot_id(slotId);
+        *slot.mutable_item() = item;
+        return slot;
+    }
+
     // 개수로 쌓이는 아이템의 테이블이다. 쌓이는 종류가 아니면 nullptr.
     const WCHAR* GetStackableItemTable(Protocol::ItemType itemType)
     {
@@ -76,20 +84,20 @@ bool ItemDAO::GetMaxItemUID()
     return true;
 }
 
-bool ItemDAO::LoadItems(SessionRef session, int64 characterId)
+bool ItemDAO::LoadItems(int64 characterId, OUT PlayerProgress& progress)
 {
     try
     {
         // 1. 캐릭터 장비 아이템 가져오기
-        if (LoadGearItems(session, characterId) == false)
+        if (LoadGearItems(characterId, progress) == false)
             throw wstring(L"장비 아이템 불러오기 실패");
 
         // 2. 캐릭터 소비 아이템 가져오기
-        if (LoadStackableItems(session, characterId, Protocol::ITEM_TYPE_CONSUMABLE) == false)
+        if (LoadStackableItems(characterId, Protocol::ITEM_TYPE_CONSUMABLE, progress) == false)
             throw wstring(L"소비 아이템 불러오기 실패");
 
         // 3. 캐릭터 기타 아이템 가져오기
-        if (LoadStackableItems(session, characterId, Protocol::ITEM_TYPE_MISCELLANEOUS) == false)
+        if (LoadStackableItems(characterId, Protocol::ITEM_TYPE_MISCELLANEOUS, progress) == false)
             throw wstring(L"기타 아이템 불러오기 실패");
     }
     catch (const wstring& cause)
@@ -126,7 +134,7 @@ bool ItemDAO::SaveItems(const PlayerSaveData& data)
     return true;
 }
 
-bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
+bool ItemDAO::LoadGearItems(int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 8;
@@ -186,8 +194,6 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-
         while (dbConn->Fetch())
         {
             Protocol::Item item;
@@ -195,6 +201,7 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
 
             item.set_template_id(bindObject._templateId);
             item.set_item_uid(bindObject._itemUid);
+            item.set_count(1);
 
             gearInfo->set_enhance_level(bindObject._enhance);
             gearInfo->set_durability(bindObject._durability);
@@ -202,9 +209,9 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
             gearInfo->set_additional_magical_attack(bindObject._additionalMagicalAttack);
 
             if (bindObject._isEquipped == false)
-                player->_inventory->AddItem(nullptr, item, 1, bindObject._slotId);
+                *progress.possession.mutable_inventory()->add_gear() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, bindObject._slotId, item);
             else
-                player->_equipment->LoadEquipped(item, bindObject._slotId);
+                (*progress.possession.mutable_equipped_gear())[bindObject._slotId] = MakeLoadedSlot(Protocol::SLOT_TYPE_EQUIPPED, bindObject._slotId, item);
         }
     }
     catch (DBCustomError error)
@@ -216,7 +223,7 @@ bool ItemDAO::LoadGearItems(SessionRef session, int64 characterId)
     return true;
 }
 
-bool ItemDAO::LoadStackableItems(SessionRef session, int64 characterId, Protocol::ItemType itemType)
+bool ItemDAO::LoadStackableItems(int64 characterId, Protocol::ItemType itemType, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 3;
@@ -272,14 +279,19 @@ bool ItemDAO::LoadStackableItems(SessionRef session, int64 characterId, Protocol
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
+        Protocol::Inventory* inventory = progress.possession.mutable_inventory();
+        const bool isConsumable = itemType == Protocol::ITEM_TYPE_CONSUMABLE;
 
         while (dbConn->Fetch())
         {
             Protocol::Item item;
-
             item.set_template_id(bindObject._templateId);
-            player->_inventory->AddItem(nullptr, item, bindObject._count, bindObject._slotId);
+            item.set_count(bindObject._count);
+
+            if (isConsumable)
+                *inventory->add_consumables() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, bindObject._slotId, item);
+            else
+                *inventory->add_miscellaneous() = MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_MISC, bindObject._slotId, item);
         }
     }
     catch (DBCustomError error)

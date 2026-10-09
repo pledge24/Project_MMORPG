@@ -169,6 +169,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup Label="테스트 소스">
+    <ClCompile Include="GameEntryTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

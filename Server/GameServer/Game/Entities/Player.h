@@ -26,10 +26,13 @@ struct NextLevelUpData
 /**
  * 플레이어의 스폰 매개변수.
  * session이 비어 있으면 세션에 연결하지 않는다. 운영 코드는 언제나 세션을 넘기고, 빈 세션은 테스트만 쓴다.
+ * progress가 있으면 그 진행으로 플레이어를 채우고 검증까지 한다. 검증에 실패하면 팩토리가 nullptr를 돌려준다.
  */
 struct PlayerSpawnParams : public Creature::SpawnParams
 {
     GameSessionRef session;
+    /** 불러온 진행. Init 안에서만 읽으므로 Init이 끝날 때까지만 살아 있으면 된다. */
+    const PlayerProgress* progress = nullptr;
 };
 
 /**
@@ -53,7 +56,10 @@ public:
 protected:
     friend class EntityFactory;
     
-    /** 세션을 연결하고 인벤토리와 장비를 만든다. */
+    /**
+     * 세션을 가리키고 인벤토리와 장비를 만든다. 세션의 _player는 바꾸지 않는다. 등록은 검증을 마친 호출자가 한다.
+     * progress가 있으면 ApplyProgress로 채운 뒤 OnLoaded로 검증한다.
+     */
     bool Init(const SpawnParams& params);
     
     //~ Begin Entity Interface
@@ -111,6 +117,10 @@ public:
     bool ApplyTownRespawnForSave();
 
 private:
+    //~ 불러오기
+    /** 불러온 진행을 플레이어에 쓴다. 인벤토리와 장비는 슬롯 번호대로 넣는다. 검증은 OnLoaded가 한다. */
+    void ApplyProgress(const PlayerProgress& progress);
+
     //~ 스탯
     /**
      * 레벨 표의 기본 스탯에 착용 장비의 증감량을 더한다. 최종 스탯은 이 함수로만 계산한다.

@@ -56,6 +56,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="GameEntryTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\GameEntry.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

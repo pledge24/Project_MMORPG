@@ -4,9 +4,8 @@
 #include "Network/SaveGate.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
-#include "Game/Entities/EntityFactory.h"
+#include "Network/GameEntry.h"
 #include "DB/CharacterListDAO.h"
-#include "DB/ProgressStorage.h"
 #include "Game/Characters/CharacterCreation.h"
 
 namespace
@@ -114,7 +113,23 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 return;
             }
 
-            CharacterListDAO::LoadCharacterList(session, userId);
+            Protocol::S_LOGIN loginPkt;
+            vector<Protocol::CharacterOverview> characters;
+            if (CharacterListDAO::LoadCharacterList(userId, OUT characters))
+            {
+                for (Protocol::CharacterOverview& character : characters)
+                    *loginPkt.add_characters() = std::move(character);
+
+                // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. CreateCharacter가 막는 한도와 같은 값이다.
+                loginPkt.set_character_slot_count(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT);
+                loginPkt.set_success(true);
+            }
+            else
+            {
+                loginPkt.set_success(false);
+            }
+
+            SEND_PACKET(loginPkt)
         }
     );
 
@@ -142,8 +157,25 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
     JobRef job = make_shared<Job>(
         [session, pkt, userId]()
         {
-            const Protocol::CharacterOverview& character = pkt.character();
-            CharacterListDAO::CreateCharacter(session, character, userId);
+            Protocol::S_CREATE_CHARACTER createCharacterPkt;
+            CreateCharacterResult result;
+            if (CharacterListDAO::CreateCharacter(pkt.character(), userId, OUT result) == false)
+            {
+                createCharacterPkt.set_success(false);
+                createCharacterPkt.set_cause("서버 내부 오류");
+            }
+            else if (result.rejection.has_value())
+            {
+                createCharacterPkt.set_success(false);
+                createCharacterPkt.set_cause(result.rejection.value());
+            }
+            else
+            {
+                createCharacterPkt.set_success(true);
+                createCharacterPkt.set_character_id(result.characterId);
+            }
+
+            SEND_PACKET(createCharacterPkt)
         }
     );
 
@@ -163,8 +195,16 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
     JobRef job = make_shared<Job>(
         [session, pkt]()
         {
-            int64 characterId = pkt.character_id();
-            CharacterListDAO::DeleteCharacter(session, characterId);
+            // 계정 번호는 잡이 실행될 때 세션에서 읽는다.
+            const int64 userId = static_pointer_cast<GameSession>(session)->_userId;
+            const int64 characterId = pkt.character_id();
+
+            Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
+            deleteCharacterPkt.set_success(CharacterListDAO::DeleteCharacter(userId, characterId));
+            if (deleteCharacterPkt.success())
+                deleteCharacterPkt.set_character_id(characterId);
+
+            SEND_PACKET(deleteCharacterPkt)
         }
     );
 
@@ -190,19 +230,9 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             if (session->IsConnected() == false)
                 return;
 
-            // 플레이어 생성 및 초기화. 룸에는 불러오기가 끝난 뒤 EnterPlayer로 들어간다.
-            PlayerSpawnParams spawnParams;
-            spawnParams.session = static_pointer_cast<GameSession>(session);
-
-            PlayerRef player = EntityFactory::Create<Player>(spawnParams);
-            if (player == nullptr)
-            {
-                wcout << L"Warning: 플레이어 생성 실패" << '\n';
-                return;
-            }
-
-            int64 characterId = pkt.character_id();
-            ProgressStorage::Load(session, characterId);
+            // 불러오기가 모두 성공하고 검증을 통과해야 세션에 플레이어가 생긴다. 룸에는 그 뒤 EnterPlayer로 들어간다.
+            Protocol::S_ENTER_GAME enterGamePkt = GameEntry::Enter(static_pointer_cast<GameSession>(session), pkt.character_id());
+            SEND_PACKET(enterGamePkt)
         };
 
     auto reject = [session]()
