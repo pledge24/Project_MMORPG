@@ -13,7 +13,7 @@ class GameSessionManager
 {
 public:
     /**
-     * [LOCK] 세션을 계정에 묶고 session->_userId를 userId로 바꾼다.
+     * [LOCK] 세션을 계정에 묶고 session의 계정 번호를 userId로 바꾼다.
      * 같은 계정의 기존 세션이 있으면 교체하고 그 세션을 돌려준다. 없으면 nullptr를 돌려준다.
      * 돌려받은 세션을 끊는 것은 호출자의 몫이다.
      * 이 세션이 다른 계정에 묶여 있었으면 그 등록을 거둔다.

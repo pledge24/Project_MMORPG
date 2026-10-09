@@ -39,7 +39,7 @@ namespace
     template<typename RoomJob>
     bool DispatchToPlayerRoom(const PacketSessionRef& session, RoomJob&& job)
     {
-        PlayerRef player = static_pointer_cast<GameSession>(session)->_player.load();
+        PlayerRef player = static_pointer_cast<GameSession>(session)->GetPlayer();
         if (player == nullptr)
             return false;
 
@@ -178,7 +178,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
+    int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
@@ -222,14 +222,14 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
     // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
+    int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
         [session, pkt]()
         {
             // 계정 번호는 잡이 실행될 때 세션에서 읽는다.
-            const int64 userId = static_pointer_cast<GameSession>(session)->_userId;
+            const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
             const int64 characterId = pkt.character_id();
 
             Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
@@ -258,14 +258,14 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
     // 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다. 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
-    if (static_pointer_cast<GameSession>(session)->_player.load() != nullptr)
+    if (static_pointer_cast<GameSession>(session)->GetPlayer() != nullptr)
     {
         SendEnterGameFail(session);
         return true;
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
+    int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
@@ -341,7 +341,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->_player.load();
+    PlayerRef player = gameSession->GetPlayer();
     int32 roomId = pkt.room_id();
 
     if (player == nullptr)
@@ -409,7 +409,7 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->_player.load();
+    PlayerRef player = gameSession->GetPlayer();
     if (player == nullptr)
         return false;
 

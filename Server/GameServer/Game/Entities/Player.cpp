@@ -65,7 +65,7 @@ bool Player::Init(const SpawnParams& params)
     if (params.session != nullptr)
     {
         _session = params.session;
-        _userId = params.session->_userId;
+        _userId = params.session->GetUserId();
     }
 
     _inventory = make_shared<InventoryComponent>(self, _possession->mutable_inventory());

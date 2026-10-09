@@ -52,6 +52,12 @@ void GameSession::OnSend(int32 len)
 {
 }
 
+bool GameSession::TryRegisterPlayer(const PlayerRef& player)
+{
+	PlayerRef expected = nullptr;
+	return _player.compare_exchange_strong(expected, player);
+}
+
 bool GameSession::IsPlayerInRoom()
 {
 	PlayerRef player = _player.load();

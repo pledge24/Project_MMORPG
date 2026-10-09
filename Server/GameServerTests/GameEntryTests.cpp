@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Network/GameEntry.h"
+#include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -69,12 +70,11 @@ protected:
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
-        session->_userId = USER_ID;
+        sessionManager.RegisterUser(USER_ID, session);
     }
 
     void TearDown() override
     {
-        session->_player.store(nullptr);
         session.reset();
         Gamedata::Install(GamedataTables());
     }
@@ -104,6 +104,7 @@ protected:
         return progress;
     }
 
+    GameSessionManager sessionManager;
     GameSessionRef session;
 };
 
@@ -114,7 +115,7 @@ TEST_F(GameEntryTest, ValidProgressRegistersPlayerInSession)
     PlayerRef player = GameEntry::SpawnPlayer(session, progress);
 
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(session->_player.load(), player);
+    EXPECT_EQ(session->GetPlayer(), player);
     EXPECT_EQ(player->GetUserId(), USER_ID);
     EXPECT_EQ(player->GetPlayerInfo().character_id(), CHARACTER_ID);
     EXPECT_EQ(player->GetEnteringRoomId(), 10) << "첫 룸 입장은 불러온 룸으로 간다";
@@ -149,7 +150,7 @@ TEST_F(GameEntryTest, FailedValidationLeavesSessionWithoutPlayer)
     PlayerRef player = GameEntry::SpawnPlayer(session, progress);
 
     EXPECT_EQ(player, nullptr);
-    EXPECT_EQ(session->_player.load(), nullptr) << "검증에 실패한 플레이어가 세션에 남으면 끊길 때 저장 경로를 탄다";
+    EXPECT_EQ(session->GetPlayer(), nullptr) << "검증에 실패한 플레이어가 세션에 남으면 끊길 때 저장 경로를 탄다";
 }
 
 TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
@@ -158,7 +159,7 @@ TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
     progress.playerInfo.set_level(2);
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr);
-    EXPECT_EQ(session->_player.load(), nullptr);
+    EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
 // TD-019: 룸에 들어간 플레이어가 C_ENTER_GAME을 다시 보내면 새 플레이어가 세션을 덮어써, 이전 플레이어가
@@ -172,7 +173,7 @@ TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
     PlayerRef second = GameEntry::SpawnPlayer(session, progress);
 
     EXPECT_EQ(second, nullptr);
-    EXPECT_EQ(session->_player.load(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
+    EXPECT_EQ(session->GetPlayer(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
 }
 
 /* TD-035: DB에서 읽은 슬롯은 믿지 않는다. 잘못된 행이 있으면 입장을 거절하고, 행은 DB에 그대로 둔다. */
@@ -184,7 +185,7 @@ TEST_F(GameEntryTest, TwoRowsInOneSlotAreRejected)
         MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5, POTION_TEMPLATE_ID, 2);
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "같은 칸의 두 행을 합치면 다음 저장이 한 행을 지운다";
-    EXPECT_EQ(session->_player.load(), nullptr);
+    EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
 TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)

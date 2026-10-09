@@ -30,7 +30,7 @@ TEST_F(GameSessionManagerTest, FirstRegisterReplacesNothing)
     GameSessionRef session = make_shared<GameSession>();
 
     EXPECT_EQ(manager.RegisterUser(USER_ID, session), nullptr);
-    EXPECT_EQ(session->_userId, USER_ID);
+    EXPECT_EQ(session->GetUserId(), USER_ID);
 }
 
 TEST_F(GameSessionManagerTest, SameUserReturnsReplacedSession)

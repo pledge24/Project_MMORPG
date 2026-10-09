@@ -4,6 +4,7 @@
 #include "DB/CharacterStateDAO.h"
 #include "DB/ProgressStorage.h"
 #include "Network/GameEntry.h"
+#include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerSaveData.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -80,12 +81,13 @@ TEST(ProgressStorageTest, FailedLoadLeavesSessionWithoutPlayer)
     conn.QueueExecuteFailure();
 
     GameSessionRef session = make_shared<GameSession>();
-    session->_userId = USER_ID;
+    GameSessionManager sessionManager;
+    sessionManager.RegisterUser(USER_ID, session);
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, CHARACTER_ID);
 
     EXPECT_FALSE(pkt.success());
-    EXPECT_EQ(session->_player.load(), nullptr) << "불러오기에 실패한 세션에 플레이어가 남으면 끊길 때 반쯤 채운 진행을 저장한다";
+    EXPECT_EQ(session->GetPlayer(), nullptr) << "불러오기에 실패한 세션에 플레이어가 남으면 끊길 때 반쯤 채운 진행을 저장한다";
 }
 
 /* 저장 */
