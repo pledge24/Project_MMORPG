@@ -69,6 +69,8 @@ protected:
 private:
     /** 룸이 AddEntity에서 JoinRoom을, 룸 틱에서 Tick을 부른다. */
     friend class Room;
+    /** 테스트가 준비 단계에서 엔티티 번호를 겹치게 정한다(GameServerTests/PlayerTestAccess.h). */
+    friend struct EntityTestAccess;
 
     /** 팩토리가 생성 직후에 한 번 부른다. 위치의 엔티티 id도 함께 쓴다. */
     void SetEntityId(int64 entityId)                    { _entityInfo->set_entity_id(entityId); _posInfo->set_entity_id(entityId); }

@@ -12,6 +12,20 @@ namespace
     {
         return vector2D(posInfo.pos().x(), posInfo.pos().y());
     }
+
+    // 룸에서 빠진 끊긴 플레이어의 저장 사본. 사망한 채 끊겼으면 마을 리스폰을 적용해 저장한다.
+    PlayerSaveData MakeDisconnectSaveData(const PlayerRef& player)
+    {
+        if (player->IsDead())
+        {
+            if (optional<TownRespawn> town = RoomTransfer::FindTownRespawn())
+                player->ApplyTownRespawnForSave(town.value());
+            else
+                GLogger->Error("플레이어 {}에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다(맵 표에 마을 리스폰 지점이 없다)", player->GetEntityId());
+        }
+
+        return player->MakeSaveData();
+    }
 }
 
 RoomRef Room::Create(const MapTemplate& mapTemplate)
@@ -124,6 +138,14 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     if (AddEntity(enterPlayer) == false)
     {
         GLogger->Warning("플레이어 {}가 Room {} 입장에 실패했습니다", enterPlayerId, _roomId);
+
+        // 룸 이동 중에 끊겼다. 떠난 룸은 이 플레이어를 찾지 못하고 이 룸에도 들어오지 못했으므로, 저장을 여기서 넘긴다.
+        // 넘기지 않으면 접속 종료가 건 저장 대기를 풀 곳이 없다(TD-047).
+        if (enterPlayer->GetPresence() == Player::Presence::LEFT_IN_ROOM)
+        {
+            GProgressCoordinator->SaveLeftPlayer(enterPlayer, MakeDisconnectSaveData(enterPlayer));
+            return false;
+        }
 
         if (auto session = enterPlayer->GetSession())
         {
@@ -245,15 +267,7 @@ optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
     if (LeavePlayer(player, false) == false)
         return nullopt;
 
-    if (player->IsDead())
-    {
-        if (optional<TownRespawn> town = RoomTransfer::FindTownRespawn())
-            player->ApplyTownRespawnForSave(town.value());
-        else
-            GLogger->Error("플레이어 {}에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다(맵 표에 마을 리스폰 지점이 없다)", playerId);
-    }
-
-    return player->MakeSaveData();
+    return MakeDisconnectSaveData(player);
 }
 
 void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)

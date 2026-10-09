@@ -15,3 +15,9 @@ struct PlayerTestAccess
     /** 세션 없이 만든 플레이어에 계정 번호를 준다. 운영 코드는 PlayerSpawnParams의 userId로 받는다. */
     static void SetUserId(Player& player, int64 userId) { player._userId = userId; }
 };
+
+/** 테스트가 엔티티 번호를 정한다. Entity가 friend로 연다. 운영 코드는 팩토리가 생성 직후에 한 번만 정한다. */
+struct EntityTestAccess
+{
+    static void SetEntityId(Entity& entity, int64 entityId) { entity.SetEntityId(entityId); }
+};
