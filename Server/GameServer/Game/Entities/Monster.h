@@ -108,29 +108,30 @@ protected:
     //~ 기타
     void ClearDestination();
     void PrintMonsterAllData() const;
-    /** _monsterData에서 스탯과 AI 값을 읽어 멤버에 둔다. 표에 없는 값은 기본값으로 둔다. */
+    /** _template에서 스탯과 AI 값을 읽어 멤버에 둔다. */
     void CacheMonsterData();
 
 private:
-    //~ Monster Raw Data
-    Json _monsterData;
+    //~ Monster Template
+    /** 몬스터 표의 행 사본. 보상은 여기서 뽑는다. */
+    MonsterTemplate _template;
 
     //~ Monster Stat Data
     /** _entityInfo 안의 monster_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::MonsterInfo* _monsterInfo;
     int32 _templateId;
     int32 _maxHp;
-    /** 공격 간격(초). 표에 없으면 사실상 공격하지 않는 큰 값이다. */
+    /** 공격 간격(초). */
     float _attackInterval;
     int32 _baseAttack;
 
     //~ Monster AI Data(Common)
     /** 단위는 초다. */
-    const float IDLE_TIME = 5.f;
+    static constexpr float IDLE_TIME = 5.f;
     /** 단위는 초다. */
-    const float WANDERING_TIME = 2.f;
-    const uint64 UPDATE_STATE_INTERVAL_MS = 200;
-    const float MIN_APPROACH_DISTANCE = 120.f;
+    static constexpr float WANDERING_TIME = 2.f;
+    static constexpr uint64 UPDATE_STATE_INTERVAL_MS = 200;
+    static constexpr float MIN_APPROACH_DISTANCE = 120.f;
 
     //~ Monster AI Data(Individual)
     MonsterState _state = MonsterState::Idle;

@@ -26,7 +26,6 @@
 
 //~ GameData
 #include "Game/Data/Gamedata.h"
-#include "Game/Data/JsonProperty.h"
 
 //~ Network
 #include "Protocol/Protocol.pb.h"

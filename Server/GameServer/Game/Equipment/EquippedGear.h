@@ -36,11 +36,7 @@ public:
     weak_ptr<Player> _player;
 
 private:
-    /** 아이템 데이터의 세부 종류로 장비 부위를 찾는다. 장비가 아니면 nullopt. */
-    optional<Protocol::GearType> FindGearType(const Json& itemData) const;
-
     google::protobuf::Map<int32, Protocol::Slot>* _equippedGearLookup;
     map<int32, bool> _dirtyFlagMappings;
-    unordered_map<string_view, Protocol::GearType> _gearTypeMappings;
 };
 

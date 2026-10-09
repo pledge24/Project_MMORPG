@@ -13,7 +13,7 @@
     있었다. 판정은 서버 슬롯에 든 아이템으로 하고, 요청의 아이템은 클라이언트 슬롯이 어긋났는지
     대조하는 데만 쓴다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
     시드한 장비에는 물리 공격력만 있다.
 ---------------------------------------------------------------*/
 
@@ -27,16 +27,16 @@ namespace
     constexpr int64 START_GOLD = 1000;
     constexpr int64 BASE_PHYSICAL_ATTACK = 5;
 
-    Json MakeSword(int64 buyPrice, int64 sellPrice, bool sellable, int32 physicalAttack)
+    ItemTemplate MakeSword(int32 templateId, int64 buyPrice, int64 sellPrice, bool sellable, int32 physicalAttack)
     {
-        Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
-        sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
-        sword[string(JsonProperty::Item::MaxStack)] = 1;
-        sword[string(JsonProperty::Item::BuyPrice)] = buyPrice;
-        sword[string(JsonProperty::Item::SellPrice)] = sellPrice;
-        sword[string(JsonProperty::Item::Sellable)] = sellable;
-        sword[string(JsonProperty::Item::PhysicalAttack)] = physicalAttack;
+        ItemTemplate sword;
+        sword.templateId = templateId;
+        sword.itemType = Protocol::ITEM_TYPE_GEAR;
+        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.buyPrice = buyPrice;
+        sword.sellPrice = sellPrice;
+        sword.sellable = sellable;
+        sword.physicalAttack = physicalAttack;
         return sword;
     }
 }
@@ -46,9 +46,11 @@ class PlayerItemRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = MakeSword(100, 10, true, 10);
-        Gamedata::s_itemDataTable[GREATSWORD_TEMPLATE_ID] = MakeSword(80000, 8000, true, 500);
-        Gamedata::s_itemDataTable[UNSELLABLE_SWORD_TEMPLATE_ID] = MakeSword(100, 10, false, 10);
+        GamedataTables tables;
+        tables.items[SWORD_TEMPLATE_ID] = MakeSword(SWORD_TEMPLATE_ID, 100, 10, true, 10);
+        tables.items[GREATSWORD_TEMPLATE_ID] = MakeSword(GREATSWORD_TEMPLATE_ID, 80000, 8000, true, 500);
+        tables.items[UNSELLABLE_SWORD_TEMPLATE_ID] = MakeSword(UNSELLABLE_SWORD_TEMPLATE_ID, 100, 10, false, 10);
+        Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
@@ -59,7 +61,7 @@ protected:
     void TearDown() override
     {
         player.reset();
-        Gamedata::s_itemDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     // 인벤토리에 아이템을 넣고, 클라이언트가 요청에 실어 보내는 슬롯 사본을 돌려준다.
@@ -99,7 +101,7 @@ TEST_F(PlayerItemRequestTest, BuyingUnknownTemplateIsRejectedWithoutTouchingTabl
     int64 totalGold = 0;
 
     EXPECT_FALSE(player->ProcessBuyItem(&updatedSlots, totalGold, UNKNOWN_TEMPLATE_ID));
-    EXPECT_FALSE(Gamedata::s_itemDataTable.contains(UNKNOWN_TEMPLATE_ID))
+    EXPECT_EQ(Gamedata::FindItem(UNKNOWN_TEMPLATE_ID), nullptr)
         << "없는 번호를 표에 끼워 넣으면 여러 룸 스레드가 전역 표를 동시에 바꾼다";
     EXPECT_EQ(player->_possession->gold(), START_GOLD);
 }

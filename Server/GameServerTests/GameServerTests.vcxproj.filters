@@ -79,6 +79,7 @@
     <ClCompile Include="SaveGateTests.cpp" />
     <ClCompile Include="EntityFactoryTests.cpp" />
     <ClCompile Include="LoggerTests.cpp" />
+    <ClCompile Include="GamedataParserTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
@@ -149,6 +150,9 @@
       <Filter>GameServer\Game\Equipment</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
+      <Filter>GameServer\Game\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp">
       <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp">

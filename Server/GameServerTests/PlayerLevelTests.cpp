@@ -10,13 +10,35 @@
     조회가 실패해 그 캐릭터는 게임에 들어오지 못한다. 최대 레벨에서 경험치 보상을
     받아도 레벨이 오르지 않는지 확인한다.
 
-    픽스처 결합도: Player를 세션 없이 EntityFactory로만 만들고 스탯은 손으로 넣는다. 최대 레벨에서는
-    다음 레벨 데이터를 읽지 않으므로 레벨 표를 시드할 필요가 없다.
+    픽스처 결합도: Player를 세션 없이 EntityFactory로만 만들고 스탯은 손으로 넣는다. 최대 레벨은 직업 레벨 표의
+    마지막 레벨이므로, MAX_LEVEL행짜리 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
 {
     constexpr int32 MAX_LEVEL = 50;
+
+    /** 레벨 1부터 maxLevel까지의 표. 다음 레벨로 가는 경험치는 레벨 × 100이고 스탯 증가량은 0이다. */
+    ClassLevelTable MakeLevelTable(int32 maxLevel)
+    {
+        vector<LevelTemplate> rows;
+        for (int32 level = 1; level <= maxLevel; level++)
+        {
+            LevelTemplate row;
+            row.level = level;
+            row.expRequirement = level * 100;
+            rows.push_back(row);
+        }
+
+        return ClassLevelTable(std::move(rows));
+    }
+
+    void InstallWarriorLevelTable(int32 maxLevel)
+    {
+        GamedataTables tables;
+        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = MakeLevelTable(maxLevel);
+        Gamedata::Install(std::move(tables));
+    }
 
     Protocol::S_REWARD_RESULT MakeExpReward(int64 exp)
     {
@@ -31,15 +53,43 @@ class PlayerLevelTest : public ::testing::Test
 protected:
     void SetUp() override
     {
+        InstallWarriorLevelTable(MAX_LEVEL);
+
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
+        player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
 
         player->SetStatValue(Protocol::STAT_TYPE_EXP, 90);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, 100);
     }
 
+    void TearDown() override
+    {
+        player.reset();
+        Gamedata::Install(GamedataTables());
+    }
+
     PlayerRef player;
 };
+
+TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
+{
+    InstallWarriorLevelTable(3);
+
+    player->_playerInfo->set_level(2);
+    EXPECT_FALSE(player->IsMaxLevel());
+
+    player->_playerInfo->set_level(3);
+    EXPECT_TRUE(player->IsMaxLevel()) << "최대 레벨은 코드 상수가 아니라 레벨 표의 마지막 레벨이다";
+}
+
+TEST_F(PlayerLevelTest, ClassWithoutLevelTableIsMaxLevel)
+{
+    player->_playerInfo->set_class_(Protocol::CLASS_TYPE_MAGE);
+    player->_playerInfo->set_level(1);
+
+    EXPECT_TRUE(player->IsMaxLevel()) << "레벨 표가 없으면 오를 레벨이 없다";
+}
 
 TEST_F(PlayerLevelTest, MaxLevelDoesNotLevelUpOnReward)
 {
@@ -105,7 +155,7 @@ TEST_F(PlayerLevelTest, MaxLevelDiscardsRewardExp)
     한 번의 보상으로 여러 레벨을 올릴 수 있어야 한다. 레벨 표의 expRequirement는
     그 레벨에서 다음 레벨로 가는 데 필요한 경험치다.
 
-    픽스처 결합도: 전사 레벨 표를 손으로 시드하고 Player::OnLoaded()로 다음 레벨 데이터를
+    픽스처 결합도: 전사 레벨 표를 Gamedata::Install로 주입하고 Player::OnLoaded()로 다음 레벨 데이터를
     캐시한다. 레벨 표에 스탯 값을 넣지 않으므로 최종 스탯 검증이 0으로 통과한다.
 ---------------------------------------------------------------*/
 
@@ -114,19 +164,7 @@ class PlayerMultiLevelUpTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        using namespace JsonProperty::LevelTable;
-
-        Gamedata::s_classLevelDataTableMappings[Protocol::CLASS_TYPE_WARRIOR] = &Gamedata::s_warriorLevelDataTable;
-        for (int32 level = 1; level <= MAX_LEVEL; level++)
-        {
-            Json row;
-            row[string(Level)] = level;
-            row[string(ExpRequirement)] = level * 100;
-            // 다음 레벨 데이터를 const로 읽으므로 키가 빠지면 assert가 난다
-            for (string_view key : { MaxHp_Increment, MaxMp_Increment, PA_Increment, MA_Increment })
-                row[string(key)] = 0;
-            Gamedata::s_warriorLevelDataTable[level] = row;
-        }
+        InstallWarriorLevelTable(MAX_LEVEL);
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
@@ -141,8 +179,7 @@ protected:
     void TearDown() override
     {
         player.reset();
-        Gamedata::s_warriorLevelDataTable.clear();
-        Gamedata::s_classLevelDataTableMappings.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     void LoadAtLevel(int32 level)

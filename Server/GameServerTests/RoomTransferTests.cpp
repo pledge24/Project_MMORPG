@@ -66,10 +66,11 @@ TEST(RoomTransferTest, RespawnAndNoneEnterTypesAreRejected)
 
 TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
 {
-    const Json portal = Json::parse(R"({
-        "portalId": 11,
-        "dst": { "templateId": 20, "posX": -8000, "posY": 10000, "posZ": 50, "yaw": 180.0 }
-    })");
+    PortalTemplate portal;
+    portal.portalId = 11;
+    portal.dstRoomId = 20;
+    portal.dstPos = TemplatePos{ -8000.f, 10000.f, 50.f };
+    portal.dstYaw = 180.f;
 
     const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal, 7);
 

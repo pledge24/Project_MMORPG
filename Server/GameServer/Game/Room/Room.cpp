@@ -13,11 +13,11 @@ namespace
     }
 }
 
-RoomRef Room::Create(const Json& roomData)
+RoomRef Room::Create(const MapTemplate& mapTemplate)
 {
     RoomRef newRoom = make_shared<Room>();
 
-    if (newRoom->Init(roomData) == false)
+    if (newRoom->Init(mapTemplate) == false)
     {
         return nullptr;
     }
@@ -25,17 +25,11 @@ RoomRef Room::Create(const Json& roomData)
     return newRoom;
 }
 
-bool Room::Init(const Json& roomData)
+bool Room::Init(const MapTemplate& mapTemplate)
 {
-    if (roomData.empty())
-    {
-        wcout << L"roomData가 없습니다" << '\n';
-        return false;
-    }
+    _mapTemplate = mapTemplate;
 
-    _roomData = roomData;
-
-    // 자주 사용하는 JsonProperty Cache
+    // 자주 쓰는 맵 데이터를 멤버에 둔다.
     CacheRoomData();
 
     _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
@@ -346,15 +340,15 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     case Protocol::ENTER_TYPE_SAME_MAP_TRANSFER:
     {
         // 포탈을 통한 같은 맵 내 이동. 현재 Room의 JobQueue 위에서 실행된다.
-        optional<Json> portalDataOpt = GetPortalDataFromPortalId(pkt.portal_id());
-        if (portalDataOpt.has_value() == false)
+        const PortalTemplate* portal = FindPortal(pkt.portal_id());
+        if (portal == nullptr)
         {
             wcout << L"플레이어가 현재 Room에 존재하지 않는 포털 사용 시도" << '\n';
             sendEnterRoomFailure();
             return;
         }
 
-        const RoomEnterData roomEnterData = RoomTransfer::MakePortalEnterData(portalDataOpt.value(), player->GetEntityId());
+        const RoomEnterData roomEnterData = RoomTransfer::MakePortalEnterData(*portal, player->GetEntityId());
 
         RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomEnterData.nextRoomId);
         if (enterRoom == nullptr)
@@ -875,23 +869,6 @@ vector2D Room::GetRandomLocation(bool usePadding)
     return randomPos;
 }
 
-optional<Json> Room::GetPortalDataFromPortalId(int32 portalId)
-{
-    using namespace JsonProperty::Map;
-
-    const Json& portalList = _roomData[Portals][Lists];
-    if(portalList.empty())
-        return nullopt;
-
-    for (const auto& portal : portalList)
-    {
-        if (portal[JsonProperty::Map::PortalId] == portalId)
-            return portal;
-    }
-
-    return nullopt;
-}
-
 void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYaw)
 {
     vector2D randomPos = GetRandomLocation(usePadding);
@@ -1025,44 +1002,33 @@ bool Room::RemoveEntity(int64 entityId)
 
 void Room::CacheRoomData()
 {
-    using namespace JsonProperty::Map;
+    _roomId = _mapTemplate.templateId;
 
-    _roomId = _roomData[TemplateId];
+    _roomCenterPos.x = _mapTemplate.center.x;
+    _roomCenterPos.y = _mapTemplate.center.y;
+    _roomCenterPos.z = _mapTemplate.center.z;
 
-    const Json& centerPos = _roomData[CenterPos];
-    _roomCenterPos.x = centerPos[PosX].is_null() ? 0 : static_cast<float>(centerPos[PosX]);
-    _roomCenterPos.y = centerPos[PosY].is_null() ? 0 : static_cast<float>(centerPos[PosY]);
-    _roomCenterPos.z = centerPos[PosZ].is_null() ? 0 : static_cast<float>(centerPos[PosZ]);
-
-    _depthHalfExtent = _roomData[DepthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[DepthHalfExtent]);
-    _widthHalfExtent = _roomData[WidthHalfExtent].is_null() ? 0 : static_cast<float>(_roomData[WidthHalfExtent]);
+    _depthHalfExtent = _mapTemplate.depthHalfExtent;
+    _widthHalfExtent = _mapTemplate.widthHalfExtent;
 
     _roomMinX = _roomCenterPos.x - _depthHalfExtent;
     _roomMaxX = _roomCenterPos.x + _depthHalfExtent;
     _roomMinY = _roomCenterPos.y - _widthHalfExtent;
     _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
-    _maxMonsterCount = _roomData[MaxMonsterCount].is_null() ? 0 : static_cast<int32>(_roomData[MaxMonsterCount]);
-    _monsterRespawnTime = _roomData[MonsterRespawnTime].is_null() ? 100000.f : static_cast<float>(_roomData[MonsterRespawnTime]);
-
-    for (int32 monsterId : _roomData[MonsterIds])
-    {
-        _monsterIds.push_back(monsterId);
-    }
+    _maxMonsterCount = _mapTemplate.maxMonsterCount;
+    _monsterRespawnTime = _mapTemplate.monsterRespawnTime;
+    _monsterIds = _mapTemplate.monsterIds;
 
     // 리스폰 포인트 저장
-    if (_roomData[HasRespawnPoint] && _roomData[RespawnPoint].is_null() == false)
+    if (_mapTemplate.respawnPoint.has_value())
     {
+        const TemplatePos& point = _mapTemplate.respawnPoint.value();
+
         _respawnPoint = make_shared<Protocol::PosInfo>();
-
-        const Json& point = _roomData[RespawnPoint];
-        float posX = point[PosX];
-        float posY = point[PosY];
-        float posZ = point[PosZ];
-
-        _respawnPoint->mutable_pos()->set_x(posX);
-        _respawnPoint->mutable_pos()->set_y(posY);
-        _respawnPoint->mutable_pos()->set_z(posZ);
+        _respawnPoint->mutable_pos()->set_x(point.x);
+        _respawnPoint->mutable_pos()->set_y(point.y);
+        _respawnPoint->mutable_pos()->set_z(point.z);
         _respawnPoint->set_yaw(0.f);
         _respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 

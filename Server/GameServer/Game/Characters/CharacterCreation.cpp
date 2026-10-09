@@ -4,12 +4,9 @@
 
 optional<string> CharacterCreation::Validate(const Protocol::CharacterOverview& character)
 {
-    // NONE은 매핑에 있고 지금은 빈 표를 가리킨다. 표가 비어 있는지만 보면 누가 그 표를 채우는 순간
-    // NONE이 통과하므로 따로 막는다. 빈 표는 데이터가 아직 없는 직업이다.
-    const DataTable* classLevelTable = Gamedata::FindClassLevelTable(character.class_());
+    // 레벨 표가 없는 직업은 데이터가 아직 없는 직업이다. NONE은 직업이 아니므로 누가 표를 넣어도 막는다.
     if (character.class_() == Protocol::CLASS_TYPE_NONE
-        || classLevelTable == nullptr
-        || classLevelTable->empty())
+        || Gamedata::FindClassLevelTable(character.class_()) == nullptr)
     {
         return string("선택할 수 없는 직업입니다.");
     }

@@ -10,8 +10,8 @@
     죽는다. 클라이언트의 마법사 버튼이 그 경로다. 이름이 DB 열 한도를 넘으면 생성이
     내부 오류로 끝난다.
 
-    픽스처 결합도: Gamedata::s_classLevelDataTableMappings를 손으로 시드한다.
-    전사 표에는 레벨 1 행 하나만 넣고, NONE은 실제 서버처럼 빈 표를 가리키게 한다.
+    픽스처 결합도: 직업 레벨 표를 Gamedata::Install로 주입한다.
+    전사 표에는 레벨 1 행 하나만 넣는다. NONE에도 표를 넣어, 표가 있어도 NONE이 막히는지 본다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -37,20 +37,19 @@ class CharacterCreationTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        warriorTable[1] = Json::object();
-        Gamedata::s_classLevelDataTableMappings = {
-            { Protocol::CLASS_TYPE_NONE, &emptyTable },
-            { Protocol::CLASS_TYPE_WARRIOR, &warriorTable },
-        };
+        LevelTemplate levelOne;
+        levelOne.level = 1;
+
+        GamedataTables tables;
+        tables.classLevelTables[Protocol::CLASS_TYPE_NONE] = ClassLevelTable({ levelOne });
+        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ levelOne });
+        Gamedata::Install(std::move(tables));
     }
 
     void TearDown() override
     {
-        Gamedata::s_classLevelDataTableMappings.clear();
+        Gamedata::Install(GamedataTables());
     }
-
-    DataTable emptyTable;
-    DataTable warriorTable;
 };
 
 TEST_F(CharacterCreationTest, WarriorWithValidNamePasses)
@@ -64,14 +63,14 @@ TEST_F(CharacterCreationTest, ClassWithoutLevelTableIsRejected)
 
     ASSERT_TRUE(cause.has_value()) << "레벨 표가 없는 직업을 통과시키면 생성 쿼리가 널 표를 역참조한다";
     EXPECT_EQ(cause.value(), "선택할 수 없는 직업입니다.");
-    EXPECT_FALSE(Gamedata::s_classLevelDataTableMappings.contains(Protocol::CLASS_TYPE_MAGE))
+    EXPECT_EQ(Gamedata::FindClassLevelTable(Protocol::CLASS_TYPE_MAGE), nullptr)
         << "검증이 전역 표에 없는 직업을 끼워 넣으면 안 된다";
 }
 
-TEST_F(CharacterCreationTest, NoneClassWithEmptyTableIsRejected)
+TEST_F(CharacterCreationTest, NoneClassIsRejectedEvenWithLevelTable)
 {
     EXPECT_TRUE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_NONE, "무직")).has_value())
-        << "NONE은 매핑에 있지만 표가 비어 있다";
+        << "NONE은 직업이 아니다. 누가 레벨 표를 넣어도 통과하면 안 된다";
 }
 
 TEST_F(CharacterCreationTest, UndefinedClassNumberIsRejected)

@@ -104,7 +104,27 @@
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 이 파일들을 읽어 템플릿 ID를 키로 하는 `nlohmann::json` 기반 `DataTable`에 올린다.
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `S_Quest.json`을 뺀 네 파일을 읽는다.
+`GamedataParser::Parse`가 모든 행을 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, 표가 통과하면 그때 설치한다.
+게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿만 읽는다.
+
+**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Item.json` 2번째 행(templateId 1001): 'buyPrice'가 정수가 아니다」처럼
+파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 표에 없는 아이템 종류와 장비 부위,
+보상의 최솟값이 최댓값보다 큰 행, 중복된 templateId, 맵 표에 없는 포털 목적지와 몬스터 표에 없는 스폰 몬스터가 여기 걸린다.
+— 게임 중에 Json을 읽던 때는 틀린 행이 룸 스레드의 예외가 되거나 조용히 기본값으로 동작했다.
+
+두 값은 코드 상수가 아니라 기획표에서 온다.
+
+| 값 | 원천 |
+|---|---|
+| 직업의 최대 레벨 | 그 직업 레벨 표의 마지막 레벨. 레벨은 1부터 빠짐없이 이어져야 한다 |
+| 마을 룸 번호 | 맵 표에서 `hasRespawnPoint`가 참인 유일한 맵. 둘 이상이거나 없으면 부팅이 실패한다 |
+
+서버가 읽는 열을 늘릴 때는 `JsonProperty.h`의 열 이름, `Templates.h`의 필드, `GamedataParser.cpp`의 변환을 함께 고친다.
+테스트는 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다.
+
+`S_Quest.json`은 생성되지만 서버가 읽지 않는다. 읽는 코드가 없는 표 때문에 서버가 뜨지 않는 일을 없애려고
+2026년 10월 9일(#207)에 불러오기를 뺐다. 퀘스트를 만들 때 템플릿과 함께 다시 읽는다.
 
 ---
 

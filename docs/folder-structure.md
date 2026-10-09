@@ -495,7 +495,7 @@ Server/
 │   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
 │   │   ├── Inventory/      인벤토리
 │   │   ├── Equipment/      장비
-│   │   └── Data/           게임 데이터 로더
+│   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템)와 진행 저장소
 │   ├── Queries/            GameDB 스키마 스크립트
 │   ├── Protocol/           생성물

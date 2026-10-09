@@ -9,7 +9,7 @@
     피격 처리는 스탯의 HP를 읽는다. 초기화가 HP를 스탯에 넣지 않으면 첫 피격에서
     서버가 죽는다. 보상은 기획 데이터의 최솟값과 최댓값 사이에서 뽑는다.
 
-    픽스처 결합도: Gamedata::s_monsterDataTable을 손으로 시드하고
+    픽스처 결합도: 몬스터 템플릿을 Gamedata::Install로 주입하고
     EntityFactory로 만든다. 룸에는 넣지 않는다.
 ---------------------------------------------------------------*/
 
@@ -26,16 +26,17 @@ class MonsterTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        using namespace JsonProperty::Monster;
+        MonsterTemplate data;
+        data.templateId = MONSTER_TEMPLATE_ID;
+        data.maxHp = MAX_HP;
+        data.minExp = EXP_REWARD;
+        data.maxExp = EXP_REWARD;
+        data.minGold = GOLD_REWARD;
+        data.maxGold = GOLD_REWARD;
 
-        Json data;
-        data[string(TemplateId)] = MONSTER_TEMPLATE_ID;
-        data[string(MaxHp)] = MAX_HP;
-        data[string(ExpReward)][string(MinExp)] = EXP_REWARD;
-        data[string(ExpReward)][string(MaxExp)] = EXP_REWARD;
-        data[string(GoldReward)][string(MinGold)] = GOLD_REWARD;
-        data[string(GoldReward)][string(MaxGold)] = GOLD_REWARD;
-        Gamedata::s_monsterDataTable[MONSTER_TEMPLATE_ID] = data;
+        GamedataTables tables;
+        tables.monsters[MONSTER_TEMPLATE_ID] = data;
+        Gamedata::Install(std::move(tables));
 
         MonsterSpawnParams spawnParams;
         spawnParams.templateId = MONSTER_TEMPLATE_ID;
@@ -46,7 +47,7 @@ protected:
     void TearDown() override
     {
         monster.reset();
-        Gamedata::s_monsterDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     MonsterRef monster;

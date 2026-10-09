@@ -97,8 +97,9 @@ public:
     //~ Player 정보 관련
     /** 이동 중인 룸이 없으면 -1이다. */
     int32 GetEnteringRoomId() { return _enteringRoomId; }
+    /** 최대 레벨은 직업 레벨 표의 마지막 레벨이다. 레벨 표가 없는 직업도 true다. */
     bool IsMaxLevel() const;
-    /** 마을 리스폰의 룸과 위치를 찾는다. 마을 룸이나 그 룸의 리스폰 지점이 없으면 false. */
+    /** 마을(Gamedata::GetTownRoomId)의 룸과 리스폰 위치를 찾는다. 마을 룸이나 그 룸의 리스폰 지점이 없으면 false. */
     bool FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
     //~ 접속 종료
@@ -137,11 +138,9 @@ public:
 private:
     int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
 
-    const int32 MAX_LEVEL = 50;
     NextLevelUpData _nextLevelUpData;
 
     /** 소모품 템플릿 id → 마지막으로 쓴 시각(ms). 재사용 대기 판정에 쓴다. 저장하지 않으므로 재접속하면 사라진다. */
     map<int32, uint64> _lastUseTimeMs;
-    const int32 RESPAWN_TOWN_ID = 10;   // 고정으로 사용
 };
 

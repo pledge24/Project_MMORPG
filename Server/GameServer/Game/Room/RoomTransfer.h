@@ -23,8 +23,8 @@ namespace RoomTransfer
      */
     optional<string> ValidateEnterRequest(const Protocol::C_ENTER_ROOM& pkt, int32 enteringRoomId);
 
-    /** 포털 데이터의 목적지로 포털 이동의 입장 정보를 만든다. 포털이 현재 룸에 있는지는 호출자가 확인한다. */
-    RoomEnterData MakePortalEnterData(const Json& portal, int64 entityId);
+    /** 포털의 목적지로 포털 이동의 입장 정보를 만든다. 포털이 현재 룸에 있는지는 호출자가 확인한다. */
+    RoomEnterData MakePortalEnterData(const PortalTemplate& portal, int64 entityId);
 
     /**
      * 통과하면 nullopt, 거절하면 S_RESPAWN에 실을 사유를 돌려준다.

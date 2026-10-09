@@ -160,25 +160,21 @@ bool CharacterStateDAO::LoadLastState(SessionRef session, int64 characterId)
         auto* statMappings = statInfo->mutable_info();
 
         // ==성장 및 스텟 관련==
-        const DataTable* classLevelTable = Gamedata::FindClassLevelTable(playerInfo->class_());
+        const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(playerInfo->class_());
         if (classLevelTable == nullptr)
         {
-            wcout << L"캐릭터 " << characterId << L"의 클래스 " << playerInfo->class_() << L"에 레벨 표가 없습니다" << '\n';
+            GLogger->Error("캐릭터 {}의 클래스 {}에 레벨 표가 없습니다", characterId, static_cast<int32>(playerInfo->class_()));
             return false;
         }
 
-        const DataTable& classLevelDataTable = *classLevelTable;
-        auto levelIt = classLevelDataTable.find(playerInfo->level());
-        const bool hasExpRequirement = levelIt != classLevelDataTable.end()
-            && levelIt->second.contains(JsonProperty::LevelTable::ExpRequirement)
-            && levelIt->second.at(JsonProperty::LevelTable::ExpRequirement).is_number();
-        if (hasExpRequirement == false)
+        const LevelTemplate* levelTemplate = classLevelTable->Find(playerInfo->level());
+        if (levelTemplate == nullptr)
         {
-            wcout << L"캐릭터 " << characterId << L"의 레벨 " << playerInfo->level() << L"이 레벨 표 범위 밖입니다" << '\n';
+            GLogger->Error("캐릭터 {}의 레벨 {}이 레벨 표 범위 밖입니다", characterId, playerInfo->level());
             return false;
         }
 
-        int64 maxExp = levelIt->second.at(JsonProperty::LevelTable::ExpRequirement);
+        int64 maxExp = levelTemplate->expRequirement;
         statMappings->insert({ (int32)Protocol::STAT_TYPE_EXP, bindObject._exp });
         statMappings->insert({ (int32)Protocol::STAT_TYPE_MAX_EXP, maxExp });
 

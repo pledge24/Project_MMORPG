@@ -18,9 +18,9 @@ public:
 	virtual ~Room() = default;
 
 public:
-    /** Init까지 마친 룸을 돌려준다. 맵 데이터가 비어 있으면 nullptr. */
-    static RoomRef Create(const Json& roomData);
-    bool Init(const Json& roomData);
+    /** Init까지 마친 룸을 돌려준다. */
+    static RoomRef Create(const MapTemplate& mapTemplate);
+    bool Init(const MapTemplate& mapTemplate);
     bool Start();
 
 protected:
@@ -82,8 +82,8 @@ public:
     RoomRef             GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
     /** Init 뒤로는 바뀌지 않으므로 룸 큐 밖에서 읽어도 된다. */
     int32               GetRoomId() const { return _roomId; }
-    /** 이 룸에 그 번호의 포털이 없으면 nullopt. */
-    optional<Json>      GetPortalDataFromPortalId(int32 portalId);
+    /** 이 룸에 그 번호의 포털이 없으면 nullptr. */
+    const PortalTemplate* FindPortal(int32 portalId) const { return _mapTemplate.FindPortal(portalId); }
     /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
     shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return _hasRespawnPoint ? _respawnPoint : nullptr; }
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
@@ -166,7 +166,8 @@ private:
     CellMatrix _cellMatrix;
 
     int32 _roomId;
-    Json _roomData;
+    /** 맵 표의 행 사본. */
+    MapTemplate _mapTemplate;
     bool _isValid = false;
 
     /** 언리얼 좌표를 따른다. depth가 x 방향, width가 y 방향의 반폭이다. */

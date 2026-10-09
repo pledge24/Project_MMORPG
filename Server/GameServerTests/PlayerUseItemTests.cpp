@@ -11,7 +11,7 @@
     요청의 아이템이 슬롯과 다르면 쓰지 않는다.
     HP나 MP가 가득 차 있어도 소비한다. 재사용 대기는 템플릿마다 따로 돌고 서버가 판정한다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
     시각은 ProcessUseItem의 인자로 넘긴다.
 ---------------------------------------------------------------*/
 
@@ -27,15 +27,15 @@ namespace
     constexpr int32 COOLDOWN_SECONDS = 10;
     constexpr uint64 NOW_MS = 100'000;
 
-    Json MakePotion(double hpRestore, double mpRestore)
+    ItemTemplate MakePotion(int32 templateId, double hpRestore, double mpRestore)
     {
-        Json potion;
-        potion[string(JsonProperty::Item::ItemType)] = "CONSUMABLE";
-        potion[string(JsonProperty::Item::ItemSubtype)] = "potion";
-        potion[string(JsonProperty::Item::MaxStack)] = 10;
-        potion[string(JsonProperty::Item::Cooldown)] = COOLDOWN_SECONDS;
-        potion[string(JsonProperty::Item::HpRestore)] = hpRestore;
-        potion[string(JsonProperty::Item::MpRestore)] = mpRestore;
+        ItemTemplate potion;
+        potion.templateId = templateId;
+        potion.itemType = Protocol::ITEM_TYPE_CONSUMABLE;
+        potion.maxStack = 10;
+        potion.cooldownMs = COOLDOWN_SECONDS * 1000;
+        potion.hpRestoreRatio = hpRestore;
+        potion.mpRestoreRatio = mpRestore;
         return potion;
     }
 }
@@ -45,16 +45,17 @@ class PlayerUseItemTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        Gamedata::s_itemDataTable[HP_POTION_TEMPLATE_ID] = MakePotion(0.3, 0);
-        Gamedata::s_itemDataTable[MP_POTION_TEMPLATE_ID] = MakePotion(0, 0.3);
-        Gamedata::s_itemDataTable[MIX_POTION_TEMPLATE_ID] = MakePotion(0.4, 0.4);
+        tables.items[HP_POTION_TEMPLATE_ID] = MakePotion(HP_POTION_TEMPLATE_ID, 0.3, 0);
+        tables.items[MP_POTION_TEMPLATE_ID] = MakePotion(MP_POTION_TEMPLATE_ID, 0, 0.3);
+        tables.items[MIX_POTION_TEMPLATE_ID] = MakePotion(MIX_POTION_TEMPLATE_ID, 0.4, 0.4);
 
-        Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
-        sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
-        sword[string(JsonProperty::Item::MaxStack)] = 1;
-        sword[string(JsonProperty::Item::HpRestore)] = 1.0;
-        Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = sword;
+        ItemTemplate sword;
+        sword.templateId = SWORD_TEMPLATE_ID;
+        sword.itemType = Protocol::ITEM_TYPE_GEAR;
+        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.hpRestoreRatio = 1.0;
+        tables.items[SWORD_TEMPLATE_ID] = sword;
+        Gamedata::Install(tables);
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
@@ -67,7 +68,7 @@ protected:
     void TearDown() override
     {
         player.reset();
-        Gamedata::s_itemDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     // 아이템을 넣고 그 슬롯을 요청 형태로 돌려준다.
@@ -92,6 +93,8 @@ protected:
         return stats;
     }
 
+    /** 주입한 표. 테스트가 행을 빼고 다시 설치할 수 있다. */
+    GamedataTables tables;
     PlayerRef player;
 };
 
@@ -187,7 +190,9 @@ TEST_F(PlayerUseItemTest, EmptySlotIsRejected)
 TEST_F(PlayerUseItemTest, UnknownTemplateIsRejected)
 {
     Protocol::Slot slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 1);
-    Gamedata::s_itemDataTable.erase(HP_POTION_TEMPLATE_ID); // 데이터에서 빠진 아이템이 인벤토리에 남아 있다
+    // 데이터에서 빠진 아이템이 인벤토리에 남아 있다
+    tables.items.erase(HP_POTION_TEMPLATE_ID);
+    Gamedata::Install(tables);
 
     Protocol::S_USE_ITEM pkt;
     EXPECT_FALSE(player->ProcessUseItem(slot, NOW_MS, pkt));

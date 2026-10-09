@@ -10,7 +10,7 @@
     팩토리는 id를 발급하고 스폰 매개변수를 Init에 넘긴다. 엔티티 타입은 생성자가 정한다.
     룸에 넣고 Start하는 일은 룸이 맡으므로 여기서는 보지 않는다.
 
-    픽스처 결합도: Gamedata::s_monsterDataTable을 손으로 시드한다. 플레이어는 세션 없이 만든다.
+    픽스처 결합도: 몬스터 템플릿을 Gamedata::Install로 주입한다. 플레이어는 세션 없이 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -34,17 +34,18 @@ class EntityFactoryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        using namespace JsonProperty::Monster;
+        MonsterTemplate monster;
+        monster.templateId = MONSTER_TEMPLATE_ID;
+        monster.maxHp = MAX_HP;
 
-        Json data;
-        data[string(TemplateId)] = MONSTER_TEMPLATE_ID;
-        data[string(MaxHp)] = MAX_HP;
-        Gamedata::s_monsterDataTable[MONSTER_TEMPLATE_ID] = data;
+        GamedataTables tables;
+        tables.monsters[MONSTER_TEMPLATE_ID] = monster;
+        Gamedata::Install(std::move(tables));
     }
 
     void TearDown() override
     {
-        Gamedata::s_monsterDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 };
 
