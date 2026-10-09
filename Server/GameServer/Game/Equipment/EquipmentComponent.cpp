@@ -27,6 +27,11 @@ bool EquipmentComponent::Equip(OUT Protocol::Slot* replicatingSlot, const Protoc
     if (itemTemplate == nullptr || itemTemplate->gearType.has_value() == false)
         return false;
 
+    // 착용 조건은 클라이언트도 보지만, 판정은 서버가 한다.
+    PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
+    if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->_playerInfo->level(), owner->_playerInfo->class_()) == false)
+        return false;
+
     return PlaceItem(replicatingSlot, itemInstance, itemTemplate->gearType.value());
 }
 
@@ -109,6 +114,17 @@ bool EquipmentComponent::PlaceItem(OUT Protocol::Slot* replicatingSlot, const Pr
 
     if (replicatingSlot != nullptr)
         replicatingSlot->CopyFrom(*targetSlot);
+
+    return true;
+}
+
+bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass)
+{
+    if (level < itemTemplate.levelRequirement)
+        return false;
+
+    if (itemTemplate.classRequirement.has_value() && itemTemplate.classRequirement.value() != characterClass)
+        return false;
 
     return true;
 }

@@ -12,7 +12,7 @@
     그래서 두 값은 요청 슬롯이 아니라 처리 결과여야 한다. slot_id는 장비 부위, template_id는
     처리 뒤 그 부위의 아이템이다. 다른 플레이어가 보는 외형은 equipped_gear_summary로 간다.
 
-    픽스처 결합도: 아이템 템플릿과 1레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿과 2레벨까지 있는 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 장착과 해제가 레벨 표로 최종 스탯을 다시 계산하므로 레벨 표가 있어야 한다.
 ---------------------------------------------------------------*/
 
@@ -25,6 +25,8 @@ namespace
     constexpr int32 BASE_MAX_MP = 100;
     constexpr int32 HELMET_HP = 100;
     constexpr int32 HELMET_MP = 50;
+    constexpr int32 HIGH_LEVEL_SWORD_TEMPLATE_ID = 1030;
+    constexpr int32 MAGE_SWORD_TEMPLATE_ID = 1031;
 }
 
 class GearEquipTest : public ::testing::Test
@@ -51,10 +53,23 @@ protected:
         level1.maxMp = BASE_MAX_MP;
         level1.physicalAttack = BASE_PHYSICAL_ATTACK;
 
+        ItemTemplate highLevelSword = sword;
+        highLevelSword.templateId = HIGH_LEVEL_SWORD_TEMPLATE_ID;
+        highLevelSword.levelRequirement = 2;
+
+        ItemTemplate mageSword = sword;
+        mageSword.templateId = MAGE_SWORD_TEMPLATE_ID;
+        mageSword.classRequirement = Protocol::CLASS_TYPE_MAGE;
+
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.items[HELMET_TEMPLATE_ID] = helmet;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.items[HIGH_LEVEL_SWORD_TEMPLATE_ID] = highLevelSword;
+        tables.items[MAGE_SWORD_TEMPLATE_ID] = mageSword;
+        LevelTemplate level2 = level1;
+        level2.level = 2;
+
+        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
@@ -181,6 +196,38 @@ TEST_F(GearEquipTest, UnequippingAtFullHpSavesCopyThatPassesNextEntry)
 
     PlayerRef reloaded = LoadFromSaveData(player->MakeSaveData());
     EXPECT_TRUE(reloaded->OnLoaded()) << "저장 사본의 현재 HP가 최대 HP를 넘으면 그 캐릭터는 다시 들어오지 못한다";
+}
+
+// TD-038: 착용 조건은 클라이언트만 보던 것을 서버가 다시 판정한다. 조작한 클라이언트가 보낸 요청도 거절해야 한다.
+TEST_F(GearEquipTest, EquippingAboveLevelRequirementIsRejected)
+{
+    Protocol::Slot requestSlot = AddToInventory(HIGH_LEVEL_SWORD_TEMPLATE_ID);
+
+    Protocol::S_EQUIP_GEAR pkt;
+    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "1레벨이 2레벨 장비를 입으면 안 된다";
+
+    EXPECT_FALSE(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).has_item());
+    EXPECT_TRUE(player->_inventory->GetSlot(requestSlot.type(), requestSlot.slot_id())->has_item());
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
+}
+
+TEST_F(GearEquipTest, EquippingOtherClassGearIsRejected)
+{
+    Protocol::Slot requestSlot = AddToInventory(MAGE_SWORD_TEMPLATE_ID);
+
+    Protocol::S_EQUIP_GEAR pkt;
+    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "전사가 마법사 장비를 입으면 안 된다";
+
+    EXPECT_FALSE(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).has_item());
+    EXPECT_TRUE(player->_inventory->GetSlot(requestSlot.type(), requestSlot.slot_id())->has_item());
+}
+
+TEST_F(GearEquipTest, EquippingAtRequiredLevelSucceeds)
+{
+    player->_playerInfo->set_level(2);
+
+    Protocol::S_EQUIP_GEAR pkt;
+    EXPECT_TRUE(player->ProcessEquipGear(AddToInventory(HIGH_LEVEL_SWORD_TEMPLATE_ID), pkt)) << "요구 레벨과 같은 레벨은 입는다";
 }
 
 // DB에서 장착 장비를 불러올 때는 스텟을 바꾸지 않는다. 스텟은 OnLoaded가 대조한 뒤 RefreshFinalStat이 계산한다.

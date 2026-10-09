@@ -25,6 +25,11 @@ struct ItemTemplate
     /** 장비만 값이 있다. 아이템 세부 종류(itemSubtype)로 정한 착용 부위다. */
     optional<Protocol::GearType> gearType;
 
+    //~ 착용 조건. 장착할 때 서버가 판정한다.
+    int32 levelRequirement = 0;
+    /** 비어 있으면 모든 직업이 쓴다. 기획표의 "all"이다. */
+    optional<Protocol::CharacterClass> classRequirement;
+
     int64 buyPrice = 0;
     int64 sellPrice = 0;
     bool sellable = false;

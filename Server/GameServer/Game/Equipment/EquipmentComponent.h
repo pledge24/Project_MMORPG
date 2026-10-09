@@ -17,10 +17,11 @@ public:
 
     /**
      * 장착 요청을 처리한다. 아이템 표의 착용 부위에 넣는다.
-     * 장비가 아니거나 그 부위가 이미 차 있으면 false. 실패하면 아무것도 바꾸지 않는다.
+     * 장비가 아니거나, 소유자의 레벨이나 직업이 착용 조건에 맞지 않거나, 그 부위가 이미 차 있으면 false.
+     * 실패하면 아무것도 바꾸지 않는다.
      */
     bool Equip(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance);
-    /** DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템의 부위와 같은지는 확인하지 않는다. */
+    /** DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템의 부위와 착용 조건은 확인하지 않는다. */
     bool LoadEquipped(const Protocol::Item& itemInstance, int32 gearType);
     /**
      * 그 부위에 든 장비를 뺀다. 실패하면 아무것도 바꾸지 않는다.
@@ -39,6 +40,8 @@ public:
     void ClearDirtyFlags();
 
 private:
+    /** level과 characterClass가 아이템 표의 착용 조건(요구 레벨 이상, 요구 직업)에 맞으면 true. */
+    static bool MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass);
     /** 빈 부위에 아이템을 넣는다. 없는 부위이거나 차 있으면 false. */
     bool PlaceItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 gearType);
 

@@ -19,6 +19,15 @@ namespace
     /** 기획 원본은 열거형 이름에서 접두사를 뺀 값(GEAR)을 적는다. 이름 표는 protobuf가 만든 것을 쓴다. */
     constexpr string_view ITEM_TYPE_NAME_PREFIX = "ITEM_TYPE_";
 
+    /** 직업 조건은 소문자 직업 이름(warrior)을 적는다. 이 값이면 모든 직업이 쓴다. */
+    constexpr string_view ANY_CLASS = "all";
+
+    /** 착용 조건의 직업 이름 → 직업. */
+    const unordered_map<string_view, Protocol::CharacterClass> CLASS_BY_NAME = {
+        { "warrior", Protocol::CLASS_TYPE_WARRIOR },
+        { "mage", Protocol::CLASS_TYPE_MAGE },
+    };
+
     /** 장비의 세부 종류(itemSubtype) → 착용 부위. */
     const unordered_map<string_view, Protocol::GearType> GEAR_TYPE_BY_SUBTYPE = {
         { JsonProperty::Item::GearSubtype_Helmet, Protocol::GEAR_TYPE_HELMET },
@@ -204,6 +213,18 @@ namespace
                         throw RowError{ format("장비의 'itemSubtype' \"{}\"에 맞는 착용 부위가 없다", subtype) };
 
                     item.gearType = gearTypeIt->second;
+                }
+
+                item.levelRequirement = Require<int32>(row, LevelRequirement);
+
+                const string className = Require<string>(row, ClassRequirement);
+                if (className != ANY_CLASS)
+                {
+                    auto classIt = CLASS_BY_NAME.find(className);
+                    if (classIt == CLASS_BY_NAME.end())
+                        throw RowError{ format("'classRequirement' \"{}\"는 직업이 아니다", className) };
+
+                    item.classRequirement = classIt->second;
                 }
 
                 item.buyPrice = Require<int64>(row, BuyPrice);

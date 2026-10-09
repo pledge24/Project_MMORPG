@@ -572,19 +572,6 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 **유지보수 어려움** · **버그 발생 가능성 증가** — 기능이 있는 것처럼 보여서 읽는 사람이 동작을 잘못 짐작한다.
 `operator-=`나 `TickIntervalTimer`를 새로 쓰기 시작하면 그 자리에서 바로 버그가 된다.
 
-## TD-038 장비 착용이 요구 레벨과 요구 직업을 보지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Equipment/EquippedGear.cpp` 33~51줄 (`EquipGear`)
-> 등록일: 2026년 10월 9일
-
-`EquipGear`는 아이템이 장비인지와 부위가 비었는지만 본다. 아이템 표의 `levelRequirement`와 `classRequirement`는
-`JsonProperty::Item`에 이름만 정의되어 있고 읽는 곳이 없다. 요구 레벨은 클라이언트의 `FP1InventorySlotAction::Decide`만 판정한다.
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 조작한 클라이언트는 레벨이 모자라거나 직업이 맞지 않는 장비를 입는다.
-
 ## TD-041 세션의 계정 번호를 락 없이 여러 스레드가 읽고 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Network/GameSessionManager.cpp` 12줄 · `Server/GameServer/Network/GameSession.cpp` 17줄 · `Server/GameServer/Network/ServerPacketHandler.cpp` (`Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`)
