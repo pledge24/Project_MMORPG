@@ -150,12 +150,6 @@
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">
-      <Filter>GameServer\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp">
-      <Filter>GameServer\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\GameServer\Utils\Utils.cpp">
       <Filter>GameServer\Utils</Filter>
     </ClCompile>

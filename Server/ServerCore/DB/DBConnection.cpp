@@ -1,6 +1,22 @@
 #include "ServerCore/Core/pch.h"
 #include "ServerCore/DB/DBConnection.h"
 
+namespace
+{
+	/** 로거는 UTF-8을 받는다. ODBC 진단 메시지는 UTF-16이다. 변환에 실패하면 빈 문자열이다. */
+	string ToUtf8(const WCHAR* wstr)
+	{
+		const int32 size = ::WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nullptr, 0, nullptr, nullptr);
+		if (size <= 1)
+			return "";
+
+		string result(size, '\0');
+		::WideCharToMultiByte(CP_UTF8, 0, wstr, -1, result.data(), size, nullptr, nullptr);
+		result.pop_back(); // 널 종료 문자
+		return result;
+	}
+}
+
 /*----------------
 	DBConnection
 -----------------*/
@@ -360,8 +376,7 @@ void DBConnection::HandleError(SQLRETURN ret)
 		if (errorRet != SQL_SUCCESS && errorRet != SQL_SUCCESS_WITH_INFO)
 			break;
 
-        // Print Log
-		wcout << L"DB 오류 발생(HandleError): " << errMsg << endl;
+		GLogger->Error("DB 오류 [{}] {}", ToUtf8(sqlState), ToUtf8(errMsg));
 
         _diagnostics.push_back(DiagnosticInfo{
             sqlState,

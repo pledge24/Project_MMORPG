@@ -1,8 +1,6 @@
 #pragma once
 #include "Game/Entities/Creature.h"
 
-class TickIntervalTimer;
-class TickTimer;
 class MonsterAIComponent;
 
 /** 몬스터의 스폰 매개변수. spawnPos는 스폰 위치와 방향이다. */
@@ -64,7 +62,6 @@ private:
     void SetMoveState(Protocol::MoveState moveState);
 
     //~ 기타
-    void PrintMonsterAllData() const;
     /** _template에서 스탯 값을 읽어 멤버에 둔다. */
     void CacheMonsterData();
 
@@ -82,6 +79,4 @@ private:
     //~ 컴포넌트
     /** Init에서 만든다. */
     MonsterAIComponentRef _ai;
-
-    TickTimer* _attackTimer = nullptr;          // 사용 안하는 중
 };

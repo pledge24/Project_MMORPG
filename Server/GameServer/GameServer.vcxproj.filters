@@ -110,12 +110,6 @@
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Utils\TickIntervalTimer.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\TickTimer.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
     <ClCompile Include="Game\Entities\Player.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
@@ -236,12 +230,6 @@
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Utils\EncodingConverter.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TickIntervalTimer.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TickTimer.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\Player.h">

@@ -241,8 +241,6 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
-    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
-    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />

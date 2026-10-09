@@ -194,8 +194,6 @@
     <ClInclude Include="Utils\EncodingConverter.h" />
     <ClInclude Include="Game\Characters\CharacterCreation.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
-    <ClInclude Include="Utils\TickIntervalTimer.h" />
-    <ClInclude Include="Utils\TickTimer.h" />
     <ClInclude Include="Utils\Utils.h" />
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
@@ -267,8 +265,6 @@
     </ClCompile>
     <ClCompile Include="Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
-    <ClCompile Include="Utils\TickIntervalTimer.cpp" />
-    <ClCompile Include="Utils\TickTimer.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
     <ClCompile Include="Game\Entities\Creature.cpp" />
     <ClCompile Include="Game\Entities\Entity.cpp" />

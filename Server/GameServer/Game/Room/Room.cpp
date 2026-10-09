@@ -54,7 +54,7 @@ bool Room::Start()
 
             if (SpawnEntity<Monster>(spawnParams) == nullptr)
             {
-                wcout << L"Room " << _roomId << L": 몬스터 " << monsterTemplateId << L" 스폰에 실패했습니다" << '\n';
+                GLogger->Error("룸 {}: 몬스터 {}를 스폰하지 못했다", _roomId, monsterTemplateId);
                 return false;
             }
         }
@@ -893,7 +893,6 @@ void Room::CacheRoomData()
     _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
     _maxMonsterCount = _mapTemplate.maxMonsterCount;
-    _monsterRespawnTime = _mapTemplate.monsterRespawnTime;
     _monsterIds = _mapTemplate.monsterIds;
 
     // 리스폰 포인트 저장

@@ -147,8 +147,6 @@ struct MapTemplate
     vector<int32> monsterIds;
     /** 표에 없으면 0이다. */
     int32 maxMonsterCount = 0;
-    /** 표에 없으면 0이다. */
-    float monsterRespawnTime = 0.f;
 };
 
 /** 부팅 때 만들어 Gamedata에 한 번 설치하는 표 전체. 테스트는 이것을 직접 채워 설치한다. */

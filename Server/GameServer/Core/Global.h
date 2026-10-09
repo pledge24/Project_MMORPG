@@ -5,7 +5,6 @@
  * 포인터 전역은 ServerContext(Core/ServerContext.h)가 만들고 지운다. 그 객체가 살아 있는 동안만 유효하다.
  */
 
-extern const map<string, int32> GClassMappings;
 extern atomic<int64> GNextItemUID;
 extern class RoomManager* GRoomManager;
 

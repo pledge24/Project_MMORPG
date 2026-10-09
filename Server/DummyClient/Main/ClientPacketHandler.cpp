@@ -129,7 +129,7 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
-	std::cout << pkt.msg() << endl;
+	GLogger->Info("채팅: {}", pkt.msg());
 
 	return true;
 }

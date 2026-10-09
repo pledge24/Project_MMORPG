@@ -46,12 +46,6 @@ struct vector2D
         return { lhs.x - rhs.x, lhs.y - rhs.y };
     }
 
-    /** 이름과 달리 lhs를 바꾸지 않고 차를 새로 돌려준다. operator-와 같다. */
-    friend vector2D operator-=(const vector2D& lhs, const vector2D& rhs)
-    {
-        return { lhs.x - rhs.x, lhs.y - rhs.y };
-    }
-
     friend vector2D operator*(const vector2D& lhs, float scale)
     {
         return { lhs.x * scale, lhs.y * scale };

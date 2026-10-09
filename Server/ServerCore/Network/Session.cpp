@@ -64,10 +64,7 @@ void Session::Disconnect(const char* cause)
 	if (_connected.exchange(false) == false)
 		return;
 
-	// TEMP
-	cout << "Disconnect : " << cause << endl;
-
-	// TODO: 강제 연결 해제 Log 남기기.
+	GLogger->Info("연결을 끊는다: {}", cause);
 
 	RegisterDisconnect();
 }

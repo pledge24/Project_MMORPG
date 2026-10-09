@@ -333,7 +333,6 @@ namespace
                 }
 
                 mapTemplate.maxMonsterCount = ReadOr<int32>(row, MaxMonsterCount, 0);
-                mapTemplate.monsterRespawnTime = ReadOr<float>(row, MonsterRespawnTime, 0.f);
 
                 InsertUnique(maps, mapTemplate.templateId, std::move(mapTemplate));
             });

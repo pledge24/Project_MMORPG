@@ -116,7 +116,7 @@ public:
 
         if (AddEntity(entity) == false)
         {
-            wcout << L"Room " << _roomId << L": 엔티티 " << entity->GetEntityId() << L" 등록에 실패했습니다" << '\n';
+            GLogger->Error("룸 {}: 엔티티 {}를 등록하지 못했다", _roomId, entity->GetEntityId());
             return nullptr;
         }
 
@@ -207,7 +207,6 @@ private:
 
     //~ 몬스터 스폰 정보
     int32 _maxMonsterCount;
-    float _monsterRespawnTime;
     vector<int32> _monsterIds;
 
 };

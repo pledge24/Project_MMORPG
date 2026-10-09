@@ -30,7 +30,7 @@ void CellMatrix::Update(const vector<pair<int64, vector2D>>& entities)
         optional<pair<int32, int32>> indices = FindCellIndices(pos);
         if (indices.has_value() == false)
         {
-            wcout << L"유효하지 않은 위치" << '\n';
+            GLogger->Warning("엔티티 {}의 위치({}, {})가 셀 격자 밖이라 셀에 넣지 않는다", entityId, pos.x, pos.y);
             continue;
         }
 
