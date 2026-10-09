@@ -48,5 +48,6 @@ public:
         delete GRedisManager;
 		SocketUtil::Clear();
 		delete GLogger;
+		GLogger = nullptr;
 	}
 } GCoreGlobal;

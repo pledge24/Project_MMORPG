@@ -528,7 +528,7 @@ void UnregisterUser(GameSessionRef session);
 
 **이 절은 `Server/ServerCore/`에도 적용한다.**
 
-`cout`, `wcout`, `printf`로 로그를 쓰지 않는다. `ServerCore/Utils/Logger.h`의 전역 로거 `GLogger`에
+`cout`, `wcout`, `printf`처럼 표준 출력에 직접 쓰는 호출로 로그를 남기지 않는다. `ServerCore/Utils/Logger.h`의 전역 로거 `GLogger`에
 레벨을 골라 쓴다. 인자는 `std::format` 형식으로 넘긴다.
 
 ```cpp
@@ -537,9 +537,9 @@ GLogger->Warning("몬스터 템플릿 {}이 없다", templateId);
 
 — 로그는 IOCP 워커와 DB 스레드, 메인 스레드가 한 콘솔에 함께 쓴다. 표준 출력 스트림에 바로 쓰면
 줄이 서로 섞이고, 어느 스레드가 언제 남긴 줄인지 알 수 없다. `GLogger`는 한 줄을 통째로 쓰고 시각과
-레벨, 스레드 id(`LThreadId`)를 붙인다.
+레벨, 스레드 id(`LThreadId`)를 붙인다. `ThreadManager`가 띄우지 않은 스레드는 id가 `0`으로 찍힌다.
 
-2026년 10월 9일(#206) 기준으로 기존 코드에는 표준 출력 스트림 호출이 남아 있다. #205의 각 티켓이 자기가 고치는
+2026년 10월 9일(#206) 기준으로 기존 코드에는 표준 출력에 직접 쓰는 호출이 남아 있다. #205의 각 티켓이 자기가 고치는
 코드의 호출을 옮기고, 남은 것은 #213이 옮긴다.
 
 ---
