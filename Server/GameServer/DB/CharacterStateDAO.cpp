@@ -5,7 +5,7 @@
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Entities/PlayerSaveData.h"
 
-bool CharacterStateDAO::LoadCharacter(int64 userId, int64 characterId, OUT PlayerProgress& progress)
+bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 2;
     const int COLS = 3;
@@ -41,13 +41,12 @@ bool CharacterStateDAO::LoadCharacter(int64 userId, int64 characterId, OUT Playe
         int16 _level;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 해당 유저의 캐릭터 기본 정보들을 가져온다.
         // 이 계정의 캐릭터가 아니면 행이 없다. 클라이언트가 보낸 character_id를 믿지 않는다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             SELECT class_id, character_name, level
             FROM [dbo].[Characters]
             WHERE character_id = (?) AND user_id = (?)
@@ -59,7 +58,7 @@ bool CharacterStateDAO::LoadCharacter(int64 userId, int64 characterId, OUT Playe
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
         // 행이 없으면 바인딩 버퍼는 초기화되지 않은 값이다. 채우지 않고 실패로 끝낸다.
-        if (dbConn->Fetch() == false)
+        if (conn.Fetch() == false)
             throw DBCustomError::SQL_FETCH_FAIL;
 
         Protocol::PlayerInfo* playerInfo = &progress.playerInfo;
@@ -78,7 +77,7 @@ bool CharacterStateDAO::LoadCharacter(int64 userId, int64 characterId, OUT Playe
     return true;
 }
 
-bool CharacterStateDAO::LoadLastState(int64 characterId, OUT PlayerProgress& progress)
+bool CharacterStateDAO::LoadLastState(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 12;
@@ -131,12 +130,11 @@ bool CharacterStateDAO::LoadLastState(int64 characterId, OUT PlayerProgress& pro
         int64 _gold;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 해당 유저의 마지막 정보를 가져온다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
             FROM [dbo].[CharactersLastState] 
             WHERE character_id = (?)
@@ -147,7 +145,7 @@ bool CharacterStateDAO::LoadLastState(int64 characterId, OUT PlayerProgress& pro
         if (dbBind.Execute() == false)
             return false;
 
-        if (dbConn->Fetch() == false)
+        if (conn.Fetch() == false)
             return false;
 
         auto* statMappings = progress.statInfo.mutable_info();
@@ -178,7 +176,7 @@ bool CharacterStateDAO::LoadLastState(int64 characterId, OUT PlayerProgress& pro
     return true;
 }
 
-bool CharacterStateDAO::SaveCharacter(const PlayerSaveData& data)
+bool CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& data)
 {
     const int PARAMS = 2;
     const int COLS = 0;
@@ -202,12 +200,11 @@ bool CharacterStateDAO::SaveCharacter(const PlayerSaveData& data)
         int16 _level;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 해당 유저의 캐릭터 기본 정보들을 갱신한다(지금은 레벨만 갱신).
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             UPDATE [dbo].[Characters]
             SET level = (?)
             WHERE character_id = (?)
@@ -227,7 +224,7 @@ bool CharacterStateDAO::SaveCharacter(const PlayerSaveData& data)
     return true;
 }
 
-bool CharacterStateDAO::SaveLastState(const PlayerSaveData& data)
+bool CharacterStateDAO::SaveLastState(DBConnection& conn, const PlayerSaveData& data)
 {
     const int PARAMS = 13;
     const int COLS = 0;
@@ -291,12 +288,11 @@ bool CharacterStateDAO::SaveLastState(const PlayerSaveData& data)
         int64 _characterId;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 해당 유저의 마지막 정보를 DB에 갱신한다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             UPDATE [dbo].[CharactersLastState]
             SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)
             WHERE character_id = (?)
@@ -307,8 +303,9 @@ bool CharacterStateDAO::SaveLastState(const PlayerSaveData& data)
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        //if (dbConn->GetRowCount() != 1)
-        //    throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
+        // 행이 없으면 UPDATE는 성공하고 아무것도 바꾸지 않는다. 저장이 사라진 것을 실패로 알린다.
+        if (conn.GetRowCount() != 1)
+            throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
     }
     catch (DBCustomError error)
     {

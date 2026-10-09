@@ -4,7 +4,7 @@
 #include "Utils/EncodingConverter.h"
 #include "Game/Characters/CharacterCreation.h"
 
-bool CharacterListDAO::LoadCharacterList(int64 userId, OUT vector<Protocol::CharacterOverview>& characters)
+bool CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 userId, OUT vector<Protocol::CharacterOverview>& characters)
 {
     const int PARAMS = 1;
     const int COLS = 4;
@@ -40,12 +40,11 @@ bool CharacterListDAO::LoadCharacterList(int64 userId, OUT vector<Protocol::Char
         int16 _level;
     };
     
-    DBConnectionGuard dbConn;
 
     try
     {
         // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(                             
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(                             
             SELECT character_id, class_id, character_name, level
             FROM [dbo].[Characters]
             WHERE user_id = (?)
@@ -57,7 +56,7 @@ bool CharacterListDAO::LoadCharacterList(int64 userId, OUT vector<Protocol::Char
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        while(dbConn->Fetch())
+        while(conn.Fetch())
         {
             Protocol::CharacterOverview* character = &characters.emplace_back();
 
@@ -83,7 +82,7 @@ bool CharacterListDAO::LoadCharacterList(int64 userId, OUT vector<Protocol::Char
     return true;
 }
 
-bool CharacterListDAO::CreateCharacter(const Protocol::CharacterOverview& character, int64 userId, OUT CreateCharacterResult& result)
+bool CharacterListDAO::CreateCharacter(DBConnection& conn, const Protocol::CharacterOverview& character, int64 userId, OUT CreateCharacterResult& result)
 {
     const int PARAMS = 10;
     const int COLS = 1;
@@ -145,12 +144,11 @@ bool CharacterListDAO::CreateCharacter(const Protocol::CharacterOverview& charac
         int64 _characterId;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 계정에 빈 슬롯이 있고 이름이 중복이 아니면 INSERT한다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             SET NOCOUNT ON;
 
             BEGIN TRANSACTION;
@@ -216,7 +214,7 @@ bool CharacterListDAO::CreateCharacter(const Protocol::CharacterOverview& charac
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        if (dbConn->Fetch() == false)
+        if (conn.Fetch() == false)
             throw DBCustomError::SQL_FETCH_FAIL;
 
         // character_id는 identity라 양수다. 음수면 쿼리가 거절한 것이고, 부호를 뒤집으면 사유가 된다.
@@ -254,7 +252,7 @@ bool CharacterListDAO::CreateCharacter(const Protocol::CharacterOverview& charac
     return true;
 }
 
-bool CharacterListDAO::DeleteCharacter(int64 userId, int64 characterId)
+bool CharacterListDAO::DeleteCharacter(DBConnection& conn, int64 userId, int64 characterId)
 {
     const int PARAMS = 2;
     const int COLS = 0;
@@ -278,12 +276,11 @@ bool CharacterListDAO::DeleteCharacter(int64 userId, int64 characterId)
         int64 _userId;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 캐릭터 삭제. user_id를 함께 대조하므로 이 계정의 캐릭터만 지운다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             BEGIN TRANSACTION;
 
             DECLARE @character_id BIGINT;
@@ -315,7 +312,7 @@ bool CharacterListDAO::DeleteCharacter(int64 userId, int64 characterId)
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        if (dbConn->GetRowCount() <= 0)
+        if (conn.GetRowCount() <= 0)
             throw DBCustomError::SQL_MISMATCHED_GET_ROW_COUNT;
     }
     catch (DBCustomError error)

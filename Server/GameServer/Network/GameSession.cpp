@@ -3,6 +3,7 @@
 #include "Network/GameSessionManager.h"
 #include "Network/SaveGate.h"
 #include "DB/ProgressStorage.h"
+#include "DB/DAOCommon.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 
@@ -72,7 +73,10 @@ void GameSession::LeaveGame(RoomRef room, PlayerRef player)
 	dbQueue->Push(make_shared<Job>(
 		[data = std::move(saveData.value())]()
 		{
-			ProgressStorage::Save(data);
+			{
+				DBConnectionGuard conn;
+				ProgressStorage::Save(*conn, data);
+			}
 
 			// 저장이 실패해도 대기를 푼다. 실패한 저장은 다시 시도하지 않으므로 기다려도 결과가 같다.
 			if (optional<SaveGate::ParkedLoad> parked = GSaveGate.Release(data.userId))

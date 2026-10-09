@@ -16,9 +16,9 @@ struct CreateCharacterResult
 class CharacterListDAO
 {
 public:
-    static bool LoadCharacterList(int64 userId, OUT vector<Protocol::CharacterOverview>& characters);
+    static bool LoadCharacterList(DBConnection& conn, int64 userId, OUT vector<Protocol::CharacterOverview>& characters);
     /** 빈 슬롯이 없거나 이름이 겹치면 쿼리가 거절하고, 그 사유를 result에 담는다. 거절은 실패가 아니므로 true다. */
-    static bool CreateCharacter(const Protocol::CharacterOverview& character, int64 userId, OUT CreateCharacterResult& result);
+    static bool CreateCharacter(DBConnection& conn, const Protocol::CharacterOverview& character, int64 userId, OUT CreateCharacterResult& result);
     /** userId와 함께 대조하므로 다른 계정의 캐릭터는 지우지 않는다. 지운 행이 없으면 false다. */
-    static bool DeleteCharacter(int64 userId, int64 characterId);
+    static bool DeleteCharacter(DBConnection& conn, int64 userId, int64 characterId);
 };

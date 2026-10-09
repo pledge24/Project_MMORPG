@@ -23,26 +23,37 @@ struct DiagnosticInfo
 
 /**
  * ODBC 연결 하나와 statement 하나를 묶은 클래스. DBConnectionPool이 만들어 들고 있다.
- * statement가 하나뿐이므로 한 번에 한 스레드만 쓴다. DAO는 풀에서 빌려 쓰고 돌려준다.
+ * statement가 하나뿐이므로 한 번에 한 스레드만 쓴다. DB 잡이 풀에서 빌려 DAO에 넘기고 돌려준다.
  * 보통은 직접 바인딩하지 않고 DBBind를 거쳐 쓴다.
+ * ODBC를 부르는 함수는 가상이다. 테스트는 이 함수들을 재정의한 가짜 연결로 DAO를 부른다.
  */
 class DBConnection
 {
 public:
+	virtual ~DBConnection() = default;
+
 	/** henv 위에서 연결하고 statement를 할당한다. */
 	bool			Connect(SQLHENV henv, const WCHAR* connectionString);
 	void			Clear();
 
 	/** 쿼리를 바로 실행한다. 영향받은 행이 없을 때(SQL_NO_DATA)도 성공으로 본다. 실행 전에 진단 기록을 비운다. */
-	bool			Execute(const WCHAR* query);
+	virtual bool	Execute(const WCHAR* query);
 	/** 다음 행을 바인딩한 변수로 읽는다. 행이 더 없거나 실패하면 false를 돌려준다. */
-	bool			Fetch();
+	virtual bool	Fetch();
     /** 수정 쿼리(UPDATE, INSERT, DELETE)에 영향을 받은 행의 수 반환(SELECT는 -1 반환)*/
-	int32			GetRowCount();
+	virtual int32	GetRowCount();
 	/** 바인딩을 모두 풀고 커서를 닫는다. PARAMSET_SIZE와 ROW_ARRAY_SIZE도 1로 되돌린다. */
-	void			Unbind();
+	virtual void	Unbind();
     /** 배열 파라미터의 행 수를 정한다. DBBind 생성자가 Unbind로 1로 되돌리므로 DBBind를 만든 뒤에 부른다. */
-    void            SetParamSetSize(int32& rows);
+    virtual void    SetParamSetSize(int32& rows);
+
+    //~ 트랜잭션
+    /** 자동 커밋을 끈다. 이 뒤의 쿼리는 Commit이나 Rollback까지 한 트랜잭션이다. */
+    virtual bool    BeginTransaction();
+    /** 트랜잭션을 확정하고 자동 커밋으로 돌아간다. */
+    virtual bool    Commit();
+    /** 트랜잭션을 되돌리고 자동 커밋으로 돌아간다. */
+    virtual bool    Rollback();
 
     /** 마지막 Execute 이후 쌓인 진단에 이 SQLSTATE나 원본 오류 번호가 있는지 본다. */
     bool            FindError(const SQLWCHAR* sqlState);
@@ -72,9 +83,13 @@ public:
 	bool			BindCol(int32 columnIndex, WCHAR* str, int32 size, SQLLEN* index);
 	bool			BindCol(int32 columnIndex, BYTE* bin, int32 size, SQLLEN* index);
 
+protected:
+	/** 타입별 BindParam과 BindCol이 모두 이 두 함수로 모인다. 가짜 연결은 여기서 바인딩한 주소를 기록한다. */
+	virtual bool	BindParam(SQLUSMALLINT paramIndex, SQLSMALLINT cType, SQLSMALLINT sqlType, SQLULEN len, SQLPOINTER ptr, SQLLEN* index);
+	virtual bool	BindCol(SQLUSMALLINT columnIndex, SQLSMALLINT cType, SQLULEN len, SQLPOINTER value, SQLLEN* index);
+
 private:
-	bool			BindParam(SQLUSMALLINT paramIndex, SQLSMALLINT cType, SQLSMALLINT sqlType, SQLULEN len, SQLPOINTER ptr, SQLLEN* index);
-	bool			BindCol(SQLUSMALLINT columnIndex, SQLSMALLINT cType, SQLULEN len, SQLPOINTER value, SQLLEN* index);
+	bool			EndTransaction(SQLSMALLINT completionType);
 	void			HandleError(SQLRETURN ret);
 
 private:

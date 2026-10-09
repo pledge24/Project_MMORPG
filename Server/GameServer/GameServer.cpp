@@ -3,6 +3,7 @@
 #include "ServerCore/Network/IocpCore.h"
 #include "Core/Config.h"
 #include "DB/ItemDAO.h"
+#include "DB/DAOCommon.h"
 
 enum
 {
@@ -109,7 +110,10 @@ int main(void)
     }
 
     // DB에서 서버 메모리에 올릴거 가져오기
-    ItemDAO::GetMaxItemUID();
+    {
+        DBConnectionGuard conn;
+        ItemDAO::GetMaxItemUID(*conn);
+    }
 
     // Main Thread
     DoWorkerJob(service);

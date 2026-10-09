@@ -645,20 +645,6 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 
 **버그 발생 가능성 증가** — 밀려나거나 끊긴 세션의 마지막 진행이 사라지고, 새 세션이 끊길 때 낡은 진행으로 덮어쓴다.
 
-## TD-032 접속 종료 저장이 중간에 실패하면 진행의 일부만 저장된다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/ProgressStorage.cpp` 68~90줄 (`Save`)
-> 등록일: 2026년 10월 5일
-
-`ProgressStorage::Save`는 `SaveCharacter`(레벨), `SaveLastState`(경험치, HP, 위치, 골드), `SaveItems`(인벤토리와 착용 장비)를
-차례로 부르고, 실패하면 그 자리에서 멈춘다. 세 DAO는 각자 따로 실행되고 하나의 트랜잭션으로 묶이지 않는다. 저장 잡은 실패해도
-`GSaveGate`를 푼다(`GameSession.cpp`의 주석이 의도라고 밝힌다). `SaveLastState`는 갱신한 행 수를 확인하는 코드가 주석
-처리되어 있어서, 행이 없어도 성공으로 본다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 레벨은 오르고 아이템은 저장되지 않는 식으로 진행이 서로 어긋난 채 남는다. 다음 입장은 어긋난 상태를 불러온다.
-
 ## TD-033 클라이언트가 맵 간 이동을 요청하지 않아 `S_ENTER_MAP` 경로가 실행되지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · client
 > 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 42줄 (`OpenInGameMap`) · `P1/Source/P1/Network/ClientPacketHandler.cpp` 60~67줄 (`Handle_S_ENTER_MAP`)

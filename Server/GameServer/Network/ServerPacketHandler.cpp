@@ -6,6 +6,7 @@
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
 #include "DB/CharacterListDAO.h"
+#include "DB/DAOCommon.h"
 #include "Game/Characters/CharacterCreation.h"
 
 namespace
@@ -115,7 +116,8 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
             Protocol::S_LOGIN loginPkt;
             vector<Protocol::CharacterOverview> characters;
-            if (CharacterListDAO::LoadCharacterList(userId, OUT characters))
+            DBConnectionGuard conn;
+            if (CharacterListDAO::LoadCharacterList(*conn, userId, OUT characters))
             {
                 for (Protocol::CharacterOverview& character : characters)
                     *loginPkt.add_characters() = std::move(character);
@@ -159,7 +161,8 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
         {
             Protocol::S_CREATE_CHARACTER createCharacterPkt;
             CreateCharacterResult result;
-            if (CharacterListDAO::CreateCharacter(pkt.character(), userId, OUT result) == false)
+            DBConnectionGuard conn;
+            if (CharacterListDAO::CreateCharacter(*conn, pkt.character(), userId, OUT result) == false)
             {
                 createCharacterPkt.set_success(false);
                 createCharacterPkt.set_cause("서버 내부 오류");
@@ -200,7 +203,8 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
             const int64 characterId = pkt.character_id();
 
             Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
-            deleteCharacterPkt.set_success(CharacterListDAO::DeleteCharacter(userId, characterId));
+            DBConnectionGuard conn;
+            deleteCharacterPkt.set_success(CharacterListDAO::DeleteCharacter(*conn, userId, characterId));
             if (deleteCharacterPkt.success())
                 deleteCharacterPkt.set_character_id(characterId);
 
@@ -231,7 +235,8 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
                 return;
 
             // 불러오기가 모두 성공하고 검증을 통과해야 세션에 플레이어가 생긴다. 룸에는 그 뒤 EnterPlayer로 들어간다.
-            Protocol::S_ENTER_GAME enterGamePkt = GameEntry::Enter(static_pointer_cast<GameSession>(session), pkt.character_id());
+            DBConnectionGuard conn;
+            Protocol::S_ENTER_GAME enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), pkt.character_id());
             SEND_PACKET(enterGamePkt)
         };
 

@@ -37,7 +37,7 @@ inline void PrintDBErrorLog(const DBCustomError error)
 
 /**
  * 연결 풀에서 연결을 빌리고, 가드가 사라질 때 돌려준다.
- * 예외로 함수를 빠져나가도 연결이 풀로 돌아간다. DAO 함수 안의 지역 변수로만 쓴다.
+ * 예외로 함수를 빠져나가도 연결이 풀로 돌아간다. DB 잡이 지역 변수로 만들어 DAO와 ProgressStorage에 연결을 넘긴다.
  */
 class DBConnectionGuard
 {

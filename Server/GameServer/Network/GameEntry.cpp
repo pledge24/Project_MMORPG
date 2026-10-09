@@ -5,13 +5,13 @@
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Entities/PlayerProgress.h"
 
-Protocol::S_ENTER_GAME GameEntry::Enter(const GameSessionRef& session, int64 characterId)
+Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef& session, int64 characterId)
 {
     Protocol::S_ENTER_GAME enterGamePkt;
     enterGamePkt.set_success(false);
 
     PlayerProgress progress;
-    if (ProgressStorage::Load(session->_userId, characterId, OUT progress) == false)
+    if (ProgressStorage::Load(conn, session->_userId, characterId, OUT progress) == false)
         return enterGamePkt;
 
     PlayerRef player = SpawnPlayer(session, progress);

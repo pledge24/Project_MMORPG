@@ -31,7 +31,7 @@ namespace
     }
 }
 
-bool ItemDAO::GetMaxItemUID()
+bool ItemDAO::GetMaxItemUID(DBConnection& conn)
 {
     const int PARAMS = 0;
     const int COLS = 1;
@@ -57,11 +57,10 @@ bool ItemDAO::GetMaxItemUID()
         int32 _maxItemUID;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             EXEC GetMaxItemUID;
         )SQL");
 
@@ -70,7 +69,7 @@ bool ItemDAO::GetMaxItemUID()
         if (dbBind.Execute() == false)
             throw wstring(L"Execute() 실패");
 
-        if (dbConn->Fetch() == false)
+        if (conn.Fetch() == false)
             throw wstring(L"Fetch() 실패");
 
         GNextItemUID = bindObject._maxItemUID + 1; // itemUid저장
@@ -84,20 +83,20 @@ bool ItemDAO::GetMaxItemUID()
     return true;
 }
 
-bool ItemDAO::LoadItems(int64 characterId, OUT PlayerProgress& progress)
+bool ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
     try
     {
         // 1. 캐릭터 장비 아이템 가져오기
-        if (LoadGearItems(characterId, progress) == false)
+        if (LoadGearItems(conn, characterId, progress) == false)
             throw wstring(L"장비 아이템 불러오기 실패");
 
         // 2. 캐릭터 소비 아이템 가져오기
-        if (LoadStackableItems(characterId, Protocol::ITEM_TYPE_CONSUMABLE, progress) == false)
+        if (LoadStackableItems(conn, characterId, Protocol::ITEM_TYPE_CONSUMABLE, progress) == false)
             throw wstring(L"소비 아이템 불러오기 실패");
 
         // 3. 캐릭터 기타 아이템 가져오기
-        if (LoadStackableItems(characterId, Protocol::ITEM_TYPE_MISCELLANEOUS, progress) == false)
+        if (LoadStackableItems(conn, characterId, Protocol::ITEM_TYPE_MISCELLANEOUS, progress) == false)
             throw wstring(L"기타 아이템 불러오기 실패");
     }
     catch (const wstring& cause)
@@ -109,20 +108,20 @@ bool ItemDAO::LoadItems(int64 characterId, OUT PlayerProgress& progress)
     return true;
 }
 
-bool ItemDAO::SaveItems(const PlayerSaveData& data)
+bool ItemDAO::SaveItems(DBConnection& conn, const PlayerSaveData& data)
 {
     try
     {
         // 1. 캐릭터 장비 아이템 갱신하기
-        if (SaveGearItems(data) == false)
+        if (SaveGearItems(conn, data) == false)
             throw wstring(L"장비 아이템 저장 실패");
 
         // 2. 캐릭터 소비 아이템 갱신하기
-        if (SaveStackableItems(data, Protocol::ITEM_TYPE_CONSUMABLE) == false)
+        if (SaveStackableItems(conn, data, Protocol::ITEM_TYPE_CONSUMABLE) == false)
             throw wstring(L"소비 아이템 저장 실패");
 
         // 3. 캐릭터 기타 아이템 갱신하기
-        if (SaveStackableItems(data, Protocol::ITEM_TYPE_MISCELLANEOUS) == false)
+        if (SaveStackableItems(conn, data, Protocol::ITEM_TYPE_MISCELLANEOUS) == false)
             throw wstring(L"기타 아이템 저장 실패");
     }
     catch (const wstring& cause)
@@ -134,7 +133,7 @@ bool ItemDAO::SaveItems(const PlayerSaveData& data)
     return true;
 }
 
-bool ItemDAO::LoadGearItems(int64 characterId, OUT PlayerProgress& progress)
+bool ItemDAO::LoadGearItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 8;
@@ -178,12 +177,11 @@ bool ItemDAO::LoadGearItems(int64 characterId, OUT PlayerProgress& progress)
         int32 _additionalMagicalAttack;
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
         // 해당 캐릭터의 장비 아이템 정보를 가져온다.
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             SELECT item_uid, template_id, is_equipped, slot_id, enhance, durability, additional_physical_attack, additional_magical_attack
             FROM [dbo].[CharactersGearItems]
             WHERE character_id = (?)
@@ -194,7 +192,7 @@ bool ItemDAO::LoadGearItems(int64 characterId, OUT PlayerProgress& progress)
         if (dbBind.Execute() == false)
             throw DBCustomError::SQL_EXECUTE_FAIL;
 
-        while (dbConn->Fetch())
+        while (conn.Fetch())
         {
             Protocol::Item item;
             Protocol::GearInfo* gearInfo = item.mutable_gearinfo();
@@ -223,7 +221,7 @@ bool ItemDAO::LoadGearItems(int64 characterId, OUT PlayerProgress& progress)
     return true;
 }
 
-bool ItemDAO::LoadStackableItems(int64 characterId, Protocol::ItemType itemType, OUT PlayerProgress& progress)
+bool ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol::ItemType itemType, OUT PlayerProgress& progress)
 {
     const int PARAMS = 1;
     const int COLS = 3;
@@ -261,7 +259,6 @@ bool ItemDAO::LoadStackableItems(int64 characterId, Protocol::ItemType itemType,
     if (table == nullptr)
         return false;
 
-    DBConnectionGuard dbConn;
 
     try
     {
@@ -272,7 +269,7 @@ bool ItemDAO::LoadStackableItems(int64 characterId, Protocol::ItemType itemType,
             FROM )SQL") + table + LR"SQL(
             WHERE character_id = (?)
         )SQL";
-        DBBind<PARAMS, COLS> dbBind(*dbConn, query.c_str());
+        DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
 
         BindObject bindObject(dbBind, characterId);
 
@@ -282,7 +279,7 @@ bool ItemDAO::LoadStackableItems(int64 characterId, Protocol::ItemType itemType,
         Protocol::Inventory* inventory = progress.possession.mutable_inventory();
         const bool isConsumable = itemType == Protocol::ITEM_TYPE_CONSUMABLE;
 
-        while (dbConn->Fetch())
+        while (conn.Fetch())
         {
             Protocol::Item item;
             item.set_template_id(bindObject._templateId);
@@ -303,7 +300,7 @@ bool ItemDAO::LoadStackableItems(int64 characterId, Protocol::ItemType itemType,
     return true;
 }
 
-bool ItemDAO::SaveGearItems(const PlayerSaveData& data)
+bool ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
 {
     const int PARAMS = 9;
     const int COLS = 0;
@@ -368,7 +365,6 @@ bool ItemDAO::SaveGearItems(const PlayerSaveData& data)
         int32 _additionalMagicalAttack[MAX_ROWS];
     };
 
-    DBConnectionGuard dbConn;
 
     try
     {
@@ -377,7 +373,7 @@ bool ItemDAO::SaveGearItems(const PlayerSaveData& data)
         if (rows.has_value() == false)
             throw DBCustomError::INVENTORY_DIRTY_FLAGS_NOT_FOUND;
 
-        DBBind<PARAMS, COLS> dbBind(*dbConn, LR"SQL(
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
             -- 1. 임시 테이블 생성
             SELECT *
             INTO #TempTable
@@ -424,7 +420,7 @@ bool ItemDAO::SaveGearItems(const PlayerSaveData& data)
         int32 rowCount = static_cast<int32>(rows->size());
         if (rowCount > 0)
         {
-            dbConn->SetParamSetSize(rowCount);
+            conn.SetParamSetSize(rowCount);
 
             if (dbBind.Execute() == false)
                 throw DBCustomError::SQL_EXECUTE_FAIL;
@@ -439,7 +435,7 @@ bool ItemDAO::SaveGearItems(const PlayerSaveData& data)
     return true;
 }
 
-bool ItemDAO::SaveStackableItems(const PlayerSaveData& data, Protocol::ItemType itemType)
+bool ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data, Protocol::ItemType itemType)
 {
     const int PARAMS = 4;
     const int COLS = 0;
@@ -488,7 +484,6 @@ bool ItemDAO::SaveStackableItems(const PlayerSaveData& data, Protocol::ItemType 
     if (table == nullptr)
         return false;
 
-    DBConnectionGuard dbConn;
 
     try
     {
@@ -534,14 +529,14 @@ bool ItemDAO::SaveStackableItems(const PlayerSaveData& data, Protocol::ItemType 
             -- 4. 임시 테이블 삭제
             DROP TABLE #TempTable;
         )SQL";
-        DBBind<PARAMS, COLS> dbBind(*dbConn, query.c_str());
+        DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
 
         BindObject bindObject(dbBind, rows.value());
 
         int32 rowCount = static_cast<int32>(rows->size());
         if (rowCount > 0)
         {
-            dbConn->SetParamSetSize(rowCount);
+            conn.SetParamSetSize(rowCount);
 
             if (dbBind.Execute() == false)
                 throw DBCustomError::SQL_EXECUTE_FAIL;

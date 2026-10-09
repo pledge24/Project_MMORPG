@@ -15,8 +15,11 @@ public:
      * 입장할 때 부른다. userId 계정의 캐릭터 characterId의 진행을 progress에 채운다.
      * 한 단계라도 실패하면 사유를 로그에 남기고 false를 돌려준다. 그때 progress는 일부만 채워져 있으므로 쓰지 않는다.
      */
-    static bool Load(int64 userId, int64 characterId, OUT PlayerProgress& progress);
+    static bool Load(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress);
 
-    /** 접속이 끊길 때 룸 큐에서 뜬 사본으로 저장한다. 한 단계가 실패하면 뒤 단계는 저장하지 않고, 다시 시도하지 않는다. */
-    static void Save(const PlayerSaveData& data);
+    /**
+     * 접속이 끊길 때 룸 큐에서 뜬 사본으로 저장한다. 세 단계를 트랜잭션 하나로 묶는다.
+     * 한 단계라도 실패하면 앞 단계까지 되돌리고 false를 돌려준다. 다시 시도하지 않는다.
+     */
+    static bool Save(DBConnection& conn, const PlayerSaveData& data);
 };

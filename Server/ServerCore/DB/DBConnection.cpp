@@ -107,6 +107,32 @@ void DBConnection::SetParamSetSize(int32& rows)
     ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)(SQLULEN)rows, 0);
 }
 
+bool DBConnection::BeginTransaction()
+{
+    SQLRETURN ret = ::SQLSetConnectAttr(_connection, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, SQL_IS_UINTEGER);
+    return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO;
+}
+
+bool DBConnection::Commit()
+{
+    return EndTransaction(SQL_COMMIT);
+}
+
+bool DBConnection::Rollback()
+{
+    return EndTransaction(SQL_ROLLBACK);
+}
+
+bool DBConnection::EndTransaction(SQLSMALLINT completionType)
+{
+    SQLRETURN ret = ::SQLEndTran(SQL_HANDLE_DBC, _connection, completionType);
+
+    // 확정에 실패해도 자동 커밋으로 돌려 둔다. 다음 잡이 끝나지 않은 트랜잭션 위에서 돌지 않게 한다.
+    ::SQLSetConnectAttr(_connection, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, SQL_IS_UINTEGER);
+
+    return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO;
+}
+
 bool DBConnection::FindError(const SQLWCHAR* targetState)
 {
     if (targetState == nullptr) return false;
