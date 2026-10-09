@@ -57,8 +57,6 @@ bool Monster::Init(const SpawnParams& params)
 void Monster::Start()
 {
     Creature::Start();
-
-    UpdateState();
 }
 
 void Monster::Tick(float deltaTime)
@@ -69,6 +67,16 @@ void Monster::Tick(float deltaTime)
     {
         _stateTimer += deltaTime;
         _timeSinceLastAttack += deltaTime;
+        _timeSinceStateUpdate += deltaTime;
+    }
+
+    UpdatePendingHit(deltaTime);
+
+    // 상태 전환 판정은 틱보다 긴 주기로 돈다. 남은 시간을 넘기지 않고 0으로 돌리므로 주기가 틱 간격만큼 늦어질 수 있다.
+    if (_timeSinceStateUpdate >= UPDATE_STATE_INTERVAL)
+    {
+        _timeSinceStateUpdate = 0.f;
+        EvaluateStateTransition();
     }
 
     // 몬스터 AI 실행
@@ -96,24 +104,6 @@ int64 Monster::GetExpReward()
 int64 Monster::GetGoldReward()
 {
     return Utils::GetRandom(_template.minGold, _template.maxGold);
-}
-
-void Monster::UpdateState()
-{
-    // 전환 판정은 중간에 return으로 빠져나가므로, 다음 판정 예약을 판정 함수 밖에 둔다.
-    EvaluateStateTransition();
-
-    if (auto ownerRoom = GetRoom())
-    {
-        ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
-            {
-                int64 entityId = self->GetEntityId();
-
-                if(ownerRoom->Contains(entityId))
-                    self->UpdateState();
-            });
-
-    }
 }
 
 void Monster::EvaluateStateTransition()
@@ -504,8 +494,24 @@ void Monster::NormalAttack()
             attackInfo.set_combo(0);
             attackInfo.set_damage(_baseAttack);
         }
-        ownerRoom->DoTimer(200, &Room::HandleHit, shared_from_this(), attackInfo);
+        _pendingHit = PendingHit{ attackInfo, NORMAL_ATTACK_HIT_DELAY };
     }
+}
+
+void Monster::UpdatePendingHit(float deltaTime)
+{
+    if (_pendingHit.has_value() == false)
+        return;
+
+    _pendingHit->remainingTime -= deltaTime;
+    if (_pendingHit->remainingTime > 0.f)
+        return;
+
+    const Protocol::AttackInfo attackInfo = _pendingHit->attackInfo;
+    _pendingHit.reset();
+
+    if (auto ownerRoom = GetRoom())
+        ownerRoom->HandleHit(shared_from_this(), attackInfo);
 }
 
 bool Monster::IsTargetLost()

@@ -28,7 +28,6 @@ namespace
 Player::Player()
 {
 	_isPlayer = true;
-    _isTickable = false;
 
     _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
     _playerInfo = _entityInfo->mutable_player_info();
@@ -141,7 +140,8 @@ void Player::Start()
 
 void Player::Tick(float deltaTime)
 {
-    // 플레이어는 틱을 돌리지 않는다. Creature::Tick은 다음 틱을 예약하므로 부르지 않는다.
+    Creature::Tick(deltaTime);
+
     _inventory->Tick(deltaTime);
     _equipment->Tick(deltaTime);
 }

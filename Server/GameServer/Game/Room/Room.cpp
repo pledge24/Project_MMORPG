@@ -59,51 +59,67 @@ bool Room::Start()
         }
     }
 
-    Update();
+    _lastTickTime = GetTickCount64();
+    DoTimer(ROOM_TICK_INTERVAL_MS, &Room::RunScheduledTick);
 
     return true;
 }
 
-void Room::Update()
+void Room::Tick(float deltaTime)
 {
-    DoTimer(ROOM_UPDATE_INTERVAL_MS, &Room::Update);
-
-    // 몬스터가 플레이어를 찾을 때 셀을 본다. 위치가 틱마다 바뀌므로 여기서 다시 채운다.
+    // 몬스터가 플레이어를 찾을 때 셀을 본다. 엔티티 Tick보다 먼저 채워야 이번 틱의 탐색이 지난 틱의 위치를 본다.
     UpdateCellMatrix();
 
-    Protocol::S_MOVE movePkt;
+    // 엔티티의 Tick이 룸에서 엔티티를 뺄 수 있다(피격으로 사망한 몬스터). 순회 중인 맵을 바꾸지 않도록 목록을 떠 둔다.
+    vector<EntityRef> entities;
+    entities.reserve(_entities.size());
+    for (auto& [entityId, entity] : _entities)
+        entities.push_back(entity);
+
+    for (const EntityRef& entity : entities)
     {
-        for (auto pair : _entities)
-        {
-            EntityRef entity = pair.second;
-            if (entity->IsPlayer())
-                continue;
+        // 이번 틱에서 앞선 엔티티가 뺀 엔티티는 돌리지 않는다.
+        if (FindEntityAs<Entity>(entity->GetEntityId()) != entity)
+            continue;
 
-            Protocol::PosInfo* info = movePkt.add_info();
-            info->CopyFrom(entity->GetPosInfo());
-        }
+        entity->Tick(deltaTime);
+    }
 
-        // 몬스터가 없는 룸에서는 목록이 빈다. 틱마다 빈 패킷을 보내지 않도록 여기서 끝낸다.
-        if (movePkt.info_size() == 0)
-            return;
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-        Broadcast(sendBuffer);
+    _timeSinceMoveSend += deltaTime;
+    if (_timeSinceMoveSend >= MOVE_SEND_INTERVAL)
+    {
+        _timeSinceMoveSend = 0.f;
+        BroadcastMonsterMoves();
     }
 }
 
-void Room::TickEntity(EntityRef entity)
+void Room::RunScheduledTick()
 {
-    int64 entityId = entity->GetEntityId();
-    if (_entities.contains(entityId) == false)
+    const uint64 now = GetTickCount64();
+    const float deltaTime = (now - _lastTickTime) / 1000.f;
+    _lastTickTime = now;
+
+    DoTimer(ROOM_TICK_INTERVAL_MS, &Room::RunScheduledTick);
+
+    Tick(deltaTime);
+}
+
+void Room::BroadcastMonsterMoves()
+{
+    Protocol::S_MOVE movePkt;
+    for (auto& [entityId, entity] : _entities)
+    {
+        if (entity->IsPlayer())
+            continue;
+
+        movePkt.add_info()->CopyFrom(entity->GetPosInfo());
+    }
+
+    // 몬스터가 없는 룸에서는 목록이 빈다. 주기마다 빈 패킷을 보내지 않도록 여기서 끝낸다.
+    if (movePkt.info_size() == 0)
         return;
 
-    uint64 curTime = GetTickCount64();
-    uint64 prevTime = entity->GetPrevTime();
-    float deltaTime = (curTime - prevTime) / 1000.f;
-    entity->SetPrevTime(curTime);
-
-    entity->Tick(deltaTime);
+    Broadcast(ServerPacketHandler::MakeSerializedPacket(movePkt));
 }
 
 bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
@@ -779,7 +795,7 @@ bool Room::AddEntity(EntityRef entity)
 
 	_entities.insert(make_pair(entityId, entity));
 
-    // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
+    // 틱은 다음 룸 틱부터 받는다. 처음 들어온 엔티티면 JoinRoom이 Start를 부른다.
     entity->JoinRoom(GetRoomRef());
 
 	return true;

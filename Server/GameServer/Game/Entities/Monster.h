@@ -25,8 +25,8 @@ struct MonsterSpawnParams : public Creature::SpawnParams
 /**
  * 게임 기획 데이터의 몬스터 표로 만드는 AI 크리처.
  * Room::SpawnEntity가 만들어 룸에 넣고, 모든 처리가 그 룸 큐 위에서 돈다.
- * 이동과 행동은 틱(ENTITY_TICK_INTERVAL)마다, 상태 전환 판정은 UPDATE_STATE_INTERVAL_MS마다 룸 타이머로 돈다.
- * 룸의 _entities가 붙잡고, 사망하면 룸이 빼낸다. 빠지면 두 타이머 모두 다음 차례에 멈춘다.
+ * 이동과 행동은 룸 틱마다, 상태 전환 판정은 누적 시간이 UPDATE_STATE_INTERVAL을 채울 때마다 돈다.
+ * 룸의 _entities가 붙잡고, 사망하면 룸이 빼낸다. 빠지면 룸 틱을 받지 않으므로 예약해 둔 피격도 사라진다.
  */
 class Monster : public Creature
 {
@@ -40,8 +40,8 @@ protected:
     friend class EntityFactory;
     /** 몬스터 표에 없는 templateId면 false. */
     bool Init(const SpawnParams& params);
-    /** 틱과 상태 전환 판정을 예약한다. */
     virtual void Start() override;
+    /** 예약한 피격, 상태 전환 판정(주기가 찼을 때), 상태별 행동 순서로 돈다. */
     virtual void Tick(float deltaTime) override;
 
 public:
@@ -59,8 +59,6 @@ public:
 
 protected:
     //~ 상태
-    /** 상태 전환을 판정하고 다음 판정을 예약한다. 룸에서 빠졌으면 예약된 판정은 실행되지 않는다. */
-    void UpdateState();
     void EvaluateStateTransition();
     /** _stateTimer를 0으로 돌리고 새 상태의 진입 처리(목적지, 방향, 이동 상태)를 한다. */
     void SwitchState(MonsterState nextState);
@@ -81,8 +79,10 @@ protected:
     void StartMovingTo(const vector2D& dest, float minApproachDistance = 0.f);
     /** context는 지금 쓰지 않는다. shouldBeIdle이면 달리던 중이 아니어도 Idle 이동 상태로 바꾼다. */
     void StopMoving(string context = "", bool shouldBeIdle = false);
-    /** 룸에 일반 공격을 알리고, 200ms 뒤의 피격 판정(Room::HandleHit)을 예약한다. */
+    /** 룸에 일반 공격을 알리고, NORMAL_ATTACK_HIT_DELAY 뒤의 피격 판정을 예약한다. */
     void NormalAttack();
+    /** 예약한 피격의 남은 시간을 줄이고, 다 됐으면 Room::HandleHit에 넘긴다. */
+    void UpdatePendingHit(float deltaTime);
 
     //~ 상태 확인
     /** 대상이 사라졌거나, 사망했거나, 이 룸을 떠났으면 true. */
@@ -130,7 +130,10 @@ private:
     static constexpr float IDLE_TIME = 5.f;
     /** 단위는 초다. */
     static constexpr float WANDERING_TIME = 2.f;
-    static constexpr uint64 UPDATE_STATE_INTERVAL_MS = 200;
+    /** 상태 전환 판정의 주기. 단위는 초다. */
+    static constexpr float UPDATE_STATE_INTERVAL = 0.2f;
+    /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간. 단위는 초다. */
+    static constexpr float NORMAL_ATTACK_HIT_DELAY = 0.2f;
     static constexpr float MIN_APPROACH_DISTANCE = 120.f;
 
     //~ Monster AI Data(Individual)
@@ -146,9 +149,18 @@ private:
     optional<vector2D> _moveDest;
 
     //~ Timer
-    /** 아래 두 타이머의 단위는 초다. */
+    /** 아래 세 타이머의 단위는 초다. */
     float _stateTimer = 0.f;                    // 여러 용도로 사용됨
     float _timeSinceLastAttack = 0.f;
+    float _timeSinceStateUpdate = 0.f;
+
+    /** 판정을 기다리는 일반 공격. remainingTime은 초 단위다. */
+    struct PendingHit
+    {
+        Protocol::AttackInfo attackInfo;
+        float remainingTime = 0.f;
+    };
+    optional<PendingHit> _pendingHit;
 
     TickTimer* _attackTimer = nullptr;          // 사용 안하는 중
 };

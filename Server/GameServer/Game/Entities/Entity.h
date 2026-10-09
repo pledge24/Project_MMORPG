@@ -27,8 +27,12 @@ protected:
     /** 스폰 매개변수를 멤버에 연결하는 초기화 함수. EntityFactory가 id를 쓴 뒤에 호출한다. */
     bool Init(const SpawnParams& params);
     /** 언리얼의 BeginPlay에 대응하는 함수. 첫 틱 전 작업을 처리한다. */
-    virtual void Start();
-    virtual void Tick(float deltaTime);
+    virtual void Start() {}
+    /**
+     * 소속 룸이 룸 틱마다 룸 큐 위에서 부른다. deltaTime은 초 단위다. 엔티티가 다음 틱을 예약하지 않는다(ADR-0011).
+     * 컴포넌트를 가진 엔티티는 받은 틱을 자기 컴포넌트에 넘긴다.
+     */
+    virtual void Tick(float deltaTime) {}
 
 public:
     //~ 이벤트
@@ -40,11 +44,8 @@ public:
 	bool IsPlayer()                                     { return _isPlayer; }
 
     int64 GetEntityId() const                           { return _entityInfo->entity_id(); }
-    /** 마지막 틱 시각(ms, GetTickCount64 기준)이다. */
-    uint64 GetPrevTime()                                { return _prevTime; }
     void GetNormalAttackData()                          {}
 
-    void SetPrevTime(uint64 time)                       { _prevTime = time; }
     void SetPosInfo(const Protocol::PosInfo& posInfo_)  { _posInfo->CopyFrom(posInfo_); }
     void SetPos(const Protocol::Vector& pos)            { _posInfo->mutable_pos()->CopyFrom(pos); }
 
@@ -66,13 +67,9 @@ protected:
 
 protected:
 	bool _isPlayer = false;
-    bool _isTickable = true;
-
-    uint64 _prevTime = 0;
-    /** 틱 간격(ms) */
-    const uint64 ENTITY_TICK_INTERVAL = 50;
 
 private:
+    /** 룸이 AddEntity에서 JoinRoom을, 룸 틱에서 Tick을 부른다. */
     friend class Room;
 
     /** 팩토리가 생성 직후에 한 번 부른다. 위치의 엔티티 id도 함께 쓴다. */
@@ -80,7 +77,7 @@ private:
 
     /**
      * Room::AddEntity가 룸 큐 위에서 부른다. 소속 룸을 바꾸고, 처음 룸에 들어가는 엔티티면 Start를 부른다.
-     * 룸을 먼저 쓴다. 틱과 AI는 소속 룸의 타이머로 돌기 때문이다.
+     * 룸을 먼저 쓴다. Start가 소속 룸을 읽을 수 있어야 하기 때문이다.
      */
     void JoinRoom(const RoomRef& room);
 

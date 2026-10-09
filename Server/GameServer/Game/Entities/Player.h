@@ -80,7 +80,7 @@ struct PlayerSpawnParams : public Creature::SpawnParams
 
 /**
  * 접속한 캐릭터 하나를 나타내는 Creature.
- * Tick을 돌리지 않는다.
+ * 룸 틱을 받아 인벤토리와 장비 컴포넌트에 넘기기만 한다.
  */
 class Player : public Creature
 {
