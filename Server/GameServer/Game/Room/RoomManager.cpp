@@ -2,70 +2,29 @@
 #include "Game/Room/RoomManager.h"
 #include "Game/Room/Room.h"
 
-RoomManager::RoomManager()
+bool RoomManager::CreateAllRooms()
 {
-}
-
-RoomManager::~RoomManager()
-{
-    Clear();
-}
-
-RoomRef RoomManager::CreateRoom(int32 templateId)
-{
-    const MapTemplate* mapTemplate = Gamedata::FindMap(templateId);
-    if (mapTemplate == nullptr)
+    for (const auto& [roomId, mapTemplate] : Gamedata::GetMaps())
     {
-        GLogger->Error("맵 표에 룸 {}이 없다", templateId);
-        return nullptr;
+        RoomRef room = Room::Create(mapTemplate);
+        if (room == nullptr || room->Start() == false)
+        {
+            // 룸 데이터가 틀렸다는 뜻이다. 룸 하나가 빠진 채로 뜨면 그 룸으로 가는 요청이 모두 깨진다.
+            GLogger->Error("Room {} 생성에 실패했다", roomId);
+            return false;
+        }
+
+        _rooms.emplace(roomId, room);
     }
 
-    RoomRef room = Room::Create(*mapTemplate);
-    
-    if (room == nullptr)
+    return true;
+}
+
+RoomRef RoomManager::FindRoom(int32 roomId) const
+{
+    auto it = _rooms.find(roomId);
+    if (it == _rooms.end())
         return nullptr;
 
-    if (room->Start() == false)
-        return nullptr;
-
-    return room;
-}
-
-void RoomManager::AddRoom(int32 templateId, RoomRef room)
-{
-    if (_rooms.find(templateId) != _rooms.end())
-        return;
-
-    room->SetValid(true);
-    _rooms.insert(make_pair(templateId, room));
-}
-
-void RoomManager::RemoveRoom(int32 templateId)
-{
-    if (_rooms.find(templateId) == _rooms.end())
-        return;
-
-    RoomRef room = _rooms[templateId];
-    room->SetValid(false);
-
-    _rooms.erase(templateId);
-}
-
-void RoomManager::Clear()
-{
-    for (auto pair : _rooms)
-    {
-        RoomRef room = pair.second;
-        room->SetValid(false);
-    }
-
-    _rooms.clear();
-}
-
-RoomRef RoomManager::GetRoomRefFromRoomId(int32 templateId)
-{
-    if (_rooms.contains(templateId) == false)
-        return nullptr;
-
-    return _rooms[templateId];
+    return it->second;
 }

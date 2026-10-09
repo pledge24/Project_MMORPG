@@ -301,12 +301,8 @@ optional<GearChangeResult> Player::ProcessUnequipGear(const Protocol::Slot& requ
     return result;
 }
 
-optional<RespawnResult> Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
+RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
-	auto ownerRoom = GetRoom();
-	if (ownerRoom == nullptr)
-		return nullopt;
-
 	_posInfo->CopyFrom(respawnPos);
 
     RespawnResult result;
@@ -477,21 +473,6 @@ bool Player::IsMaxLevel() const
     return classLevelTable == nullptr || _playerInfo->level() >= classLevelTable->GetMaxLevel();
 }
 
-bool Player::FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
-{
-    RoomRef townRoom = GRoomManager->GetRoomRefFromRoomId(Gamedata::GetTownRoomId());
-    if (townRoom == nullptr)
-        return false;
-
-    shared_ptr<Protocol::PosInfo> respawnPoint = townRoom->GetRespawnPoint();
-    if (respawnPoint == nullptr)
-        return false;
-
-    respawnRoom = townRoom;
-    respawnPos = *respawnPoint;
-    return true;
-}
-
 PlayerSaveData Player::MakeSaveData() const
 {
     PlayerSaveData data;
@@ -515,20 +496,15 @@ PlayerSaveData Player::MakeSaveData() const
 
 // 사망한 채 접속이 끊기면 사망 화면에서 마을 리스폰을 누른 것과 같은 상태로 저장한다.
 // 사망 여부는 저장되지 않으므로, 그대로 저장하면 다시 접속했을 때 HP 0으로 살아서 들어온다.
-bool Player::ApplyTownRespawnForSave()
+// 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 맵 표에서 찾은 마을을 받는다.
+void Player::ApplyTownRespawnForSave(const TownRespawn& town)
 {
-    RoomRef respawnRoom = nullptr;
-    Protocol::PosInfo respawnPos;
-    if (FindTownRespawnPoint(OUT respawnRoom, OUT respawnPos) == false)
-        return false;
-
+    Protocol::PosInfo respawnPos = town.pos;
     respawnPos.set_entity_id(GetEntityId());
 
-    if (ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos).has_value() == false)
-        return false;
+    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
 
-    _playerInfo->set_room_id(respawnRoom->GetRoomId());
-    return true;
+    _playerInfo->set_room_id(town.roomId);
 }
 
 optional<CombatStats> Player::CalculateFinalStat()

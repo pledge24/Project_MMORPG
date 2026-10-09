@@ -402,7 +402,6 @@ IOCP 워커가 진다는 사실이 빠진다.
 |---|---|
 | `Utils/Utils.h`의 `vector2D::operator-=` | lhs를 바꾸지 않고 차를 새로 돌려준다. `operator-`와 같다. 부르는 곳은 없다 |
 | `Utils/TickIntervalTimer.h/.cpp` | 쓰는 곳이 없다. `Clear`가 `_repeatingCount`를 되돌리지 않아서, 한 번 발동한 타이머를 `doOnce`로 다시 `Init`하면 발동하지 않는다. `Clear`만 부르면 `_state`도 그대로 남는다 |
-| `Game/Room/Room.h`의 `IsValid` | 읽는 곳이 없다 |
 | `Game/Room/Room.cpp`의 `_monsterRespawnTime` | 룸 데이터에서 읽어 두기만 하고 쓰지 않는다 |
 | `Game/Entities/Monster.h`의 `_attackTimer` | 생성자에서 할당하고 소멸자에서 해제할 뿐 쓰지 않는다(주석 「사용 안하는 중」) |
 

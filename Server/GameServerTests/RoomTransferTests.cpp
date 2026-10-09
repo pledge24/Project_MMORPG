@@ -115,3 +115,40 @@ TEST(RoomTransferTest, UnsupportedRespawnTypesAreRejected)
             << "목적지가 없는 리스폰 유형을 통과시키면 서버가 널 룸을 역참조한다. 유형: " << respawnType;
     }
 }
+
+// 마을 리스폰의 목적지는 맵 표에서 읽는다. 룸 객체를 보지 않으므로 퇴장한 뒤의 저장에서도 쓸 수 있다.
+TEST(RoomTransferTest, TownRespawnComesFromMapTable)
+{
+    MapTemplate town;
+    town.templateId = 10;
+    town.respawnPoint = TemplatePos{ 100.f, 200.f, 30.f };
+
+    GamedataTables tables;
+    tables.maps[town.templateId] = town;
+    tables.townRoomId = town.templateId;
+    Gamedata::Install(std::move(tables));
+
+    optional<TownRespawn> respawn = RoomTransfer::FindTownRespawn();
+    Gamedata::Install(GamedataTables());
+
+    ASSERT_TRUE(respawn.has_value());
+    EXPECT_EQ(respawn->roomId, 10);
+    EXPECT_FLOAT_EQ(respawn->pos.pos().x(), 100.f);
+    EXPECT_FLOAT_EQ(respawn->pos.pos().y(), 200.f);
+    EXPECT_FLOAT_EQ(respawn->pos.pos().z(), 30.f);
+    EXPECT_EQ(respawn->pos.state(), Protocol::MOVE_STATE_IDLE);
+}
+
+TEST(RoomTransferTest, TownWithoutRespawnPointHasNoTownRespawn)
+{
+    MapTemplate town;
+    town.templateId = 10;
+
+    GamedataTables tables;
+    tables.maps[town.templateId] = town;
+    tables.townRoomId = town.templateId;
+    Gamedata::Install(std::move(tables));
+
+    EXPECT_FALSE(RoomTransfer::FindTownRespawn().has_value());
+    Gamedata::Install(GamedataTables());
+}

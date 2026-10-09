@@ -11,6 +11,14 @@ struct RoomEnterData
     optional<Protocol::PosInfo> enterPos;
 };
 
+/** 마을 리스폰의 목적지. 맵 표에서 읽은 값이다. */
+struct TownRespawn
+{
+    int32 roomId = 0;
+    /** 리스폰 지점. 엔티티 id는 비어 있고 이동 상태는 Idle이다. */
+    Protocol::PosInfo pos;
+};
+
 /**
  * Room 이동과 리스폰 요청을 판정하는 자유 함수.
  */
@@ -31,4 +39,10 @@ namespace RoomTransfer
      * 사망한 플레이어의, 서버가 지원하는 유형(지금은 마을 리스폰뿐)만 받는다.
      */
     optional<string> ValidateRespawn(bool isDead, Protocol::RespawnType respawnType);
+
+    /**
+     * 마을(Gamedata::GetTownRoomId)과 그 리스폰 지점을 맵 표에서 찾는다. 룸 객체를 보지 않으므로 어느 스레드에서 불러도 된다.
+     * 마을이 맵 표에 없거나 리스폰 지점이 없으면 nullopt.
+     */
+    optional<TownRespawn> FindTownRespawn();
 }

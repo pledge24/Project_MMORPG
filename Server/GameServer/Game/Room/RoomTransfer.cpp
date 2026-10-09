@@ -55,3 +55,23 @@ optional<string> RoomTransfer::ValidateRespawn(bool isDead, Protocol::RespawnTyp
 
     return nullopt;
 }
+
+optional<TownRespawn> RoomTransfer::FindTownRespawn()
+{
+    const int32 townRoomId = Gamedata::GetTownRoomId();
+    const MapTemplate* town = Gamedata::FindMap(townRoomId);
+    if (town == nullptr || town->respawnPoint.has_value() == false)
+        return nullopt;
+
+    const TemplatePos& point = town->respawnPoint.value();
+
+    TownRespawn respawn;
+    respawn.roomId = townRoomId;
+    respawn.pos.mutable_pos()->set_x(point.x);
+    respawn.pos.mutable_pos()->set_y(point.y);
+    respawn.pos.mutable_pos()->set_z(point.z);
+    respawn.pos.set_yaw(0.f);
+    respawn.pos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+
+    return respawn;
+}

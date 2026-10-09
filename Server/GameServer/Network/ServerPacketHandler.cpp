@@ -389,7 +389,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
     // OnEnterMap이 세팅한 enteringRoomId를 뒤이어 읽게 될 목적지 룸의 큐로 넘긴다.
     RoomRef room = player->GetRoom();
     if (room == nullptr)
-        room = GRoomManager->GetRoomRefFromRoomId(roomId);
+        room = GRoomManager->FindRoom(roomId);
 
     if (room == nullptr)
     {
@@ -447,7 +447,7 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
         pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 
         int32 roomId = pkt.has_room_id() ? pkt.room_id() : player->GetEnteringRoomId();
-        RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
+        RoomRef enterRoom = GRoomManager->FindRoom(roomId);
         if (enterRoom == nullptr)
         {
             GLogger->Warning("최초 입장할 Room을 찾지 못함. roomId: {}", roomId);

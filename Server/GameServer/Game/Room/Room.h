@@ -18,9 +18,8 @@ public:
 	virtual ~Room() = default;
 
 public:
-    /** Init까지 마친 룸을 돌려준다. */
+    /** 룸을 만들어 Init까지 마친다. 룸을 만드는 길은 이것 하나다. Init에 실패하면 nullptr. */
     static RoomRef Create(const MapTemplate& mapTemplate);
-    bool Init(const MapTemplate& mapTemplate);
     /** 몬스터를 스폰하고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
     bool Start();
 
@@ -82,17 +81,12 @@ public:
     int32               GetRoomId() const { return _roomId; }
     /** 이 룸에 그 번호의 포털이 없으면 nullptr. */
     const PortalTemplate* FindPortal(int32 portalId) const;
-    /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
-    shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return _hasRespawnPoint ? _respawnPoint : nullptr; }
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
 
     /** z는 룸 중심 높이에 LOCATION_PADDING_Z를 더한 값이다. randYaw가 false면 yaw를 건드리지 않는다. */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
-    void SetValid(bool isValid) { _isValid = isValid; }
 
     //~ 상태 조회
-    /** GRoomManager에 등록된 동안 true. */
-    bool IsValid() const { return _isValid; }
     bool Contains(int64 entityId) { return _entities.contains(entityId); }
 
     //~ 위치 탐색
@@ -153,6 +147,8 @@ protected:
     }
 
     //~ 룸 데이터
+    /** Create만 부른다. 맵 표의 행을 읽어 두고 셀 행렬을 만든다. */
+    bool Init(const MapTemplate& mapTemplate);
     /** 맵 데이터에서 자주 읽는 값을 멤버로 옮겨 둔다. Init에서 한 번 부른다. */
     void CacheRoomData();
     /** 엔티티 위치로 셀 행렬을 다시 채운다. */
@@ -173,7 +169,6 @@ private:
     int32 _roomId;
     /** 맵 표의 행 사본. */
     MapTemplate _mapTemplate;
-    bool _isValid = false;
 
     /** 언리얼 좌표를 따른다. depth가 x 방향, width가 y 방향의 반폭이다. */
     vector3D _roomCenterPos;
@@ -185,7 +180,7 @@ private:
     float _roomMinY;
     float _roomMaxY;
 
-    bool _hasRespawnPoint = false;
+    /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
     shared_ptr<Protocol::PosInfo> _respawnPoint;
 
     //~ 설정값
