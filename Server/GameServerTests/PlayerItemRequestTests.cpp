@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
-#include "Game/Inventory/Inventory.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Inventory/InventoryComponent.h"
+#include "Game/Equipment/EquipmentComponent.h"
 
 /*--------------------------------------------------------------
     아이템 요청 판정 테스트
@@ -77,7 +77,7 @@ protected:
     {
         Protocol::S_EQUIP_GEAR pkt;
         EXPECT_TRUE(player->ProcessEquipGear(AddToInventory(SWORD_TEMPLATE_ID), pkt));
-        return *player->_equippedGear->GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
     const Protocol::Slot& InventorySlot(const Protocol::Slot& slot)
@@ -87,7 +87,7 @@ protected:
 
     const Protocol::Slot& WeaponSlot()
     {
-        return *player->_equippedGear->GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
     PlayerRef player;

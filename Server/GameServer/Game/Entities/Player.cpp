@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include "Game/Entities/Player.h"
-#include "Game/Inventory/Inventory.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Inventory/InventoryComponent.h"
+#include "Game/Equipment/EquipmentComponent.h"
 #include "Game/Room/Room.h"
 
 namespace
@@ -43,7 +43,7 @@ Player::~Player()
 bool Player::OnLoaded()
 {
     _inventory->ClearDirtyFlags();
-    _equippedGear->ClearDirtyFlag();
+    _equipment->ClearDirtyFlags();
     RefreshEquippedGearSummary();
 
 	if (CalculateFinalStat() == false)
@@ -70,10 +70,26 @@ bool Player::Init(const SpawnParams& params)
         params.session->_player.store(self);
     }
 
-    _inventory = make_shared<Inventory>(self);
-    _equippedGear = make_shared<EquippedGear>(self);
+    _inventory = make_shared<InventoryComponent>(self);
+    _equipment = make_shared<EquipmentComponent>(self);
 
 	return true;
+}
+
+void Player::Start()
+{
+    Creature::Start();
+
+    _inventory->Start();
+    _equipment->Start();
+}
+
+void Player::Tick(float deltaTime)
+{
+    Creature::Tick(deltaTime);
+
+    _inventory->Tick(deltaTime);
+    _equipment->Tick(deltaTime);
 }
 
 bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
@@ -143,9 +159,7 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     if (itemTemplate == nullptr)
         return false;
 
-    // 재사용 대기는 템플릿마다 따로 돈다.
-    auto lastUseIt = _lastUseTimeMs.find(templateId);
-    if (lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs)
+    if (_inventory->IsCoolingDown(templateId, nowMs))
         return false;
 
     // 제거에 성공했을 때만 응답에 슬롯을 싣는다. 거부 응답에는 슬롯이 없다.
@@ -155,7 +169,7 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
 
     *pkt.mutable_updated_slots()->Add() = std::move(updatedSlot);
 
-    _lastUseTimeMs[templateId] = nowMs;
+    _inventory->StartCooldown(templateId, nowMs);
 
     // 회복률이 있는 스탯만 바꾸고 싣는다. 이미 가득 차 있어도 소비하고 값은 최대로 둔다.
     auto restore = [&](double ratio, Protocol::StatType maxType, Protocol::StatType curType)
@@ -192,7 +206,7 @@ bool Player::ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S
     // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 슬롯이라 제거는 실패하지 않는다.
     const Protocol::Item ownedItem = ownedSlot->item();
     Protocol::Slot* equippedSlot = updatedSlotList->Add();
-    if (_equippedGear->EquipGear(OUT equippedSlot, OUT updatedStatList, ownedItem) == false)
+    if (_equipment->EquipGear(OUT equippedSlot, OUT updatedStatList, ownedItem) == false)
         return false;
 
     // 외형을 바꾸는 쪽은 요청 슬롯(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
@@ -221,7 +235,7 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
     if (requestSlot.type() != Protocol::SLOT_TYPE_EQUIPPED)
         return false;
 
-    const Protocol::Slot* ownedSlot = _equippedGear->GetSlot(requestSlot.slot_id());
+    const Protocol::Slot* ownedSlot = _equipment->GetSlot(requestSlot.slot_id());
     if (MatchesRequest(ownedSlot, requestSlot) == false)
         return false;
 
@@ -231,7 +245,7 @@ bool Player::ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol:
         return false;
 
     Protocol::Slot* unequippedSlot = updatedSlotList->Add();
-    if (_equippedGear->UnequipGear(requestSlot.slot_id(), OUT unequippedSlot, OUT updatedStatList) == false)
+    if (_equipment->UnequipGear(requestSlot.slot_id(), OUT unequippedSlot, OUT updatedStatList) == false)
         return false;
 
     // 탈착 뒤 그 부위는 비어 있으므로 template_id는 0이다.
@@ -466,7 +480,7 @@ PlayerSaveData Player::MakeSaveData() const
     if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS))
         data.miscDirtyFlags = *flags;
 
-    data.equippedGearDirtyFlags = _equippedGear->GetDirtyFlagMappings();
+    data.equippedGearDirtyFlags = _equipment->GetDirtyFlagMappings();
 
     return data;
 }

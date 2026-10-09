@@ -4,8 +4,8 @@
 
 class GameSession;
 class Room;
-class Inventory;
-class EquippedGear;
+class InventoryComponent;
+class EquipmentComponent;
 struct RoomEnterData;
 
 /**
@@ -56,7 +56,8 @@ protected:
     bool Init(const SpawnParams& params);
     
     //~ Begin Entity Interface
-    virtual void Tick(float deltaTime) override {};
+    virtual void Start() override;
+    virtual void Tick(float deltaTime) override;
     //~ End Entity Interface
 
 public:
@@ -131,16 +132,13 @@ public:
     Protocol::Possession* _possession;
 
     /** Init에서 만든다. */
-    InventoryRef _inventory;             
+    InventoryComponentRef _inventory;
     /** Init에서 만든다. */
-    EquippedGearRef _equippedGear;       
+    EquipmentComponentRef _equipment;
 
 private:
     int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
 
     NextLevelUpData _nextLevelUpData;
-
-    /** 소모품 템플릿 id → 마지막으로 쓴 시각(ms). 재사용 대기 판정에 쓴다. 저장하지 않으므로 재접속하면 사라진다. */
-    map<int32, uint64> _lastUseTimeMs;
 };
 

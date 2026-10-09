@@ -1,18 +1,17 @@
 #pragma once
-#include <string_view>
+#include "Game/Entities/EntityComponent.h"
 
 /**
- * 플레이어 한 명이 장착한 장비. 장비 부위(GearType)마다 슬롯 하나를 둔다.
+ * 플레이어 한 명의 장비 장착. 장비 부위(GearType)마다 슬롯 하나를 둔다.
  * 슬롯은 플레이어의 _possession(protobuf) 안에 있고, 이 클래스는 그 포인터만 든다.
- * Player가 shared_ptr로 소유하고, 이 클래스는 Player를 weak_ptr로 가리키므로 순환 참조가 없다.
  * 룸에 들어가기 전에는 ProgressStorage::Load가 DB에서 채우고, 그 뒤로는 소속 룸 큐 위에서만 쓴다.
  */
-class EquippedGear
+class EquipmentComponent : public EntityComponent
 {
 public:
-    /** player의 _possession에 부위별 빈 슬롯을 만든다. */
-    EquippedGear(PlayerRef player);
-    ~EquippedGear();
+    /** owner의 _possession에 부위별 빈 슬롯을 만든다. */
+    EquipmentComponent(PlayerRef owner);
+    virtual ~EquipmentComponent();
 
     /**
      * 아이템 데이터의 세부 종류로 부위를 정해 장착한다. 그 부위가 이미 차 있으면 false. 실패하면 아무것도 바꾸지 않는다.
@@ -31,9 +30,7 @@ public:
 
     /** 부위 번호마다 저장할 변경이 있는지. 한 번도 바뀌지 않은 부위는 키가 없다. */
     map<int32, bool>& GetDirtyFlagMappings() { return _dirtyFlagMappings; }
-    void ClearDirtyFlag();
-
-    weak_ptr<Player> _player;
+    void ClearDirtyFlags();
 
 private:
     google::protobuf::Map<int32, Protocol::Slot>* _equippedGearLookup;

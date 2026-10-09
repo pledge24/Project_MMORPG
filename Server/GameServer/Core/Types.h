@@ -16,6 +16,6 @@ USING_SHARED_PTR(Monster);
 USING_SHARED_PTR(Creature);
 USING_SHARED_PTR(Entity);
 USING_SHARED_PTR(Room);
-USING_SHARED_PTR(Inventory);
-USING_SHARED_PTR(EquippedGear);
+USING_SHARED_PTR(InventoryComponent);
+USING_SHARED_PTR(EquipmentComponent);
 USING_SHARED_PTR(TickIntervalTimer);

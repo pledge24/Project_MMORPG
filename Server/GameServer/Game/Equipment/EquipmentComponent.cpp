@@ -1,10 +1,10 @@
 #include "Core/pch.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Equipment/EquipmentComponent.h"
 #include "Game/Entities/Player.h"
 
-EquippedGear::EquippedGear(PlayerRef player) : _player(player)
+EquipmentComponent::EquipmentComponent(PlayerRef owner) : EntityComponent(owner)
 {
-    _equippedGearLookup = player->_possession->mutable_equipped_gear();
+    _equippedGearLookup = owner->_possession->mutable_equipped_gear();
 
     for (int32 slotId = 0; slotId <= Protocol::GearType_MAX; slotId++)
     {
@@ -17,11 +17,11 @@ EquippedGear::EquippedGear(PlayerRef player) : _player(player)
     }
 }
 
-EquippedGear::~EquippedGear()
+EquipmentComponent::~EquipmentComponent()
 {
 }
 
-bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList, const Protocol::Item& itemInstance, optional<int32> setSlotId)
+bool EquipmentComponent::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList, const Protocol::Item& itemInstance, optional<int32> setSlotId)
 {
     const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
     if (itemTemplate == nullptr)
@@ -52,7 +52,7 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPt
     if (updatedStatList == nullptr)
         return true;
 
-    if (PlayerRef ownerPlayer = _player.lock())
+    if (PlayerRef ownerPlayer = static_pointer_cast<Player>(_owner.lock()))
     {
         if (itemTemplate->hp > 0)
         {
@@ -86,7 +86,7 @@ bool EquippedGear::EquipGear(OUT Protocol::Slot* replicatingSlot, OUT RepeatedPt
     return true;
 }
 
-bool EquippedGear::UnequipGear(int32 gearType, OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList)
+bool EquipmentComponent::UnequipGear(int32 gearType, OUT Protocol::Slot* replicatingSlot, OUT RepeatedPtrField<Protocol::Stat>* updatedStatList)
 {
     auto slotIt = _equippedGearLookup->find(gearType);
     if (slotIt == _equippedGearLookup->end() || slotIt->second.has_item() == false)
@@ -110,7 +110,7 @@ bool EquippedGear::UnequipGear(int32 gearType, OUT Protocol::Slot* replicatingSl
     if (updatedStatList == nullptr)
         return true;
 
-    if (PlayerRef ownerPlayer = _player.lock())
+    if (PlayerRef ownerPlayer = static_pointer_cast<Player>(_owner.lock()))
     {
         if (itemTemplate->hp > 0)
         {
@@ -144,7 +144,7 @@ bool EquippedGear::UnequipGear(int32 gearType, OUT Protocol::Slot* replicatingSl
     return true;
 }
 
-const Protocol::Slot* EquippedGear::GetSlot(int32 gearType) const
+const Protocol::Slot* EquipmentComponent::GetSlot(int32 gearType) const
 {
     auto it = _equippedGearLookup->find(gearType);
     if (it == _equippedGearLookup->end())
@@ -153,7 +153,7 @@ const Protocol::Slot* EquippedGear::GetSlot(int32 gearType) const
     return &it->second;
 }
 
-void EquippedGear::ClearDirtyFlag()
+void EquipmentComponent::ClearDirtyFlags()
 {
     for (auto& dirtyFlagPair : _dirtyFlagMappings)
         dirtyFlagPair.second = false;

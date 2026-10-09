@@ -2,8 +2,8 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
-#include "Game/Inventory/Inventory.h"
-#include "Game/Equipment/EquippedGear.h"
+#include "Game/Inventory/InventoryComponent.h"
+#include "Game/Equipment/EquipmentComponent.h"
 
 /*--------------------------------------------------------------
     장비 장착·탈착 결과 테스트
@@ -96,7 +96,7 @@ TEST_F(GearEquipTest, LoadingEquippedGearPlacesItemWithoutTouchingStats)
     Protocol::Item sword;
     sword.set_template_id(SWORD_TEMPLATE_ID);
 
-    ASSERT_TRUE(player->_equippedGear->EquipGear(nullptr, nullptr, sword, Protocol::GEAR_TYPE_WEAPON));
+    ASSERT_TRUE(player->_equipment->EquipGear(nullptr, nullptr, sword, Protocol::GEAR_TYPE_WEAPON));
 
     const Protocol::Slot& weaponSlot = player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(weaponSlot.item().template_id(), SWORD_TEMPLATE_ID);

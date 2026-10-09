@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
-#include "Game/Inventory/Inventory.h"
+#include "Game/Inventory/InventoryComponent.h"
 
 /*--------------------------------------------------------------
     인벤토리 슬롯 타입 매핑 테스트
@@ -14,7 +14,7 @@
 
     픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. DB·Redis·Room·세션이 필요 없다 (세션이 없으면 Player::Init은
-    Inventory/EquippedGear 생성이 전부).
+    InventoryComponent/EquipmentComponent 생성이 전부).
 ---------------------------------------------------------------*/
 
 namespace
@@ -87,7 +87,7 @@ namespace
     //
     // 뺀 이유는 값마다 다음과 같다.
     //  - SLOT_TYPE_NONE     : 슬롯 타입이 정해지지 않았다는 표식이므로 대응할 저장소가 없다.
-    //  - SLOT_TYPE_EQUIPPED : 장착 슬롯은 EquippedGear가 따로 관리한다. 인벤토리 표에 넣는 것이
+    //  - SLOT_TYPE_EQUIPPED : 장착 슬롯은 EquipmentComponent가 따로 관리한다. 인벤토리 표에 넣는 것이
     //                         옳은지부터가 설계 판단이라 이 티켓에서 정하지 않는다 (#24 Out of Scope).
     //  - SLOT_TYPE_QUICK    : 퀵 슬롯은 서버에 대응하는 저장소가 아직 없다. 어떤 아이템 타입에
     //                         매핑할지 결정하는 일이 먼저다.
