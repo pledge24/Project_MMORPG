@@ -31,6 +31,11 @@ void MonsterAIComponent::Tick(float deltaTime)
 
     UpdatePendingHit(deltaTime);
 
+    // 대상의 위치는 대상이 이 룸에 있을 때만 읽을 수 있다. 다른 룸으로 떠난 대상의 위치는 그 룸 큐가 쓴다.
+    // 그래서 대상 확인은 상태 전환 판정 주기를 기다리지 않고 틱마다 한다.
+    if (_target.expired() == false && IsTargetLost())
+        SwitchState(MonsterState::Idle);
+
     // 상태 전환 판정은 틱보다 긴 주기로 돈다. 남은 시간을 넘기지 않고 0으로 돌리므로 주기가 틱 간격만큼 늦어질 수 있다.
     if (_timeSinceStateUpdate >= UPDATE_STATE_INTERVAL)
     {
@@ -489,17 +494,19 @@ void MonsterAIComponent::UpdatePendingHit(float deltaTime)
 
 bool MonsterAIComponent::IsTargetLost()
 {
-    // 대상이 사망했거나 룸을 떠났으면 추적을 그만둔다. 사망한 플레이어는 룸에 남으므로 사망을 따로 본다.
+    // 대상이 룸을 떠났거나 사망했으면 추적을 그만둔다. 사망한 플레이어는 룸에 남으므로 사망을 따로 본다.
     EntityRef target = _target.lock();
     if (target == nullptr)
         return true;
 
-    if (CreatureRef creature = dynamic_pointer_cast<Creature>(target); creature && creature->IsDead())
-        return true;
-
+    // 룸을 먼저 본다. 떠난 대상의 사망 표시는 그 대상이 들어간 룸 큐가 쓴다.
     MonsterRef owner = GetOwner();
     RoomRef ownerRoom = owner ? owner->GetRoom() : nullptr;
-    return ownerRoom == nullptr || ownerRoom->Contains(target->GetEntityId()) == false;
+    if (ownerRoom == nullptr || ownerRoom->Contains(target->GetEntityId()) == false)
+        return true;
+
+    CreatureRef creature = dynamic_pointer_cast<Creature>(target);
+    return creature && creature->IsDead();
 }
 
 bool MonsterAIComponent::CanMove()
