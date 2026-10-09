@@ -216,3 +216,60 @@ TEST_F(ProgressCoordinatorTest, PlayerNeverInRoomIsNotSaved)
 
     EXPECT_EQ(events, vector<string>({ "load" }));
 }
+
+// 룸 이동 중에 끊긴 플레이어는 떠난 룸이 찾지 못하므로 들어갈 룸이 퇴장과 저장을 이어 받는다.
+TEST_F(ProgressCoordinatorTest, DisconnectDuringRoomTransferSavesInNextRoom)
+{
+    EnterRoom();
+    MapTemplate nextMap;
+    nextMap.templateId = ROOM_ID + 1;
+    nextMap.depthHalfExtent = 5000.f;
+    nextMap.widthHalfExtent = 5000.f;
+    RoomRef nextRoom = Room::Create(nextMap);
+    ASSERT_NE(nextRoom, nullptr);
+    ASSERT_TRUE(room->LeavePlayer(player, true));
+
+    coordinator.OnDisconnected(USER_ID, player);
+    RequestEnter();
+    RunDBJobs();
+    EXPECT_TRUE(events.empty()) << "떠난 룸은 저장하지 않지만 대기는 남는다";
+
+    RoomEnterData enterData{};
+    enterData.nextRoomId = ROOM_ID + 1;
+    enterData.enterType = Protocol::ENTER_TYPE_SAME_MAP_TRANSFER;
+    EXPECT_FALSE(nextRoom->EnterPlayer(player, enterData));
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "load" }));
+    EXPECT_FALSE(nextRoom->Contains(player->GetEntityId()));
+}
+
+// TD-003: 룸 입장 잡이 큐에 있는 동안 끊기면 대기 없이 새 세션이 불러오고, 늦게 돈 룸 입장 잡이 그 뒤에 저장을 넣었다.
+// 룸에 들어간 적이 없으므로 저장할 것이 없다.
+TEST_F(ProgressCoordinatorTest, DisconnectBeforeFirstRoomEntryIsNotSavedAfterReload)
+{
+    coordinator.OnDisconnected(USER_ID, player);
+    RequestEnter();
+    EnterRoom(); // 큐에 남아 있던 룸 입장 잡
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "load" }));
+    EXPECT_FALSE(room->Contains(player->GetEntityId())) << "끊긴 플레이어는 룸에 남지 않는다";
+}
+
+// TD-003: 상한이 지나 입장을 거절하면서 대기까지 지웠다. 그 뒤의 입장은 늦게 도착한 저장보다 먼저 불러왔다.
+TEST_F(ProgressCoordinatorTest, EnterAfterExpiryStillWaitsForSave)
+{
+    EnterRoom();
+    coordinator.OnDuplicateLogin(USER_ID, player);
+    RequestEnter();
+    FireTimers();
+
+    RequestEnter();
+    RunDBJobs();
+    EXPECT_EQ(events, vector<string>({ "reject" })) << "만료가 저장을 끝내지는 않는다";
+
+    coordinator.OnDisconnected(USER_ID, player);
+    RunDBJobs();
+    EXPECT_EQ(events, vector<string>({ "reject", "save", "load" }));
+}

@@ -49,7 +49,8 @@ optional<SaveGate::ParkedLoad> SaveGate::Expire(int64 userId, uint64 token)
     if (it == _entries.end() || it->second.parked.has_value() == false || it->second.token != token)
         return nullopt;
 
+    // 대기는 지우지 않는다. 저장은 아직 끝나지 않았으므로, 지우면 다음 입장이 늦게 도착할 저장보다 먼저 불러온다(TD-003).
     optional<ParkedLoad> parked = std::move(it->second.parked);
-    _entries.erase(it);
+    it->second.parked.reset();
     return parked;
 }

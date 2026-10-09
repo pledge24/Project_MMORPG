@@ -39,8 +39,8 @@ public:
     optional<ParkedLoad> Release(int64 userId);
 
     /**
-     * 만료 타이머에서 부른다. token이 지금 맡아 둔 불러오기의 것이면 대기를 풀고 그 불러오기를 돌려준다.
-     * 그사이 풀렸거나 다른 불러오기로 바뀌었으면 빈 값을 돌려준다.
+     * 만료 타이머에서 부른다. token이 지금 맡아 둔 불러오기의 것이면 그 불러오기를 내주고 돌려준다.
+     * 대기는 Release까지 남으므로 다음 불러오기는 다시 맡는다. 그사이 풀렸거나 다른 불러오기로 바뀌었으면 빈 값을 돌려준다.
      */
     optional<ParkedLoad> Expire(int64 userId, uint64 token);
 

@@ -622,3 +622,30 @@ void Player::RefreshEquippedGearSummary()
             (*summary)[slot.slot_id()] = slot.item().template_id();
     }
 }
+
+bool Player::MarkDisconnected()
+{
+    // 룸 큐의 MarkEnteredRoom과 같은 값을 바꾼다. 읽고 바꾸는 일을 한 번에 해서 둘 중 한쪽 판정만 남긴다.
+    Presence current = _presence.load();
+    while (true)
+    {
+        Presence next = current;
+        if (current == Presence::LOADED)
+            next = Presence::LEFT_BEFORE_ROOM;
+        else if (current == Presence::IN_ROOM)
+            next = Presence::LEFT_IN_ROOM;
+
+        if (next == current || _presence.compare_exchange_weak(current, next))
+            return next == Presence::LEFT_IN_ROOM;
+    }
+}
+
+Player::Presence Player::MarkEnteredRoom()
+{
+    // 실패하면 expected에 지금 값이 들어온다. 성공하면 LOADED가 남으므로 바꾼 값을 따로 돌려준다.
+    Presence expected = Presence::LOADED;
+    if (_presence.compare_exchange_strong(expected, Presence::IN_ROOM))
+        return Presence::IN_ROOM;
+
+    return expected;
+}

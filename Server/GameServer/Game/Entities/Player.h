@@ -191,13 +191,28 @@ public:
     GameSessionRef GetSession() const { return _session.lock(); }
     /** 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 계정 번호를 따로 든다. Init 뒤로는 바뀌지 않는다. */
     int64 GetUserId() const { return _userId; }
-    /** 접속 종료를 표시한다. 세션 스레드(GameSession::OnDisconnected)가 부른다. */
-    void MarkDisconnected() { _disconnected.store(true); }
     /**
-     * 룸 큐(Room::EnterPlayer)가 읽는다. 룸 이동 중에 끊겼으면 다음 룸이 이 표시를 보고 퇴장과 저장을 이어 받는다.
-     * 세션 스레드가 쓰고 룸 큐가 읽으므로 atomic이다.
+     * 접속과 룸 입장의 진행. 접속 종료와 첫 룸 입장 중 어느 쪽이 먼저였는지를 한 값으로 정한다.
+     * 세션 스레드(접속 종료)와 룸 큐(입장)가 함께 바꾸므로, 두 쪽 모두 이 값을 읽고 바꾸는 일을 한 번에 한다.
      */
-    bool IsDisconnected() const { return _disconnected.load(); }
+    enum class Presence : uint8
+    {
+        LOADED,           // 불러와 세션에 등록했고 룸에 들어간 적이 없다
+        IN_ROOM,          // 룸에 들어간 적이 있다. 룸 이동 중이어도 이 값이다
+        LEFT_BEFORE_ROOM, // 룸에 들어가기 전에 끊겼다. 바뀐 것이 없으므로 저장하지 않는다
+        LEFT_IN_ROOM,     // 룸에 들어간 뒤 끊겼다. 저장한다
+    };
+
+    /**
+     * 접속 종료를 표시하고, 끊기기 전에 룸에 들어간 적이 있으면 true. 세션 스레드(ProgressCoordinator::OnDisconnected)가 부른다.
+     * true면 소속 룸(GetRoom)이 이미 정해져 있다.
+     */
+    bool MarkDisconnected();
+    /**
+     * 룸 큐(Room::EnterPlayer)가 엔티티를 룸에 넣은 뒤에 부른다. 처음 들어가는 룸이면 IN_ROOM으로 바꾼다.
+     * 바꾼 뒤의 값을 돌려준다. LEFT_BEFORE_ROOM이면 룸에서 빼기만 하고, LEFT_IN_ROOM이면 퇴장과 저장을 이어 받는다.
+     */
+    Presence MarkEnteredRoom();
 
     //~ 상태 읽기
     const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
@@ -213,7 +228,7 @@ private:
 
 	weak_ptr<GameSession> _session;
     int64 _userId = 0;
-    atomic<bool> _disconnected = false;
+    atomic<Presence> _presence = Presence::LOADED;
 
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::PlayerInfo* _playerInfo;

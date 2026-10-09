@@ -80,7 +80,8 @@ TEST_F(SaveGateTest, HoldTwiceKeepsParkedLoad)
     EXPECT_EQ(gate.Park(USER_ID, MakeLoad()).result, SaveGate::ParkResult::NOT_HELD);
 }
 
-TEST_F(SaveGateTest, ExpireHandsBackParkedLoadAndEndsHold)
+// TD-003: 만료는 기다리던 입장만 돌려준다. 저장은 아직 끝나지 않았으므로 대기는 남아 다음 입장도 기다린다.
+TEST_F(SaveGateTest, ExpireHandsBackParkedLoadButKeepsHold)
 {
     gate.Hold(USER_ID);
     SaveGate::ParkTicket ticket = gate.Park(USER_ID, MakeLoad());
@@ -90,7 +91,11 @@ TEST_F(SaveGateTest, ExpireHandsBackParkedLoadAndEndsHold)
     expired->reject();
     EXPECT_EQ(rejectCount, 1);
 
-    EXPECT_EQ(gate.Park(USER_ID, MakeLoad()).result, SaveGate::ParkResult::NOT_HELD);
+    SaveGate::ParkTicket next = gate.Park(USER_ID, MakeLoad());
+    EXPECT_EQ(next.result, SaveGate::ParkResult::PARKED);
+    EXPECT_NE(next.token, ticket.token);
+    EXPECT_FALSE(gate.Expire(USER_ID, ticket.token).has_value()) << "지난 만료는 새로 맡긴 입장을 거절하지 않는다";
+    EXPECT_TRUE(gate.Release(USER_ID).has_value());
 }
 
 // 저장이 먼저 끝나 풀렸으면 늦게 온 만료 타이머는 아무것도 하지 않는다.
