@@ -14,7 +14,7 @@ namespace GameEntry
 
     /**
      * progress로 플레이어를 만들어 검증하고 session에 등록한다.
-     * 검증에 실패하면 세션을 건드리지 않고 nullptr를 돌려준다.
+     * 검증에 실패하거나 세션에 이미 플레이어가 있으면 세션을 건드리지 않고 nullptr를 돌려준다.
      */
     PlayerRef SpawnPlayer(const GameSessionRef& session, const PlayerProgress& progress);
 }

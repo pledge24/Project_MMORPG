@@ -235,6 +235,13 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
+    // 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다. 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
+    if (static_pointer_cast<GameSession>(session)->_player.load() != nullptr)
+    {
+        SendEnterGameFail(session);
+        return true;
+    }
+
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
     int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);

@@ -40,6 +40,14 @@ PlayerRef GameEntry::SpawnPlayer(const GameSessionRef& session, const PlayerProg
         return nullptr;
     }
 
-    session->_player.store(player);
+    // 비어 있을 때만 등록한다. 이미 있는 플레이어를 덮어쓰면 그 플레이어는 룸에 남고, 끊길 때 퇴장하지 않는다.
+    // 같은 세션의 입장 잡 둘이 다른 DB 큐에서 돌 수 있으므로 확인과 등록을 한 번에 한다.
+    PlayerRef expected = nullptr;
+    if (session->_player.compare_exchange_strong(expected, player) == false)
+    {
+        GLogger->Warning("계정 {}의 세션에 이미 플레이어가 있어 입장을 거절합니다", session->_userId);
+        return nullptr;
+    }
+
     return player;
 }

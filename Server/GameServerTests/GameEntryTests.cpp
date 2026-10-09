@@ -160,3 +160,17 @@ TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
     EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr);
     EXPECT_EQ(session->_player.load(), nullptr);
 }
+
+// TD-019: 룸에 들어간 플레이어가 C_ENTER_GAME을 다시 보내면 새 플레이어가 세션을 덮어써, 이전 플레이어가
+// 룸에 남은 채 끊길 때도 퇴장하지 않는다.
+TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
+{
+    const PlayerProgress progress = MakeValidProgress();
+    PlayerRef first = GameEntry::SpawnPlayer(session, progress);
+    ASSERT_NE(first, nullptr);
+
+    PlayerRef second = GameEntry::SpawnPlayer(session, progress);
+
+    EXPECT_EQ(second, nullptr);
+    EXPECT_EQ(session->_player.load(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
+}
