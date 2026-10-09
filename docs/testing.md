@@ -83,7 +83,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `RoomAxisTest` | 1 | 룸의 X 범위는 깊이, Y 범위는 폭으로 계산 |
 | `RoomLocationTest` | 2 | 룸 안 무작위 위치가 여백 안에 머묾 · 여백이 없으면 룸 전체 |
 | `RoomRequestTest` | 7 | 룸 큐의 요청 처리. 이동은 보낸 사람의 위치만 바꿈 · 허용 거리를 넘는 이동은 버림 · 처음 입장한 플레이어는 자기 스폰을 한 번 받음 · 룸을 떠난 플레이어의 아이템 요청 무시 · 세션이 사라진 플레이어의 착용과 해제는 응답 없이 끝남 · 사망한 채 끊긴 플레이어는 마을 리스폰 상태로 저장 · 첫 입장 전 다른 룸으로의 맵 입장 거절 |
-| `MoveValidation` | 5 | 이동 위치 판정. 허용 거리 안은 통과하고 넘으면 거절 · 오래 서 있어도 경과 시간은 상한에서 자름 · 평면 거리로 잼 · 룸 경계 밖 거절(경계 위는 안쪽) |
+| `MoveValidation` | 5 | 이동 위치 판정. 허용 거리 안은 통과하고 넘으면 거절 · 허용 거리는 경과 시간에 따라 늘어남 · 평면 거리로 잼 · 룸 경계 밖 거절(경계 위는 안쪽) |
 | `RoomTransferTest` | 12 | 룸 이동 판정. 첫 입장 · 다른 맵의 다른 룸 거절 · 같은 맵 이동에 포털 필요 · 포털 목적지 · 사망한 플레이어의 마을 리스폰만 허용 · 맵 표에서 찾는 마을 리스폰 지점 |
 | `RoomTransferMapTest` | 6 | 위치를 보는 룸 이동 판정. 포털 반경 경계와 높이 무시 · 반경 밖 포털 이동 거절 · 첫 맵 입장은 불러온 룸으로만 · 맵 간 이동은 다른 맵으로 가는 포털 반경 안에서만 · 맵 번호 대조 |
 | `ServerConfigTest` | 7 | 서버 설정 로더. 환경 변수가 없을 때 기본값 · 환경 변수가 각 값을 덮음 · 연결 수의 기본값은 DB 스레드 수를 따라감 · 연결 수가 DB 스레드 수보다 작으면 거절 · IPv4가 아닌 바인드 주소 거절 · 잘못된 개수와 포트는 기본값 |
@@ -97,7 +97,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `P1.Combat.NormalAttackCombo` | 1 | 일반 공격의 콤보 순번 순환(1→N→1) · 몽타주가 하나이거나 없을 때 · 순번 N의 몽타주 인덱스 · 서버가 보낸 순번 0 · 범위 밖 순번 |
 | `P1.Progress.RewardResult` | 1 | 보상 결과의 반영. 경험치만 쌓일 때 레벨을 알리지 않음 · 여러 레벨 상승의 레벨, 레벨업 스탯, 최대 경험치 · 경험치를 알릴 때 최대 경험치가 이미 새 값 · 골드를 사본에 쓴 뒤 알림 |
 
-**안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer 라우터/인증 흐름. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -108,7 +108,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | GameServer 순수 로직 | `GameServerTests.exe`, 종료 코드 | 가능 |
 | AuthServer 설정 | `npm test` | 가능. 가장 빠름 |
 | GameServer DAO의 바인딩과 흐름 | `GameServerTests.exe`의 `FakeDBConnection` | 가능. SQL 문장과 드라이버 동작은 확인하지 못한다 |
-| GameServer Room·SQL·IOCP | 없음 | **불가.** JobQueue 비동기, 실제 DB 필요 |
+| GameServer Room·SQL·IOCP | 일부 | SQL은 **불가**(실제 DB 필요). IOCP는 루프백 세션 끊기 하나만 있다 |
 | AuthServer 라우터·인증 | 없음 | 가능하나 비쌈 (bcrypt+MSSQL+Redis) |
 | UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
 | UE 클라 액터·월드 의존 로직 | 없음 | **불가.** 월드를 띄우는 테스트를 아직 써 보지 않았다 |
@@ -152,7 +152,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |
 | 세션 송수신 | 존재. `Session::Send`가 가상이다. 테스트는 `GameServerTests/RecordingSession.h`로 보낸 패킷을 기록하고, `Receive`로 받은 패킷을 흉내 낸다 |
-| 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호, 소지품(인벤토리와 장비 컴포넌트)을 직접 바꾸는 길은 이것 하나다. Player는 컴포넌트를 읽기 전용으로만 연다 |
+| 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호, 소지품(인벤토리와 장비 컴포넌트)을 직접 바꾸는 길은 이것 하나다. Player는 컴포넌트를 읽기 전용으로만 연다. 같은 파일의 `EntityTestAccess`(Entity의 friend)는 엔티티 번호만 정한다. 들어갈 룸에 같은 번호를 미리 넣어 입장 실패를 만들 때 쓴다 |
 
 seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므로 별도 계획을 세운다.
 

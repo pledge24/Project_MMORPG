@@ -13,11 +13,8 @@ namespace MoveValidation
     constexpr float SPEED_TOLERANCE = 1.5f;
     /** 경과 시간과 무관하게 더 허용하는 거리(cm). */
     constexpr float DISTANCE_TOLERANCE = 50.f;
-    /**
-     * 경과 시간의 상한(ms). 오래 서 있다가 보낸 첫 이동이 룸 어디로든 가지 못하게 자른다.
-     * 클라이언트는 움직이는 동안 0.2초마다 보내므로 정상 이동은 이 상한에 닿지 않는다.
-     */
-    constexpr uint64 MAX_ELAPSED_MS = 1000;
+    // 경과 시간에 상한을 두지 않는다. 버린 이동 뒤에 서버와 클라이언트의 위치가 벌어져도 시간이 흐르면 다시 받아들인다.
+    // 대신 오래 서 있다가 보낸 첫 이동은 멀리 갈 수 있다(TD-048).
 
     /** 룸의 평면 경계. 경계 위의 점은 안쪽이다. */
     struct Bounds

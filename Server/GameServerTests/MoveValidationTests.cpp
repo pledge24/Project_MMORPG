@@ -6,7 +6,7 @@
     이동 위치 판정 테스트
 
     서버는 클라이언트가 보낸 위치를 그대로 썼다. 조작한 클라이언트는 룸 안 어디로든 순간이동하고 그 위치로
-    저장됐다(TD-045). 허용 거리는 최대 속도 × 경과 시간 × 여유 + 고정 여유이고, 경과 시간은 상한에서 자른다.
+    저장됐다(TD-045). 허용 거리는 최대 속도 × 경과 시간 × 여유 + 고정 여유다.
 
     픽스처 결합도: 없음. 순수 함수만 부른다.
 ---------------------------------------------------------------*/
@@ -15,10 +15,10 @@ namespace
 {
     const MoveValidation::Bounds BOUNDS{ -5000.f, 5000.f, -5000.f, 5000.f };
 
-    /** elapsedMs 동안 허용하는 거리. 상한에서 자른 경과 시간으로 계산한다. */
+    /** elapsedMs 동안 허용하는 거리. */
     float AllowedDistance(uint64 elapsedMs)
     {
-        const float seconds = static_cast<float>(min(elapsedMs, MoveValidation::MAX_ELAPSED_MS)) / 1000.f;
+        const float seconds = static_cast<float>(elapsedMs) / 1000.f;
         return MoveValidation::PLAYER_MAX_SPEED * seconds * MoveValidation::SPEED_TOLERANCE + MoveValidation::DISTANCE_TOLERANCE;
     }
 }
@@ -39,12 +39,13 @@ TEST(MoveValidation, MoveFartherThanAllowedDistanceIsRejected)
     EXPECT_NE(MoveValidation::Validate({ 0.f, 0.f }, to, ELAPSED_MS, BOUNDS), nullopt);
 }
 
-TEST(MoveValidation, ElapsedTimeIsCappedAfterStandingStill)
+TEST(MoveValidation, AllowedDistanceGrowsWithElapsedTime)
 {
-    // 1분 동안 서 있었어도 허용 거리는 상한의 경과 시간까지다.
-    const vector2D to{ AllowedDistance(MoveValidation::MAX_ELAPSED_MS) + 1.f, 0.f };
+    // 버린 이동 뒤에 벌어진 위치도 시간이 흐르면 다시 받아들인다. 상한을 두면 한 번 벌어진 클라이언트의 이동을 계속 버린다.
+    const vector2D to{ 2000.f, 0.f };
 
-    EXPECT_NE(MoveValidation::Validate({ 0.f, 0.f }, to, 60'000, BOUNDS), nullopt);
+    EXPECT_NE(MoveValidation::Validate({ 0.f, 0.f }, to, 1000, BOUNDS), nullopt);
+    EXPECT_EQ(MoveValidation::Validate({ 0.f, 0.f }, to, 3000, BOUNDS), nullopt);
 }
 
 TEST(MoveValidation, HeightIsNotMeasured)
