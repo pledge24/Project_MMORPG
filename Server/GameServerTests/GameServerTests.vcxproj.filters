@@ -56,6 +56,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="ItemDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
     <ClCompile Include="DBWorkerTests.cpp" />

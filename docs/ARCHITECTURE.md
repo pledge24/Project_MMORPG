@@ -58,10 +58,20 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 핸들러 안에서 블로킹하면 IOCP 처리량이 그만큼 줄어든다.
 
 **Architecture Invariant:** DB 접근은 `DB/`의 DAO가 데이터별로 맡는다. SQL을 실행하는 클래스만 DAO라고
-부른다. 여러 DAO를 차례로 부르는 `ProgressStorage`는 DAO가 아니다. DAO는 연결을 `DBConnectionGuard`로
-빌려 함수가 어떻게 끝나든 풀로 돌려준다. 접속 종료 때 저장할 아이템 행은 DB를 모르는 `ItemSaveRows`가
-고른다.
-— 저장할 행을 잘못 고르면 진행이 사라지는데, SQL 실행은 테스트할 수 없어 이 판정만 떼어 테스트한다.
+부른다. 여러 DAO를 차례로 부르는 `ProgressStorage`는 DAO가 아니다. DAO는 세션과 패킷을 모른다. 연결은
+DB 잡이 `DBConnectionGuard`로 빌려 DAO에 넘기고, 잡이 어떻게 끝나든 풀로 돌려준다. 접속 종료 저장 하나는
+트랜잭션 하나다. 접속 종료 때 저장할 아이템 행은 DB를 모르는 `ItemSaveRows`가 고른다.
+— 저장할 행을 잘못 고르면 진행이 사라지는데, SQL 문장은 테스트할 수 없어 이 판정만 떼어 테스트한다.
+DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`)로 테스트한다.
+
+**Architecture Invariant:** DB 작업의 실패는 `DBError` 예외이고, 클라이언트에 보낼 거절(캐릭터 생성의 이름 중복 등)은
+예외가 아니라 결과다. DB 잡은 `DBError`를 받아 실패 응답을 보낸다. DB 스레드(`DBWorker::RunJob`)는 잡이 던진
+예외를 종류에 상관없이 받아 로그를 남기고 다음 잡을 돌린다.
+— 잡 밖으로 나간 예외는 `std::terminate`로 서버 전체를 내린다.
+
+**Architecture Invariant:** 입장은 진행을 모두 불러오고 검증을 통과한 뒤에야 세션에 플레이어를 등록한다
+(`GameEntry`). DB 스레드는 불러오기에서도 살아 있는 `Player`를 만지지 않고 진행 사본(`PlayerProgress`)만 채운다.
+근거는 `docs/adr/0012-load-and-save-one-progress-copy.md`에 있다.
 
 **Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
 Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
