@@ -56,7 +56,7 @@ public:
 	/**
 	 * 송신 큐에 직렬화된 패킷이 담긴 버퍼 참조를 추가한다.
 	 * 송신이 등록된 상태라면, 큐에 쌓았다가 다음 WSASend에 모아 보낸다.
-	 * 연결이 끊겼거나 DisconnectAfterSend를 부른 뒤에는 버린다.
+	 * sendBuffer가 nullptr이거나, 연결이 끊겼거나, DisconnectAfterSend를 부른 뒤에는 버린다.
 	 * 가상인 이유는 테스트가 보낸 패킷을 기록하는 세션으로 바꿔 끼우기 때문이다. 운영 코드는 재정의하지 않는다.
 	 */
 	virtual void			Send(SendBufferRef sendBuffer);

@@ -91,7 +91,8 @@ void Session::DisconnectAfterSend(const char* cause)
 
 void Session::Send(SendBufferRef sendBuffer)
 {
-	if (IsConnected() == false)
+	// 생성된 MakeSerializedPacket은 헤더에 담기지 않는 패킷이면 nullptr를 돌려주고 로그를 남긴다.
+	if (sendBuffer == nullptr || IsConnected() == false)
 		return;
 
 	bool registerSend = false;
