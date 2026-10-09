@@ -44,3 +44,27 @@ TEST(DBWorkerTest, NonStandardExceptionDoesNotEscapeJob)
 
     EXPECT_NO_THROW(DBWorker::RunJob(job));
 }
+
+// TD-016: DB 큐를 멈출 수단이 없으면 DB 스레드가 끝나지 않아 정상 종료를 만들 수 없다.
+// 멈출 때 이미 들어온 잡(접속 종료 저장 등)은 버리지 않고 다 돌린 뒤 끝난다.
+TEST(DBWorkerTest, StoppedQueueRunsPendingJobsThenEndsWorkerLoop)
+{
+    DBQueueRef dbQueue = make_shared<DBQueue>(0);
+    bool ran = false;
+    dbQueue->Push(make_shared<Job>([&ran]() { ran = true; }));
+
+    dbQueue->Stop();
+    DBWorker::Run(dbQueue);
+
+    EXPECT_TRUE(ran) << "멈추기 전에 들어온 저장 잡을 버리면 진행이 사라진다";
+}
+
+TEST(DBWorkerTest, StoppedQueueIgnoresNewJobs)
+{
+    DBQueue dbQueue(0);
+    dbQueue.Stop();
+
+    dbQueue.Push(make_shared<Job>([]() {}));
+
+    EXPECT_EQ(dbQueue.WaitForSingleJob(), nullptr) << "멈춘 큐에 넣은 잡은 실행되지 않는다";
+}

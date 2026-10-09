@@ -5,7 +5,7 @@
  */
 namespace DBWorker
 {
-    /** 큐가 멈출 때까지 잡을 꺼내 RunJob으로 실행한다. */
+    /** 잡을 꺼내 RunJob으로 실행한다. 큐가 멈추면 남은 잡을 다 돌린 뒤 끝난다. */
     void Run(DBQueueRef dbQueue);
 
     /**

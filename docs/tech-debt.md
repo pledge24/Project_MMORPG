@@ -260,22 +260,6 @@
 **버그 발생 가능성 증가** — 몬스터의 50ms 틱과 200ms 상태 판정이 모두 타이머로 돌기 때문에, 한 룸의 무거운 잡이 다른 룸의
 몬스터 틱을 늦춘다.
 
-## TD-016 DB 연결을 정리하는 경로가 핸들을 해제하지 못한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
-> 위치: `Server/ServerCore/DB/`
-> 등록일: 2026년 10월 5일
-
-- `DBConnection::Clear`는 DBC 핸들을 STMT 핸들보다 먼저 해제하고 `SQLDisconnect`를 부르지 않는다
-- `DBConnection`에 소멸자가 없어서 `DBConnectionPool::Clear`의 `delete`는 ODBC 핸들을 해제하지 않는다. 그 전에 환경 핸들부터 해제한다
-- `DBConnectionPool::Connect`는 연결에 실패하면 만든 `DBConnection`을 지우지 않는다. `DBConnection::Connect`는 연결 결과를 보기 전에 STMT를 할당한다
-- `DBQueue`에는 `stopFlag`를 세우는 함수가 없어서 DB 스레드를 멈출 수 없다
-
-지금 게임 서버에는 종료 경로가 없어서 드러나지 않는다. 코드를 읽고 판단했다.
-
-### 영향
-
-**유지보수 어려움** — 정상 종료나 연결 재시도를 만들 때 이 경로를 그대로 쓰면 핸들이 새고 DB 스레드가 끝나지 않는다.
-
 ## TD-017 게임 서버가 DB를 준비하기 전에 접속을 받는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
 > 위치: `Server/GameServer/GameServer.cpp` 70~112줄 · `Server/GameServer/DB/ItemDAO.cpp` 35~80줄 (`GetMaxItemUID`)

@@ -5,14 +5,11 @@ void DBWorker::Run(DBQueueRef dbQueue)
 {
     GLogger->Info("{}번째 DBQueue가 작업을 시작함", dbQueue->GetId());
 
-    while (dbQueue->IsStop() == false)
-    {
-        JobRef job = dbQueue->WaitForSingleJob();
-        if (job == nullptr)
-            continue;
-
+    // 멈춘 큐는 남은 잡을 다 내준 뒤에야 nullptr를 돌려준다. 그 전에 끝내면 접속 종료 저장이 사라진다.
+    while (JobRef job = dbQueue->WaitForSingleJob())
         RunJob(job);
-    }
+
+    GLogger->Info("{}번째 DBQueue가 작업을 마침", dbQueue->GetId());
 }
 
 bool DBWorker::RunJob(const JobRef& job)

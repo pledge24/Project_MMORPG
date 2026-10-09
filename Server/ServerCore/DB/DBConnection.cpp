@@ -5,6 +5,11 @@
 	DBConnection
 -----------------*/
 
+DBConnection::~DBConnection()
+{
+	Clear();
+}
+
 bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 {
 	if (::SQLAllocHandle(SQL_HANDLE_DBC, henv, &_connection) != SQL_SUCCESS)
@@ -27,24 +32,37 @@ bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 		SQL_DRIVER_NOPROMPT
 	);
 
-	if (::SQLAllocHandle(SQL_HANDLE_STMT, _connection, &_statement) != SQL_SUCCESS)
+	// 연결 결과를 먼저 본다. 연결되지 않은 핸들 위에는 statement를 할당할 수 없다.
+	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+	{
+		Clear();
 		return false;
+	}
 
-	return (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO);
+	if (::SQLAllocHandle(SQL_HANDLE_STMT, _connection, &_statement) != SQL_SUCCESS)
+	{
+		Clear();
+		return false;
+	}
+
+	return true;
 }
 
 void DBConnection::Clear()
 {
-	if (_connection != SQL_NULL_HANDLE)
-	{
-		::SQLFreeHandle(SQL_HANDLE_DBC, _connection);
-		_connection = SQL_NULL_HANDLE;
-	}
-
+	// statement는 연결에 딸린 핸들이므로 연결보다 먼저 해제한다.
 	if (_statement != SQL_NULL_HANDLE)
 	{
 		::SQLFreeHandle(SQL_HANDLE_STMT, _statement);
 		_statement = SQL_NULL_HANDLE;
+	}
+
+	if (_connection != SQL_NULL_HANDLE)
+	{
+		// 연결하지 않은 핸들에서도 부를 수 있다. 그때 SQLDisconnect는 실패를 돌려줄 뿐이다.
+		::SQLDisconnect(_connection);
+		::SQLFreeHandle(SQL_HANDLE_DBC, _connection);
+		_connection = SQL_NULL_HANDLE;
 	}
 }
 

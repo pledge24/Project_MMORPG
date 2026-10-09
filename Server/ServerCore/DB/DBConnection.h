@@ -30,10 +30,12 @@ struct DiagnosticInfo
 class DBConnection
 {
 public:
-	virtual ~DBConnection() = default;
+	/** 연결이 남아 있으면 Clear로 끊고 핸들을 해제한다. */
+	virtual ~DBConnection();
 
-	/** henv 위에서 연결하고 statement를 할당한다. */
+	/** henv 위에서 연결하고 statement를 할당한다. 실패하면 만든 핸들을 해제하고 false. */
 	bool			Connect(SQLHENV henv, const WCHAR* connectionString);
+	/** statement를 해제하고 연결을 끊은 뒤 연결 핸들을 해제한다. 두 번 불러도 된다. 환경 핸들보다 먼저 부른다. */
 	void			Clear();
 
 	/** 쿼리를 바로 실행한다. 영향받은 행이 없을 때(SQL_NO_DATA)도 성공으로 본다. 실행 전에 진단 기록을 비운다. */
