@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 34개 (높음 1 · 중간 3 · 낮음 30) · 다음 번호 TD-037
+항목 42개 (높음 3 · 중간 5 · 낮음 34) · 다음 번호 TD-045
 
 ## 작성 방법
 
@@ -94,6 +94,34 @@
 **버그 발생 가능성 증가** — 두 계정이 동시에 로그인하거나, 한 계정의 저장과 다른 계정의 입장이 겹치면
 나중에 연결을 빌린 쪽이 널 포인터를 역참조해 게임 서버가 죽는다. 접속자가 적을 때는 겹치는 일이 드물어서 드러나지 않는다.
 
+## TD-037 장비를 벗어도 현재 HP와 MP가 줄지 않아 다음 입장이 실패한다
+> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Equipment/EquippedGear.cpp` 130~146줄 (`UnequipGear`) · `Server/GameServer/Game/Entities/Player.cpp` 549~559줄 (`CalculateFinalStat`)
+> 등록일: 2026년 10월 9일
+
+`UnequipGear`는 장비의 hp와 mp만큼 최대 HP와 최대 MP를 빼고, 현재 HP와 MP는 그대로 둔다. 현재 값이 새 최대치를 넘은 채로
+접속이 끊기면 그 값이 저장된다. 다음 입장에서 `OnLoaded` → `CalculateFinalStat`이 「현재 HP가 최대 HP를 초과」로 false를 돌려주고,
+`ProgressStorage::Load`가 입장 실패를 보낸다. 장비 데이터의 1000번대에 hp와 mp가 있으므로, HP가 가득 찬 상태에서 그런 장비를
+벗고 접속을 끊으면 바로 이 상황이 된다. 코드를 읽고 판단했고 실행해서 재현하지는 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 그 캐릭터는 DB를 손으로 고치기 전까지 게임에 들어가지 못한다.
+
+## TD-044 서버를 종료하면 접속 중인 플레이어의 진행이 사라진다
+> **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · server
+> 위치: `Server/GameServer/GameServer.cpp` 25~38줄 (`DoWorkerJob`), 105~116줄
+> 등록일: 2026년 10월 9일
+
+워커 루프가 `while (true)`로 돌고, 콘솔 종료 처리기가 없다. `GThreadManager->Join()`과 `return 0`에 도달하지 않는다. 진행은
+`GameSession::OnDisconnected`에서만 저장하고 주기 저장이 없으므로, 서버 창을 닫거나 Ctrl+C를 누르면 접속 중인 플레이어 전원의
+진행이 로그인 이후 것까지 사라진다. 종료 경로를 만들면 GameServer와 ServerCore의 전역 객체가 서로 다른 번역 단위에 있어서
+소멸 순서가 정해지지 않는 문제도 함께 드러난다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 개발 중 서버를 다시 띄울 때마다 진행이 사라져서, 진행에 기대는 기능을 검증하기 어렵다.
+
 ---
 
 # 중간
@@ -141,6 +169,44 @@
 
 **버그 발생 가능성 증가** — 엔진 버전이나 할당 패턴이 바뀌면 디스폰할 때 다른 액터를 지우거나 클라이언트가 죽는다.
 원인이 디스폰과 떨어진 곳에서 드러나서 추적하기 어렵다.
+
+## TD-039 DB 스레드가 예상하지 못한 예외를 받지 않아 서버가 종료된다
+> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · server
+> 위치: `Server/GameServer/GameServer.cpp` 12~23줄 (`DoDBJob`) · `Server/GameServer/DB/`
+> 등록일: 2026년 10월 9일
+
+DAO의 오류 처리가 네 방식으로 갈려 있다.
+
+| 방식 | 위치 |
+|---|---|
+| `throw DBCustomError` 후 `PrintDBErrorLog` | `CharacterStateDAO.cpp` |
+| `throw wstring`을 흐름 제어로 씀 | `ItemDAO.cpp`의 `LoadItems`, `GetMaxItemUID` |
+| 로그 없이 `return false` | `CharacterStateDAO::LoadLastState`, `ItemDAO`의 일부 |
+| `catch (exception&)` 후 `cerr` | `CharacterListDAO.cpp`에만 있음 |
+
+`CharacterStateDAO`와 `ItemDAO`는 `DBCustomError`만 받고, `DoDBJob`에도 catch가 없다. 그래서 Json의 `type_error`, `bad_alloc`,
+인벤토리 코드가 던지는 예외가 DB 스레드 밖으로 나가면 `std::terminate`로 서버가 끝난다. 예외가 실제로 나는 경로는 확인하지
+않았다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** · **유지보수 어려움** — 한 계정의 잘못된 데이터가 서버 전체를 내린다. 로그 없는 실패는 원인을 남기지 않는다.
+
+## TD-042 몬스터의 틱이 다른 룸으로 떠난 플레이어의 위치를 읽는다
+> **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Entities/Monster.cpp` 378~386줄 (`ExecuteStateAttacking`), 399~423줄 (`ExecuteStateChasing`), 521~533줄 (`IsTargetLost`)
+> 등록일: 2026년 10월 9일
+
+대상이 룸에 남아 있는지는 200ms마다 도는 `UpdateState`의 `IsTargetLost`만 확인한다. 50ms마다 도는 틱은 `_target.lock()`만 하고
+`target->_posInfo`를 읽는다. 플레이어가 포털로 다른 룸에 가면, 그 룸 큐의 `C_HandleMove`가 같은 `_posInfo`를 쓰는 동안 이 몬스터의
+룸 큐가 읽는다. 「다른 룸의 오브젝트에 직접 손대지 않는다」는 불변식을 최대 200ms 동안 어긴다.
+
+고칠 때 함정이 있다. 퇴장할 때 `_room`을 비우면 `Player::ApplyTownRespawnForSave`가 실패한다. 이 함수는 이미 떠난 룸이 `_room`에
+남아 있어야 성공하므로, 사망한 채 끊긴 플레이어가 HP 0으로 저장된다. 코드를 읽고 판단했고 경합을 재현하지는 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 정의되지 않은 동작인 데이터 경합이다. 몬스터가 찢어진 위치를 읽어 엉뚱한 방향을 보거나 이동한다.
 
 ---
 
@@ -520,6 +586,45 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 **유지보수 어려움** · **버그 발생 가능성 증가** — 기능이 있는 것처럼 보여서 읽는 사람이 동작을 잘못 짐작한다.
 `operator-=`나 `TickIntervalTimer`를 새로 쓰기 시작하면 그 자리에서 바로 버그가 된다.
 
+## TD-038 장비 착용이 요구 레벨과 요구 직업을 보지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Equipment/EquippedGear.cpp` 33~51줄 (`EquipGear`)
+> 등록일: 2026년 10월 9일
+
+`EquipGear`는 아이템이 장비인지와 부위가 비었는지만 본다. 아이템 표의 `levelRequirement`와 `classRequirement`는
+`JsonProperty::Item`에 이름만 정의되어 있고 읽는 곳이 없다. 요구 레벨은 클라이언트의 `FP1InventorySlotAction::Decide`만 판정한다.
+코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 조작한 클라이언트는 레벨이 모자라거나 직업이 맞지 않는 장비를 입는다.
+
+## TD-041 세션의 계정 번호를 락 없이 여러 스레드가 읽고 쓴다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Network/GameSessionManager.cpp` 12줄 · `Server/GameServer/Network/GameSession.cpp` 17줄 · `Server/GameServer/Network/ServerPacketHandler.cpp` (`Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`)
+> 등록일: 2026년 10월 9일
+
+`GameSession::_userId`는 원자적이지 않은 `int64`다. 로그인 잡(DB 스레드)이 관리자의 락 안에서 쓰고, IOCP 스레드의 핸들러와
+`OnDisconnected`는 락 없이 읽는다. 계정 번호를 읽는 시점도 요청마다 다르다. 캐릭터 생성은 핸들러가 읽은 값을 잡에 넘기고,
+삭제와 입장 불러오기의 DAO는 잡이 실행될 때 세션에서 다시 읽는다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 정의되지 않은 동작인 데이터 경합이다. 로그인 직후의 요청이 0이나 찢어진 계정 번호로 처리될 수 있다.
+
+## TD-043 몬스터의 일반 공격이 피격 시점에 거리를 다시 보지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Entities/Monster.cpp` 517줄 (`NormalAttack`) · `Server/GameServer/Game/Room/Room.cpp` (`HandleHit`)
+> 등록일: 2026년 10월 9일
+
+몬스터는 사거리 안에서 공격을 시작하고 200ms 뒤의 `Room::HandleHit`을 예약한다. `HandleHit`은 공격자가 룸에 남았는지만 보고
+대상과의 거리를 다시 보지 않는다. 그래서 그 200ms 안에 사거리를 빠져나간 플레이어도 맞는다. 피격 시점에 거리를 다시 확인하기로
+2026년 10월 9일에 정했다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 플레이어가 공격을 피해도 맞는다. 클라이언트가 보여 주는 거리와 판정이 어긋난다.
+
 ## TD-001 룸 이동 요청이 플레이어의 위치를 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Room/RoomTransfer.cpp` · `Server/GameServer/Game/Room/Room.cpp` (`C_HandleEnterMap`)
@@ -595,3 +700,17 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 
 **새 기능 개발 지연** — 맵이 둘 이상이 되면 클라이언트의 맵 간 이동을 처음부터 이어야 한다. 실행되지 않는 핸들러가 동작하는
 경로처럼 보여서, 그 경로를 고친 결과를 확인할 수 없다.
+
+## TD-040 아이템 배열 저장이 일부 행의 실패를 성공으로 본다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 함수 · server
+> 위치: `Server/GameServer/DB/ItemDAO.cpp` 412~419줄, 529~536줄 (`SaveGearItems`, `SaveStackableItems`)
+> 등록일: 2026년 10월 9일
+
+배열 파라미터로 여러 행을 한 번에 저장하면서 `Execute`의 반환값만 본다. 처리된 행 수(`SQL_ATTR_PARAMS_PROCESSED_PTR`)나 행별
+상태 배열을 바인딩하지 않는다. `DAOCommon.h`의 `SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE`는 이 경우를 잡으려고 정의한 것으로
+보이지만 쓰는 곳이 없다. ODBC 명세상 일부 파라미터 집합이 실패하면 `SQLExecute`가 `SQL_SUCCESS_WITH_INFO`를 돌려주는데,
+`DBConnection::Execute`는 이를 성공으로 본다. 드라이버가 실제로 이렇게 동작하는지는 확인하지 않았다. 추측이다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 아이템 행의 일부만 저장되고 저장은 성공으로 끝나서, 다음 입장 때 아이템이 사라진 원인을 찾을 수 없다.
