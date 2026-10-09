@@ -12,6 +12,12 @@ public:
         _sent.push_back(sendBuffer);
     }
 
+    /** 받은 패킷을 흉내 낸다. IOCP가 OnRecv에서 부르는 것과 같은 경로로 핸들러에 넘긴다. */
+    void Receive(BYTE* buffer, int32 len)
+    {
+        OnRecvPacket(buffer, len);
+    }
+
     /** 보낸 패킷 중 id가 packetId인 것을 PacketType으로 풀어 돌려준다. */
     template<typename PacketType>
     vector<PacketType> SentPackets(uint16 packetId) const

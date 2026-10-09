@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include <sstream>
 #include "RecordingSession.h"
 
 /*--------------------------------------------------------------
@@ -46,6 +47,31 @@ protected:
     shared_ptr<RecordingSession> recordingSession;
     PacketSessionRef session;
 };
+
+// TD-020: 받은 패킷의 처리가 실패해도(핸들러가 거절하거나 본문을 풀지 못해도) 로그가 없어서 원인을 찾을 수 없었다.
+TEST_F(PacketHandlerTest, FailedPacketIsLogged)
+{
+    ServerPacketHandler::Init();
+
+    // 플레이어가 없는 세션의 채팅은 핸들러가 거절한다.
+    Protocol::C_CHAT chatPkt;
+    chatPkt.set_msg("hello");
+    const int32 bodySize = static_cast<int32>(chatPkt.ByteSizeLong());
+    vector<BYTE> buffer(sizeof(PacketHeader) + bodySize);
+    PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer.data());
+    header->size = static_cast<uint16>(buffer.size());
+    header->id = PKT_C_CHAT;
+    chatPkt.SerializeToArray(buffer.data() + sizeof(PacketHeader), bodySize);
+
+    // GLogger는 cout에 쓴다. 출력을 잠시 붙잡는다.
+    stringstream captured;
+    streambuf* original = cout.rdbuf(captured.rdbuf());
+    recordingSession->Receive(buffer.data(), static_cast<int32>(buffer.size()));
+    cout.rdbuf(original);
+
+    EXPECT_NE(captured.str().find(format("패킷 {}", static_cast<int32>(PKT_C_CHAT))), string::npos)
+        << "처리에 실패한 패킷의 id가 로그에 남아야 한다. 실제 출력: " << captured.str();
+}
 
 TEST_F(PacketHandlerTest, CreateCharacterBeforeLoginIsRejected)
 {
