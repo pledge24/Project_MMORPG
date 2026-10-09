@@ -482,7 +482,7 @@ Server/
 │   ├── Job/                잡 큐, 잡 타이머, 글로벌 큐
 │   ├── Thread/
 │   ├── DB/                 커넥션 풀, 바인딩, DB 큐, Redis
-│   ├── Utils/
+│   ├── Utils/              락 큐, 로거
 │   └── Core/               타입, 매크로, TLS, 전역 객체, pch
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점

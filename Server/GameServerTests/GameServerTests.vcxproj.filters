@@ -78,6 +78,7 @@
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
     <ClCompile Include="EntityFactoryTests.cpp" />
+    <ClCompile Include="LoggerTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
