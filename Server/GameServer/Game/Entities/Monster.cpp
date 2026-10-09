@@ -604,19 +604,9 @@ void Monster::ClearDestination()
 
 void Monster::PrintMonsterAllData() const
 {
-    cout << "=====================" << '\n';
-
-    cout << "templateId: " << _templateId << '\n';
-    cout << "maxHp: " << _maxHp << '\n';
-    cout << "attackInterval: " << _attackInterval << '\n';
-    cout << "baseAttack: " << _baseAttack << '\n';
-    cout << "attackRange: " << _tryAttackRange << '\n';
-    cout << "detectionRange: " << _detectionRange << '\n';
-    cout << "chaseRange: " << _chasingMaxRange << '\n';
-
-    cout << _entityInfo->Utf8DebugString() << '\n';
-
-    cout << "======Monster Data End ====" << '\n';
+    GLogger->Debug("몬스터 templateId: {} · maxHp: {} · attackInterval: {} · baseAttack: {} · attackRange: {} · detectionRange: {} · chaseRange: {}\n{}",
+        _templateId, _maxHp, _attackInterval, _baseAttack, _tryAttackRange, _detectionRange, _chasingMaxRange,
+        _entityInfo->Utf8DebugString());
 }
 
 void Monster::CacheMonsterData()

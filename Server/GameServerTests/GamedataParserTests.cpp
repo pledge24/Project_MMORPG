@@ -167,10 +167,10 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     const MapTemplate& town = tables.maps.at(TOWN_ID);
     ASSERT_TRUE(town.respawnPoint.has_value());
     EXPECT_FLOAT_EQ(town.respawnPoint->y, 20.f);
-    const PortalTemplate* portal = town.FindPortal(11);
-    ASSERT_NE(portal, nullptr);
-    EXPECT_EQ(portal->dstRoomId, FIELD_ID);
-    EXPECT_FLOAT_EQ(portal->dstYaw, 180.f);
+    ASSERT_EQ(town.portals.size(), 1u);
+    EXPECT_EQ(town.portals[0].portalId, 11);
+    EXPECT_EQ(town.portals[0].dstRoomId, FIELD_ID);
+    EXPECT_FLOAT_EQ(town.portals[0].dstYaw, 180.f);
     EXPECT_EQ(town.maxMonsterCount, 0) << "null인 몬스터 수는 0이다";
 
     const MapTemplate& field = tables.maps.at(FIELD_ID);

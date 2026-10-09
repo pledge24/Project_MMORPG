@@ -245,7 +245,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             }
             else
             {
-                cerr << "Unexpected Rejection(CreateCharacter): " << code << endl;
+                GLogger->Error("Unexpected Rejection(CreateCharacter): {}", code);
                 createCharacterPkt.set_cause("서버 내부 오류");
             }
         }
@@ -265,7 +265,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
     }
     catch (exception& err)
     {
-        cerr << "Unexpected Error(CreateCharacter): " << err.what() << endl;
+        GLogger->Error("Unexpected Error(CreateCharacter): {}", err.what());
 
         createCharacterPkt.Clear();
         createCharacterPkt.set_success(false);

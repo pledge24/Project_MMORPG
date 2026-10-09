@@ -138,18 +138,6 @@ struct MapTemplate
     int32 maxMonsterCount = 0;
     /** 표에 없으면 0이다. */
     float monsterRespawnTime = 0.f;
-
-    /** 이 맵에 없는 포털이면 nullptr. */
-    const PortalTemplate* FindPortal(int32 portalId) const
-    {
-        for (const PortalTemplate& portal : portals)
-        {
-            if (portal.portalId == portalId)
-                return &portal;
-        }
-
-        return nullptr;
-    }
 };
 
 /** 부팅 때 만들어 Gamedata에 한 번 설치하는 표 전체. 테스트는 이것을 직접 채워 설치한다. */

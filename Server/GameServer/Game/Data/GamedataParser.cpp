@@ -75,7 +75,7 @@ namespace
 
     /** 필드가 없거나 null이면 fallback. 있으면 Require와 같이 검사한다. */
     template<typename T>
-    T Optional(const Json& object, string_view key, T fallback)
+    T ReadOr(const Json& object, string_view key, T fallback)
     {
         return IsAbsent(object, key) ? fallback : Require<T>(object, key);
     }
@@ -218,12 +218,12 @@ namespace
                 const double cooldownSeconds = Require<double>(row, Cooldown);
                 item.cooldownMs = cooldownSeconds > 0 ? static_cast<uint64>(cooldownSeconds * 1000) : 0;
 
-                item.hp = Optional<int32>(row, Hp, 0);
-                item.mp = Optional<int32>(row, Mp, 0);
-                item.physicalAttack = Optional<int32>(row, PhysicalAttack, 0);
-                item.magicalAttack = Optional<int32>(row, MagicalAttack, 0);
-                item.hpRestoreRatio = Optional<double>(row, HpRestore, 0.0);
-                item.mpRestoreRatio = Optional<double>(row, MpRestore, 0.0);
+                item.hp = ReadOr<int32>(row, Hp, 0);
+                item.mp = ReadOr<int32>(row, Mp, 0);
+                item.physicalAttack = ReadOr<int32>(row, PhysicalAttack, 0);
+                item.magicalAttack = ReadOr<int32>(row, MagicalAttack, 0);
+                item.hpRestoreRatio = ReadOr<double>(row, HpRestore, 0.0);
+                item.mpRestoreRatio = ReadOr<double>(row, MpRestore, 0.0);
 
                 InsertUnique(items, item.templateId, std::move(item));
             });
@@ -304,8 +304,8 @@ namespace
                     mapTemplate.monsterIds.push_back(monsterId.get<int32>());
                 }
 
-                mapTemplate.maxMonsterCount = Optional<int32>(row, MaxMonsterCount, 0);
-                mapTemplate.monsterRespawnTime = Optional<float>(row, MonsterRespawnTime, 0.f);
+                mapTemplate.maxMonsterCount = ReadOr<int32>(row, MaxMonsterCount, 0);
+                mapTemplate.monsterRespawnTime = ReadOr<float>(row, MonsterRespawnTime, 0.f);
 
                 InsertUnique(maps, mapTemplate.templateId, std::move(mapTemplate));
             });

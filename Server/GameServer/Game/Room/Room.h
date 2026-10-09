@@ -83,7 +83,7 @@ public:
     /** Init 뒤로는 바뀌지 않으므로 룸 큐 밖에서 읽어도 된다. */
     int32               GetRoomId() const { return _roomId; }
     /** 이 룸에 그 번호의 포털이 없으면 nullptr. */
-    const PortalTemplate* FindPortal(int32 portalId) const { return _mapTemplate.FindPortal(portalId); }
+    const PortalTemplate* FindPortal(int32 portalId) const;
     /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
     shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return _hasRespawnPoint ? _respawnPoint : nullptr; }
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }

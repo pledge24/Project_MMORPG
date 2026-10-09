@@ -279,7 +279,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 
     if (optional<string> rejection = RoomTransfer::ValidateEnterRequest(pkt, player->GetEnteringRoomId()))
     {
-        cout << "C_HandleEnterRoom: " << rejection.value() << '\n';
+        GLogger->Warning("C_HandleEnterRoom: {}", rejection.value());
         sendEnterRoomFailure();
         return;
     }
@@ -312,7 +312,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
         if (enterRoom == nullptr)
         {
-            wcout << L"맵 간 이동할 Room을 찾지 못함. roomId: " << roomId << '\n';
+            GLogger->Warning("맵 간 이동할 Room을 찾지 못함. roomId: {}", roomId);
             sendEnterRoomFailure();
             return;
         }
@@ -343,7 +343,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         const PortalTemplate* portal = FindPortal(pkt.portal_id());
         if (portal == nullptr)
         {
-            wcout << L"플레이어가 현재 Room에 존재하지 않는 포털 사용 시도" << '\n';
+            GLogger->Warning("플레이어 {}가 현재 Room에 없는 포털 {}을 쓰려고 했다", player->GetEntityId(), pkt.portal_id());
             sendEnterRoomFailure();
             return;
         }
@@ -353,7 +353,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomEnterData.nextRoomId);
         if (enterRoom == nullptr)
         {
-            wcout << L"포탈 목적지 Room을 찾지 못함. roomId: " << roomEnterData.nextRoomId << '\n';
+            GLogger->Warning("포탈 목적지 Room을 찾지 못함. roomId: {}", roomEnterData.nextRoomId);
             sendEnterRoomFailure();
             return;
         }
@@ -867,6 +867,17 @@ vector2D Room::GetRandomLocation(bool usePadding)
     randomPos.y = Utils::GetRandom(paddedMinY, paddedMaxY);
 
     return randomPos;
+}
+
+const PortalTemplate* Room::FindPortal(int32 portalId) const
+{
+    for (const PortalTemplate& portal : _mapTemplate.portals)
+    {
+        if (portal.portalId == portalId)
+            return &portal;
+    }
+
+    return nullptr;
 }
 
 void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYaw)

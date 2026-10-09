@@ -572,14 +572,15 @@ bool Player::CalculateFinalStat()
 
 void Player::CacheNextLevelUpData()
 {
-    // 최대 레벨에서는 오를 레벨이 없으므로 캐시를 그대로 둔다.
+    // 최대 레벨에서는 오를 레벨이 없으므로 캐시를 그대로 둔다. 레벨 표가 없는 직업도 여기서 끝난다.
     if (IsMaxLevel())
         return;
 
     // 다음 레벨 행이 없으면 빈 값으로 둔다.
     _nextLevelUpData = NextLevelUpData{};
 
-    const LevelTemplate* nextLevelTemplate = Gamedata::FindClassLevelTable(_playerInfo->class_())->Find(_playerInfo->level() + 1);
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
     if (nextLevelTemplate == nullptr)
         return;
 
