@@ -416,12 +416,12 @@ DAO의 오류 처리가 네 방식으로 갈려 있다.
 
 ## TD-025 클라이언트가 서버의 슬롯 번호를 범위 검사 없이 배열 인덱스로 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
-> 위치: `P1/Source/P1/Game/Inventory/P1Inventory.cpp` 15~67줄 · `P1/Source/P1/Game/Equipment/P1EquippedGear.h` 25줄
+> 위치: `P1/Source/P1/Game/Inventory/P1Inventory.cpp` 15~67줄 · `P1/Source/P1/Game/Equipment/P1Equipment.h` 29줄
 > 등록일: 2026년 10월 5일
 
 - `UP1Inventory::Init`은 `slot_id`가 `[0, 칸 수)` 안이라고 가정하고 `GearLookup[Slot_->slot_id()]`에 넣는다
 - `UP1Inventory::Rep_SlotChanged`는 범위를 보지 않고 `InvenLookup[Slot_.slot_id()]`를 역참조한다
-- `UP1EquippedGear::EquippedGearLookup` 원시 포인터에 초기값이 없다. `Init` 전에 `GetAllSlot`이나 `Rep_SlotChanged`가
+- `UP1Equipment::EquippedGearLookup` 원시 포인터에 초기값이 없다. `Init` 전에 `GetAllSlot`이나 `Rep_SlotChanged`가
   불리면 쓰레기 값을 역참조한다
 
 코드를 읽고 판단했다.
@@ -534,15 +534,15 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 
 ## TD-035 DB에서 읽은 슬롯 번호를 검증 없이 인벤토리와 장비 칸에 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Inventory/Inventory.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquippedGear.cpp` (`EquipGear`)
+> 위치: `Server/GameServer/Game/Inventory/InventoryComponent.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquipmentComponent.cpp` (`LoadEquipped`)
 > 등록일: 2026년 10월 7일
 
-`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 `setSlotId`로 넘긴다. 두 함수는 이 값을 그대로 믿는다.
+`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 두 함수에 넘긴다. 두 함수는 이 값을 그대로 믿는다.
 
-- `Inventory::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
+- `InventoryComponent::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
   `Mutable`의 범위 검사는 `GOOGLE_DCHECK`라서 Release 빌드에서 빠진다
 - 같은 함수는 그 칸에 이미 아이템이 있으면 템플릿이 같은지 보지 않고 수량을 더한다
-- `EquippedGear::EquipGear`는 `setSlotId`를 그대로 `GearType`으로 바꿔 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
+- `EquipmentComponent::LoadEquipped`는 받은 `gearType`을 그대로 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
   없는 부위면 칸을 찾지 못해 실패하므로 범위 밖 접근은 없다
 
 코드를 읽고 판단했다. 잘못된 행을 넣어 재현하지는 않았다.

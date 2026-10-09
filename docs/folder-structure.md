@@ -491,10 +491,10 @@ Server/
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정
 │   │   ├── Combat/         피격과 처치 판정
-│   │   ├── Entities/       엔티티 계층과 그 생성, 저장 사본
+│   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 저장 사본
 │   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
-│   │   ├── Inventory/      인벤토리
-│   │   ├── Equipment/      장비
+│   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
+│   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템)와 진행 저장소
 │   ├── Queries/            GameDB 스키마 스크립트

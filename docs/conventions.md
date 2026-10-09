@@ -547,6 +547,21 @@ GLogger->Warning("몬스터 템플릿 {}이 없다", templateId);
 2026년 10월 9일(#206) 기준으로 기존 코드에는 표준 출력에 직접 쓰는 호출이 남아 있다. #205의 각 티켓이 자기가 고치는
 코드의 호출을 옮기고, 남은 것은 #213이 옮긴다.
 
+### 3.10 `Component`는 `EntityComponent` 파생에만 붙인다
+
+이름이 `Component`로 끝나는 클래스는 `EntityComponent`(`Game/Entities/EntityComponent.h`)를 상속한다.
+`EntityComponent`를 상속하는 클래스는 이름을 `Component`로 끝낸다.
+
+```
+O  class InventoryComponent : public EntityComponent
+X  class EquippedGear : public EntityComponent
+X  class StatComponent           // EntityComponent를 상속하지 않는다
+```
+
+— 이름만 보고 엔티티가 멤버로 소유하고 `Start`/`Tick`을 받는 클래스인지 알 수 있어야 한다. 근거는
+`docs/adr/0013-own-server-components-as-typed-members.md`에 있다. 클라이언트에는 이 규칙을 적용하지 않는다.
+클라이언트의 `Component` 접미사는 `UActorComponent` 파생을 뜻한다.
+
 ---
 
 ## 4. 인증 서버 (Node)
