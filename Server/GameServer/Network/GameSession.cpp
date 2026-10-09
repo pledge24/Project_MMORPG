@@ -73,9 +73,15 @@ void GameSession::LeaveGame(RoomRef room, PlayerRef player)
 	dbQueue->Push(make_shared<Job>(
 		[data = std::move(saveData.value())]()
 		{
+			// 연결을 빌리지 못해도 아래에서 대기를 풀어야 한다. 풀지 않으면 다음 입장이 상한까지 막힌다.
+			try
 			{
 				DBConnectionGuard conn;
 				ProgressStorage::Save(*conn, data);
+			}
+			catch (const DBError& error)
+			{
+				GLogger->Error("계정 {} 접속 종료 저장 실패: {}", data.userId, error.what());
 			}
 
 			// 저장이 실패해도 대기를 푼다. 실패한 저장은 다시 시도하지 않으므로 기다려도 결과가 같다.

@@ -56,6 +56,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DBConnectionGuardTests.cpp" />
     <ClCompile Include="DBWorkerTests.cpp" />
     <ClCompile Include="..\GameServer\DB\DBWorker.cpp">
       <Filter>GameServer\DB</Filter>

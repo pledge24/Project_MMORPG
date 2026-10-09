@@ -79,21 +79,6 @@
 
 # 높음
 
-## TD-004 DB 연결은 하나인데 DB 스레드 다섯이 동시에 빌린다
-> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/GameServer.cpp` 82~106줄 · `Server/GameServer/DB/DAOCommon.h` (`DBConnectionGuard`)
-> 등록일: 2026년 10월 4일
-
-`main`은 연결 풀에 연결을 하나만 넣는다(`maxDBConnections = 1`). DB 스레드는 다섯이고, 스레드마다 자기
-`DBQueue`를 따로 소비하므로 두 스레드가 동시에 DAO를 부를 수 있다. 풀이 비어 있으면 `DBConnectionPool::Pop`은
-`nullptr`를 돌려준다. `DBConnectionGuard`는 이 값을 검사하지 않고 `operator->`로 그대로 넘긴다.
-코드를 읽고 판단했고 실행해서 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 두 계정이 동시에 로그인하거나, 한 계정의 저장과 다른 계정의 입장이 겹치면
-나중에 연결을 빌린 쪽이 널 포인터를 역참조해 게임 서버가 죽는다. 접속자가 적을 때는 겹치는 일이 드물어서 드러나지 않는다.
-
 ## TD-044 서버를 종료하면 접속 중인 플레이어의 진행이 사라진다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/GameServer.cpp` 25~38줄 (`DoWorkerJob`), 105~116줄

@@ -251,8 +251,18 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
                 return;
 
             // 불러오기가 모두 성공하고 검증을 통과해야 세션에 플레이어가 생긴다. 룸에는 그 뒤 EnterPlayer로 들어간다.
-            DBConnectionGuard conn;
-            Protocol::S_ENTER_GAME enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), pkt.character_id());
+            Protocol::S_ENTER_GAME enterGamePkt;
+            try
+            {
+                DBConnectionGuard conn;
+                enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), pkt.character_id());
+            }
+            catch (const DBError& error)
+            {
+                // 실패해도 응답을 보내야 클라이언트가 캐릭터 선택 화면에서 기다리지 않는다.
+                GLogger->Error("캐릭터 {} 입장 실패: {}", pkt.character_id(), error.what());
+                enterGamePkt.set_success(false);
+            }
             SEND_PACKET(enterGamePkt)
         };
 

@@ -14,11 +14,16 @@ public:
 /**
  * 연결 풀에서 연결을 빌리고, 가드가 사라질 때 돌려준다.
  * 예외로 함수를 빠져나가도 연결이 풀로 돌아간다. DB 잡이 지역 변수로 만들어 DAO와 ProgressStorage에 연결을 넘긴다.
+ * 풀이 비어 있으면 DBError를 던진다. 풀은 DB 스레드마다 하나씩 연결을 두므로, 잡 하나가 가드를 둘 이상 만들지 않는 한 비지 않는다.
  */
 class DBConnectionGuard
 {
 public:
-    DBConnectionGuard() : _connection(GDBConnectionPool->Pop()) {}
+    DBConnectionGuard() : _connection(GDBConnectionPool->Pop())
+    {
+        if (_connection == nullptr)
+            throw DBError("DBConnectionGuard", "연결 풀이 비어 있다");
+    }
     ~DBConnectionGuard() { GDBConnectionPool->Push(_connection); }
 
     DBConnectionGuard(const DBConnectionGuard&) = delete;

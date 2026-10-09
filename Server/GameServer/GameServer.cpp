@@ -66,11 +66,15 @@ int main(void)
 
 	ASSERT_CRASH(service->Start())
 
+    // DB thread 수. 큐마다 DB 스레드가 하나씩 붙는다.
+    const int DBThreadN = 5;
+
     // DB 연결
     {
-        // SQL Server
-        int32 maxDBConnections = 1;
-        ASSERT_CRASH(GDBConnectionPool->Connect(maxDBConnections, config.dbConnectionString.c_str()));
+        // SQL Server. DB 스레드마다 하나, 시작할 때 main이 아이템 UID를 읽는 데 하나를 쓴다.
+        // 모자라면 동시에 돈 잡 하나가 연결을 빌리지 못한다.
+        const int32 dbConnectionCount = DBThreadN + 1;
+        ASSERT_CRASH(GDBConnectionPool->Connect(dbConnectionCount, config.dbConnectionString.c_str()));
 
         // Redis
         ASSERT_CRASH(GRedisManager->Connect(config.redisUri));
@@ -87,7 +91,6 @@ int main(void)
 	}
 
     // DB thread
-    const int DBThreadN = 5;
     GDBManager->Init(DBThreadN);
     for (int32 i = 0; i < DBThreadN; i++)
     {
