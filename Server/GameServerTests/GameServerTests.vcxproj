@@ -183,6 +183,8 @@
     <ClCompile Include="ProgressStorageTests.cpp" />
     <ClCompile Include="GameEntryTests.cpp" />
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
+    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\AccessToken.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

@@ -79,6 +79,10 @@
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
+    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\AccessToken.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

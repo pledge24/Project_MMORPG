@@ -64,6 +64,9 @@
     <ClCompile Include="Network\GameEntry.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\AccessToken.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Core\pch.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -179,6 +182,9 @@
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="Network\GameEntry.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\AccessToken.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">
