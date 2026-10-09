@@ -121,7 +121,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
             enterRoomPkt.set_room_id(_roomId);
 
-            SEND_PACKET(enterRoomPkt)
+            SendPacket(session, enterRoomPkt);
         }
 
         return false;
@@ -148,7 +148,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
             if(roomEnterData.enterPos.has_value())
                 enterRoomPkt.mutable_enter_pos()->CopyFrom(roomEnterData.enterPos.value());
 
-            SEND_PACKET(enterRoomPkt)
+            SendPacket(session, enterRoomPkt);
         }
     }
   
@@ -188,7 +188,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
                 Protocol::S_DESPAWN despawnPkt;
                 despawnPkt.add_entity_ids(leavePlayerId);
 
-                SEND_PACKET(despawnPkt)
+                SendPacket(session, despawnPkt);
             }
         }
     }
@@ -254,7 +254,7 @@ void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt)
+            SendPacket(session, enterMapPkt);
         }
     }
 }
@@ -274,7 +274,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
             enterRoomPkt.set_success(false);
             enterRoomPkt.set_enter_type(enterType);
 
-            SEND_PACKET(enterRoomPkt)
+            SendPacket(session, enterRoomPkt);
         };
 
     if (optional<string> rejection = RoomTransfer::ValidateEnterRequest(pkt, player->GetEnteringRoomId()))
@@ -416,7 +416,7 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
         buyItemPkt.set_success(false);
         buyItemPkt.clear_updated_slots();
 
-        SEND_PACKET(buyItemPkt)
+        SendPacket(session, buyItemPkt);
         return;
     }
 
@@ -425,7 +425,7 @@ void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
         buyItemPkt.set_success(true);
         buyItemPkt.set_gold(totalGold);
 
-        SEND_PACKET(buyItemPkt)
+        SendPacket(session, buyItemPkt);
         cout << buyItemPkt.DebugString() << endl;
     }
 
@@ -447,7 +447,7 @@ void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
     {
         sellItemPkt.set_success(false);
 
-        SEND_PACKET(sellItemPkt)
+        SendPacket(session, sellItemPkt);
         return;
     }
 
@@ -456,7 +456,7 @@ void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
         sellItemPkt.set_success(true);
         sellItemPkt.set_gold(totalGold);
 
-        SEND_PACKET(sellItemPkt)
+        SendPacket(session, sellItemPkt);
         cout << sellItemPkt.DebugString() << endl;
     }
 
@@ -475,7 +475,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
     {
         useItemPkt.set_success(false);
 
-        SEND_PACKET(useItemPkt)
+        SendPacket(session, useItemPkt);
         return;
     }
 
@@ -483,7 +483,7 @@ void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
     {
         useItemPkt.set_success(true);
 
-        SEND_PACKET(useItemPkt)
+        SendPacket(session, useItemPkt);
         cout << useItemPkt.DebugString() << endl;
     }
 
@@ -507,7 +507,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
         if (SessionRef session = player->_session.lock())
         {
             equipGearPkt.set_success(false);
-            SEND_PACKET(equipGearPkt)
+            SendPacket(session, equipGearPkt);
         }
 
         return;
@@ -517,7 +517,7 @@ void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
     // 잡이 기다리는 사이 끊겼으면 세션이 없다. 실패 응답과 같이 확인하고 보낸다.
     if (SessionRef session = player->_session.lock())
     {
-        SEND_PACKET(equipGearPkt)
+        SendPacket(session, equipGearPkt);
     }
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
@@ -549,7 +549,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
         {
             unequipGearPkt.set_success(false);
 
-            SEND_PACKET(unequipGearPkt)
+            SendPacket(session, unequipGearPkt);
         }
         return;
     }
@@ -558,7 +558,7 @@ void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
     // 잡이 기다리는 사이 끊겼으면 세션이 없다. 실패 응답과 같이 확인하고 보낸다.
     if (SessionRef session = player->_session.lock())
     {
-        SEND_PACKET(unequipGearPkt)
+        SendPacket(session, unequipGearPkt);
     }
 
     // 다른 유저들한테는 변경된 stat을 보내지 않는다.
@@ -617,7 +617,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
             respawnPkt.set_respawn_type(respawnType);
             respawnPkt.set_error_message(rejection.value());
 
-            SEND_PACKET(respawnPkt)
+            SendPacket(session, respawnPkt);
         }
 
         return;
@@ -767,7 +767,7 @@ void Room::HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward)
 
     if (auto session = player->_session.lock())
     {
-        SEND_PACKET(rewardResultPkt)
+        SendPacket(session, rewardResultPkt);
     }
 }
 
@@ -804,7 +804,7 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("No Respawn Point"));
 
-            SEND_PACKET(respawnPkt)
+            SendPacket(session, respawnPkt);
         }
 
         return false;
@@ -820,14 +820,14 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("Fail to Respawn"));
 
-            SEND_PACKET(respawnPkt)
+            SendPacket(session, respawnPkt);
         }
 
         return false;
     }
 
     // 리스폰 성공 처리
-    SEND_PACKET(respawnPkt)
+    SendPacket(session, respawnPkt);
 
     return true;
 }
@@ -849,7 +849,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
             spawnPkt.add_entities()->CopyFrom(*item.second->_entityInfo);
         }
 
-        SEND_PACKET(spawnPkt)
+        SendPacket(session, spawnPkt);
     }
 }
 

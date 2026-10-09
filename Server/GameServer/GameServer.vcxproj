@@ -174,12 +174,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Network\PacketSend.h" />
     <ClInclude Include="DB\DBWorker.h" />
     <ClInclude Include="Network\GameEntry.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
-    <ClInclude Include="Core\Macro.h" />
     <ClInclude Include="Core\Global.h" />
     <ClInclude Include="Network\GameSession.h" />
     <ClInclude Include="Network\GameSessionManager.h" />

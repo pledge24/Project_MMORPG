@@ -160,6 +160,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Network\PacketSend.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="DB\DBWorker.h">
       <Filter>DB</Filter>
     </ClInclude>
@@ -173,9 +176,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Types.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Macro.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Network\GameSession.h">

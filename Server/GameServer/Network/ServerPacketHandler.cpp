@@ -22,7 +22,7 @@ namespace
     {
         Protocol::S_LEAVE_GAME leavePkt;
         leavePkt.set_reason(reason);
-        SEND_PACKET_USING_THIS_SESSION(target, leavePkt)
+        SendPacket(target, leavePkt);
 
         target->DisconnectAfterSend(cause);
 
@@ -37,7 +37,7 @@ namespace
     {
         Protocol::S_ENTER_GAME enterGameFailPkt;
         enterGameFailPkt.set_success(false);
-        SEND_PACKET(enterGameFailPkt)
+        SendPacket(session, enterGameFailPkt);
     }
 }
 
@@ -134,7 +134,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 loginPkt.set_success(false);
             }
 
-            SEND_PACKET(loginPkt)
+            SendPacket(session, loginPkt);
         }
     );
 
@@ -151,7 +151,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
         Protocol::S_CREATE_CHARACTER createCharacterPkt;
         createCharacterPkt.set_success(false);
         createCharacterPkt.set_cause(cause.value());
-        SEND_PACKET(createCharacterPkt)
+        SendPacket(session, createCharacterPkt);
         return true;
     }
 
@@ -186,7 +186,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
                 createCharacterPkt.set_cause("서버 내부 오류");
             }
 
-            SEND_PACKET(createCharacterPkt)
+            SendPacket(session, createCharacterPkt);
         }
     );
 
@@ -224,7 +224,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
                 deleteCharacterPkt.set_success(false);
             }
 
-            SEND_PACKET(deleteCharacterPkt)
+            SendPacket(session, deleteCharacterPkt);
         }
     );
 
@@ -270,7 +270,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
                 GLogger->Error("캐릭터 {} 입장 실패: {}", pkt.character_id(), error.what());
                 enterGamePkt.set_success(false);
             }
-            SEND_PACKET(enterGamePkt)
+            SendPacket(session, enterGamePkt);
         };
 
     auto reject = [session]()
@@ -332,7 +332,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt)
+            SendPacket(session, enterMapPkt);
         }
 
         return false;
@@ -356,7 +356,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt)
+            SendPacket(session, enterMapPkt);
         }
 
         return false;

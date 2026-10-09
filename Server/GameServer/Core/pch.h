@@ -14,7 +14,6 @@
 //~ Core
 #include "ServerCore/Core/CorePch.h"
 #include "Core/Types.h"
-#include "Core/Macro.h"
 #include "Core/Global.h"
 
 //~ DB
@@ -32,6 +31,7 @@
 #include "Protocol/Enum.pb.h"
 #include "Protocol/Struct.pb.h"
 #include "Network/ServerPacketHandler.h"
+#include "Network/PacketSend.h"
 #include "Utils/Utils.h"
 #include "Network/GameSession.h"
 #include "Game/Room/RoomManager.h"
