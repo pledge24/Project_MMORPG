@@ -35,7 +35,7 @@ public:
 public:
 	//~ IocpObject 인터페이스 구현
 	virtual HANDLE			GetHandle() override;
-	virtual void			Dispatch(class NetworkEvent* networkEvent, int32 numOfBytes = 0) override;
+	virtual void			Dispatch(class NetworkEvent* networkEvent, int32 numOfBytes, int32 errorCode) override;
 
 public:
 	//~ 통신 함수
@@ -86,6 +86,7 @@ private:
 	void					ProcessRecv(int32 numOfBytes);
 	void					ProcessSend(int32 numOfBytes);
 
+	/** 수신이나 송신을 걸지 못했을 때 부른다. 오류 종류와 무관하게 끊는다. 걸리지 않은 I/O는 다시 걸리지 않기 때문이다. */
 	void					HandleError(int32 errorCode);
 
 protected:

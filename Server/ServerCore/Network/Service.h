@@ -42,15 +42,15 @@ public:
 	void				Broadcast(SendBufferRef sendBuffer);
 	/** 세션 팩토리로 세션을 만들어 IOCP에 등록한다. 등록에 실패하면 nullptr를 돌려준다. */
 	SessionRef			CreateSession();
-	/** 연결이 완료된 세션을 추가한다. Session::ProcessConnect가 부른다. */
-	void				AddSession(SessionRef session);
+	/** [LOCK] 연결이 완료된 세션을 추가한다. Session::ProcessConnect가 부른다. 접속 상한에 닿았으면 넣지 않고 false. */
+	bool				AddSession(SessionRef session);
 	/** 연결이 끊긴 세션을 제거한다. */
 	void				RemoveSession(SessionRef session);
 	/** [LOCK] 지금 연결된 세션 모두에 Disconnect를 건다. 끊기가 끝나면 세션마다 OnDisconnected가 불리고 집합에서 빠진다. */
 	void				DisconnectAllSessions(const char* cause);
 	/** [LOCK] 연결된 세션 수. 끊기가 끝나 RemoveSession이 불린 세션은 세지 않는다. */
 	int32				GetCurrentSessionCount();
-	/** 최대 세션 수를 반환한다. 서버에서는 "동시에 걸어 두는 AcceptEx의 수"이며, 최대 젒속 인원수와 관련이 없다 */
+	/** 동시에 연결할 수 있는 세션 수. 서버는 넘는 접속을 받지 않고, 클라이언트는 이 수만큼 접속을 건다. */
 	int32				GetMaxSessionCount() { return _maxSessionCount; }
 
 public:

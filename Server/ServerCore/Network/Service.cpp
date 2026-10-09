@@ -61,11 +61,15 @@ SessionRef Service::CreateSession()
 	return session;
 }
 
-void Service::AddSession(SessionRef session)
+bool Service::AddSession(SessionRef session)
 {
 	USE_LOCK
+	if (_sessionCount >= _maxSessionCount)
+		return false;
+
 	_sessionCount++;
 	_sessions.insert(session);
+	return true;
 }
 
 void Service::RemoveSession(SessionRef session)
@@ -94,7 +98,7 @@ bool ClientService::Start()
 	for (int32 i = 0; i < sessionCount; i++)
 	{
 		SessionRef session = CreateSession();
-		if (session->Connect() == false)
+		if (session == nullptr || session->Connect() == false)
 			return false;
 	}
 

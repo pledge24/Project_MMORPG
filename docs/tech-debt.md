@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 22개 (높음 0 · 중간 2 · 낮음 20) · 다음 번호 TD-047
+항목 18개 (높음 0 · 중간 2 · 낮음 16) · 다음 번호 TD-047
 
 ## 작성 방법
 
@@ -136,65 +136,6 @@ TD-003을 고치기 전에는 5초 뒤에 입장을 허용해 낡은 진행을 �
 
 **버그 발생 가능성 증가** — 지금은 설정값과 기본값이 같아서 동작한다. Redis 주소나 포트를 바꾸면 인증 서버만
 옛 주소로 붙고, 게임 서버는 토큰을 찾지 못해 모든 로그인이 `INVALID_TOKEN`으로 끝난다.
-
-## TD-010 리슨 소켓의 네이글 비활성화가 주석과 반대로 동작한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/ServerCore/Network/Listener.cpp` 52~54줄 (`Listen`)
-> 등록일: 2026년 10월 5일
-
-`Listener::Listen`은 주석이 「네이글 알고리즘 비활성화」인데 `SetTcpNoDelay(_listenSocket, false)`로 `false`를 넘긴다.
-대상도 리슨 소켓뿐이고 세션 소켓에는 걸지 않는다. 코드를 읽고 판단했고 패킷 지연은 측정하지 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 세션 소켓에 네이글 알고리즘이 켜져 있어 작은 패킷(이동, 공격)이 모였다가 나갈 수 있다.
-주석을 믿고 지연 원인에서 소켓 옵션을 빼면 진단이 늦어진다.
-
-## TD-011 IOCP 오류 경로의 검사가 틀렸다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/ServerCore/Network/IocpCore.cpp` 11~12줄, 36~49줄
-> 등록일: 2026년 10월 5일
-
-- `CreateIoCompletionPort`는 실패하면 `NULL`을 돌려준다. 생성자는 결과를 `INVALID_HANDLE_VALUE`와 비교하므로 실패를 잡지 못한다
-- `GetQueuedCompletionStatus`가 실패하면 `WAIT_TIMEOUT`이 아닌 경우 모두 `networkEvent->owner`를 역참조한다.
-  완료 패킷을 꺼내지 못한 실패에서는 `networkEvent`가 `nullptr`다
-- I/O가 실패한 완료도 같은 `Dispatch`로 보낸다. `Session`은 `numOfBytes == 0`을 보고 끊으므로, 오류 처리가 바이트 수 0에 기대고 있다
-
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — IOCP 핸들 생성 실패나 포트 자체의 오류가 생기면 원인 로그 없이 워커 스레드가 널 포인터로 죽는다.
-
-## TD-012 리스너의 Accept 오류 경로가 실패를 검사하지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/ServerCore/Network/Listener.cpp` 40~56줄, 118~130줄 · `Server/ServerCore/Network/Service.cpp` 35~50줄
-> 등록일: 2026년 10월 5일
-
-- `Service::CreateSession`이 소켓을 IOCP에 등록하고, `Listener::RegisterAccept`가 같은 소켓을 다시 등록한다. 두 번째 반환값은 보지 않는다
-- `CreateSession`은 등록에 실패하면 `nullptr`를 돌려주는데 `RegisterAccept`와 `ClientService::Start`는 검사하지 않는다
-- `AcceptEx`가 `WSA_IO_PENDING` 말고 다른 오류로 실패하면 `RegisterAccept`가 자신을 다시 부른다. 오류가 계속되면 재귀가 끝나지 않는다
-- `maxSessionCount`는 이름과 달리 동시 접속 상한이 아니라 동시에 걸어 두는 `AcceptEx`의 개수다. `AddSession`은 상한을 보지 않는다
-
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 소켓 자원이 바닥난 상태에서 접속이 몰리면 리스너가 스택 오버플로나
-널 포인터로 죽는다. `maxSessionCount`라는 이름만 보고 접속 상한이 있다고 믿게 된다.
-
-## TD-013 수신 등록이 일부 오류에서 세션을 끊지도 다시 걸지도 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/ServerCore/Network/Session.cpp` 159~181줄 (`RegisterRecv`), 329~341줄 (`HandleError`)
-> 등록일: 2026년 10월 5일
-
-`WSARecv`가 `WSA_IO_PENDING` 말고 다른 오류로 실패하면 `HandleError`를 부른다. `HandleError`는 `WSAECONNRESET`과
-`WSAECONNABORTED`일 때만 끊고, 나머지 오류는 로그만 찍는다. 그 경우 수신이 다시 걸리지 않고 세션은 연결된 상태로 남는다.
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 그 세션은 패킷을 더 받지 못하는데 끊기지 않아서, 접속 종료 저장도 일어나지 않고 룸에 플레이어가 남는다.
 
 ## TD-017 게임 서버가 DB를 준비하기 전에 접속을 받는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
