@@ -15,7 +15,7 @@ namespace
 
         if (result.has_value() == false)
         {
-            SendPacket(player->_session.lock(), response);
+            SendPacket(player->GetSession(), response);
             return;
         }
 
@@ -26,7 +26,7 @@ namespace
 
         *response.mutable_updated_slots() = std::move(result->updatedSlots);
         *response.mutable_updated_stat() = std::move(result->updatedStats);
-        SendPacket(player->_session.lock(), response);
+        SendPacket(player->GetSession(), response);
 
         room.Broadcast(othersBuffer, entityId);
     }
@@ -34,7 +34,7 @@ namespace
 
 void ItemRequests::HandleBuyItem(const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return;
 
@@ -52,7 +52,7 @@ void ItemRequests::HandleBuyItem(const PlayerRef& player, const Protocol::C_BUY_
 
 void ItemRequests::HandleSellItem(const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return;
 
@@ -70,7 +70,7 @@ void ItemRequests::HandleSellItem(const PlayerRef& player, const Protocol::C_SEL
 
 void ItemRequests::HandleUseItem(const PlayerRef& player, const Protocol::C_USE_ITEM& pkt)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return;
 

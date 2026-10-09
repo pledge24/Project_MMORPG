@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "PlayerTestAccess.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -36,9 +37,9 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        player->_userId = USER_ID;
+        PlayerTestAccess::SetUserId(*player, USER_ID);
         player->SetStatValue(Protocol::STAT_TYPE_HP, 100);
-        player->_possession->set_gold(500);
+        PlayerTestAccess::Possession(*player).set_gold(500);
     }
 
     void TearDown() override
@@ -55,7 +56,7 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
     PlayerSaveData data = player->MakeSaveData();
 
     player->SetStatValue(Protocol::STAT_TYPE_HP, 1);
-    player->_possession->set_gold(0);
+    PlayerTestAccess::Possession(*player).set_gold(0);
 
     EXPECT_EQ(data.userId, USER_ID);
     EXPECT_EQ(data.progress.statInfo.info().at(Protocol::STAT_TYPE_HP), 100) << "사본이 살아 있는 스탯을 따라가면 DB 스레드가 룸 스레드와 경쟁한다";
@@ -65,12 +66,12 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
 TEST_F(PlayerSaveDataTest, SnapshotCarriesDirtyFlags)
 {
     RepeatedPtrField<Protocol::Slot> addedSlots;
-    ASSERT_TRUE(player->_inventory->AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
+    ASSERT_TRUE(player->GetInventory().AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
     ASSERT_FALSE(addedSlots.empty());
     const int32 slotId = addedSlots[0].slot_id();
 
     PlayerSaveData data = player->MakeSaveData();
-    player->_inventory->ClearDirtyFlags();
+    player->GetInventory().ClearDirtyFlags();
 
     ASSERT_TRUE(data.gearDirtyFlags.has_value());
     ASSERT_LT(slotId, (int32)data.gearDirtyFlags->size());

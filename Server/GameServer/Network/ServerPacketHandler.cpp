@@ -388,7 +388,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
     room->DoAsync([pkt, player]()
         {
             // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
-            GameSessionRef session = player->_session.lock();
+            GameSessionRef session = player->GetSession();
             if (session == nullptr)
                 return;
 

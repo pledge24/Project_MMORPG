@@ -75,13 +75,13 @@ protected:
     Protocol::Slot AddAndGetSlot(int32 templateId, int32 count)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(player->_inventory->AddItem(&addedSlots, templateId, count));
+        EXPECT_TRUE(player->GetInventory().AddItem(&addedSlots, templateId, count));
         return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
     }
 
     int32 CountIn(const Protocol::Slot& slot)
     {
-        Protocol::Slot* current = player->_inventory->GetSlot(slot.type(), slot.slot_id());
+        Protocol::Slot* current = player->GetInventory().GetSlot(slot.type(), slot.slot_id());
         return (current != nullptr && current->has_item()) ? current->item().count() : 0;
     }
 

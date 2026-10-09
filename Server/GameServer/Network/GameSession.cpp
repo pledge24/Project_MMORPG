@@ -23,7 +23,7 @@ void GameSession::OnDisconnected()
 		return;
 
 	// 표시를 먼저 쓰고 룸을 읽는다. 순서는 Room::EnterPlayer의 주석을 본다.
-	player->_disconnected.store(true);
+	player->MarkDisconnected();
 
 	// 룸에 들어간 적이 없으면 이 세션에서 바뀐 것이 없으므로 저장하지 않는다.
 	// 불러오기가 도중에 실패했다면 절반만 채워진 상태를 덮어쓰게 된다.

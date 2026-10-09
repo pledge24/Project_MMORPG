@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "PlayerTestAccess.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -58,9 +59,9 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        player->_playerInfo->set_level(1);
-        player->_possession->set_gold(START_GOLD);
+        PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        PlayerTestAccess::PlayerInfo(*player).set_level(1);
+        PlayerTestAccess::Possession(*player).set_gold(START_GOLD);
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, BASE_PHYSICAL_ATTACK);
     }
 
@@ -74,7 +75,7 @@ protected:
     Protocol::Slot AddToInventory(int32 templateId)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(player->_inventory->AddItem(&addedSlots, templateId, 1));
+        EXPECT_TRUE(player->GetInventory().AddItem(&addedSlots, templateId, 1));
         return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
     }
 
@@ -83,17 +84,17 @@ protected:
     {
         auto result = player->ProcessEquipGear(AddToInventory(SWORD_TEMPLATE_ID));
         EXPECT_TRUE(result.has_value());
-        return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return *player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
     const Protocol::Slot& InventorySlot(const Protocol::Slot& slot)
     {
-        return *player->_inventory->GetSlot(slot.type(), slot.slot_id());
+        return *player->GetInventory().GetSlot(slot.type(), slot.slot_id());
     }
 
     const Protocol::Slot& WeaponSlot()
     {
-        return *player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return *player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON);
     }
 
     PlayerRef player;
@@ -106,7 +107,7 @@ TEST_F(PlayerItemRequestTest, BuyingUnknownTemplateIsRejectedWithoutTouchingTabl
     EXPECT_FALSE(player->ProcessBuyItem(UNKNOWN_TEMPLATE_ID).has_value());
     EXPECT_EQ(Gamedata::FindItem(UNKNOWN_TEMPLATE_ID), nullptr)
         << "없는 번호를 표에 끼워 넣으면 여러 룸 스레드가 전역 표를 동시에 바꾼다";
-    EXPECT_EQ(player->_possession->gold(), START_GOLD);
+    EXPECT_EQ(player->GetPossession().gold(), START_GOLD);
 }
 
 /* 판매 */
@@ -130,7 +131,7 @@ TEST_F(PlayerItemRequestTest, SellingWithForgedTemplateIsRejected)
     EXPECT_FALSE(player->ProcessSellItem(requestSlot).has_value())
         << "싼 칼을 비싼 칼 번호로 팔면 골드가 생긴다";
 
-    EXPECT_EQ(player->_possession->gold(), START_GOLD);
+    EXPECT_EQ(player->GetPossession().gold(), START_GOLD);
     EXPECT_TRUE(InventorySlot(requestSlot).has_item());
 }
 
@@ -140,7 +141,7 @@ TEST_F(PlayerItemRequestTest, SellingUnsellableItemIsRejected)
 
     EXPECT_FALSE(player->ProcessSellItem(requestSlot).has_value());
 
-    EXPECT_EQ(player->_possession->gold(), START_GOLD);
+    EXPECT_EQ(player->GetPossession().gold(), START_GOLD);
     EXPECT_TRUE(InventorySlot(requestSlot).has_item());
 }
 
@@ -209,7 +210,7 @@ TEST_F(PlayerItemRequestTest, UnequipReturnsEquippedItem)
     ASSERT_TRUE(result.has_value());
 
     EXPECT_FALSE(WeaponSlot().has_item());
-    const Protocol::Slot* returnedSlot = player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0);
+    const Protocol::Slot* returnedSlot = player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0);
     ASSERT_TRUE(returnedSlot->has_item());
     EXPECT_EQ(returnedSlot->item().template_id(), SWORD_TEMPLATE_ID);
     EXPECT_EQ(returnedSlot->item().item_uid(), equippedUid);
@@ -226,7 +227,7 @@ TEST_F(PlayerItemRequestTest, UnequippingWithForgedTemplateChangesNothing)
     EXPECT_FALSE(result.has_value()) << "칼을 빼고 대검을 돌려받으면 안 된다";
 
     EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_FALSE(player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item());
+    EXPECT_FALSE(player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item());
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), equippedAttack);
 }
 

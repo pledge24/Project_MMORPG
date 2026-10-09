@@ -16,8 +16,8 @@ enum
 class InventoryComponent : public EntityComponent
 {
 public:
-    /** owner의 _possession에 빈 슬롯을 만든다. 같은 플레이어에 두 번 만들면 슬롯이 두 벌 생긴다. */
-    explicit InventoryComponent(PlayerRef owner);
+    /** inventory(소유자 Possession의 인벤토리)에 빈 슬롯을 만든다. 같은 인벤토리에 두 번 만들면 슬롯이 두 벌 생긴다. */
+    InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory);
     virtual ~InventoryComponent();
 
     /**

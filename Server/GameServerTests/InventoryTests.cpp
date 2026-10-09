@@ -187,7 +187,7 @@ protected:
     bool AddByTemplate(int32 templateId, int32 count, OUT Protocol::Slot* firstAdded)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        if (player->_inventory->AddItem(&addedSlots, templateId, count) == false || addedSlots.empty())
+        if (player->GetInventory().AddItem(&addedSlots, templateId, count) == false || addedSlots.empty())
             return false;
 
         firstAdded->CopyFrom(addedSlots[0]);
@@ -209,7 +209,7 @@ TEST_P(InventorySlotTypeTest, AddedItemIsVisibleThroughGetSlot)
     Protocol::Slot added;
     ASSERT_TRUE(AddByTemplate(slotCase.templateId, 1, &added));
 
-    Protocol::Slot* stored = player->_inventory->GetSlot(slotCase.slotType, added.slot_id());
+    Protocol::Slot* stored = player->GetInventory().GetSlot(slotCase.slotType, added.slot_id());
     ASSERT_NE(stored, nullptr);
     EXPECT_EQ(stored->type(), slotCase.slotType) << "조회가 다른 인벤토리를 가리킨다";
     ASSERT_TRUE(stored->has_item());
@@ -229,7 +229,7 @@ TEST_P(InventorySlotTypeTest, RemoveItemEmptiesTheSameSlot)
     request.set_type(slotCase.slotType);
 
     Protocol::Slot removed;
-    ASSERT_TRUE(player->_inventory->RemoveItem(request, &removed, 1));
+    ASSERT_TRUE(player->GetInventory().RemoveItem(request, &removed, 1));
     EXPECT_EQ(removed.type(), slotCase.slotType) << "삭제가 다른 인벤토리를 가리킨다";
     EXPECT_EQ(removed.state(), Protocol::UpdateState::UPDATE_STATE_REMOVED);
     EXPECT_FALSE(removed.has_item());
@@ -260,10 +260,10 @@ TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
     request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
 
     Protocol::Slot removed;
-    player->_inventory->RemoveItem(request, &removed, 1);
+    player->GetInventory().RemoveItem(request, &removed, 1);
 
     Protocol::Slot* gearSlot =
-        player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, gearAdded.slot_id());
+        player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, gearAdded.slot_id());
     ASSERT_NE(gearSlot, nullptr);
     ASSERT_TRUE(gearSlot->has_item()) << "기타 슬롯 삭제가 장비 인벤토리를 지웠다";
     EXPECT_EQ(gearSlot->item().template_id(), GEAR_TEMPLATE_ID);
@@ -276,16 +276,16 @@ TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
 // 실패한 제거가 슬롯을 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
 TEST_F(InventoryTest, FailedRemoveDoesNotMarkSlotDirty)
 {
-    player->_inventory->ClearDirtyFlags();
+    player->GetInventory().ClearDirtyFlags();
 
     Protocol::Slot request;
     request.set_slot_id(0);
     request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
 
     Protocol::Slot removed;
-    ASSERT_FALSE(player->_inventory->RemoveItem(request, &removed, 1)) << "빈 슬롯 제거는 실패해야 한다";
+    ASSERT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1)) << "빈 슬롯 제거는 실패해야 한다";
 
-    const vector<bool>* flags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+    const vector<bool>* flags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
     ASSERT_NE(flags, nullptr) << "더티 플래그 표에 소비 아이템 타입이 없다";
     EXPECT_FALSE((*flags)[0]) << "실패한 제거가 슬롯을 더티로 만들었다";
 }
@@ -299,7 +299,7 @@ TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
     request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
 
     Protocol::Slot removed;
-    ASSERT_FALSE(player->_inventory->RemoveItem(request, &removed, 1));
+    ASSERT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1));
 
     Protocol::Slot added;
     ASSERT_TRUE(AddByTemplate(CONSUMABLE_TEMPLATE_ID, 1, &added));
@@ -319,13 +319,13 @@ TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
     SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
-    ASSERT_TRUE(player->_inventory->AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
+    ASSERT_TRUE(player->GetInventory().AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
     EXPECT_EQ(addedSlots.size(), 2) << "바뀐 슬롯이 복제 목록에 전부 실리지 않았다";
 
     Protocol::Slot* first =
-        player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 0);
+        player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 0);
     Protocol::Slot* second =
-        player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 1);
+        player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 1);
 
     EXPECT_LE(first->item().count(), MAX_STACK) << "한 슬롯에 스택 상한을 넘겨 쌓았다";
     ASSERT_TRUE(second->has_item()) << "초과분이 다음 슬롯으로 넘어가지 않았다";
@@ -337,20 +337,20 @@ TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
     constexpr int32 MAX_STACK = 10;
     SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
-    ASSERT_TRUE(player->_inventory->AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
-    player->_inventory->ClearDirtyFlags();
+    ASSERT_TRUE(player->GetInventory().AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
+    player->GetInventory().ClearDirtyFlags();
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
-    EXPECT_FALSE(player->_inventory->AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, 2))
+    EXPECT_FALSE(player->GetInventory().AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, 2))
         << "빈 칸이 1개뿐인데 2개를 받아들였다";
     EXPECT_TRUE(addedSlots.empty()) << "거절한 추가가 복제 목록을 채웠다";
 
     Protocol::Slot* last =
-        player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS - 1);
+        player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS - 1);
     ASSERT_NE(last, nullptr);
     EXPECT_EQ(last->item().count(), MAX_STACK - 1) << "거절한 추가가 슬롯 일부를 바꿨다";
 
-    vector<bool>* dirtyFlags = player->_inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+    vector<bool>* dirtyFlags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
     ASSERT_NE(dirtyFlags, nullptr);
     EXPECT_EQ(std::count(dirtyFlags->begin(), dirtyFlags->end(), true), 0) << "거절한 추가가 더티 플래그를 켰다";
 }
@@ -376,7 +376,7 @@ TEST_F(InventoryTest, RemoveWithUnknownSlotTypeIsRejected)
         request.set_slot_id(0);
         request.set_type(unknownType);
 
-        EXPECT_FALSE(player->_inventory->RemoveItem(request, &removed, 1))
+        EXPECT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1))
             << "매핑 표에 없는 SlotType(" << unknownType << ") 제거가 거부되지 않았다";
     }
 }
@@ -391,7 +391,7 @@ TEST_F(InventoryTest, RemoveWithOutOfRangeSlotIdIsRejected)
         request.set_slot_id(outOfRangeSlotId);
         request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
 
-        EXPECT_FALSE(player->_inventory->RemoveItem(request, &removed, 1))
+        EXPECT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1))
             << "범위 밖 slot_id(" << outOfRangeSlotId << ") 제거가 거부되지 않았다";
     }
 
@@ -400,12 +400,12 @@ TEST_F(InventoryTest, RemoveWithOutOfRangeSlotIdIsRejected)
     gearInstance.set_template_id(GEAR_TEMPLATE_ID);
 
     Protocol::Slot added;
-    ASSERT_TRUE(player->_inventory->AddItem(&added, gearInstance, 1, LAST_SLOT_ID));
+    ASSERT_TRUE(player->GetInventory().AddItem(&added, gearInstance, 1, LAST_SLOT_ID));
 
     Protocol::Slot lastSlotRequest;
     lastSlotRequest.set_slot_id(LAST_SLOT_ID);
     lastSlotRequest.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
-    EXPECT_TRUE(player->_inventory->RemoveItem(lastSlotRequest, &removed, 1))
+    EXPECT_TRUE(player->GetInventory().RemoveItem(lastSlotRequest, &removed, 1))
         << "마지막 유효 슬롯까지 거부됐다";
 }
 
@@ -413,7 +413,7 @@ TEST_F(InventoryTest, GetSlotWithUnknownSlotTypeReturnsNull)
 {
     for (Protocol::SlotType unknownType : UNKNOWN_SLOT_TYPES)
     {
-        EXPECT_EQ(player->_inventory->GetSlot(unknownType, 0), nullptr)
+        EXPECT_EQ(player->GetInventory().GetSlot(unknownType, 0), nullptr)
             << "매핑 표에 없는 SlotType(" << unknownType << ") 조회가 널을 반환하지 않았다";
     }
 }
@@ -422,12 +422,12 @@ TEST_F(InventoryTest, GetSlotWithOutOfRangeSlotIdReturnsNull)
 {
     for (int32 outOfRangeSlotId : OUT_OF_RANGE_SLOT_IDS)
     {
-        EXPECT_EQ(player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, outOfRangeSlotId), nullptr)
+        EXPECT_EQ(player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, outOfRangeSlotId), nullptr)
             << "범위 밖 slot_id(" << outOfRangeSlotId << ") 조회가 널을 반환하지 않았다";
     }
 
     // 경계 안쪽은 그대로 동작해야 한다. 거부가 유효 범위까지 먹으면 안 된다.
-    EXPECT_NE(player->_inventory->GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, LAST_SLOT_ID), nullptr)
+    EXPECT_NE(player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, LAST_SLOT_ID), nullptr)
         << "마지막 유효 슬롯 조회까지 거부됐다";
 }
 
@@ -446,9 +446,9 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
     Protocol::Slot removed;
     for (int32 attempt = 0; attempt < 2; attempt++)
     {
-        EXPECT_FALSE(player->_inventory->RemoveItem(request, &removed, 1))
+        EXPECT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1))
             << attempt << "번째 시도에서 판정이 달라졌다";
-        EXPECT_EQ(player->_inventory->GetSlot(UNKNOWN_TYPE, 0), nullptr)
+        EXPECT_EQ(player->GetInventory().GetSlot(UNKNOWN_TYPE, 0), nullptr)
             << attempt << "번째 조회에서 판정이 달라졌다";
     }
 
@@ -459,7 +459,7 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
     Protocol::Slot validRequest;
     validRequest.set_slot_id(added.slot_id());
     validRequest.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
-    EXPECT_TRUE(player->_inventory->RemoveItem(validRequest, &removed, 1))
+    EXPECT_TRUE(player->GetInventory().RemoveItem(validRequest, &removed, 1))
         << "거부된 요청이 정상 경로를 망가뜨렸다";
 }
 
@@ -504,13 +504,13 @@ TEST_F(InventoryTest, SlotTypeMappingKeySetMatchesDeclaration)
     // 없다는 것뿐이다. 위 「관측 수단과 그 한계」를 함께 볼 것.
     for (const StoredSlotCase& storedCase : STORED_SLOT_CASES)
     {
-        EXPECT_NE(player->_inventory->GetSlot(storedCase.slotType, 0), nullptr)
+        EXPECT_NE(player->GetInventory().GetSlot(storedCase.slotType, 0), nullptr)
             << Protocol::SlotType_Name(storedCase.slotType) << " 가 매핑 표에서 빠졌다";
     }
 
     for (Protocol::SlotType excludedSlotType : UNKNOWN_SLOT_TYPES)
     {
-        EXPECT_EQ(player->_inventory->GetSlot(excludedSlotType, 0), nullptr)
+        EXPECT_EQ(player->GetInventory().GetSlot(excludedSlotType, 0), nullptr)
             << Protocol::SlotType_Name(excludedSlotType)
             << " 가 매핑 표에 들어왔다. 의도한 변경이라면 위 기대 집합에서 자리를 옮겨라";
     }
@@ -536,7 +536,7 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
 
         // 어느 아이템 타입으로 들어갔는지는 더티 플래그가 어느 표에 찍혔는지로 확인한다.
         // 이것까지 봐야 관측한 키가 선언한 아이템 타입이라고 말할 수 있다.
-        const vector<bool>* dirtyFlags = player->_inventory->GetDirtyFlags(storedCase.itemType);
+        const vector<bool>* dirtyFlags = player->GetInventory().GetDirtyFlags(storedCase.itemType);
         ASSERT_NE(dirtyFlags, nullptr) << "더티 플래그 표에 이 아이템 타입이 없다";
         EXPECT_TRUE((*dirtyFlags)[added.slot_id()]) << "선언한 아이템 타입이 아닌 저장소에 아이템이 들어갔다";
     }
@@ -546,7 +546,7 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
     // 이 검사가 있어야 키 집합이 양쪽에서 고정된다.
     for (Protocol::ItemType excludedItemType : EXCLUDED_ITEM_TYPES)
     {
-        EXPECT_EQ(player->_inventory->GetDirtyFlags(excludedItemType), nullptr)
+        EXPECT_EQ(player->GetInventory().GetDirtyFlags(excludedItemType), nullptr)
             << Protocol::ItemType_Name(excludedItemType)
             << " 가 더티 플래그 표에 들어왔다. 의도한 변경이라면 위 기대 집합에서 자리를 옮겨라";
     }

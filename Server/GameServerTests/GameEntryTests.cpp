@@ -115,12 +115,12 @@ TEST_F(GameEntryTest, ValidProgressRegistersPlayerInSession)
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(session->_player.load(), player);
-    EXPECT_EQ(player->_userId, USER_ID);
-    EXPECT_EQ(player->_playerInfo->character_id(), CHARACTER_ID);
+    EXPECT_EQ(player->GetUserId(), USER_ID);
+    EXPECT_EQ(player->GetPlayerInfo().character_id(), CHARACTER_ID);
     EXPECT_EQ(player->GetEnteringRoomId(), 10) << "첫 룸 입장은 불러온 룸으로 간다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MAX_HP);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), 50) << "최대 경험치는 저장하지 않고 레벨 표에서 정한다";
-    EXPECT_EQ(player->_possession->gold(), 300);
+    EXPECT_EQ(player->GetPossession().gold(), 300);
 }
 
 TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
@@ -130,14 +130,14 @@ TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
     PlayerRef player = GameEntry::SpawnPlayer(session, progress);
     ASSERT_NE(player, nullptr);
 
-    const Protocol::Slot* potionSlot = player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5);
+    const Protocol::Slot* potionSlot = player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5);
     ASSERT_TRUE(potionSlot->has_item());
     EXPECT_EQ(potionSlot->item().template_id(), POTION_TEMPLATE_ID);
     EXPECT_EQ(potionSlot->item().count(), 3);
-    EXPECT_FALSE(player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 0)->has_item());
+    EXPECT_FALSE(player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 0)->has_item());
 
-    EXPECT_EQ(player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON)->item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_TRUE(player->_inventory->GetDirtyFlags(Protocol::ITEM_TYPE_CONSUMABLE)->at(5) == false)
+    EXPECT_EQ(player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON)->item().template_id(), SWORD_TEMPLATE_ID);
+    EXPECT_TRUE(player->GetInventory().GetDirtyFlags(Protocol::ITEM_TYPE_CONSUMABLE)->at(5) == false)
         << "불러온 슬롯을 바뀐 슬롯으로 표시하면 다음 저장이 바뀌지 않은 행까지 쓴다";
 }
 

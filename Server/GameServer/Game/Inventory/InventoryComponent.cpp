@@ -2,9 +2,8 @@
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Entities/Player.h"
 
-InventoryComponent::InventoryComponent(PlayerRef owner) : EntityComponent(owner)
+InventoryComponent::InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory) : EntityComponent(owner)
 {
-    Protocol::Inventory* inventory = owner->_possession->mutable_inventory();
     
     for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
     {

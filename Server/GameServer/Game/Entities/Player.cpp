@@ -68,8 +68,8 @@ bool Player::Init(const SpawnParams& params)
         _userId = params.session->_userId;
     }
 
-    _inventory = make_shared<InventoryComponent>(self);
-    _equipment = make_shared<EquipmentComponent>(self);
+    _inventory = make_shared<InventoryComponent>(self, _possession->mutable_inventory());
+    _equipment = make_shared<EquipmentComponent>(self, _possession->mutable_equipped_gear());
 
     if (params.progress != nullptr)
         return ApplyProgress(*params.progress) && OnLoaded();

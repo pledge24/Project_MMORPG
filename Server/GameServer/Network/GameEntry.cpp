@@ -21,7 +21,7 @@ Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef
     enterGamePkt.set_success(true);
     enterGamePkt.mutable_player()->CopyFrom(player->GetEntityInfo());
     enterGamePkt.mutable_stat_info()->CopyFrom(player->GetStatInfo());
-    enterGamePkt.mutable_possession()->CopyFrom(*player->_possession);
+    enterGamePkt.mutable_possession()->CopyFrom(player->GetPossession());
 
     return enterGamePkt;
 }

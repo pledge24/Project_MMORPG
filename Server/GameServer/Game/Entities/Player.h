@@ -185,13 +185,35 @@ private:
     void RefreshEquippedGearSummary();
 
 public:
-	weak_ptr<GameSession> _session;
-    int64 _userId = 0;                   // 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 값을 따로 들고 있다
-
+    //~ 세션
+    /** 세션이 끊겨 사라졌거나 세션 없이 만든 플레이어(테스트)면 nullptr. */
+    GameSessionRef GetSession() const { return _session.lock(); }
+    /** 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 계정 번호를 따로 든다. Init 뒤로는 바뀌지 않는다. */
+    int64 GetUserId() const { return _userId; }
+    /** 접속 종료를 표시한다. 세션 스레드(GameSession::OnDisconnected)가 부른다. */
+    void MarkDisconnected() { _disconnected.store(true); }
     /**
-     * 접속 종료 표시. 세션 스레드가 쓰고 룸 큐가 읽는다.
-     * 룸 이동 중에 끊기면 다음 룸의 EnterPlayer가 이 표시를 보고 퇴장과 저장을 이어 받는다.
+     * 룸 큐(Room::EnterPlayer)가 읽는다. 룸 이동 중에 끊겼으면 다음 룸이 이 표시를 보고 퇴장과 저장을 이어 받는다.
+     * 세션 스레드가 쓰고 룸 큐가 읽으므로 atomic이다.
      */
+    bool IsDisconnected() const { return _disconnected.load(); }
+
+    //~ 상태 읽기
+    const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
+    const Protocol::Possession& GetPossession() const { return *_possession; }
+
+    //~ 컴포넌트. 쓰기는 컴포넌트의 함수(AddItem, Equip 등)로만 한다.
+    InventoryComponent& GetInventory() { return *_inventory; }
+    const InventoryComponent& GetInventory() const { return *_inventory; }
+    EquipmentComponent& GetEquipment() { return *_equipment; }
+    const EquipmentComponent& GetEquipment() const { return *_equipment; }
+
+private:
+    /** 테스트가 준비 단계에서 레벨, 직업, 골드를 직접 채운다(GameServerTests/PlayerTestAccess.h). */
+    friend struct PlayerTestAccess;
+
+	weak_ptr<GameSession> _session;
+    int64 _userId = 0;
     atomic<bool> _disconnected = false;
 
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
@@ -204,7 +226,6 @@ public:
     /** Init에서 만든다. */
     EquipmentComponentRef _equipment;
 
-private:
     int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
 
     NextLevelUpData _nextLevelUpData;

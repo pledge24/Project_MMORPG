@@ -115,7 +115,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     {
         wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
 
-        if (auto session = enterPlayer->_session.lock())
+        if (auto session = enterPlayer->GetSession())
         {
             enterRoomPkt.set_success(false);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
@@ -133,13 +133,13 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
         // 룸 이동 중에 접속이 끊겼으면 이전 룸은 이 플레이어를 찾지 못한다. 퇴장과 저장을 여기서 이어 받는다.
         // AddEntity가 _room을 먼저 쓰고 여기서 표시를 읽는다. OnDisconnected는 표시를 먼저 쓰고 _room을 읽는다.
         // 그래서 둘 중 적어도 한쪽은 상대를 본다. 둘 다 보면 이 룸 큐에서 두 번 돌고, 두 번째는 퇴장에 실패해 저장하지 않는다.
-        if (enterPlayer->_disconnected.load())
+        if (enterPlayer->IsDisconnected())
         {
             GameSession::LeaveGame(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
             return false;
         }
 
-        if (auto session = enterPlayer->_session.lock())
+        if (auto session = enterPlayer->GetSession())
         {
             enterRoomPkt.set_success(true);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
@@ -181,7 +181,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
         }
 
         // leavePlayer: Despawn Packet 전송
-        if (auto session = leavePlayer->_session.lock())
+        if (auto session = leavePlayer->GetSession())
         {
             if (transferRoom == false)
             {
@@ -229,7 +229,7 @@ optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
 
 void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return;
 
@@ -408,7 +408,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
     {
         cout << "C_HandleRespawn: " << rejection.value() << '\n';
 
-        if (auto session = player->_session.lock())
+        if (auto session = player->GetSession())
         {
             Protocol::S_RESPAWN respawnPkt;
             respawnPkt.set_success(false);
@@ -552,7 +552,7 @@ void Room::HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward)
 
     player->OnGetReward(rewardResultPkt);
 
-    if (auto session = player->_session.lock())
+    if (auto session = player->GetSession())
     {
         SendPacket(session, rewardResultPkt);
     }
@@ -579,7 +579,7 @@ void Room::HandleDie(CreatureRef creature)
 
 bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return false;
 
@@ -631,7 +631,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 
     // 해당 플레이어에게 Room 엔티티 전송
     Protocol::S_SPAWN spawnPkt;
-    if (auto session = player->_session.lock())
+    if (auto session = player->GetSession())
     {
         for (auto& item : _entities)
         {
@@ -762,7 +762,7 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 		if (player->GetEntityId() == exceptId)
 			continue;
 
-		if (GameSessionRef session = player->_session.lock())
+		if (GameSessionRef session = player->GetSession())
 			session->Send(sendBuffer);
 	}
 }
