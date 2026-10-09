@@ -24,6 +24,9 @@
     <Filter Include="GameServer\Game\Equipment">
       <UniqueIdentifier>{f5558365-b878-4854-9d36-43c09c1a2c66}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\AI">
+      <UniqueIdentifier>{1996a35a-3878-408d-9050-caf0a7d99800}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Inventory">
       <UniqueIdentifier>{07cf74dd-b75d-5821-a5fd-7f0ec6092656}</UniqueIdentifier>
     </Filter>
@@ -61,6 +64,7 @@
       <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="RoomRequestTests.cpp" />
+    <ClCompile Include="MonsterAITests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="ItemDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
@@ -167,6 +171,9 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp">
       <Filter>GameServer\Game\Equipment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp">
+      <Filter>GameServer\Game\AI</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
       <Filter>GameServer\Game\Data</Filter>

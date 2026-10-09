@@ -42,18 +42,11 @@ int main(void)
 
     const Config config = Config::Load(&Config::ReadProcessEnv);
 
-    // Room 추가
-    for (const auto& [roomId, mapTemplate] : Gamedata::GetMaps())
+    // 룸은 여기서 한 번만 만든다. 워커 스레드가 뜬 뒤로는 룸 목록을 읽기만 한다.
+    if (GRoomManager->CreateAllRooms() == false)
     {
-        RoomRef room = GRoomManager->CreateRoom(roomId);
-        if (room == nullptr)
-        {
-            // 룸 데이터가 틀렸다는 뜻이다. 룸 하나가 빠진 채로 뜨면 그 룸으로 가는 요청이 모두 깨진다.
-            GLogger->Error("Room {} 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요", roomId);
-            return 1;
-        }
-
-        GRoomManager->AddRoom(roomId, room);
+        GLogger->Error("룸 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
+        return 1;
     }
 
 	const int maxSessionCount = 30;

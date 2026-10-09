@@ -41,6 +41,9 @@
     <Filter Include="Game\Equipment">
       <UniqueIdentifier>{c36c017d-b07a-4db4-951a-8826a8aa4a9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\AI">
+      <UniqueIdentifier>{710ba740-885c-460b-b0eb-233bf434b28e}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
     </Filter>
@@ -142,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\AI\MonsterAIComponent.cpp">
+      <Filter>Game\AI</Filter>
     </ClCompile>
     <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
@@ -276,6 +282,9 @@
     </ClInclude>
     <ClInclude Include="Game\Equipment\EquipmentComponent.h">
       <Filter>Game\Equipment</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\AI\MonsterAIComponent.h">
+      <Filter>Game\AI</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\JsonProperty.h">
       <Filter>Game\Data</Filter>

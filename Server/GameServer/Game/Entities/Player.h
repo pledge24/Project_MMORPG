@@ -8,6 +8,7 @@ class Room;
 class InventoryComponent;
 class EquipmentComponent;
 struct RoomEnterData;
+struct TownRespawn;
 
 /**
  * 다음 레벨로 오를 때 더할 스탯 증가량. 레벨 표의 다음 행을 미리 읽어 둔 것이다.
@@ -80,7 +81,7 @@ struct PlayerSpawnParams : public Creature::SpawnParams
 
 /**
  * 접속한 캐릭터 하나를 나타내는 Creature.
- * Tick을 돌리지 않는다.
+ * 룸 틱을 받아 인벤토리와 장비 컴포넌트에 넘기기만 한다.
  */
 class Player : public Creature
 {
@@ -127,10 +128,10 @@ public:
     /** 가방에 자리가 없으면 장비 칸을 비우기 전에 거절한다(nullopt). 결과의 templateId는 0이다. */
     optional<GearChangeResult> ProcessUnequipGear(const Protocol::Slot& requestSlot);
     /**
-     * 소속 룸이 없으면 nullopt. 위치를 respawnPos로 옮기고 사망 표시를 지운다.
+     * 위치를 respawnPos로 옮기고 사망 표시를 지운다. 소속 룸을 보지 않으므로 룸에서 뺀 뒤에도 부를 수 있다.
      * 마을 리스폰만 경험치 감소(최대 경험치의 10%)와 HP 절반 회복을 적용한다.
      */
-    optional<RespawnResult> ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos);
+    RespawnResult ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos);
 
     //~ 이벤트
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
@@ -150,14 +151,12 @@ public:
     int32 GetEnteringRoomId() { return _enteringRoomId; }
     /** 최대 레벨은 직업 레벨 표의 마지막 레벨이다. 레벨 표가 없는 직업도 true다. */
     bool IsMaxLevel() const;
-    /** 마을(Gamedata::GetTownRoomId)의 룸과 리스폰 위치를 찾는다. 마을 룸이나 그 룸의 리스폰 지점이 없으면 false. */
-    bool FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos);
 
     //~ 접속 종료
     /** 룸 큐 위에서만 부른다. */
     PlayerSaveData MakeSaveData() const;
-    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 마을 리스폰 지점이 없으면 false. */
-    bool ApplyTownRespawnForSave();
+    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 룸 번호도 마을로 바꾼다. */
+    void ApplyTownRespawnForSave(const TownRespawn& town);
 
 private:
     //~ 불러오기

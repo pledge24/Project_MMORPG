@@ -206,6 +206,7 @@
     <ClInclude Include="Game\Inventory\InventoryComponent.h" />
     <ClInclude Include="Game\Combat\Combat.h" />
     <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
+    <ClInclude Include="Game\AI\MonsterAIComponent.h" />
     <ClInclude Include="Game\Data\Gamedata.h" />
     <ClInclude Include="Game\Data\GamedataParser.h" />
     <ClInclude Include="Game\Data\Templates.h" />
@@ -272,6 +273,7 @@
     <ClCompile Include="Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="Game\Combat\Combat.cpp" />
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp" />
+    <ClCompile Include="Game\AI\MonsterAIComponent.cpp" />
     <ClCompile Include="Game\Data\Gamedata.cpp" />
     <ClCompile Include="Game\Data\GamedataParser.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />

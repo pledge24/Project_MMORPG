@@ -114,10 +114,12 @@ private:
     vector<LevelTemplate> _rows;
 };
 
-/** 맵 표의 포털 하나. 들어서면 목적지 룸의 목적지 좌표로 옮긴다. */
+/** 맵 표의 포털 하나. 출발 위치에서 맵의 portalRadius 안에 들어서면 목적지 룸의 목적지 좌표로 옮긴다. */
 struct PortalTemplate
 {
     int32 portalId = 0;
+    /** 포털이 놓인 위치. 이 룸의 좌표다. */
+    TemplatePos srcPos;
     int32 dstRoomId = 0;
     TemplatePos dstPos;
     float dstYaw = 0.f;
@@ -128,6 +130,8 @@ struct MapTemplate
 {
     /** 룸 번호로 쓴다. */
     int32 templateId = 0;
+    /** 이 룸이 속한 맵. 같은 맵의 룸끼리는 포털로, 다른 맵의 룸으로는 맵 간 이동으로 옮긴다. */
+    int32 mapId = 0;
     TemplatePos center;
     /** X 방향 반경. */
     float depthHalfExtent = 0.f;
@@ -136,6 +140,8 @@ struct MapTemplate
     /** 리스폰 지점이 있는 맵만 값이 있다. 지금은 마을 하나뿐이다. */
     optional<TemplatePos> respawnPoint;
     vector<PortalTemplate> portals;
+    /** 이 룸의 포털을 탈 수 있는 거리. 평면(x, y) 거리로 재고 0보다 크다. */
+    float portalRadius = 0.f;
 
     /** 이 룸에 스폰할 몬스터 템플릿. 비어 있으면 몬스터를 스폰하지 않는다. */
     vector<int32> monsterIds;

@@ -172,6 +172,7 @@
     <ClCompile Include="PacketHandlerTests.cpp" />
     <ClCompile Include="..\GameServer\Network\ItemRequests.cpp" />
     <ClCompile Include="RoomRequestTests.cpp" />
+    <ClCompile Include="MonsterAITests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="ItemDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
@@ -246,6 +247,7 @@
     <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />

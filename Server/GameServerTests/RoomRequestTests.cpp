@@ -20,6 +20,9 @@
 namespace
 {
     constexpr int32 ROOM_ID = 10;
+    constexpr int32 TOWN_ROOM_ID = 1;
+    constexpr float TOWN_RESPAWN_X = 300.f;
+    constexpr int32 PLAYER_MAX_HP = 100;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
 
     PlayerProgress MakeProgressWithSword()
@@ -57,10 +60,18 @@ protected:
 
         LevelTemplate level1;
         level1.level = 1;
+        level1.maxHp = PLAYER_MAX_HP;
+
+        // 마을은 룸 객체 없이 맵 표에만 둔다. 리스폰 규칙은 맵 표만 읽는다.
+        MapTemplate town;
+        town.templateId = TOWN_ROOM_ID;
+        town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 0.f, 0.f };
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.maps[TOWN_ROOM_ID] = town;
+        tables.townRoomId = TOWN_ROOM_ID;
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;
@@ -200,4 +211,46 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
     ItemRequests::HandleUnequipGear(*room, player, unequipPkt);
 
     SUCCEED() << "세션이 없어도 응답을 건너뛰고 끝나야 한다";
+}
+
+// 사망한 채 끊긴 플레이어는 사망 화면에서 마을 리스폰을 누른 상태로 저장한다. 사망 여부는 저장되지 않아서,
+// 그대로 저장하면 다시 접속했을 때 HP 0으로 살아서 들어온다. 저장은 룸에서 뺀 뒤에 뜨므로 리스폰 규칙이
+// 소속 룸이나 전역 룸 관리자에 기대면 이 저장이 실패한다.
+TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
+{
+    Protocol::AttackInfo lethalAttack;
+    lethalAttack.set_damage(PLAYER_MAX_HP * 10);
+    player->OnHit(nullptr, lethalAttack);
+    ASSERT_TRUE(player->IsDead());
+
+    optional<PlayerSaveData> saveData = room->HandleDisconnect(player);
+    ASSERT_TRUE(saveData.has_value());
+
+    EXPECT_EQ(saveData->progress.playerInfo.room_id(), TOWN_ROOM_ID);
+    EXPECT_FLOAT_EQ(saveData->progress.posInfo.pos().x(), TOWN_RESPAWN_X);
+    EXPECT_EQ(saveData->progress.statInfo.info().at(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP / 2)
+        << "마을 리스폰은 HP를 절반으로 채운다";
+}
+
+// TD-001: 맵 입장 요청은 아무 룸 번호나 받아 들어갈 룸으로 기록했다. 뒤이은 첫 입장(C_ENTER_ROOM)이 그 번호와
+// 같은지만 보므로, 조작한 클라이언트는 불러온 룸과 무관하게 아무 룸에서나 시작했다.
+TEST_F(RoomRequestTest, FirstEnterMapToOtherRoomIsRejected)
+{
+    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+    const PlayerProgress progress = MakeProgressWithSword();
+    PlayerSpawnParams params;
+    params.session = session;
+    params.progress = &progress;
+    PlayerRef newcomer = EntityFactory::Create<Player>(params);
+    ASSERT_NE(newcomer, nullptr);
+    ASSERT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID);
+
+    Protocol::C_ENTER_MAP enterMapPkt;
+    enterMapPkt.set_room_id(TOWN_ROOM_ID);
+    room->C_HandleEnterMap(enterMapPkt, newcomer);
+
+    EXPECT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID) << "들어갈 룸은 불러온 진행의 룸 그대로다";
+    vector<Protocol::S_ENTER_MAP> responses = session->SentPackets<Protocol::S_ENTER_MAP>(PKT_S_ENTER_MAP);
+    ASSERT_EQ(responses.size(), 1u);
+    EXPECT_FALSE(responses[0].success());
 }

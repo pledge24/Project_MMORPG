@@ -495,6 +495,7 @@ Server/
 │   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
+│   │   ├── AI/             몬스터 AI 컴포넌트
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템), 진행 저장소, DB 스레드 루프
 │   ├── Queries/            GameDB 스키마 스크립트
@@ -511,7 +512,7 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
-`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 일곱은 게임 규칙이다. 이 층을 없애면
+`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 여덟은 게임 규칙이다. 이 층을 없애면
 폴더 열세 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
@@ -534,8 +535,8 @@ Server/
 2026년 10월 9일(#206) 기준으로 이 폴더에는 생성 검증(`CharacterCreation`)과 슬롯 기본 개수만 있다. 삭제
 규칙을 코드로 나눌 때 여기에 둔다.
 
-`Game/AI/`는 아직 없다. 몬스터 행동 결정이 `Game/Entities/`에 섞여 있다. 이 도메인을 분리할
-때 만든다.
+`Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
+소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가
 소유한다.

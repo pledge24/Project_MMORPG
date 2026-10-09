@@ -71,7 +71,8 @@
         },
         "monsterIds": [],
         "maxMonsterCount": null,
-        "monsterRespawnTime": null
+        "monsterRespawnTime": null,
+        "portalRadius": 500
     },
     {
         "templateId": 20,
@@ -113,7 +114,8 @@
             5002
         ],
         "maxMonsterCount": 10,
-        "monsterRespawnTime": 10
+        "monsterRespawnTime": 10,
+        "portalRadius": 500
     },
     {
         "templateId": 30,
@@ -155,7 +157,8 @@
             5005
         ],
         "maxMonsterCount": 10,
-        "monsterRespawnTime": 10
+        "monsterRespawnTime": 10,
+        "portalRadius": 500
     },
     {
         "templateId": 40,
@@ -197,6 +200,7 @@
             5008
         ],
         "maxMonsterCount": 10,
-        "monsterRespawnTime": 10
+        "monsterRespawnTime": 10,
+        "portalRadius": 500
     }
 ]

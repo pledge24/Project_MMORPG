@@ -7,7 +7,7 @@
 
 /**
  * GameServer가 동기화를 처리하는 최소 공간 단위.
- * 속한 Entity를 소유하며, Tick을 통해 각 Entity 및 Room 상태를 갱신한다.
+ * 속한 Entity를 소유하며, 룸 틱이 ROOM_TICK_INTERVAL_MS마다 모든 엔티티의 Tick을 돌린다(ADR-0011).
  * 모든 작업(네트워크를 통한 작업, Room 내부 작업 등)은 Job 객체 단위로 처리되며, JobQueue에 꺼내 처리한다.
  * Room 클래스 자체는 중계 역할만 하며, 대부분의 작업은 각 컴포넌트에서 처리한다.
  */
@@ -18,17 +18,17 @@ public:
 	virtual ~Room() = default;
 
 public:
-    /** Init까지 마친 룸을 돌려준다. */
+    /** 룸을 만들어 Init까지 마친다. 룸을 만드는 길은 이것 하나다. Init에 실패하면 nullptr. */
     static RoomRef Create(const MapTemplate& mapTemplate);
-    bool Init(const MapTemplate& mapTemplate);
+    /** 몬스터를 스폰하고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
     bool Start();
 
-protected:
-    void Update();
-
-public:
-    /** 속한 Entity의 Tick을 실행한다. */
-    void TickEntity(EntityRef entity);
+    //~ 룸 틱
+    /**
+     * 룸 틱 하나를 룸 큐 위에서 돈다. 순서는 셀 갱신, 엔티티 Tick, 이동 전송(MOVE_SEND_INTERVAL마다)이다.
+     * deltaTime은 초 단위다. 다음 틱을 예약하지 않는다. 운영 코드는 예약된 틱(RunScheduledTick)이 부르고, 테스트는 직접 부른다.
+     */
+    void Tick(float deltaTime);
 
     //~ 플레이어 입장과 퇴장
     /**
@@ -48,6 +48,12 @@ public:
      * 아래 핸들러는 모두 ServerPacketHandler가 DoAsync로 넣는다. 잡이 도는 시점에 세션이 끊겼을 수 있다.
      * 룸에는 룸 상태를 쓰는 요청(입장, 이동, 전투, 리스폰)만 둔다. 아이템 요청은 ItemRequests에 있다.
      */
+
+    /**
+     * 판정을 통과하면 들어갈 맵과 룸을 플레이어에 기록하고 S_ENTER_MAP을 보낸다. 룸 입장은 뒤이은 C_ENTER_ROOM이 한다.
+     * 이 룸에 있는 플레이어는 이 룸의 포털로, 아직 룸에 들어간 적이 없는 플레이어는 불러온 룸으로 판정한다.
+     */
+    void C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player);
     void C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player);
     /** 보낸 사람(player)의 위치만 바꾼다. 패킷의 엔티티 번호는 보지 않는다. */
     void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
@@ -81,23 +87,18 @@ public:
     int32               GetRoomId() const { return _roomId; }
     /** 이 룸에 그 번호의 포털이 없으면 nullptr. */
     const PortalTemplate* FindPortal(int32 portalId) const;
-    /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
-    shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return _hasRespawnPoint ? _respawnPoint : nullptr; }
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
 
     /** z는 룸 중심 높이에 LOCATION_PADDING_Z를 더한 값이다. randYaw가 false면 yaw를 건드리지 않는다. */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
-    void SetValid(bool isValid) { _isValid = isValid; }
 
     //~ 상태 조회
-    /** GRoomManager에 등록된 동안 true. */
-    bool IsValid() const { return _isValid; }
     bool Contains(int64 entityId) { return _entities.contains(entityId); }
 
     //~ 위치 탐색
     /**
      * range 안에서 가장 가까운 살아 있는 플레이어와 그 거리의 제곱을 돌려준다.
-     * 없으면 (nullptr, -1)이다. 셀 행렬은 Update가 다시 채우므로 위치는 최대 한 Update 주기만큼 늦다.
+     * 없으면 (nullptr, -1)이다. 셀 행렬은 룸 틱이 엔티티 Tick 전에 다시 채우므로 위치는 그 틱이 시작할 때의 것이다.
      */
     pair<PlayerRef, float> FindClosestPlayer(const Protocol::PosInfo* posInfo, float range);
 
@@ -134,7 +135,7 @@ protected:
 
     //~ 엔티티
     /**
-     * 이미 있는 id면 false. 셀 행렬에는 다음 Update에서 들어간다.
+     * 이미 있는 id면 false. 셀 행렬에는 다음 룸 틱에서 들어간다.
      * 엔티티의 _room을 이 룸으로 바꾸고, 처음 룸에 들어가는 엔티티면 Start를 부른다.
      */
     bool AddEntity(EntityRef entity);
@@ -152,10 +153,18 @@ protected:
     }
 
     //~ 룸 데이터
+    /** Create만 부른다. 맵 표의 행을 읽어 두고 셀 행렬을 만든다. */
+    bool Init(const MapTemplate& mapTemplate);
     /** 맵 데이터에서 자주 읽는 값을 멤버로 옮겨 둔다. Init에서 한 번 부른다. */
     void CacheRoomData();
     /** 엔티티 위치로 셀 행렬을 다시 채운다. */
     void UpdateCellMatrix();
+
+    //~ 룸 틱
+    /** 지난 틱부터 흐른 시간으로 Tick을 부르고 다음 틱을 예약한다. */
+    void RunScheduledTick();
+    /** 몬스터의 위치를 S_MOVE 하나로 모아 룸 전체에 보낸다. 몬스터가 없으면 보내지 않는다. */
+    void BroadcastMonsterMoves();
 
 private:
     //~ 룸 상태
@@ -166,7 +175,6 @@ private:
     int32 _roomId;
     /** 맵 표의 행 사본. */
     MapTemplate _mapTemplate;
-    bool _isValid = false;
 
     /** 언리얼 좌표를 따른다. depth가 x 방향, width가 y 방향의 반폭이다. */
     vector3D _roomCenterPos;
@@ -178,7 +186,7 @@ private:
     float _roomMinY;
     float _roomMaxY;
 
-    bool _hasRespawnPoint = false;
+    /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
     shared_ptr<Protocol::PosInfo> _respawnPoint;
 
     //~ 설정값
@@ -187,7 +195,15 @@ private:
     const float LOCATION_PADDING_Z = 100.f;
 
     const float CELL_SIZE = 1000.f;    // 10M
-    const uint64 ROOM_UPDATE_INTERVAL_MS = 200;
+    const uint64 ROOM_TICK_INTERVAL_MS = 50;
+    /** 몬스터 위치를 보내는 주기. 단위는 초다. 룸 틱보다 길다. */
+    const float MOVE_SEND_INTERVAL = 0.2f;
+
+    //~ 룸 틱 상태
+    /** 마지막 예약 틱의 시각(ms, GetTickCount64 기준). */
+    uint64 _lastTickTime = 0;
+    /** 마지막 이동 전송 뒤 흐른 시간. 단위는 초다. */
+    float _timeSinceMoveSend = 0.f;
 
     //~ 몬스터 스폰 정보
     int32 _maxMonsterCount;

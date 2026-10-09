@@ -298,6 +298,7 @@ namespace
             {
                 MapTemplate mapTemplate;
                 mapTemplate.templateId = Require<int32>(row, TemplateId);
+                mapTemplate.mapId = Require<int32>(row, MapId);
                 mapTemplate.center = RequirePos(RequireObject(row, CenterPos));
                 mapTemplate.depthHalfExtent = Require<float>(row, DepthHalfExtent);
                 mapTemplate.widthHalfExtent = Require<float>(row, WidthHalfExtent);
@@ -311,11 +312,17 @@ namespace
 
                     PortalTemplate portal;
                     portal.portalId = Require<int32>(portalRow, PortalId);
+                    portal.srcPos = RequirePos(RequireObject(portalRow, Src));
                     portal.dstRoomId = Require<int32>(dst, TemplateId);
                     portal.dstPos = RequirePos(dst);
                     portal.dstYaw = Require<float>(dst, Yaw);
                     mapTemplate.portals.push_back(portal);
                 }
+
+                // 0 이하면 어디서도 포털을 탈 수 없다. 포털이 없는 맵도 같은 열을 가지므로 모든 행에서 본다.
+                mapTemplate.portalRadius = Require<float>(row, PortalRadius);
+                if (mapTemplate.portalRadius <= 0.f)
+                    throw RowError{ format("'portalRadius'가 0보다 커야 한다: {}", mapTemplate.portalRadius) };
 
                 for (const Json& monsterId : RequireArray(row, MonsterIds))
                 {
