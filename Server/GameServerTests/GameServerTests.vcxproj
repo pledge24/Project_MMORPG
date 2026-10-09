@@ -169,6 +169,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup Label="테스트 소스">
+    <ClCompile Include="ItemDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
     <ClCompile Include="DBWorkerTests.cpp" />
     <ClCompile Include="..\GameServer\DB\DBWorker.cpp" />

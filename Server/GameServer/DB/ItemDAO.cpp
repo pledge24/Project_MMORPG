@@ -127,7 +127,8 @@ void ItemDAO::GetMaxItemUID(DBConnection& conn)
         }
 
         //~ Cols
-        int32 _maxItemUID;
+        // item_uid는 BIGINT다. int32로 받으면 범위를 넘을 때 잘린다.
+        int64 _maxItemUID = 0;
     };
 
 

@@ -481,20 +481,6 @@ IOCP 워커가 진다는 사실이 빠진다.
 **유지보수 어려움** — 룸 잡에 무거운 일을 넣어도 IOCP와 무관하다고 오해하게 된다. 클라이언트에 엔티티가 아닌 동기화 대상을 넣을
 때 서버와 같은 계층이 있다고 가정하게 된다.
 
-## TD-034 아이템 UID의 최댓값을 `int32`로 읽는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/DB/ItemDAO.cpp` (`GetMaxItemUID`의 `BindObject`) · `Server/GameServer/Queries/GameDB_GetMaxItemUid.sql`
-> 등록일: 2026년 10월 7일
-
-`item_uid` 컬럼은 `BIGINT`이고 `GNextItemUID`도 `atomic<int64>`다. 그런데 `GetMaxItemUID`는 프로시저의 결과를
-`int32 _maxItemUID`에 바인딩한다. `DBConnection::BindCol(int32)`은 `SQL_C_LONG`으로 묶는다. 최댓값이 `int32` 범위를 넘을 때
-ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인하지 않았다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 지금은 UID가 작아서 드러나지 않는다. 범위를 넘으면 값이 잘려서 새로 발급하는 UID가 기존 아이템과
-겹치거나, `Fetch` 실패가 TD-017 「게임 서버가 DB를 준비하기 전에 접속을 받는다」의 잡히지 않는 예외로 이어져 서버가 시작하지 못한다.
-
 ## TD-035 DB에서 읽은 슬롯 번호를 검증 없이 인벤토리와 장비 칸에 쓴다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Inventory/InventoryComponent.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquipmentComponent.cpp` (`LoadEquipped`)
