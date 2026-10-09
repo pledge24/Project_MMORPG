@@ -47,8 +47,10 @@ UUID 액세스 토큰을 발급해 TTL과 함께 Redis에 넣는다.
 계정 정보를 DB에서 직접 조회하지 않는다.
 
 **Architecture Invariant:** 룸 소유 상태 변경은 그 룸의 큐 위에서만 일어난다. 락이 없다.
-`Room`이 `JobQueue`를 상속하고, 패킷 핸들러는 인라인으로 일하지 않고 `DoAsync`로 잡을
-밀어넣고 리턴한다. **다른 룸의 오브젝트에 직접 손대지 않는다.**
+`Room`이 `JobQueue`를 상속하고, 패킷 핸들러는 룸 상태를 직접 바꾸지 않고 `DoAsync`로 잡을
+밀어넣는다. **다른 룸의 오브젝트에 직접 손대지 않는다.**
+`JobQueue::Push`는 큐가 비어 있고 그 스레드가 다른 큐를 실행하고 있지 않으면 잡을 그 자리에서 실행한다.
+그래서 대개 같은 IOCP 워커가 룸 잡까지 실행한 뒤에 핸들러에서 돌아온다. 룸 잡이 무거우면 IOCP 처리량도 그만큼 준다.
 DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB 스레드가 소비한다
 (유저 친화도가 필요한 작업은 id 기반 큐로, 그 외는 랜덤 큐로 보낸다).
 
@@ -93,8 +95,9 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 (`GameEntry`). DB 스레드는 불러오기에서도 살아 있는 `Player`를 만지지 않고 진행 사본(`PlayerProgress`)만 채운다.
 근거는 `docs/adr/0012-load-and-save-one-progress-copy.md`에 있다.
 
-**Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
-Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
+**Architecture Invariant:** DB를 거치는 요청(로그인, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
+계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로그인만
+계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 Redis 토큰 확인과 캐릭터 목록 불러오기를 이어 한다.
 
 **Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
 Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
@@ -259,8 +262,9 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 
 ## Layering Rules
 
-**클라와 서버의 클래스 계층이 대칭이다.** `Entity → Creature → { Player, Monster }`.
-서버는 상태를 protobuf로 들고 클라는 그것을 액터에 반영한다.
+**클라와 서버의 클래스 계층이 대칭이다.** 서버는 `Entity → Creature → { Player, Monster }`, 클라는
+`AP1Creature → { AP1Player, AP1Monster }`다. 클라에는 서버의 `Entity`에 해당하는 클래스가 없고 `AP1Creature`가
+`ACharacter`를 상속한다. 서버는 상태를 protobuf로 들고 클라는 그것을 액터에 반영한다.
 
 그래서 게임플레이 변경은 **클라 + 서버 + 프로토콜 3곳을 기본으로 잡는다.**
 한쪽만 고치면 어긋나고, 어긋남을 빌드가 잡아주지 않는다.

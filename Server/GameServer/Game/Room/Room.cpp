@@ -17,16 +17,11 @@ namespace
 RoomRef Room::Create(const MapTemplate& mapTemplate)
 {
     RoomRef newRoom = make_shared<Room>();
-
-    if (newRoom->Init(mapTemplate) == false)
-    {
-        return nullptr;
-    }
-
+    newRoom->Init(mapTemplate);
     return newRoom;
 }
 
-bool Room::Init(const MapTemplate& mapTemplate)
+void Room::Init(const MapTemplate& mapTemplate)
 {
     _mapTemplate = mapTemplate;
 
@@ -34,8 +29,6 @@ bool Room::Init(const MapTemplate& mapTemplate)
     CacheRoomData();
 
     _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
-
-    return true;
 }
 
 bool Room::Start()
@@ -588,17 +581,13 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
         if(Contains(targetId) == false)
             return;
 
-        // TODO: 피격이 가능한 대상?
+        // 피격은 Creature만 받는다.
         if (CreatureRef creature = FindEntityAs<Creature>(targetId))
         {
             targets.push_back(creature);
         }
     }
-    else
-    {
 
-    }
-    
     // 2) 판정 결과를 알린다.
     for (const CreatureRef& target : targets)
     {
@@ -797,15 +786,6 @@ pair<PlayerRef, float> Room::FindClosestPlayer(const Protocol::PosInfo* posInfo,
     }
 
     return make_pair(closestPlayer, minDist);
-}
-
-PlayerRef Room::SpawnPlayer(int64 entityId)
-{
-    PlayerRef targetPlayer = FindEntityAs<Player>(entityId);
-    if (targetPlayer == nullptr)
-        return nullptr;
-
-    return SpawnPlayer(targetPlayer);
 }
 
 PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)

@@ -120,9 +120,6 @@ bool ServerService::Start()
 		return false;
 
 	_listener = make_shared<Listener>();
-	if (_listener == nullptr)
-		return false;
-
 	_listener->SetService(static_pointer_cast<ServerService>(shared_from_this()));
 
 	if (_listener->Start() == false)

@@ -190,7 +190,7 @@ int main(void)
 	ServerServiceRef service = make_shared<ServerService>(
 		NetAddress(config.bindAddress, config.port),
 		make_shared<IocpCore>(),
-		[=]() { return make_shared<GameSession>(); }, // TODO: SessionManager 등
+		[=]() { return make_shared<GameSession>(); },
 		config.maxSessionCount
 	);
 

@@ -7,7 +7,7 @@
 
 /**
  * Winsock 초기화와 소켓 함수를 모은 정적 클래스. 객체를 만들지 않는다.
- * CoreGlobal이 main보다 먼저 Init을 불러 확장 함수 포인터(ConnectEx 등)를 채운다.
+ * CoreGlobal의 생성자가 Init을 불러 확장 함수 포인터(ConnectEx 등)를 채운다. 소켓을 만들기 전에 CoreGlobal을 만든다.
  */
 class SocketUtil
 {

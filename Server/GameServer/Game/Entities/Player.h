@@ -16,7 +16,6 @@ struct TownRespawn;
  */
 struct NextLevelUpData
 {
-    int32 level = 0;
     int64 maxHpIncrement = 0;
     int64 maxMpIncrement = 0;
     int64 paIncrement = 0;

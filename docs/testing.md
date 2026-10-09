@@ -198,7 +198,8 @@ strings -n 6 P1/Binaries/Win64/UnrealEditor-P1.pdb | grep -c <새 심볼>
 
 ### gtest는 소스 벤더링이다. vcpkg를 쓰지 않는다
 
-`Server/Libraries/googletest/`에 v1.18.0(커밋 `063de7e`) 소스를 넣고 `gtest-all.cc`와 `gtest_main.cc`를 테스트 프로젝트가 직접 컴파일한다. gmock은 넣지 않았다.
+`Server/Libraries/googletest/`에 v1.18.0(커밋 `063de7e`) 소스를 넣고 `gtest-all.cc`를 테스트 프로젝트가 직접 컴파일한다. `gtest_main.cc`는 쓰지 않고 `TestMain.cpp`가 `main`을 둔다.
+콘솔 코드페이지를 UTF-8로 돌려야 한국어 실패 메시지가 읽히기 때문이다. gmock은 넣지 않았다.
 
 **근거는 이 저장소가 이미 모든 서드파티를 벤더링한다는 점이다.** `Server/Libraries/include/`의 `google`, `nlohmann`, `sw`, `hiredis`가 전부 그렇다. gtest만 다른 메커니즘을 들이면 새 클론에 "vcpkg를 설치한다"는 단계가 하나 늘고, 그 단계는 문서에만 존재하게 된다. 벤더링은 툴셋·CRT 완전 일치(v145로 같이 컴파일), 머신 선행조건 없음, 네트워크 없음을 동시에 만족한다. 대가는 저장소 용량 1.1MB다.
 

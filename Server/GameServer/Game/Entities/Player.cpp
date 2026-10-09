@@ -601,7 +601,6 @@ void Player::CacheNextLevelUpData()
     if (nextLevelTemplate == nullptr)
         return;
 
-    _nextLevelUpData.level = nextLevelTemplate->level;
     _nextLevelUpData.maxHpIncrement = nextLevelTemplate->maxHpIncrement;
     _nextLevelUpData.maxMpIncrement = nextLevelTemplate->maxMpIncrement;
     _nextLevelUpData.paIncrement = nextLevelTemplate->paIncrement;

@@ -64,10 +64,9 @@ namespace
 // 룸 소유 상태는 여기서 건드리지 않는다. 룸 일은 room->DoAsync로, DB 일은 DB 큐로 넘기고 바로 리턴한다.
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
+// false를 돌려주면 GameSession::OnRecvPacket이 패킷 id와 함께 로그를 남긴다.
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 {
-	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO: Log
 	return false;
 }
 
@@ -284,7 +283,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     }
 
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
-    // room_id는 LoadAllCharactersData가 DB에서 읽어야 알 수 있으므로,
+    // room_id는 GameEntry::Enter가 ProgressStorage::Load로 DB에서 읽어야 알 수 있으므로,
     // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
     // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
     // 언제 어느 DB 큐에서 돌지는 조율자가 정한다. 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.

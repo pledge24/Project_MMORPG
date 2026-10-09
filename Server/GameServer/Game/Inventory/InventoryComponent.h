@@ -10,7 +10,7 @@ enum
 /**
  * 플레이어 한 명의 인벤토리와 소모품 재사용 대기. 아이템 종류(장비, 소모품, 기타)마다 MAX_SLOTS칸 저장소를 하나씩 둔다.
  * 슬롯은 플레이어의 _possession(protobuf) 안에 있고, 이 클래스는 그 포인터만 든다.
- * 룸에 들어가기 전에는 ProgressStorage::Load가 DB에서 채우고, 그 뒤로는 소속 룸 큐 위에서만 쓴다.
+ * 룸에 들어가기 전에 Player::ApplyProgress가 불러온 진행 사본으로 채우고, 그 뒤로는 소속 룸 큐 위에서만 쓴다.
  * 바뀐 슬롯에는 더티 플래그가 찍히고, 저장할 행을 만들 때 그 플래그를 읽는다.
  */
 class InventoryComponent : public EntityComponent

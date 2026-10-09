@@ -61,22 +61,6 @@ struct vector3D
     vector3D() {};
     vector3D(float x_, float y_, float z_) : x(x_), y(y_), z(z_) {};
 
-    static vector3D GetZeroVector() { return vector3D(0.f, 0.f, 0.f); }
-    float GetMagnitude() { return sqrt(x * x + y * y + z * z); }
-    /** 길이가 0이면 영벡터를 돌려준다. */
-    vector3D GetNormalize()
-    {
-        float magnitude = GetMagnitude();
-
-        if (magnitude == 0.0)
-        {
-            return GetZeroVector();
-        }
-
-        // 각 성분을 크기로 나눈다.
-        return vector3D(x / magnitude, y / magnitude, z /magnitude);
-    }
-
     float x = 0.f;
     float y = 0.f;
     float z = 0.f;
@@ -116,17 +100,6 @@ public:
 class MathUtil
 {
 public:
-    static vector2D GetUnitVector(float yaw)
-    {
-        constexpr float PI = std::numbers::pi_v<float>;
-        float yaw_radians = yaw * (PI / 180.0f);
-
-        float dirX = std::cosf(yaw_radians);
-        float dirY = std::sinf(yaw_radians);
-
-        return vector2D{ dirX, dirY };
-    }
-
     /** -180도에서 180도 사이로 돌려준다. */
     static float VectorToYaw(const vector2D& vec)
     {
@@ -174,15 +147,6 @@ public:
         float squareDist = MathUtil::Distance(curPos, target, true);
         
         return squareDist <= (range * range);
-    }
-
-    static bool IsZeroVector(Protocol::Vector* vector)
-    {
-        bool zeroX = vector->x() == 0.f;
-        bool zeroY = vector->y() == 0.f;
-        bool zeroZ = vector->z() == 0.f;
-
-        return (zeroX && zeroY && zeroZ);
     }
 };
 

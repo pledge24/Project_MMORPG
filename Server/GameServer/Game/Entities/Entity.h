@@ -44,10 +44,8 @@ public:
 	bool IsPlayer()                                     { return _isPlayer; }
 
     int64 GetEntityId() const                           { return _entityInfo->entity_id(); }
-    void GetNormalAttackData()                          {}
 
     void SetPosInfo(const Protocol::PosInfo& posInfo_)  { _posInfo->CopyFrom(posInfo_); }
-    void SetPos(const Protocol::Vector& pos)            { _posInfo->mutable_pos()->CopyFrom(pos); }
 
     /** 다른 클라이언트에게 보낼 스폰 정보. 위치(pos_info)와 종류별 정보가 들어 있다. */
     const Protocol::EntityInfo& GetEntityInfo() const   { return *_entityInfo; }
