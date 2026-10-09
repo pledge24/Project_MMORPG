@@ -137,6 +137,9 @@
     <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Data\GamedataParser.cpp">
+      <Filter>Game\Data</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Room\Room.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
@@ -251,6 +254,12 @@
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\Gamedata.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\GamedataParser.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\Templates.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\Room.h">

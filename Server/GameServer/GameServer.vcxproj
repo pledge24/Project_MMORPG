@@ -201,6 +201,8 @@
     <ClInclude Include="Game\Combat\Combat.h" />
     <ClInclude Include="Game\Equipment\EquippedGear.h" />
     <ClInclude Include="Game\Data\Gamedata.h" />
+    <ClInclude Include="Game\Data\GamedataParser.h" />
+    <ClInclude Include="Game\Data\Templates.h" />
     <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomTransfer.h" />
@@ -262,6 +264,7 @@
     <ClCompile Include="Game\Combat\Combat.cpp" />
     <ClCompile Include="Game\Equipment\EquippedGear.cpp" />
     <ClCompile Include="Game\Data\Gamedata.cpp" />
+    <ClCompile Include="Game\Data\GamedataParser.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />
     <ClCompile Include="Game\Room\RoomTransfer.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />

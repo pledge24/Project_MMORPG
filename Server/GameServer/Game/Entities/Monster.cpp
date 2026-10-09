@@ -27,15 +27,15 @@ bool Monster::Init(const SpawnParams& params)
     SetPosInfo(params.spawnPos);
     _posInfo->set_entity_id(GetEntityId());
 
-    int32 templateId = params.templateId;
-    if (Gamedata::s_monsterDataTable.contains(templateId) == false)
+    const int32 templateId = params.templateId;
+    const MonsterTemplate* monsterTemplate = Gamedata::FindMonster(templateId);
+    if (monsterTemplate == nullptr)
     {
-        cout << "Monster's template id is Invalid" << '\n';
+        GLogger->Warning("몬스터 표에 없는 템플릿 {}으로 몬스터를 만들 수 없다", templateId);
         return false;
     }
 
-    const Json& monsterData = Gamedata::s_monsterDataTable[templateId];
-    _monsterData = monsterData;
+    _template = *monsterTemplate;
 
     // cache monster data
     CacheMonsterData();
@@ -90,22 +90,12 @@ void Monster::OnDie(EntityRef attacker)
 
 int64 Monster::GetExpReward()
 {
-    using namespace JsonProperty::Monster;
-
-    int64 minExp = _monsterData[ExpReward][MinExp].is_null() ? 0 : static_cast<int64>(_monsterData[ExpReward][MinExp]);
-    int64 maxExp = _monsterData[ExpReward][MaxExp].is_null() ? minExp : static_cast<int64>(_monsterData[ExpReward][MaxExp]);
-
-    return Utils::GetRandom(minExp, maxExp);
+    return Utils::GetRandom(_template.minExp, _template.maxExp);
 }
 
 int64 Monster::GetGoldReward()
 {
-    using namespace JsonProperty::Monster;
-
-    int64 minGold = _monsterData[GoldReward][MinGold].is_null() ? 0 : static_cast<int64>(_monsterData[GoldReward][MinGold]);
-    int64 maxGold = _monsterData[GoldReward][MaxGold].is_null() ? minGold : static_cast<int64>(_monsterData[GoldReward][MaxGold]);
-
-    return Utils::GetRandom(minGold, maxGold);
+    return Utils::GetRandom(_template.minGold, _template.maxGold);
 }
 
 void Monster::UpdateState()
@@ -614,34 +604,21 @@ void Monster::ClearDestination()
 
 void Monster::PrintMonsterAllData() const
 {
-    cout << "=====================" << '\n';
-    cout << _monsterData.dump(2) << '\n';
-
-    cout << "templateId: " << _templateId << '\n';
-    cout << "maxHp: " << _maxHp << '\n';
-    cout << "attackInterval: " << _attackInterval << '\n';
-    cout << "baseAttack: " << _baseAttack << '\n';
-    cout << "attackRange: " << _tryAttackRange << '\n';
-    cout << "detectionRange: " << _detectionRange << '\n';
-    cout << "chaseRange: " << _chasingMaxRange << '\n';
-
-    cout << _entityInfo->Utf8DebugString() << '\n';
-
-    cout << "======Monster Data End ====" << '\n';
+    GLogger->Debug("몬스터 templateId: {} · maxHp: {} · attackInterval: {} · baseAttack: {} · attackRange: {} · detectionRange: {} · chaseRange: {}\n{}",
+        _templateId, _maxHp, _attackInterval, _baseAttack, _tryAttackRange, _detectionRange, _chasingMaxRange,
+        _entityInfo->Utf8DebugString());
 }
 
 void Monster::CacheMonsterData()
 {
-    using namespace JsonProperty::Monster;
+    _templateId = _template.templateId;
+    _maxHp = _template.maxHp;
+    _attackInterval = _template.attackInterval;
+    _baseAttack = _template.baseAttack;
 
-    _templateId = _monsterData[TemplateId].is_null() ? 0 : static_cast<int32>(_monsterData[TemplateId]);
-    _maxHp = _monsterData[MaxHp].is_null() ? 0 : static_cast<int32>(_monsterData[MaxHp]);
-    _attackInterval = _monsterData[AttackInterval].is_null() ? 100000.f : static_cast<float>(_monsterData[AttackInterval]);
-    _baseAttack = _monsterData[BaseAttack].is_null() ? 0 : static_cast<int32>(_monsterData[BaseAttack]);
-
-    _tryAttackRange = _monsterData[TryAttackRange].is_null() ? 0.f : static_cast<float>(_monsterData[TryAttackRange]);
-    _detectionRange = _monsterData[DetectionRange].is_null() ? 0.f : static_cast<float>(_monsterData[DetectionRange]);
-    _chasingMaxRange = _monsterData[ChasingMaxRange].is_null() ? 0.f : static_cast<float>(_monsterData[ChasingMaxRange]);
-    _monsterSpeed = _monsterData[MonsterSpeed].is_null() ? 0.f : static_cast<float>(_monsterData[MonsterSpeed]);
-    _isTargeting = _monsterData[IsTargeting].is_null() ? false : static_cast<bool>(_monsterData[IsTargeting]);
+    _tryAttackRange = _template.tryAttackRange;
+    _detectionRange = _template.detectionRange;
+    _chasingMaxRange = _template.chasingMaxRange;
+    _monsterSpeed = _template.movementSpeed;
+    _isTargeting = _template.isTargeting;
 }

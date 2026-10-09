@@ -104,17 +104,16 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
               _slotCount(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT)
         {
             // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 끼워 넣지 않고 실패로 끝낸다.
-            const DataTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
-            if (classLevelTable == nullptr)
+            const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
+            const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
+            const LevelTemplate* levelTemplate = classLevelTable != nullptr ? classLevelTable->Find(level) : nullptr;
+            if (levelTemplate == nullptr)
                 throw DBCustomError::UNKNOWN_CHARACTER_CLASS;
 
-            const DataTable& classLevelDataTable = *classLevelTable;
-            const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
-            const Json& levelData = classLevelDataTable.at(level);
-            _curHp = levelData.at(JsonProperty::LevelTable::MaxHp);
-            _curMp = levelData.at(JsonProperty::LevelTable::MaxMp);
-            _curPhysicalAttack = levelData.at(JsonProperty::LevelTable::PhysicalAttack);
-            _curMagicalAttack = levelData.at(JsonProperty::LevelTable::MagicalAttack);
+            _curHp = levelTemplate->maxHp;
+            _curMp = levelTemplate->maxMp;
+            _curPhysicalAttack = levelTemplate->physicalAttack;
+            _curMagicalAttack = levelTemplate->magicalAttack;
             BindParam(dbBind);
             BindCol(dbBind);
         }
@@ -246,7 +245,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
             }
             else
             {
-                cerr << "Unexpected Rejection(CreateCharacter): " << code << endl;
+                GLogger->Error("Unexpected Rejection(CreateCharacter): {}", code);
                 createCharacterPkt.set_cause("서버 내부 오류");
             }
         }
@@ -266,7 +265,7 @@ void CharacterListDAO::CreateCharacter(SessionRef session, const Protocol::Chara
     }
     catch (exception& err)
     {
-        cerr << "Unexpected Error(CreateCharacter): " << err.what() << endl;
+        GLogger->Error("Unexpected Error(CreateCharacter): {}", err.what());
 
         createCharacterPkt.Clear();
         createCharacterPkt.set_success(false);

@@ -236,7 +236,8 @@
 
 **할 일**
 - 기획 원본에 마법사 레벨 표(`Original_Mage_Level_Data.xlsx`)를 만들고 JSON을 생성한다
-- `Gamedata::LoadAllGamedata`가 그 표를 읽어 직업 매핑에 넣는다. 생성 검증은 매핑과 표만 보므로 고칠 필요가 없다
+- `Gamedata::LoadAllGamedata`가 그 파일을 읽고 `GamedataParser::Parse`가 직업 레벨 표(`classLevelTables`)에 넣는다.
+  생성 검증은 직업 레벨 표만 보므로 고칠 필요가 없다
 - 마법사의 공격과 스킬, 외형
 
 **선행 조건**: 기획 데이터. 백로그 15(플레이어 전투 경로)와 함께 보는 편이 낫다.

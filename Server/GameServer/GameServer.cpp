@@ -43,19 +43,24 @@ int main(void)
 {
     // Init
 	ServerPacketHandler::Init();
-    ASSERT_CRASH(Gamedata::LoadAllGamedata())
+
+    // 기획표가 틀리면 게임 중에 드러나지 않도록 여기서 멈춘다. 틀린 행은 LoadAllGamedata가 로그에 남긴다.
+    if (Gamedata::LoadAllGamedata() == false)
+    {
+        GLogger->Error("기획 데이터가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
+        return 1;
+    }
 
     const Config config = Config::Load(&Config::ReadProcessEnv);
 
     // Room 추가
-    for (auto& mapDataPair : Gamedata::s_mapDataTable)
+    for (const auto& [roomId, mapTemplate] : Gamedata::GetMaps())
     {
-        int roomId = mapDataPair.first; // templateId
         RoomRef room = GRoomManager->CreateRoom(roomId);
         if (room == nullptr)
         {
             // 룸 데이터가 틀렸다는 뜻이다. 룸 하나가 빠진 채로 뜨면 그 룸으로 가는 요청이 모두 깨진다.
-            wcout << L"Room " << roomId << L" 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요" << '\n';
+            GLogger->Error("Room {} 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요", roomId);
             return 1;
         }
 

@@ -78,12 +78,12 @@ bool Player::Init(const SpawnParams& params)
 
 bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
 {
-    const Json* itemData = Gamedata::FindItemData(templateId);
-    if (itemData == nullptr || itemData->contains(JsonProperty::Item::BuyPrice) == false)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
+    if (itemTemplate == nullptr)
         return false;
 
     int64 gold = _possession->gold();
-    int64 buyPrice = itemData->value(JsonProperty::Item::BuyPrice, int64(0)) * count;
+    int64 buyPrice = itemTemplate->buyPrice * count;
 
     if (gold < buyPrice)
         return false;
@@ -105,12 +105,12 @@ bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Sl
     if (MatchesRequest(ownedSlot, requestSlot) == false)
         return false;
 
-    const Json* itemData = Gamedata::FindItemData(ownedSlot->item().template_id());
-    if (itemData == nullptr || itemData->value(JsonProperty::Item::Sellable, false) == false)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(ownedSlot->item().template_id());
+    if (itemTemplate == nullptr || itemTemplate->sellable == false)
         return false;
 
     int64 gold = _possession->gold();
-    int64 sellPrice = itemData->value(JsonProperty::Item::SellPrice, int64(0)) * count;
+    int64 sellPrice = itemTemplate->sellPrice * count;
 
     // 실제 "아이템 판매" 적용 시점.
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlot, count) == false)
@@ -139,16 +139,13 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
         return false;
 
     const int32 templateId = ownedSlot->item().template_id();
-    const Json* itemDataPtr = Gamedata::FindItemData(templateId);
-    if (itemDataPtr == nullptr)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
+    if (itemTemplate == nullptr)
         return false;
 
-    const Json& itemData = *itemDataPtr;
-
-    // 재사용 대기는 템플릿마다 따로 돈다. 데이터의 cooldown은 초 단위다.
-    const uint64 cooldownMs = static_cast<uint64>(itemData.value(JsonProperty::Item::Cooldown, 0.0) * 1000);
+    // 재사용 대기는 템플릿마다 따로 돈다.
     auto lastUseIt = _lastUseTimeMs.find(templateId);
-    if (lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + cooldownMs)
+    if (lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs)
         return false;
 
     // 제거에 성공했을 때만 응답에 슬롯을 싣는다. 거부 응답에는 슬롯이 없다.
@@ -161,9 +158,8 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     _lastUseTimeMs[templateId] = nowMs;
 
     // 회복률이 있는 스탯만 바꾸고 싣는다. 이미 가득 차 있어도 소비하고 값은 최대로 둔다.
-    auto restore = [&](string_view restoreKey, Protocol::StatType maxType, Protocol::StatType curType)
+    auto restore = [&](double ratio, Protocol::StatType maxType, Protocol::StatType curType)
         {
-            const double ratio = itemData.value(restoreKey, 0.0);
             if (ratio <= 0)
                 return;
 
@@ -177,8 +173,8 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
             updatedStat->set_value(updatedValue);
         };
 
-    restore(JsonProperty::Item::HpRestore, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
-    restore(JsonProperty::Item::MpRestore, Protocol::STAT_TYPE_MAX_MP, Protocol::STAT_TYPE_MP);
+    restore(itemTemplate->hpRestoreRatio, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
+    restore(itemTemplate->mpRestoreRatio, Protocol::STAT_TYPE_MAX_MP, Protocol::STAT_TYPE_MP);
 
     return true;
 }
@@ -434,12 +430,14 @@ void Player::OnLevelUp()
 
 bool Player::IsMaxLevel() const
 {
-    return _playerInfo->level() >= MAX_LEVEL;
+    // 레벨 표가 없는 직업은 오를 레벨이 없으므로 최대 레벨로 본다.
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    return classLevelTable == nullptr || _playerInfo->level() >= classLevelTable->GetMaxLevel();
 }
 
 bool Player::FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
 {
-    RoomRef townRoom = GRoomManager->GetRoomRefFromRoomId(RESPAWN_TOWN_ID);
+    RoomRef townRoom = GRoomManager->GetRoomRefFromRoomId(Gamedata::GetTownRoomId());
     if (townRoom == nullptr)
         return false;
 
@@ -507,25 +505,24 @@ bool Player::CalculateFinalStat()
     // ===========================================================================
 
     // 1. 레벨당 캐릭터 기본 스텟
-    const DataTable* classLevelDataTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
-    if (classLevelDataTable == nullptr)
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    if (classLevelTable == nullptr)
     {
-        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업" << endl;
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_playerInfo->class_()));
         return false;
     }
 
-    auto levelIt = classLevelDataTable->find(_playerInfo->level());
-    if (levelIt == classLevelDataTable->end())
+    const LevelTemplate* levelTemplate = classLevelTable->Find(_playerInfo->level());
+    if (levelTemplate == nullptr)
     {
-        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 레벨" << endl;
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 레벨 {}", _playerInfo->level());
         return false;
     }
 
-    const Json& levelData = levelIt->second;
-    finalStat.maxHp += levelData.value(JsonProperty::LevelTable::MaxHp, 0);
-    finalStat.maxMp += levelData.value(JsonProperty::LevelTable::MaxMp, 0);
-    finalStat.physical_attack += levelData.value(JsonProperty::LevelTable::PhysicalAttack, 0);
-    finalStat.magical_attack += levelData.value(JsonProperty::LevelTable::MagicalAttack, 0);
+    finalStat.maxHp += levelTemplate->maxHp;
+    finalStat.maxMp += levelTemplate->maxMp;
+    finalStat.physical_attack += levelTemplate->physicalAttack;
+    finalStat.magical_attack += levelTemplate->magicalAttack;
 
     // 2. 장착 중이 장비 스텟 추가
     for (const auto& pair : _possession->equipped_gear())
@@ -536,31 +533,31 @@ bool Player::CalculateFinalStat()
             continue;
 
         // 장비 칸에는 표에 있는 아이템만 들어간다(EquipGear가 거른다).
-        const Json* itemData = Gamedata::FindItemData(item.template_id());
-        if (itemData == nullptr)
+        const ItemTemplate* itemTemplate = Gamedata::FindItem(item.template_id());
+        if (itemTemplate == nullptr)
             continue;
 
-        finalStat.maxHp += itemData->value(JsonProperty::Item::Hp, 0);
-        finalStat.maxMp += itemData->value(JsonProperty::Item::Mp, 0);
-        finalStat.physical_attack += itemData->value(JsonProperty::Item::PhysicalAttack, 0);
-        finalStat.magical_attack += itemData->value(JsonProperty::Item::MagicalAttack, 0);
+        finalStat.maxHp += itemTemplate->hp;
+        finalStat.maxMp += itemTemplate->mp;
+        finalStat.physical_attack += itemTemplate->physicalAttack;
+        finalStat.magical_attack += itemTemplate->magicalAttack;
     }
 
     // validate
     try
     {
         if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat.maxHp)
-            throw wstring(L"현재 HP가 최대 HP를 초과");
+            throw string("현재 HP가 최대 HP를 초과");
         if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat.maxMp)
-            throw wstring(L"현재 MP가 최대 MP를 초과");
+            throw string("현재 MP가 최대 MP를 초과");
         if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat.physical_attack)
-            throw wstring(L"물리 공격력이 계산 결과와 일치하지 않음");
+            throw string("물리 공격력이 계산 결과와 일치하지 않음");
         if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat.magical_attack)
-            throw wstring(L"마법 공격력이 계산 결과와 일치하지 않음");
+            throw string("마법 공격력이 계산 결과와 일치하지 않음");
     }
-    catch (wstring& cause)
+    catch (const string& cause)
     {
-        wcerr << L"스텟 계산에 문제가 생겼습니다. 사유: " << cause << endl;
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: {}", cause);
         return false;
     }
 
@@ -575,37 +572,24 @@ bool Player::CalculateFinalStat()
 
 void Player::CacheNextLevelUpData()
 {
-    int32 nextLevel = _playerInfo->level() + 1;
-    if (nextLevel > (int32)MAX_LEVEL)
-    {
-        cout << "Current Level is Max! Can't Cache Level Up Data" << '\n';
+    // 최대 레벨에서는 오를 레벨이 없으므로 캐시를 그대로 둔다. 레벨 표가 없는 직업도 여기서 끝난다.
+    if (IsMaxLevel())
         return;
-    }
 
-    // 다음 레벨 행이 없으면 빈 값으로 둔다. 전역 표에 빈 행을 끼워 넣지 않는다.
+    // 다음 레벨 행이 없으면 빈 값으로 둔다.
     _nextLevelUpData = NextLevelUpData{};
 
-    const DataTable* classLevelDataTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
-    if (classLevelDataTable == nullptr)
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
+    if (nextLevelTemplate == nullptr)
         return;
 
-    auto nextLevelIt = classLevelDataTable->find(nextLevel);
-    if (nextLevelIt == classLevelDataTable->end())
-        return;
-
-    const Json& nextLevelData = nextLevelIt->second;
-
-    // Cache
-    {
-        using namespace JsonProperty::LevelTable;
-
-        _nextLevelUpData.level = nextLevelData.value(Level, 0);
-        _nextLevelUpData.maxHpIncrement = nextLevelData.value(MaxHp_Increment, int64(0));
-        _nextLevelUpData.maxMpIncrement = nextLevelData.value(MaxMp_Increment, int64(0));
-        _nextLevelUpData.paIncrement = nextLevelData.value(PA_Increment, int64(0));
-        _nextLevelUpData.maIncrement = nextLevelData.value(MA_Increment, int64(0));
-        _nextLevelUpData.expRequirement = nextLevelData.value(ExpRequirement, int64(0));
-    }
+    _nextLevelUpData.level = nextLevelTemplate->level;
+    _nextLevelUpData.maxHpIncrement = nextLevelTemplate->maxHpIncrement;
+    _nextLevelUpData.maxMpIncrement = nextLevelTemplate->maxMpIncrement;
+    _nextLevelUpData.paIncrement = nextLevelTemplate->paIncrement;
+    _nextLevelUpData.maIncrement = nextLevelTemplate->maIncrement;
+    _nextLevelUpData.expRequirement = nextLevelTemplate->expRequirement;
 }
 
 void Player::RefreshEquippedGearSummary()

@@ -12,7 +12,7 @@
     아래 테스트는 세 슬롯 타입 전부에 대해 넣기→조회→지우기 왕복이 같은 저장소를
     가리키는지 확인한다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. DB·Redis·Room·세션이 필요 없다 (세션이 없으면 Player::Init은
     Inventory/EquippedGear 생성이 전부).
 ---------------------------------------------------------------*/
@@ -23,12 +23,17 @@ namespace
     constexpr int32 CONSUMABLE_TEMPLATE_ID = 2001;
     constexpr int32 MISC_TEMPLATE_ID = 3001;
 
-    void SeedItem(int32 templateId, const char* itemType, int32 maxStack = 99)
+    /** 테스트가 주입한 표. 시드할 때마다 통째로 다시 설치한다. */
+    GamedataTables seededTables;
+
+    void SeedItem(int32 templateId, Protocol::ItemType itemType, int32 maxStack = 99)
     {
-        Json data;
-        data[string(JsonProperty::Item::ItemType)] = itemType;
-        data[string(JsonProperty::Item::MaxStack)] = maxStack;
-        Gamedata::s_itemDataTable[templateId] = data;
+        ItemTemplate item;
+        item.templateId = templateId;
+        item.itemType = itemType;
+        item.maxStack = maxStack;
+        seededTables.items[templateId] = item;
+        Gamedata::Install(seededTables);
     }
 
     struct SlotCase
@@ -163,9 +168,9 @@ class InventoryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        SeedItem(GEAR_TEMPLATE_ID, "GEAR");
-        SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE");
-        SeedItem(MISC_TEMPLATE_ID, "MISCELLANEOUS");
+        SeedItem(GEAR_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR);
+        SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
+        SeedItem(MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS);
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
@@ -174,7 +179,8 @@ protected:
     void TearDown() override
     {
         player.reset();
-        Gamedata::s_itemDataTable.clear();
+        seededTables = GamedataTables();
+        Gamedata::Install(GamedataTables());
     }
 
     // 템플릿 ID로 넣고, 바뀐 슬롯 가운데 첫 번째를 돌려준다.
@@ -310,7 +316,7 @@ TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
 {
     constexpr int32 MAX_STACK = 10;
     constexpr int32 BUY_COUNT = 15;
-    SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE", MAX_STACK);
+    SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
     ASSERT_TRUE(player->_inventory->AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
@@ -329,7 +335,7 @@ TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
 TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
 {
     constexpr int32 MAX_STACK = 10;
-    SeedItem(CONSUMABLE_TEMPLATE_ID, "CONSUMABLE", MAX_STACK);
+    SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
     ASSERT_TRUE(player->_inventory->AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
     player->_inventory->ClearDirtyFlags();
@@ -428,7 +434,7 @@ TEST_F(InventoryTest, GetSlotWithOutOfRangeSlotIdReturnsNull)
 // 거부가 인벤토리를 건드리지 않아야 한다. 같은 입력을 두 번 넣어 판정이 그대로인지 보고,
 // 그 뒤 정상 왕복이 되는지로 확인한다.
 // (표에 키가 삽입됐는지 자체는 공개 인터페이스로 관측할 수 없다 — 삽입되더라도 판정은 같다.
-//  삽입을 막는 것은 ToItemType이 find를 쓴다는 사실이고, 여기서 보는 것은 그 결과인 동작이다.)
+//  삽입을 막는 것은 FindBag이 표를 훑기만 한다는 사실이고, 여기서 보는 것은 그 결과인 동작이다.)
 TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
 {
     constexpr Protocol::SlotType UNKNOWN_TYPE = Protocol::SlotType::SLOT_TYPE_QUICK;
@@ -546,18 +552,3 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
     }
 }
 
-// itemType에는 아이템 종류만 온다. 없앤 단계의 값(방어구·무기·소비)이나 종류가 아닌 값을 종류로 읽으면
-// 기획 원본이 다시 어긋나도 알아채지 못한다.
-TEST_F(InventoryTest, ItemTypeOtherThanKindIsRejected)
-{
-    constexpr int32 REJECTED_TEMPLATE_ID = 1999;
-    const char* REJECTED_ITEM_TYPES[] = { "weapon", "consumption", "NONE", "gear", "" };
-
-    for (const char* itemType : REJECTED_ITEM_TYPES)
-    {
-        SeedItem(REJECTED_TEMPLATE_ID, itemType);
-
-        Protocol::Slot added;
-        EXPECT_FALSE(AddByTemplate(REJECTED_TEMPLATE_ID, 1, &added)) << "itemType \"" << itemType << "\"를 받아들였다";
-    }
-}

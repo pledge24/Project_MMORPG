@@ -12,7 +12,7 @@
     그래서 두 값은 요청 슬롯이 아니라 처리 결과여야 한다. slot_id는 장비 부위, template_id는
     처리 뒤 그 부위의 아이템이다. 다른 플레이어가 보는 외형은 equipped_gear_summary로 간다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
     시드한 무기에는 스탯 속성이 없으므로 스탯 계산을 타지 않는다.
 ---------------------------------------------------------------*/
 
@@ -26,12 +26,15 @@ class GearEquipTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
-        sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
-        sword[string(JsonProperty::Item::MaxStack)] = 1;
-        sword[string(JsonProperty::Item::PhysicalAttack)] = 10;
-        Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = sword;
+        ItemTemplate sword;
+        sword.templateId = SWORD_TEMPLATE_ID;
+        sword.itemType = Protocol::ITEM_TYPE_GEAR;
+        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.physicalAttack = 10;
+
+        GamedataTables tables;
+        tables.items[SWORD_TEMPLATE_ID] = sword;
+        Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
@@ -41,7 +44,7 @@ protected:
     void TearDown() override
     {
         player.reset();
-        Gamedata::s_itemDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     // 인벤토리에 칼을 넣고, 클라가 장착을 요청할 때 보내는 인벤토리 슬롯을 돌려준다.

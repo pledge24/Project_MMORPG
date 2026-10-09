@@ -38,15 +38,11 @@ Inventory::~Inventory()
 
 bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
-    const Json* itemData = Gamedata::FindItemData(itemInstance.template_id());
-    if (itemData == nullptr)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
+    if (itemTemplate == nullptr)
         return false;
 
-    optional<Protocol::ItemType> itemType = ToItemType(*itemData);
-    if (itemType.has_value() == false)
-        return false;
-
-    Bag* bag = FindBag(itemType.value());
+    Bag* bag = FindBag(itemTemplate->itemType);
     if (bag == nullptr)
         return false;
 
@@ -95,21 +91,16 @@ bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, 
     if (count <= 0)
         return false;
 
-    const Json* itemDataPtr = Gamedata::FindItemData(templateId);
-    if (itemDataPtr == nullptr)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
+    if (itemTemplate == nullptr)
         return false;
 
-    const Json& itemData = *itemDataPtr;
-    optional<Protocol::ItemType> itemTypeOpt = ToItemType(itemData);
-    if (itemTypeOpt.has_value() == false)
-        return false;
-
-    const Bag* bag = FindBag(itemTypeOpt.value());
+    const Bag* bag = FindBag(itemTemplate->itemType);
     if (bag == nullptr)
         return false;
 
     const Protocol::ItemType itemType = bag->itemType;
-    const int32 maxStack = (std::max)(1, itemData.value(JsonProperty::Item::MaxStack, 1));
+    const int32 maxStack = itemTemplate->maxStack;
     const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
 
     // 슬롯을 바꾸기 전에 넣을 자리를 전부 정한다. 도중에 모자라면 이미 바꾼 슬롯을 되돌릴 방법이 없다.
@@ -324,25 +315,5 @@ Inventory::Bag* Inventory::FindBag(Protocol::SlotType slotType)
     }
 
     return nullptr;
-}
-
-optional<Protocol::ItemType> Inventory::ToItemType(const Json& itemData)
-{
-    if (itemData.is_object() == false)
-        return nullopt;
-
-    auto fieldIt = itemData.find(string(JsonProperty::Item::ItemType));
-    if (fieldIt == itemData.end() || fieldIt->is_string() == false)
-        return nullopt;
-
-    // 기획 원본은 열거형 이름에서 접두사를 뺀 값(GEAR)을 적는다. 이름 표는 protobuf가 만든 것을 쓴다.
-    Protocol::ItemType itemType;
-    if (Protocol::ItemType_Parse(string(ITEM_TYPE_NAME_PREFIX) + fieldIt->get<string>(), &itemType) == false)
-        return nullopt;
-
-    if (itemType == Protocol::ItemType::ITEM_TYPE_NONE)
-        return nullopt;
-
-    return itemType;
 }
 

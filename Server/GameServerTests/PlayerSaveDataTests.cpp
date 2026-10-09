@@ -11,7 +11,7 @@
     Player를 가리키면 룸 스레드의 변경과 경쟁하므로, 사본을 뜬 뒤에 플레이어가 바뀌어도
     사본은 그대로여야 한다. 어느 인벤토리 칸을 저장할지 정하는 dirty flag도 함께 떠야 한다.
 
-    픽스처 결합도: Gamedata::s_itemDataTable을 손으로 시드하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -25,11 +25,14 @@ class PlayerSaveDataTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        Json sword;
-        sword[string(JsonProperty::Item::ItemType)] = "GEAR";
-        sword[string(JsonProperty::Item::ItemSubtype)] = string(JsonProperty::Item::GearSubtype_Sword);
-        sword[string(JsonProperty::Item::MaxStack)] = 1;
-        Gamedata::s_itemDataTable[SWORD_TEMPLATE_ID] = sword;
+        ItemTemplate sword;
+        sword.templateId = SWORD_TEMPLATE_ID;
+        sword.itemType = Protocol::ITEM_TYPE_GEAR;
+        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+
+        GamedataTables tables;
+        tables.items[SWORD_TEMPLATE_ID] = sword;
+        Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
@@ -41,7 +44,7 @@ protected:
     void TearDown() override
     {
         player.reset();
-        Gamedata::s_itemDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     PlayerRef player;

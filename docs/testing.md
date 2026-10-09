@@ -48,20 +48,21 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `PacketSerialization` | 2 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 |
 | `ProtocolContract` | 3 | `PROTOCOL_MESSAGES(X)` 목록 대조 · 패킷 ID 연속·유일성 · 전 메시지 리플렉션 왕복 |
 | `PacketDispatch` | 2 | 핸들러 테이블 밖의 id(65535)를 디스패치하지 않고 거절 · 헤더보다 짧은 입력(0~3바이트)을 디스패치하지 않고 거절 |
-| `InventoryTest` | 13 | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
+| `InventoryTest` | 12 | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
 | `SaveGateTest` | 9 | 접속 종료 저장 대기. 대기 없는 계정은 맡지 않음 · 해제가 맡긴 불러오기를 돌려줌 · 두 번째 맡기기 거절 · 두 번 걸어도 한 번에 풀림 · 만료 · 해제 뒤 늦게 온 만료와 지난 토큰의 만료 무시 · 계정별 분리 |
 | `CellMatrixTest` | 7 | 근접 탐색 격자. 겹치는 칸의 엔티티만 반환 · 칸 경계는 위 칸 소속 · 격자 끝과 밖의 엔티티 · 가장자리 질의 보정 · 제거와 재구성 |
-| `CharacterCreationTest` | 7 | 캐릭터 생성 검증. 유효한 전사 · 레벨 표가 없거나 정의되지 않은 직업 거절 · 빈 이름 거절 · 이름 길이 경계(한글 50자 통과, 51자 거절) |
+| `CharacterCreationTest` | 7 | 캐릭터 생성 검증. 유효한 전사 · 레벨 표가 없거나 정의되지 않은 직업 거절 · 레벨 표가 있어도 NONE 거절 · 빈 이름 거절 · 이름 길이 경계(한글 50자 통과, 51자 거절) |
 | `CombatTest` | 8 | 피격과 처치 판정. 데미지만큼 HP 감소 · 과잉 데미지의 HP 0 고정과 사망 · 죽은 대상과 죽은 공격자 · 플레이어가 몬스터를 처치할 때만 보상 · 피격 후 몬스터 정보의 HP |
 | `EntityFactoryTest` | 4 | 엔티티 생성. 몬스터의 id·타입·템플릿·스폰 위치와 위치의 엔티티 id · 모르는 템플릿 거절 · 세션 없는 플레이어의 id·인벤토리 · 엔티티마다 다른 id |
 | `GameSessionManagerTest` | 6 | 계정별 세션 등록. 같은 계정의 새 로그인이 밀어낸 세션 반환 · 밀려난 세션 제거가 새 등록을 지우지 않음 · 다른 계정끼리 밀어내지 않음 |
+| `GamedataParserTest` | 17 | 기획표 검증과 변환. 행이 템플릿으로 바뀜(아이템 종류, 장비 부위, 재사용 대기 ms, 최대 레벨, 마을) · 틀린 행의 파일·행 번호·필드를 알림(누락, 타입, 중첩 필드, 아이템 종류가 아닌 itemType, 부위 없는 장비, maxStack, 보상 최솟값, 중복 templateId, 끊긴 레벨) · 마을이 하나가 아님 · 없는 포털 목적지와 스폰 몬스터 · 실패한 불러오기가 이전 표를 남김 · 저장소의 실제 기획표 통과 |
 | `GearEquipTest` | 3 | 장비 착용과 해제가 알리는 장비 종류 · DB에서 불러온 장착 장비가 스탯을 건드리지 않음 |
 | `ItemSaveRowsTest` | 8 | 저장할 아이템 행 생성. 더티 칸만 행이 됨 · 비운 칸은 템플릿 0 · 기타 칸의 플래그 · 장비는 쌓이지 않음 · 착용 여부 · 플래그 누락은 실패 |
 | `LoggerTest` | 5 | 로그 한 줄의 형식. 시각·레벨·스레드 표시와 밀리초 세 자리 · 레벨마다 다섯 칸 표시 · 쓰는 스레드의 id와 줄바꿈 · 여러 스레드가 동시에 써도 줄이 섞이지 않음 |
 | `MonsterTest` | 2 | 몬스터 초기화의 HP · 최소와 최대가 같은 보상 |
 | `PlayerItemRequestTest` | 11 | 구매·판매·착용·해제 요청 검증. 모르는 템플릿 · 위조한 템플릿과 uid · 판매 불가 아이템 · 빈 칸 착용 · 가득 찬 인벤토리로 해제 |
-| `PlayerLevelTest` | 5 | 레벨 상승. 최대 레벨에서 멈춤 · 최대 경험치 미만 누적 · 최대 경험치 표가 없을 때 · 최대 레벨의 보상 경험치 버림 |
+| `PlayerLevelTest` | 7 | 레벨 상승. 최대 레벨은 레벨 표의 마지막 레벨 · 레벨 표가 없는 직업은 최대 레벨 · 최대 레벨에서 멈춤 · 최대 경험치 미만 누적 · 최대 경험치 표가 없을 때 · 최대 레벨의 보상 경험치 버림 |
 | `PlayerMultiLevelUpTest` | 2 | 큰 보상의 여러 레벨 상승 · 최대 레벨 도달 시 남는 경험치 버림 |
 | `PlayerSaveDataTest` | 2 | 저장 스냅샷이 이후 변경을 따라가지 않음 · 더티 플래그를 싣음 |
 | `PlayerUseItemTest` | 11 | 소모품 사용. HP·MP 회복과 최대치 고정 · 요청과 칸이 어긋나면 거절 · 장비 칸, 빈 칸, 모르는 템플릿, 죽은 플레이어 거절 · 템플릿별 재사용 대기 |
@@ -79,7 +80,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `P1.Combat.NormalAttackCombo` | 1 | 일반 공격의 콤보 순번 순환(1→N→1) · 몽타주가 하나이거나 없을 때 · 순번 N의 몽타주 인덱스 · 서버가 보낸 순번 0 · 범위 밖 순번 |
 | `P1.Progress.RewardResult` | 1 | 보상 결과의 반영. 경험치만 쌓일 때 레벨을 알리지 않음 · 여러 레벨 상승의 레벨, 레벨업 스탯, 최대 경험치 · 경험치를 알릴 때 최대 경험치가 이미 새 값 · 골드를 사본에 쓴 뒤 알림 |
 
-**안 덮는 것**: `Room` 본체 · DAO의 SQL 실행 · IOCP · Gamedata 로딩 · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: `Room` 본체 · DAO의 SQL 실행 · IOCP · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -119,7 +120,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 보상 결과 반영 | 존재. `UP1MyPlayerData::HandleRewardResult`. 경험치와 레벨은 서버가 계산하므로 클라이언트는 사본에 쓰고 알리기만 한다 |
 | 접속 종료 저장 대기 | 존재. `SaveGate` 공개 API. 대기를 거는 시점, 맡긴 불러오기의 실행, 만료 타이머는 `GameSession`과 `ServerPacketHandler`에 있고 테스트하지 않는다 |
 | 전투 판정 | 존재. `Combat`(`Game/Combat/`). 룸 대조와 패킷 전송은 `Room`에 있다 |
-| `Gamedata` 테이블 로딩 | 미확인 |
+| 기획표 검증과 변환 | 존재. `GamedataParser::Parse`와 `Gamedata::Load`. 파일 읽기는 `Gamedata::LoadAllGamedata`에 있고 테스트하지 않는다 |
+| 기획 데이터 주입 | 존재. `Gamedata::Install`. 테스트는 전역 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 설치한다 |
 
 seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므로 별도 계획을 세운다.
 
