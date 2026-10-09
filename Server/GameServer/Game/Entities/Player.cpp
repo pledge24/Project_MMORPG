@@ -88,6 +88,7 @@ bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, 
     if (gold < buyPrice)
         return false;
 
+    // 실제 "아이템 구매" 적용 시점.
     if (_inventory->AddItem(OUT updatedSlots, templateId, count) == false)
         return false;
 
@@ -111,6 +112,7 @@ bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Sl
     int64 gold = _possession->gold();
     int64 sellPrice = itemData->value(JsonProperty::Item::SellPrice, int64(0)) * count;
 
+    // 실제 "아이템 판매" 적용 시점.
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlot, count) == false)
         return false;
 
@@ -125,11 +127,9 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     // 거부 응답에도 싣는다. 클라이언트는 이 id로 내 플레이어를 찾은 뒤에야 요청 대기를 푼다.
     pkt.set_entity_id(GetEntityId());
 
-    // 사망한 크리처는 행동을 멈춘다.
     if (IsDead())
         return false;
 
-    // 소모품 슬롯의 아이템만 쓴다. 장비나 기타 아이템을 받으면 효과 없이 사라진다.
     if (requestSlot.type() != Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE)
         return false;
 

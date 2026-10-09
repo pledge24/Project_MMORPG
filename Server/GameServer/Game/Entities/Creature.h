@@ -15,9 +15,11 @@ public:
 
 protected:
     friend class EntityFactory;
+    //~ Begin Entity Interface
     bool Init(const SpawnParams& params);
     virtual void Start() override;
     virtual void Tick(float deltaTime) override;
+    //~ End Entity Interface
 
 public:
     //~ 이벤트

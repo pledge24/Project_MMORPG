@@ -18,7 +18,7 @@ optional<string> CharacterCreation::Validate(const Protocol::CharacterOverview& 
     // 이름 안의 NUL 뒤는 잘린다. DB에 들어가는 이름도 같은 결과다.
     const wstring name = EncodingConverter::StringToWString(character.name());
     if (name.empty() || name.size() > MAX_NAME_LENGTH)
-        return "캐릭터 이름은 1~" + to_string(MAX_NAME_LENGTH) + "자여야 합니다.";
+        return "캐릭터 이름은 " + to_string(MAX_NAME_LENGTH) + "이하여야 합니다.";
 
     return nullopt;
 }

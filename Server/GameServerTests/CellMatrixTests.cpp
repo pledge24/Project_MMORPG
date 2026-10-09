@@ -40,7 +40,7 @@ protected:
 
 TEST_F(CellMatrixTest, QueryReturnsOnlyEntitiesInOverlappingCells)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(500.f, 500.f) }, { ENTITY_B, vector2D(2500.f, 2500.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(500.f, 500.f) }, { ENTITY_B, vector2D(2500.f, 2500.f) } });
 
     const vector<int64> found = cellMatrix.QueryRange(vector2D(400.f, 400.f), 300.f);
 
@@ -50,7 +50,7 @@ TEST_F(CellMatrixTest, QueryReturnsOnlyEntitiesInOverlappingCells)
 
 TEST_F(CellMatrixTest, CellBoundaryBelongsToUpperCell)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(999.f, 0.f) }, { ENTITY_B, vector2D(1000.f, 0.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(999.f, 0.f) }, { ENTITY_B, vector2D(1000.f, 0.f) } });
 
     // 상자 [100, 900]은 첫 칸에만 걸친다.
     const vector<int64> found = cellMatrix.QueryRange(vector2D(500.f, 500.f), 400.f);
@@ -61,7 +61,7 @@ TEST_F(CellMatrixTest, CellBoundaryBelongsToUpperCell)
 
 TEST_F(CellMatrixTest, EntitiesOnMinAndMaxEdgesAreIndexed)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(MIN, MIN) }, { ENTITY_B, vector2D(MAX, MAX) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(MIN, MIN) }, { ENTITY_B, vector2D(MAX, MAX) } });
 
     EXPECT_TRUE(Contains(cellMatrix.QueryRange(vector2D(MIN, MIN), 100.f), ENTITY_A));
     EXPECT_TRUE(Contains(cellMatrix.QueryRange(vector2D(MAX, MAX), 100.f), ENTITY_B))
@@ -70,7 +70,7 @@ TEST_F(CellMatrixTest, EntitiesOnMinAndMaxEdgesAreIndexed)
 
 TEST_F(CellMatrixTest, QueryNearEdgeIsClampedIntoMatrix)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(2900.f, 2900.f) }, { ENTITY_B, vector2D(100.f, 100.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(2900.f, 2900.f) }, { ENTITY_B, vector2D(100.f, 100.f) } });
 
     EXPECT_TRUE(Contains(cellMatrix.QueryRange(vector2D(2900.f, 2900.f), 1500.f), ENTITY_A))
         << "탐색 상자가 격자를 넘으면 넘친 부분만 버리고 안쪽 칸은 본다";
@@ -79,7 +79,7 @@ TEST_F(CellMatrixTest, QueryNearEdgeIsClampedIntoMatrix)
 
 TEST_F(CellMatrixTest, EntitiesOutsideMatrixAreNotIndexed)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(-500.f, 500.f) }, { ENTITY_B, vector2D(500.f, 4500.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(-500.f, 500.f) }, { ENTITY_B, vector2D(500.f, 4500.f) } });
 
     const vector<int64> found = cellMatrix.QueryRange(vector2D(1500.f, 1500.f), 5000.f);
 
@@ -88,7 +88,7 @@ TEST_F(CellMatrixTest, EntitiesOutsideMatrixAreNotIndexed)
 
 TEST_F(CellMatrixTest, RemovedEntityIsNotReturned)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(500.f, 500.f) }, { ENTITY_B, vector2D(600.f, 600.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(500.f, 500.f) }, { ENTITY_B, vector2D(600.f, 600.f) } });
 
     cellMatrix.Remove(ENTITY_A, vector2D(500.f, 500.f));
 
@@ -99,8 +99,8 @@ TEST_F(CellMatrixTest, RemovedEntityIsNotReturned)
 
 TEST_F(CellMatrixTest, RebuildForgetsPreviousPositions)
 {
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(500.f, 500.f) } });
-    cellMatrix.Rebuild({ { ENTITY_A, vector2D(2500.f, 2500.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(500.f, 500.f) } });
+    cellMatrix.Update({ { ENTITY_A, vector2D(2500.f, 2500.f) } });
 
     EXPECT_FALSE(Contains(cellMatrix.QueryRange(vector2D(500.f, 500.f), 100.f), ENTITY_A));
     EXPECT_TRUE(Contains(cellMatrix.QueryRange(vector2D(2500.f, 2500.f), 100.f), ENTITY_A));

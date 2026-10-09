@@ -17,7 +17,7 @@ void CellMatrix::Init(float minX, float maxX, float minY, float maxY, float cell
     _offset = vector2D(snappedMinX, snappedMinY);
 }
 
-void CellMatrix::Rebuild(const vector<pair<int64, vector2D>>& entities)
+void CellMatrix::Update(const vector<pair<int64, vector2D>>& entities)
 {
     for (auto& column : _cells)
     {

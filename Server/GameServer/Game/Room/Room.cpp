@@ -1080,5 +1080,5 @@ void Room::UpdateCellMatrix()
     for (auto& [entityId, entity] : _entities)
         positions.emplace_back(entityId, ToPlanePos(*entity->_posInfo));
 
-    _cellMatrix.Rebuild(positions);
+    _cellMatrix.Update(positions);
 }
