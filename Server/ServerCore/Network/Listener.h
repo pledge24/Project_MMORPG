@@ -26,6 +26,11 @@ public:
     
 	/** 소켓을 열어 리슨하고 AcceptEx를 서비스의 GetMaxSessionCount()개만큼 걸어 둔다. */
 	bool				Start();
+	/**
+	 * 리슨 소켓을 닫아 새 접속을 더 받지 않는다. 걸어 둔 AcceptEx는 실패로 완료되고 다시 걸리지 않는다.
+	 * 이미 접속한 세션은 그대로 둔다. 여러 번 불러도 한 번만 닫는다.
+	 */
+	void				Close();
     
 private:
 	bool				Listen();
@@ -42,6 +47,8 @@ public:
 
 private:
 	SOCKET _listenSocket = INVALID_SOCKET;
+	/** Close가 세운다. IOCP 워커가 읽으므로 atomic이다. 세운 뒤에는 AcceptEx를 다시 걸지 않는다. */
+	atomic<bool> _closed = false;
 	ServerServiceRef _service;
 	vector<AcceptEvent*> _acceptEvents;
 };

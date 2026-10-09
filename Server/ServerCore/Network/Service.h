@@ -33,7 +33,7 @@ public:
 	virtual bool		Start() abstract;
 	bool				CanStart() { return _sessionFactory != nullptr; }
 
-	                    /** 아직 구현이 없다. */
+	                    /** 새 접속을 더 받지 않는다. 이미 접속한 세션은 그대로 둔다. */
 	virtual void		CloseService();
 	void				SetSessionFactory(SessionFactory func) { _sessionFactory = func; }
 			
@@ -46,7 +46,10 @@ public:
 	void				AddSession(SessionRef session);
 	/** 연결이 끊긴 세션을 제거한다. */
 	void				RemoveSession(SessionRef session);
-	int32				GetCurrentSessionCount() { return _sessionCount; }
+	/** [LOCK] 지금 연결된 세션 모두에 Disconnect를 건다. 끊기가 끝나면 세션마다 OnDisconnected가 불리고 집합에서 빠진다. */
+	void				DisconnectAllSessions(const char* cause);
+	/** [LOCK] 연결된 세션 수. 끊기가 끝나 RemoveSession이 불린 세션은 세지 않는다. */
+	int32				GetCurrentSessionCount();
 	/** 최대 세션 수를 반환한다. 서버에서는 "동시에 걸어 두는 AcceptEx의 수"이며, 최대 젒속 인원수와 관련이 없다 */
 	int32				GetMaxSessionCount() { return _maxSessionCount; }
 

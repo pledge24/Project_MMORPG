@@ -28,3 +28,13 @@ RoomRef RoomManager::FindRoom(int32 roomId) const
 
     return it->second;
 }
+
+vector<RoomRef> RoomManager::GetAllRooms() const
+{
+    vector<RoomRef> rooms;
+    rooms.reserve(_rooms.size());
+    for (const auto& [roomId, room] : _rooms)
+        rooms.push_back(room);
+
+    return rooms;
+}

@@ -82,8 +82,25 @@ bool Listener::Listen()
     return true;
 }
 
+void Listener::Close()
+{
+	if (_closed.exchange(true))
+		return;
+
+	// 값을 INVALID_SOCKET으로 되돌리지 않는다. 워커가 RegisterAccept에서 같은 변수를 읽고 있을 수 있다.
+	// 닫힌 소켓으로 건 AcceptEx는 실패하고, 그 실패 경로가 _closed를 보고 멈춘다.
+	::closesocket(_listenSocket);
+}
+
 void Listener::RegisterAccept(AcceptEvent* acceptEvent)
 {
+	// 리스너를 닫았으면 접속을 더 받지 않는다. 받던 세션은 놓아 준다.
+	if (_closed.load())
+	{
+		acceptEvent->session = nullptr;
+		return;
+	}
+
 	SessionRef session = _service->CreateSession();
 	_service->GetIocpCore()->RegisterSocket(session->GetSocket());
 
@@ -104,6 +121,13 @@ void Listener::RegisterAccept(AcceptEvent* acceptEvent)
 
 void Listener::ProcessAccept(AcceptEvent* acceptEvent)
 {
+	// 리스너를 닫으면 걸어 둔 AcceptEx가 실패로 완료되어 여기로 온다. 다시 걸지 않는다.
+	if (_closed.load())
+	{
+		acceptEvent->session = nullptr;
+		return;
+	}
+
 	cout << "New Client Arrived" << '\n';
 
 	SessionRef session = acceptEvent->session;

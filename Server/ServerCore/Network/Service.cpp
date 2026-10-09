@@ -19,7 +19,25 @@ Service::~Service()
 
 void Service::CloseService()
 {
-	// TODO
+}
+
+void Service::DisconnectAllSessions(const char* cause)
+{
+	// 끊기 완료는 다른 워커가 RemoveSession으로 집합을 고친다. 락 밖에서 끊도록 사본을 뜬다.
+	vector<SessionRef> sessions;
+	{
+		USE_LOCK
+		sessions.assign(_sessions.begin(), _sessions.end());
+	}
+
+	for (const SessionRef& session : sessions)
+		session->Disconnect(cause);
+}
+
+int32 Service::GetCurrentSessionCount()
+{
+	USE_LOCK
+	return _sessionCount;
 }
 
 void Service::Broadcast(SendBufferRef sendBuffer)
@@ -111,7 +129,8 @@ bool ServerService::Start()
 
 void ServerService::CloseService()
 {
-	// TODO
+	if (_listener != nullptr)
+		_listener->Close();
 
 	Service::CloseService();
 }
