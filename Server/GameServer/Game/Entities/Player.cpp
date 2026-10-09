@@ -32,12 +32,11 @@ Player::Player()
 
     _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
     _playerInfo = _entityInfo->mutable_player_info();
-    _possession = new Protocol::Possession();
+    _possession = make_unique<Protocol::Possession>();
 }
 
 Player::~Player()
 {
-    delete _possession;
 }
 
 bool Player::OnLoaded()

@@ -3,12 +3,11 @@
 
 Creature::Creature()
 {
-    _statInfo = new Protocol::StatInfo();
+    _statInfo = make_unique<Protocol::StatInfo>();
 }
 
 Creature::~Creature()
 {
-    delete _statInfo;
 }
 
 bool Creature::Init(const SpawnParams& params)

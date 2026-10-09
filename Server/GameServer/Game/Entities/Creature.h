@@ -40,8 +40,8 @@ public:
     /** 없는 스탯이면 새로 만든다. */
     void SetStatValue(Protocol::StatType statType, const int64& value);
 
-    /** 크리처가 소유한다. 소멸자에서 지운다. */
-    Protocol::StatInfo* _statInfo;
+    /** 크리처가 소유한다. */
+    unique_ptr<Protocol::StatInfo> _statInfo;
 
 protected:
     bool _isDead = false;

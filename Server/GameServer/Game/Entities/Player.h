@@ -155,8 +155,8 @@ public:
 
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::PlayerInfo* _playerInfo;
-    /** 플레이어가 소유한다. 소멸자에서 지운다. */
-    Protocol::Possession* _possession;
+    /** 플레이어가 소유한다. */
+    unique_ptr<Protocol::Possession> _possession;
 
     /** Init에서 만든다. */
     InventoryComponentRef _inventory;

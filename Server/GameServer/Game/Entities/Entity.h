@@ -17,6 +17,10 @@ public:
 	Entity();
 	virtual ~Entity();
 
+    // 엔티티는 shared_ptr로만 다룬다. 복사하면 같은 id의 엔티티가 둘이 된다.
+    Entity(const Entity&) = delete;
+    Entity& operator=(const Entity&) = delete;
+
 protected:
     friend class EntityFactory;
     
@@ -45,7 +49,9 @@ public:
     void SetPos(const Protocol::Vector& pos)            { _posInfo->mutable_pos()->CopyFrom(pos); }
 
 public:
-	Protocol::EntityInfo* _entityInfo;
+    /** 엔티티가 소유한다. */
+	unique_ptr<Protocol::EntityInfo> _entityInfo;
+    /** _entityInfo 안의 pos_info를 가리킨다. 따로 지우지 않는다. */
 	Protocol::PosInfo* _posInfo;
 
     friend class Room;
