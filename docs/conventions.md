@@ -389,7 +389,7 @@ void UP1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 언리얼 밖에서 도는 C++이다. UHT가 없으므로 클라이언트의 이름 규칙을 그대로 옮겨 쓰지 않는다.
 
 **적용 대상은 `Server/GameServer/`와 `Server/DummyClient/`다. `Server/ServerCore/`는 제외한다.**
-3.7의 include 규칙만은 ServerCore에도 적용한다.
+3.7의 include 규칙과 3.9의 로그 규칙만은 ServerCore에도 적용한다.
 — ServerCore는 완성된 네트워크 코어다. 게임 로직이 바뀌어도 이 계층은 바뀌지 않으므로, 이름을
 고쳐서 얻는 것보다 이미 돌아가는 코드를 건드려서 잃는 것이 크다.
 
@@ -523,6 +523,24 @@ void UnregisterUser(GameSessionRef session);
 
 락을 잡지 않고 호출자가 잡은 락에 기대는 함수에는 `[LOCK]`을 붙이지 않는다. 대신 "락을 잡은
 상태에서만 부른다"고 적는다.
+
+### 3.9 로그는 `GLogger`로 남긴다
+
+**이 절은 `Server/ServerCore/`에도 적용한다.**
+
+`cout`, `wcout`, `printf`처럼 표준 출력에 직접 쓰는 호출로 로그를 남기지 않는다. `ServerCore/Utils/Logger.h`의 전역 로거 `GLogger`에
+레벨을 골라 쓴다. 인자는 `std::format` 형식으로 넘긴다.
+
+```cpp
+GLogger->Warning("몬스터 템플릿 {}이 없다", templateId);
+```
+
+— 로그는 IOCP 워커와 DB 스레드, 메인 스레드가 한 콘솔에 함께 쓴다. 표준 출력 스트림에 바로 쓰면
+줄이 서로 섞이고, 어느 스레드가 언제 남긴 줄인지 알 수 없다. `GLogger`는 한 줄을 통째로 쓰고 시각과
+레벨, 스레드 id(`LThreadId`)를 붙인다. `ThreadManager`가 띄우지 않은 스레드는 id가 `0`으로 찍힌다.
+
+2026년 10월 9일(#206) 기준으로 기존 코드에는 표준 출력에 직접 쓰는 호출이 남아 있다. #205의 각 티켓이 자기가 고치는
+코드의 호출을 옮기고, 남은 것은 #213이 옮긴다.
 
 ---
 

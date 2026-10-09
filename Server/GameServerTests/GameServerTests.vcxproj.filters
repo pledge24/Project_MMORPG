@@ -30,6 +30,9 @@
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\Characters">
+      <UniqueIdentifier>{4879e189-484a-4f11-9016-5d7b55efb970}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Core">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
     </Filter>
@@ -75,6 +78,7 @@
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
     <ClCompile Include="EntityFactoryTests.cpp" />
+    <ClCompile Include="LoggerTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
@@ -108,8 +112,8 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp">
-      <Filter>GameServer\Game\Entities</Filter>
+    <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp">
+      <Filter>GameServer\Game\Characters</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>

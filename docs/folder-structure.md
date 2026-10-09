@@ -482,7 +482,7 @@ Server/
 │   ├── Job/                잡 큐, 잡 타이머, 글로벌 큐
 │   ├── Thread/
 │   ├── DB/                 커넥션 풀, 바인딩, DB 큐, Redis
-│   ├── Utils/
+│   ├── Utils/              락 큐, 로거
 │   └── Core/               타입, 매크로, TLS, 전역 객체, pch
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점
@@ -491,7 +491,8 @@ Server/
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정
 │   │   ├── Combat/         피격과 처치 판정
-│   │   ├── Entities/       엔티티 계층
+│   │   ├── Entities/       엔티티 계층과 그 생성, 저장 사본
+│   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
 │   │   ├── Inventory/      인벤토리
 │   │   ├── Equipment/      장비
 │   │   └── Data/           게임 데이터 로더
@@ -510,8 +511,8 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
-`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 여섯은 게임 규칙이다. 이 층을 없애면
-폴더 열 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
+`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 일곱은 게임 규칙이다. 이 층을 없애면
+폴더 열세 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
@@ -525,7 +526,15 @@ Server/
 
 `Game/Combat/`은 피격과 처치를 판정한다. 룸과 세션을 모르고, 대상 찾기와 결과 전송은 `Game/Room/`이
 맡는다. `Game/Room/`의 `RoomTransfer`도 같은 모양이다. 룸 이동과 리스폰 요청을 판정하고, 퇴장과 입장,
-결과 전송은 `Room`이 맡는다. `Game/AI/`는 아직 없다. 몬스터 행동 결정이 `Game/Entities/`에 섞여 있다. 이 도메인을 분리할
+결과 전송은 `Room`이 맡는다.
+
+`Game/Characters/`는 계정이 가진 캐릭터를 만들고 지우는 규칙과 슬롯 규칙을 담는다. 이 폴더의 코드는
+엔티티가 아니다. 월드에 서 있는 플레이어가 아니라 캐릭터 선택 화면의 캐릭터 목록을 다루므로 `Game/Entities/`에
+두지 않는다. 세션과 DB는 모르고, 검증 결과를 받아 DB에 쓰는 일은 핸들러와 `DB/`가 맡는다.
+2026년 10월 9일(#206) 기준으로 이 폴더에는 생성 검증(`CharacterCreation`)과 슬롯 기본 개수만 있다. 삭제
+규칙을 코드로 나눌 때 여기에 둔다.
+
+`Game/AI/`는 아직 없다. 몬스터 행동 결정이 `Game/Entities/`에 섞여 있다. 이 도메인을 분리할
 때 만든다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가

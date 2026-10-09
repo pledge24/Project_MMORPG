@@ -21,6 +21,7 @@ using namespace std;
 //~ Debug
 #include <iostream>
 #include <assert.h>
+#include "ServerCore/Utils/Logger.h"
 
 //~ STL Container
 #include <array>
