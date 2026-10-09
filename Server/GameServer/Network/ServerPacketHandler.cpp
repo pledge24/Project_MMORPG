@@ -33,6 +33,27 @@ namespace
             });
     }
 
+    // 보낸 세션의 플레이어가 속한 룸의 큐에 job(room, player)을 넣는다. 플레이어나 룸이 없으면 넣지 않고 false.
+    // 보낸 사람은 패킷 안의 id가 아니라 세션의 플레이어로 정한다.
+    template<typename RoomJob>
+    bool DispatchToPlayerRoom(const PacketSessionRef& session, RoomJob&& job)
+    {
+        PlayerRef player = static_pointer_cast<GameSession>(session)->_player.load();
+        if (player == nullptr)
+            return false;
+
+        RoomRef room = player->_room.load().lock();
+        if (room == nullptr)
+            return false;
+
+        room->DoAsync([room, player, job = std::forward<RoomJob>(job)]()
+            {
+                job(room, player);
+            });
+
+        return true;
+    }
+
     void SendEnterGameFail(const PacketSessionRef& session)
     {
         Protocol::S_ENTER_GAME enterGameFailPkt;
@@ -403,155 +424,74 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 {
-	auto gameSession = static_pointer_cast<GameSession>(session);
-
-	PlayerRef player = gameSession->_player.load();
-	if (player == nullptr)
-		return false;
-
-	RoomRef room = player->_room.load().lock();
-	if (room == nullptr)
-		return false;
-
-    room->DoAsync(&Room::C_HandleMove, pkt);
-
-	return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef&)
+        {
+            room->C_HandleMove(pkt);
+        });
 }
 
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
-	auto gameSession = static_pointer_cast<GameSession>(session);
-
-	PlayerRef player = gameSession->_player.load();
-	if (player == nullptr)
-		return false;
-
-	RoomRef room = player->_room.load().lock();
-	if (room == nullptr)
-		return false;
-
-	room->DoAsync(&Room::C_HandleChat, pkt, player);
-
-	return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleChat(pkt, player);
+        });
 }
 
 bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleNormalAttack, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleNormalAttack(pkt, player);
+        });
 }
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleBuyItem, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleBuyItem(pkt, player);
+        });
 }
 
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleSellItem, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleSellItem(pkt, player);
+        });
 }
 
 bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleEquipGear, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleEquipGear(pkt, player);
+        });
 }
 
 
 bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleUnequipGear, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleUnequipGear(pkt, player);
+        });
 }
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleUseItem, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleUseItem(pkt, player);
+        });
 }
 
 bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleRespawn, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleRespawn(pkt, player);
+        });
 }
 
