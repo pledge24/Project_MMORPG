@@ -47,6 +47,9 @@
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Characters">
+      <UniqueIdentifier>{c86c3240-4ec0-44a0-b694-596060a93c50}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\pch.cpp">
@@ -83,8 +86,8 @@
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Entities\CharacterCreation.cpp">
-      <Filter>Game\Entities</Filter>
+    <ClCompile Include="Game\Characters\CharacterCreation.cpp">
+      <Filter>Game\Characters</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
@@ -187,8 +190,8 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Entities\CharacterCreation.h">
-      <Filter>Game\Entities</Filter>
+    <ClInclude Include="Game\Characters\CharacterCreation.h">
+      <Filter>Game\Characters</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityFactory.h">
       <Filter>Game\Entities</Filter>

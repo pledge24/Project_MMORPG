@@ -218,7 +218,7 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp" />
+    <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />

@@ -2,7 +2,7 @@
 #include "DB/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Utils/EncodingConverter.h"
-#include "Game/Entities/CharacterCreation.h"
+#include "Game/Characters/CharacterCreation.h"
 
 void CharacterListDAO::LoadCharacterList(SessionRef session, int64 userId)
 {

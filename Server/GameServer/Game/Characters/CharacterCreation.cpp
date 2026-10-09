@@ -1,5 +1,5 @@
 #include "Core/pch.h"
-#include "Game/Entities/CharacterCreation.h"
+#include "Game/Characters/CharacterCreation.h"
 #include "Utils/EncodingConverter.h"
 
 optional<string> CharacterCreation::Validate(const Protocol::CharacterOverview& character)

@@ -7,7 +7,7 @@
 #include "Game/Entities/EntityFactory.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/ProgressStorage.h"
-#include "Game/Entities/CharacterCreation.h"
+#include "Game/Characters/CharacterCreation.h"
 
 namespace
 {
