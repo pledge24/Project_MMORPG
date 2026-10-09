@@ -85,11 +85,11 @@ public:
 	}
 
     /** 파라미터 배열: 배열 + 실제 데이터 개수를 넘겨주는 경우 */
-    /** rows 뒤의 행은 NULL로 표시한다. 최대 MAX_ROWS(100)행이다. */
+    /** rows 뒤의 행은 NULL로 표시한다. 최대 MAX_PARAM_ROWS행이다. */
     template<typename T, int32 N>
     void BindParamSet(int32 idx, T(&value)[N], int32 rows)
     {
-        for (int32 i = 0; i < MAX_ROWS; i++)
+        for (int32 i = 0; i < MAX_PARAM_ROWS; i++)
             _paramIndex[idx][i] = i < rows ? 0 : SQL_NULL_DATA;
 
         _dbConnection.BindParam(idx + 1, value, _paramIndex[idx]);
@@ -127,13 +127,15 @@ public:
 		_columnFlag |= (1LL << idx);
 	}
 
-protected:
-    static constexpr int32  MAX_ROWS = 100;
+public:
+    /** 배열 파라미터 한 번에 묶을 수 있는 행 수. 파라미터마다 지시자를 이만큼 둔다. */
+    static constexpr int32  MAX_PARAM_ROWS = 100;
 
+protected:
 	DBConnection&	        _dbConnection;
 	const WCHAR*	        _query;
-	SQLLEN			        _paramIndex[ParamCount > 0 ? ParamCount : 1][MAX_ROWS];
-	SQLLEN			        _columnIndex[ColumnCount > 0 ? ColumnCount : 1][MAX_ROWS];
+	SQLLEN			        _paramIndex[ParamCount > 0 ? ParamCount : 1][MAX_PARAM_ROWS];
+	SQLLEN			        _columnIndex[ColumnCount > 0 ? ColumnCount : 1][MAX_PARAM_ROWS];
 	uint64			        _paramFlag;
 	uint64			        _columnFlag;
 };

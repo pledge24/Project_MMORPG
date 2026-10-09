@@ -16,6 +16,79 @@ namespace
         return slot;
     }
 
+    // 장비 행을 배열 파라미터로 묶는다. 순서는 저장 쿼리의 물음표 순서다.
+    struct GearRowsBinding
+    {
+        static constexpr int32 PARAMS = 9;
+
+        GearRowsBinding(DBBind<PARAMS, 0>& dbBind, const vector<GearSaveRow>& rows)
+        {
+            const int32 rowCount = static_cast<int32>(rows.size());
+            for (int32 i = 0; i < rowCount; i++)
+            {
+                const GearSaveRow& row = rows[i];
+                _characterId[i] = row.characterId;
+                _slotId[i] = row.slotId;
+                _itemUid[i] = row.itemUid;
+                _templateId[i] = row.templateId;
+                _isEquipped[i] = row.isEquipped;
+                _enhance[i] = row.enhance;
+                _durability[i] = row.durability;
+                _additionalPhysicalAttack[i] = row.additionalPhysicalAttack;
+                _additionalMagicalAttack[i] = row.additionalMagicalAttack;
+            }
+
+            dbBind.BindParamSet(0, _characterId, rowCount);
+            dbBind.BindParamSet(1, _slotId, rowCount);
+            dbBind.BindParamSet(2, _itemUid, rowCount);
+            dbBind.BindParamSet(3, _templateId, rowCount);
+            dbBind.BindParamSet(4, _isEquipped, rowCount);
+            dbBind.BindParamSet(5, _enhance, rowCount);
+            dbBind.BindParamSet(6, _durability, rowCount);
+            dbBind.BindParamSet(7, _additionalPhysicalAttack, rowCount);
+            dbBind.BindParamSet(8, _additionalMagicalAttack, rowCount);
+        }
+
+        int64 _characterId[MAX_PARAM_ROWS] = {};
+        int32 _slotId[MAX_PARAM_ROWS] = {};
+        int64 _itemUid[MAX_PARAM_ROWS] = {};
+        int32 _templateId[MAX_PARAM_ROWS] = {};
+        bool _isEquipped[MAX_PARAM_ROWS] = {};
+        int32 _enhance[MAX_PARAM_ROWS] = {};
+        int32 _durability[MAX_PARAM_ROWS] = {};
+        int32 _additionalPhysicalAttack[MAX_PARAM_ROWS] = {};
+        int32 _additionalMagicalAttack[MAX_PARAM_ROWS] = {};
+    };
+
+    // 소모품이나 기타 아이템 행을 배열 파라미터로 묶는다. 순서는 저장 쿼리의 물음표 순서다.
+    struct StackableRowsBinding
+    {
+        static constexpr int32 PARAMS = 4;
+
+        StackableRowsBinding(DBBind<PARAMS, 0>& dbBind, const vector<StackableItemSaveRow>& rows)
+        {
+            const int32 rowCount = static_cast<int32>(rows.size());
+            for (int32 i = 0; i < rowCount; i++)
+            {
+                const StackableItemSaveRow& row = rows[i];
+                _characterId[i] = row.characterId;
+                _slotId[i] = row.slotId;
+                _templateId[i] = row.templateId;
+                _count[i] = row.count;
+            }
+
+            dbBind.BindParamSet(0, _characterId, rowCount);
+            dbBind.BindParamSet(1, _slotId, rowCount);
+            dbBind.BindParamSet(2, _templateId, rowCount);
+            dbBind.BindParamSet(3, _count, rowCount);
+        }
+
+        int64 _characterId[MAX_PARAM_ROWS] = {};
+        int32 _slotId[MAX_PARAM_ROWS] = {};
+        int32 _templateId[MAX_PARAM_ROWS] = {};
+        int32 _count[MAX_PARAM_ROWS] = {};
+    };
+
     // 개수로 쌓이는 아이템의 테이블이다. 쌓이는 종류가 아니면 nullptr.
     const WCHAR* GetStackableItemTable(Protocol::ItemType itemType)
     {
@@ -236,68 +309,6 @@ void ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol
 
 void ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
 {
-    const int PARAMS = 9;
-    const int COLS = 0;
-    const int MAX_ROWS = 100;
-
-    struct BindObject
-    {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, const vector<GearSaveRow>& rows)
-        {
-            // MemSet
-            ::memset(_characterId, 0, sizeof(_characterId));
-            ::memset(_slotId, 0, sizeof(_slotId));
-            ::memset(_itemUid, 0, sizeof(_itemUid));
-            ::memset(_templateId, 0, sizeof(_templateId));
-            ::memset(_isEquipped, false, sizeof(_isEquipped));
-            ::memset(_enhance, 0, sizeof(_enhance));
-            ::memset(_durability, 0, sizeof(_durability));
-            ::memset(_additionalPhysicalAttack, 0, sizeof(_additionalPhysicalAttack));
-            ::memset(_additionalMagicalAttack, 0, sizeof(_additionalMagicalAttack));
-
-            const int32 rowCount = static_cast<int32>(rows.size());
-            for (int32 i = 0; i < rowCount; i++)
-            {
-                const GearSaveRow& row = rows[i];
-                _characterId[i] = row.characterId;
-                _slotId[i] = row.slotId;
-                _itemUid[i] = row.itemUid;
-                _templateId[i] = row.templateId;
-                _isEquipped[i] = row.isEquipped;
-                _enhance[i] = row.enhance;
-                _durability[i] = row.durability;
-                _additionalPhysicalAttack[i] = row.additionalPhysicalAttack;
-                _additionalMagicalAttack[i] = row.additionalMagicalAttack;
-            }
-
-            if (rowCount > 0)
-                BindParam(dbBind, rowCount);
-        }
-
-        void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
-        {
-            dbBind.BindParamSet(0, _characterId, rows);
-            dbBind.BindParamSet(1, _slotId, rows);
-            dbBind.BindParamSet(2, _itemUid, rows);
-            dbBind.BindParamSet(3, _templateId, rows);
-            dbBind.BindParamSet(4, _isEquipped, rows);
-            dbBind.BindParamSet(5, _enhance, rows);
-            dbBind.BindParamSet(6, _durability, rows);
-            dbBind.BindParamSet(7, _additionalPhysicalAttack, rows);
-            dbBind.BindParamSet(8, _additionalMagicalAttack, rows);
-        }
-
-        //~ Params
-        int64 _characterId[MAX_ROWS];
-        int32 _slotId[MAX_ROWS];
-        int64 _itemUid[MAX_ROWS];
-        int32 _templateId[MAX_ROWS];
-        bool _isEquipped[MAX_ROWS];
-        int32 _enhance[MAX_ROWS];
-        int32 _durability[MAX_ROWS];
-        int32 _additionalPhysicalAttack[MAX_ROWS];
-        int32 _additionalMagicalAttack[MAX_ROWS];
-    };
 
 
     // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
@@ -305,7 +316,7 @@ void ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
     if (rows.has_value() == false)
         throw DBError(__func__, "가방의 더티 플래그가 없다");
 
-    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+    const WCHAR* query = LR"SQL(
         -- 1. 임시 테이블 생성
         SELECT *
         INTO #TempTable
@@ -345,69 +356,17 @@ void ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
 
         -- 4. 임시 테이블 삭제
         DROP TABLE #TempTable;
-    )SQL");
+    )SQL";
 
-    BindObject bindObject(dbBind, rows.value());
-
-    int32 rowCount = static_cast<int32>(rows->size());
-    if (rowCount > 0)
-    {
-        conn.SetParamSetSize(rowCount);
-
-        if (dbBind.Execute() == false)
-            throw DBError(__func__, "쿼리 실행 실패");
-    }
+    ExecuteParamSet<GearRowsBinding>(conn, __func__, query, rows.value());
 }
 
 void ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data, Protocol::ItemType itemType)
 {
-    const int PARAMS = 4;
-    const int COLS = 0;
-    const int MAX_ROWS = 100;
-
-    struct BindObject
-    {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, const vector<StackableItemSaveRow>& rows)
-        {
-            // MemSet
-            ::memset(_characterId, 0, sizeof(_characterId));
-            ::memset(_slotId, 0, sizeof(_slotId));
-            ::memset(_templateId, 0, sizeof(_templateId));
-            ::memset(_count, 0, sizeof(_count));
-
-            const int32 rowCount = static_cast<int32>(rows.size());
-            for (int32 i = 0; i < rowCount; i++)
-            {
-                const StackableItemSaveRow& row = rows[i];
-                _characterId[i] = row.characterId;
-                _slotId[i] = row.slotId;
-                _templateId[i] = row.templateId;
-                _count[i] = row.count;
-            }
-
-            if (rowCount > 0)
-                BindParam(dbBind, rowCount);
-        }
-
-        void BindParam(DBBind<PARAMS, COLS>& dbBind, int32 rows)
-        {
-            dbBind.BindParamSet(0, _characterId, rows);
-            dbBind.BindParamSet(1, _slotId, rows);
-            dbBind.BindParamSet(2, _templateId, rows);
-            dbBind.BindParamSet(3, _count, rows);
-        }
-
-        //~ Params
-        int64 _characterId[MAX_ROWS];
-        int32 _slotId[MAX_ROWS];
-        int32 _templateId[MAX_ROWS];
-        int32 _count[MAX_ROWS];
-    };
 
     const WCHAR* table = GetStackableItemTable(itemType);
     if (table == nullptr)
         throw DBError(__func__, "쌓이는 아이템 종류가 아니다");
-
 
     // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
     optional<vector<StackableItemSaveRow>> rows = ItemSaveRows::BuildStackableRows(data, itemType);
@@ -451,16 +410,6 @@ void ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data,
         -- 4. 임시 테이블 삭제
         DROP TABLE #TempTable;
     )SQL";
-    DBBind<PARAMS, COLS> dbBind(conn, query.c_str());
 
-    BindObject bindObject(dbBind, rows.value());
-
-    int32 rowCount = static_cast<int32>(rows->size());
-    if (rowCount > 0)
-    {
-        conn.SetParamSetSize(rowCount);
-
-        if (dbBind.Execute() == false)
-            throw DBError(__func__, "쿼리 실행 실패");
-    }
+    ExecuteParamSet<StackableRowsBinding>(conn, __func__, query.c_str(), rows.value());
 }

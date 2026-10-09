@@ -56,6 +56,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ParamSetTests.cpp" />
     <ClCompile Include="CharacterListDAOTests.cpp" />
     <ClCompile Include="ProgressStorageTests.cpp" />
     <ClCompile Include="GameEntryTests.cpp" />

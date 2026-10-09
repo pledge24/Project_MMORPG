@@ -30,3 +30,34 @@ public:
 private:
     DBConnection* _connection;
 };
+
+/** 배열 파라미터 한 번에 묶을 수 있는 행 수. */
+constexpr int32 MAX_PARAM_ROWS = DBBind<1, 0>::MAX_PARAM_ROWS;
+
+/**
+ * rows를 배열 파라미터로 묶어 query를 한 번 실행한다. 행이 없으면 실행하지 않는다.
+ * Binding은 PARAMS(파라미터 수)를 갖고, (DBBind<PARAMS, 0>&, const vector<Row>&)로 만들면 행을 자기 배열에 옮겨 바인딩한다.
+ * 행이 MAX_PARAM_ROWS를 넘거나 실행이 실패하면 DBError. where는 오류 메시지에 붙일 호출자 이름이다.
+ * DBBind는 query를 가리키기만 하므로 query는 이 함수가 끝날 때까지 살아 있어야 한다.
+ */
+template<typename Binding, typename Row>
+void ExecuteParamSet(DBConnection& conn, string_view where, const WCHAR* query, const vector<Row>& rows)
+{
+    if (rows.empty())
+        return;
+
+    // 넘는 행은 바인딩 배열 밖에 쓴다.
+    if (rows.size() > static_cast<size_t>(MAX_PARAM_ROWS))
+        throw DBError(where, format("저장할 행 {}개가 한 번에 묶을 수 있는 {}개를 넘는다", rows.size(), MAX_PARAM_ROWS));
+
+    DBBind<Binding::PARAMS, 0> dbBind(conn, query);
+    // 바인딩한 배열은 실행이 끝날 때까지 살아 있어야 한다. 스택에 두기에는 커서 힙에 둔다.
+    unique_ptr<Binding> binding = make_unique<Binding>(dbBind, rows);
+
+    // DBBind 생성자가 Unbind로 행 수를 1로 되돌리므로 바인딩한 뒤에 정한다.
+    int32 rowCount = static_cast<int32>(rows.size());
+    conn.SetParamSetSize(rowCount);
+
+    if (dbBind.Execute() == false)
+        throw DBError(where, "쿼리 실행 실패");
+}
