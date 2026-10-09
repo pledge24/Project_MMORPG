@@ -83,9 +83,9 @@ protected:
 
     void RequestEnter()
     {
-        coordinator.RequestEnter(USER_ID,
+        coordinator.RequestEnter(USER_ID, {
             [this]() { events.push_back("load"); },
-            [this]() { events.push_back("reject"); });
+            [this]() { events.push_back("reject"); } });
     }
 
     /** 쌓인 DB 잡을 넣은 순서대로 돌린다. 도는 중에 들어온 잡도 돌린다. */
@@ -272,4 +272,44 @@ TEST_F(ProgressCoordinatorTest, EnterAfterExpiryStillWaitsForSave)
     coordinator.OnDisconnected(USER_ID, player);
     RunDBJobs();
     EXPECT_EQ(events, vector<string>({ "reject", "save", "load" }));
+}
+
+// 끊긴 세션이 계정 등록에서 빠지기 전에 새 로그인이 그 세션을 밀어낼 수 있다. 그 접속 종료가 이미 대기를 풀었으므로
+// 밀어내기가 건 대기를 풀어 줄 곳이 없어, 다음 입장이 영영 기다렸다.
+TEST_F(ProgressCoordinatorTest, LateDuplicateLoginAfterDisconnectBeforeRoomDoesNotBlockEnter)
+{
+    coordinator.OnDisconnected(USER_ID, player);
+    coordinator.OnDuplicateLogin(USER_ID, player);
+
+    RequestEnter();
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "load" }));
+}
+
+TEST_F(ProgressCoordinatorTest, LateDuplicateLoginAfterSaveDoesNotBlockEnter)
+{
+    EnterRoom();
+    coordinator.OnDisconnected(USER_ID, player);
+    RunDBJobs();
+    coordinator.OnDuplicateLogin(USER_ID, player);
+
+    RequestEnter();
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "load" }));
+}
+
+// 저장이 아직 끝나지 않았으면 늦게 온 밀어내기가 있어도 새 입장은 그 저장을 기다린다.
+TEST_F(ProgressCoordinatorTest, LateDuplicateLoginBeforeSaveStillWaitsForSave)
+{
+    EnterRoom();
+    coordinator.OnDisconnected(USER_ID, player);
+    coordinator.OnDuplicateLogin(USER_ID, player);
+
+    RequestEnter();
+    EXPECT_TRUE(events.empty());
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "load" }));
 }

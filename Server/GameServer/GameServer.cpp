@@ -19,6 +19,8 @@ namespace
     constexpr uint64 SESSION_CLOSE_TIMEOUT_MS = 2000;
     // 룸 큐 하나가 비기를 기다리는 상한(ms).
     constexpr uint64 ROOM_DRAIN_TIMEOUT_MS = 1000;
+    // 룸 큐를 비우는 횟수. 룸 이동 중에 끊긴 플레이어는 떠난 룸 큐가 들어갈 룸 큐로 넘긴 뒤에야 저장되므로 한 번 더 비운다.
+    constexpr int32 ROOM_DRAIN_ROUNDS = 2;
 
     // 콘솔 종료 신호를 받으면 세운다. 메인 스레드가 워커 루프를 빠져나와 종료 절차를 밟는다.
     atomic<bool> s_shutdownRequested = false;
@@ -103,9 +105,8 @@ namespace
         if (WaitUntil([&service]() { return service->GetCurrentSessionCount() == 0; }, SESSION_CLOSE_TIMEOUT_MS) == false)
             GLogger->Warning("세션 {}개가 끊기지 않아 그 플레이어는 저장하지 못할 수 있습니다", service->GetCurrentSessionCount());
 
-        // 접속 종료가 룸 큐에 넣은 퇴장과 저장을 마저 돌린다. 룸 이동 중에 끊긴 플레이어는 첫 바퀴에서 떠난 룸이
-        // 들어갈 룸 큐로 넘기므로 두 바퀴 돌린다.
-        for (int32 round = 0; round < 2; round++)
+        // 접속 종료가 룸 큐에 넣은 퇴장과 저장을 마저 돌린다.
+        for (int32 round = 0; round < ROOM_DRAIN_ROUNDS; round++)
         {
             if (DrainRoomQueues() == false)
                 GLogger->Warning("룸 큐가 비지 않아 일부 플레이어는 저장하지 못할 수 있습니다");

@@ -315,7 +315,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             SendEnterGameFail(session);
         };
 
-    GProgressCoordinator->RequestEnter(userId, std::move(load), std::move(reject));
+    GProgressCoordinator->RequestEnter(userId, { std::move(load), std::move(reject) });
 
 	return true;
 }

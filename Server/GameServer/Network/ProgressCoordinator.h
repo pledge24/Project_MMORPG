@@ -37,11 +37,11 @@ public:
      */
     void OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer);
     /**
-     * 입장 요청(C_ENTER_GAME)에서 IOCP 스레드가 부른다. load는 DB 잡 안에서 진행을 불러오고 응답까지 보낸다.
+     * 입장 요청(C_ENTER_GAME)에서 IOCP 스레드가 부른다. load.run은 DB 잡 안에서 진행을 불러오고 응답까지 보낸다.
      * 저장 대기가 없으면 load를 곧바로 DB 큐에 넣는다. 대기 중이면 저장이 끝난 뒤에 돌리고, PARKED_LOAD_TIMEOUT_MS 안에
-     * 끝나지 않거나 이미 기다리는 입장이 있으면 load 대신 reject를 부른다. 만료로 거절해도 대기는 저장이 끝날 때까지 남는다.
+     * 끝나지 않거나 이미 기다리는 입장이 있으면 load.run 대신 load.reject를 부른다. 만료로 거절해도 대기는 저장이 끝날 때까지 남는다.
      */
-    void RequestEnter(int64 userId, CallbackType load, CallbackType reject);
+    void RequestEnter(int64 userId, SaveGate::ParkedLoad load);
 
     //~ 룸 큐
     /**

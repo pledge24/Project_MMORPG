@@ -201,6 +201,7 @@ public:
         IN_ROOM,          // 룸에 들어간 적이 있다. 룸 이동 중이어도 이 값이다
         LEFT_BEFORE_ROOM, // 룸에 들어가기 전에 끊겼다. 바뀐 것이 없으므로 저장하지 않는다
         LEFT_IN_ROOM,     // 룸에 들어간 뒤 끊겼다. 저장한다
+        SAVED,            // 룸에 들어간 뒤 끊겼고 접속 종료 저장 잡이 끝났다
     };
 
     /**
@@ -213,6 +214,13 @@ public:
      * 바꾼 뒤의 값을 돌려준다. LEFT_BEFORE_ROOM이면 룸에서 빼기만 하고, LEFT_IN_ROOM이면 퇴장과 저장을 이어 받는다.
      */
     Presence MarkEnteredRoom();
+    /**
+     * 접속 종료 저장 잡이 끝났음을 표시한다. 저장 잡(DB 스레드)이 저장 대기를 풀기 직전에 부른다.
+     * DB 스레드가 살아 있는 Player에서 만지는 것은 이 atomic 하나뿐이다.
+     */
+    void MarkSaved() { _presence.store(Presence::SAVED); }
+    /** 늦게 온 밀어내기가 그 세션의 접속 종료가 이미 끝났는지 볼 때 읽는다. */
+    Presence GetPresence() const { return _presence.load(); }
 
     //~ 상태 읽기
     const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }

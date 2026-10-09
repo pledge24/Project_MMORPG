@@ -70,18 +70,26 @@ void ProgressCoordinator::OnDuplicateLogin(int64 userId, const PlayerRef& replac
     // 그 사이의 입장이 저장 전의 진행을 불러오지 않도록 대기를 여기서 먼저 건다.
     // 아직 룸에 없는 플레이어도 끊기기 전에 룸에 들어갈 수 있으므로 건다. 저장할 것이 없으면 접속 종료가 푼다.
     // 입장 전의 세션은 접속 종료가 아무것도 하지 않으므로 걸지 않는다. 걸면 풀어 줄 곳이 없다.
-    if (replacedPlayer != nullptr)
-        _saveGate.Hold(userId);
+    if (replacedPlayer == nullptr)
+        return;
+
+    _saveGate.Hold(userId);
+
+    // 끊긴 세션이 계정 등록에서 빠지기 전에 밀어낼 수 있다. 그 접속 종료가 이미 대기를 풀었으면 이 대기를 풀 곳이 없으므로
+    // 여기서 푼다. 대기를 건 뒤에 읽으므로, 여기서 끝나지 않은 접속 종료로 보이면 그 해제는 이 대기보다 나중에 온다.
+    const Player::Presence presence = replacedPlayer->GetPresence();
+    if (presence == Player::Presence::LEFT_BEFORE_ROOM || presence == Player::Presence::SAVED)
+        ReleaseHold(userId);
 }
 
-void ProgressCoordinator::RequestEnter(int64 userId, CallbackType load, CallbackType reject)
+void ProgressCoordinator::RequestEnter(int64 userId, SaveGate::ParkedLoad load)
 {
     // 이 계정의 접속 종료 저장이 남아 있으면 저장 잡이 같은 userId 큐에서 이 불러오기를 실행한다.
-    SaveGate::ParkTicket ticket = _saveGate.Park(userId, { load, reject });
+    SaveGate::ParkTicket ticket = _saveGate.Park(userId, load);
     switch (ticket.result)
     {
     case SaveGate::ParkResult::NOT_HELD:
-        _pushDBJob(userId, std::move(load));
+        _pushDBJob(userId, std::move(load.run));
         break;
 
     case SaveGate::ParkResult::PARKED:
@@ -97,7 +105,7 @@ void ProgressCoordinator::RequestEnter(int64 userId, CallbackType load, Callback
 
     case SaveGate::ParkResult::BUSY:
         // 저장을 기다리는 입장 요청이 이미 있다. 쌓으면 요청마다 플레이어가 만들어진다.
-        reject();
+        load.reject();
         break;
     }
 }
@@ -112,7 +120,7 @@ void ProgressCoordinator::LeaveRoomAndSave(const RoomRef& room, const PlayerRef&
     const int64 userId = saveData->userId;
 
     // 입장 불러오기와 같은 userId 큐에 넣는다. 그사이 맡겨 둔 불러오기는 저장이 끝난 뒤 이 잡에서 실행한다.
-    _pushDBJob(userId, [this, data = std::move(saveData.value())]()
+    _pushDBJob(userId, [this, player, data = std::move(saveData.value())]()
         {
             // 연결을 빌리지 못해도 아래에서 대기를 풀어야 한다. 풀지 않으면 다음 입장이 상한까지 막힌다.
             try
@@ -125,6 +133,8 @@ void ProgressCoordinator::LeaveRoomAndSave(const RoomRef& room, const PlayerRef&
             }
 
             // 저장이 실패해도 대기를 푼다. 실패한 저장은 다시 시도하지 않으므로 기다려도 결과가 같다.
+            // 표시를 먼저 바꾼다. 그 뒤에 온 밀어내기가 이 해제를 놓쳤는지 표시로 안다(OnDuplicateLogin).
+            player->MarkSaved();
             if (optional<SaveGate::ParkedLoad> parked = _saveGate.Release(data.userId))
                 parked->run();
         });
