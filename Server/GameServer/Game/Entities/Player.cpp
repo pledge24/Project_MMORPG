@@ -73,15 +73,12 @@ bool Player::Init(const SpawnParams& params)
     _equipment = make_shared<EquipmentComponent>(self);
 
     if (params.progress != nullptr)
-    {
-        ApplyProgress(*params.progress);
-        return OnLoaded();
-    }
+        return ApplyProgress(*params.progress) && OnLoaded();
 
 	return true;
 }
 
-void Player::ApplyProgress(const PlayerProgress& progress)
+bool Player::ApplyProgress(const PlayerProgress& progress)
 {
     const Protocol::PlayerInfo& playerInfo = progress.playerInfo;
     _playerInfo->set_character_id(playerInfo.character_id());
@@ -109,21 +106,33 @@ void Player::ApplyProgress(const PlayerProgress& progress)
 
     _possession->set_gold(progress.possession.gold());
 
+    // 잘못된 행 하나를 건너뛰고 입장시키면, 그 칸에 다른 아이템이 들어가 저장될 때 그 행을 덮어쓴다.
+    // 그래서 입장을 거절하고 행은 DB에 남긴다.
+    const int64 characterId = playerInfo.character_id();
     const Protocol::Inventory& inventory = progress.possession.inventory();
     for (const auto* slots : { &inventory.gear(), &inventory.consumables(), &inventory.miscellaneous() })
     {
         for (const Protocol::Slot& slot : *slots)
         {
-            if (slot.has_item())
-                _inventory->AddItem(nullptr, slot.item(), slot.item().count(), slot.slot_id());
+            if (slot.has_item() && _inventory->LoadItem(slot) == false)
+            {
+                GLogger->Error("캐릭터 {}의 인벤토리 행(종류 {}, 칸 {}, 템플릿 {})을 넣을 수 없습니다",
+                    characterId, static_cast<int32>(slot.type()), slot.slot_id(), slot.item().template_id());
+                return false;
+            }
         }
     }
 
     for (const auto& [gearType, slot] : progress.possession.equipped_gear())
     {
-        if (slot.has_item())
-            _equipment->LoadEquipped(slot.item(), gearType);
+        if (slot.has_item() && _equipment->LoadEquipped(slot.item(), gearType) == false)
+        {
+            GLogger->Error("캐릭터 {}의 장착 행(부위 {}, 템플릿 {})을 넣을 수 없습니다", characterId, gearType, slot.item().template_id());
+            return false;
+        }
     }
+
+    return true;
 }
 
 void Player::Start()

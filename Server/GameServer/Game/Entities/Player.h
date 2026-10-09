@@ -118,8 +118,11 @@ public:
 
 private:
     //~ 불러오기
-    /** 불러온 진행을 플레이어에 쓴다. 인벤토리와 장비는 슬롯 번호대로 넣는다. 검증은 OnLoaded가 한다. */
-    void ApplyProgress(const PlayerProgress& progress);
+    /**
+     * 불러온 진행을 플레이어에 쓴다. 인벤토리와 장비는 슬롯 번호대로 넣는다. 스탯 검증은 OnLoaded가 한다.
+     * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false. 그 행은 DB에 그대로 남는다.
+     */
+    bool ApplyProgress(const PlayerProgress& progress);
 
     //~ 스탯
     /**

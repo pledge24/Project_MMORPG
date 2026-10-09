@@ -174,3 +174,45 @@ TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
     EXPECT_EQ(second, nullptr);
     EXPECT_EQ(session->_player.load(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
 }
+
+/* TD-035: DB에서 읽은 슬롯은 믿지 않는다. 잘못된 행이 있으면 입장을 거절하고, 행은 DB에 그대로 둔다. */
+
+TEST_F(GameEntryTest, TwoRowsInOneSlotAreRejected)
+{
+    PlayerProgress progress = MakeValidProgress();
+    *progress.possession.mutable_inventory()->add_consumables() =
+        MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5, POTION_TEMPLATE_ID, 2);
+
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "같은 칸의 두 행을 합치면 다음 저장이 한 행을 지운다";
+    EXPECT_EQ(session->_player.load(), nullptr);
+}
+
+TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
+{
+    PlayerProgress progress = MakeValidProgress();
+    progress.possession.mutable_equipped_gear()->clear();
+    (*progress.possession.mutable_equipped_gear())[Protocol::GEAR_TYPE_HELMET] =
+        MakeLoadedSlot(Protocol::SLOT_TYPE_EQUIPPED, Protocol::GEAR_TYPE_HELMET, SWORD_TEMPLATE_ID, 1);
+    (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = PHYSICAL_ATTACK + SWORD_ATTACK;
+
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
+}
+
+TEST_F(GameEntryTest, ItemInOtherKindOfBagIsRejected)
+{
+    PlayerProgress progress = MakeValidProgress();
+    *progress.possession.mutable_inventory()->add_consumables() =
+        MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 7, SWORD_TEMPLATE_ID, 1);
+
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "소모품 표의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
+}
+
+// 수정 전에는 범위 밖 칸 번호가 Debug 빌드의 DCHECK로 테스트 실행 파일을 멈춰서 빨강 단계를 돌리지 못했다.
+TEST_F(GameEntryTest, SlotIdOutOfRangeIsRejected)
+{
+    PlayerProgress progress = MakeValidProgress();
+    *progress.possession.mutable_inventory()->add_consumables() =
+        MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS, POTION_TEMPLATE_ID, 1);
+
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
+}

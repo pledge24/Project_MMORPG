@@ -478,26 +478,6 @@ IOCP 워커가 진다는 사실이 빠진다.
 **유지보수 어려움** — 룸 잡에 무거운 일을 넣어도 IOCP와 무관하다고 오해하게 된다. 클라이언트에 엔티티가 아닌 동기화 대상을 넣을
 때 서버와 같은 계층이 있다고 가정하게 된다.
 
-## TD-035 DB에서 읽은 슬롯 번호를 검증 없이 인벤토리와 장비 칸에 쓴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Inventory/InventoryComponent.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquipmentComponent.cpp` (`LoadEquipped`)
-> 등록일: 2026년 10월 7일
-
-`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 두 함수에 넘긴다. 두 함수는 이 값을 그대로 믿는다.
-
-- `InventoryComponent::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
-  `Mutable`의 범위 검사는 `GOOGLE_DCHECK`라서 Release 빌드에서 빠진다
-- 같은 함수는 그 칸에 이미 아이템이 있으면 템플릿이 같은지 보지 않고 수량을 더한다
-- `EquipmentComponent::LoadEquipped`는 받은 `gearType`을 그대로 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
-  없는 부위면 칸을 찾지 못해 실패하므로 범위 밖 접근은 없다
-
-코드를 읽고 판단했다. 잘못된 행을 넣어 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 수동 수정이나 마이그레이션 실수로 DB에 잘못된 슬롯이 들어가면, 그 캐릭터가 입장할 때 Debug 빌드는
-중단되고 Release 빌드는 범위 밖 메모리를 쓴다. 범위 안이어도 다른 아이템이 합쳐지거나 무기가 다른 부위에 장착된 채로 저장된다.
-
 ## TD-036 쓰이지 않거나 이름과 다르게 동작하는 코드가 남아 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
 > 위치: `Server/GameServer/Utils/`, `Server/GameServer/Game/`

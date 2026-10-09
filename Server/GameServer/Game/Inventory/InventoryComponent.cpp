@@ -153,6 +153,27 @@ bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicati
     return true;
 }
 
+bool InventoryComponent::LoadItem(const Protocol::Slot& loadedSlot)
+{
+    Bag* bag = FindBag(loadedSlot.type());
+    if (bag == nullptr || IsValidSlotId(loadedSlot.slot_id()) == false)
+        return false;
+
+    // 같은 칸의 두 행을 합치면 다음 저장이 한 행만 남긴다.
+    if (bag->slots->Get(loadedSlot.slot_id()).has_item())
+        return false;
+
+    const Protocol::Item& item = loadedSlot.item();
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.template_id());
+    if (itemTemplate == nullptr || itemTemplate->itemType != bag->itemType)
+        return false;
+
+    if (item.count() < 1 || item.count() > itemTemplate->maxStack)
+        return false;
+
+    return AddItem(nullptr, item, item.count(), loadedSlot.slot_id());
+}
+
 bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
 {
     // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.

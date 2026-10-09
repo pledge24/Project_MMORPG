@@ -21,7 +21,10 @@ public:
      * 실패하면 아무것도 바꾸지 않는다.
      */
     bool Equip(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance);
-    /** DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템의 부위와 착용 조건은 확인하지 않는다. */
+    /**
+     * DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템 표의 부위와 gearType이 다르면 false.
+     * 착용 조건은 확인하지 않는다. 기획표가 바뀌어 조건이 높아져도 이미 입은 장비는 남는다.
+     */
     bool LoadEquipped(const Protocol::Item& itemInstance, int32 gearType);
     /**
      * 그 부위에 든 장비를 뺀다. 실패하면 아무것도 바꾸지 않는다.
