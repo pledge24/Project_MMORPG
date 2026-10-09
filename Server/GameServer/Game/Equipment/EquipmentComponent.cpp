@@ -41,6 +41,10 @@ bool EquipmentComponent::LoadEquipped(const Protocol::Item& itemInstance, int32 
     if (itemTemplate == nullptr || itemTemplate->gearType.has_value() == false)
         return false;
 
+    // DB의 부위를 믿지 않는다. 무기가 투구 칸에 든 채로 불러오면 그대로 저장된다.
+    if (itemTemplate->gearType.value() != gearType)
+        return false;
+
     return PlaceItem(nullptr, itemInstance, gearType);
 }
 

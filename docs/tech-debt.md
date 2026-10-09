@@ -79,21 +79,6 @@
 
 # 높음
 
-## TD-004 DB 연결은 하나인데 DB 스레드 다섯이 동시에 빌린다
-> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/GameServer.cpp` 82~106줄 · `Server/GameServer/DB/DAOCommon.h` (`DBConnectionGuard`)
-> 등록일: 2026년 10월 4일
-
-`main`은 연결 풀에 연결을 하나만 넣는다(`maxDBConnections = 1`). DB 스레드는 다섯이고, 스레드마다 자기
-`DBQueue`를 따로 소비하므로 두 스레드가 동시에 DAO를 부를 수 있다. 풀이 비어 있으면 `DBConnectionPool::Pop`은
-`nullptr`를 돌려준다. `DBConnectionGuard`는 이 값을 검사하지 않고 `operator->`로 그대로 넘긴다.
-코드를 읽고 판단했고 실행해서 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 두 계정이 동시에 로그인하거나, 한 계정의 저장과 다른 계정의 입장이 겹치면
-나중에 연결을 빌린 쪽이 널 포인터를 역참조해 게임 서버가 죽는다. 접속자가 적을 때는 겹치는 일이 드물어서 드러나지 않는다.
-
 ## TD-044 서버를 종료하면 접속 중인 플레이어의 진행이 사라진다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/GameServer.cpp` 25~38줄 (`DoWorkerJob`), 105~116줄
@@ -155,28 +140,6 @@
 
 **버그 발생 가능성 증가** — 엔진 버전이나 할당 패턴이 바뀌면 디스폰할 때 다른 액터를 지우거나 클라이언트가 죽는다.
 원인이 디스폰과 떨어진 곳에서 드러나서 추적하기 어렵다.
-
-## TD-039 DB 스레드가 예상하지 못한 예외를 받지 않아 서버가 종료된다
-> **심각도:** 중간 · **난이도:** 중간 · **범위:** 모듈 · server
-> 위치: `Server/GameServer/GameServer.cpp` 12~23줄 (`DoDBJob`) · `Server/GameServer/DB/`
-> 등록일: 2026년 10월 9일
-
-DAO의 오류 처리가 네 방식으로 갈려 있다.
-
-| 방식 | 위치 |
-|---|---|
-| `throw DBCustomError` 후 `PrintDBErrorLog` | `CharacterStateDAO.cpp` |
-| `throw wstring`을 흐름 제어로 씀 | `ItemDAO.cpp`의 `LoadItems`, `GetMaxItemUID` |
-| 로그 없이 `return false` | `CharacterStateDAO::LoadLastState`, `ItemDAO`의 일부 |
-| `catch (exception&)` 후 `cerr` | `CharacterListDAO.cpp`에만 있음 |
-
-`CharacterStateDAO`와 `ItemDAO`는 `DBCustomError`만 받고, `DoDBJob`에도 catch가 없다. 그래서 Json의 `type_error`, `bad_alloc`,
-인벤토리 코드가 던지는 예외가 DB 스레드 밖으로 나가면 `std::terminate`로 서버가 끝난다. 예외가 실제로 나는 경로는 확인하지
-않았다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** · **유지보수 어려움** — 한 계정의 잘못된 데이터가 서버 전체를 내린다. 로그 없는 실패는 원인을 남기지 않는다.
 
 ## TD-042 몬스터의 틱이 다른 룸으로 떠난 플레이어의 위치를 읽는다
 > **심각도:** 중간 · **난이도:** 중간 · **범위:** 기능 · server
@@ -297,22 +260,6 @@ DAO의 오류 처리가 네 방식으로 갈려 있다.
 **버그 발생 가능성 증가** — 몬스터의 50ms 틱과 200ms 상태 판정이 모두 타이머로 돌기 때문에, 한 룸의 무거운 잡이 다른 룸의
 몬스터 틱을 늦춘다.
 
-## TD-016 DB 연결을 정리하는 경로가 핸들을 해제하지 못한다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
-> 위치: `Server/ServerCore/DB/`
-> 등록일: 2026년 10월 5일
-
-- `DBConnection::Clear`는 DBC 핸들을 STMT 핸들보다 먼저 해제하고 `SQLDisconnect`를 부르지 않는다
-- `DBConnection`에 소멸자가 없어서 `DBConnectionPool::Clear`의 `delete`는 ODBC 핸들을 해제하지 않는다. 그 전에 환경 핸들부터 해제한다
-- `DBConnectionPool::Connect`는 연결에 실패하면 만든 `DBConnection`을 지우지 않는다. `DBConnection::Connect`는 연결 결과를 보기 전에 STMT를 할당한다
-- `DBQueue`에는 `stopFlag`를 세우는 함수가 없어서 DB 스레드를 멈출 수 없다
-
-지금 게임 서버에는 종료 경로가 없어서 드러나지 않는다. 코드를 읽고 판단했다.
-
-### 영향
-
-**유지보수 어려움** — 정상 종료나 연결 재시도를 만들 때 이 경로를 그대로 쓰면 핸들이 새고 DB 스레드가 끝나지 않는다.
-
 ## TD-017 게임 서버가 DB를 준비하기 전에 접속을 받는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
 > 위치: `Server/GameServer/GameServer.cpp` 70~112줄 · `Server/GameServer/DB/ItemDAO.cpp` 35~80줄 (`GetMaxItemUID`)
@@ -345,23 +292,20 @@ DAO의 오류 처리가 네 방식으로 갈려 있다.
 
 **버그 발생 가능성 증가** — 인증 서버가 토큰 값의 형식을 바꾸거나 키에 다른 값이 들어가면 로그인 한 번에 게임 서버가 죽는다.
 
-## TD-019 캐릭터 요청이 세션의 로그인과 입장 상태를 보지 않는다
+## TD-019 캐릭터 요청이 세션의 로그인 상태를 보지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Network/ServerPacketHandler.cpp` 126~238줄 · `Server/GameServer/Game/Entities/Player.cpp` 43~63줄 (`Init`)
+> 위치: `Server/GameServer/Network/ServerPacketHandler.cpp` (`Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`)
 > 등록일: 2026년 10월 5일
 
 - `Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`은 `_userId`가 0이어도, 즉 `C_LOGIN`을
   거치지 않은 세션이어도 진행한다. 삭제와 입장은 SQL의 `user_id` 대조로 실패하지만, 생성은 `user_id` 0으로 INSERT를 시도한다.
   DB 제약이 막는지는 확인하지 않았다
-- `Handle_C_ENTER_GAME`은 세션에 이미 플레이어가 있는지 보지 않는다. `Player::Init`이 `session->_player`를
-  덮어쓰므로, 룸에 들어간 뒤 `C_ENTER_GAME`을 다시 보내면 이전 `Player`가 룸에 남는다. `OnDisconnected`는 새 플레이어만
-  보므로 이전 플레이어는 퇴장하지 않는다
 
 코드를 읽고 판단했다.
 
 ### 영향
 
-**버그 발생 가능성 증가** — 조작한 클라이언트는 주인 없는 캐릭터 행을 만들거나, 룸에 지워지지 않는 플레이어를 남긴다.
+**버그 발생 가능성 증가** — 조작한 클라이언트는 주인 없는 캐릭터 행을 만든다.
 
 ## TD-020 패킷 핸들러의 반환값을 아무도 읽지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
@@ -518,40 +462,6 @@ IOCP 워커가 진다는 사실이 빠진다.
 **유지보수 어려움** — 룸 잡에 무거운 일을 넣어도 IOCP와 무관하다고 오해하게 된다. 클라이언트에 엔티티가 아닌 동기화 대상을 넣을
 때 서버와 같은 계층이 있다고 가정하게 된다.
 
-## TD-034 아이템 UID의 최댓값을 `int32`로 읽는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/DB/ItemDAO.cpp` (`GetMaxItemUID`의 `BindObject`) · `Server/GameServer/Queries/GameDB_GetMaxItemUid.sql`
-> 등록일: 2026년 10월 7일
-
-`item_uid` 컬럼은 `BIGINT`이고 `GNextItemUID`도 `atomic<int64>`다. 그런데 `GetMaxItemUID`는 프로시저의 결과를
-`int32 _maxItemUID`에 바인딩한다. `DBConnection::BindCol(int32)`은 `SQL_C_LONG`으로 묶는다. 최댓값이 `int32` 범위를 넘을 때
-ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인하지 않았다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 지금은 UID가 작아서 드러나지 않는다. 범위를 넘으면 값이 잘려서 새로 발급하는 UID가 기존 아이템과
-겹치거나, `Fetch` 실패가 TD-017 「게임 서버가 DB를 준비하기 전에 접속을 받는다」의 잡히지 않는 예외로 이어져 서버가 시작하지 못한다.
-
-## TD-035 DB에서 읽은 슬롯 번호를 검증 없이 인벤토리와 장비 칸에 쓴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Inventory/InventoryComponent.cpp` (`AddItem`) · `Server/GameServer/Game/Equipment/EquipmentComponent.cpp` (`LoadEquipped`)
-> 등록일: 2026년 10월 7일
-
-`ItemDAO::LoadItems`는 DB 행의 `slot_id`를 두 함수에 넘긴다. 두 함수는 이 값을 그대로 믿는다.
-
-- `InventoryComponent::AddItem`은 `setSlotId`의 범위(`[0, MAX_SLOTS)`)를 보지 않고 `bag->slots->Mutable`과 `dirtyFlags`의 인덱스로 쓴다.
-  `Mutable`의 범위 검사는 `GOOGLE_DCHECK`라서 Release 빌드에서 빠진다
-- 같은 함수는 그 칸에 이미 아이템이 있으면 템플릿이 같은지 보지 않고 수량을 더한다
-- `EquipmentComponent::LoadEquipped`는 받은 `gearType`을 그대로 장착 부위로 쓴다. 아이템의 실제 부위와 같은지 보지 않는다.
-  없는 부위면 칸을 찾지 못해 실패하므로 범위 밖 접근은 없다
-
-코드를 읽고 판단했다. 잘못된 행을 넣어 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 수동 수정이나 마이그레이션 실수로 DB에 잘못된 슬롯이 들어가면, 그 캐릭터가 입장할 때 Debug 빌드는
-중단되고 Release 빌드는 범위 밖 메모리를 쓴다. 범위 안이어도 다른 아이템이 합쳐지거나 무기가 다른 부위에 장착된 채로 저장된다.
-
 ## TD-036 쓰이지 않거나 이름과 다르게 동작하는 코드가 남아 있다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
 > 위치: `Server/GameServer/Utils/`, `Server/GameServer/Game/`
@@ -645,20 +555,6 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 
 **버그 발생 가능성 증가** — 밀려나거나 끊긴 세션의 마지막 진행이 사라지고, 새 세션이 끊길 때 낡은 진행으로 덮어쓴다.
 
-## TD-032 접속 종료 저장이 중간에 실패하면 진행의 일부만 저장된다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/DB/ProgressStorage.cpp` 68~90줄 (`Save`)
-> 등록일: 2026년 10월 5일
-
-`ProgressStorage::Save`는 `SaveCharacter`(레벨), `SaveLastState`(경험치, HP, 위치, 골드), `SaveItems`(인벤토리와 착용 장비)를
-차례로 부르고, 실패하면 그 자리에서 멈춘다. 세 DAO는 각자 따로 실행되고 하나의 트랜잭션으로 묶이지 않는다. 저장 잡은 실패해도
-`GSaveGate`를 푼다(`GameSession.cpp`의 주석이 의도라고 밝힌다). `SaveLastState`는 갱신한 행 수를 확인하는 코드가 주석
-처리되어 있어서, 행이 없어도 성공으로 본다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 레벨은 오르고 아이템은 저장되지 않는 식으로 진행이 서로 어긋난 채 남는다. 다음 입장은 어긋난 상태를 불러온다.
-
 ## TD-033 클라이언트가 맵 간 이동을 요청하지 않아 `S_ENTER_MAP` 경로가 실행되지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · client
 > 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 42줄 (`OpenInGameMap`) · `P1/Source/P1/Network/ClientPacketHandler.cpp` 60~67줄 (`Handle_S_ENTER_MAP`)
@@ -674,16 +570,3 @@ ODBC 드라이버가 값을 자르는지 `Fetch`를 실패시키는지는 확인
 **새 기능 개발 지연** — 맵이 둘 이상이 되면 클라이언트의 맵 간 이동을 처음부터 이어야 한다. 실행되지 않는 핸들러가 동작하는
 경로처럼 보여서, 그 경로를 고친 결과를 확인할 수 없다.
 
-## TD-040 아이템 배열 저장이 일부 행의 실패를 성공으로 본다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 함수 · server
-> 위치: `Server/GameServer/DB/ItemDAO.cpp` 412~419줄, 529~536줄 (`SaveGearItems`, `SaveStackableItems`)
-> 등록일: 2026년 10월 9일
-
-배열 파라미터로 여러 행을 한 번에 저장하면서 `Execute`의 반환값만 본다. 처리된 행 수(`SQL_ATTR_PARAMS_PROCESSED_PTR`)나 행별
-상태 배열을 바인딩하지 않는다. `DAOCommon.h`의 `SQL_MISMATCHED_PROCESSED_PARAMSET_SIZE`는 이 경우를 잡으려고 정의한 것으로
-보이지만 쓰는 곳이 없다. ODBC 명세상 일부 파라미터 집합이 실패하면 `SQLExecute`가 `SQL_SUCCESS_WITH_INFO`를 돌려주는데,
-`DBConnection::Execute`는 이를 성공으로 본다. 드라이버가 실제로 이렇게 동작하는지는 확인하지 않았다. 추측이다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 아이템 행의 일부만 저장되고 저장은 성공으로 끝나서, 다음 입장 때 아이템이 사라진 원인을 찾을 수 없다.

@@ -18,6 +18,8 @@ public:
     void                        Push(JobRef&& job);
     /** 잡이 들어올 때까지 블로킹한다. 멈춤 상태이고 비어 있으면 nullptr를 돌려준다. */
     JobRef                      WaitForSingleJob();
+    /** 새 잡을 더 받지 않고 기다리는 DB 스레드를 모두 깨운다. 이미 들어온 잡은 WaitForSingleJob이 마저 내준다. */
+    void                        Stop();
 
     bool                        IsStop() { return stopFlag == true; }
     int32                       GetId() { return _dbQueueId; }

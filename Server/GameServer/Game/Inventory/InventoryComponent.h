@@ -33,6 +33,12 @@ public:
      */
     bool AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count = 1);
     /**
+     * DB에서 불러온 행 하나를 그 슬롯 번호에 넣는다. DB 값을 믿지 않는다.
+     * 저장소가 없는 슬롯 종류, 범위 밖 번호, 이미 찬 칸, 표에 없는 템플릿, 슬롯 종류와 다른 아이템 종류,
+     * 1보다 작거나 스택 상한을 넘는 수량이면 아무것도 바꾸지 않고 false.
+     */
+    bool LoadItem(const Protocol::Slot& loadedSlot);
+    /**
      * requestSlot의 type과 slot_id는 클라이언트 값이어도 된다. 저장소가 없거나 범위 밖이면 false.
      * 수량이 모자라면 아무것도 바꾸지 않고 false. replicatingSlot은 nullptr이면 안 된다.
      */

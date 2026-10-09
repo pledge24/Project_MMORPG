@@ -5,6 +5,11 @@
 	DBConnection
 -----------------*/
 
+DBConnection::~DBConnection()
+{
+	Clear();
+}
+
 bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 {
 	if (::SQLAllocHandle(SQL_HANDLE_DBC, henv, &_connection) != SQL_SUCCESS)
@@ -27,24 +32,37 @@ bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 		SQL_DRIVER_NOPROMPT
 	);
 
-	if (::SQLAllocHandle(SQL_HANDLE_STMT, _connection, &_statement) != SQL_SUCCESS)
+	// 연결 결과를 먼저 본다. 연결되지 않은 핸들 위에는 statement를 할당할 수 없다.
+	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO)
+	{
+		Clear();
 		return false;
+	}
 
-	return (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO);
+	if (::SQLAllocHandle(SQL_HANDLE_STMT, _connection, &_statement) != SQL_SUCCESS)
+	{
+		Clear();
+		return false;
+	}
+
+	return true;
 }
 
 void DBConnection::Clear()
 {
-	if (_connection != SQL_NULL_HANDLE)
-	{
-		::SQLFreeHandle(SQL_HANDLE_DBC, _connection);
-		_connection = SQL_NULL_HANDLE;
-	}
-
+	// statement는 연결에 딸린 핸들이므로 연결보다 먼저 해제한다.
 	if (_statement != SQL_NULL_HANDLE)
 	{
 		::SQLFreeHandle(SQL_HANDLE_STMT, _statement);
 		_statement = SQL_NULL_HANDLE;
+	}
+
+	if (_connection != SQL_NULL_HANDLE)
+	{
+		// 연결하지 않은 핸들에서도 부를 수 있다. 그때 SQLDisconnect는 실패를 돌려줄 뿐이다.
+		::SQLDisconnect(_connection);
+		::SQLFreeHandle(SQL_HANDLE_DBC, _connection);
+		_connection = SQL_NULL_HANDLE;
 	}
 }
 
@@ -98,6 +116,13 @@ void DBConnection::Unbind()
 
     ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0);
     ::SQLSetStmtAttr(_statement, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);
+    SetParamStatusArray(nullptr, nullptr);
+}
+
+void DBConnection::SetParamStatusArray(SQLUSMALLINT* statuses, SQLULEN* processedCount)
+{
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAM_STATUS_PTR, statuses, 0);
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMS_PROCESSED_PTR, processedCount, 0);
 }
 
 void DBConnection::SetParamSetSize(int32& rows)
@@ -105,6 +130,32 @@ void DBConnection::SetParamSetSize(int32& rows)
     // SQL_ATTR_PARAMSET_SIZE는 값을 SQLULEN으로 읽는다. int32를 바로 포인터로
     // 캐스팅하면 x64에서 크기가 달라 C4312가 나므로 포인터 폭으로 먼저 넓힌다.
     ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)(SQLULEN)rows, 0);
+}
+
+bool DBConnection::BeginTransaction()
+{
+    SQLRETURN ret = ::SQLSetConnectAttr(_connection, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, SQL_IS_UINTEGER);
+    return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO;
+}
+
+bool DBConnection::Commit()
+{
+    return EndTransaction(SQL_COMMIT);
+}
+
+bool DBConnection::Rollback()
+{
+    return EndTransaction(SQL_ROLLBACK);
+}
+
+bool DBConnection::EndTransaction(SQLSMALLINT completionType)
+{
+    SQLRETURN ret = ::SQLEndTran(SQL_HANDLE_DBC, _connection, completionType);
+
+    // 확정에 실패해도 자동 커밋으로 돌려 둔다. 다음 잡이 끝나지 않은 트랜잭션 위에서 돌지 않게 한다.
+    ::SQLSetConnectAttr(_connection, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, SQL_IS_UINTEGER);
+
+    return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO;
 }
 
 bool DBConnection::FindError(const SQLWCHAR* targetState)

@@ -56,6 +56,20 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DriverReproTests.cpp" />
+    <ClCompile Include="ItemDAOTests.cpp" />
+    <ClCompile Include="DBConnectionGuardTests.cpp" />
+    <ClCompile Include="DBWorkerTests.cpp" />
+    <ClCompile Include="..\GameServer\DB\DBWorker.cpp">
+      <Filter>GameServer\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="ParamSetTests.cpp" />
+    <ClCompile Include="CharacterListDAOTests.cpp" />
+    <ClCompile Include="ProgressStorageTests.cpp" />
+    <ClCompile Include="GameEntryTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\GameEntry.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

@@ -3,24 +3,13 @@
 #include "ServerCore/Network/IocpCore.h"
 #include "Core/Config.h"
 #include "DB/ItemDAO.h"
+#include "DB/DAOCommon.h"
+#include "DB/DBWorker.h"
 
 enum
 {
 	WORKER_TICK = 64
 };
-
-void DoDBJob(int dbQueueId)
-{
-    DBQueueRef dbQueue = GDBManager->GetDBQueue(dbQueueId);
-    wcout << dbQueue->GetId() << L"번째 DBQueue가 작업을 시작함" << endl;
-
-    while (dbQueue->IsStop() == false)
-    {
-        JobRef job = dbQueue->WaitForSingleJob();
-        wcout << dbQueue->GetId() << L"번째 DBQueue가 작업을 받음" << endl;
-        job->Execute();
-    }
-}
 
 void DoWorkerJob(ServerServiceRef& service)
 {
@@ -77,11 +66,15 @@ int main(void)
 
 	ASSERT_CRASH(service->Start())
 
+    // DB 스레드 수. 큐마다 DB 스레드가 하나씩 붙는다.
+    constexpr int32 DB_THREAD_COUNT = 5;
+
     // DB 연결
     {
-        // SQL Server
-        int32 maxDBConnections = 1;
-        ASSERT_CRASH(GDBConnectionPool->Connect(maxDBConnections, config.dbConnectionString.c_str()));
+        // SQL Server. DB 스레드마다 하나, 시작할 때 main이 아이템 UID를 읽는 데 하나를 쓴다.
+        // 모자라면 동시에 돈 잡 하나가 연결을 빌리지 못한다.
+        const int32 dbConnectionCount = DB_THREAD_COUNT + 1;
+        ASSERT_CRASH(GDBConnectionPool->Connect(dbConnectionCount, config.dbConnectionString.c_str()));
 
         // Redis
         ASSERT_CRASH(GRedisManager->Connect(config.redisUri));
@@ -98,18 +91,27 @@ int main(void)
 	}
 
     // DB thread
-    const int DBThreadN = 5;
-    GDBManager->Init(DBThreadN);
-    for (int32 i = 0; i < DBThreadN; i++)
+    GDBManager->Init(DB_THREAD_COUNT);
+    for (int32 i = 0; i < DB_THREAD_COUNT; i++)
     {
         GThreadManager->Launch([i]()
             {
-                DoDBJob(i);
+                DBWorker::Run(GDBManager->GetDBQueue(i));
             });
     }
 
     // DB에서 서버 메모리에 올릴거 가져오기
-    ItemDAO::GetMaxItemUID();
+    try
+    {
+        DBConnectionGuard conn;
+        ItemDAO::GetMaxItemUID(*conn);
+    }
+    catch (const DBError& error)
+    {
+        // 다음 아이템 UID를 모르면 새 아이템이 기존 아이템과 UID가 겹친다.
+        GLogger->Error("아이템 UID의 최댓값을 읽지 못해 서버를 종료합니다: {}", error.what());
+        return 1;
+    }
 
     // Main Thread
     DoWorkerJob(service);

@@ -169,6 +169,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup Label="테스트 소스">
+    <ClCompile Include="DriverReproTests.cpp" />
+    <ClCompile Include="ItemDAOTests.cpp" />
+    <ClCompile Include="DBConnectionGuardTests.cpp" />
+    <ClCompile Include="DBWorkerTests.cpp" />
+    <ClCompile Include="..\GameServer\DB\DBWorker.cpp" />
+    <ClCompile Include="ParamSetTests.cpp" />
+    <ClCompile Include="CharacterListDAOTests.cpp" />
+    <ClCompile Include="ProgressStorageTests.cpp" />
+    <ClCompile Include="GameEntryTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

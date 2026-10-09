@@ -52,6 +52,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DB\DBWorker.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\GameEntry.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Core\pch.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -154,6 +160,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DB\DBWorker.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\GameEntry.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Core\Config.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -245,6 +257,9 @@
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\CombatStats.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\PlayerProgress.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Game\Inventory\InventoryComponent.h">

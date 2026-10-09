@@ -63,19 +63,76 @@ bool Player::Init(const SpawnParams& params)
 
     PlayerRef self = static_pointer_cast<Player>(shared_from_this());
 
-    // 세션 연결을 인벤토리 생성보다 먼저 한다. 팩토리가 nullptr를 돌려줘도 세션의 _player는 이미
-    // 바뀌어 있는 동작을 옮겨 온 것이다(TD-019).
     if (params.session != nullptr)
     {
         _session = params.session;
         _userId = params.session->_userId;
-        params.session->_player.store(self);
     }
 
     _inventory = make_shared<InventoryComponent>(self);
     _equipment = make_shared<EquipmentComponent>(self);
 
+    if (params.progress != nullptr)
+        return ApplyProgress(*params.progress) && OnLoaded();
+
 	return true;
+}
+
+bool Player::ApplyProgress(const PlayerProgress& progress)
+{
+    const Protocol::PlayerInfo& playerInfo = progress.playerInfo;
+    _playerInfo->set_character_id(playerInfo.character_id());
+    _playerInfo->set_class_(playerInfo.class_());
+    _playerInfo->set_name(playerInfo.name());
+    _playerInfo->set_level(playerInfo.level());
+    _playerInfo->set_room_id(playerInfo.room_id());
+
+    // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 _enteringRoomId를 채운다.
+    // 채우지 않으면 최초 입장(INITIAL) 검증이 _enteringRoomId == -1로 실패한다.
+    OnEnterMap(playerInfo.map_id(), playerInfo.room_id());
+
+    Protocol::PosInfo spawnPosInfo = progress.posInfo;
+    spawnPosInfo.set_entity_id(GetEntityId());
+    spawnPosInfo.set_state(Protocol::MOVE_STATE_IDLE);
+    SetPosInfo(spawnPosInfo);
+
+    for (const auto& [statType, value] : progress.statInfo.info())
+        SetStatValue(static_cast<Protocol::StatType>(statType), value);
+
+    // 최대 경험치는 저장하지 않는다. 레벨 표에 없는 레벨이면 OnLoaded의 스탯 계산이 거절한다.
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    if (const LevelTemplate* levelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level()) : nullptr)
+        SetStatValue(Protocol::STAT_TYPE_MAX_EXP, levelTemplate->expRequirement);
+
+    _possession->set_gold(progress.possession.gold());
+
+    // 잘못된 행 하나를 건너뛰고 입장시키면, 그 칸에 다른 아이템이 들어가 저장될 때 그 행을 덮어쓴다.
+    // 그래서 입장을 거절하고 행은 DB에 남긴다.
+    const int64 characterId = playerInfo.character_id();
+    const Protocol::Inventory& inventory = progress.possession.inventory();
+    for (const auto* slots : { &inventory.gear(), &inventory.consumables(), &inventory.miscellaneous() })
+    {
+        for (const Protocol::Slot& slot : *slots)
+        {
+            if (slot.has_item() && _inventory->LoadItem(slot) == false)
+            {
+                GLogger->Error("캐릭터 {}의 인벤토리 행(종류 {}, 칸 {}, 템플릿 {})을 넣을 수 없습니다",
+                    characterId, static_cast<int32>(slot.type()), slot.slot_id(), slot.item().template_id());
+                return false;
+            }
+        }
+    }
+
+    for (const auto& [gearType, slot] : progress.possession.equipped_gear())
+    {
+        if (slot.has_item() && _equipment->LoadEquipped(slot.item(), gearType) == false)
+        {
+            GLogger->Error("캐릭터 {}의 장착 행(부위 {}, 템플릿 {})을 넣을 수 없습니다", characterId, gearType, slot.item().template_id());
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void Player::Start()
@@ -459,10 +516,10 @@ PlayerSaveData Player::MakeSaveData() const
 {
     PlayerSaveData data;
     data.userId = _userId;
-    data.playerInfo.CopyFrom(*_playerInfo);
-    data.posInfo.CopyFrom(*_posInfo);
-    data.statInfo.CopyFrom(*_statInfo);
-    data.possession.CopyFrom(*_possession);
+    data.progress.playerInfo.CopyFrom(*_playerInfo);
+    data.progress.posInfo.CopyFrom(*_posInfo);
+    data.progress.statInfo.CopyFrom(*_statInfo);
+    data.progress.possession.CopyFrom(*_possession);
 
     if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR))
         data.gearDirtyFlags = *flags;
