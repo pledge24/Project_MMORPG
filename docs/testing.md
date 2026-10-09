@@ -45,13 +45,15 @@ py -3 Tools/ConventionLint/check_conventions.py
 
 | 스위트 | 개수 | 대상 |
 |---|---|---|
-| `PacketSerialization` | 2 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 |
+| `PacketSerialization` | 4 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 · 헤더 크기 상한의 본문은 직렬화되고 상한을 넘는 본문은 만들지 않음 |
 | `ProtocolContract` | 3 | `PROTOCOL_MESSAGES(X)` 목록 대조 · 패킷 ID 연속·유일성 · 전 메시지 리플렉션 왕복 |
 | `PacketDispatch` | 2 | 핸들러 테이블 밖의 id(65535)를 디스패치하지 않고 거절 · 헤더보다 짧은 입력(0~3바이트)을 디스패치하지 않고 거절 |
 | `InventoryTest` | 12 | 슬롯 타입 교차오염 · 더티 플래그 순서 · 실패한 remove 후 슬롯 재사용 · 알 수 없는 슬롯 타입과 범위 밖 슬롯 번호 거부 · 매핑 표 키 집합과 기대 집합 대조 |
 | `AllSlotTypes/InventorySlotTypeTest` | 6 | 슬롯 추가·제거 왕복 전 타입 (TEST_P 2 × Gear/Consumable/Misc) |
+| `SessionDisconnectTest` | 1 | 서버가 건 끊기. 받기만 하고 소켓을 닫지 않는 루프백 상대도 상한 안에 `OnDisconnected`까지 가고 세션 집합에서 빠짐 |
 | `SaveGateTest` | 9 | 접속 종료 저장 대기. 대기 없는 계정은 맡지 않음 · 해제가 맡긴 불러오기를 돌려줌 · 두 번째 맡기기 거절 · 두 번 걸어도 한 번에 풀림 · 만료가 입장만 돌려주고 대기는 남김 · 해제 뒤 늦게 온 만료와 지난 토큰의 만료 무시 · 계정별 분리 |
-| `ProgressCoordinatorTest` | 13 | 저장 대기와 입장 불러오기의 순서. 대기 없는 입장은 곧바로 불러옴 · 접속 종료 중 재입장은 저장 뒤에 불러옴 · 중복 로그인은 밀려난 세션의 저장을 기다림 · 대기 만료는 입장 거절 · 기다리는 중의 두 번째 입장 거절 · 실패한 저장도 대기를 풂 · 룸에 들어간 적 없는 플레이어는 저장하지 않음 · 룸 이동 중 끊긴 플레이어는 들어갈 룸이 저장 · 첫 룸 입장 전에 끊긴 플레이어는 재입장 뒤에 저장되지 않음 · 만료 뒤의 입장도 저장을 기다림 · 끊긴 세션을 늦게 밀어내도 입장이 막히지 않음(저장 전, 저장 뒤, 룸 입장 전) |
+| `ProgressCoordinatorTest` | 14 | 저장 대기와 입장 불러오기의 순서. 대기 없는 입장은 곧바로 불러옴 · 접속 종료 중 재입장은 저장 뒤에 불러옴 · 중복 로그인은 밀려난 세션의 저장을 기다림 · 대기 만료는 입장 거절 · 기다리는 중의 두 번째 입장 거절 · 실패한 저장도 대기를 풂 · 룸에 들어간 적 없는 플레이어는 저장하지 않음 · 룸 이동 중 끊긴 플레이어는 들어갈 룸이 저장하고, 들어가지 못해도 저장 · 첫 룸 입장 전에 끊긴 플레이어는 재입장 뒤에 저장되지 않음 · 만료 뒤의 입장도 저장을 기다림 · 끊긴 세션을 늦게 밀어내도 입장이 막히지 않음(저장 전, 저장 뒤, 룸 입장 전) |
+| `AccessToken` | 4 | Redis 토큰 값 해석. 계정 번호와 이름을 읽음 · 형식이 틀린 값, 빠진 키, 틀린 타입은 예외 없이 거절 |
 | `CellMatrixTest` | 7 | 근접 탐색 격자. 겹치는 칸의 엔티티만 반환 · 칸 경계는 위 칸 소속 · 격자 끝과 밖의 엔티티 · 가장자리 질의 보정 · 제거와 재구성 |
 | `CharacterListDAOTest` | 4 | 캐릭터 생성 DAO(가짜 연결). 만든 캐릭터 번호 · 거절은 예외가 아니라 결과 · 쿼리가 모르는 거절 사유와 실패한 쿼리는 DBError |
 | `CharacterCreationTest` | 7 | 캐릭터 생성 검증. 유효한 전사 · 레벨 표가 없거나 정의되지 않은 직업 거절 · 레벨 표가 있어도 NONE 거절 · 빈 이름 거절 · 이름 길이 경계(한글 50자 통과, 51자 거절) |
@@ -80,11 +82,13 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `RandomTest` | 2 | 정수 범위 난수의 같은 경계와 최대값 포함 |
 | `RoomAxisTest` | 1 | 룸의 X 범위는 깊이, Y 범위는 폭으로 계산 |
 | `RoomLocationTest` | 2 | 룸 안 무작위 위치가 여백 안에 머묾 · 여백이 없으면 룸 전체 |
-| `RoomRequestTest` | 6 | 룸 큐의 요청 처리. 이동은 보낸 사람의 위치만 바꿈 · 처음 입장한 플레이어는 자기 스폰을 한 번 받음 · 룸을 떠난 플레이어의 아이템 요청 무시 · 세션이 사라진 플레이어의 착용과 해제는 응답 없이 끝남 · 사망한 채 끊긴 플레이어는 마을 리스폰 상태로 저장 · 첫 입장 전 다른 룸으로의 맵 입장 거절 |
+| `RoomRequestTest` | 7 | 룸 큐의 요청 처리. 이동은 보낸 사람의 위치만 바꿈 · 허용 거리를 넘는 이동은 버림 · 처음 입장한 플레이어는 자기 스폰을 한 번 받음 · 룸을 떠난 플레이어의 아이템 요청 무시 · 세션이 사라진 플레이어의 착용과 해제는 응답 없이 끝남 · 사망한 채 끊긴 플레이어는 마을 리스폰 상태로 저장 · 첫 입장 전 다른 룸으로의 맵 입장 거절 |
+| `MoveValidation` | 5 | 이동 위치 판정. 허용 거리 안은 통과하고 넘으면 거절 · 허용 거리는 경과 시간에 따라 늘어남 · 평면 거리로 잼 · 룸 경계 밖 거절(경계 위는 안쪽) |
 | `RoomTransferTest` | 12 | 룸 이동 판정. 첫 입장 · 다른 맵의 다른 룸 거절 · 같은 맵 이동에 포털 필요 · 포털 목적지 · 사망한 플레이어의 마을 리스폰만 허용 · 맵 표에서 찾는 마을 리스폰 지점 |
 | `RoomTransferMapTest` | 6 | 위치를 보는 룸 이동 판정. 포털 반경 경계와 높이 무시 · 반경 밖 포털 이동 거절 · 첫 맵 입장은 불러온 룸으로만 · 맵 간 이동은 다른 맵으로 가는 포털 반경 안에서만 · 맵 번호 대조 |
 | `ServerConfigTest` | 7 | 서버 설정 로더. 환경 변수가 없을 때 기본값 · 환경 변수가 각 값을 덮음 · 연결 수의 기본값은 DB 스레드 수를 따라감 · 연결 수가 DB 스레드 수보다 작으면 거절 · IPv4가 아닌 바인드 주소 거절 · 잘못된 개수와 포트는 기본값 |
 | AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
+| AuthServer `redis.test.js` | 1 | Redis 주소 설정이 클라이언트의 `socket` 옵션으로 넘어감(Redis에 붙지 않고 옵션만 읽음) |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
 | `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · Z 유지 · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
 | `P1.Sync.MoveSendThrottle` | 1 | 내 플레이어 이동 패킷의 주기 송신(0.2초)과 타이머 리셋 · 입력 변화 즉시 송신(이동 가능할 때만) · 회전 허용치(60도) 경계와 ±180도 감싸기 · 입력이 없을 때 서버와 마지막으로 맞춘 yaw와의 비교 · 공격 중 즉시 송신 억제 |
@@ -93,7 +97,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `P1.Combat.NormalAttackCombo` | 1 | 일반 공격의 콤보 순번 순환(1→N→1) · 몽타주가 하나이거나 없을 때 · 순번 N의 몽타주 인덱스 · 서버가 보낸 순번 0 · 범위 밖 순번 |
 | `P1.Progress.RewardResult` | 1 | 보상 결과의 반영. 경험치만 쌓일 때 레벨을 알리지 않음 · 여러 레벨 상승의 레벨, 레벨업 스탯, 최대 경험치 · 경험치를 알릴 때 최대 경험치가 이미 새 값 · 골드를 사본에 쓴 뒤 알림 |
 
-**안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer 라우터/인증 흐름. 전부 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer 라우터/인증 흐름. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -104,7 +108,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | GameServer 순수 로직 | `GameServerTests.exe`, 종료 코드 | 가능 |
 | AuthServer 설정 | `npm test` | 가능. 가장 빠름 |
 | GameServer DAO의 바인딩과 흐름 | `GameServerTests.exe`의 `FakeDBConnection` | 가능. SQL 문장과 드라이버 동작은 확인하지 못한다 |
-| GameServer Room·SQL·IOCP | 없음 | **불가.** JobQueue 비동기, 실제 DB 필요 |
+| GameServer Room·SQL·IOCP | 일부 | SQL은 **불가**(실제 DB 필요). IOCP는 루프백 세션 끊기 하나만 있다 |
 | AuthServer 라우터·인증 | 없음 | 가능하나 비쌈 (bcrypt+MSSQL+Redis) |
 | UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
 | UE 클라 액터·월드 의존 로직 | 없음 | **불가.** 월드를 띄우는 테스트를 아직 써 보지 않았다 |
@@ -137,15 +141,18 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 전투 판정 | 존재. `Combat`(`Game/Combat/`). 룸 대조와 패킷 전송은 `Room`에 있다 |
 | 룸 틱 | 존재. `Room::Tick(deltaTime)`. 테스트는 타이머를 기다리지 않고 시간을 넘긴다. 틱 예약(`RunScheduledTick`)은 테스트하지 않는다 |
 | 몬스터 AI | 존재. `MonsterAIComponent`의 `GetState`와 `GetTarget`, 그리고 룸 틱 뒤의 엔티티 상태. 몬스터는 `Room::SpawnEntity`로 넣는다 |
+| 이동 위치 판정 | 존재. `MoveValidation::Validate`. 기준 시각과 위치의 보관, 패킷 버리기는 `Room::C_HandleMove`와 `Player`에 있다 |
 | 룸 이동 판정 | 존재. `RoomTransfer`의 자유 함수. 퇴장과 입장, 목적지 큐로 넘기기는 `Room`에 있다 |
 | 기획표 검증과 변환 | 존재. `GamedataParser::Parse`와 `Gamedata::Load`. 파일 읽기는 `Gamedata::LoadAllGamedata`에 있고 테스트하지 않는다 |
 | 기획 데이터 주입 | 존재. `Gamedata::Install`. 테스트는 전역 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 설치한다 |
 | DB 연결 | 존재. `DBConnection`의 가상 함수. 테스트는 `GameServerTests/FakeDBConnection.h`를 DAO와 `ProgressStorage`에 넘긴다. 결과 행과 실행 실패를 미리 넣고, 바인딩한 파라미터와 트랜잭션 호출을 기록한다 |
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
+| 액세스 토큰 값 | 존재. `AccessToken::ParsePayload`. Redis 읽기와 지우기, 밀어내기는 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
+| 세션 끊기 | 존재. 루프백(127.0.0.1)의 고정 포트 47913에 `ServerService`를 띄우고 Winsock 소켓으로 접속한다. 테스트가 IOCP 디스패치, 예약 잡 분배, 글로벌 큐 소비를 직접 돈다. 그 포트를 다른 프로세스가 쓰고 있으면 준비 단계에서 실패한다 |
 | 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |
 | 세션 송수신 | 존재. `Session::Send`가 가상이다. 테스트는 `GameServerTests/RecordingSession.h`로 보낸 패킷을 기록하고, `Receive`로 받은 패킷을 흉내 낸다 |
-| 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호, 소지품(인벤토리와 장비 컴포넌트)을 직접 바꾸는 길은 이것 하나다. Player는 컴포넌트를 읽기 전용으로만 연다 |
+| 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호, 소지품(인벤토리와 장비 컴포넌트)을 직접 바꾸는 길은 이것 하나다. Player는 컴포넌트를 읽기 전용으로만 연다. 같은 파일의 `EntityTestAccess`(Entity의 friend)는 엔티티 번호만 정한다. 들어갈 룸에 같은 번호를 미리 넣어 입장 실패를 만들 때 쓴다 |
 
 seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므로 별도 계획을 세운다.
 
@@ -198,7 +205,8 @@ strings -n 6 P1/Binaries/Win64/UnrealEditor-P1.pdb | grep -c <새 심볼>
 
 ### gtest는 소스 벤더링이다. vcpkg를 쓰지 않는다
 
-`Server/Libraries/googletest/`에 v1.18.0(커밋 `063de7e`) 소스를 넣고 `gtest-all.cc`와 `gtest_main.cc`를 테스트 프로젝트가 직접 컴파일한다. gmock은 넣지 않았다.
+`Server/Libraries/googletest/`에 v1.18.0(커밋 `063de7e`) 소스를 넣고 `gtest-all.cc`를 테스트 프로젝트가 직접 컴파일한다. `gtest_main.cc`는 쓰지 않고 `TestMain.cpp`가 `main`을 둔다.
+콘솔 코드페이지를 UTF-8로 돌려야 한국어 실패 메시지가 읽히기 때문이다. gmock은 넣지 않았다.
 
 **근거는 이 저장소가 이미 모든 서드파티를 벤더링한다는 점이다.** `Server/Libraries/include/`의 `google`, `nlohmann`, `sw`, `hiredis`가 전부 그렇다. gtest만 다른 메커니즘을 들이면 새 클론에 "vcpkg를 설치한다"는 단계가 하나 늘고, 그 단계는 문서에만 존재하게 된다. 벤더링은 툴셋·CRT 완전 일치(v145로 같이 컴파일), 머신 선행조건 없음, 네트워크 없음을 동시에 만족한다. 대가는 저장소 용량 1.1MB다.
 

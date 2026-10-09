@@ -109,73 +109,54 @@ void MonsterAIComponent::EvaluateStateTransition()
     }
     case MonsterState::Chasing:
     {
+        // 전환 조건(대기): 대상이 룸을 떠났거나 사망함. 이 검사를 통과하면 대상이 살아 있고 이 룸에 있다.
         if (IsTargetLost())
         {
             SwitchState(MonsterState::Idle);
             return;
         }
 
-        if (auto target = _target.lock())
+        const Protocol::PosInfo* targetPos = &_target.lock()->GetPosInfo();
+
+        // 전환 조건(공격): 공격 범위 안에 들어옴
+        if (MathUtil::InRange(curPos, targetPos, _tryAttackRange))
         {
-            const Protocol::PosInfo* targetPos = &target->GetPosInfo();
-
-            // 전환 조건(공격): 공격 범위 안에 들어옴
-            if (bool inAttackRange = MathUtil::InRange(curPos, targetPos, _tryAttackRange))
-            {
-                SwitchState(MonsterState::Attacking);
-                return;
-            }
-
-            // 전환 조건(대기): 타겟이 추적 범위를 벗어남
-            if (bool outOfChasingRange = !MathUtil::InRange(curPos, targetPos, _chasingMaxRange))
-            {
-                SwitchState(MonsterState::Idle);
-                return;
-            }
-
-            // 전환이 일어나지 않음(추적): 목적지를 갱신한다.
-            SetDestination(MathUtil::PosInfoToVector2D(targetPos), MIN_APPROACH_DISTANCE);
+            SwitchState(MonsterState::Attacking);
+            return;
         }
 
+        // 전환 조건(대기): 타겟이 추적 범위를 벗어남
+        if (MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false)
+        {
+            SwitchState(MonsterState::Idle);
+            return;
+        }
+
+        // 전환이 일어나지 않음(추적): 목적지를 갱신한다.
+        SetDestination(MathUtil::PosInfoToVector2D(targetPos), MIN_APPROACH_DISTANCE);
         break;
     }
     case MonsterState::Attacking:
     {
+        // 전환 조건(대기): 대상이 룸을 떠났거나 사망함. 이 검사를 통과하면 대상이 살아 있고 이 룸에 있다.
         if (IsTargetLost())
         {
             SwitchState(MonsterState::Idle);
             return;
         }
 
-        if (auto target = _target.lock())
+        const Protocol::PosInfo* targetPos = &_target.lock()->GetPosInfo();
+
+        // 전환 조건(추적): 공격 범위를 벗어남
+        if (MathUtil::InRange(curPos, targetPos, _tryAttackRange) == false)
         {
-            const Protocol::PosInfo* targetPos = &target->GetPosInfo();
-
-            // 전환 조건(추적): 공격 범위를 벗어남
-            if (bool outOfAttackRange = !MathUtil::InRange(curPos, targetPos, _tryAttackRange))
-            {
-                SwitchState(MonsterState::Chasing);
-                return;
-            }
-
-            auto ownerRoom = owner->GetRoom();
-            if (ownerRoom == nullptr)
-                return;
-
-            // 전환 조건(대기): 타겟이 현재 룸에서 사라졌거나, 범위를 벗어남
-            bool outOfChasingRange = MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false;
-            if (ownerRoom->Contains(target->GetEntityId()) == false || outOfChasingRange)
-            {
-                _target.reset();
-                SwitchState(MonsterState::Idle);
-                return;
-            }
-
+            SwitchState(MonsterState::Chasing);
+            return;
         }
-        else
+
+        // 공격 범위가 추적 범위보다 넓은 표에서만 일어난다. 그때는 추적 범위를 따른다.
+        if (MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false)
         {
-            // 전환 조건(대기): 타겟이 유효하지 않음
-            _target.reset();
             SwitchState(MonsterState::Idle);
             return;
         }
@@ -259,7 +240,7 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
 
 void MonsterAIComponent::ExecuteStateBehavior(float deltaTime)
 {
-    // Idle과 Death에는 틱마다 할 행동이 없다.
+    // Idle에는 틱마다 할 행동이 없다.
     switch (_state)
     {
     case MonsterState::Wandering:

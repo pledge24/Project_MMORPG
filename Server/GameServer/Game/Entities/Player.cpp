@@ -304,6 +304,8 @@ optional<GearChangeResult> Player::ProcessUnequipGear(const Protocol::Slot& requ
 RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
 	_posInfo->CopyFrom(respawnPos);
+    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다. 같은 룸 리스폰은 OnEnterRoom을 거치지 않는다.
+    _lastPositionTick = ::GetTickCount64();
 
     RespawnResult result;
 
@@ -395,6 +397,16 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
         _posInfo->set_yaw(0.f);
         _posInfo->set_state(Protocol::MOVE_STATE_IDLE);
     }
+
+    _lastPositionTick = ::GetTickCount64();
+}
+
+void Player::ApplyMove(const Protocol::PosInfo& posInfo, uint64 now)
+{
+    // 위치의 엔티티 id는 패킷 값이 아니라 이 플레이어의 것으로 둔다.
+    _posInfo->CopyFrom(posInfo);
+    _posInfo->set_entity_id(GetEntityId());
+    _lastPositionTick = now;
 }
 
 void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
@@ -601,7 +613,6 @@ void Player::CacheNextLevelUpData()
     if (nextLevelTemplate == nullptr)
         return;
 
-    _nextLevelUpData.level = nextLevelTemplate->level;
     _nextLevelUpData.maxHpIncrement = nextLevelTemplate->maxHpIncrement;
     _nextLevelUpData.maxMpIncrement = nextLevelTemplate->maxMpIncrement;
     _nextLevelUpData.paIncrement = nextLevelTemplate->paIncrement;

@@ -9,12 +9,6 @@ class Room;
  */
 class GameSession : public PacketSession
 {
-public:
-	~GameSession()
-	{
-		cout << "~GameSession" << endl;
-	}
-
 protected:
 	//~ Session/PacketSession 통신 이벤트 인터페이스 구현
 	virtual void OnDisconnected() override;

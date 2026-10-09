@@ -1,7 +1,6 @@
 #include "Core/pch.h"
 #include "Game/Entities/Monster.h"
 #include "Game/AI/MonsterAIComponent.h"
-#include "Utils/TickTimer.h"
 
 Monster::Monster()
 {
@@ -9,12 +8,10 @@ Monster::Monster()
 
     _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_MONSTER);
     _monsterInfo = _entityInfo->mutable_monster_info();
-    _attackTimer = new TickTimer();
 }
 
 Monster::~Monster()
 {
-    delete _attackTimer;
 }
 
 bool Monster::Init(const SpawnParams& params)
@@ -112,13 +109,6 @@ void Monster::SetYaw(float yaw)
 void Monster::SetMoveState(Protocol::MoveState moveState)
 {
     _posInfo->set_state(moveState);
-}
-
-void Monster::PrintMonsterAllData() const
-{
-    GLogger->Debug("몬스터 templateId: {} · maxHp: {} · attackInterval: {} · baseAttack: {} · attackRange: {} · detectionRange: {} · chaseRange: {}\n{}",
-        _templateId, _maxHp, _template.attackInterval, _template.baseAttack, _template.tryAttackRange, _template.detectionRange,
-        _template.chasingMaxRange, _entityInfo->Utf8DebugString());
 }
 
 void Monster::CacheMonsterData()

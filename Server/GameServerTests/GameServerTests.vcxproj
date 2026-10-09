@@ -183,6 +183,9 @@
     <ClCompile Include="ProgressStorageTests.cpp" />
     <ClCompile Include="GameEntryTests.cpp" />
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
+    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="SessionDisconnectTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\AccessToken.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
@@ -190,6 +193,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
@@ -241,8 +245,6 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
-    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
-    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
@@ -256,6 +258,7 @@
     <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp" />
+    <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />

@@ -18,7 +18,7 @@ public:
 	virtual ~Room() = default;
 
 public:
-    /** 룸을 만들어 Init까지 마친다. 룸을 만드는 길은 이것 하나다. Init에 실패하면 nullptr. */
+    /** 룸을 만들어 Init까지 마친다. 룸을 만드는 길은 이것 하나다. 맵 표는 부팅 때 검증을 마쳤으므로 실패하지 않는다. */
     static RoomRef Create(const MapTemplate& mapTemplate);
     /** 몬스터를 스폰하고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
     bool Start();
@@ -40,7 +40,10 @@ public:
     bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
     /** 이 룸에서 퇴장시키고 목적지 룸 큐에 EnterPlayer를 넣는다. */
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
-    /** 연결이 끊인 플레이어를 처리한다. 해당 플레이어 Entity를 제거하고, DB에 SaveData 저장을 요청한다. */
+    /**
+     * 연결이 끊긴 플레이어를 룸에서 빼고 저장 사본을 돌려준다. 이 룸에 없으면 nullopt.
+     * 저장 요청은 부른 쪽(ProgressCoordinator::LeaveRoomAndSave)이 한다.
+     */
     optional<PlayerSaveData> HandleDisconnect(PlayerRef player);
 
     //~ 클라이언트 패킷 핸들러
@@ -116,14 +119,12 @@ public:
 
         if (AddEntity(entity) == false)
         {
-            wcout << L"Room " << _roomId << L": 엔티티 " << entity->GetEntityId() << L" 등록에 실패했습니다" << '\n';
+            GLogger->Error("룸 {}: 엔티티 {}를 등록하지 못했다", _roomId, entity->GetEntityId());
             return nullptr;
         }
 
         return entity;
     }
-    /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
-    PlayerRef SpawnPlayer(int64 entityId);
     /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
 
@@ -154,7 +155,7 @@ protected:
 
     //~ 룸 데이터
     /** Create만 부른다. 맵 표의 행을 읽어 두고 셀 행렬을 만든다. */
-    bool Init(const MapTemplate& mapTemplate);
+    void Init(const MapTemplate& mapTemplate);
     /** 맵 데이터에서 자주 읽는 값을 멤버로 옮겨 둔다. Init에서 한 번 부른다. */
     void CacheRoomData();
     /** 엔티티 위치로 셀 행렬을 다시 채운다. */
@@ -207,7 +208,6 @@ private:
 
     //~ 몬스터 스폰 정보
     int32 _maxMonsterCount;
-    float _monsterRespawnTime;
     vector<int32> _monsterIds;
 
 };

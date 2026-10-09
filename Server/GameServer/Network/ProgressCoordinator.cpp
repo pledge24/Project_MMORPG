@@ -116,11 +116,16 @@ void ProgressCoordinator::LeaveRoomAndSave(const RoomRef& room, const PlayerRef&
     if (saveData.has_value() == false)
         return;
 
+    SaveLeftPlayer(player, std::move(saveData.value()));
+}
+
+void ProgressCoordinator::SaveLeftPlayer(const PlayerRef& player, PlayerSaveData saveData)
+{
     // 저장 대기는 OnDisconnected가 진행 표시를 바꾸기 전에 이미 걸었다.
-    const int64 userId = saveData->userId;
+    const int64 userId = saveData.userId;
 
     // 입장 불러오기와 같은 userId 큐에 넣는다. 그사이 맡겨 둔 불러오기는 저장이 끝난 뒤 이 잡에서 실행한다.
-    _pushDBJob(userId, [this, player, data = std::move(saveData.value())]()
+    _pushDBJob(userId, [this, player, data = std::move(saveData)]()
         {
             // 연결을 빌리지 못해도 아래에서 대기를 풀어야 한다. 풀지 않으면 다음 입장이 상한까지 막힌다.
             try

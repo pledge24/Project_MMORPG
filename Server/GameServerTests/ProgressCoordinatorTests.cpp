@@ -4,6 +4,7 @@
 #include "Game/Room/Room.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
+#include "PlayerTestAccess.h"
 
 /*--------------------------------------------------------------
     진행 조율자 테스트
@@ -48,6 +49,13 @@ protected:
         room = Room::Create(mapTemplate);
         ASSERT_NE(room, nullptr);
 
+        player = CreatePlayer(USER_ID);
+        ASSERT_NE(player, nullptr);
+    }
+
+    /** ROOM_ID에서 불러온 1레벨 전사. 세션은 없다. */
+    static PlayerRef CreatePlayer(int64 userId)
+    {
         PlayerProgress progress;
         progress.playerInfo.set_class_(Protocol::CLASS_TYPE_WARRIOR);
         progress.playerInfo.set_level(1);
@@ -59,10 +67,19 @@ protected:
             (*stats)[statType] = 0;
 
         PlayerSpawnParams params;
-        params.userId = USER_ID;
+        params.userId = userId;
         params.progress = &progress;
-        player = EntityFactory::Create<Player>(params);
-        ASSERT_NE(player, nullptr);
+        return EntityFactory::Create<Player>(params);
+    }
+
+    /** ROOM_ID + 1번 룸. 룸 이동의 목적지로 쓴다. */
+    static RoomRef CreateNextRoom()
+    {
+        MapTemplate nextMap;
+        nextMap.templateId = ROOM_ID + 1;
+        nextMap.depthHalfExtent = 5000.f;
+        nextMap.widthHalfExtent = 5000.f;
+        return Room::Create(nextMap);
     }
 
     void TearDown() override
@@ -221,12 +238,7 @@ TEST_F(ProgressCoordinatorTest, PlayerNeverInRoomIsNotSaved)
 TEST_F(ProgressCoordinatorTest, DisconnectDuringRoomTransferSavesInNextRoom)
 {
     EnterRoom();
-    MapTemplate nextMap;
-    nextMap.templateId = ROOM_ID + 1;
-    nextMap.depthHalfExtent = 5000.f;
-    nextMap.widthHalfExtent = 5000.f;
-    RoomRef nextRoom = Room::Create(nextMap);
-    ASSERT_NE(nextRoom, nullptr);
+    RoomRef nextRoom = CreateNextRoom();
     ASSERT_TRUE(room->LeavePlayer(player, true));
 
     coordinator.OnDisconnected(USER_ID, player);
@@ -242,6 +254,33 @@ TEST_F(ProgressCoordinatorTest, DisconnectDuringRoomTransferSavesInNextRoom)
 
     EXPECT_EQ(events, vector<string>({ "save", "load" }));
     EXPECT_FALSE(nextRoom->Contains(player->GetEntityId()));
+}
+
+// TD-047: 룸 이동 중에 끊긴 플레이어가 들어갈 룸에 들어가지 못하면, 떠난 룸도 들어갈 룸도 저장하지 않아 대기가 풀리지 않았다.
+// 들어갈 룸에 같은 엔티티 번호가 이미 있으면 들어가지 못한다.
+TEST_F(ProgressCoordinatorTest, DisconnectDuringFailedRoomTransferStillSaves)
+{
+    EnterRoom();
+    RoomRef nextRoom = CreateNextRoom();
+    PlayerRef occupant = CreatePlayer(USER_ID + 1);
+    EntityTestAccess::SetEntityId(*occupant, player->GetEntityId());
+    RoomEnterData occupantEnter{};
+    occupantEnter.nextRoomId = ROOM_ID + 1;
+    occupantEnter.enterType = Protocol::ENTER_TYPE_INITIAL;
+    ASSERT_TRUE(nextRoom->EnterPlayer(occupant, occupantEnter));
+    ASSERT_TRUE(room->LeavePlayer(player, true));
+
+    coordinator.OnDisconnected(USER_ID, player);
+    RequestEnter();
+    RunDBJobs();
+
+    RoomEnterData enterData{};
+    enterData.nextRoomId = ROOM_ID + 1;
+    enterData.enterType = Protocol::ENTER_TYPE_SAME_MAP_TRANSFER;
+    EXPECT_FALSE(nextRoom->EnterPlayer(player, enterData));
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "load" })) << "어느 룸에도 없는 플레이어도 저장하고 대기를 푼다";
 }
 
 // TD-003: 룸 입장 잡이 큐에 있는 동안 끊기면 대기 없이 새 세션이 불러오고, 늦게 돈 룸 입장 잡이 그 뒤에 저장을 넣었다.

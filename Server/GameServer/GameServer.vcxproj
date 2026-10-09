@@ -178,6 +178,7 @@
     <ClInclude Include="Network\PacketSend.h" />
     <ClInclude Include="DB\DBWorker.h" />
     <ClInclude Include="Network\GameEntry.h" />
+    <ClInclude Include="Network\AccessToken.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
@@ -194,8 +195,6 @@
     <ClInclude Include="Utils\EncodingConverter.h" />
     <ClInclude Include="Game\Characters\CharacterCreation.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
-    <ClInclude Include="Utils\TickIntervalTimer.h" />
-    <ClInclude Include="Utils\TickTimer.h" />
     <ClInclude Include="Utils\Utils.h" />
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
@@ -215,6 +214,7 @@
     <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomTransfer.h" />
+    <ClInclude Include="Game\Room\MoveValidation.h" />
     <ClInclude Include="Game\Room\CellMatrix.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
     <ClInclude Include="DB\CharacterListDAO.h" />
@@ -228,6 +228,7 @@
     <ClCompile Include="Network\ItemRequests.cpp" />
     <ClCompile Include="DB\DBWorker.cpp" />
     <ClCompile Include="Network\GameEntry.cpp" />
+    <ClCompile Include="Network\AccessToken.cpp" />
     <ClCompile Include="Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Core/pch.h</PrecompiledHeaderFile>
@@ -267,8 +268,6 @@
     </ClCompile>
     <ClCompile Include="Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
-    <ClCompile Include="Utils\TickIntervalTimer.cpp" />
-    <ClCompile Include="Utils\TickTimer.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
     <ClCompile Include="Game\Entities\Creature.cpp" />
     <ClCompile Include="Game\Entities\Entity.cpp" />
@@ -282,6 +281,7 @@
     <ClCompile Include="Game\Data\GamedataParser.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />
     <ClCompile Include="Game\Room\RoomTransfer.cpp" />
+    <ClCompile Include="Game\Room\MoveValidation.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
     <ClCompile Include="DB\CharacterListDAO.cpp" />

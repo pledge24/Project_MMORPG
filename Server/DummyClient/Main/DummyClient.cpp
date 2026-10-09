@@ -1,5 +1,4 @@
 #include "Main/pch.h"
-#include <iostream>
 #include "ServerCore/Thread/ThreadManager.h"
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/Session.h"
@@ -11,14 +10,9 @@ char sendData[] = "Hello World";
 class ServerSession : public PacketSession
 {
 public:
-	~ServerSession()
-	{
-		cout << "~ServerSession" << endl;
-	}
-
 	virtual void OnConnected() override
 	{
-		cout << "OnConnected" << endl;
+		GLogger->Info("서버에 접속했다");
 
         // 테스트용: 접속 직후 로그인 패킷을 한 번 보낸다.
 		Protocol::C_LOGIN pkt;
@@ -35,14 +29,9 @@ public:
 		ClientPacketHandler::HandlePacket(session, buffer, len);
 	}
 
-	virtual void OnSend(int32 len) override
-	{
-		//cout << "OnSend Len = " << len << endl;
-	}
-
 	virtual void OnDisconnected() override
 	{
-		cout << "Disconnected" << endl;
+		GLogger->Info("서버와의 연결이 끊겼다");
 	}
 };
 

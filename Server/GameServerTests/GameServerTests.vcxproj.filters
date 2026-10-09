@@ -79,6 +79,11 @@
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
+    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="SessionDisconnectTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\AccessToken.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
@@ -86,6 +91,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
@@ -150,12 +156,6 @@
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">
-      <Filter>GameServer\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp">
-      <Filter>GameServer\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\GameServer\Utils\Utils.cpp">
       <Filter>GameServer\Utils</Filter>
     </ClCompile>
@@ -193,6 +193,9 @@
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp">
+      <Filter>GameServer\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp">

@@ -96,9 +96,6 @@ namespace JsonProperty
         constexpr std::string_view PortalRadius = "portalRadius";
         constexpr std::string_view MonsterIds = "monsterIds";
         constexpr std::string_view MaxMonsterCount = "maxMonsterCount";
-        // constexpr std::string_view MinMonsterCount = "minMonsterCount";
-        constexpr std::string_view MonsterRespawnTime = "monsterRespawnTime";
-        //constexpr std::string_view SummonCount = "summonCount";
         constexpr std::string_view Yaw = "yaw";
     }
 }

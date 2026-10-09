@@ -16,7 +16,6 @@ struct TownRespawn;
  */
 struct NextLevelUpData
 {
-    int32 level = 0;
     int64 maxHpIncrement = 0;
     int64 maxMpIncrement = 0;
     int64 paIncrement = 0;
@@ -139,8 +138,12 @@ public:
 
     /** 들어갈 맵과 룸 id를 기록한다. 룸 입장은 목적지 룸 큐의 OnEnterRoom에서 끝난다. */
     void OnEnterMap(int32 mapId, int32 roomId);
-    /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 룸 중심에 둔다. */
+    /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 룸 중심에 둔다. 이동 판정의 기준 시각도 이때로 정한다. */
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
+    /** 이동 요청을 받아들여 위치를 바꾼다. now는 이동 판정의 기준 시각이 된다. 소속 룸 큐 위에서 부른다. */
+    void ApplyMove(const Protocol::PosInfo& posInfo, uint64 now);
+    /** 서버가 위치를 정했거나 이동을 받아들인 마지막 시각(ms, GetTickCount64 기준). */
+    uint64 GetLastPositionTick() const { return _lastPositionTick; }
     /** 경험치가 남는 만큼 여러 레벨을 한 번에 올린다. 최대 레벨에서는 경험치를 버린다. */
     void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
     /** 최대 레벨이면 아무것도 하지 않는다. */
@@ -249,6 +252,8 @@ private:
     EquipmentComponentRef _equipment;
 
     int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
+    /** 이동 판정은 이 시각부터 흐른 시간으로 허용 거리를 정한다. 소속 룸 큐만 읽고 쓴다. */
+    uint64 _lastPositionTick = 0;
 
     NextLevelUpData _nextLevelUpData;
 };

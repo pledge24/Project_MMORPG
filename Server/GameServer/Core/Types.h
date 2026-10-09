@@ -19,4 +19,3 @@ USING_SHARED_PTR(Room);
 USING_SHARED_PTR(InventoryComponent);
 USING_SHARED_PTR(EquipmentComponent);
 USING_SHARED_PTR(MonsterAIComponent);
-USING_SHARED_PTR(TickIntervalTimer);

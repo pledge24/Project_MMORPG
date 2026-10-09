@@ -3,6 +3,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
 #include "Game/Combat/Combat.h"
+#include "Game/Room/MoveValidation.h"
 #include "Network/ProgressCoordinator.h"
 
 namespace
@@ -12,21 +13,30 @@ namespace
     {
         return vector2D(posInfo.pos().x(), posInfo.pos().y());
     }
+
+    // 룸에서 빠진 끊긴 플레이어의 저장 사본. 사망한 채 끊겼으면 마을 리스폰을 적용해 저장한다.
+    PlayerSaveData MakeDisconnectSaveData(const PlayerRef& player)
+    {
+        if (player->IsDead())
+        {
+            if (optional<TownRespawn> town = RoomTransfer::FindTownRespawn())
+                player->ApplyTownRespawnForSave(town.value());
+            else
+                GLogger->Error("플레이어 {}에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다(맵 표에 마을 리스폰 지점이 없다)", player->GetEntityId());
+        }
+
+        return player->MakeSaveData();
+    }
 }
 
 RoomRef Room::Create(const MapTemplate& mapTemplate)
 {
     RoomRef newRoom = make_shared<Room>();
-
-    if (newRoom->Init(mapTemplate) == false)
-    {
-        return nullptr;
-    }
-
+    newRoom->Init(mapTemplate);
     return newRoom;
 }
 
-bool Room::Init(const MapTemplate& mapTemplate)
+void Room::Init(const MapTemplate& mapTemplate)
 {
     _mapTemplate = mapTemplate;
 
@@ -34,8 +44,6 @@ bool Room::Init(const MapTemplate& mapTemplate)
     CacheRoomData();
 
     _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
-
-    return true;
 }
 
 bool Room::Start()
@@ -54,7 +62,7 @@ bool Room::Start()
 
             if (SpawnEntity<Monster>(spawnParams) == nullptr)
             {
-                wcout << L"Room " << _roomId << L": 몬스터 " << monsterTemplateId << L" 스폰에 실패했습니다" << '\n';
+                GLogger->Error("룸 {}: 몬스터 {}를 스폰하지 못했다", _roomId, monsterTemplateId);
                 return false;
             }
         }
@@ -131,6 +139,14 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     if (AddEntity(enterPlayer) == false)
     {
         GLogger->Warning("플레이어 {}가 Room {} 입장에 실패했습니다", enterPlayerId, _roomId);
+
+        // 룸 이동 중에 끊겼다. 떠난 룸은 이 플레이어를 찾지 못하고 이 룸에도 들어오지 못했으므로, 저장을 여기서 넘긴다.
+        // 넘기지 않으면 접속 종료가 건 저장 대기를 풀 곳이 없다(TD-047).
+        if (enterPlayer->GetPresence() == Player::Presence::LEFT_IN_ROOM)
+        {
+            GProgressCoordinator->SaveLeftPlayer(enterPlayer, MakeDisconnectSaveData(enterPlayer));
+            return false;
+        }
 
         if (auto session = enterPlayer->GetSession())
         {
@@ -252,15 +268,7 @@ optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
     if (LeavePlayer(player, false) == false)
         return nullopt;
 
-    if (player->IsDead())
-    {
-        if (optional<TownRespawn> town = RoomTransfer::FindTownRespawn())
-            player->ApplyTownRespawnForSave(town.value());
-        else
-            GLogger->Error("플레이어 {}에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다(맵 표에 마을 리스폰 지점이 없다)", playerId);
-    }
-
-    return player->MakeSaveData();
+    return MakeDisconnectSaveData(player);
 }
 
 void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
@@ -437,10 +445,18 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
     if (Contains(playerId) == false)
         return;
 
-    // 적용. 위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것으로 둔다.
-    Protocol::PosInfo posInfo = pkt.info();
-    posInfo.set_entity_id(playerId);
-    player->SetPosInfo(posInfo);
+    // 직전에 받아들인 위치에서 흐른 시간으로 갈 수 있는 곳인지 본다. 어기면 버리고, 서버의 위치는 그대로 둔다.
+    const uint64 now = ::GetTickCount64();
+    const vector2D from = MathUtil::PosInfoToVector2D(&player->GetPosInfo());
+    const vector2D to = MathUtil::PosInfoToVector2D(&pkt.info());
+    if (optional<string> rejection = MoveValidation::Validate(from, to, now - player->GetLastPositionTick(),
+        MoveValidation::Bounds{ _roomMinX, _roomMaxX, _roomMinY, _roomMaxY }))
+    {
+        GLogger->Warning("플레이어 {}의 이동을 버린다: {}", playerId, rejection.value());
+        return;
+    }
+
+    player->ApplyMove(pkt.info(), now);
 
     // 이동 사실을 알린다(본인 빼고).
     Protocol::S_MOVE movePkt;
@@ -588,17 +604,13 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
         if(Contains(targetId) == false)
             return;
 
-        // TODO: 피격이 가능한 대상?
+        // 피격은 Creature만 받는다.
         if (CreatureRef creature = FindEntityAs<Creature>(targetId))
         {
             targets.push_back(creature);
         }
     }
-    else
-    {
 
-    }
-    
     // 2) 판정 결과를 알린다.
     for (const CreatureRef& target : targets)
     {
@@ -799,15 +811,6 @@ pair<PlayerRef, float> Room::FindClosestPlayer(const Protocol::PosInfo* posInfo,
     return make_pair(closestPlayer, minDist);
 }
 
-PlayerRef Room::SpawnPlayer(int64 entityId)
-{
-    PlayerRef targetPlayer = FindEntityAs<Player>(entityId);
-    if (targetPlayer == nullptr)
-        return nullptr;
-
-    return SpawnPlayer(targetPlayer);
-}
-
 PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
 {
     // 룸 이동 뒤에 예약한 스폰 잡은 그사이 EnterPlayer가 접속 종료로 플레이어를 뺐어도 돈다.
@@ -893,7 +896,6 @@ void Room::CacheRoomData()
     _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
     _maxMonsterCount = _mapTemplate.maxMonsterCount;
-    _monsterRespawnTime = _mapTemplate.monsterRespawnTime;
     _monsterIds = _mapTemplate.monsterIds;
 
     // 리스폰 포인트 저장

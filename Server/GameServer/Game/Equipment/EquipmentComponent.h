@@ -6,7 +6,7 @@
  * 플레이어 한 명의 장비 장착. 장비 부위(GearType)마다 슬롯 하나를 둔다.
  * 슬롯은 플레이어의 _possession(protobuf) 안에 있고, 이 클래스는 그 포인터만 든다.
  * 스탯은 바꾸지 않는다. 착용 장비가 올려 주는 증감량만 돌려주고, 최종 스탯은 Player::RefreshFinalStat이 계산한다.
- * 룸에 들어가기 전에는 ProgressStorage::Load가 DB에서 채우고, 그 뒤로는 소속 룸 큐 위에서만 쓴다.
+ * 룸에 들어가기 전에 Player::ApplyProgress가 불러온 진행 사본으로 채우고, 그 뒤로는 소속 룸 큐 위에서만 쓴다.
  */
 class EquipmentComponent : public EntityComponent
 {

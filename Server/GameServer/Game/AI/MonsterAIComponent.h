@@ -1,15 +1,13 @@
 #pragma once
 #include "Game/Entities/EntityComponent.h"
 
-/** 몬스터 AI의 상태. StateCount는 상태 개수를 나타낼 뿐 상태가 아니다. */
+/** 몬스터 AI의 상태. 사망한 몬스터는 룸에서 빠지므로 사망 상태를 두지 않는다. */
 enum class MonsterState : uint8
 {
     Idle = 0,
     Wandering,
     Chasing,
     Attacking,
-    Death,
-    StateCount
 };
 
 /**

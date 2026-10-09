@@ -32,7 +32,7 @@ void Creature::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 {
     Entity::OnHit(attacker, attackInfo);
 
-    // TEMP: Hit 발생시 Hp만 깎도록 설정
+    // 피격은 HP만 깎는다. 0 아래로 내려가지 않는다.
     int64 damage = attackInfo.damage();
     int64 hp = GetStatValue(Protocol::STAT_TYPE_HP);
     int64 updatedHp = hp - damage;
@@ -59,18 +59,6 @@ int64 Creature::GetStatValue(Protocol::StatType statType)
 {
     auto* statMappings = _statInfo->mutable_info();
     return statMappings->at((int32)statType);
-}
-
-Protocol::Stat Creature::GetStat(Protocol::StatType statType)
-{
-    int64 value = GetStatValue(statType);
-    Protocol::Stat stat;
-    {
-        stat.set_type(statType);
-        stat.set_value(value);
-    }
-
-    return stat;
 }
 
 void Creature::SetStatValue(Protocol::StatType statType, const int64& value)

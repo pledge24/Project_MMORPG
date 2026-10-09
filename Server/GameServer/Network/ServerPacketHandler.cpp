@@ -6,6 +6,7 @@
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
 #include "Network/ItemRequests.h"
+#include "Network/AccessToken.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Game/Characters/CharacterCreation.h"
@@ -64,10 +65,9 @@ namespace
 // 룸 소유 상태는 여기서 건드리지 않는다. 룸 일은 room->DoAsync로, DB 일은 DB 큐로 넘기고 바로 리턴한다.
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
+// false를 돌려주면 GameSession::OnRecvPacket이 패킷 id와 함께 로그를 남긴다.
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 {
-	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO: Log
 	return false;
 }
 
@@ -106,11 +106,17 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 return;
             }
 
-            Json json = Json::parse(*val);
-            string username = json["username"];
-            int64 userId = json["userId"];
+            // 토큰은 이미 지웠다. 값을 읽지 못하면 다시 쓸 수 없으므로 응답 없이 끝내지 말고 끊는다.
+            optional<AccessToken::Payload> payload = AccessToken::ParsePayload(*val);
+            if (payload.has_value() == false)
+            {
+                GLogger->Warning("액세스 토큰 값의 형식이 틀렸다");
+                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
+                return;
+            }
 
-            GLogger->Info("로그인 userId: {}, username: {}", userId, username);
+            const int64 userId = payload->userId;
+            GLogger->Info("로그인 userId: {}, username: {}", userId, payload->username);
 
             // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
             // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
@@ -284,7 +290,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     }
 
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
-    // room_id는 LoadAllCharactersData가 DB에서 읽어야 알 수 있으므로,
+    // room_id는 GameEntry::Enter가 ProgressStorage::Load로 DB에서 읽어야 알 수 있으므로,
     // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
     // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
     // 언제 어느 DB 큐에서 돌지는 조율자가 정한다. 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.

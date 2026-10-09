@@ -2,13 +2,14 @@
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/Session.h"
 #include "ServerCore/Network/Listener.h"
+#include "ServerCore/Job/JobQueue.h"
 
 /*-------------------
 		Service
 --------------------*/
 
 Service::Service(ServiceType type, NetAddress address, IocpCoreRef core, SessionFactory factory, int32 maxSessionCount)
-	: _type(type), _netAddress(address), _iocpCore(core), _sessionFactory(factory), _maxSessionCount(maxSessionCount)
+	: _type(type), _netAddress(address), _iocpCore(core), _timerQueue(make_shared<JobQueue>()), _sessionFactory(factory), _maxSessionCount(maxSessionCount)
 {
 
 }
@@ -120,9 +121,6 @@ bool ServerService::Start()
 		return false;
 
 	_listener = make_shared<Listener>();
-	if (_listener == nullptr)
-		return false;
-
 	_listener->SetService(static_pointer_cast<ServerService>(shared_from_this()));
 
 	if (_listener->Start() == false)

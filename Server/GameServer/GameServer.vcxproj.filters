@@ -64,6 +64,9 @@
     <ClCompile Include="Network\GameEntry.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\AccessToken.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Core\pch.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -109,12 +112,6 @@
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\TickIntervalTimer.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\TickTimer.cpp">
-      <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\Player.cpp">
       <Filter>Game\Entities</Filter>
@@ -167,6 +164,9 @@
     <ClCompile Include="Game\Room\RoomTransfer.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Room\MoveValidation.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Room\CellMatrix.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
@@ -185,6 +185,9 @@
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="Network\GameEntry.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\AccessToken.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">
@@ -236,12 +239,6 @@
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Utils\EncodingConverter.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TickIntervalTimer.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TickTimer.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\Player.h">
@@ -314,6 +311,9 @@
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\RoomTransfer.h">
+      <Filter>Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Room\MoveValidation.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\CellMatrix.h">

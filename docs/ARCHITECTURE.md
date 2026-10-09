@@ -47,8 +47,10 @@ UUID 액세스 토큰을 발급해 TTL과 함께 Redis에 넣는다.
 계정 정보를 DB에서 직접 조회하지 않는다.
 
 **Architecture Invariant:** 룸 소유 상태 변경은 그 룸의 큐 위에서만 일어난다. 락이 없다.
-`Room`이 `JobQueue`를 상속하고, 패킷 핸들러는 인라인으로 일하지 않고 `DoAsync`로 잡을
-밀어넣고 리턴한다. **다른 룸의 오브젝트에 직접 손대지 않는다.**
+`Room`이 `JobQueue`를 상속하고, 패킷 핸들러는 룸 상태를 직접 바꾸지 않고 `DoAsync`로 잡을
+밀어넣는다. **다른 룸의 오브젝트에 직접 손대지 않는다.**
+`JobQueue::Push`는 큐가 비어 있고 그 스레드가 다른 큐를 실행하고 있지 않으면 잡을 그 자리에서 실행한다.
+그래서 대개 같은 IOCP 워커가 룸 잡까지 실행한 뒤에 핸들러에서 돌아온다. 룸 잡이 무거우면 IOCP 처리량도 그만큼 준다.
 DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB 스레드가 소비한다
 (유저 친화도가 필요한 작업은 id 기반 큐로, 그 외는 랜덤 큐로 보낸다).
 
@@ -93,8 +95,9 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 (`GameEntry`). DB 스레드는 불러오기에서도 살아 있는 `Player`를 만지지 않고 진행 사본(`PlayerProgress`)만 채운다.
 근거는 `docs/adr/0012-load-and-save-one-progress-copy.md`에 있다.
 
-**Architecture Invariant:** 로그인 핸들러만 예외적으로 `DBQueue` 위에서 시작한다.
-Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
+**Architecture Invariant:** DB를 거치는 요청(로그인, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
+계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로그인만
+계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 Redis 토큰 확인과 캐릭터 목록 불러오기를 이어 한다.
 
 **Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
 Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
@@ -102,6 +105,9 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
 `S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).
 상대가 받지 않아 송신이 끝나지 않으면 1초 뒤에 끊는다. 그 세션의 저장은 아래의 접속 종료 경로를 탄다.
+서버가 건 끊기(`DisconnectEx`)는 상대가 소켓을 닫아야 끝나므로, `Session::DISCONNECT_TIMEOUT_MS`(1초) 안에 끝나지 않으면
+세션이 소켓을 닫아 `OnDisconnected`까지 가게 한다. 이 상한은 서비스의 타이머 큐로 예약하고 워커의 `JobTimer` 분배로 돈다.
+— 끊기가 끝나지 않으면 저장 대기가 풀리지 않아 그 계정은 서버를 다시 띄울 때까지 입장하지 못한다.
 
 **Architecture Invariant:** 캐릭터를 다루는 요청(입장, 삭제)은 그 계정이 가진 캐릭터에만 동작한다.
 클라이언트가 보낸 `character_id`를 믿지 않고, SQL이 세션의 `user_id`를 함께 대조한다. 생성 요청은
@@ -182,6 +188,11 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 마을 리스폰의 목적지는 `RoomTransfer::FindTownRespawn`이 맵 표에서 찾는다.
 — 사망한 채 끊긴 플레이어의 저장은 룸에서 뺀 뒤에 뜨므로, 리스폰 규칙이 소속 룸이나 룸 객체에 기대면 실패한다.
 
+**Architecture Invariant:** 이동 요청(`C_MOVE`)의 위치는 `MoveValidation`이 판정한다. 직전에 받아들인 위치에서 평면 거리가
+최대 속도(500) × 경과 시간 × 1.5 + 50을 넘거나 룸 경계 밖이면 패킷을 버리고 서버의 위치를 그대로 둔다. 경과 시간은 서버가
+위치를 정했거나(룸 입장, 리스폰) 이동을 받아들인 시각부터 잰다. 높이는 보지 않는다. 버린 이동은 보낸 클라이언트에 알리지 않는다.
+— 클라이언트가 보낸 위치를 그대로 쓰면 조작한 클라이언트가 룸 안 어디로든 순간이동하고, 그 위치로 저장된다.
+
 **Architecture Invariant:** 위치에 묶인 룸 이동 요청은 서버가 플레이어 위치로 판정한다. 포털 이동은 플레이어와 포털 출발
 위치의 평면 거리가 맵 기획표의 `portalRadius` 안이어야 하고, 맵 입장(`C_ENTER_MAP`)은 첫 입장이면 불러온 룸으로만, 룸
 안에서는 다른 맵으로 가는 포털의 반경 안에서만 받는다. 판정은 `RoomTransfer`가 한다.
@@ -259,8 +270,9 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 
 ## Layering Rules
 
-**클라와 서버의 클래스 계층이 대칭이다.** `Entity → Creature → { Player, Monster }`.
-서버는 상태를 protobuf로 들고 클라는 그것을 액터에 반영한다.
+**클라와 서버의 클래스 계층이 대칭이다.** 서버는 `Entity → Creature → { Player, Monster }`, 클라는
+`AP1Creature → { AP1Player, AP1Monster }`다. 클라에는 서버의 `Entity`에 해당하는 클래스가 없고 `AP1Creature`가
+`ACharacter`를 상속한다. 서버는 상태를 protobuf로 들고 클라는 그것을 액터에 반영한다.
 
 그래서 게임플레이 변경은 **클라 + 서버 + 프로토콜 3곳을 기본으로 잡는다.**
 한쪽만 고치면 어긋나고, 어긋남을 빌드가 잡아주지 않는다.

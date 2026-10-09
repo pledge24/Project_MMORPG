@@ -44,10 +44,8 @@ public:
 	bool IsPlayer()                                     { return _isPlayer; }
 
     int64 GetEntityId() const                           { return _entityInfo->entity_id(); }
-    void GetNormalAttackData()                          {}
 
     void SetPosInfo(const Protocol::PosInfo& posInfo_)  { _posInfo->CopyFrom(posInfo_); }
-    void SetPos(const Protocol::Vector& pos)            { _posInfo->mutable_pos()->CopyFrom(pos); }
 
     /** 다른 클라이언트에게 보낼 스폰 정보. 위치(pos_info)와 종류별 정보가 들어 있다. */
     const Protocol::EntityInfo& GetEntityInfo() const   { return *_entityInfo; }
@@ -71,6 +69,8 @@ protected:
 private:
     /** 룸이 AddEntity에서 JoinRoom을, 룸 틱에서 Tick을 부른다. */
     friend class Room;
+    /** 테스트가 준비 단계에서 엔티티 번호를 겹치게 정한다(GameServerTests/PlayerTestAccess.h). */
+    friend struct EntityTestAccess;
 
     /** 팩토리가 생성 직후에 한 번 부른다. 위치의 엔티티 id도 함께 쓴다. */
     void SetEntityId(int64 entityId)                    { _entityInfo->set_entity_id(entityId); _posInfo->set_entity_id(entityId); }
