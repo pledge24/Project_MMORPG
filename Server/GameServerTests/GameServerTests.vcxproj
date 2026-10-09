@@ -224,6 +224,7 @@
     <ClCompile Include="..\GameServer\Network\GameSession.cpp" />
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp" />
     <ClCompile Include="..\GameServer\Core\Global.cpp" />
+    <ClCompile Include="..\GameServer\Core\ServerContext.cpp" />
     <ClCompile Include="..\GameServer\Network\SaveGate.cpp" />
     <ClCompile Include="..\GameServer\Network\ProgressCoordinator.cpp" />
     <ClCompile Include="..\GameServer\Core\Config.cpp" />

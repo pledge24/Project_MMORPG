@@ -29,5 +29,3 @@ private:
     MAKE_LOCK;
     map<int64, GameSessionRef> _userSessions;   // userId → 그 계정의 현재 세션
 };
-
-extern GameSessionManager GSessionManager;

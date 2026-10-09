@@ -86,6 +86,9 @@
     <ClCompile Include="Core\Config.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\ServerContext.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
     <ClCompile Include="Core\Global.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -207,6 +210,9 @@
     </ClInclude>
     <ClInclude Include="Network\ServerPacketHandler.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ServerContext.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Global.h">
       <Filter>Core</Filter>

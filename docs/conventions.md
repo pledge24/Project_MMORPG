@@ -540,9 +540,14 @@ GLogger->Warning("몬스터 템플릿 {}이 없다", templateId);
 레벨, 스레드 id(`LThreadId`)를 붙인다. `ThreadManager`가 띄우지 않은 스레드는 id가 `0`으로 찍힌다.
 
 **정적 객체의 생성자와 소멸자에서는 `GLogger`를 쓰지 않는다.**
-— `GLogger`는 정적 객체 `GCoreGlobal`(`ServerCore/Core/CoreGlobal.cpp`)의 생성자가 만들고 소멸자가 지운다.
-번역 단위가 다른 정적 객체 사이의 초기화와 소멸 순서는 정해지지 않으므로, 그 시점에는 `GLogger`가 아직
-`nullptr`이거나 이미 지워져 `nullptr`일 수 있다. 그 자리의 로그는 `main` 안으로 옮긴다.
+— `GLogger`는 `main`이 만든 `CoreGlobal`(`ServerCore/Core/CoreGlobal.h`)의 생성자가 만들고 소멸자가 지운다.
+정적 객체는 `main`보다 먼저 만들어지고 `main`이 끝난 뒤에 지워지므로, 그 시점에는 `GLogger`가 아직
+`nullptr`이거나 이미 지워져 `nullptr`이다. 그 자리의 로그는 `main` 안으로 옮긴다.
+
+**전역 객체는 정적 객체로 두지 않는다.** ServerCore의 전역은 `CoreGlobal`에, 게임 서버의 전역은
+`ServerContext`(`GameServer/Core/ServerContext.h`)에 넣는다. 두 객체 모두 `main`이 맨 처음에 지역 변수로 만든다.
+— 번역 단위가 다른 정적 객체 사이에서는 만들고 지우는 순서가 정해지지 않는다. 서버를 끝낼 때 룸과 세션이
+로거나 잡 타이머보다 늦게 지워지면 이미 지운 객체를 읽는다.
 
 2026년 10월 9일(#206) 기준으로 기존 코드에는 표준 출력에 직접 쓰는 호출이 남아 있다. #205의 각 티켓이 자기가 고치는
 코드의 호출을 옮기고, 남은 것은 #213이 옮긴다.

@@ -4,7 +4,7 @@
  * 접속 종료 저장이 끝나기 전에는 같은 계정의 입장 불러오기를 하지 않게 막는다.
  * 계정마다 저장 대기를 표시하고, 대기 중에 온 불러오기를 하나만 맡아 둔다.
  * 세션과 DB를 모른다. 맡아 둔 일을 언제 어디서 실행할지는 호출자가 정한다.
- * 여러 스레드(IOCP, DB 큐, 타이머 큐)에서 부르므로 모든 함수가 락을 잡는다. 전역 객체 GSaveGate 하나만 있다.
+ * 여러 스레드(IOCP, DB 큐, 타이머 큐)에서 부르므로 모든 함수가 락을 잡는다. 운영 코드는 ServerContext가 만든 하나를 조율자(ProgressCoordinator)에 넘겨 쓴다.
  */
 class SaveGate
 {
@@ -55,5 +55,3 @@ private:
     map<int64, Entry> _entries; // 대기 중인 계정만 들어 있다
     uint64 _nextToken = 1;
 };
-
-extern SaveGate GSaveGate;

@@ -8,7 +8,7 @@ void GameSession::OnDisconnected()
 	// 조율자가 저장 대기를 건 뒤에 계정 등록을 지운다. 순서의 이유는 ProgressCoordinator::OnDisconnected에 있다.
 	GProgressCoordinator->OnDisconnected(_userId, _player.load());
 
-	GSessionManager.UnregisterUser(static_pointer_cast<GameSession>(shared_from_this()));
+	GSessionManager->UnregisterUser(static_pointer_cast<GameSession>(shared_from_this()));
 }
 
 void GameSession::OnRecvPacket(BYTE* buffer, int32 len)

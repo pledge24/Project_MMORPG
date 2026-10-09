@@ -7,7 +7,7 @@ struct PlayerSaveData;
  * 접속 종료 저장과 입장 불러오기의 순서를 맞춘다. 「저장이 끝나기 전에는 같은 계정을 불러오지 않는다」를 이 클래스가 지킨다.
  * 접속 종료, 중복 로그인, 입장 요청은 함수 하나씩만 부른다. 저장 대기를 걸고 푸는 곳은 이 클래스 밖에 없다.
  * DB 큐, 저장 게이트, 진행 저장소, 만료 타이머를 주입받는다. 테스트는 DB 잡과 타이머를 쌓아 두고 원하는 순서로 돌린다.
- * 운영 코드는 전역 포인터 GProgressCoordinator가 가리키는 객체 하나만 쓴다.
+ * 운영 코드는 ServerContext가 만든 하나를 전역 포인터 GProgressCoordinator로 쓴다.
  */
 class ProgressCoordinator
 {
@@ -20,6 +20,8 @@ public:
     using ScheduleTimer = function<void(uint64 delayMs, CallbackType job)>;
 
     ProgressCoordinator(SaveGate& saveGate, PushDBJob pushDBJob, SaveProgress saveProgress, ScheduleTimer scheduleTimer);
+    /** 운영 코드의 DB 큐(GDBManager), 진행 저장소(ProgressStorage), 타이머 큐(GSessionJobQueue)를 쓰는 조율자. saveGate보다 먼저 지운다. */
+    static unique_ptr<ProgressCoordinator> CreateForServer(SaveGate& saveGate);
 
     //~ 진입점
     /**
@@ -61,6 +63,3 @@ private:
     SaveProgress _saveProgress;
     ScheduleTimer _scheduleTimer;
 };
-
-/** 세션, 패킷 핸들러, 룸이 부르는 조율자. 테스트는 주입한 조율자로 바꿔 끼우고 끝나면 되돌린다. */
-extern ProgressCoordinator* GProgressCoordinator;

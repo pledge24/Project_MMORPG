@@ -114,7 +114,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
             // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
             // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
-            if (GameSessionRef replaced = GSessionManager.RegisterUser(userId, gameSession))
+            if (GameSessionRef replaced = GSessionManager->RegisterUser(userId, gameSession))
             {
                 // 밀어내기 전에 조율자에 알린다. 기존 세션의 저장이 끝나기 전에 새 세션이 입장하지 않게 한다.
                 GProgressCoordinator->OnDuplicateLogin(userId, replaced->GetPlayer());
@@ -125,7 +125,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             // 등록하기 전에 이 세션이 이미 끊겼다면 접속 종료의 UnregisterUser가 먼저 지나갔다. 등록을 여기서 거둔다.
             if (gameSession->IsConnected() == false)
             {
-                GSessionManager.UnregisterUser(gameSession);
+                GSessionManager->UnregisterUser(gameSession);
                 return;
             }
 

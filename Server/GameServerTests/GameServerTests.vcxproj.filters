@@ -125,6 +125,9 @@
     <ClCompile Include="..\GameServer\Core\Config.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Core\ServerContext.cpp">
+      <Filter>GameServer\Core</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Core\Global.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>

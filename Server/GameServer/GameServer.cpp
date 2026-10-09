@@ -5,6 +5,7 @@
 #include "DB/ItemDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/DBWorker.h"
+#include "Core/ServerContext.h"
 
 enum
 {
@@ -30,6 +31,9 @@ void DoWorkerJob(ServerServiceRef& service)
 
 int main(void)
 {
+    // 전역 객체를 여기서 만들고 main이 끝날 때 역순으로 지운다. 아래 모든 코드가 이 객체에 기댄다.
+    ServerContext context;
+
     // Init
 	ServerPacketHandler::Init();
 

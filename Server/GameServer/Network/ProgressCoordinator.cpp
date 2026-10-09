@@ -5,11 +5,11 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 
-namespace
+unique_ptr<ProgressCoordinator> ProgressCoordinator::CreateForServer(SaveGate& saveGate)
 {
-    // 운영 코드의 의존성. 람다는 부를 때에야 전역 객체를 읽으므로 정적 초기화 순서에 기대지 않는다.
-    ProgressCoordinator DefaultCoordinator(
-        GSaveGate,
+    // 람다는 부를 때에야 전역 객체를 읽는다. 만들 때는 DB 큐가 아직 없어도 된다.
+    return make_unique<ProgressCoordinator>(
+        saveGate,
         [](int64 userId, CallbackType job)
         {
             GDBManager->GetDBQueueFromId(userId)->Push(make_shared<Job>(std::move(job)));
@@ -24,8 +24,6 @@ namespace
             GSessionJobQueue->DoTimer(delayMs, std::move(job));
         });
 }
-
-ProgressCoordinator* GProgressCoordinator = &DefaultCoordinator;
 
 ProgressCoordinator::ProgressCoordinator(SaveGate& saveGate, PushDBJob pushDBJob, SaveProgress saveProgress, ScheduleTimer scheduleTimer)
     : _saveGate(saveGate), _pushDBJob(std::move(pushDBJob)), _saveProgress(std::move(saveProgress)), _scheduleTimer(std::move(scheduleTimer))

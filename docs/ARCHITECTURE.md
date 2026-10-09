@@ -97,7 +97,7 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 Redis 재검증과 캐릭터 로드가 이어져야 하기 때문이다. 다른 진입점을 여기에 얹지 않는다.
 
 **Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
-Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager.RegisterUser`가
+Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
 계정에 세션을 묶고 기존 세션을 돌려준다. 확인과 교체는 관리자의 락 하나 안에서 한다. 로그인 잡은
 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
 `S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).

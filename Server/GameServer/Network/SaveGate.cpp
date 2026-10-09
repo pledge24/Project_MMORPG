@@ -1,8 +1,6 @@
 #include "Core/pch.h"
 #include "Network/SaveGate.h"
 
-SaveGate GSaveGate;
-
 void SaveGate::Hold(int64 userId)
 {
     USE_LOCK;
