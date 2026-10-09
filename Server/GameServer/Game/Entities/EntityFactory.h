@@ -16,8 +16,7 @@ public:
 
         // Init이 id를 읽을 수 있도록 먼저 쓴다.
         const int64 newId = s_idGenerator.fetch_add(1);
-        entity->_entityInfo->set_entity_id(newId);
-        entity->_posInfo->set_entity_id(newId);
+        entity->SetEntityId(newId);
 
         if (entity->Init(params) == false)
             return nullptr;

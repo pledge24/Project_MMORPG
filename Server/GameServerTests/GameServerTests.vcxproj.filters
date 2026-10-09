@@ -56,6 +56,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="PacketHandlerTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\ItemRequests.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="ItemDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />

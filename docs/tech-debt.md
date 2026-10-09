@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 42개 (높음 3 · 중간 5 · 낮음 34) · 다음 번호 TD-045
+항목 28개 (높음 1 · 중간 2 · 낮음 25) · 다음 번호 TD-046
 
 ## 작성 방법
 
@@ -96,35 +96,6 @@
 ---
 
 # 중간
-
-## TD-006 장비 착용·해제의 성공 응답이 끊긴 세션을 검사하지 않고 보낸다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 531~536줄, 571~576줄 (`C_HandleEquipGear`, `C_HandleUnequipGear`)
-> 등록일: 2026년 10월 5일
-
-두 함수는 실패 응답을 보낼 때 `player->_session.lock()`의 결과를 `if`로 검사한다. 성공 응답을 보낼 때는 같은
-결과를 검사하지 않고 `SEND_PACKET`으로 `session->Send`를 부른다. `Handle_C_EQUIP_GEAR`와 `Handle_C_UNEQUIP_GEAR`는
-세션을 잡에 담지 않고 플레이어만 넘긴다. 그래서 잡이 룸 큐에서 기다리는 사이에 연결이 끊겨 세션이 소멸하면
-`lock()`이 널을 돌려준다. 코드를 읽고 판단했고 실행해서 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 착용이나 해제를 요청한 직후에 연결이 끊기면 룸 잡이 널 포인터를 역참조해 게임 서버가 죽는다.
-
-## TD-007 이동 요청이 보낸 사람이 아니라 패킷의 엔티티 번호로 플레이어를 찾는다
-> **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 389~400줄 (`C_HandleMove`) · `Server/GameServer/Network/ServerPacketHandler.cpp` 336~351줄 (`Handle_C_MOVE`)
-> 등록일: 2026년 10월 5일
-
-`Handle_C_MOVE`는 보낸 세션의 플레이어를 룸 잡에 넘기지 않고 패킷만 넘긴다. `Room::C_HandleMove`는
-`FindEntityAs<Player>(pkt.info().entity_id())`로 대상을 찾고 `_posInfo->CopyFrom(pkt.info())`로 위치를 덮어쓴다.
-클라이언트는 `UP1MoveSyncComponent`가 캐시한 위치를 엔티티 번호와 함께 그대로 보낸다. 위치값 자체도 검증하지 않는다.
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 조작한 클라이언트는 같은 룸에 있는 다른 플레이어의 위치를 바꿀 수 있다. 피해자가 그
-상태로 접속을 끊으면 바뀐 위치가 `SaveLastState`로 저장되어 다른 계정의 진행이 손상된다.
 
 ## TD-008 클라이언트가 엔티티를 디스폰할 때 맵에서 지운 원소를 역참조한다
 > **심각도:** 중간 · **난이도:** 낮음 · **범위:** 함수 · client
@@ -292,46 +263,6 @@
 
 **버그 발생 가능성 증가** — 인증 서버가 토큰 값의 형식을 바꾸거나 키에 다른 값이 들어가면 로그인 한 번에 게임 서버가 죽는다.
 
-## TD-019 캐릭터 요청이 세션의 로그인 상태를 보지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Network/ServerPacketHandler.cpp` (`Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`)
-> 등록일: 2026년 10월 5일
-
-- `Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`은 `_userId`가 0이어도, 즉 `C_LOGIN`을
-  거치지 않은 세션이어도 진행한다. 삭제와 입장은 SQL의 `user_id` 대조로 실패하지만, 생성은 `user_id` 0으로 INSERT를 시도한다.
-  DB 제약이 막는지는 확인하지 않았다
-
-코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 조작한 클라이언트는 주인 없는 캐릭터 행을 만든다.
-
-## TD-020 패킷 핸들러의 반환값을 아무도 읽지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Network/GameSession.cpp` 76~84줄 (`OnRecvPacket`)
-> 등록일: 2026년 10월 5일
-
-`OnRecvPacket`은 `ServerPacketHandler::HandlePacket`의 반환값을 버린다. 그래서 `ParseFromArray`가 실패하거나 핸들러가
-`false`를 돌려줘도 로그도 끊기도 없다. 같은 함수의 `header` 변수는 쓰이지 않는다.
-
-### 영향
-
-**유지보수 어려움** — 클라이언트와 서버의 프로토콜이 어긋나도 패킷이 조용히 사라져서 원인을 찾기 어렵다.
-
-## TD-021 처음 입장한 플레이어에게 자기 스폰을 두 번 보낸다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 304~310줄, 893~909줄
-> 등록일: 2026년 10월 5일
-
-`C_HandleEnterRoom`의 INITIAL 분기는 `SpawnPlayer(player)`를 부른 뒤 `ReplicateRoomData(player, true)`를 부른다.
-`SpawnPlayer`는 `Broadcast(sendBuffer)`로 본인을 빼지 않고 보내고, `ReplicateRoomData`도 `includeThisPlayer`가 참이라
-본인을 다시 싣는다. 클라이언트 `UP1StatefulEntityManager::SpawnPlayer`가 이미 있는 번호를 무시해서 드러나지 않는다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 클라이언트의 중복 검사를 지우거나 스폰에 부수 효과를 붙이면 내 플레이어가 두 번 처리된다.
-
 ## TD-023 생성된 패킷 직렬화가 크기를 `uint16`으로 자른다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · protocol
 > 위치: `Protocol/Templates/PacketHandler.h` 75줄
@@ -482,19 +413,6 @@ IOCP 워커가 진다는 사실이 빠진다.
 **유지보수 어려움** · **버그 발생 가능성 증가** — 기능이 있는 것처럼 보여서 읽는 사람이 동작을 잘못 짐작한다.
 `operator-=`나 `TickIntervalTimer`를 새로 쓰기 시작하면 그 자리에서 바로 버그가 된다.
 
-## TD-041 세션의 계정 번호를 락 없이 여러 스레드가 읽고 쓴다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Network/GameSessionManager.cpp` 12줄 · `Server/GameServer/Network/GameSession.cpp` 17줄 · `Server/GameServer/Network/ServerPacketHandler.cpp` (`Handle_C_CREATE_CHARACTER`, `Handle_C_DELETE_CHARACTER`, `Handle_C_ENTER_GAME`)
-> 등록일: 2026년 10월 9일
-
-`GameSession::_userId`는 원자적이지 않은 `int64`다. 로그인 잡(DB 스레드)이 관리자의 락 안에서 쓰고, IOCP 스레드의 핸들러와
-`OnDisconnected`는 락 없이 읽는다. 계정 번호를 읽는 시점도 요청마다 다르다. 캐릭터 생성은 핸들러가 읽은 값을 잡에 넘기고,
-삭제와 입장 불러오기의 DAO는 잡이 실행될 때 세션에서 다시 읽는다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 정의되지 않은 동작인 데이터 경합이다. 로그인 직후의 요청이 0이나 찢어진 계정 번호로 처리될 수 있다.
-
 ## TD-043 몬스터의 일반 공격이 피격 시점에 거리를 다시 보지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
 > 위치: `Server/GameServer/Game/Entities/Monster.cpp` 517줄 (`NormalAttack`) · `Server/GameServer/Game/Room/Room.cpp` (`HandleHit`)
@@ -507,6 +425,19 @@ IOCP 워커가 진다는 사실이 빠진다.
 ### 영향
 
 **버그 발생 가능성 증가** — 플레이어가 공격을 피해도 맞는다. 클라이언트가 보여 주는 거리와 판정이 어긋난다.
+
+## TD-045 이동 요청의 위치값을 서버가 검증하지 않는다
+> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` (`C_HandleMove`)
+> 등록일: 2026년 10월 9일
+
+`C_HandleMove`는 클라이언트가 보낸 위치를 그대로 보낸 사람의 위치로 쓴다. 직전 위치와의 거리, 이동 속도, 룸 경계를
+보지 않는다. TD-007(다른 플레이어를 옮길 수 있던 결함)을 #210에서 고칠 때 대상 찾기만 고쳤고, 위치값의 검증은 남겼다.
+서버에는 지형이 없어서 검증의 기준(최대 속도, 허용 오차)부터 정해야 한다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 조작한 클라이언트는 룸 안 어디로든 순간이동하고, 그 위치로 저장된다.
 
 ## TD-001 룸 이동 요청이 플레이어의 위치를 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server

@@ -23,6 +23,47 @@ struct NextLevelUpData
     int64 expRequirement = 0;
 };
 
+//~ 요청 처리 결과. 응답 패킷은 핸들러가 이 결과로 만든다.
+
+/** 구매 결과. updatedSlots는 수량이 바뀐 인벤토리 칸이다. */
+struct BuyItemResult
+{
+    RepeatedPtrField<Protocol::Slot> updatedSlots;
+    int64 gold = 0;
+};
+
+/** 판매 결과. */
+struct SellItemResult
+{
+    Protocol::Slot updatedSlot;
+    int64 gold = 0;
+};
+
+/** 소모품 사용 결과. updatedStats는 회복으로 바뀐 스탯만 담는다. */
+struct UseItemResult
+{
+    Protocol::Slot updatedSlot;
+    RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
+/**
+ * 장비 착용과 해제의 결과. gearType은 바뀐 장비 부위이고, templateId는 처리 뒤 그 부위의 아이템이다(해제면 0).
+ * updatedSlots는 바뀐 장비 칸과 인벤토리 칸, updatedStats는 값이 바뀐 스탯이다.
+ */
+struct GearChangeResult
+{
+    int32 gearType = 0;
+    int32 templateId = 0;
+    RepeatedPtrField<Protocol::Slot> updatedSlots;
+    RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
+/** 리스폰 결과. updatedStats는 사망 패널티와 회복으로 바뀐 스탯이다. */
+struct RespawnResult
+{
+    RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
 /**
  * 플레이어의 스폰 매개변수.
  * session이 비어 있으면 세션에 연결하지 않는다. 운영 코드는 언제나 세션을 넘기고, 빈 세션은 테스트만 쓴다.
@@ -31,6 +72,8 @@ struct NextLevelUpData
 struct PlayerSpawnParams : public Creature::SpawnParams
 {
     GameSessionRef session;
+    /** 입장 요청을 받은 핸들러가 읽은 계정 번호. 세션에서 다시 읽지 않는다. */
+    int64 userId = 0;
     /** 불러온 진행. Init 안에서만 읽으므로 Init이 끝날 때까지만 살아 있으면 된다. */
     const PlayerProgress* progress = nullptr;
 };
@@ -70,24 +113,24 @@ protected:
 public:
     //~ 요청 처리
 
-    /** 골드가 모자라거나 가방에 넣지 못하면 false. 성공하면 totalGold에 남은 골드를 채운다. */
-    bool ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count = 1);
-    /** 팔 수 없는 아이템이면 false. 성공하면 totalGold에 남은 골드를 채운다. */
-    bool ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* updatedSlot, OUT int64& totalGold, int32 count = 1);
+    /** 골드가 모자라거나 가방에 넣지 못하면 nullopt. 결과의 gold는 남은 골드다. */
+    optional<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
+    /** 팔 수 없는 아이템이거나 요청이 서버 슬롯과 어긋나면 nullopt. 결과의 gold는 남은 골드다. */
+    optional<SellItemResult> ProcessSellItem(const Protocol::Slot& requestSlot, int32 count = 1);
     /**
      * nowMs는 재사용 대기 판정에 쓰는 현재 시각(ms)이다. 룸은 GetTickCount64()를 넘긴다.
-     * 거절해도 pkt에 entity_id를 싣는다. 슬롯은 성공했을 때만 싣는다.
+     * 사망했거나, 소모품 칸이 아니거나, 재사용 대기 중이면 nullopt.
      */
-    bool ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT Protocol::S_USE_ITEM& pkt);
-    /** pkt의 slot_id에는 요청한 인벤토리 칸이 아니라 장착된 장비 부위가 실린다. */
-    bool ProcessEquipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_EQUIP_GEAR& pkt);
-    /** 가방에 자리가 없으면 장비 칸을 비우기 전에 거절한다. 성공하면 pkt의 template_id는 0이다. */
-    bool ProcessUnequipGear(const Protocol::Slot& requestSlot, OUT Protocol::S_UNEQUIP_GEAR& pkt);
+    optional<UseItemResult> ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs);
+    /** 결과의 gearType은 요청한 인벤토리 칸이 아니라 장착된 장비 부위다. 착용 조건에 맞지 않으면 nullopt. */
+    optional<GearChangeResult> ProcessEquipGear(const Protocol::Slot& requestSlot);
+    /** 가방에 자리가 없으면 장비 칸을 비우기 전에 거절한다(nullopt). 결과의 templateId는 0이다. */
+    optional<GearChangeResult> ProcessUnequipGear(const Protocol::Slot& requestSlot);
     /**
-     * 소속 룸이 없으면 false. 위치를 respawnPos로 옮기고 사망 표시를 지운다.
+     * 소속 룸이 없으면 nullopt. 위치를 respawnPos로 옮기고 사망 표시를 지운다.
      * 마을 리스폰만 경험치 감소(최대 경험치의 10%)와 HP 절반 회복을 적용한다.
      */
-    bool ProcessRespawn(Protocol::RespawnType type, shared_ptr<Protocol::PosInfo> respawnPos, OUT Protocol::S_RESPAWN& pkt);
+    optional<RespawnResult> ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos);
 
     //~ 이벤트
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
@@ -144,26 +187,45 @@ private:
     void RefreshEquippedGearSummary();
 
 public:
-	weak_ptr<GameSession> _session;
-    int64 _userId = 0;                   // 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 값을 따로 들고 있다
-
+    //~ 세션
+    /** 세션이 끊겨 사라졌거나 세션 없이 만든 플레이어(테스트)면 nullptr. */
+    GameSessionRef GetSession() const { return _session.lock(); }
+    /** 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 계정 번호를 따로 든다. Init 뒤로는 바뀌지 않는다. */
+    int64 GetUserId() const { return _userId; }
+    /** 접속 종료를 표시한다. 세션 스레드(GameSession::OnDisconnected)가 부른다. */
+    void MarkDisconnected() { _disconnected.store(true); }
     /**
-     * 접속 종료 표시. 세션 스레드가 쓰고 룸 큐가 읽는다.
-     * 룸 이동 중에 끊기면 다음 룸의 EnterPlayer가 이 표시를 보고 퇴장과 저장을 이어 받는다.
+     * 룸 큐(Room::EnterPlayer)가 읽는다. 룸 이동 중에 끊겼으면 다음 룸이 이 표시를 보고 퇴장과 저장을 이어 받는다.
+     * 세션 스레드가 쓰고 룸 큐가 읽으므로 atomic이다.
      */
+    bool IsDisconnected() const { return _disconnected.load(); }
+
+    //~ 상태 읽기
+    const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
+    const Protocol::Possession& GetPossession() const { return *_possession; }
+
+    //~ 컴포넌트. 읽기만 연다. 소지품을 바꾸는 길은 Process* 요청 처리와 불러오기뿐이다.
+    const InventoryComponent& GetInventory() const { return *_inventory; }
+    const EquipmentComponent& GetEquipment() const { return *_equipment; }
+
+private:
+    /** 테스트가 준비 단계에서 레벨, 직업, 골드, 소지품을 직접 채운다(GameServerTests/PlayerTestAccess.h). */
+    friend struct PlayerTestAccess;
+
+	weak_ptr<GameSession> _session;
+    int64 _userId = 0;
     atomic<bool> _disconnected = false;
 
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::PlayerInfo* _playerInfo;
-    /** 플레이어가 소유한다. 소멸자에서 지운다. */
-    Protocol::Possession* _possession;
+    /** 플레이어가 소유한다. */
+    unique_ptr<Protocol::Possession> _possession;
 
     /** Init에서 만든다. */
     InventoryComponentRef _inventory;
     /** Init에서 만든다. */
     EquipmentComponentRef _equipment;
 
-private:
     int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
 
     NextLevelUpData _nextLevelUpData;

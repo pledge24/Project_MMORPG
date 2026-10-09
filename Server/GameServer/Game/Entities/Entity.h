@@ -17,6 +17,10 @@ public:
 	Entity();
 	virtual ~Entity();
 
+    // 엔티티는 shared_ptr로만 다룬다. 복사하면 같은 id의 엔티티가 둘이 된다.
+    Entity(const Entity&) = delete;
+    Entity& operator=(const Entity&) = delete;
+
 protected:
     friend class EntityFactory;
     
@@ -44,13 +48,21 @@ public:
     void SetPosInfo(const Protocol::PosInfo& posInfo_)  { _posInfo->CopyFrom(posInfo_); }
     void SetPos(const Protocol::Vector& pos)            { _posInfo->mutable_pos()->CopyFrom(pos); }
 
-public:
-	Protocol::EntityInfo* _entityInfo;
-	Protocol::PosInfo* _posInfo;
+    /** 다른 클라이언트에게 보낼 스폰 정보. 위치(pos_info)와 종류별 정보가 들어 있다. */
+    const Protocol::EntityInfo& GetEntityInfo() const   { return *_entityInfo; }
+    const Protocol::PosInfo& GetPosInfo() const         { return *_posInfo; }
 
-    friend class Room;
-    /** 소속 룸. 룸 큐가 쓰고 세션 스레드도 읽으므로 atomic이다. 룸에 들어가기 전에는 비어 있다. */
-	atomic<weak_ptr<Room>> _room;
+    /**
+     * 소속 룸. 룸에 들어가기 전이거나 룸이 사라졌으면 nullptr.
+     * 룸 큐(Room::AddEntity)가 쓰고, 세션 스레드(패킷 핸들러, 접속 종료)가 읽는다. 그래서 atomic이다.
+     */
+    RoomRef GetRoom() const                             { return _room.load().lock(); }
+
+protected:
+    /** 엔티티가 소유한다. 파생 클래스만 쓴다. 다른 클래스는 GetEntityInfo로 읽는다. */
+	unique_ptr<Protocol::EntityInfo> _entityInfo;
+    /** _entityInfo 안의 pos_info를 가리킨다. 따로 지우지 않는다. */
+	Protocol::PosInfo* _posInfo;
 
 protected:
 	bool _isPlayer = false;
@@ -61,7 +73,21 @@ protected:
     const uint64 ENTITY_TICK_INTERVAL = 50;
 
 private:
-    /** Start를 이미 불렀으면 true. Room::AddEntity만 읽고 쓴다. 룸 이동 때 Start가 다시 불리지 않게 막는다. */
+    friend class Room;
+
+    /** 팩토리가 생성 직후에 한 번 부른다. 위치의 엔티티 id도 함께 쓴다. */
+    void SetEntityId(int64 entityId)                    { _entityInfo->set_entity_id(entityId); _posInfo->set_entity_id(entityId); }
+
+    /**
+     * Room::AddEntity가 룸 큐 위에서 부른다. 소속 룸을 바꾸고, 처음 룸에 들어가는 엔티티면 Start를 부른다.
+     * 룸을 먼저 쓴다. 틱과 AI는 소속 룸의 타이머로 돌기 때문이다.
+     */
+    void JoinRoom(const RoomRef& room);
+
+private:
+    /** 소속 룸. GetRoom의 주석에 쓰고 읽는 스레드가 있다. */
+	atomic<weak_ptr<Room>> _room;
+    /** Start를 이미 불렀으면 true. JoinRoom만 읽고 쓴다. 룸 이동 때 Start가 다시 불리지 않게 막는다. */
     bool _hasBegunPlay = false;
 };
 

@@ -16,8 +16,8 @@ enum
 class InventoryComponent : public EntityComponent
 {
 public:
-    /** owner의 _possession에 빈 슬롯을 만든다. 같은 플레이어에 두 번 만들면 슬롯이 두 벌 생긴다. */
-    explicit InventoryComponent(PlayerRef owner);
+    /** inventory(소유자 Possession의 인벤토리)에 빈 슬롯을 만든다. 같은 인벤토리에 두 번 만들면 슬롯이 두 벌 생긴다. */
+    InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory);
     virtual ~InventoryComponent();
 
     /**
@@ -58,9 +58,11 @@ public:
 
     /** 저장소가 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다. */
     vector<bool>* GetDirtyFlags(Protocol::ItemType itemType);
+    const vector<bool>* GetDirtyFlags(Protocol::ItemType itemType) const;
 
     /** 클라이언트 값을 받아도 된다. 저장소가 없거나 slot_id가 범위 밖이면 nullptr. */
     Protocol::Slot* GetSlot(Protocol::SlotType type, int32 slot_id);
+    const Protocol::Slot* GetSlot(Protocol::SlotType type, int32 slot_id) const;
 
     void ClearDirtyFlags();
 

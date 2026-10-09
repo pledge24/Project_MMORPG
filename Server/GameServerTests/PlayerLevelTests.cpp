@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "PlayerTestAccess.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 
@@ -57,7 +58,7 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
 
         player->SetStatValue(Protocol::STAT_TYPE_EXP, 90);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, 100);
@@ -76,45 +77,45 @@ TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
 {
     InstallWarriorLevelTable(3);
 
-    player->_playerInfo->set_level(2);
+    PlayerTestAccess::PlayerInfo(*player).set_level(2);
     EXPECT_FALSE(player->IsMaxLevel());
 
-    player->_playerInfo->set_level(3);
+    PlayerTestAccess::PlayerInfo(*player).set_level(3);
     EXPECT_TRUE(player->IsMaxLevel()) << "최대 레벨은 코드 상수가 아니라 레벨 표의 마지막 레벨이다";
 }
 
 TEST_F(PlayerLevelTest, ClassWithoutLevelTableIsMaxLevel)
 {
-    player->_playerInfo->set_class_(Protocol::CLASS_TYPE_MAGE);
-    player->_playerInfo->set_level(1);
+    PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_MAGE);
+    PlayerTestAccess::PlayerInfo(*player).set_level(1);
 
     EXPECT_TRUE(player->IsMaxLevel()) << "레벨 표가 없으면 오를 레벨이 없다";
 }
 
 TEST_F(PlayerLevelTest, MaxLevelDoesNotLevelUpOnReward)
 {
-    player->_playerInfo->set_level(MAX_LEVEL);
+    PlayerTestAccess::PlayerInfo(*player).set_level(MAX_LEVEL);
 
     Protocol::S_REWARD_RESULT pkt = MakeExpReward(1000);
     player->OnGetReward(pkt);
 
-    EXPECT_EQ(player->_playerInfo->level(), MAX_LEVEL);
+    EXPECT_EQ(player->GetPlayerInfo().level(), MAX_LEVEL);
     EXPECT_FALSE(pkt.is_level_up());
 }
 
 TEST_F(PlayerLevelTest, OnLevelUpStopsAtMaxLevel)
 {
-    player->_playerInfo->set_level(MAX_LEVEL);
+    PlayerTestAccess::PlayerInfo(*player).set_level(MAX_LEVEL);
 
     player->OnLevelUp();
 
-    EXPECT_EQ(player->_playerInfo->level(), MAX_LEVEL);
+    EXPECT_EQ(player->GetPlayerInfo().level(), MAX_LEVEL);
     EXPECT_TRUE(player->IsMaxLevel());
 }
 
 TEST_F(PlayerLevelTest, RewardBelowMaxExpAccumulates)
 {
-    player->_playerInfo->set_level(1);
+    PlayerTestAccess::PlayerInfo(*player).set_level(1);
 
     Protocol::S_REWARD_RESULT pkt = MakeExpReward(5);
     player->OnGetReward(pkt);
@@ -127,20 +128,20 @@ TEST_F(PlayerLevelTest, RewardBelowMaxExpAccumulates)
 TEST_F(PlayerLevelTest, MissingMaxExpDoesNotLevelUp)
 {
     // 레벨 표에 다음 레벨 행이 없으면 maxExp가 0으로 캐시된다.
-    player->_playerInfo->set_level(1);
+    PlayerTestAccess::PlayerInfo(*player).set_level(1);
     player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, 0);
 
     Protocol::S_REWARD_RESULT pkt = MakeExpReward(10);
     player->OnGetReward(pkt);
 
-    EXPECT_EQ(player->_playerInfo->level(), 1) << "maxExp가 0일 때 레벨을 올리면 보상 한 번에 최대 레벨까지 간다";
+    EXPECT_EQ(player->GetPlayerInfo().level(), 1) << "maxExp가 0일 때 레벨을 올리면 보상 한 번에 최대 레벨까지 간다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 100);
     EXPECT_FALSE(pkt.is_level_up());
 }
 
 TEST_F(PlayerLevelTest, MaxLevelDiscardsRewardExp)
 {
-    player->_playerInfo->set_level(MAX_LEVEL);
+    PlayerTestAccess::PlayerInfo(*player).set_level(MAX_LEVEL);
     player->SetStatValue(Protocol::STAT_TYPE_EXP, 0);
 
     Protocol::S_REWARD_RESULT pkt = MakeExpReward(30);
@@ -168,7 +169,7 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
 
         for (Protocol::StatType type : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP,
                                          Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK,
@@ -184,7 +185,7 @@ protected:
 
     void LoadAtLevel(int32 level)
     {
-        player->_playerInfo->set_level(level);
+        PlayerTestAccess::PlayerInfo(*player).set_level(level);
         player->SetStatValue(Protocol::STAT_TYPE_MAX_EXP, level * 100);
         ASSERT_TRUE(player->OnLoaded());
     }
@@ -200,7 +201,7 @@ TEST_F(PlayerMultiLevelUpTest, LargeRewardRaisesSeveralLevelsAtOnce)
     Protocol::S_REWARD_RESULT pkt = MakeExpReward(350);
     player->OnGetReward(pkt);
 
-    EXPECT_EQ(player->_playerInfo->level(), 3);
+    EXPECT_EQ(player->GetPlayerInfo().level(), 3);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 50);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), 300);
 
@@ -225,7 +226,7 @@ TEST_F(PlayerMultiLevelUpTest, ReachingMaxLevelDropsLeftoverExp)
     Protocol::S_REWARD_RESULT pkt = MakeExpReward((MAX_LEVEL - 1) * 100 + 70);
     player->OnGetReward(pkt);
 
-    EXPECT_EQ(player->_playerInfo->level(), MAX_LEVEL);
+    EXPECT_EQ(player->GetPlayerInfo().level(), MAX_LEVEL);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 0) << "최대 레벨에서는 경험치를 쌓지 않는다";
     EXPECT_EQ(pkt.level_up_details().new_level(), MAX_LEVEL);
 }

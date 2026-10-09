@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "PlayerTestAccess.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -74,8 +75,8 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        player->_playerInfo->set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        player->_playerInfo->set_level(1);
+        PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        PlayerTestAccess::PlayerInfo(*player).set_level(1);
         player->SetStatValue(Protocol::STAT_TYPE_HP, 0);
         player->SetStatValue(Protocol::STAT_TYPE_MP, 0);
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, BASE_PHYSICAL_ATTACK);
@@ -93,7 +94,7 @@ protected:
     Protocol::Slot AddToInventory(int32 templateId)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(player->_inventory->AddItem(&addedSlots, templateId, 1));
+        EXPECT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, templateId, 1));
         EXPECT_FALSE(addedSlots.empty());
         return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
     }
@@ -104,8 +105,8 @@ protected:
     PlayerRef LoadFromSaveData(const PlayerSaveData& data)
     {
         PlayerRef loaded = EntityFactory::Create<Player>(PlayerSpawnParams());
-        loaded->_playerInfo->set_class_(data.progress.playerInfo.class_());
-        loaded->_playerInfo->set_level(data.progress.playerInfo.level());
+        PlayerTestAccess::PlayerInfo(*loaded).set_class_(data.progress.playerInfo.class_());
+        PlayerTestAccess::PlayerInfo(*loaded).set_level(data.progress.playerInfo.level());
 
         for (Protocol::StatType statType : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP, Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
             loaded->SetStatValue(statType, data.progress.statInfo.info().at(statType));
@@ -113,7 +114,7 @@ protected:
         for (const auto& [gearType, slot] : data.progress.possession.equipped_gear())
         {
             if (slot.has_item())
-                EXPECT_TRUE(loaded->_equipment->LoadEquipped(slot.item(), gearType));
+                EXPECT_TRUE(PlayerTestAccess::Equipment(*loaded).LoadEquipped(slot.item(), gearType));
         }
 
         return loaded;
@@ -126,49 +127,49 @@ TEST_F(GearEquipTest, EquipReportsGearTypeNotInventorySlot)
 {
     Protocol::Slot requestSlot = AddSwordToInventory();
 
-    Protocol::S_EQUIP_GEAR pkt;
-    ASSERT_TRUE(player->ProcessEquipGear(requestSlot, pkt));
+    auto result = player->ProcessEquipGear(requestSlot);
+    ASSERT_TRUE(result.has_value());
 
-    EXPECT_EQ(pkt.slot_id(), Protocol::GEAR_TYPE_WEAPON) << "인벤토리 칸 번호가 실려 가면 클라가 무기 부위를 찾지 못한다";
-    EXPECT_EQ(pkt.template_id(), SWORD_TEMPLATE_ID);
+    EXPECT_EQ(result->gearType, Protocol::GEAR_TYPE_WEAPON) << "인벤토리 칸 번호가 실려 가면 클라가 무기 부위를 찾지 못한다";
+    EXPECT_EQ(result->templateId, SWORD_TEMPLATE_ID);
 
-    const auto& summary = player->_playerInfo->equipped_gear_summary();
+    const auto& summary = player->GetPlayerInfo().equipped_gear_summary();
     ASSERT_TRUE(summary.contains(Protocol::GEAR_TYPE_WEAPON));
     EXPECT_EQ(summary.at(Protocol::GEAR_TYPE_WEAPON), SWORD_TEMPLATE_ID);
 }
 
 TEST_F(GearEquipTest, UnequipReportsEmptiedGearType)
 {
-    Protocol::S_EQUIP_GEAR equipPkt;
-    ASSERT_TRUE(player->ProcessEquipGear(AddSwordToInventory(), equipPkt));
+    auto equipResult = player->ProcessEquipGear(AddSwordToInventory());
+    ASSERT_TRUE(equipResult.has_value());
 
     // 클라는 탈착할 때 장비 슬롯을 그대로 보낸다.
-    Protocol::Slot requestSlot = player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
+    Protocol::Slot requestSlot = player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
 
-    Protocol::S_UNEQUIP_GEAR pkt;
-    ASSERT_TRUE(player->ProcessUnequipGear(requestSlot, pkt));
+    auto result = player->ProcessUnequipGear(requestSlot);
+    ASSERT_TRUE(result.has_value());
 
-    EXPECT_EQ(pkt.slot_id(), Protocol::GEAR_TYPE_WEAPON);
-    EXPECT_EQ(pkt.template_id(), 0) << "뺀 아이템의 템플릿이 실려 가면 클라가 그 아이템을 다시 입힌다";
-    EXPECT_FALSE(player->_playerInfo->equipped_gear_summary().contains(Protocol::GEAR_TYPE_WEAPON));
+    EXPECT_EQ(result->gearType, Protocol::GEAR_TYPE_WEAPON);
+    EXPECT_EQ(result->templateId, 0) << "뺀 아이템의 템플릿이 실려 가면 클라가 그 아이템을 다시 입힌다";
+    EXPECT_FALSE(player->GetPlayerInfo().equipped_gear_summary().contains(Protocol::GEAR_TYPE_WEAPON));
 }
 
 // 장착과 해제는 레벨 표의 기본 스탯과 착용 장비의 합으로 최종 스탯을 다시 계산하고, 바뀐 스탯만 응답에 싣는다.
 TEST_F(GearEquipTest, EquipAndUnequipReportRecalculatedStats)
 {
-    Protocol::S_EQUIP_GEAR equipPkt;
-    ASSERT_TRUE(player->ProcessEquipGear(AddSwordToInventory(), equipPkt));
+    auto equipResult = player->ProcessEquipGear(AddSwordToInventory());
+    ASSERT_TRUE(equipResult.has_value());
 
-    ASSERT_EQ(equipPkt.updated_stat_size(), 1) << "값이 바뀌지 않은 스탯까지 실으면 클라이언트가 불필요하게 갱신한다";
-    EXPECT_EQ(equipPkt.updated_stat(0).type(), Protocol::STAT_TYPE_PHYSICAL_ATTACK);
-    EXPECT_EQ(equipPkt.updated_stat(0).value(), BASE_PHYSICAL_ATTACK + 10);
+    ASSERT_EQ(equipResult->updatedStats.size(), 1) << "값이 바뀌지 않은 스탯까지 실으면 클라이언트가 불필요하게 갱신한다";
+    EXPECT_EQ(equipResult->updatedStats[0].type(), Protocol::STAT_TYPE_PHYSICAL_ATTACK);
+    EXPECT_EQ(equipResult->updatedStats[0].value(), BASE_PHYSICAL_ATTACK + 10);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK + 10);
 
-    Protocol::S_UNEQUIP_GEAR unequipPkt;
-    ASSERT_TRUE(player->ProcessUnequipGear(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON), unequipPkt));
+    auto unequipResult = player->ProcessUnequipGear(player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_WEAPON));
+    ASSERT_TRUE(unequipResult.has_value());
 
-    ASSERT_EQ(unequipPkt.updated_stat_size(), 1);
-    EXPECT_EQ(unequipPkt.updated_stat(0).value(), BASE_PHYSICAL_ATTACK);
+    ASSERT_EQ(unequipResult->updatedStats.size(), 1);
+    EXPECT_EQ(unequipResult->updatedStats[0].value(), BASE_PHYSICAL_ATTACK);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
 }
 
@@ -176,20 +177,20 @@ TEST_F(GearEquipTest, EquipAndUnequipReportRecalculatedStats)
 // 「현재 HP가 최대 HP를 초과」로 거절된다.
 TEST_F(GearEquipTest, UnequippingAtFullHpSavesCopyThatPassesNextEntry)
 {
-    Protocol::S_EQUIP_GEAR equipPkt;
-    ASSERT_TRUE(player->ProcessEquipGear(AddToInventory(HELMET_TEMPLATE_ID), equipPkt));
+    auto equipResult = player->ProcessEquipGear(AddToInventory(HELMET_TEMPLATE_ID));
+    ASSERT_TRUE(equipResult.has_value());
     player->SetStatValue(Protocol::STAT_TYPE_HP, BASE_MAX_HP + HELMET_HP);
     player->SetStatValue(Protocol::STAT_TYPE_MP, BASE_MAX_MP + HELMET_MP);
 
-    Protocol::S_UNEQUIP_GEAR unequipPkt;
-    ASSERT_TRUE(player->ProcessUnequipGear(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_HELMET), unequipPkt));
+    auto unequipResult = player->ProcessUnequipGear(player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_HELMET));
+    ASSERT_TRUE(unequipResult.has_value());
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), BASE_MAX_HP);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MP), BASE_MAX_MP);
 
     // 클라이언트도 잘린 현재 HP와 MP를 받아야 화면의 값이 최대치를 넘지 않는다.
     map<int32, int64> reported;
-    for (const Protocol::Stat& stat : unequipPkt.updated_stat())
+    for (const Protocol::Stat& stat : unequipResult->updatedStats)
         reported[stat.type()] = stat.value();
     EXPECT_EQ(reported[Protocol::STAT_TYPE_HP], BASE_MAX_HP);
     EXPECT_EQ(reported[Protocol::STAT_TYPE_MP], BASE_MAX_MP);
@@ -203,11 +204,11 @@ TEST_F(GearEquipTest, EquippingAboveLevelRequirementIsRejected)
 {
     Protocol::Slot requestSlot = AddToInventory(HIGH_LEVEL_SWORD_TEMPLATE_ID);
 
-    Protocol::S_EQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "1레벨이 2레벨 장비를 입으면 안 된다";
+    auto result = player->ProcessEquipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "1레벨이 2레벨 장비를 입으면 안 된다";
 
-    EXPECT_FALSE(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).has_item());
-    EXPECT_TRUE(player->_inventory->GetSlot(requestSlot.type(), requestSlot.slot_id())->has_item());
+    EXPECT_FALSE(player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).has_item());
+    EXPECT_TRUE(player->GetInventory().GetSlot(requestSlot.type(), requestSlot.slot_id())->has_item());
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
 }
 
@@ -215,19 +216,19 @@ TEST_F(GearEquipTest, EquippingOtherClassGearIsRejected)
 {
     Protocol::Slot requestSlot = AddToInventory(MAGE_SWORD_TEMPLATE_ID);
 
-    Protocol::S_EQUIP_GEAR pkt;
-    EXPECT_FALSE(player->ProcessEquipGear(requestSlot, pkt)) << "전사가 마법사 장비를 입으면 안 된다";
+    auto result = player->ProcessEquipGear(requestSlot);
+    EXPECT_FALSE(result.has_value()) << "전사가 마법사 장비를 입으면 안 된다";
 
-    EXPECT_FALSE(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).has_item());
-    EXPECT_TRUE(player->_inventory->GetSlot(requestSlot.type(), requestSlot.slot_id())->has_item());
+    EXPECT_FALSE(player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).has_item());
+    EXPECT_TRUE(player->GetInventory().GetSlot(requestSlot.type(), requestSlot.slot_id())->has_item());
 }
 
 TEST_F(GearEquipTest, EquippingAtRequiredLevelSucceeds)
 {
-    player->_playerInfo->set_level(2);
+    PlayerTestAccess::PlayerInfo(*player).set_level(2);
 
-    Protocol::S_EQUIP_GEAR pkt;
-    EXPECT_TRUE(player->ProcessEquipGear(AddToInventory(HIGH_LEVEL_SWORD_TEMPLATE_ID), pkt)) << "요구 레벨과 같은 레벨은 입는다";
+    auto result = player->ProcessEquipGear(AddToInventory(HIGH_LEVEL_SWORD_TEMPLATE_ID));
+    EXPECT_TRUE(result.has_value()) << "요구 레벨과 같은 레벨은 입는다";
 }
 
 // DB에서 장착 장비를 불러올 때는 스텟을 바꾸지 않는다. 스텟은 OnLoaded가 대조한 뒤 RefreshFinalStat이 계산한다.
@@ -236,9 +237,9 @@ TEST_F(GearEquipTest, LoadingEquippedGearPlacesItemWithoutTouchingStats)
     Protocol::Item sword;
     sword.set_template_id(SWORD_TEMPLATE_ID);
 
-    ASSERT_TRUE(player->_equipment->LoadEquipped(sword, Protocol::GEAR_TYPE_WEAPON));
+    ASSERT_TRUE(PlayerTestAccess::Equipment(*player).LoadEquipped(sword, Protocol::GEAR_TYPE_WEAPON));
 
-    const Protocol::Slot& weaponSlot = player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
+    const Protocol::Slot& weaponSlot = player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(weaponSlot.item().template_id(), SWORD_TEMPLATE_ID);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK) << "불러오기에서 장비 스텟을 더하면 OnLoaded의 대조와 어긋난다";
 }

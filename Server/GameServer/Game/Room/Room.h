@@ -44,18 +44,15 @@ public:
     optional<PlayerSaveData> HandleDisconnect(PlayerRef player);
 
     //~ 클라이언트 패킷 핸들러
-    /** 아래 핸들러는 모두 ServerPacketHandler가 DoAsync로 넣는다. 잡이 도는 시점에 세션이 끊겼을 수 있다. */
-    void C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player);
+    /**
+     * 아래 핸들러는 모두 ServerPacketHandler가 DoAsync로 넣는다. 잡이 도는 시점에 세션이 끊겼을 수 있다.
+     * 룸에는 룸 상태를 쓰는 요청(입장, 이동, 전투, 리스폰)만 둔다. 아이템 요청은 ItemRequests에 있다.
+     */
     void C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player);
-    void C_HandleMove(Protocol::C_MOVE pkt);
-    void C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player);
-    void C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player);
-    void C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player);
-    void C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player);
-    void C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player);
+    /** 보낸 사람(player)의 위치만 바꾼다. 패킷의 엔티티 번호는 보지 않는다. */
+    void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
-    void C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player);
 
     //~ 전투와 리스폰
     /** 공격 사실만 브로드캐스트한다. 피격 판정은 HandleHit이 따로 한다. */
@@ -102,7 +99,7 @@ public:
      * range 안에서 가장 가까운 살아 있는 플레이어와 그 거리의 제곱을 돌려준다.
      * 없으면 (nullptr, -1)이다. 셀 행렬은 Update가 다시 채우므로 위치는 최대 한 Update 주기만큼 늦다.
      */
-    pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);
+    pair<PlayerRef, float> FindClosestPlayer(const Protocol::PosInfo* posInfo, float range);
 
     //~ 스폰
     /**
@@ -124,15 +121,16 @@ public:
 
         return entity;
     }
-    /** 다른 플레이어에게 S_SPAWN을 알린다. 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
+    /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(int64 entityId);
-    /** 다른 플레이어에게 S_SPAWN을 알린다. 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
+    /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
 
-protected:
     //~ 네트워크
-    /** 룸의 플레이어 전원에게 보낸다. exceptId가 0이 아니면 그 엔티티는 뺀다. */
+    /** 룸의 플레이어 전원에게 보낸다. exceptId가 0이 아니면 그 엔티티는 뺀다. 룸 큐 위에서만 부른다. */
     void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
+
+protected:
 
     //~ 엔티티
     /**

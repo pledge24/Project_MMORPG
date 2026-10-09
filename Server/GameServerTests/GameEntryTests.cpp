@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Network/GameEntry.h"
+#include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -69,12 +70,11 @@ protected:
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
-        session->_userId = USER_ID;
+        sessionManager.RegisterUser(USER_ID, session);
     }
 
     void TearDown() override
     {
-        session->_player.store(nullptr);
         session.reset();
         Gamedata::Install(GamedataTables());
     }
@@ -104,6 +104,7 @@ protected:
         return progress;
     }
 
+    GameSessionManager sessionManager;
     GameSessionRef session;
 };
 
@@ -111,33 +112,33 @@ TEST_F(GameEntryTest, ValidProgressRegistersPlayerInSession)
 {
     const PlayerProgress progress = MakeValidProgress();
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, progress);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
 
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(session->_player.load(), player);
-    EXPECT_EQ(player->_userId, USER_ID);
-    EXPECT_EQ(player->_playerInfo->character_id(), CHARACTER_ID);
+    EXPECT_EQ(session->GetPlayer(), player);
+    EXPECT_EQ(player->GetUserId(), USER_ID);
+    EXPECT_EQ(player->GetPlayerInfo().character_id(), CHARACTER_ID);
     EXPECT_EQ(player->GetEnteringRoomId(), 10) << "첫 룸 입장은 불러온 룸으로 간다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MAX_HP);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), 50) << "최대 경험치는 저장하지 않고 레벨 표에서 정한다";
-    EXPECT_EQ(player->_possession->gold(), 300);
+    EXPECT_EQ(player->GetPossession().gold(), 300);
 }
 
 TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
 {
     const PlayerProgress progress = MakeValidProgress();
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, progress);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
     ASSERT_NE(player, nullptr);
 
-    const Protocol::Slot* potionSlot = player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5);
+    const Protocol::Slot* potionSlot = player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5);
     ASSERT_TRUE(potionSlot->has_item());
     EXPECT_EQ(potionSlot->item().template_id(), POTION_TEMPLATE_ID);
     EXPECT_EQ(potionSlot->item().count(), 3);
-    EXPECT_FALSE(player->_inventory->GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 0)->has_item());
+    EXPECT_FALSE(player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 0)->has_item());
 
-    EXPECT_EQ(player->_equipment->GetSlot(Protocol::GEAR_TYPE_WEAPON)->item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_TRUE(player->_inventory->GetDirtyFlags(Protocol::ITEM_TYPE_CONSUMABLE)->at(5) == false)
+    EXPECT_EQ(player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON)->item().template_id(), SWORD_TEMPLATE_ID);
+    EXPECT_TRUE(player->GetInventory().GetDirtyFlags(Protocol::ITEM_TYPE_CONSUMABLE)->at(5) == false)
         << "불러온 슬롯을 바뀐 슬롯으로 표시하면 다음 저장이 바뀌지 않은 행까지 쓴다";
 }
 
@@ -146,10 +147,10 @@ TEST_F(GameEntryTest, FailedValidationLeavesSessionWithoutPlayer)
     PlayerProgress progress = MakeValidProgress();
     (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_HP] = MAX_HP + 1;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, progress);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
 
     EXPECT_EQ(player, nullptr);
-    EXPECT_EQ(session->_player.load(), nullptr) << "검증에 실패한 플레이어가 세션에 남으면 끊길 때 저장 경로를 탄다";
+    EXPECT_EQ(session->GetPlayer(), nullptr) << "검증에 실패한 플레이어가 세션에 남으면 끊길 때 저장 경로를 탄다";
 }
 
 TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
@@ -157,8 +158,8 @@ TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
     PlayerProgress progress = MakeValidProgress();
     progress.playerInfo.set_level(2);
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr);
-    EXPECT_EQ(session->_player.load(), nullptr);
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr);
+    EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
 // TD-019: 룸에 들어간 플레이어가 C_ENTER_GAME을 다시 보내면 새 플레이어가 세션을 덮어써, 이전 플레이어가
@@ -166,13 +167,13 @@ TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
 TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
 {
     const PlayerProgress progress = MakeValidProgress();
-    PlayerRef first = GameEntry::SpawnPlayer(session, progress);
+    PlayerRef first = GameEntry::SpawnPlayer(session, USER_ID, progress);
     ASSERT_NE(first, nullptr);
 
-    PlayerRef second = GameEntry::SpawnPlayer(session, progress);
+    PlayerRef second = GameEntry::SpawnPlayer(session, USER_ID, progress);
 
     EXPECT_EQ(second, nullptr);
-    EXPECT_EQ(session->_player.load(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
+    EXPECT_EQ(session->GetPlayer(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
 }
 
 /* TD-035: DB에서 읽은 슬롯은 믿지 않는다. 잘못된 행이 있으면 입장을 거절하고, 행은 DB에 그대로 둔다. */
@@ -183,8 +184,8 @@ TEST_F(GameEntryTest, TwoRowsInOneSlotAreRejected)
     *progress.possession.mutable_inventory()->add_consumables() =
         MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 5, POTION_TEMPLATE_ID, 2);
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "같은 칸의 두 행을 합치면 다음 저장이 한 행을 지운다";
-    EXPECT_EQ(session->_player.load(), nullptr);
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "같은 칸의 두 행을 합치면 다음 저장이 한 행을 지운다";
+    EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
 TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
@@ -195,7 +196,7 @@ TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
         MakeLoadedSlot(Protocol::SLOT_TYPE_EQUIPPED, Protocol::GEAR_TYPE_HELMET, SWORD_TEMPLATE_ID, 1);
     (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = PHYSICAL_ATTACK + SWORD_ATTACK;
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
 }
 
 TEST_F(GameEntryTest, ItemInOtherKindOfBagIsRejected)
@@ -204,7 +205,7 @@ TEST_F(GameEntryTest, ItemInOtherKindOfBagIsRejected)
     *progress.possession.mutable_inventory()->add_consumables() =
         MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 7, SWORD_TEMPLATE_ID, 1);
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "소모품 표의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "소모품 표의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
 }
 
 // 수정 전에는 범위 밖 칸 번호가 Debug 빌드의 DCHECK로 테스트 실행 파일을 멈춰서 빨강 단계를 돌리지 못했다.
@@ -214,5 +215,5 @@ TEST_F(GameEntryTest, SlotIdOutOfRangeIsRejected)
     *progress.possession.mutable_inventory()->add_consumables() =
         MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS, POTION_TEMPLATE_ID, 1);
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, progress), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
 }

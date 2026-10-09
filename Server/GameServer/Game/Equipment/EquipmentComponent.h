@@ -11,8 +11,8 @@
 class EquipmentComponent : public EntityComponent
 {
 public:
-    /** owner의 _possession에 부위별 빈 슬롯을 만든다. */
-    explicit EquipmentComponent(PlayerRef owner);
+    /** equippedGear(소유자 Possession의 장착 칸)에 부위별 빈 슬롯을 만든다. */
+    EquipmentComponent(PlayerRef owner, google::protobuf::Map<int32, Protocol::Slot>* equippedGear);
     virtual ~EquipmentComponent();
 
     /**

@@ -174,12 +174,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Network\ItemRequests.h" />
+    <ClInclude Include="Network\PacketSend.h" />
     <ClInclude Include="DB\DBWorker.h" />
     <ClInclude Include="Network\GameEntry.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
-    <ClInclude Include="Core\Macro.h" />
     <ClInclude Include="Core\Global.h" />
     <ClInclude Include="Network\GameSession.h" />
     <ClInclude Include="Network\GameSessionManager.h" />
@@ -221,6 +222,7 @@
     <ClInclude Include="DB\DAOCommon.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Network\ItemRequests.cpp" />
     <ClCompile Include="DB\DBWorker.cpp" />
     <ClCompile Include="Network\GameEntry.cpp" />
     <ClCompile Include="Core\pch.cpp">

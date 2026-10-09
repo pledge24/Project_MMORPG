@@ -2,9 +2,9 @@
 #include "Game/Equipment/EquipmentComponent.h"
 #include "Game/Entities/Player.h"
 
-EquipmentComponent::EquipmentComponent(PlayerRef owner) : EntityComponent(owner)
+EquipmentComponent::EquipmentComponent(PlayerRef owner, google::protobuf::Map<int32, Protocol::Slot>* equippedGear)
+    : EntityComponent(owner), _equippedGearLookup(equippedGear)
 {
-    _equippedGearLookup = owner->_possession->mutable_equipped_gear();
 
     for (int32 slotId = 0; slotId <= Protocol::GearType_MAX; slotId++)
     {
@@ -29,7 +29,7 @@ bool EquipmentComponent::Equip(OUT Protocol::Slot* replicatingSlot, const Protoc
 
     // 착용 조건은 클라이언트도 보지만, 판정은 서버가 한다.
     PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
-    if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->_playerInfo->level(), owner->_playerInfo->class_()) == false)
+    if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetPlayerInfo().class_()) == false)
         return false;
 
     return PlaceItem(replicatingSlot, itemInstance, itemTemplate->gearType.value());

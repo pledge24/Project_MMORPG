@@ -5,6 +5,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
+#include "Network/ItemRequests.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Game/Characters/CharacterCreation.h"
@@ -22,7 +23,7 @@ namespace
     {
         Protocol::S_LEAVE_GAME leavePkt;
         leavePkt.set_reason(reason);
-        SEND_PACKET_USING_THIS_SESSION(target, leavePkt)
+        SendPacket(target, leavePkt);
 
         target->DisconnectAfterSend(cause);
 
@@ -33,11 +34,32 @@ namespace
             });
     }
 
+    // 보낸 세션의 플레이어가 속한 룸의 큐에 job(room, player)을 넣는다. 플레이어나 룸이 없으면 넣지 않고 false.
+    // 보낸 사람은 패킷 안의 id가 아니라 세션의 플레이어로 정한다.
+    template<typename RoomJob>
+    bool DispatchToPlayerRoom(const PacketSessionRef& session, RoomJob&& job)
+    {
+        PlayerRef player = static_pointer_cast<GameSession>(session)->GetPlayer();
+        if (player == nullptr)
+            return false;
+
+        RoomRef room = player->GetRoom();
+        if (room == nullptr)
+            return false;
+
+        room->DoAsync([room, player, job = std::forward<RoomJob>(job)]()
+            {
+                job(room, player);
+            });
+
+        return true;
+    }
+
     void SendEnterGameFail(const PacketSessionRef& session)
     {
         Protocol::S_ENTER_GAME enterGameFailPkt;
         enterGameFailPkt.set_success(false);
-        SEND_PACKET(enterGameFailPkt)
+        SendPacket(session, enterGameFailPkt);
     }
 }
 
@@ -134,7 +156,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 loginPkt.set_success(false);
             }
 
-            SEND_PACKET(loginPkt)
+            SendPacket(session, loginPkt);
         }
     );
 
@@ -145,18 +167,30 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
+    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
+
+    // 세션 상태는 핸들러가 본다. 로그인하지 않은 세션은 계정 번호 0으로 INSERT를 시도하게 된다.
+    if (userId == 0)
+    {
+        Protocol::S_CREATE_CHARACTER createCharacterPkt;
+        createCharacterPkt.set_success(false);
+        createCharacterPkt.set_cause("로그인이 필요합니다.");
+        SendPacket(session, createCharacterPkt);
+        return false;
+    }
+
     // 거절하면 DB 큐로 넘기지 않고 사유를 곧바로 돌려준다. 클라이언트가 사유를 생성 화면에 띄운다.
     if (optional<string> cause = CharacterCreation::Validate(pkt.character()))
     {
         Protocol::S_CREATE_CHARACTER createCharacterPkt;
         createCharacterPkt.set_success(false);
         createCharacterPkt.set_cause(cause.value());
-        SEND_PACKET(createCharacterPkt)
+        SendPacket(session, createCharacterPkt);
         return true;
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     JobRef job = make_shared<Job>(
@@ -186,7 +220,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
                 createCharacterPkt.set_cause("서버 내부 오류");
             }
 
-            SEND_PACKET(createCharacterPkt)
+            SendPacket(session, createCharacterPkt);
         }
     );
 
@@ -197,17 +231,26 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
+    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
+
+    if (userId == 0)
+    {
+        Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
+        deleteCharacterPkt.set_success(false);
+        SendPacket(session, deleteCharacterPkt);
+        return false;
+    }
+
     // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
+    // 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
     JobRef job = make_shared<Job>(
-        [session, pkt]()
+        [session, pkt, userId]()
         {
-            // 계정 번호는 잡이 실행될 때 세션에서 읽는다.
-            const int64 userId = static_pointer_cast<GameSession>(session)->_userId;
             const int64 characterId = pkt.character_id();
 
             Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
@@ -224,7 +267,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
                 deleteCharacterPkt.set_success(false);
             }
 
-            SEND_PACKET(deleteCharacterPkt)
+            SendPacket(session, deleteCharacterPkt);
         }
     );
 
@@ -235,15 +278,18 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-    // 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다. 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
-    if (static_pointer_cast<GameSession>(session)->_player.load() != nullptr)
+    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
+
+    // 로그인하지 않았거나 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다.
+    // 이미 입장했는지는 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
+    if (userId == 0 || static_pointer_cast<GameSession>(session)->GetPlayer() != nullptr)
     {
         SendEnterGameFail(session);
-        return true;
+        return false;
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
-    int64 userId = static_pointer_cast<GameSession>(session)->_userId;
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
     // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
@@ -251,7 +297,8 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
     // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
     // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
     // 이 계정의 접속 종료 저장이 남아 있으면 저장 잡이 같은 userId 큐에서 이 불러오기를 실행한다.
-    auto load = [session, pkt]()
+    // 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.
+    auto load = [session, pkt, userId]()
         {
             // 저장을 기다리는 사이에 끊겼으면 불러올 이유가 없다. 불러오면 끊긴 것을 알아챈 뒤 또 저장한다.
             if (session->IsConnected() == false)
@@ -262,7 +309,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             try
             {
                 DBConnectionGuard conn;
-                enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), pkt.character_id());
+                enterGamePkt = GameEntry::Enter(*conn, static_pointer_cast<GameSession>(session), userId, pkt.character_id());
             }
             catch (const exception& error)
             {
@@ -270,7 +317,7 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
                 GLogger->Error("캐릭터 {} 입장 실패: {}", pkt.character_id(), error.what());
                 enterGamePkt.set_success(false);
             }
-            SEND_PACKET(enterGamePkt)
+            SendPacket(session, enterGamePkt);
         };
 
     auto reject = [session]()
@@ -319,7 +366,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->_player.load();
+    PlayerRef player = gameSession->GetPlayer();
     int32 roomId = pkt.room_id();
 
     if (player == nullptr)
@@ -332,7 +379,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt)
+            SendPacket(session, enterMapPkt);
         }
 
         return false;
@@ -340,7 +387,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 
     // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면
     // OnEnterMap이 세팅한 enteringRoomId를 뒤이어 읽게 될 목적지 룸의 큐로 넘긴다.
-    RoomRef room = player->_room.load().lock();
+    RoomRef room = player->GetRoom();
     if (room == nullptr)
         room = GRoomManager->GetRoomRefFromRoomId(roomId);
 
@@ -348,7 +395,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
     {
         // 넘길 큐가 없으면 잡을 만들 수 없다. 이전 코드가 이 입력에도 응답을 돌려줬으므로
         // 클라를 대기 상태로 남기지 않도록 실패 응답은 유지한다.
-        wcout << L"C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: " << roomId << '\n';
+        GLogger->Warning("C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: {}", roomId);
 
         Protocol::S_ENTER_MAP enterMapPkt;
         {
@@ -356,13 +403,29 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
             enterMapPkt.set_map_id(pkt.map_id());
             enterMapPkt.set_room_id(roomId);
 
-            SEND_PACKET(enterMapPkt)
+            SendPacket(session, enterMapPkt);
         }
 
         return false;
     }
 
-    room->DoAsync(&Room::C_HandleEnterMap, pkt, player);
+    // 룸 상태를 쓰지 않지만, 여기서 기록한 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
+    room->DoAsync([pkt, player]()
+        {
+            // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
+            GameSessionRef session = player->GetSession();
+            if (session == nullptr)
+                return;
+
+            // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
+            player->OnEnterMap(pkt.map_id(), pkt.room_id());
+
+            Protocol::S_ENTER_MAP enterMapPkt;
+            enterMapPkt.set_success(true);
+            enterMapPkt.set_map_id(pkt.map_id());
+            enterMapPkt.set_room_id(pkt.room_id());
+            SendPacket(session, enterMapPkt);
+        });
 
     return true;
 }
@@ -371,15 +434,15 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 {
     auto gameSession = static_pointer_cast<GameSession>(session);
 
-    PlayerRef player = gameSession->_player.load();
+    PlayerRef player = gameSession->GetPlayer();
     if (player == nullptr)
         return false;
 
-    RoomRef curRoom = player->_room.load().lock();
+    RoomRef curRoom = player->GetRoom();
     if (curRoom == nullptr)
     {
         // 아직 어떤 Room에도 속하지 않은 최초 입장.
-        // player->_room 은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
+        // 소속 룸은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
         // 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고, 입장할 Room의 큐로 넘긴다.
         pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 
@@ -387,7 +450,7 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
         RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
         if (enterRoom == nullptr)
         {
-            wcout << L"최초 입장할 Room을 찾지 못함. roomId: " << roomId << '\n';
+            GLogger->Warning("최초 입장할 Room을 찾지 못함. roomId: {}", roomId);
             return false;
         }
 
@@ -403,155 +466,79 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
 
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
 {
-	auto gameSession = static_pointer_cast<GameSession>(session);
-
-	PlayerRef player = gameSession->_player.load();
-	if (player == nullptr)
-		return false;
-
-	RoomRef room = player->_room.load().lock();
-	if (room == nullptr)
-		return false;
-
-    room->DoAsync(&Room::C_HandleMove, pkt);
-
-	return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleMove(pkt, player);
+        });
 }
 
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
-	auto gameSession = static_pointer_cast<GameSession>(session);
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            // 같은 Room의 모든 플레이어에게 그대로 중계한다(본인 포함).
+            Protocol::S_CHAT chatPkt;
+            chatPkt.set_entity_id(player->GetEntityId());
+            chatPkt.set_msg(pkt.msg());
 
-	PlayerRef player = gameSession->_player.load();
-	if (player == nullptr)
-		return false;
-
-	RoomRef room = player->_room.load().lock();
-	if (room == nullptr)
-		return false;
-
-	room->DoAsync(&Room::C_HandleChat, pkt, player);
-
-	return true;
+            room->Broadcast(ServerPacketHandler::MakeSerializedPacket(chatPkt));
+        });
 }
 
 bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleNormalAttack, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleNormalAttack(pkt, player);
+        });
 }
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleBuyItem, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            ItemRequests::HandleBuyItem(*room, player, pkt);
+        });
 }
 
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleSellItem, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            ItemRequests::HandleSellItem(*room, player, pkt);
+        });
 }
 
 bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleEquipGear, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            ItemRequests::HandleEquipGear(*room, player, pkt);
+        });
 }
 
 
 bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleUnequipGear, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            ItemRequests::HandleUnequipGear(*room, player, pkt);
+        });
 }
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleUseItem, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            ItemRequests::HandleUseItem(*room, player, pkt);
+        });
 }
 
 bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->_player.load();
-    if (player == nullptr)
-        return false;
-
-    RoomRef room = player->_room.load().lock();
-    if (room == nullptr)
-        return false;
-
-    room->DoAsync(&Room::C_HandleRespawn, pkt, player);
-
-    return true;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleRespawn(pkt, player);
+        });
 }
 

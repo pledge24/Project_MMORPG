@@ -23,11 +23,11 @@ void GameSession::OnDisconnected()
 		return;
 
 	// 표시를 먼저 쓰고 룸을 읽는다. 순서는 Room::EnterPlayer의 주석을 본다.
-	player->_disconnected.store(true);
+	player->MarkDisconnected();
 
 	// 룸에 들어간 적이 없으면 이 세션에서 바뀐 것이 없으므로 저장하지 않는다.
 	// 불러오기가 도중에 실패했다면 절반만 채워진 상태를 덮어쓰게 된다.
-	RoomRef room = player->_room.load().lock();
+	RoomRef room = player->GetRoom();
 	if (room == nullptr)
 		return;
 
@@ -41,21 +41,29 @@ void GameSession::OnRecvPacket(BYTE* buffer, int32 len)
 {
 	PacketSessionRef self = GetPacketSessionRef();
 
-	// 게임 서버가 아닌 다른 서버(ex. DB 서버)에 넘겨줄때 id 대역 체크용
-	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
-	// TODO: packetId 대역 체크...
-
-	ServerPacketHandler::HandlePacket(self, buffer, len);
+	// 핸들러가 거절했거나 본문을 풀지 못하면 false다. 버리면 프로토콜이 어긋나도 원인이 남지 않는다.
+	// PacketSession::OnRecv가 헤더 크기 이상만 넘기므로 헤더는 읽을 수 있다.
+	if (ServerPacketHandler::HandlePacket(self, buffer, len) == false)
+	{
+		const PacketHeader* header = reinterpret_cast<const PacketHeader*>(buffer);
+		GLogger->Warning("패킷 {} 처리에 실패했다(길이 {}, 계정 {})", header->id, len, GetUserId());
+	}
 }
 
 void GameSession::OnSend(int32 len)
 {
 }
 
+bool GameSession::TryRegisterPlayer(const PlayerRef& player)
+{
+	PlayerRef expected = nullptr;
+	return _player.compare_exchange_strong(expected, player);
+}
+
 bool GameSession::IsPlayerInRoom()
 {
 	PlayerRef player = _player.load();
-	return player != nullptr && player->_room.load().lock() != nullptr;
+	return player != nullptr && player->GetRoom() != nullptr;
 }
 
 void GameSession::LeaveGame(RoomRef room, PlayerRef player)

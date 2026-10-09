@@ -80,7 +80,7 @@ void Room::Update()
                 continue;
 
             Protocol::PosInfo* info = movePkt.add_info();
-            info->CopyFrom(*entity->_posInfo);
+            info->CopyFrom(entity->GetPosInfo());
         }
 
         // 몬스터가 없는 룸에서는 목록이 빈다. 틱마다 빈 패킷을 보내지 않도록 여기서 끝낸다.
@@ -113,15 +113,15 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
     if (AddEntity(enterPlayer) == false)
     {
-        wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
+        GLogger->Warning("플레이어 {}가 Room {} 입장에 실패했습니다", enterPlayerId, _roomId);
 
-        if (auto session = enterPlayer->_session.lock())
+        if (auto session = enterPlayer->GetSession())
         {
             enterRoomPkt.set_success(false);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
             enterRoomPkt.set_room_id(_roomId);
 
-            SEND_PACKET(enterRoomPkt)
+            SendPacket(session, enterRoomPkt);
         }
 
         return false;
@@ -133,13 +133,13 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
         // 룸 이동 중에 접속이 끊겼으면 이전 룸은 이 플레이어를 찾지 못한다. 퇴장과 저장을 여기서 이어 받는다.
         // AddEntity가 _room을 먼저 쓰고 여기서 표시를 읽는다. OnDisconnected는 표시를 먼저 쓰고 _room을 읽는다.
         // 그래서 둘 중 적어도 한쪽은 상대를 본다. 둘 다 보면 이 룸 큐에서 두 번 돌고, 두 번째는 퇴장에 실패해 저장하지 않는다.
-        if (enterPlayer->_disconnected.load())
+        if (enterPlayer->IsDisconnected())
         {
             GameSession::LeaveGame(static_pointer_cast<Room>(shared_from_this()), enterPlayer);
             return false;
         }
 
-        if (auto session = enterPlayer->_session.lock())
+        if (auto session = enterPlayer->GetSession())
         {
             enterRoomPkt.set_success(true);
             enterRoomPkt.set_enter_type(roomEnterData.enterType);
@@ -148,7 +148,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
             if(roomEnterData.enterPos.has_value())
                 enterRoomPkt.mutable_enter_pos()->CopyFrom(roomEnterData.enterPos.value());
 
-            SEND_PACKET(enterRoomPkt)
+            SendPacket(session, enterRoomPkt);
         }
     }
   
@@ -162,9 +162,9 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
     if (RemoveEntity(leavePlayerId) == false)
     {
         if (transferRoom)
-            wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 중 현재 Room 퇴장에 실패했습니다" << '\n';
+            GLogger->Warning("플레이어 {}가 Room 이동 중 현재 Room {} 퇴장에 실패했습니다", leavePlayerId, _roomId);
         else
-            wcout << L"플레이어: " << leavePlayerId << "가 Room 퇴장에 실패했습니다" << '\n';
+            GLogger->Warning("플레이어 {}가 Room {} 퇴장에 실패했습니다", leavePlayerId, _roomId);
 
         return false;
     }
@@ -181,14 +181,14 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
         }
 
         // leavePlayer: Despawn Packet 전송
-        if (auto session = leavePlayer->_session.lock())
+        if (auto session = leavePlayer->GetSession())
         {
             if (transferRoom == false)
             {
                 Protocol::S_DESPAWN despawnPkt;
                 despawnPkt.add_entity_ids(leavePlayerId);
 
-                SEND_PACKET(despawnPkt)
+                SendPacket(session, despawnPkt);
             }
         }
     }
@@ -227,41 +227,9 @@ optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
     return player->MakeSaveData();
 }
 
-// 이 함수는 Room의 데이터를 쓰지 않는다. Room에 두는 이유는 큐 하나뿐이다.
-// 여기서 세팅하는 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
-void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
-{
-    // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
-    auto session = player->_session.lock();
-    if (session == nullptr)
-        return;
-
-    const int32 roomId = pkt.room_id();
-
-    // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
-    // ...
-
-    // TODO: Map 입장에 제한(ex. 인원수 제한)을 두고 싶다면 로직 추가
-    // ...
-
-    // 성공적인 Map 입장 처리
-    {
-        player->OnEnterMap(pkt.map_id(), roomId);
-
-        Protocol::S_ENTER_MAP enterMapPkt;
-        {
-            enterMapPkt.set_success(true);
-            enterMapPkt.set_map_id(pkt.map_id());
-            enterMapPkt.set_room_id(roomId);
-
-            SEND_PACKET(enterMapPkt)
-        }
-    }
-}
-
 void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return;
 
@@ -274,7 +242,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
             enterRoomPkt.set_success(false);
             enterRoomPkt.set_enter_type(enterType);
 
-            SEND_PACKET(enterRoomPkt)
+            SendPacket(session, enterRoomPkt);
         };
 
     if (optional<string> rejection = RoomTransfer::ValidateEnterRequest(pkt, player->GetEnteringRoomId()))
@@ -293,7 +261,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = _roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_INITIAL;
-        roomEnterData.enterPos = *player->_posInfo;
+        roomEnterData.enterPos = player->GetPosInfo();
 
         if (EnterPlayer(player, roomEnterData) == false)
             return;
@@ -320,7 +288,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER;
-        roomEnterData.enterPos = *player->_posInfo;
+        roomEnterData.enterPos = player->GetPosInfo();
 
         if (TransferPlayer(player, roomEnterData) == false)
             return;
@@ -380,193 +348,22 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     }
 }
 
-void Room::C_HandleMove(Protocol::C_MOVE pkt)
+void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
 {
-	PlayerRef player = FindEntityAs<Player>(pkt.info().entity_id());
-    if (player == nullptr)
+    // 대상은 패킷의 엔티티 번호가 아니라 보낸 사람이다. 그사이 룸을 떠났으면 버린다.
+    const int64 playerId = player->GetEntityId();
+    if (Contains(playerId) == false)
         return;
 
-	// 적용
-	player->_posInfo->CopyFrom(pkt.info());
+    // 적용. 위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것으로 둔다.
+    Protocol::PosInfo posInfo = pkt.info();
+    posInfo.set_entity_id(playerId);
+    player->SetPosInfo(posInfo);
 
-	// 이동 사실을 알린다 (본인 빼고)
-	{
-		Protocol::S_MOVE movePkt;
-		{
-            Protocol::PosInfo* info = movePkt.add_info();
-			info->CopyFrom(pkt.info());
-		}
-		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
-		Broadcast(sendBuffer, player->GetEntityId());
-	}
-}
-
-void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
-{
-    auto session = player->_session.lock();
-    if (session == nullptr)
-        return;
-
-    Protocol::S_BUY_ITEM buyItemPkt;
-    int32 templateId = pkt.template_id();
-    int64 totalGold = 0;
-
-    if (player->ProcessBuyItem(OUT buyItemPkt.mutable_updated_slots(), OUT totalGold, templateId) == false)
-    {
-        buyItemPkt.set_success(false);
-        buyItemPkt.clear_updated_slots();
-
-        SEND_PACKET(buyItemPkt)
-        return;
-    }
-
-    // 아이템 구매 성공 처리
-    {
-        buyItemPkt.set_success(true);
-        buyItemPkt.set_gold(totalGold);
-
-        SEND_PACKET(buyItemPkt)
-        cout << buyItemPkt.DebugString() << endl;
-    }
-
-    return;
-}
-
-void Room::C_HandleSellItem(Protocol::C_SELL_ITEM pkt, PlayerRef player)
-{
-    auto session = player->_session.lock();
-    if (session == nullptr)
-        return;
-
-    Protocol::S_SELL_ITEM sellItemPkt;
-    const Protocol::Slot& requestSlot = pkt.slot();
-    Protocol::Slot* updatedSlot = sellItemPkt.mutable_updated_slot();
-    int64 totalGold = 0;
-
-    if (player->ProcessSellItem(requestSlot, OUT updatedSlot, OUT totalGold) == false)
-    {
-        sellItemPkt.set_success(false);
-
-        SEND_PACKET(sellItemPkt)
-        return;
-    }
-
-    // 아이템 판매 성공 처리
-    {
-        sellItemPkt.set_success(true);
-        sellItemPkt.set_gold(totalGold);
-
-        SEND_PACKET(sellItemPkt)
-        cout << sellItemPkt.DebugString() << endl;
-    }
-
-}
-
-void Room::C_HandleUseItem(Protocol::C_USE_ITEM pkt, PlayerRef player)
-{
-    auto session = player->_session.lock();
-    if (session == nullptr)
-        return;
-
-    Protocol::S_USE_ITEM useItemPkt;
-    const Protocol::Slot& targetSlot = pkt.slot();
-
-    if (player->ProcessUseItem(targetSlot, ::GetTickCount64(), OUT useItemPkt) == false)
-    {
-        useItemPkt.set_success(false);
-
-        SEND_PACKET(useItemPkt)
-        return;
-    }
-
-    // 아이템 사용 성공 처리
-    {
-        useItemPkt.set_success(true);
-
-        SEND_PACKET(useItemPkt)
-        cout << useItemPkt.DebugString() << endl;
-    }
-
-}
-
-void Room::C_HandleEquipGear(Protocol::C_EQUIP_GEAR pkt, PlayerRef player)
-{
-    const int64 entityId = player->GetEntityId();
-    if (Contains(entityId) == false)
-        return;
-
-    // slot_id와 template_id는 처리 결과(장비 부위와 그 부위의 아이템)라서 ProcessEquipGear가 채운다.
-    Protocol::S_EQUIP_GEAR equipGearPkt;
-    {
-        equipGearPkt.set_success(true);
-        equipGearPkt.set_entity_id(entityId);
-    }
-
-    if (player->ProcessEquipGear(pkt.slot(), OUT equipGearPkt) == false)
-    {
-        if (SessionRef session = player->_session.lock())
-        {
-            equipGearPkt.set_success(false);
-            SEND_PACKET(equipGearPkt)
-        }
-
-        return;
-    }
-
-    // 장착한 유저에게만 그대로 전송.
-    {
-        SessionRef session = player->_session.lock();
-        SEND_PACKET(equipGearPkt)
-    }
-
-    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
-    {
-        equipGearPkt.clear_updated_slots();
-        equipGearPkt.clear_updated_stat();
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(equipGearPkt);
-        Broadcast(sendBuffer, entityId);
-    }
-
-}
-
-void Room::C_HandleUnequipGear(Protocol::C_UNEQUIP_GEAR pkt, PlayerRef player)
-{
-    const int64 entityId = player->GetEntityId();
-    if (Contains(entityId) == false)
-        return;
-
-    // slot_id와 template_id는 처리 결과(장비 부위와 그 부위의 아이템)라서 ProcessUnequipGear가 채운다.
-    Protocol::S_UNEQUIP_GEAR unequipGearPkt;
-    {
-        unequipGearPkt.set_success(true);
-        unequipGearPkt.set_entity_id(entityId);
-    }
-
-    if (player->ProcessUnequipGear(pkt.slot(), OUT unequipGearPkt) == false)
-    {
-        if (SessionRef session = player->_session.lock())
-        {
-            unequipGearPkt.set_success(false);
-
-            SEND_PACKET(unequipGearPkt)
-        }
-        return;
-    }
-
-    // 탈착한 유저에게만 그대로 전송.
-    {
-        SessionRef session = player->_session.lock();
-        SEND_PACKET(unequipGearPkt)
-    }
-
-    // 다른 유저들한테는 변경된 stat을 보내지 않는다.
-    {
-        unequipGearPkt.clear_updated_slots();
-        unequipGearPkt.clear_updated_stat();
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(unequipGearPkt);
-        Broadcast(sendBuffer, entityId);
-    }
-
+    // 이동 사실을 알린다(본인 빼고).
+    Protocol::S_MOVE movePkt;
+    *movePkt.add_info() = player->GetPosInfo();
+    Broadcast(ServerPacketHandler::MakeSerializedPacket(movePkt), playerId);
 }
 
 void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
@@ -606,16 +403,16 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
     if (rejection.has_value())
     {
-        cout << "C_HandleRespawn: " << rejection.value() << '\n';
+        GLogger->Warning("C_HandleRespawn: {}", rejection.value());
 
-        if (auto session = player->_session.lock())
+        if (auto session = player->GetSession())
         {
             Protocol::S_RESPAWN respawnPkt;
             respawnPkt.set_success(false);
             respawnPkt.set_respawn_type(respawnType);
             respawnPkt.set_error_message(rejection.value());
 
-            SEND_PACKET(respawnPkt)
+            SendPacket(session, respawnPkt);
         }
 
         return;
@@ -636,7 +433,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         Broadcast(ServerPacketHandler::MakeSerializedPacket(despawnPkt), playerId);
 
         Protocol::S_SPAWN spawnPkt;
-        spawnPkt.add_entities()->CopyFrom(*player->_entityInfo);
+        spawnPkt.add_entities()->CopyFrom(player->GetEntityInfo());
         Broadcast(ServerPacketHandler::MakeSerializedPacket(spawnPkt), playerId);
     }
     else
@@ -667,21 +464,13 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
                     return;
 
                 respawnRoom->SpawnPlayer(player);
-                respawnRoom->ReplicateRoomData(player, false);
+
+                // 전에는 SpawnPlayer가 본인에게도 보냈다. 받는 횟수를 그대로 두려고 본인까지 싣는다.
+                // 클라이언트가 내 액터를 유지하고 있으면 중복 검사가 버린다.
+                respawnRoom->ReplicateRoomData(player, true);
             });
     }
 
-}
-
-void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
-{
-	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
-	Protocol::S_CHAT chatPkt;
-	chatPkt.set_entity_id(player->GetEntityId());
-	chatPkt.set_msg(pkt.msg());
-
-	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
-	Broadcast(sendBuffer);
 }
 
 void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
@@ -690,7 +479,7 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
     {
         normalAttackPkt.set_entity_id(creature->GetEntityId());
         normalAttackPkt.set_combo(combo);
-        normalAttackPkt.set_yaw(creature->_posInfo->yaw());
+        normalAttackPkt.set_yaw(creature->GetPosInfo().yaw());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer);
@@ -763,9 +552,9 @@ void Room::HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward)
 
     player->OnGetReward(rewardResultPkt);
 
-    if (auto session = player->_session.lock())
+    if (auto session = player->GetSession())
     {
-        SEND_PACKET(rewardResultPkt)
+        SendPacket(session, rewardResultPkt);
     }
 }
 
@@ -790,42 +579,48 @@ void Room::HandleDie(CreatureRef creature)
 
 bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos)
 {
-    auto session = player->_session.lock();
+    auto session = player->GetSession();
     if (session == nullptr)
         return false;
 
     Protocol::S_RESPAWN respawnPkt;
     if (_respawnPoint == nullptr)
     {
-        wcout << "리스폰 위치가 없는 Room에서 리스폰 시도" << '\n';
+        GLogger->Warning("리스폰 위치가 없는 Room {}에서 리스폰을 시도했습니다", _roomId);
         {
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("No Respawn Point"));
 
-            SEND_PACKET(respawnPkt)
+            SendPacket(session, respawnPkt);
         }
 
         return false;
     }
 
     // 호출자가 FindTownRespawnPoint로 찾아 넘겨준 위치를 쓴다.
-    shared_ptr<Protocol::PosInfo> targetPos = make_shared<Protocol::PosInfo>(std::move(respawnPos));
-
-    if (player->ProcessRespawn(respawnType, targetPos, respawnPkt) == false)
+    optional<RespawnResult> result = player->ProcessRespawn(respawnType, respawnPos);
+    if (result.has_value() == false)
     {
-        wcout << "ProcessRespawn가 false를 반환" << '\n';
+        GLogger->Warning("플레이어 {}의 리스폰을 처리하지 못했습니다(소속 룸이 없다)", player->GetEntityId());
         {
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("Fail to Respawn"));
 
-            SEND_PACKET(respawnPkt)
+            SendPacket(session, respawnPkt);
         }
 
         return false;
     }
 
     // 리스폰 성공 처리
-    SEND_PACKET(respawnPkt)
+    respawnPkt.set_success(true);
+    respawnPkt.set_respawn_type(respawnType);
+    respawnPkt.set_entity_id(player->GetEntityId());
+    respawnPkt.set_room_id(_roomId);
+    *respawnPkt.mutable_pos_info() = respawnPos;
+    *respawnPkt.mutable_updated_stat() = std::move(result->updatedStats);
+
+    SendPacket(session, respawnPkt);
 
     return true;
 }
@@ -836,7 +631,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 
     // 해당 플레이어에게 Room 엔티티 전송
     Protocol::S_SPAWN spawnPkt;
-    if (auto session = player->_session.lock())
+    if (auto session = player->GetSession())
     {
         for (auto& item : _entities)
         {
@@ -844,10 +639,10 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
                 continue;
 
             // 플레이어의 장비 외형은 _entityInfo의 equipped_gear_summary에 실려 간다.
-            spawnPkt.add_entities()->CopyFrom(*item.second->_entityInfo);
+            spawnPkt.add_entities()->CopyFrom(item.second->GetEntityInfo());
         }
 
-        SEND_PACKET(spawnPkt)
+        SendPacket(session, spawnPkt);
     }
 }
 
@@ -893,7 +688,7 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(GetRandomYaw());
 }
 
-pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
+pair<PlayerRef, float> Room::FindClosestPlayer(const Protocol::PosInfo* posInfo, float range)
 {
     const vector2D center = ToPlanePos(*posInfo);
 
@@ -914,7 +709,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
             if (player->IsDead())
                 continue;
 
-            float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
+            float squareDist = MathUtil::Distance(posInfo, &player->GetPosInfo(), true);
             if (squareRange < squareDist)
                 continue;
 
@@ -945,13 +740,14 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
     if (Contains(targetPlayer->GetEntityId()) == false)
         return nullptr;
 
+    // 본인은 빼고 알린다. 본인에게 자기 스폰을 보낼지는 ReplicateRoomData의 includeThisPlayer가 정한다.
     Protocol::S_SPAWN spawnPkt;
     {
         Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
-        entityInfo->CopyFrom(*targetPlayer->_entityInfo);
+        entityInfo->CopyFrom(targetPlayer->GetEntityInfo());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer);
+        Broadcast(sendBuffer, targetPlayer->GetEntityId());
     }
 
     return targetPlayer;
@@ -967,7 +763,7 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 		if (player->GetEntityId() == exceptId)
 			continue;
 
-		if (GameSessionRef session = player->_session.lock())
+		if (GameSessionRef session = player->GetSession())
 			session->Send(sendBuffer);
 	}
 }
@@ -984,13 +780,7 @@ bool Room::AddEntity(EntityRef entity)
 	_entities.insert(make_pair(entityId, entity));
 
     // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
-    entity->_room.store(GetRoomRef());
-
-    if (entity->_hasBegunPlay == false)
-    {
-        entity->_hasBegunPlay = true;
-        entity->Start();
-    }
+    entity->JoinRoom(GetRoomRef());
 
 	return true;
 }
@@ -1003,7 +793,7 @@ bool Room::RemoveEntity(int64 entityId)
     EntityRef entity = _entities[entityId];
 
     // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
-    _cellMatrix.Remove(entityId, ToPlanePos(*entity->_posInfo));
+    _cellMatrix.Remove(entityId, ToPlanePos(entity->GetPosInfo()));
 
     // 엔티티를 삭제한다.
 	_entities.erase(entityId);
@@ -1055,7 +845,7 @@ void Room::UpdateCellMatrix()
     positions.reserve(_entities.size());
 
     for (auto& [entityId, entity] : _entities)
-        positions.emplace_back(entityId, ToPlanePos(*entity->_posInfo));
+        positions.emplace_back(entityId, ToPlanePos(entity->GetPosInfo()));
 
     _cellMatrix.Update(positions);
 }
