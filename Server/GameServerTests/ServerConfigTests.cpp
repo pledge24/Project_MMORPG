@@ -36,7 +36,7 @@ TEST(ServerConfigTest, UsesLocalDefaultsWithoutEnv)
     EXPECT_EQ(config.maxSessionCount, 30);
     EXPECT_EQ(config.workerThreadCount, 5);
     EXPECT_EQ(config.dbThreadCount, 5);
-    EXPECT_EQ(config.dbConnectionCount, 6) << "DB 스레드마다 하나와 부팅 때 main이 쓰는 하나";
+    EXPECT_EQ(config.dbConnectionCount, 5) << "DB 스레드마다 하나";
     EXPECT_FALSE(config.Validate().has_value());
 }
 
@@ -68,16 +68,16 @@ TEST(ServerConfigTest, DbConnectionCountFollowsDbThreadCount)
 {
     const Config config = Config::Load(FakeEnv({{"P1_GAME_DB_THREADS", "8"}}));
 
-    EXPECT_EQ(config.dbConnectionCount, 9);
+    EXPECT_EQ(config.dbConnectionCount, 8);
     EXPECT_FALSE(config.Validate().has_value());
 }
 
-// 연결 풀은 DB 스레드마다 하나와 부팅 때 main이 쓰는 하나가 있어야 한다. 모자라면 동시에 돈 잡 하나가 연결을 빌리지 못한다.
+// 연결 풀은 DB 스레드마다 하나가 있어야 한다. 모자라면 동시에 돈 잡 하나가 연결을 빌리지 못한다.
 TEST(ServerConfigTest, TooFewDbConnectionsIsRejected)
 {
     const Config config = Config::Load(FakeEnv({
         {"P1_GAME_DB_THREADS", "5"},
-        {"P1_GAME_DB_CONNECTIONS", "5"}}));
+        {"P1_GAME_DB_CONNECTIONS", "4"}}));
 
     ASSERT_TRUE(config.Validate().has_value());
     EXPECT_NE(config.Validate()->find("P1_GAME_DB_CONNECTIONS"), string::npos) << "고칠 변수를 알린다";
@@ -106,7 +106,7 @@ TEST(ServerConfigTest, InvalidCountFallsBackToDefault)
         EXPECT_EQ(config.maxSessionCount, 30);
         EXPECT_EQ(config.workerThreadCount, 5);
         EXPECT_EQ(config.dbThreadCount, 5);
-        EXPECT_EQ(config.dbConnectionCount, 6);
+        EXPECT_EQ(config.dbConnectionCount, 5);
     }
 }
 

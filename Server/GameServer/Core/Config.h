@@ -11,7 +11,7 @@
  * - P1_GAME_SERVER_MAX_SESSIONS:   동시에 접속할 수 있는 세션 수
  * - P1_GAME_SERVER_WORKER_THREADS: 메인 스레드 말고 띄울 IOCP 워커 스레드 수
  * - P1_GAME_DB_THREADS:            DB 스레드 수. DB 큐마다 하나씩 붙는다
- * - P1_GAME_DB_CONNECTIONS:        SQL Server 연결 풀의 크기. 없으면 DB 스레드 수 + 1
+ * - P1_GAME_DB_CONNECTIONS:        SQL Server 연결 풀의 크기. 없으면 DB 스레드 수
  */
 struct Config
 {
@@ -34,7 +34,7 @@ struct Config
 
     /**
      * 값끼리의 관계와 주소 형식을 본다. 틀렸으면 고칠 환경 변수를 담은 사유를 돌려준다. 서버는 그때 뜨지 않는다.
-     * 연결 풀은 DB 스레드마다 하나와 부팅 때 main이 아이템 번호를 읽는 데 쓰는 하나가 있어야 한다.
+     * 연결 풀은 DB 스레드마다 하나가 있어야 한다. 부팅 때 main은 DB 스레드를 띄우기 전에 연결을 빌렸다가 돌려준다.
      */
     std::optional<string> Validate() const;
 };

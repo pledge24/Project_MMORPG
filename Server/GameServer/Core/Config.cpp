@@ -14,9 +14,6 @@ namespace
     constexpr int32 DEFAULT_WORKER_THREAD_COUNT = 5;
     constexpr int32 DEFAULT_DB_THREAD_COUNT = 5;
 
-    // 부팅 때 main이 DB 스레드 밖에서 빌리는 연결 수. 아이템 번호의 최댓값을 읽는다.
-    constexpr int32 BOOT_DB_CONNECTION_COUNT = 1;
-
     // min~max가 아니거나 숫자가 아니면 nullopt.
     std::optional<int32> ParseInt(const string& text, int32 min, int32 max)
     {
@@ -76,7 +73,7 @@ Config Config::Load(const EnvLookup& lookup)
     OverrideInt(lookup, "P1_GAME_DB_THREADS", 1, INT32_MAX, config.dbThreadCount);
 
     // 연결 수는 DB 스레드 수가 정해진 뒤에 기본값을 정한다. 스레드만 늘리고 풀을 그대로 두면 잡이 연결을 빌리지 못한다.
-    config.dbConnectionCount = config.dbThreadCount + BOOT_DB_CONNECTION_COUNT;
+    config.dbConnectionCount = config.dbThreadCount;
     OverrideInt(lookup, "P1_GAME_DB_CONNECTIONS", 1, INT32_MAX, config.dbConnectionCount);
 
     return config;
@@ -104,10 +101,9 @@ std::optional<string> Config::Validate() const
     if (::inet_pton(AF_INET, bindAddress.c_str(), &address) != 1)
         return format("P1_GAME_SERVER_BIND_ADDRESS({})가 IPv4 주소가 아니다", bindAddress);
 
-    const int32 requiredConnections = dbThreadCount + BOOT_DB_CONNECTION_COUNT;
-    if (dbConnectionCount < requiredConnections)
-        return format("P1_GAME_DB_CONNECTIONS({})가 DB 스레드 수({}) + {}보다 작다. DB 스레드마다 연결이 하나씩 있어야 한다",
-            dbConnectionCount, dbThreadCount, BOOT_DB_CONNECTION_COUNT);
+    if (dbConnectionCount < dbThreadCount)
+        return format("P1_GAME_DB_CONNECTIONS({})가 DB 스레드 수({})보다 작다. DB 스레드마다 연결이 하나씩 있어야 한다",
+            dbConnectionCount, dbThreadCount);
 
     return std::nullopt;
 }

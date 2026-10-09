@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 18개 (높음 0 · 중간 2 · 낮음 16) · 다음 번호 TD-047
+항목 17개 (높음 0 · 중간 2 · 낮음 15) · 다음 번호 TD-047
 
 ## 작성 방법
 
@@ -136,26 +136,6 @@ TD-003을 고치기 전에는 5초 뒤에 입장을 허용해 낡은 진행을 �
 
 **버그 발생 가능성 증가** — 지금은 설정값과 기본값이 같아서 동작한다. Redis 주소나 포트를 바꾸면 인증 서버만
 옛 주소로 붙고, 게임 서버는 토큰을 찾지 못해 모든 로그인이 `INVALID_TOKEN`으로 끝난다.
-
-## TD-017 게임 서버가 DB를 준비하기 전에 접속을 받는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · server
-> 위치: `Server/GameServer/GameServer.cpp` 70~112줄 · `Server/GameServer/DB/ItemDAO.cpp` 35~80줄 (`GetMaxItemUID`)
-> 등록일: 2026년 10월 5일
-
-`main`은 `service->Start()`로 리슨을 연 뒤에 DB에 연결하고, 워커 스레드를 띄운 뒤에 `GDBManager->Init`과
-`ItemDAO::GetMaxItemUID`를 부른다. 그 사이에는 다음 일이 생길 수 있다.
-
-- 워커가 뜬 뒤 `GDBManager->Init` 전에 `C_LOGIN`이 오면 DB 큐가 0개라 `GetRandom(0, -1)`로 범위 밖 큐를 고른다.
-  `GetDBQueueFromId`는 0으로 나눈다
-- `GNextItemUID`가 정해지기 전에 아이템이 만들어질 수 있다
-
-`GetMaxItemUID`는 실패하면 `wstring`을 던지는데 `catch`는 `DBCustomError`만 받으므로 `std::terminate`로 끝난다.
-결과를 받는 열 변수도 `int32`인데 `GNextItemUID`와 `item_uid`는 `int64`다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 클라이언트가 서버 기동 직후에 붙으면 서버가 죽거나 아이템 번호가 겹친다. 아이템 번호가
-`INT32` 상한을 넘으면 다음 번호가 틀린다.
 
 ## TD-018 로그인 잡이 Redis 값의 JSON 파싱 예외를 받지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server

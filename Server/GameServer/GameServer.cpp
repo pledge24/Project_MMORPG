@@ -156,34 +156,27 @@ int main(void)
         return 1;
     }
 
-	ServerServiceRef service = make_shared<ServerService>(
-		NetAddress(config.bindAddress, config.port),
-		make_shared<IocpCore>(),
-		[=]() { return make_shared<GameSession>(); }, // TODO: SessionManager 등
-		config.maxSessionCount
-	);
+    // 접속을 받기 전에 DB를 모두 준비한다. 리슨부터 열면 DB 큐가 생기기 전에 온 로그인이 없는 큐를 고르고,
+    // 다음 아이템 번호가 정해지기 전에 아이템이 만들어질 수 있다(TD-017).
 
-	ASSERT_CRASH(service->Start())
+    // DB 연결. 풀 크기가 DB 스레드 수보다 넉넉한지는 Config::Validate가 봤다.
+    ASSERT_CRASH(GDBConnectionPool->Connect(config.dbConnectionCount, config.dbConnectionString.c_str()));
+    ASSERT_CRASH(GRedisManager->Connect(config.redisUri));
 
-    // DB 연결
+    // DB에서 서버 메모리에 올릴 것을 가져온다. 스레드를 띄우기 전이라 실패하면 그대로 끝내도 된다.
+    try
     {
-        // SQL Server. 풀 크기가 DB 스레드 수보다 넉넉한지는 Config::Validate가 봤다.
-        ASSERT_CRASH(GDBConnectionPool->Connect(config.dbConnectionCount, config.dbConnectionString.c_str()));
-
-        // Redis
-        ASSERT_CRASH(GRedisManager->Connect(config.redisUri));
+        DBConnectionGuard conn;
+        ItemDAO::GetMaxItemUID(*conn);
+    }
+    catch (const exception& error)
+    {
+        // 다음 아이템 UID를 모르면 새 아이템이 기존 아이템과 UID가 겹친다.
+        GLogger->Error("아이템 UID의 최댓값을 읽지 못해 서버를 종료합니다: {}", error.what());
+        return 1;
     }
 
-	// worker thread. 메인 스레드가 마지막 하나로 합류한다.
-	for (int32 i = 0; i < config.workerThreadCount; i++)
-	{
-		GThreadManager->Launch([&service]()
-			{
-				DoWorkerJob(service, s_workersStopped);
-			});
-	}
-
-    // DB thread
+    // DB thread. 큐마다 DB 스레드가 하나씩 붙는다.
     GDBManager->Init(config.dbThreadCount);
     for (int32 i = 0; i < config.dbThreadCount; i++)
     {
@@ -193,23 +186,23 @@ int main(void)
             });
     }
 
-    // DB에서 서버 메모리에 올릴거 가져오기
-    try
-    {
-        DBConnectionGuard conn;
-        ItemDAO::GetMaxItemUID(*conn);
-    }
-    catch (const DBError& error)
-    {
-        // 다음 아이템 UID를 모르면 새 아이템이 기존 아이템과 UID가 겹친다.
-        GLogger->Error("아이템 UID의 최댓값을 읽지 못해 서버를 종료합니다: {}", error.what());
+	ServerServiceRef service = make_shared<ServerService>(
+		NetAddress(config.bindAddress, config.port),
+		make_shared<IocpCore>(),
+		[=]() { return make_shared<GameSession>(); }, // TODO: SessionManager 등
+		config.maxSessionCount
+	);
 
-        // 띄운 스레드를 끝내야 ServerContext가 합류하고 지운다. 아직 아무도 접속하지 않았으므로 저장할 것이 없다.
-        for (int32 i = 0; i < GDBManager->GetDBQueueCount(); i++)
-            GDBManager->GetDBQueue(i)->Stop();
-        s_workersStopped.store(true);
-        return 1;
-    }
+	ASSERT_CRASH(service->Start())
+
+	// worker thread. 메인 스레드가 마지막 하나로 합류한다.
+	for (int32 i = 0; i < config.workerThreadCount; i++)
+	{
+		GThreadManager->Launch([&service]()
+			{
+				DoWorkerJob(service, s_workersStopped);
+			});
+	}
 
     // 메인 스레드도 워커로 일하다가 종료 신호를 받으면 빠져나와 종료 절차를 밟는다.
     DoWorkerJob(service, s_shutdownRequested);
