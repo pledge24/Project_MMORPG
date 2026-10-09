@@ -55,6 +55,12 @@ namespace
         return true;
     }
 
+    // 로그인(C_LOGIN)을 마친 세션이면 true. 계정 번호는 로그인 잡이 등록할 때 쓴다.
+    bool IsLoggedIn(const PacketSessionRef& session)
+    {
+        return static_pointer_cast<GameSession>(session)->GetUserId() != 0;
+    }
+
     void SendEnterGameFail(const PacketSessionRef& session)
     {
         Protocol::S_ENTER_GAME enterGameFailPkt;
@@ -167,6 +173,16 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
+    // 세션 상태는 핸들러가 본다. 로그인하지 않은 세션은 계정 번호 0으로 INSERT를 시도하게 된다.
+    if (IsLoggedIn(session) == false)
+    {
+        Protocol::S_CREATE_CHARACTER createCharacterPkt;
+        createCharacterPkt.set_success(false);
+        createCharacterPkt.set_cause("로그인이 필요합니다.");
+        SendPacket(session, createCharacterPkt);
+        return false;
+    }
+
     // 거절하면 DB 큐로 넘기지 않고 사유를 곧바로 돌려준다. 클라이언트가 사유를 생성 화면에 띄운다.
     if (optional<string> cause = CharacterCreation::Validate(pkt.character()))
     {
@@ -219,6 +235,14 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
+    if (IsLoggedIn(session) == false)
+    {
+        Protocol::S_DELETE_CHARACTER deleteCharacterPkt;
+        deleteCharacterPkt.set_success(false);
+        SendPacket(session, deleteCharacterPkt);
+        return false;
+    }
+
     // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
@@ -257,11 +281,12 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-    // 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다. 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
-    if (static_pointer_cast<GameSession>(session)->GetPlayer() != nullptr)
+    // 로그인하지 않았거나 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다.
+    // 이미 입장했는지는 잡 안의 GameEntry::SpawnPlayer도 다시 막는다.
+    if (IsLoggedIn(session) == false || static_pointer_cast<GameSession>(session)->GetPlayer() != nullptr)
     {
         SendEnterGameFail(session);
-        return true;
+        return false;
     }
 
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
