@@ -32,8 +32,12 @@ namespace
     }
 }
 
-void ItemRequests::HandleBuyItem(const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt)
+void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt)
 {
+    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
+    if (room.Contains(player->GetEntityId()) == false)
+        return;
+
     auto session = player->GetSession();
     if (session == nullptr)
         return;
@@ -50,8 +54,12 @@ void ItemRequests::HandleBuyItem(const PlayerRef& player, const Protocol::C_BUY_
     SendPacket(session, buyItemPkt);
 }
 
-void ItemRequests::HandleSellItem(const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt)
+void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt)
 {
+    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
+    if (room.Contains(player->GetEntityId()) == false)
+        return;
+
     auto session = player->GetSession();
     if (session == nullptr)
         return;
@@ -68,8 +76,12 @@ void ItemRequests::HandleSellItem(const PlayerRef& player, const Protocol::C_SEL
     SendPacket(session, sellItemPkt);
 }
 
-void ItemRequests::HandleUseItem(const PlayerRef& player, const Protocol::C_USE_ITEM& pkt)
+void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Protocol::C_USE_ITEM& pkt)
 {
+    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
+    if (room.Contains(player->GetEntityId()) == false)
+        return;
+
     auto session = player->GetSession();
     if (session == nullptr)
         return;
@@ -92,7 +104,7 @@ void ItemRequests::HandleUseItem(const PlayerRef& player, const Protocol::C_USE_
 
 void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Protocol::C_EQUIP_GEAR& pkt)
 {
-    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다.
+    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
         return;
 
@@ -103,7 +115,7 @@ void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Pr
 
 void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const Protocol::C_UNEQUIP_GEAR& pkt)
 {
-    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다.
+    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
         return;
 

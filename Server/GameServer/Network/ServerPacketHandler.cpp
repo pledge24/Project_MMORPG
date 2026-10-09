@@ -495,17 +495,17 @@ bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK
 
 bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef&, const PlayerRef& player)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleBuyItem(player, pkt);
+            ItemRequests::HandleBuyItem(*room, player, pkt);
         });
 }
 
 bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef&, const PlayerRef& player)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleSellItem(player, pkt);
+            ItemRequests::HandleSellItem(*room, player, pkt);
         });
 }
 
@@ -528,9 +528,9 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
 
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
-    return DispatchToPlayerRoom(session, [pkt](const RoomRef&, const PlayerRef& player)
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleUseItem(player, pkt);
+            ItemRequests::HandleUseItem(*room, player, pkt);
         });
 }
 

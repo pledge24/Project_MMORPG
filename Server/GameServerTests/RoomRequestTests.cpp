@@ -4,6 +4,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Network/ItemRequests.h"
+#include "Game/Inventory/InventoryComponent.h"
 #include "RecordingSession.h"
 
 /*--------------------------------------------------------------
@@ -52,6 +53,7 @@ protected:
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
         sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.sellable = true;
 
         LevelTemplate level1;
         level1.level = 1;
@@ -152,6 +154,32 @@ TEST_F(RoomRequestTest, InitialEntrySpawnsSelfOnce)
     }
 
     EXPECT_EQ(selfSpawnCount, 1) << "클라이언트의 중복 검사를 지우면 내 플레이어가 두 번 처리된다";
+}
+
+// 아이템 요청은 디스패치할 때의 룸 큐에서 돈다. 그사이 플레이어가 다른 룸으로 옮겼으면 그 플레이어의 상태는
+// 새 룸 큐의 것이므로 옛 룸 큐에서 바꾸지 않는다.
+TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
+{
+    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+    const PlayerProgress progress = MakeProgressWithSword();
+    PlayerSpawnParams params;
+    params.session = session;
+    params.progress = &progress;
+    PlayerRef traveler = EntityFactory::Create<Player>(params);
+    ASSERT_NE(traveler, nullptr);
+
+    RoomEnterData enterData{};
+    enterData.nextRoomId = ROOM_ID;
+    enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
+    ASSERT_TRUE(room->EnterPlayer(traveler, enterData));
+    ASSERT_TRUE(room->LeavePlayer(traveler, true));
+
+    Protocol::C_SELL_ITEM sellPkt;
+    *sellPkt.mutable_slot() = SwordSlot();
+    ItemRequests::HandleSellItem(*room, traveler, sellPkt);
+
+    EXPECT_TRUE(traveler->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item())
+        << "룸을 떠난 플레이어의 소지품을 옛 룸 큐에서 바꾸면 새 룸 큐와 경쟁한다";
 }
 
 // TD-006: 착용과 해제는 실패 응답 전에만 세션을 확인하고, 성공 응답은 확인 없이 보냈다.
