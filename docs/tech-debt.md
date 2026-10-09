@@ -94,20 +94,6 @@
 **버그 발생 가능성 증가** — 두 계정이 동시에 로그인하거나, 한 계정의 저장과 다른 계정의 입장이 겹치면
 나중에 연결을 빌린 쪽이 널 포인터를 역참조해 게임 서버가 죽는다. 접속자가 적을 때는 겹치는 일이 드물어서 드러나지 않는다.
 
-## TD-037 장비를 벗어도 현재 HP와 MP가 줄지 않아 다음 입장이 실패한다
-> **심각도:** 높음 · **난이도:** 낮음 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Equipment/EquippedGear.cpp` 130~146줄 (`UnequipGear`) · `Server/GameServer/Game/Entities/Player.cpp` 549~559줄 (`CalculateFinalStat`)
-> 등록일: 2026년 10월 9일
-
-`UnequipGear`는 장비의 hp와 mp만큼 최대 HP와 최대 MP를 빼고, 현재 HP와 MP는 그대로 둔다. 현재 값이 새 최대치를 넘은 채로
-접속이 끊기면 그 값이 저장된다. 다음 입장에서 `OnLoaded` → `CalculateFinalStat`이 「현재 HP가 최대 HP를 초과」로 false를 돌려주고,
-`ProgressStorage::Load`가 입장 실패를 보낸다. 장비 데이터의 1000번대에 hp와 mp가 있으므로, HP가 가득 찬 상태에서 그런 장비를
-벗고 접속을 끊으면 바로 이 상황이 된다. 코드를 읽고 판단했고 실행해서 재현하지는 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 그 캐릭터는 DB를 손으로 고치기 전까지 게임에 들어가지 못한다.
-
 ## TD-044 서버를 종료하면 접속 중인 플레이어의 진행이 사라진다
 > **심각도:** 높음 · **난이도:** 높음 · **범위:** 기능 · server
 > 위치: `Server/GameServer/GameServer.cpp` 25~38줄 (`DoWorkerJob`), 105~116줄

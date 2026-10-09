@@ -118,7 +118,7 @@ private:
      */
     optional<CombatStats> CalculateFinalStat();
     /**
-     * 최종 스탯을 다시 계산해 쓴다. 장착, 해제, 입장이 모두 이 함수를 거친다.
+     * 최종 스탯을 다시 계산해 쓰고, 현재 HP와 MP를 새 최대치로 자른다. 장착, 해제, 입장이 모두 이 함수를 거친다.
      * 값이 바뀐 스탯을 updatedStats에 싣는다. nullptr이면 싣지 않는다. 계산할 수 없으면 아무것도 바꾸지 않는다.
      */
     void RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats);

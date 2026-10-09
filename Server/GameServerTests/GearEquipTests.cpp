@@ -19,7 +19,12 @@
 namespace
 {
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
+    constexpr int32 HELMET_TEMPLATE_ID = 1000;
     constexpr int32 BASE_PHYSICAL_ATTACK = 5;
+    constexpr int32 BASE_MAX_HP = 500;
+    constexpr int32 BASE_MAX_MP = 100;
+    constexpr int32 HELMET_HP = 100;
+    constexpr int32 HELMET_MP = 50;
 }
 
 class GearEquipTest : public ::testing::Test
@@ -33,12 +38,22 @@ protected:
         sword.gearType = Protocol::GEAR_TYPE_WEAPON;
         sword.physicalAttack = 10;
 
+        ItemTemplate helmet;
+        helmet.templateId = HELMET_TEMPLATE_ID;
+        helmet.itemType = Protocol::ITEM_TYPE_GEAR;
+        helmet.gearType = Protocol::GEAR_TYPE_HELMET;
+        helmet.hp = HELMET_HP;
+        helmet.mp = HELMET_MP;
+
         LevelTemplate level1;
         level1.level = 1;
+        level1.maxHp = BASE_MAX_HP;
+        level1.maxMp = BASE_MAX_MP;
         level1.physicalAttack = BASE_PHYSICAL_ATTACK;
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
+        tables.items[HELMET_TEMPLATE_ID] = helmet;
         tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
@@ -59,13 +74,34 @@ protected:
         Gamedata::Install(GamedataTables());
     }
 
-    // 인벤토리에 칼을 넣고, 클라가 장착을 요청할 때 보내는 인벤토리 슬롯을 돌려준다.
-    Protocol::Slot AddSwordToInventory()
+    // 인벤토리에 아이템을 넣고, 클라가 장착을 요청할 때 보내는 인벤토리 슬롯을 돌려준다.
+    Protocol::Slot AddToInventory(int32 templateId)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(player->_inventory->AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
+        EXPECT_TRUE(player->_inventory->AddItem(&addedSlots, templateId, 1));
         EXPECT_FALSE(addedSlots.empty());
         return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
+    }
+
+    Protocol::Slot AddSwordToInventory() { return AddToInventory(SWORD_TEMPLATE_ID); }
+
+    // 저장 사본을 DB가 불러오는 것처럼 새 플레이어에 채운다. DB는 레벨, 직업, 현재 HP와 MP, 공격력, 장착 장비만 돌려준다.
+    PlayerRef LoadFromSaveData(const PlayerSaveData& data)
+    {
+        PlayerRef loaded = EntityFactory::Create<Player>(PlayerSpawnParams());
+        loaded->_playerInfo->set_class_(data.playerInfo.class_());
+        loaded->_playerInfo->set_level(data.playerInfo.level());
+
+        for (Protocol::StatType statType : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP, Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
+            loaded->SetStatValue(statType, data.statInfo.info().at(statType));
+
+        for (const auto& [gearType, slot] : data.possession.equipped_gear())
+        {
+            if (slot.has_item())
+                EXPECT_TRUE(loaded->_equipment->LoadEquipped(slot.item(), gearType));
+        }
+
+        return loaded;
     }
 
     PlayerRef player;
@@ -119,6 +155,32 @@ TEST_F(GearEquipTest, EquipAndUnequipReportRecalculatedStats)
     ASSERT_EQ(unequipPkt.updated_stat_size(), 1);
     EXPECT_EQ(unequipPkt.updated_stat(0).value(), BASE_PHYSICAL_ATTACK);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
+}
+
+// TD-037: 해제로 최대치가 줄면 현재 HP와 MP도 새 최대치로 잘려야 한다. 잘리지 않은 채 저장되면 다음 입장이
+// 「현재 HP가 최대 HP를 초과」로 거절된다.
+TEST_F(GearEquipTest, UnequippingAtFullHpSavesCopyThatPassesNextEntry)
+{
+    Protocol::S_EQUIP_GEAR equipPkt;
+    ASSERT_TRUE(player->ProcessEquipGear(AddToInventory(HELMET_TEMPLATE_ID), equipPkt));
+    player->SetStatValue(Protocol::STAT_TYPE_HP, BASE_MAX_HP + HELMET_HP);
+    player->SetStatValue(Protocol::STAT_TYPE_MP, BASE_MAX_MP + HELMET_MP);
+
+    Protocol::S_UNEQUIP_GEAR unequipPkt;
+    ASSERT_TRUE(player->ProcessUnequipGear(player->_possession->equipped_gear().at(Protocol::GEAR_TYPE_HELMET), unequipPkt));
+
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), BASE_MAX_HP);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MP), BASE_MAX_MP);
+
+    // 클라이언트도 잘린 현재 HP와 MP를 받아야 화면의 값이 최대치를 넘지 않는다.
+    map<int32, int64> reported;
+    for (const Protocol::Stat& stat : unequipPkt.updated_stat())
+        reported[stat.type()] = stat.value();
+    EXPECT_EQ(reported[Protocol::STAT_TYPE_HP], BASE_MAX_HP);
+    EXPECT_EQ(reported[Protocol::STAT_TYPE_MP], BASE_MAX_MP);
+
+    PlayerRef reloaded = LoadFromSaveData(player->MakeSaveData());
+    EXPECT_TRUE(reloaded->OnLoaded()) << "저장 사본의 현재 HP가 최대 HP를 넘으면 그 캐릭터는 다시 들어오지 못한다";
 }
 
 // DB에서 장착 장비를 불러올 때는 스텟을 바꾸지 않는다. 스텟은 OnLoaded가 대조한 뒤 RefreshFinalStat이 계산한다.

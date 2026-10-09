@@ -543,6 +543,12 @@ void Player::RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats
     apply(Protocol::STAT_TYPE_MAX_MP, finalStat->maxMp);
     apply(Protocol::STAT_TYPE_PHYSICAL_ATTACK, finalStat->physicalAttack);
     apply(Protocol::STAT_TYPE_MAGICAL_ATTACK, finalStat->magicalAttack);
+
+    // 최대치가 줄면 현재 값도 따라 줄인다. 넘는 채로 저장되면 다음 입장의 대조가 거절한다.
+    if (HasStat(Protocol::STAT_TYPE_HP) && GetStatValue(Protocol::STAT_TYPE_HP) > finalStat->maxHp)
+        apply(Protocol::STAT_TYPE_HP, finalStat->maxHp);
+    if (HasStat(Protocol::STAT_TYPE_MP) && GetStatValue(Protocol::STAT_TYPE_MP) > finalStat->maxMp)
+        apply(Protocol::STAT_TYPE_MP, finalStat->maxMp);
 }
 
 bool Player::ValidateLoadedStat()
