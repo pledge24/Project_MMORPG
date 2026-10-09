@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "PlayerTestAccess.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -187,7 +188,7 @@ protected:
     bool AddByTemplate(int32 templateId, int32 count, OUT Protocol::Slot* firstAdded)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        if (player->GetInventory().AddItem(&addedSlots, templateId, count) == false || addedSlots.empty())
+        if (PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, templateId, count) == false || addedSlots.empty())
             return false;
 
         firstAdded->CopyFrom(addedSlots[0]);
@@ -209,7 +210,7 @@ TEST_P(InventorySlotTypeTest, AddedItemIsVisibleThroughGetSlot)
     Protocol::Slot added;
     ASSERT_TRUE(AddByTemplate(slotCase.templateId, 1, &added));
 
-    Protocol::Slot* stored = player->GetInventory().GetSlot(slotCase.slotType, added.slot_id());
+    const Protocol::Slot* stored = player->GetInventory().GetSlot(slotCase.slotType, added.slot_id());
     ASSERT_NE(stored, nullptr);
     EXPECT_EQ(stored->type(), slotCase.slotType) << "조회가 다른 인벤토리를 가리킨다";
     ASSERT_TRUE(stored->has_item());
@@ -229,7 +230,7 @@ TEST_P(InventorySlotTypeTest, RemoveItemEmptiesTheSameSlot)
     request.set_type(slotCase.slotType);
 
     Protocol::Slot removed;
-    ASSERT_TRUE(player->GetInventory().RemoveItem(request, &removed, 1));
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1));
     EXPECT_EQ(removed.type(), slotCase.slotType) << "삭제가 다른 인벤토리를 가리킨다";
     EXPECT_EQ(removed.state(), Protocol::UpdateState::UPDATE_STATE_REMOVED);
     EXPECT_FALSE(removed.has_item());
@@ -260,9 +261,9 @@ TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
     request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
 
     Protocol::Slot removed;
-    player->GetInventory().RemoveItem(request, &removed, 1);
+    PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1);
 
-    Protocol::Slot* gearSlot =
+    const Protocol::Slot* gearSlot =
         player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, gearAdded.slot_id());
     ASSERT_NE(gearSlot, nullptr);
     ASSERT_TRUE(gearSlot->has_item()) << "기타 슬롯 삭제가 장비 인벤토리를 지웠다";
@@ -276,14 +277,14 @@ TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
 // 실패한 제거가 슬롯을 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
 TEST_F(InventoryTest, FailedRemoveDoesNotMarkSlotDirty)
 {
-    player->GetInventory().ClearDirtyFlags();
+    PlayerTestAccess::Inventory(*player).ClearDirtyFlags();
 
     Protocol::Slot request;
     request.set_slot_id(0);
     request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
 
     Protocol::Slot removed;
-    ASSERT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1)) << "빈 슬롯 제거는 실패해야 한다";
+    ASSERT_FALSE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1)) << "빈 슬롯 제거는 실패해야 한다";
 
     const vector<bool>* flags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
     ASSERT_NE(flags, nullptr) << "더티 플래그 표에 소비 아이템 타입이 없다";
@@ -299,7 +300,7 @@ TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
     request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
 
     Protocol::Slot removed;
-    ASSERT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1));
+    ASSERT_FALSE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1));
 
     Protocol::Slot added;
     ASSERT_TRUE(AddByTemplate(CONSUMABLE_TEMPLATE_ID, 1, &added));
@@ -319,12 +320,12 @@ TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
     SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
-    ASSERT_TRUE(player->GetInventory().AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, BUY_COUNT));
     EXPECT_EQ(addedSlots.size(), 2) << "바뀐 슬롯이 복제 목록에 전부 실리지 않았다";
 
-    Protocol::Slot* first =
+    const Protocol::Slot* first =
         player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 0);
-    Protocol::Slot* second =
+    const Protocol::Slot* second =
         player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, 1);
 
     EXPECT_LE(first->item().count(), MAX_STACK) << "한 슬롯에 스택 상한을 넘겨 쌓았다";
@@ -337,20 +338,20 @@ TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
     constexpr int32 MAX_STACK = 10;
     SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
-    ASSERT_TRUE(player->GetInventory().AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
-    player->GetInventory().ClearDirtyFlags();
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
+    PlayerTestAccess::Inventory(*player).ClearDirtyFlags();
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
-    EXPECT_FALSE(player->GetInventory().AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, 2))
+    EXPECT_FALSE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, 2))
         << "빈 칸이 1개뿐인데 2개를 받아들였다";
     EXPECT_TRUE(addedSlots.empty()) << "거절한 추가가 복제 목록을 채웠다";
 
-    Protocol::Slot* last =
+    const Protocol::Slot* last =
         player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS - 1);
     ASSERT_NE(last, nullptr);
     EXPECT_EQ(last->item().count(), MAX_STACK - 1) << "거절한 추가가 슬롯 일부를 바꿨다";
 
-    vector<bool>* dirtyFlags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
+    const vector<bool>* dirtyFlags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
     ASSERT_NE(dirtyFlags, nullptr);
     EXPECT_EQ(std::count(dirtyFlags->begin(), dirtyFlags->end(), true), 0) << "거절한 추가가 더티 플래그를 켰다";
 }
@@ -376,7 +377,7 @@ TEST_F(InventoryTest, RemoveWithUnknownSlotTypeIsRejected)
         request.set_slot_id(0);
         request.set_type(unknownType);
 
-        EXPECT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1))
+        EXPECT_FALSE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1))
             << "매핑 표에 없는 SlotType(" << unknownType << ") 제거가 거부되지 않았다";
     }
 }
@@ -391,7 +392,7 @@ TEST_F(InventoryTest, RemoveWithOutOfRangeSlotIdIsRejected)
         request.set_slot_id(outOfRangeSlotId);
         request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
 
-        EXPECT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1))
+        EXPECT_FALSE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1))
             << "범위 밖 slot_id(" << outOfRangeSlotId << ") 제거가 거부되지 않았다";
     }
 
@@ -400,12 +401,12 @@ TEST_F(InventoryTest, RemoveWithOutOfRangeSlotIdIsRejected)
     gearInstance.set_template_id(GEAR_TEMPLATE_ID);
 
     Protocol::Slot added;
-    ASSERT_TRUE(player->GetInventory().AddItem(&added, gearInstance, 1, LAST_SLOT_ID));
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&added, gearInstance, 1, LAST_SLOT_ID));
 
     Protocol::Slot lastSlotRequest;
     lastSlotRequest.set_slot_id(LAST_SLOT_ID);
     lastSlotRequest.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
-    EXPECT_TRUE(player->GetInventory().RemoveItem(lastSlotRequest, &removed, 1))
+    EXPECT_TRUE(PlayerTestAccess::Inventory(*player).RemoveItem(lastSlotRequest, &removed, 1))
         << "마지막 유효 슬롯까지 거부됐다";
 }
 
@@ -446,7 +447,7 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
     Protocol::Slot removed;
     for (int32 attempt = 0; attempt < 2; attempt++)
     {
-        EXPECT_FALSE(player->GetInventory().RemoveItem(request, &removed, 1))
+        EXPECT_FALSE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1))
             << attempt << "번째 시도에서 판정이 달라졌다";
         EXPECT_EQ(player->GetInventory().GetSlot(UNKNOWN_TYPE, 0), nullptr)
             << attempt << "번째 조회에서 판정이 달라졌다";
@@ -459,7 +460,7 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
     Protocol::Slot validRequest;
     validRequest.set_slot_id(added.slot_id());
     validRequest.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
-    EXPECT_TRUE(player->GetInventory().RemoveItem(validRequest, &removed, 1))
+    EXPECT_TRUE(PlayerTestAccess::Inventory(*player).RemoveItem(validRequest, &removed, 1))
         << "거부된 요청이 정상 경로를 망가뜨렸다";
 }
 

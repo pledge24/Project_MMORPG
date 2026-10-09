@@ -66,12 +66,12 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
 TEST_F(PlayerSaveDataTest, SnapshotCarriesDirtyFlags)
 {
     RepeatedPtrField<Protocol::Slot> addedSlots;
-    ASSERT_TRUE(player->GetInventory().AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
     ASSERT_FALSE(addedSlots.empty());
     const int32 slotId = addedSlots[0].slot_id();
 
     PlayerSaveData data = player->MakeSaveData();
-    player->GetInventory().ClearDirtyFlags();
+    PlayerTestAccess::Inventory(*player).ClearDirtyFlags();
 
     ASSERT_TRUE(data.gearDirtyFlags.has_value());
     ASSERT_LT(slotId, (int32)data.gearDirtyFlags->size());

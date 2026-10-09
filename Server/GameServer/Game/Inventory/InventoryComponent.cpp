@@ -287,6 +287,16 @@ Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_
     return bag->slots->Mutable(slot_id);
 }
 
+const Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id) const
+{
+    return const_cast<InventoryComponent*>(this)->GetSlot(type, slot_id);
+}
+
+const vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType) const
+{
+    return const_cast<InventoryComponent*>(this)->GetDirtyFlags(itemType);
+}
+
 void InventoryComponent::ClearDirtyFlags()
 {
     for (Bag& bag : _bags)

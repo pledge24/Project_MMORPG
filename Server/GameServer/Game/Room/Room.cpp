@@ -113,7 +113,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
     if (AddEntity(enterPlayer) == false)
     {
-        wcout << L"플레이어: " << enterPlayerId << "가 Room 입장에 실패했습니다" << '\n';
+        GLogger->Warning("플레이어 {}가 Room {} 입장에 실패했습니다", enterPlayerId, _roomId);
 
         if (auto session = enterPlayer->GetSession())
         {
@@ -162,9 +162,9 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
     if (RemoveEntity(leavePlayerId) == false)
     {
         if (transferRoom)
-            wcout << L"플레이어: " << leavePlayerId << "가 Room 이동 중 현재 Room 퇴장에 실패했습니다" << '\n';
+            GLogger->Warning("플레이어 {}가 Room 이동 중 현재 Room {} 퇴장에 실패했습니다", leavePlayerId, _roomId);
         else
-            wcout << L"플레이어: " << leavePlayerId << "가 Room 퇴장에 실패했습니다" << '\n';
+            GLogger->Warning("플레이어 {}가 Room {} 퇴장에 실패했습니다", leavePlayerId, _roomId);
 
         return false;
     }
@@ -403,7 +403,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
     if (rejection.has_value())
     {
-        cout << "C_HandleRespawn: " << rejection.value() << '\n';
+        GLogger->Warning("C_HandleRespawn: {}", rejection.value());
 
         if (auto session = player->GetSession())
         {
@@ -465,7 +465,8 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
                 respawnRoom->SpawnPlayer(player);
 
-                // 다른 룸에서 리스폰하면 월드를 새로 받으므로 자기 자신까지 다시 스폰해야 한다.
+                // 전에는 SpawnPlayer가 본인에게도 보냈다. 받는 횟수를 그대로 두려고 본인까지 싣는다.
+                // 클라이언트가 내 액터를 유지하고 있으면 중복 검사가 버린다.
                 respawnRoom->ReplicateRoomData(player, true);
             });
     }
@@ -585,7 +586,7 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     Protocol::S_RESPAWN respawnPkt;
     if (_respawnPoint == nullptr)
     {
-        wcout << "리스폰 위치가 없는 Room에서 리스폰 시도" << '\n';
+        GLogger->Warning("리스폰 위치가 없는 Room {}에서 리스폰을 시도했습니다", _roomId);
         {
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("No Respawn Point"));
@@ -600,7 +601,7 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     optional<RespawnResult> result = player->ProcessRespawn(respawnType, respawnPos);
     if (result.has_value() == false)
     {
-        wcout << "ProcessRespawn가 false를 반환" << '\n';
+        GLogger->Warning("플레이어 {}의 리스폰을 처리하지 못했습니다(소속 룸이 없다)", player->GetEntityId());
         {
             respawnPkt.set_success(false);
             respawnPkt.set_error_message(string("Fail to Respawn"));

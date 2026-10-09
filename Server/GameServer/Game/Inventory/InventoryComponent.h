@@ -58,9 +58,11 @@ public:
 
     /** 저장소가 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다. */
     vector<bool>* GetDirtyFlags(Protocol::ItemType itemType);
+    const vector<bool>* GetDirtyFlags(Protocol::ItemType itemType) const;
 
     /** 클라이언트 값을 받아도 된다. 저장소가 없거나 slot_id가 범위 밖이면 nullptr. */
     Protocol::Slot* GetSlot(Protocol::SlotType type, int32 slot_id);
+    const Protocol::Slot* GetSlot(Protocol::SlotType type, int32 slot_id) const;
 
     void ClearDirtyFlags();
 

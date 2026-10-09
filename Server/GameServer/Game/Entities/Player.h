@@ -113,21 +113,21 @@ protected:
 public:
     //~ 요청 처리
 
-    /** 골드가 모자라거나 가방에 넣지 못하면 false. 성공하면 totalGold에 남은 골드를 채운다. */
+    /** 골드가 모자라거나 가방에 넣지 못하면 nullopt. 결과의 gold는 남은 골드다. */
     optional<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
-    /** 팔 수 없는 아이템이면 false. 성공하면 totalGold에 남은 골드를 채운다. */
+    /** 팔 수 없는 아이템이거나 요청이 서버 슬롯과 어긋나면 nullopt. 결과의 gold는 남은 골드다. */
     optional<SellItemResult> ProcessSellItem(const Protocol::Slot& requestSlot, int32 count = 1);
     /**
      * nowMs는 재사용 대기 판정에 쓰는 현재 시각(ms)이다. 룸은 GetTickCount64()를 넘긴다.
-     * 거절해도 pkt에 entity_id를 싣는다. 슬롯은 성공했을 때만 싣는다.
+     * 사망했거나, 소모품 칸이 아니거나, 재사용 대기 중이면 nullopt.
      */
     optional<UseItemResult> ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs);
-    /** pkt의 slot_id에는 요청한 인벤토리 칸이 아니라 장착된 장비 부위가 실린다. */
+    /** 결과의 gearType은 요청한 인벤토리 칸이 아니라 장착된 장비 부위다. 착용 조건에 맞지 않으면 nullopt. */
     optional<GearChangeResult> ProcessEquipGear(const Protocol::Slot& requestSlot);
-    /** 가방에 자리가 없으면 장비 칸을 비우기 전에 거절한다. 성공하면 pkt의 template_id는 0이다. */
+    /** 가방에 자리가 없으면 장비 칸을 비우기 전에 거절한다(nullopt). 결과의 templateId는 0이다. */
     optional<GearChangeResult> ProcessUnequipGear(const Protocol::Slot& requestSlot);
     /**
-     * 소속 룸이 없으면 false. 위치를 respawnPos로 옮기고 사망 표시를 지운다.
+     * 소속 룸이 없으면 nullopt. 위치를 respawnPos로 옮기고 사망 표시를 지운다.
      * 마을 리스폰만 경험치 감소(최대 경험치의 10%)와 HP 절반 회복을 적용한다.
      */
     optional<RespawnResult> ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos);
@@ -204,14 +204,12 @@ public:
     const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
     const Protocol::Possession& GetPossession() const { return *_possession; }
 
-    //~ 컴포넌트. 쓰기는 컴포넌트의 함수(AddItem, Equip 등)로만 한다.
-    InventoryComponent& GetInventory() { return *_inventory; }
+    //~ 컴포넌트. 읽기만 연다. 소지품을 바꾸는 길은 Process* 요청 처리와 불러오기뿐이다.
     const InventoryComponent& GetInventory() const { return *_inventory; }
-    EquipmentComponent& GetEquipment() { return *_equipment; }
     const EquipmentComponent& GetEquipment() const { return *_equipment; }
 
 private:
-    /** 테스트가 준비 단계에서 레벨, 직업, 골드를 직접 채운다(GameServerTests/PlayerTestAccess.h). */
+    /** 테스트가 준비 단계에서 레벨, 직업, 골드, 소지품을 직접 채운다(GameServerTests/PlayerTestAccess.h). */
     friend struct PlayerTestAccess;
 
 	weak_ptr<GameSession> _session;

@@ -136,7 +136,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송과 저장 대기는 `ServerPacketHandler`에 있고 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |
 | 세션 송수신 | 존재. `Session::Send`가 가상이다. 테스트는 `GameServerTests/RecordingSession.h`로 보낸 패킷을 기록하고, `Receive`로 받은 패킷을 흉내 낸다 |
-| 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호를 직접 채우는 길은 이것 하나다 |
+| 플레이어 상태 준비 | 존재. `GameServerTests/PlayerTestAccess.h`(Player의 friend). 테스트가 레벨, 직업, 골드, 계정 번호, 소지품(인벤토리와 장비 컴포넌트)을 직접 바꾸는 길은 이것 하나다. Player는 컴포넌트를 읽기 전용으로만 연다 |
 
 seam이 없으면 만드는 작업이 선행된다. 그것은 리팩토링이므로 별도 계획을 세운다.
 

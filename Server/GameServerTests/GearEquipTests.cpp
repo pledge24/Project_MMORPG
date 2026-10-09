@@ -94,7 +94,7 @@ protected:
     Protocol::Slot AddToInventory(int32 templateId)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(player->GetInventory().AddItem(&addedSlots, templateId, 1));
+        EXPECT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, templateId, 1));
         EXPECT_FALSE(addedSlots.empty());
         return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
     }
@@ -114,7 +114,7 @@ protected:
         for (const auto& [gearType, slot] : data.progress.possession.equipped_gear())
         {
             if (slot.has_item())
-                EXPECT_TRUE(loaded->GetEquipment().LoadEquipped(slot.item(), gearType));
+                EXPECT_TRUE(PlayerTestAccess::Equipment(*loaded).LoadEquipped(slot.item(), gearType));
         }
 
         return loaded;
@@ -237,7 +237,7 @@ TEST_F(GearEquipTest, LoadingEquippedGearPlacesItemWithoutTouchingStats)
     Protocol::Item sword;
     sword.set_template_id(SWORD_TEMPLATE_ID);
 
-    ASSERT_TRUE(player->GetEquipment().LoadEquipped(sword, Protocol::GEAR_TYPE_WEAPON));
+    ASSERT_TRUE(PlayerTestAccess::Equipment(*player).LoadEquipped(sword, Protocol::GEAR_TYPE_WEAPON));
 
     const Protocol::Slot& weaponSlot = player->GetPossession().equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(weaponSlot.item().template_id(), SWORD_TEMPLATE_ID);

@@ -395,7 +395,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
     {
         // 넘길 큐가 없으면 잡을 만들 수 없다. 이전 코드가 이 입력에도 응답을 돌려줬으므로
         // 클라를 대기 상태로 남기지 않도록 실패 응답은 유지한다.
-        wcout << L"C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: " << roomId << '\n';
+        GLogger->Warning("C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: {}", roomId);
 
         Protocol::S_ENTER_MAP enterMapPkt;
         {
@@ -450,7 +450,7 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
         RoomRef enterRoom = GRoomManager->GetRoomRefFromRoomId(roomId);
         if (enterRoom == nullptr)
         {
-            wcout << L"최초 입장할 Room을 찾지 못함. roomId: " << roomId << '\n';
+            GLogger->Warning("최초 입장할 Room을 찾지 못함. roomId: {}", roomId);
             return false;
         }
 

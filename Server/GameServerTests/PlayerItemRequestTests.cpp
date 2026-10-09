@@ -75,7 +75,7 @@ protected:
     Protocol::Slot AddToInventory(int32 templateId)
     {
         RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(player->GetInventory().AddItem(&addedSlots, templateId, 1));
+        EXPECT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, templateId, 1));
         return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
     }
 
