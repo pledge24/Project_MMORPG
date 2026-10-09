@@ -306,7 +306,7 @@ optional<GearChangeResult> Player::ProcessUnequipGear(const Protocol::Slot& requ
 
 optional<RespawnResult> Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
-	auto ownerRoom = _room.load().lock();
+	auto ownerRoom = GetRoom();
 	if (ownerRoom == nullptr)
 		return nullopt;
 

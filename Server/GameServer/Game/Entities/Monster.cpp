@@ -103,7 +103,7 @@ void Monster::UpdateState()
     // 전환 판정은 중간에 return으로 빠져나가므로, 다음 판정 예약을 판정 함수 밖에 둔다.
     EvaluateStateTransition();
 
-    if (auto ownerRoom = _room.load().lock())
+    if (auto ownerRoom = GetRoom())
     {
         ownerRoom->DoTimer(UPDATE_STATE_INTERVAL_MS, [self = static_pointer_cast<Monster>(shared_from_this()), ownerRoom]()
             {
@@ -124,7 +124,7 @@ void Monster::EvaluateStateTransition()
     case MonsterState::Wandering:
     {
         // (Idle, Wandering) -> (chasing, attacking): detection 안에 플레이어 감지
-        if (RoomRef ownerRoom = _room.load().lock())
+        if (RoomRef ownerRoom = GetRoom())
         {
             PlayerRef player = nullptr;
             float squareDist = 0.f;
@@ -178,7 +178,7 @@ void Monster::EvaluateStateTransition()
         if (auto target = _target.lock())
         {
             Protocol::PosInfo* curPos = _posInfo;
-            Protocol::PosInfo* targetPos = target->_posInfo;
+            const Protocol::PosInfo* targetPos = &target->GetPosInfo();
             float squareDist = MathUtil::Distance(curPos, targetPos, true);
 
             // 전환 조건(attacking): 공격 범위 안에 들어옴
@@ -215,7 +215,7 @@ void Monster::EvaluateStateTransition()
         if (auto target = _target.lock())
         {
             Protocol::PosInfo* curPos = _posInfo;
-            Protocol::PosInfo* targetPos = target->_posInfo;
+            const Protocol::PosInfo* targetPos = &target->GetPosInfo();
 
             // 전환 조건(Chasing): 공격 범위를 벗어남
             if (bool outOfAttackRange = !MathUtil::InRange(curPos, targetPos, _tryAttackRange))
@@ -224,7 +224,7 @@ void Monster::EvaluateStateTransition()
                 return;
             }
 
-            auto ownerRoom = _room.load().lock();
+            auto ownerRoom = GetRoom();
             if (ownerRoom == nullptr)
                 return;
 
@@ -275,7 +275,7 @@ void Monster::SwitchState(MonsterState nextState)
     }
     case MonsterState::Wandering:
     {
-        RoomRef ownerRoom = _room.load().lock();
+        RoomRef ownerRoom = GetRoom();
         if (ownerRoom == nullptr)
             return;
 
@@ -292,7 +292,7 @@ void Monster::SwitchState(MonsterState nextState)
         if (entity == nullptr)
             return;
 
-        vector2D targetPos = MathUtil::PosInfoToVector2D(entity->_posInfo);
+        vector2D targetPos = MathUtil::PosInfoToVector2D(&entity->GetPosInfo());
 
         // 타겟으로 이동 세팅(PosInfo 세팅)
         StartMovingTo(targetPos, MIN_APPROACH_DISTANCE);
@@ -305,7 +305,7 @@ void Monster::SwitchState(MonsterState nextState)
         if (entity == nullptr)
             return;
 
-        Protocol::PosInfo* targetPos = entity->_posInfo;
+        const Protocol::PosInfo* targetPos = &entity->GetPosInfo();
 
         // 타겟 공격 세팅(PosInfo 세팅)
         {
@@ -372,7 +372,7 @@ void Monster::ExecuteStateAttacking(float deltaTime)
         return;
 
     // Look Target
-    Protocol::PosInfo* targetPos = target->_posInfo;
+    const Protocol::PosInfo* targetPos = &target->GetPosInfo();
     LookAt(MathUtil::PosInfoToVector2D(targetPos));
     
     if (_timeSinceLastAttack >= _attackInterval)
@@ -397,7 +397,7 @@ void Monster::ExecuteStateChasing(float deltaTime)
 
     // 타겟이랑 충분히 멀리 떨어져 있을때만 이동
     Protocol::PosInfo* curPos = _posInfo;
-    Protocol::PosInfo* targetPos = target->_posInfo;
+    const Protocol::PosInfo* targetPos = &target->GetPosInfo();
     if (bool tooClose = MathUtil::InRange(curPos, targetPos, MIN_APPROACH_DISTANCE))
     {
         //StopMoving("ExecuteStateChasing:: too Close");
@@ -491,7 +491,7 @@ void Monster::NormalAttack()
     if (target == nullptr)
         return;
 
-    if (auto ownerRoom = _room.load().lock())
+    if (auto ownerRoom = GetRoom())
     {
         int32 combo = 0;
         ownerRoom->HandleNormalAttack(combo, static_pointer_cast<Creature>(shared_from_this()));
@@ -518,7 +518,7 @@ bool Monster::IsTargetLost()
     if (CreatureRef creature = dynamic_pointer_cast<Creature>(target); creature && creature->IsDead())
         return true;
 
-    RoomRef ownerRoom = _room.load().lock();
+    RoomRef ownerRoom = GetRoom();
     return ownerRoom == nullptr || ownerRoom->Contains(target->GetEntityId()) == false;
 }
 

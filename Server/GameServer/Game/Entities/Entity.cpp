@@ -12,6 +12,17 @@ Entity::~Entity()
 {
 }
 
+void Entity::JoinRoom(const RoomRef& room)
+{
+    _room.store(room);
+
+    if (_hasBegunPlay == false)
+    {
+        _hasBegunPlay = true;
+        Start();
+    }
+}
+
 bool Entity::Init(const SpawnParams&)
 {
     return true;

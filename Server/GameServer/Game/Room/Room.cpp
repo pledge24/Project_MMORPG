@@ -80,7 +80,7 @@ void Room::Update()
                 continue;
 
             Protocol::PosInfo* info = movePkt.add_info();
-            info->CopyFrom(*entity->_posInfo);
+            info->CopyFrom(entity->GetPosInfo());
         }
 
         // 몬스터가 없는 룸에서는 목록이 빈다. 틱마다 빈 패킷을 보내지 않도록 여기서 끝낸다.
@@ -261,7 +261,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = _roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_INITIAL;
-        roomEnterData.enterPos = *player->_posInfo;
+        roomEnterData.enterPos = player->GetPosInfo();
 
         if (EnterPlayer(player, roomEnterData) == false)
             return;
@@ -288,7 +288,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER;
-        roomEnterData.enterPos = *player->_posInfo;
+        roomEnterData.enterPos = player->GetPosInfo();
 
         if (TransferPlayer(player, roomEnterData) == false)
             return;
@@ -355,7 +355,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
         return;
 
 	// 적용
-	player->_posInfo->CopyFrom(pkt.info());
+	player->SetPosInfo(pkt.info());
 
 	// 이동 사실을 알린다 (본인 빼고)
 	{
@@ -436,7 +436,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         Broadcast(ServerPacketHandler::MakeSerializedPacket(despawnPkt), playerId);
 
         Protocol::S_SPAWN spawnPkt;
-        spawnPkt.add_entities()->CopyFrom(*player->_entityInfo);
+        spawnPkt.add_entities()->CopyFrom(player->GetEntityInfo());
         Broadcast(ServerPacketHandler::MakeSerializedPacket(spawnPkt), playerId);
     }
     else
@@ -479,7 +479,7 @@ void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
     {
         normalAttackPkt.set_entity_id(creature->GetEntityId());
         normalAttackPkt.set_combo(combo);
-        normalAttackPkt.set_yaw(creature->_posInfo->yaw());
+        normalAttackPkt.set_yaw(creature->GetPosInfo().yaw());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
         Broadcast(sendBuffer);
@@ -639,7 +639,7 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
                 continue;
 
             // 플레이어의 장비 외형은 _entityInfo의 equipped_gear_summary에 실려 간다.
-            spawnPkt.add_entities()->CopyFrom(*item.second->_entityInfo);
+            spawnPkt.add_entities()->CopyFrom(item.second->GetEntityInfo());
         }
 
         SendPacket(session, spawnPkt);
@@ -688,7 +688,7 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(GetRandomYaw());
 }
 
-pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float range)
+pair<PlayerRef, float> Room::FindClosestPlayer(const Protocol::PosInfo* posInfo, float range)
 {
     const vector2D center = ToPlanePos(*posInfo);
 
@@ -709,7 +709,7 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
             if (player->IsDead())
                 continue;
 
-            float squareDist = MathUtil::Distance(posInfo, player->_posInfo, true);
+            float squareDist = MathUtil::Distance(posInfo, &player->GetPosInfo(), true);
             if (squareRange < squareDist)
                 continue;
 
@@ -743,7 +743,7 @@ PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
     Protocol::S_SPAWN spawnPkt;
     {
         Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
-        entityInfo->CopyFrom(*targetPlayer->_entityInfo);
+        entityInfo->CopyFrom(targetPlayer->GetEntityInfo());
 
         SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
         Broadcast(sendBuffer);
@@ -779,13 +779,7 @@ bool Room::AddEntity(EntityRef entity)
 	_entities.insert(make_pair(entityId, entity));
 
     // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
-    entity->_room.store(GetRoomRef());
-
-    if (entity->_hasBegunPlay == false)
-    {
-        entity->_hasBegunPlay = true;
-        entity->Start();
-    }
+    entity->JoinRoom(GetRoomRef());
 
 	return true;
 }
@@ -798,7 +792,7 @@ bool Room::RemoveEntity(int64 entityId)
     EntityRef entity = _entities[entityId];
 
     // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
-    _cellMatrix.Remove(entityId, ToPlanePos(*entity->_posInfo));
+    _cellMatrix.Remove(entityId, ToPlanePos(entity->GetPosInfo()));
 
     // 엔티티를 삭제한다.
 	_entities.erase(entityId);
@@ -850,7 +844,7 @@ void Room::UpdateCellMatrix()
     positions.reserve(_entities.size());
 
     for (auto& [entityId, entity] : _entities)
-        positions.emplace_back(entityId, ToPlanePos(*entity->_posInfo));
+        positions.emplace_back(entityId, ToPlanePos(entity->GetPosInfo()));
 
     _cellMatrix.Update(positions);
 }

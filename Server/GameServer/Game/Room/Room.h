@@ -98,7 +98,7 @@ public:
      * range 안에서 가장 가까운 살아 있는 플레이어와 그 거리의 제곱을 돌려준다.
      * 없으면 (nullptr, -1)이다. 셀 행렬은 Update가 다시 채우므로 위치는 최대 한 Update 주기만큼 늦다.
      */
-    pair<PlayerRef, float> FindClosestPlayer(Protocol::PosInfo* posInfo, float range);
+    pair<PlayerRef, float> FindClosestPlayer(const Protocol::PosInfo* posInfo, float range);
 
     //~ 스폰
     /**

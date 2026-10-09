@@ -154,5 +154,5 @@ TEST_F(CombatTest, MonsterInfoHpFollowsStatAfterHit)
 {
     Combat::ResolveHit(player, monster, MakeAttack(monster->GetEntityId(), 50));
 
-    EXPECT_EQ(monster->_entityInfo->monster_info().hp(), MONSTER_MAX_HP - 50) << "나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실려야 한다";
+    EXPECT_EQ(monster->GetEntityInfo().monster_info().hp(), MONSTER_MAX_HP - 50) << "나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실려야 한다";
 }

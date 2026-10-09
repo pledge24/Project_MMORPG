@@ -27,7 +27,7 @@ void GameSession::OnDisconnected()
 
 	// 룸에 들어간 적이 없으면 이 세션에서 바뀐 것이 없으므로 저장하지 않는다.
 	// 불러오기가 도중에 실패했다면 절반만 채워진 상태를 덮어쓰게 된다.
-	RoomRef room = player->_room.load().lock();
+	RoomRef room = player->GetRoom();
 	if (room == nullptr)
 		return;
 
@@ -55,7 +55,7 @@ void GameSession::OnSend(int32 len)
 bool GameSession::IsPlayerInRoom()
 {
 	PlayerRef player = _player.load();
-	return player != nullptr && player->_room.load().lock() != nullptr;
+	return player != nullptr && player->GetRoom() != nullptr;
 }
 
 void GameSession::LeaveGame(RoomRef room, PlayerRef player)

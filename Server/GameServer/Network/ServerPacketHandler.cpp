@@ -43,7 +43,7 @@ namespace
         if (player == nullptr)
             return false;
 
-        RoomRef room = player->_room.load().lock();
+        RoomRef room = player->GetRoom();
         if (room == nullptr)
             return false;
 
@@ -362,7 +362,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 
     // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면
     // OnEnterMap이 세팅한 enteringRoomId를 뒤이어 읽게 될 목적지 룸의 큐로 넘긴다.
-    RoomRef room = player->_room.load().lock();
+    RoomRef room = player->GetRoom();
     if (room == nullptr)
         room = GRoomManager->GetRoomRefFromRoomId(roomId);
 
@@ -413,11 +413,11 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
     if (player == nullptr)
         return false;
 
-    RoomRef curRoom = player->_room.load().lock();
+    RoomRef curRoom = player->GetRoom();
     if (curRoom == nullptr)
     {
         // 아직 어떤 Room에도 속하지 않은 최초 입장.
-        // player->_room 은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
+        // 소속 룸은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
         // 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고, 입장할 Room의 큐로 넘긴다.
         pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 

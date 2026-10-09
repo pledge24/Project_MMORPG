@@ -160,7 +160,7 @@ public:
     }
 
     /** z를 빼고 잰 평면 거리다. noSqrt면 제곱 거리를 돌려준다. */
-    static float Distance(Protocol::PosInfo* src, Protocol::PosInfo* dst, bool noSqrt = false)
+    static float Distance(const Protocol::PosInfo* src, const Protocol::PosInfo* dst, bool noSqrt = false)
     {
         float dx = dst->pos().x() - src->pos().x();
         float dy = dst->pos().y() - src->pos().y();
@@ -169,13 +169,13 @@ public:
         return noSqrt ? squareDist : sqrt(squareDist);
     }
 
-    static vector2D PosInfoToVector2D(Protocol::PosInfo* posInfo)
+    static vector2D PosInfoToVector2D(const Protocol::PosInfo* posInfo)
     {
         return { posInfo->pos().x(), posInfo->pos().y() };
     }
 
     /** 평면 거리가 range 이하면 true. */
-    static bool InRange(Protocol::PosInfo* curPos, Protocol::PosInfo* target, float range)
+    static bool InRange(const Protocol::PosInfo* curPos, const Protocol::PosInfo* target, float range)
     {
         float squareDist = MathUtil::Distance(curPos, target, true);
         
