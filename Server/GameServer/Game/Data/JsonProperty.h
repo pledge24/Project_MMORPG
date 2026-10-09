@@ -76,6 +76,7 @@ namespace JsonProperty
     namespace Map
     {
         constexpr std::string_view TemplateId = "templateId";
+        constexpr std::string_view MapId = "mapId";
         constexpr std::string_view MapName = "mapName";
         constexpr std::string_view MapType = "mapType";
         constexpr std::string_view HasRespawnPoint = "hasRespawnPoint";
@@ -92,6 +93,7 @@ namespace JsonProperty
         constexpr std::string_view Type = "type";
         constexpr std::string_view Src = "src";
         constexpr std::string_view Dst = "dst";
+        constexpr std::string_view PortalRadius = "portalRadius";
         constexpr std::string_view MonsterIds = "monsterIds";
         constexpr std::string_view MaxMonsterCount = "maxMonsterCount";
         // constexpr std::string_view MinMonsterCount = "minMonsterCount";

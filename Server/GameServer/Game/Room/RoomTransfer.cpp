@@ -75,3 +75,50 @@ optional<TownRespawn> RoomTransfer::FindTownRespawn()
 
     return respawn;
 }
+
+optional<string> RoomTransfer::ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos)
+{
+    // 높이는 보지 않는다. 포털 좌표의 z는 바닥이고 플레이어의 z는 캡슐 중심이다.
+    const float dx = playerPos.pos().x() - portal.srcPos.x;
+    const float dy = playerPos.pos().y() - portal.srcPos.y;
+    if (dx * dx + dy * dy > portalRadius * portalRadius)
+        return format("포털 {}의 반경 {} 밖에서 온 포털 이동 요청", portal.portalId, portalRadius);
+
+    return nullopt;
+}
+
+optional<string> RoomTransfer::ValidateFirstEnterMap(const Protocol::C_ENTER_MAP& pkt, int32 enteringRoomId)
+{
+    if (pkt.room_id() != enteringRoomId)
+        return format("불러온 룸 {}이 아닌 룸 {}으로 온 첫 맵 입장 요청", enteringRoomId, pkt.room_id());
+
+    const MapTemplate* room = Gamedata::FindMap(pkt.room_id());
+    if (room == nullptr)
+        return format("맵 표에 없는 룸 {}으로 온 맵 입장 요청", pkt.room_id());
+    if (pkt.map_id() != room->mapId)
+        return format("룸 {}의 맵 {}과 다른 맵 {}으로 온 맵 입장 요청", pkt.room_id(), room->mapId, pkt.map_id());
+
+    return nullopt;
+}
+
+optional<string> RoomTransfer::ValidateCrossMapEnter(const Protocol::C_ENTER_MAP& pkt, const MapTemplate& currentRoom, const Protocol::PosInfo& playerPos)
+{
+    const MapTemplate* destination = Gamedata::FindMap(pkt.room_id());
+    if (destination == nullptr)
+        return format("맵 표에 없는 룸 {}으로 온 맵 입장 요청", pkt.room_id());
+    if (pkt.map_id() != destination->mapId)
+        return format("룸 {}의 맵 {}과 다른 맵 {}으로 온 맵 입장 요청", pkt.room_id(), destination->mapId, pkt.map_id());
+    if (destination->mapId == currentRoom.mapId)
+        return format("같은 맵의 룸 {}으로 온 맵 입장 요청. 같은 맵 안의 이동은 포털 이동이다", pkt.room_id());
+
+    for (const PortalTemplate& portal : currentRoom.portals)
+    {
+        if (portal.dstRoomId != pkt.room_id())
+            continue;
+
+        if (ValidatePortalUse(portal, currentRoom.portalRadius, playerPos).has_value() == false)
+            return nullopt;
+    }
+
+    return format("룸 {}에서 룸 {}으로 가는 포털의 반경 밖에서 온 맵 입장 요청", currentRoom.templateId, pkt.room_id());
+}

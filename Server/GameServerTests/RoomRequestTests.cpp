@@ -231,3 +231,26 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
     EXPECT_EQ(saveData->progress.statInfo.info().at(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP / 2)
         << "마을 리스폰은 HP를 절반으로 채운다";
 }
+
+// TD-001: 맵 입장 요청은 아무 룸 번호나 받아 들어갈 룸으로 기록했다. 뒤이은 첫 입장(C_ENTER_ROOM)이 그 번호와
+// 같은지만 보므로, 조작한 클라이언트는 불러온 룸과 무관하게 아무 룸에서나 시작했다.
+TEST_F(RoomRequestTest, FirstEnterMapToOtherRoomIsRejected)
+{
+    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+    const PlayerProgress progress = MakeProgressWithSword();
+    PlayerSpawnParams params;
+    params.session = session;
+    params.progress = &progress;
+    PlayerRef newcomer = EntityFactory::Create<Player>(params);
+    ASSERT_NE(newcomer, nullptr);
+    ASSERT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID);
+
+    Protocol::C_ENTER_MAP enterMapPkt;
+    enterMapPkt.set_room_id(TOWN_ROOM_ID);
+    room->C_HandleEnterMap(enterMapPkt, newcomer);
+
+    EXPECT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID) << "들어갈 룸은 불러온 진행의 룸 그대로다";
+    vector<Protocol::S_ENTER_MAP> responses = session->SentPackets<Protocol::S_ENTER_MAP>(PKT_S_ENTER_MAP);
+    ASSERT_EQ(responses.size(), 1u);
+    EXPECT_FALSE(responses[0].success());
+}

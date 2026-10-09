@@ -385,8 +385,8 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
         return false;
     }
 
-    // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면
-    // OnEnterMap이 세팅한 enteringRoomId를 뒤이어 읽게 될 목적지 룸의 큐로 넘긴다.
+    // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면 요청한 룸의 큐로 넘긴다.
+    // 그 경우 판정은 불러온 룸과 같은지만 보므로, 다른 룸을 요청하면 그 룸의 큐에서 거절된다.
     RoomRef room = player->GetRoom();
     if (room == nullptr)
         room = GRoomManager->FindRoom(roomId);
@@ -409,23 +409,8 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
         return false;
     }
 
-    // 룸 상태를 쓰지 않지만, 여기서 기록한 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
-    room->DoAsync([pkt, player]()
-        {
-            // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
-            GameSessionRef session = player->GetSession();
-            if (session == nullptr)
-                return;
-
-            // TODO: 나중에 레벨 이동이 생기면 검증 코드 추가
-            player->OnEnterMap(pkt.map_id(), pkt.room_id());
-
-            Protocol::S_ENTER_MAP enterMapPkt;
-            enterMapPkt.set_success(true);
-            enterMapPkt.set_map_id(pkt.map_id());
-            enterMapPkt.set_room_id(pkt.room_id());
-            SendPacket(session, enterMapPkt);
-        });
+    // 여기서 기록한 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
+    room->DoAsync(&Room::C_HandleEnterMap, pkt, player);
 
     return true;
 }

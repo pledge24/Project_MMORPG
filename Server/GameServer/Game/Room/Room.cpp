@@ -248,6 +248,41 @@ optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
     return player->MakeSaveData();
 }
 
+void Room::C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player)
+{
+    // 잡이 도는 시점에 세션이 끊겼을 수 있다. 응답을 보낼 곳이 없으면 그대로 끝낸다.
+    GameSessionRef session = player->GetSession();
+    if (session == nullptr)
+        return;
+
+    // 판정에 쓰는 플레이어 상태(위치, 들어갈 룸)는 플레이어가 속한 룸 큐만 읽는다.
+    // 다른 룸으로 옮기는 중인 플레이어는 이 룸에도, 아직 룸에 들어가지 않은 상태에도 해당하지 않으므로 거절한다.
+    optional<string> rejection;
+    if (Contains(player->GetEntityId()))
+        rejection = RoomTransfer::ValidateCrossMapEnter(pkt, _mapTemplate, player->GetPosInfo());
+    else if (player->GetRoom() == nullptr)
+        rejection = RoomTransfer::ValidateFirstEnterMap(pkt, player->GetEnteringRoomId());
+    else
+        rejection = "룸을 옮기는 중에 온 맵 입장 요청";
+
+    Protocol::S_ENTER_MAP enterMapPkt;
+    enterMapPkt.set_map_id(pkt.map_id());
+    enterMapPkt.set_room_id(pkt.room_id());
+
+    if (rejection.has_value())
+    {
+        GLogger->Warning("C_HandleEnterMap: 플레이어 {}: {}", player->GetEntityId(), rejection.value());
+        enterMapPkt.set_success(false);
+        SendPacket(session, enterMapPkt);
+        return;
+    }
+
+    player->OnEnterMap(pkt.map_id(), pkt.room_id());
+
+    enterMapPkt.set_success(true);
+    SendPacket(session, enterMapPkt);
+}
+
 void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
 {
     auto session = player->GetSession();
@@ -329,10 +364,21 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     case Protocol::ENTER_TYPE_SAME_MAP_TRANSFER:
     {
         // 포탈을 통한 같은 맵 내 이동. 현재 Room의 JobQueue 위에서 실행된다.
+        // 그사이 다른 룸으로 옮겼으면 위치를 읽지 않고 버린다. 이 룸에서 퇴장시킬 수 없는 요청이므로 응답도 보내지 않는다.
+        if (Contains(player->GetEntityId()) == false)
+            return;
+
         const PortalTemplate* portal = FindPortal(pkt.portal_id());
         if (portal == nullptr)
         {
             GLogger->Warning("플레이어 {}가 현재 Room에 없는 포털 {}을 쓰려고 했다", player->GetEntityId(), pkt.portal_id());
+            sendEnterRoomFailure();
+            return;
+        }
+
+        if (optional<string> rejection = RoomTransfer::ValidatePortalUse(*portal, _mapTemplate.portalRadius, player->GetPosInfo()))
+        {
+            GLogger->Warning("C_HandleEnterRoom: 플레이어 {}: {}", player->GetEntityId(), rejection.value());
             sendEnterRoomFailure();
             return;
         }

@@ -83,6 +83,7 @@ namespace
             {"widthHalfExtent", 1500}, {"depthHalfExtent", 1500}, {"respawnPoint", MakePos(10, 20, 0)},
             {"portals", {{"lists", Json::array({portal})}}},
             {"monsterIds", Json::array()}, {"maxMonsterCount", nullptr}, {"monsterRespawnTime", nullptr},
+            {"portalRadius", 500},
         };
     }
 
@@ -94,6 +95,7 @@ namespace
             {"widthHalfExtent", 2000}, {"depthHalfExtent", 2000}, {"respawnPoint", nullptr},
             {"portals", {{"lists", Json::array()}}},
             {"monsterIds", Json::array({MONSTER_ID})}, {"maxMonsterCount", 10}, {"monsterRespawnTime", 10},
+            {"portalRadius", 300.5},
         };
     }
 
@@ -177,12 +179,17 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(town.portals[0].portalId, 11);
     EXPECT_EQ(town.portals[0].dstRoomId, FIELD_ID);
     EXPECT_FLOAT_EQ(town.portals[0].dstYaw, 180.f);
+    EXPECT_FLOAT_EQ(town.portals[0].srcPos.x, -1200.f);
+    EXPECT_FLOAT_EQ(town.portals[0].srcPos.y, 1000.f);
+    EXPECT_FLOAT_EQ(town.portalRadius, 500.f);
+    EXPECT_EQ(town.mapId, 1111);
     EXPECT_EQ(town.maxMonsterCount, 0) << "null인 몬스터 수는 0이다";
 
     const MapTemplate& field = tables.maps.at(FIELD_ID);
     EXPECT_FALSE(field.respawnPoint.has_value());
     EXPECT_EQ(field.monsterIds, vector<int32>({MONSTER_ID}));
     EXPECT_EQ(field.maxMonsterCount, 10);
+    EXPECT_FLOAT_EQ(field.portalRadius, 300.5f);
 }
 
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
@@ -312,6 +319,15 @@ TEST(GamedataParserTest, PortalToUnknownMapIsRejected)
     documents.maps[0]["portals"]["lists"][0]["dst"]["templateId"] = 99;
 
     ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "templateId 10", "99"});
+}
+
+// 반경이 0 이하면 어느 위치에서도 포털을 탈 수 없다. 표가 틀린 것이므로 부팅에서 막는다.
+TEST(GamedataParserTest, NonPositivePortalRadiusIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.maps[1]["portalRadius"] = 0;
+
+    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "2번째 행", "portalRadius"});
 }
 
 TEST(GamedataParserTest, UnknownMonsterInMapIsRejected)

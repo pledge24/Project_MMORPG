@@ -31,8 +31,27 @@ namespace RoomTransfer
      */
     optional<string> ValidateEnterRequest(const Protocol::C_ENTER_ROOM& pkt, int32 enteringRoomId);
 
+    /**
+     * 포털 이동을 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유를 돌려준다.
+     * 플레이어 위치와 포털 출발 위치의 평면(x, y) 거리가 portalRadius 이하여야 한다. 포털이 현재 룸에 있는지는 호출자가 확인한다.
+     */
+    optional<string> ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos);
+
     /** 포털의 목적지로 포털 이동의 입장 정보를 만든다. 포털이 현재 룸에 있는지는 호출자가 확인한다. */
     RoomEnterData MakePortalEnterData(const PortalTemplate& portal, int64 entityId);
+
+    /**
+     * 아직 어느 룸에도 들어가지 않은 플레이어의 C_ENTER_MAP을 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유.
+     * 불러온 진행의 룸(enteringRoomId)으로만 들어갈 수 있고, map_id는 그 룸의 맵 번호와 같아야 한다.
+     */
+    optional<string> ValidateFirstEnterMap(const Protocol::C_ENTER_MAP& pkt, int32 enteringRoomId);
+
+    /**
+     * 룸에 있는 플레이어의 C_ENTER_MAP을 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유.
+     * 현재 룸에 요청한 룸으로 가는 포털이 있고 플레이어가 그 포털의 반경 안에 있어야 한다. 목적지는 다른 맵의 룸이어야 하고
+     * (같은 맵 안의 이동은 포털 이동이다), map_id는 그 룸의 맵 번호와 같아야 한다.
+     */
+    optional<string> ValidateCrossMapEnter(const Protocol::C_ENTER_MAP& pkt, const MapTemplate& currentRoom, const Protocol::PosInfo& playerPos);
 
     /**
      * 통과하면 nullopt, 거절하면 S_RESPAWN에 실을 사유를 돌려준다.
