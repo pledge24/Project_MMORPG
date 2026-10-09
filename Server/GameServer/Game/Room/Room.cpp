@@ -202,6 +202,21 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
     return true;
 }
 
+bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
+{
+    // Leave Current Room
+    if (LeavePlayer(player, true) == false)
+    {
+        return false;
+    }
+
+    // Enter Next Room
+    RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(roomEnterData.nextRoomId);
+    nextRoom->DoAsync(&Room::EnterPlayer, player, roomEnterData);
+
+    return true;
+}
+
 optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
 {
     const int64 playerId = player->GetEntityId();
@@ -216,21 +231,6 @@ optional<PlayerSaveData> Room::HandleDisconnect(PlayerRef player)
         wcout << L"플레이어: " << playerId << L"에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다" << '\n';
 
     return player->MakeSaveData();
-}
-
-bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
-{
-    // Leave Current Room
-    if (LeavePlayer(player, true) == false)
-    {
-        return false;
-    }
-
-    // Enter Next Room
-    RoomRef nextRoom = GRoomManager->GetRoomRefFromRoomId(roomEnterData.nextRoomId);
-    nextRoom->DoAsync(&Room::EnterPlayer, player, roomEnterData);
-
-    return true;
 }
 
 // 이 함수는 Room의 데이터를 쓰지 않는다. Room에 두는 이유는 큐 하나뿐이다.
@@ -405,17 +405,6 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt)
 		SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(movePkt);
 		Broadcast(sendBuffer, player->GetEntityId());
 	}
-}
-
-void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
-{
-	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
-	Protocol::S_CHAT chatPkt;
-	chatPkt.set_entity_id(player->GetEntityId());
-	chatPkt.set_msg(pkt.msg());
-
-	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
-	Broadcast(sendBuffer);
 }
 
 void Room::C_HandleBuyItem(Protocol::C_BUY_ITEM pkt, PlayerRef player)
@@ -690,6 +679,17 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
 }
 
+void Room::C_HandleChat(Protocol::C_CHAT pkt, PlayerRef player)
+{
+	// 같은 Room의 모든 플레이어에게 그대로 중계한다 (본인 포함).
+	Protocol::S_CHAT chatPkt;
+	chatPkt.set_entity_id(player->GetEntityId());
+	chatPkt.set_msg(pkt.msg());
+
+	SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatPkt);
+	Broadcast(sendBuffer);
+}
+
 void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 {
     Protocol::S_NORMAL_ATTACK normalAttackPkt;
@@ -857,34 +857,6 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
     }
 }
 
-PlayerRef Room::SpawnPlayer(int64 entityId)
-{
-    PlayerRef targetPlayer = FindEntityAs<Player>(entityId);
-    if (targetPlayer == nullptr)
-        return nullptr;
-
-    return SpawnPlayer(targetPlayer);
-}
-
-PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
-{
-    // 룸 이동 뒤에 예약한 스폰 잡은 그사이 EnterPlayer가 접속 종료로 플레이어를 뺐어도 돈다.
-    // 룸에 없는 플레이어를 알리면 다른 클라이언트에 유령이 남는다.
-    if (Contains(targetPlayer->GetEntityId()) == false)
-        return nullptr;
-
-    Protocol::S_SPAWN spawnPkt;
-    {
-        Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
-        entityInfo->CopyFrom(*targetPlayer->_entityInfo);
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer);
-    }
-
-    return targetPlayer;
-}
-
 vector2D Room::GetRandomLocation(bool usePadding)
 {
     float paddingX = usePadding ? LOCATION_PADDING_X : 0.f;
@@ -969,6 +941,88 @@ pair<PlayerRef, float> Room::FindClosestPlayer(Protocol::PosInfo* posInfo, float
     return make_pair(closestPlayer, minDist);
 }
 
+PlayerRef Room::SpawnPlayer(int64 entityId)
+{
+    PlayerRef targetPlayer = FindEntityAs<Player>(entityId);
+    if (targetPlayer == nullptr)
+        return nullptr;
+
+    return SpawnPlayer(targetPlayer);
+}
+
+PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
+{
+    // 룸 이동 뒤에 예약한 스폰 잡은 그사이 EnterPlayer가 접속 종료로 플레이어를 뺐어도 돈다.
+    // 룸에 없는 플레이어를 알리면 다른 클라이언트에 유령이 남는다.
+    if (Contains(targetPlayer->GetEntityId()) == false)
+        return nullptr;
+
+    Protocol::S_SPAWN spawnPkt;
+    {
+        Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
+        entityInfo->CopyFrom(*targetPlayer->_entityInfo);
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
+        Broadcast(sendBuffer);
+    }
+
+    return targetPlayer;
+}
+
+void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
+{
+	for (auto& item : _entities)
+	{
+		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
+		if (player == nullptr)
+			continue;
+		if (player->GetEntityId() == exceptId)
+			continue;
+
+		if (GameSessionRef session = player->_session.lock())
+			session->Send(sendBuffer);
+	}
+}
+
+bool Room::AddEntity(EntityRef entity)
+{
+    if (entity == nullptr)
+        return false;
+
+    int64 entityId = entity->GetEntityId();
+	if (_entities.contains(entityId))
+		return false;
+
+	_entities.insert(make_pair(entityId, entity));
+
+    // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
+    entity->_room.store(GetRoomRef());
+
+    if (entity->_hasBegunPlay == false)
+    {
+        entity->_hasBegunPlay = true;
+        entity->Start();
+    }
+
+	return true;
+}
+
+bool Room::RemoveEntity(int64 entityId)
+{
+	if (_entities.contains(entityId) == false)
+		return false;
+
+    EntityRef entity = _entities[entityId];
+
+    // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
+    _cellMatrix.Remove(entityId, ToPlanePos(*entity->_posInfo));
+
+    // 엔티티를 삭제한다.
+	_entities.erase(entityId);
+
+	return true;
+}
+
 void Room::CacheRoomData()
 {
     using namespace JsonProperty::Map;
@@ -1026,59 +1080,5 @@ void Room::UpdateCellMatrix()
     for (auto& [entityId, entity] : _entities)
         positions.emplace_back(entityId, ToPlanePos(*entity->_posInfo));
 
-    _cellMatrix.Rebuild(positions);
-}
-
-bool Room::AddEntity(EntityRef entity)
-{
-    if (entity == nullptr)
-        return false;
-
-    int64 entityId = entity->GetEntityId();
-	if (_entities.contains(entityId))
-		return false;
-
-	_entities.insert(make_pair(entityId, entity));
-
-    // 틱과 AI는 소속 룸의 타이머로 돈다. 룸을 먼저 알려야 Start가 타이머를 건다.
-    entity->_room.store(GetRoomRef());
-
-    if (entity->_hasBegunPlay == false)
-    {
-        entity->_hasBegunPlay = true;
-        entity->Start();
-    }
-
-	return true;
-}
-
-bool Room::RemoveEntity(int64 entityId)
-{
-	if (_entities.contains(entityId) == false)
-		return false;
-
-    EntityRef entity = _entities[entityId];
-
-    // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
-    _cellMatrix.Remove(entityId, ToPlanePos(*entity->_posInfo));
-
-    // 엔티티를 삭제한다.
-	_entities.erase(entityId);
-
-	return true;
-}
-
-void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
-{
-	for (auto& item : _entities)
-	{
-		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
-		if (player == nullptr)
-			continue;
-		if (player->GetEntityId() == exceptId)
-			continue;
-
-		if (GameSessionRef session = player->_session.lock())
-			session->Send(sendBuffer);
-	}
+    _cellMatrix.Update(positions);
 }

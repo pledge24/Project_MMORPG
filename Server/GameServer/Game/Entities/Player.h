@@ -32,12 +32,8 @@ struct PlayerSpawnParams : public Creature::SpawnParams
 };
 
 /**
- * 접속한 캐릭터 하나를 나타내는 크리처.
- * 게임 입장 때 DB 스레드의 불러오기 잡에서 만들고(EntityFactory::Create) DB 값을 채운 뒤 OnLoaded를 부른다.
- * 룸에는 그 뒤 Room::EnterPlayer로 들어간다. 소속 룸을 DB에서 읽어야 알기 때문에 룸이 직접 만들지 않는다.
- * 룸에 들어간 뒤로는 소속 룸 큐 위에서만 다룬다. 예외는 atomic인 _room과 _disconnected다.
- * GameSession::_player와 룸의 _entities가 붙잡는다. 인벤토리와 장비는 플레이어를 weak_ptr로 가리킨다.
- * 틱을 돌지 않는다.
+ * 접속한 캐릭터 하나를 나타내는 Creature.
+ * Tick을 돌리지 않는다.
  */
 class Player : public Creature
 {
@@ -48,28 +44,23 @@ public:
 	virtual ~Player();
 
     /**
-     * DB 값을 모두 채운 뒤 DB 스레드에서 부른다. 언리얼의 FinishSpawning에 대응한다.
-     * dirty flag를 지우고 최종 스탯을 다시 계산해 DB 값과 대조한다.
-     * 레벨 표에 없는 직업이나 레벨이거나, 저장된 스탯이 계산 결과와 어긋나면 false.
+     * 플레이어 정보를 모두 채운 시점에 호출하는 함수. 언리얼의 FinishSpawning에 대응한다.
+     * 채운 플레이어 정보 검증까지 진행한다. 검증 결과가 맞지 않는다면 false. 
      */
     bool OnLoaded();
 
 protected:
     friend class EntityFactory;
-    /**
-     * 세션을 연결하고 인벤토리와 장비를 만든다.
-     * session을 넘기면 Init이 끝나기 전에 GameSession::_player가 이 플레이어로 바뀐다.
-     */
+    
+    /** 세션을 연결하고 인벤토리와 장비를 만든다. */
     bool Init(const SpawnParams& params);
+    
+    //~ Begin Entity Interface
     virtual void Tick(float deltaTime) override {};
+    //~ End Entity Interface
 
 public:
     //~ 요청 처리
-    /**
-     * 아래 함수는 모두 소속 룸 큐 위에서 부른다.
-     * 아이템 요청은 요청에 실린 아이템이 아니라 서버 슬롯에 든 아이템으로 판정한다.
-     * 요청의 아이템이 서버 슬롯과 다르면 거절한다.
-     */
 
     /** 골드가 모자라거나 가방에 넣지 못하면 false. 성공하면 totalGold에 남은 골드를 채운다. */
     bool ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count = 1);
@@ -103,7 +94,7 @@ public:
     /** 최대 레벨이면 아무것도 하지 않는다. */
     void OnLevelUp();
 
-    //~ Getter
+    //~ Player 정보 관련
     /** 이동 중인 룸이 없으면 -1이다. */
     int32 GetEnteringRoomId() { return _enteringRoomId; }
     bool IsMaxLevel() const;

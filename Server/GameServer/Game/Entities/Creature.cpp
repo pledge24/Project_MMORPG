@@ -27,8 +27,6 @@ void Creature::Start()
 void Creature::Tick(float deltaTime)
 {
     Entity::Tick(deltaTime);
-
-
 }
 
 void Creature::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)

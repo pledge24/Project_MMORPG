@@ -6,10 +6,10 @@
 #include "Game/Room/CellMatrix.h"
 
 /**
- * 맵 데이터 한 건(룸 템플릿)에 대응하는 게임 공간. 안에 든 엔티티를 소유하고 틱과 패킷 중계를 맡는다.
- * JobQueue를 상속한다. 룸 소유 상태(_entities, _cellMatrix 등)는 이 큐 위에서만 읽고 쓰므로 락이 없다.
- * 패킷 핸들러와 다른 룸은 멤버 함수를 직접 부르지 않고 DoAsync로 잡을 넣는다.
- * 서버 시작 때 main이 맵 데이터마다 하나씩 만들어 GRoomManager에 넣고, 프로세스가 끝날 때까지 산다.
+ * GameServer가 동기화를 처리하는 최소 공간 단위.
+ * 속한 Entity를 소유하며, Tick을 통해 각 Entity 및 Room 상태를 갱신한다.
+ * 모든 작업(네트워크를 통한 작업, Room 내부 작업 등)은 Job 객체 단위로 처리되며, JobQueue에 꺼내 처리한다.
+ * Room 클래스 자체는 중계 역할만 하며, 대부분의 작업은 각 컴포넌트에서 처리한다.
  */
 class Room : public JobQueue
 {
@@ -21,18 +21,13 @@ public:
     /** Init까지 마친 룸을 돌려준다. 맵 데이터가 비어 있으면 nullptr. */
     static RoomRef Create(const Json& roomData);
     bool Init(const Json& roomData);
-    /**
-     * 몬스터를 최대 수만큼 스폰하고 Update 타이머를 건다. 몬스터 하나라도 스폰에 실패하면 false.
-     * 서버 시작 때 main 스레드에서 서비스를 열기 전에 부른다.
-     */
     bool Start();
 
 protected:
-    /** ROOM_UPDATE_INTERVAL_MS(ms)마다 자기 자신을 다시 예약해 돈다. 몬스터 위치를 브로드캐스트한다. */
     void Update();
 
 public:
-    /** 엔티티가 이 룸에 없으면 아무것도 하지 않는다. 마지막 틱 이후 지난 시간(초)으로 Tick을 부른다. */
+    /** 속한 Entity의 Tick을 실행한다. */
     void TickEntity(EntityRef entity);
 
     //~ 플레이어 입장과 퇴장
@@ -43,15 +38,9 @@ public:
 	bool EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
     /** 다른 플레이어에게 S_DESPAWN을 알린다. transferRoom이 false면 떠나는 본인에게도 보낸다. */
     bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
-    /**
-     * 이 룸에서 퇴장시키고 목적지 룸 큐에 EnterPlayer를 넣는다.
-     * roomEnterData.nextRoomId는 GRoomManager에 있는 룸이어야 한다. 호출자가 먼저 확인한다.
-     */
+    /** 이 룸에서 퇴장시키고 목적지 룸 큐에 EnterPlayer를 넣는다. */
     bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
-    /**
-     * 접속 종료한 플레이어를 룸에서 빼고 저장할 상태를 돌려준다.
-     * 이 룸에 없으면(룸 이동 중이거나 이미 처리됨) 빈 값을 돌려준다. 저장은 퇴장에 성공한 쪽이 한 번만 한다.
-     */
+    /** 연결이 끊인 플레이어를 처리한다. 해당 플레이어 Entity를 제거하고, DB에 SaveData 저장을 요청한다. */
     optional<PlayerSaveData> HandleDisconnect(PlayerRef player);
 
     //~ 클라이언트 패킷 핸들러
@@ -80,13 +69,12 @@ public:
     bool HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
 
     /**
-     * 룸의 엔티티 목록을 S_SPAWN으로 플레이어에게 보낸다.
-     * includeThisPlayer는 자기 자신의 EntityInfo도 포함할지다. 클라 월드가 비어 있는 최초 입장과 맵 간 이동에서는 true,
-     * 액터가 살아 있는 경우 false.
+     * 현재 Room 정보를 S_SPAWN으로 플레이어에게 보낸다.
+     * includeThisPlayer가 false면 요청한 플레이어 정보를 제외하고 보낸다.
      */
     void ReplicateRoomData(PlayerRef player, bool includeThisPlayer);
 
-    //~ Getter
+    //~ Room 정보 관련
     /** usePadding이면 룸 경계에서 LOCATION_PADDING만큼 안쪽에서 고른다. */
     vector2D            GetRandomLocation(bool usePadding = true);
     /** -180도에서 180도 사이. */
@@ -100,7 +88,6 @@ public:
     shared_ptr<Protocol::PosInfo> GetRespawnPoint() { return _hasRespawnPoint ? _respawnPoint : nullptr; }
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
 
-    //~ Setter
     /** z는 룸 중심 높이에 LOCATION_PADDING_Z를 더한 값이다. randYaw가 false면 yaw를 건드리지 않는다. */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
     void SetValid(bool isValid) { _isValid = isValid; }

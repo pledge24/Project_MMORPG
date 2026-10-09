@@ -26,6 +26,6 @@ public:
     }
 
 private:
-    /** 1부터 발급한다. 플레이어와 몬스터가 같은 번호 공간을 쓴다. */
+    /** Entity 고유번호. 1부터 발급하며, 플레이어와 몬스터가 같은 번호 공간을 쓴다. */
     static atomic<int64> s_idGenerator;
 };

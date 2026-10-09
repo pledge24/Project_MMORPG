@@ -40,6 +40,20 @@ Player::~Player()
     delete _possession;
 }
 
+bool Player::OnLoaded()
+{
+    _inventory->ClearDirtyFlags();
+    _equippedGear->ClearDirtyFlag();
+    RefreshEquippedGearSummary();
+
+	if (CalculateFinalStat() == false)
+		return false;
+
+	CacheNextLevelUpData();
+
+	return true;
+}
+
 bool Player::Init(const SpawnParams& params)
 {
 	if (Creature::Init(params) == false)
@@ -62,20 +76,6 @@ bool Player::Init(const SpawnParams& params)
 	return true;
 }
 
-bool Player::OnLoaded()
-{
-    _inventory->ClearDirtyFlags();
-    _equippedGear->ClearDirtyFlag();
-    RefreshEquippedGearSummary();
-
-	if (CalculateFinalStat() == false)
-		return false;
-
-	CacheNextLevelUpData();
-
-	return true;
-}
-
 bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, OUT int64& totalGold, int32 templateId, int32 count)
 {
     const Json* itemData = Gamedata::FindItemData(templateId);
@@ -88,6 +88,7 @@ bool Player::ProcessBuyItem(OUT RepeatedPtrField<Protocol::Slot>* updatedSlots, 
     if (gold < buyPrice)
         return false;
 
+    // 실제 "아이템 구매" 적용 시점.
     if (_inventory->AddItem(OUT updatedSlots, templateId, count) == false)
         return false;
 
@@ -111,6 +112,7 @@ bool Player::ProcessSellItem(const Protocol::Slot& requestSlot, OUT Protocol::Sl
     int64 gold = _possession->gold();
     int64 sellPrice = itemData->value(JsonProperty::Item::SellPrice, int64(0)) * count;
 
+    // 실제 "아이템 판매" 적용 시점.
     if (_inventory->RemoveItem(requestSlot, OUT updatedSlot, count) == false)
         return false;
 
@@ -125,11 +127,9 @@ bool Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs, OUT
     // 거부 응답에도 싣는다. 클라이언트는 이 id로 내 플레이어를 찾은 뒤에야 요청 대기를 푼다.
     pkt.set_entity_id(GetEntityId());
 
-    // 사망한 크리처는 행동을 멈춘다.
     if (IsDead())
         return false;
 
-    // 소모품 슬롯의 아이템만 쓴다. 장비나 기타 아이템을 받으면 효과 없이 사라진다.
     if (requestSlot.type() != Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE)
         return false;
 
@@ -414,25 +414,6 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     }
 }
 
-void Player::RefreshEquippedGearSummary()
-{
-    // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
-    auto* summary = _playerInfo->mutable_equipped_gear_summary();
-    summary->clear();
-
-    for (const auto& pair : _possession->equipped_gear())
-    {
-        const Protocol::Slot& slot = pair.second;
-        if (slot.has_item() && slot.item().template_id() != 0)
-            (*summary)[slot.slot_id()] = slot.item().template_id();
-    }
-}
-
-bool Player::IsMaxLevel() const
-{
-    return _playerInfo->level() >= MAX_LEVEL;
-}
-
 void Player::OnLevelUp()
 {
     if (IsMaxLevel())
@@ -449,6 +430,11 @@ void Player::OnLevelUp()
     SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) + _nextLevelUpData.maIncrement);
 
     CacheNextLevelUpData();
+}
+
+bool Player::IsMaxLevel() const
+{
+    return _playerInfo->level() >= MAX_LEVEL;
 }
 
 bool Player::FindTownRespawnPoint(OUT RoomRef& respawnRoom, OUT Protocol::PosInfo& respawnPos)
@@ -619,5 +605,19 @@ void Player::CacheNextLevelUpData()
         _nextLevelUpData.paIncrement = nextLevelData.value(PA_Increment, int64(0));
         _nextLevelUpData.maIncrement = nextLevelData.value(MA_Increment, int64(0));
         _nextLevelUpData.expRequirement = nextLevelData.value(ExpRequirement, int64(0));
+    }
+}
+
+void Player::RefreshEquippedGearSummary()
+{
+    // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
+    auto* summary = _playerInfo->mutable_equipped_gear_summary();
+    summary->clear();
+
+    for (const auto& pair : _possession->equipped_gear())
+    {
+        const Protocol::Slot& slot = pair.second;
+        if (slot.has_item() && slot.item().template_id() != 0)
+            (*summary)[slot.slot_id()] = slot.item().template_id();
     }
 }

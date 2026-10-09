@@ -84,7 +84,7 @@ TEST_F(CharacterCreationTest, EmptyNameIsRejected)
     const auto cause = CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, ""));
 
     ASSERT_TRUE(cause.has_value());
-    EXPECT_EQ(cause.value(), "캐릭터 이름은 1~50자여야 합니다.");
+    EXPECT_EQ(cause.value(), "캐릭터 이름은 50이하여야 합니다.");
 }
 
 TEST_F(CharacterCreationTest, FiftyHangulCharactersPass)

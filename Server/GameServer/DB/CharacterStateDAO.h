@@ -9,13 +9,13 @@ struct PlayerSaveData;
 class CharacterStateDAO
 {
 public:
-    //~ 불러오기
+    //~ 불러오기(Load)
     /** 세션의 Player에 직접 채운다. 세션에 Player가 있어야 한다. 이 계정의 캐릭터가 아니면 false를 돌려준다. */
     static bool LoadCharacter(SessionRef session, int64 characterId);
     /** 세션의 Player에 직접 채운다. 세션에 Player가 있어야 한다. */
     static bool LoadLastState(SessionRef session, int64 characterId);
 
-    //~ 저장
+    //~ 저장(Save)
     /** 룸 큐에서 뜬 사본으로 저장한다. 살아 있는 Player는 읽지 않는다. */
     static bool SaveCharacter(const PlayerSaveData& data);
     static bool SaveLastState(const PlayerSaveData& data);

@@ -1,20 +1,21 @@
 #pragma once
 
 /**
- * 룸을 일정 크기의 셀로 자른 공간 색인이다. 엔티티 번호와 위치만 알고, 엔티티가 무엇인지는 모른다.
- * 몬스터가 가까운 플레이어를 찾는 근접 탐색에 쓴다. 어떤 엔티티를 대상으로 삼을지는 룸이 판정한다.
- * 룸이 값으로 들고 있고 룸 큐 위에서만 쓰므로 락이 없다.
+ * Room을 일정 크기의 사각형(Cell)로 자른 공간 색인.
+ * - 특정 위치에서 인접한 Entity를 탐색할 때 사용한다. 
+ * - Cell은 해당 범위 내에 존재하는 Entity들의 집합으로, 
+ * Room::Update -> CellMatrix::Update에 의해 주기적으로 갱신된다.
  */
 class CellMatrix
 {
 public:
-    /** 경계를 cellSize의 배수로 바깥쪽에 맞춰 칸을 만든다. 기존 칸은 버린다. */
+    /** 경계를 cellSize의 배수로 바깥쪽에 맞춰 칸을 만든다. */
     void Init(float minX, float maxX, float minY, float maxY, float cellSize);
 
-    /** 칸을 비우고 다시 채운다. 격자 밖 위치의 엔티티는 넣지 않는다. */
-    void Rebuild(const vector<pair<int64, vector2D>>& entities);
+    /** 모든 Cell들을 갱신한다. */
+    void Update(const vector<pair<int64, vector2D>>& entities);
 
-    /** pos가 가리키는 칸에서 엔티티를 뺀다. 격자 밖 위치면 아무것도 하지 않는다. */
+    /** pos가 가리키는 칸에서 엔티티를 제거한다. */
     void Remove(int64 entityId, const vector2D& pos);
 
     /**
@@ -26,7 +27,7 @@ public:
 private:
     using Cell = set<int64>;   // 특정 영역에 있는 EntityId
 
-    /** 격자 밖이면 nullopt. */
+    /** 위치에 해당하는 Cell 위치를 찾는다. 격자 밖이면 nullopt. */
     optional<pair<int32, int32>> FindCellIndices(const vector2D& pos) const;
 
 private:

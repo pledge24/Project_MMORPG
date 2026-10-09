@@ -1,9 +1,8 @@
 #pragma once
 
 /**
- * 접속 종료 때 DB에 저장할 플레이어 상태의 사본이다.
- * 룸 큐 위에서 Player::MakeSaveData로 만들고 DB 큐로 넘긴다.
- * DB 스레드가 살아 있는 Player를 읽으면 룸 스레드의 변경과 경쟁하므로 사본만 읽게 한다.
+ * 접속 종료 시 DB에 저장할 플레이어 상태의 사본.
+ * Player::MakeSaveData로 생성되며,생성된 사본은 DBQueue로 전달된다.
  */
 struct PlayerSaveData
 {
