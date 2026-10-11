@@ -1,186 +1,102 @@
 #include "Core/pch.h"
 #include "Game/Data/Gamedata.h"
+#include "Game/Data/GamedataParser.h"
 #include <fstream>
-#include "Utils/EncodingConverter.h"
 
-/** 직업별 레벨 테이블 */
-DataTable Gamedata::s_invalidLevelDataTable;
-DataTable Gamedata::s_warriorLevelDataTable;
+namespace
+{
+    /**
+     * 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이다.
+     * GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다.
+     */
+    constexpr string_view GAMEDATA_DIR = "Game/Data/Json/";
 
-/** 레벨 테이블 매핑 */
-unordered_map<int32, DataTable*> Gamedata::s_classLevelDataTableMappings;
+    /** 파일을 열지 못하거나 Json 문법이 틀리면 사유를 돌려준다. */
+    optional<string> ReadDocument(string_view fileName, OUT Json& document)
+    {
+        ifstream file(string(GAMEDATA_DIR) + string(fileName));
+        if (file.is_open() == false)
+            return format("{}: 파일을 열지 못했다", fileName);
 
-/**
- * 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이다.
- * GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다. 
- */
-static constexpr const char* GAMEDATA_DIR = "Game/Data/Json/";
+        try
+        {
+            document = Json::parse(file);
+        }
+        catch (const Json::parse_error& e)
+        {
+            return format("{}: Json 문법 오류(byte {}): {}", fileName, e.byte, e.what());
+        }
 
-/** 게임 데이터 */
-DataTable Gamedata::s_itemDataTable;
-DataTable Gamedata::s_mapDataTable;
-DataTable Gamedata::s_monsterDataTable;
-DataTable Gamedata::s_questDataTable;
+        return nullopt;
+    }
+}
+
+GamedataTables Gamedata::s_tables;
 
 bool Gamedata::LoadAllGamedata()
 {
-    // 레벨 테이블 매핑 초기화
-    s_classLevelDataTableMappings = {
-        make_pair(Protocol::CharacterClass::CLASS_TYPE_NONE, &s_invalidLevelDataTable),
-        make_pair(Protocol::CharacterClass::CLASS_TYPE_WARRIOR, &s_warriorLevelDataTable)
+    // 퀘스트 표(S_Quest.json)는 읽는 코드가 없어 불러오지 않는다. 퀘스트를 만들 때 템플릿과 함께 추가한다.
+    GamedataDocuments documents;
+    const pair<string_view, Json*> files[] = {
+        { GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
+        { GamedataFile::ITEMS, &documents.items },
+        { GamedataFile::MAPS, &documents.maps },
+        { GamedataFile::MONSTERS, &documents.monsters },
     };
 
-    try
+    for (const auto& [fileName, document] : files)
     {
-        // 1. 캐릭터 정보
+        if (optional<string> error = ReadDocument(fileName, OUT *document))
         {
-            ifstream file(string(GAMEDATA_DIR) + "S_Warrior_Level_Data.json");
-            if (file.is_open() == false)
-                throw wstring(L"LevelTable JSON 파일 열기 실패");
-   
-            Json json_data = Json::parse(file);
-            for (auto& row : json_data)
-            {
-                if (row.contains(JsonProperty::LevelTable::Level) == false)
-                    throw wstring(L"LevelTable JSON 파일에 level 정보가 존재하지 않음");
-
-                int32 level = row[JsonProperty::LevelTable::Level];
-                s_warriorLevelDataTable[level] = row;
-            }
+            GLogger->Error("기획 데이터를 불러오지 못했다. {}", error.value());
+            return false;
         }
-
-        // 2. 아이템 정보
-        {
-            ifstream file(string(GAMEDATA_DIR) + "S_Item.json");
-            if (file.is_open() == false)
-                throw wstring(L"Item JSON 파일 열기 실패");
-
-            Json json_data = Json::parse(file);
-            for (auto& row : json_data)
-            {
-                if(row.contains(JsonProperty::Item::TemplateId) == false)
-                    throw wstring(L"Item JSON 파일에 templateId 정보가 존재하지 않음");
-
-                int32 templateId = row[JsonProperty::Item::TemplateId];
-                s_itemDataTable[templateId] = row;
-            }
-        }
-    
-        // 3. 맵 정보
-        {
-            ifstream file(string(GAMEDATA_DIR) + "S_Map.json");
-            if (file.is_open() == false)
-                throw wstring(L"Map JSON 파일 열기 실패");
-
-            Json json_data = Json::parse(file);
-            for (auto& row : json_data)
-            {
-                if(row.contains(JsonProperty::Map::TemplateId) == false)
-                    throw wstring(L"Map JSON 파일에 templateId 정보가 존재하지 않음");
-
-                int32 templateId = row[JsonProperty::Map::TemplateId];
-                s_mapDataTable[templateId] = row;
-            }
-        }
-
-        // 4. 몬스터 정보
-        {
-            ifstream file(string(GAMEDATA_DIR) + "S_Monster.json");
-            if (file.is_open() == false)
-                throw wstring(L"Monster JSON 파일 열기 실패");
-
-            Json json_data = Json::parse(file);
-            for (auto& row : json_data)
-            {
-                if(row.contains(JsonProperty::Monster::TemplateId) == false)
-                    throw wstring(L"Monster JSON 파일에 templateId 정보가 존재하지 않음");
-
-                int32 templateId = row[JsonProperty::Monster::TemplateId];
-                s_monsterDataTable[templateId] = row;
-            }
-        }
-
-        // 5. 퀘스트 정보(현재 사용하지 않음)
-        {
-            ifstream file(string(GAMEDATA_DIR) + "S_Quest.json");
-            if (file.is_open() == false)
-                throw wstring(L"Quest JSON 파일 열기 실패");
-
-            Json json_data = Json::parse(file);
-            for (auto& row : json_data)
-            {
-                int32 templateId = row["templateId"];
-                s_questDataTable[templateId] = row;
-            }
-        }
-    
     }
-    catch (const wstring cause)
+
+    if (optional<string> error = Load(documents))
     {
-        wcout << L"Gamedata JSON 파일 로드 중 오류 발생: " << cause << '\n';
-        return false;
-    }
-    catch (const Json::parse_error& e)
-    {
-        // JSON 파싱 실패 시 예외 처리
-        wcout << L"JSON 파싱 오류 발생: " << e.what() << '\n';
-        wcout << L"오류 코드: " << e.id << '\n';
-        wcout << L"오류 발생 위치 (byte offset): " << e.byte << '\n';
+        GLogger->Error("기획 데이터 검증에 실패했다. {}", error.value());
         return false;
     }
 
     return true;
 }
 
-#ifdef _DEBUG
-void Gamedata::PrintAllGamedata()
+optional<string> Gamedata::Load(const GamedataDocuments& documents)
 {
-    for (auto elem : s_warriorLevelDataTable)
-    {
-        string str = elem.second.dump();
-        wcout << EncodingConverter::StringToWString(str) << '\n';
-    }
+    GamedataTables tables;
+    if (optional<string> error = GamedataParser::Parse(documents, OUT tables))
+        return error;
 
-    for (auto elem : s_itemDataTable)
-    {
-        string str = elem.second.dump();
-        wcout << EncodingConverter::StringToWString(str) << '\n';
-    }
-
-    for (auto elem : s_mapDataTable)
-    {
-        string str = elem.second.dump();
-        wcout << EncodingConverter::StringToWString(str) << '\n';
-    }
-
-    for (auto elem : s_monsterDataTable)
-    {
-        string str = elem.second.dump();
-        wcout << EncodingConverter::StringToWString(str) << '\n';
-    }
-
-    for (auto elem : s_questDataTable)
-    {
-        string str = elem.second.dump();
-        wcout << EncodingConverter::StringToWString(str) << '\n';
-    }
-}
-#endif
-
-const DataTable* Gamedata::FindClassLevelTable(int32 classId)
-{
-    auto it = s_classLevelDataTableMappings.find(classId);
-    if (it == s_classLevelDataTableMappings.end())
-        return nullptr;
-
-    return it->second;
+    Install(std::move(tables));
+    return nullopt;
 }
 
-const Json* Gamedata::FindItemData(int32 templateId)
+void Gamedata::Install(GamedataTables tables)
 {
-    auto it = s_itemDataTable.find(templateId);
-    if (it == s_itemDataTable.end())
-        return nullptr;
+    s_tables = std::move(tables);
+}
 
-    return &it->second;
+const ItemTemplate* Gamedata::FindItem(int32 templateId)
+{
+    auto it = s_tables.items.find(templateId);
+    return it == s_tables.items.end() ? nullptr : &it->second;
+}
+
+const MonsterTemplate* Gamedata::FindMonster(int32 templateId)
+{
+    auto it = s_tables.monsters.find(templateId);
+    return it == s_tables.monsters.end() ? nullptr : &it->second;
+}
+
+const MapTemplate* Gamedata::FindMap(int32 templateId)
+{
+    auto it = s_tables.maps.find(templateId);
+    return it == s_tables.maps.end() ? nullptr : &it->second;
+}
+
+const ClassLevelTable* Gamedata::FindClassLevelTable(int32 classId)
+{
+    auto it = s_tables.classLevelTables.find(classId);
+    return it == s_tables.classLevelTables.end() ? nullptr : &it->second;
 }

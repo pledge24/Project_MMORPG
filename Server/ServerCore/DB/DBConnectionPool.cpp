@@ -29,7 +29,10 @@ bool DBConnectionPool::Connect(int32 connectionCount, const WCHAR* connectionStr
 	{
 		DBConnection* connection = new DBConnection();
 		if (connection->Connect(_environment, connectionString) == false)
+		{
+			delete connection;
 			return false;
+		}
 
 		_connections.push_back(connection);
 	}
@@ -41,16 +44,17 @@ void DBConnectionPool::Clear()
 {
     USE_LOCK
 
+	// 연결 핸들은 환경 핸들에 딸려 있으므로 연결을 먼저 지운다. DBConnection의 소멸자가 연결을 끊고 핸들을 해제한다.
+	for (DBConnection* connection : _connections)
+		delete(connection);
+
+	_connections.clear();
+
 	if (_environment != SQL_NULL_HANDLE)
 	{
 		::SQLFreeHandle(SQL_HANDLE_ENV, _environment);
 		_environment = SQL_NULL_HANDLE;
 	}
-
-	for (DBConnection* connection : _connections)
-		delete(connection);
-
-	_connections.clear();
 }
 
 DBConnection* DBConnectionPool::Pop()

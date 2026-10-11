@@ -12,7 +12,7 @@
     룸에 남기 때문이다. 처치는 플레이어의 공격으로 몬스터가 사망하는 것이고, 처치일
     때만 보상이 붙는다.
 
-    픽스처 결합도: Gamedata::s_monsterDataTable을 손으로 시드하고 두 엔티티를 EntityFactory로
+    픽스처 결합도: 몬스터 템플릿을 Gamedata::Install로 주입하고 두 엔티티를 EntityFactory로
     만든다. 플레이어는 세션 없이 만들고 HP 스탯을 손으로 넣는다. 룸에는 넣지 않는다.
 ---------------------------------------------------------------*/
 
@@ -41,16 +41,17 @@ class CombatTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        using namespace JsonProperty::Monster;
+        MonsterTemplate data;
+        data.templateId = MONSTER_TEMPLATE_ID;
+        data.maxHp = MONSTER_MAX_HP;
+        data.minExp = MIN_EXP;
+        data.maxExp = MAX_EXP;
+        data.minGold = MIN_GOLD;
+        data.maxGold = MAX_GOLD;
 
-        Json data;
-        data[string(TemplateId)] = MONSTER_TEMPLATE_ID;
-        data[string(MaxHp)] = MONSTER_MAX_HP;
-        data[string(ExpReward)][string(MinExp)] = MIN_EXP;
-        data[string(ExpReward)][string(MaxExp)] = MAX_EXP;
-        data[string(GoldReward)][string(MinGold)] = MIN_GOLD;
-        data[string(GoldReward)][string(MaxGold)] = MAX_GOLD;
-        Gamedata::s_monsterDataTable[MONSTER_TEMPLATE_ID] = data;
+        GamedataTables tables;
+        tables.monsters[MONSTER_TEMPLATE_ID] = data;
+        Gamedata::Install(std::move(tables));
 
         MonsterSpawnParams monsterParams;
         monsterParams.templateId = MONSTER_TEMPLATE_ID;
@@ -67,7 +68,7 @@ protected:
     {
         monster.reset();
         player.reset();
-        Gamedata::s_monsterDataTable.clear();
+        Gamedata::Install(GamedataTables());
     }
 
     MonsterRef monster;
@@ -153,5 +154,5 @@ TEST_F(CombatTest, MonsterInfoHpFollowsStatAfterHit)
 {
     Combat::ResolveHit(player, monster, MakeAttack(monster->GetEntityId(), 50));
 
-    EXPECT_EQ(monster->_entityInfo->monster_info().hp(), MONSTER_MAX_HP - 50) << "나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실려야 한다";
+    EXPECT_EQ(monster->GetEntityInfo().monster_info().hp(), MONSTER_MAX_HP - 50) << "나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실려야 한다";
 }

@@ -2,85 +2,65 @@
 #include "DB/ProgressStorage.h"
 #include "DB/CharacterStateDAO.h"
 #include "DB/ItemDAO.h"
-#include "Game/Entities/Player.h"
+#include "DB/DAOCommon.h"
 #include "Game/Entities/PlayerSaveData.h"
 
-void ProgressStorage::Load(SessionRef session, int64 characterId)
+bool ProgressStorage::Load(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress)
 {
-    PlayerRef player = static_pointer_cast<GameSession>(session)->_player;
-
-    // 실패해도 클라에 알려야 로그인 화면에서 기다리지 않는다.
-    auto sendEnterGameFail = [&session]()
+    try
+    {
+        // 1. 캐릭터 기본 정보(이름, 레벨 등). 이 계정의 캐릭터가 아니면 행이 없다.
+        if (CharacterStateDAO::LoadCharacter(conn, userId, characterId, OUT progress) == false)
         {
-            Protocol::S_ENTER_GAME enterGameFailPkt;
-            enterGameFailPkt.set_success(false);
-            SEND_PACKET(enterGameFailPkt)
-        };
+            GLogger->Warning("계정 {}에 캐릭터 {}가 없어 불러오지 않습니다", userId, characterId);
+            return false;
+        }
 
-    // 1. 캐릭터 기본 정보 다시 가져오기(이름, 레벨 등 필요)
-    if (CharacterStateDAO::LoadCharacter(session, characterId) == false)
+        // 2. 캐릭터 마지막 상태(LastState)
+        CharacterStateDAO::LoadLastState(conn, characterId, OUT progress);
+
+        // 3. 캐릭터 소유 아이템
+        ItemDAO::LoadItems(conn, characterId, OUT progress);
+    }
+    catch (const exception& error)
     {
-        wcout << L"캐릭터 기본 정보 불러오기 실패" << endl;
-        sendEnterGameFail();
-        return;
+        GLogger->Error("캐릭터 {} 불러오기 실패: {}", characterId, error.what());
+        return false;
     }
 
-    // 2. 캐릭터 마지막 상태(LastState)가져오기
-    if (CharacterStateDAO::LoadLastState(session, characterId) == false)
-    {
-        wcout << L"캐릭터 마지막 상태(LastState) 불러오기 실패" << endl;
-        sendEnterGameFail();
-        return;
-    }
-
-    // 3. 캐릭터 소유 아이템 정보 가져오기
-    if (ItemDAO::LoadItems(session, characterId) == false)
-    {
-        wcout << L"캐릭터 소유 아이템 정보 불러오기 실패" << endl;
-        sendEnterGameFail();
-        return;
-    }
-
-    // DB에서 가져온 스펙을 기반으로 최종 스텟 계산
-    if (player->OnLoaded() == false)
-    {
-        sendEnterGameFail();
-        return;
-    }
-    
-    // 패킷으로 만들어서 클라이언트에게 보낸다.
-    Protocol::S_ENTER_GAME enterGamePkt;
-    {
-        enterGamePkt.set_success(true);
-        enterGamePkt.mutable_player()->CopyFrom(*player->_entityInfo);
-
-        enterGamePkt.mutable_stat_info()->CopyFrom(*player->_statInfo);
-        enterGamePkt.mutable_possession()->CopyFrom(*player->_possession);
-    }
-
-    SEND_PACKET(enterGamePkt)
+    return true;
 }
 
-void ProgressStorage::Save(const PlayerSaveData& data)
+bool ProgressStorage::Save(DBConnection& conn, const PlayerSaveData& data)
 {
-    // 1. 캐릭터 기본 정보 업데이트(이름, 레벨 등 필요)
-    if (CharacterStateDAO::SaveCharacter(data) == false)
+    const int64 characterId = data.progress.playerInfo.character_id();
+
+    // 세 단계가 따로 확정되면 레벨은 오르고 아이템은 저장되지 않는 식으로 진행이 어긋난다.
+    // DBError가 아닌 예외도 받아 되돌린다. 열린 트랜잭션을 둔 채 연결을 풀에 돌려주면 다음 잡이 그 위에서 돈다.
+    if (conn.BeginTransaction() == false)
     {
-        wcout << L"캐릭터 기본 정보 업데이트 실패" << endl;
-        return;
+        GLogger->Error("캐릭터 {} 저장 트랜잭션을 시작하지 못했습니다", characterId);
+        return false;
     }
 
-    // 2. 캐릭터 마지막 상태(LastState) 업데이트
-    if (CharacterStateDAO::SaveLastState(data) == false)
+    try
     {
-        wcout << L"캐릭터 마지막 상태(LastState) 업데이트 실패" << endl;
-        return;
+        CharacterStateDAO::SaveCharacter(conn, data);
+        CharacterStateDAO::SaveLastState(conn, data);
+        ItemDAO::SaveItems(conn, data);
+    }
+    catch (const exception& error)
+    {
+        GLogger->Error("캐릭터 {} 저장 실패. 이번 저장을 모두 되돌립니다: {}", characterId, error.what());
+        conn.Rollback();
+        return false;
     }
 
-    // 3. 캐릭터 소유 아이템 정보 업데이트
-    if (ItemDAO::SaveItems(data) == false)
+    if (conn.Commit() == false)
     {
-        wcout << L"캐릭터 소유 아이템 정보 업데이트 실패" << endl;
-        return;
+        GLogger->Error("캐릭터 {} 저장을 확정하지 못했습니다", characterId);
+        return false;
     }
+
+    return true;
 }

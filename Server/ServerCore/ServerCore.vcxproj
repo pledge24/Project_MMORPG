@@ -194,6 +194,7 @@
     <ClInclude Include="Network\SocketUtil.h" />
     <ClInclude Include="Thread\ThreadManager.h" />
     <ClInclude Include="Utils\LockQueue.h" />
+    <ClInclude Include="Utils\Logger.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\CoreGlobal.cpp" />
@@ -224,6 +225,7 @@
     <ClCompile Include="Network\SocketUtil.cpp" />
     <ClCompile Include="Thread\ThreadManager.cpp" />
     <ClCompile Include="Utils\LockQueue.cpp" />
+    <ClCompile Include="Utils\Logger.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

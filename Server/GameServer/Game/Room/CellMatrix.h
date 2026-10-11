@@ -4,7 +4,7 @@
  * Room을 일정 크기의 사각형(Cell)로 자른 공간 색인.
  * - 특정 위치에서 인접한 Entity를 탐색할 때 사용한다. 
  * - Cell은 해당 범위 내에 존재하는 Entity들의 집합으로, 
- * Room::Update -> CellMatrix::Update에 의해 주기적으로 갱신된다.
+ * 룸 틱마다 Room::UpdateCellMatrix가 CellMatrix::Update로 다시 채운다.
  */
 class CellMatrix
 {

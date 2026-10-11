@@ -24,11 +24,17 @@
     <Filter Include="GameServer\Game\Equipment">
       <UniqueIdentifier>{f5558365-b878-4854-9d36-43c09c1a2c66}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\AI">
+      <UniqueIdentifier>{1996a35a-3878-408d-9050-caf0a7d99800}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Inventory">
       <UniqueIdentifier>{07cf74dd-b75d-5821-a5fd-7f0ec6092656}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Game\Characters">
+      <UniqueIdentifier>{4879e189-484a-4f11-9016-5d7b55efb970}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Core">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
@@ -53,6 +59,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="PacketHandlerTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\ItemRequests.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomRequestTests.cpp" />
+    <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="DriverReproTests.cpp" />
+    <ClCompile Include="ItemDAOTests.cpp" />
+    <ClCompile Include="DBConnectionGuardTests.cpp" />
+    <ClCompile Include="DBWorkerTests.cpp" />
+    <ClCompile Include="..\GameServer\DB\DBWorker.cpp">
+      <Filter>GameServer\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="ParamSetTests.cpp" />
+    <ClCompile Include="CharacterListDAOTests.cpp" />
+    <ClCompile Include="ProgressStorageTests.cpp" />
+    <ClCompile Include="GameEntryTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\GameEntry.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="SessionDisconnectTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\AccessToken.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
@@ -60,6 +91,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
@@ -74,7 +106,11 @@
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
+    <ClCompile Include="ProgressCoordinatorTests.cpp" />
+    <ClCompile Include="JobTimerTests.cpp" />
     <ClCompile Include="EntityFactoryTests.cpp" />
+    <ClCompile Include="LoggerTests.cpp" />
+    <ClCompile Include="GamedataParserTests.cpp" />
     <ClCompile Include="..\Libraries\googletest\src\gtest-all.cc">
       <Filter>Libraries\googletest\src</Filter>
     </ClCompile>
@@ -87,10 +123,16 @@
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Network\ProgressCoordinator.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Network\SaveGate.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Core\Config.cpp">
+      <Filter>GameServer\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Core\ServerContext.cpp">
       <Filter>GameServer\Core</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Core\Global.cpp">
@@ -108,17 +150,11 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp">
-      <Filter>GameServer\Game\Entities</Filter>
+    <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp">
+      <Filter>GameServer\Game\Characters</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp">
-      <Filter>GameServer\Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp">
-      <Filter>GameServer\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Utils\Utils.cpp">
       <Filter>GameServer\Utils</Filter>
@@ -135,22 +171,31 @@
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp">
+    <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp">
       <Filter>GameServer\Game\Inventory</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp">
       <Filter>GameServer\Game\Combat</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp">
+    <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp">
       <Filter>GameServer\Game\Equipment</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp">
+      <Filter>GameServer\Game\AI</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
+      <Filter>GameServer\Game\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp">
       <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp">
+      <Filter>GameServer\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp">

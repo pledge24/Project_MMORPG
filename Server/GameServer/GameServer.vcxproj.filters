@@ -41,14 +41,32 @@
     <Filter Include="Game\Equipment">
       <UniqueIdentifier>{c36c017d-b07a-4db4-951a-8826a8aa4a9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\AI">
+      <UniqueIdentifier>{710ba740-885c-460b-b0eb-233bf434b28e}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Characters">
+      <UniqueIdentifier>{c86c3240-4ec0-44a0-b694-596060a93c50}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Network\ItemRequests.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\DBWorker.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\GameEntry.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\AccessToken.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Core\pch.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -59,6 +77,9 @@
     <ClCompile Include="Network\GameSessionManager.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\ProgressCoordinator.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Network\SaveGate.cpp">
       <Filter>Network</Filter>
     </ClCompile>
@@ -66,6 +87,9 @@
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\Config.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ServerContext.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Global.cpp">
@@ -83,17 +107,11 @@
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Entities\CharacterCreation.cpp">
-      <Filter>Game\Entities</Filter>
+    <ClCompile Include="Game\Characters\CharacterCreation.cpp">
+      <Filter>Game\Characters</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\TickIntervalTimer.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\TickTimer.cpp">
-      <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\Player.cpp">
       <Filter>Game\Entities</Filter>
@@ -122,22 +140,31 @@
     <ClCompile Include="DB\ItemSaveRows.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Inventory\Inventory.cpp">
+    <ClCompile Include="Game\Inventory\InventoryComponent.cpp">
       <Filter>Game\Inventory</Filter>
     </ClCompile>
     <ClCompile Include="Game\Combat\Combat.cpp">
       <Filter>Game\Combat</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Equipment\EquippedGear.cpp">
+    <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
     </ClCompile>
+    <ClCompile Include="Game\AI\MonsterAIComponent.cpp">
+      <Filter>Game\AI</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Data\Gamedata.cpp">
+      <Filter>Game\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Data\GamedataParser.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\Room.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\RoomTransfer.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Room\MoveValidation.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\CellMatrix.cpp">
@@ -148,6 +175,21 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Network\ItemRequests.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\PacketSend.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\DBWorker.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\GameEntry.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\AccessToken.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Core\Config.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -157,13 +199,13 @@
     <ClInclude Include="Core\Types.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Macro.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Network\GameSession.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\GameSessionManager.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ProgressCoordinator.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\SaveGate.h">
@@ -171,6 +213,9 @@
     </ClInclude>
     <ClInclude Include="Network\ServerPacketHandler.h">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ServerContext.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Global.h">
       <Filter>Core</Filter>
@@ -187,19 +232,13 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Entities\CharacterCreation.h">
-      <Filter>Game\Entities</Filter>
+    <ClInclude Include="Game\Characters\CharacterCreation.h">
+      <Filter>Game\Characters</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityFactory.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Utils\EncodingConverter.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TickIntervalTimer.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\TickTimer.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\Player.h">
@@ -235,14 +274,26 @@
     <ClInclude Include="DB\DAOCommon.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Inventory\Inventory.h">
+    <ClInclude Include="Game\Entities\EntityComponent.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\CombatStats.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\PlayerProgress.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Inventory\InventoryComponent.h">
       <Filter>Game\Inventory</Filter>
     </ClInclude>
     <ClInclude Include="Game\Combat\Combat.h">
       <Filter>Game\Combat</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Equipment\EquippedGear.h">
+    <ClInclude Include="Game\Equipment\EquipmentComponent.h">
       <Filter>Game\Equipment</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\AI\MonsterAIComponent.h">
+      <Filter>Game\AI</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\JsonProperty.h">
       <Filter>Game\Data</Filter>
@@ -250,10 +301,19 @@
     <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Data\GamedataParser.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\Templates.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Room\Room.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\RoomTransfer.h">
+      <Filter>Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Room\MoveValidation.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\CellMatrix.h">

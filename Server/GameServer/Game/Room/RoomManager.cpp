@@ -2,70 +2,39 @@
 #include "Game/Room/RoomManager.h"
 #include "Game/Room/Room.h"
 
-RoomManager::RoomManager()
+bool RoomManager::CreateAllRooms()
 {
-}
-
-RoomManager::~RoomManager()
-{
-    Clear();
-}
-
-RoomRef RoomManager::CreateRoom(int32 templateId)
-{
-    if (Gamedata::s_mapDataTable.find(templateId) == Gamedata::s_mapDataTable.end())
+    for (const auto& [roomId, mapTemplate] : Gamedata::GetMaps())
     {
-        wcout << L"Gamedata에 해당 room에 대한 정보 누락" << '\n';
-        return nullptr;
+        RoomRef room = Room::Create(mapTemplate);
+        if (room->Start() == false)
+        {
+            // 룸 데이터가 틀렸다는 뜻이다. 룸 하나가 빠진 채로 뜨면 그 룸으로 가는 요청이 모두 깨진다.
+            GLogger->Error("Room {} 생성에 실패했다", roomId);
+            return false;
+        }
+
+        _rooms.emplace(roomId, room);
     }
 
-    const Json& roomData = Gamedata::s_mapDataTable[templateId];
-    RoomRef room = Room::Create(roomData);
-    
-    if (room == nullptr)
+    return true;
+}
+
+RoomRef RoomManager::FindRoom(int32 roomId) const
+{
+    auto it = _rooms.find(roomId);
+    if (it == _rooms.end())
         return nullptr;
 
-    if (room->Start() == false)
-        return nullptr;
-
-    return room;
+    return it->second;
 }
 
-void RoomManager::AddRoom(int32 templateId, RoomRef room)
+vector<RoomRef> RoomManager::GetAllRooms() const
 {
-    if (_rooms.find(templateId) != _rooms.end())
-        return;
+    vector<RoomRef> rooms;
+    rooms.reserve(_rooms.size());
+    for (const auto& [roomId, room] : _rooms)
+        rooms.push_back(room);
 
-    room->SetValid(true);
-    _rooms.insert(make_pair(templateId, room));
-}
-
-void RoomManager::RemoveRoom(int32 templateId)
-{
-    if (_rooms.find(templateId) == _rooms.end())
-        return;
-
-    RoomRef room = _rooms[templateId];
-    room->SetValid(false);
-
-    _rooms.erase(templateId);
-}
-
-void RoomManager::Clear()
-{
-    for (auto pair : _rooms)
-    {
-        RoomRef room = pair.second;
-        room->SetValid(false);
-    }
-
-    _rooms.clear();
-}
-
-RoomRef RoomManager::GetRoomRefFromRoomId(int32 templateId)
-{
-    if (_rooms.contains(templateId) == false)
-        return nullptr;
-
-    return _rooms[templateId];
+    return rooms;
 }

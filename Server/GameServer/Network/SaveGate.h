@@ -4,7 +4,7 @@
  * 접속 종료 저장이 끝나기 전에는 같은 계정의 입장 불러오기를 하지 않게 막는다.
  * 계정마다 저장 대기를 표시하고, 대기 중에 온 불러오기를 하나만 맡아 둔다.
  * 세션과 DB를 모른다. 맡아 둔 일을 언제 어디서 실행할지는 호출자가 정한다.
- * 여러 스레드(IOCP, DB 큐, 타이머 큐)에서 부르므로 모든 함수가 락을 잡는다. 전역 객체 GSaveGate 하나만 있다.
+ * 여러 스레드(IOCP, DB 큐, 타이머 큐)에서 부르므로 모든 함수가 락을 잡는다. 운영 코드는 ServerContext가 만든 하나를 조율자(ProgressCoordinator)에 넘겨 쓴다.
  */
 class SaveGate
 {
@@ -29,18 +29,18 @@ public:
         uint64 token = 0; // PARKED일 때만 쓴다
     };
 
-    /** 저장 대기를 건다. 이미 대기 중이면 아무것도 하지 않는다. */
+    /** [LOCK] 저장 대기를 건다. 이미 대기 중이면 아무것도 하지 않는다. */
     void Hold(int64 userId);
 
-    /** 대기 중인 계정이고 맡아 둔 불러오기가 없을 때만 load를 맡는다. 결과별 처리는 ParkResult에 있다. */
+    /** [LOCK] 대기 중인 계정이고 맡아 둔 불러오기가 없을 때만 load를 맡는다. 결과별 처리는 ParkResult에 있다. */
     ParkTicket Park(int64 userId, ParkedLoad load);
 
-    /** 저장이 끝났을 때 부른다. 대기를 풀고 맡아 둔 불러오기가 있으면 돌려준다. */
+    /** [LOCK] 저장이 끝났을 때 부른다. 대기를 풀고 맡아 둔 불러오기가 있으면 돌려준다. */
     optional<ParkedLoad> Release(int64 userId);
 
     /**
-     * 만료 타이머에서 부른다. token이 지금 맡아 둔 불러오기의 것이면 대기를 풀고 그 불러오기를 돌려준다.
-     * 그사이 풀렸거나 다른 불러오기로 바뀌었으면 빈 값을 돌려준다.
+     * [LOCK] 만료 타이머에서 부른다. token이 지금 맡아 둔 불러오기의 것이면 그 불러오기를 내주고 돌려준다.
+     * 대기는 Release까지 남으므로 다음 불러오기는 다시 맡는다. 그사이 풀렸거나 다른 불러오기로 바뀌었으면 빈 값을 돌려준다.
      */
     optional<ParkedLoad> Expire(int64 userId, uint64 token);
 
@@ -55,5 +55,3 @@ private:
     map<int64, Entry> _entries; // 대기 중인 계정만 들어 있다
     uint64 _nextToken = 1;
 };
-
-extern SaveGate GSaveGate;

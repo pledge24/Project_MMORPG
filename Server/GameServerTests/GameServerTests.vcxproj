@@ -77,8 +77,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <!-- 작업 디렉터리를 GameServer 프로젝트 폴더로 둔다.
-       현재 테스트는 Gamedata::ItemDataTable을 손으로 시드하지만, 나중에 실 JSON을 읽는
-       테스트를 쓸 때 Gamedata의 상대 경로("Game/Data/Json/")가 그대로 맞도록. -->
+       테스트는 템플릿을 Gamedata::Install로 주입하고, 실 JSON을 읽는 테스트는 소스 위치로
+       파일을 찾는다. 디버거로 Gamedata::LoadAllGamedata를 직접 부를 때 상대 경로("Game/Data/Json/")가
+       맞도록 둔다. -->
   <PropertyGroup>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)GameServer\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
@@ -168,6 +169,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup Label="테스트 소스">
+    <ClCompile Include="PacketHandlerTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\ItemRequests.cpp" />
+    <ClCompile Include="RoomRequestTests.cpp" />
+    <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="DriverReproTests.cpp" />
+    <ClCompile Include="ItemDAOTests.cpp" />
+    <ClCompile Include="DBConnectionGuardTests.cpp" />
+    <ClCompile Include="DBWorkerTests.cpp" />
+    <ClCompile Include="..\GameServer\DB\DBWorker.cpp" />
+    <ClCompile Include="ParamSetTests.cpp" />
+    <ClCompile Include="CharacterListDAOTests.cpp" />
+    <ClCompile Include="ProgressStorageTests.cpp" />
+    <ClCompile Include="GameEntryTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
+    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="SessionDisconnectTests.cpp" />
+    <ClCompile Include="..\GameServer\Network\AccessToken.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
@@ -175,6 +193,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
@@ -189,7 +208,11 @@
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
+    <ClCompile Include="ProgressCoordinatorTests.cpp" />
+    <ClCompile Include="JobTimerTests.cpp" />
     <ClCompile Include="EntityFactoryTests.cpp" />
+    <ClCompile Include="LoggerTests.cpp" />
+    <ClCompile Include="GamedataParserTests.cpp" />
   </ItemGroup>
   <ItemGroup Label="googletest — PCH 금지(서버 pch가 using namespace std를 전역에 푼다)">
     <!-- gtest_main.cc는 쓰지 않는다. 콘솔 코드페이지를 UTF-8로 돌려야 한국어
@@ -206,7 +229,9 @@
     <ClCompile Include="..\GameServer\Network\GameSession.cpp" />
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp" />
     <ClCompile Include="..\GameServer\Core\Global.cpp" />
+    <ClCompile Include="..\GameServer\Core\ServerContext.cpp" />
     <ClCompile Include="..\GameServer\Network\SaveGate.cpp" />
+    <ClCompile Include="..\GameServer\Network\ProgressCoordinator.cpp" />
     <ClCompile Include="..\GameServer\Core\Config.cpp" />
     <ClCompile Include="..\GameServer\Network\ServerPacketHandler.cpp" />
     <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
@@ -218,21 +243,22 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Entities\CharacterCreation.cpp" />
+    <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
-    <ClCompile Include="..\GameServer\Utils\TickIntervalTimer.cpp" />
-    <ClCompile Include="..\GameServer\Utils\TickTimer.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp" />
-    <ClCompile Include="..\GameServer\Game\Inventory\Inventory.cpp" />
+    <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
-    <ClCompile Include="..\GameServer\Game\Equipment\EquippedGear.cpp" />
+    <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
+    <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp" />
+    <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />

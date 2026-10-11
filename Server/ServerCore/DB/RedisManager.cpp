@@ -19,11 +19,11 @@ bool RedisManager::Connect(const string& uri)
     {
         _uri = uri;
         _redis = make_shared<Redis>(uri);
-        wcout << L"Redis++로 레디스 연결 성공!" << '\n';
+        GLogger->Info("Redis에 연결했다");
     }
     catch (const Error& err)
     {
-        wcerr << L"Redis 오류: " << err.what() << '\n';
+        GLogger->Error("Redis에 연결하지 못했다: {}", err.what());
         return false;
     }
 

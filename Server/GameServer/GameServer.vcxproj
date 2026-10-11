@@ -174,36 +174,47 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Network\ItemRequests.h" />
+    <ClInclude Include="Network\PacketSend.h" />
+    <ClInclude Include="DB\DBWorker.h" />
+    <ClInclude Include="Network\GameEntry.h" />
+    <ClInclude Include="Network\AccessToken.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
-    <ClInclude Include="Core\Macro.h" />
     <ClInclude Include="Core\Global.h" />
+    <ClInclude Include="Core\ServerContext.h" />
     <ClInclude Include="Network\GameSession.h" />
     <ClInclude Include="Network\GameSessionManager.h" />
+    <ClInclude Include="Network\ProgressCoordinator.h" />
     <ClInclude Include="Network\SaveGate.h" />
     <ClInclude Include="Network\ServerPacketHandler.h" />
     <ClInclude Include="Protocol\Enum.pb.h" />
     <ClInclude Include="Protocol\Protocol.pb.h" />
     <ClInclude Include="Protocol\Struct.pb.h" />
     <ClInclude Include="Utils\EncodingConverter.h" />
-    <ClInclude Include="Game\Entities\CharacterCreation.h" />
+    <ClInclude Include="Game\Characters\CharacterCreation.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
-    <ClInclude Include="Utils\TickIntervalTimer.h" />
-    <ClInclude Include="Utils\TickTimer.h" />
     <ClInclude Include="Utils\Utils.h" />
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
+    <ClInclude Include="Game\Entities\EntityComponent.h" />
+    <ClInclude Include="Game\Entities\CombatStats.h" />
     <ClInclude Include="Game\Entities\Monster.h" />
     <ClInclude Include="Game\Entities\Player.h" />
     <ClInclude Include="Game\Entities\PlayerSaveData.h" />
-    <ClInclude Include="Game\Inventory\Inventory.h" />
+    <ClInclude Include="Game\Entities\PlayerProgress.h" />
+    <ClInclude Include="Game\Inventory\InventoryComponent.h" />
     <ClInclude Include="Game\Combat\Combat.h" />
-    <ClInclude Include="Game\Equipment\EquippedGear.h" />
+    <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
+    <ClInclude Include="Game\AI\MonsterAIComponent.h" />
     <ClInclude Include="Game\Data\Gamedata.h" />
+    <ClInclude Include="Game\Data\GamedataParser.h" />
+    <ClInclude Include="Game\Data\Templates.h" />
     <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomTransfer.h" />
+    <ClInclude Include="Game\Room\MoveValidation.h" />
     <ClInclude Include="Game\Room\CellMatrix.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
     <ClInclude Include="DB\CharacterListDAO.h" />
@@ -214,6 +225,10 @@
     <ClInclude Include="DB\DAOCommon.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Network\ItemRequests.cpp" />
+    <ClCompile Include="DB\DBWorker.cpp" />
+    <ClCompile Include="Network\GameEntry.cpp" />
+    <ClCompile Include="Network\AccessToken.cpp" />
     <ClCompile Include="Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Core/pch.h</PrecompiledHeaderFile>
@@ -225,10 +240,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Core/pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="Core\Global.cpp" />
+    <ClCompile Include="Core\ServerContext.cpp" />
     <ClCompile Include="Core\Config.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp" />
     <ClCompile Include="Network\GameSessionManager.cpp" />
+    <ClCompile Include="Network\ProgressCoordinator.cpp" />
     <ClCompile Include="Network\SaveGate.cpp" />
     <ClCompile Include="Network\ServerPacketHandler.cpp" />
     <ClCompile Include="Protocol\Enum.pb.cc">
@@ -249,21 +266,22 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Game\Entities\CharacterCreation.cpp" />
+    <ClCompile Include="Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
-    <ClCompile Include="Utils\TickIntervalTimer.cpp" />
-    <ClCompile Include="Utils\TickTimer.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
     <ClCompile Include="Game\Entities\Creature.cpp" />
     <ClCompile Include="Game\Entities\Entity.cpp" />
     <ClCompile Include="Game\Entities\Monster.cpp" />
     <ClCompile Include="Game\Entities\Player.cpp" />
-    <ClCompile Include="Game\Inventory\Inventory.cpp" />
+    <ClCompile Include="Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="Game\Combat\Combat.cpp" />
-    <ClCompile Include="Game\Equipment\EquippedGear.cpp" />
+    <ClCompile Include="Game\Equipment\EquipmentComponent.cpp" />
+    <ClCompile Include="Game\AI\MonsterAIComponent.cpp" />
     <ClCompile Include="Game\Data\Gamedata.cpp" />
+    <ClCompile Include="Game\Data\GamedataParser.cpp" />
     <ClCompile Include="Game\Room\Room.cpp" />
     <ClCompile Include="Game\Room\RoomTransfer.cpp" />
+    <ClCompile Include="Game\Room\MoveValidation.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
     <ClCompile Include="DB\CharacterListDAO.cpp" />

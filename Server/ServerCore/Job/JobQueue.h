@@ -51,8 +51,8 @@ public:
 		GJobTimer->Reserve(tickAfter, shared_from_this(), job);
 	}
 
-	/** 대기 중인 잡을 버린다. 잡 개수를 줄이지 않으므로 이후에 넣은 잡이 실행되지 않는다(TD-014). */
-	void					ClearJobs() { _jobs.Clear(); }
+	// 대기 중인 잡을 버리는 함수를 두지 않는다. 잡 개수만 맞춰 줄이면, 실행을 맡은 스레드가 남아 있는 사이에 다음 Push가
+	// 실행을 또 맡아 한 큐를 두 스레드가 실행한다(TD-014).
 
 public:
 	/**

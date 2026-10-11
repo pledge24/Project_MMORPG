@@ -2,7 +2,7 @@
 #include "Game/Data/P1GameDataSettings.h"
 #include "Game/Data/P1ItemData.h"
 #include "Game/Inventory/P1Inventory.h"
-#include "Game/Equipment/P1EquippedGear.h"
+#include "Game/Equipment/P1Equipment.h"
 #include "Utils/LogCategory.h"
 
 UP1MyPlayerData::UP1MyPlayerData()
@@ -34,20 +34,20 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("Inventory Is Not Exist"));
 
     // 장비 객체를 만든다
-    EquippedGear = NewObject<UP1EquippedGear>(this, UP1EquippedGear::StaticClass());
-    if (EquippedGear == nullptr)
-        UE_LOG(LogP1CharacterComp, Warning, TEXT("EquippedGear Is Not Exist"));
+    Equipment = NewObject<UP1Equipment>(this, UP1Equipment::StaticClass());
+    if (Equipment == nullptr)
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("Equipment Is Not Exist"));
 
     // 소지품 델리게이트는 이 서브시스템과 함께 사는 객체끼리 잇는다. 플레이어 액터와 무관하므로 한 번만 붙인다.
     // 내 플레이어가 스폰될 때마다 붙이면 맵을 옮길 때마다 핸들러가 하나씩 늘어난다.
     OnInvenSlotChanged.AddUObject(Inventory, &UP1Inventory::Rep_SlotChanged);
-    OnEquipmentSlotChanged.AddUObject(EquippedGear, &UP1EquippedGear::Rep_SlotChanged);
+    OnEquipmentSlotChanged.AddUObject(Equipment, &UP1Equipment::Rep_SlotChanged);
 }
 
 void UP1MyPlayerData::Deinitialize()
 {
     Inventory = nullptr;
-    EquippedGear = nullptr;
+    Equipment = nullptr;
 
     // _PlayerInfo는 _EntityInfo 안을 가리키므로 먼저 끊는다.
     _PlayerInfo = nullptr;
@@ -74,7 +74,7 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
     // 소지품 래퍼를 초기화한다
     {
         Inventory->Init(_Possession->mutable_inventory());
-        EquippedGear->Init(_Possession->mutable_equipped_gear());
+        Equipment->Init(_Possession->mutable_equipped_gear());
     }
 
     // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.

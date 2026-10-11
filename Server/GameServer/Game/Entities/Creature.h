@@ -34,16 +34,16 @@ public:
 
     /** 없는 스탯을 읽으면 안 된다. 있는지 모르면 HasStat으로 먼저 확인한다. */
     int64 GetStatValue(Protocol::StatType statType);
-    /** GetStatValue와 같은 제약을 갖는다. */
-    Protocol::Stat GetStat(Protocol::StatType statType);
 
     /** 없는 스탯이면 새로 만든다. */
     void SetStatValue(Protocol::StatType statType, const int64& value);
 
-    /** 크리처가 소유한다. 소멸자에서 지운다. */
-    Protocol::StatInfo* _statInfo;
+    const Protocol::StatInfo& GetStatInfo() const { return *_statInfo; }
 
 protected:
+    /** 크리처가 소유한다. 파생 클래스만 쓴다. 다른 클래스는 GetStatInfo와 GetStatValue로 읽는다. */
+    unique_ptr<Protocol::StatInfo> _statInfo;
+
     bool _isDead = false;
 };
 

@@ -6,7 +6,7 @@
 
 /**
  * DB 큐 여러 개를 묶어 관리한다. 전역 객체 GDBManager 하나만 있다.
- * 큐마다 DB 스레드가 하나씩 붙는다(GameServer의 DoDBJob).
+ * 큐마다 DB 스레드가 하나씩 붙는다(GameServer의 DBWorker::Run).
  */
 class DBManager
 {

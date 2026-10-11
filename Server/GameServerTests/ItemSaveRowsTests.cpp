@@ -49,9 +49,9 @@ class ItemSaveRowsTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        data.playerInfo.set_character_id(CHARACTER_ID);
+        data.progress.playerInfo.set_character_id(CHARACTER_ID);
 
-        Protocol::Inventory* inven = data.possession.mutable_inventory();
+        Protocol::Inventory* inven = data.progress.possession.mutable_inventory();
         for (int32 i = 0; i < SLOT_COUNT; i++)
         {
             *inven->add_gear() = MakeGearSlot(i, 1000 + i, 500 + i);
@@ -83,7 +83,7 @@ TEST_F(ItemSaveRowsTest, OnlyDirtyConsumableSlotsBecomeRows)
 
 TEST_F(ItemSaveRowsTest, EmptiedSlotBecomesRowWithZeroTemplate)
 {
-    *data.possession.mutable_inventory()->mutable_consumables(2) = MakeStackableSlot(2, 0, 0);
+    *data.progress.possession.mutable_inventory()->mutable_consumables(2) = MakeStackableSlot(2, 0, 0);
     (*data.consumableDirtyFlags)[2] = true;
 
     const auto rows = ItemSaveRows::BuildStackableRows(data, Protocol::ITEM_TYPE_CONSUMABLE);
@@ -144,7 +144,7 @@ TEST_F(ItemSaveRowsTest, DirtyInventoryGearBecomesUnequippedRow)
 TEST_F(ItemSaveRowsTest, DirtyEquippedGearBecomesEquippedRow)
 {
     constexpr int32 EQUIP_SLOT_ID = 4;
-    (*data.possession.mutable_equipped_gear())[EQUIP_SLOT_ID] = MakeGearSlot(EQUIP_SLOT_ID, 1100, 900);
+    (*data.progress.possession.mutable_equipped_gear())[EQUIP_SLOT_ID] = MakeGearSlot(EQUIP_SLOT_ID, 1100, 900);
     data.equippedGearDirtyFlags[EQUIP_SLOT_ID] = true;
 
     const auto rows = ItemSaveRows::BuildGearRows(data);

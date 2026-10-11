@@ -4,6 +4,7 @@
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
 #include "Network/SendBuffer.h"
 #include "Utils/Types.h"
+#include "Utils/LogCategory.h"
 #endif
 
 using PacketHandlerFunc = std::function<bool(PacketSessionRef&, BYTE*, int32)>;
@@ -69,11 +70,24 @@ private:
 		return func(session, pkt);
 	}
 
+	/** 헤더의 size(uint16)에 담기지 않는 패킷은 만들지 않고 nullptr를 돌려준다. Send는 nullptr를 버린다. */
 	template<typename T>
 	static SendBufferRef MakeSerializedPacket(T& pkt, uint16 pktId)
 	{
-		const uint16 dataSize = static_cast<uint16>(pkt.ByteSizeLong());
-		const uint16 packetSize = dataSize + sizeof(PacketHeader);
+		// 크기를 잘라 보내면 받는 쪽의 패킷 경계가 깨진다.
+		const size_t bodySize = pkt.ByteSizeLong();
+		if (bodySize > UINT16_MAX - sizeof(PacketHeader))
+		{
+#if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
+			UE_LOG(LogP1Network, Error, TEXT("패킷 %d의 본문이 %llu바이트라 헤더의 크기에 담기지 않아 보내지 않는다"), pktId, static_cast<uint64>(bodySize));
+#else
+			GLogger->Error("패킷 {}의 본문이 {}바이트라 헤더의 크기에 담기지 않아 보내지 않는다", pktId, bodySize);
+#endif
+			return nullptr;
+		}
+
+		const int32 dataSize = static_cast<int32>(bodySize);
+		const uint16 packetSize = static_cast<uint16>(bodySize + sizeof(PacketHeader));
 
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
 		SendBufferRef sendBuffer = MakeShared<SendBuffer>(packetSize);

@@ -9,7 +9,7 @@
     밀려난 세션의 저장이 userId DB 큐에 들어가기 전에 새 세션의 불러오기가 먼저
     들어가면 저장 전의 진행을 불러오고, 새 세션이 끊길 때 그 낡은 진행으로 덮어쓴다.
 
-    픽스처 결합도: 전역 GSaveGate 대신 지역 객체를 쓴다. 맡기는 불러오기는 호출 횟수만 센다.
+    픽스처 결합도: ServerContext가 만든 SaveGate 대신 지역 객체를 쓴다. 맡기는 불러오기는 호출 횟수만 센다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -80,7 +80,8 @@ TEST_F(SaveGateTest, HoldTwiceKeepsParkedLoad)
     EXPECT_EQ(gate.Park(USER_ID, MakeLoad()).result, SaveGate::ParkResult::NOT_HELD);
 }
 
-TEST_F(SaveGateTest, ExpireHandsBackParkedLoadAndEndsHold)
+// TD-003: 만료는 기다리던 입장만 돌려준다. 저장은 아직 끝나지 않았으므로 대기는 남아 다음 입장도 기다린다.
+TEST_F(SaveGateTest, ExpireHandsBackParkedLoadButKeepsHold)
 {
     gate.Hold(USER_ID);
     SaveGate::ParkTicket ticket = gate.Park(USER_ID, MakeLoad());
@@ -90,7 +91,11 @@ TEST_F(SaveGateTest, ExpireHandsBackParkedLoadAndEndsHold)
     expired->reject();
     EXPECT_EQ(rejectCount, 1);
 
-    EXPECT_EQ(gate.Park(USER_ID, MakeLoad()).result, SaveGate::ParkResult::NOT_HELD);
+    SaveGate::ParkTicket next = gate.Park(USER_ID, MakeLoad());
+    EXPECT_EQ(next.result, SaveGate::ParkResult::PARKED);
+    EXPECT_NE(next.token, ticket.token);
+    EXPECT_FALSE(gate.Expire(USER_ID, ticket.token).has_value()) << "지난 만료는 새로 맡긴 입장을 거절하지 않는다";
+    EXPECT_TRUE(gate.Release(USER_ID).has_value());
 }
 
 // 저장이 먼저 끝나 풀렸으면 늦게 온 만료 타이머는 아무것도 하지 않는다.

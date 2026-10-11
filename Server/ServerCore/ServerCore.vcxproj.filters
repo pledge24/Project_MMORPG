@@ -85,6 +85,9 @@
     <ClInclude Include="Utils\LockQueue.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\Logger.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
     <ClInclude Include="DB\DBBind.h">
       <Filter>DB</Filter>
     </ClInclude>
@@ -154,6 +157,9 @@
       <Filter>Job</Filter>
     </ClCompile>
     <ClCompile Include="Utils\LockQueue.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\Logger.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="DB\DBBind.cpp">

@@ -4,7 +4,7 @@
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
-#include "Game/Equipment/P1EquippedGear.h"
+#include "Game/Equipment/P1Equipment.h"
 
 void UP1StatusWindowWidget::NativeConstruct()
 {
@@ -22,7 +22,7 @@ void UP1StatusWindowWidget::NativeConstruct()
         {
             UpdateAllStat(MyPlayerData);
 
-            for (const auto& Pair : MyPlayerData->GetEquippedGear()->GetAllSlot())
+            for (const auto& Pair : MyPlayerData->GetEquipment()->GetAllSlot())
             {
                 const Protocol::Slot& Slot_ = Pair.second;
                 UpdateSlotWidget(Slot_);

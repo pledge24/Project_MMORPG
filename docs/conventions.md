@@ -389,7 +389,7 @@ void UP1InventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 언리얼 밖에서 도는 C++이다. UHT가 없으므로 클라이언트의 이름 규칙을 그대로 옮겨 쓰지 않는다.
 
 **적용 대상은 `Server/GameServer/`와 `Server/DummyClient/`다. `Server/ServerCore/`는 제외한다.**
-3.7의 include 규칙만은 ServerCore에도 적용한다.
+3.7의 include 규칙과 3.9의 로그 규칙만은 ServerCore에도 적용한다.
 — ServerCore는 완성된 네트워크 코어다. 게임 로직이 바뀌어도 이 계층은 바뀌지 않으므로, 이름을
 고쳐서 얻는 것보다 이미 돌아가는 코드를 건드려서 잃는 것이 크다.
 
@@ -523,6 +523,49 @@ void UnregisterUser(GameSessionRef session);
 
 락을 잡지 않고 호출자가 잡은 락에 기대는 함수에는 `[LOCK]`을 붙이지 않는다. 대신 "락을 잡은
 상태에서만 부른다"고 적는다.
+
+### 3.9 로그는 `GLogger`로 남긴다
+
+**이 절은 `Server/ServerCore/`에도 적용한다.**
+
+`cout`, `wcout`, `printf`처럼 표준 출력에 직접 쓰는 호출로 로그를 남기지 않는다. `ServerCore/Utils/Logger.h`의 전역 로거 `GLogger`에
+레벨을 골라 쓴다. 인자는 `std::format` 형식으로 넘긴다.
+
+```cpp
+GLogger->Warning("몬스터 템플릿 {}이 없다", templateId);
+```
+
+— 로그는 IOCP 워커와 DB 스레드, 메인 스레드가 한 콘솔에 함께 쓴다. 표준 출력 스트림에 바로 쓰면
+줄이 서로 섞이고, 어느 스레드가 언제 남긴 줄인지 알 수 없다. `GLogger`는 한 줄을 통째로 쓰고 시각과
+레벨, 스레드 id(`LThreadId`)를 붙인다. `ThreadManager`가 띄우지 않은 스레드는 id가 `0`으로 찍힌다.
+
+**정적 객체의 생성자와 소멸자에서는 `GLogger`를 쓰지 않는다.**
+— `GLogger`는 `main`이 만든 `CoreGlobal`(`ServerCore/Core/CoreGlobal.h`)의 생성자가 만들고 소멸자가 지운다.
+정적 객체는 `main`보다 먼저 만들어지고 `main`이 끝난 뒤에 지워지므로, 그 시점에는 `GLogger`가 아직
+`nullptr`이거나 이미 지워져 `nullptr`이다. 그 자리의 로그는 `main` 안으로 옮긴다.
+
+**전역 객체는 정적 객체로 두지 않는다.** ServerCore의 전역은 `CoreGlobal`에, 게임 서버의 전역은
+`ServerContext`(`GameServer/Core/ServerContext.h`)에 넣는다. 두 객체 모두 `main`이 맨 처음에 지역 변수로 만든다.
+— 번역 단위가 다른 정적 객체 사이에서는 만들고 지우는 순서가 정해지지 않는다. 서버를 끝낼 때 룸과 세션이
+로거나 잡 타이머보다 늦게 지워지면 이미 지운 객체를 읽는다.
+
+2026년 10월 9일(#206) 기준으로 기존 코드에는 표준 출력에 직접 쓰는 호출이 남아 있다. #205의 각 티켓이 자기가 고치는
+코드의 호출을 옮기고, 남은 것은 #213이 옮긴다.
+
+### 3.10 `Component`는 `EntityComponent` 파생에만 붙인다
+
+이름이 `Component`로 끝나는 클래스는 `EntityComponent`(`Game/Entities/EntityComponent.h`)를 상속한다.
+`EntityComponent`를 상속하는 클래스는 이름을 `Component`로 끝낸다.
+
+```
+O  class InventoryComponent : public EntityComponent
+X  class EquippedGear : public EntityComponent
+X  class StatComponent           // EntityComponent를 상속하지 않는다
+```
+
+— 이름만 보고 엔티티가 멤버로 소유하고 `Start`/`Tick`을 받는 클래스인지 알 수 있어야 한다. 근거는
+`docs/adr/0013-own-server-components-as-typed-members.md`에 있다. 클라이언트에는 이 규칙을 적용하지 않는다.
+클라이언트의 `Component` 접미사는 `UActorComponent` 파생을 뜻한다.
 
 ---
 

@@ -65,3 +65,45 @@ TEST(PacketSerialization, MoveRoundTrip)
 
     ExpectRoundTrip(pkt, PKT_S_MOVE);
 }
+
+/*--------------------------------------------------------------
+    패킷 직렬화 크기 상한
+
+    헤더의 size는 uint16이고 헤더를 포함한 길이다. 본문이 UINT16_MAX - 헤더 크기를 넘으면
+    크기를 잘라 쓰는 대신 패킷을 만들지 않는다(TD-023). 잘린 크기가 나가면 받는 쪽의 패킷 경계가 깨진다.
+---------------------------------------------------------------*/
+
+namespace
+{
+    constexpr size_t MAX_BODY_SIZE = UINT16_MAX - sizeof(PacketHeader);
+
+    /** 본문이 정확히 bodySize바이트인 S_CHAT. msg 길이가 16384 이상이면 태그 1바이트와 길이 3바이트가 붙는다. */
+    Protocol::S_CHAT MakeChatWithBodySize(size_t bodySize)
+    {
+        Protocol::S_CHAT pkt;
+        pkt.set_msg(string(bodySize - 4, 'a'));
+        return pkt;
+    }
+}
+
+TEST(PacketSerialization, LargestBodyFitsHeaderSize)
+{
+    Protocol::S_CHAT pkt = MakeChatWithBodySize(MAX_BODY_SIZE);
+    ASSERT_EQ(pkt.ByteSizeLong(), MAX_BODY_SIZE) << "준비: 본문 크기를 상한에 맞추지 못했다";
+
+    SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);
+
+    ASSERT_NE(sendBuffer, nullptr);
+    const PacketHeader* header = reinterpret_cast<const PacketHeader*>(sendBuffer->Buffer());
+    EXPECT_EQ(header->size, UINT16_MAX);
+    EXPECT_EQ(sendBuffer->WriteSize(), static_cast<int32>(UINT16_MAX));
+}
+
+TEST(PacketSerialization, BodyLargerThanHeaderSizeIsNotSerialized)
+{
+    Protocol::S_CHAT pkt = MakeChatWithBodySize(MAX_BODY_SIZE + 1);
+    ASSERT_EQ(pkt.ByteSizeLong(), MAX_BODY_SIZE + 1) << "준비: 본문 크기를 상한 + 1에 맞추지 못했다";
+
+    EXPECT_EQ(ServerPacketHandler::MakeSerializedPacket(pkt), nullptr)
+        << "헤더에 담기지 않는 크기를 잘라 보내면 받는 쪽의 패킷 경계가 깨진다";
+}

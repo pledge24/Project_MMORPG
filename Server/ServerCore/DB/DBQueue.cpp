@@ -23,6 +23,15 @@ void DBQueue::Push(JobRef&& job)
     cv.notify_one();
 }
 
+void DBQueue::Stop()
+{
+    {
+        LockGuard lock(mtx);
+        stopFlag = true;
+    }
+    cv.notify_all();
+}
+
 JobRef DBQueue::WaitForSingleJob()
 {
     UniqueLock lock(mtx);

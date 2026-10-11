@@ -3,15 +3,19 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Protocol.pb.h"
-#include "P1EquippedGear.generated.h"
+#include "P1Equipment.generated.h"
 
+/**
+ * 내 플레이어의 장착 장비 사본. 서버의 EquipmentComponent에 대응한다.
+ * UActorComponent가 아니라 UObject이므로 이름에 Component를 붙이지 않는다.
+ */
 UCLASS()
-class P1_API UP1EquippedGear : public UObject
+class P1_API UP1Equipment : public UObject
 {
     GENERATED_BODY()
 
 public:
-    UP1EquippedGear() = default;
+    UP1Equipment() = default;
 
     //~ Equipped Slots
 public:

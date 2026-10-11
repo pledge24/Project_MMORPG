@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "Core/ServerContext.h"
 
 /*--------------------------------------------------------------
     gtest_main.cc 대신 직접 main을 둔다.
@@ -14,6 +15,9 @@
 int main(int argc, char** argv)
 {
     SetConsoleOutputCP(CP_UTF8);
+
+    // 운영 코드와 같은 전역 객체를 만든다. 테스트는 이 객체가 만든 로거와 룸 관리자를 쓴다.
+    ServerContext context;
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

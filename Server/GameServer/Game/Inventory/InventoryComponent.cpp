@@ -1,10 +1,9 @@
 #include "Core/pch.h"
-#include "Game/Inventory/Inventory.h"
+#include "Game/Inventory/InventoryComponent.h"
 #include "Game/Entities/Player.h"
 
-Inventory::Inventory(PlayerRef player) : _player(player)
+InventoryComponent::InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory) : EntityComponent(owner)
 {
-    Protocol::Inventory* inventory = player->_possession->mutable_inventory();
     
     for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
     {
@@ -32,21 +31,17 @@ Inventory::Inventory(PlayerRef player) : _player(player)
     };
 }
 
-Inventory::~Inventory()
+InventoryComponent::~InventoryComponent()
 {
 }
 
-bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
+bool InventoryComponent::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
-    const Json* itemData = Gamedata::FindItemData(itemInstance.template_id());
-    if (itemData == nullptr)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
+    if (itemTemplate == nullptr)
         return false;
 
-    optional<Protocol::ItemType> itemType = ToItemType(*itemData);
-    if (itemType.has_value() == false)
-        return false;
-
-    Bag* bag = FindBag(itemType.value());
+    Bag* bag = FindBag(itemTemplate->itemType);
     if (bag == nullptr)
         return false;
 
@@ -90,26 +85,21 @@ bool Inventory::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Ite
     return true;
 }
 
-bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count)
+bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count)
 {
     if (count <= 0)
         return false;
 
-    const Json* itemDataPtr = Gamedata::FindItemData(templateId);
-    if (itemDataPtr == nullptr)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
+    if (itemTemplate == nullptr)
         return false;
 
-    const Json& itemData = *itemDataPtr;
-    optional<Protocol::ItemType> itemTypeOpt = ToItemType(itemData);
-    if (itemTypeOpt.has_value() == false)
-        return false;
-
-    const Bag* bag = FindBag(itemTypeOpt.value());
+    const Bag* bag = FindBag(itemTemplate->itemType);
     if (bag == nullptr)
         return false;
 
     const Protocol::ItemType itemType = bag->itemType;
-    const int32 maxStack = (std::max)(1, itemData.value(JsonProperty::Item::MaxStack, 1));
+    const int32 maxStack = itemTemplate->maxStack;
     const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
 
     // 슬롯을 바꾸기 전에 넣을 자리를 전부 정한다. 도중에 모자라면 이미 바꾼 슬롯을 되돌릴 방법이 없다.
@@ -135,11 +125,8 @@ bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, 
         }
     }
 
-    for (int32 slotId = 0; slotId < lookupTable.size() && remaining > 0; slotId++)
+    for (int32 slotId = FindEmptySlotId(*bag); slotId != -1 && remaining > 0; slotId = FindEmptySlotId(*bag, slotId + 1))
     {
-        if (lookupTable[slotId].has_item())
-            continue;
-
         const int32 amount = (std::min)(maxStack, remaining);
         fills.emplace_back(slotId, amount);
         remaining -= amount;
@@ -165,21 +152,42 @@ bool Inventory::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, 
     return true;
 }
 
-bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
+bool InventoryComponent::LoadItem(const Protocol::Slot& loadedSlot)
+{
+    Bag* bag = FindBag(loadedSlot.type());
+    if (bag == nullptr || IsValidSlotId(loadedSlot.slot_id()) == false)
+        return false;
+
+    // 같은 칸의 두 행을 합치면 다음 저장이 한 행만 남긴다.
+    if (bag->slots->Get(loadedSlot.slot_id()).has_item())
+        return false;
+
+    const Protocol::Item& item = loadedSlot.item();
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.template_id());
+    if (itemTemplate == nullptr || itemTemplate->itemType != bag->itemType)
+        return false;
+
+    if (item.count() < 1 || item.count() > itemTemplate->maxStack)
+        return false;
+
+    return AddItem(nullptr, item, item.count(), loadedSlot.slot_id());
+}
+
+bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
 {
     // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.
     // 인덱싱에 닿기 전에 거르지 않으면 널 역참조와 범위 밖 접근으로 프로세스가 죽는다.
     Bag* bag = FindBag(requestSlot.type());
     if (bag == nullptr)
     {
-        cout << "RemoveItem() Error: 저장소가 없는 SlotType(" << requestSlot.type() << ")" << endl;
+        GLogger->Warning("RemoveItem: 저장소가 없는 SlotType({})", static_cast<int32>(requestSlot.type()));
         return false;
     }
 
     int32 slotId = requestSlot.slot_id();
     if (IsValidSlotId(slotId) == false)
     {
-        cout << "RemoveItem() Error: 범위 밖 slot_id(" << slotId << ")" << endl;
+        GLogger->Warning("RemoveItem: 범위 밖 slot_id({})", slotId);
         return false;
     }
 
@@ -217,73 +225,54 @@ bool Inventory::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot
     return true;
 }
 
-int32 Inventory::FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId)
+int32 InventoryComponent::FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId)
 {
     if (type == Protocol::ItemType::ITEM_TYPE_NONE)
     {
-        cout << "FindFirstAvailableSlotId() Error: Invalid ItemType" << endl;
+        GLogger->Warning("FindFirstAvailableSlotId: 아이템 종류가 없다");
         return -1;
     }
 
-    Bag* bag = FindBag(type);
+    const Bag* bag = FindBag(type);
     if (bag == nullptr)
         return -1;
 
-    RepeatedPtrField<Protocol::Slot>* lookupTable = bag->slots;
-    int32 availableSlotId = -1;
-    if (type == Protocol::ItemType::ITEM_TYPE_GEAR)
+    // 장비는 합치지 않는다. 나머지는 같은 아이템이 든 슬롯을 먼저 고른다.
+    if (type != Protocol::ItemType::ITEM_TYPE_GEAR)
     {
-        // leftmost 빈 슬롯 찾기.
-        auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot& slot)
-            {
-                return slot.has_item() == false;
-            });
-
-        if(it != lookupTable->end())
-            availableSlotId = (int32)(it - lookupTable->begin());
-    }
-    else
-    {
-        bool found = false;
-
-        // 같은 아이템이 있는지 확인
+        const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
+        for (int32 slotId = 0; slotId < lookupTable.size(); slotId++)
         {
-            auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot& slot)
-                {
-                    return slot.item().template_id() == templateId;
-                });
-
-            if (it != lookupTable->end())
-            {
-                availableSlotId = (int32)(it - lookupTable->begin());
-                found = true;
-            }
+            if (lookupTable[slotId].has_item() && lookupTable[slotId].item().template_id() == templateId)
+                return slotId;
         }
-
-        if (!found)
-        {
-            // leftmost 빈 슬롯 찾기.
-            auto it = std::find_if(lookupTable->begin(), lookupTable->end(), [templateId](const Protocol::Slot& slot)
-                {
-                    return slot.has_item() == false;
-                });
-
-            if (it != lookupTable->end())
-                availableSlotId = (int32)(it - lookupTable->begin());
-        }
-            
     }
 
-    return availableSlotId;
+    return FindEmptySlotId(*bag);
 }
 
-vector<bool>* Inventory::GetDirtyFlags(Protocol::ItemType itemType)
+bool InventoryComponent::IsCoolingDown(int32 templateId, uint64 nowMs) const
+{
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
+    if (itemTemplate == nullptr)
+        return false;
+
+    auto lastUseIt = _lastUseTimeMs.find(templateId);
+    return lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs;
+}
+
+void InventoryComponent::StartCooldown(int32 templateId, uint64 nowMs)
+{
+    _lastUseTimeMs[templateId] = nowMs;
+}
+
+vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType)
 {
     Bag* bag = FindBag(itemType);
     return bag != nullptr ? &bag->dirtyFlags : nullptr;
 }
 
-Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
+Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id)
 {
     // 슬롯 해석의 단일 창구다. RemoveItem도 같은 FindBag을 거친다.
     // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
@@ -298,13 +287,23 @@ Protocol::Slot* Inventory::GetSlot(Protocol::SlotType type, int32 slot_id)
     return bag->slots->Mutable(slot_id);
 }
 
-void Inventory::ClearDirtyFlags()
+const Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id) const
+{
+    return const_cast<InventoryComponent*>(this)->GetSlot(type, slot_id);
+}
+
+const vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType) const
+{
+    return const_cast<InventoryComponent*>(this)->GetDirtyFlags(itemType);
+}
+
+void InventoryComponent::ClearDirtyFlags()
 {
     for (Bag& bag : _bags)
         std::fill(bag.dirtyFlags.begin(), bag.dirtyFlags.end(), false);
 }
 
-Inventory::Bag* Inventory::FindBag(Protocol::ItemType itemType)
+InventoryComponent::Bag* InventoryComponent::FindBag(Protocol::ItemType itemType)
 {
     for (Bag& bag : _bags)
     {
@@ -315,7 +314,7 @@ Inventory::Bag* Inventory::FindBag(Protocol::ItemType itemType)
     return nullptr;
 }
 
-Inventory::Bag* Inventory::FindBag(Protocol::SlotType slotType)
+InventoryComponent::Bag* InventoryComponent::FindBag(Protocol::SlotType slotType)
 {
     for (Bag& bag : _bags)
     {
@@ -326,23 +325,14 @@ Inventory::Bag* Inventory::FindBag(Protocol::SlotType slotType)
     return nullptr;
 }
 
-optional<Protocol::ItemType> Inventory::ToItemType(const Json& itemData)
+int32 InventoryComponent::FindEmptySlotId(const Bag& bag, int32 fromSlotId)
 {
-    if (itemData.is_object() == false)
-        return nullopt;
+    const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag.slots;
+    for (int32 slotId = fromSlotId; slotId < lookupTable.size(); slotId++)
+    {
+        if (lookupTable[slotId].has_item() == false)
+            return slotId;
+    }
 
-    auto fieldIt = itemData.find(string(JsonProperty::Item::ItemType));
-    if (fieldIt == itemData.end() || fieldIt->is_string() == false)
-        return nullopt;
-
-    // 기획 원본은 열거형 이름에서 접두사를 뺀 값(GEAR)을 적는다. 이름 표는 protobuf가 만든 것을 쓴다.
-    Protocol::ItemType itemType;
-    if (Protocol::ItemType_Parse(string(ITEM_TYPE_NAME_PREFIX) + fieldIt->get<string>(), &itemType) == false)
-        return nullopt;
-
-    if (itemType == Protocol::ItemType::ITEM_TYPE_NONE)
-        return nullopt;
-
-    return itemType;
+    return -1;
 }
-

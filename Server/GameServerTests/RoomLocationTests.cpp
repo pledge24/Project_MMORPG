@@ -25,19 +25,13 @@ namespace
 
     RoomRef MakeRoom(float depthHalfExtent, float widthHalfExtent)
     {
-        using namespace JsonProperty::Map;
+        MapTemplate mapTemplate;
+        mapTemplate.templateId = 99;
+        mapTemplate.center = TemplatePos{ CENTER_X, CENTER_Y, 0.f };
+        mapTemplate.depthHalfExtent = depthHalfExtent;
+        mapTemplate.widthHalfExtent = widthHalfExtent;
 
-        Json roomData;
-        roomData[string(TemplateId)] = 99;
-        roomData[string(CenterPos)][string(PosX)] = CENTER_X;
-        roomData[string(CenterPos)][string(PosY)] = CENTER_Y;
-        roomData[string(CenterPos)][string(PosZ)] = 0.f;
-        roomData[string(DepthHalfExtent)] = depthHalfExtent;
-        roomData[string(WidthHalfExtent)] = widthHalfExtent;
-        roomData[string(MonsterIds)] = Json::array();
-        roomData[string(HasRespawnPoint)] = false;
-
-        return Room::Create(roomData);
+        return Room::Create(mapTemplate);
     }
 }
 

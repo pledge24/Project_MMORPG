@@ -23,22 +23,19 @@ optional<string> RoomTransfer::ValidateEnterRequest(const Protocol::C_ENTER_ROOM
     }
 }
 
-RoomEnterData RoomTransfer::MakePortalEnterData(const Json& portal, int64 entityId)
+RoomEnterData RoomTransfer::MakePortalEnterData(const PortalTemplate& portal, int64 entityId)
 {
-    using namespace JsonProperty::Map;
-    const Json& dst = portal[Dst];
-
     RoomEnterData enterData;
-    enterData.nextRoomId = dst[TemplateId];
+    enterData.nextRoomId = portal.dstRoomId;
     enterData.enterType = Protocol::ENTER_TYPE_SAME_MAP_TRANSFER;
 
     Protocol::PosInfo enterPos;
     Protocol::Vector& pos = *enterPos.mutable_pos();
     enterPos.set_entity_id(entityId);
-    pos.set_x(dst[PosX]);
-    pos.set_y(dst[PosY]);
-    pos.set_z(dst[PosZ]);
-    enterPos.set_yaw(dst[Yaw]);
+    pos.set_x(portal.dstPos.x);
+    pos.set_y(portal.dstPos.y);
+    pos.set_z(portal.dstPos.z);
+    enterPos.set_yaw(portal.dstYaw);
     enterPos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
     // 클라이언트는 내 플레이어를 이 enter_pos로 옮기므로 반드시 채워야 한다.
@@ -57,4 +54,71 @@ optional<string> RoomTransfer::ValidateRespawn(bool isDead, Protocol::RespawnTyp
         return string("지원하지 않는 리스폰 유형입니다.");
 
     return nullopt;
+}
+
+optional<TownRespawn> RoomTransfer::FindTownRespawn()
+{
+    const int32 townRoomId = Gamedata::GetTownRoomId();
+    const MapTemplate* town = Gamedata::FindMap(townRoomId);
+    if (town == nullptr || town->respawnPoint.has_value() == false)
+        return nullopt;
+
+    const TemplatePos& point = town->respawnPoint.value();
+
+    TownRespawn respawn;
+    respawn.roomId = townRoomId;
+    respawn.pos.mutable_pos()->set_x(point.x);
+    respawn.pos.mutable_pos()->set_y(point.y);
+    respawn.pos.mutable_pos()->set_z(point.z);
+    respawn.pos.set_yaw(0.f);
+    respawn.pos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+
+    return respawn;
+}
+
+optional<string> RoomTransfer::ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos)
+{
+    // 높이는 보지 않는다. 포털 좌표의 z는 바닥이고 플레이어의 z는 캡슐 중심이다.
+    const float dx = playerPos.pos().x() - portal.srcPos.x;
+    const float dy = playerPos.pos().y() - portal.srcPos.y;
+    if (dx * dx + dy * dy > portalRadius * portalRadius)
+        return format("포털 {}의 반경 {} 밖에서 온 포털 이동 요청", portal.portalId, portalRadius);
+
+    return nullopt;
+}
+
+optional<string> RoomTransfer::ValidateFirstEnterMap(const Protocol::C_ENTER_MAP& pkt, int32 enteringRoomId)
+{
+    if (pkt.room_id() != enteringRoomId)
+        return format("불러온 룸 {}이 아닌 룸 {}으로 온 첫 맵 입장 요청", enteringRoomId, pkt.room_id());
+
+    const MapTemplate* room = Gamedata::FindMap(pkt.room_id());
+    if (room == nullptr)
+        return format("맵 표에 없는 룸 {}으로 온 맵 입장 요청", pkt.room_id());
+    if (pkt.map_id() != room->mapId)
+        return format("룸 {}의 맵 {}과 다른 맵 {}으로 온 맵 입장 요청", pkt.room_id(), room->mapId, pkt.map_id());
+
+    return nullopt;
+}
+
+optional<string> RoomTransfer::ValidateCrossMapEnter(const Protocol::C_ENTER_MAP& pkt, const MapTemplate& currentRoom, const Protocol::PosInfo& playerPos)
+{
+    const MapTemplate* destination = Gamedata::FindMap(pkt.room_id());
+    if (destination == nullptr)
+        return format("맵 표에 없는 룸 {}으로 온 맵 입장 요청", pkt.room_id());
+    if (pkt.map_id() != destination->mapId)
+        return format("룸 {}의 맵 {}과 다른 맵 {}으로 온 맵 입장 요청", pkt.room_id(), destination->mapId, pkt.map_id());
+    if (destination->mapId == currentRoom.mapId)
+        return format("같은 맵의 룸 {}으로 온 맵 입장 요청. 같은 맵 안의 이동은 포털 이동이다", pkt.room_id());
+
+    for (const PortalTemplate& portal : currentRoom.portals)
+    {
+        if (portal.dstRoomId != pkt.room_id())
+            continue;
+
+        if (ValidatePortalUse(portal, currentRoom.portalRadius, playerPos).has_value() == false)
+            return nullopt;
+    }
+
+    return format("룸 {}에서 룸 {}으로 가는 포털의 반경 밖에서 온 맵 입장 요청", currentRoom.templateId, pkt.room_id());
 }

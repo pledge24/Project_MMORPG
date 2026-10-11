@@ -3,6 +3,8 @@
 #include "ServerCore/Network/SocketUtil.h"
 #include "ServerCore/Network/NetworkEvent.h"
 #include "ServerCore/Network/Service.h"
+#include "ServerCore/Job/JobQueue.h"
+#include "ServerCore/Job/JobTimer.h"
 
 /*---------------------
 		Session
@@ -15,7 +17,7 @@ Session::Session() : _recvBuffer(BUFFER_SIZE)
 
 Session::~Session()
 {
-	SocketUtil::Close(_socket);
+	CloseSocket();
 }
 
 HANDLE Session::GetHandle()
@@ -23,11 +25,19 @@ HANDLE Session::GetHandle()
 	return reinterpret_cast<HANDLE>(_socket);
 }
 
-void Session::Dispatch(NetworkEvent* networkEvent, int32 numOfBytes)
+void Session::Dispatch(NetworkEvent* networkEvent, int32 numOfBytes, int32 errorCode)
 {
+	// 실패한 수신과 송신은 numOfBytes가 0으로 들어와 Process*가 끊는다. 끊기는 실패해도 정리한다.
 	switch (networkEvent->eventType)
 	{
 	case EventType::Connect:
+		// ConnectEx는 성공해도 numOfBytes가 0이라 오류 코드로만 실패를 안다.
+		if (errorCode != 0)
+		{
+			_connectEvent.owner = nullptr; // RELEASE_REF
+			GLogger->Warning("접속하지 못했다(오류 {})", errorCode);
+			break;
+		}
 		ProcessConnect();
 		break;
 	case EventType::Disconnect:
@@ -56,12 +66,33 @@ void Session::Disconnect(const char* cause)
 	if (_connected.exchange(false) == false)
 		return;
 
-	// TEMP
-	cout << "Disconnect : " << cause << endl;
+	GLogger->Info("연결을 끊는다: {}", cause);
 
-	// TODO: 강제 연결 해제 Log 남기기.
+	// 끊기를 걸지 못하면 완료 통지가 오지 않는다. 소켓을 닫고 끊기 처리를 여기서 한다.
+	if (RegisterDisconnect() == false)
+	{
+		GLogger->Warning("끊기를 걸지 못해 소켓을 닫는다(오류 {})", ::WSAGetLastError());
+		CloseSocket();
+		ProcessDisconnect();
+		return;
+	}
 
-	RegisterDisconnect();
+	// 상대가 소켓을 닫지 않으면 DisconnectEx가 끝나지 않는다. 상한이 지나도 끝나지 않았으면 소켓을 닫는다.
+	// 걸려 있던 DisconnectEx가 오류로 완료되어 ProcessDisconnect로 간다.
+	shared_ptr<Service> service = GetService();
+	if (service == nullptr)
+		return;
+
+	weak_ptr<Session> weakSelf = GetSessionRef();
+	GJobTimer->Reserve(DISCONNECT_TIMEOUT_MS, service->GetTimerQueue(), make_shared<Job>([weakSelf]()
+		{
+			SessionRef self = weakSelf.lock();
+			if (self == nullptr || self->_disconnectCompleted.load())
+				return;
+
+			GLogger->Warning("끊기가 {}ms 안에 끝나지 않아 소켓을 닫는다", static_cast<int32>(DISCONNECT_TIMEOUT_MS));
+			self->CloseSocket();
+		}));
 }
 
 void Session::DisconnectAfterSend(const char* cause)
@@ -86,7 +117,8 @@ void Session::DisconnectAfterSend(const char* cause)
 
 void Session::Send(SendBufferRef sendBuffer)
 {
-	if (IsConnected() == false)
+	// 생성된 MakeSerializedPacket은 헤더에 담기지 않는 패킷이면 nullptr를 돌려주고 로그를 남긴다.
+	if (sendBuffer == nullptr || IsConnected() == false)
 		return;
 
 	bool registerSend = false;
@@ -240,8 +272,17 @@ void Session::ProcessConnect()
 
 	_connected.store(true);
 
-	// 세션 등록
-	GetService()->AddSession(GetSessionRef());
+	// 세션 등록. 접속 상한에 닿았으면 받지 않는다. 이 세션은 붙잡는 곳이 없어져 소멸하며 소켓을 닫는다.
+	if (GetService()->AddSession(GetSessionRef()) == false)
+	{
+		_connected.store(false);
+		GLogger->Warning("접속 상한({})에 닿아 새 접속을 받지 않는다", GetService()->GetMaxSessionCount());
+		return;
+	}
+
+	// 이동과 공격 같은 작은 패킷이 모였다가 나가지 않도록 네이글 알고리즘을 끈다. 실패해도 접속은 유지한다.
+	if (SocketUtil::SetTcpNoDelay(_socket, true) == false)
+		GLogger->Warning("세션 소켓의 네이글 알고리즘을 끄지 못했다(오류 {})", ::WSAGetLastError());
 
 	// 컨텐츠 코드에서 재정의
 	OnConnected();
@@ -253,6 +294,7 @@ void Session::ProcessConnect()
 void Session::ProcessDisconnect()
 {
 	_disconnectEvent.owner = nullptr; // RELEASE_REF
+	_disconnectCompleted.store(true);
 
 	OnDisconnected();
 	GetService()->RemoveSession(GetSessionRef());
@@ -329,17 +371,20 @@ void Session::ProcessSend(int32 numOfBytes)
 
 void Session::HandleError(int32 errorCode)
 {
-	switch (errorCode)
-	{
-	case WSAECONNRESET:		/* 10054: 연결이 원격 호스트에 의해 강제로 끊김*/
-	case WSAECONNABORTED:	/* 10053: 소프트웨어에 의한 연결 중단(ex. TCP timeout)*/
-		Disconnect("HandleError");
-		break;
-	default:
-		// TODO : Log
-		cout << "Handle Error : " << errorCode << endl;
-		break;
-	}
+	// 상대가 끊은 경우(10054, 10053)는 흔하므로 로그를 남기지 않는다. 다른 오류도 끊는다.
+	// 끊지 않으면 수신이 다시 걸리지 않은 채 연결된 상태로 남아, 접속 종료 저장도 일어나지 않는다.
+	if (errorCode != WSAECONNRESET && errorCode != WSAECONNABORTED)
+		GLogger->Warning("소켓 I/O를 걸지 못해 연결을 끊는다(오류 {})", errorCode);
+
+	Disconnect("HandleError");
+}
+
+void Session::CloseSocket()
+{
+	if (_socketClosed.exchange(true))
+		return;
+
+	::closesocket(_socket);
 }
 
 /*---------------------

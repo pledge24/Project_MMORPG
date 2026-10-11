@@ -1,38 +1,39 @@
 #pragma once
+#include "Game/Data/Templates.h"
 
-using DataTable = unordered_map<int32, Json>;
+struct GamedataDocuments;
 
 /**
- * Json 형태로 되어있는 게임 기획 데이터를 가져와 저장하는 클래스.
- * 
+ * 기획 데이터 표를 들고 있는 클래스.
+ * 부팅할 때 LoadAllGamedata가 한 번 설치하고, 그 뒤로는 바뀌지 않으므로 여러 스레드가 Find*로 함께 읽는다.
+ * 표는 private이다. 조회는 Find*로만 한다.
  */
 class Gamedata
 {
 public:
-    /** 모든 게임 기획 데이터를 가져온다. */
+    /** 기획표 파일을 읽어 검증하고 설치한다. 실패하면 사유를 로그에 남기고 false. 이때 서버는 뜨지 않는다. */
     static bool LoadAllGamedata();
-#ifdef _DEBUG
-    static void PrintAllGamedata();
-#endif
 
-public:
-    /* 직업별 레벨 테이블 */
-    static DataTable s_invalidLevelDataTable;
-    static DataTable s_warriorLevelDataTable;
+    /** 문서를 검증하고 통과하면 설치한다. 실패하면 사유를 돌려주고 이전 표를 그대로 둔다. */
+    static optional<string> Load(const GamedataDocuments& documents);
 
-    /* 레벨 테이블 매핑 */
-    static unordered_map<int32, DataTable*> s_classLevelDataTableMappings;
+    /**
+     * 표 전체를 바꿔 끼운다. 부팅과 테스트에서만 부른다.
+     * 다른 스레드가 Find*로 읽는 중에 부르면 안 된다.
+     */
+    static void Install(GamedataTables tables);
 
-    // 직업의 레벨 표를 찾는다. 없으면 nullptr.
-    // 전역 표는 여러 스레드가 함께 읽는다. operator[]는 없는 키를 끼워 넣으므로 이 함수로만 조회한다.
-    static const DataTable* FindClassLevelTable(int32 classId);
+    //~ 조회. 없는 번호면 nullptr.
+    static const ItemTemplate* FindItem(int32 templateId);
+    static const MonsterTemplate* FindMonster(int32 templateId);
+    static const MapTemplate* FindMap(int32 templateId);
+    static const ClassLevelTable* FindClassLevelTable(int32 classId);
 
-    // 아이템 표에서 찾는다. 없는 번호면 nullptr. 레벨 표와 같은 이유로 이 함수로만 조회한다.
-    static const Json* FindItemData(int32 templateId);
+    /** 룸 번호 순서다. */
+    static const map<int32, MapTemplate>& GetMaps() { return s_tables.maps; }
+    /** 사망한 플레이어가 돌아가는 마을 룸 번호. */
+    static int32 GetTownRoomId() { return s_tables.townRoomId; }
 
-    /* 게임 데이터 */
-    static DataTable s_itemDataTable;
-    static DataTable s_mapDataTable;
-    static DataTable s_monsterDataTable;
-    static DataTable s_questDataTable;
+private:
+    static GamedataTables s_tables;
 };

@@ -1,11 +1,11 @@
-#include "Game/Equipment/P1EquippedGear.h"
+#include "Game/Equipment/P1Equipment.h"
 
-void UP1EquippedGear::Init(google::protobuf::Map<int32, Protocol::Slot>* EquippedGear_)
+void UP1Equipment::Init(google::protobuf::Map<int32, Protocol::Slot>* EquippedGear_)
 {
     EquippedGearLookup = EquippedGear_;
 }
 
-void UP1EquippedGear::Rep_SlotChanged(const Protocol::Slot& Slot_)
+void UP1Equipment::Rep_SlotChanged(const Protocol::Slot& Slot_)
 {
     int32 SlotId_ = Slot_.slot_id();
     Protocol::SlotType SlotType_ = Slot_.type();
