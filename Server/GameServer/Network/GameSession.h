@@ -15,8 +15,8 @@ protected:
 	virtual void OnRecvPacket(BYTE* buffer, int32 len) override;
 	virtual void OnSend(int32 len) override;
     
-public:
 	//~ 플레이어
+public:
 	/** 입장한 플레이어. 입장 전이면 nullptr. 입장 잡(DB 스레드)이 쓰고, IOCP 스레드(핸들러, 접속 종료)와 룸 큐가 읽는다. */
 	PlayerRef GetPlayer() const { return _player.load(); }
 	/**
@@ -25,7 +25,11 @@ public:
 	 */
 	bool TryRegisterPlayer(const PlayerRef& player);
 
+private:
+	atomic<PlayerRef> _player;
+
 	//~ 계정
+public:
 	/**
 	 * 로그인하기 전이면 0. 로그인 잡(DB 스레드)이 GameSessionManager의 락 안에서 쓰고,
 	 * IOCP 스레드(핸들러, 접속 종료)가 락 없이 읽는다. 그래서 atomic이다.
@@ -37,6 +41,5 @@ private:
 	friend class GameSessionManager;
 	void SetUserId(int64 userId) { _userId.store(userId); }
 
-	atomic<PlayerRef> _player;
 	atomic<int64> _userId = 0;
 };

@@ -34,24 +34,39 @@ protected:
     virtual void Tick(float deltaTime) override;
     //~ End Entity Interface
 
-public:
     //~ 이벤트
+public:
     /** 스폰 정보에 실리는 HP 사본(monster_info.hp)도 함께 맞춘다. */
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(EntityRef attacker) override;
 
-    //~ Getter
+    //~ 몬스터 표
+public:
     int64 GetTemplateId() { return _templateId; }
     /** 부를 때마다 표의 최솟값과 최댓값 사이에서 새로 뽑는다. */
     int64 GetExpReward();
     /** 부를 때마다 표의 최솟값과 최댓값 사이에서 새로 뽑는다. */
     int64 GetGoldReward();
 
-    //~ 컴포넌트. 읽기만 연다.
+private:
+    /** _template에서 스탯 값을 읽어 멤버에 둔다. */
+    void CacheMonsterData();
+
+    /** 몬스터 표의 행 사본. 보상은 여기서 뽑는다. */
+    MonsterTemplate _template;
+
+    /** _entityInfo 안의 monster_info를 가리킨다. 따로 지우지 않는다. */
+    Protocol::MonsterInfo* _monsterInfo;
+    int32 _templateId;
+    int32 _maxHp;
+
+    //~ AI
+public:
+    /** 읽기만 연다. */
     const MonsterAIComponent& GetAI() const { return *_ai; }
 
 private:
-    //~ AI가 쓰는 위치 상태. MonsterAIComponent만 부른다.
+    /** 아래 위치 함수는 MonsterAIComponent만 부른다. */
     friend class MonsterAIComponent;
 
     /** x와 y만 바꾼다. 높이는 스폰 때의 값을 유지한다. */
@@ -61,22 +76,6 @@ private:
     void SetYaw(float yaw);
     void SetMoveState(Protocol::MoveState moveState);
 
-    //~ 기타
-    /** _template에서 스탯 값을 읽어 멤버에 둔다. */
-    void CacheMonsterData();
-
-private:
-    //~ Monster Template
-    /** 몬스터 표의 행 사본. 보상은 여기서 뽑는다. */
-    MonsterTemplate _template;
-
-    //~ Monster Stat Data
-    /** _entityInfo 안의 monster_info를 가리킨다. 따로 지우지 않는다. */
-    Protocol::MonsterInfo* _monsterInfo;
-    int32 _templateId;
-    int32 _maxHp;
-
-    //~ 컴포넌트
     /** Init에서 만든다. */
     MonsterAIComponentRef _ai;
 };

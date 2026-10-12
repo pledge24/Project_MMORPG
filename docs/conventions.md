@@ -57,6 +57,69 @@ O  // 셋 다 "크래시 없이 거부된다"는 것은 신뢰 경계 테스트�
 사라진다. 주석만 읽어도 이유를 알 수 있어야 한다. 어느 변경이 무엇을 고쳤는지는 커밋 메시지와 PR에 남긴다.
 2026년 10월 12일에 정했다.
 
+### 1.5 클래스 멤버는 기능 단위로 묶는다
+
+언리얼 클라이언트와 게임 서버의 C++ 클래스에 적용한다. `Server/ServerCore/`에는 적용하지 않는다.
+제외하는 이유는 3절 머리말에 있다.
+
+에픽 공식 표준은 클래스 전체를 public에서 private 순서로 배치하라고 안내한다. 이 프로젝트는 기능
+섹션 **안에** 그 순서를 적용한다.
+
+— 게임플레이 클래스 하나가 이동, 전투, 인벤토리를 함께 다룬다. 접근 지정자로만 정렬하면 전투
+함수와 전투 변수가 파일의 양 끝으로 갈라져서, 기능 하나를 고칠 때마다 파일 전체를 오간다.
+
+순서는 아래와 같다.
+
+1. 생성자와 소멸자
+2. 엔진 인터페이스 오버라이드. 게임 서버에서는 기반 클래스가 정한 생명주기 함수(`Init`, `Start`, `Tick`)다
+3. 기능 섹션. 각 섹션 안에서 public → protected → private, 함수 먼저 변수 나중
+
+```cpp
+UCLASS()
+class P1_API AP1Character : public ACharacter
+{
+    GENERATED_BODY()
+
+public:
+    AP1Character();
+
+    //~ Begin AActor Interface
+    virtual void BeginPlay() override;
+    //~ End AActor Interface
+
+    //~ Combat
+public:
+    void ApplyDamage(float Amount, AActor* Instigator);
+
+protected:
+    void HandleDeath();
+
+private:
+    UPROPERTY()
+    float Health = 100.0f;
+
+    //~ Inventory
+public:
+    UP1InventoryComponent* GetInventory() const { return Inventory; }
+
+private:
+    UPROPERTY(VisibleAnywhere, Category = "Inventory")
+    TObjectPtr<UP1InventoryComponent> Inventory;
+};
+```
+
+기능 섹션을 나눌 때 아래 세 가지를 지킨다.
+
+- 섹션 하나는 한 번만 연다. 같은 이름의 섹션이 클래스 안 두 곳에 있으면 하나로 합친다
+- 여러 기능이 함께 쓰는 상수와 변수는 마지막 섹션인 `//~ 공통`에 둔다
+- 기능이 하나뿐인 클래스는 섹션 표시를 생략한다
+
+**멤버 선언 순서를 바꿀 때 초기화 순서를 확인한다.**
+— C++은 멤버를 선언 순서대로 초기화한다. 생성자 초기화 리스트나 클래스 내 초기화가 다른 멤버를
+읽으면, 순서를 바꾸는 순간 읽는 값이 달라진다. 컴파일러가 경고하지 않는 경우가 있다.
+
+2026년 10월 13일에 언리얼 클라이언트 규칙(옛 2.12)에서 공통 규칙으로 옮겼다.
+
 ---
 
 ## 2. 언리얼 클라이언트 C++
@@ -278,66 +341,14 @@ float AttackPower = 10.0f;
 
 `/*---- 이름 ----*/` 형태의 배너 주석을 쓰지 않는다.
 
-### 2.12 클래스 멤버는 기능 단위로 묶는다
-
-에픽 공식 표준은 클래스 전체를 public에서 private 순서로 배치하라고 안내한다. 이 프로젝트는 기능
-섹션 **안에** 그 순서를 적용한다.
-
-— 게임플레이 클래스 하나가 이동, 전투, 인벤토리를 함께 다룬다. 접근 지정자로만 정렬하면 전투
-함수와 전투 변수가 파일의 양 끝으로 갈라져서, 기능 하나를 고칠 때마다 파일 전체를 오간다.
-
-순서는 아래와 같다.
-
-1. 생성자
-2. 엔진 인터페이스 오버라이드
-3. 기능 섹션. 각 섹션 안에서 public → protected → private, 함수 먼저 변수 나중
-
-```cpp
-UCLASS()
-class P1_API AP1Character : public ACharacter
-{
-    GENERATED_BODY()
-
-public:
-    AP1Character();
-
-    //~ Begin AActor Interface
-    virtual void BeginPlay() override;
-    //~ End AActor Interface
-
-    //~ Combat
-public:
-    void ApplyDamage(float Amount, AActor* Instigator);
-
-protected:
-    void HandleDeath();
-
-private:
-    UPROPERTY()
-    float Health = 100.0f;
-
-    //~ Inventory
-public:
-    UP1InventoryComponent* GetInventory() const { return Inventory; }
-
-private:
-    UPROPERTY(VisibleAnywhere, Category = "Inventory")
-    TObjectPtr<UP1InventoryComponent> Inventory;
-};
-```
-
-**멤버 선언 순서를 바꿀 때 초기화 순서를 확인한다.**
-— C++은 멤버를 선언 순서대로 초기화한다. 생성자 초기화 리스트나 클래스 내 초기화가 다른 멤버를
-읽으면, 순서를 바꾸는 순간 읽는 값이 달라진다. 컴파일러가 경고하지 않는 경우가 있다.
-
-### 2.13 public에는 외부에서 호출하는 것만 둔다
+### 2.12 public에는 외부에서 호출하는 것만 둔다
 
 기능마다 public 블록이 새로 열리기 때문에 구조상 public이 늘어나기 쉽다.
 
 한 기능 섹션의 public 함수가 5개를 넘으면 그 기능을 컴포넌트로 뺄 시점인지 판단한다
-(→ 「2.16 분리 기준」).
+(→ 「2.15 분리 기준」).
 
-### 2.14 UObject 포인터는 `TObjectPtr`로 선언한다
+### 2.13 UObject 포인터는 `TObjectPtr`로 선언한다
 
 ```cpp
 UPROPERTY(VisibleAnywhere)
@@ -351,7 +362,7 @@ UPROPERTY()
 TMap<uint64, TObjectPtr<AP1Player>> Players;
 ```
 
-### 2.15 위젯
+### 2.14 위젯
 
 **모든 위젯은 `UP1UserWidget`을 상속한다.** `UUserWidget`을 직접 상속하지 않는다.
 — 로컬 플레이어 컨트롤러를 얻는 함수처럼 모든 위젯이 쓰는 접근자를 놓을 자리가 필요하다.
@@ -375,7 +386,7 @@ TObjectPtr<UTextBlock> ItemNameText;
 — `UCommonActivatableWidget`이 `UCommonUserWidget`을 상속하므로 하나의 베이스가 두 계층의 부모가
 될 수 없다.
 
-### 2.16 분리 기준
+### 2.15 분리 기준
 
 기능 섹션으로 정리한 것만으로는 클래스가 커지는 것을 막지 못한다. 아래 두 조건 중 하나를
 만족하면 그 기능을 컴포넌트나 서브시스템으로 뺀다.
@@ -391,7 +402,7 @@ TObjectPtr<UTextBlock> ItemNameText;
 외부 C++ 서버가 판정을 맡으므로 언리얼 리플리케이션을 쓰지 않는다. 컴포넌트는 사실상 클라이언트
 상태 컨테이너이고 분리 비용이 낮다.
 
-### 2.17 서브시스템 의존성을 `Initialize`에서 선언한다
+### 2.16 서브시스템 의존성을 `Initialize`에서 선언한다
 
 `[엔진 제약]` `UGameInstanceSubsystem`의 초기화 순서는 보장되지 않는다.
 

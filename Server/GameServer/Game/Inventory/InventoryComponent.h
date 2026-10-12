@@ -20,6 +20,8 @@ public:
     InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory);
     virtual ~InventoryComponent();
 
+    //~ 슬롯
+public:
     /**
      * 아이템 인스턴스를 슬롯 하나에 넣는다. 같은 아이템이 든 슬롯이면 수량을 더한다.
      * setSlotId를 주면 그 슬롯에 넣는다. 범위와 그 슬롯에 든 아이템은 확인하지 않는다(DB 로드용).
@@ -49,12 +51,6 @@ public:
      * 장비는 가장 왼쪽 빈 슬롯, 나머지는 같은 아이템이 든 슬롯을 먼저 고른다. 스택 상한은 보지 않는다.
      */
     int32 FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId);
-
-    //~ 재사용 대기
-    /** 템플릿을 nowMs에 쓸 수 없으면 true. 템플릿마다 따로 돈다. 표에 없는 템플릿은 false. */
-    bool IsCoolingDown(int32 templateId, uint64 nowMs) const;
-    /** 템플릿의 재사용 대기를 nowMs부터 센다. */
-    void StartCooldown(int32 templateId, uint64 nowMs);
 
     /** 저장소가 없는 ItemType이면 nullptr. GetSlot과 같은 규약이다. */
     vector<bool>* GetDirtyFlags(Protocol::ItemType itemType);
@@ -88,9 +84,16 @@ private:
 
     static bool IsValidSlotId(int32 slotId) { return slotId >= 0 && slotId < MAX_SLOTS; }
 
-private:
     vector<Bag> _bags;
 
+    //~ 재사용 대기
+public:
+    /** 템플릿을 nowMs에 쓸 수 없으면 true. 템플릿마다 따로 돈다. 표에 없는 템플릿은 false. */
+    bool IsCoolingDown(int32 templateId, uint64 nowMs) const;
+    /** 템플릿의 재사용 대기를 nowMs부터 센다. */
+    void StartCooldown(int32 templateId, uint64 nowMs);
+
+private:
     /** 소모품 템플릿 id → 마지막으로 쓴 시각(ms). 저장하지 않으므로 재접속하면 사라진다. */
     map<int32, uint64> _lastUseTimeMs;
 };

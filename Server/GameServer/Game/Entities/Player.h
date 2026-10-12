@@ -90,29 +90,39 @@ public:
 	Player();
 	virtual ~Player();
 
+protected:
+    friend class EntityFactory;
+
+    /**
+     * 세션을 가리키고 인벤토리와 장비를 만든다. 세션의 _player는 바꾸지 않는다. 등록은 검증을 마친 호출자가 한다.
+     * progress가 있으면 ApplyProgress로 채운 뒤 OnLoaded로 검증한다.
+     */
+    bool Init(const SpawnParams& params);
+
+    //~ Begin Entity Interface
+    virtual void Start() override;
+    virtual void Tick(float deltaTime) override;
+    //~ End Entity Interface
+
+    //~ 불러오기
+public:
     /**
      * 플레이어 정보를 모두 채운 시점에 호출하는 함수. 언리얼의 FinishSpawning에 대응한다.
      * 불러온 스탯을 계산 결과와 대조하고 최종 스탯을 쓴다. 대조 결과가 맞지 않는다면 false.
      */
     bool OnLoaded();
 
-protected:
-    friend class EntityFactory;
-    
+private:
     /**
-     * 세션을 가리키고 인벤토리와 장비를 만든다. 세션의 _player는 바꾸지 않는다. 등록은 검증을 마친 호출자가 한다.
-     * progress가 있으면 ApplyProgress로 채운 뒤 OnLoaded로 검증한다.
+     * 불러온 진행을 플레이어에 쓴다. 인벤토리와 장비는 슬롯 번호대로 넣는다. 스탯 검증은 OnLoaded가 한다.
+     * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false. 그 행은 DB에 그대로 남는다.
      */
-    bool Init(const SpawnParams& params);
-    
-    //~ Begin Entity Interface
-    virtual void Start() override;
-    virtual void Tick(float deltaTime) override;
-    //~ End Entity Interface
+    bool ApplyProgress(const PlayerProgress& progress);
+    /** 불러온 현재 HP와 MP가 최대치를 넘지 않고 공격력이 계산 결과와 같은지 본다. 어긋나면 사유를 남기고 false. */
+    bool ValidateLoadedStat();
 
-public:
     //~ 요청 처리
-
+public:
     /** 골드가 모자라거나 가방에 넣지 못하면 nullopt. 결과의 gold는 남은 골드다. */
     optional<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
     /** 팔 수 없는 아이템이거나 요청이 서버 슬롯과 어긋나면 nullopt. 결과의 gold는 남은 골드다. */
@@ -133,9 +143,12 @@ public:
     RespawnResult ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos);
 
     //~ 이벤트
+public:
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(EntityRef attacker) override;
 
+    //~ 맵과 룸 이동
+public:
     /** 들어갈 맵과 룸 id를 기록한다. 룸 입장은 목적지 룸 큐의 OnEnterRoom에서 끝난다. */
     void OnEnterMap(int32 mapId, int32 roomId);
     /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 룸 중심에 둔다. 이동 판정의 기준 시각도 이때로 정한다. */
@@ -144,32 +157,30 @@ public:
     void ApplyMove(const Protocol::PosInfo& posInfo, uint64 now);
     /** 서버가 위치를 정했거나 이동을 받아들인 마지막 시각(ms, GetTickCount64 기준). */
     uint64 GetLastPositionTick() const { return _lastPositionTick; }
+    /** 이동 중인 룸이 없으면 -1이다. */
+    int32 GetEnteringRoomId() { return _enteringRoomId; }
+
+private:
+    int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
+    /** 이동 판정은 이 시각부터 흐른 시간으로 허용 거리를 정한다. 소속 룸 큐만 읽고 쓴다. */
+    uint64 _lastPositionTick = 0;
+
+    //~ 레벨과 보상
+public:
     /** 경험치가 남는 만큼 여러 레벨을 한 번에 올린다. 최대 레벨에서는 경험치를 버린다. */
     void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
     /** 최대 레벨이면 아무것도 하지 않는다. */
     void OnLevelUp();
-
-    //~ Player 정보 관련
-    /** 이동 중인 룸이 없으면 -1이다. */
-    int32 GetEnteringRoomId() { return _enteringRoomId; }
     /** 최대 레벨은 직업 레벨 표의 마지막 레벨이다. 레벨 표가 없는 직업도 true다. */
     bool IsMaxLevel() const;
 
-    //~ 접속 종료
-    /** 룸 큐 위에서만 부른다. */
-    PlayerSaveData MakeSaveData() const;
-    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 룸 번호도 마을로 바꾼다. */
-    void ApplyTownRespawnForSave(const TownRespawn& town);
-
 private:
-    //~ 불러오기
-    /**
-     * 불러온 진행을 플레이어에 쓴다. 인벤토리와 장비는 슬롯 번호대로 넣는다. 스탯 검증은 OnLoaded가 한다.
-     * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false. 그 행은 DB에 그대로 남는다.
-     */
-    bool ApplyProgress(const PlayerProgress& progress);
+    void CacheNextLevelUpData();
+
+    NextLevelUpData _nextLevelUpData;
 
     //~ 스탯
+private:
     /**
      * 레벨 표의 기본 스탯에 착용 장비의 증감량을 더한다. 최종 스탯은 이 함수로만 계산한다.
      * 레벨 표에 없는 직업이나 레벨이면 nullopt.
@@ -180,20 +191,37 @@ private:
      * 값이 바뀐 스탯을 updatedStats에 싣는다. nullptr이면 싣지 않는다. 계산할 수 없으면 아무것도 바꾸지 않는다.
      */
     void RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats);
-    /** 불러온 현재 HP와 MP가 최대치를 넘지 않고 공격력이 계산 결과와 같은지 본다. 어긋나면 사유를 남기고 false. */
-    bool ValidateLoadedStat();
 
-    //~ 내부 계산
-    void CacheNextLevelUpData();
+    //~ 소지품. 읽기만 연다. 소지품을 바꾸는 길은 Process* 요청 처리와 불러오기뿐이다.
+public:
+    const Protocol::Possession& GetPossession() const { return *_possession; }
+    const InventoryComponent& GetInventory() const { return *_inventory; }
+    const EquipmentComponent& GetEquipment() const { return *_equipment; }
+
+private:
     /** 다른 플레이어에게 보일 장비 외형 요약을 _playerInfo에 다시 쓴다. */
     void RefreshEquippedGearSummary();
 
-public:
+    /** 플레이어가 소유한다. */
+    unique_ptr<Protocol::Possession> _possession;
+    /** Init에서 만든다. */
+    InventoryComponentRef _inventory;
+    /** Init에서 만든다. */
+    EquipmentComponentRef _equipment;
+
     //~ 세션
+public:
     /** 세션이 끊겨 사라졌거나 세션 없이 만든 플레이어(테스트)면 nullptr. */
     GameSessionRef GetSession() const { return _session.lock(); }
     /** 세션은 끊긴 뒤 사라질 수 있어서 저장에 쓸 계정 번호를 따로 든다. Init 뒤로는 바뀌지 않는다. */
     int64 GetUserId() const { return _userId; }
+
+private:
+	weak_ptr<GameSession> _session;
+    int64 _userId = 0;
+
+    //~ 접속 종료
+public:
     /**
      * 접속과 룸 입장의 진행. 접속 종료와 첫 룸 입장 중 어느 쪽이 먼저였는지를 한 값으로 정한다.
      * 세션 스레드(접속 종료)와 룸 큐(입장)가 함께 바꾸므로, 두 쪽 모두 이 값을 읽고 바꾸는 일을 한 번에 한다.
@@ -225,36 +253,23 @@ public:
     /** 늦게 온 밀어내기가 그 세션의 접속 종료가 이미 끝났는지 볼 때 읽는다. */
     Presence GetPresence() const { return _presence.load(); }
 
-    //~ 상태 읽기
-    const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
-    const Protocol::Possession& GetPossession() const { return *_possession; }
+    /** 룸 큐 위에서만 부른다. */
+    PlayerSaveData MakeSaveData() const;
+    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 룸 번호도 마을로 바꾼다. */
+    void ApplyTownRespawnForSave(const TownRespawn& town);
 
-    //~ 컴포넌트. 읽기만 연다. 소지품을 바꾸는 길은 Process* 요청 처리와 불러오기뿐이다.
-    const InventoryComponent& GetInventory() const { return *_inventory; }
-    const EquipmentComponent& GetEquipment() const { return *_equipment; }
+private:
+    atomic<Presence> _presence = Presence::LOADED;
+
+    //~ 공통
+public:
+    const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
 
 private:
     /** 테스트가 준비 단계에서 레벨, 직업, 골드, 소지품을 직접 채운다(GameServerTests/PlayerTestAccess.h). */
     friend struct PlayerTestAccess;
 
-	weak_ptr<GameSession> _session;
-    int64 _userId = 0;
-    atomic<Presence> _presence = Presence::LOADED;
-
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::PlayerInfo* _playerInfo;
-    /** 플레이어가 소유한다. */
-    unique_ptr<Protocol::Possession> _possession;
-
-    /** Init에서 만든다. */
-    InventoryComponentRef _inventory;
-    /** Init에서 만든다. */
-    EquipmentComponentRef _equipment;
-
-    int32 _enteringRoomId = -1;         // 이동하고자 하는 Room id
-    /** 이동 판정은 이 시각부터 흐른 시간으로 허용 거리를 정한다. 소속 룸 큐만 읽고 쓴다. */
-    uint64 _lastPositionTick = 0;
-
-    NextLevelUpData _nextLevelUpData;
 };
 
