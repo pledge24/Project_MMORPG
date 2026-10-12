@@ -38,22 +38,6 @@ Player::~Player()
 {
 }
 
-bool Player::OnLoaded()
-{
-    _inventory->ClearDirtyFlags();
-    _equipment->ClearDirtyFlags();
-    RefreshEquippedGearSummary();
-
-	if (ValidateLoadedStat() == false)
-		return false;
-
-	RefreshFinalStat(nullptr);
-
-	CacheNextLevelUpData();
-
-	return true;
-}
-
 bool Player::Init(const SpawnParams& params)
 {
 	if (Creature::Init(params) == false)
@@ -69,6 +53,38 @@ bool Player::Init(const SpawnParams& params)
 
     if (params.progress != nullptr)
         return ApplyProgress(*params.progress) && OnLoaded();
+
+	return true;
+}
+
+void Player::Start()
+{
+    Creature::Start();
+
+    _inventory->Start();
+    _equipment->Start();
+}
+
+void Player::Tick(float deltaTime)
+{
+    Creature::Tick(deltaTime);
+
+    _inventory->Tick(deltaTime);
+    _equipment->Tick(deltaTime);
+}
+
+bool Player::OnLoaded()
+{
+    _inventory->ClearDirtyFlags();
+    _equipment->ClearDirtyFlags();
+    RefreshEquippedGearSummary();
+
+	if (ValidateLoadedStat() == false)
+		return false;
+
+	RefreshFinalStat(nullptr);
+
+	CacheNextLevelUpData();
 
 	return true;
 }
@@ -130,20 +146,29 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
     return true;
 }
 
-void Player::Start()
+bool Player::ValidateLoadedStat()
 {
-    Creature::Start();
+    const optional<CombatStats> finalStat = CalculateFinalStat();
+    if (finalStat.has_value() == false)
+        return false;
 
-    _inventory->Start();
-    _equipment->Start();
-}
+    string cause;
+    if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat->maxHp)
+        cause = "현재 HP가 최대 HP를 초과";
+    else if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat->maxMp)
+        cause = "현재 MP가 최대 MP를 초과";
+    else if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat->physicalAttack)
+        cause = "물리 공격력이 계산 결과와 일치하지 않음";
+    else if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat->magicalAttack)
+        cause = "마법 공격력이 계산 결과와 일치하지 않음";
 
-void Player::Tick(float deltaTime)
-{
-    Creature::Tick(deltaTime);
+    if (cause.empty() == false)
+    {
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: {}", cause);
+        return false;
+    }
 
-    _inventory->Tick(deltaTime);
-    _equipment->Tick(deltaTime);
+    return true;
 }
 
 optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
@@ -485,38 +510,25 @@ bool Player::IsMaxLevel() const
     return classLevelTable == nullptr || _playerInfo->level() >= classLevelTable->GetMaxLevel();
 }
 
-PlayerSaveData Player::MakeSaveData() const
+void Player::CacheNextLevelUpData()
 {
-    PlayerSaveData data;
-    data.userId = _userId;
-    data.progress.playerInfo.CopyFrom(*_playerInfo);
-    data.progress.posInfo.CopyFrom(*_posInfo);
-    data.progress.statInfo.CopyFrom(*_statInfo);
-    data.progress.possession.CopyFrom(*_possession);
+    // 최대 레벨에서는 오를 레벨이 없으므로 캐시를 그대로 둔다. 레벨 표가 없는 직업도 여기서 끝난다.
+    if (IsMaxLevel())
+        return;
 
-    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR))
-        data.gearDirtyFlags = *flags;
-    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE))
-        data.consumableDirtyFlags = *flags;
-    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS))
-        data.miscDirtyFlags = *flags;
+    // 다음 레벨 행이 없으면 빈 값으로 둔다.
+    _nextLevelUpData = NextLevelUpData{};
 
-    data.equippedGearDirtyFlags = _equipment->GetDirtyFlagMappings();
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
+    if (nextLevelTemplate == nullptr)
+        return;
 
-    return data;
-}
-
-// 사망한 채 접속이 끊기면 사망 화면에서 마을 리스폰을 누른 것과 같은 상태로 저장한다.
-// 사망 여부는 저장되지 않으므로, 그대로 저장하면 다시 접속했을 때 HP 0으로 살아서 들어온다.
-// 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 맵 표에서 찾은 마을을 받는다.
-void Player::ApplyTownRespawnForSave(const TownRespawn& town)
-{
-    Protocol::PosInfo respawnPos = town.pos;
-    respawnPos.set_entity_id(GetEntityId());
-
-    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
-
-    _playerInfo->set_room_id(town.roomId);
+    _nextLevelUpData.maxHpIncrement = nextLevelTemplate->maxHpIncrement;
+    _nextLevelUpData.maxMpIncrement = nextLevelTemplate->maxMpIncrement;
+    _nextLevelUpData.paIncrement = nextLevelTemplate->paIncrement;
+    _nextLevelUpData.maIncrement = nextLevelTemplate->maIncrement;
+    _nextLevelUpData.expRequirement = nextLevelTemplate->expRequirement;
 }
 
 optional<CombatStats> Player::CalculateFinalStat()
@@ -574,52 +586,6 @@ void Player::RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats
         apply(Protocol::STAT_TYPE_MP, finalStat->maxMp);
 }
 
-bool Player::ValidateLoadedStat()
-{
-    const optional<CombatStats> finalStat = CalculateFinalStat();
-    if (finalStat.has_value() == false)
-        return false;
-
-    string cause;
-    if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat->maxHp)
-        cause = "현재 HP가 최대 HP를 초과";
-    else if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat->maxMp)
-        cause = "현재 MP가 최대 MP를 초과";
-    else if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat->physicalAttack)
-        cause = "물리 공격력이 계산 결과와 일치하지 않음";
-    else if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat->magicalAttack)
-        cause = "마법 공격력이 계산 결과와 일치하지 않음";
-
-    if (cause.empty() == false)
-    {
-        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: {}", cause);
-        return false;
-    }
-
-    return true;
-}
-
-void Player::CacheNextLevelUpData()
-{
-    // 최대 레벨에서는 오를 레벨이 없으므로 캐시를 그대로 둔다. 레벨 표가 없는 직업도 여기서 끝난다.
-    if (IsMaxLevel())
-        return;
-
-    // 다음 레벨 행이 없으면 빈 값으로 둔다.
-    _nextLevelUpData = NextLevelUpData{};
-
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
-    const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
-    if (nextLevelTemplate == nullptr)
-        return;
-
-    _nextLevelUpData.maxHpIncrement = nextLevelTemplate->maxHpIncrement;
-    _nextLevelUpData.maxMpIncrement = nextLevelTemplate->maxMpIncrement;
-    _nextLevelUpData.paIncrement = nextLevelTemplate->paIncrement;
-    _nextLevelUpData.maIncrement = nextLevelTemplate->maIncrement;
-    _nextLevelUpData.expRequirement = nextLevelTemplate->expRequirement;
-}
-
 void Player::RefreshEquippedGearSummary()
 {
     // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
@@ -659,4 +625,38 @@ Player::Presence Player::MarkEnteredRoom()
         return Presence::IN_ROOM;
 
     return expected;
+}
+
+PlayerSaveData Player::MakeSaveData() const
+{
+    PlayerSaveData data;
+    data.userId = _userId;
+    data.progress.playerInfo.CopyFrom(*_playerInfo);
+    data.progress.posInfo.CopyFrom(*_posInfo);
+    data.progress.statInfo.CopyFrom(*_statInfo);
+    data.progress.possession.CopyFrom(*_possession);
+
+    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR))
+        data.gearDirtyFlags = *flags;
+    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE))
+        data.consumableDirtyFlags = *flags;
+    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS))
+        data.miscDirtyFlags = *flags;
+
+    data.equippedGearDirtyFlags = _equipment->GetDirtyFlagMappings();
+
+    return data;
+}
+
+// 사망한 채 접속이 끊기면 사망 화면에서 마을 리스폰을 누른 것과 같은 상태로 저장한다.
+// 사망 여부는 저장되지 않으므로, 그대로 저장하면 다시 접속했을 때 HP 0으로 살아서 들어온다.
+// 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 맵 표에서 찾은 마을을 받는다.
+void Player::ApplyTownRespawnForSave(const TownRespawn& town)
+{
+    Protocol::PosInfo respawnPos = town.pos;
+    respawnPos.set_entity_id(GetEntityId());
+
+    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
+
+    _playerInfo->set_room_id(town.roomId);
 }

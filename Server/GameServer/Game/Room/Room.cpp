@@ -46,6 +46,40 @@ void Room::Init(const MapTemplate& mapTemplate)
     _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
 }
 
+void Room::CacheRoomData()
+{
+    _roomId = _mapTemplate.templateId;
+
+    _roomCenterPos.x = _mapTemplate.center.x;
+    _roomCenterPos.y = _mapTemplate.center.y;
+    _roomCenterPos.z = _mapTemplate.center.z;
+
+    _depthHalfExtent = _mapTemplate.depthHalfExtent;
+    _widthHalfExtent = _mapTemplate.widthHalfExtent;
+
+    _roomMinX = _roomCenterPos.x - _depthHalfExtent;
+    _roomMaxX = _roomCenterPos.x + _depthHalfExtent;
+    _roomMinY = _roomCenterPos.y - _widthHalfExtent;
+    _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
+
+    _maxMonsterCount = _mapTemplate.maxMonsterCount;
+    _monsterIds = _mapTemplate.monsterIds;
+
+    // 리스폰 포인트 저장
+    if (_mapTemplate.respawnPoint.has_value())
+    {
+        const TemplatePos& point = _mapTemplate.respawnPoint.value();
+
+        _respawnPoint = make_shared<Protocol::PosInfo>();
+        _respawnPoint->mutable_pos()->set_x(point.x);
+        _respawnPoint->mutable_pos()->set_y(point.y);
+        _respawnPoint->mutable_pos()->set_z(point.z);
+        _respawnPoint->set_yaw(0.f);
+        _respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+    }
+
+}
+
 bool Room::Start()
 {
     // 몬스터를 Room에 스폰한다. 마을처럼 몬스터 목록이 빈 룸은 건너뛴다.
@@ -712,27 +746,6 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     return true;
 }
 
-void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
-{
-    int64 playerId = player->GetEntityId();
-
-    // 해당 플레이어에게 Room 엔티티 전송
-    Protocol::S_SPAWN spawnPkt;
-    if (auto session = player->GetSession())
-    {
-        for (auto& item : _entities)
-        {
-            if (!includeThisPlayer && item.second->GetEntityId() == playerId)
-                continue;
-
-            // 플레이어의 장비 외형은 _entityInfo의 equipped_gear_summary에 실려 간다.
-            spawnPkt.add_entities()->CopyFrom(item.second->GetEntityInfo());
-        }
-
-        SendPacket(session, spawnPkt);
-    }
-}
-
 vector2D Room::GetRandomLocation(bool usePadding)
 {
     float paddingX = usePadding ? LOCATION_PADDING_X : 0.f;
@@ -775,6 +788,80 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
         posInfo->set_yaw(GetRandomYaw());
 }
 
+PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
+{
+    // 룸 이동 뒤에 예약한 스폰 잡은 그사이 EnterPlayer가 접속 종료로 플레이어를 뺐어도 돈다.
+    // 룸에 없는 플레이어를 알리면 다른 클라이언트에 유령이 남는다.
+    if (Contains(targetPlayer->GetEntityId()) == false)
+        return nullptr;
+
+    // 본인은 빼고 알린다. 본인에게 자기 스폰을 보낼지는 ReplicateRoomData의 includeThisPlayer가 정한다.
+    Protocol::S_SPAWN spawnPkt;
+    {
+        Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
+        entityInfo->CopyFrom(targetPlayer->GetEntityInfo());
+
+        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
+        Broadcast(sendBuffer, targetPlayer->GetEntityId());
+    }
+
+    return targetPlayer;
+}
+
+void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
+{
+    int64 playerId = player->GetEntityId();
+
+    // 해당 플레이어에게 Room 엔티티 전송
+    Protocol::S_SPAWN spawnPkt;
+    if (auto session = player->GetSession())
+    {
+        for (auto& item : _entities)
+        {
+            if (!includeThisPlayer && item.second->GetEntityId() == playerId)
+                continue;
+
+            // 플레이어의 장비 외형은 _entityInfo의 equipped_gear_summary에 실려 간다.
+            spawnPkt.add_entities()->CopyFrom(item.second->GetEntityInfo());
+        }
+
+        SendPacket(session, spawnPkt);
+    }
+}
+
+bool Room::AddEntity(EntityRef entity)
+{
+    if (entity == nullptr)
+        return false;
+
+    int64 entityId = entity->GetEntityId();
+	if (_entities.contains(entityId))
+		return false;
+
+	_entities.insert(make_pair(entityId, entity));
+
+    // 틱은 다음 룸 틱부터 받는다. 처음 들어온 엔티티면 JoinRoom이 Start를 부른다.
+    entity->JoinRoom(GetRoomRef());
+
+	return true;
+}
+
+bool Room::RemoveEntity(int64 entityId)
+{
+	if (_entities.contains(entityId) == false)
+		return false;
+
+    EntityRef entity = _entities[entityId];
+
+    // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
+    _cellMatrix.Remove(entityId, ToPlanePos(entity->GetPosInfo()));
+
+    // 엔티티를 삭제한다.
+	_entities.erase(entityId);
+
+	return true;
+}
+
 pair<PlayerRef, float> Room::FindClosestPlayer(const Protocol::PosInfo* posInfo, float range)
 {
     const vector2D center = ToPlanePos(*posInfo);
@@ -811,24 +898,15 @@ pair<PlayerRef, float> Room::FindClosestPlayer(const Protocol::PosInfo* posInfo,
     return make_pair(closestPlayer, minDist);
 }
 
-PlayerRef Room::SpawnPlayer(PlayerRef targetPlayer)
+void Room::UpdateCellMatrix()
 {
-    // 룸 이동 뒤에 예약한 스폰 잡은 그사이 EnterPlayer가 접속 종료로 플레이어를 뺐어도 돈다.
-    // 룸에 없는 플레이어를 알리면 다른 클라이언트에 유령이 남는다.
-    if (Contains(targetPlayer->GetEntityId()) == false)
-        return nullptr;
+    vector<pair<int64, vector2D>> positions;
+    positions.reserve(_entities.size());
 
-    // 본인은 빼고 알린다. 본인에게 자기 스폰을 보낼지는 ReplicateRoomData의 includeThisPlayer가 정한다.
-    Protocol::S_SPAWN spawnPkt;
-    {
-        Protocol::EntityInfo* entityInfo = spawnPkt.add_entities();
-        entityInfo->CopyFrom(targetPlayer->GetEntityInfo());
+    for (auto& [entityId, entity] : _entities)
+        positions.emplace_back(entityId, ToPlanePos(entity->GetPosInfo()));
 
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(spawnPkt);
-        Broadcast(sendBuffer, targetPlayer->GetEntityId());
-    }
-
-    return targetPlayer;
+    _cellMatrix.Update(positions);
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
@@ -844,82 +922,4 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 		if (GameSessionRef session = player->GetSession())
 			session->Send(sendBuffer);
 	}
-}
-
-bool Room::AddEntity(EntityRef entity)
-{
-    if (entity == nullptr)
-        return false;
-
-    int64 entityId = entity->GetEntityId();
-	if (_entities.contains(entityId))
-		return false;
-
-	_entities.insert(make_pair(entityId, entity));
-
-    // 틱은 다음 룸 틱부터 받는다. 처음 들어온 엔티티면 JoinRoom이 Start를 부른다.
-    entity->JoinRoom(GetRoomRef());
-
-	return true;
-}
-
-bool Room::RemoveEntity(int64 entityId)
-{
-	if (_entities.contains(entityId) == false)
-		return false;
-
-    EntityRef entity = _entities[entityId];
-
-    // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
-    _cellMatrix.Remove(entityId, ToPlanePos(entity->GetPosInfo()));
-
-    // 엔티티를 삭제한다.
-	_entities.erase(entityId);
-
-	return true;
-}
-
-void Room::CacheRoomData()
-{
-    _roomId = _mapTemplate.templateId;
-
-    _roomCenterPos.x = _mapTemplate.center.x;
-    _roomCenterPos.y = _mapTemplate.center.y;
-    _roomCenterPos.z = _mapTemplate.center.z;
-
-    _depthHalfExtent = _mapTemplate.depthHalfExtent;
-    _widthHalfExtent = _mapTemplate.widthHalfExtent;
-
-    _roomMinX = _roomCenterPos.x - _depthHalfExtent;
-    _roomMaxX = _roomCenterPos.x + _depthHalfExtent;
-    _roomMinY = _roomCenterPos.y - _widthHalfExtent;
-    _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
-
-    _maxMonsterCount = _mapTemplate.maxMonsterCount;
-    _monsterIds = _mapTemplate.monsterIds;
-
-    // 리스폰 포인트 저장
-    if (_mapTemplate.respawnPoint.has_value())
-    {
-        const TemplatePos& point = _mapTemplate.respawnPoint.value();
-
-        _respawnPoint = make_shared<Protocol::PosInfo>();
-        _respawnPoint->mutable_pos()->set_x(point.x);
-        _respawnPoint->mutable_pos()->set_y(point.y);
-        _respawnPoint->mutable_pos()->set_z(point.z);
-        _respawnPoint->set_yaw(0.f);
-        _respawnPoint->set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-    }
-
-}
-
-void Room::UpdateCellMatrix()
-{
-    vector<pair<int64, vector2D>> positions;
-    positions.reserve(_entities.size());
-
-    for (auto& [entityId, entity] : _entities)
-        positions.emplace_back(entityId, ToPlanePos(entity->GetPosInfo()));
-
-    _cellMatrix.Update(positions);
 }

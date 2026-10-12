@@ -44,12 +44,6 @@ void MonsterAIComponent::Tick(float deltaTime)
     ExecuteStateBehavior(deltaTime);
 }
 
-MonsterRef MonsterAIComponent::GetOwner() const
-{
-    // 이 컴포넌트를 만드는 엔티티는 Monster뿐이다.
-    return static_pointer_cast<Monster>(_owner.lock());
-}
-
 void MonsterAIComponent::EvaluateStateTransition()
 {
     MonsterRef owner = GetOwner();
@@ -314,6 +308,23 @@ void MonsterAIComponent::ExecuteStateChasing(float deltaTime)
     }
 }
 
+bool MonsterAIComponent::IsTargetLost()
+{
+    // 대상이 룸을 떠났거나 사망했으면 추적을 그만둔다. 사망한 플레이어는 룸에 남으므로 사망을 따로 본다.
+    EntityRef target = _target.lock();
+    if (target == nullptr)
+        return true;
+
+    // 룸을 먼저 본다. 떠난 대상의 사망 표시는 그 대상이 들어간 룸 큐가 쓴다.
+    MonsterRef owner = GetOwner();
+    RoomRef ownerRoom = owner ? owner->GetRoom() : nullptr;
+    if (ownerRoom == nullptr || ownerRoom->Contains(target->GetEntityId()) == false)
+        return true;
+
+    CreatureRef creature = dynamic_pointer_cast<Creature>(target);
+    return creature && creature->IsDead();
+}
+
 void MonsterAIComponent::Move(float deltaTime, bool orientRotationToMovement)
 {
     MonsterRef owner = GetOwner();
@@ -427,6 +438,27 @@ void MonsterAIComponent::ClearDestination()
         owner->SetMoveDirection(vector2D::GetZeroVector());
 }
 
+bool MonsterAIComponent::CanMove()
+{
+    bool hasLeftAttackDelay = _timeSinceLastAttack <= _attackInterval;
+    bool hasDest = _moveDest.has_value();     // 반드시 목적지가 있을때만 이동한다.
+
+    return !hasLeftAttackDelay && hasDest;
+}
+
+bool MonsterAIComponent::AlreadyArrive()
+{
+    if (_moveDest.has_value() == false)
+        return true;
+
+    MonsterRef owner = GetOwner();
+    if (owner == nullptr)
+        return true;
+
+    vector2D monsterPos = MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
+    return MathUtil::Distance(monsterPos, _moveDest.value(), true) < 1.f;
+}
+
 void MonsterAIComponent::NormalAttack()
 {
     MonsterRef owner = GetOwner();
@@ -482,40 +514,8 @@ void MonsterAIComponent::UpdatePendingHit(float deltaTime)
     ownerRoom->HandleHit(owner, hit.attackInfo);
 }
 
-bool MonsterAIComponent::IsTargetLost()
+MonsterRef MonsterAIComponent::GetOwner() const
 {
-    // 대상이 룸을 떠났거나 사망했으면 추적을 그만둔다. 사망한 플레이어는 룸에 남으므로 사망을 따로 본다.
-    EntityRef target = _target.lock();
-    if (target == nullptr)
-        return true;
-
-    // 룸을 먼저 본다. 떠난 대상의 사망 표시는 그 대상이 들어간 룸 큐가 쓴다.
-    MonsterRef owner = GetOwner();
-    RoomRef ownerRoom = owner ? owner->GetRoom() : nullptr;
-    if (ownerRoom == nullptr || ownerRoom->Contains(target->GetEntityId()) == false)
-        return true;
-
-    CreatureRef creature = dynamic_pointer_cast<Creature>(target);
-    return creature && creature->IsDead();
-}
-
-bool MonsterAIComponent::CanMove()
-{
-    bool hasLeftAttackDelay = _timeSinceLastAttack <= _attackInterval;
-    bool hasDest = _moveDest.has_value();     // 반드시 목적지가 있을때만 이동한다.
-
-    return !hasLeftAttackDelay && hasDest;
-}
-
-bool MonsterAIComponent::AlreadyArrive()
-{
-    if (_moveDest.has_value() == false)
-        return true;
-
-    MonsterRef owner = GetOwner();
-    if (owner == nullptr)
-        return true;
-
-    vector2D monsterPos = MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
-    return MathUtil::Distance(monsterPos, _moveDest.value(), true) < 1.f;
+    // 이 컴포넌트를 만드는 엔티티는 Monster뿐이다.
+    return static_pointer_cast<Monster>(_owner.lock());
 }
