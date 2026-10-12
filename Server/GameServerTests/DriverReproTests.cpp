@@ -5,7 +5,7 @@
 #include "Core/Config.h"
 
 /*--------------------------------------------------------------
-    ODBC 드라이버 동작 재현 (TD-040)
+    ODBC 드라이버 동작 재현
 
     배열 파라미터로 여러 행을 한 번에 실행할 때, 일부 행만 실패하면 SQLExecDirect가 무엇을 돌려주는지
     확인한다. ODBC 명세는 SQL_SUCCESS_WITH_INFO를 돌려줄 수 있다고 하고, DBConnection::Execute는 그 값을
@@ -112,7 +112,7 @@ namespace
 }
 
 // 가장 단순한 경우: 세 행 중 두 번째 행이 기본 키 중복으로 실패한다.
-TEST(DriverReproTest, DISABLED_TD040_PlainInsertWithOneFailingRow)
+TEST(DriverReproTest, DISABLED_PlainInsertWithOneFailingRow)
 {
     ReproConnection conn;
     ASSERT_TRUE(conn.Open()) << "DB에 연결하지 못했다. 게임 서버와 같은 접속 문자열을 쓴다";
@@ -133,7 +133,7 @@ TEST(DriverReproTest, DISABLED_TD040_PlainInsertWithOneFailingRow)
 }
 
 // 아이템 저장과 같은 모양: 임시 테이블에 넣고 MERGE한 뒤 지운다. 두 번째 행이 대상 테이블의 CHECK에 걸린다.
-TEST(DriverReproTest, DISABLED_TD040_MergeBatchWithOneFailingRow)
+TEST(DriverReproTest, DISABLED_MergeBatchWithOneFailingRow)
 {
     ReproConnection conn;
     ASSERT_TRUE(conn.Open()) << "DB에 연결하지 못했다. 게임 서버와 같은 접속 문자열을 쓴다";

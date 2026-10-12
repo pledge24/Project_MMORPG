@@ -256,7 +256,7 @@ TEST_F(ProgressCoordinatorTest, DisconnectDuringRoomTransferSavesInNextRoom)
     EXPECT_FALSE(nextRoom->Contains(player->GetEntityId()));
 }
 
-// TD-047: 룸 이동 중에 끊긴 플레이어가 들어갈 룸에 들어가지 못하면, 떠난 룸도 들어갈 룸도 저장하지 않아 대기가 풀리지 않았다.
+// 룸 이동 중에 끊긴 플레이어가 들어갈 룸에 들어가지 못하면, 떠난 룸도 들어갈 룸도 저장하지 않아 대기가 풀리지 않았다.
 // 들어갈 룸에 같은 엔티티 번호가 이미 있으면 들어가지 못한다.
 TEST_F(ProgressCoordinatorTest, DisconnectDuringFailedRoomTransferStillSaves)
 {
@@ -283,7 +283,7 @@ TEST_F(ProgressCoordinatorTest, DisconnectDuringFailedRoomTransferStillSaves)
     EXPECT_EQ(events, vector<string>({ "save", "load" })) << "어느 룸에도 없는 플레이어도 저장하고 대기를 푼다";
 }
 
-// TD-003: 룸 입장 잡이 큐에 있는 동안 끊기면 대기 없이 새 세션이 불러오고, 늦게 돈 룸 입장 잡이 그 뒤에 저장을 넣었다.
+// 룸 입장 잡이 큐에 있는 동안 끊기면 대기 없이 새 세션이 불러오고, 늦게 돈 룸 입장 잡이 그 뒤에 저장을 넣었다.
 // 룸에 들어간 적이 없으므로 저장할 것이 없다.
 TEST_F(ProgressCoordinatorTest, DisconnectBeforeFirstRoomEntryIsNotSavedAfterReload)
 {
@@ -296,7 +296,7 @@ TEST_F(ProgressCoordinatorTest, DisconnectBeforeFirstRoomEntryIsNotSavedAfterRel
     EXPECT_FALSE(room->Contains(player->GetEntityId())) << "끊긴 플레이어는 룸에 남지 않는다";
 }
 
-// TD-003: 상한이 지나 입장을 거절하면서 대기까지 지웠다. 그 뒤의 입장은 늦게 도착한 저장보다 먼저 불러왔다.
+// 상한이 지나 입장을 거절하면서 대기까지 지웠다. 그 뒤의 입장은 늦게 도착한 저장보다 먼저 불러왔다.
 TEST_F(ProgressCoordinatorTest, EnterAfterExpiryStillWaitsForSave)
 {
     EnterRoom();

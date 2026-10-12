@@ -60,7 +60,7 @@ TEST(ParamSetTest, RowsOverLimitAreRejectedWithoutExecuting)
     EXPECT_TRUE(conn.executedQueries.empty());
 }
 
-// TD-040: ODBC Driver 17은 일부 행만 실패해도 SQL_SUCCESS_WITH_INFO를 돌려주고 나머지 행을 저장한다.
+// ODBC Driver 17은 일부 행만 실패해도 SQL_SUCCESS_WITH_INFO를 돌려주고 나머지 행을 저장한다.
 // 2026년 10월 9일 DriverReproTest로 실제 DB에서 확인했다. 실행 결과만 보면 아이템 일부가 사라진 저장이 성공으로 끝난다.
 TEST(ParamSetTest, PartiallyFailedRowsAreDBError)
 {

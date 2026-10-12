@@ -8,7 +8,7 @@ import redisClient from './redis.js';
  * Redis 클라이언트 설정 테스트.
  *
  * node-redis v5의 옵션에는 최상위 host와 port가 없고 socket: { host, port }만 있다. 최상위에 넘긴 값은 무시되어
- * 클라이언트가 기본값(localhost:6379)으로 붙었다(TD-005). 지금은 설정값과 기본값이 같아서 드러나지 않는다.
+ * 클라이언트가 기본값(localhost:6379)으로 붙었다. 지금은 설정값과 기본값이 같아서 드러나지 않는다.
  *
  * Redis에 붙지 않는다. connect()는 app.js가 부르고, 여기서는 만든 클라이언트의 옵션만 읽는다.
  */

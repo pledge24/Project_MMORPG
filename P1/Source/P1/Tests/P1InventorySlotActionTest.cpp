@@ -1,6 +1,6 @@
 // 인벤토리 칸을 더블클릭했을 때 어떤 요청을 보낼지 정하는 판정을 고정한다.
 //
-// 왜 이것인가: 무기를 더블클릭해도 장착 요청이 나가지 않는다는 결함이 이 판정에서 생겼다고 보고됐다(#132).
+// 왜 이것인가: 무기를 더블클릭해도 장착 요청이 나가지 않는다는 결함이 이 판정에서 생겼다고 보고됐다.
 // 블루프린트에 있던 판정을 C++로 옮기면서 슬롯 종류로 가르게 바꿨고, 기획 원본에 아이템 종류가 생긴 뒤로는
 // 아이템 데이터의 종류로 가른다. 슬롯 종류는 칸이 인벤토리에 있는지만 본다.
 //
@@ -75,7 +75,7 @@ bool FP1InventorySlotActionTest::RunTest(const FString& Parameters)
             FP1InventorySlotAction::Decide(MISC_SLOT, MISC, 4000, 10, 1, false) == EKind::Unusable);
     }
 
-    // 6) 재사용 대기 중인 소모품은 요청하지 않는다(#133). 장비는 대기가 없으므로 이 인자를 보지 않는다.
+    // 6) 재사용 대기 중인 소모품은 요청하지 않는다. 장비는 대기가 없으므로 이 인자를 보지 않는다.
     {
         TestTrue(TEXT("대기 중인 물약"),
             FP1InventorySlotAction::Decide(CONSUMABLE_SLOT, CONSUMABLE, 2000, 0, 1, true) == EKind::CoolingDown);

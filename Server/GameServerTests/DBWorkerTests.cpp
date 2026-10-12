@@ -8,7 +8,7 @@
 
     DB 스레드는 잡이 던진 예외를 받지 않으면 std::terminate로 서버 전체가 끝난다. 한 계정의
     잘못된 데이터가 Json 예외나 bad_alloc을 낼 수 있으므로, 잡 경계에서 모든 예외를 받아 로그를
-    남기고 다음 잡을 계속 돌려야 한다(TD-039).
+    남기고 다음 잡을 계속 돌려야 한다.
 
     픽스처 결합도: 없음. 잡을 직접 만들어 RunJob에 넘긴다.
 ---------------------------------------------------------------*/
@@ -45,7 +45,7 @@ TEST(DBWorkerTest, NonStandardExceptionDoesNotEscapeJob)
     EXPECT_NO_THROW(DBWorker::RunJob(job));
 }
 
-// TD-016: DB 큐를 멈출 수단이 없으면 DB 스레드가 끝나지 않아 정상 종료를 만들 수 없다.
+// DB 큐를 멈출 수단이 없으면 DB 스레드가 끝나지 않아 정상 종료를 만들 수 없다.
 // 멈출 때 이미 들어온 잡(접속 종료 저장 등)은 버리지 않고 다 돌린 뒤 끝난다.
 TEST(DBWorkerTest, StoppedQueueRunsPendingJobsThenEndsWorkerLoop)
 {

@@ -162,7 +162,7 @@ TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
     EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
-// TD-019: 룸에 들어간 플레이어가 C_ENTER_GAME을 다시 보내면 새 플레이어가 세션을 덮어써, 이전 플레이어가
+// 룸에 들어간 플레이어가 C_ENTER_GAME을 다시 보내면 새 플레이어가 세션을 덮어써, 이전 플레이어가
 // 룸에 남은 채 끊길 때도 퇴장하지 않는다.
 TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
 {
@@ -176,7 +176,7 @@ TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
     EXPECT_EQ(session->GetPlayer(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
 }
 
-/* TD-035: DB에서 읽은 슬롯은 믿지 않는다. 잘못된 행이 있으면 입장을 거절하고, 행은 DB에 그대로 둔다. */
+/* DB에서 읽은 슬롯은 믿지 않는다. 잘못된 행이 있으면 입장을 거절하고, 행은 DB에 그대로 둔다. */
 
 TEST_F(GameEntryTest, TwoRowsInOneSlotAreRejected)
 {

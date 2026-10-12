@@ -1,12 +1,12 @@
 // 내 플레이어의 이동 패킷을 언제 보낼지 정하는 판정을 고정한다.
 //
 // 왜 이것인가: 다른 클라이언트에 내 플레이어가 어떻게 보이는지가 이 판정에 달렸다. 이동 동기화를
-// Sync 컴포넌트로 옮기는 작업(#128)이 AP1MyPlayer::Tick에 있던 이 판정을 떼어 냈으므로, 그때의 동작을
-// 묶어 두었다. #156이 회전 비교를 고쳤다. 각도 차이를 ±180도에서 감싸고, 입력이 없으면 원하는 이동 Yaw
+// Sync 컴포넌트로 옮기는 작업이 AP1MyPlayer::Tick에 있던 이 판정을 떼어 냈으므로, 그때의 동작을
+// 묶어 두었다. 그 뒤 회전 비교를 고쳤다. 각도 차이를 ±180도에서 감싸고, 입력이 없으면 원하는 이동 Yaw
 // 대신 서버와 마지막으로 맞춘 yaw와 비교한다.
 //
-// 기대값은 판정을 다시 계산하지 않고 규칙에서 적었다. 1)~3)과 5)는 #128 때의 코드에서, 4)와 6)은 #156의
-// 이슈와 그때 정한 규칙에서 왔다. 전송 주기는 0.2초, 회전 허용치는 60도다.
+// 기대값은 판정을 다시 계산하지 않고 규칙에서 적었다. 1)~3)과 5)는 옮길 때의 코드에서, 4)와 6)은 회전 비교를
+// 고칠 때 정한 규칙에서 왔다. 전송 주기는 0.2초, 회전 허용치는 60도다.
 //
 // 실행: pwsh P1/Scripts/Run-UeTests.ps1
 
@@ -53,7 +53,7 @@ bool FP1MoveSendThrottleTest::RunTest(const FString& Parameters)
     }
 
     // 4) 입력이 있으면 원하는 이동 Yaw와 현재 Yaw가 60도 이상 벌어질 때 바로 보낸다. 경계값 60도 보내는 쪽이다.
-    //    이 판정은 이동 입력이 막혀 있어도 한다. 차이는 ±180도에서 감싸서 짧은 쪽으로 잰다(#156).
+    //    이 판정은 이동 입력이 막혀 있어도 한다. 차이는 ±180도에서 감싸서 짧은 쪽으로 잰다.
     {
         TestTrue(TEXT("60도 차이면 바로 보낸다"),
             FP1MoveSendThrottle::Decide({.RemainingTimer = 0.2f, .DeltaSeconds = 0.01f, .bCanInputMovement = true,
@@ -84,7 +84,7 @@ bool FP1MoveSendThrottleTest::RunTest(const FString& Parameters)
             FP1MoveSendThrottle::Decide({.RemainingTimer = 0.05f, .DeltaSeconds = 0.1f, .bCanInputMovement = true, .bAttacking = true}).bSend);
     }
 
-    // 6) 입력이 없으면 원하는 이동 Yaw를 보지 않는다. 입력을 떼면 그 값이 0이 되기 때문이다(#156).
+    // 6) 입력이 없으면 원하는 이동 Yaw를 보지 않는다. 입력을 떼면 그 값이 0이 되기 때문이다.
     //    대신 서버와 마지막으로 맞춘 yaw와 현재 yaw가 60도 이상 벌어지면 바로 보낸다. 공격 중에는 보내지 않는다.
     {
         TestFalse(TEXT("입력을 뗀 뒤 원하는 이동 Yaw가 0이어도 회전으로 보내지 않는다"),

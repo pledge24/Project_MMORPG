@@ -44,7 +44,7 @@ namespace
         const char* name;
     };
 
-    // 신뢰 경계 밖에서 온 슬롯 입력 (issue #25)
+    // 신뢰 경계 밖에서 온 슬롯 입력
     // 프로토콜에는 있으나 저장소 목록에는 없는 슬롯 타입들.
     constexpr Protocol::SlotType UNKNOWN_SLOT_TYPES[] = {
         Protocol::SlotType::SLOT_TYPE_NONE,
@@ -55,13 +55,13 @@ namespace
     constexpr int32 OUT_OF_RANGE_SLOT_IDS[] = {
         -1, static_cast<int32>(MAX_SLOTS), static_cast<int32>(MAX_SLOTS) + 1};
 
-    // 매핑 표의 키 집합 고정 (issue #27)
+    // 매핑 표의 키 집합 고정
     // 슬롯 타입 ↔ 아이템 타입 ↔ 그 타입으로 들어가는 시드 아이템.
     // 세 표가 이 짝대로 맞물려 있어야 넣은 아이템이 같은 저장소에서 다시 나온다.
     //
     // 아래 InventorySlotTypeTest의 INSTANTIATE_TEST_SUITE_P 목록과 값이 겹치지만
-    // 합치지 않는다. 합치려면 기존 SlotCase와 파라미터 목록을 고쳐야 하는데, #27이
-    // 기존 줄 수정을 사람 승인 사항으로 두었다. 합치는 일은 후속 작업으로 남긴다.
+    // 합치지 않는다. 합치려면 기존 SlotCase와 파라미터 목록을 고쳐야 하는데, 기존 줄의
+    // 수정은 사람이 승인할 사항이다. 합치는 일은 후속 작업으로 남긴다.
     struct StoredSlotCase
     {
         Protocol::SlotType slotType;
@@ -82,17 +82,17 @@ namespace
          Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS,
          MISC_TEMPLATE_ID}};
 
-    // 매핑 표에서 의도적으로 뺀 슬롯 타입의 기대 집합으로는 위 UNKNOWN_SLOT_TYPES(#25)를
+    // 매핑 표에서 의도적으로 뺀 슬롯 타입의 기대 집합으로는 위 UNKNOWN_SLOT_TYPES를
     // 그대로 쓴다. 목록을 두 벌로 두면 한쪽만 고쳤을 때 두 테스트가 서로 다른 사실을
     // 주장하게 되므로, 같은 선언을 공유한다.
     //
     // 뺀 이유는 값마다 다음과 같다.
     //  - SLOT_TYPE_NONE     : 슬롯 타입이 정해지지 않았다는 표식이므로 대응할 저장소가 없다.
     //  - SLOT_TYPE_EQUIPPED : 장착 슬롯은 EquipmentComponent가 따로 관리한다. 인벤토리 표에 넣는 것이
-    //                         옳은지부터가 설계 판단이라 이 티켓에서 정하지 않는다 (#24 Out of Scope).
+    //                         옳은지부터가 설계 판단이라 아직 정하지 않았다.
     //  - SLOT_TYPE_QUICK    : 퀵 슬롯은 서버에 대응하는 저장소가 아직 없다. 어떤 아이템 타입에
     //                         매핑할지 결정하는 일이 먼저다.
-    // 셋 다 #25에서 "크래시 없이 거부된다"로 고정됐다. 여기서 고정하는 것은 "표에 없다"는 사실이다.
+    // 셋 다 "크래시 없이 거부된다"는 것은 신뢰 경계 테스트가 고정한다. 여기서 고정하는 것은 "표에 없다"는 사실이다.
 
     // 조회 표에서 의도적으로 뺀 아이템 타입이다.
     //  - ITEM_TYPE_NONE : 아이템 타입이 정해지지 않았다는 표식이므로 저장소를 갖지 않는다.
@@ -357,7 +357,7 @@ TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
 }
 
 /*--------------------------------------------------------------
-    신뢰 경계 밖에서 온 슬롯 입력 (issue #25)
+    신뢰 경계 밖에서 온 슬롯 입력
 
     RemoveItem과 GetSlot이 받는 SlotType과 slot_id는 클라이언트가 보낸 값이
     그대로 들어온다. 매핑 표에 없는 SlotType이나 범위 밖 slot_id가 와도
@@ -465,7 +465,7 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
 }
 
 /*--------------------------------------------------------------
-    매핑 표의 키 집합 고정 (issue #27)
+    매핑 표의 키 집합 고정
 
     위의 왕복 테스트는 표의 **내용**이 어긋나면 잡아낸다. 잡아내지 못하는 것은
     표의 **키 집합**이다. .proto에 슬롯 타입이 새로 생기고 아무도 표를 갱신하지
@@ -480,7 +480,7 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
 
     **이 테스트는 표를 채우지 않는다.** 지금의 불완전함을 그대로 고정하는 것이
     목적이므로, 장착 슬롯과 퀵 슬롯은 그 선언에서 의도적 제외로 선언된다.
-    그 둘을 어디에 매핑할지는 `docs/backlog.md`가 후보로 들고 있다.
+    그 둘을 어디에 매핑할지는 아직 정하지 않았다.
 
     ---- 관측 수단과 그 한계 ----
 

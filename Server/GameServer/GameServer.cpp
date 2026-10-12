@@ -159,7 +159,7 @@ int main(void)
     }
 
     // 접속을 받기 전에 DB를 모두 준비한다. 리슨부터 열면 DB 큐가 생기기 전에 온 로그인이 없는 큐를 고르고,
-    // 다음 아이템 번호가 정해지기 전에 아이템이 만들어질 수 있다(TD-017).
+    // 다음 아이템 번호가 정해지기 전에 아이템이 만들어질 수 있다.
 
     // DB 연결. 풀 크기가 DB 스레드 수보다 넉넉한지는 Config::Validate가 봤다.
     ASSERT_CRASH(GDBConnectionPool->Connect(config.dbConnectionCount, config.dbConnectionString.c_str()));

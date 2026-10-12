@@ -173,7 +173,7 @@ TEST_F(GearEquipTest, EquipAndUnequipReportRecalculatedStats)
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
 }
 
-// TD-037: 해제로 최대치가 줄면 현재 HP와 MP도 새 최대치로 잘려야 한다. 잘리지 않은 채 저장되면 다음 입장이
+// 해제로 최대치가 줄면 현재 HP와 MP도 새 최대치로 잘려야 한다. 잘리지 않은 채 저장되면 다음 입장이
 // 「현재 HP가 최대 HP를 초과」로 거절된다.
 TEST_F(GearEquipTest, UnequippingAtFullHpSavesCopyThatPassesNextEntry)
 {
@@ -199,7 +199,7 @@ TEST_F(GearEquipTest, UnequippingAtFullHpSavesCopyThatPassesNextEntry)
     EXPECT_TRUE(reloaded->OnLoaded()) << "저장 사본의 현재 HP가 최대 HP를 넘으면 그 캐릭터는 다시 들어오지 못한다";
 }
 
-// TD-038: 착용 조건은 클라이언트만 보던 것을 서버가 다시 판정한다. 조작한 클라이언트가 보낸 요청도 거절해야 한다.
+// 착용 조건은 클라이언트만 보던 것을 서버가 다시 판정한다. 조작한 클라이언트가 보낸 요청도 거절해야 한다.
 TEST_F(GearEquipTest, EquippingAboveLevelRequirementIsRejected)
 {
     Protocol::Slot requestSlot = AddToInventory(HIGH_LEVEL_SWORD_TEMPLATE_ID);
