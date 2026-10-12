@@ -21,15 +21,19 @@ protected:
     virtual void Tick(float deltaTime) override;
     //~ End Entity Interface
 
+    //~ 피격과 사망
 public:
-    //~ 이벤트
     /** 공격의 damage만큼 HP를 깎는다. HP가 0 이하가 되면 OnDie를 부른다. HP는 0 밑으로 내려가지 않는다. */
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
     /** 사망 표시만 남긴다. 룸에서 빼는 일은 룸이 맡는다. */
     virtual void OnDie(EntityRef attacker);
+    bool IsDead() { return _isDead; }
+
+protected:
+    bool _isDead = false;
 
     //~ 스탯
-    bool IsDead() { return _isDead; }
+public:
     bool HasStat(Protocol::StatType statType);
 
     /** 없는 스탯을 읽으면 안 된다. 있는지 모르면 HasStat으로 먼저 확인한다. */
@@ -43,7 +47,5 @@ public:
 protected:
     /** 크리처가 소유한다. 파생 클래스만 쓴다. 다른 클래스는 GetStatInfo와 GetStatValue로 읽는다. */
     unique_ptr<Protocol::StatInfo> _statInfo;
-
-    bool _isDead = false;
 };
 

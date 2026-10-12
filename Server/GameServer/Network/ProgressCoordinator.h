@@ -43,6 +43,9 @@ public:
      */
     void RequestEnter(int64 userId, SaveGate::ParkedLoad load);
 
+    /** 접속 종료 저장을 기다리는 입장 요청의 상한(ms). 넘기면 입장을 거절한다. */
+    static constexpr uint64 PARKED_LOAD_TIMEOUT_MS = 5000;
+
     //~ 룸 큐
     /**
      * 끊긴 플레이어를 room에서 빼고, 룸이 저장 사본을 내주면 DB 큐에 저장을 넣는다. room의 큐 위에서만 부른다.
@@ -55,9 +58,6 @@ public:
      * 룸 이동 중에 끊긴 플레이어가 들어갈 룸에 들어가지 못했을 때 Room::EnterPlayer가 부른다.
      */
     void SaveLeftPlayer(const PlayerRef& player, PlayerSaveData saveData);
-
-    /** 접속 종료 저장을 기다리는 입장 요청의 상한(ms). 넘기면 입장을 거절한다. */
-    static constexpr uint64 PARKED_LOAD_TIMEOUT_MS = 5000;
 
 private:
     /** 저장하지 않기로 한 계정의 대기를 풀고, 맡겨 둔 불러오기가 있으면 DB 큐에 넣는다. */

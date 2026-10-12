@@ -27,16 +27,13 @@ public:
     virtual void Tick(float deltaTime) override;
     //~ End EntityComponent Interface
 
-    //~ 상태 읽기
+    //~ 상태 기계
+public:
     MonsterState GetState() const { return _state; }
     /** 쫓거나 공격하는 대상. 없으면 nullptr. */
     EntityRef GetTarget() const { return _target.lock(); }
 
 private:
-    /** 소유 몬스터. 소유자가 이미 사라졌으면 nullptr. */
-    MonsterRef GetOwner() const;
-
-    //~ 상태 전환
     void EvaluateStateTransition();
     /** _stateTimer를 0으로 돌리고 새 상태의 진입 처리(목적지, 방향, 이동 상태)를 한다. */
     void SwitchState(MonsterState nextState);
@@ -47,7 +44,29 @@ private:
     void ExecuteStateAttacking(float deltaTime);
     void ExecuteStateChasing(float deltaTime);
 
+    /** 대상이 사라졌거나, 사망했거나, 이 룸을 떠났으면 true. */
+    bool IsTargetLost();
+
+    /** 단위는 초다. */
+    static constexpr float IDLE_TIME = 5.f;
+    /** 단위는 초다. */
+    static constexpr float WANDERING_TIME = 2.f;
+    /** 상태 전환 판정의 주기. 단위는 초다. */
+    static constexpr float UPDATE_STATE_INTERVAL = 0.2f;
+    static constexpr float MIN_APPROACH_DISTANCE = 120.f;
+
+    float _detectionRange;                      // 타겟 감지 범위
+    float _chasingMaxRange;                     // 추적 범위
+
+    MonsterState _state = MonsterState::Idle;
+    weak_ptr<Entity> _target;
+
+    /** 아래 두 타이머의 단위는 초다. */
+    float _stateTimer = 0.f;                    // 여러 용도로 사용됨
+    float _timeSinceStateUpdate = 0.f;
+
     //~ 이동
+private:
     /** 목적지가 없거나 이미 도착했으면 이동하지 않고 멈춘다. deltaTime은 초 단위다. */
     void Move(float deltaTime, bool orientRotationToMovement = true);
     void LookAt(const vector2D& targetPos);
@@ -58,7 +77,16 @@ private:
     void SetDestination(const vector2D& destPos, float minApproachDistance = 0.f);
     void ClearDestination();
 
+    /** 목적지가 있고 마지막 공격 뒤 _attackInterval이 지났을 때만 true. */
+    bool CanMove();
+    /** 목적지가 없어도 true다. */
+    bool AlreadyArrive();
+
+    float _monsterSpeed;                        // 몬스터 이동 속도
+    optional<vector2D> _moveDest;
+
     //~ 공격
+private:
     /** 룸에 일반 공격을 알리고, NORMAL_ATTACK_HIT_DELAY 뒤의 피격 판정을 예약한다. */
     void NormalAttack();
     /**
@@ -67,45 +95,16 @@ private:
      */
     void UpdatePendingHit(float deltaTime);
 
-    //~ 상태 확인
-    /** 대상이 사라졌거나, 사망했거나, 이 룸을 떠났으면 true. */
-    bool IsTargetLost();
-    /** 목적지가 있고 마지막 공격 뒤 _attackInterval이 지났을 때만 true. */
-    bool CanMove();
-    /** 목적지가 없어도 true다. */
-    bool AlreadyArrive();
-
-private:
-    //~ 공통 값
-    /** 단위는 초다. */
-    static constexpr float IDLE_TIME = 5.f;
-    /** 단위는 초다. */
-    static constexpr float WANDERING_TIME = 2.f;
-    /** 상태 전환 판정의 주기. 단위는 초다. */
-    static constexpr float UPDATE_STATE_INTERVAL = 0.2f;
     /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간. 단위는 초다. */
     static constexpr float NORMAL_ATTACK_HIT_DELAY = 0.2f;
-    static constexpr float MIN_APPROACH_DISTANCE = 120.f;
 
-    //~ 몬스터 표에서 읽은 값
     /** 공격 간격(초). */
     float _attackInterval;
     int32 _baseAttack;
     float _tryAttackRange;                      // 공격 사거리
-    float _detectionRange;                      // 타겟 감지 범위
-    float _chasingMaxRange;                     // 추적 범위
-    float _monsterSpeed;                        // 몬스터 이동 속도
 
-    //~ 상태 기계의 값
-    MonsterState _state = MonsterState::Idle;
-    weak_ptr<Entity> _target;
-    optional<vector2D> _moveDest;
-
-    //~ 타이머
-    /** 아래 세 타이머의 단위는 초다. */
-    float _stateTimer = 0.f;                    // 여러 용도로 사용됨
+    /** 단위는 초다. */
     float _timeSinceLastAttack = 0.f;
-    float _timeSinceStateUpdate = 0.f;
 
     /** 판정을 기다리는 일반 공격. remainingTime은 초 단위다. */
     struct PendingHit
@@ -116,4 +115,9 @@ private:
         float remainingTime = 0.f;
     };
     optional<PendingHit> _pendingHit;
+
+    //~ 공통
+private:
+    /** 소유 몬스터. 소유자가 이미 사라졌으면 nullptr. */
+    MonsterRef GetOwner() const;
 };
