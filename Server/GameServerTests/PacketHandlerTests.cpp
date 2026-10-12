@@ -8,7 +8,7 @@
     패킷 핸들러의 세션 상태 검사 테스트
 
     세션 상태(로그인 여부, 플레이어 유무)는 패킷 핸들러가 본다. 로그인하지 않은 세션의 캐릭터 요청이
-    DB 큐까지 가면 생성은 계정 번호 0으로 INSERT를 시도한다(TD-019).
+    DB 큐까지 가면 생성은 계정 번호 0으로 INSERT를 시도한다.
 
     픽스처 결합도: 전역 DB 관리자(GDBManager)에 큐 하나를 만들고 끝나면 비운다. 핸들러가 큐에 잡을 넣었는지는
     큐를 멈춘 뒤 WaitForSingleJob으로 본다. 멈춘 큐는 남은 잡이 없으면 블로킹하지 않고 nullptr를 돌려준다.
@@ -49,7 +49,7 @@ protected:
     PacketSessionRef session;
 };
 
-// TD-020: 받은 패킷의 처리가 실패해도(핸들러가 거절하거나 본문을 풀지 못해도) 로그가 없어서 원인을 찾을 수 없었다.
+// 받은 패킷의 처리가 실패해도(핸들러가 거절하거나 본문을 풀지 못해도) 로그가 없어서 원인을 찾을 수 없었다.
 TEST_F(PacketHandlerTest, FailedPacketIsLogged)
 {
     ServerPacketHandler::Init();
@@ -74,7 +74,7 @@ TEST_F(PacketHandlerTest, FailedPacketIsLogged)
         << "처리에 실패한 패킷의 id가 로그에 남아야 한다. 실제 출력: " << captured.str();
 }
 
-// TD-041: 삭제 잡이 실행될 때 세션에서 계정 번호를 다시 읽었다. 그사이 세션의 계정이 바뀌면 다른 계정으로 일한다.
+// 삭제 잡이 실행될 때 세션에서 계정 번호를 다시 읽었다. 그사이 세션의 계정이 바뀌면 다른 계정으로 일한다.
 // 테스트 실행 파일에는 DB 연결이 없으므로 잡은 연결을 빌리지 못하고, 실패 로그에 쓴 계정 번호를 남긴다.
 TEST_F(PacketHandlerTest, DeleteJobUsesAccountReadByHandler)
 {

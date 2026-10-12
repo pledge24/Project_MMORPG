@@ -5,8 +5,7 @@
 // 이 배치는 클라와 서버가 함께 지켜야 하는 규약이라 한쪽만 고치면 바로 깨진다.
 // 서버 쪽 짝은 GameServerTests 의 PacketSerialization 스위트다.
 //
-// SendBuffer 의 Append 와 Copy 는 대상으로 삼지 않았다. 클라이언트에서 부르는 곳이 없다
-// (docs/tech-debt.md 참조).
+// SendBuffer 의 Append 와 Copy 는 대상으로 삼지 않았다. 클라이언트에서 부르는 곳이 없다.
 //
 // 실행: pwsh P1/Scripts/Run-UeTests.ps1
 

@@ -141,7 +141,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
         GLogger->Warning("플레이어 {}가 Room {} 입장에 실패했습니다", enterPlayerId, _roomId);
 
         // 룸 이동 중에 끊겼다. 떠난 룸은 이 플레이어를 찾지 못하고 이 룸에도 들어오지 못했으므로, 저장을 여기서 넘긴다.
-        // 넘기지 않으면 접속 종료가 건 저장 대기를 풀 곳이 없다(TD-047).
+        // 넘기지 않으면 접속 종료가 건 저장 대기를 풀 곳이 없다.
         if (enterPlayer->GetPresence() == Player::Presence::LEFT_IN_ROOM)
         {
             GProgressCoordinator->SaveLeftPlayer(enterPlayer, MakeDisconnectSaveData(enterPlayer));
@@ -173,7 +173,7 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
 
         case Player::Presence::LEFT_BEFORE_ROOM:
             // 첫 입장 전에 끊겼다. 바뀐 것이 없으므로 저장하지 않고, 접속 종료가 이미 저장 대기를 풀었다.
-            // 여기서 저장하면 그사이 대기 없이 입장한 새 세션의 불러오기 뒤에 이 저장이 돈다(TD-003).
+            // 여기서 저장하면 그사이 대기 없이 입장한 새 세션의 불러오기 뒤에 이 저장이 돈다.
             RemoveEntity(enterPlayerId);
             return false;
 

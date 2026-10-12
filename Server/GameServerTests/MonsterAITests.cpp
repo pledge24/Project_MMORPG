@@ -132,7 +132,7 @@ TEST_F(MonsterAITest, ChasesPlayerInDetectionRangeAfterStateUpdate)
     EXPECT_EQ(monster->GetAI().GetTarget(), player);
 }
 
-// TD-042: 대상이 룸에 남았는지는 0.2초마다 도는 상태 전환 판정만 봤다. 그사이의 틱은 다른 룸으로 떠난 플레이어의 위치를
+// 대상이 룸에 남았는지는 0.2초마다 도는 상태 전환 판정만 봤다. 그사이의 틱은 다른 룸으로 떠난 플레이어의 위치를
 // 읽었다. 그 위치는 새 룸 큐가 쓰므로, 다른 룸의 오브젝트에 손대지 않는다는 불변식을 어긴다.
 TEST_F(MonsterAITest, LosesTargetOnFirstTickAfterTargetLeavesRoom)
 {
@@ -162,7 +162,7 @@ TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
     EXPECT_LT(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
 }
 
-// TD-043: 피격 판정이 공격자가 룸에 남았는지만 보고 대상과의 거리를 다시 보지 않았다.
+// 피격 판정이 공격자가 룸에 남았는지만 보고 대상과의 거리를 다시 보지 않았다.
 // 공격을 알린 뒤 0.2초 안에 사거리를 빠져나간 플레이어도 맞았다.
 TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
 {

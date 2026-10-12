@@ -113,7 +113,7 @@ TEST(ProgressStorageTest, UnexpectedExceptionRollsBack)
     EXPECT_EQ(conn.rollbackCount, 1) << "열린 트랜잭션을 둔 채 연결을 풀에 돌려주면 다음 잡이 그 위에서 돈다";
 }
 
-// TD-032: 아이템 저장이 실패하면 앞서 실행한 레벨과 마지막 상태의 갱신도 되돌린다.
+// 아이템 저장이 실패하면 앞서 실행한 레벨과 마지막 상태의 갱신도 되돌린다.
 TEST(ProgressStorageTest, FailedItemSaveRollsBackEarlierSteps)
 {
     FakeDBConnection conn;

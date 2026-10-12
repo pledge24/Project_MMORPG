@@ -29,7 +29,7 @@ protected:
     /** 언리얼의 BeginPlay에 대응하는 함수. 첫 틱 전 작업을 처리한다. */
     virtual void Start() {}
     /**
-     * 소속 룸이 룸 틱마다 룸 큐 위에서 부른다. deltaTime은 초 단위다. 엔티티가 다음 틱을 예약하지 않는다(ADR-0011).
+     * 소속 룸이 룸 틱마다 룸 큐 위에서 부른다. deltaTime은 초 단위다. 엔티티가 다음 틱을 예약하지 않는다.
      * 컴포넌트를 가진 엔티티는 받은 틱을 자기 컴포넌트에 넘긴다.
      */
     virtual void Tick(float deltaTime) {}

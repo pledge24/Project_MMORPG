@@ -46,7 +46,7 @@ void MonsterAIComponent::Tick(float deltaTime)
 
 MonsterRef MonsterAIComponent::GetOwner() const
 {
-    // 이 컴포넌트를 만드는 엔티티는 Monster뿐이다(ADR-0013).
+    // 이 컴포넌트를 만드는 엔티티는 Monster뿐이다.
     return static_pointer_cast<Monster>(_owner.lock());
 }
 

@@ -11,7 +11,7 @@
     룸 요청 처리 테스트
 
     룸 큐의 잡은 핸들러가 넣은 뒤 나중에 돈다. 그사이 연결이 끊겨 세션이 사라졌을 수 있으므로,
-    잡은 세션이 없어도 응답을 건너뛰고 끝나야 한다(TD-006).
+    잡은 세션이 없어도 응답을 건너뛰고 끝나야 한다.
 
     픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 플레이어는 세션 없이 불러온 진행으로
     만들어 EnterPlayer로 넣는다. 아이템과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
@@ -114,7 +114,7 @@ protected:
     PlayerRef player;
 };
 
-// TD-045: 클라이언트가 보낸 위치를 그대로 썼다. 조작한 클라이언트는 룸 안 어디로든 순간이동했다.
+// 클라이언트가 보낸 위치를 그대로 썼다. 조작한 클라이언트는 룸 안 어디로든 순간이동했다.
 // 판정 기준은 MoveValidationTests가 덮는다. 여기서는 룸이 그 판정으로 패킷을 버리는지만 본다.
 TEST_F(RoomRequestTest, MoveFartherThanAllowedIsIgnored)
 {
@@ -127,7 +127,7 @@ TEST_F(RoomRequestTest, MoveFartherThanAllowedIsIgnored)
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), startX) << "한 번에 허용 거리를 넘는 이동은 버린다";
 }
 
-// TD-007: 이동은 보낸 사람의 위치만 바꾼다. 패킷의 엔티티 번호로 대상을 찾으면 같은 룸의 다른 플레이어를 옮길 수 있다.
+// 이동은 보낸 사람의 위치만 바꾼다. 패킷의 엔티티 번호로 대상을 찾으면 같은 룸의 다른 플레이어를 옮길 수 있다.
 TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
 {
     const PlayerProgress progress = MakeProgressWithSword();
@@ -151,7 +151,7 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
     EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
 }
 
-// TD-021: 처음 입장하면 다른 플레이어 알림(SpawnPlayer)과 룸 정보 복제(ReplicateRoomData)가 둘 다 본인을 실었다.
+// 처음 입장하면 다른 플레이어 알림(SpawnPlayer)과 룸 정보 복제(ReplicateRoomData)가 둘 다 본인을 실었다.
 TEST_F(RoomRequestTest, InitialEntrySpawnsSelfOnce)
 {
     shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
@@ -206,7 +206,7 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
         << "룸을 떠난 플레이어의 소지품을 옛 룸 큐에서 바꾸면 새 룸 큐와 경쟁한다";
 }
 
-// TD-006: 착용과 해제는 실패 응답 전에만 세션을 확인하고, 성공 응답은 확인 없이 보냈다.
+// 착용과 해제는 실패 응답 전에만 세션을 확인하고, 성공 응답은 확인 없이 보냈다.
 // 세션이 없는 플레이어(잡이 기다리는 사이 끊긴 세션)로 성공 경로를 타면 널 세션을 역참조했다.
 TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
 {
@@ -245,7 +245,7 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
         << "마을 리스폰은 HP를 절반으로 채운다";
 }
 
-// TD-001: 맵 입장 요청은 아무 룸 번호나 받아 들어갈 룸으로 기록했다. 뒤이은 첫 입장(C_ENTER_ROOM)이 그 번호와
+// 맵 입장 요청은 아무 룸 번호나 받아 들어갈 룸으로 기록했다. 뒤이은 첫 입장(C_ENTER_ROOM)이 그 번호와
 // 같은지만 보므로, 조작한 클라이언트는 불러온 룸과 무관하게 아무 룸에서나 시작했다.
 TEST_F(RoomRequestTest, FirstEnterMapToOtherRoomIsRejected)
 {

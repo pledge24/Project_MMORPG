@@ -153,7 +153,7 @@ TEST(RoomTransferTest, TownWithoutRespawnPointHasNoTownRespawn)
     Gamedata::Install(GamedataTables());
 }
 
-//~ 위치를 보는 판정(TD-001)
+//~ 위치를 보는 판정
 
 namespace
 {

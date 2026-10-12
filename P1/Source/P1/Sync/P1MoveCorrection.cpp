@@ -16,8 +16,8 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
     Result.Location = ClientLocation;
     Result.Rotation = ClientRotation;
 
-    // 지금은 높이를 판정하지 않으므로 보정은 XY에만 적용한다. 서버 Z는 높이를 다룰 때를 위해 받아 둔다
-    // (docs/backlog.md 「높이(Z) 판정 도입」). 그때 이 줄부터 고친다.
+    // 지금은 높이를 판정하지 않으므로 보정은 XY에만 적용한다. 서버 Z는 높이를 다룰 때를 위해 받아 둔다.
+    // 높이 판정을 도입할 때 이 줄부터 고친다.
     const FVector Target(ServerLocation.X, ServerLocation.Y, ClientLocation.Z);
 
     if (FVector::Distance(ClientLocation, Target) >= P1MoveSync::SNAP_DISTANCE)

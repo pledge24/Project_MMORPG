@@ -7,7 +7,7 @@
 
 /**
  * GameServer가 동기화를 처리하는 최소 공간 단위.
- * 속한 Entity를 소유하며, 룸 틱이 ROOM_TICK_INTERVAL_MS마다 모든 엔티티의 Tick을 돌린다(ADR-0011).
+ * 속한 Entity를 소유하며, 룸 틱이 ROOM_TICK_INTERVAL_MS마다 모든 엔티티의 Tick을 돌린다.
  * 모든 작업(네트워크를 통한 작업, Room 내부 작업 등)은 Job 객체 단위로 처리되며, JobQueue에 꺼내 처리한다.
  * Room 클래스 자체는 중계 역할만 하며, 대부분의 작업은 각 컴포넌트에서 처리한다.
  */

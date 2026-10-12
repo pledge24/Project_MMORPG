@@ -80,7 +80,7 @@ TEST_F(SaveGateTest, HoldTwiceKeepsParkedLoad)
     EXPECT_EQ(gate.Park(USER_ID, MakeLoad()).result, SaveGate::ParkResult::NOT_HELD);
 }
 
-// TD-003: 만료는 기다리던 입장만 돌려준다. 저장은 아직 끝나지 않았으므로 대기는 남아 다음 입장도 기다린다.
+// 만료는 기다리던 입장만 돌려준다. 저장은 아직 끝나지 않았으므로 대기는 남아 다음 입장도 기다린다.
 TEST_F(SaveGateTest, ExpireHandsBackParkedLoadButKeepsHold)
 {
     gate.Hold(USER_ID);

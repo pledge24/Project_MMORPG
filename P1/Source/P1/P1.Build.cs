@@ -13,7 +13,7 @@ public class P1 : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { "ProtobufCore", "Slate", "SlateCore" });
 
         // 도메인 폴더는 등록하지 않는다. `#include`를 경로 한정으로 쓰게 해서 경계를 넘는
-        // 참조가 include 줄에 드러나게 한다. 근거는 ADR-0005.
+        // 참조가 include 줄에 드러나게 한다.
         PrivateIncludePaths.AddRange(new string[]
         {
             "P1/",
