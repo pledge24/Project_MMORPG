@@ -34,6 +34,16 @@ bool Listener::Start()
 	return true;
 }
 
+void Listener::Close()
+{
+	if (_closed.exchange(true))
+		return;
+
+	// 값을 INVALID_SOCKET으로 되돌리지 않는다. 워커가 RegisterAccept에서 같은 변수를 읽고 있을 수 있다.
+	// 닫힌 소켓으로 건 AcceptEx는 실패하고, 그 실패 경로가 _closed를 보고 멈춘다.
+	::closesocket(_listenSocket);
+}
+
 bool Listener::Listen()
 {
     // Socket
@@ -76,16 +86,6 @@ bool Listener::Listen()
     GLogger->Info("리슨 소켓을 열고 AcceptEx {}개를 걸었다", acceptCount);
 
     return true;
-}
-
-void Listener::Close()
-{
-	if (_closed.exchange(true))
-		return;
-
-	// 값을 INVALID_SOCKET으로 되돌리지 않는다. 워커가 RegisterAccept에서 같은 변수를 읽고 있을 수 있다.
-	// 닫힌 소켓으로 건 AcceptEx는 실패하고, 그 실패 경로가 _closed를 보고 멈춘다.
-	::closesocket(_listenSocket);
 }
 
 void Listener::RegisterAccept(AcceptEvent* acceptEvent)

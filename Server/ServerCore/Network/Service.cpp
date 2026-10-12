@@ -22,25 +22,6 @@ void Service::CloseService()
 {
 }
 
-void Service::DisconnectAllSessions(const char* cause)
-{
-	// 끊기 완료는 다른 워커가 RemoveSession으로 집합을 고친다. 락 밖에서 끊도록 사본을 뜬다.
-	vector<SessionRef> sessions;
-	{
-		USE_LOCK
-		sessions.assign(_sessions.begin(), _sessions.end());
-	}
-
-	for (const SessionRef& session : sessions)
-		session->Disconnect(cause);
-}
-
-int32 Service::GetCurrentSessionCount()
-{
-	USE_LOCK
-	return _sessionCount;
-}
-
 void Service::Broadcast(SendBufferRef sendBuffer)
 {
 	USE_LOCK
@@ -79,6 +60,25 @@ void Service::RemoveSession(SessionRef session)
     // 서비스에 등록되지 않은 세션을 지우는 경우가 발생해선 안된다. (ASSERT_CRASH는 좀 과할 수 있다)
 	ASSERT_CRASH(_sessions.erase(session) != 0)
 	_sessionCount--;
+}
+
+void Service::DisconnectAllSessions(const char* cause)
+{
+	// 끊기 완료는 다른 워커가 RemoveSession으로 집합을 고친다. 락 밖에서 끊도록 사본을 뜬다.
+	vector<SessionRef> sessions;
+	{
+		USE_LOCK
+		sessions.assign(_sessions.begin(), _sessions.end());
+	}
+
+	for (const SessionRef& session : sessions)
+		session->Disconnect(cause);
+}
+
+int32 Service::GetCurrentSessionCount()
+{
+	USE_LOCK
+	return _sessionCount;
 }
 
 /*-------------------

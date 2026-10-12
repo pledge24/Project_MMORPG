@@ -101,6 +101,17 @@ void EquipmentComponent::ClearDirtyFlags()
         dirtyFlagPair.second = false;
 }
 
+bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass)
+{
+    if (level < itemTemplate.levelRequirement)
+        return false;
+
+    if (itemTemplate.classRequirement.has_value() && itemTemplate.classRequirement.value() != characterClass)
+        return false;
+
+    return true;
+}
+
 bool EquipmentComponent::PlaceItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 gearType)
 {
     auto slotIt = _equippedGearLookup->find(gearType);
@@ -118,17 +129,6 @@ bool EquipmentComponent::PlaceItem(OUT Protocol::Slot* replicatingSlot, const Pr
 
     if (replicatingSlot != nullptr)
         replicatingSlot->CopyFrom(*targetSlot);
-
-    return true;
-}
-
-bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass)
-{
-    if (level < itemTemplate.levelRequirement)
-        return false;
-
-    if (itemTemplate.classRequirement.has_value() && itemTemplate.classRequirement.value() != characterClass)
-        return false;
 
     return true;
 }

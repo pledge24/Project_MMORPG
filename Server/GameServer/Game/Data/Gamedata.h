@@ -10,6 +10,7 @@ struct GamedataDocuments;
  */
 class Gamedata
 {
+    //~ 설치
 public:
     /** 기획표 파일을 읽어 검증하고 설치한다. 실패하면 사유를 로그에 남기고 false. 이때 서버는 뜨지 않는다. */
     static bool LoadAllGamedata();
@@ -24,6 +25,7 @@ public:
     static void Install(GamedataTables tables);
 
     //~ 조회. 없는 번호면 nullptr.
+public:
     static const ItemTemplate* FindItem(int32 templateId);
     static const MonsterTemplate* FindMonster(int32 templateId);
     static const MapTemplate* FindMap(int32 templateId);
@@ -34,6 +36,7 @@ public:
     /** 사망한 플레이어가 돌아가는 마을 룸 번호. */
     static int32 GetTownRoomId() { return s_tables.townRoomId; }
 
+    //~ 공통
 private:
     static GamedataTables s_tables;
 };

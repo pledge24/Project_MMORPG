@@ -15,15 +15,6 @@
  */
 struct Config
 {
-    wstring dbConnectionString;
-    string redisUri;
-    string bindAddress;
-    uint16 port = 0;
-    int32 maxSessionCount = 0;
-    int32 workerThreadCount = 0;
-    int32 dbThreadCount = 0;
-    int32 dbConnectionCount = 0;
-
     // 이름을 받아 값이 있으면 돌려준다. 테스트는 실제 환경 대신 가짜 조회를 넘긴다.
     using EnvLookup = std::function<std::optional<string>(const char* name)>;
 
@@ -37,4 +28,13 @@ struct Config
      * 연결 풀은 DB 스레드마다 하나가 있어야 한다. 부팅 때 main은 DB 스레드를 띄우기 전에 연결을 빌렸다가 돌려준다.
      */
     std::optional<string> Validate() const;
+
+    wstring dbConnectionString;
+    string redisUri;
+    string bindAddress;
+    uint16 port = 0;
+    int32 maxSessionCount = 0;
+    int32 workerThreadCount = 0;
+    int32 dbThreadCount = 0;
+    int32 dbConnectionCount = 0;
 };

@@ -251,25 +251,15 @@ int32 InventoryComponent::FindFirstAvailableSlotId(Protocol::ItemType type, int3
     return FindEmptySlotId(*bag);
 }
 
-bool InventoryComponent::IsCoolingDown(int32 templateId, uint64 nowMs) const
-{
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
-    if (itemTemplate == nullptr)
-        return false;
-
-    auto lastUseIt = _lastUseTimeMs.find(templateId);
-    return lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs;
-}
-
-void InventoryComponent::StartCooldown(int32 templateId, uint64 nowMs)
-{
-    _lastUseTimeMs[templateId] = nowMs;
-}
-
 vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType)
 {
     Bag* bag = FindBag(itemType);
     return bag != nullptr ? &bag->dirtyFlags : nullptr;
+}
+
+const vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType) const
+{
+    return const_cast<InventoryComponent*>(this)->GetDirtyFlags(itemType);
 }
 
 Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id)
@@ -290,11 +280,6 @@ Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_
 const Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id) const
 {
     return const_cast<InventoryComponent*>(this)->GetSlot(type, slot_id);
-}
-
-const vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType) const
-{
-    return const_cast<InventoryComponent*>(this)->GetDirtyFlags(itemType);
 }
 
 void InventoryComponent::ClearDirtyFlags()
@@ -335,4 +320,19 @@ int32 InventoryComponent::FindEmptySlotId(const Bag& bag, int32 fromSlotId)
     }
 
     return -1;
+}
+
+bool InventoryComponent::IsCoolingDown(int32 templateId, uint64 nowMs) const
+{
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
+    if (itemTemplate == nullptr)
+        return false;
+
+    auto lastUseIt = _lastUseTimeMs.find(templateId);
+    return lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs;
+}
+
+void InventoryComponent::StartCooldown(int32 templateId, uint64 nowMs)
+{
+    _lastUseTimeMs[templateId] = nowMs;
 }

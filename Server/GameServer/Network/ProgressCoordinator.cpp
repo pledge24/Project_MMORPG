@@ -5,6 +5,11 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 
+ProgressCoordinator::ProgressCoordinator(SaveGate& saveGate, PushDBJob pushDBJob, SaveProgress saveProgress, ScheduleTimer scheduleTimer)
+    : _saveGate(saveGate), _pushDBJob(std::move(pushDBJob)), _saveProgress(std::move(saveProgress)), _scheduleTimer(std::move(scheduleTimer))
+{
+}
+
 unique_ptr<ProgressCoordinator> ProgressCoordinator::CreateForServer(SaveGate& saveGate)
 {
     // 람다는 부를 때에야 전역 객체를 읽는다. 만들 때는 DB 큐가 아직 없어도 된다.
@@ -23,11 +28,6 @@ unique_ptr<ProgressCoordinator> ProgressCoordinator::CreateForServer(SaveGate& s
         {
             GSessionJobQueue->DoTimer(delayMs, std::move(job));
         });
-}
-
-ProgressCoordinator::ProgressCoordinator(SaveGate& saveGate, PushDBJob pushDBJob, SaveProgress saveProgress, ScheduleTimer scheduleTimer)
-    : _saveGate(saveGate), _pushDBJob(std::move(pushDBJob)), _saveProgress(std::move(saveProgress)), _scheduleTimer(std::move(scheduleTimer))
-{
 }
 
 void ProgressCoordinator::OnDisconnected(int64 userId, const PlayerRef& player)

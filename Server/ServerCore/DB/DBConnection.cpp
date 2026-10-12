@@ -135,17 +135,17 @@ void DBConnection::Unbind()
     SetParamStatusArray(nullptr, nullptr);
 }
 
-void DBConnection::SetParamStatusArray(SQLUSMALLINT* statuses, SQLULEN* processedCount)
-{
-    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAM_STATUS_PTR, statuses, 0);
-    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMS_PROCESSED_PTR, processedCount, 0);
-}
-
 void DBConnection::SetParamSetSize(int32& rows)
 {
     // SQL_ATTR_PARAMSET_SIZE는 값을 SQLULEN으로 읽는다. int32를 바로 포인터로
     // 캐스팅하면 x64에서 크기가 달라 C4312가 나므로 포인터 폭으로 먼저 넓힌다.
     ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)(SQLULEN)rows, 0);
+}
+
+void DBConnection::SetParamStatusArray(SQLUSMALLINT* statuses, SQLULEN* processedCount)
+{
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAM_STATUS_PTR, statuses, 0);
+    ::SQLSetStmtAttr(_statement, SQL_ATTR_PARAMS_PROCESSED_PTR, processedCount, 0);
 }
 
 bool DBConnection::BeginTransaction()
@@ -162,16 +162,6 @@ bool DBConnection::Commit()
 bool DBConnection::Rollback()
 {
     return EndTransaction(SQL_ROLLBACK);
-}
-
-bool DBConnection::EndTransaction(SQLSMALLINT completionType)
-{
-    SQLRETURN ret = ::SQLEndTran(SQL_HANDLE_DBC, _connection, completionType);
-
-    // 확정에 실패해도 자동 커밋으로 돌려 둔다. 다음 잡이 끝나지 않은 트랜잭션 위에서 돌지 않게 한다.
-    ::SQLSetConnectAttr(_connection, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, SQL_IS_UINTEGER);
-
-    return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO;
 }
 
 bool DBConnection::FindError(const SQLWCHAR* targetState)
@@ -344,6 +334,16 @@ bool DBConnection::BindCol(SQLUSMALLINT columnIndex, SQLSMALLINT cType, SQLULEN 
 	}
 
 	return true;
+}
+
+bool DBConnection::EndTransaction(SQLSMALLINT completionType)
+{
+    SQLRETURN ret = ::SQLEndTran(SQL_HANDLE_DBC, _connection, completionType);
+
+    // 확정에 실패해도 자동 커밋으로 돌려 둔다. 다음 잡이 끝나지 않은 트랜잭션 위에서 돌지 않게 한다.
+    ::SQLSetConnectAttr(_connection, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_ON, SQL_IS_UINTEGER);
+
+    return ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO;
 }
 
 void DBConnection::HandleError(SQLRETURN ret)

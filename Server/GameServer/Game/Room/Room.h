@@ -17,18 +17,21 @@ public:
     Room() = default;
 	virtual ~Room() = default;
 
-    //~ 생성과 시작
+    //~ 생성
 public:
     /** 룸을 만들어 Init까지 마친다. 룸을 만드는 길은 이것 하나다. 맵 표는 부팅 때 검증을 마쳤으므로 실패하지 않는다. */
     static RoomRef Create(const MapTemplate& mapTemplate);
-    /** 몬스터를 스폰하고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
-    bool Start();
 
 protected:
     /** Create만 부른다. 맵 표의 행을 읽어 두고 셀 행렬을 만든다. */
     void Init(const MapTemplate& mapTemplate);
     /** 맵 데이터에서 자주 읽는 값을 멤버로 옮겨 둔다. Init에서 한 번 부른다. */
     void CacheRoomData();
+
+    //~ 시작
+public:
+    /** 몬스터를 스폰하고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
+    bool Start();
 
 private:
     /** Start가 스폰할 몬스터의 수와 종류. */

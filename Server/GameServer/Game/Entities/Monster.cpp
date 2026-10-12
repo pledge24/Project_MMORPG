@@ -86,6 +86,12 @@ int64 Monster::GetGoldReward()
     return Utils::GetRandom(_template.minGold, _template.maxGold);
 }
 
+void Monster::CacheMonsterData()
+{
+    _templateId = _template.templateId;
+    _maxHp = _template.maxHp;
+}
+
 void Monster::SetPlanePos(const vector2D& pos)
 {
     _posInfo->mutable_pos()->set_x(pos.x);
@@ -109,10 +115,4 @@ void Monster::SetYaw(float yaw)
 void Monster::SetMoveState(Protocol::MoveState moveState)
 {
     _posInfo->set_state(moveState);
-}
-
-void Monster::CacheMonsterData()
-{
-    _templateId = _template.templateId;
-    _maxHp = _template.maxHp;
 }

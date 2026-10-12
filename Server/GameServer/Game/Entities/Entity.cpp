@@ -12,6 +12,11 @@ Entity::~Entity()
 {
 }
 
+bool Entity::Init(const SpawnParams&)
+{
+    return true;
+}
+
 void Entity::JoinRoom(const RoomRef& room)
 {
     _room.store(room);
@@ -22,9 +27,3 @@ void Entity::JoinRoom(const RoomRef& room)
         Start();
     }
 }
-
-bool Entity::Init(const SpawnParams&)
-{
-    return true;
-}
-

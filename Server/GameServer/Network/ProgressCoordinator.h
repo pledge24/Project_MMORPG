@@ -59,6 +59,7 @@ public:
      */
     void SaveLeftPlayer(const PlayerRef& player, PlayerSaveData saveData);
 
+    //~ 공통
 private:
     /** 저장하지 않기로 한 계정의 대기를 풀고, 맡겨 둔 불러오기가 있으면 DB 큐에 넣는다. */
     void ReleaseHold(int64 userId);
