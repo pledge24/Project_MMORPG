@@ -42,8 +42,7 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
     };
 
 
-    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
-    // 이 계정의 캐릭터가 아니면 행이 없다. 클라이언트가 보낸 character_id를 믿지 않는다.
+    // user_id를 함께 대조한다. character_id는 클라이언트 값이라, 빼면 다른 계정의 캐릭터로 입장할 수 있다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         SELECT class_id, character_name, level
         FROM [dbo].[Characters]
@@ -123,7 +122,6 @@ void CharacterStateDAO::LoadLastState(DBConnection& conn, int64 characterId, OUT
     };
 
 
-    // 해당 유저의 마지막 정보를 가져온다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         SELECT exp, cur_hp, cur_mp, cur_physical_attack, cur_magical_attack, room_id, map_id, pos_x, pos_y, pos_z, rot_yaw, gold
         FROM [dbo].[CharactersLastState] 
@@ -170,7 +168,7 @@ void CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& 
             BindParam(dbBind);
         }
 
-        // 번호는 아래 SQL의 물음표 순서다. SET이 먼저, WHERE가 나중이다.
+        // 번호는 아래 SQL의 물음표 순서다. SET이 먼저, WHERE가 나중이다. 어긋나면 다른 캐릭터의 레벨을 덮어쓴다.
         void BindParam(DBBind<PARAMS, COLS>& dbBind)
         {
             dbBind.BindParam(0, _level);
@@ -183,7 +181,6 @@ void CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& 
     };
 
 
-    // 해당 유저의 캐릭터 기본 정보들을 갱신한다(지금은 레벨만 갱신).
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         UPDATE [dbo].[Characters]
         SET level = (?)
@@ -261,7 +258,6 @@ void CharacterStateDAO::SaveLastState(DBConnection& conn, const PlayerSaveData& 
     };
 
 
-    // 해당 유저의 마지막 정보를 DB에 갱신한다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         UPDATE [dbo].[CharactersLastState]
         SET exp = (?), cur_hp = (?), cur_mp = (?), cur_physical_attack = (?), cur_magical_attack = (?), room_id = (?), map_id = (?), pos_x = (?), pos_y = (?), pos_z = (?), rot_yaw = (?), gold = (?)

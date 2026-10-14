@@ -3,8 +3,9 @@
 #include <Windows.h>
 
 /**
- * UTF-8 string과 UTF-16 wstring 사이를 바꾼다. DB와 Windows API가 쓰는 wchar 문자열을
- * protobuf와 설정값의 UTF-8 문자열로 옮길 때 쓴다.
+ * UTF-8 string과 UTF-16 wstring 사이의 변환기.
+ *
+ * Windows 쪽이 쓰는 UTF-16 문자열과 나머지 코드가 쓰는 UTF-8 문자열 사이를 옮길 때 쓴다.
  * 상태가 없으므로 여러 스레드에서 불러도 된다.
  */
 class EncodingConverter
@@ -18,15 +19,15 @@ public:
             return "";
         }
 
-        // 변환에 필요한 버퍼 크기 계산
+        // 버퍼 없이 부르면 필요한 크기만 돌려준다. 길이를 -1로 넘겼으므로 크기에 널 문자가 들어 있다.
         int bufferSize = WideCharToMultiByte(
-            CP_UTF8,            // 대상 코드 페이지 (UTF-8)
-            0,                  // 플래그
-            wstr,               // 변환할 와이드 문자열
-            -1,                 // 문자열의 길이 (-1은 널 종료 문자까지 계산)
-            NULL,               // 변환 결과를 저장할 버퍼 (크기만 계산)
-            0,                  // 버퍼 크기
-            NULL, NULL          // 기본 문자, 기본 문자 사용 여부
+            CP_UTF8,
+            0,
+            wstr,
+            -1,
+            NULL,
+            0,
+            NULL, NULL
         );
 
         if (bufferSize == 0)
@@ -34,7 +35,6 @@ public:
             return "";
         }
 
-        // 버퍼 할당 및 변환 수행
         string result(bufferSize, 0);
         WideCharToMultiByte(
             CP_UTF8,
@@ -46,7 +46,7 @@ public:
             NULL, NULL
         );
 
-        // 마지막 널 문자를 제거 (std::string은 널 문자로 끝나지 않음)
+        // 널 문자를 잘라 낸다. 남기면 문자열 끝에 '\0'이 붙어 비교와 길이가 어긋난다.
         result.resize(bufferSize - 1);
 
         return result;
@@ -60,23 +60,21 @@ public:
             return L"";
         }
 
-        // 변환에 필요한 버퍼 크기 계산
+        // 버퍼 없이 부르면 필요한 크기만 돌려준다. 길이를 -1로 넘겼으므로 크기에 널 문자가 들어 있다.
         int bufferSize = MultiByteToWideChar(
-            CP_UTF8,        // 대상 코드 페이지 (UTF-8)
-            0,              // 플래그
-            str.c_str(),    // 변환할 문자열
-            -1,             // 문자열의 길이 (-1은 널 종료 문자까지 계산)
-            NULL,           // 변환 결과를 저장할 버퍼 (크기만 계산)
-            0               // 버퍼 크기
+            CP_UTF8,
+            0,
+            str.c_str(),
+            -1,
+            NULL,
+            0
         );
 
         if (bufferSize == 0)
         {
-            // 오류 처리. GetLastError()를 통해 자세한 오류 정보 확인 가능
             return L"";
         }
 
-        // 버퍼 할당 및 변환 수행
         wstring result(bufferSize, 0);
         MultiByteToWideChar(
             CP_UTF8,
@@ -87,7 +85,7 @@ public:
             bufferSize
         );
 
-        // 마지막 널 문자를 제거 (std::wstring은 널 문자로 끝나지 않음)
+        // 널 문자를 잘라 낸다. 남기면 문자열 끝에 L'\0'이 붙어 비교와 길이가 어긋난다.
         result.resize(bufferSize - 1);
 
         return result;

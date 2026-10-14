@@ -25,8 +25,9 @@ struct StackableItemSaveRow
 };
 
 /**
- * 접속 종료 때 아이템 테이블에 반영할 행을 PlayerSaveData에서 고른다. DB를 모른다.
- * 더티 플래그가 켜진 슬롯만 행이 된다.
+ * 아이템 저장 행을 고르는 규칙.
+ *
+ * 저장 사본에서 바뀐 슬롯만 골라 아이템 테이블에 반영할 행으로 만든다. DB에는 손대지 않는다.
  */
 namespace ItemSaveRows
 {

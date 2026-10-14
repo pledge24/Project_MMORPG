@@ -185,7 +185,6 @@ optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
     if (gold < buyPrice)
         return nullopt;
 
-    // 실제 "아이템 구매" 적용 시점.
     BuyItemResult result;
     if (_inventory->AddItem(OUT &result.updatedSlots, templateId, count) == false)
         return nullopt;
@@ -210,7 +209,6 @@ optional<SellItemResult> Player::ProcessSellItem(const Protocol::Slot& requestSl
     const int64 gold = _possession->gold();
     const int64 sellPrice = itemTemplate->sellPrice * count;
 
-    // 실제 "아이템 판매" 적용 시점.
     SellItemResult result;
     if (_inventory->RemoveItem(requestSlot, OUT &result.updatedSlot, count) == false)
         return nullopt;
@@ -340,7 +338,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 	{
 	case Protocol::RESPAWN_TYPE_TOWN:
 	{
-		// 사망 패널티 적용(경험치 10% 감소) <- 리스폰 할때 적용
+		// 사망 패널티. 최대 경험치의 10%를 잃고, 0 밑으로는 내려가지 않는다.
 		{
 			int64 exp = GetStatValue(Protocol::STAT_TYPE_EXP);
 			int64 maxExp = GetStatValue(Protocol::STAT_TYPE_MAX_EXP);
@@ -353,7 +351,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 			ProtoUtil::AddStat(&result.updatedStats, Protocol::STAT_TYPE_EXP, updatedExp);
 		}
 
-		// Hp는 절반만 가지고 리스폰
+		// HP는 최대치의 절반으로 되살아난다.
 		{
 			int64 respawnHp = (int64)(GetStatValue(Protocol::STAT_TYPE_MAX_HP) * 0.5f);
 
@@ -377,7 +375,6 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 		break;
 	}
 
-	// 리스폰 성공 처리
 	{
 		_isDead = false;
 	}
@@ -414,7 +411,6 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
     }
     else
     {
-        // 만일을 대비한 _posInfo 세팅
         const vector3D& centerPos = enterRoom->GetCenterPoint();
         Protocol::Vector* pos = _posInfo->mutable_pos();
 
@@ -441,7 +437,6 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     const int32 oldLevel = _playerInfo->level();
 
     const Protocol::Reward& reward = rewardResultPkt.reward();
-    // 받은 보상(Reward) 처리.
     {
         _possession->set_gold(_possession->gold() + reward.gold());
 
@@ -462,7 +457,6 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
         SetStatValue(Protocol::STAT_TYPE_EXP, IsMaxLevel() ? 0 : updatedExp);
     }
 
-    // 받은 보상에 따른 변화를 패킷에 넣는다.
     {
         rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
         rewardResultPkt.set_updated_gold(_possession->gold());
@@ -492,10 +486,8 @@ void Player::OnLevelUp()
     if (IsMaxLevel())
         return;
 
-    // Set Level
     _playerInfo->set_level(_playerInfo->level() + 1);
 
-    // Set StatInfo
     SetStatValue(Protocol::STAT_TYPE_MAX_EXP, _nextLevelUpData.expRequirement);
     SetStatValue(Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP) + _nextLevelUpData.maxHpIncrement);
     SetStatValue(Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP) + _nextLevelUpData.maxMpIncrement);
@@ -535,9 +527,6 @@ void Player::CacheNextLevelUpData()
 
 optional<CombatStats> Player::CalculateFinalStat()
 {
-    // 스킬 패시브, 내실 등 캐릭터 스텟을 올릴 수 있는 요소가 추가되면 여기에 더한다.
-
-    // 1. 레벨당 캐릭터 기본 스텟
     const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
     if (classLevelTable == nullptr)
     {
@@ -554,7 +543,7 @@ optional<CombatStats> Player::CalculateFinalStat()
 
     CombatStats finalStat{ levelTemplate->maxHp, levelTemplate->maxMp, levelTemplate->physicalAttack, levelTemplate->magicalAttack };
 
-    // 2. 착용 장비의 증감량
+    // 스킬 패시브, 내실 등 캐릭터 스탯을 올릴 수 있는 요소가 추가되면 장비처럼 여기에 더한다.
     finalStat += _equipment->SumStatDelta();
 
     return finalStat;

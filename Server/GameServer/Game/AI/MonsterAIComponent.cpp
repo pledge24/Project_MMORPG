@@ -20,13 +20,14 @@ MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const MonsterTemplate& 
 
 void MonsterAIComponent::Tick(float deltaTime)
 {
-    // 틱마다 타이머 갱신
+    // 타이머 갱신.
     {
         _stateTimer += deltaTime;
         _timeSinceLastAttack += deltaTime;
         _timeSinceStateUpdate += deltaTime;
     }
 
+    // 예약한 피격 판정.
     UpdatePendingHit(deltaTime);
 
     // 대상의 위치는 대상이 이 룸에 있을 때만 읽을 수 있다. 다른 룸으로 떠난 대상의 위치는 그 룸 큐가 쓴다.
@@ -41,6 +42,7 @@ void MonsterAIComponent::Tick(float deltaTime)
         EvaluateStateTransition();
     }
 
+    // 상태별 행동.
     ExecuteStateBehavior(deltaTime);
 }
 
@@ -82,14 +84,14 @@ void MonsterAIComponent::EvaluateStateTransition()
             }
         }
 
-        // Idle -> Wandering으로 상태 전환
+        // 대기 시간이 끝나면 배회한다.
         if (_state == MonsterState::Idle && _stateTimer >= IDLE_TIME)
         {
             SwitchState(MonsterState::Wandering);
             return;
         }
 
-        // Wandering -> Idle로 상태 전환
+        // 배회 시간이 끝났거나 목적지에 닿으면 대기한다.
         if (_state == MonsterState::Wandering)
         {
             if (_stateTimer >= WANDERING_TIME || AlreadyArrive())
@@ -103,7 +105,8 @@ void MonsterAIComponent::EvaluateStateTransition()
     }
     case MonsterState::Chasing:
     {
-        // 전환 조건(대기): 대상이 룸을 떠났거나 사망함. 이 검사를 통과하면 대상이 살아 있고 이 룸에 있다.
+        // 대상이 룸을 떠났거나 사망하면 대기한다.
+        // 이 검사를 통과해야 대상이 살아 있고 이 룸에 있다. 아래는 그것을 믿고 대상을 바로 읽으므로 검사를 뒤로 미루면 안 된다.
         if (IsTargetLost())
         {
             SwitchState(MonsterState::Idle);
@@ -112,27 +115,27 @@ void MonsterAIComponent::EvaluateStateTransition()
 
         const Protocol::PosInfo* targetPos = &_target.lock()->GetPosInfo();
 
-        // 전환 조건(공격): 공격 범위 안에 들어옴
+        // 공격 범위 안에 들어오면 공격한다.
         if (MathUtil::InRange(curPos, targetPos, _tryAttackRange))
         {
             SwitchState(MonsterState::Attacking);
             return;
         }
 
-        // 전환 조건(대기): 타겟이 추적 범위를 벗어남
+        // 대상이 추적 범위를 벗어나면 대기한다.
         if (MathUtil::InRange(curPos, targetPos, _chasingMaxRange) == false)
         {
             SwitchState(MonsterState::Idle);
             return;
         }
 
-        // 전환이 일어나지 않음(추적): 목적지를 갱신한다.
+        // 전환하지 않으면 추적 목적지를 대상 위치로 갱신한다.
         SetDestination(MathUtil::PosInfoToVector2D(targetPos), MIN_APPROACH_DISTANCE);
         break;
     }
     case MonsterState::Attacking:
     {
-        // 전환 조건(대기): 대상이 룸을 떠났거나 사망함. 이 검사를 통과하면 대상이 살아 있고 이 룸에 있다.
+        // 대상이 룸을 떠났거나 사망하면 대기한다. 추적과 같이, 이 검사를 통과해야 아래에서 대상을 바로 읽을 수 있다.
         if (IsTargetLost())
         {
             SwitchState(MonsterState::Idle);
@@ -141,7 +144,7 @@ void MonsterAIComponent::EvaluateStateTransition()
 
         const Protocol::PosInfo* targetPos = &_target.lock()->GetPosInfo();
 
-        // 전환 조건(추적): 공격 범위를 벗어남
+        // 공격 범위를 벗어나면 추적한다.
         if (MathUtil::InRange(curPos, targetPos, _tryAttackRange) == false)
         {
             SwitchState(MonsterState::Chasing);
@@ -175,10 +178,8 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
     {
     case MonsterState::Idle:
     {
-        // 서있기 세팅(PosInfo 세팅)
         StopMoving(true);
 
-        // 타겟을 놓는다.
         {
             ClearDestination();
             _target.reset();
@@ -194,7 +195,6 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
 
         vector2D newDest = ownerRoom->GetRandomLocation();
 
-        // 목적지로 이동 세팅(PosInfo 세팅)
         StartMovingTo(newDest);
 
         break;
@@ -207,7 +207,6 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
 
         vector2D targetPos = MathUtil::PosInfoToVector2D(&entity->GetPosInfo());
 
-        // 타겟으로 이동 세팅(PosInfo 세팅)
         StartMovingTo(targetPos, MIN_APPROACH_DISTANCE);
 
         break;
@@ -218,7 +217,6 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
         if (entity == nullptr)
             return;
 
-        // 타겟 공격 세팅(PosInfo 세팅)
         {
             ClearDestination();
             LookAt(MathUtil::PosInfoToVector2D(&entity->GetPosInfo()));
@@ -266,7 +264,6 @@ void MonsterAIComponent::ExecuteStateAttacking(float deltaTime)
     if (owner == nullptr || target == nullptr)
         return;
 
-    // 타겟을 바라본다.
     const Protocol::PosInfo* targetPos = &target->GetPosInfo();
     LookAt(MathUtil::PosInfoToVector2D(targetPos));
 
@@ -293,11 +290,11 @@ void MonsterAIComponent::ExecuteStateChasing(float deltaTime)
         return;
     }
 
-    // 타겟이랑 충분히 멀리 떨어져 있을때만 이동
+    // 너무 가까우면 상태 전환 판정 주기를 기다리지 않고 여기서 바로 공격으로 바꾼다.
     const Protocol::PosInfo* targetPos = &target->GetPosInfo();
     if (bool tooClose = MathUtil::InRange(&owner->GetPosInfo(), targetPos, MIN_APPROACH_DISTANCE))
     {
-        SwitchState(MonsterState::Attacking);   // 이 경우, 예외로 상태를 변경한다.
+        SwitchState(MonsterState::Attacking);
     }
     else
     {
@@ -310,7 +307,7 @@ void MonsterAIComponent::ExecuteStateChasing(float deltaTime)
 
 bool MonsterAIComponent::IsTargetLost()
 {
-    // 대상이 룸을 떠났거나 사망했으면 추적을 그만둔다. 사망한 플레이어는 룸에 남으므로 사망을 따로 본다.
+    // 사망한 플레이어는 리스폰할 때까지 룸에 남으므로, 룸 소속만 보지 않고 사망도 따로 본다.
     EntityRef target = _target.lock();
     if (target == nullptr)
         return true;
@@ -352,7 +349,6 @@ void MonsterAIComponent::Move(float deltaTime, bool orientRotationToMovement)
 
     owner->SetPlanePos(curPos);
 
-    // 필요할지도 모르니까 매번 이동 방향 세팅
     owner->SetMoveDirection(moveVec);
 
     if (orientRotationToMovement)
@@ -412,7 +408,6 @@ void MonsterAIComponent::SetDestination(const vector2D& destPos, float minApproa
         vector2D approachVec = destPos - curPos;
         float dist = approachVec.GetMagnitude();
 
-        // 이미 너무 가까움 → 그냥 현 위치를 목적지로 설정.
         if (dist <= minApproachDistance)
         {
             _moveDest = curPos;
@@ -431,9 +426,8 @@ void MonsterAIComponent::SetDestination(const vector2D& destPos, float minApproa
 
 void MonsterAIComponent::ClearDestination()
 {
-    _moveDest.reset();  // 목적지를 없앤다.
+    _moveDest.reset();
 
-    // 목적지가 없으니 이동도 X
     if (MonsterRef owner = GetOwner())
         owner->SetMoveDirection(vector2D::GetZeroVector());
 }
@@ -441,7 +435,7 @@ void MonsterAIComponent::ClearDestination()
 bool MonsterAIComponent::CanMove()
 {
     bool hasLeftAttackDelay = _timeSinceLastAttack <= _attackInterval;
-    bool hasDest = _moveDest.has_value();     // 반드시 목적지가 있을때만 이동한다.
+    bool hasDest = _moveDest.has_value();
 
     return !hasLeftAttackDelay && hasDest;
 }
@@ -516,6 +510,6 @@ void MonsterAIComponent::UpdatePendingHit(float deltaTime)
 
 MonsterRef MonsterAIComponent::GetOwner() const
 {
-    // 이 컴포넌트를 만드는 엔티티는 Monster뿐이다.
+    // 이 컴포넌트를 만드는 엔티티는 Monster뿐이라 static_pointer_cast를 쓴다. 다른 엔티티에 붙이면 잘못된 형변환으로 메모리를 깨뜨린다.
     return static_pointer_cast<Monster>(_owner.lock());
 }

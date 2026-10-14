@@ -66,7 +66,6 @@ namespace JsonProperty
         constexpr std::string_view MagicalAttack = "magicalAttack";
         constexpr std::string_view ExpRequirement = "expRequirement";
 
-        // 증가량
         constexpr std::string_view MaxHp_Increment = "maxHpIncrement";
         constexpr std::string_view MaxMp_Increment = "maxMpIncrement";
         constexpr std::string_view PA_Increment = "paIncrement";

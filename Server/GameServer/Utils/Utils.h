@@ -3,7 +3,11 @@
 #include <cmath>
 #include <numbers>
 
-/** 평면(x, y) 벡터. 좌표는 언리얼 단위(cm)를 따른다. 셀 행렬과 몬스터 이동이 높이를 빼고 계산할 때 쓴다. */
+/**
+ * 평면(x, y) 벡터.
+ *
+ * 높이를 빼고 평면에서 위치와 방향을 계산할 때 쓴다. 좌표는 언리얼 단위(cm)를 따른다.
+ */
 struct vector2D
 {
     vector2D() {};
@@ -20,7 +24,6 @@ struct vector2D
             return GetZeroVector();
         }
 
-        // 각 성분을 크기로 나눈다.
         return vector2D(x / magnitude, y / magnitude);
     }
 
@@ -66,23 +69,25 @@ struct vector3D
     float z = 0.f;
 };
 
-/** 상태 없는 범용 함수 모음. */
+/**
+ * 상태 없는 범용 함수 모음.
+ *
+ * 특정 게임 기능에 묶이지 않는 보조 함수를 둔다.
+ */
 class Utils
 {
 public:
 	/**
-	 * [min, max]에서 뽑는다. 정수도 max를 포함한다. 배열 인덱스를 뽑을 때는 size - 1을 넘긴다.
-	 * 호출마다 엔진을 새로 만들므로 여러 스레드에서 불러도 된다. min이 max보다 크면 동작이 정의되지 않는다.
+	 * [min, max]에서 균등하게 뽑는다. 정수도 max를 포함하므로 인덱스를 뽑을 때는 size - 1을 넘긴다.
+	 * 여러 스레드에서 불러도 된다. min이 max보다 크면 동작이 정의되지 않는다.
 	 */
 	template<typename T>
 	static T GetRandom(T min, T max)
 	{
-		// 시드값을 얻기 위한 random_device 생성.
+		// 엔진을 호출마다 새로 만든다. 엔진을 공유하면 여러 스레드가 함께 부를 때 상태가 깨진다.
 		std::random_device randomDevice;
-		// random_device 를 통해 난수 생성 엔진을 초기화 한다.
 		std::mt19937 generator(randomDevice());
 
-		// 균등하게 나타나는 난수열을 생성하기 위해 균등 분포 정의.
 		if constexpr (std::is_integral_v<T>)
 		{
 			std::uniform_int_distribution<T> distribution(min, max);
@@ -96,7 +101,12 @@ public:
 	}
 };
 
-/** 평면 거리와 방향 계산. yaw는 언리얼과 같이 도(degree) 단위이고 +x 축이 0도다. */
+/**
+ * 평면 거리와 방향 계산.
+ *
+ * 높이를 빼고 평면에서 거리, 범위, 방향을 잰다.
+ * yaw는 언리얼과 같이 도(degree) 단위이고 +x 축이 0도다.
+ */
 class MathUtil
 {
 public:
@@ -107,7 +117,6 @@ public:
 
         float yaw_degrees = yaw_radians * (180.0f / std::numbers::pi_v<float>);
 
-        // 언리얼 방식에 맞게 -180~180 범위로 정규화
         if (yaw_degrees > 180.0f)
             yaw_degrees -= 360.0f;
         else if (yaw_degrees < -180.0f)
@@ -152,7 +161,11 @@ public:
 
 using google::protobuf::RepeatedPtrField;
 
-/** protobuf 메시지를 채우는 보조 함수 모음. */
+/**
+ * protobuf 메시지를 채우는 보조 함수 모음.
+ *
+ * 여러 곳에서 같은 모양으로 채우는 protobuf 필드를 한 번의 호출로 채우게 한다.
+ */
 class ProtoUtil
 {
 public:

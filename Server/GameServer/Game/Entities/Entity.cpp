@@ -19,6 +19,7 @@ bool Entity::Init(const SpawnParams&)
 
 void Entity::JoinRoom(const RoomRef& room)
 {
+    // 룸을 Start보다 먼저 쓴다. 순서를 바꾸면 Start 안에서 읽는 소속 룸이 비어 있다.
     _room.store(room);
 
     if (_hasBegunPlay == false)

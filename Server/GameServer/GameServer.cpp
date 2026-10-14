@@ -56,13 +56,13 @@ namespace
         {
             LEndTickCount = ::GetTickCount64() + WORKER_TICK;
 
-            // 네트워크 입출력 처리 -> 인게임 로직까지 (패킷 핸들러에 의해)
+            // 네트워크 입출력 처리. 패킷 핸들러가 여기서 돈다.
             service->GetIocpCore()->Dispatch(10);
 
-            // 시간이 된 TimerJob 각 JQ에 밀어넣기(하나만 통과)
+            // 시간이 된 예약 잡을 각 잡 큐에 넣는다. 한 번에 한 스레드만 나눠 준다.
             ThreadManager::DistributeReservedJobs();
 
-            // 글로벌 큐(떠넘겨진 JQ 들어있음)
+            // 다른 스레드가 떠넘긴 잡 큐 처리.
             ThreadManager::DoGlobalQueueWork();
         }
     }
@@ -94,12 +94,12 @@ namespace
         return WaitUntil([&remaining]() { return remaining->load() == 0; }, ROOM_DRAIN_TIMEOUT_MS);
     }
 
-    // 새 접속을 막고, 접속 중인 세션을 모두 끊어 접속 종료 저장을 돌리고, DB 큐가 빌 때까지 기다린 뒤 스레드를 모두 끝낸다.
-    // 저장은 평소의 접속 종료 경로(ProgressCoordinator)를 그대로 탄다.
+    // 접속 중인 플레이어를 저장하고 스레드를 모두 끝낸다. 저장은 평소의 접속 종료 경로를 그대로 탄다.
     void Shutdown(ServerServiceRef& service)
     {
         GLogger->Info("종료 신호를 받았습니다. 새 접속을 막고 접속 중인 플레이어를 저장합니다");
 
+        // 새 접속을 막고 접속 중인 세션을 모두 끊는다.
         service->CloseService();
         service->DisconnectAllSessions("Server Shutdown");
 
@@ -134,7 +134,7 @@ int main(void)
     ASSERT_CRASH(s_shutdownCompleted != nullptr);
     ASSERT_CRASH(::SetConsoleCtrlHandler(HandleConsoleCtrl, TRUE));
 
-    // Init
+    // 패킷 핸들러 등록.
 	ServerPacketHandler::Init();
 
     // 기획표가 틀리면 게임 중에 드러나지 않도록 여기서 멈춘다. 틀린 행은 LoadAllGamedata가 로그에 남긴다.
@@ -178,7 +178,7 @@ int main(void)
         return 1;
     }
 
-    // DB thread. 큐마다 DB 스레드가 하나씩 붙는다.
+    // DB 스레드 시작. 큐마다 DB 스레드가 하나씩 붙는다.
     GDBManager->Init(config.dbThreadCount);
     for (int32 i = 0; i < config.dbThreadCount; i++)
     {
@@ -188,6 +188,7 @@ int main(void)
             });
     }
 
+	// 접속 받기 시작.
 	ServerServiceRef service = make_shared<ServerService>(
 		NetAddress(config.bindAddress, config.port),
 		make_shared<IocpCore>(),
@@ -197,7 +198,7 @@ int main(void)
 
 	ASSERT_CRASH(service->Start())
 
-	// worker thread. 메인 스레드가 마지막 하나로 합류한다.
+	// 워커 스레드 시작. 메인 스레드가 마지막 하나로 합류한다.
 	for (int32 i = 0; i < config.workerThreadCount; i++)
 	{
 		GThreadManager->Launch([&service]()

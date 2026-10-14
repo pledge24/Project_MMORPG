@@ -35,7 +35,6 @@ optional<vector<GearSaveRow>> ItemSaveRows::BuildGearRows(const PlayerSaveData& 
 
     vector<GearSaveRow> rows;
 
-    // 인벤토리에 들어 있는 장비
     const auto& inventoryGear = possession.inventory().gear();
     for (int32 i = 0; i < inventoryGear.size(); i++)
     {
@@ -43,7 +42,6 @@ optional<vector<GearSaveRow>> ItemSaveRows::BuildGearRows(const PlayerSaveData& 
             rows.push_back(MakeGearRow(characterId, inventoryGear.Get(i), false));
     }
 
-    // 착용 중인 장비
     for (const auto& [slotId, isDirty] : data.equippedGearDirtyFlags)
     {
         if (isDirty)

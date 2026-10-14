@@ -1,14 +1,18 @@
 #pragma once
 
 /**
- * 엔티티를 만드는 정적 팩토리. 언리얼의 SpawnActorDeferred에 대응한다.
- * id 발급, 생성, Init(params)까지만 하고 룸에는 넣지 않는다. 룸에 넣고 Start하는 일은 Room::AddEntity가 맡는다.
- * 엔티티 id를 서버 전체에서 겹치지 않게 발급한다. id 발급이 atomic이라 여러 스레드에서 불러도 된다.
+ * 엔티티를 만드는 정적 팩토리.
+ *
+ * 서버 전체에서 겹치지 않는 엔티티 id를 발급하고, 룸에 넣기 전까지의 생성을 맡는다.
+ * 언리얼의 SpawnActorDeferred에 대응하며, 여러 스레드에서 불러도 된다.
  */
 class EntityFactory
 {
 public:
-    /** T의 정의가 보이는 곳에서 부른다. Init에 실패하면 nullptr. */
+    /**
+     * 엔티티를 만들어 Init까지 부른다. 룸에는 넣지 않으며, Init에 실패하면 nullptr.
+     * T의 정의가 보이는 곳에서 부른다.
+     */
     template<typename T>
     static shared_ptr<T> Create(const typename T::SpawnParams& params)
     {

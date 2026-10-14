@@ -2,8 +2,9 @@
 #include "Game/Entities/Entity.h"
 
 /**
- * 스탯과 생사를 갖는 엔티티. 피격되고 사망할 수 있는 것은 모두 이 클래스를 상속한다.
- * 스레드와 수명은 Entity와 같다.
+ * 스탯과 생사를 갖는 엔티티.
+ *
+ * 피격되고 사망할 수 있는 것은 모두 이 클래스를 상속한다.
  */
 class Creature : public Entity
 {
@@ -16,6 +17,7 @@ public:
 protected:
     friend class EntityFactory;
     //~ Begin Entity Interface
+protected:
     bool Init(const SpawnParams& params);
     virtual void Start() override;
     virtual void Tick(float deltaTime) override;
@@ -23,7 +25,7 @@ protected:
 
     //~ 피격과 사망
 public:
-    /** 공격의 damage만큼 HP를 깎는다. HP가 0 이하가 되면 OnDie를 부른다. HP는 0 밑으로 내려가지 않는다. */
+    /** 공격의 damage만큼 HP를 깎고, HP가 0이 되면 OnDie를 부른다. */
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
     /** 사망 표시만 남긴다. 룸에서 빼는 일은 룸이 맡는다. */
     virtual void OnDie(EntityRef attacker);
@@ -45,7 +47,6 @@ public:
     const Protocol::StatInfo& GetStatInfo() const { return *_statInfo; }
 
 protected:
-    /** 크리처가 소유한다. 파생 클래스만 쓴다. 다른 클래스는 GetStatInfo와 GetStatValue로 읽는다. */
     unique_ptr<Protocol::StatInfo> _statInfo;
 };
 

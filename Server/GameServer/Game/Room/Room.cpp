@@ -40,7 +40,6 @@ void Room::Init(const MapTemplate& mapTemplate)
 {
     _mapTemplate = mapTemplate;
 
-    // 자주 쓰는 맵 데이터를 멤버에 둔다.
     CacheRoomData();
 
     _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
@@ -65,7 +64,6 @@ void Room::CacheRoomData()
     _maxMonsterCount = _mapTemplate.maxMonsterCount;
     _monsterIds = _mapTemplate.monsterIds;
 
-    // 리스폰 포인트 저장
     if (_mapTemplate.respawnPoint.has_value())
     {
         const TemplatePos& point = _mapTemplate.respawnPoint.value();
@@ -82,7 +80,7 @@ void Room::CacheRoomData()
 
 bool Room::Start()
 {
-    // 몬스터를 Room에 스폰한다. 마을처럼 몬스터 목록이 빈 룸은 건너뛴다.
+    // 몬스터 스폰. 마을처럼 몬스터 목록이 빈 룸은 건너뛴다.
     if (_monsterIds.empty() == false)
     {
         int32 kindOfMonster = static_cast<int32>(_monsterIds.size());
@@ -158,7 +156,6 @@ void Room::BroadcastMonsterMoves()
         movePkt.add_info()->CopyFrom(entity->GetPosInfo());
     }
 
-    // 몬스터가 없는 룸에서는 목록이 빈다. 주기마다 빈 패킷을 보내지 않도록 여기서 끝낸다.
     if (movePkt.info_size() == 0)
         return;
 
@@ -248,9 +245,7 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
         return false;
     }
 
-    // 플레이어 Room 퇴장 성공 처리
     {
-        // OtherPlayer: Broadcast Player Despawn In Room
         {
             Protocol::S_DESPAWN despawnPkt;
             despawnPkt.add_entity_ids(leavePlayerId);
@@ -259,7 +254,6 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
             Broadcast(sendBuffer);
         }
 
-        // leavePlayer: Despawn Packet 전송
         if (auto session = leavePlayer->GetSession())
         {
             if (transferRoom == false)
@@ -277,13 +271,11 @@ bool Room::LeavePlayer(PlayerRef leavePlayer, bool transferRoom)
 
 bool Room::TransferPlayer(PlayerRef player, RoomEnterData roomEnterData)
 {
-    // Leave Current Room
     if (LeavePlayer(player, true) == false)
     {
         return false;
     }
 
-    // Enter Next Room
     RoomRef nextRoom = GRoomManager->FindRoom(roomEnterData.nextRoomId);
     nextRoom->DoAsync(&Room::EnterPlayer, player, roomEnterData);
 
@@ -367,8 +359,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     {
     case Protocol::ENTER_TYPE_INITIAL:
     {
-        // 최초 입장. ServerPacketHandler가 목적지 Room의 JobQueue로 넘겨주므로
-        // 여기서는 이미 입장할 Room 위에서 실행 중이다. 떠날 Room이 없다.
+        // 최초 입장. 이미 목적지 룸 큐 위에서 돌고 있으므로 떠날 룸이 없다.
         RoomEnterData roomEnterData{};
         roomEnterData.nextRoomId = _roomId;
         roomEnterData.enterType = Protocol::ENTER_TYPE_INITIAL;
@@ -386,7 +377,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     }
     case Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER:
     {
-        // 맵 간 이동. 현재 Room의 JobQueue 위에서 실행되므로 퇴장까지 직접 처리한다.
+        // 맵 간 이동. 현재 룸 큐 위에서 돌므로 퇴장까지 여기서 한다.
         const int32 roomId = pkt.room_id();
         RoomRef enterRoom = GRoomManager->FindRoom(roomId);
         if (enterRoom == nullptr)
@@ -418,7 +409,7 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
     }
     case Protocol::ENTER_TYPE_SAME_MAP_TRANSFER:
     {
-        // 포탈을 통한 같은 맵 내 이동. 현재 Room의 JobQueue 위에서 실행된다.
+        // 포털로 같은 맵 안에서 이동한다. 현재 룸 큐 위에서 돈다.
         // 그사이 다른 룸으로 옮겼으면 위치를 읽지 않고 버린다. 이 룸에서 퇴장시킬 수 없는 요청이므로 응답도 보내지 않는다.
         if (Contains(player->GetEntityId()) == false)
             return;
@@ -454,7 +445,6 @@ void Room::C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player)
         // TransferPlayer가 목적지 큐에 EnterPlayer를 넣은 뒤에 실행된다.
         enterRoom->DoAsync([enterRoom, player]()
             {
-                // 목적지 Room의 다른 플레이어들에게 내 등장을 알린다.
                 if (enterRoom->SpawnPlayer(player) == nullptr)
                     return;
 
@@ -490,7 +480,6 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
 
     player->ApplyMove(pkt.info(), now);
 
-    // 이동 사실을 알린다(본인 빼고).
     Protocol::S_MOVE movePkt;
     *movePkt.add_info() = player->GetPosInfo();
     Broadcast(ServerPacketHandler::MakeSerializedPacket(movePkt), playerId);
@@ -502,7 +491,6 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
     
-    // 일반 공격 사실을 Broadcast.
     {
         Protocol::S_NORMAL_ATTACK normalAttackPkt;
         {
@@ -518,7 +506,7 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
 
 void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 {
-    // 1. Validate + Find Respawn Room
+    // 판정과 리스폰할 룸 찾기
     RoomRef respawnRoom = nullptr;
     Protocol::PosInfo respawnPos;
     const Protocol::RespawnType respawnType = pkt.respawn_type();
@@ -553,7 +541,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         return;
     }
 
-    // 2. Process Respawn
+    // 리스폰
     if (shared_from_this() == respawnRoom)
     {
         if (HandleRespawn(player, respawnType, respawnPos) == false)
@@ -573,9 +561,8 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
     }
     else
     {
-        // 죽은 Room과 다른 Room에서 Respawn하는 경우 진입
+        // 죽은 룸과 다른 룸에서 리스폰한다.
         RoomEnterData enterData = RoomEnterData{};
-        // 1) Room 이동 데이터 설정
         {
             enterData.nextRoomId = respawnRoom->GetRoomId();
             enterData.enterType = Protocol::ENTER_TYPE_RESPAWN;
@@ -586,7 +573,6 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
             enterData.enterPos = std::move(enterPos);
         }
 
-        // 2) Room을 이동 -> 리스폰 패킷 전송 -> Room 정보 전송
         if (TransferPlayer(player, enterData) == false)
             return;
 
@@ -600,8 +586,7 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
                 respawnRoom->SpawnPlayer(player);
 
-                // 전에는 SpawnPlayer가 본인에게도 보냈다. 받는 횟수를 그대로 두려고 본인까지 싣는다.
-                // 클라이언트가 내 액터를 유지하고 있으면 중복 검사가 버린다.
+                // 본인도 싣는다. 내 액터를 유지하고 있는 클라이언트에서는 중복 검사가 버린다.
                 respawnRoom->ReplicateRoomData(player, true);
             });
     }
@@ -628,7 +613,6 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
     if (FindEntityAs<Entity>(attacker->GetEntityId()) != attacker)
         return;
 
-    // 1) 해당 공격에 맞은 대상을 찾는다.
     vector<CreatureRef> targets;
     if (attackInfo.has_target_id())
     {
@@ -643,7 +627,6 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
         }
     }
 
-    // 2) 판정 결과를 알린다.
     for (const CreatureRef& target : targets)
     {
         optional<Combat::HitResult> result = Combat::ResolveHit(attacker, target, attackInfo);
@@ -731,7 +714,6 @@ bool Room::HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Pr
     // 호출자가 RoomTransfer::FindTownRespawn으로 찾아 넘겨준 위치를 쓴다.
     RespawnResult result = player->ProcessRespawn(respawnType, respawnPos);
 
-    // 리스폰 성공 처리
     respawnPkt.set_success(true);
     respawnPkt.set_respawn_type(respawnType);
     respawnPkt.set_entity_id(player->GetEntityId());
@@ -810,7 +792,6 @@ void Room::ReplicateRoomData(PlayerRef player, bool includeThisPlayer)
 {
     int64 playerId = player->GetEntityId();
 
-    // 해당 플레이어에게 Room 엔티티 전송
     Protocol::S_SPAWN spawnPkt;
     if (auto session = player->GetSession())
     {
@@ -851,10 +832,9 @@ bool Room::RemoveEntity(int64 entityId)
 
     EntityRef entity = _entities[entityId];
 
-    // 셀 행렬에서 엔티티를 삭제한다. 격자 밖에 있으면 어느 셀에도 없다.
+    // 격자 밖에 있던 엔티티는 어느 셀에도 없다.
     _cellMatrix.Remove(entityId, ToPlanePos(entity->GetPosInfo()));
 
-    // 엔티티를 삭제한다.
 	_entities.erase(entityId);
 
 	return true;

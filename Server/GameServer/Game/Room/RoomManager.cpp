@@ -22,6 +22,7 @@ bool RoomManager::CreateAllRooms()
 
 RoomRef RoomManager::FindRoom(int32 roomId) const
 {
+    // 락이 없다. 부팅 뒤로 _rooms를 바꾸지 않기 때문이다. 실행 중에 룸을 더하거나 빼려면 조회에 락부터 둬야 한다.
     auto it = _rooms.find(roomId);
     if (it == _rooms.end())
         return nullptr;

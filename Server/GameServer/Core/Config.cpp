@@ -101,6 +101,7 @@ std::optional<string> Config::Validate() const
     if (::inet_pton(AF_INET, bindAddress.c_str(), &address) != 1)
         return format("P1_GAME_SERVER_BIND_ADDRESS({})가 IPv4 주소가 아니다", bindAddress);
 
+    // DB 스레드는 저마다 연결을 하나씩 빌려 쓴다. 풀이 스레드 수보다 작으면 연결을 빌리지 못하는 DB 잡이 생긴다.
     if (dbConnectionCount < dbThreadCount)
         return format("P1_GAME_DB_CONNECTIONS({})가 DB 스레드 수({})보다 작다. DB 스레드마다 연결이 하나씩 있어야 한다",
             dbConnectionCount, dbThreadCount);

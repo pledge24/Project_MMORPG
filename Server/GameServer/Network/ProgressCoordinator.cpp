@@ -35,20 +35,19 @@ void ProgressCoordinator::OnDisconnected(int64 userId, const PlayerRef& player)
     if (player == nullptr)
         return;
 
-    // 저장할지 모르는 채로 대기부터 건다. 표시를 바꾼 뒤에 걸면, 룸 이동 중에 끊긴 플레이어를 들어갈 룸이 먼저
-    // 저장하고 대기를 푼 다음에 이 대기가 걸려 아무도 풀지 않는다.
+    // 호출자가 계정 등록을 지우기 전에 대기를 건다. 반대로 하면 그사이 새 로그인이 저장 전의 진행을 불러온다.
+    // 표시를 바꾼 뒤에 걸면, 들어갈 룸이 먼저 저장하고 대기를 푼 다음에 이 대기가 걸려 아무도 풀지 않는다.
     _saveGate.Hold(userId);
 
     // 표시를 먼저 바꾸고 룸을 읽는다. 순서는 Room::EnterPlayer의 주석을 본다.
     if (player->MarkDisconnected() == false)
     {
-        // 룸에 들어간 적이 없으면 이 세션에서 바뀐 것이 없으므로 저장하지 않는다. 큐에 남은 첫 룸 입장도 저장하지 않고
-        // 플레이어를 빼기만 하므로 대기를 여기서 푼다. 그사이 맡겨 둔 불러오기는 DB 큐로 넘긴다.
+        // 룸에 들어간 적이 없으면 바뀐 것이 없어 저장하지 않는다. 큐에 남은 첫 입장도 플레이어를 빼기만 하므로 대기를 여기서 푼다.
         ReleaseHold(userId);
         return;
     }
 
-    // 룸에 들어간 적이 있으면 소속 룸이 정해져 있다. 룸 이동 중이면 떠난 룸이고, 퇴장은 들어갈 룸이 이어 받는다.
+    // 룸 이동 중이면 떠난 룸이 나온다. 그때 퇴장은 들어갈 룸이 이어 받는다.
     RoomRef room = player->GetRoom();
     if (room == nullptr)
     {
@@ -66,17 +65,15 @@ void ProgressCoordinator::OnDisconnected(int64 userId, const PlayerRef& player)
 
 void ProgressCoordinator::OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer)
 {
-    // 기존 세션의 접속 종료는 송신을 마친 뒤에야 오지만, 새 세션은 곧 목록을 받고 입장할 수 있다.
-    // 그 사이의 입장이 저장 전의 진행을 불러오지 않도록 대기를 여기서 먼저 건다.
-    // 아직 룸에 없는 플레이어도 끊기기 전에 룸에 들어갈 수 있으므로 건다. 저장할 것이 없으면 접속 종료가 푼다.
-    // 입장 전의 세션은 접속 종료가 아무것도 하지 않으므로 걸지 않는다. 걸면 풀어 줄 곳이 없다.
+    // 새 세션의 입장이 기존 세션의 접속 종료보다 빠를 수 있으므로 대기를 여기서 먼저 건다.
+    // 입장 전의 세션은 접속 종료가 대기를 풀지 않으므로 걸지 않는다.
     if (replacedPlayer == nullptr)
         return;
 
     _saveGate.Hold(userId);
 
-    // 끊긴 세션이 계정 등록에서 빠지기 전에 밀어낼 수 있다. 그 접속 종료가 이미 대기를 풀었으면 이 대기를 풀 곳이 없으므로
-    // 여기서 푼다. 대기를 건 뒤에 읽으므로, 여기서 끝나지 않은 접속 종료로 보이면 그 해제는 이 대기보다 나중에 온다.
+    // 밀려난 세션의 접속 종료가 이미 대기를 풀었으면 이 대기를 풀 곳이 없으므로 여기서 푼다.
+    // 대기를 건 뒤에 표시를 읽으므로, 끝나지 않은 접속 종료로 보이면 그 해제는 이 대기보다 나중에 온다.
     const Player::Presence presence = replacedPlayer->GetPresence();
     if (presence == Player::Presence::LEFT_BEFORE_ROOM || presence == Player::Presence::SAVED)
         ReleaseHold(userId);

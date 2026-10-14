@@ -90,7 +90,6 @@ void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Prot
     Protocol::S_USE_ITEM useItemPkt;
     useItemPkt.set_entity_id(player->GetEntityId());
 
-    // 슬롯과 스탯은 성공했을 때만 싣는다.
     optional<UseItemResult> result = player->ProcessUseItem(pkt.slot(), ::GetTickCount64());
     useItemPkt.set_success(result.has_value());
     if (result.has_value())

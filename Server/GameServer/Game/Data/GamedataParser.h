@@ -1,7 +1,7 @@
 #pragma once
 #include "Game/Data/Templates.h"
 
-/** 기획표 파일 이름. 오류 메시지가 이 이름으로 행의 위치를 알린다. */
+/** 기획표 파일 이름. */
 namespace GamedataFile
 {
     constexpr string_view WARRIOR_LEVELS = "S_Warrior_Level_Data.json";
