@@ -1,8 +1,10 @@
 #pragma once
 
 /**
- * 피격과 처치를 판정한다. 룸과 세션을 모른다.
- * 대상 찾기와 결과 전송은 룸이 맡는다. 대상을 바꾸므로 대상이 속한 룸 큐 위에서 부른다.
+ * 피격과 처치의 판정.
+ *
+ * 공격 하나가 대상에게 미치는 결과를 정하는 게임 규칙만 맡는다.
+ * 대상을 찾고 결과를 알리는 일은 판정을 부르는 쪽의 몫이다.
  */
 namespace Combat
 {
@@ -24,6 +26,9 @@ namespace Combat
         optional<KillResult> kill;
     };
 
-    /** 피격을 적용하고 결과를 돌려준다. 공격자나 대상이 이미 사망했으면 아무것도 바꾸지 않고 nullopt. */
+    /**
+     * 피격을 적용하고 결과를 돌려준다. 대상을 바꾸므로 대상이 속한 룸 큐 위에서만 부른다.
+     * 공격자나 대상이 이미 사망했으면 아무것도 바꾸지 않고 nullopt.
+     */
     optional<HitResult> ResolveHit(const EntityRef& attacker, const CreatureRef& target, const Protocol::AttackInfo& attackInfo);
 }

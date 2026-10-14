@@ -56,7 +56,6 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::It
     bag->dirtyFlags[availableSlotId] = true;
     if (targetSlot->has_item())
     {
-        // 이미 든 아이템에 수량을 더한다.
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
 
         Protocol::Item* item = targetSlot->mutable_item();
@@ -68,7 +67,6 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::It
     }
     else
     {
-        // 빈 슬롯에 새로 넣는다.
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
 
         Protocol::Item* item = targetSlot->mutable_item();
@@ -102,7 +100,7 @@ bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* outSlotLi
     const int32 maxStack = itemTemplate->maxStack;
     const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
 
-    // 슬롯을 바꾸기 전에 넣을 자리를 전부 정한다. 도중에 모자라면 이미 바꾼 슬롯을 되돌릴 방법이 없다.
+    // 넣을 자리를 먼저 다 정한다. 슬롯을 바꾸기 시작한 뒤에 모자라면 되돌릴 수 없다.
     vector<pair<int32, int32>> fills; // <slotId, 넣을 수량>
     int32 remaining = count;
 
@@ -175,8 +173,7 @@ bool InventoryComponent::LoadItem(const Protocol::Slot& loadedSlot)
 
 bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* outSlot, int32 count)
 {
-    // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.
-    // 인덱싱에 닿기 전에 거르지 않으면 널 역참조와 범위 밖 접근으로 프로세스가 죽는다.
+    // type과 slot_id는 클라이언트 값이다. 인덱싱 전에 거르지 않으면 범위 밖 접근으로 프로세스가 죽는다.
     Bag* bag = FindBag(requestSlot.type());
     if (bag == nullptr)
     {
@@ -191,15 +188,12 @@ bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Proto
         return false;
     }
 
-    // 슬롯 해석은 GetSlot과 같이 FindBag 하나를 거친다. 두 함수가 같은 입력을 다르게
-    // 해석하면 슬롯은 한 저장소에서 꺼내고 더티 플래그는 다른 저장소에 찍게 된다.
     Protocol::Slot* updatedSlot = bag->slots->Mutable(slotId);
     if (updatedSlot == nullptr)
         return false;
 
-    // 검증이 먼저다. mutable_item()은 없던 item을 만들면서 has_item()을 켜므로,
-    // 검증보다 먼저 부르면 빈 슬롯이 "아이템 있음"으로 오염돼 다시는 채워지지 않는다.
-    // 더티 플래그도 마찬가지다. 실패한 제거까지 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
+    // mutable_item()과 더티 플래그는 검증 뒤에 둔다. mutable_item()은 빈 슬롯에 item을 만들어 다시는 채워지지 않게 하고,
+    // 실패한 제거에 더티 플래그를 찍으면 쓸데없는 저장과 복제가 따라온다.
     if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
         return false;
 
@@ -264,9 +258,7 @@ const vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemTyp
 
 Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id)
 {
-    // 슬롯 해석의 단일 창구다. RemoveItem도 같은 FindBag을 거친다.
-    // 인덱싱 전에 거르고, 거부는 널로 알린다. Mutable()의 범위 검사는 DCHECK라
-    // Release에서 빠지므로, 실제로 안전을 보장하는 것은 아래 검증들이다.
+    // Mutable()의 범위 검사는 DCHECK라 Release에서 빠진다. 아래 검증을 지우면 범위 밖 접근을 막는 것이 없다.
     Bag* bag = FindBag(type);
     if (bag == nullptr)
         return nullptr;

@@ -3,9 +3,9 @@
 USING_SHARED_PTR(Room);
 
 /**
- * GameServer에 존재하는 모든 Room을 관리하는 Manager 클래스. 전역 객체 GRoomManager 하나만 존재한다.
- * 부팅 때 main이 CreateAllRooms로 모든 룸을 한 번 만들고, 그 뒤로는 조회만 한다. 등록된 룸이 바뀌지 않으므로
- * 조회에 락이 없고 어느 스레드에서 불러도 된다.
+ * 게임 서버의 모든 룸을 가진 관리자.
+ *
+ * 서버가 뜰 때 룸을 모두 만들어 두고, 룸을 번호로 찾아 주는 창구가 된다.
  */
 class RoomManager
 {
@@ -14,12 +14,12 @@ public:
     ~RoomManager() = default;
 
     /**
-     * 맵 표의 행마다 룸을 만들고 Start까지 불러 등록한다. 워커 스레드를 띄우기 전에 main이 한 번만 부른다.
-     * 하나라도 실패하면 그 룸 번호를 로그에 남기고 false. 등록한 룸은 그대로 남지만 서버는 뜨지 않는다.
+     * 맵 표의 행마다 룸을 만들어 시작하고 등록한다. 워커 스레드를 띄우기 전에 한 번만 부른다.
+     * 하나라도 실패하면 false이고, 그때는 서버를 띄우지 않는다.
      */
     bool CreateAllRooms();
 
-    /** 등록되지 않은 번호면 nullptr. */
+    /** 어느 스레드에서 불러도 된다. 등록되지 않은 번호면 nullptr. */
     RoomRef FindRoom(int32 roomId) const;
     /** 등록된 룸 전부. 서버 종료 절차가 룸 큐를 비울 때 쓴다. */
     vector<RoomRef> GetAllRooms() const;

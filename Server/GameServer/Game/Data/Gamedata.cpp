@@ -6,8 +6,8 @@
 namespace
 {
     /**
-     * 게임 데이터 JSON 위치. 작업 디렉터리(프로젝트 폴더) 기준 상대 경로이다.
-     * GenJsonFile.bat의 MOVE 목적지와 반드시 같아야 한다.
+     * 작업 디렉터리(프로젝트 폴더) 기준 상대 경로다.
+     * GenJsonFile.bat이 Json을 옮기는 곳과 다르면 부팅 때 기획표를 찾지 못한다.
      */
     constexpr string_view GAMEDATA_DIR = "Game/Data/Json/";
 
@@ -35,7 +35,7 @@ GamedataTables Gamedata::s_tables;
 
 bool Gamedata::LoadAllGamedata()
 {
-    // 퀘스트 표(S_Quest.json)는 읽는 코드가 없어 불러오지 않는다. 퀘스트를 만들 때 템플릿과 함께 추가한다.
+    // TODO: 퀘스트를 만들 때 퀘스트 표(S_Quest.json)도 템플릿과 함께 불러온다.
     GamedataDocuments documents;
     const pair<string_view, Json*> files[] = {
         { GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },

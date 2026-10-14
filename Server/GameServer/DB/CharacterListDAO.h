@@ -1,6 +1,6 @@
 #pragma once
 
-/** 캐릭터 생성 쿼리가 거절한 사유. 클라이언트에 보낸다. 값은 쿼리에 바인딩했다가 부호를 뒤집어 돌려받는다. */
+/** 캐릭터 생성 쿼리가 거절한 사유. 쿼리가 부호를 뒤집어 돌려주므로 값은 양수여야 한다. */
 enum class CharacterRejection : int32
 {
     DUPLICATE_NAME = 1,
@@ -27,16 +27,18 @@ struct CreateCharacterResult
 };
 
 /**
- * 계정의 캐릭터 목록을 불러오고, 캐릭터를 만들고 지운다. 세션과 패킷을 모른다. 응답은 호출한 잡이 만든다.
- * 모든 함수가 DB 쿼리를 블로킹으로 실행하므로 DB 큐의 잡 안에서만 부른다.
- * DB 작업이 실패하면 DBError를 던진다. 거절은 예외가 아니라 결과로 돌려준다.
+ * 계정의 캐릭터 목록의 DB 접근 창구.
+ *
+ * 캐릭터 선택 화면에 필요한 목록을 불러오고, 캐릭터를 만들고 지운다.
+ * 모든 쿼리가 블로킹이므로 DB 큐의 잡 안에서만 부른다.
+ * DB 작업이 실패하면 DBError를 던지고, 요청의 거절은 예외가 아니라 결과로 돌려준다.
  */
 class CharacterListDAO
 {
 public:
     static void LoadCharacterList(DBConnection& conn, int64 userId, OUT vector<Protocol::CharacterOverview>& characters);
-    /** 빈 슬롯이 없거나 이름이 겹치면 쿼리가 거절하고, 그 사유를 결과에 담는다. */
+    /** 새 캐릭터를 만든다. 빈 슬롯이 없거나 이름이 겹치면 거절 사유를 결과에 담는다. */
     static CreateCharacterResult CreateCharacter(DBConnection& conn, const Protocol::CharacterOverview& character, int64 userId);
-    /** userId와 함께 대조하므로 다른 계정의 캐릭터는 지우지 않는다. 지운 행이 없으면 false다. */
+    /** characterId는 클라이언트 값이어도 된다. 이 계정의 캐릭터가 아니면 지우지 않고 false. */
     static bool DeleteCharacter(DBConnection& conn, int64 userId, int64 characterId);
 };

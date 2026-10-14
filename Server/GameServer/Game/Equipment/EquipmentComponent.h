@@ -3,32 +3,30 @@
 #include "Game/Entities/CombatStats.h"
 
 /**
- * 플레이어 한 명의 장비 장착. 장비 부위(GearType)마다 슬롯 하나를 둔다.
- * 슬롯은 플레이어의 _possession(protobuf) 안에 있고, 이 클래스는 그 포인터만 든다.
- * 스탯은 바꾸지 않는다. 착용 장비가 올려 주는 증감량만 돌려주고, 최종 스탯은 Player::RefreshFinalStat이 계산한다.
- * 룸에 들어가기 전에 Player::ApplyProgress가 불러온 진행 사본으로 채우고, 그 뒤로는 소속 룸 큐 위에서만 쓴다.
+ * 플레이어가 입은 장비의 자리.
+ *
+ * 장비를 부위별 슬롯에 입고 벗기는 창구가 된다.
+ * 입은 장비가 올려 주는 스탯을 알려 줄 뿐, 캐릭터의 스탯을 직접 바꾸지는 않는다.
  */
 class EquipmentComponent : public EntityComponent
 {
 public:
-    /** equippedGear(소유자 Possession의 장착 칸)에 부위별 빈 슬롯을 만든다. */
     EquipmentComponent(PlayerRef owner, google::protobuf::Map<int32, Protocol::Slot>* equippedGear);
     virtual ~EquipmentComponent();
 
     /**
-     * 장착 요청을 처리한다. 아이템 표의 착용 부위에 넣는다.
-     * 장비가 아니거나, 소유자의 레벨이나 직업이 착용 조건에 맞지 않거나, 그 부위가 이미 차 있으면 false.
-     * 실패하면 아무것도 바꾸지 않는다.
+     * 장비를 아이템 표의 착용 부위에 입히고, 바뀐 슬롯을 replicatingSlot에 쓴다(nullptr 가능).
+     * 장비가 아니거나 착용 조건에 맞지 않거나 그 부위가 차 있으면 아무것도 바꾸지 않고 false.
      */
     bool Equip(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance);
     /**
-     * DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템 표의 부위와 gearType이 다르면 false.
-     * 착용 조건은 확인하지 않는다. 기획표가 바뀌어 조건이 높아져도 이미 입은 장비는 남는다.
+     * DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템 표의 부위와 다르면 false.
+     * 착용 조건은 보지 않으므로, 기획표의 조건이 높아져도 이미 입은 장비는 남는다.
      */
     bool LoadEquipped(const Protocol::Item& itemInstance, int32 gearType);
     /**
-     * 그 부위에 든 장비를 뺀다. 실패하면 아무것도 바꾸지 않는다.
-     * 뺀 장비를 인벤토리에 넣지는 않는다. 호출자가 넣는다.
+     * 그 부위의 장비를 벗기고, 바뀐 슬롯을 replicatingSlot에 쓴다(nullptr 가능). 빈 부위면 false.
+     * 벗긴 장비를 인벤토리에 넣지 않으므로 호출자가 넣는다.
      */
     bool Unequip(int32 gearType, OUT Protocol::Slot* replicatingSlot);
 
@@ -43,7 +41,7 @@ public:
     void ClearDirtyFlags();
 
 private:
-    /** level과 characterClass가 아이템 표의 착용 조건(요구 레벨 이상, 요구 직업)에 맞으면 true. */
+    /** level과 characterClass가 아이템 표의 착용 조건에 맞으면 true. */
     static bool MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass);
     /** 빈 부위에 아이템을 넣는다. 없는 부위이거나 차 있으면 false. */
     bool PlaceItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 gearType);

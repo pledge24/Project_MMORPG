@@ -3,7 +3,7 @@
 
 class MonsterAIComponent;
 
-/** 몬스터의 스폰 매개변수. spawnPos는 스폰 위치와 방향이다. */
+/** 몬스터의 스폰 매개변수. */
 struct MonsterSpawnParams : public Creature::SpawnParams
 {
     int32 templateId = 0;
@@ -11,9 +11,9 @@ struct MonsterSpawnParams : public Creature::SpawnParams
 };
 
 /**
- * 게임 기획 데이터의 몬스터 표로 만드는 AI 크리처. 행동은 MonsterAIComponent가 정한다.
- * Room::SpawnEntity가 만들어 룸에 넣고, 모든 처리가 그 룸 큐 위에서 돈다.
- * 룸의 _entities가 붙잡고, 사망하면 룸이 빼낸다. 빠지면 룸 틱을 받지 않으므로 AI도 멈춘다.
+ * 기획 데이터의 몬스터 표로 만드는 AI 크리처.
+ *
+ * 룸 안에서 스스로 움직이고 싸우며, 처치한 플레이어가 받을 보상을 정한다.
  */
 class Monster : public Creature
 {
@@ -29,14 +29,13 @@ protected:
     bool Init(const SpawnParams& params);
 
     //~ Begin Entity Interface
+protected:
     virtual void Start() override;
-    /** 받은 틱을 AI에 넘긴다. */
     virtual void Tick(float deltaTime) override;
     //~ End Entity Interface
 
     //~ 이벤트
 public:
-    /** 스폰 정보에 실리는 HP 사본(monster_info.hp)도 함께 맞춘다. */
     virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(EntityRef attacker) override;
 
@@ -49,10 +48,9 @@ public:
     int64 GetGoldReward();
 
 private:
-    /** _template에서 스탯 값을 읽어 멤버에 둔다. */
     void CacheMonsterData();
 
-    /** 몬스터 표의 행 사본. 보상은 여기서 뽑는다. */
+    /** 몬스터 표의 행 사본. */
     MonsterTemplate _template;
 
     /** _entityInfo 안의 monster_info를 가리킨다. 따로 지우지 않는다. */
@@ -76,6 +74,5 @@ private:
     void SetYaw(float yaw);
     void SetMoveState(Protocol::MoveState moveState);
 
-    /** Init에서 만든다. */
     MonsterAIComponentRef _ai;
 };

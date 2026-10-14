@@ -17,6 +17,7 @@ optional<string> RoomTransfer::ValidateEnterRequest(const Protocol::C_ENTER_ROOM
             return string("포털 번호가 없는 포털 이동 요청");
         return nullopt;
     case Protocol::ENTER_TYPE_RESPAWN:
+        // 리스폰 입장은 서버만 만드는 값이라 요청으로 받지 않는다.
         return string("클라이언트가 리스폰 입장을 요청함");
     default:
         return string("알 수 없는 입장 유형");
@@ -89,6 +90,7 @@ optional<string> RoomTransfer::ValidatePortalUse(const PortalTemplate& portal, f
 
 optional<string> RoomTransfer::ValidateFirstEnterMap(const Protocol::C_ENTER_MAP& pkt, int32 enteringRoomId)
 {
+    // 첫 입장은 불러온 진행의 룸으로만 할 수 있다.
     if (pkt.room_id() != enteringRoomId)
         return format("불러온 룸 {}이 아닌 룸 {}으로 온 첫 맵 입장 요청", enteringRoomId, pkt.room_id());
 
@@ -111,6 +113,7 @@ optional<string> RoomTransfer::ValidateCrossMapEnter(const Protocol::C_ENTER_MAP
     if (destination->mapId == currentRoom.mapId)
         return format("같은 맵의 룸 {}으로 온 맵 입장 요청. 같은 맵 안의 이동은 포털 이동이다", pkt.room_id());
 
+    // 맵 간 이동도 포털을 거친다. 목적지로 가는 포털 중 하나의 반경 안에만 있으면 통과한다.
     for (const PortalTemplate& portal : currentRoom.portals)
     {
         if (portal.dstRoomId != pkt.room_id())

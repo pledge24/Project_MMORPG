@@ -33,7 +33,7 @@ namespace
     }
 
     // 보낸 세션의 플레이어가 속한 룸의 큐에 job(room, player)을 넣는다. 플레이어나 룸이 없으면 넣지 않고 false.
-    // 보낸 사람은 패킷 안의 id가 아니라 세션의 플레이어로 정한다.
+    // 보낸 사람은 패킷 안의 id가 아니라 세션의 플레이어로 정한다. 패킷 안의 id를 믿으면 다른 플레이어 행세를 할 수 있다.
     template<typename RoomJob>
     bool DispatchToPlayerRoom(const PacketSessionRef& session, RoomJob&& job)
     {
@@ -63,6 +63,7 @@ namespace
 
 // 핸들러는 모두 IOCP 워커 스레드에서 불린다. C_ 패킷의 값은 클라이언트가 보낸 것이므로 전부 검증 대상이다.
 // 룸 소유 상태는 여기서 건드리지 않는다. 룸 일은 room->DoAsync로, DB 일은 DB 큐로 넘기고 바로 리턴한다.
+// 여기서 룸 상태를 건드리면 락 없이 도는 룸 큐와 경합한다.
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
 // false를 돌려주면 GameSession::OnRecvPacket이 패킷 id와 함께 로그를 남긴다.
@@ -167,7 +168,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHARACTER& pkt)
 {
-    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    // 계정 번호는 여기서 한 번 읽어 로그인 검사와 잡이 같은 값을 쓴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
     const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
 
     // 세션 상태는 핸들러가 본다. 로그인하지 않은 세션은 계정 번호 0으로 INSERT를 시도하게 된다.
@@ -231,7 +232,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
 
 bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHARACTER& pkt)
 {
-    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    // 계정 번호는 여기서 한 번 읽어 로그인 검사와 잡이 같은 값을 쓴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
     const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
 
     if (userId == 0)
@@ -245,7 +246,6 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 
-    // 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
     JobRef job = make_shared<Job>(
         [session, pkt, userId]()
         {
@@ -276,7 +276,7 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
 
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
 {
-    // 계정 번호는 여기서 한 번 읽는다. 로그인 검사와 잡이 같은 값을 쓴다.
+    // 계정 번호는 여기서 한 번 읽어 로그인 검사와 잡이 같은 값을 쓴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
     const int64 userId = static_pointer_cast<GameSession>(session)->GetUserId();
 
     // 로그인하지 않았거나 이미 입장한 세션의 입장 요청은 DB에 가기 전에 거절한다.
@@ -287,11 +287,8 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
         return false;
     }
 
-    // 플레이어 생성은 잡 안에서 한다. C_ENTER_GAME은 character_id만 싣고 오고
-    // room_id는 GameEntry::Enter가 ProgressStorage::Load로 DB에서 읽어야 알 수 있으므로,
-    // 이 시점에 넘길 룸 큐가 없다. 아키텍처가 게임 입장에 지정한 경로가 DBQueue이고
-    // 생성 직후의 소비자도 같은 잡이라 여기로 모은다.
-    // 언제 어느 DB 큐에서 돌지는 조율자가 정한다. 계정 번호는 핸들러가 여기서 한 번 읽어 넘긴다.
+    // 플레이어는 DB 잡 안에서 만든다. 들어갈 룸은 진행을 DB에서 불러와야 알 수 있으므로 이 시점에는 넘길 룸 큐가 없다.
+    // 언제 어느 DB 큐에서 돌지는 조율자가 정한다.
     auto load = [session, pkt, userId]()
         {
             // 저장을 기다리는 사이에 끊겼으면 불러올 이유가 없다. 불러오면 끊긴 것을 알아챈 뒤 또 저장한다.
@@ -365,8 +362,7 @@ bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
 
     if (room == nullptr)
     {
-        // 넘길 큐가 없으면 잡을 만들 수 없다. 이전 코드가 이 입력에도 응답을 돌려줬으므로
-        // 클라를 대기 상태로 남기지 않도록 실패 응답은 유지한다.
+        // 넘길 큐가 없어도 실패 응답은 보낸다. 보내지 않으면 클라이언트가 응답을 기다리며 멈춘다.
         GLogger->Warning("C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: {}", roomId);
 
         Protocol::S_ENTER_MAP enterMapPkt;
@@ -398,9 +394,7 @@ bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
     RoomRef curRoom = player->GetRoom();
     if (curRoom == nullptr)
     {
-        // 아직 어떤 Room에도 속하지 않은 최초 입장.
-        // 소속 룸은 Room::EnterPlayer 안에서만 세팅되므로 여기서는 항상 비어 있다.
-        // 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고, 입장할 Room의 큐로 넘긴다.
+        // 최초 입장. 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고 입장할 룸의 큐로 넘긴다.
         pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
 
         int32 roomId = pkt.has_room_id() ? pkt.room_id() : player->GetEnteringRoomId();
@@ -433,7 +427,7 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            // 같은 Room의 모든 플레이어에게 그대로 중계한다(본인 포함).
+            // 같은 룸의 모든 플레이어에게 그대로 중계한다(본인 포함).
             Protocol::S_CHAT chatPkt;
             chatPkt.set_entity_id(player->GetEntityId());
             chatPkt.set_msg(pkt.msg());

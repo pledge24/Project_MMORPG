@@ -4,10 +4,10 @@
 struct PlayerSaveData;
 
 /**
- * 접속 종료 저장과 입장 불러오기의 순서를 맞춘다. 「저장이 끝나기 전에는 같은 계정을 불러오지 않는다」를 이 클래스가 지킨다.
- * 접속 종료, 중복 로그인, 입장 요청은 함수 하나씩만 부른다. 저장 대기를 걸고 푸는 곳은 이 클래스 밖에 없다.
- * DB 큐, 저장 게이트, 진행 저장소, 만료 타이머를 주입받는다. 테스트는 DB 잡과 타이머를 쌓아 두고 원하는 순서로 돌린다.
- * 운영 코드는 ServerContext가 만든 하나를 전역 포인터 GProgressCoordinator로 쓴다.
+ * 접속 종료 저장과 입장 불러오기의 순서를 맞추는 조율자.
+ *
+ * 같은 계정의 저장이 끝나기 전에는 그 계정의 진행을 불러오지 않도록 지킨다.
+ * 접속 종료, 중복 로그인, 입장 요청이 저장과 불러오기에 닿을 때는 모두 이 클래스를 거친다.
  */
 class ProgressCoordinator
 {
@@ -20,26 +20,24 @@ public:
     using ScheduleTimer = function<void(uint64 delayMs, CallbackType job)>;
 
     ProgressCoordinator(SaveGate& saveGate, PushDBJob pushDBJob, SaveProgress saveProgress, ScheduleTimer scheduleTimer);
-    /** 운영 코드의 DB 큐(GDBManager), 진행 저장소(ProgressStorage), 타이머 큐(GSessionJobQueue)를 쓰는 조율자. saveGate보다 먼저 지운다. */
+    /** 운영 코드의 DB 큐, 진행 저장소, 타이머 큐를 쓰는 조율자를 만든다. saveGate보다 먼저 지운다. */
     static unique_ptr<ProgressCoordinator> CreateForServer(SaveGate& saveGate);
 
     //~ 진입점
+public:
     /**
-     * 세션의 접속 종료(GameSession::OnDisconnected)에서 IOCP 스레드가 부른다. player는 입장 전이면 nullptr.
-     * 계정 등록(GameSessionManager::UnregisterUser)을 지우기 전에 불러야 한다. 반대로 하면 그 사이에 온 새 로그인이
-     * 대기 없이 입장해 저장 전의 진행을 불러온다. 룸에 들어간 적이 있는 플레이어는 그 룸 큐에서 퇴장과 저장을 시작한다.
-     * 룸에 들어간 적이 없으면 저장하지 않는다. 큐에 남은 첫 룸 입장도 그 플레이어를 저장하지 않고 뺀다.
+     * 세션이 끊길 때 IOCP 스레드가 부른다. 입장 전이면 player는 nullptr.
+     * 계정 등록(UnregisterUser)을 지우기 전에 불러야 한다.
      */
     void OnDisconnected(int64 userId, const PlayerRef& player);
     /**
-     * 같은 계정의 새 로그인이 기존 세션을 밀어낼 때, 밀어내기 전에 부른다. 로그인 잡(DB 스레드)이 부른다.
-     * replacedPlayer는 밀려나는 세션의 플레이어이고 입장 전이면 nullptr. 플레이어가 있으면 그 세션의 접속 종료까지 입장을 막는다.
+     * 같은 계정의 새 로그인이 기존 세션을 밀어내기 직전에 로그인 잡(DB 스레드)이 부른다.
+     * 입장 전의 세션이면 replacedPlayer는 nullptr.
      */
     void OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer);
     /**
-     * 입장 요청(C_ENTER_GAME)에서 IOCP 스레드가 부른다. load.run은 DB 잡 안에서 진행을 불러오고 응답까지 보낸다.
-     * 저장 대기가 없으면 load를 곧바로 DB 큐에 넣는다. 대기 중이면 저장이 끝난 뒤에 돌리고, PARKED_LOAD_TIMEOUT_MS 안에
-     * 끝나지 않거나 이미 기다리는 입장이 있으면 load.run 대신 load.reject를 부른다. 만료로 거절해도 대기는 저장이 끝날 때까지 남는다.
+     * 입장 요청에서 IOCP 스레드가 부른다. 이 계정의 저장이 끝난 뒤 DB 잡 안에서 load.run을 부른다.
+     * PARKED_LOAD_TIMEOUT_MS 안에 저장이 끝나지 않거나 이미 기다리는 입장이 있으면 load.reject를 부른다.
      */
     void RequestEnter(int64 userId, SaveGate::ParkedLoad load);
 
@@ -47,15 +45,12 @@ public:
     static constexpr uint64 PARKED_LOAD_TIMEOUT_MS = 5000;
 
     //~ 룸 큐
-    /**
-     * 끊긴 플레이어를 room에서 빼고, 룸이 저장 사본을 내주면 DB 큐에 저장을 넣는다. room의 큐 위에서만 부른다.
-     * 접속 종료와, 룸 이동 중에 끊긴 플레이어를 이어 받은 Room::EnterPlayer가 부른다.
-     * 저장 잡은 끝나면 실패해도 저장 대기를 풀고, 기다리던 불러오기를 그 자리에서 돌린다.
-     */
+public:
+    /** 끊긴 플레이어를 room에서 빼고 저장한다. room의 큐 위에서만 부른다. */
     void LeaveRoomAndSave(const RoomRef& room, const PlayerRef& player);
     /**
-     * 어느 룸에도 없는 끊긴 플레이어의 저장 사본을 DB 큐에 넣는다. 저장 잡은 LeaveRoomAndSave와 같다.
-     * 룸 이동 중에 끊긴 플레이어가 들어갈 룸에 들어가지 못했을 때 Room::EnterPlayer가 부른다.
+     * 어느 룸에도 없는 끊긴 플레이어를 저장한다.
+     * 룸 이동 중에 끊긴 플레이어가 들어갈 룸에 들어가지 못했을 때 쓴다.
      */
     void SaveLeftPlayer(const PlayerRef& player, PlayerSaveData saveData);
 

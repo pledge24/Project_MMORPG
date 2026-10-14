@@ -9,17 +9,14 @@ bool ProgressStorage::Load(DBConnection& conn, int64 userId, int64 characterId, 
 {
     try
     {
-        // 1. 캐릭터 기본 정보(이름, 레벨 등). 이 계정의 캐릭터가 아니면 행이 없다.
         if (CharacterStateDAO::LoadCharacter(conn, userId, characterId, OUT progress) == false)
         {
             GLogger->Warning("계정 {}에 캐릭터 {}가 없어 불러오지 않습니다", userId, characterId);
             return false;
         }
 
-        // 2. 캐릭터 마지막 상태(LastState)
         CharacterStateDAO::LoadLastState(conn, characterId, OUT progress);
 
-        // 3. 캐릭터 소유 아이템
         ItemDAO::LoadItems(conn, characterId, OUT progress);
     }
     catch (const exception& error)

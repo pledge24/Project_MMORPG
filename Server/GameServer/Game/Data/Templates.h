@@ -4,9 +4,8 @@
 /*--------------------------------------------------------------
     기획 데이터 템플릿
 
-    부팅할 때 GamedataParser가 기획표(Json)를 검증해 이 구조체로 바꾼다.
-    게임 코드는 Json을 읽지 않고 Gamedata::Find*로 이 구조체만 읽는다.
-    부팅 뒤에는 바뀌지 않으므로 여러 스레드가 락 없이 함께 읽는다.
+    게임 코드는 기획표(Json)를 직접 읽지 않고 이 구조체만 읽는다.
+    설치한 뒤에는 바뀌지 않으므로 여러 스레드가 락 없이 함께 읽는다.
 ---------------------------------------------------------------*/
 
 /** 기획표의 좌표. */
@@ -22,7 +21,7 @@ struct ItemTemplate
 {
     int32 templateId = 0;
     Protocol::ItemType itemType = Protocol::ITEM_TYPE_NONE;
-    /** 장비만 값이 있다. 아이템 세부 종류(itemSubtype)로 정한 착용 부위다. */
+    /** 착용 부위. 장비만 값이 있다. */
     optional<Protocol::GearType> gearType;
 
     //~ 착용 조건. 장착할 때 서버가 판정한다.
@@ -35,7 +34,7 @@ struct ItemTemplate
     bool sellable = false;
     /** 1 이상이다. */
     int32 maxStack = 1;
-    /** 같은 템플릿을 다시 쓰기까지의 대기(ms). 기획표의 초 단위 값이 0 이하면 0이다. */
+    /** 같은 템플릿을 다시 쓰기까지의 대기(ms). 0이면 대기가 없다. */
     uint64 cooldownMs = 0;
 
     //~ 장비가 올려 주는 스탯. 표에 없으면 0이다.
@@ -88,14 +87,15 @@ struct LevelTemplate
 };
 
 /**
- * 한 직업의 레벨 표. 행은 레벨 1부터 빠짐없이 이어진다.
- * 마지막 행의 레벨이 그 직업의 최대 레벨이다.
+ * 한 직업의 레벨 표.
+ *
+ * 레벨마다 능력치와 필요 경험치를 담고, 그 직업의 최대 레벨을 정한다.
  */
 class ClassLevelTable
 {
 public:
     ClassLevelTable() = default;
-    /** rows[i]의 레벨이 i + 1이어야 한다. GamedataParser가 확인한다. */
+    /** rows[i]의 레벨이 i + 1이어야 한다. 여기서는 확인하지 않는다. */
     explicit ClassLevelTable(vector<LevelTemplate> rows) : _rows(std::move(rows)) {}
 
     /** 표 밖의 레벨이면 nullptr. */
@@ -137,7 +137,7 @@ struct MapTemplate
     float depthHalfExtent = 0.f;
     /** Y 방향 반경. */
     float widthHalfExtent = 0.f;
-    /** 리스폰 지점이 있는 맵만 값이 있다. 지금은 마을 하나뿐이다. */
+    /** 리스폰 지점. 마을만 값이 있다. */
     optional<TemplatePos> respawnPoint;
     vector<PortalTemplate> portals;
     /** 이 룸의 포털을 탈 수 있는 거리. 평면(x, y) 거리로 재고 0보다 크다. */
@@ -149,7 +149,7 @@ struct MapTemplate
     int32 maxMonsterCount = 0;
 };
 
-/** 부팅 때 만들어 Gamedata에 한 번 설치하는 표 전체. 테스트는 이것을 직접 채워 설치한다. */
+/** Gamedata에 한 번에 설치하는 기획 데이터 표 전체. */
 struct GamedataTables
 {
     unordered_map<int32, ItemTemplate> items;

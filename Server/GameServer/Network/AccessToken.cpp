@@ -3,6 +3,7 @@
 
 optional<AccessToken::Payload> AccessToken::ParsePayload(const string& value)
 {
+    // 형식(JSON 객체, userId는 정수, username은 문자열)은 인증 서버가 정한다. 한쪽만 바꾸면 모든 로그인이 여기서 거절된다.
     // 예외를 던지지 않는 해석을 쓴다. 틀린 값이면 discarded가 나온다.
     const Json json = Json::parse(value, nullptr, false);
     if (json.is_object() == false)

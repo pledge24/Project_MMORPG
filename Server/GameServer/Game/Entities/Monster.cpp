@@ -33,10 +33,8 @@ bool Monster::Init(const SpawnParams& params)
 
     _template = *monsterTemplate;
 
-    // cache monster data
     CacheMonsterData();
 
-    // set Init data
     // 피격 처리는 스탯의 HP를 읽는다. monster_info의 hp는 스폰 정보에 실리는 사본이다.
     SetStatValue(Protocol::STAT_TYPE_MAX_HP, _maxHp);
     SetStatValue(Protocol::STAT_TYPE_HP, _maxHp);

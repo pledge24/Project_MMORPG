@@ -7,6 +7,11 @@
 
 char sendData[] = "Hello World";
 
+/**
+ * 더미 클라이언트가 게임 서버와 맺는 세션.
+ *
+ * 서버에 시험용 패킷을 보내고, 받은 패킷을 패킷 핸들러로 넘긴다.
+ */
 class ServerSession : public PacketSession
 {
 public:
@@ -25,7 +30,7 @@ public:
 		PacketSessionRef session = GetPacketSessionRef();
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 
-		// TODO : packetId 대역 체크
+		// TODO: packetId 대역 체크
 		ClientPacketHandler::HandlePacket(session, buffer, len);
 	}
 
@@ -47,7 +52,7 @@ int main()
 	ClientServiceRef service = make_shared<ClientService>(
 		NetAddress("127.0.0.1"s, 7777),
 		make_shared<IocpCore>(),
-		[=]() { return make_shared<ServerSession>(); }, // TODO : SessionManager 등
+		[=]() { return make_shared<ServerSession>(); }, // TODO: SessionManager 등
 		100);
 
 	ASSERT_CRASH(service->Start());

@@ -6,7 +6,6 @@
 
 namespace
 {
-    // 불러온 행 하나를 슬롯으로 만든다. 칸 번호는 slot_id에 싣는다.
     Protocol::Slot MakeLoadedSlot(Protocol::SlotType slotType, int32 slotId, const Protocol::Item& item)
     {
         Protocol::Slot slot;
@@ -16,7 +15,7 @@ namespace
         return slot;
     }
 
-    // 장비 행을 배열 파라미터로 묶는다. 순서는 저장 쿼리의 물음표 순서다.
+    // 장비 행을 배열 파라미터로 묶는다. 바인딩 번호는 저장 쿼리의 물음표 순서와 맞아야 한다. 어긋나면 값이 다른 열에 저장된다.
     struct GearRowsBinding
     {
         static constexpr int32 PARAMS = 9;
@@ -60,7 +59,7 @@ namespace
         int32 _additionalMagicalAttack[MAX_PARAM_ROWS] = {};
     };
 
-    // 소모품이나 기타 아이템 행을 배열 파라미터로 묶는다. 순서는 저장 쿼리의 물음표 순서다.
+    // 소모품이나 기타 아이템 행을 배열 파라미터로 묶는다. 바인딩 번호는 저장 쿼리의 물음표 순서와 맞아야 한다. 어긋나면 값이 다른 열에 저장된다.
     struct StackableRowsBinding
     {
         static constexpr int32 PARAMS = 4;
@@ -89,7 +88,6 @@ namespace
         int32 _count[MAX_PARAM_ROWS] = {};
     };
 
-    // 개수로 쌓이는 아이템의 테이블이다. 쌓이는 종류가 아니면 nullptr.
     const WCHAR* GetStackableItemTable(Protocol::ItemType itemType)
     {
         switch (itemType)
@@ -142,7 +140,7 @@ void ItemDAO::GetMaxItemUID(DBConnection& conn)
     if (conn.Fetch() == false)
         throw DBError(__func__, "결과 행이 없다");
 
-    GNextItemUID = bindObject._maxItemUID + 1; // itemUid저장
+    GNextItemUID = bindObject._maxItemUID + 1;
 }
 
 void ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
@@ -204,7 +202,6 @@ void ItemDAO::LoadGearItems(DBConnection& conn, int64 characterId, OUT PlayerPro
     };
 
 
-    // 해당 캐릭터의 장비 아이템 정보를 가져온다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         SELECT item_uid, template_id, is_equipped, slot_id, enhance, durability, additional_physical_attack, additional_magical_attack
         FROM [dbo].[CharactersGearItems]
@@ -276,8 +273,7 @@ void ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol
         throw DBError(__func__, "쌓이는 아이템 종류가 아니다");
 
 
-    // 해당 캐릭터의 소비 아이템이나 기타 아이템 정보를 가져온다.
-    // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다.
+    // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다. 임시 문자열을 넘기면 실행할 때 해제된 메모리를 읽는다.
     const wstring query = wstring(LR"SQL(
         SELECT slot_id, template_id, count
         FROM )SQL") + table + LR"SQL(
@@ -370,9 +366,8 @@ void ItemDAO::SaveStackableItems(DBConnection& conn, const PlayerSaveData& data,
     if (rows.has_value() == false)
         throw DBError(__func__, "가방의 더티 플래그가 없다");
 
-    // 해당 캐릭터의 소비 아이템이나 기타 아이템 정보를 갱신한다.
-    // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다.
-    // MERGE는 세미콜론으로 끝나야 한다.
+    // DBBind는 쿼리 문자열을 가리키기만 하므로 문자열이 실행보다 오래 살아야 한다. 임시 문자열을 넘기면 실행할 때 해제된 메모리를 읽는다.
+    // MERGE는 세미콜론으로 끝나야 한다. 빠지면 SQL Server가 쿼리를 거부한다.
     const wstring query = wstring(LR"SQL(
         -- 1. 임시 테이블 생성
         SELECT *

@@ -41,7 +41,6 @@ void CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 userId, OUT v
     };
     
 
-    // 해당 유저의 캐릭터 기본 정보들을 가져온다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(                             
         SELECT character_id, class_id, character_name, level
         FROM [dbo].[Characters]
@@ -76,7 +75,7 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, cons
             : _userId(userId), _classId(character.class_()), _name(EncodingConverter::StringToWString(character.name())),
               _slotCount(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT)
         {
-            // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 끼워 넣지 않고 실패로 끝낸다.
+            // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 스탯 없는 캐릭터를 넣지 않도록 실패로 끝낸다.
             const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
             const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
             const LevelTemplate* levelTemplate = classLevelTable != nullptr ? classLevelTable->Find(level) : nullptr;
@@ -115,8 +114,7 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, cons
         int32 _classId;
         wstring _name;
         int32 _slotCount;
-        // 쿼리가 거절할 때 character_id 자리에 부호를 뒤집어 돌려주는 사유다. 화면에 그대로 보여 준다.
-        // 순서는 쿼리의 @duplicate_name_error, @no_empty_slot_error 순서와 같다.
+        // 순서는 쿼리의 @duplicate_name_error, @no_empty_slot_error 순서와 맞아야 한다. 어긋나면 거절 사유가 뒤바뀐다.
         int32 _rejections[2] = { static_cast<int32>(CharacterRejection::DUPLICATE_NAME), static_cast<int32>(CharacterRejection::NO_EMPTY_SLOT) };
         int32 _curHp = 0;
         int32 _curMp = 0;
@@ -128,7 +126,6 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, cons
     };
 
 
-    // 계정에 빈 슬롯이 있고 이름이 중복이 아니면 INSERT한다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         SET NOCOUNT ON;
 
@@ -243,7 +240,7 @@ bool CharacterListDAO::DeleteCharacter(DBConnection& conn, int64 userId, int64 c
     };
 
 
-    // 캐릭터 삭제. user_id를 함께 대조하므로 이 계정의 캐릭터만 지운다.
+    // user_id를 함께 대조한다. character_id는 클라이언트 값이라, 빼면 다른 계정의 캐릭터를 지울 수 있다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         BEGIN TRANSACTION;
 

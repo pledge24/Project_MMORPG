@@ -6,6 +6,7 @@ void SaveGate::Hold(int64 userId)
     USE_LOCK;
 
     // 밀어낼 때 한 번, 접속 종료 때 한 번 불린다. 저장은 한 번이므로 이미 걸린 대기를 새로 만들지 않는다.
+    // 새로 만들면 맡아 둔 불러오기를 잃어, 그 입장은 응답을 받지 못한다.
     _entries.try_emplace(userId);
 }
 
