@@ -13,7 +13,6 @@ UP1MyPlayerData::UP1MyPlayerData()
     _StatInfo = MakeUnique<Protocol::StatInfo>();
     _Possession = MakeUnique<Protocol::Possession>();
 
-    // 스탯마다 변경 델리게이트 자리를 만든다(공통)
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_HP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_HP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_MP);
@@ -28,12 +27,12 @@ void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    // 인벤토리 객체를 만든다
+    // 인벤토리 생성.
     Inventory = NewObject<UP1Inventory>(this, UP1Inventory::StaticClass());
     if (Inventory == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("Inventory Is Not Exist"));
 
-    // 장비 객체를 만든다
+    // 장비 생성.
     Equipment = NewObject<UP1Equipment>(this, UP1Equipment::StaticClass());
     if (Equipment == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("Equipment Is Not Exist"));
@@ -60,18 +59,17 @@ void UP1MyPlayerData::Deinitialize()
 
 void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePkt)
 {
-    // 저장
+    // 입장 패킷의 캐릭터 정보 저장.
     {
         SetEntityInfo(EnterGamePkt.player());
         _StatInfo->CopyFrom(EnterGamePkt.stat_info());
         _Possession->CopyFrom(EnterGamePkt.possession());
-        
-        // 자주 읽는 값을 캐시한다
+
         _PlayerId = _EntityInfo->entity_id();
         _PlayerName = FText::FromString(UTF8_TO_TCHAR(_EntityInfo->player_info().name().c_str()));
     }
 
-    // 소지품 래퍼를 초기화한다
+    // 소지품 래퍼 초기화.
     {
         Inventory->Init(_Possession->mutable_inventory());
         Equipment->Init(_Possession->mutable_equipped_gear());
@@ -103,7 +101,7 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
 
 void UP1MyPlayerData::SetEntityInfo(const Protocol::EntityInfo& InEntityInfo)
 {
-    // 프로토버프는 메세지를 CopyFrom할때마다 필트의 포인터가 달라질 수 있다.
+    // 프로토버프는 CopyFrom 뒤에 하위 메시지의 주소가 달라질 수 있다. _PlayerInfo를 다시 잡지 않으면 옛 주소를 읽는다.
     _EntityInfo->CopyFrom(InEntityInfo);
     _PlayerInfo = _EntityInfo->mutable_player_info();
 }
@@ -116,7 +114,7 @@ void UP1MyPlayerData::SetStatValue(Protocol::StatType statType, const int64& val
 
 void UP1MyPlayerData::ApplyStat(Protocol::StatType statType, int64 value)
 {
-    // 알리기만 하고 사본을 두면 안 된다. HUD는 생성될 때 사본을 읽으므로 맵을 옮긴 뒤 옛 값이 보인다.
+    // 알리기만 하고 사본에 쓰지 않으면 안 된다. HUD는 생성될 때 사본을 읽으므로 맵을 옮긴 뒤 옛 값이 보인다.
     SetStatValue(statType, value);
 
     if (FOnStatChanged* OnThisStatChanged = OnStatChangedMappings.Find(statType))
@@ -158,6 +156,7 @@ void UP1MyPlayerData::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
     SetRoomId(EnterMapPkt.room_id());
     SetMapId(EnterMapPkt.map_id());
 
+    // 게임 인스턴스가 이 알림을 받아 인게임 맵을 연다.
     OnMapEntered.Broadcast();
 }
 
@@ -292,6 +291,8 @@ void UP1MyPlayerData::ApplyGearSlots(const google::protobuf::RepeatedPtrField<Pr
 
 void UP1MyPlayerData::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
 {
+    // 레벨과 레벨업 스탯을 경험치보다 먼저 반영한다. 경험치를 알릴 때 최대 경험치가 이미 새 값이어야
+    // 구독자가 새 경험치를 옛 최대 경험치에 대어 그리지 않는다.
     if (RewardResultPkt.is_level_up())
     {
         const Protocol::LevelUpInfo& LevelUpInfo = RewardResultPkt.level_up_details();

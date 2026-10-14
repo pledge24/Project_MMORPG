@@ -2,24 +2,22 @@
 
 #include "CoreMinimal.h"
 
-/** 원격 크리처의 화면 위치와 회전을 서버 상태 쪽으로 끌어당긴 결과다. */
+/**
+ * 원격 크리처의 이동 보정 결과.
+ *
+ * 화면에 보이는 원격 크리처가 서버의 위치와 방향에서 멀어지지 않도록, 매 틱 적용할 위치와 회전을 계산한다.
+ */
 struct P1_API FP1MoveCorrection
 {
     FVector Location = FVector::ZeroVector;
     FRotator Rotation = FRotator::ZeroRotator;
 
-    /** 거리가 기준 이상이라 보간 없이 서버 위치로 옮겼으면 true다. */
+    /** 보간 없이 서버 위치로 순간이동했으면 true. */
     bool bSnapped = false;
 
     /**
-     * 한 틱 분량의 보정을 계산한다.
-     * 지금은 높이를 판정하지 않으므로 보정은 XY에만 적용한다. ServerLocation의 Z는 받지만 쓰지 않고,
-     * 결과의 Z는 언제나 ClientLocation의 Z다.
-     * MoveDirection이 0 벡터면 정지 중으로 보고 서버 위치를 향한다. 이동 중이면 서버 위치를 지나
-     * MoveDirection과 평행한 직선 위의, 현재 위치에서 가장 가까운 점을 향한다.
-     * bCorrectRotation이 false면 순간이동할 때 말고는 회전을 바꾸지 않는다.
-     * bInAction이 true면 루트 모션 공격에 맡기므로 순간이동할 때 말고는 위치도 회전도 바꾸지 않는다.
-     * DeltaSeconds는 초 단위다.
+     * 한 틱 분량의 보정을 계산한다. 높이는 보정하지 않으므로 결과의 Z는 ClientLocation의 Z다.
+     * bInAction이면 루트 모션에 맡기고, 순간이동할 때만 위치와 회전을 바꾼다.
      */
     static FP1MoveCorrection Compute(
         const FVector& ClientLocation,

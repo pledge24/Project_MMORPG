@@ -12,6 +12,7 @@ void UP1DeathWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // 내 플레이어의 스폰과 마을 리스폰 거절을 구독.
     if (auto* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
@@ -26,7 +27,6 @@ void UP1DeathWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 {
     UE_LOG(LogP1UI, Log, TEXT("BindMyPlayerSpawned"));
 
-    // 바인딩 셋업
     MyPlayer->OnDie.AddDynamic(this, &UP1DeathWidget::OnMyPlayerDie);
     MyPlayer->OnRespawn.AddDynamic(this, &UP1DeathWidget::OnMyPlayerRespawn);
 }
@@ -35,6 +35,7 @@ void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
 {
     if (APlayerController* PC = GetP1PlayerController())
     {
+        // 사망 화면을 띄우고 입력을 UI로 돌린다.
         SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
         FInputModeUIOnly InputMode;
@@ -75,7 +76,7 @@ void UP1DeathWidget::StartCountdown()
 
 void UP1DeathWidget::TickCountdown()
 {
-    // 실제 시각이 아니라 타이머가 울린 횟수로 센다. 블루프린트와 같다.
+    // 실제 시각이 아니라 타이머가 울린 횟수로 센다.
     --RemainingSeconds;
     ShowRemainingSeconds();
 

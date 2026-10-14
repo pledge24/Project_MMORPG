@@ -8,6 +8,11 @@ class AP1MyPlayer;
 class UTextBlock;
 class UP1ProgressBarWidget;
 
+/**
+ * 게임 화면에 늘 떠 있는 내 플레이어의 상태 표시.
+ *
+ * 이름, 레벨, HP·MP·경험치, 전투 모드처럼 플레이 중에 계속 봐야 하는 내 정보를 보여 준다.
+ */
 UCLASS()
 class P1_API UP1HUDWidget : public UP1UserWidget
 {

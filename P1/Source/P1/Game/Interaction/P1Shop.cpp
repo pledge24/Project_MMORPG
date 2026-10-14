@@ -12,6 +12,7 @@ void AP1Shop::BeginPlay()
 {
     Super::BeginPlay();
 
+    // 상점 범위 컴포넌트의 겹침 구독.
     TInlineComponentArray<UPrimitiveComponent*> Components(this);
     UPrimitiveComponent* const* Found = Components.FindByPredicate(
         [](const UPrimitiveComponent* Component) { return Component->GetFName() == RangeComponentName; });

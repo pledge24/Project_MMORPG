@@ -12,7 +12,11 @@ struct FP1CharacterOverview;
 
 DECLARE_DELEGATE_OneParam(FOnCharacterSlotClicked, int32 /*SlotId*/);
 
-/** 캐릭터 선택 화면의 슬롯 하나다. 캐릭터 요약을 보여 주고, 눌리면 로그인 메뉴에 슬롯 번호를 알린다. */
+/**
+ * 캐릭터 선택 화면의 슬롯 하나.
+ *
+ * 캐릭터 하나의 요약을 보여 주고, 눌리면 자기 슬롯 번호를 알린다.
+ */
 UCLASS()
 class P1_API UP1CharacterSlotWidget : public UP1UserWidget
 {
@@ -25,7 +29,7 @@ protected:
 
     //~ Character Slot
 public:
-    /** 로그인 메뉴가 슬롯 목록의 순서대로 매긴다. 클릭 알림에 실린다. */
+    /** 클릭 알림에 실을 슬롯 번호를 정한다. */
     void SetSlotId(int32 InSlotId);
 
     void ShowCharacter(const FP1CharacterOverview& Character);
@@ -56,6 +60,6 @@ private:
 
     int32 SlotId = -1;
 
-    /** 캐릭터가 없으면 -1이다. */
+    /** 캐릭터가 없으면 -1. */
     int64 CharacterId = -1;
 };

@@ -12,7 +12,8 @@ UP1Inventory::UP1Inventory()
 
 void UP1Inventory::Init(Protocol::Inventory* Inventory_)
 {
-    // 장비창 룩업 저장
+    // 슬롯 번호가 종류마다 0부터 슬롯 개수 미만이라고 보고 그대로 인덱스로 쓴다. 범위를 검사하지 않으므로
+    // 서버가 빈틈이 있는 번호를 보내면 범위 밖에 쓴다.
     {
         int32 size = Inventory_->gear_size();
         TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
@@ -24,7 +25,6 @@ void UP1Inventory::Init(Protocol::Inventory* Inventory_)
         }
     }
 
-    // 소비창 룩업 저장
     {
         int32 size = Inventory_->consumables_size();
         TArray<Protocol::Slot*>& ConsumablesLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE];
@@ -36,7 +36,6 @@ void UP1Inventory::Init(Protocol::Inventory* Inventory_)
         }
     }
 
-    // 기타창 룩업 저장
     {
         int32 size = Inventory_->miscellaneous_size();
         TArray<Protocol::Slot*>& MiscellaneousLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC];

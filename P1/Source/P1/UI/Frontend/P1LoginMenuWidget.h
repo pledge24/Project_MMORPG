@@ -20,7 +20,11 @@ namespace Protocol
     class S_DELETE_CHARACTER;
 }
 
-/** 로그인 맵의 화면이다. 로그인, 캐릭터 선택, 캐릭터 생성, 삭제 확인 네 화면을 스위처로 오간다. */
+/**
+ * 로그인 맵의 메뉴 위젯.
+ *
+ * 로그인부터 캐릭터 선택, 생성, 삭제를 거쳐 게임 입장을 요청하기까지의 화면을 맡는다.
+ */
 UCLASS()
 class P1_API UP1LoginMenuWidget : public UP1UserWidget
 {
@@ -51,7 +55,7 @@ private:
 
     //~ Login
 private:
-    /** 게임 인스턴스가 없으면 nullptr을 돌려준다. */
+    /** 게임 인스턴스가 없으면 nullptr. */
     UP1LoginManager* GetLoginManager() const;
 
     void SetResultText(bool bSuccess, const FString& Message);
@@ -87,6 +91,7 @@ private:
 
     //~ Character Select
 private:
+    /** 로그인 응답의 캐릭터 목록으로 캐릭터 선택 화면을 채우고 연다. */
     void FetchCharacterOverviews(const Protocol::S_LOGIN& pkt);
 
     /**
@@ -95,13 +100,13 @@ private:
      */
     void ApplyCharacterSlotCount(int32 SlotCount);
 
-    /** 서버가 보낸 슬롯 수와 디자이너에 놓인 슬롯 위젯 수 중 작은 값이다. 생성 가능 여부도 이 값으로 판정한다. */
+    /** 서버가 보낸 슬롯 수와 슬롯 위젯 수 중 작은 값. 캐릭터 생성 가능 여부도 이 값으로 판정한다. */
     int32 GetVisibleSlotCount() const;
 
-    /** 슬롯을 모두 비우고 캐릭터 요약을 앞에서부터 채운 뒤 캐릭터 선택 화면으로 넘어간다. */
+    /** 캐릭터 요약을 슬롯에 다시 그리고 캐릭터 선택 화면으로 넘어간다. */
     void DisplayCharacterOverviews();
 
-    /** 고른 슬롯만 하이라이트를 켠다. */
+    /** 슬롯을 고르고 하이라이트한다. -1이면 선택을 푼다. */
     void SelectSlot(int32 SlotIndex);
 
     bool IsSelectedSlotOccupied() const;
@@ -125,14 +130,14 @@ private:
 
     static constexpr float DESCRIPTION_SECONDS = 3.0f;
 
-    /** 디자이너에 놓인 캐릭터 슬롯을 담은 패널이다. 자식의 순서가 슬롯 번호다. */
+    /** 캐릭터 슬롯 위젯을 담은 패널. 자식의 순서가 슬롯 번호다. */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UPanelWidget> Slots;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> CS_Description;
 
-    /** 게임 입장 실패 문구다. WBP에 없으면 로그인 결과 문구를 대신 쓴다. */
+    /** 게임 입장 실패 문구. 없으면 ResultText에 대신 적는다. */
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UTextBlock> CS_ResultText;
 
@@ -150,17 +155,17 @@ private:
 
     TArray<FP1CharacterOverview> CharacterOverviews;
 
-    /** 계정이 가질 수 있는 캐릭터 수다. 캐릭터 목록을 받기 전에는 0이다. */
+    /** 계정이 가질 수 있는 캐릭터 수. 캐릭터 목록을 받기 전에는 0. */
     int32 CharacterSlotCount = 0;
 
-    /** 고른 슬롯이 없으면 -1이다. 캐릭터 목록을 다시 그려도 바뀌지 않는다. */
+    /** 고른 슬롯이 없으면 -1. 캐릭터 목록을 다시 그려도 바뀌지 않는다. */
     int32 SelectedSlotIndex = -1;
 
     FTimerHandle DescriptionTimer;
 
     //~ Character Create
 private:
-    /** 직업 선택과 이름 입력을 비운다. 생성 화면으로 넘어가기 전에 부른다. */
+    /** 생성 화면으로 넘어가기 전에 불러 직업 선택과 이름 입력을 비운다. */
     void ResetCharacterCreateScreen();
 
     /** ClassId는 Protocol::CharacterClass 값이다. */
@@ -202,13 +207,13 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> CC_CancelBtn;
 
-    /** Protocol::CharacterClass 값이다. 고르지 않았으면 -1이다. */
+    /** Protocol::CharacterClass 값. 고르지 않았으면 -1. */
     int32 SelectedClassId = -1;
 
-    /** 마지막으로 보낸 생성 요청의 이름이다. 응답이 오면 이 값을 목록에 넣는다. */
+    /** 마지막으로 보낸 생성 요청의 이름. 응답에는 이름이 없으므로 이 값을 목록에 넣는다. */
     FString RequestedCharacterName;
 
-    /** 마지막으로 보낸 생성 요청의 직업이다. Protocol::CharacterClass 값이다. */
+    /** 마지막으로 보낸 생성 요청의 직업(Protocol::CharacterClass 값). */
     int32 RequestedClassId = -1;
 
     //~ Character Delete

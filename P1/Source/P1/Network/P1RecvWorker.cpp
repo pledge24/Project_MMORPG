@@ -51,6 +51,7 @@ uint32 FP1RecvWorker::Run()
 			break;
 		}
 
+		// 받은 패킷은 큐에 넣기만 하고 게임 스레드가 처리한다. 이 스레드에서 핸들러를 돌리면 UObject를 만지게 된다.
 		if (PacketSessionRef Session = SessionRef.Pin())
 		{
 			Session->RecvPacketQueue.Enqueue(Packet);
@@ -93,7 +94,6 @@ void FP1RecvWorker::Destroy()
 
 bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 {
-	// 헤더 준비
 	const int32 HeaderSize = sizeof(FP1PacketHeader);
 	TArray<uint8> HeaderBuffer;
 	HeaderBuffer.AddZeroed(HeaderSize);
@@ -101,7 +101,6 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 	if (ReceiveDesiredBytes(HeaderBuffer.GetData(), HeaderSize) == false)
 		return false;
 
-	// ID, Size 파싱
 	FP1PacketHeader Header;
 	{
 		FMemoryReader Reader(HeaderBuffer);
@@ -113,10 +112,9 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
         }
 	}
 
-	// 헤더 추가
+	// 핸들러가 패킷 앞의 헤더부터 읽으므로 헤더도 함께 담는다.
 	OutPacket = HeaderBuffer;
 
-	// 페이로드
 	const int32 PayloadSize = Header.PacketSize - HeaderSize;
 
 	// PacketSize는 헤더를 포함한 길이다. 헤더보다 작으면 스트림이 어긋난 것이므로 연결을 끊는다.
@@ -140,7 +138,7 @@ bool FP1RecvWorker::ReceivePacket(TArray<uint8>& OutPacket)
 bool FP1RecvWorker::ReceiveDesiredBytes(uint8* Results, int32 Size)
 {
 	// 소켓은 블로킹이다. 헤더 뒤의 페이로드가 아직 도착하지 않았어도 여기서 기다린다.
-	// 예전처럼 대기 중인 데이터가 없다고 바로 돌아가면 읽은 헤더를 버리게 되어 스트림이 어긋난다.
+	// 대기 중인 데이터가 없다고 바로 돌아가면 이미 읽은 헤더를 버리게 되어 스트림이 어긋난다.
 	int32 Offset = 0;
 
 	while (Size > 0)

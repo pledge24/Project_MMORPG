@@ -7,6 +7,11 @@
 
 class UTextBlock;
 
+/**
+ * 내 플레이어가 죽어 있는 동안 뜨는 사망 화면.
+ *
+ * 마을 리스폰까지 남은 시간을 보여 주고, 시간이 다 되면 마을 리스폰을 요청한다.
+ */
 UCLASS()
 class P1_API UP1DeathWidget : public UP1UserWidget
 {
@@ -22,7 +27,6 @@ public:
     UFUNCTION()
     void OnMyPlayerDie(AActor* KilledCreature);
 
-    /** 사망 화면을 숨기고 입력을 게임으로 돌려준다. */
     UFUNCTION()
     void OnMyPlayerRespawn(AActor* RespawnedCreature);
 
@@ -31,17 +35,15 @@ protected:
 
     //~ Countdown
 private:
-    /** 남은 초를 대기 시간으로 채우고 CountdownIntervalSeconds마다 1씩 줄인다. */
     void StartCountdown();
 
     void TickCountdown();
 
-    /** 문구를 요청 중으로 바꾸고 마을 리스폰을 요청한다. */
     void HandleCountdownFinished();
 
     void ShowRemainingSeconds();
 
-    /** 사망한 뒤 마을 리스폰을 요청하기까지 기다리는 초다. 1 이상이다. 1이면 첫 타이머에서 요청한다. */
+    /** 사망한 뒤 마을 리스폰을 요청하기까지 기다리는 초. 요청이 거절되면 같은 간격으로 다시 요청한다. */
     UPROPERTY(EditDefaultsOnly, Category = "Respawn", meta = (ClampMin = "1"))
     int32 TownRespawnDelaySeconds = 10;
 
@@ -58,7 +60,6 @@ private:
 private:
     void RequestTownRespawn();
 
-    /** 사망 화면이 떠 있으면, 거절을 받을 때마다 TownRespawnDelaySeconds 뒤에 다시 요청한다. */
     void HandleTownRespawnRejected();
 
     FTimerHandle RetryTimerHandle;

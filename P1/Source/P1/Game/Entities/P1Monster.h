@@ -9,6 +9,11 @@ class AP1Monster;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDespawnReady, AP1Monster*);
 
+/**
+ * 월드에 보이는 몬스터.
+ *
+ * 몬스터 종류의 고정 데이터를 들고, 사망한 몬스터를 연출 뒤 정리할 수 있게 알린다.
+ */
 UCLASS()
 class P1_API AP1Monster : public AP1Creature
 {
@@ -17,7 +22,7 @@ class P1_API AP1Monster : public AP1Creature
     //~ Begin AP1Creature Interface
 public:
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
-    /** 사망 연출 뒤 OnDespawnReady를 알린다. 서버는 사망한 몬스터에 S_DESPAWN을 보내지 않는다. */
+    /** 사망 연출 뒤 OnDespawnReady를 알린다. */
     virtual void S_Die() override;
     //~ End AP1Creature Interface
 
@@ -29,7 +34,7 @@ public:
 private:
     void DespawnAfterDeath();
 
-    /** 초 단위. 사망 애니메이션(약 2.1초)이 끝나고 잠시 뒤에 지운다. */
+    /** 사망부터 지우기까지의 시간(초). 사망 애니메이션(약 2.1초)이 끝나고 잠시 뒤다. */
     static constexpr float DESPAWN_DELAY_SECONDS = 3.0f;
 
     FTimerHandle DespawnTimerHandle;
@@ -43,11 +48,11 @@ public:
     void SetDefaultMonsterData(const FP1MonsterData& InMonsterData);
 
 protected:
-    /** 데이터 테이블에서 읽은 고정값이다. 런타임에 바뀌지 않는다. */
+    /** 데이터 테이블에서 읽은 고정값. 런타임에 바뀌지 않는다. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MonsterData")
     FP1MonsterData MonsterData;
 
-    /** MonsterData에서 꺼내 캐시한 값이다. */
+    /** 몬스터 종류를 가리키는 템플릿 ID. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MonsterData")
     int32 TemplateId = 0;
 

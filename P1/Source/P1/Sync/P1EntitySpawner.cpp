@@ -29,6 +29,7 @@ void AP1EntitySpawner::BeginPlay()
         return;
     }
 
+    // 엔티티 관리자에 스포너 등록.
     if (UP1StatefulEntityManager* EntityManager = GetWorld()->GetSubsystem<UP1StatefulEntityManager>())
     {
         EntityManager->RegisterSpawner(this);
@@ -77,7 +78,7 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
         ESpawnActorCollisionHandlingMethod::AlwaysSpawn
     );
 
-    // 스폰 전에 몬스터 데이터 설정
+    // FinishSpawning 전에 이동 동기화와 몬스터 데이터 설정.
     if (OutMonster != nullptr)
     {
         UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutMonster, EP1MoveSyncMode::RemoteMonster);
@@ -185,7 +186,7 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
 
     if (OutPlayer != nullptr)
     {
-        // 플레이어 데이터 설정(스폰 전 후로)
+        // FinishSpawning 전후로 플레이어 데이터 설정.
         // 이름은 Initialize도 다시 넣지만 여기서 먼저 넣어야 한다. FinishSpawning 안의 BeginPlay가
         // 네임플레이트를 바인딩하면서 이름을 읽는데, Initialize는 그 뒤에 불린다.
         OutPlayer->SetPlayerName(FText::FromString(UTF8_TO_TCHAR(InEntityInfo.player_info().name().c_str())));

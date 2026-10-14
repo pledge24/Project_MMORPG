@@ -11,6 +11,7 @@ void AP1LoginMenuPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
+    // 로그인 화면 띄우기.
     if (LoginMenuWidgetClass && !LoginMenuWidget)
     {
         LoginMenuWidget = CreateWidget<UP1LoginMenuWidget>(this, LoginMenuWidgetClass);

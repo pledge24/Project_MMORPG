@@ -8,7 +8,7 @@
 
 namespace
 {
-    /** 사유를 모르는 끊김에 보여 줄 문구다. 서버가 먼저 내려갔거나 사유 패킷을 잃은 경우다. */
+    /** 사유를 모르는 끊김에 보여 줄 문구. 서버가 먼저 내려갔거나 사유 패킷을 잃은 경우다. */
     const TCHAR* const CONNECTION_LOST_NOTICE = TEXT("게임 서버와 연결이 끊겼습니다.");
 }
 
@@ -20,6 +20,7 @@ void UP1GameInstance::Init()
 {
     Super::Init();
 
+    // 입장에 성공하거나 맵을 옮기면 인게임 맵을 연다.
     if (UP1LoginManager* LoginManager = GetSubsystem<UP1LoginManager>())
         LoginManager->OnEnterGameSucceeded.AddUObject(this, &UP1GameInstance::OpenInGameMap);
     else
@@ -30,6 +31,7 @@ void UP1GameInstance::Init()
     else
         UE_LOG(LogP1System, Warning, TEXT("내 플레이어 데이터 서브시스템을 찾지 못했다"));
 
+    // 연결이 끊기면 로그인 화면으로 돌아간다.
     if (UP1ConnectionSubsystem* Connection = GetSubsystem<UP1ConnectionSubsystem>())
         Connection->OnConnectionLost.AddUObject(this, &UP1GameInstance::HandleConnectionLost);
     else

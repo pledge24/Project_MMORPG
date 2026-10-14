@@ -3,7 +3,7 @@
 #include "Components/Image.h"
 #include "Components/VerticalBox.h"
 
-// 툴팁에 보일 아이템 종류의 이름이다. 종류를 모르면 빈 문자열이고, 그 줄은 비워 둔다.
+// 툴팁에 보일 아이템 종류의 이름이다. 종류를 모르면 빈 문자열이고, 그 줄은 적지 않는다.
 static FString GetItemTypeDisplayName(Protocol::ItemType ItemType)
 {
     switch (ItemType)
@@ -35,7 +35,7 @@ void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
         ItemDescriptionText->SetText(FText::FromString(Item.Description));
     }
 
-    // Clear Text
+    // 툴팁 위젯은 다시 쓰이므로 앞서 띄운 아이템의 줄을 먼저 지운다. 지우지 않으면 이번 아이템에 없는 정보가 남는다.
     for (UWidget* Child : VB_ItemInfo->GetAllChildren())
     {
         if (UTextBlock* TextBlock = Cast<UTextBlock>(Child))

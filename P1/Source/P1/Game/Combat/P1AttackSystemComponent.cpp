@@ -10,7 +10,7 @@ void UP1AttackSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-    // 1. Owner가 유효한지 확인
+    // 공격 몽타주를 재생할 메시 찾기.
     AActor* Owner = GetOwner();
     if (Owner)
     {

@@ -21,7 +21,8 @@ void UP1MoveSyncComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 액터 Tick 뒤에 돌고, 여기서 넣은 이동 입력과 보정을 캐릭터 이동 컴포넌트가 같은 프레임에 이어받아야 한다.
+    // 틱 순서의 선행 조건 설정. 소유 액터의 Tick 뒤, 캐릭터 이동 컴포넌트의 틱 앞에 돌아야
+    // 여기서 넣은 이동 입력과 보정을 캐릭터 이동 컴포넌트가 같은 프레임에 이어받는다.
     if (ACharacter* Character = GetOwner<ACharacter>())
     {
         AddTickPrerequisiteActor(Character);
@@ -39,7 +40,7 @@ void UP1MoveSyncComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
     if (IsValid(Owner) == false)
         return;
 
-    // 틱마다 지금 화면 위치를 캐시한다
+    // 지금 화면 위치 캐시.
     {
         const FVector Location = Owner->GetActorLocation();
         ClientPos.mutable_pos()->set_x(Location.X);
@@ -48,7 +49,7 @@ void UP1MoveSyncComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
         ClientPos.set_yaw(Owner->GetActorRotation().Yaw);
     }
 
-    // 내 플레이어는 받은 위치로 바로 옮기고, 원격 크리처는 보간 목표로 삼는다
+    // 받은 서버 위치 반영. 내 플레이어는 받은 위치로 바로 옮기고, 원격 크리처는 보간 목표로 삼는다.
     Protocol::PosInfo Info;
     while (MoveQueue.Dequeue(Info))
     {
@@ -58,6 +59,7 @@ void UP1MoveSyncComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
             SetServerPos(Info);
     }
 
+    // 모드별 송신 또는 보정.
     if (Mode == EP1MoveSyncMode::MyPlayer)
         TickMyPlayer(DeltaTime);
     else
@@ -114,7 +116,7 @@ void UP1MoveSyncComponent::SetServerPos(const Protocol::PosInfo& Info)
 
     ServerPos.CopyFrom(Info);
     MoveDirection = FVector(ServerPos.move_direction().x(), ServerPos.move_direction().y(), 0.f);
-    SetMoveState(Info.state()); // state는 ClientPos에 바로 세팅
+    SetMoveState(Info.state()); // 이동 상태는 보간을 기다리지 않고 화면 쪽에 바로 반영한다.
 }
 
 void UP1MoveSyncComponent::SetMoveState(Protocol::MoveState State)
@@ -157,7 +159,6 @@ void UP1MoveSyncComponent::TickRemote(float DeltaSeconds)
         bInAction,
         DeltaSeconds);
 
-    // 회전이 그대로면 SetActorRotation을 부르지 않는다.
     if (Correction.Rotation != Character->GetActorRotation())
         Character->SetActorRotation(Correction.Rotation);
 

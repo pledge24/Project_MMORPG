@@ -17,6 +17,11 @@ class UP1SlotWidget;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSlotClicked, UP1SlotWidget*);
 
+/**
+ * 아이템 한 칸을 보여 주는 슬롯 위젯.
+ *
+ * 인벤토리, 장비, 상점, HUD에서 아이템의 아이콘, 수량, 재사용 대기와 툴팁을 보여 주고 칸의 클릭을 알린다.
+ */
 UCLASS()
 class P1_API UP1SlotWidget : public UP1UserWidget
 {
@@ -46,17 +51,22 @@ private:
 
     //~ Slot Data
 public:
+    /** 아이템을 진열만 한다. 칸이 아이템을 든 것으로 보지 않으므로 재사용 대기를 보이지 않는다. */
     void SetSlot(const FP1ItemData& Item, int32 Count = 1);
+
+    /** 서버가 보낸 슬롯 변경분을 입힌다. 아이템 없이 REMOVED로 오면 칸을 비운다. */
     void SetSlot(const Protocol::Slot& _Slot);
 
     void ClearSlot();
+
+    /** 슬롯 데이터와 아이콘만 입히고 수량 문구는 갱신하지 않는다. */
     void InsertData(const Protocol::Slot& _Slot);
 
-    /** 아이템 아이콘을 담은 에셋 테이블이다. 행 구조체는 FP1ItemAssetData다. */
+    /** 아이템 아이콘을 찾는 에셋 테이블. 행 구조체는 FP1ItemAssetData. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
     TObjectPtr<UDataTable> ItemAssetTable;
 
-    /** SlotData의 templateId가 바뀌면 함께 바뀐다. */
+    /** 칸에 보이는 아이템의 정의. SlotData의 템플릿이 바뀌면 함께 바뀐다. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
     FP1ItemData ItemData;
 
@@ -70,40 +80,40 @@ protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> ItemCountText;
 
-    /** 슬롯이 비었을 때 쓰는 아이콘이다. */
+    /** 칸이 비었을 때 보이는 아이콘. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
     TObjectPtr<UTexture2D> SlotDefaultIcon;
 
 private:
-    /** 에셋 테이블에서 아이콘을 찾아 표시한다. */
+    /** 아이콘을 찾지 못하면 지금 아이콘을 그대로 둔다. */
     void ApplyIcon(int32 TemplateId);
 
-    /** 에셋 테이블에서 아이콘을 찾아 로드한다. 행이 없으면 nullptr */
+    /** 에셋 테이블에서 아이콘을 동기 로드한다. 테이블이나 행이 없으면 nullptr. */
     UTexture2D* LoadIcon(int32 TemplateId) const;
 
     //~ Display
 protected:
-    /** 0보다 크면 PreConstruct에서 이 템플릿의 아이템 하나로 칸을 채운다. 상점의 진열 칸이 쓴다. */
+    /** 0보다 크면 이 템플릿의 아이템 하나를 진열한다. 상점의 진열 칸이 쓴다. */
     UPROPERTY(EditAnywhere, Category = "Slot")
     int32 DisplayTemplateId = 0;
 
-    /** DisplayTemplateId가 0일 때 PreConstruct에서 아이콘으로 입힌다. 비어 있으면 SlotDefaultIcon을 쓴다. HUD의 물약 그림이 쓴다. */
+    /** 진열할 아이템이 없을 때 입힐 아이콘. 비어 있으면 SlotDefaultIcon. HUD의 물약 그림이 쓴다. */
     UPROPERTY(EditAnywhere, Category = "Slot")
     TObjectPtr<UTexture2D> DisplayIcon;
 
     //~ Cooldown
 private:
-    /** 칸이 지금 든 아이템의 템플릿 id다. 빈 칸이나 진열 칸이면 0이다. */
+    /** 칸이 든 아이템의 템플릿 id. 빈 칸이나 진열 칸이면 0. */
     int32 GetHeldTemplateId() const;
 
     void HandleItemCooldownStarted(int32 TemplateId);
 
-    /** 든 아이템이 재사용 대기 중이면 막대를 갱신하고 타이머를 켠다. 아니면 막대를 0으로 두고 타이머를 끈다. */
+    /** 든 아이템의 재사용 대기를 막대에 그린다. 대기 중이면 끝날 때까지 타이머로 다시 불린다. */
     void RefreshCooldown();
 
-    /** 남은 비율을 1에서 0으로 줄여 보인다. 블루프린트와 같은 간격이다. */
     static constexpr float CooldownBarIntervalSeconds = 0.05f;
 
+    /** 재사용 대기의 남은 비율을 1에서 0으로 줄여 보인다. */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBar> CooldownBar;
 
@@ -111,11 +121,11 @@ private:
 
     //~ Tooltip
 protected:
-    /** 아이콘에 마우스를 올리면 아이콘의 툴팁 델리게이트가 부른다. 빈 칸이면 nullptr을 돌려 툴팁을 띄우지 않는다. */
+    /** 아이콘의 툴팁 델리게이트가 부른다. 빈 칸이면 nullptr을 돌려 툴팁을 띄우지 않는다. */
     UFUNCTION()
     UWidget* GetToolTipWidget() const;
 
-    /** 툴팁으로 띄울 위젯 클래스다. */
+    /** 툴팁으로 띄울 위젯 클래스. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Slot")
     TSubclassOf<UP1ItemTooltipWidget> TooltipClass;
 

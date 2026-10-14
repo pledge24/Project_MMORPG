@@ -27,6 +27,7 @@ void UP1NameplateWidget::BindCreature(AP1Creature* Creature)
 
 void UP1NameplateWidget::InitializePlayerNameplate(AP1Player* TargetPlayer)
 {
+    // 플레이어 이름판에는 HP 막대를 보이지 않는다.
     NameTextInitVisibility = ESlateVisibility::SelfHitTestInvisible;
     HpBarInitVisibility = ESlateVisibility::Collapsed;
 

@@ -11,7 +11,12 @@ class AP1Player;
 class AP1EntitySpawner;
 class UP1MyPlayerData;
 
-/** 서버가 id로 관리하는 엔티티를 월드 액터와 이어 붙이는 서브시스템이다. */
+/**
+ * 서버 엔티티와 월드 액터를 잇는 관리자.
+ *
+ * 서버가 id로 관리하는 엔티티를 월드의 액터와 이어 붙이고, 엔티티에 관한 패킷을 그 액터에 전달한다.
+ * 게임 스레드 전용.
+ */
 UCLASS()
 class P1_API UP1StatefulEntityManager : public UWorldSubsystem
 {
@@ -30,6 +35,7 @@ public:
 
     //~ Spawner Registry
 public:
+    /** 등록한 순서가 스포너 id가 된다. */
     void RegisterSpawner(AP1EntitySpawner* Spawner);
 
 protected:
@@ -39,9 +45,10 @@ protected:
     //~ Entity Registry
 public:
     void RegisterEntity(uint64 EntityId, AActor* SpawnedActor);
+    /** EntityType의 목록에서 뺀다. None이면 아무것도 빼지 않는다. */
     void UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType = EP1EntityType::None);
 
-    /** 찾지 못하면 nullptr을 돌려준다. */
+    /** 없으면 경고를 남기고 nullptr. */
     AActor* FindEntity(uint64 EntityId);
 
     /** 찾은 엔티티를 T로 캐스트한다. 없거나 타입이 다르면 nullptr. */
@@ -62,6 +69,7 @@ protected:
 
     //~ Spawn
 public:
+    /** SpawnerId 번 스포너로 스폰한다. 이미 등록된 id면 무시한다. */
     void SpawnEntity(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId = 0);
     /** 내 플레이어만 남기고 모든 엔티티를 디스폰한다. */
     void DespawnAllEntities();
@@ -74,7 +82,6 @@ protected:
 
     //~ Entity Packet Handlers
 public:
-    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 아래 핸들러도 같다. */
     void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
     void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
     void HandleMove(const Protocol::S_MOVE& MovePkt);
@@ -85,8 +92,8 @@ protected:
     //~ Room Packet Handlers
 public:
     /**
-     * 같은 맵 안의 룸 이동이나 리스폰으로 룸에 들어왔으면 내 플레이어만 남기고 디스폰한 뒤 내 플레이어를 입장 위치로 옮긴다.
-     * 실패 응답이면 아무것도 하지 않는다. 룸 id는 내 플레이어 데이터가 저장한다.
+     * 같은 맵 안의 룸 이동이나 리스폰이면 내 플레이어만 남기고 디스폰한 뒤 내 플레이어를 입장 위치로 옮긴다.
+     * 룸 id는 저장하지 않는다. 그것은 내 플레이어 데이터가 맡는다.
      */
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 

@@ -15,6 +15,7 @@ void UP1InventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // 탭 버튼과 슬롯 클릭 연결.
     InventoryTabSwitcher->SetActiveWidgetIndex(0);
     GearTabButton->OnClicked.AddUniqueDynamic(this, &UP1InventoryWidget::ShowGearTab);
     ConsumableTabButton->OnClicked.AddUniqueDynamic(this, &UP1InventoryWidget::ShowConsumableTab);
@@ -26,7 +27,7 @@ void UP1InventoryWidget::NativeConstruct()
 
     if (auto* GameInstance = GetP1GameInstance())
     {
-        // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
+        // 지금 골드와 슬롯으로 채운다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
             const Protocol::Inventory& Inven_ = MyPlayerData->GetPossession()->inventory();
@@ -48,7 +49,7 @@ void UP1InventoryWidget::NativeConstruct()
                 UpdateSlotWidget(Slot_);
             }
 
-            // 바인딩 셋업
+            // 이후 바뀌는 값과 요청 응답을 구독.
             MyPlayerData->OnGoldChanged.AddUObject(this, &UP1InventoryWidget::UpdateGold);
             MyPlayerData->OnInvenSlotChanged.AddUObject(this, &UP1InventoryWidget::UpdateSlotWidget);
 
@@ -172,7 +173,7 @@ void UP1InventoryWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     if (Screens == nullptr || !Screens->IsWindowOpen(EP1WidgetType::WIDGET_SHOP))
         return;
 
-    // 블루프린트와 같이 ItemData로 빈 칸을 가린다. 칸을 비우면 ItemData도 비워진다.
+    // ItemData로 빈 칸을 가린다. 칸을 비우면 ItemData도 비워진다.
     const Protocol::Slot& SlotData = SlotWidget->SlotData;
     if (SlotWidget->ItemData.TemplateId <= 0)
     {

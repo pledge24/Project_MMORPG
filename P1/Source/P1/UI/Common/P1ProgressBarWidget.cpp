@@ -20,8 +20,8 @@ void UP1ProgressBarWidget::NativePreConstruct()
     if (GridImage)
         GridImage->SetBrushFromTexture(GridTexture, false);
 
-    // 위젯 컴포넌트에 붙은 막대는 값이 먼저 들어온 뒤에 슬레이트 위젯이 만들어져 이 함수가 다시 불린다.
-    // 그때 자리 문구로 덮지 않고 들어온 값을 다시 적는다.
+    // 에디터 디자이너에서도 불리므로 값이 없으면 자리 문구를 적는다.
+    // 위젯 컴포넌트에 붙은 막대는 값이 먼저 들어온 뒤에 이 함수가 다시 불린다. 그때 자리 문구로 덮지 않고 들어온 값을 다시 적는다.
     if (bHasValue)
         UpdateBar();
     else if (TextBlock)
