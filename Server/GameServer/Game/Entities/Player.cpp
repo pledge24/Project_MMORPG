@@ -61,6 +61,7 @@ void Player::Start()
 {
     Creature::Start();
 
+    // 컴포넌트들 시작.
     _inventory->Start();
     _equipment->Start();
 }
@@ -69,6 +70,7 @@ void Player::Tick(float deltaTime)
 {
     Creature::Tick(deltaTime);
 
+    // 컴포넌트들 Tick 처리.
     _inventory->Tick(deltaTime);
     _equipment->Tick(deltaTime);
 }
@@ -439,7 +441,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
     const int32 oldLevel = _playerInfo->level();
 
     const Protocol::Reward& reward = rewardResultPkt.reward();
-    // Get Reward
+    // 받은 보상(Reward) 처리.
     {
         _possession->set_gold(_possession->gold() + reward.gold());
 
@@ -460,7 +462,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
         SetStatValue(Protocol::STAT_TYPE_EXP, IsMaxLevel() ? 0 : updatedExp);
     }
 
-    // Set Reward Result Pkt
+    // 받은 보상에 따른 변화를 패킷에 넣는다.
     {
         rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
         rewardResultPkt.set_updated_gold(_possession->gold());
