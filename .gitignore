@@ -28,7 +28,7 @@ DesignData/C_TestJsonfile.json
 # 현행 제약은 docs/ 아래 다른 문서들의 본문에 있다.
 #
 # **리포트에 적을 만한 내용 중 앞으로도 지켜야 할 것은 규범 문서로 옮긴다.** 리포트에만 적으면
-# 그 결론이 저장소에서 사라진다. 옮길 자리는 docs/folder-structure.md, docs/conventions.md,
+# 그 결론이 저장소에서 사라진다. 옮길 자리는 docs/folder-structure.md, .claude/rules/,
 # docs/tech-debt.md, docs/adr/ 다.
 docs/reports/
 

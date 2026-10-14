@@ -102,7 +102,7 @@
 
 ## 9. CommonUI 도입
 
-같은 이행에서 유예한 둘이다. 근거는 계획 문서의 F절과 `docs/conventions.md` 2.14에 있다.
+같은 이행에서 유예한 둘이다. 근거는 계획 문서의 F절과 `.claude/rules/ue-client.md` 「클래스 구성」에 있다.
 
 | ID | 무엇을 바꾸는가 |
 | --- | --- |
@@ -114,7 +114,7 @@
 
 **선행 조건**: 없다. **두 계층을 하나로 합치려는 시도는 하지 않는다.**
 `UCommonActivatableWidget`이 `UCommonUserWidget`을 상속하므로 베이스 하나가 두 계층의 부모가 될
-수 없다(`conventions.md` 2.14).
+수 없다(`.claude/rules/ue-client.md` 「클래스 구성」).
 
 **클라이언트 구조 정리에서도 넣지 않았다(2026년 10월 2일).** 이 프로젝트에서 얻는 것이 작다.
 - 활성화 스택은 맨 위 화면만 입력을 받는데, 상점 판매는 인벤토리와 상점이 함께 열려 있어야 한다
@@ -279,13 +279,13 @@
 
 ## 21. 남은 리다이렉트 정리
 
-**왜 지금**: #131부터 이름을 바꾼 작업 안에서 리다이렉트를 지운다(`docs/conventions.md` 2.2). 그전에 넣은
+**왜 지금**: #131부터 이름을 바꾼 작업 안에서 리다이렉트를 지운다(`.claude/rules/ue-client.md` 「이름과 파일」). 그전에 넣은
 리다이렉트는 남아 있다. `DefaultEngine.ini`의 `[CoreRedirects]`에 `Class`·`Property`·`FunctionRedirects`가
 65줄 있고, 그중 24줄은 같은 줄이 두 번 들어 있다(2026년 10월 4일 실측). `[/Script/Engine.Engine]`에도 템플릿 이름을 옮기는
 `ActiveGameNameRedirects`와 `ActiveClassRedirects`가 13줄 있다.
 
 **알려진 자리**: 각 리다이렉트의 옛 이름을 `Content`의 `.uasset`·`.umap`에서 문자열로 찾아, 옛 이름으로 저장된
-에셋을 다시 저장한다. #131에서 쓴 절차와 MCP 제약은 `docs/conventions.md` 2.2에 있다.
+에셋을 다시 저장한다. #131에서 쓴 절차와 MCP 제약은 `.claude/rules/ue-client.md` 「이름과 파일」에 있다.
 
 **선행 조건**: 없다. 에셋을 많이 다시 저장하므로 다른 티켓과 같은 에셋을 건드리지 않는 시점에 한다.
 

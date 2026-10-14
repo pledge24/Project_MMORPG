@@ -24,7 +24,7 @@
 |---|---|---|---|
 | P1 | `CONTEXT.md` | 세 티어가 공유하는 이 프로젝트 고유의 용어만 담는다. 구현, 배치, 일반 프로그래밍 개념이 들어가면 위반이다. 정의는 1~2문장이고 무엇을 하는지가 아니라 무엇인지를 말한다. 동의어는 하나를 고르고 나머지를 「피할 말」에 적는다 | `CONTEXT.md` 머리말, `domain-modeling` 「Update CONTEXT.md inline」, `CONTEXT-FORMAT.md` 「Rules」 |
 | P2 | `docs/ARCHITECTURE.md` | 코드를 읽어서 알 수 있는 내용을 반복하지 않는다. 왜 이렇게 되어 있는지와 깨면 안 되는 것만 적는다 | `docs/ARCHITECTURE.md` 머리말 |
-| P3 | `docs/conventions.md`, `docs/folder-structure.md` | conventions는 코드 안의 규칙(이름, 주석, 멤버 배치, 타입)만, folder-structure는 무엇을 어디에 둘지만 담는다. 서로의 몫이 들어가면 위반이다 | 두 문서의 머리말 |
+| P3 | `.claude/rules/`의 티어별 파일, `docs/folder-structure.md` | rules는 코드 안의 규칙(이름, 주석, 멤버 배치, 타입)만, folder-structure는 무엇을 어디에 둘지만 담는다. 서로의 몫이 들어가면 위반이다 | `.claude/rules/cpp-common.md`와 `docs/folder-structure.md`의 머리말 |
 | P4 | `docs/tech-debt.md` | 지금 틀린 것만 담는다. 해결된 항목, 「해결됨」·「완료」 표기, 착수 순서와 계획은 위반이다. 순서와 계획은 backlog의 몫이다 | `docs/tech-debt.md` 머리말, `CLAUDE.md` 「작업 방식」 |
 | P5 | `docs/backlog.md` | 착수하지 않은 작업 후보를 담는다. 지금 틀린 것(결함)은 tech-debt의 몫이다. 「하지 않기로 확인된 것」의 행마다 근거 문서를 가리킨다 | `docs/backlog.md` 머리말과 「하지 않기로 확인된 것」 |
 | P6 | `docs/adr/` | ADR은 되돌리기 어렵고, 맥락 없이는 놀랍고, 실제 트레이드오프의 결과인 결정이다. 셋 중 하나라도 아니면 판단 필요로 올린다. 구현 수준의 결정은 ADR이 아니라 커밋 메시지와 work 파일의 「결정」이 담는다 | `ADR-FORMAT.md` 「When to offer an ADR」 |
@@ -33,7 +33,7 @@
 | P9 | `docs/work/` | 진행 표의 「검증」에는 실제로 돌린 명령과 결과만 적는다. 실행하지 않은 검증을 적었으면 위반이다 | `CLAUDE.md` 「완료 기준」 |
 | P10 | `docs/work/` | 진행 상태의 원천은 work 파일의 진행 표다. 진행 상태를 다른 곳(이슈만, 문서 본문)에 둔다고 적었으면 위반이다. 모든 단계가 끝난 work 파일이 남아 있으면 판단 필요로 올린다 | `CLAUDE.md` 「작업 방식」 |
 | P11 | `docs/agents/` | 상류 템플릿 문구를 그대로 둔다. 의도적 이탈은 `issue-tracker.md`의 `--body-file` 절 하나다 | `docs/agents/issue-tracker.md` 「Why `--body-file` here」 |
-| P12 | `docs/reports/` | 앞으로도 지켜야 할 결론이 리포트에만 있고 규범 문서(folder-structure, conventions, tech-debt, backlog, adr)에 없으면 발견으로 올린다. 리포트는 git이 추적하지 않아서 저장소에 남지 않는다 | `CLAUDE.md` 「문서 위치」 |
+| P12 | `docs/reports/` | 앞으로도 지켜야 할 결론이 리포트에만 있고 규범 문서(folder-structure, `.claude/rules/`, tech-debt, backlog, adr)에 없으면 발견으로 올린다. 리포트는 git이 추적하지 않아서 저장소에 남지 않는다 | `CLAUDE.md` 「문서 위치」 |
 
 ## 문서끼리의 관계
 
