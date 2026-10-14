@@ -11,16 +11,15 @@
 
 AP1MyPlayer::AP1MyPlayer()
 {
-    // 카메라 붐을 만든다. 벽에 막히면 플레이어 쪽으로 당겨진다
+    // 카메라 붐은 벽에 막히면 플레이어 쪽으로 당겨진다. 카메라는 붐 끝에 붙어 붐과 함께 컨트롤러 방향으로 돈다.
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 400.0f; // 카메라가 캐릭터 뒤에서 따라오는 거리다	
-    CameraBoom->bUsePawnControlRotation = true; // 암은 컨트롤러 회전을 따른다
+    CameraBoom->TargetArmLength = 400.0f;
+    CameraBoom->bUsePawnControlRotation = true;
 
-    // 따라가는 카메라를 만든다
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // 붐 끝에 붙여 붐이 컨트롤러 방향에 맞춰 돌게 한다
-    FollowCamera->bUsePawnControlRotation = false; // 카메라는 암에 대해 따로 돌지 않는다
+    FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+    FollowCamera->bUsePawnControlRotation = false;
 
     // 엔진이 FinishSpawning 안(PreInitializeComponents)에서 0번 컨트롤러에 빙의시킨다. BeginPlay에서는 Controller가 채워져 있다.
     AutoPossessPlayer = EAutoReceiveInput::Player0;
@@ -30,7 +29,7 @@ void AP1MyPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-    // 입력 매핑 컨텍스트를 붙인다
+    // 입력 매핑 컨텍스트 등록.
     if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
     {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -39,7 +38,8 @@ void AP1MyPlayer::BeginPlay()
         }
     }
 
-    // 스폰 알림(OnMyPlayerSpawned)은 스포너가 Initialize를 마친 뒤에 보낸다.
+    // 스폰 알림(OnMyPlayerSpawned)은 여기서 보내지 않는다. 스포너가 Initialize를 마친 뒤에 보내야
+    // 구독자가 서버 정보로 초기화된 플레이어를 받는다.
 }
 
 void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -51,24 +51,20 @@ void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
-	// 입력 액션을 바인딩한다
+	// 입력 액션 바인딩.
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// 점프
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
 		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// 이동
+		// 입력을 놓을 때(Completed)도 Move를 불러 캐시한 이동 입력을 0으로 되돌린다.
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Move);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AP1MyPlayer::Move);
 
-		// 시점 회전
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
 
-        // 공격
         EnhancedInputComponent->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &AP1MyPlayer::NormalAttack);
 
-        // 전투 모드 전환
         EnhancedInputComponent->BindAction(ToggleBattleModeAction, ETriggerEvent::Started, this, &AP1MyPlayer::ToggleBattleMode);
 
 	}
@@ -86,7 +82,7 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		// 카메라 기준의 앞 방향을 구한다
+		// 이동 방향은 카메라(컨트롤러 회전)의 Yaw 기준이다.
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -96,12 +92,12 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 
         if (CanInputMovement() == true)
         {
-		    // 이동 입력을 넣는다
 		    AddMovementInput(ForwardDirection, MovementVector.Y);
 		    AddMovementInput(RightDirection, MovementVector.X);
         }
 
-		// 이동 입력을 캐시한다
+		// 공격 중이라 이동하지 못해도 입력은 캐시한다. 이동 동기화가 이 값과 CanInputMovement로
+		// 이동 상태와 송신을 판정한다.
 		{
 			DesiredInput = MovementVector;
 
@@ -117,12 +113,10 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 
 void AP1MyPlayer::Look(const FInputActionValue& Value)
 {
-	// 입력은 2D 벡터다
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
-		// 컨트롤러에 Yaw와 Pitch 입력을 넣는다
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}

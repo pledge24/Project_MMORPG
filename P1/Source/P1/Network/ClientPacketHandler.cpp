@@ -11,7 +11,7 @@ PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
 namespace
 {
-    /** 세션이 속한 월드의 엔티티 관리자다. 월드가 없으면 nullptr. */
+    /** 세션이 속한 월드의 엔티티 관리자. 월드가 없으면 nullptr. */
     UP1StatefulEntityManager* GetEntityManager(const PacketSessionRef& session)
     {
         if (UWorld* World = session->GetWorld())
@@ -20,7 +20,7 @@ namespace
         return nullptr;
     }
 
-    /** 세션을 연 게임 인스턴스의 내 플레이어 데이터다. 월드나 게임 인스턴스가 없으면 nullptr. */
+    /** 세션을 연 게임 인스턴스의 내 플레이어 데이터. 월드나 게임 인스턴스가 없으면 nullptr. */
     UP1MyPlayerData* GetMyPlayerData(const PacketSessionRef& session)
     {
         if (UWorld* World = session->GetWorld())
@@ -230,8 +230,7 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
-    /* 채팅 UI가 아직 없다. DummyClient 부하 테스트에서 서버 중계가 도는지
-       확인할 수 있게 로그만 남긴다. */
+    // 채팅 UI가 아직 없다. DummyClient 부하 테스트에서 서버 중계가 도는지 확인할 수 있게 로그만 남긴다.
     FString Msg = UTF8_TO_TCHAR(pkt.msg().c_str());
     UE_LOG(LogP1Network, Log, TEXT("S_CHAT entity_id: %lld, msg: %s"), pkt.entity_id(), *Msg);
 

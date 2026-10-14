@@ -26,7 +26,7 @@ void UP1LoginManager::RequestLogin(const FString& Username, const FString& Passw
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
-	// JSON 데이터 생성
+	// 요청 본문 JSON 작성.
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(TEXT("username"), Username);
 	JsonObject->SetStringField(TEXT("password"), Password);
@@ -35,7 +35,7 @@ void UP1LoginManager::RequestLogin(const FString& Username, const FString& Passw
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-	// 요청 설정
+	// 요청 설정.
 	FString URL = MakeAuthUrl(TEXT("/Login"));
 
     RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnLoginResponse);
@@ -43,7 +43,7 @@ void UP1LoginManager::RequestLogin(const FString& Username, const FString& Passw
     RequestRef->SetVerb("POST");
     RequestRef->SetHeader("Content-Type", "application/json");
     RequestRef->SetContentAsString(OutputString);
-    RequestRef->SetTimeout(10.0f); // 10초 타임아웃
+    RequestRef->SetTimeout(10.0f);
 
     RequestRef->ProcessRequest();
 }
@@ -52,7 +52,7 @@ void UP1LoginManager::RequestRegister(const FString& Username, const FString& Pa
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
-	// JSON 데이터 생성
+	// 요청 본문 JSON 작성.
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(TEXT("username"), Username);
 	JsonObject->SetStringField(TEXT("password"), Password);
@@ -61,7 +61,7 @@ void UP1LoginManager::RequestRegister(const FString& Username, const FString& Pa
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-	// 요청 설정
+	// 요청 설정.
 	FString URL = MakeAuthUrl(TEXT("/Account/Register"));
 
     RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnRegisterResponse);
@@ -69,7 +69,7 @@ void UP1LoginManager::RequestRegister(const FString& Username, const FString& Pa
     RequestRef->SetVerb("POST");
     RequestRef->SetHeader("Content-Type", "application/json");
     RequestRef->SetContentAsString(OutputString);
-    RequestRef->SetTimeout(10.0f); // 10초 타임아웃
+    RequestRef->SetTimeout(10.0f);
 
     RequestRef->ProcessRequest();
 }
@@ -86,7 +86,7 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 		int32 ResponseCode = Response->GetResponseCode();
 		FString ResponseBody = Response->GetContentAsString();
 
-		// JSON 응답 파싱
+		// JSON 응답 파싱.
 		TSharedPtr<FJsonObject> JsonObject;
 		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
 
@@ -198,5 +198,6 @@ void UP1LoginManager::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt
     if (UP1MyPlayerData* MyPlayerData = GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
         MyPlayerData->InitMyPlayerData(EnterGamePkt);
 
+    // 게임 인스턴스가 이 알림을 받아 인게임 맵을 연다.
     OnEnterGameSucceeded.Broadcast();
 }

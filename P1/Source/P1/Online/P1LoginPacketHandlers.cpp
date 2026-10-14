@@ -7,7 +7,7 @@
 
 namespace
 {
-    /** 세션을 연 게임 인스턴스의 로그인 관리자다. 월드나 게임 인스턴스가 없으면 nullptr. */
+    /** 세션을 연 게임 인스턴스의 로그인 관리자. 월드나 게임 인스턴스가 없으면 nullptr. */
     UP1LoginManager* GetLoginManager(const PacketSessionRef& session)
     {
         if (UWorld* World = session->GetWorld())

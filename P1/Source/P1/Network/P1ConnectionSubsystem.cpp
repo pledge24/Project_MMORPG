@@ -13,8 +13,7 @@ void UP1ConnectionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    // 수신 펌프를 코어 티커에 등록한다.
-    // 게임 인스턴스는 레벨 전환에 살아남으므로 펌프도 레벨과 무관하게 계속 돈다.
+    // 수신 펌프 등록. 게임 인스턴스는 레벨 전환에도 살아남으므로 펌프도 레벨과 무관하게 돈다.
     // 코어 티커는 게임 스레드에서 돌기 때문에 여기서 UObject를 만져도 된다.
     RecvPumpTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
         FTickerDelegate::CreateUObject(this, &UP1ConnectionSubsystem::TickRecvPump));
@@ -119,10 +118,8 @@ bool UP1ConnectionSubsystem::TickRecvPump(float DeltaTime)
     if (World == nullptr)
         return true;
 
-    // 월드가 준비되기 전과 정리 중에는 펌프를 돌리지 않는다.
-    // 레벨 블루프린트 틱은 레벨 전환 동안 죽어 있어서 그 사이 패킷이 큐에 쌓였다가
-    // 월드가 준비된 뒤 처리됐다. 코어 티커는 전환 중에도 돌기 때문에 그 버퍼링을
-    // 여기서 직접 복원한다. 큐는 비우지 않으므로 패킷은 유실되지 않는다.
+    // 코어 티커는 레벨 전환 중에도 돈다. 월드가 준비되기 전과 정리 중에는 패킷을 처리하지 않고
+    // 큐에 남겨 두었다가, 월드가 준비된 뒤에 처리한다. 큐를 비우지 않으므로 패킷은 유실되지 않는다.
     if (World->bIsTearingDown || World->HasBegunPlay() == false)
         return true;
 

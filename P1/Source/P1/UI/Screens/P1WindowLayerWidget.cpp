@@ -16,6 +16,7 @@ void UP1WindowLayerWidget::NativeOnInitialized()
 
 FReply UP1WindowLayerWidget::NativeOnPreviewMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+    // 좌클릭이 닿은 창을 앞으로 올린다.
     // 슬롯 위젯이 클릭을 Handled로 소비하므로 버블링 단계에서는 창까지 올라오지 않는다.
     // 그래서 터널링 단계인 프리뷰에서 먼저 본다.
     // 창의 캔버스 슬롯은 화면 전체를 덮으므로 위치로는 창을 가를 수 없다. 이벤트 경로에 든 창을 찾는다.
@@ -34,6 +35,7 @@ FReply UP1WindowLayerWidget::NativeOnPreviewMouseButtonDown(const FGeometry& InG
         }
     }
 
+    // 클릭을 소비하지 않는다. 여기서 Handled를 돌려주면 창 안의 위젯이 클릭을 받지 못한다.
     return Super::NativeOnPreviewMouseButtonDown(InGeometry, InMouseEvent);
 }
 
@@ -42,6 +44,7 @@ void UP1WindowLayerWidget::AddWindow(UUserWidget* Window)
     if (Window == nullptr || Canvas == nullptr)
         return;
 
+    // 화면 전체에 맞춘 슬롯으로 넣어야 창의 배치가 뷰포트에 직접 붙였을 때와 같아진다.
     UCanvasPanelSlot* WindowSlot = Canvas->AddChildToCanvas(Window);
     WindowSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
     WindowSlot->SetOffsets(FMargin(0.f));
@@ -49,6 +52,7 @@ void UP1WindowLayerWidget::AddWindow(UUserWidget* Window)
 
 void UP1WindowLayerWidget::BringToFront(UUserWidget* Window)
 {
+    // 창을 뗐다 붙이지 않고 Z 순서만 바꾼다. 뗐다 붙이면 창의 NativeConstruct가 다시 돌아 구독이 겹친다.
     if (UCanvasPanelSlot* WindowSlot = Cast<UCanvasPanelSlot>(Window ? Window->Slot : nullptr))
         WindowSlot->SetZOrder(++TopZOrder);
 }

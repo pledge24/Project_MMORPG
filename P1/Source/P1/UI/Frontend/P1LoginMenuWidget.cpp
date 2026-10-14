@@ -11,7 +11,6 @@
 #include "UI/Frontend/P1CharacterSlotWidget.h"
 #include "Utils/LogCategory.h"
 
-// 클래스 열거형 -> 직업 이름으로 바꾸기 위한 맵
 static const TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
     {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
     {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
@@ -31,6 +30,7 @@ void UP1LoginMenuWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
 
+    // 화면별 버튼 연결.
     LoginButton->OnClicked.AddDynamic(this, &UP1LoginMenuWidget::OnLoginButtonClicked);
     RegisterButton->OnClicked.AddDynamic(this, &UP1LoginMenuWidget::OnRegisterButtonClicked);
 
@@ -46,6 +46,7 @@ void UP1LoginMenuWidget::NativeOnInitialized()
     CD_ConfirmButton->OnClicked.AddDynamic(this, &UP1LoginMenuWidget::OnDeleteConfirmButtonClicked);
     CD_CancelButton->OnClicked.AddDynamic(this, &UP1LoginMenuWidget::OnDeleteCancelButtonClicked);
 
+    // 패널에 놓인 순서대로 슬롯 번호를 매긴다.
     for (UWidget* Child : Slots->GetAllChildren())
     {
         UP1CharacterSlotWidget* CharacterSlot = Cast<UP1CharacterSlotWidget>(Child);
@@ -62,6 +63,7 @@ void UP1LoginMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // 로그인 화면에서 시작.
     WidgetSwitcher->SetActiveWidget(LoginScreen);
 
     // 게임 서버와 연결이 끊겨 돌아왔으면 그 사유를 보여 준다.
@@ -72,6 +74,7 @@ void UP1LoginMenuWidget::NativeConstruct()
             SetResultText(false, Notice);
     }
 
+    // 로그인 흐름의 응답 구독. 떼는 것은 UP1UserWidget::NativeDestruct가 한다.
     if (UP1LoginManager* LoginManager = GetLoginManager())
     {
         LoginManager->OnAuthResult.AddUObject(this, &UP1LoginMenuWidget::SetResultText);
@@ -136,6 +139,7 @@ void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
         return;
     }
 
+    // 서버가 보낸 캐릭터 요약을 화면용으로 옮긴다.
     CharacterOverviews.Empty();
 
     for (auto& Character : pkt.characters())
@@ -304,6 +308,7 @@ void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER
         return;
     }
 
+    // 응답에는 캐릭터 id만 오므로 이름과 직업은 요청할 때 적어 둔 값을 쓴다. 새 캐릭터는 1레벨에서 시작한다.
     {
         FP1CharacterOverview CharacterOverview;
         CharacterOverview.CharacterId = pkt.character_id();

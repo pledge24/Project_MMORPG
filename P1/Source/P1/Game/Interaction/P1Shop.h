@@ -8,8 +8,9 @@ class IP1ShopScreen;
 class UPrimitiveComponent;
 
 /**
- * 레벨에 놓인 상점이다. 내 플레이어가 상점 범위에 들어오면 상점 창을 열고, 범위에서 나가면 닫는다.
- * 상점 범위는 블루프린트가 소유한 ShopCollision 컴포넌트다.
+ * 레벨에 놓인 상점.
+ *
+ * 내 플레이어가 상점 범위에 들어오면 상점 창을 열고, 범위에서 나가면 닫는다.
  */
 UCLASS()
 class P1_API AP1Shop : public AActor
@@ -27,14 +28,13 @@ private:
     void HandleRangeBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-    /** 범위에서 나간 액터가 누구든 상점 창을 닫는다. */
     UFUNCTION()
     void HandleRangeEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex);
 
-    /** 첫 로컬 플레이어의 컨트롤러가 구현한 창구다. 없으면 nullptr. */
+    /** 첫 로컬 플레이어의 컨트롤러가 구현한 창구. 없으면 nullptr. */
     IP1ShopScreen* FindShopScreen() const;
 
-    /** 블루프린트에서 상점 범위로 쓰는 컴포넌트의 이름이다. */
+    /** 블루프린트에서 상점 범위로 쓰는 컴포넌트의 이름. */
     static const FName RangeComponentName;
 };

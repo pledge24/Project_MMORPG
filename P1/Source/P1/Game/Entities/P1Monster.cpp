@@ -22,6 +22,7 @@ void AP1Monster::S_Die()
 {
     Super::S_Die();
 
+    // 서버는 사망한 몬스터에 S_DESPAWN을 보내지 않으므로 클라이언트가 스스로 지워야 한다. 지우지 않으면 시체가 남는다.
     // 사망 애니메이션은 ABP가 OnDie를 받아 재생한다. 그 시간을 준 뒤 지운다.
     // 그사이 룸 이동으로 먼저 지워지면 AActor::EndPlay가 이 타이머를 함께 지운다.
     GetWorldTimerManager().SetTimer(DespawnTimerHandle, this, &AP1Monster::DespawnAfterDeath, DESPAWN_DELAY_SECONDS, false);

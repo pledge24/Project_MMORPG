@@ -8,6 +8,11 @@ class USkeletalMeshComponent;
 class UStaticMeshComponent;
 class UP1GearAppearanceComponent;
 
+/**
+ * 월드에 보이는 플레이어 캐릭터.
+ *
+ * 내 플레이어와 다른 플레이어가 함께 쓰는 기반으로, 장착한 장비의 외형을 보여 준다.
+ */
 UCLASS()
 class P1_API AP1Player : public AP1Creature
 {
@@ -25,7 +30,6 @@ protected:
 
     //~ Begin AP1Creature Interface
 public:
-    /** 서버가 보낸 엔티티 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
     //~ End AP1Creature Interface
 

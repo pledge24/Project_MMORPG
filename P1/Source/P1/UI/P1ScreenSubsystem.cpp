@@ -64,10 +64,11 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
     OwningPlayer = InOwningPlayer;
     const UP1UISettings* Settings = GetDefault<UP1UISettings>();
 
-    // 붙이는 순서가 같은 Z 순서 안에서의 앞뒤를 정한다.
+    // 배경 화면. 붙이는 순서가 같은 Z 순서 안에서의 앞뒤를 정한다.
     HUDWidget = CreateScreen(InOwningPlayer, Settings->HUDWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
     HelpWidget = CreateScreen(InOwningPlayer, Settings->HelpWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
 
+    // 창 레이어와 창. 창은 닫힌 채로 만든다.
     WindowLayer = CreateWidget<UP1WindowLayerWidget>(InOwningPlayer, UP1WindowLayerWidget::StaticClass());
     WindowLayer->AddToViewport(WINDOW_LAYER_Z_ORDER);
     WindowLayer->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
@@ -78,6 +79,7 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
         {EP1WidgetType::WIDGET_SHOP, CreateWindowWidget(InOwningPlayer, Settings->ShopWidgetClass, WindowLayer)},
     };
 
+    // 창보다 위에 그리는 화면.
     WarningTextWidget = CreateScreen(InOwningPlayer, Settings->WarningTextWidgetClass, WARNING_TEXT_Z_ORDER, ESlateVisibility::HitTestInvisible);
     DeathWidget = CreateScreen(InOwningPlayer, Settings->DeathWidgetClass, DEATH_SCREEN_Z_ORDER, ESlateVisibility::Collapsed);
 }

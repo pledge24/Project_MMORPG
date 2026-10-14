@@ -16,7 +16,7 @@ void UP1WarningTextWidget::DisplayWarningMessage(const FText& WarningMessage)
     WarningText->SetText(WarningMessage);
     WarningText->SetVisibility(ESlateVisibility::HitTestInvisible);
 
-    // 같은 핸들로 다시 걸면 남은 시간을 버리고 처음부터 센다. 블루프린트의 RetriggerableDelay와 같다.
+    // 같은 핸들로 다시 걸면 남은 시간을 버리고 처음부터 센다.
     if (UWorld* World = GetWorld())
         World->GetTimerManager().SetTimer(HideTimerHandle, this, &UP1WarningTextWidget::HideWarningMessage, DisplaySeconds, false);
 }

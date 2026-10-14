@@ -2,6 +2,7 @@
 
 #include "P1CharacterOverview.generated.h"
 
+/** 캐릭터 선택 화면에 보여 줄 캐릭터 하나의 요약. */
 USTRUCT(BlueprintType)
 struct FP1CharacterOverview
 {

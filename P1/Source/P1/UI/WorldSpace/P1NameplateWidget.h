@@ -10,6 +10,11 @@ class AP1Monster;
 class UTextBlock;
 class UP1ProgressBarWidget;
 
+/**
+ * 크리처 머리 위에 뜨는 이름판.
+ *
+ * 월드의 플레이어와 몬스터 위에 이름을, 몬스터에게는 HP도 함께 보여 준다.
+ */
 UCLASS()
 class P1_API UP1NameplateWidget : public UP1UserWidget, public IP1CreatureBoundWidget
 {
@@ -22,7 +27,7 @@ public:
 
     //~ Begin IP1CreatureBoundWidget Interface
 public:
-    /** 크리처의 종류를 보고 플레이어용과 몬스터용 중 하나로 초기화한다. */
+    /** 플레이어와 몬스터만 받는다. 다른 크리처면 아무것도 하지 않는다. */
     virtual void BindCreature(AP1Creature* Creature) override;
     //~ End IP1CreatureBoundWidget Interface
 
@@ -40,7 +45,7 @@ protected:
     TObjectPtr<UP1ProgressBarWidget> HpBar;
 
 private:
-    /** WBP에 지정된 최초 표시 상태다. 되돌릴 때 쓴다. */
+    /** 대상 크리처의 종류에 따라 정한 최초 표시 상태. */
     ESlateVisibility NameTextInitVisibility;
     ESlateVisibility HpBarInitVisibility;
 };

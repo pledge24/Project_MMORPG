@@ -11,7 +11,7 @@ void UP1HUDWidget::NativeConstruct()
 
     if (auto* GameInstance = GetP1GameInstance())
     {
-        // MyPlayerData에서 스텟 정보를 가져와 갱신한다.
+        // 지금 값으로 채운다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
             const Protocol::PlayerInfo& PlayerInfo_ = MyPlayerData->GetPlayerInfo();
@@ -22,7 +22,7 @@ void UP1HUDWidget::NativeConstruct()
             MpBar->Init(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MP), MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_MP));
             ExpBar->Init(MyPlayerData->GetStatValue(Protocol::STAT_TYPE_EXP), MyPlayerData->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), true);
 
-            // 바인딩 셋업
+            // 이후 바뀌는 값을 구독.
             MyPlayerData->OnLevelChanged.AddUObject(this, &UP1HUDWidget::UpdateLevel);
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_HP].AddUObject(this, &UP1HUDWidget::UpdateMaxHp);
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_HP].AddUObject(this, &UP1HUDWidget::UpdateCurHp);

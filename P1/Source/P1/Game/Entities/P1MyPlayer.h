@@ -10,7 +10,11 @@ class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
 
-/** 로컬 플레이어가 조종하는 캐릭터다. 입력과 카메라를 이 클래스가 갖는다. */
+/**
+ * 로컬 플레이어가 조종하는 캐릭터.
+ *
+ * 입력과 카메라를 맡고, 플레이어의 조작을 캐릭터의 이동과 공격으로 옮긴다.
+ */
 UCLASS()
 class P1_API AP1MyPlayer : public AP1Player
 {
@@ -32,7 +36,6 @@ protected:
 
     //~ Begin AP1Creature Interface
 public:
-    /** 서버가 보낸 엔티티 정보로 초기화한다. 서버가 보낸 값으로만 부른다. */
     virtual void Initialize(const Protocol::EntityInfo& InEntityInfo) override;
 
     virtual bool IsMyPlayer() const override { return true; }
@@ -51,7 +54,7 @@ protected:
     void Look(const FInputActionValue& Value);
 
 private:
-    /** 카메라를 캐릭터 뒤에 두는 스프링 암이다. */
+    /** 카메라를 캐릭터 뒤에 두는 스프링 암. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<USpringArmComponent> CameraBoom;
 
@@ -80,16 +83,16 @@ private:
 
     //~ Movement
 public:
-    /** 공격 중이면 false다. 이동 동기화 컴포넌트가 이동 상태와 송신을 판정할 때 읽는다. */
+    /** 이동 입력을 캐릭터에 반영할 수 있으면 true. 공격 중이면 false. */
     bool CanInputMovement() const;
 
-    /** 이동 입력의 원본 값이다. 입력이 없으면 0 벡터다. */
+    /** 이동 입력의 원본 값. 입력이 없으면 0 벡터. */
     FVector2D GetDesiredInput() const { return DesiredInput; }
 
-    /** 입력을 카메라 기준으로 바꾼 이동 방향의 단위 벡터다. 입력이 없으면 0 벡터다. */
+    /** 입력을 카메라 기준으로 바꾼 이동 방향의 단위 벡터. 입력이 없으면 0 벡터. */
     FVector GetDesiredMoveDirection() const { return DesiredMoveDirectionVec; }
 
-    /** 이동 방향의 Yaw(도)다. */
+    /** 이동 방향의 Yaw(도). */
     float GetDesiredMoveDirectionYaw() const { return DesiredMoveDirectionYaw; }
 
 protected:
@@ -97,8 +100,8 @@ protected:
 
 private:
     FVector2D DesiredInput = FVector2D::ZeroVector;
-    FVector DesiredMoveDirectionVec = FVector::ZeroVector;    // 이동할 방향(단위 벡터)
-    float DesiredMoveDirectionYaw = 0.f;                      // 이동할 방향(Yaw)
+    FVector DesiredMoveDirectionVec = FVector::ZeroVector;
+    float DesiredMoveDirectionYaw = 0.f;
 
     //~ Combat
 protected:

@@ -10,6 +10,7 @@ void AP1InGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
+    // 룸 입장 요청.
     Protocol::C_ENTER_ROOM EnterRoomPkt;
     {
         EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
@@ -23,12 +24,14 @@ void AP1InGamePlayerController::BeginPlay()
         FP1PacketSender::Send(this, EnterRoomPkt);
     }
 
+    // 인게임 UI 입력 매핑 등록.
     if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
     {
         if (InGameUIMappingContext)
             InputSubsystem->AddMappingContext(InGameUIMappingContext, 0);
     }
 
+    // 화면 생성.
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->CreateScreens(this);
 }

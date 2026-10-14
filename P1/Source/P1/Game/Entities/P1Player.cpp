@@ -8,7 +8,6 @@
 AP1Player::AP1Player()
 {
 	// 아래 WeaponMesh 생성 전까지는 UE의 3인칭 템플릿에서 그대로 가져온 설정이다.
-	// 충돌 캡슐의 크기를 정한다
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
 	// 컨트롤러가 회전해도 캐릭터는 돌지 않는다. 컨트롤러 회전은 카메라에만 적용한다.
@@ -16,11 +15,10 @@ AP1Player::AP1Player()
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
-	// 캐릭터 이동을 설정한다
-	GetCharacterMovement()->bOrientRotationToMovement = true; // 입력 방향으로 몸을 돌린다	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // 몸을 돌리는 속도다
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 
-	// 이 값들은 다시 컴파일하지 않고 캐릭터 블루프린트에서 조정할 수 있다
+	// 아래 값은 캐릭터 블루프린트에서 조정할 수 있다. 블루프린트에서 바꾼 값은 여기를 고쳐도 바뀌지 않는다.
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;

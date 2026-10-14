@@ -10,6 +10,7 @@ void UP1StatusWindowWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // 장비 슬롯 더블클릭과 팁 버튼 연결.
     for (UP1SlotWidget* SlotWidget : { Equipped_Helmet, Equipped_Chest, Equipped_Arms, Equipped_Legs, Equipped_Boots, Equipped_Weapon })
         SlotWidget->OnDoubleClicked.AddUObject(this, &UP1StatusWindowWidget::HandleSlotDoubleClicked);
 
@@ -17,7 +18,7 @@ void UP1StatusWindowWidget::NativeConstruct()
 
     if (auto* GameInstance = GetP1GameInstance())
     {
-        // MyPlayerData에서 인벤토리 정보를 가져와 갱신한다.
+        // 지금 능력치와 착용 장비로 채운다.
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
         {
             UpdateAllStat(MyPlayerData);
@@ -28,7 +29,7 @@ void UP1StatusWindowWidget::NativeConstruct()
                 UpdateSlotWidget(Slot_);
             }
 
-            // 바인딩 셋업
+            // 이후 바뀌는 값과 해제 응답을 구독.
             MyPlayerData->OnEquipmentSlotChanged.AddUObject(this, &UP1StatusWindowWidget::UpdateSlotWidget);
 
             // 창은 한 번 만들고 표시 여부만 바꾸므로, 수치도 열 때 다시 읽지 않고 바뀔 때마다 받는다.
@@ -103,13 +104,13 @@ void UP1StatusWindowWidget::UpdateMagicalAttack(int64 Value)
 
 void UP1StatusWindowWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
 {
-    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 해제가 막힌다.
     if (bPendingPacket)
         return;
 
     Protocol::C_UNEQUIP_GEAR Pkt;
     Pkt.mutable_slot()->CopyFrom(SlotWidget->SlotData);
 
+    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 해제가 막힌다.
     bPendingPacket = true;
     FP1PacketSender::Send(this, Pkt);
 }

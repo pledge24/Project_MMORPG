@@ -19,7 +19,13 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnInvenSlotChanged, const Protocol::Slot&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::Slot&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemCooldownStarted, int32);
 
-/** 내 플레이어의 정보를 담는 서브시스템이다. */
+/**
+ * 내 플레이어의 상태.
+ *
+ * 서버가 알려 준 내 플레이어의 정보, 스탯, 소지품, 재사용 대기의 사본을 들고, 바뀌면 구독자에게 알린다.
+ * 레벨과 무관하게 살아 있어 화면이 언제든 현재 값을 읽을 수 있다.
+ * 모든 멤버 함수는 게임 스레드 전용이다.
+ */
 UCLASS()
 class P1_API UP1MyPlayerData : public UGameInstanceSubsystem
 {
@@ -56,17 +62,18 @@ public:
     uint64 GetPlayerId() const { return _PlayerId; }
     int32 GetPlayerLevel() const { return _PlayerInfo->level(); };
 
-    // 룸 ID와 맵 ID는 서로 다른 번호 공간이다(룸 10/20/30/40, 맵 1111).
+    /** 룸 ID와 맵 ID는 서로 다른 번호 공간이다. */
     int32 GetRoomId() const { return _PlayerInfo->room_id(); }
     int32 GetMapId() const { return _PlayerInfo->map_id(); }
 
-    /** 레벨을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 레벨은 이 함수로만 바꾼다. 게임 스레드 전용. */
+    /** 레벨을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 레벨은 이 함수로만 바꾼다. */
     void ApplyLevel(int32 Level);
 
     FOnLevelChanged OnLevelChanged;
 
 protected:
     TUniquePtr<Protocol::EntityInfo> _EntityInfo;
+    /** _EntityInfo 안의 PlayerInfo를 가리킨다. */
     Protocol::PlayerInfo* _PlayerInfo;
 
     uint64 _PlayerId = 0;
@@ -74,12 +81,13 @@ protected:
 
     //~ Stats
 public:
+    /** 사본에만 쓰고 구독자에게 알리지 않는다. 내 플레이어의 스탯을 바꿀 때는 ApplyStat을 쓴다. */
     void SetStatValue(Protocol::StatType statType, const int64& value);
 
-    /** 서버가 알려 준 스탯을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 스탯은 이 함수로만 바꾼다. 게임 스레드 전용. */
+    /** 서버가 알려 준 스탯을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 스탯은 이 함수로만 바꾼다. */
     void ApplyStat(Protocol::StatType statType, int64 value);
 
-    /** 패킷에 실린 스탯 목록을 ApplyStat으로 차례로 반영한다. 게임 스레드 전용. */
+    /** 패킷에 실린 스탯 목록을 ApplyStat으로 차례로 반영한다. */
     void ApplyStats(const google::protobuf::RepeatedPtrField<Protocol::Stat>& Stats);
 
     const Protocol::StatInfo& GetStatInfo() const { return *_StatInfo; }
@@ -95,7 +103,7 @@ public:
     Protocol::Possession* GetPossession() { return _Possession.Get(); }
     int64 GetGold() const { return _Possession->gold(); }
 
-    /** 골드를 사본에 쓰고 구독자에게 알린다. 내 플레이어의 골드는 이 함수로만 바꾼다. 게임 스레드 전용. */
+    /** 골드를 사본에 쓰고 구독자에게 알린다. 내 플레이어의 골드는 이 함수로만 바꾼다. */
     void ApplyGold(int64 Gold);
 
     FOnGoldChanged OnGoldChanged;
@@ -116,19 +124,19 @@ protected:
 
     //~ Item Cooldown
 public:
-    /** 템플릿이 재사용 대기 중이 아니면 nullptr을 돌려준다. 시각은 FP1ItemCooldown::GetClockSeconds()로 잰다. */
+    /** 템플릿이 재사용 대기 중이면 그 대기를, 아니면 nullptr. 시각은 FP1ItemCooldown::GetClockSeconds()로 잰다. */
     const FP1ItemCooldown* FindActiveItemCooldown(int32 TemplateId) const;
 
     bool IsItemCoolingDown(int32 TemplateId) const { return FindActiveItemCooldown(TemplateId) != nullptr; }
 
-    /** 사용 성공 응답으로 템플릿의 재사용 대기가 시작되면 템플릿 id를 알린다. 같은 아이템이 든 칸이 모두 대기 막대를 돌린다. */
+    /** 재사용 대기가 시작된 템플릿 id를 알린다. 대기는 템플릿 단위라 같은 아이템이 든 칸이 모두 대기한다. */
     FOnItemCooldownStarted OnItemCooldownStarted;
 
 private:
     /** 아이템 정의의 Cooldown(초)으로 대기를 시작한다. 대기가 없는 아이템이면 아무것도 하지 않는다. */
     void StartItemCooldown(int32 TemplateId);
 
-    /** 템플릿 id별 재사용 대기다. 서버처럼 재접속하면 비운다. */
+    /** 템플릿 id별 재사용 대기. 서버처럼 재접속하면 비운다. */
     TMap<int32, FP1ItemCooldown> ItemCooldowns;
 
     //~ Equipment
@@ -143,18 +151,17 @@ protected:
 
     //~ Enter Packet Handlers
 public:
-    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 성공하면 맵과 룸 id를 저장하고 OnMapEntered를 알린다. */
+    /** 성공하면 맵과 룸 id를 저장하고 OnMapEntered를 알린다. */
     void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
 
-    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 성공하면 룸 id를 저장한다. 엔티티 정리는 엔티티 관리자가 맡는다. */
+    /** 성공하면 룸 id를 저장한다. 엔티티 정리는 엔티티 관리자가 맡는다. */
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
-    /** 게임 인스턴스가 구독해 인게임 맵을 연다. */
+    /** 맵 입장에 성공하면 알린다. */
     FOnMapEntered OnMapEntered;
 
     //~ Item Packet Handlers
 public:
-    /** 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 아래 핸들러도 같다. */
     void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
     void HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt);
 
@@ -167,7 +174,7 @@ public:
     /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
 
-    /** 응답이 왔다는 알림이다. 성공 여부와 무관하게 알린다. */
+    /** 응답이 오면 성공 여부와 무관하게 알린다. 아래 알림도 같다. */
     DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
     FOnRecvBuyItemPkt OnRecvBuyItemPkt;
 
@@ -191,18 +198,12 @@ private:
 
     //~ Reward Packet Handlers
 public:
-    /**
-     * 패킷 핸들러가 수신 펌프에서 부른다. 게임 스레드 전용. 경험치와 레벨은 서버가 계산한 최종 값을 그대로 쓴다.
-     * 레벨이 올랐으면 레벨과 레벨업 스탯을 경험치보다 먼저 반영한다. 경험치를 알릴 때 최대 경험치가 이미 새 값이어야 한다.
-     */
+    /** 보상으로 바뀐 레벨, 스탯, 경험치, 골드를 반영한다. 서버가 계산한 최종 값을 그대로 쓴다. */
     void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
 
     //~ Respawn
 public:
-    /**
-     * 서버가 마을 리스폰 요청을 거절했다는 알림이다. 정상 흐름에서는 일어나지 않는다.
-     * 엔티티 관리자가 거절 응답을 받으면 알린다. 거절 사유는 엔티티 관리자가 로그로만 남긴다.
-     */
+    /** 서버가 마을 리스폰 요청을 거절하면 알린다. 정상 흐름에서는 일어나지 않는다. */
     DECLARE_MULTICAST_DELEGATE(FOnTownRespawnRejected);
     FOnTownRespawnRejected OnTownRespawnRejected;
 };

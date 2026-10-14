@@ -10,8 +10,9 @@ class UInputMappingContext;
 class UP1ScreenSubsystem;
 
 /**
- * 인게임 맵의 컨트롤러다. 룸 입장을 요청하고, 화면 서브시스템을 만들고 치우는 시점과 화면 단축키를 넘긴다.
- * 상점이 부르는 상점 창 여닫기와 경고도 화면 서브시스템에 넘긴다.
+ * 인게임 맵의 플레이어 컨트롤러.
+ *
+ * 인게임 맵에서 플레이어의 화면 입력을 받고, 게임 객체가 요청하는 화면 조작을 화면 쪽에 넘기는 창구가 된다.
  */
 UCLASS()
 class P1_API AP1InGamePlayerController : public APlayerController, public IP1ShopScreen
@@ -45,7 +46,7 @@ private:
     void OnToggleStatusWindowWidget();
     void OnToggleInventoryWidget();
 
-    /** 이 로컬 플레이어의 화면 서브시스템이다. 로컬 플레이어가 없으면 nullptr. */
+    /** 이 로컬 플레이어의 화면 서브시스템. 로컬 플레이어가 없으면 nullptr. */
     UP1ScreenSubsystem* GetScreens() const;
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")

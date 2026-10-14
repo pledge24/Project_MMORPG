@@ -39,6 +39,8 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
         Result.Rotation = FMath::RInterpTo(ClientRotation, TargetRotation, DeltaSeconds, P1MoveSync::ROTATION_INTERP_SPEED);
     }
 
+    // 정지 중이면 서버 위치를 향한다. 이동 중이면 서버 위치를 지나는 이동 방향 직선 위에서
+    // 현재 위치와 가장 가까운 점을 향한다.
     const FVector CorrectionPoint = MoveDirection == FVector::ZeroVector
         ? Target
         : UKismetMathLibrary::FindClosestPointOnLine(ClientLocation, Target, MoveDirection);

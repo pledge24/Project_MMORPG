@@ -16,9 +16,11 @@ void UP1SlotWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // 툴팁 위젯은 칸마다 한 번만 만들고 띄울 때마다 다시 채운다.
     if (TooltipClass && !SlotTooltipWidget)
         SlotTooltipWidget = CreateWidget<UP1ItemTooltipWidget>(this, TooltipClass);
 
+    // 재사용 대기 시작 알림 구독. 떼는 것은 UP1UserWidget::NativeDestruct가 한다.
     if (UP1GameInstance* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
@@ -30,7 +32,7 @@ void UP1SlotWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
 
-    // 툴팁은 띄울 때마다 지금 칸의 아이템으로 채운다. 디자이너 바인딩 대신 여기서 묶는다.
+    // 툴팁은 띄울 때마다 지금 칸의 아이템으로 채운다.
     // 슬레이트 위젯을 만들 때 델리게이트가 묶여 있어야 툴팁이 걸리므로 NativeConstruct보다 앞인 여기서 묶는다.
     if (ItemIcon)
         ItemIcon->ToolTipWidgetDelegate.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UP1SlotWidget, GetToolTipWidget));
@@ -79,7 +81,7 @@ FReply UP1SlotWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry
 
 bool UP1SlotWidget::IsOverIcon(const FPointerEvent& InMouseEvent) const
 {
-    // 슬롯 테두리가 아니라 아이콘 영역만 받는다. 블루프린트에서 옮긴 조건이다.
+    // 슬롯 테두리가 아니라 아이콘 영역만 받는다.
     return ItemIcon && ItemIcon->GetCachedGeometry().IsUnderLocation(InMouseEvent.GetScreenSpacePosition());
 }
 
@@ -100,7 +102,7 @@ void UP1SlotWidget::SetSlot(const Protocol::Slot& _Slot)
 {
     // 아이템이 있으면 state와 무관하게 데이터와 아이콘을 입힌다. state는 서버가 보낸 변경분의 표시인데
     // 내 플레이어 데이터의 사본에 그대로 남는다. 위젯이 다시 붙으면 NativePreConstruct가 아이콘을
-    // 초기 텍스처로 되돌리고, 사본의 MODIFIED 슬롯으로 다시 그리면 아이콘이 빈 채로 남았다.
+    // 초기 텍스처로 되돌리므로, state로 거르면 사본의 MODIFIED 슬롯으로 다시 그릴 때 아이콘이 빈 채로 남는다.
     // 한 번도 채워진 적 없는 빈 슬롯(NONE)은 건드리지 않아 초기 텍스처를 남긴다.
     if (_Slot.has_item())
         InsertData(_Slot);
@@ -187,7 +189,6 @@ void UP1SlotWidget::RefreshCooldown()
     UWorld* World = GetWorld();
     if (Cooldown == nullptr || World == nullptr)
     {
-        // 블루프린트는 끝날 때 막대를 0 이하의 마지막 값으로 두었다. 0으로 맞춰도 보이는 것은 같다.
         CooldownBar->SetPercent(0.f);
         if (World)
             World->GetTimerManager().ClearTimer(CooldownTimerHandle);
@@ -205,7 +206,7 @@ UWidget* UP1SlotWidget::GetToolTipWidget() const
     {
         if (SlotTooltipWidget)
         {
-            SlotTooltipWidget->Init(ItemData, LoadIcon(ItemData.TemplateId)); // 아이템 정보 전달
+            SlotTooltipWidget->Init(ItemData, LoadIcon(ItemData.TemplateId));
             return SlotTooltipWidget;
         }
     }

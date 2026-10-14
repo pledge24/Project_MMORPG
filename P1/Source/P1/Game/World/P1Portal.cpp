@@ -13,7 +13,7 @@ void AP1Portal::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
 
-    // 에디터에서 배치하거나 값을 고칠 때도 이름표가 바로 보이게 한다. 블루프린트의 생성 스크립트가 하던 일이다.
+    // 에디터에서 배치하거나 값을 고칠 때도 이름표가 바로 보이게 한다.
     ApplyNameTag();
 }
 
@@ -24,6 +24,7 @@ void AP1Portal::BeginPlay()
     // 게임 월드에서는 위젯 컴포넌트가 BeginPlay에서야 위젯을 만들어, OnConstruction 때는 입힐 위젯이 없다.
     ApplyNameTag();
 
+    // 밟는 범위 컴포넌트의 겹침 구독.
     TInlineComponentArray<UPrimitiveComponent*> Components(this);
     UPrimitiveComponent* const* Found = Components.FindByPredicate(
         [](const UPrimitiveComponent* Component) { return Component->GetFName() == RangeComponentName; });
@@ -39,7 +40,7 @@ void AP1Portal::BeginPlay()
 void AP1Portal::HandleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
     int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    // 블루프린트는 BP_MyPlayer로 캐스트해 가렸다. 로컬 플레이어 컨트롤러가 조종하는 폰은 내 플레이어뿐이라 결과가 같다.
+    // 로컬 플레이어 컨트롤러가 조종하는 폰은 내 플레이어뿐이므로 원격 플레이어와 몬스터는 여기서 걸러진다.
     // AI 컨트롤러도 단독 실행에서는 로컬로 치므로 플레이어 컨트롤러인지도 본다.
     const APawn* Pawn = Cast<APawn>(OtherActor);
     if (Pawn && Pawn->IsPlayerControlled() && Pawn->IsLocallyControlled())

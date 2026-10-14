@@ -5,12 +5,13 @@
 #include "Network/Enum.pb.h"
 #include "P1ItemData.generated.h"
 
+/** 아이템 정의 테이블의 한 행. 행 이름은 템플릿 id. */
 USTRUCT(BlueprintType)
 struct FP1ItemData : public FTableRowBase
 {
     GENERATED_BODY()
 
-    /** ItemType 문자열을 열거형으로 바꾼다. 종류가 아니거나 비었으면 ITEM_TYPE_NONE이다. */
+    /** ItemType 문자열을 열거형으로 바꾼다. 종류가 아니거나 비었으면 ITEM_TYPE_NONE. */
     Protocol::ItemType GetItemType() const;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -22,11 +23,11 @@ struct FP1ItemData : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemName;
 
-    /** 아이템 종류다. 기획 원본의 값(GEAR, CONSUMABLE, MISCELLANEOUS)을 그대로 담는다. 판정에는 GetItemType을 쓴다. */
+    /** 아이템 종류. 기획 원본의 값(GEAR, CONSUMABLE, MISCELLANEOUS)을 그대로 담는다. 판정에는 GetItemType을 쓴다. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemType;
 
-    /** 아이템 분류다(helmet, sword, potion 등). */
+    /** 아이템 분류(helmet, sword, potion 등). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString ItemSubtype;
 

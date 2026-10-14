@@ -10,6 +10,11 @@ class UButton;
 class UTextBlock;
 class UP1MyPlayerData;
 
+/**
+ * 내 플레이어의 상태 창.
+ *
+ * 착용한 장비와 세부 능력치를 보여 주고, 장비 슬롯 조작을 장착 해제 요청으로 바꾼다.
+ */
 UCLASS()
 class P1_API UP1StatusWindowWidget : public UP1UserWidget
 {
@@ -43,7 +48,7 @@ protected:
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
     TObjectPtr<UP1SlotWidget> Equipped_Weapon;
 
-    /** 장착 해제 응답을 기다리는 동안 참이다. 중복 요청을 막는다. */
+    /** 장착 해제 응답을 기다리는 동안 true. 중복 요청을 막는다. */
     UPROPERTY(VisibleAnywhere)
     bool bPendingPacket = false;
 
@@ -75,7 +80,6 @@ protected:
 
     //~ Tips
 private:
-    /** 팁 패널이 보이면 숨기고, 숨어 있으면 보인다. */
     UFUNCTION()
     void ToggleTips();
 

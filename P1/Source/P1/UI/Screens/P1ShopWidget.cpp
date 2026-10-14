@@ -11,12 +11,14 @@ void UP1ShopWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    // 진열 칸 우클릭 연결.
     for (UWidget* Child : UGP_Shop->GetAllChildren())
     {
         if (UP1SlotWidget* SlotWidget = Cast<UP1SlotWidget>(Child))
             SlotWidget->OnRightClicked.AddUObject(this, &UP1ShopWidget::HandleSlotRightClicked);
     }
 
+    // 구매 응답 구독.
     if (auto* GameInstance = GetP1GameInstance())
     {
         if (UP1MyPlayerData* MyPlayerData = GameInstance->GetSubsystem<UP1MyPlayerData>())
@@ -38,7 +40,6 @@ void UP1ShopWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
         return;
     }
 
-    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 구매가 막힌다.
     if (MyPlayerData->GetGold() < SlotWidget->ItemData.BuyPrice)
     {
         UE_LOG(LogP1UI, Log, TEXT("골드가 모자라 살 수 없다. 템플릿 %d"), SlotWidget->ItemData.TemplateId);
@@ -49,6 +50,7 @@ void UP1ShopWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     Pkt.set_template_id(SlotWidget->ItemData.TemplateId);
     Pkt.set_count(1);
 
+    // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 구매가 막힌다.
     bPendingPacket = true;
     FP1PacketSender::Send(this, Pkt);
 }
