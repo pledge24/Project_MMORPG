@@ -242,8 +242,6 @@ bool Handle_C_DELETE_CHARACTER(PacketSessionRef& session, Protocol::C_DELETE_CHA
         return false;
     }
 
-    // 소유 확인은 DeleteCharacter의 SQL이 user_id를 함께 대조해서 한다.
-
     // 한 계정의 DB 작업이 순서대로 돌도록 userId로 DB 큐를 고른다.
     DBQueueRef dbQueue = GDBManager->GetDBQueueFromId(userId);
 

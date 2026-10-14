@@ -1,15 +1,15 @@
 """저장소 규범을 텍스트로 검사한다.
 
-`docs/conventions.md`와 `docs/folder-structure.md`가 정한 규칙 중 빌드 없이 판정할 수 있는
+`.claude/rules/ue-client.md`와 `docs/folder-structure.md`가 정한 규칙 중 빌드 없이 판정할 수 있는
 다섯 가지를 본다. 엔진도 v145 툴셋도 필요하지 않으므로 호스티드 러너에서 그대로 돈다.
 
 검사 항목과 근거는 아래와 같다.
 
 | 검사 이름              | 무엇을 보는가                          | 근거                        |
 | ---------------------- | -------------------------------------- | --------------------------- |
-| `file-type`            | 파일 이름과 그 안의 주 타입 이름       | `conventions.md` 2.4        |
-| `p1-prefix`            | 리플렉션 타입의 `P1` 약어              | `conventions.md` 2.2        |
-| `include-path`         | `#include`가 도메인 경로를 쓰는지      | `conventions.md` 2.6        |
+| `file-type`            | 파일 이름과 그 안의 주 타입 이름       | `ue-client.md` 「이름과 파일」 |
+| `p1-prefix`            | 리플렉션 타입의 `P1` 약어              | `ue-client.md` 「이름과 파일」 |
+| `include-path`         | `#include`가 도메인 경로를 쓰는지      | `ue-client.md` 「이름과 파일」 |
 | `project-item-exists`  | 프로젝트 파일의 등록 항목이 실재하는지 | #74                         |
 | `project-filter-path`  | `.filters`의 논리 폴더가 디스크와 같은지 | #74                       |
 
@@ -54,7 +54,7 @@ GENERATED_FILE_NAMES = frozenset(
 )
 
 # 생성물이 이름으로 부르기 때문에 프로젝트 약어를 붙이지 않는 타입이다.
-# `Protocol/Templates/PacketHandler.h`가 이 이름들을 그대로 적는다 (`conventions.md` 2.2).
+# `Protocol/Templates/PacketHandler.h`가 이 이름들을 그대로 적는다 (`ue-client.md` 「이름과 파일」).
 GENERATED_NAME_DEPENDENTS = frozenset(
     {"ClientPacketHandler", "PacketSession", "SendBuffer", "PacketHeader"}
 )
@@ -140,7 +140,7 @@ def read_text(rel_path: str) -> str:
     try:
         return data.decode("utf-8")
     except UnicodeDecodeError:
-        # `.proto`와 `.bat`은 cp949다 (`conventions.md` 1.3). 이 검사가 보는 파일은 전부
+        # `.proto`와 `.bat`은 cp949다 (`CLAUDE.md` 「컨벤션」). 이 검사가 보는 파일은 전부
         # UTF-8이지만, 새 파일이 섞여 들어와도 예외로 죽지 않게 한다.
         return data.decode("cp949", errors="replace")
 
@@ -207,7 +207,7 @@ def is_generated(rel_path: str) -> bool:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 1: 파일 이름과 타입 이름의 일치 (`conventions.md` 2.4)
+# 검사 1: 파일 이름과 타입 이름의 일치 (`ue-client.md` 「이름과 파일」)
 # ----------------------------------------------------------------------------------
 
 # 전방 선언과 실제 정의를 가른다. 정의는 여는 중괄호가 뒤따르고 전방 선언은 `;`로 끝난다.
@@ -225,7 +225,7 @@ ENUM_DEF_RE = re.compile(
     re.MULTILINE,
 )
 
-# 타입 접두사 한 글자다 (`conventions.md` 2.1). 파일 이름에는 붙이지 않는다.
+# 언리얼 표준의 타입 접두사 한 글자다. 파일 이름에는 붙이지 않는다.
 TYPE_PREFIX_RE = re.compile(r"^[UAFEI](?=[A-Z])")
 
 
@@ -259,7 +259,7 @@ def check_file_type_match(_: argparse.Namespace) -> list[Violation]:
         if stem in expected:
             continue
 
-        # 그 타입 안에서만 쓰는 작은 열거형은 같은 파일에 둘 수 있다 (2.4의 예외). 파일 이름과
+        # 그 타입 안에서만 쓰는 작은 열거형은 같은 파일에 둘 수 있다 (「이름과 파일」의 예외). 파일 이름과
         # 맞는 타입이 하나라도 있으면 통과이므로, 여기까지 왔다는 것은 하나도 없다는 뜻이다.
         names = ", ".join(f"{name}({line}줄)" for name, line in types)
         violations.append(
@@ -267,14 +267,14 @@ def check_file_type_match(_: argparse.Namespace) -> list[Violation]:
                 rel_path,
                 types[0][1],
                 f"파일 이름 '{stem}'과 맞는 타입이 없다. 정의된 타입: {names}. "
-                f"파일 이름과 주 타입 이름을 맞춘다 (conventions.md 2.4)",
+                f"파일 이름과 주 타입 이름을 맞춘다 (ue-client.md 「이름과 파일」)",
             )
         )
     return violations
 
 
 # ----------------------------------------------------------------------------------
-# 검사 2: 리플렉션 타입의 `P1` 약어 (`conventions.md` 2.2)
+# 검사 2: 리플렉션 타입의 `P1` 약어 (`ue-client.md` 「이름과 파일」)
 # ----------------------------------------------------------------------------------
 
 REFLECTION_MACRO_RE = re.compile(r"^[ \t]*(UCLASS|USTRUCT|UENUM|UINTERFACE)[ \t]*\(", re.MULTILINE)
@@ -316,14 +316,14 @@ def check_p1_prefix(_: argparse.Namespace) -> list[Violation]:
                     rel_path,
                     line,
                     f"리플렉션 타입 '{name}'에 프로젝트 약어가 없다. "
-                    f"타입 접두사 뒤에 'P1'을 붙인다 (conventions.md 2.2)",
+                    f"타입 접두사 뒤에 'P1'을 붙인다 (ue-client.md 「이름과 파일」)",
                 )
             )
     return violations
 
 
 # ----------------------------------------------------------------------------------
-# 검사 3: `#include`가 도메인 경로를 쓰는지 (`conventions.md` 2.6)
+# 검사 3: `#include`가 도메인 경로를 쓰는지 (`ue-client.md` 「이름과 파일」)
 # ----------------------------------------------------------------------------------
 
 INCLUDE_RE = re.compile(r'^[ \t]*#[ \t]*include[ \t]+"([^"]+)"', re.MULTILINE)
@@ -378,7 +378,7 @@ def check_include_path(_: argparse.Namespace) -> list[Violation]:
                     rel_path,
                     line,
                     f'#include "{included}"가 경로를 한정하지 않는다. '
-                    f'"{target}"로 적는다 (conventions.md 2.6)',
+                    f'"{target}"로 적는다 (ue-client.md 「이름과 파일」)',
                 )
             )
     return violations

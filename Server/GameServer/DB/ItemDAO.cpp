@@ -122,12 +122,10 @@ void ItemDAO::GetMaxItemUID(DBConnection& conn)
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
         {
-
             dbBind.BindCol(0, _maxItemUID);
         }
 
         //~ Cols
-        // item_uid는 BIGINT다. int32로 받으면 범위를 넘을 때 잘린다.
         int64 _maxItemUID = 0;
     };
 
@@ -310,8 +308,6 @@ void ItemDAO::LoadStackableItems(DBConnection& conn, int64 characterId, Protocol
 
 void ItemDAO::SaveGearItems(DBConnection& conn, const PlayerSaveData& data)
 {
-
-
     // 더티 플래그가 없으면 이 요청을 실패로 끝낸다. 빈 결과로 넘기면 아무것도 반영하지 않고 성공으로 보고한다.
     optional<vector<GearSaveRow>> rows = ItemSaveRows::BuildGearRows(data);
     if (rows.has_value() == false)

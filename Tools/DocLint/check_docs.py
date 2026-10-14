@@ -15,7 +15,7 @@
 | `path-ref`           | 백틱으로 적은 저장소 경로가 있는지             | 문서 전반의 상호 참조                 |
 | `backlog-ref`        | backlog 번호 참조가 실제 항목을 가리키는지     | `docs/backlog.md`                     |
 | `references-mention` | 규범 문서와 ADR이 `docs/references`를 안 쓰는지 | `docs/references/README.md`           |
-| `encoding`           | `.md`는 UTF-8, `.proto`·`.bat`은 cp949인지     | `docs/conventions.md` 1.3             |
+| `encoding`           | `.md`는 UTF-8, `.proto`·`.bat`은 cp949인지     | `CLAUDE.md` 「컨벤션」                |
 
 사용법:
 
@@ -428,7 +428,7 @@ def check_references_mention(_: argparse.Namespace) -> list[Violation]:
 
 
 # ----------------------------------------------------------------------------------
-# 검사 5: 인코딩 (`docs/conventions.md` 1.3)
+# 검사 5: 인코딩 (`CLAUDE.md` 「컨벤션」)
 # ----------------------------------------------------------------------------------
 
 UTF8_BOM = b"\xef\xbb\xbf"
@@ -458,7 +458,7 @@ def check_encoding(_: argparse.Namespace) -> list[Violation]:
         try:
             data.decode("utf-8")
             violations.append(
-                Violation(path, 0, "UTF-8로 저장돼 있다. .proto와 .bat은 cp949다 (conventions.md 1.3)")
+                Violation(path, 0, "UTF-8로 저장돼 있다. .proto와 .bat은 cp949다 (CLAUDE.md 「컨벤션」)")
             )
             continue
         except UnicodeDecodeError:
@@ -466,7 +466,7 @@ def check_encoding(_: argparse.Namespace) -> list[Violation]:
         try:
             data.decode("cp949")
         except UnicodeDecodeError:
-            violations.append(Violation(path, 0, "cp949로 읽히지 않는다 (conventions.md 1.3)"))
+            violations.append(Violation(path, 0, "cp949로 읽히지 않는다 (CLAUDE.md 「컨벤션」)"))
     return violations
 
 

@@ -27,13 +27,13 @@ public:
      * setSlotId를 주면 그 슬롯에 넣는다. 범위와 그 슬롯에 든 아이템은 확인하지 않는다(DB 로드용).
      * 새로 넣는 장비에 item_uid가 없으면 GNextItemUID로 붙인다. replicatingSlot이 nullptr면 복제본을 쓰지 않는다.
      */
-    bool AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count = 1, optional<int32> setSlotId = nullopt);
+    bool AddItem(OUT Protocol::Slot* outSlot, const Protocol::Item& itemInstance, int32 count = 1, optional<int32> setSlotId = nullopt);
     /**
      * 템플릿 번호로 새 아이템을 넣는다(구매 등). 장비는 합치지 않고, 나머지는 같은 아이템이 든 슬롯부터 채운다.
      * 스택 상한을 넘는 수량은 다음 슬롯으로 나눠 넣는다. 다 넣을 수 없으면 아무것도 바꾸지 않고 false.
      * 바뀐 슬롯마다 replicatingSlots에 하나씩 추가한다. count가 0 이하면 false.
      */
-    bool AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count = 1);
+    bool AddItem(OUT RepeatedPtrField<Protocol::Slot>* outSlotList, int32 templateId, int32 count = 1);
     /**
      * DB에서 불러온 행 하나를 그 슬롯 번호에 넣는다. DB 값을 믿지 않는다.
      * 저장소가 없는 슬롯 종류, 범위 밖 번호, 이미 찬 칸, 표에 없는 템플릿, 슬롯 종류와 다른 아이템 종류,
@@ -44,7 +44,7 @@ public:
      * requestSlot의 type과 slot_id는 클라이언트 값이어도 된다. 저장소가 없거나 범위 밖이면 false.
      * 수량이 모자라면 아무것도 바꾸지 않고 false. replicatingSlot은 nullptr이면 안 된다.
      */
-    bool RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count = 1);
+    bool RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* outSlot, int32 count = 1);
 
     /**
      * 넣을 슬롯 번호를 돌려준다. 없으면 -1.

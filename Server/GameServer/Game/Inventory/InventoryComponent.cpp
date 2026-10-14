@@ -35,7 +35,7 @@ InventoryComponent::~InventoryComponent()
 {
 }
 
-bool InventoryComponent::AddItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
+bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
 {
     const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
     if (itemTemplate == nullptr)
@@ -63,8 +63,8 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* replicatingSlot, const Prot
         int32 updatedCount = item->count() + count;
         item->set_count(updatedCount);
 
-        if(replicatingSlot != nullptr)
-            replicatingSlot->CopyFrom(*targetSlot);
+        if(outSlot != nullptr)
+            outSlot->CopyFrom(*targetSlot);
     }
     else
     {
@@ -78,14 +78,14 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* replicatingSlot, const Prot
         if (bag->itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
             item->set_item_uid(GNextItemUID.fetch_add(1));
         
-        if (replicatingSlot != nullptr)
-            replicatingSlot->CopyFrom(*targetSlot);
+        if (outSlot != nullptr)
+            outSlot->CopyFrom(*targetSlot);
     }
 
     return true;
 }
 
-bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicatingSlots, int32 templateId, int32 count)
+bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* outSlotList, int32 templateId, int32 count)
 {
     if (count <= 0)
         return false;
@@ -144,7 +144,7 @@ bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* replicati
         // TODO: 초기 인스턴스 데이터 생성
         // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
 
-        Protocol::Slot* replicatingSlot = replicatingSlots != nullptr ? replicatingSlots->Add() : nullptr;
+        Protocol::Slot* replicatingSlot = outSlotList != nullptr ? outSlotList->Add() : nullptr;
         if (AddItem(replicatingSlot, itemInstance, amount, slotId) == false)
             return false;
     }
@@ -173,7 +173,7 @@ bool InventoryComponent::LoadItem(const Protocol::Slot& loadedSlot)
     return AddItem(nullptr, item, item.count(), loadedSlot.slot_id());
 }
 
-bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* replicatingSlot, int32 count)
+bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* outSlot, int32 count)
 {
     // requestSlot의 type과 slot_id는 클라이언트가 보낸 값이 그대로 들어온다.
     // 인덱싱에 닿기 전에 거르지 않으면 널 역참조와 범위 밖 접근으로 프로세스가 죽는다.
@@ -212,14 +212,14 @@ bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Proto
         updatedSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
         item->set_count(updatedCount);
 
-        replicatingSlot->CopyFrom(*updatedSlot);
+        outSlot->CopyFrom(*updatedSlot);
     }
     else
     {
         updatedSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
         updatedSlot->clear_item();
         
-        replicatingSlot->CopyFrom(*updatedSlot);
+        outSlot->CopyFrom(*updatedSlot);
     }
     
     return true;
