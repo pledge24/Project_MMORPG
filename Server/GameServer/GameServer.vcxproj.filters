@@ -29,6 +29,9 @@
     <Filter Include="Queries">
       <UniqueIdentifier>{16bdea6a-c160-4039-b349-dd326eaabaea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Queries\Schema">
+      <UniqueIdentifier>{7b2e4f1a-3c8d-4e5b-9a6f-1d2c3b4a5e6f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Data">
       <UniqueIdentifier>{c1cdcfa1-e243-42a2-ab0e-55ffd15cd2ac}</UniqueIdentifier>
     </Filter>
@@ -350,6 +353,12 @@
     </None>
     <None Include="Queries\GameDB_GetMaxItemUid.sql">
       <Filter>Queries</Filter>
+    </None>
+    <None Include="Queries\Schema\current.sql">
+      <Filter>Queries\Schema</Filter>
+    </None>
+    <None Include="Queries\Schema\schema.erd.json">
+      <Filter>Queries\Schema</Filter>
     </None>
     <None Include="Game\Data\Json\S_Item.json">
       <Filter>Game\Data\Json</Filter>

@@ -300,6 +300,8 @@
     <None Include="Queries\GameDB_CreateAllTables.sql" />
     <None Include="Queries\GameDB_GetMaxItemUid.sql" />
     <None Include="Queries\GameDB_InsertAdminAccount.sql" />
+    <None Include="Queries\Schema\current.sql" />
+    <None Include="Queries\Schema\schema.erd.json" />
     <None Include="Game\Data\Json\S_Item.json" />
     <None Include="Game\Data\Json\S_Map.json" />
     <None Include="Game\Data\Json\S_Monster.json" />
@@ -313,9 +315,6 @@
       <Project>{06e33453-7277-4458-9eca-030e662c2598}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Queries\Schema\schema.erd.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
