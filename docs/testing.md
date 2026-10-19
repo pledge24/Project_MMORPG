@@ -11,10 +11,11 @@
 | 게임 서버 L1 (GoogleTest) | `MSBuild Server.sln` (`docs/build.md` 「빌드 명령」) | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
 | 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
 | 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
+| 인증 서버 타입 검사 | — | `cd Server/AuthServer && npm run typecheck` | Rider npm 구성 |
 | UE 클라 L2 (Automation) | `Build.bat P1Editor` (`docs/build.md` 「빌드 명령」) | `pwsh P1/Scripts/Run-UeTests.ps1` | 에디터 `Window > Test Automation` |
 | 규범 검사 | — | `py -3 Tools/ConventionLint/check_conventions.py` | 같은 명령 |
 
-**판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`와 `npm run lint`가 둘 다 0이어야 완료다.
+**판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`, `npm run lint`, `npm run typecheck`가 모두 0이어야 완료다.
 
 **UE 클라만 예외다.** `UnrealEditor-Cmd`는 테스트가 실패해도, 필터가 아무것도 맞추지 못해도 종료
 코드 `0`을 돌려준다(2026년 9월 17일 실측, 두 경우 모두 확인). 그래서 `Run-UeTests.ps1`이 리포트의
@@ -37,9 +38,9 @@ py -3 Tools/ConventionLint/check_conventions.py
 검사 대상은 git이 추적하는 파일뿐이다. 빌드도 엔진도 필요 없으므로 호스티드 러너에서 그대로
 돈다. 검사 항목과 그 근거 조항은 스크립트 첫머리의 표에 있다.
 
-테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
+테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 vitest(`npm test` = `vitest run`)로 돈다. 테스트는 `.env`를 읽지 않는다. HTTP 계층 테스트는 `supertest`로 앱을 조립 함수(`createApp`)에 메모리 저장소를 넣어 띄운다.
 
-정적 검사는 ESLint 9다. flat config(`Server/AuthServer/eslint.config.js`)가 `@eslint/js`의 recommended를 적용한다. `node_modules/`는 검사하지 않는다.
+정적 검사는 ESLint 10이다. flat config(`Server/AuthServer/eslint.config.js`)가 `@eslint/js`의 recommended를 `.js`와 `.ts`에, `typescript-eslint`의 recommended를 `.ts`에만 적용한다. `node_modules/`는 검사하지 않는다.
 
 ### 현재 커버리지
 
@@ -87,8 +88,11 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `RoomTransferTest` | 12 | 룸 이동 판정. 첫 입장 · 다른 맵의 다른 룸 거절 · 같은 맵 이동에 포털 필요 · 포털 목적지 · 사망한 플레이어의 마을 리스폰만 허용 · 맵 표에서 찾는 마을 리스폰 지점 |
 | `RoomTransferMapTest` | 6 | 위치를 보는 룸 이동 판정. 포털 반경 경계와 높이 무시 · 반경 밖 포털 이동 거절 · 첫 맵 입장은 불러온 룸으로만 · 맵 간 이동은 다른 맵으로 가는 포털 반경 안에서만 · 맵 번호 대조 |
 | `ServerConfigTest` | 7 | 서버 설정 로더. 환경 변수가 없을 때 기본값 · 환경 변수가 각 값을 덮음 · 연결 수의 기본값은 DB 스레드 수를 따라감 · 연결 수가 DB 스레드 수보다 작으면 거절 · IPv4가 아닌 바인드 주소 거절 · 잘못된 개수와 포트는 기본값 |
-| AuthServer `configs.test.js` | 2 | `.env` 필수 키 존재 · 커넥션 풀 크기 파싱 |
-| AuthServer `redis.test.js` | 1 | Redis 주소 설정이 클라이언트의 `socket` 옵션으로 넘어감(Redis에 붙지 않고 옵션만 읽음) |
+| AuthServer `common/tests/config.test.ts` | 11 | 설정 검사. 숫자로 바꾼 설정 · 빠진 키를 모두 모아 알림 · 정수와 범위 형식 · 풀 최솟값과 최댓값 · 예시 환경 파일의 키가 요구 키와 같고 값이 검사를 통과 |
+| AuthServer `auth/tests/auth.service.test.ts` | 13 | 회원가입과 로그인 판정(메모리 저장소, 형식을 통과한 값만 넣음). 가입과 bcrypt 해시 저장 · 중복 · 가입은 티켓을 발급하지 않음 · 성공한 티켓이 UUID이고 그 계정 번호를 가리킴 · 마지막 로그인 시각 갱신 · 다시 로그인해도 이전 티켓을 지우지 않음 · 없는 로그인 ID와 틀린 비밀번호가 같은 에러 · 정지 중이면 정지 기한을 주고 티켓도 로그인 시각도 남기지 않음 · 정지 중이어도 비밀번호가 틀리면 자격 증명 에러 · 정지 기한이 지났거나 지금과 같으면 통과 |
+| AuthServer `auth/tests/auth.router.test.ts` | 33 | HTTP 계약(앱 전체를 메모리 저장소로 조립). 회원가입의 201과 소문자 로그인 ID, 대소문자만 다른 중복의 409, 400(형식, 깨진 JSON, 빈 본문), 500과 봉투 형식 · 로그인의 200(대문자 로그인 ID), 401(없는 로그인 ID와 틀린 비밀번호가 같은 본문), 403과 `bannedUntil`, 400(형식, 빈 본문), 티켓 저장소 실패의 500 · 옛 로그인 경로 `/Login`의 404와 `NOT_FOUND` 봉투 · 형식 실패 10가지를 두 경로에 각각 보내 계정도 티켓도 남지 않음 |
+| AuthServer `common/tests/errorHandlers.test.ts` | 1 | 도메인 라우터 없이 공용 핸들러만 붙인 앱에서 없는 경로의 404와 봉투 |
+| AuthServer `common/tests/ticket.test.ts` | 1 | Redis 주소 설정이 클라이언트의 `socket` 옵션으로 넘어감(Redis에 붙지 않고 옵션만 읽음) |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
 | `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · Z 유지 · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
 | `P1.Sync.MoveSendThrottle` | 1 | 내 플레이어 이동 패킷의 주기 송신(0.2초)과 타이머 리셋 · 입력 변화 즉시 송신(이동 가능할 때만) · 회전 허용치(60도) 경계와 ±180도 감싸기 · 입력이 없을 때 서버와 마지막으로 맞춘 yaw와의 비교 · 공격 중 즉시 송신 억제 |
@@ -97,7 +101,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `P1.Combat.NormalAttackCombo` | 1 | 일반 공격의 콤보 순번 순환(1→N→1) · 몽타주가 하나이거나 없을 때 · 순번 N의 몽타주 인덱스 · 서버가 보낸 순번 0 · 범위 밖 순번 |
 | `P1.Progress.RewardResult` | 1 | 보상 결과의 반영. 경험치만 쌓일 때 레벨을 알리지 않음 · 여러 레벨 상승의 레벨, 레벨업 스탯, 최대 경험치 · 경험치를 알릴 때 최대 경험치가 이미 새 값 · 골드를 사본에 쓴 뒤 알림 |
 
-**안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer 라우터/인증 흐름. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer의 MSSQL 계정 저장소와 Redis 티켓 저장소. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
 
 ---
 
@@ -109,7 +113,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | AuthServer 설정 | `npm test` | 가능. 가장 빠름 |
 | GameServer DAO의 바인딩과 흐름 | `GameServerTests.exe`의 `FakeDBConnection` | 가능. SQL 문장과 드라이버 동작은 확인하지 못한다 |
 | GameServer Room·SQL·IOCP | 일부 | SQL은 **불가**(실제 DB 필요). IOCP는 루프백 세션 끊기 하나만 있다 |
-| AuthServer 라우터·인증 | 없음 | 가능하나 비쌈 (bcrypt+MSSQL+Redis) |
+| AuthServer 판정과 HTTP 계약 | `npm test` | 가능. 메모리 저장소를 넣는다. bcrypt는 실제로 돌아서 테스트 하나에 수십 ms가 든다 |
+| AuthServer MSSQL 계정 저장소와 Redis 티켓 저장소 | 없음 | **불가**(실제 DB와 Redis 필요). `npm start` 뒤 실제 요청으로 확인한다. Redis 클라이언트의 주소 옵션만 `common/tests/ticket.test.ts`가 Redis에 붙지 않고 검사한다 |
 | UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
 | UE 클라 액터·월드 의존 로직 | 없음 | **불가.** 월드를 띄우는 테스트를 아직 써 보지 않았다 |
 

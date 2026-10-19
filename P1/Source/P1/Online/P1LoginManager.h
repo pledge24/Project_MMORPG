@@ -35,8 +35,8 @@ public:
     //~ Auth Request
 public:
     /** 결과는 OnAuthResult로 알린다. 로그인에 성공하면 이어서 게임 서버에 접속한다. */
-    void RequestLogin(const FString& Username, const FString& Password);
-    void RequestRegister(const FString& Username, const FString& Password);
+    void RequestLogin(const FString& LoginId, const FString& Password);
+    void RequestRegister(const FString& LoginId, const FString& Password);
 
     /** 로그인과 회원가입 요청의 성공 여부와 결과 문구를 게임 스레드에서 알린다. */
     FOnAuthResult OnAuthResult;

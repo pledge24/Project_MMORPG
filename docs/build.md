@@ -72,22 +72,53 @@ git config core.hooksPath .githooks
 ```bash
 cd Server/AuthServer
 npm install
-npm start                # = node src/app.js
+npm start                # = tsx --env-file=.env src/main.ts
+npm run typecheck        # = tsc (출력 파일을 만들지 않는다)
 ```
 
-설정은 gitignore된 `.env`를 `src/Config/configs.js`가 읽는다.
+설정은 gitignore된 `.env`에 둔다. 처음에는 `.env.example`을 `.env`로 복사한다. `npm start`가 Node의 `--env-file`
+옵션으로 읽어 `process.env`에 넣고, `src/common/config.ts`가 기동할 때 키와 형식을 검사한다. 검사, `AccountDB` 연결, Redis 연결 중
+하나라도 실패하면 에러 원문을 남기고 종료 코드 1로 끝난다. 셸에 같은 이름의 환경 변수가 있으면 `.env`보다 그 값이 우선한다.
+**Redis를 인증 서버보다 먼저 띄운다.**
+— 인증 서버는 Redis 첫 연결에 실패하면 다시 시도하지 않고 종료 코드 1로 끝난다.
+
+**키를 더하거나 바꾸면 `src/common/config.ts`의 `REQUIRED_ENV_KEYS`, `.env.example`, 아래 키 표를 함께 고친다.** 키 변경은 PR의
+「머지 시 주의」에도 적는다.
+— `common/tests/config.test.ts`가 앞의 두 목록이 같은지, 예시 값이 검사를 통과하는지 대조한다. 키 표는 대조하지 않는다.
+각자의 `.env`는 저장소 밖이라 git으로 전달되지 않는다.
+
+Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | 키 |
 |---|
 | `PORT` |
 | `DB_CONNECTION_STRING` |
-| `DB_DRIVER` |
-| 커넥션 풀 크기 |
+| `DB_MAX_CONNECTION` |
+| `DB_MIN_CONNECTION` |
+| `DB_IDLE_TIMEOUT` |
 | `REDIS_HOST` |
 | `REDIS_PORT` |
-| `ACCESS_TOKEN_TTL` |
+| `TICKET_TTL_SECONDS` |
 
-정적 검사는 ESLint 9이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
+정적 검사는 ESLint 10이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
+
+**패키지는 아래 표에 있는 것만 둔다.** 새 패키지를 들이거나 버전 고정을 풀 때는 이 표를 함께 고친다.
+「다시 볼 신호」가 나타나면 그 줄의 결정을 다시 검토한다.
+
+| 패키지 | 쓰는 곳 | 이 선택을 유지하는 이유 | 다시 볼 신호 |
+|---|---|---|---|
+| `express` 5 | 라우터와 에러 핸들러 | 비동기 핸들러가 던진 에러를 에러 핸들러로 넘긴다. 핸들러에 `try`/`catch`가 없어도 된다 | - |
+| `bcrypt` 6 | `common/password.ts` | 네이티브 패키지를 유지한다. 미리 빌드된 바이너리로 로드된다 | Node를 올렸을 때 그 버전용 바이너리가 없다 |
+| `mssql` 12와 `msnodesqlv8` 5 | `common/db.ts`, `auth/auth.repository.ts` | LocalDB에 Windows 인증의 ODBC로 붙는다. `mssql`은 타입 정의를 싣지 않아, 쓰는 API만 `src/types/`의 선언 파일에 적는다 | `mssql`을 올린 뒤 선언 파일과 실제 API가 어긋난 것을 실행해서야 안다 |
+| `redis` 5 | `common/ticket.ts` | 이 머신의 Redis는 3.0이라 node-redis 6의 기본 프로토콜 RESP3를 지원하지 않는다 | node-redis 5가 보안 패치를 끝내거나, 쓰려는 Node 버전을 지원하지 않는다 |
+| `typescript` 6.0(`~`로 고정) | 타입 검사 | `typescript-eslint`가 지원하는 가장 높은 계열이다 | `typescript-eslint`가 7을 지원하기 시작한다 |
+| `tsx` | `npm start` | 빌드 단계 없이 TypeScript를 실행한다 | 실행 시점의 변환 비용이나 `tsx`와 Node 버전의 호환 문제가 기동을 막는다 |
+| `vitest`, `supertest` | 테스트 | 판정 테스트와 HTTP 계약 테스트를 한 러너로 돌린다 | - |
+| `eslint`, `@eslint/js`, `typescript-eslint`, `globals` | 정적 검사 | `eslint.config.js`가 쓴다 | - |
+| `@types/*` | 타입 검사 | `bcrypt`, `express`, `node`, `supertest`의 타입 정의다 | - |
+
+`dotenv`는 두지 않고 Node의 `--env-file` 옵션으로 `.env`를 읽는다. 테스트나 스크립트가 `.env`를 따로 읽어야 하는
+일이 반복되면 이 결정을 다시 본다. UUID는 `uuid` 패키지 대신 `node:crypto`의 `randomUUID`로 만든다.
 
 ---
 
@@ -129,19 +160,31 @@ npm start                # = node src/app.js
 
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
-| UserDB | `(localdb)\MSSQLLocalDB` | `Server/AuthServer/Queries/UserDB_CreateUsersTable.sql` |
+| AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/migrations/`의 파일을 번호 순서로 |
 | GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
+
+**AccountDB의 스키마는 `Server/AuthServer/migrations/`의 번호 붙은 파일로 관리한다.** 파일 이름은 `NNN_<이름>.sql`이고
+첫 줄에 `-- NNN: 설명`을 적는다. 각 파일은 이미 적용된 DB에 다시 실행해도 결과가 같게 쓴다. 적용한 파일은 고치지 않고,
+스키마를 바꿀 때는 다음 번호의 파일을 더한다. 적용 기록 테이블과 실행 도구는 두지 않고, 사람이 번호 순서로 실행한다.
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
 
-**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, UserDB는 `.env`.
+**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, AccountDB는 `.env`.
+
+**새 머신에서 AccountDB를 만들 때는 사람이 아래 순서로 실행한다.** Claude는 인스턴스와 DB를 만들지 못한다(훅이 막는다).
+
+1. `sqllocaldb create P1Auth -s`로 인스턴스를 만들고 시작한다
+2. `SERVERPROPERTY('IsIntegratedSecurityOnly')`가 `0`인지 확인한다. `claude_ro`는 SQL 인증 로그인이므로 혼합 인증이 켜져 있어야 한다
+3. `CREATE DATABASE AccountDB`를 실행하고, `Server/AuthServer/migrations/`의 파일을 번호 순서로 `-d AccountDB`로 실행한다. 각 파일은 이미 적용된 DB에서 다시 실행해도 결과가 같다
+4. SQL 인증 로그인 `claude_ro`를 만들고, `AccountDB`의 사용자로 만들어 `db_datareader`에만 넣는다
+5. Rider에 아래 표의 `AccountDB` 데이터 소스 두 개(`AccountDB`, `AccountDB (사용자 전용)`)를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
 
 Rider의 DB 연결은 두 벌이다.
 
 | 데이터 소스 | 계정 | 쓰는 쪽 |
 |---|---|---|
-| `GameDB` · `UserDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP) |
-| `GameDB (사용자 전용)` · `UserDB (사용자 전용)` | Windows 인증 | 사람. 행 편집은 여기서 한다 |
+| `GameDB` · `AccountDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP) |
+| `GameDB (사용자 전용)` · `AccountDB (사용자 전용)` | Windows 인증 | 사람. 행 편집은 여기서 한다 |
 
 Claude는 `claude_ro` 연결로만 SQL을 실행한다. `.claude/hooks/guard_dangerous_cmd.py`의
 `SQL_ALLOWED_CONNECTIONS`가 `execute_sql_query`의 `connectionId`를 허용 목록과 대조해 나머지를 막는다.
@@ -150,7 +193,7 @@ LocalDB는 Windows 인증이라 셸에서 붙으면 관리자가 되므로, 같�
 **`claude_ro` 데이터 소스를 다시 만들면 ID가 바뀌어 Claude의 조회가 전부 막힌다.** 그때는 새 ID를 허용
 목록에 넣는다. 파이썬 등 임의 코드로 여는 ODBC 연결은 문자열 검사로 완전히 막을 수 없다.
 
-두 서버가 공유하는 액세스 토큰 저장소로 Redis(`127.0.0.1:6379`).
+두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
 
 ---
 

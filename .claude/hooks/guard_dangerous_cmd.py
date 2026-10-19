@@ -73,7 +73,7 @@ SQL_TOOLS = {
 # 사람이 편집용으로 만든 데이터 소스(Windows 인증)는 여기 넣지 않는다.
 # id는 mcp__rider__list_database_connections 의 결과에서 가져온다.
 SQL_ALLOWED_CONNECTIONS = {
-    "66d76225-1a17-423c-9e47-c279ba1cf5cc",  # UserDB (claude_ro)
+    "ec1a21ae-0018-4e67-8d1e-9ad0a36a97e1",  # AccountDB (claude_ro)
     "fb62fcf6-27f1-42eb-97d1-9d5139bab77f",  # GameDB (claude_ro)
 }
 
