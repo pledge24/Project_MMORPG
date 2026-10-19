@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
           cache-dependency-path: Server/AuthServer/package-lock.json
 
@@ -46,7 +46,7 @@ jobs:
       # min 이 max 를 넘지 않는지를 본다. parseInt(undefined) 는 예외가 아니라 NaN 이라
       # 이 경로는 조용히 깨진다.
       #
-      # DB 와 Redis 에는 붙지 않는다. configs.js 가 import 하는 것은 dotenv 뿐이다.
+      # DB 와 Redis 에는 붙지 않는다. configs.js 는 process.env 만 읽고, .env 는 vitest.setup.js 가 읽어 둔다.
       - name: 테스트용 .env 만들기
         shell: bash
         run: |

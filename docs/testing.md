@@ -37,9 +37,9 @@ py -3 Tools/ConventionLint/check_conventions.py
 검사 대상은 git이 추적하는 파일뿐이다. 빌드도 엔진도 필요 없으므로 호스티드 러너에서 그대로
 돈다. 검사 항목과 그 근거 조항은 스크립트 첫머리의 표에 있다.
 
-테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 Node 내장 러너(`node --test`)라 새 의존성이 없다.
+테스트는 `Server/GameServerTests/`, gtest는 `Server/Libraries/googletest/`에 벤더링돼 있다(v1.18.0, gmock 없음). 인증 서버는 vitest(`npm test` = `vitest run`)로 돈다. `vitest.setup.js`가 테스트 전에 `.env`를 읽는다. HTTP 계층 테스트용 `supertest`는 개발 의존성으로 들어 있다.
 
-정적 검사는 ESLint 9다. flat config(`Server/AuthServer/eslint.config.js`)가 `@eslint/js`의 recommended를 적용한다. `node_modules/`는 검사하지 않는다.
+정적 검사는 ESLint 10이다. flat config(`Server/AuthServer/eslint.config.js`)가 `@eslint/js`의 recommended를 `.js`와 `.ts`에, `typescript-eslint`의 recommended를 `.ts`에만 적용한다. `node_modules/`는 검사하지 않는다.
 
 ### 현재 커버리지
 
