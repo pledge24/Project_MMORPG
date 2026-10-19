@@ -24,4 +24,11 @@ export default [
     // TypeScript 파일에만 적용한다.
     // TODO: tsconfig가 생기면 타입 정보를 쓰는 규칙을 켠다
     ...tseslint.configs.recommended.map((config) => ({ ...config, files: ['**/*.ts'] })),
+    {
+        files: ['**/*.ts'],
+        rules: {
+            // Express는 인자 개수로 에러 핸들러를 알아보므로, 쓰지 않는 인자도 지울 수 없다. 그런 인자는 _로 시작한다.
+            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+        },
+    },
 ];

@@ -1,5 +1,5 @@
 import redis from 'redis';
-import configs from '../Config/configs.js';
+import configs from './configs.js';
 
 // Redis 클라이언트 생성. node-redis v5는 주소를 socket 아래에서만 읽는다. 최상위 host와 port는 무시된다.
 const redisClient = redis.createClient({

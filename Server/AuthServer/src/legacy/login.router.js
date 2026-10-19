@@ -1,10 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import redisClient from '../DB/redis.js';
+import redisClient from './redis.js';
 import { randomUUID } from 'node:crypto';
-import configs from '../Config/configs.js';
+import configs from './configs.js';
 import sql from 'mssql/msnodesqlv8.js';
-import pool from '../DB/connectPool.js';
+import pool from './connectPool.js';
 
 const router = express.Router();
 
