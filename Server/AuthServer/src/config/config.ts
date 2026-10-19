@@ -40,7 +40,7 @@ export class ConfigError extends Error {
 export function loadConfig(env: Record<string, string | undefined>): Config {
     const problems: string[] = [];
 
-    const text = (key: EnvKey): string => {
+    const readText = (key: EnvKey): string => {
         const value = env[key];
         if (value === undefined || value === '') {
             problems.push(`${key}가 없다`);
@@ -49,8 +49,8 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
         return value;
     };
 
-    const integer = (key: EnvKey, min: number, max = Number.MAX_SAFE_INTEGER): number => {
-        const value = text(key);
+    const readInteger = (key: EnvKey, min: number, max = Number.MAX_SAFE_INTEGER): number => {
+        const value = readText(key);
         if (value === '') {
             return NaN;
         }
@@ -62,20 +62,20 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     };
 
     const config: Config = {
-        port: integer('PORT', 1, 65535),
+        port: readInteger('PORT', 1, 65535),
         accountDb: {
-            connectionString: text('DB_CONNECTION_STRING'),
+            connectionString: readText('DB_CONNECTION_STRING'),
             pool: {
-                max: integer('DB_MAX_CONNECTION', 1),
-                min: integer('DB_MIN_CONNECTION', 0),
-                idleTimeoutMillis: integer('DB_IDLE_TIMEOUT', 0),
+                max: readInteger('DB_MAX_CONNECTION', 1),
+                min: readInteger('DB_MIN_CONNECTION', 0),
+                idleTimeoutMillis: readInteger('DB_IDLE_TIMEOUT', 0),
             },
         },
         redis: {
-            host: text('REDIS_HOST'),
-            port: integer('REDIS_PORT', 1, 65535),
+            host: readText('REDIS_HOST'),
+            port: readInteger('REDIS_PORT', 1, 65535),
         },
-        accessTokenTtlSeconds: integer('ACCESS_TOKEN_TTL', 1),
+        accessTokenTtlSeconds: readInteger('ACCESS_TOKEN_TTL', 1),
     };
 
     const { min, max } = config.accountDb.pool;

@@ -34,9 +34,11 @@ async function main(): Promise<void> {
         legacyRouter: legacyLoginRouter,
     });
 
-    app.listen(config.port, () => {
-        console.log(`인증 서버가 ${config.port} 포트에서 접속을 받는다`);
+    // Express는 포트를 열지 못한 에러(포트 사용 중 등)도 이 콜백으로 넘긴다. 에러를 보지 않으면 실패한 채 떠 있는 것처럼 보인다.
+    await new Promise<void>((resolve, reject) => {
+        app.listen(config.port, (err?: Error) => (err ? reject(err) : resolve()));
     });
+    console.log(`인증 서버가 ${config.port} 포트에서 접속을 받는다`);
 }
 
 main().catch((err: unknown) => {
