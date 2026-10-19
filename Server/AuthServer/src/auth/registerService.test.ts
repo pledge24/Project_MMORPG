@@ -24,7 +24,7 @@ describe('RegisterService.register', () => {
         const result = await service.register({ loginId: 'Player01', password: 'pass1234' });
 
         expect(result).toEqual({ loginId: 'player01' });
-        const stored = accounts.findByLoginId('player01');
+        const stored = accounts.get('player01');
         expect(stored).toBeDefined();
         expect(await bcrypt.compare('pass1234', stored!.passwordHash)).toBe(true);
     });

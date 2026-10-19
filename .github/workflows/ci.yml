@@ -36,13 +36,6 @@ jobs:
       - name: 의존성 설치
         run: npm ci
 
-      # .env 는 gitignore 대상이라 러너에 없다. 새로 클론한 사람처럼 예시 파일을 복사한다.
-      # 설정 모듈의 테스트는 예시 파일을 직접 읽으므로 .env 가 필요 없다. .env 를 읽는 것은
-      # 옛 로그인 경로의 Redis 설정 테스트뿐이다. DB 와 Redis 에는 붙지 않는다.
-      - name: 테스트용 .env 만들기
-        shell: bash
-        run: cp .env.example .env
-
       - name: 테스트
         run: npm test
 

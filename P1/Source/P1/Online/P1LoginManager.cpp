@@ -22,13 +22,13 @@ FString UP1LoginManager::MakeAuthUrl(const TCHAR* Path)
     return FString::Printf(TEXT("http://%s:%d%s"), *NetworkSettings->AuthServerIp, NetworkSettings->AuthServerPort, Path);
 }
 
-void UP1LoginManager::RequestLogin(const FString& Username, const FString& Password)
+void UP1LoginManager::RequestLogin(const FString& LoginId, const FString& Password)
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
 	// 요청 본문 JSON 작성.
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-	JsonObject->SetStringField(TEXT("username"), Username);
+	JsonObject->SetStringField(TEXT("loginId"), LoginId);
 	JsonObject->SetStringField(TEXT("password"), Password);
 
 	FString OutputString;
@@ -36,7 +36,7 @@ void UP1LoginManager::RequestLogin(const FString& Username, const FString& Passw
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
 	// 요청 설정.
-	FString URL = MakeAuthUrl(TEXT("/Login"));
+	FString URL = MakeAuthUrl(TEXT("/api/auth/login"));
 
     RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnLoginResponse);
     RequestRef->SetURL(URL);
@@ -78,33 +78,31 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 {
 	FString Message = TEXT("로그인 실패");
 
-	FString token;
-	bool loginSuccess = false;
+	FString Ticket;
+	bool LoginSuccess = false;
 
 	if (bWasSuccessful && Response.IsValid())
 	{
-		int32 ResponseCode = Response->GetResponseCode();
-		FString ResponseBody = Response->GetContentAsString();
-
-		// JSON 응답 파싱.
 		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
-		if (ResponseCode == 200)
+		// 응답은 성공이면 { ok: true, data: { ticket } }, 실패면 { ok: false, error: { code, message } }다. 성공 여부는 상태 코드가 아니라 ok로 가른다.
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			if (FJsonSerializer::Deserialize(Reader, JsonObject))
-			{
-				token = JsonObject->GetStringField(TEXT("accessToken"));
+			bool bOk = false;
+			JsonObject->TryGetBoolField(TEXT("ok"), bOk);
 
+			const TSharedPtr<FJsonObject>* DataObject = nullptr;
+			const TSharedPtr<FJsonObject>* ErrorObject = nullptr;
+			if (bOk && JsonObject->TryGetObjectField(TEXT("data"), DataObject) && (*DataObject)->TryGetStringField(TEXT("ticket"), Ticket))
+			{
 				Message = TEXT("로그인 성공! 캐릭터 불러오는 중...");
-				loginSuccess = true;
+				LoginSuccess = true;
 			}
-		}
-		else
-		{
-			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			else if (JsonObject->TryGetObjectField(TEXT("error"), ErrorObject))
 			{
-				Message = JsonObject->GetStringField(TEXT("errorMessage"));
+				// 서버의 문구는 화면에 그대로 보여 주는 한국어 문장이다.
+				(*ErrorObject)->TryGetStringField(TEXT("message"), Message);
 			}
 		}
 	}
@@ -113,17 +111,17 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 		Message = TEXT("인증 서버에 접속 실패");
 	}
 
-	OnAuthResult.Broadcast(loginSuccess, Message);
+	OnAuthResult.Broadcast(LoginSuccess, Message);
 
-	if (loginSuccess)
+	if (LoginSuccess)
 	{
-        // 토큰 값은 로그 파일에 남기지 않는다.
-        UE_LOG(LogP1Network, Display, TEXT("인증 서버에서 액세스 토큰을 받았다"));
+        // 티켓 값은 로그 파일에 남기지 않는다.
+        UE_LOG(LogP1Network, Display, TEXT("인증 서버에서 인증 티켓을 받았다"));
 
-		// 토큰은 저장하지 않고 게임 서버 로그인에 바로 넘긴다. 게임 서버가 한 번 쓰고 지운다.
+		// 티켓은 저장하지 않고 게임 서버 로그인에 바로 넘긴다. 게임 서버가 한 번 쓰고 지운다.
 		if (UP1ConnectionSubsystem* Connection = GetGameInstance()->GetSubsystem<UP1ConnectionSubsystem>())
 		{
-            Connection->Connect(token);
+            Connection->Connect(Ticket);
 		}
         else
         {

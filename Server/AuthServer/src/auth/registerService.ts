@@ -4,7 +4,7 @@ import type { AccountRepository } from '../accounts/accountRepository.js';
 import { AppError } from '../errors.js';
 import { parseCredentials } from './credentials.js';
 
-const BCRYPT_COST = 10;
+export const BCRYPT_COST = 10;
 
 /**
  * 회원가입 판정.

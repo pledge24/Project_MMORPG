@@ -9,7 +9,7 @@
 | 인증 서버 | `Server/AuthServer/` | Node.js / Express (ESM) | `.env`의 `PORT` (클라는 `5000`을 기대) |
 
 저장소: SQL Server LocalDB — GameDB는 `(localdb)\ProjectModels`, AccountDB는 `(localdb)\P1Auth`.
-두 인스턴스는 서로 다르다. 두 서버가 공유하는 액세스 토큰 저장소로 Redis(`127.0.0.1:6379`).
+두 인스턴스는 서로 다르다. 두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
 **Claude는 `claude_ro` 연결(`GameDB`·`AccountDB`)로만 SQL을 실행한다.** `(사용자 전용)` 연결과 셸의 DB
 클라이언트(`sqlcmd` 등)는 훅이 막는다. DB에 쓸 일은 SQL 초안을 사람에게 넘긴다. 상세: `docs/build.md`
 

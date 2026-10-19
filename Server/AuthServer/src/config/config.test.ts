@@ -16,7 +16,7 @@ const VALID_ENV = {
     DB_IDLE_TIMEOUT: '30000',
     REDIS_HOST: '127.0.0.1',
     REDIS_PORT: '6379',
-    ACCESS_TOKEN_TTL: '600',
+    TICKET_TTL_SECONDS: '30',
 };
 
 function problemsOf(env: Record<string, string | undefined>): string[] {
@@ -40,7 +40,7 @@ describe('loadConfig', () => {
         expect(config.accountDb.connectionString).toBe(VALID_ENV.DB_CONNECTION_STRING);
         expect(config.accountDb.pool).toEqual({ max: 5, min: 1, idleTimeoutMillis: 30000 });
         expect(config.redis).toEqual({ host: '127.0.0.1', port: 6379 });
-        expect(config.accessTokenTtlSeconds).toBe(600);
+        expect(config.ticketTtlSeconds).toBe(30);
     });
 
     test('빠지거나 빈 키를 모두 모아 알린다', () => {
@@ -57,7 +57,7 @@ describe('loadConfig', () => {
         ['DB_MAX_CONNECTION', '5개'],
         ['DB_IDLE_TIMEOUT', '-1'],
         ['REDIS_PORT', '0'],
-        ['ACCESS_TOKEN_TTL', '1.5'],
+        ['TICKET_TTL_SECONDS', '1.5'],
     ])('%s=%s는 형식 오류다', (key, value) => {
         const problems = problemsOf({ ...VALID_ENV, [key]: value });
 
