@@ -32,9 +32,9 @@ router.post('/Register', async (req, res) => {
         const existing = await pool.request()
             .input('username', sql.VarChar, username)
             .query(`
-                SELECT *
-                FROM dbo.Users
-                WHERE username = @username
+                SELECT AccountId
+                FROM dbo.Account
+                WHERE LoginId = @username
             `);
 
         if (existing.recordset.length > 0) {
@@ -42,16 +42,15 @@ router.post('/Register', async (req, res) => {
         }
             
                 
-        // 3. UserDB에 사용자 추가
+        // 3. AccountDB에 계정 추가. CreatedAt은 테이블 기본값(UTC)이 채운다.
         const password_hash = await bcrypt.hash(password, 10);
 
         await pool.request()
             .input('username', sql.VarChar, username)
             .input('password_hash', sql.VarChar, password_hash)
-            .input('created_at', sql.DateTime, new Date())
             .query(`
-                INSERT INTO dbo.Users (username, password_hash, created_at)
-                VALUES (@username, @password_hash, @created_at)
+                INSERT INTO dbo.Account (LoginId, PasswordHash)
+                VALUES (@username, @password_hash)
             `);
 
         return res.status(201).json({ message: '회원가입 완료' });

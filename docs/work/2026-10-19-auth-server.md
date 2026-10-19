@@ -82,3 +82,6 @@
 - 2026-10-19: #233에서 npm이 `msnodesqlv8`, `bcrypt`, `esbuild`의 설치 스크립트를 막는 것을 확인했다. 세 패키지 모두 함께 배포되는 미리 빌드된 바이너리로 로드되는 것을 확인했고, `allowScripts`는 설정하지 않았다
 - 2026-10-19: #234의 1·2단계를 마쳤다. 티켓 브랜치는 `refactor/234-move-account-db`다. `Server/AuthServer/Queries/AccountDB_CreateAllTables.sql`을 쓰고, 옛 `UserDB_CreateUsersTable.sql`과 게임 서버의 `AccountDB.example.sql`(과 `GameServer.vcxproj`의 항목)을 지웠다. 사람이 인스턴스와 DB, `claude_ro`, Rider 연결을 만들고 `UserDB`를 지우는 3단계를 기다린다. 코드의 쿼리, `.env`, 문서는 아직 `UserDB`를 가리킨다
 - 2026-10-19: #234에서 기존 `claude_ro`를 조회해 SQL 인증 로그인이고 `db_datareader`에만 속한 것을 확인했다. `P1Auth`에도 같은 권한으로 만든다. 기본 인스턴스의 `claude_ro` 로그인은 `UserDB`를 지운 뒤 쓰는 곳이 없지만, 이슈 범위가 「`UserDB`만 삭제」라서 남긴다
+- 2026-10-19: #234의 3단계를 사람이 실행했다. `P1Auth`는 처음부터 혼합 인증(`IsIntegratedSecurityOnly` = 0)이었다. Rider 데이터 소스를 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패해서, 기존 LocalDB 연결을 복제해 만들었다. 이 절차는 `docs/build.md`에 옮겼다
+- 2026-10-19: #234에서 훅의 `SQL_ALLOWED_CONNECTIONS`를 Claude가 고치려 하자 자기 수정으로 분류되어 막혔다. 새 `AccountDB`(claude_ro) 연결의 ID를 넣는 일은 사람이 한다
+- 2026-10-19: #234에서 설정 모듈의 키 `UserDBConfig`는 이름을 바꾸지 않았다. #235가 설정 모듈을 다시 쓰므로 그때 바꾼다

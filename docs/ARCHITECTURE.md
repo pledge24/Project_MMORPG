@@ -380,7 +380,7 @@ Redis 값의 `userId`를 JSON 정수로 읽는 게임 서버가 깨지기 때문
 ### 저장소
 
 LocalDB 인스턴스는 그 인스턴스를 소유한 티어마다 하나다. 인스턴스 이름은 티어를, 데이터베이스 이름은 데이터 영역을
-따른다. 인증 서버의 DB는 인증 서버 재구성 작업에서 `(localdb)\P1Auth`의 `AccountDB`로 옮긴다. 게임 서버의 인스턴스는 다음 GameDB 작업에서 이 규칙에 맞춘다.
+따른다. 인증 서버의 DB는 `(localdb)\P1Auth`의 `AccountDB`다. 게임 서버의 인스턴스는 다음 GameDB 작업에서 이 규칙에 맞춘다.
 근거는 `docs/adr/0014-split-db-instances-by-tier.md`에 있다. 접속 문자열의 출처도 다르다. 게임 쪽은 `Config`의 기본값과
 환경 변수이고, 인증 쪽은 환경 파일이다.
 **Architecture Invariant:** 각 DB는 소유 티어만 접근한다. 교차 접근 경로가 없다.

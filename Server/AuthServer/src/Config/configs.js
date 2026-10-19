@@ -4,7 +4,7 @@ const configs = {
     // AuthServer
     port: process.env.PORT,
 
-    // UserDB
+    // AccountDB
     UserDBConfig: {
         connectionString: process.env.DB_CONNECTION_STRING,
         driver: process.env.DB_DRIVER,

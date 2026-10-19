@@ -131,19 +131,27 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
-| UserDB | `(localdb)\MSSQLLocalDB` | `Server/AuthServer/Queries/UserDB_CreateUsersTable.sql` |
+| AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/Queries/AccountDB_CreateAllTables.sql` |
 | GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
 
-**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, UserDB는 `.env`.
+**인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, AccountDB는 `.env`.
+
+**새 머신에서 AccountDB를 만들 때는 사람이 아래 순서로 실행한다.** Claude는 인스턴스와 DB를 만들지 못한다(훅이 막는다).
+
+1. `sqllocaldb create P1Auth -s`로 인스턴스를 만들고 시작한다
+2. `SERVERPROPERTY('IsIntegratedSecurityOnly')`가 `0`인지 확인한다. `claude_ro`는 SQL 인증 로그인이므로 혼합 인증이 켜져 있어야 한다
+3. `CREATE DATABASE AccountDB`를 실행하고, 위 표의 스크립트를 `-d AccountDB`로 실행한다
+4. SQL 인증 로그인 `claude_ro`를 만들고, `AccountDB`의 사용자로 만들어 `db_datareader`에만 넣는다
+5. Rider에 아래 표의 데이터 소스 두 개를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
 
 Rider의 DB 연결은 두 벌이다.
 
 | 데이터 소스 | 계정 | 쓰는 쪽 |
 |---|---|---|
-| `GameDB` · `UserDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP) |
-| `GameDB (사용자 전용)` · `UserDB (사용자 전용)` | Windows 인증 | 사람. 행 편집은 여기서 한다 |
+| `GameDB` · `AccountDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP) |
+| `GameDB (사용자 전용)` · `AccountDB (사용자 전용)` | Windows 인증 | 사람. 행 편집은 여기서 한다 |
 
 Claude는 `claude_ro` 연결로만 SQL을 실행한다. `.claude/hooks/guard_dangerous_cmd.py`의
 `SQL_ALLOWED_CONNECTIONS`가 `execute_sql_query`의 `connectionId`를 허용 목록과 대조해 나머지를 막는다.

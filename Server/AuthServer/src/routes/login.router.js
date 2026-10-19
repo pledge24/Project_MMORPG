@@ -26,9 +26,9 @@ router.post('/Login', async (req, res) => {
         const result = await pool.request()
             .input('username', sql.VarChar, username)
             .query(`
-                SELECT *
-                FROM dbo.Users 
-                WHERE username = @username
+                SELECT AccountId, PasswordHash
+                FROM dbo.Account
+                WHERE LoginId = @username
             `);
 
         if (result.recordset.length === 0) {
@@ -38,7 +38,7 @@ router.post('/Login', async (req, res) => {
         const account = result.recordset[0];
 
         // 비밀번호 암호화한 다음 DB랑 대조
-        const isMatch = await bcrypt.compare(password, account.password_hash);
+        const isMatch = await bcrypt.compare(password, account.PasswordHash);
         if (!isMatch) {
             return res.status(400).json({ errorMessage: '비밀번호가 일치하지 않습니다.' });
         }
@@ -47,15 +47,15 @@ router.post('/Login', async (req, res) => {
         await pool.request()
             .input('username', sql.VarChar, username)
             .query(`
-                UPDATE dbo.Users
-                SET last_login = GETDATE()
-                WHERE username = @username
+                UPDATE dbo.Account
+                SET LastLoginAt = SYSUTCDATETIME()
+                WHERE LoginId = @username
             `);
 
         // Access Token 정책: UUID + Redis/DB 세션 저장 구조
         const token = randomUUID();
-        // mssql 12와 msnodesqlv8 5.6은 user_id(INT)를 문자열로 돌려준다. 게임 서버는 userId를 JSON 정수로만 받으므로 숫자로 바꾼다.
-        const userId = Number(account.user_id);
+        // mssql 드라이버는 AccountId(BIGINT)를 문자열로 돌려준다. 게임 서버는 userId를 JSON 정수로만 받으므로 숫자로 바꾼다.
+        const userId = Number(account.AccountId);
 
         await redisClient.set(`accessToken:${token}`, JSON.stringify({ userId, username }), {
             EX: configs.accessTokenTTL
