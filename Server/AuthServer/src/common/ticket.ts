@@ -1,8 +1,20 @@
 import { createClient } from 'redis';
 
-import type { AccountId } from '../accounts/accountRepository.js';
-import type { Config } from '../config/config.js';
-import type { Ticket, TicketRepository } from './ticketRepository.js';
+import type { Config } from './config.js';
+
+/** 인증 티켓. crypto.randomUUID()가 만든 UUID 문자열이다. */
+export type Ticket = string;
+
+/**
+ * 인증 티켓을 두는 곳.
+ *
+ * 판정 코드는 이 인터페이스만 안다. Redis를 아는 코드는 구현뿐이다. 소비는 게임 서버가 하므로 여기에 없다.
+ * 계정 번호는 10진수 문자열로 받는다. 공용 코드가 도메인의 타입을 import하지 않도록 문자열로 둔다.
+ */
+export interface TicketRepository {
+    /** 티켓이 가리키는 계정 번호를 저장한다. 유효 시간은 구현이 정한다. */
+    save(ticket: Ticket, accountId: string): Promise<void>;
+}
 
 export type RedisClient = ReturnType<typeof createClient>;
 
@@ -19,7 +31,7 @@ export class RedisTicketRepository implements TicketRepository {
         this.ttlSeconds = ttlSeconds;
     }
 
-    async save(ticket: Ticket, accountId: AccountId): Promise<void> {
+    async save(ticket: Ticket, accountId: string): Promise<void> {
         await this.client.set(`${TICKET_KEY_PREFIX}${ticket}`, accountId, {
             expiration: { type: 'EX', value: this.ttlSeconds },
         });

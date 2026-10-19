@@ -1,4 +1,4 @@
-import type { ErrorCode, ErrorDetails } from '../errors.js';
+import type { ErrorCode, ErrorDetails } from './errors.js';
 
 // 모든 응답 본문은 이 두 형태 중 하나다. 클라이언트는 상태 코드가 아니라 ok로 성공과 실패를 가른다.
 export interface SuccessBody<T> {

@@ -1,4 +1,4 @@
-import type { AccountId, AccountRepository, CreateAccountResult, LoginAccount, NewAccount } from './accountRepository.js';
+import type { AccountId, AccountRepository, CreateAccountResult, LoginAccount, NewAccount } from './auth.repository.js';
 
 interface StoredAccount extends NewAccount {
     accountId: AccountId;

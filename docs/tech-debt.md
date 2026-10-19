@@ -349,7 +349,7 @@ Release 분기에서 `Release` 폴더를 쓴다. 코드를 읽고 판단했고 R
 
 ## TD-058 인증 서버 로그에 남는 ODBC 오류 문구의 한국어가 `?`로 깨진다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 모듈 · server
-> 위치: `Server/AuthServer/src/main.ts` 44~47줄 · `mssql/msnodesqlv8` 드라이버
+> 위치: `Server/AuthServer/src/main.ts` 33~36줄(기동 실패 로그) · `Server/AuthServer/src/common/db.ts` · `mssql/msnodesqlv8` 드라이버
 > 등록일: 2026년 10월 19일
 
 없는 LocalDB 인스턴스를 가리키는 접속 문자열로 `npm start`를 실행하면, 기동 실패 로그의 `ConnectionError` 문구가
