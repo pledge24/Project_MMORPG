@@ -4,8 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { AccountRepository } from '../accounts/accountRepository.js';
 import { AppError } from '../errors.js';
 import type { Ticket, TicketRepository } from '../tickets/ticketRepository.js';
-import { parseCredentials } from './credentials.js';
-import { BCRYPT_COST } from './registerService.js';
+import { BCRYPT_COST, parseCredentials } from './credentials.js';
 
 // 없는 로그인 ID에도 비밀번호 검증을 한 번 돌린다. 건너뛰면 응답 시간의 차이로 로그인 ID가 있는지를 밖에서 알아낼 수 있다.
 const PASSWORD_HASH_FOR_UNKNOWN_ID = bcrypt.hashSync(randomUUID(), BCRYPT_COST);

@@ -2,9 +2,7 @@ import bcrypt from 'bcrypt';
 
 import type { AccountRepository } from '../accounts/accountRepository.js';
 import { AppError } from '../errors.js';
-import { parseCredentials } from './credentials.js';
-
-export const BCRYPT_COST = 10;
+import { BCRYPT_COST, parseCredentials } from './credentials.js';
 
 /**
  * 회원가입 판정.

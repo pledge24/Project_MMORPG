@@ -10,6 +10,9 @@ export interface Credentials {
 const LOGIN_ID_PATTERN = /^[a-z0-9]{4,10}$/;
 const PASSWORD_PATTERN = /^[A-Za-z0-9]{4,20}$/;
 
+/** 회원가입에서 비밀번호를 해시할 때의 bcrypt 비용. 로그인은 없는 로그인 ID에 쓸 더미 해시를 같은 비용으로 만든다. */
+export const BCRYPT_COST = 10;
+
 /**
  * 요청 본문에서 로그인 ID와 비밀번호를 꺼내 로그인 ID를 소문자로 바꾸고 형식을 검사한다.
  * 형식에 맞지 않으면 VALIDATION_FAILED를 던진다.

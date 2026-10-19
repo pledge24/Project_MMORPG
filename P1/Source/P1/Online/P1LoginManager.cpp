@@ -79,7 +79,7 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 	FString Message = TEXT("로그인 실패");
 
 	FString Ticket;
-	bool LoginSuccess = false;
+	bool bLoginSuccess = false;
 
 	if (bWasSuccessful && Response.IsValid())
 	{
@@ -97,7 +97,7 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 			if (bOk && JsonObject->TryGetObjectField(TEXT("data"), DataObject) && (*DataObject)->TryGetStringField(TEXT("ticket"), Ticket))
 			{
 				Message = TEXT("로그인 성공! 캐릭터 불러오는 중...");
-				LoginSuccess = true;
+				bLoginSuccess = true;
 			}
 			else if (JsonObject->TryGetObjectField(TEXT("error"), ErrorObject))
 			{
@@ -111,9 +111,9 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 		Message = TEXT("인증 서버에 접속 실패");
 	}
 
-	OnAuthResult.Broadcast(LoginSuccess, Message);
+	OnAuthResult.Broadcast(bLoginSuccess, Message);
 
-	if (LoginSuccess)
+	if (bLoginSuccess)
 	{
         // 티켓 값은 로그 파일에 남기지 않는다.
         UE_LOG(LogP1Network, Display, TEXT("인증 서버에서 인증 티켓을 받았다"));
