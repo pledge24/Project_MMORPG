@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { AppError } from '../common/errors.js';
-import { MemoryTicketRepository } from '../common/ticket.memory.js';
-import { MemoryAccountRepository } from './auth.repository.memory.js';
-import { AuthService } from './auth.service.js';
+import { AppError } from '../../common/errors.js';
+import { MemoryTicketRepository } from '../../common/ticket.memory.js';
+import { MemoryAccountRepository } from '../auth.repository.memory.js';
+import { AuthService } from '../auth.service.js';
 
 // 형식 검사와 로그인 ID 소문자 변환은 handler가 하므로, 여기서는 형식을 통과한 값만 넣는다. 형식 실패는 HTTP 테스트가 검사한다.
 

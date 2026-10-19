@@ -133,8 +133,12 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
-| AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/Queries/AccountDB_CreateAllTables.sql` |
+| AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/migrations/`의 파일을 번호 순서로 |
 | GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
+
+**AccountDB의 스키마는 `Server/AuthServer/migrations/`의 번호 붙은 파일로 관리한다.** 파일 이름은 `NNN_<이름>.sql`이고
+첫 줄에 `-- NNN: 설명`을 적는다. 각 파일은 이미 적용된 DB에 다시 실행해도 결과가 같게 쓴다. 적용한 파일은 고치지 않고,
+스키마를 바꿀 때는 다음 번호의 파일을 더한다. 적용 기록 테이블과 실행 도구는 두지 않고, 사람이 번호 순서로 실행한다.
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
 

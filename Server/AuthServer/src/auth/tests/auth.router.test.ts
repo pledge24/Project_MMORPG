@@ -1,12 +1,12 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createApp } from '../app.js';
-import { MemoryTicketRepository } from '../common/ticket.memory.js';
-import type { TicketRepository } from '../common/ticket.js';
-import type { AccountRepository } from './auth.repository.js';
-import { MemoryAccountRepository } from './auth.repository.memory.js';
-import { AuthService } from './auth.service.js';
+import { createApp } from '../../app.js';
+import { MemoryTicketRepository } from '../../common/ticket.memory.js';
+import type { TicketRepository } from '../../common/ticket.js';
+import type { AccountRepository } from '../auth.repository.js';
+import { MemoryAccountRepository } from '../auth.repository.memory.js';
+import { AuthService } from '../auth.service.js';
 
 // 앱 전체를 메모리 저장소로 조립해 HTTP 계약(상태 코드와 봉투)을 검사한다. 본문 형식이 틀린 경우도 여기서 다룬다.
 

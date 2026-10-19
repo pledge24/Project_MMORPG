@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { expect, test } from 'vitest';
 
-import { errorHandler, notFoundHandler } from './errorHandlers.js';
+import { errorHandler, notFoundHandler } from '../errorHandlers.js';
 
 // 도메인 라우터 없이 공용 핸들러만 붙인 앱. 도메인 폴더를 지워도 이 테스트는 남는다.
 function bareApp() {
