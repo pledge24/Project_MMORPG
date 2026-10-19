@@ -354,9 +354,6 @@
     <None Include="Queries\GameDB_GetMaxItemUid.sql">
       <Filter>Queries</Filter>
     </None>
-    <None Include="Queries\Schema\AccountDB.example.sql">
-      <Filter>Queries\Schema</Filter>
-    </None>
     <None Include="Queries\Schema\current.sql">
       <Filter>Queries\Schema</Filter>
     </None>

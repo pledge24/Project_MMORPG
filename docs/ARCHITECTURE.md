@@ -368,10 +368,10 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 | 클라 ↔ 게임 서버 | 생성된 패킷 | 빌드는 통과하고 런타임에 어긋남 |
 | 게임 서버 ↔ GameDB | SQL 스크립트 | 부팅 또는 첫 쿼리에서 터짐 |
 
-**주의: 계정 번호의 폭이 지금은 티어마다 다르다.** `Users.user_id`는 `INT`, `Characters.user_id`는 `BIGINT`다.
-지금까지 넓히지 않은 이유는 `INT` 상한에 닿을 일이 없고, 넓히면 `mssql` 드라이버가 `BIGINT`를 문자열로 돌려줘서
-Redis 값의 `userId`를 JSON 정수로 읽는 게임 서버가 깨지기 때문이었다. 인증 서버 재구성에서 `AccountId`를 `BIGINT`로 넓힌다.
-문자열 반환은 인증 티켓 계약의 값이 문자열이라 문제가 되지 않는다(「Server/AuthServer」 절).
+**주의: 계정 번호는 두 티어 모두 `BIGINT`지만, 지금은 인증 서버가 Redis에 숫자로 바꿔 넣는다.** `Account.AccountId`와
+`Characters.user_id`는 모두 `BIGINT`다. `mssql` 드라이버는 `BIGINT`를 문자열로 돌려주는데, 지금의 게임 서버는 Redis 값의
+`userId`를 JSON 정수로만 읽는다. 그래서 인증 서버가 숫자로 바꿔 넣고, 2^53을 넘는 계정 번호는 정확히 전달되지 않는다.
+인증 서버가 새 인증 티켓 계약으로 발급하기 시작하면 값이 문자열이 되므로 이 변환이 사라진다(「Server/AuthServer」 절).
 
 ---
 
@@ -380,7 +380,7 @@ Redis 값의 `userId`를 JSON 정수로 읽는 게임 서버가 깨지기 때문
 ### 저장소
 
 LocalDB 인스턴스는 그 인스턴스를 소유한 티어마다 하나다. 인스턴스 이름은 티어를, 데이터베이스 이름은 데이터 영역을
-따른다. 인증 서버의 DB는 인증 서버 재구성 작업에서 `(localdb)\P1Auth`의 `AccountDB`로 옮긴다. 게임 서버의 인스턴스는 다음 GameDB 작업에서 이 규칙에 맞춘다.
+따른다. 인증 서버의 DB는 `(localdb)\P1Auth`의 `AccountDB`다. 게임 서버의 인스턴스는 다음 GameDB 작업에서 이 규칙에 맞춘다.
 근거는 `docs/adr/0014-split-db-instances-by-tier.md`에 있다. 접속 문자열의 출처도 다르다. 게임 쪽은 `Config`의 기본값과
 환경 변수이고, 인증 쪽은 환경 파일이다.
 **Architecture Invariant:** 각 DB는 소유 티어만 접근한다. 교차 접근 경로가 없다.

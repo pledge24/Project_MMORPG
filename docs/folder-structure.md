@@ -504,7 +504,7 @@ Server/
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
-│   └── Queries/            UserDB 스키마 스크립트
+│   └── Queries/            AccountDB 스키마 스크립트
 └── Libraries/              벤더링한 서드파티
 ```
 
@@ -538,7 +538,7 @@ Server/
 `Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
 
-SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `UserDB`는 인증 서버가
+SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `AccountDB`는 인증 서버가
 소유한다.
 
 ---

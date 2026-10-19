@@ -8,9 +8,9 @@
 | 게임 서버 | `Server/GameServer/` | C++20, 자체 IOCP 코어 | `127.0.0.1:7777` |
 | 인증 서버 | `Server/AuthServer/` | Node.js / Express (ESM) | `.env`의 `PORT` (클라는 `5000`을 기대) |
 
-저장소: SQL Server LocalDB — GameDB는 `(localdb)\ProjectModels`, UserDB는 `(localdb)\MSSQLLocalDB`.
+저장소: SQL Server LocalDB — GameDB는 `(localdb)\ProjectModels`, AccountDB는 `(localdb)\P1Auth`.
 두 인스턴스는 서로 다르다. 두 서버가 공유하는 액세스 토큰 저장소로 Redis(`127.0.0.1:6379`).
-**Claude는 `claude_ro` 연결(`GameDB`·`UserDB`)로만 SQL을 실행한다.** `(사용자 전용)` 연결과 셸의 DB
+**Claude는 `claude_ro` 연결(`GameDB`·`AccountDB`)로만 SQL을 실행한다.** `(사용자 전용)` 연결과 셸의 DB
 클라이언트(`sqlcmd` 등)는 훅이 막는다. DB에 쓸 일은 SQL 초안을 사람에게 넘긴다. 상세: `docs/build.md`
 
 ## 문서 위치
@@ -91,7 +91,7 @@ single-context — 루트 `CONTEXT.md`와 `docs/adr/`. 상세: `docs/agents/doma
 
 ## 아키텍처 핵심 규칙 (상세: `docs/ARCHITECTURE.md`)
 
-- 인증 티어와 게임 티어를 잇는 건 Redis뿐이다. 게임 서버는 `UserDB`를 직접 건드리지 않는다.
+- 인증 티어와 게임 티어를 잇는 건 Redis뿐이다. 게임 서버는 `AccountDB`를 직접 건드리지 않는다.
 - `Room`이 `JobQueue`를 상속한다. 패킷 핸들러는 인라인으로 일하지 않고 `room->DoAsync(...)`로
   잡만 밀어넣고 리턴한다. 룸 소유 상태는 큐 위에서 직렬화되므로 락이 없다.
   다른 룸의 오브젝트에 직접 손대지 않는다. DB 작업도 `DBQueue`에 push한다.
