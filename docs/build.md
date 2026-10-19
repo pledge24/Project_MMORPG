@@ -142,9 +142,9 @@ GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetM
 
 1. `sqllocaldb create P1Auth -s`로 인스턴스를 만들고 시작한다
 2. `SERVERPROPERTY('IsIntegratedSecurityOnly')`가 `0`인지 확인한다. `claude_ro`는 SQL 인증 로그인이므로 혼합 인증이 켜져 있어야 한다
-3. `CREATE DATABASE AccountDB`를 실행하고, 위 표의 스크립트를 `-d AccountDB`로 실행한다
+3. `CREATE DATABASE AccountDB`를 실행하고, 위 표의 스크립트를 `-d AccountDB`로 실행한다. 이 스크립트는 테이블을 지우고 다시 만들므로, 쓰고 있는 DB에서 다시 실행하면 계정이 모두 사라진다
 4. SQL 인증 로그인 `claude_ro`를 만들고, `AccountDB`의 사용자로 만들어 `db_datareader`에만 넣는다
-5. Rider에 아래 표의 데이터 소스 두 개를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
+5. Rider에 아래 표의 `AccountDB` 데이터 소스 두 개(`AccountDB`, `AccountDB (사용자 전용)`)를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
 
 Rider의 DB 연결은 두 벌이다.
 
