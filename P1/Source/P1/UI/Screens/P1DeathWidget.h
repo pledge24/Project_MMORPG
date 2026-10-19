@@ -36,11 +36,8 @@ protected:
     //~ Countdown
 private:
     void StartCountdown();
-
     void TickCountdown();
-
     void HandleCountdownFinished();
-
     void ShowRemainingSeconds();
 
     /** 사망한 뒤 마을 리스폰을 요청하기까지 기다리는 초. 요청이 거절되면 같은 간격으로 다시 요청한다. */
@@ -59,7 +56,6 @@ private:
     //~ Respawn
 private:
     void RequestTownRespawn();
-
     void HandleTownRespawnRejected();
 
     FTimerHandle RetryTimerHandle;

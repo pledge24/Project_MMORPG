@@ -47,8 +47,6 @@ void AP1MyPlayer::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-//~ Input
-
 void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	// 입력 액션 바인딩.
@@ -60,13 +58,9 @@ void AP1MyPlayer::SetupPlayerInputComponent(class UInputComponent* PlayerInputCo
 		// 입력을 놓을 때(Completed)도 Move를 불러 캐시한 이동 입력을 0으로 되돌린다.
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Move);
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &AP1MyPlayer::Move);
-
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AP1MyPlayer::Look);
-
         EnhancedInputComponent->BindAction(NormalAttackAction, ETriggerEvent::Started, this, &AP1MyPlayer::NormalAttack);
-
         EnhancedInputComponent->BindAction(ToggleBattleModeAction, ETriggerEvent::Started, this, &AP1MyPlayer::ToggleBattleMode);
-
 	}
 
 }
@@ -87,7 +81,6 @@ void AP1MyPlayer::Move(const FInputActionValue& Value)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
         if (CanInputMovement() == true)
