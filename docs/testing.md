@@ -114,7 +114,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | GameServer DAO의 바인딩과 흐름 | `GameServerTests.exe`의 `FakeDBConnection` | 가능. SQL 문장과 드라이버 동작은 확인하지 못한다 |
 | GameServer Room·SQL·IOCP | 일부 | SQL은 **불가**(실제 DB 필요). IOCP는 루프백 세션 끊기 하나만 있다 |
 | AuthServer 판정과 HTTP 계약 | `npm test` | 가능. 메모리 저장소를 넣는다. bcrypt는 실제로 돌아서 테스트 하나에 수십 ms가 든다 |
-| AuthServer MSSQL 저장소 | 없음 | **불가**(실제 DB 필요). `npm start` 뒤 실제 요청으로 확인한다 |
+| AuthServer MSSQL 계정 저장소와 Redis 티켓 저장소 | 없음 | **불가**(실제 DB와 Redis 필요). `npm start` 뒤 실제 요청으로 확인한다. Redis 클라이언트의 주소 옵션만 `common/tests/ticket.test.ts`가 Redis에 붙지 않고 검사한다 |
 | UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
 | UE 클라 액터·월드 의존 로직 | 없음 | **불가.** 월드를 띄우는 테스트를 아직 써 보지 않았다 |
 

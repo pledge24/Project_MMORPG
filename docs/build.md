@@ -79,19 +79,42 @@ npm run typecheck        # = tsc (출력 파일을 만들지 않는다)
 설정은 gitignore된 `.env`에 둔다. 처음에는 `.env.example`을 `.env`로 복사한다. `npm start`가 Node의 `--env-file`
 옵션으로 읽어 `process.env`에 넣고, `src/common/config.ts`가 기동할 때 키와 형식을 검사한다. 검사, `AccountDB` 연결, Redis 연결 중
 하나라도 실패하면 에러 원문을 남기고 종료 코드 1로 끝난다. 셸에 같은 이름의 환경 변수가 있으면 `.env`보다 그 값이 우선한다.
+**Redis를 인증 서버보다 먼저 띄운다.** 인증 서버는 Redis 첫 연결에 실패하면 다시 시도하지 않고 끝난다.
+
+**키를 더하거나 바꾸면 `src/common/config.ts`의 `REQUIRED_ENV_KEYS`와 `.env.example`을 함께 고친다.** `common/tests/config.test.ts`가
+두 목록이 같은지, 예시 값이 검사를 통과하는지 대조한다. 각자의 `.env`는 저장소 밖이므로 키 변경을 PR의 「머지 시 주의」에 적는다.
 Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | 키 |
 |---|
 | `PORT` |
 | `DB_CONNECTION_STRING` |
-| `DB_DRIVER` |
-| 커넥션 풀 크기 |
+| `DB_MAX_CONNECTION` |
+| `DB_MIN_CONNECTION` |
+| `DB_IDLE_TIMEOUT` |
 | `REDIS_HOST` |
 | `REDIS_PORT` |
 | `TICKET_TTL_SECONDS` |
 
 정적 검사는 ESLint 10이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
+
+**패키지는 아래 표에 있는 것만 둔다.** 새 패키지를 들이거나 버전 고정을 풀 때는 이 표를 함께 고친다.
+「다시 볼 신호」가 나타나면 그 줄의 결정을 다시 검토한다.
+
+| 패키지 | 쓰는 곳 | 이 선택을 유지하는 이유 | 다시 볼 신호 |
+|---|---|---|---|
+| `express` 5 | 라우터와 에러 핸들러 | 비동기 핸들러가 던진 에러를 에러 핸들러로 넘긴다. 핸들러에 `try`/`catch`가 없어도 된다 | - |
+| `bcrypt` 6 | `common/password.ts` | 네이티브 패키지를 유지한다. 미리 빌드된 바이너리로 로드된다 | Node를 올렸을 때 그 버전용 바이너리가 없다 |
+| `mssql` 12와 `msnodesqlv8` 5 | `common/db.ts`, `auth/auth.repository.ts` | LocalDB에 Windows 인증의 ODBC로 붙는다. `mssql`은 타입 정의를 싣지 않아, 쓰는 API만 `src/types/`의 선언 파일에 적는다 | `mssql`을 올린 뒤 선언 파일과 실제 API가 어긋난 것을 실행해서야 안다 |
+| `redis` 5 | `common/ticket.ts` | 이 머신의 Redis는 3.0이라 node-redis 6의 기본 프로토콜 RESP3를 지원하지 않는다 | node-redis 5가 보안 패치를 끝내거나, 쓰려는 Node 버전을 지원하지 않는다 |
+| `typescript` 6.0(`~`로 고정) | 타입 검사 | `typescript-eslint`가 지원하는 가장 높은 계열이다 | `typescript-eslint`가 7을 지원하기 시작한다 |
+| `tsx` | `npm start` | 빌드 단계 없이 TypeScript를 실행한다 | 실행 시점의 변환 비용이나 `tsx`와 Node 버전의 호환 문제가 기동을 막는다 |
+| `vitest`, `supertest` | 테스트 | 판정 테스트와 HTTP 계약 테스트를 한 러너로 돌린다 | - |
+| `eslint`, `@eslint/js`, `typescript-eslint`, `globals` | 정적 검사 | `eslint.config.js`가 쓴다 | - |
+| `@types/*` | 타입 검사 | `bcrypt`, `express`, `node`, `supertest`의 타입 정의다 | - |
+
+`dotenv`는 두지 않고 Node의 `--env-file` 옵션으로 `.env`를 읽는다. 테스트나 스크립트가 `.env`를 따로 읽어야 하는
+일이 반복되면 이 결정을 다시 본다. UUID는 `uuid` 패키지 대신 `node:crypto`의 `randomUUID`로 만든다.
 
 ---
 
