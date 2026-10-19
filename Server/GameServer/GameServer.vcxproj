@@ -300,7 +300,10 @@
     <None Include="Queries\GameDB_CreateAllTables.sql" />
     <None Include="Queries\GameDB_GetMaxItemUid.sql" />
     <None Include="Queries\GameDB_InsertAdminAccount.sql" />
+    <None Include="Queries\Schema\AccountDB.example.sql" />
     <None Include="Queries\Schema\current.sql" />
+    <None Include="Queries\Schema\GameDB.example.sql" />
+    <None Include="Queries\Schema\GameDB.target.sql" />
     <None Include="Queries\Schema\schema.erd.json" />
     <None Include="Game\Data\Json\S_Item.json" />
     <None Include="Game\Data\Json\S_Map.json" />
