@@ -1,7 +1,7 @@
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 
-import configs from '../Config/configs.js';
+import configs from './configs.js';
 import redisClient from './redis.js';
 
 /*
