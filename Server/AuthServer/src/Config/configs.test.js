@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 
 import configs from './configs.js';
@@ -11,7 +11,7 @@ import configs from './configs.js';
  * 시점에야 터진다. 그 사이의 시간이 이 티어에서 가장 비싼 디버깅이었다.
  * 여기서 먼저 걸리게 한다.
  *
- * DB·Redis에 붙지 않는다 — configs.js가 import하는 건 dotenv뿐이다.
+ * DB·Redis에 붙지 않는다 — configs.js는 process.env만 읽고, .env는 vitest.setup.js가 읽어 둔다.
  */
 
 test('필수 설정 키가 모두 정의돼 있다', () => {

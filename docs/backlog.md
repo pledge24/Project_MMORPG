@@ -409,6 +409,7 @@ SQL 문장, 드라이버의 `BIGINT` 반환 형태, 티켓의 TTL을 확인하�
 |---|---|
 | UE L1 (Low-Level Tests) | `docs/testing.md` 「UE L1(Low-Level Tests)은 채택하지 않는다」 |
 | 엔진 소스 패치 | `docs/build.md` 「엔진 제약」 |
+| Redis 서버의 버전 올리기 | 2026년 10월 19일 결정. 이 머신의 Redis는 Microsoft의 Windows 포트 3.0.504다. 두 서버가 쓰는 명령(`SET ... EX`, `GET`, `DEL`)이 모두 3.0에 있고, 인증 티켓의 일회성은 `GET` 뒤 `DEL`로 지켜진다. 그래서 인증 서버는 node-redis 5에 머물고, 게임 서버는 `GETDEL`을 쓰지 않는다 |
 | 인증 서버의 로그아웃 | 2026년 10월 19일 결정. 인증 티켓이 일회용이라 인증 서버에 끝낼 세션이 없다. 게임 세션의 종료는 게임 서버가 맡는다 |
 | 의존 방향(`docs/folder-structure.md` 3.3)을 규범 린트로 검사하기 | 2026년 10월 4일 결정. 검사를 만들었다가 걷어냈다. 3.3의 표는 손으로 대조한다 |
 | `AuthServer`를 `Server.sln`에 등록하기(`K4`) | 2026년 10월 4일 결정. 인증 서버는 VS Code에서 따로 연다. Visual Studio 프로젝트 파일 `AuthServer.esproj`도 함께 지웠다 |

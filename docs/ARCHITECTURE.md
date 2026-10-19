@@ -105,14 +105,17 @@ MSSQL과 Redis를 아는 코드는 이 두 인터페이스의 구현뿐이다.
 | 키 | `authTicket:{티켓}` |
 | 값 | 계정 번호의 10진수 문자열 (예: `"42"`) |
 | TTL | 30초. 환경 변수 `TICKET_TTL_SECONDS`로 바꾼다. 옛 키 `ACCESS_TOKEN_TTL`을 대신한다 |
-| 소비 | 게임 서버가 `GETDEL`로 읽는 동시에 지운다. 값을 받은 쪽만 통과한다 |
+| 소비 | 게임 서버가 값을 읽고 키를 지운다. 키를 실제로 지운 쪽만 통과한다 |
+
+소비에 쓰는 Redis 명령은 계약에 넣지 않는다. 이 머신의 Redis는 3.0이라 `GETDEL`(6.2부터)이 없고, `GET` 뒤에 `DEL`을 부르고
+`DEL`이 1을 돌려준 쪽만 통과시키면 같은 일회성이 지켜진다. 같은 티켓으로 두 요청이 동시에 와도 `DEL`이 1을 돌려주는 것은 한 번뿐이다.
 
 TTL은 로그인 응답부터 게임 서버 접속까지의 유효 시간이고, 게임 세션의 길이와 무관하다.
 
 ### Server/GameServer
 
-> 게임 서버는 아직 옛 계약을 읽는다. 키는 `accessToken:{UUID}`이고 값은 `{ userId, username }` JSON이며, 읽기와
-> 지우기를 따로 한다. 새 계약은 값이 계정 번호 문자열 하나이고 `GETDEL`로 한 번에 소비한다.
+> 게임 서버는 아직 옛 계약을 읽는다. 키는 `accessToken:{UUID}`이고 값은 `{ userId, username }` JSON이다.
+> 새 계약은 키가 `authTicket:{티켓}`이고 값이 계정 번호 문자열 하나다. 소비 방식(읽고 지우며 지운 쪽만 통과)은 같다.
 > `docs/testing.md`와 `docs/folder-structure.md`의 「액세스 토큰」도 이 옛 계약의 코드(`AccessToken`)를 가리킨다.
 > 인증 서버가 위 「Server/AuthServer」 절의 인증 티켓 계약으로 발급하기 시작하면 게임 서버 입장이 실패한다.
 > 다음 GameServer 작업에서 그 계약에 맞춘다. 아래 서술의 「Redis 토큰」은 그때 「인증 티켓」으로 바뀐다.

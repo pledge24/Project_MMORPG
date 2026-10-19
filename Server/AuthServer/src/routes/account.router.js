@@ -8,7 +8,8 @@ const router = express.Router();
 /** 회원가입 API */
 router.post('/Register', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        // Express 5는 본문이 없는 요청의 req.body를 undefined로 둔다. 구조 분해가 예외로 500을 내지 않게 한다.
+        const { username, password } = req.body ?? {};
 
         // 1. 유효성 검사
         if (!username) {

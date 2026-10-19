@@ -1,7 +1,4 @@
-import dotenv from "dotenv";
-
-dotenv.config();
-
+// 이 모듈은 process.env만 읽는다. .env 파일은 읽지 않는다.
 const configs = {
 
     // AuthServer

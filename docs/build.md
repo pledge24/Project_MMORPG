@@ -72,10 +72,12 @@ git config core.hooksPath .githooks
 ```bash
 cd Server/AuthServer
 npm install
-npm start                # = node src/app.js
+npm start                # = tsx --env-file=.env src/app.js
 ```
 
-설정은 gitignore된 `.env`를 `src/Config/configs.js`가 읽는다.
+설정은 gitignore된 `.env`에 둔다. `npm start`가 Node의 `--env-file` 옵션으로 읽어 `process.env`에 넣고,
+`src/Config/configs.js`는 `process.env`만 읽는다. 테스트는 `vitest.setup.js`가 같은 `.env`를 읽는다.
+Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | 키 |
 |---|
@@ -87,7 +89,7 @@ npm start                # = node src/app.js
 | `REDIS_PORT` |
 | `ACCESS_TOKEN_TTL` |
 
-정적 검사는 ESLint 9이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
+정적 검사는 ESLint 10이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
 
 ---
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import redisClient from '../DB/redis.js';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import configs from '../Config/configs.js';
 import sql from 'mssql/msnodesqlv8.js';
 import pool from '../DB/connectPool.js';
@@ -11,7 +11,8 @@ const router = express.Router();
 /** 로그인 API */
 router.post('/Login', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        // Express 5는 본문이 없는 요청의 req.body를 undefined로 둔다. 구조 분해가 예외로 500을 내지 않게 한다.
+        const { username, password } = req.body ?? {};
 
         if (!username) {
             return res.status(400).json({ errorMessage: '로그인할 아이디를 입력하여 주세요.' });
@@ -52,8 +53,9 @@ router.post('/Login', async (req, res) => {
             `);
 
         // Access Token 정책: UUID + Redis/DB 세션 저장 구조
-        const token = uuidv4();
-        const userId = account.user_id;
+        const token = randomUUID();
+        // mssql 12와 msnodesqlv8 5.6은 user_id(INT)를 문자열로 돌려준다. 게임 서버는 userId를 JSON 정수로만 받으므로 숫자로 바꾼다.
+        const userId = Number(account.user_id);
 
         await redisClient.set(`accessToken:${token}`, JSON.stringify({ userId, username }), {
             EX: configs.accessTokenTTL
