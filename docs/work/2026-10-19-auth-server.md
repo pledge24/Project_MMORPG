@@ -41,7 +41,7 @@
 |---|---|---|---|---|---|
 | 1 | #232 인증 서버의 역할과 실행 흐름 확정하기 | — | 머지 | #238 | 문서만 바꿈 · 문서를 검사하는 도구가 없어 실행한 검증 없음 |
 | 2 | #233 쓰지 않는 패키지를 지우고 TypeScript 도구를 들이기 | 1 | 머지 | #239 | `npm test` 3개 통과 · `npm run lint` 종료 코드 0(`.ts` 파일이 없어 TypeScript 규칙은 아무것도 검사하지 않음) · 타입 검사는 TypeScript 소스가 없어 돌리지 않음 · `npm start` 후 실제 요청으로 회원가입 201, 중복 409, 로그인 200, 틀린 비밀번호 400, 빈 본문 400 확인 · Redis의 토큰 키에 TTL과 정수 `userId`가 들어간 것을 확인 · 게임 서버 로그인은 확인하지 못함 |
-| 3 | #234 계정 DB를 새 인스턴스 P1Auth로 옮기기 | 2 | 대기 | | |
+| 3 | #234 계정 DB를 새 인스턴스 P1Auth로 옮기기 | 2 | 진행 | | |
 | 4 | #235 회원가입을 새 구조로 다시 짜기 | 3 | 대기 | | |
 | 5 | #236 로그인과 인증 티켓 발급을 새 구조로 다시 짜기 | 4 | 대기 | | |
 | 6 | #237 인증 서버 문서를 새 구조에 맞추고 보고서 쓰기 | 5 | 대기 | | |
@@ -80,3 +80,5 @@
 - 2026-10-19: #233에서 테스트가 `.env`를 읽도록 `vitest.setup.js`를 두었다. vitest가 `--env-file` 옵션을 받지 않기 때문이다. 결정 표의 「`dotenv` 대신 `--env-file`」이 말하는 「`.env`를 따로 읽는 일」의 첫 사례다
 - 2026-10-19: #233에서 node-redis 6에 `RESP: 2`를 지정하면 Redis 3.0에 붙을 수 있는지는 확인하지 않았다. Redis 서버를 올리지 않으므로 5를 유지한다
 - 2026-10-19: #233에서 npm이 `msnodesqlv8`, `bcrypt`, `esbuild`의 설치 스크립트를 막는 것을 확인했다. 세 패키지 모두 함께 배포되는 미리 빌드된 바이너리로 로드되는 것을 확인했고, `allowScripts`는 설정하지 않았다
+- 2026-10-19: #234의 1·2단계를 마쳤다. 티켓 브랜치는 `refactor/234-move-account-db`다. `Server/AuthServer/Queries/AccountDB_CreateAllTables.sql`을 쓰고, 옛 `UserDB_CreateUsersTable.sql`과 게임 서버의 `AccountDB.example.sql`(과 `GameServer.vcxproj`의 항목)을 지웠다. 사람이 인스턴스와 DB, `claude_ro`, Rider 연결을 만들고 `UserDB`를 지우는 3단계를 기다린다. 코드의 쿼리, `.env`, 문서는 아직 `UserDB`를 가리킨다
+- 2026-10-19: #234에서 기존 `claude_ro`를 조회해 SQL 인증 로그인이고 `db_datareader`에만 속한 것을 확인했다. `P1Auth`에도 같은 권한으로 만든다. 기본 인스턴스의 `claude_ro` 로그인은 `UserDB`를 지운 뒤 쓰는 곳이 없지만, 이슈 범위가 「`UserDB`만 삭제」라서 남긴다
