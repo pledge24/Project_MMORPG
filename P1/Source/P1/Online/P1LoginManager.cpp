@@ -48,13 +48,13 @@ void UP1LoginManager::RequestLogin(const FString& Username, const FString& Passw
     RequestRef->ProcessRequest();
 }
 
-void UP1LoginManager::RequestRegister(const FString& Username, const FString& Password)
+void UP1LoginManager::RequestRegister(const FString& LoginId, const FString& Password)
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
 	// 요청 본문 JSON 작성.
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-	JsonObject->SetStringField(TEXT("username"), Username);
+	JsonObject->SetStringField(TEXT("loginId"), LoginId);
 	JsonObject->SetStringField(TEXT("password"), Password);
 
 	FString OutputString;
@@ -62,7 +62,7 @@ void UP1LoginManager::RequestRegister(const FString& Username, const FString& Pa
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
 	// 요청 설정.
-	FString URL = MakeAuthUrl(TEXT("/Account/Register"));
+	FString URL = MakeAuthUrl(TEXT("/api/auth/register"));
 
     RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnRegisterResponse);
     RequestRef->SetURL(URL);
@@ -134,31 +134,35 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
 
 void UP1LoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
-	FString Message = TEXT("로그인 실패");
+	FString Message = TEXT("회원가입 실패");
 
 	bool RegisterSuccess = false;
 	if (bWasSuccessful && Response.IsValid())
 	{
-		int32 ResponseCode = Response->GetResponseCode();
-		FString ResponseBody = Response->GetContentAsString();
-
 		TSharedPtr<FJsonObject> JsonObject;
-		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseBody);
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
 
-		if (ResponseCode == 200 || ResponseCode == 201)
+		// 응답은 성공이면 { ok: true, data }, 실패면 { ok: false, error: { code, message } }다. 성공 여부는 상태 코드가 아니라 ok로 가른다.
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
-			RegisterSuccess = true;
-			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			bool bOk = false;
+			JsonObject->TryGetBoolField(TEXT("ok"), bOk);
+
+			const TSharedPtr<FJsonObject>* DataObject = nullptr;
+			const TSharedPtr<FJsonObject>* ErrorObject = nullptr;
+			if (bOk && JsonObject->TryGetObjectField(TEXT("data"), DataObject))
 			{
-				Message = JsonObject->GetStringField(TEXT("message"));
+				RegisterSuccess = true;
+
+				// 서버가 소문자로 바꿔 저장한 로그인 ID를 보여 준다. 입력과 다를 수 있다.
+				FString RegisteredLoginId;
+				(*DataObject)->TryGetStringField(TEXT("loginId"), RegisteredLoginId);
+				Message = FString::Printf(TEXT("회원가입 완료. 로그인 ID: %s"), *RegisteredLoginId);
 			}
-		}
-		else
-		{
-			RegisterSuccess = false;
-			if (FJsonSerializer::Deserialize(Reader, JsonObject))
+			else if (JsonObject->TryGetObjectField(TEXT("error"), ErrorObject))
 			{
-				Message = JsonObject->GetStringField(TEXT("errorMessage"));
+				// 서버의 문구는 화면에 그대로 보여 주는 한국어 문장이다.
+				(*ErrorObject)->TryGetStringField(TEXT("message"), Message);
 			}
 		}
 	}
