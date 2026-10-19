@@ -70,7 +70,7 @@ UE5 클라이언트 · 외부 IOCP C++ 게임 서버 · Node 인증 서버의 3�
 — 연결에 실패한 채 포트를 열면 서버가 떠 있는 것처럼 보이지만 모든 로그인이 500으로 실패한다.
 
 **Architecture Invariant:** 회원가입과 로그인의 판정은 계정 저장소와 티켓 저장소를 인터페이스로 받는다.
-MSSQL과 Redis를 아는 코드는 이 두 인터페이스의 구현뿐이다.
+MSSQL과 Redis를 아는 코드는 이 두 인터페이스의 구현과 AccountDB 연결을 만드는 `common/db.ts`뿐이다.
 — DB나 Redis를 바꿀 때는 구현만 바꾼다. 테스트는 메모리 구현을 넣어 판정과 HTTP 계약을 검사한다.
 
 **Architecture Invariant:** 계정 번호(`AccountId`)는 `BIGINT`이고, 인증 서버 안에서는 10진수 문자열로 다룬다.

@@ -504,7 +504,13 @@ Server/
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
-│   └── Queries/            AccountDB 스키마 스크립트
+│   ├── src/
+│   │   ├── main.ts         진입점. 설정 검사, AccountDB와 Redis 연결, 실제 구현 조립, 포트 열기
+│   │   ├── app.ts          앱 조립. 도메인마다 라우터를 한 줄로 붙인다
+│   │   ├── auth/           도메인: 회원가입과 로그인. router, handler, service, repository
+│   │   ├── common/         도메인이 아닌 공용 코드. 설정, DB 연결, 인증 티켓, 봉투, 에러, 비밀번호
+│   │   └── types/          타입 정의를 싣지 않는 패키지의 선언 파일
+│   └── migrations/         AccountDB 스키마. `NNN_<이름>.sql`을 번호 순서로 적용한다
 └── Libraries/              벤더링한 서드파티
 ```
 
@@ -540,6 +546,18 @@ Server/
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `AccountDB`는 인증 서버가
 소유한다.
+
+**인증 서버의 `src/`는 도메인 폴더와 `common/`으로 나눈다.** 도메인 폴더 하나를 지우면 그 도메인 로직만 사라져야 한다.
+근거와 버린 대안은 `docs/adr/0015-group-auth-server-by-domain-folder.md`에 있다.
+
+- 도메인 폴더 안에는 `<도메인>.<계층>.ts` 파일을 평평하게 둔다. 계층은 `router`(경로), `handler`(본문 검증과 응답 봉투),
+  `service`(판정), `repository`(저장소 인터페이스와 실제 구현)다
+- 메모리 구현은 `<도메인>.repository.memory.ts`처럼 `.memory.ts` 접미사로 나눈다. 파일 이름에 DB 기술 이름을 넣지 않는다
+- 테스트는 그 폴더 아래의 `tests/`에 `<대상>.test.ts`로 둔다(`auth/tests/auth.service.test.ts`, `common/tests/config.test.ts`).
+  도메인 경로의 HTTP 테스트(`<도메인>.router.test.ts`)도 그 도메인의 `tests/`에 둔다
+- 도메인이 아닌 코드는 평평한 `common/`에 둔다. 인증 티켓처럼 여러 도메인이 쓸 수 있는 것도 여기에 둔다.
+  `common/`은 도메인 폴더를 import하지 않는다
+- 도메인을 지울 때 남는 것은 `app.ts`의 등록 줄, `main.ts`의 조립 줄, `common/errors.ts`의 그 도메인 에러 코드뿐이다
 
 ---
 

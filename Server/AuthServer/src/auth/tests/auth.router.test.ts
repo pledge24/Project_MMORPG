@@ -1,19 +1,17 @@
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import type { AccountRepository } from './accounts/accountRepository.js';
-import { MemoryAccountRepository } from './accounts/memoryAccountRepository.js';
-import { createApp } from './app.js';
-import { LoginService } from './auth/loginService.js';
-import { RegisterService } from './auth/registerService.js';
-import { MemoryTicketRepository } from './tickets/memoryTicketRepository.js';
-import type { TicketRepository } from './tickets/ticketRepository.js';
+import { createApp } from '../../app.js';
+import { MemoryTicketRepository } from '../../common/ticket.memory.js';
+import type { TicketRepository } from '../../common/ticket.js';
+import type { AccountRepository } from '../auth.repository.js';
+import { MemoryAccountRepository } from '../auth.repository.memory.js';
+import { AuthService } from '../auth.service.js';
+
+// 앱 전체를 메모리 저장소로 조립해 HTTP 계약(상태 코드와 봉투)을 검사한다. 본문 형식이 틀린 경우도 여기서 다룬다.
 
 function appWith(accounts: AccountRepository = new MemoryAccountRepository(), tickets: TicketRepository = new MemoryTicketRepository()) {
-    return createApp({
-        registerService: new RegisterService(accounts),
-        loginService: new LoginService(accounts, tickets),
-    });
+    return createApp({ authService: new AuthService(accounts, tickets) });
 }
 
 afterEach(() => {
@@ -146,16 +144,46 @@ describe('POST /api/auth/login', () => {
         expect(console.error).toHaveBeenCalled();
     });
 
-    test('옛 로그인 경로는 404다', async () => {
+    test('옛 로그인 경로는 404와 NOT_FOUND 봉투다', async () => {
         const res = await request(app).post('/Login').send({ username: 'player01', password: 'pass1234' });
 
         expect(res.status).toBe(404);
+        expect(res.body).toEqual({ ok: false, error: { code: 'NOT_FOUND', message: expect.any(String) } });
     });
 });
 
-test('없는 경로는 404와 NOT_FOUND다', async () => {
-    const res = await request(appWith()).get('/api/auth/nothing');
+// 형식 규칙은 auth.handler.ts의 정규식이 정한다. 아래는 그 규칙의 경계를 하나씩 넘는 본문이다.
+const MALFORMED_BODIES = [
+    ['본문이 객체가 아님', 'player01'],
+    ['로그인 ID 없음', { password: 'pass1234' }],
+    ['로그인 ID가 문자열이 아님', { loginId: 1234, password: 'pass1234' }],
+    ['로그인 ID가 4자 미만', { loginId: 'abc', password: 'pass1234' }],
+    ['로그인 ID가 10자 초과', { loginId: 'abcdefghijk', password: 'pass1234' }],
+    ['로그인 ID에 특수문자', { loginId: 'play_er', password: 'pass1234' }],
+    ['비밀번호 없음', { loginId: 'player01' }],
+    ['비밀번호가 4자 미만', { loginId: 'player01', password: 'abc' }],
+    ['비밀번호가 20자 초과', { loginId: 'player01', password: 'a'.repeat(21) }],
+    ['비밀번호에 특수문자', { loginId: 'player01', password: 'pass!234' }],
+] as const;
 
-    expect(res.status).toBe(404);
-    expect(res.body).toEqual({ ok: false, error: { code: 'NOT_FOUND', message: expect.any(String) } });
+describe('본문 형식 검사', () => {
+    test.each(MALFORMED_BODIES)('회원가입: %s이면 400과 VALIDATION_FAILED이고 계정을 만들지 않는다', async (_case, body) => {
+        const accounts = new MemoryAccountRepository();
+
+        const res = await request(appWith(accounts)).post('/api/auth/register').set('Content-Type', 'application/json').send(JSON.stringify(body));
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('VALIDATION_FAILED');
+        expect(accounts.count()).toBe(0);
+    });
+
+    test.each(MALFORMED_BODIES)('로그인: %s이면 400과 VALIDATION_FAILED이고 티켓을 발급하지 않는다', async (_case, body) => {
+        const tickets = new MemoryTicketRepository();
+
+        const res = await request(appWith(undefined, tickets)).post('/api/auth/login').set('Content-Type', 'application/json').send(JSON.stringify(body));
+
+        expect(res.status).toBe(400);
+        expect(res.body.error.code).toBe('VALIDATION_FAILED');
+        expect(tickets.count()).toBe(0);
+    });
 });

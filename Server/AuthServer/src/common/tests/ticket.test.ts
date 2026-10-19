@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { createRedisClient } from './redisTicketRepository.js';
+import { createRedisClient } from '../ticket.js';
 
 // Redis에 붙지 않는다. 만든 클라이언트의 옵션만 읽는다.
 test('Redis 주소 설정이 클라이언트의 소켓 옵션으로 넘어간다', () => {

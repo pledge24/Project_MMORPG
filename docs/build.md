@@ -77,7 +77,7 @@ npm run typecheck        # = tsc (출력 파일을 만들지 않는다)
 ```
 
 설정은 gitignore된 `.env`에 둔다. 처음에는 `.env.example`을 `.env`로 복사한다. `npm start`가 Node의 `--env-file`
-옵션으로 읽어 `process.env`에 넣고, `src/config/config.ts`가 기동할 때 키와 형식을 검사한다. 검사, `AccountDB` 연결, Redis 연결 중
+옵션으로 읽어 `process.env`에 넣고, `src/common/config.ts`가 기동할 때 키와 형식을 검사한다. 검사, `AccountDB` 연결, Redis 연결 중
 하나라도 실패하면 에러 원문을 남기고 종료 코드 1로 끝난다. 셸에 같은 이름의 환경 변수가 있으면 `.env`보다 그 값이 우선한다.
 Node 24가 필요하다. CI도 Node 24로 돈다.
 
@@ -133,8 +133,12 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
-| AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/Queries/AccountDB_CreateAllTables.sql` |
+| AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/migrations/`의 파일을 번호 순서로 |
 | GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
+
+**AccountDB의 스키마는 `Server/AuthServer/migrations/`의 번호 붙은 파일로 관리한다.** 파일 이름은 `NNN_<이름>.sql`이고
+첫 줄에 `-- NNN: 설명`을 적는다. 각 파일은 이미 적용된 DB에 다시 실행해도 결과가 같게 쓴다. 적용한 파일은 고치지 않고,
+스키마를 바꿀 때는 다음 번호의 파일을 더한다. 적용 기록 테이블과 실행 도구는 두지 않고, 사람이 번호 순서로 실행한다.
 
 GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
 

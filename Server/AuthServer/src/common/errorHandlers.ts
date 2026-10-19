@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 
-import { AppError } from '../errors.js';
+import { AppError } from './errors.js';
 import { failure } from './envelope.js';
 
 /** 어느 라우터도 받지 않은 요청을 NOT_FOUND로 넘긴다. 라우터를 모두 붙인 뒤에 붙인다. */

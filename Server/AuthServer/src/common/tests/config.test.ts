@@ -3,10 +3,10 @@ import { join } from 'node:path';
 import { parseEnv } from 'node:util';
 import { describe, expect, test } from 'vitest';
 
-import { ConfigError, loadConfig, REQUIRED_ENV_KEYS } from './config.js';
+import { ConfigError, loadConfig, REQUIRED_ENV_KEYS } from '../config.js';
 
 // .env는 커밋하지 않으므로, 새로 클론한 환경은 예시 파일을 복사해 시작한다. 두 목록이 어긋나면 기동하자마자 설정 검사에서 멈춘다.
-const EXAMPLE_ENV_PATH = join(import.meta.dirname, '..', '..', '.env.example');
+const EXAMPLE_ENV_PATH = join(import.meta.dirname, '..', '..', '..', '.env.example');
 
 const VALID_ENV = {
     PORT: '5000',

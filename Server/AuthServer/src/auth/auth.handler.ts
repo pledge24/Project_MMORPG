@@ -1,23 +1,18 @@
-import { AppError } from '../errors.js';
+import type { RequestHandler } from 'express';
 
-export interface Credentials {
-    /** 소문자로 바꾼 값 */
-    loginId: string;
-    password: string;
-}
+import { success } from '../common/envelope.js';
+import { AppError } from '../common/errors.js';
+import type { AuthService, Credentials } from './auth.service.js';
 
 // 로그인 ID는 소문자로 바꾼 뒤에 검사하므로 대문자를 받지 않는다.
 const LOGIN_ID_PATTERN = /^[a-z0-9]{4,10}$/;
 const PASSWORD_PATTERN = /^[A-Za-z0-9]{4,20}$/;
 
-/** 회원가입에서 비밀번호를 해시할 때의 bcrypt 비용. 로그인은 없는 로그인 ID에 쓸 더미 해시를 같은 비용으로 만든다. */
-export const BCRYPT_COST = 10;
-
 /**
  * 요청 본문에서 로그인 ID와 비밀번호를 꺼내 로그인 ID를 소문자로 바꾸고 형식을 검사한다.
  * 형식에 맞지 않으면 VALIDATION_FAILED를 던진다.
  */
-export function parseCredentials(body: unknown): Credentials {
+function parseCredentials(body: unknown): Credentials {
     if (typeof body !== 'object' || body === null) {
         throw new AppError('VALIDATION_FAILED');
     }
@@ -34,4 +29,23 @@ export function parseCredentials(body: unknown): Credentials {
     }
 
     return { loginId: normalizedLoginId, password };
+}
+
+export interface AuthHandler {
+    register: RequestHandler;
+    login: RequestHandler;
+}
+
+/** 본문을 검사해 서비스에 넘기고 성공 봉투로 응답한다. 실패는 던진 에러를 에러 핸들러가 응답한다. */
+export function createAuthHandler(service: AuthService): AuthHandler {
+    return {
+        register: async (req, res) => {
+            const result = await service.register(parseCredentials(req.body));
+            res.status(201).json(success(result));
+        },
+        login: async (req, res) => {
+            const result = await service.login(parseCredentials(req.body));
+            res.status(200).json(success(result));
+        },
+    };
 }
