@@ -77,8 +77,8 @@ npm run typecheck        # = tsc (출력 파일을 만들지 않는다)
 ```
 
 설정은 gitignore된 `.env`에 둔다. 처음에는 `.env.example`을 `.env`로 복사한다. `npm start`가 Node의 `--env-file`
-옵션으로 읽어 `process.env`에 넣고, `src/config/config.ts`가 기동할 때 키와 형식을 검사한다. 검사나 `AccountDB` 연결에
-실패하면 에러 원문을 남기고 종료 코드 1로 끝난다. 셸에 같은 이름의 환경 변수가 있으면 `.env`보다 그 값이 우선한다.
+옵션으로 읽어 `process.env`에 넣고, `src/config/config.ts`가 기동할 때 키와 형식을 검사한다. 검사, `AccountDB` 연결, Redis 연결 중
+하나라도 실패하면 에러 원문을 남기고 종료 코드 1로 끝난다. 셸에 같은 이름의 환경 변수가 있으면 `.env`보다 그 값이 우선한다.
 Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | 키 |
@@ -89,7 +89,7 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 | 커넥션 풀 크기 |
 | `REDIS_HOST` |
 | `REDIS_PORT` |
-| `ACCESS_TOKEN_TTL` |
+| `TICKET_TTL_SECONDS` |
 
 정적 검사는 ESLint 10이고 `npm run lint`로 돈다. 상세는 `docs/testing.md`에 있다.
 
@@ -162,7 +162,7 @@ LocalDB는 Windows 인증이라 셸에서 붙으면 관리자가 되므로, 같�
 **`claude_ro` 데이터 소스를 다시 만들면 ID가 바뀌어 Claude의 조회가 전부 막힌다.** 그때는 새 ID를 허용
 목록에 넣는다. 파이썬 등 임의 코드로 여는 ODBC 연결은 문자열 검사로 완전히 막을 수 없다.
 
-두 서버가 공유하는 액세스 토큰 저장소로 Redis(`127.0.0.1:6379`).
+두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
 
 ---
 

@@ -17,7 +17,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
         console.error('요청 처리 중 오류:', err);
     }
 
-    res.status(appError.status).json(failure(appError.code, appError.message));
+    res.status(appError.status).json(failure(appError.code, appError.message, appError.details));
 };
 
 function toAppError(err: unknown): AppError {

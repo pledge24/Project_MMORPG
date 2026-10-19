@@ -9,7 +9,7 @@ export const REQUIRED_ENV_KEYS = [
     'DB_IDLE_TIMEOUT',
     'REDIS_HOST',
     'REDIS_PORT',
-    'ACCESS_TOKEN_TTL',
+    'TICKET_TTL_SECONDS',
 ] as const;
 
 type EnvKey = (typeof REQUIRED_ENV_KEYS)[number];
@@ -21,8 +21,8 @@ export interface Config {
         pool: { max: number; min: number; idleTimeoutMillis: number };
     };
     redis: { host: string; port: number };
-    /** 옛 로그인 경로가 Redis에 넣는 토큰의 TTL(초) */
-    accessTokenTtlSeconds: number;
+    /** 인증 티켓의 유효 시간(초). 로그인 응답부터 게임 서버 접속까지의 시간이다. */
+    ticketTtlSeconds: number;
 }
 
 /** 설정 검사에서 찾은 문제를 모두 담는다. */
@@ -75,7 +75,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
             host: readText('REDIS_HOST'),
             port: readInteger('REDIS_PORT', 1, 65535),
         },
-        accessTokenTtlSeconds: readInteger('ACCESS_TOKEN_TTL', 1),
+        ticketTtlSeconds: readInteger('TICKET_TTL_SECONDS', 1),
     };
 
     const { min, max } = config.accountDb.pool;
