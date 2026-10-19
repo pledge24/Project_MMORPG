@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 
 /** 비밀번호를 해시할 때의 bcrypt 비용 */
-export const BCRYPT_COST = 10;
+const BCRYPT_COST = 10;
 
 // 대조할 해시가 없을 때 대신 비교하는 해시. 모듈을 로드할 때 한 번 만든다.
 const PASSWORD_HASH_FOR_MISSING_ACCOUNT = bcrypt.hashSync(randomUUID(), BCRYPT_COST);

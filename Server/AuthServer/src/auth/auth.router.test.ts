@@ -8,7 +8,7 @@ import type { AccountRepository } from './auth.repository.js';
 import { MemoryAccountRepository } from './auth.repository.memory.js';
 import { AuthService } from './auth.service.js';
 
-// 앱 전체를 메모리 저장소로 조립해 HTTP 계약(상태 코드와 봉투)을 검사한다. 본문 형식 검사도 여기서 검사한다.
+// 앱 전체를 메모리 저장소로 조립해 HTTP 계약(상태 코드와 봉투)을 검사한다. 본문 형식이 틀린 경우도 여기서 다룬다.
 
 function appWith(accounts: AccountRepository = new MemoryAccountRepository(), tickets: TicketRepository = new MemoryTicketRepository()) {
     return createApp({ authService: new AuthService(accounts, tickets) });
@@ -144,14 +144,15 @@ describe('POST /api/auth/login', () => {
         expect(console.error).toHaveBeenCalled();
     });
 
-    test('옛 로그인 경로는 404다', async () => {
+    test('옛 로그인 경로는 404와 NOT_FOUND 봉투다', async () => {
         const res = await request(app).post('/Login').send({ username: 'player01', password: 'pass1234' });
 
         expect(res.status).toBe(404);
+        expect(res.body).toEqual({ ok: false, error: { code: 'NOT_FOUND', message: expect.any(String) } });
     });
 });
 
-// 형식 규칙: 로그인 ID는 소문자로 바꾼 뒤 영문 소문자와 숫자 4~10자, 비밀번호는 영문과 숫자 4~20자다.
+// 형식 규칙은 auth.handler.ts의 정규식이 정한다. 아래는 그 규칙의 경계를 하나씩 넘는 본문이다.
 const MALFORMED_BODIES = [
     ['본문이 객체가 아님', 'player01'],
     ['로그인 ID 없음', { password: 'pass1234' }],
