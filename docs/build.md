@@ -79,10 +79,14 @@ npm run typecheck        # = tsc (출력 파일을 만들지 않는다)
 설정은 gitignore된 `.env`에 둔다. 처음에는 `.env.example`을 `.env`로 복사한다. `npm start`가 Node의 `--env-file`
 옵션으로 읽어 `process.env`에 넣고, `src/common/config.ts`가 기동할 때 키와 형식을 검사한다. 검사, `AccountDB` 연결, Redis 연결 중
 하나라도 실패하면 에러 원문을 남기고 종료 코드 1로 끝난다. 셸에 같은 이름의 환경 변수가 있으면 `.env`보다 그 값이 우선한다.
-**Redis를 인증 서버보다 먼저 띄운다.** 인증 서버는 Redis 첫 연결에 실패하면 다시 시도하지 않고 끝난다.
+**Redis를 인증 서버보다 먼저 띄운다.**
+— 인증 서버는 Redis 첫 연결에 실패하면 다시 시도하지 않고 종료 코드 1로 끝난다.
 
-**키를 더하거나 바꾸면 `src/common/config.ts`의 `REQUIRED_ENV_KEYS`와 `.env.example`을 함께 고친다.** `common/tests/config.test.ts`가
-두 목록이 같은지, 예시 값이 검사를 통과하는지 대조한다. 각자의 `.env`는 저장소 밖이므로 키 변경을 PR의 「머지 시 주의」에 적는다.
+**키를 더하거나 바꾸면 `src/common/config.ts`의 `REQUIRED_ENV_KEYS`, `.env.example`, 아래 키 표를 함께 고친다.** 키 변경은 PR의
+「머지 시 주의」에도 적는다.
+— `common/tests/config.test.ts`가 앞의 두 목록이 같은지, 예시 값이 검사를 통과하는지 대조한다. 키 표는 대조하지 않는다.
+각자의 `.env`는 저장소 밖이라 git으로 전달되지 않는다.
+
 Node 24가 필요하다. CI도 Node 24로 돈다.
 
 | 키 |
@@ -171,7 +175,7 @@ GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetM
 
 1. `sqllocaldb create P1Auth -s`로 인스턴스를 만들고 시작한다
 2. `SERVERPROPERTY('IsIntegratedSecurityOnly')`가 `0`인지 확인한다. `claude_ro`는 SQL 인증 로그인이므로 혼합 인증이 켜져 있어야 한다
-3. `CREATE DATABASE AccountDB`를 실행하고, 위 표의 스크립트를 `-d AccountDB`로 실행한다. 이 스크립트는 테이블을 지우고 다시 만들므로, 쓰고 있는 DB에서 다시 실행하면 계정이 모두 사라진다
+3. `CREATE DATABASE AccountDB`를 실행하고, `Server/AuthServer/migrations/`의 파일을 번호 순서로 `-d AccountDB`로 실행한다. 각 파일은 이미 적용된 DB에서 다시 실행해도 결과가 같다
 4. SQL 인증 로그인 `claude_ro`를 만들고, `AccountDB`의 사용자로 만들어 `db_datareader`에만 넣는다
 5. Rider에 아래 표의 `AccountDB` 데이터 소스 두 개(`AccountDB`, `AccountDB (사용자 전용)`)를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
 
