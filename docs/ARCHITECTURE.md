@@ -176,7 +176,8 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 
 **Architecture Invariant:** DB를 거치는 요청(로그인, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
 계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로그인만
-계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 인증 티켓 확인과 캐릭터 목록 불러오기를 이어 한다.
+계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 인증 티켓 확인, `GameDB` 계정 행 기록, 캐릭터 목록
+불러오기를 이어 한다. 계정 행은 이 월드에 처음 들어올 때 만들어지고, 캐릭터 슬롯 수의 원천이다.
 
 **Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
 Redis의 인증 티켓 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가

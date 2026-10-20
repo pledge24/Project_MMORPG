@@ -102,47 +102,6 @@ namespace
     }
 }
 
-void ItemDAO::GetMaxItemUID(DBConnection& conn)
-{
-    const int PARAMS = 0;
-    const int COLS = 1;
-
-    struct BindObject
-    {
-        BindObject(DBBind<PARAMS, COLS>& dbBind)
-        {
-            BindCol(dbBind);
-        }
-
-        void BindParam(DBBind<PARAMS, COLS>& dbBind)
-        {
-        }
-
-        void BindCol(DBBind<PARAMS, COLS>& dbBind)
-        {
-            dbBind.BindCol(0, _maxItemUID);
-        }
-
-        //~ Cols
-        int64 _maxItemUID = 0;
-    };
-
-
-    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
-        EXEC GetMaxItemUID;
-    )SQL");
-
-    BindObject bindObject(dbBind);
-
-    if (dbBind.Execute() == false)
-        throw DBError(__func__, "쿼리 실행 실패");
-
-    if (conn.Fetch() == false)
-        throw DBError(__func__, "결과 행이 없다");
-
-    GNextItemUID = bindObject._maxItemUID + 1;
-}
-
 void ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress)
 {
     LoadGearItems(conn, characterId, progress);

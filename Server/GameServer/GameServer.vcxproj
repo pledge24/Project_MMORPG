@@ -219,7 +219,9 @@
     <ClInclude Include="Game\Room\MoveValidation.h" />
     <ClInclude Include="Game\Room\CellMatrix.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
+    <ClInclude Include="DB\AccountDAO.h" />
     <ClInclude Include="DB\CharacterListDAO.h" />
+    <ClInclude Include="DB\IssuedIdDAO.h" />
     <ClInclude Include="DB\CharacterStateDAO.h" />
     <ClInclude Include="DB\ItemDAO.h" />
     <ClInclude Include="DB\ProgressStorage.h" />
@@ -288,7 +290,9 @@
     <ClCompile Include="Game\Room\MoveValidation.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
+    <ClCompile Include="DB\AccountDAO.cpp" />
     <ClCompile Include="DB\CharacterListDAO.cpp" />
+    <ClCompile Include="DB\IssuedIdDAO.cpp" />
     <ClCompile Include="DB\CharacterStateDAO.cpp" />
     <ClCompile Include="DB\ItemDAO.cpp" />
     <ClCompile Include="DB\ProgressStorage.cpp" />

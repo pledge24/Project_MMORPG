@@ -24,7 +24,10 @@ public:
 
     /** 2026-01-01T00:00:00Z의 Unix 밀리초. */
     static constexpr int64 EPOCH_UNIX_MS = 1767225600000;
-    static constexpr int32 MAX_NODE_ID = 1023;
+    /** 순번 비트 수. 노드 번호는 이 비트 위에, 시각은 노드 번호 위에 놓인다. */
+    static constexpr int32 SEQUENCE_BITS = 12;
+    static constexpr int32 NODE_BITS = 10;
+    static constexpr int32 MAX_NODE_ID = (1 << NODE_BITS) - 1;
 
     /** nodeId는 0~MAX_NODE_ID여야 한다. 검증하지 않으므로 설정 검사를 통과한 값을 넘긴다. */
     explicit SnowflakeIdGenerator(int32 nodeId, Clock clock = &NowUnixMs);

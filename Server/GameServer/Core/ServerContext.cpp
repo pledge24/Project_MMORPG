@@ -3,6 +3,7 @@
 #include "Network/GameSessionManager.h"
 #include "Network/SaveGate.h"
 #include "Network/ProgressCoordinator.h"
+#include "Utils/SnowflakeIdGenerator.h"
 
 ServerContext::ServerContext()
 {
@@ -36,6 +37,15 @@ ServerContext::~ServerContext()
     GSessionJobQueue = nullptr;
     _sessionJobQueue.reset();
 
+    GIdGenerator = nullptr;
+    _idGenerator.reset();
+
     GRoomManager = nullptr;
     _roomManager.reset();
+}
+
+void ServerContext::CreateIdGenerator(int32 nodeId)
+{
+    _idGenerator = make_unique<SnowflakeIdGenerator>(nodeId);
+    GIdGenerator = _idGenerator.get();
 }

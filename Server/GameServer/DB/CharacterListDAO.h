@@ -1,6 +1,6 @@
 #pragma once
 
-/** 캐릭터 생성 쿼리가 거절한 사유. 쿼리가 부호를 뒤집어 돌려주므로 값은 양수여야 한다. */
+/** 캐릭터 생성 쿼리가 거절한 사유. 쿼리가 성공하면 0을 돌려주므로 값은 0이 아니어야 한다. */
 enum class CharacterRejection : int32
 {
     DUPLICATE_NAME = 1,
@@ -36,9 +36,13 @@ struct CreateCharacterResult
 class CharacterListDAO
 {
 public:
-    static void LoadCharacterList(DBConnection& conn, int64 userId, OUT vector<Protocol::CharacterOverview>& characters);
-    /** 새 캐릭터를 만든다. 빈 슬롯이 없거나 이름이 겹치면 거절 사유를 결과에 담는다. */
-    static CreateCharacterResult CreateCharacter(DBConnection& conn, const Protocol::CharacterOverview& character, int64 userId);
-    /** characterId는 클라이언트 값이어도 된다. 이 계정의 캐릭터가 아니면 지우지 않고 false. */
-    static bool DeleteCharacter(DBConnection& conn, int64 userId, int64 characterId);
+    /** 삭제되지 않은 캐릭터를 만든 순서로 돌려준다. */
+    static void LoadCharacterList(DBConnection& conn, int64 accountId, OUT vector<Protocol::CharacterOverview>& characters);
+    /**
+     * characterId로 새 캐릭터를 만든다. 계정 행이 먼저 있어야 한다(없으면 DBError).
+     * 빈 슬롯이 없거나 이름이 겹치면 거절 사유를 결과에 담는다.
+     */
+    static CreateCharacterResult CreateCharacter(DBConnection& conn, int64 accountId, int64 characterId, const Protocol::CharacterOverview& character);
+    /** characterId는 클라이언트 값이어도 된다. 이 계정의 삭제되지 않은 캐릭터가 아니면 지우지 않고 false. */
+    static bool DeleteCharacter(DBConnection& conn, int64 accountId, int64 characterId);
 };

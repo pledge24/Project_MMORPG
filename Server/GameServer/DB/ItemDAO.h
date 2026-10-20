@@ -12,9 +12,6 @@ struct PlayerSaveData;
 class ItemDAO
 {
 public:
-    /** 서버 시작 때 main 스레드에서 한 번 불러 GNextItemUID를 DB의 최대 UID 다음 값으로 정한다. */
-    static void GetMaxItemUID(DBConnection& conn);
-
     /**
      * 캐릭터의 아이템을 progress의 인벤토리와 착용 장비에 붙인다. DB 큐의 잡 안에서 부른다.
      * 행마다 슬롯을 하나씩 붙일 뿐이라 배열 순번은 슬롯 번호가 아니다. 슬롯 번호는 각 슬롯의 slot_id다.

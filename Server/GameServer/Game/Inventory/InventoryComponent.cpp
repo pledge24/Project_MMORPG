@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Entities/Player.h"
+#include "Utils/SnowflakeIdGenerator.h"
 
 InventoryComponent::InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory) : EntityComponent(owner)
 {
@@ -73,8 +74,9 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::It
         item->CopyFrom(itemInstance);
         item->set_count(count);
 
-        if (bag->itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
-            item->set_item_uid(GNextItemUID.fetch_add(1));
+        // 빈 칸에 새로 놓이는 아이템은 종류와 상관없이 UID를 받는다. 이미 있는 묶음에 더한 개수는 그 묶음의 UID를 따른다.
+        if (itemInstance.has_item_uid() == false)
+            item->set_item_uid(GIdGenerator->Next());
         
         if (outSlot != nullptr)
             outSlot->CopyFrom(*targetSlot);

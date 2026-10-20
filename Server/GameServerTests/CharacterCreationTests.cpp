@@ -83,17 +83,17 @@ TEST_F(CharacterCreationTest, EmptyNameIsRejected)
     const auto cause = CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, ""));
 
     ASSERT_TRUE(cause.has_value());
-    EXPECT_EQ(cause.value(), "캐릭터 이름은 50이하여야 합니다.");
+    EXPECT_EQ(cause.value(), "캐릭터 이름은 32이하여야 합니다.");
 }
 
-TEST_F(CharacterCreationTest, FiftyHangulCharactersPass)
+TEST_F(CharacterCreationTest, ThirtyTwoHangulCharactersPass)
 {
-    EXPECT_FALSE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, MakeHangulName(50))).has_value())
-        << "UTF-8 바이트(150)가 아니라 UTF-16 글자 수(50)로 세야 한다";
+    EXPECT_FALSE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, MakeHangulName(32))).has_value())
+        << "UTF-8 바이트(96)가 아니라 UTF-16 글자 수(32)로 세야 한다";
 }
 
-TEST_F(CharacterCreationTest, FiftyOneCharactersAreRejected)
+TEST_F(CharacterCreationTest, ThirtyThreeCharactersAreRejected)
 {
-    EXPECT_TRUE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, MakeHangulName(51))).has_value())
-        << "DB 열 한도를 넘으면 생성 쿼리가 내부 오류로 끝난다";
+    EXPECT_TRUE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, MakeHangulName(33))).has_value())
+        << "DB 열 한도(NVARCHAR(32))를 넘으면 생성 쿼리가 내부 오류로 끝난다";
 }
