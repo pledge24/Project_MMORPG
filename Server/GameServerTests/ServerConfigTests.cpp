@@ -5,8 +5,9 @@
 /*--------------------------------------------------------------
     서버 설정 로더 테스트
 
-    Config::Load는 환경 변수 조회를 인자로 받는다. 실제 프로세스 환경을
-    건드리지 않고 가짜 조회로 기본값과 덮어쓰기, 값끼리의 관계 검증을 확인한다.
+    Config::Load는 환경 변수 조회와 빌드 구성을 인자로 받는다. 실제 프로세스
+    환경을 건드리지 않고 가짜 조회로 기본값과 덮어쓰기, 값끼리의 관계 검증을
+    확인한다. 노드 번호처럼 빌드 구성마다 기본값이 다른 설정은 두 구성을 모두 넘긴다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -21,6 +22,14 @@ namespace
 
                 return it->second;
             };
+    }
+
+    // 검증이 거절하고, 사유가 고칠 환경 변수를 알리는지 본다.
+    void ExpectRejectedFor(const Config& config, const char* envName)
+    {
+        const std::optional<string> error = config.Validate();
+        ASSERT_TRUE(error.has_value());
+        EXPECT_NE(error->find(envName), string::npos) << "고칠 변수를 알린다: " << error.value();
     }
 }
 
@@ -124,8 +133,7 @@ TEST(ServerConfigTest, ReleaseRejectsMissingNodeId)
 {
     const Config config = Config::Load(FakeEnv({}), Config::BuildConfiguration::Release);
 
-    ASSERT_TRUE(config.Validate().has_value());
-    EXPECT_NE(config.Validate()->find("P1_SERVER_NODE_ID"), string::npos) << "고칠 변수를 알린다";
+    ExpectRejectedFor(config, "P1_SERVER_NODE_ID");
 }
 
 TEST(ServerConfigTest, NodeIdEnvIsUsedInBothBuilds)
@@ -153,8 +161,7 @@ TEST(ServerConfigTest, NodeIdOutOfRangeIsRejected)
         SCOPED_TRACE(nodeId);
 
         const Config config = Config::Load(FakeEnv({{"P1_SERVER_NODE_ID", nodeId}}), Config::BuildConfiguration::Debug);
-        ASSERT_TRUE(config.Validate().has_value());
-        EXPECT_NE(config.Validate()->find("P1_SERVER_NODE_ID"), string::npos);
+        ExpectRejectedFor(config, "P1_SERVER_NODE_ID");
     }
 }
 
@@ -166,8 +173,7 @@ TEST(ServerConfigTest, NonIntegerNodeIdIsRejectedEvenInDebug)
         SCOPED_TRACE(nodeId);
 
         const Config config = Config::Load(FakeEnv({{"P1_SERVER_NODE_ID", nodeId}}), Config::BuildConfiguration::Debug);
-        ASSERT_TRUE(config.Validate().has_value());
-        EXPECT_NE(config.Validate()->find("P1_SERVER_NODE_ID"), string::npos);
+        ExpectRejectedFor(config, "P1_SERVER_NODE_ID");
     }
 }
 

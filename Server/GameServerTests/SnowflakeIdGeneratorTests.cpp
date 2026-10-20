@@ -146,12 +146,13 @@ TEST(SnowflakeIdGeneratorTest, StartAfterZeroFollowsClock)
     EXPECT_EQ(generator.Next(), MakeId(50, NODE_ID, 0));
 }
 
-// 여러 룸 스레드가 동시에 불러도 겹치지 않는다. 실제 시계를 써서 순번이 넘치는 경우도 함께 지난다.
+// 여러 룸 스레드가 동시에 불러도 겹치지 않는다. 시계를 한 밀리초에 묶어 두므로 모든 발급이 같은 상태를 두고
+// 다투고, 16만 개를 발급하는 동안 순번이 여러 번 넘쳐 시각을 앞당기는 경로도 매번 지난다.
 TEST(SnowflakeIdGeneratorTest, ConcurrentIssueHasNoDuplicates)
 {
     constexpr int32 THREAD_COUNT = 8;
     constexpr int32 IDS_PER_THREAD = 20000;
-    SnowflakeIdGenerator generator(NODE_ID);
+    SnowflakeIdGenerator generator(NODE_ID, [] { return AtElapsed(10); });
 
     vector<vector<int64>> issued(THREAD_COUNT);
     vector<std::thread> threads;
@@ -168,6 +169,7 @@ TEST(SnowflakeIdGeneratorTest, ConcurrentIssueHasNoDuplicates)
         thread.join();
 
     std::unordered_set<int64> unique;
+    int64 maxElapsedMs = 0;
     for (const vector<int64>& ids : issued)
     {
         for (size_t i = 1; i < ids.size(); i++)
@@ -175,9 +177,12 @@ TEST(SnowflakeIdGeneratorTest, ConcurrentIssueHasNoDuplicates)
 
         for (int64 id : ids)
         {
-            ASSERT_EQ(SnowflakeIdGenerator::Decompose(id).nodeId, NODE_ID);
+            const SnowflakeIdGenerator::Parts parts = SnowflakeIdGenerator::Decompose(id);
+            ASSERT_EQ(parts.nodeId, NODE_ID);
+            maxElapsedMs = max(maxElapsedMs, parts.elapsedMs);
             unique.insert(id);
         }
     }
     EXPECT_EQ(unique.size(), size_t{ THREAD_COUNT } * IDS_PER_THREAD);
+    EXPECT_GT(maxElapsedMs, 10) << "순번이 넘쳐 시각을 앞당긴 발급이 있어야 한다";
 }
