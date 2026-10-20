@@ -6,6 +6,7 @@
 #include "Network/ItemRequests.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "RecordingSession.h"
+#include "PlayerTestAccess.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -14,13 +15,14 @@
     잡은 세션이 없어도 응답을 건너뛰고 끝나야 한다.
 
     픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 플레이어는 세션 없이 불러온 진행으로
-    만들어 EnterPlayer로 넣는다. 아이템과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
+    만들어 EnterPlayer로 넣는다. 아이템, 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
 {
     constexpr int32 ROOM_ID = 10;
     constexpr int32 TOWN_ROOM_ID = 1;
+    constexpr int32 TOWN_MAP_ID = 1001;
     constexpr float TOWN_RESPAWN_X = 300.f;
     constexpr int32 PLAYER_MAX_HP = 100;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
@@ -65,6 +67,7 @@ protected:
         // 마을은 룸 객체 없이 맵 표에만 둔다. 리스폰 규칙은 맵 표만 읽는다.
         MapTemplate town;
         town.templateId = TOWN_ROOM_ID;
+        town.mapId = TOWN_MAP_ID;
         town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 0.f, 0.f };
 
         GamedataTables tables;
@@ -72,6 +75,7 @@ protected:
         tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
+        tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;
@@ -239,6 +243,7 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
     optional<PlayerSaveData> saveData = room->HandleDisconnect(player);
     ASSERT_TRUE(saveData.has_value());
 
+    EXPECT_EQ(saveData->progress.playerInfo.map_id(), TOWN_MAP_ID) << "DB에는 룸이 아니라 맵과 좌표를 저장한다";
     EXPECT_EQ(saveData->progress.playerInfo.room_id(), TOWN_ROOM_ID);
     EXPECT_FLOAT_EQ(saveData->progress.posInfo.pos().x(), TOWN_RESPAWN_X);
     EXPECT_EQ(saveData->progress.statInfo.info().at(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP / 2)

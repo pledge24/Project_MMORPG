@@ -17,7 +17,7 @@ UE5 클라이언트 · 외부 IOCP C++ 게임 서버 · Node 인증 서버의 3�
 세 티어를 반드시 함께 띄워야 동작한다.
 
 **ground state**는 인증 서버의 계정 DB와 `GameDB`의 행, 그리고 Redis의 인증 티켓이다.
-**derived state**는 룸 안 오브젝트의 런타임 상태다 — 접속 종료 시 `CharactersLastState`로
+**derived state**는 룸 안 오브젝트의 런타임 상태다 — 접속 종료 시 `CharacterState`와 `Item`으로
 내려가고, 재접속으로 재생성된다. 진실의 원천으로 삼지 않는다.
 
 세 티어를 잇는 선은 두 개뿐이다.
@@ -161,9 +161,9 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 **Architecture Invariant:** DB 접근은 `DB/`의 DAO가 데이터별로 맡는다. SQL을 실행하는 클래스만 DAO라고
 부른다. 여러 DAO를 차례로 부르는 `ProgressStorage`는 DAO가 아니다. DAO는 세션과 패킷을 모른다. 연결은
 DB 잡이 `DBConnectionGuard`로 빌려 DAO에 넘기고, 잡이 어떻게 끝나든 풀로 돌려준다. 접속 종료 저장 하나는
-트랜잭션 하나다. 접속 종료 때 저장할 아이템 행은 DB를 모르는 `ItemSaveRows`가 고른다.
-— 저장할 행을 잘못 고르면 진행이 사라지는데, SQL 문장은 테스트할 수 없어 이 판정만 떼어 테스트한다.
-DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`)로 테스트한다.
+트랜잭션 하나다. DB 아이템 행과 패킷 칸 사이의 변환은 DB를 모르는 `ItemRows`가 맡고, 불러오기와 저장이 이 변환 하나를 쓴다.
+— 두 방향이 다른 변환을 쓰면 아이템이 다른 구역이나 부위로 옮겨 가거나 사라진다. 그래서 이 변환만 떼어 테스트한다.
+DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`)로, SQL 문장은 `GameDB_Test`에 붙는 실제 DB 테스트로 테스트한다.
 
 **Architecture Invariant:** DB 작업의 실패는 `DBError` 예외이고, 클라이언트에 보낼 거절(캐릭터 생성의 이름 중복 등)은
 예외가 아니라 결과다. DB 잡은 `DBError`를 포함한 표준 예외를 받아 실패 응답을 보내고, 접속 종료 저장 잡은

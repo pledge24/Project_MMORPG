@@ -152,7 +152,7 @@
     <ClCompile Include="DB\ProgressStorage.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DB\ItemSaveRows.cpp">
+    <ClCompile Include="DB\ItemRows.cpp">
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="Game\Inventory\InventoryComponent.cpp">
@@ -295,7 +295,7 @@
     <ClInclude Include="DB\ProgressStorage.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DB\ItemSaveRows.h">
+    <ClInclude Include="DB\ItemRows.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\DAOCommon.h">

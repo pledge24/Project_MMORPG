@@ -16,6 +16,19 @@ struct PlayerTestAccess
     static void SetUserId(Player& player, int64 userId) { player._userId = userId; }
 };
 
+/**
+ * 구역마다 slotCount칸인 인벤토리 구역 표. 플레이어에게 아이템을 넣는 테스트가 GamedataTables에 넣어 설치한다.
+ * 설치하지 않으면 인벤토리의 구역마다 칸이 0개다. 운영 코드는 기획 데이터의 인벤토리 구역 표를 읽는다.
+ */
+inline unordered_map<int32, int32> MakeInventorySections(int32 slotCount = 32)
+{
+    return {
+        { Protocol::ITEM_TYPE_GEAR, slotCount },
+        { Protocol::ITEM_TYPE_CONSUMABLE, slotCount },
+        { Protocol::ITEM_TYPE_MISCELLANEOUS, slotCount },
+    };
+}
+
 /** 테스트가 엔티티 번호를 정한다. Entity가 friend로 연다. 운영 코드는 팩토리가 생성 직후에 한 번만 정한다. */
 struct EntityTestAccess
 {

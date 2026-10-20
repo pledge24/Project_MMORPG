@@ -14,7 +14,7 @@
     있었다. 판정은 서버 슬롯에 든 아이템으로 하고, 요청의 아이템은 클라이언트 슬롯이 어긋났는지
     대조하는 데만 쓴다.
 
-    픽스처 결합도: 아이템 템플릿과 1레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿, 1레벨짜리 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 시드한 장비에는 물리 공격력만 있다.
 ---------------------------------------------------------------*/
 
@@ -24,6 +24,7 @@ namespace
     constexpr int32 GREATSWORD_TEMPLATE_ID = 1035;
     constexpr int32 UNSELLABLE_SWORD_TEMPLATE_ID = 1005;
     constexpr int32 UNKNOWN_TEMPLATE_ID = 9999;
+    constexpr int32 GEAR_SLOT_COUNT = 32;
 
     constexpr int64 START_GOLD = 1000;
     constexpr int32 BASE_PHYSICAL_ATTACK = 5;
@@ -55,6 +56,7 @@ protected:
         level1.level = 1;
         level1.physicalAttack = BASE_PHYSICAL_ATTACK;
         tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.inventorySlotCounts = MakeInventorySections(GEAR_SLOT_COUNT);
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
@@ -235,7 +237,7 @@ TEST_F(PlayerItemRequestTest, UnequippingIntoFullInventoryChangesNothing)
 {
     Protocol::Slot requestSlot = EquipSword();
     const int64 equippedAttack = player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
-    for (int32 i = 0; i < MAX_SLOTS; i++)
+    for (int32 i = 0; i < GEAR_SLOT_COUNT; i++)
         AddToInventory(SWORD_TEMPLATE_ID);
 
     auto result = player->ProcessUnequipGear(requestSlot);

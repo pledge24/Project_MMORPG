@@ -56,8 +56,6 @@ bool EquipmentComponent::Unequip(int32 gearType, OUT Protocol::Slot* replicating
 
     Protocol::Slot* targetSlot = &slotIt->second;
 
-    _dirtyFlagMappings[gearType] = true;
-
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
     targetSlot->clear_item();
 
@@ -95,12 +93,6 @@ const Protocol::Slot* EquipmentComponent::GetSlot(int32 gearType) const
     return &it->second;
 }
 
-void EquipmentComponent::ClearDirtyFlags()
-{
-    for (auto& dirtyFlagPair : _dirtyFlagMappings)
-        dirtyFlagPair.second = false;
-}
-
 bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass)
 {
     if (level < itemTemplate.levelRequirement)
@@ -121,8 +113,6 @@ bool EquipmentComponent::PlaceItem(OUT Protocol::Slot* replicatingSlot, const Pr
         return false;
 
     Protocol::Slot* targetSlot = &slotIt->second;
-
-    _dirtyFlagMappings[gearType] = true;
 
     targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
     targetSlot->mutable_item()->CopyFrom(itemInstance);

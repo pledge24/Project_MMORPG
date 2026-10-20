@@ -72,6 +72,7 @@
     <ClCompile Include="GameDBSchemaTests.cpp" />
     <ClCompile Include="GameDBCharacterListTests.cpp" />
     <ClCompile Include="GameDBIssuedIdTests.cpp" />
+    <ClCompile Include="GameDBProgressTests.cpp" />
     <ClCompile Include="AccountDAOTests.cpp" />
     <ClCompile Include="IssuedIdDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
@@ -104,7 +105,7 @@
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
-    <ClCompile Include="ItemSaveRowsTests.cpp" />
+    <ClCompile Include="ItemRowsTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="MonsterTests.cpp" />
@@ -237,7 +238,7 @@
     <ClCompile Include="..\GameServer\DB\ProgressStorage.cpp">
       <Filter>GameServer\DB</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\DB\ItemSaveRows.cpp">
+    <ClCompile Include="..\GameServer\DB\ItemRows.cpp">
       <Filter>GameServer\DB</Filter>
     </ClCompile>
   </ItemGroup>

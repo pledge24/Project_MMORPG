@@ -99,6 +99,7 @@ optional<TownRespawn> RoomTransfer::FindTownRespawn()
     const TemplatePos& point = town->respawnPoint.value();
 
     TownRespawn respawn;
+    respawn.mapId = town->mapId;
     respawn.roomId = townRoomId;
     respawn.pos.mutable_pos()->set_x(point.x);
     respawn.pos.mutable_pos()->set_y(point.y);
@@ -112,14 +113,14 @@ optional<TownRespawn> RoomTransfer::FindTownRespawn()
 optional<RoomAssignment> RoomTransfer::AssignRoom(int32 mapId, const Protocol::PosInfo& pos)
 {
     if (const MapTemplate* range = FindRangeContaining(mapId, pos.pos()))
-        return RoomAssignment{ SelectRoomForRange(*range), pos };
+        return RoomAssignment{ range->mapId, SelectRoomForRange(*range), pos };
 
     // 어느 룸에도 들지 않는 좌표는 마을 리스폰 지점에서 시작한다. 맵 표가 바뀌어 저장된 좌표가 범위 밖이 된 경우다.
     optional<TownRespawn> town = FindTownRespawn();
     if (town.has_value() == false)
         return nullopt;
 
-    return RoomAssignment{ town->roomId, town->pos };
+    return RoomAssignment{ town->mapId, town->roomId, town->pos };
 }
 
 optional<string> RoomTransfer::ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos)

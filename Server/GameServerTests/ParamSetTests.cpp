@@ -71,6 +71,16 @@ TEST(ParamSetTest, PartiallyFailedRowsAreDBError)
         << "실패한 행을 놓치면 저장 트랜잭션이 되돌려지지 않고 그 행의 아이템이 사라진다";
 }
 
+// 배열 크기가 1이면 ODBC Driver 17은 행별 상태를 쓰지 않는다. 2026년 10월 21일 GameDB_Test에서 처리한 행 1, 상태는
+// 처음 값(SQL_PARAM_UNUSED) 그대로인 것을 확인했다. 상태로 판정하면 아이템이 하나인 저장이 언제나 실패한다.
+TEST(ParamSetTest, OneRowIsJudgedByExecutionResult)
+{
+    FakeDBConnection conn;
+
+    EXPECT_NO_THROW(ExecuteParamSet<ValueRowsBinding>(conn, "Test", QUERY, vector<int64>{ 11 }));
+    EXPECT_EQ(conn.executedQueries.size(), 1u);
+}
+
 TEST(ParamSetTest, FailedExecutionIsDBError)
 {
     FakeDBConnection conn;

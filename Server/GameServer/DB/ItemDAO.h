@@ -6,24 +6,20 @@ struct PlayerSaveData;
 /**
  * 캐릭터 아이템의 DB 접근 창구.
  *
- * 캐릭터가 가진 장비와 개수로 쌓이는 아이템(소모품, 기타)을 불러오고 저장한다.
- * DB 작업이 실패하면 DBError를 던진다.
+ * 캐릭터가 가진 아이템(Item)과 장비의 세부 값(ItemGear)을 불러오고 저장한다.
+ * 모든 쿼리가 블로킹이므로 DB 큐의 잡 안에서만 부른다. DB 작업이 실패하면 DBError를 던진다.
  */
 class ItemDAO
 {
 public:
     /**
-     * 캐릭터의 아이템을 progress의 인벤토리와 착용 장비에 붙인다. DB 큐의 잡 안에서 부른다.
-     * 행마다 슬롯을 하나씩 붙일 뿐이라 배열 순번은 슬롯 번호가 아니다. 슬롯 번호는 각 슬롯의 slot_id다.
+     * 캐릭터의 아이템을 progress의 인벤토리와 착용 장비에 붙인다. 컨테이너나 구역을 모르는 행이 있으면 DBError.
+     * 행마다 칸을 하나씩 붙일 뿐이라 배열 순번은 칸 번호가 아니다. 칸 번호는 각 칸의 slot_id다.
      */
     static void LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress);
-    /** 더티 플래그가 켜진 슬롯만 저장한다. DB 큐의 잡 안에서 부르고, 가방의 더티 플래그가 없으면 DBError. */
+    /**
+     * 사본에 든 아이템 전체로 그 캐릭터의 아이템 행을 맞추고, 사본에 없는 행은 지운다.
+     * 여러 문장을 차례로 실행하므로 트랜잭션 안에서 부르고, DBError를 받으면 되돌린다.
+     */
     static void SaveItems(DBConnection& conn, const PlayerSaveData& data);
-
-private:
-    static void LoadGearItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress);
-    static void LoadStackableItems(DBConnection& conn, int64 characterId, Protocol::ItemType itemType, OUT PlayerProgress& progress);
-
-    static void SaveGearItems(DBConnection& conn, const PlayerSaveData& data);
-    static void SaveStackableItems(DBConnection& conn, const PlayerSaveData& data, Protocol::ItemType itemType);
 };

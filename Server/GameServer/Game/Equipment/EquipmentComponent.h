@@ -36,10 +36,6 @@ public:
     /** 없는 부위면 nullptr. */
     const Protocol::Slot* GetSlot(int32 gearType) const;
 
-    /** 부위 번호마다 저장할 변경이 있는지. 한 번도 바뀌지 않은 부위는 키가 없다. */
-    map<int32, bool>& GetDirtyFlagMappings() { return _dirtyFlagMappings; }
-    void ClearDirtyFlags();
-
 private:
     /** level과 characterClass가 아이템 표의 착용 조건에 맞으면 true. */
     static bool MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass);
@@ -48,5 +44,4 @@ private:
 
 private:
     google::protobuf::Map<int32, Protocol::Slot>* _equippedGearLookup;
-    map<int32, bool> _dirtyFlagMappings;
 };
