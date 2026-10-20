@@ -206,6 +206,7 @@
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
+    <ClCompile Include="SnowflakeIdGeneratorTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
@@ -248,6 +249,7 @@
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
+    <ClCompile Include="..\GameServer\Utils\SnowflakeIdGenerator.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />

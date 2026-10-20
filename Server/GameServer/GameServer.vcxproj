@@ -197,6 +197,7 @@
     <ClInclude Include="Game\Progress\Leveling.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
+    <ClInclude Include="Utils\SnowflakeIdGenerator.h" />
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
     <ClInclude Include="Game\Entities\EntityComponent.h" />
@@ -271,6 +272,7 @@
     <ClCompile Include="Game\Progress\Leveling.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
+    <ClCompile Include="Utils\SnowflakeIdGenerator.cpp" />
     <ClCompile Include="Game\Entities\Creature.cpp" />
     <ClCompile Include="Game\Entities\Entity.cpp" />
     <ClCompile Include="Game\Entities\Monster.cpp" />

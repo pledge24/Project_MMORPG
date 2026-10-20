@@ -1,0 +1,14 @@
+[
+    {
+        "itemType": "GEAR",
+        "slotCount": 32
+    },
+    {
+        "itemType": "CONSUMABLE",
+        "slotCount": 32
+    },
+    {
+        "itemType": "MISCELLANEOUS",
+        "slotCount": 32
+    }
+]
