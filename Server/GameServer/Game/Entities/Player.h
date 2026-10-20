@@ -102,7 +102,7 @@ protected:
 public:
     /**
      * 플레이어 정보를 모두 채운 뒤 부른다. 언리얼의 FinishSpawning에 대응한다.
-     * 불러온 스탯이 계산 결과와 맞지 않으면 false.
+     * 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 false.
      */
     bool OnLoaded();
 
@@ -112,7 +112,7 @@ private:
      * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false.
      */
     bool ApplyProgress(const PlayerProgress& progress);
-    /** 불러온 스탯이 계산 결과와 어긋나면 사유를 로그에 남기고 false. */
+    /** 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 사유를 로그에 남기고 false. */
     bool ValidateLoadedStat();
 
     //~ 요청 처리
@@ -254,7 +254,7 @@ public:
 
     /** 저장할 진행의 사본을 만든다. 룸 큐 위에서만 부른다. */
     PlayerSaveData MakeSaveData() const;
-    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 룸 번호도 마을로 바꾼다. */
+    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 맵과 룸 번호도 마을로 바꾼다. */
     void ApplyTownRespawnForSave(const TownRespawn& town);
 
 private:

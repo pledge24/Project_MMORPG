@@ -13,7 +13,7 @@
     아래 테스트는 세 슬롯 타입 전부에 대해 넣기→조회→지우기 왕복이 같은 저장소를
     가리키는지 확인한다.
 
-    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. DB·Redis·Room·세션이 필요 없다 (세션이 없으면 Player::Init은
     InventoryComponent/EquipmentComponent 생성이 전부).
 ---------------------------------------------------------------*/
@@ -23,6 +23,8 @@ namespace
     constexpr int32 GEAR_TEMPLATE_ID = 1001;
     constexpr int32 CONSUMABLE_TEMPLATE_ID = 2001;
     constexpr int32 MISC_TEMPLATE_ID = 3001;
+    /** 장비, 소모품, 기타 구역이 모두 이 칸 수를 갖는다. */
+    constexpr int32 SLOT_COUNT = 32;
 
     /** 테스트가 주입한 표. 시드할 때마다 통째로 다시 설치한다. */
     GamedataTables seededTables;
@@ -51,9 +53,9 @@ namespace
         Protocol::SlotType::SLOT_TYPE_EQUIPPED,
         Protocol::SlotType::SLOT_TYPE_QUICK};
 
-    constexpr int32 LAST_SLOT_ID = static_cast<int32>(MAX_SLOTS) - 1;
+    constexpr int32 LAST_SLOT_ID = SLOT_COUNT - 1;
     constexpr int32 OUT_OF_RANGE_SLOT_IDS[] = {
-        -1, static_cast<int32>(MAX_SLOTS), static_cast<int32>(MAX_SLOTS) + 1};
+        -1, SLOT_COUNT, SLOT_COUNT + 1};
 
     // 매핑 표의 키 집합 고정
     // 슬롯 타입 ↔ 아이템 타입 ↔ 그 타입으로 들어가는 시드 아이템.
@@ -169,6 +171,11 @@ class InventoryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
+        seededTables.inventorySlotCounts = {
+            { Protocol::ITEM_TYPE_GEAR, SLOT_COUNT },
+            { Protocol::ITEM_TYPE_CONSUMABLE, SLOT_COUNT },
+            { Protocol::ITEM_TYPE_MISCELLANEOUS, SLOT_COUNT },
+        };
         SeedItem(GEAR_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR);
         SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
         SeedItem(MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS);
@@ -274,23 +281,6 @@ TEST_F(InventoryTest, RemovingMiscItemDoesNotTouchGearInventory)
     실패한 제거의 부작용
 ---------------------------------------------------------------*/
 
-// 실패한 제거가 슬롯을 더티로 만들면 불필요한 DB 저장·복제가 따라온다.
-TEST_F(InventoryTest, FailedRemoveDoesNotMarkSlotDirty)
-{
-    PlayerTestAccess::Inventory(*player).ClearDirtyFlags();
-
-    Protocol::Slot request;
-    request.set_slot_id(0);
-    request.set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
-
-    Protocol::Slot removed;
-    ASSERT_FALSE(PlayerTestAccess::Inventory(*player).RemoveItem(request, &removed, 1)) << "빈 슬롯 제거는 실패해야 한다";
-
-    const vector<bool>* flags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
-    ASSERT_NE(flags, nullptr) << "더티 플래그 표에 소비 아이템 타입이 없다";
-    EXPECT_FALSE((*flags)[0]) << "실패한 제거가 슬롯을 더티로 만들었다";
-}
-
 // 빈 슬롯에 제거를 시도한 것만으로 그 슬롯이 쓸 수 없게 되면 안 된다.
 // (RemoveItem이 검증보다 먼저 mutable_item()을 부르면 has_item()이 켜져 슬롯이 점유된다)
 TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
@@ -338,8 +328,7 @@ TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
     constexpr int32 MAX_STACK = 10;
     SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, MAX_STACK);
 
-    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, MAX_SLOTS * MAX_STACK - 1));
-    PlayerTestAccess::Inventory(*player).ClearDirtyFlags();
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(nullptr, CONSUMABLE_TEMPLATE_ID, SLOT_COUNT * MAX_STACK - 1));
 
     RepeatedPtrField<Protocol::Slot> addedSlots;
     EXPECT_FALSE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, CONSUMABLE_TEMPLATE_ID, 2))
@@ -347,13 +336,9 @@ TEST_F(InventoryTest, AddBeyondCapacityChangesNothing)
     EXPECT_TRUE(addedSlots.empty()) << "거절한 추가가 복제 목록을 채웠다";
 
     const Protocol::Slot* last =
-        player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS - 1);
+        player->GetInventory().GetSlot(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, SLOT_COUNT - 1);
     ASSERT_NE(last, nullptr);
     EXPECT_EQ(last->item().count(), MAX_STACK - 1) << "거절한 추가가 슬롯 일부를 바꿨다";
-
-    const vector<bool>* dirtyFlags = player->GetInventory().GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE);
-    ASSERT_NE(dirtyFlags, nullptr);
-    EXPECT_EQ(std::count(dirtyFlags->begin(), dirtyFlags->end(), true), 0) << "거절한 추가가 더티 플래그를 켰다";
 }
 
 /*--------------------------------------------------------------
@@ -486,9 +471,9 @@ TEST_F(InventoryTest, RejectedSlotInputLeavesInventoryUsable)
 
     키가 표에 있는지는 공개 인터페이스로만 관측한다. 내부 상태를 들여다보지 않는다.
 
-    Inventory는 아이템 타입마다 저장소(Bag) 하나를 두고, 그 안에 슬롯 타입과 슬롯 배열과
-    더티 플래그를 함께 담는다. 슬롯 타입으로 찾든 아이템 타입으로 찾든 같은 목록을 본다.
-    GetSlot은 슬롯 타입으로, GetDirtyFlags와 AddItem은 아이템 타입으로 저장소를 찾으므로,
+    Inventory는 아이템 타입마다 저장소(Bag) 하나를 두고, 그 안에 슬롯 타입과 슬롯 배열을
+    함께 담는다. 슬롯 타입으로 찾든 아이템 타입으로 찾든 같은 목록을 본다.
+    GetSlot은 슬롯 타입으로, AddItem은 아이템 타입으로 저장소를 찾으므로,
     아래 두 테스트가 두 방향의 키 집합을 각각 고정한다.
 ---------------------------------------------------------------*/
 
@@ -535,21 +520,26 @@ TEST_F(InventoryTest, ItemTypeLookupKeySetMatchesDeclaration)
         ASSERT_TRUE(AddByTemplate(storedCase.templateId, 1, &added))
             << "조회 표에 이 아이템 타입의 저장소가 없다";
 
-        // 어느 아이템 타입으로 들어갔는지는 더티 플래그가 어느 표에 찍혔는지로 확인한다.
+        // 어느 아이템 타입으로 들어갔는지는 그 짝인 슬롯 타입으로 다시 찾아 확인한다.
         // 이것까지 봐야 관측한 키가 선언한 아이템 타입이라고 말할 수 있다.
-        const vector<bool>* dirtyFlags = player->GetInventory().GetDirtyFlags(storedCase.itemType);
-        ASSERT_NE(dirtyFlags, nullptr) << "더티 플래그 표에 이 아이템 타입이 없다";
-        EXPECT_TRUE((*dirtyFlags)[added.slot_id()]) << "선언한 아이템 타입이 아닌 저장소에 아이템이 들어갔다";
+        const Protocol::Slot* stored = player->GetInventory().GetSlot(storedCase.slotType, added.slot_id());
+        ASSERT_NE(stored, nullptr);
+        EXPECT_TRUE(stored->has_item() && stored->item().template_id() == storedCase.templateId)
+            << "선언한 아이템 타입이 아닌 저장소에 아이템이 들어갔다";
     }
 
-    // 더티 플래그 표를 반대 방향으로도 본다. 제외하기로 선언한 아이템 타입이 표에
-    // 들어와 있으면 여기서 걸린다. 위 두 EXPECT는 "있어야 할 키가 있다"만 보므로
+    // 조회 표를 반대 방향으로도 본다. 제외하기로 선언한 아이템 타입의 아이템을 넣어서
+    // 들어가면 그 타입이 표에 들어와 있는 것이다. 위 EXPECT는 "있어야 할 키가 있다"만 보므로
     // 이 검사가 있어야 키 집합이 양쪽에서 고정된다.
+    constexpr int32 EXCLUDED_TEMPLATE_ID = 9001;
     for (Protocol::ItemType excludedItemType : EXCLUDED_ITEM_TYPES)
     {
-        EXPECT_EQ(player->GetInventory().GetDirtyFlags(excludedItemType), nullptr)
+        SeedItem(EXCLUDED_TEMPLATE_ID, excludedItemType);
+
+        Protocol::Slot added;
+        EXPECT_FALSE(AddByTemplate(EXCLUDED_TEMPLATE_ID, 1, &added))
             << Protocol::ItemType_Name(excludedItemType)
-            << " 가 더티 플래그 표에 들어왔다. 의도한 변경이라면 위 기대 집합에서 자리를 옮겨라";
+            << " 가 조회 표에 들어왔다. 의도한 변경이라면 위 기대 집합에서 자리를 옮겨라";
     }
 }
 

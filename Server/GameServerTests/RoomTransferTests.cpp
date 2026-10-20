@@ -121,6 +121,7 @@ TEST(RoomTransferTest, TownRespawnComesFromMapTable)
 {
     MapTemplate town;
     town.templateId = 10;
+    town.mapId = 1001;
     town.respawnPoint = TemplatePos{ 100.f, 200.f, 30.f };
 
     GamedataTables tables;
@@ -132,6 +133,7 @@ TEST(RoomTransferTest, TownRespawnComesFromMapTable)
     Gamedata::Install(GamedataTables());
 
     ASSERT_TRUE(respawn.has_value());
+    EXPECT_EQ(respawn->mapId, 1001) << "사망한 채 끊긴 플레이어는 마을의 맵으로 저장한다";
     EXPECT_EQ(respawn->roomId, 10);
     EXPECT_FLOAT_EQ(respawn->pos.pos().x(), 100.f);
     EXPECT_FLOAT_EQ(respawn->pos.pos().y(), 200.f);
@@ -314,6 +316,7 @@ protected:
     static void ExpectTownRespawn(const optional<RoomAssignment>& assignment)
     {
         ASSERT_TRUE(assignment.has_value());
+        EXPECT_EQ(assignment->mapId, MAP_A) << "마을로 보내면 맵도 마을의 맵으로 바뀐다";
         EXPECT_EQ(assignment->roomId, TOWN_ROOM);
         EXPECT_FLOAT_EQ(assignment->pos.pos().x(), 100.f);
         EXPECT_FLOAT_EQ(assignment->pos.pos().y(), 200.f);
@@ -371,6 +374,7 @@ TEST_F(RoomAssignmentTest, RangeOfOtherMapIsNotCandidate)
     const optional<RoomAssignment> otherMap = RoomTransfer::AssignRoom(MAP_B, MakePlayerPos(0.f, 0.f));
     ASSERT_TRUE(otherMap.has_value());
     EXPECT_EQ(otherMap->roomId, OTHER_MAP_ROOM) << "범위가 같은 마을이 룸 번호가 더 작아도 맵이 다르면 후보가 아니다";
+    EXPECT_EQ(otherMap->mapId, MAP_B);
 }
 
 TEST_F(RoomAssignmentTest, MapIdNotInMapTableGoesToTownRespawn)

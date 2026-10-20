@@ -15,8 +15,6 @@ bool ProgressStorage::Load(DBConnection& conn, int64 userId, int64 characterId, 
             return false;
         }
 
-        CharacterStateDAO::LoadLastState(conn, characterId, OUT progress);
-
         ItemDAO::LoadItems(conn, characterId, OUT progress);
     }
     catch (const exception& error)
@@ -32,7 +30,7 @@ bool ProgressStorage::Save(DBConnection& conn, const PlayerSaveData& data)
 {
     const int64 characterId = data.progress.playerInfo.character_id();
 
-    // 세 단계가 따로 확정되면 레벨은 오르고 아이템은 저장되지 않는 식으로 진행이 어긋난다.
+    // 단계가 따로 확정되면 레벨은 오르고 아이템은 저장되지 않는 식으로 진행이 어긋난다.
     // DBError가 아닌 예외도 받아 되돌린다. 열린 트랜잭션을 둔 채 연결을 풀에 돌려주면 다음 잡이 그 위에서 돈다.
     if (conn.BeginTransaction() == false)
     {
@@ -43,7 +41,8 @@ bool ProgressStorage::Save(DBConnection& conn, const PlayerSaveData& data)
     try
     {
         CharacterStateDAO::SaveCharacter(conn, data);
-        CharacterStateDAO::SaveLastState(conn, data);
+        CharacterStateDAO::SaveState(conn, data);
+        CharacterStateDAO::SaveGold(conn, data);
         ItemDAO::SaveItems(conn, data);
     }
     catch (const exception& error)

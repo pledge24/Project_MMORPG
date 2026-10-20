@@ -73,7 +73,8 @@ public:
             throw runtime_error("FakeDBConnection이 던진 예외");
 
         // 드라이버는 실행한 행마다 상태를 쓴다. 실패한 행이 있어도 Execute는 SQL_SUCCESS_WITH_INFO로 성공한다.
-        if (_paramStatuses != nullptr)
+        // 배열 크기가 1이면 실제 드라이버(ODBC Driver 17)는 처리한 행 수만 쓰고 행별 상태는 쓰지 않는다.
+        if (_paramStatuses != nullptr && _paramSetSize > 1)
         {
             for (int32 i = 0; i < _paramSetSize; i++)
                 _paramStatuses[i] = SQL_PARAM_SUCCESS;

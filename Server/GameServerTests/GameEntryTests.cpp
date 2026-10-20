@@ -6,6 +6,7 @@
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "DB/ItemRows.h"
 
 /*--------------------------------------------------------------
     게임 입장 테스트
@@ -14,9 +15,9 @@
     세션에 플레이어를 넣어 두고 DB가 그 플레이어에 직접 채웠다. 그래서 불러오기나 검증이 실패해도
     절반만 채운 플레이어가 세션에 남았다.
 
-    픽스처 결합도: 아이템 템플릿과 2레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고, 소켓 없는
-    GameSession을 만든다. 두 레벨의 능력치가 같아서 레벨이 바뀌어도 스탯 검증을 통과한다.
-    DB는 거치지 않고 DAO가 채울 진행 사본을 손으로 만든다.
+    픽스처 결합도: 아이템 템플릿, 2레벨짜리 전사 레벨 표, 구역마다 칸 수가 다른 인벤토리 구역 표를
+    Gamedata::Install로 주입하고, 소켓 없는 GameSession을 만든다. DB는 거치지 않고 DAO가 채울 진행 사본을
+    손으로 만들거나, DB 행을 DAO와 같은 변환(ItemRows)으로 붙여 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -28,7 +29,12 @@ namespace
     constexpr int32 MAX_HP = 500;
     constexpr int32 MAX_MP = 100;
     constexpr int32 PHYSICAL_ATTACK = 10;
+    /** 레벨 2의 물리 공격력. 레벨 1과 달라야 다시 계산한 레벨의 공격력이 쓰이는지 드러난다. */
+    constexpr int32 LEVEL2_PHYSICAL_ATTACK = 13;
     constexpr int32 SWORD_ATTACK = 15;
+    constexpr int32 GEAR_SLOT_COUNT = 32;
+    constexpr int32 CONSUMABLE_SLOT_COUNT = 24;
+    constexpr int32 MISC_SLOT_COUNT = 16;
     /** 레벨 1 → 2의 요구치. 레벨 2가 최대 레벨이라 누적 경험치는 이 값을 넘지 않는다. */
     constexpr int64 LEVEL1_EXP_REQUIREMENT = 50;
 
@@ -40,6 +46,19 @@ namespace
         slot.mutable_item()->set_template_id(templateId);
         slot.mutable_item()->set_count(count);
         return slot;
+    }
+
+    // DB의 Item 행 하나. DAO가 읽는 그대로다.
+    ItemRow MakeInventoryRow(Protocol::ItemType section, int32 slotIndex, int32 templateId, int64 itemUid)
+    {
+        ItemRow row;
+        row.itemUid = itemUid;
+        row.templateId = templateId;
+        row.itemType = section;
+        row.container = ItemContainer::INVENTORY;
+        row.slotIndex = slotIndex;
+        row.stackCount = 1;
+        return row;
     }
 }
 
@@ -68,12 +87,18 @@ protected:
 
         LevelTemplate level2 = level1;
         level2.level = 2;
+        level2.physicalAttack = LEVEL2_PHYSICAL_ATTACK;
         level2.expRequirement = 0;
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.items[POTION_TEMPLATE_ID] = potion;
         tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
+        tables.inventorySlotCounts = {
+            { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
+            { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
+            { Protocol::ITEM_TYPE_MISCELLANEOUS, MISC_SLOT_COUNT },
+        };
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
@@ -86,7 +111,7 @@ protected:
         Gamedata::Install(GamedataTables());
     }
 
-    // DAO가 채우는 것과 같은 모양의 진행. 무기를 하나 입고 있어서 물리 공격력에 무기 수치가 더해져 있다.
+    // DAO가 채우는 것과 같은 모양의 진행. 무기를 하나 입고 있다. 공격력은 DB에 없으므로 사본에도 없다.
     static PlayerProgress MakeValidProgress()
     {
         PlayerProgress progress;
@@ -100,8 +125,6 @@ protected:
         (*stats)[Protocol::STAT_TYPE_EXP] = 20;
         (*stats)[Protocol::STAT_TYPE_HP] = MAX_HP;
         (*stats)[Protocol::STAT_TYPE_MP] = MAX_MP;
-        (*stats)[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = PHYSICAL_ATTACK + SWORD_ATTACK;
-        (*stats)[Protocol::STAT_TYPE_MAGICAL_ATTACK] = 0;
 
         progress.possession.set_gold(300);
         (*progress.possession.mutable_equipped_gear())[Protocol::GEAR_TYPE_WEAPON] =
@@ -145,8 +168,38 @@ TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
     EXPECT_FALSE(player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 0)->has_item());
 
     EXPECT_EQ(player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON)->item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_TRUE(player->GetInventory().GetDirtyFlags(Protocol::ITEM_TYPE_CONSUMABLE)->at(5) == false)
-        << "불러온 슬롯을 바뀐 슬롯으로 표시하면 다음 저장이 바뀌지 않은 행까지 쓴다";
+}
+
+TEST_F(GameEntryTest, InventorySectionsHaveSlotCountsOfSectionTable)
+{
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress());
+    ASSERT_NE(player, nullptr);
+
+    EXPECT_EQ(player->GetPossession().inventory().gear().size(), GEAR_SLOT_COUNT);
+    EXPECT_EQ(player->GetPossession().inventory().consumables().size(), CONSUMABLE_SLOT_COUNT);
+    EXPECT_EQ(player->GetPossession().inventory().miscellaneous().size(), MISC_SLOT_COUNT);
+}
+
+/* 공격력은 저장하지 않는다. 레벨 표와 착용 장비로 다시 계산한다. */
+
+TEST_F(GameEntryTest, AttackIsCalculatedFromLevelAndEquippedGear)
+{
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress());
+
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), PHYSICAL_ATTACK + SWORD_ATTACK);
+}
+
+TEST_F(GameEntryTest, RecalculatedLevelWithOtherAttackStillEnters)
+{
+    PlayerProgress progress = MakeValidProgress();
+    (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = LEVEL1_EXP_REQUIREMENT;
+
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
+
+    ASSERT_NE(player, nullptr) << "저장된 레벨과 다시 계산한 레벨의 공격력이 달라도 입장한다";
+    EXPECT_EQ(player->GetPlayerInfo().level(), 2);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), LEVEL2_PHYSICAL_ATTACK + SWORD_ATTACK);
 }
 
 TEST_F(GameEntryTest, FailedValidationLeavesSessionWithoutPlayer)
@@ -253,26 +306,38 @@ TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
     progress.possession.mutable_equipped_gear()->clear();
     (*progress.possession.mutable_equipped_gear())[Protocol::GEAR_TYPE_HELMET] =
         MakeLoadedSlot(Protocol::SLOT_TYPE_EQUIPPED, Protocol::GEAR_TYPE_HELMET, SWORD_TEMPLATE_ID, 1);
-    (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_PHYSICAL_ATTACK] = PHYSICAL_ATTACK + SWORD_ATTACK;
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
 }
 
-TEST_F(GameEntryTest, ItemInOtherKindOfBagIsRejected)
+TEST_F(GameEntryTest, ItemInOtherKindOfSectionIsRejected)
 {
     PlayerProgress progress = MakeValidProgress();
-    *progress.possession.mutable_inventory()->add_consumables() =
-        MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 7, SWORD_TEMPLATE_ID, 1);
+    ASSERT_TRUE(ItemRows::AddToPossession(MakeInventoryRow(Protocol::ITEM_TYPE_CONSUMABLE, 7, SWORD_TEMPLATE_ID, 501), OUT progress.possession));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "소모품 표의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "소모품 구역의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
 }
 
 // 수정 전에는 범위 밖 칸 번호가 Debug 빌드의 DCHECK로 테스트 실행 파일을 멈춰서 빨강 단계를 돌리지 못했다.
-TEST_F(GameEntryTest, SlotIdOutOfRangeIsRejected)
+TEST_F(GameEntryTest, SlotIndexBeyondSectionSlotCountIsRejected)
 {
     PlayerProgress progress = MakeValidProgress();
-    *progress.possession.mutable_inventory()->add_consumables() =
-        MakeLoadedSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, MAX_SLOTS, POTION_TEMPLATE_ID, 1);
+    ASSERT_TRUE(ItemRows::AddToPossession(
+        MakeInventoryRow(Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT, POTION_TEMPLATE_ID, 501), OUT progress.possession));
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
+}
+
+TEST_F(GameEntryTest, SlotIndexWithinItsOwnSectionEnters)
+{
+    PlayerProgress progress = MakeValidProgress();
+    ASSERT_TRUE(ItemRows::AddToPossession(
+        MakeInventoryRow(Protocol::ITEM_TYPE_GEAR, CONSUMABLE_SLOT_COUNT, SWORD_TEMPLATE_ID, 501), OUT progress.possession));
+
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
+
+    ASSERT_NE(player, nullptr) << "칸 수는 구역마다 따로다. 소모품 구역의 칸 수를 넘는 번호도 장비 구역에서는 들어간다";
+    const Protocol::Slot* slot = player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, CONSUMABLE_SLOT_COUNT);
+    ASSERT_NE(slot, nullptr);
+    EXPECT_EQ(slot->item().item_uid(), 501);
 }

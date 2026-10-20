@@ -10,9 +10,9 @@
 
     접속 종료 저장은 룸 큐 위에서 뜬 사본을 DB 스레드가 읽는다. 사본이 살아 있는
     Player를 가리키면 룸 스레드의 변경과 경쟁하므로, 사본을 뜬 뒤에 플레이어가 바뀌어도
-    사본은 그대로여야 한다. 어느 인벤토리 칸을 저장할지 정하는 dirty flag도 함께 떠야 한다.
+    사본은 그대로여야 한다. 저장은 들고 있는 아이템 전체로 행을 맞추므로 소지품도 통째로 떠야 한다.
 
-    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -33,6 +33,7 @@ protected:
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
+        tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
@@ -63,18 +64,19 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
     EXPECT_EQ(data.progress.possession.gold(), 500);
 }
 
-TEST_F(PlayerSaveDataTest, SnapshotCarriesDirtyFlags)
+TEST_F(PlayerSaveDataTest, SnapshotCarriesHeldItems)
 {
     RepeatedPtrField<Protocol::Slot> addedSlots;
     ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
     ASSERT_FALSE(addedSlots.empty());
-    const int32 slotId = addedSlots[0].slot_id();
+    const Protocol::Slot added = addedSlots[0];
 
     PlayerSaveData data = player->MakeSaveData();
-    PlayerTestAccess::Inventory(*player).ClearDirtyFlags();
+    Protocol::Slot removed;
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).RemoveItem(added, OUT &removed));
 
-    ASSERT_TRUE(data.gearDirtyFlags.has_value());
-    ASSERT_LT(slotId, (int32)data.gearDirtyFlags->size());
-    EXPECT_TRUE((*data.gearDirtyFlags)[slotId]) << "dirty flag가 빠지면 새로 얻은 아이템이 저장되지 않는다";
-    EXPECT_EQ(data.progress.possession.inventory().gear(slotId).item().template_id(), SWORD_TEMPLATE_ID);
+    const Protocol::Slot& saved = data.progress.possession.inventory().gear(added.slot_id());
+    ASSERT_TRUE(saved.has_item()) << "사본에서 빠진 아이템은 저장 쿼리가 DB에서 지운다";
+    EXPECT_EQ(saved.item().template_id(), SWORD_TEMPLATE_ID);
+    EXPECT_EQ(saved.item().item_uid(), added.item().item_uid());
 }

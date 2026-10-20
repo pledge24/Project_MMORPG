@@ -225,7 +225,7 @@
     <ClInclude Include="DB\CharacterStateDAO.h" />
     <ClInclude Include="DB\ItemDAO.h" />
     <ClInclude Include="DB\ProgressStorage.h" />
-    <ClInclude Include="DB\ItemSaveRows.h" />
+    <ClInclude Include="DB\ItemRows.h" />
     <ClInclude Include="DB\DAOCommon.h" />
   </ItemGroup>
   <ItemGroup>
@@ -296,7 +296,7 @@
     <ClCompile Include="DB\CharacterStateDAO.cpp" />
     <ClCompile Include="DB\ItemDAO.cpp" />
     <ClCompile Include="DB\ProgressStorage.cpp" />
-    <ClCompile Include="DB\ItemSaveRows.cpp" />
+    <ClCompile Include="DB\ItemRows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Protocol\GenPackets.bat" />

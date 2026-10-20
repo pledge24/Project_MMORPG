@@ -78,8 +78,6 @@ void Player::Tick(float deltaTime)
 
 bool Player::OnLoaded()
 {
-    _inventory->ClearDirtyFlags();
-    _equipment->ClearDirtyFlags();
     RefreshEquippedGearSummary();
 
 	if (ValidateLoadedStat() == false)
@@ -169,15 +167,12 @@ bool Player::ValidateLoadedStat()
     if (finalStat.has_value() == false)
         return false;
 
+    // 공격력은 저장하지 않고 레벨 표와 착용 장비로 다시 계산하므로 대조할 값이 없다.
     string cause;
     if (GetStatValue(Protocol::STAT_TYPE_HP) > finalStat->maxHp)
         cause = "현재 HP가 최대 HP를 초과";
     else if (GetStatValue(Protocol::STAT_TYPE_MP) > finalStat->maxMp)
         cause = "현재 MP가 최대 MP를 초과";
-    else if (GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) != finalStat->physicalAttack)
-        cause = "물리 공격력이 계산 결과와 일치하지 않음";
-    else if (GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) != finalStat->magicalAttack)
-        cause = "마법 공격력이 계산 결과와 일치하지 않음";
 
     if (cause.empty() == false)
     {
@@ -641,15 +636,6 @@ PlayerSaveData Player::MakeSaveData() const
     (*data.progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = _totalExp;
     data.progress.possession.CopyFrom(*_possession);
 
-    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_GEAR))
-        data.gearDirtyFlags = *flags;
-    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_CONSUMABLE))
-        data.consumableDirtyFlags = *flags;
-    if (vector<bool>* flags = _inventory->GetDirtyFlags(Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS))
-        data.miscDirtyFlags = *flags;
-
-    data.equippedGearDirtyFlags = _equipment->GetDirtyFlagMappings();
-
     return data;
 }
 
@@ -663,5 +649,7 @@ void Player::ApplyTownRespawnForSave(const TownRespawn& town)
 
     ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
 
+    // DB에는 룸이 아니라 맵과 좌표를 저장한다. 맵을 바꾸지 않으면 다음 입장이 죽은 맵의 마을 좌표에서 룸을 찾는다.
+    _playerInfo->set_map_id(town.mapId);
     _playerInfo->set_room_id(town.roomId);
 }
