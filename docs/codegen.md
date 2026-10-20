@@ -61,7 +61,7 @@
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data)
+**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data, Currency, Character_Creation, Inventory_Section)
 
 **원본에는 수치만 둔다. 에셋 경로 열을 만들지 않는다.** 아이콘, 메시, 몬스터 클래스는
 `DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
@@ -71,12 +71,12 @@
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 9개가 전부다.**
+**산출물은 아래 표의 12개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` · `S_Currency.json` · `S_Character_Creation.json` · `S_Inventory_Section.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
@@ -84,6 +84,24 @@
 
 장비 데이터는 `Original_Item.xlsx`의 첫 시트에 있다. 세 시트가 하나의 `C_Item.json`으로
 합쳐지므로 장비만 담는 산출물은 없다.
+
+레벨, 재화, 캐릭터 생성, 인벤토리 구역 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
+
+### 서버 전용 표
+
+아래 세 표는 2026년 10월 20일(#250)에 DB 기본값과 코드 상수에서 옮겨 왔다. 열은 모두 `SERVER`다.
+
+| 원본 | 열 | 규칙 |
+|---|---|---|
+| `Original_Currency.xlsx` (재화) | `template_id` · `currency_name` · `currency_type` | `template_id`가 DB의 `CurrencyId`다. `currency_type`은 서버 열거형 `CurrencyType`의 이름(`GOLD`)이고, `GOLD` 행은 정확히 하나다 |
+| `Original_Character_Creation.xlsx` (캐릭터 생성) | `start_map_id` · `start_pos` · `start_yaw` · `start_gold` · `default_character_slot_count` | 행이 정확히 하나다. `start_map_id`는 룸 번호(`template_id`)가 아니라 맵 표의 `map_id`다. 시작 골드는 0 이상, 슬롯 수는 1~255다(DB 열이 `TINYINT`) |
+| `Original_Inventory_Section.xlsx` (인벤토리 구역) | `item_type` · `slot_count` | `NONE`을 뺀 아이템 종류마다 행이 정확히 하나다. 칸 수는 1 이상이다 |
+
+**인벤토리 구역의 칸 수는 32에서 바꾸지 않는다.** 클라이언트 UI가 구역마다 32칸을 고정으로 쓴다.
+
+2026년 10월 20일 현재 서버는 세 표를 검증만 하고 값은 쓰지 않는다. 새 캐릭터의 시작 값은 아직 DB 기본값이,
+슬롯 수와 칸 수는 `CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT`와 `InventoryComponent`의 `MAX_SLOTS`가 정한다.
+GameDB 재구성 작업(#247)의 뒤 티켓들이 이 값을 표로 바꾼다.
 
 ### 클라이언트 데이터 테이블 재임포트
 
@@ -104,21 +122,23 @@
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `S_Quest.json`을 뺀 네 파일을 읽는다.
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `S_Quest.json`을 뺀 일곱 파일을 읽는다.
 `GamedataParser::Parse`가 모든 행을 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿만 읽는다.
 
 **틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Item.json` 2번째 행(templateId 1001): 'buyPrice'가 정수가 아니다」처럼
 파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 표에 없는 아이템 종류와 장비 부위, 착용 조건의 직업(`all`이 아닌 값),
 보상의 최솟값이 최댓값보다 큰 행, 0 이하의 포털 반경(`portalRadius`), 중복된 templateId, 맵 표에 없는 포털 목적지와 몬스터 표에 없는 스폰 몬스터가 여기 걸린다.
+위 「서버 전용 표」의 규칙을 어긴 행도 같다.
 — 게임 중에 Json을 읽던 때는 틀린 행이 룸 스레드의 예외가 되거나 조용히 기본값으로 동작했다.
 
-두 값은 코드 상수가 아니라 기획표에서 온다.
+세 값은 코드 상수가 아니라 기획표에서 온다.
 
 | 값 | 원천 |
 |---|---|
 | 직업의 최대 레벨 | 그 직업 레벨 표의 마지막 레벨. 레벨은 1부터 빠짐없이 이어져야 한다 |
 | 마을 룸 번호 | 맵 표에서 `hasRespawnPoint`가 참인 유일한 맵. 둘 이상이거나 없으면 부팅이 실패한다 |
+| 골드의 재화 번호 | 재화 표에서 `currency_type`이 `GOLD`인 유일한 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이거나 없으면 부팅이 실패한다 |
 
 서버가 읽는 열을 늘릴 때는 `JsonProperty.h`의 열 이름, `Templates.h`의 필드, `GamedataParser.cpp`의 변환을 함께 고친다.
 테스트는 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다.

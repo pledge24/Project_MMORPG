@@ -24,6 +24,7 @@ namespace
     constexpr int32 MONSTER_ID = 5000;
     constexpr int32 TOWN_ID = 10;
     constexpr int32 FIELD_ID = 20;
+    constexpr int32 GOLD_ID = 1;
 
     Json MakeLevelRow(int32 level)
     {
@@ -99,6 +100,24 @@ namespace
         };
     }
 
+    Json MakeCurrency(int32 templateId, const char* currencyType)
+    {
+        return Json{{"templateId", templateId}, {"currencyName", "골드"}, {"currencyType", currencyType}};
+    }
+
+    Json MakeCharacterCreation()
+    {
+        return Json{
+            {"startMapId", 1111}, {"startPos", MakePos(100, -200, 0)}, {"startYaw", 90.0},
+            {"startGold", 10000}, {"defaultCharacterSlotCount", 4},
+        };
+    }
+
+    Json MakeInventorySection(const char* itemType, int32 slotCount)
+    {
+        return Json{{"itemType", itemType}, {"slotCount", slotCount}};
+    }
+
     GamedataDocuments MakeValidDocuments()
     {
         GamedataDocuments documents;
@@ -106,6 +125,11 @@ namespace
         documents.items = Json::array({MakeSword(), MakePotion()});
         documents.monsters = Json::array({MakeMonster()});
         documents.maps = Json::array({MakeTown(), MakeField()});
+        documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
+        documents.characterCreation = Json::array({MakeCharacterCreation()});
+        documents.inventorySections = Json::array({
+            MakeInventorySection("GEAR", 32), MakeInventorySection("CONSUMABLE", 24), MakeInventorySection("MISCELLANEOUS", 16),
+        });
         return documents;
     }
 
@@ -190,6 +214,22 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(field.monsterIds, vector<int32>({MONSTER_ID}));
     EXPECT_EQ(field.maxMonsterCount, 10);
     EXPECT_FLOAT_EQ(field.portalRadius, 300.5f);
+
+    EXPECT_EQ(tables.goldCurrencyId, GOLD_ID) << "골드는 재화 종류가 GOLD인 재화다";
+    ASSERT_TRUE(tables.currencies.contains(GOLD_ID));
+    EXPECT_EQ(tables.currencies.at(GOLD_ID).currencyType, CurrencyType::GOLD);
+
+    const CharacterCreationTemplate& creation = tables.characterCreation;
+    EXPECT_EQ(creation.startMapId, 1111);
+    EXPECT_FLOAT_EQ(creation.startPos.x, 100.f);
+    EXPECT_FLOAT_EQ(creation.startPos.y, -200.f);
+    EXPECT_FLOAT_EQ(creation.startYaw, 90.f);
+    EXPECT_EQ(creation.startGold, 10000);
+    EXPECT_EQ(creation.defaultCharacterSlotCount, 4);
+
+    EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_GEAR), 32);
+    EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_CONSUMABLE), 24);
+    EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_MISCELLANEOUS), 16);
 }
 
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
@@ -338,6 +378,98 @@ TEST(GamedataParserTest, UnknownMonsterInMapIsRejected)
     ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "templateId 20", "5999"});
 }
 
+// 서버는 재화 종류로 골드를 찾는다. 골드가 없거나 둘이면 어느 행이 골드인지 정할 수 없다.
+TEST(GamedataParserTest, ExactlyOneGoldCurrencyIsRequired)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.currencies = Json::array();
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "GOLD"});
+
+    documents = MakeValidDocuments();
+    documents.currencies.push_back(MakeCurrency(2, "GOLD"));
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "GOLD"});
+}
+
+TEST(GamedataParserTest, UnknownCurrencyTypeIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.currencies.push_back(MakeCurrency(2, "HONOR"));
+
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "2번째 행", "currencyType", "HONOR"});
+}
+
+TEST(GamedataParserTest, DuplicateCurrencyIdIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.currencies.push_back(MakeCurrency(GOLD_ID, "GOLD"));
+
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "2번째 행", "중복"});
+}
+
+// 시작 맵은 맵 표의 mapId다. 룸 번호(templateId)를 적으면 새 캐릭터가 들어갈 맵이 없다.
+TEST(GamedataParserTest, StartMapNotInMapTableIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.characterCreation[0]["startMapId"] = TOWN_ID;
+
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION, "startMapId", "10"});
+}
+
+TEST(GamedataParserTest, CharacterCreationMustHaveExactlyOneRow)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.characterCreation = Json::array();
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION});
+
+    documents = MakeValidDocuments();
+    documents.characterCreation.push_back(MakeCharacterCreation());
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION});
+}
+
+TEST(GamedataParserTest, CharacterCreationValuesOutOfRangeAreRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.characterCreation[0]["startGold"] = -1;
+    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION, "startGold"});
+
+    for (int32 slotCount : { 0, 256 })
+    {
+        documents = MakeValidDocuments();
+        documents.characterCreation[0]["defaultCharacterSlotCount"] = slotCount;
+
+        SCOPED_TRACE(slotCount);
+        ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION, "defaultCharacterSlotCount"});
+    }
+}
+
+TEST(GamedataParserTest, NonPositiveSectionSlotCountIsRejected)
+{
+    for (int32 slotCount : { 0, -1 })
+    {
+        GamedataDocuments documents = MakeValidDocuments();
+        documents.inventorySections[1]["slotCount"] = slotCount;
+
+        SCOPED_TRACE(slotCount);
+        ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "2번째 행", "slotCount"});
+    }
+}
+
+// 아이템은 자기 종류의 구역에만 들어간다. 구역이 없는 종류의 아이템은 인벤토리에 넣을 곳이 없다.
+TEST(GamedataParserTest, EveryItemTypeNeedsExactlyOneSection)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.inventorySections.erase(2);
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "MISCELLANEOUS"});
+
+    documents = MakeValidDocuments();
+    documents.inventorySections.push_back(MakeInventorySection("GEAR", 8));
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "4번째 행", "GEAR"});
+
+    documents = MakeValidDocuments();
+    documents.inventorySections[0]["itemType"] = "NONE";
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "1번째 행", "itemType"});
+}
+
 TEST(GamedataParserTest, FailedLoadKeepsPreviousTables)
 {
     ASSERT_FALSE(Gamedata::Load(MakeValidDocuments()).has_value());
@@ -364,6 +496,9 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.items = ReadJsonFile(dir / GamedataFile::ITEMS);
     documents.maps = ReadJsonFile(dir / GamedataFile::MAPS);
     documents.monsters = ReadJsonFile(dir / GamedataFile::MONSTERS);
+    documents.currencies = ReadJsonFile(dir / GamedataFile::CURRENCIES);
+    documents.characterCreation = ReadJsonFile(dir / GamedataFile::CHARACTER_CREATION);
+    documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
     ASSERT_TRUE(documents.items.is_array()) << "기획표를 찾지 못했다: " << dir.string();
 
     GamedataTables tables;
@@ -371,4 +506,11 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_FALSE(error.has_value()) << error.value_or("");
     EXPECT_EQ(tables.townRoomId, 10);
     EXPECT_EQ(tables.classLevelTables.at(Protocol::CLASS_TYPE_WARRIOR).GetMaxLevel(), 50);
+
+    // DB 기본값과 코드 상수에서 옮겨 온 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
+    EXPECT_EQ(tables.characterCreation.startMapId, 1111);
+    EXPECT_EQ(tables.characterCreation.startGold, 10000);
+    EXPECT_EQ(tables.characterCreation.defaultCharacterSlotCount, 4);
+    for (int32 itemType : { Protocol::ITEM_TYPE_GEAR, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::ITEM_TYPE_MISCELLANEOUS })
+        EXPECT_EQ(tables.inventorySlotCounts.at(itemType), 32) << "클라이언트 UI가 구역마다 32칸을 고정으로 쓴다";
 }

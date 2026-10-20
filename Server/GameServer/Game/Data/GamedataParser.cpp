@@ -38,6 +38,11 @@ namespace
         { JsonProperty::Item::GearSubtype_Sword, Protocol::GEAR_TYPE_WEAPON },
     };
 
+    /** 재화 표의 재화 종류 이름 → 재화 종류. */
+    const unordered_map<string_view, CurrencyType> CURRENCY_TYPE_BY_NAME = {
+        { "GOLD", CurrencyType::GOLD },
+    };
+
     bool IsAbsent(const Json& object, string_view key)
     {
         auto it = object.find(key);
@@ -110,6 +115,25 @@ namespace
         using namespace JsonProperty::Map;
 
         return TemplatePos{ Require<float>(object, PosX), Require<float>(object, PosY), Require<float>(object, PosZ) };
+    }
+
+    /** 아이템 종류를 기획 원본의 표기(GEAR)로 적는다. */
+    string ItemTypeName(Protocol::ItemType itemType)
+    {
+        return Protocol::ItemType_Name(itemType).substr(ITEM_TYPE_NAME_PREFIX.size());
+    }
+
+    /** 아이템 종류 이름(GEAR)을 읽는다. 아이템 종류가 아니거나 NONE이면 RowError를 던진다. */
+    Protocol::ItemType RequireItemType(const Json& object, string_view key)
+    {
+        const string name = Require<string>(object, key);
+
+        Protocol::ItemType itemType = Protocol::ITEM_TYPE_NONE;
+        if (Protocol::ItemType_Parse(string(ITEM_TYPE_NAME_PREFIX) + name, &itemType) == false
+            || itemType == Protocol::ITEM_TYPE_NONE)
+            throw RowError{ format("'{}' \"{}\"는 아이템 종류가 아니다", key, name) };
+
+        return itemType;
     }
 
     /** 행 위치를 붙인 메시지. templateId를 읽을 수 있으면 함께 적는다. */
@@ -199,11 +223,7 @@ namespace
             {
                 ItemTemplate item;
                 item.templateId = Require<int32>(row, TemplateId);
-
-                const string itemTypeName = Require<string>(row, ItemType);
-                if (Protocol::ItemType_Parse(string(ITEM_TYPE_NAME_PREFIX) + itemTypeName, &item.itemType) == false
-                    || item.itemType == Protocol::ITEM_TYPE_NONE)
-                    throw RowError{ format("'itemType' \"{}\"는 아이템 종류가 아니다", itemTypeName) };
+                item.itemType = RequireItemType(row, ItemType);
 
                 const string subtype = Require<string>(row, ItemSubtype);
                 if (item.itemType == Protocol::ITEM_TYPE_GEAR)
@@ -340,6 +360,94 @@ namespace
         return maps;
     }
 
+    unordered_map<int32, CurrencyTemplate> ParseCurrencies(string_view fileName, const Json& document)
+    {
+        // 열 이름 CurrencyType이 재화 종류 열거형과 겹치므로 using namespace를 쓰지 않는다.
+        namespace Column = JsonProperty::Currency;
+
+        unordered_map<int32, CurrencyTemplate> currencies;
+        ForEachRow(fileName, document, [&](const Json& row, size_t)
+            {
+                CurrencyTemplate currency;
+                currency.templateId = Require<int32>(row, Column::TemplateId);
+
+                const string typeName = Require<string>(row, Column::CurrencyType);
+                auto typeIt = CURRENCY_TYPE_BY_NAME.find(typeName);
+                if (typeIt == CURRENCY_TYPE_BY_NAME.end())
+                    throw RowError{ format("'currencyType' \"{}\"는 재화 종류가 아니다", typeName) };
+
+                currency.currencyType = typeIt->second;
+
+                InsertUnique(currencies, currency.templateId, std::move(currency));
+            });
+
+        return currencies;
+    }
+
+    CharacterCreationTemplate ParseCharacterCreation(string_view fileName, const Json& document)
+    {
+        using namespace JsonProperty::CharacterCreation;
+
+        vector<CharacterCreationTemplate> rows;
+        ForEachRow(fileName, document, [&](const Json& row, size_t)
+            {
+                CharacterCreationTemplate creation;
+                creation.startMapId = Require<int32>(row, StartMapId);
+                creation.startPos = RequirePos(RequireObject(row, StartPos));
+                creation.startYaw = Require<float>(row, StartYaw);
+
+                // 재화 수량은 음수가 될 수 없다. DB도 CHECK 제약으로 막는다.
+                creation.startGold = Require<int64>(row, StartGold);
+                if (creation.startGold < 0)
+                    throw RowError{ format("'startGold'가 0보다 작다: {}", creation.startGold) };
+
+                // DB의 Account.CharacterSlotCount가 TINYINT라 255를 넘으면 계정을 만들 때 저장하지 못한다.
+                creation.defaultCharacterSlotCount = Require<int32>(row, DefaultCharacterSlotCount);
+                if (creation.defaultCharacterSlotCount < 1 || creation.defaultCharacterSlotCount > UINT8_MAX)
+                    throw RowError{ format("'defaultCharacterSlotCount'가 1 이상 {} 이하여야 한다: {}",
+                        UINT8_MAX, creation.defaultCharacterSlotCount) };
+
+                rows.push_back(creation);
+            });
+
+        // 새 캐릭터의 시작 값은 하나로 정해져야 한다.
+        if (rows.size() != 1)
+            throw TableError{ format("{}: 행이 하나여야 하는데 {}개다", fileName, rows.size()) };
+
+        return rows.front();
+    }
+
+    /** 아이템 종류(Protocol::ItemType) → 그 구역의 칸 수. */
+    unordered_map<int32, int32> ParseInventorySections(string_view fileName, const Json& document)
+    {
+        using namespace JsonProperty::InventorySection;
+
+        unordered_map<int32, int32> slotCounts;
+        ForEachRow(fileName, document, [&](const Json& row, size_t)
+            {
+                const Protocol::ItemType itemType = RequireItemType(row, ItemType);
+
+                const int32 slotCount = Require<int32>(row, SlotCount);
+                if (slotCount <= 0)
+                    throw RowError{ format("'slotCount'가 0보다 커야 한다: {}", slotCount) };
+
+                if (slotCounts.emplace(itemType, slotCount).second == false)
+                    throw RowError{ format("아이템 종류 {}의 구역이 중복된다", ItemTypeName(itemType)) };
+            });
+
+        // 아이템은 자기 종류의 구역에만 들어간다. 구역이 없는 종류의 아이템은 인벤토리에 넣을 곳이 없다.
+        for (int32 value = Protocol::ItemType_MIN; value <= Protocol::ItemType_MAX; value++)
+        {
+            if (Protocol::ItemType_IsValid(value) == false || value == Protocol::ITEM_TYPE_NONE)
+                continue;
+
+            if (slotCounts.contains(value) == false)
+                throw TableError{ format("{}: 아이템 종류 {}의 구역이 없다", fileName, ItemTypeName(static_cast<Protocol::ItemType>(value))) };
+        }
+
+        return slotCounts;
+    }
+
     //~ 표 사이의 검사
 
     /** 포털 목적지와 스폰 몬스터가 다른 표에 있는지 본다. */
@@ -378,6 +486,35 @@ namespace
 
         return townIds.front();
     }
+
+    /** 서버는 재화 종류로 골드를 찾는다. 골드인 재화가 하나로 정해져야 한다. */
+    int32 FindGoldCurrencyId(const unordered_map<int32, CurrencyTemplate>& currencies)
+    {
+        vector<int32> goldIds;
+        for (const auto& [currencyId, currency] : currencies)
+        {
+            if (currency.currencyType == CurrencyType::GOLD)
+                goldIds.push_back(currencyId);
+        }
+
+        if (goldIds.size() != 1)
+            throw TableError{ format("{}: 재화 종류가 GOLD인 재화가 하나여야 하는데 {}개다", GamedataFile::CURRENCIES, goldIds.size()) };
+
+        return goldIds.front();
+    }
+
+    /** 시작 맵은 룸 번호(templateId)가 아니라 맵 번호(mapId)다. 그 맵의 룸이 맵 표에 있어야 새 캐릭터가 들어간다. */
+    void CheckStartMap(const GamedataTables& tables)
+    {
+        const int32 startMapId = tables.characterCreation.startMapId;
+        for (const auto& [roomId, mapTemplate] : tables.maps)
+        {
+            if (mapTemplate.mapId == startMapId)
+                return;
+        }
+
+        throw TableError{ format("{}: 'startMapId' {}가 맵 표의 mapId에 없다", GamedataFile::CHARACTER_CREATION, startMapId) };
+    }
 }
 
 optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT GamedataTables& tables)
@@ -389,8 +526,14 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.monsters = ParseMonsters(GamedataFile::MONSTERS, documents.monsters);
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
 
+        tables.currencies = ParseCurrencies(GamedataFile::CURRENCIES, documents.currencies);
+        tables.characterCreation = ParseCharacterCreation(GamedataFile::CHARACTER_CREATION, documents.characterCreation);
+        tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
+
         CheckMapReferences(tables);
         tables.townRoomId = FindTownRoomId(tables.maps);
+        tables.goldCurrencyId = FindGoldCurrencyId(tables.currencies);
+        CheckStartMap(tables);
     }
     catch (const TableError& error)
     {
