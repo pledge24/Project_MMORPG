@@ -20,30 +20,26 @@
 class GameDBTestFixture : public ::testing::Test
 {
 protected:
-    static constexpr const char* CONNECTION_STRING_ENV = "P1_GAME_DB_TEST_CONNECTION_STRING";
-    static constexpr const WCHAR* EXPECTED_DATABASE = L"GameDB_Test";
-
     void SetUp() override
     {
         const std::optional<string> connectionString = Config::ReadProcessEnv(CONNECTION_STRING_ENV);
-        ASSERT_TRUE(connectionString.has_value()) << CONNECTION_STRING_ENV << " 환경 변수에 GameDB_Test의 접속 문자열을 넣는다";
+        ASSERT_TRUE(connectionString.has_value()) << CONNECTION_STRING_ENV << " 환경 변수에 테스트 DB의 접속 문자열을 넣는다";
 
         ASSERT_EQ(::SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &_environment), SQL_SUCCESS);
         ASSERT_EQ(::SQLSetEnvAttr(_environment, SQL_ATTR_ODBC_VERSION, reinterpret_cast<SQLPOINTER>(SQL_OV_ODBC3), 0), SQL_SUCCESS);
 
         const wstring wideConnectionString = EncodingConverter::StringToWString(connectionString.value());
-        ASSERT_TRUE(_connection.Connect(_environment, wideConnectionString.c_str())) << "GameDB_Test에 연결하지 못했다";
+        ASSERT_TRUE(_connection.Connect(_environment, wideConnectionString.c_str())) << "테스트 DB에 연결하지 못했다";
 
         const wstring database = QueryCurrentDatabase();
-        ASSERT_EQ(database, EXPECTED_DATABASE) << "행을 지우는 테스트이므로 GameDB_Test가 아닌 DB에서는 돌리지 않는다";
+        ASSERT_EQ(database, EXPECTED_DATABASE) << "행을 지우는 테스트이므로 테스트 DB가 아닌 DB에서는 돌리지 않는다";
     }
 
     void TearDown() override
     {
         for (auto it = _cleanups.rbegin(); it != _cleanups.rend(); ++it)
         {
-            _connection.Unbind();
-            EXPECT_TRUE(_connection.Execute(it->c_str())) << "테스트가 넣은 행을 지우지 못했다: " << EncodingConverter::WCharToString(it->c_str());
+            EXPECT_TRUE(Execute(*it)) << "테스트가 넣은 행을 지우지 못했다: " << EncodingConverter::WCharToString(it->c_str());
         }
 
         _connection.Clear();
@@ -58,6 +54,13 @@ protected:
     void AddCleanup(wstring query)
     {
         _cleanups.push_back(std::move(query));
+    }
+
+    /** 앞 문장의 바인딩과 커서를 풀고 query를 실행한다. 결과 열을 바인딩하려면 Connection()을 직접 쓴다. */
+    bool Execute(const wstring& query)
+    {
+        _connection.Unbind();
+        return _connection.Execute(query.c_str());
     }
 
     DBConnection& Connection() { return _connection; }
@@ -76,6 +79,9 @@ private:
     }
 
 private:
+    static constexpr const char* CONNECTION_STRING_ENV = "P1_GAME_DB_TEST_CONNECTION_STRING";
+    static constexpr const WCHAR* EXPECTED_DATABASE = L"GameDB_Test";
+
     SQLHENV         _environment = SQL_NULL_HANDLE;
     DBConnection    _connection;
     vector<wstring> _cleanups;

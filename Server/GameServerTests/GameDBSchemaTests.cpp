@@ -30,8 +30,7 @@ TEST_F(DISABLED_GameDBSchemaTest, ReadsEveryTableOfInitialSchema)
     for (const wstring& table : tables)
     {
         const wstring query = L"SELECT TOP (0) * FROM " + table;
-        Connection().Unbind();
-        EXPECT_TRUE(Connection().Execute(query.c_str())) << EncodingConverter::WCharToString(table.c_str()) << "를 조회하지 못했다";
+        EXPECT_TRUE(Execute(query)) << EncodingConverter::WCharToString(table.c_str()) << "를 조회하지 못했다";
         EXPECT_FALSE(Connection().Fetch()) << "TOP (0)은 행을 돌려주지 않는다";
     }
 }
