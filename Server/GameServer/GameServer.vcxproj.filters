@@ -56,6 +56,9 @@
     <Filter Include="Game\Characters">
       <UniqueIdentifier>{c86c3240-4ec0-44a0-b694-596060a93c50}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Progress">
+      <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Network\ItemRequests.cpp">
@@ -112,6 +115,9 @@
     </ClCompile>
     <ClCompile Include="Game\Characters\CharacterCreation.cpp">
       <Filter>Game\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Progress\Leveling.cpp">
+      <Filter>Game\Progress</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
@@ -237,6 +243,9 @@
     </ClInclude>
     <ClInclude Include="Game\Characters\CharacterCreation.h">
       <Filter>Game\Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Progress\Leveling.h">
+      <Filter>Game\Progress</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityFactory.h">
       <Filter>Game\Entities</Filter>

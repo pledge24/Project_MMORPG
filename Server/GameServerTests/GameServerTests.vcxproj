@@ -192,6 +192,7 @@
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
+    <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -244,6 +245,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
+    <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />

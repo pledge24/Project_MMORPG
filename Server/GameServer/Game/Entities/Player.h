@@ -9,6 +9,8 @@ class InventoryComponent;
 class EquipmentComponent;
 struct RoomEnterData;
 struct TownRespawn;
+struct LevelExp;
+class ClassLevelTable;
 
 /** 다음 레벨로 오를 때 더할 스탯 증가량. */
 struct NextLevelUpData
@@ -17,7 +19,6 @@ struct NextLevelUpData
     int64 maxMpIncrement = 0;
     int64 paIncrement = 0;
     int64 maIncrement = 0;
-    int64 expRequirement = 0;
 };
 
 //~ 요청 처리 결과
@@ -165,15 +166,22 @@ private:
 public:
     /** rewardResultPkt의 보상을 적용하고 결과를 그 패킷에 쓴다. 최대 레벨에서는 경험치를 버린다. */
     void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
-    /** 최대 레벨이면 아무것도 하지 않는다. */
-    void OnLevelUp();
     /** 직업 레벨 표의 마지막 레벨이면 true. 레벨 표가 없는 직업도 true. */
     bool IsMaxLevel() const;
 
 private:
+    /** 레벨을 하나 올리고 레벨 표의 증가량을 스탯에 더한다. 최대 레벨이면 아무것도 하지 않는다. */
+    void OnLevelUp();
     void CacheNextLevelUpData();
+    /**
+     * 누적 경험치를 바꾸고, 클라이언트에 보낼 레벨 안의 경험치와 그 레벨의 요구치를 스탯에 쓴다.
+     * 레벨은 바꾸지 않는다. 돌려받은 레벨에 맞추는 일은 호출자가 한다.
+     */
+    LevelExp SetTotalExp(const ClassLevelTable& classLevelTable, int64 totalExp);
 
     NextLevelUpData _nextLevelUpData;
+    /** DB에 저장하는 누적 경험치. 스탯의 경험치는 이 값에서 계산한 레벨 안의 값이다. */
+    int64 _totalExp = 0;
 
     //~ 스탯
 private:

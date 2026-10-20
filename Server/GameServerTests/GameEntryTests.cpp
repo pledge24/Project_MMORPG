@@ -14,8 +14,9 @@
     세션에 플레이어를 넣어 두고 DB가 그 플레이어에 직접 채웠다. 그래서 불러오기나 검증이 실패해도
     절반만 채운 플레이어가 세션에 남았다.
 
-    픽스처 결합도: 아이템 템플릿과 1레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고, 소켓 없는
-    GameSession을 만든다. DB는 거치지 않고 DAO가 채울 진행 사본을 손으로 만든다.
+    픽스처 결합도: 아이템 템플릿과 2레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고, 소켓 없는
+    GameSession을 만든다. 두 레벨의 능력치가 같아서 레벨이 바뀌어도 스탯 검증을 통과한다.
+    DB는 거치지 않고 DAO가 채울 진행 사본을 손으로 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -28,6 +29,8 @@ namespace
     constexpr int32 MAX_MP = 100;
     constexpr int32 PHYSICAL_ATTACK = 10;
     constexpr int32 SWORD_ATTACK = 15;
+    /** 레벨 1 → 2의 요구치. 레벨 2가 최대 레벨이라 누적 경험치는 이 값을 넘지 않는다. */
+    constexpr int64 LEVEL1_EXP_REQUIREMENT = 50;
 
     Protocol::Slot MakeLoadedSlot(Protocol::SlotType slotType, int32 slotId, int32 templateId, int32 count)
     {
@@ -61,12 +64,16 @@ protected:
         level1.maxHp = MAX_HP;
         level1.maxMp = MAX_MP;
         level1.physicalAttack = PHYSICAL_ATTACK;
-        level1.expRequirement = 50;
+        level1.expRequirement = LEVEL1_EXP_REQUIREMENT;
+
+        LevelTemplate level2 = level1;
+        level2.level = 2;
+        level2.expRequirement = 0;
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.items[POTION_TEMPLATE_ID] = potion;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
@@ -120,7 +127,7 @@ TEST_F(GameEntryTest, ValidProgressRegistersPlayerInSession)
     EXPECT_EQ(player->GetPlayerInfo().character_id(), CHARACTER_ID);
     EXPECT_EQ(player->GetEnteringRoomId(), 10) << "첫 룸 입장은 불러온 룸으로 간다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MAX_HP);
-    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), 50) << "최대 경험치는 저장하지 않고 레벨 표에서 정한다";
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), LEVEL1_EXP_REQUIREMENT) << "최대 경험치는 저장하지 않고 레벨 표에서 정한다";
     EXPECT_EQ(player->GetPossession().gold(), 300);
 }
 
@@ -153,13 +160,65 @@ TEST_F(GameEntryTest, FailedValidationLeavesSessionWithoutPlayer)
     EXPECT_EQ(session->GetPlayer(), nullptr) << "검증에 실패한 플레이어가 세션에 남으면 끊길 때 저장 경로를 탄다";
 }
 
-TEST_F(GameEntryTest, UnknownLevelLeavesSessionWithoutPlayer)
+TEST_F(GameEntryTest, UnknownClassLeavesSessionWithoutPlayer)
+{
+    PlayerProgress progress = MakeValidProgress();
+    progress.playerInfo.set_class_(Protocol::CLASS_TYPE_MAGE);
+
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr);
+    EXPECT_EQ(session->GetPlayer(), nullptr);
+}
+
+/* DB의 경험치는 누적값이고 레벨은 캐릭터 목록에 보일 사본이다. 입장할 때 레벨을 누적 경험치로 다시 계산한다. */
+
+TEST_F(GameEntryTest, LevelHigherThanExpIsLoweredToCalculatedLevel)
 {
     PlayerProgress progress = MakeValidProgress();
     progress.playerInfo.set_level(2);
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress), nullptr);
-    EXPECT_EQ(session->GetPlayer(), nullptr);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
+
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->GetPlayerInfo().level(), 1) << "누적 경험치 20은 레벨 2의 시작값 50에 못 미친다";
+    EXPECT_EQ(player->MakeSaveData().progress.playerInfo.level(), 1) << "저장하는 레벨 사본도 계산값이어야 한다";
+}
+
+TEST_F(GameEntryTest, LevelLowerThanExpIsRaisedToCalculatedLevel)
+{
+    PlayerProgress progress = MakeValidProgress();
+    (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = LEVEL1_EXP_REQUIREMENT;
+
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
+
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->GetPlayerInfo().level(), 2) << "레벨 1의 요구치와 같은 누적 경험치는 레벨 2다";
+}
+
+TEST_F(GameEntryTest, LoadedTotalExpIsSentAsExpInLevel)
+{
+    PlayerProgress progress = MakeValidProgress();
+    (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = 20;
+
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
+
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 20);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), LEVEL1_EXP_REQUIREMENT);
+    EXPECT_EQ(player->MakeSaveData().progress.statInfo.info().at(Protocol::STAT_TYPE_EXP), 20) << "DB에는 누적 경험치를 저장한다";
+}
+
+TEST_F(GameEntryTest, TotalExpBeyondMaxLevelIsCut)
+{
+    PlayerProgress progress = MakeValidProgress();
+    (*progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = LEVEL1_EXP_REQUIREMENT + 30;
+
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress);
+
+    ASSERT_NE(player, nullptr);
+    EXPECT_EQ(player->GetPlayerInfo().level(), 2);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 0) << "최대 레벨에서는 경험치가 쌓이지 않는다";
+    EXPECT_EQ(player->MakeSaveData().progress.statInfo.info().at(Protocol::STAT_TYPE_EXP), LEVEL1_EXP_REQUIREMENT)
+        << "최대 레벨에 이르는 누적값을 넘는 경험치는 잘라서 저장한다";
 }
 
 // 룸에 들어간 플레이어가 C_ENTER_GAME을 다시 보내면 새 플레이어가 세션을 덮어써, 이전 플레이어가
