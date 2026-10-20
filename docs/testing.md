@@ -54,7 +54,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `SessionDisconnectTest` | 1 | 서버가 건 끊기. 받기만 하고 소켓을 닫지 않는 루프백 상대도 상한 안에 `OnDisconnected`까지 가고 세션 집합에서 빠짐 |
 | `SaveGateTest` | 9 | 접속 종료 저장 대기. 대기 없는 계정은 맡지 않음 · 해제가 맡긴 불러오기를 돌려줌 · 두 번째 맡기기 거절 · 두 번 걸어도 한 번에 풀림 · 만료가 입장만 돌려주고 대기는 남김 · 해제 뒤 늦게 온 만료와 지난 토큰의 만료 무시 · 계정별 분리 |
 | `ProgressCoordinatorTest` | 14 | 저장 대기와 입장 불러오기의 순서. 대기 없는 입장은 곧바로 불러옴 · 접속 종료 중 재입장은 저장 뒤에 불러옴 · 중복 로그인은 밀려난 세션의 저장을 기다림 · 대기 만료는 입장 거절 · 기다리는 중의 두 번째 입장 거절 · 실패한 저장도 대기를 풂 · 룸에 들어간 적 없는 플레이어는 저장하지 않음 · 룸 이동 중 끊긴 플레이어는 들어갈 룸이 저장하고, 들어가지 못해도 저장 · 첫 룸 입장 전에 끊긴 플레이어는 재입장 뒤에 저장되지 않음 · 만료 뒤의 입장도 저장을 기다림 · 끊긴 세션을 늦게 밀어내도 입장이 막히지 않음(저장 전, 저장 뒤, 룸 입장 전) |
-| `AccessToken` | 4 | Redis 토큰 값 해석. 계정 번호와 이름을 읽음 · 형식이 틀린 값, 빠진 키, 틀린 타입은 예외 없이 거절 |
+| `AuthTicket` | 7 | 인증 티켓 값 해석. 계정 번호를 읽음(int64 최댓값 포함) · 빈 값, 0과 음수, 앞자리 0, 부호, 공백, 숫자 아닌 문자, int64를 넘는 값, 옛 JSON 값은 예외 없이 거절 |
 | `CellMatrixTest` | 7 | 근접 탐색 격자. 겹치는 칸의 엔티티만 반환 · 칸 경계는 위 칸 소속 · 격자 끝과 밖의 엔티티 · 가장자리 질의 보정 · 제거와 재구성 |
 | `CharacterListDAOTest` | 4 | 캐릭터 생성 DAO(가짜 연결). 만든 캐릭터 번호 · 거절은 예외가 아니라 결과 · 쿼리가 모르는 거절 사유와 실패한 쿼리는 DBError |
 | `CharacterCreationTest` | 7 | 캐릭터 생성 검증. 유효한 전사 · 레벨 표가 없거나 정의되지 않은 직업 거절 · 레벨 표가 있어도 NONE 거절 · 빈 이름 거절 · 이름 길이 경계(한글 50자 통과, 51자 거절) |
@@ -155,7 +155,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
 | ID 발급 | 존재. `SnowflakeIdGenerator`의 `Next`와 `StartAfter`. 테스트는 시계를 주입해 시각을 정하고, 비트 배치는 발급기의 분해 함수가 아니라 테스트가 따로 조립한 값과 대조한다. 생성 경로에서 부르는 일은 테스트하지 않는다 |
 | 서버 설정 | 존재. `Config::Load`와 `Config::Validate`. 테스트는 환경 변수 조회와 빌드 구성(Debug, Release)을 넘긴다 |
-| 액세스 토큰 값 | 존재. `AccessToken::ParsePayload`. Redis 읽기와 지우기, 밀어내기는 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
+| 인증 티켓 값 | 존재. `AuthTicket::ParseAccountId`. Redis 읽기와 지우기, 밀어내기는 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
 | 세션 끊기 | 존재. 루프백(127.0.0.1)의 고정 포트 47913에 `ServerService`를 띄우고 Winsock 소켓으로 접속한다. 테스트가 IOCP 디스패치, 예약 잡 분배, 글로벌 큐 소비를 직접 돈다. 그 포트를 다른 프로세스가 쓰고 있으면 준비 단계에서 실패한다 |
 | 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |

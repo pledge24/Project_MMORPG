@@ -30,10 +30,10 @@ public:
     //~ Connection
 public:
     /**
-     * 게임 서버에 접속하고 AccessToken으로 로그인을 요청한다. 이미 연결이 있으면 먼저 닫는다.
+     * 게임 서버에 접속하고 인증 티켓으로 로그인을 요청한다. 이미 연결이 있으면 먼저 닫는다.
      * 게임 스레드 전용.
      */
-    void Connect(const FString& AccessToken);
+    void Connect(const FString& AuthTicket);
 
     /**
      * 연결을 닫는다. 세션 스레드가 끝날 때까지 기다리고, OnConnectionLost는 알리지 않는다.

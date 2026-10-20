@@ -35,7 +35,7 @@ void UP1ConnectionSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
-void UP1ConnectionSubsystem::Connect(const FString& AccessToken)
+void UP1ConnectionSubsystem::Connect(const FString& AuthTicket)
 {
     // 로그인을 다시 누르면 이 함수가 또 불린다. 이전 연결을 정리하지 않으면 소켓이 샌다.
     Close();
@@ -65,9 +65,9 @@ void UP1ConnectionSubsystem::Connect(const FString& AccessToken)
     Session = MakeShared<PacketSession>(Socket, this);
     Session->Run();
 
-    // 인증 서버가 발급한 토큰으로 게임 서버에 로그인한다. 토큰은 게임 서버가 한 번 쓰고 지운다.
+    // 인증 서버가 발급한 인증 티켓으로 게임 서버에 로그인한다. 티켓은 게임 서버가 한 번 쓰고 지운다.
     Protocol::C_LOGIN Pkt;
-    Pkt.set_access_token(TCHAR_TO_UTF8(*AccessToken));
+    Pkt.set_access_token(TCHAR_TO_UTF8(*AuthTicket));
     Send(ClientPacketHandler::MakeSerializedPacket(Pkt));
 }
 

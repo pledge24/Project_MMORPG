@@ -67,7 +67,7 @@
     <ClCompile Include="Network\GameEntry.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\AccessToken.cpp">
+    <ClCompile Include="Network\AuthTicket.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\pch.cpp">
@@ -193,7 +193,7 @@
     <ClInclude Include="Network\GameEntry.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\AccessToken.h">
+    <ClInclude Include="Network\AuthTicket.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">
@@ -361,9 +361,6 @@
       <Filter>Queries</Filter>
     </None>
     <None Include="Queries\Schema\current.sql">
-      <Filter>Queries\Schema</Filter>
-    </None>
-    <None Include="Queries\Schema\GameDB.example.sql">
       <Filter>Queries\Schema</Filter>
     </None>
     <None Include="Queries\Schema\GameDB.target.sql">

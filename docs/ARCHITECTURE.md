@@ -119,13 +119,10 @@ TTL은 로그인 응답부터 게임 서버 접속까지의 유효 시간이고,
 
 ### Server/GameServer
 
-> 게임 서버는 아직 옛 계약을 읽는다. 키는 `accessToken:{UUID}`이고 값은 `{ userId, username }` JSON이다.
-> 새 계약은 키가 `authTicket:{티켓}`이고 값이 계정 번호 문자열 하나다. 소비 방식(읽고 지우며 지운 쪽만 통과)은 같다.
-> `docs/testing.md`와 `docs/folder-structure.md`의 「액세스 토큰」도 이 옛 계약의 코드(`AccessToken`)를 가리킨다.
-> 인증 서버는 2026년 10월 19일(#236)부터 위 「Server/AuthServer」 절의 인증 티켓 계약으로 발급한다. 그래서 지금은 게임 서버 입장이 실패한다.
-> 다음 GameServer 작업에서 그 계약에 맞춘다. 아래 서술의 「Redis 토큰」은 그때 「인증 티켓」으로 바뀐다.
+게임 서버는 위 「Server/AuthServer」 절의 인증 티켓 계약을 읽는다. 값은 `Network/AuthTicket`이 계정 번호로 읽는다.
+클라이언트가 티켓을 담아 보내는 패킷 필드는 프로토콜을 다시 짤 때까지 옛 이름(`C_LOGIN.access_token`)을 쓴다.
 
-**Architecture Invariant:** 인증 서버의 DB를 모른다. 로그인 검증은 Redis의 토큰을 되읽어서 하고,
+**Architecture Invariant:** 인증 서버의 DB를 모른다. 로그인 검증은 Redis의 인증 티켓을 되읽어서 하고,
 계정 정보를 DB에서 직접 조회하지 않는다.
 
 **Architecture Invariant:** 룸 소유 상태 변경은 그 룸의 큐 위에서만 일어난다. 락이 없다.
@@ -179,10 +176,10 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 
 **Architecture Invariant:** DB를 거치는 요청(로그인, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
 계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로그인만
-계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 Redis 토큰 확인과 캐릭터 목록 불러오기를 이어 한다.
+계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 인증 티켓 확인과 캐릭터 목록 불러오기를 이어 한다.
 
 **Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
-Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
+Redis의 인증 티켓 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
 계정에 세션을 묶고 기존 세션을 돌려준다. 확인과 교체는 관리자의 락 하나 안에서 한다. 로그인 잡은
 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
 `S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).
@@ -375,8 +372,7 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 
 **주의: 계정 번호는 두 티어 모두 `BIGINT`이고, Redis에는 10진수 문자열로 들어간다.** `Account.AccountId`와
 `Characters.user_id`는 모두 `BIGINT`다. 인증 서버는 `mssql` 드라이버가 돌려준 문자열을 숫자로 바꾸지 않고 그대로 넣으므로,
-2^53을 넘는 계정 번호도 정확히 전달된다. 게임 서버는 아직 옛 계약대로 JSON 정수 `userId`를 읽으므로 이 값을 읽지 못한다.
-다음 GameServer 작업에서 문자열을 `BIGINT`로 읽게 맞춘다.
+2^53을 넘는 계정 번호도 정확히 전달된다. 게임 서버는 이 문자열을 `int64`로 읽고, int64 범위를 넘는 값은 거절한다.
 
 ---
 
