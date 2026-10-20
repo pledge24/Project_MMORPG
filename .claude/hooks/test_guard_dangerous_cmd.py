@@ -26,6 +26,9 @@ SRV = str(REPO / "Server")
 
 RUN = ["py", "-3", str(HOOK)]
 
+# P1Game 의 GameDB (claude_rw) 연결 ID. 훅의 SQL_ALLOWED_CONNECTIONS 에 넣은 값과 같아야 한다.
+RW_CONN = "c063e213-1cdd-4be6-89f6-492f47a3937c"
+
 # 언리얼 MCP 라우터 케이스에서 반복되는 긴 이름들.
 UE = "mcp__unreal__call_tool"
 OBJ = "editor_toolset.toolsets.object.ObjectTools"
@@ -159,16 +162,19 @@ CASES = [
     # --- SQL ---
     # 연결 id를 허용 목록의 GameDB(claude_ro)로 고정한다. 없으면 연결 검사에서 먼저 막혀 패턴을 
     # 시험하지 못한다.
-    ("SELECT", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "SELECT * FROM Users WHERE user_id=1"}, False),
-    ("WHERE 없는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DELETE FROM Characters"}, True),
-    ("WHERE 있는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DELETE FROM Characters WHERE character_id=5"}, False),
-    ("WHERE 없는 UPDATE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "UPDATE Users SET last_login=GETDATE()"}, True),
-    ("WHERE 있는 UPDATE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "UPDATE Users SET last_login=GETDATE() WHERE username='a'"}, False),
-    ("DROP TABLE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DROP TABLE Users"}, True),
-    ("TRUNCATE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "TRUNCATE TABLE Characters"}, True),
-    ("ALTER TABLE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "ALTER TABLE Characters ADD col INT"}, True),
-    ("주석 속 WHERE", "mcp__rider__execute_sql_query", {"connectionId": "fb62fcf6-27f1-42eb-97d1-9d5139bab77f", "queryText": "DELETE FROM x -- WHERE y"}, True),
+    ("SELECT", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "SELECT * FROM Users WHERE user_id=1"}, False),
+    ("WHERE 없는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "DELETE FROM Characters"}, True),
+    ("WHERE 있는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "DELETE FROM Characters WHERE character_id=5"}, False),
+    ("WHERE 없는 UPDATE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "UPDATE Users SET last_login=GETDATE()"}, True),
+    ("WHERE 있는 UPDATE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "UPDATE Users SET last_login=GETDATE() WHERE username='a'"}, False),
+    ("DROP TABLE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "DROP TABLE Users"}, True),
+    ("TRUNCATE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "TRUNCATE TABLE Characters"}, True),
+    ("ALTER TABLE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "ALTER TABLE Characters ADD col INT"}, True),
+    ("주석 속 WHERE", "mcp__rider__execute_sql_query", {"connectionId": "621627b2-31ed-43e2-ba83-75f1a6ec8e20", "queryText": "DELETE FROM x -- WHERE y"}, True),
     ("허용 목록 밖 연결", "mcp__rider__execute_sql_query", {"connectionId": "00000000-0000-0000-0000-000000000000", "queryText": "SELECT 1"}, True),
+    # 행 쓰기 연결도 같은 판정을 받는다. 스키마 변경은 DB 권한이 막고, WHERE 없는 쓰기는 이 훅이 막는다.
+    ("쓰기 연결 INSERT", "mcp__rider__execute_sql_query", {"connectionId": RW_CONN, "queryText": "INSERT INTO Characters (Name) VALUES ('a')"}, False),
+    ("쓰기 연결 WHERE 없는 DELETE", "mcp__rider__execute_sql_query", {"connectionId": RW_CONN, "queryText": "DELETE FROM Characters"}, True),
 
     # --- rootFolder 강제 ---
     ("빌드 rootFolder 없음", "mcp__rider__build_solution_start", {"rebuild": False}, True),

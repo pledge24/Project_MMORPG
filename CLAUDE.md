@@ -10,8 +10,9 @@
 
 저장소: SQL Server LocalDB — GameDB는 `(localdb)\ProjectModels`, AccountDB는 `(localdb)\P1Auth`.
 두 인스턴스는 서로 다르다. 두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
-**Claude는 `claude_ro` 연결(`GameDB`·`AccountDB`)로만 SQL을 실행한다.** `(사용자 전용)` 연결과 셸의 DB
-클라이언트(`sqlcmd` 등)는 훅이 막는다. DB에 쓸 일은 SQL 초안을 사람에게 넘긴다. 상세: `docs/build.md`
+**Claude는 `claude_ro` 연결(`GameDB(claude_ro)`·`AccountDB`)로 조회하고, `claude_rw` 연결(`GameDB(claude_rw)`·
+`GameDB_Test(claude_rw)`)로 행을 쓴다.** `claude_rw`는 DB 권한이 행 쓰기로 제한한다. 스키마 변경과 `AccountDB`에 쓸 일은
+SQL 초안을 사람에게 넘긴다. `(사용자 전용)` 연결과 셸의 DB 클라이언트(`sqlcmd` 등)는 훅이 막는다. 상세: `docs/build.md`
 
 ## 문서 위치
 
