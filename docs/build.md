@@ -55,9 +55,15 @@ git config core.hooksPath .githooks
 | `P1_GAME_SERVER_WORKER_THREADS` | `5`. 메인 스레드가 하나 더 합류한다 |
 | `P1_GAME_DB_THREADS` | `5` |
 | `P1_GAME_DB_CONNECTIONS` | DB 스레드 수 |
+| `P1_SERVER_NODE_ID` | Debug 빌드는 `0`. Release 빌드는 기본값이 없다 |
 
 숫자가 아니거나 범위 밖인 값은 경고를 남기고 기본값을 쓴다. 바인드 주소가 IPv4 주소가 아니거나, 연결 수가 DB 스레드 수보다
 작으면 서버가 사유를 로그에 남기고 종료 코드 1로 멈춘다.
+
+**노드 번호만은 틀린 값을 기본값으로 바꾸지 않는다.** `P1_SERVER_NODE_ID`가 0~1023의 정수가 아니거나, Release 빌드에서
+값이 없으면 서버가 종료 코드 1로 멈춘다. 서버마다 겹치지 않는 번호를 준다.
+— 노드 번호는 캐릭터 ID와 아이템 UID에 들어간다. 두 서버가 같은 번호로 뜨면 두 서버가 발급한 ID가 겹친다. 근거는
+`docs/adr/0016-issue-ids-with-snowflake.md`에 있다.
 — 연결 풀은 DB 스레드마다 하나가 있어야 한다. 모자라면 동시에 돈 DB 잡 하나가 연결을 빌리지 못하고 실패한다. 부팅 때
 `main`은 DB 스레드를 띄우기 전에 연결을 하나 빌려 아이템 번호를 읽고 돌려준다.
 

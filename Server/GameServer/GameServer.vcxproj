@@ -178,7 +178,7 @@
     <ClInclude Include="Network\PacketSend.h" />
     <ClInclude Include="DB\DBWorker.h" />
     <ClInclude Include="Network\GameEntry.h" />
-    <ClInclude Include="Network\AccessToken.h" />
+    <ClInclude Include="Network\AuthTicket.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
@@ -196,6 +196,7 @@
     <ClInclude Include="Game\Characters\CharacterCreation.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
+    <ClInclude Include="Utils\SnowflakeIdGenerator.h" />
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
     <ClInclude Include="Game\Entities\EntityComponent.h" />
@@ -228,7 +229,7 @@
     <ClCompile Include="Network\ItemRequests.cpp" />
     <ClCompile Include="DB\DBWorker.cpp" />
     <ClCompile Include="Network\GameEntry.cpp" />
-    <ClCompile Include="Network\AccessToken.cpp" />
+    <ClCompile Include="Network\AuthTicket.cpp" />
     <ClCompile Include="Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Core/pch.h</PrecompiledHeaderFile>
@@ -269,6 +270,7 @@
     <ClCompile Include="Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
+    <ClCompile Include="Utils\SnowflakeIdGenerator.cpp" />
     <ClCompile Include="Game\Entities\Creature.cpp" />
     <ClCompile Include="Game\Entities\Entity.cpp" />
     <ClCompile Include="Game\Entities\Monster.cpp" />

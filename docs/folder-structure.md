@@ -487,7 +487,7 @@ Server/
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점
 │   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정
-│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리, 저장 게이트, 진행 조율자, 게임 입장, 액세스 토큰 값 해석
+│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리, 저장 게이트, 진행 조율자, 게임 입장, 인증 티켓 값 해석
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정, 이동 위치 판정
 │   │   ├── Combat/         피격과 처치 판정
@@ -500,7 +500,7 @@ Server/
 │   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템), 진행 저장소, DB 스레드 루프
 │   ├── Queries/            GameDB 스키마 스크립트
 │   ├── Protocol/           생성물
-│   └── Utils/
+│   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버

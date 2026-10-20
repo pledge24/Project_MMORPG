@@ -6,7 +6,7 @@
 
 /**
  * Redis 연결 하나를 들고 있다. 전역 객체 GRedisManager 하나만 있다.
- * 인증 서버가 넣은 액세스 토큰을 읽는 데 쓴다.
+ * 인증 서버가 넣은 인증 티켓을 읽는 데 쓴다.
  */
 class RedisManager
 {

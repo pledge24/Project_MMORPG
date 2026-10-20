@@ -183,9 +183,9 @@
     <ClCompile Include="ProgressStorageTests.cpp" />
     <ClCompile Include="GameEntryTests.cpp" />
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
-    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="AuthTicketTests.cpp" />
     <ClCompile Include="SessionDisconnectTests.cpp" />
-    <ClCompile Include="..\GameServer\Network\AccessToken.cpp" />
+    <ClCompile Include="..\GameServer\Network\AuthTicket.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
@@ -205,6 +205,7 @@
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
+    <ClCompile Include="SnowflakeIdGeneratorTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
@@ -246,6 +247,7 @@
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
+    <ClCompile Include="..\GameServer\Utils\SnowflakeIdGenerator.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />

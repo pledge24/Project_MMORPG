@@ -67,7 +67,7 @@
     <ClCompile Include="Network\GameEntry.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\AccessToken.cpp">
+    <ClCompile Include="Network\AuthTicket.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\pch.cpp">
@@ -108,6 +108,9 @@
       <Filter>Protocol</Filter>
     </ClCompile>
     <ClCompile Include="Utils\Utils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\SnowflakeIdGenerator.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Game\Characters\CharacterCreation.cpp">
@@ -190,7 +193,7 @@
     <ClInclude Include="Network\GameEntry.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\AccessToken.h">
+    <ClInclude Include="Network\AuthTicket.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">
@@ -233,6 +236,9 @@
       <Filter>Protocol</Filter>
     </ClInclude>
     <ClInclude Include="Utils\Utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Game\Characters\CharacterCreation.h">
