@@ -25,6 +25,6 @@ public:
     static void SaveCharacter(DBConnection& conn, const PlayerSaveData& data);
     /** 누적 경험치, 맵과 위치, HP와 MP를 저장한다. 갱신한 행이 하나가 아니면 DBError. */
     static void SaveState(DBConnection& conn, const PlayerSaveData& data);
-    /** 갱신한 행이 하나가 아니면 DBError. */
+    /** 골드 재화 행의 수량을 저장한다. 갱신한 행이 하나가 아니면 DBError. */
     static void SaveGold(DBConnection& conn, const PlayerSaveData& data);
 };

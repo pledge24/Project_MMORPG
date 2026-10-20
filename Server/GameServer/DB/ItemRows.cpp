@@ -12,7 +12,8 @@ namespace
         const RepeatedPtrField<Protocol::Slot>& (Protocol::Inventory::*slots)() const;
     };
 
-    // 구역과 패킷 칸 종류의 대응은 이 표 하나로 정한다. 불러오기와 저장이 다른 표를 쓰면 아이템이 다른 구역으로 옮겨 간다.
+    // 불러오기와 저장은 구역과 패킷 칸 종류의 대응을 이 표 하나로 정한다. 다른 표를 쓰면 아이템이 다른 구역으로 옮겨 간다.
+    // InventoryComponent의 구역 목록도 같은 대응을 따로 적으므로, 대응을 바꾸면 그쪽도 함께 고친다.
     constexpr InventorySection INVENTORY_SECTIONS[] = {
         { Protocol::ITEM_TYPE_GEAR, Protocol::SLOT_TYPE_INVENTORY_GEAR, &Protocol::Inventory::mutable_gear, &Protocol::Inventory::gear },
         { Protocol::ITEM_TYPE_CONSUMABLE, Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, &Protocol::Inventory::mutable_consumables, &Protocol::Inventory::consumables },

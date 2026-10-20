@@ -75,7 +75,7 @@ namespace
         )SQL");
 
         if (dbBind.Execute() == false)
-            throw DBError("CreateItemSource", "쿼리 실행 실패");
+            throw DBError(__func__, "쿼리 실행 실패");
     }
 
     // 임시 테이블의 행으로 그 캐릭터의 Item과 ItemGear를 맞추고 임시 테이블을 지운다.
@@ -158,7 +158,7 @@ namespace
         BindObject bindObject(dbBind, characterId);
 
         if (dbBind.Execute() == false)
-            throw DBError("MergeItemSource", "쿼리 실행 실패");
+            throw DBError(__func__, "쿼리 실행 실패");
     }
 }
 
