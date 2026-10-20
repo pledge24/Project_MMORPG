@@ -36,6 +36,9 @@
     <Filter Include="GameServer\Game\Characters">
       <UniqueIdentifier>{4879e189-484a-4f11-9016-5d7b55efb970}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\Progress">
+      <UniqueIdentifier>{bcccc72c-a1db-4fdf-8451-c7738e31863f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Core">
       <UniqueIdentifier>{1dd60551-52f5-5426-a91d-bf81515bf73b}</UniqueIdentifier>
     </Filter>
@@ -90,6 +93,7 @@
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
+    <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -153,6 +157,9 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp">
       <Filter>GameServer\Game\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp">
+      <Filter>GameServer\Game\Progress</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>
