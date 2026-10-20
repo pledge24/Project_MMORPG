@@ -189,12 +189,14 @@ Rider의 DB 연결은 세 벌이다.
 
 | 데이터 소스 | 계정 | 쓰는 쪽 |
 |---|---|---|
-| `GameDB` · `AccountDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP)의 조회 |
-| `GameDB (claude_rw)` | 행 쓰기 전용 `claude_rw`. `P1Game`에만 있다 | Claude(Rider MCP)의 행 쓰기 |
-| `GameDB (사용자 전용)` · `AccountDB (사용자 전용)` | Windows 인증 | 사람. 스키마 변경과 마이그레이션 적용은 여기서 한다 |
+| `GameDB(claude_ro)` · `AccountDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP)의 조회 |
+| `GameDB_Test(claude_rw)` | 행 쓰기 전용 `claude_rw` | Claude(Rider MCP)의 행 쓰기 |
+| `GameDB` · `AccountDB (사용자 전용)` | Windows 인증 | 사람. 스키마 변경, 마이그레이션 적용, 개발용 `GameDB`의 행 편집은 여기서 한다 |
 
-`claude_rw`는 `P1Game`의 `GameDB`와 `GameDB_Test`에서 `db_datareader`와 `db_datawriter`에만 속한다.
+`claude_rw`는 `P1Game`의 `GameDB_Test`에만 사용자가 있고, 그 DB에서 `db_datareader`와 `db_datawriter`에만 속한다.
 그래서 행을 읽고 쓰는 문장만 실행되고, `CREATE`·`ALTER`·`DROP`·`TRUNCATE`는 DB가 권한 오류로 거부한다.
+개발용 `GameDB`에 쓸 일은 SQL 초안을 사람에게 넘긴다. `GameDB_Test`는 실제 DB에 붙는 테스트만 쓰는 DB이므로,
+Claude가 행을 잘못 써도 개발 중의 게임 데이터는 그대로 남는다.
 **문장의 제한은 훅이 아니라 DB 권한이 맡는다.** 훅의 문자열 검사는 주석, 동적 SQL, 문장 구분을 다 해석하지
 못하지만 DB 권한은 우회할 수 없다. 처음에는 훅이 세션마다 처음 한 번 묻고 승인 기록을 남기는 설계였으나,
 승인된 세션을 허용하는 훅 분기를 Claude Code 자동 모드의 분류기가 우회로 판정해 막았다(2026년 10월 21일).
@@ -202,7 +204,7 @@ Rider의 DB 연결은 세 벌이다.
 
 Claude는 위 표의 Claude 연결로만 SQL을 실행한다. `.claude/hooks/guard_dangerous_cmd.py`의
 `SQL_ALLOWED_CONNECTIONS`가 `execute_sql_query`의 `connectionId`를 허용 목록과 대조해 나머지를 막는다.
-`(사용자 전용)` 연결은 관리자 권한이고 `permissions`는 툴의 인자를 보지 못하므로, 이 연결을 가르는 판정은 훅에만 있다.
+Windows 인증 연결은 관리자 권한이고 `permissions`는 툴의 인자를 보지 못하므로, 이 연결을 가르는 판정은 훅에만 있다.
 같은 훅이 WHERE 없는 `UPDATE`와 `DELETE`를 연결과 무관하게 막는다. DB 권한으로는 이 둘을 막을 수 없다.
 LocalDB는 Windows 인증이라 셸에서 붙으면 관리자가 되므로, 같은 훅이 `sqlcmd`·`osql`·`Invoke-Sqlcmd`·
 `sqllocaldb`·`SqlClient` 직접 접속도 막는다(2026년 9월 30일 차단 확인).

@@ -136,6 +136,6 @@ grep 금지도 없다. 내장 Grep과 셸 검색이 탐색의 대체 경로가 �
 데이터 소스로만 `execute_sql_query`를 부르고, 훅의 `SQL_ALLOWED_CONNECTIONS`가 나머지 연결을 막는다.
 위의 「쓰기 권한을 가진 계정을 쓴다」는 그 전의 상태다. 상세는 `docs/build.md`에 있다.
 
-**2026년 10월 21일 덧붙임 — 행 쓰기 연결을 더한다.** `P1Game`의 `GameDB`와 `GameDB_Test`에 `claude_rw` 연결을 더했다.
-이 로그인은 `db_datareader`와 `db_datawriter`에만 속하므로 쓰기의 범위는 DB 권한이 정한다. 훅은 위의 허용 목록에
+**2026년 10월 21일 덧붙임 — 행 쓰기 연결을 더한다.** `P1Game`의 테스트 DB `GameDB_Test`에 `claude_rw` 연결을 더했다.
+이 로그인은 그 DB의 `db_datareader`와 `db_datawriter`에만 속하므로 쓰기의 범위는 DB 권한이 정한다. 훅은 위의 허용 목록에
 이 연결의 ID를 더할 뿐이다. 상세는 `docs/build.md`에 있다.
