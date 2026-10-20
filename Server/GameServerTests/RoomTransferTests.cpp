@@ -3,7 +3,7 @@
 #include "Game/Room/RoomTransfer.h"
 
 /*--------------------------------------------------------------
-    룸 이동 판정 테스트
+    룸 이동 판정과 입장할 룸 배정 테스트
 
     리스폰 요청은 검증 없이 처리되어, 살아 있는 플레이어가 어디서든 마을로 이동했고
     목적지 룸이 없는 리스폰 유형은 서버를 죽였다. 입장 요청의 룸 번호 검증은 최초 입장과
@@ -272,4 +272,121 @@ TEST_F(RoomTransferMapTest, CrossMapEnterRejectsSameMapRoomAndWrongMapId)
         << "같은 맵 안의 이동은 포털 이동(C_ENTER_ROOM)으로 한다";
     EXPECT_TRUE(RoomTransfer::ValidateCrossMapEnter(MakeEnterMap(MAP_A, OTHER_MAP_ROOM), town, MakePlayerPos(2100.f, 0.f)).has_value())
         << "맵 번호는 목적지 룸의 맵과 같아야 한다";
+}
+
+//~ 입장할 룸 배정
+
+// DB와 기획 데이터는 맵과 좌표만 안다. 들어갈 룸은 서버가 맵 표 행의 범위로 고른다.
+// 마을(TOWN_ROOM, 중심 (0, 0), 반경 1000)과 그 서쪽에 붙은 사냥터(FIELD_ROOM, 중심 (-3000, 0), 반경 2000)가 x = -1000에서
+// 경계를 함께 쓴다. 다른 맵(MAP_B)의 룸은 마을과 같은 좌표 범위에 있다.
+class RoomAssignmentTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        MapTemplate town = MakeRange(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
+        town.respawnPoint = TemplatePos{ 100.f, 200.f, 30.f };
+
+        GamedataTables tables;
+        tables.maps[TOWN_ROOM] = town;
+        tables.maps[FIELD_ROOM] = MakeRange(FIELD_ROOM, MAP_A, -3000.f, 0.f, 2000.f);
+        tables.maps[OTHER_MAP_ROOM] = MakeRange(OTHER_MAP_ROOM, MAP_B, 0.f, 0.f, 1000.f);
+        tables.townRoomId = TOWN_ROOM;
+        Gamedata::Install(std::move(tables));
+    }
+
+    void TearDown() override
+    {
+        Gamedata::Install(GamedataTables());
+    }
+
+    static MapTemplate MakeRange(int32 roomId, int32 mapId, float centerX, float centerY, float halfExtent)
+    {
+        MapTemplate range;
+        range.templateId = roomId;
+        range.mapId = mapId;
+        range.center = TemplatePos{ centerX, centerY, 0.f };
+        range.depthHalfExtent = halfExtent;
+        range.widthHalfExtent = halfExtent;
+        return range;
+    }
+
+    static void ExpectTownRespawn(const optional<RoomAssignment>& assignment)
+    {
+        ASSERT_TRUE(assignment.has_value());
+        EXPECT_EQ(assignment->roomId, TOWN_ROOM);
+        EXPECT_FLOAT_EQ(assignment->pos.pos().x(), 100.f);
+        EXPECT_FLOAT_EQ(assignment->pos.pos().y(), 200.f);
+        EXPECT_FLOAT_EQ(assignment->pos.pos().z(), 30.f);
+    }
+};
+
+TEST_F(RoomAssignmentTest, PosInsideRangeKeepsPosInThatRoom)
+{
+    Protocol::PosInfo pos = MakePlayerPos(-3500.f, 1500.f, 80.f);
+    pos.set_yaw(90.f);
+
+    const optional<RoomAssignment> assignment = RoomTransfer::AssignRoom(MAP_A, pos);
+
+    ASSERT_TRUE(assignment.has_value());
+    EXPECT_EQ(assignment->roomId, FIELD_ROOM);
+    EXPECT_FLOAT_EQ(assignment->pos.pos().x(), -3500.f);
+    EXPECT_FLOAT_EQ(assignment->pos.pos().y(), 1500.f);
+    EXPECT_FLOAT_EQ(assignment->pos.pos().z(), 80.f) << "높이는 범위 판정에 쓰지 않지만 그대로 돌려준다";
+    EXPECT_FLOAT_EQ(assignment->pos.yaw(), 90.f);
+}
+
+TEST_F(RoomAssignmentTest, PosOnRangeBoundaryBelongsToThatRoom)
+{
+    const optional<RoomAssignment> maxEdge = RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(1000.f, 1000.f));
+    ASSERT_TRUE(maxEdge.has_value());
+    EXPECT_EQ(maxEdge->roomId, TOWN_ROOM)
+        << "이동 판정은 경계 위의 점을 룸 안쪽으로 받는다. 경계에서 저장한 플레이어를 마을로 보내면 안 된다";
+
+    const optional<RoomAssignment> minEdge = RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(-5000.f, -2000.f));
+    ASSERT_TRUE(minEdge.has_value());
+    EXPECT_EQ(minEdge->roomId, FIELD_ROOM);
+    EXPECT_FLOAT_EQ(minEdge->pos.pos().x(), -5000.f);
+}
+
+TEST_F(RoomAssignmentTest, SharedBoundaryGoesToSmallerMapTableRow)
+{
+    const optional<RoomAssignment> assignment = RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(-1000.f, 0.f));
+
+    ASSERT_TRUE(assignment.has_value());
+    EXPECT_EQ(assignment->roomId, TOWN_ROOM) << "두 범위가 함께 쓰는 경계는 맵 표 행 번호가 작은 쪽이 갖는다";
+}
+
+TEST_F(RoomAssignmentTest, PosOutsideEveryRangeGoesToTownRespawn)
+{
+    ExpectTownRespawn(RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(1000.1f, 0.f)));
+    ExpectTownRespawn(RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(-3000.f, 2000.1f)));
+}
+
+TEST_F(RoomAssignmentTest, RangeOfOtherMapIsNotCandidate)
+{
+    // (-3000, 0)은 MAP_A 사냥터의 범위 안이지만 MAP_B에는 그 좌표를 덮는 룸이 없다.
+    ExpectTownRespawn(RoomTransfer::AssignRoom(MAP_B, MakePlayerPos(-3000.f, 0.f)));
+
+    const optional<RoomAssignment> otherMap = RoomTransfer::AssignRoom(MAP_B, MakePlayerPos(0.f, 0.f));
+    ASSERT_TRUE(otherMap.has_value());
+    EXPECT_EQ(otherMap->roomId, OTHER_MAP_ROOM) << "범위가 같은 마을이 룸 번호가 더 작아도 맵이 다르면 후보가 아니다";
+}
+
+TEST_F(RoomAssignmentTest, MapIdNotInMapTableGoesToTownRespawn)
+{
+    ExpectTownRespawn(RoomTransfer::AssignRoom(9999, MakePlayerPos(0.f, 0.f)));
+}
+
+TEST_F(RoomAssignmentTest, NoAssignmentWithoutTownRespawn)
+{
+    GamedataTables tables;
+    tables.maps[FIELD_ROOM] = MakeRange(FIELD_ROOM, MAP_A, -3000.f, 0.f, 2000.f);
+    tables.maps[TOWN_ROOM] = MakeRange(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
+    tables.townRoomId = TOWN_ROOM;
+    Gamedata::Install(std::move(tables));
+
+    EXPECT_TRUE(RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(-3000.f, 0.f)).has_value())
+        << "범위 안의 좌표는 마을 리스폰 지점이 없어도 배정한다";
+    EXPECT_FALSE(RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(50000.f, 0.f)).has_value());
 }
