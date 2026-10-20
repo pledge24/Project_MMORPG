@@ -499,7 +499,7 @@ Server/
 │   │   ├── Progress/       누적 경험치와 레벨 판정
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템), 진행 저장소, DB 스레드 루프
-│   ├── Queries/            GameDB 스키마 스크립트
+│   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
 │   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
 ├── GameServerTests/
@@ -519,7 +519,7 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
-`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 아홉은 게임 규칙이다. 이 층을 없애면
+`DB/`, `Migrations/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 아홉은 게임 규칙이다. 이 층을 없애면
 폴더 열다섯 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.

@@ -368,7 +368,7 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 |---|---|---|
 | 인증 ↔ 게임 | Redis 인증 티켓 키의 형태, 값, TTL | 로그인이 통과해도 게임 입장이 실패 |
 | 클라 ↔ 게임 서버 | 생성된 패킷 | 빌드는 통과하고 런타임에 어긋남 |
-| 게임 서버 ↔ GameDB | SQL 스크립트 | 부팅 또는 첫 쿼리에서 터짐 |
+| 게임 서버 ↔ GameDB | 마이그레이션 파일(`Server/GameServer/Migrations/`) | 부팅 또는 첫 쿼리에서 터짐 |
 
 **주의: 계정 번호는 두 티어 모두 `BIGINT`이고, Redis에는 10진수 문자열로 들어간다.** `Account.AccountId`와
 `Characters.user_id`는 모두 `BIGINT`다. 인증 서버는 `mssql` 드라이버가 돌려준 문자열을 숫자로 바꾸지 않고 그대로 넣으므로,
@@ -381,11 +381,13 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 ### 저장소
 
 LocalDB 인스턴스는 그 인스턴스를 소유한 티어마다 하나다. 인스턴스 이름은 티어를, 데이터베이스 이름은 데이터 영역을
-따른다. 인증 서버의 DB는 `(localdb)\P1Auth`의 `AccountDB`다. 게임 서버의 인스턴스는 다음 GameDB 작업에서 이 규칙에 맞춘다.
+따른다. 인증 서버의 DB는 `(localdb)\P1Auth`의 `AccountDB`다. 게임 서버의 DB는 `(localdb)\P1Game`의 `GameDB`이고,
+같은 인스턴스의 `GameDB_Test`는 실제 DB에 붙는 테스트만 쓴다.
 근거는 `docs/adr/0014-split-db-instances-by-tier.md`에 있다. 접속 문자열의 출처도 다르다. 게임 쪽은 `Config`의 기본값과
 환경 변수이고, 인증 쪽은 환경 파일이다.
 **Architecture Invariant:** 각 DB는 소유 티어만 접근한다. 교차 접근 경로가 없다.
-인스턴스·경로·스크립트 목록은 `docs/build.md`. 스키마의 원본은 SQL 스크립트다.
+인스턴스·경로·스크립트 목록은 `docs/build.md`. 스키마의 원본은 각 서버의 마이그레이션 파일이다
+(`Server/AuthServer/migrations/`, `Server/GameServer/Migrations/`).
 
 ### 코드 생성
 

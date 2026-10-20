@@ -7,7 +7,7 @@
 namespace
 {
     const wchar_t* DEFAULT_DB_CONNECTION_STRING =
-        L"Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\\ProjectModels;Database=GameDB;Trusted_Connection=Yes;";
+        L"Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\\P1Game;Database=GameDB;Trusted_Connection=Yes;";
     const char* DEFAULT_REDIS_URI = "tcp://127.0.0.1:6379";
     const char* DEFAULT_BIND_ADDRESS = "127.0.0.1";
     constexpr uint16 DEFAULT_PORT = 7777;

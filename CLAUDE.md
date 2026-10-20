@@ -8,7 +8,7 @@
 | 게임 서버 | `Server/GameServer/` | C++20, 자체 IOCP 코어 | `127.0.0.1:7777` |
 | 인증 서버 | `Server/AuthServer/` | Node.js / Express (ESM) | `.env`의 `PORT` (클라는 `5000`을 기대) |
 
-저장소: SQL Server LocalDB — GameDB는 `(localdb)\ProjectModels`, AccountDB는 `(localdb)\P1Auth`.
+저장소: SQL Server LocalDB — GameDB와 실제 DB 테스트용 GameDB_Test는 `(localdb)\P1Game`, AccountDB는 `(localdb)\P1Auth`.
 두 인스턴스는 서로 다르다. 두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
 **Claude는 `claude_ro` 연결(`GameDB(claude_ro)`·`AccountDB`)로 조회하고, `claude_rw` 연결(`GameDB(claude_rw)`·
 `GameDB_Test(claude_rw)`)로 행을 쓴다.** `claude_rw`는 DB 권한이 행 쓰기로 제한한다. 스키마 변경과 `AccountDB`에 쓸 일은

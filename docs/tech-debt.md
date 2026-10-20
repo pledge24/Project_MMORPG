@@ -370,6 +370,23 @@ Release 분기에서 `Release` 폴더를 쓴다. 코드를 읽고 판단했고 R
 
 **변경 비용 증가** — 조회만 하는 문장이 막혀 다른 쿼리로 돌아가야 한다. 차단 쪽으로 틀리므로 위험한 문장이 새지는 않는다.
 
+## TD-064 260자 이상의 DB 접속 문자열을 받으면 연결이 실패하지 않고 프로세스가 죽는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/ServerCore/DB/DBConnection.cpp` 34~35줄 (`Connect`)
+> 등록일: 2026년 10월 21일
+
+`Connect`는 접속 문자열을 `WCHAR stringBuffer[MAX_PATH]`(260자)에 `wcscpy_s`로 복사한다. 문자열이 버퍼보다 길면
+`wcscpy_s`가 잘못된 매개변수 처리기를 불러 프로세스를 끝내므로, `Connect`가 `false`를 돌려주지 못한다. 실제 DB 테스트를
+처음 돌릴 때 찾았다. 터미널에서 복사하다 공백, 줄바꿈, 테두리 문자(`│`)가 섞여 259자가 된 `P1_GAME_DB_TEST_CONNECTION_STRING`으로
+실행하자 `Assertion failed: (L"Buffer is too small" && 0)`을 남기고 종료 코드 `-1073740791`로 끝났다(2026년 10월 21일 실측).
+259자는 널 문자까지 버퍼에 들어가는 길이다. 그래도 넘친 것은 `Config::ReadProcessEnv`의 `_dupenv_s`가 값을 UTF-8이 아닌
+ANSI 코드 페이지로 돌려주고, UTF-8로 읽는 변환에서 `│`가 더 많은 글자로 바뀌었기 때문으로 추정한다. 이 추정은 확인하지 않았다.
+게임 서버도 같은 함수로 `P1_GAME_DB_CONNECTION_STRING`에 연결하므로, 긴 값을 주면 사유를 로그에 남기지 못하고 부팅 중에 죽는다.
+
+### 영향
+
+**변경 비용 증가** — 설정 실수가 원인을 알리는 로그 없이 비정상 종료로만 드러나서, 접속 문자열이 원인인지 알아내기 어렵다.
+
 ## TD-002 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/Player.cpp` (`ProcessBuyItem`, `ProcessSellItem`)

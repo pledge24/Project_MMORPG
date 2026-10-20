@@ -37,7 +37,7 @@ TEST(ServerConfigTest, UsesLocalDefaultsWithoutEnv)
 {
     const Config config = Config::Load(FakeEnv({}));
 
-    EXPECT_NE(config.dbConnectionString.find(L"(localdb)\\ProjectModels"), wstring::npos);
+    EXPECT_NE(config.dbConnectionString.find(L"Server=(localdb)\\P1Game;"), wstring::npos);
     EXPECT_NE(config.dbConnectionString.find(L"Database=GameDB"), wstring::npos);
     EXPECT_EQ(config.redisUri, "tcp://127.0.0.1:6379");
     EXPECT_EQ(config.port, 7777);
