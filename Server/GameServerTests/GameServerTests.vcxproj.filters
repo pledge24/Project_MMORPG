@@ -70,7 +70,10 @@
     <ClCompile Include="MonsterAITests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="GameDBSchemaTests.cpp" />
-    <ClCompile Include="ItemDAOTests.cpp" />
+    <ClCompile Include="GameDBCharacterListTests.cpp" />
+    <ClCompile Include="GameDBIssuedIdTests.cpp" />
+    <ClCompile Include="AccountDAOTests.cpp" />
+    <ClCompile Include="IssuedIdDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
     <ClCompile Include="DBWorkerTests.cpp" />
     <ClCompile Include="..\GameServer\DB\DBWorker.cpp">
@@ -216,7 +219,13 @@
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\DB\AccountDAO.cpp">
+      <Filter>GameServer\DB</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp">
+      <Filter>GameServer\DB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\DB\IssuedIdDAO.cpp">
       <Filter>GameServer\DB</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp">

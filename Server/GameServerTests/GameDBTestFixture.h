@@ -63,6 +63,19 @@ protected:
         return _connection.Execute(query.c_str());
     }
 
+    /** 첫 행의 첫 열을 정수로 읽는다. 행이 없거나 값이 NULL이거나 실행에 실패하면 nullopt. */
+    std::optional<int64> QueryInt64(const wstring& query)
+    {
+        _connection.Unbind();
+        int64 value = 0;
+        SQLLEN valueLength = 0;
+        _connection.BindCol(1, &value, &valueLength);
+        if (_connection.Execute(query.c_str()) == false || _connection.Fetch() == false || valueLength == SQL_NULL_DATA)
+            return std::nullopt;
+
+        return value;
+    }
+
     DBConnection& Connection() { return _connection; }
 
 private:

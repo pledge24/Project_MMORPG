@@ -5,8 +5,10 @@
  * 포인터 전역은 ServerContext가 살아 있는 동안만 유효하다.
  */
 
-extern atomic<int64> GNextItemUID;
 extern class RoomManager* GRoomManager;
+
+/** 캐릭터 ID와 아이템 UID의 발급기. main이 설정을 읽은 뒤에 만들므로 그 전에는 nullptr이다. */
+extern class SnowflakeIdGenerator* GIdGenerator;
 
 /** 세션과 계정에 걸린 시간 제한을 돌리는 큐. 룸 상태와 무관한 타이머를 룸 큐에 섞지 않으려고 따로 둔다. */
 extern JobQueueRef GSessionJobQueue;

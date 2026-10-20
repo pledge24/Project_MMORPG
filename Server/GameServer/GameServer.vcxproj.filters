@@ -134,7 +134,13 @@
     <ClCompile Include="Game\Entities\Creature.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="DB\AccountDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
     <ClCompile Include="DB\CharacterListDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\IssuedIdDAO.cpp">
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="DB\CharacterStateDAO.cpp">
@@ -271,7 +277,13 @@
     <ClInclude Include="Game\Entities\Creature.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="DB\AccountDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
     <ClInclude Include="DB\CharacterListDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\IssuedIdDAO.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\CharacterStateDAO.h">

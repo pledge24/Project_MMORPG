@@ -2,11 +2,12 @@
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/IocpCore.h"
 #include "Core/Config.h"
-#include "DB/ItemDAO.h"
+#include "DB/IssuedIdDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/DBWorker.h"
 #include "Core/ServerContext.h"
 #include "Game/Room/Room.h"
+#include "Utils/SnowflakeIdGenerator.h"
 
 enum
 {
@@ -151,6 +152,10 @@ int main(void)
         return 1;
     }
 
+    // 노드 번호는 Validate가 확인했다.
+    const int32 serverNodeId = config.serverNodeId.value();
+    context.CreateIdGenerator(serverNodeId);
+
     // 룸은 여기서 한 번만 만든다. 워커 스레드가 뜬 뒤로는 룸 목록을 읽기만 한다.
     if (GRoomManager->CreateAllRooms() == false)
     {
@@ -159,7 +164,7 @@ int main(void)
     }
 
     // 접속을 받기 전에 DB를 모두 준비한다. 리슨부터 열면 DB 큐가 생기기 전에 온 로그인이 없는 큐를 고르고,
-    // 다음 아이템 번호가 정해지기 전에 아이템이 만들어질 수 있다.
+    // 발급기의 시작점이 정해지기 전에 캐릭터나 아이템이 만들어질 수 있다.
 
     // DB 연결. 풀 크기가 DB 스레드 수보다 넉넉한지는 Config::Validate가 봤다.
     ASSERT_CRASH(GDBConnectionPool->Connect(config.dbConnectionCount, config.dbConnectionString.c_str()));
@@ -169,12 +174,12 @@ int main(void)
     try
     {
         DBConnectionGuard conn;
-        ItemDAO::GetMaxItemUID(*conn);
+        GIdGenerator->StartAfter(IssuedIdDAO::GetLastIssuedId(*conn, serverNodeId));
     }
     catch (const exception& error)
     {
-        // 다음 아이템 UID를 모르면 새 아이템이 기존 아이템과 UID가 겹친다.
-        GLogger->Error("아이템 UID의 최댓값을 읽지 못해 서버를 종료합니다: {}", error.what());
+        // 이 노드가 발급한 마지막 ID를 모르면, 시계가 뒤로 간 뒤 새 ID가 기존 캐릭터나 아이템과 겹칠 수 있다.
+        GLogger->Error("이 노드가 발급한 ID의 최댓값을 읽지 못해 서버를 종료합니다: {}", error.what());
         return 1;
     }
 

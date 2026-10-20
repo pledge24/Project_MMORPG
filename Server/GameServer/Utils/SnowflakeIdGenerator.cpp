@@ -4,12 +4,10 @@
 
 namespace
 {
-    constexpr int32 NODE_BITS = 10;
-    constexpr int32 SEQUENCE_BITS = 12;
-    constexpr int32 NODE_SHIFT = SEQUENCE_BITS;
-    constexpr int32 TIME_SHIFT = SEQUENCE_BITS + NODE_BITS;
-    constexpr int64 NODE_MASK = (int64{ 1 } << NODE_BITS) - 1;
-    constexpr int64 SEQUENCE_MASK = (int64{ 1 } << SEQUENCE_BITS) - 1;
+    constexpr int32 NODE_SHIFT = SnowflakeIdGenerator::SEQUENCE_BITS;
+    constexpr int32 TIME_SHIFT = SnowflakeIdGenerator::SEQUENCE_BITS + SnowflakeIdGenerator::NODE_BITS;
+    constexpr int64 NODE_MASK = (int64{ 1 } << SnowflakeIdGenerator::NODE_BITS) - 1;
+    constexpr int64 SEQUENCE_MASK = (int64{ 1 } << SnowflakeIdGenerator::SEQUENCE_BITS) - 1;
 }
 
 SnowflakeIdGenerator::SnowflakeIdGenerator(int32 nodeId, Clock clock)

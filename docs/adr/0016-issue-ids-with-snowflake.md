@@ -56,6 +56,9 @@ status: accepted
 - `GameDB`의 `Character.CharacterId`와 `Item.ItemUid`에는 `IDENTITY`가 없다. 서버가 넣는다
 - 발급기를 캐릭터 생성과 아이템 생성 경로에 연결하고 부팅 때 `StartAfter`를 부르는 일은 계정과 캐릭터 DAO 티켓(#256)이
   한다. 그때까지 아이템 UID는 옛 메모리 카운터가 발급한다
+  - 2026-10-21 덧붙임: #256이 연결했다. 발급기는 `GIdGenerator`이고 `main`이 설정 검사 뒤에 만든다. 부팅할 때
+    `IssuedIdDAO::GetLastIssuedId`가 `Character`와 `Item`에서 이 노드의 최댓값을 읽어 `StartAfter`에 넘긴다.
+    옛 메모리 카운터(`GNextItemUID`)는 지웠고, 소모품과 기타 아이템도 빈 칸에 놓일 때 UID를 받는다
 - 서버를 더할 때마다 사람이 노드 번호를 나눠 준다. 번호를 어디에 기록할지는 서버가 둘이 되는 날 정한다
 - ID에서 발급 시각을 읽을 수 있다. 아이템 UID는 클라이언트에 가므로 아이템을 언제 얻었는지가 드러난다. 지금은 숨길
   이유가 없다
