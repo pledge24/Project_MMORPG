@@ -28,7 +28,7 @@
 | P4 | `docs/tech-debt.md` | 지금 틀린 것만 담는다. 해결된 항목, 「해결됨」·「완료」 표기, 착수 순서와 계획은 위반이다. 순서와 계획은 backlog의 몫이다 | `docs/tech-debt.md` 머리말, `CLAUDE.md` 「작업 방식」 |
 | P5 | `docs/backlog.md` | 착수하지 않은 작업 후보를 담는다. 지금 틀린 것(결함)은 tech-debt의 몫이다. 「하지 않기로 확인된 것」의 행마다 근거 문서를 가리킨다 | `docs/backlog.md` 머리말과 「하지 않기로 확인된 것」 |
 | P6 | `docs/adr/` | ADR은 되돌리기 어렵고, 맥락 없이는 놀랍고, 실제 트레이드오프의 결과인 결정이다. 셋 중 하나라도 아니면 판단 필요로 올린다. 구현 수준의 결정은 ADR이 아니라 커밋 메시지와 work 파일의 「결정」이 담는다 | `ADR-FORMAT.md` 「When to offer an ADR」 |
-| P7 | `docs/adr/` | ADR은 자기 완결적이다. `docs/reports/`나 다른 임시 자료를 링크하거나 근거로 인용하지 않는다. `docs/references/`도 같다 | `docs/work/2026-09-19-convention-migration.md` 「반드시 지킬 것」, `docs/references/README.md`, `docs/references/harness-v1/README.md` |
+| P7 | `docs/adr/` | ADR은 자기 완결적이다. `docs/reports/`나 다른 임시 자료를 링크하거나 근거로 인용하지 않는다. `docs/references/`도 같다 | `docs/work/2026-09-19-convention-migration.md` 「반드시 지킬 것」, `docs/references/README.md` |
 | P8 | `docs/adr/` | 덧붙임에는 덧붙인 날짜가 있다. 날짜 없이 본문이 바뀌었는지는 `git log -p --follow <ADR>`로 본다. 본문 문장이 덧붙임 없이 고쳐졌으면 위반이다 | `CLAUDE.md` 「문서 위치」, `ADR-0007`의 덧붙임 |
 | P9 | `docs/work/` | 진행 표의 「검증」에는 실제로 돌린 명령과 결과만 적는다. 실행하지 않은 검증을 적었으면 위반이다 | `CLAUDE.md` 「완료 기준」 |
 | P10 | `docs/work/` | 진행 상태의 원천은 work 파일의 진행 표다. 진행 상태를 다른 곳(이슈만, 문서 본문)에 둔다고 적었으면 위반이다. 모든 단계가 끝난 work 파일이 남아 있으면 판단 필요로 올린다 | `CLAUDE.md` 「작업 방식」 |
