@@ -178,7 +178,7 @@
     <ClInclude Include="Network\PacketSend.h" />
     <ClInclude Include="DB\DBWorker.h" />
     <ClInclude Include="Network\GameEntry.h" />
-    <ClInclude Include="Network\AccessToken.h" />
+    <ClInclude Include="Network\AuthTicket.h" />
     <ClInclude Include="Core\Config.h" />
     <ClInclude Include="Core\pch.h" />
     <ClInclude Include="Core\Types.h" />
@@ -229,7 +229,7 @@
     <ClCompile Include="Network\ItemRequests.cpp" />
     <ClCompile Include="DB\DBWorker.cpp" />
     <ClCompile Include="Network\GameEntry.cpp" />
-    <ClCompile Include="Network\AccessToken.cpp" />
+    <ClCompile Include="Network\AuthTicket.cpp" />
     <ClCompile Include="Core\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Core/pch.h</PrecompiledHeaderFile>
