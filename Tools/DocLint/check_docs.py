@@ -406,7 +406,7 @@ REFERENCES_RE = re.compile(r"docs/references\b")
 
 
 def check_references_mention(_: argparse.Namespace) -> list[Violation]:
-    """규범 문서와 ADR이 하네스 v1 이력을 가리키지 않는지 본다.
+    """규범 문서와 ADR이 설계 참고 자료와 하네스 v1 이력을 가리키지 않는지 본다.
 
     `CLAUDE.md`는 뺀다. 문서 위치의 색인이라 이 폴더가 무엇인지 적을 자리다.
     """
@@ -510,7 +510,7 @@ SELF_TEST_FIXTURES: dict[str, dict[str, str | bytes | None]] = {
         "CLAUDE.md": "# CLAUDE\n",
     },
     "references-mention": {
-        "docs/ARCHITECTURE.md": "`docs/references/decisions/index.md` 참조.\n",
+        "docs/ARCHITECTURE.md": "`docs/references/harness-v1/decisions/index.md` 참조.\n",
         "CLAUDE.md": "# CLAUDE\n",
     },
     "encoding": {
@@ -551,7 +551,7 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | bytes | None]] = {
     },
     "references-mention": {
         "docs/codegen.md": "근거는 `docs/adr/0009-keep-asset-references-out-of-design-data.md`에 있다.\n",
-        "CLAUDE.md": "- `docs/references/` — 하네스 v1의 이력\n",
+        "CLAUDE.md": "- `docs/references/` — 앞으로의 설계에 참고할 자료\n",
     },
     "encoding": {
         "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("cp949"),

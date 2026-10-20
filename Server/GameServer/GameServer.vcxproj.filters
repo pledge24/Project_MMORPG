@@ -366,9 +366,6 @@
     <None Include="Queries\Schema\current.sql">
       <Filter>Queries\Schema</Filter>
     </None>
-    <None Include="Queries\Schema\GameDB.example.sql">
-      <Filter>Queries\Schema</Filter>
-    </None>
     <None Include="Queries\Schema\GameDB.target.sql">
       <Filter>Queries\Schema</Filter>
     </None>
