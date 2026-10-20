@@ -38,6 +38,13 @@ public:
     /** 사망한 플레이어가 돌아가는 마을 룸 번호. */
     static int32 GetTownRoomId() { return s_tables.townRoomId; }
 
+    /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
+    static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }
+    /** 새 캐릭터의 시작 맵, 위치, 골드와 새 계정의 캐릭터 슬롯 수. */
+    static const CharacterCreationTemplate& GetCharacterCreation() { return s_tables.characterCreation; }
+    /** 인벤토리에서 그 아이템 종류 구역의 칸 수. 구역이 없는 종류(NONE)면 0. */
+    static int32 GetInventorySlotCount(Protocol::ItemType itemType);
+
     //~ 공통
 private:
     static GamedataTables s_tables;

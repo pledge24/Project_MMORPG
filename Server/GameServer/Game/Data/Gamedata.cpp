@@ -42,6 +42,9 @@ bool Gamedata::LoadAllGamedata()
         { GamedataFile::ITEMS, &documents.items },
         { GamedataFile::MAPS, &documents.maps },
         { GamedataFile::MONSTERS, &documents.monsters },
+        { GamedataFile::CURRENCIES, &documents.currencies },
+        { GamedataFile::CHARACTER_CREATION, &documents.characterCreation },
+        { GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
     };
 
     for (const auto& [fileName, document] : files)
@@ -99,4 +102,10 @@ const ClassLevelTable* Gamedata::FindClassLevelTable(int32 classId)
 {
     auto it = s_tables.classLevelTables.find(classId);
     return it == s_tables.classLevelTables.end() ? nullptr : &it->second;
+}
+
+int32 Gamedata::GetInventorySlotCount(Protocol::ItemType itemType)
+{
+    auto it = s_tables.inventorySlotCounts.find(itemType);
+    return it == s_tables.inventorySlotCounts.end() ? 0 : it->second;
 }

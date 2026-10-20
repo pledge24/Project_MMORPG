@@ -7,6 +7,12 @@ DEL /Q C_Warrior_Level_Data.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Item.xlsx --s_output=S_Item.json --c_output=C_Item.json 
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Map.xlsx --s_output=S_Map.json --c_output=C_Map.json 
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Quest.xlsx --s_output=S_Quest.json --c_output=C_Quest.json 
+..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Currency.xlsx --s_output=S_Currency.json --c_output=C_Currency.json
+DEL /Q C_Currency.json
+..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Character_Creation.xlsx --s_output=S_Character_Creation.json --c_output=C_Character_Creation.json
+DEL /Q C_Character_Creation.json
+..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Inventory_Section.xlsx --s_output=S_Inventory_Section.json --c_output=C_Inventory_Section.json
+DEL /Q C_Inventory_Section.json
 
 IF ERRORLEVEL 1 PAUSE
 
@@ -15,6 +21,9 @@ MOVE /Y S_Monster.json				    "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Item.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Map.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Quest.json				    "../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Currency.json			"../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Character_Creation.json			"../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Inventory_Section.json			"../Server/GameServer/Game/Data/Json"
 
 MOVE /Y C_Monster.json				    "../P1/Content/P1/Data/DataTables"
 MOVE /Y C_Item.json				        "../P1/Content/P1/Data/DataTables"

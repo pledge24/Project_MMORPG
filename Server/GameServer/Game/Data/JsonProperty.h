@@ -97,4 +97,26 @@ namespace JsonProperty
         constexpr std::string_view MaxMonsterCount = "maxMonsterCount";
         constexpr std::string_view Yaw = "yaw";
     }
+
+    namespace Currency
+    {
+        constexpr std::string_view TemplateId = "templateId";
+        constexpr std::string_view CurrencyName = "currencyName";
+        constexpr std::string_view CurrencyType = "currencyType";
+    }
+
+    namespace CharacterCreation
+    {
+        constexpr std::string_view StartMapId = "startMapId";
+        constexpr std::string_view StartPos = "startPos";
+        constexpr std::string_view StartYaw = "startYaw";
+        constexpr std::string_view StartGold = "startGold";
+        constexpr std::string_view DefaultCharacterSlotCount = "defaultCharacterSlotCount";
+    }
+
+    namespace InventorySection
+    {
+        constexpr std::string_view ItemType = "itemType";
+        constexpr std::string_view SlotCount = "slotCount";
+    }
 }
