@@ -110,6 +110,9 @@
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\SnowflakeIdGenerator.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Characters\CharacterCreation.cpp">
       <Filter>Game\Characters</Filter>
     </ClCompile>
@@ -233,6 +236,9 @@
       <Filter>Protocol</Filter>
     </ClInclude>
     <ClInclude Include="Utils\Utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Game\Characters\CharacterCreation.h">

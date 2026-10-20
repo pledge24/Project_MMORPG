@@ -87,7 +87,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `MoveValidation` | 5 | 이동 위치 판정. 허용 거리 안은 통과하고 넘으면 거절 · 허용 거리는 경과 시간에 따라 늘어남 · 평면 거리로 잼 · 룸 경계 밖 거절(경계 위는 안쪽) |
 | `RoomTransferTest` | 12 | 룸 이동 판정. 첫 입장 · 다른 맵의 다른 룸 거절 · 같은 맵 이동에 포털 필요 · 포털 목적지 · 사망한 플레이어의 마을 리스폰만 허용 · 맵 표에서 찾는 마을 리스폰 지점 |
 | `RoomTransferMapTest` | 6 | 위치를 보는 룸 이동 판정. 포털 반경 경계와 높이 무시 · 반경 밖 포털 이동 거절 · 첫 맵 입장은 불러온 룸으로만 · 맵 간 이동은 다른 맵으로 가는 포털 반경 안에서만 · 맵 번호 대조 |
-| `ServerConfigTest` | 7 | 서버 설정 로더. 환경 변수가 없을 때 기본값 · 환경 변수가 각 값을 덮음 · 연결 수의 기본값은 DB 스레드 수를 따라감 · 연결 수가 DB 스레드 수보다 작으면 거절 · IPv4가 아닌 바인드 주소 거절 · 잘못된 개수와 포트는 기본값 |
+| `ServerConfigTest` | 12 | 서버 설정 로더. 환경 변수가 없을 때 기본값 · 환경 변수가 각 값을 덮음 · 연결 수의 기본값은 DB 스레드 수를 따라감 · 연결 수가 DB 스레드 수보다 작으면 거절 · IPv4가 아닌 바인드 주소 거절 · 잘못된 개수와 포트는 기본값 · 노드 번호가 없으면 Debug는 0, Release는 거절 · 두 빌드 모두 경계값(0, 1023)을 쓰고 범위 밖과 정수가 아닌 값을 거절 |
+| `SnowflakeIdGeneratorTest` | 11 | 캐릭터 ID와 아이템 UID 발급기(시계 주입). 기준 시각 · 시각, 노드, 순번의 비트 배치와 부호 비트 · 같은 밀리초의 순번 증가와 새 밀리초의 순번 초기화 · 순번이 넘치면 시각을 앞당김 · 시계가 뒤로 가도 커지기만 함 · 시작점이 시계보다 앞서면 그 뒤에서, 뒤처지면 시계를 따름 · 여러 스레드의 동시 발급에 중복 없음 |
 | AuthServer `common/tests/config.test.ts` | 11 | 설정 검사. 숫자로 바꾼 설정 · 빠진 키를 모두 모아 알림 · 정수와 범위 형식 · 풀 최솟값과 최댓값 · 예시 환경 파일의 키가 요구 키와 같고 값이 검사를 통과 |
 | AuthServer `auth/tests/auth.service.test.ts` | 13 | 회원가입과 로그인 판정(메모리 저장소, 형식을 통과한 값만 넣음). 가입과 bcrypt 해시 저장 · 중복 · 가입은 티켓을 발급하지 않음 · 성공한 티켓이 UUID이고 그 계정 번호를 가리킴 · 마지막 로그인 시각 갱신 · 다시 로그인해도 이전 티켓을 지우지 않음 · 없는 로그인 ID와 틀린 비밀번호가 같은 에러 · 정지 중이면 정지 기한을 주고 티켓도 로그인 시각도 남기지 않음 · 정지 중이어도 비밀번호가 틀리면 자격 증명 에러 · 정지 기한이 지났거나 지금과 같으면 통과 |
 | AuthServer `auth/tests/auth.router.test.ts` | 33 | HTTP 계약(앱 전체를 메모리 저장소로 조립). 회원가입의 201과 소문자 로그인 ID, 대소문자만 다른 중복의 409, 400(형식, 깨진 JSON, 빈 본문), 500과 봉투 형식 · 로그인의 200(대문자 로그인 ID), 401(없는 로그인 ID와 틀린 비밀번호가 같은 본문), 403과 `bannedUntil`, 400(형식, 빈 본문), 티켓 저장소 실패의 500 · 옛 로그인 경로 `/Login`의 404와 `NOT_FOUND` 봉투 · 형식 실패 10가지를 두 경로에 각각 보내 계정도 티켓도 남지 않음 |
@@ -152,6 +153,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 기획 데이터 주입 | 존재. `Gamedata::Install`. 테스트는 전역 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 설치한다 |
 | DB 연결 | 존재. `DBConnection`의 가상 함수. 테스트는 `GameServerTests/FakeDBConnection.h`를 DAO와 `ProgressStorage`에 넘긴다. 결과 행과 실행 실패를 미리 넣고, 바인딩한 파라미터와 트랜잭션 호출을 기록한다 |
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
+| ID 발급 | 존재. `SnowflakeIdGenerator`의 `Next`와 `StartAfter`. 테스트는 시계를 주입해 시각을 정하고, 비트 배치는 발급기의 분해 함수가 아니라 테스트가 따로 조립한 값과 대조한다. 생성 경로에서 부르는 일은 테스트하지 않는다 |
+| 서버 설정 | 존재. `Config::Load`와 `Config::Validate`. 테스트는 환경 변수 조회와 빌드 구성(Debug, Release)을 넘긴다 |
 | 액세스 토큰 값 | 존재. `AccessToken::ParsePayload`. Redis 읽기와 지우기, 밀어내기는 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
 | 세션 끊기 | 존재. 루프백(127.0.0.1)의 고정 포트 47913에 `ServerService`를 띄우고 Winsock 소켓으로 접속한다. 테스트가 IOCP 디스패치, 예약 잡 분배, 글로벌 큐 소비를 직접 돈다. 그 포트를 다른 프로세스가 쓰고 있으면 준비 단계에서 실패한다 |
 | 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |

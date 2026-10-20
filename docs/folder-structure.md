@@ -500,7 +500,7 @@ Server/
 │   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템), 진행 저장소, DB 스레드 루프
 │   ├── Queries/            GameDB 스키마 스크립트
 │   ├── Protocol/           생성물
-│   └── Utils/
+│   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
