@@ -9,6 +9,7 @@
 | 대상 | 빌드 | 실행 (에이전트·CI) | 실행 (사람·IDE) |
 |---|---|---|---|
 | 게임 서버 L1 (GoogleTest) | `MSBuild Server.sln` (`docs/build.md` 「빌드 명령」) | `Server/Binary/Debug/GameServerTests.exe` | Rider 실행 구성 `GameServerTests` |
+| 게임 서버 실제 DB (GoogleTest, 기본으로 꺼짐) | 위와 같다 | 아래 「실제 DB 테스트」 | 같은 명령 |
 | 인증 서버 | — | `cd Server/AuthServer && npm test` | Rider npm 구성 |
 | 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
 | 인증 서버 타입 검사 | — | `cd Server/AuthServer && npm run typecheck` | Rider npm 구성 |
@@ -59,6 +60,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `CharacterListDAOTest` | 4 | 캐릭터 생성 DAO(가짜 연결). 만든 캐릭터 번호 · 거절은 예외가 아니라 결과 · 쿼리가 모르는 거절 사유와 실패한 쿼리는 DBError |
 | `CharacterCreationTest` | 7 | 캐릭터 생성 검증. 유효한 전사 · 레벨 표가 없거나 정의되지 않은 직업 거절 · 레벨 표가 있어도 NONE 거절 · 빈 이름 거절 · 이름 길이 경계(한글 50자 통과, 51자 거절) |
 | `CombatTest` | 8 | 피격과 처치 판정. 데미지만큼 HP 감소 · 과잉 데미지의 HP 0 고정과 사망 · 죽은 대상과 죽은 공격자 · 플레이어가 몬스터를 처치할 때만 보상 · 피격 후 몬스터 정보의 HP |
+| `DISABLED_GameDBSchemaTest` | 1 | 실제 DB(`GameDB_Test`). 연결한 DB가 `GameDB_Test`인지 확인 · 001이 만든 테이블 일곱 개를 모두 조회 |
 | `DBConnectionGuardTest` | 1 | 빈 연결 풀에서 빌리면 널 연결 대신 DBError |
 | `DBWorkerTest` | 6 | DB 스레드. 끝까지 돈 잡 · 표준 예외와 DBError와 표준 예외가 아닌 값이 잡 밖으로 나가지 않음 · 멈춘 큐의 남은 잡은 돌리고 새 잡은 버림 |
 | `EntityFactoryTest` | 4 | 엔티티 생성. 몬스터의 id·타입·템플릿·스폰 위치와 위치의 엔티티 id · 모르는 템플릿 거절 · 세션 없는 플레이어의 id·인벤토리 · 엔티티마다 다른 id |
@@ -104,6 +106,24 @@ py -3 Tools/ConventionLint/check_conventions.py
 
 **안 덮는 것**: `Room` 본체의 대부분(입장 일부, 이동, 아이템 착용과 해제, 접속 종료 저장, 맵 입장만 `RoomRequestTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer의 MSSQL 계정 저장소와 Redis 티켓 저장소. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영 일곱뿐이고 나머지 계층은 0개다.
 
+### 실제 DB 테스트
+
+`GameDB_Test`에 붙어 SQL 문장과 스키마를 확인하는 GoogleTest다. 단위 테스트와 같은 `GameServerTests.exe`에 들어 있고,
+묶음 이름이 `DISABLED_GameDB`로 시작해서 평소에는 돌지 않는다.
+
+```powershell
+$env:P1_GAME_DB_TEST_CONNECTION_STRING = "Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\P1Game;Database=GameDB_Test;UID=claude_rw;PWD=<비밀번호>;"
+Server/Binary/Debug/GameServerTests.exe --gtest_also_run_disabled_tests --gtest_filter=DISABLED_GameDB*
+```
+
+- 접속 문자열은 `P1_GAME_DB_TEST_CONNECTION_STRING`에서만 읽는다. 게임 서버의 `P1_GAME_DB_CONNECTION_STRING`과 그 기본값은 보지 않는다.
+  변수가 없으면 테스트가 실패한다. 건너뛴 것으로 끝나면 통과와 구별되지 않기 때문이다
+- 연결한 DB의 이름이 `GameDB_Test`가 아니면 테스트를 시작하지 않는다. 테스트가 행을 지우므로 개발용 `GameDB`에 붙으면 안 된다
+- 행 쓰기만 하는 `claude_rw`로 붙는다. 스키마는 사람이 마이그레이션으로 적용하고, 테스트는 스키마를 바꾸지 않는다
+- 테스트는 자기가 넣은 행만 지운다. 행을 넣기 전에 지울 문장을 `AddCleanup`에 넣으면, 테스트가 실패해도 픽스처가 끝에 지운다.
+  다른 테스트가 남긴 행에 결과가 흔들리지 않도록, 테스트는 자기가 넣은 키로만 조회한다
+- 판정은 단위 테스트와 같이 종료 코드다. 필터가 아무것도 맞추지 못해도 0이므로, 출력의 `tests ran` 개수를 함께 본다
+
 ---
 
 ## TDD가 도는 범위
@@ -113,7 +133,8 @@ py -3 Tools/ConventionLint/check_conventions.py
 | GameServer 순수 로직 | `GameServerTests.exe`, 종료 코드 | 가능 |
 | AuthServer 설정 | `npm test` | 가능. 가장 빠름 |
 | GameServer DAO의 바인딩과 흐름 | `GameServerTests.exe`의 `FakeDBConnection` | 가능. SQL 문장과 드라이버 동작은 확인하지 못한다 |
-| GameServer Room·SQL·IOCP | 일부 | SQL은 **불가**(실제 DB 필요). IOCP는 루프백 세션 끊기 하나만 있다 |
+| GameServer SQL 문장 | `GameServerTests.exe`의 `DISABLED_GameDB*` | 가능. `GameDB_Test`에 붙는다. 접속 문자열을 환경 변수로 줘야 하고, 단위 테스트를 돌릴 때는 빠진다 |
+| GameServer Room·IOCP | 일부 | IOCP는 루프백 세션 끊기 하나만 있다 |
 | AuthServer 판정과 HTTP 계약 | `npm test` | 가능. 메모리 저장소를 넣는다. bcrypt는 실제로 돌아서 테스트 하나에 수십 ms가 든다 |
 | AuthServer MSSQL 계정 저장소와 Redis 티켓 저장소 | 없음 | **불가**(실제 DB와 Redis 필요). `npm start` 뒤 실제 요청으로 확인한다. Redis 클라이언트의 주소 옵션만 `common/tests/ticket.test.ts`가 Redis에 붙지 않고 검사한다 |
 | UE 클라 순수 로직 | `Run-UeTests.ps1`, 종료 코드 | 가능. 다만 한 바퀴마다 에디터를 닫고 빌드해야 한다 |
@@ -151,6 +172,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 룸 이동 판정 | 존재. `RoomTransfer`의 자유 함수. 퇴장과 입장, 목적지 큐로 넘기기는 `Room`에 있다 |
 | 기획표 검증과 변환 | 존재. `GamedataParser::Parse`와 `Gamedata::Load`. 파일 읽기는 `Gamedata::LoadAllGamedata`에 있고 테스트하지 않는다 |
 | 기획 데이터 주입 | 존재. `Gamedata::Install`. 테스트는 전역 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 설치한다 |
+| 실제 DB | 존재. `GameServerTests/GameDBTestFixture.h`의 `GameDBTestFixture`. 테스트는 `Connection()`으로 받은 실제 연결로 DAO나 SQL을 부르고, 넣은 행을 지우는 문장을 `AddCleanup`에 넣는다. 묶음 이름은 `DISABLED_GameDB`로 시작한다 |
 | DB 연결 | 존재. `DBConnection`의 가상 함수. 테스트는 `GameServerTests/FakeDBConnection.h`를 DAO와 `ProgressStorage`에 넘긴다. 결과 행과 실행 실패를 미리 넣고, 바인딩한 파라미터와 트랜잭션 호출을 기록한다 |
 | 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
 | ID 발급 | 존재. `SnowflakeIdGenerator`의 `Next`와 `StartAfter`. 테스트는 시계를 주입해 시각을 정하고, 비트 배치는 발급기의 분해 함수가 아니라 테스트가 따로 조립한 값과 대조한다. 생성 경로에서 부르는 일은 테스트하지 않는다 |

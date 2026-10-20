@@ -299,14 +299,7 @@
     <None Include="..\..\Protocol\Schema\Enum.proto" />
     <None Include="..\..\Protocol\Schema\Protocol.proto" />
     <None Include="..\..\Protocol\Schema\Struct.proto" />
-    <None Include="Queries\AlterTable.sql" />
-    <None Include="Queries\DEBUG.sql" />
-    <None Include="Queries\GameDB_CreateAllTables.sql" />
-    <None Include="Queries\GameDB_GetMaxItemUid.sql" />
-    <None Include="Queries\GameDB_InsertAdminAccount.sql" />
-    <None Include="Queries\Schema\current.sql" />
-    <None Include="Queries\Schema\GameDB.target.sql" />
-    <None Include="Queries\Schema\schema.erd.json" />
+    <None Include="Migrations\001_init.sql" />
     <None Include="Game\Data\Json\S_Item.json" />
     <None Include="Game\Data\Json\S_Map.json" />
     <None Include="Game\Data\Json\S_Monster.json" />

@@ -47,7 +47,7 @@ git config core.hooksPath .githooks
 
 | 환경 변수 | 기본값 |
 |---|---|
-| `P1_GAME_DB_CONNECTION_STRING` | `(localdb)\ProjectModels`의 `GameDB`, 통합 인증 |
+| `P1_GAME_DB_CONNECTION_STRING` | `(localdb)\P1Game`의 `GameDB`, 통합 인증 |
 | `P1_REDIS_URI` | `tcp://127.0.0.1:6379` |
 | `P1_GAME_SERVER_BIND_ADDRESS` | `127.0.0.1` |
 | `P1_GAME_SERVER_PORT` | `7777` |
@@ -167,13 +167,16 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
 | AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/migrations/`의 파일을 번호 순서로 |
-| GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
+| GameDB · GameDB_Test | `(localdb)\P1Game` | `Server/GameServer/Migrations/`의 파일을 번호 순서로 두 DB에 |
 
-**AccountDB의 스키마는 `Server/AuthServer/migrations/`의 번호 붙은 파일로 관리한다.** 파일 이름은 `NNN_<이름>.sql`이고
+**두 서버의 스키마는 각자의 마이그레이션 폴더에 번호 붙은 파일로 관리한다.** AccountDB는 `Server/AuthServer/migrations/`,
+GameDB는 `Server/GameServer/Migrations/`다. 파일 이름은 `NNN_<이름>.sql`이고
 첫 줄에 `-- NNN: 설명`을 적는다. 각 파일은 이미 적용된 DB에 다시 실행해도 결과가 같게 쓴다. 적용한 파일은 고치지 않고,
 스키마를 바꿀 때는 다음 번호의 파일을 더한다. 적용 기록 테이블과 실행 도구는 두지 않고, 사람이 번호 순서로 실행한다.
 
-GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
+**GameDB의 마이그레이션은 `GameDB`와 `GameDB_Test`에 함께 적용한다.** 한쪽에만 적용하면 실제 DB 테스트가 게임 서버와 다른
+스키마를 검사한다. 게임 서버의 `.vcxproj`에는 마이그레이션 파일을 `None` 항목으로 등록한다. 파일을 더하면 `.vcxproj`와
+`.filters`에도 더한다.
 
 **인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, AccountDB는 `.env`.
 
@@ -184,6 +187,20 @@ GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetM
 3. `CREATE DATABASE AccountDB`를 실행하고, `Server/AuthServer/migrations/`의 파일을 번호 순서로 `-d AccountDB`로 실행한다. 각 파일은 이미 적용된 DB에서 다시 실행해도 결과가 같다
 4. SQL 인증 로그인 `claude_ro`를 만들고, `AccountDB`의 사용자로 만들어 `db_datareader`에만 넣는다
 5. Rider에 아래 표의 `AccountDB` 데이터 소스 두 개(`AccountDB`, `AccountDB (사용자 전용)`)를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
+
+**새 머신에서 GameDB를 만들 때도 사람이 아래 순서로 실행한다.** `claude_ro`와 `claude_rw`는 `P1Game`의 로그인이다.
+`P1Auth`의 `claude_ro`와 이름은 같지만 인스턴스가 다르므로 따로 만든다.
+
+1. `sqllocaldb create P1Game -s`로 인스턴스를 만들고 시작한다
+2. `SERVERPROPERTY('IsIntegratedSecurityOnly')`가 `0`인지 확인한다. `claude_ro`와 `claude_rw`는 SQL 인증 로그인이다
+3. `CREATE DATABASE GameDB`와 `CREATE DATABASE GameDB_Test`를 실행하고, `Server/GameServer/Migrations/`의 파일을 번호 순서로
+   두 DB에 각각 실행한다
+4. SQL 인증 로그인 `claude_ro`를 만들고, `GameDB`의 사용자로 만들어 `db_datareader`에만 넣는다
+5. SQL 인증 로그인 `claude_rw`를 만들고, `GameDB`와 `GameDB_Test`의 사용자로 만들어 두 DB 모두에서 `db_datareader`와
+   `db_datawriter`에만 넣는다
+6. Rider에 아래 표의 GameDB 데이터 소스 네 개(`GameDB(claude_ro)`, `GameDB(claude_rw)`, `GameDB_Test(claude_rw)`,
+   `GameDB(사용자 전용)`)를 AccountDB와 같은 드라이버로 만든다
+7. 새로 만든 Claude 연결의 ID를 `.claude/hooks/guard_dangerous_cmd.py`의 `SQL_ALLOWED_CONNECTIONS`에 넣는다
 
 Rider의 DB 연결은 세 벌이다.
 
