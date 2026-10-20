@@ -6,7 +6,7 @@
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
 #include "Network/ItemRequests.h"
-#include "Network/AccessToken.h"
+#include "Network/AuthTicket.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Game/Characters/CharacterCreation.h"
@@ -95,29 +95,29 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
         {
             GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-            // 액세스 토큰은 한 번만 쓴다. 같은 토큰의 로그인이 다른 DB 큐에서 동시에 와도
-            // 키를 지운 쪽 하나만 통과한다.
-            const string tokenKey = "accessToken:" + pkt.access_token();
+            // 인증 티켓은 한 번만 쓴다. 같은 티켓의 로그인이 다른 DB 큐에서 동시에 와도
+            // 키를 지운 쪽 하나만 통과한다. 키 형식은 인증 서버와의 계약이다.
+            const string ticketKey = "authTicket:" + pkt.access_token();
             RedisRef redis = GRedisManager->GetRedis();
-            auto val = redis->get(tokenKey);
-            if (val.has_value() == false || redis->del(tokenKey) == 0)
+            auto val = redis->get(ticketKey);
+            if (val.has_value() == false || redis->del(ticketKey) == 0)
             {
-                GLogger->Warning("액세스 토큰이 없거나 이미 쓰였다");
-                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
+                GLogger->Warning("인증 티켓이 없거나 이미 쓰였다");
+                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "인증 티켓 없음");
                 return;
             }
 
-            // 토큰은 이미 지웠다. 값을 읽지 못하면 다시 쓸 수 없으므로 응답 없이 끝내지 말고 끊는다.
-            optional<AccessToken::Payload> payload = AccessToken::ParsePayload(*val);
-            if (payload.has_value() == false)
+            // 티켓은 이미 지웠다. 값을 읽지 못하면 다시 쓸 수 없으므로 응답 없이 끝내지 말고 끊는다.
+            optional<int64> accountId = AuthTicket::ParseAccountId(*val);
+            if (accountId.has_value() == false)
             {
-                GLogger->Warning("액세스 토큰 값의 형식이 틀렸다");
-                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
+                GLogger->Warning("인증 티켓 값의 형식이 틀렸다");
+                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "인증 티켓 값 형식 오류");
                 return;
             }
 
-            const int64 userId = payload->userId;
-            GLogger->Info("로그인 userId: {}, username: {}", userId, payload->username);
+            const int64 userId = *accountId;
+            GLogger->Info("로그인 userId: {}", userId);
 
             // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
             // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
