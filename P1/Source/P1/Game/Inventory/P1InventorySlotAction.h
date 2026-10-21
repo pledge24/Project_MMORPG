@@ -30,5 +30,5 @@ struct P1_API FP1InventorySlotAction
      * 착용할지 사용할지는 아이템 종류(ItemType)로 가르고, 컨테이너는 인벤토리 구역인지만 본다.
      * TemplateId가 0 이하이면 빈 칸. bCoolingDown은 소모품에만 쓴다.
      */
-    static EKind Decide(Protocol::ContainerType Container,Protocol::ItemType ItemType, int32 TemplateId, int32 LevelRequirement, int32 PlayerLevel, bool bCoolingDown);
+    static EKind Decide(Protocol::ContainerType Container, Protocol::ItemType ItemType, int32 TemplateId, int32 LevelRequirement, int32 PlayerLevel, bool bCoolingDown);
 };

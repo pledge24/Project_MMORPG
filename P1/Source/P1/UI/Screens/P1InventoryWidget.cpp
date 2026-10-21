@@ -92,7 +92,7 @@ void UP1InventoryWidget::UpdateGold(const int64 Gold)
 UP1SlotWidget* UP1InventoryWidget::GetSlotWidgetFromSlot(const Protocol::SlotChange& InSlot)
 {
     UUniformGridPanel* Inven = nullptr;
-    int32 SlotId = InSlot.address().slot_index();
+    const int32 SlotIndex = InSlot.address().slot_index();
 
     switch (InSlot.address().container())
     {
@@ -109,12 +109,12 @@ UP1SlotWidget* UP1InventoryWidget::GetSlotWidgetFromSlot(const Protocol::SlotCha
         break;
     }
 
-    if (!Inven || SlotId < 0 || SlotId >= Inven->GetChildrenCount())
+    if (!Inven || SlotIndex < 0 || SlotIndex >= Inven->GetChildrenCount())
     {
         return nullptr;
     }
 
-    UWidget* ChildWidget = Inven->GetChildAt(SlotId);
+    UWidget* ChildWidget = Inven->GetChildAt(SlotIndex);
 
     if (ChildWidget)
     {
