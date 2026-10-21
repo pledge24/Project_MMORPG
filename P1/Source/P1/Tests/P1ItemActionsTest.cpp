@@ -144,6 +144,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
             return false;
 
         TestTrue(TEXT("물약 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
+        F.Actions->HandleResponse(EKind::Use);
         TestTrue(TEXT("두건 착용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(GEAR, 0)) == EResult::Sent);
 
         if (TestEqual(TEXT("보낸 요청 수"), F.Sent.Num(), 2))
@@ -175,20 +176,24 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("보낸 요청 없음"), F.Sent.Num(), 0);
     }
 
-    // 3) 응답을 기다리는 동안 같은 종류의 요청은 보내지 않는다. 다른 종류는 막지 않는다.
+    // 3) 인벤토리 칸의 사용, 착용, 판매는 응답 대기 하나를 함께 쓴다. 해제와 구매는 그 대기에 막히지 않는다.
     //    다른 플레이어의 응답으로는 풀리지 않고, 실패 응답이어도 내 응답이면 풀린다.
     {
         FFixture F;
+        F.Actions->SetShopOpen(true);
         TestTrue(TEXT("첫 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
         TestTrue(TEXT("응답 전 두 번째 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Pending);
-        TestTrue(TEXT("사용 대기 중 착용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(GEAR, 0)) == EResult::Sent);
+        TestTrue(TEXT("사용 대기 중 착용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(GEAR, 0)) == EResult::Pending);
+        TestTrue(TEXT("사용 대기 중 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(GEAR, 0)) == EResult::Pending);
+        TestTrue(TEXT("사용 대기 중 해제"), F.Actions->RequestForSlot(EP1ItemIntent::Unequip, Address(EQUIPPED, 6)) == EResult::Sent);
+        TestTrue(TEXT("사용 대기 중 구매"), F.Actions->RequestBuy(2000) == EResult::Sent);
 
         F.Data->HandleUseItem(MakeUseResponse(OTHER_PLAYER_ID, true));
         TestTrue(TEXT("다른 플레이어의 응답 뒤 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Pending);
 
         F.Data->HandleUseItem(MakeUseResponse(MY_PLAYER_ID, false));
         TestTrue(TEXT("실패 응답 뒤 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
-        TestEqual(TEXT("보낸 요청 수"), F.Sent.Num(), 3);
+        TestEqual(TEXT("보낸 요청 수"), F.Sent.Num(), 4);
     }
 
     // 4) 재사용 대기 중인 소모품은 쓰지 않는다. 대기는 성공한 사용 응답으로 시작한다.

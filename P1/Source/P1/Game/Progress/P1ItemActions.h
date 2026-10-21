@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Game/Items/P1Slot.h"
 #include "Game/Items/P1SlotAddress.h"
 #include "Game/Progress/P1ItemIntent.h"
 #include "P1ItemActions.generated.h"
@@ -11,7 +12,7 @@ class UP1MyPlayerData;
 /**
  * 내 플레이어의 아이템 요청 창구.
  *
- * 칸 주소에 대한 의도와 구매를 받아 요청을 보낼지 판정하고, 응답을 기다리는 동안 같은 요청을 막고, 요청을 보낸다.
+ * 칸 주소에 대한 의도와 구매를 요청으로 바꾸는 유일한 창구다. 요청할 수 있는지의 판정과 응답 대기를 여기서만 다룬다.
  * 데이터는 서버 응답으로만 바뀌므로 요청을 보내도 칸과 골드를 고치지 않는다.
  * 내 플레이어 데이터의 하위 객체로만 만든다. 모든 멤버 함수는 게임 스레드 전용이다.
  */
@@ -21,7 +22,7 @@ class P1_API UP1ItemActions : public UObject
     GENERATED_BODY()
 
 public:
-    /** 보내는 요청의 종류. 응답 대기는 종류마다 따로 건다. */
+    /** 보내는 요청의 종류. 인벤토리 칸의 사용, 착용, 판매는 응답 대기 하나를 함께 쓰고, 해제와 구매는 각자 쓴다. */
     enum class ERequestKind : uint8
     {
         Use,
@@ -44,7 +45,7 @@ public:
         NotSellable,
         ShopClosed,
         NotEnoughGold,
-        /** 같은 종류의 요청이 응답을 기다리고 있다. */
+        /** 응답 대기를 함께 쓰는 요청이 응답을 기다리고 있다. */
         Pending,
     };
 
@@ -75,11 +76,14 @@ public:
     void SetRequestSender(FRequestSender InSender) { RequestSender = MoveTemp(InSender); }
 
 private:
+    /** 내 플레이어의 컨테이너에서 Address의 칸을 찾는다. 칸이 없으면 nullptr. */
+    const FP1Slot* FindSlot(const FP1SlotAddress& Address) const;
+
     EResult DecideUse(const FP1SlotAddress& Address, OUT FRequest& OutRequest) const;
     EResult DecideUnequip(const FP1SlotAddress& Address, OUT FRequest& OutRequest) const;
     EResult DecideSell(const FP1SlotAddress& Address, OUT FRequest& OutRequest) const;
 
-    /** 응답을 기다리는 같은 종류의 요청이 있으면 보내지 않는다. */
+    /** 응답 대기를 함께 쓰는 요청이 응답을 기다리고 있으면 보내지 않는다. */
     EResult Send(const FRequest& Request);
 
     void SendPacket(const FRequest& Request) const;
@@ -90,16 +94,20 @@ private:
 
     //~ Pending
 public:
-    bool IsPending(ERequestKind Kind) const { return PendingKinds.Contains(Kind); }
+    bool IsPending(ERequestKind Kind) const { return PendingGroups.Contains(GetPendingGroup(Kind)); }
 
     /** Kind의 응답이 오면 성공 여부와 무관하게 부른다. */
-    void HandleResponse(ERequestKind Kind) { PendingKinds.Remove(Kind); }
+    void HandleResponse(ERequestKind Kind) { PendingGroups.Remove(GetPendingGroup(Kind)); }
 
     /** 모든 응답 대기를 푼다. 새로 입장하면 부른다. 끊기기 전에 보낸 요청의 응답은 오지 않는다. */
-    void ResetPending() { PendingKinds.Reset(); }
+    void ResetPending() { PendingGroups.Reset(); }
 
 private:
-    TSet<ERequestKind> PendingKinds;
+    /** 응답 대기를 함께 쓰는 요청들의 대표 종류. */
+    static ERequestKind GetPendingGroup(ERequestKind Kind);
+
+    /** 응답을 기다리는 대기의 대표 종류. */
+    TSet<ERequestKind> PendingGroups;
 
     //~ 공통
 private:

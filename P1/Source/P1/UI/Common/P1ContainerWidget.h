@@ -32,14 +32,6 @@ protected:
     /** 칸 번호마다 그 칸을 그릴 슬롯 위젯을 OutSlotWidgets에 넣는다. 위젯이 초기화될 때 한 번 불린다. */
     virtual void CollectSlotWidgets(TMap<int32, TObjectPtr<UP1SlotWidget>>& OutSlotWidgets) PURE_VIRTUAL(UP1ContainerWidget::CollectSlotWidgets, );
 
-    /** 그릴 컨테이너. */
-    UPROPERTY(EditAnywhere, Category = "Container")
-    EP1ContainerType ContainerType = EP1ContainerType::None;
-
-private:
-    UPROPERTY(Transient)
-    TMap<int32, TObjectPtr<UP1SlotWidget>> SlotWidgets;
-
     //~ Drawing
 private:
     void HandleSlotChanged(const FP1Slot& Changed);
@@ -63,4 +55,15 @@ private:
 
     /** 의도가 None이거나 이 위젯의 슬롯이 아니면 아무것도 하지 않는다. */
     void RequestIntent(EP1ItemIntent Intent, UP1SlotWidget* SlotWidget) const;
+
+    //~ 공통
+protected:
+    /** 그릴 컨테이너. */
+    UPROPERTY(EditAnywhere, Category = "Container")
+    EP1ContainerType ContainerType = EP1ContainerType::None;
+
+private:
+    /** 칸 번호와 그 칸을 그리는 슬롯 위젯. */
+    UPROPERTY(Transient)
+    TMap<int32, TObjectPtr<UP1SlotWidget>> SlotWidgets;
 };

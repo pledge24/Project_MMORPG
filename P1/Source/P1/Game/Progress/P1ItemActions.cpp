@@ -83,13 +83,21 @@ UP1ItemActions::EResult UP1ItemActions::RequestBuy(int32 TemplateId)
     return Result;
 }
 
-UP1ItemActions::EResult UP1ItemActions::DecideUse(const FP1SlotAddress& Address, FRequest& OutRequest) const
+const FP1Slot* UP1ItemActions::FindSlot(const FP1SlotAddress& Address) const
 {
     const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
     const UP1ItemContainer* Container = MyPlayerData ? MyPlayerData->GetContainer(Address.Container) : nullptr;
-    const FP1Slot* Slot_ = Container ? Container->FindSlot(Address.SlotIndex) : nullptr;
+    return Container ? Container->FindSlot(Address.SlotIndex) : nullptr;
+}
+
+UP1ItemActions::EResult UP1ItemActions::DecideUse(const FP1SlotAddress& Address, FRequest& OutRequest) const
+{
+    const FP1Slot* Slot_ = FindSlot(Address);
     if (Slot_ == nullptr || Slot_->HasItem() == false)
         return EResult::Empty;
+
+    // 칸을 찾았으면 내 플레이어 데이터가 있다.
+    const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
 
     // 정의가 없는 아이템은 종류를 몰라 쓸 수 없는 아이템으로 판정된다.
     const FP1ItemData* ItemData = UP1GameDataSettings::FindItemData(Slot_->Item.TemplateId);
@@ -120,9 +128,7 @@ UP1ItemActions::EResult UP1ItemActions::DecideUnequip(const FP1SlotAddress& Addr
     if (Address.Container != EP1ContainerType::Equipped)
         return EResult::Unusable;
 
-    const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
-    const UP1ItemContainer* Container = MyPlayerData ? MyPlayerData->GetContainer(Address.Container) : nullptr;
-    const FP1Slot* Slot_ = Container ? Container->FindSlot(Address.SlotIndex) : nullptr;
+    const FP1Slot* Slot_ = FindSlot(Address);
     if (Slot_ == nullptr || Slot_->HasItem() == false)
         return EResult::Empty;
 
@@ -141,9 +147,7 @@ UP1ItemActions::EResult UP1ItemActions::DecideSell(const FP1SlotAddress& Address
     if (IsInventorySection(Address.Container) == false)
         return EResult::Unusable;
 
-    const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
-    const UP1ItemContainer* Container = MyPlayerData ? MyPlayerData->GetContainer(Address.Container) : nullptr;
-    const FP1Slot* Slot_ = Container ? Container->FindSlot(Address.SlotIndex) : nullptr;
+    const FP1Slot* Slot_ = FindSlot(Address);
     if (Slot_ == nullptr || Slot_->HasItem() == false)
         return EResult::Empty;
 
@@ -165,8 +169,8 @@ UP1ItemActions::EResult UP1ItemActions::Send(const FRequest& Request)
     if (IsPending(Request.Kind))
         return EResult::Pending;
 
-    // 보내기 직전에 건다. 걸고 보내지 않으면 응답이 오지 않아 그 종류의 요청이 계속 막힌다.
-    PendingKinds.Add(Request.Kind);
+    // 보내기 직전에 건다. 걸고 보내지 않으면 응답이 오지 않아 대기를 함께 쓰는 요청이 계속 막힌다.
+    PendingGroups.Add(GetPendingGroup(Request.Kind));
     if (RequestSender)
         RequestSender(Request);
     else
@@ -223,6 +227,21 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }
+    }
+}
+
+UP1ItemActions::ERequestKind UP1ItemActions::GetPendingGroup(ERequestKind Kind)
+{
+    // 인벤토리 칸에 대한 요청은 응답 하나를 기다리는 동안 다음 요청을 보내지 않는다. 응답의 칸 변경이 오기 전에는
+    // 클라이언트가 보는 칸이 서버의 칸과 다를 수 있다.
+    switch (Kind)
+    {
+    case ERequestKind::Use:
+    case ERequestKind::Equip:
+    case ERequestKind::Sell:
+        return ERequestKind::Use;
+    default:
+        return Kind;
     }
 }
 
