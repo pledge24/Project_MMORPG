@@ -118,3 +118,14 @@
   지워진 원인은 BP를 다시 컴파일할 때 인스턴스의 상대 위치가 초기화된 것으로 추정하고 재현하지 않았다. `BP_Portal`을 다시 저장하면 포털 위치를 함께 확인한다
 - 2026-10-22: #276의 PIE에서 두 결함을 찾아 고쳤다. HUD를 `HitTestInvisible`로 띄워 자식까지 입력을 막고 있어 퀵슬롯이 놓기를 받지 못했다. HUD를 `SelfHitTestInvisible`로 바꾸고 퀵슬롯이 아닌 HUD 그림과 글자는 WBP에서 입력을 막았다.
   슬롯 위젯의 `NativePreConstruct`가 표시 내용을 빈 칸으로 덮어 끌리는 그림이 배경으로만 보였다. 키 번호 그림이 셋뿐이고 슬롯과 어긋난 것은 원래 HUD의 배치이고, 사람의 결정으로 #277 본문에 더했다
+- 2026-10-22: #277에서 퀵슬롯 사용 요청 `C_USE_QUICK_SLOT`(퀵슬롯 번호 하나)을 더했다. 응답은 `S_USE_ITEM`을 그대로 쓴다.
+  #276처럼 칸 계약은 건드리지 않고 메시지만 더했다. 서버는 `Player::ProcessUseQuickSlot`이 소모품 구역에서 칸 번호가 가장 작은 칸을 골라
+  `ProcessUseItem`으로 넘긴다. 칸 고르기는 `ItemContainer::FindFirstSlotOf`이고, 인벤토리의 묶음 칸 찾기도 이 함수를 쓰게 바꿨다.
+  클라이언트는 `UP1ItemActions::RequestUseQuickSlot`이 빈 퀵슬롯, 갖고 있지 않은 소모품, 재사용 대기 중인 소모품을 보내지 않는다. 응답 대기는 칸 사용과 함께 쓴다.
+  퀵슬롯의 재사용 대기 표시는 #276의 `FP1SlotDisplay::FromQuickSlotRef`가 대기 템플릿을 이미 넣고 있어 코드를 고치지 않았다.
+  Enhanced Input 에셋은 MCP로 고칠 수 있었다. 입력 액션은 `AssetTools.duplicate`로 `IA_ToggleInventory`를 복제해 `IA_UseQuickSlot1`~`9`를 만들었다.
+  매핑은 `ObjectTools.set_properties`로 `IMC_InGameUI`의 `defaultKeyMappings`에 키 `One`~`Nine`을 더했다. 기존 요소를 읽은 형식 그대로 보내야 하는 함정은 `ue-mcp` 스킬에 적었다.
+  `AP1InGamePlayerController`의 `UseQuickSlotActions` 배열 순번이 퀵슬롯 번호이고, `BP_InGamePlayerController`에 아홉 개를 넣었다.
+  `WBP_QuickSlots`의 칸마다 Overlay로 감싸고 입력을 막은 TextBlock(`KeyText_0`~`8`, 1~9)을 왼쪽 위에 두었다. `WBP_HUD`의 `Image_key1_1`~`Image_key3_1`을 지웠다.
+  지운 그림이 쓰던 텍스처 `key1`~`key3`은 이제 참조가 없지만 지우지 않았다.
+  찾은 부채: 아이템 요청 핸들러의 이름이 클라이언트 진입 핸들러 규칙과 다르다(TD-069). PIE 확인은 사람이 한다
