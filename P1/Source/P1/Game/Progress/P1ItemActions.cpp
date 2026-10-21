@@ -114,7 +114,7 @@ UP1ItemActions::EResult UP1ItemActions::RequestSetQuickSlot(int32 QuickSlotIndex
 
     if (Result != EResult::Sent)
     {
-        UE_LOG(LogP1CharacterInventory, Log, TEXT("퀵슬롯 등록 요청을 보내지 않았다: %s. 퀵슬롯 %d, 종류 %d, 대상 %d"),
+        UE_LOG(LogP1QuickSlots, Log, TEXT("퀵슬롯 등록 요청을 보내지 않았다: %s. 퀵슬롯 %d, 종류 %d, 대상 %d"),
             ToString(Result), QuickSlotIndex, static_cast<int32>(Ref.Type), Ref.Id);
     }
     return Result;

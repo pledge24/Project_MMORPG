@@ -18,7 +18,6 @@ struct FP1Slot;
  *
  * 퀵슬롯마다 슬롯 위젯 하나로 그 소모품의 소모품 구역 전체 개수를 보여 준다.
  * 소모품 칸이나 다른 퀵슬롯을 놓으면 등록과 교환을, 퀵슬롯을 바깥에 놓으면 해제를 요청한다.
- * 퀵슬롯은 컨테이너가 아니므로 컨테이너 위젯을 상속하지 않는다.
  */
 UCLASS()
 class P1_API UP1QuickSlotsWidget : public UP1UserWidget

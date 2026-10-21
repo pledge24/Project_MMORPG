@@ -154,8 +154,9 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
     {
         if (_quickSlots->Load(quickSlot) == false)
         {
+            const QuickSlotRef ref = quickSlot.ref.value_or(QuickSlotRef{});
             GLogger->Warning("캐릭터 {}의 퀵슬롯 {}(종류 {}, 대상 {})을 등록할 수 없어 버립니다", characterId, quickSlot.slotIndex,
-                quickSlot.ref.has_value() ? static_cast<int32>(quickSlot.ref->type) : 0, quickSlot.ref.has_value() ? quickSlot.ref->id : 0);
+                static_cast<int32>(ref.type), ref.id);
         }
     }
 

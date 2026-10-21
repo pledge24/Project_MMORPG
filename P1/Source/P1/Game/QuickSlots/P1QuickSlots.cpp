@@ -9,7 +9,7 @@ void UP1QuickSlots::ResetQuickSlots(const TArray<FP1QuickSlot>& InQuickSlots)
         // 같은 번호가 두 번 오면 뒤의 것을 쓴다. 둘 두면 변경이 한쪽만 고친다.
         if (FP1QuickSlot* Existing = QuickSlots.FindByPredicate([&](const FP1QuickSlot& Q) { return Q.SlotIndex == InQuickSlot.SlotIndex; }))
         {
-            UE_LOG(LogP1CharacterInventory, Warning, TEXT("퀵슬롯 번호 %d가 두 번 왔다"), InQuickSlot.SlotIndex);
+            UE_LOG(LogP1QuickSlots, Warning, TEXT("퀵슬롯 번호 %d가 두 번 왔다"), InQuickSlot.SlotIndex);
             Existing->Ref = InQuickSlot.Ref;
             continue;
         }
@@ -32,7 +32,7 @@ bool UP1QuickSlots::ApplyChange(const FP1QuickSlot& Change)
     FP1QuickSlot* Target = const_cast<FP1QuickSlot*>(Find(Change.SlotIndex));
     if (Target == nullptr)
     {
-        UE_LOG(LogP1CharacterInventory, Warning, TEXT("없는 퀵슬롯의 변경을 버린다. 퀵슬롯 번호 %d"), Change.SlotIndex);
+        UE_LOG(LogP1QuickSlots, Warning, TEXT("없는 퀵슬롯의 변경을 버린다. 퀵슬롯 번호 %d"), Change.SlotIndex);
         return false;
     }
 

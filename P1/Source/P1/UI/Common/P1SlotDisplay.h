@@ -43,8 +43,13 @@ struct FP1SlotDisplay
         if (Ref.Type != EP1QuickSlotRefType::Item || Ref.Id <= 0)
             return FP1SlotDisplay();
 
-        const int32 Total = Consumables ? Consumables->CountItem(Ref.Id) : 0;
-        return FP1SlotDisplay{ Ref.Id, Total, Ref.Id, Total <= 0, true };
+        FP1SlotDisplay Display;
+        Display.TemplateId = Ref.Id;
+        Display.Count = Consumables ? Consumables->CountItem(Ref.Id) : 0;
+        Display.CooldownTemplateId = Ref.Id;
+        Display.bDimmed = Display.Count <= 0;
+        Display.bAlwaysShowCount = true;
+        return Display;
     }
 
     bool operator==(const FP1SlotDisplay&) const = default;
