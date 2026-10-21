@@ -7,19 +7,17 @@
 
 namespace
 {
-    // 아이템 요청은 서버 슬롯에 든 아이템으로 판정한다. 요청에 실린 아이템은 클라이언트 슬롯이
+    // 아이템 요청은 서버의 칸에 든 아이템으로 판정한다. 요청에 실린 아이템은 클라이언트의 칸이
     // 어긋났는지 대조하는 데만 쓴다. 서버 아이템에 uid가 있으면 uid까지 같아야 같은 아이템이다.
-    bool MatchesRequest(const Protocol::Slot* ownedSlot, const Protocol::Slot& requestSlot)
+    bool MatchesRequest(const ItemInstance* owned, const ItemSlotRequest& request)
     {
-        if (ownedSlot == nullptr || ownedSlot->has_item() == false || requestSlot.has_item() == false)
+        if (owned == nullptr || request.templateId == 0)
             return false;
 
-        const Protocol::Item& owned = ownedSlot->item();
-        const Protocol::Item& requested = requestSlot.item();
-        if (owned.template_id() != requested.template_id())
+        if (owned->templateId != request.templateId)
             return false;
 
-        if (owned.has_item_uid() && owned.item_uid() != requested.item_uid())
+        if (owned->itemUid != 0 && owned->itemUid != request.itemUid)
             return false;
 
         return true;
@@ -32,7 +30,6 @@ Player::Player()
 
     _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
     _playerInfo = _entityInfo->mutable_player_info();
-    _possession = make_unique<Protocol::Possession>();
 }
 
 Player::~Player()
@@ -49,8 +46,8 @@ bool Player::Init(const SpawnParams& params)
     _session = params.session;
     _userId = params.userId;
 
-    _inventory = make_shared<InventoryComponent>(self, _possession->mutable_inventory());
-    _equipment = make_shared<EquipmentComponent>(self, _possession->mutable_equipped_gear());
+    _inventory = make_shared<InventoryComponent>(self);
+    _equipment = make_shared<EquipmentComponent>(self);
 
     if (params.progress != nullptr)
         return ApplyProgress(*params.progress) && OnLoaded();
@@ -131,32 +128,27 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
         _playerInfo->set_level(levelExp.level);
     }
 
-    _possession->set_gold(progress.possession.gold());
+    _gold = progress.gold;
 
     // 잘못된 행 하나를 건너뛰고 입장시키면, 그 칸에 다른 아이템이 들어가 저장될 때 그 행을 덮어쓴다.
     // 그래서 입장을 거절하고 행은 DB에 남긴다.
-    const Protocol::Inventory& inventory = progress.possession.inventory();
-    for (const auto* slots : { &inventory.gear(), &inventory.consumables(), &inventory.miscellaneous() })
+    for (const PlacedItem& placed : progress.items)
     {
-        for (const Protocol::Slot& slot : *slots)
-        {
-            if (slot.has_item() && _inventory->LoadItem(slot) == false)
-            {
-                GLogger->Error("캐릭터 {}의 인벤토리 행(종류 {}, 칸 {}, 템플릿 {})을 넣을 수 없습니다",
-                    characterId, static_cast<int32>(slot.type()), slot.slot_id(), slot.item().template_id());
-                return false;
-            }
-        }
-    }
+        const SlotAddress& address = placed.address;
+        const bool loaded = address.container == ContainerType::EQUIPPED
+            ? _equipment->LoadEquipped(placed.item, address.slotIndex)
+            : _inventory->LoadItem(address, placed.item);
 
-    for (const auto& [gearType, slot] : progress.possession.equipped_gear())
-    {
-        if (slot.has_item() && _equipment->LoadEquipped(slot.item(), gearType) == false)
+        if (loaded == false)
         {
-            GLogger->Error("캐릭터 {}의 장착 행(부위 {}, 템플릿 {})을 넣을 수 없습니다", characterId, gearType, slot.item().template_id());
+            GLogger->Error("캐릭터 {}의 아이템(컨테이너 {}, 칸 {}, 템플릿 {})을 넣을 수 없습니다",
+                characterId, static_cast<int32>(address.container), address.slotIndex, placed.item.templateId);
             return false;
         }
     }
+
+    // 불러온 칸은 응답에 실을 변경이 아니다. 남겨 두면 첫 요청의 응답에 함께 실린다.
+    TakeItemChanges();
 
     return true;
 }
@@ -189,60 +181,62 @@ optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
     if (itemTemplate == nullptr)
         return nullopt;
 
-    const int64 gold = _possession->gold();
     const int64 buyPrice = itemTemplate->buyPrice * count;
 
-    if (gold < buyPrice)
+    if (_gold < buyPrice)
         return nullopt;
+
+    if (_inventory->AddNewItem(templateId, count) == false)
+        return nullopt;
+
+    _gold -= buyPrice;
 
     BuyItemResult result;
-    if (_inventory->AddItem(OUT &result.updatedSlots, templateId, count) == false)
-        return nullopt;
-
-    result.gold = gold - buyPrice;
-    _possession->set_gold(result.gold);
+    result.changedSlots = TakeItemChanges();
+    result.gold = _gold;
 
     return result;
 }
 
-optional<SellItemResult> Player::ProcessSellItem(const Protocol::Slot& requestSlot, int32 count)
+optional<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request, int32 count)
 {
-    // 가격은 요청이 아니라 슬롯에 든 아이템으로 정한다.
-    const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
-    if (MatchesRequest(ownedSlot, requestSlot) == false)
+    // 가격은 요청이 아니라 칸에 든 아이템으로 정한다.
+    const ItemInstance* owned = _inventory->FindItem(request.address);
+    if (MatchesRequest(owned, request) == false)
         return nullopt;
 
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(ownedSlot->item().template_id());
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(owned->templateId);
     if (itemTemplate == nullptr || itemTemplate->sellable == false)
         return nullopt;
 
-    const int64 gold = _possession->gold();
     const int64 sellPrice = itemTemplate->sellPrice * count;
 
-    SellItemResult result;
-    if (_inventory->RemoveItem(requestSlot, OUT &result.updatedSlot, count) == false)
+    if (_inventory->RemoveItem(request.address, count) == false)
         return nullopt;
 
-    result.gold = gold + sellPrice;
-    _possession->set_gold(result.gold);
+    _gold += sellPrice;
+
+    SellItemResult result;
+    result.changedSlots = TakeItemChanges();
+    result.gold = _gold;
 
     return result;
 }
 
-optional<UseItemResult> Player::ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs)
+optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs)
 {
     if (IsDead())
         return nullopt;
 
-    if (requestSlot.type() != Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE)
+    if (request.address.container != ContainerType::INVENTORY_CONSUMABLE)
         return nullopt;
 
-    // 효과는 요청이 아니라 슬롯에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
-    const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
-    if (MatchesRequest(ownedSlot, requestSlot) == false)
+    // 효과는 요청이 아니라 칸에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
+    const ItemInstance* owned = _inventory->FindItem(request.address);
+    if (MatchesRequest(owned, request) == false)
         return nullopt;
 
-    const int32 templateId = ownedSlot->item().template_id();
+    const int32 templateId = owned->templateId;
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
         return nullopt;
@@ -250,11 +244,13 @@ optional<UseItemResult> Player::ProcessUseItem(const Protocol::Slot& requestSlot
     if (_inventory->IsCoolingDown(templateId, nowMs))
         return nullopt;
 
-    UseItemResult result;
-    if (_inventory->RemoveItem(requestSlot, OUT &result.updatedSlot) == false)
+    if (_inventory->RemoveItem(request.address) == false)
         return nullopt;
 
     _inventory->StartCooldown(templateId, nowMs);
+
+    UseItemResult result;
+    result.changedSlots = TakeItemChanges();
 
     // 회복률이 있는 스탯만 바꾸고 싣는다. 이미 가득 차 있어도 소비하고 값은 최대로 둔다.
     auto restore = [&](double ratio, Protocol::StatType maxType, Protocol::StatType curType)
@@ -276,61 +272,63 @@ optional<UseItemResult> Player::ProcessUseItem(const Protocol::Slot& requestSlot
     return result;
 }
 
-optional<GearChangeResult> Player::ProcessEquipGear(const Protocol::Slot& requestSlot)
+optional<GearChangeResult> Player::ProcessEquipGear(const ItemSlotRequest& request)
 {
-    // 입는 것은 요청이 아니라 인벤토리 슬롯에 든 장비다.
-    const Protocol::Slot* ownedSlot = _inventory->GetSlot(requestSlot.type(), requestSlot.slot_id());
-    if (MatchesRequest(ownedSlot, requestSlot) == false || ownedSlot->item().count() < 1)
+    // 입는 것은 요청이 아니라 인벤토리 칸에 든 장비다.
+    const ItemInstance* owned = _inventory->FindItem(request.address);
+    if (MatchesRequest(owned, request) == false)
         return nullopt;
 
-    // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 슬롯이라 제거는 실패하지 않는다.
-    const Protocol::Item ownedItem = ownedSlot->item();
+    // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 칸이라 제거는 실패하지 않는다.
+    const ItemInstance ownedItem = *owned;
+    const optional<int32> gearType = _equipment->Equip(ownedItem);
+    if (gearType.has_value() == false)
+        return nullopt;
+
+    // 외형을 바꾸는 쪽은 요청한 칸(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
     GearChangeResult result;
-    Protocol::Slot* equippedSlot = result.updatedSlots.Add();
-    if (_equipment->Equip(OUT equippedSlot, ownedItem) == false)
-        return nullopt;
-
-    // 외형을 바꾸는 쪽은 요청 슬롯(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
-    result.gearType = equippedSlot->slot_id();
-    result.templateId = equippedSlot->item().template_id();
+    result.gearType = gearType.value();
+    result.templateId = ownedItem.templateId;
     RefreshEquippedGearSummary();
 
-    if (_inventory->RemoveItem(requestSlot, OUT result.updatedSlots.Add()) == false)
+    if (_inventory->RemoveItem(request.address) == false)
         return nullopt;
 
+    result.changedSlots = TakeItemChanges();
     RefreshFinalStat(OUT &result.updatedStats);
 
     return result;
 }
 
-optional<GearChangeResult> Player::ProcessUnequipGear(const Protocol::Slot& requestSlot)
+optional<GearChangeResult> Player::ProcessUnequipGear(const ItemSlotRequest& request)
 {
     // 돌려받는 것은 요청이 아니라 장비 칸에 든 장비다.
-    if (requestSlot.type() != Protocol::SLOT_TYPE_EQUIPPED)
+    if (request.address.container != ContainerType::EQUIPPED)
         return nullopt;
 
-    const Protocol::Slot* ownedSlot = _equipment->GetSlot(requestSlot.slot_id());
-    if (MatchesRequest(ownedSlot, requestSlot) == false)
+    const int32 gearType = request.address.slotIndex;
+    const ItemInstance* owned = _equipment->FindItem(gearType);
+    if (MatchesRequest(owned, request) == false)
         return nullopt;
 
     // 넣을 자리가 없으면 장비 칸을 비우기 전에 거절한다. 비운 뒤에 실패하면 장비가 사라진다.
-    const Protocol::Item ownedItem = ownedSlot->item();
-    if (_inventory->FindFirstAvailableSlotId(Protocol::ItemType::ITEM_TYPE_GEAR, ownedItem.template_id()) == -1)
+    if (_inventory->CanAddItem(*owned) == false)
         return nullopt;
 
+    optional<ItemInstance> unequipped = _equipment->Unequip(gearType);
+    if (unequipped.has_value() == false)
+        return nullopt;
+
+    // 탈착 뒤 그 부위는 비어 있으므로 templateId는 0이다.
     GearChangeResult result;
-    Protocol::Slot* unequippedSlot = result.updatedSlots.Add();
-    if (_equipment->Unequip(requestSlot.slot_id(), OUT unequippedSlot) == false)
-        return nullopt;
-
-    // 탈착 뒤 그 부위는 비어 있으므로 template_id는 0이다.
-    result.gearType = unequippedSlot->slot_id();
-    result.templateId = unequippedSlot->item().template_id();
+    result.gearType = gearType;
+    result.templateId = 0;
     RefreshEquippedGearSummary();
 
-    if (_inventory->AddItem(OUT result.updatedSlots.Add(), ownedItem) == false)
+    if (_inventory->AddItem(unequipped.value()) == false)
         return nullopt;
 
+    result.changedSlots = TakeItemChanges();
     RefreshFinalStat(OUT &result.updatedStats);
 
     return result;
@@ -443,7 +441,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 
     const Protocol::Reward& reward = rewardResultPkt.reward();
     {
-        _possession->set_gold(_possession->gold() + reward.gold());
+        _gold += reward.gold();
 
         // 경험치는 누적값에 더하고, 레벨은 누적 경험치로 다시 정한다. 보상 한 번에 여러 레벨이 오를 수 있다.
         // 최대 레벨에 이르고 남는 경험치는 버린다. 레벨 표가 없는 직업은 오를 레벨이 없으므로 경험치를 쌓지 않는다.
@@ -457,7 +455,7 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 
     {
         rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
-        rewardResultPkt.set_updated_gold(_possession->gold());
+        rewardResultPkt.set_updated_gold(_gold);
 
         if (_playerInfo->level() > oldLevel)
         {
@@ -590,12 +588,20 @@ void Player::RefreshEquippedGearSummary()
     auto* summary = _playerInfo->mutable_equipped_gear_summary();
     summary->clear();
 
-    for (const auto& pair : _possession->equipped_gear())
+    const ItemContainer& equipped = _equipment->GetContainer();
+    for (int32 gearType : equipped.GetSlotIndices())
     {
-        const Protocol::Slot& slot = pair.second;
-        if (slot.has_item() && slot.item().template_id() != 0)
-            (*summary)[slot.slot_id()] = slot.item().template_id();
+        if (const ItemInstance* item = equipped.Find(gearType))
+            (*summary)[gearType] = item->templateId;
     }
+}
+
+vector<SlotChange> Player::TakeItemChanges()
+{
+    vector<SlotChange> changes;
+    _equipment->TakeChanges(changes);
+    _inventory->TakeChanges(changes);
+    return changes;
 }
 
 bool Player::MarkDisconnected()
@@ -634,7 +640,9 @@ PlayerSaveData Player::MakeSaveData() const
     data.progress.statInfo.CopyFrom(*_statInfo);
     // DB에는 누적 경험치를 저장한다. 스탯의 경험치는 클라이언트에 보낼 레벨 안의 값이다.
     (*data.progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = _totalExp;
-    data.progress.possession.CopyFrom(*_possession);
+    data.progress.gold = _gold;
+    _inventory->CollectItems(data.progress.items);
+    _equipment->CollectItems(data.progress.items);
 
     return data;
 }

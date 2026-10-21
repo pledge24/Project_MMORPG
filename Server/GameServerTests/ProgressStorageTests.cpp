@@ -47,7 +47,7 @@ namespace
     }
 
     // ItemDAO::LoadItems가 읽는 열 순서의 행.
-    FakeDBRow MakeItemRow(int64 itemUid, int64 templateId, Protocol::ItemType itemType, ItemContainer container, int64 slotIndex,
+    FakeDBRow MakeItemRow(int64 itemUid, int64 templateId, Protocol::ItemType itemType, ItemRowContainer container, int64 slotIndex,
         int64 stackCount, int64 enhanceLevel = 0)
     {
         return { itemUid, templateId, int64(itemType), int64(container), slotIndex, stackCount, enhanceLevel, int64(0) };
@@ -66,7 +66,7 @@ namespace
         data.progress.posInfo.mutable_pos()->set_y(40.f);
         data.progress.posInfo.mutable_pos()->set_z(5.f);
         data.progress.posInfo.set_yaw(45.f);
-        data.progress.possession.set_gold(1234);
+        data.progress.gold = 1234;
 
         auto* stats = data.progress.statInfo.mutable_info();
         (*stats)[Protocol::STAT_TYPE_EXP] = 777;
@@ -77,12 +77,11 @@ namespace
 
     void AddConsumable(PlayerSaveData& data, int64 itemUid, int32 slotId)
     {
-        Protocol::Slot* slot = data.progress.possession.mutable_inventory()->add_consumables();
-        slot->set_type(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE);
-        slot->set_slot_id(slotId);
-        slot->mutable_item()->set_item_uid(itemUid);
-        slot->mutable_item()->set_template_id(POTION_TEMPLATE_ID);
-        slot->mutable_item()->set_count(1);
+        PlacedItem potion;
+        potion.address = SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, slotId };
+        potion.item.itemUid = itemUid;
+        potion.item.templateId = POTION_TEMPLATE_ID;
+        data.progress.items.push_back(potion);
     }
 }
 
@@ -172,7 +171,7 @@ TEST_F(ProgressStorageTest, LoadCharacterReadsCharacterStateAndGold)
     EXPECT_EQ(progress.statInfo.info().at(Protocol::STAT_TYPE_HP), MAX_HP);
     EXPECT_EQ(progress.statInfo.info().at(Protocol::STAT_TYPE_MP), 80);
     EXPECT_EQ(progress.statInfo.info().count(Protocol::STAT_TYPE_PHYSICAL_ATTACK), 0u) << "공격력은 DB에 없다";
-    EXPECT_EQ(progress.possession.gold(), 6'000'000'000) << "골드는 재화 행에서 온다";
+    EXPECT_EQ(progress.gold, 6'000'000'000) << "골드는 재화 행에서 온다";
 
     ASSERT_EQ(conn.executedParams.size(), 1u);
     EXPECT_EQ(get<int64>(conn.executedParams[0].at(0)), CHARACTER_ID);
@@ -203,23 +202,24 @@ TEST_F(ProgressStorageTest, LoadItemsPlacesRowsByContainerAndSection)
 {
     FakeDBConnection conn;
     conn.QueueResult({
-        MakeItemRow(11, POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, ItemContainer::INVENTORY, 5, 3),
-        MakeItemRow(12, SWORD_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR, ItemContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, 1, 4),
+        MakeItemRow(11, POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, ItemRowContainer::INVENTORY, 5, 3),
+        MakeItemRow(12, SWORD_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR, ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, 1, 4),
     });
 
     PlayerProgress progress;
     ItemDAO::LoadItems(conn, CHARACTER_ID, OUT progress);
 
-    ASSERT_EQ(progress.possession.inventory().consumables().size(), 1);
-    const Protocol::Slot& potion = progress.possession.inventory().consumables(0);
-    EXPECT_EQ(potion.slot_id(), 5);
-    EXPECT_EQ(potion.item().item_uid(), 11);
-    EXPECT_EQ(potion.item().count(), 3);
+    ASSERT_EQ(progress.items.size(), 2u);
+    const PlacedItem& potion = progress.items[0];
+    EXPECT_EQ(potion.address, (SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 5 }));
+    EXPECT_EQ(potion.item.itemUid, 11);
+    EXPECT_EQ(potion.item.count, 3);
 
-    ASSERT_EQ(progress.possession.equipped_gear().count(Protocol::GEAR_TYPE_WEAPON), 1u);
-    const Protocol::Item& sword = progress.possession.equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).item();
-    EXPECT_EQ(sword.item_uid(), 12);
-    EXPECT_EQ(sword.gearinfo().enhance_level(), 4);
+    const PlacedItem& sword = progress.items[1];
+    EXPECT_EQ(sword.address, (SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }));
+    EXPECT_EQ(sword.item.itemUid, 12);
+    ASSERT_TRUE(sword.item.gear.has_value());
+    EXPECT_EQ(sword.item.gear->enhanceLevel, 4);
 
     ASSERT_EQ(conn.executedParams.size(), 1u);
     EXPECT_EQ(get<int64>(conn.executedParams[0].at(0)), CHARACTER_ID);
@@ -228,7 +228,7 @@ TEST_F(ProgressStorageTest, LoadItemsPlacesRowsByContainerAndSection)
 TEST_F(ProgressStorageTest, ItemRowInUnknownPlaceIsDBError)
 {
     FakeDBConnection conn;
-    conn.QueueResult({ MakeItemRow(11, POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, static_cast<ItemContainer>(9), 0, 1) });
+    conn.QueueResult({ MakeItemRow(11, POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, static_cast<ItemRowContainer>(9), 0, 1) });
 
     PlayerProgress progress;
     EXPECT_THROW(ItemDAO::LoadItems(conn, CHARACTER_ID, OUT progress), DBError)

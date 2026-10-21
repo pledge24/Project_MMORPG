@@ -1,83 +1,21 @@
 #include "Core/pch.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Entities/Player.h"
+#include "Game/Items/InventorySections.h"
 #include "Utils/SnowflakeIdGenerator.h"
 
-InventoryComponent::InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory) : EntityComponent(owner)
+InventoryComponent::InventoryComponent(PlayerRef owner) : EntityComponent(owner)
 {
-    _bags = {
-        {Protocol::ItemType::ITEM_TYPE_GEAR, Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, inventory->mutable_gear()},
-        {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, inventory->mutable_consumables()},
-        {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, inventory->mutable_miscellaneous()}
-    };
-
     // 구역마다 칸 수는 기획 데이터의 인벤토리 구역 표가 정한다.
-    for (Bag& bag : _bags)
-    {
-        const int32 slotCount = Gamedata::GetInventorySlotCount(bag.itemType);
-        for (int32 slotId = 0; slotId < slotCount; slotId++)
-        {
-            Protocol::Slot* slot = bag.slots->Add();
-            slot->set_slot_id(slotId);
-            slot->set_type(bag.slotType);
-            slot->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
-        }
-    }
+    for (const InventorySection& section : InventorySections::ALL)
+        _sections.emplace_back(section.container, Gamedata::GetInventorySlotCount(section.itemType));
 }
 
 InventoryComponent::~InventoryComponent()
 {
 }
 
-bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::Item& itemInstance, int32 count, optional<int32> setSlotId)
-{
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
-    if (itemTemplate == nullptr)
-        return false;
-
-    Bag* bag = FindBag(itemTemplate->itemType);
-    if (bag == nullptr)
-        return false;
-
-    int32 availableSlotId = setSlotId.has_value() ? setSlotId.value() : FindFirstAvailableSlotId(bag->itemType, itemInstance.template_id());
-    if (availableSlotId == -1)
-        return false;
-
-    Protocol::Slot* targetSlot = bag->slots->Mutable(availableSlotId);
-    if (targetSlot == nullptr)
-        return false;
-
-    if (targetSlot->has_item())
-    {
-        targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
-
-        Protocol::Item* item = targetSlot->mutable_item();
-        int32 updatedCount = item->count() + count;
-        item->set_count(updatedCount);
-
-        if(outSlot != nullptr)
-            outSlot->CopyFrom(*targetSlot);
-    }
-    else
-    {
-        targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
-
-        Protocol::Item* item = targetSlot->mutable_item();
-        item->CopyFrom(itemInstance);
-        item->set_count(count);
-
-        // 빈 칸에 새로 놓이는 아이템은 종류와 상관없이 UID를 받는다. 이미 있는 묶음에 더한 개수는 그 묶음의 UID를 따른다.
-        if (itemInstance.has_item_uid() == false)
-            item->set_item_uid(GIdGenerator->Next());
-        
-        if (outSlot != nullptr)
-            outSlot->CopyFrom(*targetSlot);
-    }
-
-    return true;
-}
-
-bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* outSlotList, int32 templateId, int32 count)
+bool InventoryComponent::AddNewItem(int32 templateId, int32 count)
 {
     if (count <= 0)
         return false;
@@ -86,207 +24,222 @@ bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* outSlotLi
     if (itemTemplate == nullptr)
         return false;
 
-    const Bag* bag = FindBag(itemTemplate->itemType);
-    if (bag == nullptr)
+    ItemContainer* section = FindSectionFor(itemTemplate->itemType);
+    if (section == nullptr)
         return false;
 
-    const Protocol::ItemType itemType = bag->itemType;
     const int32 maxStack = itemTemplate->maxStack;
-    const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
 
-    // 넣을 자리를 먼저 다 정한다. 슬롯을 바꾸기 시작한 뒤에 모자라면 되돌릴 수 없다.
-    vector<pair<int32, int32>> fills; // <slotId, 넣을 수량>
+    // 넣을 자리를 먼저 다 정한다. 칸을 바꾸기 시작한 뒤에 모자라면 되돌릴 수 없다.
+    vector<pair<int32, int32>> stacks; // <칸 번호, 더할 수량>
+    vector<pair<int32, int32>> puts;   // <칸 번호, 놓을 수량>
     int32 remaining = count;
 
-    // 장비는 합치지 않는다. 나머지는 같은 아이템이 든 슬롯의 남은 칸부터 채운다.
-    if (itemType != Protocol::ItemType::ITEM_TYPE_GEAR)
+    // 장비는 합치지 않는다. 나머지는 같은 아이템이 든 칸의 남은 자리부터 채운다.
+    if (itemTemplate->itemType != Protocol::ITEM_TYPE_GEAR)
     {
-        for (int32 slotId = 0; slotId < lookupTable.size() && remaining > 0; slotId++)
+        for (int32 slotIndex : section->GetSlotIndices())
         {
-            const Protocol::Slot& slot = lookupTable[slotId];
-            if (slot.has_item() == false || slot.item().template_id() != templateId)
+            if (remaining <= 0)
+                break;
+
+            const ItemInstance* item = section->Find(slotIndex);
+            if (item == nullptr || item->templateId != templateId)
                 continue;
 
-            const int32 space = maxStack - slot.item().count();
+            const int32 space = maxStack - item->count;
             if (space <= 0)
                 continue;
 
             const int32 amount = (std::min)(space, remaining);
-            fills.emplace_back(slotId, amount);
+            stacks.emplace_back(slotIndex, amount);
             remaining -= amount;
         }
     }
 
-    for (int32 slotId = FindEmptySlotId(*bag); slotId != -1 && remaining > 0; slotId = FindEmptySlotId(*bag, slotId + 1))
+    for (optional<int32> slotIndex = section->FindEmptySlot(); slotIndex.has_value() && remaining > 0; slotIndex = section->FindEmptySlot(slotIndex.value() + 1))
     {
         const int32 amount = (std::min)(maxStack, remaining);
-        fills.emplace_back(slotId, amount);
+        puts.emplace_back(slotIndex.value(), amount);
         remaining -= amount;
     }
 
     if (remaining > 0)
         return false;
 
-    for (const auto& [slotId, amount] : fills)
+    for (const auto& [slotIndex, amount] : stacks)
+        section->AddCount(slotIndex, amount);
+
+    for (const auto& [slotIndex, amount] : puts)
     {
-        Protocol::Item itemInstance;
-        itemInstance.set_template_id(templateId);
-        itemInstance.set_count(amount);
+        // TODO: 장비의 초기 세부 값(강화, 내구도)을 정하는 규칙이 생기면 여기서 채운다.
+        ItemInstance item;
+        item.itemUid = GIdGenerator->Next();
+        item.templateId = templateId;
+        item.count = amount;
+        if (itemTemplate->itemType == Protocol::ITEM_TYPE_GEAR)
+            item.gear = GearDetail{};
 
-        // TODO: 초기 인스턴스 데이터 생성
-        // itemInstance.set_gear_info(); 초기 랜덤 데이터 넣을 때 사용(지금은 안 씀)
-
-        Protocol::Slot* replicatingSlot = outSlotList != nullptr ? outSlotList->Add() : nullptr;
-        if (AddItem(replicatingSlot, itemInstance, amount, slotId) == false)
-            return false;
+        section->Put(slotIndex, item);
     }
 
     return true;
 }
 
-bool InventoryComponent::LoadItem(const Protocol::Slot& loadedSlot)
+bool InventoryComponent::AddItem(const ItemInstance& item)
+{
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
+    if (itemTemplate == nullptr)
+        return false;
+
+    ItemContainer* section = FindSectionFor(itemTemplate->itemType);
+    if (section == nullptr)
+        return false;
+
+    // 이미 있는 묶음에 더한 개수는 그 묶음의 UID를 따른다.
+    if (optional<int32> stackSlot = FindStackSlot(*section, itemTemplate->itemType, item.templateId))
+        return section->AddCount(stackSlot.value(), item.count);
+
+    optional<int32> emptySlot = section->FindEmptySlot();
+    if (emptySlot.has_value() == false)
+        return false;
+
+    // 빈 칸에 새로 놓이는 아이템은 종류와 상관없이 UID를 받는다.
+    ItemInstance placed = item;
+    if (placed.itemUid == 0)
+        placed.itemUid = GIdGenerator->Next();
+
+    return section->Put(emptySlot.value(), placed);
+}
+
+bool InventoryComponent::LoadItem(const SlotAddress& address, const ItemInstance& item)
 {
     // 구역의 칸 수를 넘는 번호는 기획 데이터가 칸 수를 줄였거나 DB가 어긋난 것이다.
-    Bag* bag = FindBag(loadedSlot.type());
-    if (bag == nullptr || IsValidSlotId(*bag, loadedSlot.slot_id()) == false)
+    ItemContainer* section = FindSection(address.container);
+    if (section == nullptr || section->IsValidSlot(address.slotIndex) == false)
         return false;
 
     // 같은 칸의 두 행을 합치면 다음 저장이 한 행만 남긴다.
-    if (bag->slots->Get(loadedSlot.slot_id()).has_item())
+    if (section->Find(address.slotIndex) != nullptr)
         return false;
 
-    const Protocol::Item& item = loadedSlot.item();
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.template_id());
-    if (itemTemplate == nullptr || itemTemplate->itemType != bag->itemType)
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
+    if (itemTemplate == nullptr || InventorySections::FindContainer(itemTemplate->itemType) != address.container)
         return false;
 
-    if (item.count() < 1 || item.count() > itemTemplate->maxStack)
+    if (item.count < 1 || item.count > itemTemplate->maxStack)
         return false;
 
-    return AddItem(nullptr, item, item.count(), loadedSlot.slot_id());
+    ItemInstance placed = item;
+    if (placed.itemUid == 0)
+        placed.itemUid = GIdGenerator->Next();
+
+    return section->Put(address.slotIndex, placed);
 }
 
-bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Protocol::Slot* outSlot, int32 count)
+bool InventoryComponent::RemoveItem(const SlotAddress& address, int32 count)
 {
-    // type과 slot_id는 클라이언트 값이다. 인덱싱 전에 거르지 않으면 범위 밖 접근으로 프로세스가 죽는다.
-    Bag* bag = FindBag(requestSlot.type());
-    if (bag == nullptr)
+    // 주소는 클라이언트 값이다. 구역과 칸 번호는 컨테이너가 거르지만, 거른 사유를 남긴다.
+    ItemContainer* section = FindSection(address.container);
+    if (section == nullptr)
     {
-        GLogger->Warning("RemoveItem: 저장소가 없는 SlotType({})", static_cast<int32>(requestSlot.type()));
+        GLogger->Warning("RemoveItem: 인벤토리 구역이 아닌 컨테이너({})", static_cast<int32>(address.container));
         return false;
     }
 
-    int32 slotId = requestSlot.slot_id();
-    if (IsValidSlotId(*bag, slotId) == false)
+    if (section->IsValidSlot(address.slotIndex) == false)
     {
-        GLogger->Warning("RemoveItem: 범위 밖 slot_id({})", slotId);
+        GLogger->Warning("RemoveItem: 범위 밖 칸 번호({})", address.slotIndex);
         return false;
     }
 
-    Protocol::Slot* updatedSlot = bag->slots->Mutable(slotId);
-    if (updatedSlot == nullptr)
-        return false;
-
-    // mutable_item()은 검증 뒤에 둔다. 빈 슬롯에 item을 만들어 다시는 채워지지 않게 한다.
-    if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
-        return false;
-
-    Protocol::Item* item = updatedSlot->mutable_item();
-    int32 updatedCount = item->count() - count;
-    if (updatedCount > 0)
-    {
-        updatedSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
-        item->set_count(updatedCount);
-
-        outSlot->CopyFrom(*updatedSlot);
-    }
-    else
-    {
-        updatedSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
-        updatedSlot->clear_item();
-        
-        outSlot->CopyFrom(*updatedSlot);
-    }
-    
-    return true;
+    return section->RemoveCount(address.slotIndex, count);
 }
 
-int32 InventoryComponent::FindFirstAvailableSlotId(Protocol::ItemType type, int32 templateId)
+bool InventoryComponent::CanAddItem(const ItemInstance& item) const
 {
-    if (type == Protocol::ItemType::ITEM_TYPE_NONE)
-    {
-        GLogger->Warning("FindFirstAvailableSlotId: 아이템 종류가 없다");
-        return -1;
-    }
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
+    if (itemTemplate == nullptr)
+        return false;
 
-    const Bag* bag = FindBag(type);
-    if (bag == nullptr)
-        return -1;
+    const ItemContainer* section = FindSectionFor(itemTemplate->itemType);
+    if (section == nullptr)
+        return false;
 
-    // 장비는 합치지 않는다. 나머지는 같은 아이템이 든 슬롯을 먼저 고른다.
-    if (type != Protocol::ItemType::ITEM_TYPE_GEAR)
+    return FindStackSlot(*section, itemTemplate->itemType, item.templateId).has_value() || section->FindEmptySlot().has_value();
+}
+
+const ItemInstance* InventoryComponent::FindItem(const SlotAddress& address) const
+{
+    const ItemContainer* section = FindSection(address.container);
+    if (section == nullptr)
+        return nullptr;
+
+    return section->Find(address.slotIndex);
+}
+
+const ItemContainer* InventoryComponent::FindSection(ContainerType container) const
+{
+    return const_cast<InventoryComponent*>(this)->FindSection(container);
+}
+
+void InventoryComponent::TakeChanges(OUT vector<SlotChange>& changes)
+{
+    for (ItemContainer& section : _sections)
+        section.TakeChanges(changes);
+}
+
+void InventoryComponent::CollectItems(OUT vector<PlacedItem>& items) const
+{
+    for (const ItemContainer& section : _sections)
     {
-        const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag->slots;
-        for (int32 slotId = 0; slotId < lookupTable.size(); slotId++)
+        for (int32 slotIndex : section.GetSlotIndices())
         {
-            if (lookupTable[slotId].has_item() && lookupTable[slotId].item().template_id() == templateId)
-                return slotId;
+            if (const ItemInstance* item = section.Find(slotIndex))
+                items.push_back(PlacedItem{ SlotAddress{ section.GetType(), slotIndex }, *item });
         }
     }
-
-    return FindEmptySlotId(*bag);
 }
 
-Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id)
+ItemContainer* InventoryComponent::FindSection(ContainerType container)
 {
-    // Mutable()의 범위 검사는 DCHECK라 Release에서 빠진다. 아래 검증을 지우면 범위 밖 접근을 막는 것이 없다.
-    Bag* bag = FindBag(type);
-    if (bag == nullptr)
-        return nullptr;
-
-    if (IsValidSlotId(*bag, slot_id) == false)
-        return nullptr;
-
-    return bag->slots->Mutable(slot_id);
-}
-
-const Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id) const
-{
-    return const_cast<InventoryComponent*>(this)->GetSlot(type, slot_id);
-}
-
-InventoryComponent::Bag* InventoryComponent::FindBag(Protocol::ItemType itemType)
-{
-    for (Bag& bag : _bags)
+    for (ItemContainer& section : _sections)
     {
-        if (bag.itemType == itemType)
-            return &bag;
+        if (section.GetType() == container)
+            return &section;
     }
 
     return nullptr;
 }
 
-InventoryComponent::Bag* InventoryComponent::FindBag(Protocol::SlotType slotType)
+ItemContainer* InventoryComponent::FindSectionFor(Protocol::ItemType itemType)
 {
-    for (Bag& bag : _bags)
-    {
-        if (bag.slotType == slotType)
-            return &bag;
-    }
+    optional<ContainerType> container = InventorySections::FindContainer(itemType);
+    if (container.has_value() == false)
+        return nullptr;
 
-    return nullptr;
+    return FindSection(container.value());
 }
 
-int32 InventoryComponent::FindEmptySlotId(const Bag& bag, int32 fromSlotId)
+const ItemContainer* InventoryComponent::FindSectionFor(Protocol::ItemType itemType) const
 {
-    const RepeatedPtrField<Protocol::Slot>& lookupTable = *bag.slots;
-    for (int32 slotId = fromSlotId; slotId < lookupTable.size(); slotId++)
+    return const_cast<InventoryComponent*>(this)->FindSectionFor(itemType);
+}
+
+optional<int32> InventoryComponent::FindStackSlot(const ItemContainer& section, Protocol::ItemType itemType, int32 templateId)
+{
+    // 장비는 합치지 않는다.
+    if (itemType == Protocol::ITEM_TYPE_GEAR)
+        return nullopt;
+
+    for (int32 slotIndex : section.GetSlotIndices())
     {
-        if (lookupTable[slotId].has_item() == false)
-            return slotId;
+        const ItemInstance* item = section.Find(slotIndex);
+        if (item != nullptr && item->templateId == templateId)
+            return slotIndex;
     }
 
-    return -1;
+    return nullopt;
 }
 
 bool InventoryComponent::IsCoolingDown(int32 templateId, uint64 nowMs) const

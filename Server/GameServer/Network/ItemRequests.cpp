@@ -2,6 +2,7 @@
 #include "Network/ItemRequests.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
+#include "Network/ItemPackets.h"
 
 namespace
 {
@@ -24,7 +25,7 @@ namespace
         response.set_template_id(result->templateId);
         SendBufferRef othersBuffer = ServerPacketHandler::MakeSerializedPacket(response);
 
-        *response.mutable_updated_slots() = std::move(result->updatedSlots);
+        ItemPackets::AddChangedSlots(result->changedSlots, response.mutable_updated_slots());
         *response.mutable_updated_stat() = std::move(result->updatedStats);
         SendPacket(player->GetSession(), response);
 
@@ -47,7 +48,7 @@ void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Prot
     buyItemPkt.set_success(result.has_value());
     if (result.has_value())
     {
-        *buyItemPkt.mutable_updated_slots() = std::move(result->updatedSlots);
+        ItemPackets::AddChangedSlots(result->changedSlots, buyItemPkt.mutable_updated_slots());
         buyItemPkt.set_gold(result->gold);
     }
 
@@ -65,11 +66,13 @@ void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Pro
         return;
 
     Protocol::S_SELL_ITEM sellItemPkt;
-    optional<SellItemResult> result = player->ProcessSellItem(pkt.slot());
+    optional<SellItemResult> result = player->ProcessSellItem(ItemPackets::ToRequest(pkt.slot()));
     sellItemPkt.set_success(result.has_value());
     if (result.has_value())
     {
-        *sellItemPkt.mutable_updated_slot() = std::move(result->updatedSlot);
+        // 판매 응답은 칸 하나만 싣는다. 판매는 요청한 칸 하나만 바꾼다.
+        if (result->changedSlots.empty() == false)
+            *sellItemPkt.mutable_updated_slot() = ItemPackets::ToChangedSlot(result->changedSlots.front());
         sellItemPkt.set_gold(result->gold);
     }
 
@@ -90,11 +93,11 @@ void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Prot
     Protocol::S_USE_ITEM useItemPkt;
     useItemPkt.set_entity_id(player->GetEntityId());
 
-    optional<UseItemResult> result = player->ProcessUseItem(pkt.slot(), ::GetTickCount64());
+    optional<UseItemResult> result = player->ProcessUseItem(ItemPackets::ToRequest(pkt.slot()), ::GetTickCount64());
     useItemPkt.set_success(result.has_value());
     if (result.has_value())
     {
-        *useItemPkt.mutable_updated_slots()->Add() = std::move(result->updatedSlot);
+        ItemPackets::AddChangedSlots(result->changedSlots, useItemPkt.mutable_updated_slots());
         *useItemPkt.mutable_updated_stat() = std::move(result->updatedStats);
     }
 
@@ -108,7 +111,7 @@ void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Pr
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
-    optional<GearChangeResult> result = player->ProcessEquipGear(pkt.slot());
+    optional<GearChangeResult> result = player->ProcessEquipGear(ItemPackets::ToRequest(pkt.slot()));
     SendGearChange(room, player, equipGearPkt, result);
 }
 
@@ -119,6 +122,6 @@ void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const 
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
-    optional<GearChangeResult> result = player->ProcessUnequipGear(pkt.slot());
+    optional<GearChangeResult> result = player->ProcessUnequipGear(ItemPackets::ToRequest(pkt.slot()));
     SendGearChange(room, player, unequipGearPkt, result);
 }

@@ -123,7 +123,7 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
     (*statMappings)[Protocol::STAT_TYPE_HP] = bindObject._currentHp;
     (*statMappings)[Protocol::STAT_TYPE_MP] = bindObject._currentMp;
 
-    progress.possession.set_gold(bindObject._gold);
+    progress.gold = bindObject._gold;
 
     return true;
 }
@@ -272,7 +272,7 @@ void CharacterStateDAO::SaveGold(DBConnection& conn, const PlayerSaveData& data)
           AND CurrencyId = (?)
     )SQL");
 
-    BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.possession.gold());
+    BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.gold);
 
     if (dbBind.Execute() == false)
         throw DBError(__func__, "쿼리 실행 실패");

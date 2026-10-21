@@ -5,6 +5,7 @@
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Room/RoomTransfer.h"
+#include "Network/ItemPackets.h"
 
 namespace
 {
@@ -47,7 +48,7 @@ Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef
     enterGamePkt.set_success(true);
     enterGamePkt.mutable_player()->CopyFrom(player->GetEntityInfo());
     enterGamePkt.mutable_stat_info()->CopyFrom(player->GetStatInfo());
-    enterGamePkt.mutable_possession()->CopyFrom(player->GetPossession());
+    *enterGamePkt.mutable_possession() = ItemPackets::MakePossession(*player);
 
     return enterGamePkt;
 }

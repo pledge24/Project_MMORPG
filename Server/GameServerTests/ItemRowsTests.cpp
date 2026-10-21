@@ -3,13 +3,13 @@
 #include "DB/ItemRows.h"
 
 /*--------------------------------------------------------------
-    DB 아이템 행과 패킷 칸의 변환 테스트
+    DB 아이템 행과 칸에 든 아이템의 변환 테스트
 
     DB는 아이템의 자리를 컨테이너(인벤토리, 착용 장비), 구역(아이템 종류), 구역 안의 칸 번호로 적고,
-    패킷은 칸 종류(SlotType)와 slot_id로 적는다. 불러오기와 저장이 같은 변환을 써야, 저장한 자리에서
+    서버는 칸 주소(컨테이너 종류, 칸 번호)로 적는다. 불러오기와 저장이 같은 변환을 써야, 저장한 자리에서
     다시 불러온다. 한쪽만 어긋나면 아이템이 다른 구역이나 다른 부위로 옮겨 가거나 사라진다.
 
-    픽스처 결합도: 행과 Possession을 손으로 만든다. DB와 기획 데이터는 쓰지 않는다.
+    픽스처 결합도: 행과 아이템을 손으로 만든다. DB와 기획 데이터는 쓰지 않는다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -19,7 +19,7 @@ namespace
     constexpr int64 POTION_UID = 2001;
     constexpr int32 POTION_TEMPLATE_ID = 20;
 
-    ItemRow MakeRow(ItemContainer container, Protocol::ItemType itemType, int32 slotIndex, int64 itemUid = POTION_UID, int32 templateId = POTION_TEMPLATE_ID)
+    ItemRow MakeRow(ItemRowContainer container, Protocol::ItemType itemType, int32 slotIndex, int64 itemUid = POTION_UID, int32 templateId = POTION_TEMPLATE_ID)
     {
         ItemRow row;
         row.itemUid = itemUid;
@@ -31,7 +31,7 @@ namespace
         return row;
     }
 
-    ItemRow MakeGearRow(ItemContainer container, int32 slotIndex)
+    ItemRow MakeGearRow(ItemRowContainer container, int32 slotIndex)
     {
         ItemRow row = MakeRow(container, Protocol::ITEM_TYPE_GEAR, slotIndex, SWORD_UID, SWORD_TEMPLATE_ID);
         row.enhanceLevel = 3;
@@ -39,205 +39,145 @@ namespace
         return row;
     }
 
-    Protocol::Slot MakeSlot(Protocol::SlotType slotType, int32 slotId, int64 itemUid, int32 templateId, int32 count)
-    {
-        Protocol::Slot slot;
-        slot.set_type(slotType);
-        slot.set_slot_id(slotId);
-        Protocol::Item* item = slot.mutable_item();
-        item->set_item_uid(itemUid);
-        item->set_template_id(templateId);
-        item->set_count(count);
-        return slot;
-    }
-
     // 컨테이너와 구역마다 행 하나씩. 불러오기와 저장의 왕복에 쓴다.
     vector<ItemRow> MakeRowsOfEveryPlace()
     {
-        ItemRow inventoryGear = MakeGearRow(ItemContainer::INVENTORY, 4);
-        ItemRow consumable = MakeRow(ItemContainer::INVENTORY, Protocol::ITEM_TYPE_CONSUMABLE, 0, POTION_UID, POTION_TEMPLATE_ID);
+        ItemRow inventoryGear = MakeGearRow(ItemRowContainer::INVENTORY, 4);
+        ItemRow consumable = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_CONSUMABLE, 0, POTION_UID, POTION_TEMPLATE_ID);
         consumable.stackCount = 7;
-        ItemRow misc = MakeRow(ItemContainer::INVENTORY, Protocol::ITEM_TYPE_MISCELLANEOUS, 2, 3001, 30);
-        ItemRow equipped = MakeGearRow(ItemContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+        ItemRow misc = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_MISCELLANEOUS, 2, 3001, 30);
+        ItemRow equipped = MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
         equipped.itemUid = 1002;
         equipped.enhanceLevel = 0;
+        equipped.durability = 40;
 
         return { inventoryGear, consumable, misc, equipped };
     }
 }
 
-/* 불러오기: 행 → 패킷 칸 */
+/* 불러오기: 행 → 칸에 든 아이템 */
 
-TEST(ItemRowsTest, InventoryRowGoesToSlotListOfItsSection)
+TEST(ItemRowsTest, InventoryRowGoesToContainerOfItsSection)
 {
     struct Case
     {
         Protocol::ItemType section;
-        Protocol::SlotType slotType;
-        const RepeatedPtrField<Protocol::Slot>& (Protocol::Inventory::*slots)() const;
+        ContainerType container;
     };
     const Case cases[] = {
-        { Protocol::ITEM_TYPE_GEAR, Protocol::SLOT_TYPE_INVENTORY_GEAR, &Protocol::Inventory::gear },
-        { Protocol::ITEM_TYPE_CONSUMABLE, Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, &Protocol::Inventory::consumables },
-        { Protocol::ITEM_TYPE_MISCELLANEOUS, Protocol::SLOT_TYPE_INVENTORY_MISC, &Protocol::Inventory::miscellaneous },
+        { Protocol::ITEM_TYPE_GEAR, ContainerType::INVENTORY_GEAR },
+        { Protocol::ITEM_TYPE_CONSUMABLE, ContainerType::INVENTORY_CONSUMABLE },
+        { Protocol::ITEM_TYPE_MISCELLANEOUS, ContainerType::INVENTORY_MISC },
     };
 
     for (const Case& testCase : cases)
     {
-        Protocol::Possession possession;
-        ASSERT_TRUE(ItemRows::AddToPossession(MakeRow(ItemContainer::INVENTORY, testCase.section, 9), OUT possession));
-
-        const RepeatedPtrField<Protocol::Slot>& slots = (possession.inventory().*testCase.slots)();
-        ASSERT_EQ(slots.size(), 1) << "구역 " << testCase.section;
-        EXPECT_EQ(slots[0].type(), testCase.slotType);
-        EXPECT_EQ(slots[0].slot_id(), 9) << "칸 번호는 구역 안의 번호 그대로다";
-        EXPECT_EQ(possession.inventory().gear().size() + possession.inventory().consumables().size()
-            + possession.inventory().miscellaneous().size(), 1) << "다른 구역에는 붙이지 않는다";
+        optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeRow(ItemRowContainer::INVENTORY, testCase.section, 9));
+        ASSERT_TRUE(placed.has_value()) << "구역 " << testCase.section;
+        EXPECT_EQ(placed->address.container, testCase.container);
+        EXPECT_EQ(placed->address.slotIndex, 9) << "칸 번호는 구역 안의 번호 그대로다";
     }
 }
 
 TEST(ItemRowsTest, EquippedRowGoesToItsGearPart)
 {
-    Protocol::Possession possession;
-    ASSERT_TRUE(ItemRows::AddToPossession(MakeGearRow(ItemContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON), OUT possession));
+    optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON));
 
-    ASSERT_EQ(possession.equipped_gear().count(Protocol::GEAR_TYPE_WEAPON), 1u) << "착용 장비의 칸 번호는 장비 부위다";
-    const Protocol::Slot& slot = possession.equipped_gear().at(Protocol::GEAR_TYPE_WEAPON);
-    EXPECT_EQ(slot.type(), Protocol::SLOT_TYPE_EQUIPPED);
-    EXPECT_EQ(slot.slot_id(), Protocol::GEAR_TYPE_WEAPON);
-    EXPECT_EQ(possession.inventory().gear().size(), 0);
+    ASSERT_TRUE(placed.has_value());
+    EXPECT_EQ(placed->address, (SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON })) << "착용 장비의 칸 번호는 장비 부위다";
 }
 
 TEST(ItemRowsTest, RowValuesBecomeItem)
 {
-    ItemRow row = MakeRow(ItemContainer::INVENTORY, Protocol::ITEM_TYPE_CONSUMABLE, 0);
+    ItemRow row = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_CONSUMABLE, 0);
     row.stackCount = 7;
 
-    Protocol::Possession possession;
-    ASSERT_TRUE(ItemRows::AddToPossession(row, OUT possession));
+    optional<PlacedItem> placed = ItemRows::ToPlacedItem(row);
+    ASSERT_TRUE(placed.has_value());
 
-    const Protocol::Item& item = possession.inventory().consumables(0).item();
-    EXPECT_EQ(item.item_uid(), POTION_UID);
-    EXPECT_EQ(item.template_id(), POTION_TEMPLATE_ID);
-    EXPECT_EQ(item.count(), 7);
-    EXPECT_FALSE(item.has_gearinfo()) << "장비가 아닌 아이템에는 장비 정보가 없다";
+    EXPECT_EQ(placed->item.itemUid, POTION_UID);
+    EXPECT_EQ(placed->item.templateId, POTION_TEMPLATE_ID);
+    EXPECT_EQ(placed->item.count, 7);
+    EXPECT_FALSE(placed->item.gear.has_value()) << "장비가 아닌 아이템에는 장비 세부 값이 없다";
 }
 
-TEST(ItemRowsTest, GearRowCarriesGearInfoWithZeroAdditionalAttack)
+TEST(ItemRowsTest, GearRowCarriesGearDetail)
 {
-    Protocol::Possession possession;
-    ASSERT_TRUE(ItemRows::AddToPossession(MakeGearRow(ItemContainer::INVENTORY, 0), OUT possession));
+    optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeGearRow(ItemRowContainer::INVENTORY, 0));
 
-    const Protocol::Item& item = possession.inventory().gear(0).item();
-    ASSERT_TRUE(item.has_gearinfo());
-    EXPECT_EQ(item.gearinfo().enhance_level(), 3);
-    EXPECT_EQ(item.gearinfo().durability(), 0);
-    EXPECT_EQ(item.gearinfo().additional_physical_attack(), 0) << "추가 공격력은 DB에 없으므로 0을 채운다";
-    EXPECT_EQ(item.gearinfo().additional_magical_attack(), 0);
+    ASSERT_TRUE(placed.has_value());
+    ASSERT_TRUE(placed->item.gear.has_value());
+    EXPECT_EQ(placed->item.gear->enhanceLevel, 3);
+    EXPECT_EQ(placed->item.gear->durability, 0);
 }
 
 TEST(ItemRowsTest, UnknownPlaceIsRejected)
 {
-    ItemRow unknownContainer = MakeRow(static_cast<ItemContainer>(3), Protocol::ITEM_TYPE_CONSUMABLE, 0);
-    ItemRow noSection = MakeRow(ItemContainer::INVENTORY, Protocol::ITEM_TYPE_NONE, 0);
-    ItemRow unknownSection = MakeRow(ItemContainer::INVENTORY, static_cast<Protocol::ItemType>(9), 0);
-    ItemRow equippedConsumable = MakeRow(ItemContainer::EQUIPPED, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::GEAR_TYPE_WEAPON);
+    ItemRow unknownContainer = MakeRow(static_cast<ItemRowContainer>(3), Protocol::ITEM_TYPE_CONSUMABLE, 0);
+    ItemRow noSection = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_NONE, 0);
+    ItemRow unknownSection = MakeRow(ItemRowContainer::INVENTORY, static_cast<Protocol::ItemType>(9), 0);
+    ItemRow equippedConsumable = MakeRow(ItemRowContainer::EQUIPPED, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::GEAR_TYPE_WEAPON);
 
     for (const ItemRow& row : { unknownContainer, noSection, unknownSection, equippedConsumable })
     {
-        Protocol::Possession possession;
-        EXPECT_FALSE(ItemRows::AddToPossession(row, OUT possession))
+        EXPECT_FALSE(ItemRows::ToPlacedItem(row).has_value())
             << "컨테이너 " << static_cast<int32>(row.container) << ", 구역 " << row.itemType;
-        EXPECT_EQ(possession.ByteSizeLong(), 0u) << "거절한 행은 아무것도 붙이지 않는다";
     }
 }
 
-TEST(ItemRowsTest, SecondRowInSameGearPartIsRejected)
+/* 저장: 칸에 든 아이템 → 행 */
+
+TEST(ItemRowsTest, InventoryItemBecomesRowOfItsSection)
 {
-    Protocol::Possession possession;
-    ASSERT_TRUE(ItemRows::AddToPossession(MakeGearRow(ItemContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON), OUT possession));
+    PlacedItem gear{ SlotAddress{ ContainerType::INVENTORY_GEAR, 3 }, ItemInstance{ SWORD_UID, SWORD_TEMPLATE_ID, 1, GearDetail{} } };
+    PlacedItem misc{ SlotAddress{ ContainerType::INVENTORY_MISC, 3 }, ItemInstance{ 3001, 30, 2, nullopt } };
 
-    ItemRow second = MakeGearRow(ItemContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
-    second.itemUid = SWORD_UID + 1;
+    optional<ItemRow> gearRow = ItemRows::ToRow(gear);
+    optional<ItemRow> miscRow = ItemRows::ToRow(misc);
 
-    EXPECT_FALSE(ItemRows::AddToPossession(second, OUT possession)) << "부위 하나에 두 장비를 겹치면 하나가 사라진다";
-    EXPECT_EQ(possession.equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).item().item_uid(), SWORD_UID);
+    ASSERT_TRUE(gearRow.has_value());
+    ASSERT_TRUE(miscRow.has_value());
+    EXPECT_EQ(gearRow->container, ItemRowContainer::INVENTORY);
+    EXPECT_EQ(gearRow->itemType, Protocol::ITEM_TYPE_GEAR);
+    EXPECT_EQ(miscRow->itemType, Protocol::ITEM_TYPE_MISCELLANEOUS) << "같은 칸 번호여도 구역이 다르면 다른 칸이다";
+    EXPECT_EQ(gearRow->slotIndex, 3);
+    EXPECT_EQ(miscRow->slotIndex, 3);
+    EXPECT_EQ(miscRow->stackCount, 2);
 }
 
-/* 저장: 패킷 칸 → 행 */
-
-TEST(ItemRowsTest, OnlySlotsWithItemBecomeRows)
+TEST(ItemRowsTest, EquippedItemBecomesGearRowAtItsPart)
 {
-    Protocol::Possession possession;
-    Protocol::Inventory* inventory = possession.mutable_inventory();
-    Protocol::Slot* emptySlot = inventory->add_consumables();
-    emptySlot->set_type(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE);
-    emptySlot->set_slot_id(0);
-    *inventory->add_consumables() = MakeSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, 1, POTION_UID, POTION_TEMPLATE_ID, 5);
+    PlacedItem sword{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, ItemInstance{ SWORD_UID, SWORD_TEMPLATE_ID, 1, GearDetail{ 5, 70 } } };
 
-    Protocol::Slot emptyPart;
-    emptyPart.set_type(Protocol::SLOT_TYPE_EQUIPPED);
-    emptyPart.set_slot_id(Protocol::GEAR_TYPE_HELMET);
-    (*possession.mutable_equipped_gear())[Protocol::GEAR_TYPE_HELMET] = emptyPart;
+    optional<ItemRow> row = ItemRows::ToRow(sword);
 
-    const vector<ItemRow> rows = ItemRows::FromPossession(possession);
-
-    ASSERT_EQ(rows.size(), 1u) << "빈 칸은 행이 되지 않는다. 그 칸에 있던 DB 행은 저장 쿼리가 지운다";
-    EXPECT_EQ(rows[0].itemUid, POTION_UID);
-    EXPECT_EQ(rows[0].container, ItemContainer::INVENTORY);
-    EXPECT_EQ(rows[0].itemType, Protocol::ITEM_TYPE_CONSUMABLE);
-    EXPECT_EQ(rows[0].slotIndex, 1);
-    EXPECT_EQ(rows[0].stackCount, 5);
+    ASSERT_TRUE(row.has_value());
+    EXPECT_EQ(row->container, ItemRowContainer::EQUIPPED);
+    EXPECT_EQ(row->itemType, Protocol::ITEM_TYPE_GEAR);
+    EXPECT_EQ(row->slotIndex, Protocol::GEAR_TYPE_WEAPON);
+    EXPECT_EQ(row->enhanceLevel, 5);
+    EXPECT_EQ(row->durability, 70);
 }
 
-TEST(ItemRowsTest, InventorySlotBecomesRowOfItsSection)
+TEST(ItemRowsTest, AddressOutsideInventoryAndEquipmentIsRejected)
 {
-    Protocol::Possession possession;
-    Protocol::Inventory* inventory = possession.mutable_inventory();
-    *inventory->add_gear() = MakeSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 3, SWORD_UID, SWORD_TEMPLATE_ID, 1);
-    *inventory->add_miscellaneous() = MakeSlot(Protocol::SLOT_TYPE_INVENTORY_MISC, 3, 3001, 30, 2);
+    PlacedItem nowhere{ SlotAddress{ ContainerType::NONE, 0 }, ItemInstance{ POTION_UID, POTION_TEMPLATE_ID, 1, nullopt } };
 
-    const vector<ItemRow> rows = ItemRows::FromPossession(possession);
-
-    ASSERT_EQ(rows.size(), 2u);
-    EXPECT_EQ(rows[0].itemType, Protocol::ITEM_TYPE_GEAR);
-    EXPECT_EQ(rows[1].itemType, Protocol::ITEM_TYPE_MISCELLANEOUS) << "같은 칸 번호여도 구역이 다르면 다른 칸이다";
-    EXPECT_EQ(rows[0].slotIndex, 3);
-    EXPECT_EQ(rows[1].slotIndex, 3);
-}
-
-TEST(ItemRowsTest, EquippedSlotBecomesGearRowAtItsPart)
-{
-    Protocol::Possession possession;
-    Protocol::Slot slot = MakeSlot(Protocol::SLOT_TYPE_EQUIPPED, Protocol::GEAR_TYPE_WEAPON, SWORD_UID, SWORD_TEMPLATE_ID, 1);
-    slot.mutable_item()->mutable_gearinfo()->set_enhance_level(5);
-    slot.mutable_item()->mutable_gearinfo()->set_additional_physical_attack(9);
-    (*possession.mutable_equipped_gear())[Protocol::GEAR_TYPE_WEAPON] = slot;
-
-    const vector<ItemRow> rows = ItemRows::FromPossession(possession);
-
-    ASSERT_EQ(rows.size(), 1u);
-    EXPECT_EQ(rows[0].container, ItemContainer::EQUIPPED);
-    EXPECT_EQ(rows[0].itemType, Protocol::ITEM_TYPE_GEAR);
-    EXPECT_EQ(rows[0].slotIndex, Protocol::GEAR_TYPE_WEAPON);
-    EXPECT_EQ(rows[0].enhanceLevel, 5);
+    EXPECT_FALSE(ItemRows::ToRow(nowhere).has_value());
 }
 
 TEST(ItemRowsTest, RowsSurviveRoundTrip)
 {
-    const vector<ItemRow> rows = MakeRowsOfEveryPlace();
-
-    Protocol::Possession possession;
-    for (const ItemRow& row : rows)
-        ASSERT_TRUE(ItemRows::AddToPossession(row, OUT possession));
-
-    const vector<ItemRow> savedRows = ItemRows::FromPossession(possession);
-
-    ASSERT_EQ(savedRows.size(), rows.size());
-    for (const ItemRow& row : rows)
+    for (const ItemRow& row : MakeRowsOfEveryPlace())
     {
-        auto saved = ranges::find(savedRows, row.itemUid, &ItemRow::itemUid);
-        ASSERT_NE(saved, savedRows.end()) << "아이템 " << row.itemUid << "이 저장 행에서 빠졌다";
+        SCOPED_TRACE(row.itemUid);
+
+        optional<PlacedItem> placed = ItemRows::ToPlacedItem(row);
+        ASSERT_TRUE(placed.has_value());
+        optional<ItemRow> saved = ItemRows::ToRow(placed.value());
+        ASSERT_TRUE(saved.has_value());
+
+        EXPECT_EQ(saved->itemUid, row.itemUid);
         EXPECT_EQ(saved->templateId, row.templateId);
         EXPECT_EQ(saved->itemType, row.itemType);
         EXPECT_EQ(saved->container, row.container);
@@ -245,5 +185,22 @@ TEST(ItemRowsTest, RowsSurviveRoundTrip)
         EXPECT_EQ(saved->stackCount, row.stackCount);
         EXPECT_EQ(saved->enhanceLevel, row.enhanceLevel);
         EXPECT_EQ(saved->durability, row.durability);
+    }
+}
+
+TEST(ItemRowsTest, ItemsSurviveRoundTrip)
+{
+    const PlacedItem items[] = {
+        { SlotAddress{ ContainerType::INVENTORY_GEAR, 0 }, ItemInstance{ SWORD_UID, SWORD_TEMPLATE_ID, 1, GearDetail{ 2, 50 } } },
+        { SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 5 }, ItemInstance{ POTION_UID, POTION_TEMPLATE_ID, 9, nullopt } },
+        { SlotAddress{ ContainerType::INVENTORY_MISC, 1 }, ItemInstance{ 3001, 30, 3, nullopt } },
+        { SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_HELMET }, ItemInstance{ 1003, 11, 1, GearDetail{ 0, 10 } } },
+    };
+
+    for (const PlacedItem& item : items)
+    {
+        optional<ItemRow> row = ItemRows::ToRow(item);
+        ASSERT_TRUE(row.has_value());
+        EXPECT_EQ(ItemRows::ToPlacedItem(row.value()), optional<PlacedItem>(item));
     }
 }
