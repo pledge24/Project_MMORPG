@@ -40,7 +40,7 @@ protected:
         ASSERT_NE(player, nullptr);
         PlayerTestAccess::SetUserId(*player, USER_ID);
         player->SetStatValue(Protocol::STAT_TYPE_HP, 100);
-        PlayerTestAccess::Possession(*player).set_gold(500);
+        PlayerTestAccess::Gold(*player) = 500;
     }
 
     void TearDown() override
@@ -57,26 +57,23 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
     PlayerSaveData data = player->MakeSaveData();
 
     player->SetStatValue(Protocol::STAT_TYPE_HP, 1);
-    PlayerTestAccess::Possession(*player).set_gold(0);
+    PlayerTestAccess::Gold(*player) = 0;
 
     EXPECT_EQ(data.userId, USER_ID);
     EXPECT_EQ(data.progress.statInfo.info().at(Protocol::STAT_TYPE_HP), 100) << "사본이 살아 있는 스탯을 따라가면 DB 스레드가 룸 스레드와 경쟁한다";
-    EXPECT_EQ(data.progress.possession.gold(), 500);
+    EXPECT_EQ(data.progress.gold, 500);
 }
 
 TEST_F(PlayerSaveDataTest, SnapshotCarriesHeldItems)
 {
-    RepeatedPtrField<Protocol::Slot> addedSlots;
-    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, SWORD_TEMPLATE_ID, 1));
-    ASSERT_FALSE(addedSlots.empty());
-    const Protocol::Slot added = addedSlots[0];
+    optional<SlotAddress> added = PlayerTestAccess::AddNewItem(*player, SWORD_TEMPLATE_ID);
+    ASSERT_TRUE(added.has_value());
+    const ItemInstance addedItem = *player->GetInventory().FindItem(added.value());
 
     PlayerSaveData data = player->MakeSaveData();
-    Protocol::Slot removed;
-    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).RemoveItem(added, OUT &removed));
+    ASSERT_TRUE(PlayerTestAccess::Inventory(*player).RemoveItem(added.value()));
 
-    const Protocol::Slot& saved = data.progress.possession.inventory().gear(added.slot_id());
-    ASSERT_TRUE(saved.has_item()) << "사본에서 빠진 아이템은 저장 쿼리가 DB에서 지운다";
-    EXPECT_EQ(saved.item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_EQ(saved.item().item_uid(), added.item().item_uid());
+    ASSERT_EQ(data.progress.items.size(), 1u) << "사본에서 빠진 아이템은 저장 쿼리가 DB에서 지운다";
+    EXPECT_EQ(data.progress.items[0].address, added.value());
+    EXPECT_EQ(data.progress.items[0].item, addedItem);
 }

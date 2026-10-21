@@ -4,19 +4,19 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Protocol.pb.h"
 #include "Game/Inventory/P1ItemCooldown.h"
+#include "Game/Items/P1ContainerType.h"
 #include "P1MyPlayerData.generated.h"
 
 class AP1MyPlayer;
-class UP1Inventory;
-class UP1Equipment;
+class UP1ItemActions;
+class UP1ItemContainer;
+class UP1QuickSlots;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
 DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChanged, int64);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnInvenSlotChanged, const Protocol::Slot&);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::Slot&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemCooldownStarted, int32);
 
 /**
@@ -36,7 +36,6 @@ public:
 
     //~ Begin USubsystem Interface
 public:
-    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
     //~ End USubsystem Interface
 
@@ -100,8 +99,7 @@ protected:
 
     //~ Possession
 public:
-    Protocol::Possession* GetPossession() { return _Possession.Get(); }
-    int64 GetGold() const { return _Possession->gold(); }
+    int64 GetGold() const { return _Gold; }
 
     /** 골드를 사본에 쓰고 구독자에게 알린다. 내 플레이어의 골드는 이 함수로만 바꾼다. */
     void ApplyGold(int64 Gold);
@@ -109,18 +107,35 @@ public:
     FOnGoldChanged OnGoldChanged;
 
 protected:
-    /** Inventory와 Equipment가 이 객체의 하위 메시지 주소를 들고 있다. 새 객체로 바꾸지 않는다. */
-    TUniquePtr<Protocol::Possession> _Possession;
+    int64 _Gold = 0;
 
-    //~ Inventory
+    //~ Containers
 public:
-    UP1Inventory* GetInventory() const { return Inventory; }
+    /** 인벤토리의 구역과 착용 장비의 컨테이너. 컨테이너가 아닌 종류(None)면 nullptr. */
+    UP1ItemContainer* GetContainer(EP1ContainerType ContainerType) const;
 
-    FOnInvenSlotChanged OnInvenSlotChanged;
+    /** 모든 컨테이너의 칸을 지운다. 접속이 끊기면 부른다. */
+    void ClearContainers();
+
+protected:
+    /** 서브시스템과 함께 살고, 입장과 응답으로 칸만 바뀐다. */
+    UPROPERTY()
+    TMap<EP1ContainerType, TObjectPtr<UP1ItemContainer>> Containers;
+
+    //~ Quick Slots
+public:
+    /** 서브시스템과 함께 살고, 입장과 등록 응답으로 대상만 바뀐다. */
+    UP1QuickSlots* GetQuickSlots() const { return QuickSlots; }
+
+    /** 퀵슬롯을 모두 지운다. 접속이 끊기면 부른다. */
+    void ClearQuickSlots();
+
+    /** 등록 응답의 바뀐 퀵슬롯을 반영한다. */
+    void HandleSetQuickSlot(const Protocol::S_SET_QUICK_SLOT& SetQuickSlotPkt);
 
 protected:
     UPROPERTY()
-    TObjectPtr<UP1Inventory> Inventory;
+    TObjectPtr<UP1QuickSlots> QuickSlots;
 
     //~ Item Cooldown
 public:
@@ -139,16 +154,6 @@ private:
     /** 템플릿 id별 재사용 대기. 서버처럼 재접속하면 비운다. */
     TMap<int32, FP1ItemCooldown> ItemCooldowns;
 
-    //~ Equipment
-public:
-    UP1Equipment* GetEquipment() const { return Equipment; }
-
-    FOnEquipmentSlotChanged OnEquipmentSlotChanged;
-
-protected:
-    UPROPERTY()
-    TObjectPtr<UP1Equipment> Equipment;
-
     //~ Enter Packet Handlers
 public:
     /** 성공하면 맵과 룸 id를 저장하고 OnMapEntered를 알린다. */
@@ -159,6 +164,15 @@ public:
 
     /** 맵 입장에 성공하면 알린다. */
     FOnMapEntered OnMapEntered;
+
+    //~ Item Requests
+public:
+    /** 아이템 요청 창구. 서브시스템과 함께 산다. */
+    UP1ItemActions* GetItemActions() const { return ItemActions; }
+
+protected:
+    UPROPERTY()
+    TObjectPtr<UP1ItemActions> ItemActions;
 
     //~ Item Packet Handlers
 public:
@@ -174,27 +188,11 @@ public:
     /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
 
-    /** 응답이 오면 성공 여부와 무관하게 알린다. 아래 알림도 같다. */
-    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
-    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
-    FOnRecvSellItemPkt OnRecvSellItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
-    FOnRecvUseItemPkt OnRecvUseItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
-    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
-    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
-
 private:
     bool IsMyPlayer(uint64 EntityId) const { return EntityId == _PlayerId; }
 
-    /** 장착과 해제 응답이 실어 온 슬롯을 종류에 맞는 델리게이트로 알린다. */
-    void ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots);
+    /** 응답이 실어 온 칸 변경을 그 칸의 컨테이너에 나눠 준다. 컨테이너가 아닌 칸의 변경은 버린다. */
+    void ApplySlotChanges(const google::protobuf::RepeatedPtrField<Protocol::SlotChange>& Changes);
 
     //~ Reward Packet Handlers
 public:

@@ -44,8 +44,7 @@ message PlayerInfo
 message Possession
 {
     int64 gold = 1;
-    Inventory inventory = 2;
-    map<int32, Slot> equipped_gear = 3; // <SlotId(or GearType), Slot>
+    repeated ContainerSlots containers = 2;    // 인벤토리의 구역 셋과 착용 장비. 빈 칸도 싣는다
 }
 
 message MonsterInfo
@@ -117,8 +116,6 @@ message GearInfo
 {
     int32 enhance_level = 1;
     int32 durability = 2;
-    int32 additional_physical_attack = 3;  // 추가 물리 공격력
-    int32 additional_magical_attack = 4;   // 추가 마법 공격력
 }
 
 message Item
@@ -133,19 +130,46 @@ message Item
     }
 }
 
-message Slot
+// 칸 하나를 가리키는 주소
+message SlotAddress
 {
-    int32 slot_id = 1;                  // 서버에선 딱 한 번만 세팅 1
-    SlotType type = 2;                  // 서버에선 딱 한 번만 세팅 2
-    optional UpdateState state = 3;     // 슬롯 갱신 상태: 서버가 세팅하고 클라이언트는 사용
-    optional Item item = 4;
+    ContainerType container = 1;
+    int32 slot_index = 2;               // 컨테이너 안의 칸 번호. 착용 장비에서는 장비 부위(GearType) 값이다
 }
 
-message Inventory
+// 이 주소의 칸은 이제 이 내용이다. item이 없으면 아이템이 없는 칸이다
+message SlotChange
 {
-    repeated Slot gear = 1;
-    repeated Slot consumables = 2;
-    repeated Slot miscellaneous = 3;
+    SlotAddress address = 1;
+    optional Item item = 2;
+}
+
+// 컨테이너 안의 칸 하나. item이 없으면 아이템이 없는 칸이다
+message Slot
+{
+    int32 slot_index = 1;
+    optional Item item = 2;
+}
+
+// 컨테이너 하나의 모든 칸
+message ContainerSlots
+{
+    ContainerType container = 1;
+    repeated Slot slots = 2;
+}
+
+// 퀵슬롯이 가리키는 대상. 아이템 하나가 아니라 아이템 정의를 가리킨다
+message QuickSlotRef
+{
+    QuickSlotRefType ref_type = 1;
+    int32 ref_id = 2;
+}
+
+// 퀵슬롯 하나. ref가 없으면 빈 퀵슬롯이다
+message QuickSlot
+{
+    int32 slot_index = 1;               // 0부터 퀵슬롯 개수 미만
+    optional QuickSlotRef ref = 2;
 }
 
 message LevelUpInfo

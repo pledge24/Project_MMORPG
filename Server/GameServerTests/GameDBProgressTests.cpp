@@ -13,6 +13,7 @@
     입장의 불러오기와 접속 종료의 저장을 GameDB_Test에서 실제 SQL로 돌린다. 가짜 연결은 바인딩과 흐름만 본다.
     아이템 저장은 그 캐릭터의 아이템 전체를 MERGE 한 문장으로 맞추므로, 칸 맞바꾸기와 고유 제약,
     사본에 없는 행의 삭제, 배열 파라미터의 행 상한을 넘는 저장, 실패한 저장의 되돌림은 여기서만 확인된다.
+    퀵슬롯도 같은 방식으로 저장하고, 빈 퀵슬롯은 행을 두지 않는다.
 
     테스트마다 다른 계정 번호와 캐릭터 번호를 쓰고, 아이템 UID는 캐릭터 번호에서 만든다. 그 계정의 행만 넣고 지운다.
 
@@ -27,49 +28,50 @@ namespace
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 MISC_TEMPLATE_ID = 3000;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
+    constexpr int32 MP_POTION_TEMPLATE_ID = 2001;
 
-    Protocol::Slot MakeSlot(Protocol::SlotType slotType, int32 slotId, int64 itemUid, int32 templateId, int32 count)
+    QuickSlot ItemQuickSlot(int32 slotIndex, int32 templateId)
     {
-        Protocol::Slot slot;
-        slot.set_type(slotType);
-        slot.set_slot_id(slotId);
-        Protocol::Item* item = slot.mutable_item();
-        item->set_item_uid(itemUid);
-        item->set_template_id(templateId);
-        item->set_count(count);
-        return slot;
+        return QuickSlot{ slotIndex, QuickSlotRef{ QuickSlotRefType::ITEM, templateId } };
+    }
+
+    void AddItem(PlayerSaveData& data, ContainerType container, int32 slotIndex, int64 itemUid, int32 templateId, int32 count,
+        optional<GearDetail> gear = nullopt)
+    {
+        data.progress.items.push_back(PlacedItem{ SlotAddress{ container, slotIndex }, ItemInstance{ itemUid, templateId, count, gear } });
     }
 
     void AddConsumable(PlayerSaveData& data, int32 slotId, int64 itemUid, int32 count = 1)
     {
-        *data.progress.possession.mutable_inventory()->add_consumables() =
-            MakeSlot(Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, slotId, itemUid, POTION_TEMPLATE_ID, count);
+        AddItem(data, ContainerType::INVENTORY_CONSUMABLE, slotId, itemUid, POTION_TEMPLATE_ID, count);
     }
 
     void AddInventoryGear(PlayerSaveData& data, int32 slotId, int64 itemUid, int32 enhanceLevel)
     {
-        Protocol::Slot slot = MakeSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, slotId, itemUid, SWORD_TEMPLATE_ID, 1);
-        slot.mutable_item()->mutable_gearinfo()->set_enhance_level(enhanceLevel);
-        *data.progress.possession.mutable_inventory()->add_gear() = slot;
+        AddItem(data, ContainerType::INVENTORY_GEAR, slotId, itemUid, SWORD_TEMPLATE_ID, 1, GearDetail{ enhanceLevel, 0 });
     }
 
     void EquipWeapon(PlayerSaveData& data, int64 itemUid, int32 enhanceLevel)
     {
-        Protocol::Slot slot = MakeSlot(Protocol::SLOT_TYPE_EQUIPPED, Protocol::GEAR_TYPE_WEAPON, itemUid, SWORD_TEMPLATE_ID, 1);
-        slot.mutable_item()->mutable_gearinfo()->set_enhance_level(enhanceLevel);
-        (*data.progress.possession.mutable_equipped_gear())[Protocol::GEAR_TYPE_WEAPON] = slot;
+        AddItem(data, ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, itemUid, SWORD_TEMPLATE_ID, 1, GearDetail{ enhanceLevel, 0 });
     }
 
-    // 불러온 칸 목록에서 slot_id가 같은 칸. 불러온 사본은 행마다 칸 하나라 배열 순번이 칸 번호가 아니다.
-    const Protocol::Slot* FindSlot(const RepeatedPtrField<Protocol::Slot>& slots, int32 slotId)
+    // 불러온 아이템 목록에서 그 칸의 아이템. 없으면 nullptr.
+    const ItemInstance* FindItem(const PlayerProgress& progress, ContainerType container, int32 slotIndex)
     {
-        for (const Protocol::Slot& slot : slots)
+        for (const PlacedItem& placed : progress.items)
         {
-            if (slot.slot_id() == slotId)
-                return &slot;
+            if (placed.address == SlotAddress{ container, slotIndex })
+                return &placed.item;
         }
 
         return nullptr;
+    }
+
+    // 불러온 아이템 가운데 그 컨테이너에 든 것의 개수.
+    size_t CountItems(const PlayerProgress& progress, ContainerType container)
+    {
+        return ranges::count_if(progress.items, [container](const PlacedItem& placed) { return placed.address.container == container; });
     }
 }
 
@@ -117,6 +119,7 @@ protected:
         AddCleanup(L"DELETE FROM dbo.CharacterState WHERE CharacterId IN " + characters);
         AddCleanup(L"DELETE FROM dbo.CharacterCurrency WHERE CharacterId IN " + characters);
         AddCleanup(L"DELETE FROM dbo.Item WHERE OwnerId IN " + characters);
+        AddCleanup(L"DELETE FROM dbo.QuickSlot WHERE CharacterId IN " + characters);
 
         AccountDAO::RecordLogin(Connection(), accountId);
 
@@ -139,7 +142,7 @@ protected:
         data.progress.posInfo.mutable_pos()->set_y(40.25f);
         data.progress.posInfo.mutable_pos()->set_z(5.f);
         data.progress.posInfo.set_yaw(45.f);
-        data.progress.possession.set_gold(4321);
+        data.progress.gold = 4321;
 
         auto* stats = data.progress.statInfo.mutable_info();
         (*stats)[Protocol::STAT_TYPE_EXP] = 1500;
@@ -183,8 +186,7 @@ TEST_F(DISABLED_GameDBProgressTest, SavedProgressAndItemsLoadBack)
 
     PlayerSaveData data = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
     AddConsumable(data, 0, POTION_UID, 7);
-    *data.progress.possession.mutable_inventory()->add_miscellaneous() =
-        MakeSlot(Protocol::SLOT_TYPE_INVENTORY_MISC, 2, MISC_UID, MISC_TEMPLATE_ID, 3);
+    AddItem(data, ContainerType::INVENTORY_MISC, 2, MISC_UID, MISC_TEMPLATE_ID, 3);
     AddInventoryGear(data, 4, BAG_SWORD_UID, 3);
     EquipWeapon(data, EQUIPPED_SWORD_UID, 1);
     ASSERT_TRUE(Save(data));
@@ -201,23 +203,25 @@ TEST_F(DISABLED_GameDBProgressTest, SavedProgressAndItemsLoadBack)
     EXPECT_EQ(loaded->statInfo.info().at(Protocol::STAT_TYPE_EXP), 1500);
     EXPECT_EQ(loaded->statInfo.info().at(Protocol::STAT_TYPE_HP), 60);
     EXPECT_EQ(loaded->statInfo.info().at(Protocol::STAT_TYPE_MP), 30);
-    EXPECT_EQ(loaded->possession.gold(), 4321);
+    EXPECT_EQ(loaded->gold, 4321);
 
-    const Protocol::Inventory& inventory = loaded->possession.inventory();
-    const Protocol::Slot* potion = FindSlot(inventory.consumables(), 0);
+    const ItemInstance* potion = FindItem(*loaded, ContainerType::INVENTORY_CONSUMABLE, 0);
     ASSERT_NE(potion, nullptr);
-    EXPECT_EQ(potion->item().item_uid(), POTION_UID);
-    EXPECT_EQ(potion->item().count(), 7);
-    const Protocol::Slot* misc = FindSlot(inventory.miscellaneous(), 2);
+    EXPECT_EQ(potion->itemUid, POTION_UID);
+    EXPECT_EQ(potion->count, 7);
+    const ItemInstance* misc = FindItem(*loaded, ContainerType::INVENTORY_MISC, 2);
     ASSERT_NE(misc, nullptr);
-    EXPECT_EQ(misc->item().item_uid(), MISC_UID);
-    const Protocol::Slot* bagSword = FindSlot(inventory.gear(), 4);
+    EXPECT_EQ(misc->itemUid, MISC_UID);
+    const ItemInstance* bagSword = FindItem(*loaded, ContainerType::INVENTORY_GEAR, 4);
     ASSERT_NE(bagSword, nullptr);
-    EXPECT_EQ(bagSword->item().item_uid(), BAG_SWORD_UID);
-    EXPECT_EQ(bagSword->item().gearinfo().enhance_level(), 3);
-    ASSERT_EQ(loaded->possession.equipped_gear().count(Protocol::GEAR_TYPE_WEAPON), 1u);
-    EXPECT_EQ(loaded->possession.equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).item().item_uid(), EQUIPPED_SWORD_UID);
-    EXPECT_EQ(loaded->possession.equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).item().gearinfo().enhance_level(), 1);
+    EXPECT_EQ(bagSword->itemUid, BAG_SWORD_UID);
+    ASSERT_TRUE(bagSword->gear.has_value());
+    EXPECT_EQ(bagSword->gear->enhanceLevel, 3);
+    const ItemInstance* equippedSword = FindItem(*loaded, ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+    ASSERT_NE(equippedSword, nullptr);
+    EXPECT_EQ(equippedSword->itemUid, EQUIPPED_SWORD_UID);
+    ASSERT_TRUE(equippedSword->gear.has_value());
+    EXPECT_EQ(equippedSword->gear->enhanceLevel, 1);
 
     const wstring ownerWhere = L"OwnerId = " + to_wstring(CHARACTER_ID);
     EXPECT_EQ(CountRows(L"dbo.Item", ownerWhere), 4);
@@ -262,12 +266,12 @@ TEST_F(DISABLED_GameDBProgressTest, TwoSlotsSwapInOneSave)
 
     const std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
     ASSERT_TRUE(loaded.has_value());
-    const Protocol::Slot* slot0 = FindSlot(loaded->possession.inventory().consumables(), 0);
-    const Protocol::Slot* slot1 = FindSlot(loaded->possession.inventory().consumables(), 1);
+    const ItemInstance* slot0 = FindItem(*loaded, ContainerType::INVENTORY_CONSUMABLE, 0);
+    const ItemInstance* slot1 = FindItem(*loaded, ContainerType::INVENTORY_CONSUMABLE, 1);
     ASSERT_NE(slot0, nullptr);
     ASSERT_NE(slot1, nullptr);
-    EXPECT_EQ(slot0->item().item_uid(), SECOND_UID);
-    EXPECT_EQ(slot1->item().item_uid(), FIRST_UID);
+    EXPECT_EQ(slot0->itemUid, SECOND_UID);
+    EXPECT_EQ(slot1->itemUid, FIRST_UID);
 }
 
 TEST_F(DISABLED_GameDBProgressTest, GearMovesBetweenInventoryAndEquipped)
@@ -289,9 +293,10 @@ TEST_F(DISABLED_GameDBProgressTest, GearMovesBetweenInventoryAndEquipped)
 
     std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
     ASSERT_TRUE(loaded.has_value());
-    EXPECT_EQ(loaded->possession.inventory().gear().size(), 0) << "착용한 장비는 인벤토리에 남지 않는다";
-    ASSERT_EQ(loaded->possession.equipped_gear().count(Protocol::GEAR_TYPE_WEAPON), 1u);
-    EXPECT_EQ(loaded->possession.equipped_gear().at(Protocol::GEAR_TYPE_WEAPON).item().item_uid(), SWORD_UID);
+    EXPECT_EQ(CountItems(*loaded, ContainerType::INVENTORY_GEAR), 0u) << "착용한 장비는 인벤토리에 남지 않는다";
+    const ItemInstance* equippedSword = FindItem(*loaded, ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+    ASSERT_NE(equippedSword, nullptr);
+    EXPECT_EQ(equippedSword->itemUid, SWORD_UID);
     EXPECT_EQ(CountRows(L"dbo.ItemGear", gearWhere), 1) << "자리만 바뀐 장비의 세부 값은 남는다";
 
     // 해제
@@ -301,10 +306,10 @@ TEST_F(DISABLED_GameDBProgressTest, GearMovesBetweenInventoryAndEquipped)
 
     loaded = Load(ACCOUNT_ID, CHARACTER_ID);
     ASSERT_TRUE(loaded.has_value());
-    EXPECT_EQ(loaded->possession.equipped_gear().count(Protocol::GEAR_TYPE_WEAPON), 0u);
-    const Protocol::Slot* bagSlot = FindSlot(loaded->possession.inventory().gear(), 3);
-    ASSERT_NE(bagSlot, nullptr);
-    EXPECT_EQ(bagSlot->item().item_uid(), SWORD_UID);
+    EXPECT_EQ(CountItems(*loaded, ContainerType::EQUIPPED), 0u);
+    const ItemInstance* bagSword = FindItem(*loaded, ContainerType::INVENTORY_GEAR, 3);
+    ASSERT_NE(bagSword, nullptr);
+    EXPECT_EQ(bagSword->itemUid, SWORD_UID);
     EXPECT_EQ(CountRows(L"dbo.Item", L"OwnerId = " + to_wstring(CHARACTER_ID)), 1) << "옮긴 아이템은 행 하나다";
 }
 
@@ -347,7 +352,7 @@ TEST_F(DISABLED_GameDBProgressTest, ItemsBeyondParamRowLimitAreSaved)
 
     const std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
     ASSERT_TRUE(loaded.has_value());
-    EXPECT_EQ(loaded->possession.inventory().consumables().size(), manyCount);
+    EXPECT_EQ(CountItems(*loaded, ContainerType::INVENTORY_CONSUMABLE), size_t(manyCount));
 
     // 줄인 저장도 두 묶음에 걸친다. 묶음마다 MERGE하면 앞 묶음의 행이 지워진다.
     PlayerSaveData fewer = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
@@ -382,7 +387,7 @@ TEST_F(DISABLED_GameDBProgressTest, FailedSaveRollsBackEverything)
     // 레벨, 상태, 골드는 갱신된 뒤에 아이템 MERGE가 다른 캐릭터의 UID로 기본 키 위반을 낸다.
     PlayerSaveData broken = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
     broken.progress.playerInfo.set_level(1);
-    broken.progress.possession.set_gold(9999);
+    broken.progress.gold = 9999;
     (*broken.progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = 10;
     AddConsumable(broken, 3, OTHER_POTION_UID);
     EXPECT_FALSE(Save(broken));
@@ -398,4 +403,59 @@ TEST_F(DISABLED_GameDBProgressTest, FailedSaveRollsBackEverything)
 
     // 실패한 저장이 연결에 남긴 임시 테이블이나 트랜잭션이 다음 저장을 막지 않는다.
     EXPECT_TRUE(Save(baseline));
+}
+
+TEST_F(DISABLED_GameDBProgressTest, SavedQuickSlotsLoadBack)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'208;
+    constexpr int64 CHARACTER_ID = 9'000'000'208'001;
+    CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_퀵슬롯");
+
+    PlayerSaveData data = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
+    data.progress.quickSlots = { ItemQuickSlot(4, MP_POTION_TEMPLATE_ID), ItemQuickSlot(1, POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(data));
+
+    const std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
+    ASSERT_TRUE(loaded.has_value());
+    EXPECT_EQ(loaded->quickSlots, (vector<QuickSlot>{ ItemQuickSlot(1, POTION_TEMPLATE_ID), ItemQuickSlot(4, MP_POTION_TEMPLATE_ID) }))
+        << "퀵슬롯 번호 순서로 불러온다";
+
+    const wstring characterWhere = L"CharacterId = " + to_wstring(CHARACTER_ID);
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND RefType = 1"), 2) << "아이템 정의를 가리키는 RefType은 1이다";
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND SlotIndex = 4 AND RefId = " + to_wstring(MP_POTION_TEMPLATE_ID)), 1);
+}
+
+TEST_F(DISABLED_GameDBProgressTest, EmptiedQuickSlotRowIsDeleted)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'209;
+    constexpr int64 CHARACTER_ID = 9'000'000'209'001;
+    constexpr int64 OTHER_CHARACTER_ID = 9'000'000'209'002;
+    CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_퀵해제");
+
+    Protocol::CharacterOverview other;
+    other.set_class_(Protocol::CLASS_TYPE_WARRIOR);
+    other.set_name("DB진행_퀵해제_남");
+    ASSERT_FALSE(CharacterListDAO::CreateCharacter(Connection(), ACCOUNT_ID, OTHER_CHARACTER_ID, other).rejection.has_value());
+
+    PlayerSaveData otherData = MakeSaveData(ACCOUNT_ID, OTHER_CHARACTER_ID);
+    otherData.progress.quickSlots = { ItemQuickSlot(0, POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(otherData));
+
+    PlayerSaveData before = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
+    before.progress.quickSlots = { ItemQuickSlot(0, POTION_TEMPLATE_ID), ItemQuickSlot(2, MP_POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(before));
+
+    // 0번을 해제하고 2번에 다른 물약을 등록했다.
+    PlayerSaveData after = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
+    after.progress.quickSlots = { ItemQuickSlot(2, POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(after));
+
+    const wstring characterWhere = L"CharacterId = " + to_wstring(CHARACTER_ID);
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND SlotIndex = 0"), 0) << "빈 퀵슬롯은 행을 두지 않는다";
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND SlotIndex = 2 AND RefId = " + to_wstring(POTION_TEMPLATE_ID)), 1);
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", L"CharacterId = " + to_wstring(OTHER_CHARACTER_ID)), 1) << "다른 캐릭터의 퀵슬롯은 그대로다";
+
+    // 모두 해제한 저장도 남은 행을 지운다.
+    ASSERT_TRUE(Save(MakeSaveData(ACCOUNT_ID, CHARACTER_ID)));
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere), 0);
 }

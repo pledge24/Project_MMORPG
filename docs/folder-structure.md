@@ -106,12 +106,12 @@ P1/Source/
 | `Game/Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
+| `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
 | `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
 | `Game/Interaction/` | 플레이어가 다가가 쓰는 월드 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
-| `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비)을 들고 있는 서브시스템 |
-
-`Game/Items/`는 아직 없다. 아이템 정의와 아이템 인스턴스가 생기면 `Game/Items/`를 만든다.
+| `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
+| `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
 
 **`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
@@ -160,7 +160,7 @@ P1/Source/
 ### 3.3 의존 방향
 
 도메인끼리 서로 참조하면 경계가 무너진다. 각 폴더는 아래 표에 적힌 곳만 부른다. 게임 도메인은
-`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`다.
+`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`, `Game/QuickSlots`다.
 
 | 폴더 | 부를 수 있는 곳 |
 | --- | --- |
@@ -170,7 +170,8 @@ P1/Source/
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
 | `Game/Entities` | 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
-| 게임 도메인 | `Game/Data`, `Utils/`, 송신 창구 |
+| 게임 도메인 | `Game/Items`, `Game/Data`, `Utils/`, 송신 창구 |
+| `Game/Items` | `Utils/` |
 | `Game/Data` | `Utils/` |
 | `Utils/` | 없음 |
 | `Tests/` | 테스트하는 대상 폴더 전부. 제품 코드는 `Tests/`를 부르지 않는다 |
@@ -203,9 +204,13 @@ P1/Source/
 — 알림을 받는 쪽이 그 액터를 쓰고, 보내는 쪽은 이름만 넘긴다. 이 알림을 다른 폴더로 옮기면 구독하는
 화면의 경로까지 바뀐다.
 
-**`Game/Progress`는 인벤토리와 착용 장비를 소유하므로 `Game/Inventory`와 `Game/Equipment`를 부른다.**
+**`Game/Items`는 게임 도메인 아래 층이다.** 인벤토리의 구역과 착용 장비가 같은 칸 타입과 컨테이너 클래스를 쓰므로,
+그 타입을 한 도메인에 두면 다른 도메인이 같은 층을 부르게 된다. 아이템과 칸의 Protocol 타입은 `Game/Items`의 패킷 변환에서만 다룬다.
+
+**`Game/Progress`는 아이템의 재사용 대기를 소유하고 아이템 요청을 판정하므로 `Game/Inventory`를 부른다.** 아이템 요청 창구가 인벤토리 칸의 사용·착용 판정을 그대로 쓴다.
+같은 이유로 `Game/Progress`는 퀵슬롯 사본을 소유하고 퀵슬롯 등록 요청을 보내므로 `Game/QuickSlots`를 부른다. `Game/QuickSlots`는 `Game/Progress`를 부르지 않는다.
 이 절 끝의 「같은 층의 도메인끼리 호출하는 자리는 인터페이스나 델리게이트로 연결한다」의 예외다.
-— 소유 관계는 인터페이스로 끊을 이유가 없다.
+— 소유 관계와 상태가 없는 판정 함수는 인터페이스로 끊을 이유가 없다.
 
 **`Utils/`는 `Game/` 아래를 부르지 않는다.** 배선이 게임 규칙을 부르면 화살표가 뒤집힌다.
 공용 매크로를 쓰려고 `Utils/`의 헤더를 여는 자리가 게임 도메인 전체를 딸려 끌고 온다.
@@ -487,18 +492,20 @@ Server/
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점
 │   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정
-│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리, 저장 게이트, 진행 조율자, 게임 입장, 인증 티켓 값 해석
+│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리(퀵슬롯 등록 포함)와 아이템·퀵슬롯 패킷 변환, 저장 게이트, 진행 조율자, 게임 입장, 인증 티켓 값 해석
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 진행 사본과 저장 사본
 │   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
+│   │   ├── Items/          아이템과 칸의 서버 타입, 범용 칸 배열(ItemContainer), 인벤토리 구역 대응 표
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
+│   │   ├── QuickSlots/     퀵슬롯의 서버 타입과 퀵슬롯 컴포넌트
 │   │   ├── AI/             몬스터 AI 컴포넌트
 │   │   ├── Progress/       누적 경험치와 레벨 판정
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
-│   ├── DB/                 데이터별 DAO(계정, 캐릭터 목록, 캐릭터 상태, 아이템, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 스레드 루프
+│   ├── DB/                 데이터별 DAO(계정, 캐릭터 목록, 캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
 │   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
@@ -519,8 +526,8 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
-`DB/`, `Migrations/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 아홉은 게임 규칙이다. 이 층을 없애면
-폴더 열다섯 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
+`DB/`, `Migrations/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 열은 게임 규칙이다. 이 층을 없애면
+폴더 열여섯 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 

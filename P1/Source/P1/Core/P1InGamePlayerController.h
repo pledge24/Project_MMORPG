@@ -57,4 +57,12 @@ private:
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TObjectPtr<UInputAction> ToggleInventoryAction;
+
+    //~ Quick Slot Input
+private:
+    void OnUseQuickSlot(int32 QuickSlotIndex);
+
+    /** 순번이 퀵슬롯 번호다. 0번이 1 키다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    TArray<TObjectPtr<UInputAction>> UseQuickSlotActions;
 };

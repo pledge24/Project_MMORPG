@@ -59,14 +59,14 @@ enum ItemType
     ITEM_TYPE_MISCELLANEOUS = 3;   // 기타탭
 }
 
-enum SlotType
+// 아이템을 담는 컨테이너의 종류. 인벤토리의 구역 셋과 착용 장비다.
+enum ContainerType
 {
-    SLOT_TYPE_NONE = 0;
-    SLOT_TYPE_INVENTORY_GEAR = 1;               // 인벤 장비 슬롯
-    SLOT_TYPE_INVENTORY_CONSUMABLE = 2;         // 인벤 소비 슬롯
-    SLOT_TYPE_INVENTORY_MISC = 3;               // 인벤 기타 슬롯
-    SLOT_TYPE_EQUIPPED = 4;                     // 장비 슬롯
-    SLOT_TYPE_QUICK = 5;                        // 퀵 슬롯
+    CONTAINER_TYPE_NONE = 0;
+    CONTAINER_TYPE_INVENTORY_GEAR = 1;          // 장비 구역
+    CONTAINER_TYPE_INVENTORY_CONSUMABLE = 2;    // 소모품 구역
+    CONTAINER_TYPE_INVENTORY_MISC = 3;          // 기타 구역
+    CONTAINER_TYPE_EQUIPPED = 4;                // 착용 장비. 칸 번호가 장비 부위(GearType) 값이다
 }
 
 enum StatType
@@ -84,14 +84,6 @@ enum StatType
     // 성장 스텟
     STAT_TYPE_MAX_EXP = 7;
     STAT_TYPE_EXP = 8;
-}
-
-enum UpdateState
-{
-    UPDATE_STATE_NONE = 0;
-    UPDATE_STATE_ADDED = 1;
-    UPDATE_STATE_MODIFIED = 2;
-    UPDATE_STATE_REMOVED = 3;
 }
 
 enum GearType
@@ -132,6 +124,13 @@ enum RewardType
     REWARD_TYPE_NONE = 0;
     REWARD_TYPE_MONSTER_KILL = 1;
     REWARD_TYPE_QUEST_COMPLETE = 2;
+}
+
+// 퀵슬롯이 가리키는 대상의 종류. DB의 QuickSlot.RefType과 같은 값이다
+enum QuickSlotRefType
+{
+    QUICK_SLOT_REF_TYPE_NONE = 0;
+    QUICK_SLOT_REF_TYPE_ITEM = 1;       // 아이템 정의. ref_id가 아이템 번호다
 }
 
 // 서버가 연결을 끊는 사유. 클라이언트는 이 값으로 로그인 화면의 문구를 고른다.

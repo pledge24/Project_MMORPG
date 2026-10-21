@@ -4,7 +4,9 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Entities/PlayerProgress.h"
+#include "Game/QuickSlots/QuickSlotComponent.h"
 #include "Game/Room/RoomTransfer.h"
+#include "Network/ItemPackets.h"
 
 namespace
 {
@@ -47,7 +49,9 @@ Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef
     enterGamePkt.set_success(true);
     enterGamePkt.mutable_player()->CopyFrom(player->GetEntityInfo());
     enterGamePkt.mutable_stat_info()->CopyFrom(player->GetStatInfo());
-    enterGamePkt.mutable_possession()->CopyFrom(player->GetPossession());
+    *enterGamePkt.mutable_possession() = ItemPackets::MakePossession(*player);
+    // 클라이언트는 받은 퀵슬롯 수로 퀵슬롯을 만들므로 빈 퀵슬롯도 싣는다.
+    ItemPackets::AddQuickSlots(player->GetQuickSlots().GetAll(), enterGamePkt.mutable_quick_slots());
 
     return enterGamePkt;
 }

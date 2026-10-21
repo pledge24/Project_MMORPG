@@ -45,6 +45,7 @@ bool Gamedata::LoadAllGamedata()
         { GamedataFile::CURRENCIES, &documents.currencies },
         { GamedataFile::CHARACTER_CREATION, &documents.characterCreation },
         { GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
+        { GamedataFile::QUICK_SLOTS, &documents.quickSlots },
     };
 
     for (const auto& [fileName, document] : files)

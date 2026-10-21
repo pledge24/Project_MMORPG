@@ -9,10 +9,10 @@
 /*--------------------------------------------------------------
     아이템 요청 판정 테스트
 
-    클라이언트는 판매·착용·해제 요청에 자기 슬롯 사본을 통째로 보낸다. 서버가 그 사본의 아이템으로
-    판정하던 때는 싼 아이템을 비싼 번호로 팔거나, 아무 장비나 입거나, 해제하며 다른 아이템을 받을 수
-    있었다. 판정은 서버 슬롯에 든 아이템으로 하고, 요청의 아이템은 클라이언트 슬롯이 어긋났는지
-    대조하는 데만 쓴다.
+    클라이언트는 판매·착용·해제 요청에 칸 주소와 그 칸에서 본 아이템의 uid를 보낸다. 요청이 칸 사본을
+    통째로 싣고 서버가 그 사본의 아이템으로 판정하던 때는 싼 아이템을 비싼 번호로 팔거나, 아무 장비나 입거나,
+    해제하며 다른 아이템을 받을 수 있었다. 판정은 서버의 칸에 든 아이템으로 하고, 요청의 uid는 클라이언트의
+    칸이 어긋났는지 대조하는 데만 쓴다.
 
     픽스처 결합도: 아이템 템플릿, 1레벨짜리 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 시드한 장비에는 물리 공격력만 있다.
@@ -63,7 +63,7 @@ protected:
         ASSERT_NE(player, nullptr);
         PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
         PlayerTestAccess::PlayerInfo(*player).set_level(1);
-        PlayerTestAccess::Possession(*player).set_gold(START_GOLD);
+        PlayerTestAccess::Gold(*player) = START_GOLD;
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, BASE_PHYSICAL_ATTACK);
     }
 
@@ -73,30 +73,32 @@ protected:
         Gamedata::Install(GamedataTables());
     }
 
-    // 인벤토리에 아이템을 넣고, 클라이언트가 요청에 실어 보내는 슬롯 사본을 돌려준다.
-    Protocol::Slot AddToInventory(int32 templateId)
+    // 인벤토리에 아이템을 넣고, 클라이언트가 요청에 실어 보내는 칸 사본을 돌려준다.
+    ItemSlotRequest AddToInventory(int32 templateId)
     {
-        RepeatedPtrField<Protocol::Slot> addedSlots;
-        EXPECT_TRUE(PlayerTestAccess::Inventory(*player).AddItem(&addedSlots, templateId, 1));
-        return addedSlots.empty() ? Protocol::Slot() : addedSlots[0];
+        optional<SlotAddress> address = PlayerTestAccess::AddNewItem(*player, templateId);
+        EXPECT_TRUE(address.has_value());
+        return address.has_value() ? MakeInventoryRequest(*player, address.value()) : ItemSlotRequest();
     }
 
-    // 칼을 입히고, 클라이언트가 해제를 요청할 때 보내는 장비 슬롯 사본을 돌려준다.
-    Protocol::Slot EquipSword()
+    // 칼을 입히고, 클라이언트가 해제를 요청할 때 보내는 장비 칸 사본을 돌려준다.
+    ItemSlotRequest EquipSword()
     {
         auto result = player->ProcessEquipGear(AddToInventory(SWORD_TEMPLATE_ID));
         EXPECT_TRUE(result.has_value());
-        return *player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return MakeEquippedRequest(*player, Protocol::GEAR_TYPE_WEAPON);
     }
 
-    const Protocol::Slot& InventorySlot(const Protocol::Slot& slot)
+    /** 빈 칸이면 nullptr. */
+    const ItemInstance* InventoryItem(const ItemSlotRequest& request)
     {
-        return *player->GetInventory().GetSlot(slot.type(), slot.slot_id());
+        return player->GetInventory().FindItem(request.address);
     }
 
-    const Protocol::Slot& WeaponSlot()
+    /** 빈 칸이면 nullptr. */
+    const ItemInstance* WeaponItem()
     {
-        return *player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON);
+        return player->GetEquipment().FindItem(Protocol::GEAR_TYPE_WEAPON);
     }
 
     PlayerRef player;
@@ -109,95 +111,95 @@ TEST_F(PlayerItemRequestTest, BuyingUnknownTemplateIsRejectedWithoutTouchingTabl
     EXPECT_FALSE(player->ProcessBuyItem(UNKNOWN_TEMPLATE_ID).has_value());
     EXPECT_EQ(Gamedata::FindItem(UNKNOWN_TEMPLATE_ID), nullptr)
         << "없는 번호를 표에 끼워 넣으면 여러 룸 스레드가 전역 표를 동시에 바꾼다";
-    EXPECT_EQ(player->GetPossession().gold(), START_GOLD);
+    EXPECT_EQ(player->GetGold(), START_GOLD);
 }
 
 /* 판매 */
 
 TEST_F(PlayerItemRequestTest, SellPriceComesFromOwnedItem)
 {
-    Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
+    ItemSlotRequest request = AddToInventory(SWORD_TEMPLATE_ID);
 
-    optional<SellItemResult> result = player->ProcessSellItem(requestSlot);
+    optional<SellItemResult> result = player->ProcessSellItem(request);
     ASSERT_TRUE(result.has_value());
 
     EXPECT_EQ(result->gold, START_GOLD + 10);
-    EXPECT_FALSE(InventorySlot(requestSlot).has_item());
+    EXPECT_EQ(InventoryItem(request), nullptr);
 }
 
-TEST_F(PlayerItemRequestTest, SellingWithForgedTemplateIsRejected)
+TEST_F(PlayerItemRequestTest, SellingWithAnotherItemsUidIsRejected)
 {
-    Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
-    requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
+    ItemSlotRequest request = AddToInventory(SWORD_TEMPLATE_ID);
+    const ItemSlotRequest greatswordRequest = AddToInventory(GREATSWORD_TEMPLATE_ID);
+    request.itemUid = greatswordRequest.itemUid;
 
-    EXPECT_FALSE(player->ProcessSellItem(requestSlot).has_value())
-        << "싼 칼을 비싼 칼 번호로 팔면 골드가 생긴다";
+    EXPECT_FALSE(player->ProcessSellItem(request).has_value())
+        << "칸의 아이템과 클라이언트가 본 아이템이 다르면 클라이언트의 칸이 어긋난 것이다";
 
-    EXPECT_EQ(player->GetPossession().gold(), START_GOLD);
-    EXPECT_TRUE(InventorySlot(requestSlot).has_item());
+    EXPECT_EQ(player->GetGold(), START_GOLD);
+    EXPECT_NE(InventoryItem(request), nullptr);
+    EXPECT_NE(InventoryItem(greatswordRequest), nullptr);
+}
+
+TEST_F(PlayerItemRequestTest, SellingWithoutUidIsRejected)
+{
+    ItemSlotRequest request = AddToInventory(SWORD_TEMPLATE_ID);
+    request.itemUid = 0;
+
+    EXPECT_FALSE(player->ProcessSellItem(request).has_value()) << "uid가 없으면 클라이언트는 빈 칸을 본 것이다";
+
+    EXPECT_EQ(player->GetGold(), START_GOLD);
+    EXPECT_NE(InventoryItem(request), nullptr);
 }
 
 TEST_F(PlayerItemRequestTest, SellingUnsellableItemIsRejected)
 {
-    Protocol::Slot requestSlot = AddToInventory(UNSELLABLE_SWORD_TEMPLATE_ID);
+    ItemSlotRequest request = AddToInventory(UNSELLABLE_SWORD_TEMPLATE_ID);
 
-    EXPECT_FALSE(player->ProcessSellItem(requestSlot).has_value());
+    EXPECT_FALSE(player->ProcessSellItem(request).has_value());
 
-    EXPECT_EQ(player->GetPossession().gold(), START_GOLD);
-    EXPECT_TRUE(InventorySlot(requestSlot).has_item());
+    EXPECT_EQ(player->GetGold(), START_GOLD);
+    EXPECT_NE(InventoryItem(request), nullptr);
 }
 
 /* 착용 */
 
 TEST_F(PlayerItemRequestTest, EquipPutsOwnedItemOnWithItsUid)
 {
-    Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
-    const int64 ownedUid = InventorySlot(requestSlot).item().item_uid();
+    ItemSlotRequest request = AddToInventory(SWORD_TEMPLATE_ID);
+    const int64 ownedUid = InventoryItem(request)->itemUid;
 
-    auto result = player->ProcessEquipGear(requestSlot);
+    auto result = player->ProcessEquipGear(request);
     ASSERT_TRUE(result.has_value());
 
-    EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_EQ(WeaponSlot().item().item_uid(), ownedUid);
-    EXPECT_FALSE(InventorySlot(requestSlot).has_item());
-}
-
-TEST_F(PlayerItemRequestTest, EquippingWithForgedTemplateChangesNothing)
-{
-    Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
-    requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
-
-    auto result = player->ProcessEquipGear(requestSlot);
-    EXPECT_FALSE(result.has_value()) << "인벤토리의 칼 대신 요청에 실린 대검을 입으면 안 된다";
-
-    EXPECT_FALSE(WeaponSlot().has_item());
-    EXPECT_TRUE(InventorySlot(requestSlot).has_item());
-    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
+    ASSERT_NE(WeaponItem(), nullptr);
+    EXPECT_EQ(WeaponItem()->templateId, SWORD_TEMPLATE_ID);
+    EXPECT_EQ(WeaponItem()->itemUid, ownedUid);
+    EXPECT_EQ(InventoryItem(request), nullptr);
 }
 
 TEST_F(PlayerItemRequestTest, EquippingWithForgedUidChangesNothing)
 {
-    Protocol::Slot requestSlot = AddToInventory(SWORD_TEMPLATE_ID);
-    requestSlot.mutable_item()->set_item_uid(requestSlot.item().item_uid() + 1);
+    ItemSlotRequest request = AddToInventory(SWORD_TEMPLATE_ID);
+    request.itemUid += 1;
 
-    auto result = player->ProcessEquipGear(requestSlot);
-    EXPECT_FALSE(result.has_value()) << "uid가 다르면 클라이언트 슬롯이 어긋난 것이다";
+    auto result = player->ProcessEquipGear(request);
+    EXPECT_FALSE(result.has_value()) << "uid가 다르면 클라이언트의 칸이 어긋난 것이다";
 
-    EXPECT_FALSE(WeaponSlot().has_item());
-    EXPECT_TRUE(InventorySlot(requestSlot).has_item());
+    EXPECT_EQ(WeaponItem(), nullptr);
+    EXPECT_NE(InventoryItem(request), nullptr);
 }
 
 TEST_F(PlayerItemRequestTest, EquippingFromEmptySlotChangesNothing)
 {
-    Protocol::Slot requestSlot;
-    requestSlot.set_type(Protocol::SLOT_TYPE_INVENTORY_GEAR);
-    requestSlot.set_slot_id(0);
-    requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
+    ItemSlotRequest request;
+    request.address = SlotAddress{ ContainerType::INVENTORY_GEAR, 0 };
+    request.itemUid = 777;
 
-    auto result = player->ProcessEquipGear(requestSlot);
+    auto result = player->ProcessEquipGear(request);
     EXPECT_FALSE(result.has_value()) << "빈 칸을 보내고 대검을 공짜로 입으면 안 된다";
 
-    EXPECT_FALSE(WeaponSlot().has_item());
+    EXPECT_EQ(WeaponItem(), nullptr);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
 }
 
@@ -205,44 +207,46 @@ TEST_F(PlayerItemRequestTest, EquippingFromEmptySlotChangesNothing)
 
 TEST_F(PlayerItemRequestTest, UnequipReturnsEquippedItem)
 {
-    Protocol::Slot requestSlot = EquipSword();
-    const int64 equippedUid = requestSlot.item().item_uid();
+    ItemSlotRequest request = EquipSword();
+    const int64 equippedUid = request.itemUid;
 
-    auto result = player->ProcessUnequipGear(requestSlot);
+    auto result = player->ProcessUnequipGear(request);
     ASSERT_TRUE(result.has_value());
 
-    EXPECT_FALSE(WeaponSlot().has_item());
-    const Protocol::Slot* returnedSlot = player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0);
-    ASSERT_TRUE(returnedSlot->has_item());
-    EXPECT_EQ(returnedSlot->item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_EQ(returnedSlot->item().item_uid(), equippedUid);
+    EXPECT_EQ(WeaponItem(), nullptr);
+    const ItemInstance* returned = player->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, 0 });
+    ASSERT_NE(returned, nullptr);
+    EXPECT_EQ(returned->templateId, SWORD_TEMPLATE_ID);
+    EXPECT_EQ(returned->itemUid, equippedUid);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), BASE_PHYSICAL_ATTACK);
 }
 
-TEST_F(PlayerItemRequestTest, UnequippingWithForgedTemplateChangesNothing)
+TEST_F(PlayerItemRequestTest, UnequippingWithForgedUidChangesNothing)
 {
-    Protocol::Slot requestSlot = EquipSword();
+    ItemSlotRequest request = EquipSword();
     const int64 equippedAttack = player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
-    requestSlot.mutable_item()->set_template_id(GREATSWORD_TEMPLATE_ID);
+    request.itemUid += 1;
 
-    auto result = player->ProcessUnequipGear(requestSlot);
-    EXPECT_FALSE(result.has_value()) << "칼을 빼고 대검을 돌려받으면 안 된다";
+    auto result = player->ProcessUnequipGear(request);
+    EXPECT_FALSE(result.has_value()) << "uid가 다르면 클라이언트의 칸이 어긋난 것이다";
 
-    EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
-    EXPECT_FALSE(player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item());
+    ASSERT_NE(WeaponItem(), nullptr);
+    EXPECT_EQ(WeaponItem()->templateId, SWORD_TEMPLATE_ID);
+    EXPECT_EQ(player->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, 0 }), nullptr);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), equippedAttack);
 }
 
 TEST_F(PlayerItemRequestTest, UnequippingIntoFullInventoryChangesNothing)
 {
-    Protocol::Slot requestSlot = EquipSword();
+    ItemSlotRequest request = EquipSword();
     const int64 equippedAttack = player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK);
     for (int32 i = 0; i < GEAR_SLOT_COUNT; i++)
         AddToInventory(SWORD_TEMPLATE_ID);
 
-    auto result = player->ProcessUnequipGear(requestSlot);
+    auto result = player->ProcessUnequipGear(request);
     EXPECT_FALSE(result.has_value()) << "넣을 자리가 없는데 장비 칸만 비우면 칼이 사라진다";
 
-    EXPECT_EQ(WeaponSlot().item().template_id(), SWORD_TEMPLATE_ID);
+    ASSERT_NE(WeaponItem(), nullptr);
+    EXPECT_EQ(WeaponItem()->templateId, SWORD_TEMPLATE_ID);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), equippedAttack);
 }

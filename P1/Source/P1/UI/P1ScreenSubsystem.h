@@ -63,6 +63,9 @@ private:
     /** 등록되지 않은 종류면 경고를 남기고 nullptr. */
     UUserWidget* FindWindow(EP1WidgetType Type) const;
 
+    /** 상점 창이 열려 있는지를 아이템 요청 창구에 맞춘다. 판매는 상점 창이 열려 있을 때만 보낸다. */
+    void SyncShopOpen() const;
+
     UPROPERTY()
     TObjectPtr<UP1WindowLayerWidget> WindowLayer;
 

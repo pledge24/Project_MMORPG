@@ -201,9 +201,12 @@
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
+    <ClCompile Include="QuickSlotTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
+    <ClCompile Include="ItemContainerTests.cpp" />
+    <ClCompile Include="ItemPacketsTests.cpp" />
     <ClCompile Include="ItemRowsTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
@@ -260,8 +263,12 @@
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp" />
     <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\Items\ItemContainer.cpp" />
+    <ClCompile Include="..\GameServer\Network\ItemPackets.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\QuickSlots\QuickSlotComponent.cpp" />
+    <ClCompile Include="..\GameServer\DB\QuickSlotDAO.cpp" />
     <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp" />

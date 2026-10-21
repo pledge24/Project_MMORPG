@@ -51,6 +51,13 @@ FString UP1GameInstance::ConsumeLoginNotice()
 
 void UP1GameInstance::HandleConnectionLost(Protocol::LeaveReason Reason)
 {
+    // 다음 입장 패킷이 다시 채운다. 비우지 않으면 다른 캐릭터로 들어가기 전까지 이전 캐릭터의 칸과 퀵슬롯이 남는다.
+    if (UP1MyPlayerData* MyPlayerData = GetSubsystem<UP1MyPlayerData>())
+    {
+        MyPlayerData->ClearContainers();
+        MyPlayerData->ClearQuickSlots();
+    }
+
     switch (Reason)
     {
     case Protocol::LEAVE_REASON_DUPLICATE_LOGIN:

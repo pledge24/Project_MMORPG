@@ -8,6 +8,10 @@
 #include "UI/Screens/P1DeathWidget.h"
 #include "UI/Screens/P1WindowLayerWidget.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Game/Progress/P1ItemActions.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
 namespace
@@ -65,7 +69,8 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
     const UP1UISettings* Settings = GetDefault<UP1UISettings>();
 
     // 배경 화면. 붙이는 순서가 같은 Z 순서 안에서의 앞뒤를 정한다.
-    HUDWidget = CreateScreen(InOwningPlayer, Settings->HUDWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
+    // HUD는 퀵슬롯이 끌어 놓기를 받아야 하므로 자식의 입력을 막지 않는다. 입력을 받지 않을 그림과 글자는 WBP가 막는다.
+    HUDWidget = CreateScreen(InOwningPlayer, Settings->HUDWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::SelfHitTestInvisible);
     HelpWidget = CreateScreen(InOwningPlayer, Settings->HelpWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
 
     // 창 레이어와 창. 창은 닫힌 채로 만든다.
@@ -100,6 +105,7 @@ void UP1ScreenSubsystem::ReleaseScreens()
     WindowWidgets.Empty();
     OpenWindowFlags = 0;
     OwningPlayer = nullptr;
+    SyncShopOpen();
 }
 
 void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
@@ -114,6 +120,7 @@ void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
     OpenWindowFlags |= (1 << static_cast<uint8>(Type));
 
     RefreshInputMode();
+    SyncShopOpen();
 }
 
 void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)
@@ -131,6 +138,7 @@ void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)
     OpenWindowFlags &= ~(1 << static_cast<uint8>(Type));
 
     RefreshInputMode();
+    SyncShopOpen();
 }
 
 void UP1ScreenSubsystem::ToggleWindow(EP1WidgetType Type)
@@ -174,6 +182,15 @@ UUserWidget* UP1ScreenSubsystem::FindWindow(EP1WidgetType Type) const
     }
 
     return *Found;
+}
+
+void UP1ScreenSubsystem::SyncShopOpen() const
+{
+    const ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    const UGameInstance* GameInstance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
+    const UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
+    if (MyPlayerData)
+        MyPlayerData->GetItemActions()->SetShopOpen(IsWindowOpen(EP1WidgetType::WIDGET_SHOP));
 }
 
 void UP1ScreenSubsystem::DisplayWarningText(const FText& Message)

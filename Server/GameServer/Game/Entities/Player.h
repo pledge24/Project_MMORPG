@@ -2,11 +2,14 @@
 #include "Game/Entities/Creature.h"
 #include "Game/Entities/PlayerSaveData.h"
 #include "Game/Entities/CombatStats.h"
+#include "Game/Items/ItemTypes.h"
+#include "Game/QuickSlots/QuickSlotTypes.h"
 
 class GameSession;
 class Room;
 class InventoryComponent;
 class EquipmentComponent;
+class QuickSlotComponent;
 struct RoomEnterData;
 struct TownRespawn;
 struct LevelExp;
@@ -23,34 +26,48 @@ struct NextLevelUpData
 
 //~ 요청 처리 결과
 
+/** 클라이언트가 가리킨 칸과 그 칸에 있다고 본 아이템의 uid. 모든 값이 클라이언트 값이다. */
+struct ItemSlotRequest
+{
+    SlotAddress address;
+    /** 0이면 칸에 아이템이 없다고 본 것이다. */
+    int64 itemUid = 0;
+};
+
 /** 구매 결과. */
 struct BuyItemResult
 {
-    RepeatedPtrField<Protocol::Slot> updatedSlots;
+    vector<SlotChange> changedSlots;
     int64 gold = 0;
 };
 
-/** 판매 결과. */
+/** 판매 결과. 판매는 칸 하나만 바꾼다. */
 struct SellItemResult
 {
-    Protocol::Slot updatedSlot;
+    vector<SlotChange> changedSlots;
     int64 gold = 0;
 };
 
 /** 소모품 사용 결과. */
 struct UseItemResult
 {
-    Protocol::Slot updatedSlot;
+    vector<SlotChange> changedSlots;
     RepeatedPtrField<Protocol::Stat> updatedStats;
 };
 
-/** 장비 착용과 해제의 결과. */
+/** 장비 착용과 해제의 결과. 바뀐 칸은 착용 장비의 칸이 먼저다. */
 struct GearChangeResult
 {
     int32 gearType = 0;
     int32 templateId = 0;
-    RepeatedPtrField<Protocol::Slot> updatedSlots;
+    vector<SlotChange> changedSlots;
     RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
+/** 퀵슬롯 등록 결과. 교환이면 두 퀵슬롯이 바뀐다. */
+struct SetQuickSlotResult
+{
+    vector<QuickSlot> changedQuickSlots;
 };
 
 /** 리스폰 결과. */
@@ -119,17 +136,27 @@ private:
 public:
     /** 골드가 모자라거나 가방에 넣지 못하면 nullopt. 결과의 gold는 남은 골드다. */
     optional<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
-    /** 팔 수 없는 아이템이거나 요청이 서버 슬롯과 어긋나면 nullopt. 결과의 gold는 남은 골드다. */
-    optional<SellItemResult> ProcessSellItem(const Protocol::Slot& requestSlot, int32 count = 1);
+    /** 팔 수 없는 아이템이거나 요청이 서버의 칸과 어긋나면 nullopt. 결과의 gold는 남은 골드다. */
+    optional<SellItemResult> ProcessSellItem(const ItemSlotRequest& request, int32 count = 1);
     /**
      * 소모품을 쓴다. nowMs는 재사용 대기 판정에 쓰는 현재 시각(ms, GetTickCount64)이다.
      * 사망했거나, 소모품 칸이 아니거나, 재사용 대기 중이면 nullopt.
      */
-    optional<UseItemResult> ProcessUseItem(const Protocol::Slot& requestSlot, uint64 nowMs);
+    optional<UseItemResult> ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs);
     /** 결과의 gearType은 요청한 인벤토리 칸이 아니라 장착된 장비 부위다. 착용 조건에 맞지 않으면 nullopt. */
-    optional<GearChangeResult> ProcessEquipGear(const Protocol::Slot& requestSlot);
+    optional<GearChangeResult> ProcessEquipGear(const ItemSlotRequest& request);
     /** 가방에 자리가 없으면 nullopt. 결과의 templateId는 0이다. */
-    optional<GearChangeResult> ProcessUnequipGear(const Protocol::Slot& requestSlot);
+    optional<GearChangeResult> ProcessUnequipGear(const ItemSlotRequest& request);
+    /**
+     * slotIndex 퀵슬롯에 ref를 등록하고, ref가 비었으면 해제한다. 클라이언트 값을 넘겨도 된다.
+     * 범위 밖 번호이거나 소모품이 아니면 nullopt. 소지 여부는 보지 않는다.
+     */
+    optional<SetQuickSlotResult> ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref);
+    /**
+     * slotIndex 퀵슬롯에 등록된 소모품을 소모품 구역에서 칸 번호가 가장 작은 칸부터 쓴다. 클라이언트 값을 넘겨도 된다.
+     * 빈 퀵슬롯이거나 그 소모품이 없으면 nullopt. 그 밖의 거절 사유는 ProcessUseItem과 같다.
+     */
+    optional<UseItemResult> ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs);
     /**
      * respawnPos에서 되살린다. 소속 룸을 보지 않으므로 룸에서 뺀 뒤에도 부를 수 있다.
      * 마을 리스폰만 경험치를 잃고 HP를 절반만 채운다.
@@ -198,18 +225,22 @@ private:
 
     //~ 소지품
 public:
-    // 읽기만 연다. 소지품을 바꾸는 길은 요청 처리(Process*)와 불러오기뿐이다.
-    const Protocol::Possession& GetPossession() const { return *_possession; }
+    // 읽기만 연다. 소지품과 퀵슬롯을 바꾸는 길은 요청 처리(Process*)와 불러오기뿐이다.
+    int64 GetGold() const { return _gold; }
     const InventoryComponent& GetInventory() const { return *_inventory; }
     const EquipmentComponent& GetEquipment() const { return *_equipment; }
+    const QuickSlotComponent& GetQuickSlots() const { return *_quickSlots; }
 
 private:
     /** 다른 플레이어에게 보일 장비 외형 요약을 다시 쓴다. */
     void RefreshEquippedGearSummary();
+    /** 착용 장비와 인벤토리에서 바뀐 칸을 그 순서로 꺼낸다. */
+    vector<SlotChange> TakeItemChanges();
 
-    unique_ptr<Protocol::Possession> _possession;
+    int64 _gold = 0;
     InventoryComponentRef _inventory;
     EquipmentComponentRef _equipment;
+    QuickSlotComponentRef _quickSlots;
 
     //~ 세션
 public:

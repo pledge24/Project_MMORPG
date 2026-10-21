@@ -79,8 +79,10 @@ TEST_F(EntityFactoryTest, PlayerWithoutSessionGetsIdAndInventory)
     EXPECT_GT(player->GetEntityId(), 0);
     EXPECT_EQ(player->GetEntityInfo().entity_type(), Protocol::ENTITY_TYPE_PLAYER);
     EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId());
-    EXPECT_NE(player->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0), nullptr) << "Init이 인벤토리 구역 표의 칸 수만큼 칸을 만든다";
-    EXPECT_NE(player->GetEquipment().GetSlot(Protocol::GEAR_TYPE_WEAPON), nullptr) << "Init이 장비 칸을 만든다";
+    const ItemContainer* gearSection = player->GetInventory().FindSection(ContainerType::INVENTORY_GEAR);
+    ASSERT_NE(gearSection, nullptr);
+    EXPECT_TRUE(gearSection->IsValidSlot(0)) << "Init이 인벤토리 구역 표의 칸 수만큼 칸을 만든다";
+    EXPECT_TRUE(player->GetEquipment().GetContainer().IsValidSlot(Protocol::GEAR_TYPE_WEAPON)) << "Init이 장비 칸을 만든다";
     EXPECT_EQ(player->GetSession(), nullptr);
 }
 

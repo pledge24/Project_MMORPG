@@ -39,12 +39,12 @@ namespace
             Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
             (*stats)[statType] = 0;
 
-        Protocol::Slot* slot = progress.possession.mutable_inventory()->add_gear();
-        slot->set_type(Protocol::SLOT_TYPE_INVENTORY_GEAR);
-        slot->set_slot_id(0);
-        slot->mutable_item()->set_template_id(SWORD_TEMPLATE_ID);
-        slot->mutable_item()->set_item_uid(500);
-        slot->mutable_item()->set_count(1);
+        PlacedItem sword;
+        sword.address = SlotAddress{ ContainerType::INVENTORY_GEAR, 0 };
+        sword.item.itemUid = 500;
+        sword.item.templateId = SWORD_TEMPLATE_ID;
+        sword.item.gear = GearDetail{};
+        progress.items.push_back(sword);
         return progress;
     }
 }
@@ -104,14 +104,15 @@ protected:
         Gamedata::Install(GamedataTables());
     }
 
-    Protocol::Slot SwordSlot() const
+    /** 클라이언트가 인벤토리의 칼을 가리키는 요청. */
+    template<typename RequestType>
+    RequestType MakeSwordRequest(Protocol::ContainerType container, int32 slotIndex) const
     {
-        Protocol::Slot slot;
-        slot.set_type(Protocol::SLOT_TYPE_INVENTORY_GEAR);
-        slot.set_slot_id(0);
-        slot.mutable_item()->set_template_id(SWORD_TEMPLATE_ID);
-        slot.mutable_item()->set_item_uid(500);
-        return slot;
+        RequestType pkt;
+        pkt.mutable_address()->set_container(container);
+        pkt.mutable_address()->set_slot_index(slotIndex);
+        pkt.set_item_uid(500);
+        return pkt;
     }
 
     RoomRef room;
@@ -202,11 +203,10 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
     ASSERT_TRUE(room->EnterPlayer(traveler, enterData));
     ASSERT_TRUE(room->LeavePlayer(traveler, true));
 
-    Protocol::C_SELL_ITEM sellPkt;
-    *sellPkt.mutable_slot() = SwordSlot();
+    const auto sellPkt = MakeSwordRequest<Protocol::C_SELL_ITEM>(Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
     ItemRequests::HandleSellItem(*room, traveler, sellPkt);
 
-    EXPECT_TRUE(traveler->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item())
+    EXPECT_NE(traveler->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, 0 }), nullptr)
         << "룸을 떠난 플레이어의 소지품을 옛 룸 큐에서 바꾸면 새 룸 큐와 경쟁한다";
 }
 
@@ -214,17 +214,10 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
 // 세션이 없는 플레이어(잡이 기다리는 사이 끊긴 세션)로 성공 경로를 타면 널 세션을 역참조했다.
 TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
 {
-    Protocol::C_EQUIP_GEAR equipPkt;
-    *equipPkt.mutable_slot() = SwordSlot();
+    const auto equipPkt = MakeSwordRequest<Protocol::C_EQUIP_GEAR>(Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
     ItemRequests::HandleEquipGear(*room, player, equipPkt);
 
-    Protocol::C_UNEQUIP_GEAR unequipPkt;
-    Protocol::Slot equippedSlot;
-    equippedSlot.set_type(Protocol::SLOT_TYPE_EQUIPPED);
-    equippedSlot.set_slot_id(Protocol::GEAR_TYPE_WEAPON);
-    equippedSlot.mutable_item()->set_template_id(SWORD_TEMPLATE_ID);
-    equippedSlot.mutable_item()->set_item_uid(500);
-    *unequipPkt.mutable_slot() = equippedSlot;
+    const auto unequipPkt = MakeSwordRequest<Protocol::C_UNEQUIP_GEAR>(Protocol::CONTAINER_TYPE_EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
     ItemRequests::HandleUnequipGear(*room, player, unequipPkt);
 
     SUCCEED() << "세션이 없어도 응답을 건너뛰고 끝나야 한다";

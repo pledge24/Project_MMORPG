@@ -39,6 +39,8 @@
     X(C_EQUIP_GEAR) X(S_EQUIP_GEAR)                                          \
     X(C_UNEQUIP_GEAR) X(S_UNEQUIP_GEAR)                                      \
     X(C_USE_ITEM) X(S_USE_ITEM)                                              \
+    X(C_SET_QUICK_SLOT) X(S_SET_QUICK_SLOT)                                  \
+    X(C_USE_QUICK_SLOT)                                                      \
     X(S_DIE) X(S_REWARD_RESULT)                                              \
     X(C_RESPAWN) X(S_RESPAWN)                                                \
     X(C_CHAT) X(S_CHAT)

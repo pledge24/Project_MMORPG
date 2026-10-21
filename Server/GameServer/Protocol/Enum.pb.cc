@@ -49,44 +49,43 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "D_UP\020\004\022\032\n\026EFFECT_TYPE_SPEED_DOWN\020\005*i\n\010It"
   "emType\022\022\n\016ITEM_TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_"
   "GEAR\020\001\022\030\n\024ITEM_TYPE_CONSUMABLE\020\002\022\033\n\027ITEM"
-  "_TYPE_MISCELLANEOUS\020\003*\253\001\n\010SlotType\022\022\n\016SL"
-  "OT_TYPE_NONE\020\000\022\034\n\030SLOT_TYPE_INVENTORY_GE"
-  "AR\020\001\022\"\n\036SLOT_TYPE_INVENTORY_CONSUMABLE\020\002"
-  "\022\034\n\030SLOT_TYPE_INVENTORY_MISC\020\003\022\026\n\022SLOT_T"
-  "YPE_EQUIPPED\020\004\022\023\n\017SLOT_TYPE_QUICK\020\005*\325\001\n\010"
-  "StatType\022\022\n\016STAT_TYPE_NONE\020\000\022\024\n\020STAT_TYP"
-  "E_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020STAT_TYP"
-  "E_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031STAT_TYP"
-  "E_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYPE_MAGICAL"
-  "_ATTACK\020\006\022\025\n\021STAT_TYPE_MAX_EXP\020\007\022\021\n\rSTAT"
-  "_TYPE_EXP\020\010*q\n\013UpdateState\022\025\n\021UPDATE_STA"
-  "TE_NONE\020\000\022\026\n\022UPDATE_STATE_ADDED\020\001\022\031\n\025UPD"
-  "ATE_STATE_MODIFIED\020\002\022\030\n\024UPDATE_STATE_REM"
-  "OVED\020\003*\234\001\n\010GearType\022\022\n\016GEAR_TYPE_NONE\020\000\022"
-  "\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017GEAR_TYPE_CHEST"
-  "\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016GEAR_TYPE_ARMS"
-  "\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n\020GEAR_TYPE_WEA"
-  "PON\020\006*\225\002\n\013RespawnType\022\025\n\021RESPAWN_TYPE_NO"
-  "NE\020\000\022\025\n\021RESPAWN_TYPE_TOWN\020\001\022\033\n\027RESPAWN_T"
-  "YPE_CHECKPOINT\020\002\022\"\n\036RESPAWN_TYPE_RESURRE"
-  "CTION_ITEM\020\003\022\031\n\025RESPAWN_TYPE_IN_PLACE\020\004\022"
-  "\035\n\031RESPAWN_TYPE_PARTY_MEMBER\020\005\022\033\n\027RESPAW"
-  "N_TYPE_GUILD_BASE\020\006\022\032\n\026RESPAWN_TYPE_CASH"
-  "_ITEM\020\007\022$\n RESPAWN_TYPE_BATTLE_RESURRECT"
-  "ION\020\010*\225\001\n\tEnterType\022\023\n\017ENTER_TYPE_NONE\020\000"
-  "\022\026\n\022ENTER_TYPE_INITIAL\020\001\022 \n\034ENTER_TYPE_S"
-  "AME_MAP_TRANSFER\020\002\022!\n\035ENTER_TYPE_CROSS_M"
-  "AP_TRANSFER\020\003\022\026\n\022ENTER_TYPE_RESPAWN\020\004*`\n"
-  "\nRewardType\022\024\n\020REWARD_TYPE_NONE\020\000\022\034\n\030REW"
-  "ARD_TYPE_MONSTER_KILL\020\001\022\036\n\032REWARD_TYPE_Q"
-  "UEST_COMPLETE\020\002*f\n\013LeaveReason\022\025\n\021LEAVE_"
-  "REASON_NONE\020\000\022 \n\034LEAVE_REASON_DUPLICATE_"
-  "LOGIN\020\001\022\036\n\032LEAVE_REASON_INVALID_TOKEN\020\002b"
-  "\006proto3"
+  "_TYPE_MISCELLANEOUS\020\003*\264\001\n\rContainerType\022"
+  "\027\n\023CONTAINER_TYPE_NONE\020\000\022!\n\035CONTAINER_TY"
+  "PE_INVENTORY_GEAR\020\001\022\'\n#CONTAINER_TYPE_IN"
+  "VENTORY_CONSUMABLE\020\002\022!\n\035CONTAINER_TYPE_I"
+  "NVENTORY_MISC\020\003\022\033\n\027CONTAINER_TYPE_EQUIPP"
+  "ED\020\004*\325\001\n\010StatType\022\022\n\016STAT_TYPE_NONE\020\000\022\024\n"
+  "\020STAT_TYPE_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n"
+  "\020STAT_TYPE_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n"
+  "\031STAT_TYPE_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYP"
+  "E_MAGICAL_ATTACK\020\006\022\025\n\021STAT_TYPE_MAX_EXP\020"
+  "\007\022\021\n\rSTAT_TYPE_EXP\020\010*\234\001\n\010GearType\022\022\n\016GEA"
+  "R_TYPE_NONE\020\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017G"
+  "EAR_TYPE_CHEST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016"
+  "GEAR_TYPE_ARMS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n"
+  "\020GEAR_TYPE_WEAPON\020\006*\225\002\n\013RespawnType\022\025\n\021R"
+  "ESPAWN_TYPE_NONE\020\000\022\025\n\021RESPAWN_TYPE_TOWN\020"
+  "\001\022\033\n\027RESPAWN_TYPE_CHECKPOINT\020\002\022\"\n\036RESPAW"
+  "N_TYPE_RESURRECTION_ITEM\020\003\022\031\n\025RESPAWN_TY"
+  "PE_IN_PLACE\020\004\022\035\n\031RESPAWN_TYPE_PARTY_MEMB"
+  "ER\020\005\022\033\n\027RESPAWN_TYPE_GUILD_BASE\020\006\022\032\n\026RES"
+  "PAWN_TYPE_CASH_ITEM\020\007\022$\n RESPAWN_TYPE_BA"
+  "TTLE_RESURRECTION\020\010*\225\001\n\tEnterType\022\023\n\017ENT"
+  "ER_TYPE_NONE\020\000\022\026\n\022ENTER_TYPE_INITIAL\020\001\022 "
+  "\n\034ENTER_TYPE_SAME_MAP_TRANSFER\020\002\022!\n\035ENTE"
+  "R_TYPE_CROSS_MAP_TRANSFER\020\003\022\026\n\022ENTER_TYP"
+  "E_RESPAWN\020\004*`\n\nRewardType\022\024\n\020REWARD_TYPE"
+  "_NONE\020\000\022\034\n\030REWARD_TYPE_MONSTER_KILL\020\001\022\036\n"
+  "\032REWARD_TYPE_QUEST_COMPLETE\020\002*N\n\020QuickSl"
+  "otRefType\022\034\n\030QUICK_SLOT_REF_TYPE_NONE\020\000\022"
+  "\034\n\030QUICK_SLOT_REF_TYPE_ITEM\020\001*f\n\013LeaveRe"
+  "ason\022\025\n\021LEAVE_REASON_NONE\020\000\022 \n\034LEAVE_REA"
+  "SON_DUPLICATE_LOGIN\020\001\022\036\n\032LEAVE_REASON_IN"
+  "VALID_TOKEN\020\002b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 2127, descriptor_table_protodef_Enum_2eproto,
+    false, false, 2101, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -214,18 +213,17 @@ bool ItemType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SlotType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ContainerType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[7];
 }
-bool SlotType_IsValid(int value) {
+bool ContainerType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
     case 2:
     case 3:
     case 4:
-    case 5:
       return true;
     default:
       return false;
@@ -253,25 +251,9 @@ bool StatType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* UpdateState_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[9];
-}
-bool UpdateState_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[10];
+  return file_level_enum_descriptors_Enum_2eproto[9];
 }
 bool GearType_IsValid(int value) {
   switch (value) {
@@ -290,7 +272,7 @@ bool GearType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RespawnType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[11];
+  return file_level_enum_descriptors_Enum_2eproto[10];
 }
 bool RespawnType_IsValid(int value) {
   switch (value) {
@@ -311,7 +293,7 @@ bool RespawnType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[12];
+  return file_level_enum_descriptors_Enum_2eproto[11];
 }
 bool EnterType_IsValid(int value) {
   switch (value) {
@@ -328,13 +310,27 @@ bool EnterType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[13];
+  return file_level_enum_descriptors_Enum_2eproto[12];
 }
 bool RewardType_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
     case 2:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* QuickSlotRefType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[13];
+}
+bool QuickSlotRefType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
       return true;
     default:
       return false;

@@ -35,11 +35,17 @@
     <Filter Include="Game\Inventory">
       <UniqueIdentifier>{acfe1d7c-8311-4822-baff-00b8ed84e207}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Items">
+      <UniqueIdentifier>{c58760dd-3164-4a92-8ce0-012d693cc985}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Combat">
       <UniqueIdentifier>{fa0fd672-07c0-466c-8912-9015a727cb9c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Equipment">
       <UniqueIdentifier>{c36c017d-b07a-4db4-951a-8826a8aa4a9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\QuickSlots">
+      <UniqueIdentifier>{8e5015cd-06a7-4357-9bb9-fd060d1f3ef0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\AI">
       <UniqueIdentifier>{710ba740-885c-460b-b0eb-233bf434b28e}</UniqueIdentifier>
@@ -158,11 +164,23 @@
     <ClCompile Include="Game\Inventory\InventoryComponent.cpp">
       <Filter>Game\Inventory</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Items\ItemContainer.cpp">
+      <Filter>Game\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\ItemPackets.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Combat\Combat.cpp">
       <Filter>Game\Combat</Filter>
     </ClCompile>
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\QuickSlots\QuickSlotComponent.cpp">
+      <Filter>Game\QuickSlots</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\QuickSlotDAO.cpp">
+      <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="Game\AI\MonsterAIComponent.cpp">
       <Filter>Game\AI</Filter>
@@ -313,11 +331,32 @@
     <ClInclude Include="Game\Inventory\InventoryComponent.h">
       <Filter>Game\Inventory</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Items\ItemTypes.h">
+      <Filter>Game\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Items\InventorySections.h">
+      <Filter>Game\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Items\ItemContainer.h">
+      <Filter>Game\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\ItemPackets.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Combat\Combat.h">
       <Filter>Game\Combat</Filter>
     </ClInclude>
     <ClInclude Include="Game\Equipment\EquipmentComponent.h">
       <Filter>Game\Equipment</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\QuickSlots\QuickSlotComponent.h">
+      <Filter>Game\QuickSlots</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\QuickSlots\QuickSlotTypes.h">
+      <Filter>Game\QuickSlots</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\QuickSlotDAO.h">
+      <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="Game\AI\MonsterAIComponent.h">
       <Filter>Game\AI</Filter>
@@ -364,6 +403,9 @@
       <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="Migrations\001_init.sql">
+      <Filter>Migrations</Filter>
+    </None>
+    <None Include="Migrations\002_quick_slot.sql">
       <Filter>Migrations</Filter>
     </None>
     <None Include="Game\Data\Json\S_Item.json">

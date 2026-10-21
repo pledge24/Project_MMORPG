@@ -62,6 +62,7 @@ message S_ENTER_GAME
     // 캐릭터 개인 정보
     StatInfo stat_info = 3;         // 스텟 정보
     Possession possession = 4;      // 소유물
+    repeated QuickSlot quick_slots = 5; // 모든 퀵슬롯. 빈 퀵슬롯도 싣는다
 }
 
 message C_LEAVE_GAME
@@ -170,26 +171,30 @@ message C_BUY_ITEM
 message S_BUY_ITEM
 {
     bool success = 1;
-    repeated Slot updated_slots = 2;
+    repeated SlotChange changed_slots = 2;
     int64 gold = 3;
 }
 
+// 아이템 요청은 칸 주소와 클라이언트가 그 칸에서 본 아이템의 uid로 칸을 가리킨다.
+// 서버는 그 칸의 아이템 uid가 다르면 거절한다.
 message C_SELL_ITEM
 { 
-    Slot slot = 1;
-    int32 count = 2;        // 현재 1로 고정(그래서 사용안함)
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+    int32 count = 3;        // 현재 1로 고정(그래서 사용안함)
 }
 
 message S_SELL_ITEM
 {
     bool success = 1;
-    Slot updated_slot = 2;
+    repeated SlotChange changed_slots = 2;
     int64 gold = 3;
 }
 
 message C_EQUIP_GEAR
 {
-    Slot slot = 1;
+    SlotAddress address = 1;
+    int64 item_uid = 2;
 }
 
 message S_EQUIP_GEAR
@@ -197,18 +202,19 @@ message S_EQUIP_GEAR
     bool success = 1;
     int64 entity_id = 2;
     
-    // 장착 결과: 장착된 장비 부위(GearType)와 그 부위의 아이템
-    int32 slot_id = 3; 
+    // 장착 결과의 외형: 장착된 장비 부위(GearType)와 그 부위의 아이템
+    int32 gear_type = 3; 
     int32 template_id = 4;
 
     // 장착 결과(나에게만)
-    repeated Slot updated_slots = 5;
+    repeated SlotChange changed_slots = 5;
     repeated Stat updated_stat = 6;     // 바뀐 스탯
 }
 
 message C_UNEQUIP_GEAR
 {
-    Slot slot = 1;
+    SlotAddress address = 1;
+    int64 item_uid = 2;
 }
 
 message S_UNEQUIP_GEAR
@@ -216,18 +222,19 @@ message S_UNEQUIP_GEAR
     bool success = 1;
     int64 entity_id = 2;
 
-    // 탈착 결과: 비워진 장비 부위(GearType)와 그 부위의 아이템(항상 0)
-    int32 slot_id = 3; 
+    // 탈착 결과의 외형: 비워진 장비 부위(GearType)와 그 부위의 아이템(항상 0)
+    int32 gear_type = 3; 
     int32 template_id = 4;
 
     // 탈착 결과(나에게만)
-    repeated Slot updated_slots = 5;
+    repeated SlotChange changed_slots = 5;
     repeated Stat updated_stat = 6;     
 }
 
 message C_USE_ITEM
 {
-    Slot slot = 1;
+    SlotAddress address = 1;
+    int64 item_uid = 2;
 }
 
 message S_USE_ITEM
@@ -236,8 +243,27 @@ message S_USE_ITEM
     int64 entity_id = 2;
 
     // 사용 결과
-    repeated Slot updated_slots = 3;
+    repeated SlotChange changed_slots = 3;
     repeated Stat updated_stat = 4;     // 바뀐 스탯
+}
+
+// 퀵슬롯 하나에 대상을 등록한다. ref가 없으면 해제한다. 다른 퀵슬롯에 있는 대상이면 두 퀵슬롯이 바뀐다
+message C_SET_QUICK_SLOT
+{
+    int32 slot_index = 1;
+    optional QuickSlotRef ref = 2;
+}
+
+message S_SET_QUICK_SLOT
+{
+    bool success = 1;
+    repeated QuickSlot changed_quick_slots = 2;
+}
+
+// 퀵슬롯에 등록한 소모품을 쓴다. 쓸 칸은 서버가 고른다. 응답은 S_USE_ITEM이다
+message C_USE_QUICK_SLOT
+{
+    int32 slot_index = 1;
 }
 
 message S_DIE

@@ -9,6 +9,8 @@ DEL /Q C_Currency.json
 DEL /Q C_Character_Creation.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Inventory_Section.xlsx --s_output=S_Inventory_Section.json --c_output=C_Inventory_Section.json
 DEL /Q C_Inventory_Section.json
+..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Quick_Slot.xlsx --s_output=S_Quick_Slot.json --c_output=C_Quick_Slot.json
+DEL /Q C_Quick_Slot.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Monster.xlsx --s_output=S_Monster.json --c_output=C_Monster.json 
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Item.xlsx --s_output=S_Item.json --c_output=C_Item.json 
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Map.xlsx --s_output=S_Map.json --c_output=C_Map.json 
@@ -24,6 +26,7 @@ MOVE /Y S_Quest.json				    "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Currency.json					"../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Character_Creation.json		"../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Inventory_Section.json		"../Server/GameServer/Game/Data/Json"
+MOVE /Y S_Quick_Slot.json			"../Server/GameServer/Game/Data/Json"
 
 MOVE /Y C_Monster.json				    "../P1/Content/P1/Data/DataTables"
 MOVE /Y C_Item.json				        "../P1/Content/P1/Data/DataTables"

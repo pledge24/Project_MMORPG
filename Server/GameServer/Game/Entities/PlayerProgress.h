@@ -1,4 +1,6 @@
 #pragma once
+#include "Game/Items/ItemTypes.h"
+#include "Game/QuickSlots/QuickSlotTypes.h"
 
 /** 접속이 끊겨도 남는 플레이어의 진행. 불러오기와 저장이 함께 쓰는 사본이라 DB 스레드가 다뤄도 된다. */
 struct PlayerProgress
@@ -9,6 +11,9 @@ struct PlayerProgress
     Protocol::PosInfo posInfo;
     /** 누적 경험치, 현재 HP와 MP, 공격력. 플레이어의 스탯과 달리 경험치가 레벨 안의 값이 아니다. */
     Protocol::StatInfo statInfo;
-    /** 골드, 인벤토리, 착용 장비. */
-    Protocol::Possession possession;
+    int64 gold = 0;
+    /** 인벤토리와 착용 장비에 든 아이템. 빈 칸은 싣지 않는다. */
+    vector<PlacedItem> items;
+    /** 등록된 퀵슬롯. 빈 퀵슬롯은 싣지 않는다. */
+    vector<QuickSlot> quickSlots;
 };
