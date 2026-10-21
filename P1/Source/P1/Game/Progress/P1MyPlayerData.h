@@ -8,6 +8,7 @@
 #include "P1MyPlayerData.generated.h"
 
 class AP1MyPlayer;
+class UP1ItemActions;
 class UP1ItemContainer;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
@@ -148,6 +149,15 @@ public:
     /** 맵 입장에 성공하면 알린다. */
     FOnMapEntered OnMapEntered;
 
+    //~ Item Requests
+public:
+    /** 아이템 요청 창구. 서브시스템과 함께 산다. */
+    UP1ItemActions* GetItemActions() const { return ItemActions; }
+
+protected:
+    UPROPERTY()
+    TObjectPtr<UP1ItemActions> ItemActions;
+
     //~ Item Packet Handlers
 public:
     void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
@@ -161,22 +171,6 @@ public:
 
     /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
-
-    /** 응답이 오면 성공 여부와 무관하게 알린다. 아래 알림도 같다. */
-    DECLARE_MULTICAST_DELEGATE(FOnRecvBuyItemPkt);
-    FOnRecvBuyItemPkt OnRecvBuyItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvSellItemPkt);
-    FOnRecvSellItemPkt OnRecvSellItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUseItemPkt);
-    FOnRecvUseItemPkt OnRecvUseItemPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvEquipGearPkt);
-    FOnRecvEquipGearPkt OnRecvEquipGearPkt;
-
-    DECLARE_MULTICAST_DELEGATE(FOnRecvUnequipGearPkt);
-    FOnRecvUnequipGearPkt OnRecvUnequipGearPkt;
 
 private:
     bool IsMyPlayer(uint64 EntityId) const { return EntityId == _PlayerId; }
