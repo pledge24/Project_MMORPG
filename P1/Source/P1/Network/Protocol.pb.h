@@ -105,6 +105,9 @@ extern C_UNEQUIP_GEARDefaultTypeInternal _C_UNEQUIP_GEAR_default_instance_;
 class C_USE_ITEM;
 struct C_USE_ITEMDefaultTypeInternal;
 extern C_USE_ITEMDefaultTypeInternal _C_USE_ITEM_default_instance_;
+class C_USE_QUICK_SLOT;
+struct C_USE_QUICK_SLOTDefaultTypeInternal;
+extern C_USE_QUICK_SLOTDefaultTypeInternal _C_USE_QUICK_SLOT_default_instance_;
 class S_BUY_ITEM;
 struct S_BUY_ITEMDefaultTypeInternal;
 extern S_BUY_ITEMDefaultTypeInternal _S_BUY_ITEM_default_instance_;
@@ -195,6 +198,7 @@ template<> ::Protocol::C_SELL_ITEM* Arena::CreateMaybeMessage<::Protocol::C_SELL
 template<> ::Protocol::C_SET_QUICK_SLOT* Arena::CreateMaybeMessage<::Protocol::C_SET_QUICK_SLOT>(Arena*);
 template<> ::Protocol::C_UNEQUIP_GEAR* Arena::CreateMaybeMessage<::Protocol::C_UNEQUIP_GEAR>(Arena*);
 template<> ::Protocol::C_USE_ITEM* Arena::CreateMaybeMessage<::Protocol::C_USE_ITEM>(Arena*);
+template<> ::Protocol::C_USE_QUICK_SLOT* Arena::CreateMaybeMessage<::Protocol::C_USE_QUICK_SLOT>(Arena*);
 template<> ::Protocol::S_BUY_ITEM* Arena::CreateMaybeMessage<::Protocol::S_BUY_ITEM>(Arena*);
 template<> ::Protocol::S_CHAT* Arena::CreateMaybeMessage<::Protocol::S_CHAT>(Arena*);
 template<> ::Protocol::S_CREATE_CHARACTER* Arena::CreateMaybeMessage<::Protocol::S_CREATE_CHARACTER>(Arena*);
@@ -6281,6 +6285,154 @@ class S_SET_QUICK_SLOT final :
 };
 // -------------------------------------------------------------------
 
+class C_USE_QUICK_SLOT final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_USE_QUICK_SLOT) */ {
+ public:
+  inline C_USE_QUICK_SLOT() : C_USE_QUICK_SLOT(nullptr) {}
+  ~C_USE_QUICK_SLOT() override;
+  explicit PROTOBUF_CONSTEXPR C_USE_QUICK_SLOT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  C_USE_QUICK_SLOT(const C_USE_QUICK_SLOT& from);
+  C_USE_QUICK_SLOT(C_USE_QUICK_SLOT&& from) noexcept
+    : C_USE_QUICK_SLOT() {
+    *this = ::std::move(from);
+  }
+
+  inline C_USE_QUICK_SLOT& operator=(const C_USE_QUICK_SLOT& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline C_USE_QUICK_SLOT& operator=(C_USE_QUICK_SLOT&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const C_USE_QUICK_SLOT& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const C_USE_QUICK_SLOT* internal_default_instance() {
+    return reinterpret_cast<const C_USE_QUICK_SLOT*>(
+               &_C_USE_QUICK_SLOT_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    36;
+
+  friend void swap(C_USE_QUICK_SLOT& a, C_USE_QUICK_SLOT& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(C_USE_QUICK_SLOT* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(C_USE_QUICK_SLOT* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  C_USE_QUICK_SLOT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_USE_QUICK_SLOT>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const C_USE_QUICK_SLOT& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const C_USE_QUICK_SLOT& from) {
+    C_USE_QUICK_SLOT::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(C_USE_QUICK_SLOT* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.C_USE_QUICK_SLOT";
+  }
+  protected:
+  explicit C_USE_QUICK_SLOT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kSlotIndexFieldNumber = 1,
+  };
+  // int32 slot_index = 1;
+  void clear_slot_index();
+  int32_t slot_index() const;
+  void set_slot_index(int32_t value);
+  private:
+  int32_t _internal_slot_index() const;
+  void _internal_set_slot_index(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.C_USE_QUICK_SLOT)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t slot_index_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Protocol_2eproto;
+};
+// -------------------------------------------------------------------
+
 class S_DIE final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_DIE) */ {
  public:
@@ -6329,7 +6481,7 @@ class S_DIE final :
                &_S_DIE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(S_DIE& a, S_DIE& b) {
     a.Swap(&b);
@@ -6477,7 +6629,7 @@ class S_REWARD_RESULT final :
                &_S_REWARD_RESULT_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    38;
 
   friend void swap(S_REWARD_RESULT& a, S_REWARD_RESULT& b) {
     a.Swap(&b);
@@ -6706,7 +6858,7 @@ class C_RESPAWN final :
                &_C_RESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    39;
 
   friend void swap(C_RESPAWN& a, C_RESPAWN& b) {
     a.Swap(&b);
@@ -6929,7 +7081,7 @@ class S_RESPAWN final :
                &_S_RESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    39;
+    40;
 
   friend void swap(S_RESPAWN& a, S_RESPAWN& b) {
     a.Swap(&b);
@@ -7166,7 +7318,7 @@ class C_CHAT final :
                &_C_CHAT_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    40;
+    41;
 
   friend void swap(C_CHAT& a, C_CHAT& b) {
     a.Swap(&b);
@@ -7319,7 +7471,7 @@ class S_CHAT final :
                &_S_CHAT_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    42;
 
   friend void swap(S_CHAT& a, S_CHAT& b) {
     a.Swap(&b);
@@ -10398,6 +10550,30 @@ S_SET_QUICK_SLOT::changed_quick_slots() const {
 
 // -------------------------------------------------------------------
 
+// C_USE_QUICK_SLOT
+
+// int32 slot_index = 1;
+inline void C_USE_QUICK_SLOT::clear_slot_index() {
+  _impl_.slot_index_ = 0;
+}
+inline int32_t C_USE_QUICK_SLOT::_internal_slot_index() const {
+  return _impl_.slot_index_;
+}
+inline int32_t C_USE_QUICK_SLOT::slot_index() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_USE_QUICK_SLOT.slot_index)
+  return _internal_slot_index();
+}
+inline void C_USE_QUICK_SLOT::_internal_set_slot_index(int32_t value) {
+  
+  _impl_.slot_index_ = value;
+}
+inline void C_USE_QUICK_SLOT::set_slot_index(int32_t value) {
+  _internal_set_slot_index(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_USE_QUICK_SLOT.slot_index)
+}
+
+// -------------------------------------------------------------------
+
 // S_DIE
 
 // int64 entity_id = 1;
@@ -11246,6 +11422,8 @@ inline void S_CHAT::set_allocated_msg(std::string* msg) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

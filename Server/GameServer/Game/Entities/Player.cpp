@@ -353,6 +353,28 @@ optional<SetQuickSlotResult> Player::ProcessSetQuickSlot(int32 slotIndex, const 
     return SetQuickSlotResult{ std::move(changed.value()) };
 }
 
+optional<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs)
+{
+    // 퀵슬롯은 아이템 정의를 가리키므로 쓸 칸은 서버가 고른다. 사용 규칙은 칸을 골라 쓰는 사용과 한 곳에 둔다.
+    const optional<QuickSlotRef> ref = _quickSlots->Find(slotIndex);
+    if (ref.has_value() == false || ref->type != QuickSlotRefType::ITEM)
+        return nullopt;
+
+    const ItemContainer* consumables = GetInventory().FindSection(ContainerType::INVENTORY_CONSUMABLE);
+    if (consumables == nullptr)
+        return nullopt;
+
+    // 여러 칸에 나뉘어 있으면 칸 번호가 가장 작은 묶음부터 쓴다.
+    const optional<int32> chosenSlot = consumables->FindFirstSlotOf(ref->id);
+    if (chosenSlot.has_value() == false)
+        return nullopt;
+
+    ItemSlotRequest request;
+    request.address = SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, chosenSlot.value() };
+    request.itemUid = consumables->Find(chosenSlot.value())->itemUid;
+    return ProcessUseItem(request, nowMs);
+}
+
 RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
 	_posInfo->CopyFrom(respawnPos);

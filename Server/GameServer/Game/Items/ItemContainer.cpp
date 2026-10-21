@@ -43,6 +43,17 @@ optional<int32> ItemContainer::FindEmptySlot(int32 fromSlotIndex) const
     return nullopt;
 }
 
+optional<int32> ItemContainer::FindFirstSlotOf(int32 templateId) const
+{
+    for (const auto& [slotIndex, item] : _slots)
+    {
+        if (item.has_value() && item->templateId == templateId)
+            return slotIndex;
+    }
+
+    return nullopt;
+}
+
 bool ItemContainer::Put(int32 slotIndex, const ItemInstance& item)
 {
     auto slotIt = _slots.find(slotIndex);

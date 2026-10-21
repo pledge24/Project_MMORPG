@@ -260,6 +260,12 @@ message S_SET_QUICK_SLOT
     repeated QuickSlot changed_quick_slots = 2;
 }
 
+// 퀵슬롯에 등록한 소모품을 쓴다. 쓸 칸은 서버가 고른다. 응답은 S_USE_ITEM이다
+message C_USE_QUICK_SLOT
+{
+    int32 slot_index = 1;
+}
+
 message S_DIE
 {
     int64 entity_id = 1;

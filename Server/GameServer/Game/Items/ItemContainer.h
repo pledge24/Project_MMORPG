@@ -25,6 +25,8 @@ public:
     const ItemInstance* Find(int32 slotIndex) const;
     /** fromSlotIndex 이상의 칸 번호 중 가장 작은 빈 칸. 없으면 nullopt. */
     optional<int32> FindEmptySlot(int32 fromSlotIndex = INT32_MIN) const;
+    /** 그 템플릿의 아이템이 든 칸 중 가장 작은 칸 번호. 없으면 nullopt. */
+    optional<int32> FindFirstSlotOf(int32 templateId) const;
 
     /** 빈 칸에 넣는다. 유효하지 않거나 차 있거나 개수가 1보다 작으면 아무것도 바꾸지 않고 false. */
     bool Put(int32 slotIndex, const ItemInstance& item);

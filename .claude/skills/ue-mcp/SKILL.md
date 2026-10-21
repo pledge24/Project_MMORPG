@@ -33,3 +33,5 @@ description: 언리얼 MCP(`unreal`)의 이 저장소 전용 함정. `mcp__unrea
   객체 참조 값은 `{"refPath": "<경로>"}`로 쓴다.
 - `ObjectTools.set_properties`는 배열 요소를 바꾸면서 개수도 줄이는 변경을 `ArrayRemove: elements changed
   alongside the size change`로 거부한다. `reset_properties`로 비운 뒤 새 요소를 넣는다.
+  개수를 늘릴 때도 기존 요소를 `get_properties`가 돌려준 형식 그대로 보낸다. 같은 값이라도 형식이 다르면(`"key":"T"`
+  대신 `{"keyName":"T"}`) 바뀐 요소로 읽혀 `ArrayAdd: elements changed alongside the size change`로 거부된다.

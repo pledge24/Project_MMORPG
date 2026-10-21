@@ -56,6 +56,14 @@ bool QuickSlotComponent::Load(const QuickSlot& quickSlot)
     return true;
 }
 
+optional<QuickSlotRef> QuickSlotComponent::Find(int32 slotIndex) const
+{
+    if (IsValidIndex(slotIndex) == false)
+        return nullopt;
+
+    return _slots[slotIndex];
+}
+
 vector<QuickSlot> QuickSlotComponent::GetAll() const
 {
     vector<QuickSlot> quickSlots;

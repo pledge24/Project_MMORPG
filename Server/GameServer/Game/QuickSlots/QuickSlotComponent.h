@@ -27,6 +27,8 @@ public:
     bool Load(const QuickSlot& quickSlot);
 
     int32 GetSlotCount() const { return static_cast<int32>(_slots.size()); }
+    /** slotIndex 퀵슬롯에 등록된 대상. 클라이언트 값을 넘겨도 된다. 범위 밖이거나 빈 퀵슬롯이면 nullopt. */
+    optional<QuickSlotRef> Find(int32 slotIndex) const;
     /** 모든 퀵슬롯을 번호 순서로. 빈 퀵슬롯도 싣는다. */
     vector<QuickSlot> GetAll() const;
     /** 등록된 퀵슬롯만 번호 순서로 quickSlots 뒤에 붙인다. */
