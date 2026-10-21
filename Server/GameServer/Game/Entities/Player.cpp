@@ -7,20 +7,14 @@
 
 namespace
 {
-    // 아이템 요청은 서버의 칸에 든 아이템으로 판정한다. 요청에 실린 아이템은 클라이언트의 칸이
-    // 어긋났는지 대조하는 데만 쓴다. 서버 아이템에 uid가 있으면 uid까지 같아야 같은 아이템이다.
+    // 아이템 요청은 서버의 칸에 든 아이템으로 판정한다. 요청의 uid는 클라이언트의 칸이 어긋났는지
+    // 대조하는 데만 쓴다. 칸에 놓인 아이템은 언제나 uid가 있으므로 uid가 0인 요청은 빈 칸을 본 것이다.
     bool MatchesRequest(const ItemInstance* owned, const ItemSlotRequest& request)
     {
-        if (owned == nullptr || request.templateId == 0)
+        if (owned == nullptr || request.itemUid == 0)
             return false;
 
-        if (owned->templateId != request.templateId)
-            return false;
-
-        if (owned->itemUid != 0 && owned->itemUid != request.itemUid)
-            return false;
-
-        return true;
+        return owned->itemUid == request.itemUid;
     }
 }
 

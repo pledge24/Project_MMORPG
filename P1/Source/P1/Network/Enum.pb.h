@@ -238,34 +238,33 @@ inline bool ItemType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ItemType>(
     ItemType_descriptor(), name, value);
 }
-enum SlotType : int {
-  SLOT_TYPE_NONE = 0,
-  SLOT_TYPE_INVENTORY_GEAR = 1,
-  SLOT_TYPE_INVENTORY_CONSUMABLE = 2,
-  SLOT_TYPE_INVENTORY_MISC = 3,
-  SLOT_TYPE_EQUIPPED = 4,
-  SLOT_TYPE_QUICK = 5,
-  SlotType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  SlotType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+enum ContainerType : int {
+  CONTAINER_TYPE_NONE = 0,
+  CONTAINER_TYPE_INVENTORY_GEAR = 1,
+  CONTAINER_TYPE_INVENTORY_CONSUMABLE = 2,
+  CONTAINER_TYPE_INVENTORY_MISC = 3,
+  CONTAINER_TYPE_EQUIPPED = 4,
+  ContainerType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  ContainerType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool SlotType_IsValid(int value);
-constexpr SlotType SlotType_MIN = SLOT_TYPE_NONE;
-constexpr SlotType SlotType_MAX = SLOT_TYPE_QUICK;
-constexpr int SlotType_ARRAYSIZE = SlotType_MAX + 1;
+bool ContainerType_IsValid(int value);
+constexpr ContainerType ContainerType_MIN = CONTAINER_TYPE_NONE;
+constexpr ContainerType ContainerType_MAX = CONTAINER_TYPE_EQUIPPED;
+constexpr int ContainerType_ARRAYSIZE = ContainerType_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SlotType_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ContainerType_descriptor();
 template<typename T>
-inline const std::string& SlotType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, SlotType>::value ||
+inline const std::string& ContainerType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, ContainerType>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function SlotType_Name.");
+    "Incorrect type passed to function ContainerType_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    SlotType_descriptor(), enum_t_value);
+    ContainerType_descriptor(), enum_t_value);
 }
-inline bool SlotType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, SlotType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<SlotType>(
-    SlotType_descriptor(), name, value);
+inline bool ContainerType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, ContainerType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ContainerType>(
+    ContainerType_descriptor(), name, value);
 }
 enum StatType : int {
   STAT_TYPE_NONE = 0,
@@ -298,33 +297,6 @@ inline bool StatType_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, StatType* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<StatType>(
     StatType_descriptor(), name, value);
-}
-enum UpdateState : int {
-  UPDATE_STATE_NONE = 0,
-  UPDATE_STATE_ADDED = 1,
-  UPDATE_STATE_MODIFIED = 2,
-  UPDATE_STATE_REMOVED = 3,
-  UpdateState_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  UpdateState_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool UpdateState_IsValid(int value);
-constexpr UpdateState UpdateState_MIN = UPDATE_STATE_NONE;
-constexpr UpdateState UpdateState_MAX = UPDATE_STATE_REMOVED;
-constexpr int UpdateState_ARRAYSIZE = UpdateState_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* UpdateState_descriptor();
-template<typename T>
-inline const std::string& UpdateState_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, UpdateState>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function UpdateState_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    UpdateState_descriptor(), enum_t_value);
-}
-inline bool UpdateState_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, UpdateState* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<UpdateState>(
-    UpdateState_descriptor(), name, value);
 }
 enum GearType : int {
   GEAR_TYPE_NONE = 0,
@@ -525,20 +497,15 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::ItemType>() {
   return ::Protocol::ItemType_descriptor();
 }
-template <> struct is_proto_enum< ::Protocol::SlotType> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::ContainerType> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::SlotType>() {
-  return ::Protocol::SlotType_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::ContainerType>() {
+  return ::Protocol::ContainerType_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::StatType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::StatType>() {
   return ::Protocol::StatType_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::UpdateState> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::UpdateState>() {
-  return ::Protocol::UpdateState_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::GearType> : ::std::true_type {};
 template <>

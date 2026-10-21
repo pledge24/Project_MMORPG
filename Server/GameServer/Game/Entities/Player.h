@@ -24,12 +24,11 @@ struct NextLevelUpData
 
 //~ 요청 처리 결과
 
-/** 클라이언트가 가리킨 칸과 그 칸에 있다고 본 아이템. 모든 값이 클라이언트 값이다. */
+/** 클라이언트가 가리킨 칸과 그 칸에 있다고 본 아이템의 uid. 모든 값이 클라이언트 값이다. */
 struct ItemSlotRequest
 {
     SlotAddress address;
     /** 0이면 칸에 아이템이 없다고 본 것이다. */
-    int32 templateId = 0;
     int64 itemUid = 0;
 };
 

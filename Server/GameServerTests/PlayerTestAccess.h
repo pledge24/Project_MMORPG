@@ -37,16 +37,13 @@ struct PlayerTestAccess
     static void SetUserId(Player& player, int64 userId) { player._userId = userId; }
 };
 
-/** 그 칸에 든 아이템을 그대로 가리키는 요청. 클라이언트가 자기 칸 사본을 보내는 것과 같다. 빈 칸이면 아이템 없이 가리킨다. */
+/** 그 칸에 든 아이템을 그대로 가리키는 요청. 클라이언트가 자기 칸의 주소와 uid를 보내는 것과 같다. 빈 칸이면 uid 없이 가리킨다. */
 inline ItemSlotRequest MakeSlotRequest(const SlotAddress& address, const ItemInstance* item)
 {
     ItemSlotRequest request;
     request.address = address;
     if (item != nullptr)
-    {
-        request.templateId = item->templateId;
         request.itemUid = item->itemUid;
-    }
 
     return request;
 }

@@ -98,15 +98,13 @@ void UP1SlotWidget::SetSlot(const FP1ItemData& Item, int32 Count)
         ItemCountText->SetText(FText::GetEmpty());
 }
 
-void UP1SlotWidget::SetSlot(const Protocol::Slot& _Slot)
+void UP1SlotWidget::SetSlot(const Protocol::SlotChange& _Slot)
 {
-    // 아이템이 있으면 state와 무관하게 데이터와 아이콘을 입힌다. state는 서버가 보낸 변경분의 표시인데
-    // 내 플레이어 데이터의 사본에 그대로 남는다. 위젯이 다시 붙으면 NativePreConstruct가 아이콘을
-    // 초기 텍스처로 되돌리므로, state로 거르면 사본의 MODIFIED 슬롯으로 다시 그릴 때 아이콘이 빈 채로 남는다.
-    // 한 번도 채워진 적 없는 빈 슬롯(NONE)은 건드리지 않아 초기 텍스처를 남긴다.
+    // 아이템이 없는 칸은 이 위젯이 아이템을 들고 있을 때만 비운다. 한 번도 채워진 적 없는 칸은 건드리지 않아
+    // NativePreConstruct가 입힌 초기 텍스처를 남긴다.
     if (_Slot.has_item())
         InsertData(_Slot);
-    else if (_Slot.state() == Protocol::UpdateState::UPDATE_STATE_REMOVED)
+    else if (SlotData.has_item())
         ClearSlot();
     
     if (SlotData.item().count() > 1)
@@ -127,7 +125,7 @@ void UP1SlotWidget::ClearSlot()
     ItemData = FP1ItemData();
 }
 
-void UP1SlotWidget::InsertData(const Protocol::Slot& _Slot)
+void UP1SlotWidget::InsertData(const Protocol::SlotChange& _Slot)
 {
     SlotData.CopyFrom(_Slot);
 

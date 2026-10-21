@@ -15,8 +15,8 @@ DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChanged, int64);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnInvenSlotChanged, const Protocol::Slot&);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::Slot&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnInvenSlotChanged, const Protocol::SlotChange&);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::SlotChange&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemCooldownStarted, int32);
 
 /**
@@ -100,8 +100,7 @@ protected:
 
     //~ Possession
 public:
-    Protocol::Possession* GetPossession() { return _Possession.Get(); }
-    int64 GetGold() const { return _Possession->gold(); }
+    int64 GetGold() const { return _Gold; }
 
     /** 골드를 사본에 쓰고 구독자에게 알린다. 내 플레이어의 골드는 이 함수로만 바꾼다. */
     void ApplyGold(int64 Gold);
@@ -109,8 +108,7 @@ public:
     FOnGoldChanged OnGoldChanged;
 
 protected:
-    /** Inventory와 Equipment가 이 객체의 하위 메시지 주소를 들고 있다. 새 객체로 바꾸지 않는다. */
-    TUniquePtr<Protocol::Possession> _Possession;
+    int64 _Gold = 0;
 
     //~ Inventory
 public:
@@ -193,8 +191,8 @@ public:
 private:
     bool IsMyPlayer(uint64 EntityId) const { return EntityId == _PlayerId; }
 
-    /** 장착과 해제 응답이 실어 온 슬롯을 종류에 맞는 델리게이트로 알린다. */
-    void ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots);
+    /** 응답이 실어 온 칸 변경을 컨테이너에 맞는 델리게이트로 알린다. */
+    void ApplySlotChanges(const google::protobuf::RepeatedPtrField<Protocol::SlotChange>& Changes);
 
     //~ Reward Packet Handlers
 public:

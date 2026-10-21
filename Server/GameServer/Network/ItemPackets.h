@@ -6,25 +6,29 @@ struct ItemSlotRequest;
 /**
  * 서버의 아이템 타입과 패킷 사이의 변환.
  *
- * 아이템과 칸의 Protocol 타입은 이 변환에서만 다룬다. 입장 패킷의 소지품과 응답의 바뀐 칸을 만들고, 요청의 칸을 읽는다.
+ * 아이템과 칸의 Protocol 타입은 이 변환에서만 다룬다. 입장 패킷의 소지품과 응답의 칸 변경을 만들고, 요청의 칸 주소를 읽는다.
  */
 namespace ItemPackets
 {
     Protocol::Item ToProto(const ItemInstance& item);
     ItemInstance FromProto(const Protocol::Item& item);
 
-    Protocol::SlotType ToSlotType(ContainerType container);
-    /** 컨테이너가 아닌 칸 종류면 ContainerType::NONE. 클라이언트 값을 넘겨도 된다. */
-    ContainerType ToContainerType(Protocol::SlotType slotType);
+    Protocol::ContainerType ToProto(ContainerType container);
+    /** 열거형에 없는 값이면 ContainerType::NONE. 클라이언트 값을 넘겨도 된다. */
+    ContainerType FromProto(Protocol::ContainerType container);
 
-    /** 응답에 실을 바뀐 칸. 비게 된 칸은 REMOVED로 표시한다. 클라이언트가 그 표시로만 칸을 비운다. */
-    Protocol::Slot ToChangedSlot(const SlotChange& change);
-    /** 바뀐 칸마다 패킷 칸 하나를 slots 뒤에 붙인다(nullptr 불가). */
-    void AddChangedSlots(const vector<SlotChange>& changes, OUT RepeatedPtrField<Protocol::Slot>* slots);
+    Protocol::SlotAddress ToProto(const SlotAddress& address);
+    /** 값을 검증하지 않는다. 클라이언트 값을 넘겨도 된다. */
+    SlotAddress FromProto(const Protocol::SlotAddress& address);
 
-    /** 요청 패킷의 칸을 읽는다. 값을 검증하지 않으므로 판정은 플레이어가 한다. */
-    ItemSlotRequest ToRequest(const Protocol::Slot& slot);
+    /** 응답에 실을 칸 변경. 비게 된 칸은 아이템을 싣지 않는다. */
+    Protocol::SlotChange ToProto(const SlotChange& change);
+    /** 칸 변경마다 패킷의 칸 변경 하나를 protoChanges 뒤에 붙인다(nullptr 불가). */
+    void AddChangedSlots(const vector<SlotChange>& changes, OUT RepeatedPtrField<Protocol::SlotChange>* protoChanges);
 
-    /** 입장 패킷에 실을 골드, 인벤토리의 모든 칸, 착용 장비의 모든 칸. */
+    /** 요청 패킷이 가리킨 칸을 읽는다. 값을 검증하지 않으므로 판정은 플레이어가 한다. */
+    ItemSlotRequest ToRequest(const Protocol::SlotAddress& address, int64 itemUid);
+
+    /** 입장 패킷에 실을 골드와, 인벤토리의 구역과 착용 장비의 모든 칸. */
     Protocol::Possession MakePossession(const Player& player);
 }

@@ -20,12 +20,12 @@ namespace
             return;
         }
 
-        // slot_id와 template_id는 요청 슬롯이 아니라 처리 결과(장비 부위와 그 부위의 아이템)다.
-        response.set_slot_id(result->gearType);
+        // gear_type과 template_id는 다른 플레이어에게 보일 외형(장비 부위와 그 부위의 아이템)이다.
+        response.set_gear_type(result->gearType);
         response.set_template_id(result->templateId);
         SendBufferRef othersBuffer = ServerPacketHandler::MakeSerializedPacket(response);
 
-        ItemPackets::AddChangedSlots(result->changedSlots, response.mutable_updated_slots());
+        ItemPackets::AddChangedSlots(result->changedSlots, response.mutable_changed_slots());
         *response.mutable_updated_stat() = std::move(result->updatedStats);
         SendPacket(player->GetSession(), response);
 
@@ -48,7 +48,7 @@ void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Prot
     buyItemPkt.set_success(result.has_value());
     if (result.has_value())
     {
-        ItemPackets::AddChangedSlots(result->changedSlots, buyItemPkt.mutable_updated_slots());
+        ItemPackets::AddChangedSlots(result->changedSlots, buyItemPkt.mutable_changed_slots());
         buyItemPkt.set_gold(result->gold);
     }
 
@@ -66,13 +66,11 @@ void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Pro
         return;
 
     Protocol::S_SELL_ITEM sellItemPkt;
-    optional<SellItemResult> result = player->ProcessSellItem(ItemPackets::ToRequest(pkt.slot()));
+    optional<SellItemResult> result = player->ProcessSellItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
     sellItemPkt.set_success(result.has_value());
     if (result.has_value())
     {
-        // 판매 응답은 칸 하나만 싣는다. 판매는 요청한 칸 하나만 바꾼다.
-        if (result->changedSlots.empty() == false)
-            *sellItemPkt.mutable_updated_slot() = ItemPackets::ToChangedSlot(result->changedSlots.front());
+        ItemPackets::AddChangedSlots(result->changedSlots, sellItemPkt.mutable_changed_slots());
         sellItemPkt.set_gold(result->gold);
     }
 
@@ -93,11 +91,11 @@ void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Prot
     Protocol::S_USE_ITEM useItemPkt;
     useItemPkt.set_entity_id(player->GetEntityId());
 
-    optional<UseItemResult> result = player->ProcessUseItem(ItemPackets::ToRequest(pkt.slot()), ::GetTickCount64());
+    optional<UseItemResult> result = player->ProcessUseItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()), ::GetTickCount64());
     useItemPkt.set_success(result.has_value());
     if (result.has_value())
     {
-        ItemPackets::AddChangedSlots(result->changedSlots, useItemPkt.mutable_updated_slots());
+        ItemPackets::AddChangedSlots(result->changedSlots, useItemPkt.mutable_changed_slots());
         *useItemPkt.mutable_updated_stat() = std::move(result->updatedStats);
     }
 
@@ -111,7 +109,7 @@ void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Pr
         return;
 
     Protocol::S_EQUIP_GEAR equipGearPkt;
-    optional<GearChangeResult> result = player->ProcessEquipGear(ItemPackets::ToRequest(pkt.slot()));
+    optional<GearChangeResult> result = player->ProcessEquipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
     SendGearChange(room, player, equipGearPkt, result);
 }
 
@@ -122,6 +120,6 @@ void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const 
         return;
 
     Protocol::S_UNEQUIP_GEAR unequipGearPkt;
-    optional<GearChangeResult> result = player->ProcessUnequipGear(ItemPackets::ToRequest(pkt.slot()));
+    optional<GearChangeResult> result = player->ProcessUnequipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
     SendGearChange(room, player, unequipGearPkt, result);
 }

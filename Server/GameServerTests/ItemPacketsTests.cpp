@@ -35,23 +35,31 @@ namespace
         return ItemInstance{ 502, POTION_TEMPLATE_ID, 7, nullopt };
     }
 
-    // 패킷의 칸 종류와 서버의 컨테이너 종류. 둘 사이의 변환이 이 짝대로여야 요청이 같은 칸을 가리킨다.
+    // 패킷의 컨테이너 종류와 서버의 컨테이너 종류. 둘 사이의 변환이 이 짝대로여야 요청이 같은 칸을 가리킨다.
     struct ContainerCase
     {
-        Protocol::SlotType slotType;
+        Protocol::ContainerType protoContainer;
         ContainerType container;
     };
     const ContainerCase CONTAINER_CASES[] = {
-        { Protocol::SLOT_TYPE_INVENTORY_GEAR, ContainerType::INVENTORY_GEAR },
-        { Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE, ContainerType::INVENTORY_CONSUMABLE },
-        { Protocol::SLOT_TYPE_INVENTORY_MISC, ContainerType::INVENTORY_MISC },
-        { Protocol::SLOT_TYPE_EQUIPPED, ContainerType::EQUIPPED },
+        { Protocol::CONTAINER_TYPE_NONE, ContainerType::NONE },
+        { Protocol::CONTAINER_TYPE_INVENTORY_GEAR, ContainerType::INVENTORY_GEAR },
+        { Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE, ContainerType::INVENTORY_CONSUMABLE },
+        { Protocol::CONTAINER_TYPE_INVENTORY_MISC, ContainerType::INVENTORY_MISC },
+        { Protocol::CONTAINER_TYPE_EQUIPPED, ContainerType::EQUIPPED },
     };
 
-    // 컨테이너가 아닌 칸 종류.
-    //  - SLOT_TYPE_NONE  : 칸 종류가 정해지지 않았다는 표식이다.
-    //  - SLOT_TYPE_QUICK : 퀵슬롯은 아이템을 가리키기만 하므로 컨테이너가 아니다.
-    constexpr Protocol::SlotType NON_CONTAINER_SLOT_TYPES[] = { Protocol::SLOT_TYPE_NONE, Protocol::SLOT_TYPE_QUICK };
+    /** 입장 패킷에서 그 컨테이너의 칸 목록. 없으면 nullptr. */
+    const Protocol::ContainerSlots* FindContainer(const Protocol::Possession& possession, Protocol::ContainerType container)
+    {
+        for (const Protocol::ContainerSlots& containerSlots : possession.containers())
+        {
+            if (containerSlots.container() == container)
+                return &containerSlots;
+        }
+
+        return nullptr;
+    }
 }
 
 /* 아이템 */
@@ -80,108 +88,123 @@ TEST(ItemPacketsTest, ItemWithoutUidCarriesNoUid)
     EXPECT_FALSE(proto.has_gearinfo());
 }
 
-TEST(ItemPacketsTest, GearCarriesGearInfoWithZeroAdditionalAttack)
+TEST(ItemPacketsTest, GearCarriesGearInfo)
 {
     const Protocol::Item proto = ItemPackets::ToProto(MakeSword());
 
     ASSERT_TRUE(proto.has_gearinfo());
     EXPECT_EQ(proto.gearinfo().enhance_level(), 3);
     EXPECT_EQ(proto.gearinfo().durability(), 80);
-    EXPECT_EQ(proto.gearinfo().additional_physical_attack(), 0) << "추가 공격력은 서버가 들지 않으므로 0을 채운다";
-    EXPECT_EQ(proto.gearinfo().additional_magical_attack(), 0);
 }
 
-/* 칸 종류와 컨테이너 */
+/* 컨테이너와 칸 주소 */
 
 TEST(ItemPacketsTest, ContainerSurvivesRoundTrip)
 {
     for (const ContainerCase& containerCase : CONTAINER_CASES)
     {
-        SCOPED_TRACE(Protocol::SlotType_Name(containerCase.slotType));
-        EXPECT_EQ(ItemPackets::ToContainerType(containerCase.slotType), containerCase.container);
-        EXPECT_EQ(ItemPackets::ToSlotType(containerCase.container), containerCase.slotType);
+        SCOPED_TRACE(Protocol::ContainerType_Name(containerCase.protoContainer));
+        EXPECT_EQ(ItemPackets::FromProto(containerCase.protoContainer), containerCase.container);
+        EXPECT_EQ(ItemPackets::ToProto(containerCase.container), containerCase.protoContainer);
     }
 }
 
-// .proto에 칸 종류가 새로 생기면 변환에 넣을지 말지를 사람이 정하고 위 목록을 갱신해야 한다.
-TEST(ItemPacketsTest, EverySlotTypeIsDeclared)
+// .proto에 컨테이너 종류가 새로 생기면 서버의 컨테이너 종류와 짝을 정하고 위 목록을 갱신해야 한다.
+TEST(ItemPacketsTest, EveryContainerTypeIsDeclared)
 {
     set<int> declared;
     for (const ContainerCase& containerCase : CONTAINER_CASES)
-        EXPECT_TRUE(declared.insert(containerCase.slotType).second);
-    for (Protocol::SlotType slotType : NON_CONTAINER_SLOT_TYPES)
-        EXPECT_TRUE(declared.insert(slotType).second);
+        EXPECT_TRUE(declared.insert(containerCase.protoContainer).second);
 
-    const google::protobuf::EnumDescriptor* descriptor = Protocol::SlotType_descriptor();
+    const google::protobuf::EnumDescriptor* descriptor = Protocol::ContainerType_descriptor();
     for (int i = 0; i < descriptor->value_count(); i++)
     {
         EXPECT_EQ(declared.count(descriptor->value(i)->number()), 1u)
-            << descriptor->value(i)->name() << " 가 프로토콜에 새로 생겼다. 컨테이너인지 정하고 위 목록을 갱신하라";
+            << descriptor->value(i)->name() << " 가 프로토콜에 새로 생겼다. 서버의 컨테이너 종류와 짝을 정하고 위 목록을 갱신하라";
     }
-    EXPECT_EQ(declared.size(), size_t(descriptor->value_count())) << "프로토콜에서 사라진 칸 종류가 목록에 남아 있다";
+    EXPECT_EQ(declared.size(), size_t(descriptor->value_count())) << "프로토콜에서 사라진 컨테이너 종류가 목록에 남아 있다";
 }
 
-TEST(ItemPacketsTest, NonContainerSlotTypeBecomesNoContainer)
+TEST(ItemPacketsTest, UnknownContainerTypeBecomesNoContainer)
 {
-    for (Protocol::SlotType slotType : NON_CONTAINER_SLOT_TYPES)
-        EXPECT_EQ(ItemPackets::ToContainerType(slotType), ContainerType::NONE) << Protocol::SlotType_Name(slotType);
-
-    EXPECT_EQ(ItemPackets::ToContainerType(static_cast<Protocol::SlotType>(99)), ContainerType::NONE) << "열거형에 없는 클라이언트 값";
+    EXPECT_EQ(ItemPackets::FromProto(static_cast<Protocol::ContainerType>(99)), ContainerType::NONE) << "열거형에 없는 클라이언트 값";
 }
 
-/* 응답의 바뀐 칸 */
+TEST(ItemPacketsTest, SlotAddressSurvivesRoundTrip)
+{
+    const SlotAddress addresses[] = {
+        SlotAddress{ ContainerType::INVENTORY_MISC, 0 },
+        SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 31 },
+        SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON },
+    };
 
-TEST(ItemPacketsTest, FilledChangedSlotCarriesItsItem)
+    for (const SlotAddress& address : addresses)
+    {
+        SCOPED_TRACE(address.slotIndex);
+        EXPECT_EQ(ItemPackets::FromProto(ItemPackets::ToProto(address)), address);
+    }
+}
+
+/* 응답의 칸 변경 */
+
+TEST(ItemPacketsTest, FilledSlotChangeCarriesItsItem)
 {
     const SlotChange change{ SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 2 }, MakePotion() };
 
-    const Protocol::Slot slot = ItemPackets::ToChangedSlot(change);
+    const Protocol::SlotChange proto = ItemPackets::ToProto(change);
 
-    EXPECT_EQ(slot.type(), Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE);
-    EXPECT_EQ(slot.slot_id(), 2);
-    EXPECT_NE(slot.state(), Protocol::UPDATE_STATE_REMOVED);
-    ASSERT_TRUE(slot.has_item());
-    EXPECT_EQ(ItemPackets::FromProto(slot.item()), MakePotion());
+    EXPECT_EQ(ItemPackets::FromProto(proto.address()), change.address);
+    ASSERT_TRUE(proto.has_item());
+    EXPECT_EQ(ItemPackets::FromProto(proto.item()), MakePotion());
 }
 
-TEST(ItemPacketsTest, EmptiedChangedSlotIsMarkedRemoved)
+TEST(ItemPacketsTest, EmptiedSlotChangeCarriesNoItem)
 {
     const SlotChange change{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, nullopt };
 
-    const Protocol::Slot slot = ItemPackets::ToChangedSlot(change);
+    const Protocol::SlotChange proto = ItemPackets::ToProto(change);
 
-    EXPECT_EQ(slot.type(), Protocol::SLOT_TYPE_EQUIPPED);
-    EXPECT_EQ(slot.slot_id(), Protocol::GEAR_TYPE_WEAPON);
-    EXPECT_FALSE(slot.has_item());
-    EXPECT_EQ(slot.state(), Protocol::UPDATE_STATE_REMOVED) << "클라이언트는 이 표시가 있어야 칸을 비운다";
+    EXPECT_EQ(ItemPackets::FromProto(proto.address()), change.address);
+    EXPECT_FALSE(proto.has_item()) << "아이템이 없는 칸 변경이 그 칸을 비운다";
+}
+
+TEST(ItemPacketsTest, EveryChangeIsAddedInOrder)
+{
+    const vector<SlotChange> changes = {
+        SlotChange{ SlotAddress{ ContainerType::INVENTORY_GEAR, 4 }, nullopt },
+        SlotChange{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, MakeSword() },
+    };
+
+    RepeatedPtrField<Protocol::SlotChange> protos;
+    ItemPackets::AddChangedSlots(changes, &protos);
+
+    ASSERT_EQ(protos.size(), 2);
+    EXPECT_EQ(ItemPackets::FromProto(protos[0].address()), changes[0].address);
+    EXPECT_FALSE(protos[0].has_item());
+    EXPECT_EQ(ItemPackets::FromProto(protos[1].address()), changes[1].address);
+    ASSERT_TRUE(protos[1].has_item());
+    EXPECT_EQ(ItemPackets::FromProto(protos[1].item()), MakeSword());
 }
 
 /* 요청의 칸 */
 
-TEST(ItemPacketsTest, RequestPointsAtSlotAndItsItem)
+TEST(ItemPacketsTest, RequestPointsAtSlotAndUid)
 {
-    Protocol::Slot slot;
-    slot.set_type(Protocol::SLOT_TYPE_INVENTORY_GEAR);
-    slot.set_slot_id(3);
-    *slot.mutable_item() = ItemPackets::ToProto(MakeSword());
-
-    const ItemSlotRequest request = ItemPackets::ToRequest(slot);
+    const ItemSlotRequest request = ItemPackets::ToRequest(ItemPackets::ToProto(SlotAddress{ ContainerType::INVENTORY_GEAR, 3 }), 501);
 
     EXPECT_EQ(request.address, (SlotAddress{ ContainerType::INVENTORY_GEAR, 3 }));
-    EXPECT_EQ(request.templateId, SWORD_TEMPLATE_ID);
     EXPECT_EQ(request.itemUid, 501);
 }
 
-TEST(ItemPacketsTest, RequestWithoutItemPointsAtNothing)
+TEST(ItemPacketsTest, RequestValuesAreNotValidated)
 {
-    Protocol::Slot slot;
-    slot.set_type(Protocol::SLOT_TYPE_QUICK);
-    slot.set_slot_id(-1);
+    Protocol::SlotAddress address;
+    address.set_container(static_cast<Protocol::ContainerType>(99));
+    address.set_slot_index(-1);
 
-    const ItemSlotRequest request = ItemPackets::ToRequest(slot);
+    const ItemSlotRequest request = ItemPackets::ToRequest(address, 0);
 
     EXPECT_EQ(request.address, (SlotAddress{ ContainerType::NONE, -1 })) << "값은 검증하지 않고 그대로 옮긴다";
-    EXPECT_EQ(request.templateId, 0);
     EXPECT_EQ(request.itemUid, 0);
 }
 
@@ -247,42 +270,42 @@ TEST_F(ItemPacketsPossessionTest, CarriesGoldAndEveryInventorySlot)
     const Protocol::Possession possession = ItemPackets::MakePossession(*player);
 
     EXPECT_EQ(possession.gold(), 1234);
-    ASSERT_EQ(possession.inventory().gear().size(), GEAR_SLOT_COUNT) << "빈 칸도 실어야 클라이언트가 창의 칸을 만든다";
-    ASSERT_EQ(possession.inventory().consumables().size(), CONSUMABLE_SLOT_COUNT);
-    ASSERT_EQ(possession.inventory().miscellaneous().size(), MISC_SLOT_COUNT);
+    EXPECT_EQ(possession.containers().size(), 4) << "인벤토리의 구역 셋과 착용 장비";
+
+    const Protocol::ContainerSlots* gear = FindContainer(possession, Protocol::CONTAINER_TYPE_INVENTORY_GEAR);
+    const Protocol::ContainerSlots* consumables = FindContainer(possession, Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE);
+    const Protocol::ContainerSlots* misc = FindContainer(possession, Protocol::CONTAINER_TYPE_INVENTORY_MISC);
+    ASSERT_NE(gear, nullptr);
+    ASSERT_NE(consumables, nullptr);
+    ASSERT_NE(misc, nullptr);
+    EXPECT_EQ(gear->slots().size(), GEAR_SLOT_COUNT) << "빈 칸도 실어야 클라이언트가 창의 칸을 만든다";
+    EXPECT_EQ(misc->slots().size(), MISC_SLOT_COUNT);
+    ASSERT_EQ(consumables->slots().size(), CONSUMABLE_SLOT_COUNT);
 
     for (int32 slotIndex = 0; slotIndex < CONSUMABLE_SLOT_COUNT; slotIndex++)
-    {
-        const Protocol::Slot& slot = possession.inventory().consumables(slotIndex);
-        EXPECT_EQ(slot.type(), Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE);
-        EXPECT_EQ(slot.slot_id(), slotIndex);
-        EXPECT_EQ(slot.state(), Protocol::UPDATE_STATE_NONE) << "불러온 칸은 변경이 아니다";
-    }
+        EXPECT_EQ(consumables->slots(slotIndex).slot_index(), slotIndex);
 
-    const Protocol::Slot& potion = possession.inventory().consumables(1);
+    const Protocol::Slot& potion = consumables->slots(1);
     ASSERT_TRUE(potion.has_item());
     EXPECT_EQ(ItemPackets::FromProto(potion.item()), MakePotion());
-    EXPECT_FALSE(possession.inventory().consumables(0).has_item());
+    EXPECT_FALSE(consumables->slots(0).has_item());
 }
 
 TEST_F(ItemPacketsPossessionTest, CarriesEveryGearPartWithoutPartZero)
 {
     const Protocol::Possession possession = ItemPackets::MakePossession(*player);
 
-    const auto& equipped = possession.equipped_gear();
-    EXPECT_FALSE(equipped.contains(Protocol::GEAR_TYPE_NONE)) << "착용 장비에는 0번 칸이 없다";
-    for (int32 gearType = Protocol::GEAR_TYPE_HELMET; gearType <= Protocol::GEAR_TYPE_WEAPON; gearType++)
-    {
-        SCOPED_TRACE(gearType);
-        ASSERT_TRUE(equipped.contains(gearType));
-        EXPECT_EQ(equipped.at(gearType).type(), Protocol::SLOT_TYPE_EQUIPPED);
-        EXPECT_EQ(equipped.at(gearType).slot_id(), gearType);
-    }
+    const Protocol::ContainerSlots* equipped = FindContainer(possession, Protocol::CONTAINER_TYPE_EQUIPPED);
+    ASSERT_NE(equipped, nullptr);
+    ASSERT_EQ(equipped->slots().size(), Protocol::GEAR_TYPE_WEAPON) << "착용 장비에는 0번 칸이 없다";
 
-    const Protocol::Slot& weapon = equipped.at(Protocol::GEAR_TYPE_WEAPON);
+    for (int32 i = 0; i < equipped->slots().size(); i++)
+        EXPECT_EQ(equipped->slots(i).slot_index(), Protocol::GEAR_TYPE_HELMET + i);
+
+    const Protocol::Slot& weapon = equipped->slots(Protocol::GEAR_TYPE_WEAPON - 1);
     ASSERT_TRUE(weapon.has_item());
     EXPECT_EQ(ItemPackets::FromProto(weapon.item()), MakeSword());
-    EXPECT_FALSE(equipped.at(Protocol::GEAR_TYPE_HELMET).has_item());
+    EXPECT_FALSE(equipped->slots(0).has_item());
 }
 
 // 응답에 실을 칸 목록은 불러온 칸을 담지 않는다. 담으면 첫 요청의 응답에 함께 실린다.

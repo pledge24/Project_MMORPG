@@ -24,9 +24,9 @@ bool FP1InventorySlotActionTest::RunTest(const FString& Parameters)
 {
     using EKind = FP1InventorySlotAction::EKind;
 
-    constexpr Protocol::SlotType GEAR_SLOT = Protocol::SLOT_TYPE_INVENTORY_GEAR;
-    constexpr Protocol::SlotType CONSUMABLE_SLOT = Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE;
-    constexpr Protocol::SlotType MISC_SLOT = Protocol::SLOT_TYPE_INVENTORY_MISC;
+    constexpr Protocol::ContainerType GEAR_SLOT = Protocol::CONTAINER_TYPE_INVENTORY_GEAR;
+    constexpr Protocol::ContainerType CONSUMABLE_SLOT = Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE;
+    constexpr Protocol::ContainerType MISC_SLOT = Protocol::CONTAINER_TYPE_INVENTORY_MISC;
     constexpr Protocol::ItemType GEAR = Protocol::ITEM_TYPE_GEAR;
     constexpr Protocol::ItemType CONSUMABLE = Protocol::ITEM_TYPE_CONSUMABLE;
     constexpr Protocol::ItemType MISC = Protocol::ITEM_TYPE_MISCELLANEOUS;
@@ -68,9 +68,9 @@ bool FP1InventorySlotActionTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("기타 아이템"),
             FP1InventorySlotAction::Decide(MISC_SLOT, MISC, 4000, 0, 1, false) == EKind::Unusable);
         TestTrue(TEXT("착용 장비 칸"),
-            FP1InventorySlotAction::Decide(Protocol::SLOT_TYPE_EQUIPPED, GEAR, 1005, 1, 1, false) == EKind::Unusable);
-        TestTrue(TEXT("퀵 슬롯 칸의 물약"),
-            FP1InventorySlotAction::Decide(Protocol::SLOT_TYPE_QUICK, CONSUMABLE, 2000, 0, 1, false) == EKind::Unusable);
+            FP1InventorySlotAction::Decide(Protocol::CONTAINER_TYPE_EQUIPPED, GEAR, 1005, 1, 1, false) == EKind::Unusable);
+        TestTrue(TEXT("컨테이너가 정해지지 않은 칸의 물약"),
+            FP1InventorySlotAction::Decide(Protocol::CONTAINER_TYPE_NONE, CONSUMABLE, 2000, 0, 1, false) == EKind::Unusable);
         TestTrue(TEXT("레벨이 모자란 기타 아이템"),
             FP1InventorySlotAction::Decide(MISC_SLOT, MISC, 4000, 10, 1, false) == EKind::Unusable);
     }

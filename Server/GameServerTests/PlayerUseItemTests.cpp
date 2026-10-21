@@ -9,7 +9,7 @@
     소모품 사용 테스트
 
     소모품 가방에 든 아이템만 쓸 수 있다. 회복량은 요청이 아니라 칸에 든 아이템으로 정하고,
-    요청의 아이템이 칸과 다르면 쓰지 않는다.
+    요청의 uid가 칸의 아이템과 다르면 쓰지 않는다.
     HP나 MP가 가득 차 있어도 소비한다. 재사용 대기는 템플릿마다 따로 돌고 서버가 판정한다.
 
     픽스처 결합도: 아이템 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
@@ -138,11 +138,11 @@ TEST_F(PlayerUseItemTest, MixPotionRestoresBoth)
     EXPECT_EQ(CountIn(slot), 0) << "마지막 한 개를 쓰면 칸이 빈다";
 }
 
-// 요청의 아이템은 클라이언트의 칸이 어긋났는지 대조하는 데만 쓴다. 다르면 쓰지 않는다.
+// 요청의 uid는 클라이언트의 칸이 어긋났는지 대조하는 데만 쓴다. 다르면 쓰지 않는다.
 TEST_F(PlayerUseItemTest, RequestNotMatchingSlotIsRejected)
 {
     ItemSlotRequest slot = AddAndGetSlot(MP_POTION_TEMPLATE_ID, 1);
-    slot.templateId = MIX_POTION_TEMPLATE_ID; // 요청의 템플릿을 속인다
+    slot.itemUid += 1; // 클라이언트는 그 칸에 다른 아이템이 있다고 본다
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
     EXPECT_FALSE(result.has_value());
@@ -179,7 +179,7 @@ TEST_F(PlayerUseItemTest, EmptySlotIsRejected)
 {
     ItemSlotRequest slot;
     slot.address = SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 0 };
-    slot.templateId = HP_POTION_TEMPLATE_ID;
+    slot.itemUid = 777;
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
     EXPECT_FALSE(result.has_value());

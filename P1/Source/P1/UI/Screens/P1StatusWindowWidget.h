@@ -27,7 +27,7 @@ protected:
 
     //~ Equipped Gear
 public:
-    void UpdateSlotWidget(const Protocol::Slot& Slot_);
+    void UpdateSlotWidget(const Protocol::SlotChange& Slot_);
 
 protected:
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
