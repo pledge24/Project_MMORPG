@@ -49,12 +49,13 @@ enum : uint16
 	PKT_S_USE_ITEM = 1033,
 	PKT_C_SET_QUICK_SLOT = 1034,
 	PKT_S_SET_QUICK_SLOT = 1035,
-	PKT_S_DIE = 1036,
-	PKT_S_REWARD_RESULT = 1037,
-	PKT_C_RESPAWN = 1038,
-	PKT_S_RESPAWN = 1039,
-	PKT_C_CHAT = 1040,
-	PKT_S_CHAT = 1041,
+	PKT_C_USE_QUICK_SLOT = 1036,
+	PKT_S_DIE = 1037,
+	PKT_S_REWARD_RESULT = 1038,
+	PKT_C_RESPAWN = 1039,
+	PKT_S_RESPAWN = 1040,
+	PKT_C_CHAT = 1041,
+	PKT_S_CHAT = 1042,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -151,6 +152,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_UNEQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_C_UNEQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_SET_QUICK_SLOT& pkt) { return MakeSerializedPacket(pkt, PKT_C_SET_QUICK_SLOT); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_QUICK_SLOT& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_QUICK_SLOT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_C_RESPAWN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_C_CHAT); }
 

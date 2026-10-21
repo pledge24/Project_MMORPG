@@ -2,6 +2,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Game/Entities/P1MyPlayer.h"
+#include "Game/Progress/P1ItemActions.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Network/P1PacketSender.h"
 #include "UI/P1ScreenSubsystem.h"
@@ -56,6 +57,12 @@ void AP1InGamePlayerController::SetupInputComponent()
 
         if (ToggleInventoryAction)
             EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleInventoryWidget);
+
+        for (int32 QuickSlotIndex = 0; QuickSlotIndex < UseQuickSlotActions.Num(); ++QuickSlotIndex)
+        {
+            if (UseQuickSlotActions[QuickSlotIndex])
+                EnhancedInputComponent->BindAction(UseQuickSlotActions[QuickSlotIndex], ETriggerEvent::Started, this, &AP1InGamePlayerController::OnUseQuickSlot, QuickSlotIndex);
+        }
     }
 }
 
@@ -105,4 +112,13 @@ void AP1InGamePlayerController::ShowShopWarning(const FText& Message)
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->DisplayWarningText(Message);
+}
+
+void AP1InGamePlayerController::OnUseQuickSlot(int32 QuickSlotIndex)
+{
+    if (UP1MyPlayerData* MyPlayerData = GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
+    {
+        if (UP1ItemActions* ItemActions = MyPlayerData->GetItemActions())
+            ItemActions->RequestUseQuickSlot(QuickSlotIndex);
+    }
 }

@@ -120,6 +120,40 @@ UP1ItemActions::EResult UP1ItemActions::RequestSetQuickSlot(int32 QuickSlotIndex
     return Result;
 }
 
+UP1ItemActions::EResult UP1ItemActions::RequestUseQuickSlot(int32 QuickSlotIndex)
+{
+    const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
+    const UP1QuickSlots* QuickSlots = MyPlayerData ? MyPlayerData->GetQuickSlots() : nullptr;
+    const FP1QuickSlot* QuickSlot = QuickSlots ? QuickSlots->Find(QuickSlotIndex) : nullptr;
+
+    // 서버도 등록이 없거나, 그 소모품이 없거나, 재사용 대기 중인 퀵슬롯의 사용을 거절한다.
+    EResult Result = EResult::Sent;
+    if (QuickSlot == nullptr || QuickSlot->Ref.Type != EP1QuickSlotRefType::Item)
+    {
+        Result = EResult::Empty;
+    }
+    else
+    {
+        const UP1ItemContainer* Consumables = MyPlayerData->GetContainer(EP1ContainerType::InventoryConsumable);
+        if (Consumables == nullptr || Consumables->CountItem(QuickSlot->Ref.Id) <= 0)
+            Result = EResult::Empty;
+        else if (MyPlayerData->IsItemCoolingDown(QuickSlot->Ref.Id))
+            Result = EResult::CoolingDown;
+    }
+
+    if (Result == EResult::Sent)
+    {
+        FRequest Request;
+        Request.Kind = ERequestKind::UseQuickSlot;
+        Request.QuickSlotIndex = QuickSlotIndex;
+        Result = Send(Request);
+    }
+
+    if (Result != EResult::Sent)
+        UE_LOG(LogP1QuickSlots, Log, TEXT("퀵슬롯 사용 요청을 보내지 않았다: %s. 퀵슬롯 %d"), ToString(Result), QuickSlotIndex);
+    return Result;
+}
+
 const FP1Slot* UP1ItemActions::FindSlot(const FP1SlotAddress& Address) const
 {
     const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
@@ -274,18 +308,26 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }
+    case ERequestKind::UseQuickSlot:
+    {
+        Protocol::C_USE_QUICK_SLOT Pkt;
+        Pkt.set_slot_index(Request.QuickSlotIndex);
+        FP1PacketSender::Send(WorldContext, Pkt);
+        break;
+    }
     }
 }
 
 UP1ItemActions::ERequestKind UP1ItemActions::GetPendingGroup(ERequestKind Kind)
 {
     // 인벤토리 칸에 대한 요청은 응답 하나를 기다리는 동안 다음 요청을 보내지 않는다. 응답의 칸 변경이 오기 전에는
-    // 클라이언트가 보는 칸이 서버의 칸과 다를 수 있다.
+    // 클라이언트가 보는 칸이 서버의 칸과 다를 수 있다. 퀵슬롯 사용은 같은 사용 응답을 받으므로 같은 대기를 쓴다.
     switch (Kind)
     {
     case ERequestKind::Use:
     case ERequestKind::Equip:
     case ERequestKind::Sell:
+    case ERequestKind::UseQuickSlot:
         return ERequestKind::Use;
     default:
         return Kind;

@@ -1,4 +1,4 @@
-// 아이템 요청 창구가 칸 주소에 대한 의도와 구매, 퀵슬롯 등록을 받아 무엇을 보낼지, 언제 보내지 않을지 정하는 판정을 고정한다.
+// 아이템 요청 창구가 칸 주소에 대한 의도와 구매, 퀵슬롯 등록과 사용을 받아 무엇을 보낼지, 언제 보내지 않을지 정하는 판정을 고정한다.
 //
 // 왜 이것인가: 판매·사용·착용·해제·구매의 판정과 응답 대기 플래그가 인벤토리 창, 상태 창, 상점 창에 흩어져 있었고,
 // 위젯이 패킷을 직접 보냈다. 이제 위젯은 의도만 넘기고 판정과 응답 대기와 송신은 이 창구가 맡는다.
@@ -44,7 +44,7 @@ namespace P1ItemActionsTest
     /**
      * 골드 1000. 장비 구역 0번 두건(uid 11), 1번 흑기사의 검(uid 12), 2번 초보자의 검(uid 13), 3번 빈 칸.
      * 소모품 구역 0번 HP 물약 3개(uid 21), 1번 빈 칸. 기타 구역 0번 기타 아이템(uid 31). 착용 장비 1~6번 중 6번에 초보자의 검(uid 41).
-     * 퀵슬롯 0~2번 중 0번에 HP 물약.
+     * 퀵슬롯 0~2번 중 0번에 HP 물약, 1번에 갖고 있지 않은 MP 물약.
      */
     Protocol::S_ENTER_GAME MakeEnter()
     {
@@ -78,10 +78,10 @@ namespace P1ItemActionsTest
         {
             Protocol::QuickSlot* QuickSlot = Pkt.add_quick_slots();
             QuickSlot->set_slot_index(QuickSlotIndex);
-            if (QuickSlotIndex == 0)
+            if (QuickSlotIndex < 2)
             {
                 QuickSlot->mutable_ref()->set_ref_type(Protocol::QUICK_SLOT_REF_TYPE_ITEM);
-                QuickSlot->mutable_ref()->set_ref_id(2000);
+                QuickSlot->mutable_ref()->set_ref_id(QuickSlotIndex == 0 ? 2000 : 2001);
             }
         }
 
@@ -337,6 +337,30 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("퀵슬롯 응답 뒤 해제"), F.Actions->RequestSetQuickSlot(2, FP1QuickSlotRef()) == EResult::Sent);
         if (TestEqual(TEXT("해제: 보낸 요청 수"), F.Sent.Num(), 2))
             TestTrue(TEXT("해제: 빈 참조"), F.Sent[1].QuickSlotRef.IsEmpty());
+    }
+
+    // 10) 퀵슬롯 사용은 퀵슬롯 번호만 보낸다. 쓸 칸은 서버가 고른다. 빈 퀵슬롯, 다 떨어진 소모품, 재사용 대기 중인
+    //     소모품이면 보내지 않는다. 응답은 칸을 골라 쓴 사용과 같으므로 응답 대기도 함께 쓴다.
+    {
+        FFixture F;
+        TestTrue(TEXT("퀵슬롯 사용: 빈 퀵슬롯"), F.Actions->RequestUseQuickSlot(2) == EResult::Empty);
+        TestTrue(TEXT("퀵슬롯 사용: 받지 않은 번호"), F.Actions->RequestUseQuickSlot(3) == EResult::Empty);
+        TestTrue(TEXT("퀵슬롯 사용: 갖고 있지 않은 MP 물약"), F.Actions->RequestUseQuickSlot(1) == EResult::Empty);
+        TestEqual(TEXT("퀵슬롯 사용: 거절은 보내지 않음"), F.Sent.Num(), 0);
+
+        TestTrue(TEXT("퀵슬롯 사용: HP 물약"), F.Actions->RequestUseQuickSlot(0) == EResult::Sent);
+        TestTrue(TEXT("퀵슬롯 사용: 응답 전 다시"), F.Actions->RequestUseQuickSlot(0) == EResult::Pending);
+        TestTrue(TEXT("퀵슬롯 사용: 응답 전 칸 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Pending);
+        if (TestEqual(TEXT("퀵슬롯 사용: 보낸 요청 수"), F.Sent.Num(), 1))
+        {
+            TestTrue(TEXT("퀵슬롯 사용: 요청 종류"), F.Sent[0].Kind == EKind::UseQuickSlot);
+            TestEqual(TEXT("퀵슬롯 사용: 번호"), F.Sent[0].QuickSlotIndex, 0);
+        }
+
+        F.Data->HandleUseItem(MakeUseResponse(MY_PLAYER_ID, true));
+        TestTrue(TEXT("퀵슬롯 사용: 대기 중"), F.Actions->RequestUseQuickSlot(0) == EResult::CoolingDown);
+        TestEqual(TEXT("퀵슬롯 사용: 응답 뒤 개수"), F.Data->GetContainer(CONSUMABLE)->CountItem(2000), 2);
+        TestEqual(TEXT("퀵슬롯 사용: 대기 중이면 보내지 않음"), F.Sent.Num(), 1);
     }
 
     return true;

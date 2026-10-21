@@ -153,6 +153,11 @@ public:
      */
     optional<SetQuickSlotResult> ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref);
     /**
+     * slotIndex 퀵슬롯에 등록된 소모품을 소모품 구역에서 칸 번호가 가장 작은 칸부터 쓴다. 클라이언트 값을 넘겨도 된다.
+     * 빈 퀵슬롯이거나 그 소모품이 없으면 nullopt. 그 밖의 거절 사유는 ProcessUseItem과 같다.
+     */
+    optional<UseItemResult> ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs);
+    /**
      * respawnPos에서 되살린다. 소속 룸을 보지 않으므로 룸에서 뺀 뒤에도 부를 수 있다.
      * 마을 리스폰만 경험치를 잃고 HP를 절반만 채운다.
      */

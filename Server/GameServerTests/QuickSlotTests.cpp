@@ -24,6 +24,8 @@ namespace
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
     constexpr int32 MISC_TEMPLATE_ID = 3000;
     constexpr int32 UNKNOWN_TEMPLATE_ID = 9999;
+    constexpr int32 COOLDOWN_MS = 10'000;
+    constexpr uint64 NOW_MS = 100'000;
 
     ItemTemplate MakeItem(int32 templateId, Protocol::ItemType itemType)
     {
@@ -33,6 +35,8 @@ namespace
         item.maxStack = 99;
         if (itemType == Protocol::ITEM_TYPE_GEAR)
             item.gearType = Protocol::GEAR_TYPE_WEAPON;
+        if (itemType == Protocol::ITEM_TYPE_CONSUMABLE)
+            item.cooldownMs = COOLDOWN_MS;
         return item;
     }
 
@@ -227,4 +231,130 @@ TEST_F(QuickSlotTest, SaveDataCarriesRegisteredQuickSlots)
     const PlayerSaveData saveData = player->MakeSaveData();
 
     EXPECT_EQ(saveData.progress.quickSlots, (vector<QuickSlot>{ Registered(3, MP_POTION_TEMPLATE_ID) }));
+}
+
+/*--------------------------------------------------------------
+    퀵슬롯 사용 테스트
+
+    클라이언트는 퀵슬롯 번호만 보낸다. 서버가 그 퀵슬롯에 등록된 소모품이 든 칸 중 칸 번호가 가장 작은 칸을 골라
+    소모품 사용으로 넘긴다. 그래서 사망과 재사용 대기 같은 사용 규칙은 칸을 골라 쓰는 소모품 사용과 같다.
+    재사용 대기는 아이템 정의 단위이므로 같은 소모품의 다른 묶음도 함께 기다린다.
+
+    픽스처 결합도: 등록 테스트의 픽스처에 더해, 아이템을 불러오기로 원하는 칸에 놓는다.
+---------------------------------------------------------------*/
+
+class QuickSlotUseTest : public QuickSlotTest
+{
+protected:
+    /** 소모품 구역의 slotIndex 칸에 아이템을 놓는다. 묶음 쌓기를 거치지 않아 같은 아이템을 여러 칸에 나눠 둘 수 있다. */
+    void PlaceConsumable(int32 slotIndex, int32 templateId, int32 count)
+    {
+        ItemInstance item;
+        item.templateId = templateId;
+        item.count = count;
+        ASSERT_TRUE(PlayerTestAccess::Inventory(*player).LoadItem(ConsumableSlot(slotIndex), item));
+        PlayerTestAccess::DiscardItemChanges(*player);
+    }
+
+    int32 CountAt(int32 slotIndex) const
+    {
+        const ItemInstance* item = player->GetInventory().FindItem(ConsumableSlot(slotIndex));
+        return item != nullptr ? item->count : 0;
+    }
+
+    optional<UseItemResult> Use(int32 quickSlotIndex, uint64 nowMs = NOW_MS)
+    {
+        return player->ProcessUseQuickSlot(quickSlotIndex, nowMs);
+    }
+
+    static SlotAddress ConsumableSlot(int32 slotIndex)
+    {
+        return SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, slotIndex };
+    }
+};
+
+TEST_F(QuickSlotUseTest, UsesLowestSlotIndexAmongSplitStacks)
+{
+    PlaceConsumable(5, HP_POTION_TEMPLATE_ID, 3);
+    PlaceConsumable(0, MP_POTION_TEMPLATE_ID, 1);
+    PlaceConsumable(2, HP_POTION_TEMPLATE_ID, 2);
+    Register(1, HP_POTION_TEMPLATE_ID);
+
+    optional<UseItemResult> result = Use(1);
+    ASSERT_TRUE(result.has_value());
+
+    EXPECT_EQ(CountAt(2), 1) << "같은 소모품이 여러 칸에 있으면 칸 번호가 가장 작은 칸을 쓴다";
+    EXPECT_EQ(CountAt(5), 3);
+    EXPECT_EQ(CountAt(0), 1) << "앞 칸에 든 다른 소모품은 쓰지 않는다";
+    ASSERT_EQ(result->changedSlots.size(), 1u);
+    EXPECT_EQ(result->changedSlots[0].address, ConsumableSlot(2)) << "응답은 칸을 골라 쓴 소모품 사용과 같은 칸 변경을 싣는다";
+}
+
+TEST_F(QuickSlotUseTest, ContinuesWithNextStackAfterFirstRunsOut)
+{
+    PlaceConsumable(2, HP_POTION_TEMPLATE_ID, 1);
+    PlaceConsumable(5, HP_POTION_TEMPLATE_ID, 3);
+    Register(0, HP_POTION_TEMPLATE_ID);
+
+    ASSERT_TRUE(Use(0).has_value());
+    ASSERT_EQ(CountAt(2), 0) << "준비: 첫 묶음을 다 썼다";
+
+    ASSERT_TRUE(Use(0, NOW_MS + COOLDOWN_MS).has_value());
+
+    EXPECT_EQ(CountAt(5), 2) << "다 쓴 뒤에는 남은 묶음 중 칸 번호가 가장 작은 칸으로 이어진다";
+}
+
+TEST_F(QuickSlotUseTest, UnregisteredQuickSlotIsRejected)
+{
+    PlaceConsumable(0, HP_POTION_TEMPLATE_ID, 1);
+    Register(0, HP_POTION_TEMPLATE_ID);
+
+    for (int32 quickSlotIndex : { 1, -1, QUICK_SLOT_COUNT })
+    {
+        SCOPED_TRACE(quickSlotIndex);
+        EXPECT_EQ(Use(quickSlotIndex), nullopt);
+    }
+
+    EXPECT_EQ(CountAt(0), 1) << "다른 퀵슬롯의 소모품을 쓰면 안 된다";
+}
+
+TEST_F(QuickSlotUseTest, RegisteredButNotOwnedIsRejected)
+{
+    PlaceConsumable(0, MP_POTION_TEMPLATE_ID, 1);
+    Register(0, HP_POTION_TEMPLATE_ID);
+
+    EXPECT_EQ(Use(0), nullopt) << "다 떨어진 소모품도 등록은 남지만 쓸 것이 없다";
+    EXPECT_EQ(CountAt(0), 1);
+}
+
+TEST_F(QuickSlotUseTest, CoolingDownIsRejectedAcrossStacks)
+{
+    PlaceConsumable(0, HP_POTION_TEMPLATE_ID, 1);
+    PlaceConsumable(1, HP_POTION_TEMPLATE_ID, 2);
+    Register(0, HP_POTION_TEMPLATE_ID);
+
+    ASSERT_TRUE(Use(0).has_value());
+
+    EXPECT_EQ(Use(0, NOW_MS + COOLDOWN_MS - 1), nullopt) << "재사용 대기는 아이템 정의 단위라 다른 묶음도 기다린다";
+    EXPECT_EQ(CountAt(1), 2);
+}
+
+TEST_F(QuickSlotUseTest, CooldownFromInventoryUseAppliesToQuickSlot)
+{
+    PlaceConsumable(0, HP_POTION_TEMPLATE_ID, 2);
+    Register(0, HP_POTION_TEMPLATE_ID);
+    ASSERT_TRUE(player->ProcessUseItem(MakeInventoryRequest(*player, ConsumableSlot(0)), NOW_MS).has_value());
+
+    EXPECT_EQ(Use(0, NOW_MS + 1), nullopt) << "인벤토리 창에서 쓴 소모품의 대기가 퀵슬롯에도 걸린다";
+    EXPECT_EQ(CountAt(0), 1);
+}
+
+TEST_F(QuickSlotUseTest, DeadPlayerIsRejected)
+{
+    PlaceConsumable(0, HP_POTION_TEMPLATE_ID, 1);
+    Register(0, HP_POTION_TEMPLATE_ID);
+    player->OnDie(nullptr);
+
+    EXPECT_EQ(Use(0), nullopt);
+    EXPECT_EQ(CountAt(0), 1);
 }

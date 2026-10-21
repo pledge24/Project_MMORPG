@@ -232,14 +232,7 @@ optional<int32> InventoryComponent::FindStackSlot(const ItemContainer& section, 
     if (itemType == Protocol::ITEM_TYPE_GEAR)
         return nullopt;
 
-    for (int32 slotIndex : section.GetSlotIndices())
-    {
-        const ItemInstance* item = section.Find(slotIndex);
-        if (item != nullptr && item->templateId == templateId)
-            return slotIndex;
-    }
-
-    return nullopt;
+    return section.FindFirstSlotOf(templateId);
 }
 
 bool InventoryComponent::IsCoolingDown(int32 templateId, uint64 nowMs) const
