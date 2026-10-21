@@ -18,4 +18,5 @@ USING_SHARED_PTR(Entity);
 USING_SHARED_PTR(Room);
 USING_SHARED_PTR(InventoryComponent);
 USING_SHARED_PTR(EquipmentComponent);
+USING_SHARED_PTR(QuickSlotComponent);
 USING_SHARED_PTR(MonsterAIComponent);

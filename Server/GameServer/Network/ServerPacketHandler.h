@@ -47,12 +47,14 @@ enum : uint16
 	PKT_S_UNEQUIP_GEAR = 1031,
 	PKT_C_USE_ITEM = 1032,
 	PKT_S_USE_ITEM = 1033,
-	PKT_S_DIE = 1034,
-	PKT_S_REWARD_RESULT = 1035,
-	PKT_C_RESPAWN = 1036,
-	PKT_S_RESPAWN = 1037,
-	PKT_C_CHAT = 1038,
-	PKT_S_CHAT = 1039,
+	PKT_C_SET_QUICK_SLOT = 1034,
+	PKT_S_SET_QUICK_SLOT = 1035,
+	PKT_S_DIE = 1036,
+	PKT_S_REWARD_RESULT = 1037,
+	PKT_C_RESPAWN = 1038,
+	PKT_S_RESPAWN = 1039,
+	PKT_C_CHAT = 1040,
+	PKT_S_CHAT = 1041,
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
@@ -74,6 +76,7 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt);
 bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt);
 bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& pkt);
 bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt);
+bool Handle_C_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::C_SET_QUICK_SLOT& pkt);
 bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt);
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt);
 
@@ -102,6 +105,7 @@ public:
 		GPacketHandler[PKT_C_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_EQUIP_GEAR>(Handle_C_EQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_UNEQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_UNEQUIP_GEAR>(Handle_C_UNEQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_C_USE_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_USE_ITEM>(Handle_C_USE_ITEM, session, buffer, len); };
+		GPacketHandler[PKT_C_SET_QUICK_SLOT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_SET_QUICK_SLOT>(Handle_C_SET_QUICK_SLOT, session, buffer, len); };
 		GPacketHandler[PKT_C_RESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_RESPAWN>(Handle_C_RESPAWN, session, buffer, len); };
 		GPacketHandler[PKT_C_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CHAT>(Handle_C_CHAT, session, buffer, len); };
 	}
@@ -140,6 +144,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::S_EQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_EQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_UNEQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_S_UNEQUIP_GEAR); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_S_USE_ITEM); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_SET_QUICK_SLOT& pkt) { return MakeSerializedPacket(pkt, PKT_S_SET_QUICK_SLOT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_REWARD_RESULT& pkt) { return MakeSerializedPacket(pkt, PKT_S_REWARD_RESULT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_S_RESPAWN); }

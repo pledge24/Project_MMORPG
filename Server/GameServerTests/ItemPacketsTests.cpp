@@ -12,6 +12,7 @@
     서버는 아이템과 칸을 전용 타입으로 들고, 패킷을 만들고 읽는 자리에서만 Protocol 타입으로 바꾼다.
     칸에 필드를 더할 때 변환 한쪽을 빠뜨리면 그 값이 패킷에서 사라지므로, 왕복으로 누락을 잡는다.
     입장 패킷은 클라이언트가 칸 목록으로 창의 칸을 만드므로 빈 칸까지 모두 싣는지 본다.
+    퀵슬롯도 같은 변환 파일에서 바꾼다. 요청의 참조 종류는 서버 열거형의 범위를 넘는 값을 걸러야 한다.
 
     픽스처 결합도: 입장 패킷의 소지품만 플레이어가 필요하다. 아이템 템플릿, 레벨 표, 인벤토리 구역 표를
     Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
@@ -24,6 +25,7 @@ namespace
     constexpr int32 GEAR_SLOT_COUNT = 4;
     constexpr int32 CONSUMABLE_SLOT_COUNT = 3;
     constexpr int32 MISC_SLOT_COUNT = 2;
+    constexpr int32 QUICK_SLOT_COUNT = 3;
 
     ItemInstance MakeSword()
     {
@@ -208,6 +210,59 @@ TEST(ItemPacketsTest, RequestValuesAreNotValidated)
     EXPECT_EQ(request.itemUid, 0);
 }
 
+TEST(ItemPacketsTest, RegisteredQuickSlotCarriesItsRef)
+{
+    const Protocol::QuickSlot proto = ItemPackets::ToProto(QuickSlot{ 3, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } });
+
+    EXPECT_EQ(proto.slot_index(), 3);
+    ASSERT_TRUE(proto.has_ref());
+    EXPECT_EQ(proto.ref().ref_type(), Protocol::QUICK_SLOT_REF_TYPE_ITEM);
+    EXPECT_EQ(proto.ref().ref_id(), POTION_TEMPLATE_ID);
+}
+
+TEST(ItemPacketsTest, EmptyQuickSlotCarriesNoRef)
+{
+    const Protocol::QuickSlot proto = ItemPackets::ToProto(QuickSlot{ 0, nullopt });
+
+    EXPECT_EQ(proto.slot_index(), 0);
+    EXPECT_FALSE(proto.has_ref()) << "ref가 없으면 빈 퀵슬롯이다";
+}
+
+TEST(ItemPacketsTest, QuickSlotsAreAddedInOrder)
+{
+    RepeatedPtrField<Protocol::QuickSlot> protoQuickSlots;
+    ItemPackets::AddQuickSlots({ QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } }, QuickSlot{ 0, nullopt } }, OUT &protoQuickSlots);
+
+    ASSERT_EQ(protoQuickSlots.size(), 2);
+    EXPECT_EQ(protoQuickSlots[0].slot_index(), 2);
+    EXPECT_EQ(protoQuickSlots[1].slot_index(), 0);
+}
+
+TEST(ItemPacketsTest, QuickSlotRefFromRequest)
+{
+    Protocol::QuickSlotRef item;
+    item.set_ref_type(Protocol::QUICK_SLOT_REF_TYPE_ITEM);
+    item.set_ref_id(POTION_TEMPLATE_ID);
+    EXPECT_EQ(ItemPackets::FromProto(item), (QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID }));
+
+    Protocol::QuickSlotRef none;
+    EXPECT_EQ(ItemPackets::FromProto(none), (QuickSlotRef{ QuickSlotRefType::NONE, 0 }));
+}
+
+// 서버의 종류는 uint8이다. 그대로 바꾸면 257이 1(아이템)로 읽힌다.
+TEST(ItemPacketsTest, UnknownQuickSlotRefTypeIsNotRead)
+{
+    for (int32 refType : { 2, 257, -1 })
+    {
+        Protocol::QuickSlotRef ref;
+        ref.set_ref_type(static_cast<Protocol::QuickSlotRefType>(refType));
+        ref.set_ref_id(POTION_TEMPLATE_ID);
+
+        SCOPED_TRACE(refType);
+        EXPECT_EQ(ItemPackets::FromProto(ref), nullopt);
+    }
+}
+
 /* 입장 패킷의 소지품 */
 
 class ItemPacketsPossessionTest : public ::testing::Test
@@ -238,6 +293,7 @@ protected:
             { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
             { Protocol::ITEM_TYPE_MISCELLANEOUS, MISC_SLOT_COUNT },
         };
+        tables.quickSlotCount = QUICK_SLOT_COUNT;
         Gamedata::Install(std::move(tables));
 
         PlayerProgress progress;
@@ -249,6 +305,10 @@ protected:
         progress.gold = 1234;
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 1 }, MakePotion() });
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, MakeSword() });
+        // 장비를 가리키는 행과 범위 밖의 행은 기획이 바뀌어 남은 행이다.
+        progress.quickSlots.push_back(QuickSlot{ 0, QuickSlotRef{ QuickSlotRefType::ITEM, SWORD_TEMPLATE_ID } });
+        progress.quickSlots.push_back(QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } });
+        progress.quickSlots.push_back(QuickSlot{ QUICK_SLOT_COUNT, QuickSlotRef{ QuickSlotRefType::ITEM, 2001 } });
 
         PlayerSpawnParams params;
         params.progress = &progress;
@@ -318,4 +378,15 @@ TEST_F(ItemPacketsPossessionTest, LoadedSlotsAreNotReportedAsChanges)
 
     ASSERT_EQ(result->changedSlots.size(), 1u);
     EXPECT_EQ(result->changedSlots[0].address, (SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 1 })) << "산 물약은 같은 물약의 묶음에 쌓인다";
+}
+
+// 퀵슬롯은 아이템을 담지 않으므로 넣을 수 없는 등록은 버리고 입장시킨다. 다음 저장이 그 행을 지운다.
+TEST_F(ItemPacketsPossessionTest, LoadedQuickSlotsDropInvalidRowsAndKeepEntry)
+{
+    EXPECT_EQ(player->GetQuickSlots().GetAll(), (vector<QuickSlot>{
+        QuickSlot{ 0, nullopt },
+        QuickSlot{ 1, nullopt },
+        QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } },
+    }));
+    EXPECT_EQ(player->MakeSaveData().progress.quickSlots, (vector<QuickSlot>{ QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } } }));
 }

@@ -448,6 +448,28 @@ namespace
         return slotCounts;
     }
 
+    int32 ParseQuickSlotCount(string_view fileName, const Json& document)
+    {
+        using namespace JsonProperty::QuickSlot;
+
+        vector<int32> slotCounts;
+        ForEachRow(fileName, document, [&](const Json& row, size_t)
+            {
+                // DB의 QuickSlot.SlotIndex가 TINYINT라 255번보다 뒤의 퀵슬롯은 저장하지 못한다.
+                const int32 slotCount = Require<int32>(row, SlotCount);
+                if (slotCount < 1 || slotCount > UINT8_MAX + 1)
+                    throw RowError{ format("'slotCount'가 1 이상 {} 이하여야 한다: {}", UINT8_MAX + 1, slotCount) };
+
+                slotCounts.push_back(slotCount);
+            });
+
+        // 서버와 클라이언트가 같은 개수를 써야 하므로 값이 하나로 정해져야 한다.
+        if (slotCounts.size() != 1)
+            throw TableError{ format("{}: 행이 하나여야 하는데 {}개다", fileName, slotCounts.size()) };
+
+        return slotCounts.front();
+    }
+
     //~ 표 사이의 검사
 
     /** 포털 목적지와 스폰 몬스터가 다른 표에 있는지 본다. */
@@ -529,6 +551,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.currencies = ParseCurrencies(GamedataFile::CURRENCIES, documents.currencies);
         tables.characterCreation = ParseCharacterCreation(GamedataFile::CHARACTER_CREATION, documents.characterCreation);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
+        tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);
 
         CheckMapReferences(tables);
         tables.townRoomId = FindTownRoomId(tables.maps);

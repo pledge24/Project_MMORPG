@@ -194,4 +194,6 @@ struct GamedataTables
     CharacterCreationTemplate characterCreation;
     /** 아이템 종류(Protocol::ItemType) → 인벤토리에서 그 종류 구역의 칸 수. NONE을 뺀 모든 종류가 있다. */
     unordered_map<int32, int32> inventorySlotCounts;
+    /** 플레이어 한 명의 퀵슬롯 개수. 1 이상 256 이하다. */
+    int32 quickSlotCount = 0;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * 클라이언트의 아이템 요청(구매, 판매, 사용, 착용, 해제) 처리.
+ * 클라이언트의 아이템 요청(구매, 판매, 사용, 착용, 해제, 퀵슬롯 등록) 처리.
  *
  * 요청을 플레이어의 판정에 넘기고, 그 결과로 응답을 만들어 보낸다. 룸 상태는 읽기만 한다.
  * 모든 함수는 room의 큐 위에서 부른다.
@@ -15,4 +15,5 @@ namespace ItemRequests
     void HandleEquipGear(Room& room, const PlayerRef& player, const Protocol::C_EQUIP_GEAR& pkt);
     /** 성공하면 같은 룸의 다른 플레이어에게 외형(부위와 템플릿)만 알린다. */
     void HandleUnequipGear(Room& room, const PlayerRef& player, const Protocol::C_UNEQUIP_GEAR& pkt);
+    void HandleSetQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_SET_QUICK_SLOT& pkt);
 }

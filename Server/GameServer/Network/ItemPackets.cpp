@@ -141,3 +141,37 @@ Protocol::Possession ItemPackets::MakePossession(const Player& player)
 
     return possession;
 }
+
+Protocol::QuickSlot ItemPackets::ToProto(const QuickSlot& quickSlot)
+{
+    Protocol::QuickSlot proto;
+    proto.set_slot_index(quickSlot.slotIndex);
+    if (quickSlot.ref.has_value())
+    {
+        Protocol::QuickSlotRef* ref = proto.mutable_ref();
+        ref->set_ref_type(static_cast<Protocol::QuickSlotRefType>(quickSlot.ref->type));
+        ref->set_ref_id(quickSlot.ref->id);
+    }
+
+    return proto;
+}
+
+void ItemPackets::AddQuickSlots(const vector<QuickSlot>& quickSlots, OUT RepeatedPtrField<Protocol::QuickSlot>* protoQuickSlots)
+{
+    for (const QuickSlot& quickSlot : quickSlots)
+        *protoQuickSlots->Add() = ToProto(quickSlot);
+}
+
+optional<QuickSlotRef> ItemPackets::FromProto(const Protocol::QuickSlotRef& ref)
+{
+    // 서버의 종류는 uint8이라 그대로 바꾸면 257이 1(아이템)로 읽힌다.
+    switch (ref.ref_type())
+    {
+    case Protocol::QUICK_SLOT_REF_TYPE_NONE:
+        return QuickSlotRef{ QuickSlotRefType::NONE, ref.ref_id() };
+    case Protocol::QUICK_SLOT_REF_TYPE_ITEM:
+        return QuickSlotRef{ QuickSlotRefType::ITEM, ref.ref_id() };
+    default:
+        return nullopt;
+    }
+}

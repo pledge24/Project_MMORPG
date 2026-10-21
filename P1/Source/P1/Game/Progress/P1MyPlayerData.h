@@ -10,6 +10,7 @@
 class AP1MyPlayer;
 class UP1ItemActions;
 class UP1ItemContainer;
+class UP1QuickSlots;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
 DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
@@ -120,6 +121,21 @@ protected:
     /** 서브시스템과 함께 살고, 입장과 응답으로 칸만 바뀐다. */
     UPROPERTY()
     TMap<EP1ContainerType, TObjectPtr<UP1ItemContainer>> Containers;
+
+    //~ Quick Slots
+public:
+    /** 서브시스템과 함께 살고, 입장과 등록 응답으로 대상만 바뀐다. */
+    UP1QuickSlots* GetQuickSlots() const { return QuickSlots; }
+
+    /** 퀵슬롯을 모두 지운다. 접속이 끊기면 부른다. */
+    void ClearQuickSlots();
+
+    /** 등록 응답의 바뀐 퀵슬롯을 반영한다. */
+    void HandleSetQuickSlot(const Protocol::S_SET_QUICK_SLOT& SetQuickSlotPkt);
+
+protected:
+    UPROPERTY()
+    TObjectPtr<UP1QuickSlots> QuickSlots;
 
     //~ Item Cooldown
 public:

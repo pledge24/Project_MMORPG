@@ -5,6 +5,7 @@
 #include "Game/Items/P1Slot.h"
 #include "Game/Items/P1SlotAddress.h"
 #include "Game/Progress/P1ItemIntent.h"
+#include "Game/QuickSlots/P1QuickSlotRef.h"
 #include "P1ItemActions.generated.h"
 
 class UP1MyPlayerData;
@@ -12,7 +13,7 @@ class UP1MyPlayerData;
 /**
  * 내 플레이어의 아이템 요청 창구.
  *
- * 칸 주소에 대한 의도와 구매를 요청으로 바꾸는 유일한 창구다. 요청할 수 있는지의 판정과 응답 대기를 여기서만 다룬다.
+ * 칸 주소에 대한 의도와 구매, 퀵슬롯 등록을 요청으로 바꾸는 유일한 창구다. 요청할 수 있는지의 판정과 응답 대기를 여기서만 다룬다.
  * 데이터는 서버 응답으로만 바뀌므로 요청을 보내도 칸과 골드를 고치지 않는다.
  * 내 플레이어 데이터의 하위 객체로만 만든다. 모든 멤버 함수는 게임 스레드 전용이다.
  */
@@ -30,6 +31,7 @@ public:
         Unequip,
         Sell,
         Buy,
+        SetQuickSlot,
     };
 
     /** 요청을 보냈는지, 보내지 않았다면 그 이유. */
@@ -49,7 +51,7 @@ public:
         Pending,
     };
 
-    /** 보낼 요청 하나. 구매는 TemplateId만, 나머지는 Address와 ItemUid를 쓴다. */
+    /** 보낼 요청 하나. 구매는 TemplateId만, 퀵슬롯 등록은 QuickSlotIndex와 QuickSlotRef만, 나머지는 Address와 ItemUid를 쓴다. */
     struct FRequest
     {
         ERequestKind Kind = ERequestKind::Use;
@@ -57,6 +59,8 @@ public:
         int64 ItemUid = 0;
         int32 TemplateId = 0;
         int32 Count = 0;
+        int32 QuickSlotIndex = 0;
+        FP1QuickSlotRef QuickSlotRef;
     };
 
     using FRequestSender = TFunction<void(const FRequest&)>;
@@ -68,6 +72,12 @@ public:
 
     /** 상점에서 TemplateId 아이템 하나를 산다. */
     EResult RequestBuy(int32 TemplateId);
+
+    /**
+     * QuickSlotIndex 퀵슬롯에 Ref를 등록한다. 빈 참조면 해제한다. 다른 퀵슬롯에 있는 대상이면 서버가 둘을 맞바꾼다.
+     * 소모품만 등록하고 소지 여부는 보지 않는다.
+     */
+    EResult RequestSetQuickSlot(int32 QuickSlotIndex, const FP1QuickSlotRef& Ref);
 
     /** 판매는 상점 창이 열려 있을 때만 보낸다. 상점 창을 여닫는 쪽이 부른다. */
     void SetShopOpen(bool bOpen) { bShopOpen = bOpen; }

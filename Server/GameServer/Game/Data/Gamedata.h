@@ -44,6 +44,8 @@ public:
     static const CharacterCreationTemplate& GetCharacterCreation() { return s_tables.characterCreation; }
     /** 인벤토리에서 그 아이템 종류 구역의 칸 수. 구역이 없는 종류(NONE)면 0. */
     static int32 GetInventorySlotCount(Protocol::ItemType itemType);
+    /** 플레이어 한 명의 퀵슬롯 개수. 퀵슬롯 번호는 0부터 이 값 미만이다. */
+    static int32 GetQuickSlotCount() { return s_tables.quickSlotCount; }
 
     //~ 공통
 private:

@@ -324,6 +324,35 @@ struct ContainerSlotsDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ContainerSlotsDefaultTypeInternal _ContainerSlots_default_instance_;
+PROTOBUF_CONSTEXPR QuickSlotRef::QuickSlotRef(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.ref_type_)*/0
+  , /*decltype(_impl_.ref_id_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct QuickSlotRefDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR QuickSlotRefDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~QuickSlotRefDefaultTypeInternal() {}
+  union {
+    QuickSlotRef _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 QuickSlotRefDefaultTypeInternal _QuickSlotRef_default_instance_;
+PROTOBUF_CONSTEXPR QuickSlot::QuickSlot(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_._has_bits_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_.ref_)*/nullptr
+  , /*decltype(_impl_.slot_index_)*/0} {}
+struct QuickSlotDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR QuickSlotDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~QuickSlotDefaultTypeInternal() {}
+  union {
+    QuickSlot _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 QuickSlotDefaultTypeInternal _QuickSlot_default_instance_;
 PROTOBUF_CONSTEXPR LevelUpInfo::LevelUpInfo(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.updated_stat_)*/{}
@@ -355,7 +384,7 @@ struct RewardDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RewardDefaultTypeInternal _Reward_default_instance_;
 }  // namespace Protocol
-static ::_pb::Metadata file_level_metadata_Struct_2eproto[22];
+static ::_pb::Metadata file_level_metadata_Struct_2eproto[24];
 static constexpr ::_pb::EnumDescriptor const** file_level_enum_descriptors_Struct_2eproto = nullptr;
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Struct_2eproto = nullptr;
 
@@ -570,6 +599,24 @@ const uint32_t TableStruct_Struct_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   PROTOBUF_FIELD_OFFSET(::Protocol::ContainerSlots, _impl_.container_),
   PROTOBUF_FIELD_OFFSET(::Protocol::ContainerSlots, _impl_.slots_),
   ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlotRef, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlotRef, _impl_.ref_type_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlotRef, _impl_.ref_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlot, _impl_._has_bits_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlot, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlot, _impl_.slot_index_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::QuickSlot, _impl_.ref_),
+  ~0u,
+  0,
+  ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::LevelUpInfo, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -610,8 +657,10 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 181, 189, -1, sizeof(::Protocol::SlotChange)},
   { 191, 199, -1, sizeof(::Protocol::Slot)},
   { 201, -1, -1, sizeof(::Protocol::ContainerSlots)},
-  { 209, -1, -1, sizeof(::Protocol::LevelUpInfo)},
-  { 218, 226, -1, sizeof(::Protocol::Reward)},
+  { 209, -1, -1, sizeof(::Protocol::QuickSlotRef)},
+  { 217, 225, -1, sizeof(::Protocol::QuickSlot)},
+  { 227, -1, -1, sizeof(::Protocol::LevelUpInfo)},
+  { 236, 244, -1, sizeof(::Protocol::Reward)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -635,6 +684,8 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::Protocol::_SlotChange_default_instance_._instance,
   &::Protocol::_Slot_default_instance_._instance,
   &::Protocol::_ContainerSlots_default_instance_._instance,
+  &::Protocol::_QuickSlotRef_default_instance_._instance,
+  &::Protocol::_QuickSlot_default_instance_._instance,
   &::Protocol::_LevelUpInfo_default_instance_._instance,
   &::Protocol::_Reward_default_instance_._instance,
 };
@@ -692,20 +743,24 @@ const char descriptor_table_protodef_Struct_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "(\0132\016.Protocol.ItemH\000\210\001\001B\007\n\005_item\"[\n\016Cont"
   "ainerSlots\022*\n\tcontainer\030\001 \001(\0162\027.Protocol"
   ".ContainerType\022\035\n\005slots\030\002 \003(\0132\016.Protocol"
-  ".Slot\"Y\n\013LevelUpInfo\022\021\n\told_level\030\001 \001(\005\022"
-  "\021\n\tnew_level\030\002 \001(\005\022$\n\014updated_stat\030\005 \003(\013"
-  "2\016.Protocol.Stat\">\n\006Reward\022\020\n\003exp\030\001 \001(\003H"
-  "\000\210\001\001\022\021\n\004gold\030\002 \001(\003H\001\210\001\001B\006\n\004_expB\007\n\005_gold"
-  "b\006proto3"
+  ".Slot\"L\n\014QuickSlotRef\022,\n\010ref_type\030\001 \001(\0162"
+  "\032.Protocol.QuickSlotRefType\022\016\n\006ref_id\030\002 "
+  "\001(\005\"Q\n\tQuickSlot\022\022\n\nslot_index\030\001 \001(\005\022(\n\003"
+  "ref\030\002 \001(\0132\026.Protocol.QuickSlotRefH\000\210\001\001B\006"
+  "\n\004_ref\"Y\n\013LevelUpInfo\022\021\n\told_level\030\001 \001(\005"
+  "\022\021\n\tnew_level\030\002 \001(\005\022$\n\014updated_stat\030\005 \003("
+  "\0132\016.Protocol.Stat\">\n\006Reward\022\020\n\003exp\030\001 \001(\003"
+  "H\000\210\001\001\022\021\n\004gold\030\002 \001(\003H\001\210\001\001B\006\n\004_expB\007\n\005_gol"
+  "db\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Struct_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Struct_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Struct_2eproto = {
-    false, false, 2248, descriptor_table_protodef_Struct_2eproto,
+    false, false, 2409, descriptor_table_protodef_Struct_2eproto,
     "Struct.proto",
-    &descriptor_table_Struct_2eproto_once, descriptor_table_Struct_2eproto_deps, 1, 22,
+    &descriptor_table_Struct_2eproto_once, descriptor_table_Struct_2eproto_deps, 1, 24,
     schemas, file_default_instances, TableStruct_Struct_2eproto::offsets,
     file_level_metadata_Struct_2eproto, file_level_enum_descriptors_Struct_2eproto,
     file_level_service_descriptors_Struct_2eproto,
@@ -5696,6 +5751,456 @@ void ContainerSlots::InternalSwap(ContainerSlots* other) {
 
 // ===================================================================
 
+class QuickSlotRef::_Internal {
+ public:
+};
+
+QuickSlotRef::QuickSlotRef(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:Protocol.QuickSlotRef)
+}
+QuickSlotRef::QuickSlotRef(const QuickSlotRef& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  QuickSlotRef* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ref_type_){}
+    , decltype(_impl_.ref_id_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.ref_type_, &from._impl_.ref_type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.ref_id_) -
+    reinterpret_cast<char*>(&_impl_.ref_type_)) + sizeof(_impl_.ref_id_));
+  // @@protoc_insertion_point(copy_constructor:Protocol.QuickSlotRef)
+}
+
+inline void QuickSlotRef::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ref_type_){0}
+    , decltype(_impl_.ref_id_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
+
+QuickSlotRef::~QuickSlotRef() {
+  // @@protoc_insertion_point(destructor:Protocol.QuickSlotRef)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void QuickSlotRef::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void QuickSlotRef::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void QuickSlotRef::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.QuickSlotRef)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&_impl_.ref_type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.ref_id_) -
+      reinterpret_cast<char*>(&_impl_.ref_type_)) + sizeof(_impl_.ref_id_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* QuickSlotRef::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // .Protocol.QuickSlotRefType ref_type = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_ref_type(static_cast<::Protocol::QuickSlotRefType>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 ref_id = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.ref_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* QuickSlotRef::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:Protocol.QuickSlotRef)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .Protocol.QuickSlotRefType ref_type = 1;
+  if (this->_internal_ref_type() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_ref_type(), target);
+  }
+
+  // int32 ref_id = 2;
+  if (this->_internal_ref_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_ref_id(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:Protocol.QuickSlotRef)
+  return target;
+}
+
+size_t QuickSlotRef::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:Protocol.QuickSlotRef)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // .Protocol.QuickSlotRefType ref_type = 1;
+  if (this->_internal_ref_type() != 0) {
+    total_size += 1 +
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_ref_type());
+  }
+
+  // int32 ref_id = 2;
+  if (this->_internal_ref_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_ref_id());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData QuickSlotRef::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    QuickSlotRef::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*QuickSlotRef::GetClassData() const { return &_class_data_; }
+
+
+void QuickSlotRef::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<QuickSlotRef*>(&to_msg);
+  auto& from = static_cast<const QuickSlotRef&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.QuickSlotRef)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_ref_type() != 0) {
+    _this->_internal_set_ref_type(from._internal_ref_type());
+  }
+  if (from._internal_ref_id() != 0) {
+    _this->_internal_set_ref_id(from._internal_ref_id());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void QuickSlotRef::CopyFrom(const QuickSlotRef& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.QuickSlotRef)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool QuickSlotRef::IsInitialized() const {
+  return true;
+}
+
+void QuickSlotRef::InternalSwap(QuickSlotRef* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(QuickSlotRef, _impl_.ref_id_)
+      + sizeof(QuickSlotRef::_impl_.ref_id_)
+      - PROTOBUF_FIELD_OFFSET(QuickSlotRef, _impl_.ref_type_)>(
+          reinterpret_cast<char*>(&_impl_.ref_type_),
+          reinterpret_cast<char*>(&other->_impl_.ref_type_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata QuickSlotRef::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_Struct_2eproto_getter, &descriptor_table_Struct_2eproto_once,
+      file_level_metadata_Struct_2eproto[20]);
+}
+
+// ===================================================================
+
+class QuickSlot::_Internal {
+ public:
+  using HasBits = decltype(std::declval<QuickSlot>()._impl_._has_bits_);
+  static const ::Protocol::QuickSlotRef& ref(const QuickSlot* msg);
+  static void set_has_ref(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+};
+
+const ::Protocol::QuickSlotRef&
+QuickSlot::_Internal::ref(const QuickSlot* msg) {
+  return *msg->_impl_.ref_;
+}
+QuickSlot::QuickSlot(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:Protocol.QuickSlot)
+}
+QuickSlot::QuickSlot(const QuickSlot& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  QuickSlot* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_._has_bits_){from._impl_._has_bits_}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.ref_){nullptr}
+    , decltype(_impl_.slot_index_){}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_ref()) {
+    _this->_impl_.ref_ = new ::Protocol::QuickSlotRef(*from._impl_.ref_);
+  }
+  _this->_impl_.slot_index_ = from._impl_.slot_index_;
+  // @@protoc_insertion_point(copy_constructor:Protocol.QuickSlot)
+}
+
+inline void QuickSlot::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_._has_bits_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.ref_){nullptr}
+    , decltype(_impl_.slot_index_){0}
+  };
+}
+
+QuickSlot::~QuickSlot() {
+  // @@protoc_insertion_point(destructor:Protocol.QuickSlot)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void QuickSlot::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (this != internal_default_instance()) delete _impl_.ref_;
+}
+
+void QuickSlot::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void QuickSlot::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.QuickSlot)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    GOOGLE_DCHECK(_impl_.ref_ != nullptr);
+    _impl_.ref_->Clear();
+  }
+  _impl_.slot_index_ = 0;
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* QuickSlot::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int32 slot_index = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.slot_index_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional .Protocol.QuickSlotRef ref = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_ref(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  _impl_._has_bits_.Or(has_bits);
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* QuickSlot::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:Protocol.QuickSlot)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int32 slot_index = 1;
+  if (this->_internal_slot_index() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_slot_index(), target);
+  }
+
+  // optional .Protocol.QuickSlotRef ref = 2;
+  if (_internal_has_ref()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::ref(this),
+        _Internal::ref(this).GetCachedSize(), target, stream);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:Protocol.QuickSlot)
+  return target;
+}
+
+size_t QuickSlot::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:Protocol.QuickSlot)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // optional .Protocol.QuickSlotRef ref = 2;
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.ref_);
+  }
+
+  // int32 slot_index = 1;
+  if (this->_internal_slot_index() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_slot_index());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData QuickSlot::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    QuickSlot::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*QuickSlot::GetClassData() const { return &_class_data_; }
+
+
+void QuickSlot::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<QuickSlot*>(&to_msg);
+  auto& from = static_cast<const QuickSlot&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.QuickSlot)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_has_ref()) {
+    _this->_internal_mutable_ref()->::Protocol::QuickSlotRef::MergeFrom(
+        from._internal_ref());
+  }
+  if (from._internal_slot_index() != 0) {
+    _this->_internal_set_slot_index(from._internal_slot_index());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void QuickSlot::CopyFrom(const QuickSlot& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.QuickSlot)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool QuickSlot::IsInitialized() const {
+  return true;
+}
+
+void QuickSlot::InternalSwap(QuickSlot* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(QuickSlot, _impl_.slot_index_)
+      + sizeof(QuickSlot::_impl_.slot_index_)
+      - PROTOBUF_FIELD_OFFSET(QuickSlot, _impl_.ref_)>(
+          reinterpret_cast<char*>(&_impl_.ref_),
+          reinterpret_cast<char*>(&other->_impl_.ref_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata QuickSlot::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_Struct_2eproto_getter, &descriptor_table_Struct_2eproto_once,
+      file_level_metadata_Struct_2eproto[21]);
+}
+
+// ===================================================================
+
 class LevelUpInfo::_Internal {
  public:
 };
@@ -5936,7 +6441,7 @@ void LevelUpInfo::InternalSwap(LevelUpInfo* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata LevelUpInfo::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_Struct_2eproto_getter, &descriptor_table_Struct_2eproto_once,
-      file_level_metadata_Struct_2eproto[20]);
+      file_level_metadata_Struct_2eproto[22]);
 }
 
 // ===================================================================
@@ -6172,7 +6677,7 @@ void Reward::InternalSwap(Reward* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Reward::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_Struct_2eproto_getter, &descriptor_table_Struct_2eproto_once,
-      file_level_metadata_Struct_2eproto[21]);
+      file_level_metadata_Struct_2eproto[23]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -6257,6 +6762,14 @@ Arena::CreateMaybeMessage< ::Protocol::Slot >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::Protocol::ContainerSlots*
 Arena::CreateMaybeMessage< ::Protocol::ContainerSlots >(Arena* arena) {
   return Arena::CreateMessageInternal< ::Protocol::ContainerSlots >(arena);
+}
+template<> PROTOBUF_NOINLINE ::Protocol::QuickSlotRef*
+Arena::CreateMaybeMessage< ::Protocol::QuickSlotRef >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Protocol::QuickSlotRef >(arena);
+}
+template<> PROTOBUF_NOINLINE ::Protocol::QuickSlot*
+Arena::CreateMaybeMessage< ::Protocol::QuickSlot >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Protocol::QuickSlot >(arena);
 }
 template<> PROTOBUF_NOINLINE ::Protocol::LevelUpInfo*
 Arena::CreateMaybeMessage< ::Protocol::LevelUpInfo >(Arena* arena) {

@@ -123,3 +123,36 @@ void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const 
     optional<GearChangeResult> result = player->ProcessUnequipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
     SendGearChange(room, player, unequipGearPkt, result);
 }
+
+void ItemRequests::HandleSetQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_SET_QUICK_SLOT& pkt)
+{
+    // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
+    if (room.Contains(player->GetEntityId()) == false)
+        return;
+
+    auto session = player->GetSession();
+    if (session == nullptr)
+        return;
+
+    Protocol::S_SET_QUICK_SLOT setQuickSlotPkt;
+    setQuickSlotPkt.set_success(false);
+
+    // 열거형에 없는 종류는 판정에 넘기지 않고 거절한다. 참조가 없으면 해제 요청이다.
+    optional<QuickSlotRef> ref;
+    if (pkt.has_ref())
+    {
+        ref = ItemPackets::FromProto(pkt.ref());
+        if (ref.has_value() == false)
+        {
+            SendPacket(session, setQuickSlotPkt);
+            return;
+        }
+    }
+
+    optional<SetQuickSlotResult> result = player->ProcessSetQuickSlot(pkt.slot_index(), ref);
+    setQuickSlotPkt.set_success(result.has_value());
+    if (result.has_value())
+        ItemPackets::AddQuickSlots(result->changedQuickSlots, setQuickSlotPkt.mutable_changed_quick_slots());
+
+    SendPacket(session, setQuickSlotPkt);
+}

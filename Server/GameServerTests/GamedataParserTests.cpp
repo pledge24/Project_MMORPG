@@ -118,6 +118,11 @@ namespace
         return Json{{"itemType", itemType}, {"slotCount", slotCount}};
     }
 
+    Json MakeQuickSlot(int32 slotCount)
+    {
+        return Json{{"slotCount", slotCount}};
+    }
+
     GamedataDocuments MakeValidDocuments()
     {
         GamedataDocuments documents;
@@ -130,6 +135,7 @@ namespace
         documents.inventorySections = Json::array({
             MakeInventorySection("GEAR", 32), MakeInventorySection("CONSUMABLE", 24), MakeInventorySection("MISCELLANEOUS", 16),
         });
+        documents.quickSlots = Json::array({MakeQuickSlot(6)});
         return documents;
     }
 
@@ -230,6 +236,8 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_GEAR), 32);
     EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_CONSUMABLE), 24);
     EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_MISCELLANEOUS), 16);
+
+    EXPECT_EQ(tables.quickSlotCount, 6);
 }
 
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
@@ -470,6 +478,35 @@ TEST(GamedataParserTest, EveryItemTypeNeedsExactlyOneSection)
     ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "1번째 행", "itemType"});
 }
 
+// 퀵슬롯 개수는 서버와 클라이언트가 함께 쓰는 값 하나다.
+TEST(GamedataParserTest, QuickSlotTableNeedsExactlyOneRow)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.quickSlots = Json::array();
+    ExpectMentions(ErrorOf(documents), {GamedataFile::QUICK_SLOTS, "하나"});
+
+    documents = MakeValidDocuments();
+    documents.quickSlots.push_back(MakeQuickSlot(9));
+    ExpectMentions(ErrorOf(documents), {GamedataFile::QUICK_SLOTS, "하나"});
+}
+
+// DB의 QuickSlot.SlotIndex가 TINYINT라 256번째 퀵슬롯부터 저장하지 못한다.
+TEST(GamedataParserTest, QuickSlotCountOutOfRangeIsRejected)
+{
+    for (int32 slotCount : { 0, -1, 257 })
+    {
+        GamedataDocuments documents = MakeValidDocuments();
+        documents.quickSlots[0]["slotCount"] = slotCount;
+
+        SCOPED_TRACE(slotCount);
+        ExpectMentions(ErrorOf(documents), {GamedataFile::QUICK_SLOTS, "1번째 행", "slotCount"});
+    }
+
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.quickSlots[0]["slotCount"] = 256;
+    EXPECT_EQ(ErrorOf(documents), "") << "0번부터 255번까지 256개는 저장할 수 있다";
+}
+
 TEST(GamedataParserTest, FailedLoadKeepsPreviousTables)
 {
     ASSERT_FALSE(Gamedata::Load(MakeValidDocuments()).has_value());
@@ -499,6 +536,7 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.currencies = ReadJsonFile(dir / GamedataFile::CURRENCIES);
     documents.characterCreation = ReadJsonFile(dir / GamedataFile::CHARACTER_CREATION);
     documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
+    documents.quickSlots = ReadJsonFile(dir / GamedataFile::QUICK_SLOTS);
     ASSERT_TRUE(documents.items.is_array()) << "기획표를 찾지 못했다: " << dir.string();
 
     GamedataTables tables;
@@ -513,4 +551,5 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(tables.characterCreation.defaultCharacterSlotCount, 4);
     for (int32 itemType : { Protocol::ITEM_TYPE_GEAR, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::ITEM_TYPE_MISCELLANEOUS })
         EXPECT_EQ(tables.inventorySlotCounts.at(itemType), 32) << "클라이언트 UI가 구역마다 32칸을 고정으로 쓴다";
+    EXPECT_EQ(tables.quickSlotCount, 9) << "퀵슬롯 키는 1~9다";
 }

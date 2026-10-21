@@ -54,6 +54,17 @@ const FP1Slot* UP1ItemContainer::FindSlot(int32 SlotIndex) const
     return Slots.FindByPredicate([SlotIndex](const FP1Slot& Slot_) { return Slot_.Address.SlotIndex == SlotIndex; });
 }
 
+int32 UP1ItemContainer::CountItem(int32 TemplateId) const
+{
+    int32 Total = 0;
+    for (const FP1Slot& Slot_ : Slots)
+    {
+        if (Slot_.HasItem() && Slot_.Item.TemplateId == TemplateId)
+            Total += Slot_.Item.Count;
+    }
+    return Total;
+}
+
 FP1Slot* UP1ItemContainer::FindMutableSlot(int32 SlotIndex)
 {
     return const_cast<FP1Slot*>(FindSlot(SlotIndex));
