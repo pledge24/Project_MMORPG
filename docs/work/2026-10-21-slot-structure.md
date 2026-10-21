@@ -112,3 +112,7 @@
   위젯 BP는 MCP로 고쳤다. `WBP_QuickSlots`(`UI/Screens/HUD/`, HorizontalBox 안의 ScaleBox 아홉 개와 `WBP_Slot`)를 만들어 HUD의 `HorizontalBox_249`(물약 그림 아홉 개) 자리에 같은 캔버스 배치로 넣었고,
   인벤토리 창의 `ConsumableGrid`에서 `bSlotsDraggable`을 켰다. `ReplaceWidgetWithTemplate`은 「the widget could not be re-parented in the tree」로 실패해서, 새로 넣고 배치를 옮긴 뒤 옛 위젯을 지웠다.
   사람이 마이그레이션을 두 DB에 적용했고 실제 DB 테스트 22개가 통과했다. PIE 확인이 남았다
+- 2026-10-22: #276 작업 중 `L_InGameMap`의 포털 여섯 개가 원점에 있는 것을 사람이 찾았다. 포털은 바닥 액터에 붙어 있고 레벨에는 바닥 기준의 상대 위치가 저장되는데,
+  2026-10-03 커밋 `5678b41`(#182)이 `BP_Portal`과 레벨을 다시 저장하면서 그 상대 위치(마을 셋은 회전 Yaw -90 포함)가 지워졌다. 레벨 파일의 버전별 바이트 대조로 찾았다.
+  사람의 결정으로 이 브랜치에서 `5678b41~1`의 값으로 되돌렸고, 월드 위치가 서버 맵 표의 포털 출발 위치와 맞는 것을 에디터에서 확인했다. PIE의 포털 이동은 확인하지 않았다.
+  지워진 원인은 BP를 다시 컴파일할 때 인스턴스의 상대 위치가 초기화된 것으로 추정하고 재현하지 않았다. `BP_Portal`을 다시 저장하면 포털 위치를 함께 확인한다
