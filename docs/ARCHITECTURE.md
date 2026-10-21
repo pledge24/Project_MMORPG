@@ -3,7 +3,7 @@
 이 문서는 코드를 읽어서 알 수 있는 내용을 반복하지 않는다.
 **왜 이렇게 되어 있는지**, 그리고 **깨면 안 되는 것**만 적는다.
 
-최종 수정: 2026-10-19
+최종 수정: 2026-10-21
 검증: 세션 1(2026-08-19)에서 실코드·라이브 DB·UE 에디터와 대조.
 
 불변식은 `**Architecture Invariant:**`로 표시한다. 대부분 **무언가의 부재**를 가리킨다 —
@@ -17,7 +17,7 @@ UE5 클라이언트 · 외부 IOCP C++ 게임 서버 · Node 인증 서버의 3�
 세 티어를 반드시 함께 띄워야 동작한다.
 
 **ground state**는 인증 서버의 계정 DB와 `GameDB`의 행, 그리고 Redis의 인증 티켓이다.
-**derived state**는 룸 안 오브젝트의 런타임 상태다 — 접속 종료 시 `CharactersLastState`로
+**derived state**는 룸 안 오브젝트의 런타임 상태다 — 접속 종료 시 `CharacterState`와 `Item`으로
 내려가고, 재접속으로 재생성된다. 진실의 원천으로 삼지 않는다.
 
 세 티어를 잇는 선은 두 개뿐이다.
@@ -119,13 +119,10 @@ TTL은 로그인 응답부터 게임 서버 접속까지의 유효 시간이고,
 
 ### Server/GameServer
 
-> 게임 서버는 아직 옛 계약을 읽는다. 키는 `accessToken:{UUID}`이고 값은 `{ userId, username }` JSON이다.
-> 새 계약은 키가 `authTicket:{티켓}`이고 값이 계정 번호 문자열 하나다. 소비 방식(읽고 지우며 지운 쪽만 통과)은 같다.
-> `docs/testing.md`와 `docs/folder-structure.md`의 「액세스 토큰」도 이 옛 계약의 코드(`AccessToken`)를 가리킨다.
-> 인증 서버는 2026년 10월 19일(#236)부터 위 「Server/AuthServer」 절의 인증 티켓 계약으로 발급한다. 그래서 지금은 게임 서버 입장이 실패한다.
-> 다음 GameServer 작업에서 그 계약에 맞춘다. 아래 서술의 「Redis 토큰」은 그때 「인증 티켓」으로 바뀐다.
+게임 서버는 위 「Server/AuthServer」 절의 인증 티켓 계약을 읽는다. 값은 `Network/AuthTicket`이 계정 번호로 읽는다.
+클라이언트가 티켓을 담아 보내는 패킷 필드는 프로토콜을 다시 짤 때까지 옛 이름(`C_LOGIN.access_token`)을 쓴다.
 
-**Architecture Invariant:** 인증 서버의 DB를 모른다. 로그인 검증은 Redis의 토큰을 되읽어서 하고,
+**Architecture Invariant:** 인증 서버의 DB를 모른다. 로그인 검증은 Redis의 인증 티켓을 되읽어서 하고,
 계정 정보를 DB에서 직접 조회하지 않는다.
 
 **Architecture Invariant:** 룸 소유 상태 변경은 그 룸의 큐 위에서만 일어난다. 락이 없다.
@@ -164,9 +161,9 @@ DB 작업도 같은 형태다 — 핸들러가 `DBQueue`에 push하고 전용 DB
 **Architecture Invariant:** DB 접근은 `DB/`의 DAO가 데이터별로 맡는다. SQL을 실행하는 클래스만 DAO라고
 부른다. 여러 DAO를 차례로 부르는 `ProgressStorage`는 DAO가 아니다. DAO는 세션과 패킷을 모른다. 연결은
 DB 잡이 `DBConnectionGuard`로 빌려 DAO에 넘기고, 잡이 어떻게 끝나든 풀로 돌려준다. 접속 종료 저장 하나는
-트랜잭션 하나다. 접속 종료 때 저장할 아이템 행은 DB를 모르는 `ItemSaveRows`가 고른다.
-— 저장할 행을 잘못 고르면 진행이 사라지는데, SQL 문장은 테스트할 수 없어 이 판정만 떼어 테스트한다.
-DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`)로 테스트한다.
+트랜잭션 하나다. DB 아이템 행과 패킷 칸 사이의 변환은 DB를 모르는 `ItemRows`가 맡고, 불러오기와 저장이 이 변환 하나를 쓴다.
+— 두 방향이 다른 변환을 쓰면 아이템이 다른 구역이나 부위로 옮겨 가거나 사라진다. 그래서 이 변환만 떼어 테스트한다.
+DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`)로, SQL 문장은 `GameDB_Test`에 붙는 실제 DB 테스트로 테스트한다.
 
 **Architecture Invariant:** DB 작업의 실패는 `DBError` 예외이고, 클라이언트에 보낼 거절(캐릭터 생성의 이름 중복 등)은
 예외가 아니라 결과다. DB 잡은 `DBError`를 포함한 표준 예외를 받아 실패 응답을 보내고, 접속 종료 저장 잡은
@@ -179,10 +176,11 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 
 **Architecture Invariant:** DB를 거치는 요청(로그인, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
 계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로그인만
-계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 Redis 토큰 확인과 캐릭터 목록 불러오기를 이어 한다.
+계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 인증 티켓 확인, `GameDB` 계정 행 기록, 캐릭터 목록
+불러오기를 이어 한다. 계정 행은 이 월드에 처음 들어올 때 만들어지고, 캐릭터 슬롯 수의 원천이다.
 
 **Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
-Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
+Redis의 인증 티켓 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
 계정에 세션을 묶고 기존 세션을 돌려준다. 확인과 교체는 관리자의 락 하나 안에서 한다. 로그인 잡은
 랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
 `S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).
@@ -192,8 +190,41 @@ Redis의 토큰 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통�
 — 끊기가 끝나지 않으면 저장 대기가 풀리지 않아 그 계정은 서버를 다시 띄울 때까지 입장하지 못한다.
 
 **Architecture Invariant:** 캐릭터를 다루는 요청(입장, 삭제)은 그 계정이 가진 캐릭터에만 동작한다.
-클라이언트가 보낸 `character_id`를 믿지 않고, SQL이 세션의 `user_id`를 함께 대조한다. 생성 요청은
+클라이언트가 보낸 `character_id`를 믿지 않고, SQL이 세션의 계정 번호를 `Character.AccountId`와 함께 대조한다. 생성 요청은
 `Handle_C_CREATE_CHARACTER`가 `CharacterCreation::Validate`로 먼저 거른다.
+
+**Architecture Invariant:** 캐릭터는 소프트 삭제한다. 삭제는 `Character.DeletedAt`만 적고 그 캐릭터의 다른 행은 남긴다.
+슬롯 한도와 캐릭터 목록은 삭제하지 않은 캐릭터만 센다. 이름의 고유 인덱스(`UX_Character_Name_Active`)도 삭제하지 않은
+캐릭터만 덮으므로, 삭제한 캐릭터의 이름은 바로 다시 쓸 수 있다. 삭제한 캐릭터를 되살리는 경로는 없다.
+— 삭제한 캐릭터를 복구해 달라는 요구가 나오면 이 결정을 다시 본다.
+
+**Architecture Invariant:** 캐릭터 이름의 중복은 미리 조회하지 않는다. 생성 쿼리 안의 `TRY...CATCH`가 고유 인덱스 위반(2601)을
+「이름 중복」 결과로 바꾼다.
+— 미리 조회하면 조회와 생성 사이에 같은 이름의 생성이 끼어들 수 있다. C++에서 ODBC 진단 기록으로 판정하면 이름이 겹칠
+때마다 `DBConnection`이 DB 오류 로그를 남긴다.
+
+**Architecture Invariant:** 캐릭터 이름은 최대 32자이고, 이 한도를 기획 데이터로 옮기지 않는다.
+— 한도는 DB 열(`NVARCHAR(32)`)의 크기에 묶여 있어서, 기획이 바꿀 수 있는 값이 아니다. 기획이 이름 길이를 바꾸고 싶어 하면
+이 결정을 다시 본다.
+
+**Architecture Invariant:** 아이템의 컨테이너는 서버 C++ enum `ItemContainer`이고 DB에 그 값이 들어간다. 1은 인벤토리,
+2는 착용 장비다. 인벤토리는 컨테이너 하나이고, 그 안의 구역은 `Item.ItemType`으로 나뉜다. 값을 바꾸거나 다시 쓰지 않는다.
+— DB에 저장된 값이므로, 번호를 바꾸면 이미 저장된 아이템이 다른 컨테이너로 읽힌다.
+
+**Architecture Invariant:** 장비의 추가 공격력은 DB에 없다. 패킷에는 0을 채우고 저장할 때 버린다. `ItemGearOption` 테이블은
+쓰지 않고, `ItemGear.Durability`에는 0을 넣는다.
+— 장비 옵션 기능을 만들기 시작하면 이 결정을 다시 본다.
+
+**Architecture Invariant:** 경험치는 누적값이 원천이다. `CharacterState.Exp`에 누적 경험치를 저장하고, 레벨은 입장할 때
+레벨 표로 다시 계산한다. `Character.Level`은 캐릭터 목록이 읽는 사본이고, 저장할 때 계산한 레벨로 덮어쓴다. 최대 레벨을
+넘는 누적값은 잘라 쓰고 경고를 남긴다. 클라이언트에는 레벨 안의 경험치를 보낸다. 사망 페널티는 그 레벨 요구치의 10%이고,
+레벨 안에 쌓인 양보다 많이 잃지 않으므로 레벨이 내려가지 않는다.
+— 레벨과 레벨 안의 경험치를 따로 저장하면 기획이 레벨 표를 바꿀 때 두 값이 어긋난다. 레벨 표가 바뀌어도 기존 캐릭터의
+레벨은 그대로여야 한다는 요구가 나오면 이 결정을 다시 본다.
+
+GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 맵과 룸, 경험치, 장비의 추가 공격력)은 게임 서버가 바꾼다.
+프로토콜을 다시 짤 때까지 `.proto`는 DB에 맞추지 않는다. 차이와 바꾸는 함수의 목록은
+`docs/work/2026-10-20-game-db.md`의 「패킷과 DB 사이의 변환 지점」에 있다.
 
 **Architecture Invariant:** 룸 퇴장과 진행 저장은 `GameSession::OnDisconnected`에서만 시작한다.
 `C_LEAVE_GAME`도 연결을 끊어서 이 경로로 온다. 그래서 정상 종료와 크래시, 네트워크 단절이 같은
@@ -371,12 +402,11 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 |---|---|---|
 | 인증 ↔ 게임 | Redis 인증 티켓 키의 형태, 값, TTL | 로그인이 통과해도 게임 입장이 실패 |
 | 클라 ↔ 게임 서버 | 생성된 패킷 | 빌드는 통과하고 런타임에 어긋남 |
-| 게임 서버 ↔ GameDB | SQL 스크립트 | 부팅 또는 첫 쿼리에서 터짐 |
+| 게임 서버 ↔ GameDB | 마이그레이션 파일(`Server/GameServer/Migrations/`) | 부팅 또는 첫 쿼리에서 터짐 |
 
-**주의: 계정 번호는 두 티어 모두 `BIGINT`이고, Redis에는 10진수 문자열로 들어간다.** `Account.AccountId`와
-`Characters.user_id`는 모두 `BIGINT`다. 인증 서버는 `mssql` 드라이버가 돌려준 문자열을 숫자로 바꾸지 않고 그대로 넣으므로,
-2^53을 넘는 계정 번호도 정확히 전달된다. 게임 서버는 아직 옛 계약대로 JSON 정수 `userId`를 읽으므로 이 값을 읽지 못한다.
-다음 GameServer 작업에서 문자열을 `BIGINT`로 읽게 맞춘다.
+**주의: 계정 번호는 두 티어 모두 `BIGINT`이고, Redis에는 10진수 문자열로 들어간다.** `AccountDB`의 `Account.AccountId`와
+`GameDB`의 `Account.AccountId`, `Character.AccountId`는 모두 `BIGINT`다. 인증 서버는 `mssql` 드라이버가 돌려준 문자열을 숫자로 바꾸지 않고 그대로 넣으므로,
+2^53을 넘는 계정 번호도 정확히 전달된다. 게임 서버는 이 문자열을 `int64`로 읽고, int64 범위를 넘는 값은 거절한다.
 
 ---
 
@@ -385,11 +415,13 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 ### 저장소
 
 LocalDB 인스턴스는 그 인스턴스를 소유한 티어마다 하나다. 인스턴스 이름은 티어를, 데이터베이스 이름은 데이터 영역을
-따른다. 인증 서버의 DB는 `(localdb)\P1Auth`의 `AccountDB`다. 게임 서버의 인스턴스는 다음 GameDB 작업에서 이 규칙에 맞춘다.
+따른다. 인증 서버의 DB는 `(localdb)\P1Auth`의 `AccountDB`다. 게임 서버의 DB는 `(localdb)\P1Game`의 `GameDB`이고,
+같은 인스턴스의 `GameDB_Test`는 실제 DB에 붙는 테스트만 쓴다.
 근거는 `docs/adr/0014-split-db-instances-by-tier.md`에 있다. 접속 문자열의 출처도 다르다. 게임 쪽은 `Config`의 기본값과
 환경 변수이고, 인증 쪽은 환경 파일이다.
 **Architecture Invariant:** 각 DB는 소유 티어만 접근한다. 교차 접근 경로가 없다.
-인스턴스·경로·스크립트 목록은 `docs/build.md`. 스키마의 원본은 SQL 스크립트다.
+인스턴스·경로·스크립트 목록은 `docs/build.md`. 스키마의 원본은 각 서버의 마이그레이션 파일이다
+(`Server/AuthServer/migrations/`, `Server/GameServer/Migrations/`).
 
 ### 코드 생성
 

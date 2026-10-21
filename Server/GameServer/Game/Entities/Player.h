@@ -9,6 +9,8 @@ class InventoryComponent;
 class EquipmentComponent;
 struct RoomEnterData;
 struct TownRespawn;
+struct LevelExp;
+class ClassLevelTable;
 
 /** 다음 레벨로 오를 때 더할 스탯 증가량. */
 struct NextLevelUpData
@@ -17,7 +19,6 @@ struct NextLevelUpData
     int64 maxMpIncrement = 0;
     int64 paIncrement = 0;
     int64 maIncrement = 0;
-    int64 expRequirement = 0;
 };
 
 //~ 요청 처리 결과
@@ -101,7 +102,7 @@ protected:
 public:
     /**
      * 플레이어 정보를 모두 채운 뒤 부른다. 언리얼의 FinishSpawning에 대응한다.
-     * 불러온 스탯이 계산 결과와 맞지 않으면 false.
+     * 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 false.
      */
     bool OnLoaded();
 
@@ -111,7 +112,7 @@ private:
      * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false.
      */
     bool ApplyProgress(const PlayerProgress& progress);
-    /** 불러온 스탯이 계산 결과와 어긋나면 사유를 로그에 남기고 false. */
+    /** 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 사유를 로그에 남기고 false. */
     bool ValidateLoadedStat();
 
     //~ 요청 처리
@@ -165,15 +166,22 @@ private:
 public:
     /** rewardResultPkt의 보상을 적용하고 결과를 그 패킷에 쓴다. 최대 레벨에서는 경험치를 버린다. */
     void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
-    /** 최대 레벨이면 아무것도 하지 않는다. */
-    void OnLevelUp();
     /** 직업 레벨 표의 마지막 레벨이면 true. 레벨 표가 없는 직업도 true. */
     bool IsMaxLevel() const;
 
 private:
+    /** 레벨을 하나 올리고 레벨 표의 증가량을 스탯에 더한다. 최대 레벨이면 아무것도 하지 않는다. */
+    void OnLevelUp();
     void CacheNextLevelUpData();
+    /**
+     * 누적 경험치를 바꾸고, 클라이언트에 보낼 레벨 안의 경험치와 그 레벨의 요구치를 스탯에 쓴다.
+     * 레벨은 바꾸지 않는다. 돌려받은 레벨에 맞추는 일은 호출자가 한다.
+     */
+    LevelExp SetTotalExp(const ClassLevelTable& classLevelTable, int64 totalExp);
 
     NextLevelUpData _nextLevelUpData;
+    /** DB에 저장하는 누적 경험치. 스탯의 경험치는 이 값에서 계산한 레벨 안의 값이다. */
+    int64 _totalExp = 0;
 
     //~ 스탯
 private:
@@ -246,7 +254,7 @@ public:
 
     /** 저장할 진행의 사본을 만든다. 룸 큐 위에서만 부른다. */
     PlayerSaveData MakeSaveData() const;
-    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 룸 번호도 마을로 바꾼다. */
+    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 맵과 룸 번호도 마을로 바꾼다. */
     void ApplyTownRespawnForSave(const TownRespawn& town);
 
 private:

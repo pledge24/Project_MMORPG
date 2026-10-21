@@ -17,7 +17,9 @@ int main(int argc, char** argv)
     SetConsoleOutputCP(CP_UTF8);
 
     // 운영 코드와 같은 전역 객체를 만든다. 테스트는 이 객체가 만든 로거와 룸 관리자를 쓴다.
+    // 아이템을 새 칸에 넣으면 UID를 발급하므로 발급기도 만든다. 노드 번호는 Debug 서버의 기본값과 같은 0이다.
     ServerContext context;
+    context.CreateIdGenerator(0);
 
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

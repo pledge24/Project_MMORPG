@@ -487,20 +487,21 @@ Server/
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점
 │   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정
-│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리, 저장 게이트, 진행 조율자, 게임 입장, 액세스 토큰 값 해석
+│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리, 저장 게이트, 진행 조율자, 게임 입장, 인증 티켓 값 해석
 │   ├── Game/               게임 도메인
-│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정, 이동 위치 판정
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 진행 사본과 저장 사본
 │   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   ├── AI/             몬스터 AI 컴포넌트
+│   │   ├── Progress/       누적 경험치와 레벨 판정
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
-│   ├── DB/                 데이터별 DAO(캐릭터 목록, 캐릭터 상태, 아이템), 진행 저장소, DB 스레드 루프
-│   ├── Queries/            GameDB 스키마 스크립트
+│   ├── DB/                 데이터별 DAO(계정, 캐릭터 목록, 캐릭터 상태, 아이템, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 스레드 루프
+│   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
-│   └── Utils/
+│   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
 ├── GameServerTests/
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
@@ -518,8 +519,8 @@ Server/
 `ServerCore`로 새어 들어가면 그 경계가 사라진다.
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
-`DB/`, `Queries/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 여덟은 게임 규칙이다. 이 층을 없애면
-폴더 열세 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
+`DB/`, `Migrations/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 아홉은 게임 규칙이다. 이 층을 없애면
+폴더 열다섯 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
@@ -532,8 +533,8 @@ Server/
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
 `Game/Combat/`은 피격과 처치를 판정한다. 룸과 세션을 모르고, 대상 찾기와 결과 전송은 `Game/Room/`이
-맡는다. `Game/Room/`의 `RoomTransfer`도 같은 모양이다. 룸 이동과 리스폰 요청을 판정하고, 퇴장과 입장,
-결과 전송은 `Room`이 맡는다.
+맡는다. `Game/Room/`의 `RoomTransfer`도 같은 모양이다. 룸 이동과 리스폰 요청을 판정하고, 맵과 좌표로 입장할 룸을
+고른다. 퇴장과 입장, 결과 전송은 `Room`이 맡는다.
 
 `Game/Characters/`는 계정이 가진 캐릭터를 만들고 지우는 규칙과 슬롯 규칙을 담는다. 이 폴더의 코드는
 엔티티가 아니다. 월드에 서 있는 플레이어가 아니라 캐릭터 선택 화면의 캐릭터 목록을 다루므로 `Game/Entities/`에
@@ -543,6 +544,11 @@ Server/
 
 `Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+
+`Game/Progress/`는 진행의 규칙을 담는다. 2026년 10월 20일(#252) 기준으로 누적 경험치와 레벨 표로 레벨을 정하고
+보상과 사망 페널티를 판정하는 `Leveling`만 있다. 룸과 세션을 모르고, 판정 결과를 플레이어에 쓰는 일은
+`Game/Entities/Player`가 맡는다. 클라이언트의 `Game/Progress/`는 내 플레이어의 진행을 들고 있는 서브시스템이고,
+두 폴더는 같은 도메인(진행)을 다루므로 분류명을 맞춘다.
 
 SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임 서버가, `AccountDB`는 인증 서버가
 소유한다.

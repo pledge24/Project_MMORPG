@@ -26,11 +26,8 @@
     <Filter Include="DB">
       <UniqueIdentifier>{0287b348-939c-4007-8cee-79ad2e0a1549}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Queries">
-      <UniqueIdentifier>{16bdea6a-c160-4039-b349-dd326eaabaea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Queries\Schema">
-      <UniqueIdentifier>{7b2e4f1a-3c8d-4e5b-9a6f-1d2c3b4a5e6f}</UniqueIdentifier>
+    <Filter Include="Migrations">
+      <UniqueIdentifier>{5d0f9a3e-8b27-4c61-a4e9-2f73c1b8d605}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Data">
       <UniqueIdentifier>{c1cdcfa1-e243-42a2-ab0e-55ffd15cd2ac}</UniqueIdentifier>
@@ -56,6 +53,9 @@
     <Filter Include="Game\Characters">
       <UniqueIdentifier>{c86c3240-4ec0-44a0-b694-596060a93c50}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Progress">
+      <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Network\ItemRequests.cpp">
@@ -67,7 +67,7 @@
     <ClCompile Include="Network\GameEntry.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="Network\AccessToken.cpp">
+    <ClCompile Include="Network\AuthTicket.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\pch.cpp">
@@ -110,8 +110,14 @@
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\SnowflakeIdGenerator.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Characters\CharacterCreation.cpp">
       <Filter>Game\Characters</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Progress\Leveling.cpp">
+      <Filter>Game\Progress</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
@@ -128,7 +134,13 @@
     <ClCompile Include="Game\Entities\Creature.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="DB\AccountDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
     <ClCompile Include="DB\CharacterListDAO.cpp">
+      <Filter>DB</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\IssuedIdDAO.cpp">
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="DB\CharacterStateDAO.cpp">
@@ -140,7 +152,7 @@
     <ClCompile Include="DB\ProgressStorage.cpp">
       <Filter>DB</Filter>
     </ClCompile>
-    <ClCompile Include="DB\ItemSaveRows.cpp">
+    <ClCompile Include="DB\ItemRows.cpp">
       <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="Game\Inventory\InventoryComponent.cpp">
@@ -190,7 +202,7 @@
     <ClInclude Include="Network\GameEntry.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="Network\AccessToken.h">
+    <ClInclude Include="Network\AuthTicket.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">
@@ -235,8 +247,14 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\SnowflakeIdGenerator.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Characters\CharacterCreation.h">
       <Filter>Game\Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Progress\Leveling.h">
+      <Filter>Game\Progress</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityFactory.h">
       <Filter>Game\Entities</Filter>
@@ -259,7 +277,13 @@
     <ClInclude Include="Game\Entities\Creature.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="DB\AccountDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
     <ClInclude Include="DB\CharacterListDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\IssuedIdDAO.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\CharacterStateDAO.h">
@@ -271,7 +295,7 @@
     <ClInclude Include="DB\ProgressStorage.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DB\ItemSaveRows.h">
+    <ClInclude Include="DB\ItemRows.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\DAOCommon.h">
@@ -339,32 +363,8 @@
     <None Include="..\..\Protocol\Schema\Struct.proto">
       <Filter>Protocol\Schema</Filter>
     </None>
-    <None Include="Queries\GameDB_CreateAllTables.sql">
-      <Filter>Queries</Filter>
-    </None>
-    <None Include="Queries\AlterTable.sql">
-      <Filter>Queries</Filter>
-    </None>
-    <None Include="Queries\DEBUG.sql">
-      <Filter>Queries</Filter>
-    </None>
-    <None Include="Queries\GameDB_InsertAdminAccount.sql">
-      <Filter>Queries</Filter>
-    </None>
-    <None Include="Queries\GameDB_GetMaxItemUid.sql">
-      <Filter>Queries</Filter>
-    </None>
-    <None Include="Queries\Schema\current.sql">
-      <Filter>Queries\Schema</Filter>
-    </None>
-    <None Include="Queries\Schema\GameDB.example.sql">
-      <Filter>Queries\Schema</Filter>
-    </None>
-    <None Include="Queries\Schema\GameDB.target.sql">
-      <Filter>Queries\Schema</Filter>
-    </None>
-    <None Include="Queries\Schema\schema.erd.json">
-      <Filter>Queries\Schema</Filter>
+    <None Include="Migrations\001_init.sql">
+      <Filter>Migrations</Filter>
     </None>
     <None Include="Game\Data\Json\S_Item.json">
       <Filter>Game\Data\Json</Filter>

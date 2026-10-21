@@ -1,18 +1,20 @@
 #include "Core/pch.h"
 #include "Core/Config.h"
 #include "Utils/EncodingConverter.h"
+#include "Utils/SnowflakeIdGenerator.h"
 #include <cstdlib>
 
 namespace
 {
     const wchar_t* DEFAULT_DB_CONNECTION_STRING =
-        L"Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\\ProjectModels;Database=GameDB;Trusted_Connection=Yes;";
+        L"Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\\P1Game;Database=GameDB;Trusted_Connection=Yes;";
     const char* DEFAULT_REDIS_URI = "tcp://127.0.0.1:6379";
     const char* DEFAULT_BIND_ADDRESS = "127.0.0.1";
     constexpr uint16 DEFAULT_PORT = 7777;
     constexpr int32 DEFAULT_MAX_SESSION_COUNT = 30;
     constexpr int32 DEFAULT_WORKER_THREAD_COUNT = 5;
     constexpr int32 DEFAULT_DB_THREAD_COUNT = 5;
+    constexpr int32 DEFAULT_DEBUG_SERVER_NODE_ID = 0;
 
     // min~max가 아니거나 숫자가 아니면 nullopt.
     std::optional<int32> ParseInt(const string& text, int32 min, int32 max)
@@ -47,7 +49,7 @@ namespace
     }
 }
 
-Config Config::Load(const EnvLookup& lookup)
+Config Config::Load(const EnvLookup& lookup, BuildConfiguration build)
 {
     Config config;
     config.dbConnectionString = DEFAULT_DB_CONNECTION_STRING;
@@ -75,6 +77,19 @@ Config Config::Load(const EnvLookup& lookup)
     // 연결 수는 DB 스레드 수가 정해진 뒤에 기본값을 정한다. 스레드만 늘리고 풀을 그대로 두면 잡이 연결을 빌리지 못한다.
     config.dbConnectionCount = config.dbThreadCount;
     OverrideInt(lookup, "P1_GAME_DB_CONNECTIONS", 1, INT32_MAX, config.dbConnectionCount);
+
+    // 노드 번호는 틀린 값을 기본값으로 바꾸지 않는다. 다른 노드와 번호가 겹치면 발급한 ID가 겹친다.
+    // 범위는 Validate가 본다. 노드가 하나뿐인 개발 머신(Debug)만 번호가 없을 때 0을 쓴다.
+    if (std::optional<string> text = lookup("P1_SERVER_NODE_ID"))
+    {
+        config.serverNodeId = ParseInt(text.value(), INT32_MIN, INT32_MAX);
+        if (config.serverNodeId.has_value() == false)
+            GLogger->Warning("P1_SERVER_NODE_ID 값이 정수가 아니다: {}", text.value());
+    }
+    else if (build == BuildConfiguration::Debug)
+    {
+        config.serverNodeId = DEFAULT_DEBUG_SERVER_NODE_ID;
+    }
 
     return config;
 }
@@ -105,6 +120,14 @@ std::optional<string> Config::Validate() const
     if (dbConnectionCount < dbThreadCount)
         return format("P1_GAME_DB_CONNECTIONS({})가 DB 스레드 수({})보다 작다. DB 스레드마다 연결이 하나씩 있어야 한다",
             dbConnectionCount, dbThreadCount);
+
+    if (serverNodeId.has_value() == false)
+        return format("P1_SERVER_NODE_ID가 없거나 정수가 아니다. 이 서버의 노드 번호(0~{})를 다른 서버와 겹치지 않게 넣는다",
+            SnowflakeIdGenerator::MAX_NODE_ID);
+
+    // 노드 번호는 ID의 10비트 자리에 들어간다. 범위를 넘으면 시각 비트를 덮어 다른 노드의 ID와 겹친다.
+    if (serverNodeId.value() < 0 || serverNodeId.value() > SnowflakeIdGenerator::MAX_NODE_ID)
+        return format("P1_SERVER_NODE_ID({})가 0~{}가 아니다", serverNodeId.value(), SnowflakeIdGenerator::MAX_NODE_ID);
 
     return std::nullopt;
 }

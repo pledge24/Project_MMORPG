@@ -149,6 +149,33 @@ struct MapTemplate
     int32 maxMonsterCount = 0;
 };
 
+/** 재화 표의 재화 종류. 서버가 종류로 찾아 쓰는 재화다. 기획 원본은 열거자 이름(GOLD)을 적는다. */
+enum class CurrencyType : uint8
+{
+    GOLD = 1,
+};
+
+/** 재화 표(S_Currency.json)의 한 행. */
+struct CurrencyTemplate
+{
+    /** DB가 재화를 가리키는 번호(CurrencyId)로 쓴다. */
+    int32 templateId = 0;
+    CurrencyType currencyType = CurrencyType::GOLD;
+};
+
+/** 캐릭터 생성 표(S_Character_Creation.json)의 유일한 행. 새 캐릭터와 새 계정이 처음 갖는 값이다. */
+struct CharacterCreationTemplate
+{
+    /** 시작 맵. 맵 표의 mapId다. */
+    int32 startMapId = 0;
+    TemplatePos startPos;
+    float startYaw = 0.f;
+    /** 0 이상이다. */
+    int64 startGold = 0;
+    /** 1 이상 255 이하다. */
+    int32 defaultCharacterSlotCount = 0;
+};
+
 /** Gamedata에 한 번에 설치하는 기획 데이터 표 전체. */
 struct GamedataTables
 {
@@ -160,4 +187,11 @@ struct GamedataTables
     unordered_map<int32, ClassLevelTable> classLevelTables;
     /** 사망한 플레이어가 돌아가는 마을 룸. 리스폰 지점이 있는 유일한 맵이다. */
     int32 townRoomId = 0;
+
+    unordered_map<int32, CurrencyTemplate> currencies;
+    /** 재화 종류가 GOLD인 유일한 재화. */
+    int32 goldCurrencyId = 0;
+    CharacterCreationTemplate characterCreation;
+    /** 아이템 종류(Protocol::ItemType) → 인벤토리에서 그 종류 구역의 칸 수. NONE을 뺀 모든 종류가 있다. */
+    unordered_map<int32, int32> inventorySlotCounts;
 };

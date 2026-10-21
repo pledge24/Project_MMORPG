@@ -6,10 +6,12 @@
 #include "Game/Room/Room.h"
 #include "Network/GameEntry.h"
 #include "Network/ItemRequests.h"
-#include "Network/AccessToken.h"
+#include "Network/AuthTicket.h"
+#include "DB/AccountDAO.h"
 #include "DB/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Game/Characters/CharacterCreation.h"
+#include "Utils/SnowflakeIdGenerator.h"
 
 namespace
 {
@@ -95,29 +97,29 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
         {
             GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-            // 액세스 토큰은 한 번만 쓴다. 같은 토큰의 로그인이 다른 DB 큐에서 동시에 와도
-            // 키를 지운 쪽 하나만 통과한다.
-            const string tokenKey = "accessToken:" + pkt.access_token();
+            // 인증 티켓은 한 번만 쓴다. 같은 티켓의 로그인이 다른 DB 큐에서 동시에 와도
+            // 키를 지운 쪽 하나만 통과한다. 키 형식은 인증 서버와의 계약이다.
+            const string ticketKey = "authTicket:" + pkt.access_token();
             RedisRef redis = GRedisManager->GetRedis();
-            auto val = redis->get(tokenKey);
-            if (val.has_value() == false || redis->del(tokenKey) == 0)
+            auto val = redis->get(ticketKey);
+            if (val.has_value() == false || redis->del(ticketKey) == 0)
             {
-                GLogger->Warning("액세스 토큰이 없거나 이미 쓰였다");
-                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
+                GLogger->Warning("인증 티켓이 없거나 이미 쓰였다");
+                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "인증 티켓 없음");
                 return;
             }
 
-            // 토큰은 이미 지웠다. 값을 읽지 못하면 다시 쓸 수 없으므로 응답 없이 끝내지 말고 끊는다.
-            optional<AccessToken::Payload> payload = AccessToken::ParsePayload(*val);
-            if (payload.has_value() == false)
+            // 티켓은 이미 지웠다. 값을 읽지 못하면 다시 쓸 수 없으므로 응답 없이 끝내지 말고 끊는다.
+            optional<int64> accountId = AuthTicket::ParseAccountId(*val);
+            if (accountId.has_value() == false)
             {
-                GLogger->Warning("액세스 토큰 값의 형식이 틀렸다");
-                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "Invalid Access Token");
+                GLogger->Warning("인증 티켓 값의 형식이 틀렸다");
+                KickSession(gameSession, Protocol::LEAVE_REASON_INVALID_TOKEN, "인증 티켓 값 형식 오류");
                 return;
             }
 
-            const int64 userId = payload->userId;
-            GLogger->Info("로그인 userId: {}, username: {}", userId, payload->username);
+            const int64 userId = *accountId;
+            GLogger->Info("로그인 userId: {}", userId);
 
             // 한 계정은 세션 하나만 가진다. 나중에 온 로그인이 이기고 기존 세션은 끊긴다.
             // 기존 세션의 룸 퇴장과 저장은 접속 종료 경로(GameSession::OnDisconnected)가 한다.
@@ -139,15 +141,18 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
             Protocol::S_LOGIN loginPkt;
             try
             {
-                vector<Protocol::CharacterOverview> characters;
                 DBConnectionGuard conn;
+                // 이 월드에 처음 들어온 계정이면 계정 행을 만든다. 캐릭터 생성은 이 행이 있어야 한다.
+                const int32 characterSlotCount = AccountDAO::RecordLogin(*conn, userId);
+
+                vector<Protocol::CharacterOverview> characters;
                 CharacterListDAO::LoadCharacterList(*conn, userId, OUT characters);
 
                 for (Protocol::CharacterOverview& character : characters)
                     *loginPkt.add_characters() = std::move(character);
 
-                // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. CreateCharacter가 막는 한도와 같은 값이다.
-                loginPkt.set_character_slot_count(CharacterCreation::DEFAULT_CHARACTER_SLOT_COUNT);
+                // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. CreateCharacter가 막는 한도와 같은 계정 행의 값이다.
+                loginPkt.set_character_slot_count(characterSlotCount);
                 loginPkt.set_success(true);
             }
             catch (const exception& error)
@@ -201,7 +206,8 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
             try
             {
                 DBConnectionGuard conn;
-                const CreateCharacterResult result = CharacterListDAO::CreateCharacter(*conn, pkt.character(), userId);
+                // 거절된 생성이 받은 ID는 다시 쓰지 않고 버린다.
+                const CreateCharacterResult result = CharacterListDAO::CreateCharacter(*conn, userId, GIdGenerator->Next(), pkt.character());
                 if (result.rejection.has_value())
                 {
                     createCharacterPkt.set_success(false);

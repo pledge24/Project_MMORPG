@@ -123,12 +123,12 @@ CREATE TABLE CharacterBuff
 -- 소비 아이템과 퀘스트 아이템은 세부 테이블 없이 이 테이블만 사용
 CREATE TABLE Item
 (
-    ItemUid    BIGINT       NOT NULL, -- 서버가 발급하는 전역 고유 ID
-    OwnerId    BIGINT       NOT NULL, -- 캐릭터 ID
-    TemplateId INT          NOT NULL, -- 기획 데이터의 아이템 ID
-    ItemType   TINYINT      NOT NULL, -- 1:장비, 2:소비, 3:퀘스트 ...
-    Container  TINYINT      NOT NULL, -- 인벤토리, 창고, 착용 슬롯 등
-    SlotIndex  SMALLINT     NOT NULL, -- 착용 슬롯에서는 장착 부위 번호
+    ItemUid    BIGINT       NOT NULL,                                                      -- 서버가 발급하는 전역 고유 ID
+    OwnerId    BIGINT       NOT NULL,                                                      -- 캐릭터 ID
+    TemplateId INT          NOT NULL,                                                      -- 기획 데이터의 아이템 ID
+    ItemType   TINYINT      NOT NULL,                                                      -- 1:장비, 2:소비, 3:퀘스트 ...
+    Container  TINYINT      NOT NULL,                                                      -- 인벤토리, 창고, 착용 슬롯 등
+    SlotIndex  SMALLINT     NOT NULL,                                                      -- 착용 슬롯에서는 장착 부위 번호
     StackCount INT          NOT NULL
         CONSTRAINT DF_Item_StackCount DEFAULT 1,
     IsBound    BIT          NOT NULL
@@ -137,7 +137,7 @@ CREATE TABLE Item
         CONSTRAINT DF_Item_CreatedAt DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_Item PRIMARY KEY (ItemUid),
     CONSTRAINT UQ_Item_OwnerId_Container_SlotIndex UNIQUE (OwnerId, Container, SlotIndex), -- 슬롯(착용 부위 포함) 하나에 아이템 하나
-    CONSTRAINT UQ_Item_ItemUid_ItemType UNIQUE (ItemUid, ItemType), -- 서브타입 테이블의 복합 외래 키 대상
+    CONSTRAINT UQ_Item_ItemUid_ItemType UNIQUE (ItemUid, ItemType),                        -- 서브타입 테이블의 복합 외래 키 대상
     CONSTRAINT FK_Item_Character FOREIGN KEY (OwnerId)
         REFERENCES [Character] (CharacterId),
     CONSTRAINT CK_Item_StackCount CHECK (StackCount >= 1),
@@ -176,7 +176,7 @@ CREATE TABLE ItemGearOption
 CREATE TABLE CharacterCurrency
 (
     CharacterId BIGINT       NOT NULL,
-    CurrencyId  INT          NOT NULL, -- 기획 데이터의 재화 ID (골드, 명예 점수 등)
+    CurrencyId  INT          NOT NULL,                                      -- 기획 데이터의 재화 ID (골드, 명예 점수 등)
     Amount      BIGINT       NOT NULL
         CONSTRAINT DF_CharacterCurrency_Amount DEFAULT 0,
     UpdatedAt   DATETIME2(3) NOT NULL
@@ -190,11 +190,11 @@ CREATE TABLE CharacterCurrency
 -- 계정 단위 재화: 같은 계정의 모든 캐릭터가 공유
 CREATE TABLE AccountCurrency
 (
-    AccountId   BIGINT       NOT NULL,
-    CurrencyId  INT          NOT NULL,
-    Amount      BIGINT       NOT NULL
+    AccountId  BIGINT       NOT NULL,
+    CurrencyId INT          NOT NULL,
+    Amount     BIGINT       NOT NULL
         CONSTRAINT DF_AccountCurrency_Amount DEFAULT 0,
-    UpdatedAt   DATETIME2(3) NOT NULL
+    UpdatedAt  DATETIME2(3) NOT NULL
         CONSTRAINT DF_AccountCurrency_UpdatedAt DEFAULT SYSUTCDATETIME(), -- INSERT 시에만 적용, UPDATE 시에는 서버가 지정
     CONSTRAINT PK_AccountCurrency PRIMARY KEY (AccountId, CurrencyId),
     CONSTRAINT FK_AccountCurrency_Account FOREIGN KEY (AccountId)
@@ -206,15 +206,15 @@ CREATE TABLE AccountCurrency
 -- 고빈도 이벤트(몬스터 처치, 일반 상점 구매 등)는 정기 저장 행의 순변동에 합산
 CREATE TABLE CurrencyLog
 (
-    LogId        BIGINT       IDENTITY(1, 1) NOT NULL,
-    OwnerType    TINYINT      NOT NULL, -- 1:캐릭터, 2:계정
-    OwnerId      BIGINT       NOT NULL, -- OwnerType에 따라 CharacterId 또는 AccountId
-    CurrencyId   INT          NOT NULL,
-    Delta        BIGINT       NOT NULL, -- 획득은 양수, 소모는 음수
-    BalanceAfter BIGINT       NOT NULL,
-    Reason       SMALLINT     NOT NULL, -- 0:정기 저장, 1:거래, 2:우편, 3:경매장, 4:캐시, 5:한정 상품 ...
-    RefId        BIGINT       NULL,     -- Reason에 따라 거래 ID, 우편 ID, 경매 ID 등
-    CreatedAt    DATETIME2(3) NOT NULL
+    LogId        BIGINT IDENTITY (1, 1) NOT NULL,
+    OwnerType    TINYINT                NOT NULL, -- 1:캐릭터, 2:계정
+    OwnerId      BIGINT                 NOT NULL, -- OwnerType에 따라 CharacterId 또는 AccountId
+    CurrencyId   INT                    NOT NULL,
+    Delta        BIGINT                 NOT NULL, -- 획득은 양수, 소모는 음수
+    BalanceAfter BIGINT                 NOT NULL,
+    Reason       SMALLINT               NOT NULL, -- 0:정기 저장, 1:거래, 2:우편, 3:경매장, 4:캐시, 5:한정 상품 ...
+    RefId        BIGINT                 NULL,     -- Reason에 따라 거래 ID, 우편 ID, 경매 ID 등
+    CreatedAt    DATETIME2(3)           NOT NULL
         CONSTRAINT DF_CurrencyLog_CreatedAt DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_CurrencyLog PRIMARY KEY (LogId),
     CONSTRAINT CK_CurrencyLog_OwnerType CHECK (OwnerType IN (1, 2)),

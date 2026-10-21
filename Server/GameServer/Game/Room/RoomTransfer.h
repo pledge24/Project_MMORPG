@@ -12,8 +12,17 @@ struct RoomEnterData
 /** 마을 리스폰의 목적지. 맵 표에서 읽은 값이다. */
 struct TownRespawn
 {
+    int32 mapId = 0;
     int32 roomId = 0;
     /** 리스폰 지점. 엔티티 id는 비어 있고 이동 상태는 Idle이다. */
+    Protocol::PosInfo pos;
+};
+
+/** 입장할 룸과 그 룸에 넣을 위치. 마을로 보내면 맵도 바뀌므로 룸이 속한 맵을 함께 싣는다. */
+struct RoomAssignment
+{
+    int32 mapId = 0;
+    int32 roomId = 0;
     Protocol::PosInfo pos;
 };
 
@@ -53,4 +62,10 @@ namespace RoomTransfer
      * 마을이 맵 표에 없거나 리스폰 지점이 없으면 nullopt.
      */
     optional<TownRespawn> FindTownRespawn();
+
+    /**
+     * 맵과 좌표로 입장할 룸을 고른다. 어느 룸의 범위에도 들지 않으면 마을 리스폰 지점으로 보낸다.
+     * 마을 리스폰 지점도 없으면 nullopt. 어느 스레드에서 불러도 된다.
+     */
+    optional<RoomAssignment> AssignRoom(int32 mapId, const Protocol::PosInfo& pos);
 }

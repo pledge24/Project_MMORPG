@@ -4,6 +4,7 @@ class RoomManager;
 class GameSessionManager;
 class SaveGate;
 class ProgressCoordinator;
+class SnowflakeIdGenerator;
 
 /**
  * 게임 서버 전역 객체의 수명 관리자.
@@ -20,10 +21,17 @@ public:
     ServerContext(const ServerContext&) = delete;
     ServerContext& operator=(const ServerContext&) = delete;
 
+    /**
+     * ID 발급기를 만들어 GIdGenerator에 건다. 노드 번호는 설정에서 오므로 설정 검사를 통과한 뒤에 한 번만 부른다.
+     * nodeId는 검증하지 않는다.
+     */
+    void CreateIdGenerator(int32 nodeId);
+
 private:
     /** 선언 순서가 생성 순서다. 게임 서버 전역이 모두 사라진 뒤에 사라지도록 맨 앞에 둔다. */
     CoreGlobal _core;
     unique_ptr<RoomManager> _roomManager;
+    unique_ptr<SnowflakeIdGenerator> _idGenerator;
     JobQueueRef _sessionJobQueue;
     unique_ptr<GameSessionManager> _sessionManager;
     unique_ptr<SaveGate> _saveGate;

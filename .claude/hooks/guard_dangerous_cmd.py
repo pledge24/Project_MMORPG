@@ -69,12 +69,15 @@ SHELL_TOOLS = {
 SQL_TOOLS = {
     "mcp__rider__execute_sql_query",
 }
-# Claude가 SQL을 실행해도 되는 Rider 데이터 소스. 읽기 전용 계정 claude_ro로 붙는 연결만 넣는다.
-# 사람이 편집용으로 만든 데이터 소스(Windows 인증)는 여기 넣지 않는다.
+# Claude가 SQL을 실행해도 되는 Rider 데이터 소스. 읽기 전용 계정 claude_ro와 행 쓰기 전용 계정
+# claude_rw로 붙는 연결만 넣는다. 무엇을 실행할 수 있는지는 각 계정의 DB 권한이 정한다.
+# 사람이 편집용으로 만든 데이터 소스(Windows 인증)는 관리자 권한이므로 여기 넣지 않는다.
 # id는 mcp__rider__list_database_connections 의 결과에서 가져온다.
 SQL_ALLOWED_CONNECTIONS = {
     "ec1a21ae-0018-4e67-8d1e-9ad0a36a97e1",  # AccountDB (claude_ro)
-    "fb62fcf6-27f1-42eb-97d1-9d5139bab77f",  # GameDB (claude_ro)
+    "621627b2-31ed-43e2-ba83-75f1a6ec8e20",  # GameDB (claude_ro), P1Game
+    "6cc91c53-c803-40bf-8501-bda329222016",  # GameDB (claude_rw), P1Game
+    "c063e213-1cdd-4be6-89f6-492f47a3937c",  # GameDB_Test (claude_rw), P1Game
 }
 
 # rootFolder 없이 부르면 안 되는 Rider MCP 툴 — 상태를 바꾸는 것들만.

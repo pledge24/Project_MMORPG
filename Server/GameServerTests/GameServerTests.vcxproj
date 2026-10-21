@@ -174,7 +174,12 @@
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
-    <ClCompile Include="ItemDAOTests.cpp" />
+    <ClCompile Include="GameDBSchemaTests.cpp" />
+    <ClCompile Include="GameDBCharacterListTests.cpp" />
+    <ClCompile Include="GameDBIssuedIdTests.cpp" />
+    <ClCompile Include="GameDBProgressTests.cpp" />
+    <ClCompile Include="AccountDAOTests.cpp" />
+    <ClCompile Include="IssuedIdDAOTests.cpp" />
     <ClCompile Include="DBConnectionGuardTests.cpp" />
     <ClCompile Include="DBWorkerTests.cpp" />
     <ClCompile Include="..\GameServer\DB\DBWorker.cpp" />
@@ -183,28 +188,30 @@
     <ClCompile Include="ProgressStorageTests.cpp" />
     <ClCompile Include="GameEntryTests.cpp" />
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
-    <ClCompile Include="AccessTokenTests.cpp" />
+    <ClCompile Include="AuthTicketTests.cpp" />
     <ClCompile Include="SessionDisconnectTests.cpp" />
-    <ClCompile Include="..\GameServer\Network\AccessToken.cpp" />
+    <ClCompile Include="..\GameServer\Network\AuthTicket.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
+    <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
-    <ClCompile Include="ItemSaveRowsTests.cpp" />
+    <ClCompile Include="ItemRowsTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="MonsterTests.cpp" />
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
+    <ClCompile Include="SnowflakeIdGeneratorTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
@@ -244,8 +251,10 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
+    <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
+    <ClCompile Include="..\GameServer\Utils\SnowflakeIdGenerator.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />
@@ -261,11 +270,13 @@
     <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
+    <ClCompile Include="..\GameServer\DB\AccountDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />
+    <ClCompile Include="..\GameServer\DB\IssuedIdDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\ItemDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\ProgressStorage.cpp" />
-    <ClCompile Include="..\GameServer\DB\ItemSaveRows.cpp" />
+    <ClCompile Include="..\GameServer\DB\ItemRows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 한다.

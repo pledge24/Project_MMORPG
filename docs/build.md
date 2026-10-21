@@ -47,7 +47,7 @@ git config core.hooksPath .githooks
 
 | 환경 변수 | 기본값 |
 |---|---|
-| `P1_GAME_DB_CONNECTION_STRING` | `(localdb)\ProjectModels`의 `GameDB`, 통합 인증 |
+| `P1_GAME_DB_CONNECTION_STRING` | `(localdb)\P1Game`의 `GameDB`, 통합 인증 |
 | `P1_REDIS_URI` | `tcp://127.0.0.1:6379` |
 | `P1_GAME_SERVER_BIND_ADDRESS` | `127.0.0.1` |
 | `P1_GAME_SERVER_PORT` | `7777` |
@@ -55,9 +55,15 @@ git config core.hooksPath .githooks
 | `P1_GAME_SERVER_WORKER_THREADS` | `5`. 메인 스레드가 하나 더 합류한다 |
 | `P1_GAME_DB_THREADS` | `5` |
 | `P1_GAME_DB_CONNECTIONS` | DB 스레드 수 |
+| `P1_SERVER_NODE_ID` | Debug 빌드는 `0`. Release 빌드는 기본값이 없다 |
 
 숫자가 아니거나 범위 밖인 값은 경고를 남기고 기본값을 쓴다. 바인드 주소가 IPv4 주소가 아니거나, 연결 수가 DB 스레드 수보다
 작으면 서버가 사유를 로그에 남기고 종료 코드 1로 멈춘다.
+
+**노드 번호만은 틀린 값을 기본값으로 바꾸지 않는다.** `P1_SERVER_NODE_ID`가 0~1023의 정수가 아니거나, Release 빌드에서
+값이 없으면 서버가 종료 코드 1로 멈춘다. 서버마다 겹치지 않는 번호를 준다.
+— 노드 번호는 캐릭터 ID와 아이템 UID에 들어간다. 두 서버가 같은 번호로 뜨면 두 서버가 발급한 ID가 겹친다. 근거는
+`docs/adr/0016-issue-ids-with-snowflake.md`에 있다.
 — 연결 풀은 DB 스레드마다 하나가 있어야 한다. 모자라면 동시에 돈 DB 잡 하나가 연결을 빌리지 못하고 실패한다. 부팅 때
 `main`은 DB 스레드를 띄우기 전에 연결을 하나 빌려 아이템 번호를 읽고 돌려준다.
 
@@ -161,13 +167,16 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 | DB | 인스턴스 | 스크립트 |
 |---|---|---|
 | AccountDB | `(localdb)\P1Auth` | `Server/AuthServer/migrations/`의 파일을 번호 순서로 |
-| GameDB | `(localdb)\ProjectModels` | `Server/GameServer/Queries/GameDB_CreateAllTables.sql` |
+| GameDB · GameDB_Test | `(localdb)\P1Game` | `Server/GameServer/Migrations/`의 파일을 번호 순서로 두 DB에 |
 
-**AccountDB의 스키마는 `Server/AuthServer/migrations/`의 번호 붙은 파일로 관리한다.** 파일 이름은 `NNN_<이름>.sql`이고
+**두 서버의 스키마는 각자의 마이그레이션 폴더에 번호 붙은 파일로 관리한다.** AccountDB는 `Server/AuthServer/migrations/`,
+GameDB는 `Server/GameServer/Migrations/`다. 파일 이름은 `NNN_<이름>.sql`이고
 첫 줄에 `-- NNN: 설명`을 적는다. 각 파일은 이미 적용된 DB에 다시 실행해도 결과가 같게 쓴다. 적용한 파일은 고치지 않고,
 스키마를 바꿀 때는 다음 번호의 파일을 더한다. 적용 기록 테이블과 실행 도구는 두지 않고, 사람이 번호 순서로 실행한다.
 
-GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetMaxItemUid.sql`, `DEBUG.sql`도 있다.
+**GameDB의 마이그레이션은 `GameDB`와 `GameDB_Test`에 함께 적용한다.** 한쪽에만 적용하면 실제 DB 테스트가 게임 서버와 다른
+스키마를 검사한다. 게임 서버의 `.vcxproj`에는 마이그레이션 파일을 `None` 항목으로 등록한다. 파일을 더하면 `.vcxproj`와
+`.filters`에도 더한다.
 
 **인스턴스가 서로 다르다.** 접속 문자열의 출처도 다르다 — GameDB는 `Config`의 기본값과 환경 변수, AccountDB는 `.env`.
 
@@ -179,19 +188,43 @@ GameDB 폴더에 `AlterTable.sql`, `GameDB_InsertAdminAccount.sql`, `GameDB_GetM
 4. SQL 인증 로그인 `claude_ro`를 만들고, `AccountDB`의 사용자로 만들어 `db_datareader`에만 넣는다
 5. Rider에 아래 표의 `AccountDB` 데이터 소스 두 개(`AccountDB`, `AccountDB (사용자 전용)`)를 만든다. 드라이버는 `Microsoft SQL Server LocalDB (JetBrains)`다. 일반 SQL Server 드라이버로 만들면 `localhost`의 TCP로 붙으려다 실패한다
 
-Rider의 DB 연결은 두 벌이다.
+**새 머신에서 GameDB를 만들 때도 사람이 아래 순서로 실행한다.** `claude_ro`와 `claude_rw`는 `P1Game`의 로그인이다.
+`P1Auth`의 `claude_ro`와 이름은 같지만 인스턴스가 다르므로 따로 만든다.
+
+1. `sqllocaldb create P1Game -s`로 인스턴스를 만들고 시작한다
+2. `SERVERPROPERTY('IsIntegratedSecurityOnly')`가 `0`인지 확인한다. `claude_ro`와 `claude_rw`는 SQL 인증 로그인이다
+3. `CREATE DATABASE GameDB`와 `CREATE DATABASE GameDB_Test`를 실행하고, `Server/GameServer/Migrations/`의 파일을 번호 순서로
+   두 DB에 각각 실행한다
+4. SQL 인증 로그인 `claude_ro`를 만들고, `GameDB`의 사용자로 만들어 `db_datareader`에만 넣는다
+5. SQL 인증 로그인 `claude_rw`를 만들고, `GameDB`와 `GameDB_Test`의 사용자로 만들어 두 DB 모두에서 `db_datareader`와
+   `db_datawriter`에만 넣는다
+6. Rider에 아래 표의 GameDB 데이터 소스 네 개(`GameDB(claude_ro)`, `GameDB(claude_rw)`, `GameDB_Test(claude_rw)`,
+   `GameDB(사용자 전용)`)를 AccountDB와 같은 드라이버로 만든다
+7. 새로 만든 Claude 연결의 ID를 `.claude/hooks/guard_dangerous_cmd.py`의 `SQL_ALLOWED_CONNECTIONS`에 넣는다
+
+Rider의 DB 연결은 세 벌이다.
 
 | 데이터 소스 | 계정 | 쓰는 쪽 |
 |---|---|---|
-| `GameDB` · `AccountDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP) |
-| `GameDB (사용자 전용)` · `AccountDB (사용자 전용)` | Windows 인증 | 사람. 행 편집은 여기서 한다 |
+| `GameDB(claude_ro)` · `AccountDB` | 읽기 전용 `claude_ro` | Claude(Rider MCP)의 조회 |
+| `GameDB(claude_rw)` · `GameDB_Test(claude_rw)` | 행 쓰기 전용 `claude_rw` | Claude(Rider MCP)의 행 쓰기 |
+| `GameDB(사용자 전용)` · `AccountDB (사용자 전용)` | Windows 인증 | 사람. 스키마 변경과 마이그레이션 적용은 여기서 한다 |
 
-Claude는 `claude_ro` 연결로만 SQL을 실행한다. `.claude/hooks/guard_dangerous_cmd.py`의
+`claude_rw`는 `P1Game`의 `GameDB`와 `GameDB_Test`에서 `db_datareader`와 `db_datawriter`에만 속한다.
+그래서 행을 읽고 쓰는 문장만 실행되고, `CREATE`·`ALTER`·`DROP`·`TRUNCATE`는 DB가 권한 오류로 거부한다.
+**문장의 제한은 훅이 아니라 DB 권한이 맡는다.** 훅의 문자열 검사는 주석, 동적 SQL, 문장 구분을 다 해석하지
+못하지만 DB 권한은 우회할 수 없다. 처음에는 훅이 세션마다 처음 한 번 묻고 승인 기록을 남기는 설계였으나,
+승인된 세션을 허용하는 훅 분기를 Claude Code 자동 모드의 분류기가 우회로 판정해 막았다(2026년 10월 21일).
+같은 이유로 `claude_rw`에 `db_owner`나 `db_ddladmin`을 주지 않는다. 두 역할에는 `DROP`과 `ALTER`가 함께 들어 있다.
+
+Claude는 위 표의 Claude 연결로만 SQL을 실행한다. `.claude/hooks/guard_dangerous_cmd.py`의
 `SQL_ALLOWED_CONNECTIONS`가 `execute_sql_query`의 `connectionId`를 허용 목록과 대조해 나머지를 막는다.
+Windows 인증 연결은 관리자 권한이고 `permissions`는 툴의 인자를 보지 못하므로, 이 연결을 가르는 판정은 훅에만 있다.
+같은 훅이 WHERE 없는 `UPDATE`와 `DELETE`를 연결과 무관하게 막는다. DB 권한으로는 이 둘을 막을 수 없다.
 LocalDB는 Windows 인증이라 셸에서 붙으면 관리자가 되므로, 같은 훅이 `sqlcmd`·`osql`·`Invoke-Sqlcmd`·
 `sqllocaldb`·`SqlClient` 직접 접속도 막는다(2026년 9월 30일 차단 확인).
-**`claude_ro` 데이터 소스를 다시 만들면 ID가 바뀌어 Claude의 조회가 전부 막힌다.** 그때는 새 ID를 허용
-목록에 넣는다. 파이썬 등 임의 코드로 여는 ODBC 연결은 문자열 검사로 완전히 막을 수 없다.
+**`claude_ro`나 `claude_rw` 데이터 소스를 다시 만들면 ID가 바뀌어 Claude의 SQL이 전부 막힌다.** 그때는 새 ID를
+허용 목록에 넣는다. 파이썬 등 임의 코드로 여는 ODBC 연결은 문자열 검사로 완전히 막을 수 없다.
 
 두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
 

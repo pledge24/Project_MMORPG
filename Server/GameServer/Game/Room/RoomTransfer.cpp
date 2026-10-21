@@ -1,6 +1,38 @@
 #include "Core/pch.h"
 #include "Game/Room/RoomTransfer.h"
 
+namespace
+{
+    // 좌표가 범위 안에 드는 맵 표 행을 찾는다. 높이는 보지 않는다.
+    // 경계 위의 점은 안쪽이다. 이동 판정(MoveValidation)이 경계 위를 룸 안으로 받으므로, 경계에서 저장한
+    // 플레이어를 밖으로 판정하면 다음 입장에서 마을로 밀려난다. 두 범위가 경계를 함께 쓰면 맵 표를 행 번호
+    // 순서로 돌기 때문에 행 번호가 작은 쪽이 잡힌다.
+    const MapTemplate* FindRangeContaining(int32 mapId, const Protocol::Vector& pos)
+    {
+        for (const auto& [templateId, range] : Gamedata::GetMaps())
+        {
+            if (range.mapId != mapId)
+                continue;
+
+            if (pos.x() < range.center.x - range.depthHalfExtent || pos.x() > range.center.x + range.depthHalfExtent)
+                continue;
+            if (pos.y() < range.center.y - range.widthHalfExtent || pos.y() > range.center.y + range.widthHalfExtent)
+                continue;
+
+            return &range;
+        }
+
+        return nullptr;
+    }
+
+    // 범위를 맡을 룸을 정한다. 지금은 맵 표 행 하나가 룸 하나다.
+    // 범위 여럿을 룸 하나로 묶거나 범위 하나를 여러 룸으로 나눌 때, 입장할 룸을 고르는 규칙은 여기만 바꾼다.
+    int32 SelectRoomForRange(const MapTemplate& range)
+    {
+        return range.templateId;
+    }
+}
+
 optional<string> RoomTransfer::ValidateEnterRequest(const Protocol::C_ENTER_ROOM& pkt, int32 enteringRoomId)
 {
     switch (pkt.enter_type())
@@ -67,6 +99,7 @@ optional<TownRespawn> RoomTransfer::FindTownRespawn()
     const TemplatePos& point = town->respawnPoint.value();
 
     TownRespawn respawn;
+    respawn.mapId = town->mapId;
     respawn.roomId = townRoomId;
     respawn.pos.mutable_pos()->set_x(point.x);
     respawn.pos.mutable_pos()->set_y(point.y);
@@ -75,6 +108,19 @@ optional<TownRespawn> RoomTransfer::FindTownRespawn()
     respawn.pos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
     return respawn;
+}
+
+optional<RoomAssignment> RoomTransfer::AssignRoom(int32 mapId, const Protocol::PosInfo& pos)
+{
+    if (const MapTemplate* range = FindRangeContaining(mapId, pos.pos()))
+        return RoomAssignment{ range->mapId, SelectRoomForRange(*range), pos };
+
+    // 어느 룸에도 들지 않는 좌표는 마을 리스폰 지점에서 시작한다. 맵 표가 바뀌어 저장된 좌표가 범위 밖이 된 경우다.
+    optional<TownRespawn> town = FindTownRespawn();
+    if (town.has_value() == false)
+        return nullopt;
+
+    return RoomAssignment{ town->mapId, town->roomId, town->pos };
 }
 
 optional<string> RoomTransfer::ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos)

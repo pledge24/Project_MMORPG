@@ -77,6 +77,10 @@ void ExecuteParamSet(DBConnection& conn, string_view where, const WCHAR* query, 
     if (processedCount != rows.size())
         throw DBError(where, format("{}행 중 {}행만 처리했다", rows.size(), processedCount));
 
+    // 행이 하나면 드라이버가 행별 상태를 쓰지 않는다(ODBC Driver 17에서 확인). 그 행이 실패하면 실행이 실패로 끝난다.
+    if (rows.size() == 1)
+        return;
+
     for (size_t i = 0; i < statuses.size(); i++)
     {
         if (statuses[i] != SQL_PARAM_SUCCESS && statuses[i] != SQL_PARAM_SUCCESS_WITH_INFO)

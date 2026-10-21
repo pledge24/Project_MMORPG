@@ -8,10 +8,11 @@
 | 게임 서버 | `Server/GameServer/` | C++20, 자체 IOCP 코어 | `127.0.0.1:7777` |
 | 인증 서버 | `Server/AuthServer/` | Node.js / Express (ESM) | `.env`의 `PORT` (클라는 `5000`을 기대) |
 
-저장소: SQL Server LocalDB — GameDB는 `(localdb)\ProjectModels`, AccountDB는 `(localdb)\P1Auth`.
+저장소: SQL Server LocalDB — GameDB와 실제 DB 테스트용 GameDB_Test는 `(localdb)\P1Game`, AccountDB는 `(localdb)\P1Auth`.
 두 인스턴스는 서로 다르다. 두 서버가 공유하는 인증 티켓 저장소로 Redis(`127.0.0.1:6379`).
-**Claude는 `claude_ro` 연결(`GameDB`·`AccountDB`)로만 SQL을 실행한다.** `(사용자 전용)` 연결과 셸의 DB
-클라이언트(`sqlcmd` 등)는 훅이 막는다. DB에 쓸 일은 SQL 초안을 사람에게 넘긴다. 상세: `docs/build.md`
+**Claude는 `claude_ro` 연결(`GameDB(claude_ro)`·`AccountDB`)로 조회하고, `claude_rw` 연결(`GameDB(claude_rw)`·
+`GameDB_Test(claude_rw)`)로 행을 쓴다.** `claude_rw`는 DB 권한이 행 쓰기로 제한한다. 스키마 변경과 `AccountDB`에 쓸 일은
+SQL 초안을 사람에게 넘긴다. `(사용자 전용)` 연결과 셸의 DB 클라이언트(`sqlcmd` 등)는 훅이 막는다. 상세: `docs/build.md`
 
 ## 문서 위치
 
@@ -29,7 +30,8 @@
 - 테스트를 추가하거나 테스트 프로젝트를 고치기 전에 `docs/testing.md`
 - `docs/reports/` — 세션 리포트. 사람용 설명 자료이고 git이 추적하지 않는다(루트 `.gitignore`).
   여기 적은 것 중 앞으로도 지켜야 할 결론은 규범 문서로 옮긴다. 리포트에만 적으면 저장소에 남지 않는다
-- `docs/references/` — 2026-09에 걷어낸 하네스 v1의 이력. 현행 제약이 아니다. 현행 제약은 위 문서들의 본문에 있다
+- 새 기능이나 구조를 설계하기 시작할 때 `docs/references/` — 앞으로의 설계에 참고할 자료. 현행 제약이 아니다.
+  현행 제약은 위 문서들의 본문에 있다. 2026-09에 걷어낸 하네스 v1의 이력은 `docs/references/harness-v1/`에 있다
 
 ## Agent skills
 

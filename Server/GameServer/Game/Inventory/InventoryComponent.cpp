@@ -1,34 +1,28 @@
 #include "Core/pch.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Entities/Player.h"
+#include "Utils/SnowflakeIdGenerator.h"
 
 InventoryComponent::InventoryComponent(PlayerRef owner, Protocol::Inventory* inventory) : EntityComponent(owner)
 {
-    
-    for (int32 slotId = 0; slotId < MAX_SLOTS; slotId++)
-    {
-        Protocol::Slot* slotGear = inventory->add_gear();
-        Protocol::Slot* slotConsumables = inventory->add_consumables();
-        Protocol::Slot* slotMisc = inventory->add_miscellaneous();
-
-        slotGear->set_slot_id(slotId);
-        slotGear->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR);
-        slotGear->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
-
-        slotConsumables->set_slot_id(slotId);
-        slotConsumables->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE);
-        slotConsumables->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
-
-        slotMisc->set_slot_id(slotId);
-        slotMisc->set_type(Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC);
-        slotMisc->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
-    }
-
     _bags = {
-        {Protocol::ItemType::ITEM_TYPE_GEAR, Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, inventory->mutable_gear(), vector<bool>(MAX_SLOTS)},
-        {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, inventory->mutable_consumables(), vector<bool>(MAX_SLOTS)},
-        {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, inventory->mutable_miscellaneous(), vector<bool>(MAX_SLOTS)}
+        {Protocol::ItemType::ITEM_TYPE_GEAR, Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, inventory->mutable_gear()},
+        {Protocol::ItemType::ITEM_TYPE_CONSUMABLE, Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, inventory->mutable_consumables()},
+        {Protocol::ItemType::ITEM_TYPE_MISCELLANEOUS, Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, inventory->mutable_miscellaneous()}
     };
+
+    // 구역마다 칸 수는 기획 데이터의 인벤토리 구역 표가 정한다.
+    for (Bag& bag : _bags)
+    {
+        const int32 slotCount = Gamedata::GetInventorySlotCount(bag.itemType);
+        for (int32 slotId = 0; slotId < slotCount; slotId++)
+        {
+            Protocol::Slot* slot = bag.slots->Add();
+            slot->set_slot_id(slotId);
+            slot->set_type(bag.slotType);
+            slot->set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
+        }
+    }
 }
 
 InventoryComponent::~InventoryComponent()
@@ -53,7 +47,6 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::It
     if (targetSlot == nullptr)
         return false;
 
-    bag->dirtyFlags[availableSlotId] = true;
     if (targetSlot->has_item())
     {
         targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_MODIFIED);
@@ -73,8 +66,9 @@ bool InventoryComponent::AddItem(OUT Protocol::Slot* outSlot, const Protocol::It
         item->CopyFrom(itemInstance);
         item->set_count(count);
 
-        if (bag->itemType == Protocol::ItemType::ITEM_TYPE_GEAR && itemInstance.has_item_uid() == false)
-            item->set_item_uid(GNextItemUID.fetch_add(1));
+        // 빈 칸에 새로 놓이는 아이템은 종류와 상관없이 UID를 받는다. 이미 있는 묶음에 더한 개수는 그 묶음의 UID를 따른다.
+        if (itemInstance.has_item_uid() == false)
+            item->set_item_uid(GIdGenerator->Next());
         
         if (outSlot != nullptr)
             outSlot->CopyFrom(*targetSlot);
@@ -152,8 +146,9 @@ bool InventoryComponent::AddItem(OUT RepeatedPtrField<Protocol::Slot>* outSlotLi
 
 bool InventoryComponent::LoadItem(const Protocol::Slot& loadedSlot)
 {
+    // 구역의 칸 수를 넘는 번호는 기획 데이터가 칸 수를 줄였거나 DB가 어긋난 것이다.
     Bag* bag = FindBag(loadedSlot.type());
-    if (bag == nullptr || IsValidSlotId(loadedSlot.slot_id()) == false)
+    if (bag == nullptr || IsValidSlotId(*bag, loadedSlot.slot_id()) == false)
         return false;
 
     // 같은 칸의 두 행을 합치면 다음 저장이 한 행만 남긴다.
@@ -182,7 +177,7 @@ bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Proto
     }
 
     int32 slotId = requestSlot.slot_id();
-    if (IsValidSlotId(slotId) == false)
+    if (IsValidSlotId(*bag, slotId) == false)
     {
         GLogger->Warning("RemoveItem: 범위 밖 slot_id({})", slotId);
         return false;
@@ -192,12 +187,9 @@ bool InventoryComponent::RemoveItem(const Protocol::Slot& requestSlot, OUT Proto
     if (updatedSlot == nullptr)
         return false;
 
-    // mutable_item()과 더티 플래그는 검증 뒤에 둔다. mutable_item()은 빈 슬롯에 item을 만들어 다시는 채워지지 않게 하고,
-    // 실패한 제거에 더티 플래그를 찍으면 쓸데없는 저장과 복제가 따라온다.
+    // mutable_item()은 검증 뒤에 둔다. 빈 슬롯에 item을 만들어 다시는 채워지지 않게 한다.
     if (updatedSlot->has_item() == false || updatedSlot->item().count() < count)
         return false;
-
-    bag->dirtyFlags[slotId] = true;
 
     Protocol::Item* item = updatedSlot->mutable_item();
     int32 updatedCount = item->count() - count;
@@ -245,17 +237,6 @@ int32 InventoryComponent::FindFirstAvailableSlotId(Protocol::ItemType type, int3
     return FindEmptySlotId(*bag);
 }
 
-vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType)
-{
-    Bag* bag = FindBag(itemType);
-    return bag != nullptr ? &bag->dirtyFlags : nullptr;
-}
-
-const vector<bool>* InventoryComponent::GetDirtyFlags(Protocol::ItemType itemType) const
-{
-    return const_cast<InventoryComponent*>(this)->GetDirtyFlags(itemType);
-}
-
 Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id)
 {
     // Mutable()의 범위 검사는 DCHECK라 Release에서 빠진다. 아래 검증을 지우면 범위 밖 접근을 막는 것이 없다.
@@ -263,7 +244,7 @@ Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_
     if (bag == nullptr)
         return nullptr;
 
-    if (IsValidSlotId(slot_id) == false)
+    if (IsValidSlotId(*bag, slot_id) == false)
         return nullptr;
 
     return bag->slots->Mutable(slot_id);
@@ -272,12 +253,6 @@ Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_
 const Protocol::Slot* InventoryComponent::GetSlot(Protocol::SlotType type, int32 slot_id) const
 {
     return const_cast<InventoryComponent*>(this)->GetSlot(type, slot_id);
-}
-
-void InventoryComponent::ClearDirtyFlags()
-{
-    for (Bag& bag : _bags)
-        std::fill(bag.dirtyFlags.begin(), bag.dirtyFlags.end(), false);
 }
 
 InventoryComponent::Bag* InventoryComponent::FindBag(Protocol::ItemType itemType)

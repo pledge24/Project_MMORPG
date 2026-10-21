@@ -11,7 +11,7 @@ struct PlayerProgress;
 namespace GameEntry
 {
     /**
-     * DB 큐의 잡 안에서 부른다. characterId의 진행으로 session을 입장시키고 클라이언트에 보낼 응답을 돌려준다.
+     * DB 큐의 잡 안에서 부른다. characterId의 진행과 그 맵과 좌표로 고른 룸으로 session을 입장시키고 응답을 돌려준다.
      * userId는 세션에서 다시 읽지 말고 핸들러가 읽은 값을 넘긴다.
      */
     Protocol::S_ENTER_GAME Enter(DBConnection& conn, const GameSessionRef& session, int64 userId, int64 characterId);
