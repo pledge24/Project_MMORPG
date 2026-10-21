@@ -4,19 +4,17 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Protocol.pb.h"
 #include "Game/Inventory/P1ItemCooldown.h"
+#include "Game/Items/P1ContainerType.h"
 #include "P1MyPlayerData.generated.h"
 
 class AP1MyPlayer;
-class UP1Inventory;
-class UP1Equipment;
+class UP1ItemContainer;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
 DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChanged, int64);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnInvenSlotChanged, const Protocol::SlotChange&);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnEquipmentSlotChanged, const Protocol::SlotChange&);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnItemCooldownStarted, int32);
 
 /**
@@ -36,7 +34,6 @@ public:
 
     //~ Begin USubsystem Interface
 public:
-    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
     //~ End USubsystem Interface
 
@@ -110,15 +107,18 @@ public:
 protected:
     int64 _Gold = 0;
 
-    //~ Inventory
+    //~ Containers
 public:
-    UP1Inventory* GetInventory() const { return Inventory; }
+    /** 인벤토리의 구역과 착용 장비의 컨테이너. 컨테이너가 아닌 종류(None)면 nullptr. */
+    UP1ItemContainer* GetContainer(EP1ContainerType ContainerType) const;
 
-    FOnInvenSlotChanged OnInvenSlotChanged;
+    /** 모든 컨테이너의 칸을 지운다. 접속이 끊기면 부른다. */
+    void ClearContainers();
 
 protected:
+    /** 서브시스템과 함께 살고, 입장과 응답으로 칸만 바뀐다. */
     UPROPERTY()
-    TObjectPtr<UP1Inventory> Inventory;
+    TMap<EP1ContainerType, TObjectPtr<UP1ItemContainer>> Containers;
 
     //~ Item Cooldown
 public:
@@ -136,16 +136,6 @@ private:
 
     /** 템플릿 id별 재사용 대기. 서버처럼 재접속하면 비운다. */
     TMap<int32, FP1ItemCooldown> ItemCooldowns;
-
-    //~ Equipment
-public:
-    UP1Equipment* GetEquipment() const { return Equipment; }
-
-    FOnEquipmentSlotChanged OnEquipmentSlotChanged;
-
-protected:
-    UPROPERTY()
-    TObjectPtr<UP1Equipment> Equipment;
 
     //~ Enter Packet Handlers
 public:
@@ -191,7 +181,7 @@ public:
 private:
     bool IsMyPlayer(uint64 EntityId) const { return EntityId == _PlayerId; }
 
-    /** 응답이 실어 온 칸 변경을 컨테이너에 맞는 델리게이트로 알린다. */
+    /** 응답이 실어 온 칸 변경을 그 칸의 컨테이너에 나눠 준다. 컨테이너가 아닌 칸의 변경은 버린다. */
     void ApplySlotChanges(const google::protobuf::RepeatedPtrField<Protocol::SlotChange>& Changes);
 
     //~ Reward Packet Handlers

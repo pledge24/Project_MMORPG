@@ -106,12 +106,11 @@ P1/Source/
 | `Game/Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
+| `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
 | `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
 | `Game/Interaction/` | 플레이어가 다가가 쓰는 월드 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비)을 들고 있는 서브시스템 |
-
-`Game/Items/`는 아직 없다. 아이템 정의와 아이템 인스턴스가 생기면 `Game/Items/`를 만든다.
 
 **`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
@@ -170,7 +169,8 @@ P1/Source/
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
 | `Game/Entities` | 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
-| 게임 도메인 | `Game/Data`, `Utils/`, 송신 창구 |
+| 게임 도메인 | `Game/Items`, `Game/Data`, `Utils/`, 송신 창구 |
+| `Game/Items` | `Utils/` |
 | `Game/Data` | `Utils/` |
 | `Utils/` | 없음 |
 | `Tests/` | 테스트하는 대상 폴더 전부. 제품 코드는 `Tests/`를 부르지 않는다 |
@@ -203,7 +203,10 @@ P1/Source/
 — 알림을 받는 쪽이 그 액터를 쓰고, 보내는 쪽은 이름만 넘긴다. 이 알림을 다른 폴더로 옮기면 구독하는
 화면의 경로까지 바뀐다.
 
-**`Game/Progress`는 인벤토리와 착용 장비를 소유하므로 `Game/Inventory`와 `Game/Equipment`를 부른다.**
+**`Game/Items`는 게임 도메인 아래 층이다.** 인벤토리의 구역과 착용 장비가 같은 칸 타입과 컨테이너 클래스를 쓰므로,
+그 타입을 한 도메인에 두면 다른 도메인이 같은 층을 부르게 된다. 아이템과 칸의 Protocol 타입은 `Game/Items`의 패킷 변환에서만 다룬다.
+
+**`Game/Progress`는 아이템의 재사용 대기를 소유하므로 `Game/Inventory`를 부른다.**
 이 절 끝의 「같은 층의 도메인끼리 호출하는 자리는 인터페이스나 델리게이트로 연결한다」의 예외다.
 — 소유 관계는 인터페이스로 끊을 이유가 없다.
 

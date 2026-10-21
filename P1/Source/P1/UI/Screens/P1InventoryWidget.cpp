@@ -8,7 +8,8 @@
 #include "Network/P1PacketSender.h"
 #include "Core/P1GameInstance.h"
 #include "Utils/LogCategory.h"
-#include "Game/Inventory/P1Inventory.h"
+#include "Game/Items/P1ItemContainer.h"
+#include "Game/Items/P1ItemPackets.h"
 #include "Game/Inventory/P1InventorySlotAction.h"
 #include "Game/Progress/P1MyPlayerData.h"
 
@@ -33,18 +34,19 @@ void UP1InventoryWidget::NativeConstruct()
         {
             UpdateGold(MyPlayerData->GetGold());
 
-            for (Protocol::ContainerType Section : { Protocol::CONTAINER_TYPE_INVENTORY_GEAR, Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE, Protocol::CONTAINER_TYPE_INVENTORY_MISC })
+            // 구역마다 지금 칸으로 그리고, 이후 바뀌는 칸을 구독.
+            for (EP1ContainerType Section : { EP1ContainerType::InventoryGear, EP1ContainerType::InventoryConsumable, EP1ContainerType::InventoryMisc })
             {
-                if (const TArray<Protocol::SlotChange>* SectionSlots = MyPlayerData->GetInventory()->GetSectionSlots(Section))
+                if (UP1ItemContainer* Container = MyPlayerData->GetContainer(Section))
                 {
-                    for (const Protocol::SlotChange& Slot_ : *SectionSlots)
-                        UpdateSlotWidget(Slot_);
+                    RedrawContainer(*Container);
+                    Container->OnSlotChanged.AddUObject(this, &UP1InventoryWidget::UpdateSlotWidget);
+                    Container->OnReset.AddUObject(this, &UP1InventoryWidget::RedrawContainer);
                 }
             }
 
             // 이후 바뀌는 값과 요청 응답을 구독.
             MyPlayerData->OnGoldChanged.AddUObject(this, &UP1InventoryWidget::UpdateGold);
-            MyPlayerData->OnInvenSlotChanged.AddUObject(this, &UP1InventoryWidget::UpdateSlotWidget);
 
             MyPlayerData->OnRecvSellItemPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
             MyPlayerData->OnRecvUseItemPkt.AddWeakLambda(this, [this]() { bPendingPacket = false; });
@@ -78,10 +80,37 @@ void UP1InventoryWidget::Clear()
     }
 }
 
-void UP1InventoryWidget::UpdateSlotWidget(const Protocol::SlotChange& InSlot)
+void UP1InventoryWidget::UpdateSlotWidget(const FP1Slot& InSlot)
 {
-    if (UP1SlotWidget* SlotWidget = GetSlotWidgetFromSlot(InSlot))
+    if (UP1SlotWidget* SlotWidget = GetSlotWidgetFromSlot(InSlot.Address))
         SlotWidget->SetSlot(InSlot);
+}
+
+void UP1InventoryWidget::RedrawContainer(const UP1ItemContainer& Container)
+{
+    UUniformGridPanel* Grid = GetSlotGrid(Container.GetContainerType());
+    if (Grid == nullptr)
+        return;
+
+    // 컨테이너에 없는 칸 번호의 위젯은 빈 칸으로 그린다. 그러지 않으면 접속이 끊긴 뒤 이전 캐릭터의 칸이 남는다.
+    for (int32 SlotIndex = 0; SlotIndex < Grid->GetChildrenCount(); ++SlotIndex)
+    {
+        UP1SlotWidget* SlotWidget = Cast<UP1SlotWidget>(Grid->GetChildAt(SlotIndex));
+        if (SlotWidget == nullptr)
+            continue;
+
+        if (const FP1Slot* Found = Container.FindSlot(SlotIndex))
+        {
+            SlotWidget->SetSlot(*Found);
+        }
+        else
+        {
+            FP1Slot Empty;
+            Empty.Address.Container = Container.GetContainerType();
+            Empty.Address.SlotIndex = SlotIndex;
+            SlotWidget->SetSlot(Empty);
+        }
+    }
 }
 
 void UP1InventoryWidget::UpdateGold(const int64 Gold)
@@ -89,25 +118,25 @@ void UP1InventoryWidget::UpdateGold(const int64 Gold)
     Gold_txt->SetText(FText::AsNumber(Gold));
 }
 
-UP1SlotWidget* UP1InventoryWidget::GetSlotWidgetFromSlot(const Protocol::SlotChange& InSlot)
+UUniformGridPanel* UP1InventoryWidget::GetSlotGrid(EP1ContainerType Container) const
 {
-    UUniformGridPanel* Inven = nullptr;
-    const int32 SlotIndex = InSlot.address().slot_index();
-
-    switch (InSlot.address().container())
+    switch (Container)
     {
-    case Protocol::CONTAINER_TYPE_INVENTORY_GEAR:
-        Inven = Gear_Inven;
-        break;
-    case Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE:
-        Inven = Consumables_Inven;
-        break;
-    case Protocol::CONTAINER_TYPE_INVENTORY_MISC:
-        Inven = Misc_Inven;
-        break;
+    case EP1ContainerType::InventoryGear:
+        return Gear_Inven;
+    case EP1ContainerType::InventoryConsumable:
+        return Consumables_Inven;
+    case EP1ContainerType::InventoryMisc:
+        return Misc_Inven;
     default:
-        break;
+        return nullptr;
     }
+}
+
+UP1SlotWidget* UP1InventoryWidget::GetSlotWidgetFromSlot(const FP1SlotAddress& Address) const
+{
+    UUniformGridPanel* Inven = GetSlotGrid(Address.Container);
+    const int32 SlotIndex = Address.SlotIndex;
 
     if (!Inven || SlotIndex < 0 || SlotIndex >= Inven->GetChildrenCount())
     {
@@ -169,7 +198,7 @@ void UP1InventoryWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
         return;
 
     // ItemData로 빈 칸을 가린다. 칸을 비우면 ItemData도 비워진다.
-    const Protocol::SlotChange& SlotData = SlotWidget->SlotData;
+    const FP1Slot& SlotData = SlotWidget->SlotData;
     if (SlotWidget->ItemData.TemplateId <= 0)
     {
         UE_LOG(LogP1UI, Log, TEXT("빈 칸은 팔 수 없다."));
@@ -177,8 +206,8 @@ void UP1InventoryWidget::HandleSlotRightClicked(UP1SlotWidget* SlotWidget)
     }
 
     Protocol::C_SELL_ITEM Pkt;
-    Pkt.mutable_address()->CopyFrom(SlotData.address());
-    Pkt.set_item_uid(SlotData.item().item_uid());
+    *Pkt.mutable_address() = P1ItemPackets::ToProto(SlotData.Address);
+    Pkt.set_item_uid(SlotData.Item.ItemUid);
     Pkt.set_count(1);
     SendItemRequest(Pkt);
 }
@@ -190,26 +219,26 @@ void UP1InventoryWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
     if (MyPlayerData == nullptr)
         return;
 
-    const Protocol::SlotChange& SlotData = SlotWidget->SlotData;
+    const FP1Slot& SlotData = SlotWidget->SlotData;
     const int32 TemplateId = SlotWidget->ItemData.TemplateId;
 
     switch (FP1InventorySlotAction::Decide(
-        SlotData.address().container(), SlotWidget->ItemData.GetItemType(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel(),
+        SlotData.Address.Container, SlotWidget->ItemData.GetItemType(), TemplateId, SlotWidget->ItemData.LevelRequirement, MyPlayerData->GetPlayerLevel(),
         MyPlayerData->IsItemCoolingDown(TemplateId)))
     {
     case FP1InventorySlotAction::EKind::Use:
     {
         Protocol::C_USE_ITEM Pkt;
-        Pkt.mutable_address()->CopyFrom(SlotData.address());
-        Pkt.set_item_uid(SlotData.item().item_uid());
+        *Pkt.mutable_address() = P1ItemPackets::ToProto(SlotData.Address);
+        Pkt.set_item_uid(SlotData.Item.ItemUid);
         SendItemRequest(Pkt);
         break;
     }
     case FP1InventorySlotAction::EKind::Equip:
     {
         Protocol::C_EQUIP_GEAR Pkt;
-        Pkt.mutable_address()->CopyFrom(SlotData.address());
-        Pkt.set_item_uid(SlotData.item().item_uid());
+        *Pkt.mutable_address() = P1ItemPackets::ToProto(SlotData.Address);
+        Pkt.set_item_uid(SlotData.Item.ItemUid);
         SendItemRequest(Pkt);
         break;
     }

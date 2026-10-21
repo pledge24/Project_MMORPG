@@ -8,6 +8,7 @@
 class AP1MyPlayer;
 class UButton;
 class UTextBlock;
+class UP1ItemContainer;
 class UP1MyPlayerData;
 
 /**
@@ -27,7 +28,10 @@ protected:
 
     //~ Equipped Gear
 public:
-    void UpdateSlotWidget(const Protocol::SlotChange& Slot_);
+    void UpdateSlotWidget(const FP1Slot& Slot_);
+
+    /** 착용 장비 칸을 모두 컨테이너의 지금 칸으로 다시 그린다. */
+    void RedrawContainer(const UP1ItemContainer& Container);
 
 protected:
     UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
@@ -53,6 +57,9 @@ protected:
     bool bPendingPacket = false;
 
 private:
+    /** 장비 부위의 슬롯 위젯. 장비 부위가 아니면 nullptr. */
+    UP1SlotWidget* GetSlotWidget(int32 GearType) const;
+
     /** 더블클릭한 착용 장비를 벗는다. */
     void HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget);
 

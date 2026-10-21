@@ -2,10 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Protocol.pb.h"
+#include "Game/Items/P1ContainerType.h"
+#include "Game/Items/P1Slot.h"
 #include "P1InventoryWidget.generated.h"
 
 class UButton;
+class UP1ItemContainer;
 class UP1SlotWidget;
 class UUniformGridPanel;
 class UTextBlock;
@@ -31,10 +33,16 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    void UpdateSlotWidget(const Protocol::SlotChange& InSlot);
+    void UpdateSlotWidget(const FP1Slot& InSlot);
+
+    /** 컨테이너의 격자를 그 컨테이너의 지금 칸으로 다시 그린다. */
+    void RedrawContainer(const UP1ItemContainer& Container);
+
+    /** 인벤토리 구역이 아니면 nullptr. */
+    UUniformGridPanel* GetSlotGrid(EP1ContainerType Container) const;
 
     /** 맞는 슬롯 위젯이 없으면 nullptr. */
-    UP1SlotWidget* GetSlotWidgetFromSlot(const Protocol::SlotChange& InSlot);
+    UP1SlotWidget* GetSlotWidgetFromSlot(const FP1SlotAddress& Address) const;
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     TObjectPtr<UUniformGridPanel> Gear_Inven;
