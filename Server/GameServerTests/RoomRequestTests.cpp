@@ -39,12 +39,12 @@ namespace
             Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
             (*stats)[statType] = 0;
 
-        Protocol::Slot* slot = progress.possession.mutable_inventory()->add_gear();
-        slot->set_type(Protocol::SLOT_TYPE_INVENTORY_GEAR);
-        slot->set_slot_id(0);
-        slot->mutable_item()->set_template_id(SWORD_TEMPLATE_ID);
-        slot->mutable_item()->set_item_uid(500);
-        slot->mutable_item()->set_count(1);
+        PlacedItem sword;
+        sword.address = SlotAddress{ ContainerType::INVENTORY_GEAR, 0 };
+        sword.item.itemUid = 500;
+        sword.item.templateId = SWORD_TEMPLATE_ID;
+        sword.item.gear = GearDetail{};
+        progress.items.push_back(sword);
         return progress;
     }
 }
@@ -206,7 +206,7 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
     *sellPkt.mutable_slot() = SwordSlot();
     ItemRequests::HandleSellItem(*room, traveler, sellPkt);
 
-    EXPECT_TRUE(traveler->GetInventory().GetSlot(Protocol::SLOT_TYPE_INVENTORY_GEAR, 0)->has_item())
+    EXPECT_NE(traveler->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, 0 }), nullptr)
         << "룸을 떠난 플레이어의 소지품을 옛 룸 큐에서 바꾸면 새 룸 큐와 경쟁한다";
 }
 

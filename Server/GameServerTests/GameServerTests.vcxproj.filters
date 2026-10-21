@@ -30,6 +30,9 @@
     <Filter Include="GameServer\Game\Inventory">
       <UniqueIdentifier>{07cf74dd-b75d-5821-a5fd-7f0ec6092656}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\Items">
+      <UniqueIdentifier>{c99c6e3e-352d-4234-ad88-289a15aefdf5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
     </Filter>
@@ -105,6 +108,8 @@
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
+    <ClCompile Include="ItemContainerTests.cpp" />
+    <ClCompile Include="ItemPacketsTests.cpp" />
     <ClCompile Include="ItemRowsTests.cpp" />
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
@@ -189,6 +194,12 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp">
       <Filter>GameServer\Game\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Items\ItemContainer.cpp">
+      <Filter>GameServer\Game\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Network\ItemPackets.cpp">
+      <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp">
       <Filter>GameServer\Game\Combat</Filter>

@@ -2,42 +2,53 @@
 #include "Game/Equipment/EquipmentComponent.h"
 #include "Game/Entities/Player.h"
 
-EquipmentComponent::EquipmentComponent(PlayerRef owner, google::protobuf::Map<int32, Protocol::Slot>* equippedGear)
-    : EntityComponent(owner), _equippedGearLookup(equippedGear)
+namespace
 {
-
-    for (int32 slotId = 0; slotId <= Protocol::GearType_MAX; slotId++)
+    /** 장비 부위 값 전체. GEAR_TYPE_NONE은 부위가 아니므로 뺀다. */
+    vector<int32> MakeGearSlotIndices()
     {
-        Protocol::Slot slot;
-        slot.set_slot_id(slotId);
-        slot.set_type(Protocol::SlotType::SLOT_TYPE_EQUIPPED);
-        slot.set_state(Protocol::UpdateState::UPDATE_STATE_NONE);
+        vector<int32> slotIndices;
+        for (int32 gearType = Protocol::GearType_MIN; gearType <= Protocol::GearType_MAX; gearType++)
+        {
+            if (Protocol::GearType_IsValid(gearType) && gearType != Protocol::GEAR_TYPE_NONE)
+                slotIndices.push_back(gearType);
+        }
 
-        _equippedGearLookup->emplace(slotId, std::move(slot));
+        return slotIndices;
     }
+}
+
+EquipmentComponent::EquipmentComponent(PlayerRef owner)
+    : EntityComponent(owner), _equipped(ContainerType::EQUIPPED, MakeGearSlotIndices())
+{
 }
 
 EquipmentComponent::~EquipmentComponent()
 {
 }
 
-bool EquipmentComponent::Equip(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance)
+optional<int32> EquipmentComponent::Equip(const ItemInstance& item)
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
     if (itemTemplate == nullptr || itemTemplate->gearType.has_value() == false)
-        return false;
+        return nullopt;
 
     // 착용 조건은 클라이언트도 보지만, 판정은 서버가 한다.
     PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
     if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetPlayerInfo().class_()) == false)
-        return false;
+        return nullopt;
 
-    return PlaceItem(replicatingSlot, itemInstance, itemTemplate->gearType.value());
+    // 장착 중인 부위에 다른 장비를 겹쳐 입지 않는다.
+    const int32 gearType = itemTemplate->gearType.value();
+    if (_equipped.Put(gearType, item) == false)
+        return nullopt;
+
+    return gearType;
 }
 
-bool EquipmentComponent::LoadEquipped(const Protocol::Item& itemInstance, int32 gearType)
+bool EquipmentComponent::LoadEquipped(const ItemInstance& item, int32 gearType)
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(itemInstance.template_id());
+    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
     if (itemTemplate == nullptr || itemTemplate->gearType.has_value() == false)
         return false;
 
@@ -45,36 +56,25 @@ bool EquipmentComponent::LoadEquipped(const Protocol::Item& itemInstance, int32 
     if (itemTemplate->gearType.value() != gearType)
         return false;
 
-    return PlaceItem(nullptr, itemInstance, gearType);
+    return _equipped.Put(gearType, item);
 }
 
-bool EquipmentComponent::Unequip(int32 gearType, OUT Protocol::Slot* replicatingSlot)
+optional<ItemInstance> EquipmentComponent::Unequip(int32 gearType)
 {
-    auto slotIt = _equippedGearLookup->find(gearType);
-    if (slotIt == _equippedGearLookup->end() || slotIt->second.has_item() == false)
-        return false;
-
-    Protocol::Slot* targetSlot = &slotIt->second;
-
-    targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_REMOVED);
-    targetSlot->clear_item();
-
-    if (replicatingSlot != nullptr)
-        replicatingSlot->CopyFrom(*targetSlot);
-
-    return true;
+    return _equipped.Take(gearType);
 }
 
 CombatStats EquipmentComponent::SumStatDelta() const
 {
     CombatStats sum;
-    for (const auto& [gearType, slot] : *_equippedGearLookup)
+    for (int32 gearType : _equipped.GetSlotIndices())
     {
-        if (slot.has_item() == false || slot.item().template_id() == 0)
+        const ItemInstance* item = _equipped.Find(gearType);
+        if (item == nullptr)
             continue;
 
         // 장비 칸에는 표에 있는 아이템만 들어간다(Equip과 LoadEquipped가 거른다).
-        const ItemTemplate* itemTemplate = Gamedata::FindItem(slot.item().template_id());
+        const ItemTemplate* itemTemplate = Gamedata::FindItem(item->templateId);
         if (itemTemplate == nullptr)
             continue;
 
@@ -84,13 +84,13 @@ CombatStats EquipmentComponent::SumStatDelta() const
     return sum;
 }
 
-const Protocol::Slot* EquipmentComponent::GetSlot(int32 gearType) const
+void EquipmentComponent::CollectItems(OUT vector<PlacedItem>& items) const
 {
-    auto it = _equippedGearLookup->find(gearType);
-    if (it == _equippedGearLookup->end())
-        return nullptr;
-
-    return &it->second;
+    for (int32 gearType : _equipped.GetSlotIndices())
+    {
+        if (const ItemInstance* item = _equipped.Find(gearType))
+            items.push_back(PlacedItem{ SlotAddress{ ContainerType::EQUIPPED, gearType }, *item });
+    }
 }
 
 bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass)
@@ -100,25 +100,6 @@ bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int3
 
     if (itemTemplate.classRequirement.has_value() && itemTemplate.classRequirement.value() != characterClass)
         return false;
-
-    return true;
-}
-
-bool EquipmentComponent::PlaceItem(OUT Protocol::Slot* replicatingSlot, const Protocol::Item& itemInstance, int32 gearType)
-{
-    auto slotIt = _equippedGearLookup->find(gearType);
-
-    // 장착 중인 부위에 다른 장비를 겹쳐 입지 않는다.
-    if (slotIt == _equippedGearLookup->end() || slotIt->second.has_item())
-        return false;
-
-    Protocol::Slot* targetSlot = &slotIt->second;
-
-    targetSlot->set_state(Protocol::UpdateState::UPDATE_STATE_ADDED);
-    targetSlot->mutable_item()->CopyFrom(itemInstance);
-
-    if (replicatingSlot != nullptr)
-        replicatingSlot->CopyFrom(*targetSlot);
 
     return true;
 }

@@ -207,6 +207,10 @@
     <ClInclude Include="Game\Entities\PlayerSaveData.h" />
     <ClInclude Include="Game\Entities\PlayerProgress.h" />
     <ClInclude Include="Game\Inventory\InventoryComponent.h" />
+    <ClInclude Include="Game\Items\ItemTypes.h" />
+    <ClInclude Include="Game\Items\InventorySections.h" />
+    <ClInclude Include="Game\Items\ItemContainer.h" />
+    <ClInclude Include="Network\ItemPackets.h" />
     <ClInclude Include="Game\Combat\Combat.h" />
     <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
     <ClInclude Include="Game\AI\MonsterAIComponent.h" />
@@ -280,6 +284,8 @@
     <ClCompile Include="Game\Entities\Monster.cpp" />
     <ClCompile Include="Game\Entities\Player.cpp" />
     <ClCompile Include="Game\Inventory\InventoryComponent.cpp" />
+    <ClCompile Include="Game\Items\ItemContainer.cpp" />
+    <ClCompile Include="Network\ItemPackets.cpp" />
     <ClCompile Include="Game\Combat\Combat.cpp" />
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="Game\AI\MonsterAIComponent.cpp" />

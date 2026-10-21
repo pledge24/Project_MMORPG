@@ -42,6 +42,9 @@ status: accepted
 - 서버의 DB 저장은 지금처럼 접속 종료 때 아이템 전체를 MERGE한다. 컨테이너가 응답 패킷을 만들려고 모으는 변경 목록은
   DB 저장에 쓰지 않는다(ADR 0012)
 - 요청 패킷은 칸 사본 대신 칸 주소와 아이템 uid로 칸을 가리킨다
+- 2026년 10월 21일 덧붙임: 게임 서버가 아이템과 칸을 전용 타입으로 든다. 패킷 변환은 `Server/GameServer/Network/ItemPackets`,
+  DB 행 변환은 `Server/GameServer/DB/ItemRows`에 있다. 패킷은 아직 옛 계약이라, 패킷 변환이 비게 된 칸에 `UpdateState`의
+  `REMOVED`를 채운다. 클라이언트는 아직 Protocol 타입으로 상태를 든다
 
 ## 틀렸다는 신호
 

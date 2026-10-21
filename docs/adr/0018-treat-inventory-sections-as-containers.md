@@ -39,6 +39,8 @@ status: accepted
 - 지금 구역 대응이 `InventoryComponent`의 구역 표, `ItemRows`의 `INVENTORY_SECTIONS`, `Player::ApplyProgress`의 구역 순회
   세 곳에 따로 적혀 있다. 재설계에서 이 셋을 대응 표 하나로 합친다
 - 프로토콜의 `SlotType`은 컨테이너 종류가 된다. 퀵슬롯은 컨테이너가 아니므로 이 목록에서 빠진다
+- 2026년 10월 21일 덧붙임: 게임 서버의 구역 대응 세 곳을 `Server/GameServer/Game/Items/InventorySections.h`의 표 하나로
+  합쳤다. 서버의 컨테이너 종류는 `ContainerType`이다. 프로토콜의 `SlotType`은 아직 바꾸지 않았다
 
 ## 틀렸다는 신호
 

@@ -228,31 +228,43 @@ void ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgres
         row.itemUid = bindObject._itemUid;
         row.templateId = bindObject._templateId;
         row.itemType = static_cast<Protocol::ItemType>(bindObject._itemType);
-        row.container = static_cast<ItemContainer>(bindObject._container);
+        row.container = static_cast<ItemRowContainer>(bindObject._container);
         row.slotIndex = bindObject._slotIndex;
         row.stackCount = bindObject._stackCount;
         row.enhanceLevel = bindObject._enhanceLevel;
         row.durability = bindObject._durability;
 
         // 둘 곳을 모르는 행을 건너뛰고 입장시키면 다음 저장이 그 행을 사본에 없는 행으로 보고 지운다.
-        if (ItemRows::AddToPossession(row, OUT progress.possession) == false)
+        optional<PlacedItem> placed = ItemRows::ToPlacedItem(row);
+        if (placed.has_value() == false)
         {
             throw DBError(__func__, format("아이템 {}의 자리(컨테이너 {}, 구역 {}, 칸 {})에 둘 수 없다",
                 row.itemUid, bindObject._container, bindObject._itemType, row.slotIndex));
         }
+
+        progress.items.push_back(std::move(placed.value()));
     }
 }
 
 void ItemDAO::SaveItems(DBConnection& conn, const PlayerSaveData& data)
 {
     const int64 characterId = data.progress.playerInfo.character_id();
-    const vector<ItemRow> rows = ItemRows::FromPossession(data.progress.possession);
-
-    // 행은 UID로 맞춘다. UID가 없으면 같은 아이템을 찾을 수 없다.
-    for (const ItemRow& row : rows)
+    vector<ItemRow> rows;
+    rows.reserve(data.progress.items.size());
+    for (const PlacedItem& placed : data.progress.items)
     {
-        if (row.itemUid <= 0)
-            throw DBError(__func__, format("UID가 없는 아이템(템플릿 {}, 칸 {})", row.templateId, row.slotIndex));
+        optional<ItemRow> row = ItemRows::ToRow(placed);
+        if (row.has_value() == false)
+        {
+            throw DBError(__func__, format("행으로 저장할 수 없는 자리(컨테이너 {}, 칸 {})의 아이템(템플릿 {})",
+                static_cast<int32>(placed.address.container), placed.address.slotIndex, placed.item.templateId));
+        }
+
+        // 행은 UID로 맞춘다. UID가 없으면 같은 아이템을 찾을 수 없다.
+        if (row->itemUid <= 0)
+            throw DBError(__func__, format("UID가 없는 아이템(템플릿 {}, 칸 {})", row->templateId, row->slotIndex));
+
+        rows.push_back(row.value());
     }
 
     CreateItemSource(conn);
