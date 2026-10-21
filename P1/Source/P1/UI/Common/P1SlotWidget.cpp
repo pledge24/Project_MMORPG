@@ -42,12 +42,13 @@ void UP1SlotWidget::NativePreConstruct()
 {
     Super::NativePreConstruct();
 
-    // 디자이너 미리보기에서도 돈다. 진열 칸은 아이템 하나를 대기 없이 그리고, 나머지는 빈 칸으로 시작한다.
+    // 디자이너 미리보기에서도 돈다. 진열 칸은 아이템 하나를 대기 없이 그리고, 나머지는 지금 든 내용을 다시 그린다.
     // 칸을 그리는 위젯은 자식인 이 위젯보다 늦게 Construct되므로 이 초기값을 덮어쓴다.
+    // 빈 칸으로 덮으면 화면에 붙기 전에 내용을 받은 위젯(끌리는 그림)이 빈 칸으로 보인다.
     if (DisplayTemplateId > 0)
         SetDisplay(FP1SlotDisplay{ DisplayTemplateId, 1, 0 });
     else
-        SetDisplay(FP1SlotDisplay());
+        SetDisplay(Display);
 }
 
 FReply UP1SlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

@@ -69,7 +69,8 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
     const UP1UISettings* Settings = GetDefault<UP1UISettings>();
 
     // 배경 화면. 붙이는 순서가 같은 Z 순서 안에서의 앞뒤를 정한다.
-    HUDWidget = CreateScreen(InOwningPlayer, Settings->HUDWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
+    // HUD는 퀵슬롯이 끌어 놓기를 받아야 하므로 자식의 입력을 막지 않는다. 입력을 받지 않을 그림과 글자는 WBP가 막는다.
+    HUDWidget = CreateScreen(InOwningPlayer, Settings->HUDWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::SelfHitTestInvisible);
     HelpWidget = CreateScreen(InOwningPlayer, Settings->HelpWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
 
     // 창 레이어와 창. 창은 닫힌 채로 만든다.
