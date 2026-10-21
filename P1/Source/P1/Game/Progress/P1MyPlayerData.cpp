@@ -1,9 +1,20 @@
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Game/Data/P1GameDataSettings.h"
 #include "Game/Data/P1ItemData.h"
-#include "Game/Inventory/P1Inventory.h"
-#include "Game/Equipment/P1Equipment.h"
+#include "Game/Items/P1ItemContainer.h"
+#include "Game/Items/P1ItemPackets.h"
 #include "Utils/LogCategory.h"
+
+namespace
+{
+    /** 내 플레이어가 가진 컨테이너. 입장 패킷의 소지품과 응답의 칸 변경이 이 종류로 나뉜다. */
+    constexpr EP1ContainerType CONTAINER_TYPES[] = {
+        EP1ContainerType::InventoryGear,
+        EP1ContainerType::InventoryConsumable,
+        EP1ContainerType::InventoryMisc,
+        EP1ContainerType::Equipped,
+    };
+}
 
 UP1MyPlayerData::UP1MyPlayerData()
 {
@@ -20,33 +31,19 @@ UP1MyPlayerData::UP1MyPlayerData()
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAGICAL_ATTACK);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_EXP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_EXP);
-}
 
-void UP1MyPlayerData::Initialize(FSubsystemCollectionBase& Collection)
-{
-    Super::Initialize(Collection);
-
-    // 인벤토리 생성.
-    Inventory = NewObject<UP1Inventory>(this, UP1Inventory::StaticClass());
-    if (Inventory == nullptr)
-        UE_LOG(LogP1CharacterComp, Warning, TEXT("Inventory Is Not Exist"));
-
-    // 장비 생성.
-    Equipment = NewObject<UP1Equipment>(this, UP1Equipment::StaticClass());
-    if (Equipment == nullptr)
-        UE_LOG(LogP1CharacterComp, Warning, TEXT("Equipment Is Not Exist"));
-
-    // 소지품 델리게이트는 이 서브시스템과 함께 사는 객체끼리 잇는다. 플레이어 액터와 무관하므로 한 번만 붙인다.
-    // 내 플레이어가 스폰될 때마다 붙이면 맵을 옮길 때마다 핸들러가 하나씩 늘어난다.
-    OnInvenSlotChanged.AddUObject(Inventory, &UP1Inventory::Rep_SlotChanged);
-    OnEquipmentSlotChanged.AddUObject(Equipment, &UP1Equipment::Rep_SlotChanged);
+    // 컨테이너도 서브시스템이 초기화되기 전에 쓸 수 있게 여기서 만든다.
+    for (const EP1ContainerType ContainerType : CONTAINER_TYPES)
+    {
+        const FString TypeName = StaticEnum<EP1ContainerType>()->GetNameStringByValue(static_cast<int64>(ContainerType));
+        UP1ItemContainer* Container = CreateDefaultSubobject<UP1ItemContainer>(*FString::Printf(TEXT("Container_%s"), *TypeName));
+        Container->Init(ContainerType);
+        Containers.Add(ContainerType, Container);
+    }
 }
 
 void UP1MyPlayerData::Deinitialize()
 {
-    Inventory = nullptr;
-    Equipment = nullptr;
-
     // _PlayerInfo는 _EntityInfo 안을 가리키므로 먼저 끊는다.
     _PlayerInfo = nullptr;
     _EntityInfo.Reset();
@@ -67,15 +64,23 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
         _PlayerName = FText::FromString(UTF8_TO_TCHAR(_EntityInfo->player_info().name().c_str()));
     }
 
-    // 소지품 래퍼 초기화.
+    // 컨테이너 채우기. 패킷에 없는 컨테이너도 비워 이전 캐릭터의 칸이 남지 않게 한다.
+    for (const auto& Pair : Containers)
     {
-        Inventory->Init(EnterGamePkt.possession());
-        Equipment->Init(EnterGamePkt.possession());
+        TArray<FP1Slot> Slots;
+        for (const Protocol::ContainerSlots& ContainerSlots : EnterGamePkt.possession().containers())
+        {
+            if (P1ItemPackets::FromProto(ContainerSlots.container()) == Pair.Key)
+            {
+                Slots = P1ItemPackets::FromProto(ContainerSlots);
+                break;
+            }
+        }
+        Pair.Value->ResetSlots(Slots);
     }
 
     // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.
     ItemCooldowns.Reset();
-
 }
 
 void UP1MyPlayerData::RemoveListener(const UObject* Listener)
@@ -84,8 +89,6 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
     OnMapEntered.RemoveAll(Listener);
     OnLevelChanged.RemoveAll(Listener);
     OnGoldChanged.RemoveAll(Listener);
-    OnInvenSlotChanged.RemoveAll(Listener);
-    OnEquipmentSlotChanged.RemoveAll(Listener);
     OnRecvBuyItemPkt.RemoveAll(Listener);
     OnRecvSellItemPkt.RemoveAll(Listener);
     OnRecvUseItemPkt.RemoveAll(Listener);
@@ -95,6 +98,12 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
 
     for (auto& Pair : OnStatChangedMappings)
         Pair.Value.RemoveAll(Listener);
+
+    for (const auto& Pair : Containers)
+    {
+        Pair.Value->OnSlotChanged.RemoveAll(Listener);
+        Pair.Value->OnReset.RemoveAll(Listener);
+    }
 }
 
 void UP1MyPlayerData::SetEntityInfo(const Protocol::EntityInfo& InEntityInfo)
@@ -141,6 +150,18 @@ void UP1MyPlayerData::ApplyGold(int64 Gold)
 {
     _Gold = Gold;
     OnGoldChanged.Broadcast(Gold);
+}
+
+UP1ItemContainer* UP1MyPlayerData::GetContainer(EP1ContainerType ContainerType) const
+{
+    const TObjectPtr<UP1ItemContainer>* Found = Containers.Find(ContainerType);
+    return Found ? Found->Get() : nullptr;
+}
+
+void UP1MyPlayerData::ClearContainers()
+{
+    for (const auto& Pair : Containers)
+        Pair.Value->Clear();
 }
 
 void UP1MyPlayerData::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
@@ -202,9 +223,11 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     TArray<int32, TInlineAllocator<1>> UsedTemplateIds;
     for (const Protocol::SlotChange& Change : UseItemPkt.changed_slots())
     {
-        const Protocol::SlotChange* Before = Inventory->FindSlot(Change.address().container(), Change.address().slot_index());
-        if (Before && Before->has_item())
-            UsedTemplateIds.Add(Before->item().template_id());
+        const FP1SlotAddress Address = P1ItemPackets::FromProto(Change.address());
+        const UP1ItemContainer* Container = GetContainer(Address.Container);
+        const FP1Slot* Before = Container ? Container->FindSlot(Address.SlotIndex) : nullptr;
+        if (Before && Before->HasItem())
+            UsedTemplateIds.Add(Before->Item.TemplateId);
     }
 
     ApplySlotChanges(UseItemPkt.changed_slots());
@@ -266,21 +289,11 @@ void UP1MyPlayerData::ApplySlotChanges(const google::protobuf::RepeatedPtrField<
 {
     for (const Protocol::SlotChange& Change : Changes)
     {
-        switch (Change.address().container())
-        {
-        case Protocol::CONTAINER_TYPE_EQUIPPED:
-            OnEquipmentSlotChanged.Broadcast(Change);
-            break;
-
-        case Protocol::CONTAINER_TYPE_INVENTORY_GEAR:
-        case Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE:
-        case Protocol::CONTAINER_TYPE_INVENTORY_MISC:
-            OnInvenSlotChanged.Broadcast(Change);
-            break;
-
-        default:
-            break;
-        }
+        const FP1Slot Changed = P1ItemPackets::FromProto(Change);
+        if (UP1ItemContainer* Container = GetContainer(Changed.Address.Container))
+            Container->ApplySlotChange(Changed);
+        else
+            UE_LOG(LogP1CharacterInventory, Warning, TEXT("컨테이너가 아닌 칸의 변경을 버린다. 컨테이너 %d"), static_cast<int32>(Change.address().container()));
     }
 }
 

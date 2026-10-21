@@ -88,7 +88,7 @@ bool UP1SlotWidget::IsOverIcon(const FPointerEvent& InMouseEvent) const
 void UP1SlotWidget::SetSlot(const FP1ItemData& Item, int32 Count)
 {
     ItemData = Item;
-    SlotData.mutable_item()->set_count(Count);
+    SlotData.Item.Count = Count;
 
     ApplyIcon(Item.TemplateId);
 
@@ -98,17 +98,17 @@ void UP1SlotWidget::SetSlot(const FP1ItemData& Item, int32 Count)
         ItemCountText->SetText(FText::GetEmpty());
 }
 
-void UP1SlotWidget::SetSlot(const Protocol::SlotChange& _Slot)
+void UP1SlotWidget::SetSlot(const FP1Slot& _Slot)
 {
     // 아이템이 없는 칸은 이 위젯이 아이템을 들고 있을 때만 비운다. 한 번도 채워진 적 없는 칸은 건드리지 않아
     // NativePreConstruct가 입힌 초기 텍스처를 남긴다.
-    if (_Slot.has_item())
+    if (_Slot.HasItem())
         InsertData(_Slot);
-    else if (SlotData.has_item())
+    else if (SlotData.HasItem())
         ClearSlot();
     
-    if (SlotData.item().count() > 1)
-        ItemCountText->SetText(FText::AsNumber(SlotData.item().count()));
+    if (SlotData.Item.Count > 1)
+        ItemCountText->SetText(FText::AsNumber(SlotData.Item.Count));
     else
         ItemCountText->SetText(FText::GetEmpty());
 
@@ -120,24 +120,24 @@ void UP1SlotWidget::ClearSlot()
 {
     if (ItemIcon) ItemIcon->SetBrushFromTexture(SlotDefaultIcon);
     if (ItemCountText) ItemCountText->SetText(FText::GetEmpty());
-    SlotData.Clear();
+    SlotData = FP1Slot();
     // 판매 판정과 툴팁이 ItemData.TemplateId로 빈 칸을 가린다.
     ItemData = FP1ItemData();
 }
 
-void UP1SlotWidget::InsertData(const Protocol::SlotChange& _Slot)
+void UP1SlotWidget::InsertData(const FP1Slot& _Slot)
 {
-    SlotData.CopyFrom(_Slot);
+    SlotData = _Slot;
 
-    if (const FP1ItemData* Row = UP1GameDataSettings::FindItemData(_Slot.item().template_id()))
+    if (const FP1ItemData* Row = UP1GameDataSettings::FindItemData(_Slot.Item.TemplateId))
         ItemData = *Row;
     else
     {
-        UE_LOG(LogP1UI, Warning, TEXT("아이템 정의가 없는 템플릿 id: %d"), _Slot.item().template_id());
+        UE_LOG(LogP1UI, Warning, TEXT("아이템 정의가 없는 템플릿 id: %d"), _Slot.Item.TemplateId);
         ItemData = FP1ItemData();
     }
 
-    ApplyIcon(_Slot.item().template_id());
+    ApplyIcon(_Slot.Item.TemplateId);
 }
 
 void UP1SlotWidget::ApplyIcon(int32 TemplateId)
@@ -165,7 +165,7 @@ UTexture2D* UP1SlotWidget::LoadIcon(int32 TemplateId) const
 int32 UP1SlotWidget::GetHeldTemplateId() const
 {
     // ItemData가 아니라 SlotData로 본다. 상점의 진열 칸은 ItemData만 채우고 아이템을 들지 않는다.
-    return SlotData.has_item() ? SlotData.item().template_id() : 0;
+    return SlotData.HasItem() ? SlotData.Item.TemplateId : 0;
 }
 
 void UP1SlotWidget::HandleItemCooldownStarted(int32 TemplateId)

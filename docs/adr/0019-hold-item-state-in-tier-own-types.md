@@ -45,6 +45,9 @@ status: accepted
 - 2026년 10월 21일 덧붙임: 게임 서버가 아이템과 칸을 전용 타입으로 든다. 패킷 변환은 `Server/GameServer/Network/ItemPackets`,
   DB 행 변환은 `Server/GameServer/DB/ItemRows`에 있다. 패킷은 아직 옛 계약이라, 패킷 변환이 비게 된 칸에 `UpdateState`의
   `REMOVED`를 채운다. 클라이언트는 아직 Protocol 타입으로 상태를 든다
+- 2026년 10월 22일 덧붙임: 클라이언트도 아이템과 칸을 `USTRUCT`(`FP1ItemInstance`, `FP1SlotAddress`, `FP1Slot`)로 든다.
+  컨테이너마다 `UP1ItemContainer`의 인스턴스가 하나씩 있고, 패킷 변환은 `P1/Source/P1/Game/Items/P1ItemPackets`에 있다.
+  클라이언트는 장비의 강화 수치와 내구도를 읽는 곳이 없어 변환하지 않는다
 
 ## 틀렸다는 신호
 

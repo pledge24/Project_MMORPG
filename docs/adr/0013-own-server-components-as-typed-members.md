@@ -30,6 +30,8 @@ status: accepted
 - 서버는 `EntityComponent` 파생에만 이름에 `Component`를 붙인다(`docs/conventions.md` 3.10).
 - 클라이언트의 대응 클래스는 `UActorComponent`가 아니면 `Component`를 붙이지 않는다. 서버의 `EquipmentComponent`에는
   `UObject`인 `UP1Equipment`가 대응한다.
+  - 2026년 10월 22일 덧붙임: `UP1Equipment`는 지워졌다. 클라이언트는 인벤토리의 구역과 착용 장비를 같은 클래스
+    `UP1ItemContainer`의 인스턴스로 들고, 서버의 컴포넌트와 일대일로 대응하는 클래스를 두지 않는다
 - 컴포넌트는 소유자를 `weak_ptr`로 가리키므로 순환 참조가 없다. 소유자의 구체 타입이 필요한 컴포넌트는
   `static_pointer_cast`로 내린다. 그 컴포넌트를 만드는 엔티티가 하나뿐이라 캐스트가 틀릴 일이 없다.
 - 컴포넌트를 타입으로 찾아야 하는 호출자가 셋 이상 생기면 이 결정을 다시 본다.
