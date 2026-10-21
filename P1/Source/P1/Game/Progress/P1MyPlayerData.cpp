@@ -4,6 +4,8 @@
 #include "Game/Items/P1ItemContainer.h"
 #include "Game/Items/P1ItemPackets.h"
 #include "Game/Progress/P1ItemActions.h"
+#include "Game/QuickSlots/P1QuickSlotPackets.h"
+#include "Game/QuickSlots/P1QuickSlots.h"
 #include "Utils/LogCategory.h"
 
 namespace
@@ -42,6 +44,7 @@ UP1MyPlayerData::UP1MyPlayerData()
         Containers.Add(ContainerType, Container);
     }
 
+    QuickSlots = CreateDefaultSubobject<UP1QuickSlots>(TEXT("QuickSlots"));
     ItemActions = CreateDefaultSubobject<UP1ItemActions>(TEXT("ItemActions"));
 }
 
@@ -82,6 +85,14 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
         Pair.Value->ResetSlots(Slots);
     }
 
+    // 퀵슬롯 채우기. 퀵슬롯 개수는 서버가 기획 데이터에서 읽어 빈 퀵슬롯까지 싣는다.
+    {
+        TArray<FP1QuickSlot> Received;
+        for (const Protocol::QuickSlot& QuickSlot : EnterGamePkt.quick_slots())
+            Received.Add(P1QuickSlotPackets::FromProto(QuickSlot));
+        QuickSlots->ResetQuickSlots(Received);
+    }
+
     // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.
     ItemCooldowns.Reset();
 
@@ -105,6 +116,9 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
         Pair.Value->OnSlotChanged.RemoveAll(Listener);
         Pair.Value->OnReset.RemoveAll(Listener);
     }
+
+    QuickSlots->OnChanged.RemoveAll(Listener);
+    QuickSlots->OnReset.RemoveAll(Listener);
 }
 
 void UP1MyPlayerData::SetEntityInfo(const Protocol::EntityInfo& InEntityInfo)
@@ -163,6 +177,21 @@ void UP1MyPlayerData::ClearContainers()
 {
     for (const auto& Pair : Containers)
         Pair.Value->Clear();
+}
+
+void UP1MyPlayerData::ClearQuickSlots()
+{
+    QuickSlots->Clear();
+}
+
+void UP1MyPlayerData::HandleSetQuickSlot(const Protocol::S_SET_QUICK_SLOT& SetQuickSlotPkt)
+{
+    ItemActions->HandleResponse(UP1ItemActions::ERequestKind::SetQuickSlot);
+    if (SetQuickSlotPkt.success() == false)
+        return;
+
+    for (const Protocol::QuickSlot& Changed : SetQuickSlotPkt.changed_quick_slots())
+        QuickSlots->ApplyChange(P1QuickSlotPackets::FromProto(Changed));
 }
 
 void UP1MyPlayerData::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)

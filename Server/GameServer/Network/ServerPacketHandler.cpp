@@ -491,6 +491,14 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
         });
 }
 
+bool Handle_C_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::C_SET_QUICK_SLOT& pkt)
+{
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            ItemRequests::HandleSetQuickSlot(*room, player, pkt);
+        });
+}
+
 bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)

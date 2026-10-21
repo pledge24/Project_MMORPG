@@ -2,6 +2,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "Game/QuickSlots/QuickSlotComponent.h"
 #include "Game/Progress/Leveling.h"
 #include "Game/Room/Room.h"
 
@@ -42,6 +43,7 @@ bool Player::Init(const SpawnParams& params)
 
     _inventory = make_shared<InventoryComponent>(self);
     _equipment = make_shared<EquipmentComponent>(self);
+    _quickSlots = make_shared<QuickSlotComponent>(self);
 
     if (params.progress != nullptr)
         return ApplyProgress(*params.progress) && OnLoaded();
@@ -56,6 +58,7 @@ void Player::Start()
     // 컴포넌트들 시작.
     _inventory->Start();
     _equipment->Start();
+    _quickSlots->Start();
 }
 
 void Player::Tick(float deltaTime)
@@ -65,6 +68,7 @@ void Player::Tick(float deltaTime)
     // 컴포넌트들 Tick 처리.
     _inventory->Tick(deltaTime);
     _equipment->Tick(deltaTime);
+    _quickSlots->Tick(deltaTime);
 }
 
 bool Player::OnLoaded()
@@ -143,6 +147,17 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
 
     // 불러온 칸은 응답에 실을 변경이 아니다. 남겨 두면 첫 요청의 응답에 함께 실린다.
     TakeItemChanges();
+
+    // 퀵슬롯은 아이템을 담지 않으므로 버려도 잃는 것이 없다. 넣을 수 없는 등록은 건너뛰고 입장시키고, 다음 저장이 그 행을 지운다.
+    // 기획에서 퀵슬롯 개수를 줄이거나 아이템 종류를 바꾸면 생긴다.
+    for (const QuickSlot& quickSlot : progress.quickSlots)
+    {
+        if (_quickSlots->Load(quickSlot) == false)
+        {
+            GLogger->Warning("캐릭터 {}의 퀵슬롯 {}(종류 {}, 대상 {})을 등록할 수 없어 버립니다", characterId, quickSlot.slotIndex,
+                quickSlot.ref.has_value() ? static_cast<int32>(quickSlot.ref->type) : 0, quickSlot.ref.has_value() ? quickSlot.ref->id : 0);
+        }
+    }
 
     return true;
 }
@@ -326,6 +341,15 @@ optional<GearChangeResult> Player::ProcessUnequipGear(const ItemSlotRequest& req
     RefreshFinalStat(OUT &result.updatedStats);
 
     return result;
+}
+
+optional<SetQuickSlotResult> Player::ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref)
+{
+    optional<vector<QuickSlot>> changed = _quickSlots->Set(slotIndex, ref);
+    if (changed.has_value() == false)
+        return nullopt;
+
+    return SetQuickSlotResult{ std::move(changed.value()) };
 }
 
 RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
@@ -637,6 +661,7 @@ PlayerSaveData Player::MakeSaveData() const
     data.progress.gold = _gold;
     _inventory->CollectItems(data.progress.items);
     _equipment->CollectItems(data.progress.items);
+    _quickSlots->CollectQuickSlots(data.progress.quickSlots);
 
     return data;
 }

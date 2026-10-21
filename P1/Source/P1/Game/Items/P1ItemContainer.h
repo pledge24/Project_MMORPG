@@ -48,6 +48,9 @@ public:
     /** 칸 번호 오름차순. */
     const TArray<FP1Slot>& GetSlots() const { return Slots; }
 
+    /** 이 컨테이너의 모든 칸에 든 TemplateId 아이템의 개수 합. 없으면 0. */
+    int32 CountItem(int32 TemplateId) const;
+
     /** 칸을 고친 뒤에 알린다. 구독자는 알림 안에서 어느 칸을 읽어도 새 값을 읽는다. */
     FOnContainerSlotChanged OnSlotChanged;
 

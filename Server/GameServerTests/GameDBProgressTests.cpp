@@ -13,6 +13,7 @@
     입장의 불러오기와 접속 종료의 저장을 GameDB_Test에서 실제 SQL로 돌린다. 가짜 연결은 바인딩과 흐름만 본다.
     아이템 저장은 그 캐릭터의 아이템 전체를 MERGE 한 문장으로 맞추므로, 칸 맞바꾸기와 고유 제약,
     사본에 없는 행의 삭제, 배열 파라미터의 행 상한을 넘는 저장, 실패한 저장의 되돌림은 여기서만 확인된다.
+    퀵슬롯도 같은 방식으로 저장하고, 빈 퀵슬롯은 행을 두지 않는다.
 
     테스트마다 다른 계정 번호와 캐릭터 번호를 쓰고, 아이템 UID는 캐릭터 번호에서 만든다. 그 계정의 행만 넣고 지운다.
 
@@ -27,6 +28,12 @@ namespace
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 MISC_TEMPLATE_ID = 3000;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
+    constexpr int32 MP_POTION_TEMPLATE_ID = 2001;
+
+    QuickSlot ItemQuickSlot(int32 slotIndex, int32 templateId)
+    {
+        return QuickSlot{ slotIndex, QuickSlotRef{ QuickSlotRefType::ITEM, templateId } };
+    }
 
     void AddItem(PlayerSaveData& data, ContainerType container, int32 slotIndex, int64 itemUid, int32 templateId, int32 count,
         optional<GearDetail> gear = nullopt)
@@ -112,6 +119,7 @@ protected:
         AddCleanup(L"DELETE FROM dbo.CharacterState WHERE CharacterId IN " + characters);
         AddCleanup(L"DELETE FROM dbo.CharacterCurrency WHERE CharacterId IN " + characters);
         AddCleanup(L"DELETE FROM dbo.Item WHERE OwnerId IN " + characters);
+        AddCleanup(L"DELETE FROM dbo.QuickSlot WHERE CharacterId IN " + characters);
 
         AccountDAO::RecordLogin(Connection(), accountId);
 
@@ -395,4 +403,59 @@ TEST_F(DISABLED_GameDBProgressTest, FailedSaveRollsBackEverything)
 
     // 실패한 저장이 연결에 남긴 임시 테이블이나 트랜잭션이 다음 저장을 막지 않는다.
     EXPECT_TRUE(Save(baseline));
+}
+
+TEST_F(DISABLED_GameDBProgressTest, SavedQuickSlotsLoadBack)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'208;
+    constexpr int64 CHARACTER_ID = 9'000'000'208'001;
+    CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_퀵슬롯");
+
+    PlayerSaveData data = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
+    data.progress.quickSlots = { ItemQuickSlot(4, MP_POTION_TEMPLATE_ID), ItemQuickSlot(1, POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(data));
+
+    const std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
+    ASSERT_TRUE(loaded.has_value());
+    EXPECT_EQ(loaded->quickSlots, (vector<QuickSlot>{ ItemQuickSlot(1, POTION_TEMPLATE_ID), ItemQuickSlot(4, MP_POTION_TEMPLATE_ID) }))
+        << "퀵슬롯 번호 순서로 불러온다";
+
+    const wstring characterWhere = L"CharacterId = " + to_wstring(CHARACTER_ID);
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND RefType = 1"), 2) << "아이템 정의를 가리키는 RefType은 1이다";
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND SlotIndex = 4 AND RefId = " + to_wstring(MP_POTION_TEMPLATE_ID)), 1);
+}
+
+TEST_F(DISABLED_GameDBProgressTest, EmptiedQuickSlotRowIsDeleted)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'209;
+    constexpr int64 CHARACTER_ID = 9'000'000'209'001;
+    constexpr int64 OTHER_CHARACTER_ID = 9'000'000'209'002;
+    CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_퀵해제");
+
+    Protocol::CharacterOverview other;
+    other.set_class_(Protocol::CLASS_TYPE_WARRIOR);
+    other.set_name("DB진행_퀵해제_남");
+    ASSERT_FALSE(CharacterListDAO::CreateCharacter(Connection(), ACCOUNT_ID, OTHER_CHARACTER_ID, other).rejection.has_value());
+
+    PlayerSaveData otherData = MakeSaveData(ACCOUNT_ID, OTHER_CHARACTER_ID);
+    otherData.progress.quickSlots = { ItemQuickSlot(0, POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(otherData));
+
+    PlayerSaveData before = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
+    before.progress.quickSlots = { ItemQuickSlot(0, POTION_TEMPLATE_ID), ItemQuickSlot(2, MP_POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(before));
+
+    // 0번을 해제하고 2번에 다른 물약을 등록했다.
+    PlayerSaveData after = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
+    after.progress.quickSlots = { ItemQuickSlot(2, POTION_TEMPLATE_ID) };
+    ASSERT_TRUE(Save(after));
+
+    const wstring characterWhere = L"CharacterId = " + to_wstring(CHARACTER_ID);
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND SlotIndex = 0"), 0) << "빈 퀵슬롯은 행을 두지 않는다";
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere + L" AND SlotIndex = 2 AND RefId = " + to_wstring(POTION_TEMPLATE_ID)), 1);
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", L"CharacterId = " + to_wstring(OTHER_CHARACTER_ID)), 1) << "다른 캐릭터의 퀵슬롯은 그대로다";
+
+    // 모두 해제한 저장도 남은 행을 지운다.
+    ASSERT_TRUE(Save(MakeSaveData(ACCOUNT_ID, CHARACTER_ID)));
+    EXPECT_EQ(CountRows(L"dbo.QuickSlot", characterWhere), 0);
 }

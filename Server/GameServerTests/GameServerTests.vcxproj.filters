@@ -24,6 +24,9 @@
     <Filter Include="GameServer\Game\Equipment">
       <UniqueIdentifier>{f5558365-b878-4854-9d36-43c09c1a2c66}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\QuickSlots">
+      <UniqueIdentifier>{dbcf811f-379b-4ea2-879c-c8f22277375a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\AI">
       <UniqueIdentifier>{1996a35a-3878-408d-9050-caf0a7d99800}</UniqueIdentifier>
     </Filter>
@@ -105,6 +108,7 @@
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
+    <ClCompile Include="QuickSlotTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
     <ClCompile Include="GearEquipTests.cpp" />
     <ClCompile Include="InventoryTests.cpp" />
@@ -206,6 +210,12 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp">
       <Filter>GameServer\Game\Equipment</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\QuickSlots\QuickSlotComponent.cpp">
+      <Filter>GameServer\Game\QuickSlots</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\DB\QuickSlotDAO.cpp">
+      <Filter>GameServer\DB</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp">
       <Filter>GameServer\Game\AI</Filter>

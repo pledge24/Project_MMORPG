@@ -19,6 +19,8 @@ void UP1ContainerWidget::NativeOnInitialized()
 
         Pair.Value->OnDoubleClicked.AddUObject(this, &UP1ContainerWidget::HandleSlotDoubleClicked);
         Pair.Value->OnRightClicked.AddUObject(this, &UP1ContainerWidget::HandleSlotRightClicked);
+        if (bSlotsDraggable)
+            Pair.Value->OnDragRequested.BindUObject(this, &UP1ContainerWidget::MakeDragPayload);
     }
 }
 
@@ -88,4 +90,18 @@ void UP1ContainerWidget::RequestIntent(EP1ItemIntent Intent, UP1SlotWidget* Slot
     Address.Container = ContainerType;
     Address.SlotIndex = *SlotIndex;
     MyPlayerData->GetItemActions()->RequestForSlot(Intent, Address);
+}
+
+TOptional<FP1SlotDragPayload> UP1ContainerWidget::MakeDragPayload(const UP1SlotWidget* SlotWidget) const
+{
+    const int32* SlotIndex = SlotWidgets.FindKey(const_cast<UP1SlotWidget*>(SlotWidget));
+    if (SlotIndex == nullptr || SlotWidget == nullptr)
+        return {};
+
+    FP1SlotDragPayload Payload;
+    Payload.Origin = FP1SlotDragPayload::EOrigin::ContainerSlot;
+    Payload.Address.Container = ContainerType;
+    Payload.Address.SlotIndex = *SlotIndex;
+    Payload.Display = SlotWidget->GetDisplay();
+    return Payload;
 }

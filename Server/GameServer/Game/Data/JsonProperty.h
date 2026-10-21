@@ -119,4 +119,9 @@ namespace JsonProperty
         constexpr std::string_view ItemType = "itemType";
         constexpr std::string_view SlotCount = "slotCount";
     }
+
+    namespace QuickSlot
+    {
+        constexpr std::string_view SlotCount = "slotCount";
+    }
 }

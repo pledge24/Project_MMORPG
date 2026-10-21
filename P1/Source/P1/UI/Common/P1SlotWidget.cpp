@@ -1,5 +1,6 @@
 #include "UI/Common/P1SlotWidget.h"
 #include "UI/Common/P1ItemTooltipWidget.h"
+#include "UI/Common/P1SlotDragDropOperation.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -57,6 +58,13 @@ FReply UP1SlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const
         return FReply::Handled();
     }
 
+    // 끌 수 있는 칸만 끌기를 감지한다. 감지하면 마우스를 잡으므로, 끌 수 없는 칸에서 잡으면 바깥 창이 눌림을 받지 못한다.
+    if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton && OnDragRequested.IsBound() && Display.IsEmpty() == false
+        && IsOverIcon(InMouseEvent))
+    {
+        return FReply::Handled().DetectDrag(TakeWidget(), EKeys::LeftMouseButton);
+    }
+
     return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 }
 
@@ -69,6 +77,47 @@ FReply UP1SlotWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry
     }
 
     return Super::NativeOnMouseButtonDoubleClick(InGeometry, InMouseEvent);
+}
+
+void UP1SlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
+{
+    Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
+
+    const TOptional<FP1SlotDragPayload> Payload = OnDragRequested.IsBound() ? OnDragRequested.Execute(this) : TOptional<FP1SlotDragPayload>();
+    if (Payload.IsSet() == false)
+        return;
+
+    UP1SlotDragDropOperation* Operation = NewObject<UP1SlotDragDropOperation>(this);
+    Operation->Payload = Payload.GetValue();
+    Operation->Pivot = EDragPivot::CenterCenter;
+
+    // 끌리는 그림은 같은 슬롯 위젯으로 그린다. 끄는 동안 놓을 자리를 가리지 않게 입력을 받지 않는다.
+    if (UP1SlotWidget* DragVisual = CreateWidget<UP1SlotWidget>(this, GetClass()))
+    {
+        DragVisual->SetVisibility(ESlateVisibility::HitTestInvisible);
+        DragVisual->SetDisplay(Payload->Display);
+        Operation->DefaultDragVisual = DragVisual;
+    }
+
+    OutOperation = Operation;
+}
+
+bool UP1SlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+    // 받아들이지 않으면 바깥에 놓은 것이 되어 끌기를 시작한 슬롯이 취소를 알린다.
+    const UP1SlotDragDropOperation* Operation = Cast<UP1SlotDragDropOperation>(InOperation);
+    if (Operation && OnDropped.IsBound() && OnDropped.Execute(this, Operation->Payload))
+        return true;
+
+    return Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
+}
+
+void UP1SlotWidget::NativeOnDragCancelled(const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation)
+{
+    Super::NativeOnDragCancelled(InDragDropEvent, InOperation);
+
+    if (const UP1SlotDragDropOperation* Operation = Cast<UP1SlotDragDropOperation>(InOperation))
+        OnDragCancelled.Broadcast(this, Operation->Payload);
 }
 
 bool UP1SlotWidget::IsOverIcon(const FPointerEvent& InMouseEvent) const
@@ -91,10 +140,16 @@ void UP1SlotWidget::SetDisplay(const FP1SlotDisplay& InDisplay)
         if (Icon == nullptr)
             Icon = DisplayIcon ? DisplayIcon.Get() : SlotDefaultIcon.Get();
         ItemIcon->SetBrushFromTexture(Icon);
+        if (NormalIconColor.IsSet() == false)
+            NormalIconColor = ItemIcon->GetColorAndOpacity();
+        ItemIcon->SetColorAndOpacity(Display.bDimmed ? DimmedIconColor : NormalIconColor.GetValue());
     }
 
     if (ItemCountText)
-        ItemCountText->SetText(Display.Count > 1 ? FText::AsNumber(Display.Count) : FText::GetEmpty());
+    {
+        const bool bShowCount = Display.Count > 1 || (Display.bAlwaysShowCount && Display.IsEmpty() == false);
+        ItemCountText->SetText(bShowCount ? FText::AsNumber(Display.Count) : FText::GetEmpty());
+    }
 
     // 대기 중인 물약이 칸에 새로 들어왔거나 칸이 비었을 수 있다.
     RefreshCooldown();

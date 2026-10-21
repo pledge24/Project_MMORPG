@@ -98,6 +98,11 @@ bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 	return false;
 }
 
+bool Handle_S_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::S_SET_QUICK_SLOT& pkt)
+{
+	return false;
+}
+
 bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 {
 	return false;

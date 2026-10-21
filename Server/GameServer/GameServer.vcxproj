@@ -213,6 +213,9 @@
     <ClInclude Include="Network\ItemPackets.h" />
     <ClInclude Include="Game\Combat\Combat.h" />
     <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
+    <ClInclude Include="Game\QuickSlots\QuickSlotComponent.h" />
+    <ClInclude Include="Game\QuickSlots\QuickSlotTypes.h" />
+    <ClInclude Include="DB\QuickSlotDAO.h" />
     <ClInclude Include="Game\AI\MonsterAIComponent.h" />
     <ClInclude Include="Game\Data\Gamedata.h" />
     <ClInclude Include="Game\Data\GamedataParser.h" />
@@ -288,6 +291,8 @@
     <ClCompile Include="Network\ItemPackets.cpp" />
     <ClCompile Include="Game\Combat\Combat.cpp" />
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp" />
+    <ClCompile Include="Game\QuickSlots\QuickSlotComponent.cpp" />
+    <ClCompile Include="DB\QuickSlotDAO.cpp" />
     <ClCompile Include="Game\AI\MonsterAIComponent.cpp" />
     <ClCompile Include="Game\Data\Gamedata.cpp" />
     <ClCompile Include="Game\Data\GamedataParser.cpp" />
@@ -310,6 +315,7 @@
     <None Include="..\..\Protocol\Schema\Protocol.proto" />
     <None Include="..\..\Protocol\Schema\Struct.proto" />
     <None Include="Migrations\001_init.sql" />
+    <None Include="Migrations\002_quick_slot.sql" />
     <None Include="Game\Data\Json\S_Item.json" />
     <None Include="Game\Data\Json\S_Map.json" />
     <None Include="Game\Data\Json\S_Monster.json" />

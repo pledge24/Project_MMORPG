@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[14];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[15];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -76,14 +76,16 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "R_TYPE_CROSS_MAP_TRANSFER\020\003\022\026\n\022ENTER_TYP"
   "E_RESPAWN\020\004*`\n\nRewardType\022\024\n\020REWARD_TYPE"
   "_NONE\020\000\022\034\n\030REWARD_TYPE_MONSTER_KILL\020\001\022\036\n"
-  "\032REWARD_TYPE_QUEST_COMPLETE\020\002*f\n\013LeaveRe"
+  "\032REWARD_TYPE_QUEST_COMPLETE\020\002*N\n\020QuickSl"
+  "otRefType\022\034\n\030QUICK_SLOT_REF_TYPE_NONE\020\000\022"
+  "\034\n\030QUICK_SLOT_REF_TYPE_ITEM\020\001*f\n\013LeaveRe"
   "ason\022\025\n\021LEAVE_REASON_NONE\020\000\022 \n\034LEAVE_REA"
   "SON_DUPLICATE_LOGIN\020\001\022\036\n\032LEAVE_REASON_IN"
   "VALID_TOKEN\020\002b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 2021, descriptor_table_protodef_Enum_2eproto,
+    false, false, 2101, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -321,9 +323,23 @@ bool RewardType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* LeaveReason_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* QuickSlotRefType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[13];
+}
+bool QuickSlotRefType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* LeaveReason_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[14];
 }
 bool LeaveReason_IsValid(int value) {
   switch (value) {

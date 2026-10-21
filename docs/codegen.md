@@ -61,7 +61,7 @@
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data, Currency, Character_Creation, Inventory_Section)
+**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data, Currency, Character_Creation, Inventory_Section, Quick_Slot)
 
 **원본에는 수치만 둔다. 에셋 경로 열을 만들지 않는다.** 아이콘, 메시, 몬스터 클래스는
 `DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
@@ -76,12 +76,12 @@
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 12개가 전부다.**
+**산출물은 아래 표의 13개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` · `S_Currency.json` · `S_Character_Creation.json` · `S_Inventory_Section.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` · `S_Currency.json` · `S_Character_Creation.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
@@ -90,22 +90,27 @@
 장비 데이터는 `Original_Item.xlsx`의 첫 시트에 있다. 세 시트가 하나의 `C_Item.json`으로
 합쳐지므로 장비만 담는 산출물은 없다.
 
-레벨, 재화, 캐릭터 생성, 인벤토리 구역 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
+레벨, 재화, 캐릭터 생성, 인벤토리 구역, 퀵슬롯 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
 
 ### 서버 전용 표
 
-아래 세 표는 2026년 10월 20일(#250)에 DB 기본값과 코드 상수에서 옮겨 왔다. 열은 모두 `SERVER`다.
+재화, 캐릭터 생성, 인벤토리 구역 표는 2026년 10월 20일(#250)에 DB 기본값과 코드 상수에서 옮겨 왔다. 퀵슬롯 표는 2026년 10월 22일에 새로 만들었다. 열은 모두 `SERVER`다.
 
 | 원본 | 열 | 규칙 |
 |---|---|---|
 | `Original_Currency.xlsx` (재화) | `template_id` · `currency_name` · `currency_type` | `template_id`가 DB의 `CurrencyId`다. `currency_type`은 서버 열거형 `CurrencyType`의 이름(`GOLD`)이고, `GOLD` 행은 정확히 하나다 |
 | `Original_Character_Creation.xlsx` (캐릭터 생성) | `start_map_id` · `start_pos` · `start_yaw` · `start_gold` · `default_character_slot_count` | 행이 정확히 하나다. `start_map_id`는 룸 번호(`template_id`)가 아니라 맵 표의 `map_id`다. 시작 골드는 0 이상, 슬롯 수는 1~255다(DB 열이 `TINYINT`) |
 | `Original_Inventory_Section.xlsx` (인벤토리 구역) | `item_type` · `slot_count` | `NONE`을 뺀 아이템 종류마다 행이 정확히 하나다. 칸 수는 1 이상이다 |
+| `Original_Quick_Slot.xlsx` (퀵슬롯) | `slot_count` | 행이 정확히 하나다. 퀵슬롯 개수는 1~256이다(DB의 퀵슬롯 번호 열이 `TINYINT`) |
 
 **인벤토리 구역의 칸 수는 32에서 바꾸지 않는다.** 클라이언트 UI가 구역마다 32칸을 고정으로 쓴다.
 
+**퀵슬롯 개수는 서버만 읽고 클라이언트는 입장 패킷으로 받는다.** 클라이언트의 퀵슬롯 위젯은 받은 퀵슬롯 수만큼 슬롯 위젯을
+만든다. 지금 값은 9다.
+
 2026년 10월 21일 현재 서버는 세 표의 값을 모두 쓴다. 캐릭터 생성은 시작 맵, 좌표, 방향, 시작 골드를
 표에서 읽는다. 로그인은 새 계정 행의 슬롯 수를 표의 기본값으로 정한다. 인벤토리는 구역마다 칸 수를 인벤토리 구역 표에서 읽는다.
+2026년 10월 22일부터 퀵슬롯 컴포넌트가 퀵슬롯 개수를 퀵슬롯 표에서 읽는다.
 
 ### 클라이언트 데이터 테이블 재임포트
 
@@ -126,7 +131,7 @@
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `S_Quest.json`을 뺀 일곱 파일을 읽는다.
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `S_Quest.json`을 뺀 여덟 파일을 읽는다.
 `GamedataParser::Parse`가 모든 행을 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿만 읽는다.
 

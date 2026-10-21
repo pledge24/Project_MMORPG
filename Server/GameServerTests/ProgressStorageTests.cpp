@@ -7,6 +7,7 @@
 #include "DB/ItemDAO.h"
 #include "DB/ItemRows.h"
 #include "DB/ProgressStorage.h"
+#include "DB/QuickSlotDAO.h"
 #include "Network/GameEntry.h"
 #include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
@@ -38,6 +39,7 @@ namespace
     constexpr int32 MAX_HP = 500;
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
+    constexpr int32 QUICK_SLOT_COUNT = 3;
 
     // CharacterStateDAO::LoadCharacter가 읽는 열 순서의 행.
     FakeDBRow MakeCharacterRow(int64 level, int64 exp, int64 mapId, double posX, double posY, int64 gold)
@@ -132,6 +134,7 @@ protected:
         tables.items[POTION_TEMPLATE_ID] = potion;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.inventorySlotCounts = MakeInventorySections();
+        tables.quickSlotCount = QUICK_SLOT_COUNT;
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
@@ -279,6 +282,26 @@ TEST_F(ProgressStorageTest, EnterOutsideEveryRoomGoesToTownRespawn)
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), TOWN_RESPAWN_X);
 }
 
+TEST_F(ProgressStorageTest, EnterPacketCarriesEveryQuickSlot)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ MakeCharacterRow(1, 0, FIELD_MAP_ID, -150.0, 40.0, 100) });
+    conn.QueueResult({});
+    conn.QueueResult({ { int64(1), int64(1), int64(POTION_TEMPLATE_ID) } });
+
+    const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
+
+    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.quick_slots().size(), QUICK_SLOT_COUNT) << "클라이언트는 받은 퀵슬롯 수로 퀵슬롯을 만들므로 빈 퀵슬롯도 싣는다";
+    for (int32 slotIndex = 0; slotIndex < QUICK_SLOT_COUNT; slotIndex++)
+        EXPECT_EQ(pkt.quick_slots(slotIndex).slot_index(), slotIndex);
+
+    EXPECT_FALSE(pkt.quick_slots(0).has_ref());
+    ASSERT_TRUE(pkt.quick_slots(1).has_ref());
+    EXPECT_EQ(pkt.quick_slots(1).ref().ref_type(), Protocol::QUICK_SLOT_REF_TYPE_ITEM);
+    EXPECT_EQ(pkt.quick_slots(1).ref().ref_id(), POTION_TEMPLATE_ID);
+}
+
 TEST_F(ProgressStorageTest, EnterWithoutRoomToAssignIsRejected)
 {
     GamedataTables tables;
@@ -348,8 +371,8 @@ TEST_F(ProgressStorageTest, ItemsBeyondParamRowLimitAreInsertedInChunksAndMerged
     FakeDBConnection conn;
     ASSERT_TRUE(ProgressStorage::Save(conn, data));
 
-    // 레벨, 상태, 골드, 임시 테이블, 넣기 두 번, MERGE 한 번.
-    ASSERT_EQ(conn.executedQueries.size(), 7u);
+    // 레벨, 상태, 골드, 임시 테이블, 넣기 두 번, MERGE 한 번. 그 뒤에 퀵슬롯의 임시 테이블과 MERGE.
+    ASSERT_EQ(conn.executedQueries.size(), 9u);
     EXPECT_NE(conn.executedQueries[3].find(L"CREATE TABLE #ItemSource"), wstring::npos);
     EXPECT_NE(conn.executedQueries[4].find(L"INSERT INTO #ItemSource"), wstring::npos);
     EXPECT_NE(conn.executedQueries[5].find(L"INSERT INTO #ItemSource"), wstring::npos);
@@ -364,9 +387,76 @@ TEST_F(ProgressStorageTest, SaveWithoutItemsStillMergesToDeleteRows)
     FakeDBConnection conn;
     ASSERT_TRUE(ProgressStorage::Save(conn, MakeSaveData()));
 
-    // 레벨, 상태, 골드, 임시 테이블, MERGE. 넣을 행이 없어도 MERGE는 돌아야 DB에 남은 행이 지워진다.
-    ASSERT_EQ(conn.executedQueries.size(), 5u);
+    // 레벨, 상태, 골드, 아이템의 임시 테이블과 MERGE, 퀵슬롯의 임시 테이블과 MERGE.
+    // 넣을 행이 없어도 MERGE는 돌아야 DB에 남은 행이 지워진다.
+    ASSERT_EQ(conn.executedQueries.size(), 7u);
     EXPECT_NE(conn.executedQueries[4].find(L"MERGE"), wstring::npos);
+    EXPECT_NE(conn.executedQueries[5].find(L"#QuickSlotSource"), wstring::npos);
+    EXPECT_NE(conn.executedQueries[6].find(L"MERGE"), wstring::npos);
+}
+
+TEST_F(ProgressStorageTest, SaveMergesQuickSlotsInSameTransaction)
+{
+    PlayerSaveData data = MakeSaveData();
+    data.progress.quickSlots.push_back(QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } });
+    data.progress.quickSlots.push_back(QuickSlot{ 5, QuickSlotRef{ QuickSlotRefType::ITEM, 2001 } });
+
+    FakeDBConnection conn;
+    ASSERT_TRUE(ProgressStorage::Save(conn, data));
+
+    // 레벨, 상태, 골드, 아이템의 임시 테이블과 MERGE, 퀵슬롯의 임시 테이블, 넣기, MERGE.
+    ASSERT_EQ(conn.executedQueries.size(), 8u);
+    EXPECT_NE(conn.executedQueries[6].find(L"INSERT INTO #QuickSlotSource"), wstring::npos);
+    EXPECT_EQ(get<int64>(conn.executedParams[6].at(0)), 2) << "퀵슬롯 번호";
+    EXPECT_EQ(get<int64>(conn.executedParams[6].at(1)), 1) << "아이템 정의를 가리키는 RefType은 1이다";
+    EXPECT_EQ(get<int64>(conn.executedParams[6].at(2)), POTION_TEMPLATE_ID);
+    EXPECT_NE(conn.executedQueries[7].find(L"MERGE"), wstring::npos);
+    EXPECT_EQ(get<int64>(conn.executedParams[7].at(0)), CHARACTER_ID) << "그 캐릭터의 행만 맞춘다";
+    EXPECT_EQ(conn.beginCount, 1);
+    EXPECT_EQ(conn.commitCount, 1) << "아이템과 퀵슬롯은 한 트랜잭션으로 저장한다";
+}
+
+TEST_F(ProgressStorageTest, QuickSlotsBeyondParamRowLimitAreInsertedInChunksAndMergedOnce)
+{
+    PlayerSaveData data = MakeSaveData();
+    for (int32 i = 0; i < MAX_PARAM_ROWS + 10; i++)
+        data.progress.quickSlots.push_back(QuickSlot{ i, QuickSlotRef{ QuickSlotRefType::ITEM, 5000 + i } });
+
+    FakeDBConnection conn;
+    ASSERT_TRUE(ProgressStorage::Save(conn, data));
+
+    ASSERT_EQ(conn.executedQueries.size(), 9u);
+    EXPECT_NE(conn.executedQueries[6].find(L"INSERT INTO #QuickSlotSource"), wstring::npos);
+    EXPECT_NE(conn.executedQueries[7].find(L"INSERT INTO #QuickSlotSource"), wstring::npos);
+    EXPECT_EQ(get<int64>(conn.executedParams[7].at(0)), MAX_PARAM_ROWS) << "둘째 묶음은 첫 묶음 다음 행부터";
+    EXPECT_NE(conn.executedQueries[8].find(L"MERGE"), wstring::npos);
+}
+
+TEST_F(ProgressStorageTest, EmptyQuickSlotInSaveDataFailsAndRollsBack)
+{
+    PlayerSaveData data = MakeSaveData();
+    data.progress.quickSlots.push_back(QuickSlot{ 0, nullopt });
+
+    FakeDBConnection conn;
+    EXPECT_FALSE(ProgressStorage::Save(conn, data)) << "빈 퀵슬롯은 행이 없다";
+    EXPECT_EQ(conn.rollbackCount, 1);
+    EXPECT_EQ(conn.commitCount, 0);
+}
+
+TEST_F(ProgressStorageTest, LoadQuickSlotsReadsRows)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ { int64(0), int64(1), int64(POTION_TEMPLATE_ID) }, { int64(4), int64(1), int64(2001) } });
+
+    PlayerProgress progress;
+    QuickSlotDAO::LoadQuickSlots(conn, CHARACTER_ID, OUT progress);
+
+    EXPECT_EQ(progress.quickSlots, (vector<QuickSlot>{
+        QuickSlot{ 0, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } },
+        QuickSlot{ 4, QuickSlotRef{ QuickSlotRefType::ITEM, 2001 } },
+    }));
+    ASSERT_EQ(conn.executedParams.size(), 1u);
+    EXPECT_EQ(get<int64>(conn.executedParams[0].at(0)), CHARACTER_ID);
 }
 
 TEST_F(ProgressStorageTest, ItemWithoutUidFailsAndRollsBack)

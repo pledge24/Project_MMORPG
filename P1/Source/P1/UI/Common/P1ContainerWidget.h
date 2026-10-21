@@ -5,6 +5,7 @@
 #include "Game/Items/P1ContainerType.h"
 #include "Game/Items/P1Slot.h"
 #include "Game/Progress/P1ItemIntent.h"
+#include "UI/Common/P1SlotDragPayload.h"
 #include "P1ContainerWidget.generated.h"
 
 class UP1ItemContainer;
@@ -55,6 +56,16 @@ private:
 
     /** 의도가 None이거나 이 위젯의 슬롯이 아니면 아무것도 하지 않는다. */
     void RequestIntent(EP1ItemIntent Intent, UP1SlotWidget* SlotWidget) const;
+
+    //~ Drag
+protected:
+    /** 아이템이 든 칸을 끌어 다른 위젯에 놓을 수 있다. 놓은 자리의 위젯이 무엇을 할지 정한다. */
+    UPROPERTY(EditAnywhere, Category = "Container")
+    bool bSlotsDraggable = false;
+
+private:
+    /** 끌기를 시작한 슬롯의 칸 주소와 그리던 내용. 이 위젯의 슬롯이 아니면 비워 돌려준다. */
+    TOptional<FP1SlotDragPayload> MakeDragPayload(const UP1SlotWidget* SlotWidget) const;
 
     //~ 공통
 protected:

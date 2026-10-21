@@ -2,6 +2,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "Game/QuickSlots/QuickSlotComponent.h"
 
 /**
  * 테스트가 준비 단계에서 플레이어의 상태(레벨, 직업, 골드 등)를 직접 채운다. Player가 friend로 연다.
@@ -14,6 +15,8 @@ struct PlayerTestAccess
     /** 준비 단계에서 아이템을 넣고 칸을 바꾼다. 운영 코드는 Process* 요청 처리와 불러오기로만 바꾼다. */
     static InventoryComponent& Inventory(Player& player) { return *player._inventory; }
     static EquipmentComponent& Equipment(Player& player) { return *player._equipment; }
+    /** 준비 단계에서 불러오기를 흉내 낸다. 운영 코드는 ProcessSetQuickSlot과 불러오기로만 바꾼다. */
+    static QuickSlotComponent& QuickSlots(Player& player) { return *player._quickSlots; }
     /** 준비 단계에서 바뀐 칸을 버린다. 남겨 두면 다음 요청의 결과에 함께 실린다. */
     static void DiscardItemChanges(Player& player) { player.TakeItemChanges(); }
 

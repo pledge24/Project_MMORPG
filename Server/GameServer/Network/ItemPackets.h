@@ -1,12 +1,13 @@
 #pragma once
 #include "Game/Items/ItemTypes.h"
+#include "Game/QuickSlots/QuickSlotTypes.h"
 
 struct ItemSlotRequest;
 
 /**
  * 서버의 아이템 타입과 패킷 사이의 변환.
  *
- * 아이템과 칸의 Protocol 타입은 이 변환에서만 다룬다. 입장 패킷의 소지품과 응답의 칸 변경을 만들고, 요청의 칸 주소를 읽는다.
+ * 아이템과 칸, 퀵슬롯의 Protocol 타입은 이 변환에서만 다룬다. 입장 패킷의 소지품과 응답의 칸 변경을 만들고, 요청의 칸 주소를 읽는다.
  */
 namespace ItemPackets
 {
@@ -31,4 +32,11 @@ namespace ItemPackets
 
     /** 입장 패킷에 실을 골드와, 인벤토리의 구역과 착용 장비의 모든 칸. */
     Protocol::Possession MakePossession(const Player& player);
+
+    /** 빈 퀵슬롯은 참조를 싣지 않는다. */
+    Protocol::QuickSlot ToProto(const QuickSlot& quickSlot);
+    /** 퀵슬롯마다 패킷의 퀵슬롯 하나를 protoQuickSlots 뒤에 붙인다(nullptr 불가). */
+    void AddQuickSlots(const vector<QuickSlot>& quickSlots, OUT RepeatedPtrField<Protocol::QuickSlot>* protoQuickSlots);
+    /** 열거형에 없는 종류면 nullopt. 대상은 검증하지 않으므로 클라이언트 값을 넘겨도 된다. */
+    optional<QuickSlotRef> FromProto(const Protocol::QuickSlotRef& ref);
 }

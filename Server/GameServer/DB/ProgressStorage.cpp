@@ -2,6 +2,7 @@
 #include "DB/ProgressStorage.h"
 #include "DB/CharacterStateDAO.h"
 #include "DB/ItemDAO.h"
+#include "DB/QuickSlotDAO.h"
 #include "DB/DAOCommon.h"
 #include "Game/Entities/PlayerSaveData.h"
 
@@ -16,6 +17,7 @@ bool ProgressStorage::Load(DBConnection& conn, int64 userId, int64 characterId, 
         }
 
         ItemDAO::LoadItems(conn, characterId, OUT progress);
+        QuickSlotDAO::LoadQuickSlots(conn, characterId, OUT progress);
     }
     catch (const exception& error)
     {
@@ -44,6 +46,7 @@ bool ProgressStorage::Save(DBConnection& conn, const PlayerSaveData& data)
         CharacterStateDAO::SaveState(conn, data);
         CharacterStateDAO::SaveGold(conn, data);
         ItemDAO::SaveItems(conn, data);
+        QuickSlotDAO::SaveQuickSlots(conn, data);
     }
     catch (const exception& error)
     {

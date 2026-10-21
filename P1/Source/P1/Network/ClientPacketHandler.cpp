@@ -184,6 +184,17 @@ bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& 
     return true;
 }
 
+bool Handle_S_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::S_SET_QUICK_SLOT& pkt)
+{
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleSetQuickSlot(pkt);
+        return true;
+    }
+
+    return false;
+}
+
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt)
 {
     if (auto* MyPlayerData = GetMyPlayerData(session))

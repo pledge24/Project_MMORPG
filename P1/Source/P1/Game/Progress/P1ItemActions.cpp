@@ -5,6 +5,8 @@
 #include "Game/Items/P1ItemContainer.h"
 #include "Game/Items/P1ItemPackets.h"
 #include "Game/Progress/P1MyPlayerData.h"
+#include "Game/QuickSlots/P1QuickSlotPackets.h"
+#include "Game/QuickSlots/P1QuickSlots.h"
 #include "Network/P1PacketSender.h"
 #include "Utils/LogCategory.h"
 
@@ -80,6 +82,41 @@ UP1ItemActions::EResult UP1ItemActions::RequestBuy(int32 TemplateId)
 
     if (Result != EResult::Sent)
         UE_LOG(LogP1CharacterInventory, Log, TEXT("구매 요청을 보내지 않았다: %s. 템플릿 %d"), ToString(Result), TemplateId);
+    return Result;
+}
+
+UP1ItemActions::EResult UP1ItemActions::RequestSetQuickSlot(int32 QuickSlotIndex, const FP1QuickSlotRef& Ref)
+{
+    const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
+    const UP1QuickSlots* QuickSlots = MyPlayerData ? MyPlayerData->GetQuickSlots() : nullptr;
+
+    EResult Result = EResult::Sent;
+    if (QuickSlots == nullptr || QuickSlots->Find(QuickSlotIndex) == nullptr)
+    {
+        Result = EResult::Empty;
+    }
+    else if (Ref.IsEmpty() == false)
+    {
+        // 서버도 소모품이 아닌 대상을 거절한다. 다 떨어진 소모품도 등록하므로 소지 여부는 보지 않는다.
+        const FP1ItemData* ItemData = Ref.Type == EP1QuickSlotRefType::Item ? UP1GameDataSettings::FindItemData(Ref.Id) : nullptr;
+        if (ItemData == nullptr || ItemData->GetItemType() != Protocol::ITEM_TYPE_CONSUMABLE)
+            Result = EResult::Unusable;
+    }
+
+    if (Result == EResult::Sent)
+    {
+        FRequest Request;
+        Request.Kind = ERequestKind::SetQuickSlot;
+        Request.QuickSlotIndex = QuickSlotIndex;
+        Request.QuickSlotRef = Ref;
+        Result = Send(Request);
+    }
+
+    if (Result != EResult::Sent)
+    {
+        UE_LOG(LogP1CharacterInventory, Log, TEXT("퀵슬롯 등록 요청을 보내지 않았다: %s. 퀵슬롯 %d, 종류 %d, 대상 %d"),
+            ToString(Result), QuickSlotIndex, static_cast<int32>(Ref.Type), Ref.Id);
+    }
     return Result;
 }
 
@@ -224,6 +261,16 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
         Protocol::C_BUY_ITEM Pkt;
         Pkt.set_template_id(Request.TemplateId);
         Pkt.set_count(Request.Count);
+        FP1PacketSender::Send(WorldContext, Pkt);
+        break;
+    }
+    case ERequestKind::SetQuickSlot:
+    {
+        // 참조를 싣지 않으면 서버는 해제로 읽는다.
+        Protocol::C_SET_QUICK_SLOT Pkt;
+        Pkt.set_slot_index(Request.QuickSlotIndex);
+        if (Request.QuickSlotRef.IsEmpty() == false)
+            *Pkt.mutable_ref() = P1QuickSlotPackets::ToProto(Request.QuickSlotRef);
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }

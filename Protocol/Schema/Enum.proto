@@ -126,6 +126,13 @@ enum RewardType
     REWARD_TYPE_QUEST_COMPLETE = 2;
 }
 
+// 퀵슬롯이 가리키는 대상의 종류. DB의 QuickSlot.RefType과 같은 값이다
+enum QuickSlotRefType
+{
+    QUICK_SLOT_REF_TYPE_NONE = 0;
+    QUICK_SLOT_REF_TYPE_ITEM = 1;       // 아이템 정의. ref_id가 아이템 번호다
+}
+
 // 서버가 연결을 끊는 사유. 클라이언트는 이 값으로 로그인 화면의 문구를 고른다.
 enum LeaveReason
 {

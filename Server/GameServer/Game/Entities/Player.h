@@ -3,11 +3,13 @@
 #include "Game/Entities/PlayerSaveData.h"
 #include "Game/Entities/CombatStats.h"
 #include "Game/Items/ItemTypes.h"
+#include "Game/QuickSlots/QuickSlotTypes.h"
 
 class GameSession;
 class Room;
 class InventoryComponent;
 class EquipmentComponent;
+class QuickSlotComponent;
 struct RoomEnterData;
 struct TownRespawn;
 struct LevelExp;
@@ -60,6 +62,12 @@ struct GearChangeResult
     int32 templateId = 0;
     vector<SlotChange> changedSlots;
     RepeatedPtrField<Protocol::Stat> updatedStats;
+};
+
+/** 퀵슬롯 등록 결과. 교환이면 두 퀵슬롯이 바뀐다. */
+struct SetQuickSlotResult
+{
+    vector<QuickSlot> changedQuickSlots;
 };
 
 /** 리스폰 결과. */
@@ -140,6 +148,11 @@ public:
     /** 가방에 자리가 없으면 nullopt. 결과의 templateId는 0이다. */
     optional<GearChangeResult> ProcessUnequipGear(const ItemSlotRequest& request);
     /**
+     * slotIndex 퀵슬롯에 ref를 등록하고, ref가 비었으면 해제한다. 클라이언트 값을 넘겨도 된다.
+     * 범위 밖 번호이거나 소모품이 아니면 nullopt. 소지 여부는 보지 않는다.
+     */
+    optional<SetQuickSlotResult> ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref);
+    /**
      * respawnPos에서 되살린다. 소속 룸을 보지 않으므로 룸에서 뺀 뒤에도 부를 수 있다.
      * 마을 리스폰만 경험치를 잃고 HP를 절반만 채운다.
      */
@@ -207,10 +220,11 @@ private:
 
     //~ 소지품
 public:
-    // 읽기만 연다. 소지품을 바꾸는 길은 요청 처리(Process*)와 불러오기뿐이다.
+    // 읽기만 연다. 소지품과 퀵슬롯을 바꾸는 길은 요청 처리(Process*)와 불러오기뿐이다.
     int64 GetGold() const { return _gold; }
     const InventoryComponent& GetInventory() const { return *_inventory; }
     const EquipmentComponent& GetEquipment() const { return *_equipment; }
+    const QuickSlotComponent& GetQuickSlots() const { return *_quickSlots; }
 
 private:
     /** 다른 플레이어에게 보일 장비 외형 요약을 다시 쓴다. */
@@ -221,6 +235,7 @@ private:
     int64 _gold = 0;
     InventoryComponentRef _inventory;
     EquipmentComponentRef _equipment;
+    QuickSlotComponentRef _quickSlots;
 
     //~ 세션
 public:

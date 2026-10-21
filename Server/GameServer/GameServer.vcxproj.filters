@@ -44,6 +44,9 @@
     <Filter Include="Game\Equipment">
       <UniqueIdentifier>{c36c017d-b07a-4db4-951a-8826a8aa4a9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\QuickSlots">
+      <UniqueIdentifier>{8e5015cd-06a7-4357-9bb9-fd060d1f3ef0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\AI">
       <UniqueIdentifier>{710ba740-885c-460b-b0eb-233bf434b28e}</UniqueIdentifier>
     </Filter>
@@ -172,6 +175,12 @@
     </ClCompile>
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\QuickSlots\QuickSlotComponent.cpp">
+      <Filter>Game\QuickSlots</Filter>
+    </ClCompile>
+    <ClCompile Include="DB\QuickSlotDAO.cpp">
+      <Filter>DB</Filter>
     </ClCompile>
     <ClCompile Include="Game\AI\MonsterAIComponent.cpp">
       <Filter>Game\AI</Filter>
@@ -340,6 +349,15 @@
     <ClInclude Include="Game\Equipment\EquipmentComponent.h">
       <Filter>Game\Equipment</Filter>
     </ClInclude>
+    <ClInclude Include="Game\QuickSlots\QuickSlotComponent.h">
+      <Filter>Game\QuickSlots</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\QuickSlots\QuickSlotTypes.h">
+      <Filter>Game\QuickSlots</Filter>
+    </ClInclude>
+    <ClInclude Include="DB\QuickSlotDAO.h">
+      <Filter>DB</Filter>
+    </ClInclude>
     <ClInclude Include="Game\AI\MonsterAIComponent.h">
       <Filter>Game\AI</Filter>
     </ClInclude>
@@ -385,6 +403,9 @@
       <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="Migrations\001_init.sql">
+      <Filter>Migrations</Filter>
+    </None>
+    <None Include="Migrations\002_quick_slot.sql">
       <Filter>Migrations</Filter>
     </None>
     <None Include="Game\Data\Json\S_Item.json">

@@ -158,6 +158,20 @@ message ContainerSlots
     repeated Slot slots = 2;
 }
 
+// 퀵슬롯이 가리키는 대상. 아이템 하나가 아니라 아이템 정의를 가리킨다
+message QuickSlotRef
+{
+    QuickSlotRefType ref_type = 1;
+    int32 ref_id = 2;
+}
+
+// 퀵슬롯 하나. ref가 없으면 빈 퀵슬롯이다
+message QuickSlot
+{
+    int32 slot_index = 1;               // 0부터 퀵슬롯 개수 미만
+    optional QuickSlotRef ref = 2;
+}
+
 message LevelUpInfo
 {
     int32 old_level = 1;
