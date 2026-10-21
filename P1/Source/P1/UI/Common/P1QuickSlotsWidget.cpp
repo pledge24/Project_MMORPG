@@ -1,6 +1,6 @@
 #include "UI/Common/P1QuickSlotsWidget.h"
 #include "UI/Common/P1SlotWidget.h"
-#include "Components/PanelWidget.h"
+#include "Blueprint/WidgetTree.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Items/P1ItemContainer.h"
 #include "Game/Progress/P1ItemActions.h"
@@ -8,13 +8,23 @@
 #include "Game/QuickSlots/P1QuickSlots.h"
 #include "Utils/LogCategory.h"
 
-void UP1QuickSlotsWidget::NativePreConstruct()
+void UP1QuickSlotsWidget::NativeOnInitialized()
 {
-    Super::NativePreConstruct();
+    Super::NativeOnInitialized();
 
-    // 디자이너 미리보기에서 퀵슬롯의 배치를 보인다. 실행 중에는 서버가 알려 준 개수로 NativeConstruct에서 만든다.
-    if (IsDesignTime())
-        BuildSlots(PreviewSlotCount);
+    // 슬롯 위젯 대응과 끌어 놓기 연결. 위젯이 사는 동안 한 번만 한다.
+    WidgetTree->ForEachWidget([this](UWidget* Widget)
+        {
+            if (UP1SlotWidget* SlotWidget = Cast<UP1SlotWidget>(Widget))
+                SlotWidgets.Add(SlotWidget);
+        });
+
+    for (UP1SlotWidget* SlotWidget : SlotWidgets)
+    {
+        SlotWidget->OnDragRequested.BindUObject(this, &UP1QuickSlotsWidget::MakeDragPayload);
+        SlotWidget->OnDropped.BindUObject(this, &UP1QuickSlotsWidget::HandleDrop);
+        SlotWidget->OnDragCancelled.AddUObject(this, &UP1QuickSlotsWidget::HandleDragCancelled);
+    }
 }
 
 void UP1QuickSlotsWidget::NativeConstruct()
@@ -30,7 +40,10 @@ void UP1QuickSlotsWidget::NativeConstruct()
         return;
     }
 
-    BuildSlots(QuickSlots->GetQuickSlots().Num());
+    // 서버가 알려 준 퀵슬롯이 슬롯 위젯보다 많으면 남는 퀵슬롯은 화면에 없다. 기획의 퀵슬롯 수를 바꾸면 WBP도 고친다.
+    if (QuickSlots->GetQuickSlots().Num() > SlotWidgets.Num())
+        UE_LOG(LogP1UI, Warning, TEXT("%s: 퀵슬롯 %d개 중 %d개만 그린다."), *GetName(), QuickSlots->GetQuickSlots().Num(), SlotWidgets.Num());
+
     Redraw();
     QuickSlots->OnChanged.AddUObject(this, &UP1QuickSlotsWidget::HandleQuickSlotChanged);
     QuickSlots->OnReset.AddUObject(this, &UP1QuickSlotsWidget::HandleQuickSlotsReset);
@@ -43,36 +56,8 @@ void UP1QuickSlotsWidget::NativeConstruct()
     }
 }
 
-void UP1QuickSlotsWidget::BuildSlots(int32 Count)
-{
-    if (SlotBox == nullptr || SlotWidgetClass == nullptr)
-        return;
-
-    if (SlotWidgets.Num() == Count && SlotBox->GetChildrenCount() == Count)
-        return;
-
-    SlotBox->ClearChildren();
-    SlotWidgets.Reset(Count);
-    for (int32 i = 0; i < Count; ++i)
-    {
-        UP1SlotWidget* SlotWidget = CreateWidget<UP1SlotWidget>(this, SlotWidgetClass);
-        SlotBox->AddChild(SlotWidget);
-        SlotWidgets.Add(SlotWidget);
-
-        // 디자이너 미리보기의 슬롯은 끌어 놓기를 받지 않는다.
-        if (IsDesignTime())
-            continue;
-
-        SlotWidget->OnDragRequested.BindUObject(this, &UP1QuickSlotsWidget::MakeDragPayload);
-        SlotWidget->OnDropped.BindUObject(this, &UP1QuickSlotsWidget::HandleDrop);
-        SlotWidget->OnDragCancelled.AddUObject(this, &UP1QuickSlotsWidget::HandleDragCancelled);
-    }
-}
-
 void UP1QuickSlotsWidget::HandleQuickSlotsReset(const UP1QuickSlots& QuickSlots)
 {
-    // 다른 캐릭터로 들어오면 퀵슬롯 개수가 바뀌었을 수 있다.
-    BuildSlots(QuickSlots.GetQuickSlots().Num());
     Redraw();
 }
 
@@ -100,13 +85,10 @@ void UP1QuickSlotsWidget::Redraw()
         return;
 
     // 퀵슬롯은 몇 개 되지 않으므로 무엇이 바뀌었든 전부 다시 그린다.
-    const TArray<FP1QuickSlot>& All = QuickSlots->GetQuickSlots();
     for (int32 i = 0; i < SlotWidgets.Num(); ++i)
     {
-        if (SlotWidgets[i] == nullptr)
-            continue;
-
-        SlotWidgets[i]->SetDisplay(All.IsValidIndex(i) ? FP1SlotDisplay::FromQuickSlotRef(All[i].Ref, Consumables) : FP1SlotDisplay());
+        const FP1QuickSlot* QuickSlot = QuickSlots->Find(i);
+        SlotWidgets[i]->SetDisplay(QuickSlot ? FP1SlotDisplay::FromQuickSlotRef(QuickSlot->Ref, Consumables) : FP1SlotDisplay());
     }
 }
 
@@ -171,10 +153,10 @@ int32 UP1QuickSlotsWidget::FindQuickSlotIndex(const UP1SlotWidget* SlotWidget) c
     const int32 WidgetIndex = SlotWidgets.IndexOfByKey(SlotWidget);
     const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
     const UP1QuickSlots* QuickSlots = MyPlayerData ? MyPlayerData->GetQuickSlots() : nullptr;
-    if (WidgetIndex == INDEX_NONE || QuickSlots == nullptr || QuickSlots->GetQuickSlots().IsValidIndex(WidgetIndex) == false)
+    if (WidgetIndex == INDEX_NONE || QuickSlots == nullptr || QuickSlots->Find(WidgetIndex) == nullptr)
         return INDEX_NONE;
 
-    return QuickSlots->GetQuickSlots()[WidgetIndex].SlotIndex;
+    return WidgetIndex;
 }
 
 UP1MyPlayerData* UP1QuickSlotsWidget::GetMyPlayerData() const
