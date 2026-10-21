@@ -223,7 +223,7 @@ TEST_F(InventoryTest, FailedRemoveLeavesSlotUsable)
     묶음 상한
 
     상한을 넘는 수량은 다음 칸으로 넘어가고, 바뀐 칸은 전부 바뀐 칸 목록에
-    실린다(S_BUY_ITEM.updated_slots). 다 넣을 수 없으면 아무 칸도 바뀌지 않는다.
+    실린다(S_BUY_ITEM.changed_slots). 다 넣을 수 없으면 아무 칸도 바뀌지 않는다.
 ---------------------------------------------------------------*/
 TEST_F(InventoryTest, StackDoesNotExceedMaxStack)
 {

@@ -54,13 +54,13 @@ public:
     /** 아이템을 진열만 한다. 칸이 아이템을 든 것으로 보지 않으므로 재사용 대기를 보이지 않는다. */
     void SetSlot(const FP1ItemData& Item, int32 Count = 1);
 
-    /** 서버가 보낸 슬롯 변경분을 입힌다. 아이템 없이 REMOVED로 오면 칸을 비운다. */
-    void SetSlot(const Protocol::Slot& _Slot);
+    /** 칸의 지금 내용을 입힌다. 아이템이 없으면 칸을 비운다. */
+    void SetSlot(const Protocol::SlotChange& _Slot);
 
     void ClearSlot();
 
     /** 슬롯 데이터와 아이콘만 입히고 수량 문구는 갱신하지 않는다. */
-    void InsertData(const Protocol::Slot& _Slot);
+    void InsertData(const Protocol::SlotChange& _Slot);
 
     /** 아이템 아이콘을 찾는 에셋 테이블. 행 구조체는 FP1ItemAssetData. */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DataTable")
@@ -70,7 +70,8 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Item")
     FP1ItemData ItemData;
 
-    Protocol::Slot SlotData;
+    /** 이 위젯이 보이는 칸의 주소와 내용. 한 번도 채운 적 없는 위젯이면 비어 있다. */
+    Protocol::SlotChange SlotData;
 
     //~ Slot Visual
 protected:

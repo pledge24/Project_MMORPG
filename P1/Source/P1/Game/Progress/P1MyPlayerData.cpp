@@ -11,7 +11,6 @@ UP1MyPlayerData::UP1MyPlayerData()
     _EntityInfo = MakeUnique<Protocol::EntityInfo>();
     _PlayerInfo = _EntityInfo->mutable_player_info();
     _StatInfo = MakeUnique<Protocol::StatInfo>();
-    _Possession = MakeUnique<Protocol::Possession>();
 
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_MAX_HP);
     OnStatChangedMappings.Add(Protocol::STAT_TYPE_HP);
@@ -52,7 +51,6 @@ void UP1MyPlayerData::Deinitialize()
     _PlayerInfo = nullptr;
     _EntityInfo.Reset();
     _StatInfo.Reset();
-    _Possession.Reset();
 
     Super::Deinitialize();
 }
@@ -63,7 +61,7 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
     {
         SetEntityInfo(EnterGamePkt.player());
         _StatInfo->CopyFrom(EnterGamePkt.stat_info());
-        _Possession->CopyFrom(EnterGamePkt.possession());
+        _Gold = EnterGamePkt.possession().gold();
 
         _PlayerId = _EntityInfo->entity_id();
         _PlayerName = FText::FromString(UTF8_TO_TCHAR(_EntityInfo->player_info().name().c_str()));
@@ -71,8 +69,8 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
 
     // 소지품 래퍼 초기화.
     {
-        Inventory->Init(_Possession->mutable_inventory());
-        Equipment->Init(_Possession->mutable_equipped_gear());
+        Inventory->Init(EnterGamePkt.possession());
+        Equipment->Init(EnterGamePkt.possession());
     }
 
     // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.
@@ -141,7 +139,7 @@ void UP1MyPlayerData::ApplyLevel(int32 Level)
 
 void UP1MyPlayerData::ApplyGold(int64 Gold)
 {
-    _Possession->set_gold(Gold);
+    _Gold = Gold;
     OnGoldChanged.Broadcast(Gold);
 }
 
@@ -177,10 +175,7 @@ void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
     if (BuyItemPkt.success() == false)
         return;
 
-    for (const Protocol::Slot& UpdatedSlot : BuyItemPkt.updated_slots())
-    {
-        OnInvenSlotChanged.Broadcast(UpdatedSlot);
-    }
+    ApplySlotChanges(BuyItemPkt.changed_slots());
     ApplyGold(BuyItemPkt.gold());
 }
 
@@ -190,7 +185,7 @@ void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
     if (SellItemPkt.success() == false)
         return;
 
-    OnInvenSlotChanged.Broadcast(SellItemPkt.updated_slot());
+    ApplySlotChanges(SellItemPkt.changed_slots());
     ApplyGold(SellItemPkt.gold());
 }
 
@@ -203,19 +198,16 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (UseItemPkt.success() == false)
         return;
 
-    // 마지막 한 개를 쓰면 응답의 슬롯에 아이템이 없다. 사본이 바뀌기 전에 쓴 아이템의 템플릿을 읽는다.
+    // 마지막 한 개를 쓰면 응답의 칸에 아이템이 없다. 사본이 바뀌기 전에 쓴 아이템의 템플릿을 읽는다.
     TArray<int32, TInlineAllocator<1>> UsedTemplateIds;
-    for (const Protocol::Slot& UpdatedSlot : UseItemPkt.updated_slots())
+    for (const Protocol::SlotChange& Change : UseItemPkt.changed_slots())
     {
-        const Protocol::Slot* Before = Inventory->FindSlot(UpdatedSlot.type(), UpdatedSlot.slot_id());
+        const Protocol::SlotChange* Before = Inventory->FindSlot(Change.address().container(), Change.address().slot_index());
         if (Before && Before->has_item())
             UsedTemplateIds.Add(Before->item().template_id());
     }
 
-    for (const Protocol::Slot& UpdatedSlot : UseItemPkt.updated_slots())
-    {
-        OnInvenSlotChanged.Broadcast(UpdatedSlot);
-    }
+    ApplySlotChanges(UseItemPkt.changed_slots());
     ApplyStats(UseItemPkt.updated_stat());
 
     // 칸이 먼저 바뀌어야 대기를 알릴 때 칸들이 지금 든 아이템으로 판단한다.
@@ -253,7 +245,7 @@ void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     if (EquipGearPkt.success() == false)
         return;
 
-    ApplyGearSlots(EquipGearPkt.updated_slots());
+    ApplySlotChanges(EquipGearPkt.changed_slots());
     ApplyStats(EquipGearPkt.updated_stat());
 }
 
@@ -266,24 +258,27 @@ void UP1MyPlayerData::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     if (UnequipGearPkt.success() == false)
         return;
 
-    ApplyGearSlots(UnequipGearPkt.updated_slots());
+    ApplySlotChanges(UnequipGearPkt.changed_slots());
     ApplyStats(UnequipGearPkt.updated_stat());
 }
 
-void UP1MyPlayerData::ApplyGearSlots(const google::protobuf::RepeatedPtrField<Protocol::Slot>& UpdatedSlots)
+void UP1MyPlayerData::ApplySlotChanges(const google::protobuf::RepeatedPtrField<Protocol::SlotChange>& Changes)
 {
-    for (const Protocol::Slot& UpdatedSlot : UpdatedSlots)
+    for (const Protocol::SlotChange& Change : Changes)
     {
-        switch (UpdatedSlot.type())
+        switch (Change.address().container())
         {
-        case Protocol::SLOT_TYPE_EQUIPPED:
-            OnEquipmentSlotChanged.Broadcast(UpdatedSlot);
+        case Protocol::CONTAINER_TYPE_EQUIPPED:
+            OnEquipmentSlotChanged.Broadcast(Change);
             break;
 
-        case Protocol::SLOT_TYPE_INVENTORY_GEAR:
-        case Protocol::SLOT_TYPE_INVENTORY_CONSUMABLE:
-        case Protocol::SLOT_TYPE_INVENTORY_MISC:
-            OnInvenSlotChanged.Broadcast(UpdatedSlot);
+        case Protocol::CONTAINER_TYPE_INVENTORY_GEAR:
+        case Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE:
+        case Protocol::CONTAINER_TYPE_INVENTORY_MISC:
+            OnInvenSlotChanged.Broadcast(Change);
+            break;
+
+        default:
             break;
         }
     }

@@ -24,10 +24,7 @@ void UP1StatusWindowWidget::NativeConstruct()
             UpdateAllStat(MyPlayerData);
 
             for (const auto& Pair : MyPlayerData->GetEquipment()->GetAllSlot())
-            {
-                const Protocol::Slot& Slot_ = Pair.second;
-                UpdateSlotWidget(Slot_);
-            }
+                UpdateSlotWidget(Pair.Value);
 
             // 이후 바뀌는 값과 해제 응답을 구독.
             MyPlayerData->OnEquipmentSlotChanged.AddUObject(this, &UP1StatusWindowWidget::UpdateSlotWidget);
@@ -43,10 +40,10 @@ void UP1StatusWindowWidget::NativeConstruct()
 
 }
 
-void UP1StatusWindowWidget::UpdateSlotWidget(const Protocol::Slot& Slot_)
+void UP1StatusWindowWidget::UpdateSlotWidget(const Protocol::SlotChange& Slot_)
 {
     TObjectPtr<UP1SlotWidget> SlotWidget = nullptr;
-    switch ((Protocol::GearType)Slot_.slot_id())
+    switch ((Protocol::GearType)Slot_.address().slot_index())
     {
     case Protocol::GearType::GEAR_TYPE_HELMET:
         SlotWidget = Equipped_Helmet;
@@ -108,7 +105,8 @@ void UP1StatusWindowWidget::HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget)
         return;
 
     Protocol::C_UNEQUIP_GEAR Pkt;
-    Pkt.mutable_slot()->CopyFrom(SlotWidget->SlotData);
+    Pkt.mutable_address()->CopyFrom(SlotWidget->SlotData.address());
+    Pkt.set_item_uid(SlotWidget->SlotData.item().item_uid());
 
     // 보내기 전에 돌아가는 분기를 모두 지난 뒤에 대기를 켠다. 켜고 보내지 않으면 응답이 오지 않아 해제가 막힌다.
     bPendingPacket = true;

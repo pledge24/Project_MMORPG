@@ -1,68 +1,60 @@
 #include "Game/Inventory/P1Inventory.h"
 
-UP1Inventory::UP1Inventory()
+namespace
 {
-    InventoryLookupMappings =
+    bool IsInventorySection(Protocol::ContainerType Container)
     {
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR, TArray<Protocol::Slot*>()},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE, TArray<Protocol::Slot*>()},
-        {Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC, TArray<Protocol::Slot*>()}
-    };
+        return Container == Protocol::CONTAINER_TYPE_INVENTORY_GEAR
+            || Container == Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE
+            || Container == Protocol::CONTAINER_TYPE_INVENTORY_MISC;
+    }
 }
 
-void UP1Inventory::Init(Protocol::Inventory* Inventory_)
+void UP1Inventory::Init(const Protocol::Possession& Possession)
 {
-    // 슬롯 번호가 종류마다 0부터 슬롯 개수 미만이라고 보고 그대로 인덱스로 쓴다. 범위를 검사하지 않으므로
-    // 서버가 빈틈이 있는 번호를 보내면 범위 밖에 쓴다.
+    Sections.Reset();
+
+    // 칸 번호가 구역마다 0부터 칸 수 미만이라고 보고 그대로 인덱스로 쓴다. 범위를 벗어난 번호의 칸은 버린다.
+    for (const Protocol::ContainerSlots& ContainerSlots : Possession.containers())
     {
-        int32 size = Inventory_->gear_size();
-        TArray<Protocol::Slot*>& GearLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_GEAR];
-        GearLookup.SetNum(size);
-        for (int32 i = 0; i < size; ++i)
+        if (IsInventorySection(ContainerSlots.container()) == false)
+            continue;
+
+        TArray<Protocol::SlotChange>& SectionSlots = Sections.Add(ContainerSlots.container());
+        SectionSlots.SetNum(ContainerSlots.slots_size());
+        for (const Protocol::Slot& Slot_ : ContainerSlots.slots())
         {
-            Protocol::Slot* Slot_ = Inventory_->mutable_gear(i);
-            GearLookup[Slot_->slot_id()] = Slot_;
+            if (SectionSlots.IsValidIndex(Slot_.slot_index()) == false)
+                continue;
+
+            Protocol::SlotChange& Cached = SectionSlots[Slot_.slot_index()];
+            Cached.mutable_address()->set_container(ContainerSlots.container());
+            Cached.mutable_address()->set_slot_index(Slot_.slot_index());
+            if (Slot_.has_item())
+                *Cached.mutable_item() = Slot_.item();
         }
     }
-
-    {
-        int32 size = Inventory_->consumables_size();
-        TArray<Protocol::Slot*>& ConsumablesLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_CONSUMABLE];
-        ConsumablesLookup.SetNum(size);
-        for (int32 i = 0; i < size; ++i)
-        {
-            Protocol::Slot* Slot_ = Inventory_->mutable_consumables(i);
-            ConsumablesLookup[Slot_->slot_id()] = Slot_;
-        }
-    }
-
-    {
-        int32 size = Inventory_->miscellaneous_size();
-        TArray<Protocol::Slot*>& MiscellaneousLookup = InventoryLookupMappings[Protocol::SlotType::SLOT_TYPE_INVENTORY_MISC];
-        MiscellaneousLookup.SetNum(size);
-        for (int32 i = 0; i < size; ++i)
-        {
-            Protocol::Slot* Slot_ = Inventory_->mutable_miscellaneous(i);
-            MiscellaneousLookup[Slot_->slot_id()] = Slot_;
-        }
-    }
-
 }
 
-const Protocol::Slot* UP1Inventory::FindSlot(Protocol::SlotType Type, int32 SlotId) const
+void UP1Inventory::Rep_SlotChanged(const Protocol::SlotChange& Change)
 {
-    const TArray<Protocol::Slot*>* InvenLookup = InventoryLookupMappings.Find(Type);
-    if (InvenLookup == nullptr || InvenLookup->IsValidIndex(SlotId) == false)
+    TArray<Protocol::SlotChange>* SectionSlots = Sections.Find(Change.address().container());
+    if (SectionSlots == nullptr || SectionSlots->IsValidIndex(Change.address().slot_index()) == false)
+        return;
+
+    (*SectionSlots)[Change.address().slot_index()].CopyFrom(Change);
+}
+
+const Protocol::SlotChange* UP1Inventory::FindSlot(Protocol::ContainerType Container, int32 SlotIndex) const
+{
+    const TArray<Protocol::SlotChange>* SectionSlots = Sections.Find(Container);
+    if (SectionSlots == nullptr || SectionSlots->IsValidIndex(SlotIndex) == false)
         return nullptr;
 
-    return (*InvenLookup)[SlotId];
+    return &(*SectionSlots)[SlotIndex];
 }
 
-void UP1Inventory::Rep_SlotChanged(const Protocol::Slot& Slot_)
+const TArray<Protocol::SlotChange>* UP1Inventory::GetSectionSlots(Protocol::ContainerType Container) const
 {
-    if (InventoryLookupMappings.Contains(Slot_.type()))
-    {
-        TArray<Protocol::Slot*>& InvenLookup = InventoryLookupMappings[Slot_.type()];
-        InvenLookup[Slot_.slot_id()]->CopyFrom(Slot_);
-    }
+    return Sections.Find(Container);
 }

@@ -9,8 +9,8 @@
 /*--------------------------------------------------------------
     장비 장착·탈착 결과 테스트
 
-    클라는 S_EQUIP_GEAR와 S_UNEQUIP_GEAR의 slot_id와 template_id로 캐릭터 외형을 바꾼다.
-    그래서 두 값은 요청한 칸이 아니라 처리 결과여야 한다. slot_id는 장비 부위, template_id는
+    클라는 S_EQUIP_GEAR와 S_UNEQUIP_GEAR의 gear_type과 template_id로 캐릭터 외형을 바꾼다.
+    그래서 두 값은 요청한 칸이 아니라 처리 결과여야 한다. gear_type은 장비 부위, template_id는
     처리 뒤 그 부위의 아이템이다. 다른 플레이어가 보는 외형은 equipped_gear_summary로 간다.
 
     픽스처 결합도: 아이템 템플릿, 2레벨까지 있는 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이

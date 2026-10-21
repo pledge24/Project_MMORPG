@@ -31,10 +31,10 @@ protected:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void Clear();
 
-    void UpdateSlotWidget(const Protocol::Slot& InSlot);
+    void UpdateSlotWidget(const Protocol::SlotChange& InSlot);
 
     /** 맞는 슬롯 위젯이 없으면 nullptr. */
-    UP1SlotWidget* GetSlotWidgetFromSlot(const Protocol::Slot& InSlot);
+    UP1SlotWidget* GetSlotWidgetFromSlot(const Protocol::SlotChange& InSlot);
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     TObjectPtr<UUniformGridPanel> Gear_Inven;
