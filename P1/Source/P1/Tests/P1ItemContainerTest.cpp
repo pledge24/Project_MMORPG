@@ -12,7 +12,8 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+// 유니티 빌드에서 다른 테스트 파일과 한 번역 단위로 묶여도 도우미 이름이 겹치지 않게 파일 이름의 네임스페이스에 둔다.
+namespace P1ItemContainerTest
 {
     FP1Slot MakeSlot(EP1ContainerType Container, int32 SlotIndex, int32 TemplateId = 0, int32 Count = 0, int64 ItemUid = 0)
     {
@@ -57,6 +58,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FP1ItemContainerTest::RunTest(const FString& Parameters)
 {
+    using namespace P1ItemContainerTest;
+
     // 1) 칸 전체를 바꾸면 칸 번호 순서로 들고, 주소의 컨테이너를 자기 종류로 채운다.
     {
         UP1ItemContainer* Container = NewObject<UP1ItemContainer>(GetTransientPackage());

@@ -8,6 +8,10 @@
 #include "UI/Screens/P1DeathWidget.h"
 #include "UI/Screens/P1WindowLayerWidget.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
+#include "Game/Progress/P1ItemActions.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
 namespace
@@ -100,6 +104,7 @@ void UP1ScreenSubsystem::ReleaseScreens()
     WindowWidgets.Empty();
     OpenWindowFlags = 0;
     OwningPlayer = nullptr;
+    SyncShopOpen();
 }
 
 void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
@@ -114,6 +119,7 @@ void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
     OpenWindowFlags |= (1 << static_cast<uint8>(Type));
 
     RefreshInputMode();
+    SyncShopOpen();
 }
 
 void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)
@@ -131,6 +137,7 @@ void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)
     OpenWindowFlags &= ~(1 << static_cast<uint8>(Type));
 
     RefreshInputMode();
+    SyncShopOpen();
 }
 
 void UP1ScreenSubsystem::ToggleWindow(EP1WidgetType Type)
@@ -174,6 +181,15 @@ UUserWidget* UP1ScreenSubsystem::FindWindow(EP1WidgetType Type) const
     }
 
     return *Found;
+}
+
+void UP1ScreenSubsystem::SyncShopOpen() const
+{
+    const ULocalPlayer* LocalPlayer = GetLocalPlayer();
+    const UGameInstance* GameInstance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
+    const UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
+    if (MyPlayerData)
+        MyPlayerData->GetItemActions()->SetShopOpen(IsWindowOpen(EP1WidgetType::WIDGET_SHOP));
 }
 
 void UP1ScreenSubsystem::DisplayWarningText(const FText& Message)

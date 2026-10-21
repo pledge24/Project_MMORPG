@@ -3,6 +3,7 @@
 #include "Game/Data/P1ItemData.h"
 #include "Game/Items/P1ItemContainer.h"
 #include "Game/Items/P1ItemPackets.h"
+#include "Game/Progress/P1ItemActions.h"
 #include "Utils/LogCategory.h"
 
 namespace
@@ -40,6 +41,8 @@ UP1MyPlayerData::UP1MyPlayerData()
         Container->Init(ContainerType);
         Containers.Add(ContainerType, Container);
     }
+
+    ItemActions = CreateDefaultSubobject<UP1ItemActions>(TEXT("ItemActions"));
 }
 
 void UP1MyPlayerData::Deinitialize()
@@ -81,6 +84,9 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
 
     // 서버는 재접속하면 재사용 대기를 잊는다. 같은 시점에 비워 둘의 판정을 맞춘다.
     ItemCooldowns.Reset();
+
+    // 끊기기 전에 보낸 요청의 응답은 오지 않는다. 풀지 않으면 그 종류의 요청이 계속 막힌다.
+    ItemActions->ResetPending();
 }
 
 void UP1MyPlayerData::RemoveListener(const UObject* Listener)
@@ -89,11 +95,6 @@ void UP1MyPlayerData::RemoveListener(const UObject* Listener)
     OnMapEntered.RemoveAll(Listener);
     OnLevelChanged.RemoveAll(Listener);
     OnGoldChanged.RemoveAll(Listener);
-    OnRecvBuyItemPkt.RemoveAll(Listener);
-    OnRecvSellItemPkt.RemoveAll(Listener);
-    OnRecvUseItemPkt.RemoveAll(Listener);
-    OnRecvEquipGearPkt.RemoveAll(Listener);
-    OnRecvUnequipGearPkt.RemoveAll(Listener);
     OnItemCooldownStarted.RemoveAll(Listener);
 
     for (auto& Pair : OnStatChangedMappings)
@@ -192,7 +193,7 @@ void UP1MyPlayerData::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt
 
 void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 {
-    OnRecvBuyItemPkt.Broadcast();
+    ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Buy);
     if (BuyItemPkt.success() == false)
         return;
 
@@ -202,7 +203,7 @@ void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 
 void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 {
-    OnRecvSellItemPkt.Broadcast();
+    ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Sell);
     if (SellItemPkt.success() == false)
         return;
 
@@ -215,7 +216,7 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     if (IsMyPlayer(UseItemPkt.entity_id()) == false)
         return;
 
-    OnRecvUseItemPkt.Broadcast();
+    ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Use);
     if (UseItemPkt.success() == false)
         return;
 
@@ -264,7 +265,7 @@ void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt
     if (IsMyPlayer(EquipGearPkt.entity_id()) == false)
         return;
 
-    OnRecvEquipGearPkt.Broadcast();
+    ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Equip);
     if (EquipGearPkt.success() == false)
         return;
 
@@ -277,7 +278,7 @@ void UP1MyPlayerData::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipG
     if (IsMyPlayer(UnequipGearPkt.entity_id()) == false)
         return;
 
-    OnRecvUnequipGearPkt.Broadcast();
+    ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Unequip);
     if (UnequipGearPkt.success() == false)
         return;
 

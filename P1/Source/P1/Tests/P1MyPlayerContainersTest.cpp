@@ -14,7 +14,8 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+// 유니티 빌드에서 다른 테스트 파일과 한 번역 단위로 묶여도 도우미 이름이 겹치지 않게 파일 이름의 네임스페이스에 둔다.
+namespace P1MyPlayerContainersTest
 {
     constexpr uint64 MY_PLAYER_ID = 100;
 
@@ -115,6 +116,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
 {
+    using namespace P1MyPlayerContainersTest;
+
     // 1) 입장 패킷의 컨테이너가 같은 종류의 컨테이너로 간다.
     {
         UP1MyPlayerData* Data = MakeData();

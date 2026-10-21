@@ -2,19 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "UI/Common/P1SlotWidget.h"
 #include "P1StatusWindowWidget.generated.h"
 
-class AP1MyPlayer;
 class UButton;
 class UTextBlock;
-class UP1ItemContainer;
 class UP1MyPlayerData;
 
 /**
  * 내 플레이어의 상태 창.
  *
- * 착용한 장비와 세부 능력치를 보여 주고, 장비 슬롯 조작을 장착 해제 요청으로 바꾼다.
+ * 착용한 장비와 세부 능력치를 보여 준다. 착용 장비는 품은 컨테이너 위젯이 그린다.
  */
 UCLASS()
 class P1_API UP1StatusWindowWidget : public UP1UserWidget
@@ -25,43 +22,6 @@ class P1_API UP1StatusWindowWidget : public UP1UserWidget
 protected:
     virtual void NativeConstruct() override;
     //~ End UUserWidget Interface
-
-    //~ Equipped Gear
-public:
-    void UpdateSlotWidget(const FP1Slot& Slot_);
-
-    /** 착용 장비 칸을 모두 컨테이너의 지금 칸으로 다시 그린다. */
-    void RedrawContainer(const UP1ItemContainer& Container);
-
-protected:
-    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<UP1SlotWidget> Equipped_Helmet;
-
-    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<UP1SlotWidget> Equipped_Chest;
-
-    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<UP1SlotWidget> Equipped_Arms;
-
-    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<UP1SlotWidget> Equipped_Legs;
-
-    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<UP1SlotWidget> Equipped_Boots;
-
-    UPROPERTY(meta = (BindWidget), EditAnywhere, BlueprintReadWrite, Category = "EquippedGear")
-    TObjectPtr<UP1SlotWidget> Equipped_Weapon;
-
-    /** 장착 해제 응답을 기다리는 동안 true. 중복 요청을 막는다. */
-    UPROPERTY(VisibleAnywhere)
-    bool bPendingPacket = false;
-
-private:
-    /** 장비 부위의 슬롯 위젯. 장비 부위가 아니면 nullptr. */
-    UP1SlotWidget* GetSlotWidget(int32 GearType) const;
-
-    /** 더블클릭한 착용 장비를 벗는다. */
-    void HandleSlotDoubleClicked(UP1SlotWidget* SlotWidget);
 
     //~ Stat Details
 public:
