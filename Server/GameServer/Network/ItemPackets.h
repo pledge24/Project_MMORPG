@@ -19,6 +19,7 @@ namespace ItemPackets
 
     /** 응답에 실을 바뀐 칸. 비게 된 칸은 REMOVED로 표시한다. 클라이언트가 그 표시로만 칸을 비운다. */
     Protocol::Slot ToChangedSlot(const SlotChange& change);
+    /** 바뀐 칸마다 패킷 칸 하나를 slots 뒤에 붙인다(nullptr 불가). */
     void AddChangedSlots(const vector<SlotChange>& changes, OUT RepeatedPtrField<Protocol::Slot>* slots);
 
     /** 요청 패킷의 칸을 읽는다. 값을 검증하지 않으므로 판정은 플레이어가 한다. */
