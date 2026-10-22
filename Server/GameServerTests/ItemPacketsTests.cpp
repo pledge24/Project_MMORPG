@@ -297,11 +297,8 @@ protected:
         Gamedata::Install(std::move(tables));
 
         PlayerProgress progress;
-        progress.playerInfo.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        progress.playerInfo.set_level(1);
-        auto* stats = progress.statInfo.mutable_info();
-        for (Protocol::StatType statType : { Protocol::STAT_TYPE_EXP, Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP })
-            (*stats)[statType] = 0;
+        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.level = 1;
         progress.gold = 1234;
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 1 }, MakePotion() });
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, MakeSword() });

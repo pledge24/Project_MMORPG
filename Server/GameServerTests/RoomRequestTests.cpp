@@ -30,14 +30,8 @@ namespace
     PlayerProgress MakeProgressWithSword()
     {
         PlayerProgress progress;
-        progress.playerInfo.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        progress.playerInfo.set_level(1);
-        progress.playerInfo.set_room_id(ROOM_ID);
-
-        auto* stats = progress.statInfo.mutable_info();
-        for (Protocol::StatType statType : { Protocol::STAT_TYPE_EXP, Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP,
-            Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
-            (*stats)[statType] = 0;
+        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.level = 1;
 
         PlacedItem sword;
         sword.address = SlotAddress{ ContainerType::INVENTORY_GEAR, 0 };
@@ -88,6 +82,7 @@ protected:
         const PlayerProgress progress = MakeProgressWithSword();
         PlayerSpawnParams params;
         params.progress = &progress;
+        params.enterRoomId = ROOM_ID;
         player = EntityFactory::Create<Player>(params);
         ASSERT_NE(player, nullptr);
 
@@ -138,6 +133,7 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
     const PlayerProgress progress = MakeProgressWithSword();
     PlayerSpawnParams params;
     params.progress = &progress;
+    params.enterRoomId = ROOM_ID;
     PlayerRef victim = EntityFactory::Create<Player>(params);
     ASSERT_NE(victim, nullptr);
     RoomEnterData enterData{};
@@ -164,6 +160,7 @@ TEST_F(RoomRequestTest, InitialEntrySpawnsSelfOnce)
     PlayerSpawnParams params;
     params.session = session;
     params.progress = &progress;
+    params.enterRoomId = ROOM_ID;
     PlayerRef newcomer = EntityFactory::Create<Player>(params);
     ASSERT_NE(newcomer, nullptr);
 
@@ -194,6 +191,7 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
     PlayerSpawnParams params;
     params.session = session;
     params.progress = &progress;
+    params.enterRoomId = ROOM_ID;
     PlayerRef traveler = EntityFactory::Create<Player>(params);
     ASSERT_NE(traveler, nullptr);
 
@@ -236,10 +234,10 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
     optional<PlayerSaveData> saveData = room->HandleDisconnect(player);
     ASSERT_TRUE(saveData.has_value());
 
-    EXPECT_EQ(saveData->progress.playerInfo.map_id(), TOWN_MAP_ID) << "DB에는 룸이 아니라 맵과 좌표를 저장한다";
-    EXPECT_EQ(saveData->progress.playerInfo.room_id(), TOWN_ROOM_ID);
-    EXPECT_FLOAT_EQ(saveData->progress.posInfo.pos().x(), TOWN_RESPAWN_X);
-    EXPECT_EQ(saveData->progress.statInfo.info().at(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP / 2)
+    EXPECT_EQ(saveData->progress.mapId, TOWN_MAP_ID) << "DB에는 룸이 아니라 맵과 좌표를 저장한다";
+    EXPECT_EQ(player->GetRoomId(), TOWN_ROOM_ID);
+    EXPECT_FLOAT_EQ(saveData->progress.pos.x, TOWN_RESPAWN_X);
+    EXPECT_EQ(saveData->progress.hp, PLAYER_MAX_HP / 2)
         << "마을 리스폰은 HP를 절반으로 채운다";
 }
 
@@ -252,6 +250,7 @@ TEST_F(RoomRequestTest, FirstEnterMapToOtherRoomIsRejected)
     PlayerSpawnParams params;
     params.session = session;
     params.progress = &progress;
+    params.enterRoomId = ROOM_ID;
     PlayerRef newcomer = EntityFactory::Create<Player>(params);
     ASSERT_NE(newcomer, nullptr);
     ASSERT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID);

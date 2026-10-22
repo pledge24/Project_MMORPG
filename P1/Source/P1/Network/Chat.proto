@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// Ã¤ÆÃ
+// @packet_id_range 700 799

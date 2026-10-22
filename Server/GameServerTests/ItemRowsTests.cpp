@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "DB/ItemRows.h"
+#include "Game/Items/InventorySections.h"
 
 /*--------------------------------------------------------------
     DB 아이템 행과 칸에 든 아이템의 변환 테스트
@@ -19,7 +20,7 @@ namespace
     constexpr int64 POTION_UID = 2001;
     constexpr int32 POTION_TEMPLATE_ID = 20;
 
-    ItemRow MakeRow(ItemRowContainer container, Protocol::ItemType itemType, int32 slotIndex, int64 itemUid = POTION_UID, int32 templateId = POTION_TEMPLATE_ID)
+    ItemRow MakeRow(ItemRowContainer container, ItemRowType itemType, int32 slotIndex, int64 itemUid = POTION_UID, int32 templateId = POTION_TEMPLATE_ID)
     {
         ItemRow row;
         row.itemUid = itemUid;
@@ -33,7 +34,7 @@ namespace
 
     ItemRow MakeGearRow(ItemRowContainer container, int32 slotIndex)
     {
-        ItemRow row = MakeRow(container, Protocol::ITEM_TYPE_GEAR, slotIndex, SWORD_UID, SWORD_TEMPLATE_ID);
+        ItemRow row = MakeRow(container, ItemRowType::GEAR, slotIndex, SWORD_UID, SWORD_TEMPLATE_ID);
         row.enhanceLevel = 3;
         row.durability = 0;
         return row;
@@ -43,9 +44,9 @@ namespace
     vector<ItemRow> MakeRowsOfEveryPlace()
     {
         ItemRow inventoryGear = MakeGearRow(ItemRowContainer::INVENTORY, 4);
-        ItemRow consumable = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_CONSUMABLE, 0, POTION_UID, POTION_TEMPLATE_ID);
+        ItemRow consumable = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::CONSUMABLE, 0, POTION_UID, POTION_TEMPLATE_ID);
         consumable.stackCount = 7;
-        ItemRow misc = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_MISCELLANEOUS, 2, 3001, 30);
+        ItemRow misc = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::MISC, 2, 3001, 30);
         ItemRow equipped = MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
         equipped.itemUid = 1002;
         equipped.enhanceLevel = 0;
@@ -61,21 +62,38 @@ TEST(ItemRowsTest, InventoryRowGoesToContainerOfItsSection)
 {
     struct Case
     {
-        Protocol::ItemType section;
+        ItemRowType section;
         ContainerType container;
     };
     const Case cases[] = {
-        { Protocol::ITEM_TYPE_GEAR, ContainerType::INVENTORY_GEAR },
-        { Protocol::ITEM_TYPE_CONSUMABLE, ContainerType::INVENTORY_CONSUMABLE },
-        { Protocol::ITEM_TYPE_MISCELLANEOUS, ContainerType::INVENTORY_MISC },
+        { ItemRowType::GEAR, ContainerType::INVENTORY_GEAR },
+        { ItemRowType::CONSUMABLE, ContainerType::INVENTORY_CONSUMABLE },
+        { ItemRowType::MISC, ContainerType::INVENTORY_MISC },
     };
 
     for (const Case& testCase : cases)
     {
         optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeRow(ItemRowContainer::INVENTORY, testCase.section, 9));
-        ASSERT_TRUE(placed.has_value()) << "구역 " << testCase.section;
+        ASSERT_TRUE(placed.has_value()) << "구역 " << static_cast<int32>(testCase.section);
         EXPECT_EQ(placed->address.container, testCase.container);
         EXPECT_EQ(placed->address.slotIndex, 9) << "칸 번호는 구역 안의 번호 그대로다";
+    }
+}
+
+// DB의 ItemType 열은 아이템 종류의 번호를 그대로 담는다. 행의 구역이 게임의 구역 대응 표와 어긋나면
+// 불러온 아이템이 게임이 판정하는 구역과 다른 구역에 들어간다.
+TEST(ItemRowsTest, SectionOfRowTypeMatchesInventorySections)
+{
+    for (const InventorySection& section : InventorySections::ALL)
+    {
+        const ItemRowType rowType = static_cast<ItemRowType>(section.itemType);
+        optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeRow(ItemRowContainer::INVENTORY, rowType, 0));
+        ASSERT_TRUE(placed.has_value()) << "아이템 종류 " << section.itemType;
+        EXPECT_EQ(placed->address.container, section.container);
+
+        optional<ItemRow> row = ItemRows::ToRow(placed.value());
+        ASSERT_TRUE(row.has_value());
+        EXPECT_EQ(static_cast<int32>(row->itemType), static_cast<int32>(section.itemType));
     }
 }
 
@@ -89,7 +107,7 @@ TEST(ItemRowsTest, EquippedRowGoesToItsGearPart)
 
 TEST(ItemRowsTest, RowValuesBecomeItem)
 {
-    ItemRow row = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_CONSUMABLE, 0);
+    ItemRow row = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::CONSUMABLE, 0);
     row.stackCount = 7;
 
     optional<PlacedItem> placed = ItemRows::ToPlacedItem(row);
@@ -113,15 +131,15 @@ TEST(ItemRowsTest, GearRowCarriesGearDetail)
 
 TEST(ItemRowsTest, UnknownPlaceIsRejected)
 {
-    ItemRow unknownContainer = MakeRow(static_cast<ItemRowContainer>(3), Protocol::ITEM_TYPE_CONSUMABLE, 0);
-    ItemRow noSection = MakeRow(ItemRowContainer::INVENTORY, Protocol::ITEM_TYPE_NONE, 0);
-    ItemRow unknownSection = MakeRow(ItemRowContainer::INVENTORY, static_cast<Protocol::ItemType>(9), 0);
-    ItemRow equippedConsumable = MakeRow(ItemRowContainer::EQUIPPED, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::GEAR_TYPE_WEAPON);
+    ItemRow unknownContainer = MakeRow(static_cast<ItemRowContainer>(3), ItemRowType::CONSUMABLE, 0);
+    ItemRow noSection = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::NONE, 0);
+    ItemRow unknownSection = MakeRow(ItemRowContainer::INVENTORY, static_cast<ItemRowType>(9), 0);
+    ItemRow equippedConsumable = MakeRow(ItemRowContainer::EQUIPPED, ItemRowType::CONSUMABLE, Protocol::GEAR_TYPE_WEAPON);
 
     for (const ItemRow& row : { unknownContainer, noSection, unknownSection, equippedConsumable })
     {
         EXPECT_FALSE(ItemRows::ToPlacedItem(row).has_value())
-            << "컨테이너 " << static_cast<int32>(row.container) << ", 구역 " << row.itemType;
+            << "컨테이너 " << static_cast<int32>(row.container) << ", 구역 " << static_cast<int32>(row.itemType);
     }
 }
 
@@ -138,8 +156,8 @@ TEST(ItemRowsTest, InventoryItemBecomesRowOfItsSection)
     ASSERT_TRUE(gearRow.has_value());
     ASSERT_TRUE(miscRow.has_value());
     EXPECT_EQ(gearRow->container, ItemRowContainer::INVENTORY);
-    EXPECT_EQ(gearRow->itemType, Protocol::ITEM_TYPE_GEAR);
-    EXPECT_EQ(miscRow->itemType, Protocol::ITEM_TYPE_MISCELLANEOUS) << "같은 칸 번호여도 구역이 다르면 다른 칸이다";
+    EXPECT_EQ(gearRow->itemType, ItemRowType::GEAR);
+    EXPECT_EQ(miscRow->itemType, ItemRowType::MISC) << "같은 칸 번호여도 구역이 다르면 다른 칸이다";
     EXPECT_EQ(gearRow->slotIndex, 3);
     EXPECT_EQ(miscRow->slotIndex, 3);
     EXPECT_EQ(miscRow->stackCount, 2);
@@ -153,7 +171,7 @@ TEST(ItemRowsTest, EquippedItemBecomesGearRowAtItsPart)
 
     ASSERT_TRUE(row.has_value());
     EXPECT_EQ(row->container, ItemRowContainer::EQUIPPED);
-    EXPECT_EQ(row->itemType, Protocol::ITEM_TYPE_GEAR);
+    EXPECT_EQ(row->itemType, ItemRowType::GEAR);
     EXPECT_EQ(row->slotIndex, Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(row->enhanceLevel, 5);
     EXPECT_EQ(row->durability, 70);

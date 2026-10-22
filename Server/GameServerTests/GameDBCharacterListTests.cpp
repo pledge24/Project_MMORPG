@@ -1,14 +1,15 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "GameDBTestFixture.h"
-#include "DB/AccountDAO.h"
-#include "DB/CharacterListDAO.h"
+#include "Lobby/AccountDAO.h"
+#include "Lobby/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
+#include "Lobby/Data/LobbyData.h"
 
 /*--------------------------------------------------------------
     계정과 캐릭터 목록의 SQL 확인 (실제 DB)
 
-    로그인의 계정 행, 캐릭터 목록, 생성, 삭제를 GameDB_Test에서 실제 SQL로 돌린다.
+    로그인의 계정 행, 캐릭터 목록, 생성, 삭제를 GameDB_Test에서 실제 SQL로 돌린다. 생성은 캐릭터 행만 넣는다.
     가짜 연결은 바인딩만 본다. 슬롯 한도의 COUNT, 이름 중복의 고유 인덱스 위반(2601), 삭제한 캐릭터의
     이름 재사용은 스키마와 SQL이 함께 정하므로 여기서만 확인된다.
 
@@ -20,20 +21,7 @@
 
 namespace
 {
-    constexpr int32 START_MAP_ID = 1111;
-    constexpr int64 START_GOLD = 6'000'000'000;
-    constexpr int32 GOLD_CURRENCY_ID = 1;
-    constexpr int32 LEVEL_ONE_HP = 120;
-    constexpr int32 LEVEL_ONE_MP = 45;
     constexpr int32 DEFAULT_SLOT_COUNT = 2;
-
-    Protocol::CharacterOverview MakeWarrior(const string& name)
-    {
-        Protocol::CharacterOverview character;
-        character.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        character.set_name(name);
-        return character;
-    }
 }
 
 class DISABLED_GameDBCharacterListTest : public GameDBTestFixture
@@ -45,25 +33,15 @@ protected:
         if (HasFatalFailure())
             return;
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = LEVEL_ONE_HP;
-        level1.maxMp = LEVEL_ONE_MP;
-
-        GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
-        tables.goldCurrencyId = GOLD_CURRENCY_ID;
-        tables.characterCreation.startMapId = START_MAP_ID;
-        tables.characterCreation.startPos = { 10.5f, -20.25f, 30.f };
-        tables.characterCreation.startYaw = 90.f;
-        tables.characterCreation.startGold = START_GOLD;
-        tables.characterCreation.defaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
-        Gamedata::Install(std::move(tables));
+        LobbyTables tables;
+        tables.defaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
+        tables.creatableClasses = { Protocol::CLASS_TYPE_WARRIOR };
+        LobbyData::Install(std::move(tables));
     }
 
     void TearDown() override
     {
-        Gamedata::Install(GamedataTables());
+        LobbyData::Install(LobbyTables());
         GameDBTestFixture::TearDown();
     }
 
@@ -81,7 +59,7 @@ protected:
     // 캐릭터를 하나 만든다. 계정 행은 테스트가 RecordLogin으로 먼저 만든다.
     CreateCharacterResult Create(int64 accountId, int64 characterId, const string& name)
     {
-        return CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, MakeWarrior(name));
+        return CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, name, Protocol::CLASS_TYPE_WARRIOR);
     }
 
     std::optional<int64> CountRows(const wstring& table, const wstring& where)
@@ -116,14 +94,14 @@ TEST_F(DISABLED_GameDBCharacterListTest, LoginUpdatesLastLoginAndKeepsSlotCount)
     EXPECT_EQ(CountRows(L"dbo.Account", where + L" AND LastLoginAt > '2001-01-01'"), 1) << "다시 로그인하면 마지막 로그인 시각을 갱신한다";
 }
 
-TEST_F(DISABLED_GameDBCharacterListTest, CreateInsertsCharacterStateAndGoldInOneTransaction)
+TEST_F(DISABLED_GameDBCharacterListTest, CreateInsertsOnlyCharacterRow)
 {
     constexpr int64 ACCOUNT_ID = 9'000'000'000'103;
     constexpr int64 CHARACTER_ID = 9'000'000'103'001;
     CleanupAccount(ACCOUNT_ID);
     AccountDAO::RecordLogin(Connection(), ACCOUNT_ID);
 
-    const CreateCharacterResult result = Create(ACCOUNT_ID, CHARACTER_ID, "DB생성_세행");
+    const CreateCharacterResult result = Create(ACCOUNT_ID, CHARACTER_ID, "DB생성_캐릭터행");
 
     ASSERT_FALSE(result.rejection.has_value());
     EXPECT_EQ(result.characterId, CHARACTER_ID);
@@ -131,11 +109,8 @@ TEST_F(DISABLED_GameDBCharacterListTest, CreateInsertsCharacterStateAndGoldInOne
     const wstring where = L"CharacterId = " + to_wstring(CHARACTER_ID);
     EXPECT_EQ(CountRows(L"dbo.[Character]", where + L" AND AccountId = " + to_wstring(ACCOUNT_ID)
         + L" AND ClassId = 1 AND Level = 1 AND DeletedAt IS NULL"), 1);
-    EXPECT_EQ(CountRows(L"dbo.CharacterState", where + L" AND Exp = 0 AND MapId = 1111"
-        + L" AND PosX = 10.5 AND PosY = -20.25 AND PosZ = 30 AND Direction = 90"
-        + L" AND CurrentHp = 120 AND CurrentMp = 45"), 1) << "시작 맵, 좌표, 방향은 생성 표에서, HP와 MP는 1레벨 행에서 온다";
-    EXPECT_EQ(CountRows(L"dbo.CharacterCurrency", where + L" AND CurrencyId = 1 AND Amount = 6000000000"), 1)
-        << "골드는 재화 행이고 시작 골드는 생성 표의 값이다";
+    EXPECT_EQ(CountRows(L"dbo.CharacterState", where), 0) << "진행 행이 없는 캐릭터는 아직 게임에 입장한 적이 없는 캐릭터다";
+    EXPECT_EQ(CountRows(L"dbo.CharacterCurrency", where), 0) << "초기 진행 행은 첫 게임 입장이 만든다";
 }
 
 TEST_F(DISABLED_GameDBCharacterListTest, DuplicateNameIsRejectionAndLeavesNoRows)
@@ -154,9 +129,7 @@ TEST_F(DISABLED_GameDBCharacterListTest, DuplicateNameIsRejectionAndLeavesNoRows
     ASSERT_TRUE(result.rejection.has_value()) << "이름 중복은 다른 계정의 캐릭터와도 판정한다";
     EXPECT_EQ(result.rejection.value(), CharacterRejection::DUPLICATE_NAME);
     const wstring where = L"CharacterId = " + to_wstring(OTHER_CHARACTER_ID);
-    EXPECT_EQ(CountRows(L"dbo.[Character]", where), 0);
-    EXPECT_EQ(CountRows(L"dbo.CharacterState", where), 0) << "거절된 생성은 트랜잭션 전체를 되돌린다";
-    EXPECT_EQ(CountRows(L"dbo.CharacterCurrency", where), 0);
+    EXPECT_EQ(CountRows(L"dbo.[Character]", where), 0) << "거절된 생성은 캐릭터 행을 남기지 않는다";
 }
 
 TEST_F(DISABLED_GameDBCharacterListTest, SlotLimitCountsOnlyActiveCharacters)
@@ -197,6 +170,11 @@ TEST_F(DISABLED_GameDBCharacterListTest, DeleteIsSoftAndKeepsStateAndCurrency)
     CleanupAccount(ACCOUNT_ID);
     AccountDAO::RecordLogin(Connection(), ACCOUNT_ID);
     ASSERT_FALSE(Create(ACCOUNT_ID, CHARACTER_ID, "DB삭제_소프트").rejection.has_value());
+    // 게임에 입장한 적이 있는 캐릭터처럼 진행 행을 넣는다.
+    const wstring id = to_wstring(CHARACTER_ID);
+    ASSERT_TRUE(Execute(L"INSERT INTO dbo.CharacterState (CharacterId, MapId, PosX, PosY, PosZ, CurrentHp, CurrentMp) VALUES ("
+        + id + L", 1111, 0, 0, 0, 1, 1)"));
+    ASSERT_TRUE(Execute(L"INSERT INTO dbo.CharacterCurrency (CharacterId, CurrencyId, Amount) VALUES (" + id + L", 1, 10)"));
 
     EXPECT_TRUE(CharacterListDAO::DeleteCharacter(Connection(), ACCOUNT_ID, CHARACTER_ID));
     EXPECT_FALSE(CharacterListDAO::DeleteCharacter(Connection(), ACCOUNT_ID, CHARACTER_ID)) << "이미 지운 캐릭터는 다시 지우지 않는다";
@@ -232,14 +210,14 @@ TEST_F(DISABLED_GameDBCharacterListTest, ListExcludesDeletedCharacters)
     ASSERT_TRUE(CharacterListDAO::DeleteCharacter(Connection(), ACCOUNT_ID, DELETED_ID));
     ASSERT_TRUE(Execute(L"UPDATE dbo.[Character] SET Level = 7 WHERE CharacterId = " + to_wstring(KEPT_ID)));
 
-    vector<Protocol::CharacterOverview> characters;
+    vector<CharacterListRow> characters;
     CharacterListDAO::LoadCharacterList(Connection(), ACCOUNT_ID, OUT characters);
 
     ASSERT_EQ(characters.size(), 1u);
-    EXPECT_EQ(characters[0].character_id(), KEPT_ID);
-    EXPECT_EQ(characters[0].name(), "DB목록_남김");
-    EXPECT_EQ(characters[0].class_(), Protocol::CLASS_TYPE_WARRIOR);
-    EXPECT_EQ(characters[0].level(), 7) << "목록의 레벨은 DB에 저장된 사본이다";
+    EXPECT_EQ(characters[0].characterId, KEPT_ID);
+    EXPECT_EQ(characters[0].name, "DB목록_남김");
+    EXPECT_EQ(characters[0].classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(characters[0].level, 7) << "목록의 레벨은 DB에 저장된 사본이다";
 }
 
 TEST_F(DISABLED_GameDBCharacterListTest, CreateWithoutAccountRowIsDBError)
@@ -249,4 +227,21 @@ TEST_F(DISABLED_GameDBCharacterListTest, CreateWithoutAccountRowIsDBError)
 
     EXPECT_THROW(Create(ACCOUNT_ID, 9'000'000'112'001, "DB계정없음"), DBError)
         << "슬롯 수의 원천인 계정 행이 없으면 거절이 아니라 서버 오류다";
+}
+
+TEST_F(DISABLED_GameDBCharacterListTest, OwnershipIsOnlyForAccountsActiveCharacter)
+{
+    constexpr int64 OWNER_ID = 9'000'000'000'113;
+    constexpr int64 OTHER_ID = 9'000'000'000'114;
+    constexpr int64 ACTIVE_ID = 9'000'000'113'001;
+    constexpr int64 DELETED_ID = 9'000'000'113'002;
+    CleanupAccount(OWNER_ID);
+    AccountDAO::RecordLogin(Connection(), OWNER_ID);
+    ASSERT_FALSE(Create(OWNER_ID, ACTIVE_ID, "DB소유_남김").rejection.has_value());
+    ASSERT_FALSE(Create(OWNER_ID, DELETED_ID, "DB소유_지움").rejection.has_value());
+    ASSERT_TRUE(CharacterListDAO::DeleteCharacter(Connection(), OWNER_ID, DELETED_ID));
+
+    EXPECT_TRUE(CharacterListDAO::OwnsCharacter(Connection(), OWNER_ID, ACTIVE_ID));
+    EXPECT_FALSE(CharacterListDAO::OwnsCharacter(Connection(), OTHER_ID, ACTIVE_ID)) << "다른 계정의 캐릭터로는 입장하지 못한다";
+    EXPECT_FALSE(CharacterListDAO::OwnsCharacter(Connection(), OWNER_ID, DELETED_ID)) << "삭제한 캐릭터로는 입장하지 못한다";
 }

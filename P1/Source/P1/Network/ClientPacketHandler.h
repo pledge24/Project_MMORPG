@@ -1,5 +1,14 @@
 #pragma once
+#include "Chat.pb.h"
+#include "Combat.pb.h"
+#include "Common.pb.h"
+#include "Entity.pb.h"
+#include "Entry.pb.h"
+#include "Enum.pb.h"
+#include "Item.pb.h"
+#include "Lobby.pb.h"
 #include "Protocol.pb.h"
+#include "Struct.pb.h"
 
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
 #include "Network/SendBuffer.h"
@@ -10,7 +19,7 @@
 using PacketHandlerFunc = std::function<bool(PacketSessionRef&, BYTE*, int32)>;
 extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
-// Auto-generated
+// 패킷 번호. 스키마 파일마다 정한 범위 안에서 선언 순서로 매긴다.
 enum : uint16
 {
 	PKT_C_PING = 1000,
@@ -58,9 +67,31 @@ enum : uint16
 	PKT_S_CHAT = 1042,
 };
 
+/** 생성기가 읽은 스키마 파일과 그 파일의 패킷 번호 범위. 프로토콜 계약 테스트가 자기 표와 대조한다. */
+struct PacketSchemaFile
+{
+	const char* name;
+	uint16 firstPacketId;	// 범위가 없는 파일은 0
+	uint16 lastPacketId;	// 범위가 없는 파일은 0
+};
+
+inline constexpr PacketSchemaFile PACKET_SCHEMA_FILES[] =
+{
+	{ "Chat.proto", 700, 799 },
+	{ "Combat.proto", 500, 599 },
+	{ "Common.proto", 100, 199 },
+	{ "Entity.proto", 400, 499 },
+	{ "Entry.proto", 300, 399 },
+	{ "Enum.proto", 0, 0 },
+	{ "Item.proto", 600, 699 },
+	{ "Lobby.proto", 200, 299 },
+	{ "Protocol.proto", 1000, 1999 },
+	{ "Struct.proto", 0, 0 },
+};
+
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 
-// Auto-generated template Handle Functions
+// 받는 패킷의 핸들러. 정의는 손으로 쓴다.
 bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt);
 bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt);
 bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt);
@@ -93,7 +124,7 @@ public:
 		for (int32 i = 0; i < UINT16_MAX; i++)
 			GPacketHandler[i] = Handle_INVALID;
 
-		// Auto-generated
+		// 받는 패킷마다 핸들러를 등록한다.
 		GPacketHandler[PKT_S_PONG] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_PONG>(Handle_S_PONG, session, buffer, len); };
 		GPacketHandler[PKT_S_LOGIN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_LOGIN>(Handle_S_LOGIN, session, buffer, len); };
 		GPacketHandler[PKT_S_CREATE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CREATE_CHARACTER>(Handle_S_CREATE_CHARACTER, session, buffer, len); };
@@ -134,7 +165,7 @@ public:
 		return GPacketHandler[header->id](session, buffer, len);
 	}
 
-	// Auto-generated
+	// 보내는 패킷의 직렬화.
 	static SendBufferRef MakeSerializedPacket(Protocol::C_PING& pkt) { return MakeSerializedPacket(pkt, PKT_C_PING); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_LOGIN& pkt) { return MakeSerializedPacket(pkt, PKT_C_LOGIN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_CREATE_CHARACTER); }

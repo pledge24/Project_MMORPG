@@ -1,6 +1,9 @@
 syntax = "proto3";
 package Protocol;
 
+// 옛 파일. 지금의 패킷 번호를 그대로 두는 임시 범위다
+// @packet_id_range 1000 1999
+
 import "Enum.proto";
 import "Struct.proto";
 

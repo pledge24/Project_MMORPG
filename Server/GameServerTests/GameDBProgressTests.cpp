@@ -1,10 +1,11 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "GameDBTestFixture.h"
-#include "DB/AccountDAO.h"
-#include "DB/CharacterListDAO.h"
+#include "Lobby/AccountDAO.h"
+#include "Lobby/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/ProgressStorage.h"
+#include "Lobby/Data/LobbyData.h"
 #include "Game/Entities/PlayerSaveData.h"
 
 /*--------------------------------------------------------------
@@ -14,6 +15,7 @@
     아이템 저장은 그 캐릭터의 아이템 전체를 MERGE 한 문장으로 맞추므로, 칸 맞바꾸기와 고유 제약,
     사본에 없는 행의 삭제, 배열 파라미터의 행 상한을 넘는 저장, 실패한 저장의 되돌림은 여기서만 확인된다.
     퀵슬롯도 같은 방식으로 저장하고, 빈 퀵슬롯은 행을 두지 않는다.
+    캐릭터 생성은 캐릭터 행만 넣고, 첫 입장의 불러오기가 같은 트랜잭션에서 초기 진행 행을 만든다.
 
     테스트마다 다른 계정 번호와 캐릭터 번호를 쓰고, 아이템 UID는 캐릭터 번호에서 만든다. 그 계정의 행만 넣고 지운다.
 
@@ -24,6 +26,7 @@ namespace
 {
     constexpr int32 GOLD_CURRENCY_ID = 1;
     constexpr int32 START_MAP_ID = 1111;
+    constexpr int64 START_GOLD = 500;
     constexpr int32 SAVED_MAP_ID = 2222;
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 MISC_TEMPLATE_ID = 3000;
@@ -96,21 +99,28 @@ protected:
         GamedataTables tables;
         tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
-        tables.characterCreation.startMapId = START_MAP_ID;
-        tables.characterCreation.startGold = 500;
-        tables.characterCreation.defaultCharacterSlotCount = 4;
+        tables.initialProgress.startMapId = START_MAP_ID;
+        tables.initialProgress.startPos = { 10.5f, -20.25f, 30.f };
+        tables.initialProgress.startYaw = 90.f;
+        tables.initialProgress.startGold = START_GOLD;
         Gamedata::Install(std::move(tables));
+
+        LobbyTables lobbyTables;
+        lobbyTables.defaultCharacterSlotCount = 4;
+        lobbyTables.creatableClasses = { Protocol::CLASS_TYPE_WARRIOR };
+        LobbyData::Install(std::move(lobbyTables));
     }
 
     void TearDown() override
     {
         Gamedata::Install(GamedataTables());
+        LobbyData::Install(LobbyTables());
         GameDBTestFixture::TearDown();
     }
 
-    // 계정과 캐릭터 하나를 만들고, 테스트가 끝날 때 그 계정의 행을 모두 지운다.
+    // 계정과 캐릭터 행을 만들고, 테스트가 끝날 때 그 계정의 행을 모두 지운다. 진행 행은 만들지 않는다.
     // 외래 키 때문에 자식 행부터 지운다(정리는 넣은 역순으로 돈다). ItemGear는 Item을 지우면 함께 지워진다.
-    void CreateCharacter(int64 accountId, int64 characterId, const string& name)
+    void CreateCharacterRow(int64 accountId, int64 characterId, const string& name)
     {
         const wstring id = to_wstring(accountId);
         const wstring characters = L"(SELECT CharacterId FROM dbo.[Character] WHERE AccountId = " + id + L")";
@@ -123,11 +133,15 @@ protected:
 
         AccountDAO::RecordLogin(Connection(), accountId);
 
-        Protocol::CharacterOverview character;
-        character.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        character.set_name(name);
-        const CreateCharacterResult result = CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, character);
+        const CreateCharacterResult result = CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, name, Protocol::CLASS_TYPE_WARRIOR);
         ASSERT_FALSE(result.rejection.has_value()) << "준비 단계의 캐릭터 생성이 거절됐다";
+    }
+
+    // 캐릭터를 만들고 한 번 입장시켜 진행 행까지 만든다. 저장은 진행 행이 있어야 한다.
+    void CreateCharacter(int64 accountId, int64 characterId, const string& name)
+    {
+        ASSERT_NO_FATAL_FAILURE(CreateCharacterRow(accountId, characterId, name));
+        ASSERT_TRUE(Load(accountId, characterId).has_value()) << "준비 단계의 첫 입장이 실패했다";
     }
 
     // 아이템이 없는 저장 사본. 테스트가 아이템을 붙인다.
@@ -135,19 +149,15 @@ protected:
     {
         PlayerSaveData data;
         data.userId = accountId;
-        data.progress.playerInfo.set_character_id(characterId);
-        data.progress.playerInfo.set_level(2);
-        data.progress.playerInfo.set_map_id(SAVED_MAP_ID);
-        data.progress.posInfo.mutable_pos()->set_x(-150.5f);
-        data.progress.posInfo.mutable_pos()->set_y(40.25f);
-        data.progress.posInfo.mutable_pos()->set_z(5.f);
-        data.progress.posInfo.set_yaw(45.f);
+        data.progress.characterId = characterId;
+        data.progress.level = 2;
+        data.progress.mapId = SAVED_MAP_ID;
+        data.progress.pos = vector3D(-150.5f, 40.25f, 5.f);
+        data.progress.yaw = 45.f;
         data.progress.gold = 4321;
-
-        auto* stats = data.progress.statInfo.mutable_info();
-        (*stats)[Protocol::STAT_TYPE_EXP] = 1500;
-        (*stats)[Protocol::STAT_TYPE_HP] = 60;
-        (*stats)[Protocol::STAT_TYPE_MP] = 30;
+        data.progress.totalExp = 1500;
+        data.progress.hp = 60;
+        data.progress.mp = 30;
         return data;
     }
 
@@ -170,6 +180,45 @@ protected:
         return QueryInt64(L"SELECT COUNT(*) FROM " + table + L" WHERE " + where);
     }
 };
+
+// 캐릭터 생성은 캐릭터 행만 넣는다. 첫 입장이 초기 진행 표와 1레벨 행으로 진행 행을 만들고, 두 번째 입장은 저장된 진행을 불러온다.
+TEST_F(DISABLED_GameDBProgressTest, FirstEntryCreatesInitialProgressAndSecondEntryLoadsSaved)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'210;
+    constexpr int64 CHARACTER_ID = 9'000'000'210'001;
+    CreateCharacterRow(ACCOUNT_ID, CHARACTER_ID, "DB진행_첫입장");
+    const wstring characterWhere = L"CharacterId = " + to_wstring(CHARACTER_ID);
+    ASSERT_EQ(CountRows(L"dbo.CharacterState", characterWhere), 0) << "새 캐릭터에는 진행 행이 없다";
+    ASSERT_EQ(CountRows(L"dbo.CharacterCurrency", characterWhere), 0);
+
+    const std::optional<PlayerProgress> first = Load(ACCOUNT_ID, CHARACTER_ID);
+    ASSERT_TRUE(first.has_value());
+    EXPECT_EQ(first->level, 1);
+    EXPECT_EQ(first->mapId, START_MAP_ID) << "시작 맵에서 시작한다";
+    EXPECT_FLOAT_EQ(first->pos.x, 10.5f);
+    EXPECT_FLOAT_EQ(first->pos.y, -20.25f);
+    EXPECT_FLOAT_EQ(first->pos.z, 30.f);
+    EXPECT_FLOAT_EQ(first->yaw, 90.f);
+    EXPECT_EQ(first->totalExp, 0);
+    EXPECT_EQ(first->hp, 120) << "1레벨의 최대 HP로 가득 찬 채 시작한다";
+    EXPECT_EQ(first->mp, 45);
+    EXPECT_EQ(first->gold, START_GOLD);
+    EXPECT_TRUE(first->items.empty());
+    EXPECT_EQ(CountRows(L"dbo.CharacterState", characterWhere + L" AND Exp = 0 AND MapId = 1111"
+        + L" AND PosX = 10.5 AND PosY = -20.25 AND PosZ = 30 AND Direction = 90 AND CurrentHp = 120 AND CurrentMp = 45"), 1);
+    EXPECT_EQ(CountRows(L"dbo.CharacterCurrency", characterWhere + L" AND CurrencyId = 1 AND Amount = 500"), 1);
+
+    ASSERT_TRUE(Save(MakeSaveData(ACCOUNT_ID, CHARACTER_ID)));
+
+    const std::optional<PlayerProgress> second = Load(ACCOUNT_ID, CHARACTER_ID);
+    ASSERT_TRUE(second.has_value());
+    EXPECT_EQ(second->mapId, SAVED_MAP_ID) << "두 번째 입장은 초기 진행이 아니라 저장된 진행을 불러온다";
+    EXPECT_FLOAT_EQ(second->pos.x, -150.5f);
+    EXPECT_EQ(second->gold, 4321);
+    EXPECT_EQ(second->totalExp, 1500);
+    EXPECT_EQ(CountRows(L"dbo.CharacterState", characterWhere), 1) << "진행 행을 다시 만들지 않는다";
+    EXPECT_EQ(CountRows(L"dbo.CharacterCurrency", characterWhere), 1);
+}
 
 TEST_F(DISABLED_GameDBProgressTest, SavedProgressAndItemsLoadBack)
 {
@@ -194,15 +243,15 @@ TEST_F(DISABLED_GameDBProgressTest, SavedProgressAndItemsLoadBack)
     const std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
     ASSERT_TRUE(loaded.has_value());
 
-    EXPECT_EQ(loaded->playerInfo.level(), 2);
-    EXPECT_EQ(loaded->playerInfo.map_id(), SAVED_MAP_ID) << "룸이 아니라 맵을 저장하고 불러온다";
-    EXPECT_FLOAT_EQ(loaded->posInfo.pos().x(), -150.5f);
-    EXPECT_FLOAT_EQ(loaded->posInfo.pos().y(), 40.25f);
-    EXPECT_FLOAT_EQ(loaded->posInfo.pos().z(), 5.f);
-    EXPECT_FLOAT_EQ(loaded->posInfo.yaw(), 45.f);
-    EXPECT_EQ(loaded->statInfo.info().at(Protocol::STAT_TYPE_EXP), 1500);
-    EXPECT_EQ(loaded->statInfo.info().at(Protocol::STAT_TYPE_HP), 60);
-    EXPECT_EQ(loaded->statInfo.info().at(Protocol::STAT_TYPE_MP), 30);
+    EXPECT_EQ(loaded->level, 2);
+    EXPECT_EQ(loaded->mapId, SAVED_MAP_ID) << "룸이 아니라 맵을 저장하고 불러온다";
+    EXPECT_FLOAT_EQ(loaded->pos.x, -150.5f);
+    EXPECT_FLOAT_EQ(loaded->pos.y, 40.25f);
+    EXPECT_FLOAT_EQ(loaded->pos.z, 5.f);
+    EXPECT_FLOAT_EQ(loaded->yaw, 45.f);
+    EXPECT_EQ(loaded->totalExp, 1500);
+    EXPECT_EQ(loaded->hp, 60);
+    EXPECT_EQ(loaded->mp, 30);
     EXPECT_EQ(loaded->gold, 4321);
 
     const ItemInstance* potion = FindItem(*loaded, ContainerType::INVENTORY_CONSUMABLE, 0);
@@ -236,7 +285,7 @@ TEST_F(DISABLED_GameDBProgressTest, OtherAccountAndDeletedCharacterAreNotLoaded)
 {
     constexpr int64 ACCOUNT_ID = 9'000'000'000'202;
     constexpr int64 CHARACTER_ID = 9'000'000'202'001;
-    CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_남의것");
+    CreateCharacterRow(ACCOUNT_ID, CHARACTER_ID, "DB진행_남의것");
 
     EXPECT_FALSE(Load(ACCOUNT_ID + 1, CHARACTER_ID).has_value()) << "다른 계정의 캐릭터로는 입장하지 못한다";
     EXPECT_EQ(CountRows(L"dbo.[Character]", L"CharacterId = " + to_wstring(CHARACTER_ID) + L" AND LastLoginAt IS NOT NULL"), 0)
@@ -371,10 +420,7 @@ TEST_F(DISABLED_GameDBProgressTest, FailedSaveRollsBackEverything)
     constexpr int64 OTHER_POTION_UID = OTHER_CHARACTER_ID * 1000 + 1;
     CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_롤백");
 
-    Protocol::CharacterOverview other;
-    other.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-    other.set_name("DB진행_롤백_남");
-    ASSERT_FALSE(CharacterListDAO::CreateCharacter(Connection(), ACCOUNT_ID, OTHER_CHARACTER_ID, other).rejection.has_value());
+    CreateCharacter(ACCOUNT_ID, OTHER_CHARACTER_ID, "DB진행_롤백_남");
 
     PlayerSaveData otherData = MakeSaveData(ACCOUNT_ID, OTHER_CHARACTER_ID);
     AddConsumable(otherData, 0, OTHER_POTION_UID);
@@ -386,9 +432,9 @@ TEST_F(DISABLED_GameDBProgressTest, FailedSaveRollsBackEverything)
 
     // 레벨, 상태, 골드는 갱신된 뒤에 아이템 MERGE가 다른 캐릭터의 UID로 기본 키 위반을 낸다.
     PlayerSaveData broken = MakeSaveData(ACCOUNT_ID, CHARACTER_ID);
-    broken.progress.playerInfo.set_level(1);
+    broken.progress.level = 1;
     broken.progress.gold = 9999;
-    (*broken.progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = 10;
+    broken.progress.totalExp = 10;
     AddConsumable(broken, 3, OTHER_POTION_UID);
     EXPECT_FALSE(Save(broken));
 
@@ -432,10 +478,7 @@ TEST_F(DISABLED_GameDBProgressTest, EmptiedQuickSlotRowIsDeleted)
     constexpr int64 OTHER_CHARACTER_ID = 9'000'000'209'002;
     CreateCharacter(ACCOUNT_ID, CHARACTER_ID, "DB진행_퀵해제");
 
-    Protocol::CharacterOverview other;
-    other.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-    other.set_name("DB진행_퀵해제_남");
-    ASSERT_FALSE(CharacterListDAO::CreateCharacter(Connection(), ACCOUNT_ID, OTHER_CHARACTER_ID, other).rejection.has_value());
+    CreateCharacter(ACCOUNT_ID, OTHER_CHARACTER_ID, "DB진행_퀵해제_남");
 
     PlayerSaveData otherData = MakeSaveData(ACCOUNT_ID, OTHER_CHARACTER_ID);
     otherData.progress.quickSlots = { ItemQuickSlot(0, POTION_TEMPLATE_ID) };

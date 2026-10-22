@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
-#include "Online/P1CharacterOverview.h"
+#include "Lobby/P1CharacterClass.h"
 #include "P1LoginMenuWidget.generated.h"
 
 class UButton;
@@ -10,15 +10,10 @@ class UEditableTextBox;
 class UPanelWidget;
 class UTextBlock;
 class UWidgetSwitcher;
+class UP1AuthClient;
 class UP1CharacterSlotWidget;
-class UP1LoginManager;
-
-namespace Protocol
-{
-    class S_LOGIN;
-    class S_CREATE_CHARACTER;
-    class S_DELETE_CHARACTER;
-}
+class UP1EntryFlowSubsystem;
+class UP1LobbySubsystem;
 
 /**
  * 로그인 맵의 메뉴 위젯.
@@ -34,6 +29,9 @@ class P1_API UP1LoginMenuWidget : public UP1UserWidget
 protected:
     virtual void NativeOnInitialized() override;
     virtual void NativeConstruct() override;
+
+    /** 인증 클라이언트, 로비, 접속 흐름의 델리게이트에서도 이 위젯을 뗀다. */
+    virtual void NativeDestruct() override;
     //~ End UUserWidget Interface
 
     //~ Screen
@@ -56,9 +54,12 @@ private:
     //~ Login
 private:
     /** 게임 인스턴스가 없으면 nullptr. */
-    UP1LoginManager* GetLoginManager() const;
+    UP1AuthClient* GetAuthClient() const;
 
     void SetResultText(bool bSuccess, const FString& Message);
+
+    /** 게임 서버에 접속하지 못했거나 연결이 끊긴 사유를 로그인 화면에 보여 준다. */
+    void ShowLoginNotice(const FString& Notice);
 
     /** 요청이 겹치지 않게 버튼을 BUTTON_LOCK_SECONDS 동안 잠근다. */
     void LockButtonBriefly(UButton* Button, FTimerHandle& LockTimer);
@@ -91,33 +92,40 @@ private:
 
     //~ Character Select
 private:
-    /** 로그인 응답의 캐릭터 목록으로 캐릭터 선택 화면을 채우고 연다. */
-    void FetchCharacterOverviews(const Protocol::S_LOGIN& pkt);
+    /** 게임 인스턴스가 없으면 nullptr. */
+    UP1LobbySubsystem* GetLobby() const;
+
+    /** 로비의 캐릭터 목록 사본으로 캐릭터 선택 화면을 채우고 연다. */
+    void ShowCharacters();
+
+    /** 서버가 캐릭터 목록을 보내지 못했으면 로그인 화면에 알린다. */
+    void ShowCharacterListFailed();
 
     /**
-     * 서버가 보낸 슬롯 수만큼 슬롯 위젯을 보이고 나머지는 숨긴다.
+     * 로비가 받은 슬롯 수만큼 슬롯 위젯을 보이고 나머지는 숨긴다.
      * 숨긴 슬롯을 고른 상태였으면 선택을 푼다.
      */
-    void ApplyCharacterSlotCount(int32 SlotCount);
+    void ApplyCharacterSlotCount();
 
-    /** 서버가 보낸 슬롯 수와 슬롯 위젯 수 중 작은 값. 캐릭터 생성 가능 여부도 이 값으로 판정한다. */
+    /** 로비가 받은 슬롯 수와 슬롯 위젯 수 중 작은 값. 캐릭터 생성 가능 여부도 이 값으로 판정한다. */
     int32 GetVisibleSlotCount() const;
 
-    /** 캐릭터 요약을 슬롯에 다시 그리고 캐릭터 선택 화면으로 넘어간다. */
-    void DisplayCharacterOverviews();
+    /** 캐릭터 목록을 슬롯에 다시 그리고 캐릭터 선택 화면으로 넘어간다. */
+    void DisplayCharacters();
 
     /** 슬롯을 고르고 하이라이트한다. -1이면 선택을 푼다. */
     void SelectSlot(int32 SlotIndex);
 
     bool IsSelectedSlotOccupied() const;
 
+    /** 고른 슬롯의 캐릭터 번호. 고른 슬롯에 캐릭터가 없으면 -1. */
+    int64 GetSelectedCharacterId() const;
+
     /** 안내 문구를 띄우고 DESCRIPTION_SECONDS 뒤에 지운다. 새 문구가 뜨면 시간을 다시 센다. */
     void ShowDescription(const FText& Message);
 
     /** 서버가 게임 입장을 거절하면 캐릭터 선택 화면에 알린다. */
     void ShowEnterGameFailed();
-
-    void SendEnterGamePkt();
 
     UFUNCTION()
     void OnCreateButtonClicked();
@@ -153,11 +161,6 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<UP1CharacterSlotWidget>> CharacterSlots;
 
-    TArray<FP1CharacterOverview> CharacterOverviews;
-
-    /** 계정이 가질 수 있는 캐릭터 수. 캐릭터 목록을 받기 전에는 0. */
-    int32 CharacterSlotCount = 0;
-
     /** 고른 슬롯이 없으면 -1. 캐릭터 목록을 다시 그려도 바뀌지 않는다. */
     int32 SelectedSlotIndex = -1;
 
@@ -168,11 +171,13 @@ private:
     /** 생성 화면으로 넘어가기 전에 불러 직업 선택과 이름 입력을 비운다. */
     void ResetCharacterCreateScreen();
 
-    /** ClassId는 Protocol::CharacterClass 값이다. */
-    void SelectClass(int32 ClassId);
+    void SelectClass(EP1CharacterClass CharacterClass);
 
-    void AddCharacterOverview(const Protocol::S_CREATE_CHARACTER& pkt);
-    void SendCreateCharacterPkt(const FString& CharacterName, int32 CharacterClassId);
+    /** 서버가 생성을 거절한 사유를 생성 화면에 보여 준다. */
+    void ShowCreateCharacterFailed(const FString& Cause);
+
+    /** 이름과 직업을 고르지 않았으면 생성 화면에 알리고 보내지 않는다. */
+    void RequestCreateCharacter(const FString& CharacterName, EP1CharacterClass CharacterClass);
 
     UFUNCTION()
     void OnWarriorButtonClicked();
@@ -207,19 +212,15 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> CC_CancelBtn;
 
-    /** Protocol::CharacterClass 값. 고르지 않았으면 -1. */
-    int32 SelectedClassId = -1;
-
-    /** 마지막으로 보낸 생성 요청의 이름. 응답에는 이름이 없으므로 이 값을 목록에 넣는다. */
-    FString RequestedCharacterName;
-
-    /** 마지막으로 보낸 생성 요청의 직업(Protocol::CharacterClass 값). */
-    int32 RequestedClassId = -1;
+    /** 고르지 않았으면 None. */
+    EP1CharacterClass SelectedClass = EP1CharacterClass::None;
 
     //~ Character Delete
 private:
-    void RemoveCharacterOverview(const Protocol::S_DELETE_CHARACTER& pkt);
-    void SendDeleteCharacterPkt();
+    /** 서버가 삭제를 거절하면 캐릭터 선택 화면으로 돌아가 알린다. */
+    void ShowDeleteCharacterFailed();
+
+    void RequestDeleteCharacter();
 
     UFUNCTION()
     void OnDeleteConfirmButtonClicked();

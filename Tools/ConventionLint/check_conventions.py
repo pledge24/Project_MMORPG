@@ -40,18 +40,18 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CLIENT_SOURCE = "P1/Source/P1"
 
 # 생성기가 만드는 파일이다. 손으로 고치지 않으므로 어떤 검사도 적용하지 않는다.
-# `GenPackets.bat`이 `Protocol/`에서 만들어 각 티어로 복사한다.
+# `Protocol/Generate.ps1`이 만들어 각 티어로 복사한다.
 GENERATED_FILE_NAMES = frozenset(
     {
         "ClientPacketHandler.h",
         "ClientPacketHandler.cpp",
         "ServerPacketHandler.h",
         "ServerPacketHandler.cpp",
-        "Enum.pb.h",
-        "Protocol.pb.h",
-        "Struct.pb.h",
     }
 )
+
+# protoc가 스키마 파일마다 만드는 파일의 끝이다. 스키마 파일은 도메인마다 하나라서 이름을 나열하지 않는다.
+GENERATED_FILE_SUFFIXES = (".pb.h", ".pb.cc")
 
 # 생성물이 이름으로 부르기 때문에 프로젝트 약어를 붙이지 않는 타입이다.
 # `Protocol/Templates/PacketHandler.h`가 이 이름들을 그대로 적는다 (`ue-client.md` 「이름과 파일」).
@@ -203,7 +203,8 @@ def strip_comments_and_strings(source: str, preserve_string_contents: bool = Fal
 
 
 def is_generated(rel_path: str) -> bool:
-    return Path(rel_path).name in GENERATED_FILE_NAMES
+    name = Path(rel_path).name
+    return name in GENERATED_FILE_NAMES or name.endswith(GENERATED_FILE_SUFFIXES)
 
 
 # ----------------------------------------------------------------------------------

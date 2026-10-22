@@ -198,6 +198,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
+    <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -216,6 +217,7 @@
     <ClCompile Include="ServerConfigTests.cpp" />
     <ClCompile Include="SnowflakeIdGeneratorTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
+    <ClCompile Include="SessionPhaseTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
     <ClCompile Include="ProgressCoordinatorTests.cpp" />
@@ -237,6 +239,7 @@
       <PrecompiledHeaderFile>Core/pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\GameServer\Network\GameSession.cpp" />
+    <ClCompile Include="..\GameServer\Network\SessionPhase.cpp" />
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp" />
     <ClCompile Include="..\GameServer\Core\Global.cpp" />
     <ClCompile Include="..\GameServer\Core\ServerContext.cpp" />
@@ -253,8 +256,33 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
+    <ClCompile Include="..\GameServer\Protocol\Chat.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Combat.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Common.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entity.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entry.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Item.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Lobby.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Lobby\CharacterCreation.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
+    <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp" />
+    <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\Data\LobbyData.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Utils\SnowflakeIdGenerator.cpp" />
@@ -277,8 +305,8 @@
     <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
-    <ClCompile Include="..\GameServer\DB\AccountDAO.cpp" />
-    <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\AccountDAO.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\CharacterListDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\IssuedIdDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\CharacterStateDAO.cpp" />
     <ClCompile Include="..\GameServer\DB\ItemDAO.cpp" />
@@ -297,7 +325,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <!-- GameServer.vcxproj의 GenerateProtoPackets 타깃은 의도적으로 복제하지 않는다.
-       같은 파일에 XCOPY하는 타깃이 둘이면 병렬 빌드에서 경합한다.
-       .proto 재생성은 GameServer의 책임이고, 여기서는 커밋된 .pb.cc를 컴파일만 한다. -->
+  <!-- GameServer.vcxproj와 DummyClient.vcxproj의 GenerateProtoPackets 타깃은 여기에 두지 않는다.
+       .proto 재생성은 그 두 프로젝트가 맡고, 여기서는 커밋된 .pb.cc를 컴파일만 한다. -->
 </Project>

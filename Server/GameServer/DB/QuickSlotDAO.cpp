@@ -173,7 +173,7 @@ void QuickSlotDAO::LoadQuickSlots(DBConnection& conn, int64 characterId, OUT Pla
 
 void QuickSlotDAO::SaveQuickSlots(DBConnection& conn, const PlayerSaveData& data)
 {
-    const int64 characterId = data.progress.playerInfo.character_id();
+    const int64 characterId = data.progress.characterId;
     for (const QuickSlot& quickSlot : data.progress.quickSlots)
     {
         // 빈 퀵슬롯을 행으로 넣으면 RefType 0이 CHECK 제약에 걸려 저장 전체가 되돌려진다.

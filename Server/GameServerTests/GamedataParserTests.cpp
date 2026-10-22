@@ -105,11 +105,10 @@ namespace
         return Json{{"templateId", templateId}, {"currencyName", "골드"}, {"currencyType", currencyType}};
     }
 
-    Json MakeCharacterCreation()
+    Json MakeInitialProgress()
     {
         return Json{
-            {"startMapId", 1111}, {"startPos", MakePos(100, -200, 0)}, {"startYaw", 90.0},
-            {"startGold", 10000}, {"defaultCharacterSlotCount", 4},
+            {"startMapId", 1111}, {"startPos", MakePos(100, -200, 0)}, {"startYaw", 90.0}, {"startGold", 10000},
         };
     }
 
@@ -131,7 +130,7 @@ namespace
         documents.monsters = Json::array({MakeMonster()});
         documents.maps = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
-        documents.characterCreation = Json::array({MakeCharacterCreation()});
+        documents.initialProgress = Json::array({MakeInitialProgress()});
         documents.inventorySections = Json::array({
             MakeInventorySection("GEAR", 32), MakeInventorySection("CONSUMABLE", 24), MakeInventorySection("MISCELLANEOUS", 16),
         });
@@ -225,13 +224,12 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     ASSERT_TRUE(tables.currencies.contains(GOLD_ID));
     EXPECT_EQ(tables.currencies.at(GOLD_ID).currencyType, CurrencyType::GOLD);
 
-    const CharacterCreationTemplate& creation = tables.characterCreation;
-    EXPECT_EQ(creation.startMapId, 1111);
-    EXPECT_FLOAT_EQ(creation.startPos.x, 100.f);
-    EXPECT_FLOAT_EQ(creation.startPos.y, -200.f);
-    EXPECT_FLOAT_EQ(creation.startYaw, 90.f);
-    EXPECT_EQ(creation.startGold, 10000);
-    EXPECT_EQ(creation.defaultCharacterSlotCount, 4);
+    const InitialProgressTemplate& initial = tables.initialProgress;
+    EXPECT_EQ(initial.startMapId, 1111);
+    EXPECT_FLOAT_EQ(initial.startPos.x, 100.f);
+    EXPECT_FLOAT_EQ(initial.startPos.y, -200.f);
+    EXPECT_FLOAT_EQ(initial.startYaw, 90.f);
+    EXPECT_EQ(initial.startGold, 10000);
 
     EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_GEAR), 32);
     EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_CONSUMABLE), 24);
@@ -418,36 +416,27 @@ TEST(GamedataParserTest, DuplicateCurrencyIdIsRejected)
 TEST(GamedataParserTest, StartMapNotInMapTableIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.characterCreation[0]["startMapId"] = TOWN_ID;
+    documents.initialProgress[0]["startMapId"] = TOWN_ID;
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION, "startMapId", "10"});
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS, "startMapId", "10"});
 }
 
-TEST(GamedataParserTest, CharacterCreationMustHaveExactlyOneRow)
+TEST(GamedataParserTest, InitialProgressMustHaveExactlyOneRow)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.characterCreation = Json::array();
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION});
+    documents.initialProgress = Json::array();
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS});
 
     documents = MakeValidDocuments();
-    documents.characterCreation.push_back(MakeCharacterCreation());
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION});
+    documents.initialProgress.push_back(MakeInitialProgress());
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS});
 }
 
-TEST(GamedataParserTest, CharacterCreationValuesOutOfRangeAreRejected)
+TEST(GamedataParserTest, NegativeStartGoldIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.characterCreation[0]["startGold"] = -1;
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION, "startGold"});
-
-    for (int32 slotCount : { 0, 256 })
-    {
-        documents = MakeValidDocuments();
-        documents.characterCreation[0]["defaultCharacterSlotCount"] = slotCount;
-
-        SCOPED_TRACE(slotCount);
-        ExpectMentions(ErrorOf(documents), {GamedataFile::CHARACTER_CREATION, "defaultCharacterSlotCount"});
-    }
+    documents.initialProgress[0]["startGold"] = -1;
+    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS, "startGold"});
 }
 
 TEST(GamedataParserTest, NonPositiveSectionSlotCountIsRejected)
@@ -534,7 +523,7 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.maps = ReadJsonFile(dir / GamedataFile::MAPS);
     documents.monsters = ReadJsonFile(dir / GamedataFile::MONSTERS);
     documents.currencies = ReadJsonFile(dir / GamedataFile::CURRENCIES);
-    documents.characterCreation = ReadJsonFile(dir / GamedataFile::CHARACTER_CREATION);
+    documents.initialProgress = ReadJsonFile(dir / GamedataFile::INITIAL_PROGRESS);
     documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
     documents.quickSlots = ReadJsonFile(dir / GamedataFile::QUICK_SLOTS);
     ASSERT_TRUE(documents.items.is_array()) << "기획표를 찾지 못했다: " << dir.string();
@@ -546,9 +535,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(tables.classLevelTables.at(Protocol::CLASS_TYPE_WARRIOR).GetMaxLevel(), 50);
 
     // DB 기본값과 코드 상수에서 옮겨 온 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
-    EXPECT_EQ(tables.characterCreation.startMapId, 1111);
-    EXPECT_EQ(tables.characterCreation.startGold, 10000);
-    EXPECT_EQ(tables.characterCreation.defaultCharacterSlotCount, 4);
+    EXPECT_EQ(tables.initialProgress.startMapId, 1111);
+    EXPECT_EQ(tables.initialProgress.startGold, 10000);
     for (int32 itemType : { Protocol::ITEM_TYPE_GEAR, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::ITEM_TYPE_MISCELLANEOUS })
         EXPECT_EQ(tables.inventorySlotCounts.at(itemType), 32) << "클라이언트 UI가 구역마다 32칸을 고정으로 쓴다";
     EXPECT_EQ(tables.quickSlotCount, 9) << "퀵슬롯 키는 1~9다";

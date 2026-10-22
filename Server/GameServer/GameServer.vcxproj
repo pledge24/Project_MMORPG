@@ -185,6 +185,7 @@
     <ClInclude Include="Core\Global.h" />
     <ClInclude Include="Core\ServerContext.h" />
     <ClInclude Include="Network\GameSession.h" />
+    <ClInclude Include="Network\SessionPhase.h" />
     <ClInclude Include="Network\GameSessionManager.h" />
     <ClInclude Include="Network\ProgressCoordinator.h" />
     <ClInclude Include="Network\SaveGate.h" />
@@ -192,9 +193,19 @@
     <ClInclude Include="Protocol\Enum.pb.h" />
     <ClInclude Include="Protocol\Protocol.pb.h" />
     <ClInclude Include="Protocol\Struct.pb.h" />
+    <ClInclude Include="Protocol\Chat.pb.h" />
+    <ClInclude Include="Protocol\Combat.pb.h" />
+    <ClInclude Include="Protocol\Common.pb.h" />
+    <ClInclude Include="Protocol\Entity.pb.h" />
+    <ClInclude Include="Protocol\Entry.pb.h" />
+    <ClInclude Include="Protocol\Item.pb.h" />
+    <ClInclude Include="Protocol\Lobby.pb.h" />
     <ClInclude Include="Utils\EncodingConverter.h" />
-    <ClInclude Include="Game\Characters\CharacterCreation.h" />
+    <ClInclude Include="Lobby\CharacterCreation.h" />
     <ClInclude Include="Game\Progress\Leveling.h" />
+    <ClInclude Include="Game\Progress\InitialProgress.h" />
+    <ClInclude Include="Core\DataCrossCheck.h" />
+    <ClInclude Include="Lobby\Data\LobbyData.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
     <ClInclude Include="Utils\SnowflakeIdGenerator.h" />
@@ -226,8 +237,8 @@
     <ClInclude Include="Game\Room\MoveValidation.h" />
     <ClInclude Include="Game\Room\CellMatrix.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
-    <ClInclude Include="DB\AccountDAO.h" />
-    <ClInclude Include="DB\CharacterListDAO.h" />
+    <ClInclude Include="Lobby\AccountDAO.h" />
+    <ClInclude Include="Lobby\CharacterListDAO.h" />
     <ClInclude Include="DB\IssuedIdDAO.h" />
     <ClInclude Include="DB\CharacterStateDAO.h" />
     <ClInclude Include="DB\ItemDAO.h" />
@@ -255,6 +266,7 @@
     <ClCompile Include="Core\Config.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp" />
+    <ClCompile Include="Network\SessionPhase.cpp" />
     <ClCompile Include="Network\GameSessionManager.cpp" />
     <ClCompile Include="Network\ProgressCoordinator.cpp" />
     <ClCompile Include="Network\SaveGate.cpp" />
@@ -277,8 +289,54 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Game\Characters\CharacterCreation.cpp" />
+    <ClCompile Include="Protocol\Chat.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Protocol\Combat.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Protocol\Common.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Protocol\Entity.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Protocol\Entry.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Protocol\Item.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Protocol\Lobby.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Lobby\CharacterCreation.cpp" />
+    <ClCompile Include="Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="Game\Progress\Leveling.cpp" />
+    <ClCompile Include="Game\Progress\InitialProgress.cpp" />
+    <ClCompile Include="Core\DataCrossCheck.cpp" />
+    <ClCompile Include="Lobby\Data\LobbyData.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
     <ClCompile Include="Utils\SnowflakeIdGenerator.cpp" />
@@ -301,8 +359,8 @@
     <ClCompile Include="Game\Room\MoveValidation.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
-    <ClCompile Include="DB\AccountDAO.cpp" />
-    <ClCompile Include="DB\CharacterListDAO.cpp" />
+    <ClCompile Include="Lobby\AccountDAO.cpp" />
+    <ClCompile Include="Lobby\CharacterListDAO.cpp" />
     <ClCompile Include="DB\IssuedIdDAO.cpp" />
     <ClCompile Include="DB\CharacterStateDAO.cpp" />
     <ClCompile Include="DB\ItemDAO.cpp" />
@@ -310,10 +368,17 @@
     <ClCompile Include="DB\ItemRows.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Protocol\GenPackets.bat" />
+    <None Include="..\..\Protocol\Generate.ps1" />
     <None Include="..\..\Protocol\Schema\Enum.proto" />
     <None Include="..\..\Protocol\Schema\Protocol.proto" />
     <None Include="..\..\Protocol\Schema\Struct.proto" />
+    <None Include="..\..\Protocol\Schema\Chat.proto" />
+    <None Include="..\..\Protocol\Schema\Combat.proto" />
+    <None Include="..\..\Protocol\Schema\Common.proto" />
+    <None Include="..\..\Protocol\Schema\Entity.proto" />
+    <None Include="..\..\Protocol\Schema\Entry.proto" />
+    <None Include="..\..\Protocol\Schema\Item.proto" />
+    <None Include="..\..\Protocol\Schema\Lobby.proto" />
     <None Include="Migrations\001_init.sql" />
     <None Include="Migrations\002_quick_slot.sql" />
     <None Include="Game\Data\Json\S_Item.json" />
@@ -333,17 +398,23 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <!-- .proto가 바뀌었을 때만 GenPackets.bat을 돌린다.
+  <!-- .proto가 바뀌었을 때만 Protocol/Generate.ps1을 돌린다.
        MSBuild 타겟 그래프의 일부라 VS·Rider·CLI 어디서든 동일하게 동작한다.
        (기존 PreBuildEvent + UpToDateCheckInput 조합은 Visual Studio IDE에서만 통했다)
-       < NUL: GenPackets.bat이 PAUSE로 끝나므로 stdin에 EOF를 먹여 멈추지 않게 한다.
-       .bat은 pushd %~dp0로 시작해 CWD 독립적이므로 WorkingDirectory가 불필요하다. -->
+       스키마 목록은 타깃이 돌 때 모은다. 평가 시점의 항목으로 두면 IDE의 파일 목록에 한 번 더 보인다.
+       Outputs에 스키마마다의 .pb.h를 두므로, 스키마 파일을 더하면 그 생성물이 없어서 타깃이 돈다.
+       스크립트는 실패하면 1로 끝나고, Exec가 그 종료 코드로 빌드를 멈춘다. -->
+  <Target Name="CollectProtoSchemas">
+    <ItemGroup>
+      <ProtoSchema Include="$(MSBuildProjectDirectory)\..\..\Protocol\Schema\*.proto" />
+    </ItemGroup>
+  </Target>
   <Target Name="GenerateProtoPackets"
           BeforeTargets="ClCompile"
-          Inputs="$(SolutionDir)..\Protocol\Schema\Enum.proto;$(SolutionDir)..\Protocol\Schema\Struct.proto;$(SolutionDir)..\Protocol\Schema\Protocol.proto"
-          Outputs="$(MSBuildProjectDirectory)\Protocol\Enum.pb.h;$(MSBuildProjectDirectory)\Protocol\Struct.pb.h;$(MSBuildProjectDirectory)\Protocol\Protocol.pb.h;$(MSBuildProjectDirectory)\Network\ServerPacketHandler.h">
-    <Message Importance="high" Text="[Proto] .proto changed - running GenPackets.bat" />
-    <Exec Command="CALL &quot;$(SolutionDir)..\Protocol\GenPackets.bat&quot; &lt; NUL"
-          WorkingDirectory="$(SolutionDir)..\Protocol" />
+          DependsOnTargets="CollectProtoSchemas"
+          Inputs="@(ProtoSchema)"
+          Outputs="@(ProtoSchema->'$(MSBuildProjectDirectory)\Protocol\%(Filename).pb.h');$(MSBuildProjectDirectory)\Network\ServerPacketHandler.h">
+    <Message Importance="high" Text="[Proto] 스키마가 생성물보다 새로워 Generate.ps1을 돌린다" />
+    <Exec Command="pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\Protocol\Generate.ps1&quot;" />
   </Target>
 </Project>

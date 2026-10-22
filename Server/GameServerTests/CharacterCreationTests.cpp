@@ -1,17 +1,18 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Game/Characters/CharacterCreation.h"
+#include "Lobby/CharacterCreation.h"
 #include "Utils/EncodingConverter.h"
+#include "Lobby/Data/LobbyData.h"
 
 /*--------------------------------------------------------------
     캐릭터 생성 검증 테스트
 
-    레벨 표가 없는 직업으로 캐릭터를 만들면 생성 쿼리가 레벨 1 능력치를 읽다가 서버가
-    죽는다. 클라이언트의 마법사 버튼이 그 경로다. 이름이 DB 열 한도를 넘으면 생성이
+    로비 표의 생성할 수 있는 직업이 아니면 거절한다. 그런 직업의 캐릭터는 첫 게임 입장에서 초기 진행을
+    만들지 못한다. 클라이언트의 마법사 버튼이 그 경로다. 이름이 DB 열 한도를 넘으면 생성이
     내부 오류로 끝난다.
 
-    픽스처 결합도: 직업 레벨 표를 Gamedata::Install로 주입한다.
-    전사 표에는 레벨 1 행 하나만 넣는다. NONE에도 표를 넣어, 표가 있어도 NONE이 막히는지 본다.
+    픽스처 결합도: 생성할 수 있는 직업을 LobbyData::Install로 주입한다. 게임의 기획 데이터는 읽지 않는다.
+    NONE도 생성할 수 있는 직업에 넣어, 표에 있어도 NONE이 막히는지 본다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -37,18 +38,14 @@ class CharacterCreationTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate levelOne;
-        levelOne.level = 1;
-
-        GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_NONE] = ClassLevelTable({ levelOne });
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ levelOne });
-        Gamedata::Install(std::move(tables));
+        LobbyTables tables;
+        tables.creatableClasses = { Protocol::CLASS_TYPE_NONE, Protocol::CLASS_TYPE_WARRIOR };
+        LobbyData::Install(std::move(tables));
     }
 
     void TearDown() override
     {
-        Gamedata::Install(GamedataTables());
+        LobbyData::Install(LobbyTables());
     }
 };
 
@@ -57,20 +54,18 @@ TEST_F(CharacterCreationTest, WarriorWithValidNamePasses)
     EXPECT_FALSE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_WARRIOR, "전사")).has_value());
 }
 
-TEST_F(CharacterCreationTest, ClassWithoutLevelTableIsRejected)
+TEST_F(CharacterCreationTest, ClassNotCreatableInLobbyIsRejected)
 {
     const auto cause = CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_MAGE, "마법사"));
 
-    ASSERT_TRUE(cause.has_value()) << "레벨 표가 없는 직업을 통과시키면 생성 쿼리가 널 표를 역참조한다";
+    ASSERT_TRUE(cause.has_value()) << "생성할 수 없는 직업을 통과시키면 그 캐릭터는 첫 입장에서 초기 진행을 만들지 못한다";
     EXPECT_EQ(cause.value(), "선택할 수 없는 직업입니다.");
-    EXPECT_EQ(Gamedata::FindClassLevelTable(Protocol::CLASS_TYPE_MAGE), nullptr)
-        << "검증이 전역 표에 없는 직업을 끼워 넣으면 안 된다";
 }
 
-TEST_F(CharacterCreationTest, NoneClassIsRejectedEvenWithLevelTable)
+TEST_F(CharacterCreationTest, NoneClassIsRejectedEvenWhenListedAsCreatable)
 {
     EXPECT_TRUE(CharacterCreation::Validate(MakeCharacter(Protocol::CLASS_TYPE_NONE, "무직")).has_value())
-        << "NONE은 직업이 아니다. 누가 레벨 표를 넣어도 통과하면 안 된다";
+        << "NONE은 직업이 아니다. 누가 생성할 수 있는 직업에 넣어도 통과하면 안 된다";
 }
 
 TEST_F(CharacterCreationTest, UndefinedClassNumberIsRejected)

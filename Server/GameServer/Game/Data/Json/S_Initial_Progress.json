@@ -1,0 +1,12 @@
+[
+    {
+        "startMapId": 1111,
+        "startPos": {
+            "posX": 0,
+            "posY": 0,
+            "posZ": 0
+        },
+        "startYaw": 0,
+        "startGold": 10000
+    }
+]

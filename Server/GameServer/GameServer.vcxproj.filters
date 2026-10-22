@@ -56,8 +56,11 @@
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Characters">
-      <UniqueIdentifier>{c86c3240-4ec0-44a0-b694-596060a93c50}</UniqueIdentifier>
+    <Filter Include="Lobby">
+      <UniqueIdentifier>{022156a6-1606-4fc9-bc96-85dea34299c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lobby\Data">
+      <UniqueIdentifier>{ad2d4e47-208a-4d86-b0bf-2f82fb834c9c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Progress">
       <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
@@ -81,6 +84,9 @@
     </ClCompile>
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\SessionPhase.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Network\GameSessionManager.cpp">
@@ -110,6 +116,27 @@
     <ClCompile Include="Protocol\Struct.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
+    <ClCompile Include="Protocol\Chat.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Combat.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Common.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Entity.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Entry.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Item.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Lobby.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
     <ClCompile Include="Protocol\Enum.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
@@ -119,11 +146,23 @@
     <ClCompile Include="Utils\SnowflakeIdGenerator.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Characters\CharacterCreation.cpp">
-      <Filter>Game\Characters</Filter>
+    <ClCompile Include="Lobby\CharacterCreation.cpp">
+      <Filter>Lobby</Filter>
+    </ClCompile>
+    <ClCompile Include="Lobby\LobbyPacketHandlers.cpp">
+      <Filter>Lobby</Filter>
     </ClCompile>
     <ClCompile Include="Game\Progress\Leveling.cpp">
       <Filter>Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Progress\InitialProgress.cpp">
+      <Filter>Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\DataCrossCheck.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Lobby\Data\LobbyData.cpp">
+      <Filter>Lobby\Data</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
@@ -140,11 +179,11 @@
     <ClCompile Include="Game\Entities\Creature.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="DB\AccountDAO.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="Lobby\AccountDAO.cpp">
+      <Filter>Lobby</Filter>
     </ClCompile>
-    <ClCompile Include="DB\CharacterListDAO.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="Lobby\CharacterListDAO.cpp">
+      <Filter>Lobby</Filter>
     </ClCompile>
     <ClCompile Include="DB\IssuedIdDAO.cpp">
       <Filter>DB</Filter>
@@ -235,6 +274,9 @@
     <ClInclude Include="Network\GameSession.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Network\SessionPhase.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Network\GameSessionManager.h">
       <Filter>Network</Filter>
     </ClInclude>
@@ -262,17 +304,47 @@
     <ClInclude Include="Protocol\Struct.pb.h">
       <Filter>Protocol</Filter>
     </ClInclude>
+    <ClInclude Include="Protocol\Chat.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Combat.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Common.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Entity.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Entry.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Item.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Lobby.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Characters\CharacterCreation.h">
-      <Filter>Game\Characters</Filter>
+    <ClInclude Include="Lobby\CharacterCreation.h">
+      <Filter>Lobby</Filter>
     </ClInclude>
     <ClInclude Include="Game\Progress\Leveling.h">
       <Filter>Game\Progress</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Progress\InitialProgress.h">
+      <Filter>Game\Progress</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataCrossCheck.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\Data\LobbyData.h">
+      <Filter>Lobby\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityFactory.h">
       <Filter>Game\Entities</Filter>
@@ -295,11 +367,11 @@
     <ClInclude Include="Game\Entities\Creature.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="DB\AccountDAO.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="Lobby\AccountDAO.h">
+      <Filter>Lobby</Filter>
     </ClInclude>
-    <ClInclude Include="DB\CharacterListDAO.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="Lobby\CharacterListDAO.h">
+      <Filter>Lobby</Filter>
     </ClInclude>
     <ClInclude Include="DB\IssuedIdDAO.h">
       <Filter>DB</Filter>
@@ -390,7 +462,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Protocol\GenPackets.bat">
+    <None Include="..\..\Protocol\Generate.ps1">
       <Filter>Protocol</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Enum.proto">
@@ -400,6 +472,27 @@
       <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Struct.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Chat.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Combat.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Common.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Entity.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Entry.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Item.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Lobby.proto">
       <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="Migrations\001_init.sql">

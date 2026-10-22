@@ -39,8 +39,11 @@
     <Filter Include="GameServer\Game\Room">
       <UniqueIdentifier>{ef842711-8503-5fc1-bfaa-b90865de552c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GameServer\Game\Characters">
-      <UniqueIdentifier>{4879e189-484a-4f11-9016-5d7b55efb970}</UniqueIdentifier>
+    <Filter Include="GameServer\Lobby">
+      <UniqueIdentifier>{3ba1941a-9c72-49eb-b8ee-fc9baea423af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameServer\Lobby\Data">
+      <UniqueIdentifier>{a9266c6d-9833-48bd-8c2b-f695963b5167}</UniqueIdentifier>
     </Filter>
     <Filter Include="GameServer\Game\Progress">
       <UniqueIdentifier>{bcccc72c-a1db-4fdf-8451-c7738e31863f}</UniqueIdentifier>
@@ -105,6 +108,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
+    <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -123,6 +127,7 @@
     <ClCompile Include="ServerConfigTests.cpp" />
     <ClCompile Include="SnowflakeIdGeneratorTests.cpp" />
     <ClCompile Include="GameSessionManagerTests.cpp" />
+    <ClCompile Include="SessionPhaseTests.cpp" />
     <ClCompile Include="PlayerUseItemTests.cpp" />
     <ClCompile Include="SaveGateTests.cpp" />
     <ClCompile Include="ProgressCoordinatorTests.cpp" />
@@ -137,6 +142,9 @@
       <Filter>GameServer\Core</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Network\GameSession.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Network\SessionPhase.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Network\GameSessionManager.cpp">
@@ -169,11 +177,44 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp">
-      <Filter>GameServer\Game\Characters</Filter>
+    <ClCompile Include="..\GameServer\Protocol\Chat.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Combat.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Common.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entity.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entry.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Item.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Lobby.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Lobby\CharacterCreation.cpp">
+      <Filter>GameServer\Lobby</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Lobby\LobbyPacketHandlers.cpp">
+      <Filter>GameServer\Lobby</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp">
       <Filter>GameServer\Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp">
+      <Filter>GameServer\Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp">
+      <Filter>GameServer\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Lobby\Data\LobbyData.cpp">
+      <Filter>GameServer\Lobby\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>
@@ -241,11 +282,11 @@
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\DB\AccountDAO.cpp">
-      <Filter>GameServer\DB</Filter>
+    <ClCompile Include="..\GameServer\Lobby\AccountDAO.cpp">
+      <Filter>GameServer\Lobby</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameServer\DB\CharacterListDAO.cpp">
-      <Filter>GameServer\DB</Filter>
+    <ClCompile Include="..\GameServer\Lobby\CharacterListDAO.cpp">
+      <Filter>GameServer\Lobby</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\DB\IssuedIdDAO.cpp">
       <Filter>GameServer\DB</Filter>

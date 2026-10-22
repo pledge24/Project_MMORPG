@@ -45,8 +45,9 @@ Project_MMORPG/
 ├── P1/                     언리얼 클라이언트 (.uproject, Content/, Source/, Config/)
 ├── Server/                 외부 C++ 게임 서버와 Node 인증 서버
 ├── Protocol/               클라이언트와 서버가 공유하는 패킷 계약
-│   ├── Schema/             .proto 원본
-│   └── (생성 스크립트)
+│   ├── Schema/             .proto 원본. 도메인마다 한 파일
+│   ├── Templates/          핸들러 헤더 템플릿
+│   └── Generate.ps1        생성 스크립트
 ├── DesignData/             기획 수치 원본. 클라이언트와 서버가 함께 읽는다
 ├── Tools/                  생성기 소스와 저장소 전체를 보는 검사 스크립트
 └── docs/                   문서
@@ -90,16 +91,17 @@ P1/Source/
 ### 3.2 도메인 폴더
 
 **`Game/`이 게임 도메인과 배선을 가른다.** 모듈 루트 바로 아래의 `Core/`, `Network/`, `Sync/`,
-`Online/`, `UI/`, `Utils/`, `Tests/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
+`Auth/`, `Lobby/`, `UI/`, `Utils/`, `Tests/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
 — 서버도 같은 층으로 가른다. 분류명이 양쪽에서 같으므로 `P1/Source/P1/Game/Inventory/`를 알면
 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
 | 폴더 | 담는 것 |
 | --- | --- |
-| `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
+| `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩, 로그인부터 게임까지의 단계와 레벨 전환을 갖는 접속 흐름 서브시스템(`UP1EntryFlowSubsystem`) |
 | `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치. `Server/ServerCore/Network/`와 대칭을 유지한다. 쓰이지 않는 함수도 지우지 않는다 |
 | `Sync/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸, 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
-| `Online/` | 로그인과 캐릭터 목록. 요청 하나에 응답 하나로 끝나는 비실시간 통신만 담는다 |
+| `Auth/` | 인증 서버와의 HTTP(회원가입, 로그인)를 맡는 인증 클라이언트(`UP1AuthClient`). 게임 서버를 모른다 |
+| `Lobby/` | 로비 접속, 캐릭터 목록과 슬롯 수의 사본, 캐릭터 생성·삭제·선택 요청을 맡는 로비 서브시스템(`UP1LobbySubsystem`)과 로비 패킷의 핸들러. 서버의 `Lobby/` 모듈과 이름을 맞춘다 |
 | `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
 | `Game/Entities/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
@@ -108,8 +110,8 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
-| `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
-| `Game/Interaction/` | 플레이어가 다가가 쓰는 월드 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
+| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽 |
+| `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
 
@@ -127,9 +129,9 @@ P1/Source/
 | 하위 폴더 | 담는 것 | 판정 조건 |
 | --- | --- | --- |
 | `Common/` | 다른 위젯이 품는 조각 | 다른 위젯이 품는가 |
-| `Frontend/` | 월드 입장 전 화면 | 월드에 들어가기 전에 뜨는가 |
+| `Frontend/` | 게임 입장 전 화면 | 게임에 입장하기 전에 뜨는가 |
 | `Screens/` | 플레이 중 띄우는 화면 | 화면 서브시스템(`UP1ScreenSubsystem`)이 만들어 띄우는가 |
-| `WorldSpace/` | 월드 공간에 붙는 위젯 | 화면이 아니라 월드 좌표를 따라가는가 |
+| `WorldSpace/` | 레벨 공간에 붙는 위젯 | 화면이 아니라 레벨 안의 좌표를 따라가는가 |
 
 `Common/`의 조건은 품는 곳의 수를 보지 않는다. 조각을 품는 위젯이 하나뿐이면 1절의 원칙대로
 그 위젯 가까이에 둔다. `P1ItemTooltipWidget`을 품는 것은 `P1SlotWidget` 하나뿐인데, 그 슬롯
@@ -165,7 +167,8 @@ P1/Source/
 | 폴더 | 부를 수 있는 곳 |
 | --- | --- |
 | `Core/`, `UI/` (배선) | 서로, 그리고 아래의 모든 폴더 |
-| `Online/` | `Network/`, `Game/Progress`, `Utils/` |
+| `Auth/` | `Network/`의 설정(`P1NetworkSettings.h`), `Utils/` |
+| `Lobby/` | `Network/`의 송신 창구와 생성된 핸들러 헤더, 세션(`PacketSession.h`), `Game/Progress`(받은 입장 응답을 넘기는 패킷 핸들러), `Utils/` |
 | `Network/` | `Sync/`, `Game/Progress`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
@@ -178,7 +181,7 @@ P1/Source/
 
 이 표는 #138이 클라이언트의 `#include`를 전수 대조한 결과에 맞춘 것이다.
 
-**생성된 프로토콜 자료형(`Enum.pb.h`, `Struct.pb.h`, `Protocol.pb.h`)은 어디서나 부른다.** 생성기가
+**생성된 프로토콜 자료형(스키마 파일마다 생기는 `*.pb.h`)은 어디서나 부른다.** 생성기가
 `Network/`에 복사해 둘 뿐 `Network/`의 코드가 아니다. 요청을 만드는 쪽도 응답을 받는 쪽도 이 자료형을 쓴다.
 
 **`Sync/`와 `Game/` 아래가 `Network/`에서 부르는 것은 송신 창구 `Network/P1PacketSender.h` 하나뿐이다.**
@@ -217,9 +220,19 @@ P1/Source/
 — `Utils/Types.h`가 `Data/`와 `Entities/`를 부르던 두 줄을 #73이 지웠다. 그 두 헤더가 필요한
 자리는 각자 직접 부른다.
 
-**`Game/` 아래는 `Online/`을 부르지 않는다.** 로그인과 캐릭터 목록에 쓰는 자료형은 `Online/`이
-소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가 이것이다. `Online/`은 입장에
-성공하면 내 플레이어 데이터를 채우려고 `Game/Progress`를 부른다.
+**`Game/` 아래는 `Auth/`와 `Lobby/`를 부르지 않는다.** 로비에서 쓰는 자료형은 `Lobby/`가 소유한다. 캐릭터 목록의
+항목 `FP1LobbyCharacter`와 직업 `EP1CharacterClass`가 `Game/Data/`가 아니라 `Lobby/`에 있는 이유가 이것이다.
+`Lobby/`의 입장 응답 핸들러는 입장한 캐릭터의 정보를 넘기려고 `Game/Progress`를 부른다.
+
+**인증 클라이언트, 로비 서브시스템, 연결 서브시스템은 서로의 함수를 부르지 않는다.** 폴더 사이의 의존이 아니라 클래스 사이의
+호출을 말한다. 로비 서브시스템은 위 표대로 송신 창구로 패킷을 보낼 뿐 연결 서브시스템의 함수를 부르지 않는다. 로그인 성공, 연결 성공과 실패, 로비 입장,
+게임 입장 성공은 각자 델리게이트로 알리고, 접속 흐름 서브시스템(`Core/`)이 구독해 다음 단계로 잇는다. 단계 사이의 순서는
+접속 흐름 서브시스템만 안다.
+— 한 단계를 바꿀 때 그 단계의 클래스와 접속 흐름 서브시스템만 고친다.
+
+**로그인 화면 위젯은 protobuf와 송신 창구를 모른다.** 위젯은 인증 클라이언트와 로비 서브시스템의 함수를 부르고,
+로비가 알리는 `FP1LobbyCharacter`와 델리게이트로 화면을 그린다. 그래서 `Auth/`와 `Lobby/`의 헤더는 protobuf 헤더를
+부르지 않고 쓰는 타입을 전방 선언한다.
 
 **`Sync/`는 판정하지 않고 표현만 맞춘다.** 예측을 구현하더라도 그 결과는 화면 표현일 뿐이고,
 서버 응답이 오면 서버 값으로 덮어쓴다.
@@ -262,15 +275,15 @@ P1/Content/
 │   │       └── Weapons/    검별 폴더(`Sword0R`~`Sword50R`)를 둔다
 │   ├── UI/
 │   │   ├── Common/         여러 화면이 공유하는 부품과 텍스처
-│   │   ├── Frontend/       월드 입장 전 화면
+│   │   ├── Frontend/       게임 입장 전 화면
 │   │   ├── Screens/        플레이 중 여는 화면
 │   │   │   └── HUD/        상시 표시 요소와 그 전용 파츠
-│   │   ├── WorldSpace/     월드에 붙는 위젯
+│   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
 │   │   └── DataTables/
 │   ├── Maps/
-│   └── World/              레벨에 배치하는 월드 액터
+│   └── World/              레벨에 배치하는 액터
 ├── External/               참고용 외부 팩. 게임이 참조하지 않는다
 ├── __ExternalActors__/     에디터 자동 생성물
 └── Developers/             개인 실험 공간
@@ -491,21 +504,21 @@ Server/
 │   └── Core/               타입, 매크로, TLS, 전역 객체, pch
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점
-│   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정
-│   ├── Network/            세션, 세션 관리자, 패킷 핸들러, 아이템 요청 처리(퀵슬롯 등록 포함)와 아이템·퀵슬롯 패킷 변환, 저장 게이트, 진행 조율자, 게임 입장, 인증 티켓 값 해석
+│   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정, 로비와 게임 기획 데이터의 기동 대조
+│   ├── Network/            세션과 세션 단계별 허용표, 세션 관리자, 게임 패킷 핸들러, 아이템 요청 처리(퀵슬롯 등록 포함)와 아이템·퀵슬롯 패킷 변환, 저장 게이트, 진행 조율자, 게임 입장(게임 입장 창구), 인증 티켓 값 해석
+│   ├── Lobby/              로비 모듈. 로비 패킷 핸들러, 캐릭터 생성 규칙, 계정 행과 캐릭터 행의 DAO, 로비 기획 데이터(Data/)
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 진행 사본과 저장 사본
-│   │   ├── Characters/     캐릭터 생성, 삭제, 슬롯 규칙
 │   │   ├── Items/          아이템과 칸의 서버 타입, 범용 칸 배열(ItemContainer), 인벤토리 구역 대응 표
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   ├── QuickSlots/     퀵슬롯의 서버 타입과 퀵슬롯 컴포넌트
 │   │   ├── AI/             몬스터 AI 컴포넌트
-│   │   ├── Progress/       누적 경험치와 레벨 판정
+│   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
-│   ├── DB/                 데이터별 DAO(계정, 캐릭터 목록, 캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 스레드 루프
+│   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
 │   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
@@ -527,7 +540,8 @@ Server/
 
 **`Game/`이 게임 도메인과 배선을 가른다.** `GameServer/` 바로 아래의 `Core/`, `Network/`, `Protocol/`,
 `DB/`, `Migrations/`, `Utils/`는 서버를 돌리는 배선이고, `Game/` 아래 열은 게임 규칙이다. 이 층을 없애면
-폴더 열여섯 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다.
+폴더 열여섯 개가 한 줄에 놓여서 어느 쪽이 규칙인지 이름만으로 갈리지 않는다. 최상위의 `Lobby/`는 배선도 게임 규칙도
+아닌 세로 모듈이다(아래 `Lobby/` 단락).
 — 클라이언트도 같은 층으로 가른다. 분류명과 경로 모양이 양쪽에서 같으므로
 `P1/Source/P1/Game/Inventory/`를 알면 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
@@ -543,17 +557,20 @@ Server/
 맡는다. `Game/Room/`의 `RoomTransfer`도 같은 모양이다. 룸 이동과 리스폰 요청을 판정하고, 맵과 좌표로 입장할 룸을
 고른다. 퇴장과 입장, 결과 전송은 `Room`이 맡는다.
 
-`Game/Characters/`는 계정이 가진 캐릭터를 만들고 지우는 규칙과 슬롯 규칙을 담는다. 이 폴더의 코드는
-엔티티가 아니다. 월드에 서 있는 플레이어가 아니라 캐릭터 선택 화면의 캐릭터 목록을 다루므로 `Game/Entities/`에
-두지 않는다. 세션과 DB는 모르고, 검증 결과를 받아 DB에 쓰는 일은 핸들러와 `DB/`가 맡는다.
-2026년 10월 9일(#206) 기준으로 이 폴더에는 생성 검증(`CharacterCreation`)과 슬롯 기본 개수만 있다. 삭제
-규칙을 코드로 나눌 때 여기에 둔다.
+`Lobby/`는 로비가 하는 일(로비 접속, 캐릭터 목록, 생성, 삭제, 선택)을 담는 세로 모듈이다. 로비 패킷의 핸들러,
+캐릭터 생성 규칙(`CharacterCreation`), `GameDB`의 계정 행과 캐릭터 행을 다루는 DAO가 여기 있다. `Game/` 아래에 두지 않는
+이유는 `Game/`이 게임 규칙의 층인데 로비는 핸들러와 DAO까지 함께 담기 때문이다. 로비는 배선과 게임 입장 창구
+(`Network/GameEntry`)만 include하고 `Game/`을 include하지 않는다. 로비의 기획 데이터는 `Lobby/Data/`(`LobbyData`)에 있고,
+로비는 게임의 기획 데이터(`Gamedata`)를 읽지 않는다. `Gamedata`는 pch에 들어 있어 컴파일러가 막지 않으므로 리뷰가 본다.
+게임 쪽 코드는 `Lobby/`를 include하지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
+2026년 10월 23일(#287)에 `Game/Characters/`와 `DB/`에서 옮겨 왔다.
 
 `Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
 
 `Game/Progress/`는 진행의 규칙을 담는다. 2026년 10월 20일(#252) 기준으로 누적 경험치와 레벨 표로 레벨을 정하고
-보상과 사망 페널티를 판정하는 `Leveling`만 있다. 룸과 세션을 모르고, 판정 결과를 플레이어에 쓰는 일은
+보상과 사망 페널티를 판정하는 `Leveling`만 있다. 2026년 10월 23일(#288)에 새 캐릭터의 초기 진행을 정하는 `InitialProgress`가
+더해졌다. 룸과 세션을 모르고, 판정 결과를 플레이어에 쓰는 일은
 `Game/Entities/Player`가 맡는다. 클라이언트의 `Game/Progress/`는 내 플레이어의 진행을 들고 있는 서브시스템이고,
 두 폴더는 같은 도메인(진행)을 다루므로 분류명을 맞춘다.
 
@@ -589,7 +606,7 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 규칙을 강제할 수 없다. 규칙 검사와 코드 서식 도구에서 생성물 경로를 제외한다.
 
 패킷 이름의 `C_`와 `S_`는 방향 표시이고 **기능적으로 중요하다.** 생성기가 이 접두사로 핸들러
-테이블을 나눈다. 요청과 응답 쌍은 이름을 공유한다.
+테이블을 나눈다. 접두사만 기능이고, 요청과 응답이 같은 이름을 쓰는 짝은 관례다.
 
 절차와 목적지 목록은 `docs/codegen.md`에 있다.
 

@@ -57,18 +57,13 @@ protected:
     static PlayerRef CreatePlayer(int64 userId)
     {
         PlayerProgress progress;
-        progress.playerInfo.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        progress.playerInfo.set_level(1);
-        progress.playerInfo.set_room_id(ROOM_ID);
-
-        auto* stats = progress.statInfo.mutable_info();
-        for (Protocol::StatType statType : { Protocol::STAT_TYPE_EXP, Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP,
-            Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
-            (*stats)[statType] = 0;
+        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.level = 1;
 
         PlayerSpawnParams params;
         params.userId = userId;
         params.progress = &progress;
+        params.enterRoomId = ROOM_ID;
         return EntityFactory::Create<Player>(params);
     }
 

@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// 게임 입장, 맵 로드, 룸 입장, 포털 이동, 리스폰, 로비 복귀
+// @packet_id_range 300 399

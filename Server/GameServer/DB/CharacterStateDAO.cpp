@@ -2,14 +2,13 @@
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
 #include "Utils/EncodingConverter.h"
-#include "Game/Characters/CharacterCreation.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Entities/PlayerSaveData.h"
 
-bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress)
+CharacterLoadResult CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress)
 {
     const int PARAMS = 3;
-    const int COLS = 12;
+    const int COLS = 13;
 
     struct BindObject
     {
@@ -31,15 +30,16 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
             dbBind.BindCol(0, _classId);
             dbBind.BindCol(1, _name);
             dbBind.BindCol(2, _level);
-            dbBind.BindCol(3, _exp);
-            dbBind.BindCol(4, _mapId);
-            dbBind.BindCol(5, _posX);
-            dbBind.BindCol(6, _posY);
-            dbBind.BindCol(7, _posZ);
-            dbBind.BindCol(8, _direction);
-            dbBind.BindCol(9, _currentHp);
-            dbBind.BindCol(10, _currentMp);
-            dbBind.BindCol(11, _gold);
+            dbBind.BindCol(3, _hasProgress);
+            dbBind.BindCol(4, _exp);
+            dbBind.BindCol(5, _mapId);
+            dbBind.BindCol(6, _posX);
+            dbBind.BindCol(7, _posY);
+            dbBind.BindCol(8, _posZ);
+            dbBind.BindCol(9, _direction);
+            dbBind.BindCol(10, _currentHp);
+            dbBind.BindCol(11, _currentMp);
+            dbBind.BindCol(12, _gold);
         }
 
         //~ Params
@@ -49,8 +49,9 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
 
         //~ Cols
         int32 _classId = 0;
-        WCHAR _name[CharacterCreation::MAX_NAME_LENGTH + 1] = {};
+        WCHAR _name[CHARACTER_NAME_COLUMN_LENGTH + 1] = {};
         int32 _level = 0;
+        int32 _hasProgress = 0;
         int64 _exp = 0;
         int32 _mapId = 0;
         float _posX = 0.f;
@@ -64,8 +65,9 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
 
 
     // AccountId를 함께 대조한다. CharacterId는 클라이언트 값이라, 빼면 다른 계정의 캐릭터로 입장할 수 있다.
-    // 상태 행은 캐릭터를 만들 때 한 트랜잭션에서 함께 넣으므로 내부 조인한다.
-    // 골드 행이 없으면 -1을 돌려받아 DB가 어긋난 것으로 판정한다. 바인딩한 변수에는 NULL이 쓰이지 않는다.
+    // 진행 행은 첫 게임 입장이 만들므로 외부 조인하고, 행이 있는지를 따로 받는다.
+    // 바인딩한 변수에는 NULL이 쓰이지 않으므로 진행 행이 없을 때의 열은 0으로 바꿔 읽는다.
+    // 골드 행이 없으면 -1을 돌려받아 DB가 어긋난 것으로 판정한다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
         SET NOCOUNT ON;
 
@@ -79,10 +81,13 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
           AND AccountId = @account_id
           AND DeletedAt IS NULL;
 
-        SELECT c.ClassId, c.Name, c.Level, s.Exp, s.MapId, s.PosX, s.PosY, s.PosZ, s.Direction, s.CurrentHp, s.CurrentMp,
+        SELECT c.ClassId, c.Name, c.Level,
+               CASE WHEN s.CharacterId IS NULL THEN 0 ELSE 1 END,
+               ISNULL(s.Exp, 0), ISNULL(s.MapId, 0), ISNULL(s.PosX, 0), ISNULL(s.PosY, 0), ISNULL(s.PosZ, 0),
+               ISNULL(s.Direction, 0), ISNULL(s.CurrentHp, 0), ISNULL(s.CurrentMp, 0),
                ISNULL(g.Amount, -1)
         FROM dbo.[Character] AS c
-        INNER JOIN dbo.CharacterState AS s
+        LEFT JOIN dbo.CharacterState AS s
             ON s.CharacterId = c.CharacterId
         LEFT JOIN dbo.CharacterCurrency AS g
             ON g.CharacterId = c.CharacterId
@@ -99,33 +104,127 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
 
     // 행이 없으면 이 계정의 캐릭터가 아니다. 바인딩 버퍼는 읽은 값이 아니므로 채우지 않는다.
     if (conn.Fetch() == false)
-        return false;
+        return CharacterLoadResult::NOT_FOUND;
+
+    progress.characterId = characterId;
+    progress.classId = bindObject._classId;
+    progress.name = EncodingConverter::WCharToString(bindObject._name);
+    progress.level = bindObject._level;
+
+    if (bindObject._hasProgress == 0)
+        return CharacterLoadResult::NO_PROGRESS;
 
     if (bindObject._gold < 0)
         throw DBError(__func__, format("캐릭터 {}에 골드 재화(번호 {}) 행이 없다", characterId, bindObject._goldCurrencyId));
 
-    Protocol::PlayerInfo* playerInfo = &progress.playerInfo;
-    playerInfo->set_character_id(characterId);
-    playerInfo->set_class_((Protocol::CharacterClass)bindObject._classId);
-    playerInfo->set_name(EncodingConverter::WCharToString(bindObject._name));
-    playerInfo->set_level(bindObject._level);
-    playerInfo->set_map_id(bindObject._mapId);
-
-    Protocol::Vector* pos = progress.posInfo.mutable_pos();
-    pos->set_x(bindObject._posX);
-    pos->set_y(bindObject._posY);
-    pos->set_z(bindObject._posZ);
-    progress.posInfo.set_yaw(bindObject._direction);
-
-    // 경험치는 누적값이다. 레벨 안의 값과 요구치는 입장할 때 레벨 표로 계산한다.
-    auto* statMappings = progress.statInfo.mutable_info();
-    (*statMappings)[Protocol::STAT_TYPE_EXP] = bindObject._exp;
-    (*statMappings)[Protocol::STAT_TYPE_HP] = bindObject._currentHp;
-    (*statMappings)[Protocol::STAT_TYPE_MP] = bindObject._currentMp;
-
+    progress.mapId = bindObject._mapId;
+    progress.pos = vector3D(bindObject._posX, bindObject._posY, bindObject._posZ);
+    progress.yaw = bindObject._direction;
+    progress.totalExp = bindObject._exp;
+    progress.hp = bindObject._currentHp;
+    progress.mp = bindObject._currentMp;
     progress.gold = bindObject._gold;
 
-    return true;
+    return CharacterLoadResult::LOADED;
+}
+
+void CharacterStateDAO::CreateInitialProgress(DBConnection& conn, const PlayerProgress& progress)
+{
+    // 상태 행.
+    {
+        const int PARAMS = 9;
+        const int COLS = 0;
+
+        struct BindObject
+        {
+            BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerProgress& progress)
+                : _characterId(progress.characterId), _exp(progress.totalExp), _mapId(progress.mapId),
+                  _posX(progress.pos.x), _posY(progress.pos.y), _posZ(progress.pos.z), _direction(progress.yaw),
+                  _currentHp(progress.hp), _currentMp(progress.mp)
+            {
+                BindParam(dbBind);
+            }
+
+            void BindParam(DBBind<PARAMS, COLS>& dbBind)
+            {
+                dbBind.BindParam(0, _characterId);
+                dbBind.BindParam(1, _exp);
+                dbBind.BindParam(2, _mapId);
+                dbBind.BindParam(3, _posX);
+                dbBind.BindParam(4, _posY);
+                dbBind.BindParam(5, _posZ);
+                dbBind.BindParam(6, _direction);
+                dbBind.BindParam(7, _currentHp);
+                dbBind.BindParam(8, _currentMp);
+            }
+
+            //~ Params
+            int64 _characterId;
+            int64 _exp;
+            int32 _mapId;
+            float _posX;
+            float _posY;
+            float _posZ;
+            float _direction;
+            int32 _currentHp;
+            int32 _currentMp;
+        };
+
+
+        // 이미 진행 행이 있으면 기본 키 위반으로 실패한다. 덮어쓰면 그 캐릭터의 진행이 처음으로 돌아간다.
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+            INSERT INTO dbo.CharacterState (CharacterId, Exp, MapId, PosX, PosY, PosZ, Direction, CurrentHp, CurrentMp)
+            VALUES ((?), (?), (?), (?), (?), (?), (?), (?), (?))
+        )SQL");
+
+        BindObject bindObject(dbBind, progress);
+
+        if (dbBind.Execute() == false)
+            throw DBError(__func__, "상태 행 쿼리 실행 실패");
+
+        if (conn.GetRowCount() != 1)
+            throw DBError(__func__, "상태 행을 넣지 못했다");
+    }
+
+    // 골드 행.
+    {
+        const int PARAMS = 3;
+        const int COLS = 0;
+
+        struct BindObject
+        {
+            BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId, int64 gold) : _characterId(characterId), _gold(gold)
+            {
+                BindParam(dbBind);
+            }
+
+            void BindParam(DBBind<PARAMS, COLS>& dbBind)
+            {
+                dbBind.BindParam(0, _characterId);
+                dbBind.BindParam(1, _goldCurrencyId);
+                dbBind.BindParam(2, _gold);
+            }
+
+            //~ Params
+            int64 _characterId;
+            int64 _gold;
+            int32 _goldCurrencyId = Gamedata::GetGoldCurrencyId();
+        };
+
+
+        DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+            INSERT INTO dbo.CharacterCurrency (CharacterId, CurrencyId, Amount)
+            VALUES ((?), (?), (?))
+        )SQL");
+
+        BindObject bindObject(dbBind, progress.characterId, progress.gold);
+
+        if (dbBind.Execute() == false)
+            throw DBError(__func__, "골드 행 쿼리 실행 실패");
+
+        if (conn.GetRowCount() != 1)
+            throw DBError(__func__, "골드 행을 넣지 못했다");
+    }
 }
 
 void CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& data)
@@ -159,7 +258,7 @@ void CharacterStateDAO::SaveCharacter(DBConnection& conn, const PlayerSaveData& 
         WHERE CharacterId = (?)
     )SQL");
 
-    BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.playerInfo.level());
+    BindObject bindObject(dbBind, data.progress.characterId, data.progress.level);
 
     if (dbBind.Execute() == false)
         throw DBError(__func__, "쿼리 실행 실패");
@@ -176,23 +275,10 @@ void CharacterStateDAO::SaveState(DBConnection& conn, const PlayerSaveData& data
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerSaveData& data)
+        BindObject(DBBind<PARAMS, COLS>& dbBind, const PlayerProgress& progress)
+            : _exp(progress.totalExp), _mapId(progress.mapId), _posX(progress.pos.x), _posY(progress.pos.y), _posZ(progress.pos.z),
+              _direction(progress.yaw), _currentHp(progress.hp), _currentMp(progress.mp), _characterId(progress.characterId)
         {
-            const Protocol::PlayerInfo& playerInfo = data.progress.playerInfo;
-            const Protocol::PosInfo& posInfo = data.progress.posInfo;
-            const auto& statMappings = data.progress.statInfo.info();
-
-            // 저장 사본의 경험치는 누적값이다(Player::MakeSaveData).
-            _exp = statMappings.at(Protocol::STAT_TYPE_EXP);
-            _mapId = playerInfo.map_id();
-            _posX = posInfo.pos().x();
-            _posY = posInfo.pos().y();
-            _posZ = posInfo.pos().z();
-            _direction = posInfo.yaw();
-            _currentHp = static_cast<int32>(statMappings.at(Protocol::STAT_TYPE_HP));
-            _currentMp = static_cast<int32>(statMappings.at(Protocol::STAT_TYPE_MP));
-            _characterId = playerInfo.character_id();
-
             BindParam(dbBind);
         }
 
@@ -230,7 +316,7 @@ void CharacterStateDAO::SaveState(DBConnection& conn, const PlayerSaveData& data
         WHERE CharacterId = (?)
     )SQL");
 
-    BindObject bindObject(dbBind, data);
+    BindObject bindObject(dbBind, data.progress);
 
     if (dbBind.Execute() == false)
         throw DBError(__func__, "쿼리 실행 실패");
@@ -272,7 +358,7 @@ void CharacterStateDAO::SaveGold(DBConnection& conn, const PlayerSaveData& data)
           AND CurrencyId = (?)
     )SQL");
 
-    BindObject bindObject(dbBind, data.progress.playerInfo.character_id(), data.progress.gold);
+    BindObject bindObject(dbBind, data.progress.characterId, data.progress.gold);
 
     if (dbBind.Execute() == false)
         throw DBError(__func__, "쿼리 실행 실패");

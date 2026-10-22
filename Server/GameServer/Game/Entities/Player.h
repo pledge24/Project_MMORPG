@@ -84,6 +84,8 @@ struct PlayerSpawnParams : public Creature::SpawnParams
     int64 userId = 0;
     /** 불러온 진행(nullptr 가능). Init 안에서만 읽으므로 Init이 끝날 때까지만 살아 있으면 된다. */
     const PlayerProgress* progress = nullptr;
+    /** 불러온 진행으로 처음 들어갈 룸. 진행의 맵과 좌표로 고른 룸이고, progress가 있을 때만 읽는다. */
+    int32 enterRoomId = -1;
 };
 
 /**
@@ -125,10 +127,10 @@ public:
 
 private:
     /**
-     * 불러온 진행을 플레이어에 쓴다. 스탯은 검증하지 않으므로 뒤이어 OnLoaded를 부른다.
+     * 불러온 진행을 플레이어에 쓰고 enterRoomId 룸으로 들어갈 준비를 한다. 스탯은 검증하지 않으므로 뒤이어 OnLoaded를 부른다.
      * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false.
      */
-    bool ApplyProgress(const PlayerProgress& progress);
+    bool ApplyProgress(const PlayerProgress& progress, int32 enterRoomId);
     /** 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 사유를 로그에 남기고 false. */
     bool ValidateLoadedStat();
 
@@ -183,8 +185,14 @@ public:
     uint64 GetLastPositionTick() const { return _lastPositionTick; }
     /** 이동 중인 룸이 없으면 -1. */
     int32 GetEnteringRoomId() { return _enteringRoomId; }
+    /** 지금 맵 또는 들어가는 맵. 맵 표의 mapId다. */
+    int32 GetMapId() const { return _mapId; }
+    /** 마지막으로 들어간 룸. 룸에 들어간 적이 없으면 -1. */
+    int32 GetRoomId() const { return _roomId; }
 
 private:
+    int32 _mapId = 0;
+    int32 _roomId = -1;
     int32 _enteringRoomId = -1;
     /** 이동 판정은 이 시각부터 흐른 시간으로 허용 거리를 정한다. 소속 룸 큐만 읽고 쓴다. */
     uint64 _lastPositionTick = 0;

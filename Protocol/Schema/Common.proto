@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// 여러 도메인이 함께 쓰는 자료형과, 세션 단계와 무관한 패킷
+// @packet_id_range 100 199

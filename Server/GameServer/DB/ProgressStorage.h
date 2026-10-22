@@ -14,8 +14,8 @@ class ProgressStorage
 {
 public:
     /**
-     * userId 계정의 캐릭터 characterId의 진행을 progress에 채운다. 예외를 던지지 않는다.
-     * 그 계정의 캐릭터가 아니거나 실패하면 false이고, 그때 progress는 일부만 채워져 있으므로 쓰지 않는다.
+     * userId 계정의 캐릭터 characterId의 진행을 progress에 채운다. 진행 행이 없으면 초기 진행 행을 만들고 불러온다.
+     * 예외를 던지지 않는다. 그 계정의 캐릭터가 아니거나 실패하면 false이고, 그때 progress는 쓰지 않는다.
      */
     static bool Load(DBConnection& conn, int64 userId, int64 characterId, OUT PlayerProgress& progress);
 
