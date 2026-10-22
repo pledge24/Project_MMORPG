@@ -1,8 +1,8 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "GameDBTestFixture.h"
-#include "DB/AccountDAO.h"
-#include "DB/CharacterListDAO.h"
+#include "Lobby/AccountDAO.h"
+#include "Lobby/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 
 /*--------------------------------------------------------------
@@ -249,4 +249,21 @@ TEST_F(DISABLED_GameDBCharacterListTest, CreateWithoutAccountRowIsDBError)
 
     EXPECT_THROW(Create(ACCOUNT_ID, 9'000'000'112'001, "DB계정없음"), DBError)
         << "슬롯 수의 원천인 계정 행이 없으면 거절이 아니라 서버 오류다";
+}
+
+TEST_F(DISABLED_GameDBCharacterListTest, OwnershipIsOnlyForAccountsActiveCharacter)
+{
+    constexpr int64 OWNER_ID = 9'000'000'000'113;
+    constexpr int64 OTHER_ID = 9'000'000'000'114;
+    constexpr int64 ACTIVE_ID = 9'000'000'113'001;
+    constexpr int64 DELETED_ID = 9'000'000'113'002;
+    CleanupAccount(OWNER_ID);
+    AccountDAO::RecordLogin(Connection(), OWNER_ID);
+    ASSERT_FALSE(Create(OWNER_ID, ACTIVE_ID, "DB소유_남김").rejection.has_value());
+    ASSERT_FALSE(Create(OWNER_ID, DELETED_ID, "DB소유_지움").rejection.has_value());
+    ASSERT_TRUE(CharacterListDAO::DeleteCharacter(Connection(), OWNER_ID, DELETED_ID));
+
+    EXPECT_TRUE(CharacterListDAO::OwnsCharacter(Connection(), OWNER_ID, ACTIVE_ID));
+    EXPECT_FALSE(CharacterListDAO::OwnsCharacter(Connection(), OTHER_ID, ACTIVE_ID)) << "다른 계정의 캐릭터로는 입장하지 못한다";
+    EXPECT_FALSE(CharacterListDAO::OwnsCharacter(Connection(), OWNER_ID, DELETED_ID)) << "삭제한 캐릭터로는 입장하지 못한다";
 }

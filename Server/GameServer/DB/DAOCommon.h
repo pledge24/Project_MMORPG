@@ -39,6 +39,9 @@ private:
     DBConnection* _connection;
 };
 
+/** Character.Name 열(NVARCHAR(32))의 글자 수(UTF-16 기준). 이름을 읽는 DAO가 버퍼 크기로 쓴다. */
+constexpr int32 CHARACTER_NAME_COLUMN_LENGTH = 32;
+
 /** 배열 파라미터 한 번에 묶을 수 있는 행 수. */
 constexpr int32 MAX_PARAM_ROWS = DBBind<1, 0>::MAX_PARAM_ROWS;
 

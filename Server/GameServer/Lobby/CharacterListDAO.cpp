@@ -1,8 +1,11 @@
 #include "Core/pch.h"
-#include "DB/CharacterListDAO.h"
+#include "Lobby/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "Utils/EncodingConverter.h"
-#include "Game/Characters/CharacterCreation.h"
+#include "Lobby/CharacterCreation.h"
+
+// 이름을 읽는 버퍼는 열 크기로 잡는다. 생성 규칙이 열보다 긴 이름을 받으면 INSERT가 이름을 자르거나 실패한다.
+static_assert(CharacterCreation::MAX_NAME_LENGTH == CHARACTER_NAME_COLUMN_LENGTH, "캐릭터 이름 길이 제한과 Character.Name 열 크기가 다르다");
 
 void CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 accountId, OUT vector<Protocol::CharacterOverview>& characters)
 {
@@ -36,7 +39,7 @@ void CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 accountId, OU
         //~ Cols
         int64 _characterId = 0;
         int32 _classId = 0;
-        WCHAR _name[CharacterCreation::MAX_NAME_LENGTH + 1] = {};
+        WCHAR _name[CHARACTER_NAME_COLUMN_LENGTH + 1] = {};
         int32 _level = 0;
     };
 
@@ -287,4 +290,58 @@ bool CharacterListDAO::DeleteCharacter(DBConnection& conn, int64 accountId, int6
 
     // 갱신한 행이 없으면 이 계정의 캐릭터가 아니거나 이미 지운 캐릭터다.
     return conn.GetRowCount() > 0;
+}
+
+bool CharacterListDAO::OwnsCharacter(DBConnection& conn, int64 accountId, int64 characterId)
+{
+    const int PARAMS = 2;
+    const int COLS = 1;
+
+    struct BindObject
+    {
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 characterId, int64 accountId)
+            : _characterId(characterId), _accountId(accountId)
+        {
+            BindParam(dbBind);
+            BindCol(dbBind);
+        }
+
+        void BindParam(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindParam(0, _characterId);
+            dbBind.BindParam(1, _accountId);
+        }
+
+        void BindCol(DBBind<PARAMS, COLS>& dbBind)
+        {
+            dbBind.BindCol(0, _count);
+        }
+
+        //~ Params
+        int64 _characterId;
+        int64 _accountId;
+
+        //~ Cols
+        int32 _count = 0;
+    };
+
+
+    // AccountId를 함께 대조한다. CharacterId는 클라이언트 값이라, 빼면 다른 계정의 캐릭터로 입장할 수 있다.
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        SELECT COUNT(*)
+        FROM dbo.[Character]
+        WHERE CharacterId = (?)
+          AND AccountId = (?)
+          AND DeletedAt IS NULL
+    )SQL");
+
+    BindObject bindObject(dbBind, characterId, accountId);
+
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
+
+    if (conn.Fetch() == false)
+        throw DBError(__func__, "결과 행이 없다");
+
+    return bindObject._count > 0;
 }

@@ -36,7 +36,7 @@ public:
      */
     void OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer);
     /**
-     * 입장 요청에서 IOCP 스레드가 부른다. 이 계정의 저장이 끝난 뒤 DB 잡 안에서 load.run을 부른다.
+     * 게임 입장 창구가 부른다. 어느 스레드에서 불러도 된다. 이 계정의 저장이 끝난 뒤 DB 잡 안에서 load.run을 부른다.
      * PARKED_LOAD_TIMEOUT_MS 안에 저장이 끝나지 않거나 이미 기다리는 입장이 있으면 load.reject를 부른다.
      */
     void RequestEnter(int64 userId, SaveGate::ParkedLoad load);
