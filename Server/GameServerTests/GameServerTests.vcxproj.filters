@@ -42,6 +42,9 @@
     <Filter Include="GameServer\Lobby">
       <UniqueIdentifier>{3ba1941a-9c72-49eb-b8ee-fc9baea423af}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Lobby\Data">
+      <UniqueIdentifier>{a9266c6d-9833-48bd-8c2b-f695963b5167}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Progress">
       <UniqueIdentifier>{bcccc72c-a1db-4fdf-8451-c7738e31863f}</UniqueIdentifier>
     </Filter>
@@ -105,6 +108,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
+    <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -202,6 +206,15 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp">
       <Filter>GameServer\Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp">
+      <Filter>GameServer\Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp">
+      <Filter>GameServer\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Lobby\Data\LobbyData.cpp">
+      <Filter>GameServer\Lobby\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp">
       <Filter>GameServer\Game\Entities</Filter>

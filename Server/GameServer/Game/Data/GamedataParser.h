@@ -9,7 +9,7 @@ namespace GamedataFile
     constexpr string_view MAPS = "S_Map.json";
     constexpr string_view MONSTERS = "S_Monster.json";
     constexpr string_view CURRENCIES = "S_Currency.json";
-    constexpr string_view CHARACTER_CREATION = "S_Character_Creation.json";
+    constexpr string_view INITIAL_PROGRESS = "S_Initial_Progress.json";
     constexpr string_view INVENTORY_SECTIONS = "S_Inventory_Section.json";
     constexpr string_view QUICK_SLOTS = "S_Quick_Slot.json";
 }
@@ -22,7 +22,7 @@ struct GamedataDocuments
     Json maps;
     Json monsters;
     Json currencies;
-    Json characterCreation;
+    Json initialProgress;
     Json inventorySections;
     Json quickSlots;
 };

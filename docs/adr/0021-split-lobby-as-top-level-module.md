@@ -52,6 +52,9 @@ status: accepted
 - `docs/ARCHITECTURE.md`의 「DB 접근은 `DB/`의 DAO가 데이터별로 맡는다」에 「로비의 DAO는 `Lobby/`에 있다」가 더해진다
 - 기획 원본 `Original_Character_Creation.xlsx`를 로비용과 게임용으로 나누고, 변환 스크립트의 목적지가 두 폴더가 된다
 - 클라이언트에도 `Lobby/`가 생긴다. 양쪽에 있는 도메인이므로 이름을 맞춘다(ADR-0007)
+- 2026년 10월 23일 덧붙임: 생성 표를 로비 표(`Original_Lobby.xlsx` → `Lobby/Data/Json/S_Lobby.json`)와 게임의 초기 진행 표
+  (`Original_Initial_Progress.xlsx` → `Game/Data/Json/S_Initial_Progress.json`)로 나눴다. 생성할 수 있는 직업은 레벨 표의 유무가
+  아니라 로비 표가 정하고, 기동할 때의 대조는 `Core/DataCrossCheck`가 한다
 
 ## 틀렸다는 신호
 

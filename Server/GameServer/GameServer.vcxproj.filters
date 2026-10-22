@@ -59,6 +59,9 @@
     <Filter Include="Lobby">
       <UniqueIdentifier>{022156a6-1606-4fc9-bc96-85dea34299c3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lobby\Data">
+      <UniqueIdentifier>{ad2d4e47-208a-4d86-b0bf-2f82fb834c9c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Progress">
       <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
     </Filter>
@@ -151,6 +154,15 @@
     </ClCompile>
     <ClCompile Include="Game\Progress\Leveling.cpp">
       <Filter>Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Progress\InitialProgress.cpp">
+      <Filter>Game\Progress</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\DataCrossCheck.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Lobby\Data\LobbyData.cpp">
+      <Filter>Lobby\Data</Filter>
     </ClCompile>
     <ClCompile Include="Game\Entities\EntityFactory.cpp">
       <Filter>Game\Entities</Filter>
@@ -324,6 +336,15 @@
     </ClInclude>
     <ClInclude Include="Game\Progress\Leveling.h">
       <Filter>Game\Progress</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Progress\InitialProgress.h">
+      <Filter>Game\Progress</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\DataCrossCheck.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\Data\LobbyData.h">
+      <Filter>Lobby\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\EntityFactory.h">
       <Filter>Game\Entities</Filter>

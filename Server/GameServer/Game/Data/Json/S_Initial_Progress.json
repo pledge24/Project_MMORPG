@@ -7,7 +7,6 @@
             "posZ": 0
         },
         "startYaw": 0,
-        "startGold": 10000,
-        "defaultCharacterSlotCount": 4
+        "startGold": 10000
     }
 ]

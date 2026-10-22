@@ -99,7 +99,7 @@ namespace
 
             //~ Params
             int64 _characterId;
-            int32 _gearItemType = Protocol::ITEM_TYPE_GEAR;
+            int32 _gearItemType = static_cast<int32>(ItemRowType::GEAR);
         };
 
 
@@ -227,7 +227,7 @@ void ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgres
         ItemRow row;
         row.itemUid = bindObject._itemUid;
         row.templateId = bindObject._templateId;
-        row.itemType = static_cast<Protocol::ItemType>(bindObject._itemType);
+        row.itemType = static_cast<ItemRowType>(bindObject._itemType);
         row.container = static_cast<ItemRowContainer>(bindObject._container);
         row.slotIndex = bindObject._slotIndex;
         row.stackCount = bindObject._stackCount;
@@ -248,7 +248,7 @@ void ItemDAO::LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgres
 
 void ItemDAO::SaveItems(DBConnection& conn, const PlayerSaveData& data)
 {
-    const int64 characterId = data.progress.playerInfo.character_id();
+    const int64 characterId = data.progress.characterId;
     vector<ItemRow> rows;
     rows.reserve(data.progress.items.size());
     for (const PlacedItem& placed : data.progress.items)

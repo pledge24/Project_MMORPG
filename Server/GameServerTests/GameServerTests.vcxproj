@@ -198,6 +198,7 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
+    <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -279,6 +280,9 @@
     <ClCompile Include="..\GameServer\Lobby\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
+    <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp" />
+    <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\Data\LobbyData.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="..\GameServer\Utils\Utils.cpp" />
     <ClCompile Include="..\GameServer\Utils\SnowflakeIdGenerator.cpp" />

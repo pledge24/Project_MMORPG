@@ -1,6 +1,15 @@
 #pragma once
 #include "Game/Items/ItemTypes.h"
 
+/** 아이템의 종류. DB Item 테이블의 ItemType 열 값이고, 인벤토리에서는 아이템이 든 구역을 가른다. 값을 바꾸지 않는다. */
+enum class ItemRowType : uint8
+{
+    NONE = 0,
+    GEAR = 1,
+    CONSUMABLE = 2,
+    MISC = 3,
+};
+
 /** 아이템을 담는 곳. DB Item 테이블의 Container 열 값이다. 인벤토리의 구역은 ItemType 열이 가른다. */
 enum class ItemRowContainer : uint8
 {
@@ -14,7 +23,7 @@ struct ItemRow
     int64 itemUid = 0;
     int32 templateId = 0;
     /** 인벤토리에서는 아이템이 든 구역이다. */
-    Protocol::ItemType itemType = Protocol::ITEM_TYPE_NONE;
+    ItemRowType itemType = ItemRowType::NONE;
     ItemRowContainer container = ItemRowContainer::INVENTORY;
     /** 인벤토리에서는 구역 안의 칸 번호, 착용 장비에서는 장비 부위다. */
     int32 slotIndex = 0;
@@ -30,6 +39,7 @@ struct ItemRow
  *
  * DB는 아이템의 자리를 컨테이너, 아이템 종류, 칸 번호로 나타내고, 서버는 칸 주소로 나타낸다.
  * 불러오기와 저장이 이 변환 하나를 함께 쓴다. DB와 기획 데이터는 읽지 않으므로 칸 수와 아이템 표는 입장 검증이 본다.
+ * 아이템 종류와 구역의 짝은 InventorySections와 같아야 하고, 테스트가 둘을 대조한다.
  */
 namespace ItemRows
 {

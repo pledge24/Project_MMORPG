@@ -11,7 +11,7 @@ class AccountDAO
 public:
     /**
      * 인증 티켓을 소비한 계정의 행을 만들거나 마지막 로그인 시각을 갱신하고, 그 계정의 캐릭터 슬롯 수를 돌려준다.
-     * 새 행의 슬롯 수는 캐릭터 생성 표의 기본값이다.
+     * 새 행의 슬롯 수는 로비 표의 기본값이다.
      */
     static int32 RecordLogin(DBConnection& conn, int64 accountId);
 };

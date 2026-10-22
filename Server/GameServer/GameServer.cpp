@@ -2,6 +2,8 @@
 #include "ServerCore/Network/Service.h"
 #include "ServerCore/Network/IocpCore.h"
 #include "Core/Config.h"
+#include "Core/DataCrossCheck.h"
+#include "Lobby/Data/LobbyData.h"
 #include "DB/IssuedIdDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/DBWorker.h"
@@ -142,6 +144,19 @@ int main(void)
     if (Gamedata::LoadAllGamedata() == false)
     {
         GLogger->Error("기획 데이터가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
+        return 1;
+    }
+
+    if (LobbyData::LoadAll() == false)
+    {
+        GLogger->Error("로비 기획 데이터가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
+        return 1;
+    }
+
+    // 로비와 게임은 서로의 기획 데이터를 읽지 않는다. 둘이 맞아야 하는 값은 여기서 대조한다.
+    if (optional<string> error = DataCrossCheck::Check())
+    {
+        GLogger->Error("로비와 게임의 기획 데이터가 맞지 않아 서버를 종료합니다: {}", error.value());
         return 1;
     }
 

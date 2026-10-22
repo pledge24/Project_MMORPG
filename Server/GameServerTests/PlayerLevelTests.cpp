@@ -58,7 +58,7 @@ namespace
 
     int64 SavedTotalExp(const Player& player)
     {
-        return player.MakeSaveData().progress.statInfo.info().at(Protocol::STAT_TYPE_EXP);
+        return player.MakeSaveData().progress.totalExp;
     }
 }
 
@@ -80,14 +80,9 @@ protected:
     void LoadWithTotalExp(int64 totalExp)
     {
         PlayerProgress progress;
-        progress.playerInfo.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        progress.playerInfo.set_level(1);
-
-        auto* stats = progress.statInfo.mutable_info();
-        for (Protocol::StatType type : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP,
-                                         Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
-            (*stats)[type] = 0;
-        (*stats)[Protocol::STAT_TYPE_EXP] = totalExp;
+        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.level = 1;
+        progress.totalExp = totalExp;
 
         PlayerSpawnParams params;
         params.progress = &progress;

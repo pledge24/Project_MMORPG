@@ -43,7 +43,7 @@ bool Gamedata::LoadAllGamedata()
         { GamedataFile::MAPS, &documents.maps },
         { GamedataFile::MONSTERS, &documents.monsters },
         { GamedataFile::CURRENCIES, &documents.currencies },
-        { GamedataFile::CHARACTER_CREATION, &documents.characterCreation },
+        { GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
         { GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
         { GamedataFile::QUICK_SLOTS, &documents.quickSlots },
     };

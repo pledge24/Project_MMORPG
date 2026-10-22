@@ -504,9 +504,9 @@ Server/
 │   └── Core/               타입, 매크로, TLS, 전역 객체, pch
 ├── GameServer/             게임 규칙
 │   ├── GameServer.cpp      진입점
-│   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정
+│   ├── Core/               pch, 전역 타입과 매크로, 전역 객체와 그것을 만들고 지우는 서버 컨텍스트, 서버 설정, 로비와 게임 기획 데이터의 기동 대조
 │   ├── Network/            세션과 세션 단계별 허용표, 세션 관리자, 게임 패킷 핸들러, 아이템 요청 처리(퀵슬롯 등록 포함)와 아이템·퀵슬롯 패킷 변환, 저장 게이트, 진행 조율자, 게임 입장(게임 입장 창구), 인증 티켓 값 해석
-│   ├── Lobby/              로비 모듈. 로비 패킷 핸들러, 캐릭터 생성 규칙, 계정 행과 캐릭터 행의 DAO
+│   ├── Lobby/              로비 모듈. 로비 패킷 핸들러, 캐릭터 생성 규칙, 계정 행과 캐릭터 행의 DAO, 로비 기획 데이터(Data/)
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정
 │   │   ├── Combat/         피격과 처치 판정
@@ -516,7 +516,7 @@ Server/
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   ├── QuickSlots/     퀵슬롯의 서버 타입과 퀵슬롯 컴포넌트
 │   │   ├── AI/             몬스터 AI 컴포넌트
-│   │   ├── Progress/       누적 경험치와 레벨 판정
+│   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
@@ -560,15 +560,17 @@ Server/
 `Lobby/`는 로비가 하는 일(로비 접속, 캐릭터 목록, 생성, 삭제, 선택)을 담는 세로 모듈이다. 로비 패킷의 핸들러,
 캐릭터 생성 규칙(`CharacterCreation`), `GameDB`의 계정 행과 캐릭터 행을 다루는 DAO가 여기 있다. `Game/` 아래에 두지 않는
 이유는 `Game/`이 게임 규칙의 층인데 로비는 핸들러와 DAO까지 함께 담기 때문이다. 로비는 배선과 게임 입장 창구
-(`Network/GameEntry`)만 include하고 `Game/`을 include하지 않는다. 기획 데이터는 pch로 읽는데, 로비용 기획 데이터를 따로
-나누기 전까지의 예외다. 게임 쪽 코드는 `Lobby/`를 include하지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
+(`Network/GameEntry`)만 include하고 `Game/`을 include하지 않는다. 로비의 기획 데이터는 `Lobby/Data/`(`LobbyData`)에 있고,
+로비는 게임의 기획 데이터(`Gamedata`)를 읽지 않는다. `Gamedata`는 pch에 들어 있어 컴파일러가 막지 않으므로 리뷰가 본다.
+게임 쪽 코드는 `Lobby/`를 include하지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
 2026년 10월 23일(#287)에 `Game/Characters/`와 `DB/`에서 옮겨 왔다.
 
 `Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
 
 `Game/Progress/`는 진행의 규칙을 담는다. 2026년 10월 20일(#252) 기준으로 누적 경험치와 레벨 표로 레벨을 정하고
-보상과 사망 페널티를 판정하는 `Leveling`만 있다. 룸과 세션을 모르고, 판정 결과를 플레이어에 쓰는 일은
+보상과 사망 페널티를 판정하는 `Leveling`만 있다. 2026년 10월 23일(#288)에 새 캐릭터의 초기 진행을 정하는 `InitialProgress`가
+더해졌다. 룸과 세션을 모르고, 판정 결과를 플레이어에 쓰는 일은
 `Game/Entities/Player`가 맡는다. 클라이언트의 `Game/Progress/`는 내 플레이어의 진행을 들고 있는 서브시스템이고,
 두 폴더는 같은 도메인(진행)을 다루므로 분류명을 맞춘다.
 

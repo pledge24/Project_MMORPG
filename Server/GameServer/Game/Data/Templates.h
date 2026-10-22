@@ -163,8 +163,8 @@ struct CurrencyTemplate
     CurrencyType currencyType = CurrencyType::GOLD;
 };
 
-/** 캐릭터 생성 표(S_Character_Creation.json)의 유일한 행. 새 캐릭터와 새 계정이 처음 갖는 값이다. */
-struct CharacterCreationTemplate
+/** 초기 진행 표(S_Initial_Progress.json)의 유일한 행. 새 캐릭터가 첫 게임 입장에서 갖는 값이다. */
+struct InitialProgressTemplate
 {
     /** 시작 맵. 맵 표의 mapId다. */
     int32 startMapId = 0;
@@ -172,8 +172,6 @@ struct CharacterCreationTemplate
     float startYaw = 0.f;
     /** 0 이상이다. */
     int64 startGold = 0;
-    /** 1 이상 255 이하다. */
-    int32 defaultCharacterSlotCount = 0;
 };
 
 /** Gamedata에 한 번에 설치하는 기획 데이터 표 전체. */
@@ -183,7 +181,7 @@ struct GamedataTables
     unordered_map<int32, MonsterTemplate> monsters;
     /** 룸을 번호 순서로 만들도록 정렬된 맵을 쓴다. */
     map<int32, MapTemplate> maps;
-    /** 직업(Protocol::CharacterClass) → 레벨 표. 표가 없는 직업은 캐릭터를 만들 수 없다. */
+    /** 직업(Protocol::CharacterClass) → 레벨 표. 로비가 생성할 수 있는 직업은 모두 표가 있다(기동할 때 대조한다). */
     unordered_map<int32, ClassLevelTable> classLevelTables;
     /** 사망한 플레이어가 돌아가는 마을 룸. 리스폰 지점이 있는 유일한 맵이다. */
     int32 townRoomId = 0;
@@ -191,7 +189,7 @@ struct GamedataTables
     unordered_map<int32, CurrencyTemplate> currencies;
     /** 재화 종류가 GOLD인 유일한 재화. */
     int32 goldCurrencyId = 0;
-    CharacterCreationTemplate characterCreation;
+    InitialProgressTemplate initialProgress;
     /** 아이템 종류(Protocol::ItemType) → 인벤토리에서 그 종류 구역의 칸 수. NONE을 뺀 모든 종류가 있다. */
     unordered_map<int32, int32> inventorySlotCounts;
     /** 플레이어 한 명의 퀵슬롯 개수. 1 이상 256 이하다. */

@@ -105,13 +105,12 @@ namespace JsonProperty
         constexpr std::string_view CurrencyType = "currencyType";
     }
 
-    namespace CharacterCreation
+    namespace InitialProgress
     {
         constexpr std::string_view StartMapId = "startMapId";
         constexpr std::string_view StartPos = "startPos";
         constexpr std::string_view StartYaw = "startYaw";
         constexpr std::string_view StartGold = "startGold";
-        constexpr std::string_view DefaultCharacterSlotCount = "defaultCharacterSlotCount";
     }
 
     namespace InventorySection
