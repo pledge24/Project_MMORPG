@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// 공격, 피격, 사망, 보상
+// @packet_id_range 500 599

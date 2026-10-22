@@ -253,6 +253,27 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Chat.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Combat.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Common.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entity.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entry.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Item.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Lobby.pb.cc">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\EntityFactory.cpp" />
@@ -297,7 +318,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <!-- GameServer.vcxproj의 GenerateProtoPackets 타깃은 의도적으로 복제하지 않는다.
-       같은 파일에 XCOPY하는 타깃이 둘이면 병렬 빌드에서 경합한다.
-       .proto 재생성은 GameServer의 책임이고, 여기서는 커밋된 .pb.cc를 컴파일만 한다. -->
+  <!-- GameServer.vcxproj와 DummyClient.vcxproj의 GenerateProtoPackets 타깃은 여기에 두지 않는다.
+       .proto 재생성은 그 두 프로젝트가 맡고, 여기서는 커밋된 .pb.cc를 컴파일만 한다. -->
 </Project>

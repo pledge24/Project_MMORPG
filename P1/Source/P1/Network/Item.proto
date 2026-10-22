@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// 소지품, 상점, 착용, 소모품, 퀵슬롯
+// @packet_id_range 600 699

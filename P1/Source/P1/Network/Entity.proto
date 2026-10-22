@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// 엔티티의 스폰, 디스폰, 이동, 외형
+// @packet_id_range 400 499

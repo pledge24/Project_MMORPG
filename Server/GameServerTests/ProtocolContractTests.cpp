@@ -1,26 +1,40 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include <optional>
 
 /*--------------------------------------------------------------
-    프로토콜 계약 테스트 — GenPackets.bat 재실행 회귀 그물
+    프로토콜 계약 테스트 — 생성 스크립트 재실행 회귀 그물
 
-    .proto 3개는 원본이 하나(Server/Common/Protobuf/bin/)인데 생성물이
-    5개 트리로 XCOPY된다. 그래서 "생성기를 다시 돌렸더니 무언가 조용히
+    스키마 원본은 Protocol/Schema/ 한 곳인데 생성물이 서버, 클라이언트,
+    더미 클라이언트로 복사된다. 그래서 "생성기를 다시 돌렸더니 무언가 조용히
     어긋났다"가 이 프로젝트의 고유 위험이다.
 
-    잡고 싶은 것은 셋이다.
-      1) 메시지 집합·선언 순서가 나도 모르게 바뀌는 것
-      2) 패킷 ID가 겹치거나 규칙(1000부터 연속)을 벗어나는 것
-      3) 생성된 메시지가 등록되지 않거나 직렬화가 깨지는 것
+    잡고 싶은 것은 다섯이다.
+      0) 스키마 파일이 생기거나 범위가 바뀌었는데 아래 표가 모르는 것
+      1) 스키마 파일이 빌드에서 빠지거나, 파일의 패킷 집합·선언 순서가 나도 모르게 바뀌는 것
+      2) 패킷 번호가 그 파일의 범위를 벗어나거나, 범위 안에서 선언 순서를 따르지 않는 것
+      3) 두 파일의 범위나 두 패킷의 번호가 겹치는 것
+      4) 생성된 메시지가 등록되지 않거나 직렬화가 깨지는 것
 
-    1·2는 아래 PROTOCOL_MESSAGES 목록 하나로 함께 검사한다. 목록은 중복이
-    아니라 **계약 선언**이다 — 여기가 실패하면 ".proto를 바꿨으니 목록도
-    의식적으로 갱신하라"는 뜻이다.
-    3은 리플렉션으로 전수 검사하므로 메시지가 늘어도 이 파일을 고칠 필요가 없다.
+    0~3은 아래 SCHEMA_FILES 표 하나로 검사한다. 표는 중복이 아니라
+    **계약 선언**이다 — 여기가 실패하면 ".proto를 바꿨으니 표도 의식적으로
+    갱신하라"는 뜻이다. 0은 생성기가 핸들러 헤더에 적은 PACKET_SCHEMA_FILES
+    (생성기가 읽은 스키마 파일과 각 파일의 `// @packet_id_range`)와 표를 대조한다.
+    4는 리플렉션으로 전수 검사하므로 메시지가 늘어도 이 검사는 고칠 필요가 없다.
 ---------------------------------------------------------------*/
 
-// Protocol.proto의 메시지 — 선언 순서 그대로. 생성기가 이 순서대로 1000부터 ID를 매긴다.
-#define PROTOCOL_MESSAGES(X)                                                 \
+// 파일마다의 패킷 — 선언 순서 그대로. 생성기가 이 순서대로 그 파일 범위의 첫 번호부터 매긴다.
+// 도메인 파일은 계약 티켓이 옛 Protocol.proto에서 패킷을 옮겨 오며 채운다.
+#define COMMON_PACKETS(X)
+#define LOBBY_PACKETS(X)
+#define ENTRY_PACKETS(X)
+#define ENTITY_PACKETS(X)
+#define COMBAT_PACKETS(X)
+#define ITEM_PACKETS(X)
+#define CHAT_PACKETS(X)
+
+// 옛 파일. 도메인 파일로 다 옮기면 파일과 함께 지운다.
+#define LEGACY_PROTOCOL_PACKETS(X)                                           \
     X(C_PING) X(S_PONG)                                                      \
     X(C_LOGIN) X(S_LOGIN)                                                    \
     X(C_CREATE_CHARACTER) X(S_CREATE_CHARACTER)                              \
@@ -47,27 +61,53 @@
 
 namespace
 {
-    constexpr uint16 FIRST_PACKET_ID = 1000;
-
-    const char* const EXPECTED_MESSAGE_NAMES[] = {
-#define AS_STRING(name) #name,
-        PROTOCOL_MESSAGES(AS_STRING)
-#undef AS_STRING
-    };
-
-    const uint16 DECLARED_PACKET_IDS[] = {
-#define AS_PACKET_ID(name) PKT_##name,
-        PROTOCOL_MESSAGES(AS_PACKET_ID)
-#undef AS_PACKET_ID
-    };
-
-    constexpr size_t EXPECTED_MESSAGE_COUNT = sizeof(EXPECTED_MESSAGE_NAMES) / sizeof(EXPECTED_MESSAGE_NAMES[0]);
-
-    const google::protobuf::FileDescriptor* ProtocolFile()
+    struct DeclaredPacket
     {
-        // 파일명("Protocol.proto")으로 찾지 않는다 — protoc에 넘긴 경로에 따라 달라진다.
-        // 생성된 타입에서 역으로 얻으면 그런 가정이 필요 없다.
-        return Protocol::C_PING::descriptor()->file();
+        const char* name;
+        uint16 id;          // 생성된 PKT_ 값
+    };
+
+    struct PacketIdRange
+    {
+        uint16 first;
+        uint16 last;
+    };
+
+    struct SchemaFile
+    {
+        // protoc가 붙인 파일 이름. 스키마끼리의 import 경로와 같으므로 생성 스크립트가 바꿀 수 없다.
+        const char* name;
+        optional<PacketIdRange> range;      // 패킷이 없는 파일은 범위가 없다
+        vector<DeclaredPacket> packets;
+    };
+
+#define AS_DECLARED_PACKET(name) DeclaredPacket{ #name, PKT_##name },
+
+    const SchemaFile SCHEMA_FILES[] = {
+        { "Common.proto", PacketIdRange{ 100, 199 }, { COMMON_PACKETS(AS_DECLARED_PACKET) } },
+        { "Lobby.proto", PacketIdRange{ 200, 299 }, { LOBBY_PACKETS(AS_DECLARED_PACKET) } },
+        { "Entry.proto", PacketIdRange{ 300, 399 }, { ENTRY_PACKETS(AS_DECLARED_PACKET) } },
+        { "Entity.proto", PacketIdRange{ 400, 499 }, { ENTITY_PACKETS(AS_DECLARED_PACKET) } },
+        { "Combat.proto", PacketIdRange{ 500, 599 }, { COMBAT_PACKETS(AS_DECLARED_PACKET) } },
+        { "Item.proto", PacketIdRange{ 600, 699 }, { ITEM_PACKETS(AS_DECLARED_PACKET) } },
+        { "Chat.proto", PacketIdRange{ 700, 799 }, { CHAT_PACKETS(AS_DECLARED_PACKET) } },
+
+        // 옛 파일 셋. Protocol.proto의 범위는 지금의 번호를 그대로 두려고 준 임시 범위다.
+        { "Enum.proto", nullopt, {} },
+        { "Struct.proto", nullopt, {} },
+        { "Protocol.proto", PacketIdRange{ 1000, 1999 }, { LEGACY_PROTOCOL_PACKETS(AS_DECLARED_PACKET) } },
+    };
+
+#undef AS_DECLARED_PACKET
+
+    bool IsPacketName(const string& messageName)
+    {
+        return messageName.starts_with("C_") || messageName.starts_with("S_");
+    }
+
+    const google::protobuf::FileDescriptor* FindSchemaFile(const char* name)
+    {
+        return google::protobuf::DescriptorPool::generated_pool()->FindFileByName(name);
     }
 
     // 리플렉션으로 모든 필드에 기본값이 아닌 값을 채운다.
@@ -150,70 +190,152 @@ namespace
     }
 }
 
-// (1) 메시지 집합과 선언 순서가 계약대로인가.
-// 실패하면 .proto가 바뀐 것이다 — 위 PROTOCOL_MESSAGES를 의식적으로 갱신하라는 신호다.
-TEST(ProtocolContract, MessageSetMatchesDeclaredList)
+// (0) 표가 생성기가 읽은 스키마 파일을 빠짐없이 담고, 파일마다 범위가 .proto의 선언과 같은가.
+// 패킷이 없는 파일은 (1)~(3)이 범위를 쓰지 않으므로, 여기서 보지 않으면 범위가 달라도 통과한다.
+TEST(ProtocolContract, SchemaTableMatchesGenerator)
 {
-    const google::protobuf::FileDescriptor* file = ProtocolFile();
-    ASSERT_NE(file, nullptr);
+    map<string, const PacketSchemaFile*> generated;
+    for (const PacketSchemaFile& file : PACKET_SCHEMA_FILES)
+        generated.emplace(file.name, &file);
 
-    ASSERT_EQ(static_cast<size_t>(file->message_type_count()), EXPECTED_MESSAGE_COUNT)
-        << ".proto의 메시지 개수가 바뀌었다";
-
-    for (size_t i = 0; i < EXPECTED_MESSAGE_COUNT; i++)
+    set<string> declared;
+    for (const SchemaFile& schema : SCHEMA_FILES)
     {
-        EXPECT_STREQ(file->message_type(static_cast<int>(i))->name().c_str(), EXPECTED_MESSAGE_NAMES[i])
-            << i << "번째 메시지의 이름 또는 선언 순서가 바뀌었다";
+        SCOPED_TRACE(schema.name);
+        declared.insert(schema.name);
+
+        const auto it = generated.find(schema.name);
+        ASSERT_NE(it, generated.end()) << "생성기가 읽지 않은 스키마 파일이 표에 있다";
+
+        // 생성기는 범위가 없는 파일을 0~0으로 적는다.
+        const PacketSchemaFile& file = *it->second;
+        EXPECT_EQ(schema.range.has_value() ? schema.range->first : 0, file.firstPacketId) << "첫 번호가 .proto와 다르다";
+        EXPECT_EQ(schema.range.has_value() ? schema.range->last : 0, file.lastPacketId) << "끝 번호가 .proto와 다르다";
+    }
+
+    for (const auto& [name, file] : generated)
+        EXPECT_TRUE(declared.contains(name)) << name << " 이 표에 없다. 스키마 파일을 더했으면 표에도 더한다";
+}
+
+// (1) 스키마 파일이 모두 빌드에 들어 있고, 파일마다 패킷 집합과 선언 순서가 계약대로인가.
+// 실패하면 .proto가 바뀌었거나 새 .pb.cc를 프로젝트에 등록하지 않은 것이다.
+TEST(ProtocolContract, EverySchemaFileDeclaresItsPackets)
+{
+    for (const SchemaFile& schema : SCHEMA_FILES)
+    {
+        SCOPED_TRACE(schema.name);
+
+        const google::protobuf::FileDescriptor* file = FindSchemaFile(schema.name);
+        ASSERT_NE(file, nullptr) << "스키마 파일이 빌드에 없다. 생성된 .pb.cc를 프로젝트에 등록했는지 본다";
+
+        vector<string> actualPackets;
+        for (int i = 0; i < file->message_type_count(); i++)
+        {
+            const string& messageName = file->message_type(i)->name();
+            if (IsPacketName(messageName))
+                actualPackets.push_back(messageName);
+        }
+
+        ASSERT_EQ(actualPackets.size(), schema.packets.size()) << "파일의 패킷 개수가 바뀌었다";
+        for (size_t i = 0; i < actualPackets.size(); i++)
+        {
+            EXPECT_EQ(actualPackets[i], schema.packets[i].name)
+                << i << "번째 패킷의 이름 또는 선언 순서가 바뀌었다";
+        }
+
+        EXPECT_TRUE(schema.packets.empty() || schema.range.has_value())
+            << "패킷이 있는 파일에 번호 범위가 없다";
     }
 }
 
-// (2) 패킷 ID가 1000부터 선언 순서대로 겹치지 않고 이어지는가.
-// 생성기가 ID를 붙이는 규칙이 이것이고, 어긋나면 클라·서버가 서로 다른 패킷을 읽는다.
-TEST(ProtocolContract, PacketIdsAreContiguousAndUnique)
+// (2) 패킷 번호가 그 파일 범위의 첫 번호부터 선언 순서대로 이어지고, 범위를 넘지 않는가.
+// 생성기가 번호를 붙이는 규칙이 이것이고, 어긋나면 클라·서버가 서로 다른 패킷을 읽는다.
+TEST(ProtocolContract, PacketIdsFollowDeclarationOrderWithinFileRange)
 {
-    const size_t count = sizeof(DECLARED_PACKET_IDS) / sizeof(DECLARED_PACKET_IDS[0]);
-    ASSERT_EQ(count, EXPECTED_MESSAGE_COUNT);
-
-    set<uint16> seen;
-    for (size_t i = 0; i < count; i++)
+    for (const SchemaFile& schema : SCHEMA_FILES)
     {
-        EXPECT_EQ(DECLARED_PACKET_IDS[i], FIRST_PACKET_ID + static_cast<uint16>(i))
-            << EXPECTED_MESSAGE_NAMES[i] << " 의 패킷 ID가 선언 순서와 어긋난다";
-        EXPECT_TRUE(seen.insert(DECLARED_PACKET_IDS[i]).second)
-            << EXPECTED_MESSAGE_NAMES[i] << " 의 패킷 ID가 다른 패킷과 겹친다";
+        SCOPED_TRACE(schema.name);
+        if (schema.packets.empty())
+            continue;
+        ASSERT_TRUE(schema.range.has_value());
+
+        for (size_t i = 0; i < schema.packets.size(); i++)
+        {
+            const DeclaredPacket& packet = schema.packets[i];
+            EXPECT_EQ(packet.id, schema.range->first + i)
+                << packet.name << " 의 패킷 번호가 파일 안의 선언 순서와 어긋난다";
+            EXPECT_LE(packet.id, schema.range->last)
+                << packet.name << " 의 패킷 번호가 파일의 범위를 넘는다";
+        }
     }
 }
 
-// (3) 모든 메시지가 등록돼 있고 값을 채운 채로 왕복하는가.
+// (3) 파일의 번호 범위끼리, 패킷 번호끼리 겹치지 않는가.
+// 범위가 겹치면 한 파일에 패킷을 더할 때 다른 파일의 번호와 부딪힌다.
+TEST(ProtocolContract, PacketIdRangesAndIdsDoNotOverlap)
+{
+    vector<pair<const char*, PacketIdRange>> ranges;
+    for (const SchemaFile& schema : SCHEMA_FILES)
+    {
+        if (schema.range.has_value() == false)
+            continue;
+
+        // 핸들러 표의 칸 수가 UINT16_MAX라 마지막 번호 65535는 쓸 수 없다.
+        EXPECT_LE(schema.range->first, schema.range->last) << schema.name;
+        EXPECT_LT(schema.range->last, UINT16_MAX) << schema.name;
+
+        for (const auto& [otherName, other] : ranges)
+        {
+            const bool overlaps = schema.range->first <= other.last && other.first <= schema.range->last;
+            EXPECT_FALSE(overlaps) << schema.name << " 의 번호 범위가 " << otherName << " 의 범위와 겹친다";
+        }
+        ranges.emplace_back(schema.name, *schema.range);
+    }
+
+    map<uint16, const char*> seen;
+    for (const SchemaFile& schema : SCHEMA_FILES)
+    {
+        for (const DeclaredPacket& packet : schema.packets)
+        {
+            const auto [it, inserted] = seen.emplace(packet.id, packet.name);
+            EXPECT_TRUE(inserted) << packet.name << " 의 패킷 번호가 " << it->second << " 와 겹친다";
+        }
+    }
+}
+
+// (4) 모든 스키마 파일의 모든 메시지가 등록돼 있고 값을 채운 채로 왕복하는가.
 // 리플렉션으로 도므로 메시지가 늘어도 이 테스트는 고치지 않는다.
 TEST(ProtocolContract, EveryMessageRoundTrips)
 {
-    const google::protobuf::FileDescriptor* file = ProtocolFile();
-    ASSERT_NE(file, nullptr);
-
-    for (int i = 0; i < file->message_type_count(); i++)
+    for (const SchemaFile& schema : SCHEMA_FILES)
     {
-        const google::protobuf::Descriptor* descriptor = file->message_type(i);
-        SCOPED_TRACE(descriptor->full_name());
+        const google::protobuf::FileDescriptor* file = FindSchemaFile(schema.name);
+        ASSERT_NE(file, nullptr) << schema.name;
 
-        const google::protobuf::Message* prototype =
-            google::protobuf::MessageFactory::generated_factory()->GetPrototype(descriptor);
-        ASSERT_NE(prototype, nullptr) << "생성된 메시지가 등록되지 않았다";
+        for (int i = 0; i < file->message_type_count(); i++)
+        {
+            const google::protobuf::Descriptor* descriptor = file->message_type(i);
+            SCOPED_TRACE(descriptor->full_name());
 
-        unique_ptr<google::protobuf::Message> original(prototype->New());
-        FillEveryField(*original, 3);
+            const google::protobuf::Message* prototype =
+                google::protobuf::MessageFactory::generated_factory()->GetPrototype(descriptor);
+            ASSERT_NE(prototype, nullptr) << "생성된 메시지가 등록되지 않았다";
 
-        // 필드가 있는 메시지인데 바이트가 0이면 채우기가 실패한 것이고, 그 왕복은
-        // 아무것도 검증하지 못한다. 필드 없는 메시지(C_PING, S_PONG, C_LEAVE_GAME,
-        // C_MAP_LOAD_COMPLETE)는 0바이트가 정상이므로 여기서 제외한다.
-        if (descriptor->field_count() > 0)
-            ASSERT_GT(original->ByteSizeLong(), 0u) << "필드를 하나도 채우지 못해 검증이 무의미하다";
+            unique_ptr<google::protobuf::Message> original(prototype->New());
+            FillEveryField(*original, 3);
 
-        string wire;
-        ASSERT_TRUE(original->SerializeToString(&wire));
+            // 필드가 있는 메시지인데 바이트가 0이면 채우기가 실패한 것이고, 그 왕복은
+            // 아무것도 검증하지 못한다. 필드 없는 메시지(C_PING, S_PONG, C_LEAVE_GAME,
+            // C_MAP_LOAD_COMPLETE)는 0바이트가 정상이므로 여기서 제외한다.
+            if (descriptor->field_count() > 0)
+                ASSERT_GT(original->ByteSizeLong(), 0u) << "필드를 하나도 채우지 못해 검증이 무의미하다";
 
-        unique_ptr<google::protobuf::Message> parsed(prototype->New());
-        ASSERT_TRUE(parsed->ParseFromString(wire)) << "직렬화한 바이트를 되읽지 못했다";
-        EXPECT_EQ(parsed->SerializeAsString(), wire);
+            string wire;
+            ASSERT_TRUE(original->SerializeToString(&wire));
+
+            unique_ptr<google::protobuf::Message> parsed(prototype->New());
+            ASSERT_TRUE(parsed->ParseFromString(wire)) << "직렬화한 바이트를 되읽지 못했다";
+            EXPECT_EQ(parsed->SerializeAsString(), wire);
+        }
     }
 }

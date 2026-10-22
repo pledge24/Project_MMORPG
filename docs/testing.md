@@ -48,7 +48,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | 스위트 | 개수 | 대상 |
 |---|---|---|
 | `PacketSerialization` | 4 | S_CHAT 가변 문자열 · S_MOVE 중첩 메시지 protobuf 왕복 · 헤더 크기 상한의 본문은 직렬화되고 상한을 넘는 본문은 만들지 않음 |
-| `ProtocolContract` | 3 | `PROTOCOL_MESSAGES(X)` 목록 대조 · 패킷 ID 연속·유일성 · 전 메시지 리플렉션 왕복 |
+| `ProtocolContract` | 5 | 테스트의 스키마 표와 생성기가 읽은 스키마 파일·범위 대조 · 스키마 파일마다 빌드에 있는지와 패킷 목록 대조 · 패킷 번호가 그 파일 범위의 첫 번호부터 선언 순서로 이어지고 범위를 넘지 않음 · 파일 범위끼리와 패킷 번호끼리 겹치지 않음 · 모든 스키마 파일의 메시지 리플렉션 왕복 |
 | `PacketDispatch` | 2 | 핸들러 테이블 밖의 id(65535)를 디스패치하지 않고 거절 · 헤더보다 짧은 입력(0~3바이트)을 디스패치하지 않고 거절 |
 | `InventoryTest` | 11 | 구역 교차오염 · 실패한 제거 뒤 칸 재사용 · 묶음 상한과 기존 묶음부터 채우기, 장비는 쌓지 않음 · 다 넣을 수 없는 추가는 아무 칸도 바꾸지 않음 · 구역이 아닌 컨테이너와 범위 밖 칸 번호 거부 · 구역 대응 표가 아이템 종류 전부를 덮음 · 구역 없는 아이템 거부 |
 | `AllSections/InventorySectionTest` | 6 | 구역마다 넣기·제거 왕복 (TEST_P 2 × Gear/Consumable/Misc) |

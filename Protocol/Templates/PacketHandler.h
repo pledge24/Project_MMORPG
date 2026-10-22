@@ -1,5 +1,7 @@
 #pragma once
-#include "Protocol.pb.h"
+{%- for schema in parser.schemas %}
+#include "{{schema.stem}}.pb.h"
+{%- endfor %}
 
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
 #include "Network/SendBuffer.h"
@@ -10,7 +12,7 @@
 using PacketHandlerFunc = std::function<bool(PacketSessionRef&, BYTE*, int32)>;
 extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
-// Auto-generated
+// 패킷 번호. 스키마 파일마다 정한 범위 안에서 선언 순서로 매긴다.
 enum : uint16
 {
 {%- for pkt in parser.total_pkt %}
@@ -18,9 +20,24 @@ enum : uint16
 {%- endfor %}
 };
 
+/** 생성기가 읽은 스키마 파일과 그 파일의 패킷 번호 범위. 프로토콜 계약 테스트가 자기 표와 대조한다. */
+struct PacketSchemaFile
+{
+	const char* name;
+	uint16 firstPacketId;	// 범위가 없는 파일은 0
+	uint16 lastPacketId;	// 범위가 없는 파일은 0
+};
+
+inline constexpr PacketSchemaFile PACKET_SCHEMA_FILES[] =
+{
+{%- for schema in parser.schemas %}
+	{ "{{schema.file_name}}", {{schema.id_range.first if schema.id_range else 0}}, {{schema.id_range.last if schema.id_range else 0}} },
+{%- endfor %}
+};
+
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 
-// Auto-generated template Handle Functions
+// 받는 패킷의 핸들러. 정의는 손으로 쓴다.
 {%- for pkt in parser.recv_pkt %}
 bool Handle_{{pkt.name}}(PacketSessionRef& session, Protocol::{{pkt.name}}& pkt);
 {%- endfor %}
@@ -33,7 +50,7 @@ public:
 		for (int32 i = 0; i < UINT16_MAX; i++)
 			GPacketHandler[i] = Handle_INVALID;
 
-		// Auto-generated
+		// 받는 패킷마다 핸들러를 등록한다.
 {%- for pkt in parser.recv_pkt %}
 		GPacketHandler[PKT_{{pkt.name}}] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::{{pkt.name}}>(Handle_{{pkt.name}}, session, buffer, len); };
 {%- endfor %}
@@ -54,7 +71,7 @@ public:
 		return GPacketHandler[header->id](session, buffer, len);
 	}
 
-	// Auto-generated
+	// 보내는 패킷의 직렬화.
 {%- for pkt in parser.send_pkt %}
 	static SendBufferRef MakeSerializedPacket(Protocol::{{pkt.name}}& pkt) { return MakeSerializedPacket(pkt, PKT_{{pkt.name}}); }
 {%- endfor %}
