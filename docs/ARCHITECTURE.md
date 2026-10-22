@@ -372,24 +372,35 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 게임 스레드의 수신 펌프가 그것을 비운다.
 
 **Architecture Invariant:** 수신 펌프는 `UP1ConnectionSubsystem`이 코어 티커로 돌린다. 게임 인스턴스 서브시스템이라 레벨과 무관하게 돈다.
-월드가 `BeginPlay` 전이거나 해체 중이면 그 틱을 건너뛰고 큐를 비우지 않는다. 그래서 레벨 전환 중에 온
-패킷은 새 월드가 준비된 뒤에 처리된다. 레벨 블루프린트에서 펌프를 부르지 않는다.
+게임 인스턴스의 `UWorld`가 `BeginPlay` 전이거나 해체 중이면 그 틱을 건너뛰고 큐를 비우지 않는다. 그래서 레벨 전환 중에 온
+패킷은 새 `UWorld`가 준비된 뒤에 처리된다. 레벨 블루프린트에서 펌프를 부르지 않는다.
 
 **Architecture Invariant:** 연결이 끊기면 수신 워커만 `PacketSession`에 끊김 표시를 세운다. 펌프는 표시를
 먼저 읽고 큐를 비운 뒤, 표시가 서 있었으면 연결을 정리하고 `UP1ConnectionSubsystem::OnConnectionLost`를
 `LEAVE_REASON_NONE`으로 알린다. 서버가 `S_LEAVE_GAME`으로 끊으면 그 핸들러가
 `UP1ConnectionSubsystem::HandleLeaveGame`을 부른다. 이 함수가 연결을 닫고 같은 델리게이트를 그 사유로 알린다.
-끊김을 알리는 델리게이트는 이 하나뿐이다. 게임 인스턴스가 이것을 구독해 사유를 문구로 바꾸고
-`UP1GameInstance::ReturnToLogin`으로 로그인 맵을 연다.
+끊김을 알리는 델리게이트는 이 하나뿐이다. 접속 흐름 서브시스템(`UP1EntryFlowSubsystem`)이 이것을 구독해 사유를 문구로 바꾸고,
+로그인 단계로 돌아가 로그인 맵을 연다. 이미 로그인 단계면 맵을 다시 열지 않고 열린 로그인 화면에 문구를 알린다.
 수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로 끊기기 직전에 온 `S_LEAVE_GAME`을 놓치지
 않는다. 사용자가 게임을 끄는 경로(서브시스템의 `Deinitialize`)는 `C_LEAVE_GAME`만 보내고 이 경로를 타지 않는다.
-— `Network/`는 끊김과 사유를 알리기만 하고, 화면 문구와 레벨 전환은 게임 인스턴스가 갖는다.
+— `Network/`는 끊김과 사유를 알리기만 하고, 화면 문구와 레벨 전환은 접속 흐름 서브시스템이 갖는다.
 
 **Architecture Invariant:** 소켓과 세션은 `UP1ConnectionSubsystem`만 소유한다. 게임 코드는
 `FP1PacketSender`로 보내고, 액터가 세션을 직접 잡지 않는다.
 `S_*` 핸들러는 그 상태를 소유한 곳을 부른다. 엔티티는 `UP1StatefulEntityManager`가, 내 플레이어의 정보와
-소지품은 `UP1MyPlayerData`가, 로그인과 캐릭터 목록은 `UP1LoginManager`가 맡는다. 액터와 위젯에는
-멀티캐스트 델리게이트로만 전파된다. 게임 인스턴스는 핸들러를 갖지 않고, 그 델리게이트를 구독해 레벨을 전환한다.
+소지품은 `UP1MyPlayerData`가, 캐릭터 목록과 로비 요청의 응답은 `UP1LobbySubsystem`이 맡는다. 액터와 위젯에는
+멀티캐스트 델리게이트로만 전파된다. 인증 서버와의 HTTP는 `UP1AuthClient`가 맡고 게임 서버를 모른다.
+
+**Architecture Invariant:** 로그인부터 게임까지의 단계(로그인, 로비, 맵 로드, 게임)는 `UP1EntryFlowSubsystem`만 갖는다.
+인증 클라이언트, 연결 서브시스템, 로비 서브시스템은 서로의 함수를 부르지 않고 자기 일의 결과를 델리게이트로 알린다.
+로비 서브시스템은 송신 창구로 패킷을 보내고, 입장 응답의 핸들러는 내 플레이어 데이터를 채운다. 두 경우 모두 다른 단계로 넘어가는 일은 하지 않는다. 접속 흐름 서브시스템이 그것을 구독해 허용된 단계 전이만 받고 다음 일을 부른다. 연결 서브시스템은 주소로 연결하고
+끊기만 하며, 로비 접속 패킷은 로비 서브시스템이 보낸다. 서브시스템 사이의 의존은 접속 흐름 서브시스템의 `Initialize`에서
+`InitializeDependency`로 선언한다.
+
+**Architecture Invariant:** 레벨 전환은 패킷 핸들러 호출 밖에서 일어난다. 접속 흐름 서브시스템이 핸들러에서 온 알림을
+받으면 다음 코어 티커 틱에 레벨을 연다. 맵 로드 단계에서 이 게임 인스턴스의 맵이 열리면(`PostLoadMapWithWorld`) 룸 입장을
+요청하고 게임 단계로 넘어간다. 게임 인스턴스와 인게임 컨트롤러는 입장 흐름을 갖지 않는다.
+— 레벨을 여는 시점이 패킷 처리 순서에 묶이지 않고 접속 흐름 서브시스템 한 곳에서 정해진다.
 
 **Architecture Invariant:** 내 플레이어의 스탯, 레벨, 골드는 `UP1MyPlayerData`의 `ApplyStat`, `ApplyLevel`,
 `ApplyGold`로만 바꾼다. 이 함수들이 사본에 쓰고 델리게이트로 알린다.

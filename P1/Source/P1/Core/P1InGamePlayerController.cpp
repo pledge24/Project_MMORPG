@@ -4,26 +4,11 @@
 #include "Game/Entities/P1MyPlayer.h"
 #include "Game/Progress/P1ItemActions.h"
 #include "Game/Progress/P1MyPlayerData.h"
-#include "Network/P1PacketSender.h"
 #include "UI/P1ScreenSubsystem.h"
 
 void AP1InGamePlayerController::BeginPlay()
 {
     Super::BeginPlay();
-
-    // 룸 입장 요청.
-    Protocol::C_ENTER_ROOM EnterRoomPkt;
-    {
-        EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
-
-        if (UP1MyPlayerData* MyPlayerData = GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
-        {
-            int32 RoomId = MyPlayerData->GetRoomId();
-            EnterRoomPkt.set_room_id(RoomId);
-        }
-
-        FP1PacketSender::Send(this, EnterRoomPkt);
-    }
 
     // 인게임 UI 입력 매핑 등록.
     if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))

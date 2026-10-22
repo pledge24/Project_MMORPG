@@ -1,28 +1,18 @@
-#include "Online/P1LoginManager.h"
+#include "Auth/P1AuthClient.h"
 #include "Network/P1NetworkSettings.h"
 #include "Http.h"
 #include "HttpModule.h"
-#include "Network/P1ConnectionSubsystem.h"
-#include "Game/Progress/P1MyPlayerData.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
 #include "Utils/LogCategory.h"
 
-void UP1LoginManager::RemoveListener(const UObject* Listener)
+void UP1AuthClient::RemoveListener(const UObject* Listener)
 {
     OnAuthResult.RemoveAll(Listener);
-    OnCharacterListReceived.RemoveAll(Listener);
-    OnCreateCharacterResult.RemoveAll(Listener);
-    OnDeleteCharacterResult.RemoveAll(Listener);
-    OnEnterGameFailed.RemoveAll(Listener);
-    OnEnterGameSucceeded.RemoveAll(Listener);
+    OnLoginSucceeded.RemoveAll(Listener);
 }
 
-FString UP1LoginManager::MakeAuthUrl(const TCHAR* Path)
-{
-    const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
-    return FString::Printf(TEXT("http://%s:%d%s"), *NetworkSettings->AuthServerIp, NetworkSettings->AuthServerPort, Path);
-}
-
-void UP1LoginManager::RequestLogin(const FString& LoginId, const FString& Password)
+void UP1AuthClient::RequestLogin(const FString& LoginId, const FString& Password)
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
@@ -38,7 +28,7 @@ void UP1LoginManager::RequestLogin(const FString& LoginId, const FString& Passwo
 	// 요청 설정.
 	FString URL = MakeAuthUrl(TEXT("/api/auth/login"));
 
-    RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnLoginResponse);
+    RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1AuthClient::OnLoginResponse);
     RequestRef->SetURL(URL);
     RequestRef->SetVerb("POST");
     RequestRef->SetHeader("Content-Type", "application/json");
@@ -48,7 +38,7 @@ void UP1LoginManager::RequestLogin(const FString& LoginId, const FString& Passwo
     RequestRef->ProcessRequest();
 }
 
-void UP1LoginManager::RequestRegister(const FString& LoginId, const FString& Password)
+void UP1AuthClient::RequestRegister(const FString& LoginId, const FString& Password)
 {
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestRef = FHttpModule::Get().CreateRequest();
 
@@ -64,7 +54,7 @@ void UP1LoginManager::RequestRegister(const FString& LoginId, const FString& Pas
 	// 요청 설정.
 	FString URL = MakeAuthUrl(TEXT("/api/auth/register"));
 
-    RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1LoginManager::OnRegisterResponse);
+    RequestRef->OnProcessRequestComplete().BindUObject(this, &UP1AuthClient::OnRegisterResponse);
     RequestRef->SetURL(URL);
     RequestRef->SetVerb("POST");
     RequestRef->SetHeader("Content-Type", "application/json");
@@ -74,7 +64,7 @@ void UP1LoginManager::RequestRegister(const FString& LoginId, const FString& Pas
     RequestRef->ProcessRequest();
 }
 
-void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+void UP1AuthClient::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
 	FString Message = TEXT("로그인 실패");
 
@@ -118,19 +108,11 @@ void UP1LoginManager::OnLoginResponse(FHttpRequestPtr Request, FHttpResponsePtr 
         // 티켓 값은 로그 파일에 남기지 않는다.
         UE_LOG(LogP1Network, Display, TEXT("인증 서버에서 인증 티켓을 받았다"));
 
-		// 티켓은 저장하지 않고 게임 서버 로그인에 바로 넘긴다. 게임 서버가 한 번 쓰고 지운다.
-		if (UP1ConnectionSubsystem* Connection = GetGameInstance()->GetSubsystem<UP1ConnectionSubsystem>())
-		{
-            Connection->Connect(Ticket);
-		}
-        else
-        {
-            UE_LOG(LogP1Network, Error, TEXT("게임 서버 연결 서브시스템이 없습니다"));
-        }
+		OnLoginSucceeded.Broadcast(Ticket);
 	}
 }
 
-void UP1LoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
+void UP1AuthClient::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
 {
 	FString Message = TEXT("회원가입 실패");
 
@@ -172,34 +154,8 @@ void UP1LoginManager::OnRegisterResponse(FHttpRequestPtr Request, FHttpResponseP
 	OnAuthResult.Broadcast(RegisterSuccess, Message);
 }
 
-void UP1LoginManager::HandleLogin(const Protocol::S_LOGIN& LoginPkt)
+FString UP1AuthClient::MakeAuthUrl(const TCHAR* Path)
 {
-    OnCharacterListReceived.Broadcast(LoginPkt);
-}
-
-void UP1LoginManager::HandleCreateCharacter(const Protocol::S_CREATE_CHARACTER& CreateCharacterPkt)
-{
-    OnCreateCharacterResult.Broadcast(CreateCharacterPkt);
-}
-
-void UP1LoginManager::HandleDeleteCharacter(const Protocol::S_DELETE_CHARACTER& DeleteCharacterPkt)
-{
-    OnDeleteCharacterResult.Broadcast(DeleteCharacterPkt);
-}
-
-void UP1LoginManager::HandleEnterGame(const Protocol::S_ENTER_GAME& EnterGamePkt)
-{
-    // 거절되면 아직 캐릭터 선택 화면이므로 그 화면에 알린다.
-    if (EnterGamePkt.success() == false)
-    {
-        OnEnterGameFailed.Broadcast();
-        return;
-    }
-
-    // 게임 서버에 입장한 시점에 가져온 캐릭터의 모든 정보를 저장한다. 맵을 열기 전에 채워야 한다.
-    if (UP1MyPlayerData* MyPlayerData = GetGameInstance()->GetSubsystem<UP1MyPlayerData>())
-        MyPlayerData->InitMyPlayerData(EnterGamePkt);
-
-    // 게임 인스턴스가 이 알림을 받아 인게임 맵을 연다.
-    OnEnterGameSucceeded.Broadcast();
+    const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
+    return FString::Printf(TEXT("http://%s:%d%s"), *NetworkSettings->AuthServerIp, NetworkSettings->AuthServerPort, Path);
 }

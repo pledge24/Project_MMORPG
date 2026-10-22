@@ -91,16 +91,17 @@ P1/Source/
 ### 3.2 도메인 폴더
 
 **`Game/`이 게임 도메인과 배선을 가른다.** 모듈 루트 바로 아래의 `Core/`, `Network/`, `Sync/`,
-`Online/`, `UI/`, `Utils/`, `Tests/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
+`Auth/`, `Lobby/`, `UI/`, `Utils/`, `Tests/`는 클라이언트를 돌리는 배선이고, `Game/` 아래는 게임 규칙이다.
 — 서버도 같은 층으로 가른다. 분류명이 양쪽에서 같으므로 `P1/Source/P1/Game/Inventory/`를 알면
 `Server/GameServer/Game/Inventory/`를 찾는 데 지장이 없다.
 
 | 폴더 | 담는 것 |
 | --- | --- |
-| `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩 |
+| `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩, 로그인부터 게임까지의 단계와 레벨 전환을 갖는 접속 흐름 서브시스템(`UP1EntryFlowSubsystem`) |
 | `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치. `Server/ServerCore/Network/`와 대칭을 유지한다. 쓰이지 않는 함수도 지우지 않는다 |
 | `Sync/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸, 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
-| `Online/` | 로그인과 캐릭터 목록. 요청 하나에 응답 하나로 끝나는 비실시간 통신만 담는다 |
+| `Auth/` | 인증 서버와의 HTTP(회원가입, 로그인)를 맡는 인증 클라이언트(`UP1AuthClient`). 게임 서버를 모른다 |
+| `Lobby/` | 로비 접속, 캐릭터 목록과 슬롯 수의 사본, 캐릭터 생성·삭제·선택 요청을 맡는 로비 서브시스템(`UP1LobbySubsystem`)과 로비 패킷의 핸들러. 서버의 `Lobby/` 모듈과 이름을 맞춘다 |
 | `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
 | `Game/Entities/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
@@ -109,8 +110,8 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
-| `Game/World/` | 레벨에 배치하는 월드 액터. 포털, 경계 벽 |
-| `Game/Interaction/` | 플레이어가 다가가 쓰는 월드 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
+| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽 |
+| `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
 
@@ -128,9 +129,9 @@ P1/Source/
 | 하위 폴더 | 담는 것 | 판정 조건 |
 | --- | --- | --- |
 | `Common/` | 다른 위젯이 품는 조각 | 다른 위젯이 품는가 |
-| `Frontend/` | 월드 입장 전 화면 | 월드에 들어가기 전에 뜨는가 |
+| `Frontend/` | 게임 입장 전 화면 | 게임에 입장하기 전에 뜨는가 |
 | `Screens/` | 플레이 중 띄우는 화면 | 화면 서브시스템(`UP1ScreenSubsystem`)이 만들어 띄우는가 |
-| `WorldSpace/` | 월드 공간에 붙는 위젯 | 화면이 아니라 월드 좌표를 따라가는가 |
+| `WorldSpace/` | 레벨 공간에 붙는 위젯 | 화면이 아니라 레벨 안의 좌표를 따라가는가 |
 
 `Common/`의 조건은 품는 곳의 수를 보지 않는다. 조각을 품는 위젯이 하나뿐이면 1절의 원칙대로
 그 위젯 가까이에 둔다. `P1ItemTooltipWidget`을 품는 것은 `P1SlotWidget` 하나뿐인데, 그 슬롯
@@ -166,7 +167,8 @@ P1/Source/
 | 폴더 | 부를 수 있는 곳 |
 | --- | --- |
 | `Core/`, `UI/` (배선) | 서로, 그리고 아래의 모든 폴더 |
-| `Online/` | `Network/`, `Game/Progress`, `Utils/` |
+| `Auth/` | `Network/`의 설정(`P1NetworkSettings.h`), `Utils/` |
+| `Lobby/` | `Network/`의 송신 창구와 생성된 핸들러 헤더, 세션(`PacketSession.h`), `Game/Progress`(받은 입장 응답을 넘기는 패킷 핸들러), `Utils/` |
 | `Network/` | `Sync/`, `Game/Progress`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
@@ -218,9 +220,19 @@ P1/Source/
 — `Utils/Types.h`가 `Data/`와 `Entities/`를 부르던 두 줄을 #73이 지웠다. 그 두 헤더가 필요한
 자리는 각자 직접 부른다.
 
-**`Game/` 아래는 `Online/`을 부르지 않는다.** 로그인과 캐릭터 목록에 쓰는 자료형은 `Online/`이
-소유한다. 캐릭터 요약 `USTRUCT`가 `Game/Data/`가 아니라 `Online/`에 있는 이유가 이것이다. `Online/`은 입장에
-성공하면 내 플레이어 데이터를 채우려고 `Game/Progress`를 부른다.
+**`Game/` 아래는 `Auth/`와 `Lobby/`를 부르지 않는다.** 로비에서 쓰는 자료형은 `Lobby/`가 소유한다. 캐릭터 목록의
+항목 `FP1LobbyCharacter`와 직업 `EP1CharacterClass`가 `Game/Data/`가 아니라 `Lobby/`에 있는 이유가 이것이다.
+`Lobby/`의 입장 응답 핸들러는 입장한 캐릭터의 정보를 넘기려고 `Game/Progress`를 부른다.
+
+**인증 클라이언트, 로비 서브시스템, 연결 서브시스템은 서로의 함수를 부르지 않는다.** 폴더 사이의 의존이 아니라 클래스 사이의
+호출을 말한다. 로비 서브시스템은 위 표대로 송신 창구로 패킷을 보낼 뿐 연결 서브시스템의 함수를 부르지 않는다. 로그인 성공, 연결 성공과 실패, 로비 입장,
+게임 입장 성공은 각자 델리게이트로 알리고, 접속 흐름 서브시스템(`Core/`)이 구독해 다음 단계로 잇는다. 단계 사이의 순서는
+접속 흐름 서브시스템만 안다.
+— 한 단계를 바꿀 때 그 단계의 클래스와 접속 흐름 서브시스템만 고친다.
+
+**로그인 화면 위젯은 protobuf와 송신 창구를 모른다.** 위젯은 인증 클라이언트와 로비 서브시스템의 함수를 부르고,
+로비가 알리는 `FP1LobbyCharacter`와 델리게이트로 화면을 그린다. 그래서 `Auth/`와 `Lobby/`의 헤더는 protobuf 헤더를
+부르지 않고 쓰는 타입을 전방 선언한다.
 
 **`Sync/`는 판정하지 않고 표현만 맞춘다.** 예측을 구현하더라도 그 결과는 화면 표현일 뿐이고,
 서버 응답이 오면 서버 값으로 덮어쓴다.
@@ -263,15 +275,15 @@ P1/Content/
 │   │       └── Weapons/    검별 폴더(`Sword0R`~`Sword50R`)를 둔다
 │   ├── UI/
 │   │   ├── Common/         여러 화면이 공유하는 부품과 텍스처
-│   │   ├── Frontend/       월드 입장 전 화면
+│   │   ├── Frontend/       게임 입장 전 화면
 │   │   ├── Screens/        플레이 중 여는 화면
 │   │   │   └── HUD/        상시 표시 요소와 그 전용 파츠
-│   │   ├── WorldSpace/     월드에 붙는 위젯
+│   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
 │   │   └── DataTables/
 │   ├── Maps/
-│   └── World/              레벨에 배치하는 월드 액터
+│   └── World/              레벨에 배치하는 액터
 ├── External/               참고용 외부 팩. 게임이 참조하지 않는다
 ├── __ExternalActors__/     에디터 자동 생성물
 └── Developers/             개인 실험 공간

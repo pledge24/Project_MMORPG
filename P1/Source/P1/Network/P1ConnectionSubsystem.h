@@ -9,12 +9,15 @@
 
 class FSocket;
 
+DECLARE_MULTICAST_DELEGATE(FOnGameServerConnected);
+DECLARE_MULTICAST_DELEGATE(FOnGameServerConnectFailed);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnConnectionLost, Protocol::LeaveReason);
 
 /**
  * 게임 서버와의 연결.
  *
- * 클라이언트가 게임 서버와 통신할 때 거치는 연결을 소유하고, 접속과 끊김을 관리한다.
+ * 클라이언트가 게임 서버와 통신할 때 거치는 연결을 소유하고, 주소로 연결하고 끊는 일만 한다.
+ * 연결 위에서 무엇을 보낼지는 모른다.
  */
 UCLASS()
 class P1_API UP1ConnectionSubsystem : public UGameInstanceSubsystem
@@ -30,10 +33,10 @@ public:
     //~ Connection
 public:
     /**
-     * 게임 서버에 접속하고 인증 티켓으로 로그인을 요청한다. 이미 연결이 있으면 먼저 닫는다.
-     * 게임 스레드 전용.
+     * Ip와 Port의 게임 서버에 연결하고, 결과를 반환하기 전에 OnConnected나 OnConnectFailed로 알린다.
+     * 이미 연결이 있으면 먼저 닫는다. 게임 스레드 전용.
      */
-    void Connect(const FString& AuthTicket);
+    void Connect(const FString& Ip, int32 Port);
 
     /**
      * 연결을 닫는다. 세션 스레드가 끝날 때까지 기다리고, OnConnectionLost는 알리지 않는다.
@@ -45,6 +48,9 @@ public:
 
     /** 연결이 없으면 버린다. */
     void Send(SendBufferRef SendBuffer);
+
+    FOnGameServerConnected OnConnected;
+    FOnGameServerConnectFailed OnConnectFailed;
 
 private:
     /** 접속 종료를 서버에 알린다. */
