@@ -1,6 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
-#include "Game/Characters/CharacterCreation.h"
+#include "Lobby/CharacterCreation.h"
 #include "Utils/EncodingConverter.h"
 
 /*--------------------------------------------------------------

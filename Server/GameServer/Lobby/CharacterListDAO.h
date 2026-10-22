@@ -45,4 +45,6 @@ public:
     static CreateCharacterResult CreateCharacter(DBConnection& conn, int64 accountId, int64 characterId, const Protocol::CharacterOverview& character);
     /** characterId는 클라이언트 값이어도 된다. 이 계정의 삭제되지 않은 캐릭터가 아니면 지우지 않고 false. */
     static bool DeleteCharacter(DBConnection& conn, int64 accountId, int64 characterId);
+    /** characterId는 클라이언트 값이어도 된다. 이 계정의 삭제되지 않은 캐릭터면 true. */
+    static bool OwnsCharacter(DBConnection& conn, int64 accountId, int64 characterId);
 };

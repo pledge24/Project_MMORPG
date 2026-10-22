@@ -2,7 +2,6 @@
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
 #include "Utils/EncodingConverter.h"
-#include "Game/Characters/CharacterCreation.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Entities/PlayerSaveData.h"
 
@@ -49,7 +48,7 @@ bool CharacterStateDAO::LoadCharacter(DBConnection& conn, int64 userId, int64 ch
 
         //~ Cols
         int32 _classId = 0;
-        WCHAR _name[CharacterCreation::MAX_NAME_LENGTH + 1] = {};
+        WCHAR _name[CHARACTER_NAME_COLUMN_LENGTH + 1] = {};
         int32 _level = 0;
         int64 _exp = 0;
         int32 _mapId = 0;

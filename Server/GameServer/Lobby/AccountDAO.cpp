@@ -1,5 +1,5 @@
 #include "Core/pch.h"
-#include "DB/AccountDAO.h"
+#include "Lobby/AccountDAO.h"
 #include "DB/DAOCommon.h"
 
 int32 AccountDAO::RecordLogin(DBConnection& conn, int64 accountId)

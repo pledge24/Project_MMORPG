@@ -56,8 +56,8 @@
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Characters">
-      <UniqueIdentifier>{c86c3240-4ec0-44a0-b694-596060a93c50}</UniqueIdentifier>
+    <Filter Include="Lobby">
+      <UniqueIdentifier>{022156a6-1606-4fc9-bc96-85dea34299c3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Progress">
       <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
@@ -81,6 +81,9 @@
     </ClCompile>
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\SessionPhase.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Network\GameSessionManager.cpp">
@@ -140,8 +143,11 @@
     <ClCompile Include="Utils\SnowflakeIdGenerator.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Game\Characters\CharacterCreation.cpp">
-      <Filter>Game\Characters</Filter>
+    <ClCompile Include="Lobby\CharacterCreation.cpp">
+      <Filter>Lobby</Filter>
+    </ClCompile>
+    <ClCompile Include="Lobby\LobbyPacketHandlers.cpp">
+      <Filter>Lobby</Filter>
     </ClCompile>
     <ClCompile Include="Game\Progress\Leveling.cpp">
       <Filter>Game\Progress</Filter>
@@ -161,11 +167,11 @@
     <ClCompile Include="Game\Entities\Creature.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="DB\AccountDAO.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="Lobby\AccountDAO.cpp">
+      <Filter>Lobby</Filter>
     </ClCompile>
-    <ClCompile Include="DB\CharacterListDAO.cpp">
-      <Filter>DB</Filter>
+    <ClCompile Include="Lobby\CharacterListDAO.cpp">
+      <Filter>Lobby</Filter>
     </ClCompile>
     <ClCompile Include="DB\IssuedIdDAO.cpp">
       <Filter>DB</Filter>
@@ -256,6 +262,9 @@
     <ClInclude Include="Network\GameSession.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Network\SessionPhase.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Network\GameSessionManager.h">
       <Filter>Network</Filter>
     </ClInclude>
@@ -310,8 +319,8 @@
     <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Characters\CharacterCreation.h">
-      <Filter>Game\Characters</Filter>
+    <ClInclude Include="Lobby\CharacterCreation.h">
+      <Filter>Lobby</Filter>
     </ClInclude>
     <ClInclude Include="Game\Progress\Leveling.h">
       <Filter>Game\Progress</Filter>
@@ -337,11 +346,11 @@
     <ClInclude Include="Game\Entities\Creature.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="DB\AccountDAO.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="Lobby\AccountDAO.h">
+      <Filter>Lobby</Filter>
     </ClInclude>
-    <ClInclude Include="DB\CharacterListDAO.h">
-      <Filter>DB</Filter>
+    <ClInclude Include="Lobby\CharacterListDAO.h">
+      <Filter>Lobby</Filter>
     </ClInclude>
     <ClInclude Include="DB\IssuedIdDAO.h">
       <Filter>DB</Filter>

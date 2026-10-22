@@ -7,6 +7,8 @@
 #include "Game/QuickSlots/QuickSlotComponent.h"
 #include "Game/Room/RoomTransfer.h"
 #include "Network/ItemPackets.h"
+#include "Network/ProgressCoordinator.h"
+#include "DB/DAOCommon.h"
 
 namespace
 {
@@ -26,6 +28,54 @@ namespace
         progress.posInfo = assignment->pos;
         return true;
     }
+}
+
+void GameEntry::RequestEnter(const GameSessionRef& session, int64 userId, int64 characterId)
+{
+    // 플레이어는 DB 잡 안에서 만든다. 들어갈 룸은 진행을 DB에서 불러와야 알 수 있으므로 이 시점에는 넘길 룸 큐가 없다.
+    // 언제 어느 DB 큐에서 돌지는 조율자가 정한다.
+    auto load = [session, userId, characterId]()
+        {
+            // 저장을 기다리는 사이에 끊겼으면 불러올 이유가 없다. 불러오면 끊긴 것을 알아챈 뒤 또 저장한다.
+            if (session->IsConnected() == false)
+                return;
+
+            // 불러오기가 모두 성공하고 검증을 통과해야 세션에 플레이어가 생긴다. 룸에는 그 뒤 EnterPlayer로 들어간다.
+            Protocol::S_ENTER_GAME enterGamePkt;
+            try
+            {
+                DBConnectionGuard conn;
+                enterGamePkt = Enter(*conn, session, userId, characterId);
+            }
+            catch (const exception& error)
+            {
+                // 실패해도 응답을 보내야 클라이언트가 캐릭터 선택 화면에서 기다리지 않는다.
+                GLogger->Error("캐릭터 {} 입장 실패: {}", characterId, error.what());
+                enterGamePkt.Clear();
+                enterGamePkt.set_success(false);
+            }
+            FinishEnter(session, enterGamePkt);
+        };
+
+    auto reject = [session]()
+        {
+            Protocol::S_ENTER_GAME enterGameFailPkt;
+            enterGameFailPkt.set_success(false);
+            FinishEnter(session, enterGameFailPkt);
+        };
+
+    GProgressCoordinator->RequestEnter(userId, { std::move(load), std::move(reject) });
+}
+
+void GameEntry::FinishEnter(const GameSessionRef& session, const Protocol::S_ENTER_GAME& enterGamePkt)
+{
+    // 응답을 보낸 뒤에 바꾸면, 응답을 받은 클라이언트의 다음 요청(룸 입장, 다시 고른 캐릭터의 입장)이 앞 단계에서 버려진다.
+    if (enterGamePkt.success())
+        session->CompleteGameEntry();
+    else
+        session->CancelGameEntry();
+
+    SendPacket(session, enterGamePkt);
 }
 
 Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef& session, int64 userId, int64 characterId)
