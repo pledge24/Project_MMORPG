@@ -1,0 +1,5 @@
+syntax = "proto3";
+package Protocol;
+
+// 로비 접속과 캐릭터 목록, 생성, 삭제
+// @packet_id_range 200 299

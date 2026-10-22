@@ -8,15 +8,24 @@
 
 ## 와이어 프로토콜
 
-**원본**: `Protocol/Schema/{Enum,Struct,Protocol}.proto`
+**원본**: `Protocol/Schema/*.proto`. 도메인마다 한 파일이다(Common, Lobby, Entry, Entity, Combat, Item, Chat).
+옛 파일 셋(`Enum`, `Struct`, `Protocol`)은 계약 티켓이 메시지를 도메인 파일로 다 옮기면 지운다. 옮길 정의는
+`docs/work/2026-10-23-lobby-entry-flow.md`의 「목표 정의」에 있다.
 
 `.proto`는 cp949다. UTF-8로 저장하지 않는다.
 
 ### 재생성
 
-`Protocol/GenPackets.bat` 실행. 이 스크립트는 `Tools/protoc.exe`를 돌리고, `PacketHandlerGenerator.exe`를 방향별로 두 번 실행한 뒤, 결과를 `XCOPY`로 아래에 뿌린다.
+`pwsh Protocol/Generate.ps1`을 실행한다. 이 스크립트는 `Schema/`의 `.proto`를 모두 읽어 `Tools/protoc.exe`를 한 번,
+`PacketHandlerGenerator.exe`를 방향별로 두 번 돌린다. 생성물은 임시 폴더에 만들고, 모두 성공한 뒤에만 아래 목적지로 복사한다.
 
-생성기가 읽는 템플릿은 `Protocol/Templates/PacketHandler.h`다. 생성기가 템플릿 폴더를 작업 디렉터리 기준 상대 경로로 찾고, 스크립트가 `Protocol/`로 들어간 뒤 생성기를 부르기 때문이다.
+**어느 단계든 실패하면 아무것도 배포하지 않고 종료 코드 1로 끝난다.** protoc의 문법 오류와 생성기의 번호 범위 오류가 여기 걸린다.
+— 옛 `GenPackets.bat`은 실패를 출력만 하고 복사로 넘어갔고, 생성기도 예외를 잡아 0으로 끝났다. 빌드가 옛 생성물로 통과해서
+스키마와 생성물이 어긋난 것을 알아챌 수 없었다.
+
+서버 솔루션 빌드도 이 스크립트를 부른다. `GameServer`와 `DummyClient`의 `GenerateProtoPackets` 타깃이, `.proto`가 생성물보다
+새로우면 컴파일 전에 돌린다. `pwsh`가 PATH에 있어야 한다. 병렬 빌드에서 두 타깃이 함께 불러도 스크립트는 이름 있는 뮤텍스로
+한 번에 하나씩 돈다.
 
 | 목적지 | 산출물 |
 |---|---|
@@ -24,7 +33,41 @@
 | `Server/GameServer/Network/` | `ServerPacketHandler.h` |
 | `Server/DummyClient/Protocol/` | `*.pb.{h,cc}` |
 | `Server/DummyClient/Main/` | `ClientPacketHandler.h` |
-| `P1/Source/P1/Network/` | `*.pb.{h,cc}` · `.proto` 3개 · `ClientPacketHandler.h` |
+| `P1/Source/P1/Network/` | `*.pb.{h,cc}` · `.proto` 전부 · `ClientPacketHandler.h` |
+
+생성기가 읽는 템플릿은 `Protocol/Templates/PacketHandler.h`다. 핸들러 헤더는 읽은 스키마 파일의 `.pb.h`를 모두 include한다.
+
+**스키마 파일을 더하면 서버 프로젝트 세 곳에 생성물을 등록한다.** `GameServer.vcxproj`와 `DummyClient.vcxproj`에는
+`.pb.h`, `.pb.cc`, `.proto`를, `GameServerTests.vcxproj`에는 `.pb.cc`를 넣고, 각 `.filters`에도 넣는다. 클라이언트는 UBT가
+폴더를 읽으므로 등록하지 않는다.
+— 등록하지 않으면 `ProtocolContract` 테스트가 「스키마 파일이 빌드에 없다」로 실패한다.
+
+### 패킷 번호
+
+패킷 번호는 스키마 파일마다 정한 범위 안에서 선언 순서로 매긴다. 범위는 파일 첫머리의 한 줄로 정한다.
+
+```
+// @packet_id_range 200 299
+```
+
+| 파일 | 범위 |
+|---|---|
+| `Common.proto` | 100~199 |
+| `Lobby.proto` | 200~299 |
+| `Entry.proto` | 300~399 |
+| `Entity.proto` | 400~499 |
+| `Combat.proto` | 500~599 |
+| `Item.proto` | 600~699 |
+| `Chat.proto` | 700~799 |
+| `Protocol.proto` (옛 파일) | 1000~1999. 지금의 번호를 그대로 두는 임시 범위 |
+
+- 범위 선언: 패킷(`C_*`와 `S_*` 메시지)이 있는 파일에 필수. 패킷이 없는 `Enum.proto`와 `Struct.proto`에는 없음
+- 생성기가 실패하는 범위: 다른 파일과 겹치는 범위, 패킷 수보다 좁은 범위, 1~65534를 벗어난 범위
+- 번호가 밀리는 곳: 패킷을 끼워 넣은 파일 안의 뒤쪽 번호뿐. 다른 파일의 번호는 그대로
+- 범위를 바꿀 때: `ProtocolContractTests.cpp`의 `SCHEMA_FILES` 표도 함께 고침. 고치지 않으면 테스트가 표와 생성물의 범위가 다르다고 실패
+
+**패킷 번호에 65535를 쓰지 않는다.**
+— 핸들러 표의 칸 수가 `UINT16_MAX`라 65535는 표 밖이다.
 
 ### 손으로 쓰는 것
 
@@ -35,27 +78,32 @@
 - `P1/Source/P1/Online/P1LoginPacketHandlers.cpp`
 - `Server/DummyClient/Main/ClientPacketHandler.cpp`
 
-마지막 파일에는 로그인 관리자를 부르는 클라이언트 핸들러(`S_LOGIN`, `S_CREATE_CHARACTER`, `S_DELETE_CHARACTER`,
+`P1LoginPacketHandlers.cpp`에는 로그인 관리자를 부르는 클라이언트 핸들러(`S_LOGIN`, `S_CREATE_CHARACTER`, `S_DELETE_CHARACTER`,
 `S_ENTER_GAME`)의 정의만 둔다. `Network/`는 `Online/`을 부르지 않으므로 이 정의를 `Online/`에 둔다. 선언은 생성된
 `ClientPacketHandler.h`의 것을 그대로 쓴다.
 
 ### 이름 규칙
 
-**기능적으로 중요하다.** 생성기가 접두사로 핸들러를 나눈다.
+생성기가 접두사로 핸들러를 나눈다. **접두사만 기능이고 짝은 관례다.**
 
 - `C_*` — 클라 → 서버
 - `S_*` — 서버 → 클라
-- 요청/응답 쌍은 이름을 공유한다 (`C_MOVE` / `S_MOVE`)
+- 요청과 응답이 같은 이름을 쓰는 것(`C_MOVE` / `S_MOVE`)은 관례다. 서버가 먼저 보내는 통지(`S_SPAWN`)에는 짝이 없다
 
 ### 불변식 검사
 
-`ProtocolContractTests`(`Server/GameServerTests/`)가 아래 세 가지를 검사한다. 메시지를 추가하면 이 테스트가 먼저 알려준다.
+`ProtocolContractTests`(`Server/GameServerTests/`)가 아래 다섯 가지를 검사한다. 패킷을 추가하면 이 테스트가 먼저 알려준다.
 
-- `PROTOCOL_MESSAGES(X)` 매크로 목록과 실제 메시지 목록이 일치
-- 패킷 ID가 연속이고 유일
-- 전 메시지 왕복 (`DescriptorPool` 리플렉션으로 자동 확장)
+- 생성기가 읽은 스키마 파일과 각 파일의 범위가 `SCHEMA_FILES` 표와 같은지. 생성기가 핸들러 헤더에 적는 `PACKET_SCHEMA_FILES`와 대조한다
+- 스키마 파일마다 빌드에 들어 있고, 파일의 패킷 목록과 선언 순서가 `SCHEMA_FILES` 표와 같은지
+- 패킷 번호가 그 파일 범위의 첫 번호부터 선언 순서로 이어지고, 범위를 넘지 않는지
+- 파일의 범위끼리, 패킷 번호끼리 겹치지 않는지
+- 모든 스키마 파일의 모든 메시지가 값을 채운 채로 왕복하는지 (`DescriptorPool` 리플렉션으로 자동 확장)
 
-**메시지가 늘어도 이 테스트를 고치지 않는다.** 고쳐야 한다면 뭔가 잘못된 것이다.
+**패킷을 더하거나 옮기면 `SCHEMA_FILES` 표에서 그 파일의 패킷 목록을 고친다. 스키마 파일을 더하거나 범위를 바꾸면 표의 줄을 고친다.**
+— 표는 계약 선언이다. 표와 스키마가 어긋나면 스키마가 바뀐 것을 의식적으로 반영하라는 신호다.
+
+왕복 검사는 메시지가 늘어도 고치지 않는다.
 
 ---
 
@@ -164,4 +212,10 @@
 - `Tools/PacketHandlerGenerator/`
 - `Tools/ExcelToJsonConverter/`
 
-결과 exe는 각 툴 폴더 안에 놓이고, 호출하는 `.bat`이 `..\Tools\<툴>\<툴>.exe`로 부른다. `.bat`도 cp949다.
+결과 exe는 각 툴 폴더 안에 놓인다. `Protocol/Generate.ps1`과 `DesignData/GenJsonFile.bat`이 그 exe를 부른다. `.bat`도 cp949다.
+
+**생성기의 파이썬 소스를 고치면 `MakeExe.bat`으로 exe를 다시 만들어 소스와 함께 커밋한다.**
+— 스크립트는 소스가 아니라 exe를 부른다. exe를 다시 만들지 않으면 고친 소스가 돌지 않는다.
+
+exe를 다시 만들려면 `py -3 -m pip install pyinstaller jinja2`로 두 패키지를 설치한다. `MakeExe.bat`은 `pyinstaller`를 PATH에서
+찾으므로, `--user`로 설치했으면 `%APPDATA%\Python\Python313\Scripts`를 PATH에 더한다.

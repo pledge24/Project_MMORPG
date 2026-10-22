@@ -110,6 +110,27 @@
     <ClCompile Include="Protocol\Struct.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
+    <ClCompile Include="Protocol\Chat.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Combat.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Common.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Entity.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Entry.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Item.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="Protocol\Lobby.pb.cc">
+      <Filter>Protocol</Filter>
+    </ClCompile>
     <ClCompile Include="Protocol\Enum.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
@@ -262,6 +283,27 @@
     <ClInclude Include="Protocol\Struct.pb.h">
       <Filter>Protocol</Filter>
     </ClInclude>
+    <ClInclude Include="Protocol\Chat.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Combat.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Common.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Entity.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Entry.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Item.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="Protocol\Lobby.pb.h">
+      <Filter>Protocol</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -390,7 +432,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Protocol\GenPackets.bat">
+    <None Include="..\..\Protocol\Generate.ps1">
       <Filter>Protocol</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Enum.proto">
@@ -400,6 +442,27 @@
       <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Struct.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Chat.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Combat.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Common.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Entity.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Entry.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Item.proto">
+      <Filter>Protocol\Schema</Filter>
+    </None>
+    <None Include="..\..\Protocol\Schema\Lobby.proto">
       <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="Migrations\001_init.sql">

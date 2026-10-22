@@ -169,6 +169,27 @@
     <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
       <Filter>GameServer\Protocol</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Chat.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Combat.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Common.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entity.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Entry.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Item.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Protocol\Lobby.pb.cc">
+      <Filter>GameServer\Protocol</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Characters\CharacterCreation.cpp">
       <Filter>GameServer\Game\Characters</Filter>
     </ClCompile>

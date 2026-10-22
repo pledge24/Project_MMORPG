@@ -42,7 +42,7 @@
 
 | # | 단계 | 티켓 | 차단 | 상태 | PR | 검증 |
 |---|---|---|---|---|---|---|
-| 1 | A | #286 스키마를 도메인 파일 구성으로 바꾸고 목표 스키마를 확정하기 | — | 대기 | | |
+| 1 | A | #286 스키마를 도메인 파일 구성으로 바꾸고 목표 스키마를 확정하기 | — | 머지 | | 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 390 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 10 통과 · 생성 스크립트: 문법 오류, 범위 없음, 범위 겹침에서 1, 정상 0 · 규범 검사와 문서 검사 통과 |
 | 2 | A | #287 서버의 로비를 로비 모듈로 옮기고 세션 단계를 두기 | — | 대기 | | |
 | 3 | A | #288 진행의 저장 계층을 로비와 게임의 경계에 맞게 정리하기 | 2 | 대기 | | |
 | 4 | A | #289 클라이언트 로그인 구조를 지금의 계약 그대로 나누기 | — | 대기 | | |
@@ -83,6 +83,699 @@
 #286이 이 절에 도메인 파일 일곱 개(Common, Lobby, Entry, Entity, Combat, Item, Chat)의 메시지 정의 초안을 쓴다. 사람이
 승인하면 승인한 날짜를 이 줄 아래에 적는다. 승인 전에는 계약 티켓을 시작하지 않는다.
 
+계약 티켓은 아래 정의를 그 도메인 파일에 옮겨 적는다. 파일 첫머리의 `syntax`, `package`, 번호 범위 줄은 #286이 만든 것을
+그대로 두고, `.proto`는 cp949로 저장한다.
+
+**자료형을 새 파일로 옮기는 티켓은 옛 파일의 같은 자료형을 같은 커밋에서 지운다.**
+— 옮기는 동안에는 새 파일과 옛 파일이 한 패키지에 함께 있다. 같은 이름의 자료형이 두 파일에 있으면 protoc가 거절한다.
+
+아직 옮기지 않은 자료형이 필요하면 새 파일이 옛 파일(`Enum.proto`, `Struct.proto`)을 import해서 쓴다. 그 자료형을 옮기는 티켓이
+import를 바꾼다. 아래 일곱 파일은 2026년 10월 23일에 protoc와 핸들러 생성기를 함께 통과했다.
+
+### 정의 규칙
+
+- 패킷 이름: `C_`와 `S_` 접두사만 생성기에 의미가 있고, 요청과 응답이 같은 이름을 쓰는 것은 관례
+- 서버가 먼저 보내는 통지(`S_SPAWN`, `S_CHARACTER_LIST`, `S_GEAR_APPEARANCE`): 짝이 되는 요청 없음
+- enum 값: enum 이름을 대문자 snake_case로 바꾼 접두사로 시작. 0번은 `_NONE`, 결과 enum만 0번이 `_SUCCESS`
+- 필드 이름: snake_case. C++ 예약어 금지(직업 필드는 `class`가 아니라 `character_class`)
+- 응답: 그 도메인의 결과 enum 필드 하나를 1번 필드로 둠. 서버는 화면 문구를 보내지 않음
+- 응답하지 않는 요청: `C_MOVE` 하나. 세션 단계에 맞는 나머지 요청에는 언제나 응답
+- 수신 대상: 응답과 개인 정보는 요청한 플레이어에게만 감. 다른 클라이언트에도 가는 공개 정보(`EntityInfo`와 통지)에는 맵 번호와 룸 번호를 싣지 않음
+- 엔티티 번호: 메시지마다 한 곳에만 실음
+- 번호를 바꾸지 않는 enum: DB에 숫자로 저장되는 `ItemType`, `CharacterClass`, `GearPart`, `QuickSlotRefType`
+- 이름을 바꾸지 않는 enum: 기획 데이터가 값 이름으로 읽는 `ItemType`
+- 자료형의 자리: 그것을 쓰는 도메인 파일. 두 도메인 이상의 패킷이 쓰거나 로비와 게임의 코드가 함께 쓰면 Common. 스탯 자료형 셋(`StatType`, `Stat`, `StatInfo`)은 함께 둔다
+- import 방향: Common은 아무것도 import하지 않음. Common이 아닌 도메인 파일을 import하는 것은 Entry 하나(Entity와 Item)
+
+### 흐름
+
+| 흐름 | 패킷 순서 |
+|---|---|
+| 로비 접속 | `C_CONNECT_LOBBY` → `S_CONNECT_LOBBY` → `S_CHARACTER_LIST`. 실패하면 서버가 `S_CONNECT_LOBBY`를 보낸 뒤 연결을 끊는다 |
+| 게임 입장 | `C_ENTER_GAME` → `S_ENTER_GAME` → 맵 로드 → `C_MAP_LOAD_COMPLETE` → `S_ENTER_ROOM`, `S_SPAWN` |
+| 같은 맵 안의 포털 이동 | `C_USE_PORTAL` → `S_USE_PORTAL` → `S_ENTER_ROOM`, `S_SPAWN` |
+| 맵 간 포털 이동 | `C_USE_PORTAL` → `S_USE_PORTAL`(`map_id` 있음) → 맵 로드 → `C_MAP_LOAD_COMPLETE` → `S_ENTER_ROOM`, `S_SPAWN` |
+| 리스폰 | `C_RESPAWN` → `S_RESPAWN` → 맵이 바뀌면 맵 로드와 `C_MAP_LOAD_COMPLETE` → `S_ENTER_ROOM`, `S_SPAWN`. 사망한 룸으로 다시 리스폰해도 룸 퇴장과 룸 입장을 거치므로, 다른 플레이어는 `S_DESPAWN`과 `S_SPAWN`을 받는다 |
+| 로비 복귀 | `C_RETURN_TO_LOBBY` → 룸 퇴장과 저장 → `S_RETURN_TO_LOBBY` → `S_CHARACTER_LIST` |
+| 같은 계정의 새 로비 접속 | 앞 연결에 `S_DISCONNECT` → 앞 연결 종료 |
+
+`S_ENTER_ROOM`을 받은 클라이언트는 앞 룸의 엔티티를 모두 지운다. 같은 맵 안의 이동과 리스폰을 입장 유형으로 가르지 않는다.
+
+### Common.proto
+
+```protobuf
+// 직업. DB의 Character.ClassId에 숫자로 저장된다. 로비의 캐릭터 생성과 게임의 레벨 표, 착용 조건이 함께 쓴다
+enum CharacterClass
+{
+    CHARACTER_CLASS_NONE = 0;
+    CHARACTER_CLASS_WARRIOR = 1;
+    CHARACTER_CLASS_MAGE = 2;
+}
+
+// 장비 부위. 착용 장비의 칸 번호(Item)이자 외형의 부위(Entity)이고, DB의 Item.SlotIndex에 숫자로 저장된다
+enum GearPart
+{
+    GEAR_PART_NONE = 0;
+    GEAR_PART_HELMET = 1;
+    GEAR_PART_CHEST = 2;
+    GEAR_PART_LEGS = 3;
+    GEAR_PART_ARMS = 4;
+    GEAR_PART_BOOTS = 5;
+    GEAR_PART_WEAPON = 6;
+}
+
+enum StatType
+{
+    STAT_TYPE_NONE = 0;
+    STAT_TYPE_MAX_HP = 1;
+    STAT_TYPE_HP = 2;
+    STAT_TYPE_MAX_MP = 3;
+    STAT_TYPE_MP = 4;
+    STAT_TYPE_PHYSICAL_ATTACK = 5;
+    STAT_TYPE_MAGICAL_ATTACK = 6;
+    STAT_TYPE_MAX_EXP = 7;          // 지금 레벨의 요구 경험치
+    STAT_TYPE_EXP = 8;              // 지금 레벨 안에서 쌓은 경험치
+}
+
+// 바뀐 스탯 하나
+message Stat
+{
+    StatType type = 1;
+    int64 value = 2;
+}
+
+// 크리처의 모든 스탯
+message StatInfo
+{
+    map<int32, int64> values = 1;   // <StatType 값, 스탯 값>
+}
+
+// 서버가 연결을 끊는 사유
+enum DisconnectReason
+{
+    DISCONNECT_REASON_NONE = 0;
+    DISCONNECT_REASON_DUPLICATE_CONNECTION = 1;     // 같은 계정의 새 로비 접속에 밀려났다
+}
+
+// 서버가 연결을 끊기 직전에 보낸다. 세션 단계와 무관하게 온다
+message S_DISCONNECT
+{
+    DisconnectReason reason = 1;
+}
+```
+
+### Lobby.proto
+
+```protobuf
+import "Common.proto";
+
+enum LobbyResult
+{
+    LOBBY_RESULT_SUCCESS = 0;
+    LOBBY_RESULT_INVALID_AUTH_TICKET = 1;   // 인증 티켓이 없거나, 이미 쓰였거나, 다른 월드의 것이다
+    LOBBY_RESULT_INVALID_NAME = 2;          // 이름이 비었거나 길이 제한을 넘는다
+    LOBBY_RESULT_NAME_TAKEN = 3;            // 이 월드에 같은 이름의 캐릭터가 있다
+    LOBBY_RESULT_UNAVAILABLE_CLASS = 4;     // 생성할 수 있는 직업이 아니다
+    LOBBY_RESULT_NO_EMPTY_SLOT = 5;         // 빈 캐릭터 슬롯이 없다
+    LOBBY_RESULT_CHARACTER_NOT_FOUND = 6;   // 이 계정의 캐릭터가 아니거나 이미 삭제됐다
+    LOBBY_RESULT_INTERNAL_ERROR = 7;        // DB 오류처럼 요청을 바꿔도 풀리지 않는 실패
+}
+
+// 캐릭터 목록의 항목
+message LobbyCharacter
+{
+    int64 character_id = 1;
+    string name = 2;
+    CharacterClass character_class = 3;
+    int32 level = 4;                        // 마지막으로 저장한 레벨
+}
+
+message C_CONNECT_LOBBY
+{
+    string auth_ticket = 1;
+}
+
+// 성공하면 S_CHARACTER_LIST가 뒤따른다. 실패하면 서버가 이 응답을 보낸 뒤 연결을 끊는다
+message S_CONNECT_LOBBY
+{
+    LobbyResult result = 1;
+}
+
+// 세션이 로비에 들어갈 때마다 온다. 로비 접속에 성공했을 때와 로비 복귀의 저장이 끝났을 때다
+message S_CHARACTER_LIST
+{
+    repeated LobbyCharacter characters = 1;
+    int32 character_slot_count = 2;
+}
+
+message C_CREATE_CHARACTER
+{
+    string name = 1;
+    CharacterClass character_class = 2;
+}
+
+message S_CREATE_CHARACTER
+{
+    LobbyResult result = 1;
+    LobbyCharacter character = 2;           // 성공했을 때만 있다
+}
+
+message C_DELETE_CHARACTER
+{
+    int64 character_id = 1;
+}
+
+message S_DELETE_CHARACTER
+{
+    LobbyResult result = 1;
+    int64 character_id = 2;                 // 요청한 캐릭터 번호
+}
+```
+
+### Entry.proto
+
+```protobuf
+import "Common.proto";
+import "Entity.proto";
+import "Item.proto";
+
+enum EntryResult
+{
+    ENTRY_RESULT_SUCCESS = 0;
+    ENTRY_RESULT_CHARACTER_NOT_FOUND = 1;       // 이 계정의 캐릭터가 아니거나 삭제됐다
+    ENTRY_RESULT_PREVIOUS_SAVE_PENDING = 2;     // 앞 연결의 진행 저장이 정해진 시간 안에 끝나지 않았다
+    ENTRY_RESULT_INVALID_PORTAL = 3;            // 플레이어가 있는 룸의 포털이 아니다
+    ENTRY_RESULT_TOO_FAR_FROM_PORTAL = 4;
+    ENTRY_RESULT_NOT_DEAD = 5;                  // 사망하지 않은 플레이어는 리스폰할 수 없다
+    ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE = 6;
+    ENTRY_RESULT_INTERNAL_ERROR = 7;            // 진행을 불러오거나 저장하지 못했거나, 기획 데이터가 틀려 위치를 정하지 못했다
+}
+
+// 리스폰 유형. 지금은 마을 리스폰 하나다
+enum RespawnType
+{
+    RESPAWN_TYPE_NONE = 0;
+    RESPAWN_TYPE_TOWN = 1;
+}
+
+// 로비에서 고른 캐릭터로 게임에 입장한다. 로비가 받아 캐릭터의 소유를 확인한다
+message C_ENTER_GAME
+{
+    int64 character_id = 1;
+}
+
+// 성공하면 클라이언트는 map_id의 맵을 다 연 뒤 C_MAP_LOAD_COMPLETE를 보낸다
+message S_ENTER_GAME
+{
+    EntryResult result = 1;
+    int32 map_id = 2;
+
+    // 내 캐릭터의 개인 정보
+    StatInfo stats = 3;
+    Possession possession = 4;
+    repeated QuickSlot quick_slots = 5;     // 모든 퀵슬롯. 빈 퀵슬롯도 싣는다
+}
+
+// 서버가 알린 맵을 다 열었다
+message C_MAP_LOAD_COMPLETE
+{
+}
+
+// 내 플레이어가 룸에 들어갔다. C_MAP_LOAD_COMPLETE의 응답이고, 맵이 바뀌지 않는 포털 이동과 리스폰 뒤에도 온다
+message S_ENTER_ROOM
+{
+    EntryResult result = 1;
+    EntityInfo my_entity = 2;
+}
+
+message C_USE_PORTAL
+{
+    int32 portal_id = 1;
+}
+
+// map_id가 있으면 맵이 바뀐다. 클라이언트는 그 맵을 다 연 뒤 C_MAP_LOAD_COMPLETE를 보낸다.
+// 없으면 서버가 바로 S_ENTER_ROOM을 보낸다
+message S_USE_PORTAL
+{
+    EntryResult result = 1;
+    optional int32 map_id = 2;
+}
+
+message C_RESPAWN
+{
+    RespawnType respawn_type = 1;
+}
+
+// map_id의 뜻은 S_USE_PORTAL과 같다
+message S_RESPAWN
+{
+    EntryResult result = 1;
+    optional int32 map_id = 2;
+    repeated Stat changed_stats = 3;        // 리스폰으로 회복한 스탯
+}
+
+// 서버는 플레이어를 바로 룸에서 퇴장시키고, 접속 종료와 같은 절차로 진행을 저장한다
+message C_RETURN_TO_LOBBY
+{
+}
+
+// 저장이 끝난 뒤에 온다. 성공하면 S_CHARACTER_LIST가 뒤따른다
+message S_RETURN_TO_LOBBY
+{
+    EntryResult result = 1;
+}
+```
+
+### Entity.proto
+
+```protobuf
+import "Common.proto";
+
+enum EntityType
+{
+    ENTITY_TYPE_NONE = 0;
+    ENTITY_TYPE_PLAYER = 1;
+    ENTITY_TYPE_MONSTER = 2;
+}
+
+enum MoveState
+{
+    MOVE_STATE_NONE = 0;
+    MOVE_STATE_IDLE = 1;
+    MOVE_STATE_RUN = 2;
+    MOVE_STATE_ACTION = 3;                  // 루트 모션이 들어간 애니메이션 실행
+}
+
+message Vector
+{
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message PosInfo
+{
+    Vector pos = 1;
+    float yaw = 2;
+    Vector move_direction = 3;
+    MoveState state = 4;
+}
+
+// 플레이어의 공개 정보
+message PlayerInfo
+{
+    string name = 1;
+    int32 level = 2;
+    map<int32, int32> gear_appearance = 3;  // <GearPart 값, 착용한 아이템 번호>
+}
+
+message MonsterInfo
+{
+    int32 template_id = 1;
+    int64 hp = 2;
+}
+
+message EntityInfo
+{
+    int64 entity_id = 1;
+    EntityType entity_type = 2;
+    PosInfo pos_info = 3;
+
+    oneof details
+    {
+        PlayerInfo player_info = 4;
+        MonsterInfo monster_info = 5;
+    }
+}
+
+// 엔티티 하나의 이동
+message EntityMove
+{
+    int64 entity_id = 1;
+    PosInfo pos_info = 2;
+}
+
+// 룸에 다른 엔티티가 나타났다. 내 엔티티는 싣지 않는다
+message S_SPAWN
+{
+    repeated EntityInfo entities = 1;
+}
+
+message S_DESPAWN
+{
+    repeated int64 entity_ids = 1;
+}
+
+// 내 플레이어의 이동. 응답이 없다
+message C_MOVE
+{
+    PosInfo pos_info = 1;
+}
+
+// 룸의 플레이어에게 간다. 이동한 엔티티가 플레이어면 그 플레이어는 받지 않는다
+message S_MOVE
+{
+    repeated EntityMove moves = 1;
+}
+
+// 플레이어의 착용 장비가 바뀌었다. 착용한 플레이어를 포함한 룸의 모든 플레이어에게 간다.
+// template_id가 0이면 그 부위를 비웠다
+message S_GEAR_APPEARANCE
+{
+    int64 entity_id = 1;
+    GearPart gear_part = 2;
+    int32 template_id = 3;
+}
+```
+
+### Combat.proto
+
+```protobuf
+import "Common.proto";
+
+enum CombatResult
+{
+    COMBAT_RESULT_SUCCESS = 0;
+    COMBAT_RESULT_DEAD = 1;                 // 사망한 플레이어는 공격할 수 없다
+}
+
+message C_NORMAL_ATTACK
+{
+    int32 combo = 1;
+    float yaw = 2;
+}
+
+message S_NORMAL_ATTACK
+{
+    CombatResult result = 1;
+}
+
+// 크리처가 일반 공격을 했다. 룸의 플레이어에게 가고, 공격한 크리처가 플레이어면 그 플레이어는 받지 않는다
+message S_ATTACK
+{
+    int64 entity_id = 1;
+    int32 combo = 2;
+    float yaw = 3;
+}
+
+// 크리처가 피격됐다
+message S_HIT
+{
+    int64 entity_id = 1;
+    int64 damage = 2;
+    int64 hp = 3;                           // 피격 뒤 남은 체력
+}
+
+message S_DIE
+{
+    int64 entity_id = 1;
+}
+
+message LevelUp
+{
+    int32 level = 1;                        // 오른 뒤의 레벨
+    repeated Stat changed_stats = 2;
+}
+
+// 처치 보상을 받았다. 받은 플레이어에게만 간다
+message S_REWARD
+{
+    int64 exp = 1;                          // 보상을 더한 뒤 지금 레벨 안의 경험치
+    int64 gold = 2;                         // 보상을 더한 뒤의 골드
+    LevelUp level_up = 3;                   // 레벨이 오르지 않았으면 없다
+}
+```
+
+### Item.proto
+
+```protobuf
+import "Common.proto";
+
+enum ItemResult
+{
+    ITEM_RESULT_SUCCESS = 0;
+    ITEM_RESULT_INVALID_REQUEST = 1;        // 정상 클라이언트가 보내지 않는 요청. 없는 아이템 번호, 아이템과 맞지 않는 컨테이너, 범위 밖의 퀵슬롯 번호
+    ITEM_RESULT_SLOT_CHANGED = 2;           // 칸의 아이템이 요청의 item_uid와 다르다. 클라이언트의 칸이 서버보다 늦었다
+    ITEM_RESULT_NOT_ENOUGH_GOLD = 3;
+    ITEM_RESULT_INVENTORY_FULL = 4;         // 아이템이 들어갈 구역에 빈 칸이 없다
+    ITEM_RESULT_NOT_SELLABLE = 5;
+    ITEM_RESULT_REQUIREMENT_NOT_MET = 6;    // 레벨이나 직업이 착용 조건에 못 미친다
+    ITEM_RESULT_GEAR_PART_OCCUPIED = 7;     // 그 부위에 이미 장비를 착용하고 있다
+    ITEM_RESULT_COOLDOWN = 8;               // 재사용 대기 중이다
+    ITEM_RESULT_DEAD = 9;                   // 사망한 플레이어는 소모품을 쓸 수 없다
+    ITEM_RESULT_NOT_OWNED = 10;             // 퀵슬롯이 가리키는 소모품을 갖고 있지 않다
+    ITEM_RESULT_INTERNAL_ERROR = 11;        // 검사를 통과한 뒤 칸을 바꾸지 못했다
+}
+
+// 아이템 종류. DB의 Item.ItemType에 숫자로 저장되고, 기획 데이터가 이름으로 읽는다
+enum ItemType
+{
+    ITEM_TYPE_NONE = 0;
+    ITEM_TYPE_GEAR = 1;
+    ITEM_TYPE_CONSUMABLE = 2;
+    ITEM_TYPE_MISCELLANEOUS = 3;
+}
+
+// 아이템을 담는 컨테이너의 종류. 인벤토리의 구역 셋과 착용 장비다
+enum ContainerType
+{
+    CONTAINER_TYPE_NONE = 0;
+    CONTAINER_TYPE_INVENTORY_GEAR = 1;
+    CONTAINER_TYPE_INVENTORY_CONSUMABLE = 2;
+    CONTAINER_TYPE_INVENTORY_MISC = 3;
+    CONTAINER_TYPE_EQUIPPED = 4;            // 착용 장비. 칸 번호가 GearPart 값이다
+}
+
+// 퀵슬롯이 가리키는 대상의 종류. DB의 QuickSlot.RefType에 숫자로 저장된다
+enum QuickSlotRefType
+{
+    QUICK_SLOT_REF_TYPE_NONE = 0;
+    QUICK_SLOT_REF_TYPE_ITEM = 1;           // 아이템 정의. ref_id가 아이템 번호다
+}
+
+message Item
+{
+    int32 template_id = 1;
+    int64 item_uid = 2;
+    int32 count = 3;
+}
+
+// 칸 하나를 가리키는 주소
+message SlotAddress
+{
+    ContainerType container = 1;
+    int32 slot_index = 2;                   // 컨테이너 안의 칸 번호. 착용 장비에서는 GearPart 값이다
+}
+
+// 이 주소의 칸은 이제 이 내용이다. item이 없으면 빈 칸이다
+message SlotChange
+{
+    SlotAddress address = 1;
+    Item item = 2;
+}
+
+// 컨테이너 안의 칸 하나. item이 없으면 빈 칸이다
+message Slot
+{
+    int32 slot_index = 1;
+    Item item = 2;
+}
+
+// 컨테이너 하나의 모든 칸. 빈 칸도 싣는다
+message ContainerSlots
+{
+    ContainerType container = 1;
+    repeated Slot slots = 2;
+}
+
+message Possession
+{
+    int64 gold = 1;
+    repeated ContainerSlots containers = 2; // 인벤토리의 구역 셋과 착용 장비
+}
+
+// 퀵슬롯이 가리키는 대상. 아이템 하나가 아니라 아이템 정의를 가리킨다
+message QuickSlotRef
+{
+    QuickSlotRefType ref_type = 1;
+    int32 ref_id = 2;
+}
+
+// 퀵슬롯 하나. ref가 없으면 빈 퀵슬롯이다
+message QuickSlot
+{
+    int32 quick_slot_index = 1;             // 0부터 퀵슬롯 개수 미만
+    QuickSlotRef ref = 2;
+}
+
+message C_BUY_ITEM
+{
+    int32 template_id = 1;
+}
+
+message S_BUY_ITEM
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    int64 gold = 3;
+}
+
+// 칸을 가리키는 요청은 칸 주소와, 클라이언트가 그 칸에서 본 아이템의 uid를 싣는다.
+// 그 칸의 아이템 uid가 다르면 서버는 ITEM_RESULT_SLOT_CHANGED로 거절한다
+message C_SELL_ITEM
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+message S_SELL_ITEM
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    int64 gold = 3;
+}
+
+message C_EQUIP_GEAR
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+// 외형은 S_GEAR_APPEARANCE가 룸에 알린다
+message S_EQUIP_GEAR
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    repeated Stat changed_stats = 3;
+}
+
+message C_UNEQUIP_GEAR
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+message S_UNEQUIP_GEAR
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    repeated Stat changed_stats = 3;
+}
+
+message C_USE_ITEM
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+// C_USE_ITEM과 C_USE_QUICK_SLOT의 응답
+message S_USE_ITEM
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    repeated Stat changed_stats = 3;
+}
+
+// 퀵슬롯 하나에 대상을 등록한다. ref가 없으면 해제한다. 다른 퀵슬롯에 있는 대상이면 두 퀵슬롯이 바뀐다
+message C_SET_QUICK_SLOT
+{
+    int32 quick_slot_index = 1;
+    QuickSlotRef ref = 2;
+}
+
+message S_SET_QUICK_SLOT
+{
+    ItemResult result = 1;
+    repeated QuickSlot changed_quick_slots = 2;
+}
+
+// 퀵슬롯에 등록한 소모품을 쓴다. 쓸 칸은 서버가 고른다. 응답은 S_USE_ITEM이다
+message C_USE_QUICK_SLOT
+{
+    int32 quick_slot_index = 1;
+}
+```
+
+### Chat.proto
+
+```protobuf
+enum ChatResult
+{
+    CHAT_RESULT_SUCCESS = 0;
+    CHAT_RESULT_INVALID_MESSAGE = 1;        // 비었거나 길이 제한을 넘는다
+}
+
+message C_CHAT
+{
+    string message = 1;
+}
+
+message S_CHAT
+{
+    ChatResult result = 1;
+}
+
+// 룸의 플레이어가 말했다. 말한 플레이어를 포함한 룸의 모든 플레이어에게 간다
+message S_CHAT_MESSAGE
+{
+    int64 entity_id = 1;
+    string message = 2;
+}
+```
+
+### 이름이 바뀌는 것
+
+| 옛 정의 | 새 정의 |
+|---|---|
+| `C_LOGIN.access_token` | `C_CONNECT_LOBBY.auth_ticket` |
+| `S_LOGIN` | `S_CONNECT_LOBBY`와 `S_CHARACTER_LIST` |
+| `CharacterOverview` | `LobbyCharacter`. 생성 요청은 이름과 직업 두 필드만 싣는다 |
+| `CLASS_TYPE_*` | `CHARACTER_CLASS_*`. 번호는 그대로다 |
+| `GearType`, `GEAR_TYPE_*` | `GearPart`, `GEAR_PART_*`. 번호는 그대로다 |
+| `S_LEAVE_GAME`, `LeaveReason` | `S_DISCONNECT`, `DisconnectReason` |
+| `LEAVE_REASON_DUPLICATE_LOGIN` | `DISCONNECT_REASON_DUPLICATE_CONNECTION`. 게임 서버에는 로그인이 없다 |
+| `LEAVE_REASON_INVALID_TOKEN` | `S_CONNECT_LOBBY`의 `LOBBY_RESULT_INVALID_AUTH_TICKET` |
+| `C_ENTER_ROOM`(맵을 연 뒤의 첫 입장) | `C_MAP_LOAD_COMPLETE` |
+| `C_ENTER_ROOM`(포털) | `C_USE_PORTAL` |
+| `S_ENTER_ROOM.enter_pos` | `S_ENTER_ROOM.my_entity`의 `pos_info` |
+| `S_ENTER_GAME.stat_info` | `S_ENTER_GAME.stats` |
+| `StatInfo.info` | `StatInfo.values` |
+| 응답의 `updated_stat` | `changed_stats` |
+| `C_MOVE.info`, `S_MOVE.info` | `C_MOVE.pos_info`, `S_MOVE.moves`(`EntityMove` 목록) |
+| `S_HIT.updated_hp` | `S_HIT.hp`. 언제나 싣는다 |
+| `LevelUpInfo.new_level`, `.updated_stat` | `LevelUp.level`, `.changed_stats` |
+| `PlayerInfo.equipped_gear_summary` | `PlayerInfo.gear_appearance` |
+| `S_EQUIP_GEAR`·`S_UNEQUIP_GEAR`의 외형 필드 | `S_GEAR_APPEARANCE` |
+| `S_NORMAL_ATTACK`(다른 플레이어에게 가는 것) | `S_ATTACK`. `S_NORMAL_ATTACK`은 공격한 플레이어의 응답이 된다 |
+| `S_REWARD_RESULT`, `LevelUpInfo` | `S_REWARD`, `LevelUp` |
+| `QuickSlot.slot_index`, 퀵슬롯 요청의 `slot_index` | `quick_slot_index`. 퀵슬롯은 칸이 아니다 |
+| `S_CHAT` | `S_CHAT_MESSAGE`. `S_CHAT`은 말한 플레이어의 응답이 된다 |
+| `C_CHAT.msg` | `C_CHAT.message` |
+| 응답의 `success`, `cause`, `error_message` | 도메인별 결과 enum |
+
+### 옮기지 않는 것
+
+| 옛 정의 | 이유 |
+|---|---|
+| `C_PING`, `S_PONG` | 보내는 코드가 없다 |
+| `C_LEAVE_GAME` | 쓰이는 요청이지만 설계로 뺀다. 클라이언트는 게임을 끌 때 이것을 보내고 바로 소켓을 닫는데, 소켓을 닫기만 해도 서버가 같은 접속 종료 경로를 탄다. 남기면 응답 없는 요청이 하나 는다 |
+| `C_ENTER_MAP`, `S_ENTER_MAP` | 클라이언트가 보내지 않는다. 맵 간 이동은 `C_USE_PORTAL`이 맡는다 |
+| `EnterType` | 서버가 룸을 고르므로 클라이언트가 입장 유형과 룸 번호를 보내지 않는다 |
+| `HitInfo`, `Effect`, `DamageType`, `EffectType` | 어디에서도 쓰지 않는다 |
+| `AttackInfo`, `AttackType` | 서버 안에서만 쓰고 패킷에 실리지 않는다. 서버의 자기 타입으로 옮긴다 |
+| `GearInfo`, `Item.gearInfo` | 클라이언트가 읽지 않는다. 강화 수치와 내구도는 서버 타입과 DB에 남는다 |
+| `RewardType`, `Reward`, `LevelUpInfo.old_level` | 클라이언트가 읽지 않는다 |
+| `Stat.is_gauge` | 어디에서도 쓰지 않는다 |
+| `PlayerInfo`의 `character_id`, `class`, `map_id`, `room_id` | 다른 클라이언트가 읽지 않는다. 서버는 진행 저장에 쓰지만, DB 계층이 Protocol 타입을 모르게 되면서 서버 타입으로 옮긴다 |
+| `PosInfo.entity_id` | `EntityInfo.entity_id`, `EntityMove.entity_id`와 겹친다 |
+| `S_ENTER_GAME.player` | 내 엔티티 정보는 `S_ENTER_ROOM`이 싣는다 |
+| `C_BUY_ITEM.count`, `C_SELL_ITEM.count` | 서버가 읽지 않는다 |
+| `C_RESPAWN.respawn_data` | 아무도 채우지도 읽지도 않는다 |
+| `S_RESPAWN`의 `respawn_type`, `room_id`, `entity_id`, `pos_info` | 앞의 둘은 클라이언트가 읽지 않는다. 엔티티와 위치는 `S_ENTER_ROOM`이 싣는다 |
+| `S_USE_ITEM.entity_id` | 응답은 요청한 플레이어에게만 간다 |
+| `RespawnType`의 `TOWN`이 아닌 값 일곱 개 | 서버의 빈 case뿐이고 클라이언트가 보내지 않는다 |
+| `EntityType`의 `PROJECTILE`, `ENV` | 어디에서도 쓰지 않는다 |
+
 ## 결정
 
 | 결정 | 틀렸다는 신호 |
@@ -108,3 +801,5 @@
 ## 기록
 
 - 2026-10-23: 설계 논의에서 위 결정을 정했다. 판단 과정과 고르지 않은 대안은 `docs/reports/2026-10-23-lobby-entry-flow-design.html`에 있다(git이 추적하지 않는다). 용어는 `CONTEXT.md`의 「접속 흐름」 절에, 되돌리기 어려운 결정은 ADR-0020과 ADR-0021에 있다. 설계 중에 서버 코드를 읽다가 찾은 결함 둘을 TD-071과 TD-072로 적었고 #287이 고친다. 백로그 26번과 32번, 7번의 B3과 B7을 이 작업이 가져갔고, 미룬 다섯 가지를 백로그 34~38번에 적었다
+- 2026-10-23: #286이 스키마를 도메인 파일 일곱 개와 옛 파일 셋으로 구성하고 생성 경로를 바꿨다. 새 파일은 번호 범위만 있고 비어 있다. 옛 `Protocol.proto`는 1000~1999 임시 범위라 지금의 패킷 번호가 그대로다. 생성 스크립트는 `Protocol/Generate.ps1`이고 서버 빌드의 재생성 타깃도 이 스크립트를 부른다. 생성기가 읽은 스키마 파일과 범위를 핸들러 헤더에 적고, 계약 테스트가 자기 표와 대조한다. 「목표 정의」 초안을 썼고 일곱 파일이 protoc와 생성기를 통과했다. 초안 승인과 PIE 확인은 사람을 기다린다
+- 2026-10-23: #286의 초안이 「결정」 표에 없던 일곱 가지를 정했다. 초안을 승인할 때 함께 본다. (1) 리스폰을 Entry 파일에 둔다. 맵이 바뀌는 리스폰은 #292의 맵 로드 절차를 따른다. (2) 사망한 룸으로 리스폰해도 룸 퇴장과 룸 입장을 거친다. (3) `S_ENTER_ROOM`을 받은 클라이언트는 앞 룸의 엔티티를 모두 지우고, 입장 유형을 쓰지 않는다. (4) 클라이언트가 게임을 끌 때 보내던 `C_LEAVE_GAME`을 옮기지 않는다. (5) 공격과 채팅은 요청한 플레이어의 응답(`S_NORMAL_ATTACK`, `S_CHAT`)과 룸에 가는 통지(`S_ATTACK`, `S_CHAT_MESSAGE`)를 나눈다. (6) 착용 외형은 Entity의 통지 `S_GEAR_APPEARANCE`가 착용한 플레이어를 포함한 룸 전체에 알린다. (7) 캐릭터 목록은 로비 접속과 로비 복귀 뒤에 통지 `S_CHARACTER_LIST`로 따로 보낸다
