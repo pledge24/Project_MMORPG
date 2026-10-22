@@ -5,26 +5,11 @@
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
 #include "TimerManager.h"
-#include "Network/P1PacketSender.h"
-#include "Core/P1GameInstance.h"
-#include "Online/P1LoginManager.h"
+#include "Auth/P1AuthClient.h"
+#include "Core/P1EntryFlowSubsystem.h"
+#include "Lobby/P1LobbySubsystem.h"
 #include "UI/Frontend/P1CharacterSlotWidget.h"
 #include "Utils/LogCategory.h"
-
-static const TMap<Protocol::CharacterClass, FString> ClassEnumToStringMappings = {
-    {Protocol::CharacterClass::CLASS_TYPE_WARRIOR, FString(TEXT("전사"))},
-    {Protocol::CharacterClass::CLASS_TYPE_MAGE, FString(TEXT("마법사"))}
-};
-
-// 서버 데이터에 직업이 더해져도 화면이 멈추지 않도록, 맵에 없는 값은 대체 이름으로 보여 준다.
-static FString GetClassDisplayName(Protocol::CharacterClass CharacterClass)
-{
-    if (const FString* ClassName = ClassEnumToStringMappings.Find(CharacterClass))
-        return *ClassName;
-
-    UE_LOG(LogP1UI, Warning, TEXT("이름이 없는 직업 값: %d"), static_cast<int32>(CharacterClass));
-    return TEXT("알 수 없음");
-}
 
 void UP1LoginMenuWidget::NativeOnInitialized()
 {
@@ -66,29 +51,53 @@ void UP1LoginMenuWidget::NativeConstruct()
     // 로그인 화면에서 시작.
     WidgetSwitcher->SetActiveWidget(LoginScreen);
 
-    // 게임 서버와 연결이 끊겨 돌아왔으면 그 사유를 보여 준다.
-    if (UP1GameInstance* GameInstance = GetGameInstance<UP1GameInstance>())
+    // 응답 구독. 떼는 것은 NativeDestruct가 한다.
+    if (UP1AuthClient* AuthClient = GetAuthClient())
+        AuthClient->OnAuthResult.AddUObject(this, &UP1LoginMenuWidget::SetResultText);
+
+    if (UP1LobbySubsystem* Lobby = GetLobby())
     {
-        const FString Notice = GameInstance->ConsumeLoginNotice();
-        if (Notice.IsEmpty() == false)
-            SetResultText(false, Notice);
+        Lobby->OnCharactersChanged.AddUObject(this, &UP1LoginMenuWidget::ShowCharacters);
+        Lobby->OnCharacterListFailed.AddUObject(this, &UP1LoginMenuWidget::ShowCharacterListFailed);
+        Lobby->OnCreateCharacterFailed.AddUObject(this, &UP1LoginMenuWidget::ShowCreateCharacterFailed);
+        Lobby->OnDeleteCharacterFailed.AddUObject(this, &UP1LoginMenuWidget::ShowDeleteCharacterFailed);
+        Lobby->OnEnterGameFailed.AddUObject(this, &UP1LoginMenuWidget::ShowEnterGameFailed);
     }
 
-    // 로그인 흐름의 응답 구독. 떼는 것은 UP1UserWidget::NativeDestruct가 한다.
-    if (UP1LoginManager* LoginManager = GetLoginManager())
+    // 게임 서버와 연결이 끊겨 돌아왔으면 그 사유를 보여 주고, 이 화면에 있는 동안 생긴 사유도 받는다.
+    UGameInstance* GameInstance = GetGameInstance();
+    if (UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr)
     {
-        LoginManager->OnAuthResult.AddUObject(this, &UP1LoginMenuWidget::SetResultText);
-        LoginManager->OnCharacterListReceived.AddUObject(this, &UP1LoginMenuWidget::FetchCharacterOverviews);
-        LoginManager->OnCreateCharacterResult.AddUObject(this, &UP1LoginMenuWidget::AddCharacterOverview);
-        LoginManager->OnDeleteCharacterResult.AddUObject(this, &UP1LoginMenuWidget::RemoveCharacterOverview);
-        LoginManager->OnEnterGameFailed.AddUObject(this, &UP1LoginMenuWidget::ShowEnterGameFailed);
+        const FString Notice = EntryFlow->ConsumeLoginNotice();
+        if (Notice.IsEmpty() == false)
+            ShowLoginNotice(Notice);
+
+        EntryFlow->OnLoginNotice.AddUObject(this, &UP1LoginMenuWidget::ShowLoginNotice);
     }
 }
 
-UP1LoginManager* UP1LoginMenuWidget::GetLoginManager() const
+void UP1LoginMenuWidget::NativeDestruct()
+{
+    // 서브시스템은 레벨보다 오래 산다. 떼지 않으면 로그인 맵을 다시 열 때마다 죽은 위젯의 항목이 쌓인다.
+    if (UGameInstance* GameInstance = GetGameInstance())
+    {
+        if (UP1AuthClient* AuthClient = GameInstance->GetSubsystem<UP1AuthClient>())
+            AuthClient->RemoveListener(this);
+
+        if (UP1LobbySubsystem* Lobby = GameInstance->GetSubsystem<UP1LobbySubsystem>())
+            Lobby->RemoveListener(this);
+
+        if (UP1EntryFlowSubsystem* EntryFlow = GameInstance->GetSubsystem<UP1EntryFlowSubsystem>())
+            EntryFlow->RemoveListener(this);
+    }
+
+    Super::NativeDestruct();
+}
+
+UP1AuthClient* UP1LoginMenuWidget::GetAuthClient() const
 {
     UGameInstance* GameInstance = GetGameInstance();
-    return GameInstance ? GameInstance->GetSubsystem<UP1LoginManager>() : nullptr;
+    return GameInstance ? GameInstance->GetSubsystem<UP1AuthClient>() : nullptr;
 }
 
 void UP1LoginMenuWidget::SetResultText(bool bSuccess, const FString& Message)
@@ -97,6 +106,11 @@ void UP1LoginMenuWidget::SetResultText(bool bSuccess, const FString& Message)
 
     ResultText->SetColorAndOpacity(FSlateColor(Color));
     ResultText->SetText(FText::FromString(Message));
+}
+
+void UP1LoginMenuWidget::ShowLoginNotice(const FString& Notice)
+{
+    SetResultText(false, Notice);
 }
 
 void UP1LoginMenuWidget::LockButtonBriefly(UButton* Button, FTimerHandle& LockTimer)
@@ -111,9 +125,9 @@ void UP1LoginMenuWidget::LockButtonBriefly(UButton* Button, FTimerHandle& LockTi
 
 void UP1LoginMenuWidget::OnLoginButtonClicked()
 {
-    if (UP1LoginManager* LoginManager = GetLoginManager())
+    if (UP1AuthClient* AuthClient = GetAuthClient())
     {
-        LoginManager->RequestLogin(UsernameBox->GetText().ToString(), PasswordBox->GetText().ToString());
+        AuthClient->RequestLogin(UsernameBox->GetText().ToString(), PasswordBox->GetText().ToString());
     }
 
     LockButtonBriefly(LoginButton, LoginButtonLockTimer);
@@ -121,46 +135,40 @@ void UP1LoginMenuWidget::OnLoginButtonClicked()
 
 void UP1LoginMenuWidget::OnRegisterButtonClicked()
 {
-    if (UP1LoginManager* LoginManager = GetLoginManager())
+    if (UP1AuthClient* AuthClient = GetAuthClient())
     {
-        LoginManager->RequestRegister(UsernameBox->GetText().ToString(), PasswordBox->GetText().ToString());
+        AuthClient->RequestRegister(UsernameBox->GetText().ToString(), PasswordBox->GetText().ToString());
     }
 
     LockButtonBriefly(RegisterButton, RegisterButtonLockTimer);
 }
 
-void UP1LoginMenuWidget::FetchCharacterOverviews(const Protocol::S_LOGIN& pkt)
+UP1LobbySubsystem* UP1LoginMenuWidget::GetLobby() const
 {
-    // 실패 응답은 서버가 비워서 보내므로 슬롯 수가 0이다. 그대로 적용하면 슬롯이 모두 숨은 선택 화면이 뜬다.
-    if (pkt.success() == false)
-    {
-        UE_LOG(LogP1UI, Warning, TEXT("서버가 캐릭터 목록을 불러오지 못함"));
-        SetResultText(false, TEXT("캐릭터 목록을 불러오지 못했습니다."));
-        return;
-    }
-
-    // 서버가 보낸 캐릭터 요약을 화면용으로 옮긴다.
-    CharacterOverviews.Empty();
-
-    for (auto& Character : pkt.characters())
-    {
-        FP1CharacterOverview CharacterOverview;
-        CharacterOverview.CharacterId = Character.character_id();
-        CharacterOverview.CharacterClass = GetClassDisplayName(Character.class_());
-        CharacterOverview.CharacterName = UTF8_TO_TCHAR(Character.name().c_str());
-        CharacterOverview.CharacterLevel = Character.level();
-
-        CharacterOverviews.Add(CharacterOverview);
-    }
-
-    // DisplayCharacterOverviews가 보이는 슬롯 수까지만 채우므로 슬롯 수를 먼저 적용한다.
-    ApplyCharacterSlotCount(pkt.character_slot_count());
-    DisplayCharacterOverviews();
+    UGameInstance* GameInstance = GetGameInstance();
+    return GameInstance ? GameInstance->GetSubsystem<UP1LobbySubsystem>() : nullptr;
 }
 
-void UP1LoginMenuWidget::ApplyCharacterSlotCount(int32 SlotCount)
+void UP1LoginMenuWidget::ShowCharacters()
 {
-    CharacterSlotCount = SlotCount;
+    UP1LobbySubsystem* Lobby = GetLobby();
+    if (Lobby == nullptr)
+        return;
+
+    // DisplayCharacters가 보이는 슬롯 수까지만 채우므로 슬롯 수를 먼저 적용한다.
+    ApplyCharacterSlotCount();
+    DisplayCharacters();
+}
+
+void UP1LoginMenuWidget::ShowCharacterListFailed()
+{
+    SetResultText(false, TEXT("캐릭터 목록을 불러오지 못했습니다."));
+}
+
+void UP1LoginMenuWidget::ApplyCharacterSlotCount()
+{
+    const UP1LobbySubsystem* Lobby = GetLobby();
+    const int32 CharacterSlotCount = Lobby ? Lobby->GetCharacterSlotCount() : 0;
 
     // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 0 이하는 이 필드를 모르는 서버가 보낸 기본값이다.
     if (CharacterSlots.Num() < CharacterSlotCount || CharacterSlotCount <= 0)
@@ -184,18 +192,23 @@ void UP1LoginMenuWidget::ApplyCharacterSlotCount(int32 SlotCount)
 
 int32 UP1LoginMenuWidget::GetVisibleSlotCount() const
 {
-    return FMath::Min(CharacterSlotCount, CharacterSlots.Num());
+    const UP1LobbySubsystem* Lobby = GetLobby();
+    return Lobby ? FMath::Min(Lobby->GetCharacterSlotCount(), CharacterSlots.Num()) : 0;
 }
 
-void UP1LoginMenuWidget::DisplayCharacterOverviews()
+void UP1LoginMenuWidget::DisplayCharacters()
 {
     for (UP1CharacterSlotWidget* CharacterSlot : CharacterSlots)
         CharacterSlot->Clear();
 
     // 보이는 슬롯보다 많은 캐릭터는 보이지 않는다.
-    const int32 VisibleCount = FMath::Min(CharacterOverviews.Num(), GetVisibleSlotCount());
-    for (int32 i = 0; i < VisibleCount; i++)
-        CharacterSlots[i]->ShowCharacter(CharacterOverviews[i]);
+    if (UP1LobbySubsystem* Lobby = GetLobby())
+    {
+        const TArray<FP1LobbyCharacter>& Characters = Lobby->GetCharacters();
+        const int32 VisibleCount = FMath::Min(Characters.Num(), GetVisibleSlotCount());
+        for (int32 i = 0; i < VisibleCount; i++)
+            CharacterSlots[i]->ShowCharacter(Characters[i]);
+    }
 
     WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
 }
@@ -213,6 +226,16 @@ bool UP1LoginMenuWidget::IsSelectedSlotOccupied() const
     return CharacterSlots.IsValidIndex(SelectedSlotIndex) && CharacterSlots[SelectedSlotIndex]->HasCharacter();
 }
 
+int64 UP1LoginMenuWidget::GetSelectedCharacterId() const
+{
+    // 슬롯 번호가 곧 목록의 순번이다. DisplayCharacters가 목록을 앞 슬롯부터 채운다.
+    const UP1LobbySubsystem* Lobby = GetLobby();
+    if (Lobby == nullptr || Lobby->GetCharacters().IsValidIndex(SelectedSlotIndex) == false)
+        return -1;
+
+    return Lobby->GetCharacters()[SelectedSlotIndex].CharacterId;
+}
+
 void UP1LoginMenuWidget::ShowDescription(const FText& Message)
 {
     CS_Description->SetText(Message);
@@ -226,33 +249,17 @@ void UP1LoginMenuWidget::ShowDescription(const FText& Message)
 
 void UP1LoginMenuWidget::ShowEnterGameFailed()
 {
-    UE_LOG(LogP1UI, Warning, TEXT("서버가 게임 입장을 거절함"));
-
     UTextBlock* TargetText = CS_ResultText ? CS_ResultText.Get() : ResultText.Get();
     TargetText->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
     TargetText->SetText(FText::FromString(TEXT("게임에 입장하지 못했습니다. 캐릭터 데이터를 확인해 주세요.")));
     TargetText->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
-void UP1LoginMenuWidget::SendEnterGamePkt()
-{
-    if (CharacterOverviews.IsValidIndex(SelectedSlotIndex) == false)
-    {
-        return;
-    }
-
-    FP1CharacterOverview& CharacterOverview = CharacterOverviews[SelectedSlotIndex];
-
-    Protocol::C_ENTER_GAME pkt;
-    pkt.set_character_id(CharacterOverview.CharacterId);
-
-    FP1PacketSender::Send(this, pkt);
-}
-
 void UP1LoginMenuWidget::OnCreateButtonClicked()
 {
     // 서버도 생성 요청을 같은 슬롯 수로 막는다. 여기서 먼저 막는 것은 생성 화면을 열지 않기 위해서다.
-    if (CharacterOverviews.Num() >= GetVisibleSlotCount())
+    UP1LobbySubsystem* Lobby = GetLobby();
+    if (Lobby == nullptr || Lobby->GetCharacters().Num() >= GetVisibleSlotCount())
     {
         ShowDescription(FText::FromString(TEXT("캐릭터가 꽉 차있습니다!")));
         return;
@@ -276,9 +283,11 @@ void UP1LoginMenuWidget::OnDeleteButtonClicked()
 
 void UP1LoginMenuWidget::OnGameStartButtonClicked()
 {
-    if (IsSelectedSlotOccupied())
+    const int64 CharacterId = GetSelectedCharacterId();
+    if (IsSelectedSlotOccupied() && CharacterId != -1)
     {
-        SendEnterGamePkt();
+        if (UP1LobbySubsystem* Lobby = GetLobby())
+            Lobby->SelectCharacter(CharacterId);
         return;
     }
 
@@ -287,44 +296,24 @@ void UP1LoginMenuWidget::OnGameStartButtonClicked()
 
 void UP1LoginMenuWidget::ResetCharacterCreateScreen()
 {
-    SelectedClassId = -1;
+    SelectedClass = EP1CharacterClass::None;
     SelectedClassText->SetText(FText::FromString(TEXT("선택 안 함")));
     CC_DescriptionText->SetText(FText::GetEmpty());
     CC_CharacterNameText->SetText(FText::GetEmpty());
 }
 
-void UP1LoginMenuWidget::SelectClass(int32 ClassId)
+void UP1LoginMenuWidget::SelectClass(EP1CharacterClass CharacterClass)
 {
-    SelectedClassId = ClassId;
-    SelectedClassText->SetText(FText::FromString(GetClassDisplayName(Protocol::CharacterClass(ClassId))));
+    SelectedClass = CharacterClass;
+    SelectedClassText->SetText(FText::FromString(UP1CharacterSlotWidget::GetClassDisplayName(CharacterClass)));
 }
 
-void UP1LoginMenuWidget::AddCharacterOverview(const Protocol::S_CREATE_CHARACTER& pkt)
+void UP1LoginMenuWidget::ShowCreateCharacterFailed(const FString& Cause)
 {
-    if (pkt.success() == false)
-    {
-        FString Cause = UTF8_TO_TCHAR(pkt.cause().c_str());
-        CC_DescriptionText->SetText(FText::FromString(Cause));
-        return;
-    }
-
-    // 응답에는 캐릭터 id만 오므로 이름과 직업은 요청할 때 적어 둔 값을 쓴다. 새 캐릭터는 1레벨에서 시작한다.
-    {
-        FP1CharacterOverview CharacterOverview;
-        CharacterOverview.CharacterId = pkt.character_id();
-        CharacterOverview.CharacterClass = GetClassDisplayName(Protocol::CharacterClass(RequestedClassId));
-        CharacterOverview.CharacterName = RequestedCharacterName;
-        CharacterOverview.CharacterLevel = 1;
-
-        UE_LOG(LogP1UI, Log, TEXT("캐릭터 요약 수: %d"), CharacterOverviews.Num());
-        CharacterOverviews.Add(CharacterOverview);
-        UE_LOG(LogP1UI, Log, TEXT("캐릭터 요약 수: %d"), CharacterOverviews.Num());
-    }
-
-    DisplayCharacterOverviews();
+    CC_DescriptionText->SetText(FText::FromString(Cause));
 }
 
-void UP1LoginMenuWidget::SendCreateCharacterPkt(const FString& CharacterName, int32 CharacterClassId)
+void UP1LoginMenuWidget::RequestCreateCharacter(const FString& CharacterName, EP1CharacterClass CharacterClass)
 {
     if (CharacterName.Len() <= 0)
     {
@@ -332,39 +321,29 @@ void UP1LoginMenuWidget::SendCreateCharacterPkt(const FString& CharacterName, in
         return;
     }
 
-    if (CharacterClassId == -1)
+    if (CharacterClass == EP1CharacterClass::None)
     {
         CC_DescriptionText->SetText(FText::FromString(TEXT("직업을 선택하지 않았습니다.")));
         return;
     }
 
-    Protocol::CharacterOverview* CharacterOverview = new Protocol::CharacterOverview();
-    CharacterOverview->set_class_((Protocol::CharacterClass)CharacterClassId);
-    CharacterOverview->set_name(TCHAR_TO_UTF8(*CharacterName));
-
-    Protocol::C_CREATE_CHARACTER pkt;
-    pkt.set_allocated_character(CharacterOverview);
-
-    // 응답에는 캐릭터 id만 온다. 응답을 기다리는 동안 입력 칸이 바뀌어도 서버에 보낸 값을 목록에 넣는다.
-    RequestedCharacterName = CharacterName;
-    RequestedClassId = CharacterClassId;
-
-    FP1PacketSender::Send(this, pkt);
+    if (UP1LobbySubsystem* Lobby = GetLobby())
+        Lobby->CreateCharacter(CharacterName, CharacterClass);
 }
 
 void UP1LoginMenuWidget::OnWarriorButtonClicked()
 {
-    SelectClass(Protocol::CharacterClass::CLASS_TYPE_WARRIOR);
+    SelectClass(EP1CharacterClass::Warrior);
 }
 
 void UP1LoginMenuWidget::OnMagicianButtonClicked()
 {
-    SelectClass(Protocol::CharacterClass::CLASS_TYPE_MAGE);
+    SelectClass(EP1CharacterClass::Mage);
 }
 
 void UP1LoginMenuWidget::OnCreateConfirmButtonClicked()
 {
-    SendCreateCharacterPkt(CC_CharacterNameText->GetText().ToString(), SelectedClassId);
+    RequestCreateCharacter(CC_CharacterNameText->GetText().ToString(), SelectedClass);
 }
 
 void UP1LoginMenuWidget::OnCreateCancelButtonClicked()
@@ -372,57 +351,29 @@ void UP1LoginMenuWidget::OnCreateCancelButtonClicked()
     WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
 }
 
-void UP1LoginMenuWidget::RemoveCharacterOverview(const Protocol::S_DELETE_CHARACTER& pkt)
+void UP1LoginMenuWidget::ShowDeleteCharacterFailed()
 {
-    bool bSuccess = pkt.success();
-    if (bSuccess == false)
-    {
-        WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
-        ShowDescription(FText::FromString(TEXT("서버 오류: 캐릭터 삭제 실패")));
-        return;
-    }
-
-    int64 CharacterId = pkt.character_id();
-    if (CharacterOverviews.IsValidIndex(SelectedSlotIndex) && CharacterOverviews[SelectedSlotIndex].CharacterId == CharacterId)
-    {
-        CharacterOverviews.RemoveAt(SelectedSlotIndex);
-    }
-    else
-    {
-        for (int32 i = 0; i < CharacterOverviews.Num(); i++)
-        {
-            FP1CharacterOverview& CharacterOverview = CharacterOverviews[i];
-            if (CharacterOverview.CharacterId == CharacterId)
-            {
-                CharacterOverviews.RemoveAt(i);
-                break;
-            }
-        }
-    }
-
-    DisplayCharacterOverviews();
+    WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
+    ShowDescription(FText::FromString(TEXT("서버 오류: 캐릭터 삭제 실패")));
 }
 
-void UP1LoginMenuWidget::SendDeleteCharacterPkt()
+void UP1LoginMenuWidget::RequestDeleteCharacter()
 {
-    if (CharacterOverviews.IsValidIndex(SelectedSlotIndex) == false)
+    const int64 CharacterId = GetSelectedCharacterId();
+    if (CharacterId == -1)
     {
         WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
         ShowDescription(FText::FromString(TEXT("삭제할 캐릭터가 없습니다.")));
         return;
     }
 
-    FP1CharacterOverview& CharacterOverview = CharacterOverviews[SelectedSlotIndex];
-
-    Protocol::C_DELETE_CHARACTER pkt;
-    pkt.set_character_id(CharacterOverview.CharacterId);
-
-    FP1PacketSender::Send(this, pkt);
+    if (UP1LobbySubsystem* Lobby = GetLobby())
+        Lobby->DeleteCharacter(CharacterId);
 }
 
 void UP1LoginMenuWidget::OnDeleteConfirmButtonClicked()
 {
-    SendDeleteCharacterPkt();
+    RequestDeleteCharacter();
 }
 
 void UP1LoginMenuWidget::OnDeleteCancelButtonClicked()

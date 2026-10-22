@@ -2,13 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "UI/P1UserWidget.h"
+#include "Lobby/P1CharacterClass.h"
 #include "P1CharacterSlotWidget.generated.h"
 
 class UButton;
 class UEditableTextBox;
 class UImage;
 class UTextBlock;
-struct FP1CharacterOverview;
+struct FP1LobbyCharacter;
 
 DECLARE_DELEGATE_OneParam(FOnCharacterSlotClicked, int32 /*SlotId*/);
 
@@ -32,7 +33,7 @@ public:
     /** 클릭 알림에 실을 슬롯 번호를 정한다. */
     void SetSlotId(int32 InSlotId);
 
-    void ShowCharacter(const FP1CharacterOverview& Character);
+    void ShowCharacter(const FP1LobbyCharacter& Character);
 
     /** 캐릭터가 없는 슬롯으로 되돌린다. */
     void Clear();
@@ -41,6 +42,9 @@ public:
     bool HasCharacter() const;
 
     FOnCharacterSlotClicked OnSlotClicked;
+
+    /** 화면에 보여 줄 직업 이름. 이름이 없는 직업이면 대체 이름. */
+    static FString GetClassDisplayName(EP1CharacterClass CharacterClass);
 
 private:
     UFUNCTION()
