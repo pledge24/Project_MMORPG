@@ -1,6 +1,5 @@
 #include "Network/P1ConnectionSubsystem.h"
 #include "Network/PacketSession.h"
-#include "Network/P1NetworkSettings.h"
 #include "Network/ClientPacketHandler.h"
 #include "Sockets.h"
 #include "SocketSubsystem.h"
@@ -35,40 +34,41 @@ void UP1ConnectionSubsystem::Deinitialize()
     Super::Deinitialize();
 }
 
-void UP1ConnectionSubsystem::Connect(const FString& AuthTicket)
+void UP1ConnectionSubsystem::Connect(const FString& Ip, int32 Port)
 {
     // 로그인을 다시 누르면 이 함수가 또 불린다. 이전 연결을 정리하지 않으면 소켓이 샌다.
     Close();
 
+    FIPv4Address ParsedIp;
+    if (FIPv4Address::Parse(Ip, ParsedIp) == false)
+    {
+        UE_LOG(LogP1Network, Error, TEXT("게임 서버 주소를 해석하지 못함: %s"), *Ip);
+        OnConnectFailed.Broadcast();
+        return;
+    }
+
     Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("Stream"), TEXT("Client Socket"));
 
-    const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
-
-    FIPv4Address Ip;
-    FIPv4Address::Parse(NetworkSettings->GameServerIp, Ip);
-
     TSharedRef<FInternetAddr> InternetAddr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
-    InternetAddr->SetIp(Ip.Value);
-    InternetAddr->SetPort(NetworkSettings->GameServerPort);
+    InternetAddr->SetIp(ParsedIp.Value);
+    InternetAddr->SetPort(Port);
 
     const bool bConnected = Socket->Connect(*InternetAddr);
     if (bConnected == false)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("Fail To Connect GameServer")));
+        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("게임 서버에 연결하지 못함")));
 
         Close();
+        OnConnectFailed.Broadcast();
         return;
     }
 
-    GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Success To Connect GameServer")));
+    GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("게임 서버에 연결함")));
 
     Session = MakeShared<PacketSession>(Socket, this);
     Session->Run();
 
-    // 인증 서버가 발급한 인증 티켓으로 게임 서버에 로그인한다. 티켓은 게임 서버가 한 번 쓰고 지운다.
-    Protocol::C_LOGIN Pkt;
-    Pkt.set_access_token(TCHAR_TO_UTF8(*AuthTicket));
-    Send(ClientPacketHandler::MakeSerializedPacket(Pkt));
+    OnConnected.Broadcast();
 }
 
 void UP1ConnectionSubsystem::Close()

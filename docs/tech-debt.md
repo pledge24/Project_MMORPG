@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 30개 (높음 1 · 중간 1 · 낮음 28) · 다음 번호 TD-073
+항목 31개 (높음 1 · 중간 1 · 낮음 29) · 다음 번호 TD-074
 
 ## 작성 방법
 
@@ -431,6 +431,19 @@ UBT는 테스트 파일 여럿을 한 번역 단위로 묶어 컴파일한다. �
 
 **버그 발생 가능성 증가** — 이름으로는 값을 전부 검증해야 하는 입구인지 구별되지 않는다. 내부에서 부르는 핸들러로 읽고 검증을 빼먹을 수 있다.
 
+## TD-073 수신 펌프의 주석이 없는 함수 `PacketSession::GetGameInstance`를 가리킨다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Source/P1/Network/P1ConnectionSubsystem.cpp` 127줄
+> 등록일: 2026년 10월 23일
+
+`TickRecvPump`의 주석은 패킷 핸들러가 「세션에서 얻은 게임 인스턴스를 쓴다(PacketSession::GetGameInstance)」고 적는다.
+`PacketSession`에는 그 함수가 없고, 핸들러는 `PacketSession::GetWorld()`로 얻은 `UWorld`에서 게임 인스턴스를 얻는다.
+클라이언트 로그인 구조를 나누면서 이 파일을 읽다가 찾았다.
+
+### 영향
+
+**개발 속도 저하** — 핸들러가 게임 인스턴스를 얻는 경로를 찾는 사람이 없는 함수를 찾아 헤맨다.
+
 ## TD-002 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/Player.cpp` (`ProcessBuyItem`, `ProcessSellItem`)
@@ -447,12 +460,12 @@ UBT는 테스트 파일 여럿을 한 번역 단위로 묶어 컴파일한다. �
 
 ## TD-033 클라이언트가 맵 간 이동을 요청하지 않아 `S_ENTER_MAP` 경로가 실행되지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/Core/P1GameInstance.cpp` 42줄 (`OpenInGameMap`) · `P1/Source/P1/Network/ClientPacketHandler.cpp` 60~67줄 (`Handle_S_ENTER_MAP`)
+> 위치: `P1/Source/P1/Core/P1EntryFlowSubsystem.cpp` 151~155줄 (`EnterMapLoad`) · `P1/Source/P1/Network/ClientPacketHandler.cpp` 60~67줄 (`Handle_S_ENTER_MAP`)
 > 등록일: 2026년 10월 5일
 
 클라이언트 코드는 생성물 말고는 `C_ENTER_MAP`을 보내는 곳이 없다. 서버의 `S_ENTER_MAP`은 `Handle_C_ENTER_MAP`의 응답이므로,
-`Handle_S_ENTER_MAP` → `UP1MyPlayerData::HandleEnterMap` → `OnMapEntered` → `OpenInGameMap` 경로는 지금 실행되지 않는다.
-`OpenInGameMap`도 맵 번호와 무관하게 `"L_InGameMap"`을 연다(주석 「임시」). 첫 입장은 `LoadLastState`가 `_enteringRoomId`를
+`Handle_S_ENTER_MAP` → `UP1MyPlayerData::HandleEnterMap` → `OnMapEntered` → `UP1EntryFlowSubsystem::EnterMapLoad` 경로는
+지금 실행되지 않는다. `EnterMapLoad`도 맵 번호와 무관하게 `"L_InGameMap"`을 연다. 첫 입장은 `LoadLastState`가 `_enteringRoomId`를
 채워 두므로 동작한다. 코드를 읽고 판단했다.
 
 ### 영향

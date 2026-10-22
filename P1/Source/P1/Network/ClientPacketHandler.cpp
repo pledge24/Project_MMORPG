@@ -43,8 +43,8 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 	return true;
 }
 
-// 로그인 계열(S_LOGIN, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
-// Online/P1LoginPacketHandlers.cpp에 있다. Network/는 Online/을 부르지 않는다.
+// 로비 계열(S_LOGIN, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
+// Lobby/P1LobbyPacketHandlers.cpp에 있다. Network/는 Lobby/를 부르지 않는다.
 
 bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
 {
