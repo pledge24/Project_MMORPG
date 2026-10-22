@@ -25,6 +25,9 @@ namespace GameEntry
      */
     Protocol::S_ENTER_GAME Enter(DBConnection& conn, const GameSessionRef& session, int64 userId, int64 characterId);
 
-    /** progress로 플레이어를 만들어 session에 등록한다. 검증에 실패하거나 이미 플레이어가 있으면 세션을 건드리지 않고 nullptr. */
-    PlayerRef SpawnPlayer(const GameSessionRef& session, int64 userId, const PlayerProgress& progress);
+    /**
+     * progress로 플레이어를 만들어 session에 등록하고 enterRoomId 룸으로 들어갈 준비를 한다.
+     * 검증에 실패하거나 이미 플레이어가 있으면 세션을 건드리지 않고 nullptr.
+     */
+    PlayerRef SpawnPlayer(const GameSessionRef& session, int64 userId, const PlayerProgress& progress, int32 enterRoomId);
 }

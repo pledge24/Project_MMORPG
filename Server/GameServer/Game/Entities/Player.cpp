@@ -46,7 +46,7 @@ bool Player::Init(const SpawnParams& params)
     _quickSlots = make_shared<QuickSlotComponent>(self);
 
     if (params.progress != nullptr)
-        return ApplyProgress(*params.progress) && OnLoaded();
+        return ApplyProgress(*params.progress, params.enterRoomId) && OnLoaded();
 
 	return true;
 }
@@ -85,43 +85,42 @@ bool Player::OnLoaded()
 	return true;
 }
 
-bool Player::ApplyProgress(const PlayerProgress& progress)
+bool Player::ApplyProgress(const PlayerProgress& progress, int32 enterRoomId)
 {
-    const Protocol::PlayerInfo& playerInfo = progress.playerInfo;
-    const int64 characterId = playerInfo.character_id();
+    const int64 characterId = progress.characterId;
     _playerInfo->set_character_id(characterId);
-    _playerInfo->set_class_(playerInfo.class_());
-    _playerInfo->set_name(playerInfo.name());
-    _playerInfo->set_level(playerInfo.level());
-    _playerInfo->set_room_id(playerInfo.room_id());
+    _playerInfo->set_class_(static_cast<Protocol::CharacterClass>(progress.classId));
+    _playerInfo->set_name(progress.name);
+    _playerInfo->set_level(progress.level);
 
     // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 _enteringRoomId를 채운다.
     // 채우지 않으면 최초 입장(INITIAL) 검증이 _enteringRoomId == -1로 실패한다.
-    OnEnterMap(playerInfo.map_id(), playerInfo.room_id());
+    OnEnterMap(progress.mapId, enterRoomId);
 
-    Protocol::PosInfo spawnPosInfo = progress.posInfo;
+    Protocol::PosInfo spawnPosInfo;
+    spawnPosInfo.mutable_pos()->set_x(progress.pos.x);
+    spawnPosInfo.mutable_pos()->set_y(progress.pos.y);
+    spawnPosInfo.mutable_pos()->set_z(progress.pos.z);
+    spawnPosInfo.set_yaw(progress.yaw);
     spawnPosInfo.set_entity_id(GetEntityId());
     spawnPosInfo.set_state(Protocol::MOVE_STATE_IDLE);
     SetPosInfo(spawnPosInfo);
 
-    for (const auto& [statType, value] : progress.statInfo.info())
-        SetStatValue(static_cast<Protocol::StatType>(statType), value);
+    SetStatValue(Protocol::STAT_TYPE_HP, progress.hp);
+    SetStatValue(Protocol::STAT_TYPE_MP, progress.mp);
 
     // DB의 경험치는 누적값이고 레벨은 캐릭터 목록에 보일 사본이다. 레벨은 누적 경험치와 레벨 표로 다시 정한다.
     // 레벨 표가 없는 직업은 OnLoaded의 스탯 계산이 거절한다.
     if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
     {
-        const auto& loadedStats = progress.statInfo.info();
-        const auto loadedExpIt = loadedStats.find(Protocol::STAT_TYPE_EXP);
-        const int64 loadedExp = loadedExpIt != loadedStats.end() ? loadedExpIt->second : 0;
-
+        const int64 loadedExp = progress.totalExp;
         const int64 clampedExp = Leveling::ClampTotalExp(*classLevelTable, loadedExp);
         if (clampedExp != loadedExp)
             GLogger->Warning("캐릭터 {}의 누적 경험치 {}가 범위를 벗어나 {}로 자릅니다", characterId, loadedExp, clampedExp);
 
         const LevelExp levelExp = SetTotalExp(*classLevelTable, clampedExp);
-        if (levelExp.level != playerInfo.level())
-            GLogger->Info("캐릭터 {}의 저장된 레벨 {}이 누적 경험치로 계산한 레벨 {}과 달라 계산값을 씁니다", characterId, playerInfo.level(), levelExp.level);
+        if (levelExp.level != progress.level)
+            GLogger->Info("캐릭터 {}의 저장된 레벨 {}이 누적 경험치로 계산한 레벨 {}과 달라 계산값을 씁니다", characterId, progress.level, levelExp.level);
 
         _playerInfo->set_level(levelExp.level);
     }
@@ -440,14 +439,14 @@ void Player::OnDie(EntityRef attacker)
 
 void Player::OnEnterMap(int32 mapId, int32 roomId)
 {
-    _playerInfo->set_map_id(mapId);
+    _mapId = mapId;
     _enteringRoomId = roomId;
 }
 
 void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos)
 {
     _enteringRoomId = -1;
-    _playerInfo->set_room_id(enterRoom->GetRoomId());
+    _roomId = enterRoom->GetRoomId();
 
     if(enterPos.has_value())
     {
@@ -676,11 +675,21 @@ PlayerSaveData Player::MakeSaveData() const
 {
     PlayerSaveData data;
     data.userId = _userId;
-    data.progress.playerInfo.CopyFrom(*_playerInfo);
-    data.progress.posInfo.CopyFrom(*_posInfo);
-    data.progress.statInfo.CopyFrom(*_statInfo);
+    data.progress.characterId = _playerInfo->character_id();
+    data.progress.classId = _playerInfo->class_();
+    data.progress.name = _playerInfo->name();
+    data.progress.level = _playerInfo->level();
+    data.progress.mapId = _mapId;
+    data.progress.pos = vector3D(_posInfo->pos().x(), _posInfo->pos().y(), _posInfo->pos().z());
+    data.progress.yaw = _posInfo->yaw();
     // DB에는 누적 경험치를 저장한다. 스탯의 경험치는 클라이언트에 보낼 레벨 안의 값이다.
-    (*data.progress.statInfo.mutable_info())[Protocol::STAT_TYPE_EXP] = _totalExp;
+    data.progress.totalExp = _totalExp;
+    // DB 열이 INT다. 최대치가 레벨 표의 int32 값에서 오므로 넘지 않는다.
+    const auto& stats = _statInfo->info();
+    const auto hpIt = stats.find(Protocol::STAT_TYPE_HP);
+    const auto mpIt = stats.find(Protocol::STAT_TYPE_MP);
+    data.progress.hp = hpIt != stats.end() ? static_cast<int32>(hpIt->second) : 0;
+    data.progress.mp = mpIt != stats.end() ? static_cast<int32>(mpIt->second) : 0;
     data.progress.gold = _gold;
     _inventory->CollectItems(data.progress.items);
     _equipment->CollectItems(data.progress.items);
@@ -700,6 +709,6 @@ void Player::ApplyTownRespawnForSave(const TownRespawn& town)
     ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
 
     // DB에는 룸이 아니라 맵과 좌표를 저장한다. 맵을 바꾸지 않으면 다음 입장이 죽은 맵의 마을 좌표에서 룸을 찾는다.
-    _playerInfo->set_map_id(town.mapId);
-    _playerInfo->set_room_id(town.roomId);
+    _mapId = town.mapId;
+    _roomId = town.roomId;
 }

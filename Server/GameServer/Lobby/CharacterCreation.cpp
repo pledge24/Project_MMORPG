@@ -1,12 +1,13 @@
 #include "Core/pch.h"
 #include "Lobby/CharacterCreation.h"
 #include "Utils/EncodingConverter.h"
+#include "Lobby/Data/LobbyData.h"
 
 optional<string> CharacterCreation::Validate(const Protocol::CharacterOverview& character)
 {
-    // 레벨 표가 없는 직업은 데이터가 아직 없는 직업이다. NONE은 직업이 아니므로 누가 표를 넣어도 막는다.
+    // 로비 표에 없는 직업은 아직 만들 수 없는 직업이다. NONE은 직업이 아니므로 누가 표에 넣어도 막는다.
     if (character.class_() == Protocol::CLASS_TYPE_NONE
-        || Gamedata::FindClassLevelTable(character.class_()) == nullptr)
+        || LobbyData::IsCreatableClass(character.class_()) == false)
     {
         return string("선택할 수 없는 직업입니다.");
     }

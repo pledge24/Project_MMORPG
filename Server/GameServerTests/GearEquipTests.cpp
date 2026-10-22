@@ -101,15 +101,17 @@ protected:
 
     ItemSlotRequest AddSwordToInventory() { return AddToInventory(SWORD_TEMPLATE_ID); }
 
-    // 저장 사본을 DB가 불러오는 것처럼 새 플레이어에 채운다. DB는 레벨, 직업, 현재 HP와 MP, 공격력, 장착 장비만 돌려준다.
+    // 저장 사본을 DB가 불러오는 것처럼 새 플레이어에 채운다. DB는 레벨, 직업, 현재 HP와 MP, 장착 장비만 돌려주고 공격력은 다시 계산한다.
     PlayerRef LoadFromSaveData(const PlayerSaveData& data)
     {
         PlayerRef loaded = EntityFactory::Create<Player>(PlayerSpawnParams());
-        PlayerTestAccess::PlayerInfo(*loaded).set_class_(data.progress.playerInfo.class_());
-        PlayerTestAccess::PlayerInfo(*loaded).set_level(data.progress.playerInfo.level());
+        PlayerTestAccess::PlayerInfo(*loaded).set_class_(static_cast<Protocol::CharacterClass>(data.progress.classId));
+        PlayerTestAccess::PlayerInfo(*loaded).set_level(data.progress.level);
 
-        for (Protocol::StatType statType : { Protocol::STAT_TYPE_HP, Protocol::STAT_TYPE_MP, Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
-            loaded->SetStatValue(statType, data.progress.statInfo.info().at(statType));
+        loaded->SetStatValue(Protocol::STAT_TYPE_HP, data.progress.hp);
+        loaded->SetStatValue(Protocol::STAT_TYPE_MP, data.progress.mp);
+        for (Protocol::StatType statType : { Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
+            loaded->SetStatValue(statType, 0);
 
         for (const PlacedItem& placed : data.progress.items)
         {

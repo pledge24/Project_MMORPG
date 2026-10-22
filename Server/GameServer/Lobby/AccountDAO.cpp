@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include "Lobby/AccountDAO.h"
 #include "DB/DAOCommon.h"
+#include "Lobby/Data/LobbyData.h"
 
 int32 AccountDAO::RecordLogin(DBConnection& conn, int64 accountId)
 {
@@ -10,7 +11,7 @@ int32 AccountDAO::RecordLogin(DBConnection& conn, int64 accountId)
     struct BindObject
     {
         BindObject(DBBind<PARAMS, COLS>& dbBind, int64 accountId)
-            : _accountId(accountId), _defaultSlotCount(Gamedata::GetCharacterCreation().defaultCharacterSlotCount)
+            : _accountId(accountId), _defaultSlotCount(LobbyData::GetDefaultCharacterSlotCount())
         {
             BindParam(dbBind);
             BindCol(dbBind);

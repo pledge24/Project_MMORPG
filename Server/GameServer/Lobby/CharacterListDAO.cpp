@@ -7,7 +7,7 @@
 // 이름을 읽는 버퍼는 열 크기로 잡는다. 생성 규칙이 열보다 긴 이름을 받으면 INSERT가 이름을 자르거나 실패한다.
 static_assert(CharacterCreation::MAX_NAME_LENGTH == CHARACTER_NAME_COLUMN_LENGTH, "캐릭터 이름 길이 제한과 Character.Name 열 크기가 다르다");
 
-void CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 accountId, OUT vector<Protocol::CharacterOverview>& characters)
+void CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 accountId, OUT vector<CharacterListRow>& characters)
 {
     const int PARAMS = 1;
     const int COLS = 4;
@@ -60,45 +60,24 @@ void CharacterListDAO::LoadCharacterList(DBConnection& conn, int64 accountId, OU
 
     while (conn.Fetch())
     {
-        Protocol::CharacterOverview* character = &characters.emplace_back();
-
-        character->set_character_id(bindObject._characterId);
-        character->set_class_((Protocol::CharacterClass)bindObject._classId);
-        character->set_name(EncodingConverter::WCharToString(bindObject._name));
-        character->set_level(bindObject._level);
+        CharacterListRow& character = characters.emplace_back();
+        character.characterId = bindObject._characterId;
+        character.classId = bindObject._classId;
+        character.name = EncodingConverter::WCharToString(bindObject._name);
+        character.level = bindObject._level;
     }
 }
 
-CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int64 accountId, int64 characterId, const Protocol::CharacterOverview& character)
+CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int64 accountId, int64 characterId, const string& name, int32 classId)
 {
-    const int PARAMS = 15;
+    const int PARAMS = 6;
     const int COLS = 1;
 
     struct BindObject
     {
-        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 accountId, int64 characterId, const Protocol::CharacterOverview& character)
-            : _accountId(accountId), _characterId(characterId), _classId(character.class_()),
-              _name(EncodingConverter::StringToWString(character.name()))
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 accountId, int64 characterId, const string& name, int32 classId)
+            : _accountId(accountId), _characterId(characterId), _classId(classId), _name(EncodingConverter::StringToWString(name))
         {
-            // 핸들러가 CharacterCreation::Validate로 거른다. 그래도 표에 없는 직업이 오면 시작 HP를 모르는 캐릭터를 넣지 않도록 실패로 끝낸다.
-            const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_classId);
-            const int32 level = 1; // 캐릭터 생성 시 초기 레벨은 1.
-            const LevelTemplate* levelTemplate = classLevelTable != nullptr ? classLevelTable->Find(level) : nullptr;
-            if (levelTemplate == nullptr)
-                throw DBError("CreateCharacter", "레벨 표에 없는 직업");
-
-            // 새 캐릭터는 시작 맵의 시작 위치에서, HP와 MP가 가득 찬 채로, 시작 골드를 들고 시작한다.
-            const CharacterCreationTemplate& creation = Gamedata::GetCharacterCreation();
-            _mapId = creation.startMapId;
-            _posX = creation.startPos.x;
-            _posY = creation.startPos.y;
-            _posZ = creation.startPos.z;
-            _direction = creation.startYaw;
-            _currentHp = levelTemplate->maxHp;
-            _currentMp = levelTemplate->maxMp;
-            _goldCurrencyId = Gamedata::GetGoldCurrencyId();
-            _startGold = creation.startGold;
-
             BindParam(dbBind);
             BindCol(dbBind);
         }
@@ -109,17 +88,8 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int6
             dbBind.BindParam(1, _characterId);
             dbBind.BindParam(2, _classId);
             dbBind.BindParam(3, _name.c_str());
-            dbBind.BindParam(4, _mapId);
-            dbBind.BindParam(5, _posX);
-            dbBind.BindParam(6, _posY);
-            dbBind.BindParam(7, _posZ);
-            dbBind.BindParam(8, _direction);
-            dbBind.BindParam(9, _currentHp);
-            dbBind.BindParam(10, _currentMp);
-            dbBind.BindParam(11, _goldCurrencyId);
-            dbBind.BindParam(12, _startGold);
-            dbBind.BindParam(13, _rejections[0]);
-            dbBind.BindParam(14, _rejections[1]);
+            dbBind.BindParam(4, _rejections[0]);
+            dbBind.BindParam(5, _rejections[1]);
         }
 
         void BindCol(DBBind<PARAMS, COLS>& dbBind)
@@ -132,15 +102,6 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int6
         int64 _characterId;
         int32 _classId;
         wstring _name;
-        int32 _mapId = 0;
-        float _posX = 0.f;
-        float _posY = 0.f;
-        float _posZ = 0.f;
-        float _direction = 0.f;
-        int32 _currentHp = 0;
-        int32 _currentMp = 0;
-        int32 _goldCurrencyId = 0;
-        int64 _startGold = 0;
         // 순서는 쿼리의 @duplicate_name_error, @no_empty_slot_error 순서와 맞아야 한다. 어긋나면 거절 사유가 뒤바뀐다.
         int32 _rejections[2] = { static_cast<int32>(CharacterRejection::DUPLICATE_NAME), static_cast<int32>(CharacterRejection::NO_EMPTY_SLOT) };
 
@@ -149,8 +110,9 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int6
     };
 
 
-    // 세 행을 한 트랜잭션에 넣는다. XACT_ABORT가 켜져 있어 어느 문장이 실패해도 트랜잭션 전체가 되돌려진다.
+    // 캐릭터 행만 넣는다. 진행 행(상태와 재화)은 첫 게임 입장이 게임의 기획 데이터로 만든다.
     // 계정 행을 잠가 같은 계정의 생성 요청을 한 줄로 세운다. 겹쳐 와도 슬롯 한도를 넘지 않는다.
+    // XACT_ABORT가 켜져 있어 어느 문장이 실패해도 트랜잭션 전체가 되돌려진다.
     // 이름 중복은 미리 조회하지 않고 고유 인덱스(UX_Character_Name_Active)의 위반(2601)으로 판정한다.
     // 조회와 INSERT 사이에 다른 계정이 같은 이름을 넣어도 인덱스가 막는다. 그 밖의 오류는 다시 던져 실행 실패로 끝낸다.
     DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
@@ -161,15 +123,6 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int6
         DECLARE @character_id BIGINT = (?);
         DECLARE @class_id INT = (?);
         DECLARE @name NVARCHAR(32) = (?);
-        DECLARE @map_id INT = (?);
-        DECLARE @pos_x REAL = (?);
-        DECLARE @pos_y REAL = (?);
-        DECLARE @pos_z REAL = (?);
-        DECLARE @direction REAL = (?);
-        DECLARE @current_hp INT = (?);
-        DECLARE @current_mp INT = (?);
-        DECLARE @gold_currency_id INT = (?);
-        DECLARE @start_gold BIGINT = (?);
         DECLARE @duplicate_name_error INT = (?);
         DECLARE @no_empty_slot_error INT = (?);
         DECLARE @slot_count INT;
@@ -202,12 +155,6 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int6
                 INSERT INTO dbo.[Character] (CharacterId, AccountId, Name, ClassId)
                 VALUES (@character_id, @account_id, @name, @class_id);
 
-                INSERT INTO dbo.CharacterState (CharacterId, MapId, PosX, PosY, PosZ, Direction, CurrentHp, CurrentMp)
-                VALUES (@character_id, @map_id, @pos_x, @pos_y, @pos_z, @direction, @current_hp, @current_mp);
-
-                INSERT INTO dbo.CharacterCurrency (CharacterId, CurrencyId, Amount)
-                VALUES (@character_id, @gold_currency_id, @start_gold);
-
                 COMMIT TRANSACTION;
             END
         END TRY
@@ -224,7 +171,7 @@ CreateCharacterResult CharacterListDAO::CreateCharacter(DBConnection& conn, int6
         SELECT @result AS Result;
     )SQL");
 
-    BindObject bindObject(dbBind, accountId, characterId, character);
+    BindObject bindObject(dbBind, accountId, characterId, name, classId);
 
     if (dbBind.Execute() == false)
         throw DBError(__func__, "쿼리 실행 실패");

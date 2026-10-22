@@ -40,16 +40,26 @@ namespace
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
     constexpr int32 QUICK_SLOT_COUNT = 3;
+    constexpr float START_X = -120.f;
+    constexpr float START_YAW = 180.f;
+    constexpr int64 START_GOLD = 500;
 
     // CharacterStateDAO::LoadCharacter가 읽는 열 순서의 행.
     FakeDBRow MakeCharacterRow(int64 level, int64 exp, int64 mapId, double posX, double posY, int64 gold)
     {
-        return { int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), level, exp, mapId, posX, posY, 30.0, 90.0,
+        return { int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), level, int64(1), exp, mapId, posX, posY, 30.0, 90.0,
             int64(MAX_HP), int64(80), gold };
     }
 
+    // 진행 행이 없는 캐릭터의 행. 쿼리가 진행 열을 0으로, 골드를 -1로 돌려준다.
+    FakeDBRow MakeCharacterRowWithoutProgress(Protocol::CharacterClass characterClass)
+    {
+        return { int64(characterClass), wstring(L"새내기"), int64(1), int64(0), int64(0), int64(0), 0.0, 0.0, 0.0, 0.0,
+            int64(0), int64(0), int64(-1) };
+    }
+
     // ItemDAO::LoadItems가 읽는 열 순서의 행.
-    FakeDBRow MakeItemRow(int64 itemUid, int64 templateId, Protocol::ItemType itemType, ItemRowContainer container, int64 slotIndex,
+    FakeDBRow MakeItemRow(int64 itemUid, int64 templateId, ItemRowType itemType, ItemRowContainer container, int64 slotIndex,
         int64 stackCount, int64 enhanceLevel = 0)
     {
         return { itemUid, templateId, int64(itemType), int64(container), slotIndex, stackCount, enhanceLevel, int64(0) };
@@ -60,20 +70,15 @@ namespace
     {
         PlayerSaveData data;
         data.userId = USER_ID;
-        data.progress.playerInfo.set_character_id(CHARACTER_ID);
-        data.progress.playerInfo.set_level(3);
-        data.progress.playerInfo.set_map_id(FIELD_MAP_ID);
-        data.progress.playerInfo.set_room_id(FIELD_ROOM_ID);
-        data.progress.posInfo.mutable_pos()->set_x(-150.f);
-        data.progress.posInfo.mutable_pos()->set_y(40.f);
-        data.progress.posInfo.mutable_pos()->set_z(5.f);
-        data.progress.posInfo.set_yaw(45.f);
+        data.progress.characterId = CHARACTER_ID;
+        data.progress.level = 3;
+        data.progress.mapId = FIELD_MAP_ID;
+        data.progress.pos = vector3D(-150.f, 40.f, 5.f);
+        data.progress.yaw = 45.f;
         data.progress.gold = 1234;
-
-        auto* stats = data.progress.statInfo.mutable_info();
-        (*stats)[Protocol::STAT_TYPE_EXP] = 777;
-        (*stats)[Protocol::STAT_TYPE_HP] = 60;
-        (*stats)[Protocol::STAT_TYPE_MP] = 70;
+        data.progress.totalExp = 777;
+        data.progress.hp = 60;
+        data.progress.mp = 70;
         return data;
     }
 
@@ -135,6 +140,10 @@ protected:
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.inventorySlotCounts = MakeInventorySections();
         tables.quickSlotCount = QUICK_SLOT_COUNT;
+        tables.initialProgress.startMapId = FIELD_MAP_ID;
+        tables.initialProgress.startPos = TemplatePos{ START_X, 40.f, 5.f };
+        tables.initialProgress.startYaw = START_YAW;
+        tables.initialProgress.startGold = START_GOLD;
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
@@ -159,21 +168,20 @@ TEST_F(ProgressStorageTest, LoadCharacterReadsCharacterStateAndGold)
     conn.QueueResult({ MakeCharacterRow(3, 2500, FIELD_MAP_ID, -150.0, 40.0, 6'000'000'000) });
 
     PlayerProgress progress;
-    ASSERT_TRUE(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress));
+    ASSERT_EQ(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress), CharacterLoadResult::LOADED);
 
-    EXPECT_EQ(progress.playerInfo.character_id(), CHARACTER_ID);
-    EXPECT_EQ(progress.playerInfo.class_(), Protocol::CLASS_TYPE_WARRIOR);
-    EXPECT_EQ(progress.playerInfo.level(), 3);
-    EXPECT_FALSE(progress.playerInfo.name().empty());
-    EXPECT_EQ(progress.playerInfo.map_id(), FIELD_MAP_ID);
-    EXPECT_FLOAT_EQ(progress.posInfo.pos().x(), -150.f);
-    EXPECT_FLOAT_EQ(progress.posInfo.pos().y(), 40.f);
-    EXPECT_FLOAT_EQ(progress.posInfo.pos().z(), 30.f);
-    EXPECT_FLOAT_EQ(progress.posInfo.yaw(), 90.f);
-    EXPECT_EQ(progress.statInfo.info().at(Protocol::STAT_TYPE_EXP), 2500) << "경험치는 누적값 그대로 싣는다";
-    EXPECT_EQ(progress.statInfo.info().at(Protocol::STAT_TYPE_HP), MAX_HP);
-    EXPECT_EQ(progress.statInfo.info().at(Protocol::STAT_TYPE_MP), 80);
-    EXPECT_EQ(progress.statInfo.info().count(Protocol::STAT_TYPE_PHYSICAL_ATTACK), 0u) << "공격력은 DB에 없다";
+    EXPECT_EQ(progress.characterId, CHARACTER_ID);
+    EXPECT_EQ(progress.classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(progress.level, 3);
+    EXPECT_FALSE(progress.name.empty());
+    EXPECT_EQ(progress.mapId, FIELD_MAP_ID);
+    EXPECT_FLOAT_EQ(progress.pos.x, -150.f);
+    EXPECT_FLOAT_EQ(progress.pos.y, 40.f);
+    EXPECT_FLOAT_EQ(progress.pos.z, 30.f);
+    EXPECT_FLOAT_EQ(progress.yaw, 90.f);
+    EXPECT_EQ(progress.totalExp, 2500) << "경험치는 누적값 그대로 싣는다";
+    EXPECT_EQ(progress.hp, MAX_HP);
+    EXPECT_EQ(progress.mp, 80);
     EXPECT_EQ(progress.gold, 6'000'000'000) << "골드는 재화 행에서 온다";
 
     ASSERT_EQ(conn.executedParams.size(), 1u);
@@ -188,7 +196,23 @@ TEST_F(ProgressStorageTest, LoadCharacterOfOtherAccountFails)
     conn.QueueResult({});
 
     PlayerProgress progress;
-    EXPECT_FALSE(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress)) << "행이 없으면 다른 계정의 캐릭터다";
+    EXPECT_EQ(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress), CharacterLoadResult::NOT_FOUND)
+        << "행이 없으면 다른 계정의 캐릭터다";
+}
+
+TEST_F(ProgressStorageTest, LoadCharacterWithoutProgressReadsOnlyCharacterRow)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_WARRIOR) });
+
+    PlayerProgress progress;
+    ASSERT_EQ(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress), CharacterLoadResult::NO_PROGRESS)
+        << "진행 행이 없는 캐릭터는 아직 게임에 입장한 적이 없다. 골드 행이 없어도 DB가 어긋난 것이 아니다";
+
+    EXPECT_EQ(progress.characterId, CHARACTER_ID);
+    EXPECT_EQ(progress.classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(progress.level, 1);
+    EXPECT_FALSE(progress.name.empty());
 }
 
 TEST_F(ProgressStorageTest, CharacterWithoutGoldRowIsDBError)
@@ -205,8 +229,8 @@ TEST_F(ProgressStorageTest, LoadItemsPlacesRowsByContainerAndSection)
 {
     FakeDBConnection conn;
     conn.QueueResult({
-        MakeItemRow(11, POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, ItemRowContainer::INVENTORY, 5, 3),
-        MakeItemRow(12, SWORD_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR, ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, 1, 4),
+        MakeItemRow(11, POTION_TEMPLATE_ID, ItemRowType::CONSUMABLE, ItemRowContainer::INVENTORY, 5, 3),
+        MakeItemRow(12, SWORD_TEMPLATE_ID, ItemRowType::GEAR, ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, 1, 4),
     });
 
     PlayerProgress progress;
@@ -231,7 +255,7 @@ TEST_F(ProgressStorageTest, LoadItemsPlacesRowsByContainerAndSection)
 TEST_F(ProgressStorageTest, ItemRowInUnknownPlaceIsDBError)
 {
     FakeDBConnection conn;
-    conn.QueueResult({ MakeItemRow(11, POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE, static_cast<ItemRowContainer>(9), 0, 1) });
+    conn.QueueResult({ MakeItemRow(11, POTION_TEMPLATE_ID, ItemRowType::CONSUMABLE, static_cast<ItemRowContainer>(9), 0, 1) });
 
     PlayerProgress progress;
     EXPECT_THROW(ItemDAO::LoadItems(conn, CHARACTER_ID, OUT progress), DBError)
@@ -247,6 +271,97 @@ TEST_F(ProgressStorageTest, FailedLoadLeavesSessionWithoutPlayer)
 
     EXPECT_FALSE(pkt.success());
     EXPECT_EQ(session->GetPlayer(), nullptr) << "불러오기에 실패한 세션에 플레이어가 남으면 끊길 때 반쯤 채운 진행을 저장한다";
+}
+
+/* 첫 입장: 진행 행이 없으면 같은 트랜잭션에서 초기 진행 행을 만들고 불러온다 */
+
+TEST_F(ProgressStorageTest, LoadOfExistingProgressIsOneTransaction)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ MakeCharacterRow(1, 0, FIELD_MAP_ID, -150.0, 40.0, 100) });
+
+    PlayerProgress progress;
+    ASSERT_TRUE(ProgressStorage::Load(conn, USER_ID, CHARACTER_ID, OUT progress));
+
+    ASSERT_EQ(conn.executedQueries.size(), 3u) << "캐릭터, 아이템, 퀵슬롯. 진행 행이 있으면 아무것도 넣지 않는다";
+    EXPECT_EQ(conn.beginCount, 1);
+    EXPECT_EQ(conn.commitCount, 1);
+    EXPECT_EQ(conn.rollbackCount, 0);
+}
+
+TEST_F(ProgressStorageTest, FirstEntryCreatesInitialProgressRowsThenLoadsThem)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_WARRIOR) });
+    conn.QueueResult({});
+    conn.QueueResult({});
+    conn.QueueResult({ MakeCharacterRow(1, 0, FIELD_MAP_ID, START_X, 40.0, START_GOLD) });
+
+    PlayerProgress progress;
+    ASSERT_TRUE(ProgressStorage::Load(conn, USER_ID, CHARACTER_ID, OUT progress));
+
+    // 캐릭터, 상태 행 넣기, 골드 행 넣기, 다시 캐릭터, 아이템, 퀵슬롯.
+    ASSERT_EQ(conn.executedQueries.size(), 6u);
+    EXPECT_NE(conn.executedQueries[1].find(L"INSERT INTO dbo.CharacterState"), wstring::npos);
+    const auto& state = conn.executedParams[1];
+    EXPECT_EQ(get<int64>(state.at(0)), CHARACTER_ID);
+    EXPECT_EQ(get<int64>(state.at(1)), 0) << "누적 경험치는 0에서 시작한다";
+    EXPECT_EQ(get<int64>(state.at(2)), FIELD_MAP_ID) << "초기 진행 표의 시작 맵";
+    EXPECT_DOUBLE_EQ(get<double>(state.at(3)), START_X);
+    EXPECT_DOUBLE_EQ(get<double>(state.at(4)), 40.0);
+    EXPECT_DOUBLE_EQ(get<double>(state.at(5)), 5.0);
+    EXPECT_DOUBLE_EQ(get<double>(state.at(6)), START_YAW);
+    EXPECT_EQ(get<int64>(state.at(7)), MAX_HP) << "1레벨의 최대 HP로 가득 찬 채 시작한다";
+    EXPECT_EQ(get<int64>(state.at(8)), 100);
+
+    EXPECT_NE(conn.executedQueries[2].find(L"INSERT INTO dbo.CharacterCurrency"), wstring::npos);
+    const auto& gold = conn.executedParams[2];
+    EXPECT_EQ(get<int64>(gold.at(0)), CHARACTER_ID);
+    EXPECT_EQ(get<int64>(gold.at(1)), GOLD_CURRENCY_ID);
+    EXPECT_EQ(get<int64>(gold.at(2)), START_GOLD);
+
+    EXPECT_EQ(conn.beginCount, 1);
+    EXPECT_EQ(conn.commitCount, 1) << "진행 행을 만드는 일과 불러오기를 한 트랜잭션으로 확정한다";
+    EXPECT_EQ(progress.gold, START_GOLD) << "만든 행을 다시 불러온 값이다";
+}
+
+TEST_F(ProgressStorageTest, FirstEntryOfClassWithoutLevelTableCreatesNothing)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_MAGE) });
+
+    PlayerProgress progress;
+    EXPECT_FALSE(ProgressStorage::Load(conn, USER_ID, CHARACTER_ID, OUT progress)) << "레벨 표가 없으면 시작 HP와 MP를 정할 수 없다";
+
+    EXPECT_EQ(conn.executedQueries.size(), 1u) << "진행 행을 넣지 않는다";
+    EXPECT_EQ(conn.rollbackCount, 1);
+    EXPECT_EQ(conn.commitCount, 0);
+}
+
+TEST_F(ProgressStorageTest, FailedInitialProgressInsertRollsBack)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_WARRIOR) });
+    conn.QueueResult({});
+    conn.QueueExecuteFailure();
+
+    PlayerProgress progress;
+    EXPECT_FALSE(ProgressStorage::Load(conn, USER_ID, CHARACTER_ID, OUT progress));
+
+    EXPECT_EQ(conn.rollbackCount, 1) << "골드 행을 넣지 못하면 넣은 상태 행도 되돌려 다음 입장이 다시 만든다";
+    EXPECT_EQ(conn.commitCount, 0);
+}
+
+TEST_F(ProgressStorageTest, LoadOfOtherAccountsCharacterRollsBack)
+{
+    FakeDBConnection conn;
+    conn.QueueResult({});
+
+    PlayerProgress progress;
+    EXPECT_FALSE(ProgressStorage::Load(conn, USER_ID, CHARACTER_ID, OUT progress));
+
+    EXPECT_EQ(conn.rollbackCount, 1);
+    EXPECT_EQ(conn.commitCount, 0);
 }
 
 /* 입장할 룸 고르기: DB는 맵과 좌표만 안다 */

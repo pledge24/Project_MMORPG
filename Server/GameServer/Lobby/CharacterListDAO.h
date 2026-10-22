@@ -19,6 +19,17 @@ inline string_view ToMessage(CharacterRejection rejection)
     return "";
 }
 
+/** 캐릭터 목록의 한 행. */
+struct CharacterListRow
+{
+    int64 characterId = 0;
+    /** 직업. DB의 Character.ClassId 값이다. */
+    int32 classId = 0;
+    string name;
+    /** 마지막으로 저장한 레벨. */
+    int32 level = 0;
+};
+
 /** 캐릭터 생성의 결과. 쿼리가 거절하면 rejection에 사유가 있고 characterId는 0이다. */
 struct CreateCharacterResult
 {
@@ -37,12 +48,12 @@ class CharacterListDAO
 {
 public:
     /** 삭제되지 않은 캐릭터를 만든 순서로 돌려준다. */
-    static void LoadCharacterList(DBConnection& conn, int64 accountId, OUT vector<Protocol::CharacterOverview>& characters);
+    static void LoadCharacterList(DBConnection& conn, int64 accountId, OUT vector<CharacterListRow>& characters);
     /**
-     * characterId로 새 캐릭터를 만든다. 계정 행이 먼저 있어야 한다(없으면 DBError).
-     * 빈 슬롯이 없거나 이름이 겹치면 거절 사유를 결과에 담는다.
+     * characterId로 캐릭터 행만 만든다. 진행 행은 첫 게임 입장이 만든다. 계정 행이 먼저 있어야 한다(없으면 DBError).
+     * 이름과 직업은 CharacterCreation::Validate를 통과한 값만 넘긴다. 빈 슬롯이 없거나 이름이 겹치면 거절 사유를 결과에 담는다.
      */
-    static CreateCharacterResult CreateCharacter(DBConnection& conn, int64 accountId, int64 characterId, const Protocol::CharacterOverview& character);
+    static CreateCharacterResult CreateCharacter(DBConnection& conn, int64 accountId, int64 characterId, const string& name, int32 classId);
     /** characterId는 클라이언트 값이어도 된다. 이 계정의 삭제되지 않은 캐릭터가 아니면 지우지 않고 false. */
     static bool DeleteCharacter(DBConnection& conn, int64 accountId, int64 characterId);
     /** characterId는 클라이언트 값이어도 된다. 이 계정의 삭제되지 않은 캐릭터면 true. */

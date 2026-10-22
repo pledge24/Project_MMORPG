@@ -203,6 +203,9 @@
     <ClInclude Include="Utils\EncodingConverter.h" />
     <ClInclude Include="Lobby\CharacterCreation.h" />
     <ClInclude Include="Game\Progress\Leveling.h" />
+    <ClInclude Include="Game\Progress\InitialProgress.h" />
+    <ClInclude Include="Core\DataCrossCheck.h" />
+    <ClInclude Include="Lobby\Data\LobbyData.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
     <ClInclude Include="Utils\SnowflakeIdGenerator.h" />
@@ -331,6 +334,9 @@
     <ClCompile Include="Lobby\CharacterCreation.cpp" />
     <ClCompile Include="Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="Game\Progress\Leveling.cpp" />
+    <ClCompile Include="Game\Progress\InitialProgress.cpp" />
+    <ClCompile Include="Core\DataCrossCheck.cpp" />
+    <ClCompile Include="Lobby\Data\LobbyData.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
     <ClCompile Include="Utils\SnowflakeIdGenerator.cpp" />

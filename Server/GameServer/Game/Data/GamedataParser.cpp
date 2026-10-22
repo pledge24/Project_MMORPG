@@ -384,30 +384,24 @@ namespace
         return currencies;
     }
 
-    CharacterCreationTemplate ParseCharacterCreation(string_view fileName, const Json& document)
+    InitialProgressTemplate ParseInitialProgress(string_view fileName, const Json& document)
     {
-        using namespace JsonProperty::CharacterCreation;
+        using namespace JsonProperty::InitialProgress;
 
-        vector<CharacterCreationTemplate> rows;
+        vector<InitialProgressTemplate> rows;
         ForEachRow(fileName, document, [&](const Json& row, size_t)
             {
-                CharacterCreationTemplate creation;
-                creation.startMapId = Require<int32>(row, StartMapId);
-                creation.startPos = RequirePos(RequireObject(row, StartPos));
-                creation.startYaw = Require<float>(row, StartYaw);
+                InitialProgressTemplate initial;
+                initial.startMapId = Require<int32>(row, StartMapId);
+                initial.startPos = RequirePos(RequireObject(row, StartPos));
+                initial.startYaw = Require<float>(row, StartYaw);
 
                 // 재화 수량은 음수가 될 수 없다. DB도 CHECK 제약으로 막는다.
-                creation.startGold = Require<int64>(row, StartGold);
-                if (creation.startGold < 0)
-                    throw RowError{ format("'startGold'가 0보다 작다: {}", creation.startGold) };
+                initial.startGold = Require<int64>(row, StartGold);
+                if (initial.startGold < 0)
+                    throw RowError{ format("'startGold'가 0보다 작다: {}", initial.startGold) };
 
-                // DB의 Account.CharacterSlotCount가 TINYINT라 255를 넘으면 계정을 만들 때 저장하지 못한다.
-                creation.defaultCharacterSlotCount = Require<int32>(row, DefaultCharacterSlotCount);
-                if (creation.defaultCharacterSlotCount < 1 || creation.defaultCharacterSlotCount > UINT8_MAX)
-                    throw RowError{ format("'defaultCharacterSlotCount'가 1 이상 {} 이하여야 한다: {}",
-                        UINT8_MAX, creation.defaultCharacterSlotCount) };
-
-                rows.push_back(creation);
+                rows.push_back(initial);
             });
 
         // 새 캐릭터의 시작 값은 하나로 정해져야 한다.
@@ -528,14 +522,14 @@ namespace
     /** 시작 맵은 룸 번호(templateId)가 아니라 맵 번호(mapId)다. 그 맵의 룸이 맵 표에 있어야 새 캐릭터가 들어간다. */
     void CheckStartMap(const GamedataTables& tables)
     {
-        const int32 startMapId = tables.characterCreation.startMapId;
+        const int32 startMapId = tables.initialProgress.startMapId;
         for (const auto& [roomId, mapTemplate] : tables.maps)
         {
             if (mapTemplate.mapId == startMapId)
                 return;
         }
 
-        throw TableError{ format("{}: 'startMapId' {}가 맵 표의 mapId에 없다", GamedataFile::CHARACTER_CREATION, startMapId) };
+        throw TableError{ format("{}: 'startMapId' {}가 맵 표의 mapId에 없다", GamedataFile::INITIAL_PROGRESS, startMapId) };
     }
 }
 
@@ -549,7 +543,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
 
         tables.currencies = ParseCurrencies(GamedataFile::CURRENCIES, documents.currencies);
-        tables.characterCreation = ParseCharacterCreation(GamedataFile::CHARACTER_CREATION, documents.characterCreation);
+        tables.initialProgress = ParseInitialProgress(GamedataFile::INITIAL_PROGRESS, documents.initialProgress);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
         tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);
 

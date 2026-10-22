@@ -32,15 +32,9 @@ namespace
     PlayerProgress MakeAliveProgress()
     {
         PlayerProgress progress;
-        progress.playerInfo.set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        progress.playerInfo.set_level(1);
-        progress.playerInfo.set_room_id(ROOM_ID);
-
-        auto* stats = progress.statInfo.mutable_info();
-        for (Protocol::StatType statType : { Protocol::STAT_TYPE_EXP, Protocol::STAT_TYPE_MP,
-            Protocol::STAT_TYPE_PHYSICAL_ATTACK, Protocol::STAT_TYPE_MAGICAL_ATTACK })
-            (*stats)[statType] = 0;
-        (*stats)[Protocol::STAT_TYPE_HP] = PLAYER_MAX_HP;
+        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.level = 1;
+        progress.hp = PLAYER_MAX_HP;
         return progress;
     }
 
@@ -105,6 +99,7 @@ protected:
         const PlayerProgress progress = MakeAliveProgress();
         PlayerSpawnParams params;
         params.progress = &progress;
+        params.enterRoomId = ROOM_ID;
         player = EntityFactory::Create<Player>(params);
         ASSERT_NE(player, nullptr);
 

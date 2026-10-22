@@ -60,7 +60,7 @@ TEST_F(PlayerSaveDataTest, SnapshotDoesNotFollowLaterChanges)
     PlayerTestAccess::Gold(*player) = 0;
 
     EXPECT_EQ(data.userId, USER_ID);
-    EXPECT_EQ(data.progress.statInfo.info().at(Protocol::STAT_TYPE_HP), 100) << "사본이 살아 있는 스탯을 따라가면 DB 스레드가 룸 스레드와 경쟁한다";
+    EXPECT_EQ(data.progress.hp, 100) << "사본이 살아 있는 스탯을 따라가면 DB 스레드가 룸 스레드와 경쟁한다";
     EXPECT_EQ(data.progress.gold, 500);
 }
 

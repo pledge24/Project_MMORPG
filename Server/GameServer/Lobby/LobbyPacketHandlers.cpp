@@ -102,11 +102,17 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
                 // 이 월드에 처음 들어온 계정이면 계정 행을 만든다. 캐릭터 생성은 이 행이 있어야 한다.
                 const int32 characterSlotCount = AccountDAO::RecordLogin(*conn, userId);
 
-                vector<Protocol::CharacterOverview> characters;
+                vector<CharacterListRow> characters;
                 CharacterListDAO::LoadCharacterList(*conn, userId, OUT characters);
 
-                for (Protocol::CharacterOverview& character : characters)
-                    *loginPkt.add_characters() = std::move(character);
+                for (CharacterListRow& character : characters)
+                {
+                    Protocol::CharacterOverview* overview = loginPkt.add_characters();
+                    overview->set_character_id(character.characterId);
+                    overview->set_class_(static_cast<Protocol::CharacterClass>(character.classId));
+                    overview->set_name(std::move(character.name));
+                    overview->set_level(character.level);
+                }
 
                 // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. CreateCharacter가 막는 한도와 같은 계정 행의 값이다.
                 loginPkt.set_character_slot_count(characterSlotCount);
@@ -158,7 +164,7 @@ bool Handle_C_CREATE_CHARACTER(PacketSessionRef& session, Protocol::C_CREATE_CHA
             {
                 DBConnectionGuard conn;
                 // 거절된 생성이 받은 ID는 다시 쓰지 않고 버린다.
-                const CreateCharacterResult result = CharacterListDAO::CreateCharacter(*conn, userId, GIdGenerator->Next(), pkt.character());
+                const CreateCharacterResult result = CharacterListDAO::CreateCharacter(*conn, userId, GIdGenerator->Next(), pkt.character().name(), pkt.character().class_());
                 if (result.rejection.has_value())
                 {
                     createCharacterPkt.set_success(false);
