@@ -63,11 +63,11 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `AuthTicket` | 7 | 인증 티켓 값 해석. 계정 번호를 읽음(int64 최댓값 포함) · 빈 값, 0과 음수, 앞자리 0, 부호, 공백, 숫자 아닌 문자, int64를 넘는 값, 옛 JSON 값은 예외 없이 거절 |
 | `CellMatrixTest` | 7 | 근접 탐색 격자. 겹치는 칸의 엔티티만 반환 · 칸 경계는 위 칸 소속 · 격자 끝과 밖의 엔티티 · 가장자리 질의 보정 · 제거와 재구성 |
 | `AccountDAOTest` | 4 | 로그인의 계정 행 DAO(가짜 연결). 계정 번호와 생성 표의 기본 슬롯 수 바인딩 · 결과 행의 슬롯 수를 돌려줌 · 결과 행이 없거나 실패한 쿼리는 DBError |
-| `CharacterListDAOTest` | 10 | 캐릭터 목록 DAO(가짜 연결). 생성이 발급기의 ID를 돌려줌 · 시작 맵, 좌표, 방향, 1레벨 HP와 MP, 골드 재화 번호와 시작 골드 바인딩 · 두 거절 사유는 예외가 아니라 결과 · 쿼리가 모르는 결과 값과 실패한 생성, 레벨 표가 없는 직업은 DBError · 목록 행 읽기 · 실패한 목록 쿼리는 DBError · 삭제의 바인딩과 갱신한 행 수 판정 |
+| `CharacterListDAOTest` | 13 | 캐릭터 목록 DAO(가짜 연결). 생성이 발급기의 ID를 돌려줌 · 시작 맵, 좌표, 방향, 1레벨 HP와 MP, 골드 재화 번호와 시작 골드 바인딩 · 두 거절 사유는 예외가 아니라 결과 · 쿼리가 모르는 결과 값과 실패한 생성, 레벨 표가 없는 직업은 DBError · 목록 행 읽기 · 실패한 목록 쿼리는 DBError · 삭제의 바인딩과 갱신한 행 수 판정 · 캐릭터 선택의 소유 확인이 캐릭터 번호와 계정 번호를 함께 바인딩하고 결과 행 수로 판정, 실패한 쿼리는 DBError |
 | `CharacterCreationTest` | 7 | 캐릭터 생성 검증. 유효한 전사 · 레벨 표가 없거나 정의되지 않은 직업 거절 · 레벨 표가 있어도 NONE 거절 · 빈 이름 거절 · 이름 길이 경계(한글 32자 통과, 33자 거절) |
 | `CombatTest` | 8 | 피격과 처치 판정. 데미지만큼 HP 감소 · 과잉 데미지의 HP 0 고정과 사망 · 죽은 대상과 죽은 공격자 · 플레이어가 몬스터를 처치할 때만 보상 · 피격 후 몬스터 정보의 HP |
 | `DISABLED_GameDBSchemaTest` | 1 | 실제 DB(`GameDB_Test`). 연결한 DB가 `GameDB_Test`인지 확인 · 001이 만든 테이블 일곱 개를 모두 조회 |
-| `DISABLED_GameDBCharacterListTest` | 10 | 실제 DB(`GameDB_Test`). 로그인이 기본 슬롯 수로 계정 행을 만듦 · 다시 로그인하면 마지막 로그인 시각만 갱신하고 그 행의 슬롯 수를 씀 · 생성이 캐릭터, 상태, 골드 행을 함께 넣음 · 다른 계정과 겹친 이름은 「이름 중복」 거절이고 행을 남기지 않음 · 슬롯 한도는 삭제한 캐릭터를 세지 않음 · 삭제한 캐릭터의 이름 재사용 · 삭제는 삭제 시각만 적고 상태와 재화 행을 남김 · 다른 계정의 캐릭터는 지우지 않음 · 목록이 삭제한 캐릭터를 빼고 DB의 레벨 사본을 씀 · 계정 행 없는 생성은 DBError |
+| `DISABLED_GameDBCharacterListTest` | 11 | 실제 DB(`GameDB_Test`). 로그인이 기본 슬롯 수로 계정 행을 만듦 · 다시 로그인하면 마지막 로그인 시각만 갱신하고 그 행의 슬롯 수를 씀 · 생성이 캐릭터, 상태, 골드 행을 함께 넣음 · 다른 계정과 겹친 이름은 「이름 중복」 거절이고 행을 남기지 않음 · 슬롯 한도는 삭제한 캐릭터를 세지 않음 · 삭제한 캐릭터의 이름 재사용 · 삭제는 삭제 시각만 적고 상태와 재화 행을 남김 · 다른 계정의 캐릭터는 지우지 않음 · 목록이 삭제한 캐릭터를 빼고 DB의 레벨 사본을 씀 · 계정 행 없는 생성은 DBError · 소유 확인은 그 계정의 삭제하지 않은 캐릭터만 참 |
 | `DISABLED_GameDBIssuedIdTest` | 2 | 실제 DB(`GameDB_Test`). 이 노드가 발급한 ID의 최댓값을 캐릭터와 아이템 두 테이블에서 읽고 다른 노드의 ID는 세지 않음 · 발급한 적 없는 노드는 0 |
 | `DISABLED_GameDBProgressTest` | 9 | 실제 DB(`GameDB_Test`). 저장한 레벨, 맵과 위치, 누적 경험치, HP와 MP, 골드, 네 곳의 아이템과 장비 세부 값을 불러옴 · 상태와 골드의 갱신 시각과 마지막 입장 시각 · 다른 계정과 삭제한 캐릭터는 불러오지 않음 · 두 칸 맞바꾸기 · 장비의 착용과 해제(컨테이너 사이 이동) · 사본에 없는 아이템과 그 장비 세부 행 삭제 · 행 상한을 넘는 저장과 두 묶음에 걸친 줄인 저장 · 아이템 MERGE가 실패하면 레벨, 상태, 골드, 아이템을 모두 되돌리고 다음 저장은 통과 · 저장한 퀵슬롯을 번호 순서로 불러오고 RefType은 1 · 해제한 퀵슬롯의 행 삭제, 다른 캐릭터의 퀵슬롯 유지, 모두 해제한 저장의 행 삭제 |
 | `DBConnectionGuardTest` | 1 | 빈 연결 풀에서 빌리면 널 연결 대신 DBError |
@@ -83,7 +83,10 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `LoggerTest` | 5 | 로그 한 줄의 형식. 시각·레벨·스레드 표시와 밀리초 세 자리 · 레벨마다 다섯 칸 표시 · 쓰는 스레드의 id와 줄바꿈 · 여러 스레드가 동시에 써도 줄이 섞이지 않음 |
 | `MonsterTest` | 2 | 몬스터 초기화의 HP · 최소와 최대가 같은 보상 |
 | `MonsterAITest` | 4 | 룸 틱으로 도는 몬스터 AI. 상태 전환 판정은 0.2초가 쌓인 뒤 · 룸을 떠난 대상을 다음 틱에서 놓음 · 사거리 안에 남은 대상은 맞고 피격 전에 사거리를 벗어난 대상은 맞지 않음 |
-| `PacketHandlerTest` | 5 | 패킷 핸들러의 세션 상태 검사. 처리에 실패한 패킷 id를 로그에 남김 · 삭제 잡이 핸들러가 읽은 계정 번호로 일함 · 로그인하지 않은 세션의 캐릭터 생성, 삭제, 입장은 DB 큐에 넣지 않고 실패 응답 |
+| `PacketHandlerTest` | 11 | 받은 패킷의 단계 검사와 핸들러. 처리에 실패한 패킷 id를 로그에 남김 · 삭제 잡이 핸들러가 읽은 계정 번호로 일함 · 로비 접속 전의 캐릭터 생성, 삭제, 입장과 로비 접속을 마친 세션의 두 번째 로비 접속은 경고 로그를 남기고 DB 큐에도 응답에도 가지 않음 · 게임에 입장한 세션의 로비 접속, 캐릭터 생성, 삭제, 입장을 버림 · 로비의 삭제는 DB 큐로 감 · 입장 중에는 두 번째 입장과 삭제를 버림 · 소유를 확인하지 못한 입장은 로비로 되돌리고 실패 응답 |
+| `SessionPhaseTableTest` | 3 | 단계별 허용표. 패킷마다 받는 단계를 테스트의 표로 고정(로비 접속은 로비 접속 전, 캐릭터 생성·삭제·입장은 로비, 게임 패킷은 게임, 핑과 게임 종료는 모든 단계) · 표가 핸들러가 있는 패킷을 정확히 덮음 · 핸들러 테이블 밖의 id 거절 |
+| `SessionPhaseTest` | 3 | 세션 단계 전환. 새 세션은 로비 접속 전 · 로비 접속 전 → 로비 → 게임 입장 중 → 게임 순서로만 바뀜 · 거절된 입장은 로비로 돌아가 다시 입장할 수 있음 |
+| `GameEntryFinishTest` | 2 | 게임 입장 결과. 성공은 응답 전에 게임 단계로, 실패는 로비로 바꾸고 응답 하나 |
 | `ParamSetTest` | 6 | 배열 파라미터 저장(가짜 연결). 행이 없으면 실행하지 않음 · 한 번에 실행 · 상한을 넘으면 실행하지 않고 DBError · 일부 행만 실패한 실행과 실행 실패는 DBError · 행이 하나면 행별 상태 없이 실행 결과로 판정 |
 | `PlayerItemRequestTest` | 11 | 구매·판매·착용·해제 요청 검증. 모르는 템플릿 · 다른 아이템의 uid, 위조한 uid, uid 없는 요청 · 판매 불가 아이템 · 빈 칸 착용 · 가득 찬 인벤토리로 해제 |
 | `LevelingTest` | 11 | 누적 경험치와 레벨 판정. 0은 레벨 1 · 요구치 합과 같은 값은 그 레벨이고 하나 작은 값은 아래 레벨 · 레벨 안의 경험치와 요구치 · 보상 한 번의 여러 레벨 상승 · 최대 레벨에 이르는 누적값과 그 위의 경험치 버림 · 범위 밖 값 자르기 · 사망 페널티는 요구치의 10%이고 레벨을 내리지 않음, 최대 레벨에서는 잃지 않음 |
@@ -188,7 +191,7 @@ Server/Binary/Debug/GameServerTests.exe --gtest_also_run_disabled_tests --gtest_
 | 퀵슬롯 사용 | 존재. 서버는 `Player::ProcessUseQuickSlot`, 클라이언트는 `UP1ItemActions::RequestUseQuickSlot`. 칸을 고른 뒤의 사용 규칙은 칸을 가리킨 사용과 같은 `Player::ProcessUseItem`에 있다. 요청 패킷 읽기와 응답 전송은 `ItemRequests::HandleUseQuickSlot`에, 1~9 키 바인딩은 `AP1InGamePlayerController`에 있고 테스트하지 않는다 |
 | 퀵슬롯 표시 | 존재. `FP1SlotDisplay::FromQuickSlotRef`와 `UP1ItemContainer::CountItem`. 끌어 놓기와 슬롯 위젯 배치는 `UP1QuickSlotsWidget`에 있고 사람이 PIE로 확인한다 |
 | 접속 종료 저장 대기 | 존재. `SaveGate` 공개 API |
-| 진행 조율 | 존재. `ProgressCoordinator`의 진입점 네 개(`OnDisconnected`, `OnDuplicateLogin`, `RequestEnter`, `LeaveRoomAndSave`). 테스트는 DB 큐, 진행 저장소, 만료 타이머를 주입해 잡을 쌓아 두고 순서를 정해 돌린다. 세션 끊기와 밀어내기, 응답 전송은 `GameSession`과 `ServerPacketHandler`에 있고 테스트하지 않는다 |
+| 진행 조율 | 존재. `ProgressCoordinator`의 진입점 네 개(`OnDisconnected`, `OnDuplicateLogin`, `RequestEnter`, `LeaveRoomAndSave`). 테스트는 DB 큐, 진행 저장소, 만료 타이머를 주입해 잡을 쌓아 두고 순서를 정해 돌린다. 세션 끊기와 밀어내기는 `GameSession`과 로비의 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
 | 전투 판정 | 존재. `Combat`(`Game/Combat/`). 룸 대조와 패킷 전송은 `Room`에 있다 |
 | 룸 틱 | 존재. `Room::Tick(deltaTime)`. 테스트는 타이머를 기다리지 않고 시간을 넘긴다. 틱 예약(`RunScheduledTick`)은 테스트하지 않는다 |
 | 몬스터 AI | 존재. `MonsterAIComponent`의 `GetState`와 `GetTarget`, 그리고 룸 틱 뒤의 엔티티 상태. 몬스터는 `Room::SpawnEntity`로 넣는다 |
@@ -199,10 +202,10 @@ Server/Binary/Debug/GameServerTests.exe --gtest_also_run_disabled_tests --gtest_
 | DB 행과 패킷 칸의 변환 | 존재. `ItemRows`(`DB/ItemRows.h`)의 `AddToPossession`과 `FromPossession`. DB와 기획 데이터를 읽지 않는다. 칸 수와 아이템 표의 대조는 「게임 입장」이 덮는다 |
 | 실제 DB | 존재. `GameServerTests/GameDBTestFixture.h`의 `GameDBTestFixture`. 테스트는 `Connection()`으로 받은 실제 연결로 DAO나 SQL을 부르고, 넣은 행을 지우는 문장을 `AddCleanup`에 넣는다. 묶음 이름은 `DISABLED_GameDB`로 시작한다 |
 | DB 연결 | 존재. `DBConnection`의 가상 함수. 테스트는 `GameServerTests/FakeDBConnection.h`를 DAO와 `ProgressStorage`에 넘긴다. 결과 행과 실행 실패를 미리 넣고, 바인딩한 파라미터와 트랜잭션 호출을 기록한다 |
-| 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 입장할 룸 고르기는 `Enter`가 가짜 연결로 덮는다. 응답 전송은 `ServerPacketHandler`에 있고 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
+| 게임 입장 | 존재. `GameEntry::Enter`와 `GameEntry::SpawnPlayer`. 입장할 룸 고르기는 `Enter`가 가짜 연결로 덮는다. 입장 결과로 세션 단계를 바꾸고 응답하는 `GameEntry::FinishEnter`는 `GameEntryFinishTest`가 덮는다. 조율자에 넘기는 `GameEntry::RequestEnter`는 테스트하지 않는다. 저장 대기는 「진행 조율」이 덮는다 |
 | ID 발급 | 존재. `SnowflakeIdGenerator`의 `Next`와 `StartAfter`. 테스트는 시계를 주입해 시각을 정하고, 비트 배치는 발급기의 분해 함수가 아니라 테스트가 따로 조립한 값과 대조한다. 생성 경로에서 부르는 일은 테스트하지 않는다 |
 | 서버 설정 | 존재. `Config::Load`와 `Config::Validate`. 테스트는 환경 변수 조회와 빌드 구성(Debug, Release)을 넘긴다 |
-| 인증 티켓 값 | 존재. `AuthTicket::ParseAccountId`. Redis 읽기와 지우기, 밀어내기는 `Handle_C_LOGIN`에 있고 테스트하지 않는다 |
+| 인증 티켓 값 | 존재. `AuthTicket::ParseAccountId`. Redis 읽기와 지우기, 밀어내기는 로비의 `Handle_C_LOGIN`(`Lobby/LobbyPacketHandlers.cpp`)에 있고 테스트하지 않는다 |
 | 세션 끊기 | 존재. 루프백(127.0.0.1)의 고정 포트 47913에 `ServerService`를 띄우고 Winsock 소켓으로 접속한다. 테스트가 IOCP 디스패치, 예약 잡 분배, 글로벌 큐 소비를 직접 돈다. 그 포트를 다른 프로세스가 쓰고 있으면 준비 단계에서 실패한다 |
 | 예약 잡 분배 | 존재. `JobTimer`의 `Reserve`와 `Distribute`, `JobQueue::Execute`. 테스트는 지역 타이머와 큐를 만들고 전역 `GGlobalQueue`에서 넘겨진 큐를 꺼내 돌린다. 워커 루프(`DistributeReservedJobs`, `DoGlobalQueueWork`)는 테스트하지 않는다 |
 | DB 잡 실행 | 존재. `DBWorker::RunJob`과 `DBWorker::Run`. 스레드를 띄우는 일은 `main`에 있다 |

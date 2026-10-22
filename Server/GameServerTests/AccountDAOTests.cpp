@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "FakeDBConnection.h"
-#include "DB/AccountDAO.h"
+#include "Lobby/AccountDAO.h"
 #include "DB/DAOCommon.h"
 
 /*--------------------------------------------------------------

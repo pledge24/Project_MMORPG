@@ -1,8 +1,8 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "GameDBTestFixture.h"
-#include "DB/AccountDAO.h"
-#include "DB/CharacterListDAO.h"
+#include "Lobby/AccountDAO.h"
+#include "Lobby/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/ProgressStorage.h"
 #include "Game/Entities/PlayerSaveData.h"

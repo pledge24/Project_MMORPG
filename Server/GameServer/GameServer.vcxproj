@@ -185,6 +185,7 @@
     <ClInclude Include="Core\Global.h" />
     <ClInclude Include="Core\ServerContext.h" />
     <ClInclude Include="Network\GameSession.h" />
+    <ClInclude Include="Network\SessionPhase.h" />
     <ClInclude Include="Network\GameSessionManager.h" />
     <ClInclude Include="Network\ProgressCoordinator.h" />
     <ClInclude Include="Network\SaveGate.h" />
@@ -200,7 +201,7 @@
     <ClInclude Include="Protocol\Item.pb.h" />
     <ClInclude Include="Protocol\Lobby.pb.h" />
     <ClInclude Include="Utils\EncodingConverter.h" />
-    <ClInclude Include="Game\Characters\CharacterCreation.h" />
+    <ClInclude Include="Lobby\CharacterCreation.h" />
     <ClInclude Include="Game\Progress\Leveling.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
@@ -233,8 +234,8 @@
     <ClInclude Include="Game\Room\MoveValidation.h" />
     <ClInclude Include="Game\Room\CellMatrix.h" />
     <ClInclude Include="Game\Room\RoomManager.h" />
-    <ClInclude Include="DB\AccountDAO.h" />
-    <ClInclude Include="DB\CharacterListDAO.h" />
+    <ClInclude Include="Lobby\AccountDAO.h" />
+    <ClInclude Include="Lobby\CharacterListDAO.h" />
     <ClInclude Include="DB\IssuedIdDAO.h" />
     <ClInclude Include="DB\CharacterStateDAO.h" />
     <ClInclude Include="DB\ItemDAO.h" />
@@ -262,6 +263,7 @@
     <ClCompile Include="Core\Config.cpp" />
     <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="Network\GameSession.cpp" />
+    <ClCompile Include="Network\SessionPhase.cpp" />
     <ClCompile Include="Network\GameSessionManager.cpp" />
     <ClCompile Include="Network\ProgressCoordinator.cpp" />
     <ClCompile Include="Network\SaveGate.cpp" />
@@ -326,7 +328,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Game\Characters\CharacterCreation.cpp" />
+    <ClCompile Include="Lobby\CharacterCreation.cpp" />
+    <ClCompile Include="Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="Game\Progress\Leveling.cpp" />
     <ClCompile Include="Game\Entities\EntityFactory.cpp" />
     <ClCompile Include="Utils\Utils.cpp" />
@@ -350,8 +353,8 @@
     <ClCompile Include="Game\Room\MoveValidation.cpp" />
     <ClCompile Include="Game\Room\CellMatrix.cpp" />
     <ClCompile Include="Game\Room\RoomManager.cpp" />
-    <ClCompile Include="DB\AccountDAO.cpp" />
-    <ClCompile Include="DB\CharacterListDAO.cpp" />
+    <ClCompile Include="Lobby\AccountDAO.cpp" />
+    <ClCompile Include="Lobby\CharacterListDAO.cpp" />
     <ClCompile Include="DB\IssuedIdDAO.cpp" />
     <ClCompile Include="DB\CharacterStateDAO.cpp" />
     <ClCompile Include="DB\ItemDAO.cpp" />

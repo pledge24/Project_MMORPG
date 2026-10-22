@@ -1,7 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "FakeDBConnection.h"
-#include "DB/CharacterListDAO.h"
+#include "Lobby/CharacterListDAO.h"
 #include "DB/DAOCommon.h"
 
 /*--------------------------------------------------------------
@@ -189,4 +189,29 @@ TEST_F(CharacterListDAOTest, DeleteWithAffectedRowIsTrue)
     conn.QueueResult({}, 1);
 
     EXPECT_TRUE(CharacterListDAO::DeleteCharacter(conn, ACCOUNT_ID, CHARACTER_ID));
+}
+
+TEST_F(CharacterListDAOTest, OwnershipBindsCharacterAndAccount)
+{
+    conn.QueueResult({ { int64(1) } });
+
+    EXPECT_TRUE(CharacterListDAO::OwnsCharacter(conn, ACCOUNT_ID, CHARACTER_ID));
+
+    const map<int32, FakeDBValue>& params = conn.executedParams[0];
+    EXPECT_EQ(get<int64>(params.at(0)), CHARACTER_ID);
+    EXPECT_EQ(get<int64>(params.at(1)), ACCOUNT_ID) << "캐릭터 번호는 클라이언트 값이라 계정 번호를 함께 대조해야 한다";
+}
+
+TEST_F(CharacterListDAOTest, OwnershipWithoutMatchingRowIsFalse)
+{
+    conn.QueueResult({ { int64(0) } });
+
+    EXPECT_FALSE(CharacterListDAO::OwnsCharacter(conn, ACCOUNT_ID, CHARACTER_ID));
+}
+
+TEST_F(CharacterListDAOTest, FailedOwnershipQueryIsDBError)
+{
+    conn.QueueExecuteFailure();
+
+    EXPECT_THROW(CharacterListDAO::OwnsCharacter(conn, ACCOUNT_ID, CHARACTER_ID), DBError);
 }

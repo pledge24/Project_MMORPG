@@ -1,4 +1,5 @@
 #pragma once
+#include "Network/SessionPhase.h"
 
 class Player;
 class Room;
@@ -6,7 +7,8 @@ class Room;
 /**
  * 게임 클라이언트 하나와의 연결.
  *
- * 클라이언트가 보낸 패킷을 처리 창구로 넘기고, 이 연결의 계정과 입장한 플레이어를 기억한다.
+ * 클라이언트가 보낸 패킷 중 지금 단계에서 받는 것만 처리 창구로 넘기고,
+ * 이 연결의 단계와 계정, 입장한 플레이어를 기억한다.
  */
 class GameSession : public PacketSession
 {
@@ -16,6 +18,24 @@ protected:
 	virtual void OnRecvPacket(BYTE* buffer, int32 len) override;
 	virtual void OnSend(int32 len) override;
 	//~ End PacketSession Interface
+
+	//~ 단계
+public:
+	/** 어느 스레드에서 불러도 된다. */
+	SessionPhase GetPhase() const { return _phase.load(); }
+	/** 로비 접속을 마쳤다. 로비 접속 전 단계일 때만 로비로 바꾸고, 아니면 false. */
+	bool CompleteLobbyConnect();
+	/** 로비에서 캐릭터를 골라 게임 입장을 시작한다. 로비 단계일 때만 게임 입장 중으로 바꾸고, 아니면 false. */
+	bool BeginGameEntry();
+	/** 게임 입장에 성공했다. 게임 입장 중일 때만 게임으로 바꾸고, 아니면 false. */
+	bool CompleteGameEntry();
+	/** 게임 입장이 거절됐다. 게임 입장 중일 때만 로비로 되돌리고, 아니면 false. */
+	bool CancelGameEntry();
+
+private:
+	bool TryChangePhase(SessionPhase from, SessionPhase to);
+
+	atomic<SessionPhase> _phase = SessionPhase::BEFORE_LOBBY;
 
 	//~ 플레이어
 public:
