@@ -4,14 +4,14 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Containers/Ticker.h"
 #include "Utils/Types.h"
-#include "Enum.pb.h"
+#include "Common.pb.h"
 #include "P1ConnectionSubsystem.generated.h"
 
 class FSocket;
 
 DECLARE_MULTICAST_DELEGATE(FOnGameServerConnected);
 DECLARE_MULTICAST_DELEGATE(FOnGameServerConnectFailed);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnConnectionLost, Protocol::LeaveReason);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnConnectionLost, Protocol::DisconnectReason);
 
 /**
  * 게임 서버와의 연결.
@@ -61,11 +61,11 @@ private:
 
     //~ Connection Loss
 public:
-    /** 서버가 S_LEAVE_GAME으로 끊었을 때 연결을 닫고 OnConnectionLost를 알린다. 게임 스레드 전용. */
-    void HandleLeaveGame(Protocol::LeaveReason Reason);
+    /** 서버가 S_DISCONNECT로 끊었을 때 연결을 닫고 OnConnectionLost를 알린다. 게임 스레드 전용. */
+    void HandleDisconnect(Protocol::DisconnectReason Reason);
 
     /**
-     * 연결이 끊기면 게임 스레드에서 한 번 알린다. 서버가 사유를 보내지 않았으면 LEAVE_REASON_NONE.
+     * 연결이 끊기면 게임 스레드에서 한 번 알린다. 서버가 사유를 보내지 않았으면 DISCONNECT_REASON_NONE.
      * 게임 종료(Deinitialize)와 Close로 닫을 때는 알리지 않는다.
      */
     FOnConnectionLost OnConnectionLost;

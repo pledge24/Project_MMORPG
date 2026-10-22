@@ -5,7 +5,7 @@
 
 void GameSession::OnDisconnected()
 {
-	// 조율자가 저장 대기를 건 뒤에 계정 등록을 지운다. 반대로 하면 그사이 같은 계정의 새 로그인이 대기 없이 입장해 저장 전의 진행을 불러온다.
+	// 조율자가 저장 대기를 건 뒤에 계정 등록을 지운다. 반대로 하면 그사이 같은 계정의 새 로비 접속이 대기 없이 입장해 저장 전의 진행을 불러온다.
 	GProgressCoordinator->OnDisconnected(_userId, _player.load());
 
 	GSessionManager->UnregisterUser(static_pointer_cast<GameSession>(shared_from_this()));
@@ -40,9 +40,14 @@ void GameSession::OnSend(int32 len)
 {
 }
 
+bool GameSession::BeginLobbyConnect()
+{
+	return TryChangePhase(SessionPhase::BEFORE_LOBBY, SessionPhase::CONNECTING_LOBBY);
+}
+
 bool GameSession::CompleteLobbyConnect()
 {
-	return TryChangePhase(SessionPhase::BEFORE_LOBBY, SessionPhase::LOBBY);
+	return TryChangePhase(SessionPhase::CONNECTING_LOBBY, SessionPhase::LOBBY);
 }
 
 bool GameSession::BeginGameEntry()

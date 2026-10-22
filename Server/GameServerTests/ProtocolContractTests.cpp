@@ -25,8 +25,15 @@
 
 // 파일마다의 패킷 — 선언 순서 그대로. 생성기가 이 순서대로 그 파일 범위의 첫 번호부터 매긴다.
 // 도메인 파일은 계약 티켓이 옛 Protocol.proto에서 패킷을 옮겨 오며 채운다.
-#define COMMON_PACKETS(X)
-#define LOBBY_PACKETS(X)
+#define COMMON_PACKETS(X)                                                    \
+    X(S_DISCONNECT)
+
+#define LOBBY_PACKETS(X)                                                     \
+    X(C_CONNECT_LOBBY) X(S_CONNECT_LOBBY)                                    \
+    X(S_CHARACTER_LIST)                                                      \
+    X(C_CREATE_CHARACTER) X(S_CREATE_CHARACTER)                              \
+    X(C_DELETE_CHARACTER) X(S_DELETE_CHARACTER)
+
 #define ENTRY_PACKETS(X)
 #define ENTITY_PACKETS(X)
 #define COMBAT_PACKETS(X)
@@ -36,11 +43,8 @@
 // 옛 파일. 도메인 파일로 다 옮기면 파일과 함께 지운다.
 #define LEGACY_PROTOCOL_PACKETS(X)                                           \
     X(C_PING) X(S_PONG)                                                      \
-    X(C_LOGIN) X(S_LOGIN)                                                    \
-    X(C_CREATE_CHARACTER) X(S_CREATE_CHARACTER)                              \
-    X(C_DELETE_CHARACTER) X(S_DELETE_CHARACTER)                              \
     X(C_ENTER_GAME) X(S_ENTER_GAME)                                          \
-    X(C_LEAVE_GAME) X(S_LEAVE_GAME)                                          \
+    X(C_LEAVE_GAME)                                                          \
     X(C_MAP_LOAD_COMPLETE)                                                   \
     X(C_ENTER_MAP) X(S_ENTER_MAP)                                            \
     X(C_ENTER_ROOM) X(S_ENTER_ROOM)                                          \

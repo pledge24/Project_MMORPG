@@ -7,7 +7,7 @@ struct PlayerSaveData;
  * 접속 종료 저장과 입장 불러오기의 순서를 맞추는 조율자.
  *
  * 같은 계정의 저장이 끝나기 전에는 그 계정의 진행을 불러오지 않도록 지킨다.
- * 접속 종료, 중복 로그인, 입장 요청이 저장과 불러오기에 닿을 때는 모두 이 클래스를 거친다.
+ * 접속 종료, 같은 계정의 새 로비 접속, 입장 요청이 저장과 불러오기에 닿을 때는 모두 이 클래스를 거친다.
  */
 class ProgressCoordinator
 {
@@ -31,10 +31,10 @@ public:
      */
     void OnDisconnected(int64 userId, const PlayerRef& player);
     /**
-     * 같은 계정의 새 로그인이 기존 세션을 밀어내기 직전에 로그인 잡(DB 스레드)이 부른다.
+     * 같은 계정의 새 로비 접속이 앞 세션을 밀어내기 직전에 로비 접속 잡(DB 스레드)이 부른다.
      * 입장 전의 세션이면 replacedPlayer는 nullptr.
      */
-    void OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer);
+    void OnDuplicateConnection(int64 userId, const PlayerRef& replacedPlayer);
     /**
      * 게임 입장 창구가 부른다. 어느 스레드에서 불러도 된다. 이 계정의 저장이 끝난 뒤 DB 잡 안에서 load.run을 부른다.
      * PARKED_LOAD_TIMEOUT_MS 안에 저장이 끝나지 않거나 이미 기다리는 입장이 있으면 load.reject를 부른다.

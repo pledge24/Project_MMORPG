@@ -3,3 +3,68 @@ package Protocol;
 
 // 로비 접속과 캐릭터 목록, 생성, 삭제
 // @packet_id_range 200 299
+
+// 직업(CharacterClass)은 아직 옛 파일에 있다. 직업을 Common으로 옮기는 티켓이 이 import를 바꾼다
+import "Enum.proto";
+
+enum LobbyResult
+{
+    LOBBY_RESULT_SUCCESS = 0;
+    LOBBY_RESULT_INVALID_AUTH_TICKET = 1;   // 인증 티켓이 없거나, 이미 쓰였거나, 다른 월드의 것이다
+    LOBBY_RESULT_INVALID_NAME = 2;          // 이름이 비었거나 길이 제한을 넘는다
+    LOBBY_RESULT_NAME_TAKEN = 3;            // 이 월드에 같은 이름의 캐릭터가 있다
+    LOBBY_RESULT_UNAVAILABLE_CLASS = 4;     // 생성할 수 있는 직업이 아니다
+    LOBBY_RESULT_NO_EMPTY_SLOT = 5;         // 빈 캐릭터 슬롯이 없다
+    LOBBY_RESULT_CHARACTER_NOT_FOUND = 6;   // 이 계정의 캐릭터가 아니거나 이미 삭제됐다
+    LOBBY_RESULT_INTERNAL_ERROR = 7;        // DB 오류처럼 요청을 바꿔도 풀리지 않는 실패
+}
+
+// 캐릭터 목록의 항목
+message LobbyCharacter
+{
+    int64 character_id = 1;
+    string name = 2;
+    CharacterClass character_class = 3;
+    int32 level = 4;                        // 마지막으로 저장한 레벨
+}
+
+message C_CONNECT_LOBBY
+{
+    string auth_ticket = 1;
+}
+
+// 성공하면 S_CHARACTER_LIST가 뒤따른다. 실패하면 서버가 이 응답을 보낸 뒤 연결을 끊는다
+message S_CONNECT_LOBBY
+{
+    LobbyResult result = 1;
+}
+
+// 세션이 로비에 들어갈 때마다 온다. 로비 접속에 성공했을 때와 로비 복귀의 저장이 끝났을 때다
+message S_CHARACTER_LIST
+{
+    repeated LobbyCharacter characters = 1;
+    int32 character_slot_count = 2;
+}
+
+message C_CREATE_CHARACTER
+{
+    string name = 1;
+    CharacterClass character_class = 2;
+}
+
+message S_CREATE_CHARACTER
+{
+    LobbyResult result = 1;
+    LobbyCharacter character = 2;           // 성공했을 때만 있다
+}
+
+message C_DELETE_CHARACTER
+{
+    int64 character_id = 1;
+}
+
+message S_DELETE_CHARACTER
+{
+    LobbyResult result = 1;
+    int64 character_id = 2;                 // 요청한 캐릭터 번호
+}

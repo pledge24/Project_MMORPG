@@ -3,15 +3,6 @@ package Protocol;
 
 import "Enum.proto";
 
-message CharacterOverview
-{
-    int64 character_id = 1;
-    CharacterClass class = 2;
-    string name = 3;
-    int32 level = 4;
-    //map<int32, int32> equipped_gear_summary = 5;
-}
-
 message EntityInfo
 {
 	int64 entity_id = 1;

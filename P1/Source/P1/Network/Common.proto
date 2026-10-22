@@ -3,3 +3,16 @@ package Protocol;
 
 // 여러 도메인이 함께 쓰는 자료형과, 세션 단계와 무관한 패킷
 // @packet_id_range 100 199
+
+// 서버가 연결을 끊는 사유
+enum DisconnectReason
+{
+    DISCONNECT_REASON_NONE = 0;
+    DISCONNECT_REASON_DUPLICATE_CONNECTION = 1;     // 같은 계정의 새 로비 접속에 밀려났다
+}
+
+// 서버가 연결을 끊기 직전에 보낸다. 세션 단계와 무관하게 온다
+message S_DISCONNECT
+{
+    DisconnectReason reason = 1;
+}

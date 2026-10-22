@@ -199,6 +199,7 @@
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="LobbyDataTests.cpp" />
+    <ClCompile Include="LobbyRequestsTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -279,6 +280,7 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Lobby\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Lobby\LobbyPacketHandlers.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\LobbyRequests.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp" />
     <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp" />

@@ -6,7 +6,7 @@
 /*--------------------------------------------------------------
     세션 단계와 단계별 허용표 테스트
 
-    세션은 로비 접속 전, 로비, 게임 입장 중, 게임 네 단계를 거치고, 단계마다 받는 패킷이 다르다.
+    세션은 로비 접속 전, 로비 접속 중, 로비, 게임 입장 중, 게임 다섯 단계를 거치고, 단계마다 받는 패킷이 다르다.
     단계를 보지 않던 때는 게임에 입장한 세션이 플레이 중인 캐릭터를 지울 수 있었고, 다른 계정의
     인증 티켓으로 로비 접속을 다시 보내면 세션의 계정 번호만 바뀌었다.
 
@@ -18,7 +18,7 @@ namespace
 {
     constexpr SessionPhase ALL_PHASES[] =
     {
-        SessionPhase::BEFORE_LOBBY, SessionPhase::LOBBY, SessionPhase::ENTERING_GAME, SessionPhase::IN_GAME,
+        SessionPhase::BEFORE_LOBBY, SessionPhase::CONNECTING_LOBBY, SessionPhase::LOBBY, SessionPhase::ENTERING_GAME, SessionPhase::IN_GAME,
     };
 
     struct ExpectedPhases
@@ -37,7 +37,7 @@ namespace
     {
         { PKT_C_PING, "C_PING", ANY },
         { PKT_C_LEAVE_GAME, "C_LEAVE_GAME", ANY },
-        { PKT_C_LOGIN, "C_LOGIN", BEFORE_LOBBY_ONLY },
+        { PKT_C_CONNECT_LOBBY, "C_CONNECT_LOBBY", BEFORE_LOBBY_ONLY },
         { PKT_C_CREATE_CHARACTER, "C_CREATE_CHARACTER", LOBBY_ONLY },
         { PKT_C_DELETE_CHARACTER, "C_DELETE_CHARACTER", LOBBY_ONLY },
         { PKT_C_ENTER_GAME, "C_ENTER_GAME", LOBBY_ONLY },
@@ -117,9 +117,17 @@ TEST(SessionPhaseTest, PhasesAdvanceInOrder)
     EXPECT_FALSE(session.CancelGameEntry());
     EXPECT_EQ(session.GetPhase(), SessionPhase::BEFORE_LOBBY);
 
+    EXPECT_FALSE(session.CompleteLobbyConnect()) << "로비 접속을 요청하지 않은 세션은 로비 접속을 마치지 않는다";
+
+    ASSERT_TRUE(session.BeginLobbyConnect());
+    EXPECT_EQ(session.GetPhase(), SessionPhase::CONNECTING_LOBBY);
+    EXPECT_FALSE(session.BeginLobbyConnect()) << "로비 접속 중인 세션은 두 번째 로비 접속을 시작하지 않는다";
+    EXPECT_FALSE(session.BeginGameEntry()) << "로비 접속 중에는 게임 입장을 시작하지 않는다";
+
     ASSERT_TRUE(session.CompleteLobbyConnect());
     EXPECT_EQ(session.GetPhase(), SessionPhase::LOBBY);
     EXPECT_FALSE(session.CompleteLobbyConnect()) << "로비 접속은 한 번만 마친다";
+    EXPECT_FALSE(session.BeginLobbyConnect());
     EXPECT_FALSE(session.CompleteGameEntry()) << "입장을 시작하지 않은 세션은 입장을 마치지 않는다";
 
     ASSERT_TRUE(session.BeginGameEntry());
@@ -136,6 +144,7 @@ TEST(SessionPhaseTest, PhasesAdvanceInOrder)
 TEST(SessionPhaseTest, CancelledEntryReturnsToLobby)
 {
     RecordingSession session;
+    session.BeginLobbyConnect();
     session.CompleteLobbyConnect();
     session.BeginGameEntry();
 
@@ -149,6 +158,7 @@ TEST(SessionPhaseTest, CancelledEntryReturnsToLobby)
 TEST(GameEntryFinishTest, SuccessMovesSessionToGameBeforeResponse)
 {
     shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+    session->BeginLobbyConnect();
     session->CompleteLobbyConnect();
     session->BeginGameEntry();
 
@@ -165,6 +175,7 @@ TEST(GameEntryFinishTest, SuccessMovesSessionToGameBeforeResponse)
 TEST(GameEntryFinishTest, FailureReturnsSessionToLobby)
 {
     shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+    session->BeginLobbyConnect();
     session->CompleteLobbyConnect();
     session->BeginGameEntry();
 

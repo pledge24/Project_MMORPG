@@ -64,7 +64,7 @@ UE5 클라이언트 · 외부 IOCP C++ 게임 서버 · Node 인증 서버의 3�
 — 다른 경로가 생기면 그 경로에서 정지 검사와 `LastLoginAt` 갱신이 빠진다.
 
 **Architecture Invariant:** 같은 계정으로 다시 로그인해도 쓰지 않은 이전 인증 티켓을 지우지 않는다.
-— 이전 티켓으로 들어온 세션은 게임 서버의 「나중에 온 로그인이 이긴다」 규칙으로 밀려나므로 결과가 같다. 지우려면
+— 이전 티켓으로 들어온 세션은 게임 서버의 「나중에 온 로비 접속이 이긴다」 규칙으로 밀려나므로 결과가 같다. 지우려면
 계정에서 티켓을 찾는 키가 하나 더 생기고, 두 키가 어긋나는 경우까지 다뤄야 한다.
 
 **Architecture Invariant:** 접속을 받기 전에 설정 검사, `AccountDB` 연결, Redis 연결을 이 순서로 모두 확인한다.
@@ -120,9 +120,9 @@ TTL은 로그인 응답부터 게임 서버 접속까지의 유효 시간이고,
 ### Server/GameServer
 
 게임 서버는 위 「Server/AuthServer」 절의 인증 티켓 계약을 읽는다. 값은 `Network/AuthTicket`이 계정 번호로 읽는다.
-클라이언트가 티켓을 담아 보내는 패킷 필드는 프로토콜을 다시 짤 때까지 옛 이름(`C_LOGIN.access_token`)을 쓴다.
+클라이언트는 로비 접속(`C_CONNECT_LOBBY.auth_ticket`)에 티켓을 담아 보낸다. 게임 서버에는 로그인이 없다.
 
-**Architecture Invariant:** 인증 서버의 DB를 모른다. 로그인 검증은 Redis의 인증 티켓을 되읽어서 하고,
+**Architecture Invariant:** 인증 서버의 DB를 모른다. 로비 접속의 계정 확인은 Redis의 인증 티켓을 되읽어서 하고,
 계정 정보를 DB에서 직접 조회하지 않는다.
 
 **Architecture Invariant:** 룸 소유 상태 변경은 그 룸의 큐 위에서만 일어난다. 락이 없다.
@@ -183,16 +183,18 @@ DAO의 바인딩과 흐름은 가짜 연결(`GameServerTests/FakeDBConnection.h`
 (`GameEntry`). DB 스레드는 불러오기에서도 살아 있는 `Player`를 만지지 않고 진행 사본(`PlayerProgress`)만 채운다.
 근거는 `docs/adr/0012-load-and-save-one-progress-copy.md`에 있다.
 
-**Architecture Invariant:** DB를 거치는 요청(로그인, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
-계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로그인만
+**Architecture Invariant:** DB를 거치는 요청(로비 접속, 캐릭터 생성·삭제, 입장)은 핸들러가 `DBQueue`에 잡을 넣는다.
+계정을 아는 요청은 계정 번호로 고른 큐(`GetDBQueueFromId`)에 넣어 한 계정의 DB 잡이 순서대로 돈다. 로비 접속만
 계정을 모르는 채로 시작하므로 랜덤 큐에 넣고, 그 잡 안에서 인증 티켓 확인, `GameDB` 계정 행 기록, 캐릭터 목록
 불러오기를 이어 한다. 계정 행은 이 월드에 처음 들어올 때 만들어지고, 캐릭터 슬롯 수의 원천이다.
 
-**Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로그인이 이긴다. `Handle_C_LOGIN`은
-Redis의 인증 티켓 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 `GSessionManager->RegisterUser`가
-계정에 세션을 묶고 기존 세션을 돌려준다. 확인과 교체는 관리자의 락 하나 안에서 한다. 로그인 잡은
-랜덤 DB 큐에서 돌아서 같은 계정의 로그인이 동시에 올 수 있기 때문이다. 밀려난 세션에는
-`S_LEAVE_GAME(DUPLICATE_LOGIN)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).
+**Architecture Invariant:** 한 계정은 세션 하나만 갖고, 나중에 온 로비 접속이 이긴다. `Handle_C_CONNECT_LOBBY`는
+Redis의 인증 티켓 키를 읽고 지우며, 키를 지운 쪽만 통과한다. 통과하면 배선 함수 `GSessionManager->BindAccount`가
+계정에 세션을 묶고, 앞 세션이 있으면 진행 조율자에 알린 뒤 밀어낸다. 로비는 계정 번호와 세션만 넘기고 진행 조율자와
+플레이어를 모른다. 확인과 교체(`RegisterUser`)는 관리자의 락 하나 안에서 한다. 로비 접속 잡은
+랜덤 DB 큐에서 돌아서 같은 계정의 로비 접속이 동시에 올 수 있기 때문이다. 밀려난 세션에는
+`S_DISCONNECT(DUPLICATE_CONNECTION)`을 보내고, 그 패킷의 송신이 끝난 뒤에 끊는다(`Session::DisconnectAfterSend`).
+로비 접속이 실패해도 같은 방식으로 `S_CONNECT_LOBBY`의 결과를 보낸 뒤 끊는다.
 상대가 받지 않아 송신이 끝나지 않으면 1초 뒤에 끊는다. 그 세션의 저장은 아래의 접속 종료 경로를 탄다.
 서버가 건 끊기(`DisconnectEx`)는 상대가 소켓을 닫아야 끝나므로, `Session::DISCONNECT_TIMEOUT_MS`(1초) 안에 끝나지 않으면
 세션이 소켓을 닫아 `OnDisconnected`까지 가게 한다. 이 상한은 서비스의 타이머 큐로 예약하고 워커의 `JobTimer` 분배로 돈다.
@@ -253,7 +255,7 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 **Architecture Invariant:** 접속 종료 저장이 끝나기 전에는 같은 계정의 입장 불러오기를 하지 않는다.
 같은 큐에 넣는 것만으로는 부족하다. 저장 잡은 룸 큐를 거쳐 늦게 들어가므로 새 세션의 불러오기가 먼저
 들어갈 수 있다. 그래서 `SaveGate`가 계정마다 저장 대기를 표시한다. 대기를 걸고 푸는 곳은 진행 조율자
-`ProgressCoordinator` 하나다. 접속 종료(`GameSession::OnDisconnected`), 중복 로그인(`Handle_C_LOGIN`), 입장 요청
+`ProgressCoordinator` 하나다. 접속 종료(`GameSession::OnDisconnected`), 같은 계정의 새 로비 접속(`GameSessionManager::BindAccount`), 입장 요청
 (게임 입장 창구 `GameEntry::RequestEnter`)은 조율자의 함수를 하나씩만 부르고, 저장 대기를 직접 다루지 않는다. 대기는 플레이어가 있는
 세션을 밀어낼 때와 플레이어가 있는 세션이 끊길 때 걸고, 저장 잡이 끝나면 푼다. 룸에 들어간 적이 없는 플레이어는
 저장하지 않으므로 접속 종료가 대기를 곧바로 푼다. 대기 중에 온 `C_ENTER_GAME`은 불러오기를 하나만 맡겨 두고
@@ -264,7 +266,7 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 하나로 정한다. 세션 스레드의 `MarkDisconnected`와 룸 큐의 `MarkEnteredRoom`이 같은 atomic 값을 읽고 바꾸는 일을
 한 번에 한다. 첫 룸 입장 전에 끊긴 플레이어는 룸 입장 잡이 저장하지 않고 빼기만 하고, 룸에 들어간 뒤 끊긴
 플레이어는 소속 룸 큐나 들어갈 룸 큐가 저장한다. 저장 잡은 대기를 풀기 직전에 표시를 `SAVED`로 바꾼다. 끊긴 세션이 계정
-등록에서 빠지기 전에 온 새 로그인은 그 세션을 밀어내며 대기를 거는데, 표시가 `LEFT_BEFORE_ROOM`이나 `SAVED`면 풀어 줄
+등록에서 빠지기 전에 온 새 로비 접속은 그 세션을 밀어내며 대기를 거는데, 표시가 `LEFT_BEFORE_ROOM`이나 `SAVED`면 풀어 줄
 접속 종료가 이미 지나갔으므로 그 자리에서 푼다.
 — 판정이 두 곳에 나뉘어 있던 때는 첫 룸 입장 잡이 대기 없이 저장을 넣어, 그사이 입장한 새 세션의 불러오기 뒤에
 저장이 돌았다(TD-003).
@@ -357,7 +359,7 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 브로드캐스트는 셀과 무관하게 룸 전체로 간다.
 
 **API Boundary:** 패킷 핸들러. `C_*` 로만 진입한다. 처리 경로는 네 가지뿐이다 —
-`DBQueue`(로그인·캐릭터 생성/삭제·게임 입장), 룸 큐(그 외 대부분), 혼합, 스텁.
+`DBQueue`(로비 접속·캐릭터 생성/삭제·게임 입장), 룸 큐(그 외 대부분), 혼합, 스텁.
 새 핸들러는 이 넷 중 하나에 들어가야 한다. **다섯 번째를 만들지 않는다.** 로비 패킷(로비 접속, 캐릭터 생성·삭제·선택)의
 핸들러는 `Lobby/LobbyPacketHandlers.cpp`에, 나머지는 `Network/ServerPacketHandler.cpp`에 정의한다. 새 핸들러는 단계별
 허용표에도 더한다. 더하지 않으면 그 패킷은 어느 단계에서도 버려진다.
@@ -377,12 +379,13 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 
 **Architecture Invariant:** 연결이 끊기면 수신 워커만 `PacketSession`에 끊김 표시를 세운다. 펌프는 표시를
 먼저 읽고 큐를 비운 뒤, 표시가 서 있었으면 연결을 정리하고 `UP1ConnectionSubsystem::OnConnectionLost`를
-`LEAVE_REASON_NONE`으로 알린다. 서버가 `S_LEAVE_GAME`으로 끊으면 그 핸들러가
-`UP1ConnectionSubsystem::HandleLeaveGame`을 부른다. 이 함수가 연결을 닫고 같은 델리게이트를 그 사유로 알린다.
+`DISCONNECT_REASON_NONE`으로 알린다. 서버가 `S_DISCONNECT`로 끊으면 그 핸들러가
+`UP1ConnectionSubsystem::HandleDisconnect`를 부른다. 이 함수가 연결을 닫고 같은 델리게이트를 그 사유로 알린다.
 끊김을 알리는 델리게이트는 이 하나뿐이다. 접속 흐름 서브시스템(`UP1EntryFlowSubsystem`)이 이것을 구독해 사유를 문구로 바꾸고,
 로그인 단계로 돌아가 로그인 맵을 연다. 이미 로그인 단계면 맵을 다시 열지 않고 열린 로그인 화면에 문구를 알린다.
-수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로 끊기기 직전에 온 `S_LEAVE_GAME`을 놓치지
-않는다. 사용자가 게임을 끄는 경로(서브시스템의 `Deinitialize`)는 `C_LEAVE_GAME`만 보내고 이 경로를 타지 않는다.
+수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로 끊기기 직전에 온 `S_DISCONNECT`를 놓치지
+않는다. 로비 접속이 거절되면 서버가 결과를 보낸 뒤 끊는다. 접속 흐름 서브시스템은 결과를 받는 즉시 연결을 닫고 결과의
+문구를 로그인 화면에 띄우므로, 뒤따르는 끊김이 사유 없는 끊김으로 그 문구를 덮지 않는다. 사용자가 게임을 끄는 경로(서브시스템의 `Deinitialize`)는 `C_LEAVE_GAME`만 보내고 이 경로를 타지 않는다.
 — `Network/`는 끊김과 사유를 알리기만 하고, 화면 문구와 레벨 전환은 접속 흐름 서브시스템이 갖는다.
 
 **Architecture Invariant:** 소켓과 세션은 `UP1ConnectionSubsystem`만 소유한다. 게임 코드는

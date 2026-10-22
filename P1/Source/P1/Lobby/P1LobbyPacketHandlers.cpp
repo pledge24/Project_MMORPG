@@ -23,7 +23,18 @@ namespace
     }
 }
 
-bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
+bool Handle_S_CONNECT_LOBBY(PacketSessionRef& session, Protocol::S_CONNECT_LOBBY& pkt)
+{
+    if (auto* Lobby = GetSessionSubsystem<UP1LobbySubsystem>(session))
+    {
+        Lobby->HandleConnectLobby(pkt);
+        return true;
+    }
+
+    return false;
+}
+
+bool Handle_S_CHARACTER_LIST(PacketSessionRef& session, Protocol::S_CHARACTER_LIST& pkt)
 {
     if (auto* Lobby = GetSessionSubsystem<UP1LobbySubsystem>(session))
     {

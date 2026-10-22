@@ -13,7 +13,7 @@ class UP1MyPlayerData;
 // 로그인 화면이 이 헤더를 부르므로 protobuf 헤더를 끌고 오지 않는다. 생성된 정의와 바탕 타입이 같아야 한다.
 namespace Protocol
 {
-    enum LeaveReason : int;
+    enum DisconnectReason : int;
 }
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLoginNotice, const FString& /*Notice*/);
@@ -64,6 +64,9 @@ private:
     void HandleConnectFailed();
     void HandleLobbyEntered();
 
+    /** 서버가 로비 접속을 거절하면 부른다. 로그인 단계로 돌아가 Message를 보여 준다. */
+    void HandleLobbyConnectFailed(const FText& Message);
+
     /** 연결되면 로비 접속에 낼 인증 티켓. 내자마자 비운다. */
     FString PendingAuthTicket;
 
@@ -94,7 +97,7 @@ public:
     FOnLoginNotice OnLoginNotice;
 
 private:
-    void HandleConnectionLost(Protocol::LeaveReason Reason);
+    void HandleConnectionLost(Protocol::DisconnectReason Reason);
 
     /** 로그인 단계로 돌아가 Notice를 보여 준다. 로그인 맵이 아니면 로그인 맵을 연다. */
     void ReturnToLogin(const FString& Notice);

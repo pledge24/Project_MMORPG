@@ -152,6 +152,9 @@
     <ClCompile Include="Lobby\LobbyPacketHandlers.cpp">
       <Filter>Lobby</Filter>
     </ClCompile>
+    <ClCompile Include="Lobby\LobbyRequests.cpp">
+      <Filter>Lobby</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Progress\Leveling.cpp">
       <Filter>Game\Progress</Filter>
     </ClCompile>
@@ -332,6 +335,9 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Lobby\CharacterCreation.h">
+      <Filter>Lobby</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\LobbyRequests.h">
       <Filter>Lobby</Filter>
     </ClInclude>
     <ClInclude Include="Game\Progress\Leveling.h">
