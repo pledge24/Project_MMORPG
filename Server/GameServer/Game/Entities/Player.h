@@ -84,8 +84,6 @@ struct PlayerSpawnParams : public Creature::SpawnParams
     int64 userId = 0;
     /** 불러온 진행(nullptr 가능). Init 안에서만 읽으므로 Init이 끝날 때까지만 살아 있으면 된다. */
     const PlayerProgress* progress = nullptr;
-    /** 불러온 진행으로 처음 들어갈 룸. 진행의 맵과 좌표로 고른 룸이고, progress가 있을 때만 읽는다. */
-    int32 enterRoomId = -1;
 };
 
 /**
@@ -127,10 +125,10 @@ public:
 
 private:
     /**
-     * 불러온 진행을 플레이어에 쓰고 enterRoomId 룸으로 들어갈 준비를 한다. 스탯은 검증하지 않으므로 뒤이어 OnLoaded를 부른다.
+     * 불러온 진행을 플레이어에 쓴다. 스탯은 검증하지 않으므로 뒤이어 OnLoaded를 부른다.
      * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false.
      */
-    bool ApplyProgress(const PlayerProgress& progress, int32 enterRoomId);
+    bool ApplyProgress(const PlayerProgress& progress);
     /** 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 사유를 로그에 남기고 false. */
     bool ValidateLoadedStat();
 
@@ -172,8 +170,13 @@ public:
 
     //~ 맵과 룸 이동
 public:
-    /** 들어갈 맵과 룸 id를 기록한다. 룸 입장은 목적지 룸 큐의 OnEnterRoom에서 끝난다. */
-    void OnEnterMap(int32 mapId, int32 roomId);
+    /**
+     * room의 맵을 클라이언트가 다 열 때까지 기다리게 한다. 맵과 위치를 목적지의 것으로 바꾸고 소속 룸을 room으로 정한다.
+     * 룸에는 넣지 않는다. 세션에 등록하기 전이나, 플레이어를 뺀 룸의 큐 위에서 부른다.
+     */
+    void BeginMapLoad(const RoomRef& room, const Protocol::PosInfo& pos);
+    /** roomId 룸에서 맵 로드를 기다리고 있었으면 기다림을 끝내고 true. 소속 룸 큐 위에서 부른다. */
+    bool FinishMapLoad(int32 roomId);
     /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 룸 중심에 둔다. */
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
     /**
@@ -183,8 +186,6 @@ public:
     void ApplyMove(const Protocol::PosInfo& posInfo, uint64 now);
     /** 서버가 위치를 정했거나 이동을 받아들인 마지막 시각(ms, GetTickCount64). */
     uint64 GetLastPositionTick() const { return _lastPositionTick; }
-    /** 이동 중인 룸이 없으면 -1. */
-    int32 GetEnteringRoomId() { return _enteringRoomId; }
     /** 지금 맵 또는 들어가는 맵. 맵 표의 mapId다. */
     int32 GetMapId() const { return _mapId; }
     /** 마지막으로 들어간 룸. 룸에 들어간 적이 없으면 -1. */
@@ -193,7 +194,8 @@ public:
 private:
     int32 _mapId = 0;
     int32 _roomId = -1;
-    int32 _enteringRoomId = -1;
+    /** 맵 로드를 기다리는 룸. 기다리지 않으면 -1. 소속 룸 큐만 읽고 쓴다. */
+    int32 _mapLoadRoomId = -1;
     /** 이동 판정은 이 시각부터 흐른 시간으로 허용 거리를 정한다. 소속 룸 큐만 읽고 쓴다. */
     uint64 _lastPositionTick = 0;
 

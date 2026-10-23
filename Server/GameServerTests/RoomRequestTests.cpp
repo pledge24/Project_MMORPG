@@ -82,13 +82,11 @@ protected:
         const PlayerProgress progress = MakeProgressWithSword();
         PlayerSpawnParams params;
         params.progress = &progress;
-        params.enterRoomId = ROOM_ID;
         player = EntityFactory::Create<Player>(params);
         ASSERT_NE(player, nullptr);
 
         RoomEnterData enterData{};
         enterData.nextRoomId = ROOM_ID;
-        enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
         ASSERT_TRUE(room->EnterPlayer(player, enterData));
     }
 
@@ -133,12 +131,10 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
     const PlayerProgress progress = MakeProgressWithSword();
     PlayerSpawnParams params;
     params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
     PlayerRef victim = EntityFactory::Create<Player>(params);
     ASSERT_NE(victim, nullptr);
     RoomEnterData enterData{};
     enterData.nextRoomId = ROOM_ID;
-    enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
     ASSERT_TRUE(room->EnterPlayer(victim, enterData));
     const float victimX = victim->GetPosInfo().pos().x();
 
@@ -152,36 +148,6 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
     EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
 }
 
-// 처음 입장하면 다른 플레이어 알림(SpawnPlayer)과 룸 정보 복제(ReplicateRoomData)가 둘 다 본인을 실었다.
-TEST_F(RoomRequestTest, InitialEntrySpawnsSelfOnce)
-{
-    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
-    const PlayerProgress progress = MakeProgressWithSword();
-    PlayerSpawnParams params;
-    params.session = session;
-    params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
-    PlayerRef newcomer = EntityFactory::Create<Player>(params);
-    ASSERT_NE(newcomer, nullptr);
-
-    Protocol::C_ENTER_ROOM enterPkt;
-    enterPkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
-    enterPkt.set_room_id(ROOM_ID);
-    room->C_HandleEnterRoom(enterPkt, newcomer);
-
-    int32 selfSpawnCount = 0;
-    for (const Protocol::S_SPAWN& spawnPkt : session->SentPackets<Protocol::S_SPAWN>(PKT_S_SPAWN))
-    {
-        for (const Protocol::EntityInfo& entity : spawnPkt.entities())
-        {
-            if (entity.entity_id() == newcomer->GetEntityId())
-                selfSpawnCount++;
-        }
-    }
-
-    EXPECT_EQ(selfSpawnCount, 1) << "클라이언트의 중복 검사를 지우면 내 플레이어가 두 번 처리된다";
-}
-
 // 아이템 요청은 디스패치할 때의 룸 큐에서 돈다. 그사이 플레이어가 다른 룸으로 옮겼으면 그 플레이어의 상태는
 // 새 룸 큐의 것이므로 옛 룸 큐에서 바꾸지 않는다.
 TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
@@ -191,13 +157,11 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
     PlayerSpawnParams params;
     params.session = session;
     params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
     PlayerRef traveler = EntityFactory::Create<Player>(params);
     ASSERT_NE(traveler, nullptr);
 
     RoomEnterData enterData{};
     enterData.nextRoomId = ROOM_ID;
-    enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
     ASSERT_TRUE(room->EnterPlayer(traveler, enterData));
     ASSERT_TRUE(room->LeavePlayer(traveler, true));
 
@@ -239,28 +203,4 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
     EXPECT_FLOAT_EQ(saveData->progress.pos.x, TOWN_RESPAWN_X);
     EXPECT_EQ(saveData->progress.hp, PLAYER_MAX_HP / 2)
         << "마을 리스폰은 HP를 절반으로 채운다";
-}
-
-// 맵 입장 요청은 아무 룸 번호나 받아 들어갈 룸으로 기록했다. 뒤이은 첫 입장(C_ENTER_ROOM)이 그 번호와
-// 같은지만 보므로, 조작한 클라이언트는 불러온 룸과 무관하게 아무 룸에서나 시작했다.
-TEST_F(RoomRequestTest, FirstEnterMapToOtherRoomIsRejected)
-{
-    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
-    const PlayerProgress progress = MakeProgressWithSword();
-    PlayerSpawnParams params;
-    params.session = session;
-    params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
-    PlayerRef newcomer = EntityFactory::Create<Player>(params);
-    ASSERT_NE(newcomer, nullptr);
-    ASSERT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID);
-
-    Protocol::C_ENTER_MAP enterMapPkt;
-    enterMapPkt.set_room_id(TOWN_ROOM_ID);
-    room->C_HandleEnterMap(enterMapPkt, newcomer);
-
-    EXPECT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID) << "들어갈 룸은 불러온 진행의 룸 그대로다";
-    vector<Protocol::S_ENTER_MAP> responses = session->SentPackets<Protocol::S_ENTER_MAP>(PKT_S_ENTER_MAP);
-    ASSERT_EQ(responses.size(), 1u);
-    EXPECT_FALSE(responses[0].success());
 }

@@ -25,5 +25,8 @@ public:
     vector<RoomRef> GetAllRooms() const;
 
 private:
+    /** 테스트가 시작하지 않은 룸을 등록한다. */
+    friend struct RoomManagerTestAccess;
+
     unordered_map<int32, RoomRef> _rooms; // <RoomId, RoomRef>
 };

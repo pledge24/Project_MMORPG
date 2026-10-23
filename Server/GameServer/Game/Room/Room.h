@@ -64,28 +64,38 @@ private:
     //~ 플레이어 입장과 퇴장
 public:
     /**
-     * 플레이어를 룸에 넣고 S_ENTER_ROOM을 보낸다. 실패 응답도 이 함수가 보낸다.
+     * 플레이어를 룸에 넣고 S_ENTER_ROOM을 보낸 뒤, 다른 플레이어와 본인에게 서로의 스폰을 알린다. 실패 응답도 이 함수가 보낸다.
      * 그사이 접속이 끊겼으면 퇴장과 저장을 이어 받고 false.
      */
 	bool EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData);
     /** 다른 플레이어에게 S_DESPAWN을 알린다. transferRoom이 false면 떠나는 본인에게도 보낸다. */
     bool LeavePlayer(PlayerRef leavePlayer, bool transferRoom);
-    /** 이 룸에서 퇴장시키고 목적지 룸 큐에 EnterPlayer를 넣는다. */
-    bool TransferPlayer(PlayerRef player, RoomEnterData roomEnterData);
-    /** 끊긴 플레이어를 룸에서 빼고 저장 사본을 돌려준다. 저장은 부른 쪽이 한다. 이 룸에 없으면 nullopt. */
+    /**
+     * 끊긴 플레이어를 룸에서 빼고 저장 사본을 돌려준다. 이 룸에서 맵 로드를 기다리던 플레이어도 저장한다.
+     * 저장은 부른 쪽이 한다. 이 룸에 없거나 소속 룸이 아니면 nullopt.
+     */
     optional<PlayerSaveData> HandleDisconnect(PlayerRef player);
+
+private:
+    /**
+     * 이 룸에 있는 player를 빼고 destination의 enterPos로 보낸다. 맵이 바뀌면 클라이언트의 맵 로드 완료를 기다리게 한다.
+     * 응답은 부르기 전에 보낸다. 같은 맵이면 목적지 룸 큐가 곧바로 S_ENTER_ROOM을 보낸다.
+     */
+    void MovePlayer(const PlayerRef& player, const RoomRef& destination, const Protocol::PosInfo& enterPos);
 
     //~ 클라이언트 패킷 핸들러
 public:
     /**
-     * 들어갈 맵과 룸을 정해 S_ENTER_MAP을 보낸다. 룸 입장은 뒤이은 C_ENTER_ROOM이 한다.
+     * 이 룸에서 맵 로드를 기다리던 플레이어를 룸에 넣는다. 기다리지 않던 플레이어의 로드 완료는 버린다.
      * 이 섹션의 핸들러는 ServerPacketHandler가 DoAsync로 넣으므로, 잡이 돌 때 세션이 끊겼을 수 있다.
      */
-    void C_HandleEnterMap(Protocol::C_ENTER_MAP pkt, PlayerRef player);
-    void C_HandleEnterRoom(Protocol::C_ENTER_ROOM pkt, PlayerRef player);
+    void C_HandleMapLoadComplete(PlayerRef player);
+    /** 목적지가 다른 맵이면 응답에 그 맵 번호를 싣고 맵 로드를 기다리게 한다. 같은 맵이면 바로 옮긴다. */
+    void C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player);
     /** 보낸 사람(player)의 위치만 바꾼다. 패킷의 엔티티 번호는 보지 않는다. */
     void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
+    /** 이 룸에서 되살린 뒤 마을로 보낸다. 사망한 룸이 마을이어도 퇴장과 입장을 거친다. */
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
 
     //~ 전투와 리스폰
@@ -97,12 +107,6 @@ public:
     void HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward);
     /** 몬스터는 룸에서 뺀다. 플레이어는 리스폰할 때까지 룸에 남긴다. */
     void HandleDie(CreatureRef creature);
-    /** 리스폰에 성공하면 true. 실패 응답은 이 함수가 보낸다. 세션이 끊겼으면 false. */
-    bool HandleRespawn(PlayerRef player, Protocol::RespawnType respawnType, Protocol::PosInfo respawnPos);
-
-private:
-    /** 맵 데이터에 리스폰 지점이 없는 룸이면 nullptr. */
-    shared_ptr<Protocol::PosInfo> _respawnPoint;
 
     //~ Room 정보 관련
 public:
@@ -113,6 +117,8 @@ public:
     RoomRef             GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
     /** Init 뒤로는 바뀌지 않으므로 룸 큐 밖에서 읽어도 된다. */
     int32               GetRoomId() const { return _roomId; }
+    /** 이 룸이 속한 맵. Init 뒤로는 바뀌지 않으므로 룸 큐 밖에서 읽어도 된다. */
+    int32               GetMapId() const { return _mapTemplate.mapId; }
     /** 이 룸에 그 번호의 포털이 없으면 nullptr. */
     const PortalTemplate* FindPortal(int32 portalId) const;
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
@@ -164,8 +170,8 @@ public:
     }
     /** 다른 플레이어에게만 S_SPAWN을 알린다(본인 제외). 이 룸에 없는 플레이어면 알리지 않고 nullptr. */
     PlayerRef SpawnPlayer(PlayerRef targetPlayer);
-    /** 룸의 엔티티를 S_SPAWN으로 player에게 보낸다. includeThisPlayer가 false면 player 자신은 뺀다. */
-    void ReplicateRoomData(PlayerRef player, bool includeThisPlayer);
+    /** 룸의 엔티티 중 player 자신을 뺀 나머지를 S_SPAWN으로 player에게 보낸다. */
+    void ReplicateRoomData(PlayerRef player);
 
 protected:
     /** 엔티티를 이 룸에 넣고, 처음 룸에 들어가는 엔티티면 Start를 부른다. 이미 있는 id면 false. */

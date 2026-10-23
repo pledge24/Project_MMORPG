@@ -74,10 +74,11 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
     if (Lobby == nullptr || MyPlayerData == nullptr)
         return false;
 
-    // 입장한 캐릭터의 모든 정보는 내 플레이어 데이터가 갖는다. 입장 성공을 알리면 맵을 열기 시작하므로 그 전에 채운다.
-    if (pkt.success())
+    // 입장한 캐릭터의 개인 정보와 열 맵은 내 플레이어 데이터가 갖는다. 입장 성공을 알리면 맵을 열기 시작하므로 그 전에 채운다.
+    const bool bSuccess = pkt.result() == Protocol::ENTRY_RESULT_SUCCESS;
+    if (bSuccess)
         MyPlayerData->InitMyPlayerData(pkt);
 
-    Lobby->HandleEnterGame(pkt.success());
+    Lobby->HandleEnterGame(bSuccess);
     return true;
 }

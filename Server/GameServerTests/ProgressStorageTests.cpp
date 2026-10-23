@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include "FakeDBConnection.h"
 #include "PlayerTestAccess.h"
+#include "RoomManagerTestAccess.h"
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/ItemDAO.h"
@@ -23,7 +24,8 @@
     저장되지 않는 식으로 진행이 어긋나지 않는다.
 
     픽스처 결합도: FakeDBConnection과, 골드 재화 번호, 맵 표(사냥터와 마을), 레벨 표, 아이템 표, 인벤토리 구역 표를
-    Gamedata::Install로 주입한다. 입장 테스트는 소켓 없는 GameSession을 만든다.
+    Gamedata::Install로 주입한다. 입장 테스트는 소켓 없는 GameSession과, 맵 표의 행마다 시작하지 않은 룸을 둔
+    룸 관리자를 쓴다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -145,6 +147,7 @@ protected:
         tables.initialProgress.startYaw = START_YAW;
         tables.initialProgress.startGold = START_GOLD;
         Gamedata::Install(std::move(tables));
+        rooms = make_unique<ScopedTestRoomManager>();
 
         session = make_shared<GameSession>();
         sessionManager.RegisterUser(USER_ID, session);
@@ -153,9 +156,11 @@ protected:
     void TearDown() override
     {
         session.reset();
+        rooms.reset();
         Gamedata::Install(GamedataTables());
     }
 
+    unique_ptr<ScopedTestRoomManager> rooms;
     GameSessionManager sessionManager;
     GameSessionRef session;
 };
@@ -269,7 +274,7 @@ TEST_F(ProgressStorageTest, FailedLoadLeavesSessionWithoutPlayer)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    EXPECT_FALSE(pkt.success());
+    EXPECT_EQ(pkt.result(), Protocol::ENTRY_RESULT_INTERNAL_ERROR);
     EXPECT_EQ(session->GetPlayer(), nullptr) << "불러오기에 실패한 세션에 플레이어가 남으면 끊길 때 반쯤 채운 진행을 저장한다";
 }
 
@@ -373,12 +378,11 @@ TEST_F(ProgressStorageTest, EnterGoesToRoomCoveringSavedPosition)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     PlayerRef player = session->GetPlayer();
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(player->GetEnteringRoomId(), FIELD_ROOM_ID);
-    EXPECT_EQ(pkt.player().player_info().map_id(), FIELD_MAP_ID);
-    EXPECT_EQ(pkt.player().player_info().room_id(), FIELD_ROOM_ID);
+    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(FIELD_ROOM_ID)) << "그 룸의 큐에서 맵 로드 완료를 기다린다";
+    EXPECT_EQ(pkt.map_id(), FIELD_MAP_ID);
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), -150.f);
 }
 
@@ -389,11 +393,11 @@ TEST_F(ProgressStorageTest, EnterOutsideEveryRoomGoesToTownRespawn)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     PlayerRef player = session->GetPlayer();
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(player->GetEnteringRoomId(), TOWN_ROOM_ID);
-    EXPECT_EQ(pkt.player().player_info().map_id(), TOWN_MAP_ID) << "마을로 보내면 맵도 마을의 맵이다";
+    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(TOWN_ROOM_ID));
+    EXPECT_EQ(pkt.map_id(), TOWN_MAP_ID) << "마을로 보내면 맵도 마을의 맵이다";
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), TOWN_RESPAWN_X);
 }
 
@@ -406,7 +410,7 @@ TEST_F(ProgressStorageTest, EnterPacketCarriesEveryQuickSlot)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     ASSERT_EQ(pkt.quick_slots().size(), QUICK_SLOT_COUNT) << "클라이언트는 받은 퀵슬롯 수로 퀵슬롯을 만들므로 빈 퀵슬롯도 싣는다";
     for (int32 slotIndex = 0; slotIndex < QUICK_SLOT_COUNT; slotIndex++)
         EXPECT_EQ(pkt.quick_slots(slotIndex).slot_index(), slotIndex);
@@ -429,7 +433,7 @@ TEST_F(ProgressStorageTest, EnterWithoutRoomToAssignIsRejected)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    EXPECT_FALSE(pkt.success()) << "맵 표에 그 좌표를 덮는 룸도 마을 리스폰 지점도 없다";
+    EXPECT_EQ(pkt.result(), Protocol::ENTRY_RESULT_INTERNAL_ERROR) << "맵 표에 그 좌표를 덮는 룸도 마을 리스폰 지점도 없다";
     EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 

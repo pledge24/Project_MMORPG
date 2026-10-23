@@ -173,6 +173,7 @@
     <ClCompile Include="..\GameServer\Network\ItemRequests.cpp" />
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="MapLoadTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="GameDBSchemaTests.cpp" />
     <ClCompile Include="GameDBCharacterListTests.cpp" />

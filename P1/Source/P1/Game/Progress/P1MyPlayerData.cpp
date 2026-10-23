@@ -60,14 +60,20 @@ void UP1MyPlayerData::Deinitialize()
 
 void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePkt)
 {
-    // 입장 패킷의 캐릭터 정보 저장.
+    // 입장 패킷의 캐릭터 정보 저장. 맵을 여는 동안 만들어지는 화면이 이름과 레벨을 읽는다.
+    // 내 엔티티 번호는 룸 입장 응답이 알린다. 지우지 않으면 앞 캐릭터의 번호로 새 캐릭터의 스폰을 가린다.
     {
-        SetEntityInfo(EnterGamePkt.player());
-        _StatInfo->CopyFrom(EnterGamePkt.stat_info());
+        _EntityInfo->Clear();
+        _PlayerInfo = _EntityInfo->mutable_player_info();
+        _PlayerInfo->set_name(EnterGamePkt.name());
+        _PlayerInfo->set_class_(EnterGamePkt.character_class());
+        _PlayerInfo->set_level(EnterGamePkt.level());
+        _StatInfo->CopyFrom(EnterGamePkt.stats());
         _Gold = EnterGamePkt.possession().gold();
+        _MapId = EnterGamePkt.map_id();
 
-        _PlayerId = _EntityInfo->entity_id();
-        _PlayerName = FText::FromString(UTF8_TO_TCHAR(_EntityInfo->player_info().name().c_str()));
+        _PlayerId = 0;
+        _PlayerName = FText::FromString(UTF8_TO_TCHAR(EnterGamePkt.name().c_str()));
     }
 
     // 컨테이너 채우기. 패킷에 없는 컨테이너도 비워 이전 캐릭터의 칸이 남지 않게 한다.
@@ -103,7 +109,7 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
 void UP1MyPlayerData::RemoveListener(const UObject* Listener)
 {
     OnMyPlayerSpawned.RemoveAll(Listener);
-    OnMapEntered.RemoveAll(Listener);
+    OnMapChanged.RemoveAll(Listener);
     OnLevelChanged.RemoveAll(Listener);
     OnGoldChanged.RemoveAll(Listener);
     OnItemCooldownStarted.RemoveAll(Listener);
@@ -194,30 +200,52 @@ void UP1MyPlayerData::HandleSetQuickSlot(const Protocol::S_SET_QUICK_SLOT& SetQu
         QuickSlots->ApplyChange(P1QuickSlotPackets::FromProto(Changed));
 }
 
-void UP1MyPlayerData::HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt)
-{
-    if (EnterMapPkt.success() == false)
-    {
-        UE_LOG(LogP1Network, Warning, TEXT("맵 입장에 실패했습니다. map_id: %d"), EnterMapPkt.map_id());
-        return;
-    }
-
-    SetRoomId(EnterMapPkt.room_id());
-    SetMapId(EnterMapPkt.map_id());
-
-    // 게임 인스턴스가 이 알림을 받아 인게임 맵을 연다.
-    OnMapEntered.Broadcast();
-}
-
 void UP1MyPlayerData::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)
 {
-    if (EnterRoomPkt.success() == false)
+    if (EnterRoomPkt.result() != Protocol::ENTRY_RESULT_SUCCESS)
     {
-        UE_LOG(LogP1Network, Warning, TEXT("Room 입장에 실패했습니다. room_id: %d"), EnterRoomPkt.room_id());
+        UE_LOG(LogP1Network, Warning, TEXT("룸 입장에 실패했습니다: %s"), UTF8_TO_TCHAR(Protocol::EntryResult_Name(EnterRoomPkt.result()).c_str()));
         return;
     }
 
-    SetRoomId(EnterRoomPkt.room_id());
+    // 엔티티 관리자와 스포너가 이 번호로 내 플레이어를 가린다. 엔티티 관리자보다 먼저 불려야 한다.
+    _PlayerId = EnterRoomPkt.my_entity().entity_id();
+}
+
+void UP1MyPlayerData::HandleUsePortal(const Protocol::S_USE_PORTAL& UsePortalPkt)
+{
+    if (UsePortalPkt.result() != Protocol::ENTRY_RESULT_SUCCESS)
+    {
+        UE_LOG(LogP1Network, Warning, TEXT("포털 이동이 거절됐습니다: %s"), UTF8_TO_TCHAR(Protocol::EntryResult_Name(UsePortalPkt.result()).c_str()));
+        return;
+    }
+
+    // 맵 번호가 없으면 같은 맵 안의 이동이라 서버가 곧바로 룸 입장 응답을 보낸다.
+    if (UsePortalPkt.has_map_id())
+        ChangeMap(UsePortalPkt.map_id());
+}
+
+void UP1MyPlayerData::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
+{
+    if (RespawnPkt.result() != Protocol::ENTRY_RESULT_SUCCESS)
+    {
+        UE_LOG(LogP1Network, Error, TEXT("서버가 리스폰을 거절했습니다: %s"), UTF8_TO_TCHAR(Protocol::EntryResult_Name(RespawnPkt.result()).c_str()));
+        OnTownRespawnRejected.Broadcast();
+        return;
+    }
+
+    ApplyStats(RespawnPkt.changed_stats());
+
+    if (RespawnPkt.has_map_id())
+        ChangeMap(RespawnPkt.map_id());
+}
+
+void UP1MyPlayerData::ChangeMap(int32 MapId)
+{
+    _MapId = MapId;
+
+    // 접속 흐름이 이 알림을 받아 그 맵을 연다.
+    OnMapChanged.Broadcast();
 }
 
 void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)

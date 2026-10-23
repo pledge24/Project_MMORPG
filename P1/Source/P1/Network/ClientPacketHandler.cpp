@@ -57,17 +57,6 @@ bool Handle_S_DISCONNECT(PacketSessionRef& session, Protocol::S_DISCONNECT& pkt)
     return false;
 }
 
-bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
-{
-    if (auto* MyPlayerData = GetMyPlayerData(session))
-    {
-        MyPlayerData->HandleEnterMap(pkt);
-        return true;
-    }
-
-    return false;
-}
-
 bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
 {
     UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
@@ -75,10 +64,22 @@ bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
     if (EntityManager == nullptr || MyPlayerData == nullptr)
         return false;
 
-    // 룸 id는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 위치는 엔티티 관리자가 맡는다.
+    // 내 엔티티 번호는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 배치는 엔티티 관리자가 맡는다.
+    // 엔티티 관리자가 그 번호로 내 플레이어를 가리므로 내 플레이어 데이터가 먼저다.
     MyPlayerData->HandleEnterRoom(pkt);
     EntityManager->HandleEnterRoom(pkt);
     return true;
+}
+
+bool Handle_S_USE_PORTAL(PacketSessionRef& session, Protocol::S_USE_PORTAL& pkt)
+{
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleUsePortal(pkt);
+        return true;
+    }
+
+    return false;
 }
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
@@ -230,9 +231,9 @@ bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT
 
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 {
-    if (auto* EntityManager = GetEntityManager(session))
+    if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        EntityManager->HandleRespawn(pkt);
+        MyPlayerData->HandleRespawn(pkt);
         return true;
     }
 

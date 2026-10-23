@@ -6,63 +6,8 @@
     룸 이동 판정과 입장할 룸 배정 테스트
 
     리스폰 요청은 검증 없이 처리되어, 살아 있는 플레이어가 어디서든 마을로 이동했고
-    목적지 룸이 없는 리스폰 유형은 서버를 죽였다. 입장 요청의 룸 번호 검증은 최초 입장과
-    맵 간 이동 분기에 같은 코드로 두 번 있었다.
+    목적지 룸이 없는 리스폰 유형은 서버를 죽였다.
 ---------------------------------------------------------------*/
-
-namespace
-{
-    Protocol::C_ENTER_ROOM MakeEnterRequest(Protocol::EnterType enterType)
-    {
-        Protocol::C_ENTER_ROOM pkt;
-        pkt.set_enter_type(enterType);
-        return pkt;
-    }
-
-    Protocol::C_ENTER_ROOM MakeEnterRequest(Protocol::EnterType enterType, int32 roomId)
-    {
-        Protocol::C_ENTER_ROOM pkt = MakeEnterRequest(enterType);
-        pkt.set_room_id(roomId);
-        return pkt;
-    }
-}
-
-TEST(RoomTransferTest, InitialEnterWithEnteringRoomIdPasses)
-{
-    EXPECT_FALSE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_INITIAL, 10), 10).has_value());
-}
-
-TEST(RoomTransferTest, InitialEnterWithoutRoomIdIsRejected)
-{
-    EXPECT_TRUE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_INITIAL), 10).has_value());
-}
-
-TEST(RoomTransferTest, CrossMapTransferToOtherRoomIsRejected)
-{
-    EXPECT_TRUE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER, 20), 10).has_value())
-        << "C_ENTER_MAP으로 받아 둔 룸이 아닌 곳으로는 입장할 수 없다";
-}
-
-TEST(RoomTransferTest, CrossMapTransferToEnteringRoomPasses)
-{
-    EXPECT_FALSE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER, 20), 20).has_value());
-}
-
-TEST(RoomTransferTest, SameMapTransferNeedsPortalId)
-{
-    EXPECT_TRUE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER), -1).has_value());
-
-    Protocol::C_ENTER_ROOM pkt = MakeEnterRequest(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
-    pkt.set_portal_id(11);
-    EXPECT_FALSE(RoomTransfer::ValidateEnterRequest(pkt, -1).has_value());
-}
-
-TEST(RoomTransferTest, RespawnAndNoneEnterTypesAreRejected)
-{
-    EXPECT_TRUE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_RESPAWN, 10), 10).has_value())
-        << "리스폰 입장은 서버만 만드는 값이다";
-    EXPECT_TRUE(RoomTransfer::ValidateEnterRequest(MakeEnterRequest(Protocol::ENTER_TYPE_NONE, 10), 10).has_value());
-}
 
 TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
 {
@@ -75,8 +20,7 @@ TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
     const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal, 7);
 
     EXPECT_EQ(enterData.nextRoomId, 20);
-    EXPECT_EQ(enterData.enterType, Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
-    ASSERT_TRUE(enterData.enterPos.has_value()) << "클라이언트는 내 플레이어를 enter_pos로 옮기므로 반드시 채워야 한다";
+    ASSERT_TRUE(enterData.enterPos.has_value()) << "비어 있으면 포털의 도착 위치가 아니라 룸 중심에 선다";
     EXPECT_EQ(enterData.enterPos->entity_id(), 7);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().x(), -8000.f);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().y(), 10000.f);
@@ -92,26 +36,21 @@ TEST(RoomTransferTest, DeadPlayerTownRespawnPasses)
 
 TEST(RoomTransferTest, LivingPlayerRespawnIsRejected)
 {
-    EXPECT_TRUE(RoomTransfer::ValidateRespawn(false, Protocol::RESPAWN_TYPE_TOWN).has_value())
+    EXPECT_EQ(RoomTransfer::ValidateRespawn(false, Protocol::RESPAWN_TYPE_TOWN), Protocol::ENTRY_RESULT_NOT_DEAD)
         << "살아 있는 플레이어가 리스폰하면 어디서든 마을로 이동한다";
 }
 
 TEST(RoomTransferTest, UnsupportedRespawnTypesAreRejected)
 {
+    // 클라이언트가 보낸 값이라 정의되지 않은 번호도 온다.
     const Protocol::RespawnType unsupportedTypes[] = {
         Protocol::RESPAWN_TYPE_NONE,
-        Protocol::RESPAWN_TYPE_CHECKPOINT,
-        Protocol::RESPAWN_TYPE_RESURRECTION_ITEM,
-        Protocol::RESPAWN_TYPE_IN_PLACE,
-        Protocol::RESPAWN_TYPE_PARTY_MEMBER,
-        Protocol::RESPAWN_TYPE_GUILD_BASE,
-        Protocol::RESPAWN_TYPE_CASH_ITEM,
-        Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION,
+        static_cast<Protocol::RespawnType>(2),
     };
 
     for (Protocol::RespawnType respawnType : unsupportedTypes)
     {
-        EXPECT_TRUE(RoomTransfer::ValidateRespawn(true, respawnType).has_value())
+        EXPECT_EQ(RoomTransfer::ValidateRespawn(true, respawnType), Protocol::ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE)
             << "목적지가 없는 리스폰 유형을 통과시키면 서버가 널 룸을 역참조한다. 유형: " << respawnType;
     }
 }
@@ -183,14 +122,6 @@ namespace
         portal.srcPos = TemplatePos{ srcX, srcY, 0.f };
         return portal;
     }
-
-    Protocol::C_ENTER_MAP MakeEnterMap(int32 mapId, int32 roomId)
-    {
-        Protocol::C_ENTER_MAP pkt;
-        pkt.set_map_id(mapId);
-        pkt.set_room_id(roomId);
-        return pkt;
-    }
 }
 
 // 마을(MAP_A)에는 같은 맵의 사냥터로 가는 포털과 다른 맵(MAP_B)의 룸으로 가는 포털이 하나씩 있다.
@@ -244,36 +175,6 @@ TEST_F(RoomTransferMapTest, PortalUseOutsideRadiusIsRejected)
     const PortalTemplate& portal = town.portals[0];
     EXPECT_TRUE(RoomTransfer::ValidatePortalUse(portal, PORTAL_RADIUS, MakePlayerPos(-1200.f + 301.f, 1000.f + 400.f)).has_value())
         << "조작한 클라이언트는 룸 안 어디서든 포털을 탄다";
-}
-
-TEST_F(RoomTransferMapTest, FirstEnterMapOnlyToLoadedRoom)
-{
-    EXPECT_FALSE(RoomTransfer::ValidateFirstEnterMap(MakeEnterMap(MAP_A, FIELD_ROOM), FIELD_ROOM).has_value());
-    EXPECT_TRUE(RoomTransfer::ValidateFirstEnterMap(MakeEnterMap(MAP_A, TOWN_ROOM), FIELD_ROOM).has_value())
-        << "불러온 룸이 아닌 곳으로 첫 입장을 하면 아무 룸에서나 시작한다";
-    EXPECT_TRUE(RoomTransfer::ValidateFirstEnterMap(MakeEnterMap(MAP_B, FIELD_ROOM), FIELD_ROOM).has_value())
-        << "맵 번호는 룸의 맵과 같아야 한다";
-}
-
-TEST_F(RoomTransferMapTest, CrossMapEnterThroughNearbyPortalPasses)
-{
-    EXPECT_FALSE(RoomTransfer::ValidateCrossMapEnter(MakeEnterMap(MAP_B, OTHER_MAP_ROOM), town, MakePlayerPos(2100.f, 0.f)).has_value());
-}
-
-TEST_F(RoomTransferMapTest, CrossMapEnterIsRejectedWithoutNearbyPortal)
-{
-    EXPECT_TRUE(RoomTransfer::ValidateCrossMapEnter(MakeEnterMap(MAP_B, OTHER_MAP_ROOM), town, MakePlayerPos(0.f, 0.f)).has_value())
-        << "포털 반경 밖에서는 맵 간 이동을 할 수 없다";
-    EXPECT_TRUE(RoomTransfer::ValidateCrossMapEnter(MakeEnterMap(MAP_A, 99), town, MakePlayerPos(2100.f, 0.f)).has_value())
-        << "현재 룸의 포털이 가지 않는 룸으로는 갈 수 없다";
-}
-
-TEST_F(RoomTransferMapTest, CrossMapEnterRejectsSameMapRoomAndWrongMapId)
-{
-    EXPECT_TRUE(RoomTransfer::ValidateCrossMapEnter(MakeEnterMap(MAP_A, FIELD_ROOM), town, MakePlayerPos(-1200.f, 1000.f)).has_value())
-        << "같은 맵 안의 이동은 포털 이동(C_ENTER_ROOM)으로 한다";
-    EXPECT_TRUE(RoomTransfer::ValidateCrossMapEnter(MakeEnterMap(MAP_A, OTHER_MAP_ROOM), town, MakePlayerPos(2100.f, 0.f)).has_value())
-        << "맵 번호는 목적지 룸의 맵과 같아야 한다";
 }
 
 //~ 입장할 룸 배정

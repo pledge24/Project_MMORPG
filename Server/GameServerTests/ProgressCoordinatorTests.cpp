@@ -63,7 +63,6 @@ protected:
         PlayerSpawnParams params;
         params.userId = userId;
         params.progress = &progress;
-        params.enterRoomId = ROOM_ID;
         return EntityFactory::Create<Player>(params);
     }
 
@@ -89,7 +88,6 @@ protected:
     {
         RoomEnterData enterData{};
         enterData.nextRoomId = ROOM_ID;
-        enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
         room->EnterPlayer(player, enterData);
     }
 
@@ -243,7 +241,6 @@ TEST_F(ProgressCoordinatorTest, DisconnectDuringRoomTransferSavesInNextRoom)
 
     RoomEnterData enterData{};
     enterData.nextRoomId = ROOM_ID + 1;
-    enterData.enterType = Protocol::ENTER_TYPE_SAME_MAP_TRANSFER;
     EXPECT_FALSE(nextRoom->EnterPlayer(player, enterData));
     RunDBJobs();
 
@@ -261,7 +258,6 @@ TEST_F(ProgressCoordinatorTest, DisconnectDuringFailedRoomTransferStillSaves)
     EntityTestAccess::SetEntityId(*occupant, player->GetEntityId());
     RoomEnterData occupantEnter{};
     occupantEnter.nextRoomId = ROOM_ID + 1;
-    occupantEnter.enterType = Protocol::ENTER_TYPE_INITIAL;
     ASSERT_TRUE(nextRoom->EnterPlayer(occupant, occupantEnter));
     ASSERT_TRUE(room->LeavePlayer(player, true));
 
@@ -271,11 +267,45 @@ TEST_F(ProgressCoordinatorTest, DisconnectDuringFailedRoomTransferStillSaves)
 
     RoomEnterData enterData{};
     enterData.nextRoomId = ROOM_ID + 1;
-    enterData.enterType = Protocol::ENTER_TYPE_SAME_MAP_TRANSFER;
     EXPECT_FALSE(nextRoom->EnterPlayer(player, enterData));
     RunDBJobs();
 
     EXPECT_EQ(events, vector<string>({ "save", "load" })) << "어느 룸에도 없는 플레이어도 저장하고 대기를 푼다";
+}
+
+// 다른 맵으로 가 맵 로드를 기다리는 플레이어는 어느 룸에도 없다. 룸에 있는지로만 저장을 정하면 아무도 저장하지 않아
+// 대기가 풀리지 않는다. 기다리는 룸이 소속 룸이므로 그 룸 큐가 저장한다.
+TEST_F(ProgressCoordinatorTest, DisconnectWhileWaitingForMapLoadSavesInWaitingRoom)
+{
+    EnterRoom();
+    RoomRef nextRoom = CreateNextRoom();
+    ASSERT_TRUE(room->LeavePlayer(player, true));
+    player->BeginMapLoad(nextRoom, player->GetPosInfo());
+
+    coordinator.OnDisconnected(USER_ID, player);
+    RequestEnter();
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "load" }));
+
+    nextRoom->C_HandleMapLoadComplete(player);
+    EXPECT_FALSE(nextRoom->Contains(player->GetEntityId())) << "저장한 플레이어의 늦은 로드 완료는 버린다";
+}
+
+// 접속 종료가 소속 룸을 읽은 직후에 플레이어가 다른 맵으로 떠나면, 떠난 룸 큐에 넣은 저장 잡은 플레이어를 찾지 못한다.
+// 소속 룸이 바뀌었으므로 그 룸 큐로 넘겨 저장한다.
+TEST_F(ProgressCoordinatorTest, DisconnectReadBeforeMapLoadIsForwardedToWaitingRoom)
+{
+    EnterRoom();
+    RoomRef nextRoom = CreateNextRoom();
+    ASSERT_TRUE(player->MarkDisconnected());
+    ASSERT_TRUE(room->LeavePlayer(player, true));
+    player->BeginMapLoad(nextRoom, player->GetPosInfo());
+
+    coordinator.LeaveRoomAndSave(room, player); // 떠난 룸 큐에 넣었던 저장 잡
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save" }));
 }
 
 // 룸 입장 잡이 큐에 있는 동안 끊기면 대기 없이 새 세션이 불러오고, 늦게 돈 룸 입장 잡이 그 뒤에 저장을 넣었다.

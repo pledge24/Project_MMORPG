@@ -6,6 +6,7 @@
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "Game/Room/Room.h"
 #include "DB/ItemRows.h"
 
 /*--------------------------------------------------------------
@@ -111,11 +112,16 @@ protected:
 
         session = make_shared<GameSession>();
         sessionManager.RegisterUser(USER_ID, session);
+
+        MapTemplate enterRoomTemplate;
+        enterRoomTemplate.templateId = ENTER_ROOM_ID;
+        enterRoom = Room::Create(enterRoomTemplate);
     }
 
     void TearDown() override
     {
         session.reset();
+        enterRoom.reset();
         Gamedata::Install(GamedataTables());
     }
 
@@ -139,19 +145,22 @@ protected:
 
     GameSessionManager sessionManager;
     GameSessionRef session;
+    /** 플레이어가 맵 로드를 기다릴 룸. 시작하지 않는다. */
+    RoomRef enterRoom;
+    Protocol::PosInfo enterPos;
 };
 
 TEST_F(GameEntryTest, ValidProgressRegistersPlayerInSession)
 {
     const PlayerProgress progress = MakeValidProgress();
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(session->GetPlayer(), player);
     EXPECT_EQ(player->GetUserId(), USER_ID);
     EXPECT_EQ(player->GetPlayerInfo().character_id(), CHARACTER_ID);
-    EXPECT_EQ(player->GetEnteringRoomId(), 10) << "첫 룸 입장은 불러온 룸으로 간다";
+    EXPECT_EQ(player->GetRoom(), enterRoom) << "맵 로드 완료는 입장할 룸의 큐에서 돈다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MAX_HP);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), LEVEL1_EXP_REQUIREMENT) << "최대 경험치는 저장하지 않고 레벨 표에서 정한다";
     EXPECT_EQ(player->GetGold(), 300);
@@ -161,7 +170,7 @@ TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
 {
     const PlayerProgress progress = MakeValidProgress();
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
     ASSERT_NE(player, nullptr);
 
     const ItemInstance* potion = player->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 5 });
@@ -178,7 +187,7 @@ TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
 
 TEST_F(GameEntryTest, InventorySectionsHaveSlotCountsOfSectionTable)
 {
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress(), ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress(), enterRoom, enterPos);
     ASSERT_NE(player, nullptr);
 
     const InventoryComponent& inventory = player->GetInventory();
@@ -192,7 +201,7 @@ TEST_F(GameEntryTest, InventorySectionsHaveSlotCountsOfSectionTable)
 
 TEST_F(GameEntryTest, AttackIsCalculatedFromLevelAndEquippedGear)
 {
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress(), ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress(), enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), PHYSICAL_ATTACK + SWORD_ATTACK);
@@ -203,7 +212,7 @@ TEST_F(GameEntryTest, RecalculatedLevelWithOtherAttackStillEnters)
     PlayerProgress progress = MakeValidProgress();
     progress.totalExp = LEVEL1_EXP_REQUIREMENT;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr) << "저장된 레벨과 다시 계산한 레벨의 공격력이 달라도 입장한다";
     EXPECT_EQ(player->GetPlayerInfo().level(), 2);
@@ -215,7 +224,7 @@ TEST_F(GameEntryTest, FailedValidationLeavesSessionWithoutPlayer)
     PlayerProgress progress = MakeValidProgress();
     progress.hp = MAX_HP + 1;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     EXPECT_EQ(player, nullptr);
     EXPECT_EQ(session->GetPlayer(), nullptr) << "검증에 실패한 플레이어가 세션에 남으면 끊길 때 저장 경로를 탄다";
@@ -226,7 +235,7 @@ TEST_F(GameEntryTest, UnknownClassLeavesSessionWithoutPlayer)
     PlayerProgress progress = MakeValidProgress();
     progress.classId = Protocol::CLASS_TYPE_MAGE;
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr);
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr);
     EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
@@ -237,7 +246,7 @@ TEST_F(GameEntryTest, LevelHigherThanExpIsLoweredToCalculatedLevel)
     PlayerProgress progress = MakeValidProgress();
     progress.level = 2;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->GetPlayerInfo().level(), 1) << "누적 경험치 20은 레벨 2의 시작값 50에 못 미친다";
@@ -249,7 +258,7 @@ TEST_F(GameEntryTest, LevelLowerThanExpIsRaisedToCalculatedLevel)
     PlayerProgress progress = MakeValidProgress();
     progress.totalExp = LEVEL1_EXP_REQUIREMENT;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->GetPlayerInfo().level(), 2) << "레벨 1의 요구치와 같은 누적 경험치는 레벨 2다";
@@ -260,7 +269,7 @@ TEST_F(GameEntryTest, LoadedTotalExpIsSentAsExpInLevel)
     PlayerProgress progress = MakeValidProgress();
     progress.totalExp = 20;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 20);
@@ -273,7 +282,7 @@ TEST_F(GameEntryTest, TotalExpBeyondMaxLevelIsCut)
     PlayerProgress progress = MakeValidProgress();
     progress.totalExp = LEVEL1_EXP_REQUIREMENT + 30;
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(player->GetPlayerInfo().level(), 2);
@@ -287,10 +296,10 @@ TEST_F(GameEntryTest, TotalExpBeyondMaxLevelIsCut)
 TEST_F(GameEntryTest, SecondEntryIsRejectedAndKeepsFirstPlayer)
 {
     const PlayerProgress progress = MakeValidProgress();
-    PlayerRef first = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef first = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
     ASSERT_NE(first, nullptr);
 
-    PlayerRef second = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef second = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     EXPECT_EQ(second, nullptr);
     EXPECT_EQ(session->GetPlayer(), first) << "세션의 플레이어가 바뀌면 이전 플레이어는 룸에서 빠지지 않는다";
@@ -303,7 +312,7 @@ TEST_F(GameEntryTest, TwoRowsInOneSlotAreRejected)
     PlayerProgress progress = MakeValidProgress();
     progress.items.push_back(MakeLoadedItem(ContainerType::INVENTORY_CONSUMABLE, 5, POTION_TEMPLATE_ID, 2));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr) << "같은 칸의 두 행을 합치면 다음 저장이 한 행을 지운다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "같은 칸의 두 행을 합치면 다음 저장이 한 행을 지운다";
     EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
@@ -313,7 +322,7 @@ TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
     erase_if(progress.items, [](const PlacedItem& placed) { return placed.address.container == ContainerType::EQUIPPED; });
     progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_HELMET, SWORD_TEMPLATE_ID, 1));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
 }
 
 TEST_F(GameEntryTest, SecondGearInSamePartIsRejected)
@@ -321,7 +330,7 @@ TEST_F(GameEntryTest, SecondGearInSamePartIsRejected)
     PlayerProgress progress = MakeValidProgress();
     progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, SWORD_TEMPLATE_ID, 1));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr) << "부위 하나에 두 장비를 겹치면 하나가 사라진다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "부위 하나에 두 장비를 겹치면 하나가 사라진다";
     EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 
@@ -331,7 +340,7 @@ TEST_F(GameEntryTest, GearPartNoneIsRejected)
     erase_if(progress.items, [](const PlacedItem& placed) { return placed.address.container == ContainerType::EQUIPPED; });
     progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_NONE, SWORD_TEMPLATE_ID, 1));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr) << "착용 장비에는 0번 칸이 없다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "착용 장비에는 0번 칸이 없다";
 }
 
 TEST_F(GameEntryTest, ItemInOtherKindOfSectionIsRejected)
@@ -339,7 +348,7 @@ TEST_F(GameEntryTest, ItemInOtherKindOfSectionIsRejected)
     PlayerProgress progress = MakeValidProgress();
     ASSERT_NO_FATAL_FAILURE(AddRow(progress, MakeInventoryRow(ItemRowType::CONSUMABLE, 7, SWORD_TEMPLATE_ID, 501)));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr) << "소모품 구역의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "소모품 구역의 행에 장비가 들어 있으면 DB가 어긋난 것이다";
 }
 
 // 수정 전에는 범위 밖 칸 번호가 Debug 빌드의 DCHECK로 테스트 실행 파일을 멈춰서 빨강 단계를 돌리지 못했다.
@@ -348,7 +357,7 @@ TEST_F(GameEntryTest, SlotIndexBeyondSectionSlotCountIsRejected)
     PlayerProgress progress = MakeValidProgress();
     ASSERT_NO_FATAL_FAILURE(AddRow(progress, MakeInventoryRow(ItemRowType::CONSUMABLE, CONSUMABLE_SLOT_COUNT, POTION_TEMPLATE_ID, 501)));
 
-    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
+    EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
 }
 
 TEST_F(GameEntryTest, SlotIndexWithinItsOwnSectionEnters)
@@ -356,7 +365,7 @@ TEST_F(GameEntryTest, SlotIndexWithinItsOwnSectionEnters)
     PlayerProgress progress = MakeValidProgress();
     ASSERT_NO_FATAL_FAILURE(AddRow(progress, MakeInventoryRow(ItemRowType::GEAR, CONSUMABLE_SLOT_COUNT, SWORD_TEMPLATE_ID, 501)));
 
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, ENTER_ROOM_ID);
+    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
 
     ASSERT_NE(player, nullptr) << "칸 수는 구역마다 따로다. 소모품 구역의 칸 수를 넘는 번호도 장비 구역에서는 들어간다";
     const ItemInstance* item = player->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, CONSUMABLE_SLOT_COUNT });

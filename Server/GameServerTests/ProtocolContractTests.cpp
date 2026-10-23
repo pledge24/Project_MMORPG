@@ -34,7 +34,13 @@
     X(C_CREATE_CHARACTER) X(S_CREATE_CHARACTER)                              \
     X(C_DELETE_CHARACTER) X(S_DELETE_CHARACTER)
 
-#define ENTRY_PACKETS(X)
+#define ENTRY_PACKETS(X)                                                     \
+    X(C_ENTER_GAME) X(S_ENTER_GAME)                                          \
+    X(C_MAP_LOAD_COMPLETE)                                                   \
+    X(S_ENTER_ROOM)                                                          \
+    X(C_USE_PORTAL) X(S_USE_PORTAL)                                          \
+    X(C_RESPAWN) X(S_RESPAWN)
+
 #define ENTITY_PACKETS(X)
 #define COMBAT_PACKETS(X)
 #define ITEM_PACKETS(X)
@@ -43,11 +49,7 @@
 // 옛 파일. 도메인 파일로 다 옮기면 파일과 함께 지운다.
 #define LEGACY_PROTOCOL_PACKETS(X)                                           \
     X(C_PING) X(S_PONG)                                                      \
-    X(C_ENTER_GAME) X(S_ENTER_GAME)                                          \
     X(C_LEAVE_GAME)                                                          \
-    X(C_MAP_LOAD_COMPLETE)                                                   \
-    X(C_ENTER_MAP) X(S_ENTER_MAP)                                            \
-    X(C_ENTER_ROOM) X(S_ENTER_ROOM)                                          \
     X(S_SPAWN) X(S_DESPAWN)                                                  \
     X(C_MOVE) X(S_MOVE)                                                      \
     X(C_NORMAL_ATTACK) X(S_NORMAL_ATTACK)                                    \
@@ -60,7 +62,6 @@
     X(C_SET_QUICK_SLOT) X(S_SET_QUICK_SLOT)                                  \
     X(C_USE_QUICK_SLOT)                                                      \
     X(S_DIE) X(S_REWARD_RESULT)                                              \
-    X(C_RESPAWN) X(S_RESPAWN)                                                \
     X(C_CHAT) X(S_CHAT)
 
 namespace

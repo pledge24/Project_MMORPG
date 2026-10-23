@@ -45,6 +45,15 @@ namespace P1MyPlayerContainersTest
         }
     }
 
+    /** 입장 응답 뒤의 룸 입장. 내 엔티티 번호는 이 응답이 알린다. */
+    void EnterRoom(UP1MyPlayerData* Data, uint64 PlayerId)
+    {
+        Protocol::S_ENTER_ROOM Pkt;
+        Pkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
+        Pkt.mutable_my_entity()->set_entity_id(PlayerId);
+        Data->HandleEnterRoom(Pkt);
+    }
+
     /**
      * 장비 구역 칸 2개(0번에 투구), 소모품 구역 칸 3개(0번에 물약 3개, 2번에 물약 5개), 기타 구역 칸 1개,
      * 착용 장비 칸 1~6(6번에 무기)을 가진 캐릭터의 입장 패킷.
@@ -52,8 +61,7 @@ namespace P1MyPlayerContainersTest
     Protocol::S_ENTER_GAME MakeFirstCharacterEnter()
     {
         Protocol::S_ENTER_GAME Pkt;
-        Pkt.set_success(true);
-        Pkt.mutable_player()->set_entity_id(MY_PLAYER_ID);
+        Pkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
         Pkt.mutable_possession()->set_gold(1000);
 
         Protocol::ContainerSlots* Gear = Pkt.mutable_possession()->add_containers();
@@ -122,6 +130,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
     {
         UP1MyPlayerData* Data = MakeData();
         Data->InitMyPlayerData(MakeFirstCharacterEnter());
+        EnterRoom(Data, MY_PLAYER_ID);
 
         UP1ItemContainer* Consumable = Data->GetContainer(EP1ContainerType::InventoryConsumable);
         UP1ItemContainer* Equipped = Data->GetContainer(EP1ContainerType::Equipped);
@@ -144,6 +153,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
     {
         UP1MyPlayerData* Data = MakeData();
         Data->InitMyPlayerData(MakeFirstCharacterEnter());
+        EnterRoom(Data, MY_PLAYER_ID);
 
         UP1ItemContainer* Consumable = Data->GetContainer(EP1ContainerType::InventoryConsumable);
         FSlotChangeCounter GearChanges, EquippedChanges, MiscChanges;
@@ -177,6 +187,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
     {
         UP1MyPlayerData* Data = MakeData();
         Data->InitMyPlayerData(MakeFirstCharacterEnter());
+        EnterRoom(Data, MY_PLAYER_ID);
 
         FSlotChangeCounter GearChanges, EquippedChanges, ConsumableChanges;
         GearChanges.Watch(Data->GetContainer(EP1ContainerType::InventoryGear));
@@ -204,6 +215,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
     {
         UP1MyPlayerData* Data = MakeData();
         Data->InitMyPlayerData(MakeFirstCharacterEnter());
+        EnterRoom(Data, MY_PLAYER_ID);
 
         FSlotChangeCounter ConsumableChanges;
         ConsumableChanges.Watch(Data->GetContainer(EP1ContainerType::InventoryConsumable));
@@ -225,6 +237,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
     {
         UP1MyPlayerData* Data = MakeData();
         Data->InitMyPlayerData(MakeFirstCharacterEnter());
+        EnterRoom(Data, MY_PLAYER_ID);
 
         int32 Resets = 0;
         for (EP1ContainerType ContainerType : { EP1ContainerType::InventoryGear, EP1ContainerType::InventoryConsumable, EP1ContainerType::InventoryMisc, EP1ContainerType::Equipped })
@@ -237,8 +250,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
 
         // 둘째 캐릭터는 소모품 칸 하나만 가지고, 입장 패킷에 기타 구역이 없다.
         Protocol::S_ENTER_GAME Second;
-        Second.set_success(true);
-        Second.mutable_player()->set_entity_id(MY_PLAYER_ID + 1);
+        Second.set_result(Protocol::ENTRY_RESULT_SUCCESS);
         Protocol::ContainerSlots* Consumable = Second.mutable_possession()->add_containers();
         Consumable->set_container(Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE);
         AddSlot(Consumable, 0, 2001, 2, 51);
@@ -255,10 +267,10 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
     {
         UP1MyPlayerData* Data = MakeData();
         Data->InitMyPlayerData(MakeFirstCharacterEnter());
+        EnterRoom(Data, MY_PLAYER_ID);
 
         Protocol::S_ENTER_GAME Second;
-        Second.set_success(true);
-        Second.mutable_player()->set_entity_id(MY_PLAYER_ID + 1);
+        Second.set_result(Protocol::ENTRY_RESULT_SUCCESS);
         Data->InitMyPlayerData(Second);
 
         TestEqual(TEXT("재입장: 소모품 칸 없음"), Data->GetContainer(EP1ContainerType::InventoryConsumable)->GetSlots().Num(), 0);

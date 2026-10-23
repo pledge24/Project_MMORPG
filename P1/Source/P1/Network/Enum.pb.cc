@@ -22,7 +22,7 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[14];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[12];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
@@ -63,26 +63,16 @@ const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "R_TYPE_NONE\020\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017G"
   "EAR_TYPE_CHEST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016"
   "GEAR_TYPE_ARMS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n"
-  "\020GEAR_TYPE_WEAPON\020\006*\225\002\n\013RespawnType\022\025\n\021R"
-  "ESPAWN_TYPE_NONE\020\000\022\025\n\021RESPAWN_TYPE_TOWN\020"
-  "\001\022\033\n\027RESPAWN_TYPE_CHECKPOINT\020\002\022\"\n\036RESPAW"
-  "N_TYPE_RESURRECTION_ITEM\020\003\022\031\n\025RESPAWN_TY"
-  "PE_IN_PLACE\020\004\022\035\n\031RESPAWN_TYPE_PARTY_MEMB"
-  "ER\020\005\022\033\n\027RESPAWN_TYPE_GUILD_BASE\020\006\022\032\n\026RES"
-  "PAWN_TYPE_CASH_ITEM\020\007\022$\n RESPAWN_TYPE_BA"
-  "TTLE_RESURRECTION\020\010*\225\001\n\tEnterType\022\023\n\017ENT"
-  "ER_TYPE_NONE\020\000\022\026\n\022ENTER_TYPE_INITIAL\020\001\022 "
-  "\n\034ENTER_TYPE_SAME_MAP_TRANSFER\020\002\022!\n\035ENTE"
-  "R_TYPE_CROSS_MAP_TRANSFER\020\003\022\026\n\022ENTER_TYP"
-  "E_RESPAWN\020\004*`\n\nRewardType\022\024\n\020REWARD_TYPE"
-  "_NONE\020\000\022\034\n\030REWARD_TYPE_MONSTER_KILL\020\001\022\036\n"
-  "\032REWARD_TYPE_QUEST_COMPLETE\020\002*N\n\020QuickSl"
-  "otRefType\022\034\n\030QUICK_SLOT_REF_TYPE_NONE\020\000\022"
-  "\034\n\030QUICK_SLOT_REF_TYPE_ITEM\020\001b\006proto3"
+  "\020GEAR_TYPE_WEAPON\020\006*`\n\nRewardType\022\024\n\020REW"
+  "ARD_TYPE_NONE\020\000\022\034\n\030REWARD_TYPE_MONSTER_K"
+  "ILL\020\001\022\036\n\032REWARD_TYPE_QUEST_COMPLETE\020\002*N\n"
+  "\020QuickSlotRefType\022\034\n\030QUICK_SLOT_REF_TYPE"
+  "_NONE\020\000\022\034\n\030QUICK_SLOT_REF_TYPE_ITEM\020\001b\006p"
+  "roto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1997, descriptor_table_protodef_Enum_2eproto,
+    false, false, 1565, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -267,47 +257,9 @@ bool GearType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RespawnType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[10];
-}
-bool RespawnType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-      return true;
-    default:
-      return false;
-  }
-}
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EnterType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[11];
-}
-bool EnterType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[12];
+  return file_level_enum_descriptors_Enum_2eproto[10];
 }
 bool RewardType_IsValid(int value) {
   switch (value) {
@@ -322,7 +274,7 @@ bool RewardType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* QuickSlotRefType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[13];
+  return file_level_enum_descriptors_Enum_2eproto[11];
 }
 bool QuickSlotRefType_IsValid(int value) {
   switch (value) {

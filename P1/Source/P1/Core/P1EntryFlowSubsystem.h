@@ -24,7 +24,7 @@ enum class EP1EntryPhase : uint8
     Login,      // 인증 서버 로그인. 게임 서버와 연결이 없거나 로비 접속 응답을 기다린다
     Lobby,      // 캐릭터 목록을 받았다
     MapLoad,    // 서버가 알린 맵을 여는 중이다
-    Game,       // 맵을 열고 룸 입장을 요청했다
+    Game,       // 맵을 열고 맵 로드 완료를 알렸다
 };
 
 /**
@@ -72,13 +72,16 @@ private:
 
     //~ Game Entry
 private:
-    /** 게임 입장에 성공했거나 맵을 옮길 때 맵 로드 단계로 넘어가 인게임 맵을 연다. */
+    /**
+     * 게임 입장에 성공했거나 서버가 다른 맵으로 보내면 맵 로드 단계로 넘어가 그 맵의 레벨을 연다.
+     * 데이터 설정에 그 맵의 레벨이 없으면 연결을 끊고 로그인 화면에 사유를 보여 준다.
+     */
     void EnterMapLoad();
 
-    /** 맵 로드 단계에서 이 게임 인스턴스의 맵이 열리면 룸 입장을 요청한다. */
+    /** 맵 로드 단계에서 이 게임 인스턴스의 맵이 열리면 맵 로드 완료를 알린다. */
     void HandlePostLoadMap(UWorld* LoadedWorld);
 
-    void SendEnterRoom();
+    void SendMapLoadComplete();
 
     FDelegateHandle PostLoadMapHandle;
 
