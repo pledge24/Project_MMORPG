@@ -65,7 +65,7 @@ Protocol::EntityInfo Monster::GetEntityInfo() const
 {
     // HP는 스탯 하나에만 둔다. 나중에 들어온 플레이어도 스폰 정보로 지금 HP를 받는다.
     Protocol::EntityInfo entityInfo = Creature::GetEntityInfo();
-    entityInfo.mutable_monster_info()->set_hp(GetStatInfo().values().at(Protocol::STAT_TYPE_HP));
+    entityInfo.mutable_monster_info()->set_hp(GetStatValue(Protocol::STAT_TYPE_HP));
     return entityInfo;
 }
 

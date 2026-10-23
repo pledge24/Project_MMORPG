@@ -394,21 +394,16 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
 
-    GameSessionRef session = player->GetSession();
-
     // 사망한 플레이어는 리스폰할 때까지 룸에 남으므로 여기서 거른다.
-    Protocol::S_NORMAL_ATTACK normalAttackPkt;
-    if (player->IsDead())
-    {
-        normalAttackPkt.set_result(Protocol::COMBAT_RESULT_DEAD);
-        if (session)
-            SendPacket(session, normalAttackPkt);
-        return;
-    }
+    const bool isDead = player->IsDead();
 
-    normalAttackPkt.set_result(Protocol::COMBAT_RESULT_SUCCESS);
-    if (session)
+    Protocol::S_NORMAL_ATTACK normalAttackPkt;
+    normalAttackPkt.set_result(isDead ? Protocol::COMBAT_RESULT_DEAD : Protocol::COMBAT_RESULT_SUCCESS);
+    if (GameSessionRef session = player->GetSession())
         SendPacket(session, normalAttackPkt);
+
+    if (isDead)
+        return;
 
     // 공격한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
     BroadcastAttack(entityId, pkt.combo(), pkt.yaw());

@@ -55,10 +55,9 @@ bool Creature::HasStat(Protocol::StatType statType)
     return _statInfo->mutable_values()->contains(statType);
 }
 
-int64 Creature::GetStatValue(Protocol::StatType statType)
+int64 Creature::GetStatValue(Protocol::StatType statType) const
 {
-    auto* statMappings = _statInfo->mutable_values();
-    return statMappings->at((int32)statType);
+    return _statInfo->values().at((int32)statType);
 }
 
 void Creature::SetStatValue(Protocol::StatType statType, const int64& value)
