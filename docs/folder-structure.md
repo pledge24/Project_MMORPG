@@ -100,7 +100,7 @@ P1/Source/
 | `Core/` | GameInstance, GameMode, GameState, PlayerController, PlayerState, 입력 바인딩, 로그인부터 게임까지의 단계와 레벨 전환을 갖는 접속 흐름 서브시스템(`UP1EntryFlowSubsystem`) |
 | `Network/` | 소켓, 세션 수명, 송수신 버퍼, 패킷 디스패치. `Server/ServerCore/Network/`와 대칭을 유지한다. 쓰이지 않는 함수도 지우지 않는다 |
 | `Sync/` | 서버 엔티티 ID와 언리얼 액터의 대응 관리, 스폰과 소멸, 원격 개체 보간, 로컬 예측과 서버 보정, 서버 시간 추정 |
-| `Auth/` | 인증 서버와의 HTTP(회원가입, 로그인)를 맡는 인증 클라이언트(`UP1AuthClient`). 게임 서버를 모른다 |
+| `Auth/` | 인증 서버와의 HTTP(회원가입, 로그인, 월드 목록, 월드 선택)를 맡고 로그인 세션과 월드 목록의 사본을 갖는 인증 클라이언트(`UP1AuthClient`). 게임 서버를 모른다 |
 | `Lobby/` | 로비 접속, 캐릭터 목록과 슬롯 수의 사본, 캐릭터 생성·삭제·선택 요청을 맡는 로비 서브시스템(`UP1LobbySubsystem`)과 로비 패킷의 핸들러. 서버의 `Lobby/` 모듈과 이름을 맞춘다 |
 | `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
@@ -134,10 +134,10 @@ P1/Source/
 | `Loading/` | 레벨 전환을 건너 화면을 덮는 로딩 화면 | 레벨이 바뀌어도 화면에 남아야 하는가 |
 | `WorldSpace/` | 레벨 공간에 붙는 위젯 | 화면이 아니라 레벨 안의 좌표를 따라가는가 |
 
-`Frontend/`의 화면은 로그인 맵의 로그인 메뉴(`P1LoginMenuWidget`)가 품는다. 로그인, 캐릭터 선택, 캐릭터 생성
+`Frontend/`의 화면은 로그인 맵의 로그인 메뉴(`P1LoginMenuWidget`)가 품는다. 로그인, 월드 선택, 캐릭터 선택, 캐릭터 생성
 화면은 화면 전환기로 하나씩 보이고, 캐릭터 삭제 확인 창은 그 위에 덮는다.
-화면마다 C++ 클래스와 WBP가 한 쌍이다(`P1LoginWidget`과 `WBP_Login`). 캐릭터 선택 화면의 슬롯(`P1CharacterSlotWidget`)은
-그 화면만 품으므로 `Common/`이 아니라 `Frontend/`에 있다.
+화면마다 C++ 클래스와 WBP가 한 쌍이다(`P1LoginWidget`과 `WBP_Login`). 캐릭터 선택 화면의 슬롯(`P1CharacterSlotWidget`)과
+월드 선택 화면의 줄(`P1WorldRowWidget`)은 그 화면만 품으므로 `Common/`이 아니라 `Frontend/`에 있다.
 
 `Loading/`의 접속 진행 표시(`P1EntryProgressWidget`)는 로그인 메뉴가 품지 않는다. 로딩 화면 서브시스템(`P1LoadingScreenSubsystem`)이
 게임 인스턴스에서 만들어 게임 뷰포트에 직접 붙인다. 레벨에 속한 위젯은 레벨이 바뀌면 함께 내려가서, 맵을 여는 동안과
@@ -540,7 +540,8 @@ Server/
 │   │   ├── main.ts         진입점. 설정 검사, AccountDB와 Redis 연결, 실제 구현 조립, 포트 열기
 │   │   ├── app.ts          앱 조립. 도메인마다 라우터를 한 줄로 붙인다
 │   │   ├── auth/           도메인: 회원가입과 로그인. router, handler, service, repository
-│   │   ├── common/         도메인이 아닌 공용 코드. 설정, DB 연결, 인증 티켓, 봉투, 에러, 비밀번호
+│   │   ├── world/          도메인: 월드 목록과 월드 선택. 계정 상태 저장소가 repository다
+│   │   ├── common/         도메인이 아닌 공용 코드. 설정, DB 연결, 인증 티켓, 로그인 세션, 월드 디렉터리, 봉투, 에러, 비밀번호
 │   │   └── types/          타입 정의를 싣지 않는 패키지의 선언 파일
 │   └── migrations/         AccountDB 스키마. `NNN_<이름>.sql`을 번호 순서로 적용한다
 └── Libraries/              벤더링한 서드파티
@@ -597,6 +598,7 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 - 테스트는 그 폴더 아래의 `tests/`에 `<대상>.test.ts`로 둔다(`auth/tests/auth.service.test.ts`, `common/tests/config.test.ts`).
   도메인 경로의 HTTP 테스트(`<도메인>.router.test.ts`)도 그 도메인의 `tests/`에 둔다
 - 도메인이 아닌 코드는 평평한 `common/`에 둔다. 인증 티켓처럼 여러 도메인이 쓸 수 있는 것도 여기에 둔다.
+  로그인 세션과 월드 디렉터리는 `auth/`(로그인)와 `world/`(월드 목록과 월드 선택)가 함께 쓰므로 여기에 있다(2026년 10월 23일 덧붙임)
   `common/`은 도메인 폴더를 import하지 않는다
 - 도메인을 지울 때 남는 것은 `app.ts`의 등록 줄, `main.ts`의 조립 줄, `common/errors.ts`의 그 도메인 에러 코드뿐이다
 
