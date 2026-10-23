@@ -41,7 +41,7 @@ TEST(WorldListing, LargeCountDoesNotOverflow)
     EXPECT_EQ(WorldListing::ComputeCongestion(INT32_MAX / 2 - 1, INT32_MAX), WorldCongestion::Smooth);
 }
 
-// 인증 서버의 common/worldDirectory.ts가 이 이름으로 읽는다.
+// 인증 서버의 월드 디렉터리가 이 이름으로 읽는다. 어긋나면 그 월드가 목록에서 빠진다.
 TEST(WorldListing, ContractNames)
 {
     EXPECT_STREQ(WorldListing::ToContractName(WorldCongestion::Smooth), "SMOOTH");

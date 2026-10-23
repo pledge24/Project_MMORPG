@@ -346,8 +346,10 @@ void UP1EntryFlowSubsystem::ReturnToLogin(const FString& Notice)
     Lobby->Reset();
 
     // 로그인 화면으로 가면 다시 로그인한다. 남은 로그인 세션은 쓰지 않으므로 버린다.
-    // 연결은 끊김을 알리기 전에 연결 서브시스템이 닫았다.
+    // 끊김으로 왔으면 연결은 이미 닫혔다. 로그인 세션 만료처럼 연결과 무관하게 왔으면 여기서 닫는다.
+    // 닫힌 연결을 다시 닫아도 아무 일도 없고, 닫기는 끊김을 알리지 않는다.
     AuthClient->Logout();
+    Connection->Close();
 
     // 로그인 맵이 열려 있으면 맵을 다시 열지 않고 열린 화면에 알린다.
     if (IsInLoginMap(Phase))

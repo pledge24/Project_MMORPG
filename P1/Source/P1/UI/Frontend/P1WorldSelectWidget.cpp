@@ -109,7 +109,7 @@ void UP1WorldSelectWidget::Refresh()
     while (WorldRows.Num() < Worlds.Num())
     {
         UP1WorldRowWidget* Row = CreateWidget<UP1WorldRowWidget>(this, WorldRowClass);
-        Row->OnRowClicked.BindUObject(this, &UP1WorldSelectWidget::SelectWorld);
+        Row->OnRowClicked.BindUObject(this, &UP1WorldSelectWidget::HighlightWorld);
         WorldList->AddChild(Row);
         WorldRows.Add(Row);
     }
@@ -131,10 +131,10 @@ void UP1WorldSelectWidget::Refresh()
     EmptyNotice->SetVisibility(Worlds.IsEmpty() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
     // 고른 월드가 꺼져 목록에서 빠졌으면 그 월드로 접속하지 않게 선택을 푼다.
-    SelectWorld(bSelectedWorldListed ? SelectedWorldId : 0);
+    HighlightWorld(bSelectedWorldListed ? SelectedWorldId : 0);
 }
 
-void UP1WorldSelectWidget::SelectWorld(int32 WorldId)
+void UP1WorldSelectWidget::HighlightWorld(int32 WorldId)
 {
     SelectedWorldId = WorldId;
 

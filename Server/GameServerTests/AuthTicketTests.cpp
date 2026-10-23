@@ -77,7 +77,7 @@ TEST(AuthTicket, OldJsonValueIsRejected)
     EXPECT_EQ(AuthTicket::ParseAccountId(R"({"userId": 42, "username": "tester"})"), nullopt);
 }
 
-// 키 형식은 인증 서버의 common/ticket.ts와의 계약이다.
+// 키 형식은 인증 서버의 티켓 저장소가 쓰는 키와 같아야 한다. 어긋나면 모든 로비 접속이 거절된다.
 TEST(AuthTicket, KeyHasWorldId)
 {
     EXPECT_EQ(AuthTicket::MakeKey(3, "abc"), "authTicket:3:abc");

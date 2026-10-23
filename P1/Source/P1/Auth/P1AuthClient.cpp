@@ -11,6 +11,9 @@ namespace
     // 인증 서버가 로그인 세션이 없거나 만료됐을 때 돌려주는 실패 코드. 클라이언트는 문구가 아니라 코드로 가른다.
     const TCHAR* const LOGIN_SESSION_EXPIRED_CODE = TEXT("LOGIN_SESSION_EXPIRED");
 
+    // 고른 월드의 항목이 인증 서버에서 사라졌을 때의 실패 코드.
+    const TCHAR* const WORLD_UNAVAILABLE_CODE = TEXT("WORLD_UNAVAILABLE");
+
     const TCHAR* const AUTH_SERVER_UNREACHABLE = TEXT("인증 서버에 접속 실패");
 
     /** 인증 서버의 혼잡도 이름을 읽는다. 모르는 이름이면 false. */
@@ -213,7 +216,7 @@ void UP1AuthClient::OnSelectWorldResponse(FHttpRequestPtr Request, FHttpResponse
     OnWorldSelectFailed.Broadcast(Message);
 
     // 사라진 월드를 골랐다. 목록을 다시 받아 그 월드를 지운다.
-    if (ErrorCode == TEXT("WORLD_UNAVAILABLE"))
+    if (ErrorCode == WORLD_UNAVAILABLE_CODE)
         RequestWorlds();
 }
 

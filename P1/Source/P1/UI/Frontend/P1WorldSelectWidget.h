@@ -74,8 +74,8 @@ private:
     /** 인증 클라이언트의 월드 목록으로 줄을 다시 그린다. 고른 월드가 목록에서 빠졌으면 선택을 푼다. */
     void Refresh();
 
-    /** 월드를 고르고 그 줄을 하이라이트한다. 0이면 선택을 푼다. */
-    void SelectWorld(int32 WorldId);
+    /** 접속 버튼이 쓸 월드를 정하고 그 줄을 하이라이트한다. 0이면 선택을 푼다. 접속은 시작하지 않는다. */
+    void HighlightWorld(int32 WorldId);
 
     /** 월드 줄을 담는 패널. 줄은 목록을 받을 때 WorldRowClass로 만들어 채운다. */
     UPROPERTY(meta = (BindWidget))
