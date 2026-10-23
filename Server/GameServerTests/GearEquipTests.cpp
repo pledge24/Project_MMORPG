@@ -11,7 +11,7 @@
 
     클라는 S_EQUIP_GEAR와 S_UNEQUIP_GEAR의 gear_type과 template_id로 캐릭터 외형을 바꾼다.
     그래서 두 값은 요청한 칸이 아니라 처리 결과여야 한다. gear_type은 장비 부위, template_id는
-    처리 뒤 그 부위의 아이템이다. 다른 플레이어가 보는 외형은 equipped_gear_summary로 간다.
+    처리 뒤 그 부위의 아이템이다. 다른 플레이어가 보는 외형은 gear_appearance로 간다.
 
     픽스처 결합도: 아이템 템플릿, 2레벨까지 있는 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 장착과 해제가 레벨 표로 최종 스탯을 다시 계산하므로 레벨 표가 있어야 한다.
@@ -76,7 +76,7 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        PlayerTestAccess::CharacterClass(*player) = Protocol::CLASS_TYPE_WARRIOR;
         PlayerTestAccess::PlayerInfo(*player).set_level(1);
         player->SetStatValue(Protocol::STAT_TYPE_HP, 0);
         player->SetStatValue(Protocol::STAT_TYPE_MP, 0);
@@ -105,7 +105,7 @@ protected:
     PlayerRef LoadFromSaveData(const PlayerSaveData& data)
     {
         PlayerRef loaded = EntityFactory::Create<Player>(PlayerSpawnParams());
-        PlayerTestAccess::PlayerInfo(*loaded).set_class_(static_cast<Protocol::CharacterClass>(data.progress.classId));
+        PlayerTestAccess::CharacterClass(*loaded) = static_cast<Protocol::CharacterClass>(data.progress.classId);
         PlayerTestAccess::PlayerInfo(*loaded).set_level(data.progress.level);
 
         loaded->SetStatValue(Protocol::STAT_TYPE_HP, data.progress.hp);
@@ -135,7 +135,7 @@ TEST_F(GearEquipTest, EquipReportsGearTypeNotInventorySlot)
     EXPECT_EQ(result->gearType, Protocol::GEAR_TYPE_WEAPON) << "인벤토리 칸 번호가 실려 가면 클라가 무기 부위를 찾지 못한다";
     EXPECT_EQ(result->templateId, SWORD_TEMPLATE_ID);
 
-    const auto& summary = player->GetPlayerInfo().equipped_gear_summary();
+    const auto& summary = player->GetPlayerInfo().gear_appearance();
     ASSERT_TRUE(summary.contains(Protocol::GEAR_TYPE_WEAPON));
     EXPECT_EQ(summary.at(Protocol::GEAR_TYPE_WEAPON), SWORD_TEMPLATE_ID);
 }
@@ -151,7 +151,7 @@ TEST_F(GearEquipTest, UnequipReportsEmptiedGearType)
 
     EXPECT_EQ(result->gearType, Protocol::GEAR_TYPE_WEAPON);
     EXPECT_EQ(result->templateId, 0) << "뺀 아이템의 템플릿이 실려 가면 클라가 그 아이템을 다시 입힌다";
-    EXPECT_FALSE(player->GetPlayerInfo().equipped_gear_summary().contains(Protocol::GEAR_TYPE_WEAPON));
+    EXPECT_FALSE(player->GetPlayerInfo().gear_appearance().contains(Protocol::GEAR_TYPE_WEAPON));
 }
 
 // 장착과 해제는 레벨 표의 기본 스탯과 착용 장비의 합으로 최종 스탯을 다시 계산하고, 바뀐 스탯만 응답에 싣는다.

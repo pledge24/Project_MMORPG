@@ -13,7 +13,7 @@ struct TownRespawn
 {
     int32 mapId = 0;
     int32 roomId = 0;
-    /** 리스폰 지점. 엔티티 id는 비어 있고 이동 상태는 Idle이다. */
+    /** 리스폰 지점. 이동 상태는 Idle이다. */
     Protocol::PosInfo pos;
 };
 
@@ -39,7 +39,7 @@ namespace RoomTransfer
     optional<string> ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos);
 
     /** 포털의 목적지로 포털 이동의 입장 정보를 만든다. 포털이 현재 룸에 있는지는 호출자가 확인한다. */
-    RoomEnterData MakePortalEnterData(const PortalTemplate& portal, int64 entityId);
+    RoomEnterData MakePortalEnterData(const PortalTemplate& portal);
 
     /** 리스폰 요청을 판정한다. 통과하면 nullopt, 거절하면 S_RESPAWN에 실을 결과. */
     optional<Protocol::EntryResult> ValidateRespawn(bool isDead, Protocol::RespawnType respawnType);

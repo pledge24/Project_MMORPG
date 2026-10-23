@@ -59,11 +59,10 @@ TEST_F(EntityFactoryTest, MonsterGetsIdTypeAndSpawnParams)
 
     ASSERT_NE(monster, nullptr);
     EXPECT_GT(monster->GetEntityId(), 0);
-    EXPECT_EQ(monster->GetEntityInfo().entity_type(), Protocol::ENTITY_TYPE_MONSTER);
+    EXPECT_TRUE(monster->GetEntityInfo().has_monster_info()) << "엔티티의 종류는 실린 세부 정보의 종류다";
     EXPECT_EQ(monster->GetTemplateId(), MONSTER_TEMPLATE_ID);
     EXPECT_FLOAT_EQ(monster->GetPosInfo().pos().x(), 100.f);
     EXPECT_FLOAT_EQ(monster->GetPosInfo().pos().y(), 200.f);
-    EXPECT_EQ(monster->GetPosInfo().entity_id(), monster->GetEntityId()) << "스폰 위치를 복사하면서 위치의 엔티티 id가 지워지면 안 된다";
 }
 
 TEST_F(EntityFactoryTest, UnknownMonsterTemplateFails)
@@ -77,8 +76,7 @@ TEST_F(EntityFactoryTest, PlayerWithoutSessionGetsIdAndInventory)
 
     ASSERT_NE(player, nullptr);
     EXPECT_GT(player->GetEntityId(), 0);
-    EXPECT_EQ(player->GetEntityInfo().entity_type(), Protocol::ENTITY_TYPE_PLAYER);
-    EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId());
+    EXPECT_TRUE(player->GetEntityInfo().has_player_info()) << "엔티티의 종류는 실린 세부 정보의 종류다";
     const ItemContainer* gearSection = player->GetInventory().FindSection(ContainerType::INVENTORY_GEAR);
     ASSERT_NE(gearSection, nullptr);
     EXPECT_TRUE(gearSection->IsValidSlot(0)) << "Init이 인벤토리 구역 표의 칸 수만큼 칸을 만든다";

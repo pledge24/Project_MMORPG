@@ -52,8 +52,10 @@ TEST(PacketSerialization, MoveRoundTrip)
 
     for (int32 i = 0; i < 3; i++)
     {
-        Protocol::PosInfo* info = pkt.add_info();
-        info->set_entity_id(1000 + i);
+        Protocol::EntityMove* move = pkt.add_moves();
+        move->set_entity_id(1000 + i);
+
+        Protocol::PosInfo* info = move->mutable_pos_info();
         info->set_yaw(90.5f * i);
         info->set_state(Protocol::MoveState::MOVE_STATE_RUN);
 

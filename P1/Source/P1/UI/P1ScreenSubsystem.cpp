@@ -174,6 +174,10 @@ void UP1ScreenSubsystem::RefreshInputMode()
 
     if (ModalScreen)
     {
+        // UI 전용 모드에서 뗀 키는 플레이어 입력에 닿지 않는다. 눌린 키를 먼저 놓지 않으면
+        // 화면이 떠 있는 동안 뗀 이동 키가 화면을 닫은 뒤에도 눌린 채 남아 내 플레이어가 계속 움직인다.
+        PC->FlushPressedKeys();
+
         FInputModeUIOnly InputMode;
         InputMode.SetWidgetToFocus(ModalScreen->TakeWidget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);

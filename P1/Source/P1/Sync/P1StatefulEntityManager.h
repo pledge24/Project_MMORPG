@@ -4,6 +4,8 @@
 #include "Sync/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Protocol.pb.h"
+#include "Entity.pb.h"
+#include "Combat.pb.h"
 #include "Entry.pb.h"
 #include "P1StatefulEntityManager.generated.h"
 
@@ -88,7 +90,7 @@ public:
     void HandleMove(const Protocol::S_MOVE& MovePkt);
 
 protected:
-    void HandleMove(const Protocol::PosInfo& Info);
+    void HandleMove(const Protocol::EntityMove& Move);
 
     //~ Room Packet Handlers
 public:
@@ -108,7 +110,8 @@ public:
 
     //~ Combat Packet Handlers
 public:
-    void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
+    /** 다른 크리처의 공격을 재생한다. 내 공격은 서버가 알리지 않는다. */
+    void HandleAttack(const Protocol::S_ATTACK& AttackPkt);
 
     /** 내 플레이어가 맞았으면 내 플레이어 데이터의 HP도 갱신한다. */
     void HandleHit(const Protocol::S_HIT& HitPkt);

@@ -23,7 +23,6 @@ Player::Player()
 {
 	_isPlayer = true;
 
-    _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
     _playerInfo = _entityInfo->mutable_player_info();
 }
 
@@ -88,8 +87,8 @@ bool Player::OnLoaded()
 bool Player::ApplyProgress(const PlayerProgress& progress)
 {
     const int64 characterId = progress.characterId;
-    _playerInfo->set_character_id(characterId);
-    _playerInfo->set_class_(static_cast<Protocol::CharacterClass>(progress.classId));
+    _characterId = characterId;
+    _characterClass = static_cast<Protocol::CharacterClass>(progress.classId);
     _playerInfo->set_name(progress.name);
     _playerInfo->set_level(progress.level);
 
@@ -100,7 +99,6 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
     spawnPosInfo.mutable_pos()->set_y(progress.pos.y);
     spawnPosInfo.mutable_pos()->set_z(progress.pos.z);
     spawnPosInfo.set_yaw(progress.yaw);
-    spawnPosInfo.set_entity_id(GetEntityId());
     spawnPosInfo.set_state(Protocol::MOVE_STATE_IDLE);
     SetPosInfo(spawnPosInfo);
 
@@ -109,7 +107,7 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
 
     // DB의 경험치는 누적값이고 레벨은 캐릭터 목록에 보일 사본이다. 레벨은 누적 경험치와 레벨 표로 다시 정한다.
     // 레벨 표가 없는 직업은 OnLoaded의 스탯 계산이 거절한다.
-    if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
+    if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
     {
         const int64 loadedExp = progress.totalExp;
         const int64 clampedExp = Leveling::ClampTotalExp(*classLevelTable, loadedExp);
@@ -375,7 +373,6 @@ optional<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowM
 RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
 	_posInfo->CopyFrom(respawnPos);
-    _posInfo->set_entity_id(GetEntityId());
     // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다.
     _lastPositionTick = ::GetTickCount64();
 
@@ -386,7 +383,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 	case Protocol::RESPAWN_TYPE_TOWN:
 	{
 		// 사망 패널티. 그 레벨 요구치의 10%를 잃고, 레벨은 내려가지 않는다.
-		if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
+		if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
 		{
 			SetTotalExp(*classLevelTable, Leveling::ApplyDeathPenalty(*classLevelTable, _totalExp));
 
@@ -414,7 +411,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 	return result;
 }
 
-void Player::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
+void Player::OnHit(EntityRef attacker, const AttackInfo& attackInfo)
 {
     Creature::OnHit(attacker, attackInfo);
 
@@ -431,7 +428,6 @@ void Player::BeginMapLoad(const RoomRef& room, const Protocol::PosInfo& pos)
     // 기다리는 동안의 접속 종료는 이 맵과 위치로 저장한다. 목적지를 정한 뒤에 끊겨도 다음 입장이 그 맵에서 시작한다.
     _mapId = room->GetMapId();
     _posInfo->CopyFrom(pos);
-    _posInfo->set_entity_id(GetEntityId());
     _mapLoadRoomId = room->GetRoomId();
 
     // 소속 룸을 목적지로 바꿔 두면 맵 로드 완료와 접속 종료가 목적지 룸의 큐 하나에서 차례로 돈다.
@@ -455,9 +451,7 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
 
     if(enterPos.has_value())
     {
-        // 위치의 엔티티 id는 넘겨받은 값이 아니라 이 플레이어의 것으로 둔다.
         _posInfo->CopyFrom(enterPos.value());
-        _posInfo->set_entity_id(GetEntityId());
     }
     else
     {
@@ -476,42 +470,38 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
 
 void Player::ApplyMove(const Protocol::PosInfo& posInfo, uint64 now)
 {
-    // 위치의 엔티티 id는 패킷 값이 아니라 이 플레이어의 것으로 둔다.
     _posInfo->CopyFrom(posInfo);
-    _posInfo->set_entity_id(GetEntityId());
     _lastPositionTick = now;
 }
 
-void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
+RewardResult Player::OnGetReward(const Reward& reward)
 {
     const int32 oldLevel = _playerInfo->level();
 
-    const Protocol::Reward& reward = rewardResultPkt.reward();
     {
-        _gold += reward.gold();
+        _gold += reward.gold;
 
         // 경험치는 누적값에 더하고, 레벨은 누적 경험치로 다시 정한다. 보상 한 번에 여러 레벨이 오를 수 있다.
         // 최대 레벨에 이르고 남는 경험치는 버린다. 레벨 표가 없는 직업은 오를 레벨이 없으므로 경험치를 쌓지 않는다.
-        if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
+        if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
         {
-            const LevelExp levelExp = SetTotalExp(*classLevelTable, Leveling::AddExp(*classLevelTable, _totalExp, reward.exp()));
+            const LevelExp levelExp = SetTotalExp(*classLevelTable, Leveling::AddExp(*classLevelTable, _totalExp, reward.exp));
             while (_playerInfo->level() < levelExp.level)
                 OnLevelUp();
         }
     }
 
+    RewardResult result;
     {
-        rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
-        rewardResultPkt.set_updated_gold(_gold);
+        result.exp = GetStatValue(Protocol::STAT_TYPE_EXP);
+        result.gold = _gold;
 
         if (_playerInfo->level() > oldLevel)
         {
-            rewardResultPkt.set_is_level_up(true);
-            Protocol::LevelUpInfo* info = rewardResultPkt.mutable_level_up_details();
-            info->set_old_level(oldLevel);
-            info->set_new_level(_playerInfo->level());
+            LevelUpResult& levelUp = result.levelUp.emplace();
+            levelUp.level = _playerInfo->level();
 
-			RepeatedPtrField<Protocol::Stat>* updatedStatList = info->mutable_updated_stat();
+			RepeatedPtrField<Protocol::Stat>* updatedStatList = &levelUp.changedStats;
 			{
 				// 클라이언트에는 레벨 표가 없어 새 최대 경험치를 이 패킷으로만 안다.
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_EXP, GetStatValue(Protocol::STAT_TYPE_MAX_EXP));
@@ -522,6 +512,8 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 			}
         }
     }
+
+    return result;
 }
 
 void Player::OnLevelUp()
@@ -542,7 +534,7 @@ void Player::OnLevelUp()
 bool Player::IsMaxLevel() const
 {
     // 레벨 표가 없는 직업은 오를 레벨이 없으므로 최대 레벨로 본다.
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
     return classLevelTable == nullptr || _playerInfo->level() >= classLevelTable->GetMaxLevel();
 }
 
@@ -555,7 +547,7 @@ void Player::CacheNextLevelUpData()
     // 다음 레벨 행이 없으면 빈 값으로 둔다.
     _nextLevelUpData = NextLevelUpData{};
 
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
     const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
     if (nextLevelTemplate == nullptr)
         return;
@@ -579,10 +571,10 @@ LevelExp Player::SetTotalExp(const ClassLevelTable& classLevelTable, int64 total
 
 optional<CombatStats> Player::CalculateFinalStat()
 {
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
     if (classLevelTable == nullptr)
     {
-        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_playerInfo->class_()));
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_characterClass));
         return nullopt;
     }
 
@@ -632,7 +624,7 @@ void Player::RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats
 void Player::RefreshEquippedGearSummary()
 {
     // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
-    auto* summary = _playerInfo->mutable_equipped_gear_summary();
+    auto* summary = _playerInfo->mutable_gear_appearance();
     summary->clear();
 
     const ItemContainer& equipped = _equipment->GetContainer();
@@ -682,8 +674,8 @@ PlayerSaveData Player::MakeSaveData() const
 {
     PlayerSaveData data;
     data.userId = _userId;
-    data.progress.characterId = _playerInfo->character_id();
-    data.progress.classId = _playerInfo->class_();
+    data.progress.characterId = _characterId;
+    data.progress.classId = _characterClass;
     data.progress.name = _playerInfo->name();
     data.progress.level = _playerInfo->level();
     data.progress.mapId = _mapId;
@@ -692,7 +684,7 @@ PlayerSaveData Player::MakeSaveData() const
     // DB에는 누적 경험치를 저장한다. 스탯의 경험치는 클라이언트에 보낼 레벨 안의 값이다.
     data.progress.totalExp = _totalExp;
     // DB 열이 INT다. 최대치가 레벨 표의 int32 값에서 오므로 넘지 않는다.
-    const auto& stats = _statInfo->info();
+    const auto& stats = _statInfo->values();
     const auto hpIt = stats.find(Protocol::STAT_TYPE_HP);
     const auto mpIt = stats.find(Protocol::STAT_TYPE_MP);
     data.progress.hp = hpIt != stats.end() ? static_cast<int32>(hpIt->second) : 0;
@@ -710,10 +702,7 @@ PlayerSaveData Player::MakeSaveData() const
 // 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 맵 표에서 찾은 마을을 받는다.
 void Player::ApplyTownRespawnForSave(const TownRespawn& town)
 {
-    Protocol::PosInfo respawnPos = town.pos;
-    respawnPos.set_entity_id(GetEntityId());
-
-    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
+    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, town.pos);
 
     // DB에는 룸이 아니라 맵과 좌표를 저장한다. 맵을 바꾸지 않으면 다음 입장이 죽은 맵의 마을 좌표에서 룸을 찾는다.
     _mapId = town.mapId;

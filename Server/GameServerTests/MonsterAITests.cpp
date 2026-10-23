@@ -166,7 +166,7 @@ TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
     room->Tick(2.5f);
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
+    movePkt.mutable_pos_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
     room->C_HandleMove(movePkt, player);
     room->Tick(STATE_UPDATE_TIME);
 

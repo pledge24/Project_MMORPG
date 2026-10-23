@@ -92,8 +92,9 @@ public:
     void C_HandleMapLoadComplete(PlayerRef player);
     /** 목적지가 다른 맵이면 응답에 그 맵 번호를 싣고 맵 로드를 기다리게 한다. 같은 맵이면 바로 옮긴다. */
     void C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player);
-    /** 보낸 사람(player)의 위치만 바꾼다. 패킷의 엔티티 번호는 보지 않는다. */
+    /** 보낸 사람(player)의 위치를 바꾼다. */
     void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
+    /** 사망한 플레이어의 공격은 응답으로 거절하고 다른 플레이어에게 알리지 않는다. */
     void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
     /** 이 룸에서 되살린 뒤 마을로 보낸다. 사망한 룸이 마을이어도 퇴장과 입장을 거친다. */
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
@@ -103,10 +104,14 @@ public:
     /** 공격 사실만 브로드캐스트한다. 피격 판정은 HandleHit이 따로 한다. */
     void HandleNormalAttack(int32 combo, CreatureRef creature);
     /** 공격 하나의 피격을 판정한다. 대상이 죽으면 보상과 사망까지 처리한다. */
-    void HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo);
-    void HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward);
+    void HandleHit(EntityRef attacker, AttackInfo attackInfo);
+    void HandleMonsterKill(PlayerRef player, const Reward& reward);
     /** 몬스터는 룸에서 뺀다. 플레이어는 리스폰할 때까지 룸에 남긴다. */
     void HandleDie(CreatureRef creature);
+
+private:
+    /** 공격한 엔티티를 뺀 룸의 플레이어에게 공격을 알린다. */
+    void BroadcastAttack(int64 attackerId, int32 combo, float yaw);
 
     //~ Room 정보 관련
 public:

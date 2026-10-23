@@ -3,104 +3,10 @@ package Protocol;
 
 import "Enum.proto";
 
-message EntityInfo
-{
-	int64 entity_id = 1;
-	EntityType entity_type = 2;
-	PosInfo pos_info = 3;
-
-    // EntityType에 따른 정보
-    oneof details
-    {
-        // oneof 그룹 내의 모든 필드는 기본적으로 optional 효과를 가짐
-        PlayerInfo player_info = 4;
-        MonsterInfo monster_info = 5;
-    }
-}
-
-message PlayerInfo
-{
-    // 캐릭터 공개 정보
-    int64 character_id = 1;
-    CharacterClass class = 2;
-    string name = 3;
-    int32 level = 4;
-
-    int32 map_id = 5;
-    int32 room_id = 6;
-
-    map<int32, int32> equipped_gear_summary = 7;   // <SlotId(or GearType), template_id>
-}
-
 message Possession
 {
     int64 gold = 1;
     repeated ContainerSlots containers = 2;    // 인벤토리의 구역 셋과 착용 장비. 빈 칸도 싣는다
-}
-
-message MonsterInfo
-{
-    int32 template_id = 1;
-    int32 hp = 2;
-}
-
-message Vector
-{
-    float x = 1;
-    float y = 2;
-    float z = 3;
-}
-
-message PosInfo
-{
-	int64 entity_id = 1;
-	Vector pos = 2;
-    float yaw = 3;
-	Vector move_direction = 4;
-	MoveState state = 5;
-}
-
-message AttackInfo
-{
-    AttackType type = 1;
-    optional int64 target_id = 2;   // entity_id
-    optional int32 combo = 3;
-    int64 damage = 4;
-
-    oneof details
-    {
-        int32 skill_id = 5;
-        int64 item_id = 6;
-    }
-}
-
-message HitInfo
-{
-    int64 attacker_id = 1;          // entity_id
-    int64 target_id = 2;            // entity_id
-
-    optional int64 damage = 3;
-    DamageType damage_type = 4;     // 물리 피해? 마법 피해?
-
-    repeated Stat updated_stat = 5;
-}
-
-message StatInfo
-{
-    map<int32, int64> info = 1;   // <StatType, Value>
-}
-
-message Stat
-{
-    StatType type = 1;
-    bool is_gauge = 2;
-    int64 value = 3;
-}
-
-message Effect
-{
-    int32 effect_id = 1;
-    float duration = 2;
 }
 
 message GearInfo
@@ -163,20 +69,3 @@ message QuickSlot
     optional QuickSlotRef ref = 2;
 }
 
-message LevelUpInfo
-{
-    int32 old_level = 1;
-    int32 new_level = 2;
-
-//    int32 earned_skill_points = 3;
-//    int32 earned_stat_points = 4;
-
-    repeated Stat updated_stat = 5;
-}
-
-message Reward
-{
-    optional int64 exp = 1;
-    optional int64 gold = 2;
-    // repeated Item items = 3;
-}

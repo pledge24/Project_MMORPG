@@ -226,6 +226,7 @@
     <ClInclude Include="Game\Items\ItemContainer.h" />
     <ClInclude Include="Network\ItemPackets.h" />
     <ClInclude Include="Game\Combat\Combat.h" />
+    <ClInclude Include="Game\Combat\CombatTypes.h" />
     <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
     <ClInclude Include="Game\QuickSlots\QuickSlotComponent.h" />
     <ClInclude Include="Game\QuickSlots\QuickSlotTypes.h" />

@@ -22,57 +22,34 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[12];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[5];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\nEnum.proto\022\010Protocol*\204\001\n\nEntityType\022\024\n"
-  "\020ENTITY_TYPE_NONE\020\000\022\026\n\022ENTITY_TYPE_PLAYE"
-  "R\020\001\022\027\n\023ENTITY_TYPE_MONSTER\020\002\022\032\n\026ENTITY_T"
-  "YPE_PROJECTILE\020\003\022\023\n\017ENTITY_TYPE_ENV\020\004*R\n"
-  "\016CharacterClass\022\023\n\017CLASS_TYPE_NONE\020\000\022\026\n\022"
-  "CLASS_TYPE_WARRIOR\020\001\022\023\n\017CLASS_TYPE_MAGE\020"
-  "\002*`\n\tMoveState\022\023\n\017MOVE_STATE_NONE\020\000\022\023\n\017M"
-  "OVE_STATE_IDLE\020\001\022\022\n\016MOVE_STATE_RUN\020\002\022\025\n\021"
-  "MOVE_STATE_ACTION\020\003*f\n\nAttackType\022\024\n\020ATT"
-  "ACK_TYPE_NONE\020\000\022\026\n\022ATTACK_TYPE_NORMAL\020\001\022"
-  "\025\n\021ATTACK_TYPE_SKILL\020\002\022\023\n\017ATTACK_TYPE_EO"
-  "T\020\003*j\n\nDamageType\022\024\n\020DAMAGE_TYPE_NONE\020\000\022"
-  "\030\n\024DAMAGE_TYPE_PHYSICAL\020\001\022\027\n\023DAMAGE_TYPE"
-  "_MAGICAL\020\002\022\023\n\017DAMAGE_TYPE_FIX\020\003*\240\001\n\nEffe"
-  "ctType\022\024\n\020EFFECT_TYPE_NONE\020\000\022\030\n\024EFFECT_T"
-  "YPE_BLEEDING\020\001\022\024\n\020EFFECT_TYPE_BURN\020\002\022\026\n\022"
-  "EFFECT_TYPE_POSION\020\003\022\030\n\024EFFECT_TYPE_SPEE"
-  "D_UP\020\004\022\032\n\026EFFECT_TYPE_SPEED_DOWN\020\005*i\n\010It"
-  "emType\022\022\n\016ITEM_TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_"
-  "GEAR\020\001\022\030\n\024ITEM_TYPE_CONSUMABLE\020\002\022\033\n\027ITEM"
-  "_TYPE_MISCELLANEOUS\020\003*\264\001\n\rContainerType\022"
-  "\027\n\023CONTAINER_TYPE_NONE\020\000\022!\n\035CONTAINER_TY"
-  "PE_INVENTORY_GEAR\020\001\022\'\n#CONTAINER_TYPE_IN"
-  "VENTORY_CONSUMABLE\020\002\022!\n\035CONTAINER_TYPE_I"
-  "NVENTORY_MISC\020\003\022\033\n\027CONTAINER_TYPE_EQUIPP"
-  "ED\020\004*\325\001\n\010StatType\022\022\n\016STAT_TYPE_NONE\020\000\022\024\n"
-  "\020STAT_TYPE_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n"
-  "\020STAT_TYPE_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n"
-  "\031STAT_TYPE_PHYSICAL_ATTACK\020\005\022\034\n\030STAT_TYP"
-  "E_MAGICAL_ATTACK\020\006\022\025\n\021STAT_TYPE_MAX_EXP\020"
-  "\007\022\021\n\rSTAT_TYPE_EXP\020\010*\234\001\n\010GearType\022\022\n\016GEA"
-  "R_TYPE_NONE\020\000\022\024\n\020GEAR_TYPE_HELMET\020\001\022\023\n\017G"
-  "EAR_TYPE_CHEST\020\002\022\022\n\016GEAR_TYPE_LEGS\020\003\022\022\n\016"
-  "GEAR_TYPE_ARMS\020\004\022\023\n\017GEAR_TYPE_BOOTS\020\005\022\024\n"
-  "\020GEAR_TYPE_WEAPON\020\006*`\n\nRewardType\022\024\n\020REW"
-  "ARD_TYPE_NONE\020\000\022\034\n\030REWARD_TYPE_MONSTER_K"
-  "ILL\020\001\022\036\n\032REWARD_TYPE_QUEST_COMPLETE\020\002*N\n"
-  "\020QuickSlotRefType\022\034\n\030QUICK_SLOT_REF_TYPE"
-  "_NONE\020\000\022\034\n\030QUICK_SLOT_REF_TYPE_ITEM\020\001b\006p"
-  "roto3"
+  "\n\nEnum.proto\022\010Protocol*R\n\016CharacterClass"
+  "\022\023\n\017CLASS_TYPE_NONE\020\000\022\026\n\022CLASS_TYPE_WARR"
+  "IOR\020\001\022\023\n\017CLASS_TYPE_MAGE\020\002*i\n\010ItemType\022\022"
+  "\n\016ITEM_TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_GEAR\020\001\022\030"
+  "\n\024ITEM_TYPE_CONSUMABLE\020\002\022\033\n\027ITEM_TYPE_MI"
+  "SCELLANEOUS\020\003*\264\001\n\rContainerType\022\027\n\023CONTA"
+  "INER_TYPE_NONE\020\000\022!\n\035CONTAINER_TYPE_INVEN"
+  "TORY_GEAR\020\001\022\'\n#CONTAINER_TYPE_INVENTORY_"
+  "CONSUMABLE\020\002\022!\n\035CONTAINER_TYPE_INVENTORY"
+  "_MISC\020\003\022\033\n\027CONTAINER_TYPE_EQUIPPED\020\004*\234\001\n"
+  "\010GearType\022\022\n\016GEAR_TYPE_NONE\020\000\022\024\n\020GEAR_TY"
+  "PE_HELMET\020\001\022\023\n\017GEAR_TYPE_CHEST\020\002\022\022\n\016GEAR"
+  "_TYPE_LEGS\020\003\022\022\n\016GEAR_TYPE_ARMS\020\004\022\023\n\017GEAR"
+  "_TYPE_BOOTS\020\005\022\024\n\020GEAR_TYPE_WEAPON\020\006*N\n\020Q"
+  "uickSlotRefType\022\034\n\030QUICK_SLOT_REF_TYPE_N"
+  "ONE\020\000\022\034\n\030QUICK_SLOT_REF_TYPE_ITEM\020\001b\006pro"
+  "to3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 1565, descriptor_table_protodef_Enum_2eproto,
+    false, false, 643, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -86,26 +63,9 @@ PROTOBUF_ATTRIBUTE_WEAK const ::_pbi::DescriptorTable* descriptor_table_Enum_2ep
 // Force running AddDescriptors() at dynamic initialization time.
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY2 static ::_pbi::AddDescriptorsRunner dynamic_init_dummy_Enum_2eproto(&descriptor_table_Enum_2eproto);
 namespace Protocol {
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[0];
-}
-bool EntityType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CharacterClass_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[1];
+  return file_level_enum_descriptors_Enum_2eproto[0];
 }
 bool CharacterClass_IsValid(int value) {
   switch (value) {
@@ -118,75 +78,9 @@ bool CharacterClass_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* MoveState_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[2];
-}
-bool MoveState_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* AttackType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[3];
-}
-bool AttackType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DamageType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[4];
-}
-bool DamageType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EffectType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[5];
-}
-bool EffectType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ItemType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[6];
+  return file_level_enum_descriptors_Enum_2eproto[1];
 }
 bool ItemType_IsValid(int value) {
   switch (value) {
@@ -202,7 +96,7 @@ bool ItemType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ContainerType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[7];
+  return file_level_enum_descriptors_Enum_2eproto[2];
 }
 bool ContainerType_IsValid(int value) {
   switch (value) {
@@ -217,30 +111,9 @@ bool ContainerType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[8];
-}
-bool StatType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[9];
+  return file_level_enum_descriptors_Enum_2eproto[3];
 }
 bool GearType_IsValid(int value) {
   switch (value) {
@@ -257,24 +130,9 @@ bool GearType_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[10];
-}
-bool RewardType_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-      return true;
-    default:
-      return false;
-  }
-}
-
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* QuickSlotRefType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
-  return file_level_enum_descriptors_Enum_2eproto[11];
+  return file_level_enum_descriptors_Enum_2eproto[4];
 }
 bool QuickSlotRefType_IsValid(int value) {
   switch (value) {

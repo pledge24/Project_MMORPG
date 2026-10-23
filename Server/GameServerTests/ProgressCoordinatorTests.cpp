@@ -474,8 +474,8 @@ TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
     Gamedata::Install(std::move(tables));
 
     EnterRoom();
-    Protocol::AttackInfo lethalAttack;
-    lethalAttack.set_damage(1000);
+    AttackInfo lethalAttack;
+    lethalAttack.damage = 1000;
     player->OnHit(nullptr, lethalAttack);
     ASSERT_TRUE(player->IsDead());
 

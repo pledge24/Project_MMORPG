@@ -49,11 +49,11 @@ namespace
         return 50LL * level * (level - 1);
     }
 
-    Protocol::S_REWARD_RESULT MakeExpReward(int64 exp)
+    Reward MakeExpReward(int64 exp)
     {
-        Protocol::S_REWARD_RESULT pkt;
-        pkt.mutable_reward()->set_exp(exp);
-        return pkt;
+        Reward reward;
+        reward.exp = exp;
+        return reward;
     }
 
     int64 SavedTotalExp(const Player& player)
@@ -97,7 +97,7 @@ TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
 {
     InstallWarriorLevelTable(3);
     player = EntityFactory::Create<Player>(PlayerSpawnParams());
-    PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
+    PlayerTestAccess::CharacterClass(*player) = Protocol::CLASS_TYPE_WARRIOR;
 
     PlayerTestAccess::PlayerInfo(*player).set_level(2);
     EXPECT_FALSE(player->IsMaxLevel());
@@ -109,7 +109,7 @@ TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
 TEST_F(PlayerLevelTest, ClassWithoutLevelTableIsMaxLevel)
 {
     player = EntityFactory::Create<Player>(PlayerSpawnParams());
-    PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_MAGE);
+    PlayerTestAccess::CharacterClass(*player) = Protocol::CLASS_TYPE_MAGE;
     PlayerTestAccess::PlayerInfo(*player).set_level(1);
 
     EXPECT_TRUE(player->IsMaxLevel()) << "레벨 표가 없으면 오를 레벨이 없다";
@@ -119,12 +119,11 @@ TEST_F(PlayerLevelTest, RewardBelowRequirementAccumulates)
 {
     LoadWithTotalExp(90);
 
-    Protocol::S_REWARD_RESULT pkt = MakeExpReward(5);
-    player->OnGetReward(pkt);
+    const RewardResult result = player->OnGetReward(MakeExpReward(5));
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 95) << "레벨업하지 않는 보상의 경험치가 버려지면 안 된다";
-    EXPECT_EQ(pkt.updated_exp(), 95);
-    EXPECT_FALSE(pkt.is_level_up());
+    EXPECT_EQ(result.exp, 95);
+    EXPECT_FALSE(result.levelUp.has_value());
     EXPECT_EQ(SavedTotalExp(*player), 95);
 }
 
@@ -133,22 +132,19 @@ TEST_F(PlayerLevelTest, LargeRewardRaisesSeveralLevelsAtOnce)
     LoadWithTotalExp(0);
 
     // 1→2에 100, 2→3에 200, 남는 50
-    Protocol::S_REWARD_RESULT pkt = MakeExpReward(350);
-    player->OnGetReward(pkt);
+    const RewardResult result = player->OnGetReward(MakeExpReward(350));
 
     EXPECT_EQ(player->GetPlayerInfo().level(), 3);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 50) << "클라이언트에는 누적값이 아니라 레벨 안의 경험치를 보낸다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), 300);
     EXPECT_EQ(SavedTotalExp(*player), 350);
 
-    ASSERT_TRUE(pkt.is_level_up());
-    ASSERT_TRUE(pkt.has_level_up_details()) << "레벨업 정보가 패킷에 실리지 않으면 클라가 새 스탯을 알 수 없다";
-    EXPECT_EQ(pkt.level_up_details().old_level(), 1);
-    EXPECT_EQ(pkt.level_up_details().new_level(), 3);
-    EXPECT_EQ(pkt.updated_exp(), 50);
+    ASSERT_TRUE(result.levelUp.has_value()) << "레벨업 정보가 결과에 없으면 클라가 새 스탯을 알 수 없다";
+    EXPECT_EQ(result.levelUp->level, 3);
+    EXPECT_EQ(result.exp, 50);
 
-    // 클라이언트에는 레벨 표가 없어 새 최대 경험치를 이 패킷으로만 안다.
-    const auto& updatedStats = pkt.level_up_details().updated_stat();
+    // 클라이언트에는 레벨 표가 없어 새 최대 경험치를 이 결과로만 안다.
+    const auto& updatedStats = result.levelUp->changedStats;
     const auto maxExp = std::find_if(updatedStats.begin(), updatedStats.end(),
         [](const Protocol::Stat& stat) { return stat.type() == Protocol::STAT_TYPE_MAX_EXP; });
     ASSERT_NE(maxExp, updatedStats.end()) << "레벨업 정보에 최대 경험치가 없으면 클라의 경험치 막대가 옛 최대치로 그린다";
@@ -159,12 +155,12 @@ TEST_F(PlayerLevelTest, ReachingMaxLevelDropsLeftoverExp)
 {
     LoadWithTotalExp(TotalExpAtLevel(MAX_LEVEL - 1));
 
-    Protocol::S_REWARD_RESULT pkt = MakeExpReward((MAX_LEVEL - 1) * 100 + 70);
-    player->OnGetReward(pkt);
+    const RewardResult result = player->OnGetReward(MakeExpReward((MAX_LEVEL - 1) * 100 + 70));
 
     EXPECT_EQ(player->GetPlayerInfo().level(), MAX_LEVEL);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 0) << "최대 레벨에서는 경험치를 쌓지 않는다";
-    EXPECT_EQ(pkt.level_up_details().new_level(), MAX_LEVEL);
+    ASSERT_TRUE(result.levelUp.has_value());
+    EXPECT_EQ(result.levelUp->level, MAX_LEVEL);
     EXPECT_EQ(SavedTotalExp(*player), TotalExpAtLevel(MAX_LEVEL)) << "최대 레벨에 이르고 남는 경험치는 저장하지 않는다";
 }
 
@@ -172,11 +168,10 @@ TEST_F(PlayerLevelTest, MaxLevelDoesNotLevelUpOnReward)
 {
     LoadWithTotalExp(TotalExpAtLevel(MAX_LEVEL));
 
-    Protocol::S_REWARD_RESULT pkt = MakeExpReward(1000);
-    player->OnGetReward(pkt);
+    const RewardResult result = player->OnGetReward(MakeExpReward(1000));
 
     EXPECT_EQ(player->GetPlayerInfo().level(), MAX_LEVEL);
-    EXPECT_FALSE(pkt.is_level_up());
+    EXPECT_FALSE(result.levelUp.has_value());
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_EXP), 0);
     EXPECT_EQ(SavedTotalExp(*player), TotalExpAtLevel(MAX_LEVEL));
 }

@@ -73,6 +73,11 @@ bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK
 	return false;
 }
 
+bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
+{
+	return false;
+}
+
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt)
 {
 	return false;
@@ -113,7 +118,7 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 	return false;
 }
 
-bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
+bool Handle_S_REWARD(PacketSessionRef& session, Protocol::S_REWARD& pkt)
 {
 	return false;
 }

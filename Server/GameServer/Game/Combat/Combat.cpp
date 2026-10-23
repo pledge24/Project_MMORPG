@@ -4,7 +4,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
 
-optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const CreatureRef& target, const Protocol::AttackInfo& attackInfo)
+optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const CreatureRef& target, const AttackInfo& attackInfo)
 {
     // 공격은 판정을 뒤로 미뤄 예약된다. 그사이 공격자가 사망했으면 공격은 없던 것이 된다.
     if (CreatureRef attackerCreature = dynamic_pointer_cast<Creature>(attacker); attackerCreature && attackerCreature->IsDead())
@@ -29,8 +29,8 @@ optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const 
         KillResult kill;
         {
             kill.killer = player;
-            kill.reward.set_exp(monster->GetExpReward());
-            kill.reward.set_gold(monster->GetGoldReward());
+            kill.reward.exp = monster->GetExpReward();
+            kill.reward.gold = monster->GetGoldReward();
         }
         result.kill = std::move(kill);
     }

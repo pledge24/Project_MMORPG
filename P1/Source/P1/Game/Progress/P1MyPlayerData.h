@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Protocol.pb.h"
+#include "Entity.pb.h"
+#include "Combat.pb.h"
 #include "Entry.pb.h"
 #include "Game/Inventory/P1ItemCooldown.h"
 #include "Game/Items/P1ContainerType.h"
@@ -206,7 +208,7 @@ private:
     //~ Reward Packet Handlers
 public:
     /** 보상으로 바뀐 레벨, 스탯, 경험치, 골드를 반영한다. 서버가 계산한 최종 값을 그대로 쓴다. */
-    void HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt);
+    void HandleReward(const Protocol::S_REWARD& RewardPkt);
 
     //~ Respawn
 public:

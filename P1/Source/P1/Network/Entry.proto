@@ -4,7 +4,10 @@ package Protocol;
 // 게임 입장, 맵 로드, 룸 입장, 포털 이동, 리스폰, 로비 복귀
 // @packet_id_range 300 399
 
-// 직업, 스탯, 엔티티, 소지품, 퀵슬롯은 아직 옛 파일에 있다. 그 자료형을 옮기는 티켓이 이 import를 바꾼다
+import "Common.proto";
+import "Entity.proto";
+
+// 직업, 소지품, 퀵슬롯은 아직 옛 파일에 있다. 그 자료형을 옮기는 티켓이 이 import를 바꾼다
 import "Enum.proto";
 import "Struct.proto";
 

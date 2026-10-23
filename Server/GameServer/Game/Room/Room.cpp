@@ -140,10 +140,12 @@ void Room::BroadcastMonsterMoves()
         if (entity->IsPlayer())
             continue;
 
-        movePkt.add_info()->CopyFrom(entity->GetPosInfo());
+        Protocol::EntityMove* move = movePkt.add_moves();
+        move->set_entity_id(entityId);
+        move->mutable_pos_info()->CopyFrom(entity->GetPosInfo());
     }
 
-    if (movePkt.info_size() == 0)
+    if (movePkt.moves_size() == 0)
         return;
 
     Broadcast(ServerPacketHandler::MakeSerializedPacket(movePkt));
@@ -355,7 +357,7 @@ void Room::C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player)
         usePortalPkt.set_map_id(destination->GetMapId());
     SendPacket(session, usePortalPkt);
 
-    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(*portal, player->GetEntityId());
+    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(*portal);
     MovePlayer(player, destination, enterData.enterPos.value());
 }
 
@@ -369,7 +371,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
     // 직전에 받아들인 위치에서 흐른 시간으로 갈 수 있는 곳인지 본다. 어기면 버리고, 서버의 위치는 그대로 둔다.
     const uint64 now = ::GetTickCount64();
     const vector2D from = MathUtil::PosInfoToVector2D(&player->GetPosInfo());
-    const vector2D to = MathUtil::PosInfoToVector2D(&pkt.info());
+    const vector2D to = MathUtil::PosInfoToVector2D(&pkt.pos_info());
     if (optional<string> rejection = MoveValidation::Validate(from, to, now - player->GetLastPositionTick(),
         MoveValidation::Bounds{ _roomMinX, _roomMaxX, _roomMinY, _roomMaxY }))
     {
@@ -377,10 +379,12 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
         return;
     }
 
-    player->ApplyMove(pkt.info(), now);
+    player->ApplyMove(pkt.pos_info(), now);
 
     Protocol::S_MOVE movePkt;
-    *movePkt.add_info() = player->GetPosInfo();
+    Protocol::EntityMove* move = movePkt.add_moves();
+    move->set_entity_id(playerId);
+    *move->mutable_pos_info() = player->GetPosInfo();
     Broadcast(ServerPacketHandler::MakeSerializedPacket(movePkt), playerId);
 }
 
@@ -389,18 +393,20 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     const int64 entityId = player->GetEntityId();
     if (Contains(entityId) == false)
         return;
-    
-    {
-        Protocol::S_NORMAL_ATTACK normalAttackPkt;
-        {
-            normalAttackPkt.set_entity_id(entityId);
-            normalAttackPkt.set_combo(pkt.combo());
-            // 공격한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
-            normalAttackPkt.set_yaw(pkt.yaw());
-        }
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-        Broadcast(sendBuffer, entityId);
-    }
+
+    // 사망한 플레이어는 리스폰할 때까지 룸에 남으므로 여기서 거른다.
+    const bool isDead = player->IsDead();
+
+    Protocol::S_NORMAL_ATTACK normalAttackPkt;
+    normalAttackPkt.set_result(isDead ? Protocol::COMBAT_RESULT_DEAD : Protocol::COMBAT_RESULT_SUCCESS);
+    if (GameSessionRef session = player->GetSession())
+        SendPacket(session, normalAttackPkt);
+
+    if (isDead)
+        return;
+
+    // 공격한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
+    BroadcastAttack(entityId, pkt.combo(), pkt.yaw());
 }
 
 void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
@@ -453,18 +459,23 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
 
 void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
 {
-    Protocol::S_NORMAL_ATTACK normalAttackPkt;
-    {
-        normalAttackPkt.set_entity_id(creature->GetEntityId());
-        normalAttackPkt.set_combo(combo);
-        normalAttackPkt.set_yaw(creature->GetPosInfo().yaw());
-
-        SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(normalAttackPkt);
-        Broadcast(sendBuffer);
-    }
+    BroadcastAttack(creature->GetEntityId(), combo, creature->GetPosInfo().yaw());
 }
 
-void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
+void Room::BroadcastAttack(int64 attackerId, int32 combo, float yaw)
+{
+    Protocol::S_ATTACK attackPkt;
+    {
+        attackPkt.set_entity_id(attackerId);
+        attackPkt.set_combo(combo);
+        attackPkt.set_yaw(yaw);
+    }
+
+    // 공격한 플레이어는 자기 공격을 이미 재생했으므로 받지 않는다. 몬스터의 번호는 어느 플레이어와도 겹치지 않는다.
+    Broadcast(ServerPacketHandler::MakeSerializedPacket(attackPkt), attackerId);
+}
+
+void Room::HandleHit(EntityRef attacker, AttackInfo attackInfo)
 {
     // 그사이 룸을 떠났으면 공격은 없던 것이 된다.
     // id만 보면 그사이 나갔다 다시 들어온 같은 엔티티도 통과하므로 객체까지 대조한다.
@@ -472,9 +483,9 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
         return;
 
     vector<CreatureRef> targets;
-    if (attackInfo.has_target_id())
+    if (attackInfo.targetId.has_value())
     {
-        int64 targetId = attackInfo.target_id();
+        int64 targetId = attackInfo.targetId.value();
         if(Contains(targetId) == false)
             return;
 
@@ -494,8 +505,8 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
         Protocol::S_HIT hitPkt;
         {
             hitPkt.set_entity_id(target->GetEntityId());
-            hitPkt.set_damage(attackInfo.damage());
-            hitPkt.set_updated_hp(result->updatedHp);
+            hitPkt.set_damage(attackInfo.damage);
+            hitPkt.set_hp(result->updatedHp);
 
             SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(hitPkt);
             Broadcast(sendBuffer);
@@ -514,19 +525,26 @@ void Room::HandleHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
 
 }
 
-void Room::HandleMonsterKill(PlayerRef player, const Protocol::Reward& reward)
+void Room::HandleMonsterKill(PlayerRef player, const Reward& reward)
 {
-    Protocol::S_REWARD_RESULT rewardResultPkt;
-    {
-        rewardResultPkt.set_type(Protocol::REWARD_TYPE_MONSTER_KILL);
-        rewardResultPkt.mutable_reward()->CopyFrom(reward);
-    }
+    RewardResult result = player->OnGetReward(reward);
 
-    player->OnGetReward(rewardResultPkt);
+    Protocol::S_REWARD rewardPkt;
+    {
+        rewardPkt.set_exp(result.exp);
+        rewardPkt.set_gold(result.gold);
+
+        if (result.levelUp.has_value())
+        {
+            Protocol::LevelUp* levelUp = rewardPkt.mutable_level_up();
+            levelUp->set_level(result.levelUp->level);
+            *levelUp->mutable_changed_stats() = std::move(result.levelUp->changedStats);
+        }
+    }
 
     if (auto session = player->GetSession())
     {
-        SendPacket(session, rewardResultPkt);
+        SendPacket(session, rewardPkt);
     }
 }
 
@@ -623,7 +641,7 @@ void Room::ReplicateRoomData(PlayerRef player)
             if (item.second->GetEntityId() == playerId)
                 continue;
 
-            // 플레이어의 장비 외형은 _entityInfo의 equipped_gear_summary에 실려 간다.
+            // 플레이어의 장비 외형은 공개 정보의 gear_appearance에 실려 간다.
             spawnPkt.add_entities()->CopyFrom(item.second->GetEntityInfo());
         }
 
