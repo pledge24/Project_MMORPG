@@ -6,6 +6,7 @@
 
 class UP1UserWidget;
 class UP1HUDWidget;
+class UP1ChatWidget;
 class UP1StatusWindowWidget;
 class UP1InventoryWidget;
 class UP1ShopWidget;
@@ -33,6 +34,10 @@ public:
     /** 조작 도움말 위젯 클래스. 로직 없는 표시 위젯이라 공용 베이스를 그대로 쓴다. */
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
     TSoftClassPtr<UP1UserWidget> HelpWidgetClass;
+
+    /** 게임 화면 왼쪽 아래의 채팅창 위젯 클래스. */
+    UPROPERTY(Config, EditAnywhere, Category = "Screens")
+    TSoftClassPtr<UP1ChatWidget> ChatWidgetClass;
 
     /** 경고 문구 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Screens")

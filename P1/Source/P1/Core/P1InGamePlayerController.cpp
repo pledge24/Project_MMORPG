@@ -46,6 +46,9 @@ void AP1InGamePlayerController::SetupInputComponent()
         if (ToggleGameMenuAction)
             EnhancedInputComponent->BindAction(ToggleGameMenuAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleGameMenu);
 
+        if (OpenChatAction)
+            EnhancedInputComponent->BindAction(OpenChatAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnOpenChat);
+
         for (int32 QuickSlotIndex = 0; QuickSlotIndex < UseQuickSlotActions.Num(); ++QuickSlotIndex)
         {
             if (UseQuickSlotActions[QuickSlotIndex])
@@ -93,6 +96,12 @@ void AP1InGamePlayerController::OnToggleGameMenu()
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->ToggleGameMenu();
+}
+
+void AP1InGamePlayerController::OnOpenChat()
+{
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->OpenChatInput();
 }
 
 UP1ScreenSubsystem* AP1InGamePlayerController::GetScreens() const

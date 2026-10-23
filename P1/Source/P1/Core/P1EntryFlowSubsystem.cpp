@@ -1,5 +1,6 @@
 #include "Core/P1EntryFlowSubsystem.h"
 #include "Auth/P1AuthClient.h"
+#include "Game/Chat/P1ChatSubsystem.h"
 #include "Game/Data/P1GameDataSettings.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Lobby/P1LobbySubsystem.h"
@@ -53,6 +54,7 @@ void UP1EntryFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Connection = Collection.InitializeDependency<UP1ConnectionSubsystem>();
     Lobby = Collection.InitializeDependency<UP1LobbySubsystem>();
     MyPlayerData = Collection.InitializeDependency<UP1MyPlayerData>();
+    Chat = Collection.InitializeDependency<UP1ChatSubsystem>();
 
     if (AuthClient)
     {
@@ -375,6 +377,10 @@ void UP1EntryFlowSubsystem::ClearMyPlayerData()
     // 비우지 않으면 다른 캐릭터로 들어가기 전까지 이전 캐릭터의 칸과 퀵슬롯이 남는다.
     MyPlayerData->ClearContainers();
     MyPlayerData->ClearQuickSlots();
+
+    // 채팅은 캐릭터를 따라가지 않는다. 비우지 않으면 다른 캐릭터의 채팅창에 이전 캐릭터의 대화가 남는다.
+    if (Chat)
+        Chat->ClearLog();
 }
 
 FString UP1EntryFlowSubsystem::ConsumeLoginNotice()

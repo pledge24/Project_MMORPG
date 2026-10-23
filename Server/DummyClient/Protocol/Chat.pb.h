@@ -513,6 +513,7 @@ class S_CHAT_MESSAGE final :
 
   enum : int {
     kMessageFieldNumber = 2,
+    kNameFieldNumber = 3,
     kEntityIdFieldNumber = 1,
   };
   // string message = 2;
@@ -527,6 +528,20 @@ class S_CHAT_MESSAGE final :
   const std::string& _internal_message() const;
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_message(const std::string& value);
   std::string* _internal_mutable_message();
+  public:
+
+  // string name = 3;
+  void clear_name();
+  const std::string& name() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_name(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_name();
+  PROTOBUF_NODISCARD std::string* release_name();
+  void set_allocated_name(std::string* name);
+  private:
+  const std::string& _internal_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(const std::string& value);
+  std::string* _internal_mutable_name();
   public:
 
   // int64 entity_id = 1;
@@ -547,6 +562,7 @@ class S_CHAT_MESSAGE final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr message_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
     int64_t entity_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -710,6 +726,56 @@ inline void S_CHAT_MESSAGE::set_allocated_message(std::string* message) {
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_CHAT_MESSAGE.message)
+}
+
+// string name = 3;
+inline void S_CHAT_MESSAGE::clear_name() {
+  _impl_.name_.ClearToEmpty();
+}
+inline const std::string& S_CHAT_MESSAGE::name() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHAT_MESSAGE.name)
+  return _internal_name();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void S_CHAT_MESSAGE::set_name(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.name_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:Protocol.S_CHAT_MESSAGE.name)
+}
+inline std::string* S_CHAT_MESSAGE::mutable_name() {
+  std::string* _s = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:Protocol.S_CHAT_MESSAGE.name)
+  return _s;
+}
+inline const std::string& S_CHAT_MESSAGE::_internal_name() const {
+  return _impl_.name_.Get();
+}
+inline void S_CHAT_MESSAGE::_internal_set_name(const std::string& value) {
+  
+  _impl_.name_.Set(value, GetArenaForAllocation());
+}
+inline std::string* S_CHAT_MESSAGE::_internal_mutable_name() {
+  
+  return _impl_.name_.Mutable(GetArenaForAllocation());
+}
+inline std::string* S_CHAT_MESSAGE::release_name() {
+  // @@protoc_insertion_point(field_release:Protocol.S_CHAT_MESSAGE.name)
+  return _impl_.name_.Release();
+}
+inline void S_CHAT_MESSAGE::set_allocated_name(std::string* name) {
+  if (name != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.name_.SetAllocated(name, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_CHAT_MESSAGE.name)
 }
 
 #ifdef __GNUC__

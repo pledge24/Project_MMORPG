@@ -5,6 +5,7 @@
 #include "SocketSubsystem.h"
 #include "Sync/P1StatefulEntityManager.h"
 #include "Game/Progress/P1MyPlayerData.h"
+#include "Game/Chat/P1ChatSubsystem.h"
 #include "Utils/LogCategory.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -27,6 +28,18 @@ namespace
         {
             if (UGameInstance* GameInstance = World->GetGameInstance())
                 return GameInstance->GetSubsystem<UP1MyPlayerData>();
+        }
+
+        return nullptr;
+    }
+
+    /** 세션을 연 게임 인스턴스의 채팅 서브시스템. 월드나 게임 인스턴스가 없으면 nullptr. */
+    UP1ChatSubsystem* GetChat(const PacketSessionRef& session)
+    {
+        if (UWorld* World = session->GetWorld())
+        {
+            if (UGameInstance* GameInstance = World->GetGameInstance())
+                return GameInstance->GetSubsystem<UP1ChatSubsystem>();
         }
 
         return nullptr;
@@ -255,19 +268,22 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
-    // 채팅 UI가 아직 없어 보내는 쪽도 없다. 거절만 로그로 남긴다.
-    if (pkt.result() != Protocol::CHAT_RESULT_SUCCESS)
-        UE_LOG(LogP1Network, Warning, TEXT("채팅이 거절됐습니다: %s"), UTF8_TO_TCHAR(Protocol::ChatResult_Name(pkt.result()).c_str()));
+    UP1ChatSubsystem* Chat = GetChat(session);
+    if (Chat == nullptr)
+        return false;
 
+    Chat->HandleChatResult(pkt);
     return true;
 }
 
 bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& pkt)
 {
-    // 채팅 UI가 아직 없다. DummyClient 부하 테스트에서 서버 중계가 도는지 확인할 수 있게 로그만 남긴다.
-    const FString Message = UTF8_TO_TCHAR(pkt.message().c_str());
-    UE_LOG(LogP1Network, Log, TEXT("S_CHAT_MESSAGE entity_id: %lld, message: %s"), pkt.entity_id(), *Message);
+    UP1ChatSubsystem* Chat = GetChat(session);
+    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
+    if (Chat == nullptr || MyPlayerData == nullptr)
+        return false;
 
+    Chat->HandleChatMessage(pkt, MyPlayerData->GetPlayerId());
     return true;
 }
 
