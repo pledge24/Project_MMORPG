@@ -7,6 +7,7 @@
 
 class UEditableText;
 class UPanelWidget;
+class UScrollBox;
 class UTextBlock;
 class UWidget;
 class UP1ChatLineWidget;
@@ -15,7 +16,7 @@ class UP1ChatSubsystem;
 /**
  * 게임 화면 왼쪽 아래의 채팅창.
  *
- * 최근 채팅을 늘 보여 주고, 입력칸을 열면 플레이어가 쓴 문장을 Enter로 보낸다.
+ * 최근 채팅을 늘 보여 주고, 입력칸을 열면 지난 채팅을 스크롤해 읽거나 플레이어가 쓴 문장을 Enter로 보낸다.
  * 입력칸을 열고 닫는 것과 입력 모드는 화면 서브시스템이 정한다.
  */
 UCLASS()
@@ -32,15 +33,20 @@ protected:
 
     //~ Lines
 private:
-    /** 채팅 서브시스템의 최근 줄 중 화면에 보일 수만큼을 줄 위젯에 채운다. */
+    /** 채팅 서브시스템이 보관한 줄을 모두 줄 위젯에 채우고, 맨 아래를 보고 있었으면 맨 아래로 스크롤한다. */
     void RefreshLines();
 
-    /** 화면에 보이는 줄의 수. 그보다 오래된 줄은 채팅 서브시스템에만 남는다. */
-    UPROPERTY(EditDefaultsOnly, Category = "Chat", meta = (ClampMin = "1"))
-    int32 VisibleLineCount = 8;
+    /** 스크롤이 맨 아래에 있으면 true. 맨 아래에서 이만큼(슬레이트 단위) 안이면 맨 아래로 본다. */
+    bool IsScrolledToEnd() const;
+
+    static constexpr float SCROLL_END_TOLERANCE = 4.f;
 
     UPROPERTY(EditDefaultsOnly, Category = "Chat")
     TSubclassOf<UP1ChatLineWidget> LineWidgetClass;
+
+    /** 줄 영역의 스크롤. 줄이 영역보다 많거나 길면 스크롤한다. */
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UScrollBox> LinesScroll;
 
     /** 줄 위젯을 아래로 쌓는 패널. 오래된 줄이 위에 있다. */
     UPROPERTY(meta = (BindWidget))

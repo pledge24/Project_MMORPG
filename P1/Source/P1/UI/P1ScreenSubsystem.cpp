@@ -196,14 +196,14 @@ void UP1ScreenSubsystem::RefreshInputMode()
     {
         // 창이 열린 UI·게임 모드에서는 입력칸이 처리하지 않은 글자 키가 게임으로 넘어가 내 플레이어가 움직인다.
         // 그래서 입력칸만 키를 받게 하고, 눌린 이동 키는 사망 화면과 같은 이유로 먼저 놓는다.
-        // 커서는 창이나 사망 화면이 떠 있을 때만 보인다. 입력칸을 닫아도 커서가 깜빡이지 않게 그 화면의 커서를 그대로 둔다.
+        // 지난 채팅을 휠과 스크롤바로 읽을 수 있게 커서를 보인다.
         PC->FlushPressedKeys();
 
         FInputModeUIOnly InputMode;
         InputMode.SetWidgetToFocus(ChatWidget->GetInputFocusTarget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 
-        PC->bShowMouseCursor = OpenWindowFlags != 0 || (DeathWidget && DeathWidget->IsVisible());
+        PC->bShowMouseCursor = true;
         PC->SetInputMode(InputMode);
     }
     else if (OpenWindowFlags != 0)

@@ -55,7 +55,7 @@ public:
     FOnChatLogChanged OnChatLogChanged;
 
 private:
-    /** 보관하는 줄의 수. 화면에 보이는 줄은 채팅창이 정한다. */
+    /** 보관하는 줄의 수. 채팅창은 보관한 줄을 모두 스크롤로 보인다. */
     static constexpr int32 LOG_CAPACITY = 50;
 
     FP1ChatLog Log{ LOG_CAPACITY };

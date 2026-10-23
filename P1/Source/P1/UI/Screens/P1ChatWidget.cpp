@@ -3,6 +3,7 @@
 #include "UI/P1ScreenSubsystem.h"
 #include "Components/EditableText.h"
 #include "Components/PanelWidget.h"
+#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
@@ -57,9 +58,12 @@ void UP1ChatWidget::RefreshLines()
     if (Chat == nullptr || LineWidgetClass == nullptr)
         return;
 
+    // 줄이 줄바꿈되면 높이가 줄마다 다르다. 보일 줄 수를 세어 자르면 영역보다 높아진 만큼 마지막 줄이 잘리므로,
+    // 보관한 줄을 모두 넣고 스크롤로 보인다. 입력 중에 지난 줄을 읽고 있으면 새 줄이 와도 끌어내리지 않는다.
+    const bool bFollowEnd = InputBox->IsVisible() == false || IsScrolledToEnd();
+
     const TArray<FP1ChatLine>& Lines = Chat->GetLines();
-    const int32 FirstIndex = FMath::Max(0, Lines.Num() - VisibleLineCount);
-    const int32 ShownCount = Lines.Num() - FirstIndex;
+    const int32 ShownCount = Lines.Num();
 
     while (LineWidgets.Num() < ShownCount)
     {
@@ -75,7 +79,7 @@ void UP1ChatWidget::RefreshLines()
     {
         if (Index < ShownCount)
         {
-            LineWidgets[Index]->SetLine(Lines[FirstIndex + Index]);
+            LineWidgets[Index]->SetLine(Lines[Index]);
             LineWidgets[Index]->SetVisibility(ESlateVisibility::HitTestInvisible);
         }
         else
@@ -83,12 +87,24 @@ void UP1ChatWidget::RefreshLines()
             LineWidgets[Index]->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
+
+    if (bFollowEnd)
+        LinesScroll->ScrollToEnd();
+}
+
+bool UP1ChatWidget::IsScrolledToEnd() const
+{
+    return LinesScroll->GetScrollOffset() >= LinesScroll->GetScrollOffsetOfEnd() - SCROLL_END_TOLERANCE;
 }
 
 void UP1ChatWidget::ShowInput()
 {
     InputText->SetText(FText::GetEmpty());
     ShowInputLength(0);
+
+    // 입력 중에만 휠과 스크롤바로 지난 줄을 읽는다.
+    LinesScroll->SetVisibility(ESlateVisibility::Visible);
+    LinesScroll->SetScrollBarVisibility(ESlateVisibility::Visible);
 
     Panel->SetVisibility(ESlateVisibility::HitTestInvisible);
     InputBox->SetVisibility(ESlateVisibility::Visible);
@@ -99,6 +115,11 @@ void UP1ChatWidget::ShowInput()
 void UP1ChatWidget::HideInput()
 {
     InputText->SetText(FText::GetEmpty());
+
+    // 평소에는 마우스를 받지 않고, 지난 줄을 읽다 닫았어도 최근 줄로 돌아간다.
+    LinesScroll->SetVisibility(ESlateVisibility::HitTestInvisible);
+    LinesScroll->SetScrollBarVisibility(ESlateVisibility::Collapsed);
+    LinesScroll->ScrollToEnd();
 
     Panel->SetVisibility(ESlateVisibility::Hidden);
     InputBox->SetVisibility(ESlateVisibility::Collapsed);
