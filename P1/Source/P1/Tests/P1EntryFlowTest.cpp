@@ -77,6 +77,30 @@ bool FP1EntryFlowTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("거절 뒤에도 게임"), Flow->GetPhase() == EPhase::Game);
     }
 
+    // 4) 진행 표시는 맵 로드 단계에서만 「맵을 불러오는 중」이고, 단계가 그것으로 바뀌거나 그것에서 벗어날 때만 알린다.
+    {
+        using EProgress = EP1EntryProgress;
+        UP1EntryFlowSubsystem* Flow = MakeFlow();
+        TArray<EProgress> Notified;
+        Flow->OnProgressChanged.AddLambda([&Notified](EProgress Progress) { Notified.Add(Progress); });
+
+        TestTrue(TEXT("처음은 진행 없음"), Flow->GetProgress() == EProgress::None);
+        Flow->TryEnterPhase(EPhase::Lobby);
+        TestEqual(TEXT("로비에 들어가도 진행이 바뀌지 않으면 알리지 않는다"), Notified.Num(), 0);
+
+        Flow->TryEnterPhase(EPhase::MapLoad);
+        TestTrue(TEXT("맵 로드 단계는 맵을 불러오는 중"), Flow->GetProgress() == EProgress::LoadingMap);
+
+        Flow->TryEnterPhase(EPhase::Game);
+        TestTrue(TEXT("게임 단계는 진행 없음"), Flow->GetProgress() == EProgress::None);
+
+        if (TestEqual(TEXT("알림 수"), Notified.Num(), 2))
+        {
+            TestTrue(TEXT("첫 알림은 맵을 불러오는 중"), Notified[0] == EProgress::LoadingMap);
+            TestTrue(TEXT("둘째 알림은 진행 없음"), Notified[1] == EProgress::None);
+        }
+    }
+
     return true;
 }
 

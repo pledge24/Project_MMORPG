@@ -116,14 +116,44 @@ bool UP1EntryFlowSubsystem::TryEnterPhase(EP1EntryPhase NewPhase)
     }
 
     UE_LOG(LogP1System, Log, TEXT("접속 단계: %s → %s"), PhaseName(Phase), PhaseName(NewPhase));
+    const EP1EntryProgress Before = GetProgress();
     Phase = NewPhase;
+    NotifyProgressIfChanged(Before);
     return true;
+}
+
+EP1EntryProgress UP1EntryFlowSubsystem::GetProgress() const
+{
+    if (Phase == EP1EntryPhase::MapLoad)
+        return EP1EntryProgress::LoadingMap;
+
+    if (Phase == EP1EntryPhase::Login && bConnectingWorld)
+        return EP1EntryProgress::ConnectingWorld;
+
+    return EP1EntryProgress::None;
+}
+
+void UP1EntryFlowSubsystem::NotifyProgressIfChanged(EP1EntryProgress Before)
+{
+    const EP1EntryProgress After = GetProgress();
+    if (After != Before)
+        OnProgressChanged.Broadcast(After);
+}
+
+void UP1EntryFlowSubsystem::SetConnectingWorld(bool bConnecting)
+{
+    const EP1EntryProgress Before = GetProgress();
+    bConnectingWorld = bConnecting;
+    NotifyProgressIfChanged(Before);
 }
 
 void UP1EntryFlowSubsystem::HandleLoginSucceeded(const FString& AuthTicket)
 {
     // 월드 선택이 생기기 전까지는 설정의 주소로 접속한다.
     const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
+
+    // Connect 안에서 실패를 알리면 로그인으로 돌아가며 이 표시를 끈다. 그래서 부르기 전에 켠다.
+    SetConnectingWorld(true);
 
     // 연결은 Connect 안에서 끝나고 그 안에서 결과를 알리므로, 부르기 전에 티켓을 맡겨 둔다.
     PendingAuthTicket = AuthTicket;
@@ -150,6 +180,7 @@ void UP1EntryFlowSubsystem::HandleConnectFailed()
 
 void UP1EntryFlowSubsystem::HandleLobbyEntered()
 {
+    SetConnectingWorld(false);
     TryEnterPhase(EP1EntryPhase::Lobby);
 }
 
@@ -205,6 +236,7 @@ FString UP1EntryFlowSubsystem::ConsumeLoginNotice()
 
 void UP1EntryFlowSubsystem::RemoveListener(const UObject* Listener)
 {
+    OnProgressChanged.RemoveAll(Listener);
     OnLoginNotice.RemoveAll(Listener);
 }
 
@@ -224,6 +256,9 @@ void UP1EntryFlowSubsystem::HandleConnectionLost(Protocol::DisconnectReason Reas
 void UP1EntryFlowSubsystem::ReturnToLogin(const FString& Notice)
 {
     UE_LOG(LogP1Network, Warning, TEXT("게임 서버에 연결하지 못했거나 연결이 끊겨 로그인 화면으로 돌아간다: %s"), *Notice);
+
+    // 문구를 알리기 전에 끈다. 로그인 화면이 진행 표시에 가려진 채 문구를 받지 않게 하려는 것이다.
+    SetConnectingWorld(false);
 
     // 다음 입장 패킷이 다시 채운다. 비우지 않으면 다른 캐릭터로 들어가기 전까지 이전 캐릭터의 칸과 퀵슬롯이 남는다.
     MyPlayerData->ClearContainers();

@@ -27,6 +27,16 @@ enum class EP1EntryPhase : uint8
     Game,       // 맵을 열고 맵 로드 완료를 알렸다
 };
 
+/** 진행 표시 화면이 보여 줄 접속 진행. */
+enum class EP1EntryProgress : uint8
+{
+    None,
+    ConnectingWorld,    // 로그인한 뒤 게임 서버에 연결해 로비 접속 응답을 기다린다
+    LoadingMap,         // 서버가 알린 맵을 연다
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryProgressChanged, EP1EntryProgress /*Progress*/);
+
 /**
  * 접속 흐름.
  *
@@ -56,6 +66,22 @@ public:
 
 private:
     EP1EntryPhase Phase = EP1EntryPhase::Login;
+
+    //~ Progress
+public:
+    EP1EntryProgress GetProgress() const;
+
+    /** 진행 표시가 바뀌면 알린다. 같은 진행으로는 알리지 않는다. */
+    FOnEntryProgressChanged OnProgressChanged;
+
+private:
+    /** 진행이 바뀌었으면 바뀐 진행을 알린다. 단계나 연결 중 표시를 바꾼 뒤에 바꾸기 전의 진행을 넘겨 부른다. */
+    void NotifyProgressIfChanged(EP1EntryProgress Before);
+
+    void SetConnectingWorld(bool bConnecting);
+
+    /** 로그인에 성공해 게임 서버에 연결을 시작했고, 아직 로비에 들어가지도 로그인으로 돌아가지도 않았다. */
+    bool bConnectingWorld = false;
 
     //~ Lobby Connection
 private:
