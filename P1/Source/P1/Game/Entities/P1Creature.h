@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Protocol.pb.h"
+#include "Entity.pb.h"
 #include "P1Creature.generated.h"
 
 /**

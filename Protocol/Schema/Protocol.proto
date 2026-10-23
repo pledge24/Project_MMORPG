@@ -4,7 +4,7 @@ package Protocol;
 // 옛 파일. 지금의 패킷 번호를 그대로 두는 임시 범위다
 // @packet_id_range 1000 1999
 
-import "Enum.proto";
+import "Common.proto";
 import "Struct.proto";
 
 message C_PING
@@ -20,46 +20,6 @@ message S_PONG
 message C_LEAVE_GAME
 {
 
-}
-
-message S_SPAWN
-{
-	repeated EntityInfo entities = 1;
-}
-
-message S_DESPAWN
-{
-	repeated int64 entity_ids = 1;
-}
-
-message C_MOVE
-{
-	PosInfo info = 1;
-}
-
-message S_MOVE
-{
-	repeated PosInfo info = 1;
-}
-
-message C_NORMAL_ATTACK
-{
-    int32 combo = 1;
-    float yaw = 2;
-}
-
-message S_NORMAL_ATTACK
-{
-    int64 entity_id = 1;
-    int32 combo = 2;
-    float yaw = 3;
-}
-
-message S_HIT
-{
-    int64 entity_id = 1;
-    int64 damage = 2;
-    optional int64 updated_hp = 3; 
 }
 
 message C_BUY_ITEM
@@ -164,23 +124,6 @@ message S_SET_QUICK_SLOT
 message C_USE_QUICK_SLOT
 {
     int32 slot_index = 1;
-}
-
-message S_DIE
-{
-    int64 entity_id = 1;
-}
-
-message S_REWARD_RESULT
-{
-    RewardType type = 1;
-    Reward reward = 2;
-
-    // 갱신된 데이터
-    int64 updated_exp = 3;
-    int64 updated_gold = 4;
-    bool is_level_up = 5;
-    LevelUpInfo level_up_details = 6;
 }
 
 message C_CHAT

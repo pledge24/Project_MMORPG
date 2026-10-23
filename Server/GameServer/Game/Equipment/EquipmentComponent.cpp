@@ -35,7 +35,7 @@ optional<int32> EquipmentComponent::Equip(const ItemInstance& item)
 
     // 착용 조건은 클라이언트도 보지만, 판정은 서버가 한다.
     PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
-    if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetPlayerInfo().class_()) == false)
+    if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetCharacterClass()) == false)
         return nullopt;
 
     // 장착 중인 부위에 다른 장비를 겹쳐 입지 않는다.

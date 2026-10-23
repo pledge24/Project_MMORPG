@@ -51,7 +51,7 @@
 | 7 | B | #292 맵이 바뀌는 입장을 맵 로드 절차 하나로 처리하기 | 3, 5 | 머지 | #303 | 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 437 통과 · 실제 DB 테스트 24 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 17건 모두 성공(그중 3건은 이 티켓 전부터 있던 경고 동반) · 규범 검사와 문서 검사 통과 · PIE 확인은 사람을 기다린다 |
 | 8 | B | #293 월드 목록을 보고 월드를 골라 접속하기 | 5, 6 | 머지 | #305 | 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 452 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 18건 모두 성공(그중 3건은 이 티켓 전부터 있던 경고 동반) · `npm test` 113 통과, `npm run typecheck`·`npm run lint` 통과 · `npm start` 기동 · 게임 서버를 띄워 Redis의 월드 항목을 인증 서버의 월드 디렉터리로 읽고, 끈 뒤 16초 안에 목록에서 빠짐 · 위젯 블루프린트 두 개의 그래프에 노드 없음 · 규범 검사와 문서 검사 통과 · 사람이 PIE에서 로그인부터 로비까지, 게임 서버를 끄면 월드 선택 화면에 머문 채 그 월드가 목록에서 빠지는 것, 「월드 선택으로」 뒤 다시 로그인하지 않고 월드 선택 화면으로 돌아가는 것을 확인했다 |
 | 9 | B | #294 게임에서 로비와 월드 선택으로 돌아가기 | 7, 8 | 대기 | | |
-| 10 | C | #295 엔티티와 전투 계약을 새 규칙으로 옮기기 | 7 | 대기 | | |
+| 10 | C | #295 엔티티와 전투 계약을 새 규칙으로 옮기기 | 7 | 머지 | #306 | 통합 브랜치를 합친 뒤 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 455 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 15건 모두 성공(그중 3건은 이 티켓 전부터 있던 경고 동반) · 리스폰 뒤 내 플레이어가 저절로 움직이지 않는 것은 사람이 PIE에서 확인 |
 | 11 | C | #296 아이템, 퀵슬롯, 채팅 계약을 옮기고 옛 스키마 파일 지우기 | 9, 10 | 대기 | | |
 
 단계 A는 계약을 그대로 둔 채 구조만 바꾸므로, 티켓마다 지금의 흐름으로 PIE에서 확인할 수 있다. 단계 B는 플레이어가 겪는
@@ -85,6 +85,7 @@
 
 승인: 2026년 10월 23일. 「기록」에 적은, 「결정」 표에 없던 일곱 가지도 함께 승인했다.
 2026년 10월 23일 덧붙임: #292를 시작하며 사람이 `S_ENTER_GAME`에 이름, 직업, 레벨을 더하는 것을 승인했다. 경위는 「기록」에 있다.
+2026년 10월 23일 덧붙임: #295를 시작하며 사람이 `EntityInfo.entity_type`과 `EntityType`을 지우는 것을 승인했다. 엔티티의 종류는 `details`에 실린 정보의 종류로 정한다. 경위는 「기록」에 있다.
 
 계약 티켓은 아래 정의를 그 도메인 파일에 옮겨 적는다. 파일 첫머리의 `syntax`, `package`, 번호 범위 줄은 #286이 만든 것을
 그대로 두고, `.proto`는 cp949로 저장한다.
@@ -358,13 +359,6 @@ message S_RETURN_TO_LOBBY
 ```protobuf
 import "Common.proto";
 
-enum EntityType
-{
-    ENTITY_TYPE_NONE = 0;
-    ENTITY_TYPE_PLAYER = 1;
-    ENTITY_TYPE_MONSTER = 2;
-}
-
 enum MoveState
 {
     MOVE_STATE_NONE = 0;
@@ -402,16 +396,16 @@ message MonsterInfo
     int64 hp = 2;
 }
 
+// 엔티티의 종류는 details에 실린 정보의 종류다
 message EntityInfo
 {
     int64 entity_id = 1;
-    EntityType entity_type = 2;
-    PosInfo pos_info = 3;
+    PosInfo pos_info = 2;
 
     oneof details
     {
-        PlayerInfo player_info = 4;
-        MonsterInfo monster_info = 5;
+        PlayerInfo player_info = 3;
+        MonsterInfo monster_info = 4;
     }
 }
 
@@ -781,7 +775,7 @@ message S_CHAT_MESSAGE
 | `S_RESPAWN`의 `respawn_type`, `room_id`, `entity_id`, `pos_info` | 앞의 둘은 클라이언트가 읽지 않는다. 엔티티와 위치는 `S_ENTER_ROOM`이 싣는다 |
 | `S_USE_ITEM.entity_id` | 응답은 요청한 플레이어에게만 간다 |
 | `RespawnType`의 `TOWN`이 아닌 값 일곱 개 | 서버의 빈 case뿐이고 클라이언트가 보내지 않는다 |
-| `EntityType`의 `PROJECTILE`, `ENV` | 어디에서도 쓰지 않는다 |
+| `EntityType`, `EntityInfo.entity_type` | `details`에 실린 정보의 종류와 겹친다. 서버는 플레이어인지를 서버 필드로 안다 |
 
 ## 결정
 
@@ -824,3 +818,6 @@ message S_CHAT_MESSAGE
 - 2026-10-23: #293의 코드와 문서를 마쳤다. 인증 서버에 `world/` 도메인(월드 목록, 월드 선택, 계정 상태 저장소)을 더했다. 로그인 세션과 월드 디렉터리는 `auth/`의 로그인과 `world/`가 함께 쓰므로 `common/`에 두었다. 월드 선택의 정지 검사는 `world/`의 계정 상태 저장소가 `dbo.Account`를 따로 읽는다. `auth/`를 import하지 않으려는 것인데, 계정 테이블을 바꾸면 두 도메인을 함께 고쳐야 한다. 게임 서버는 `Network/WorldListing`이 월드 집합과 월드 항목을 쓰고, 인증 티켓의 소비가 `AuthTicket::Consume`으로 옮겨 메모리 저장소로 테스트된다. 월드 번호는 전역 `GWorldId`로 로비 접속 잡에 닿는다. 한국어 월드 이름이 Redis에 깨져 들어가지 않도록 환경 변수를 UTF-16으로 읽어 UTF-8로 바꾸게 했다. 이 변경은 모든 환경 변수의 읽기 경로에 걸린다. 클라이언트는 접속 흐름에 월드 선택 단계가 더해졌고, 로비 접속 거절과 연결 실패는 이제 로그인이 아니라 월드 선택 화면에 머문다. 로그인 세션이 남아 있어 월드를 다시 고르면 새 티켓을 받기 때문이다. 쓰지 않게 된 설정의 게임 서버 주소(`GameServerIp`, `GameServerPort`)를 지웠다. 게임 서버를 띄워 Redis의 월드 항목을 인증 서버의 월드 디렉터리로 읽었고, 끈 뒤 16초 안에 목록에서 빠지는 것을 확인했다. 위젯 블루프린트(`WBP_WorldSelect`, `WBP_WorldRow`, `WBP_LoginMenu`의 `WorldSelectScreen`)는 언리얼 MCP가 연결되지 않아(`ECONNREFUSED`, 에디터가 떠 있지 않음) 만들지 못했다. `WBP_LoginMenu`에 새 바인딩이 없으면 로그인 메뉴가 컴파일되지 않으므로, 이 블루프린트들을 만들기 전에는 머지하지 않는다
 - 2026-10-23: #293의 위젯 블루프린트를 언리얼 MCP로 만들었다. `WBP_WorldSelect`는 시안대로 만든 `WBP_CharacterSelect`를, `WBP_WorldRow`는 `WBP_CharacterSlot`을 복제해 부모를 바꾸고 시안의 크기(패널 폭 520픽셀 → 780), 색, 문구로 고쳤다. 패널, 제목, 버튼의 텍스처와 글꼴은 복제한 화면의 것을 그대로 쓴다. 혼잡도 표시는 세 단계의 배지를 겹쳐 두고 C++가 하나만 보인다. 월드 줄 사이의 간격은 줄 위젯 안에 아래 여백(12)으로 두었다. 줄은 C++가 만들어 목록에 넣으므로 목록 쪽 슬롯에서 간격을 줄 수 없기 때문이다. 시안의 점선 테두리는 UMG에 없어 실선으로 그렸다. `WBP_LoginMenu`의 화면 전환기에 `WorldSelectScreen`을 로그인 화면 다음에 넣었다. PIE에서 확인할 곳은 「PIE 시나리오」 7줄과, 캐릭터 선택에서 「월드 선택으로」를 누르면 다시 로그인하지 않고 월드 선택 화면으로 돌아가는 것이다
 - 2026-10-23: #293의 첫 PIE에서 월드 목록을 받고도 화면이 비어 있었다. `WBP_LoginMenu`에 놓인 `WorldSelectScreen` 인스턴스에 `WorldRowClass`가 None으로 저장되어 `WBP_WorldSelect`의 기본값을 가렸기 때문이다. 화면을 로그인 메뉴에 먼저 넣고 기본값을 나중에 정하면 인스턴스에 옛 값이 남는다. 인스턴스의 값을 기본값으로 되돌린 뒤 사람이 PIE 확인을 마쳤다
+- 2026-10-23: #295를 시작할 때 이슈 본문과 「목표 정의」가 두 곳에서 달랐다. (1) 본문은 엔티티 종류와 세부 정보의 종류를 하나로 줄이라고 했지만 목표 정의의 `EntityInfo`는 둘 다 두었다. 사람이 `entity_type`과 `EntityType`을 지우기로 정했고 목표 정의를 고쳤다. (2) 본문은 리스폰 실패가 전투 결과 enum으로 온다고 했지만, 목표 정의와 #292는 리스폰을 Entry 파일에 두고 `EntryResult`로 실패를 싣는다. 목표 정의를 따라 그대로 두었다
+- 2026-10-23: #295가 엔티티 계약(스폰, 디스폰, 이동)을 `Entity.proto`로, 전투 계약(공격, 피격, 사망, 보상)을 `Combat.proto`로, 스탯 자료형 셋을 `Common.proto`로 옮기고 옛 파일에서 지웠다. 쓰지 않던 `AttackType`, `DamageType`, `EffectType`, `RewardType`, `HitInfo`, `Effect`, `Reward`, `LevelUpInfo`도 지웠다. 직업(`CharacterClass`)과 장비 부위(`GearType`)는 아직 `Enum.proto`에 있어 #296이 옮긴다. 착용 외형 통지 `S_GEAR_APPEARANCE`도 장비 착용 계약과 함께 #296이 옮긴다. 위치(`PosInfo`)에서 엔티티 번호를 빼고, 이동 통지는 `EntityMove`에 엔티티 번호를 싣는다. 클라이언트의 이동 동기화는 엔티티 번호를 위치와 따로 들고, 리스폰 뒤 TD-070의 Ensure를 내던 위치 대조를 지웠다. 앞으로 계속 가던 원인은 재현하지 않았으므로 TD-070은 PIE 확인 뒤에 지운다. 서버는 플레이어의 캐릭터 번호와 직업을 공개 정보가 아닌 서버 필드로 들고, 몬스터 HP는 스탯 하나에만 두어 스폰 정보를 만들 때 싣는다. 공격 판정 예약과 보상 처리는 서버 타입(`Game/Combat/CombatTypes.h`의 `AttackInfo`, `Reward`와 `Player.h`의 `RewardResult`)을 쓴다. 일반 공격은 요청한 플레이어에게 결과 응답(`S_NORMAL_ATTACK`)을, 룸의 다른 플레이어에게 통지(`S_ATTACK`)를 보내고, 사망한 플레이어의 공격은 `COMBAT_RESULT_DEAD`로 거절한다. PIE에서 확인할 곳은 다른 플레이어의 이동과 공격 모습, 몬스터의 추적과 공격, 피격 HP, 리스폰 뒤 내 플레이어가 저절로 움직이지 않는 것이다
+- 2026-10-23: #295의 PIE에서 리스폰 뒤 내 플레이어가 계속 움직이는 TD-070을 재현했다. W를 누른 채 사망하고 사망 화면에서 W를 떼면, 리스폰 뒤 A, S, D가 W와 합쳐져 움직였다. 위치의 엔티티 번호와 Ensure는 원인이 아니었다. 사망 화면이 입력 모드를 UI 전용으로 바꾸면 그 사이에 뗀 키가 플레이어 입력에 닿지 않아 W가 눌린 채 남았다. 사망 화면이 입력 모드를 바꾸기 전에 `FlushPressedKeys`로 눌린 키를 놓도록 고쳤고, 사람이 PIE에서 확인해 TD-070을 지웠다. 첫 확인은 원래 디렉터리의 서버(#305 포함)와 워크트리 클라이언트를 섞어 띄워 실패로 보였다. 브랜치를 PIE로 확인할 때는 클라이언트, GameServer, AuthServer를 같은 커밋에서 띄운다

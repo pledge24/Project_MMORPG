@@ -466,12 +466,10 @@ void MonsterAIComponent::NormalAttack()
         ownerRoom->HandleNormalAttack(combo, owner);
 
         // 일반 공격은 아직 콤보가 없다. 데미지는 몬스터 표의 기본 공격력이다.
-        Protocol::AttackInfo attackInfo;
+        AttackInfo attackInfo;
         {
-            attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-            attackInfo.set_target_id(target->GetEntityId());
-            attackInfo.set_combo(0);
-            attackInfo.set_damage(_baseAttack);
+            attackInfo.targetId = target->GetEntityId();
+            attackInfo.damage = _baseAttack;
         }
         _pendingHit = PendingHit{ attackInfo, target, NORMAL_ATTACK_HIT_DELAY };
     }

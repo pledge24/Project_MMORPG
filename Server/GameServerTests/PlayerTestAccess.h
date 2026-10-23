@@ -11,6 +11,7 @@
 struct PlayerTestAccess
 {
     static Protocol::PlayerInfo& PlayerInfo(Player& player) { return *player._playerInfo; }
+    static Protocol::CharacterClass& CharacterClass(Player& player) { return player._characterClass; }
     static int64& Gold(Player& player) { return player._gold; }
     /** 준비 단계에서 아이템을 넣고 칸을 바꾼다. 운영 코드는 Process* 요청 처리와 불러오기로만 바꾼다. */
     static InventoryComponent& Inventory(Player& player) { return *player._inventory; }

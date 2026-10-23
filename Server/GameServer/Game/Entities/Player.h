@@ -76,6 +76,25 @@ struct RespawnResult
     RepeatedPtrField<Protocol::Stat> updatedStats;
 };
 
+/** 보상으로 오른 레벨. */
+struct LevelUpResult
+{
+    /** 오른 뒤의 레벨. */
+    int32 level = 0;
+    RepeatedPtrField<Protocol::Stat> changedStats;
+};
+
+/** 보상을 적용한 결과. */
+struct RewardResult
+{
+    /** 보상을 더한 뒤 지금 레벨 안의 경험치. */
+    int64 exp = 0;
+    /** 보상을 더한 뒤의 골드. */
+    int64 gold = 0;
+    /** 레벨이 오르지 않았으면 비어 있다. */
+    optional<LevelUpResult> levelUp;
+};
+
 /** 플레이어의 스폰 매개변수. */
 struct PlayerSpawnParams : public Creature::SpawnParams
 {
@@ -165,7 +184,7 @@ public:
 
     //~ 이벤트
 public:
-    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
+    virtual void OnHit(EntityRef attacker, const AttackInfo& attackInfo) override;
     virtual void OnDie(EntityRef attacker) override;
 
     //~ 맵과 룸 이동
@@ -201,8 +220,8 @@ private:
 
     //~ 레벨과 보상
 public:
-    /** rewardResultPkt의 보상을 적용하고 결과를 그 패킷에 쓴다. 최대 레벨에서는 경험치를 버린다. */
-    void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
+    /** 보상을 적용하고 그 결과를 돌려준다. 최대 레벨에서는 경험치를 버린다. */
+    RewardResult OnGetReward(const Reward& reward);
     /** 직업 레벨 표의 마지막 레벨이면 true. 레벨 표가 없는 직업도 true. */
     bool IsMaxLevel() const;
 
@@ -303,7 +322,10 @@ private:
 
     //~ 공통
 public:
+    /** 다른 클라이언트에도 가는 공개 정보(이름, 레벨, 장비 외형). */
     const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
+    int64 GetCharacterId() const { return _characterId; }
+    Protocol::CharacterClass GetCharacterClass() const { return _characterClass; }
 
 private:
     /** 테스트가 준비 단계에서 레벨, 직업, 골드, 소지품을 직접 채운다. */
@@ -311,5 +333,7 @@ private:
 
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::PlayerInfo* _playerInfo;
+    int64 _characterId = 0;
+    Protocol::CharacterClass _characterClass = Protocol::CLASS_TYPE_NONE;
 };
 

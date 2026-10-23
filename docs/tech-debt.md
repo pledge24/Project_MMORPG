@@ -79,28 +79,6 @@
 
 # 높음
 
-## TD-070 리스폰한 뒤 내 플레이어가 키 입력 없이 계속 앞으로 이동한다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` (`C_HandleRespawn`, `HandleRespawn`) · `Server/GameServer/Game/Entities/Player.cpp` 380줄 (`ProcessRespawn`) · `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 300~304줄 (`HandleRespawn`)
-> 등록일: 2026년 10월 22일
-
-퀵슬롯 사용 작업의 PIE에서 사람이 찾았다. 리스폰하면 Ensure가 한 번 뜨고, 그 뒤로 키를 누르지 않아도 내 플레이어가 계속 앞으로 간다.
-Ensure 원문은 `P1MoveSyncComponent.cpp` 90줄의 `ClientPos.entity_id() == Info.entity_id()`와 「다른 엔티티의 위치로 덮어쓴다. 기존 31, 새 0」이다.
-호출 경로는 `UP1StatefulEntityManager::HandleRespawn` → `UP1MoveSyncComponent::SetClientPos`다.
-
-코드로 확인한 것은 다음 두 가지다.
-
-1. 서버의 리스폰 위치는 마을 표의 위치(`town->pos`)를 그대로 쓰고 엔티티 번호를 넣지 않는다. 같은 룸과 다른 룸의 두 경로가 모두
-   그 값을 `S_RESPAWN.pos_info`에 싣는다. 다른 룸 경로는 룸 입장용 사본에만 엔티티 번호를 넣는다
-2. `Player::ProcessRespawn`이 그 위치를 `_posInfo->CopyFrom`으로 통째로 복사하므로, 서버가 든 플레이어 위치의 엔티티 번호도 0이 된다
-
-앞으로 계속 가는 원인은 확인하지 않았다. 엔티티 번호가 0인 위치가 그 뒤의 이동 패킷과 스폰 정보에 실리는 것이 관련이 있을 것으로
-추정하고, 재현하지 않았다. 이번 브랜치의 변경은 리스폰과 이동 경로를 건드리지 않는다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 리스폰한 플레이어를 조작할 수 없게 된다. 사망은 일반 플레이에서 자주 일어난다.
-
 ---
 
 # 중간

@@ -61,7 +61,7 @@ protected:
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
         ASSERT_NE(player, nullptr);
-        PlayerTestAccess::PlayerInfo(*player).set_class_(Protocol::CLASS_TYPE_WARRIOR);
+        PlayerTestAccess::CharacterClass(*player) = Protocol::CLASS_TYPE_WARRIOR;
         PlayerTestAccess::PlayerInfo(*player).set_level(1);
         PlayerTestAccess::Gold(*player) = START_GOLD;
         player->SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, BASE_PHYSICAL_ATTACK);

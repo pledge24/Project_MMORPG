@@ -115,7 +115,7 @@ Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef
     // 맵을 여는 동안 만들어지는 화면이 이름과 레벨을 읽는다. 내 엔티티는 룸 입장 응답이 싣는다.
     const Protocol::PlayerInfo& playerInfo = player->GetPlayerInfo();
     enterGamePkt.set_name(playerInfo.name());
-    enterGamePkt.set_character_class(playerInfo.class_());
+    enterGamePkt.set_character_class(player->GetCharacterClass());
     enterGamePkt.set_level(playerInfo.level());
     enterGamePkt.mutable_stats()->CopyFrom(player->GetStatInfo());
     *enterGamePkt.mutable_possession() = ItemPackets::MakePossession(*player);

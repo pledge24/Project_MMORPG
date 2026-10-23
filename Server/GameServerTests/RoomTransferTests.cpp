@@ -17,11 +17,10 @@ TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
     portal.dstPos = TemplatePos{ -8000.f, 10000.f, 50.f };
     portal.dstYaw = 180.f;
 
-    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal, 7);
+    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal);
 
     EXPECT_EQ(enterData.nextRoomId, 20);
     ASSERT_TRUE(enterData.enterPos.has_value()) << "비어 있으면 포털의 도착 위치가 아니라 룸 중심에 선다";
-    EXPECT_EQ(enterData.enterPos->entity_id(), 7);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().x(), -8000.f);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().y(), 10000.f);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().z(), 50.f);

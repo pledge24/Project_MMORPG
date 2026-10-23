@@ -1,4 +1,5 @@
 #pragma once
+#include "Game/Combat/CombatTypes.h"
 
 /**
  * 피격과 처치의 판정.
@@ -13,7 +14,7 @@ namespace Combat
     {
         PlayerRef killer;
         /** 몬스터 표의 범위에서 이번 처치마다 새로 뽑은 보상이다. */
-        Protocol::Reward reward;
+        Reward reward;
     };
 
     /** 피격 한 번의 결과. */
@@ -30,5 +31,5 @@ namespace Combat
      * 피격을 적용하고 결과를 돌려준다. 대상을 바꾸므로 대상이 속한 룸 큐 위에서만 부른다.
      * 공격자나 대상이 이미 사망했으면 아무것도 바꾸지 않고 nullopt.
      */
-    optional<HitResult> ResolveHit(const EntityRef& attacker, const CreatureRef& target, const Protocol::AttackInfo& attackInfo);
+    optional<HitResult> ResolveHit(const EntityRef& attacker, const CreatureRef& target, const AttackInfo& attackInfo);
 }

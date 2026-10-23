@@ -117,9 +117,18 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 
 bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
 {
+    // 내 공격은 누를 때 이미 재생했다. 거절되어도 되돌릴 연출이 없으므로 남기기만 한다.
+    if (pkt.result() != Protocol::COMBAT_RESULT_SUCCESS)
+        UE_LOG(LogP1Network, Warning, TEXT("일반 공격이 거절됐다: %s"), UTF8_TO_TCHAR(Protocol::CombatResult_Name(pkt.result()).c_str()));
+
+    return true;
+}
+
+bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
+{
     if (auto* EntityManager = GetEntityManager(session))
     {
-        EntityManager->HandleNormalAttack(pkt);
+        EntityManager->HandleAttack(pkt);
         return true;
     }
 
@@ -218,11 +227,11 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
     return false;
 }
 
-bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
+bool Handle_S_REWARD(PacketSessionRef& session, Protocol::S_REWARD& pkt)
 {
     if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        MyPlayerData->HandleRewardResult(pkt);
+        MyPlayerData->HandleReward(pkt);
         return true;
     }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "Game/Combat/CombatTypes.h"
 
 /** 모든 엔티티에 공통인 스폰 매개변수. */
 struct EntitySpawnParams
@@ -39,7 +40,7 @@ protected:
     //~ 이벤트
 public:
     /** 소속 룸 큐 위에서 Combat::ResolveHit가 부른다. */
-    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) {};
+    virtual void OnHit(EntityRef attacker, const AttackInfo& attackInfo) {};
 
     //~ Entity 정보 관련
 public:
@@ -50,7 +51,7 @@ public:
     void SetPosInfo(const Protocol::PosInfo& posInfo_)  { _posInfo->CopyFrom(posInfo_); }
 
     /** 다른 클라이언트에게 보낼 스폰 정보. 위치(pos_info)와 종류별 정보가 들어 있다. */
-    const Protocol::EntityInfo& GetEntityInfo() const   { return *_entityInfo; }
+    virtual Protocol::EntityInfo GetEntityInfo() const  { return *_entityInfo; }
     const Protocol::PosInfo& GetPosInfo() const         { return *_posInfo; }
 
 protected:
@@ -65,7 +66,7 @@ private:
     friend struct EntityTestAccess;
 
     /** 팩토리가 생성 직후에 한 번 부른다. */
-    void SetEntityId(int64 entityId)                    { _entityInfo->set_entity_id(entityId); _posInfo->set_entity_id(entityId); }
+    void SetEntityId(int64 entityId)                    { _entityInfo->set_entity_id(entityId); }
 
     //~ 소속 룸
 public:
