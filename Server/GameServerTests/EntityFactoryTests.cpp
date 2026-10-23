@@ -80,7 +80,7 @@ TEST_F(EntityFactoryTest, PlayerWithoutSessionGetsIdAndInventory)
     const ItemContainer* gearSection = player->GetInventory().FindSection(ContainerType::INVENTORY_GEAR);
     ASSERT_NE(gearSection, nullptr);
     EXPECT_TRUE(gearSection->IsValidSlot(0)) << "Init이 인벤토리 구역 표의 칸 수만큼 칸을 만든다";
-    EXPECT_TRUE(player->GetEquipment().GetContainer().IsValidSlot(Protocol::GEAR_TYPE_WEAPON)) << "Init이 장비 칸을 만든다";
+    EXPECT_TRUE(player->GetEquipment().GetContainer().IsValidSlot(Protocol::GEAR_PART_WEAPON)) << "Init이 장비 칸을 만든다";
     EXPECT_EQ(player->GetSession(), nullptr);
 }
 

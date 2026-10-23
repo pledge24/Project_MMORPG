@@ -27,8 +27,7 @@ void UP1ConnectionSubsystem::Deinitialize()
         RecvPumpTickerHandle.Reset();
     }
 
-    // 사용자가 게임을 끄는 경로다. OnConnectionLost를 알리지 않고 서버에 접속 종료만 알린다.
-    SendLeaveGame();
+    // 사용자가 게임을 끄는 경로다. OnConnectionLost를 알리지 않고 소켓만 닫는다. 서버는 끊긴 연결을 접속 종료로 처리한다.
     Close();
 
     Super::Deinitialize();
@@ -101,15 +100,6 @@ void UP1ConnectionSubsystem::Send(SendBufferRef SendBuffer)
         return;
 
     Session->SendPacket(SendBuffer);
-}
-
-void UP1ConnectionSubsystem::SendLeaveGame()
-{
-    if (IsConnected() == false)
-        return;
-
-    Protocol::C_LEAVE_GAME LeavePkt;
-    Send(ClientPacketHandler::MakeSerializedPacket(LeavePkt));
 }
 
 bool UP1ConnectionSubsystem::TickRecvPump(float DeltaTime)

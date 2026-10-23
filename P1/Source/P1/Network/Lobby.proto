@@ -4,8 +4,7 @@ package Protocol;
 // 로비 접속과 캐릭터 목록, 생성, 삭제
 // @packet_id_range 200 299
 
-// 직업(CharacterClass)은 아직 옛 파일에 있다. 직업을 Common으로 옮기는 티켓이 이 import를 바꾼다
-import "Enum.proto";
+import "Common.proto";
 
 enum LobbyResult
 {

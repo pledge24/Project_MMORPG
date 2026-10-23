@@ -38,7 +38,7 @@ protected:
     void SetUp() override
     {
         LobbyTables tables;
-        tables.creatableClasses = { Protocol::CLASS_TYPE_NONE, Protocol::CLASS_TYPE_WARRIOR };
+        tables.creatableClasses = { Protocol::CHARACTER_CLASS_NONE, Protocol::CHARACTER_CLASS_WARRIOR };
         LobbyData::Install(std::move(tables));
     }
 
@@ -50,12 +50,12 @@ protected:
 
 TEST_F(CharacterCreationTest, WarriorWithValidNamePasses)
 {
-    EXPECT_FALSE(Validate(Protocol::CLASS_TYPE_WARRIOR, "전사").has_value());
+    EXPECT_FALSE(Validate(Protocol::CHARACTER_CLASS_WARRIOR, "전사").has_value());
 }
 
 TEST_F(CharacterCreationTest, ClassNotCreatableInLobbyIsRejected)
 {
-    const auto result = Validate(Protocol::CLASS_TYPE_MAGE, "마법사");
+    const auto result = Validate(Protocol::CHARACTER_CLASS_MAGE, "마법사");
 
     ASSERT_TRUE(result.has_value()) << "생성할 수 없는 직업을 통과시키면 그 캐릭터는 첫 입장에서 초기 진행을 만들지 못한다";
     EXPECT_EQ(result.value(), Protocol::LOBBY_RESULT_UNAVAILABLE_CLASS);
@@ -63,7 +63,7 @@ TEST_F(CharacterCreationTest, ClassNotCreatableInLobbyIsRejected)
 
 TEST_F(CharacterCreationTest, NoneClassIsRejectedEvenWhenListedAsCreatable)
 {
-    EXPECT_EQ(Validate(Protocol::CLASS_TYPE_NONE, "무직"), Protocol::LOBBY_RESULT_UNAVAILABLE_CLASS)
+    EXPECT_EQ(Validate(Protocol::CHARACTER_CLASS_NONE, "무직"), Protocol::LOBBY_RESULT_UNAVAILABLE_CLASS)
         << "NONE은 직업이 아니다. 누가 생성할 수 있는 직업에 넣어도 통과하면 안 된다";
 }
 
@@ -74,17 +74,17 @@ TEST_F(CharacterCreationTest, UndefinedClassNumberIsRejected)
 
 TEST_F(CharacterCreationTest, EmptyNameIsRejected)
 {
-    EXPECT_EQ(Validate(Protocol::CLASS_TYPE_WARRIOR, ""), Protocol::LOBBY_RESULT_INVALID_NAME);
+    EXPECT_EQ(Validate(Protocol::CHARACTER_CLASS_WARRIOR, ""), Protocol::LOBBY_RESULT_INVALID_NAME);
 }
 
 TEST_F(CharacterCreationTest, ThirtyTwoHangulCharactersPass)
 {
-    EXPECT_FALSE(Validate(Protocol::CLASS_TYPE_WARRIOR, MakeHangulName(32)).has_value())
+    EXPECT_FALSE(Validate(Protocol::CHARACTER_CLASS_WARRIOR, MakeHangulName(32)).has_value())
         << "UTF-8 바이트(96)가 아니라 UTF-16 글자 수(32)로 세야 한다";
 }
 
 TEST_F(CharacterCreationTest, ThirtyThreeCharactersAreRejected)
 {
-    EXPECT_EQ(Validate(Protocol::CLASS_TYPE_WARRIOR, MakeHangulName(33)), Protocol::LOBBY_RESULT_INVALID_NAME)
+    EXPECT_EQ(Validate(Protocol::CHARACTER_CLASS_WARRIOR, MakeHangulName(33)), Protocol::LOBBY_RESULT_INVALID_NAME)
         << "DB 열 한도(NVARCHAR(32))를 넘으면 생성 쿼리가 내부 오류로 끝난다";
 }

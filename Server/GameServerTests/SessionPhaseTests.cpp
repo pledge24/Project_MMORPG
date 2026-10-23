@@ -31,15 +31,12 @@ namespace
         vector<SessionPhase> phases;
     };
 
-    const vector<SessionPhase> ANY = { begin(ALL_PHASES), end(ALL_PHASES) };
     const vector<SessionPhase> BEFORE_LOBBY_ONLY = { SessionPhase::BEFORE_LOBBY };
     const vector<SessionPhase> LOBBY_ONLY = { SessionPhase::LOBBY };
     const vector<SessionPhase> IN_GAME_ONLY = { SessionPhase::IN_GAME };
 
     const vector<ExpectedPhases> PHASES_BY_PACKET =
     {
-        { PKT_C_PING, "C_PING", ANY },
-        { PKT_C_LEAVE_GAME, "C_LEAVE_GAME", ANY },
         { PKT_C_CONNECT_LOBBY, "C_CONNECT_LOBBY", BEFORE_LOBBY_ONLY },
         { PKT_C_CREATE_CHARACTER, "C_CREATE_CHARACTER", LOBBY_ONLY },
         { PKT_C_DELETE_CHARACTER, "C_DELETE_CHARACTER", LOBBY_ONLY },

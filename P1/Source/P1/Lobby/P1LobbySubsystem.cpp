@@ -1,11 +1,11 @@
 #include "Lobby/P1LobbySubsystem.h"
 #include "Network/P1PacketSender.h"
 #include "Lobby.pb.h"
-#include "Protocol.pb.h"
+#include "Network/Common.pb.h"
 #include "Utils/LogCategory.h"
 
-static_assert(static_cast<int32>(EP1CharacterClass::Warrior) == Protocol::CLASS_TYPE_WARRIOR, "직업 값이 프로토콜과 같아야 한다");
-static_assert(static_cast<int32>(EP1CharacterClass::Mage) == Protocol::CLASS_TYPE_MAGE, "직업 값이 프로토콜과 같아야 한다");
+static_assert(static_cast<int32>(EP1CharacterClass::Warrior) == Protocol::CHARACTER_CLASS_WARRIOR, "직업 값이 프로토콜과 같아야 한다");
+static_assert(static_cast<int32>(EP1CharacterClass::Mage) == Protocol::CHARACTER_CLASS_MAGE, "직업 값이 프로토콜과 같아야 한다");
 
 namespace
 {
@@ -133,7 +133,7 @@ void UP1LobbySubsystem::HandleCharacterList(const Protocol::S_CHARACTER_LIST& Ch
     CreatableClasses.Reset();
     for (int32 ClassValue : CharacterListPkt.creatable_classes())
     {
-        if (ClassValue != Protocol::CLASS_TYPE_WARRIOR && ClassValue != Protocol::CLASS_TYPE_MAGE)
+        if (ClassValue != Protocol::CHARACTER_CLASS_WARRIOR && ClassValue != Protocol::CHARACTER_CLASS_MAGE)
         {
             UE_LOG(LogP1Lobby, Warning, TEXT("모르는 직업을 생성할 수 있는 직업에서 뺌. 직업: %d"), ClassValue);
             continue;

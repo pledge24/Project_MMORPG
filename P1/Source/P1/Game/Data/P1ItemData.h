@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "Network/Enum.pb.h"
+#include "Network/Item.pb.h"
 #include "P1ItemData.generated.h"
 
 /** 아이템 정의 테이블의 한 행. 행 이름은 템플릿 id. */

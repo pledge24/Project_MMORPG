@@ -11,6 +11,6 @@ enum class EP1ContainerType : uint8
     InventoryGear = 1,
     InventoryConsumable = 2,
     InventoryMisc = 3,
-    /** 칸 번호가 장비 부위(GearType) 값이다. */
+    /** 칸 번호가 장비 부위(GearPart) 값이다. */
     Equipped = 4,
 };

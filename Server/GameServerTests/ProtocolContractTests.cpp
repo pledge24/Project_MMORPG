@@ -9,14 +9,15 @@
     더미 클라이언트로 복사된다. 그래서 "생성기를 다시 돌렸더니 무언가 조용히
     어긋났다"가 이 프로젝트의 고유 위험이다.
 
-    잡고 싶은 것은 다섯이다.
+    잡고 싶은 것은 여섯이다.
       0) 스키마 파일이 생기거나 범위가 바뀌었는데 아래 표가 모르는 것
       1) 스키마 파일이 빌드에서 빠지거나, 파일의 패킷 집합·선언 순서가 나도 모르게 바뀌는 것
       2) 패킷 번호가 그 파일의 범위를 벗어나거나, 범위 안에서 선언 순서를 따르지 않는 것
       3) 두 파일의 범위나 두 패킷의 번호가 겹치는 것
       4) 생성된 메시지가 등록되지 않거나 직렬화가 깨지는 것
+      5) 스키마 파일끼리의 import가 정한 방향을 벗어나는 것
 
-    0~3은 아래 SCHEMA_FILES 표 하나로 검사한다. 표는 중복이 아니라
+    0~3과 5는 아래 SCHEMA_FILES 표 하나로 검사한다. 표는 중복이 아니라
     **계약 선언**이다 — 여기가 실패하면 ".proto를 바꿨으니 표도 의식적으로
     갱신하라"는 뜻이다. 0은 생성기가 핸들러 헤더에 적은 PACKET_SCHEMA_FILES
     (생성기가 읽은 스키마 파일과 각 파일의 `// @packet_id_range`)와 표를 대조한다.
@@ -24,7 +25,6 @@
 ---------------------------------------------------------------*/
 
 // 파일마다의 패킷 — 선언 순서 그대로. 생성기가 이 순서대로 그 파일 범위의 첫 번호부터 매긴다.
-// 도메인 파일은 계약 티켓이 옛 Protocol.proto에서 패킷을 옮겨 오며 채운다.
 #define COMMON_PACKETS(X)                                                    \
     X(S_DISCONNECT)
 
@@ -44,7 +44,8 @@
 
 #define ENTITY_PACKETS(X)                                                    \
     X(S_SPAWN) X(S_DESPAWN)                                                  \
-    X(C_MOVE) X(S_MOVE)
+    X(C_MOVE) X(S_MOVE)                                                      \
+    X(S_GEAR_APPEARANCE)
 
 #define COMBAT_PACKETS(X)                                                    \
     X(C_NORMAL_ATTACK) X(S_NORMAL_ATTACK)                                    \
@@ -53,21 +54,18 @@
     X(S_DIE)                                                                 \
     X(S_REWARD)
 
-#define ITEM_PACKETS(X)
-#define CHAT_PACKETS(X)
-
-// 옛 파일. 도메인 파일로 다 옮기면 파일과 함께 지운다.
-#define LEGACY_PROTOCOL_PACKETS(X)                                           \
-    X(C_PING) X(S_PONG)                                                      \
-    X(C_LEAVE_GAME)                                                          \
+#define ITEM_PACKETS(X)                                                      \
     X(C_BUY_ITEM) X(S_BUY_ITEM)                                              \
     X(C_SELL_ITEM) X(S_SELL_ITEM)                                            \
     X(C_EQUIP_GEAR) X(S_EQUIP_GEAR)                                          \
     X(C_UNEQUIP_GEAR) X(S_UNEQUIP_GEAR)                                      \
     X(C_USE_ITEM) X(S_USE_ITEM)                                              \
     X(C_SET_QUICK_SLOT) X(S_SET_QUICK_SLOT)                                  \
-    X(C_USE_QUICK_SLOT)                                                      \
-    X(C_CHAT) X(S_CHAT)
+    X(C_USE_QUICK_SLOT)
+
+#define CHAT_PACKETS(X)                                                      \
+    X(C_CHAT) X(S_CHAT)                                                      \
+    X(S_CHAT_MESSAGE)
 
 namespace
 {
@@ -87,25 +85,23 @@ namespace
     {
         // protoc가 붙인 파일 이름. 스키마끼리의 import 경로와 같으므로 생성 스크립트가 바꿀 수 없다.
         const char* name;
-        optional<PacketIdRange> range;      // 패킷이 없는 파일은 범위가 없다
+        PacketIdRange range;
         vector<DeclaredPacket> packets;
+        // 이 파일이 import하는 스키마 파일. Common은 아무것도 import하지 않고, Common이 아닌 도메인 파일을
+        // import하는 것은 Entry 하나다. 도메인 파일끼리 얽히면 한 도메인의 계약을 고칠 때 다른 도메인이 함께 흔들린다.
+        set<string> imports;
     };
 
 #define AS_DECLARED_PACKET(name) DeclaredPacket{ #name, PKT_##name },
 
     const SchemaFile SCHEMA_FILES[] = {
-        { "Common.proto", PacketIdRange{ 100, 199 }, { COMMON_PACKETS(AS_DECLARED_PACKET) } },
-        { "Lobby.proto", PacketIdRange{ 200, 299 }, { LOBBY_PACKETS(AS_DECLARED_PACKET) } },
-        { "Entry.proto", PacketIdRange{ 300, 399 }, { ENTRY_PACKETS(AS_DECLARED_PACKET) } },
-        { "Entity.proto", PacketIdRange{ 400, 499 }, { ENTITY_PACKETS(AS_DECLARED_PACKET) } },
-        { "Combat.proto", PacketIdRange{ 500, 599 }, { COMBAT_PACKETS(AS_DECLARED_PACKET) } },
-        { "Item.proto", PacketIdRange{ 600, 699 }, { ITEM_PACKETS(AS_DECLARED_PACKET) } },
-        { "Chat.proto", PacketIdRange{ 700, 799 }, { CHAT_PACKETS(AS_DECLARED_PACKET) } },
-
-        // 옛 파일 셋. Protocol.proto의 범위는 지금의 번호를 그대로 두려고 준 임시 범위다.
-        { "Enum.proto", nullopt, {} },
-        { "Struct.proto", nullopt, {} },
-        { "Protocol.proto", PacketIdRange{ 1000, 1999 }, { LEGACY_PROTOCOL_PACKETS(AS_DECLARED_PACKET) } },
+        { "Common.proto", PacketIdRange{ 100, 199 }, { COMMON_PACKETS(AS_DECLARED_PACKET) }, {} },
+        { "Lobby.proto", PacketIdRange{ 200, 299 }, { LOBBY_PACKETS(AS_DECLARED_PACKET) }, { "Common.proto" } },
+        { "Entry.proto", PacketIdRange{ 300, 399 }, { ENTRY_PACKETS(AS_DECLARED_PACKET) }, { "Common.proto", "Entity.proto", "Item.proto" } },
+        { "Entity.proto", PacketIdRange{ 400, 499 }, { ENTITY_PACKETS(AS_DECLARED_PACKET) }, { "Common.proto" } },
+        { "Combat.proto", PacketIdRange{ 500, 599 }, { COMBAT_PACKETS(AS_DECLARED_PACKET) }, { "Common.proto" } },
+        { "Item.proto", PacketIdRange{ 600, 699 }, { ITEM_PACKETS(AS_DECLARED_PACKET) }, { "Common.proto" } },
+        { "Chat.proto", PacketIdRange{ 700, 799 }, { CHAT_PACKETS(AS_DECLARED_PACKET) }, {} },
     };
 
 #undef AS_DECLARED_PACKET
@@ -201,7 +197,7 @@ namespace
 }
 
 // (0) 표가 생성기가 읽은 스키마 파일을 빠짐없이 담고, 파일마다 범위가 .proto의 선언과 같은가.
-// 패킷이 없는 파일은 (1)~(3)이 범위를 쓰지 않으므로, 여기서 보지 않으면 범위가 달라도 통과한다.
+// 모든 스키마 파일이 범위를 선언한다. 범위가 없는 파일을 생성기는 0~0으로 적으므로 여기서 걸린다.
 TEST(ProtocolContract, SchemaTableMatchesGenerator)
 {
     map<string, const PacketSchemaFile*> generated;
@@ -217,10 +213,9 @@ TEST(ProtocolContract, SchemaTableMatchesGenerator)
         const auto it = generated.find(schema.name);
         ASSERT_NE(it, generated.end()) << "생성기가 읽지 않은 스키마 파일이 표에 있다";
 
-        // 생성기는 범위가 없는 파일을 0~0으로 적는다.
         const PacketSchemaFile& file = *it->second;
-        EXPECT_EQ(schema.range.has_value() ? schema.range->first : 0, file.firstPacketId) << "첫 번호가 .proto와 다르다";
-        EXPECT_EQ(schema.range.has_value() ? schema.range->last : 0, file.lastPacketId) << "끝 번호가 .proto와 다르다";
+        EXPECT_EQ(schema.range.first, file.firstPacketId) << "첫 번호가 .proto와 다르다";
+        EXPECT_EQ(schema.range.last, file.lastPacketId) << "끝 번호가 .proto와 다르다";
     }
 
     for (const auto& [name, file] : generated)
@@ -252,9 +247,6 @@ TEST(ProtocolContract, EverySchemaFileDeclaresItsPackets)
             EXPECT_EQ(actualPackets[i], schema.packets[i].name)
                 << i << "번째 패킷의 이름 또는 선언 순서가 바뀌었다";
         }
-
-        EXPECT_TRUE(schema.packets.empty() || schema.range.has_value())
-            << "패킷이 있는 파일에 번호 범위가 없다";
     }
 }
 
@@ -265,16 +257,13 @@ TEST(ProtocolContract, PacketIdsFollowDeclarationOrderWithinFileRange)
     for (const SchemaFile& schema : SCHEMA_FILES)
     {
         SCOPED_TRACE(schema.name);
-        if (schema.packets.empty())
-            continue;
-        ASSERT_TRUE(schema.range.has_value());
 
         for (size_t i = 0; i < schema.packets.size(); i++)
         {
             const DeclaredPacket& packet = schema.packets[i];
-            EXPECT_EQ(packet.id, schema.range->first + i)
+            EXPECT_EQ(packet.id, schema.range.first + i)
                 << packet.name << " 의 패킷 번호가 파일 안의 선언 순서와 어긋난다";
-            EXPECT_LE(packet.id, schema.range->last)
+            EXPECT_LE(packet.id, schema.range.last)
                 << packet.name << " 의 패킷 번호가 파일의 범위를 넘는다";
         }
     }
@@ -287,19 +276,16 @@ TEST(ProtocolContract, PacketIdRangesAndIdsDoNotOverlap)
     vector<pair<const char*, PacketIdRange>> ranges;
     for (const SchemaFile& schema : SCHEMA_FILES)
     {
-        if (schema.range.has_value() == false)
-            continue;
-
         // 핸들러 표의 칸 수가 UINT16_MAX라 마지막 번호 65535는 쓸 수 없다.
-        EXPECT_LE(schema.range->first, schema.range->last) << schema.name;
-        EXPECT_LT(schema.range->last, UINT16_MAX) << schema.name;
+        EXPECT_LE(schema.range.first, schema.range.last) << schema.name;
+        EXPECT_LT(schema.range.last, UINT16_MAX) << schema.name;
 
         for (const auto& [otherName, other] : ranges)
         {
-            const bool overlaps = schema.range->first <= other.last && other.first <= schema.range->last;
+            const bool overlaps = schema.range.first <= other.last && other.first <= schema.range.last;
             EXPECT_FALSE(overlaps) << schema.name << " 의 번호 범위가 " << otherName << " 의 범위와 겹친다";
         }
-        ranges.emplace_back(schema.name, *schema.range);
+        ranges.emplace_back(schema.name, schema.range);
     }
 
     map<uint16, const char*> seen;
@@ -335,8 +321,8 @@ TEST(ProtocolContract, EveryMessageRoundTrips)
             FillEveryField(*original, 3);
 
             // 필드가 있는 메시지인데 바이트가 0이면 채우기가 실패한 것이고, 그 왕복은
-            // 아무것도 검증하지 못한다. 필드 없는 메시지(C_PING, S_PONG, C_LEAVE_GAME,
-            // C_MAP_LOAD_COMPLETE)는 0바이트가 정상이므로 여기서 제외한다.
+            // 아무것도 검증하지 못한다. 필드 없는 메시지(C_MAP_LOAD_COMPLETE, C_RETURN_TO_LOBBY)는
+            // 0바이트가 정상이므로 여기서 제외한다.
             if (descriptor->field_count() > 0)
                 ASSERT_GT(original->ByteSizeLong(), 0u) << "필드를 하나도 채우지 못해 검증이 무의미하다";
 
@@ -347,5 +333,24 @@ TEST(ProtocolContract, EveryMessageRoundTrips)
             ASSERT_TRUE(parsed->ParseFromString(wire)) << "직렬화한 바이트를 되읽지 못했다";
             EXPECT_EQ(parsed->SerializeAsString(), wire);
         }
+    }
+}
+
+// (5) 스키마 파일마다 import가 표와 같은가.
+// 표에 없는 import가 생기면 자료형이 쓰는 도메인이 아닌 파일에 있거나, 도메인 파일끼리 얽힌 것이다.
+TEST(ProtocolContract, SchemaImportsFollowDomainDirection)
+{
+    for (const SchemaFile& schema : SCHEMA_FILES)
+    {
+        SCOPED_TRACE(schema.name);
+
+        const google::protobuf::FileDescriptor* file = FindSchemaFile(schema.name);
+        ASSERT_NE(file, nullptr);
+
+        set<string> actualImports;
+        for (int i = 0; i < file->dependency_count(); i++)
+            actualImports.insert(string(file->dependency(i)->name()));
+
+        EXPECT_EQ(actualImports, schema.imports) << "import가 바뀌었다";
     }
 }

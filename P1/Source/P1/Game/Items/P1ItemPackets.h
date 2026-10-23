@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Protocol.pb.h"
+#include "Network/Item.pb.h"
 #include "Game/Items/P1ContainerType.h"
 #include "Game/Items/P1ItemInstance.h"
 #include "Game/Items/P1Slot.h"

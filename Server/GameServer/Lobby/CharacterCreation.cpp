@@ -6,7 +6,7 @@
 optional<Protocol::LobbyResult> CharacterCreation::Validate(const string& name, Protocol::CharacterClass characterClass)
 {
     // 로비 표에 없는 직업은 아직 만들 수 없는 직업이다. NONE은 직업이 아니므로 누가 표에 넣어도 막는다.
-    if (characterClass == Protocol::CLASS_TYPE_NONE
+    if (characterClass == Protocol::CHARACTER_CLASS_NONE
         || LobbyData::IsCreatableClass(characterClass) == false)
     {
         return Protocol::LOBBY_RESULT_UNAVAILABLE_CLASS;

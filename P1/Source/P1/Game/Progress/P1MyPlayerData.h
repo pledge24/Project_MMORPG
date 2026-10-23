@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "Protocol.pb.h"
+#include "Network/Item.pb.h"
 #include "Entity.pb.h"
 #include "Combat.pb.h"
 #include "Entry.pb.h"
@@ -190,18 +190,15 @@ public:
     void HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt);
     void HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt);
 
-    /** 내 플레이어의 사용 응답이 아니면 무시한다. */
     void HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt);
 
-    /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
+    /** 외형은 엔티티 관리자가 외형 통지로 바꾼다. */
     void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
 
-    /** 내 플레이어의 응답이 아니면 무시한다. 외형은 엔티티 관리자가 바꾼다. */
+    /** 외형은 엔티티 관리자가 외형 통지로 바꾼다. */
     void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
 
 private:
-    bool IsMyPlayer(uint64 EntityId) const { return EntityId == _PlayerId; }
-
     /** 응답이 실어 온 칸 변경을 그 칸의 컨테이너에 나눠 준다. 컨테이너가 아닌 칸의 변경은 버린다. */
     void ApplySlotChanges(const google::protobuf::RepeatedPtrField<Protocol::SlotChange>& Changes);
 

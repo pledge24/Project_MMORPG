@@ -4,13 +4,13 @@
 
 namespace
 {
-    /** 장비 부위 값 전체. GEAR_TYPE_NONE은 부위가 아니므로 뺀다. */
+    /** 장비 부위 값 전체. GEAR_PART_NONE은 부위가 아니므로 뺀다. */
     vector<int32> MakeGearSlotIndices()
     {
         vector<int32> slotIndices;
-        for (int32 gearType = Protocol::GearType_MIN; gearType <= Protocol::GearType_MAX; gearType++)
+        for (int32 gearType = Protocol::GearPart_MIN; gearType <= Protocol::GearPart_MAX; gearType++)
         {
-            if (Protocol::GearType_IsValid(gearType) && gearType != Protocol::GEAR_TYPE_NONE)
+            if (Protocol::GearPart_IsValid(gearType) && gearType != Protocol::GEAR_PART_NONE)
                 slotIndices.push_back(gearType);
         }
 
@@ -27,23 +27,33 @@ EquipmentComponent::~EquipmentComponent()
 {
 }
 
-optional<int32> EquipmentComponent::Equip(const ItemInstance& item)
+ItemOutcome<Protocol::GearPart> EquipmentComponent::Equip(const ItemInstance& item)
 {
+    // 칸에 든 아이템은 표에 있는 아이템이므로, 표에 없으면 기획 데이터가 바뀐 것이다.
     const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
-    if (itemTemplate == nullptr || itemTemplate->gearType.has_value() == false)
-        return nullopt;
+    if (itemTemplate == nullptr)
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
+
+    if (itemTemplate->gearType.has_value() == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
+
+    PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
+    if (owner == nullptr)
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     // 착용 조건은 클라이언트도 보지만, 판정은 서버가 한다.
-    PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
-    if (owner == nullptr || MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetCharacterClass()) == false)
-        return nullopt;
+    if (MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetCharacterClass()) == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_REQUIREMENT_NOT_MET };
 
     // 장착 중인 부위에 다른 장비를 겹쳐 입지 않는다.
-    const int32 gearType = itemTemplate->gearType.value();
-    if (_equipped.Put(gearType, item) == false)
-        return nullopt;
+    const Protocol::GearPart gearPart = itemTemplate->gearType.value();
+    if (_equipped.Find(gearPart) != nullptr)
+        return ItemRejection{ Protocol::ITEM_RESULT_GEAR_PART_OCCUPIED };
 
-    return gearType;
+    if (_equipped.Put(gearPart, item) == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
+
+    return gearPart;
 }
 
 bool EquipmentComponent::LoadEquipped(const ItemInstance& item, int32 gearType)

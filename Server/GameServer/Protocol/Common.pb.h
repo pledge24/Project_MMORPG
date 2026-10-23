@@ -70,6 +70,62 @@ template<> ::Protocol::StatInfo_ValuesEntry_DoNotUse* Arena::CreateMaybeMessage<
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
+enum CharacterClass : int {
+  CHARACTER_CLASS_NONE = 0,
+  CHARACTER_CLASS_WARRIOR = 1,
+  CHARACTER_CLASS_MAGE = 2,
+  CharacterClass_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  CharacterClass_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool CharacterClass_IsValid(int value);
+constexpr CharacterClass CharacterClass_MIN = CHARACTER_CLASS_NONE;
+constexpr CharacterClass CharacterClass_MAX = CHARACTER_CLASS_MAGE;
+constexpr int CharacterClass_ARRAYSIZE = CharacterClass_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CharacterClass_descriptor();
+template<typename T>
+inline const std::string& CharacterClass_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, CharacterClass>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function CharacterClass_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    CharacterClass_descriptor(), enum_t_value);
+}
+inline bool CharacterClass_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, CharacterClass* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<CharacterClass>(
+    CharacterClass_descriptor(), name, value);
+}
+enum GearPart : int {
+  GEAR_PART_NONE = 0,
+  GEAR_PART_HELMET = 1,
+  GEAR_PART_CHEST = 2,
+  GEAR_PART_LEGS = 3,
+  GEAR_PART_ARMS = 4,
+  GEAR_PART_BOOTS = 5,
+  GEAR_PART_WEAPON = 6,
+  GearPart_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  GearPart_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool GearPart_IsValid(int value);
+constexpr GearPart GearPart_MIN = GEAR_PART_NONE;
+constexpr GearPart GearPart_MAX = GEAR_PART_WEAPON;
+constexpr int GearPart_ARRAYSIZE = GearPart_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearPart_descriptor();
+template<typename T>
+inline const std::string& GearPart_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, GearPart>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function GearPart_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    GearPart_descriptor(), enum_t_value);
+}
+inline bool GearPart_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, GearPart* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearPart>(
+    GearPart_descriptor(), name, value);
+}
 enum StatType : int {
   STAT_TYPE_NONE = 0,
   STAT_TYPE_MAX_HP = 1,
@@ -747,6 +803,16 @@ inline void S_DISCONNECT::set_reason(::Protocol::DisconnectReason value) {
 
 PROTOBUF_NAMESPACE_OPEN
 
+template <> struct is_proto_enum< ::Protocol::CharacterClass> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::CharacterClass>() {
+  return ::Protocol::CharacterClass_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::GearPart> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearPart>() {
+  return ::Protocol::GearPart_descriptor();
+}
 template <> struct is_proto_enum< ::Protocol::StatType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::StatType>() {

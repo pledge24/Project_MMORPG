@@ -228,39 +228,39 @@ static const ::_pb::Message* const file_default_instances[] = {
 };
 
 const char descriptor_table_protodef_Lobby_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\013Lobby.proto\022\010Protocol\032\nEnum.proto\"v\n\016L"
-  "obbyCharacter\022\024\n\014character_id\030\001 \001(\003\022\014\n\004n"
-  "ame\030\002 \001(\t\0221\n\017character_class\030\003 \001(\0162\030.Pro"
-  "tocol.CharacterClass\022\r\n\005level\030\004 \001(\005\"&\n\017C"
-  "_CONNECT_LOBBY\022\023\n\013auth_ticket\030\001 \001(\t\"8\n\017S"
-  "_CONNECT_LOBBY\022%\n\006result\030\001 \001(\0162\025.Protoco"
-  "l.LobbyResult\"\223\001\n\020S_CHARACTER_LIST\022,\n\nch"
-  "aracters\030\001 \003(\0132\030.Protocol.LobbyCharacter"
-  "\022\034\n\024character_slot_count\030\002 \001(\005\0223\n\021creata"
-  "ble_classes\030\003 \003(\0162\030.Protocol.CharacterCl"
-  "ass\"U\n\022C_CREATE_CHARACTER\022\014\n\004name\030\001 \001(\t\022"
-  "1\n\017character_class\030\002 \001(\0162\030.Protocol.Char"
-  "acterClass\"h\n\022S_CREATE_CHARACTER\022%\n\006resu"
-  "lt\030\001 \001(\0162\025.Protocol.LobbyResult\022+\n\tchara"
-  "cter\030\002 \001(\0132\030.Protocol.LobbyCharacter\"*\n\022"
-  "C_DELETE_CHARACTER\022\024\n\014character_id\030\001 \001(\003"
-  "\"Q\n\022S_DELETE_CHARACTER\022%\n\006result\030\001 \001(\0162\025"
-  ".Protocol.LobbyResult\022\024\n\014character_id\030\002 "
-  "\001(\003*\224\002\n\013LobbyResult\022\030\n\024LOBBY_RESULT_SUCC"
-  "ESS\020\000\022$\n LOBBY_RESULT_INVALID_AUTH_TICKE"
-  "T\020\001\022\035\n\031LOBBY_RESULT_INVALID_NAME\020\002\022\033\n\027LO"
-  "BBY_RESULT_NAME_TAKEN\020\003\022\"\n\036LOBBY_RESULT_"
-  "UNAVAILABLE_CLASS\020\004\022\036\n\032LOBBY_RESULT_NO_E"
-  "MPTY_SLOT\020\005\022$\n LOBBY_RESULT_CHARACTER_NO"
-  "T_FOUND\020\006\022\037\n\033LOBBY_RESULT_INTERNAL_ERROR"
-  "\020\007b\006proto3"
+  "\n\013Lobby.proto\022\010Protocol\032\014Common.proto\"v\n"
+  "\016LobbyCharacter\022\024\n\014character_id\030\001 \001(\003\022\014\n"
+  "\004name\030\002 \001(\t\0221\n\017character_class\030\003 \001(\0162\030.P"
+  "rotocol.CharacterClass\022\r\n\005level\030\004 \001(\005\"&\n"
+  "\017C_CONNECT_LOBBY\022\023\n\013auth_ticket\030\001 \001(\t\"8\n"
+  "\017S_CONNECT_LOBBY\022%\n\006result\030\001 \001(\0162\025.Proto"
+  "col.LobbyResult\"\223\001\n\020S_CHARACTER_LIST\022,\n\n"
+  "characters\030\001 \003(\0132\030.Protocol.LobbyCharact"
+  "er\022\034\n\024character_slot_count\030\002 \001(\005\0223\n\021crea"
+  "table_classes\030\003 \003(\0162\030.Protocol.Character"
+  "Class\"U\n\022C_CREATE_CHARACTER\022\014\n\004name\030\001 \001("
+  "\t\0221\n\017character_class\030\002 \001(\0162\030.Protocol.Ch"
+  "aracterClass\"h\n\022S_CREATE_CHARACTER\022%\n\006re"
+  "sult\030\001 \001(\0162\025.Protocol.LobbyResult\022+\n\tcha"
+  "racter\030\002 \001(\0132\030.Protocol.LobbyCharacter\"*"
+  "\n\022C_DELETE_CHARACTER\022\024\n\014character_id\030\001 \001"
+  "(\003\"Q\n\022S_DELETE_CHARACTER\022%\n\006result\030\001 \001(\016"
+  "2\025.Protocol.LobbyResult\022\024\n\014character_id\030"
+  "\002 \001(\003*\224\002\n\013LobbyResult\022\030\n\024LOBBY_RESULT_SU"
+  "CCESS\020\000\022$\n LOBBY_RESULT_INVALID_AUTH_TIC"
+  "KET\020\001\022\035\n\031LOBBY_RESULT_INVALID_NAME\020\002\022\033\n\027"
+  "LOBBY_RESULT_NAME_TAKEN\020\003\022\"\n\036LOBBY_RESUL"
+  "T_UNAVAILABLE_CLASS\020\004\022\036\n\032LOBBY_RESULT_NO"
+  "_EMPTY_SLOT\020\005\022$\n LOBBY_RESULT_CHARACTER_"
+  "NOT_FOUND\020\006\022\037\n\033LOBBY_RESULT_INTERNAL_ERR"
+  "OR\020\007b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Lobby_2eproto_deps[1] = {
-  &::descriptor_table_Enum_2eproto,
+  &::descriptor_table_Common_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Lobby_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Lobby_2eproto = {
-    false, false, 1010, descriptor_table_protodef_Lobby_2eproto,
+    false, false, 1012, descriptor_table_protodef_Lobby_2eproto,
     "Lobby.proto",
     &descriptor_table_Lobby_2eproto_once, descriptor_table_Lobby_2eproto_deps, 1, 8,
     schemas, file_default_instances, TableStruct_Lobby_2eproto::offsets,

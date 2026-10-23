@@ -175,8 +175,23 @@ struct S_MOVEDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_MOVEDefaultTypeInternal _S_MOVE_default_instance_;
+PROTOBUF_CONSTEXPR S_GEAR_APPEARANCE::S_GEAR_APPEARANCE(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.entity_id_)*/int64_t{0}
+  , /*decltype(_impl_.gear_part_)*/0
+  , /*decltype(_impl_.template_id_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct S_GEAR_APPEARANCEDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR S_GEAR_APPEARANCEDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~S_GEAR_APPEARANCEDefaultTypeInternal() {}
+  union {
+    S_GEAR_APPEARANCE _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_GEAR_APPEARANCEDefaultTypeInternal _S_GEAR_APPEARANCE_default_instance_;
 }  // namespace Protocol
-static ::_pb::Metadata file_level_metadata_Entity_2eproto[11];
+static ::_pb::Metadata file_level_metadata_Entity_2eproto[12];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Entity_2eproto[1];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Entity_2eproto = nullptr;
 
@@ -274,6 +289,15 @@ const uint32_t TableStruct_Entity_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_MOVE, _impl_.moves_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_GEAR_APPEARANCE, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_GEAR_APPEARANCE, _impl_.entity_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_GEAR_APPEARANCE, _impl_.gear_part_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_GEAR_APPEARANCE, _impl_.template_id_),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::Protocol::Vector)},
@@ -287,6 +311,7 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 72, -1, -1, sizeof(::Protocol::S_DESPAWN)},
   { 79, -1, -1, sizeof(::Protocol::C_MOVE)},
   { 86, -1, -1, sizeof(::Protocol::S_MOVE)},
+  { 93, -1, -1, sizeof(::Protocol::S_GEAR_APPEARANCE)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -301,39 +326,46 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::Protocol::_S_DESPAWN_default_instance_._instance,
   &::Protocol::_C_MOVE_default_instance_._instance,
   &::Protocol::_S_MOVE_default_instance_._instance,
+  &::Protocol::_S_GEAR_APPEARANCE_default_instance_._instance,
 };
 
 const char descriptor_table_protodef_Entity_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\014Entity.proto\022\010Protocol\")\n\006Vector\022\t\n\001x\030"
-  "\001 \001(\002\022\t\n\001y\030\002 \001(\002\022\t\n\001z\030\003 \001(\002\"\203\001\n\007PosInfo\022"
-  "\035\n\003pos\030\001 \001(\0132\020.Protocol.Vector\022\013\n\003yaw\030\002 "
-  "\001(\002\022(\n\016move_direction\030\003 \001(\0132\020.Protocol.V"
-  "ector\022\"\n\005state\030\004 \001(\0162\023.Protocol.MoveStat"
-  "e\"\243\001\n\nPlayerInfo\022\014\n\004name\030\001 \001(\t\022\r\n\005level\030"
-  "\002 \001(\005\022A\n\017gear_appearance\030\003 \003(\0132(.Protoco"
-  "l.PlayerInfo.GearAppearanceEntry\0325\n\023Gear"
-  "AppearanceEntry\022\013\n\003key\030\001 \001(\005\022\r\n\005value\030\002 "
-  "\001(\005:\0028\001\".\n\013MonsterInfo\022\023\n\013template_id\030\001 "
-  "\001(\005\022\n\n\002hp\030\002 \001(\003\"\253\001\n\nEntityInfo\022\021\n\tentity"
-  "_id\030\001 \001(\003\022#\n\010pos_info\030\002 \001(\0132\021.Protocol.P"
-  "osInfo\022+\n\013player_info\030\003 \001(\0132\024.Protocol.P"
-  "layerInfoH\000\022-\n\014monster_info\030\004 \001(\0132\025.Prot"
-  "ocol.MonsterInfoH\000B\t\n\007details\"D\n\nEntityM"
-  "ove\022\021\n\tentity_id\030\001 \001(\003\022#\n\010pos_info\030\002 \001(\013"
-  "2\021.Protocol.PosInfo\"1\n\007S_SPAWN\022&\n\010entiti"
-  "es\030\001 \003(\0132\024.Protocol.EntityInfo\"\037\n\tS_DESP"
-  "AWN\022\022\n\nentity_ids\030\001 \003(\003\"-\n\006C_MOVE\022#\n\010pos"
-  "_info\030\001 \001(\0132\021.Protocol.PosInfo\"-\n\006S_MOVE"
-  "\022#\n\005moves\030\001 \003(\0132\024.Protocol.EntityMove*`\n"
-  "\tMoveState\022\023\n\017MOVE_STATE_NONE\020\000\022\023\n\017MOVE_"
-  "STATE_IDLE\020\001\022\022\n\016MOVE_STATE_RUN\020\002\022\025\n\021MOVE"
-  "_STATE_ACTION\020\003b\006proto3"
+  "\n\014Entity.proto\022\010Protocol\032\014Common.proto\")"
+  "\n\006Vector\022\t\n\001x\030\001 \001(\002\022\t\n\001y\030\002 \001(\002\022\t\n\001z\030\003 \001("
+  "\002\"\203\001\n\007PosInfo\022\035\n\003pos\030\001 \001(\0132\020.Protocol.Ve"
+  "ctor\022\013\n\003yaw\030\002 \001(\002\022(\n\016move_direction\030\003 \001("
+  "\0132\020.Protocol.Vector\022\"\n\005state\030\004 \001(\0162\023.Pro"
+  "tocol.MoveState\"\243\001\n\nPlayerInfo\022\014\n\004name\030\001"
+  " \001(\t\022\r\n\005level\030\002 \001(\005\022A\n\017gear_appearance\030\003"
+  " \003(\0132(.Protocol.PlayerInfo.GearAppearanc"
+  "eEntry\0325\n\023GearAppearanceEntry\022\013\n\003key\030\001 \001"
+  "(\005\022\r\n\005value\030\002 \001(\005:\0028\001\".\n\013MonsterInfo\022\023\n\013"
+  "template_id\030\001 \001(\005\022\n\n\002hp\030\002 \001(\003\"\253\001\n\nEntity"
+  "Info\022\021\n\tentity_id\030\001 \001(\003\022#\n\010pos_info\030\002 \001("
+  "\0132\021.Protocol.PosInfo\022+\n\013player_info\030\003 \001("
+  "\0132\024.Protocol.PlayerInfoH\000\022-\n\014monster_inf"
+  "o\030\004 \001(\0132\025.Protocol.MonsterInfoH\000B\t\n\007deta"
+  "ils\"D\n\nEntityMove\022\021\n\tentity_id\030\001 \001(\003\022#\n\010"
+  "pos_info\030\002 \001(\0132\021.Protocol.PosInfo\"1\n\007S_S"
+  "PAWN\022&\n\010entities\030\001 \003(\0132\024.Protocol.Entity"
+  "Info\"\037\n\tS_DESPAWN\022\022\n\nentity_ids\030\001 \003(\003\"-\n"
+  "\006C_MOVE\022#\n\010pos_info\030\001 \001(\0132\021.Protocol.Pos"
+  "Info\"-\n\006S_MOVE\022#\n\005moves\030\001 \003(\0132\024.Protocol"
+  ".EntityMove\"b\n\021S_GEAR_APPEARANCE\022\021\n\tenti"
+  "ty_id\030\001 \001(\003\022%\n\tgear_part\030\002 \001(\0162\022.Protoco"
+  "l.GearPart\022\023\n\013template_id\030\003 \001(\005*`\n\tMoveS"
+  "tate\022\023\n\017MOVE_STATE_NONE\020\000\022\023\n\017MOVE_STATE_"
+  "IDLE\020\001\022\022\n\016MOVE_STATE_RUN\020\002\022\025\n\021MOVE_STATE"
+  "_ACTION\020\003b\006proto3"
   ;
+static const ::_pbi::DescriptorTable* const descriptor_table_Entity_2eproto_deps[1] = {
+  &::descriptor_table_Common_2eproto,
+};
 static ::_pbi::once_flag descriptor_table_Entity_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Entity_2eproto = {
-    false, false, 943, descriptor_table_protodef_Entity_2eproto,
+    false, false, 1057, descriptor_table_protodef_Entity_2eproto,
     "Entity.proto",
-    &descriptor_table_Entity_2eproto_once, nullptr, 0, 11,
+    &descriptor_table_Entity_2eproto_once, descriptor_table_Entity_2eproto_deps, 1, 12,
     schemas, file_default_instances, TableStruct_Entity_2eproto::offsets,
     file_level_metadata_Entity_2eproto, file_level_enum_descriptors_Entity_2eproto,
     file_level_service_descriptors_Entity_2eproto,
@@ -2809,6 +2841,244 @@ void S_MOVE::InternalSwap(S_MOVE* other) {
       file_level_metadata_Entity_2eproto[10]);
 }
 
+// ===================================================================
+
+class S_GEAR_APPEARANCE::_Internal {
+ public:
+};
+
+S_GEAR_APPEARANCE::S_GEAR_APPEARANCE(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:Protocol.S_GEAR_APPEARANCE)
+}
+S_GEAR_APPEARANCE::S_GEAR_APPEARANCE(const S_GEAR_APPEARANCE& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  S_GEAR_APPEARANCE* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.entity_id_){}
+    , decltype(_impl_.gear_part_){}
+    , decltype(_impl_.template_id_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.entity_id_, &from._impl_.entity_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.template_id_) -
+    reinterpret_cast<char*>(&_impl_.entity_id_)) + sizeof(_impl_.template_id_));
+  // @@protoc_insertion_point(copy_constructor:Protocol.S_GEAR_APPEARANCE)
+}
+
+inline void S_GEAR_APPEARANCE::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.entity_id_){int64_t{0}}
+    , decltype(_impl_.gear_part_){0}
+    , decltype(_impl_.template_id_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
+
+S_GEAR_APPEARANCE::~S_GEAR_APPEARANCE() {
+  // @@protoc_insertion_point(destructor:Protocol.S_GEAR_APPEARANCE)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void S_GEAR_APPEARANCE::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void S_GEAR_APPEARANCE::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void S_GEAR_APPEARANCE::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.S_GEAR_APPEARANCE)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&_impl_.entity_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.template_id_) -
+      reinterpret_cast<char*>(&_impl_.entity_id_)) + sizeof(_impl_.template_id_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* S_GEAR_APPEARANCE::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // int64 entity_id = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.entity_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // .Protocol.GearPart gear_part = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_gear_part(static_cast<::Protocol::GearPart>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // int32 template_id = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _impl_.template_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* S_GEAR_APPEARANCE::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:Protocol.S_GEAR_APPEARANCE)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // int64 entity_id = 1;
+  if (this->_internal_entity_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_entity_id(), target);
+  }
+
+  // .Protocol.GearPart gear_part = 2;
+  if (this->_internal_gear_part() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      2, this->_internal_gear_part(), target);
+  }
+
+  // int32 template_id = 3;
+  if (this->_internal_template_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_template_id(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:Protocol.S_GEAR_APPEARANCE)
+  return target;
+}
+
+size_t S_GEAR_APPEARANCE::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:Protocol.S_GEAR_APPEARANCE)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // int64 entity_id = 1;
+  if (this->_internal_entity_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_entity_id());
+  }
+
+  // .Protocol.GearPart gear_part = 2;
+  if (this->_internal_gear_part() != 0) {
+    total_size += 1 +
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_gear_part());
+  }
+
+  // int32 template_id = 3;
+  if (this->_internal_template_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_template_id());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData S_GEAR_APPEARANCE::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    S_GEAR_APPEARANCE::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*S_GEAR_APPEARANCE::GetClassData() const { return &_class_data_; }
+
+
+void S_GEAR_APPEARANCE::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<S_GEAR_APPEARANCE*>(&to_msg);
+  auto& from = static_cast<const S_GEAR_APPEARANCE&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.S_GEAR_APPEARANCE)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_entity_id() != 0) {
+    _this->_internal_set_entity_id(from._internal_entity_id());
+  }
+  if (from._internal_gear_part() != 0) {
+    _this->_internal_set_gear_part(from._internal_gear_part());
+  }
+  if (from._internal_template_id() != 0) {
+    _this->_internal_set_template_id(from._internal_template_id());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void S_GEAR_APPEARANCE::CopyFrom(const S_GEAR_APPEARANCE& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.S_GEAR_APPEARANCE)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool S_GEAR_APPEARANCE::IsInitialized() const {
+  return true;
+}
+
+void S_GEAR_APPEARANCE::InternalSwap(S_GEAR_APPEARANCE* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(S_GEAR_APPEARANCE, _impl_.template_id_)
+      + sizeof(S_GEAR_APPEARANCE::_impl_.template_id_)
+      - PROTOBUF_FIELD_OFFSET(S_GEAR_APPEARANCE, _impl_.entity_id_)>(
+          reinterpret_cast<char*>(&_impl_.entity_id_),
+          reinterpret_cast<char*>(&other->_impl_.entity_id_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata S_GEAR_APPEARANCE::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_Entity_2eproto_getter, &descriptor_table_Entity_2eproto_once,
+      file_level_metadata_Entity_2eproto[11]);
+}
+
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
@@ -2855,6 +3125,10 @@ Arena::CreateMaybeMessage< ::Protocol::C_MOVE >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::Protocol::S_MOVE*
 Arena::CreateMaybeMessage< ::Protocol::S_MOVE >(Arena* arena) {
   return Arena::CreateMessageInternal< ::Protocol::S_MOVE >(arena);
+}
+template<> PROTOBUF_NOINLINE ::Protocol::S_GEAR_APPEARANCE*
+Arena::CreateMaybeMessage< ::Protocol::S_GEAR_APPEARANCE >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Protocol::S_GEAR_APPEARANCE >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

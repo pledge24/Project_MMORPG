@@ -12,7 +12,6 @@ struct ItemSlotRequest;
 namespace ItemPackets
 {
     Protocol::Item ToProto(const ItemInstance& item);
-    ItemInstance FromProto(const Protocol::Item& item);
 
     Protocol::ContainerType ToProto(ContainerType container);
     /** 열거형에 없는 값이면 ContainerType::NONE. 클라이언트 값을 넘겨도 된다. */

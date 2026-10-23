@@ -75,6 +75,9 @@
     <ClCompile Include="..\GameServer\Network\ItemRequests.cpp">
       <Filter>GameServer\Network</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Network\ChatRequests.cpp">
+      <Filter>GameServer\Network</Filter>
+    </ClCompile>
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
     <ClCompile Include="MapLoadTests.cpp" />
@@ -113,6 +116,8 @@
     <ClCompile Include="CombatTests.cpp" />
     <ClCompile Include="CombatRequestTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
+    <ClCompile Include="ChatRequestsTests.cpp" />
+    <ClCompile Include="ItemChatRequestTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="LobbyRequestsTests.cpp" />
@@ -174,15 +179,6 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Network\ServerPacketHandler.cpp">
       <Filter>GameServer\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
-      <Filter>GameServer\Protocol</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Protocol\Protocol.pb.cc">
-      <Filter>GameServer\Protocol</Filter>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
-      <Filter>GameServer\Protocol</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Protocol\Chat.pb.cc">
       <Filter>GameServer\Protocol</Filter>

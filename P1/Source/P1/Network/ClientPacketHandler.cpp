@@ -38,11 +38,6 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return false;
 }
 
-bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
-{
-	return true;
-}
-
 // 로비 계열(S_CONNECT_LOBBY, S_CHARACTER_LIST, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
 // Lobby/P1LobbyPacketHandlers.cpp에 있다. Network/는 Lobby/를 부르지 않는다.
 
@@ -170,28 +165,37 @@ bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
-    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
-    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
-    if (EntityManager == nullptr || MyPlayerData == nullptr)
-        return false;
+    // 외형은 뒤따르는 S_GEAR_APPEARANCE가 바꾼다.
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleEquipGear(pkt);
+        return true;
+    }
 
-    // 외형은 모든 플레이어에 적용하고, 슬롯과 스탯은 내 플레이어일 때만 반영한다.
-    EntityManager->HandleEquipGear(pkt);
-    MyPlayerData->HandleEquipGear(pkt);
-    return true;
+    return false;
 }
 
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
-    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
-    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
-    if (EntityManager == nullptr || MyPlayerData == nullptr)
-        return false;
+    // 외형은 뒤따르는 S_GEAR_APPEARANCE가 바꾼다.
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleUnequipGear(pkt);
+        return true;
+    }
 
-    // 외형은 모든 플레이어에 적용하고, 슬롯과 스탯은 내 플레이어일 때만 반영한다.
-    EntityManager->HandleUnequipGear(pkt);
-    MyPlayerData->HandleUnequipGear(pkt);
-    return true;
+    return false;
+}
+
+bool Handle_S_GEAR_APPEARANCE(PacketSessionRef& session, Protocol::S_GEAR_APPEARANCE& pkt)
+{
+    if (auto* EntityManager = GetEntityManager(session))
+    {
+        EntityManager->HandleGearAppearance(pkt);
+        return true;
+    }
+
+    return false;
 }
 
 bool Handle_S_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::S_SET_QUICK_SLOT& pkt)
@@ -251,9 +255,18 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
+    // 채팅 UI가 아직 없어 보내는 쪽도 없다. 거절만 로그로 남긴다.
+    if (pkt.result() != Protocol::CHAT_RESULT_SUCCESS)
+        UE_LOG(LogP1Network, Warning, TEXT("채팅이 거절됐습니다: %s"), UTF8_TO_TCHAR(Protocol::ChatResult_Name(pkt.result()).c_str()));
+
+    return true;
+}
+
+bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& pkt)
+{
     // 채팅 UI가 아직 없다. DummyClient 부하 테스트에서 서버 중계가 도는지 확인할 수 있게 로그만 남긴다.
-    FString Msg = UTF8_TO_TCHAR(pkt.msg().c_str());
-    UE_LOG(LogP1Network, Log, TEXT("S_CHAT entity_id: %lld, msg: %s"), pkt.entity_id(), *Msg);
+    const FString Message = UTF8_TO_TCHAR(pkt.message().c_str());
+    UE_LOG(LogP1Network, Log, TEXT("S_CHAT_MESSAGE entity_id: %lld, message: %s"), pkt.entity_id(), *Message);
 
     return true;
 }

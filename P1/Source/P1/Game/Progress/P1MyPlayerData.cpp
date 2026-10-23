@@ -17,6 +17,16 @@ namespace
         EP1ContainerType::InventoryMisc,
         EP1ContainerType::Equipped,
     };
+
+    /** 서버가 받아들인 응답이면 true. 거절이면 결과를 로그에 남긴다. 화면 문구는 서버가 보내지 않는다. */
+    bool IsAccepted(Protocol::ItemResult Result, const TCHAR* RequestName)
+    {
+        if (Result == Protocol::ITEM_RESULT_SUCCESS)
+            return true;
+
+        UE_LOG(LogP1CharacterInventory, Warning, TEXT("%s 요청이 거절됐습니다: %s"), RequestName, UTF8_TO_TCHAR(Protocol::ItemResult_Name(Result).c_str()));
+        return false;
+    }
 }
 
 UP1MyPlayerData::UP1MyPlayerData()
@@ -192,7 +202,7 @@ void UP1MyPlayerData::ClearQuickSlots()
 void UP1MyPlayerData::HandleSetQuickSlot(const Protocol::S_SET_QUICK_SLOT& SetQuickSlotPkt)
 {
     ItemActions->HandleResponse(UP1ItemActions::ERequestKind::SetQuickSlot);
-    if (SetQuickSlotPkt.success() == false)
+    if (IsAccepted(SetQuickSlotPkt.result(), TEXT("퀵슬롯 등록")) == false)
         return;
 
     for (const Protocol::QuickSlot& Changed : SetQuickSlotPkt.changed_quick_slots())
@@ -250,7 +260,7 @@ void UP1MyPlayerData::ChangeMap(int32 MapId)
 void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 {
     ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Buy);
-    if (BuyItemPkt.success() == false)
+    if (IsAccepted(BuyItemPkt.result(), TEXT("구매")) == false)
         return;
 
     ApplySlotChanges(BuyItemPkt.changed_slots());
@@ -260,7 +270,7 @@ void UP1MyPlayerData::HandleBuyItem(const Protocol::S_BUY_ITEM& BuyItemPkt)
 void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 {
     ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Sell);
-    if (SellItemPkt.success() == false)
+    if (IsAccepted(SellItemPkt.result(), TEXT("판매")) == false)
         return;
 
     ApplySlotChanges(SellItemPkt.changed_slots());
@@ -269,11 +279,8 @@ void UP1MyPlayerData::HandleSellItem(const Protocol::S_SELL_ITEM& SellItemPkt)
 
 void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
 {
-    if (IsMyPlayer(UseItemPkt.entity_id()) == false)
-        return;
-
     ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Use);
-    if (UseItemPkt.success() == false)
+    if (IsAccepted(UseItemPkt.result(), TEXT("소모품 사용")) == false)
         return;
 
     // 마지막 한 개를 쓰면 응답의 칸에 아이템이 없다. 사본이 바뀌기 전에 쓴 아이템의 템플릿을 읽는다.
@@ -288,7 +295,7 @@ void UP1MyPlayerData::HandleUseItem(const Protocol::S_USE_ITEM& UseItemPkt)
     }
 
     ApplySlotChanges(UseItemPkt.changed_slots());
-    ApplyStats(UseItemPkt.updated_stat());
+    ApplyStats(UseItemPkt.changed_stats());
 
     // 칸이 먼저 바뀌어야 대기를 알릴 때 칸들이 지금 든 아이템으로 판단한다.
     for (const int32 TemplateId : UsedTemplateIds)
@@ -318,28 +325,22 @@ void UP1MyPlayerData::StartItemCooldown(int32 TemplateId)
 
 void UP1MyPlayerData::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
 {
-    if (IsMyPlayer(EquipGearPkt.entity_id()) == false)
-        return;
-
     ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Equip);
-    if (EquipGearPkt.success() == false)
+    if (IsAccepted(EquipGearPkt.result(), TEXT("착용")) == false)
         return;
 
     ApplySlotChanges(EquipGearPkt.changed_slots());
-    ApplyStats(EquipGearPkt.updated_stat());
+    ApplyStats(EquipGearPkt.changed_stats());
 }
 
 void UP1MyPlayerData::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
 {
-    if (IsMyPlayer(UnequipGearPkt.entity_id()) == false)
-        return;
-
     ItemActions->HandleResponse(UP1ItemActions::ERequestKind::Unequip);
-    if (UnequipGearPkt.success() == false)
+    if (IsAccepted(UnequipGearPkt.result(), TEXT("해제")) == false)
         return;
 
     ApplySlotChanges(UnequipGearPkt.changed_slots());
-    ApplyStats(UnequipGearPkt.updated_stat());
+    ApplyStats(UnequipGearPkt.changed_stats());
 }
 
 void UP1MyPlayerData::ApplySlotChanges(const google::protobuf::RepeatedPtrField<Protocol::SlotChange>& Changes)

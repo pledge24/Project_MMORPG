@@ -56,7 +56,7 @@ namespace
 
     void EquipWeapon(PlayerSaveData& data, int64 itemUid, int32 enhanceLevel)
     {
-        AddItem(data, ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, itemUid, SWORD_TEMPLATE_ID, 1, GearDetail{ enhanceLevel, 0 });
+        AddItem(data, ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON, itemUid, SWORD_TEMPLATE_ID, 1, GearDetail{ enhanceLevel, 0 });
     }
 
     // 불러온 아이템 목록에서 그 칸의 아이템. 없으면 nullptr.
@@ -97,7 +97,7 @@ protected:
         level2.expRequirement = 0;
 
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
         tables.initialProgress.startMapId = START_MAP_ID;
         tables.initialProgress.startPos = { 10.5f, -20.25f, 30.f };
@@ -107,7 +107,7 @@ protected:
 
         LobbyTables lobbyTables;
         lobbyTables.defaultCharacterSlotCount = 4;
-        lobbyTables.creatableClasses = { Protocol::CLASS_TYPE_WARRIOR };
+        lobbyTables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
         LobbyData::Install(std::move(lobbyTables));
     }
 
@@ -133,7 +133,7 @@ protected:
 
         AccountDAO::RecordLogin(Connection(), accountId);
 
-        const CreateCharacterResult result = CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, name, Protocol::CLASS_TYPE_WARRIOR);
+        const CreateCharacterResult result = CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, name, Protocol::CHARACTER_CLASS_WARRIOR);
         ASSERT_FALSE(result.rejection.has_value()) << "준비 단계의 캐릭터 생성이 거절됐다";
     }
 
@@ -266,7 +266,7 @@ TEST_F(DISABLED_GameDBProgressTest, SavedProgressAndItemsLoadBack)
     EXPECT_EQ(bagSword->itemUid, BAG_SWORD_UID);
     ASSERT_TRUE(bagSword->gear.has_value());
     EXPECT_EQ(bagSword->gear->enhanceLevel, 3);
-    const ItemInstance* equippedSword = FindItem(*loaded, ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+    const ItemInstance* equippedSword = FindItem(*loaded, ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON);
     ASSERT_NE(equippedSword, nullptr);
     EXPECT_EQ(equippedSword->itemUid, EQUIPPED_SWORD_UID);
     ASSERT_TRUE(equippedSword->gear.has_value());
@@ -343,7 +343,7 @@ TEST_F(DISABLED_GameDBProgressTest, GearMovesBetweenInventoryAndEquipped)
     std::optional<PlayerProgress> loaded = Load(ACCOUNT_ID, CHARACTER_ID);
     ASSERT_TRUE(loaded.has_value());
     EXPECT_EQ(CountItems(*loaded, ContainerType::INVENTORY_GEAR), 0u) << "착용한 장비는 인벤토리에 남지 않는다";
-    const ItemInstance* equippedSword = FindItem(*loaded, ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+    const ItemInstance* equippedSword = FindItem(*loaded, ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON);
     ASSERT_NE(equippedSword, nullptr);
     EXPECT_EQ(equippedSword->itemUid, SWORD_UID);
     EXPECT_EQ(CountRows(L"dbo.ItemGear", gearWhere), 1) << "자리만 바뀐 장비의 세부 값은 남는다";

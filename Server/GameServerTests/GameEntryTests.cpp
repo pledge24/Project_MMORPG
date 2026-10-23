@@ -79,7 +79,7 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
         sword.physicalAttack = SWORD_ATTACK;
 
         ItemTemplate potion;
@@ -102,7 +102,7 @@ protected:
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.items[POTION_TEMPLATE_ID] = potion;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
         tables.inventorySlotCounts = {
             { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
             { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
@@ -130,7 +130,7 @@ protected:
     {
         PlayerProgress progress;
         progress.characterId = CHARACTER_ID;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.mapId = 1;
         progress.totalExp = 20;
@@ -138,7 +138,7 @@ protected:
         progress.mp = MAX_MP;
 
         progress.gold = 300;
-        progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, SWORD_TEMPLATE_ID, 1));
+        progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON, SWORD_TEMPLATE_ID, 1));
         progress.items.push_back(MakeLoadedItem(ContainerType::INVENTORY_CONSUMABLE, 5, POTION_TEMPLATE_ID, 3));
         return progress;
     }
@@ -180,7 +180,7 @@ TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
     EXPECT_NE(potion->itemUid, 0) << "UID 없이 들어온 아이템은 저장할 수 없다";
     EXPECT_EQ(player->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 0 }), nullptr);
 
-    const ItemInstance* sword = player->GetEquipment().FindItem(Protocol::GEAR_TYPE_WEAPON);
+    const ItemInstance* sword = player->GetEquipment().FindItem(Protocol::GEAR_PART_WEAPON);
     ASSERT_NE(sword, nullptr);
     EXPECT_EQ(sword->templateId, SWORD_TEMPLATE_ID);
 }
@@ -233,7 +233,7 @@ TEST_F(GameEntryTest, FailedValidationLeavesSessionWithoutPlayer)
 TEST_F(GameEntryTest, UnknownClassLeavesSessionWithoutPlayer)
 {
     PlayerProgress progress = MakeValidProgress();
-    progress.classId = Protocol::CLASS_TYPE_MAGE;
+    progress.classId = Protocol::CHARACTER_CLASS_MAGE;
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr);
     EXPECT_EQ(session->GetPlayer(), nullptr);
@@ -320,7 +320,7 @@ TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
 {
     PlayerProgress progress = MakeValidProgress();
     erase_if(progress.items, [](const PlacedItem& placed) { return placed.address.container == ContainerType::EQUIPPED; });
-    progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_HELMET, SWORD_TEMPLATE_ID, 1));
+    progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_PART_HELMET, SWORD_TEMPLATE_ID, 1));
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "무기를 투구 칸에 입은 채로 두면 그대로 저장된다";
 }
@@ -328,7 +328,7 @@ TEST_F(GameEntryTest, GearEquippedInOtherPartIsRejected)
 TEST_F(GameEntryTest, SecondGearInSamePartIsRejected)
 {
     PlayerProgress progress = MakeValidProgress();
-    progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, SWORD_TEMPLATE_ID, 1));
+    progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON, SWORD_TEMPLATE_ID, 1));
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "부위 하나에 두 장비를 겹치면 하나가 사라진다";
     EXPECT_EQ(session->GetPlayer(), nullptr);
@@ -338,7 +338,7 @@ TEST_F(GameEntryTest, GearPartNoneIsRejected)
 {
     PlayerProgress progress = MakeValidProgress();
     erase_if(progress.items, [](const PlacedItem& placed) { return placed.address.container == ContainerType::EQUIPPED; });
-    progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_TYPE_NONE, SWORD_TEMPLATE_ID, 1));
+    progress.items.push_back(MakeLoadedItem(ContainerType::EQUIPPED, Protocol::GEAR_PART_NONE, SWORD_TEMPLATE_ID, 1));
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "착용 장비에는 0번 칸이 없다";
 }

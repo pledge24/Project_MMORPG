@@ -2,6 +2,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "Game/Items/InventorySections.h"
 #include "Game/QuickSlots/QuickSlotComponent.h"
 #include "Game/Progress/Leveling.h"
 #include "Game/Room/Room.h"
@@ -180,19 +181,19 @@ bool Player::ValidateLoadedStat()
     return true;
 }
 
-optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
+ItemOutcome<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
 {
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     const int64 buyPrice = itemTemplate->buyPrice * count;
 
     if (_gold < buyPrice)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_NOT_ENOUGH_GOLD };
 
     if (_inventory->AddNewItem(templateId, count) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVENTORY_FULL };
 
     _gold -= buyPrice;
 
@@ -203,21 +204,29 @@ optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
     return result;
 }
 
-optional<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request, int32 count)
+ItemOutcome<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request, int32 count)
 {
+    // 인벤토리 구역의 아이템만 판다. 착용 장비는 벗은 뒤에 판다.
+    if (InventorySections::FindItemType(request.address.container).has_value() == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
+
     // 가격은 요청이 아니라 칸에 든 아이템으로 정한다.
     const ItemInstance* owned = _inventory->FindItem(request.address);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
+    // 칸에는 표에 있는 아이템만 들어가므로, 표에 없으면 기획 데이터가 바뀐 것이다.
     const ItemTemplate* itemTemplate = Gamedata::FindItem(owned->templateId);
-    if (itemTemplate == nullptr || itemTemplate->sellable == false)
-        return nullopt;
+    if (itemTemplate == nullptr)
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
+
+    if (itemTemplate->sellable == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_NOT_SELLABLE };
 
     const int64 sellPrice = itemTemplate->sellPrice * count;
 
     if (_inventory->RemoveItem(request.address, count) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     _gold += sellPrice;
 
@@ -228,29 +237,30 @@ optional<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request,
     return result;
 }
 
-optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs)
+ItemOutcome<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs)
 {
     if (IsDead())
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_DEAD };
 
     if (request.address.container != ContainerType::INVENTORY_CONSUMABLE)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     // 효과는 요청이 아니라 칸에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
     const ItemInstance* owned = _inventory->FindItem(request.address);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
+    // 칸에는 표에 있는 아이템만 들어가므로, 표에 없으면 기획 데이터가 바뀐 것이다.
     const int32 templateId = owned->templateId;
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     if (_inventory->IsCoolingDown(templateId, nowMs))
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_COOLDOWN };
 
     if (_inventory->RemoveItem(request.address) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     _inventory->StartCooldown(templateId, nowMs);
 
@@ -268,7 +278,7 @@ optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, u
             const int64 updatedValue = min(maxValue, GetStatValue(curType) + amount);
             SetStatValue(curType, updatedValue);
 
-            ProtoUtil::AddStat(&result.updatedStats, curType, updatedValue);
+            ProtoUtil::AddStat(&result.changedStats, curType, updatedValue);
         };
 
     restore(itemTemplate->hpRestoreRatio, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
@@ -277,92 +287,97 @@ optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, u
     return result;
 }
 
-optional<GearChangeResult> Player::ProcessEquipGear(const ItemSlotRequest& request)
+ItemOutcome<GearChangeResult> Player::ProcessEquipGear(const ItemSlotRequest& request)
 {
+    if (InventorySections::FindItemType(request.address.container).has_value() == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
+
     // 입는 것은 요청이 아니라 인벤토리 칸에 든 장비다.
     const ItemInstance* owned = _inventory->FindItem(request.address);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
     // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 칸이라 제거는 실패하지 않는다.
     const ItemInstance ownedItem = *owned;
-    const optional<int32> gearType = _equipment->Equip(ownedItem);
-    if (gearType.has_value() == false)
-        return nullopt;
+    ItemOutcome<Protocol::GearPart> equipped = _equipment->Equip(ownedItem);
+    if (equipped.IsSuccess() == false)
+        return ItemRejection{ equipped.GetResult() };
 
     // 외형을 바꾸는 쪽은 요청한 칸(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
     GearChangeResult result;
-    result.gearType = gearType.value();
+    result.gearPart = *equipped;
     result.templateId = ownedItem.templateId;
     RefreshEquippedGearSummary();
 
     if (_inventory->RemoveItem(request.address) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     result.changedSlots = TakeItemChanges();
-    RefreshFinalStat(OUT &result.updatedStats);
+    RefreshFinalStat(OUT &result.changedStats);
 
     return result;
 }
 
-optional<GearChangeResult> Player::ProcessUnequipGear(const ItemSlotRequest& request)
+ItemOutcome<GearChangeResult> Player::ProcessUnequipGear(const ItemSlotRequest& request)
 {
     // 돌려받는 것은 요청이 아니라 장비 칸에 든 장비다.
     if (request.address.container != ContainerType::EQUIPPED)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
-    const int32 gearType = request.address.slotIndex;
-    const ItemInstance* owned = _equipment->FindItem(gearType);
+    const int32 gearPart = request.address.slotIndex;
+    const ItemInstance* owned = _equipment->FindItem(gearPart);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
     // 넣을 자리가 없으면 장비 칸을 비우기 전에 거절한다. 비운 뒤에 실패하면 장비가 사라진다.
     if (_inventory->CanAddItem(*owned) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVENTORY_FULL };
 
-    optional<ItemInstance> unequipped = _equipment->Unequip(gearType);
+    optional<ItemInstance> unequipped = _equipment->Unequip(gearPart);
     if (unequipped.has_value() == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
-    // 탈착 뒤 그 부위는 비어 있으므로 templateId는 0이다.
+    // 탈착 뒤 그 부위는 비어 있으므로 templateId는 0이다. 장비 칸에서 찾았으므로 부위 값이다.
     GearChangeResult result;
-    result.gearType = gearType;
+    result.gearPart = static_cast<Protocol::GearPart>(gearPart);
     result.templateId = 0;
     RefreshEquippedGearSummary();
 
     if (_inventory->AddItem(unequipped.value()) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     result.changedSlots = TakeItemChanges();
-    RefreshFinalStat(OUT &result.updatedStats);
+    RefreshFinalStat(OUT &result.changedStats);
 
     return result;
 }
 
-optional<SetQuickSlotResult> Player::ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref)
+ItemOutcome<SetQuickSlotResult> Player::ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref)
 {
+    // 범위 밖 번호와 소모품이 아닌 대상은 정상 클라이언트가 보내지 않는다.
     optional<vector<QuickSlot>> changed = _quickSlots->Set(slotIndex, ref);
     if (changed.has_value() == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     return SetQuickSlotResult{ std::move(changed.value()) };
 }
 
-optional<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs)
+ItemOutcome<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs)
 {
     // 퀵슬롯은 아이템 정의를 가리키므로 쓸 칸은 서버가 고른다. 사용 규칙은 칸을 골라 쓰는 사용과 한 곳에 둔다.
+    // 클라이언트는 빈 퀵슬롯의 사용을 보내지 않는다.
     const optional<QuickSlotRef> ref = _quickSlots->Find(slotIndex);
     if (ref.has_value() == false || ref->type != QuickSlotRefType::ITEM)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     const ItemContainer* consumables = GetInventory().FindSection(ContainerType::INVENTORY_CONSUMABLE);
     if (consumables == nullptr)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     // 여러 칸에 나뉘어 있으면 칸 번호가 가장 작은 묶음부터 쓴다.
     const optional<int32> chosenSlot = consumables->FindFirstSlotOf(ref->id);
     if (chosenSlot.has_value() == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_NOT_OWNED };
 
     ItemSlotRequest request;
     request.address = SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, chosenSlot.value() };

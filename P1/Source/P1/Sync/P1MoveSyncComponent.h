@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Containers/Queue.h"
-#include "Protocol.pb.h"
 #include "Entity.pb.h"
 #include "Sync/P1MoveSyncMode.h"
 #include "P1MoveSyncComponent.generated.h"

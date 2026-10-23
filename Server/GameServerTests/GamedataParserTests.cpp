@@ -171,12 +171,12 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     const ItemTemplate& sword = tables.items.at(SWORD_ID);
     EXPECT_EQ(sword.itemType, Protocol::ITEM_TYPE_GEAR);
     ASSERT_TRUE(sword.gearType.has_value());
-    EXPECT_EQ(sword.gearType.value(), Protocol::GEAR_TYPE_WEAPON);
+    EXPECT_EQ(sword.gearType.value(), Protocol::GEAR_PART_WEAPON);
     EXPECT_EQ(sword.physicalAttack, 15);
     EXPECT_EQ(sword.cooldownMs, 0u) << "장비의 cooldown -1은 대기가 없다는 뜻이다";
     EXPECT_EQ(sword.levelRequirement, 10);
     ASSERT_TRUE(sword.classRequirement.has_value());
-    EXPECT_EQ(sword.classRequirement.value(), Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(sword.classRequirement.value(), Protocol::CHARACTER_CLASS_WARRIOR);
 
     const ItemTemplate& potion = tables.items.at(POTION_ID);
     EXPECT_EQ(potion.itemType, Protocol::ITEM_TYPE_CONSUMABLE);
@@ -193,12 +193,12 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(monster.maxGold, 20);
     EXPECT_FLOAT_EQ(monster.attackInterval, 2.5f);
 
-    const ClassLevelTable& warrior = tables.classLevelTables.at(Protocol::CLASS_TYPE_WARRIOR);
+    const ClassLevelTable& warrior = tables.classLevelTables.at(Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(warrior.GetMaxLevel(), 3) << "최대 레벨은 레벨 표의 마지막 레벨이다";
     ASSERT_NE(warrior.Find(2), nullptr);
     EXPECT_EQ(warrior.Find(2)->maxHp, 502);
     EXPECT_EQ(warrior.Find(4), nullptr);
-    EXPECT_FALSE(tables.classLevelTables.contains(Protocol::CLASS_TYPE_NONE)) << "NONE에는 레벨 표가 없다";
+    EXPECT_FALSE(tables.classLevelTables.contains(Protocol::CHARACTER_CLASS_NONE)) << "NONE에는 레벨 표가 없다";
 
     EXPECT_EQ(tables.townRoomId, TOWN_ID) << "마을은 리스폰 지점이 있는 맵이다";
     const MapTemplate& town = tables.maps.at(TOWN_ID);
@@ -532,7 +532,7 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     const optional<string> error = GamedataParser::Parse(documents, OUT tables);
     EXPECT_FALSE(error.has_value()) << error.value_or("");
     EXPECT_EQ(tables.townRoomId, 10);
-    EXPECT_EQ(tables.classLevelTables.at(Protocol::CLASS_TYPE_WARRIOR).GetMaxLevel(), 50);
+    EXPECT_EQ(tables.classLevelTables.at(Protocol::CHARACTER_CLASS_WARRIOR).GetMaxLevel(), 50);
 
     // DB 기본값과 코드 상수에서 옮겨 온 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
     EXPECT_EQ(tables.initialProgress.startMapId, 1111);

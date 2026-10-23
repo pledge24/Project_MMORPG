@@ -30,7 +30,7 @@ namespace
     PlayerProgress MakeProgressWithSword()
     {
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
 
         PlacedItem sword;
@@ -51,7 +51,7 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
         sword.sellable = true;
 
         LevelTemplate level1;
@@ -66,7 +66,7 @@ protected:
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
         tables.inventorySlotCounts = MakeInventorySections();
@@ -177,7 +177,7 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
     const auto equipPkt = MakeSwordRequest<Protocol::C_EQUIP_GEAR>(Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
     ItemRequests::HandleEquipGear(*room, player, equipPkt);
 
-    const auto unequipPkt = MakeSwordRequest<Protocol::C_UNEQUIP_GEAR>(Protocol::CONTAINER_TYPE_EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+    const auto unequipPkt = MakeSwordRequest<Protocol::C_UNEQUIP_GEAR>(Protocol::CONTAINER_TYPE_EQUIPPED, Protocol::GEAR_PART_WEAPON);
     ItemRequests::HandleUnequipGear(*room, player, unequipPkt);
 
     SUCCEED() << "세션이 없어도 응답을 건너뛰고 끝나야 한다";

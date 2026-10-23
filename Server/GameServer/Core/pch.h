@@ -27,9 +27,6 @@
 #include "Game/Data/Gamedata.h"
 
 //~ Network
-#include "Protocol/Protocol.pb.h"
-#include "Protocol/Enum.pb.h"
-#include "Protocol/Struct.pb.h"
 #include "Network/ServerPacketHandler.h"
 #include "Network/PacketSend.h"
 #include "Utils/Utils.h"

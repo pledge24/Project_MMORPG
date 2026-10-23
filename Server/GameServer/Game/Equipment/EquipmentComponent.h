@@ -2,6 +2,7 @@
 #include "Game/Entities/EntityComponent.h"
 #include "Game/Entities/CombatStats.h"
 #include "Game/Items/ItemContainer.h"
+#include "Game/Items/ItemOutcome.h"
 
 /**
  * 플레이어가 입은 장비의 자리.
@@ -17,9 +18,9 @@ public:
 
     /**
      * 장비를 아이템 표의 착용 부위에 입히고 그 부위를 돌려준다.
-     * 장비가 아니거나 착용 조건에 맞지 않거나 그 부위가 차 있으면 아무것도 바꾸지 않고 nullopt.
+     * 장비가 아니거나 착용 조건에 맞지 않거나 그 부위가 차 있으면 아무것도 바꾸지 않고 그 사유를 돌려준다.
      */
-    optional<int32> Equip(const ItemInstance& item);
+    ItemOutcome<Protocol::GearPart> Equip(const ItemInstance& item);
     /**
      * DB에서 불러온 장비를 gearType 부위에 넣는다. 아이템 표의 부위와 다르거나 그 부위가 차 있으면 false.
      * 착용 조건은 보지 않으므로, 기획표의 조건이 높아져도 이미 입은 장비는 남는다.

@@ -279,49 +279,47 @@ static const ::_pb::Message* const file_default_instances[] = {
 
 const char descriptor_table_protodef_Entry_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\013Entry.proto\022\010Protocol\032\014Common.proto\032\014E"
-  "ntity.proto\032\nEnum.proto\032\014Struct.proto\"$\n"
-  "\014C_ENTER_GAME\022\024\n\014character_id\030\001 \001(\003\"\214\002\n\014"
-  "S_ENTER_GAME\022%\n\006result\030\001 \001(\0162\025.Protocol."
-  "EntryResult\022\016\n\006map_id\030\002 \001(\005\022\014\n\004name\030\003 \001("
-  "\t\0221\n\017character_class\030\004 \001(\0162\030.Protocol.Ch"
-  "aracterClass\022\r\n\005level\030\005 \001(\005\022!\n\005stats\030\006 \001"
-  "(\0132\022.Protocol.StatInfo\022(\n\npossession\030\007 \001"
-  "(\0132\024.Protocol.Possession\022(\n\013quick_slots\030"
-  "\010 \003(\0132\023.Protocol.QuickSlot\"\025\n\023C_MAP_LOAD"
-  "_COMPLETE\"^\n\014S_ENTER_ROOM\022%\n\006result\030\001 \001("
-  "\0162\025.Protocol.EntryResult\022\'\n\tmy_entity\030\002 "
-  "\001(\0132\024.Protocol.EntityInfo\"!\n\014C_USE_PORTA"
-  "L\022\021\n\tportal_id\030\001 \001(\005\"U\n\014S_USE_PORTAL\022%\n\006"
-  "result\030\001 \001(\0162\025.Protocol.EntryResult\022\023\n\006m"
-  "ap_id\030\002 \001(\005H\000\210\001\001B\t\n\007_map_id\"8\n\tC_RESPAWN"
-  "\022+\n\014respawn_type\030\001 \001(\0162\025.Protocol.Respaw"
-  "nType\"y\n\tS_RESPAWN\022%\n\006result\030\001 \001(\0162\025.Pro"
-  "tocol.EntryResult\022\023\n\006map_id\030\002 \001(\005H\000\210\001\001\022%"
-  "\n\rchanged_stats\030\003 \003(\0132\016.Protocol.StatB\t\n"
-  "\007_map_id\"\023\n\021C_RETURN_TO_LOBBY\":\n\021S_RETUR"
-  "N_TO_LOBBY\022%\n\006result\030\001 \001(\0162\025.Protocol.En"
-  "tryResult*\243\002\n\013EntryResult\022\030\n\024ENTRY_RESUL"
-  "T_SUCCESS\020\000\022$\n ENTRY_RESULT_CHARACTER_NO"
-  "T_FOUND\020\001\022&\n\"ENTRY_RESULT_PREVIOUS_SAVE_"
-  "PENDING\020\002\022\037\n\033ENTRY_RESULT_INVALID_PORTAL"
-  "\020\003\022$\n ENTRY_RESULT_TOO_FAR_FROM_PORTAL\020\004"
-  "\022\031\n\025ENTRY_RESULT_NOT_DEAD\020\005\022)\n%ENTRY_RES"
-  "ULT_UNSUPPORTED_RESPAWN_TYPE\020\006\022\037\n\033ENTRY_"
-  "RESULT_INTERNAL_ERROR\020\007*;\n\013RespawnType\022\025"
-  "\n\021RESPAWN_TYPE_NONE\020\000\022\025\n\021RESPAWN_TYPE_TO"
-  "WN\020\001b\006proto3"
+  "ntity.proto\032\nItem.proto\"$\n\014C_ENTER_GAME\022"
+  "\024\n\014character_id\030\001 \001(\003\"\214\002\n\014S_ENTER_GAME\022%"
+  "\n\006result\030\001 \001(\0162\025.Protocol.EntryResult\022\016\n"
+  "\006map_id\030\002 \001(\005\022\014\n\004name\030\003 \001(\t\0221\n\017character"
+  "_class\030\004 \001(\0162\030.Protocol.CharacterClass\022\r"
+  "\n\005level\030\005 \001(\005\022!\n\005stats\030\006 \001(\0132\022.Protocol."
+  "StatInfo\022(\n\npossession\030\007 \001(\0132\024.Protocol."
+  "Possession\022(\n\013quick_slots\030\010 \003(\0132\023.Protoc"
+  "ol.QuickSlot\"\025\n\023C_MAP_LOAD_COMPLETE\"^\n\014S"
+  "_ENTER_ROOM\022%\n\006result\030\001 \001(\0162\025.Protocol.E"
+  "ntryResult\022\'\n\tmy_entity\030\002 \001(\0132\024.Protocol"
+  ".EntityInfo\"!\n\014C_USE_PORTAL\022\021\n\tportal_id"
+  "\030\001 \001(\005\"U\n\014S_USE_PORTAL\022%\n\006result\030\001 \001(\0162\025"
+  ".Protocol.EntryResult\022\023\n\006map_id\030\002 \001(\005H\000\210"
+  "\001\001B\t\n\007_map_id\"8\n\tC_RESPAWN\022+\n\014respawn_ty"
+  "pe\030\001 \001(\0162\025.Protocol.RespawnType\"y\n\tS_RES"
+  "PAWN\022%\n\006result\030\001 \001(\0162\025.Protocol.EntryRes"
+  "ult\022\023\n\006map_id\030\002 \001(\005H\000\210\001\001\022%\n\rchanged_stat"
+  "s\030\003 \003(\0132\016.Protocol.StatB\t\n\007_map_id\"\023\n\021C_"
+  "RETURN_TO_LOBBY\":\n\021S_RETURN_TO_LOBBY\022%\n\006"
+  "result\030\001 \001(\0162\025.Protocol.EntryResult*\243\002\n\013"
+  "EntryResult\022\030\n\024ENTRY_RESULT_SUCCESS\020\000\022$\n"
+  " ENTRY_RESULT_CHARACTER_NOT_FOUND\020\001\022&\n\"E"
+  "NTRY_RESULT_PREVIOUS_SAVE_PENDING\020\002\022\037\n\033E"
+  "NTRY_RESULT_INVALID_PORTAL\020\003\022$\n ENTRY_RE"
+  "SULT_TOO_FAR_FROM_PORTAL\020\004\022\031\n\025ENTRY_RESU"
+  "LT_NOT_DEAD\020\005\022)\n%ENTRY_RESULT_UNSUPPORTE"
+  "D_RESPAWN_TYPE\020\006\022\037\n\033ENTRY_RESULT_INTERNA"
+  "L_ERROR\020\007*;\n\013RespawnType\022\025\n\021RESPAWN_TYPE"
+  "_NONE\020\000\022\025\n\021RESPAWN_TYPE_TOWN\020\001b\006proto3"
   ;
-static const ::_pbi::DescriptorTable* const descriptor_table_Entry_2eproto_deps[4] = {
+static const ::_pbi::DescriptorTable* const descriptor_table_Entry_2eproto_deps[3] = {
   &::descriptor_table_Common_2eproto,
   &::descriptor_table_Entity_2eproto,
-  &::descriptor_table_Enum_2eproto,
-  &::descriptor_table_Struct_2eproto,
+  &::descriptor_table_Item_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Entry_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Entry_2eproto = {
-    false, false, 1252, descriptor_table_protodef_Entry_2eproto,
+    false, false, 1238, descriptor_table_protodef_Entry_2eproto,
     "Entry.proto",
-    &descriptor_table_Entry_2eproto_once, descriptor_table_Entry_2eproto_deps, 4, 10,
+    &descriptor_table_Entry_2eproto_once, descriptor_table_Entry_2eproto_deps, 3, 10,
     schemas, file_default_instances, TableStruct_Entry_2eproto::offsets,
     file_level_metadata_Entry_2eproto, file_level_enum_descriptors_Entry_2eproto,
     file_level_service_descriptors_Entry_2eproto,

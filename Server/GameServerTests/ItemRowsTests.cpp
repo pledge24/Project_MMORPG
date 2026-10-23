@@ -47,7 +47,7 @@ namespace
         ItemRow consumable = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::CONSUMABLE, 0, POTION_UID, POTION_TEMPLATE_ID);
         consumable.stackCount = 7;
         ItemRow misc = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::MISC, 2, 3001, 30);
-        ItemRow equipped = MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+        ItemRow equipped = MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_PART_WEAPON);
         equipped.itemUid = 1002;
         equipped.enhanceLevel = 0;
         equipped.durability = 40;
@@ -99,10 +99,10 @@ TEST(ItemRowsTest, SectionOfRowTypeMatchesInventorySections)
 
 TEST(ItemRowsTest, EquippedRowGoesToItsGearPart)
 {
-    optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON));
+    optional<PlacedItem> placed = ItemRows::ToPlacedItem(MakeGearRow(ItemRowContainer::EQUIPPED, Protocol::GEAR_PART_WEAPON));
 
     ASSERT_TRUE(placed.has_value());
-    EXPECT_EQ(placed->address, (SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON })) << "착용 장비의 칸 번호는 장비 부위다";
+    EXPECT_EQ(placed->address, (SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON })) << "착용 장비의 칸 번호는 장비 부위다";
 }
 
 TEST(ItemRowsTest, RowValuesBecomeItem)
@@ -134,7 +134,7 @@ TEST(ItemRowsTest, UnknownPlaceIsRejected)
     ItemRow unknownContainer = MakeRow(static_cast<ItemRowContainer>(3), ItemRowType::CONSUMABLE, 0);
     ItemRow noSection = MakeRow(ItemRowContainer::INVENTORY, ItemRowType::NONE, 0);
     ItemRow unknownSection = MakeRow(ItemRowContainer::INVENTORY, static_cast<ItemRowType>(9), 0);
-    ItemRow equippedConsumable = MakeRow(ItemRowContainer::EQUIPPED, ItemRowType::CONSUMABLE, Protocol::GEAR_TYPE_WEAPON);
+    ItemRow equippedConsumable = MakeRow(ItemRowContainer::EQUIPPED, ItemRowType::CONSUMABLE, Protocol::GEAR_PART_WEAPON);
 
     for (const ItemRow& row : { unknownContainer, noSection, unknownSection, equippedConsumable })
     {
@@ -165,14 +165,14 @@ TEST(ItemRowsTest, InventoryItemBecomesRowOfItsSection)
 
 TEST(ItemRowsTest, EquippedItemBecomesGearRowAtItsPart)
 {
-    PlacedItem sword{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, ItemInstance{ SWORD_UID, SWORD_TEMPLATE_ID, 1, GearDetail{ 5, 70 } } };
+    PlacedItem sword{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON }, ItemInstance{ SWORD_UID, SWORD_TEMPLATE_ID, 1, GearDetail{ 5, 70 } } };
 
     optional<ItemRow> row = ItemRows::ToRow(sword);
 
     ASSERT_TRUE(row.has_value());
     EXPECT_EQ(row->container, ItemRowContainer::EQUIPPED);
     EXPECT_EQ(row->itemType, ItemRowType::GEAR);
-    EXPECT_EQ(row->slotIndex, Protocol::GEAR_TYPE_WEAPON);
+    EXPECT_EQ(row->slotIndex, Protocol::GEAR_PART_WEAPON);
     EXPECT_EQ(row->enhanceLevel, 5);
     EXPECT_EQ(row->durability, 70);
 }
@@ -212,7 +212,7 @@ TEST(ItemRowsTest, ItemsSurviveRoundTrip)
         { SlotAddress{ ContainerType::INVENTORY_GEAR, 0 }, ItemInstance{ SWORD_UID, SWORD_TEMPLATE_ID, 1, GearDetail{ 2, 50 } } },
         { SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 5 }, ItemInstance{ POTION_UID, POTION_TEMPLATE_ID, 9, nullopt } },
         { SlotAddress{ ContainerType::INVENTORY_MISC, 1 }, ItemInstance{ 3001, 30, 3, nullopt } },
-        { SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_HELMET }, ItemInstance{ 1003, 11, 1, GearDetail{ 0, 10 } } },
+        { SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_HELMET }, ItemInstance{ 1003, 11, 1, GearDetail{ 0, 10 } } },
     };
 
     for (const PlacedItem& item : items)

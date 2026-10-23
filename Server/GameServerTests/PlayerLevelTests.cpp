@@ -39,7 +39,7 @@ namespace
     void InstallWarriorLevelTable(int32 maxLevel)
     {
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = MakeLevelTable(maxLevel);
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = MakeLevelTable(maxLevel);
         Gamedata::Install(std::move(tables));
     }
 
@@ -80,7 +80,7 @@ protected:
     void LoadWithTotalExp(int64 totalExp)
     {
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.totalExp = totalExp;
 
@@ -97,7 +97,7 @@ TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
 {
     InstallWarriorLevelTable(3);
     player = EntityFactory::Create<Player>(PlayerSpawnParams());
-    PlayerTestAccess::CharacterClass(*player) = Protocol::CLASS_TYPE_WARRIOR;
+    PlayerTestAccess::CharacterClass(*player) = Protocol::CHARACTER_CLASS_WARRIOR;
 
     PlayerTestAccess::PlayerInfo(*player).set_level(2);
     EXPECT_FALSE(player->IsMaxLevel());
@@ -109,7 +109,7 @@ TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
 TEST_F(PlayerLevelTest, ClassWithoutLevelTableIsMaxLevel)
 {
     player = EntityFactory::Create<Player>(PlayerSpawnParams());
-    PlayerTestAccess::CharacterClass(*player) = Protocol::CLASS_TYPE_MAGE;
+    PlayerTestAccess::CharacterClass(*player) = Protocol::CHARACTER_CLASS_MAGE;
     PlayerTestAccess::PlayerInfo(*player).set_level(1);
 
     EXPECT_TRUE(player->IsMaxLevel()) << "레벨 표가 없으면 오를 레벨이 없다";
