@@ -99,7 +99,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `PlayerSaveDataTest` | 2 | 저장 스냅샷이 이후 변경을 따라가지 않음 · 들고 있는 아이템을 통째로 싣음 |
 | `PlayerUseItemTest` | 11 | 소모품 사용. 거절은 아이템 결과로 사유를 돌려줌. HP·MP 회복과 최대치 고정 · 요청의 uid와 칸의 아이템이 어긋나면 거절 · 장비 칸, 빈 칸, 모르는 템플릿, 죽은 플레이어 거절 · 템플릿별 재사용 대기 |
 | `ChatRequestsTest` | 3 | 채팅 메시지 검증. 보통 메시지 통과 · 빈 메시지 거절 · 길이 한도를 UTF-16 글자로 셈(한글 100자 통과, 101자 거절) |
-| `ItemChatRequestTest` | 6 | 룸의 아이템과 채팅 요청(시작하지 않은 룸 둘을 룸 관리자에 넣음). 착용 응답은 요청한 플레이어에게만 가고 외형 통지는 착용한 플레이어를 포함한 룸 전체에 감 · 거절한 착용은 결과만 싣고 외형 통지가 없음 · 해제의 외형 통지는 아이템 번호 0 · 거절한 소모품 사용의 결과 · 채팅 응답은 말한 플레이어에게만 가고 메시지 통지는 다른 룸까지 모든 룸에 말한 플레이어의 이름과 함께 감 · 빈 채팅은 거절하고 어느 룸에도 중계하지 않음 |
+| `ItemChatRequestTest` | 6 | 룸의 아이템과 채팅 요청(시작하지 않은 룸 둘을 룸 관리자에 넣음). 착용 응답은 요청한 플레이어에게만 가고 외형 통지는 착용한 플레이어를 포함한 룸 전체에 감 · 거절한 착용은 결과만 싣고 외형 통지가 없음 · 해제의 외형 통지는 아이템 번호 0 · 거절한 소모품 사용의 결과 · 채팅 응답은 말한 플레이어에게만 가고 메시지 통지는 말한 플레이어의 이름과 함께 그 룸에만 감(다른 룸은 받지 않음) · 빈 채팅은 거절하고 중계하지 않음 |
 | `LobbyDataTest` | 6 | 로비 표 검증과 변환. 슬롯 수와 생성할 수 있는 직업 · 범위 밖 슬롯 수(0, 256. 255는 통과) · 비었거나 모르는 직업이나 겹친 직업 · 행이 하나가 아님 · 실패한 불러오기가 이전 표를 남김 · 저장소의 실제 로비 표 통과와 옮겨 온 값 유지 |
 | `DataCrossCheckTest` | 2 | 기동할 때의 로비와 게임 기획 데이터 대조. 생성할 수 있는 직업마다 레벨 표가 있으면 통과 · 레벨 표가 없는 직업을 거절 |
 | `ProgressStorageTest` | 28 | 진행 저장소와 DAO(가짜 연결). 캐릭터, 상태, 골드 행 읽기와 계정, 골드 재화 번호 파라미터 · 진행 행이 없는 캐릭터는 기본 정보만 읽음 · 불러오기 하나가 트랜잭션 하나 · 첫 입장은 초기 진행 표와 1레벨 행으로 상태와 골드 행을 넣고 다시 불러옴 · 레벨 표가 없는 직업의 첫 입장은 아무것도 넣지 않고 되돌림 · 골드 행을 넣지 못하면 상태 행도 되돌림 · 다른 계정의 캐릭터 불러오기는 되돌림 · 다른 계정의 캐릭터 · 골드 행이 없으면 DBError · 아이템 행을 컨테이너와 구역에 붙이고 모르는 자리는 DBError · 불러오기 실패 뒤 빈 세션 · 입장은 저장한 좌표를 덮는 룸으로, 범위 밖이면 마을 리스폰 지점과 마을의 맵으로, 고를 룸이 없으면 거절 · 저장 하나가 트랜잭션 하나 · 레벨, 상태(누적 경험치, 맵, 위치), 골드 바인딩 · 행 상한을 넘는 아이템은 나눠 넣고 MERGE는 한 번 · 아이템이 없어도 MERGE · UID 없는 아이템, 갱신할 행이 없는 상태, DBError가 아닌 예외, 아이템 저장 실패의 되돌림 · 퀵슬롯은 같은 트랜잭션에서 아이템 다음에 MERGE하고 행 상한을 넘으면 나눠 넣음 · 빈 퀵슬롯이 든 사본은 되돌림 · 퀵슬롯 행 읽기 · 입장 패킷이 빈 퀵슬롯까지 모든 퀵슬롯을 실음 |
@@ -207,7 +207,7 @@ Server/Binary/Debug/GameServerTests.exe --gtest_also_run_disabled_tests --gtest_
 | 보상 결과 반영 | 존재. `UP1MyPlayerData::HandleReward`. 경험치와 레벨은 서버가 계산하므로 클라이언트는 사본에 쓰고 알리기만 한다 |
 | 퀵슬롯 등록 | 존재. `Player::ProcessSetQuickSlot`과 `QuickSlotComponent`의 `GetAll`, `CollectQuickSlots`, `Load`. 요청 패킷 읽기와 응답 전송은 `ItemRequests::HandleSetQuickSlot`에 있고 테스트하지 않는다 |
 | 퀵슬롯 사용 | 존재. 서버는 `Player::ProcessUseQuickSlot`, 클라이언트는 `UP1ItemActions::RequestUseQuickSlot`. 칸을 고른 뒤의 사용 규칙은 칸을 가리킨 사용과 같은 `Player::ProcessUseItem`에 있다. 요청 패킷 읽기와 응답 전송은 `ItemRequests::HandleUseQuickSlot`에, 1~9 키 바인딩은 `AP1InGamePlayerController`에 있고 테스트하지 않는다 |
-| 채팅 | 존재. 서버는 `ChatRequests::Validate`와 `ItemChatRequestTest`의 모든 룸 중계, 클라이언트는 `FP1ChatLog`, `P1ChatPackets`, `UP1ChatSubsystem`, `UP1ChatLineWidget::MakeMarkup`. 입력칸을 여닫는 것과 입력 모드는 `UP1ChatWidget`과 `UP1ScreenSubsystem`에 있고 사람이 PIE로 확인한다 |
+| 채팅 | 존재. 서버는 `ChatRequests::Validate`와 `ItemChatRequestTest`의 룸 중계, 클라이언트는 `FP1ChatLog`, `P1ChatPackets`, `UP1ChatSubsystem`, `UP1ChatLineWidget::MakeMarkup`. 입력칸을 여닫는 것과 입력 모드는 `UP1ChatWidget`과 `UP1ScreenSubsystem`에 있고 사람이 PIE로 확인한다 |
 | 퀵슬롯 표시 | 존재. `FP1SlotDisplay::FromQuickSlotRef`와 `UP1ItemContainer::CountItem`. 끌어 놓기와 슬롯 위젯 배치는 `UP1QuickSlotsWidget`에 있고 사람이 PIE로 확인한다 |
 | 접속 종료 저장 대기 | 존재. `SaveGate` 공개 API |
 | 진행 조율 | 존재. `ProgressCoordinator`의 진입점 네 개(`OnDisconnected`, `OnDuplicateConnection`, `RequestEnter`, `LeaveRoomAndSave`). 테스트는 DB 큐, 진행 저장소, 만료 타이머를 주입해 잡을 쌓아 두고 순서를 정해 돌린다. 세션 끊기는 `GameSession`에 있고 테스트하지 않는다. 밀어내기는 세션 관리자의 `BindAccount`에 있고, 앞 세션이 사유를 받는지와 끊긴 세션의 등록을 거두는지만 테스트한다 |

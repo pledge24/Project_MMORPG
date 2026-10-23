@@ -2,7 +2,6 @@
 #include "Network/ChatRequests.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
-#include "Game/Room/RoomManager.h"
 #include "Utils/EncodingConverter.h"
 
 optional<Protocol::ChatResult> ChatRequests::Validate(const string& message)
@@ -33,14 +32,10 @@ void ChatRequests::HandleChat(Room& room, const PlayerRef& player, const Protoco
     if (rejection.has_value())
         return;
 
-    // 채팅은 룸이 아니라 게임 서버 단위로 들린다. 받는 쪽은 다른 룸의 플레이어를 엔티티로 모르므로 이름을 싣는다.
+    // 받는 쪽에서 말한 플레이어의 엔티티가 이미 사라졌어도(룸을 막 떠났으면) 이름을 보여 줄 수 있게 이름을 싣는다.
     Protocol::S_CHAT_MESSAGE chatMessagePkt;
     chatMessagePkt.set_entity_id(player->GetEntityId());
     chatMessagePkt.set_message(pkt.message());
     chatMessagePkt.set_name(player->GetPlayerInfo().name());
-    const SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(chatMessagePkt);
-
-    // 룸의 플레이어 목록은 그 룸의 큐만 읽는다. 말한 플레이어의 룸도 같은 경로로 보내 룸마다 도착 순서를 큐가 정하게 한다.
-    for (const RoomRef& targetRoom : GRoomManager->GetAllRooms())
-        targetRoom->DoAsync([targetRoom, sendBuffer]() { targetRoom->Broadcast(sendBuffer); });
+    room.Broadcast(ServerPacketHandler::MakeSerializedPacket(chatMessagePkt));
 }

@@ -13,8 +13,8 @@
     룸의 아이템과 채팅 요청 테스트
 
     응답은 요청한 플레이어에게만 가고, 실패는 결과 enum 하나로 싣는다. 착용 외형은 요청한 플레이어를 포함한
-    룸의 모든 플레이어에게, 채팅 메시지는 말한 플레이어를 포함한 게임 서버의 모든 룸에 통지로 간다.
-    거절한 요청은 통지를 보내지 않는다.
+    룸의 모든 플레이어에게, 채팅 메시지는 말한 플레이어를 포함한 그 룸의 모든 플레이어에게 통지로 간다.
+    다른 룸에는 가지 않는다. 거절한 요청은 통지를 보내지 않는다.
 
     픽스처 결합도: 맵 표의 두 행으로 시작하지 않은 룸 둘을 ScopedTestRoomManager에 만든다. 요청한 플레이어와
     지켜보는 플레이어를 한 룸에, 다른 플레이어 하나를 다른 룸에 RecordingSession으로 묶어 넣는다.
@@ -217,7 +217,7 @@ TEST_F(ItemChatRequestTest, RejectedUseItemCarriesResult)
 
 /* 채팅 */
 
-TEST_F(ItemChatRequestTest, ChatRespondsToSpeakerAndRelaysToEveryRoom)
+TEST_F(ItemChatRequestTest, ChatRespondsToSpeakerAndRelaysToSpeakersRoomOnly)
 {
     Protocol::C_CHAT pkt;
     pkt.set_message("안녕하세요");
@@ -230,13 +230,14 @@ TEST_F(ItemChatRequestTest, ChatRespondsToSpeakerAndRelaysToEveryRoom)
     EXPECT_TRUE(observerSession->SentPackets<Protocol::S_CHAT>(PKT_S_CHAT).empty()) << "응답은 말한 플레이어에게만 간다";
 
     EXPECT_TRUE(otherRoomSession->SentPackets<Protocol::S_CHAT>(PKT_S_CHAT).empty());
+    EXPECT_TRUE(otherRoomSession->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE).empty()) << "다른 룸에는 중계하지 않는다";
 
-    for (const auto& session : { requesterSession, observerSession, otherRoomSession })
+    for (const auto& session : { requesterSession, observerSession })
     {
         const auto messages = session->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE);
-        ASSERT_EQ(messages.size(), 1u) << "말한 플레이어와 다른 룸의 플레이어도 메시지를 통지로 받는다";
+        ASSERT_EQ(messages.size(), 1u) << "말한 플레이어도 메시지를 통지로 받는다";
         EXPECT_EQ(messages[0].entity_id(), requester->GetEntityId());
-        EXPECT_EQ(messages[0].name(), REQUESTER_NAME) << "다른 룸의 플레이어는 엔티티로 이름을 찾지 못하므로 이름을 싣는다";
+        EXPECT_EQ(messages[0].name(), REQUESTER_NAME);
         EXPECT_EQ(messages[0].message(), "안녕하세요");
     }
 }
