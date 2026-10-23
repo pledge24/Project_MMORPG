@@ -71,3 +71,21 @@ TEST_F(AccountDAOTest, FailedQueryIsDBError)
 
     EXPECT_THROW(AccountDAO::RecordLogin(conn, ACCOUNT_ID), DBError);
 }
+
+// 로비 복귀는 로그인이 아니므로 계정 행을 만들거나 마지막 로그인 시각을 바꾸지 않고 슬롯 수만 읽는다.
+TEST_F(AccountDAOTest, LoadSlotCountBindsOnlyAccount)
+{
+    conn.QueueResult({ { int64(5) } });
+
+    EXPECT_EQ(AccountDAO::LoadCharacterSlotCount(conn, ACCOUNT_ID), 5);
+    ASSERT_EQ(conn.executedParams.size(), 1u);
+    ASSERT_EQ(conn.executedParams[0].size(), 1u);
+    EXPECT_EQ(get<int64>(conn.executedParams[0].at(0)), ACCOUNT_ID);
+}
+
+TEST_F(AccountDAOTest, LoadSlotCountWithoutAccountRowIsDBError)
+{
+    conn.QueueResult({});
+
+    EXPECT_THROW(AccountDAO::LoadCharacterSlotCount(conn, ACCOUNT_ID), DBError);
+}

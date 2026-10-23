@@ -82,3 +82,14 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
     Lobby->HandleEnterGame(bSuccess);
     return true;
 }
+
+bool Handle_S_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::S_RETURN_TO_LOBBY& pkt)
+{
+    if (auto* Lobby = GetSessionSubsystem<UP1LobbySubsystem>(session))
+    {
+        Lobby->HandleReturnToLobby(pkt.result() == Protocol::ENTRY_RESULT_SUCCESS);
+        return true;
+    }
+
+    return false;
+}

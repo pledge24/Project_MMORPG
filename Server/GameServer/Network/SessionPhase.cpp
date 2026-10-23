@@ -11,7 +11,7 @@ namespace
     }
 
     constexpr PhaseMask ANY_PHASE = Only(SessionPhase::BEFORE_LOBBY) | Only(SessionPhase::CONNECTING_LOBBY) | Only(SessionPhase::LOBBY)
-        | Only(SessionPhase::ENTERING_GAME) | Only(SessionPhase::IN_GAME);
+        | Only(SessionPhase::ENTERING_GAME) | Only(SessionPhase::IN_GAME) | Only(SessionPhase::RETURNING_TO_LOBBY);
 
     struct PacketPhases
     {
@@ -46,6 +46,7 @@ namespace
         { PKT_C_USE_QUICK_SLOT, Only(SessionPhase::IN_GAME) },
         { PKT_C_RESPAWN, Only(SessionPhase::IN_GAME) },
         { PKT_C_CHAT, Only(SessionPhase::IN_GAME) },
+        { PKT_C_RETURN_TO_LOBBY, Only(SessionPhase::IN_GAME) },
     };
 }
 

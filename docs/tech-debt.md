@@ -403,6 +403,8 @@ UBT는 테스트 파일 여럿을 한 번역 단위로 묶어 컴파일한다. �
 로그인 메뉴 위젯 하나가 모든 패널을 갖던 때는 이 텍스처를 `WBP_LoginMenu` 하나만 썼다. 2026년 10월 23일 화면마다 WBP를 나눈 뒤로는
 `WBP_Login`, `WBP_CharacterSelect`, `WBP_CharacterCreate`, `WBP_CharacterDelete`가 함께 쓴다. 옮기면 리다이렉터를 정리하고
 참조 에셋을 다시 저장해야 해서 화면을 나누는 작업에서 함께 하지 않았다.
+2026년 10월 23일 덧붙임: 게임 메뉴(`Screens/WBP_GameMenu`)도 `Btn1_*`, `Btn2_*`, `panel_small`을 쓴다. 이제 `Frontend/` 밖의 위젯도
+이 텍스처를 쓴다.
 
 ### 영향
 

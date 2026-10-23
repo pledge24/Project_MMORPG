@@ -23,11 +23,14 @@ void UP1LoginMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // 로그인 화면에서 시작. 로그인 맵은 로그인 단계에서만 다시 열린다.
+    // 지금 단계의 화면에서 시작. 게임에서 로비나 월드 선택으로 돌아오면 로그인 맵이 그 단계로 열린다.
+    UGameInstance* GameInstance = GetGameInstance();
+    UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr;
     SetActiveScreen(LoginScreen);
+    if (EntryFlow)
+        ShowScreenForPhase(EntryFlow->GetPhase());
 
     // 응답 구독. 떼는 것은 NativeDestruct가 한다.
-    UGameInstance* GameInstance = GetGameInstance();
     if (UP1LobbySubsystem* Lobby = GameInstance ? GameInstance->GetSubsystem<UP1LobbySubsystem>() : nullptr)
     {
         // 목록을 받거나 생성·삭제에 성공하면 캐릭터 선택 화면으로 돌아간다.
@@ -35,7 +38,7 @@ void UP1LoginMenuWidget::NativeConstruct()
         Lobby->OnDeleteCharacterFailed.AddUObject(this, &UP1LoginMenuWidget::HandleDeleteCharacterFailed);
     }
 
-    if (UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr)
+    if (EntryFlow)
     {
         EntryFlow->OnPhaseChanged.AddUObject(this, &UP1LoginMenuWidget::ShowScreenForPhase);
         EntryFlow->OnNotice.AddUObject(this, &UP1LoginMenuWidget::ShowNotice);
@@ -67,6 +70,9 @@ void UP1LoginMenuWidget::ShowScreenForPhase(EP1EntryPhase Phase)
     case EP1EntryPhase::WorldSelect:
         SetActiveScreen(WorldSelectScreen);
         WorldSelectScreen->Open();
+        break;
+    case EP1EntryPhase::Lobby:
+        ShowCharacterSelect();
         break;
     default:
         break;

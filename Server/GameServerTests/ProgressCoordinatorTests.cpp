@@ -91,6 +91,12 @@ protected:
         room->EnterPlayer(player, enterData);
     }
 
+    /** 로비 복귀. 저장 뒤의 일은 목록을 보낸 것으로 기록한다. */
+    void ReturnToLobby()
+    {
+        coordinator.OnReturnToLobby(USER_ID, player, [this]() { events.push_back("list"); });
+    }
+
     void RequestEnter()
     {
         coordinator.RequestEnter(USER_ID, {
@@ -122,6 +128,7 @@ protected:
     deque<CallbackType> dbJobs;
     vector<CallbackType> timers;
     vector<string> events;
+    vector<PlayerSaveData> savedData;
     bool failSave = false;
 
     ProgressCoordinator coordinator{
@@ -130,6 +137,7 @@ protected:
         [this](const PlayerSaveData& data)
         {
             events.push_back("save");
+            savedData.push_back(data);
             if (failSave)
                 throw runtime_error("저장 실패");
         },
@@ -376,4 +384,105 @@ TEST_F(ProgressCoordinatorTest, LateDuplicateConnectionBeforeSaveStillWaitsForSa
     RunDBJobs();
 
     EXPECT_EQ(events, vector<string>({ "save", "load" }));
+}
+
+// 로비 복귀: 곧바로 룸에서 퇴장하고, 캐릭터 목록은 저장이 끝난 뒤에 보낸다. 먼저 보내면 저장 전의 레벨이 보인다.
+TEST_F(ProgressCoordinatorTest, ReturnToLobbySendsListAfterSave)
+{
+    EnterRoom();
+
+    ReturnToLobby();
+    EXPECT_FALSE(room->Contains(player->GetEntityId())) << "복귀를 받으면 곧바로 룸에서 퇴장한다";
+    EXPECT_TRUE(events.empty()) << "저장 잡이 돌기 전에는 목록을 보내지 않는다";
+
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "list" }));
+}
+
+TEST_F(ProgressCoordinatorTest, ReturnToLobbyBeforeFirstRoomEntrySendsListWithoutSave)
+{
+    ReturnToLobby();
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "list" })) << "룸에 들어간 적이 없으면 바뀐 진행이 없어 저장하지 않는다";
+}
+
+// 복귀 중에 연결이 끊기면 접속 종료도 같은 플레이어를 저장하려 한다. 두 번 저장하면 앞의 저장 잡이 대기를 푼 뒤에
+// 뒤의 저장이 돌아, 그사이 입장한 새 세션의 불러오기 뒤에 낡은 저장이 덮인다.
+TEST_F(ProgressCoordinatorTest, DisconnectDuringReturnSavesOnce)
+{
+    EnterRoom();
+
+    ReturnToLobby();
+    coordinator.OnDisconnected(USER_ID, player);
+    RunDBJobs();
+
+    EXPECT_EQ(ranges::count(events, string("save")), 1);
+}
+
+// 복귀의 저장이 끝난 뒤에 접속 종료가 같은 플레이어로 와도 대기를 남기지 않는다. 남기면 다음 입장이 상한까지 막힌다.
+TEST_F(ProgressCoordinatorTest, DisconnectAfterReturnSaveDoesNotBlockEnter)
+{
+    EnterRoom();
+    ReturnToLobby();
+    RunDBJobs();
+
+    coordinator.OnDisconnected(USER_ID, player);
+    RunDBJobs();
+    events.clear();
+
+    RequestEnter();
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "load" }));
+    EXPECT_TRUE(timers.empty()) << "기다릴 저장이 없으면 만료 타이머를 걸지 않는다";
+}
+
+// 복귀한 뒤 다시 입장하면 복귀가 저장한 진행을 불러온다. 같은 계정의 입장은 그 저장이 끝나야 불러온다.
+TEST_F(ProgressCoordinatorTest, ReenterAfterReturnLoadsAfterSave)
+{
+    EnterRoom();
+    ReturnToLobby();
+    RunDBJobs();
+
+    RequestEnter();
+    RunDBJobs();
+
+    EXPECT_EQ(events, vector<string>({ "save", "list", "load" }));
+}
+
+// 사망한 채 복귀하면 접속 종료와 같이 마을로 리스폰한 상태로 저장한다.
+TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
+{
+    constexpr int32 TOWN_ROOM_ID = 1;
+    constexpr int32 TOWN_MAP_ID = 1001;
+
+    LevelTemplate level1;
+    level1.level = 1;
+    level1.maxHp = 100;
+
+    MapTemplate town;
+    town.templateId = TOWN_ROOM_ID;
+    town.mapId = TOWN_MAP_ID;
+    town.respawnPoint = TemplatePos{ 300.f, 0.f, 0.f };
+
+    GamedataTables tables;
+    tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+    tables.maps[TOWN_ROOM_ID] = town;
+    tables.townRoomId = TOWN_ROOM_ID;
+    Gamedata::Install(std::move(tables));
+
+    EnterRoom();
+    AttackInfo lethalAttack;
+    lethalAttack.damage = 1000;
+    player->OnHit(nullptr, lethalAttack);
+    ASSERT_TRUE(player->IsDead());
+
+    ReturnToLobby();
+    RunDBJobs();
+
+    ASSERT_EQ(savedData.size(), 1u);
+    EXPECT_EQ(savedData[0].progress.mapId, TOWN_MAP_ID);
+    EXPECT_EQ(savedData[0].progress.hp, 50) << "마을 리스폰은 HP를 절반으로 채운다";
 }

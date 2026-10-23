@@ -41,6 +41,8 @@ enum : uint16
 	PKT_S_USE_PORTAL = 305,
 	PKT_C_RESPAWN = 306,
 	PKT_S_RESPAWN = 307,
+	PKT_C_RETURN_TO_LOBBY = 308,
+	PKT_S_RETURN_TO_LOBBY = 309,
 	PKT_C_CONNECT_LOBBY = 200,
 	PKT_S_CONNECT_LOBBY = 201,
 	PKT_S_CHARACTER_LIST = 202,
@@ -106,6 +108,7 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt);
 bool Handle_S_USE_PORTAL(PacketSessionRef& session, Protocol::S_USE_PORTAL& pkt);
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt);
+bool Handle_S_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::S_RETURN_TO_LOBBY& pkt);
 bool Handle_S_CONNECT_LOBBY(PacketSessionRef& session, Protocol::S_CONNECT_LOBBY& pkt);
 bool Handle_S_CHARACTER_LIST(PacketSessionRef& session, Protocol::S_CHARACTER_LIST& pkt);
 bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt);
@@ -141,6 +144,7 @@ public:
 		GPacketHandler[PKT_S_ENTER_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ENTER_ROOM>(Handle_S_ENTER_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_S_USE_PORTAL] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_USE_PORTAL>(Handle_S_USE_PORTAL, session, buffer, len); };
 		GPacketHandler[PKT_S_RESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_RESPAWN>(Handle_S_RESPAWN, session, buffer, len); };
+		GPacketHandler[PKT_S_RETURN_TO_LOBBY] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_RETURN_TO_LOBBY>(Handle_S_RETURN_TO_LOBBY, session, buffer, len); };
 		GPacketHandler[PKT_S_CONNECT_LOBBY] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CONNECT_LOBBY>(Handle_S_CONNECT_LOBBY, session, buffer, len); };
 		GPacketHandler[PKT_S_CHARACTER_LIST] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHARACTER_LIST>(Handle_S_CHARACTER_LIST, session, buffer, len); };
 		GPacketHandler[PKT_S_CREATE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CREATE_CHARACTER>(Handle_S_CREATE_CHARACTER, session, buffer, len); };
@@ -177,6 +181,7 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_MAP_LOAD_COMPLETE& pkt) { return MakeSerializedPacket(pkt, PKT_C_MAP_LOAD_COMPLETE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_PORTAL& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_PORTAL); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_C_RESPAWN); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_RETURN_TO_LOBBY& pkt) { return MakeSerializedPacket(pkt, PKT_C_RETURN_TO_LOBBY); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_CONNECT_LOBBY& pkt) { return MakeSerializedPacket(pkt, PKT_C_CONNECT_LOBBY); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_CREATE_CHARACTER); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_DELETE_CHARACTER); }

@@ -41,6 +41,9 @@ void UP1CharacterSelectWidget::NativeConstruct()
         Lobby->OnDeleteCharacterFailed.AddUObject(this, &UP1CharacterSelectWidget::ShowDescription);
         Lobby->OnEnterGameFailed.AddUObject(this, &UP1CharacterSelectWidget::ShowEnterGameFailed);
     }
+
+    // 로비 복귀는 목록을 받은 뒤에 로그인 맵을 연다. 이 화면이 생길 때는 목록 변경 알림이 이미 지나갔다.
+    Refresh();
 }
 
 void UP1CharacterSelectWidget::NativeDestruct()

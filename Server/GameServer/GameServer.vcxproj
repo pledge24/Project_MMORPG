@@ -204,6 +204,7 @@
     <ClInclude Include="Utils\EncodingConverter.h" />
     <ClInclude Include="Lobby\CharacterCreation.h" />
     <ClInclude Include="Lobby\LobbyRequests.h" />
+    <ClInclude Include="Lobby\LobbyReturn.h" />
     <ClInclude Include="Game\Progress\Leveling.h" />
     <ClInclude Include="Game\Progress\InitialProgress.h" />
     <ClInclude Include="Core\DataCrossCheck.h" />
@@ -338,6 +339,7 @@
     <ClCompile Include="Lobby\CharacterCreation.cpp" />
     <ClCompile Include="Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="Lobby\LobbyRequests.cpp" />
+    <ClCompile Include="Lobby\LobbyReturn.cpp" />
     <ClCompile Include="Game\Progress\Leveling.cpp" />
     <ClCompile Include="Game\Progress\InitialProgress.cpp" />
     <ClCompile Include="Core\DataCrossCheck.cpp" />

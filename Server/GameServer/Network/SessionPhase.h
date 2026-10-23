@@ -8,6 +8,7 @@ enum class SessionPhase : uint8
     LOBBY,              // 로비에서 캐릭터를 다룬다
     ENTERING_GAME,      // 고른 캐릭터로 게임에 입장하는 중이다. 입장이 끝나거나 거절될 때까지 로비 요청을 받지 않는다
     IN_GAME,            // 게임에 입장했다
+    RETURNING_TO_LOBBY, // 로비 복귀를 요청했고 진행 저장을 기다린다. 저장이 끝나면 로비로 돌아간다
 };
 
 /** 로그에 쓸 단계 이름. */
@@ -20,6 +21,7 @@ inline string_view ToString(SessionPhase phase)
     case SessionPhase::LOBBY: return "로비";
     case SessionPhase::ENTERING_GAME: return "게임 입장 중";
     case SessionPhase::IN_GAME: return "게임";
+    case SessionPhase::RETURNING_TO_LOBBY: return "로비 복귀 중";
     }
 
     return "알 수 없음";

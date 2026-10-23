@@ -2,11 +2,13 @@
 #include <gtest/gtest.h>
 #include "RecordingSession.h"
 #include "Network/GameEntry.h"
+#include "Lobby/LobbyReturn.h"
+#include "Game/Entities/Player.h"
 
 /*--------------------------------------------------------------
     세션 단계와 단계별 허용표 테스트
 
-    세션은 로비 접속 전, 로비 접속 중, 로비, 게임 입장 중, 게임 다섯 단계를 거치고, 단계마다 받는 패킷이 다르다.
+    세션은 로비 접속 전, 로비 접속 중, 로비, 게임 입장 중, 게임, 로비 복귀 중 여섯 단계를 거치고, 단계마다 받는 패킷이 다르다.
     단계를 보지 않던 때는 게임에 입장한 세션이 플레이 중인 캐릭터를 지울 수 있었고, 다른 계정의
     인증 티켓으로 로비 접속을 다시 보내면 세션의 계정 번호만 바뀌었다.
 
@@ -19,6 +21,7 @@ namespace
     constexpr SessionPhase ALL_PHASES[] =
     {
         SessionPhase::BEFORE_LOBBY, SessionPhase::CONNECTING_LOBBY, SessionPhase::LOBBY, SessionPhase::ENTERING_GAME, SessionPhase::IN_GAME,
+        SessionPhase::RETURNING_TO_LOBBY,
     };
 
     struct ExpectedPhases
@@ -54,6 +57,7 @@ namespace
         { PKT_C_USE_QUICK_SLOT, "C_USE_QUICK_SLOT", IN_GAME_ONLY },
         { PKT_C_RESPAWN, "C_RESPAWN", IN_GAME_ONLY },
         { PKT_C_CHAT, "C_CHAT", IN_GAME_ONLY },
+        { PKT_C_RETURN_TO_LOBBY, "C_RETURN_TO_LOBBY", IN_GAME_ONLY },
     };
 
     // 생성된 Init은 핸들러가 없는 칸에 Handle_INVALID 함수 포인터를 넣고, 받는 패킷의 칸에는 람다를 넣는다.
@@ -186,4 +190,79 @@ TEST(GameEntryFinishTest, FailureReturnsSessionToLobby)
     const vector<Protocol::S_ENTER_GAME> responses = session->SentPackets<Protocol::S_ENTER_GAME>(PKT_S_ENTER_GAME);
     ASSERT_EQ(responses.size(), 1u);
     EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_PREVIOUS_SAVE_PENDING);
+}
+
+namespace
+{
+    // 게임에 입장해 플레이어를 등록한 세션.
+    shared_ptr<RecordingSession> MakeInGameSession()
+    {
+        shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
+        session->BeginLobbyConnect();
+        session->CompleteLobbyConnect();
+        session->BeginGameEntry();
+        session->CompleteGameEntry();
+        EXPECT_TRUE(session->TryRegisterPlayer(make_shared<Player>()));
+        return session;
+    }
+}
+
+TEST(SessionPhaseTest, LobbyReturnStartsOnlyInGame)
+{
+    RecordingSession session;
+    EXPECT_FALSE(session.BeginLobbyReturn()) << "게임에 입장하지 않은 세션은 로비로 복귀하지 않는다";
+
+    session.BeginLobbyConnect();
+    session.CompleteLobbyConnect();
+    EXPECT_FALSE(session.BeginLobbyReturn());
+    EXPECT_FALSE(session.CompleteLobbyReturn()) << "복귀를 시작하지 않은 세션은 복귀를 마치지 않는다";
+    EXPECT_EQ(session.GetPhase(), SessionPhase::LOBBY);
+}
+
+TEST(SessionPhaseTest, LobbyReturnGoesBackToLobbyWithoutPlayer)
+{
+    shared_ptr<RecordingSession> session = MakeInGameSession();
+
+    ASSERT_TRUE(session->BeginLobbyReturn());
+    EXPECT_EQ(session->GetPhase(), SessionPhase::RETURNING_TO_LOBBY);
+    EXPECT_FALSE(session->BeginLobbyReturn()) << "복귀 중인 세션은 두 번째 복귀를 시작하지 않는다";
+    EXPECT_NE(session->GetPlayer(), nullptr) << "저장이 끝날 때까지 플레이어를 남긴다. 그사이 끊기면 접속 종료가 그 플레이어를 본다";
+
+    ASSERT_TRUE(session->CompleteLobbyReturn());
+    EXPECT_EQ(session->GetPhase(), SessionPhase::LOBBY);
+    EXPECT_EQ(session->GetPlayer(), nullptr);
+    EXPECT_TRUE(session->TryRegisterPlayer(make_shared<Player>())) << "복귀한 세션은 같은 연결로 다시 입장한다";
+}
+
+// 목록을 받은 클라이언트는 곧바로 로비 요청을 보낸다. 응답 뒤에 단계를 바꾸면 그 요청이 복귀 중 단계에서 버려진다.
+TEST(LobbyReturnFinishTest, SuccessMovesSessionToLobbyThenSendsResponseAndList)
+{
+    shared_ptr<RecordingSession> session = MakeInGameSession();
+    session->BeginLobbyReturn();
+
+    Protocol::S_CHARACTER_LIST characterListPkt;
+    characterListPkt.set_character_slot_count(3);
+    LobbyReturn::Finish(session, characterListPkt);
+
+    EXPECT_EQ(session->GetPhase(), SessionPhase::LOBBY);
+    const vector<Protocol::S_RETURN_TO_LOBBY> responses = session->SentPackets<Protocol::S_RETURN_TO_LOBBY>(PKT_S_RETURN_TO_LOBBY);
+    ASSERT_EQ(responses.size(), 1u);
+    EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_SUCCESS);
+    const vector<Protocol::S_CHARACTER_LIST> lists = session->SentPackets<Protocol::S_CHARACTER_LIST>(PKT_S_CHARACTER_LIST);
+    ASSERT_EQ(lists.size(), 1u);
+    EXPECT_EQ(lists[0].character_slot_count(), 3);
+}
+
+TEST(LobbyReturnFinishTest, ListLoadFailureSendsInternalErrorWithoutList)
+{
+    shared_ptr<RecordingSession> session = MakeInGameSession();
+    session->BeginLobbyReturn();
+
+    LobbyReturn::Finish(session, nullopt);
+
+    const vector<Protocol::S_RETURN_TO_LOBBY> responses = session->SentPackets<Protocol::S_RETURN_TO_LOBBY>(PKT_S_RETURN_TO_LOBBY);
+    ASSERT_EQ(responses.size(), 1u);
+    EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_INTERNAL_ERROR);
+    EXPECT_TRUE(session->SentPackets<Protocol::S_CHARACTER_LIST>(PKT_S_CHARACTER_LIST).empty());
+    EXPECT_NE(session->GetPhase(), SessionPhase::LOBBY) << "목록이 없는 세션을 로비로 받지 않는다. 결과를 알린 뒤 끊는다";
 }

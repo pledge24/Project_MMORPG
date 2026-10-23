@@ -42,6 +42,7 @@ void UP1LobbySubsystem::RemoveListener(const UObject* Listener)
     OnDeleteCharacterFailed.RemoveAll(Listener);
     OnEnterGameFailed.RemoveAll(Listener);
     OnEnterGameSucceeded.RemoveAll(Listener);
+    OnReturnToLobbyFailed.RemoveAll(Listener);
 }
 
 void UP1LobbySubsystem::ConnectLobby(const FString& AuthTicket)
@@ -184,4 +185,13 @@ void UP1LobbySubsystem::HandleEnterGame(bool bSuccess)
     }
 
     OnEnterGameSucceeded.Broadcast();
+}
+
+void UP1LobbySubsystem::HandleReturnToLobby(bool bSuccess)
+{
+    if (bSuccess)
+        return;
+
+    UE_LOG(LogP1Lobby, Warning, TEXT("서버가 로비 복귀의 캐릭터 목록을 불러오지 못함"));
+    OnReturnToLobbyFailed.Broadcast();
 }
