@@ -40,7 +40,7 @@ namespace
     Protocol::C_CREATE_CHARACTER MakeCreateWarrior()
     {
         Protocol::C_CREATE_CHARACTER pkt;
-        pkt.set_character_class(Protocol::CLASS_TYPE_WARRIOR);
+        pkt.set_character_class(Protocol::CHARACTER_CLASS_WARRIOR);
         pkt.set_name("전사");
         return pkt;
     }
@@ -75,7 +75,7 @@ protected:
         LevelTemplate level1;
         level1.level = 1;
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         ServerPacketHandler::Init();
@@ -151,7 +151,7 @@ TEST_F(PacketHandlerTest, FailedPacketIsLogged)
 
     // 플레이어가 없는 세션의 채팅은 핸들러가 거절한다.
     Protocol::C_CHAT chatPkt;
-    chatPkt.set_msg("hello");
+    chatPkt.set_message("hello");
     const string log = Receive(chatPkt, PKT_C_CHAT);
 
     EXPECT_NE(log.find(format("패킷 {} 처리에 실패했다", static_cast<int32>(PKT_C_CHAT))), string::npos)
@@ -283,13 +283,13 @@ TEST_F(PacketHandlerTest, LobbyRequestsInGameAreDropped)
 TEST_F(PacketHandlerTest, UncreatableClassIsRejectedWithoutDBJob)
 {
     LobbyTables lobbyTables;
-    lobbyTables.creatableClasses = { Protocol::CLASS_TYPE_WARRIOR };
+    lobbyTables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
     LobbyData::Install(std::move(lobbyTables));
     ConnectLobby();
 
     Protocol::C_CREATE_CHARACTER createPkt;
     createPkt.set_name("마법사");
-    createPkt.set_character_class(Protocol::CLASS_TYPE_MAGE);
+    createPkt.set_character_class(Protocol::CHARACTER_CLASS_MAGE);
     Receive(createPkt, PKT_C_CREATE_CHARACTER);
 
     EXPECT_EQ(TakePushedDBJob(), nullptr);

@@ -74,7 +74,7 @@ struct S_DISCONNECTDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_DISCONNECTDefaultTypeInternal _S_DISCONNECT_default_instance_;
 }  // namespace Protocol
 static ::_pb::Metadata file_level_metadata_Common_2eproto[4];
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Common_2eproto[2];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Common_2eproto[4];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Common_2eproto = nullptr;
 
 const uint32_t TableStruct_Common_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
@@ -132,19 +132,25 @@ const char descriptor_table_protodef_Common_2eproto[] PROTOBUF_SECTION_VARIABLE(
   ".StatInfo.ValuesEntry\032-\n\013ValuesEntry\022\013\n\003"
   "key\030\001 \001(\005\022\r\n\005value\030\002 \001(\003:\0028\001\":\n\014S_DISCON"
   "NECT\022*\n\006reason\030\001 \001(\0162\032.Protocol.Disconne"
-  "ctReason*\325\001\n\010StatType\022\022\n\016STAT_TYPE_NONE\020"
-  "\000\022\024\n\020STAT_TYPE_MAX_HP\020\001\022\020\n\014STAT_TYPE_HP\020"
-  "\002\022\024\n\020STAT_TYPE_MAX_MP\020\003\022\020\n\014STAT_TYPE_MP\020"
-  "\004\022\035\n\031STAT_TYPE_PHYSICAL_ATTACK\020\005\022\034\n\030STAT"
-  "_TYPE_MAGICAL_ATTACK\020\006\022\025\n\021STAT_TYPE_MAX_"
-  "EXP\020\007\022\021\n\rSTAT_TYPE_EXP\020\010*Z\n\020DisconnectRe"
-  "ason\022\032\n\026DISCONNECT_REASON_NONE\020\000\022*\n&DISC"
-  "ONNECT_REASON_DUPLICATE_CONNECTION\020\001b\006pr"
-  "oto3"
+  "ctReason*a\n\016CharacterClass\022\030\n\024CHARACTER_"
+  "CLASS_NONE\020\000\022\033\n\027CHARACTER_CLASS_WARRIOR\020"
+  "\001\022\030\n\024CHARACTER_CLASS_MAGE\020\002*\234\001\n\010GearPart"
+  "\022\022\n\016GEAR_PART_NONE\020\000\022\024\n\020GEAR_PART_HELMET"
+  "\020\001\022\023\n\017GEAR_PART_CHEST\020\002\022\022\n\016GEAR_PART_LEG"
+  "S\020\003\022\022\n\016GEAR_PART_ARMS\020\004\022\023\n\017GEAR_PART_BOO"
+  "TS\020\005\022\024\n\020GEAR_PART_WEAPON\020\006*\325\001\n\010StatType\022"
+  "\022\n\016STAT_TYPE_NONE\020\000\022\024\n\020STAT_TYPE_MAX_HP\020"
+  "\001\022\020\n\014STAT_TYPE_HP\020\002\022\024\n\020STAT_TYPE_MAX_MP\020"
+  "\003\022\020\n\014STAT_TYPE_MP\020\004\022\035\n\031STAT_TYPE_PHYSICA"
+  "L_ATTACK\020\005\022\034\n\030STAT_TYPE_MAGICAL_ATTACK\020\006"
+  "\022\025\n\021STAT_TYPE_MAX_EXP\020\007\022\021\n\rSTAT_TYPE_EXP"
+  "\020\010*Z\n\020DisconnectReason\022\032\n\026DISCONNECT_REA"
+  "SON_NONE\020\000\022*\n&DISCONNECT_REASON_DUPLICAT"
+  "E_CONNECTION\020\001b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Common_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Common_2eproto = {
-    false, false, 564, descriptor_table_protodef_Common_2eproto,
+    false, false, 822, descriptor_table_protodef_Common_2eproto,
     "Common.proto",
     &descriptor_table_Common_2eproto_once, nullptr, 0, 4,
     schemas, file_default_instances, TableStruct_Common_2eproto::offsets,
@@ -158,9 +164,43 @@ PROTOBUF_ATTRIBUTE_WEAK const ::_pbi::DescriptorTable* descriptor_table_Common_2
 // Force running AddDescriptors() at dynamic initialization time.
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY2 static ::_pbi::AddDescriptorsRunner dynamic_init_dummy_Common_2eproto(&descriptor_table_Common_2eproto);
 namespace Protocol {
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CharacterClass_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Common_2eproto);
   return file_level_enum_descriptors_Common_2eproto[0];
+}
+bool CharacterClass_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearPart_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Common_2eproto);
+  return file_level_enum_descriptors_Common_2eproto[1];
+}
+bool GearPart_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Common_2eproto);
+  return file_level_enum_descriptors_Common_2eproto[2];
 }
 bool StatType_IsValid(int value) {
   switch (value) {
@@ -181,7 +221,7 @@ bool StatType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DisconnectReason_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Common_2eproto);
-  return file_level_enum_descriptors_Common_2eproto[1];
+  return file_level_enum_descriptors_Common_2eproto[3];
 }
 bool DisconnectReason_IsValid(int value) {
   switch (value) {

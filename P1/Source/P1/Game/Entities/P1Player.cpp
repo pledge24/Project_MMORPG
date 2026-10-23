@@ -54,13 +54,13 @@ void AP1Player::PostInitializeComponents()
         ArmorMesh->SetLeaderPoseComponent(GetMesh());
     }
 
-    // 서버가 보내는 부위 번호(GearType)와 메시 컴포넌트를 잇는다.
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_HELMET, HelmetMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_CHEST, ChestMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_LEGS, LegsMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_ARMS, ArmsMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_BOOTS, BootsMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_WEAPON, WeaponMesh);
+    // 서버가 보내는 부위 번호(GearPart)와 메시 컴포넌트를 잇는다.
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_HELMET, HelmetMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_CHEST, ChestMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_LEGS, LegsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_ARMS, ArmsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_BOOTS, BootsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_WEAPON, WeaponMesh);
 }
 
 void AP1Player::BeginPlay()

@@ -6,10 +6,7 @@ package Protocol;
 
 import "Common.proto";
 import "Entity.proto";
-
-// 직업, 소지품, 퀵슬롯은 아직 옛 파일에 있다. 그 자료형을 옮기는 티켓이 이 import를 바꾼다
-import "Enum.proto";
-import "Struct.proto";
+import "Item.proto";
 
 enum EntryResult
 {

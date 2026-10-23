@@ -35,7 +35,7 @@ protected:
 
         LobbyTables tables;
         tables.defaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
-        tables.creatableClasses = { Protocol::CLASS_TYPE_WARRIOR };
+        tables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
         LobbyData::Install(std::move(tables));
     }
 
@@ -59,7 +59,7 @@ protected:
     // 캐릭터를 하나 만든다. 계정 행은 테스트가 RecordLogin으로 먼저 만든다.
     CreateCharacterResult Create(int64 accountId, int64 characterId, const string& name)
     {
-        return CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, name, Protocol::CLASS_TYPE_WARRIOR);
+        return CharacterListDAO::CreateCharacter(Connection(), accountId, characterId, name, Protocol::CHARACTER_CLASS_WARRIOR);
     }
 
     std::optional<int64> CountRows(const wstring& table, const wstring& where)
@@ -230,7 +230,7 @@ TEST_F(DISABLED_GameDBCharacterListTest, ListExcludesDeletedCharacters)
     ASSERT_EQ(characters.size(), 1u);
     EXPECT_EQ(characters[0].characterId, KEPT_ID);
     EXPECT_EQ(characters[0].name, "DB목록_남김");
-    EXPECT_EQ(characters[0].classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(characters[0].classId, Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(characters[0].level, 7) << "목록의 레벨은 DB에 저장된 사본이다";
 }
 

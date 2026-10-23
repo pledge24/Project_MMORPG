@@ -11,9 +11,9 @@ namespace ItemRequests
     void HandleBuyItem(Room& room, const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt);
     void HandleSellItem(Room& room, const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt);
     void HandleUseItem(Room& room, const PlayerRef& player, const Protocol::C_USE_ITEM& pkt);
-    /** 성공하면 같은 룸의 다른 플레이어에게 외형(부위와 템플릿)만 알린다. */
+    /** 성공하면 본인을 포함한 룸의 모든 플레이어에게 외형(부위와 템플릿)을 알린다. */
     void HandleEquipGear(Room& room, const PlayerRef& player, const Protocol::C_EQUIP_GEAR& pkt);
-    /** 성공하면 같은 룸의 다른 플레이어에게 외형(부위와 템플릿)만 알린다. */
+    /** 성공하면 본인을 포함한 룸의 모든 플레이어에게 외형(부위와 템플릿)을 알린다. */
     void HandleUnequipGear(Room& room, const PlayerRef& player, const Protocol::C_UNEQUIP_GEAR& pkt);
     void HandleSetQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_SET_QUICK_SLOT& pkt);
     /** 응답은 소모품 사용과 같은 S_USE_ITEM이다. */

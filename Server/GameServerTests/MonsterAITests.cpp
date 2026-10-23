@@ -32,7 +32,7 @@ namespace
     PlayerProgress MakeAliveProgress()
     {
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.hp = PLAYER_MAX_HP;
         return progress;
@@ -68,7 +68,7 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monsterTemplate;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;

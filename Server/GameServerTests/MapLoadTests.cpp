@@ -99,7 +99,7 @@ protected:
         tables.maps[FIELD_ROOM] = MakeRoomTemplate(FIELD_ROOM, MAP_A, -10000.f);
         tables.maps[OTHER_MAP_ROOM] = MakeRoomTemplate(OTHER_MAP_ROOM, MAP_B, 7000.f);
         tables.townRoomId = TOWN_ROOM;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         rooms = make_unique<ScopedTestRoomManager>();
@@ -125,7 +125,7 @@ protected:
         sessions.push_back(outSession);
 
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.hp = PLAYER_MAX_HP;
 

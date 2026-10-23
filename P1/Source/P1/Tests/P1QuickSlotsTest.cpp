@@ -84,7 +84,7 @@ bool FP1QuickSlotsTest::RunTest(const FString& Parameters)
     // 4) 패킷의 대상: 참조가 없거나 모르는 종류면 빈 퀵슬롯이다.
     {
         Protocol::QuickSlot Item;
-        Item.set_slot_index(4);
+        Item.set_quick_slot_index(4);
         Item.mutable_ref()->set_ref_type(Protocol::QUICK_SLOT_REF_TYPE_ITEM);
         Item.mutable_ref()->set_ref_id(2000);
         const FP1QuickSlot FromItem = P1QuickSlotPackets::FromProto(Item);
@@ -92,7 +92,7 @@ bool FP1QuickSlotsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("패킷: 아이템 정의"), FromItem.Ref == FP1QuickSlotRef::ForItem(2000));
 
         Protocol::QuickSlot Empty;
-        Empty.set_slot_index(1);
+        Empty.set_quick_slot_index(1);
         TestTrue(TEXT("패킷: 참조 없음"), P1QuickSlotPackets::FromProto(Empty).Ref.IsEmpty());
 
         Protocol::QuickSlot Unknown = Item;

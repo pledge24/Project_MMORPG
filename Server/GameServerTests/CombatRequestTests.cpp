@@ -31,7 +31,7 @@ protected:
         level1.maxHp = PLAYER_MAX_HP;
 
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;
@@ -63,7 +63,7 @@ protected:
         outSession = make_shared<RecordingSession>();
 
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.hp = PLAYER_MAX_HP;
 

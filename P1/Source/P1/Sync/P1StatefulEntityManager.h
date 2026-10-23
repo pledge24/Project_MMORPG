@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Sync/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Protocol.pb.h"
+#include "Network/Item.pb.h"
 #include "Entity.pb.h"
 #include "Combat.pb.h"
 #include "Entry.pb.h"
@@ -102,11 +102,8 @@ public:
 
     //~ Gear Packet Handlers
 public:
-    /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
-    void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
-
-    /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
-    void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
+    /** 내 플레이어를 포함한 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
+    void HandleGearAppearance(const Protocol::S_GEAR_APPEARANCE& GearAppearancePkt);
 
     //~ Combat Packet Handlers
 public:

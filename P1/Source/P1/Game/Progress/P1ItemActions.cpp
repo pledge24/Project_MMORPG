@@ -76,7 +76,6 @@ UP1ItemActions::EResult UP1ItemActions::RequestBuy(int32 TemplateId)
         FRequest Request;
         Request.Kind = ERequestKind::Buy;
         Request.TemplateId = TemplateId;
-        Request.Count = 1;
         Result = Send(Request);
     }
 
@@ -231,7 +230,6 @@ UP1ItemActions::EResult UP1ItemActions::DecideSell(const FP1SlotAddress& Address
     OutRequest.Kind = ERequestKind::Sell;
     OutRequest.Address = Address;
     OutRequest.ItemUid = Slot_->Item.ItemUid;
-    OutRequest.Count = 1;
     return EResult::Sent;
 }
 
@@ -286,7 +284,6 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
         Protocol::C_SELL_ITEM Pkt;
         *Pkt.mutable_address() = P1ItemPackets::ToProto(Request.Address);
         Pkt.set_item_uid(Request.ItemUid);
-        Pkt.set_count(Request.Count);
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }
@@ -294,7 +291,6 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
     {
         Protocol::C_BUY_ITEM Pkt;
         Pkt.set_template_id(Request.TemplateId);
-        Pkt.set_count(Request.Count);
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }
@@ -302,7 +298,7 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
     {
         // 참조를 싣지 않으면 서버는 해제로 읽는다.
         Protocol::C_SET_QUICK_SLOT Pkt;
-        Pkt.set_slot_index(Request.QuickSlotIndex);
+        Pkt.set_quick_slot_index(Request.QuickSlotIndex);
         if (Request.QuickSlotRef.IsEmpty() == false)
             *Pkt.mutable_ref() = P1QuickSlotPackets::ToProto(Request.QuickSlotRef);
         FP1PacketSender::Send(WorldContext, Pkt);
@@ -311,7 +307,7 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
     case ERequestKind::UseQuickSlot:
     {
         Protocol::C_USE_QUICK_SLOT Pkt;
-        Pkt.set_slot_index(Request.QuickSlotIndex);
+        Pkt.set_quick_slot_index(Request.QuickSlotIndex);
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }

@@ -35,7 +35,7 @@ public:
 
     //~ Equipment
 public:
-    /** 장비 부위(GearType)에 아이템 외형을 입힌다. TemplateId가 0이면 그 부위를 비운다. */
+    /** 장비 부위(GearPart)에 아이템 외형을 입힌다. TemplateId가 0이면 그 부위를 비운다. */
     void ApplyGear(int32 GearType, int32 TemplateId);
 
 protected:

@@ -3,6 +3,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/ItemRequests.h"
+#include "Network/ChatRequests.h"
 #include "Network/ProgressCoordinator.h"
 #include "Lobby/LobbyReturn.h"
 
@@ -43,21 +44,6 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return false;
 }
 
-bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
-{
-	return false;
-}
-
-bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
-{
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    // 룸 퇴장과 저장은 GameSession::OnDisconnected가 한다. 비정상 종료와 같은 경로를 탄다.
-    gameSession->Disconnect("Exit Game");
-
-    return true;
-}
-
 bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_COMPLETE& pkt)
 {
     // 맵 로드를 기다리는 플레이어의 소속 룸은 목적지 룸이다. 첫 입장도 게임 입장이 목적지 룸을 소속 룸으로 정해 둔다.
@@ -87,16 +73,7 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            // 맵 로드를 기다리는 플레이어는 소속 룸에 아직 없다. 그 룸에 중계하면 들어가지 않은 룸에 말이 남는다.
-            if (room->Contains(player->GetEntityId()) == false)
-                return;
-
-            // 같은 룸의 모든 플레이어에게 그대로 중계한다(본인 포함).
-            Protocol::S_CHAT chatPkt;
-            chatPkt.set_entity_id(player->GetEntityId());
-            chatPkt.set_msg(pkt.msg());
-
-            room->Broadcast(ServerPacketHandler::MakeSerializedPacket(chatPkt));
+            ChatRequests::HandleChat(*room, player, pkt);
         });
 }
 

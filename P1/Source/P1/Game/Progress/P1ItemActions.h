@@ -62,7 +62,6 @@ public:
         FP1SlotAddress Address;
         int64 ItemUid = 0;
         int32 TemplateId = 0;
-        int32 Count = 0;
         int32 QuickSlotIndex = 0;
         FP1QuickSlotRef QuickSlotRef;
     };

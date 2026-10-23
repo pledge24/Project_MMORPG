@@ -31,9 +31,9 @@ namespace P1LobbySubsystemTest
     {
         Protocol::S_CHARACTER_LIST Pkt;
         Pkt.set_character_slot_count(4);
-        Pkt.add_creatable_classes(Protocol::CLASS_TYPE_WARRIOR);
-        SetCharacter(Pkt.add_characters(), 11, TEXT("가나"), Protocol::CLASS_TYPE_WARRIOR, 7);
-        SetCharacter(Pkt.add_characters(), 12, TEXT("다라"), Protocol::CLASS_TYPE_MAGE, 3);
+        Pkt.add_creatable_classes(Protocol::CHARACTER_CLASS_WARRIOR);
+        SetCharacter(Pkt.add_characters(), 11, TEXT("가나"), Protocol::CHARACTER_CLASS_WARRIOR, 7);
+        SetCharacter(Pkt.add_characters(), 12, TEXT("다라"), Protocol::CHARACTER_CLASS_MAGE, 3);
         return Pkt;
     }
 
@@ -139,7 +139,7 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
 
         Protocol::S_CREATE_CHARACTER Created;
         Created.set_result(Protocol::LOBBY_RESULT_SUCCESS);
-        SetCharacter(Created.mutable_character(), 13, TEXT("마바"), Protocol::CLASS_TYPE_MAGE, 1);
+        SetCharacter(Created.mutable_character(), 13, TEXT("마바"), Protocol::CHARACTER_CLASS_MAGE, 1);
         F.Lobby->HandleCreateCharacter(Created);
 
         const TArray<FP1LobbyCharacter>& Characters = F.Lobby->GetCharacters();
@@ -218,9 +218,9 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         FFixture F;
         Protocol::S_CHARACTER_LIST Pkt;
         Pkt.set_character_slot_count(4);
-        Pkt.add_creatable_classes(Protocol::CLASS_TYPE_MAGE);
+        Pkt.add_creatable_classes(Protocol::CHARACTER_CLASS_MAGE);
         Pkt.add_creatable_classes(static_cast<Protocol::CharacterClass>(99));
-        Pkt.add_creatable_classes(Protocol::CLASS_TYPE_WARRIOR);
+        Pkt.add_creatable_classes(Protocol::CHARACTER_CLASS_WARRIOR);
         F.Lobby->HandleCharacterList(Pkt);
 
         const TArray<EP1CharacterClass>& CreatableClasses = F.Lobby->GetCreatableClasses();

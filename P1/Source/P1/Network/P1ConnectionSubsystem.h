@@ -53,9 +53,6 @@ public:
     FOnGameServerConnectFailed OnConnectFailed;
 
 private:
-    /** 접속 종료를 서버에 알린다. */
-    void SendLeaveGame();
-
     FSocket* Socket = nullptr;
     PacketSessionRef Session;
 

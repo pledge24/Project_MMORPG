@@ -50,9 +50,9 @@ TEST_F(LobbyDataTest, RowBecomesSlotCountAndCreatableClasses)
     ASSERT_FALSE(LobbyData::Load(MakeLobbyDocument(4, Json::array({ "warrior", "mage" }))).has_value());
 
     EXPECT_EQ(LobbyData::GetDefaultCharacterSlotCount(), 4);
-    EXPECT_EQ(LobbyData::GetCreatableClasses(), (vector<int32>{ Protocol::CLASS_TYPE_WARRIOR, Protocol::CLASS_TYPE_MAGE }));
-    EXPECT_TRUE(LobbyData::IsCreatableClass(Protocol::CLASS_TYPE_MAGE));
-    EXPECT_FALSE(LobbyData::IsCreatableClass(Protocol::CLASS_TYPE_NONE));
+    EXPECT_EQ(LobbyData::GetCreatableClasses(), (vector<int32>{ Protocol::CHARACTER_CLASS_WARRIOR, Protocol::CHARACTER_CLASS_MAGE }));
+    EXPECT_TRUE(LobbyData::IsCreatableClass(Protocol::CHARACTER_CLASS_MAGE));
+    EXPECT_FALSE(LobbyData::IsCreatableClass(Protocol::CHARACTER_CLASS_NONE));
 }
 
 // DB의 Account.CharacterSlotCount가 TINYINT라 255를 넘으면 계정을 만들 때 저장하지 못한다.
@@ -91,7 +91,7 @@ TEST_F(LobbyDataTest, FailedLoadKeepsPreviousTable)
     EXPECT_TRUE(LobbyData::Load(MakeLobbyDocument(0, Json::array({ "mage" }))).has_value());
 
     EXPECT_EQ(LobbyData::GetDefaultCharacterSlotCount(), 4) << "실패한 불러오기가 이전 표를 지웠다";
-    EXPECT_FALSE(LobbyData::IsCreatableClass(Protocol::CLASS_TYPE_MAGE)) << "실패한 불러오기가 일부 값을 설치했다";
+    EXPECT_FALSE(LobbyData::IsCreatableClass(Protocol::CHARACTER_CLASS_MAGE)) << "실패한 불러오기가 일부 값을 설치했다";
 }
 
 TEST_F(LobbyDataTest, RepositoryLobbyDataPasses)
@@ -106,7 +106,7 @@ TEST_F(LobbyDataTest, RepositoryLobbyDataPasses)
 
     // 옛 캐릭터 생성 표에서 옮겨 온 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
     EXPECT_EQ(LobbyData::GetDefaultCharacterSlotCount(), 4);
-    EXPECT_EQ(LobbyData::GetCreatableClasses(), (vector<int32>{ Protocol::CLASS_TYPE_WARRIOR }))
+    EXPECT_EQ(LobbyData::GetCreatableClasses(), (vector<int32>{ Protocol::CHARACTER_CLASS_WARRIOR }))
         << "레벨 표가 있는 직업은 전사뿐이다";
 }
 
@@ -118,7 +118,7 @@ protected:
     void SetUp() override
     {
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, 100, 50 } });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, 100, 50 } });
         Gamedata::Install(std::move(tables));
     }
 
@@ -139,7 +139,7 @@ protected:
 
 TEST_F(DataCrossCheckTest, CreatableClassesWithLevelTablesPass)
 {
-    InstallCreatableClasses({ Protocol::CLASS_TYPE_WARRIOR });
+    InstallCreatableClasses({ Protocol::CHARACTER_CLASS_WARRIOR });
 
     const optional<string> error = DataCrossCheck::Check();
     EXPECT_FALSE(error.has_value()) << error.value_or("");
@@ -147,9 +147,9 @@ TEST_F(DataCrossCheckTest, CreatableClassesWithLevelTablesPass)
 
 TEST_F(DataCrossCheckTest, CreatableClassWithoutLevelTableIsRejected)
 {
-    InstallCreatableClasses({ Protocol::CLASS_TYPE_WARRIOR, Protocol::CLASS_TYPE_MAGE });
+    InstallCreatableClasses({ Protocol::CHARACTER_CLASS_WARRIOR, Protocol::CHARACTER_CLASS_MAGE });
 
     const optional<string> error = DataCrossCheck::Check();
     ASSERT_TRUE(error.has_value()) << "레벨 표가 없는 직업을 만들게 두면 그 캐릭터는 첫 입장에서 들어가지 못한다";
-    EXPECT_NE(error->find(to_string(Protocol::CLASS_TYPE_MAGE)), string::npos) << error.value();
+    EXPECT_NE(error->find(to_string(Protocol::CHARACTER_CLASS_MAGE)), string::npos) << error.value();
 }

@@ -17,7 +17,7 @@ public class P1 : ModuleRules
         PrivateIncludePaths.AddRange(new string[]
         {
             "P1/",
-            // 생성물 폴더는 예외로 남긴다. protobuf 생성 코드가 서로를 `#include "Enum.pb.h"`
+            // 생성물 폴더는 예외로 남긴다. protobuf 생성 코드가 서로를 `#include "Common.pb.h"`
             // 형태로 부르는데 생성물은 손으로 고치지 않는다.
             "P1/Network",
         });

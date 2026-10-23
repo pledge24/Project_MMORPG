@@ -16,8 +16,8 @@ namespace
 
     /** 기획 원본은 소문자 직업 이름(warrior)을 적는다. 게임의 착용 조건과 같은 표기다. */
     const unordered_map<string_view, Protocol::CharacterClass> CLASS_BY_NAME = {
-        { "warrior", Protocol::CLASS_TYPE_WARRIOR },
-        { "mage", Protocol::CLASS_TYPE_MAGE },
+        { "warrior", Protocol::CHARACTER_CLASS_WARRIOR },
+        { "mage", Protocol::CHARACTER_CLASS_MAGE },
     };
 
     /** 행 하나를 검증해 tables에 쓴다. 틀리면 사유. */

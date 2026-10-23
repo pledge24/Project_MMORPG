@@ -34,7 +34,7 @@ namespace
         item.itemType = itemType;
         item.maxStack = 99;
         if (itemType == Protocol::ITEM_TYPE_GEAR)
-            item.gearType = Protocol::GEAR_TYPE_WEAPON;
+            item.gearType = Protocol::GEAR_PART_WEAPON;
         if (itemType == Protocol::ITEM_TYPE_CONSUMABLE)
             item.cooldownMs = COOLDOWN_MS;
         return item;
@@ -82,8 +82,8 @@ protected:
 
     optional<vector<QuickSlot>> Set(int32 slotIndex, const optional<QuickSlotRef>& ref)
     {
-        optional<SetQuickSlotResult> result = player->ProcessSetQuickSlot(slotIndex, ref);
-        if (result.has_value() == false)
+        auto result = player->ProcessSetQuickSlot(slotIndex, ref);
+        if (result.IsSuccess() == false)
             return nullopt;
 
         return result->changedQuickSlots;
@@ -199,6 +199,13 @@ TEST_F(QuickSlotTest, OutOfRangeQuickSlotIsRejected)
     }
 }
 
+TEST_F(QuickSlotTest, RejectedRegistrationIsInvalidRequest)
+{
+    EXPECT_EQ(player->ProcessSetQuickSlot(QUICK_SLOT_COUNT, ItemRef(HP_POTION_TEMPLATE_ID)).GetResult(), Protocol::ITEM_RESULT_INVALID_REQUEST);
+    EXPECT_EQ(player->ProcessSetQuickSlot(0, ItemRef(SWORD_TEMPLATE_ID)).GetResult(), Protocol::ITEM_RESULT_INVALID_REQUEST)
+        << "정상 클라이언트는 소모품이 아닌 아이템을 퀵슬롯에 끌어다 놓지 못한다";
+}
+
 TEST_F(QuickSlotTest, CollectQuickSlotsSkipsEmptyOnes)
 {
     Register(1, HP_POTION_TEMPLATE_ID);
@@ -262,7 +269,7 @@ protected:
         return item != nullptr ? item->count : 0;
     }
 
-    optional<UseItemResult> Use(int32 quickSlotIndex, uint64 nowMs = NOW_MS)
+    ItemOutcome<UseItemResult> Use(int32 quickSlotIndex, uint64 nowMs = NOW_MS)
     {
         return player->ProcessUseQuickSlot(quickSlotIndex, nowMs);
     }
@@ -280,8 +287,8 @@ TEST_F(QuickSlotUseTest, UsesLowestSlotIndexAmongSplitStacks)
     PlaceConsumable(2, HP_POTION_TEMPLATE_ID, 2);
     Register(1, HP_POTION_TEMPLATE_ID);
 
-    optional<UseItemResult> result = Use(1);
-    ASSERT_TRUE(result.has_value());
+    auto result = Use(1);
+    ASSERT_TRUE(result.IsSuccess());
 
     EXPECT_EQ(CountAt(2), 1) << "같은 소모품이 여러 칸에 있으면 칸 번호가 가장 작은 칸을 쓴다";
     EXPECT_EQ(CountAt(5), 3);
@@ -296,10 +303,10 @@ TEST_F(QuickSlotUseTest, ContinuesWithNextStackAfterFirstRunsOut)
     PlaceConsumable(5, HP_POTION_TEMPLATE_ID, 3);
     Register(0, HP_POTION_TEMPLATE_ID);
 
-    ASSERT_TRUE(Use(0).has_value());
+    ASSERT_TRUE(Use(0).IsSuccess());
     ASSERT_EQ(CountAt(2), 0) << "준비: 첫 묶음을 다 썼다";
 
-    ASSERT_TRUE(Use(0, NOW_MS + COOLDOWN_MS).has_value());
+    ASSERT_TRUE(Use(0, NOW_MS + COOLDOWN_MS).IsSuccess());
 
     EXPECT_EQ(CountAt(5), 2) << "다 쓴 뒤에는 남은 묶음 중 칸 번호가 가장 작은 칸으로 이어진다";
 }
@@ -312,7 +319,7 @@ TEST_F(QuickSlotUseTest, UnregisteredQuickSlotIsRejected)
     for (int32 quickSlotIndex : { 1, -1, QUICK_SLOT_COUNT })
     {
         SCOPED_TRACE(quickSlotIndex);
-        EXPECT_EQ(Use(quickSlotIndex), nullopt);
+        EXPECT_EQ(Use(quickSlotIndex).GetResult(), Protocol::ITEM_RESULT_INVALID_REQUEST);
     }
 
     EXPECT_EQ(CountAt(0), 1) << "다른 퀵슬롯의 소모품을 쓰면 안 된다";
@@ -323,7 +330,7 @@ TEST_F(QuickSlotUseTest, RegisteredButNotOwnedIsRejected)
     PlaceConsumable(0, MP_POTION_TEMPLATE_ID, 1);
     Register(0, HP_POTION_TEMPLATE_ID);
 
-    EXPECT_EQ(Use(0), nullopt) << "다 떨어진 소모품도 등록은 남지만 쓸 것이 없다";
+    EXPECT_EQ(Use(0).GetResult(), Protocol::ITEM_RESULT_NOT_OWNED) << "다 떨어진 소모품도 등록은 남지만 쓸 것이 없다";
     EXPECT_EQ(CountAt(0), 1);
 }
 
@@ -333,9 +340,9 @@ TEST_F(QuickSlotUseTest, CoolingDownIsRejectedAcrossStacks)
     PlaceConsumable(1, HP_POTION_TEMPLATE_ID, 2);
     Register(0, HP_POTION_TEMPLATE_ID);
 
-    ASSERT_TRUE(Use(0).has_value());
+    ASSERT_TRUE(Use(0).IsSuccess());
 
-    EXPECT_EQ(Use(0, NOW_MS + COOLDOWN_MS - 1), nullopt) << "재사용 대기는 아이템 정의 단위라 다른 묶음도 기다린다";
+    EXPECT_EQ(Use(0, NOW_MS + COOLDOWN_MS - 1).GetResult(), Protocol::ITEM_RESULT_COOLDOWN) << "재사용 대기는 아이템 정의 단위라 다른 묶음도 기다린다";
     EXPECT_EQ(CountAt(1), 2);
 }
 
@@ -343,9 +350,9 @@ TEST_F(QuickSlotUseTest, CooldownFromInventoryUseAppliesToQuickSlot)
 {
     PlaceConsumable(0, HP_POTION_TEMPLATE_ID, 2);
     Register(0, HP_POTION_TEMPLATE_ID);
-    ASSERT_TRUE(player->ProcessUseItem(MakeInventoryRequest(*player, ConsumableSlot(0)), NOW_MS).has_value());
+    ASSERT_TRUE(player->ProcessUseItem(MakeInventoryRequest(*player, ConsumableSlot(0)), NOW_MS).IsSuccess());
 
-    EXPECT_EQ(Use(0, NOW_MS + 1), nullopt) << "인벤토리 창에서 쓴 소모품의 대기가 퀵슬롯에도 걸린다";
+    EXPECT_EQ(Use(0, NOW_MS + 1).GetResult(), Protocol::ITEM_RESULT_COOLDOWN) << "인벤토리 창에서 쓴 소모품의 대기가 퀵슬롯에도 걸린다";
     EXPECT_EQ(CountAt(0), 1);
 }
 
@@ -355,6 +362,6 @@ TEST_F(QuickSlotUseTest, DeadPlayerIsRejected)
     Register(0, HP_POTION_TEMPLATE_ID);
     player->OnDie(nullptr);
 
-    EXPECT_EQ(Use(0), nullopt);
+    EXPECT_EQ(Use(0).GetResult(), Protocol::ITEM_RESULT_DEAD);
     EXPECT_EQ(CountAt(0), 1);
 }

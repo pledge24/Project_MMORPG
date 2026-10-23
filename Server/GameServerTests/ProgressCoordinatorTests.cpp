@@ -39,7 +39,7 @@ protected:
         level1.maxHp = 100;
 
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;
@@ -57,7 +57,7 @@ protected:
     static PlayerRef CreatePlayer(int64 userId)
     {
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
 
         PlayerSpawnParams params;
@@ -468,7 +468,7 @@ TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
     town.respawnPoint = TemplatePos{ 300.f, 0.f, 0.f };
 
     GamedataTables tables;
-    tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+    tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
     tables.maps[TOWN_ROOM_ID] = town;
     tables.townRoomId = TOWN_ROOM_ID;
     Gamedata::Install(std::move(tables));

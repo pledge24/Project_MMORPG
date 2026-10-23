@@ -170,7 +170,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
         });
 
         Protocol::S_BUY_ITEM Pkt;
-        Pkt.set_success(true);
+        Pkt.set_result(Protocol::ITEM_RESULT_SUCCESS);
         Pkt.set_gold(900);
         AddChange(Pkt.mutable_changed_slots(), Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE, 1, 2000, 4, 23);
         Data->HandleBuyItem(Pkt);
@@ -195,8 +195,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
         ConsumableChanges.Watch(Data->GetContainer(EP1ContainerType::InventoryConsumable));
 
         Protocol::S_EQUIP_GEAR Pkt;
-        Pkt.set_success(true);
-        Pkt.set_entity_id(MY_PLAYER_ID);
+        Pkt.set_result(Protocol::ITEM_RESULT_SUCCESS);
         AddChange(Pkt.mutable_changed_slots(), Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
         AddChange(Pkt.mutable_changed_slots(), Protocol::CONTAINER_TYPE_EQUIPPED, 1, 1000, 1, 11);
         Data->HandleEquipGear(Pkt);
@@ -221,7 +220,7 @@ bool FP1MyPlayerContainersTest::RunTest(const FString& Parameters)
         ConsumableChanges.Watch(Data->GetContainer(EP1ContainerType::InventoryConsumable));
 
         Protocol::S_SELL_ITEM Pkt;
-        Pkt.set_success(true);
+        Pkt.set_result(Protocol::ITEM_RESULT_SUCCESS);
         Pkt.set_gold(1100);
         AddChange(Pkt.mutable_changed_slots(), Protocol::CONTAINER_TYPE_NONE, 0, 2000, 1, 24);
         AddChange(Pkt.mutable_changed_slots(), Protocol::CONTAINER_TYPE_INVENTORY_CONSUMABLE, 3, 2000, 1, 25);

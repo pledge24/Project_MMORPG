@@ -45,7 +45,7 @@ protected:
     {
         LobbyTables tables;
         tables.defaultCharacterSlotCount = SLOT_COUNT;
-        tables.creatableClasses = { Protocol::CLASS_TYPE_WARRIOR };
+        tables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
         LobbyData::Install(std::move(tables));
     }
 
@@ -61,8 +61,8 @@ TEST_F(LobbyRequestsTest, ConnectLobbyListsCharactersWithSlotCountOfAccountRow)
 {
     conn.QueueResult({ { int64(6) } });
     conn.QueueResult({
-        { CHARACTER_ID, int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), int64(12) },
-        { CHARACTER_ID + 1, int64(Protocol::CLASS_TYPE_MAGE), wstring(L"마법사"), int64(3) },
+        { CHARACTER_ID, int64(Protocol::CHARACTER_CLASS_WARRIOR), wstring(L"전사"), int64(12) },
+        { CHARACTER_ID + 1, int64(Protocol::CHARACTER_CLASS_MAGE), wstring(L"마법사"), int64(3) },
     });
 
     const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ConnectLobby(conn, ACCOUNT_ID);
@@ -71,9 +71,9 @@ TEST_F(LobbyRequestsTest, ConnectLobbyListsCharactersWithSlotCountOfAccountRow)
     ASSERT_EQ(listPkt.characters_size(), 2);
     EXPECT_EQ(listPkt.characters(0).character_id(), CHARACTER_ID);
     EXPECT_EQ(listPkt.characters(0).name(), "전사");
-    EXPECT_EQ(listPkt.characters(0).character_class(), Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(listPkt.characters(0).character_class(), Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(listPkt.characters(0).level(), 12);
-    EXPECT_EQ(listPkt.characters(1).character_class(), Protocol::CLASS_TYPE_MAGE)
+    EXPECT_EQ(listPkt.characters(1).character_class(), Protocol::CHARACTER_CLASS_MAGE)
         << "목록은 지금 생성할 수 없는 직업의 캐릭터도 보여 준다";
 }
 
@@ -81,7 +81,7 @@ TEST_F(LobbyRequestsTest, ConnectLobbyCarriesCreatableClassesOfLobbyTable)
 {
     LobbyTables tables;
     tables.defaultCharacterSlotCount = SLOT_COUNT;
-    tables.creatableClasses = { Protocol::CLASS_TYPE_MAGE, Protocol::CLASS_TYPE_WARRIOR };
+    tables.creatableClasses = { Protocol::CHARACTER_CLASS_MAGE, Protocol::CHARACTER_CLASS_WARRIOR };
     LobbyData::Install(std::move(tables));
     conn.QueueResult({ { int64(SLOT_COUNT) } });
     conn.QueueResult({});
@@ -89,21 +89,21 @@ TEST_F(LobbyRequestsTest, ConnectLobbyCarriesCreatableClassesOfLobbyTable)
     const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ConnectLobby(conn, ACCOUNT_ID);
 
     ASSERT_EQ(listPkt.creatable_classes_size(), 2) << "클라이언트는 직업 목록을 따로 갖지 않고 이 값만 보여 준다";
-    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CLASS_TYPE_MAGE) << "로비 표의 순서를 그대로 싣는다";
-    EXPECT_EQ(listPkt.creatable_classes(1), Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CHARACTER_CLASS_MAGE) << "로비 표의 순서를 그대로 싣는다";
+    EXPECT_EQ(listPkt.creatable_classes(1), Protocol::CHARACTER_CLASS_WARRIOR);
 }
 
 TEST_F(LobbyRequestsTest, CreatedCharacterComesBackAsLobbyCharacter)
 {
     conn.QueueResult({ { int64(0) } });
 
-    const Protocol::S_CREATE_CHARACTER createPkt = LobbyRequests::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, MakeCreate("전사", Protocol::CLASS_TYPE_WARRIOR));
+    const Protocol::S_CREATE_CHARACTER createPkt = LobbyRequests::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, MakeCreate("전사", Protocol::CHARACTER_CLASS_WARRIOR));
 
     EXPECT_EQ(createPkt.result(), Protocol::LOBBY_RESULT_SUCCESS);
     ASSERT_TRUE(createPkt.has_character()) << "클라이언트는 응답의 캐릭터를 목록에 더한다";
     EXPECT_EQ(createPkt.character().character_id(), CHARACTER_ID);
     EXPECT_EQ(createPkt.character().name(), "전사");
-    EXPECT_EQ(createPkt.character().character_class(), Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(createPkt.character().character_class(), Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(createPkt.character().level(), 1) << "새 캐릭터는 1레벨에서 시작한다";
 }
 
@@ -111,7 +111,7 @@ TEST_F(LobbyRequestsTest, DuplicateNameIsNameTaken)
 {
     conn.QueueResult({ { int64(CharacterRejection::DUPLICATE_NAME) } });
 
-    const Protocol::S_CREATE_CHARACTER createPkt = LobbyRequests::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, MakeCreate("전사", Protocol::CLASS_TYPE_WARRIOR));
+    const Protocol::S_CREATE_CHARACTER createPkt = LobbyRequests::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, MakeCreate("전사", Protocol::CHARACTER_CLASS_WARRIOR));
 
     EXPECT_EQ(createPkt.result(), Protocol::LOBBY_RESULT_NAME_TAKEN);
     EXPECT_FALSE(createPkt.has_character()) << "캐릭터는 성공했을 때만 싣는다";
@@ -121,7 +121,7 @@ TEST_F(LobbyRequestsTest, FullSlotsAreNoEmptySlot)
 {
     conn.QueueResult({ { int64(CharacterRejection::NO_EMPTY_SLOT) } });
 
-    const Protocol::S_CREATE_CHARACTER createPkt = LobbyRequests::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, MakeCreate("전사", Protocol::CLASS_TYPE_WARRIOR));
+    const Protocol::S_CREATE_CHARACTER createPkt = LobbyRequests::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, MakeCreate("전사", Protocol::CHARACTER_CLASS_WARRIOR));
 
     EXPECT_EQ(createPkt.result(), Protocol::LOBBY_RESULT_NO_EMPTY_SLOT);
     EXPECT_FALSE(createPkt.has_character());
@@ -197,7 +197,7 @@ TEST_F(LobbyRequestsTest, ReturnToLobbyListsCharactersWithSlotCountOfAccountRow)
 {
     conn.QueueResult({ { int64(6) } });
     conn.QueueResult({
-        { CHARACTER_ID, int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), int64(13) },
+        { CHARACTER_ID, int64(Protocol::CHARACTER_CLASS_WARRIOR), wstring(L"전사"), int64(13) },
     });
 
     const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ReturnToLobby(conn, ACCOUNT_ID);
@@ -206,7 +206,7 @@ TEST_F(LobbyRequestsTest, ReturnToLobbyListsCharactersWithSlotCountOfAccountRow)
     ASSERT_EQ(listPkt.characters_size(), 1);
     EXPECT_EQ(listPkt.characters(0).level(), 13);
     ASSERT_EQ(listPkt.creatable_classes_size(), 1);
-    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CHARACTER_CLASS_WARRIOR);
     ASSERT_EQ(conn.executedParams.size(), 2u);
     EXPECT_EQ(conn.executedParams[0].size(), 1u) << "슬롯 수 조회는 계정 번호만 바인딩한다. 로그인 기록은 기본 슬롯 수까지 둘이다";
 }

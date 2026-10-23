@@ -34,6 +34,7 @@
 #include <google/protobuf/map_field_inl.h>
 #include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
+#include "Common.pb.h"
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_Entity_2eproto
@@ -73,6 +74,9 @@ extern PosInfoDefaultTypeInternal _PosInfo_default_instance_;
 class S_DESPAWN;
 struct S_DESPAWNDefaultTypeInternal;
 extern S_DESPAWNDefaultTypeInternal _S_DESPAWN_default_instance_;
+class S_GEAR_APPEARANCE;
+struct S_GEAR_APPEARANCEDefaultTypeInternal;
+extern S_GEAR_APPEARANCEDefaultTypeInternal _S_GEAR_APPEARANCE_default_instance_;
 class S_MOVE;
 struct S_MOVEDefaultTypeInternal;
 extern S_MOVEDefaultTypeInternal _S_MOVE_default_instance_;
@@ -92,6 +96,7 @@ template<> ::Protocol::PlayerInfo* Arena::CreateMaybeMessage<::Protocol::PlayerI
 template<> ::Protocol::PlayerInfo_GearAppearanceEntry_DoNotUse* Arena::CreateMaybeMessage<::Protocol::PlayerInfo_GearAppearanceEntry_DoNotUse>(Arena*);
 template<> ::Protocol::PosInfo* Arena::CreateMaybeMessage<::Protocol::PosInfo>(Arena*);
 template<> ::Protocol::S_DESPAWN* Arena::CreateMaybeMessage<::Protocol::S_DESPAWN>(Arena*);
+template<> ::Protocol::S_GEAR_APPEARANCE* Arena::CreateMaybeMessage<::Protocol::S_GEAR_APPEARANCE>(Arena*);
 template<> ::Protocol::S_MOVE* Arena::CreateMaybeMessage<::Protocol::S_MOVE>(Arena*);
 template<> ::Protocol::S_SPAWN* Arena::CreateMaybeMessage<::Protocol::S_SPAWN>(Arena*);
 template<> ::Protocol::Vector* Arena::CreateMaybeMessage<::Protocol::Vector>(Arena*);
@@ -1895,6 +1900,176 @@ class S_MOVE final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Entity_2eproto;
 };
+// -------------------------------------------------------------------
+
+class S_GEAR_APPEARANCE final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_GEAR_APPEARANCE) */ {
+ public:
+  inline S_GEAR_APPEARANCE() : S_GEAR_APPEARANCE(nullptr) {}
+  ~S_GEAR_APPEARANCE() override;
+  explicit PROTOBUF_CONSTEXPR S_GEAR_APPEARANCE(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  S_GEAR_APPEARANCE(const S_GEAR_APPEARANCE& from);
+  S_GEAR_APPEARANCE(S_GEAR_APPEARANCE&& from) noexcept
+    : S_GEAR_APPEARANCE() {
+    *this = ::std::move(from);
+  }
+
+  inline S_GEAR_APPEARANCE& operator=(const S_GEAR_APPEARANCE& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_GEAR_APPEARANCE& operator=(S_GEAR_APPEARANCE&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_GEAR_APPEARANCE& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_GEAR_APPEARANCE* internal_default_instance() {
+    return reinterpret_cast<const S_GEAR_APPEARANCE*>(
+               &_S_GEAR_APPEARANCE_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    11;
+
+  friend void swap(S_GEAR_APPEARANCE& a, S_GEAR_APPEARANCE& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(S_GEAR_APPEARANCE* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_GEAR_APPEARANCE* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_GEAR_APPEARANCE* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_GEAR_APPEARANCE>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const S_GEAR_APPEARANCE& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const S_GEAR_APPEARANCE& from) {
+    S_GEAR_APPEARANCE::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(S_GEAR_APPEARANCE* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.S_GEAR_APPEARANCE";
+  }
+  protected:
+  explicit S_GEAR_APPEARANCE(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kEntityIdFieldNumber = 1,
+    kGearPartFieldNumber = 2,
+    kTemplateIdFieldNumber = 3,
+  };
+  // int64 entity_id = 1;
+  void clear_entity_id();
+  int64_t entity_id() const;
+  void set_entity_id(int64_t value);
+  private:
+  int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(int64_t value);
+  public:
+
+  // .Protocol.GearPart gear_part = 2;
+  void clear_gear_part();
+  ::Protocol::GearPart gear_part() const;
+  void set_gear_part(::Protocol::GearPart value);
+  private:
+  ::Protocol::GearPart _internal_gear_part() const;
+  void _internal_set_gear_part(::Protocol::GearPart value);
+  public:
+
+  // int32 template_id = 3;
+  void clear_template_id();
+  int32_t template_id() const;
+  void set_template_id(int32_t value);
+  private:
+  int32_t _internal_template_id() const;
+  void _internal_set_template_id(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.S_GEAR_APPEARANCE)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int64_t entity_id_;
+    int gear_part_;
+    int32_t template_id_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Entity_2eproto;
+};
 // ===================================================================
 
 
@@ -2957,9 +3132,75 @@ S_MOVE::moves() const {
   return _impl_.moves_;
 }
 
+// -------------------------------------------------------------------
+
+// S_GEAR_APPEARANCE
+
+// int64 entity_id = 1;
+inline void S_GEAR_APPEARANCE::clear_entity_id() {
+  _impl_.entity_id_ = int64_t{0};
+}
+inline int64_t S_GEAR_APPEARANCE::_internal_entity_id() const {
+  return _impl_.entity_id_;
+}
+inline int64_t S_GEAR_APPEARANCE::entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_GEAR_APPEARANCE.entity_id)
+  return _internal_entity_id();
+}
+inline void S_GEAR_APPEARANCE::_internal_set_entity_id(int64_t value) {
+  
+  _impl_.entity_id_ = value;
+}
+inline void S_GEAR_APPEARANCE::set_entity_id(int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_GEAR_APPEARANCE.entity_id)
+}
+
+// .Protocol.GearPart gear_part = 2;
+inline void S_GEAR_APPEARANCE::clear_gear_part() {
+  _impl_.gear_part_ = 0;
+}
+inline ::Protocol::GearPart S_GEAR_APPEARANCE::_internal_gear_part() const {
+  return static_cast< ::Protocol::GearPart >(_impl_.gear_part_);
+}
+inline ::Protocol::GearPart S_GEAR_APPEARANCE::gear_part() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_GEAR_APPEARANCE.gear_part)
+  return _internal_gear_part();
+}
+inline void S_GEAR_APPEARANCE::_internal_set_gear_part(::Protocol::GearPart value) {
+  
+  _impl_.gear_part_ = value;
+}
+inline void S_GEAR_APPEARANCE::set_gear_part(::Protocol::GearPart value) {
+  _internal_set_gear_part(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_GEAR_APPEARANCE.gear_part)
+}
+
+// int32 template_id = 3;
+inline void S_GEAR_APPEARANCE::clear_template_id() {
+  _impl_.template_id_ = 0;
+}
+inline int32_t S_GEAR_APPEARANCE::_internal_template_id() const {
+  return _impl_.template_id_;
+}
+inline int32_t S_GEAR_APPEARANCE::template_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_GEAR_APPEARANCE.template_id)
+  return _internal_template_id();
+}
+inline void S_GEAR_APPEARANCE::_internal_set_template_id(int32_t value) {
+  
+  _impl_.template_id_ = value;
+}
+inline void S_GEAR_APPEARANCE::set_template_id(int32_t value) {
+  _internal_set_template_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_GEAR_APPEARANCE.template_id)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

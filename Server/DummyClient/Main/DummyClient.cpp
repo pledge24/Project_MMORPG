@@ -70,7 +70,7 @@ int main()
 
     // 테스트용: 채팅 패킷을 1초 간격으로 계속 브로드캐스트한다.
 	Protocol::C_CHAT chatPkt;
-	chatPkt.set_msg("Hello World !");
+	chatPkt.set_message("Hello World !");
 	auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(chatPkt);
 
 	while (true)

@@ -22,7 +22,7 @@ public:
 
     //~ Gear Appearance
 public:
-    /** 장비 부위(GearType)의 외형을 맡을 메시 컴포넌트를 등록한다. 스켈레탈 메시와 스태틱 메시만 받는다. */
+    /** 장비 부위(GearPart)의 외형을 맡을 메시 컴포넌트를 등록한다. 스켈레탈 메시와 스태틱 메시만 받는다. */
     void RegisterGearMesh(int32 GearType, UMeshComponent* MeshComponent);
 
     /** 장비 부위에 아이템 외형을 입힌다. TemplateId가 0이면 그 부위를 비운다. */

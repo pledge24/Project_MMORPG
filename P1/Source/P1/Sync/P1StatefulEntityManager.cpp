@@ -289,24 +289,11 @@ UP1MyPlayerData* UP1StatefulEntityManager::GetMyPlayerData() const
     return nullptr;
 }
 
-void UP1StatefulEntityManager::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+void UP1StatefulEntityManager::HandleGearAppearance(const Protocol::S_GEAR_APPEARANCE& GearAppearancePkt)
 {
-    if (EquipGearPkt.success() == false)
-        return;
-
-    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
-    if (AP1Player* Player = FindEntityAs<AP1Player>(EquipGearPkt.entity_id()))
-        Player->ApplyGear(EquipGearPkt.gear_type(), EquipGearPkt.template_id());
-}
-
-void UP1StatefulEntityManager::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
-{
-    if (UnequipGearPkt.success() == false)
-        return;
-
-    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
-    if (AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id()))
-        Player->ApplyGear(UnequipGearPkt.gear_type(), UnequipGearPkt.template_id());
+    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템. template_id가 0이면 그 부위를 비웠다.
+    if (AP1Player* Player = FindEntityAs<AP1Player>(GearAppearancePkt.entity_id()))
+        Player->ApplyGear(GearAppearancePkt.gear_part(), GearAppearancePkt.template_id());
 }
 
 void UP1StatefulEntityManager::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)

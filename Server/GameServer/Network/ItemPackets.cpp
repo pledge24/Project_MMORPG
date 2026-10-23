@@ -26,32 +26,12 @@ namespace
 
 Protocol::Item ItemPackets::ToProto(const ItemInstance& item)
 {
+    // 강화 수치와 내구도는 클라이언트가 읽지 않으므로 싣지 않는다. 발급하지 않은 uid는 0이다.
     Protocol::Item proto;
     proto.set_template_id(item.templateId);
+    proto.set_item_uid(item.itemUid);
     proto.set_count(item.count);
-    if (item.itemUid != 0)
-        proto.set_item_uid(item.itemUid);
-
-    if (item.gear.has_value())
-    {
-        Protocol::GearInfo* gearInfo = proto.mutable_gearinfo();
-        gearInfo->set_enhance_level(item.gear->enhanceLevel);
-        gearInfo->set_durability(item.gear->durability);
-    }
-
     return proto;
-}
-
-ItemInstance ItemPackets::FromProto(const Protocol::Item& proto)
-{
-    ItemInstance item;
-    item.itemUid = proto.item_uid();
-    item.templateId = proto.template_id();
-    item.count = proto.count();
-    if (proto.has_gearinfo())
-        item.gear = GearDetail{ proto.gearinfo().enhance_level(), proto.gearinfo().durability() };
-
-    return item;
 }
 
 Protocol::ContainerType ItemPackets::ToProto(ContainerType container)
@@ -145,7 +125,7 @@ Protocol::Possession ItemPackets::MakePossession(const Player& player)
 Protocol::QuickSlot ItemPackets::ToProto(const QuickSlot& quickSlot)
 {
     Protocol::QuickSlot proto;
-    proto.set_slot_index(quickSlot.slotIndex);
+    proto.set_quick_slot_index(quickSlot.slotIndex);
     if (quickSlot.ref.has_value())
     {
         Protocol::QuickSlotRef* ref = proto.mutable_ref();

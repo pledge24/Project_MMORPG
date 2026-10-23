@@ -146,7 +146,6 @@
 | 위치 | 적힌 것 | 실제 |
 |---|---|---|
 | `Network/PacketSession.cpp` 106줄 | 소켓은 게임 인스턴스가 소유한다 | `UP1ConnectionSubsystem`이 소유한다 |
-| `Network/P1SendWorker.cpp` 45줄 | 게임 인스턴스가 연결을 닫을 때 `C_LEAVE_GAME`이 나간다 | 연결 서브시스템의 `Deinitialize`가 닫는다 |
 | `Network/P1ConnectionSubsystem.cpp` 129줄 | `PacketSession::GetGameInstance`를 쓴다 | 그 함수는 없다. `GetWorld`와 `GetConnection`을 쓴다 |
 | `Game/Interaction/P1Shop.h` 30줄 | 범위에서 나간 액터가 누구든 상점 창을 닫는다 | `AP1MyPlayer`가 아니면 리턴한다. cpp의 주석은 코드와 맞다 |
 | `Tests/P1PacketFramingTest.cpp` 8~9줄 | SendBuffer의 `Append`와 `Copy`는 `docs/tech-debt.md` 참조 | 그런 항목이 없다 |

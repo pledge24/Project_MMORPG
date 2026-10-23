@@ -34,8 +34,7 @@
 #include <google/protobuf/unknown_field_set.h>
 #include "Common.pb.h"
 #include "Entity.pb.h"
-#include "Enum.pb.h"
-#include "Struct.pb.h"
+#include "Item.pb.h"
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_Entry_2eproto

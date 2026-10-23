@@ -83,7 +83,7 @@ void PacketSession::Disconnect()
 {
 	// 순서가 중요하다.
 	// 1) 수신 스레드에 먼저 멈추라고 알린다. 소켓이 닫혀 Recv가 실패해도 끊김으로 오인해 경고하지 않는다.
-	// 2) 송신 스레드가 남은 큐(C_LEAVE_GAME 등)를 보낸 뒤 끝난다.
+	// 2) 송신 스레드가 남은 큐를 보낸 뒤 끝난다.
 	// 3) 소켓을 닫아야 페이로드를 기다리며 블로킹된 Recv가 풀려 수신 스레드가 끝난다.
 	if (RecvWorkerThread)
 		RecvWorkerThread->RequestStop();

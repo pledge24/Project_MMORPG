@@ -4,6 +4,26 @@ package Protocol;
 // 여러 도메인이 함께 쓰는 자료형과, 세션 단계와 무관한 패킷
 // @packet_id_range 100 199
 
+// 직업. DB의 Character.ClassId에 숫자로 저장된다. 로비의 캐릭터 생성과 게임의 레벨 표, 착용 조건이 함께 쓴다
+enum CharacterClass
+{
+    CHARACTER_CLASS_NONE = 0;
+    CHARACTER_CLASS_WARRIOR = 1;
+    CHARACTER_CLASS_MAGE = 2;
+}
+
+// 장비 부위. 착용 장비의 칸 번호(Item)이자 외형의 부위(Entity)이고, DB의 Item.SlotIndex에 숫자로 저장된다
+enum GearPart
+{
+    GEAR_PART_NONE = 0;
+    GEAR_PART_HELMET = 1;
+    GEAR_PART_CHEST = 2;
+    GEAR_PART_LEGS = 3;
+    GEAR_PART_ARMS = 4;
+    GEAR_PART_BOOTS = 5;
+    GEAR_PART_WEAPON = 6;
+}
+
 enum StatType
 {
     STAT_TYPE_NONE = 0;

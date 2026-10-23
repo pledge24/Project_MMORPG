@@ -9,8 +9,6 @@
 ## 와이어 프로토콜
 
 **원본**: `Protocol/Schema/*.proto`. 도메인마다 한 파일이다(Common, Lobby, Entry, Entity, Combat, Item, Chat).
-옛 파일 셋(`Enum`, `Struct`, `Protocol`)은 계약 티켓이 메시지를 도메인 파일로 다 옮기면 지운다. 옮길 정의는
-`docs/work/2026-10-23-lobby-entry-flow.md`의 「목표 정의」에 있다.
 
 `.proto`는 cp949다. UTF-8로 저장하지 않는다.
 
@@ -59,15 +57,26 @@
 | `Combat.proto` | 500~599 |
 | `Item.proto` | 600~699 |
 | `Chat.proto` | 700~799 |
-| `Protocol.proto` (옛 파일) | 1000~1999. 지금의 번호를 그대로 두는 임시 범위 |
 
-- 범위 선언: 패킷(`C_*`와 `S_*` 메시지)이 있는 파일에 필수. 패킷이 없는 `Enum.proto`와 `Struct.proto`에는 없음
+- 범위 선언: 모든 스키마 파일에 둔다. 생성기는 패킷(`C_*`와 `S_*` 메시지)이 있는데 범위가 없는 파일에서 실패하고, `ProtocolContract` 테스트는 범위가 없는 파일에서 실패한다
 - 생성기가 실패하는 범위: 다른 파일과 겹치는 범위, 패킷 수보다 좁은 범위, 1~65534를 벗어난 범위
 - 번호가 밀리는 곳: 패킷을 끼워 넣은 파일 안의 뒤쪽 번호뿐. 다른 파일의 번호는 그대로
 - 범위를 바꿀 때: `ProtocolContractTests.cpp`의 `SCHEMA_FILES` 표도 함께 고침. 고치지 않으면 테스트가 표와 생성물의 범위가 다르다고 실패
 
 **패킷 번호에 65535를 쓰지 않는다.**
 — 핸들러 표의 칸 수가 `UINT16_MAX`라 65535는 표 밖이다.
+
+### 자료형의 자리와 import
+
+- 자료형은 그것을 쓰는 도메인 파일에 둔다. 두 도메인 이상의 패킷이 쓰거나 로비와 게임의 코드가 함께 쓰면 `Common.proto`에 둔다.
+  스탯 자료형 셋(`StatType`, `Stat`, `StatInfo`)은 함께 둔다
+- `Common.proto`는 아무것도 import하지 않는다. `Common.proto`가 아닌 도메인 파일을 import하는 것은 `Entry.proto` 하나다
+  (`Entity.proto`와 `Item.proto`). 게임 입장 응답이 내 엔티티의 개인 정보로 소지품과 퀵슬롯을 싣기 때문이다
+- DB에 숫자로 저장되는 enum(`ItemType`, `CharacterClass`, `GearPart`, `QuickSlotRefType`)은 값 번호를 바꾸지 않는다.
+  기획 데이터가 값 이름으로 읽는 `ItemType`은 이름도 바꾸지 않는다
+
+**import를 바꾸면 `ProtocolContractTests.cpp`의 `SCHEMA_FILES` 표에서 그 파일의 import 목록을 고친다.**
+— 도메인 파일끼리 얽히면 한 도메인의 계약을 고칠 때 다른 도메인의 생성물이 함께 바뀐다.
 
 ### 손으로 쓰는 것
 
@@ -92,13 +101,14 @@
 
 ### 불변식 검사
 
-`ProtocolContractTests`(`Server/GameServerTests/`)가 아래 다섯 가지를 검사한다. 패킷을 추가하면 이 테스트가 먼저 알려준다.
+`ProtocolContractTests`(`Server/GameServerTests/`)가 아래 여섯 가지를 검사한다. 패킷을 추가하면 이 테스트가 먼저 알려준다.
 
 - 생성기가 읽은 스키마 파일과 각 파일의 범위가 `SCHEMA_FILES` 표와 같은지. 생성기가 핸들러 헤더에 적는 `PACKET_SCHEMA_FILES`와 대조한다
 - 스키마 파일마다 빌드에 들어 있고, 파일의 패킷 목록과 선언 순서가 `SCHEMA_FILES` 표와 같은지
 - 패킷 번호가 그 파일 범위의 첫 번호부터 선언 순서로 이어지고, 범위를 넘지 않는지
 - 파일의 범위끼리, 패킷 번호끼리 겹치지 않는지
 - 모든 스키마 파일의 모든 메시지가 값을 채운 채로 왕복하는지 (`DescriptorPool` 리플렉션으로 자동 확장)
+- 스키마 파일마다 import가 `SCHEMA_FILES` 표와 같은지
 
 **패킷을 더하거나 옮기면 `SCHEMA_FILES` 표에서 그 파일의 패킷 목록을 고친다. 스키마 파일을 더하거나 범위를 바꾸면 표의 줄을 고친다.**
 — 표는 계약 선언이다. 표와 스키마가 어긋나면 스키마가 바뀐 것을 의식적으로 반영하라는 신호다.

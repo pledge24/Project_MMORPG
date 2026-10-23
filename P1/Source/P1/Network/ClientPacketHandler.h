@@ -4,11 +4,8 @@
 #include "Common.pb.h"
 #include "Entity.pb.h"
 #include "Entry.pb.h"
-#include "Enum.pb.h"
 #include "Item.pb.h"
 #include "Lobby.pb.h"
-#include "Protocol.pb.h"
-#include "Struct.pb.h"
 
 #if UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING >= 1
 #include "Network/SendBuffer.h"
@@ -22,6 +19,9 @@ extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
 // 패킷 번호. 스키마 파일마다 정한 범위 안에서 선언 순서로 매긴다.
 enum : uint16
 {
+	PKT_C_CHAT = 700,
+	PKT_S_CHAT = 701,
+	PKT_S_CHAT_MESSAGE = 702,
 	PKT_C_NORMAL_ATTACK = 500,
 	PKT_S_NORMAL_ATTACK = 501,
 	PKT_S_ATTACK = 502,
@@ -33,6 +33,7 @@ enum : uint16
 	PKT_S_DESPAWN = 401,
 	PKT_C_MOVE = 402,
 	PKT_S_MOVE = 403,
+	PKT_S_GEAR_APPEARANCE = 404,
 	PKT_C_ENTER_GAME = 300,
 	PKT_S_ENTER_GAME = 301,
 	PKT_C_MAP_LOAD_COMPLETE = 302,
@@ -43,6 +44,19 @@ enum : uint16
 	PKT_S_RESPAWN = 307,
 	PKT_C_RETURN_TO_LOBBY = 308,
 	PKT_S_RETURN_TO_LOBBY = 309,
+	PKT_C_BUY_ITEM = 600,
+	PKT_S_BUY_ITEM = 601,
+	PKT_C_SELL_ITEM = 602,
+	PKT_S_SELL_ITEM = 603,
+	PKT_C_EQUIP_GEAR = 604,
+	PKT_S_EQUIP_GEAR = 605,
+	PKT_C_UNEQUIP_GEAR = 606,
+	PKT_S_UNEQUIP_GEAR = 607,
+	PKT_C_USE_ITEM = 608,
+	PKT_S_USE_ITEM = 609,
+	PKT_C_SET_QUICK_SLOT = 610,
+	PKT_S_SET_QUICK_SLOT = 611,
+	PKT_C_USE_QUICK_SLOT = 612,
 	PKT_C_CONNECT_LOBBY = 200,
 	PKT_S_CONNECT_LOBBY = 201,
 	PKT_S_CHARACTER_LIST = 202,
@@ -50,24 +64,6 @@ enum : uint16
 	PKT_S_CREATE_CHARACTER = 204,
 	PKT_C_DELETE_CHARACTER = 205,
 	PKT_S_DELETE_CHARACTER = 206,
-	PKT_C_PING = 1000,
-	PKT_S_PONG = 1001,
-	PKT_C_LEAVE_GAME = 1002,
-	PKT_C_BUY_ITEM = 1003,
-	PKT_S_BUY_ITEM = 1004,
-	PKT_C_SELL_ITEM = 1005,
-	PKT_S_SELL_ITEM = 1006,
-	PKT_C_EQUIP_GEAR = 1007,
-	PKT_S_EQUIP_GEAR = 1008,
-	PKT_C_UNEQUIP_GEAR = 1009,
-	PKT_S_UNEQUIP_GEAR = 1010,
-	PKT_C_USE_ITEM = 1011,
-	PKT_S_USE_ITEM = 1012,
-	PKT_C_SET_QUICK_SLOT = 1013,
-	PKT_S_SET_QUICK_SLOT = 1014,
-	PKT_C_USE_QUICK_SLOT = 1015,
-	PKT_C_CHAT = 1016,
-	PKT_S_CHAT = 1017,
 };
 
 /** 생성기가 읽은 스키마 파일과 그 파일의 패킷 번호 범위. 프로토콜 계약 테스트가 자기 표와 대조한다. */
@@ -85,16 +81,15 @@ inline constexpr PacketSchemaFile PACKET_SCHEMA_FILES[] =
 	{ "Common.proto", 100, 199 },
 	{ "Entity.proto", 400, 499 },
 	{ "Entry.proto", 300, 399 },
-	{ "Enum.proto", 0, 0 },
 	{ "Item.proto", 600, 699 },
 	{ "Lobby.proto", 200, 299 },
-	{ "Protocol.proto", 1000, 1999 },
-	{ "Struct.proto", 0, 0 },
 };
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 
 // 받는 패킷의 핸들러. 정의는 손으로 쓴다.
+bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt);
+bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& pkt);
 bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt);
 bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt);
 bool Handle_S_HIT(PacketSessionRef& session, Protocol::S_HIT& pkt);
@@ -104,23 +99,22 @@ bool Handle_S_DISCONNECT(PacketSessionRef& session, Protocol::S_DISCONNECT& pkt)
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt);
 bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt);
 bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt);
+bool Handle_S_GEAR_APPEARANCE(PacketSessionRef& session, Protocol::S_GEAR_APPEARANCE& pkt);
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt);
 bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt);
 bool Handle_S_USE_PORTAL(PacketSessionRef& session, Protocol::S_USE_PORTAL& pkt);
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt);
 bool Handle_S_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::S_RETURN_TO_LOBBY& pkt);
-bool Handle_S_CONNECT_LOBBY(PacketSessionRef& session, Protocol::S_CONNECT_LOBBY& pkt);
-bool Handle_S_CHARACTER_LIST(PacketSessionRef& session, Protocol::S_CHARACTER_LIST& pkt);
-bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt);
-bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt);
-bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt);
 bool Handle_S_BUY_ITEM(PacketSessionRef& session, Protocol::S_BUY_ITEM& pkt);
 bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt);
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt);
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt);
 bool Handle_S_USE_ITEM(PacketSessionRef& session, Protocol::S_USE_ITEM& pkt);
 bool Handle_S_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::S_SET_QUICK_SLOT& pkt);
-bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt);
+bool Handle_S_CONNECT_LOBBY(PacketSessionRef& session, Protocol::S_CONNECT_LOBBY& pkt);
+bool Handle_S_CHARACTER_LIST(PacketSessionRef& session, Protocol::S_CHARACTER_LIST& pkt);
+bool Handle_S_CREATE_CHARACTER(PacketSessionRef& session, Protocol::S_CREATE_CHARACTER& pkt);
+bool Handle_S_DELETE_CHARACTER(PacketSessionRef& session, Protocol::S_DELETE_CHARACTER& pkt);
 
 class ClientPacketHandler
 {
@@ -131,6 +125,8 @@ public:
 			GPacketHandler[i] = Handle_INVALID;
 
 		// 받는 패킷마다 핸들러를 등록한다.
+		GPacketHandler[PKT_S_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHAT>(Handle_S_CHAT, session, buffer, len); };
+		GPacketHandler[PKT_S_CHAT_MESSAGE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHAT_MESSAGE>(Handle_S_CHAT_MESSAGE, session, buffer, len); };
 		GPacketHandler[PKT_S_NORMAL_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_NORMAL_ATTACK>(Handle_S_NORMAL_ATTACK, session, buffer, len); };
 		GPacketHandler[PKT_S_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ATTACK>(Handle_S_ATTACK, session, buffer, len); };
 		GPacketHandler[PKT_S_HIT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_HIT>(Handle_S_HIT, session, buffer, len); };
@@ -140,23 +136,22 @@ public:
 		GPacketHandler[PKT_S_SPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_SPAWN>(Handle_S_SPAWN, session, buffer, len); };
 		GPacketHandler[PKT_S_DESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DESPAWN>(Handle_S_DESPAWN, session, buffer, len); };
 		GPacketHandler[PKT_S_MOVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_MOVE>(Handle_S_MOVE, session, buffer, len); };
+		GPacketHandler[PKT_S_GEAR_APPEARANCE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_GEAR_APPEARANCE>(Handle_S_GEAR_APPEARANCE, session, buffer, len); };
 		GPacketHandler[PKT_S_ENTER_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ENTER_GAME>(Handle_S_ENTER_GAME, session, buffer, len); };
 		GPacketHandler[PKT_S_ENTER_ROOM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_ENTER_ROOM>(Handle_S_ENTER_ROOM, session, buffer, len); };
 		GPacketHandler[PKT_S_USE_PORTAL] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_USE_PORTAL>(Handle_S_USE_PORTAL, session, buffer, len); };
 		GPacketHandler[PKT_S_RESPAWN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_RESPAWN>(Handle_S_RESPAWN, session, buffer, len); };
 		GPacketHandler[PKT_S_RETURN_TO_LOBBY] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_RETURN_TO_LOBBY>(Handle_S_RETURN_TO_LOBBY, session, buffer, len); };
-		GPacketHandler[PKT_S_CONNECT_LOBBY] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CONNECT_LOBBY>(Handle_S_CONNECT_LOBBY, session, buffer, len); };
-		GPacketHandler[PKT_S_CHARACTER_LIST] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHARACTER_LIST>(Handle_S_CHARACTER_LIST, session, buffer, len); };
-		GPacketHandler[PKT_S_CREATE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CREATE_CHARACTER>(Handle_S_CREATE_CHARACTER, session, buffer, len); };
-		GPacketHandler[PKT_S_DELETE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DELETE_CHARACTER>(Handle_S_DELETE_CHARACTER, session, buffer, len); };
-		GPacketHandler[PKT_S_PONG] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_PONG>(Handle_S_PONG, session, buffer, len); };
 		GPacketHandler[PKT_S_BUY_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_BUY_ITEM>(Handle_S_BUY_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_SELL_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_SELL_ITEM>(Handle_S_SELL_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_EQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_EQUIP_GEAR>(Handle_S_EQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_S_UNEQUIP_GEAR] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_UNEQUIP_GEAR>(Handle_S_UNEQUIP_GEAR, session, buffer, len); };
 		GPacketHandler[PKT_S_USE_ITEM] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_USE_ITEM>(Handle_S_USE_ITEM, session, buffer, len); };
 		GPacketHandler[PKT_S_SET_QUICK_SLOT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_SET_QUICK_SLOT>(Handle_S_SET_QUICK_SLOT, session, buffer, len); };
-		GPacketHandler[PKT_S_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHAT>(Handle_S_CHAT, session, buffer, len); };
+		GPacketHandler[PKT_S_CONNECT_LOBBY] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CONNECT_LOBBY>(Handle_S_CONNECT_LOBBY, session, buffer, len); };
+		GPacketHandler[PKT_S_CHARACTER_LIST] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CHARACTER_LIST>(Handle_S_CHARACTER_LIST, session, buffer, len); };
+		GPacketHandler[PKT_S_CREATE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_CREATE_CHARACTER>(Handle_S_CREATE_CHARACTER, session, buffer, len); };
+		GPacketHandler[PKT_S_DELETE_CHARACTER] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::S_DELETE_CHARACTER>(Handle_S_DELETE_CHARACTER, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -175,6 +170,7 @@ public:
 	}
 
 	// 보내는 패킷의 직렬화.
+	static SendBufferRef MakeSerializedPacket(Protocol::C_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_C_CHAT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_NORMAL_ATTACK& pkt) { return MakeSerializedPacket(pkt, PKT_C_NORMAL_ATTACK); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_MOVE& pkt) { return MakeSerializedPacket(pkt, PKT_C_MOVE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_ENTER_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_ENTER_GAME); }
@@ -182,11 +178,6 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_PORTAL& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_PORTAL); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_RESPAWN& pkt) { return MakeSerializedPacket(pkt, PKT_C_RESPAWN); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_RETURN_TO_LOBBY& pkt) { return MakeSerializedPacket(pkt, PKT_C_RETURN_TO_LOBBY); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_CONNECT_LOBBY& pkt) { return MakeSerializedPacket(pkt, PKT_C_CONNECT_LOBBY); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_CREATE_CHARACTER); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_DELETE_CHARACTER); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_PING& pkt) { return MakeSerializedPacket(pkt, PKT_C_PING); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_LEAVE_GAME& pkt) { return MakeSerializedPacket(pkt, PKT_C_LEAVE_GAME); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_BUY_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_C_BUY_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_SELL_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_C_SELL_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_EQUIP_GEAR& pkt) { return MakeSerializedPacket(pkt, PKT_C_EQUIP_GEAR); }
@@ -194,7 +185,9 @@ public:
 	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_ITEM& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_ITEM); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_SET_QUICK_SLOT& pkt) { return MakeSerializedPacket(pkt, PKT_C_SET_QUICK_SLOT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::C_USE_QUICK_SLOT& pkt) { return MakeSerializedPacket(pkt, PKT_C_USE_QUICK_SLOT); }
-	static SendBufferRef MakeSerializedPacket(Protocol::C_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_C_CHAT); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_CONNECT_LOBBY& pkt) { return MakeSerializedPacket(pkt, PKT_C_CONNECT_LOBBY); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_CREATE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_CREATE_CHARACTER); }
+	static SendBufferRef MakeSerializedPacket(Protocol::C_DELETE_CHARACTER& pkt) { return MakeSerializedPacket(pkt, PKT_C_DELETE_CHARACTER); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>
