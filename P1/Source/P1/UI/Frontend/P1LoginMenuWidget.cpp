@@ -24,6 +24,7 @@ void UP1LoginMenuWidget::NativeConstruct()
     Super::NativeConstruct();
 
     // 로그인 화면에서 시작.
+    CharacterDeleteScreen->SetVisibility(ESlateVisibility::Collapsed);
     ScreenSwitcher->SetActiveWidget(LoginScreen);
 
     // 응답 구독. 떼는 것은 NativeDestruct가 한다.
@@ -61,6 +62,8 @@ void UP1LoginMenuWidget::NativeDestruct()
 void UP1LoginMenuWidget::ShowCharacterSelect()
 {
     // 슬롯은 캐릭터 선택 화면이 로비의 목록 변경 알림을 받아 직접 다시 그린다.
+    // 삭제의 성공과 실패, 취소 모두 이리로 오므로 삭제 확인 창도 여기서 닫는다.
+    CharacterDeleteScreen->SetVisibility(ESlateVisibility::Collapsed);
     ScreenSwitcher->SetActiveWidget(CharacterSelectScreen);
 }
 
@@ -72,12 +75,14 @@ void UP1LoginMenuWidget::ShowCharacterCreate()
 
 void UP1LoginMenuWidget::ShowCharacterDelete(const FP1LobbyCharacter& Character)
 {
+    // 확인 창은 캐릭터 선택 화면 위에 덮는다. 화면 전환기 밖에 있어서 선택 화면이 그 아래에 보인다.
     CharacterDeleteScreen->SetCharacter(Character);
-    ScreenSwitcher->SetActiveWidget(CharacterDeleteScreen);
+    CharacterDeleteScreen->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UP1LoginMenuWidget::ShowLoginNotice(const FString& Notice)
 {
+    CharacterDeleteScreen->SetVisibility(ESlateVisibility::Collapsed);
     ScreenSwitcher->SetActiveWidget(LoginScreen);
     LoginScreen->ShowNotice(Notice);
 }

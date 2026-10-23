@@ -16,7 +16,7 @@ enum class EP1EntryProgress : uint8;
 /**
  * 로그인 맵의 메뉴 위젯.
  *
- * 로그인, 캐릭터 선택, 캐릭터 생성, 캐릭터 삭제 확인 화면 가운데 하나를 보이고, 접속 진행 표시를 그 위에 덮는다.
+ * 로그인, 캐릭터 선택, 캐릭터 생성 화면 가운데 하나를 보이고, 삭제 확인 창과 접속 진행 표시를 그 위에 덮는다.
  * 화면 사이를 오가는 순서만 맡고, 각 화면의 일은 그 화면의 위젯이 한다.
  */
 UCLASS()
@@ -57,6 +57,7 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UP1CharacterCreateWidget> CharacterCreateScreen;
 
+    /** 화면 전환기 밖에서 캐릭터 선택 화면 위에 덮는 확인 창. 보이고 숨기는 것으로 여닫는다. */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UP1CharacterDeleteWidget> CharacterDeleteScreen;
 

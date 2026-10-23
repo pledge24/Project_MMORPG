@@ -133,6 +133,12 @@ P1/Source/
 | `Screens/` | 플레이 중 띄우는 화면 | 화면 서브시스템(`UP1ScreenSubsystem`)이 만들어 띄우는가 |
 | `WorldSpace/` | 레벨 공간에 붙는 위젯 | 화면이 아니라 레벨 안의 좌표를 따라가는가 |
 
+`Frontend/`의 화면은 로그인 맵의 로그인 메뉴(`P1LoginMenuWidget`)가 품는다. 로그인, 캐릭터 선택, 캐릭터 생성
+화면은 화면 전환기로 하나씩 보이고, 캐릭터 삭제 확인 창과 접속 진행 표시(`P1EntryProgressWidget`)는 그 위에 덮는다.
+화면마다 C++ 클래스와 WBP가 한 쌍이다(`P1LoginWidget`과 `WBP_Login`). 캐릭터 선택 화면의 슬롯(`P1CharacterSlotWidget`)은
+그 화면만 품으므로 `Common/`이 아니라 `Frontend/`에 있다. 접속 진행 표시는 로그인 맵에서만 뜨므로 `Frontend/`에 둔다.
+게임 중에 다른 맵으로 갈 때도 띄우게 되면 레벨을 건너 남아야 해서 이 표의 어느 조건에도 맞지 않는다. 그때 자리를 다시 정한다.
+
 `Common/`의 조건은 품는 곳의 수를 보지 않는다. 조각을 품는 위젯이 하나뿐이면 1절의 원칙대로
 그 위젯 가까이에 둔다. `P1ItemTooltipWidget`을 품는 것은 `P1SlotWidget` 하나뿐인데, 그 슬롯
 위젯이 `Common/`에 있으므로 툴팁도 `Common/`에 있다.
