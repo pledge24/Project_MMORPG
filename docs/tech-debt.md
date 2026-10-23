@@ -79,40 +79,6 @@
 
 # 높음
 
-## TD-070 리스폰한 뒤 내 플레이어가 키 입력 없이 계속 앞으로 이동한다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/UI/Screens/P1DeathWidget.cpp` 34~49줄 (`OnMyPlayerDie`) · `P1/Source/P1/Game/Entities/P1MyPlayer.cpp` 59~60줄 (이동 액션 바인딩)
-> 등록일: 2026년 10월 22일
-
-퀵슬롯 사용 작업의 PIE에서 사람이 찾았다. 리스폰하면 Ensure가 한 번 뜨고, 그 뒤로 키를 누르지 않아도 내 플레이어가 계속 앞으로 간다.
-Ensure 원문은 `P1MoveSyncComponent.cpp` 90줄의 `ClientPos.entity_id() == Info.entity_id()`와 「다른 엔티티의 위치로 덮어쓴다. 기존 31, 새 0」이다.
-호출 경로는 `UP1StatefulEntityManager::HandleRespawn` → `UP1MoveSyncComponent::SetClientPos`다.
-
-코드로 확인한 것은 다음 두 가지다.
-
-1. 서버의 리스폰 위치는 마을 표의 위치(`town->pos`)를 그대로 쓰고 엔티티 번호를 넣지 않는다. 같은 룸과 다른 룸의 두 경로가 모두
-   그 값을 `S_RESPAWN.pos_info`에 싣는다. 다른 룸 경로는 룸 입장용 사본에만 엔티티 번호를 넣는다
-2. `Player::ProcessRespawn`이 그 위치를 `_posInfo->CopyFrom`으로 통째로 복사하므로, 서버가 든 플레이어 위치의 엔티티 번호도 0이 된다
-
-앞으로 계속 가는 원인은 확인하지 않았다. 엔티티 번호가 0인 위치가 그 뒤의 이동 패킷과 스폰 정보에 실리는 것이 관련이 있을 것으로
-추정하고, 재현하지 않았다. 이번 브랜치의 변경은 리스폰과 이동 경로를 건드리지 않는다.
-
-2026년 10월 23일 덧붙임: 엔티티와 전투 계약을 옮기면서 위치에서 엔티티 번호를 뺐다. 리스폰은 이제 룸 입장 응답의 내 엔티티로
-위치를 받고(`UP1StatefulEntityManager::HandleEnterRoom`), 위 Ensure를 내던 대조는 지웠다. Ensure가 게임을 멈춘 사이에 키를 뗀 입력을
-놓쳤다고 추정했으나, 아래 재현으로 이 추정은 틀렸다. Ensure를 지운 것은 이 결함을 고치지 않는다.
-
-2026년 10월 23일 덧붙임: 사람이 PIE에서 재현했다. W를 누른 채 사망하고, 사망 화면에서 W를 떼고, 마을 리스폰을 하면 내 플레이어가 계속
-앞으로 간다. 이때 A, S, D를 누르면 W를 함께 누른 것처럼 움직인다. W를 다시 눌렀다 떼야 멈춘다.
-A, S, D가 W와 합쳐지므로, 남은 것은 `AP1MyPlayer::DesiredInput` 하나가 아니라 플레이어 입력이 든 W의 눌림 상태다.
-사망하면 `UP1DeathWidget::OnMyPlayerDie`가 입력 모드를 UI 전용으로 바꾼다. 그 사이에 뗀 키는 플레이어 입력에 닿지 않는다고 추정한다.
-고칠 곳은 서버가 아니라 클라이언트의 사망 화면이다. 사망 화면이 입력 모드를 바꾸기 전에 `APlayerController::FlushPressedKeys`로
-눌린 키를 놓도록 고쳤다. 이동 액션의 Completed가 불려 `DesiredInput`이 0으로 돌아오는지는 엔진 코드로만 추론했다.
-PIE에서 위 재현 순서로 내 플레이어가 멈추고, A·S·D가 W와 합쳐지지 않으면 이 항목을 지운다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 리스폰한 플레이어를 조작할 수 없게 된다. 사망은 일반 플레이에서 자주 일어난다.
-
 ---
 
 # 중간
