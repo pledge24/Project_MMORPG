@@ -34,13 +34,21 @@ void UP1DeathWidget::NativeConstruct()
 
 FReply UP1DeathWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-    // 사망 화면이 떠 있으면 입력이 플레이어 컨트롤러에 가지 않으므로, 사망한 채 로비로 돌아갈 게임 메뉴는 이 화면이 연다.
+    // 사망 화면이 떠 있으면 입력이 플레이어 컨트롤러에 가지 않는다. 사망한 채 로비로 돌아갈 게임 메뉴와
+    // 사망한 채 말할 채팅 입력칸은 이 화면이 연다.
     const AP1InGamePlayerController* PC = GetP1PlayerController<AP1InGamePlayerController>();
-    if (PC && PC->IsGameMenuKey(InKeyEvent.GetKey()))
+    UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer());
+    if (PC && Screens)
     {
-        if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
+        if (PC->IsGameMenuKey(InKeyEvent.GetKey()))
         {
             Screens->ToggleGameMenu();
+            return FReply::Handled();
+        }
+
+        if (PC->IsOpenChatKey(InKeyEvent.GetKey()))
+        {
+            Screens->OpenChatInput();
             return FReply::Handled();
         }
     }

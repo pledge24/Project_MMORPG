@@ -72,12 +72,22 @@ void AP1InGamePlayerController::OnPossess(APawn* InPawn)
 
 bool AP1InGamePlayerController::IsGameMenuKey(const FKey& Key) const
 {
+    return IsKeyMappedToAction(ToggleGameMenuAction, Key);
+}
+
+bool AP1InGamePlayerController::IsOpenChatKey(const FKey& Key) const
+{
+    return IsKeyMappedToAction(OpenChatAction, Key);
+}
+
+bool AP1InGamePlayerController::IsKeyMappedToAction(const UInputAction* Action, const FKey& Key) const
+{
     // 키를 위젯에 따로 적지 않고 입력 매핑에서 읽는다. 따로 적으면 매핑을 바꿀 때 화면마다 고쳐야 한다.
     const UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-    if (InputSubsystem == nullptr || ToggleGameMenuAction == nullptr)
+    if (InputSubsystem == nullptr || Action == nullptr)
         return false;
 
-    return InputSubsystem->QueryKeysMappedToAction(ToggleGameMenuAction).Contains(Key);
+    return InputSubsystem->QueryKeysMappedToAction(Action).Contains(Key);
 }
 
 void AP1InGamePlayerController::OnToggleStatusWindowWidget()
