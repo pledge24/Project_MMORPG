@@ -5,9 +5,11 @@
 export const ERROR_CATALOG = {
     VALIDATION_FAILED: { status: 400, message: '요청 형식이 올바르지 않습니다.' },
     INVALID_CREDENTIALS: { status: 401, message: '로그인 ID 또는 비밀번호가 올바르지 않습니다.' },
+    LOGIN_SESSION_EXPIRED: { status: 401, message: '로그인이 만료되었습니다. 다시 로그인해 주세요.' },
     ACCOUNT_BANNED: { status: 403, message: '이용이 정지된 계정입니다.' },
     NOT_FOUND: { status: 404, message: '요청한 경로가 없습니다.' },
     DUPLICATE_LOGIN_ID: { status: 409, message: '이미 사용 중인 로그인 ID입니다.' },
+    WORLD_UNAVAILABLE: { status: 409, message: '지금은 이 월드에 접속할 수 없습니다. 월드 목록을 다시 확인해 주세요.' },
     INTERNAL_ERROR: { status: 500, message: '서버에서 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' },
 } as const satisfies Record<string, { status: number; message: string }>;
 

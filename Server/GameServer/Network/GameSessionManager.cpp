@@ -44,6 +44,12 @@ void GameSessionManager::UnregisterUser(GameSessionRef session)
     EraseRegistration(session);
 }
 
+int32 GameSessionManager::GetAccountCount()
+{
+    USE_LOCK
+    return static_cast<int32>(_userSessions.size());
+}
+
 void GameSessionManager::EraseRegistration(const GameSessionRef& session)
 {
     // 새 로비 접속에 밀려난 세션이면 계정은 이미 새 세션을 가리킨다. 그 등록은 지우지 않는다.

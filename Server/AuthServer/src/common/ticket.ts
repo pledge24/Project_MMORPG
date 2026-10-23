@@ -12,8 +12,8 @@ export type Ticket = string;
  * 계정 번호는 10진수 문자열로 받는다. 공용 코드가 도메인의 타입을 import하지 않도록 문자열로 둔다.
  */
 export interface TicketRepository {
-    /** 티켓이 가리키는 계정 번호를 저장한다. 유효 시간은 구현이 정한다. */
-    save(ticket: Ticket, accountId: string): Promise<void>;
+    /** worldId 월드에서만 쓸 수 있는 티켓이 가리키는 계정 번호를 저장한다. 유효 시간은 구현이 정한다. */
+    save(worldId: number, ticket: Ticket, accountId: string): Promise<void>;
 }
 
 export type RedisClient = ReturnType<typeof createClient>;
@@ -21,7 +21,10 @@ export type RedisClient = ReturnType<typeof createClient>;
 // 키 이름은 게임 서버와의 계약이다. 바꾸면 게임 서버가 티켓을 찾지 못한다.
 const TICKET_KEY_PREFIX = 'authTicket:';
 
-/** 인증 티켓을 Redis의 키 하나로 두는 저장소. 값은 계정 번호 문자열 하나이고 TTL이 붙는다. */
+/**
+ * 인증 티켓을 Redis의 키 하나로 두는 저장소. 값은 계정 번호 문자열 하나이고 TTL이 붙는다.
+ * 키에 월드 번호가 들어가므로, 그 월드의 게임 서버만 티켓을 찾는다.
+ */
 export class RedisTicketRepository implements TicketRepository {
     private readonly client: RedisClient;
     private readonly ttlSeconds: number;
@@ -31,8 +34,8 @@ export class RedisTicketRepository implements TicketRepository {
         this.ttlSeconds = ttlSeconds;
     }
 
-    async save(ticket: Ticket, accountId: string): Promise<void> {
-        await this.client.set(`${TICKET_KEY_PREFIX}${ticket}`, accountId, {
+    async save(worldId: number, ticket: Ticket, accountId: string): Promise<void> {
+        await this.client.set(`${TICKET_KEY_PREFIX}${worldId}:${ticket}`, accountId, {
             expiration: { type: 'EX', value: this.ttlSeconds },
         });
     }

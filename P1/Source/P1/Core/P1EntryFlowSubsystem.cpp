@@ -4,7 +4,6 @@
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Lobby/P1LobbySubsystem.h"
 #include "Network/P1ConnectionSubsystem.h"
-#include "Network/P1NetworkSettings.h"
 #include "Network/P1PacketSender.h"
 #include "Common.pb.h"
 #include "Entry.pb.h"
@@ -31,6 +30,7 @@ namespace
         switch (Phase)
         {
         case EP1EntryPhase::Login: return TEXT("Login");
+        case EP1EntryPhase::WorldSelect: return TEXT("WorldSelect");
         case EP1EntryPhase::Lobby: return TEXT("Lobby");
         case EP1EntryPhase::MapLoad: return TEXT("MapLoad");
         case EP1EntryPhase::Game: return TEXT("Game");
@@ -51,7 +51,12 @@ void UP1EntryFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     MyPlayerData = Collection.InitializeDependency<UP1MyPlayerData>();
 
     if (AuthClient)
+    {
         AuthClient->OnLoginSucceeded.AddUObject(this, &UP1EntryFlowSubsystem::HandleLoginSucceeded);
+        AuthClient->OnWorldSelected.AddUObject(this, &UP1EntryFlowSubsystem::HandleWorldSelected);
+        AuthClient->OnWorldSelectFailed.AddUObject(this, &UP1EntryFlowSubsystem::ShowWorldSelectNotice);
+        AuthClient->OnLoginSessionExpired.AddUObject(this, &UP1EntryFlowSubsystem::HandleLoginSessionExpired);
+    }
 
     if (Connection)
     {
@@ -96,10 +101,13 @@ bool UP1EntryFlowSubsystem::CanTransition(EP1EntryPhase From, EP1EntryPhase To)
     switch (To)
     {
     case EP1EntryPhase::Login:
-        // 연결이 끊기면 어느 단계에서든 돌아온다.
+        // 연결이 끊기거나 로그인 세션이 만료되면 어느 단계에서든 돌아온다.
         return From != EP1EntryPhase::Login;
+    case EP1EntryPhase::WorldSelect:
+        // 로비에서 월드 선택으로 돌아갈 때는 다시 로그인하지 않는다.
+        return From == EP1EntryPhase::Login || From == EP1EntryPhase::Lobby;
     case EP1EntryPhase::Lobby:
-        return From == EP1EntryPhase::Login;
+        return From == EP1EntryPhase::WorldSelect;
     case EP1EntryPhase::MapLoad:
         // 게임에서 맵 로드로 가는 것은 맵을 옮길 때다.
         return From == EP1EntryPhase::Lobby || From == EP1EntryPhase::Game;
@@ -128,6 +136,7 @@ bool UP1EntryFlowSubsystem::TryEnterPhase(EP1EntryPhase NewPhase)
     else if (NewPhase == EP1EntryPhase::Login)
         bAwaitingMyPlayer = false;
 
+    OnPhaseChanged.Broadcast(NewPhase);
     NotifyProgressIfChanged(Before);
     return true;
 }
@@ -140,7 +149,7 @@ EP1EntryProgress UP1EntryFlowSubsystem::GetProgress() const
     if (Phase == EP1EntryPhase::Game && bAwaitingMyPlayer)
         return EP1EntryProgress::LoadingMap;
 
-    if (Phase == EP1EntryPhase::Login && bConnectingWorld)
+    if (Phase == EP1EntryPhase::WorldSelect && bConnectingWorld)
         return EP1EntryProgress::ConnectingWorld;
 
     return EP1EntryProgress::None;
@@ -160,18 +169,61 @@ void UP1EntryFlowSubsystem::SetConnectingWorld(bool bConnecting)
     NotifyProgressIfChanged(Before);
 }
 
-void UP1EntryFlowSubsystem::HandleLoginSucceeded(const FString& AuthTicket)
+void UP1EntryFlowSubsystem::SelectWorld(int32 WorldId)
 {
-    // 월드 선택이 생기기 전까지는 설정의 주소로 접속한다.
-    const UP1NetworkSettings* NetworkSettings = GetDefault<UP1NetworkSettings>();
+    if (Phase != EP1EntryPhase::WorldSelect || bConnectingWorld)
+        return;
 
-    // Connect 안에서 실패를 알리면 로그인으로 돌아가며 이 표시를 끈다. 그래서 부르기 전에 켠다.
+    // 월드 선택 응답을 기다리는 동안에도 접속 중으로 보인다. 그사이 다른 월드를 또 고르지 못하게 한다.
     SetConnectingWorld(true);
+    AuthClient->RequestSelectWorld(WorldId);
+}
+
+void UP1EntryFlowSubsystem::Logout()
+{
+    if (Phase != EP1EntryPhase::WorldSelect || bConnectingWorld)
+        return;
+
+    AuthClient->Logout();
+    TryEnterPhase(EP1EntryPhase::Login);
+}
+
+void UP1EntryFlowSubsystem::ReturnToWorldSelect()
+{
+    if (Phase != EP1EntryPhase::Lobby)
+        return;
+
+    // 연결을 닫으면 서버는 접속 종료 경로를 탄다. 닫기는 끊김을 알리지 않으므로 로그인으로 돌아가지 않는다.
+    Connection->Close();
+    Lobby->Reset();
+    TryEnterPhase(EP1EntryPhase::WorldSelect);
+
+    // 로비에 있는 동안 월드의 혼잡도가 바뀌었거나 월드가 꺼졌을 수 있다.
+    AuthClient->RequestWorlds();
+}
+
+void UP1EntryFlowSubsystem::HandleLoginSucceeded()
+{
+    TryEnterPhase(EP1EntryPhase::WorldSelect);
+}
+
+void UP1EntryFlowSubsystem::HandleWorldSelected(const FString& Host, int32 Port, const FString& AuthTicket)
+{
+    // 응답을 기다리는 사이 로그인으로 돌아갔으면 티켓을 쓰지 않는다. 티켓은 유효 시간이 지나면 저절로 사라진다.
+    if (Phase != EP1EntryPhase::WorldSelect || bConnectingWorld == false)
+        return;
 
     // 연결은 Connect 안에서 끝나고 그 안에서 결과를 알리므로, 부르기 전에 티켓을 맡겨 둔다.
     PendingAuthTicket = AuthTicket;
-    Connection->Connect(NetworkSettings->GameServerIp, NetworkSettings->GameServerPort);
+    Connection->Connect(Host, Port);
     PendingAuthTicket.Reset();
+}
+
+void UP1EntryFlowSubsystem::HandleLoginSessionExpired(const FString& Message)
+{
+    // 로그인 세션은 로그인 맵에서만 쓴다. 게임 중에는 만료돼도 게임 서버와의 연결이 그대로다.
+    if (IsInLoginMap(Phase))
+        ReturnToLogin(Message);
 }
 
 void UP1EntryFlowSubsystem::HandleConnected()
@@ -188,7 +240,7 @@ void UP1EntryFlowSubsystem::HandleConnected()
 
 void UP1EntryFlowSubsystem::HandleConnectFailed()
 {
-    ReturnToLogin(CONNECT_FAILED_NOTICE);
+    ShowWorldSelectNotice(CONNECT_FAILED_NOTICE);
 }
 
 void UP1EntryFlowSubsystem::HandleLobbyEntered()
@@ -200,9 +252,9 @@ void UP1EntryFlowSubsystem::HandleLobbyEntered()
 void UP1EntryFlowSubsystem::HandleLobbyConnectFailed(const FText& Message)
 {
     // 서버가 이 응답 뒤에 끊는다. 먼저 닫지 않으면 끊김이 사유 없는 끊김으로 와서 결과의 문구를 덮는다.
-    // 티켓은 게임 서버가 이미 지웠으므로 다시 로그인해야 한다.
+    // 티켓은 게임 서버가 이미 지웠지만, 로그인 세션이 남아 있으므로 월드를 다시 고르면 새 티켓을 받는다.
     Connection->Close();
-    ReturnToLogin(Message.ToString());
+    ShowWorldSelectNotice(Message.ToString());
 }
 
 void UP1EntryFlowSubsystem::EnterMapLoad()
@@ -257,11 +309,19 @@ FString UP1EntryFlowSubsystem::ConsumeLoginNotice()
 void UP1EntryFlowSubsystem::RemoveListener(const UObject* Listener)
 {
     OnProgressChanged.RemoveAll(Listener);
-    OnLoginNotice.RemoveAll(Listener);
+    OnPhaseChanged.RemoveAll(Listener);
+    OnNotice.RemoveAll(Listener);
 }
 
 void UP1EntryFlowSubsystem::HandleConnectionLost(Protocol::DisconnectReason Reason)
 {
+    // 로비 접속 응답을 기다리다 끊기면 월드를 다시 고르게 한다.
+    if (Phase == EP1EntryPhase::WorldSelect)
+    {
+        ShowWorldSelectNotice(CONNECTION_LOST_NOTICE);
+        return;
+    }
+
     switch (Reason)
     {
     case Protocol::DISCONNECT_REASON_DUPLICATE_CONNECTION:
@@ -275,7 +335,7 @@ void UP1EntryFlowSubsystem::HandleConnectionLost(Protocol::DisconnectReason Reas
 
 void UP1EntryFlowSubsystem::ReturnToLogin(const FString& Notice)
 {
-    UE_LOG(LogP1Network, Warning, TEXT("게임 서버에 연결하지 못했거나 연결이 끊겨 로그인 화면으로 돌아간다: %s"), *Notice);
+    UE_LOG(LogP1Network, Warning, TEXT("로그인 화면으로 돌아간다: %s"), *Notice);
 
     // 문구를 알리기 전에 끈다. 로그인 화면이 진행 표시에 가려진 채 문구를 받지 않게 하려는 것이다.
     SetConnectingWorld(false);
@@ -285,18 +345,42 @@ void UP1EntryFlowSubsystem::ReturnToLogin(const FString& Notice)
     MyPlayerData->ClearQuickSlots();
     Lobby->Reset();
 
-    // 아직 로그인 단계면 로그인 맵이 열려 있다. 맵을 다시 열지 않고 열린 화면에 알린다.
-    if (Phase == EP1EntryPhase::Login)
+    // 로그인 화면으로 가면 다시 로그인한다. 남은 로그인 세션은 쓰지 않으므로 버린다.
+    // 연결은 끊김을 알리기 전에 연결 서브시스템이 닫았다.
+    AuthClient->Logout();
+
+    // 로그인 맵이 열려 있으면 맵을 다시 열지 않고 열린 화면에 알린다.
+    if (IsInLoginMap(Phase))
     {
-        OnLoginNotice.Broadcast(Notice);
+        if (Phase != EP1EntryPhase::Login)
+            TryEnterPhase(EP1EntryPhase::Login);
+
+        if (Notice.IsEmpty() == false)
+            OnNotice.Broadcast(Notice);
         return;
     }
 
-    // 티켓은 게임 서버가 한 번 쓰고 지웠다. 다시 들어가려면 인증 서버에 다시 로그인해야 하므로 다시 잇지 않는다.
-    // 연결은 끊김을 알리기 전에 연결 서브시스템이 닫았다.
     TryEnterPhase(EP1EntryPhase::Login);
     PendingLoginNotice = Notice;
     OpenLevelNextTick(LOGIN_LEVEL_NAME);
+}
+
+void UP1EntryFlowSubsystem::ShowWorldSelectNotice(const FString& Notice)
+{
+    if (Phase != EP1EntryPhase::WorldSelect)
+        return;
+
+    UE_LOG(LogP1Network, Warning, TEXT("월드에 접속하지 못해 월드 선택 화면에 남는다: %s"), *Notice);
+
+    // 문구를 알리기 전에 끈다. 월드 선택 화면이 진행 표시에 가려진 채 문구를 받지 않게 하려는 것이다.
+    SetConnectingWorld(false);
+    Lobby->Reset();
+    OnNotice.Broadcast(Notice);
+}
+
+bool UP1EntryFlowSubsystem::IsInLoginMap(EP1EntryPhase InPhase)
+{
+    return InPhase == EP1EntryPhase::Login || InPhase == EP1EntryPhase::WorldSelect || InPhase == EP1EntryPhase::Lobby;
 }
 
 void UP1EntryFlowSubsystem::OpenLevelNextTick(FName LevelName)

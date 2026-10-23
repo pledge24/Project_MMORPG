@@ -15,6 +15,10 @@ namespace
     constexpr int32 DEFAULT_WORKER_THREAD_COUNT = 5;
     constexpr int32 DEFAULT_DB_THREAD_COUNT = 5;
     constexpr int32 DEFAULT_DEBUG_SERVER_NODE_ID = 0;
+    constexpr int32 DEFAULT_WORLD_ID = 1;
+    const char* DEFAULT_WORLD_NAME = "로컬 월드";
+    const char* DEFAULT_WORLD_HOST = "127.0.0.1";
+    constexpr int32 DEFAULT_WORLD_CAPACITY = 100;
 
     // min~max가 아니거나 숫자가 아니면 nullopt.
     std::optional<int32> ParseInt(const string& text, int32 min, int32 max)
@@ -78,6 +82,22 @@ Config Config::Load(const EnvLookup& lookup, BuildConfiguration build)
     config.dbConnectionCount = config.dbThreadCount;
     OverrideInt(lookup, "P1_GAME_DB_CONNECTIONS", 1, INT32_MAX, config.dbConnectionCount);
 
+    // 월드 번호도 틀린 값을 기본값으로 바꾸지 않는다. 다른 월드의 번호로 뜨면 그 월드의 항목을 덮어쓰고 그 월드의 인증 티켓을 받는다.
+    config.worldId = DEFAULT_WORLD_ID;
+    if (std::optional<string> text = lookup("P1_WORLD_ID"))
+        config.worldId = ParseInt(text.value(), INT32_MIN, INT32_MAX).value_or(0);
+
+    config.worldName = DEFAULT_WORLD_NAME;
+    if (std::optional<string> value = lookup("P1_WORLD_NAME"))
+        config.worldName = value.value();
+
+    config.worldHost = DEFAULT_WORLD_HOST;
+    if (std::optional<string> value = lookup("P1_WORLD_HOST"))
+        config.worldHost = value.value();
+
+    config.worldCapacity = DEFAULT_WORLD_CAPACITY;
+    OverrideInt(lookup, "P1_WORLD_CAPACITY", 1, INT32_MAX, config.worldCapacity);
+
     // 노드 번호는 틀린 값을 기본값으로 바꾸지 않는다. 다른 노드와 번호가 겹치면 발급한 ID가 겹친다.
     // 범위는 Validate가 본다. 노드가 하나뿐인 개발 머신(Debug)만 번호가 없을 때 0을 쓴다.
     if (std::optional<string> text = lookup("P1_SERVER_NODE_ID"))
@@ -96,12 +116,14 @@ Config Config::Load(const EnvLookup& lookup, BuildConfiguration build)
 
 std::optional<string> Config::ReadProcessEnv(const char* name)
 {
-    char* buffer = nullptr;
+    // 넓은 문자로 읽어 UTF-8로 바꾼다. _dupenv_s는 ANSI 코드 페이지(cp949)로 돌려주므로, 한국어 월드 이름이 Redis에 깨진 채 들어간다.
+    const wstring wideName = EncodingConverter::StringToWString(name);
+    wchar_t* buffer = nullptr;
     size_t length = 0;
-    if (_dupenv_s(&buffer, &length, name) != 0 || buffer == nullptr)
+    if (_wdupenv_s(&buffer, &length, wideName.c_str()) != 0 || buffer == nullptr)
         return std::nullopt;
 
-    string value(buffer);
+    string value = EncodingConverter::WCharToString(buffer);
     free(buffer);
 
     if (value.empty())
@@ -128,6 +150,13 @@ std::optional<string> Config::Validate() const
     // 노드 번호는 ID의 10비트 자리에 들어간다. 범위를 넘으면 시각 비트를 덮어 다른 노드의 ID와 겹친다.
     if (serverNodeId.value() < 0 || serverNodeId.value() > SnowflakeIdGenerator::MAX_NODE_ID)
         return format("P1_SERVER_NODE_ID({})가 0~{}가 아니다", serverNodeId.value(), SnowflakeIdGenerator::MAX_NODE_ID);
+
+    if (worldId < 1)
+        return "P1_WORLD_ID가 1 이상의 정수가 아니다. 이 서버가 맡은 월드의 번호를 다른 월드와 겹치지 않게 넣는다";
+
+    // 클라이언트는 월드 선택이 돌려준 주소를 IPv4로만 읽는다. 호스트 이름을 알리면 그 월드에는 아무도 접속하지 못한다.
+    if (::inet_pton(AF_INET, worldHost.c_str(), &address) != 1)
+        return format("P1_WORLD_HOST({})가 IPv4 주소가 아니다", worldHost);
 
     return std::nullopt;
 }
