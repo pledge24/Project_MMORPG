@@ -42,7 +42,7 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
     TSoftClassPtr<UP1DeathWidget> DeathWidgetClass;
 
-    /** Esc로 여는 게임 메뉴 위젯 클래스. */
+    /** 메뉴 키로 여는 게임 메뉴 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
     TSoftClassPtr<UP1GameMenuWidget> GameMenuWidgetClass;
 

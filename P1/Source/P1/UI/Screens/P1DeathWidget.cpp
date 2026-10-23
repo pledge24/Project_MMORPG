@@ -5,6 +5,7 @@
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "UI/P1ScreenSubsystem.h"
+#include "Core/P1InGamePlayerController.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
 
@@ -34,7 +35,8 @@ void UP1DeathWidget::NativeConstruct()
 FReply UP1DeathWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
     // 사망 화면이 떠 있으면 입력이 플레이어 컨트롤러에 가지 않으므로, 사망한 채 로비로 돌아갈 게임 메뉴는 이 화면이 연다.
-    if (InKeyEvent.GetKey() == EKeys::Escape)
+    const AP1InGamePlayerController* PC = GetP1PlayerController<AP1InGamePlayerController>();
+    if (PC && PC->IsGameMenuKey(InKeyEvent.GetKey()))
     {
         if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
         {

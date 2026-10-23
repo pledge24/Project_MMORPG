@@ -1,9 +1,9 @@
 #include "UI/Screens/P1GameMenuWidget.h"
 #include "Components/Button.h"
 #include "Core/P1EntryFlowSubsystem.h"
+#include "Core/P1InGamePlayerController.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
-#include "InputCoreTypes.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/P1ScreenSubsystem.h"
 
@@ -32,7 +32,8 @@ void UP1GameMenuWidget::NativeOnInitialized()
 FReply UP1GameMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
     // 메뉴가 열려 있으면 입력이 플레이어 컨트롤러에 가지 않으므로, 여는 키로 닫는 일은 메뉴가 받는다.
-    if (InKeyEvent.GetKey() == EKeys::Escape)
+    const AP1InGamePlayerController* PC = GetP1PlayerController<AP1InGamePlayerController>();
+    if (PC && PC->IsGameMenuKey(InKeyEvent.GetKey()))
     {
         CloseMenu();
         return FReply::Handled();

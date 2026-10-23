@@ -42,6 +42,10 @@ public:
     //~ End IP1ShopScreen Interface
 
     //~ Screen Input
+public:
+    /** Key가 게임 메뉴를 여닫는 키로 매핑돼 있으면 true. 입력을 혼자 받는 화면이 메뉴 키를 처리할 때 쓴다. */
+    bool IsGameMenuKey(const FKey& Key) const;
+
 private:
     void OnToggleStatusWindowWidget();
     void OnToggleInventoryWidget();
@@ -59,7 +63,7 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TObjectPtr<UInputAction> ToggleInventoryAction;
 
-    /** 게임 메뉴를 연다. 메뉴가 열려 있으면 입력을 메뉴가 받으므로 닫는 키는 메뉴 위젯이 처리한다. */
+    /** 게임 메뉴를 연다. 메뉴나 사망 화면이 떠 있으면 입력을 그 화면이 받으므로, 그때 이 키는 그 화면이 처리한다. */
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TObjectPtr<UInputAction> ToggleGameMenuAction;
 
