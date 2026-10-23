@@ -56,6 +56,7 @@ void UP1LobbySubsystem::Reset()
 {
     Characters.Reset();
     CharacterSlotCount = 0;
+    CreatableClasses.Reset();
 }
 
 void UP1LobbySubsystem::CreateCharacter(const FString& CharacterName, EP1CharacterClass CharacterClass)
@@ -126,6 +127,19 @@ void UP1LobbySubsystem::HandleCharacterList(const Protocol::S_CHARACTER_LIST& Ch
         Characters.Add(ToLobbyCharacter(Character));
 
     CharacterSlotCount = CharacterListPkt.character_slot_count();
+
+    // 클라이언트보다 새 서버가 이 클라이언트에 없는 직업을 열었으면, 고를 버튼을 그릴 수 없으므로 생성 화면에서 뺀다.
+    CreatableClasses.Reset();
+    for (int32 ClassValue : CharacterListPkt.creatable_classes())
+    {
+        if (ClassValue != Protocol::CLASS_TYPE_WARRIOR && ClassValue != Protocol::CLASS_TYPE_MAGE)
+        {
+            UE_LOG(LogP1Lobby, Warning, TEXT("모르는 직업을 생성할 수 있는 직업에서 뺌. 직업: %d"), ClassValue);
+            continue;
+        }
+
+        CreatableClasses.Add(static_cast<EP1CharacterClass>(ClassValue));
+    }
 
     OnLobbyEntered.Broadcast();
     OnCharactersChanged.Broadcast();

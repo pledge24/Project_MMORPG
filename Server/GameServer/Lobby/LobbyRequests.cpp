@@ -2,6 +2,7 @@
 #include "Lobby/LobbyRequests.h"
 #include "Lobby/AccountDAO.h"
 #include "Lobby/CharacterListDAO.h"
+#include "Lobby/Data/LobbyData.h"
 
 namespace
 {
@@ -40,6 +41,11 @@ Protocol::S_CHARACTER_LIST LobbyRequests::ConnectLobby(DBConnection& conn, int64
 
     // 클라이언트는 이 값으로 슬롯을 보여 주고 생성 버튼을 막는다. 생성 쿼리가 막는 한도와 같은 계정 행의 값이다.
     listPkt.set_character_slot_count(characterSlotCount);
+
+    // 캐릭터 생성 화면은 이 직업만 보여 준다. 클라이언트에 따로 목록을 두면 로비 표를 바꿀 때 클라이언트도 패치해야 한다.
+    for (int32 classId : LobbyData::GetCreatableClasses())
+        listPkt.add_creatable_classes(static_cast<Protocol::CharacterClass>(classId));
+
     return listPkt;
 }
 

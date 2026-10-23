@@ -26,11 +26,12 @@ namespace P1LobbySubsystemTest
         Character->set_level(Level);
     }
 
-    /** 전사 「가나」(번호 11, 레벨 7)와 마법사 「다라」(번호 12, 레벨 3)가 있고 슬롯이 4개인 목록. */
+    /** 전사 「가나」(번호 11, 레벨 7)와 마법사 「다라」(번호 12, 레벨 3)가 있고 슬롯이 4개이며, 전사만 생성할 수 있는 목록. */
     Protocol::S_CHARACTER_LIST MakeCharacterList()
     {
         Protocol::S_CHARACTER_LIST Pkt;
         Pkt.set_character_slot_count(4);
+        Pkt.add_creatable_classes(Protocol::CLASS_TYPE_WARRIOR);
         SetCharacter(Pkt.add_characters(), 11, TEXT("가나"), Protocol::CLASS_TYPE_WARRIOR, 7);
         SetCharacter(Pkt.add_characters(), 12, TEXT("다라"), Protocol::CLASS_TYPE_MAGE, 3);
         return Pkt;
@@ -75,6 +76,9 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
     // 2)의 거절된 로비 접속은 경고를 남긴다.
     AddExpectedMessage(TEXT("서버가 로비 접속을 거절함"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
 
+    // 7)의 모르는 직업은 경고를 남긴다.
+    AddExpectedMessage(TEXT("모르는 직업을 생성할 수 있는 직업에서 뺌"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
+
     // 1) 로비 접속이 성공하면 목록이 뒤따른다. 목록을 받으면 캐릭터와 슬롯 수를 사본에 옮기고,
     //    로비에 들어왔다고 알린 뒤 목록이 바뀌었다고 알린다.
     {
@@ -100,6 +104,9 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("첫 캐릭터 레벨"), Characters[0].CharacterLevel, 7);
             TestTrue(TEXT("둘째 캐릭터 직업"), Characters[1].CharacterClass == EP1CharacterClass::Mage);
         }
+        const TArray<EP1CharacterClass>& CreatableClasses = F.Lobby->GetCreatableClasses();
+        if (TestEqual(TEXT("생성할 수 있는 직업 수"), CreatableClasses.Num(), 1))
+            TestTrue(TEXT("생성할 수 있는 직업은 서버가 알려 준 전사뿐"), CreatableClasses[0] == EP1CharacterClass::Warrior);
         TestEqual(TEXT("로비 입장 알림"), F.EnteredCount, 1);
         TestEqual(TEXT("목록 변경 알림"), F.ChangedCount, 1);
     }
@@ -200,6 +207,25 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
 
         TestEqual(TEXT("비운 뒤 캐릭터 수"), F.Lobby->GetCharacters().Num(), 0);
         TestEqual(TEXT("비운 뒤 슬롯 수"), F.Lobby->GetCharacterSlotCount(), 0);
+        TestEqual(TEXT("비운 뒤 생성할 수 있는 직업 수"), F.Lobby->GetCreatableClasses().Num(), 0);
+    }
+
+    // 7) 서버가 이 클라이언트에 없는 직업을 생성할 수 있다고 알리면, 그 직업만 빼고 나머지는 서버의 순서대로 둔다.
+    {
+        FFixture F;
+        Protocol::S_CHARACTER_LIST Pkt;
+        Pkt.set_character_slot_count(4);
+        Pkt.add_creatable_classes(Protocol::CLASS_TYPE_MAGE);
+        Pkt.add_creatable_classes(static_cast<Protocol::CharacterClass>(99));
+        Pkt.add_creatable_classes(Protocol::CLASS_TYPE_WARRIOR);
+        F.Lobby->HandleCharacterList(Pkt);
+
+        const TArray<EP1CharacterClass>& CreatableClasses = F.Lobby->GetCreatableClasses();
+        if (TestEqual(TEXT("모르는 직업을 뺀 수"), CreatableClasses.Num(), 2))
+        {
+            TestTrue(TEXT("첫 직업은 마법사"), CreatableClasses[0] == EP1CharacterClass::Mage);
+            TestTrue(TEXT("둘째 직업은 전사"), CreatableClasses[1] == EP1CharacterClass::Warrior);
+        }
     }
 
     return true;
