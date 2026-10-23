@@ -42,8 +42,7 @@ namespace
         { PKT_C_DELETE_CHARACTER, "C_DELETE_CHARACTER", LOBBY_ONLY },
         { PKT_C_ENTER_GAME, "C_ENTER_GAME", LOBBY_ONLY },
         { PKT_C_MAP_LOAD_COMPLETE, "C_MAP_LOAD_COMPLETE", IN_GAME_ONLY },
-        { PKT_C_ENTER_MAP, "C_ENTER_MAP", IN_GAME_ONLY },
-        { PKT_C_ENTER_ROOM, "C_ENTER_ROOM", IN_GAME_ONLY },
+        { PKT_C_USE_PORTAL, "C_USE_PORTAL", IN_GAME_ONLY },
         { PKT_C_MOVE, "C_MOVE", IN_GAME_ONLY },
         { PKT_C_NORMAL_ATTACK, "C_NORMAL_ATTACK", IN_GAME_ONLY },
         { PKT_C_BUY_ITEM, "C_BUY_ITEM", IN_GAME_ONLY },
@@ -153,7 +152,7 @@ TEST(SessionPhaseTest, CancelledEntryReturnsToLobby)
     EXPECT_TRUE(session.BeginGameEntry()) << "거절된 뒤에는 다시 캐릭터를 골라 입장할 수 있다";
 }
 
-// 입장 결과의 응답을 받은 클라이언트는 곧바로 다음 요청(룸 입장, 다른 캐릭터의 입장)을 보낸다.
+// 입장 결과의 응답을 받은 클라이언트는 곧바로 다음 요청(맵 로드 완료, 다른 캐릭터의 입장)을 보낸다.
 // 응답 뒤에 단계를 바꾸면 그 요청이 앞 단계에서 버려진다.
 TEST(GameEntryFinishTest, SuccessMovesSessionToGameBeforeResponse)
 {
@@ -163,13 +162,13 @@ TEST(GameEntryFinishTest, SuccessMovesSessionToGameBeforeResponse)
     session->BeginGameEntry();
 
     Protocol::S_ENTER_GAME enterGamePkt;
-    enterGamePkt.set_success(true);
+    enterGamePkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
     GameEntry::FinishEnter(session, enterGamePkt);
 
     EXPECT_EQ(session->GetPhase(), SessionPhase::IN_GAME);
     const vector<Protocol::S_ENTER_GAME> responses = session->SentPackets<Protocol::S_ENTER_GAME>(PKT_S_ENTER_GAME);
     ASSERT_EQ(responses.size(), 1u);
-    EXPECT_TRUE(responses[0].success());
+    EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_SUCCESS);
 }
 
 TEST(GameEntryFinishTest, FailureReturnsSessionToLobby)
@@ -180,11 +179,11 @@ TEST(GameEntryFinishTest, FailureReturnsSessionToLobby)
     session->BeginGameEntry();
 
     Protocol::S_ENTER_GAME enterGamePkt;
-    enterGamePkt.set_success(false);
+    enterGamePkt.set_result(Protocol::ENTRY_RESULT_PREVIOUS_SAVE_PENDING);
     GameEntry::FinishEnter(session, enterGamePkt);
 
     EXPECT_EQ(session->GetPhase(), SessionPhase::LOBBY);
     const vector<Protocol::S_ENTER_GAME> responses = session->SentPackets<Protocol::S_ENTER_GAME>(PKT_S_ENTER_GAME);
     ASSERT_EQ(responses.size(), 1u);
-    EXPECT_FALSE(responses[0].success());
+    EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_PREVIOUS_SAVE_PENDING);
 }

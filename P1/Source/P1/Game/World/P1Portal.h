@@ -30,7 +30,7 @@ private:
     void HandleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-    /** PortalId가 가리키는 룸으로 입장을 요청한다. 0이면 요청하지 않는다. */
+    /** PortalId 포털의 사용을 요청한다. 0이면 요청하지 않는다. */
     void RequestRoomTransfer();
 
     /** 블루프린트에서 밟는 범위로 쓰는 컴포넌트의 이름. */

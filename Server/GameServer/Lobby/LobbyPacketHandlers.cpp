@@ -22,10 +22,10 @@ namespace
     }
 
     // 게임 입장 창구로 넘기기 전에 거절한다. 세션은 로비로 돌아가 다시 고른 캐릭터의 입장을 받는다.
-    void RejectEnterGame(const GameSessionRef& session)
+    void RejectEnterGame(const GameSessionRef& session, Protocol::EntryResult result)
     {
         Protocol::S_ENTER_GAME enterGameFailPkt;
-        enterGameFailPkt.set_success(false);
+        enterGameFailPkt.set_result(result);
         GameEntry::FinishEnter(session, enterGameFailPkt);
     }
 }
@@ -205,14 +205,14 @@ bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt)
             catch (const exception& error)
             {
                 GLogger->Error("계정 {} 캐릭터 {} 소유 확인 실패: {}", userId, characterId, error.what());
-                RejectEnterGame(gameSession);
+                RejectEnterGame(gameSession, Protocol::ENTRY_RESULT_INTERNAL_ERROR);
                 return;
             }
 
             if (result != Protocol::LOBBY_RESULT_SUCCESS)
             {
                 GLogger->Warning("계정 {}의 캐릭터가 아닌 {}로 입장을 요청했다", userId, characterId);
-                RejectEnterGame(gameSession);
+                RejectEnterGame(gameSession, Protocol::ENTRY_RESULT_CHARACTER_NOT_FOUND);
                 return;
             }
 

@@ -1,12 +1,13 @@
 #include "Core/P1EntryFlowSubsystem.h"
 #include "Auth/P1AuthClient.h"
+#include "Game/Data/P1GameDataSettings.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Lobby/P1LobbySubsystem.h"
 #include "Network/P1ConnectionSubsystem.h"
 #include "Network/P1NetworkSettings.h"
 #include "Network/P1PacketSender.h"
 #include "Common.pb.h"
-#include "Protocol.pb.h"
+#include "Entry.pb.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,12 +17,14 @@
 namespace
 {
     const FName LOGIN_LEVEL_NAME(TEXT("L_LoginMap"));
-    const FName IN_GAME_LEVEL_NAME(TEXT("L_InGameMap"));
 
     /** 사유를 모르는 끊김에 보여 줄 문구. 서버가 먼저 내려갔거나 사유 패킷을 잃은 경우다. */
     const TCHAR* const CONNECTION_LOST_NOTICE = TEXT("게임 서버와 연결이 끊겼습니다.");
 
     const TCHAR* const CONNECT_FAILED_NOTICE = TEXT("게임 서버에 접속하지 못했습니다.");
+
+    /** 서버가 이 클라이언트에 없는 맵으로 보냈을 때 보여 줄 문구. 클라이언트와 서버의 기획 데이터가 어긋난 경우다. */
+    const TCHAR* const UNKNOWN_MAP_NOTICE = TEXT("이 클라이언트에 없는 맵입니다. 클라이언트를 최신으로 업데이트해 주세요.");
 
     const TCHAR* PhaseName(EP1EntryPhase Phase)
     {
@@ -65,7 +68,7 @@ void UP1EntryFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     }
 
     if (MyPlayerData)
-        MyPlayerData->OnMapEntered.AddUObject(this, &UP1EntryFlowSubsystem::EnterMapLoad);
+        MyPlayerData->OnMapChanged.AddUObject(this, &UP1EntryFlowSubsystem::EnterMapLoad);
 
     PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UP1EntryFlowSubsystem::HandlePostLoadMap);
 }
@@ -160,8 +163,19 @@ void UP1EntryFlowSubsystem::HandleLobbyConnectFailed(const FText& Message)
 
 void UP1EntryFlowSubsystem::EnterMapLoad()
 {
+    const int32 MapId = MyPlayerData->GetMapId();
+    const TSoftObjectPtr<UWorld> Level = GetDefault<UP1GameDataSettings>()->FindMapLevel(MapId);
+    if (Level.IsNull())
+    {
+        // 열 레벨이 없는데 남아 있으면 서버는 로드 완료를 기다리고 클라이언트는 아무 맵도 열지 않은 채 멈춘다.
+        UE_LOG(LogP1System, Error, TEXT("맵 %d의 레벨이 데이터 설정(P1 Game Data)에 없어 연결을 끊는다"), MapId);
+        Connection->Close();
+        ReturnToLogin(UNKNOWN_MAP_NOTICE);
+        return;
+    }
+
     if (TryEnterPhase(EP1EntryPhase::MapLoad))
-        OpenLevelNextTick(IN_GAME_LEVEL_NAME);
+        OpenLevelNextTick(FName(*Level.GetLongPackageName()));
 }
 
 void UP1EntryFlowSubsystem::HandlePostLoadMap(UWorld* LoadedWorld)
@@ -173,18 +187,15 @@ void UP1EntryFlowSubsystem::HandlePostLoadMap(UWorld* LoadedWorld)
     if (Phase != EP1EntryPhase::MapLoad)
         return;
 
-    // 엔진은 이 맵의 BeginPlay를 마친 뒤에 이 알림을 보낸다. 그래서 인게임 컨트롤러의 BeginPlay에서 보내던 때와 같은 시점이다.
-    SendEnterRoom();
+    // 엔진은 이 맵의 BeginPlay를 마친 뒤에 이 알림을 보낸다. 서버는 이 알림을 받아야 플레이어를 룸에 넣고 스폰을 보낸다.
+    SendMapLoadComplete();
     TryEnterPhase(EP1EntryPhase::Game);
 }
 
-void UP1EntryFlowSubsystem::SendEnterRoom()
+void UP1EntryFlowSubsystem::SendMapLoadComplete()
 {
-    Protocol::C_ENTER_ROOM EnterRoomPkt;
-    EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_CROSS_MAP_TRANSFER);
-    EnterRoomPkt.set_room_id(MyPlayerData->GetRoomId());
-
-    FP1PacketSender::Send(GetGameInstance(), EnterRoomPkt);
+    Protocol::C_MAP_LOAD_COMPLETE MapLoadCompletePkt;
+    FP1PacketSender::Send(GetGameInstance(), MapLoadCompletePkt);
 }
 
 FString UP1EntryFlowSubsystem::ConsumeLoginNotice()

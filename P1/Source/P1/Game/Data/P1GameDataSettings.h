@@ -6,6 +6,7 @@
 
 class UDataTable;
 class UTexture2D;
+class UWorld;
 struct FP1ItemData;
 
 /**
@@ -38,4 +39,11 @@ public:
      * 게임 스레드 전용.
      */
     static UTexture2D* LoadItemIcon(int32 TemplateId);
+
+    /** 맵 번호(서버 맵 표의 mapId)마다 열 레벨. 서버가 알린 맵을 이 표로 연다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Maps")
+    TMap<int32, TSoftObjectPtr<UWorld>> MapLevels;
+
+    /** MapId 맵의 레벨. 표에 없으면 null인 참조. */
+    TSoftObjectPtr<UWorld> FindMapLevel(int32 MapId) const;
 };

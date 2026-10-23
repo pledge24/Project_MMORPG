@@ -64,8 +64,8 @@ void AP1Portal::RequestRoomTransfer()
     if (PortalId == 0)
         return;
 
-    Protocol::C_ENTER_ROOM EnterRoomPkt;
-    EnterRoomPkt.set_enter_type(Protocol::ENTER_TYPE_SAME_MAP_TRANSFER);
-    EnterRoomPkt.set_portal_id(PortalId);
-    FP1PacketSender::Send(this, EnterRoomPkt);
+    // 목적지가 다른 맵인지는 서버가 정한다. 응답이 맵 번호를 실어 오면 접속 흐름이 그 맵을 연다.
+    Protocol::C_USE_PORTAL UsePortalPkt;
+    UsePortalPkt.set_portal_id(PortalId);
+    FP1PacketSender::Send(this, UsePortalPkt);
 }

@@ -46,7 +46,7 @@ bool Player::Init(const SpawnParams& params)
     _quickSlots = make_shared<QuickSlotComponent>(self);
 
     if (params.progress != nullptr)
-        return ApplyProgress(*params.progress, params.enterRoomId) && OnLoaded();
+        return ApplyProgress(*params.progress) && OnLoaded();
 
 	return true;
 }
@@ -85,7 +85,7 @@ bool Player::OnLoaded()
 	return true;
 }
 
-bool Player::ApplyProgress(const PlayerProgress& progress, int32 enterRoomId)
+bool Player::ApplyProgress(const PlayerProgress& progress)
 {
     const int64 characterId = progress.characterId;
     _playerInfo->set_character_id(characterId);
@@ -93,9 +93,7 @@ bool Player::ApplyProgress(const PlayerProgress& progress, int32 enterRoomId)
     _playerInfo->set_name(progress.name);
     _playerInfo->set_level(progress.level);
 
-    // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 _enteringRoomId를 채운다.
-    // 채우지 않으면 최초 입장(INITIAL) 검증이 _enteringRoomId == -1로 실패한다.
-    OnEnterMap(progress.mapId, enterRoomId);
+    _mapId = progress.mapId;
 
     Protocol::PosInfo spawnPosInfo;
     spawnPosInfo.mutable_pos()->set_x(progress.pos.x);
@@ -377,7 +375,8 @@ optional<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowM
 RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
 	_posInfo->CopyFrom(respawnPos);
-    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다. 같은 룸 리스폰은 OnEnterRoom을 거치지 않는다.
+    _posInfo->set_entity_id(GetEntityId());
+    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다.
     _lastPositionTick = ::GetTickCount64();
 
     RespawnResult result;
@@ -404,16 +403,6 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 
 		break;
 	}
-	case Protocol::RESPAWN_TYPE_CHECKPOINT:
-	case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
-	case Protocol::RESPAWN_TYPE_IN_PLACE:
-	case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
-	case Protocol::RESPAWN_TYPE_GUILD_BASE:
-	case Protocol::RESPAWN_TYPE_CASH_ITEM:
-	case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
-	{
-		break;
-	}
 	default:
 		break;
 	}
@@ -437,20 +426,38 @@ void Player::OnDie(EntityRef attacker)
 
 }
 
-void Player::OnEnterMap(int32 mapId, int32 roomId)
+void Player::BeginMapLoad(const RoomRef& room, const Protocol::PosInfo& pos)
 {
-    _mapId = mapId;
-    _enteringRoomId = roomId;
+    // 기다리는 동안의 접속 종료는 이 맵과 위치로 저장한다. 목적지를 정한 뒤에 끊겨도 다음 입장이 그 맵에서 시작한다.
+    _mapId = room->GetMapId();
+    _posInfo->CopyFrom(pos);
+    _posInfo->set_entity_id(GetEntityId());
+    _mapLoadRoomId = room->GetRoomId();
+
+    // 소속 룸을 목적지로 바꿔 두면 맵 로드 완료와 접속 종료가 목적지 룸의 큐 하나에서 차례로 돈다.
+    // 기다리는 동안 온 다른 요청도 그 큐로 가서, 룸에 없는 플레이어의 요청으로 버려진다.
+    AssignRoom(room);
+}
+
+bool Player::FinishMapLoad(int32 roomId)
+{
+    // 룸 번호는 -1이 아니므로 기다리지 않는 플레이어는 여기서 걸린다.
+    if (_mapLoadRoomId != roomId)
+        return false;
+
+    _mapLoadRoomId = -1;
+    return true;
 }
 
 void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos)
 {
-    _enteringRoomId = -1;
     _roomId = enterRoom->GetRoomId();
 
     if(enterPos.has_value())
     {
+        // 위치의 엔티티 id는 넘겨받은 값이 아니라 이 플레이어의 것으로 둔다.
         _posInfo->CopyFrom(enterPos.value());
+        _posInfo->set_entity_id(GetEntityId());
     }
     else
     {

@@ -46,7 +46,7 @@ public:
 
     //~ 룸 큐
 public:
-    /** 끊긴 플레이어를 room에서 빼고 저장한다. room의 큐 위에서만 부른다. */
+    /** 끊긴 플레이어를 room에서 빼고 저장한다. 그사이 소속 룸이 바뀌었으면 그 룸의 큐로 넘긴다. room의 큐 위에서만 부른다. */
     void LeaveRoomAndSave(const RoomRef& room, const PlayerRef& player);
     /**
      * 어느 룸에도 없는 끊긴 플레이어를 저장한다.

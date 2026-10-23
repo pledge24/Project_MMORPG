@@ -34,8 +34,7 @@ namespace
         { PKT_C_ENTER_GAME, Only(SessionPhase::LOBBY) },
 
         { PKT_C_MAP_LOAD_COMPLETE, Only(SessionPhase::IN_GAME) },
-        { PKT_C_ENTER_MAP, Only(SessionPhase::IN_GAME) },
-        { PKT_C_ENTER_ROOM, Only(SessionPhase::IN_GAME) },
+        { PKT_C_USE_PORTAL, Only(SessionPhase::IN_GAME) },
         { PKT_C_MOVE, Only(SessionPhase::IN_GAME) },
         { PKT_C_NORMAL_ATTACK, Only(SessionPhase::IN_GAME) },
         { PKT_C_BUY_ITEM, Only(SessionPhase::IN_GAME) },

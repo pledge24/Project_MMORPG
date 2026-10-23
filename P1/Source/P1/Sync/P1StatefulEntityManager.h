@@ -4,6 +4,7 @@
 #include "Sync/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Protocol.pb.h"
+#include "Entry.pb.h"
 #include "P1StatefulEntityManager.generated.h"
 
 class AP1Monster;
@@ -92,8 +93,8 @@ protected:
     //~ Room Packet Handlers
 public:
     /**
-     * 같은 맵 안의 룸 이동이나 리스폰이면 내 플레이어만 남기고 디스폰한 뒤 내 플레이어를 입장 위치로 옮긴다.
-     * 룸 id는 저장하지 않는다. 그것은 내 플레이어 데이터가 맡는다.
+     * 앞 룸의 엔티티를 지우고 내 플레이어를 입장 위치에 둔다. 내 플레이어가 없으면 스폰하고, 사망해 있으면 되살린다.
+     * 내 플레이어 데이터가 내 엔티티 번호를 먼저 저장해야 한다.
      */
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
@@ -113,9 +114,6 @@ public:
     void HandleHit(const Protocol::S_HIT& HitPkt);
 
     void HandleDie(const Protocol::S_DIE& DiePkt);
-
-    /** 내 플레이어가 살아났으면 내 플레이어 데이터의 스탯도 갱신한다. */
-    void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
 
 protected:
     /** 게임 인스턴스가 없으면 nullptr. */

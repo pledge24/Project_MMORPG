@@ -72,6 +72,10 @@ public:
     /** 룸에 들어가기 전이거나 룸이 사라졌으면 nullptr. 어느 스레드에서 불러도 된다. */
     RoomRef GetRoom() const                             { return _room.load().lock(); }
 
+protected:
+    /** 룸에 넣지 않고 소속 룸만 room으로 정한다. 이 엔티티에 온 요청이 그 룸의 큐에서 돈다. Start는 부르지 않는다. */
+    void AssignRoom(const RoomRef& room)                { _room.store(room); }
+
 private:
     /** 룸이 AddEntity에서 JoinRoom을, 룸 틱에서 Tick을 부른다. */
     friend class Room;

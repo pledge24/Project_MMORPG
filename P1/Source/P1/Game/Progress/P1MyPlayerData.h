@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Protocol.pb.h"
+#include "Entry.pb.h"
 #include "Game/Inventory/P1ItemCooldown.h"
 #include "Game/Items/P1ContainerType.h"
 #include "P1MyPlayerData.generated.h"
@@ -13,7 +14,7 @@ class UP1ItemContainer;
 class UP1QuickSlots;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnMyPlayerSpawned, AP1MyPlayer*);
-DECLARE_MULTICAST_DELEGATE(FOnMapEntered);
+DECLARE_MULTICAST_DELEGATE(FOnMapChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnStatChanged, int64);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnLevelChanged, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnGoldChanged, int64);
@@ -54,16 +55,14 @@ public:
     //~ Player Info
 public:
     void SetEntityInfo(const Protocol::EntityInfo& InEntityInfo);
-    void SetRoomId(int32 RoomId) { _PlayerInfo->set_room_id(RoomId); }
-    void SetMapId(int32 MapId) { _PlayerInfo->set_map_id(MapId); }
 
     const Protocol::PlayerInfo& GetPlayerInfo() const { return *_PlayerInfo; }
+    /** 룸에 들어가기 전에는 0. 내 엔티티 번호는 룸 입장 응답이 알린다. */
     uint64 GetPlayerId() const { return _PlayerId; }
     int32 GetPlayerLevel() const { return _PlayerInfo->level(); };
 
-    /** 룸 ID와 맵 ID는 서로 다른 번호 공간이다. */
-    int32 GetRoomId() const { return _PlayerInfo->room_id(); }
-    int32 GetMapId() const { return _PlayerInfo->map_id(); }
+    /** 서버가 알린 지금 맵 또는 여는 맵. 맵 표의 맵 번호다. */
+    int32 GetMapId() const { return _MapId; }
 
     /** 레벨을 사본에 쓰고 구독자에게 알린다. 내 플레이어의 레벨은 이 함수로만 바꾼다. */
     void ApplyLevel(int32 Level);
@@ -76,6 +75,7 @@ protected:
     Protocol::PlayerInfo* _PlayerInfo;
 
     uint64 _PlayerId = 0;
+    int32 _MapId = 0;
     FText _PlayerName = FText::FromString("NULL");
 
     //~ Stats
@@ -156,14 +156,23 @@ private:
 
     //~ Enter Packet Handlers
 public:
-    /** 성공하면 맵과 룸 id를 저장하고 OnMapEntered를 알린다. */
-    void HandleEnterMap(const Protocol::S_ENTER_MAP& EnterMapPkt);
-
-    /** 성공하면 룸 id를 저장한다. 엔티티 정리는 엔티티 관리자가 맡는다. */
+    /** 성공하면 내 엔티티 번호를 저장한다. 엔티티 정리와 내 플레이어 배치는 엔티티 관리자가 맡는다. */
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
-    /** 맵 입장에 성공하면 알린다. */
-    FOnMapEntered OnMapEntered;
+    /** 성공 응답에 맵 번호가 있으면 그 맵을 저장하고 OnMapChanged를 알린다. */
+    void HandleUsePortal(const Protocol::S_USE_PORTAL& UsePortalPkt);
+
+    /**
+     * 거절되면 OnTownRespawnRejected를 알린다. 성공하면 회복한 스탯을 반영하고, 맵 번호가 있으면 OnMapChanged를 알린다.
+     * 사망한 액터를 되살리는 일은 뒤이은 룸 입장에서 엔티티 관리자가 한다.
+     */
+    void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
+
+    /** 서버가 다른 맵으로 보냈으면 알린다. 접속 흐름이 그 맵을 연다. */
+    FOnMapChanged OnMapChanged;
+
+private:
+    void ChangeMap(int32 MapId);
 
     //~ Item Requests
 public:

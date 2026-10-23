@@ -99,13 +99,11 @@ protected:
         const PlayerProgress progress = MakeAliveProgress();
         PlayerSpawnParams params;
         params.progress = &progress;
-        params.enterRoomId = ROOM_ID;
         player = EntityFactory::Create<Player>(params);
         ASSERT_NE(player, nullptr);
 
         RoomEnterData enterData{};
         enterData.nextRoomId = ROOM_ID;
-        enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
         enterData.enterPos = MakePos(x, y);
         ASSERT_TRUE(room->EnterPlayer(player, enterData));
     }

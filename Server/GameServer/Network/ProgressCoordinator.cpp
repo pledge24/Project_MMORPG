@@ -111,7 +111,19 @@ void ProgressCoordinator::LeaveRoomAndSave(const RoomRef& room, const PlayerRef&
 {
     optional<PlayerSaveData> saveData = room->HandleDisconnect(player);
     if (saveData.has_value() == false)
+    {
+        // 접속 종료가 소속 룸을 읽은 뒤에 플레이어가 그 룸을 떠났다. 다른 맵으로 가 맵 로드를 기다리면 소속 룸이 목적지로 바뀌어
+        // 있으므로 그 룸 큐가 저장한다. 같은 맵 안에서 옮기는 중이면 소속 룸이 아직 이 룸이고, 목적지 룸의 입장이 저장을 이어 받는다.
+        RoomRef current = player->GetRoom();
+        if (current != nullptr && current != room)
+        {
+            current->DoAsync([this, current, player]()
+                {
+                    LeaveRoomAndSave(current, player);
+                });
+        }
         return;
+    }
 
     SaveLeftPlayer(player, std::move(saveData.value()));
 }

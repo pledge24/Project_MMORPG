@@ -41,6 +41,15 @@ namespace P1ItemActionsTest
         }
     }
 
+    /** 입장 응답 뒤의 룸 입장. 내 엔티티 번호는 이 응답이 알린다. */
+    void EnterRoom(UP1MyPlayerData* Data, uint64 PlayerId)
+    {
+        Protocol::S_ENTER_ROOM Pkt;
+        Pkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
+        Pkt.mutable_my_entity()->set_entity_id(PlayerId);
+        Data->HandleEnterRoom(Pkt);
+    }
+
     /**
      * 골드 1000. 장비 구역 0번 두건(uid 11), 1번 흑기사의 검(uid 12), 2번 초보자의 검(uid 13), 3번 빈 칸.
      * 소모품 구역 0번 HP 물약 3개(uid 21), 1번 빈 칸. 기타 구역 0번 기타 아이템(uid 31). 착용 장비 1~6번 중 6번에 초보자의 검(uid 41).
@@ -49,8 +58,7 @@ namespace P1ItemActionsTest
     Protocol::S_ENTER_GAME MakeEnter()
     {
         Protocol::S_ENTER_GAME Pkt;
-        Pkt.set_success(true);
-        Pkt.mutable_player()->set_entity_id(MY_PLAYER_ID);
+        Pkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
         Pkt.mutable_possession()->set_gold(1000);
 
         Protocol::ContainerSlots* Gear = Pkt.mutable_possession()->add_containers();
@@ -109,6 +117,7 @@ namespace P1ItemActionsTest
             UGameInstance* GameInstance = NewObject<UGameInstance>(GetTransientPackage());
             Data = NewObject<UP1MyPlayerData>(GameInstance);
             Data->InitMyPlayerData(MakeEnter());
+            EnterRoom(Data, MY_PLAYER_ID);
             Data->ApplyLevel(MY_LEVEL);
 
             Actions = Data->GetItemActions();
@@ -300,6 +309,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         FFixture F;
         TestTrue(TEXT("입장 전 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
         F.Data->InitMyPlayerData(MakeEnter());
+        EnterRoom(F.Data, MY_PLAYER_ID);
         F.Data->ApplyLevel(MY_LEVEL);
         TestTrue(TEXT("다시 입장한 뒤 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
     }

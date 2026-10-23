@@ -343,5 +343,5 @@ TEST_F(PacketHandlerTest, EnterGameWithoutOwnershipCheckReturnsToLobby)
     EXPECT_EQ(recordingSession->GetPhase(), SessionPhase::LOBBY) << "다시 캐릭터를 골라 입장할 수 있어야 한다";
     const vector<Protocol::S_ENTER_GAME> responses = recordingSession->SentPackets<Protocol::S_ENTER_GAME>(PKT_S_ENTER_GAME);
     ASSERT_EQ(responses.size(), 1u) << "거절해도 응답을 보내야 클라이언트가 기다리지 않는다";
-    EXPECT_FALSE(responses[0].success());
+    EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_INTERNAL_ERROR);
 }
