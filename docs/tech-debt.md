@@ -105,8 +105,9 @@ Ensure 원문은 `P1MoveSyncComponent.cpp` 90줄의 `ClientPos.entity_id() == In
 앞으로 간다. 이때 A, S, D를 누르면 W를 함께 누른 것처럼 움직인다. W를 다시 눌렀다 떼야 멈춘다.
 A, S, D가 W와 합쳐지므로, 남은 것은 `AP1MyPlayer::DesiredInput` 하나가 아니라 플레이어 입력이 든 W의 눌림 상태다.
 사망하면 `UP1DeathWidget::OnMyPlayerDie`가 입력 모드를 UI 전용으로 바꾼다. 그 사이에 뗀 키는 플레이어 입력에 닿지 않는다고 추정한다.
-고칠 곳은 서버가 아니라 클라이언트의 사망 화면이다. 입력 모드를 바꾸기 전에 `APlayerController::FlushPressedKeys`로 눌린 키를 놓는
-방법을 후보로 두고, 이동 액션의 Completed가 실제로 불리는지는 확인하지 않았다.
+고칠 곳은 서버가 아니라 클라이언트의 사망 화면이다. 사망 화면이 입력 모드를 바꾸기 전에 `APlayerController::FlushPressedKeys`로
+눌린 키를 놓도록 고쳤다. 이동 액션의 Completed가 불려 `DesiredInput`이 0으로 돌아오는지는 엔진 코드로만 추론했다.
+PIE에서 위 재현 순서로 내 플레이어가 멈추고, A·S·D가 W와 합쳐지지 않으면 이 항목을 지운다.
 
 ### 영향
 

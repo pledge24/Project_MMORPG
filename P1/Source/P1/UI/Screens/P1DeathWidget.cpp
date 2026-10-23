@@ -38,6 +38,10 @@ void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
         // 사망 화면을 띄우고 입력을 UI로 돌린다.
         SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
+        // UI 전용 모드에서 뗀 키는 플레이어 입력에 닿지 않는다. 눌린 키를 먼저 놓지 않으면
+        // 사망 중에 뗀 이동 키가 리스폰 뒤에도 눌린 채 남아 내 플레이어가 계속 움직인다.
+        PC->FlushPressedKeys();
+
         FInputModeUIOnly InputMode;
         InputMode.SetWidgetToFocus(TakeWidget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
