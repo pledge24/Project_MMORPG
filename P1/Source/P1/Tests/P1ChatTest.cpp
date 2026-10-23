@@ -4,6 +4,8 @@
 // 실린 것을 그대로 쓰고, 내 줄인지는 내 엔티티 번호로 가른다. 플레이어가 쓴 글자가 리치 텍스트 태그로 읽히면
 // 다른 플레이어의 채팅창에서 이름의 색이 바뀌거나 글자가 사라진다.
 //
+// 말풍선은 같은 룸이어도 일정 거리보다 먼 플레이어에게는 보이지 않는다.
+//
 // 실행: pwsh P1/Scripts/Run-UeTests.ps1 -Filter P1.Chat
 
 #include "CoreMinimal.h"
@@ -14,6 +16,7 @@
 #include "Game/Chat/P1ChatPackets.h"
 #include "Game/Chat/P1ChatSubsystem.h"
 #include "UI/Screens/P1ChatLineWidget.h"
+#include "Game/Entities/P1Player.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -215,6 +218,30 @@ bool FP1ChatLineMarkupTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("표시: 이스케이프"),
         UP1ChatLineWidget::MakeMarkup(MakeLine(EP1ChatLineKind::Other, TEXT("<Mine>"), TEXT("</>a&lt;\""))),
         FString(TEXT("<Other>&lt;Mine&gt;</>: &lt;/&gt;a&amp;lt;&quot;")));
+
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FP1ChatBubbleRangeTest,
+    "P1.Chat.BubbleRange",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FP1ChatBubbleRangeTest::RunTest(const FString& Parameters)
+{
+    constexpr float MAX_DISTANCE = 2000.f;
+    const FVector Speaker(100.f, 200.f, 50.f);
+
+    // 1) 내 캐릭터의 말풍선은 거리가 0이라 언제나 보인다.
+    TestTrue(TEXT("거리: 내 캐릭터"), AP1Player::IsWithinChatBubbleRange(Speaker, Speaker, MAX_DISTANCE));
+
+    // 2) 거리가 한도와 같으면 보이고, 넘으면 숨긴다. 높이 차이도 거리에 든다.
+    TestTrue(TEXT("거리: 경계"), AP1Player::IsWithinChatBubbleRange(Speaker, Speaker + FVector(MAX_DISTANCE, 0.f, 0.f), MAX_DISTANCE));
+    TestFalse(TEXT("거리: 경계 밖"), AP1Player::IsWithinChatBubbleRange(Speaker, Speaker + FVector(MAX_DISTANCE + 1.f, 0.f, 0.f), MAX_DISTANCE));
+    TestFalse(TEXT("거리: 높이 차이"), AP1Player::IsWithinChatBubbleRange(Speaker, Speaker + FVector(MAX_DISTANCE, 0.f, 100.f), MAX_DISTANCE));
+
+    // 3) 말풍선은 5초 떠 있는다.
+    TestEqual(TEXT("표시 시간"), AP1Player::CHAT_BUBBLE_SECONDS, 5.f);
 
     return true;
 }

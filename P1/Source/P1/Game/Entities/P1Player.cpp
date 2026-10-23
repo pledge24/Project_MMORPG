@@ -2,6 +2,10 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Game/Equipment/P1GearAppearanceComponent.h"
+#include "Game/Entities/P1ChatBubbleDisplay.h"
+#include "Components/WidgetComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "TimerManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 
@@ -43,6 +47,16 @@ AP1Player::AP1Player()
     BootsMesh->SetupAttachment(GetMesh());
 
     GearAppearance = CreateDefaultSubobject<UP1GearAppearanceComponent>(TEXT("GearAppearance"));
+
+    // 말풍선은 화면 공간에 원래 크기로 그리고, 아래 가운데를 기준점으로 삼아 줄이 늘면 위로 자란다.
+    // 그래서 기준점을 네임플레이트 위에 두면 몇 줄이 되든 네임플레이트를 덮지 않는다.
+    ChatBubbleComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ChatBubble"));
+    ChatBubbleComponent->SetupAttachment(RootComponent);
+    ChatBubbleComponent->SetWidgetSpace(EWidgetSpace::Screen);
+    ChatBubbleComponent->SetDrawAtDesiredSize(true);
+    ChatBubbleComponent->SetPivot(FVector2D(0.5f, 1.f));
+    ChatBubbleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ChatBubbleComponent->SetGenerateOverlapEvents(false);
 }
 
 void AP1Player::PostInitializeComponents()
@@ -66,10 +80,17 @@ void AP1Player::PostInitializeComponents()
 void AP1Player::BeginPlay()
 {
 	Super::BeginPlay();
+
+    // 말풍선은 말하기 전까지 숨긴다.
+    if (IP1ChatBubbleDisplay* Bubble = GetChatBubble())
+        Bubble->SetBubbleVisible(false);
 }
 
 void AP1Player::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    GetWorldTimerManager().ClearTimer(ChatBubbleHideTimer);
+    GetWorldTimerManager().ClearTimer(ChatBubbleRangeTimer);
+
     Super::EndPlay(EndPlayReason);
 }
 
@@ -92,4 +113,55 @@ void AP1Player::ApplyGear(int32 GearType, int32 TemplateId)
 void AP1Player::SetPlayerName(const FText& InName)
 {
     SetCreatureName(InName);
+}
+
+void AP1Player::ShowChatBubble(const FString& Message)
+{
+    IP1ChatBubbleDisplay* Bubble = GetChatBubble();
+    if (Bubble == nullptr)
+        return;
+
+    Bubble->SetBubbleMessage(FText::FromString(Message));
+    bChatBubbleActive = true;
+    RefreshChatBubbleVisibility();
+
+    // 연달아 말하면 앞 말풍선을 새 말로 바꾸고 표시 시간을 처음부터 다시 센다.
+    FTimerManager& TimerManager = GetWorldTimerManager();
+    TimerManager.SetTimer(ChatBubbleHideTimer, this, &AP1Player::HideChatBubble, CHAT_BUBBLE_SECONDS, false);
+    TimerManager.SetTimer(ChatBubbleRangeTimer, this, &AP1Player::RefreshChatBubbleVisibility, CHAT_BUBBLE_RANGE_CHECK_SECONDS, true);
+}
+
+bool AP1Player::IsWithinChatBubbleRange(const FVector& SpeakerLocation, const FVector& ViewerLocation, float MaxDistance)
+{
+    return FVector::DistSquared(SpeakerLocation, ViewerLocation) <= FMath::Square(MaxDistance);
+}
+
+void AP1Player::HideChatBubble()
+{
+    bChatBubbleActive = false;
+    GetWorldTimerManager().ClearTimer(ChatBubbleRangeTimer);
+
+    if (IP1ChatBubbleDisplay* Bubble = GetChatBubble())
+        Bubble->SetBubbleVisible(false);
+}
+
+void AP1Player::RefreshChatBubbleVisibility()
+{
+    IP1ChatBubbleDisplay* Bubble = GetChatBubble();
+    if (Bubble == nullptr)
+        return;
+
+    // 보는 쪽은 이 클라이언트의 내 플레이어다. PIE 창마다 월드가 따로라 그 월드의 첫 컨트롤러가 그 창의 플레이어다.
+    // 내 플레이어가 아직 없으면 거리를 잴 수 없으니 보인다.
+    const UWorld* World = GetWorld();
+    const APlayerController* LocalController = World ? World->GetFirstPlayerController() : nullptr;
+    const APawn* Viewer = LocalController ? LocalController->GetPawn() : nullptr;
+    const bool bInRange = Viewer == nullptr || IsWithinChatBubbleRange(GetActorLocation(), Viewer->GetActorLocation(), ChatBubbleVisibleDistance);
+
+    Bubble->SetBubbleVisible(bChatBubbleActive && bInRange);
+}
+
+IP1ChatBubbleDisplay* AP1Player::GetChatBubble() const
+{
+    return ChatBubbleComponent ? Cast<IP1ChatBubbleDisplay>(ChatBubbleComponent->GetWidget()) : nullptr;
 }

@@ -7,6 +7,7 @@
 #include "Entity.pb.h"
 #include "Combat.pb.h"
 #include "Entry.pb.h"
+#include "Chat.pb.h"
 #include "P1StatefulEntityManager.generated.h"
 
 class AP1Monster;
@@ -104,6 +105,11 @@ public:
 public:
     /** 내 플레이어를 포함한 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
     void HandleGearAppearance(const Protocol::S_GEAR_APPEARANCE& GearAppearancePkt);
+
+    //~ Chat Packet Handlers
+public:
+    /** 말한 플레이어 머리 위에 말풍선을 띄운다. 이 월드에 없는 플레이어면 아무것도 하지 않는다. */
+    void HandleChatMessage(const Protocol::S_CHAT_MESSAGE& ChatMessagePkt);
 
     //~ Combat Packet Handlers
 public:

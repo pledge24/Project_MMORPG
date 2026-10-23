@@ -280,10 +280,12 @@ bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& 
 {
     UP1ChatSubsystem* Chat = GetChat(session);
     UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
-    if (Chat == nullptr || MyPlayerData == nullptr)
+    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
+    if (Chat == nullptr || MyPlayerData == nullptr || EntityManager == nullptr)
         return false;
 
     Chat->HandleChatMessage(pkt, MyPlayerData->GetPlayerId());
+    EntityManager->HandleChatMessage(pkt);
     return true;
 }
 
