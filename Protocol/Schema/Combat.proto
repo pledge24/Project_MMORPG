@@ -3,3 +3,57 @@ package Protocol;
 
 // 공격, 피격, 사망, 보상
 // @packet_id_range 500 599
+
+import "Common.proto";
+
+enum CombatResult
+{
+    COMBAT_RESULT_SUCCESS = 0;
+    COMBAT_RESULT_DEAD = 1;                 // 사망한 플레이어는 공격할 수 없다
+}
+
+message C_NORMAL_ATTACK
+{
+    int32 combo = 1;
+    float yaw = 2;
+}
+
+message S_NORMAL_ATTACK
+{
+    CombatResult result = 1;
+}
+
+// 크리처가 일반 공격을 했다. 룸의 플레이어에게 가고, 공격한 크리처가 플레이어면 그 플레이어는 받지 않는다
+message S_ATTACK
+{
+    int64 entity_id = 1;
+    int32 combo = 2;
+    float yaw = 3;
+}
+
+// 크리처가 피격됐다
+message S_HIT
+{
+    int64 entity_id = 1;
+    int64 damage = 2;
+    int64 hp = 3;                           // 피격 뒤 남은 체력
+}
+
+message S_DIE
+{
+    int64 entity_id = 1;
+}
+
+message LevelUp
+{
+    int32 level = 1;                        // 오른 뒤의 레벨
+    repeated Stat changed_stats = 2;
+}
+
+// 처치 보상을 받았다. 받은 플레이어에게만 간다
+message S_REWARD
+{
+    int64 exp = 1;                          // 보상을 더한 뒤 지금 레벨 안의 경험치
+    int64 gold = 2;                         // 보상을 더한 뒤의 골드
+    LevelUp level_up = 3;                   // 레벨이 오르지 않았으면 없다
+}

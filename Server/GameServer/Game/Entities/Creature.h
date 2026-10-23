@@ -26,7 +26,7 @@ protected:
     //~ 피격과 사망
 public:
     /** 공격의 damage만큼 HP를 깎고, HP가 0이 되면 OnDie를 부른다. */
-    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
+    virtual void OnHit(EntityRef attacker, const AttackInfo& attackInfo) override;
     /** 사망 표시만 남긴다. 룸에서 빼는 일은 룸이 맡는다. */
     virtual void OnDie(EntityRef attacker);
     bool IsDead() { return _isDead; }

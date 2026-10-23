@@ -47,34 +47,6 @@ PROTOBUF_NAMESPACE_OPEN
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
-enum EntityType : int {
-  ENTITY_TYPE_NONE = 0,
-  ENTITY_TYPE_PLAYER = 1,
-  ENTITY_TYPE_MONSTER = 2,
-  ENTITY_TYPE_PROJECTILE = 3,
-  ENTITY_TYPE_ENV = 4,
-  EntityType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  EntityType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool EntityType_IsValid(int value);
-constexpr EntityType EntityType_MIN = ENTITY_TYPE_NONE;
-constexpr EntityType EntityType_MAX = ENTITY_TYPE_ENV;
-constexpr int EntityType_ARRAYSIZE = EntityType_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityType_descriptor();
-template<typename T>
-inline const std::string& EntityType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, EntityType>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function EntityType_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    EntityType_descriptor(), enum_t_value);
-}
-inline bool EntityType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EntityType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EntityType>(
-    EntityType_descriptor(), name, value);
-}
 enum CharacterClass : int {
   CLASS_TYPE_NONE = 0,
   CLASS_TYPE_WARRIOR = 1,
@@ -100,116 +72,6 @@ inline bool CharacterClass_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, CharacterClass* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<CharacterClass>(
     CharacterClass_descriptor(), name, value);
-}
-enum MoveState : int {
-  MOVE_STATE_NONE = 0,
-  MOVE_STATE_IDLE = 1,
-  MOVE_STATE_RUN = 2,
-  MOVE_STATE_ACTION = 3,
-  MoveState_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  MoveState_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool MoveState_IsValid(int value);
-constexpr MoveState MoveState_MIN = MOVE_STATE_NONE;
-constexpr MoveState MoveState_MAX = MOVE_STATE_ACTION;
-constexpr int MoveState_ARRAYSIZE = MoveState_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* MoveState_descriptor();
-template<typename T>
-inline const std::string& MoveState_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, MoveState>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function MoveState_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    MoveState_descriptor(), enum_t_value);
-}
-inline bool MoveState_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, MoveState* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<MoveState>(
-    MoveState_descriptor(), name, value);
-}
-enum AttackType : int {
-  ATTACK_TYPE_NONE = 0,
-  ATTACK_TYPE_NORMAL = 1,
-  ATTACK_TYPE_SKILL = 2,
-  ATTACK_TYPE_EOT = 3,
-  AttackType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  AttackType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool AttackType_IsValid(int value);
-constexpr AttackType AttackType_MIN = ATTACK_TYPE_NONE;
-constexpr AttackType AttackType_MAX = ATTACK_TYPE_EOT;
-constexpr int AttackType_ARRAYSIZE = AttackType_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* AttackType_descriptor();
-template<typename T>
-inline const std::string& AttackType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, AttackType>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function AttackType_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    AttackType_descriptor(), enum_t_value);
-}
-inline bool AttackType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, AttackType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<AttackType>(
-    AttackType_descriptor(), name, value);
-}
-enum DamageType : int {
-  DAMAGE_TYPE_NONE = 0,
-  DAMAGE_TYPE_PHYSICAL = 1,
-  DAMAGE_TYPE_MAGICAL = 2,
-  DAMAGE_TYPE_FIX = 3,
-  DamageType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  DamageType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool DamageType_IsValid(int value);
-constexpr DamageType DamageType_MIN = DAMAGE_TYPE_NONE;
-constexpr DamageType DamageType_MAX = DAMAGE_TYPE_FIX;
-constexpr int DamageType_ARRAYSIZE = DamageType_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DamageType_descriptor();
-template<typename T>
-inline const std::string& DamageType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, DamageType>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function DamageType_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    DamageType_descriptor(), enum_t_value);
-}
-inline bool DamageType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, DamageType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<DamageType>(
-    DamageType_descriptor(), name, value);
-}
-enum EffectType : int {
-  EFFECT_TYPE_NONE = 0,
-  EFFECT_TYPE_BLEEDING = 1,
-  EFFECT_TYPE_BURN = 2,
-  EFFECT_TYPE_POSION = 3,
-  EFFECT_TYPE_SPEED_UP = 4,
-  EFFECT_TYPE_SPEED_DOWN = 5,
-  EffectType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  EffectType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool EffectType_IsValid(int value);
-constexpr EffectType EffectType_MIN = EFFECT_TYPE_NONE;
-constexpr EffectType EffectType_MAX = EFFECT_TYPE_SPEED_DOWN;
-constexpr int EffectType_ARRAYSIZE = EffectType_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EffectType_descriptor();
-template<typename T>
-inline const std::string& EffectType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, EffectType>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function EffectType_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    EffectType_descriptor(), enum_t_value);
-}
-inline bool EffectType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EffectType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EffectType>(
-    EffectType_descriptor(), name, value);
 }
 enum ItemType : int {
   ITEM_TYPE_NONE = 0,
@@ -266,38 +128,6 @@ inline bool ContainerType_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ContainerType>(
     ContainerType_descriptor(), name, value);
 }
-enum StatType : int {
-  STAT_TYPE_NONE = 0,
-  STAT_TYPE_MAX_HP = 1,
-  STAT_TYPE_HP = 2,
-  STAT_TYPE_MAX_MP = 3,
-  STAT_TYPE_MP = 4,
-  STAT_TYPE_PHYSICAL_ATTACK = 5,
-  STAT_TYPE_MAGICAL_ATTACK = 6,
-  STAT_TYPE_MAX_EXP = 7,
-  STAT_TYPE_EXP = 8,
-  StatType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  StatType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool StatType_IsValid(int value);
-constexpr StatType StatType_MIN = STAT_TYPE_NONE;
-constexpr StatType StatType_MAX = STAT_TYPE_EXP;
-constexpr int StatType_ARRAYSIZE = StatType_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor();
-template<typename T>
-inline const std::string& StatType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, StatType>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function StatType_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    StatType_descriptor(), enum_t_value);
-}
-inline bool StatType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, StatType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<StatType>(
-    StatType_descriptor(), name, value);
-}
 enum GearType : int {
   GEAR_TYPE_NONE = 0,
   GEAR_TYPE_HELMET = 1,
@@ -327,32 +157,6 @@ inline bool GearType_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, GearType* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearType>(
     GearType_descriptor(), name, value);
-}
-enum RewardType : int {
-  REWARD_TYPE_NONE = 0,
-  REWARD_TYPE_MONSTER_KILL = 1,
-  REWARD_TYPE_QUEST_COMPLETE = 2,
-  RewardType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  RewardType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
-};
-bool RewardType_IsValid(int value);
-constexpr RewardType RewardType_MIN = REWARD_TYPE_NONE;
-constexpr RewardType RewardType_MAX = REWARD_TYPE_QUEST_COMPLETE;
-constexpr int RewardType_ARRAYSIZE = RewardType_MAX + 1;
-
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RewardType_descriptor();
-template<typename T>
-inline const std::string& RewardType_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, RewardType>::value ||
-    ::std::is_integral<T>::value,
-    "Incorrect type passed to function RewardType_Name.");
-  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    RewardType_descriptor(), enum_t_value);
-}
-inline bool RewardType_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RewardType* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RewardType>(
-    RewardType_descriptor(), name, value);
 }
 enum QuickSlotRefType : int {
   QUICK_SLOT_REF_TYPE_NONE = 0,
@@ -401,35 +205,10 @@ inline bool QuickSlotRefType_Parse(
 
 PROTOBUF_NAMESPACE_OPEN
 
-template <> struct is_proto_enum< ::Protocol::EntityType> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::EntityType>() {
-  return ::Protocol::EntityType_descriptor();
-}
 template <> struct is_proto_enum< ::Protocol::CharacterClass> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::CharacterClass>() {
   return ::Protocol::CharacterClass_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::MoveState> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::MoveState>() {
-  return ::Protocol::MoveState_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::AttackType> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::AttackType>() {
-  return ::Protocol::AttackType_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::DamageType> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::DamageType>() {
-  return ::Protocol::DamageType_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::EffectType> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::EffectType>() {
-  return ::Protocol::EffectType_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::ItemType> : ::std::true_type {};
 template <>
@@ -441,20 +220,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::ContainerType>() {
   return ::Protocol::ContainerType_descriptor();
 }
-template <> struct is_proto_enum< ::Protocol::StatType> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::StatType>() {
-  return ::Protocol::StatType_descriptor();
-}
 template <> struct is_proto_enum< ::Protocol::GearType> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearType>() {
   return ::Protocol::GearType_descriptor();
-}
-template <> struct is_proto_enum< ::Protocol::RewardType> : ::std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RewardType>() {
-  return ::Protocol::RewardType_descriptor();
 }
 template <> struct is_proto_enum< ::Protocol::QuickSlotRefType> : ::std::true_type {};
 template <>

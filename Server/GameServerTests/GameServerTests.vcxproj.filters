@@ -107,6 +107,7 @@
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
+    <ClCompile Include="CombatRequestTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="LobbyDataTests.cpp" />

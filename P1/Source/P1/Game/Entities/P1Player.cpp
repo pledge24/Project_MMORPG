@@ -78,7 +78,7 @@ void AP1Player::Initialize(const Protocol::EntityInfo& EntityInfo)
     Super::Initialize(EntityInfo);
 
     // 입장할 때 이미 장착 중인 장비를 입힌다. 다른 플레이어도 이 요약으로 외형을 받는다.
-    for (const auto& Pair : EntityInfo.player_info().equipped_gear_summary())
+    for (const auto& Pair : EntityInfo.player_info().gear_appearance())
     {
         ApplyGear(Pair.first, Pair.second);
     }

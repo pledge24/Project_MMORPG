@@ -28,12 +28,12 @@ void Creature::Tick(float deltaTime)
     Entity::Tick(deltaTime);
 }
 
-void Creature::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
+void Creature::OnHit(EntityRef attacker, const AttackInfo& attackInfo)
 {
     Entity::OnHit(attacker, attackInfo);
 
     // 피격은 HP만 깎는다. 0 아래로 내려가지 않는다.
-    int64 damage = attackInfo.damage();
+    int64 damage = attackInfo.damage;
     int64 hp = GetStatValue(Protocol::STAT_TYPE_HP);
     int64 updatedHp = hp - damage;
 
@@ -52,18 +52,18 @@ void Creature::OnDie(EntityRef attacker)
 
 bool Creature::HasStat(Protocol::StatType statType)
 {
-    return _statInfo->mutable_info()->contains(statType);
+    return _statInfo->mutable_values()->contains(statType);
 }
 
 int64 Creature::GetStatValue(Protocol::StatType statType)
 {
-    auto* statMappings = _statInfo->mutable_info();
+    auto* statMappings = _statInfo->mutable_values();
     return statMappings->at((int32)statType);
 }
 
 void Creature::SetStatValue(Protocol::StatType statType, const int64& value)
 {
-    auto* statMappings = _statInfo->mutable_info();
+    auto* statMappings = _statInfo->mutable_values();
     (*statMappings)[(int32)statType] = value;
 }
 

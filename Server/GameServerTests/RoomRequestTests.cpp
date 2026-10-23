@@ -119,13 +119,13 @@ TEST_F(RoomRequestTest, MoveFartherThanAllowedIsIgnored)
     const float startX = player->GetPosInfo().pos().x();
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->mutable_pos()->set_x(startX + 3000.f);
+    movePkt.mutable_pos_info()->mutable_pos()->set_x(startX + 3000.f);
     room->C_HandleMove(movePkt, player);
 
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), startX) << "한 번에 허용 거리를 넘는 이동은 버린다";
 }
 
-// 이동은 보낸 사람의 위치만 바꾼다. 패킷의 엔티티 번호로 대상을 찾으면 같은 룸의 다른 플레이어를 옮길 수 있다.
+// 이동은 보낸 사람의 위치만 바꾼다. 같은 룸의 다른 플레이어는 그대로다.
 TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
 {
     const PlayerProgress progress = MakeProgressWithSword();
@@ -139,13 +139,11 @@ TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
     const float victimX = victim->GetPosInfo().pos().x();
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->set_entity_id(victim->GetEntityId());
-    movePkt.mutable_info()->mutable_pos()->set_x(victimX + 30.f);
+    movePkt.mutable_pos_info()->mutable_pos()->set_x(victimX + 30.f);
     room->C_HandleMove(movePkt, player);
 
     EXPECT_FLOAT_EQ(victim->GetPosInfo().pos().x(), victimX) << "다른 플레이어의 위치가 바뀌면 그 계정의 진행이 손상된다";
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), victimX + 30.f);
-    EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
 }
 
 // 아이템 요청은 디스패치할 때의 룸 큐에서 돈다. 그사이 플레이어가 다른 룸으로 옮겼으면 그 플레이어의 상태는
@@ -190,8 +188,8 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
 // 소속 룸이나 전역 룸 관리자에 기대면 이 저장이 실패한다.
 TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
 {
-    Protocol::AttackInfo lethalAttack;
-    lethalAttack.set_damage(PLAYER_MAX_HP * 10);
+    AttackInfo lethalAttack;
+    lethalAttack.damage = PLAYER_MAX_HP * 10;
     player->OnHit(nullptr, lethalAttack);
     ASSERT_TRUE(player->IsDead());
 

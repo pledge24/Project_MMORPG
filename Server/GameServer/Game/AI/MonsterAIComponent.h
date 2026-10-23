@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/Entities/EntityComponent.h"
+#include "Game/Combat/CombatTypes.h"
 
 /** 몬스터 AI의 상태. 사망한 몬스터는 룸에서 빠지므로 사망 상태를 두지 않는다. */
 enum class MonsterState : uint8
@@ -107,7 +108,7 @@ private:
     /** 판정을 기다리는 일반 공격. remainingTime은 초 단위다. */
     struct PendingHit
     {
-        Protocol::AttackInfo attackInfo;
+        AttackInfo attackInfo;
         /** 공격을 알릴 때의 대상. 그사이 _target이 바뀌어도 이 대상으로 판정한다. */
         weak_ptr<Entity> target;
         float remainingTime = 0.f;

@@ -41,8 +41,17 @@
     X(C_USE_PORTAL) X(S_USE_PORTAL)                                          \
     X(C_RESPAWN) X(S_RESPAWN)
 
-#define ENTITY_PACKETS(X)
-#define COMBAT_PACKETS(X)
+#define ENTITY_PACKETS(X)                                                    \
+    X(S_SPAWN) X(S_DESPAWN)                                                  \
+    X(C_MOVE) X(S_MOVE)
+
+#define COMBAT_PACKETS(X)                                                    \
+    X(C_NORMAL_ATTACK) X(S_NORMAL_ATTACK)                                    \
+    X(S_ATTACK)                                                              \
+    X(S_HIT)                                                                 \
+    X(S_DIE)                                                                 \
+    X(S_REWARD)
+
 #define ITEM_PACKETS(X)
 #define CHAT_PACKETS(X)
 
@@ -50,10 +59,6 @@
 #define LEGACY_PROTOCOL_PACKETS(X)                                           \
     X(C_PING) X(S_PONG)                                                      \
     X(C_LEAVE_GAME)                                                          \
-    X(S_SPAWN) X(S_DESPAWN)                                                  \
-    X(C_MOVE) X(S_MOVE)                                                      \
-    X(C_NORMAL_ATTACK) X(S_NORMAL_ATTACK)                                    \
-    X(S_HIT)                                                                 \
     X(C_BUY_ITEM) X(S_BUY_ITEM)                                              \
     X(C_SELL_ITEM) X(S_SELL_ITEM)                                            \
     X(C_EQUIP_GEAR) X(S_EQUIP_GEAR)                                          \
@@ -61,7 +66,6 @@
     X(C_USE_ITEM) X(S_USE_ITEM)                                              \
     X(C_SET_QUICK_SLOT) X(S_SET_QUICK_SLOT)                                  \
     X(C_USE_QUICK_SLOT)                                                      \
-    X(S_DIE) X(S_REWARD_RESULT)                                              \
     X(C_CHAT) X(S_CHAT)
 
 namespace

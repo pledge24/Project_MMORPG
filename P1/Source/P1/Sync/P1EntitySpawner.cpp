@@ -85,7 +85,7 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
 
         if (ServerInfo.IsSet())
         {
-            MoveSync->InitPos(ServerInfo.GetValue().pos_info());
+            MoveSync->InitPos(ServerInfo.GetValue().entity_id(), ServerInfo.GetValue().pos_info());
             OutMonster->Initialize(ServerInfo.GetValue());
         }
 
@@ -192,7 +192,7 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
         OutPlayer->SetPlayerName(FText::FromString(UTF8_TO_TCHAR(InEntityInfo.player_info().name().c_str())));
         // 서버 위치를 보간 목표로도 넣어 이동 방향까지 채운다. 몬스터는 위치만 넣는다.
         UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutPlayer, IsMine ? EP1MoveSyncMode::MyPlayer : EP1MoveSyncMode::RemotePlayer);
-        MoveSync->InitPos(InEntityInfo.pos_info());
+        MoveSync->InitPos(InEntityInfo.entity_id(), InEntityInfo.pos_info());
         MoveSync->SetServerPos(InEntityInfo.pos_info());
         OutPlayer->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
         OutPlayer->Initialize(InEntityInfo);

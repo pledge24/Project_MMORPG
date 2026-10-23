@@ -159,7 +159,7 @@ TEST_F(GameEntryTest, ValidProgressRegistersPlayerInSession)
     ASSERT_NE(player, nullptr);
     EXPECT_EQ(session->GetPlayer(), player);
     EXPECT_EQ(player->GetUserId(), USER_ID);
-    EXPECT_EQ(player->GetPlayerInfo().character_id(), CHARACTER_ID);
+    EXPECT_EQ(player->GetCharacterId(), CHARACTER_ID);
     EXPECT_EQ(player->GetRoom(), enterRoom) << "맵 로드 완료는 입장할 룸의 큐에서 돈다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MAX_HP);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_EXP), LEVEL1_EXP_REQUIREMENT) << "최대 경험치는 저장하지 않고 레벨 표에서 정한다";

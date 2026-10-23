@@ -71,8 +71,9 @@ UP1MoveSyncComponent* UP1MoveSyncComponent::FindOn(const AActor* Actor)
     return Actor ? Actor->FindComponentByClass<UP1MoveSyncComponent>() : nullptr;
 }
 
-void UP1MoveSyncComponent::InitPos(const Protocol::PosInfo& Info)
+void UP1MoveSyncComponent::InitPos(uint64 InEntityId, const Protocol::PosInfo& Info)
 {
+    EntityId = InEntityId;
     ClientPos.CopyFrom(Info);
     ServerPos.CopyFrom(Info);
     LastSyncedYaw = Info.yaw();
@@ -85,12 +86,6 @@ bool UP1MoveSyncComponent::PushToMoveQueue(const Protocol::PosInfo& Info)
 
 void UP1MoveSyncComponent::SetClientPos(const Protocol::PosInfo& Info)
 {
-    if (ClientPos.entity_id() != 0)
-    {
-        ensureMsgf(ClientPos.entity_id() == Info.entity_id(), TEXT("다른 엔티티의 위치로 덮어쓴다. 기존 %lld, 새 %lld"),
-            ClientPos.entity_id(), Info.entity_id());
-    }
-
     ClientPos.CopyFrom(Info);
     LastSyncedYaw = Info.yaw();
 
@@ -108,12 +103,6 @@ void UP1MoveSyncComponent::SetClientPos(const Protocol::PosInfo& Info)
 
 void UP1MoveSyncComponent::SetServerPos(const Protocol::PosInfo& Info)
 {
-    if (ClientPos.entity_id() != 0)
-    {
-        ensureMsgf(ClientPos.entity_id() == Info.entity_id(), TEXT("다른 엔티티의 서버 위치를 받았다. 기존 %lld, 새 %lld"),
-            ClientPos.entity_id(), Info.entity_id());
-    }
-
     ServerPos.CopyFrom(Info);
     MoveDirection = FVector(ServerPos.move_direction().x(), ServerPos.move_direction().y(), 0.f);
     SetMoveState(Info.state()); // 이동 상태는 보간을 기다리지 않고 화면 쪽에 바로 반영한다.
@@ -207,7 +196,7 @@ void UP1MoveSyncComponent::TickMyPlayer(float DeltaSeconds)
     const FVector DesiredMoveDirection = MyPlayer->GetDesiredMoveDirection();
 
     Protocol::C_MOVE MovePkt;
-    Protocol::PosInfo* Info = MovePkt.mutable_info();
+    Protocol::PosInfo* Info = MovePkt.mutable_pos_info();
     Info->CopyFrom(ClientPos);
     Info->mutable_move_direction()->set_x(DesiredMoveDirection.X);
     Info->mutable_move_direction()->set_y(DesiredMoveDirection.Y);

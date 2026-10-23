@@ -33,21 +33,20 @@ namespace
     }
 }
 
-RoomEnterData RoomTransfer::MakePortalEnterData(const PortalTemplate& portal, int64 entityId)
+RoomEnterData RoomTransfer::MakePortalEnterData(const PortalTemplate& portal)
 {
     RoomEnterData enterData;
     enterData.nextRoomId = portal.dstRoomId;
 
     Protocol::PosInfo enterPos;
     Protocol::Vector& pos = *enterPos.mutable_pos();
-    enterPos.set_entity_id(entityId);
     pos.set_x(portal.dstPos.x);
     pos.set_y(portal.dstPos.y);
     pos.set_z(portal.dstPos.z);
     enterPos.set_yaw(portal.dstYaw);
     enterPos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
-    // 클라이언트는 내 플레이어를 이 enter_pos로 옮기므로 반드시 채워야 한다.
+    // 룸 입장 응답이 내 엔티티의 위치로 이 값을 실으므로 반드시 채워야 한다.
     enterData.enterPos = std::move(enterPos);
 
     return enterData;

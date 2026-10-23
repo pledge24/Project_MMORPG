@@ -26,12 +26,11 @@ namespace
     constexpr int64 MIN_GOLD = 5;
     constexpr int64 MAX_GOLD = 8;
 
-    Protocol::AttackInfo MakeAttack(int64 targetId, int64 damage)
+    AttackInfo MakeAttack(int64 targetId, int64 damage)
     {
-        Protocol::AttackInfo attackInfo;
-        attackInfo.set_type(Protocol::ATTACK_TYPE_NORMAL);
-        attackInfo.set_target_id(targetId);
-        attackInfo.set_damage(damage);
+        AttackInfo attackInfo;
+        attackInfo.targetId = targetId;
+        attackInfo.damage = damage;
         return attackInfo;
     }
 }
@@ -126,10 +125,10 @@ TEST_F(CombatTest, PlayerKillingMonsterGetsReward)
     ASSERT_TRUE(result->isDead);
     ASSERT_TRUE(result->kill.has_value());
     EXPECT_EQ(result->kill->killer, player);
-    EXPECT_GE(result->kill->reward.exp(), MIN_EXP);
-    EXPECT_LE(result->kill->reward.exp(), MAX_EXP);
-    EXPECT_GE(result->kill->reward.gold(), MIN_GOLD);
-    EXPECT_LE(result->kill->reward.gold(), MAX_GOLD);
+    EXPECT_GE(result->kill->reward.exp, MIN_EXP);
+    EXPECT_LE(result->kill->reward.exp, MAX_EXP);
+    EXPECT_GE(result->kill->reward.gold, MIN_GOLD);
+    EXPECT_LE(result->kill->reward.gold, MAX_GOLD);
 }
 
 TEST_F(CombatTest, MonsterKillingPlayerIsNotKill)

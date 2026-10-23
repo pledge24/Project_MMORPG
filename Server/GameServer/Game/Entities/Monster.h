@@ -36,8 +36,12 @@ protected:
 
     //~ 이벤트
 public:
-    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
     virtual void OnDie(EntityRef attacker) override;
+
+    //~ Entity 정보
+public:
+    /** 몬스터 정보의 HP는 부를 때의 스탯 값이다. */
+    virtual Protocol::EntityInfo GetEntityInfo() const override;
 
     //~ 몬스터 표
 public:

@@ -1,54 +1,11 @@
 syntax = "proto3";
 package Protocol;
 
-enum EntityType
-{
-	ENTITY_TYPE_NONE = 0;
-	ENTITY_TYPE_PLAYER = 1;
-	ENTITY_TYPE_MONSTER = 2;
-	ENTITY_TYPE_PROJECTILE = 3;
-	ENTITY_TYPE_ENV = 4;
-}
-
 enum CharacterClass
 {
 	CLASS_TYPE_NONE = 0;
 	CLASS_TYPE_WARRIOR = 1;
 	CLASS_TYPE_MAGE = 2;
-}
-
-enum MoveState
-{
-	MOVE_STATE_NONE = 0;
-	MOVE_STATE_IDLE = 1;
-	MOVE_STATE_RUN = 2;
-    MOVE_STATE_ACTION = 3; // Root Motion이 들어간 애니메이션 실행
-}
-
-enum AttackType
-{
-    ATTACK_TYPE_NONE = 0;
-    ATTACK_TYPE_NORMAL = 1;
-    ATTACK_TYPE_SKILL = 2;
-    ATTACK_TYPE_EOT = 3;        // Effect Over Time(지속 피해)
-}
-
-enum DamageType
-{
-    DAMAGE_TYPE_NONE = 0;
-    DAMAGE_TYPE_PHYSICAL = 1;   // 물리 피해
-    DAMAGE_TYPE_MAGICAL = 2;    // 마법 피해
-    DAMAGE_TYPE_FIX = 3;        // 고정 피해
-}
-
-enum EffectType
-{
-    EFFECT_TYPE_NONE = 0;
-    EFFECT_TYPE_BLEEDING = 1;   // 출혈
-    EFFECT_TYPE_BURN = 2;       // 화상
-    EFFECT_TYPE_POSION = 3;     // 독
-    EFFECT_TYPE_SPEED_UP = 4;   // 이속 증가
-    EFFECT_TYPE_SPEED_DOWN = 5; // 이속 감소
 }
 
 enum ItemType
@@ -69,23 +26,6 @@ enum ContainerType
     CONTAINER_TYPE_EQUIPPED = 4;                // 착용 장비. 칸 번호가 장비 부위(GearType) 값이다
 }
 
-enum StatType
-{
-    STAT_TYPE_NONE = 0;
-
-    // 전투 스텟
-    STAT_TYPE_MAX_HP = 1;
-    STAT_TYPE_HP = 2;
-    STAT_TYPE_MAX_MP = 3;
-    STAT_TYPE_MP = 4;
-    STAT_TYPE_PHYSICAL_ATTACK = 5;
-    STAT_TYPE_MAGICAL_ATTACK = 6;
-
-    // 성장 스텟
-    STAT_TYPE_MAX_EXP = 7;
-    STAT_TYPE_EXP = 8;
-}
-
 enum GearType
 {
     GEAR_TYPE_NONE = 0;
@@ -95,13 +35,6 @@ enum GearType
     GEAR_TYPE_ARMS = 4;
     GEAR_TYPE_BOOTS = 5;
     GEAR_TYPE_WEAPON = 6;
-}
-
-enum RewardType
-{
-    REWARD_TYPE_NONE = 0;
-    REWARD_TYPE_MONSTER_KILL = 1;
-    REWARD_TYPE_QUEST_COMPLETE = 2;
 }
 
 // 퀵슬롯이 가리키는 대상의 종류. DB의 QuickSlot.RefType과 같은 값이다

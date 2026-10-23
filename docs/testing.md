@@ -193,7 +193,7 @@ Server/Binary/Debug/GameServerTests.exe --gtest_also_run_disabled_tests --gtest_
 | 인벤토리 칸 더블클릭의 요청 판정 | 존재. `FP1InventorySlotAction::Decide`. 응답 대기와 패킷 구성은 `UP1InventoryWidget::HandleSlotDoubleClicked`에 있다 |
 | 아이템 재사용 대기 계산 | 존재. `FP1ItemCooldown`. 템플릿별 대기의 보관과 시작은 `UP1MyPlayerData`에, 막대 갱신은 `UP1SlotWidget::RefreshCooldown`에 있다 |
 | 일반 공격 콤보 순번과 몽타주 선택 | 존재. `FP1NormalAttackCombo`. 몽타주 재생, 입력 가능 상태, 2초 초기화 타이머는 `UP1AttackSystemComponent`에 있다 |
-| 보상 결과 반영 | 존재. `UP1MyPlayerData::HandleRewardResult`. 경험치와 레벨은 서버가 계산하므로 클라이언트는 사본에 쓰고 알리기만 한다 |
+| 보상 결과 반영 | 존재. `UP1MyPlayerData::HandleReward`. 경험치와 레벨은 서버가 계산하므로 클라이언트는 사본에 쓰고 알리기만 한다 |
 | 퀵슬롯 등록 | 존재. `Player::ProcessSetQuickSlot`과 `QuickSlotComponent`의 `GetAll`, `CollectQuickSlots`, `Load`. 요청 패킷 읽기와 응답 전송은 `ItemRequests::HandleSetQuickSlot`에 있고 테스트하지 않는다 |
 | 퀵슬롯 사용 | 존재. 서버는 `Player::ProcessUseQuickSlot`, 클라이언트는 `UP1ItemActions::RequestUseQuickSlot`. 칸을 고른 뒤의 사용 규칙은 칸을 가리킨 사용과 같은 `Player::ProcessUseItem`에 있다. 요청 패킷 읽기와 응답 전송은 `ItemRequests::HandleUseQuickSlot`에, 1~9 키 바인딩은 `AP1InGamePlayerController`에 있고 테스트하지 않는다 |
 | 퀵슬롯 표시 | 존재. `FP1SlotDisplay::FromQuickSlotRef`와 `UP1ItemContainer::CountItem`. 끌어 놓기와 슬롯 위젯 배치는 `UP1QuickSlotsWidget`에 있고 사람이 PIE로 확인한다 |

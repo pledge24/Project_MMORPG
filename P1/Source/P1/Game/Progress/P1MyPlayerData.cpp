@@ -66,7 +66,6 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
         _EntityInfo->Clear();
         _PlayerInfo = _EntityInfo->mutable_player_info();
         _PlayerInfo->set_name(EnterGamePkt.name());
-        _PlayerInfo->set_class_(EnterGamePkt.character_class());
         _PlayerInfo->set_level(EnterGamePkt.level());
         _StatInfo->CopyFrom(EnterGamePkt.stats());
         _Gold = EnterGamePkt.possession().gold();
@@ -136,7 +135,7 @@ void UP1MyPlayerData::SetEntityInfo(const Protocol::EntityInfo& InEntityInfo)
 
 void UP1MyPlayerData::SetStatValue(Protocol::StatType statType, const int64& value)
 {
-    auto* statMappings = _StatInfo->mutable_info();
+    auto* statMappings = _StatInfo->mutable_values();
     (*statMappings)[(int32)statType] = value;
 }
 
@@ -157,7 +156,7 @@ void UP1MyPlayerData::ApplyStats(const google::protobuf::RepeatedPtrField<Protoc
 
 int64 UP1MyPlayerData::GetStatValue(Protocol::StatType statType)
 {
-    auto* statMappings = _StatInfo->mutable_info();
+    auto* statMappings = _StatInfo->mutable_values();
     return statMappings->at((int32)statType);
 }
 
@@ -355,17 +354,17 @@ void UP1MyPlayerData::ApplySlotChanges(const google::protobuf::RepeatedPtrField<
     }
 }
 
-void UP1MyPlayerData::HandleRewardResult(const Protocol::S_REWARD_RESULT& RewardResultPkt)
+void UP1MyPlayerData::HandleReward(const Protocol::S_REWARD& RewardPkt)
 {
     // 레벨과 레벨업 스탯을 경험치보다 먼저 반영한다. 경험치를 알릴 때 최대 경험치가 이미 새 값이어야
     // 구독자가 새 경험치를 옛 최대 경험치에 대어 그리지 않는다.
-    if (RewardResultPkt.is_level_up())
+    if (RewardPkt.has_level_up())
     {
-        const Protocol::LevelUpInfo& LevelUpInfo = RewardResultPkt.level_up_details();
-        ApplyLevel(LevelUpInfo.new_level());
-        ApplyStats(LevelUpInfo.updated_stat());
+        const Protocol::LevelUp& LevelUp = RewardPkt.level_up();
+        ApplyLevel(LevelUp.level());
+        ApplyStats(LevelUp.changed_stats());
     }
 
-    ApplyStat(Protocol::STAT_TYPE_EXP, RewardResultPkt.updated_exp());
-    ApplyGold(RewardResultPkt.updated_gold());
+    ApplyStat(Protocol::STAT_TYPE_EXP, RewardPkt.exp());
+    ApplyGold(RewardPkt.gold());
 }

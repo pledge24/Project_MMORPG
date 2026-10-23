@@ -147,8 +147,8 @@ protected:
 
     static void Kill(const PlayerRef& player)
     {
-        Protocol::AttackInfo lethalAttack;
-        lethalAttack.set_damage(PLAYER_MAX_HP * 10);
+        AttackInfo lethalAttack;
+        lethalAttack.damage = PLAYER_MAX_HP * 10;
         player->OnHit(nullptr, lethalAttack);
     }
 
@@ -207,7 +207,7 @@ TEST_F(MapLoadTest, RoomRequestsBeforeMapLoadCompleteAreDropped)
     player->BeginMapLoad(townRoom, MakePos(1000.f, 0.f));
 
     Protocol::C_MOVE movePkt;
-    *movePkt.mutable_info() = MakePos(1050.f, 0.f);
+    *movePkt.mutable_pos_info() = MakePos(1050.f, 0.f);
     townRoom->C_HandleMove(movePkt, player);
     townRoom->C_HandleUsePortal(MakeUsePortal(PORTAL_TO_OTHER_MAP), player);
     Kill(player);
