@@ -12,7 +12,7 @@
 
 namespace
 {
-    // DB는 맵과 좌표만 저장한다. 들어갈 룸은 그 맵과 좌표로 고르고, 마을로 보낼 때는 맵과 위치도 마을의 것으로 바꾼다.
+    // DB는 맵과 좌표만 저장한다. 들어갈 룸은 그 맵과 좌표로 고르고, 범위 밖이면 마을의 룸과 리스폰 지점을 돌려준다.
     // 들어갈 룸이 없으면 nullopt.
     optional<RoomAssignment> AssignEnterRoom(const PlayerProgress& progress)
     {

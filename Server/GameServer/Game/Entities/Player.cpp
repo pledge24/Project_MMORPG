@@ -376,7 +376,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 {
 	_posInfo->CopyFrom(respawnPos);
     _posInfo->set_entity_id(GetEntityId());
-    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다. 같은 룸 리스폰은 OnEnterRoom을 거치지 않는다.
+    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다.
     _lastPositionTick = ::GetTickCount64();
 
     RespawnResult result;
