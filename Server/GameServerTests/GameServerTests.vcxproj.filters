@@ -213,6 +213,9 @@
     <ClCompile Include="..\GameServer\Lobby\LobbyRequests.cpp">
       <Filter>GameServer\Lobby</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Lobby\LobbyReturn.cpp">
+      <Filter>GameServer\Lobby</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp">
       <Filter>GameServer\Game\Progress</Filter>
     </ClCompile>

@@ -23,6 +23,9 @@ namespace
     const TCHAR* const CONNECT_FAILED_NOTICE = TEXT("게임 서버에 접속하지 못했습니다.");
 
     /** 서버가 이 클라이언트에 없는 맵으로 보냈을 때 보여 줄 문구. 클라이언트와 서버의 기획 데이터가 어긋난 경우다. */
+    /** 로비 복귀의 저장은 끝났지만 서버가 캐릭터 목록을 불러오지 못했을 때 보여 줄 문구. 서버는 연결을 끊는다. */
+    const TCHAR* const RETURN_TO_LOBBY_FAILED_NOTICE = TEXT("캐릭터 목록을 불러오지 못했습니다. 다시 로그인해 주세요.");
+
     const TCHAR* const UNKNOWN_MAP_NOTICE = TEXT("이 클라이언트에 없는 맵입니다. 클라이언트를 최신으로 업데이트해 주세요.");
 
     const TCHAR* PhaseName(EP1EntryPhase Phase)
@@ -34,6 +37,7 @@ namespace
         case EP1EntryPhase::Lobby: return TEXT("Lobby");
         case EP1EntryPhase::MapLoad: return TEXT("MapLoad");
         case EP1EntryPhase::Game: return TEXT("Game");
+        case EP1EntryPhase::ReturningToLobby: return TEXT("ReturningToLobby");
         }
 
         return TEXT("Unknown");
@@ -70,6 +74,7 @@ void UP1EntryFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         Lobby->OnLobbyEntered.AddUObject(this, &UP1EntryFlowSubsystem::HandleLobbyEntered);
         Lobby->OnLobbyConnectFailed.AddUObject(this, &UP1EntryFlowSubsystem::HandleLobbyConnectFailed);
         Lobby->OnEnterGameSucceeded.AddUObject(this, &UP1EntryFlowSubsystem::EnterMapLoad);
+        Lobby->OnReturnToLobbyFailed.AddUObject(this, &UP1EntryFlowSubsystem::HandleReturnToLobbyFailed);
     }
 
     if (MyPlayerData)
@@ -104,15 +109,17 @@ bool UP1EntryFlowSubsystem::CanTransition(EP1EntryPhase From, EP1EntryPhase To)
         // 연결이 끊기거나 로그인 세션이 만료되면 어느 단계에서든 돌아온다.
         return From != EP1EntryPhase::Login;
     case EP1EntryPhase::WorldSelect:
-        // 로비에서 월드 선택으로 돌아갈 때는 다시 로그인하지 않는다.
-        return From == EP1EntryPhase::Login || From == EP1EntryPhase::Lobby;
+        // 로비나 게임에서 월드 선택으로 돌아갈 때는 다시 로그인하지 않는다.
+        return From == EP1EntryPhase::Login || From == EP1EntryPhase::Lobby || From == EP1EntryPhase::Game;
     case EP1EntryPhase::Lobby:
-        return From == EP1EntryPhase::WorldSelect;
+        return From == EP1EntryPhase::WorldSelect || From == EP1EntryPhase::ReturningToLobby;
     case EP1EntryPhase::MapLoad:
         // 게임에서 맵 로드로 가는 것은 맵을 옮길 때다.
         return From == EP1EntryPhase::Lobby || From == EP1EntryPhase::Game;
     case EP1EntryPhase::Game:
         return From == EP1EntryPhase::MapLoad;
+    case EP1EntryPhase::ReturningToLobby:
+        return From == EP1EntryPhase::Game;
     }
 
     return false;
@@ -130,10 +137,10 @@ bool UP1EntryFlowSubsystem::TryEnterPhase(EP1EntryPhase NewPhase)
     const EP1EntryProgress Before = GetProgress();
     Phase = NewPhase;
 
-    // 맵을 옮길 때마다 새 맵의 스폰을 기다린다. 로그인으로 돌아가면 기다릴 스폰이 없다.
+    // 맵을 옮길 때마다 새 맵의 스폰을 기다린다. 게임을 떠나면 기다릴 스폰이 없다.
     if (NewPhase == EP1EntryPhase::MapLoad)
         bAwaitingMyPlayer = true;
-    else if (NewPhase == EP1EntryPhase::Login)
+    else if (NewPhase != EP1EntryPhase::Game)
         bAwaitingMyPlayer = false;
 
     OnPhaseChanged.Broadcast(NewPhase);
@@ -148,6 +155,18 @@ EP1EntryProgress UP1EntryFlowSubsystem::GetProgress() const
 
     if (Phase == EP1EntryPhase::Game && bAwaitingMyPlayer)
         return EP1EntryProgress::LoadingMap;
+
+    if (Phase == EP1EntryPhase::ReturningToLobby)
+        return EP1EntryProgress::ReturningToLobby;
+
+    // 게임에서 돌아가며 로그인 맵을 여는 동안이다. 맵이 열리기 전까지는 게임 맵이 그대로 보인다.
+    if (bOpeningLevel && bLoginMapOpen)
+    {
+        if (Phase == EP1EntryPhase::Lobby)
+            return EP1EntryProgress::ReturningToLobby;
+        if (Phase == EP1EntryPhase::WorldSelect)
+            return EP1EntryProgress::ReturningToWorldSelect;
+    }
 
     if (Phase == EP1EntryPhase::WorldSelect && bConnectingWorld)
         return EP1EntryProgress::ConnectingWorld;
@@ -190,16 +209,27 @@ void UP1EntryFlowSubsystem::Logout()
 
 void UP1EntryFlowSubsystem::ReturnToWorldSelect()
 {
-    if (Phase != EP1EntryPhase::Lobby)
+    if (Phase != EP1EntryPhase::Lobby && Phase != EP1EntryPhase::Game)
         return;
 
     // 연결을 닫으면 서버는 접속 종료 경로를 탄다. 닫기는 끊김을 알리지 않으므로 로그인으로 돌아가지 않는다.
     Connection->Close();
     Lobby->Reset();
-    TryEnterPhase(EP1EntryPhase::WorldSelect);
 
-    // 로비에 있는 동안 월드의 혼잡도가 바뀌었거나 월드가 꺼졌을 수 있다.
-    AuthClient->RequestWorlds();
+    if (Phase == EP1EntryPhase::Lobby)
+    {
+        TryEnterPhase(EP1EntryPhase::WorldSelect);
+
+        // 로비에 있는 동안 월드의 혼잡도가 바뀌었거나 월드가 꺼졌을 수 있다.
+        AuthClient->RequestWorlds();
+        return;
+    }
+
+    // 레벨을 먼저 정해 두고 단계를 바꾼다. 반대로 하면 진행 표시가 없음으로 한 번 바뀌어 로딩 화면이 사라지기 시작한다.
+    // 월드 목록은 로그인 맵이 열린 뒤에 받는다(HandlePostLoadMap). 그 전에 로그인 세션 만료를 받으면 알릴 화면이 없다.
+    ClearMyPlayerData();
+    OpenLevelNextTick(LOGIN_LEVEL_NAME);
+    TryEnterPhase(EP1EntryPhase::WorldSelect);
 }
 
 void UP1EntryFlowSubsystem::HandleLoginSucceeded()
@@ -221,8 +251,8 @@ void UP1EntryFlowSubsystem::HandleWorldSelected(const FString& Host, int32 Port,
 
 void UP1EntryFlowSubsystem::HandleLoginSessionExpired(const FString& Message)
 {
-    // 로그인 세션은 로그인 맵에서만 쓴다. 게임 중에는 만료돼도 게임 서버와의 연결이 그대로다.
-    if (IsInLoginMap(Phase))
+    // 로그인 세션은 로그인 메뉴에서만 쓴다. 게임 중에는 만료돼도 게임 서버와의 연결이 그대로다.
+    if (IsLoginMenuPhase(Phase))
         ReturnToLogin(Message);
 }
 
@@ -245,8 +275,24 @@ void UP1EntryFlowSubsystem::HandleConnectFailed()
 
 void UP1EntryFlowSubsystem::HandleLobbyEntered()
 {
+    // 로비 복귀의 저장이 끝나 목록이 왔다. 레벨을 먼저 정해 두는 이유는 ReturnToWorldSelect와 같다.
+    if (Phase == EP1EntryPhase::ReturningToLobby)
+    {
+        ClearMyPlayerData();
+        OpenLevelNextTick(LOGIN_LEVEL_NAME);
+        TryEnterPhase(EP1EntryPhase::Lobby);
+        return;
+    }
+
     SetConnectingWorld(false);
     TryEnterPhase(EP1EntryPhase::Lobby);
+}
+
+void UP1EntryFlowSubsystem::HandleReturnToLobbyFailed()
+{
+    // 서버가 이 응답 뒤에 끊는다. 먼저 닫지 않으면 끊김이 사유 없는 끊김으로 와서 이 문구를 덮는다.
+    Connection->Close();
+    ReturnToLogin(RETURN_TO_LOBBY_FAILED_NOTICE);
 }
 
 void UP1EntryFlowSubsystem::HandleLobbyConnectFailed(const FText& Message)
@@ -280,6 +326,17 @@ void UP1EntryFlowSubsystem::HandlePostLoadMap(UWorld* LoadedWorld)
     if (LoadedWorld == nullptr || LoadedWorld->GetGameInstance() != GetGameInstance())
         return;
 
+    const EP1EntryProgress Before = GetProgress();
+    bOpeningLevel = false;
+    NotifyProgressIfChanged(Before);
+
+    // 게임에서 월드 선택으로 돌아왔다. 게임에 있는 동안 월드 목록이 바뀌었을 수 있고, 로그인 세션이 만료됐으면 여기서 알게 된다.
+    if (bLoginMapOpen && Phase == EP1EntryPhase::WorldSelect)
+    {
+        AuthClient->RequestWorlds();
+        return;
+    }
+
     if (Phase != EP1EntryPhase::MapLoad)
         return;
 
@@ -299,6 +356,25 @@ void UP1EntryFlowSubsystem::SendMapLoadComplete()
 {
     Protocol::C_MAP_LOAD_COMPLETE MapLoadCompletePkt;
     FP1PacketSender::Send(GetGameInstance(), MapLoadCompletePkt);
+}
+
+void UP1EntryFlowSubsystem::ReturnToLobby()
+{
+    if (Phase != EP1EntryPhase::Game)
+        return;
+
+    // 서버는 받자마자 룸에서 퇴장시키므로 게임 맵이 남아 있어도 더는 게임이 아니다. 단계를 먼저 바꿔 두 번 보내지 않는다.
+    TryEnterPhase(EP1EntryPhase::ReturningToLobby);
+
+    Protocol::C_RETURN_TO_LOBBY ReturnToLobbyPkt;
+    FP1PacketSender::Send(GetGameInstance(), ReturnToLobbyPkt);
+}
+
+void UP1EntryFlowSubsystem::ClearMyPlayerData()
+{
+    // 비우지 않으면 다른 캐릭터로 들어가기 전까지 이전 캐릭터의 칸과 퀵슬롯이 남는다.
+    MyPlayerData->ClearContainers();
+    MyPlayerData->ClearQuickSlots();
 }
 
 FString UP1EntryFlowSubsystem::ConsumeLoginNotice()
@@ -340,9 +416,7 @@ void UP1EntryFlowSubsystem::ReturnToLogin(const FString& Notice)
     // 문구를 알리기 전에 끈다. 로그인 화면이 진행 표시에 가려진 채 문구를 받지 않게 하려는 것이다.
     SetConnectingWorld(false);
 
-    // 다음 입장 패킷이 다시 채운다. 비우지 않으면 다른 캐릭터로 들어가기 전까지 이전 캐릭터의 칸과 퀵슬롯이 남는다.
-    MyPlayerData->ClearContainers();
-    MyPlayerData->ClearQuickSlots();
+    ClearMyPlayerData();
     Lobby->Reset();
 
     // 로그인 화면으로 가면 다시 로그인한다. 남은 로그인 세션은 쓰지 않으므로 버린다.
@@ -351,13 +425,15 @@ void UP1EntryFlowSubsystem::ReturnToLogin(const FString& Notice)
     AuthClient->Logout();
     Connection->Close();
 
-    // 로그인 맵이 열려 있으면 맵을 다시 열지 않고 열린 화면에 알린다.
-    if (IsInLoginMap(Phase))
+    // 로그인 맵이 열려 있으면 맵을 다시 열지 않고 열린 화면에 알린다. 여는 중이면 아직 화면이 없으므로 열린 뒤에 보여 준다.
+    if (bLoginMapOpen)
     {
         if (Phase != EP1EntryPhase::Login)
             TryEnterPhase(EP1EntryPhase::Login);
 
-        if (Notice.IsEmpty() == false)
+        if (bOpeningLevel)
+            PendingLoginNotice = Notice;
+        else if (Notice.IsEmpty() == false)
             OnNotice.Broadcast(Notice);
         return;
     }
@@ -380,7 +456,7 @@ void UP1EntryFlowSubsystem::ShowWorldSelectNotice(const FString& Notice)
     OnNotice.Broadcast(Notice);
 }
 
-bool UP1EntryFlowSubsystem::IsInLoginMap(EP1EntryPhase InPhase)
+bool UP1EntryFlowSubsystem::IsLoginMenuPhase(EP1EntryPhase InPhase)
 {
     return InPhase == EP1EntryPhase::Login || InPhase == EP1EntryPhase::WorldSelect || InPhase == EP1EntryPhase::Lobby;
 }
@@ -390,6 +466,11 @@ void UP1EntryFlowSubsystem::OpenLevelNextTick(FName LevelName)
     // 한 틱 안에 두 번 불리면 나중 것만 연다.
     if (OpenLevelTickerHandle.IsValid())
         FTSTicker::RemoveTicker(OpenLevelTickerHandle);
+
+    const EP1EntryProgress Before = GetProgress();
+    bLoginMapOpen = LevelName == LOGIN_LEVEL_NAME;
+    bOpeningLevel = true;
+    NotifyProgressIfChanged(Before);
 
     // 틱 도중에 더한 티커는 그 틱 안에서 곧바로 돈다. 패킷도 같은 틱에서 처리되므로, 프레임 번호가 바뀔 때까지 기다리지 않으면
     // 같은 프레임에 레벨을 열어 로딩 화면이 그려지기 전에 화면이 멈춘다.

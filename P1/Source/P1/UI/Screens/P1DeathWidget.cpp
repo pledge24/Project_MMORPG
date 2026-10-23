@@ -8,6 +8,14 @@
 #include "Game/Entities/P1MyPlayer.h"
 #include "Utils/LogCategory.h"
 
+void UP1DeathWidget::NativeOnInitialized()
+{
+    Super::NativeOnInitialized();
+
+    // 사망 화면이 떠 있는 동안 입력을 이 화면만 받으려면 키 포커스를 받을 수 있어야 한다.
+    SetIsFocusable(true);
+}
+
 void UP1DeathWidget::NativeConstruct()
 {
     Super::NativeConstruct();
@@ -23,6 +31,21 @@ void UP1DeathWidget::NativeConstruct()
     }
 }
 
+FReply UP1DeathWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // 사망 화면이 떠 있으면 입력이 플레이어 컨트롤러에 가지 않으므로, 사망한 채 로비로 돌아갈 게임 메뉴는 이 화면이 연다.
+    if (InKeyEvent.GetKey() == EKeys::Escape)
+    {
+        if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
+        {
+            Screens->ToggleGameMenu();
+            return FReply::Handled();
+        }
+    }
+
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 void UP1DeathWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 {
     UE_LOG(LogP1UI, Log, TEXT("BindMyPlayerSpawned"));
@@ -33,17 +56,13 @@ void UP1DeathWidget::BindMyPlayerSpawned(AP1MyPlayer* MyPlayer)
 
 void UP1DeathWidget::OnMyPlayerDie(AActor* KilledCreature)
 {
-    if (APlayerController* PC = GetP1PlayerController())
+    if (GetP1PlayerController())
     {
-        // 사망 화면을 띄우고 입력을 UI로 돌린다.
+        // 사망 화면을 띄우고 입력을 이 화면으로 돌린다. 게임 메뉴가 열려 있으면 메뉴가 계속 입력을 받는다.
         SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
-        FInputModeUIOnly InputMode;
-        InputMode.SetWidgetToFocus(TakeWidget());
-        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-
-        PC->SetInputMode(InputMode);
-        PC->bShowMouseCursor = true;
+        if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
+            Screens->RefreshInputMode();
 
         // 카운트 다운 시작.
         StartCountdown();
@@ -58,7 +77,7 @@ void UP1DeathWidget::OnMyPlayerRespawn(AActor* RespawnedCreature)
     if (UWorld* World = GetWorld())
         World->GetTimerManager().ClearTimer(RetryTimerHandle);
 
-    // 사망 중에 열려 있던 창이 있으면 UI 모드로 돌아가야 하므로 판단을 화면 서브시스템에 맡긴다.
+    // 사망 중에 열려 있던 창이나 게임 메뉴가 있으면 그에 맞는 입력 모드로 돌아가야 하므로 판단을 화면 서브시스템에 맡긴다.
     if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
     {
         Screens->RefreshInputMode();

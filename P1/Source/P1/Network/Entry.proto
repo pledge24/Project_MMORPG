@@ -85,3 +85,14 @@ message S_RESPAWN
     optional int32 map_id = 2;
     repeated Stat changed_stats = 3;        // 리스폰으로 회복한 스탯
 }
+
+// 서버는 플레이어를 바로 룸에서 퇴장시키고, 접속 종료와 같은 절차로 진행을 저장한다
+message C_RETURN_TO_LOBBY
+{
+}
+
+// 저장이 끝난 뒤에 온다. 성공하면 S_CHARACTER_LIST가 뒤따른다
+message S_RETURN_TO_LOBBY
+{
+    EntryResult result = 1;
+}

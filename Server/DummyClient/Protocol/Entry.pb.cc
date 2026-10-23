@@ -136,8 +136,32 @@ struct S_RESPAWNDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_RESPAWNDefaultTypeInternal _S_RESPAWN_default_instance_;
+PROTOBUF_CONSTEXPR C_RETURN_TO_LOBBY::C_RETURN_TO_LOBBY(
+    ::_pbi::ConstantInitialized) {}
+struct C_RETURN_TO_LOBBYDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR C_RETURN_TO_LOBBYDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~C_RETURN_TO_LOBBYDefaultTypeInternal() {}
+  union {
+    C_RETURN_TO_LOBBY _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_RETURN_TO_LOBBYDefaultTypeInternal _C_RETURN_TO_LOBBY_default_instance_;
+PROTOBUF_CONSTEXPR S_RETURN_TO_LOBBY::S_RETURN_TO_LOBBY(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.result_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct S_RETURN_TO_LOBBYDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR S_RETURN_TO_LOBBYDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~S_RETURN_TO_LOBBYDefaultTypeInternal() {}
+  union {
+    S_RETURN_TO_LOBBY _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_RETURN_TO_LOBBYDefaultTypeInternal _S_RETURN_TO_LOBBY_default_instance_;
 }  // namespace Protocol
-static ::_pb::Metadata file_level_metadata_Entry_2eproto[8];
+static ::_pb::Metadata file_level_metadata_Entry_2eproto[10];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Entry_2eproto[2];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Entry_2eproto = nullptr;
 
@@ -213,6 +237,19 @@ const uint32_t TableStruct_Entry_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pr
   ~0u,
   0,
   ~0u,
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_RETURN_TO_LOBBY, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_RETURN_TO_LOBBY, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_RETURN_TO_LOBBY, _impl_.result_),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::Protocol::C_ENTER_GAME)},
@@ -223,6 +260,8 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 42, 50, -1, sizeof(::Protocol::S_USE_PORTAL)},
   { 52, -1, -1, sizeof(::Protocol::C_RESPAWN)},
   { 59, 68, -1, sizeof(::Protocol::S_RESPAWN)},
+  { 71, -1, -1, sizeof(::Protocol::C_RETURN_TO_LOBBY)},
+  { 77, -1, -1, sizeof(::Protocol::S_RETURN_TO_LOBBY)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -234,6 +273,8 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::Protocol::_S_USE_PORTAL_default_instance_._instance,
   &::Protocol::_C_RESPAWN_default_instance_._instance,
   &::Protocol::_S_RESPAWN_default_instance_._instance,
+  &::Protocol::_C_RETURN_TO_LOBBY_default_instance_._instance,
+  &::Protocol::_S_RETURN_TO_LOBBY_default_instance_._instance,
 };
 
 const char descriptor_table_protodef_Entry_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
@@ -256,16 +297,18 @@ const char descriptor_table_protodef_Entry_2eproto[] PROTOBUF_SECTION_VARIABLE(p
   "tocol.RespawnType\"y\n\tS_RESPAWN\022%\n\006result"
   "\030\001 \001(\0162\025.Protocol.EntryResult\022\023\n\006map_id\030"
   "\002 \001(\005H\000\210\001\001\022%\n\rchanged_stats\030\003 \003(\0132\016.Prot"
-  "ocol.StatB\t\n\007_map_id*\243\002\n\013EntryResult\022\030\n\024"
-  "ENTRY_RESULT_SUCCESS\020\000\022$\n ENTRY_RESULT_C"
-  "HARACTER_NOT_FOUND\020\001\022&\n\"ENTRY_RESULT_PRE"
-  "VIOUS_SAVE_PENDING\020\002\022\037\n\033ENTRY_RESULT_INV"
-  "ALID_PORTAL\020\003\022$\n ENTRY_RESULT_TOO_FAR_FR"
-  "OM_PORTAL\020\004\022\031\n\025ENTRY_RESULT_NOT_DEAD\020\005\022)"
-  "\n%ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE\020"
-  "\006\022\037\n\033ENTRY_RESULT_INTERNAL_ERROR\020\007*;\n\013Re"
-  "spawnType\022\025\n\021RESPAWN_TYPE_NONE\020\000\022\025\n\021RESP"
-  "AWN_TYPE_TOWN\020\001b\006proto3"
+  "ocol.StatB\t\n\007_map_id\"\023\n\021C_RETURN_TO_LOBB"
+  "Y\":\n\021S_RETURN_TO_LOBBY\022%\n\006result\030\001 \001(\0162\025"
+  ".Protocol.EntryResult*\243\002\n\013EntryResult\022\030\n"
+  "\024ENTRY_RESULT_SUCCESS\020\000\022$\n ENTRY_RESULT_"
+  "CHARACTER_NOT_FOUND\020\001\022&\n\"ENTRY_RESULT_PR"
+  "EVIOUS_SAVE_PENDING\020\002\022\037\n\033ENTRY_RESULT_IN"
+  "VALID_PORTAL\020\003\022$\n ENTRY_RESULT_TOO_FAR_F"
+  "ROM_PORTAL\020\004\022\031\n\025ENTRY_RESULT_NOT_DEAD\020\005\022"
+  ")\n%ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE"
+  "\020\006\022\037\n\033ENTRY_RESULT_INTERNAL_ERROR\020\007*;\n\013R"
+  "espawnType\022\025\n\021RESPAWN_TYPE_NONE\020\000\022\025\n\021RES"
+  "PAWN_TYPE_TOWN\020\001b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Entry_2eproto_deps[2] = {
   &::descriptor_table_Enum_2eproto,
@@ -273,9 +316,9 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Entry_2eproto_deps[
 };
 static ::_pbi::once_flag descriptor_table_Entry_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Entry_2eproto = {
-    false, false, 1143, descriptor_table_protodef_Entry_2eproto,
+    false, false, 1224, descriptor_table_protodef_Entry_2eproto,
     "Entry.proto",
-    &descriptor_table_Entry_2eproto_once, descriptor_table_Entry_2eproto_deps, 2, 8,
+    &descriptor_table_Entry_2eproto_once, descriptor_table_Entry_2eproto_deps, 2, 10,
     schemas, file_default_instances, TableStruct_Entry_2eproto::offsets,
     file_level_metadata_Entry_2eproto, file_level_enum_descriptors_Entry_2eproto,
     file_level_service_descriptors_Entry_2eproto,
@@ -2067,6 +2110,227 @@ void S_RESPAWN::InternalSwap(S_RESPAWN* other) {
       file_level_metadata_Entry_2eproto[7]);
 }
 
+// ===================================================================
+
+class C_RETURN_TO_LOBBY::_Internal {
+ public:
+};
+
+C_RETURN_TO_LOBBY::C_RETURN_TO_LOBBY(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase(arena, is_message_owned) {
+  // @@protoc_insertion_point(arena_constructor:Protocol.C_RETURN_TO_LOBBY)
+}
+C_RETURN_TO_LOBBY::C_RETURN_TO_LOBBY(const C_RETURN_TO_LOBBY& from)
+  : ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase() {
+  C_RETURN_TO_LOBBY* const _this = this; (void)_this;
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:Protocol.C_RETURN_TO_LOBBY)
+}
+
+
+
+
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData C_RETURN_TO_LOBBY::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl,
+    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl,
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*C_RETURN_TO_LOBBY::GetClassData() const { return &_class_data_; }
+
+
+
+
+
+
+
+::PROTOBUF_NAMESPACE_ID::Metadata C_RETURN_TO_LOBBY::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_Entry_2eproto_getter, &descriptor_table_Entry_2eproto_once,
+      file_level_metadata_Entry_2eproto[8]);
+}
+
+// ===================================================================
+
+class S_RETURN_TO_LOBBY::_Internal {
+ public:
+};
+
+S_RETURN_TO_LOBBY::S_RETURN_TO_LOBBY(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:Protocol.S_RETURN_TO_LOBBY)
+}
+S_RETURN_TO_LOBBY::S_RETURN_TO_LOBBY(const S_RETURN_TO_LOBBY& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  S_RETURN_TO_LOBBY* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.result_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _this->_impl_.result_ = from._impl_.result_;
+  // @@protoc_insertion_point(copy_constructor:Protocol.S_RETURN_TO_LOBBY)
+}
+
+inline void S_RETURN_TO_LOBBY::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.result_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+}
+
+S_RETURN_TO_LOBBY::~S_RETURN_TO_LOBBY() {
+  // @@protoc_insertion_point(destructor:Protocol.S_RETURN_TO_LOBBY)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void S_RETURN_TO_LOBBY::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+}
+
+void S_RETURN_TO_LOBBY::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void S_RETURN_TO_LOBBY::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.S_RETURN_TO_LOBBY)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.result_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* S_RETURN_TO_LOBBY::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // .Protocol.EntryResult result = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_result(static_cast<::Protocol::EntryResult>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* S_RETURN_TO_LOBBY::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:Protocol.S_RETURN_TO_LOBBY)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .Protocol.EntryResult result = 1;
+  if (this->_internal_result() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_result(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:Protocol.S_RETURN_TO_LOBBY)
+  return target;
+}
+
+size_t S_RETURN_TO_LOBBY::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:Protocol.S_RETURN_TO_LOBBY)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // .Protocol.EntryResult result = 1;
+  if (this->_internal_result() != 0) {
+    total_size += 1 +
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_result());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData S_RETURN_TO_LOBBY::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    S_RETURN_TO_LOBBY::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*S_RETURN_TO_LOBBY::GetClassData() const { return &_class_data_; }
+
+
+void S_RETURN_TO_LOBBY::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<S_RETURN_TO_LOBBY*>(&to_msg);
+  auto& from = static_cast<const S_RETURN_TO_LOBBY&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.S_RETURN_TO_LOBBY)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_result() != 0) {
+    _this->_internal_set_result(from._internal_result());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void S_RETURN_TO_LOBBY::CopyFrom(const S_RETURN_TO_LOBBY& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.S_RETURN_TO_LOBBY)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool S_RETURN_TO_LOBBY::IsInitialized() const {
+  return true;
+}
+
+void S_RETURN_TO_LOBBY::InternalSwap(S_RETURN_TO_LOBBY* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.result_, other->_impl_.result_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata S_RETURN_TO_LOBBY::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_Entry_2eproto_getter, &descriptor_table_Entry_2eproto_once,
+      file_level_metadata_Entry_2eproto[9]);
+}
+
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
@@ -2101,6 +2365,14 @@ Arena::CreateMaybeMessage< ::Protocol::C_RESPAWN >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::Protocol::S_RESPAWN*
 Arena::CreateMaybeMessage< ::Protocol::S_RESPAWN >(Arena* arena) {
   return Arena::CreateMessageInternal< ::Protocol::S_RESPAWN >(arena);
+}
+template<> PROTOBUF_NOINLINE ::Protocol::C_RETURN_TO_LOBBY*
+Arena::CreateMaybeMessage< ::Protocol::C_RETURN_TO_LOBBY >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Protocol::C_RETURN_TO_LOBBY >(arena);
+}
+template<> PROTOBUF_NOINLINE ::Protocol::S_RETURN_TO_LOBBY*
+Arena::CreateMaybeMessage< ::Protocol::S_RETURN_TO_LOBBY >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Protocol::S_RETURN_TO_LOBBY >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

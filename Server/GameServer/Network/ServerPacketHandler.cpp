@@ -3,6 +3,8 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/ItemRequests.h"
+#include "Network/ProgressCoordinator.h"
+#include "Lobby/LobbyReturn.h"
 
 namespace
 {
@@ -171,3 +173,25 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
         });
 }
 
+bool Handle_C_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::C_RETURN_TO_LOBBY& pkt)
+{
+    GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+
+    // 계정 번호는 여기서 한 번 읽어 잡에 넘긴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
+    const int64 userId = gameSession->GetUserId();
+    PlayerRef player = gameSession->GetPlayer();
+    if (player == nullptr)
+        return false;
+
+    // 받는 순간 단계를 바꾼다. 저장이 끝날 때까지 게임 요청도 로비 요청도 받지 않고, 두 번째 복귀도 여기서 막는다.
+    if (gameSession->BeginLobbyReturn() == false)
+        return false;
+
+    // 접속 종료와 같은 절차로 룸에서 퇴장하고 저장한다. 목록은 저장이 끝난 뒤 로비 복귀 창구가 보낸다.
+    GProgressCoordinator->OnReturnToLobby(userId, player, [gameSession, userId]()
+        {
+            LobbyReturn::Accept(gameSession, userId);
+        });
+
+    return true;
+}

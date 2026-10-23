@@ -6,6 +6,7 @@
 #include "UI/Screens/P1ShopWidget.h"
 #include "UI/Screens/P1WarningTextWidget.h"
 #include "UI/Screens/P1DeathWidget.h"
+#include "UI/Screens/P1GameMenuWidget.h"
 #include "UI/Screens/P1WindowLayerWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/GameInstance.h"
@@ -21,6 +22,7 @@ namespace
     constexpr int32 WINDOW_LAYER_Z_ORDER = 1;
     constexpr int32 WARNING_TEXT_Z_ORDER = 2;
     constexpr int32 DEATH_SCREEN_Z_ORDER = 10000;
+    constexpr int32 GAME_MENU_Z_ORDER = 20000;     // 사망한 채로도 메뉴를 열어 로비로 돌아갈 수 있다
 
     template <typename T>
     T* LoadAndCreate(APlayerController* OwningPlayer, const TSoftClassPtr<T>& WidgetClass)
@@ -87,11 +89,12 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
     // 창보다 위에 그리는 화면.
     WarningTextWidget = CreateScreen(InOwningPlayer, Settings->WarningTextWidgetClass, WARNING_TEXT_Z_ORDER, ESlateVisibility::HitTestInvisible);
     DeathWidget = CreateScreen(InOwningPlayer, Settings->DeathWidgetClass, DEATH_SCREEN_Z_ORDER, ESlateVisibility::Collapsed);
+    GameMenuWidget = CreateScreen(InOwningPlayer, Settings->GameMenuWidgetClass, GAME_MENU_Z_ORDER, ESlateVisibility::Collapsed);
 }
 
 void UP1ScreenSubsystem::ReleaseScreens()
 {
-    for (UUserWidget* Widget : TArray<UUserWidget*>{ HUDWidget, HelpWidget, WindowLayer, WarningTextWidget, DeathWidget })
+    for (UUserWidget* Widget : TArray<UUserWidget*>{ HUDWidget, HelpWidget, WindowLayer, WarningTextWidget, DeathWidget, GameMenuWidget })
     {
         if (Widget)
             Widget->RemoveFromParent();
@@ -102,6 +105,7 @@ void UP1ScreenSubsystem::ReleaseScreens()
     WindowLayer = nullptr;
     WarningTextWidget = nullptr;
     DeathWidget = nullptr;
+    GameMenuWidget = nullptr;
     WindowWidgets.Empty();
     OpenWindowFlags = 0;
     OwningPlayer = nullptr;
@@ -160,7 +164,23 @@ void UP1ScreenSubsystem::RefreshInputMode()
     if (PC == nullptr)
         return;
 
-    if (OpenWindowFlags != 0)
+    // 게임 메뉴와 사망 화면은 그 화면만 입력을 받는다. 사망 화면이 게임 입력을 막지 않으면 죽은 플레이어가 움직인다.
+    UUserWidget* ModalScreen = nullptr;
+    if (IsGameMenuOpen())
+        ModalScreen = GameMenuWidget;
+    else if (DeathWidget && DeathWidget->IsVisible())
+        ModalScreen = DeathWidget;
+
+    if (ModalScreen)
+    {
+        FInputModeUIOnly InputMode;
+        InputMode.SetWidgetToFocus(ModalScreen->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+        PC->bShowMouseCursor = true;
+        PC->SetInputMode(InputMode);
+    }
+    else if (OpenWindowFlags != 0)
     {
         PC->bShowMouseCursor = true;
         PC->SetInputMode(FInputModeGameAndUI());
@@ -191,6 +211,35 @@ void UP1ScreenSubsystem::SyncShopOpen() const
     const UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
     if (MyPlayerData)
         MyPlayerData->GetItemActions()->SetShopOpen(IsWindowOpen(EP1WidgetType::WIDGET_SHOP));
+}
+
+void UP1ScreenSubsystem::ToggleGameMenu()
+{
+    if (GameMenuWidget == nullptr)
+        return;
+
+    if (IsGameMenuOpen())
+    {
+        CloseGameMenu();
+        return;
+    }
+
+    GameMenuWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+    RefreshInputMode();
+}
+
+void UP1ScreenSubsystem::CloseGameMenu()
+{
+    if (IsGameMenuOpen() == false)
+        return;
+
+    GameMenuWidget->SetVisibility(ESlateVisibility::Collapsed);
+    RefreshInputMode();
+}
+
+bool UP1ScreenSubsystem::IsGameMenuOpen() const
+{
+    return GameMenuWidget && GameMenuWidget->IsVisible();
 }
 
 void UP1ScreenSubsystem::DisplayWarningText(const FText& Message)

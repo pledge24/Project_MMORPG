@@ -23,6 +23,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FOnCreateCharacterFailed, const FText& /*Mes
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDeleteCharacterFailed, const FText& /*Message*/);
 DECLARE_MULTICAST_DELEGATE(FOnEnterGameFailed);
 DECLARE_MULTICAST_DELEGATE(FOnEnterGameSucceeded);
+DECLARE_MULTICAST_DELEGATE(FOnReturnToLobbyFailed);
 
 /**
  * 게임 서버의 로비.
@@ -51,7 +52,7 @@ public:
     /** 캐릭터 목록 사본을 비운다. 게임 서버와의 연결이 끊기면 부른다. */
     void Reset();
 
-    /** 로비 접속에 성공해 캐릭터 목록을 받으면 OnCharactersChanged보다 먼저 알린다. */
+    /** 로비 접속이나 로비 복귀 뒤에 캐릭터 목록을 받으면 OnCharactersChanged보다 먼저 알린다. */
     FOnLobbyEntered OnLobbyEntered;
 
     /** 서버가 로비 접속을 거절했다. 서버는 이 응답 뒤에 연결을 끊는다. */
@@ -116,4 +117,10 @@ public:
 
     /** 성공했으면 내 플레이어 데이터를 먼저 채운 뒤 부른다. */
     void HandleEnterGame(bool bSuccess);
+
+    /** 성공하면 캐릭터 목록이 뒤따르므로 아무것도 하지 않는다. 실패하면 OnReturnToLobbyFailed로 알린다. */
+    void HandleReturnToLobby(bool bSuccess);
+
+    /** 서버가 로비 복귀의 캐릭터 목록을 불러오지 못했다. 서버는 이 응답 뒤에 연결을 끊는다. */
+    FOnReturnToLobbyFailed OnReturnToLobbyFailed;
 };

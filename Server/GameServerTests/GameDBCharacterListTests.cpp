@@ -94,6 +94,20 @@ TEST_F(DISABLED_GameDBCharacterListTest, LoginUpdatesLastLoginAndKeepsSlotCount)
     EXPECT_EQ(CountRows(L"dbo.Account", where + L" AND LastLoginAt > '2001-01-01'"), 1) << "다시 로그인하면 마지막 로그인 시각을 갱신한다";
 }
 
+// 로비 복귀는 로그인이 아니다. 슬롯 수만 읽고 마지막 로그인 시각은 그대로 둔다.
+TEST_F(DISABLED_GameDBCharacterListTest, LoadSlotCountKeepsLastLogin)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'115;
+    CleanupAccount(ACCOUNT_ID);
+    const wstring where = L"AccountId = " + to_wstring(ACCOUNT_ID);
+
+    AccountDAO::RecordLogin(Connection(), ACCOUNT_ID);
+    ASSERT_TRUE(Execute(L"UPDATE dbo.Account SET CharacterSlotCount = 5, LastLoginAt = '2000-01-01' WHERE " + where));
+
+    EXPECT_EQ(AccountDAO::LoadCharacterSlotCount(Connection(), ACCOUNT_ID), 5);
+    EXPECT_EQ(CountRows(L"dbo.Account", where + L" AND LastLoginAt = '2000-01-01'"), 1);
+}
+
 TEST_F(DISABLED_GameDBCharacterListTest, CreateInsertsOnlyCharacterRow)
 {
     constexpr int64 ACCOUNT_ID = 9'000'000'000'103;

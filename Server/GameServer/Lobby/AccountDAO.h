@@ -14,4 +14,7 @@ public:
      * 새 행의 슬롯 수는 로비 표의 기본값이다.
      */
     static int32 RecordLogin(DBConnection& conn, int64 accountId);
+
+    /** 계정 행의 캐릭터 슬롯 수를 읽는다. 행을 만들거나 로그인 시각을 바꾸지 않는다. 행이 없으면 DBError. */
+    static int32 LoadCharacterSlotCount(DBConnection& conn, int64 accountId);
 };

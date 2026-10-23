@@ -43,6 +43,9 @@ void AP1InGamePlayerController::SetupInputComponent()
         if (ToggleInventoryAction)
             EnhancedInputComponent->BindAction(ToggleInventoryAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleInventoryWidget);
 
+        if (ToggleGameMenuAction)
+            EnhancedInputComponent->BindAction(ToggleGameMenuAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleGameMenu);
+
         for (int32 QuickSlotIndex = 0; QuickSlotIndex < UseQuickSlotActions.Num(); ++QuickSlotIndex)
         {
             if (UseQuickSlotActions[QuickSlotIndex])
@@ -74,6 +77,12 @@ void AP1InGamePlayerController::OnToggleInventoryWidget()
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->ToggleWindow(EP1WidgetType::WIDGET_INVENTORY);
+}
+
+void AP1InGamePlayerController::OnToggleGameMenu()
+{
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->ToggleGameMenu();
 }
 
 UP1ScreenSubsystem* AP1InGamePlayerController::GetScreens() const

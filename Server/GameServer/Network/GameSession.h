@@ -33,6 +33,13 @@ public:
 	bool CompleteGameEntry();
 	/** 게임 입장이 거절됐다. 게임 입장 중일 때만 로비로 되돌리고, 아니면 false. */
 	bool CancelGameEntry();
+	/** 게임에서 로비 복귀를 시작한다. 게임 단계일 때만 로비 복귀 중으로 바꾸고, 아니면 false. */
+	bool BeginLobbyReturn();
+	/**
+	 * 로비 복귀의 저장이 끝났다. 로비 복귀 중일 때만 플레이어를 비우고 로비로 바꾸며, 아니면 false.
+	 * 로비 복귀 창구가 부른다.
+	 */
+	bool CompleteLobbyReturn();
 
 private:
 	bool TryChangePhase(SessionPhase from, SessionPhase to);

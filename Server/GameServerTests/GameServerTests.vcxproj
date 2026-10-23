@@ -284,6 +284,7 @@
     <ClCompile Include="..\GameServer\Lobby\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Lobby\LobbyPacketHandlers.cpp" />
     <ClCompile Include="..\GameServer\Lobby\LobbyRequests.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\LobbyReturn.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp" />
     <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp" />

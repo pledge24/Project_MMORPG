@@ -79,6 +79,9 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
     // 7)의 모르는 직업은 경고를 남긴다.
     AddExpectedMessage(TEXT("모르는 직업을 생성할 수 있는 직업에서 뺌"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
 
+    // 8)의 실패한 로비 복귀는 경고를 남긴다.
+    AddExpectedMessage(TEXT("서버가 로비 복귀의 캐릭터 목록을 불러오지 못함"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
+
     // 1) 로비 접속이 성공하면 목록이 뒤따른다. 목록을 받으면 캐릭터와 슬롯 수를 사본에 옮기고,
     //    로비에 들어왔다고 알린 뒤 목록이 바뀌었다고 알린다.
     {
@@ -226,6 +229,20 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
             TestTrue(TEXT("첫 직업은 마법사"), CreatableClasses[0] == EP1CharacterClass::Mage);
             TestTrue(TEXT("둘째 직업은 전사"), CreatableClasses[1] == EP1CharacterClass::Warrior);
         }
+    }
+
+    // 8) 로비 복귀가 성공하면 목록이 뒤따르므로 응답만으로는 아무것도 알리지 않는다. 실패하면 실패를 알린다.
+    //    복귀 뒤의 목록은 로비 접속의 목록과 같은 경로(1)로 로비에 들어왔다고 알린다.
+    {
+        FFixture F;
+        int32 FailedCount = 0;
+        F.Lobby->OnReturnToLobbyFailed.AddLambda([&FailedCount]() { ++FailedCount; });
+
+        F.Lobby->HandleReturnToLobby(true);
+        TestEqual(TEXT("성공한 복귀는 실패를 알리지 않는다"), FailedCount, 0);
+
+        F.Lobby->HandleReturnToLobby(false);
+        TestEqual(TEXT("실패한 복귀는 실패를 한 번 알린다"), FailedCount, 1);
     }
 
     return true;

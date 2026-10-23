@@ -65,6 +65,21 @@ bool GameSession::CancelGameEntry()
 	return TryChangePhase(SessionPhase::ENTERING_GAME, SessionPhase::LOBBY);
 }
 
+bool GameSession::BeginLobbyReturn()
+{
+	return TryChangePhase(SessionPhase::IN_GAME, SessionPhase::RETURNING_TO_LOBBY);
+}
+
+bool GameSession::CompleteLobbyReturn()
+{
+	// 단계보다 플레이어를 먼저 비운다. 로비 단계가 된 뒤에 온 게임 입장이 남은 플레이어를 보고 등록에 실패하지 않게 하려는 것이다.
+	if (GetPhase() != SessionPhase::RETURNING_TO_LOBBY)
+		return false;
+
+	_player.store(nullptr);
+	return TryChangePhase(SessionPhase::RETURNING_TO_LOBBY, SessionPhase::LOBBY);
+}
+
 bool GameSession::TryChangePhase(SessionPhase from, SessionPhase to)
 {
 	// 단계는 IOCP 스레드(핸들러)와 DB 스레드(로비 접속, 입장 잡)가 함께 바꾼다. 확인과 변경을 나누면 둘 다 같은 단계를 보고 넘어간다.

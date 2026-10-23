@@ -27,6 +27,7 @@ enum class EP1EntryPhase : uint8
     Lobby,          // 캐릭터 목록을 받았다
     MapLoad,        // 서버가 알린 맵을 여는 중이다
     Game,           // 맵을 열고 맵 로드 완료를 알렸다
+    ReturningToLobby,   // 게임에서 로비 복귀를 요청했고, 서버가 진행을 저장한 뒤 보낼 캐릭터 목록을 기다린다
 };
 
 /** 진행 표시 화면이 보여 줄 접속 진행. */
@@ -35,6 +36,8 @@ enum class EP1EntryProgress : uint8
     None,
     ConnectingWorld,    // 월드를 고른 뒤 인증 티켓을 받아 그 월드의 게임 서버에 연결하고 로비 접속 응답을 기다린다
     LoadingMap,         // 서버가 알린 맵을 열고, 그 맵에 내 플레이어가 스폰되기를 기다린다
+    ReturningToLobby,   // 게임에서 로비 복귀를 요청해 저장을 기다리고, 캐릭터 목록을 받은 뒤 로그인 맵을 연다
+    ReturningToWorldSelect, // 게임에서 연결을 닫고 월드 선택 화면이 있는 로그인 맵을 연다
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryProgressChanged, EP1EntryProgress /*Progress*/);
@@ -103,7 +106,10 @@ public:
     /** 월드 선택 단계에서 로그인 세션을 버리고 로그인 단계로 돌아간다. 접속하는 중이면 아무것도 하지 않는다. */
     void Logout();
 
-    /** 로비 단계에서 게임 서버와의 연결을 닫고, 다시 로그인하지 않고 월드 선택 단계로 돌아간다. */
+    /**
+     * 로비나 게임 단계에서 게임 서버와의 연결을 닫고, 다시 로그인하지 않고 월드 선택 단계로 돌아간다.
+     * 게임에서 돌아가면 로그인 맵을 연다. 그사이 로그인 세션이 만료됐으면 월드 목록을 받을 때 로그인 화면으로 간다.
+     */
     void ReturnToWorldSelect();
 
 private:
@@ -116,6 +122,9 @@ private:
     void HandleConnected();
     void HandleConnectFailed();
     void HandleLobbyEntered();
+
+    /** 서버가 로비 복귀의 캐릭터 목록을 불러오지 못했다. 연결을 닫고 로그인 화면에 사유를 보여 준다. */
+    void HandleReturnToLobbyFailed();
 
     /** 서버가 로비 접속을 거절하면 부른다. 월드 선택 화면에 Message를 보여 준다. */
     void HandleLobbyConnectFailed(const FText& Message);
@@ -139,6 +148,15 @@ private:
     void HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 
     FDelegateHandle PostLoadMapHandle;
+
+    //~ Return To Lobby
+public:
+    /** 게임 단계에서 로비 복귀를 요청한다. 서버가 진행을 저장한 뒤 캐릭터 목록을 보내면 로그인 맵을 열고 캐릭터 선택 화면을 보인다. */
+    void ReturnToLobby();
+
+private:
+    /** 게임에서 로그인 맵으로 돌아갈 때 내 플레이어의 칸과 퀵슬롯을 비운다. 다음 입장 패킷이 다시 채운다. */
+    void ClearMyPlayerData();
 
     //~ Notice
 public:
@@ -169,8 +187,8 @@ private:
     /** 월드 접속을 그만두고 월드 선택 화면에 Notice를 보여 준다. 로그인 세션은 남으므로 다시 월드를 고를 수 있다. */
     void ShowWorldSelectNotice(const FString& Notice);
 
-    /** 로그인 맵이 열려 있는 단계면 true. */
-    static bool IsInLoginMap(EP1EntryPhase InPhase);
+    /** 로그인 메뉴의 화면(로그인, 월드 선택, 캐릭터 선택)을 쓰는 단계면 true. */
+    static bool IsLoginMenuPhase(EP1EntryPhase InPhase);
 
     /** 로그인 맵이 열린 뒤 로그인 화면에 보여 줄 문구. 레벨 전환을 건너 들고 간다. */
     FString PendingLoginNotice;
@@ -184,6 +202,12 @@ private:
     void OpenLevelNextTick(FName LevelName);
 
     FTSTicker::FDelegateHandle OpenLevelTickerHandle;
+
+    /** 열려 있거나 여는 중인 레벨이 로그인 맵이면 true. 게임은 로그인 맵에서 시작한다. */
+    bool bLoginMapOpen = true;
+
+    /** 레벨을 열기로 했고 아직 그 레벨이 열렸다는 알림을 받지 않았다. 그동안에는 열린 화면이 없다. */
+    bool bOpeningLevel = false;
 
     //~ 공통
 private:

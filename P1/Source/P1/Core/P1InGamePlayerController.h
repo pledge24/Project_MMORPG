@@ -45,6 +45,7 @@ public:
 private:
     void OnToggleStatusWindowWidget();
     void OnToggleInventoryWidget();
+    void OnToggleGameMenu();
 
     /** 이 로컬 플레이어의 화면 서브시스템. 로컬 플레이어가 없으면 nullptr. */
     UP1ScreenSubsystem* GetScreens() const;
@@ -57,6 +58,10 @@ private:
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TObjectPtr<UInputAction> ToggleInventoryAction;
+
+    /** 게임 메뉴를 연다. 메뉴가 열려 있으면 입력을 메뉴가 받으므로 닫는 키는 메뉴 위젯이 처리한다. */
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    TObjectPtr<UInputAction> ToggleGameMenuAction;
 
     //~ Quick Slot Input
 private:

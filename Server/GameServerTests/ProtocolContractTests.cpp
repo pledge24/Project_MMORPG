@@ -39,7 +39,8 @@
     X(C_MAP_LOAD_COMPLETE)                                                   \
     X(S_ENTER_ROOM)                                                          \
     X(C_USE_PORTAL) X(S_USE_PORTAL)                                          \
-    X(C_RESPAWN) X(S_RESPAWN)
+    X(C_RESPAWN) X(S_RESPAWN)                                                \
+    X(C_RETURN_TO_LOBBY) X(S_RETURN_TO_LOBBY)
 
 #define ENTITY_PACKETS(X)
 #define COMBAT_PACKETS(X)

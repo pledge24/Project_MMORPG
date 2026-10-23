@@ -11,6 +11,7 @@ class UP1InventoryWidget;
 class UP1ShopWidget;
 class UP1WarningTextWidget;
 class UP1DeathWidget;
+class UP1GameMenuWidget;
 class UP1EntryProgressWidget;
 
 /**
@@ -40,6 +41,10 @@ public:
     /** 사망 화면 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Screens")
     TSoftClassPtr<UP1DeathWidget> DeathWidgetClass;
+
+    /** Esc로 여는 게임 메뉴 위젯 클래스. */
+    UPROPERTY(Config, EditAnywhere, Category = "Screens")
+    TSoftClassPtr<UP1GameMenuWidget> GameMenuWidgetClass;
 
     /** 스탯 창 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Windows")

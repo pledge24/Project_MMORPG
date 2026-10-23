@@ -191,3 +191,22 @@ TEST(LobbyModuleTest, LobbyDoesNotIncludeProgressCoordinator)
 
     EXPECT_GT(checkedFiles, 0) << "검사한 파일이 없으면 아무것도 검사하지 않은 것이다";
 }
+
+// 로비 복귀의 목록은 로비 접속의 목록과 같은 내용이다. 계정 행은 이미 있으므로 로그인을 기록하지 않고 슬롯 수만 읽는다.
+TEST_F(LobbyRequestsTest, ReturnToLobbyListsCharactersWithSlotCountOfAccountRow)
+{
+    conn.QueueResult({ { int64(6) } });
+    conn.QueueResult({
+        { CHARACTER_ID, int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), int64(13) },
+    });
+
+    const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ReturnToLobby(conn, ACCOUNT_ID);
+
+    EXPECT_EQ(listPkt.character_slot_count(), 6);
+    ASSERT_EQ(listPkt.characters_size(), 1);
+    EXPECT_EQ(listPkt.characters(0).level(), 13);
+    ASSERT_EQ(listPkt.creatable_classes_size(), 1);
+    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CLASS_TYPE_WARRIOR);
+    ASSERT_EQ(conn.executedParams.size(), 2u);
+    EXPECT_EQ(conn.executedParams[0].size(), 1u) << "슬롯 수 조회는 계정 번호만 바인딩한다. 로그인 기록은 기본 슬롯 수까지 둘이다";
+}

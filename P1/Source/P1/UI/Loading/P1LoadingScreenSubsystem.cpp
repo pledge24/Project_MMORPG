@@ -55,7 +55,8 @@ void UP1LoadingScreenSubsystem::HandleProgressChanged(EP1EntryProgress NewProgre
         Widget->SetProgress(Progress);
 
     // 맵을 여는 동안은 화면이 멈춰 페이드가 돌지 않는다. 멈추기 전의 마지막 프레임에 이미 덮여 있어야 하므로 기다리지 않는다.
-    if (Progress == EP1EntryProgress::LoadingMap && ViewportContent.IsValid() == false)
+    // 월드 접속만 레벨을 열지 않으므로 지연 표시를 쓴다. 로비 복귀는 저장을 기다린 뒤 같은 진행으로 로그인 맵을 연다.
+    if (Progress != EP1EntryProgress::None && Progress != EP1EntryProgress::ConnectingWorld && ViewportContent.IsValid() == false)
         Show(false);
 
     // 띄우기 지연, 페이드, 숨기기는 모두 틱이 한다.
