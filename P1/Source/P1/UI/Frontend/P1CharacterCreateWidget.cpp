@@ -3,7 +3,6 @@
 #include "Components/EditableTextBox.h"
 #include "Components/TextBlock.h"
 #include "Lobby/P1LobbySubsystem.h"
-#include "UI/Frontend/P1CharacterSlotWidget.h"
 
 void UP1CharacterCreateWidget::NativeOnInitialized()
 {
@@ -35,8 +34,7 @@ void UP1CharacterCreateWidget::NativeDestruct()
 
 void UP1CharacterCreateWidget::Reset()
 {
-    SelectedClass = EP1CharacterClass::None;
-    SelectedClassText->SetText(FText::FromString(TEXT("직업을 고르세요")));
+    SelectClass(EP1CharacterClass::None);
     DescriptionText->SetText(FText::GetEmpty());
     NameBox->SetText(FText::GetEmpty());
 
@@ -62,7 +60,13 @@ UP1LobbySubsystem* UP1CharacterCreateWidget::GetLobby() const
 void UP1CharacterCreateWidget::SelectClass(EP1CharacterClass CharacterClass)
 {
     SelectedClass = CharacterClass;
-    SelectedClassText->SetText(FText::FromString(UP1CharacterSlotWidget::GetClassDisplayName(CharacterClass)));
+
+    const auto ShowIf = [](UWidget* Widget, bool bShow)
+    {
+        Widget->SetVisibility(bShow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    };
+    ShowIf(WarriorSelected, CharacterClass == EP1CharacterClass::Warrior);
+    ShowIf(MageSelected, CharacterClass == EP1CharacterClass::Mage);
 }
 
 void UP1CharacterCreateWidget::ShowCreateFailed(const FText& Message)

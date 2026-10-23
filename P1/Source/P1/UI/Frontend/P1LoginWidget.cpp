@@ -56,9 +56,10 @@ UP1AuthClient* UP1LoginWidget::GetAuthClient() const
 
 void UP1LoginWidget::SetResultText(bool bSuccess, const FString& Message)
 {
-    const FLinearColor Color = bSuccess ? FLinearColor::White : FLinearColor::Red;
+    // 시안의 본문색과 오류색. FColor는 sRGB 값이라 선형 색으로 바꿔 넘긴다.
+    const FColor Color = bSuccess ? FColor(0xEC, 0xE5, 0xD6) : FColor(0xF0, 0xA1, 0x84);
 
-    ResultText->SetColorAndOpacity(FSlateColor(Color));
+    ResultText->SetColorAndOpacity(FSlateColor(FLinearColor(Color)));
     ResultText->SetText(FText::FromString(Message));
 }
 

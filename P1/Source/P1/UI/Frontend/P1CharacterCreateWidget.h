@@ -69,11 +69,16 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> MageButton;
 
+    /** 전사 카드를 골랐을 때 덮는 테두리. */
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UEditableTextBox> NameBox;
+    TObjectPtr<UWidget> WarriorSelected;
+
+    /** 마법사 카드를 골랐을 때 덮는 테두리. */
+    UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UWidget> MageSelected;
 
     UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UTextBlock> SelectedClassText;
+    TObjectPtr<UEditableTextBox> NameBox;
 
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UTextBlock> DescriptionText;

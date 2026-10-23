@@ -23,6 +23,7 @@ void UP1CharacterDeleteWidget::SetCharacter(const FP1LobbyCharacter& Character)
     CharacterInfoText->SetText(FText::FromString(FString::Printf(TEXT("%s (%s · Lv. %d)을 삭제합니다.\n삭제한 캐릭터는 되돌릴 수 없습니다."),
         *Character.CharacterName, *UP1CharacterSlotWidget::GetClassDisplayName(Character.CharacterClass), Character.CharacterLevel)));
     NameBox->SetText(FText::GetEmpty());
+    NameBox->SetHintText(FText::FromString(Character.CharacterName));
     ConfirmButton->SetIsEnabled(false);
 }
 
