@@ -22,10 +22,10 @@ namespace
 
     const TCHAR* const CONNECT_FAILED_NOTICE = TEXT("게임 서버에 접속하지 못했습니다.");
 
-    /** 서버가 이 클라이언트에 없는 맵으로 보냈을 때 보여 줄 문구. 클라이언트와 서버의 기획 데이터가 어긋난 경우다. */
     /** 로비 복귀의 저장은 끝났지만 서버가 캐릭터 목록을 불러오지 못했을 때 보여 줄 문구. 서버는 연결을 끊는다. */
     const TCHAR* const RETURN_TO_LOBBY_FAILED_NOTICE = TEXT("캐릭터 목록을 불러오지 못했습니다. 다시 로그인해 주세요.");
 
+    /** 서버가 이 클라이언트에 없는 맵으로 보냈을 때 보여 줄 문구. 클라이언트와 서버의 기획 데이터가 어긋난 경우다. */
     const TCHAR* const UNKNOWN_MAP_NOTICE = TEXT("이 클라이언트에 없는 맵입니다. 클라이언트를 최신으로 업데이트해 주세요.");
 
     const TCHAR* PhaseName(EP1EntryPhase Phase)

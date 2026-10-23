@@ -81,7 +81,7 @@ private:
 
     //~ Game Menu
 public:
-    /** 게임 메뉴를 열거나 닫는다. 열면 모든 화면 위에 그리고 입력을 게임 메뉴만 받는다. */
+    /** 게임 메뉴를 열거나 닫는다. 게임 단계에서만 열고, 열면 모든 화면 위에 그리며 입력을 게임 메뉴만 받는다. */
     void ToggleGameMenu();
     void CloseGameMenu();
     bool IsGameMenuOpen() const;

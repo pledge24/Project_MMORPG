@@ -73,7 +73,7 @@ int32 AccountDAO::RecordLogin(DBConnection& conn, int64 accountId)
 
     return bindObject._slotCount;
 }
-
+
 int32 AccountDAO::LoadCharacterSlotCount(DBConnection& conn, int64 accountId)
 {
     const int PARAMS = 1;

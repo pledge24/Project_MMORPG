@@ -1,5 +1,6 @@
 #include "UI/P1ScreenSubsystem.h"
 #include "UI/P1UISettings.h"
+#include "Core/P1EntryFlowSubsystem.h"
 #include "UI/Screens/P1HUDWidget.h"
 #include "UI/Screens/P1StatusWindowWidget.h"
 #include "UI/Screens/P1InventoryWidget.h"
@@ -223,6 +224,12 @@ void UP1ScreenSubsystem::ToggleGameMenu()
         CloseGameMenu();
         return;
     }
+
+    // 맵을 불러오거나 로비 복귀를 기다리는 동안에는 메뉴의 버튼이 아무것도 하지 않으므로 열지 않는다.
+    const UGameInstance* GameInstance = GetLocalPlayer()->GetGameInstance();
+    const UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr;
+    if (EntryFlow == nullptr || EntryFlow->GetPhase() != EP1EntryPhase::Game)
+        return;
 
     GameMenuWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     RefreshInputMode();
