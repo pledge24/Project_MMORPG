@@ -77,7 +77,8 @@ bool FP1EntryFlowTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("거절 뒤에도 게임"), Flow->GetPhase() == EPhase::Game);
     }
 
-    // 4) 진행 표시는 맵 로드 단계에서만 「맵을 불러오는 중」이고, 단계가 그것으로 바뀌거나 그것에서 벗어날 때만 알린다.
+    // 4) 진행 표시는 맵 로드 단계부터 내 플레이어가 스폰될 때까지 「맵을 불러오는 중」이고, 진행이 바뀔 때만 알린다.
+    //    스폰 알림은 내 플레이어 데이터가 보내므로 여기서는 로그인으로 돌아가 기다림이 끝나는 경로를 본다.
     {
         using EProgress = EP1EntryProgress;
         UP1EntryFlowSubsystem* Flow = MakeFlow();
@@ -92,7 +93,10 @@ bool FP1EntryFlowTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("맵 로드 단계는 맵을 불러오는 중"), Flow->GetProgress() == EProgress::LoadingMap);
 
         Flow->TryEnterPhase(EPhase::Game);
-        TestTrue(TEXT("게임 단계는 진행 없음"), Flow->GetProgress() == EProgress::None);
+        TestTrue(TEXT("맵을 열어도 스폰 전이면 맵을 불러오는 중"), Flow->GetProgress() == EProgress::LoadingMap);
+
+        Flow->TryEnterPhase(EPhase::Login);
+        TestTrue(TEXT("로그인으로 돌아가면 진행 없음"), Flow->GetProgress() == EProgress::None);
 
         if (TestEqual(TEXT("알림 수"), Notified.Num(), 2))
         {

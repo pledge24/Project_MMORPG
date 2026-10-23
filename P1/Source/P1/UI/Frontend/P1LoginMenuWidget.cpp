@@ -5,7 +5,6 @@
 #include "UI/Frontend/P1CharacterCreateWidget.h"
 #include "UI/Frontend/P1CharacterDeleteWidget.h"
 #include "UI/Frontend/P1CharacterSelectWidget.h"
-#include "UI/Frontend/P1EntryProgressWidget.h"
 #include "UI/Frontend/P1LoginWidget.h"
 
 void UP1LoginMenuWidget::NativeOnInitialized()
@@ -37,11 +36,7 @@ void UP1LoginMenuWidget::NativeConstruct()
     }
 
     if (UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr)
-    {
         EntryFlow->OnLoginNotice.AddUObject(this, &UP1LoginMenuWidget::ShowLoginNotice);
-        EntryFlow->OnProgressChanged.AddUObject(this, &UP1LoginMenuWidget::ShowProgress);
-        ShowProgress(EntryFlow->GetProgress());
-    }
 }
 
 void UP1LoginMenuWidget::NativeDestruct()
@@ -90,9 +85,4 @@ void UP1LoginMenuWidget::ShowLoginNotice(const FString& Notice)
 void UP1LoginMenuWidget::HandleDeleteCharacterFailed(const FText& Message)
 {
     ShowCharacterSelect();
-}
-
-void UP1LoginMenuWidget::ShowProgress(EP1EntryProgress Progress)
-{
-    ProgressScreen->ShowProgress(Progress);
 }

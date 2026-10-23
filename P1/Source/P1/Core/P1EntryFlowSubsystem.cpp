@@ -68,7 +68,10 @@ void UP1EntryFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     }
 
     if (MyPlayerData)
+    {
         MyPlayerData->OnMapChanged.AddUObject(this, &UP1EntryFlowSubsystem::EnterMapLoad);
+        MyPlayerData->OnMyPlayerSpawned.AddUObject(this, &UP1EntryFlowSubsystem::HandleMyPlayerSpawned);
+    }
 
     PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UP1EntryFlowSubsystem::HandlePostLoadMap);
 }
@@ -118,6 +121,13 @@ bool UP1EntryFlowSubsystem::TryEnterPhase(EP1EntryPhase NewPhase)
     UE_LOG(LogP1System, Log, TEXT("접속 단계: %s → %s"), PhaseName(Phase), PhaseName(NewPhase));
     const EP1EntryProgress Before = GetProgress();
     Phase = NewPhase;
+
+    // 맵을 옮길 때마다 새 맵의 스폰을 기다린다. 로그인으로 돌아가면 기다릴 스폰이 없다.
+    if (NewPhase == EP1EntryPhase::MapLoad)
+        bAwaitingMyPlayer = true;
+    else if (NewPhase == EP1EntryPhase::Login)
+        bAwaitingMyPlayer = false;
+
     NotifyProgressIfChanged(Before);
     return true;
 }
@@ -125,6 +135,9 @@ bool UP1EntryFlowSubsystem::TryEnterPhase(EP1EntryPhase NewPhase)
 EP1EntryProgress UP1EntryFlowSubsystem::GetProgress() const
 {
     if (Phase == EP1EntryPhase::MapLoad)
+        return EP1EntryProgress::LoadingMap;
+
+    if (Phase == EP1EntryPhase::Game && bAwaitingMyPlayer)
         return EP1EntryProgress::LoadingMap;
 
     if (Phase == EP1EntryPhase::Login && bConnectingWorld)
@@ -223,6 +236,13 @@ void UP1EntryFlowSubsystem::HandlePostLoadMap(UWorld* LoadedWorld)
     TryEnterPhase(EP1EntryPhase::Game);
 }
 
+void UP1EntryFlowSubsystem::HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer)
+{
+    const EP1EntryProgress Before = GetProgress();
+    bAwaitingMyPlayer = false;
+    NotifyProgressIfChanged(Before);
+}
+
 void UP1EntryFlowSubsystem::SendMapLoadComplete()
 {
     Protocol::C_MAP_LOAD_COMPLETE MapLoadCompletePkt;
@@ -285,8 +305,14 @@ void UP1EntryFlowSubsystem::OpenLevelNextTick(FName LevelName)
     if (OpenLevelTickerHandle.IsValid())
         FTSTicker::RemoveTicker(OpenLevelTickerHandle);
 
-    OpenLevelTickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this, LevelName](float)
+    // 틱 도중에 더한 티커는 그 틱 안에서 곧바로 돈다. 패킷도 같은 틱에서 처리되므로, 프레임 번호가 바뀔 때까지 기다리지 않으면
+    // 같은 프레임에 레벨을 열어 로딩 화면이 그려지기 전에 화면이 멈춘다.
+    const uint64 ScheduledFrame = GFrameCounter;
+    OpenLevelTickerHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateWeakLambda(this, [this, LevelName, ScheduledFrame](float)
     {
+        if (GFrameCounter == ScheduledFrame)
+            return true;
+
         OpenLevelTickerHandle.Reset();
         UGameplayStatics::OpenLevel(GetGameInstance()->GetWorld(), LevelName);
         return false;
