@@ -280,12 +280,15 @@ bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& 
 {
     UP1ChatSubsystem* Chat = GetChat(session);
     UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
-    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
-    if (Chat == nullptr || MyPlayerData == nullptr || EntityManager == nullptr)
+    if (Chat == nullptr || MyPlayerData == nullptr)
         return false;
 
     Chat->HandleChatMessage(pkt, MyPlayerData->GetPlayerId());
-    EntityManager->HandleChatMessage(pkt);
+
+    // 말풍선은 엔티티 관리자가 띄운다. 맵을 바꾸는 중이라 관리자가 없어도 채팅창 기록은 남긴다.
+    if (UP1StatefulEntityManager* EntityManager = GetEntityManager(session))
+        EntityManager->HandleChatMessage(pkt);
+
     return true;
 }
 
