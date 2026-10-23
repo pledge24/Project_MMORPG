@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import { AppError } from '../common/errors.js';
 import { hashPassword, verifyPassword } from '../common/password.js';
-import type { Ticket, TicketRepository } from '../common/ticket.js';
+import type { LoginSession, LoginSessionRepository } from '../common/loginSession.js';
+import { toWorldSummary, type WorldDirectory, type WorldSummary } from '../common/worldDirectory.js';
 import type { AccountRepository } from './auth.repository.js';
 
 /** 형식 검사를 통과한 로그인 ID와 비밀번호. 형식 검사는 handler가 한다. */
@@ -12,19 +13,31 @@ export interface Credentials {
     password: string;
 }
 
+export interface LoginResult {
+    loginSession: LoginSession;
+    worlds: WorldSummary[];
+}
+
 /**
  * 회원가입과 로그인 판정.
  *
- * 인증 티켓을 발급하는 곳은 로그인뿐이다. 회원가입은 티켓 저장소를 쓰지 않는다.
+ * 로그인은 로그인 세션을 만들고 월드 목록을 함께 돌려준다. 인증 티켓은 발급하지 않는다. 회원가입은 로그인 세션도 만들지 않는다.
  */
 export class AuthService {
     private readonly accounts: AccountRepository;
-    private readonly tickets: TicketRepository;
+    private readonly loginSessions: LoginSessionRepository;
+    private readonly worlds: WorldDirectory;
     private readonly now: () => Date;
 
-    constructor(accounts: AccountRepository, tickets: TicketRepository, now: () => Date = () => new Date()) {
+    constructor(
+        accounts: AccountRepository,
+        loginSessions: LoginSessionRepository,
+        worlds: WorldDirectory,
+        now: () => Date = () => new Date(),
+    ) {
         this.accounts = accounts;
-        this.tickets = tickets;
+        this.loginSessions = loginSessions;
+        this.worlds = worlds;
         this.now = now;
     }
 
@@ -41,10 +54,10 @@ export class AuthService {
     }
 
     /**
-     * 로그인 ID 조회, 비밀번호 검증, 정지 검사, 마지막 로그인 시각 갱신, 인증 티켓 발급을 이 순서로 한다.
+     * 로그인 ID 조회, 비밀번호 검증, 정지 검사, 마지막 로그인 시각 갱신, 로그인 세션 생성, 월드 목록 조회를 이 순서로 한다.
      * 로그인 ID가 없거나 비밀번호가 틀리면 INVALID_CREDENTIALS, 정지 중이면 ACCOUNT_BANNED를 던진다.
      */
-    async login({ loginId, password }: Credentials): Promise<{ ticket: Ticket }> {
+    async login({ loginId, password }: Credentials): Promise<LoginResult> {
         // 로그인 ID가 없는 것과 비밀번호가 틀린 것은 같은 에러다. 다르면 로그인 ID가 있는지를 밖에서 알아낼 수 있다.
         const account = await this.accounts.findByLoginId(loginId);
         const passwordMatches = await verifyPassword(password, account?.passwordHash);
@@ -59,8 +72,11 @@ export class AuthService {
 
         await this.accounts.recordLogin(account.accountId);
 
-        const ticket = randomUUID();
-        await this.tickets.save(ticket, account.accountId);
-        return { ticket };
+        // 다시 로그인해도 이전 로그인 세션을 지우지 않는다. 두 로그인 세션은 각자의 수명이 끝날 때까지 산다.
+        const loginSession = randomUUID();
+        await this.loginSessions.save(loginSession, account.accountId);
+
+        const entries = await this.worlds.list();
+        return { loginSession, worlds: entries.map(toWorldSummary) };
     }
 }

@@ -33,35 +33,49 @@ bool FP1EntryFlowTest::RunTest(const FString& Parameters)
     using namespace P1EntryFlowTest;
     using EPhase = EP1EntryPhase;
 
-    // 3)의 거절 여덟 번은 경고를 남긴다.
-    AddExpectedMessage(TEXT("허용되지 않은 접속 단계 전이를 거절함"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 8, false);
+    // 3)의 거절 열세 번은 경고를 남긴다.
+    AddExpectedMessage(TEXT("허용되지 않은 접속 단계 전이를 거절함"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 13, false);
 
-    // 1) 로그인에서 시작해 로비, 맵 로드, 게임 순서로 나아가고, 맵이 바뀌면 게임에서 맵 로드로 돌아간다.
+    // 1) 로그인에서 시작해 월드 선택, 로비, 맵 로드, 게임 순서로 나아가고, 맵이 바뀌면 게임에서 맵 로드로 돌아간다.
+    //    단계가 바뀔 때마다 바뀐 단계를 알린다.
     {
         UP1EntryFlowSubsystem* Flow = MakeFlow();
+        TArray<EPhase> Notified;
+        Flow->OnPhaseChanged.AddLambda([&Notified](EPhase Phase) { Notified.Add(Phase); });
         TestTrue(TEXT("처음은 로그인"), Flow->GetPhase() == EPhase::Login);
 
-        TestTrue(TEXT("로그인 → 로비"), Flow->TryEnterPhase(EPhase::Lobby));
+        TestTrue(TEXT("로그인 → 월드 선택"), Flow->TryEnterPhase(EPhase::WorldSelect));
+        TestTrue(TEXT("월드 선택 → 로비"), Flow->TryEnterPhase(EPhase::Lobby));
         TestTrue(TEXT("로비 → 맵 로드"), Flow->TryEnterPhase(EPhase::MapLoad));
         TestTrue(TEXT("맵 로드 → 게임"), Flow->TryEnterPhase(EPhase::Game));
         TestTrue(TEXT("게임 → 맵 로드"), Flow->TryEnterPhase(EPhase::MapLoad));
         TestTrue(TEXT("마지막 단계는 맵 로드"), Flow->GetPhase() == EPhase::MapLoad);
+
+        const TArray<EPhase> Expected = { EPhase::WorldSelect, EPhase::Lobby, EPhase::MapLoad, EPhase::Game, EPhase::MapLoad };
+        TestTrue(TEXT("바뀐 단계를 차례로 알린다"), Notified == Expected);
     }
 
-    // 2) 연결이 끊기면 어느 단계에서든 로그인으로 돌아간다. 이미 로그인이면 전이가 아니다.
+    // 2) 연결이 끊기거나 로그인 세션이 만료되면 어느 단계에서든 로그인으로 돌아간다. 이미 로그인이면 전이가 아니다.
+    //    로비에서는 다시 로그인하지 않고 월드 선택으로 돌아갈 수 있다.
     {
-        for (EPhase From : { EPhase::Lobby, EPhase::MapLoad, EPhase::Game })
+        for (EPhase From : { EPhase::WorldSelect, EPhase::Lobby, EPhase::MapLoad, EPhase::Game })
             TestTrue(*FString::Printf(TEXT("%d → 로그인"), static_cast<int32>(From)), UP1EntryFlowSubsystem::CanTransition(From, EPhase::Login));
 
         TestFalse(TEXT("로그인 → 로그인"), UP1EntryFlowSubsystem::CanTransition(EPhase::Login, EPhase::Login));
+        TestTrue(TEXT("로비 → 월드 선택"), UP1EntryFlowSubsystem::CanTransition(EPhase::Lobby, EPhase::WorldSelect));
     }
 
     // 3) 순서를 건너뛰거나 거꾸로 가는 전이는 거절하고 단계를 그대로 둔다.
     {
         UP1EntryFlowSubsystem* Flow = MakeFlow();
+        TestFalse(TEXT("로그인 → 로비"), Flow->TryEnterPhase(EPhase::Lobby));
         TestFalse(TEXT("로그인 → 맵 로드"), Flow->TryEnterPhase(EPhase::MapLoad));
         TestFalse(TEXT("로그인 → 게임"), Flow->TryEnterPhase(EPhase::Game));
         TestTrue(TEXT("거절 뒤에도 로그인"), Flow->GetPhase() == EPhase::Login);
+
+        Flow->TryEnterPhase(EPhase::WorldSelect);
+        TestFalse(TEXT("월드 선택 → 월드 선택"), Flow->TryEnterPhase(EPhase::WorldSelect));
+        TestFalse(TEXT("월드 선택 → 맵 로드"), Flow->TryEnterPhase(EPhase::MapLoad));
 
         Flow->TryEnterPhase(EPhase::Lobby);
         TestFalse(TEXT("로비 → 로비"), Flow->TryEnterPhase(EPhase::Lobby));
@@ -70,10 +84,12 @@ bool FP1EntryFlowTest::RunTest(const FString& Parameters)
         Flow->TryEnterPhase(EPhase::MapLoad);
         TestFalse(TEXT("맵 로드 → 로비"), Flow->TryEnterPhase(EPhase::Lobby));
         TestFalse(TEXT("맵 로드 → 맵 로드"), Flow->TryEnterPhase(EPhase::MapLoad));
+        TestFalse(TEXT("맵 로드 → 월드 선택"), Flow->TryEnterPhase(EPhase::WorldSelect));
 
         Flow->TryEnterPhase(EPhase::Game);
         TestFalse(TEXT("게임 → 로비"), Flow->TryEnterPhase(EPhase::Lobby));
         TestFalse(TEXT("게임 → 게임"), Flow->TryEnterPhase(EPhase::Game));
+        TestFalse(TEXT("게임 → 월드 선택"), Flow->TryEnterPhase(EPhase::WorldSelect));
         TestTrue(TEXT("거절 뒤에도 게임"), Flow->GetPhase() == EPhase::Game);
     }
 
@@ -86,8 +102,9 @@ bool FP1EntryFlowTest::RunTest(const FString& Parameters)
         Flow->OnProgressChanged.AddLambda([&Notified](EProgress Progress) { Notified.Add(Progress); });
 
         TestTrue(TEXT("처음은 진행 없음"), Flow->GetProgress() == EProgress::None);
+        Flow->TryEnterPhase(EPhase::WorldSelect);
         Flow->TryEnterPhase(EPhase::Lobby);
-        TestEqual(TEXT("로비에 들어가도 진행이 바뀌지 않으면 알리지 않는다"), Notified.Num(), 0);
+        TestEqual(TEXT("월드 선택과 로비에 들어가도 진행이 바뀌지 않으면 알리지 않는다"), Notified.Num(), 0);
 
         Flow->TryEnterPhase(EPhase::MapLoad);
         TestTrue(TEXT("맵 로드 단계는 맵을 불러오는 중"), Flow->GetProgress() == EProgress::LoadingMap);

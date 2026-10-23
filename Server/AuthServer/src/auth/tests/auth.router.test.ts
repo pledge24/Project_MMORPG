@@ -1,17 +1,30 @@
+import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createApp } from '../../app.js';
-import { MemoryTicketRepository } from '../../common/ticket.memory.js';
-import type { TicketRepository } from '../../common/ticket.js';
+import { errorHandler, notFoundHandler } from '../../common/errorHandlers.js';
+import type { LoginSessionRepository } from '../../common/loginSession.js';
+import { MemoryLoginSessionRepository } from '../../common/loginSession.memory.js';
+import { MemoryWorldDirectory } from '../../common/worldDirectory.memory.js';
 import type { AccountRepository } from '../auth.repository.js';
 import { MemoryAccountRepository } from '../auth.repository.memory.js';
+import { createAuthRouter } from '../auth.router.js';
 import { AuthService } from '../auth.service.js';
 
-// 앱 전체를 메모리 저장소로 조립해 HTTP 계약(상태 코드와 봉투)을 검사한다. 본문 형식이 틀린 경우도 여기서 다룬다.
+// auth 라우터와 공용 핸들러를 app.ts와 같은 순서로 메모리 저장소와 조립해 HTTP 계약(상태 코드와 봉투)을 검사한다.
+// 본문 형식이 틀린 경우도 여기서 다룬다. 다른 도메인의 라우터는 붙이지 않는다. 도메인을 지우면 그 테스트만 사라진다.
 
-function appWith(accounts: AccountRepository = new MemoryAccountRepository(), tickets: TicketRepository = new MemoryTicketRepository()) {
-    return createApp({ authService: new AuthService(accounts, tickets) });
+function appWith(
+    accounts: AccountRepository = new MemoryAccountRepository(),
+    loginSessions: LoginSessionRepository = new MemoryLoginSessionRepository(),
+    worlds = new MemoryWorldDirectory(),
+) {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/auth', createAuthRouter(new AuthService(accounts, loginSessions, worlds)));
+    app.use(notFoundHandler);
+    app.use(errorHandler);
+    return app;
 }
 
 afterEach(() => {
@@ -76,23 +89,31 @@ describe('POST /api/auth/register', () => {
 
 describe('POST /api/auth/login', () => {
     let accounts: MemoryAccountRepository;
-    let tickets: MemoryTicketRepository;
+    let loginSessions: MemoryLoginSessionRepository;
+    let worlds: MemoryWorldDirectory;
     let app: ReturnType<typeof appWith>;
 
     beforeEach(async () => {
         accounts = new MemoryAccountRepository();
-        tickets = new MemoryTicketRepository();
-        app = appWith(accounts, tickets);
+        loginSessions = new MemoryLoginSessionRepository();
+        worlds = new MemoryWorldDirectory();
+        app = appWith(accounts, loginSessions, worlds);
         await request(app).post('/api/auth/register').send({ loginId: 'player01', password: 'pass1234' });
     });
 
-    test('성공하면 200과 티켓을 성공 봉투에 담는다', async () => {
+    test('성공하면 200과 로그인 세션, 월드 목록을 성공 봉투에 담는다', async () => {
+        worlds.set({ worldId: 1, name: '하나', host: '10.0.0.1', port: 7777, congestion: 'CROWDED' });
+
         const res = await request(app).post('/api/auth/login').send({ loginId: 'Player01', password: 'pass1234' });
 
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ ok: true, data: { ticket: expect.any(String) } });
-        expect(tickets.accountIdOf(res.body.data.ticket)).toBe(accounts.get('player01')!.accountId);
+        expect(res.body).toEqual({
+            ok: true,
+            data: { loginSession: expect.any(String), worlds: [{ worldId: 1, name: '하나', congestion: 'CROWDED' }] },
+        });
+        expect(await loginSessions.findAccountId(res.body.data.loginSession)).toBe(accounts.get('player01')!.accountId);
     });
+
 
     test('없는 로그인 ID와 틀린 비밀번호는 같은 401과 INVALID_CREDENTIALS다', async () => {
         const unknownId = await request(app).post('/api/auth/login').send({ loginId: 'nobody', password: 'pass1234' });
@@ -115,7 +136,7 @@ describe('POST /api/auth/login', () => {
             ok: false,
             error: { code: 'ACCOUNT_BANNED', message: expect.any(String), bannedUntil: bannedUntil.toISOString() },
         });
-        expect(tickets.count()).toBe(0);
+        expect(loginSessions.count()).toBe(0);
     });
 
     test('형식이 틀리면 400과 VALIDATION_FAILED다', async () => {
@@ -132,8 +153,9 @@ describe('POST /api/auth/login', () => {
         expect(res.body.error.code).toBe('VALIDATION_FAILED');
     });
 
-    test('티켓 저장소가 실패하면 500과 INTERNAL_ERROR이고, 에러 원문은 응답에 싣지 않는다', async () => {
-        const failing: TicketRepository = { save: () => Promise.reject(new Error('Redis 접속 끊김')) };
+    test('로그인 세션 저장소가 실패하면 500과 INTERNAL_ERROR이고, 에러 원문은 응답에 싣지 않는다', async () => {
+        const redisDown = () => Promise.reject(new Error('Redis 접속 끊김'));
+        const failing: LoginSessionRepository = { save: redisDown, findAccountId: redisDown };
         vi.spyOn(console, 'error').mockImplementation(() => {});
 
         const res = await request(appWith(accounts, failing)).post('/api/auth/login').send({ loginId: 'player01', password: 'pass1234' });
@@ -177,13 +199,13 @@ describe('본문 형식 검사', () => {
         expect(accounts.count()).toBe(0);
     });
 
-    test.each(MALFORMED_BODIES)('로그인: %s이면 400과 VALIDATION_FAILED이고 티켓을 발급하지 않는다', async (_case, body) => {
-        const tickets = new MemoryTicketRepository();
+    test.each(MALFORMED_BODIES)('로그인: %s이면 400과 VALIDATION_FAILED이고 로그인 세션을 만들지 않는다', async (_case, body) => {
+        const loginSessions = new MemoryLoginSessionRepository();
 
-        const res = await request(appWith(undefined, tickets)).post('/api/auth/login').set('Content-Type', 'application/json').send(JSON.stringify(body));
+        const res = await request(appWith(undefined, loginSessions)).post('/api/auth/login').set('Content-Type', 'application/json').send(JSON.stringify(body));
 
         expect(res.status).toBe(400);
         expect(res.body.error.code).toBe('VALIDATION_FAILED');
-        expect(tickets.count()).toBe(0);
+        expect(loginSessions.count()).toBe(0);
     });
 });

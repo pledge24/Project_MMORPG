@@ -45,24 +45,12 @@ bool Handle_C_CONNECT_LOBBY(PacketSessionRef& session, Protocol::C_CONNECT_LOBBY
     JobRef job = make_shared<Job>(
         [gameSession, authTicket = pkt.auth_ticket()]()
         {
-            // 인증 티켓은 한 번만 쓴다. 같은 티켓의 로비 접속이 다른 DB 큐에서 동시에 와도
-            // 키를 지운 쪽 하나만 통과한다. 키 형식은 인증 서버와의 계약이다.
-            const string ticketKey = "authTicket:" + authTicket;
-            RedisRef redis = GRedisManager->GetRedis();
-            auto val = redis->get(ticketKey);
-            if (val.has_value() == false || redis->del(ticketKey) == 0)
-            {
-                GLogger->Warning("인증 티켓이 없거나 이미 쓰였다");
-                RejectLobbyConnect(gameSession, Protocol::LOBBY_RESULT_INVALID_AUTH_TICKET, "인증 티켓 없음");
-                return;
-            }
-
-            // 티켓은 이미 지웠다. 값을 읽지 못하면 다시 쓸 수 없으므로 응답 없이 끝내지 말고 끊는다.
-            optional<int64> accountId = AuthTicket::ParseAccountId(*val);
+            // 이 서버의 월드에 발급한 티켓만 받는다. 티켓을 소비하지 못하면 응답 없이 끝내지 말고 결과를 알린 뒤 끊는다.
+            RedisAuthTicketStore ticketStore;
+            optional<int64> accountId = AuthTicket::Consume(ticketStore, GWorldId, authTicket);
             if (accountId.has_value() == false)
             {
-                GLogger->Warning("인증 티켓 값의 형식이 틀렸다");
-                RejectLobbyConnect(gameSession, Protocol::LOBBY_RESULT_INVALID_AUTH_TICKET, "인증 티켓 값 형식 오류");
+                RejectLobbyConnect(gameSession, Protocol::LOBBY_RESULT_INVALID_AUTH_TICKET, "인증 티켓 소비 실패");
                 return;
             }
 

@@ -86,6 +86,9 @@ private:
     UFUNCTION()
     void OnGameStartButtonClicked();
 
+    UFUNCTION()
+    void OnWorldSelectButtonClicked();
+
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> CreateButton;
 
@@ -95,7 +98,7 @@ private:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> GameStartButton;
 
-    /** 월드 선택 화면으로 돌아가는 버튼. 월드 선택 화면이 생기기 전까지는 꺼 둔다. */
+    /** 게임 서버와의 연결을 닫고, 다시 로그인하지 않고 월드 선택 화면으로 돌아가는 버튼. */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> WorldSelectButton;
 

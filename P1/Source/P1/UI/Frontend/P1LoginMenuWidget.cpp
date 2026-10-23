@@ -6,6 +6,7 @@
 #include "UI/Frontend/P1CharacterDeleteWidget.h"
 #include "UI/Frontend/P1CharacterSelectWidget.h"
 #include "UI/Frontend/P1LoginWidget.h"
+#include "UI/Frontend/P1WorldSelectWidget.h"
 
 void UP1LoginMenuWidget::NativeOnInitialized()
 {
@@ -22,9 +23,8 @@ void UP1LoginMenuWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // 로그인 화면에서 시작.
-    CharacterDeleteScreen->SetVisibility(ESlateVisibility::Collapsed);
-    ScreenSwitcher->SetActiveWidget(LoginScreen);
+    // 로그인 화면에서 시작. 로그인 맵은 로그인 단계에서만 다시 열린다.
+    SetActiveScreen(LoginScreen);
 
     // 응답 구독. 떼는 것은 NativeDestruct가 한다.
     UGameInstance* GameInstance = GetGameInstance();
@@ -36,7 +36,10 @@ void UP1LoginMenuWidget::NativeConstruct()
     }
 
     if (UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr)
-        EntryFlow->OnLoginNotice.AddUObject(this, &UP1LoginMenuWidget::ShowLoginNotice);
+    {
+        EntryFlow->OnPhaseChanged.AddUObject(this, &UP1LoginMenuWidget::ShowScreenForPhase);
+        EntryFlow->OnNotice.AddUObject(this, &UP1LoginMenuWidget::ShowNotice);
+    }
 }
 
 void UP1LoginMenuWidget::NativeDestruct()
@@ -54,18 +57,33 @@ void UP1LoginMenuWidget::NativeDestruct()
     Super::NativeDestruct();
 }
 
+void UP1LoginMenuWidget::ShowScreenForPhase(EP1EntryPhase Phase)
+{
+    switch (Phase)
+    {
+    case EP1EntryPhase::Login:
+        SetActiveScreen(LoginScreen);
+        break;
+    case EP1EntryPhase::WorldSelect:
+        SetActiveScreen(WorldSelectScreen);
+        WorldSelectScreen->Open();
+        break;
+    default:
+        break;
+    }
+}
+
 void UP1LoginMenuWidget::ShowCharacterSelect()
 {
     // 슬롯은 캐릭터 선택 화면이 로비의 목록 변경 알림을 받아 직접 다시 그린다.
-    // 삭제의 성공과 실패, 취소 모두 이리로 오므로 삭제 확인 창도 여기서 닫는다.
-    CharacterDeleteScreen->SetVisibility(ESlateVisibility::Collapsed);
-    ScreenSwitcher->SetActiveWidget(CharacterSelectScreen);
+    // 삭제의 성공과 실패, 취소 모두 이리로 오므로 삭제 확인 창도 여기서 닫힌다.
+    SetActiveScreen(CharacterSelectScreen);
 }
 
 void UP1LoginMenuWidget::ShowCharacterCreate()
 {
     CharacterCreateScreen->Reset();
-    ScreenSwitcher->SetActiveWidget(CharacterCreateScreen);
+    SetActiveScreen(CharacterCreateScreen);
 }
 
 void UP1LoginMenuWidget::ShowCharacterDelete(const FP1LobbyCharacter& Character)
@@ -75,11 +93,22 @@ void UP1LoginMenuWidget::ShowCharacterDelete(const FP1LobbyCharacter& Character)
     CharacterDeleteScreen->SetVisibility(ESlateVisibility::Visible);
 }
 
-void UP1LoginMenuWidget::ShowLoginNotice(const FString& Notice)
+void UP1LoginMenuWidget::SetActiveScreen(UWidget* Screen)
 {
+    if (Screen != WorldSelectScreen)
+        WorldSelectScreen->Close();
+
     CharacterDeleteScreen->SetVisibility(ESlateVisibility::Collapsed);
-    ScreenSwitcher->SetActiveWidget(LoginScreen);
-    LoginScreen->ShowNotice(Notice);
+    ScreenSwitcher->SetActiveWidget(Screen);
+}
+
+void UP1LoginMenuWidget::ShowNotice(const FString& Notice)
+{
+    // 단계를 바꾸며 알릴 때는 단계 알림이 먼저 와서 그 단계의 화면이 이미 보인다.
+    if (ScreenSwitcher->GetActiveWidget() == WorldSelectScreen)
+        WorldSelectScreen->ShowNotice(Notice);
+    else
+        LoginScreen->ShowNotice(Notice);
 }
 
 void UP1LoginMenuWidget::HandleDeleteCharacterFailed(const FText& Message)

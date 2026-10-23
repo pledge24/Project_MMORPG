@@ -46,6 +46,10 @@ TEST(ServerConfigTest, UsesLocalDefaultsWithoutEnv)
     EXPECT_EQ(config.workerThreadCount, 5);
     EXPECT_EQ(config.dbThreadCount, 5);
     EXPECT_EQ(config.dbConnectionCount, 5) << "DB 스레드마다 하나";
+    EXPECT_EQ(config.worldId, 1);
+    EXPECT_FALSE(config.worldName.empty());
+    EXPECT_EQ(config.worldHost, "127.0.0.1");
+    EXPECT_EQ(config.worldCapacity, 100);
     EXPECT_FALSE(config.Validate().has_value());
 }
 
@@ -59,8 +63,16 @@ TEST(ServerConfigTest, EnvOverridesEachValue)
         {"P1_GAME_SERVER_MAX_SESSIONS", "100"},
         {"P1_GAME_SERVER_WORKER_THREADS", "3"},
         {"P1_GAME_DB_THREADS", "2"},
-        {"P1_GAME_DB_CONNECTIONS", "4"}}));
+        {"P1_GAME_DB_CONNECTIONS", "4"},
+        {"P1_WORLD_ID", "7"},
+        {"P1_WORLD_NAME", "테스트 월드"},
+        {"P1_WORLD_HOST", "10.0.0.5"},
+        {"P1_WORLD_CAPACITY", "300"}}));
 
+    EXPECT_EQ(config.worldId, 7);
+    EXPECT_EQ(config.worldName, "테스트 월드");
+    EXPECT_EQ(config.worldHost, "10.0.0.5");
+    EXPECT_EQ(config.worldCapacity, 300);
     EXPECT_EQ(config.dbConnectionString, L"Driver={ODBC Driver 17 for SQL Server};Database=GameDB_Test;");
     EXPECT_EQ(config.redisUri, "tcp://127.0.0.1:6380");
     EXPECT_EQ(config.port, 7778);
@@ -186,5 +198,37 @@ TEST(ServerConfigTest, InvalidPortFallsBackToDefault)
 
         const Config config = Config::Load(FakeEnv({{"P1_GAME_SERVER_PORT", invalidPort}}));
         EXPECT_EQ(config.port, 7777);
+    }
+}
+
+// 월드 번호는 틀린 값을 기본값(1)으로 바꾸지 않고 거절한다. 다른 월드의 번호로 뜨면 그 월드의 항목을 덮어쓰고 그 월드의 인증 티켓을 받는다.
+TEST(ServerConfigTest, InvalidWorldIdIsRejected)
+{
+    for (const char* worldId : { "0", "-1", "abc", "1x" })
+    {
+        SCOPED_TRACE(worldId);
+
+        const Config config = Config::Load(FakeEnv({{"P1_WORLD_ID", worldId}}));
+        ExpectRejectedFor(config, "P1_WORLD_ID");
+    }
+}
+
+// 클라이언트는 월드 선택이 돌려준 주소를 IPv4로만 읽는다.
+TEST(ServerConfigTest, NonIpv4WorldHostIsRejected)
+{
+    const Config config = Config::Load(FakeEnv({{"P1_WORLD_HOST", "localhost"}}));
+
+    ExpectRejectedFor(config, "P1_WORLD_HOST");
+}
+
+// 정원은 혼잡도를 나누는 분모다. 0 이하면 나눌 수 없으므로 기본값으로 뜬다.
+TEST(ServerConfigTest, InvalidWorldCapacityFallsBackToDefault)
+{
+    for (const char* capacity : { "0", "-5", "abc" })
+    {
+        SCOPED_TRACE(capacity);
+
+        const Config config = Config::Load(FakeEnv({{"P1_WORLD_CAPACITY", capacity}}));
+        EXPECT_EQ(config.worldCapacity, 100);
     }
 }

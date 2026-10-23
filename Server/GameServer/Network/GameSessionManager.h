@@ -25,6 +25,8 @@ public:
     GameSessionRef RegisterUser(int64 userId, GameSessionRef session);
     /** [LOCK] 이 세션의 계정 등록을 지운다. 새 로비 접속에 밀려난 세션이면 아무것도 하지 않는다. */
     void UnregisterUser(GameSessionRef session);
+    /** [LOCK] 로비에 접속해 계정에 묶인 세션의 수. 월드의 혼잡도를 정하는 데 쓴다. */
+    int32 GetAccountCount();
 
 private:
     /** 락을 잡은 상태에서만 부른다. */

@@ -79,6 +79,9 @@
     <ClCompile Include="Network\AuthTicket.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\WorldListing.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="Core\pch.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -263,6 +266,9 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\AuthTicket.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\WorldListing.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">

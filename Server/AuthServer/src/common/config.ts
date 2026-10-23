@@ -21,7 +21,7 @@ export interface Config {
         pool: { max: number; min: number; idleTimeoutMillis: number };
     };
     redis: { host: string; port: number };
-    /** 인증 티켓의 유효 시간(초). 로그인 응답부터 게임 서버 접속까지의 시간이다. */
+    /** 인증 티켓의 유효 시간(초). 월드 선택 응답부터 게임 서버의 로비 접속까지의 시간이다. */
     ticketTtlSeconds: number;
 }
 
