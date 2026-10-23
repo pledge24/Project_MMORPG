@@ -21,7 +21,7 @@ public:
 
     /** 어느 스레드에서 불러도 된다. 등록되지 않은 번호면 nullptr. */
     RoomRef FindRoom(int32 roomId) const;
-    /** 등록된 룸 전부. 서버 종료 절차가 룸 큐를 비울 때 쓴다. */
+    /** 등록된 룸 전부. 어느 스레드에서 불러도 된다. 서버 종료 절차와 모든 룸에 보내는 채팅 중계가 쓴다. */
     vector<RoomRef> GetAllRooms() const;
 
 private:

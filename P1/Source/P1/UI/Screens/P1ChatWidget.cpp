@@ -85,12 +85,6 @@ void UP1ChatWidget::RefreshLines()
     }
 }
 
-UP1ChatSubsystem* UP1ChatWidget::GetChat() const
-{
-    const UGameInstance* GameInstance = GetGameInstance();
-    return GameInstance ? GameInstance->GetSubsystem<UP1ChatSubsystem>() : nullptr;
-}
-
 void UP1ChatWidget::ShowInput()
 {
     InputText->SetText(FText::GetEmpty());
@@ -165,4 +159,10 @@ void UP1ChatWidget::HandleInputCommitted(const FText& Text, ETextCommit::Type Co
 void UP1ChatWidget::ShowInputLength(int32 Length)
 {
     InputLengthText->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), Length, P1ChatLimits::MAX_MESSAGE_LENGTH)));
+}
+
+UP1ChatSubsystem* UP1ChatWidget::GetChat() const
+{
+    const UGameInstance* GameInstance = GetGameInstance();
+    return GameInstance ? GameInstance->GetSubsystem<UP1ChatSubsystem>() : nullptr;
 }

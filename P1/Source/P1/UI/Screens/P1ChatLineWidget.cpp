@@ -1,8 +1,6 @@
 #include "UI/Screens/P1ChatLineWidget.h"
 #include "Components/RichTextBlock.h"
 
-const TCHAR* const UP1ChatLineWidget::UNKNOWN_NAME = TEXT("알 수 없음");
-
 namespace
 {
     /** 글자 스타일 표(DT_ChatTextStyles)의 행 이름. 태그가 없는 글자는 Default 행으로 그린다. */
@@ -45,3 +43,5 @@ FString UP1ChatLineWidget::MakeMarkup(const FP1ChatLine& Line)
 
     return FString::Printf(TEXT("%s: %s"), *NameMarkup, *EscapeMarkup(Line.Message));
 }
+
+const TCHAR* const UP1ChatLineWidget::UNKNOWN_NAME = TEXT("알 수 없음");

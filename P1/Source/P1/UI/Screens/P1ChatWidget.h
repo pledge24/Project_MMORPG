@@ -35,9 +35,6 @@ private:
     /** 채팅 서브시스템의 최근 줄 중 화면에 보일 수만큼을 줄 위젯에 채운다. */
     void RefreshLines();
 
-    /** 이 위젯을 만든 게임 인스턴스의 채팅 서브시스템. 없으면 nullptr. */
-    UP1ChatSubsystem* GetChat() const;
-
     /** 화면에 보이는 줄의 수. 그보다 오래된 줄은 채팅 서브시스템에만 남는다. */
     UPROPERTY(EditDefaultsOnly, Category = "Chat", meta = (ClampMin = "1"))
     int32 VisibleLineCount = 8;
@@ -94,4 +91,9 @@ private:
     /** 입력 중에 보이는 보내는 키 안내. */
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UWidget> SendHint;
+
+    //~ 공통
+private:
+    /** 이 위젯을 만든 게임 인스턴스의 채팅 서브시스템. 없으면 nullptr. */
+    UP1ChatSubsystem* GetChat() const;
 };

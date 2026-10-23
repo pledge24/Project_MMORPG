@@ -37,6 +37,9 @@ public:
     /** MyEntityId는 내 플레이어의 엔티티 번호다. 내 줄인지 가르는 데 쓴다. */
     void HandleChatMessage(const Protocol::S_CHAT_MESSAGE& ChatMessagePkt, uint64 MyEntityId);
 
+private:
+    void AddLine(FP1ChatLine Line);
+
     //~ Log
 public:
     /** 오래된 줄이 앞에 있다. */
@@ -52,8 +55,6 @@ public:
     FOnChatLogChanged OnChatLogChanged;
 
 private:
-    void AddLine(FP1ChatLine Line);
-
     /** 보관하는 줄의 수. 화면에 보이는 줄은 채팅창이 정한다. */
     static constexpr int32 LOG_CAPACITY = 50;
 

@@ -33,6 +33,12 @@ void UP1ChatSubsystem::HandleChatMessage(const Protocol::S_CHAT_MESSAGE& ChatMes
     AddLine(P1ChatPackets::FromProto(ChatMessagePkt, MyEntityId));
 }
 
+void UP1ChatSubsystem::AddLine(FP1ChatLine Line)
+{
+    Log.Add(MoveTemp(Line));
+    OnChatLogChanged.Broadcast();
+}
+
 void UP1ChatSubsystem::ClearLog()
 {
     Log.Clear();
@@ -42,10 +48,4 @@ void UP1ChatSubsystem::ClearLog()
 void UP1ChatSubsystem::RemoveListener(const UObject* Listener)
 {
     OnChatLogChanged.RemoveAll(Listener);
-}
-
-void UP1ChatSubsystem::AddLine(FP1ChatLine Line)
-{
-    Log.Add(MoveTemp(Line));
-    OnChatLogChanged.Broadcast();
 }
