@@ -5,6 +5,7 @@
 #include "Containers/Ticker.h"
 #include "P1EntryFlowSubsystem.generated.h"
 
+class AP1MyPlayer;
 class UP1AuthClient;
 class UP1ConnectionSubsystem;
 class UP1LobbySubsystem;
@@ -26,6 +27,16 @@ enum class EP1EntryPhase : uint8
     MapLoad,    // 서버가 알린 맵을 여는 중이다
     Game,       // 맵을 열고 맵 로드 완료를 알렸다
 };
+
+/** 진행 표시 화면이 보여 줄 접속 진행. */
+enum class EP1EntryProgress : uint8
+{
+    None,
+    ConnectingWorld,    // 로그인한 뒤 게임 서버에 연결해 로비 접속 응답을 기다린다
+    LoadingMap,         // 서버가 알린 맵을 열고, 그 맵에 내 플레이어가 스폰되기를 기다린다
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryProgressChanged, EP1EntryProgress /*Progress*/);
 
 /**
  * 접속 흐름.
@@ -57,6 +68,28 @@ public:
 private:
     EP1EntryPhase Phase = EP1EntryPhase::Login;
 
+    //~ Progress
+public:
+    EP1EntryProgress GetProgress() const;
+
+    /** 진행 표시가 바뀌면 알린다. 같은 진행으로는 알리지 않는다. */
+    FOnEntryProgressChanged OnProgressChanged;
+
+private:
+    /** 진행이 바뀌었으면 바뀐 진행을 알린다. 단계나 연결 중 표시를 바꾼 뒤에 바꾸기 전의 진행을 넘겨 부른다. */
+    void NotifyProgressIfChanged(EP1EntryProgress Before);
+
+    void SetConnectingWorld(bool bConnecting);
+
+    /** 로그인에 성공해 게임 서버에 연결을 시작했고, 아직 로비에 들어가지도 로그인으로 돌아가지도 않았다. */
+    bool bConnectingWorld = false;
+
+    /**
+     * 맵 로드 단계에 들어간 뒤 아직 내 플레이어가 스폰되지 않았다. 맵을 다 열어도 서버가 플레이어를 룸에 넣기 전까지는
+     * 빈 맵이 보이므로 그동안도 맵을 불러오는 중으로 본다.
+     */
+    bool bAwaitingMyPlayer = false;
+
     //~ Lobby Connection
 private:
     void HandleLoginSucceeded(const FString& AuthTicket);
@@ -82,6 +115,8 @@ private:
     void HandlePostLoadMap(UWorld* LoadedWorld);
 
     void SendMapLoadComplete();
+
+    void HandleMyPlayerSpawned(AP1MyPlayer* MyPlayer);
 
     FDelegateHandle PostLoadMapHandle;
 
@@ -110,7 +145,10 @@ private:
 
     //~ Level Transition
 private:
-    /** 다음 틱에 LevelName 레벨을 연다. 패킷 핸들러 호출 안에서 레벨을 바꾸지 않으려는 것이다. */
+    /**
+     * 다음 프레임에 LevelName 레벨을 연다. 패킷 핸들러 호출 안에서 레벨을 바꾸지 않고, 레벨을 여는 동안 화면이 멈추기 전에
+     * 로딩 화면이 한 번 그려지게 하려는 것이다.
+     */
     void OpenLevelNextTick(FName LevelName);
 
     FTSTicker::FDelegateHandle OpenLevelTickerHandle;

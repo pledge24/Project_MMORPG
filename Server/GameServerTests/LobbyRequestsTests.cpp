@@ -77,6 +77,22 @@ TEST_F(LobbyRequestsTest, ConnectLobbyListsCharactersWithSlotCountOfAccountRow)
         << "목록은 지금 생성할 수 없는 직업의 캐릭터도 보여 준다";
 }
 
+TEST_F(LobbyRequestsTest, ConnectLobbyCarriesCreatableClassesOfLobbyTable)
+{
+    LobbyTables tables;
+    tables.defaultCharacterSlotCount = SLOT_COUNT;
+    tables.creatableClasses = { Protocol::CLASS_TYPE_MAGE, Protocol::CLASS_TYPE_WARRIOR };
+    LobbyData::Install(std::move(tables));
+    conn.QueueResult({ { int64(SLOT_COUNT) } });
+    conn.QueueResult({});
+
+    const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ConnectLobby(conn, ACCOUNT_ID);
+
+    ASSERT_EQ(listPkt.creatable_classes_size(), 2) << "클라이언트는 직업 목록을 따로 갖지 않고 이 값만 보여 준다";
+    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CLASS_TYPE_MAGE) << "로비 표의 순서를 그대로 싣는다";
+    EXPECT_EQ(listPkt.creatable_classes(1), Protocol::CLASS_TYPE_WARRIOR);
+}
+
 TEST_F(LobbyRequestsTest, CreatedCharacterComesBackAsLobbyCharacter)
 {
     conn.QueueResult({ { int64(0) } });

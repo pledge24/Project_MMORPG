@@ -66,6 +66,8 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR S_CHARACTER_LIST::S_CHARACTER_LIST(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.characters_)*/{}
+  , /*decltype(_impl_.creatable_classes_)*/{}
+  , /*decltype(_impl_._creatable_classes_cached_byte_size_)*/{0}
   , /*decltype(_impl_.character_slot_count_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_CHARACTER_LISTDefaultTypeInternal {
@@ -170,6 +172,7 @@ const uint32_t TableStruct_Lobby_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pr
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CHARACTER_LIST, _impl_.characters_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CHARACTER_LIST, _impl_.character_slot_count_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_CHARACTER_LIST, _impl_.creatable_classes_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_CREATE_CHARACTER, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -207,10 +210,10 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 10, -1, -1, sizeof(::Protocol::C_CONNECT_LOBBY)},
   { 17, -1, -1, sizeof(::Protocol::S_CONNECT_LOBBY)},
   { 24, -1, -1, sizeof(::Protocol::S_CHARACTER_LIST)},
-  { 32, -1, -1, sizeof(::Protocol::C_CREATE_CHARACTER)},
-  { 40, -1, -1, sizeof(::Protocol::S_CREATE_CHARACTER)},
-  { 48, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
-  { 55, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
+  { 33, -1, -1, sizeof(::Protocol::C_CREATE_CHARACTER)},
+  { 41, -1, -1, sizeof(::Protocol::S_CREATE_CHARACTER)},
+  { 49, -1, -1, sizeof(::Protocol::C_DELETE_CHARACTER)},
+  { 56, -1, -1, sizeof(::Protocol::S_DELETE_CHARACTER)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -231,31 +234,33 @@ const char descriptor_table_protodef_Lobby_2eproto[] PROTOBUF_SECTION_VARIABLE(p
   "tocol.CharacterClass\022\r\n\005level\030\004 \001(\005\"&\n\017C"
   "_CONNECT_LOBBY\022\023\n\013auth_ticket\030\001 \001(\t\"8\n\017S"
   "_CONNECT_LOBBY\022%\n\006result\030\001 \001(\0162\025.Protoco"
-  "l.LobbyResult\"^\n\020S_CHARACTER_LIST\022,\n\ncha"
-  "racters\030\001 \003(\0132\030.Protocol.LobbyCharacter\022"
-  "\034\n\024character_slot_count\030\002 \001(\005\"U\n\022C_CREAT"
-  "E_CHARACTER\022\014\n\004name\030\001 \001(\t\0221\n\017character_c"
-  "lass\030\002 \001(\0162\030.Protocol.CharacterClass\"h\n\022"
-  "S_CREATE_CHARACTER\022%\n\006result\030\001 \001(\0162\025.Pro"
-  "tocol.LobbyResult\022+\n\tcharacter\030\002 \001(\0132\030.P"
-  "rotocol.LobbyCharacter\"*\n\022C_DELETE_CHARA"
-  "CTER\022\024\n\014character_id\030\001 \001(\003\"Q\n\022S_DELETE_C"
-  "HARACTER\022%\n\006result\030\001 \001(\0162\025.Protocol.Lobb"
-  "yResult\022\024\n\014character_id\030\002 \001(\003*\224\002\n\013LobbyR"
-  "esult\022\030\n\024LOBBY_RESULT_SUCCESS\020\000\022$\n LOBBY"
-  "_RESULT_INVALID_AUTH_TICKET\020\001\022\035\n\031LOBBY_R"
-  "ESULT_INVALID_NAME\020\002\022\033\n\027LOBBY_RESULT_NAM"
-  "E_TAKEN\020\003\022\"\n\036LOBBY_RESULT_UNAVAILABLE_CL"
-  "ASS\020\004\022\036\n\032LOBBY_RESULT_NO_EMPTY_SLOT\020\005\022$\n"
-  " LOBBY_RESULT_CHARACTER_NOT_FOUND\020\006\022\037\n\033L"
-  "OBBY_RESULT_INTERNAL_ERROR\020\007b\006proto3"
+  "l.LobbyResult\"\223\001\n\020S_CHARACTER_LIST\022,\n\nch"
+  "aracters\030\001 \003(\0132\030.Protocol.LobbyCharacter"
+  "\022\034\n\024character_slot_count\030\002 \001(\005\0223\n\021creata"
+  "ble_classes\030\003 \003(\0162\030.Protocol.CharacterCl"
+  "ass\"U\n\022C_CREATE_CHARACTER\022\014\n\004name\030\001 \001(\t\022"
+  "1\n\017character_class\030\002 \001(\0162\030.Protocol.Char"
+  "acterClass\"h\n\022S_CREATE_CHARACTER\022%\n\006resu"
+  "lt\030\001 \001(\0162\025.Protocol.LobbyResult\022+\n\tchara"
+  "cter\030\002 \001(\0132\030.Protocol.LobbyCharacter\"*\n\022"
+  "C_DELETE_CHARACTER\022\024\n\014character_id\030\001 \001(\003"
+  "\"Q\n\022S_DELETE_CHARACTER\022%\n\006result\030\001 \001(\0162\025"
+  ".Protocol.LobbyResult\022\024\n\014character_id\030\002 "
+  "\001(\003*\224\002\n\013LobbyResult\022\030\n\024LOBBY_RESULT_SUCC"
+  "ESS\020\000\022$\n LOBBY_RESULT_INVALID_AUTH_TICKE"
+  "T\020\001\022\035\n\031LOBBY_RESULT_INVALID_NAME\020\002\022\033\n\027LO"
+  "BBY_RESULT_NAME_TAKEN\020\003\022\"\n\036LOBBY_RESULT_"
+  "UNAVAILABLE_CLASS\020\004\022\036\n\032LOBBY_RESULT_NO_E"
+  "MPTY_SLOT\020\005\022$\n LOBBY_RESULT_CHARACTER_NO"
+  "T_FOUND\020\006\022\037\n\033LOBBY_RESULT_INTERNAL_ERROR"
+  "\020\007b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Lobby_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Lobby_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Lobby_2eproto = {
-    false, false, 956, descriptor_table_protodef_Lobby_2eproto,
+    false, false, 1010, descriptor_table_protodef_Lobby_2eproto,
     "Lobby.proto",
     &descriptor_table_Lobby_2eproto_once, descriptor_table_Lobby_2eproto_deps, 1, 8,
     schemas, file_default_instances, TableStruct_Lobby_2eproto::offsets,
@@ -981,6 +986,8 @@ S_CHARACTER_LIST::S_CHARACTER_LIST(const S_CHARACTER_LIST& from)
   S_CHARACTER_LIST* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.characters_){from._impl_.characters_}
+    , decltype(_impl_.creatable_classes_){from._impl_.creatable_classes_}
+    , /*decltype(_impl_._creatable_classes_cached_byte_size_)*/{0}
     , decltype(_impl_.character_slot_count_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
@@ -995,6 +1002,8 @@ inline void S_CHARACTER_LIST::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.characters_){arena}
+    , decltype(_impl_.creatable_classes_){arena}
+    , /*decltype(_impl_._creatable_classes_cached_byte_size_)*/{0}
     , decltype(_impl_.character_slot_count_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
@@ -1012,6 +1021,7 @@ S_CHARACTER_LIST::~S_CHARACTER_LIST() {
 inline void S_CHARACTER_LIST::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   _impl_.characters_.~RepeatedPtrField();
+  _impl_.creatable_classes_.~RepeatedField();
 }
 
 void S_CHARACTER_LIST::SetCachedSize(int size) const {
@@ -1025,6 +1035,7 @@ void S_CHARACTER_LIST::Clear() {
   (void) cached_has_bits;
 
   _impl_.characters_.Clear();
+  _impl_.creatable_classes_.Clear();
   _impl_.character_slot_count_ = 0;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -1053,6 +1064,18 @@ const char* S_CHARACTER_LIST::_InternalParse(const char* ptr, ::_pbi::ParseConte
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
           _impl_.character_slot_count_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
           CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // repeated .Protocol.CharacterClass creatable_classes = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedEnumParser(_internal_mutable_creatable_classes(), ptr, ctx);
+          CHK_(ptr);
+        } else if (static_cast<uint8_t>(tag) == 24) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_add_creatable_classes(static_cast<::Protocol::CharacterClass>(val));
         } else
           goto handle_unusual;
         continue;
@@ -1099,6 +1122,15 @@ uint8_t* S_CHARACTER_LIST::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_character_slot_count(), target);
   }
 
+  // repeated .Protocol.CharacterClass creatable_classes = 3;
+  {
+    int byte_size = _impl_._creatable_classes_cached_byte_size_.load(std::memory_order_relaxed);
+    if (byte_size > 0) {
+      target = stream->WriteEnumPacked(
+          3, _impl_.creatable_classes_, byte_size, target);
+    }
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1120,6 +1152,23 @@ size_t S_CHARACTER_LIST::ByteSizeLong() const {
   for (const auto& msg : this->_impl_.characters_) {
     total_size +=
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
+  }
+
+  // repeated .Protocol.CharacterClass creatable_classes = 3;
+  {
+    size_t data_size = 0;
+    unsigned int count = static_cast<unsigned int>(this->_internal_creatable_classes_size());for (unsigned int i = 0; i < count; i++) {
+      data_size += ::_pbi::WireFormatLite::EnumSize(
+        this->_internal_creatable_classes(static_cast<int>(i)));
+    }
+    if (data_size > 0) {
+      total_size += 1 +
+        ::_pbi::WireFormatLite::Int32Size(static_cast<int32_t>(data_size));
+    }
+    int cached_size = ::_pbi::ToCachedSize(data_size);
+    _impl_._creatable_classes_cached_byte_size_.store(cached_size,
+                                    std::memory_order_relaxed);
+    total_size += data_size;
   }
 
   // int32 character_slot_count = 2;
@@ -1146,6 +1195,7 @@ void S_CHARACTER_LIST::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const
   (void) cached_has_bits;
 
   _this->_impl_.characters_.MergeFrom(from._impl_.characters_);
+  _this->_impl_.creatable_classes_.MergeFrom(from._impl_.creatable_classes_);
   if (from._internal_character_slot_count() != 0) {
     _this->_internal_set_character_slot_count(from._internal_character_slot_count());
   }
@@ -1167,6 +1217,7 @@ void S_CHARACTER_LIST::InternalSwap(S_CHARACTER_LIST* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   _impl_.characters_.InternalSwap(&other->_impl_.characters_);
+  _impl_.creatable_classes_.InternalSwap(&other->_impl_.creatable_classes_);
   swap(_impl_.character_slot_count_, other->_impl_.character_slot_count_);
 }
 

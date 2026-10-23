@@ -11,11 +11,12 @@ class UP1InventoryWidget;
 class UP1ShopWidget;
 class UP1WarningTextWidget;
 class UP1DeathWidget;
+class UP1EntryProgressWidget;
 
 /**
  * 인게임 UI 위젯 클래스 설정.
  *
- * 인게임 화면과 창에 띄울 위젯 클래스를 프로젝트 설정 「P1 UI」에서 고르게 한다.
+ * 인게임 화면과 창, 레벨을 건너 덮는 로딩 화면에 띄울 위젯 클래스를 프로젝트 설정 「P1 UI」에서 고르게 한다.
  * 기본값은 Config/DefaultGame.ini에 저장된다.
  */
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "P1 UI"))
@@ -51,4 +52,8 @@ public:
     /** 상점 창 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Windows")
     TSoftClassPtr<UP1ShopWidget> ShopWidgetClass;
+
+    /** 월드에 접속하거나 맵을 불러오는 동안 화면을 덮는 접속 진행 표시 위젯 클래스. */
+    UPROPERTY(Config, EditAnywhere, Category = "Loading")
+    TSoftClassPtr<UP1EntryProgressWidget> LoadingScreenWidgetClass;
 };

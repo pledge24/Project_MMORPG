@@ -726,6 +726,7 @@ class S_CHARACTER_LIST final :
 
   enum : int {
     kCharactersFieldNumber = 1,
+    kCreatableClassesFieldNumber = 3,
     kCharacterSlotCountFieldNumber = 2,
   };
   // repeated .Protocol.LobbyCharacter characters = 1;
@@ -746,6 +747,23 @@ class S_CHARACTER_LIST final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::LobbyCharacter >&
       characters() const;
 
+  // repeated .Protocol.CharacterClass creatable_classes = 3;
+  int creatable_classes_size() const;
+  private:
+  int _internal_creatable_classes_size() const;
+  public:
+  void clear_creatable_classes();
+  private:
+  ::Protocol::CharacterClass _internal_creatable_classes(int index) const;
+  void _internal_add_creatable_classes(::Protocol::CharacterClass value);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>* _internal_mutable_creatable_classes();
+  public:
+  ::Protocol::CharacterClass creatable_classes(int index) const;
+  void set_creatable_classes(int index, ::Protocol::CharacterClass value);
+  void add_creatable_classes(::Protocol::CharacterClass value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>& creatable_classes() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>* mutable_creatable_classes();
+
   // int32 character_slot_count = 2;
   void clear_character_slot_count();
   int32_t character_slot_count() const;
@@ -764,6 +782,8 @@ class S_CHARACTER_LIST final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::LobbyCharacter > characters_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedField<int> creatable_classes_;
+    mutable std::atomic<int> _creatable_classes_cached_byte_size_;
     int32_t character_slot_count_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -1670,6 +1690,49 @@ inline void S_CHARACTER_LIST::_internal_set_character_slot_count(int32_t value) 
 inline void S_CHARACTER_LIST::set_character_slot_count(int32_t value) {
   _internal_set_character_slot_count(value);
   // @@protoc_insertion_point(field_set:Protocol.S_CHARACTER_LIST.character_slot_count)
+}
+
+// repeated .Protocol.CharacterClass creatable_classes = 3;
+inline int S_CHARACTER_LIST::_internal_creatable_classes_size() const {
+  return _impl_.creatable_classes_.size();
+}
+inline int S_CHARACTER_LIST::creatable_classes_size() const {
+  return _internal_creatable_classes_size();
+}
+inline void S_CHARACTER_LIST::clear_creatable_classes() {
+  _impl_.creatable_classes_.Clear();
+}
+inline ::Protocol::CharacterClass S_CHARACTER_LIST::_internal_creatable_classes(int index) const {
+  return static_cast< ::Protocol::CharacterClass >(_impl_.creatable_classes_.Get(index));
+}
+inline ::Protocol::CharacterClass S_CHARACTER_LIST::creatable_classes(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHARACTER_LIST.creatable_classes)
+  return _internal_creatable_classes(index);
+}
+inline void S_CHARACTER_LIST::set_creatable_classes(int index, ::Protocol::CharacterClass value) {
+  _impl_.creatable_classes_.Set(index, value);
+  // @@protoc_insertion_point(field_set:Protocol.S_CHARACTER_LIST.creatable_classes)
+}
+inline void S_CHARACTER_LIST::_internal_add_creatable_classes(::Protocol::CharacterClass value) {
+  _impl_.creatable_classes_.Add(value);
+}
+inline void S_CHARACTER_LIST::add_creatable_classes(::Protocol::CharacterClass value) {
+  _internal_add_creatable_classes(value);
+  // @@protoc_insertion_point(field_add:Protocol.S_CHARACTER_LIST.creatable_classes)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>&
+S_CHARACTER_LIST::creatable_classes() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_CHARACTER_LIST.creatable_classes)
+  return _impl_.creatable_classes_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>*
+S_CHARACTER_LIST::_internal_mutable_creatable_classes() {
+  return &_impl_.creatable_classes_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>*
+S_CHARACTER_LIST::mutable_creatable_classes() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_CHARACTER_LIST.creatable_classes)
+  return _internal_mutable_creatable_classes();
 }
 
 // -------------------------------------------------------------------
