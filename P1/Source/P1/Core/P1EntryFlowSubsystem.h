@@ -17,26 +17,28 @@ namespace Protocol
     enum DisconnectReason : int;
 }
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnLoginNotice, const FString& /*Notice*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryNotice, const FString& /*Notice*/);
 
 /** 클라이언트가 로그인부터 게임까지 지나는 단계. */
 enum class EP1EntryPhase : uint8
 {
-    Login,      // 인증 서버 로그인. 게임 서버와 연결이 없거나 로비 접속 응답을 기다린다
-    Lobby,      // 캐릭터 목록을 받았다
-    MapLoad,    // 서버가 알린 맵을 여는 중이다
-    Game,       // 맵을 열고 맵 로드 완료를 알렸다
+    Login,          // 인증 서버 로그인. 로그인 세션이 없다
+    WorldSelect,    // 로그인 세션으로 월드를 고른다. 고른 월드의 게임 서버에 연결해 로비 접속 응답을 기다리는 동안도 이 단계다
+    Lobby,          // 캐릭터 목록을 받았다
+    MapLoad,        // 서버가 알린 맵을 여는 중이다
+    Game,           // 맵을 열고 맵 로드 완료를 알렸다
 };
 
 /** 진행 표시 화면이 보여 줄 접속 진행. */
 enum class EP1EntryProgress : uint8
 {
     None,
-    ConnectingWorld,    // 로그인한 뒤 게임 서버에 연결해 로비 접속 응답을 기다린다
+    ConnectingWorld,    // 월드를 고른 뒤 인증 티켓을 받아 그 월드의 게임 서버에 연결하고 로비 접속 응답을 기다린다
     LoadingMap,         // 서버가 알린 맵을 열고, 그 맵에 내 플레이어가 스폰되기를 기다린다
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryProgressChanged, EP1EntryProgress /*Progress*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnEntryPhaseChanged, EP1EntryPhase /*Phase*/);
 
 /**
  * 접속 흐름.
@@ -62,8 +64,11 @@ public:
     /** From에서 To로 넘어갈 수 있으면 true. 같은 단계로 넘어가는 것은 전이가 아니다. */
     static bool CanTransition(EP1EntryPhase From, EP1EntryPhase To);
 
-    /** 허용된 전이면 단계를 바꾸고 true. 아니면 경고를 남기고 단계를 그대로 둔 채 false. */
+    /** 허용된 전이면 단계를 바꾸고 OnPhaseChanged로 알린 뒤 true. 아니면 경고를 남기고 단계를 그대로 둔 채 false. */
     bool TryEnterPhase(EP1EntryPhase NewPhase);
+
+    /** 단계가 바뀌었다. 로그인 메뉴가 단계에 맞는 화면을 보인다. */
+    FOnEntryPhaseChanged OnPhaseChanged;
 
 private:
     EP1EntryPhase Phase = EP1EntryPhase::Login;
@@ -81,7 +86,7 @@ private:
 
     void SetConnectingWorld(bool bConnecting);
 
-    /** 로그인에 성공해 게임 서버에 연결을 시작했고, 아직 로비에 들어가지도 로그인으로 돌아가지도 않았다. */
+    /** 월드를 골라 그 월드에 접속하기 시작했고, 아직 로비에 들어가지도 실패를 알리지도 않았다. */
     bool bConnectingWorld = false;
 
     /**
@@ -90,14 +95,29 @@ private:
      */
     bool bAwaitingMyPlayer = false;
 
+    //~ World Selection
+public:
+    /** 월드 선택 단계에서 WorldId 월드에 접속한다. 이미 접속하는 중이면 아무것도 하지 않는다. */
+    void SelectWorld(int32 WorldId);
+
+    /** 월드 선택 단계에서 로그인 세션을 버리고 로그인 단계로 돌아간다. 접속하는 중이면 아무것도 하지 않는다. */
+    void Logout();
+
+    /** 로비 단계에서 게임 서버와의 연결을 닫고, 다시 로그인하지 않고 월드 선택 단계로 돌아간다. */
+    void ReturnToWorldSelect();
+
+private:
+    void HandleLoginSucceeded();
+    void HandleWorldSelected(const FString& Host, int32 Port, const FString& AuthTicket);
+    void HandleLoginSessionExpired(const FString& Message);
+
     //~ Lobby Connection
 private:
-    void HandleLoginSucceeded(const FString& AuthTicket);
     void HandleConnected();
     void HandleConnectFailed();
     void HandleLobbyEntered();
 
-    /** 서버가 로비 접속을 거절하면 부른다. 로그인 단계로 돌아가 Message를 보여 준다. */
+    /** 서버가 로비 접속을 거절하면 부른다. 월드 선택 화면에 Message를 보여 준다. */
     void HandleLobbyConnectFailed(const FText& Message);
 
     /** 연결되면 로비 접속에 낼 인증 티켓. 내자마자 비운다. */
@@ -120,7 +140,7 @@ private:
 
     FDelegateHandle PostLoadMapHandle;
 
-    //~ Login Notice
+    //~ Notice
 public:
     /** 로그인 화면에 보여 줄 문구를 꺼내고 비운다. 로그인 맵을 다시 열어 돌아온 것이 아니면 빈 문자열. */
     FString ConsumeLoginNotice();
@@ -131,14 +151,26 @@ public:
      */
     void RemoveListener(const UObject* Listener);
 
-    /** 로그인 단계에서 게임 서버 연결이 실패하거나 끊기면, 열려 있는 로그인 화면에 보여 줄 문구를 알린다. */
-    FOnLoginNotice OnLoginNotice;
+    /**
+     * 로그인 맵에 있는 동안 생긴 사유를 지금 단계의 화면(로그인 또는 월드 선택)에 보여 줄 문구로 알린다.
+     * 단계를 바꾸며 알릴 때는 OnPhaseChanged 뒤에 온다.
+     */
+    FOnEntryNotice OnNotice;
 
 private:
     void HandleConnectionLost(Protocol::DisconnectReason Reason);
 
-    /** 로그인 단계로 돌아가 Notice를 보여 준다. 로그인 맵이 아니면 로그인 맵을 연다. */
+    /**
+     * 로그인 세션을 버리고 로그인 단계로 돌아가 Notice를 보여 준다. 게임 중이면 로그인 맵을 연다.
+     * Notice가 비었으면 문구를 알리지 않는다.
+     */
     void ReturnToLogin(const FString& Notice);
+
+    /** 월드 접속을 그만두고 월드 선택 화면에 Notice를 보여 준다. 로그인 세션은 남으므로 다시 월드를 고를 수 있다. */
+    void ShowWorldSelectNotice(const FString& Notice);
+
+    /** 로그인 맵이 열려 있는 단계면 true. */
+    static bool IsInLoginMap(EP1EntryPhase InPhase);
 
     /** 로그인 맵이 열린 뒤 로그인 화면에 보여 줄 문구. 레벨 전환을 건너 들고 간다. */
     FString PendingLoginNotice;

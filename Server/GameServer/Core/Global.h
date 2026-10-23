@@ -16,5 +16,8 @@ extern JobQueueRef GSessionJobQueue;
 /** 로그인한 세션을 계정별로 기록한다. */
 extern class GameSessionManager* GSessionManager;
 
+/** 이 서버가 맡은 월드의 번호. main이 설정을 읽은 뒤에 정하므로 그 전에는 0이다. */
+extern int32 GWorldId;
+
 /** 테스트는 주입한 조율자로 바꿔 끼우고 끝나면 되돌린다. */
 extern class ProgressCoordinator* GProgressCoordinator;

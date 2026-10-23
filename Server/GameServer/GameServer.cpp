@@ -8,6 +8,8 @@
 #include "DB/DAOCommon.h"
 #include "DB/DBWorker.h"
 #include "Core/ServerContext.h"
+#include "Network/GameSessionManager.h"
+#include "Network/WorldListing.h"
 #include "Game/Room/Room.h"
 #include "Utils/SnowflakeIdGenerator.h"
 
@@ -67,6 +69,35 @@ namespace
 
             // 다른 스레드가 떠넘긴 잡 큐 처리.
             ThreadManager::DoGlobalQueueWork();
+        }
+    }
+
+    // stop이 설 때까지 이 서버의 월드 항목을 주기마다 다시 쓴다. 쓰지 못한 회차는 남기고 다음 회차에 다시 쓴다.
+    // 항목의 TTL이 주기의 세 배이므로, 한두 번 놓쳐도 월드가 목록에서 빠지지 않는다.
+    void DoWorldListingJob(const Config& config, const atomic<bool>& stop)
+    {
+        while (stop.load() == false)
+        {
+            WorldEntry entry;
+            entry.worldId = config.worldId;
+            entry.name = config.worldName;
+            entry.host = config.worldHost;
+            entry.port = config.port;
+            entry.congestion = WorldListing::ComputeCongestion(GSessionManager->GetAccountCount(), config.worldCapacity);
+
+            try
+            {
+                WorldListing::Publish(*GRedisManager->GetRedis(), entry);
+            }
+            catch (const exception& error)
+            {
+                GLogger->Warning("월드 항목을 갱신하지 못했다: {}", error.what());
+            }
+
+            // 종료 신호를 놓치지 않도록 잘게 나눠 잔다. 한 번에 자면 종료 절차가 이 스레드를 최대 한 주기 기다린다.
+            const uint64 nextRefresh = ::GetTickCount64() + WorldListing::REFRESH_INTERVAL_MS;
+            while (stop.load() == false && ::GetTickCount64() < nextRefresh)
+                this_thread::sleep_for(100ms);
         }
     }
 
@@ -167,6 +198,8 @@ int main(void)
         return 1;
     }
 
+    GWorldId = config.worldId;
+
     // 노드 번호는 Validate가 확인했다.
     const int32 serverNodeId = config.serverNodeId.value();
     context.CreateIdGenerator(serverNodeId);
@@ -208,6 +241,17 @@ int main(void)
             });
     }
 
+    // 월드 목록에 이 월드를 넣는다. 항목은 접속을 받기 시작한 뒤 갱신 스레드가 쓴다.
+    try
+    {
+        WorldListing::Register(*GRedisManager->GetRedis(), config.worldId);
+    }
+    catch (const exception& error)
+    {
+        GLogger->Error("월드 {}를 월드 목록에 넣지 못해 서버를 종료합니다: {}", config.worldId, error.what());
+        return 1;
+    }
+
 	// 접속 받기 시작.
 	ServerServiceRef service = make_shared<ServerService>(
 		NetAddress(config.bindAddress, config.port),
@@ -226,6 +270,13 @@ int main(void)
 				DoWorkerJob(service, s_workersStopped);
 			});
 	}
+
+    // 월드 항목 갱신 시작. 접속을 받기 시작한 뒤라 목록에 보인 월드는 곧바로 접속할 수 있다.
+    GThreadManager->Launch([&config]()
+        {
+            DoWorldListingJob(config, s_workersStopped);
+        });
+    GLogger->Info("월드 {}({})를 {}:{}로 알린다", config.worldId, config.worldName, config.worldHost, config.port);
 
     // 메인 스레드도 워커로 일하다가 종료 신호를 받으면 빠져나와 종료 절차를 밟는다.
     DoWorkerJob(service, s_shutdownRequested);

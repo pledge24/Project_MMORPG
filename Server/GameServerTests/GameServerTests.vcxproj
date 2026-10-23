@@ -190,8 +190,10 @@
     <ClCompile Include="GameEntryTests.cpp" />
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
     <ClCompile Include="AuthTicketTests.cpp" />
+    <ClCompile Include="WorldListingTests.cpp" />
     <ClCompile Include="SessionDisconnectTests.cpp" />
     <ClCompile Include="..\GameServer\Network\AuthTicket.cpp" />
+    <ClCompile Include="..\GameServer\Network\WorldListing.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />

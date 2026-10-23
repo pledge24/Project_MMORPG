@@ -3,6 +3,7 @@
 #include "Components/PanelWidget.h"
 #include "Components/TextBlock.h"
 #include "TimerManager.h"
+#include "Core/P1EntryFlowSubsystem.h"
 #include "Lobby/P1LobbySubsystem.h"
 #include "UI/Frontend/P1CharacterSlotWidget.h"
 #include "Utils/LogCategory.h"
@@ -14,9 +15,7 @@ void UP1CharacterSelectWidget::NativeOnInitialized()
     CreateButton->OnClicked.AddDynamic(this, &UP1CharacterSelectWidget::OnCreateButtonClicked);
     DeleteButton->OnClicked.AddDynamic(this, &UP1CharacterSelectWidget::OnDeleteButtonClicked);
     GameStartButton->OnClicked.AddDynamic(this, &UP1CharacterSelectWidget::OnGameStartButtonClicked);
-
-    // TODO: 월드 선택 화면이 생기면 누를 때 게임 서버와의 연결을 닫고 월드 선택으로 돌아가게 잇는다
-    WorldSelectButton->SetIsEnabled(false);
+    WorldSelectButton->OnClicked.AddDynamic(this, &UP1CharacterSelectWidget::OnWorldSelectButtonClicked);
 
     // 패널에 놓인 순서대로 슬롯 번호를 매긴다.
     for (UWidget* Child : Slots->GetAllChildren())
@@ -161,6 +160,14 @@ void UP1CharacterSelectWidget::OnGameStartButtonClicked()
     }
 
     ShowDescription(FText::FromString(TEXT("캐릭터를 선택하지 않았습니다.")));
+}
+
+void UP1CharacterSelectWidget::OnWorldSelectButtonClicked()
+{
+    // 로그인 세션이 남아 있으므로 다시 로그인하지 않는다. 화면은 접속 흐름의 단계 알림을 받은 로그인 메뉴가 바꾼다.
+    UGameInstance* GameInstance = GetGameInstance();
+    if (UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr)
+        EntryFlow->ReturnToWorldSelect();
 }
 
 void UP1CharacterSelectWidget::ShowDescription(const FText& Message)
