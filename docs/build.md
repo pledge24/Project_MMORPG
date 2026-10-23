@@ -56,12 +56,17 @@ git config core.hooksPath .githooks
 | `P1_GAME_DB_THREADS` | `5` |
 | `P1_GAME_DB_CONNECTIONS` | DB 스레드 수 |
 | `P1_SERVER_NODE_ID` | Debug 빌드는 `0`. Release 빌드는 기본값이 없다 |
+| `P1_WORLD_ID` | `1`. 이 서버가 맡은 월드의 번호다 |
+| `P1_WORLD_NAME` | `로컬 월드`. 월드 목록에 보이는 이름이다 |
+| `P1_WORLD_HOST` | `127.0.0.1`. 클라이언트가 이 월드에 접속할 IPv4 주소다. 포트는 `P1_GAME_SERVER_PORT`다 |
+| `P1_WORLD_CAPACITY` | `100`. 혼잡도를 나누는 정원이고, 접속을 막지 않는다 |
 
-숫자가 아니거나 범위 밖인 값은 경고를 남기고 기본값을 쓴다. 바인드 주소가 IPv4 주소가 아니거나, 연결 수가 DB 스레드 수보다
-작으면 서버가 사유를 로그에 남기고 종료 코드 1로 멈춘다.
+숫자가 아니거나 범위 밖인 값은 경고를 남기고 기본값을 쓴다. 바인드 주소나 월드 주소가 IPv4 주소가 아니거나, 연결 수가 DB 스레드 수보다
+작으면 서버가 사유를 로그에 남기고 종료 코드 1로 멈춘다. 환경 변수는 UTF-8로 바꿔 읽으므로 월드 이름에 한국어를 쓸 수 있다.
 
-**노드 번호만은 틀린 값을 기본값으로 바꾸지 않는다.** `P1_SERVER_NODE_ID`가 0~1023의 정수가 아니거나, Release 빌드에서
-값이 없으면 서버가 종료 코드 1로 멈춘다. 서버마다 겹치지 않는 번호를 준다.
+**노드 번호와 월드 번호는 틀린 값을 기본값으로 바꾸지 않는다.** `P1_SERVER_NODE_ID`가 0~1023의 정수가 아니거나, Release 빌드에서
+값이 없으면 서버가 종료 코드 1로 멈춘다. `P1_WORLD_ID`가 1 이상의 정수가 아니어도 멈춘다. 서버마다 겹치지 않는 번호를 준다.
+— 두 서버가 같은 월드 번호로 뜨면 한 월드 항목을 서로 덮어쓰고, 그 월드의 인증 티켓을 둘 중 아무 서버나 소비한다.
 — 노드 번호는 캐릭터 ID와 아이템 UID에 들어간다. 두 서버가 같은 번호로 뜨면 두 서버가 발급한 ID가 겹친다. 근거는
 `docs/adr/0016-issue-ids-with-snowflake.md`에 있다.
 — 연결 풀은 DB 스레드마다 하나가 있어야 한다. 모자라면 동시에 돈 DB 잡 하나가 연결을 빌리지 못하고 실패한다. 부팅 때
@@ -152,7 +157,7 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 
 **클라이언트 include는 경로를 한정한다.** `P1/Source/P1/P1.Build.cs`의 `PrivateIncludePaths`에는 모듈 루트 `P1/`과 생성물 폴더 `P1/Network` 둘만 있다. 헤더는 파일명이 아니라 모듈 루트 기준 상대 경로로 include한다(`#include "Game/Entities/P1Creature.h"`). **새 도메인 폴더를 만들어도 여기에 등록하지 않는다.**
 
-생성물 폴더만 예외로 남겼다. protobuf 생성 코드가 서로를 `#include "Enum.pb.h"` 형태로 부르는데 생성물은 손으로 고치지 않으므로, 이 폴더를 빼면 생성기를 다시 돌릴 때마다 빌드가 깨진다. 이 결정의 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있고, 얻는 것과 얻지 못하는 것은 `docs/ARCHITECTURE.md`에 불변식으로 적혀 있다.
+생성물 폴더만 예외로 남겼다. protobuf 생성 코드가 서로를 `#include "Common.pb.h"` 형태로 부르는데 생성물은 손으로 고치지 않으므로, 이 폴더를 빼면 생성기를 다시 돌릴 때마다 빌드가 깨진다. 이 결정의 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있고, 얻는 것과 얻지 못하는 것은 `docs/ARCHITECTURE.md`에 불변식으로 적혀 있다.
 
 **서버 include도 경로를 한정한다.** `Server/`의 네 `.vcxproj`는 `IncludePath`에 프로젝트 루트와 솔루션 폴더(`$(SolutionDir)`), 생성물 폴더 `Protocol`, 서드파티 경로만 둔다. GameServerTests는 프로젝트 루트 대신 `$(SolutionDir)GameServer`와 `$(SolutionDir)GameServer\Protocol`을 쓴다. ServerCore 헤더는 `#include "ServerCore/Network/Session.h"`처럼 솔루션 폴더 기준으로 부른다. **새 폴더를 만들어도 `IncludePath`에 등록하지 않는다.**
 

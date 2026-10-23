@@ -19,8 +19,8 @@ public:
 	{
 		GLogger->Info("서버에 접속했다");
 
-        // 테스트용: 접속 직후 로그인 패킷을 한 번 보낸다.
-		Protocol::C_LOGIN pkt;
+        // 테스트용: 접속 직후 로비 접속 패킷을 한 번 보낸다. 인증 티켓이 비어 있어 서버가 거절하고 끊는다.
+		Protocol::C_CONNECT_LOBBY pkt;
 		auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(pkt);
 		Send(sendBuffer);
 	}
@@ -70,7 +70,7 @@ int main()
 
     // 테스트용: 채팅 패킷을 1초 간격으로 계속 브로드캐스트한다.
 	Protocol::C_CHAT chatPkt;
-	chatPkt.set_msg("Hello World !");
+	chatPkt.set_message("Hello World !");
 	auto sendBuffer = ClientPacketHandler::MakeSerializedPacket(chatPkt);
 
 	while (true)

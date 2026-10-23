@@ -3,6 +3,9 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/ItemRequests.h"
+#include "Network/ChatRequests.h"
+#include "Network/ProgressCoordinator.h"
+#include "Lobby/LobbyReturn.h"
 
 namespace
 {
@@ -41,110 +44,21 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return false;
 }
 
-bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
-{
-	return false;
-}
-
-// TODO: 클라이언트 맵 로드 완료 처리. Protocol.proto에 선언만 되어 있어
-// 생성기가 만드는 핸들러 선언을 채우기 위한 스텁이다.
 bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_COMPLETE& pkt)
 {
-	return false;
+    // 맵 로드를 기다리는 플레이어의 소속 룸은 목적지 룸이다. 첫 입장도 게임 입장이 목적지 룸을 소속 룸으로 정해 둔다.
+    return DispatchToPlayerRoom(session, [](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleMapLoadComplete(player);
+        });
 }
 
-bool Handle_C_LEAVE_GAME(PacketSessionRef& session, Protocol::C_LEAVE_GAME& pkt)
+bool Handle_C_USE_PORTAL(PacketSessionRef& session, Protocol::C_USE_PORTAL& pkt)
 {
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    // 룸 퇴장과 저장은 GameSession::OnDisconnected가 한다. 비정상 종료와 같은 경로를 탄다.
-    gameSession->Disconnect("Exit Game");
-
-    return true;
-}
-
-bool Handle_C_ENTER_MAP(PacketSessionRef& session, Protocol::C_ENTER_MAP& pkt)
-{
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->GetPlayer();
-    int32 roomId = pkt.room_id();
-
-    if (player == nullptr)
-    {
-        // 플레이어가 없으면 잡을 올릴 룸 큐도 없다. 룸 소유 상태를 건드리지 않는
-        // 실패 응답만 이 자리에서 돌려준다.
-        Protocol::S_ENTER_MAP enterMapPkt;
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            enterMapPkt.set_success(false);
-            enterMapPkt.set_map_id(pkt.map_id());
-            enterMapPkt.set_room_id(roomId);
-
-            SendPacket(session, enterMapPkt);
-        }
-
-        return false;
-    }
-
-    // 플레이어 상태를 소유한 룸의 큐로 넘긴다. 아직 어떤 룸에도 속하지 않았다면 요청한 룸의 큐로 넘긴다.
-    // 그 경우 판정은 불러온 룸과 같은지만 보므로, 다른 룸을 요청하면 그 룸의 큐에서 거절된다.
-    RoomRef room = player->GetRoom();
-    if (room == nullptr)
-        room = GRoomManager->FindRoom(roomId);
-
-    if (room == nullptr)
-    {
-        // 넘길 큐가 없어도 실패 응답은 보낸다. 보내지 않으면 클라이언트가 응답을 기다리며 멈춘다.
-        GLogger->Warning("C_ENTER_MAP을 넘길 Room을 찾지 못함. roomId: {}", roomId);
-
-        Protocol::S_ENTER_MAP enterMapPkt;
-        {
-            enterMapPkt.set_success(false);
-            enterMapPkt.set_map_id(pkt.map_id());
-            enterMapPkt.set_room_id(roomId);
-
-            SendPacket(session, enterMapPkt);
-        }
-
-        return false;
-    }
-
-    // 여기서 기록한 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다.
-    room->DoAsync(&Room::C_HandleEnterMap, pkt, player);
-
-    return true;
-}
-
-bool Handle_C_ENTER_ROOM(PacketSessionRef& session, Protocol::C_ENTER_ROOM& pkt)
-{
-    auto gameSession = static_pointer_cast<GameSession>(session);
-
-    PlayerRef player = gameSession->GetPlayer();
-    if (player == nullptr)
-        return false;
-
-    RoomRef curRoom = player->GetRoom();
-    if (curRoom == nullptr)
-    {
-        // 최초 입장. 클라이언트가 무엇을 보냈든 서버가 INITIAL로 판정하고 입장할 룸의 큐로 넘긴다.
-        pkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
-
-        int32 roomId = pkt.has_room_id() ? pkt.room_id() : player->GetEnteringRoomId();
-        RoomRef enterRoom = GRoomManager->FindRoom(roomId);
-        if (enterRoom == nullptr)
-        {
-            GLogger->Warning("최초 입장할 Room을 찾지 못함. roomId: {}", roomId);
-            return false;
-        }
-
-        enterRoom->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
-
-        return true;
-    }
-
-    curRoom->DoAsync(&Room::C_HandleEnterRoom, pkt, player);
-
-    return true;
+            room->C_HandleUsePortal(pkt, player);
+        });
 }
 
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt)
@@ -159,12 +73,7 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            // 같은 룸의 모든 플레이어에게 그대로 중계한다(본인 포함).
-            Protocol::S_CHAT chatPkt;
-            chatPkt.set_entity_id(player->GetEntityId());
-            chatPkt.set_msg(pkt.msg());
-
-            room->Broadcast(ServerPacketHandler::MakeSerializedPacket(chatPkt));
+            ChatRequests::HandleChat(*room, player, pkt);
         });
 }
 
@@ -241,3 +150,25 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
         });
 }
 
+bool Handle_C_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::C_RETURN_TO_LOBBY& pkt)
+{
+    GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+
+    // 계정 번호는 여기서 한 번 읽어 잡에 넘긴다. 잡이 세션에서 다시 읽으면 그사이 바뀐 계정으로 일한다.
+    const int64 userId = gameSession->GetUserId();
+    PlayerRef player = gameSession->GetPlayer();
+    if (player == nullptr)
+        return false;
+
+    // 받는 순간 단계를 바꾼다. 저장이 끝날 때까지 게임 요청도 로비 요청도 받지 않고, 두 번째 복귀도 여기서 막는다.
+    if (gameSession->BeginLobbyReturn() == false)
+        return false;
+
+    // 접속 종료와 같은 절차로 룸에서 퇴장하고 저장한다. 목록은 저장이 끝난 뒤 로비 복귀 창구가 보낸다.
+    GProgressCoordinator->OnReturnToLobby(userId, player, [gameSession, userId]()
+        {
+            LobbyReturn::Accept(gameSession, userId);
+        });
+
+    return true;
+}

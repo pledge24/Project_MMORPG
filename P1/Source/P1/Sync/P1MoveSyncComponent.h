@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Containers/Queue.h"
-#include "Protocol.pb.h"
+#include "Entity.pb.h"
 #include "Sync/P1MoveSyncMode.h"
 #include "P1MoveSyncComponent.generated.h"
 
@@ -37,13 +37,14 @@ public:
     /** 붙인 직후, FinishSpawning 전에 부른다. */
     void SetMode(EP1MoveSyncMode InMode) { Mode = InMode; }
 
-    /** 스폰할 때 서버가 보낸 첫 위치로 화면 위치와 서버 위치를 맞춘다. 액터는 옮기지 않는다. */
-    void InitPos(const Protocol::PosInfo& Info);
+    /** 스폰할 때 서버가 보낸 엔티티 번호와 첫 위치로 화면 위치와 서버 위치를 맞춘다. 액터는 옮기지 않는다. */
+    void InitPos(uint64 InEntityId, const Protocol::PosInfo& Info);
 
-    uint64 GetEntityId() const { return ClientPos.entity_id(); }
+    uint64 GetEntityId() const { return EntityId; }
 
 private:
     EP1MoveSyncMode Mode = EP1MoveSyncMode::RemotePlayer;
+    uint64 EntityId = 0;
 
     //~ Server Position
 public:
@@ -62,7 +63,7 @@ public:
 private:
     void SetMoveState(Protocol::MoveState State);
 
-    /** 지금 화면에 보이는 위치. 이동 상태와 엔티티 id도 여기에 둔다. */
+    /** 지금 화면에 보이는 위치. 이동 상태도 여기에 둔다. */
     Protocol::PosInfo ClientPos;
 
     /** 서버에서 받은 위치. 원격 크리처에만 쓴다. */

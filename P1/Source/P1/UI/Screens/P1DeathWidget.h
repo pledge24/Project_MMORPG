@@ -19,7 +19,9 @@ class P1_API UP1DeathWidget : public UP1UserWidget
 
     //~ Begin UUserWidget Interface
 protected:
+    virtual void NativeOnInitialized() override;
     virtual void NativeConstruct() override;
+    virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
     //~ End UUserWidget Interface
 
     //~ Death Event

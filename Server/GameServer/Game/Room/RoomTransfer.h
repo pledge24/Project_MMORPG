@@ -4,8 +4,7 @@
 struct RoomEnterData
 {
     int32 nextRoomId = -1;
-    Protocol::EnterType enterType = Protocol::ENTER_TYPE_NONE;
-    /** 비어 있으면 클라이언트에 입장 위치를 보내지 않는다. */
+    /** 비어 있으면 룸 중심에 둔다. */
     optional<Protocol::PosInfo> enterPos;
 };
 
@@ -14,7 +13,7 @@ struct TownRespawn
 {
     int32 mapId = 0;
     int32 roomId = 0;
-    /** 리스폰 지점. 엔티티 id는 비어 있고 이동 상태는 Idle이다. */
+    /** 리스폰 지점. 이동 상태는 Idle이다. */
     Protocol::PosInfo pos;
 };
 
@@ -33,9 +32,6 @@ struct RoomAssignment
  */
 namespace RoomTransfer
 {
-    /** C_ENTER_ROOM을 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유. */
-    optional<string> ValidateEnterRequest(const Protocol::C_ENTER_ROOM& pkt, int32 enteringRoomId);
-
     /**
      * 플레이어가 포털 반경 안에 있는지 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유.
      * 포털이 현재 룸에 있는지는 호출자가 확인한다.
@@ -43,19 +39,10 @@ namespace RoomTransfer
     optional<string> ValidatePortalUse(const PortalTemplate& portal, float portalRadius, const Protocol::PosInfo& playerPos);
 
     /** 포털의 목적지로 포털 이동의 입장 정보를 만든다. 포털이 현재 룸에 있는지는 호출자가 확인한다. */
-    RoomEnterData MakePortalEnterData(const PortalTemplate& portal, int64 entityId);
+    RoomEnterData MakePortalEnterData(const PortalTemplate& portal);
 
-    /**
-     * 아직 어느 룸에도 들어가지 않은 플레이어의 C_ENTER_MAP을 판정한다.
-     * 통과하면 nullopt, 거절하면 로그에 남길 사유.
-     */
-    optional<string> ValidateFirstEnterMap(const Protocol::C_ENTER_MAP& pkt, int32 enteringRoomId);
-
-    /** 룸에 있는 플레이어의 C_ENTER_MAP을 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유. */
-    optional<string> ValidateCrossMapEnter(const Protocol::C_ENTER_MAP& pkt, const MapTemplate& currentRoom, const Protocol::PosInfo& playerPos);
-
-    /** 리스폰 요청을 판정한다. 통과하면 nullopt, 거절하면 S_RESPAWN에 실을 사유. */
-    optional<string> ValidateRespawn(bool isDead, Protocol::RespawnType respawnType);
+    /** 리스폰 요청을 판정한다. 통과하면 nullopt, 거절하면 S_RESPAWN에 실을 결과. */
+    optional<Protocol::EntryResult> ValidateRespawn(bool isDead, Protocol::RespawnType respawnType);
 
     /**
      * 마을과 그 리스폰 지점을 맵 표에서 찾는다. 어느 스레드에서 불러도 된다.

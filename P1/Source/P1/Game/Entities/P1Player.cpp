@@ -54,13 +54,13 @@ void AP1Player::PostInitializeComponents()
         ArmorMesh->SetLeaderPoseComponent(GetMesh());
     }
 
-    // 서버가 보내는 부위 번호(GearType)와 메시 컴포넌트를 잇는다.
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_HELMET, HelmetMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_CHEST, ChestMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_LEGS, LegsMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_ARMS, ArmsMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_BOOTS, BootsMesh);
-    GearAppearance->RegisterGearMesh(Protocol::GEAR_TYPE_WEAPON, WeaponMesh);
+    // 서버가 보내는 부위 번호(GearPart)와 메시 컴포넌트를 잇는다.
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_HELMET, HelmetMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_CHEST, ChestMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_LEGS, LegsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_ARMS, ArmsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_BOOTS, BootsMesh);
+    GearAppearance->RegisterGearMesh(Protocol::GEAR_PART_WEAPON, WeaponMesh);
 }
 
 void AP1Player::BeginPlay()
@@ -78,7 +78,7 @@ void AP1Player::Initialize(const Protocol::EntityInfo& EntityInfo)
     Super::Initialize(EntityInfo);
 
     // 입장할 때 이미 장착 중인 장비를 입힌다. 다른 플레이어도 이 요약으로 외형을 받는다.
-    for (const auto& Pair : EntityInfo.player_info().equipped_gear_summary())
+    for (const auto& Pair : EntityInfo.player_info().gear_appearance())
     {
         ApplyGear(Pair.first, Pair.second);
     }

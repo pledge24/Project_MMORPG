@@ -33,11 +33,11 @@ TEST(PacketDispatch, RejectsInputShorterThanHeader)
 
     // 실제 핸들러는 세션이 없으면 결과를 구별할 수 없으므로, 테이블 칸을 호출 기록으로 바꿔 끼운다.
     int32 dispatchedCount = 0;
-    GPacketHandler[PKT_C_PING] = [&dispatchedCount](PacketSessionRef&, BYTE*, int32) { dispatchedCount++; return true; };
+    GPacketHandler[PKT_C_MOVE] = [&dispatchedCount](PacketSessionRef&, BYTE*, int32) { dispatchedCount++; return true; };
 
     PacketHeader header;
     header.size = 0;
-    header.id = PKT_C_PING;
+    header.id = PKT_C_MOVE;
 
     PacketSessionRef session = nullptr;
     for (int32 len = 0; len < static_cast<int32>(sizeof(PacketHeader)); len++)

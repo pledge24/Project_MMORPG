@@ -6,21 +6,24 @@
 #include "Utils/Types.h"
 #include "P1LobbySubsystem.generated.h"
 
-// 화면이 이 헤더를 부르므로 protobuf 헤더를 끌고 오지 않는다.
+// 화면이 이 헤더를 부르므로 protobuf 헤더를 끌고 오지 않는다. 생성된 정의와 바탕 타입이 같아야 한다.
 namespace Protocol
 {
-    class S_LOGIN;
+    enum LobbyResult : int;
+    class S_CONNECT_LOBBY;
+    class S_CHARACTER_LIST;
     class S_CREATE_CHARACTER;
     class S_DELETE_CHARACTER;
 }
 
 DECLARE_MULTICAST_DELEGATE(FOnLobbyEntered);
 DECLARE_MULTICAST_DELEGATE(FOnLobbyCharactersChanged);
-DECLARE_MULTICAST_DELEGATE(FOnLobbyCharacterListFailed);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnCreateCharacterFailed, const FString& /*Cause*/);
-DECLARE_MULTICAST_DELEGATE(FOnDeleteCharacterFailed);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnLobbyConnectFailed, const FText& /*Message*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCreateCharacterFailed, const FText& /*Message*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDeleteCharacterFailed, const FText& /*Message*/);
 DECLARE_MULTICAST_DELEGATE(FOnEnterGameFailed);
 DECLARE_MULTICAST_DELEGATE(FOnEnterGameSucceeded);
+DECLARE_MULTICAST_DELEGATE(FOnReturnToLobbyFailed);
 
 /**
  * 게임 서버의 로비.
@@ -43,14 +46,17 @@ public:
 
     //~ Lobby Connection
 public:
-    /** 연결된 게임 서버에 인증 티켓을 내고 로비에 들어간다. 결과는 목록 응답이 알린다. */
+    /** 연결된 게임 서버에 인증 티켓을 내고 로비에 들어간다. 성공은 OnLobbyEntered로, 실패는 OnLobbyConnectFailed로 알린다. */
     void ConnectLobby(const FString& AuthTicket);
 
-    /** 캐릭터 목록 사본과 생성 요청 대기를 비운다. 게임 서버와의 연결이 끊기면 부른다. */
+    /** 캐릭터 목록 사본을 비운다. 게임 서버와의 연결이 끊기면 부른다. */
     void Reset();
 
-    /** 로비 접속에 성공해 첫 캐릭터 목록을 받으면 OnCharactersChanged보다 먼저 알린다. */
+    /** 로비 접속이나 로비 복귀 뒤에 캐릭터 목록을 받으면 OnCharactersChanged보다 먼저 알린다. */
     FOnLobbyEntered OnLobbyEntered;
+
+    /** 서버가 로비 접속을 거절했다. 서버는 이 응답 뒤에 연결을 끊는다. */
+    FOnLobbyConnectFailed OnLobbyConnectFailed;
 
     //~ Characters
 public:
@@ -59,23 +65,25 @@ public:
     /** 계정이 가질 수 있는 캐릭터 수. 캐릭터 목록을 받기 전에는 0. */
     int32 GetCharacterSlotCount() const { return CharacterSlotCount; }
 
+    /** 캐릭터 생성 화면이 보여 줄 직업. 서버가 캐릭터 목록과 함께 알려 주며, 목록을 받기 전에는 비어 있다. */
+    const TArray<EP1CharacterClass>& GetCreatableClasses() const { return CreatableClasses; }
+
     /** 목록을 받거나 생성·삭제에 성공해 사본이 바뀌면 알린다. */
     FOnLobbyCharactersChanged OnCharactersChanged;
-
-    /** 서버가 캐릭터 목록을 보내지 못했다. 사본은 그대로다. */
-    FOnLobbyCharacterListFailed OnCharacterListFailed;
 
 private:
     TArray<FP1LobbyCharacter> Characters;
 
     int32 CharacterSlotCount = 0;
 
+    TArray<EP1CharacterClass> CreatableClasses;
+
     //~ Character Requests
 public:
-    /** 이름과 직업을 검사하지 않고 보낸다. 실패하면 OnCreateCharacterFailed로 서버의 사유를 알린다. */
+    /** 이름과 직업을 검사하지 않고 보낸다. 실패하면 OnCreateCharacterFailed로 결과의 문구를 알린다. */
     void CreateCharacter(const FString& CharacterName, EP1CharacterClass CharacterClass);
 
-    /** 실패하면 OnDeleteCharacterFailed를 알린다. */
+    /** 실패하면 OnDeleteCharacterFailed로 결과의 문구를 알린다. */
     void DeleteCharacter(int64 CharacterId);
 
     /** 고른 캐릭터로 게임 입장을 요청한다. 결과는 OnEnterGameSucceeded나 OnEnterGameFailed로 알린다. */
@@ -93,24 +101,26 @@ public:
     FOnEnterGameSucceeded OnEnterGameSucceeded;
 
 private:
-    /** 응답에는 캐릭터 번호만 오므로 이름과 직업을 요청할 때 적어 둔다. */
-    struct FPendingCreate
-    {
-        FString CharacterName;
-        EP1CharacterClass CharacterClass = EP1CharacterClass::None;
-    };
-
-    /** 응답을 기다리는 생성 요청. 응답을 받으면 비운다. */
-    TOptional<FPendingCreate> PendingCreate;
-
     FPacketSender PacketSender;
+
+    //~ Lobby Result
+public:
+    /** 서버가 보낸 로비 결과 값을 화면 문구로 바꾼다. 모르는 값이면 값을 담은 일반 오류 문구. */
+    static FText GetResultText(Protocol::LobbyResult Result);
 
     //~ Lobby Packet Handlers
 public:
-    void HandleCharacterList(const Protocol::S_LOGIN& LoginPkt);
+    void HandleConnectLobby(const Protocol::S_CONNECT_LOBBY& ConnectLobbyPkt);
+    void HandleCharacterList(const Protocol::S_CHARACTER_LIST& CharacterListPkt);
     void HandleCreateCharacter(const Protocol::S_CREATE_CHARACTER& CreateCharacterPkt);
     void HandleDeleteCharacter(const Protocol::S_DELETE_CHARACTER& DeleteCharacterPkt);
 
     /** 성공했으면 내 플레이어 데이터를 먼저 채운 뒤 부른다. */
     void HandleEnterGame(bool bSuccess);
+
+    /** 성공하면 캐릭터 목록이 뒤따르므로 아무것도 하지 않는다. 실패하면 OnReturnToLobbyFailed로 알린다. */
+    void HandleReturnToLobby(bool bSuccess);
+
+    /** 서버가 로비 복귀의 캐릭터 목록을 불러오지 못했다. 서버는 이 응답 뒤에 연결을 끊는다. */
+    FOnReturnToLobbyFailed OnReturnToLobbyFailed;
 };

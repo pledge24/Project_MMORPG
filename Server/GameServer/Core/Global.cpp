@@ -8,3 +8,4 @@ SnowflakeIdGenerator* GIdGenerator = nullptr;
 JobQueueRef GSessionJobQueue = nullptr;
 GameSessionManager* GSessionManager = nullptr;
 ProgressCoordinator* GProgressCoordinator = nullptr;
+int32 GWorldId = 0;

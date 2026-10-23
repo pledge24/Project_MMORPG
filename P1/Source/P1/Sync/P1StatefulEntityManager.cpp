@@ -81,18 +81,18 @@ void UP1StatefulEntityManager::SpawnEntity(const Protocol::EntityInfo& InEntityI
         return;
     }
 
-    Protocol::EntityType EntityType = InEntityInfo.entity_type();
-    switch (EntityType)
+    // 엔티티의 종류는 실린 세부 정보의 종류다.
+    switch (InEntityInfo.details_case())
     {
-    case Protocol::EntityType::ENTITY_TYPE_MONSTER:
+    case Protocol::EntityInfo::kMonsterInfo:
         SpawnMonster(InEntityInfo, SpawnerId);
         break;
 
-    case Protocol::EntityType::ENTITY_TYPE_PLAYER:
+    case Protocol::EntityInfo::kPlayerInfo:
         SpawnPlayer(InEntityInfo, SpawnerId);
         break;
     default:
-        UE_LOG(LogP1Entity, Warning, TEXT("EntityType 누락"))
+        UE_LOG(LogP1Entity, Warning, TEXT("세부 정보가 없는 엔티티 %llu는 스폰하지 않는다"), InEntityInfo.entity_id())
         break;
 
     }
@@ -234,26 +234,26 @@ void UP1StatefulEntityManager::HandleDespawn(const Protocol::S_DESPAWN& DespawnP
 
 void UP1StatefulEntityManager::HandleMove(const Protocol::S_MOVE& MovePkt)
 {
-    for (auto& Info : MovePkt.info())
-        HandleMove(Info);
+    for (auto& Move : MovePkt.moves())
+        HandleMove(Move);
 }
 
-void UP1StatefulEntityManager::HandleMove(const Protocol::PosInfo& Info)
+void UP1StatefulEntityManager::HandleMove(const Protocol::EntityMove& Move)
 {
-    if (AP1Creature* Creature = FindEntityAs<AP1Creature>(Info.entity_id()))
+    if (AP1Creature* Creature = FindEntityAs<AP1Creature>(Move.entity_id()))
     {
         if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(Creature))
-            MoveSync->PushToMoveQueue(Info);
+            MoveSync->PushToMoveQueue(Move.pos_info());
     }
 }
 
-void UP1StatefulEntityManager::HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt)
+void UP1StatefulEntityManager::HandleAttack(const Protocol::S_ATTACK& AttackPkt)
 {
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(NormalAttackPkt.entity_id());
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(AttackPkt.entity_id());
     if (Creature == nullptr)
         return;
 
-    Creature->S_NormalAttack(NormalAttackPkt.combo(), NormalAttackPkt.yaw());
+    Creature->S_NormalAttack(AttackPkt.combo(), AttackPkt.yaw());
 }
 
 void UP1StatefulEntityManager::HandleHit(const Protocol::S_HIT& HitPkt)
@@ -263,12 +263,12 @@ void UP1StatefulEntityManager::HandleHit(const Protocol::S_HIT& HitPkt)
         return;
 
     // 피격 연출과 HP 갱신
-    Creature->S_Hit(HitPkt.damage(), HitPkt.updated_hp());
+    Creature->S_Hit(HitPkt.damage(), HitPkt.hp());
 
     if (Creature->IsMyPlayer())
     {
         if (UP1MyPlayerData* MyPlayerData = GetMyPlayerData())
-            MyPlayerData->ApplyStat(Protocol::STAT_TYPE_HP, HitPkt.updated_hp());
+            MyPlayerData->ApplyStat(Protocol::STAT_TYPE_HP, HitPkt.hp());
     }
 }
 
@@ -281,38 +281,6 @@ void UP1StatefulEntityManager::HandleDie(const Protocol::S_DIE& DiePkt)
     Creature->S_Die();
 }
 
-void UP1StatefulEntityManager::HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt)
-{
-    if (RespawnPkt.success() == false)
-    {
-        // 실패 응답은 요청한 세션에만 오므로 내 플레이어의 것이다.
-        UE_LOG(LogP1Network, Error, TEXT("서버에서 리스폰 실패: %s"), UTF8_TO_TCHAR(RespawnPkt.error_message().c_str()));
-        if (UP1MyPlayerData* MyPlayerData = GetMyPlayerData())
-            MyPlayerData->OnTownRespawnRejected.Broadcast();
-        return;
-    }
-
-    // 서버는 같은 액터가 살아나는 것으로 다룬다. 새로 스폰하지 않는다.
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(RespawnPkt.entity_id());
-    if (Creature == nullptr)
-        return;
-
-    // 위치를 먼저 옮긴 뒤 사망을 풀고 알린다. OnRespawn을 받는 쪽이 옮겨진 위치를 본다.
-    if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(Creature))
-    {
-        MoveSync->SetClientPos(RespawnPkt.pos_info());
-        MoveSync->SetServerPos(RespawnPkt.pos_info());
-    }
-
-    Creature->S_Respawn();
-
-    if (Creature->IsMyPlayer())
-    {
-        if (UP1MyPlayerData* MyPlayerData = GetMyPlayerData())
-            MyPlayerData->ApplyStats(RespawnPkt.updated_stat());
-    }
-}
-
 UP1MyPlayerData* UP1StatefulEntityManager::GetMyPlayerData() const
 {
     if (UGameInstance* GameInstance = GetWorld()->GetGameInstance())
@@ -321,51 +289,38 @@ UP1MyPlayerData* UP1StatefulEntityManager::GetMyPlayerData() const
     return nullptr;
 }
 
-void UP1StatefulEntityManager::HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt)
+void UP1StatefulEntityManager::HandleGearAppearance(const Protocol::S_GEAR_APPEARANCE& GearAppearancePkt)
 {
-    if (EquipGearPkt.success() == false)
-        return;
-
-    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
-    if (AP1Player* Player = FindEntityAs<AP1Player>(EquipGearPkt.entity_id()))
-        Player->ApplyGear(EquipGearPkt.gear_type(), EquipGearPkt.template_id());
-}
-
-void UP1StatefulEntityManager::HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt)
-{
-    if (UnequipGearPkt.success() == false)
-        return;
-
-    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템
-    if (AP1Player* Player = FindEntityAs<AP1Player>(UnequipGearPkt.entity_id()))
-        Player->ApplyGear(UnequipGearPkt.gear_type(), UnequipGearPkt.template_id());
+    // 서버가 처리 결과로 보낸 장비 부위와 그 부위의 아이템. template_id가 0이면 그 부위를 비웠다.
+    if (AP1Player* Player = FindEntityAs<AP1Player>(GearAppearancePkt.entity_id()))
+        Player->ApplyGear(GearAppearancePkt.gear_part(), GearAppearancePkt.template_id());
 }
 
 void UP1StatefulEntityManager::HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt)
 {
-    if (EnterRoomPkt.success() == false)
+    if (EnterRoomPkt.result() != Protocol::ENTRY_RESULT_SUCCESS)
         return;
 
-    // 다른 룸으로 리스폰하는 경우도 룸이 한 맵 안의 논리 분할이라 같은 맵 이동과 같은 처리다.
-    if (EnterRoomPkt.enter_type() != Protocol::ENTER_TYPE_SAME_MAP_TRANSFER
-        && EnterRoomPkt.enter_type() != Protocol::ENTER_TYPE_RESPAWN)
-        return;
-
+    // 앞 룸의 엔티티를 모두 지운다. 같은 맵 안의 포털 이동과 리스폰을 입장 유형으로 가르지 않는다.
     DespawnAllEntities();
 
-    if (EnterRoomPkt.has_enter_pos() == false)
-        return;
-
-    UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
-    if (MyPlayerData == nullptr)
-        return;
-
-    if (AP1MyPlayer* MyPlayer = FindEntityAs<AP1MyPlayer>(MyPlayerData->GetPlayerId()))
+    // 맵을 새로 열었으면 내 플레이어가 아직 없다. 내 엔티티는 스폰이 아니라 이 응답에만 온다.
+    const Protocol::EntityInfo& MyEntity = EnterRoomPkt.my_entity();
+    const TObjectPtr<AP1Player>* Found = Players.Find(MyEntity.entity_id());
+    AP1Creature* MyPlayer = Found ? Found->Get() : nullptr;
+    if (MyPlayer == nullptr)
     {
-        if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(MyPlayer))
-        {
-            MoveSync->SetClientPos(EnterRoomPkt.enter_pos());
-            MoveSync->SetServerPos(EnterRoomPkt.enter_pos());
-        }
+        SpawnEntity(MyEntity);
+        return;
     }
+
+    // 같은 맵 안에서 옮기면 내 플레이어를 남겨 두고 옮긴다. 위치를 먼저 옮긴 뒤 사망을 푼다. OnRespawn을 받는 쪽이 옮겨진 위치를 본다.
+    if (UP1MoveSyncComponent* MoveSync = UP1MoveSyncComponent::FindOn(MyPlayer))
+    {
+        MoveSync->SetClientPos(MyEntity.pos_info());
+        MoveSync->SetServerPos(MyEntity.pos_info());
+    }
+
+    if (MyPlayer->IsDead())
+        MyPlayer->S_Respawn();
 }

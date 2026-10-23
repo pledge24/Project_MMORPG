@@ -6,7 +6,7 @@ struct PlayerProgress;
  * 캐릭터를 골라 게임에 들어가는 입장 처리이자, 로비가 게임을 부르는 게임 입장 창구.
  *
  * 저장된 진행으로 플레이어를 만들어 세션에 입장시킨다. 입장에 실패하면 세션에 플레이어를 남기지 않는다.
- * 룸 입장은 맡지 않는다. 룸 입장은 클라이언트의 다음 요청이 시작한다.
+ * 룸 입장은 맡지 않는다. 클라이언트가 맵을 다 열었다고 알리면 들어갈 룸이 입장시킨다.
  */
 namespace GameEntry
 {
@@ -26,8 +26,8 @@ namespace GameEntry
     Protocol::S_ENTER_GAME Enter(DBConnection& conn, const GameSessionRef& session, int64 userId, int64 characterId);
 
     /**
-     * progress로 플레이어를 만들어 session에 등록하고 enterRoomId 룸으로 들어갈 준비를 한다.
+     * progress로 플레이어를 만들어 enterRoom의 enterPos에서 맵 로드를 기다리게 하고 session에 등록한다.
      * 검증에 실패하거나 이미 플레이어가 있으면 세션을 건드리지 않고 nullptr.
      */
-    PlayerRef SpawnPlayer(const GameSessionRef& session, int64 userId, const PlayerProgress& progress, int32 enterRoomId);
+    PlayerRef SpawnPlayer(const GameSessionRef& session, int64 userId, const PlayerProgress& progress, const RoomRef& enterRoom, const Protocol::PosInfo& enterPos);
 }

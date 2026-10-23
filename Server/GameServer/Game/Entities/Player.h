@@ -3,6 +3,7 @@
 #include "Game/Entities/PlayerSaveData.h"
 #include "Game/Entities/CombatStats.h"
 #include "Game/Items/ItemTypes.h"
+#include "Game/Items/ItemOutcome.h"
 #include "Game/QuickSlots/QuickSlotTypes.h"
 
 class GameSession;
@@ -52,16 +53,17 @@ struct SellItemResult
 struct UseItemResult
 {
     vector<SlotChange> changedSlots;
-    RepeatedPtrField<Protocol::Stat> updatedStats;
+    RepeatedPtrField<Protocol::Stat> changedStats;
 };
 
 /** 장비 착용과 해제의 결과. 바뀐 칸은 착용 장비의 칸이 먼저다. */
 struct GearChangeResult
 {
-    int32 gearType = 0;
+    /** 외형이 바뀐 부위와 그 부위의 아이템. 해제면 templateId가 0이다. */
+    Protocol::GearPart gearPart = Protocol::GEAR_PART_NONE;
     int32 templateId = 0;
     vector<SlotChange> changedSlots;
-    RepeatedPtrField<Protocol::Stat> updatedStats;
+    RepeatedPtrField<Protocol::Stat> changedStats;
 };
 
 /** 퀵슬롯 등록 결과. 교환이면 두 퀵슬롯이 바뀐다. */
@@ -76,6 +78,25 @@ struct RespawnResult
     RepeatedPtrField<Protocol::Stat> updatedStats;
 };
 
+/** 보상으로 오른 레벨. */
+struct LevelUpResult
+{
+    /** 오른 뒤의 레벨. */
+    int32 level = 0;
+    RepeatedPtrField<Protocol::Stat> changedStats;
+};
+
+/** 보상을 적용한 결과. */
+struct RewardResult
+{
+    /** 보상을 더한 뒤 지금 레벨 안의 경험치. */
+    int64 exp = 0;
+    /** 보상을 더한 뒤의 골드. */
+    int64 gold = 0;
+    /** 레벨이 오르지 않았으면 비어 있다. */
+    optional<LevelUpResult> levelUp;
+};
+
 /** 플레이어의 스폰 매개변수. */
 struct PlayerSpawnParams : public Creature::SpawnParams
 {
@@ -84,8 +105,6 @@ struct PlayerSpawnParams : public Creature::SpawnParams
     int64 userId = 0;
     /** 불러온 진행(nullptr 가능). Init 안에서만 읽으므로 Init이 끝날 때까지만 살아 있으면 된다. */
     const PlayerProgress* progress = nullptr;
-    /** 불러온 진행으로 처음 들어갈 룸. 진행의 맵과 좌표로 고른 룸이고, progress가 있을 때만 읽는다. */
-    int32 enterRoomId = -1;
 };
 
 /**
@@ -127,38 +146,35 @@ public:
 
 private:
     /**
-     * 불러온 진행을 플레이어에 쓰고 enterRoomId 룸으로 들어갈 준비를 한다. 스탯은 검증하지 않으므로 뒤이어 OnLoaded를 부른다.
+     * 불러온 진행을 플레이어에 쓴다. 스탯은 검증하지 않으므로 뒤이어 OnLoaded를 부른다.
      * 넣을 수 없는 슬롯이 하나라도 있으면 사유를 로그에 남기고 false.
      */
-    bool ApplyProgress(const PlayerProgress& progress, int32 enterRoomId);
+    bool ApplyProgress(const PlayerProgress& progress);
     /** 불러온 현재 HP나 MP가 계산한 최대치를 넘으면 사유를 로그에 남기고 false. */
     bool ValidateLoadedStat();
 
     //~ 요청 처리
 public:
-    /** 골드가 모자라거나 가방에 넣지 못하면 nullopt. 결과의 gold는 남은 골드다. */
-    optional<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
-    /** 팔 수 없는 아이템이거나 요청이 서버의 칸과 어긋나면 nullopt. 결과의 gold는 남은 골드다. */
-    optional<SellItemResult> ProcessSellItem(const ItemSlotRequest& request, int32 count = 1);
-    /**
-     * 소모품을 쓴다. nowMs는 재사용 대기 판정에 쓰는 현재 시각(ms, GetTickCount64)이다.
-     * 사망했거나, 소모품 칸이 아니거나, 재사용 대기 중이면 nullopt.
-     */
-    optional<UseItemResult> ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs);
-    /** 결과의 gearType은 요청한 인벤토리 칸이 아니라 장착된 장비 부위다. 착용 조건에 맞지 않으면 nullopt. */
-    optional<GearChangeResult> ProcessEquipGear(const ItemSlotRequest& request);
-    /** 가방에 자리가 없으면 nullopt. 결과의 templateId는 0이다. */
-    optional<GearChangeResult> ProcessUnequipGear(const ItemSlotRequest& request);
+    /** 클라이언트 값을 넘겨도 된다. 결과의 gold는 남은 골드다. */
+    ItemOutcome<BuyItemResult> ProcessBuyItem(int32 templateId, int32 count = 1);
+    /** 클라이언트 값을 넘겨도 된다. 결과의 gold는 남은 골드다. */
+    ItemOutcome<SellItemResult> ProcessSellItem(const ItemSlotRequest& request, int32 count = 1);
+    /** 소모품을 쓴다. nowMs는 재사용 대기 판정에 쓰는 현재 시각(ms, GetTickCount64)이다. */
+    ItemOutcome<UseItemResult> ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs);
+    /** 결과의 gearPart는 요청한 인벤토리 칸이 아니라 장착된 장비 부위다. */
+    ItemOutcome<GearChangeResult> ProcessEquipGear(const ItemSlotRequest& request);
+    /** 결과의 templateId는 0이다. */
+    ItemOutcome<GearChangeResult> ProcessUnequipGear(const ItemSlotRequest& request);
     /**
      * slotIndex 퀵슬롯에 ref를 등록하고, ref가 비었으면 해제한다. 클라이언트 값을 넘겨도 된다.
-     * 범위 밖 번호이거나 소모품이 아니면 nullopt. 소지 여부는 보지 않는다.
+     * 소지 여부는 보지 않는다.
      */
-    optional<SetQuickSlotResult> ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref);
+    ItemOutcome<SetQuickSlotResult> ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref);
     /**
      * slotIndex 퀵슬롯에 등록된 소모품을 소모품 구역에서 칸 번호가 가장 작은 칸부터 쓴다. 클라이언트 값을 넘겨도 된다.
-     * 빈 퀵슬롯이거나 그 소모품이 없으면 nullopt. 그 밖의 거절 사유는 ProcessUseItem과 같다.
+     * 그 밖의 거절 사유는 ProcessUseItem과 같다.
      */
-    optional<UseItemResult> ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs);
+    ItemOutcome<UseItemResult> ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs);
     /**
      * respawnPos에서 되살린다. 소속 룸을 보지 않으므로 룸에서 뺀 뒤에도 부를 수 있다.
      * 마을 리스폰만 경험치를 잃고 HP를 절반만 채운다.
@@ -167,13 +183,18 @@ public:
 
     //~ 이벤트
 public:
-    virtual void OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo) override;
+    virtual void OnHit(EntityRef attacker, const AttackInfo& attackInfo) override;
     virtual void OnDie(EntityRef attacker) override;
 
     //~ 맵과 룸 이동
 public:
-    /** 들어갈 맵과 룸 id를 기록한다. 룸 입장은 목적지 룸 큐의 OnEnterRoom에서 끝난다. */
-    void OnEnterMap(int32 mapId, int32 roomId);
+    /**
+     * room의 맵을 클라이언트가 다 열 때까지 기다리게 한다. 맵과 위치를 목적지의 것으로 바꾸고 소속 룸을 room으로 정한다.
+     * 룸에는 넣지 않는다. 세션에 등록하기 전이나, 플레이어를 뺀 룸의 큐 위에서 부른다.
+     */
+    void BeginMapLoad(const RoomRef& room, const Protocol::PosInfo& pos);
+    /** roomId 룸에서 맵 로드를 기다리고 있었으면 기다림을 끝내고 true. 소속 룸 큐 위에서 부른다. */
+    bool FinishMapLoad(int32 roomId);
     /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 룸 중심에 둔다. */
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
     /**
@@ -183,8 +204,6 @@ public:
     void ApplyMove(const Protocol::PosInfo& posInfo, uint64 now);
     /** 서버가 위치를 정했거나 이동을 받아들인 마지막 시각(ms, GetTickCount64). */
     uint64 GetLastPositionTick() const { return _lastPositionTick; }
-    /** 이동 중인 룸이 없으면 -1. */
-    int32 GetEnteringRoomId() { return _enteringRoomId; }
     /** 지금 맵 또는 들어가는 맵. 맵 표의 mapId다. */
     int32 GetMapId() const { return _mapId; }
     /** 마지막으로 들어간 룸. 룸에 들어간 적이 없으면 -1. */
@@ -193,14 +212,15 @@ public:
 private:
     int32 _mapId = 0;
     int32 _roomId = -1;
-    int32 _enteringRoomId = -1;
+    /** 맵 로드를 기다리는 룸. 기다리지 않으면 -1. 소속 룸 큐만 읽고 쓴다. */
+    int32 _mapLoadRoomId = -1;
     /** 이동 판정은 이 시각부터 흐른 시간으로 허용 거리를 정한다. 소속 룸 큐만 읽고 쓴다. */
     uint64 _lastPositionTick = 0;
 
     //~ 레벨과 보상
 public:
-    /** rewardResultPkt의 보상을 적용하고 결과를 그 패킷에 쓴다. 최대 레벨에서는 경험치를 버린다. */
-    void OnGetReward(OUT Protocol::S_REWARD_RESULT& rewardResultPkt);
+    /** 보상을 적용하고 그 결과를 돌려준다. 최대 레벨에서는 경험치를 버린다. */
+    RewardResult OnGetReward(const Reward& reward);
     /** 직업 레벨 표의 마지막 레벨이면 true. 레벨 표가 없는 직업도 true. */
     bool IsMaxLevel() const;
 
@@ -274,7 +294,7 @@ public:
     };
 
     /**
-     * 접속 종료를 표시하고, 끊기기 전에 룸에 들어간 적이 있으면 true. 세션 스레드가 부른다.
+     * 접속 종료나 로비 복귀를 표시하고, 그 전에 룸에 들어간 적이 있으면 true. 세션 스레드가 부른다.
      * true면 소속 룸이 이미 정해져 있다.
      */
     bool MarkDisconnected();
@@ -301,7 +321,10 @@ private:
 
     //~ 공통
 public:
+    /** 다른 클라이언트에도 가는 공개 정보(이름, 레벨, 장비 외형). */
     const Protocol::PlayerInfo& GetPlayerInfo() const { return *_playerInfo; }
+    int64 GetCharacterId() const { return _characterId; }
+    Protocol::CharacterClass GetCharacterClass() const { return _characterClass; }
 
 private:
     /** 테스트가 준비 단계에서 레벨, 직업, 골드, 소지품을 직접 채운다. */
@@ -309,5 +332,7 @@ private:
 
     /** _entityInfo 안의 player_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::PlayerInfo* _playerInfo;
+    int64 _characterId = 0;
+    Protocol::CharacterClass _characterClass = Protocol::CHARACTER_CLASS_NONE;
 };
 

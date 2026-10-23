@@ -49,4 +49,13 @@ struct Config
     int32 dbConnectionCount = 0;
     /** ID 발급기의 노드 번호(0~1023). 주지 않았거나(Release만) 정수가 아니면 nullopt. */
     std::optional<int32> serverNodeId;
+
+    /** 이 서버가 맡은 월드의 번호(1 이상). 인증 티켓은 이 월드에 발급된 것만 받는다. */
+    int32 worldId = 0;
+    /** 월드 목록에 보이는 이름(UTF-8). */
+    string worldName;
+    /** 클라이언트가 이 월드에 접속할 IPv4 주소. 포트는 리슨 포트(port)다. */
+    string worldHost;
+    /** 혼잡도를 정하는 기준이 되는 연결 계정 수. 이 수를 넘는 접속을 막지는 않는다. */
+    int32 worldCapacity = 0;
 };

@@ -26,7 +26,6 @@ namespace P1ItemActionsTest
     using EResult = UP1ItemActions::EResult;
 
     constexpr uint64 MY_PLAYER_ID = 100;
-    constexpr uint64 OTHER_PLAYER_ID = 200;
     constexpr int32 MY_LEVEL = 5;
 
     void AddSlot(Protocol::ContainerSlots* ContainerSlots, int32 SlotIndex, int32 TemplateId = 0, int32 Count = 0, int64 ItemUid = 0)
@@ -41,6 +40,15 @@ namespace P1ItemActionsTest
         }
     }
 
+    /** 입장 응답 뒤의 룸 입장. 내 엔티티 번호는 이 응답이 알린다. */
+    void EnterRoom(UP1MyPlayerData* Data, uint64 PlayerId)
+    {
+        Protocol::S_ENTER_ROOM Pkt;
+        Pkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
+        Pkt.mutable_my_entity()->set_entity_id(PlayerId);
+        Data->HandleEnterRoom(Pkt);
+    }
+
     /**
      * 골드 1000. 장비 구역 0번 두건(uid 11), 1번 흑기사의 검(uid 12), 2번 초보자의 검(uid 13), 3번 빈 칸.
      * 소모품 구역 0번 HP 물약 3개(uid 21), 1번 빈 칸. 기타 구역 0번 기타 아이템(uid 31). 착용 장비 1~6번 중 6번에 초보자의 검(uid 41).
@@ -49,8 +57,7 @@ namespace P1ItemActionsTest
     Protocol::S_ENTER_GAME MakeEnter()
     {
         Protocol::S_ENTER_GAME Pkt;
-        Pkt.set_success(true);
-        Pkt.mutable_player()->set_entity_id(MY_PLAYER_ID);
+        Pkt.set_result(Protocol::ENTRY_RESULT_SUCCESS);
         Pkt.mutable_possession()->set_gold(1000);
 
         Protocol::ContainerSlots* Gear = Pkt.mutable_possession()->add_containers();
@@ -77,7 +84,7 @@ namespace P1ItemActionsTest
         for (int32 QuickSlotIndex = 0; QuickSlotIndex < 3; ++QuickSlotIndex)
         {
             Protocol::QuickSlot* QuickSlot = Pkt.add_quick_slots();
-            QuickSlot->set_slot_index(QuickSlotIndex);
+            QuickSlot->set_quick_slot_index(QuickSlotIndex);
             if (QuickSlotIndex < 2)
             {
                 QuickSlot->mutable_ref()->set_ref_type(Protocol::QUICK_SLOT_REF_TYPE_ITEM);
@@ -109,6 +116,7 @@ namespace P1ItemActionsTest
             UGameInstance* GameInstance = NewObject<UGameInstance>(GetTransientPackage());
             Data = NewObject<UP1MyPlayerData>(GameInstance);
             Data->InitMyPlayerData(MakeEnter());
+            EnterRoom(Data, MY_PLAYER_ID);
             Data->ApplyLevel(MY_LEVEL);
 
             Actions = Data->GetItemActions();
@@ -117,11 +125,10 @@ namespace P1ItemActionsTest
         }
     };
 
-    Protocol::S_USE_ITEM MakeUseResponse(uint64 EntityId, bool bSuccess)
+    Protocol::S_USE_ITEM MakeUseResponse(bool bSuccess)
     {
         Protocol::S_USE_ITEM Pkt;
-        Pkt.set_entity_id(EntityId);
-        Pkt.set_success(bSuccess);
+        Pkt.set_result(bSuccess ? Protocol::ITEM_RESULT_SUCCESS : Protocol::ITEM_RESULT_COOLDOWN);
         if (bSuccess)
         {
             // 소모품 구역 0번의 물약이 3개에서 2개로 준다.
@@ -190,7 +197,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
     }
 
     // 3) 인벤토리 칸의 사용, 착용, 판매는 응답 대기 하나를 함께 쓴다. 해제와 구매는 그 대기에 막히지 않는다.
-    //    다른 플레이어의 응답으로는 풀리지 않고, 실패 응답이어도 내 응답이면 풀린다.
+    //    응답은 요청한 플레이어에게만 오므로, 실패 응답이어도 풀린다.
     {
         FFixture F;
         F.Actions->SetShopOpen(true);
@@ -201,10 +208,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("사용 대기 중 해제"), F.Actions->RequestForSlot(EP1ItemIntent::Unequip, Address(EQUIPPED, 6)) == EResult::Sent);
         TestTrue(TEXT("사용 대기 중 구매"), F.Actions->RequestBuy(2000) == EResult::Sent);
 
-        F.Data->HandleUseItem(MakeUseResponse(OTHER_PLAYER_ID, true));
-        TestTrue(TEXT("다른 플레이어의 응답 뒤 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Pending);
-
-        F.Data->HandleUseItem(MakeUseResponse(MY_PLAYER_ID, false));
+        F.Data->HandleUseItem(MakeUseResponse(false));
         TestTrue(TEXT("실패 응답 뒤 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
         TestEqual(TEXT("보낸 요청 수"), F.Sent.Num(), 4);
     }
@@ -213,7 +217,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
     {
         FFixture F;
         TestTrue(TEXT("사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
-        F.Data->HandleUseItem(MakeUseResponse(MY_PLAYER_ID, true));
+        F.Data->HandleUseItem(MakeUseResponse(true));
         TestTrue(TEXT("대기 중 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::CoolingDown);
         TestEqual(TEXT("보낸 요청 수"), F.Sent.Num(), 1);
     }
@@ -234,8 +238,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         }
 
         Protocol::S_UNEQUIP_GEAR Response;
-        Response.set_entity_id(MY_PLAYER_ID);
-        Response.set_success(false);
+        Response.set_result(Protocol::ITEM_RESULT_INVENTORY_FULL);
         F.Data->HandleUnequipGear(Response);
         TestTrue(TEXT("응답 뒤 무기 해제"), F.Actions->RequestForSlot(EP1ItemIntent::Unequip, Address(EQUIPPED, 6)) == EResult::Sent);
     }
@@ -257,14 +260,13 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
             TestTrue(TEXT("판매 요청"), F.Sent[0].Kind == EKind::Sell);
             TestTrue(TEXT("판매: 칸 주소"), F.Sent[0].Address == Address(GEAR, 0));
             TestEqual(TEXT("판매: uid"), F.Sent[0].ItemUid, 11LL);
-            TestEqual(TEXT("판매: 개수"), F.Sent[0].Count, 1);
         }
 
         TestNotNull(TEXT("보낸 뒤 두건 칸은 그대로"), F.Data->GetContainer(GEAR)->FindSlot(0));
         TestEqual(TEXT("보낸 뒤 골드는 그대로"), F.Data->GetGold(), 1000LL);
 
         Protocol::S_SELL_ITEM Response;
-        Response.set_success(false);
+        Response.set_result(Protocol::ITEM_RESULT_SLOT_CHANGED);
         F.Data->HandleSellItem(Response);
         TestTrue(TEXT("응답 뒤 물약 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(CONSUMABLE, 0)) == EResult::Sent);
 
@@ -285,12 +287,11 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         {
             TestTrue(TEXT("구매 요청"), F.Sent[0].Kind == EKind::Buy);
             TestEqual(TEXT("구매: 템플릿"), F.Sent[0].TemplateId, 2000);
-            TestEqual(TEXT("구매: 개수"), F.Sent[0].Count, 1);
         }
         TestEqual(TEXT("보낸 뒤 골드는 그대로"), F.Data->GetGold(), 1000LL);
 
         Protocol::S_BUY_ITEM Response;
-        Response.set_success(false);
+        Response.set_result(Protocol::ITEM_RESULT_NOT_ENOUGH_GOLD);
         F.Data->HandleBuyItem(Response);
         TestTrue(TEXT("응답 뒤 물약 구매"), F.Actions->RequestBuy(2000) == EResult::Sent);
     }
@@ -300,6 +301,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         FFixture F;
         TestTrue(TEXT("입장 전 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
         F.Data->InitMyPlayerData(MakeEnter());
+        EnterRoom(F.Data, MY_PLAYER_ID);
         F.Data->ApplyLevel(MY_LEVEL);
         TestTrue(TEXT("다시 입장한 뒤 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
     }
@@ -324,12 +326,12 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
 
         // 0번에 있던 물약을 2번에 등록했으므로 서버가 두 퀵슬롯을 맞바꿔 알린다.
         Protocol::S_SET_QUICK_SLOT Response;
-        Response.set_success(true);
+        Response.set_result(Protocol::ITEM_RESULT_SUCCESS);
         Protocol::QuickSlot* Registered = Response.add_changed_quick_slots();
-        Registered->set_slot_index(2);
+        Registered->set_quick_slot_index(2);
         Registered->mutable_ref()->set_ref_type(Protocol::QUICK_SLOT_REF_TYPE_ITEM);
         Registered->mutable_ref()->set_ref_id(2000);
-        Response.add_changed_quick_slots()->set_slot_index(0);
+        Response.add_changed_quick_slots()->set_quick_slot_index(0);
         F.Data->HandleSetQuickSlot(Response);
 
         TestTrue(TEXT("퀵슬롯 응답: 2번"), F.Data->GetQuickSlots()->Find(2)->Ref == FP1QuickSlotRef::ForItem(2000));
@@ -357,7 +359,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("퀵슬롯 사용: 번호"), F.Sent[0].QuickSlotIndex, 0);
         }
 
-        F.Data->HandleUseItem(MakeUseResponse(MY_PLAYER_ID, true));
+        F.Data->HandleUseItem(MakeUseResponse(true));
         TestTrue(TEXT("퀵슬롯 사용: 대기 중"), F.Actions->RequestUseQuickSlot(0) == EResult::CoolingDown);
         TestEqual(TEXT("퀵슬롯 사용: 응답 뒤 개수"), F.Data->GetContainer(CONSUMABLE)->CountItem(2000), 2);
         TestEqual(TEXT("퀵슬롯 사용: 대기 중이면 보내지 않음"), F.Sent.Num(), 1);

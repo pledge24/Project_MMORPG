@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "Sync/P1EntityType.h"
 #include "Subsystems/WorldSubsystem.h"
-#include "Protocol.pb.h"
+#include "Network/Item.pb.h"
+#include "Entity.pb.h"
+#include "Combat.pb.h"
+#include "Entry.pb.h"
 #include "P1StatefulEntityManager.generated.h"
 
 class AP1Monster;
@@ -87,35 +90,30 @@ public:
     void HandleMove(const Protocol::S_MOVE& MovePkt);
 
 protected:
-    void HandleMove(const Protocol::PosInfo& Info);
+    void HandleMove(const Protocol::EntityMove& Move);
 
     //~ Room Packet Handlers
 public:
     /**
-     * 같은 맵 안의 룸 이동이나 리스폰이면 내 플레이어만 남기고 디스폰한 뒤 내 플레이어를 입장 위치로 옮긴다.
-     * 룸 id는 저장하지 않는다. 그것은 내 플레이어 데이터가 맡는다.
+     * 앞 룸의 엔티티를 지우고 내 플레이어를 입장 위치에 둔다. 내 플레이어가 없으면 스폰하고, 사망해 있으면 되살린다.
+     * 내 플레이어 데이터가 내 엔티티 번호를 먼저 저장해야 한다.
      */
     void HandleEnterRoom(const Protocol::S_ENTER_ROOM& EnterRoomPkt);
 
     //~ Gear Packet Handlers
 public:
-    /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
-    void HandleEquipGear(const Protocol::S_EQUIP_GEAR& EquipGearPkt);
-
-    /** 성공 응답이면 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
-    void HandleUnequipGear(const Protocol::S_UNEQUIP_GEAR& UnequipGearPkt);
+    /** 내 플레이어를 포함한 그 플레이어의 외형을 바꾼다. 내 플레이어의 슬롯과 스탯은 내 플레이어 데이터가 맡는다. */
+    void HandleGearAppearance(const Protocol::S_GEAR_APPEARANCE& GearAppearancePkt);
 
     //~ Combat Packet Handlers
 public:
-    void HandleNormalAttack(const Protocol::S_NORMAL_ATTACK& NormalAttackPkt);
+    /** 다른 크리처의 공격을 재생한다. 내 공격은 서버가 알리지 않는다. */
+    void HandleAttack(const Protocol::S_ATTACK& AttackPkt);
 
     /** 내 플레이어가 맞았으면 내 플레이어 데이터의 HP도 갱신한다. */
     void HandleHit(const Protocol::S_HIT& HitPkt);
 
     void HandleDie(const Protocol::S_DIE& DiePkt);
-
-    /** 내 플레이어가 살아났으면 내 플레이어 데이터의 스탯도 갱신한다. */
-    void HandleRespawn(const Protocol::S_RESPAWN& RespawnPkt);
 
 protected:
     /** 게임 인스턴스가 없으면 nullptr. */

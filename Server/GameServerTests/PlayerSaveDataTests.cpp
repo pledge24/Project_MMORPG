@@ -29,7 +29,7 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;

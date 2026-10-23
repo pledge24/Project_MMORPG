@@ -3,3 +3,189 @@ package Protocol;
 
 // 소지품, 상점, 착용, 소모품, 퀵슬롯
 // @packet_id_range 600 699
+
+import "Common.proto";
+
+enum ItemResult
+{
+    ITEM_RESULT_SUCCESS = 0;
+    ITEM_RESULT_INVALID_REQUEST = 1;        // 정상 클라이언트가 보내지 않는 요청. 없는 아이템 번호, 아이템과 맞지 않는 컨테이너, 범위 밖의 퀵슬롯 번호
+    ITEM_RESULT_SLOT_CHANGED = 2;           // 칸의 아이템이 요청의 item_uid와 다르다. 클라이언트의 칸이 서버보다 늦었다
+    ITEM_RESULT_NOT_ENOUGH_GOLD = 3;
+    ITEM_RESULT_INVENTORY_FULL = 4;         // 아이템이 들어갈 구역에 빈 칸이 없다
+    ITEM_RESULT_NOT_SELLABLE = 5;
+    ITEM_RESULT_REQUIREMENT_NOT_MET = 6;    // 레벨이나 직업이 착용 조건에 못 미친다
+    ITEM_RESULT_GEAR_PART_OCCUPIED = 7;     // 그 부위에 이미 장비를 착용하고 있다
+    ITEM_RESULT_COOLDOWN = 8;               // 재사용 대기 중이다
+    ITEM_RESULT_DEAD = 9;                   // 사망한 플레이어는 소모품을 쓸 수 없다
+    ITEM_RESULT_NOT_OWNED = 10;             // 퀵슬롯이 가리키는 소모품을 갖고 있지 않다
+    ITEM_RESULT_INTERNAL_ERROR = 11;        // 검사를 통과한 뒤 칸을 바꾸지 못했다
+}
+
+// 아이템 종류. DB의 Item.ItemType에 숫자로 저장되고, 기획 데이터가 이름으로 읽는다
+enum ItemType
+{
+    ITEM_TYPE_NONE = 0;
+    ITEM_TYPE_GEAR = 1;
+    ITEM_TYPE_CONSUMABLE = 2;
+    ITEM_TYPE_MISCELLANEOUS = 3;
+}
+
+// 아이템을 담는 컨테이너의 종류. 인벤토리의 구역 셋과 착용 장비다
+enum ContainerType
+{
+    CONTAINER_TYPE_NONE = 0;
+    CONTAINER_TYPE_INVENTORY_GEAR = 1;
+    CONTAINER_TYPE_INVENTORY_CONSUMABLE = 2;
+    CONTAINER_TYPE_INVENTORY_MISC = 3;
+    CONTAINER_TYPE_EQUIPPED = 4;            // 착용 장비. 칸 번호가 GearPart 값이다
+}
+
+// 퀵슬롯이 가리키는 대상의 종류. DB의 QuickSlot.RefType에 숫자로 저장된다
+enum QuickSlotRefType
+{
+    QUICK_SLOT_REF_TYPE_NONE = 0;
+    QUICK_SLOT_REF_TYPE_ITEM = 1;           // 아이템 정의. ref_id가 아이템 번호다
+}
+
+message Item
+{
+    int32 template_id = 1;
+    int64 item_uid = 2;
+    int32 count = 3;
+}
+
+// 칸 하나를 가리키는 주소
+message SlotAddress
+{
+    ContainerType container = 1;
+    int32 slot_index = 2;                   // 컨테이너 안의 칸 번호. 착용 장비에서는 GearPart 값이다
+}
+
+// 이 주소의 칸은 이제 이 내용이다. item이 없으면 빈 칸이다
+message SlotChange
+{
+    SlotAddress address = 1;
+    Item item = 2;
+}
+
+// 컨테이너 안의 칸 하나. item이 없으면 빈 칸이다
+message Slot
+{
+    int32 slot_index = 1;
+    Item item = 2;
+}
+
+// 컨테이너 하나의 모든 칸. 빈 칸도 싣는다
+message ContainerSlots
+{
+    ContainerType container = 1;
+    repeated Slot slots = 2;
+}
+
+message Possession
+{
+    int64 gold = 1;
+    repeated ContainerSlots containers = 2; // 인벤토리의 구역 셋과 착용 장비
+}
+
+// 퀵슬롯이 가리키는 대상. 아이템 하나가 아니라 아이템 정의를 가리킨다
+message QuickSlotRef
+{
+    QuickSlotRefType ref_type = 1;
+    int32 ref_id = 2;
+}
+
+// 퀵슬롯 하나. ref가 없으면 빈 퀵슬롯이다
+message QuickSlot
+{
+    int32 quick_slot_index = 1;             // 0부터 퀵슬롯 개수 미만
+    QuickSlotRef ref = 2;
+}
+
+message C_BUY_ITEM
+{
+    int32 template_id = 1;
+}
+
+message S_BUY_ITEM
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    int64 gold = 3;
+}
+
+// 칸을 가리키는 요청은 칸 주소와, 클라이언트가 그 칸에서 본 아이템의 uid를 싣는다.
+// 그 칸의 아이템 uid가 다르면 서버는 ITEM_RESULT_SLOT_CHANGED로 거절한다
+message C_SELL_ITEM
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+message S_SELL_ITEM
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    int64 gold = 3;
+}
+
+message C_EQUIP_GEAR
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+// 외형은 S_GEAR_APPEARANCE가 룸에 알린다
+message S_EQUIP_GEAR
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    repeated Stat changed_stats = 3;
+}
+
+message C_UNEQUIP_GEAR
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+message S_UNEQUIP_GEAR
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    repeated Stat changed_stats = 3;
+}
+
+message C_USE_ITEM
+{
+    SlotAddress address = 1;
+    int64 item_uid = 2;
+}
+
+// C_USE_ITEM과 C_USE_QUICK_SLOT의 응답
+message S_USE_ITEM
+{
+    ItemResult result = 1;
+    repeated SlotChange changed_slots = 2;
+    repeated Stat changed_stats = 3;
+}
+
+// 퀵슬롯 하나에 대상을 등록한다. ref가 없으면 해제한다. 다른 퀵슬롯에 있는 대상이면 두 퀵슬롯이 바뀐다
+message C_SET_QUICK_SLOT
+{
+    int32 quick_slot_index = 1;
+    QuickSlotRef ref = 2;
+}
+
+message S_SET_QUICK_SLOT
+{
+    ItemResult result = 1;
+    repeated QuickSlot changed_quick_slots = 2;
+}
+
+// 퀵슬롯에 등록한 소모품을 쓴다. 쓸 칸은 서버가 고른다. 응답은 S_USE_ITEM이다
+message C_USE_QUICK_SLOT
+{
+    int32 quick_slot_index = 1;
+}

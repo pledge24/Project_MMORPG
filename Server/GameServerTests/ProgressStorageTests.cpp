@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include "FakeDBConnection.h"
 #include "PlayerTestAccess.h"
+#include "RoomManagerTestAccess.h"
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
 #include "DB/ItemDAO.h"
@@ -23,7 +24,8 @@
     저장되지 않는 식으로 진행이 어긋나지 않는다.
 
     픽스처 결합도: FakeDBConnection과, 골드 재화 번호, 맵 표(사냥터와 마을), 레벨 표, 아이템 표, 인벤토리 구역 표를
-    Gamedata::Install로 주입한다. 입장 테스트는 소켓 없는 GameSession을 만든다.
+    Gamedata::Install로 주입한다. 입장 테스트는 소켓 없는 GameSession과, 맵 표의 행마다 시작하지 않은 룸을 둔
+    룸 관리자를 쓴다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -47,7 +49,7 @@ namespace
     // CharacterStateDAO::LoadCharacter가 읽는 열 순서의 행.
     FakeDBRow MakeCharacterRow(int64 level, int64 exp, int64 mapId, double posX, double posY, int64 gold)
     {
-        return { int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), level, int64(1), exp, mapId, posX, posY, 30.0, 90.0,
+        return { int64(Protocol::CHARACTER_CLASS_WARRIOR), wstring(L"전사"), level, int64(1), exp, mapId, posX, posY, 30.0, 90.0,
             int64(MAX_HP), int64(80), gold };
     }
 
@@ -128,14 +130,14 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
 
         GamedataTables tables;
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
         tables.maps[FIELD_ROOM_ID] = field;
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1, level2 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
         tables.items[POTION_TEMPLATE_ID] = potion;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.inventorySlotCounts = MakeInventorySections();
@@ -145,6 +147,7 @@ protected:
         tables.initialProgress.startYaw = START_YAW;
         tables.initialProgress.startGold = START_GOLD;
         Gamedata::Install(std::move(tables));
+        rooms = make_unique<ScopedTestRoomManager>();
 
         session = make_shared<GameSession>();
         sessionManager.RegisterUser(USER_ID, session);
@@ -153,9 +156,11 @@ protected:
     void TearDown() override
     {
         session.reset();
+        rooms.reset();
         Gamedata::Install(GamedataTables());
     }
 
+    unique_ptr<ScopedTestRoomManager> rooms;
     GameSessionManager sessionManager;
     GameSessionRef session;
 };
@@ -171,7 +176,7 @@ TEST_F(ProgressStorageTest, LoadCharacterReadsCharacterStateAndGold)
     ASSERT_EQ(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress), CharacterLoadResult::LOADED);
 
     EXPECT_EQ(progress.characterId, CHARACTER_ID);
-    EXPECT_EQ(progress.classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(progress.classId, Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(progress.level, 3);
     EXPECT_FALSE(progress.name.empty());
     EXPECT_EQ(progress.mapId, FIELD_MAP_ID);
@@ -203,14 +208,14 @@ TEST_F(ProgressStorageTest, LoadCharacterOfOtherAccountFails)
 TEST_F(ProgressStorageTest, LoadCharacterWithoutProgressReadsOnlyCharacterRow)
 {
     FakeDBConnection conn;
-    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_WARRIOR) });
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CHARACTER_CLASS_WARRIOR) });
 
     PlayerProgress progress;
     ASSERT_EQ(CharacterStateDAO::LoadCharacter(conn, USER_ID, CHARACTER_ID, OUT progress), CharacterLoadResult::NO_PROGRESS)
         << "진행 행이 없는 캐릭터는 아직 게임에 입장한 적이 없다. 골드 행이 없어도 DB가 어긋난 것이 아니다";
 
     EXPECT_EQ(progress.characterId, CHARACTER_ID);
-    EXPECT_EQ(progress.classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(progress.classId, Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(progress.level, 1);
     EXPECT_FALSE(progress.name.empty());
 }
@@ -230,7 +235,7 @@ TEST_F(ProgressStorageTest, LoadItemsPlacesRowsByContainerAndSection)
     FakeDBConnection conn;
     conn.QueueResult({
         MakeItemRow(11, POTION_TEMPLATE_ID, ItemRowType::CONSUMABLE, ItemRowContainer::INVENTORY, 5, 3),
-        MakeItemRow(12, SWORD_TEMPLATE_ID, ItemRowType::GEAR, ItemRowContainer::EQUIPPED, Protocol::GEAR_TYPE_WEAPON, 1, 4),
+        MakeItemRow(12, SWORD_TEMPLATE_ID, ItemRowType::GEAR, ItemRowContainer::EQUIPPED, Protocol::GEAR_PART_WEAPON, 1, 4),
     });
 
     PlayerProgress progress;
@@ -243,7 +248,7 @@ TEST_F(ProgressStorageTest, LoadItemsPlacesRowsByContainerAndSection)
     EXPECT_EQ(potion.item.count, 3);
 
     const PlacedItem& sword = progress.items[1];
-    EXPECT_EQ(sword.address, (SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }));
+    EXPECT_EQ(sword.address, (SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON }));
     EXPECT_EQ(sword.item.itemUid, 12);
     ASSERT_TRUE(sword.item.gear.has_value());
     EXPECT_EQ(sword.item.gear->enhanceLevel, 4);
@@ -269,7 +274,7 @@ TEST_F(ProgressStorageTest, FailedLoadLeavesSessionWithoutPlayer)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    EXPECT_FALSE(pkt.success());
+    EXPECT_EQ(pkt.result(), Protocol::ENTRY_RESULT_INTERNAL_ERROR);
     EXPECT_EQ(session->GetPlayer(), nullptr) << "불러오기에 실패한 세션에 플레이어가 남으면 끊길 때 반쯤 채운 진행을 저장한다";
 }
 
@@ -292,7 +297,7 @@ TEST_F(ProgressStorageTest, LoadOfExistingProgressIsOneTransaction)
 TEST_F(ProgressStorageTest, FirstEntryCreatesInitialProgressRowsThenLoadsThem)
 {
     FakeDBConnection conn;
-    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_WARRIOR) });
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CHARACTER_CLASS_WARRIOR) });
     conn.QueueResult({});
     conn.QueueResult({});
     conn.QueueResult({ MakeCharacterRow(1, 0, FIELD_MAP_ID, START_X, 40.0, START_GOLD) });
@@ -328,7 +333,7 @@ TEST_F(ProgressStorageTest, FirstEntryCreatesInitialProgressRowsThenLoadsThem)
 TEST_F(ProgressStorageTest, FirstEntryOfClassWithoutLevelTableCreatesNothing)
 {
     FakeDBConnection conn;
-    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_MAGE) });
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CHARACTER_CLASS_MAGE) });
 
     PlayerProgress progress;
     EXPECT_FALSE(ProgressStorage::Load(conn, USER_ID, CHARACTER_ID, OUT progress)) << "레벨 표가 없으면 시작 HP와 MP를 정할 수 없다";
@@ -341,7 +346,7 @@ TEST_F(ProgressStorageTest, FirstEntryOfClassWithoutLevelTableCreatesNothing)
 TEST_F(ProgressStorageTest, FailedInitialProgressInsertRollsBack)
 {
     FakeDBConnection conn;
-    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CLASS_TYPE_WARRIOR) });
+    conn.QueueResult({ MakeCharacterRowWithoutProgress(Protocol::CHARACTER_CLASS_WARRIOR) });
     conn.QueueResult({});
     conn.QueueExecuteFailure();
 
@@ -373,12 +378,11 @@ TEST_F(ProgressStorageTest, EnterGoesToRoomCoveringSavedPosition)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     PlayerRef player = session->GetPlayer();
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(player->GetEnteringRoomId(), FIELD_ROOM_ID);
-    EXPECT_EQ(pkt.player().player_info().map_id(), FIELD_MAP_ID);
-    EXPECT_EQ(pkt.player().player_info().room_id(), FIELD_ROOM_ID);
+    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(FIELD_ROOM_ID)) << "그 룸의 큐에서 맵 로드 완료를 기다린다";
+    EXPECT_EQ(pkt.map_id(), FIELD_MAP_ID);
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), -150.f);
 }
 
@@ -389,11 +393,11 @@ TEST_F(ProgressStorageTest, EnterOutsideEveryRoomGoesToTownRespawn)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     PlayerRef player = session->GetPlayer();
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(player->GetEnteringRoomId(), TOWN_ROOM_ID);
-    EXPECT_EQ(pkt.player().player_info().map_id(), TOWN_MAP_ID) << "마을로 보내면 맵도 마을의 맵이다";
+    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(TOWN_ROOM_ID));
+    EXPECT_EQ(pkt.map_id(), TOWN_MAP_ID) << "마을로 보내면 맵도 마을의 맵이다";
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), TOWN_RESPAWN_X);
 }
 
@@ -406,10 +410,10 @@ TEST_F(ProgressStorageTest, EnterPacketCarriesEveryQuickSlot)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    ASSERT_TRUE(pkt.success());
+    ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     ASSERT_EQ(pkt.quick_slots().size(), QUICK_SLOT_COUNT) << "클라이언트는 받은 퀵슬롯 수로 퀵슬롯을 만들므로 빈 퀵슬롯도 싣는다";
     for (int32 slotIndex = 0; slotIndex < QUICK_SLOT_COUNT; slotIndex++)
-        EXPECT_EQ(pkt.quick_slots(slotIndex).slot_index(), slotIndex);
+        EXPECT_EQ(pkt.quick_slots(slotIndex).quick_slot_index(), slotIndex);
 
     EXPECT_FALSE(pkt.quick_slots(0).has_ref());
     ASSERT_TRUE(pkt.quick_slots(1).has_ref());
@@ -421,7 +425,7 @@ TEST_F(ProgressStorageTest, EnterWithoutRoomToAssignIsRejected)
 {
     GamedataTables tables;
     tables.goldCurrencyId = GOLD_CURRENCY_ID;
-    tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, MAX_HP, 100 } });
+    tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, MAX_HP, 100 } });
     Gamedata::Install(std::move(tables));
 
     FakeDBConnection conn;
@@ -429,7 +433,7 @@ TEST_F(ProgressStorageTest, EnterWithoutRoomToAssignIsRejected)
 
     const Protocol::S_ENTER_GAME pkt = GameEntry::Enter(conn, session, USER_ID, CHARACTER_ID);
 
-    EXPECT_FALSE(pkt.success()) << "맵 표에 그 좌표를 덮는 룸도 마을 리스폰 지점도 없다";
+    EXPECT_EQ(pkt.result(), Protocol::ENTRY_RESULT_INTERNAL_ERROR) << "맵 표에 그 좌표를 덮는 룸도 마을 리스폰 지점도 없다";
     EXPECT_EQ(session->GetPlayer(), nullptr);
 }
 

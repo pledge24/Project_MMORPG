@@ -26,8 +26,14 @@
 #include <google/protobuf/generated_message_util.h>
 #include <google/protobuf/metadata_lite.h>
 #include <google/protobuf/generated_message_reflection.h>
+#include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/map.h>  // IWYU pragma: export
+#include <google/protobuf/map_entry.h>
+#include <google/protobuf/map_field_inl.h>
+#include <google/protobuf/generated_enum_reflection.h>
+#include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_Common_2eproto
@@ -42,13 +48,635 @@ struct TableStruct_Common_2eproto {
   static const uint32_t offsets[];
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_Common_2eproto;
+namespace Protocol {
+class S_DISCONNECT;
+struct S_DISCONNECTDefaultTypeInternal;
+extern S_DISCONNECTDefaultTypeInternal _S_DISCONNECT_default_instance_;
+class Stat;
+struct StatDefaultTypeInternal;
+extern StatDefaultTypeInternal _Stat_default_instance_;
+class StatInfo;
+struct StatInfoDefaultTypeInternal;
+extern StatInfoDefaultTypeInternal _StatInfo_default_instance_;
+class StatInfo_ValuesEntry_DoNotUse;
+struct StatInfo_ValuesEntry_DoNotUseDefaultTypeInternal;
+extern StatInfo_ValuesEntry_DoNotUseDefaultTypeInternal _StatInfo_ValuesEntry_DoNotUse_default_instance_;
+}  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
+template<> ::Protocol::S_DISCONNECT* Arena::CreateMaybeMessage<::Protocol::S_DISCONNECT>(Arena*);
+template<> ::Protocol::Stat* Arena::CreateMaybeMessage<::Protocol::Stat>(Arena*);
+template<> ::Protocol::StatInfo* Arena::CreateMaybeMessage<::Protocol::StatInfo>(Arena*);
+template<> ::Protocol::StatInfo_ValuesEntry_DoNotUse* Arena::CreateMaybeMessage<::Protocol::StatInfo_ValuesEntry_DoNotUse>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
+enum CharacterClass : int {
+  CHARACTER_CLASS_NONE = 0,
+  CHARACTER_CLASS_WARRIOR = 1,
+  CHARACTER_CLASS_MAGE = 2,
+  CharacterClass_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  CharacterClass_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool CharacterClass_IsValid(int value);
+constexpr CharacterClass CharacterClass_MIN = CHARACTER_CLASS_NONE;
+constexpr CharacterClass CharacterClass_MAX = CHARACTER_CLASS_MAGE;
+constexpr int CharacterClass_ARRAYSIZE = CharacterClass_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CharacterClass_descriptor();
+template<typename T>
+inline const std::string& CharacterClass_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, CharacterClass>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function CharacterClass_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    CharacterClass_descriptor(), enum_t_value);
+}
+inline bool CharacterClass_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, CharacterClass* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<CharacterClass>(
+    CharacterClass_descriptor(), name, value);
+}
+enum GearPart : int {
+  GEAR_PART_NONE = 0,
+  GEAR_PART_HELMET = 1,
+  GEAR_PART_CHEST = 2,
+  GEAR_PART_LEGS = 3,
+  GEAR_PART_ARMS = 4,
+  GEAR_PART_BOOTS = 5,
+  GEAR_PART_WEAPON = 6,
+  GearPart_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  GearPart_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool GearPart_IsValid(int value);
+constexpr GearPart GearPart_MIN = GEAR_PART_NONE;
+constexpr GearPart GearPart_MAX = GEAR_PART_WEAPON;
+constexpr int GearPart_ARRAYSIZE = GearPart_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* GearPart_descriptor();
+template<typename T>
+inline const std::string& GearPart_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, GearPart>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function GearPart_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    GearPart_descriptor(), enum_t_value);
+}
+inline bool GearPart_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, GearPart* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<GearPart>(
+    GearPart_descriptor(), name, value);
+}
+enum StatType : int {
+  STAT_TYPE_NONE = 0,
+  STAT_TYPE_MAX_HP = 1,
+  STAT_TYPE_HP = 2,
+  STAT_TYPE_MAX_MP = 3,
+  STAT_TYPE_MP = 4,
+  STAT_TYPE_PHYSICAL_ATTACK = 5,
+  STAT_TYPE_MAGICAL_ATTACK = 6,
+  STAT_TYPE_MAX_EXP = 7,
+  STAT_TYPE_EXP = 8,
+  StatType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  StatType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool StatType_IsValid(int value);
+constexpr StatType StatType_MIN = STAT_TYPE_NONE;
+constexpr StatType StatType_MAX = STAT_TYPE_EXP;
+constexpr int StatType_ARRAYSIZE = StatType_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* StatType_descriptor();
+template<typename T>
+inline const std::string& StatType_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, StatType>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function StatType_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    StatType_descriptor(), enum_t_value);
+}
+inline bool StatType_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, StatType* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<StatType>(
+    StatType_descriptor(), name, value);
+}
+enum DisconnectReason : int {
+  DISCONNECT_REASON_NONE = 0,
+  DISCONNECT_REASON_DUPLICATE_CONNECTION = 1,
+  DisconnectReason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  DisconnectReason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool DisconnectReason_IsValid(int value);
+constexpr DisconnectReason DisconnectReason_MIN = DISCONNECT_REASON_NONE;
+constexpr DisconnectReason DisconnectReason_MAX = DISCONNECT_REASON_DUPLICATE_CONNECTION;
+constexpr int DisconnectReason_ARRAYSIZE = DisconnectReason_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DisconnectReason_descriptor();
+template<typename T>
+inline const std::string& DisconnectReason_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, DisconnectReason>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function DisconnectReason_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    DisconnectReason_descriptor(), enum_t_value);
+}
+inline bool DisconnectReason_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, DisconnectReason* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<DisconnectReason>(
+    DisconnectReason_descriptor(), name, value);
+}
 // ===================================================================
 
+class Stat final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.Stat) */ {
+ public:
+  inline Stat() : Stat(nullptr) {}
+  ~Stat() override;
+  explicit PROTOBUF_CONSTEXPR Stat(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
+  Stat(const Stat& from);
+  Stat(Stat&& from) noexcept
+    : Stat() {
+    *this = ::std::move(from);
+  }
+
+  inline Stat& operator=(const Stat& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Stat& operator=(Stat&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Stat& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const Stat* internal_default_instance() {
+    return reinterpret_cast<const Stat*>(
+               &_Stat_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    0;
+
+  friend void swap(Stat& a, Stat& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Stat* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Stat* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Stat* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Stat>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Stat& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Stat& from) {
+    Stat::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Stat* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.Stat";
+  }
+  protected:
+  explicit Stat(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kValueFieldNumber = 2,
+    kTypeFieldNumber = 1,
+  };
+  // int64 value = 2;
+  void clear_value();
+  int64_t value() const;
+  void set_value(int64_t value);
+  private:
+  int64_t _internal_value() const;
+  void _internal_set_value(int64_t value);
+  public:
+
+  // .Protocol.StatType type = 1;
+  void clear_type();
+  ::Protocol::StatType type() const;
+  void set_type(::Protocol::StatType value);
+  private:
+  ::Protocol::StatType _internal_type() const;
+  void _internal_set_type(::Protocol::StatType value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.Stat)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int64_t value_;
+    int type_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Common_2eproto;
+};
+// -------------------------------------------------------------------
+
+class StatInfo_ValuesEntry_DoNotUse : public ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<StatInfo_ValuesEntry_DoNotUse, 
+    int32_t, int64_t,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_INT32,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_INT64> {
+public:
+  typedef ::PROTOBUF_NAMESPACE_ID::internal::MapEntry<StatInfo_ValuesEntry_DoNotUse, 
+    int32_t, int64_t,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_INT32,
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_INT64> SuperType;
+  StatInfo_ValuesEntry_DoNotUse();
+  explicit PROTOBUF_CONSTEXPR StatInfo_ValuesEntry_DoNotUse(
+      ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  explicit StatInfo_ValuesEntry_DoNotUse(::PROTOBUF_NAMESPACE_ID::Arena* arena);
+  void MergeFrom(const StatInfo_ValuesEntry_DoNotUse& other);
+  static const StatInfo_ValuesEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const StatInfo_ValuesEntry_DoNotUse*>(&_StatInfo_ValuesEntry_DoNotUse_default_instance_); }
+  static bool ValidateKey(void*) { return true; }
+  static bool ValidateValue(void*) { return true; }
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+  friend struct ::TableStruct_Common_2eproto;
+};
+
+// -------------------------------------------------------------------
+
+class StatInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.StatInfo) */ {
+ public:
+  inline StatInfo() : StatInfo(nullptr) {}
+  ~StatInfo() override;
+  explicit PROTOBUF_CONSTEXPR StatInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  StatInfo(const StatInfo& from);
+  StatInfo(StatInfo&& from) noexcept
+    : StatInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline StatInfo& operator=(const StatInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline StatInfo& operator=(StatInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const StatInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const StatInfo* internal_default_instance() {
+    return reinterpret_cast<const StatInfo*>(
+               &_StatInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  friend void swap(StatInfo& a, StatInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(StatInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(StatInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  StatInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<StatInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const StatInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const StatInfo& from) {
+    StatInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(StatInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.StatInfo";
+  }
+  protected:
+  explicit StatInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  private:
+  static void ArenaDtor(void* object);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kValuesFieldNumber = 1,
+  };
+  // map<int32, int64> values = 1;
+  int values_size() const;
+  private:
+  int _internal_values_size() const;
+  public:
+  void clear_values();
+  private:
+  const ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >&
+      _internal_values() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >*
+      _internal_mutable_values();
+  public:
+  const ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >&
+      values() const;
+  ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >*
+      mutable_values();
+
+  // @@protoc_insertion_point(class_scope:Protocol.StatInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::MapField<
+        StatInfo_ValuesEntry_DoNotUse,
+        int32_t, int64_t,
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_INT32,
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::TYPE_INT64> values_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Common_2eproto;
+};
+// -------------------------------------------------------------------
+
+class S_DISCONNECT final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_DISCONNECT) */ {
+ public:
+  inline S_DISCONNECT() : S_DISCONNECT(nullptr) {}
+  ~S_DISCONNECT() override;
+  explicit PROTOBUF_CONSTEXPR S_DISCONNECT(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  S_DISCONNECT(const S_DISCONNECT& from);
+  S_DISCONNECT(S_DISCONNECT&& from) noexcept
+    : S_DISCONNECT() {
+    *this = ::std::move(from);
+  }
+
+  inline S_DISCONNECT& operator=(const S_DISCONNECT& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_DISCONNECT& operator=(S_DISCONNECT&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_DISCONNECT& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_DISCONNECT* internal_default_instance() {
+    return reinterpret_cast<const S_DISCONNECT*>(
+               &_S_DISCONNECT_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  friend void swap(S_DISCONNECT& a, S_DISCONNECT& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(S_DISCONNECT* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_DISCONNECT* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_DISCONNECT* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_DISCONNECT>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const S_DISCONNECT& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const S_DISCONNECT& from) {
+    S_DISCONNECT::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(S_DISCONNECT* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.S_DISCONNECT";
+  }
+  protected:
+  explicit S_DISCONNECT(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kReasonFieldNumber = 1,
+  };
+  // .Protocol.DisconnectReason reason = 1;
+  void clear_reason();
+  ::Protocol::DisconnectReason reason() const;
+  void set_reason(::Protocol::DisconnectReason value);
+  private:
+  ::Protocol::DisconnectReason _internal_reason() const;
+  void _internal_set_reason(::Protocol::DisconnectReason value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.S_DISCONNECT)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int reason_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Common_2eproto;
+};
 // ===================================================================
 
 
@@ -58,13 +686,145 @@ namespace Protocol {
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
+// Stat
+
+// .Protocol.StatType type = 1;
+inline void Stat::clear_type() {
+  _impl_.type_ = 0;
+}
+inline ::Protocol::StatType Stat::_internal_type() const {
+  return static_cast< ::Protocol::StatType >(_impl_.type_);
+}
+inline ::Protocol::StatType Stat::type() const {
+  // @@protoc_insertion_point(field_get:Protocol.Stat.type)
+  return _internal_type();
+}
+inline void Stat::_internal_set_type(::Protocol::StatType value) {
+  
+  _impl_.type_ = value;
+}
+inline void Stat::set_type(::Protocol::StatType value) {
+  _internal_set_type(value);
+  // @@protoc_insertion_point(field_set:Protocol.Stat.type)
+}
+
+// int64 value = 2;
+inline void Stat::clear_value() {
+  _impl_.value_ = int64_t{0};
+}
+inline int64_t Stat::_internal_value() const {
+  return _impl_.value_;
+}
+inline int64_t Stat::value() const {
+  // @@protoc_insertion_point(field_get:Protocol.Stat.value)
+  return _internal_value();
+}
+inline void Stat::_internal_set_value(int64_t value) {
+  
+  _impl_.value_ = value;
+}
+inline void Stat::set_value(int64_t value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:Protocol.Stat.value)
+}
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// StatInfo
+
+// map<int32, int64> values = 1;
+inline int StatInfo::_internal_values_size() const {
+  return _impl_.values_.size();
+}
+inline int StatInfo::values_size() const {
+  return _internal_values_size();
+}
+inline void StatInfo::clear_values() {
+  _impl_.values_.Clear();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >&
+StatInfo::_internal_values() const {
+  return _impl_.values_.GetMap();
+}
+inline const ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >&
+StatInfo::values() const {
+  // @@protoc_insertion_point(field_map:Protocol.StatInfo.values)
+  return _internal_values();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >*
+StatInfo::_internal_mutable_values() {
+  return _impl_.values_.MutableMap();
+}
+inline ::PROTOBUF_NAMESPACE_ID::Map< int32_t, int64_t >*
+StatInfo::mutable_values() {
+  // @@protoc_insertion_point(field_mutable_map:Protocol.StatInfo.values)
+  return _internal_mutable_values();
+}
+
+// -------------------------------------------------------------------
+
+// S_DISCONNECT
+
+// .Protocol.DisconnectReason reason = 1;
+inline void S_DISCONNECT::clear_reason() {
+  _impl_.reason_ = 0;
+}
+inline ::Protocol::DisconnectReason S_DISCONNECT::_internal_reason() const {
+  return static_cast< ::Protocol::DisconnectReason >(_impl_.reason_);
+}
+inline ::Protocol::DisconnectReason S_DISCONNECT::reason() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DISCONNECT.reason)
+  return _internal_reason();
+}
+inline void S_DISCONNECT::_internal_set_reason(::Protocol::DisconnectReason value) {
+  
+  _impl_.reason_ = value;
+}
+inline void S_DISCONNECT::set_reason(::Protocol::DisconnectReason value) {
+  _internal_set_reason(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DISCONNECT.reason)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace Protocol
+
+PROTOBUF_NAMESPACE_OPEN
+
+template <> struct is_proto_enum< ::Protocol::CharacterClass> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::CharacterClass>() {
+  return ::Protocol::CharacterClass_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::GearPart> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::GearPart>() {
+  return ::Protocol::GearPart_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::StatType> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::StatType>() {
+  return ::Protocol::StatType_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::DisconnectReason> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::DisconnectReason>() {
+  return ::Protocol::DisconnectReason_descriptor();
+}
+
+PROTOBUF_NAMESPACE_CLOSE
 
 // @@protoc_insertion_point(global_scope)
 

@@ -4,10 +4,10 @@
 struct PlayerSaveData;
 
 /**
- * 접속 종료 저장과 입장 불러오기의 순서를 맞추는 조율자.
+ * 진행 저장과 입장 불러오기의 순서를 맞추는 조율자.
  *
  * 같은 계정의 저장이 끝나기 전에는 그 계정의 진행을 불러오지 않도록 지킨다.
- * 접속 종료, 중복 로그인, 입장 요청이 저장과 불러오기에 닿을 때는 모두 이 클래스를 거친다.
+ * 접속 종료, 로비 복귀, 같은 계정의 새 로비 접속, 입장 요청이 저장과 불러오기에 닿을 때는 모두 이 클래스를 거친다.
  */
 class ProgressCoordinator
 {
@@ -31,10 +31,15 @@ public:
      */
     void OnDisconnected(int64 userId, const PlayerRef& player);
     /**
-     * 같은 계정의 새 로그인이 기존 세션을 밀어내기 직전에 로그인 잡(DB 스레드)이 부른다.
+     * 로비 복귀를 받은 핸들러(IOCP 스레드)가 부른다. 접속 종료와 같은 절차로 player를 룸에서 빼고 저장한 뒤,
+     * 이 계정의 DB 잡 안에서 afterSave를 부른다. 저장할 것이 없으면 저장 없이 부른다.
+     */
+    void OnReturnToLobby(int64 userId, const PlayerRef& player, CallbackType afterSave);
+    /**
+     * 같은 계정의 새 로비 접속이 앞 세션을 밀어내기 직전에 로비 접속 잡(DB 스레드)이 부른다.
      * 입장 전의 세션이면 replacedPlayer는 nullptr.
      */
-    void OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer);
+    void OnDuplicateConnection(int64 userId, const PlayerRef& replacedPlayer);
     /**
      * 게임 입장 창구가 부른다. 어느 스레드에서 불러도 된다. 이 계정의 저장이 끝난 뒤 DB 잡 안에서 load.run을 부른다.
      * PARKED_LOAD_TIMEOUT_MS 안에 저장이 끝나지 않거나 이미 기다리는 입장이 있으면 load.reject를 부른다.
@@ -46,7 +51,7 @@ public:
 
     //~ 룸 큐
 public:
-    /** 끊긴 플레이어를 room에서 빼고 저장한다. room의 큐 위에서만 부른다. */
+    /** 끊긴 플레이어를 room에서 빼고 저장한다. 그사이 소속 룸이 바뀌었으면 그 룸의 큐로 넘긴다. room의 큐 위에서만 부른다. */
     void LeaveRoomAndSave(const RoomRef& room, const PlayerRef& player);
     /**
      * 어느 룸에도 없는 끊긴 플레이어를 저장한다.
@@ -56,6 +61,8 @@ public:
 
     //~ 공통
 private:
+    /** 접속 종료와 로비 복귀가 함께 쓰는 퇴장과 저장. 저장 대기를 걸고, 저장할 것이 없으면 곧바로 푼다. */
+    void LeaveGameAndSave(int64 userId, const PlayerRef& player);
     /** 저장하지 않기로 한 계정의 대기를 풀고, 맡겨 둔 불러오기가 있으면 DB 큐에 넣는다. */
     void ReleaseHold(int64 userId);
 

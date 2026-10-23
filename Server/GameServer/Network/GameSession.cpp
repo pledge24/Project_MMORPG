@@ -5,7 +5,7 @@
 
 void GameSession::OnDisconnected()
 {
-	// 조율자가 저장 대기를 건 뒤에 계정 등록을 지운다. 반대로 하면 그사이 같은 계정의 새 로그인이 대기 없이 입장해 저장 전의 진행을 불러온다.
+	// 조율자가 저장 대기를 건 뒤에 계정 등록을 지운다. 반대로 하면 그사이 같은 계정의 새 로비 접속이 대기 없이 입장해 저장 전의 진행을 불러온다.
 	GProgressCoordinator->OnDisconnected(_userId, _player.load());
 
 	GSessionManager->UnregisterUser(static_pointer_cast<GameSession>(shared_from_this()));
@@ -40,9 +40,14 @@ void GameSession::OnSend(int32 len)
 {
 }
 
+bool GameSession::BeginLobbyConnect()
+{
+	return TryChangePhase(SessionPhase::BEFORE_LOBBY, SessionPhase::CONNECTING_LOBBY);
+}
+
 bool GameSession::CompleteLobbyConnect()
 {
-	return TryChangePhase(SessionPhase::BEFORE_LOBBY, SessionPhase::LOBBY);
+	return TryChangePhase(SessionPhase::CONNECTING_LOBBY, SessionPhase::LOBBY);
 }
 
 bool GameSession::BeginGameEntry()
@@ -58,6 +63,21 @@ bool GameSession::CompleteGameEntry()
 bool GameSession::CancelGameEntry()
 {
 	return TryChangePhase(SessionPhase::ENTERING_GAME, SessionPhase::LOBBY);
+}
+
+bool GameSession::BeginLobbyReturn()
+{
+	return TryChangePhase(SessionPhase::IN_GAME, SessionPhase::RETURNING_TO_LOBBY);
+}
+
+bool GameSession::CompleteLobbyReturn()
+{
+	// 단계보다 플레이어를 먼저 비운다. 로비 단계가 된 뒤에 온 게임 입장이 남은 플레이어를 보고 등록에 실패하지 않게 하려는 것이다.
+	if (GetPhase() != SessionPhase::RETURNING_TO_LOBBY)
+		return false;
+
+	_player.store(nullptr);
+	return TryChangePhase(SessionPhase::RETURNING_TO_LOBBY, SessionPhase::LOBBY);
 }
 
 bool GameSession::TryChangePhase(SessionPhase from, SessionPhase to)

@@ -73,3 +73,42 @@ int32 AccountDAO::RecordLogin(DBConnection& conn, int64 accountId)
 
     return bindObject._slotCount;
 }
+
+int32 AccountDAO::LoadCharacterSlotCount(DBConnection& conn, int64 accountId)
+{
+    const int PARAMS = 1;
+    const int COLS = 1;
+
+    struct BindObject
+    {
+        BindObject(DBBind<PARAMS, COLS>& dbBind, int64 accountId)
+            : _accountId(accountId)
+        {
+            dbBind.BindParam(0, _accountId);
+            dbBind.BindCol(0, _slotCount);
+        }
+
+        //~ Params
+        int64 _accountId;
+
+        //~ Cols
+        int32 _slotCount = 0;
+    };
+
+    DBBind<PARAMS, COLS> dbBind(conn, LR"SQL(
+        SELECT CharacterSlotCount
+        FROM dbo.Account
+        WHERE AccountId = (?);
+    )SQL");
+
+    BindObject bindObject(dbBind, accountId);
+
+    if (dbBind.Execute() == false)
+        throw DBError(__func__, "쿼리 실행 실패");
+
+    // 로비 복귀는 로비 접속이 계정 행을 만든 뒤에만 온다. 행이 없으면 그 사이 누가 행을 지운 것이다.
+    if (conn.Fetch() == false)
+        throw DBError(__func__, "계정 행이 없다");
+
+    return bindObject._slotCount;
+}

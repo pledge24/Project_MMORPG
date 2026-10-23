@@ -6,44 +6,43 @@
 
 namespace
 {
-    // 착용과 해제의 응답. 본인에게는 바뀐 칸과 스탯까지, 다른 플레이어에게는 외형만 보낸다.
+    // 착용과 해제의 응답. 본인에게는 바뀐 칸과 스탯을 보내고, 외형은 본인을 포함한 룸의 모든 플레이어에게 알린다.
     template<typename ResponseType>
-    void SendGearChange(Room& room, const PlayerRef& player, ResponseType& response, optional<GearChangeResult>& result)
+    void SendGearChange(Room& room, const PlayerRef& player, ItemOutcome<GearChangeResult>& outcome)
     {
-        const int64 entityId = player->GetEntityId();
-        response.set_entity_id(entityId);
-        response.set_success(result.has_value());
+        auto session = player->GetSession();
+        if (session == nullptr)
+            return;
 
-        if (result.has_value() == false)
+        ResponseType response;
+        response.set_result(outcome.GetResult());
+        if (outcome.IsSuccess() == false)
         {
-            SendPacket(player->GetSession(), response);
+            SendPacket(session, response);
             return;
         }
 
-        // gear_type과 template_id는 다른 플레이어에게 보일 외형(장비 부위와 그 부위의 아이템)이다.
-        response.set_gear_type(result->gearType);
-        response.set_template_id(result->templateId);
-        SendBufferRef othersBuffer = ServerPacketHandler::MakeSerializedPacket(response);
+        ItemPackets::AddChangedSlots(outcome->changedSlots, response.mutable_changed_slots());
+        *response.mutable_changed_stats() = std::move(outcome->changedStats);
+        SendPacket(session, response);
 
-        ItemPackets::AddChangedSlots(result->changedSlots, response.mutable_changed_slots());
-        *response.mutable_updated_stat() = std::move(result->updatedStats);
-        SendPacket(player->GetSession(), response);
-
-        room.Broadcast(othersBuffer, entityId);
+        // 외형은 요청한 인벤토리 칸이 아니라 장착된 장비 부위로 알린다.
+        Protocol::S_GEAR_APPEARANCE appearancePkt;
+        appearancePkt.set_entity_id(player->GetEntityId());
+        appearancePkt.set_gear_part(outcome->gearPart);
+        appearancePkt.set_template_id(outcome->templateId);
+        room.Broadcast(ServerPacketHandler::MakeSerializedPacket(appearancePkt));
     }
 
     // 소모품 사용의 응답. 칸을 골라 쓴 요청과 퀵슬롯으로 쓴 요청이 같은 응답을 받는다.
-    void SendUseItem(const GameSessionRef& session, const PlayerRef& player, optional<UseItemResult>& result)
+    void SendUseItem(const GameSessionRef& session, ItemOutcome<UseItemResult>& outcome)
     {
-        // 거부 응답에도 싣는다. 클라이언트는 이 id로 내 플레이어를 찾은 뒤에야 요청 대기를 푼다.
         Protocol::S_USE_ITEM useItemPkt;
-        useItemPkt.set_entity_id(player->GetEntityId());
-
-        useItemPkt.set_success(result.has_value());
-        if (result.has_value())
+        useItemPkt.set_result(outcome.GetResult());
+        if (outcome.IsSuccess())
         {
-            ItemPackets::AddChangedSlots(result->changedSlots, useItemPkt.mutable_changed_slots());
-            *useItemPkt.mutable_updated_stat() = std::move(result->updatedStats);
+            ItemPackets::AddChangedSlots(outcome->changedSlots, useItemPkt.mutable_changed_slots());
+            *useItemPkt.mutable_changed_stats() = std::move(outcome->changedStats);
         }
 
         SendPacket(session, useItemPkt);
@@ -61,12 +60,12 @@ void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Prot
         return;
 
     Protocol::S_BUY_ITEM buyItemPkt;
-    optional<BuyItemResult> result = player->ProcessBuyItem(pkt.template_id());
-    buyItemPkt.set_success(result.has_value());
-    if (result.has_value())
+    ItemOutcome<BuyItemResult> outcome = player->ProcessBuyItem(pkt.template_id());
+    buyItemPkt.set_result(outcome.GetResult());
+    if (outcome.IsSuccess())
     {
-        ItemPackets::AddChangedSlots(result->changedSlots, buyItemPkt.mutable_changed_slots());
-        buyItemPkt.set_gold(result->gold);
+        ItemPackets::AddChangedSlots(outcome->changedSlots, buyItemPkt.mutable_changed_slots());
+        buyItemPkt.set_gold(outcome->gold);
     }
 
     SendPacket(session, buyItemPkt);
@@ -83,12 +82,12 @@ void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Pro
         return;
 
     Protocol::S_SELL_ITEM sellItemPkt;
-    optional<SellItemResult> result = player->ProcessSellItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
-    sellItemPkt.set_success(result.has_value());
-    if (result.has_value())
+    ItemOutcome<SellItemResult> outcome = player->ProcessSellItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
+    sellItemPkt.set_result(outcome.GetResult());
+    if (outcome.IsSuccess())
     {
-        ItemPackets::AddChangedSlots(result->changedSlots, sellItemPkt.mutable_changed_slots());
-        sellItemPkt.set_gold(result->gold);
+        ItemPackets::AddChangedSlots(outcome->changedSlots, sellItemPkt.mutable_changed_slots());
+        sellItemPkt.set_gold(outcome->gold);
     }
 
     SendPacket(session, sellItemPkt);
@@ -104,8 +103,8 @@ void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Prot
     if (session == nullptr)
         return;
 
-    optional<UseItemResult> result = player->ProcessUseItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()), ::GetTickCount64());
-    SendUseItem(session, player, result);
+    ItemOutcome<UseItemResult> outcome = player->ProcessUseItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()), ::GetTickCount64());
+    SendUseItem(session, outcome);
 }
 
 void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Protocol::C_EQUIP_GEAR& pkt)
@@ -114,9 +113,8 @@ void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Pr
     if (room.Contains(player->GetEntityId()) == false)
         return;
 
-    Protocol::S_EQUIP_GEAR equipGearPkt;
-    optional<GearChangeResult> result = player->ProcessEquipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
-    SendGearChange(room, player, equipGearPkt, result);
+    ItemOutcome<GearChangeResult> outcome = player->ProcessEquipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
+    SendGearChange<Protocol::S_EQUIP_GEAR>(room, player, outcome);
 }
 
 void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const Protocol::C_UNEQUIP_GEAR& pkt)
@@ -125,9 +123,8 @@ void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const 
     if (room.Contains(player->GetEntityId()) == false)
         return;
 
-    Protocol::S_UNEQUIP_GEAR unequipGearPkt;
-    optional<GearChangeResult> result = player->ProcessUnequipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
-    SendGearChange(room, player, unequipGearPkt, result);
+    ItemOutcome<GearChangeResult> outcome = player->ProcessUnequipGear(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
+    SendGearChange<Protocol::S_UNEQUIP_GEAR>(room, player, outcome);
 }
 
 void ItemRequests::HandleSetQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_SET_QUICK_SLOT& pkt)
@@ -141,7 +138,6 @@ void ItemRequests::HandleSetQuickSlot(Room& room, const PlayerRef& player, const
         return;
 
     Protocol::S_SET_QUICK_SLOT setQuickSlotPkt;
-    setQuickSlotPkt.set_success(false);
 
     // 열거형에 없는 종류는 판정에 넘기지 않고 거절한다. 참조가 없으면 해제 요청이다.
     optional<QuickSlotRef> ref;
@@ -150,15 +146,16 @@ void ItemRequests::HandleSetQuickSlot(Room& room, const PlayerRef& player, const
         ref = ItemPackets::FromProto(pkt.ref());
         if (ref.has_value() == false)
         {
+            setQuickSlotPkt.set_result(Protocol::ITEM_RESULT_INVALID_REQUEST);
             SendPacket(session, setQuickSlotPkt);
             return;
         }
     }
 
-    optional<SetQuickSlotResult> result = player->ProcessSetQuickSlot(pkt.slot_index(), ref);
-    setQuickSlotPkt.set_success(result.has_value());
-    if (result.has_value())
-        ItemPackets::AddQuickSlots(result->changedQuickSlots, setQuickSlotPkt.mutable_changed_quick_slots());
+    ItemOutcome<SetQuickSlotResult> outcome = player->ProcessSetQuickSlot(pkt.quick_slot_index(), ref);
+    setQuickSlotPkt.set_result(outcome.GetResult());
+    if (outcome.IsSuccess())
+        ItemPackets::AddQuickSlots(outcome->changedQuickSlots, setQuickSlotPkt.mutable_changed_quick_slots());
 
     SendPacket(session, setQuickSlotPkt);
 }
@@ -173,6 +170,6 @@ void ItemRequests::HandleUseQuickSlot(Room& room, const PlayerRef& player, const
     if (session == nullptr)
         return;
 
-    optional<UseItemResult> result = player->ProcessUseQuickSlot(pkt.slot_index(), ::GetTickCount64());
-    SendUseItem(session, player, result);
+    ItemOutcome<UseItemResult> outcome = player->ProcessUseQuickSlot(pkt.quick_slot_index(), ::GetTickCount64());
+    SendUseItem(session, outcome);
 }

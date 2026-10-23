@@ -171,8 +171,10 @@
   <ItemGroup Label="테스트 소스">
     <ClCompile Include="PacketHandlerTests.cpp" />
     <ClCompile Include="..\GameServer\Network\ItemRequests.cpp" />
+    <ClCompile Include="..\GameServer\Network\ChatRequests.cpp" />
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="MapLoadTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="GameDBSchemaTests.cpp" />
     <ClCompile Include="GameDBCharacterListTests.cpp" />
@@ -189,16 +191,22 @@
     <ClCompile Include="GameEntryTests.cpp" />
     <ClCompile Include="..\GameServer\Network\GameEntry.cpp" />
     <ClCompile Include="AuthTicketTests.cpp" />
+    <ClCompile Include="WorldListingTests.cpp" />
     <ClCompile Include="SessionDisconnectTests.cpp" />
     <ClCompile Include="..\GameServer\Network\AuthTicket.cpp" />
+    <ClCompile Include="..\GameServer\Network\WorldListing.cpp" />
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="PacketSerializationTests.cpp" />
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
+    <ClCompile Include="CombatRequestTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
+    <ClCompile Include="ChatRequestsTests.cpp" />
+    <ClCompile Include="ItemChatRequestTests.cpp" />
     <ClCompile Include="LevelingTests.cpp" />
     <ClCompile Include="LobbyDataTests.cpp" />
+    <ClCompile Include="LobbyRequestsTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
@@ -247,15 +255,6 @@
     <ClCompile Include="..\GameServer\Network\ProgressCoordinator.cpp" />
     <ClCompile Include="..\GameServer\Core\Config.cpp" />
     <ClCompile Include="..\GameServer\Network\ServerPacketHandler.cpp" />
-    <ClCompile Include="..\GameServer\Protocol\Enum.pb.cc">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Protocol\Protocol.pb.cc">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\GameServer\Protocol\Struct.pb.cc">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="..\GameServer\Protocol\Chat.pb.cc">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
@@ -279,6 +278,8 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Lobby\CharacterCreation.cpp" />
     <ClCompile Include="..\GameServer\Lobby\LobbyPacketHandlers.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\LobbyRequests.cpp" />
+    <ClCompile Include="..\GameServer\Lobby\LobbyReturn.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\Leveling.cpp" />
     <ClCompile Include="..\GameServer\Game\Progress\InitialProgress.cpp" />
     <ClCompile Include="..\GameServer\Core\DataCrossCheck.cpp" />

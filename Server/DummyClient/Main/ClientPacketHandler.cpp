@@ -8,12 +8,17 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return false;
 }
 
-bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
+bool Handle_S_DISCONNECT(PacketSessionRef& session, Protocol::S_DISCONNECT& pkt)
 {
 	return false;
 }
 
-bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
+bool Handle_S_CONNECT_LOBBY(PacketSessionRef& session, Protocol::S_CONNECT_LOBBY& pkt)
+{
+	return true;
+}
+
+bool Handle_S_CHARACTER_LIST(PacketSessionRef& session, Protocol::S_CHARACTER_LIST& pkt)
 {
 	return true;
 }
@@ -33,17 +38,12 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 	return false;
 }
 
-bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
-{
-	return false;
-}
-
-bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
-{
-	return false;
-}
-
 bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
+{
+	return false;
+}
+
+bool Handle_S_USE_PORTAL(PacketSessionRef& session, Protocol::S_USE_PORTAL& pkt)
 {
 	return false;
 }
@@ -63,7 +63,17 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
     return false;
 }
 
+bool Handle_S_GEAR_APPEARANCE(PacketSessionRef& session, Protocol::S_GEAR_APPEARANCE& pkt)
+{
+	return false;
+}
+
 bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
+{
+	return false;
+}
+
+bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
 {
 	return false;
 }
@@ -108,7 +118,7 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
 	return false;
 }
 
-bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
+bool Handle_S_REWARD(PacketSessionRef& session, Protocol::S_REWARD& pkt)
 {
 	return false;
 }
@@ -118,9 +128,19 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 	return false;
 }
 
+bool Handle_S_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::S_RETURN_TO_LOBBY& pkt)
+{
+	return false;
+}
+
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
-	GLogger->Info("채팅: {}", pkt.msg());
+	return true;
+}
+
+bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& pkt)
+{
+	GLogger->Info("채팅: {}", pkt.message());
 
 	return true;
 }

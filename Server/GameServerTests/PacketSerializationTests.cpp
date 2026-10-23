@@ -38,11 +38,11 @@ namespace
 // 가변 길이 문자열 — 헤더의 size 계산이 페이로드 길이를 제대로 따라가는지
 TEST(PacketSerialization, ChatRoundTrip)
 {
-    Protocol::S_CHAT pkt;
+    Protocol::S_CHAT_MESSAGE pkt;
     pkt.set_entity_id(4242);
-    pkt.set_msg("한글과 ASCII가 섞인 채팅 메시지");   // /utf-8 이므로 좁은 리터럴이 UTF-8 바이트다
+    pkt.set_message("한글과 ASCII가 섞인 채팅 메시지");   // /utf-8 이므로 좁은 리터럴이 UTF-8 바이트다
 
-    ExpectRoundTrip(pkt, PKT_S_CHAT);
+    ExpectRoundTrip(pkt, PKT_S_CHAT_MESSAGE);
 }
 
 // 중첩 메시지 + repeated — 페이로드 오프셋이 어긋나면 여기서 걸린다
@@ -52,8 +52,10 @@ TEST(PacketSerialization, MoveRoundTrip)
 
     for (int32 i = 0; i < 3; i++)
     {
-        Protocol::PosInfo* info = pkt.add_info();
-        info->set_entity_id(1000 + i);
+        Protocol::EntityMove* move = pkt.add_moves();
+        move->set_entity_id(1000 + i);
+
+        Protocol::PosInfo* info = move->mutable_pos_info();
         info->set_yaw(90.5f * i);
         info->set_state(Protocol::MoveState::MOVE_STATE_RUN);
 
@@ -77,18 +79,18 @@ namespace
 {
     constexpr size_t MAX_BODY_SIZE = UINT16_MAX - sizeof(PacketHeader);
 
-    /** 본문이 정확히 bodySize바이트인 S_CHAT. msg 길이가 16384 이상이면 태그 1바이트와 길이 3바이트가 붙는다. */
-    Protocol::S_CHAT MakeChatWithBodySize(size_t bodySize)
+    /** 본문이 정확히 bodySize바이트인 S_CHAT_MESSAGE. message 길이가 16384 이상이면 태그 1바이트와 길이 3바이트가 붙는다. */
+    Protocol::S_CHAT_MESSAGE MakeChatWithBodySize(size_t bodySize)
     {
-        Protocol::S_CHAT pkt;
-        pkt.set_msg(string(bodySize - 4, 'a'));
+        Protocol::S_CHAT_MESSAGE pkt;
+        pkt.set_message(string(bodySize - 4, 'a'));
         return pkt;
     }
 }
 
 TEST(PacketSerialization, LargestBodyFitsHeaderSize)
 {
-    Protocol::S_CHAT pkt = MakeChatWithBodySize(MAX_BODY_SIZE);
+    Protocol::S_CHAT_MESSAGE pkt = MakeChatWithBodySize(MAX_BODY_SIZE);
     ASSERT_EQ(pkt.ByteSizeLong(), MAX_BODY_SIZE) << "준비: 본문 크기를 상한에 맞추지 못했다";
 
     SendBufferRef sendBuffer = ServerPacketHandler::MakeSerializedPacket(pkt);
@@ -101,7 +103,7 @@ TEST(PacketSerialization, LargestBodyFitsHeaderSize)
 
 TEST(PacketSerialization, BodyLargerThanHeaderSizeIsNotSerialized)
 {
-    Protocol::S_CHAT pkt = MakeChatWithBodySize(MAX_BODY_SIZE + 1);
+    Protocol::S_CHAT_MESSAGE pkt = MakeChatWithBodySize(MAX_BODY_SIZE + 1);
     ASSERT_EQ(pkt.ByteSizeLong(), MAX_BODY_SIZE + 1) << "준비: 본문 크기를 상한 + 1에 맞추지 못했다";
 
     EXPECT_EQ(ServerPacketHandler::MakeSerializedPacket(pkt), nullptr)

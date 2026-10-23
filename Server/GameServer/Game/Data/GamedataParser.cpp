@@ -24,18 +24,18 @@ namespace
 
     /** 착용 조건의 직업 이름 → 직업. */
     const unordered_map<string_view, Protocol::CharacterClass> CLASS_BY_NAME = {
-        { "warrior", Protocol::CLASS_TYPE_WARRIOR },
-        { "mage", Protocol::CLASS_TYPE_MAGE },
+        { "warrior", Protocol::CHARACTER_CLASS_WARRIOR },
+        { "mage", Protocol::CHARACTER_CLASS_MAGE },
     };
 
     /** 장비의 세부 종류(itemSubtype) → 착용 부위. */
-    const unordered_map<string_view, Protocol::GearType> GEAR_TYPE_BY_SUBTYPE = {
-        { JsonProperty::Item::GearSubtype_Helmet, Protocol::GEAR_TYPE_HELMET },
-        { JsonProperty::Item::GearSubtype_Chest, Protocol::GEAR_TYPE_CHEST },
-        { JsonProperty::Item::GearSubtype_Legs, Protocol::GEAR_TYPE_LEGS },
-        { JsonProperty::Item::GearSubtype_Arms, Protocol::GEAR_TYPE_ARMS },
-        { JsonProperty::Item::GearSubtype_Boots, Protocol::GEAR_TYPE_BOOTS },
-        { JsonProperty::Item::GearSubtype_Sword, Protocol::GEAR_TYPE_WEAPON },
+    const unordered_map<string_view, Protocol::GearPart> GEAR_PART_BY_SUBTYPE = {
+        { JsonProperty::Item::GearSubtype_Helmet, Protocol::GEAR_PART_HELMET },
+        { JsonProperty::Item::GearSubtype_Chest, Protocol::GEAR_PART_CHEST },
+        { JsonProperty::Item::GearSubtype_Legs, Protocol::GEAR_PART_LEGS },
+        { JsonProperty::Item::GearSubtype_Arms, Protocol::GEAR_PART_ARMS },
+        { JsonProperty::Item::GearSubtype_Boots, Protocol::GEAR_PART_BOOTS },
+        { JsonProperty::Item::GearSubtype_Sword, Protocol::GEAR_PART_WEAPON },
     };
 
     /** 재화 표의 재화 종류 이름 → 재화 종류. */
@@ -228,8 +228,8 @@ namespace
                 const string subtype = Require<string>(row, ItemSubtype);
                 if (item.itemType == Protocol::ITEM_TYPE_GEAR)
                 {
-                    auto gearTypeIt = GEAR_TYPE_BY_SUBTYPE.find(subtype);
-                    if (gearTypeIt == GEAR_TYPE_BY_SUBTYPE.end())
+                    auto gearTypeIt = GEAR_PART_BY_SUBTYPE.find(subtype);
+                    if (gearTypeIt == GEAR_PART_BY_SUBTYPE.end())
                         throw RowError{ format("장비의 'itemSubtype' \"{}\"에 맞는 착용 부위가 없다", subtype) };
 
                     item.gearType = gearTypeIt->second;
@@ -537,7 +537,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
 {
     try
     {
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ParseLevels(GamedataFile::WARRIOR_LEVELS, documents.warriorLevels);
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ParseLevels(GamedataFile::WARRIOR_LEVELS, documents.warriorLevels);
         tables.items = ParseItems(GamedataFile::ITEMS, documents.items);
         tables.monsters = ParseMonsters(GamedataFile::MONSTERS, documents.monsters);
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);

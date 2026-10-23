@@ -2,6 +2,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "Game/Items/InventorySections.h"
 #include "Game/QuickSlots/QuickSlotComponent.h"
 #include "Game/Progress/Leveling.h"
 #include "Game/Room/Room.h"
@@ -23,7 +24,6 @@ Player::Player()
 {
 	_isPlayer = true;
 
-    _entityInfo->set_entity_type(Protocol::EntityType::ENTITY_TYPE_PLAYER);
     _playerInfo = _entityInfo->mutable_player_info();
 }
 
@@ -46,7 +46,7 @@ bool Player::Init(const SpawnParams& params)
     _quickSlots = make_shared<QuickSlotComponent>(self);
 
     if (params.progress != nullptr)
-        return ApplyProgress(*params.progress, params.enterRoomId) && OnLoaded();
+        return ApplyProgress(*params.progress) && OnLoaded();
 
 	return true;
 }
@@ -85,24 +85,21 @@ bool Player::OnLoaded()
 	return true;
 }
 
-bool Player::ApplyProgress(const PlayerProgress& progress, int32 enterRoomId)
+bool Player::ApplyProgress(const PlayerProgress& progress)
 {
     const int64 characterId = progress.characterId;
-    _playerInfo->set_character_id(characterId);
-    _playerInfo->set_class_(static_cast<Protocol::CharacterClass>(progress.classId));
+    _characterId = characterId;
+    _characterClass = static_cast<Protocol::CharacterClass>(progress.classId);
     _playerInfo->set_name(progress.name);
     _playerInfo->set_level(progress.level);
 
-    // 클라가 C_ENTER_MAP을 보내지 않으므로 여기서 _enteringRoomId를 채운다.
-    // 채우지 않으면 최초 입장(INITIAL) 검증이 _enteringRoomId == -1로 실패한다.
-    OnEnterMap(progress.mapId, enterRoomId);
+    _mapId = progress.mapId;
 
     Protocol::PosInfo spawnPosInfo;
     spawnPosInfo.mutable_pos()->set_x(progress.pos.x);
     spawnPosInfo.mutable_pos()->set_y(progress.pos.y);
     spawnPosInfo.mutable_pos()->set_z(progress.pos.z);
     spawnPosInfo.set_yaw(progress.yaw);
-    spawnPosInfo.set_entity_id(GetEntityId());
     spawnPosInfo.set_state(Protocol::MOVE_STATE_IDLE);
     SetPosInfo(spawnPosInfo);
 
@@ -111,7 +108,7 @@ bool Player::ApplyProgress(const PlayerProgress& progress, int32 enterRoomId)
 
     // DB의 경험치는 누적값이고 레벨은 캐릭터 목록에 보일 사본이다. 레벨은 누적 경험치와 레벨 표로 다시 정한다.
     // 레벨 표가 없는 직업은 OnLoaded의 스탯 계산이 거절한다.
-    if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
+    if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
     {
         const int64 loadedExp = progress.totalExp;
         const int64 clampedExp = Leveling::ClampTotalExp(*classLevelTable, loadedExp);
@@ -184,19 +181,19 @@ bool Player::ValidateLoadedStat()
     return true;
 }
 
-optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
+ItemOutcome<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
 {
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     const int64 buyPrice = itemTemplate->buyPrice * count;
 
     if (_gold < buyPrice)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_NOT_ENOUGH_GOLD };
 
     if (_inventory->AddNewItem(templateId, count) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVENTORY_FULL };
 
     _gold -= buyPrice;
 
@@ -207,21 +204,29 @@ optional<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
     return result;
 }
 
-optional<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request, int32 count)
+ItemOutcome<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request, int32 count)
 {
+    // 인벤토리 구역의 아이템만 판다. 착용 장비는 벗은 뒤에 판다.
+    if (InventorySections::FindItemType(request.address.container).has_value() == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
+
     // 가격은 요청이 아니라 칸에 든 아이템으로 정한다.
     const ItemInstance* owned = _inventory->FindItem(request.address);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
+    // 칸에는 표에 있는 아이템만 들어가므로, 표에 없으면 기획 데이터가 바뀐 것이다.
     const ItemTemplate* itemTemplate = Gamedata::FindItem(owned->templateId);
-    if (itemTemplate == nullptr || itemTemplate->sellable == false)
-        return nullopt;
+    if (itemTemplate == nullptr)
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
+
+    if (itemTemplate->sellable == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_NOT_SELLABLE };
 
     const int64 sellPrice = itemTemplate->sellPrice * count;
 
     if (_inventory->RemoveItem(request.address, count) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     _gold += sellPrice;
 
@@ -232,29 +237,30 @@ optional<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& request,
     return result;
 }
 
-optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs)
+ItemOutcome<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, uint64 nowMs)
 {
     if (IsDead())
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_DEAD };
 
     if (request.address.container != ContainerType::INVENTORY_CONSUMABLE)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     // 효과는 요청이 아니라 칸에 든 아이템으로 정한다. RemoveItem이 마지막 한 개를 지우므로 그 전에 읽는다.
     const ItemInstance* owned = _inventory->FindItem(request.address);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
+    // 칸에는 표에 있는 아이템만 들어가므로, 표에 없으면 기획 데이터가 바뀐 것이다.
     const int32 templateId = owned->templateId;
     const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
     if (itemTemplate == nullptr)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     if (_inventory->IsCoolingDown(templateId, nowMs))
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_COOLDOWN };
 
     if (_inventory->RemoveItem(request.address) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     _inventory->StartCooldown(templateId, nowMs);
 
@@ -272,7 +278,7 @@ optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, u
             const int64 updatedValue = min(maxValue, GetStatValue(curType) + amount);
             SetStatValue(curType, updatedValue);
 
-            ProtoUtil::AddStat(&result.updatedStats, curType, updatedValue);
+            ProtoUtil::AddStat(&result.changedStats, curType, updatedValue);
         };
 
     restore(itemTemplate->hpRestoreRatio, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
@@ -281,92 +287,97 @@ optional<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request, u
     return result;
 }
 
-optional<GearChangeResult> Player::ProcessEquipGear(const ItemSlotRequest& request)
+ItemOutcome<GearChangeResult> Player::ProcessEquipGear(const ItemSlotRequest& request)
 {
+    if (InventorySections::FindItemType(request.address.container).has_value() == false)
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
+
     // 입는 것은 요청이 아니라 인벤토리 칸에 든 장비다.
     const ItemInstance* owned = _inventory->FindItem(request.address);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
     // 착용이 실패하면 아무것도 바뀌지 않는다. 착용이 성공하면 위에서 확인한 칸이라 제거는 실패하지 않는다.
     const ItemInstance ownedItem = *owned;
-    const optional<int32> gearType = _equipment->Equip(ownedItem);
-    if (gearType.has_value() == false)
-        return nullopt;
+    ItemOutcome<Protocol::GearPart> equipped = _equipment->Equip(ownedItem);
+    if (equipped.IsSuccess() == false)
+        return ItemRejection{ equipped.GetResult() };
 
     // 외형을 바꾸는 쪽은 요청한 칸(인벤토리 칸)이 아니라 장착된 장비 부위를 알아야 한다.
     GearChangeResult result;
-    result.gearType = gearType.value();
+    result.gearPart = *equipped;
     result.templateId = ownedItem.templateId;
     RefreshEquippedGearSummary();
 
     if (_inventory->RemoveItem(request.address) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     result.changedSlots = TakeItemChanges();
-    RefreshFinalStat(OUT &result.updatedStats);
+    RefreshFinalStat(OUT &result.changedStats);
 
     return result;
 }
 
-optional<GearChangeResult> Player::ProcessUnequipGear(const ItemSlotRequest& request)
+ItemOutcome<GearChangeResult> Player::ProcessUnequipGear(const ItemSlotRequest& request)
 {
     // 돌려받는 것은 요청이 아니라 장비 칸에 든 장비다.
     if (request.address.container != ContainerType::EQUIPPED)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
-    const int32 gearType = request.address.slotIndex;
-    const ItemInstance* owned = _equipment->FindItem(gearType);
+    const int32 gearPart = request.address.slotIndex;
+    const ItemInstance* owned = _equipment->FindItem(gearPart);
     if (MatchesRequest(owned, request) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
     // 넣을 자리가 없으면 장비 칸을 비우기 전에 거절한다. 비운 뒤에 실패하면 장비가 사라진다.
     if (_inventory->CanAddItem(*owned) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVENTORY_FULL };
 
-    optional<ItemInstance> unequipped = _equipment->Unequip(gearType);
+    optional<ItemInstance> unequipped = _equipment->Unequip(gearPart);
     if (unequipped.has_value() == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
-    // 탈착 뒤 그 부위는 비어 있으므로 templateId는 0이다.
+    // 탈착 뒤 그 부위는 비어 있으므로 templateId는 0이다. 장비 칸에서 찾았으므로 부위 값이다.
     GearChangeResult result;
-    result.gearType = gearType;
+    result.gearPart = static_cast<Protocol::GearPart>(gearPart);
     result.templateId = 0;
     RefreshEquippedGearSummary();
 
     if (_inventory->AddItem(unequipped.value()) == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     result.changedSlots = TakeItemChanges();
-    RefreshFinalStat(OUT &result.updatedStats);
+    RefreshFinalStat(OUT &result.changedStats);
 
     return result;
 }
 
-optional<SetQuickSlotResult> Player::ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref)
+ItemOutcome<SetQuickSlotResult> Player::ProcessSetQuickSlot(int32 slotIndex, const optional<QuickSlotRef>& ref)
 {
+    // 범위 밖 번호와 소모품이 아닌 대상은 정상 클라이언트가 보내지 않는다.
     optional<vector<QuickSlot>> changed = _quickSlots->Set(slotIndex, ref);
     if (changed.has_value() == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     return SetQuickSlotResult{ std::move(changed.value()) };
 }
 
-optional<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs)
+ItemOutcome<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowMs)
 {
     // 퀵슬롯은 아이템 정의를 가리키므로 쓸 칸은 서버가 고른다. 사용 규칙은 칸을 골라 쓰는 사용과 한 곳에 둔다.
+    // 클라이언트는 빈 퀵슬롯의 사용을 보내지 않는다.
     const optional<QuickSlotRef> ref = _quickSlots->Find(slotIndex);
     if (ref.has_value() == false || ref->type != QuickSlotRefType::ITEM)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
     const ItemContainer* consumables = GetInventory().FindSection(ContainerType::INVENTORY_CONSUMABLE);
     if (consumables == nullptr)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     // 여러 칸에 나뉘어 있으면 칸 번호가 가장 작은 묶음부터 쓴다.
     const optional<int32> chosenSlot = consumables->FindFirstSlotOf(ref->id);
     if (chosenSlot.has_value() == false)
-        return nullopt;
+        return ItemRejection{ Protocol::ITEM_RESULT_NOT_OWNED };
 
     ItemSlotRequest request;
     request.address = SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, chosenSlot.value() };
@@ -377,7 +388,7 @@ optional<UseItemResult> Player::ProcessUseQuickSlot(int32 slotIndex, uint64 nowM
 RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol::PosInfo& respawnPos)
 {
 	_posInfo->CopyFrom(respawnPos);
-    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다. 같은 룸 리스폰은 OnEnterRoom을 거치지 않는다.
+    // 서버가 위치를 정했으므로 이동 판정의 기준 시각도 지금으로 둔다.
     _lastPositionTick = ::GetTickCount64();
 
     RespawnResult result;
@@ -387,7 +398,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 	case Protocol::RESPAWN_TYPE_TOWN:
 	{
 		// 사망 패널티. 그 레벨 요구치의 10%를 잃고, 레벨은 내려가지 않는다.
-		if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
+		if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
 		{
 			SetTotalExp(*classLevelTable, Leveling::ApplyDeathPenalty(*classLevelTable, _totalExp));
 
@@ -404,16 +415,6 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 
 		break;
 	}
-	case Protocol::RESPAWN_TYPE_CHECKPOINT:
-	case Protocol::RESPAWN_TYPE_RESURRECTION_ITEM:
-	case Protocol::RESPAWN_TYPE_IN_PLACE:
-	case Protocol::RESPAWN_TYPE_PARTY_MEMBER:
-	case Protocol::RESPAWN_TYPE_GUILD_BASE:
-	case Protocol::RESPAWN_TYPE_CASH_ITEM:
-	case Protocol::RESPAWN_TYPE_BATTLE_RESURRECTION:
-	{
-		break;
-	}
 	default:
 		break;
 	}
@@ -425,7 +426,7 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 	return result;
 }
 
-void Player::OnHit(EntityRef attacker, Protocol::AttackInfo attackInfo)
+void Player::OnHit(EntityRef attacker, const AttackInfo& attackInfo)
 {
     Creature::OnHit(attacker, attackInfo);
 
@@ -437,15 +438,30 @@ void Player::OnDie(EntityRef attacker)
 
 }
 
-void Player::OnEnterMap(int32 mapId, int32 roomId)
+void Player::BeginMapLoad(const RoomRef& room, const Protocol::PosInfo& pos)
 {
-    _mapId = mapId;
-    _enteringRoomId = roomId;
+    // 기다리는 동안의 접속 종료는 이 맵과 위치로 저장한다. 목적지를 정한 뒤에 끊겨도 다음 입장이 그 맵에서 시작한다.
+    _mapId = room->GetMapId();
+    _posInfo->CopyFrom(pos);
+    _mapLoadRoomId = room->GetRoomId();
+
+    // 소속 룸을 목적지로 바꿔 두면 맵 로드 완료와 접속 종료가 목적지 룸의 큐 하나에서 차례로 돈다.
+    // 기다리는 동안 온 다른 요청도 그 큐로 가서, 룸에 없는 플레이어의 요청으로 버려진다.
+    AssignRoom(room);
+}
+
+bool Player::FinishMapLoad(int32 roomId)
+{
+    // 룸 번호는 -1이 아니므로 기다리지 않는 플레이어는 여기서 걸린다.
+    if (_mapLoadRoomId != roomId)
+        return false;
+
+    _mapLoadRoomId = -1;
+    return true;
 }
 
 void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos)
 {
-    _enteringRoomId = -1;
     _roomId = enterRoom->GetRoomId();
 
     if(enterPos.has_value())
@@ -469,42 +485,38 @@ void Player::OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& e
 
 void Player::ApplyMove(const Protocol::PosInfo& posInfo, uint64 now)
 {
-    // 위치의 엔티티 id는 패킷 값이 아니라 이 플레이어의 것으로 둔다.
     _posInfo->CopyFrom(posInfo);
-    _posInfo->set_entity_id(GetEntityId());
     _lastPositionTick = now;
 }
 
-void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
+RewardResult Player::OnGetReward(const Reward& reward)
 {
     const int32 oldLevel = _playerInfo->level();
 
-    const Protocol::Reward& reward = rewardResultPkt.reward();
     {
-        _gold += reward.gold();
+        _gold += reward.gold;
 
         // 경험치는 누적값에 더하고, 레벨은 누적 경험치로 다시 정한다. 보상 한 번에 여러 레벨이 오를 수 있다.
         // 최대 레벨에 이르고 남는 경험치는 버린다. 레벨 표가 없는 직업은 오를 레벨이 없으므로 경험치를 쌓지 않는다.
-        if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_()))
+        if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
         {
-            const LevelExp levelExp = SetTotalExp(*classLevelTable, Leveling::AddExp(*classLevelTable, _totalExp, reward.exp()));
+            const LevelExp levelExp = SetTotalExp(*classLevelTable, Leveling::AddExp(*classLevelTable, _totalExp, reward.exp));
             while (_playerInfo->level() < levelExp.level)
                 OnLevelUp();
         }
     }
 
+    RewardResult result;
     {
-        rewardResultPkt.set_updated_exp(GetStatValue(Protocol::STAT_TYPE_EXP));
-        rewardResultPkt.set_updated_gold(_gold);
+        result.exp = GetStatValue(Protocol::STAT_TYPE_EXP);
+        result.gold = _gold;
 
         if (_playerInfo->level() > oldLevel)
         {
-            rewardResultPkt.set_is_level_up(true);
-            Protocol::LevelUpInfo* info = rewardResultPkt.mutable_level_up_details();
-            info->set_old_level(oldLevel);
-            info->set_new_level(_playerInfo->level());
+            LevelUpResult& levelUp = result.levelUp.emplace();
+            levelUp.level = _playerInfo->level();
 
-			RepeatedPtrField<Protocol::Stat>* updatedStatList = info->mutable_updated_stat();
+			RepeatedPtrField<Protocol::Stat>* updatedStatList = &levelUp.changedStats;
 			{
 				// 클라이언트에는 레벨 표가 없어 새 최대 경험치를 이 패킷으로만 안다.
 				ProtoUtil::AddStat(updatedStatList, Protocol::STAT_TYPE_MAX_EXP, GetStatValue(Protocol::STAT_TYPE_MAX_EXP));
@@ -515,6 +527,8 @@ void Player::OnGetReward(Protocol::S_REWARD_RESULT& rewardResultPkt)
 			}
         }
     }
+
+    return result;
 }
 
 void Player::OnLevelUp()
@@ -535,7 +549,7 @@ void Player::OnLevelUp()
 bool Player::IsMaxLevel() const
 {
     // 레벨 표가 없는 직업은 오를 레벨이 없으므로 최대 레벨로 본다.
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
     return classLevelTable == nullptr || _playerInfo->level() >= classLevelTable->GetMaxLevel();
 }
 
@@ -548,7 +562,7 @@ void Player::CacheNextLevelUpData()
     // 다음 레벨 행이 없으면 빈 값으로 둔다.
     _nextLevelUpData = NextLevelUpData{};
 
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
     const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
     if (nextLevelTemplate == nullptr)
         return;
@@ -572,10 +586,10 @@ LevelExp Player::SetTotalExp(const ClassLevelTable& classLevelTable, int64 total
 
 optional<CombatStats> Player::CalculateFinalStat()
 {
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_playerInfo->class_());
+    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
     if (classLevelTable == nullptr)
     {
-        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_playerInfo->class_()));
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_characterClass));
         return nullopt;
     }
 
@@ -625,7 +639,7 @@ void Player::RefreshFinalStat(OUT RepeatedPtrField<Protocol::Stat>* updatedStats
 void Player::RefreshEquippedGearSummary()
 {
     // 다른 플레이어는 장비 슬롯을 받지 못하므로, 외형에 필요한 부위와 템플릿만 공개 정보에 싣는다.
-    auto* summary = _playerInfo->mutable_equipped_gear_summary();
+    auto* summary = _playerInfo->mutable_gear_appearance();
     summary->clear();
 
     const ItemContainer& equipped = _equipment->GetContainer();
@@ -675,8 +689,8 @@ PlayerSaveData Player::MakeSaveData() const
 {
     PlayerSaveData data;
     data.userId = _userId;
-    data.progress.characterId = _playerInfo->character_id();
-    data.progress.classId = _playerInfo->class_();
+    data.progress.characterId = _characterId;
+    data.progress.classId = _characterClass;
     data.progress.name = _playerInfo->name();
     data.progress.level = _playerInfo->level();
     data.progress.mapId = _mapId;
@@ -685,7 +699,7 @@ PlayerSaveData Player::MakeSaveData() const
     // DB에는 누적 경험치를 저장한다. 스탯의 경험치는 클라이언트에 보낼 레벨 안의 값이다.
     data.progress.totalExp = _totalExp;
     // DB 열이 INT다. 최대치가 레벨 표의 int32 값에서 오므로 넘지 않는다.
-    const auto& stats = _statInfo->info();
+    const auto& stats = _statInfo->values();
     const auto hpIt = stats.find(Protocol::STAT_TYPE_HP);
     const auto mpIt = stats.find(Protocol::STAT_TYPE_MP);
     data.progress.hp = hpIt != stats.end() ? static_cast<int32>(hpIt->second) : 0;
@@ -703,10 +717,7 @@ PlayerSaveData Player::MakeSaveData() const
 // 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 맵 표에서 찾은 마을을 받는다.
 void Player::ApplyTownRespawnForSave(const TownRespawn& town)
 {
-    Protocol::PosInfo respawnPos = town.pos;
-    respawnPos.set_entity_id(GetEntityId());
-
-    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, respawnPos);
+    ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, town.pos);
 
     // DB에는 룸이 아니라 맵과 좌표를 저장한다. 맵을 바꾸지 않으면 다음 입장이 죽은 맵의 마을 좌표에서 룸을 찾는다.
     _mapId = town.mapId;

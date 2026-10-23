@@ -35,35 +35,34 @@ void ProgressCoordinator::OnDisconnected(int64 userId, const PlayerRef& player)
     if (player == nullptr)
         return;
 
-    // 호출자가 계정 등록을 지우기 전에 대기를 건다. 반대로 하면 그사이 새 로그인이 저장 전의 진행을 불러온다.
-    // 표시를 바꾼 뒤에 걸면, 들어갈 룸이 먼저 저장하고 대기를 푼 다음에 이 대기가 걸려 아무도 풀지 않는다.
-    _saveGate.Hold(userId);
-
-    // 표시를 먼저 바꾸고 룸을 읽는다. 순서는 Room::EnterPlayer의 주석을 본다.
-    if (player->MarkDisconnected() == false)
-    {
-        // 룸에 들어간 적이 없으면 바뀐 것이 없어 저장하지 않는다. 큐에 남은 첫 입장도 플레이어를 빼기만 하므로 대기를 여기서 푼다.
-        ReleaseHold(userId);
-        return;
-    }
-
-    // 룸 이동 중이면 떠난 룸이 나온다. 그때 퇴장은 들어갈 룸이 이어 받는다.
-    RoomRef room = player->GetRoom();
-    if (room == nullptr)
-    {
-        // 룸에 들어갔다는 표시는 소속 룸을 정한 뒤에만 세운다. 여기로 오면 그 순서가 깨진 것이다.
-        GLogger->Error("계정 {}: 룸에 들어간 플레이어의 소속 룸이 없어 저장하지 못합니다", userId);
-        ReleaseHold(userId);
-        return;
-    }
-
-    room->DoAsync([this, room, player]()
-        {
-            LeaveRoomAndSave(room, player);
-        });
+    LeaveGameAndSave(userId, player);
 }
 
-void ProgressCoordinator::OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer)
+void ProgressCoordinator::OnReturnToLobby(int64 userId, const PlayerRef& player, CallbackType afterSave)
+{
+    LeaveGameAndSave(userId, player);
+
+    // 목록은 저장이 끝난 뒤에 읽는다. 입장 불러오기와 같이 저장 대기에 맡기면 저장 잡이 대기를 풀며 그 자리에서 돌린다.
+    // 저장할 것이 없어 대기가 이미 풀렸으면 맡지 않으므로 같은 계정의 큐에 바로 넣는다.
+    // 만료 타이머는 걸지 않는다. 기다리는 저장이 이 세션의 것이고, 저장 잡은 실패해도 대기를 푼다.
+    SaveGate::ParkTicket ticket = _saveGate.Park(userId, { afterSave, []() {} });
+    switch (ticket.result)
+    {
+    case SaveGate::ParkResult::NOT_HELD:
+        _pushDBJob(userId, std::move(afterSave));
+        break;
+
+    case SaveGate::ParkResult::PARKED:
+        break;
+
+    case SaveGate::ParkResult::BUSY:
+        // 같은 계정의 새 로비 접속이 이 세션을 밀어내고 먼저 입장을 맡겼다. 이 세션은 곧 끊기므로 로비로 받지 않는다.
+        GLogger->Warning("계정 {}: 다른 연결의 입장이 저장을 기다리고 있어 로비 복귀를 마치지 않습니다", userId);
+        break;
+    }
+}
+
+void ProgressCoordinator::OnDuplicateConnection(int64 userId, const PlayerRef& replacedPlayer)
 {
     // 새 세션의 입장이 기존 세션의 접속 종료보다 빠를 수 있으므로 대기를 여기서 먼저 건다.
     // 입장 전의 세션은 접속 종료가 대기를 풀지 않으므로 걸지 않는다.
@@ -111,7 +110,19 @@ void ProgressCoordinator::LeaveRoomAndSave(const RoomRef& room, const PlayerRef&
 {
     optional<PlayerSaveData> saveData = room->HandleDisconnect(player);
     if (saveData.has_value() == false)
+    {
+        // 접속 종료가 소속 룸을 읽은 뒤에 플레이어가 그 룸을 떠났다. 다른 맵으로 가 맵 로드를 기다리면 소속 룸이 목적지로 바뀌어
+        // 있으므로 그 룸 큐가 저장한다. 같은 맵 안에서 옮기는 중이면 소속 룸이 아직 이 룸이고, 목적지 룸의 입장이 저장을 이어 받는다.
+        RoomRef current = player->GetRoom();
+        if (current != nullptr && current != room)
+        {
+            current->DoAsync([this, current, player]()
+                {
+                    LeaveRoomAndSave(current, player);
+                });
+        }
         return;
+    }
 
     SaveLeftPlayer(player, std::move(saveData.value()));
 }
@@ -135,10 +146,43 @@ void ProgressCoordinator::SaveLeftPlayer(const PlayerRef& player, PlayerSaveData
             }
 
             // 저장이 실패해도 대기를 푼다. 실패한 저장은 다시 시도하지 않으므로 기다려도 결과가 같다.
-            // 표시를 먼저 바꾼다. 그 뒤에 온 밀어내기가 이 해제를 놓쳤는지 표시로 안다(OnDuplicateLogin).
+            // 표시를 먼저 바꾼다. 그 뒤에 온 밀어내기가 이 해제를 놓쳤는지 표시로 안다(OnDuplicateConnection).
             player->MarkSaved();
             if (optional<SaveGate::ParkedLoad> parked = _saveGate.Release(data.userId))
                 parked->run();
+        });
+}
+
+void ProgressCoordinator::LeaveGameAndSave(int64 userId, const PlayerRef& player)
+{
+    // 로비 복귀 중에 끊기면 접속 종료가 같은 플레이어로 다시 온다. 진행 표시가 이미 바뀌었으면 아래 판정이 저장 없이 끝나거나,
+    // 이미 룸에서 빠진 플레이어를 룸 큐가 찾지 못해 저장을 넣지 않는다. 그래서 저장은 한 번만 돈다.
+
+    // 접속 종료가 계정 등록을 지우기 전에 대기를 건다. 반대로 하면 그사이 새 로비 접속이 저장 전의 진행을 불러온다.
+    // 표시를 바꾼 뒤에 걸면, 들어갈 룸이 먼저 저장하고 대기를 푼 다음에 이 대기가 걸려 아무도 풀지 않는다.
+    _saveGate.Hold(userId);
+
+    // 표시를 먼저 바꾸고 룸을 읽는다. 순서는 Room::EnterPlayer의 주석을 본다.
+    if (player->MarkDisconnected() == false)
+    {
+        // 룸에 들어간 적이 없으면 바뀐 것이 없어 저장하지 않는다. 큐에 남은 첫 입장도 플레이어를 빼기만 하므로 대기를 여기서 푼다.
+        ReleaseHold(userId);
+        return;
+    }
+
+    // 룸 이동 중이면 떠난 룸이 나온다. 그때 퇴장은 들어갈 룸이 이어 받는다.
+    RoomRef room = player->GetRoom();
+    if (room == nullptr)
+    {
+        // 룸에 들어갔다는 표시는 소속 룸을 정한 뒤에만 세운다. 여기로 오면 그 순서가 깨진 것이다.
+        GLogger->Error("계정 {}: 룸에 들어간 플레이어의 소속 룸이 없어 저장하지 못합니다", userId);
+        ReleaseHold(userId);
+        return;
+    }
+
+    room->DoAsync([this, room, player]()
+        {
+            LeaveRoomAndSave(room, player);
         });
 }
 

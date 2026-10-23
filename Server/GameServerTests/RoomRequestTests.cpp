@@ -30,7 +30,7 @@ namespace
     PlayerProgress MakeProgressWithSword()
     {
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
 
         PlacedItem sword;
@@ -51,7 +51,7 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
         sword.sellable = true;
 
         LevelTemplate level1;
@@ -66,7 +66,7 @@ protected:
 
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
         tables.inventorySlotCounts = MakeInventorySections();
@@ -82,13 +82,11 @@ protected:
         const PlayerProgress progress = MakeProgressWithSword();
         PlayerSpawnParams params;
         params.progress = &progress;
-        params.enterRoomId = ROOM_ID;
         player = EntityFactory::Create<Player>(params);
         ASSERT_NE(player, nullptr);
 
         RoomEnterData enterData{};
         enterData.nextRoomId = ROOM_ID;
-        enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
         ASSERT_TRUE(room->EnterPlayer(player, enterData));
     }
 
@@ -121,65 +119,31 @@ TEST_F(RoomRequestTest, MoveFartherThanAllowedIsIgnored)
     const float startX = player->GetPosInfo().pos().x();
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->mutable_pos()->set_x(startX + 3000.f);
+    movePkt.mutable_pos_info()->mutable_pos()->set_x(startX + 3000.f);
     room->C_HandleMove(movePkt, player);
 
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), startX) << "한 번에 허용 거리를 넘는 이동은 버린다";
 }
 
-// 이동은 보낸 사람의 위치만 바꾼다. 패킷의 엔티티 번호로 대상을 찾으면 같은 룸의 다른 플레이어를 옮길 수 있다.
+// 이동은 보낸 사람의 위치만 바꾼다. 같은 룸의 다른 플레이어는 그대로다.
 TEST_F(RoomRequestTest, MoveChangesOnlySenderPosition)
 {
     const PlayerProgress progress = MakeProgressWithSword();
     PlayerSpawnParams params;
     params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
     PlayerRef victim = EntityFactory::Create<Player>(params);
     ASSERT_NE(victim, nullptr);
     RoomEnterData enterData{};
     enterData.nextRoomId = ROOM_ID;
-    enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
     ASSERT_TRUE(room->EnterPlayer(victim, enterData));
     const float victimX = victim->GetPosInfo().pos().x();
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->set_entity_id(victim->GetEntityId());
-    movePkt.mutable_info()->mutable_pos()->set_x(victimX + 30.f);
+    movePkt.mutable_pos_info()->mutable_pos()->set_x(victimX + 30.f);
     room->C_HandleMove(movePkt, player);
 
     EXPECT_FLOAT_EQ(victim->GetPosInfo().pos().x(), victimX) << "다른 플레이어의 위치가 바뀌면 그 계정의 진행이 손상된다";
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), victimX + 30.f);
-    EXPECT_EQ(player->GetPosInfo().entity_id(), player->GetEntityId()) << "위치의 엔티티 id는 패킷 값이 아니라 보낸 사람의 것이다";
-}
-
-// 처음 입장하면 다른 플레이어 알림(SpawnPlayer)과 룸 정보 복제(ReplicateRoomData)가 둘 다 본인을 실었다.
-TEST_F(RoomRequestTest, InitialEntrySpawnsSelfOnce)
-{
-    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
-    const PlayerProgress progress = MakeProgressWithSword();
-    PlayerSpawnParams params;
-    params.session = session;
-    params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
-    PlayerRef newcomer = EntityFactory::Create<Player>(params);
-    ASSERT_NE(newcomer, nullptr);
-
-    Protocol::C_ENTER_ROOM enterPkt;
-    enterPkt.set_enter_type(Protocol::ENTER_TYPE_INITIAL);
-    enterPkt.set_room_id(ROOM_ID);
-    room->C_HandleEnterRoom(enterPkt, newcomer);
-
-    int32 selfSpawnCount = 0;
-    for (const Protocol::S_SPAWN& spawnPkt : session->SentPackets<Protocol::S_SPAWN>(PKT_S_SPAWN))
-    {
-        for (const Protocol::EntityInfo& entity : spawnPkt.entities())
-        {
-            if (entity.entity_id() == newcomer->GetEntityId())
-                selfSpawnCount++;
-        }
-    }
-
-    EXPECT_EQ(selfSpawnCount, 1) << "클라이언트의 중복 검사를 지우면 내 플레이어가 두 번 처리된다";
 }
 
 // 아이템 요청은 디스패치할 때의 룸 큐에서 돈다. 그사이 플레이어가 다른 룸으로 옮겼으면 그 플레이어의 상태는
@@ -191,13 +155,11 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
     PlayerSpawnParams params;
     params.session = session;
     params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
     PlayerRef traveler = EntityFactory::Create<Player>(params);
     ASSERT_NE(traveler, nullptr);
 
     RoomEnterData enterData{};
     enterData.nextRoomId = ROOM_ID;
-    enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
     ASSERT_TRUE(room->EnterPlayer(traveler, enterData));
     ASSERT_TRUE(room->LeavePlayer(traveler, true));
 
@@ -215,7 +177,7 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
     const auto equipPkt = MakeSwordRequest<Protocol::C_EQUIP_GEAR>(Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
     ItemRequests::HandleEquipGear(*room, player, equipPkt);
 
-    const auto unequipPkt = MakeSwordRequest<Protocol::C_UNEQUIP_GEAR>(Protocol::CONTAINER_TYPE_EQUIPPED, Protocol::GEAR_TYPE_WEAPON);
+    const auto unequipPkt = MakeSwordRequest<Protocol::C_UNEQUIP_GEAR>(Protocol::CONTAINER_TYPE_EQUIPPED, Protocol::GEAR_PART_WEAPON);
     ItemRequests::HandleUnequipGear(*room, player, unequipPkt);
 
     SUCCEED() << "세션이 없어도 응답을 건너뛰고 끝나야 한다";
@@ -226,8 +188,8 @@ TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
 // 소속 룸이나 전역 룸 관리자에 기대면 이 저장이 실패한다.
 TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
 {
-    Protocol::AttackInfo lethalAttack;
-    lethalAttack.set_damage(PLAYER_MAX_HP * 10);
+    AttackInfo lethalAttack;
+    lethalAttack.damage = PLAYER_MAX_HP * 10;
     player->OnHit(nullptr, lethalAttack);
     ASSERT_TRUE(player->IsDead());
 
@@ -239,28 +201,4 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
     EXPECT_FLOAT_EQ(saveData->progress.pos.x, TOWN_RESPAWN_X);
     EXPECT_EQ(saveData->progress.hp, PLAYER_MAX_HP / 2)
         << "마을 리스폰은 HP를 절반으로 채운다";
-}
-
-// 맵 입장 요청은 아무 룸 번호나 받아 들어갈 룸으로 기록했다. 뒤이은 첫 입장(C_ENTER_ROOM)이 그 번호와
-// 같은지만 보므로, 조작한 클라이언트는 불러온 룸과 무관하게 아무 룸에서나 시작했다.
-TEST_F(RoomRequestTest, FirstEnterMapToOtherRoomIsRejected)
-{
-    shared_ptr<RecordingSession> session = make_shared<RecordingSession>();
-    const PlayerProgress progress = MakeProgressWithSword();
-    PlayerSpawnParams params;
-    params.session = session;
-    params.progress = &progress;
-    params.enterRoomId = ROOM_ID;
-    PlayerRef newcomer = EntityFactory::Create<Player>(params);
-    ASSERT_NE(newcomer, nullptr);
-    ASSERT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID);
-
-    Protocol::C_ENTER_MAP enterMapPkt;
-    enterMapPkt.set_room_id(TOWN_ROOM_ID);
-    room->C_HandleEnterMap(enterMapPkt, newcomer);
-
-    EXPECT_EQ(newcomer->GetEnteringRoomId(), ROOM_ID) << "들어갈 룸은 불러온 진행의 룸 그대로다";
-    vector<Protocol::S_ENTER_MAP> responses = session->SentPackets<Protocol::S_ENTER_MAP>(PKT_S_ENTER_MAP);
-    ASSERT_EQ(responses.size(), 1u);
-    EXPECT_FALSE(responses[0].success());
 }

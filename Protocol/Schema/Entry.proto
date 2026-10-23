@@ -3,3 +3,96 @@ package Protocol;
 
 // 게임 입장, 맵 로드, 룸 입장, 포털 이동, 리스폰, 로비 복귀
 // @packet_id_range 300 399
+
+import "Common.proto";
+import "Entity.proto";
+import "Item.proto";
+
+enum EntryResult
+{
+    ENTRY_RESULT_SUCCESS = 0;
+    ENTRY_RESULT_CHARACTER_NOT_FOUND = 1;       // 이 계정의 캐릭터가 아니거나 삭제됐다
+    ENTRY_RESULT_PREVIOUS_SAVE_PENDING = 2;     // 앞 연결의 진행 저장이 정해진 시간 안에 끝나지 않았다
+    ENTRY_RESULT_INVALID_PORTAL = 3;            // 플레이어가 있는 룸의 포털이 아니다
+    ENTRY_RESULT_TOO_FAR_FROM_PORTAL = 4;
+    ENTRY_RESULT_NOT_DEAD = 5;                  // 사망하지 않은 플레이어는 리스폰할 수 없다
+    ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE = 6;
+    ENTRY_RESULT_INTERNAL_ERROR = 7;            // 진행을 불러오거나 저장하지 못했거나, 기획 데이터가 틀려 위치를 정하지 못했다
+}
+
+// 리스폰 유형. 지금은 마을 리스폰 하나다
+enum RespawnType
+{
+    RESPAWN_TYPE_NONE = 0;
+    RESPAWN_TYPE_TOWN = 1;
+}
+
+// 로비에서 고른 캐릭터로 게임에 입장한다. 로비가 받아 캐릭터의 소유를 확인한다
+message C_ENTER_GAME
+{
+    int64 character_id = 1;
+}
+
+// 성공하면 클라이언트는 map_id의 맵을 다 연 뒤 C_MAP_LOAD_COMPLETE를 보낸다
+message S_ENTER_GAME
+{
+    EntryResult result = 1;
+    int32 map_id = 2;
+
+    // 내 캐릭터의 개인 정보. 맵을 여는 동안 만들어지는 화면이 룸 입장 전에 읽는다
+    string name = 3;
+    CharacterClass character_class = 4;
+    int32 level = 5;
+    StatInfo stats = 6;
+    Possession possession = 7;
+    repeated QuickSlot quick_slots = 8;     // 모든 퀵슬롯. 빈 퀵슬롯도 싣는다
+}
+
+// 서버가 알린 맵을 다 열었다
+message C_MAP_LOAD_COMPLETE
+{
+}
+
+// 내 플레이어가 룸에 들어갔다. C_MAP_LOAD_COMPLETE의 응답이고, 맵이 바뀌지 않는 포털 이동과 리스폰 뒤에도 온다
+message S_ENTER_ROOM
+{
+    EntryResult result = 1;
+    EntityInfo my_entity = 2;
+}
+
+message C_USE_PORTAL
+{
+    int32 portal_id = 1;
+}
+
+// map_id가 있으면 맵이 바뀐다. 클라이언트는 그 맵을 다 연 뒤 C_MAP_LOAD_COMPLETE를 보낸다.
+// 없으면 서버가 바로 S_ENTER_ROOM을 보낸다
+message S_USE_PORTAL
+{
+    EntryResult result = 1;
+    optional int32 map_id = 2;
+}
+
+message C_RESPAWN
+{
+    RespawnType respawn_type = 1;
+}
+
+// map_id의 뜻은 S_USE_PORTAL과 같다
+message S_RESPAWN
+{
+    EntryResult result = 1;
+    optional int32 map_id = 2;
+    repeated Stat changed_stats = 3;        // 리스폰으로 회복한 스탯
+}
+
+// 서버는 플레이어를 바로 룸에서 퇴장시키고, 접속 종료와 같은 절차로 진행을 저장한다
+message C_RETURN_TO_LOBBY
+{
+}
+
+// 저장이 끝난 뒤에 온다. 성공하면 S_CHARACTER_LIST가 뒤따른다
+message S_RETURN_TO_LOBBY
+{
+    EntryResult result = 1;
+}

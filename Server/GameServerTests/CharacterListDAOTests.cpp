@@ -26,7 +26,7 @@ namespace
 
     CreateCharacterResult CreateWarrior(FakeDBConnection& conn)
     {
-        return CharacterListDAO::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, WARRIOR_NAME, Protocol::CLASS_TYPE_WARRIOR);
+        return CharacterListDAO::CreateCharacter(conn, ACCOUNT_ID, CHARACTER_ID, WARRIOR_NAME, Protocol::CHARACTER_CLASS_WARRIOR);
     }
 }
 
@@ -57,7 +57,7 @@ TEST_F(CharacterListDAOTest, CreateBindsOnlyCharacterRowValues)
     ASSERT_EQ(params.size(), 6u) << "계정, 캐릭터, 직업, 이름과 거절 사유 둘. 진행 행의 값은 싣지 않는다";
     EXPECT_EQ(get<int64>(params.at(0)), ACCOUNT_ID);
     EXPECT_EQ(get<int64>(params.at(1)), CHARACTER_ID) << "int32로 바인딩하면 Snowflake ID가 잘린다";
-    EXPECT_EQ(get<int64>(params.at(2)), Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(get<int64>(params.at(2)), Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(get<wstring>(params.at(3)), L"전사");
     EXPECT_EQ(conn.executedQueries[0].find(L"CharacterState"), wstring::npos) << "진행 행은 첫 게임 입장이 만든다";
     EXPECT_EQ(conn.executedQueries[0].find(L"CharacterCurrency"), wstring::npos);
@@ -75,7 +75,6 @@ TEST_F(CharacterListDAOTest, RejectionIsResultNotError)
         ASSERT_TRUE(result.rejection.has_value());
         EXPECT_EQ(result.rejection.value(), rejection);
         EXPECT_EQ(result.characterId, 0) << "거절된 생성은 캐릭터 ID를 돌려주지 않는다";
-        EXPECT_FALSE(ToMessage(result.rejection.value()).empty()) << "거절 사유는 생성 화면에 그대로 보여 준다";
     }
 }
 
@@ -98,8 +97,8 @@ TEST_F(CharacterListDAOTest, FailedCreateIsDBError)
 TEST_F(CharacterListDAOTest, LoadCharacterListReadsRows)
 {
     conn.QueueResult({
-        { CHARACTER_ID, int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"전사"), int64(12) },
-        { CHARACTER_ID + 1, int64(Protocol::CLASS_TYPE_WARRIOR), wstring(L"둘째"), int64(1) },
+        { CHARACTER_ID, int64(Protocol::CHARACTER_CLASS_WARRIOR), wstring(L"전사"), int64(12) },
+        { CHARACTER_ID + 1, int64(Protocol::CHARACTER_CLASS_WARRIOR), wstring(L"둘째"), int64(1) },
     });
 
     vector<CharacterListRow> characters;
@@ -107,7 +106,7 @@ TEST_F(CharacterListDAOTest, LoadCharacterListReadsRows)
 
     ASSERT_EQ(characters.size(), 2u);
     EXPECT_EQ(characters[0].characterId, CHARACTER_ID);
-    EXPECT_EQ(characters[0].classId, Protocol::CLASS_TYPE_WARRIOR);
+    EXPECT_EQ(characters[0].classId, Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_EQ(characters[0].name, "전사");
     EXPECT_EQ(characters[0].level, 12);
     EXPECT_EQ(characters[1].name, "둘째");

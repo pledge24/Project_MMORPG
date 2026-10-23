@@ -23,7 +23,9 @@ protected:
 public:
 	/** 어느 스레드에서 불러도 된다. */
 	SessionPhase GetPhase() const { return _phase.load(); }
-	/** 로비 접속을 마쳤다. 로비 접속 전 단계일 때만 로비로 바꾸고, 아니면 false. */
+	/** 로비 접속 요청을 받았다. 로비 접속 전 단계일 때만 로비 접속 중으로 바꾸고, 아니면 false. */
+	bool BeginLobbyConnect();
+	/** 로비 접속에 성공했다. 로비 접속 중 단계일 때만 로비로 바꾸고, 아니면 false. */
 	bool CompleteLobbyConnect();
 	/** 로비에서 캐릭터를 골라 게임 입장을 시작한다. 로비 단계일 때만 게임 입장 중으로 바꾸고, 아니면 false. */
 	bool BeginGameEntry();
@@ -31,6 +33,13 @@ public:
 	bool CompleteGameEntry();
 	/** 게임 입장이 거절됐다. 게임 입장 중일 때만 로비로 되돌리고, 아니면 false. */
 	bool CancelGameEntry();
+	/** 게임에서 로비 복귀를 시작한다. 게임 단계일 때만 로비 복귀 중으로 바꾸고, 아니면 false. */
+	bool BeginLobbyReturn();
+	/**
+	 * 로비 복귀의 저장이 끝났다. 로비 복귀 중일 때만 플레이어를 비우고 로비로 바꾸며, 아니면 false.
+	 * 로비 복귀 창구가 부른다.
+	 */
+	bool CompleteLobbyReturn();
 
 private:
 	bool TryChangePhase(SessionPhase from, SessionPhase to);
@@ -50,7 +59,7 @@ private:
 	//~ 계정
 public:
 	/**
-	 * 로그인하기 전이면 0. 로그인 잡이 언제든 바꿀 수 있으므로,
+	 * 로비 접속 전이면 0. 로비 접속 잡이 언제든 바꿀 수 있으므로,
 	 * 요청 하나에서는 핸들러가 한 번 읽은 값을 잡에 넘겨 쓰고 잡 안에서 다시 읽지 않는다.
 	 */
 	int64 GetUserId() const { return _userId.load(); }

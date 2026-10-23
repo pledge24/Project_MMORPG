@@ -53,7 +53,7 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
         sword.hpRestoreRatio = 1.0;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.inventorySlotCounts = MakeInventorySections();
@@ -87,10 +87,10 @@ protected:
         return current != nullptr ? current->count : 0;
     }
 
-    static map<Protocol::StatType, int64> StatsOf(const optional<UseItemResult>& result)
+    static map<Protocol::StatType, int64> StatsOf(const ItemOutcome<UseItemResult>& result)
     {
         map<Protocol::StatType, int64> stats;
-        for (const Protocol::Stat& stat : result->updatedStats)
+        for (const Protocol::Stat& stat : result->changedStats)
             stats[stat.type()] = stat.value();
         return stats;
     }
@@ -105,7 +105,7 @@ TEST_F(PlayerUseItemTest, HpPotionRestoresHpOnly)
     ItemSlotRequest slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 3);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result.IsSuccess());
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 400);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MP), 100);
@@ -121,7 +121,7 @@ TEST_F(PlayerUseItemTest, RestoreIsCappedAtMax)
     ItemSlotRequest slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 1);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result.IsSuccess());
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), MAX_HP);
 }
@@ -131,7 +131,7 @@ TEST_F(PlayerUseItemTest, MixPotionRestoresBoth)
     ItemSlotRequest slot = AddAndGetSlot(MIX_POTION_TEMPLATE_ID, 1);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result.IsSuccess());
 
     map<Protocol::StatType, int64> expected = { {Protocol::STAT_TYPE_HP, 500}, {Protocol::STAT_TYPE_MP, 300} };
     EXPECT_EQ(StatsOf(result), expected);
@@ -145,7 +145,7 @@ TEST_F(PlayerUseItemTest, RequestNotMatchingSlotIsRejected)
     slot.itemUid += 1; // 클라이언트는 그 칸에 다른 아이템이 있다고 본다
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.GetResult(), Protocol::ITEM_RESULT_SLOT_CHANGED);
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MP), 100);
@@ -158,7 +158,7 @@ TEST_F(PlayerUseItemTest, FullStatsStillConsume)
     ItemSlotRequest slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 2);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result.IsSuccess());
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), MAX_HP);
     EXPECT_EQ(CountIn(slot), 1);
@@ -169,7 +169,7 @@ TEST_F(PlayerUseItemTest, GearSlotIsRejected)
     ItemSlotRequest slot = AddAndGetSlot(SWORD_TEMPLATE_ID, 1);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.GetResult(), Protocol::ITEM_RESULT_INVALID_REQUEST) << "정상 클라이언트는 소모품 구역이 아닌 칸의 사용을 보내지 않는다";
 
     EXPECT_EQ(CountIn(slot), 1) << "소모품이 아닌 아이템이 효과 없이 사라지면 안 된다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
@@ -182,7 +182,7 @@ TEST_F(PlayerUseItemTest, EmptySlotIsRejected)
     slot.itemUid = 777;
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.GetResult(), Protocol::ITEM_RESULT_SLOT_CHANGED);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
 }
 
@@ -194,7 +194,7 @@ TEST_F(PlayerUseItemTest, UnknownTemplateIsRejected)
     Gamedata::Install(tables);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.GetResult(), Protocol::ITEM_RESULT_INTERNAL_ERROR);
     EXPECT_EQ(CountIn(slot), 1);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
 }
@@ -205,7 +205,7 @@ TEST_F(PlayerUseItemTest, DeadPlayerIsRejected)
     player->OnDie(nullptr);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);
-    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.GetResult(), Protocol::ITEM_RESULT_DEAD);
     EXPECT_EQ(CountIn(slot), 1);
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 100);
 }
@@ -214,18 +214,18 @@ TEST_F(PlayerUseItemTest, SameTemplateWaitsForCooldown)
 {
     ItemSlotRequest slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 3);
     auto first = player->ProcessUseItem(slot, NOW_MS);
-    ASSERT_TRUE(first.has_value());
+    ASSERT_TRUE(first.IsSuccess());
 
     const uint64 cooldownMs = COOLDOWN_SECONDS * 1000ull;
 
     auto tooEarly = player->ProcessUseItem(slot, NOW_MS + cooldownMs - 1);
     const int64 hpAfterFirst = player->GetStatValue(Protocol::STAT_TYPE_HP);
-    EXPECT_FALSE(tooEarly.has_value());
+    EXPECT_EQ(tooEarly.GetResult(), Protocol::ITEM_RESULT_COOLDOWN);
     EXPECT_EQ(CountIn(slot), 2) << "재사용 대기 중에 거부하면 개수가 그대로다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), hpAfterFirst);
 
     auto afterCooldown = player->ProcessUseItem(slot, NOW_MS + cooldownMs);
-    EXPECT_TRUE(afterCooldown.has_value());
+    EXPECT_TRUE(afterCooldown.IsSuccess());
     EXPECT_EQ(CountIn(slot), 1);
 }
 
@@ -235,8 +235,8 @@ TEST_F(PlayerUseItemTest, CooldownIsPerTemplate)
     ItemSlotRequest mpSlot = AddAndGetSlot(MP_POTION_TEMPLATE_ID, 1);
 
     auto first = player->ProcessUseItem(hpSlot, NOW_MS);
-    ASSERT_TRUE(first.has_value());
+    ASSERT_TRUE(first.IsSuccess());
 
     auto second = player->ProcessUseItem(mpSlot, NOW_MS);
-    EXPECT_TRUE(second.has_value());
+    EXPECT_TRUE(second.IsSuccess());
 }

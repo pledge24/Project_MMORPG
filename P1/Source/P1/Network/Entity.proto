@@ -3,3 +3,94 @@ package Protocol;
 
 // 엔티티의 스폰, 디스폰, 이동, 외형
 // @packet_id_range 400 499
+
+import "Common.proto";
+
+enum MoveState
+{
+    MOVE_STATE_NONE = 0;
+    MOVE_STATE_IDLE = 1;
+    MOVE_STATE_RUN = 2;
+    MOVE_STATE_ACTION = 3;                  // 루트 모션이 들어간 애니메이션 실행
+}
+
+message Vector
+{
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message PosInfo
+{
+    Vector pos = 1;
+    float yaw = 2;
+    Vector move_direction = 3;
+    MoveState state = 4;
+}
+
+// 플레이어의 공개 정보
+message PlayerInfo
+{
+    string name = 1;
+    int32 level = 2;
+    map<int32, int32> gear_appearance = 3;  // <GearPart 값, 착용한 아이템 번호>
+}
+
+message MonsterInfo
+{
+    int32 template_id = 1;
+    int64 hp = 2;
+}
+
+// 엔티티의 종류는 details에 실린 정보의 종류다
+message EntityInfo
+{
+    int64 entity_id = 1;
+    PosInfo pos_info = 2;
+
+    oneof details
+    {
+        PlayerInfo player_info = 3;
+        MonsterInfo monster_info = 4;
+    }
+}
+
+// 엔티티 하나의 이동
+message EntityMove
+{
+    int64 entity_id = 1;
+    PosInfo pos_info = 2;
+}
+
+// 룸에 다른 엔티티가 나타났다. 내 엔티티는 싣지 않는다
+message S_SPAWN
+{
+    repeated EntityInfo entities = 1;
+}
+
+message S_DESPAWN
+{
+    repeated int64 entity_ids = 1;
+}
+
+// 내 플레이어의 이동. 응답이 없다
+message C_MOVE
+{
+    PosInfo pos_info = 1;
+}
+
+// 룸의 플레이어에게 간다. 이동한 엔티티가 플레이어면 그 플레이어는 받지 않는다
+message S_MOVE
+{
+    repeated EntityMove moves = 1;
+}
+
+// 플레이어의 착용 장비가 바뀌었다. 착용한 플레이어를 포함한 룸의 모든 플레이어에게 간다.
+// template_id가 0이면 그 부위를 비웠다
+message S_GEAR_APPEARANCE
+{
+    int64 entity_id = 1;
+    GearPart gear_part = 2;
+    int32 template_id = 3;
+}

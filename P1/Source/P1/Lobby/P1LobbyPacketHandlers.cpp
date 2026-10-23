@@ -23,7 +23,18 @@ namespace
     }
 }
 
-bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
+bool Handle_S_CONNECT_LOBBY(PacketSessionRef& session, Protocol::S_CONNECT_LOBBY& pkt)
+{
+    if (auto* Lobby = GetSessionSubsystem<UP1LobbySubsystem>(session))
+    {
+        Lobby->HandleConnectLobby(pkt);
+        return true;
+    }
+
+    return false;
+}
+
+bool Handle_S_CHARACTER_LIST(PacketSessionRef& session, Protocol::S_CHARACTER_LIST& pkt)
 {
     if (auto* Lobby = GetSessionSubsystem<UP1LobbySubsystem>(session))
     {
@@ -63,10 +74,22 @@ bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
     if (Lobby == nullptr || MyPlayerData == nullptr)
         return false;
 
-    // 입장한 캐릭터의 모든 정보는 내 플레이어 데이터가 갖는다. 입장 성공을 알리면 맵을 열기 시작하므로 그 전에 채운다.
-    if (pkt.success())
+    // 입장한 캐릭터의 개인 정보와 열 맵은 내 플레이어 데이터가 갖는다. 입장 성공을 알리면 맵을 열기 시작하므로 그 전에 채운다.
+    const bool bSuccess = pkt.result() == Protocol::ENTRY_RESULT_SUCCESS;
+    if (bSuccess)
         MyPlayerData->InitMyPlayerData(pkt);
 
-    Lobby->HandleEnterGame(pkt.success());
+    Lobby->HandleEnterGame(bSuccess);
     return true;
+}
+
+bool Handle_S_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::S_RETURN_TO_LOBBY& pkt)
+{
+    if (auto* Lobby = GetSessionSubsystem<UP1LobbySubsystem>(session))
+    {
+        Lobby->HandleReturnToLobby(pkt.result() == Protocol::ENTRY_RESULT_SUCCESS);
+        return true;
+    }
+
+    return false;
 }

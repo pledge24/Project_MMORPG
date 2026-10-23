@@ -51,6 +51,14 @@ namespace
         { Protocol::CONTAINER_TYPE_EQUIPPED, ContainerType::EQUIPPED },
     };
 
+    /** 패킷의 아이템이 서버 아이템의 번호, uid, 개수를 싣는지 본다. */
+    void ExpectCarries(const Protocol::Item& proto, const ItemInstance& item)
+    {
+        EXPECT_EQ(proto.template_id(), item.templateId);
+        EXPECT_EQ(proto.item_uid(), item.itemUid) << "발급하지 않은 uid는 0이다";
+        EXPECT_EQ(proto.count(), item.count);
+    }
+
     /** 입장 패킷에서 그 컨테이너의 칸 목록. 없으면 nullptr. */
     const Protocol::ContainerSlots* FindContainer(const Protocol::Possession& possession, Protocol::ContainerType container)
     {
@@ -66,37 +74,28 @@ namespace
 
 /* 아이템 */
 
-TEST(ItemPacketsTest, ItemSurvivesRoundTrip)
+TEST(ItemPacketsTest, ItemCarriesTemplateUidAndCount)
 {
     const ItemInstance items[] = {
         MakeSword(),
         MakePotion(),
         ItemInstance{ 0, POTION_TEMPLATE_ID, 1, nullopt },
-        ItemInstance{ 503, SWORD_TEMPLATE_ID, 1, GearDetail{} },
     };
 
     for (const ItemInstance& item : items)
     {
         SCOPED_TRACE(item.itemUid);
-        EXPECT_EQ(ItemPackets::FromProto(ItemPackets::ToProto(item)), item);
+        ExpectCarries(ItemPackets::ToProto(item), item);
     }
 }
 
-TEST(ItemPacketsTest, ItemWithoutUidCarriesNoUid)
-{
-    const Protocol::Item proto = ItemPackets::ToProto(ItemInstance{ 0, POTION_TEMPLATE_ID, 1, nullopt });
-
-    EXPECT_FALSE(proto.has_item_uid()) << "발급하지 않은 UID를 0으로 보내면 클라이언트가 0번 아이템으로 본다";
-    EXPECT_FALSE(proto.has_gearinfo());
-}
-
-TEST(ItemPacketsTest, GearCarriesGearInfo)
+// 강화 수치와 내구도는 클라이언트가 읽지 않으므로 서버 타입과 DB에만 남는다.
+TEST(ItemPacketsTest, GearDetailStaysOnServer)
 {
     const Protocol::Item proto = ItemPackets::ToProto(MakeSword());
 
-    ASSERT_TRUE(proto.has_gearinfo());
-    EXPECT_EQ(proto.gearinfo().enhance_level(), 3);
-    EXPECT_EQ(proto.gearinfo().durability(), 80);
+    EXPECT_EQ(proto.GetDescriptor()->field_count(), 3) << "아이템은 번호, uid, 개수만 싣는다";
+    ExpectCarries(proto, MakeSword());
 }
 
 /* 컨테이너와 칸 주소 */
@@ -137,7 +136,7 @@ TEST(ItemPacketsTest, SlotAddressSurvivesRoundTrip)
     const SlotAddress addresses[] = {
         SlotAddress{ ContainerType::INVENTORY_MISC, 0 },
         SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 31 },
-        SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON },
+        SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON },
     };
 
     for (const SlotAddress& address : addresses)
@@ -157,12 +156,12 @@ TEST(ItemPacketsTest, FilledSlotChangeCarriesItsItem)
 
     EXPECT_EQ(ItemPackets::FromProto(proto.address()), change.address);
     ASSERT_TRUE(proto.has_item());
-    EXPECT_EQ(ItemPackets::FromProto(proto.item()), MakePotion());
+    ExpectCarries(proto.item(), MakePotion());
 }
 
 TEST(ItemPacketsTest, EmptiedSlotChangeCarriesNoItem)
 {
-    const SlotChange change{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, nullopt };
+    const SlotChange change{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON }, nullopt };
 
     const Protocol::SlotChange proto = ItemPackets::ToProto(change);
 
@@ -174,7 +173,7 @@ TEST(ItemPacketsTest, EveryChangeIsAddedInOrder)
 {
     const vector<SlotChange> changes = {
         SlotChange{ SlotAddress{ ContainerType::INVENTORY_GEAR, 4 }, nullopt },
-        SlotChange{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, MakeSword() },
+        SlotChange{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON }, MakeSword() },
     };
 
     RepeatedPtrField<Protocol::SlotChange> protos;
@@ -185,7 +184,7 @@ TEST(ItemPacketsTest, EveryChangeIsAddedInOrder)
     EXPECT_FALSE(protos[0].has_item());
     EXPECT_EQ(ItemPackets::FromProto(protos[1].address()), changes[1].address);
     ASSERT_TRUE(protos[1].has_item());
-    EXPECT_EQ(ItemPackets::FromProto(protos[1].item()), MakeSword());
+    ExpectCarries(protos[1].item(), MakeSword());
 }
 
 /* 요청의 칸 */
@@ -214,7 +213,7 @@ TEST(ItemPacketsTest, RegisteredQuickSlotCarriesItsRef)
 {
     const Protocol::QuickSlot proto = ItemPackets::ToProto(QuickSlot{ 3, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } });
 
-    EXPECT_EQ(proto.slot_index(), 3);
+    EXPECT_EQ(proto.quick_slot_index(), 3);
     ASSERT_TRUE(proto.has_ref());
     EXPECT_EQ(proto.ref().ref_type(), Protocol::QUICK_SLOT_REF_TYPE_ITEM);
     EXPECT_EQ(proto.ref().ref_id(), POTION_TEMPLATE_ID);
@@ -224,7 +223,7 @@ TEST(ItemPacketsTest, EmptyQuickSlotCarriesNoRef)
 {
     const Protocol::QuickSlot proto = ItemPackets::ToProto(QuickSlot{ 0, nullopt });
 
-    EXPECT_EQ(proto.slot_index(), 0);
+    EXPECT_EQ(proto.quick_slot_index(), 0);
     EXPECT_FALSE(proto.has_ref()) << "ref가 없으면 빈 퀵슬롯이다";
 }
 
@@ -234,8 +233,8 @@ TEST(ItemPacketsTest, QuickSlotsAreAddedInOrder)
     ItemPackets::AddQuickSlots({ QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } }, QuickSlot{ 0, nullopt } }, OUT &protoQuickSlots);
 
     ASSERT_EQ(protoQuickSlots.size(), 2);
-    EXPECT_EQ(protoQuickSlots[0].slot_index(), 2);
-    EXPECT_EQ(protoQuickSlots[1].slot_index(), 0);
+    EXPECT_EQ(protoQuickSlots[0].quick_slot_index(), 2);
+    EXPECT_EQ(protoQuickSlots[1].quick_slot_index(), 0);
 }
 
 TEST(ItemPacketsTest, QuickSlotRefFromRequest)
@@ -273,7 +272,7 @@ protected:
         ItemTemplate sword;
         sword.templateId = SWORD_TEMPLATE_ID;
         sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_TYPE_WEAPON;
+        sword.gearType = Protocol::GEAR_PART_WEAPON;
 
         ItemTemplate potion;
         potion.templateId = POTION_TEMPLATE_ID;
@@ -287,7 +286,7 @@ protected:
         GamedataTables tables;
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.items[POTION_TEMPLATE_ID] = potion;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         tables.inventorySlotCounts = {
             { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
             { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
@@ -297,11 +296,11 @@ protected:
         Gamedata::Install(std::move(tables));
 
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.gold = 1234;
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 1 }, MakePotion() });
-        progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_TYPE_WEAPON }, MakeSword() });
+        progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON }, MakeSword() });
         // 장비를 가리키는 행과 범위 밖의 행은 기획이 바뀌어 남은 행이다.
         progress.quickSlots.push_back(QuickSlot{ 0, QuickSlotRef{ QuickSlotRefType::ITEM, SWORD_TEMPLATE_ID } });
         progress.quickSlots.push_back(QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } });
@@ -344,7 +343,7 @@ TEST_F(ItemPacketsPossessionTest, CarriesGoldAndEveryInventorySlot)
 
     const Protocol::Slot& potion = consumables->slots(1);
     ASSERT_TRUE(potion.has_item());
-    EXPECT_EQ(ItemPackets::FromProto(potion.item()), MakePotion());
+    ExpectCarries(potion.item(), MakePotion());
     EXPECT_FALSE(consumables->slots(0).has_item());
 }
 
@@ -354,14 +353,14 @@ TEST_F(ItemPacketsPossessionTest, CarriesEveryGearPartWithoutPartZero)
 
     const Protocol::ContainerSlots* equipped = FindContainer(possession, Protocol::CONTAINER_TYPE_EQUIPPED);
     ASSERT_NE(equipped, nullptr);
-    ASSERT_EQ(equipped->slots().size(), Protocol::GEAR_TYPE_WEAPON) << "착용 장비에는 0번 칸이 없다";
+    ASSERT_EQ(equipped->slots().size(), Protocol::GEAR_PART_WEAPON) << "착용 장비에는 0번 칸이 없다";
 
     for (int32 i = 0; i < equipped->slots().size(); i++)
-        EXPECT_EQ(equipped->slots(i).slot_index(), Protocol::GEAR_TYPE_HELMET + i);
+        EXPECT_EQ(equipped->slots(i).slot_index(), Protocol::GEAR_PART_HELMET + i);
 
-    const Protocol::Slot& weapon = equipped->slots(Protocol::GEAR_TYPE_WEAPON - 1);
+    const Protocol::Slot& weapon = equipped->slots(Protocol::GEAR_PART_WEAPON - 1);
     ASSERT_TRUE(weapon.has_item());
-    EXPECT_EQ(ItemPackets::FromProto(weapon.item()), MakeSword());
+    ExpectCarries(weapon.item(), MakeSword());
     EXPECT_FALSE(equipped->slots(0).has_item());
 }
 
@@ -370,8 +369,8 @@ TEST_F(ItemPacketsPossessionTest, LoadedSlotsAreNotReportedAsChanges)
 {
     PlayerTestAccess::Gold(*player) = 1000;
 
-    optional<BuyItemResult> result = player->ProcessBuyItem(POTION_TEMPLATE_ID);
-    ASSERT_TRUE(result.has_value());
+    auto result = player->ProcessBuyItem(POTION_TEMPLATE_ID);
+    ASSERT_TRUE(result.IsSuccess());
 
     ASSERT_EQ(result->changedSlots.size(), 1u);
     EXPECT_EQ(result->changedSlots[0].address, (SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 1 })) << "산 물약은 같은 물약의 묶음에 쌓인다";

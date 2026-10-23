@@ -32,7 +32,7 @@ namespace
     PlayerProgress MakeAliveProgress()
     {
         PlayerProgress progress;
-        progress.classId = Protocol::CLASS_TYPE_WARRIOR;
+        progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.hp = PLAYER_MAX_HP;
         return progress;
@@ -68,7 +68,7 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monsterTemplate;
-        tables.classLevelTables[Protocol::CLASS_TYPE_WARRIOR] = ClassLevelTable({ level1 });
+        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;
@@ -99,13 +99,11 @@ protected:
         const PlayerProgress progress = MakeAliveProgress();
         PlayerSpawnParams params;
         params.progress = &progress;
-        params.enterRoomId = ROOM_ID;
         player = EntityFactory::Create<Player>(params);
         ASSERT_NE(player, nullptr);
 
         RoomEnterData enterData{};
         enterData.nextRoomId = ROOM_ID;
-        enterData.enterType = Protocol::ENTER_TYPE_INITIAL;
         enterData.enterPos = MakePos(x, y);
         ASSERT_TRUE(room->EnterPlayer(player, enterData));
     }
@@ -168,7 +166,7 @@ TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
     room->Tick(2.5f);
 
     Protocol::C_MOVE movePkt;
-    movePkt.mutable_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
+    movePkt.mutable_pos_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
     room->C_HandleMove(movePkt, player);
     room->Tick(STATE_UPDATE_TIME);
 

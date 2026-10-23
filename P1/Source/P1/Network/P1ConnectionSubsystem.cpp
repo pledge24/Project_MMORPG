@@ -27,8 +27,7 @@ void UP1ConnectionSubsystem::Deinitialize()
         RecvPumpTickerHandle.Reset();
     }
 
-    // 사용자가 게임을 끄는 경로다. OnConnectionLost를 알리지 않고 서버에 접속 종료만 알린다.
-    SendLeaveGame();
+    // 사용자가 게임을 끄는 경로다. OnConnectionLost를 알리지 않고 소켓만 닫는다. 서버는 끊긴 연결을 접속 종료로 처리한다.
     Close();
 
     Super::Deinitialize();
@@ -103,15 +102,6 @@ void UP1ConnectionSubsystem::Send(SendBufferRef SendBuffer)
     Session->SendPacket(SendBuffer);
 }
 
-void UP1ConnectionSubsystem::SendLeaveGame()
-{
-    if (IsConnected() == false)
-        return;
-
-    Protocol::C_LEAVE_GAME LeavePkt;
-    Send(ClientPacketHandler::MakeSerializedPacket(LeavePkt));
-}
-
 bool UP1ConnectionSubsystem::TickRecvPump(float DeltaTime)
 {
     UWorld* World = GetGameInstance()->GetWorld();
@@ -136,20 +126,21 @@ void UP1ConnectionSubsystem::HandleRecvPackets()
         return;
 
     // 끊김 표시를 큐보다 먼저 읽는다. 수신 워커는 마지막 패킷을 큐에 넣은 뒤 표시를 세우므로,
-    // 표시를 본 뒤에 큐를 비우면 끊기기 직전에 온 S_LEAVE_GAME까지 처리한다.
+    // 표시를 본 뒤에 큐를 비우면 끊기기 직전에 온 S_DISCONNECT까지 처리한다.
     const bool bConnectionLost = Session->IsConnectionLost();
 
     Session->HandleRecvPackets();
 
-    // S_LEAVE_GAME을 처리했으면 HandleLeaveGame이 이미 연결을 닫고 알려서 세션이 없다.
+    // S_DISCONNECT를 처리했으면 HandleDisconnect가 이미 연결을 닫고 알려서 세션이 없다.
+    // 로비 접속이 거절됐으면 접속 흐름이 이미 연결을 닫아서 세션이 없다.
     if (bConnectionLost && Session)
     {
         Close();
-        OnConnectionLost.Broadcast(Protocol::LEAVE_REASON_NONE);
+        OnConnectionLost.Broadcast(Protocol::DISCONNECT_REASON_NONE);
     }
 }
 
-void UP1ConnectionSubsystem::HandleLeaveGame(Protocol::LeaveReason Reason)
+void UP1ConnectionSubsystem::HandleDisconnect(Protocol::DisconnectReason Reason)
 {
     Close();
     OnConnectionLost.Broadcast(Reason);

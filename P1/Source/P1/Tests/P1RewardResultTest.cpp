@@ -1,4 +1,4 @@
-// 보상 결과(S_REWARD_RESULT)를 내 플레이어 데이터에 반영하는 규칙을 고정한다.
+// 처치 보상(S_REWARD)을 내 플레이어 데이터에 반영하는 규칙을 고정한다.
 //
 // 왜 이것인가: 클라이언트는 보상 결과를 받고도 버렸다. 플레이어가 몬스터를 처치하는 경로가 아직 없어
 // PIE로는 보상을 받을 수 없으므로, 반영 결과를 이 테스트로만 확인한다.
@@ -31,27 +31,24 @@ namespace
         return Data;
     }
 
-    Protocol::S_REWARD_RESULT MakeReward(int64 UpdatedExp, int64 UpdatedGold)
+    Protocol::S_REWARD MakeReward(int64 Exp, int64 Gold)
     {
-        Protocol::S_REWARD_RESULT Pkt;
-        Pkt.set_type(Protocol::REWARD_TYPE_MONSTER_KILL);
-        Pkt.set_updated_exp(UpdatedExp);
-        Pkt.set_updated_gold(UpdatedGold);
+        Protocol::S_REWARD Pkt;
+        Pkt.set_exp(Exp);
+        Pkt.set_gold(Gold);
         return Pkt;
     }
 
-    void AddLevelUp(Protocol::S_REWARD_RESULT& Pkt, int32 OldLevel, int32 NewLevel, int64 MaxExp, int64 MaxHp)
+    void AddLevelUp(Protocol::S_REWARD& Pkt, int32 NewLevel, int64 MaxExp, int64 MaxHp)
     {
-        Pkt.set_is_level_up(true);
-        Protocol::LevelUpInfo* Info = Pkt.mutable_level_up_details();
-        Info->set_old_level(OldLevel);
-        Info->set_new_level(NewLevel);
+        Protocol::LevelUp* LevelUp = Pkt.mutable_level_up();
+        LevelUp->set_level(NewLevel);
 
-        Protocol::Stat* MaxExpStat = Info->add_updated_stat();
+        Protocol::Stat* MaxExpStat = LevelUp->add_changed_stats();
         MaxExpStat->set_type(Protocol::STAT_TYPE_MAX_EXP);
         MaxExpStat->set_value(MaxExp);
 
-        Protocol::Stat* MaxHpStat = Info->add_updated_stat();
+        Protocol::Stat* MaxHpStat = LevelUp->add_changed_stats();
         MaxHpStat->set_type(Protocol::STAT_TYPE_MAX_HP);
         MaxHpStat->set_value(MaxHp);
     }
@@ -74,7 +71,7 @@ bool FP1RewardResultTest::RunTest(const FString& Parameters)
         TArray<int64> NotifiedExp;
         Data->OnStatChangedMappings[Protocol::STAT_TYPE_EXP].AddLambda([&NotifiedExp](int64 Value) { NotifiedExp.Add(Value); });
 
-        Data->HandleRewardResult(MakeReward(70, 1000));
+        Data->HandleReward(MakeReward(70, 1000));
 
         TestEqual(TEXT("경험치 누적: 레벨"), Data->GetPlayerLevel(), 1);
         TestEqual(TEXT("경험치 누적: 레벨 알림 없음"), LevelBroadcasts, 0);
@@ -98,9 +95,9 @@ bool FP1RewardResultTest::RunTest(const FString& Parameters)
         });
 
         // 1→2에 100, 2→3에 200을 쓰고 50이 남는다.
-        Protocol::S_REWARD_RESULT Pkt = MakeReward(50, 1000);
-        AddLevelUp(Pkt, 1, 3, 300, 140);
-        Data->HandleRewardResult(Pkt);
+        Protocol::S_REWARD Pkt = MakeReward(50, 1000);
+        AddLevelUp(Pkt, 3, 300, 140);
+        Data->HandleReward(Pkt);
 
         TestEqual(TEXT("여러 레벨: 레벨"), Data->GetPlayerLevel(), 3);
         TestTrue(TEXT("여러 레벨: 새 레벨을 한 번 알림"), NotifiedLevels.Num() == 1 && NotifiedLevels[0] == 3);
@@ -122,7 +119,7 @@ bool FP1RewardResultTest::RunTest(const FString& Parameters)
             StoredGoldWhenNotified = Data->GetGold();
         });
 
-        Data->HandleRewardResult(MakeReward(0, 1250));
+        Data->HandleReward(MakeReward(0, 1250));
 
         TestEqual(TEXT("골드: 사본"), Data->GetGold(), 1250LL);
         TestEqual(TEXT("골드: 알림"), NotifiedGold, 1250LL);

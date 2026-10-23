@@ -3,3 +3,62 @@ package Protocol;
 
 // 여러 도메인이 함께 쓰는 자료형과, 세션 단계와 무관한 패킷
 // @packet_id_range 100 199
+
+// 직업. DB의 Character.ClassId에 숫자로 저장된다. 로비의 캐릭터 생성과 게임의 레벨 표, 착용 조건이 함께 쓴다
+enum CharacterClass
+{
+    CHARACTER_CLASS_NONE = 0;
+    CHARACTER_CLASS_WARRIOR = 1;
+    CHARACTER_CLASS_MAGE = 2;
+}
+
+// 장비 부위. 착용 장비의 칸 번호(Item)이자 외형의 부위(Entity)이고, DB의 Item.SlotIndex에 숫자로 저장된다
+enum GearPart
+{
+    GEAR_PART_NONE = 0;
+    GEAR_PART_HELMET = 1;
+    GEAR_PART_CHEST = 2;
+    GEAR_PART_LEGS = 3;
+    GEAR_PART_ARMS = 4;
+    GEAR_PART_BOOTS = 5;
+    GEAR_PART_WEAPON = 6;
+}
+
+enum StatType
+{
+    STAT_TYPE_NONE = 0;
+    STAT_TYPE_MAX_HP = 1;
+    STAT_TYPE_HP = 2;
+    STAT_TYPE_MAX_MP = 3;
+    STAT_TYPE_MP = 4;
+    STAT_TYPE_PHYSICAL_ATTACK = 5;
+    STAT_TYPE_MAGICAL_ATTACK = 6;
+    STAT_TYPE_MAX_EXP = 7;          // 지금 레벨의 요구 경험치
+    STAT_TYPE_EXP = 8;              // 지금 레벨 안에서 쌓은 경험치
+}
+
+// 바뀐 스탯 하나
+message Stat
+{
+    StatType type = 1;
+    int64 value = 2;
+}
+
+// 크리처의 모든 스탯
+message StatInfo
+{
+    map<int32, int64> values = 1;   // <StatType 값, 스탯 값>
+}
+
+// 서버가 연결을 끊는 사유
+enum DisconnectReason
+{
+    DISCONNECT_REASON_NONE = 0;
+    DISCONNECT_REASON_DUPLICATE_CONNECTION = 1;     // 같은 계정의 새 로비 접속에 밀려났다
+}
+
+// 서버가 연결을 끊기 직전에 보낸다. 세션 단계와 무관하게 온다
+message S_DISCONNECT
+{
+    DisconnectReason reason = 1;
+}

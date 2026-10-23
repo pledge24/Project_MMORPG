@@ -28,7 +28,7 @@ bool FP1PacketFramingTest::RunTest(const FString& Parameters)
     const std::string Payload = "\xEC\x95\x88\xEB\x85\x95 \xEC\x84\x9C\xEB\xB2\x84";
 
     Protocol::C_CHAT Pkt;
-    Pkt.set_msg(Payload);
+    Pkt.set_message(Payload);
 
     const int32 DataSize = static_cast<int32>(Pkt.ByteSizeLong());
     const int32 Expected = DataSize + HeaderSize;
@@ -50,9 +50,9 @@ bool FP1PacketFramingTest::RunTest(const FString& Parameters)
     Protocol::C_CHAT Parsed;
     const bool bParsed = Parsed.ParseFromArray(Packet->Buffer() + HeaderSize, DataSize);
     TestTrue(TEXT("본문이 파싱된다"), bParsed);
-    TestEqual(TEXT("왕복한 msg 의 길이"), static_cast<int32>(Parsed.msg().size()),
+    TestEqual(TEXT("왕복한 message 의 길이"), static_cast<int32>(Parsed.message().size()),
               static_cast<int32>(Payload.size()));
-    TestTrue(TEXT("왕복한 msg 의 내용"), Parsed.msg() == Payload);
+    TestTrue(TEXT("왕복한 message 의 내용"), Parsed.message() == Payload);
 
     // 4) 빈 메시지는 헤더만 실려 나간다. 본문 0바이트가 경계다.
     Protocol::C_CHAT EmptyPkt;

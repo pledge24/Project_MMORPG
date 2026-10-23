@@ -70,6 +70,9 @@
     <ClCompile Include="Network\ItemRequests.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\ChatRequests.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
     <ClCompile Include="DB\DBWorker.cpp">
       <Filter>DB</Filter>
     </ClCompile>
@@ -77,6 +80,9 @@
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Network\AuthTicket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network\WorldListing.cpp">
       <Filter>Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\pch.cpp">
@@ -110,12 +116,6 @@
     <ClCompile Include="Core\Global.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Protocol\Protocol.pb.cc">
-      <Filter>Protocol</Filter>
-    </ClCompile>
-    <ClCompile Include="Protocol\Struct.pb.cc">
-      <Filter>Protocol</Filter>
-    </ClCompile>
     <ClCompile Include="Protocol\Chat.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
@@ -137,9 +137,6 @@
     <ClCompile Include="Protocol\Lobby.pb.cc">
       <Filter>Protocol</Filter>
     </ClCompile>
-    <ClCompile Include="Protocol\Enum.pb.cc">
-      <Filter>Protocol</Filter>
-    </ClCompile>
     <ClCompile Include="Utils\Utils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
@@ -150,6 +147,12 @@
       <Filter>Lobby</Filter>
     </ClCompile>
     <ClCompile Include="Lobby\LobbyPacketHandlers.cpp">
+      <Filter>Lobby</Filter>
+    </ClCompile>
+    <ClCompile Include="Lobby\LobbyRequests.cpp">
+      <Filter>Lobby</Filter>
+    </ClCompile>
+    <ClCompile Include="Lobby\LobbyReturn.cpp">
       <Filter>Lobby</Filter>
     </ClCompile>
     <ClCompile Include="Game\Progress\Leveling.cpp">
@@ -250,6 +253,9 @@
     <ClInclude Include="Network\ItemRequests.h">
       <Filter>Network</Filter>
     </ClInclude>
+    <ClInclude Include="Network\ChatRequests.h">
+      <Filter>Network</Filter>
+    </ClInclude>
     <ClInclude Include="Network\PacketSend.h">
       <Filter>Network</Filter>
     </ClInclude>
@@ -260,6 +266,9 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Network\AuthTicket.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\WorldListing.h">
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Config.h">
@@ -295,15 +304,6 @@
     <ClInclude Include="Core\Global.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Protocol\Enum.pb.h">
-      <Filter>Protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="Protocol\Protocol.pb.h">
-      <Filter>Protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="Protocol\Struct.pb.h">
-      <Filter>Protocol</Filter>
-    </ClInclude>
     <ClInclude Include="Protocol\Chat.pb.h">
       <Filter>Protocol</Filter>
     </ClInclude>
@@ -332,6 +332,12 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Lobby\CharacterCreation.h">
+      <Filter>Lobby</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\LobbyRequests.h">
+      <Filter>Lobby</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\LobbyReturn.h">
       <Filter>Lobby</Filter>
     </ClInclude>
     <ClInclude Include="Game\Progress\Leveling.h">
@@ -406,6 +412,9 @@
     <ClInclude Include="Game\Items\ItemTypes.h">
       <Filter>Game\Items</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Items\ItemOutcome.h">
+      <Filter>Game\Items</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Items\InventorySections.h">
       <Filter>Game\Items</Filter>
     </ClInclude>
@@ -464,15 +473,6 @@
   <ItemGroup>
     <None Include="..\..\Protocol\Generate.ps1">
       <Filter>Protocol</Filter>
-    </None>
-    <None Include="..\..\Protocol\Schema\Enum.proto">
-      <Filter>Protocol\Schema</Filter>
-    </None>
-    <None Include="..\..\Protocol\Schema\Protocol.proto">
-      <Filter>Protocol\Schema</Filter>
-    </None>
-    <None Include="..\..\Protocol\Schema\Struct.proto">
-      <Filter>Protocol\Schema</Filter>
     </None>
     <None Include="..\..\Protocol\Schema\Chat.proto">
       <Filter>Protocol\Schema</Filter>

@@ -38,30 +38,14 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 	return false;
 }
 
-bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
-{
-	return true;
-}
-
-// 로비 계열(S_LOGIN, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
+// 로비 계열(S_CONNECT_LOBBY, S_CHARACTER_LIST, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
 // Lobby/P1LobbyPacketHandlers.cpp에 있다. Network/는 Lobby/를 부르지 않는다.
 
-bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
+bool Handle_S_DISCONNECT(PacketSessionRef& session, Protocol::S_DISCONNECT& pkt)
 {
     if (auto* Connection = session->GetConnection())
     {
-        Connection->HandleLeaveGame(pkt.reason());
-        return true;
-    }
-
-    return false;
-}
-
-bool Handle_S_ENTER_MAP(PacketSessionRef& session, Protocol::S_ENTER_MAP& pkt)
-{
-    if (auto* MyPlayerData = GetMyPlayerData(session))
-    {
-        MyPlayerData->HandleEnterMap(pkt);
+        Connection->HandleDisconnect(pkt.reason());
         return true;
     }
 
@@ -75,10 +59,22 @@ bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
     if (EntityManager == nullptr || MyPlayerData == nullptr)
         return false;
 
-    // 룸 id는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 위치는 엔티티 관리자가 맡는다.
+    // 내 엔티티 번호는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 배치는 엔티티 관리자가 맡는다.
+    // 엔티티 관리자가 그 번호로 내 플레이어를 가리므로 내 플레이어 데이터가 먼저다.
     MyPlayerData->HandleEnterRoom(pkt);
     EntityManager->HandleEnterRoom(pkt);
     return true;
+}
+
+bool Handle_S_USE_PORTAL(PacketSessionRef& session, Protocol::S_USE_PORTAL& pkt)
+{
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleUsePortal(pkt);
+        return true;
+    }
+
+    return false;
 }
 
 bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
@@ -116,9 +112,18 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
 
 bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
 {
+    // 내 공격은 누를 때 이미 재생했다. 거절되어도 되돌릴 연출이 없으므로 남기기만 한다.
+    if (pkt.result() != Protocol::COMBAT_RESULT_SUCCESS)
+        UE_LOG(LogP1Network, Warning, TEXT("일반 공격이 거절됐다: %s"), UTF8_TO_TCHAR(Protocol::CombatResult_Name(pkt.result()).c_str()));
+
+    return true;
+}
+
+bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
+{
     if (auto* EntityManager = GetEntityManager(session))
     {
-        EntityManager->HandleNormalAttack(pkt);
+        EntityManager->HandleAttack(pkt);
         return true;
     }
 
@@ -160,28 +165,37 @@ bool Handle_S_SELL_ITEM(PacketSessionRef& session, Protocol::S_SELL_ITEM& pkt)
 
 bool Handle_S_EQUIP_GEAR(PacketSessionRef& session, Protocol::S_EQUIP_GEAR& pkt)
 {
-    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
-    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
-    if (EntityManager == nullptr || MyPlayerData == nullptr)
-        return false;
+    // 외형은 뒤따르는 S_GEAR_APPEARANCE가 바꾼다.
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleEquipGear(pkt);
+        return true;
+    }
 
-    // 외형은 모든 플레이어에 적용하고, 슬롯과 스탯은 내 플레이어일 때만 반영한다.
-    EntityManager->HandleEquipGear(pkt);
-    MyPlayerData->HandleEquipGear(pkt);
-    return true;
+    return false;
 }
 
 bool Handle_S_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::S_UNEQUIP_GEAR& pkt)
 {
-    UP1StatefulEntityManager* EntityManager = GetEntityManager(session);
-    UP1MyPlayerData* MyPlayerData = GetMyPlayerData(session);
-    if (EntityManager == nullptr || MyPlayerData == nullptr)
-        return false;
+    // 외형은 뒤따르는 S_GEAR_APPEARANCE가 바꾼다.
+    if (auto* MyPlayerData = GetMyPlayerData(session))
+    {
+        MyPlayerData->HandleUnequipGear(pkt);
+        return true;
+    }
 
-    // 외형은 모든 플레이어에 적용하고, 슬롯과 스탯은 내 플레이어일 때만 반영한다.
-    EntityManager->HandleUnequipGear(pkt);
-    MyPlayerData->HandleUnequipGear(pkt);
-    return true;
+    return false;
+}
+
+bool Handle_S_GEAR_APPEARANCE(PacketSessionRef& session, Protocol::S_GEAR_APPEARANCE& pkt)
+{
+    if (auto* EntityManager = GetEntityManager(session))
+    {
+        EntityManager->HandleGearAppearance(pkt);
+        return true;
+    }
+
+    return false;
 }
 
 bool Handle_S_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::S_SET_QUICK_SLOT& pkt)
@@ -217,11 +231,11 @@ bool Handle_S_DIE(PacketSessionRef& session, Protocol::S_DIE& pkt)
     return false;
 }
 
-bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT& pkt)
+bool Handle_S_REWARD(PacketSessionRef& session, Protocol::S_REWARD& pkt)
 {
     if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        MyPlayerData->HandleRewardResult(pkt);
+        MyPlayerData->HandleReward(pkt);
         return true;
     }
 
@@ -230,9 +244,9 @@ bool Handle_S_REWARD_RESULT(PacketSessionRef& session, Protocol::S_REWARD_RESULT
 
 bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 {
-    if (auto* EntityManager = GetEntityManager(session))
+    if (auto* MyPlayerData = GetMyPlayerData(session))
     {
-        EntityManager->HandleRespawn(pkt);
+        MyPlayerData->HandleRespawn(pkt);
         return true;
     }
 
@@ -241,9 +255,18 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
+    // 채팅 UI가 아직 없어 보내는 쪽도 없다. 거절만 로그로 남긴다.
+    if (pkt.result() != Protocol::CHAT_RESULT_SUCCESS)
+        UE_LOG(LogP1Network, Warning, TEXT("채팅이 거절됐습니다: %s"), UTF8_TO_TCHAR(Protocol::ChatResult_Name(pkt.result()).c_str()));
+
+    return true;
+}
+
+bool Handle_S_CHAT_MESSAGE(PacketSessionRef& session, Protocol::S_CHAT_MESSAGE& pkt)
+{
     // 채팅 UI가 아직 없다. DummyClient 부하 테스트에서 서버 중계가 도는지 확인할 수 있게 로그만 남긴다.
-    FString Msg = UTF8_TO_TCHAR(pkt.msg().c_str());
-    UE_LOG(LogP1Network, Log, TEXT("S_CHAT entity_id: %lld, msg: %s"), pkt.entity_id(), *Msg);
+    const FString Message = UTF8_TO_TCHAR(pkt.message().c_str());
+    UE_LOG(LogP1Network, Log, TEXT("S_CHAT_MESSAGE entity_id: %lld, message: %s"), pkt.entity_id(), *Message);
 
     return true;
 }

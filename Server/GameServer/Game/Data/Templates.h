@@ -1,5 +1,6 @@
 #pragma once
-#include "Protocol/Enum.pb.h"
+#include "Protocol/Common.pb.h"
+#include "Protocol/Item.pb.h"
 
 /*--------------------------------------------------------------
     기획 데이터 템플릿
@@ -22,7 +23,7 @@ struct ItemTemplate
     int32 templateId = 0;
     Protocol::ItemType itemType = Protocol::ITEM_TYPE_NONE;
     /** 착용 부위. 장비만 값이 있다. */
-    optional<Protocol::GearType> gearType;
+    optional<Protocol::GearPart> gearType;
 
     //~ 착용 조건. 장착할 때 서버가 판정한다.
     int32 levelRequirement = 0;

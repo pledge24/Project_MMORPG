@@ -18,6 +18,12 @@ public:
         OnRecvPacket(buffer, len);
     }
 
+    /** 지금까지 보낸 패킷을 잊는다. 준비 단계에서 보낸 패킷을 대조에서 뺀다. */
+    void ClearSent()
+    {
+        _sent.clear();
+    }
+
     /** 보낸 패킷 중 id가 packetId인 것을 PacketType으로 풀어 돌려준다. */
     template<typename PacketType>
     vector<PacketType> SentPackets(uint16 packetId) const

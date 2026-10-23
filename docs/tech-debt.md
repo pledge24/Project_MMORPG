@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 30개 (높음 1 · 중간 1 · 낮음 28) · 다음 번호 TD-075
+항목 27개 (높음 1 · 중간 1 · 낮음 25) · 다음 번호 TD-077
 
 ## 작성 방법
 
@@ -79,28 +79,6 @@
 
 # 높음
 
-## TD-070 리스폰한 뒤 내 플레이어가 키 입력 없이 계속 앞으로 이동한다
-> **심각도:** 높음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` (`C_HandleRespawn`, `HandleRespawn`) · `Server/GameServer/Game/Entities/Player.cpp` 380줄 (`ProcessRespawn`) · `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 300~304줄 (`HandleRespawn`)
-> 등록일: 2026년 10월 22일
-
-퀵슬롯 사용 작업의 PIE에서 사람이 찾았다. 리스폰하면 Ensure가 한 번 뜨고, 그 뒤로 키를 누르지 않아도 내 플레이어가 계속 앞으로 간다.
-Ensure 원문은 `P1MoveSyncComponent.cpp` 90줄의 `ClientPos.entity_id() == Info.entity_id()`와 「다른 엔티티의 위치로 덮어쓴다. 기존 31, 새 0」이다.
-호출 경로는 `UP1StatefulEntityManager::HandleRespawn` → `UP1MoveSyncComponent::SetClientPos`다.
-
-코드로 확인한 것은 다음 두 가지다.
-
-1. 서버의 리스폰 위치는 마을 표의 위치(`town->pos`)를 그대로 쓰고 엔티티 번호를 넣지 않는다. 같은 룸과 다른 룸의 두 경로가 모두
-   그 값을 `S_RESPAWN.pos_info`에 싣는다. 다른 룸 경로는 룸 입장용 사본에만 엔티티 번호를 넣는다
-2. `Player::ProcessRespawn`이 그 위치를 `_posInfo->CopyFrom`으로 통째로 복사하므로, 서버가 든 플레이어 위치의 엔티티 번호도 0이 된다
-
-앞으로 계속 가는 원인은 확인하지 않았다. 엔티티 번호가 0인 위치가 그 뒤의 이동 패킷과 스폰 정보에 실리는 것이 관련이 있을 것으로
-추정하고, 재현하지 않았다. 이번 브랜치의 변경은 리스폰과 이동 경로를 건드리지 않는다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 리스폰한 플레이어를 조작할 수 없게 된다. 사망은 일반 플레이에서 자주 일어난다.
-
 ---
 
 # 중간
@@ -168,7 +146,6 @@ Ensure 원문은 `P1MoveSyncComponent.cpp` 90줄의 `ClientPos.entity_id() == In
 | 위치 | 적힌 것 | 실제 |
 |---|---|---|
 | `Network/PacketSession.cpp` 106줄 | 소켓은 게임 인스턴스가 소유한다 | `UP1ConnectionSubsystem`이 소유한다 |
-| `Network/P1SendWorker.cpp` 45줄 | 게임 인스턴스가 연결을 닫을 때 `C_LEAVE_GAME`이 나간다 | 연결 서브시스템의 `Deinitialize`가 닫는다 |
 | `Network/P1ConnectionSubsystem.cpp` 129줄 | `PacketSession::GetGameInstance`를 쓴다 | 그 함수는 없다. `GetWorld`와 `GetConnection`을 쓴다 |
 | `Game/Interaction/P1Shop.h` 30줄 | 범위에서 나간 액터가 누구든 상점 창을 닫는다 | `AP1MyPlayer`가 아니면 리턴한다. cpp의 주석은 코드와 맞다 |
 | `Tests/P1PacketFramingTest.cpp` 8~9줄 | SendBuffer의 `Append`와 `Copy`는 `docs/tech-debt.md` 참조 | 그런 항목이 없다 |
@@ -223,22 +200,6 @@ Ensure 원문은 `P1MoveSyncComponent.cpp` 90줄의 `ClientPos.entity_id() == In
 **버그 발생 가능성 증가** — 49자 이상인 이름은 캐릭터 목록과 게임 안에서 잘려 보인다. 같은 헬퍼로 다른 문자열 열을
 읽으면 같은 비율로 잘린다.
 
-## TD-051 리스폰 요청이 플레이어가 아직 그 룸에 있는지 보지 않는다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Game/Room/Room.cpp` 487~577줄 (`C_HandleRespawn`)
-> 등록일: 2026년 10월 10일
-
-이동, 공격, 포털 같은 룸 큐 핸들러는 `Contains`로 플레이어가 이 룸에 있는지 먼저 확인한다. `C_HandleRespawn`은 이 확인 없이
-`player->IsDead()`를 읽고, 같은 룸 분기에서는 `HandleRespawn`으로 플레이어 상태를 바꾼다. 핸들러는 디스패치할 때의
-`GetRoom()`으로 큐를 고르고, 소속 룸 참조는 퇴장해도 비워지지 않는다. 그래서 룸을 옮기는 사이에 온 리스폰 요청은 옛 룸 큐에서
-돌며 새 룸 큐가 소유한 플레이어 상태를 읽거나 바꿀 수 있다. #210에서 아이템 요청에 고친 것과 같은 종류의 결함이다.
-코드를 읽고 판단했고 실행해서 재현하지 않았다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 두 룸 큐가 한 플레이어의 상태를 동시에 다루면 사망 여부와 위치가 어긋날 수 있다. 「다른 룸의
-오브젝트에 직접 손대지 않는다」는 불변식이 이 핸들러에서만 깨진다.
-
 ## TD-052 DummyClient의 Release 구성이 Debug 폴더의 protobuf 라이브러리를 링크한다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · build
 > 위치: `Server/DummyClient/Main/pch.h` 10줄
@@ -263,21 +224,6 @@ Release 분기에서 `Release` 폴더를 쓴다. 코드를 읽고 판단했고 R
 
 **유지보수 어려움** — 더미 클라이언트가 이 문자열을 보낸다고 오해하게 만든다.
 
-## TD-054 첫 입장의 `_enteringRoomId`를 쓰는 큐와 읽는 스레드가 주석과 다르다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Network/ServerPacketHandler.cpp` 380줄, 386~410줄
-> 등록일: 2026년 10월 14일
-
-`Handle_C_ENTER_MAP`의 주석은 「여기서 기록한 enteringRoomId를 뒤이어 C_HandleEnterRoom이 같은 큐에서 읽는다」고 말한다.
-그런데 아직 룸에 들어가지 않은 플레이어가 `C_ENTER_ROOM`을 보내면, `Handle_C_ENTER_ROOM`이 IOCP 스레드에서
-`GetEnteringRoomId()`를 직접 읽어 입장할 룸을 고른다. 이 값을 쓰는 `C_HandleEnterMap`은 룸 큐 위에서 돌기 때문에 두 접근은
-같은 큐에 있지 않다. 지금은 클라이언트가 `C_ENTER_MAP`을 보내지 않아(TD-033) 이 경로가 실행되지 않는다. 코드를 읽고 판단했다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 클라이언트가 `C_ENTER_MAP`을 보내기 시작하면, 동기화 없이 한 스레드가 쓰고 다른 스레드가 읽는다.
-주석을 믿고 고치는 사람은 이 경쟁을 보지 못한다.
-
 ## TD-055 엔티티 관리자의 중복 스폰 경고가 실행되지 않는다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
 > 위치: `P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 164~171줄, 198~205줄
@@ -289,18 +235,6 @@ Release 분기에서 `Release` 폴더를 쓴다. 코드를 읽고 판단했고 R
 ### 영향
 
 **유지보수 어려움** — 서버가 같은 엔티티를 두 번 스폰해도 로그가 남지 않는다. 경고가 있다고 믿고 로그에서 찾는 사람은 아무것도 찾지 못한다.
-
-## TD-059 중복 로그인으로 세션을 끊을 때 남기는 사유가 영어다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
-> 위치: `Server/GameServer/Lobby/LobbyPacketHandlers.cpp` (`Handle_C_LOGIN`)
-> 등록일: 2026년 10월 20일
-
-`KickSession`에 넘긴 사유 `"Duplicate Login"`이 `Session::Disconnect`의 로그(`연결을 끊는다: {}`)에 그대로 찍힌다.
-로그는 한국어로 쓴다는 규칙과 어긋난다. 같은 함수의 인증 티켓 거절 사유는 한국어로 바꿨다.
-
-### 영향
-
-**유지보수 어려움** — 한 로그 줄 안에서 한국어와 영어가 섞여, 끊긴 사유로 로그를 찾을 때 검색어를 둘 다 써야 한다.
 
 ## TD-060 기획 데이터 변환기가 실패해도 종료 코드 0으로 끝난다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · build
@@ -444,6 +378,38 @@ UBT는 테스트 파일 여럿을 한 번역 단위로 묶어 컴파일한다. �
 
 **개발 속도 저하** — 핸들러가 게임 인스턴스를 얻는 경로를 찾는 사람이 없는 함수를 찾아 헤맨다.
 
+## TD-075 클라이언트 빌드 스크립트가 다른 워크트리의 에디터를 이 프로젝트의 에디터로 본다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Scripts/Invoke-UeBuild.ps1` 123~127줄
+> 등록일: 2026년 10월 23일
+
+스크립트는 떠 있는 에디터의 명령줄에 프로젝트 파일 이름(`P1.uproject`)이 들어 있는지만 본다. 워크트리마다 프로젝트 파일 이름이
+같다. 그래서 다른 워크트리에서 연 에디터가 떠 있으면 이 워크트리의 빌드도 「이 프로젝트를 연 에디터가 떠 있다」며 1로 끝난다.
+그 에디터는 이 워크트리의 `UnrealEditor-P1.dll`을 잠그지 않는다. `-CloseEditor`를 붙이면 다른 워크트리의 에디터를 닫는다.
+2026년 10월 23일 #292 작업 중에 메인 체크아웃의 에디터 때문에 실제로 막혔다. `Run-UeTests.ps1`에는 이 판정이 없다.
+
+### 영향
+
+**작업 흐름 정지** — 한 워크트리에서 에디터를 쓰고 다른 워크트리에서 빌드하는 병렬 작업이 막힌다. `-CloseEditor`로 넘기면 다른
+세션의 저장하지 않은 에셋 변경을 잃을 수 있다.
+
+## TD-076 여러 로그인 화면 WBP가 쓰는 버튼 텍스처가 `Frontend/Textures/`에 있다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · client
+> 위치: `P1/Content/P1/UI/Frontend/Textures/` (`Btn1_*`, `Btn2_*`, `panel_small` 등)
+> 등록일: 2026년 10월 23일
+
+폴더 구조 문서는 위젯 하나만 쓰는 텍스처를 그 위젯 폴더의 `Textures/`에 두고, 두 위젯 이상이 쓰면 `Common/Textures/`로 옮기라고 한다.
+로그인 메뉴 위젯 하나가 모든 패널을 갖던 때는 이 텍스처를 `WBP_LoginMenu` 하나만 썼다. 2026년 10월 23일 화면마다 WBP를 나눈 뒤로는
+`WBP_Login`, `WBP_CharacterSelect`, `WBP_CharacterCreate`, `WBP_CharacterDelete`가 함께 쓴다. 옮기면 리다이렉터를 정리하고
+참조 에셋을 다시 저장해야 해서 화면을 나누는 작업에서 함께 하지 않았다.
+2026년 10월 23일 덧붙임: 게임 메뉴(`Screens/WBP_GameMenu`)도 `Btn1_*`, `Btn2_*`, `panel_small`을 쓴다. 이제 `Frontend/` 밖의 위젯도
+이 텍스처를 쓴다.
+
+### 영향
+
+**개발 속도 저하** — 다른 화면에서 같은 버튼 이미지를 찾는 사람이 `Common/Textures/`를 먼저 뒤진다. 문서의 예시(`WBP_LoginMenu`만 쓰는
+버튼 이미지)도 지금의 상태와 맞지 않는다.
+
 ## TD-002 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/Player.cpp` (`ProcessBuyItem`, `ProcessSellItem`)
@@ -457,21 +423,6 @@ UBT는 테스트 파일 여럿을 한 번역 단위로 묶어 컴파일한다. �
 ### 영향
 
 **버그 발생 가능성 증가** — 조작한 클라이언트는 상점에 없는 아이템을 사고, 상점에 가지 않고 거래할 수 있다.
-
-## TD-033 클라이언트가 맵 간 이동을 요청하지 않아 `S_ENTER_MAP` 경로가 실행되지 않는다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · client
-> 위치: `P1/Source/P1/Core/P1EntryFlowSubsystem.cpp` 151~155줄 (`EnterMapLoad`) · `P1/Source/P1/Network/ClientPacketHandler.cpp` 60~67줄 (`Handle_S_ENTER_MAP`)
-> 등록일: 2026년 10월 5일
-
-클라이언트 코드는 생성물 말고는 `C_ENTER_MAP`을 보내는 곳이 없다. 서버의 `S_ENTER_MAP`은 `Handle_C_ENTER_MAP`의 응답이므로,
-`Handle_S_ENTER_MAP` → `UP1MyPlayerData::HandleEnterMap` → `OnMapEntered` → `UP1EntryFlowSubsystem::EnterMapLoad` 경로는
-지금 실행되지 않는다. `EnterMapLoad`도 맵 번호와 무관하게 `"L_InGameMap"`을 연다. 첫 입장은 `LoadLastState`가 `_enteringRoomId`를
-채워 두므로 동작한다. 코드를 읽고 판단했다.
-
-### 영향
-
-**새 기능 개발 지연** — 맵이 둘 이상이 되면 클라이언트의 맵 간 이동을 처음부터 이어야 한다. 실행되지 않는 핸들러가 동작하는
-경로처럼 보여서, 그 경로를 고친 결과를 확인할 수 없다.
 
 ## TD-049 룸 이동에 실패한 플레이어가 끊기면 저장 대기가 풀리지 않는 창이 남는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
@@ -507,19 +458,3 @@ UBT는 테스트 파일 여럿을 한 번역 단위로 묶어 컴파일한다. �
 ### 영향
 
 **유지보수 어려움** — DB 연결이 실패한 이유를 로그만으로 알 수 없어, 같은 접속을 다른 도구로 다시 시도해야 한다.
-
-## TD-073 한 세션이 로비 접속을 마치기 전에 두 번 보내면 둘 다 통과한다
-> **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
-> 위치: `Server/GameServer/Lobby/LobbyPacketHandlers.cpp` (`Handle_C_LOGIN`)
-> 등록일: 2026년 10월 23일
-
-세션 단계는 로비 접속 잡이 목록을 불러온 뒤에야 로비로 바뀐다. 로비 접속 잡은 계정을 모르는 채로 랜덤 DB 큐에 들어가므로,
-같은 세션이 그 전에 유효한 인증 티켓 둘로 `C_LOGIN`을 두 번 보내면 두 잡이 서로 다른 DB 스레드에서 함께 돈다. 둘 다 티켓을
-지우고 계정을 등록하므로, 세션의 계정 번호는 나중에 등록한 쪽이 되고 클라이언트는 목록을 두 번 받는다. 앞 계정의 등록은
-지워진다. 플레이어가 없는 단계라 저장 대기는 엇갈리지 않는다. 계정 둘의 티켓과 조작한 클라이언트가 있어야 이 경로를 탄다.
-#287에서 세션 단계를 두다가 코드를 읽고 찾았고, 실행해 보지는 않았다. 로비 계약 티켓(#290)이 세션 단계에
-「로비 접속 중」을 더해, 로비 접속을 받는 순간 단계를 바꾸면서 고친다.
-
-### 영향
-
-**버그 발생 가능성 증가** — 세션이 어느 계정으로 로비에 있는지 클라이언트와 서버가 다르게 알 수 있다.

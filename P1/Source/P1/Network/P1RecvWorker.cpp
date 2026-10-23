@@ -69,7 +69,7 @@ void FP1RecvWorker::Exit()
 void FP1RecvWorker::NotifyConnectionLost()
 {
 	// 받은 패킷은 모두 큐에 넣은 뒤에 부른다. 게임 스레드는 이 표시를 본 뒤 큐를 비우므로
-	// 끊기기 직전에 온 S_LEAVE_GAME을 놓치지 않는다.
+	// 끊기기 직전에 온 S_DISCONNECT를 놓치지 않는다.
 	if (PacketSessionRef Session = SessionRef.Pin())
 		Session->MarkConnectionLost();
 }
