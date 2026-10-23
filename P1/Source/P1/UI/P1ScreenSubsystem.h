@@ -12,11 +12,12 @@ class UP1WarningTextWidget;
 class UP1DeathWidget;
 class UP1GameMenuWidget;
 class UP1WindowLayerWidget;
+class UP1ChatWidget;
 
 /**
  * 인게임 화면과 창의 관리자.
  *
- * HUD, 도움말, 경고 문구, 사망 화면, 게임 메뉴 같은 인게임 화면과 스탯 창, 인벤토리, 상점 같은 창을 띄우고 여닫는다.
+ * HUD, 도움말, 채팅창, 경고 문구, 사망 화면, 게임 메뉴 같은 인게임 화면과 스탯 창, 인벤토리, 상점 같은 창을 띄우고 여닫는다.
  * 열린 창에 맞춰 입력 모드와 마우스 커서를 바꾼다.
  */
 UCLASS()
@@ -58,8 +59,8 @@ public:
     bool IsWindowOpen(EP1WidgetType Type) const;
 
     /**
-     * 게임 메뉴나 사망 화면이 떠 있으면 그 화면만 입력을 받게 하고, 아니면 열린 창이 하나라도 있으면 UI 모드,
-     * 없으면 게임 모드로 입력과 커서를 맞춘다.
+     * 게임 메뉴, 채팅 입력칸, 사망 화면, 열린 창의 순서로 먼저 해당하는 것에 입력과 커서를 맞춘다.
+     * 앞의 셋은 그것만 입력을 받고, 창은 UI와 게임이 함께 받는다. 아무것도 없으면 게임 모드다.
      */
     void RefreshInputMode();
 
@@ -89,6 +90,22 @@ public:
 private:
     UPROPERTY()
     TObjectPtr<UP1GameMenuWidget> GameMenuWidget;
+
+    //~ Chat
+public:
+    /** 채팅 입력칸을 열고 입력을 입력칸만 받게 한다. 사망 중에도 연다. 게임 단계가 아니면 열지 않는다. */
+    void OpenChatInput();
+
+    /** 채팅 입력칸을 닫고 입력 모드를 되돌린다. */
+    void CloseChatInput();
+
+    bool IsChatInputOpen() const { return bChatInputOpen; }
+
+private:
+    UPROPERTY()
+    TObjectPtr<UP1ChatWidget> ChatWidget;
+
+    bool bChatInputOpen = false;
 
     //~ Notices
 public:

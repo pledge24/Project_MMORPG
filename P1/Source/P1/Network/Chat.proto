@@ -25,4 +25,5 @@ message S_CHAT_MESSAGE
 {
     int64 entity_id = 1;
     string message = 2;
+    string name = 3;                        // 말한 플레이어의 이름. 받는 쪽에서 그 엔티티가 이미 사라졌어도 보여 줄 수 있다
 }

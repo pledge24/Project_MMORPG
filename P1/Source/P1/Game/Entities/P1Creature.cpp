@@ -24,18 +24,22 @@ void AP1Creature::BeginPlay()
         UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature {%s} AttackSystemComponent 누락"), *this->GetName());
 
     // 네임플레이트에 이 크리처 바인딩.
-    NameplateComponent = FindComponentByClass<UWidgetComponent>();
-    if (NameplateComponent)
+    // 플레이어는 말풍선 위젯 컴포넌트도 가지므로, 위젯 컴포넌트 중 크리처에 붙는 위젯을 가진 것을 네임플레이트로 고른다.
+    NameplateComponent = nullptr;
+    TArray<UWidgetComponent*> WidgetComponents;
+    GetComponents<UWidgetComponent>(WidgetComponents);
+    for (UWidgetComponent* WidgetComponent : WidgetComponents)
     {
-        if (IP1CreatureBoundWidget* NameplateWidget = Cast<IP1CreatureBoundWidget>(NameplateComponent->GetWidget()))
+        if (IP1CreatureBoundWidget* NameplateWidget = Cast<IP1CreatureBoundWidget>(WidgetComponent->GetWidget()))
+        {
+            NameplateComponent = WidgetComponent;
             NameplateWidget->BindCreature(this);
-        else
-            UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature::BeginPlay() NameplateWidget 누락"));
+            break;
+        }
     }
-    else
-    {
-        UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature::BeginPlay() NameplateComponent 누락"));
-    }
+
+    if (NameplateComponent == nullptr)
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature {%s} 네임플레이트 위젯을 가진 위젯 컴포넌트가 없다"), *GetName());
 
 }
 

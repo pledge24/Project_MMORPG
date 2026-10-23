@@ -7,20 +7,25 @@
 #include "Network/ChatRequests.h"
 #include "PlayerTestAccess.h"
 #include "RecordingSession.h"
+#include "RoomManagerTestAccess.h"
 
 /*--------------------------------------------------------------
     룸의 아이템과 채팅 요청 테스트
 
-    응답은 요청한 플레이어에게만 가고, 실패는 결과 enum 하나로 싣는다. 착용 외형과 채팅 메시지는
-    요청한 플레이어를 포함한 룸의 모든 플레이어에게 통지로 간다. 거절한 요청은 통지를 보내지 않는다.
+    응답은 요청한 플레이어에게만 가고, 실패는 결과 enum 하나로 싣는다. 착용 외형은 요청한 플레이어를 포함한
+    룸의 모든 플레이어에게, 채팅 메시지는 말한 플레이어를 포함한 그 룸의 모든 플레이어에게 통지로 간다.
+    다른 룸에는 가지 않는다. 거절한 요청은 통지를 보내지 않는다.
 
-    픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 두 플레이어를 RecordingSession에 묶어
-    EnterPlayer로 넣는다. 칼 하나와 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
+    픽스처 결합도: 맵 표의 두 행으로 시작하지 않은 룸 둘을 ScopedTestRoomManager에 만든다. 요청한 플레이어와
+    지켜보는 플레이어를 한 룸에, 다른 플레이어 하나를 다른 룸에 RecordingSession으로 묶어 넣는다.
+    칼 하나와 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
 {
     constexpr int32 ROOM_ID = 10;
+    constexpr int32 OTHER_ROOM_ID = 20;
+    const string REQUESTER_NAME = "검은늑대";
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
 }
 
@@ -42,37 +47,55 @@ protected:
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         tables.items[SWORD_TEMPLATE_ID] = sword;
         tables.inventorySlotCounts = MakeInventorySections();
+        tables.maps[ROOM_ID] = MakeRoomTemplate(ROOM_ID, 0.f);
+        tables.maps[OTHER_ROOM_ID] = MakeRoomTemplate(OTHER_ROOM_ID, 20000.f);
         Gamedata::Install(std::move(tables));
 
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = ROOM_ID;
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
-        room = Room::Create(mapTemplate);
+        rooms = make_unique<ScopedTestRoomManager>();
+        room = rooms->FindRoom(ROOM_ID);
+        otherRoom = rooms->FindRoom(OTHER_ROOM_ID);
         ASSERT_NE(room, nullptr);
+        ASSERT_NE(otherRoom, nullptr);
 
-        requester = EnterPlayer(requesterSession);
-        observer = EnterPlayer(observerSession);
+        requester = EnterPlayer(room, requesterSession, REQUESTER_NAME);
+        observer = EnterPlayer(room, observerSession, "아린");
+        otherRoomPlayer = EnterPlayer(otherRoom, otherRoomSession, "북부상인");
         ASSERT_NE(requester, nullptr);
         ASSERT_NE(observer, nullptr);
+        ASSERT_NE(otherRoomPlayer, nullptr);
 
         requesterSession->ClearSent();
         observerSession->ClearSent();
+        otherRoomSession->ClearSent();
     }
 
     void TearDown() override
     {
         requester.reset();
         observer.reset();
+        otherRoomPlayer.reset();
         room.reset();
+        otherRoom.reset();
+        rooms.reset();
         Gamedata::Install(GamedataTables());
     }
 
-    PlayerRef EnterPlayer(shared_ptr<RecordingSession>& outSession)
+    static MapTemplate MakeRoomTemplate(int32 roomId, float centerX)
+    {
+        MapTemplate mapTemplate;
+        mapTemplate.templateId = roomId;
+        mapTemplate.center = TemplatePos{ centerX, 0.f, 0.f };
+        mapTemplate.depthHalfExtent = 5000.f;
+        mapTemplate.widthHalfExtent = 5000.f;
+        return mapTemplate;
+    }
+
+    PlayerRef EnterPlayer(const RoomRef& targetRoom, shared_ptr<RecordingSession>& outSession, const string& name)
     {
         outSession = make_shared<RecordingSession>();
 
         PlayerProgress progress;
+        progress.name = name;
         progress.classId = Protocol::CHARACTER_CLASS_WARRIOR;
         progress.level = 1;
         progress.hp = 100;
@@ -85,8 +108,8 @@ protected:
             return nullptr;
 
         RoomEnterData enterData{};
-        enterData.nextRoomId = ROOM_ID;
-        if (room->EnterPlayer(player, enterData) == false)
+        enterData.nextRoomId = targetRoom->GetRoomId();
+        if (targetRoom->EnterPlayer(player, enterData) == false)
             return nullptr;
 
         return player;
@@ -106,11 +129,15 @@ protected:
         return pkt;
     }
 
+    unique_ptr<ScopedTestRoomManager> rooms;
     RoomRef room;
+    RoomRef otherRoom;
     PlayerRef requester;
     PlayerRef observer;
+    PlayerRef otherRoomPlayer;
     shared_ptr<RecordingSession> requesterSession;
     shared_ptr<RecordingSession> observerSession;
+    shared_ptr<RecordingSession> otherRoomSession;
 };
 
 /* 착용 */
@@ -190,7 +217,7 @@ TEST_F(ItemChatRequestTest, RejectedUseItemCarriesResult)
 
 /* 채팅 */
 
-TEST_F(ItemChatRequestTest, ChatRespondsToSpeakerAndRelaysToWholeRoom)
+TEST_F(ItemChatRequestTest, ChatRespondsToSpeakerAndRelaysToSpeakersRoomOnly)
 {
     Protocol::C_CHAT pkt;
     pkt.set_message("안녕하세요");
@@ -202,11 +229,15 @@ TEST_F(ItemChatRequestTest, ChatRespondsToSpeakerAndRelaysToWholeRoom)
     EXPECT_EQ(responses[0].result(), Protocol::CHAT_RESULT_SUCCESS);
     EXPECT_TRUE(observerSession->SentPackets<Protocol::S_CHAT>(PKT_S_CHAT).empty()) << "응답은 말한 플레이어에게만 간다";
 
+    EXPECT_TRUE(otherRoomSession->SentPackets<Protocol::S_CHAT>(PKT_S_CHAT).empty());
+    EXPECT_TRUE(otherRoomSession->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE).empty()) << "다른 룸에는 중계하지 않는다";
+
     for (const auto& session : { requesterSession, observerSession })
     {
         const auto messages = session->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE);
         ASSERT_EQ(messages.size(), 1u) << "말한 플레이어도 메시지를 통지로 받는다";
         EXPECT_EQ(messages[0].entity_id(), requester->GetEntityId());
+        EXPECT_EQ(messages[0].name(), REQUESTER_NAME);
         EXPECT_EQ(messages[0].message(), "안녕하세요");
     }
 }
@@ -222,4 +253,5 @@ TEST_F(ItemChatRequestTest, InvalidChatIsRejectedWithoutRelay)
     EXPECT_EQ(responses[0].result(), Protocol::CHAT_RESULT_INVALID_MESSAGE);
     EXPECT_TRUE(requesterSession->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE).empty());
     EXPECT_TRUE(observerSession->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE).empty());
+    EXPECT_TRUE(otherRoomSession->SentPackets<Protocol::S_CHAT_MESSAGE>(PKT_S_CHAT_MESSAGE).empty());
 }

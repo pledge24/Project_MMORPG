@@ -247,6 +247,16 @@ void UP1StatefulEntityManager::HandleMove(const Protocol::EntityMove& Move)
     }
 }
 
+void UP1StatefulEntityManager::HandleChatMessage(const Protocol::S_CHAT_MESSAGE& ChatMessagePkt)
+{
+    // 말하자마자 룸을 떠난 플레이어는 이미 없을 수 있다. 채팅창에는 남으므로 경고 없이 건너뛴다.
+    const TObjectPtr<AP1Player>* Player = Players.Find(static_cast<uint64>(ChatMessagePkt.entity_id()));
+    if (Player == nullptr || *Player == nullptr)
+        return;
+
+    (*Player)->ShowChatBubble(UTF8_TO_TCHAR(ChatMessagePkt.message().c_str()));
+}
+
 void UP1StatefulEntityManager::HandleAttack(const Protocol::S_ATTACK& AttackPkt)
 {
     AP1Creature* Creature = FindEntityAs<AP1Creature>(AttackPkt.entity_id());

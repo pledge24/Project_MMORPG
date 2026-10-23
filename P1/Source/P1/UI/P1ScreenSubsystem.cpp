@@ -2,6 +2,7 @@
 #include "UI/P1UISettings.h"
 #include "Core/P1EntryFlowSubsystem.h"
 #include "UI/Screens/P1HUDWidget.h"
+#include "UI/Screens/P1ChatWidget.h"
 #include "UI/Screens/P1StatusWindowWidget.h"
 #include "UI/Screens/P1InventoryWidget.h"
 #include "UI/Screens/P1ShopWidget.h"
@@ -19,7 +20,7 @@
 namespace
 {
     // 뷰포트의 Z 순서다. 값이 같으면 나중에 붙인 것이 위에 그려진다.
-    constexpr int32 BACKGROUND_Z_ORDER = 0;     // HUD, 도움말
+    constexpr int32 BACKGROUND_Z_ORDER = 0;     // HUD, 도움말, 채팅창
     constexpr int32 WINDOW_LAYER_Z_ORDER = 1;
     constexpr int32 WARNING_TEXT_Z_ORDER = 2;
     constexpr int32 DEATH_SCREEN_Z_ORDER = 10000;
@@ -75,6 +76,7 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
     // HUD는 퀵슬롯이 끌어 놓기를 받아야 하므로 자식의 입력을 막지 않는다. 입력을 받지 않을 그림과 글자는 WBP가 막는다.
     HUDWidget = CreateScreen(InOwningPlayer, Settings->HUDWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::SelfHitTestInvisible);
     HelpWidget = CreateScreen(InOwningPlayer, Settings->HelpWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::HitTestInvisible);
+    ChatWidget = CreateScreen(InOwningPlayer, Settings->ChatWidgetClass, BACKGROUND_Z_ORDER, ESlateVisibility::SelfHitTestInvisible);
 
     // 창 레이어와 창. 창은 닫힌 채로 만든다.
     WindowLayer = CreateWidget<UP1WindowLayerWidget>(InOwningPlayer, UP1WindowLayerWidget::StaticClass());
@@ -95,7 +97,7 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
 
 void UP1ScreenSubsystem::ReleaseScreens()
 {
-    for (UUserWidget* Widget : TArray<UUserWidget*>{ HUDWidget, HelpWidget, WindowLayer, WarningTextWidget, DeathWidget, GameMenuWidget })
+    for (UUserWidget* Widget : TArray<UUserWidget*>{ HUDWidget, HelpWidget, ChatWidget, WindowLayer, WarningTextWidget, DeathWidget, GameMenuWidget })
     {
         if (Widget)
             Widget->RemoveFromParent();
@@ -103,6 +105,8 @@ void UP1ScreenSubsystem::ReleaseScreens()
 
     HUDWidget = nullptr;
     HelpWidget = nullptr;
+    ChatWidget = nullptr;
+    bChatInputOpen = false;
     WindowLayer = nullptr;
     WarningTextWidget = nullptr;
     DeathWidget = nullptr;
@@ -166,10 +170,13 @@ void UP1ScreenSubsystem::RefreshInputMode()
         return;
 
     // 게임 메뉴와 사망 화면은 그 화면만 입력을 받는다. 사망 화면이 게임 입력을 막지 않으면 죽은 플레이어가 움직인다.
+    // 채팅 입력칸은 사망 화면보다 앞이다. 사망한 채로도 말할 수 있고, 입력칸을 닫으면 다시 사망 화면이 입력을 받는다.
+    const bool bChatInputFirst = bChatInputOpen && ChatWidget && IsGameMenuOpen() == false;
+
     UUserWidget* ModalScreen = nullptr;
     if (IsGameMenuOpen())
         ModalScreen = GameMenuWidget;
-    else if (DeathWidget && DeathWidget->IsVisible())
+    else if (bChatInputFirst == false && DeathWidget && DeathWidget->IsVisible())
         ModalScreen = DeathWidget;
 
     if (ModalScreen)
@@ -180,6 +187,20 @@ void UP1ScreenSubsystem::RefreshInputMode()
 
         FInputModeUIOnly InputMode;
         InputMode.SetWidgetToFocus(ModalScreen->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+        PC->bShowMouseCursor = true;
+        PC->SetInputMode(InputMode);
+    }
+    else if (bChatInputFirst)
+    {
+        // 창이 열린 UI·게임 모드에서는 입력칸이 처리하지 않은 글자 키가 게임으로 넘어가 내 플레이어가 움직인다.
+        // 그래서 입력칸만 키를 받게 하고, 눌린 이동 키는 사망 화면과 같은 이유로 먼저 놓는다.
+        // 지난 채팅을 휠과 스크롤바로 읽을 수 있게 커서를 보인다.
+        PC->FlushPressedKeys();
+
+        FInputModeUIOnly InputMode;
+        InputMode.SetWidgetToFocus(ChatWidget->GetInputFocusTarget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 
         PC->bShowMouseCursor = true;
@@ -251,6 +272,34 @@ void UP1ScreenSubsystem::CloseGameMenu()
 bool UP1ScreenSubsystem::IsGameMenuOpen() const
 {
     return GameMenuWidget && GameMenuWidget->IsVisible();
+}
+
+void UP1ScreenSubsystem::OpenChatInput()
+{
+    if (ChatWidget == nullptr || bChatInputOpen)
+        return;
+
+    // 게임 메뉴와 같은 이유로 게임 단계에서만 연다. 서버도 게임 단계의 세션이 보낸 채팅만 받는다.
+    const UGameInstance* GameInstance = GetLocalPlayer()->GetGameInstance();
+    const UP1EntryFlowSubsystem* EntryFlow = GameInstance ? GameInstance->GetSubsystem<UP1EntryFlowSubsystem>() : nullptr;
+    if (EntryFlow == nullptr || EntryFlow->GetPhase() != EP1EntryPhase::Game)
+        return;
+
+    bChatInputOpen = true;
+    ChatWidget->ShowInput();
+    RefreshInputMode();
+}
+
+void UP1ScreenSubsystem::CloseChatInput()
+{
+    if (bChatInputOpen == false)
+        return;
+
+    bChatInputOpen = false;
+    if (ChatWidget)
+        ChatWidget->HideInput();
+
+    RefreshInputMode();
 }
 
 void UP1ScreenSubsystem::DisplayWarningText(const FText& Message)

@@ -32,8 +32,10 @@ void ChatRequests::HandleChat(Room& room, const PlayerRef& player, const Protoco
     if (rejection.has_value())
         return;
 
+    // 받는 쪽에서 말한 플레이어의 엔티티가 이미 사라졌어도(룸을 막 떠났으면) 이름을 보여 줄 수 있게 이름을 싣는다.
     Protocol::S_CHAT_MESSAGE chatMessagePkt;
     chatMessagePkt.set_entity_id(player->GetEntityId());
     chatMessagePkt.set_message(pkt.message());
+    chatMessagePkt.set_name(player->GetPlayerInfo().name());
     room.Broadcast(ServerPacketHandler::MakeSerializedPacket(chatMessagePkt));
 }

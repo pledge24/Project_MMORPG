@@ -46,6 +46,9 @@ void AP1InGamePlayerController::SetupInputComponent()
         if (ToggleGameMenuAction)
             EnhancedInputComponent->BindAction(ToggleGameMenuAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnToggleGameMenu);
 
+        if (OpenChatAction)
+            EnhancedInputComponent->BindAction(OpenChatAction, ETriggerEvent::Started, this, &AP1InGamePlayerController::OnOpenChat);
+
         for (int32 QuickSlotIndex = 0; QuickSlotIndex < UseQuickSlotActions.Num(); ++QuickSlotIndex)
         {
             if (UseQuickSlotActions[QuickSlotIndex])
@@ -69,12 +72,22 @@ void AP1InGamePlayerController::OnPossess(APawn* InPawn)
 
 bool AP1InGamePlayerController::IsGameMenuKey(const FKey& Key) const
 {
+    return IsKeyMappedToAction(ToggleGameMenuAction, Key);
+}
+
+bool AP1InGamePlayerController::IsOpenChatKey(const FKey& Key) const
+{
+    return IsKeyMappedToAction(OpenChatAction, Key);
+}
+
+bool AP1InGamePlayerController::IsKeyMappedToAction(const UInputAction* Action, const FKey& Key) const
+{
     // 키를 위젯에 따로 적지 않고 입력 매핑에서 읽는다. 따로 적으면 매핑을 바꿀 때 화면마다 고쳐야 한다.
     const UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-    if (InputSubsystem == nullptr || ToggleGameMenuAction == nullptr)
+    if (InputSubsystem == nullptr || Action == nullptr)
         return false;
 
-    return InputSubsystem->QueryKeysMappedToAction(ToggleGameMenuAction).Contains(Key);
+    return InputSubsystem->QueryKeysMappedToAction(Action).Contains(Key);
 }
 
 void AP1InGamePlayerController::OnToggleStatusWindowWidget()
@@ -93,6 +106,12 @@ void AP1InGamePlayerController::OnToggleGameMenu()
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->ToggleGameMenu();
+}
+
+void AP1InGamePlayerController::OnOpenChat()
+{
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->OpenChatInput();
 }
 
 UP1ScreenSubsystem* AP1InGamePlayerController::GetScreens() const

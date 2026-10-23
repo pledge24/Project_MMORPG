@@ -7,6 +7,7 @@
 
 class AP1MyPlayer;
 class UP1AuthClient;
+class UP1ChatSubsystem;
 class UP1ConnectionSubsystem;
 class UP1LobbySubsystem;
 class UP1MyPlayerData;
@@ -155,7 +156,7 @@ public:
     void ReturnToLobby();
 
 private:
-    /** 게임에서 로그인 맵으로 돌아갈 때 내 플레이어의 칸과 퀵슬롯을 비운다. 다음 입장 패킷이 다시 채운다. */
+    /** 게임에서 로그인 맵으로 돌아갈 때 내 플레이어의 칸과 퀵슬롯, 채팅을 비운다. 다음 입장 패킷이 칸과 퀵슬롯을 다시 채운다. */
     void ClearMyPlayerData();
 
     //~ Notice
@@ -222,4 +223,7 @@ private:
 
     UPROPERTY()
     TObjectPtr<UP1MyPlayerData> MyPlayerData;
+
+    UPROPERTY()
+    TObjectPtr<UP1ChatSubsystem> Chat;
 };
