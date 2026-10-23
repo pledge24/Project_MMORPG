@@ -49,7 +49,6 @@ AP1Player::AP1Player()
     GearAppearance = CreateDefaultSubobject<UP1GearAppearanceComponent>(TEXT("GearAppearance"));
 
     // 말풍선은 화면 공간에 원래 크기로 그리고, 아래 가운데를 기준점으로 삼아 줄이 늘면 위로 자란다.
-    // 그래서 기준점을 네임플레이트 위에 두면 몇 줄이 되든 네임플레이트를 덮지 않는다.
     ChatBubbleComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("ChatBubble"));
     ChatBubbleComponent->SetupAttachment(RootComponent);
     ChatBubbleComponent->SetWidgetSpace(EWidgetSpace::Screen);
@@ -80,6 +79,11 @@ void AP1Player::PostInitializeComponents()
 void AP1Player::BeginPlay()
 {
 	Super::BeginPlay();
+
+    // 말풍선을 네임플레이트와 같은 기준점에 붙인다. 네임플레이트도 그 점에서 위로 자라므로,
+    // WBP_ChatBubble 아래쪽 여백이 네임플레이트 높이를 비워 두어 몇 줄이 되든 네임플레이트를 덮지 않는다.
+    if (NameplateComponent)
+        ChatBubbleComponent->AttachToComponent(NameplateComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
     // 말풍선은 말하기 전까지 숨긴다.
     if (IP1ChatBubbleDisplay* Bubble = GetChatBubble())

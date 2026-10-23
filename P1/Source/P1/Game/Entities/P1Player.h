@@ -92,7 +92,7 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Chat Bubble", meta = (ClampMin = "0"))
     float ChatBubbleVisibleDistance = 2000.f;
 
-    /** 말풍선 위젯을 붙이는 컴포넌트. 위젯 클래스와 높이는 블루프린트에서 네임플레이트 위로 맞춘다. */
+    /** 말풍선 위젯을 붙이는 컴포넌트. 위젯 클래스는 블루프린트가 정하고, BeginPlay에서 네임플레이트의 기준점에 붙는다. */
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<UWidgetComponent> ChatBubbleComponent;
 
