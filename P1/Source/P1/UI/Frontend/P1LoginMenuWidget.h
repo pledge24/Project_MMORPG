@@ -98,9 +98,6 @@ private:
     /** 로비의 캐릭터 목록 사본으로 캐릭터 선택 화면을 채우고 연다. */
     void ShowCharacters();
 
-    /** 서버가 캐릭터 목록을 보내지 못했으면 로그인 화면에 알린다. */
-    void ShowCharacterListFailed();
-
     /**
      * 로비가 받은 슬롯 수만큼 슬롯 위젯을 보이고 나머지는 숨긴다.
      * 숨긴 슬롯을 고른 상태였으면 선택을 푼다.
@@ -173,8 +170,8 @@ private:
 
     void SelectClass(EP1CharacterClass CharacterClass);
 
-    /** 서버가 생성을 거절한 사유를 생성 화면에 보여 준다. */
-    void ShowCreateCharacterFailed(const FString& Cause);
+    /** 서버가 생성을 거절한 결과의 문구를 생성 화면에 보여 준다. */
+    void ShowCreateCharacterFailed(const FText& Message);
 
     /** 이름과 직업을 고르지 않았으면 생성 화면에 알리고 보내지 않는다. */
     void RequestCreateCharacter(const FString& CharacterName, EP1CharacterClass CharacterClass);
@@ -217,8 +214,8 @@ private:
 
     //~ Character Delete
 private:
-    /** 서버가 삭제를 거절하면 캐릭터 선택 화면으로 돌아가 알린다. */
-    void ShowDeleteCharacterFailed();
+    /** 서버가 삭제를 거절하면 캐릭터 선택 화면으로 돌아가 결과의 문구를 알린다. */
+    void ShowDeleteCharacterFailed(const FText& Message);
 
     void RequestDeleteCharacter();
 

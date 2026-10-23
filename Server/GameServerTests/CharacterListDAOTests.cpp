@@ -75,7 +75,6 @@ TEST_F(CharacterListDAOTest, RejectionIsResultNotError)
         ASSERT_TRUE(result.rejection.has_value());
         EXPECT_EQ(result.rejection.value(), rejection);
         EXPECT_EQ(result.characterId, 0) << "거절된 생성은 캐릭터 ID를 돌려주지 않는다";
-        EXPECT_FALSE(ToMessage(result.rejection.value()).empty()) << "거절 사유는 생성 화면에 그대로 보여 준다";
     }
 }
 

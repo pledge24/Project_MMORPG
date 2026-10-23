@@ -7,18 +7,6 @@ enum class CharacterRejection : int32
     NO_EMPTY_SLOT = 2,
 };
 
-/** 생성 화면에 보여 줄 문구. */
-inline string_view ToMessage(CharacterRejection rejection)
-{
-    switch (rejection)
-    {
-    case CharacterRejection::DUPLICATE_NAME: return "이미 존재하는 캐릭터입니다.";
-    case CharacterRejection::NO_EMPTY_SLOT: return "빈 캐릭터 슬롯이 없습니다.";
-    }
-
-    return "";
-}
-
 /** 캐릭터 목록의 한 행. */
 struct CharacterListRow
 {

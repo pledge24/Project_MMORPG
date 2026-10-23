@@ -14,3 +14,23 @@ bool SendPacket(const shared_ptr<SessionType>& session, const PacketType& pkt)
     session->Send(ServerPacketHandler::MakeSerializedPacket(const_cast<PacketType&>(pkt)));
     return true;
 }
+
+/** 사유 패킷을 보낼 때까지 끊기를 미루는 상한(ms). 넘기면 상대가 받지 않는 것으로 보고 끊는다. */
+constexpr uint64 DISCONNECT_SEND_TIMEOUT_MS = 1000;
+
+/**
+ * pkt를 보낸 뒤 session을 끊는다. 클라이언트가 끊긴 이유를 알도록 사유를 먼저 보낼 때 쓴다.
+ * 어느 스레드에서 불러도 된다. 이미 끊긴 세션이면 아무것도 하지 않는다.
+ */
+template<typename SessionType, typename PacketType>
+void SendPacketAndDisconnect(const shared_ptr<SessionType>& session, const PacketType& pkt, const char* cause)
+{
+    SendPacket(session, pkt);
+    session->DisconnectAfterSend(cause);
+
+    // 받기만 하고 소켓을 비우지 않는 상대면 송신이 끝나지 않는다. 이미 끊겼으면 Disconnect는 아무것도 하지 않는다.
+    GSessionJobQueue->DoTimer(DISCONNECT_SEND_TIMEOUT_MS, [session, cause]()
+        {
+            session->Disconnect(cause);
+        });
+}

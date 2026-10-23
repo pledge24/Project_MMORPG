@@ -43,14 +43,14 @@ bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
 	return true;
 }
 
-// 로비 계열(S_LOGIN, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
+// 로비 계열(S_CONNECT_LOBBY, S_CHARACTER_LIST, S_CREATE_CHARACTER, S_DELETE_CHARACTER, S_ENTER_GAME)의 정의는
 // Lobby/P1LobbyPacketHandlers.cpp에 있다. Network/는 Lobby/를 부르지 않는다.
 
-bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
+bool Handle_S_DISCONNECT(PacketSessionRef& session, Protocol::S_DISCONNECT& pkt)
 {
     if (auto* Connection = session->GetConnection())
     {
-        Connection->HandleLeaveGame(pkt.reason());
+        Connection->HandleDisconnect(pkt.reason());
         return true;
     }
 

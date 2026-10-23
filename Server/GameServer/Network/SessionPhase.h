@@ -3,7 +3,8 @@
 /** 게임 서버와의 연결이 지금 어느 단계에 있는지. 단계마다 받는 패킷이 다르다. */
 enum class SessionPhase : uint8
 {
-    BEFORE_LOBBY,       // 연결했지만 로비 접속을 마치지 않았다
+    BEFORE_LOBBY,       // 연결했지만 로비 접속을 요청하지 않았다
+    CONNECTING_LOBBY,   // 로비 접속을 요청했고 결과를 기다린다. 실패하면 연결을 끊으므로 로비 접속 전으로 돌아가지 않는다
     LOBBY,              // 로비에서 캐릭터를 다룬다
     ENTERING_GAME,      // 고른 캐릭터로 게임에 입장하는 중이다. 입장이 끝나거나 거절될 때까지 로비 요청을 받지 않는다
     IN_GAME,            // 게임에 입장했다
@@ -15,6 +16,7 @@ inline string_view ToString(SessionPhase phase)
     switch (phase)
     {
     case SessionPhase::BEFORE_LOBBY: return "로비 접속 전";
+    case SessionPhase::CONNECTING_LOBBY: return "로비 접속 중";
     case SessionPhase::LOBBY: return "로비";
     case SessionPhase::ENTERING_GAME: return "게임 입장 중";
     case SessionPhase::IN_GAME: return "게임";

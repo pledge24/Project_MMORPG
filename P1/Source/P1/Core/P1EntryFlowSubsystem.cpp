@@ -5,6 +5,7 @@
 #include "Network/P1ConnectionSubsystem.h"
 #include "Network/P1NetworkSettings.h"
 #include "Network/P1PacketSender.h"
+#include "Common.pb.h"
 #include "Protocol.pb.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -59,6 +60,7 @@ void UP1EntryFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     if (Lobby)
     {
         Lobby->OnLobbyEntered.AddUObject(this, &UP1EntryFlowSubsystem::HandleLobbyEntered);
+        Lobby->OnLobbyConnectFailed.AddUObject(this, &UP1EntryFlowSubsystem::HandleLobbyConnectFailed);
         Lobby->OnEnterGameSucceeded.AddUObject(this, &UP1EntryFlowSubsystem::EnterMapLoad);
     }
 
@@ -148,6 +150,14 @@ void UP1EntryFlowSubsystem::HandleLobbyEntered()
     TryEnterPhase(EP1EntryPhase::Lobby);
 }
 
+void UP1EntryFlowSubsystem::HandleLobbyConnectFailed(const FText& Message)
+{
+    // 서버가 이 응답 뒤에 끊는다. 먼저 닫지 않으면 끊김이 사유 없는 끊김으로 와서 결과의 문구를 덮는다.
+    // 티켓은 게임 서버가 이미 지웠으므로 다시 로그인해야 한다.
+    Connection->Close();
+    ReturnToLogin(Message.ToString());
+}
+
 void UP1EntryFlowSubsystem::EnterMapLoad()
 {
     if (TryEnterPhase(EP1EntryPhase::MapLoad))
@@ -187,15 +197,12 @@ void UP1EntryFlowSubsystem::RemoveListener(const UObject* Listener)
     OnLoginNotice.RemoveAll(Listener);
 }
 
-void UP1EntryFlowSubsystem::HandleConnectionLost(Protocol::LeaveReason Reason)
+void UP1EntryFlowSubsystem::HandleConnectionLost(Protocol::DisconnectReason Reason)
 {
     switch (Reason)
     {
-    case Protocol::LEAVE_REASON_DUPLICATE_LOGIN:
-        ReturnToLogin(TEXT("다른 곳에서 같은 계정으로 로그인해 연결이 끊겼습니다."));
-        break;
-    case Protocol::LEAVE_REASON_INVALID_TOKEN:
-        ReturnToLogin(TEXT("로그인 정보가 만료되었습니다. 다시 로그인하세요."));
+    case Protocol::DISCONNECT_REASON_DUPLICATE_CONNECTION:
+        ReturnToLogin(TEXT("다른 곳에서 같은 계정으로 접속해 연결이 끊겼습니다."));
         break;
     default:
         ReturnToLogin(CONNECTION_LOST_NOTICE);

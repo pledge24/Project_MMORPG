@@ -10,7 +10,7 @@ namespace
         return static_cast<PhaseMask>(1u << static_cast<uint8>(phase));
     }
 
-    constexpr PhaseMask ANY_PHASE = Only(SessionPhase::BEFORE_LOBBY) | Only(SessionPhase::LOBBY)
+    constexpr PhaseMask ANY_PHASE = Only(SessionPhase::BEFORE_LOBBY) | Only(SessionPhase::CONNECTING_LOBBY) | Only(SessionPhase::LOBBY)
         | Only(SessionPhase::ENTERING_GAME) | Only(SessionPhase::IN_GAME);
 
     struct PacketPhases
@@ -26,7 +26,7 @@ namespace
         { PKT_C_LEAVE_GAME, ANY_PHASE },
 
         // 로비 접속은 한 번만 받는다. 입장한 세션이 다른 계정의 인증 티켓을 내면 세션의 계정 번호만 바뀐다.
-        { PKT_C_LOGIN, Only(SessionPhase::BEFORE_LOBBY) },
+        { PKT_C_CONNECT_LOBBY, Only(SessionPhase::BEFORE_LOBBY) },
 
         // 게임에 입장한 세션이 플레이 중인 캐릭터를 지우면 플레이어는 룸에 남고 삭제된 캐릭터의 진행이 계속 저장된다.
         { PKT_C_CREATE_CHARACTER, Only(SessionPhase::LOBBY) },

@@ -35,7 +35,7 @@ void ProgressCoordinator::OnDisconnected(int64 userId, const PlayerRef& player)
     if (player == nullptr)
         return;
 
-    // 호출자가 계정 등록을 지우기 전에 대기를 건다. 반대로 하면 그사이 새 로그인이 저장 전의 진행을 불러온다.
+    // 호출자가 계정 등록을 지우기 전에 대기를 건다. 반대로 하면 그사이 새 로비 접속이 저장 전의 진행을 불러온다.
     // 표시를 바꾼 뒤에 걸면, 들어갈 룸이 먼저 저장하고 대기를 푼 다음에 이 대기가 걸려 아무도 풀지 않는다.
     _saveGate.Hold(userId);
 
@@ -63,7 +63,7 @@ void ProgressCoordinator::OnDisconnected(int64 userId, const PlayerRef& player)
         });
 }
 
-void ProgressCoordinator::OnDuplicateLogin(int64 userId, const PlayerRef& replacedPlayer)
+void ProgressCoordinator::OnDuplicateConnection(int64 userId, const PlayerRef& replacedPlayer)
 {
     // 새 세션의 입장이 기존 세션의 접속 종료보다 빠를 수 있으므로 대기를 여기서 먼저 건다.
     // 입장 전의 세션은 접속 종료가 대기를 풀지 않으므로 걸지 않는다.
@@ -135,7 +135,7 @@ void ProgressCoordinator::SaveLeftPlayer(const PlayerRef& player, PlayerSaveData
             }
 
             // 저장이 실패해도 대기를 푼다. 실패한 저장은 다시 시도하지 않으므로 기다려도 결과가 같다.
-            // 표시를 먼저 바꾼다. 그 뒤에 온 밀어내기가 이 해제를 놓쳤는지 표시로 안다(OnDuplicateLogin).
+            // 표시를 먼저 바꾼다. 그 뒤에 온 밀어내기가 이 해제를 놓쳤는지 표시로 안다(OnDuplicateConnection).
             player->MarkSaved();
             if (optional<SaveGate::ParkedLoad> parked = _saveGate.Release(data.userId))
                 parked->run();

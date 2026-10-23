@@ -1,41 +1,38 @@
-// 로비 서브시스템이 캐릭터 목록 응답과 생성·삭제 응답을 캐릭터 목록 사본에 반영하는 규칙을 고정한다.
+// 로비 서브시스템이 로비 응답을 캐릭터 목록 사본에 반영하고, 실패를 결과 값의 화면 문구로 알리는 규칙을 고정한다.
 //
 // 왜 이것인가: 캐릭터 목록을 로그인 화면 위젯이 들고 있었고, 위젯이 응답을 해석해 목록을 고쳤다. 이제 사본은 로비
-// 서브시스템이 갖고 위젯은 바뀌었다는 알림을 받아 다시 그리기만 한다. 생성 응답에는 캐릭터 번호만 오므로, 이름과 직업은
-// 요청할 때 적어 둔 값을 써야 한다. UWorld 없이 빈 게임 인스턴스 위에서 돈다.
+// 서브시스템이 갖고 위젯은 바뀌었다는 알림을 받아 다시 그리기만 한다. 서버는 실패를 화면 문구가 아니라 로비 결과 값으로
+// 보내므로, 결과 값마다 클라이언트에 문구가 있어야 한다. 문구가 빠진 값은 「알 수 없는 오류」로 보인다.
+// UWorld 없이 빈 게임 인스턴스 위에서 돈다.
 //
-// 실행: pwsh P1/Scripts/Run-UeTests.ps1 -Filter P1.Lobby.Subsystem
+// 실행: pwsh P1/Scripts/Run-UeTests.ps1 -Filter P1.Lobby
 
 #include "CoreMinimal.h"
 #include "Misc/AutomationTest.h"
 #include "Engine/GameInstance.h"
 #include "Lobby/P1LobbySubsystem.h"
-#include "Protocol.pb.h"
+#include "Lobby.pb.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 // 유니티 빌드에서 다른 테스트 파일과 한 번역 단위로 묶여도 도우미 이름이 겹치지 않게 파일 이름의 네임스페이스에 둔다.
 namespace P1LobbySubsystemTest
 {
-    /** 전사 「가나」(번호 11, 레벨 7)와 마법사 「다라」(번호 12, 레벨 3)가 있고 슬롯이 4개인 목록 응답. */
-    Protocol::S_LOGIN MakeCharacterList()
+    void SetCharacter(Protocol::LobbyCharacter* Character, int64 CharacterId, const TCHAR* Name, Protocol::CharacterClass CharacterClass, int32 Level)
     {
-        Protocol::S_LOGIN Pkt;
-        Pkt.set_success(true);
+        Character->set_character_id(CharacterId);
+        Character->set_name(TCHAR_TO_UTF8(Name));
+        Character->set_character_class(CharacterClass);
+        Character->set_level(Level);
+    }
+
+    /** 전사 「가나」(번호 11, 레벨 7)와 마법사 「다라」(번호 12, 레벨 3)가 있고 슬롯이 4개인 목록. */
+    Protocol::S_CHARACTER_LIST MakeCharacterList()
+    {
+        Protocol::S_CHARACTER_LIST Pkt;
         Pkt.set_character_slot_count(4);
-
-        Protocol::CharacterOverview* Warrior = Pkt.add_characters();
-        Warrior->set_character_id(11);
-        Warrior->set_name(TCHAR_TO_UTF8(TEXT("가나")));
-        Warrior->set_class_(Protocol::CLASS_TYPE_WARRIOR);
-        Warrior->set_level(7);
-
-        Protocol::CharacterOverview* Mage = Pkt.add_characters();
-        Mage->set_character_id(12);
-        Mage->set_name(TCHAR_TO_UTF8(TEXT("다라")));
-        Mage->set_class_(Protocol::CLASS_TYPE_MAGE);
-        Mage->set_level(3);
-
+        SetCharacter(Pkt.add_characters(), 11, TEXT("가나"), Protocol::CLASS_TYPE_WARRIOR, 7);
+        SetCharacter(Pkt.add_characters(), 12, TEXT("다라"), Protocol::CLASS_TYPE_MAGE, 3);
         return Pkt;
     }
 
@@ -46,8 +43,9 @@ namespace P1LobbySubsystemTest
         int32 SentCount = 0;
         int32 ChangedCount = 0;
         int32 EnteredCount = 0;
-        TArray<FString> CreateFailures;
-        int32 DeleteFailedCount = 0;
+        TArray<FText> ConnectFailures;
+        TArray<FText> CreateFailures;
+        TArray<FText> DeleteFailures;
 
         FFixture()
         {
@@ -58,8 +56,9 @@ namespace P1LobbySubsystemTest
 
             Lobby->OnCharactersChanged.AddLambda([this]() { ++ChangedCount; });
             Lobby->OnLobbyEntered.AddLambda([this]() { ++EnteredCount; });
-            Lobby->OnCreateCharacterFailed.AddLambda([this](const FString& Cause) { CreateFailures.Add(Cause); });
-            Lobby->OnDeleteCharacterFailed.AddLambda([this]() { ++DeleteFailedCount; });
+            Lobby->OnLobbyConnectFailed.AddLambda([this](const FText& Message) { ConnectFailures.Add(Message); });
+            Lobby->OnCreateCharacterFailed.AddLambda([this](const FText& Message) { CreateFailures.Add(Message); });
+            Lobby->OnDeleteCharacterFailed.AddLambda([this](const FText& Message) { DeleteFailures.Add(Message); });
         }
     };
 }
@@ -73,12 +72,22 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
 {
     using namespace P1LobbySubsystemTest;
 
-    // 2)의 실패한 목록 응답은 경고를 남긴다.
-    AddExpectedMessage(TEXT("서버가 캐릭터 목록을 불러오지 못함"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
+    // 2)의 거절된 로비 접속은 경고를 남긴다.
+    AddExpectedMessage(TEXT("서버가 로비 접속을 거절함"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1, false);
 
-    // 1) 목록 응답이 오면 캐릭터와 슬롯 수를 사본에 옮기고, 로비에 들어왔다고 알린 뒤 목록이 바뀌었다고 알린다.
+    // 1) 로비 접속이 성공하면 목록이 뒤따른다. 목록을 받으면 캐릭터와 슬롯 수를 사본에 옮기고,
+    //    로비에 들어왔다고 알린 뒤 목록이 바뀌었다고 알린다.
     {
         FFixture F;
+        F.Lobby->ConnectLobby(TEXT("ticket"));
+        TestEqual(TEXT("로비 접속 송신"), F.SentCount, 1);
+
+        Protocol::S_CONNECT_LOBBY Connected;
+        Connected.set_result(Protocol::LOBBY_RESULT_SUCCESS);
+        F.Lobby->HandleConnectLobby(Connected);
+        TestEqual(TEXT("목록 전에는 로비 입장 알림 없음"), F.EnteredCount, 0);
+        TestEqual(TEXT("성공은 실패 알림 없음"), F.ConnectFailures.Num(), 0);
+
         F.Lobby->HandleCharacterList(MakeCharacterList());
 
         TestEqual(TEXT("슬롯 수"), F.Lobby->GetCharacterSlotCount(), 4);
@@ -95,24 +104,23 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("목록 변경 알림"), F.ChangedCount, 1);
     }
 
-    // 2) 실패한 목록 응답은 사본을 바꾸지 않고 로비에 들어왔다고 알리지 않는다.
+    // 2) 거절된 로비 접속은 결과 값의 문구를 알리고, 사본을 바꾸지 않고 로비에 들어왔다고 알리지 않는다.
     {
         FFixture F;
-        int32 FailedCount = 0;
-        F.Lobby->OnCharacterListFailed.AddLambda([&FailedCount]() { ++FailedCount; });
+        Protocol::S_CONNECT_LOBBY Rejected;
+        Rejected.set_result(Protocol::LOBBY_RESULT_INVALID_AUTH_TICKET);
+        F.Lobby->HandleConnectLobby(Rejected);
 
-        Protocol::S_LOGIN Failed;
-        Failed.set_success(false);
-        F.Lobby->HandleCharacterList(Failed);
-
-        TestEqual(TEXT("실패 알림"), FailedCount, 1);
-        TestEqual(TEXT("캐릭터 없음"), F.Lobby->GetCharacters().Num(), 0);
+        if (TestEqual(TEXT("실패 알림 수"), F.ConnectFailures.Num(), 1))
+        {
+            TestTrue(TEXT("실패 문구는 결과 값의 문구"),
+                F.ConnectFailures[0].EqualTo(UP1LobbySubsystem::GetResultText(Protocol::LOBBY_RESULT_INVALID_AUTH_TICKET)));
+        }
         TestEqual(TEXT("슬롯 수는 0"), F.Lobby->GetCharacterSlotCount(), 0);
         TestEqual(TEXT("로비 입장 알림 없음"), F.EnteredCount, 0);
-        TestEqual(TEXT("목록 변경 알림 없음"), F.ChangedCount, 0);
     }
 
-    // 3) 생성에 성공하면 요청할 때의 이름과 직업, 레벨 1로 목록 끝에 더한다. 응답에는 캐릭터 번호만 있다.
+    // 3) 생성에 성공하면 응답이 실은 캐릭터를 목록 끝에 더한다.
     {
         FFixture F;
         F.Lobby->HandleCharacterList(MakeCharacterList());
@@ -120,8 +128,8 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("생성 요청 송신"), F.SentCount, 1);
 
         Protocol::S_CREATE_CHARACTER Created;
-        Created.set_success(true);
-        Created.set_character_id(13);
+        Created.set_result(Protocol::LOBBY_RESULT_SUCCESS);
+        SetCharacter(Created.mutable_character(), 13, TEXT("마바"), Protocol::CLASS_TYPE_MAGE, 1);
         F.Lobby->HandleCreateCharacter(Created);
 
         const TArray<FP1LobbyCharacter>& Characters = F.Lobby->GetCharacters();
@@ -135,24 +143,30 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("목록 변경 알림"), F.ChangedCount, 2);
     }
 
-    // 4) 생성에 실패하면 목록을 바꾸지 않고 서버가 보낸 사유를 알린다.
+    // 4) 생성에 실패하면 목록을 바꾸지 않고 결과 값의 문구를 알린다. 이름 중복과 빈 슬롯 없음은 서로 다른 문구다.
     {
         FFixture F;
         F.Lobby->HandleCharacterList(MakeCharacterList());
-        F.Lobby->CreateCharacter(TEXT("가나"), EP1CharacterClass::Warrior);
 
-        Protocol::S_CREATE_CHARACTER Rejected;
-        Rejected.set_success(false);
-        Rejected.set_cause(TCHAR_TO_UTF8(TEXT("이미 있는 이름입니다.")));
-        F.Lobby->HandleCreateCharacter(Rejected);
+        Protocol::S_CREATE_CHARACTER NameTaken;
+        NameTaken.set_result(Protocol::LOBBY_RESULT_NAME_TAKEN);
+        F.Lobby->HandleCreateCharacter(NameTaken);
+
+        Protocol::S_CREATE_CHARACTER NoEmptySlot;
+        NoEmptySlot.set_result(Protocol::LOBBY_RESULT_NO_EMPTY_SLOT);
+        F.Lobby->HandleCreateCharacter(NoEmptySlot);
 
         TestEqual(TEXT("실패 뒤 캐릭터 수"), F.Lobby->GetCharacters().Num(), 2);
-        if (TestEqual(TEXT("실패 알림 수"), F.CreateFailures.Num(), 1))
-            TestEqual(TEXT("실패 사유"), F.CreateFailures[0], FString(TEXT("이미 있는 이름입니다.")));
+        if (TestEqual(TEXT("실패 알림 수"), F.CreateFailures.Num(), 2))
+        {
+            TestTrue(TEXT("이름 중복 문구"), F.CreateFailures[0].EqualTo(UP1LobbySubsystem::GetResultText(Protocol::LOBBY_RESULT_NAME_TAKEN)));
+            TestTrue(TEXT("빈 슬롯 없음 문구"), F.CreateFailures[1].EqualTo(UP1LobbySubsystem::GetResultText(Protocol::LOBBY_RESULT_NO_EMPTY_SLOT)));
+            TestFalse(TEXT("두 실패의 문구가 다르다"), F.CreateFailures[0].EqualTo(F.CreateFailures[1]));
+        }
         TestEqual(TEXT("목록 변경 알림은 목록 응답의 것뿐"), F.ChangedCount, 1);
     }
 
-    // 5) 삭제에 성공하면 응답의 캐릭터 번호로 찾아 지운다. 실패하면 목록을 바꾸지 않고 실패를 알린다.
+    // 5) 삭제에 성공하면 응답의 캐릭터 번호로 찾아 지운다. 실패하면 목록을 바꾸지 않고 결과 값의 문구를 알린다.
     {
         FFixture F;
         F.Lobby->HandleCharacterList(MakeCharacterList());
@@ -160,13 +174,15 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("삭제 요청 송신"), F.SentCount, 1);
 
         Protocol::S_DELETE_CHARACTER Rejected;
-        Rejected.set_success(false);
+        Rejected.set_result(Protocol::LOBBY_RESULT_CHARACTER_NOT_FOUND);
+        Rejected.set_character_id(11);
         F.Lobby->HandleDeleteCharacter(Rejected);
-        TestEqual(TEXT("삭제 실패 알림"), F.DeleteFailedCount, 1);
+        if (TestEqual(TEXT("삭제 실패 알림"), F.DeleteFailures.Num(), 1))
+            TestTrue(TEXT("삭제 실패 문구"), F.DeleteFailures[0].EqualTo(UP1LobbySubsystem::GetResultText(Protocol::LOBBY_RESULT_CHARACTER_NOT_FOUND)));
         TestEqual(TEXT("삭제 실패 뒤 캐릭터 수"), F.Lobby->GetCharacters().Num(), 2);
 
         Protocol::S_DELETE_CHARACTER Deleted;
-        Deleted.set_success(true);
+        Deleted.set_result(Protocol::LOBBY_RESULT_SUCCESS);
         Deleted.set_character_id(11);
         F.Lobby->HandleDeleteCharacter(Deleted);
 
@@ -185,6 +201,38 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("비운 뒤 캐릭터 수"), F.Lobby->GetCharacters().Num(), 0);
         TestEqual(TEXT("비운 뒤 슬롯 수"), F.Lobby->GetCharacterSlotCount(), 0);
     }
+
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FP1LobbyResultTextTest,
+    "P1.Lobby.ResultText",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FP1LobbyResultTextTest::RunTest(const FString& Parameters)
+{
+    // 생성된 정의의 값 범위를 돈다. 스키마에 결과 값을 더하고 문구를 잊으면 그 값이 「알 수 없는 오류」로 걸린다.
+    const FText UnknownText = UP1LobbySubsystem::GetResultText(static_cast<Protocol::LobbyResult>(Protocol::LobbyResult_MAX + 1));
+
+    TArray<FString> Texts;
+    for (int32 Value = Protocol::LobbyResult_MIN; Value <= Protocol::LobbyResult_MAX; Value++)
+    {
+        if (Protocol::LobbyResult_IsValid(Value) == false)
+            continue;
+
+        const Protocol::LobbyResult Result = static_cast<Protocol::LobbyResult>(Value);
+        const FString Name = UTF8_TO_TCHAR(Protocol::LobbyResult_Name(Result).c_str());
+        const FText Text = UP1LobbySubsystem::GetResultText(Result);
+
+        TestFalse(FString::Printf(TEXT("%s의 문구가 있다"), *Name), Text.IsEmpty());
+        TestFalse(FString::Printf(TEXT("%s의 문구가 모르는 값의 문구가 아니다"), *Name), Text.EqualTo(UnknownText));
+        TestFalse(FString::Printf(TEXT("%s의 문구가 다른 값과 겹치지 않는다"), *Name), Texts.Contains(Text.ToString()));
+        Texts.Add(Text.ToString());
+    }
+
+    TestTrue(TEXT("결과 값을 하나 이상 확인했다"), Texts.Num() > 1);
+    TestFalse(TEXT("모르는 값에도 문구가 있다"), UnknownText.IsEmpty());
 
     return true;
 }

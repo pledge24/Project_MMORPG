@@ -52,9 +52,6 @@ namespace Protocol {
 class AttackInfo;
 struct AttackInfoDefaultTypeInternal;
 extern AttackInfoDefaultTypeInternal _AttackInfo_default_instance_;
-class CharacterOverview;
-struct CharacterOverviewDefaultTypeInternal;
-extern CharacterOverviewDefaultTypeInternal _CharacterOverview_default_instance_;
 class ContainerSlots;
 struct ContainerSlotsDefaultTypeInternal;
 extern ContainerSlotsDefaultTypeInternal _ContainerSlots_default_instance_;
@@ -124,7 +121,6 @@ extern VectorDefaultTypeInternal _Vector_default_instance_;
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::AttackInfo* Arena::CreateMaybeMessage<::Protocol::AttackInfo>(Arena*);
-template<> ::Protocol::CharacterOverview* Arena::CreateMaybeMessage<::Protocol::CharacterOverview>(Arena*);
 template<> ::Protocol::ContainerSlots* Arena::CreateMaybeMessage<::Protocol::ContainerSlots>(Arena*);
 template<> ::Protocol::Effect* Arena::CreateMaybeMessage<::Protocol::Effect>(Arena*);
 template<> ::Protocol::EntityInfo* Arena::CreateMaybeMessage<::Protocol::EntityInfo>(Arena*);
@@ -151,192 +147,6 @@ PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
 // ===================================================================
-
-class CharacterOverview final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.CharacterOverview) */ {
- public:
-  inline CharacterOverview() : CharacterOverview(nullptr) {}
-  ~CharacterOverview() override;
-  explicit PROTOBUF_CONSTEXPR CharacterOverview(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
-
-  CharacterOverview(const CharacterOverview& from);
-  CharacterOverview(CharacterOverview&& from) noexcept
-    : CharacterOverview() {
-    *this = ::std::move(from);
-  }
-
-  inline CharacterOverview& operator=(const CharacterOverview& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline CharacterOverview& operator=(CharacterOverview&& from) noexcept {
-    if (this == &from) return *this;
-    if (GetOwningArena() == from.GetOwningArena()
-  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
-        && GetOwningArena() != nullptr
-  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
-    ) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-    return GetDescriptor();
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const CharacterOverview& default_instance() {
-    return *internal_default_instance();
-  }
-  static inline const CharacterOverview* internal_default_instance() {
-    return reinterpret_cast<const CharacterOverview*>(
-               &_CharacterOverview_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    0;
-
-  friend void swap(CharacterOverview& a, CharacterOverview& b) {
-    a.Swap(&b);
-  }
-  inline void Swap(CharacterOverview* other) {
-    if (other == this) return;
-  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
-    if (GetOwningArena() != nullptr &&
-        GetOwningArena() == other->GetOwningArena()) {
-   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
-    if (GetOwningArena() == other->GetOwningArena()) {
-  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
-      InternalSwap(other);
-    } else {
-      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(CharacterOverview* other) {
-    if (other == this) return;
-    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  CharacterOverview* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<CharacterOverview>(arena);
-  }
-  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const CharacterOverview& from);
-  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const CharacterOverview& from) {
-    CharacterOverview::MergeImpl(*this, from);
-  }
-  private:
-  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
-  public:
-  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
-  uint8_t* _InternalSerialize(
-      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
-  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(CharacterOverview* other);
-
-  private:
-  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
-  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.CharacterOverview";
-  }
-  protected:
-  explicit CharacterOverview(::PROTOBUF_NAMESPACE_ID::Arena* arena,
-                       bool is_message_owned = false);
-  public:
-
-  static const ClassData _class_data_;
-  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
-
-  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  enum : int {
-    kNameFieldNumber = 3,
-    kCharacterIdFieldNumber = 1,
-    kClassFieldNumber = 2,
-    kLevelFieldNumber = 4,
-  };
-  // string name = 3;
-  void clear_name();
-  const std::string& name() const;
-  template <typename ArgT0 = const std::string&, typename... ArgT>
-  void set_name(ArgT0&& arg0, ArgT... args);
-  std::string* mutable_name();
-  PROTOBUF_NODISCARD std::string* release_name();
-  void set_allocated_name(std::string* name);
-  private:
-  const std::string& _internal_name() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(const std::string& value);
-  std::string* _internal_mutable_name();
-  public:
-
-  // int64 character_id = 1;
-  void clear_character_id();
-  int64_t character_id() const;
-  void set_character_id(int64_t value);
-  private:
-  int64_t _internal_character_id() const;
-  void _internal_set_character_id(int64_t value);
-  public:
-
-  // .Protocol.CharacterClass class = 2;
-  void clear_class_();
-  ::Protocol::CharacterClass class_() const;
-  void set_class_(::Protocol::CharacterClass value);
-  private:
-  ::Protocol::CharacterClass _internal_class_() const;
-  void _internal_set_class_(::Protocol::CharacterClass value);
-  public:
-
-  // int32 level = 4;
-  void clear_level();
-  int32_t level() const;
-  void set_level(int32_t value);
-  private:
-  int32_t _internal_level() const;
-  void _internal_set_level(int32_t value);
-  public:
-
-  // @@protoc_insertion_point(class_scope:Protocol.CharacterOverview)
- private:
-  class _Internal;
-
-  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
-  typedef void InternalArenaConstructable_;
-  typedef void DestructorSkippable_;
-  struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
-    int64_t character_id_;
-    int class__;
-    int32_t level_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_Struct_2eproto;
-};
-// -------------------------------------------------------------------
 
 class EntityInfo final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.EntityInfo) */ {
@@ -392,7 +202,7 @@ class EntityInfo final :
                &_EntityInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    0;
 
   friend void swap(EntityInfo& a, EntityInfo& b) {
     a.Swap(&b);
@@ -648,7 +458,7 @@ class PlayerInfo final :
                &_PlayerInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    2;
 
   friend void swap(PlayerInfo& a, PlayerInfo& b) {
     a.Swap(&b);
@@ -882,7 +692,7 @@ class Possession final :
                &_Possession_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    3;
 
   friend void swap(Possession& a, Possession& b) {
     a.Swap(&b);
@@ -1050,7 +860,7 @@ class MonsterInfo final :
                &_MonsterInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    4;
 
   friend void swap(MonsterInfo& a, MonsterInfo& b) {
     a.Swap(&b);
@@ -1209,7 +1019,7 @@ class Vector final :
                &_Vector_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    5;
 
   friend void swap(Vector& a, Vector& b) {
     a.Swap(&b);
@@ -1379,7 +1189,7 @@ class PosInfo final :
                &_PosInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    6;
 
   friend void swap(PosInfo& a, PosInfo& b) {
     a.Swap(&b);
@@ -1595,7 +1405,7 @@ class AttackInfo final :
                &_AttackInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    7;
 
   friend void swap(AttackInfo& a, AttackInfo& b) {
     a.Swap(&b);
@@ -1828,7 +1638,7 @@ class HitInfo final :
                &_HitInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    8;
 
   friend void swap(HitInfo& a, HitInfo& b) {
     a.Swap(&b);
@@ -2058,7 +1868,7 @@ class StatInfo final :
                &_StatInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    10;
 
   friend void swap(StatInfo& a, StatInfo& b) {
     a.Swap(&b);
@@ -2221,7 +2031,7 @@ class Stat final :
                &_Stat_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    11;
 
   friend void swap(Stat& a, Stat& b) {
     a.Swap(&b);
@@ -2391,7 +2201,7 @@ class Effect final :
                &_Effect_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    12;
 
   friend void swap(Effect& a, Effect& b) {
     a.Swap(&b);
@@ -2550,7 +2360,7 @@ class GearInfo final :
                &_GearInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    13;
 
   friend void swap(GearInfo& a, GearInfo& b) {
     a.Swap(&b);
@@ -2714,7 +2524,7 @@ class Item final :
                &_Item_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    14;
 
   friend void swap(Item& a, Item& b) {
     a.Swap(&b);
@@ -2925,7 +2735,7 @@ class SlotAddress final :
                &_SlotAddress_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    15;
 
   friend void swap(SlotAddress& a, SlotAddress& b) {
     a.Swap(&b);
@@ -3084,7 +2894,7 @@ class SlotChange final :
                &_SlotChange_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    16;
 
   friend void swap(SlotChange& a, SlotChange& b) {
     a.Swap(&b);
@@ -3262,7 +3072,7 @@ class Slot final :
                &_Slot_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    17;
 
   friend void swap(Slot& a, Slot& b) {
     a.Swap(&b);
@@ -3431,7 +3241,7 @@ class ContainerSlots final :
                &_ContainerSlots_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    18;
 
   friend void swap(ContainerSlots& a, ContainerSlots& b) {
     a.Swap(&b);
@@ -3599,7 +3409,7 @@ class QuickSlotRef final :
                &_QuickSlotRef_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    19;
 
   friend void swap(QuickSlotRef& a, QuickSlotRef& b) {
     a.Swap(&b);
@@ -3758,7 +3568,7 @@ class QuickSlot final :
                &_QuickSlot_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    20;
 
   friend void swap(QuickSlot& a, QuickSlot& b) {
     a.Swap(&b);
@@ -3927,7 +3737,7 @@ class LevelUpInfo final :
                &_LevelUpInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    21;
 
   friend void swap(LevelUpInfo& a, LevelUpInfo& b) {
     a.Swap(&b);
@@ -4106,7 +3916,7 @@ class Reward final :
                &_Reward_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    22;
 
   friend void swap(Reward& a, Reward& b) {
     a.Swap(&b);
@@ -4233,120 +4043,6 @@ class Reward final :
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// CharacterOverview
-
-// int64 character_id = 1;
-inline void CharacterOverview::clear_character_id() {
-  _impl_.character_id_ = int64_t{0};
-}
-inline int64_t CharacterOverview::_internal_character_id() const {
-  return _impl_.character_id_;
-}
-inline int64_t CharacterOverview::character_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.CharacterOverview.character_id)
-  return _internal_character_id();
-}
-inline void CharacterOverview::_internal_set_character_id(int64_t value) {
-  
-  _impl_.character_id_ = value;
-}
-inline void CharacterOverview::set_character_id(int64_t value) {
-  _internal_set_character_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.character_id)
-}
-
-// .Protocol.CharacterClass class = 2;
-inline void CharacterOverview::clear_class_() {
-  _impl_.class__ = 0;
-}
-inline ::Protocol::CharacterClass CharacterOverview::_internal_class_() const {
-  return static_cast< ::Protocol::CharacterClass >(_impl_.class__);
-}
-inline ::Protocol::CharacterClass CharacterOverview::class_() const {
-  // @@protoc_insertion_point(field_get:Protocol.CharacterOverview.class)
-  return _internal_class_();
-}
-inline void CharacterOverview::_internal_set_class_(::Protocol::CharacterClass value) {
-  
-  _impl_.class__ = value;
-}
-inline void CharacterOverview::set_class_(::Protocol::CharacterClass value) {
-  _internal_set_class_(value);
-  // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.class)
-}
-
-// string name = 3;
-inline void CharacterOverview::clear_name() {
-  _impl_.name_.ClearToEmpty();
-}
-inline const std::string& CharacterOverview::name() const {
-  // @@protoc_insertion_point(field_get:Protocol.CharacterOverview.name)
-  return _internal_name();
-}
-template <typename ArgT0, typename... ArgT>
-inline PROTOBUF_ALWAYS_INLINE
-void CharacterOverview::set_name(ArgT0&& arg0, ArgT... args) {
- 
- _impl_.name_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
-  // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.name)
-}
-inline std::string* CharacterOverview::mutable_name() {
-  std::string* _s = _internal_mutable_name();
-  // @@protoc_insertion_point(field_mutable:Protocol.CharacterOverview.name)
-  return _s;
-}
-inline const std::string& CharacterOverview::_internal_name() const {
-  return _impl_.name_.Get();
-}
-inline void CharacterOverview::_internal_set_name(const std::string& value) {
-  
-  _impl_.name_.Set(value, GetArenaForAllocation());
-}
-inline std::string* CharacterOverview::_internal_mutable_name() {
-  
-  return _impl_.name_.Mutable(GetArenaForAllocation());
-}
-inline std::string* CharacterOverview::release_name() {
-  // @@protoc_insertion_point(field_release:Protocol.CharacterOverview.name)
-  return _impl_.name_.Release();
-}
-inline void CharacterOverview::set_allocated_name(std::string* name) {
-  if (name != nullptr) {
-    
-  } else {
-    
-  }
-  _impl_.name_.SetAllocated(name, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.name_.IsDefault()) {
-    _impl_.name_.Set("", GetArenaForAllocation());
-  }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  // @@protoc_insertion_point(field_set_allocated:Protocol.CharacterOverview.name)
-}
-
-// int32 level = 4;
-inline void CharacterOverview::clear_level() {
-  _impl_.level_ = 0;
-}
-inline int32_t CharacterOverview::_internal_level() const {
-  return _impl_.level_;
-}
-inline int32_t CharacterOverview::level() const {
-  // @@protoc_insertion_point(field_get:Protocol.CharacterOverview.level)
-  return _internal_level();
-}
-inline void CharacterOverview::_internal_set_level(int32_t value) {
-  
-  _impl_.level_ = value;
-}
-inline void CharacterOverview::set_level(int32_t value) {
-  _internal_set_level(value);
-  // @@protoc_insertion_point(field_set:Protocol.CharacterOverview.level)
-}
-
-// -------------------------------------------------------------------
-
 // EntityInfo
 
 // int64 entity_id = 1;
@@ -6615,8 +6311,6 @@ inline void Reward::set_gold(int64_t value) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

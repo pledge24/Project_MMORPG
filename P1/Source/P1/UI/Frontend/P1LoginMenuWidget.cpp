@@ -58,7 +58,6 @@ void UP1LoginMenuWidget::NativeConstruct()
     if (UP1LobbySubsystem* Lobby = GetLobby())
     {
         Lobby->OnCharactersChanged.AddUObject(this, &UP1LoginMenuWidget::ShowCharacters);
-        Lobby->OnCharacterListFailed.AddUObject(this, &UP1LoginMenuWidget::ShowCharacterListFailed);
         Lobby->OnCreateCharacterFailed.AddUObject(this, &UP1LoginMenuWidget::ShowCreateCharacterFailed);
         Lobby->OnDeleteCharacterFailed.AddUObject(this, &UP1LoginMenuWidget::ShowDeleteCharacterFailed);
         Lobby->OnEnterGameFailed.AddUObject(this, &UP1LoginMenuWidget::ShowEnterGameFailed);
@@ -158,11 +157,6 @@ void UP1LoginMenuWidget::ShowCharacters()
     // DisplayCharacters가 보이는 슬롯 수까지만 채우므로 슬롯 수를 먼저 적용한다.
     ApplyCharacterSlotCount();
     DisplayCharacters();
-}
-
-void UP1LoginMenuWidget::ShowCharacterListFailed()
-{
-    SetResultText(false, TEXT("캐릭터 목록을 불러오지 못했습니다."));
 }
 
 void UP1LoginMenuWidget::ApplyCharacterSlotCount()
@@ -308,9 +302,9 @@ void UP1LoginMenuWidget::SelectClass(EP1CharacterClass CharacterClass)
     SelectedClassText->SetText(FText::FromString(UP1CharacterSlotWidget::GetClassDisplayName(CharacterClass)));
 }
 
-void UP1LoginMenuWidget::ShowCreateCharacterFailed(const FString& Cause)
+void UP1LoginMenuWidget::ShowCreateCharacterFailed(const FText& Message)
 {
-    CC_DescriptionText->SetText(FText::FromString(Cause));
+    CC_DescriptionText->SetText(Message);
 }
 
 void UP1LoginMenuWidget::RequestCreateCharacter(const FString& CharacterName, EP1CharacterClass CharacterClass)
@@ -351,10 +345,10 @@ void UP1LoginMenuWidget::OnCreateCancelButtonClicked()
     WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
 }
 
-void UP1LoginMenuWidget::ShowDeleteCharacterFailed()
+void UP1LoginMenuWidget::ShowDeleteCharacterFailed(const FText& Message)
 {
     WidgetSwitcher->SetActiveWidget(CharacterSelectScreen);
-    ShowDescription(FText::FromString(TEXT("서버 오류: 캐릭터 삭제 실패")));
+    ShowDescription(Message);
 }
 
 void UP1LoginMenuWidget::RequestDeleteCharacter()

@@ -17,41 +17,6 @@ message S_PONG
 
 }
 
-message C_LOGIN
-{
-    string access_token = 1;
-}
-
-message S_LOGIN
-{
-	bool success = 1;
-	repeated CharacterOverview characters = 2; // 캐릭터 아이디 발급 전
-	int32 character_slot_count = 3; // 계정이 가질 수 있는 캐릭터 수. 서버의 생성 한도와 같다
-}
-
-message C_CREATE_CHARACTER
-{
-    CharacterOverview character = 1;
-}
-
-message S_CREATE_CHARACTER
-{
-    bool success = 1;
-    string cause = 2;
-    int64 character_id = 3;
-}
-
-message C_DELETE_CHARACTER
-{
-    int64 character_id = 1;
-}
-
-message S_DELETE_CHARACTER
-{
-    bool success = 1;
-    int64 character_id = 2;
-}
-
 message C_ENTER_GAME
 {
 	int64 character_id = 1;
@@ -71,11 +36,6 @@ message S_ENTER_GAME
 message C_LEAVE_GAME
 {
 
-}
-
-message S_LEAVE_GAME
-{
-    LeaveReason reason = 1;
 }
 
 message C_MAP_LOAD_COMPLETE
