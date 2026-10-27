@@ -14,10 +14,12 @@
 | 인증 서버 정적 검사 | — | `cd Server/AuthServer && npm run lint` | Rider npm 구성 |
 | 인증 서버 타입 검사 | — | `cd Server/AuthServer && npm run typecheck` | Rider npm 구성 |
 | UE 클라 L2 (Automation) | `Build.bat P1Editor` (`docs/build.md` 「빌드 명령」) | `pwsh P1/Scripts/Run-UeTests.ps1` | 에디터 `Window > Test Automation` |
+| UE 에셋 검증 (DataValidation 커맨드렛) | 위와 같다 | 아래 「에셋 검증 커맨드렛」 | 콘텐츠 브라우저 우클릭 **Asset Actions > Validate Assets**, 저장할 때 자동 |
 | 규범 검사 | — | `py -3 Tools/ConventionLint/check_conventions.py` | 같은 명령 |
 | DataBuilder | — | `pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1 -Test` | 같은 명령 |
 
 **판정은 종료 코드다.** 0이 아니면 실패다. 인증 서버는 `npm test`, `npm run lint`, `npm run typecheck`가 모두 0이어야 완료다.
+에셋 검증 커맨드렛은 예외다. 아래 「에셋 검증 커맨드렛」에서 로그로 판정한다.
 
 **UE 클라만 예외다.** `UnrealEditor-Cmd`는 테스트가 실패해도, 필터가 아무것도 맞추지 못해도 종료
 코드 `0`을 돌려준다(2026년 9월 17일 실측, 두 경우 모두 확인). 그래서 `Run-UeTests.ps1`이 리포트의
@@ -154,10 +156,12 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `P1.Core.EntryFlow` | 1 | 접속 단계 전이(`UWorld` 없음). 로그인 → 월드 선택 → 로비 → 맵 로드 → 게임, 게임 → 맵 로드와 바뀐 단계의 알림 · 로그인이 아닌 단계에서 로그인으로, 로비와 게임에서 월드 선택으로 · 게임 → 로비 복귀 중 → 로비이고, 로비 복귀 중에는 게임이나 맵 로드로 가지 않음 · 건너뛰기, 거꾸로 가기, 같은 단계로 가기는 거절하고 단계를 그대로 둠 · 진행 표시는 맵 로드 단계부터 내 플레이어 스폰 전까지 「맵을 불러오는 중」이고(로그인으로 돌아가면 끝남) 진행이 바뀔 때만 알림 · 로비 복귀 중의 진행 표시는 「로비로 돌아가는 중」 |
 | `P1.Game.MapLevel` | 1 | 맵 번호로 열 레벨 고르기. 맵 번호마다 그 레벨 · 표에 없는 맵 번호와 빈 표는 레벨을 고르지 않음 · 프로젝트 설정의 표가 서버 맵 표의 맵을 인게임 레벨로 엶 |
 | `P1.Data.DesignDataTables` | 1 | DataBuilder의 클라이언트 JSON을 생성된 행 구조체의 임시 데이터 테이블로 채움(행 이름 `RowName`). 저장소의 JSON 여섯 개가 임포트 문제 없이 JSON의 행 수만큼 채워짐 · 아이템 행의 이름, 가격, 판매 여부와 `.proto` 열거형 값 이름을 프로토콜 값으로 읽음(종류, 착용 직업 목록, 장비 부위) · 지역 행의 생성된 `UENUM`과 중첩된 포털 · 다시 채우면 JSON에서 빠진 행이 남지 않고 남은 행은 새 값 · 소문자, 빈 값, 모르는 값 이름은 0번 값 |
-| `P1.Data.GameDataSettings` | 1 | 게임 코드가 기획 데이터 행을 찾는 창구(`UP1GameDataSettings`). 프로젝트 설정의 네 테이블 경로가 `/Game/P1/Data/DesignData/DT_<표>` · 저장소의 JSON으로 채운 임시 테이블에서 아이템, 장비 능력치, 소모 효과, 몬스터 행을 번호로 찾음 · 종류별 표는 다른 종류의 아이템에 `nullptr` · 없는 번호는 `nullptr` |
+| `P1.Data.GameDataSettings` | 1 | 게임 코드가 기획 데이터 행을 찾는 창구(`UP1GameDataSettings`). 프로젝트 설정의 네 테이블 경로가 `/Game/P1/Data/DesignData/DT_<표>`이고 두 에셋 테이블 경로가 `/Game/P1/Data/DataTables/DT_<표>Assets` · 저장소의 JSON으로 채운 임시 테이블에서 아이템, 장비 능력치, 소모 효과, 몬스터 행을 번호로 찾음 · 종류별 표는 다른 종류의 아이템에 `nullptr` · 없는 번호는 `nullptr` |
+| `P1.Editor.DesignDataPairCheck` | 1 | 수치 테이블과 에셋 테이블의 짝 검사(`FP1DesignDataPairCheck`). 에셋 행이 없는 아이템과 몬스터, 빈 아이콘과 빈 몬스터 클래스, 스켈레탈 메시와 스태틱 메시가 모두 빈 장비, 없는 에셋을 가리키는 아이콘·메시·몬스터 클래스(패키지는 있지만 객체 이름이 틀린 것 포함)는 오류이고 깨진 경로를 메시지에 실음 · 장비가 아니면 메시가 없어도 되고 장비는 메시 하나면 됨 · 네이티브 클래스도 몬스터 클래스로 받음 · 에셋 테이블에만 있는 행은 경고 · 에셋 테이블의 행 구조체가 다르면 오류 하나로 끝냄 |
+| `P1.Editor.DesignDataPairValidator` | 1 | 에셋 검증기(`UP1DesignDataPairValidator`)를 검증 서브시스템으로 돌림. 프로젝트 설정의 수치 테이블, 장비 능력치 테이블, 에셋 테이블 어느 쪽을 검증해도 짝 오류로 실패 · 경고만 있으면 통과하고 경고를 실음 · 짝 테이블을 불러오지 못하면 설정 이름과 함께 실패 · 설정이 가리키지 않는 테이블은 짝 검사를 하지 않음 |
 | `P1.Progress.ItemActions` | 1 | 아이템 요청 창구의 판정. 퀵슬롯에는 소모품만 받은 번호로 등록하고 응답의 교환을 반영 · 소모품은 사용 요청, 장비는 착용 요청 · 요구 레벨 미달, 쓸 수 없는 아이템, 빈 칸은 보내지 않음 · 인벤토리 칸의 사용, 착용, 판매는 응답 대기 하나를 함께 쓰고 해제와 구매는 막지 않음(거절 응답으로도 풀림) · 재사용 대기 중인 소모품 · 착용 장비 해제 · 상점이 열려 있을 때만, 팔 수 있는 인벤토리 아이템만 판매 · 골드가 가격 이상일 때만 구매 · 다시 입장하면 대기가 풀림 · 보내도 칸과 골드를 바꾸지 않음 · 퀵슬롯 사용은 번호만 보내고 칸 사용과 응답 대기를 함께 씀 · 빈 퀵슬롯, 갖고 있지 않은 소모품, 재사용 대기 중인 소모품은 보내지 않음 |
 
-**안 덮는 것**: `Room` 본체의 대부분(이동, 아이템 착용과 해제, 접속 종료 저장만 `RoomRequestTest`가, 맵 로드와 룸 입장, 포털 이동, 리스폰만 `MapLoadTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer의 MSSQL 계정 저장소와 계정 상태 저장소, Redis 티켓 저장소, 로그인 세션 저장소, 월드 디렉터리의 Redis 명령 · 게임 서버가 월드 항목을 Redis에 쓰는 일(`WorldListing::Register`, `Publish`)과 갱신 스레드. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영, 클라이언트 컨테이너, 아이템 패킷 변환, 내 플레이어의 컨테이너 분배, 아이템 요청 판정, 퀵슬롯 표시, 퀵슬롯 사본, 로비의 캐릭터 목록 사본, 접속 단계 전이, 맵 번호의 레벨 선택, 월드 목록 읽기 열일곱 가지뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: `Room` 본체의 대부분(이동, 아이템 착용과 해제, 접속 종료 저장만 `RoomRequestTest`가, 맵 로드와 룸 입장, 포털 이동, 리스폰만 `MapLoadTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer의 MSSQL 계정 저장소와 계정 상태 저장소, Redis 티켓 저장소, 로그인 세션 저장소, 월드 디렉터리의 Redis 명령 · 게임 서버가 월드 항목을 Redis에 쓰는 일(`WorldListing::Register`, `Publish`)과 갱신 스레드. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영, 클라이언트 컨테이너, 아이템 패킷 변환, 내 플레이어의 컨테이너 분배, 아이템 요청 판정, 퀵슬롯 표시, 퀵슬롯 사본, 로비의 캐릭터 목록 사본, 접속 단계 전이, 맵 번호의 레벨 선택, 월드 목록 읽기, 수치 테이블과 에셋 테이블의 짝 검사와 그 검증기 열여덟 가지뿐이고 나머지 계층은 0개다.
 
 ### 실제 DB 테스트
 
@@ -283,6 +287,28 @@ strings -n 6 P1/Binaries/Win64/UnrealEditor-P1.pdb | grep -c <새 심볼>
 — 산출물이 소스보다 오래됐으면 재컴파일되지 않은 것이다. 이것이 확인이다.
 
 위 두 절차 중 하나만 쓰지 않는다. 회피가 매번 통하지는 않으므로 예방과 확인을 함께 쓴다.
+
+### 에셋 검증 커맨드렛
+
+에디터 모듈의 에셋 검증기는 에디터를 띄우지 않고 엔진의 `DataValidation` 커맨드렛으로도 돈다. 아래 명령은 프로젝트의 데이터 테이블만 검증한다.
+에디터를 닫지 않아도 돌지만, 그 전에 에디터 타깃을 빌드해야 새 검증기가 들어간다.
+
+```powershell
+& "D:\Unreal\Editor\Launcher\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" `
+    "D:\Unreal\Projects\Project_MMORPG\P1\P1.uproject" `
+    -run=DataValidation -AssetType=DataTable -unattended -nullrhi -nosplash -stdout -FullStdOutLogOutput
+```
+
+**판정은 출력의 `AssetCheck: Error` 줄로 한다.** 검증기의 오류는 그 줄 끝에 `(P1DesignDataPairValidator)`를 붙여 나오고, 경고는 `AssetCheck: Warning` 줄이다.
+종료 코드는 판정에 쓰지 않는다. 커맨드렛 자체는 검증 오류가 있어도 0을 돌려주고, 실행 중 어디서든 오류 로그가 남으면 엔진이 1로 바꾼다.
+그래서 1은 「어딘가에 오류 로그가 있다」는 뜻일 뿐, 이 검증기의 오류라는 뜻이 아니다.
+
+2026년 10월 27일에 두 경우를 실측했다. 저장소의 테이블 그대로 돌리면 검증기가 테이블 다섯(`DT_Item`, `DT_ItemEquipStat`, `DT_ItemAssets`, `DT_Monster`, `DT_MonsterAssets`)을 검사해 모두 통과했고 종료 코드는 0이었다.
+명령줄에 `"-ini:Game:[/Script/P1.P1GameDataSettings]:MonsterAssetTable=/Game/P1/Data/DataTables/DT_ItemAssets.DT_ItemAssets"`를 더해 짝을 일부러 어긋내면 `AssetCheck: Error` 줄이 나왔고 종료 코드는 1이었다.
+
+출력 끝의 `Validated asset counts` 표에서 `/Script/P1Editor.P1DesignDataPairValidator`의 수가 5가 아니면, 설정이 가리키는 테이블 중 검증하지 못한 것이 있다.
+이 표는 `Log` 수준이라 `-FullStdOutLogOutput`을 빼면 출력에 나오지 않는다.
+UE CI가 아직 없으므로(`docs/backlog.md` 4번) 이 명령은 로컬에서만 돈다.
 
 ---
 

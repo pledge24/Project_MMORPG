@@ -2,8 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "Templates/SubclassOf.h"
 #include "P1GameDataSettings.generated.h"
 
+class AP1Monster;
 class UDataTable;
 class UTexture2D;
 class UWorld;
@@ -56,9 +58,16 @@ public:
 public:
     static const FP1MonsterRow* FindMonsterRow(int32 MonsterId);
 
+    /** 몬스터 번호의 몬스터 클래스를 동기 로드한다. 클래스가 없어도 nullptr. */
+    static TSubclassOf<AP1Monster> LoadMonsterClass(int32 MonsterId);
+
     /** 몬스터 정의. 행 구조체는 FP1MonsterRow이고 행 이름은 몬스터 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterTable;
+
+    /** 몬스터의 에셋 참조. 행 구조체는 FP1MonsterAssetData이고 행 이름은 몬스터 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Monsters")
+    TSoftObjectPtr<UDataTable> MonsterAssetTable;
 
     //~ Maps
 public:

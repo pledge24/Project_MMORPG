@@ -10,6 +10,6 @@ public class P1EditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
-		ExtraModuleNames.Add("P1");
+		ExtraModuleNames.AddRange(new string[] { "P1", "P1Editor" });
 	}
 }

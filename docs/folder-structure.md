@@ -79,10 +79,11 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
-런타임 모듈은 Public과 Private을 나누지 않는다. 도메인 폴더에 `.h`와 `.cpp`를 함께 둔다.
+런타임 모듈과 에디터 모듈은 Public과 Private을 나누지 않는다. 도메인 폴더에 `.h`와 `.cpp`를 함께 둔다.
 다른 모듈에 공개할 API가 생기는 시점에 그 모듈만 나눈다.
 
 **도메인을 별도 모듈로 나누지 않는다.** 수작업 `.h`·`.cpp`가 130개 남짓인 지금 규모에서는 빌드
