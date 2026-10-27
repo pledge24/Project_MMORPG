@@ -30,6 +30,16 @@ class ModuleConfig:
 
 
 @dataclass(frozen=True)
+class ClientConfig:
+    """클라이언트 산출물 폴더. 데이터 테이블에 채울 JSON과 그 행 구조체 헤더를 따로 둔다."""
+
+    json_dir: Path
+    source_dir: Path
+    # 생성 헤더를 include할 때 쓰는 모듈 소스 루트 기준 경로(`Game/Data/Generated`).
+    include_dir: str
+
+
+@dataclass(frozen=True)
 class TableConfig:
     """가로형 표 하나. 워크북의 시트를 모두 이어 붙인다."""
 
@@ -59,6 +69,8 @@ class Config:
     settings: dict[str, SettingConfig]
     # .proto에 없는 열거형. 열거형 이름 → 값 이름 → 값 번호.
     enums: dict[str, dict[str, int]]
+    # 없으면 클라이언트 산출물을 만들지 않는다.
+    client: ClientConfig | None = None
 
 
 def load_config(path: Path, root: Path) -> Config:
@@ -83,6 +95,21 @@ def load_config(path: Path, root: Path) -> Config:
         if server_dir.name != OUTPUT_DIR_NAME:
             raise ConfigError(f"{path}: modules.{name}의 server_dir은 '{OUTPUT_DIR_NAME}' 폴더여야 한다")
         modules[name] = ModuleConfig(name, server_dir)
+
+    client = None
+    if "client" in raw:
+        section = raw["client"]
+        json_dir = root / require_str(section, "json_dir", "client")
+        source_dir = root / require_str(section, "source_dir", "client")
+        for key, folder in (("json_dir", json_dir), ("source_dir", source_dir)):
+            if folder.name != OUTPUT_DIR_NAME:
+                raise ConfigError(f"{path}: client의 {key}는 '{OUTPUT_DIR_NAME}' 폴더여야 한다")
+        # 클라이언트의 include는 모듈 소스 루트(Source/<모듈>/) 기준이다.
+        parts = source_dir.relative_to(root).parts
+        if "Source" not in parts or len(parts) < parts.index("Source") + 3:
+            raise ConfigError(f"{path}: client의 source_dir은 Source/<모듈>/ 아래여야 한다")
+        include_dir = "/".join(parts[parts.index("Source") + 2:])
+        client = ClientConfig(json_dir, source_dir, include_dir)
 
     def require_modules(section: dict, where: str) -> tuple[str, ...]:
         names = section.get("modules")
@@ -139,4 +166,5 @@ def load_config(path: Path, root: Path) -> Config:
         tables=tables,
         settings=settings,
         enums=enums,
+        client=client,
     )

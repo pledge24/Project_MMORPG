@@ -120,10 +120,10 @@
 ## 기획 데이터 (DataBuilder)
 
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
-C++ 타입을 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
+C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
 2026년 10월 27일(#316) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
-표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 아직 만들지 않는다.
+표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 클라이언트 코드는 아직 옛 데이터 테이블을 읽는다(아래 「클라이언트 산출물」).
 
 ### 재생성
 
@@ -148,6 +148,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 항목 | 정하는 것 |
 |---|---|
 | `[modules.<모듈>]` | 서버 모듈의 산출물 폴더(`server_dir`). 폴더 이름은 `Generated`여야 한다 |
+| `[client]` | 클라이언트 JSON 폴더(`json_dir`)와 생성 헤더 폴더(`source_dir`). 두 폴더 이름은 `Generated`여야 하고, `source_dir`은 `Source/<모듈>/` 아래여야 한다. 없으면 클라이언트 산출물을 만들지 않는다 |
 | `[tables.<표>]` | 가로형 표 하나. 워크북 파일 이름과 그 표를 읽는 모듈 목록. `nest`를 적으면 부모 표 행의 그 필드 아래에 중첩한다(아래 「산출물」) |
 | `[settings.<설정>]` | 세로형 설정 시트 하나. 워크북, 시트 이름, 모듈 목록 |
 | `[enums.<열거형>]` | `.proto`에 없는 기획 데이터 전용 열거형의 값 이름과 번호. 번호는 1부터다 |
@@ -307,7 +308,7 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 **착용할 수 있는 직업(`AllowedClasses`)이 빈 셀이면 모든 직업이 입는다.** 옛 표의 `all`이 빈 셀이 됐다.
 
-이름(`Name`)과 설명(`Description`)은 클라이언트만 쓰므로 대상이 `client`다. 2026년 10월 27일 기준으로 클라이언트 산출물은 없다.
+이름(`Name`)과 설명(`Description`)은 클라이언트만 쓰므로 대상이 `client`다.
 
 ### 몬스터와 드롭 표
 
@@ -391,7 +392,34 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - 옛 열의 대응: `depth_half_extent`가 `HalfExtentX`, `width_half_extent`가 `HalfExtentY`다. 옛 `portal_radius`는 지역 하나에 하나였고, 지금은 포털마다 `Radius`가 있다
 - 유형 이름: 옛 지역 유형 `safe zone`과 `hunting field`는 `SAFE_ZONE`과 `HUNTING_FIELD`가 됐다. 옛 포털 유형 `room`은 `AREA`가 됐다. 기획 데이터는 룸을 모르기 때문이다
 - 서버가 읽지 않는 열: 지역 유형과 이름은 대상이 `client`다. 포털 유형과 몬스터 리스폰 시간은 서버로 가지만 아직 읽는 코드가 없다. 사망한 몬스터의 리젠은 백로그에 있다
-- 맵 1111의 이름: 옛 표에 없어서 「시작의 섬」으로 정했다. 클라이언트 산출물이 생기면(#319) 보이는 이름이다
+- 맵 1111의 이름: 옛 표에 없어서 「시작의 섬」으로 정했다. 클라이언트 산출물의 `Map.json`에 실린다
+
+
+### 클라이언트 산출물
+
+**키 말고 클라이언트로 가는 열(`both`, `client`)이 하나라도 있는 표만 클라이언트 산출물을 만든다.** 키만 클라이언트로 가는 표(`Level`)와
+서버 전용 표(`Currency`, `DropGroup`, `ClassLevelStat`)는 만들지 않는다. 2026년 10월 27일(#319) 기준으로 `Item`, `ItemEquipStat`, `ItemConsumeEffect`,
+`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다.
+
+| 폴더 | 파일 | 내용 |
+|---|---|---|
+| `P1/DesignData/Generated/` | `<표>.json` | 데이터 테이블에 채울 행 배열. `Content/` 밖에 있어 패키지에 들어가지 않는다 |
+| `P1/Source/P1/Game/Data/Generated/` | `P1<표>Row.h` | 행 구조체 `FP1<표>Row`. 중첩한 표는 `FTableRowBase`를 상속하지 않는 구조체이고, 부모 행이 `TArray`로 갖는다 |
+| 같은 폴더 | `P1<열거형>.h` | 설정 파일의 열거형을 `UENUM`(`EP1<열거형>`)으로 만든 것. 0번 값은 `None`이다 |
+| 같은 폴더 | `P1DesignDataEnumNames.h` | `.proto` 열거형의 값 이름을 프로토콜 값으로 읽는 `P1DesignData::ParseEnumName` |
+| 같은 폴더 | `P1DesignDataVersion.h` | 데이터 버전(`P1DesignData::Version`). 클라이언트가 게임 인스턴스를 초기화할 때 로그에 남긴다 |
+
+- JSON은 서버 산출물과 같이 한 행 한 줄, 키 순서, 열 순서다. 각 행의 첫 필드 `RowName`이 데이터 테이블의 행 이름이고, 값은 기획 데이터의 키다. 복합 키는 `_`로 잇는다(`WARRIOR_1`)
+- 행 구조체의 속성은 열 이름 그대로이고 `VisibleAnywhere`다. 에디터에서 행 값을 고치지 않는다. 값은 원본을 고치고 DataBuilder와 에디터 메뉴를 다시 돌려 바꾼다
+- `.proto` 열거형은 `UPROPERTY`가 될 수 없어서 값 이름(`FString`)으로 싣는다. 게임 코드는 생성된 `Get<열>()`로 프로토콜 값을 얻는다. 값 이름이 아니면 0번 값이다
+- 클라이언트로 가는 열에는 선택 값(`int32?`, `ref?:` 등)을 쓰지 않는다. 행 구조체가 빈 값을 담지 못해서 DataBuilder가 막는다
+- 설정 시트는 클라이언트 산출물을 만들지 않는다. 설정 시트의 필드 대상이 `both`나 `client`면 DataBuilder가 막는다
+- 중첩한 표가 클라이언트 산출물을 만들면 부모 표도 만들어야 한다. 아니면 DataBuilder가 막는다
+- 클라이언트로 가는 설정 파일의 열거형에는 값 이름 `NONE`과 255를 넘는 번호를 쓰지 않는다. `UENUM`의 0번 값과 겹치고, 값 타입이 `uint8`이다
+
+**데이터 버전 로그는 빌드에 들어간 헤더의 값이다.** DataBuilder를 다시 돌리고 에디터 메뉴를 돌리지 않으면 로그와 데이터 테이블의 값이 어긋난다.
+
+2026년 10월 27일 기준으로 클라이언트 코드는 새 데이터 테이블을 읽지 않는다. 옛 `DT_Item` 등과 손으로 쓴 행 구조체를 새 테이블로 옮기는 일은 #320이 한다.
 
 ---
 
@@ -464,22 +492,29 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 인벤토리는 구역마다 칸 수를 인벤토리 구역 표에서 읽는다.
 2026년 10월 22일부터 퀵슬롯 컴포넌트가 퀵슬롯 개수를 퀵슬롯 표에서 읽는다.
 
-### 클라이언트 데이터 테이블 재임포트
+### 클라이언트 데이터 테이블 채우기
 
-`C_*.json`을 다시 만들면 그 JSON을 소스로 쓰는 데이터 테이블을 다시 임포트한다. 아이템은 `DT_Item`이다.
-**재임포트하기 전까지 클라이언트는 옛 값을 읽는다.** UE 테스트는 데이터 테이블을 읽지 않으므로 이 상태에서도
-통과한다.
+DataBuilder의 클라이언트 JSON(`P1/DesignData/Generated/<표>.json`)마다 데이터 테이블 `/Game/P1/Data/DesignData/DT_<표>` 하나를 채운다.
+**채우기 전까지 클라이언트는 옛 값을 읽는다.** UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한다.
 
-1. 에디터의 콘텐츠 브라우저에서 데이터 테이블(`Content/P1/Data/DataTables/DT_Item`)을 우클릭해 Reimport를 실행한다.
-2. 테이블을 열어 바뀐 열의 값을 확인하고 저장한다.
-3. `.uasset`이 `C_*.json`보다 나중에 저장됐는지 수정 시각으로 확인한다.
+1. `pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1`로 산출물을 만든다. 행 구조체가 바뀌었으면 클라이언트를 빌드한다
+2. 에디터 메인 메뉴의 **Tools > P1 > 기획 데이터 테이블 채우기**를 실행한다
+3. 출력 로그에서 `[기획 데이터]` 줄을 확인한다. 표마다 `DT_<표> ← <표>.json (N행)`이 나오고, 마지막 줄이 `테이블 N개를 채웠다`다.
+   임포터가 알린 문제(`LogCSVImportFactory`, `LogDataTable`)가 있으면 그 표의 값을 믿지 않는다
+4. 바뀐 `.uasset`을 JSON과 같은 커밋에 담는다
 
-**사람이 에디터에서 한다.** 언리얼 MCP의 `DataTableTools`에는 재임포트 툴이 없다(2026년 10월 4일 확인).
-`import_file`은 새 에셋을 만드는 툴이고, `set_rows`로 값을 고치면 JSON과 테이블이 따로 바뀌므로 쓰지 않는다.
-재임포트 뒤 값의 확인은 MCP의 `DataTableTools.get_rows`로 할 수 있다.
+메뉴는 `P1/Scripts/Editor/p1_design_data_tables.py`의 `fill_all()`이다. `Config/DefaultEngine.ini`의 Python 시작 스크립트가 에디터를 띄울 때 메뉴를 더한다.
 
-필드 이름을 바꿀 때는 대소문자만 다른 이름(`ItemSubType` → `ItemSubtype`)이면 기존 값이 그대로 읽힌다.
-언리얼이 속성 이름의 대소문자를 가리지 않기 때문이다.
+- 테이블이 없으면 행 구조체 `FP1<표>Row`로 만들고, 있으면 비우고 다시 채운다. 원본에서 지운 행은 테이블에도 남지 않는다
+- 행 이름은 JSON의 `RowName`이다. 스크립트가 테이블의 `ImportKeyField`를 `RowName`으로 두고 `bPreserveExistingValues`를 끈다
+- 채운 테이블은 저장한다
+- 행 구조체가 없으면(클라이언트를 빌드하지 않았으면) 그 표를 건너뛰고 오류를 남긴다
+
+**사람이 에디터에서 한다.** 메뉴의 결과는 에셋 변경이라, 실행과 확인을 사람에게 인계한다.
+생성된 행 구조체가 저장소의 JSON을 문제 없이 받는지는 `P1.Data.DesignDataTables` 테스트가 임시 테이블로 확인한다.
+
+옛 변환기의 `C_*.json`과 옛 데이터 테이블(`DT_Item`, `DT_Monster`, `DT_Map`, `DT_Quest`)은 콘텐츠 브라우저의 Reimport로 다시 읽는다.
+#320이 클라이언트 코드를 새 데이터 테이블로 옮기면서 옛 테이블을 지운다.
 
 ### 로딩
 

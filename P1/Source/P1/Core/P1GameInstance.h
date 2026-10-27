@@ -16,4 +16,9 @@ class P1_API UP1GameInstance : public UGameInstance
 
 public:
     UP1GameInstance();
+
+    //~ Begin UGameInstance Interface
+public:
+    virtual void Init() override;
+    //~ End UGameInstance Interface
 };
