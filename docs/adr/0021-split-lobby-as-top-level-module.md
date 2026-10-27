@@ -55,6 +55,10 @@ status: accepted
 - 2026년 10월 23일 덧붙임: 생성 표를 로비 표(`Original_Lobby.xlsx` → `Lobby/Data/Json/S_Lobby.json`)와 게임의 초기 진행 표
   (`Original_Initial_Progress.xlsx` → `Game/Data/Json/S_Initial_Progress.json`)로 나눴다. 생성할 수 있는 직업은 레벨 표의 유무가
   아니라 로비 표가 정하고, 기동할 때의 대조는 `Core/DataCrossCheck`가 한다
+- 2026년 10월 27일 덧붙임: 로비 표는 설정 워크북의 `Lobby` 시트(`DesignData/Config.xlsx`)가 됐고, 초기 진행 표는 같은 워크북의
+  `Progress` 시트가 됐다. DataBuilder가 `Lobby` 시트를 로비 모듈의 산출물 폴더(`Lobby/Data/Generated/`)로, `Progress` 시트를 게임
+  모듈의 산출물 폴더로 생성한다. 두 모듈의 생성된 헤더는 C++ 네임스페이스가 다르고(`LobbyDesignData`, `DesignData`), 로비 코드는
+  게임의 기획 데이터 헤더를 include하지 않는다
 
 ## 틀렸다는 신호
 

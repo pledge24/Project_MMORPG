@@ -46,7 +46,7 @@
 | 2 | #314 아이템 표를 공통, 장비 능력치, 소모 효과 표로 나눠 옮기기 | 1 | 머지 | #324 | DataBuilder 테스트 79개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 490개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Item.json` 39행 대조 |
 | 3 | #315 몬스터 표를 기본 보상 열로 옮기고 드롭 그룹과 드롭 항목 표 더하기 | 2 | 머지 | #325 | DataBuilder 테스트 107개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 491개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Monster.json` 9행 대조 |
 | 4 | #316 맵 표를 맵, 지역, 포털 표로 나누기 | 3 | 머지 | #327 | DataBuilder 테스트 132개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 491개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Map.json` 4행 대조. PIE는 확인하지 않았다 |
-| 5 | #317 설정 시트로 초기 진행과 로비 데이터를 옮기고 칸 수와 퀵슬롯 개수를 서버 상수로 되돌리기 | 4 | 대기 | | |
+| 5 | #317 설정 시트로 초기 진행과 로비 데이터를 옮기고 칸 수와 퀵슬롯 개수를 서버 상수로 되돌리기 | 4 | 머지 | #329 | DataBuilder 테스트 144개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 484개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Initial_Progress.json`, `S_Lobby.json` 대조 · 규범 검사와 문서 검사 통과. PIE는 확인하지 않았다 |
 | 6 | #318 레벨 표를 공통 레벨 표와 직업별 능력치 표로 나누기 | 1 | 머지 | #326 | #315를 merge한 뒤 DataBuilder 테스트 117개 통과 · 서버 솔루션 빌드 0(DummyClient 포함. merge 전 첫 빌드는 TD-077로 1) · `GameServerTests` 493개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Warrior_Level_Data.json` 50행 대조 |
 | 7 | #319 클라이언트 행 구조체를 생성하고 새 데이터 테이블 채우기 | 2, 3, 4 | 대기 | | |
 | 8 | #320 클라이언트 코드를 새 데이터 테이블로 옮기고 손으로 쓴 행 구조체 지우기 | 7 | 대기 | | |
@@ -144,3 +144,20 @@
 - 레벨업은 새 레벨과 이전 레벨 능력치 행의 차이를 지금 스탯에 더한다. 장비 증감량을 지키려고 새 레벨 값으로 덮지 않는다
 - 서버 테스트는 `Server/GameServerTests/TestLevelTables.h`로 레벨 행과 능력치 행을 함께 넣는다
 - `.gitignore`의 `C_TestJsonfile.json` 주석이 지운 `Original_Warrior_Level_Data.xlsx`를 가리킨다. 옛 변환기와 함께 #322가 정리한다
+
+**#317 (2026년 10월 27일)**
+
+- 설정 워크북 `Config.xlsx`에 `Progress`(시작 맵, 시작 좌표 셋, 시작 방향, 시작 골드)와 `Lobby`(기본 슬롯 수, 생성할 수 있는 직업) 시트를 만들고 옛 값을 그대로 옮겼다.
+  새 산출물을 옛 `S_Initial_Progress.json`, `S_Lobby.json`과 대조했다(맵 1111, 좌표 0, 방향 0, 골드 10000, 슬롯 4, 전사). 규칙은 `docs/codegen.md` 「설정 워크북」에 있다
+- 로비 모듈(`lobby`)을 설정 파일에 더했다. 산출물 폴더는 `Server/GameServer/Lobby/Data/Generated/`다
+- 정한 것: 설정 파일의 모듈에 `namespace`를 더했다. 게임은 `DesignData`, 로비는 `LobbyDesignData`다. 두 모듈이 같은 네임스페이스를 쓰면 DataBuilder가 멈춘다.
+  pch가 게임 헤더를, `Core/DataCrossCheck`가 로비 헤더를 함께 include해서, 네임스페이스가 같으면 공통 함수와 열거형 이름 표가 두 번 정의된다
+- DataBuilder에 설정의 의미 규칙(`SETTING_RULES`)을 더했다. 시작 골드 0 이상, 슬롯 수 1 이상, 직업 목록이 비지 않고 겹치지 않음이다.
+  서버에는 슬롯 수의 `TINYINT` 상한과 직업별 능력치 대조만 남겼다. 시작 맵의 서버 대조(`CheckStartMap`)는 참조 열(`ref:Map`)로 바꾸고 지웠다
+- 인벤토리 구역의 칸 수는 `InventorySections::SLOT_COUNT`(32), 퀵슬롯 개수는 `QUICK_SLOT_COUNT`(9)가 됐다. 퀵슬롯 상수 옆에
+  「9를 넘기면 `WBP_QuickSlots`에도 위젯을 더한다」를 남겼다. 256을 넘기면 `static_assert`가 빌드를 막는다
+- 옛 변환기의 표 넷이 빠지면서 `GamedataParser.cpp`의 행 단위 도우미와 `JsonProperty.h`를 쓰는 곳이 없어져 함께 지웠다. 옛 변환기는 퀘스트 표 하나만 만든다
+- 구역마다 칸 수가 다른 경우를 보던 테스트(`GameEntryTest`의 「다른 구역에서는 같은 번호가 들어감」)는 칸 수가 하나가 되어 지웠다.
+  퀵슬롯 테스트는 상수 개수 기준으로 기대값을 만든다
+- 일반 규칙 테스트가 설정 이름으로 쓰던 `Lobby`를 `Account`로 바꿨다. 설정 이름으로 규칙을 거는 `SETTING_RULES` 때문이다
+- 사람의 PIE 확인(새 캐릭터가 시작 맵의 시작 위치에 시작 골드를 들고 선다. 인벤토리와 퀵슬롯이 지금처럼 보인다)이 남았다

@@ -14,7 +14,7 @@
     두 경로가 다른 구역을 가리키면 아이템이 엉뚱한 구역으로 샌다. 아래 테스트는 세 구역 전부에 대해
     넣기→조회→지우기 왕복이 같은 구역을 가리키는지 확인한다.
 
-    픽스처 결합도: 아이템 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. DB·Redis·Room·세션이 필요 없다.
 ---------------------------------------------------------------*/
 
@@ -24,7 +24,7 @@ namespace
     constexpr int32 CONSUMABLE_TEMPLATE_ID = 2001;
     constexpr int32 MISC_TEMPLATE_ID = 3001;
     /** 장비, 소모품, 기타 구역이 모두 이 칸 수를 갖는다. */
-    constexpr int32 SLOT_COUNT = 32;
+    constexpr int32 SLOT_COUNT = InventorySections::SLOT_COUNT;
 
     /** 테스트가 주입한 표. 시드할 때마다 통째로 다시 설치한다. */
     GamedataTables seededTables;
@@ -106,7 +106,6 @@ class InventoryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        seededTables.inventorySlotCounts = MakeInventorySections(SLOT_COUNT);
         SeedItem(GEAR_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR);
         SeedItem(CONSUMABLE_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
         SeedItem(MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS);

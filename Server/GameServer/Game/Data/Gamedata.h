@@ -52,11 +52,7 @@ public:
     /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }
     /** 새 캐릭터가 첫 게임 입장에서 갖는 시작 맵, 위치, 방향, 골드. */
-    static const InitialProgressTemplate& GetInitialProgress() { return s_tables.initialProgress; }
-    /** 인벤토리에서 그 아이템 종류 구역의 칸 수. 구역이 없는 종류(NONE)면 0. */
-    static int32 GetInventorySlotCount(Protocol::ItemType itemType);
-    /** 플레이어 한 명의 퀵슬롯 개수. 퀵슬롯 번호는 0부터 이 값 미만이다. */
-    static int32 GetQuickSlotCount() { return s_tables.quickSlotCount; }
+    static const DesignData::ProgressConfig& GetInitialProgress() { return s_tables.initialProgress; }
 
     //~ 공통
 private:

@@ -207,6 +207,7 @@
     <ClInclude Include="Game\Progress\InitialProgress.h" />
     <ClInclude Include="Core\DataCrossCheck.h" />
     <ClInclude Include="Lobby\Data\LobbyData.h" />
+    <ClInclude Include="Lobby\Data\Generated\DesignData.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
     <ClInclude Include="Utils\SnowflakeIdGenerator.h" />
@@ -234,7 +235,6 @@
     <ClInclude Include="Game\Data\Gamedata.h" />
     <ClInclude Include="Game\Data\GamedataParser.h" />
     <ClInclude Include="Game\Data\Templates.h" />
-    <ClInclude Include="Game\Data\JsonProperty.h" />
     <ClInclude Include="Game\Data\Generated\DesignData.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomTransfer.h" />
@@ -380,6 +380,9 @@
     <None Include="Game\Data\Generated\DropGroup.json" />
     <None Include="Game\Data\Generated\Map.json" />
     <None Include="Game\Data\Generated\Area.json" />
+    <None Include="Game\Data\Generated\Progress.json" />
+    <None Include="Lobby\Data\Generated\DataVersion.json" />
+    <None Include="Lobby\Data\Generated\Lobby.json" />
   </ItemGroup>
   <ItemGroup>
     <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 하므로

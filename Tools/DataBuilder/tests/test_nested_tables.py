@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 import unittest
 
-from databuilder.build import generate
-from databuilder.config import load_config
 from tests.helpers import DesignDataCase, sheet
 
 GROUP = (["Id", "Rate"], ["key:int32", "float"], ["both", "both"])
@@ -72,10 +70,9 @@ class NestedTableTest(DesignDataCase):
             with self.subTest(group=group_modules, entry=entry_modules):
                 self.add_table("Group", sheet(*GROUP, [1, 0.5]), modules=group_modules)
                 self.add_table("Entry", sheet(*ENTRY, [1, 10, 1]), modules=entry_modules, nest="Entries")
-                path = self.config_path()
-                path.write_text(path.read_text(encoding="utf-8") + '\n[modules.lobby]\nserver_dir = "Server/Lobby/Generated"\n', encoding="utf-8")
+                self.add_module("lobby", "Server/Lobby/Generated", "LobbyDesignData")
 
-                errors = generate(load_config(path, self.root)).errors
+                errors = self.build().errors
                 self.assertTrue(any("Entry" in error and "lobby" in error for error in errors), errors)
 
 

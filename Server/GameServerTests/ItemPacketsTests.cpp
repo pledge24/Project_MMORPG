@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "Game/Items/InventorySections.h"
 #include "PlayerTestAccess.h"
 #include "TestItemTables.h"
 #include "Network/ItemPackets.h"
@@ -16,7 +17,7 @@
     입장 패킷은 클라이언트가 칸 목록으로 창의 칸을 만드므로 빈 칸까지 모두 싣는지 본다.
     퀵슬롯도 같은 변환 파일에서 바꾼다. 요청의 참조 종류는 서버 열거형의 범위를 넘는 값을 걸러야 한다.
 
-    픽스처 결합도: 입장 패킷의 소지품만 플레이어가 필요하다. 아이템 템플릿, 레벨 표, 인벤토리 구역 표를
+    픽스처 결합도: 입장 패킷의 소지품만 플레이어가 필요하다. 아이템 템플릿과 레벨 표를
     Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
 ---------------------------------------------------------------*/
 
@@ -24,10 +25,6 @@ namespace
 {
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
     constexpr int32 POTION_TEMPLATE_ID = 2000;
-    constexpr int32 GEAR_SLOT_COUNT = 4;
-    constexpr int32 CONSUMABLE_SLOT_COUNT = 3;
-    constexpr int32 MISC_SLOT_COUNT = 2;
-    constexpr int32 QUICK_SLOT_COUNT = 3;
 
     ItemInstance MakeSword()
     {
@@ -275,12 +272,6 @@ protected:
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 10);
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
-        tables.inventorySlotCounts = {
-            { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
-            { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
-            { Protocol::ITEM_TYPE_MISCELLANEOUS, MISC_SLOT_COUNT },
-        };
-        tables.quickSlotCount = QUICK_SLOT_COUNT;
         Gamedata::Install(std::move(tables));
 
         PlayerProgress progress;
@@ -289,7 +280,7 @@ protected:
         progress.gold = 1234;
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::INVENTORY_CONSUMABLE, 1 }, MakePotion() });
         progress.items.push_back(PlacedItem{ SlotAddress{ ContainerType::EQUIPPED, Protocol::GEAR_PART_WEAPON }, MakeSword() });
-        // 장비를 가리키는 행과 범위 밖의 행은 기획이 바뀌어 남은 행이다.
+        // 장비를 가리키는 행과 범위 밖의 행은 아이템 표나 퀵슬롯 개수가 바뀌어 남은 행이다.
         progress.quickSlots.push_back(QuickSlot{ 0, QuickSlotRef{ QuickSlotRefType::ITEM, SWORD_TEMPLATE_ID } });
         progress.quickSlots.push_back(QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } });
         progress.quickSlots.push_back(QuickSlot{ QUICK_SLOT_COUNT, QuickSlotRef{ QuickSlotRefType::ITEM, 2001 } });
@@ -322,11 +313,11 @@ TEST_F(ItemPacketsPossessionTest, CarriesGoldAndEveryInventorySlot)
     ASSERT_NE(gear, nullptr);
     ASSERT_NE(consumables, nullptr);
     ASSERT_NE(misc, nullptr);
-    EXPECT_EQ(gear->slots().size(), GEAR_SLOT_COUNT) << "빈 칸도 실어야 클라이언트가 창의 칸을 만든다";
-    EXPECT_EQ(misc->slots().size(), MISC_SLOT_COUNT);
-    ASSERT_EQ(consumables->slots().size(), CONSUMABLE_SLOT_COUNT);
+    EXPECT_EQ(gear->slots().size(), InventorySections::SLOT_COUNT) << "빈 칸도 실어야 클라이언트가 창의 칸을 만든다";
+    EXPECT_EQ(misc->slots().size(), InventorySections::SLOT_COUNT);
+    ASSERT_EQ(consumables->slots().size(), InventorySections::SLOT_COUNT);
 
-    for (int32 slotIndex = 0; slotIndex < CONSUMABLE_SLOT_COUNT; slotIndex++)
+    for (int32 slotIndex = 0; slotIndex < InventorySections::SLOT_COUNT; slotIndex++)
         EXPECT_EQ(consumables->slots(slotIndex).slot_index(), slotIndex);
 
     const Protocol::Slot& potion = consumables->slots(1);
@@ -367,10 +358,12 @@ TEST_F(ItemPacketsPossessionTest, LoadedSlotsAreNotReportedAsChanges)
 // 퀵슬롯은 아이템을 담지 않으므로 넣을 수 없는 등록은 버리고 입장시킨다. 다음 저장이 그 행을 지운다.
 TEST_F(ItemPacketsPossessionTest, LoadedQuickSlotsDropInvalidRowsAndKeepEntry)
 {
-    EXPECT_EQ(player->GetQuickSlots().GetAll(), (vector<QuickSlot>{
-        QuickSlot{ 0, nullopt },
-        QuickSlot{ 1, nullopt },
-        QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } },
-    }));
+    const vector<QuickSlot> quickSlots = player->GetQuickSlots().GetAll();
+    ASSERT_EQ(quickSlots.size(), size_t(QUICK_SLOT_COUNT));
+    for (const QuickSlot& quickSlot : quickSlots)
+    {
+        const optional<QuickSlotRef> expected = quickSlot.slotIndex == 2 ? optional(QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID }) : nullopt;
+        EXPECT_EQ(quickSlot.ref, expected) << "퀵슬롯 " << quickSlot.slotIndex;
+    }
     EXPECT_EQ(player->MakeSaveData().progress.quickSlots, (vector<QuickSlot>{ QuickSlot{ 2, QuickSlotRef{ QuickSlotRefType::ITEM, POTION_TEMPLATE_ID } } }));
 }

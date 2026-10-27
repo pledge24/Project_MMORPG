@@ -333,7 +333,7 @@ def setting_lines(setting: Setting, data: DesignData) -> list[str]:
     return lines
 
 
-def module_header(tables: list[Table], settings: list[Setting], data: DesignData) -> str:
+def module_header(namespace: str, tables: list[Table], settings: list[Setting], data: DesignData) -> str:
     enums = used_enums(tables, settings, data)
     proto_files = sorted({data.enums[name].proto_file for name in enums if data.enums[name].proto_file})
 
@@ -347,7 +347,7 @@ def module_header(tables: list[Table], settings: list[Setting], data: DesignData
     lines += [
         "",
         "/** DataBuilder가 생성한 기획 데이터의 타입과 역직렬화. */",
-        "namespace DesignData",
+        f"namespace {namespace}",
         "{",
         "    /** 원본 해시로 만든 데이터 버전을 담은 파일. */",
         f'    constexpr string_view VERSION_FILE = "{VERSION_FILE}";',

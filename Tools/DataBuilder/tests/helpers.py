@@ -62,6 +62,8 @@ class DesignDataCase(unittest.TestCase):
         (self.root / "Schema").mkdir()
         (self.root / "Schema" / "Common.proto").write_bytes(PROTO.encode("cp949"))
         self.out_dir = self.root / "Server" / "Game" / "Generated"
+        # 모듈 이름 → (산출물 폴더, 설정 파일의 namespace). namespace가 None이면 설정 파일에 적지 않는다.
+        self.modules: dict[str, tuple[str, str | None]] = {"game": ("Server/Game/Generated", None)}
         self.tables: dict[str, tuple[str, list[str], str | None]] = {}
         self.settings: dict[str, tuple[str, str, list[str]]] = {}
         self.enums: dict[str, dict[str, int]] = {"CurrencyType": {"GOLD": 1, "HONOR": 2}}
@@ -85,7 +87,12 @@ class DesignDataCase(unittest.TestCase):
         self.write_workbook(f"{name}.xlsx", {f"Sheet{i + 1}": rows for i, rows in enumerate(sheets)})
         self.tables[name] = (f"{name}.xlsx", modules or ["game"], nest)
 
-    def add_setting(self, name: str, rows: list[list[Any]], workbook: str = "Config.xlsx") -> None:
+    def add_module(self, name: str, server_dir: str, namespace: str | None = None) -> Path:
+        """서버 모듈을 더하고 그 산출물 폴더를 돌려준다."""
+        self.modules[name] = (server_dir, namespace)
+        return self.root / server_dir
+
+    def add_setting(self, name: str, rows: list[list[Any]], workbook: str = "Config.xlsx", modules: list[str] | None = None) -> None:
         path = self.root / "DesignData" / workbook
         existing = {}
         if path.exists():
@@ -93,10 +100,14 @@ class DesignDataCase(unittest.TestCase):
             existing = {ws.title: [list(r) for r in ws.iter_rows(values_only=True)] for ws in loaded.worksheets}
         existing[name] = rows
         self.write_workbook(workbook, existing)
-        self.settings[name] = (workbook, name, ["game"])
+        self.settings[name] = (workbook, name, modules or ["game"])
 
     def config_path(self) -> Path:
-        lines = ['source_dir = "DesignData"', 'proto_dir = "Schema"', "", "[modules.game]", 'server_dir = "Server/Game/Generated"', ""]
+        lines = ['source_dir = "DesignData"', 'proto_dir = "Schema"', ""]
+        for name, (server_dir, namespace) in self.modules.items():
+            lines += [f"[modules.{name}]", f'server_dir = "{server_dir}"']
+            lines += [f'namespace = "{namespace}"'] if namespace else []
+            lines += [""]
         for name, (workbook, modules, nest) in self.tables.items():
             lines += [f"[tables.{name}]", f'workbook = "{workbook}"', f"modules = {modules!r}".replace("'", '"')]
             lines += [f'nest = "{nest}"'] if nest else []

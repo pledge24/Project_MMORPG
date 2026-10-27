@@ -13,7 +13,7 @@
     팩토리는 id를 발급하고 스폰 매개변수를 Init에 넘긴다. 엔티티 타입은 생성자가 정한다.
     룸에 넣고 Start하는 일은 룸이 맡으므로 여기서는 보지 않는다.
 
-    픽스처 결합도: 몬스터 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입한다. 플레이어는 세션 없이 만든다.
+    픽스처 결합도: 몬스터 템플릿을 Gamedata::Install로 주입한다. 플레이어는 세션 없이 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -43,7 +43,6 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monster;
-        tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
     }
 
@@ -79,7 +78,7 @@ TEST_F(EntityFactoryTest, PlayerWithoutSessionGetsIdAndInventory)
     EXPECT_TRUE(player->GetEntityInfo().has_player_info()) << "엔티티의 종류는 실린 세부 정보의 종류다";
     const ItemContainer* gearSection = player->GetInventory().FindSection(ContainerType::INVENTORY_GEAR);
     ASSERT_NE(gearSection, nullptr);
-    EXPECT_TRUE(gearSection->IsValidSlot(0)) << "Init이 인벤토리 구역 표의 칸 수만큼 칸을 만든다";
+    EXPECT_TRUE(gearSection->IsValidSlot(0)) << "Init이 구역마다 정한 칸 수만큼 칸을 만든다";
     EXPECT_TRUE(player->GetEquipment().GetContainer().IsValidSlot(Protocol::GEAR_PART_WEAPON)) << "Init이 장비 칸을 만든다";
     EXPECT_EQ(player->GetSession(), nullptr);
 }

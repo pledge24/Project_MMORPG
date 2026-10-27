@@ -1,15 +1,7 @@
 #pragma once
 #include "Game/Data/Templates.h"
 
-/** 기획표 파일 이름. */
-namespace GamedataFile
-{
-    constexpr string_view INITIAL_PROGRESS = "S_Initial_Progress.json";
-    constexpr string_view INVENTORY_SECTIONS = "S_Inventory_Section.json";
-    constexpr string_view QUICK_SLOTS = "S_Quick_Slot.json";
-}
-
-/** 파싱만 마친 기획표 문서. 파일 하나가 행 배열 하나다. 재화, 아이템, 몬스터, 드롭 그룹, 레벨, 맵, 지역 표는 DataBuilder가 생성한 표다. */
+/** 파싱만 마친 기획표 문서. DataBuilder가 생성한 파일 하나가 문서 하나다. 표는 행 배열이고 설정은 객체 하나다. */
 struct GamedataDocuments
 {
     Json maps;
@@ -23,9 +15,8 @@ struct GamedataDocuments
     Json itemConsumeEffects;
     Json levels;
     Json classLevelStats;
+    /** 설정 워크북의 초기 진행 시트(Progress.json). */
     Json initialProgress;
-    Json inventorySections;
-    Json quickSlots;
 };
 
 /**

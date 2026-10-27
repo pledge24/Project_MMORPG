@@ -19,7 +19,7 @@
 
     이름과 직업의 검사는 핸들러가 DB 큐로 넘기기 전에 한다. 그 결과 값은 CharacterCreationTest와 PacketHandlerTest가 본다.
 
-    픽스처 결합도: FakeDBConnection과 LobbyData::Install로 넣은 로비 표를 쓴다. 생성할 수 있는 직업은 전사뿐이다.
+    픽스처 결합도: FakeDBConnection과 LobbyData::Install로 넣은 로비 설정을 쓴다. 생성할 수 있는 직업은 전사뿐이다.
     SQL 문장과 거절 판정은 DAO 테스트와 실제 DB 테스트가 본다. 마지막 테스트는 저장소의 Lobby/ 폴더를 읽는다.
 ---------------------------------------------------------------*/
 
@@ -43,15 +43,15 @@ class LobbyRequestsTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LobbyTables tables;
-        tables.defaultCharacterSlotCount = SLOT_COUNT;
-        tables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
-        LobbyData::Install(std::move(tables));
+        LobbyDesignData::LobbyConfig config;
+        config.DefaultCharacterSlotCount = SLOT_COUNT;
+        config.CreatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
+        LobbyData::Install(std::move(config));
     }
 
     void TearDown() override
     {
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
     }
 
     FakeDBConnection conn;
@@ -67,7 +67,7 @@ TEST_F(LobbyRequestsTest, ConnectLobbyListsCharactersWithSlotCountOfAccountRow)
 
     const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ConnectLobby(conn, ACCOUNT_ID);
 
-    EXPECT_EQ(listPkt.character_slot_count(), 6) << "슬롯 수는 로비 표가 아니라 계정 행의 값이다";
+    EXPECT_EQ(listPkt.character_slot_count(), 6) << "슬롯 수는 로비 설정이 아니라 계정 행의 값이다";
     ASSERT_EQ(listPkt.characters_size(), 2);
     EXPECT_EQ(listPkt.characters(0).character_id(), CHARACTER_ID);
     EXPECT_EQ(listPkt.characters(0).name(), "전사");
@@ -79,17 +79,17 @@ TEST_F(LobbyRequestsTest, ConnectLobbyListsCharactersWithSlotCountOfAccountRow)
 
 TEST_F(LobbyRequestsTest, ConnectLobbyCarriesCreatableClassesOfLobbyTable)
 {
-    LobbyTables tables;
-    tables.defaultCharacterSlotCount = SLOT_COUNT;
-    tables.creatableClasses = { Protocol::CHARACTER_CLASS_MAGE, Protocol::CHARACTER_CLASS_WARRIOR };
-    LobbyData::Install(std::move(tables));
+    LobbyDesignData::LobbyConfig config;
+    config.DefaultCharacterSlotCount = SLOT_COUNT;
+    config.CreatableClasses = { Protocol::CHARACTER_CLASS_MAGE, Protocol::CHARACTER_CLASS_WARRIOR };
+    LobbyData::Install(std::move(config));
     conn.QueueResult({ { int64(SLOT_COUNT) } });
     conn.QueueResult({});
 
     const Protocol::S_CHARACTER_LIST listPkt = LobbyRequests::ConnectLobby(conn, ACCOUNT_ID);
 
     ASSERT_EQ(listPkt.creatable_classes_size(), 2) << "클라이언트는 직업 목록을 따로 갖지 않고 이 값만 보여 준다";
-    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CHARACTER_CLASS_MAGE) << "로비 표의 순서를 그대로 싣는다";
+    EXPECT_EQ(listPkt.creatable_classes(0), Protocol::CHARACTER_CLASS_MAGE) << "로비 설정의 순서를 그대로 싣는다";
     EXPECT_EQ(listPkt.creatable_classes(1), Protocol::CHARACTER_CLASS_WARRIOR);
 }
 
@@ -186,6 +186,28 @@ TEST(LobbyModuleTest, LobbyDoesNotIncludeProgressCoordinator)
         ifstream file(entry.path());
         const string source((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
         EXPECT_EQ(source.find("ProgressCoordinator.h"), string::npos) << entry.path().string();
+        checkedFiles++;
+    }
+
+    EXPECT_GT(checkedFiles, 0) << "검사한 파일이 없으면 아무것도 검사하지 않은 것이다";
+}
+
+// 로비와 게임은 서로의 기획 데이터를 읽지 않는다. 로비를 별도 프로세스로 옮길 때 게임의 산출물이 따라오지 않게 한다.
+TEST(LobbyModuleTest, LobbyDoesNotIncludeGameDesignData)
+{
+    const filesystem::path lobbyDir = filesystem::path(__FILE__).parent_path() / ".." / "GameServer" / "Lobby";
+    ASSERT_TRUE(filesystem::is_directory(lobbyDir)) << "로비 폴더를 찾지 못했다: " << lobbyDir.string();
+
+    int32 checkedFiles = 0;
+    for (const filesystem::directory_entry& entry : filesystem::recursive_directory_iterator(lobbyDir))
+    {
+        const string extension = entry.path().extension().string();
+        if (extension != ".h" && extension != ".cpp")
+            continue;
+
+        ifstream file(entry.path());
+        const string source((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+        EXPECT_EQ(source.find("\"Game/Data/"), string::npos) << entry.path().string();
         checkedFiles++;
     }
 

@@ -15,7 +15,7 @@
     그래서 두 값은 요청한 칸이 아니라 처리 결과여야 한다. gear_part는 장비 부위, template_id는
     처리 뒤 그 부위의 아이템이다. 나중에 룸에 들어온 플레이어가 보는 외형은 gear_appearance로 간다.
 
-    픽스처 결합도: 아이템 템플릿, 2레벨까지 있는 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿, 2레벨까지 있는 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 장착과 해제가 레벨 표로 최종 스탯을 다시 계산하므로 레벨 표가 있어야 한다.
 ---------------------------------------------------------------*/
 
@@ -54,7 +54,6 @@ protected:
             stat.MaxMp = BASE_MAX_MP;
             stat.PhysicalAttack = BASE_PHYSICAL_ATTACK;
         }
-        tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());

@@ -96,22 +96,24 @@ protected:
             stat.MaxMp = 45;
         }
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
-        tables.initialProgress.startMapId = START_MAP_ID;
-        tables.initialProgress.startPos = { 10.5f, -20.25f, 30.f };
-        tables.initialProgress.startYaw = 90.f;
-        tables.initialProgress.startGold = START_GOLD;
+        tables.initialProgress.StartMapId = START_MAP_ID;
+        tables.initialProgress.StartX = 10.5f;
+        tables.initialProgress.StartY = -20.25f;
+        tables.initialProgress.StartZ = 30.f;
+        tables.initialProgress.StartYaw = 90.f;
+        tables.initialProgress.StartGold = START_GOLD;
         Gamedata::Install(std::move(tables));
 
-        LobbyTables lobbyTables;
-        lobbyTables.defaultCharacterSlotCount = 4;
-        lobbyTables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
-        LobbyData::Install(std::move(lobbyTables));
+        LobbyDesignData::LobbyConfig lobbyConfig;
+        lobbyConfig.DefaultCharacterSlotCount = 4;
+        lobbyConfig.CreatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
+        LobbyData::Install(std::move(lobbyConfig));
     }
 
     void TearDown() override
     {
         Gamedata::Install(GamedataTables());
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
         GameDBTestFixture::TearDown();
     }
 
@@ -178,7 +180,7 @@ protected:
     }
 };
 
-// 캐릭터 생성은 캐릭터 행만 넣는다. 첫 입장이 초기 진행 표와 1레벨 행으로 진행 행을 만들고, 두 번째 입장은 저장된 진행을 불러온다.
+// 캐릭터 생성은 캐릭터 행만 넣는다. 첫 입장이 초기 진행 설정과 1레벨 행으로 진행 행을 만들고, 두 번째 입장은 저장된 진행을 불러온다.
 TEST_F(DISABLED_GameDBProgressTest, FirstEntryCreatesInitialProgressAndSecondEntryLoadsSaved)
 {
     constexpr int64 ACCOUNT_ID = 9'000'000'000'210;
