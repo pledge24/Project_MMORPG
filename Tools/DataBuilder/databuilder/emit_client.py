@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from databuilder.column_types import ColumnType
 from databuilder.config import ClientConfig
-from databuilder.emit_json import dump
+from databuilder.emit_json import dump, fields_text
 from databuilder.workbooks import Column, DesignData, Row, Table, locate, nested_children, sort_key, targets_client, value_type
 
 ROW_NAME_FIELD = "RowName"
@@ -93,10 +93,6 @@ def used_client_enums(data: DesignData) -> list[str]:
 
 def row_name(table: Table, row: Row) -> str:
     return "_".join(str(row.values[column.name]) for column in table.key_columns)
-
-
-def fields_text(columns: list[Column], row: Row) -> str:
-    return ",".join(f"{dump(column.name)}:{dump(row.values[column.name])}" for column in columns)
 
 
 def client_table_json(table: Table, data: DesignData) -> str:

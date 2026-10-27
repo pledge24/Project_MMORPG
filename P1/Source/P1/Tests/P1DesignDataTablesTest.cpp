@@ -22,7 +22,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
 
-namespace
+namespace P1DesignDataTablesTest
 {
     FString ReadGeneratedJson(const FString& TableName)
     {
@@ -52,6 +52,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FP1DesignDataTablesTest::RunTest(const FString& Parameters)
 {
+    using namespace P1DesignDataTablesTest;
+
     // 1) 저장소의 클라이언트 JSON이 모두 문제 없이 채워진다. 행 수는 JSON의 행 수다.
     {
         const TArray<TPair<FString, UScriptStruct*>> Tables = {
