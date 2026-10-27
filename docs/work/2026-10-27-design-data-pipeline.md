@@ -49,7 +49,7 @@
 | 5 | #317 설정 시트로 초기 진행과 로비 데이터를 옮기고 칸 수와 퀵슬롯 개수를 서버 상수로 되돌리기 | 4 | 머지 | #329 | DataBuilder 테스트 144개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 484개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Initial_Progress.json`, `S_Lobby.json` 대조 · 규범 검사와 문서 검사 통과. PIE는 확인하지 않았다 |
 | 6 | #318 레벨 표를 공통 레벨 표와 직업별 능력치 표로 나누기 | 1 | 머지 | #326 | #315를 merge한 뒤 DataBuilder 테스트 117개 통과 · 서버 솔루션 빌드 0(DummyClient 포함. merge 전 첫 빌드는 TD-077로 1) · `GameServerTests` 493개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Warrior_Level_Data.json` 50행 대조 |
 | 7 | #319 클라이언트 행 구조체를 생성하고 새 데이터 테이블 채우기 | 2, 3, 4 | 머지 | #328 | #317을 merge한 뒤 DataBuilder 테스트 161개 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 19개 통과 · 규범 검사와 문서 검사 통과. 에디터 메뉴는 실행하지 않았다(사람의 확인) |
-| 8 | #320 클라이언트 코드를 새 데이터 테이블로 옮기고 손으로 쓴 행 구조체 지우기 | 7 | 대기 | | |
+| 8 | #320 클라이언트 코드를 새 데이터 테이블로 옮기고 손으로 쓴 행 구조체 지우기 | 7 | 머지 | | 클라이언트 빌드 0 · `Run-UeTests.ps1` 20개 통과 · 규범 검사와 문서 검사 통과. 에디터 메뉴와 옛 테이블 삭제, PIE는 사람의 확인 |
 | 9 | #321 P1Editor 모듈과 수치 테이블과 에셋 테이블의 짝 검증기 만들기 | 8 | 대기 | | |
 | 10 | #322 옛 변환기, 퀘스트 표, 시험용 파일 걷어내기 | 5, 6, 8 | 대기 | | |
 
@@ -179,3 +179,21 @@
 - `Tools/ConventionLint`가 `P1/Source/P1/Game/Data/Generated/` 아래 파일을 생성물로 보고 검사하지 않는다
 - 사람의 확인이 남았다: 에디터 메뉴로 새 테이블 생성, 행 이름과 값, 원본에서 행을 지운 뒤 다시 돌렸을 때 테이블에서 사라지는지(PIE 시나리오 3줄). 메뉴는 실행하지 않았다
 - 이미 있던 결함 TD-075(클라이언트 빌드 스크립트가 다른 워크트리의 에디터를 이 프로젝트의 에디터로 본다)에 막혔다. 다른 체크아웃의 Live Coding도 빌드를 막는다는 것을 덧붙였다. 메인 체크아웃의 에디터를 닫고 빌드했다
+
+**#320 (2026년 10월 27일)**
+
+- 게임 코드는 `UP1GameDataSettings`의 `FindItemRow`, `FindItemEquipStatRow`, `FindItemConsumeEffectRow`, `FindMonsterRow`로 생성된 행을 찾는다.
+  프로젝트 설정의 테이블 경로는 `/Game/P1/Data/DesignData/DT_<표>`다. 읽는 법은 `docs/codegen.md` 「클라이언트가 읽는 법」에 있다
+- 손으로 쓴 `FP1ItemData`, `FP1MonsterData`, `FP1MapData`와 그 리디렉터, 옛 `C_Item.json`, `C_Monster.json`, `C_Map.json`을 지웠다
+- 정한 것: 몬스터 스포너는 몬스터 행을 블루프린트 속성(`MonsterDataTable`) 대신 프로젝트 설정에서 찾는다. 속성이 사라져 TD-026(몬스터 테이블이 비면 플레이어도 스폰되지 않음)이 풀렸다
+- 정한 것: 툴팁은 장비 능력치와 소모 효과를 아이템 번호로 직접 찾는다. 재사용 대기는 `CooldownMs`를 1000으로 나눠 초로 쓴다
+- 맵 행을 읽는 클라이언트 코드는 없었다(`FP1MapData`를 쓰는 곳이 없었다). 맵 번호로 레벨을 여는 `MapLevels`의 키가 이미 맵 표의 `Id`라서 고칠 곳이 없었다
+- 퀘스트 보상의 아이템 목록이 `FP1ItemData`였다. JSON의 모양(`Id`, `Quantity`)에 맞춘 `FP1QuestRewardItemData`로 바꿨다. 퀘스트 표는 #322가 걷어낸다
+- 아이템 요청 테스트(`P1.Progress.ItemActions`)는 실제 `DT_Item` 에셋을 읽었다. 이제 `Tests/P1DesignDataTestTables.h`가 저장소의 클라이언트 JSON으로 임시 테이블을 채워 설정에 끼운다
+- 에셋 테이블의 행 이름을 `.uasset` 문자열에서 뽑아 생성된 JSON의 키와 대조했다. 아이템 39개, 몬스터 9개가 같다
+- 사람에게 인계한다
+  1. 에디터 메뉴 **Tools > P1 > 기획 데이터 테이블 채우기**로 `/Game/P1/Data/DesignData/`의 테이블을 만든다(#319부터 남은 일). 만들기 전에는 아이템 툴팁과 몬스터 스폰이 보이지 않는다
+  2. `BP_ObjectSpawner`를 열어 다시 저장한다. 지운 속성(`MonsterDataTable`)이 옛 `DT_Monster`를 참조한다
+  3. `DT_Quest`를 다시 임포트하고 저장한다. 보상 아이템의 구조체가 바뀌었다
+  4. `Content/P1/Data/DataTables/`의 `DT_Item`, `DT_Monster`, `DT_Map`을 지운다. 행 구조체가 없어 에디터가 경고를 남긴다
+  5. PIE 시나리오 3줄과 4줄

@@ -7,12 +7,16 @@
 class UDataTable;
 class UTexture2D;
 class UWorld;
-struct FP1ItemData;
+struct FP1ItemConsumeEffectRow;
+struct FP1ItemEquipStatRow;
+struct FP1ItemRow;
+struct FP1MonsterRow;
 
 /**
  * 게임 코드가 읽는 기획 데이터 테이블의 설정.
  *
  * 어느 테이블을 쓸지 프로젝트 설정 「P1 Game Data」에서 고르게 하고, 게임 코드가 기획 데이터를 찾는 창구가 된다.
+ * 아래 Find 함수는 모두 테이블이 로드되지 않았으면 동기 로드하고, 테이블이나 행이 없으면 nullptr이다. 게임 스레드 전용.
  */
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "P1 Game Data"))
 class P1_API UP1GameDataSettings : public UDeveloperSettings
@@ -20,27 +24,40 @@ class P1_API UP1GameDataSettings : public UDeveloperSettings
     GENERATED_BODY()
 
 public:
-    /** 아이템 정의. 행 구조체는 FP1ItemData이고 행 이름은 템플릿 id. */
+    /** 모든 아이템의 공통 행. 행 구조체는 FP1ItemRow이고 행 이름은 아이템 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Items")
     TSoftObjectPtr<UDataTable> ItemTable;
 
-    /**
-     * 템플릿 id의 아이템 정의를 찾는다. 테이블이나 행이 없으면 nullptr.
-     * 테이블이 로드되지 않았으면 동기 로드한다. 게임 스레드 전용.
-     */
-    static const FP1ItemData* FindItemData(int32 TemplateId);
+    static const FP1ItemRow* FindItemRow(int32 ItemId);
 
-    /** 아이템의 에셋 참조. 행 구조체는 FP1ItemAssetData이고 행 이름은 템플릿 id. */
+    /** 장비의 착용 부위와 능력치. 행 구조체는 FP1ItemEquipStatRow이고 행 이름은 아이템 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Items")
+    TSoftObjectPtr<UDataTable> ItemEquipStatTable;
+
+    /** 장비가 아니면 nullptr. */
+    static const FP1ItemEquipStatRow* FindItemEquipStatRow(int32 ItemId);
+
+    /** 소모품의 회복량과 재사용 대기. 행 구조체는 FP1ItemConsumeEffectRow이고 행 이름은 아이템 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Items")
+    TSoftObjectPtr<UDataTable> ItemConsumeEffectTable;
+
+    /** 소모품이 아니면 nullptr. */
+    static const FP1ItemConsumeEffectRow* FindItemConsumeEffectRow(int32 ItemId);
+
+    /** 아이템의 에셋 참조. 행 구조체는 FP1ItemAssetData이고 행 이름은 아이템 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Items")
     TSoftObjectPtr<UDataTable> ItemAssetTable;
 
-    /**
-     * 템플릿 id의 아이템 아이콘을 동기 로드한다. 테이블이나 행이나 아이콘이 없으면 nullptr.
-     * 게임 스레드 전용.
-     */
-    static UTexture2D* LoadItemIcon(int32 TemplateId);
+    /** 아이템 번호의 아이콘을 동기 로드한다. 테이블이나 행이나 아이콘이 없으면 nullptr. */
+    static UTexture2D* LoadItemIcon(int32 ItemId);
 
-    /** 맵 번호(서버 맵 표의 mapId)마다 열 레벨. 서버가 알린 맵을 이 표로 연다. */
+    /** 몬스터 정의. 행 구조체는 FP1MonsterRow이고 행 이름은 몬스터 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Monsters")
+    TSoftObjectPtr<UDataTable> MonsterTable;
+
+    static const FP1MonsterRow* FindMonsterRow(int32 MonsterId);
+
+    /** 맵 번호(맵 표의 Id)마다 열 레벨. 서버가 알린 맵을 이 표로 연다. */
     UPROPERTY(Config, EditAnywhere, Category = "Maps")
     TMap<int32, TSoftObjectPtr<UWorld>> MapLevels;
 

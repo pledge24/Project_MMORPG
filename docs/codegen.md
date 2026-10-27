@@ -124,7 +124,7 @@ C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구
 
 2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다.
 설정은 설정 워크북의 초기 진행(`Progress`)과 로비(`Lobby`) 두 시트다. 옛 변환기는 퀘스트 표 하나만 만든다(아래 「게임 데이터」).
-표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 클라이언트 코드는 아직 옛 데이터 테이블을 읽는다(아래 「클라이언트 산출물」).
+표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 같은 날(#320)부터 클라이언트 코드는 DataBuilder가 만든 데이터 테이블만 읽는다(아래 「클라이언트가 읽는 법」).
 
 ### 재생성
 
@@ -430,7 +430,25 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 
 **데이터 버전 로그는 빌드에 들어간 헤더의 값이다.** DataBuilder를 다시 돌리고 에디터 메뉴를 돌리지 않으면 로그와 데이터 테이블의 값이 어긋난다.
 
-2026년 10월 27일 기준으로 클라이언트 코드는 새 데이터 테이블을 읽지 않는다. 옛 `DT_Item` 등과 손으로 쓴 행 구조체를 새 테이블로 옮기는 일은 #320이 한다.
+### 클라이언트가 읽는 법
+
+게임 코드는 프로젝트 설정 「P1 Game Data」(`UP1GameDataSettings`)의 정적 함수로 행을 찾는다. 행 이름이 기획 데이터의 키라서 함수는 번호를 받는다.
+테이블 경로는 `Config/DefaultGame.ini`의 `[/Script/P1.P1GameDataSettings]`에 있다.
+
+| 설정 | 테이블 | 찾는 함수 |
+|---|---|---|
+| `ItemTable` | `DT_Item` | `FindItemRow` |
+| `ItemEquipStatTable` | `DT_ItemEquipStat` | `FindItemEquipStatRow`. 장비가 아니면 `nullptr`이다 |
+| `ItemConsumeEffectTable` | `DT_ItemConsumeEffect` | `FindItemConsumeEffectRow`. 소모품이 아니면 `nullptr`이다 |
+| `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
+
+- 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 그대로 있다
+- 재사용 대기는 소모 효과 표의 `CooldownMs`다. 클라이언트의 대기 계산(`FP1ItemCooldown`)은 초 단위라 1000으로 나눠 넘긴다
+- 맵과 지역 테이블(`DT_Map`, `DT_Area`)을 읽는 코드는 없다. 서버가 알린 맵 번호로 레벨을 여는 표(`MapLevels`)의 키가 맵 표의 `Id`다
+- 몬스터 스포너(`AP1EntitySpawner`)는 몬스터 행을 이 설정에서 찾는다. 스포너에는 몬스터 클래스를 담은 에셋 테이블만 지정한다
+
+UE 테스트는 에디터 메뉴가 만든 테이블 에셋을 읽지 않는다. 기획 데이터가 필요한 테스트는 `Tests/P1DesignDataTestTables.h`로
+저장소의 클라이언트 JSON을 임시 테이블에 채워 설정에 끼운다.
 
 ### 설정 워크북
 
@@ -490,16 +508,6 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
 
-**`C_Item.json`은 2026년 10월 27일(#314)부터 생성기의 산출물이 아니지만 지우지 않는다.** 아이템 표를 DataBuilder로 옮긴 시점의 값이다.
-클라이언트의 `DT_Item`이 이 값을 읽는다. 클라이언트를 새 데이터 테이블로 옮기는 #320까지 남긴다.
-— 그 사이에 아이템 수치를 바꾸면 클라이언트에는 반영되지 않는다.
-
-**`C_Monster.json`도 2026년 10월 27일(#315)부터 생성기의 산출물이 아니지만 #320까지 남긴다.** 몬스터 표를 DataBuilder로 옮긴 시점의 값이다.
-클라이언트의 몬스터 데이터 테이블이 이 값을 읽는다. 그 사이에 몬스터 수치를 바꾸면 클라이언트에는 반영되지 않는다.
-
-**`C_Map.json`도 2026년 10월 27일(#316)부터 생성기의 산출물이 아니지만 #320까지 남긴다.** 맵 표를 나눈 시점의 값이다.
-그 사이에 지역의 이름이나 유형을 바꾸면 클라이언트에는 반영되지 않는다.
-
 **기획 데이터는 소비자별로 나눈다.** 로비 설정은 로비 모듈(`Lobby/Data/`)만, 나머지는 게임(`Game/Data/`)만 읽는다. 로비와 게임이
 함께 맞아야 하는 값(생성할 수 있는 직업이 직업별 능력치 표에 있는지)은 서버가 기동할 때 `Core/DataCrossCheck`가 대조하고, 어긋나면
 서버가 뜨지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
@@ -525,7 +533,8 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 ### 클라이언트 데이터 테이블 채우기
 
 DataBuilder의 클라이언트 JSON(`P1/DesignData/Generated/<표>.json`)마다 데이터 테이블 `/Game/P1/Data/DesignData/DT_<표>` 하나를 채운다.
-**채우기 전까지 클라이언트는 옛 값을 읽는다.** UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한다.
+**채우기 전에는 클라이언트가 그 표의 행을 찾지 못한다.** 아이템 툴팁이 뜨지 않고 상점 구매를 보내지 않으며, 몬스터가 스폰되지 않는다.
+UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한다.
 
 1. `pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1`로 산출물을 만든다. 행 구조체가 바뀌었으면 클라이언트를 빌드한다
 2. 에디터 메인 메뉴의 **Tools > P1 > 기획 데이터 테이블 채우기**를 실행한다
@@ -546,8 +555,8 @@ DataBuilder의 클라이언트 JSON(`P1/DesignData/Generated/<표>.json`)마다 
 
 ### 옛 데이터 테이블 재임포트
 
-옛 변환기의 `C_*.json`을 소스로 쓰는 옛 데이터 테이블(`Content/P1/Data/DataTables/`의 `DT_Item`, `DT_Monster`, `DT_Map`, `DT_Quest`)은 #320까지 클라이언트 코드가 읽는다.
-`C_*.json`을 다시 만들면 그 테이블을 다시 임포트한다. 재임포트하기 전까지 클라이언트는 옛 값을 읽는다.
+옛 변환기의 `C_Quest.json`을 소스로 쓰는 `Content/P1/Data/DataTables/DT_Quest`가 남은 옛 데이터 테이블이다. 클라이언트 코드는 이 테이블을 읽지 않는다.
+`C_Quest.json`을 다시 만들면 그 테이블을 다시 임포트한다.
 
 1. 에디터의 콘텐츠 브라우저에서 데이터 테이블을 우클릭해 Reimport를 실행한다.
 2. 테이블을 열어 바뀐 열의 값을 확인하고 저장한다.

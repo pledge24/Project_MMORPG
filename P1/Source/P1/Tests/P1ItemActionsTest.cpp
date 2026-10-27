@@ -6,6 +6,7 @@
 //
 // 기대값은 판정을 다시 계산하지 않고 규칙과 기획 데이터에서 적었다. 두건(1000)과 흑기사의 검(1011, 요구 레벨 10)은
 // 팔 수 있고, 초보자의 검(1005)은 팔 수 없다. HP 물약(2000)은 150골드이고 재사용 대기가 10초다. 흑기사의 검은 2000골드다.
+// 기획 데이터는 에디터가 만든 테이블 에셋이 아니라 DataBuilder의 클라이언트 JSON으로 채운 임시 테이블에서 읽는다.
 //
 // 실행: pwsh P1/Scripts/Run-UeTests.ps1 -Filter P1.Progress.ItemActions
 
@@ -16,6 +17,7 @@
 #include "Game/Progress/P1ItemActions.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Game/QuickSlots/P1QuickSlots.h"
+#include "Tests/P1DesignDataTestTables.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -151,6 +153,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FP1ItemActionsTest::RunTest(const FString& Parameters)
 {
     using namespace P1ItemActionsTest;
+
+    FP1DesignDataTestTables Tables;
 
     constexpr EP1ContainerType GEAR = EP1ContainerType::InventoryGear;
     constexpr EP1ContainerType CONSUMABLE = EP1ContainerType::InventoryConsumable;

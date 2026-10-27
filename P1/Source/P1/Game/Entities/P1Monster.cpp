@@ -34,12 +34,12 @@ void AP1Monster::DespawnAfterDeath()
     OnDespawnReady.Broadcast(this);
 }
 
-void AP1Monster::SetDefaultMonsterData(const FP1MonsterData& InMonsterData)
+void AP1Monster::SetDefaultMonsterData(const FP1MonsterRow& InMonsterData)
 {
     MonsterData = InMonsterData;
 
-    CreatureName = FText::FromString(MonsterData.MonsterName);
-    TemplateId = MonsterData.TemplateId;
+    CreatureName = FText::FromString(MonsterData.Name);
+    TemplateId = MonsterData.Id;
     if (CurHp < 0)
         CurHp = MonsterData.MaxHp;
 }

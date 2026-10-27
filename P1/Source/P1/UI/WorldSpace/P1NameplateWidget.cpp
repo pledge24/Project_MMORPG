@@ -45,11 +45,11 @@ void UP1NameplateWidget::InitializeMonsterNameplate(AP1Monster* TargetMonster)
     NameTextBlock->SetVisibility(NameTextInitVisibility);
     HpBar->SetVisibility(HpBarInitVisibility);
 
-    const FP1MonsterData& MonsterData = TargetMonster->GetMonsterData();
+    const FP1MonsterRow& MonsterData = TargetMonster->GetMonsterData();
     if (TargetMonster->GetTemplateId() == 0)
         return;
 
-    NameTextBlock->SetText(FText::FromString(MonsterData.MonsterName));
+    NameTextBlock->SetText(FText::FromString(MonsterData.Name));
 
     int64 CurHp = TargetMonster->GetCurHp();
     int64 MaxHp = MonsterData.MaxHp;

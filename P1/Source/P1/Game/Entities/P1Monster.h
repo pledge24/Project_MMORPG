@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Game/Data/P1MonsterData.h"
+#include "Game/Data/Generated/P1MonsterRow.h"
 #include "Game/Entities/P1Creature.h"
 #include "P1Monster.generated.h"
 
@@ -41,16 +41,16 @@ private:
 
     //~ Monster Data
 public:
-    const FP1MonsterData& GetMonsterData() const { return MonsterData; }
+    const FP1MonsterRow& GetMonsterData() const { return MonsterData; }
     int32 GetTemplateId() const { return TemplateId; }
     int32 GetCurHp() const { return CurHp; }
 
-    void SetDefaultMonsterData(const FP1MonsterData& InMonsterData);
+    void SetDefaultMonsterData(const FP1MonsterRow& InMonsterData);
 
 protected:
     /** 데이터 테이블에서 읽은 고정값. 런타임에 바뀌지 않는다. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MonsterData")
-    FP1MonsterData MonsterData;
+    FP1MonsterRow MonsterData;
 
     /** 몬스터 종류를 가리키는 템플릿 ID. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MonsterData")

@@ -1,6 +1,6 @@
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Game/Data/P1GameDataSettings.h"
-#include "Game/Data/P1ItemData.h"
+#include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
 #include "Game/Items/P1ItemContainer.h"
 #include "Game/Items/P1ItemPackets.h"
 #include "Game/Progress/P1ItemActions.h"
@@ -313,13 +313,14 @@ const FP1ItemCooldown* UP1MyPlayerData::FindActiveItemCooldown(int32 TemplateId)
 
 void UP1MyPlayerData::StartItemCooldown(int32 TemplateId)
 {
-    const FP1ItemData* ItemData = UP1GameDataSettings::FindItemData(TemplateId);
-    if (ItemData == nullptr || ItemData->Cooldown <= 0.f)
+    // 재사용 대기는 소모품에만 있다.
+    const FP1ItemConsumeEffectRow* Effect = UP1GameDataSettings::FindItemConsumeEffectRow(TemplateId);
+    if (Effect == nullptr || Effect->CooldownMs <= 0)
         return;
 
     // 응답을 받은 지금부터 센다. 서버는 요청을 처리한 시각부터 세므로 클라이언트의 대기가 늘 조금 늦게 끝나고,
     // 클라이언트가 쓸 수 있다고 보일 때 서버가 거절하는 일이 없다.
-    ItemCooldowns.Add(TemplateId, FP1ItemCooldown{ FP1ItemCooldown::GetClockSeconds(), ItemData->Cooldown });
+    ItemCooldowns.Add(TemplateId, FP1ItemCooldown{ FP1ItemCooldown::GetClockSeconds(), Effect->CooldownMs / 1000.0 });
     OnItemCooldownStarted.Broadcast(TemplateId);
 }
 
