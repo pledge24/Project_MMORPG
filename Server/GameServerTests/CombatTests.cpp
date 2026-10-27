@@ -40,13 +40,13 @@ class CombatTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MonsterTemplate data;
-        data.templateId = MONSTER_TEMPLATE_ID;
-        data.maxHp = MONSTER_MAX_HP;
-        data.minExp = MIN_EXP;
-        data.maxExp = MAX_EXP;
-        data.minGold = MIN_GOLD;
-        data.maxGold = MAX_GOLD;
+        DesignData::MonsterRow data;
+        data.Id = MONSTER_TEMPLATE_ID;
+        data.MaxHp = MONSTER_MAX_HP;
+        data.MinExp = MIN_EXP;
+        data.MaxExp = MAX_EXP;
+        data.MinGold = MIN_GOLD;
+        data.MaxGold = MAX_GOLD;
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = data;

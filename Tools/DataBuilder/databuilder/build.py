@@ -22,6 +22,8 @@ from databuilder.workbooks import read_design_data
 @dataclass
 class BuildResult:
     errors: list[str] = field(default_factory=list)
+    # 산출물을 막지 않는 규칙 위반. 오류가 없으면 경고가 있어도 배포한다.
+    warnings: list[str] = field(default_factory=list)
     # 산출물 폴더 → 파일 이름 → 내용. 오류가 있으면 비어 있다.
     outputs: dict[Path, dict[str, str]] = field(default_factory=dict)
     version: str = ""
@@ -39,7 +41,7 @@ def generate(config: Config) -> BuildResult:
     data = read_design_data(config, enums, result.errors)
     if result.errors:
         return result
-    check_rules(data, result.errors)
+    check_rules(data, result.errors, result.warnings)
     if result.errors:
         return result
 
@@ -49,7 +51,8 @@ def generate(config: Config) -> BuildResult:
         settings = [data.settings[name] for name, setting in config.settings.items() if module.name in setting.modules]
         files = {VERSION_FILE: version_json(result.version), HEADER_FILE: module_header(tables, settings, data)}
         for table in tables:
-            files[f"{table.name}.json"] = table_json(table, data)
+            if not table.config.nest:  # 중첩한 표는 부모 표의 파일에 실린다.
+                files[f"{table.name}.json"] = table_json(table, data)
         for setting in settings:
             files[f"{setting.name}.json"] = setting_json(setting)
         result.outputs[module.server_dir] = files
@@ -82,6 +85,8 @@ def run(config_path: Path, root: Path) -> int:
         return 1
 
     result = generate(config)
+    for warning in result.warnings:
+        print(f"[DataBuilder] 경고: {warning}", file=sys.stderr)
     if result.errors:
         for error in result.errors:
             print(f"[DataBuilder] {error}", file=sys.stderr)

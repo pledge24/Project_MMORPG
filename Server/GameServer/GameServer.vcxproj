@@ -369,7 +369,6 @@
     <None Include="Migrations\001_init.sql" />
     <None Include="Migrations\002_quick_slot.sql" />
     <None Include="Game\Data\Json\S_Map.json" />
-    <None Include="Game\Data\Json\S_Monster.json" />
     <None Include="Game\Data\Json\S_Quest.json" />
     <None Include="Game\Data\Json\S_Warrior_Level_Data.json" />
     <None Include="Game\Data\Generated\Currency.json" />
@@ -377,6 +376,8 @@
     <None Include="Game\Data\Generated\Item.json" />
     <None Include="Game\Data\Generated\ItemEquipStat.json" />
     <None Include="Game\Data\Generated\ItemConsumeEffect.json" />
+    <None Include="Game\Data\Generated\Monster.json" />
+    <None Include="Game\Data\Generated\DropGroup.json" />
   </ItemGroup>
   <ItemGroup>
     <!-- 빌드 순서만 강제한다. 링크는 pch.h의 #pragma comment(lib, ...)가 이미 하므로
