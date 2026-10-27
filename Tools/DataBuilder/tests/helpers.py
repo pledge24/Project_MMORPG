@@ -67,6 +67,10 @@ class DesignDataCase(unittest.TestCase):
         self.tables: dict[str, tuple[str, list[str], str | None]] = {}
         self.settings: dict[str, tuple[str, str, list[str]]] = {}
         self.enums: dict[str, dict[str, int]] = {"CurrencyType": {"GOLD": 1, "HONOR": 2}}
+        # 참이면 설정에 클라이언트 산출물 폴더를 적는다. 클라이언트 산출물을 보는 테스트만 켠다.
+        self.with_client = False
+        self.client_json_dir = self.root / "Client" / "DesignData" / "Generated"
+        self.client_source_dir = self.root / "Client" / "Source" / "P1" / "Game" / "Data" / "Generated"
 
     def tearDown(self) -> None:
         self._temp.cleanup()
@@ -108,6 +112,8 @@ class DesignDataCase(unittest.TestCase):
             lines += [f"[modules.{name}]", f'server_dir = "{server_dir}"']
             lines += [f'namespace = "{namespace}"'] if namespace else []
             lines += [""]
+        if self.with_client:
+            lines += ["[client]", 'json_dir = "Client/DesignData/Generated"', 'source_dir = "Client/Source/P1/Game/Data/Generated"', ""]
         for name, (workbook, modules, nest) in self.tables.items():
             lines += [f"[tables.{name}]", f'workbook = "{workbook}"', f"modules = {modules!r}".replace("'", '"')]
             lines += [f'nest = "{nest}"'] if nest else []
@@ -137,6 +143,14 @@ class DesignDataCase(unittest.TestCase):
 
     def output(self, file_name: str) -> str:
         return self.build_ok().outputs[self.out_dir][file_name]
+
+    def client_json(self) -> dict[str, str]:
+        """클라이언트 JSON 폴더의 파일 이름 → 내용."""
+        return self.build_ok().outputs[self.client_json_dir]
+
+    def client_source(self) -> dict[str, str]:
+        """클라이언트 생성 헤더 폴더의 파일 이름 → 내용."""
+        return self.build_ok().outputs[self.client_source_dir]
 
     def assert_error(self, *fragments: str) -> list[str]:
         """오류 중 하나가 조각을 모두 담는지 본다."""

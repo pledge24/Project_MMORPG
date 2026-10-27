@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from databuilder.config import Config, ConfigError, load_config
+from databuilder.emit_client import check_client, client_outputs
 from databuilder.emit_cpp import HEADER_FILE, module_header
 from databuilder.emit_json import VERSION_FILE, data_version, setting_json, table_json, version_json
 from databuilder.enums import EnumError, collect_enums
@@ -42,6 +43,8 @@ def generate(config: Config) -> BuildResult:
     if result.errors:
         return result
     check_rules(data, result.errors, result.warnings)
+    if config.client is not None:
+        check_client(data, result.errors)
     if result.errors:
         return result
 
@@ -56,6 +59,8 @@ def generate(config: Config) -> BuildResult:
         for setting in settings:
             files[f"{setting.name}.json"] = setting_json(setting)
         result.outputs[module.server_dir] = files
+    if config.client is not None:
+        result.outputs.update(client_outputs(config.client, data, result.version))
     return result
 
 

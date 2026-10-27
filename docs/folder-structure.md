@@ -109,7 +109,7 @@ P1/Source/
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
-| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
+| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`). 하위 `Generated/`는 DataBuilder가 만드는 기획 데이터 행 구조체와 열거형이다 |
 | `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽 |
 | `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
@@ -293,7 +293,8 @@ P1/Content/
 │   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
-│   │   └── DataTables/
+│   │   ├── DataTables/     옛 변환기의 데이터 테이블과 에셋 테이블
+│   │   └── DesignData/     DataBuilder JSON으로 채우는 기획 데이터 테이블(`DT_<표>`)
 │   ├── Maps/
 │   └── World/              레벨에 배치하는 액터
 ├── External/               참고용 외부 팩. 게임이 참조하지 않는다
@@ -637,10 +638,12 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 | 옛 변환기 원본 | `DesignData/` | `Original_<표>.xlsx`. 옮긴 표의 워크북은 지운다 |
 | DataBuilder | `Tools/DataBuilder/` | 래퍼 `Invoke-DataBuilder.ps1`, 설정 `databuilder.toml`, 패키지 `databuilder/`, 테스트 `tests/` |
 | DataBuilder 산출물 | 서버 모듈의 `Data/Generated/` | 게임 모듈은 `Server/GameServer/Game/Data/Generated/`, 로비 모듈은 `Server/GameServer/Lobby/Data/Generated/`다. 폴더 이름은 `Generated`로 고정이다 |
+| DataBuilder 클라이언트 산출물 | `P1/DesignData/Generated/`, `P1/Source/P1/Game/Data/Generated/` | `<표>.json`과 `P1<표>Row.h`. `Content/` 밖의 JSON을 에디터 메뉴가 `Content/P1/Data/DesignData/`의 `DT_<표>`에 채운다 |
+| 데이터 테이블 채우기 메뉴 | `P1/Scripts/Editor/` | `p1_design_data_tables.py`. 에디터의 Python 시작 스크립트가 불러온다 |
 | 옛 변환기 산출물 | 서버 모듈의 `Data/Json/`, 클라이언트의 `Content/P1/Data/DataTables/` | `S_<표>.json`, `C_<표>.json` |
 
 **산출물 폴더는 DataBuilder가 소유한다.** 실행할 때마다 비우고 다시 쓰므로 그 폴더에 손으로 쓴 파일을 두면 지워진다.
-서버 모듈(로비, 게임)마다 산출물 폴더가 하나이고, 어느 모듈이 어느 표를 읽는지는 `Tools/DataBuilder/databuilder.toml`이 정한다.
+서버 모듈(로비, 게임)마다 산출물 폴더가 하나이고, 어느 모듈이 어느 표를 읽는지는 `Tools/DataBuilder/databuilder.toml`이 정한다. 클라이언트 산출물 폴더 둘도 DataBuilder가 소유한다.
 로비 모듈의 산출물 폴더는 2026년 10월 27일(#317)에 로비 설정을 DataBuilder로 옮기면서 만들었다.
 
 ---

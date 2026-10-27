@@ -48,7 +48,7 @@
 | 4 | #316 맵 표를 맵, 지역, 포털 표로 나누기 | 3 | 머지 | #327 | DataBuilder 테스트 132개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 491개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Map.json` 4행 대조. PIE는 확인하지 않았다 |
 | 5 | #317 설정 시트로 초기 진행과 로비 데이터를 옮기고 칸 수와 퀵슬롯 개수를 서버 상수로 되돌리기 | 4 | 머지 | #329 | DataBuilder 테스트 144개 통과 · 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 484개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Initial_Progress.json`, `S_Lobby.json` 대조 · 규범 검사와 문서 검사 통과. PIE는 확인하지 않았다 |
 | 6 | #318 레벨 표를 공통 레벨 표와 직업별 능력치 표로 나누기 | 1 | 머지 | #326 | #315를 merge한 뒤 DataBuilder 테스트 117개 통과 · 서버 솔루션 빌드 0(DummyClient 포함. merge 전 첫 빌드는 TD-077로 1) · `GameServerTests` 493개 통과 · 실제 DB 테스트 25개 통과 · 서버 기동 로그에 데이터 버전 · 새 산출물과 옛 `S_Warrior_Level_Data.json` 50행 대조 |
-| 7 | #319 클라이언트 행 구조체를 생성하고 새 데이터 테이블 채우기 | 2, 3, 4 | 대기 | | |
+| 7 | #319 클라이언트 행 구조체를 생성하고 새 데이터 테이블 채우기 | 2, 3, 4 | 머지 | #328 | #317을 merge한 뒤 DataBuilder 테스트 161개 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 19개 통과 · 규범 검사와 문서 검사 통과. 에디터 메뉴는 실행하지 않았다(사람의 확인) |
 | 8 | #320 클라이언트 코드를 새 데이터 테이블로 옮기고 손으로 쓴 행 구조체 지우기 | 7 | 대기 | | |
 | 9 | #321 P1Editor 모듈과 수치 테이블과 에셋 테이블의 짝 검증기 만들기 | 8 | 대기 | | |
 | 10 | #322 옛 변환기, 퀘스트 표, 시험용 파일 걷어내기 | 5, 6, 8 | 대기 | | |
@@ -161,3 +161,21 @@
   퀵슬롯 테스트는 상수 개수 기준으로 기대값을 만든다
 - 일반 규칙 테스트가 설정 이름으로 쓰던 `Lobby`를 `Account`로 바꿨다. 설정 이름으로 규칙을 거는 `SETTING_RULES` 때문이다
 - 사람의 PIE 확인(새 캐릭터가 시작 맵의 시작 위치에 시작 골드를 들고 선다. 인벤토리와 퀵슬롯이 지금처럼 보인다)이 남았다
+
+**#319 (2026년 10월 27일)**
+
+- DataBuilder가 클라이언트 산출물을 만든다. 설정 파일의 `[client]`가 JSON 폴더(`P1/DesignData/Generated/`)와 헤더 폴더(`P1/Source/P1/Game/Data/Generated/`)를 정한다.
+  규칙과 파일 목록은 `docs/codegen.md` 「클라이언트 산출물」에 있다
+- 클라이언트 산출물을 만드는 표는 `Item`, `ItemEquipStat`, `ItemConsumeEffect`, `Monster`, `Map`, `Area`(포털 중첩)다. `Level`은 키만 `both`라서 만들지 않는다
+- 정한 것: 행 이름은 JSON 각 행의 첫 필드 `RowName`이다. 아이템 표의 `Name` 열이 언리얼 임포터의 기본 행 이름 필드(`Name`)와 겹쳐서, 에디터 스크립트가 `ImportKeyField`를 `RowName`으로 둔다.
+  복합 키는 `_`로 잇는다
+- 정한 것: `.proto` 열거형은 `UPROPERTY`가 될 수 없어서 값 이름(`FString`)으로 싣고, 행 구조체의 `Get<열>()`이 프로토콜 값을 돌려준다(ADR-0022의 「프로토콜 헤더의 열거형을 쓴다」).
+  설정 파일의 열거형은 `UENUM`(`EP1<열거형>`)으로 만든다. #320은 옛 `FP1ItemData::GetItemType` 대신 `FP1ItemRow::GetType`을 쓴다
+- 정한 것: 새 데이터 테이블은 `/Game/P1/Data/DesignData/DT_<표>`다. 옛 `DataTables/`의 같은 이름 테이블과 폴더로 나뉜다. 행 구조체의 속성은 `VisibleAnywhere`라 에디터에서 행 값을 고칠 수 없다
+- 에디터 메뉴는 `P1/Scripts/Editor/p1_design_data_tables.py`다. `Content/`는 `Content/P1/`만 추적하므로 스크립트를 `Content/Python/`에 두지 않고, `DefaultEngine.ini`의 Python 시작 스크립트가 `sys.path`에 더해 불러온다.
+  `PythonScriptPlugin`은 `ToolsetRegistry`가 이미 켜고 있었지만 `.uproject`에 에디터 전용으로 명시했다
+- 데이터 버전은 생성된 `P1DesignDataVersion.h`의 값을 게임 인스턴스가 초기화할 때 남긴다(`기획 데이터 버전 ...`). 빌드에 들어간 헤더의 값이라, 메뉴를 돌리지 않으면 데이터 테이블과 어긋날 수 있다. #321의 검증기가 다룰지 본다
+- 이슈에 없던 규칙을 더했다: 클라이언트로 가는 선택 값, 설정 시트의 클라이언트 필드, 부모 표가 클라이언트로 가지 않는 중첩, 클라이언트로 가는 설정 열거형의 `NONE` 값 이름과 255를 넘는 번호를 DataBuilder가 막는다
+- `Tools/ConventionLint`가 `P1/Source/P1/Game/Data/Generated/` 아래 파일을 생성물로 보고 검사하지 않는다
+- 사람의 확인이 남았다: 에디터 메뉴로 새 테이블 생성, 행 이름과 값, 원본에서 행을 지운 뒤 다시 돌렸을 때 테이블에서 사라지는지(PIE 시나리오 3줄). 메뉴는 실행하지 않았다
+- 이미 있던 결함 TD-075(클라이언트 빌드 스크립트가 다른 워크트리의 에디터를 이 프로젝트의 에디터로 본다)에 막혔다. 다른 체크아웃의 Live Coding도 빌드를 막는다는 것을 덧붙였다. 메인 체크아웃의 에디터를 닫고 빌드했다
