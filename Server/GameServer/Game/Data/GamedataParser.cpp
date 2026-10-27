@@ -38,11 +38,6 @@ namespace
         { JsonProperty::Item::GearSubtype_Sword, Protocol::GEAR_PART_WEAPON },
     };
 
-    /** 재화 표의 재화 종류 이름 → 재화 종류. */
-    const unordered_map<string_view, CurrencyType> CURRENCY_TYPE_BY_NAME = {
-        { "GOLD", CurrencyType::GOLD },
-    };
-
     bool IsAbsent(const Json& object, string_view key)
     {
         auto it = object.find(key);
@@ -360,26 +355,12 @@ namespace
         return maps;
     }
 
-    unordered_map<int32, CurrencyTemplate> ParseCurrencies(string_view fileName, const Json& document)
+    /** DataBuilder가 생성한 재화 표를 생성된 타입으로 읽는다. 기획 데이터의 규칙은 DataBuilder가 이미 검사했다. */
+    DesignData::CurrencyTable ParseCurrencies(const Json& document)
     {
-        // 열 이름 CurrencyType이 재화 종류 열거형과 겹치므로 using namespace를 쓰지 않는다.
-        namespace Column = JsonProperty::Currency;
-
-        unordered_map<int32, CurrencyTemplate> currencies;
-        ForEachRow(fileName, document, [&](const Json& row, size_t)
-            {
-                CurrencyTemplate currency;
-                currency.templateId = Require<int32>(row, Column::TemplateId);
-
-                const string typeName = Require<string>(row, Column::CurrencyType);
-                auto typeIt = CURRENCY_TYPE_BY_NAME.find(typeName);
-                if (typeIt == CURRENCY_TYPE_BY_NAME.end())
-                    throw RowError{ format("'currencyType' \"{}\"는 재화 종류가 아니다", typeName) };
-
-                currency.currencyType = typeIt->second;
-
-                InsertUnique(currencies, currency.templateId, std::move(currency));
-            });
+        DesignData::CurrencyTable currencies;
+        if (optional<string> error = DesignData::ParseCurrency(document, OUT currencies))
+            throw TableError{ error.value() };
 
         return currencies;
     }
@@ -503,20 +484,19 @@ namespace
         return townIds.front();
     }
 
-    /** 서버는 재화 종류로 골드를 찾는다. 골드인 재화가 하나로 정해져야 한다. */
-    int32 FindGoldCurrencyId(const unordered_map<int32, CurrencyTemplate>& currencies)
+    /**
+     * 서버는 재화 종류로 골드를 찾는다. GOLD인 행이 하나뿐인지는 DataBuilder가 검사하므로 여기서는 세지 않는다.
+     * 그래도 골드가 없으면 DB에 쓸 재화 번호가 없어 서버가 돌 수 없으므로 부팅을 멈춘다.
+     */
+    int32 FindGoldCurrencyId(const DesignData::CurrencyTable& currencies)
     {
-        vector<int32> goldIds;
         for (const auto& [currencyId, currency] : currencies)
         {
-            if (currency.currencyType == CurrencyType::GOLD)
-                goldIds.push_back(currencyId);
+            if (currency.Type == DesignData::CurrencyType::GOLD)
+                return currencyId;
         }
 
-        if (goldIds.size() != 1)
-            throw TableError{ format("{}: 재화 종류가 GOLD인 재화가 하나여야 하는데 {}개다", GamedataFile::CURRENCIES, goldIds.size()) };
-
-        return goldIds.front();
+        throw TableError{ format("{}: 재화 종류가 GOLD인 재화가 없다", DesignData::CURRENCY_FILE) };
     }
 
     /** 시작 맵은 룸 번호(templateId)가 아니라 맵 번호(mapId)다. 그 맵의 룸이 맵 표에 있어야 새 캐릭터가 들어간다. */
@@ -542,7 +522,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.monsters = ParseMonsters(GamedataFile::MONSTERS, documents.monsters);
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
 
-        tables.currencies = ParseCurrencies(GamedataFile::CURRENCIES, documents.currencies);
+        tables.currencies = ParseCurrencies(documents.currencies);
         tables.initialProgress = ParseInitialProgress(GamedataFile::INITIAL_PROGRESS, documents.initialProgress);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
         tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);

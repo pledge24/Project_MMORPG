@@ -55,7 +55,7 @@ Project_MMORPG/
 
 **한 티어 안에서만 도는 스크립트는 `Tools/`에 두지 않는다.** 클라이언트의 빌드와 테스트 실행은
 `P1/Scripts/`가 맡는다. `Tools/`에 두는 것은 저장소 전체를 대상으로 삼거나 두 티어가 함께 쓰는
-것이다. 규범 검사(`Tools/ConventionLint/`)와 문서 검사(`Tools/DocLint/`)가 앞에, 패킷 핸들러
+것이다. 규범 검사(`Tools/ConventionLint/`)와 문서 검사(`Tools/DocLint/`)가 앞에, 기획 데이터 생성기(`Tools/DataBuilder/`), 패킷 핸들러
 생성기와 기획 수치 변환기가 뒤에 해당한다.
 
 `Server/`와 `Protocol/`이 언리얼 프로젝트 **바깥에** 있는 이유는 둘이다. 첫째, 언리얼의 쿠킹과
@@ -530,6 +530,7 @@ Server/
 │   │   ├── AI/             몬스터 AI 컴포넌트
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
+│   │       └── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
@@ -613,6 +614,7 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 - 스키마 원본은 `Protocol/Schema/` 한 곳에만 둔다
 - 기획 수치 원본은 `DesignData/` 한 곳에만 둔다
 - 생성된 코드는 커밋한다
+- 생성기의 산출물 폴더에는 사람이 쓴 파일을 두지 않는다. 한 폴더에는 생성기 하나만 쓴다
 - 스키마 변경과 생성 결과를 같은 커밋에 담는다
 - 손으로 쓰는 파일 목록은 `docs/codegen.md` 「손으로 쓰는 것」에 있다
 
@@ -623,6 +625,23 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 테이블을 나눈다. 접두사만 기능이고, 요청과 응답이 같은 이름을 쓰는 짝은 관례다.
 
 절차와 목적지 목록은 `docs/codegen.md`에 있다.
+
+### 7.1 기획 데이터
+
+기획 데이터는 원본, 도구, 산출물이 세 곳에 나뉜다. 2026년 10월 27일(#313)부터 표를 하나씩 DataBuilder로 옮기고 있다.
+옮기지 않은 표는 옛 변환기의 경로에 남는다.
+
+| 무엇 | 경로 | 이름 |
+| --- | --- | --- |
+| DataBuilder 원본 | `DesignData/` | 표 이름 그대로의 워크북(`Currency.xlsx`). 설정 시트는 `Config.xlsx`에 둔다 |
+| 옛 변환기 원본 | `DesignData/` | `Original_<표>.xlsx`. 옮긴 표의 워크북은 지운다 |
+| DataBuilder | `Tools/DataBuilder/` | 래퍼 `Invoke-DataBuilder.ps1`, 설정 `databuilder.toml`, 패키지 `databuilder/`, 테스트 `tests/` |
+| DataBuilder 산출물 | 서버 모듈의 `Data/Generated/` | 게임 모듈은 `Server/GameServer/Game/Data/Generated/`다. 폴더 이름은 `Generated`로 고정이다 |
+| 옛 변환기 산출물 | 서버 모듈의 `Data/Json/`, 클라이언트의 `Content/P1/Data/DataTables/` | `S_<표>.json`, `C_<표>.json` |
+
+**산출물 폴더는 DataBuilder가 소유한다.** 실행할 때마다 비우고 다시 쓰므로 그 폴더에 손으로 쓴 파일을 두면 지워진다.
+서버 모듈(로비, 게임)마다 산출물 폴더가 하나이고, 어느 모듈이 어느 표를 읽는지는 `Tools/DataBuilder/databuilder.toml`이 정한다.
+로비 모듈의 산출물 폴더는 로비가 읽는 표를 DataBuilder로 옮길 때 로비 모듈 폴더 아래의 `Lobby/Data/Generated/`로 만든다.
 
 ---
 

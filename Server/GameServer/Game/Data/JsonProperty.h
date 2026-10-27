@@ -98,13 +98,6 @@ namespace JsonProperty
         constexpr std::string_view Yaw = "yaw";
     }
 
-    namespace Currency
-    {
-        constexpr std::string_view TemplateId = "templateId";
-        constexpr std::string_view CurrencyName = "currencyName";
-        constexpr std::string_view CurrencyType = "currencyType";
-    }
-
     namespace InitialProgress
     {
         constexpr std::string_view StartMapId = "startMapId";

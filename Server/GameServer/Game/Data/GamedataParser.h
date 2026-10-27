@@ -8,13 +8,12 @@ namespace GamedataFile
     constexpr string_view ITEMS = "S_Item.json";
     constexpr string_view MAPS = "S_Map.json";
     constexpr string_view MONSTERS = "S_Monster.json";
-    constexpr string_view CURRENCIES = "S_Currency.json";
     constexpr string_view INITIAL_PROGRESS = "S_Initial_Progress.json";
     constexpr string_view INVENTORY_SECTIONS = "S_Inventory_Section.json";
     constexpr string_view QUICK_SLOTS = "S_Quick_Slot.json";
 }
 
-/** 파싱만 마친 기획표 문서. 파일 하나가 행 배열 하나다. */
+/** 파싱만 마친 기획표 문서. 파일 하나가 행 배열 하나다. currencies는 DataBuilder가 생성한 표다. */
 struct GamedataDocuments
 {
     Json warriorLevels;

@@ -11,10 +11,13 @@ namespace
      */
     constexpr string_view GAMEDATA_DIR = "Game/Data/Json/";
 
+    /** DataBuilder의 산출물 폴더. 작업 디렉터리 기준이고, databuilder.toml의 game 모듈 폴더와 같아야 한다. */
+    constexpr string_view GENERATED_DIR = "Game/Data/Generated/";
+
     /** 파일을 열지 못하거나 Json 문법이 틀리면 사유를 돌려준다. */
-    optional<string> ReadDocument(string_view fileName, OUT Json& document)
+    optional<string> ReadDocument(string_view dir, string_view fileName, OUT Json& document)
     {
-        ifstream file(string(GAMEDATA_DIR) + string(fileName));
+        ifstream file(string(dir) + string(fileName));
         if (file.is_open() == false)
             return format("{}: 파일을 열지 못했다", fileName);
 
@@ -37,24 +40,45 @@ bool Gamedata::LoadAllGamedata()
 {
     // TODO: 퀘스트를 만들 때 퀘스트 표(S_Quest.json)도 템플릿과 함께 불러온다.
     GamedataDocuments documents;
-    const pair<string_view, Json*> files[] = {
-        { GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
-        { GamedataFile::ITEMS, &documents.items },
-        { GamedataFile::MAPS, &documents.maps },
-        { GamedataFile::MONSTERS, &documents.monsters },
-        { GamedataFile::CURRENCIES, &documents.currencies },
-        { GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
-        { GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
-        { GamedataFile::QUICK_SLOTS, &documents.quickSlots },
+
+    /** 옛 변환기의 표와 DataBuilder의 표는 폴더가 다르다. */
+    struct DocumentFile
+    {
+        string_view dir;
+        string_view fileName;
+        Json* document;
     };
 
-    for (const auto& [fileName, document] : files)
+    const DocumentFile files[] = {
+        { GAMEDATA_DIR, GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
+        { GAMEDATA_DIR, GamedataFile::ITEMS, &documents.items },
+        { GAMEDATA_DIR, GamedataFile::MAPS, &documents.maps },
+        { GAMEDATA_DIR, GamedataFile::MONSTERS, &documents.monsters },
+        { GAMEDATA_DIR, GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
+        { GAMEDATA_DIR, GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
+        { GAMEDATA_DIR, GamedataFile::QUICK_SLOTS, &documents.quickSlots },
+        { GENERATED_DIR, DesignData::CURRENCY_FILE, &documents.currencies },
+    };
+
+    for (const DocumentFile& file : files)
     {
-        if (optional<string> error = ReadDocument(fileName, OUT *document))
+        if (optional<string> error = ReadDocument(file.dir, file.fileName, OUT *file.document))
         {
             GLogger->Error("기획 데이터를 불러오지 못했다. {}", error.value());
             return false;
         }
+    }
+
+    // 어느 원본으로 만든 데이터를 읽었는지 로그로 남긴다. 원본 해시라서 같은 원본이면 같은 값이다.
+    Json versionDocument;
+    string dataVersion;
+    optional<string> versionError = ReadDocument(GENERATED_DIR, DesignData::VERSION_FILE, OUT versionDocument);
+    if (versionError.has_value() == false)
+        versionError = DesignData::ParseDataVersion(versionDocument, OUT dataVersion);
+    if (versionError.has_value())
+    {
+        GLogger->Error("기획 데이터 버전을 읽지 못했다. {}", versionError.value());
+        return false;
     }
 
     if (optional<string> error = Load(documents))
@@ -63,6 +87,7 @@ bool Gamedata::LoadAllGamedata()
         return false;
     }
 
+    GLogger->Info("기획 데이터 버전 {}을 불러왔다", dataVersion);
     return true;
 }
 

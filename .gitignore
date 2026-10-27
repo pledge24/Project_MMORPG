@@ -44,3 +44,5 @@ docs/reports/
 
 # ue-mcp 브리핑 세션 id 담긴 파일.
 .claude/hooks/.ue_briefed/
+# DataBuilder 래퍼가 첫 실행에 만드는 가상 환경. requirements.txt 의 고정 버전을 설치한다.
+Tools/DataBuilder/.venv/

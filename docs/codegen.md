@@ -2,7 +2,7 @@
 
 **프로토콜·데이터 파일을 고치기 전에 반드시 읽는다.**
 
-생성 결과물을 클라이언트/서버 트리로 **복사**하는 파이프라인이 두 개 있다. 복사본이 git에 커밋되어 있어서 직접 수정해도 되는 파일처럼 보이지만 아니다. **생성기를 다시 돌리는 순간 덮어써진다.**
+생성 결과물을 클라이언트/서버 트리로 **복사**하는 파이프라인이 세 개 있다. 와이어 프로토콜, DataBuilder, 옛 기획 데이터 변환기다. 복사본이 git에 커밋되어 있어서 직접 수정해도 되는 파일처럼 보이지만 아니다. **생성기를 다시 돌리는 순간 덮어써진다.**
 
 ---
 
@@ -117,9 +117,156 @@
 
 ---
 
+## 기획 데이터 (DataBuilder)
+
+`Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
+C++ 타입을 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
+
+2026년 10월 27일(#313) 기준으로 DataBuilder가 맡은 표는 재화 하나다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
+표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 아직 만들지 않는다.
+
+### 재생성
+
+```
+pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
+```
+
+래퍼는 첫 실행에 `Tools/DataBuilder/.venv/`에 가상 환경을 만들고 `requirements.txt`의 고정 버전 패키지를 설치한다.
+`requirements.txt`가 바뀌면 다시 설치한다. exe는 만들지 않는다.
+
+**검사가 하나라도 실패하면 산출물을 하나도 바꾸지 않고 종료 코드 1로 끝난다.** DataBuilder는 오류를 모두 모아 한 줄에 하나씩
+출력한다. 오류 한 줄에는 워크북, 시트, 행, 열이 들어 있다. 예: `Currency.xlsx 시트 '재화' 6행 A열(Id): 키(Id) 1이 시트 '재화' 5행과 겹친다`.
+모두 통과하면 임시 폴더에 생성한 뒤 산출물 폴더에 배포한다.
+
+**원본이나 설정을 고치면 DataBuilder를 돌리고 산출물을 같은 커밋에 담는다.** DataBuilder 테스트가 커밋된 산출물과 원본에서
+다시 만든 산출물을 비교한다. 둘이 다르면 테스트가 실패한다.
+
+### 설정 파일
+
+`Tools/DataBuilder/databuilder.toml`이 어느 워크북을 읽고, 어느 서버 모듈이 그 표를 읽는지 정한다. 엑셀은 정하지 않는다.
+
+| 항목 | 정하는 것 |
+|---|---|
+| `[modules.<모듈>]` | 서버 모듈의 산출물 폴더(`server_dir`). 폴더 이름은 `Generated`여야 한다 |
+| `[tables.<표>]` | 가로형 표 하나. 워크북 파일 이름과 그 표를 읽는 모듈 목록 |
+| `[settings.<설정>]` | 세로형 설정 시트 하나. 워크북, 시트 이름, 모듈 목록 |
+| `[enums.<열거형>]` | `.proto`에 없는 기획 데이터 전용 열거형의 값 이름과 번호. 번호는 1부터다 |
+
+표 이름과 설정 이름이 그대로 생성되는 C++ 이름(`CurrencyRow`, `CurrencyTable`, `ParseCurrency`)이 된다. 모듈의 산출물 폴더 이름을 고정한
+이유는 배포할 때 그 폴더를 통째로 지우기 때문이다.
+— 설정 파일의 경로를 잘못 적으면 사람이 쓴 폴더가 지워진다.
+
+### 시트 규칙
+
+가로형 표는 한 워크북이 표 하나다.
+
+| 행 | 내용 |
+|---|---|
+| 1 | 열 이름. PascalCase 식별자이고, 생성되는 C++ 필드 이름이 된다 |
+| 2 | 타입. 아래 「타입」 표 |
+| 3 | 대상. `both` · `client` · `server` · `none` 중 하나 |
+| 4 | 설명. 생성되는 필드의 주석이 된다. 산출물의 값과 데이터 버전에는 들어가지 않는다 |
+| 5~ | 데이터. 셀이 모두 빈 행은 건너뛴다 |
+
+- 한 워크북의 시트는 1~3행이 같아야 한다. DataBuilder는 시트의 데이터 행을 시트 순서대로 이어 붙인다. 시트 이름은 데이터가 아니다
+- 열 이름은 1행 A열부터 처음 빈 칸 앞까지다. 그 오른쪽 열에 값이 있으면 오류다
+- 키 열이 하나 이상 있어야 한다. 키 열이 둘 이상이면 그 조합이 유일해야 한다
+- 서버로 가는 열이 하나라도 있으면 키 열도 서버로 가야 한다. 클라이언트도 같다
+- `none` 열은 어디에도 싣지 않는다. 빈 셀을 허용한다. 값이 있으면 타입을 검사한다
+- `none`이 아닌 열의 빈 셀은 오류다. 예외는 선택 참조(`ref?:`)와 목록이다
+
+세로형 설정 시트는 시트 하나가 구조체 하나다. 1행은 `Key | Type | Target | Value | Description`이고, 2행부터 한 행이 필드 하나다.
+`Key`가 필드 이름이다. 키와 부모 표 참조는 쓰지 않는다. 나머지 규칙은 가로형 표와 같다.
+
+### 타입
+
+| 표기 | 셀에 적는 값 | C++ 타입 |
+|---|---|---|
+| `int32` · `int64` | 정수. 범위를 넘으면 오류다 | `int32` · `int64` |
+| `float` | 수 | `float` |
+| `string` | 문자열. 정수 셀은 문자열로 읽는다 | `string` |
+| `bool` | 엑셀의 TRUE/FALSE, 또는 문자열 `TRUE`/`FALSE`(대소문자 무관) | `bool` |
+| `enum:<열거형>` | 열거형 값 이름 하나 | 열거형 |
+| `enum[]:<열거형>` | `;`로 구분한 값 이름 목록 | `vector<열거형>` |
+| `ref:<표>` | 그 표의 키 하나 | 그 표의 키 타입 |
+| `ref?:<표>` | 그 표의 키 하나, 또는 빈 셀 | `optional<키 타입>` |
+| `ref[]:<표>` | `;`로 구분한 그 표의 키 목록 | `vector<키 타입>` |
+| `parent:<표>` | 이 행이 속한 부모 표의 키. 필수다 | 그 표의 키 타입 |
+
+- `key:`를 앞에 붙이면 키 열이다(`key:int32`, `key:parent:Item`). 키 열이 될 수 있는 것은 정수, 문자열, 열거형, 참조 하나다. 실수, 불, 목록, 선택 참조는 키가 될 수 없다
+- 참조하는 표는 설정 파일에 있고 키 열이 하나여야 한다. 셀의 값이 그 표의 키에 없으면 오류다
+- 부모 표 참조 열은 표에 하나까지다. 자기 자신을 부모 표로 삼을 수 없다
+- 목록 셀에 빈 항목(`A;;B`)이 있으면 오류다. 빈 셀은 빈 목록이다
+- **JSON 셀을 쓰지 않는다.** `{`나 `[`로 시작하는 셀은 어느 타입이든 오류다. 좌표와 범위는 열로 나눈다
+
+### 열거형 값의 표기
+
+**셀에는 `.proto` 값 이름에서 열거형 이름의 접두사를 뺀 이름을 적는다.** 접두사는 열거형 이름을 대문자와 밑줄로 바꾼 것이다.
+
+| 열거형 | `.proto` 값 | 셀에 적는 값 |
+|---|---|---|
+| `ItemType` | `ITEM_TYPE_GEAR` | `GEAR` |
+| `CharacterClass` | `CHARACTER_CLASS_WARRIOR` | `WARRIOR` |
+| `CurrencyType`(설정 파일) | — | `GOLD` |
+
+- 0번 값(`ITEM_TYPE_NONE`)은 「값 없음」이라 셀에 적을 수 없다
+- 접두사를 붙인 전체 이름(`ITEM_TYPE_GEAR`)과 소문자(`warrior`)는 오류다
+- DataBuilder는 `Protocol/Schema/`의 최상위 열거형을 모두 읽는다. 메시지 안의 열거형은 읽지 않는다
+- 설정 파일의 열거형과 같은 이름이 `.proto`에 있으면 오류다
+- 산출물 JSON에는 열거형을 번호가 아니라 이 이름으로 싣는다. 생성된 역직렬화가 이름을 C++ 값으로 바꾼다
+
+### 산출물
+
+모듈마다 산출물 폴더 하나에 아래 파일을 만든다. 게임 모듈의 폴더는 `Server/GameServer/Game/Data/Generated/`다.
+
+| 파일 | 내용 |
+|---|---|
+| `<표>.json` | 행 배열. 한 행이 한 줄이고, 행은 키 순서, 필드는 시트의 열 순서다. 서버로 가는 열(`both`, `server`)만 싣는다 |
+| `<설정>.json` | 객체 하나. 한 필드가 한 줄이고, 시트의 행 순서다 |
+| `DataVersion.json` | 데이터 버전 하나(`{"Version":"..."}`) |
+| `DesignData.h` | 그 모듈이 읽는 표의 행 구조체(`<표>Row`), 키 → 행 맵(`<표>Table`), 설정 구조체(`<설정>Config`), `.proto`에 없는 열거형, 역직렬화 함수(`Parse<표>`, `Parse<설정>`, `ParseDataVersion`) |
+
+- 키 순서에서 열거형 키는 값 번호 순서다
+- 같은 원본으로 두 번 돌리면 산출물이 바이트 단위로 같다. 줄바꿈은 LF다
+- 행 하나의 값을 바꾸면 그 표의 JSON diff는 그 행의 한 줄이다. 데이터 버전 파일도 함께 바뀐다
+- **산출물 폴더에 사람이 쓴 파일을 두지 않는다.** DataBuilder는 실행할 때마다 산출물 폴더를 비우고 다시 쓴다
+
+**데이터 버전은 원본의 값으로 만든 해시다.** 표마다 열 이름, 타입, 대상과 키 순서로 정렬한 행 값을 넣고, 설정과 열거형도 넣는다.
+4행 설명, 시트 이름, 시트 안의 행 순서, 대상이 `none`인 열은 산출물을 바꾸지 않으므로 넣지 않는다. 워크북을 열어 고치지 않고 저장해도 버전은 그대로다.
+서버는 기동할 때 이 값을 로그에 남긴다(`기획 데이터 버전 342624c01048663c을 불러왔다`).
+
+### 검사하는 곳
+
+기획 데이터 자체의 규칙은 DataBuilder가, 코드가 정한 제약은 서버 기동이 검사한다(ADR-0022). 같은 규칙을 두 곳에 쓰지 않는다.
+
+| 검사 | 하는 곳 |
+|---|---|
+| 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
+| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나 | DataBuilder (`databuilder/rules.py`) |
+| JSON의 형식. 필드의 유무와 타입, 열거형 이름 | 서버. 생성된 `Parse<표>` |
+| 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
+
+표 하나의 의미 규칙을 더할 때는 `databuilder/rules.py`의 `TABLE_RULES`에 그 표 이름으로 함수를 넣는다.
+
+### 서버가 읽는 법
+
+`Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
+`DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
+`DesignData::CurrencyTable`이다.
+
+**생성된 헤더는 `Templates.h`가 include한다.** 프로젝트 파일에는 `GameServer.vcxproj`에 `DesignData.h`와 JSON을 등록한다. 헤더만 생성하므로
+`GameServerTests.vcxproj`에 넣을 `.cpp`는 없다. 표를 더하면 그 표의 JSON을 `GameServer.vcxproj`와 `.filters`에 등록한다.
+
+생성된 역직렬화의 공통 함수(`DesignData::Detail::Read`)는 `DesignDataReadTests`가 목록, 선택 값, 열거형 목록까지 인스턴스화해서 확인한다.
+아직 그 타입을 쓰는 표가 없어도 빌드가 그 코드를 컴파일하게 하려는 것이다.
+
+---
+
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data, Currency, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+
+이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 위 DataBuilder로 옮긴 표는 여기서 빠진다.
 
 **원본에는 수치만 둔다. 에셋 경로 열을 만들지 않는다.** 아이콘, 메시, 몬스터 클래스는
 `DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
@@ -135,12 +282,12 @@
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 14개가 전부다.**
+**산출물은 아래 표의 13개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` · `S_Currency.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
 | `Server/GameServer/Lobby/Data/Json/` | `S_Lobby.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
 
@@ -150,7 +297,7 @@
 장비 데이터는 `Original_Item.xlsx`의 첫 시트에 있다. 세 시트가 하나의 `C_Item.json`으로
 합쳐지므로 장비만 담는 산출물은 없다.
 
-레벨, 재화, 초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
+레벨, 초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
 
 **기획 데이터는 소비자별로 나눈다.** 로비 표는 로비 모듈(`Lobby/Data/`)만, 나머지는 게임(`Game/Data/`)만 읽는다. 로비와 게임이
 함께 맞아야 하는 값(생성할 수 있는 직업마다 레벨 표가 있는지)은 서버가 기동할 때 `Core/DataCrossCheck`가 대조하고, 어긋나면
@@ -158,11 +305,10 @@
 
 ### 서버 전용 표
 
-재화, 캐릭터 생성, 인벤토리 구역 표는 2026년 10월 20일(#250)에 DB 기본값과 코드 상수에서 옮겨 왔다. 퀵슬롯 표는 2026년 10월 22일에 새로 만들었다. 열은 모두 `SERVER`다.
+재화, 캐릭터 생성, 인벤토리 구역 표는 2026년 10월 20일(#250)에 DB 기본값과 코드 상수에서 옮겨 왔다. 재화 표는 2026년 10월 27일(#313)에 DataBuilder로 옮겼다. 퀵슬롯 표는 2026년 10월 22일에 새로 만들었다. 열은 모두 `SERVER`다.
 
 | 원본 | 열 | 규칙 |
 |---|---|---|
-| `Original_Currency.xlsx` (재화) | `template_id` · `currency_name` · `currency_type` | `template_id`가 DB의 `CurrencyId`다. `currency_type`은 서버 열거형 `CurrencyType`의 이름(`GOLD`)이고, `GOLD` 행은 정확히 하나다 |
 | `Original_Initial_Progress.xlsx` (초기 진행) | `start_map_id` · `start_pos` · `start_yaw` · `start_gold` | 행이 정확히 하나다. `start_map_id`는 룸 번호(`template_id`)가 아니라 맵 표의 `map_id`다. 시작 골드는 0 이상이다 |
 | `Original_Inventory_Section.xlsx` (인벤토리 구역) | `item_type` · `slot_count` | `NONE`을 뺀 아이템 종류마다 행이 정확히 하나다. 칸 수는 1 이상이다 |
 | `Original_Quick_Slot.xlsx` (퀵슬롯) | `slot_count` | 행이 정확히 하나다. 퀵슬롯 개수는 1~256이다(DB의 퀵슬롯 번호 열이 `TINYINT`) |
@@ -197,7 +343,7 @@
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 여덟 파일을,
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 일곱 파일과 `Game/Data/Generated/`의 재화 표와 데이터 버전을,
 `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로 `S_Lobby.json`을 읽는다.
 `GamedataParser::Parse`가 모든 행을 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿만 읽는다.
@@ -214,9 +360,9 @@
 |---|---|
 | 직업의 최대 레벨 | 그 직업 레벨 표의 마지막 레벨. 레벨은 1부터 빠짐없이 이어져야 한다 |
 | 마을 룸 번호 | 맵 표에서 `hasRespawnPoint`가 참인 유일한 맵. 둘 이상이거나 없으면 부팅이 실패한다 |
-| 골드의 재화 번호 | 재화 표에서 `currency_type`이 `GOLD`인 유일한 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이거나 없으면 부팅이 실패한다 |
+| 골드의 재화 번호 | 재화 표(`Currency.xlsx`)에서 `Type`이 `GOLD`인 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 
-서버가 읽는 열을 늘릴 때는 `JsonProperty.h`의 열 이름, `Templates.h`의 필드, `GamedataParser.cpp`의 변환을 함께 고친다.
+DataBuilder로 옮기지 않은 표에서 서버가 읽는 열을 늘릴 때는 `JsonProperty.h`의 열 이름, `Templates.h`의 필드, `GamedataParser.cpp`의 변환을 함께 고친다.
 테스트는 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다.
 
 `S_Quest.json`은 생성되지만 서버가 읽지 않는다. 읽는 코드가 없는 표 때문에 서버가 뜨지 않는 일을 없애려고
@@ -232,6 +378,8 @@
 - `Tools/ExcelToJsonConverter/`
 
 결과 exe는 각 툴 폴더 안에 놓인다. `Protocol/Generate.ps1`과 `DesignData/GenJsonFile.bat`이 그 exe를 부른다. `.bat`도 cp949다.
+
+DataBuilder(`Tools/DataBuilder/`)는 exe를 만들지 않는다. 래퍼가 가상 환경의 파이썬으로 소스를 바로 돌리므로, 소스를 고치면 다음 실행에 반영된다.
 
 **생성기의 파이썬 소스를 고치면 `MakeExe.bat`으로 exe를 다시 만들어 소스와 함께 커밋한다.**
 — 스크립트는 소스가 아니라 exe를 부른다. exe를 다시 만들지 않으면 고친 소스가 돌지 않는다.
