@@ -62,7 +62,7 @@ class DesignDataCase(unittest.TestCase):
         (self.root / "Schema").mkdir()
         (self.root / "Schema" / "Common.proto").write_bytes(PROTO.encode("cp949"))
         self.out_dir = self.root / "Server" / "Game" / "Generated"
-        self.tables: dict[str, tuple[str, list[str]]] = {}
+        self.tables: dict[str, tuple[str, list[str], str | None]] = {}
         self.settings: dict[str, tuple[str, str, list[str]]] = {}
         self.enums: dict[str, dict[str, int]] = {"CurrencyType": {"GOLD": 1, "HONOR": 2}}
 
@@ -80,10 +80,10 @@ class DesignDataCase(unittest.TestCase):
         workbook.save(path)
         return path
 
-    def add_table(self, name: str, *sheets: list[list[Any]], modules: list[str] | None = None) -> None:
-        """표 하나를 워크북 `<name>.xlsx`로 쓰고 설정에 넣는다. 시트 이름은 Sheet1, Sheet2...다."""
+    def add_table(self, name: str, *sheets: list[list[Any]], modules: list[str] | None = None, nest: str | None = None) -> None:
+        """표 하나를 워크북 `<name>.xlsx`로 쓰고 설정에 넣는다. 시트 이름은 Sheet1, Sheet2...다. nest는 설정의 `nest`다."""
         self.write_workbook(f"{name}.xlsx", {f"Sheet{i + 1}": rows for i, rows in enumerate(sheets)})
-        self.tables[name] = (f"{name}.xlsx", modules or ["game"])
+        self.tables[name] = (f"{name}.xlsx", modules or ["game"], nest)
 
     def add_setting(self, name: str, rows: list[list[Any]], workbook: str = "Config.xlsx") -> None:
         path = self.root / "DesignData" / workbook
@@ -97,8 +97,10 @@ class DesignDataCase(unittest.TestCase):
 
     def config_path(self) -> Path:
         lines = ['source_dir = "DesignData"', 'proto_dir = "Schema"', "", "[modules.game]", 'server_dir = "Server/Game/Generated"', ""]
-        for name, (workbook, modules) in self.tables.items():
-            lines += [f"[tables.{name}]", f'workbook = "{workbook}"', f"modules = {modules!r}".replace("'", '"'), ""]
+        for name, (workbook, modules, nest) in self.tables.items():
+            lines += [f"[tables.{name}]", f'workbook = "{workbook}"', f"modules = {modules!r}".replace("'", '"')]
+            lines += [f'nest = "{nest}"'] if nest else []
+            lines += [""]
         for name, (workbook, sheet_name, modules) in self.settings.items():
             lines += [f"[settings.{name}]", f'workbook = "{workbook}"', f'sheet = "{sheet_name}"', f"modules = {modules!r}".replace("'", '"'), ""]
         for name, values in self.enums.items():
@@ -114,6 +116,13 @@ class DesignDataCase(unittest.TestCase):
         result = self.build()
         self.assertEqual(result.errors, [], "통과해야 하는 원본에서 오류가 났다")
         return result
+
+    def assert_warning(self, *fragments: str) -> list[str]:
+        """통과하면서 경고 중 하나가 조각을 모두 담는지 본다."""
+        warnings = self.build_ok().warnings
+        matching = [warning for warning in warnings if all(fragment in warning for fragment in fragments)]
+        self.assertTrue(matching, f"{fragments}를 모두 담은 경고가 없다:\n" + "\n".join(warnings))
+        return warnings
 
     def output(self, file_name: str) -> str:
         return self.build_ok().outputs[self.out_dir][file_name]

@@ -4,28 +4,6 @@
 
 namespace JsonProperty
 {
-    namespace Monster
-    {
-        constexpr std::string_view TemplateId = "templateId";
-        constexpr std::string_view Level = "level";
-        constexpr std::string_view MonsterName = "monsterName";
-        constexpr std::string_view AttackType = "attackType";
-        constexpr std::string_view MaxHp = "maxHp";
-        constexpr std::string_view BaseAttack = "baseAttack";
-        constexpr std::string_view ExpReward = "expReward";
-        constexpr std::string_view MinExp = "minExp";
-        constexpr std::string_view MaxExp = "maxExp";
-        constexpr std::string_view GoldReward = "goldReward";
-        constexpr std::string_view MinGold = "minGold";
-        constexpr std::string_view MaxGold = "maxGold";
-        constexpr std::string_view AttackInterval = "attackInterval";
-        constexpr std::string_view TryAttackRange = "tryAttackRange";
-        constexpr std::string_view DetectionRange = "detectionRange";
-        constexpr std::string_view ChasingMaxRange = "chasingMaxRange";
-        constexpr std::string_view MonsterSpeed = "movementSpeed";
-        constexpr std::string_view IsTargeting = "isTargeting";
-    }
-
     namespace Map
     {
         constexpr std::string_view TemplateId = "templateId";

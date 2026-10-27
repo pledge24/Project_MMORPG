@@ -35,6 +35,30 @@ modules = ["game"]
 workbook = "ClassLevelStat.xlsx"
 modules = ["game"]
 
+# 몬스터의 능력치와 기본 보상. 드롭은 아래 드롭 그룹 표를 참조한다.
+[tables.Monster]
+workbook = "Monster.xlsx"
+modules = ["game"]
+
+[tables.DropGroup]
+workbook = "DropGroup.xlsx"
+modules = ["game"]
+
+# 드롭 항목은 DropGroup.json의 각 그룹 아래 Entries에 싣는다.
+[tables.DropEntry]
+workbook = "DropEntry.xlsx"
+modules = ["game"]
+nest = "Entries"
+
 # .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
 [enums.CurrencyType]
 GOLD = 1
+
+[enums.MonsterAttackType]
+MELEE = 1
+RANGED = 2
+
+# 드롭 그룹의 판정 방식. INDEPENDENT는 항목마다 따로, WEIGHTED는 가중치로 정해진 개수를 뽑는다.
+[enums.DropMethod]
+INDEPENDENT = 1
+WEIGHTED = 2

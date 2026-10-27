@@ -22,6 +22,7 @@ namespace
     constexpr int32 SWORD_ID = 1005;
     constexpr int32 POTION_ID = 2000;
     constexpr int32 MONSTER_ID = 5000;
+    constexpr int32 DROP_GROUP_ID = 1;
     constexpr int32 TOWN_ID = 10;
     constexpr int32 FIELD_ID = 20;
     constexpr int32 GOLD_ID = 1;
@@ -67,14 +68,26 @@ namespace
         return Json{{"ItemId", POTION_ID}, {"HpRestoreRatio", 0.3}, {"MpRestoreRatio", 0.0}, {"CooldownMs", 10000}};
     }
 
+    /** DataBuilder가 생성하는 몬스터 표의 행. */
     Json MakeMonster()
     {
         return Json{
-            {"templateId", MONSTER_ID}, {"level", 3}, {"monsterName", "미니언"}, {"attackType", "melee"},
-            {"maxHp", 200}, {"baseAttack", 100}, {"movementSpeed", 300}, {"isTargeting", true},
-            {"expReward", {{"minExp", 5}, {"maxExp", 10}}},
-            {"goldReward", {{"minGold", 10}, {"maxGold", 20}}},
-            {"attackInterval", 2.5}, {"tryAttackRange", 150}, {"detectionRange", 900}, {"chasingMaxRange", 1200},
+            {"Id", MONSTER_ID}, {"MaxHp", 200}, {"BaseAttack", 100}, {"MovementSpeed", 300.0},
+            {"MinExp", 5}, {"MaxExp", 10}, {"MinGold", 10}, {"MaxGold", 20},
+            {"AttackInterval", 2.5}, {"TryAttackRange", 150.0}, {"DetectionRange", 900.0}, {"ChasingMaxRange", 1200.0},
+            {"DropGroups", Json::array({DROP_GROUP_ID})},
+        };
+    }
+
+    /** DataBuilder가 생성하는 드롭 그룹 표의 행. 드롭 항목은 그룹 아래 Entries에 중첩된다. */
+    Json MakeDropGroup()
+    {
+        return Json{
+            {"Id", DROP_GROUP_ID}, {"Method", "WEIGHTED"}, {"Rate", 0.5}, {"PickCount", 1},
+            {"Entries", Json::array({
+                Json{{"ItemId", SWORD_ID}, {"Rate", nullptr}, {"Weight", 10}, {"MinCount", 1}, {"MaxCount", 1}},
+                Json{{"ItemId", POTION_ID}, {"Rate", nullptr}, {"Weight", 30}, {"MinCount", 2}, {"MaxCount", 5}},
+            })},
         };
     }
 
@@ -144,6 +157,7 @@ namespace
         documents.itemEquipStats = Json::array({MakeSwordEquipStat()});
         documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
         documents.monsters = Json::array({MakeMonster()});
+        documents.dropGroups = Json::array({MakeDropGroup()});
         documents.maps = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
         documents.initialProgress = Json::array({MakeInitialProgress()});
@@ -202,11 +216,12 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_FLOAT_EQ(potionEffect.HpRestoreRatio, 0.3f);
     EXPECT_FALSE(tables.itemEquipStats.contains(POTION_ID));
 
-    const MonsterTemplate& monster = tables.monsters.at(MONSTER_ID);
-    EXPECT_EQ(monster.maxHp, 200);
-    EXPECT_EQ(monster.minExp, 5);
-    EXPECT_EQ(monster.maxGold, 20);
-    EXPECT_FLOAT_EQ(monster.attackInterval, 2.5f);
+    const DesignData::MonsterRow& monster = tables.monsters.at(MONSTER_ID);
+    EXPECT_EQ(monster.MaxHp, 200);
+    EXPECT_EQ(monster.MinExp, 5);
+    EXPECT_EQ(monster.MaxGold, 20);
+    EXPECT_FLOAT_EQ(monster.AttackInterval, 2.5f);
+    EXPECT_EQ(monster.DropGroups, vector<int32>({DROP_GROUP_ID}));
 
     ASSERT_EQ(tables.levels.size(), 3u);
     EXPECT_EQ(tables.levels.at(2).ExpRequirement, 100);
@@ -265,17 +280,25 @@ TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
 TEST(GamedataParserTest, WrongFieldTypeIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.monsters[0]["maxHp"] = "200";
+    documents.monsters[0]["MaxHp"] = "200";
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MONSTERS, "1번째 행", "maxHp"});
+    ExpectMentions(ErrorOf(documents), {DesignData::MONSTER_FILE, "1번째 행", "MaxHp"});
 }
 
-TEST(GamedataParserTest, NestedFieldIsChecked)
+TEST(GamedataParserTest, NestedDropEntryFieldIsChecked)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.monsters[0]["expReward"].erase("maxExp");
+    documents.dropGroups[0]["Entries"][1].erase("Weight");
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MONSTERS, "maxExp"});
+    ExpectMentions(ErrorOf(documents), {DesignData::DROP_GROUP_FILE, "1번째 행", "'Entries' 2번째 원소", "Weight"});
+}
+
+TEST(GamedataParserTest, UnknownDropMethodIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.dropGroups[0]["Method"] = "RANDOM";
+
+    ExpectMentions(ErrorOf(documents), {DesignData::DROP_GROUP_FILE, "1번째 행", "Method", "RANDOM"});
 }
 
 // 아이템 표의 규칙(종류별 표의 짝, 번호 범위, 최대 개수)은 DataBuilder가 검사한다.
@@ -314,14 +337,6 @@ TEST(GamedataParserTest, MissingConsumeEffectFieldIsRejected)
     documents.itemConsumeEffects[0].erase("CooldownMs");
 
     ExpectMentions(ErrorOf(documents), {DesignData::ITEM_CONSUME_EFFECT_FILE, "1번째 행", "CooldownMs"});
-}
-
-TEST(GamedataParserTest, RewardMinAboveMaxIsRejected)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.monsters[0]["goldReward"]["minGold"] = 30;
-
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MONSTERS, "minGold"});
 }
 
 TEST(GamedataParserTest, DuplicateTemplateIdIsRejected)
@@ -496,6 +511,27 @@ TEST(GamedataParserTest, QuickSlotCountOutOfRangeIsRejected)
     EXPECT_EQ(ErrorOf(documents), "") << "0번부터 255번까지 256개는 저장할 수 있다";
 }
 
+// 드롭의 판정과 지급은 아직 없다. 서버는 드롭 그룹을 생성된 타입으로 읽어 설치만 한다.
+TEST(GamedataParserTest, DropGroupsAreInstalledAsGeneratedRows)
+{
+    ASSERT_FALSE(Gamedata::Load(MakeValidDocuments()).has_value());
+
+    const DesignData::DropGroupRow* group = Gamedata::FindDropGroup(DROP_GROUP_ID);
+    ASSERT_NE(group, nullptr);
+    EXPECT_EQ(group->Method, DesignData::DropMethod::WEIGHTED);
+    EXPECT_FLOAT_EQ(group->Rate, 0.5f);
+    EXPECT_EQ(group->PickCount, optional<int32>(1));
+    ASSERT_EQ(group->Entries.size(), 2u);
+    EXPECT_EQ(group->Entries[1].ItemId, POTION_ID);
+    EXPECT_EQ(group->Entries[1].Rate, nullopt) << "가중치 그룹의 항목은 확률이 비어 있다";
+    EXPECT_EQ(group->Entries[1].Weight, optional<int32>(30));
+    EXPECT_EQ(group->Entries[1].MinCount, 2);
+    EXPECT_EQ(group->Entries[1].MaxCount, 5);
+    EXPECT_EQ(Gamedata::FindDropGroup(DROP_GROUP_ID + 1), nullptr);
+
+    Gamedata::Install(GamedataTables());
+}
+
 TEST(GamedataParserTest, FailedLoadKeepsPreviousTables)
 {
     ASSERT_FALSE(Gamedata::Load(MakeValidDocuments()).has_value());
@@ -526,7 +562,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.itemEquipStats = ReadJsonFile(generatedDir / DesignData::ITEM_EQUIP_STAT_FILE);
     documents.itemConsumeEffects = ReadJsonFile(generatedDir / DesignData::ITEM_CONSUME_EFFECT_FILE);
     documents.maps = ReadJsonFile(dir / GamedataFile::MAPS);
-    documents.monsters = ReadJsonFile(dir / GamedataFile::MONSTERS);
+    documents.monsters = ReadJsonFile(generatedDir / DesignData::MONSTER_FILE);
+    documents.dropGroups = ReadJsonFile(generatedDir / DesignData::DROP_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(dir / GamedataFile::INITIAL_PROGRESS);
     documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
@@ -565,4 +602,10 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(warriorLevel1.PhysicalAttack, 10);
     EXPECT_EQ(warriorLevel1.MagicalAttack, 2);
     EXPECT_EQ(tables.classLevelStats.at({ Protocol::CHARACTER_CLASS_WARRIOR, 50 }).MaxHp, 5400);
+
+    // 몬스터 표를 기본 보상 열로 옮기면서 옮긴 값이다.
+    ASSERT_TRUE(tables.monsters.contains(5000));
+    EXPECT_EQ(tables.monsters.at(5000).MinGold, 10);
+    EXPECT_EQ(tables.monsters.at(5000).MaxGold, 20);
+    EXPECT_EQ(tables.monsters.size(), 9u);
 }

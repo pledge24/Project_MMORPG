@@ -87,7 +87,7 @@ class SheetRulesTest(DesignDataCase):
         self.assert_error("Thing.xlsx 시트 'Sheet1' 6행 A열(Id)", "정수가 아니다")
 
     def test_missing_workbook_is_rejected(self):
-        self.tables["Thing"] = ("Thing.xlsx", ["game"])
+        self.tables["Thing"] = ("Thing.xlsx", ["game"], None)
 
         self.assert_error("Thing.xlsx", "워크북이 없다")
 

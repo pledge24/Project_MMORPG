@@ -17,9 +17,11 @@ class ParseTypeTest(unittest.TestCase):
         self.assertEqual(parse_type("ref?:Thing"), ColumnType("ref", "Thing", is_optional=True))
         self.assertEqual(parse_type("ref[]:Thing"), ColumnType("ref", "Thing", is_list=True))
         self.assertEqual(parse_type("key:parent:Thing"), ColumnType("parent", "Thing", is_key=True))
+        self.assertEqual(parse_type("float?"), ColumnType("float", is_optional=True))
+        self.assertEqual(parse_type("int32?"), ColumnType("int32", is_optional=True))
 
     def test_invalid_types(self):
-        for text in ["", None, "int", "key:float", "key:bool", "key:ref?:Thing", "key:enum[]:ItemType", "enum?:ItemType", "parent[]:Thing", "ref:"]:
+        for text in ["", None, "int", "key:float", "key:bool", "key:ref?:Thing", "key:enum[]:ItemType", "enum?:ItemType", "parent[]:Thing", "ref:", "key:int32?", "bool?", "string?"]:
             with self.subTest(text=text), self.assertRaises(CellError):
                 parse_type(text)
 
@@ -61,6 +63,14 @@ class CellValueTest(DesignDataCase):
     def test_empty_required_cell_is_rejected(self):
         self.add_table("Thing", one_column("string", "검", None))
         self.assert_error("6행", "B열(Value)", "비어 있다")
+
+    def test_optional_number_writes_blank_cell_as_null(self):
+        self.add_table("Thing", one_column("float?", 0.5, None))
+        self.assertEqual(self.values(), [0.5, None])
+
+    def test_optional_number_still_checks_type(self):
+        self.add_table("Thing", one_column("int32?", 1.5))
+        self.assert_error("5행", "정수가 아니다")
 
     def test_proto_enum_is_written_without_prefix(self):
         self.add_table("Thing", one_column("enum:ItemType", "GEAR", "CONSUMABLE"))

@@ -26,13 +26,13 @@ class MonsterTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MonsterTemplate data;
-        data.templateId = MONSTER_TEMPLATE_ID;
-        data.maxHp = MAX_HP;
-        data.minExp = EXP_REWARD;
-        data.maxExp = EXP_REWARD;
-        data.minGold = GOLD_REWARD;
-        data.maxGold = GOLD_REWARD;
+        DesignData::MonsterRow data;
+        data.Id = MONSTER_TEMPLATE_ID;
+        data.MaxHp = MAX_HP;
+        data.MinExp = EXP_REWARD;
+        data.MaxExp = EXP_REWARD;
+        data.MinGold = GOLD_REWARD;
+        data.MaxGold = GOLD_REWARD;
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = data;

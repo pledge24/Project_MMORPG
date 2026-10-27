@@ -121,6 +121,96 @@ def every_level_per_class(table: Table, data: DesignData) -> list[str]:
     return errors
 
 
+def range_ordered(low_column: str, high_column: str, minimum: int) -> Callable[[Table, DesignData], list[str]]:
+    """최솟값 열이 minimum 이상이고 최댓값 열보다 크지 않은지 본다. 서버가 두 값 사이에서 고른다."""
+
+    def rule(table: Table, _: DesignData) -> list[str]:
+        errors = []
+        for row in table.rows:
+            low, high = row.values[low_column], row.values[high_column]
+            where = locate(table.config.workbook, row.sheet, row.number)
+            if low < minimum:
+                errors.append(f"{where}: {low_column}가 {minimum} 이상이어야 하는데 {low}이다")
+            if low > high:
+                errors.append(f"{where}: {low_column} {low}이 {high_column} {high}보다 크다")
+        return errors
+
+    return rule
+
+
+def is_probability(value: float) -> bool:
+    return 0.0 < value <= 1.0
+
+
+# 판정 방식 → 그 방식의 드롭 항목이 채우는 열. 나머지 하나는 비워 둔다.
+DROP_ENTRY_ODDS_COLUMN = {"INDEPENDENT": "Rate", "WEIGHTED": "Weight"}
+
+
+def drop_entries_by_group(data: DesignData) -> dict[int, list]:
+    entries: dict[int, list] = {}
+    table = data.tables.get("DropEntry")
+    for row in table.rows if table is not None else []:
+        entries.setdefault(row.values["GroupId"], []).append(row)
+    return entries
+
+
+def drop_group_matches_method(table: Table, data: DesignData) -> list[str]:
+    """그룹 확률은 0 초과 1 이하다. 항목이 하나 이상이고, 가중치 그룹만 뽑는 개수를 갖는다. 개수는 항목 수를 넘지 않는다."""
+    entries = drop_entries_by_group(data)
+    errors = []
+    for row in table.rows:
+        where = locate(table.config.workbook, row.sheet, row.number)
+        group_id, method, pick_count = row.values["Id"], row.values["Method"], row.values["PickCount"]
+        if not is_probability(row.values["Rate"]):
+            errors.append(f"{where}: 그룹 {group_id}의 Rate가 0 초과 1 이하여야 하는데 {row.values['Rate']}이다")
+        count = len(entries.get(group_id, []))
+        if count == 0:
+            errors.append(f"{where}: 그룹 {group_id}에 드롭 항목이 없다. 표 'DropEntry'에 항목을 하나 이상 둔다")
+        if method == "WEIGHTED":
+            if pick_count is None or pick_count < 1:
+                errors.append(f"{where}: WEIGHTED 그룹 {group_id}의 PickCount가 1 이상이어야 하는데 {'비어 있다' if pick_count is None else pick_count}")
+            elif count and pick_count > count:
+                errors.append(f"{where}: 그룹 {group_id}의 PickCount {pick_count}가 항목 수 {count}보다 크다")
+        elif pick_count is not None:
+            errors.append(f"{where}: {method} 그룹 {group_id}은 PickCount를 비워 둔다. 뽑는 개수는 WEIGHTED 그룹에만 쓴다")
+    return errors
+
+
+def drop_entry_matches_group_method(table: Table, data: DesignData) -> list[str]:
+    """독립 판정 그룹의 항목은 확률(Rate)만, 가중치 그룹의 항목은 가중치(Weight)만 채운다."""
+    groups = data.tables.get("DropGroup")
+    if groups is None:
+        return [f"{table.config.workbook}: 판정 방식을 확인할 표 'DropGroup'이 설정 파일에 없다"]
+    methods = {row.values["Id"]: row.values["Method"] for row in groups.rows}
+    errors = []
+    for row in table.rows:
+        where = locate(table.config.workbook, row.sheet, row.number)
+        method = methods[row.values["GroupId"]]
+        rate, weight = row.values["Rate"], row.values["Weight"]
+        filled = DROP_ENTRY_ODDS_COLUMN[method]
+        for column in DROP_ENTRY_ODDS_COLUMN.values():
+            if column == filled and row.values[column] is None:
+                errors.append(f"{where}: {method} 그룹의 항목은 {column}를 채운다")
+            if column != filled and row.values[column] is not None:
+                errors.append(f"{where}: {method} 그룹의 항목은 {column}를 비워 둔다")
+        if rate is not None and not is_probability(rate):
+            errors.append(f"{where}: Rate가 0 초과 1 이하여야 하는데 {rate}이다")
+        if weight is not None and weight < 1:
+            errors.append(f"{where}: Weight가 1 이상이어야 하는데 {weight}이다")
+    return errors
+
+
+def drop_group_used_by_monster(table: Table, data: DesignData) -> list[str]:
+    """어느 몬스터도 쓰지 않는 그룹은 판정되지 않는다. 작업 중일 수 있으므로 경고만 한다."""
+    monsters = data.tables.get("Monster")
+    used = {group_id for row in monsters.rows for group_id in row.values["DropGroups"]} if monsters is not None else set()
+    return [
+        f"{locate(table.config.workbook, row.sheet, row.number)}: 그룹 {row.values['Id']}을 쓰는 몬스터가 없다"
+        for row in table.rows
+        if row.values["Id"] not in used
+    ]
+
+
 TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Currency": [exactly_one_gold],
     "Item": [item_key_in_kind_range, item_max_stack_at_least_one, item_has_kind_row],
@@ -128,13 +218,22 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "ItemConsumeEffect": [references_item_of_kind("CONSUMABLE"), cooldown_not_negative],
     "Level": [levels_from_one_ending_at_max],
     "ClassLevelStat": [every_level_per_class],
+    "Monster": [range_ordered("MinExp", "MaxExp", 0), range_ordered("MinGold", "MaxGold", 0)],
+    "DropGroup": [drop_group_matches_method],
+    "DropEntry": [drop_entry_matches_group_method, range_ordered("MinCount", "MaxCount", 1)],
+}
+
+# 산출물을 막지 않는 규칙. 어기면 경고를 남기고 생성은 계속한다.
+TABLE_WARNINGS: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
+    "DropGroup": [drop_group_used_by_monster],
 }
 
 
-def check_rules(data: DesignData, errors: list[str]) -> None:
-    for name, rules in TABLE_RULES.items():
-        table = data.tables.get(name)
-        if table is None:
-            continue
-        for rule in rules:
-            errors.extend(rule(table, data))
+def check_rules(data: DesignData, errors: list[str], warnings: list[str]) -> None:
+    for found, table_rules in ((errors, TABLE_RULES), (warnings, TABLE_WARNINGS)):
+        for name, rules in table_rules.items():
+            table = data.tables.get(name)
+            if table is None:
+                continue
+            for rule in rules:
+                found.extend(rule(table, data))

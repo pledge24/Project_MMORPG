@@ -46,16 +46,16 @@ public:
     //~ 몬스터 표
 public:
     int64 GetTemplateId() { return _templateId; }
-    /** 부를 때마다 표의 최솟값과 최댓값 사이에서 새로 뽑는다. */
+    /** 기본 보상의 경험치. 부를 때마다 표의 최솟값과 최댓값 사이에서 새로 뽑는다. */
     int64 GetExpReward();
-    /** 부를 때마다 표의 최솟값과 최댓값 사이에서 새로 뽑는다. */
+    /** 기본 보상의 골드. 부를 때마다 표의 최솟값과 최댓값 사이에서 새로 뽑는다. */
     int64 GetGoldReward();
 
 private:
     void CacheMonsterData();
 
     /** 몬스터 표의 행 사본. */
-    MonsterTemplate _template;
+    DesignData::MonsterRow _template;
 
     /** _entityInfo 안의 monster_info를 가리킨다. 따로 지우지 않는다. */
     Protocol::MonsterInfo* _monsterInfo;

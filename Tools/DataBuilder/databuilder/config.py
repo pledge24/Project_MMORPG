@@ -36,6 +36,8 @@ class TableConfig:
     name: str
     workbook: str
     modules: tuple[str, ...]
+    # 부모 표 행의 이 필드 아래에 중첩한다. 중첩한 표는 파일과 키 → 행 맵을 따로 만들지 않는다.
+    nest: str | None = None
 
 
 @dataclass(frozen=True)
@@ -96,7 +98,10 @@ def load_config(path: Path, root: Path) -> Config:
         where = f"tables.{name}"
         if not TYPE_NAME.match(name):
             raise ConfigError(f"{path}: 표 이름 '{name}'은 PascalCase 식별자여야 한다")
-        tables[name] = TableConfig(name, require_str(section, "workbook", where), require_modules(section, where))
+        nest = section.get("nest")
+        if nest is not None and (not isinstance(nest, str) or not TYPE_NAME.match(nest)):
+            raise ConfigError(f"{path}: {where}의 'nest'는 PascalCase 식별자여야 한다")
+        tables[name] = TableConfig(name, require_str(section, "workbook", where), require_modules(section, where), nest)
 
     settings: dict[str, SettingConfig] = {}
     for name, section in raw.get("settings", {}).items():

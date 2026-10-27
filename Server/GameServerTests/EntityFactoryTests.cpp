@@ -37,9 +37,9 @@ class EntityFactoryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MonsterTemplate monster;
-        monster.templateId = MONSTER_TEMPLATE_ID;
-        monster.maxHp = MAX_HP;
+        DesignData::MonsterRow monster;
+        monster.Id = MONSTER_TEMPLATE_ID;
+        monster.MaxHp = MAX_HP;
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monster;

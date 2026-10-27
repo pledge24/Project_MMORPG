@@ -10,8 +10,8 @@ from __future__ import annotations
 import re
 
 from databuilder.column_types import ColumnType
-from databuilder.emit_json import VERSION_FILE, server_columns
-from databuilder.workbooks import Column, DesignData, Setting, Table, value_type
+from databuilder.emit_json import VERSION_FILE, nested_columns, server_columns
+from databuilder.workbooks import Column, DesignData, Setting, Table, nested_children, value_type
 
 HEADER_FILE = "DesignData.h"
 
@@ -99,6 +99,36 @@ DETAIL = r"""
             if (it == object.end())
                 throw FieldError{ format("'{}'가 없다", key) };
             return ReadValue<T>(*it, key);
+        }
+
+        /** 객체의 배열 필드를 원소마다 readRow로 읽는다. 중첩한 표의 행에 쓴다. 틀린 원소가 있으면 몇 번째인지 붙여 FieldError를 던진다. */
+        template<typename Row, typename ReadRow>
+        vector<Row> ReadRows(const Json& object, string_view key, ReadRow readRow)
+        {
+            auto it = object.find(key);
+            if (it == object.end())
+                throw FieldError{ format("'{}'가 없다", key) };
+            if (it->is_array() == false)
+                throw FieldError{ format("'{}'가 배열이 아니다: {}", key, it->dump()) };
+
+            vector<Row> rows;
+            for (size_t index = 0; index < it->size(); ++index)
+            {
+                try
+                {
+                    const Json& item = (*it)[index];
+                    if (item.is_object() == false)
+                        throw FieldError{ "객체가 아니다" };
+
+                    rows.push_back(readRow(item));
+                }
+                catch (const FieldError& error)
+                {
+                    throw FieldError{ format("'{}' {}번째 원소: {}", key, index + 1, error.cause) };
+                }
+            }
+
+            return rows;
         }
 
         /** 행 배열을 키 → 행의 맵으로 읽는다. 실패하면 "파일 N번째 행: 사유". */
@@ -221,8 +251,32 @@ def enum_lines(name: str, data: DesignData) -> list[str]:
     return lines
 
 
+def nested_table_lines(table: Table, data: DesignData) -> list[str]:
+    """중첩한 표는 행 구조체와 원소 하나를 읽는 함수만 만든다. 파일과 키 → 행 맵은 부모 표가 갖는다."""
+    columns = nested_columns(table)
+    parent = table.parent_column.type.target
+    lines = [f"    /** {table.name} 표({table.config.workbook})의 한 행. {parent} 행의 {table.config.nest} 아래에 키 순서로 실린다. */"]
+    lines += [f"    struct {table.name}Row", "    {"]
+    for column in columns:
+        lines += cpp_field(column, data)
+    lines += ["    };", ""]
+    lines += [
+        f"    /** {parent} 행의 {table.config.nest} 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */",
+        f"    inline {table.name}Row Read{table.name}Row(const Json& object)",
+        "    {",
+        f"        {table.name}Row row;",
+    ]
+    lines += [f'        row.{c.name} = Detail::Read<{cpp_field_type(c.type, data)}>(object, "{c.name}");' for c in columns]
+    lines += ["        return row;", "    }", ""]
+    return lines
+
+
 def table_lines(table: Table, data: DesignData) -> list[str]:
+    if table.config.nest:
+        return nested_table_lines(table, data)
+
     columns = server_columns(table.columns)
+    children = nested_children(table, data)
     keys = table.key_columns
     key_types = [cpp_value_type(key.type, data) for key in keys]
     key_type = key_types[0] if len(keys) == 1 else f"tuple<{', '.join(key_types)}>"
@@ -231,6 +285,8 @@ def table_lines(table: Table, data: DesignData) -> list[str]:
     lines = [f"    /** {table.name} 표({table.config.workbook})의 한 행. */", f"    struct {table.name}Row", "    {"]
     for column in columns:
         lines += cpp_field(column, data)
+    for child in children:
+        lines += [f"        /** {child.name} 표에서 이 행에 속한 행. 키 순서다. */", f"        vector<{child.name}Row> {child.config.nest};"]
     lines += ["    };", ""]
     key_names = ", ".join(key.name for key in keys)
     lines += [f"    /** {key_names} → 행. 키 순서로 돈다. */", f"    using {table.name}Table = map<{key_type}, {table.name}Row>;", ""]
@@ -243,6 +299,10 @@ def table_lines(table: Table, data: DesignData) -> list[str]:
         f"            {table.name}Row row;",
     ]
     lines += [f'            row.{c.name} = Detail::Read<{cpp_field_type(c.type, data)}>(object, "{c.name}");' for c in columns]
+    lines += [
+        f'            row.{child.config.nest} = Detail::ReadRows<{child.name}Row>(object, "{child.config.nest}", Read{child.name}Row);'
+        for child in children
+    ]
     lines += [
         "",
         f"            auto key = {key_expr};",
@@ -293,7 +353,8 @@ def module_header(tables: list[Table], settings: list[Setting], data: DesignData
         f'    constexpr string_view VERSION_FILE = "{VERSION_FILE}";',
     ]
     for table in tables:
-        lines.append(f'    constexpr string_view {screaming(table.name)}_FILE = "{table.name}.json";')
+        if not table.config.nest:
+            lines.append(f'    constexpr string_view {screaming(table.name)}_FILE = "{table.name}.json";')
     for setting in settings:
         lines.append(f'    constexpr string_view {screaming(setting.name)}_FILE = "{setting.name}.json";')
     lines.append("")
@@ -320,7 +381,8 @@ def module_header(tables: list[Table], settings: list[Setting], data: DesignData
 
     if tables:
         lines += ["    //~ 표", ""]
-        for table in tables:
+        # 부모 행 구조체가 중첩한 표의 행 구조체를 필드로 가지므로 중첩한 표를 먼저 선언한다.
+        for table in sorted(tables, key=lambda table: not table.config.nest):
             lines += table_lines(table, data)
     if settings:
         lines += ["    //~ 설정", ""]

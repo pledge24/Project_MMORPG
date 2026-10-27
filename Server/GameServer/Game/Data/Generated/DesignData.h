@@ -16,6 +16,8 @@ namespace DesignData
     constexpr string_view ITEM_CONSUME_EFFECT_FILE = "ItemConsumeEffect.json";
     constexpr string_view LEVEL_FILE = "Level.json";
     constexpr string_view CLASS_LEVEL_STAT_FILE = "ClassLevelStat.json";
+    constexpr string_view MONSTER_FILE = "Monster.json";
+    constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
 
     //~ 열거형
 
@@ -45,6 +47,28 @@ namespace DesignData
     {
         static const unordered_map<string_view, CurrencyType> VALUES = {
             { "GOLD", CurrencyType::GOLD },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
+
+    enum class DropMethod : int32
+    {
+        INDEPENDENT = 1,
+        WEIGHTED = 2,
+    };
+
+    /** 셀에 적는 값 이름(INDEPENDENT, WEIGHTED)을 DropMethod로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT DropMethod& value)
+    {
+        static const unordered_map<string_view, DropMethod> VALUES = {
+            { "INDEPENDENT", DropMethod::INDEPENDENT },
+            { "WEIGHTED", DropMethod::WEIGHTED },
         };
 
         auto it = VALUES.find(name);
@@ -174,6 +198,36 @@ namespace DesignData
             return ReadValue<T>(*it, key);
         }
 
+        /** 객체의 배열 필드를 원소마다 readRow로 읽는다. 중첩한 표의 행에 쓴다. 틀린 원소가 있으면 몇 번째인지 붙여 FieldError를 던진다. */
+        template<typename Row, typename ReadRow>
+        vector<Row> ReadRows(const Json& object, string_view key, ReadRow readRow)
+        {
+            auto it = object.find(key);
+            if (it == object.end())
+                throw FieldError{ format("'{}'가 없다", key) };
+            if (it->is_array() == false)
+                throw FieldError{ format("'{}'가 배열이 아니다: {}", key, it->dump()) };
+
+            vector<Row> rows;
+            for (size_t index = 0; index < it->size(); ++index)
+            {
+                try
+                {
+                    const Json& item = (*it)[index];
+                    if (item.is_object() == false)
+                        throw FieldError{ "객체가 아니다" };
+
+                    rows.push_back(readRow(item));
+                }
+                catch (const FieldError& error)
+                {
+                    throw FieldError{ format("'{}' {}번째 원소: {}", key, index + 1, error.cause) };
+                }
+            }
+
+            return rows;
+        }
+
         /** 행 배열을 키 → 행의 맵으로 읽는다. 실패하면 "파일 N번째 행: 사유". */
         template<typename Table, typename ReadRow>
         optional<string> ParseTable(string_view fileName, const Json& document, OUT Table& table, ReadRow readRow)
@@ -232,6 +286,33 @@ namespace DesignData
     }
 
     //~ 표
+
+    /** DropEntry 표(DropEntry.xlsx)의 한 행. DropGroup 행의 Entries 아래에 키 순서로 실린다. */
+    struct DropEntryRow
+    {
+        /** 나오는 아이템 */
+        int32 ItemId = 0;
+        /** INDEPENDENT 그룹에서 이 항목이 나올 확률. 0 초과 1 이하다. WEIGHTED 그룹은 비워 둔다 */
+        optional<float> Rate;
+        /** WEIGHTED 그룹에서 이 항목이 뽑힐 가중치. 1 이상이다. INDEPENDENT 그룹은 비워 둔다 */
+        optional<int32> Weight;
+        /** 나오는 수량의 최솟값. 1 이상이고 MaxCount보다 크지 않다 */
+        int32 MinCount = 0;
+        /** 나오는 수량의 최댓값 */
+        int32 MaxCount = 0;
+    };
+
+    /** DropGroup 행의 Entries 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
+    inline DropEntryRow ReadDropEntryRow(const Json& object)
+    {
+        DropEntryRow row;
+        row.ItemId = Detail::Read<int32>(object, "ItemId");
+        row.Rate = Detail::Read<optional<float>>(object, "Rate");
+        row.Weight = Detail::Read<optional<int32>>(object, "Weight");
+        row.MinCount = Detail::Read<int32>(object, "MinCount");
+        row.MaxCount = Detail::Read<int32>(object, "MaxCount");
+        return row;
+    }
 
     /** Currency 표(Currency.xlsx)의 한 행. */
     struct CurrencyRow
@@ -436,6 +517,100 @@ namespace DesignData
             row.MagicalAttack = Detail::Read<int32>(object, "MagicalAttack");
 
             auto key = tuple{ row.Class, row.Level };
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Monster 표(Monster.xlsx)의 한 행. */
+    struct MonsterRow
+    {
+        /** 몬스터 번호. 5000번대다 */
+        int32 Id = 0;
+        /** 최대 HP */
+        int32 MaxHp = 0;
+        /** 공격력 */
+        int32 BaseAttack = 0;
+        /** 이동 속도 */
+        float MovementSpeed = 0.f;
+        /** 처치하면 주는 경험치의 최솟값. 0 이상이고 MaxExp보다 크지 않다 */
+        int64 MinExp = 0;
+        /** 처치하면 주는 경험치의 최댓값 */
+        int64 MaxExp = 0;
+        /** 처치하면 주는 골드의 최솟값. 0 이상이고 MaxGold보다 크지 않다 */
+        int64 MinGold = 0;
+        /** 처치하면 주는 골드의 최댓값 */
+        int64 MaxGold = 0;
+        /** 공격 간격(초) */
+        float AttackInterval = 0.f;
+        /** 공격을 시도하는 거리 */
+        float TryAttackRange = 0.f;
+        /** 플레이어를 알아채는 거리 */
+        float DetectionRange = 0.f;
+        /** 스폰 위치에서 쫓아갈 수 있는 최대 거리 */
+        float ChasingMaxRange = 0.f;
+        /** 처치할 때 판정하는 드롭 그룹. ';'로 구분한다. 비어 있으면 드롭이 없다 */
+        vector<int32> DropGroups;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using MonsterTable = map<int32, MonsterRow>;
+
+    /** Monster.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseMonster(const Json& document, OUT MonsterTable& table)
+    {
+        return Detail::ParseTable(MONSTER_FILE, document, OUT table, [](const Json& object)
+        {
+            MonsterRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.MaxHp = Detail::Read<int32>(object, "MaxHp");
+            row.BaseAttack = Detail::Read<int32>(object, "BaseAttack");
+            row.MovementSpeed = Detail::Read<float>(object, "MovementSpeed");
+            row.MinExp = Detail::Read<int64>(object, "MinExp");
+            row.MaxExp = Detail::Read<int64>(object, "MaxExp");
+            row.MinGold = Detail::Read<int64>(object, "MinGold");
+            row.MaxGold = Detail::Read<int64>(object, "MaxGold");
+            row.AttackInterval = Detail::Read<float>(object, "AttackInterval");
+            row.TryAttackRange = Detail::Read<float>(object, "TryAttackRange");
+            row.DetectionRange = Detail::Read<float>(object, "DetectionRange");
+            row.ChasingMaxRange = Detail::Read<float>(object, "ChasingMaxRange");
+            row.DropGroups = Detail::Read<vector<int32>>(object, "DropGroups");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** DropGroup 표(DropGroup.xlsx)의 한 행. */
+    struct DropGroupRow
+    {
+        /** 드롭 그룹 번호. 몬스터의 DropGroups가 이 번호를 적는다 */
+        int32 Id = 0;
+        /** 판정 방식. INDEPENDENT는 항목마다 Rate로 따로 판정하고, WEIGHTED는 Weight에 비례해 PickCount개를 뽑는다 */
+        DropMethod Method = {};
+        /** 그룹이 판정에 들어갈 확률. 0 초과 1 이하다 */
+        float Rate = 0.f;
+        /** WEIGHTED 그룹이 뽑는 항목 수. 1 이상, 항목 수 이하다. INDEPENDENT 그룹은 비워 둔다 */
+        optional<int32> PickCount;
+        /** DropEntry 표에서 이 행에 속한 행. 키 순서다. */
+        vector<DropEntryRow> Entries;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using DropGroupTable = map<int32, DropGroupRow>;
+
+    /** DropGroup.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseDropGroup(const Json& document, OUT DropGroupTable& table)
+    {
+        return Detail::ParseTable(DROP_GROUP_FILE, document, OUT table, [](const Json& object)
+        {
+            DropGroupRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.Method = Detail::Read<DropMethod>(object, "Method");
+            row.Rate = Detail::Read<float>(object, "Rate");
+            row.PickCount = Detail::Read<optional<int32>>(object, "PickCount");
+            row.Entries = Detail::ReadRows<DropEntryRow>(object, "Entries", ReadDropEntryRow);
+
+            auto key = row.Id;
             return pair{ std::move(key), std::move(row) };
         });
     }

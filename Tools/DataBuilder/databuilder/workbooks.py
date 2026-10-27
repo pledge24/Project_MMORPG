@@ -66,6 +66,10 @@ class Table:
     def key_columns(self) -> list[Column]:
         return [column for column in self.columns if column.type.is_key]
 
+    @property
+    def parent_column(self) -> Column | None:
+        return next((column for column in self.columns if column.type.kind == "parent"), None)
+
 
 @dataclass
 class Setting:
@@ -344,7 +348,42 @@ def read_design_data(config: Config, enums: dict[str, EnumDef], errors: list[str
 
     check_keys(data, errors)
     check_references(data, errors)
+    check_nesting(data, errors)
     return data
+
+
+def nested_children(table: Table, data: DesignData) -> list[Table]:
+    """부모 표 행 아래에 중첩하는 표. 설정 파일의 순서다."""
+    return [
+        child
+        for child in data.tables.values()
+        if child.config.nest and child.parent_column is not None and child.parent_column.type.target == table.name
+    ]
+
+
+def check_nesting(data: DesignData, errors: list[str]) -> None:
+    """중첩은 부모 표 참조로 정하므로 그 열이 있어야 하고, 부모 표와 같은 모듈에 가야 한다."""
+    nests: dict[tuple[str, str], str] = {}
+    for table in data.tables.values():
+        nest = table.config.nest
+        if not nest:
+            continue
+        workbook = table.config.workbook
+        parent_column = table.parent_column
+        if parent_column is None:
+            errors.append(f"{workbook}: 부모 표 아래에 중첩하려면(nest = \"{nest}\") 부모 표 참조 열이 있어야 한다")
+            continue
+        parent = data.tables.get(parent_column.type.target)
+        if parent is None:
+            continue  # 열 타입 오류로 이미 걸렸다.
+        if parent.config.nest:
+            errors.append(f"{workbook}: 부모 표 '{parent.name}'도 중첩된 표다. 중첩은 한 단계까지다")
+        if any(column.name == nest for column in parent.columns) or (parent.name, nest) in nests:
+            errors.append(f"{workbook}: 중첩 필드 이름 '{nest}'가 표 '{parent.name}'의 열이나 다른 중첩 필드와 겹친다")
+        nests[(parent.name, nest)] = table.name
+        # 부모 행 구조체가 자식 행 구조체를 필드로 가지므로 한쪽만 가는 모듈의 헤더는 컴파일되지 않는다.
+        for module in sorted(set(table.config.modules) ^ set(parent.config.modules)):
+            errors.append(f"{workbook}: 모듈 '{module}'이 표 '{table.name}'과 부모 표 '{parent.name}' 중 하나만 읽는다. 중첩한 표는 부모 표와 모듈이 같아야 한다")
 
 
 def check_keys(data: DesignData, errors: list[str]) -> None:

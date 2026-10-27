@@ -31,7 +31,8 @@ public:
     static const DesignData::ItemRow* FindItem(int32 templateId);
     static const DesignData::ItemEquipStatRow* FindItemEquipStat(int32 templateId);
     static const DesignData::ItemConsumeEffectRow* FindItemConsumeEffect(int32 templateId);
-    static const MonsterTemplate* FindMonster(int32 templateId);
+    static const DesignData::MonsterRow* FindMonster(int32 templateId);
+    static const DesignData::DropGroupRow* FindDropGroup(int32 dropGroupId);
     static const MapTemplate* FindMap(int32 templateId);
     /** 그 직업의 그 레벨 능력치. 표에 없는 직업이나 레벨이면 nullptr. */
     static const DesignData::ClassLevelStatRow* FindClassLevelStat(int32 classId, int32 level);

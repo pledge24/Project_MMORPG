@@ -3,6 +3,7 @@
 | 표기 | 뜻 |
 | --- | --- |
 | `int32` · `int64` · `float` · `string` · `bool` | 값 하나 |
+| `int32?` · `int64?` · `float?` | 수 하나, 또는 빈 셀 |
 | `enum:<열거형>` · `enum[]:<열거형>` | 열거형 값 하나, 목록 |
 | `ref:<표>` · `ref?:<표>` · `ref[]:<표>` | 다른 표의 키. 필수, 선택(빈 셀 허용), 목록 |
 | `parent:<표>` | 이 행이 속한 부모 표의 키. 필수다 |
@@ -21,6 +22,8 @@ from databuilder.enums import EnumDef
 
 SCALAR_KINDS = ("int32", "int64", "float", "string", "bool")
 KEYABLE_KINDS = ("int32", "int64", "string", "enum", "ref", "parent")
+# 빈 셀을 허용하는 값. 다른 열의 값에 따라 채울지가 정해지는 수(드롭 항목의 확률과 가중치)에 쓴다.
+OPTIONAL_KINDS = ("int32", "int64", "float")
 INT_RANGES = {"int32": (-(2**31), 2**31 - 1), "int64": (-(2**63), 2**63 - 1)}
 INTEGER_TEXT = re.compile(r"^-?\d+$")
 
@@ -57,13 +60,15 @@ def parse_type(text: Any) -> ColumnType:
 
     if rest in SCALAR_KINDS:
         column_type = ColumnType(rest, is_key=is_key)
+    elif rest.endswith("?") and rest[:-1] in OPTIONAL_KINDS:
+        column_type = ColumnType(rest[:-1], is_key=is_key, is_optional=True)
     else:
         match = TYPE_PATTERN.match(rest)
         if match is None:
             raise CellError(f"모르는 타입 '{text}'")
         kind, modifier = match.group("kind"), match.group("mod")
         if modifier == "?" and kind != "ref":
-            raise CellError(f"'?'는 ref에만 붙는다: '{text}'")
+            raise CellError(f"'?'는 ref와 수에만 붙는다: '{text}'")
         if modifier == "[]" and kind == "parent":
             raise CellError(f"부모 표 참조는 목록이 될 수 없다: '{text}'")
         column_type = ColumnType(kind, match.group("target"), is_key, modifier == "[]", modifier == "?")
