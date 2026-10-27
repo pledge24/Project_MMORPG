@@ -1,0 +1,18 @@
+# DataBuilder 설정. 어느 워크북을 읽고, 어느 서버 모듈이 그 표를 읽는지 정한다.
+# 경로는 저장소 루트 기준이다. 규칙은 docs/codegen.md 「DataBuilder」에 있다.
+
+source_dir = "DesignData"
+proto_dir = "Protocol/Schema"
+
+# 서버 모듈마다 산출물 폴더가 하나다. DataBuilder가 실행마다 비우고 다시 쓴다.
+[modules.game]
+server_dir = "Server/GameServer/Game/Data/Generated"
+
+# 표. 워크북 하나가 표 하나다.
+[tables.Currency]
+workbook = "Currency.xlsx"
+modules = ["game"]
+
+# .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
+[enums.CurrencyType]
+GOLD = 1

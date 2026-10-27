@@ -3,8 +3,6 @@ setlocal
 pushd %~dp0
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Warrior_Level_Data.xlsx --s_output=S_Warrior_Level_Data.json --c_output=C_Warrior_Level_Data.json
 DEL /Q C_Warrior_Level_Data.json
-..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Currency.xlsx --s_output=S_Currency.json --c_output=C_Currency.json
-DEL /Q C_Currency.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Initial_Progress.xlsx --s_output=S_Initial_Progress.json --c_output=C_Initial_Progress.json
 DEL /Q C_Initial_Progress.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Inventory_Section.xlsx --s_output=S_Inventory_Section.json --c_output=C_Inventory_Section.json
@@ -25,7 +23,6 @@ MOVE /Y S_Monster.json				    "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Item.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Map.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Quest.json				    "../Server/GameServer/Game/Data/Json"
-MOVE /Y S_Currency.json					"../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Initial_Progress.json		"../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Inventory_Section.json		"../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Quick_Slot.json			"../Server/GameServer/Game/Data/Json"

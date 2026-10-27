@@ -100,9 +100,10 @@ namespace
         };
     }
 
-    Json MakeCurrency(int32 templateId, const char* currencyType)
+    /** DataBuilder가 생성하는 재화 표의 한 행. */
+    Json MakeCurrency(int32 id, const char* type)
     {
-        return Json{{"templateId", templateId}, {"currencyName", "골드"}, {"currencyType", currencyType}};
+        return Json{{"Id", id}, {"Name", "골드"}, {"Type", type}};
     }
 
     Json MakeInitialProgress()
@@ -222,7 +223,7 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
 
     EXPECT_EQ(tables.goldCurrencyId, GOLD_ID) << "골드는 재화 종류가 GOLD인 재화다";
     ASSERT_TRUE(tables.currencies.contains(GOLD_ID));
-    EXPECT_EQ(tables.currencies.at(GOLD_ID).currencyType, CurrencyType::GOLD);
+    EXPECT_EQ(tables.currencies.at(GOLD_ID).Type, DesignData::CurrencyType::GOLD);
 
     const InitialProgressTemplate& initial = tables.initialProgress;
     EXPECT_EQ(initial.startMapId, 1111);
@@ -384,24 +385,23 @@ TEST(GamedataParserTest, UnknownMonsterInMapIsRejected)
     ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "templateId 20", "5999"});
 }
 
-// 서버는 재화 종류로 골드를 찾는다. 골드가 없거나 둘이면 어느 행이 골드인지 정할 수 없다.
-TEST(GamedataParserTest, ExactlyOneGoldCurrencyIsRequired)
+// 서버는 재화 종류로 골드를 찾는다. 골드가 없으면 DB에 쓸 재화 번호가 없다.
+// GOLD인 행이 둘 이상인지는 DataBuilder가 검사한다.
+TEST(GamedataParserTest, MissingGoldCurrencyIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
     documents.currencies = Json::array();
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "GOLD"});
 
-    documents = MakeValidDocuments();
-    documents.currencies.push_back(MakeCurrency(2, "GOLD"));
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "GOLD"});
+    ExpectMentions(ErrorOf(documents), {DesignData::CURRENCY_FILE, "GOLD"});
 }
 
+// 생성된 역직렬화가 형식을 확인한다. 생성된 열거형에 없는 값은 읽지 않는다.
 TEST(GamedataParserTest, UnknownCurrencyTypeIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
     documents.currencies.push_back(MakeCurrency(2, "HONOR"));
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "2번째 행", "currencyType", "HONOR"});
+    ExpectMentions(ErrorOf(documents), {DesignData::CURRENCY_FILE, "2번째 행", "Type", "HONOR"});
 }
 
 TEST(GamedataParserTest, DuplicateCurrencyIdIsRejected)
@@ -409,7 +409,7 @@ TEST(GamedataParserTest, DuplicateCurrencyIdIsRejected)
     GamedataDocuments documents = MakeValidDocuments();
     documents.currencies.push_back(MakeCurrency(GOLD_ID, "GOLD"));
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::CURRENCIES, "2번째 행", "중복"});
+    ExpectMentions(ErrorOf(documents), {DesignData::CURRENCY_FILE, "2번째 행", "키가 겹친다"});
 }
 
 // 시작 맵은 맵 표의 mapId다. 룸 번호(templateId)를 적으면 새 캐릭터가 들어갈 맵이 없다.
@@ -515,14 +515,16 @@ TEST(GamedataParserTest, FailedLoadKeepsPreviousTables)
 TEST(GamedataParserTest, RepositoryGamedataPasses)
 {
     // 테스트 소스 위치에서 GameServer의 기획표 폴더를 찾는다. 작업 디렉터리와 무관하게 돈다.
-    const filesystem::path dir = filesystem::path(__FILE__).parent_path() / ".." / "GameServer" / "Game" / "Data" / "Json";
+    const filesystem::path dataDir = filesystem::path(__FILE__).parent_path() / ".." / "GameServer" / "Game" / "Data";
+    const filesystem::path dir = dataDir / "Json";
+    const filesystem::path generatedDir = dataDir / "Generated";
 
     GamedataDocuments documents;
     documents.warriorLevels = ReadJsonFile(dir / GamedataFile::WARRIOR_LEVELS);
     documents.items = ReadJsonFile(dir / GamedataFile::ITEMS);
     documents.maps = ReadJsonFile(dir / GamedataFile::MAPS);
     documents.monsters = ReadJsonFile(dir / GamedataFile::MONSTERS);
-    documents.currencies = ReadJsonFile(dir / GamedataFile::CURRENCIES);
+    documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(dir / GamedataFile::INITIAL_PROGRESS);
     documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
     documents.quickSlots = ReadJsonFile(dir / GamedataFile::QUICK_SLOTS);
@@ -540,4 +542,5 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     for (int32 itemType : { Protocol::ITEM_TYPE_GEAR, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::ITEM_TYPE_MISCELLANEOUS })
         EXPECT_EQ(tables.inventorySlotCounts.at(itemType), 32) << "클라이언트 UI가 구역마다 32칸을 고정으로 쓴다";
     EXPECT_EQ(tables.quickSlotCount, 9) << "퀵슬롯 키는 1~9다";
+    EXPECT_EQ(tables.goldCurrencyId, 1) << "DB의 CharacterCurrency 행이 골드를 재화 번호 1로 가리킨다";
 }

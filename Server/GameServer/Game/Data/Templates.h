@@ -1,6 +1,7 @@
 #pragma once
 #include "Protocol/Common.pb.h"
 #include "Protocol/Item.pb.h"
+#include "Game/Data/Generated/DesignData.h"
 
 /*--------------------------------------------------------------
     기획 데이터 템플릿
@@ -150,20 +151,6 @@ struct MapTemplate
     int32 maxMonsterCount = 0;
 };
 
-/** 재화 표의 재화 종류. 서버가 종류로 찾아 쓰는 재화다. 기획 원본은 열거자 이름(GOLD)을 적는다. */
-enum class CurrencyType : uint8
-{
-    GOLD = 1,
-};
-
-/** 재화 표(S_Currency.json)의 한 행. */
-struct CurrencyTemplate
-{
-    /** DB가 재화를 가리키는 번호(CurrencyId)로 쓴다. */
-    int32 templateId = 0;
-    CurrencyType currencyType = CurrencyType::GOLD;
-};
-
 /** 초기 진행 표(S_Initial_Progress.json)의 유일한 행. 새 캐릭터가 첫 게임 입장에서 갖는 값이다. */
 struct InitialProgressTemplate
 {
@@ -187,8 +174,8 @@ struct GamedataTables
     /** 사망한 플레이어가 돌아가는 마을 룸. 리스폰 지점이 있는 유일한 맵이다. */
     int32 townRoomId = 0;
 
-    unordered_map<int32, CurrencyTemplate> currencies;
-    /** 재화 종류가 GOLD인 유일한 재화. */
+    DesignData::CurrencyTable currencies;
+    /** 재화 종류가 GOLD인 재화. DataBuilder가 하나뿐임을 검사한다. */
     int32 goldCurrencyId = 0;
     InitialProgressTemplate initialProgress;
     /** 아이템 종류(Protocol::ItemType) → 인벤토리에서 그 종류 구역의 칸 수. NONE을 뺀 모든 종류가 있다. */

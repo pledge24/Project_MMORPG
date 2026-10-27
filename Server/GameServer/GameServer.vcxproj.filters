@@ -53,6 +53,9 @@
     <Filter Include="Game\Data\Json">
       <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Data\Generated">
+      <UniqueIdentifier>{f82dec03-c22b-4774-8d5f-d43ea7f3e958}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
@@ -454,6 +457,9 @@
     <ClInclude Include="Game\Data\Templates.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Data\Generated\DesignData.h">
+      <Filter>Game\Data\Generated</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Room\Room.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
@@ -515,6 +521,12 @@
     </None>
     <None Include="Game\Data\Json\S_Warrior_Level_Data.json">
       <Filter>Game\Data\Json</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Currency.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\DataVersion.json">
+      <Filter>Game\Data\Generated</Filter>
     </None>
   </ItemGroup>
 </Project>
