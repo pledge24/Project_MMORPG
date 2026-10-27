@@ -1,0 +1,5 @@
+[
+{"ItemId":2000,"HpRestoreRatio":0.3,"MpRestoreRatio":0.0,"CooldownMs":10000},
+{"ItemId":2001,"HpRestoreRatio":0.0,"MpRestoreRatio":0.3,"CooldownMs":10000},
+{"ItemId":2002,"HpRestoreRatio":0.4,"MpRestoreRatio":0.4,"CooldownMs":10000}
+]

@@ -13,6 +13,19 @@ server_dir = "Server/GameServer/Game/Data/Generated"
 workbook = "Currency.xlsx"
 modules = ["game"]
 
+# 아이템의 공통 열. 종류별 열은 아래 두 표에 있고, 그 종류의 아이템만 참조한다.
+[tables.Item]
+workbook = "Item.xlsx"
+modules = ["game"]
+
+[tables.ItemEquipStat]
+workbook = "ItemEquipStat.xlsx"
+modules = ["game"]
+
+[tables.ItemConsumeEffect]
+workbook = "ItemConsumeEffect.xlsx"
+modules = ["game"]
+
 # .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
 [enums.CurrencyType]
 GOLD = 1

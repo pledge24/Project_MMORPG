@@ -4,37 +4,6 @@
 
 namespace JsonProperty
 {
-    namespace Item
-    {
-        constexpr std::string_view TemplateId = "templateId";
-        constexpr std::string_view ItemName = "itemName";
-        constexpr std::string_view ItemType = "itemType";
-        constexpr std::string_view ItemSubtype = "itemSubtype";
-        constexpr std::string_view LevelRequirement = "levelRequirement";
-        constexpr std::string_view ClassRequirement = "classRequirement";
-        constexpr std::string_view BuyPrice = "buyPrice";
-        constexpr std::string_view SellPrice = "sellPrice";
-        constexpr std::string_view Sellable = "sellable";
-        constexpr std::string_view Stackable = "stackable";
-        constexpr std::string_view MaxStack = "maxStack";
-        constexpr std::string_view Cooldown = "cooldown";
-        constexpr std::string_view PhysicalAttack = "physicalAttack";
-        constexpr std::string_view MagicalAttack = "magicalAttack";
-        constexpr std::string_view Hp = "hp";
-        constexpr std::string_view Mp = "mp";
-        constexpr std::string_view HpRegenerate = "hpRegenerate";
-        constexpr std::string_view MpRegenerate = "mpRegenerate";
-        constexpr std::string_view HpRestore = "hpRestore";
-        constexpr std::string_view MpRestore = "mpRestore";
-
-        constexpr std::string_view GearSubtype_Helmet = "helmet";
-        constexpr std::string_view GearSubtype_Chest = "chest";
-        constexpr std::string_view GearSubtype_Legs = "legs";
-        constexpr std::string_view GearSubtype_Arms = "arms";
-        constexpr std::string_view GearSubtype_Boots = "boots";
-        constexpr std::string_view GearSubtype_Sword = "sword";
-    }
-
     namespace Monster
     {
         constexpr std::string_view TemplateId = "templateId";

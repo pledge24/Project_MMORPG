@@ -22,6 +22,7 @@ enum ItemType
     ITEM_TYPE_NONE = 0;
     ITEM_TYPE_GEAR = 1;
     ITEM_TYPE_CONSUMABLE = 2;
+    ITEM_TYPE_MISCELLANEOUS = 3;
 }
 
 enum CharacterClass

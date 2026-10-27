@@ -30,23 +30,28 @@ EquipmentComponent::~EquipmentComponent()
 ItemOutcome<Protocol::GearPart> EquipmentComponent::Equip(const ItemInstance& item)
 {
     // 칸에 든 아이템은 표에 있는 아이템이므로, 표에 없으면 기획 데이터가 바뀐 것이다.
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(item.templateId);
+    if (itemRow == nullptr)
         return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
-    if (itemTemplate->gearType.has_value() == false)
+    if (itemRow->Type != Protocol::ITEM_TYPE_GEAR)
         return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
+
+    // 장비마다 장비 능력치 행이 있다(DataBuilder가 검사한다). 없으면 기획 데이터가 바뀐 것이다.
+    const DesignData::ItemEquipStatRow* equipStat = Gamedata::FindItemEquipStat(item.templateId);
+    if (equipStat == nullptr)
+        return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     PlayerRef owner = static_pointer_cast<Player>(_owner.lock());
     if (owner == nullptr)
         return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     // 착용 조건은 클라이언트도 보지만, 판정은 서버가 한다.
-    if (MeetsRequirement(*itemTemplate, owner->GetPlayerInfo().level(), owner->GetCharacterClass()) == false)
+    if (MeetsRequirement(*itemRow, owner->GetPlayerInfo().level(), owner->GetCharacterClass()) == false)
         return ItemRejection{ Protocol::ITEM_RESULT_REQUIREMENT_NOT_MET };
 
     // 장착 중인 부위에 다른 장비를 겹쳐 입지 않는다.
-    const Protocol::GearPart gearPart = itemTemplate->gearType.value();
+    const Protocol::GearPart gearPart = equipStat->Part;
     if (_equipped.Find(gearPart) != nullptr)
         return ItemRejection{ Protocol::ITEM_RESULT_GEAR_PART_OCCUPIED };
 
@@ -58,12 +63,12 @@ ItemOutcome<Protocol::GearPart> EquipmentComponent::Equip(const ItemInstance& it
 
 bool EquipmentComponent::LoadEquipped(const ItemInstance& item, int32 gearType)
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
-    if (itemTemplate == nullptr || itemTemplate->gearType.has_value() == false)
+    const DesignData::ItemEquipStatRow* equipStat = Gamedata::FindItemEquipStat(item.templateId);
+    if (equipStat == nullptr)
         return false;
 
     // DB의 부위를 믿지 않는다. 무기가 투구 칸에 든 채로 불러오면 그대로 저장된다.
-    if (itemTemplate->gearType.value() != gearType)
+    if (equipStat->Part != gearType)
         return false;
 
     return _equipped.Put(gearType, item);
@@ -84,11 +89,11 @@ CombatStats EquipmentComponent::SumStatDelta() const
             continue;
 
         // 장비 칸에는 표에 있는 아이템만 들어간다(Equip과 LoadEquipped가 거른다).
-        const ItemTemplate* itemTemplate = Gamedata::FindItem(item->templateId);
-        if (itemTemplate == nullptr)
+        const DesignData::ItemEquipStatRow* equipStat = Gamedata::FindItemEquipStat(item->templateId);
+        if (equipStat == nullptr)
             continue;
 
-        sum += CombatStats{ itemTemplate->hp, itemTemplate->mp, itemTemplate->physicalAttack, itemTemplate->magicalAttack };
+        sum += CombatStats{ equipStat->Hp, equipStat->Mp, equipStat->PhysicalAttack, equipStat->MagicalAttack };
     }
 
     return sum;
@@ -103,12 +108,14 @@ void EquipmentComponent::CollectItems(OUT vector<PlacedItem>& items) const
     }
 }
 
-bool EquipmentComponent::MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass)
+bool EquipmentComponent::MeetsRequirement(const DesignData::ItemRow& itemRow, int32 level, Protocol::CharacterClass characterClass)
 {
-    if (level < itemTemplate.levelRequirement)
+    if (level < itemRow.LevelRequirement)
         return false;
 
-    if (itemTemplate.classRequirement.has_value() && itemTemplate.classRequirement.value() != characterClass)
+    // 직업 목록이 비어 있으면 모든 직업이 입는다.
+    const vector<Protocol::CharacterClass>& allowedClasses = itemRow.AllowedClasses;
+    if (allowedClasses.empty() == false && ranges::find(allowedClasses, characterClass) == allowedClasses.end())
         return false;
 
     return true;

@@ -18,7 +18,7 @@ TARGETS = ["both", "both", "server", "client", "none"]
 
 class OutputTest(DesignDataCase):
     def add_items(self, *rows) -> None:
-        self.add_table("Item", sheet(NAMES, TYPES, TARGETS, *rows))
+        self.add_table("Thing", sheet(NAMES, TYPES, TARGETS, *rows))
 
     def run_builder(self) -> int:
         with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
@@ -27,12 +27,12 @@ class OutputTest(DesignDataCase):
     def test_one_row_per_line_sorted_by_key_in_column_order(self):
         self.add_items(["방패", 2, 50, "I_Shield", "메모"], ["검", 1, 100, "I_Sword", None])
 
-        self.assertEqual(self.output("Item.json"), '[\n{"Name":"검","Id":1,"Price":100},\n{"Name":"방패","Id":2,"Price":50}\n]\n')
+        self.assertEqual(self.output("Thing.json"), '[\n{"Name":"검","Id":1,"Price":100},\n{"Name":"방패","Id":2,"Price":50}\n]\n')
 
     def test_server_output_drops_client_and_none_columns(self):
         self.add_items(["검", 1, 100, "I_Sword", "메모"])
 
-        row = json.loads(self.output("Item.json"))[0]
+        row = json.loads(self.output("Thing.json"))[0]
         self.assertEqual(list(row), ["Name", "Id", "Price"])
 
     def test_same_source_gives_same_bytes(self):
@@ -43,15 +43,15 @@ class OutputTest(DesignDataCase):
         self.assertEqual(self.run_builder(), 0)
         second = {path.name: path.read_bytes() for path in self.out_dir.iterdir()}
         self.assertEqual(first, second)
-        self.assertNotIn(b"\r\n", first["Item.json"], "줄바꿈은 LF로 고정한다")
+        self.assertNotIn(b"\r\n", first["Thing.json"], "줄바꿈은 LF로 고정한다")
 
     def test_changing_one_value_changes_one_line(self):
         rows = [["검", 1, 100, "I", None], ["방패", 2, 50, "I", None], ["물약", 3, 10, "I", None]]
         self.add_items(*rows)
-        before = self.output("Item.json")
+        before = self.output("Thing.json")
         rows[1][2] = 60
         self.add_items(*rows)
-        after = self.output("Item.json")
+        after = self.output("Thing.json")
 
         changed = [line for line in difflib.ndiff(before.splitlines(), after.splitlines()) if line[:1] in "+-"]
         self.assertEqual(changed, ['- {"Name":"방패","Id":2,"Price":50},', '+ {"Name":"방패","Id":2,"Price":60},'])
@@ -73,7 +73,7 @@ class OutputTest(DesignDataCase):
 
         self.assertEqual(self.run_builder(), 0)
 
-        self.assertEqual(sorted(path.name for path in self.out_dir.iterdir()), ["DataVersion.json", "DesignData.h", "Item.json"])
+        self.assertEqual(sorted(path.name for path in self.out_dir.iterdir()), ["DataVersion.json", "DesignData.h", "Thing.json"])
 
     def test_output_folder_must_be_named_generated(self):
         self.add_items(["검", 1, 100, "I", None])
@@ -90,7 +90,7 @@ class OutputTest(DesignDataCase):
         self.assertRegex(version, r"^[0-9a-f]{16}$")
         self.assertEqual(json.loads(self.output("DataVersion.json")), {"Version": version})
 
-        self.add_table("Item", sheet(NAMES, TYPES, TARGETS, ["검", 1, 100, "I", None], descriptions=["이름", "번호", "가격", "아이콘", "메모"]))
+        self.add_table("Thing", sheet(NAMES, TYPES, TARGETS, ["검", 1, 100, "I", None], descriptions=["이름", "번호", "가격", "아이콘", "메모"]))
         self.assertEqual(self.build_ok().version, version, "설명은 산출물을 바꾸지 않는다")
 
         self.add_items(["검", 1, 100, "I", "메모"])

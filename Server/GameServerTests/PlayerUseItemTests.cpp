@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -28,16 +29,12 @@ namespace
     constexpr int32 COOLDOWN_SECONDS = 10;
     constexpr uint64 NOW_MS = 100'000;
 
-    ItemTemplate MakePotion(int32 templateId, double hpRestore, double mpRestore)
+    void AddPotion(GamedataTables& tables, int32 templateId, float hpRestore, float mpRestore)
     {
-        ItemTemplate potion;
-        potion.templateId = templateId;
-        potion.itemType = Protocol::ITEM_TYPE_CONSUMABLE;
-        potion.maxStack = 10;
-        potion.cooldownMs = COOLDOWN_SECONDS * 1000;
-        potion.hpRestoreRatio = hpRestore;
-        potion.mpRestoreRatio = mpRestore;
-        return potion;
+        DesignData::ItemConsumeEffectRow& effect = TestItemTables::AddConsumable(tables, templateId, 10);
+        effect.CooldownMs = COOLDOWN_SECONDS * 1000;
+        effect.HpRestoreRatio = hpRestore;
+        effect.MpRestoreRatio = mpRestore;
     }
 }
 
@@ -46,16 +43,11 @@ class PlayerUseItemTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        tables.items[HP_POTION_TEMPLATE_ID] = MakePotion(HP_POTION_TEMPLATE_ID, 0.3, 0);
-        tables.items[MP_POTION_TEMPLATE_ID] = MakePotion(MP_POTION_TEMPLATE_ID, 0, 0.3);
-        tables.items[MIX_POTION_TEMPLATE_ID] = MakePotion(MIX_POTION_TEMPLATE_ID, 0.4, 0.4);
+        AddPotion(tables, HP_POTION_TEMPLATE_ID, 0.3f, 0.f);
+        AddPotion(tables, MP_POTION_TEMPLATE_ID, 0.f, 0.3f);
+        AddPotion(tables, MIX_POTION_TEMPLATE_ID, 0.4f, 0.4f);
 
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.hpRestoreRatio = 1.0;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(tables);
 
@@ -191,6 +183,7 @@ TEST_F(PlayerUseItemTest, UnknownTemplateIsRejected)
     ItemSlotRequest slot = AddAndGetSlot(HP_POTION_TEMPLATE_ID, 1);
     // 데이터에서 빠진 아이템이 인벤토리에 남아 있다
     tables.items.erase(HP_POTION_TEMPLATE_ID);
+    tables.itemConsumeEffects.erase(HP_POTION_TEMPLATE_ID);
     Gamedata::Install(tables);
 
     auto result = player->ProcessUseItem(slot, NOW_MS);

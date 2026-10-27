@@ -18,38 +18,6 @@ struct TemplatePos
     float z = 0.f;
 };
 
-/** 아이템 표(S_Item.json)의 한 행. */
-struct ItemTemplate
-{
-    int32 templateId = 0;
-    Protocol::ItemType itemType = Protocol::ITEM_TYPE_NONE;
-    /** 착용 부위. 장비만 값이 있다. */
-    optional<Protocol::GearPart> gearType;
-
-    //~ 착용 조건. 장착할 때 서버가 판정한다.
-    int32 levelRequirement = 0;
-    /** 비어 있으면 모든 직업이 쓴다. 기획표의 "all"이다. */
-    optional<Protocol::CharacterClass> classRequirement;
-
-    int64 buyPrice = 0;
-    int64 sellPrice = 0;
-    bool sellable = false;
-    /** 1 이상이다. */
-    int32 maxStack = 1;
-    /** 같은 템플릿을 다시 쓰기까지의 대기(ms). 0이면 대기가 없다. */
-    uint64 cooldownMs = 0;
-
-    //~ 장비가 올려 주는 스탯. 표에 없으면 0이다.
-    int32 hp = 0;
-    int32 mp = 0;
-    int32 physicalAttack = 0;
-    int32 magicalAttack = 0;
-
-    //~ 소모품이 회복하는 비율(최대치 기준). 표에 없으면 0이다.
-    double hpRestoreRatio = 0.0;
-    double mpRestoreRatio = 0.0;
-};
-
 /** 몬스터 표(S_Monster.json)의 한 행. 보상의 최솟값은 최댓값보다 크지 않다. */
 struct MonsterTemplate
 {
@@ -165,7 +133,11 @@ struct InitialProgressTemplate
 /** Gamedata에 한 번에 설치하는 기획 데이터 표 전체. */
 struct GamedataTables
 {
-    unordered_map<int32, ItemTemplate> items;
+    DesignData::ItemTable items;
+    /** 장비 아이템의 착용 부위와 스탯. 장비마다 행이 하나다(DataBuilder가 검사한다). */
+    DesignData::ItemEquipStatTable itemEquipStats;
+    /** 소모품의 사용 효과. 소모품마다 행이 하나다(DataBuilder가 검사한다). */
+    DesignData::ItemConsumeEffectTable itemConsumeEffects;
     unordered_map<int32, MonsterTemplate> monsters;
     /** 룸을 번호 순서로 만들도록 정렬된 맵을 쓴다. */
     map<int32, MapTemplate> maps;

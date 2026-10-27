@@ -8,6 +8,7 @@
 #include "Game/Equipment/EquipmentComponent.h"
 #include "Game/Room/Room.h"
 #include "DB/ItemRows.h"
+#include "TestItemTables.h"
 
 /*--------------------------------------------------------------
     게임 입장 테스트
@@ -76,17 +77,6 @@ class GameEntryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.physicalAttack = SWORD_ATTACK;
-
-        ItemTemplate potion;
-        potion.templateId = POTION_TEMPLATE_ID;
-        potion.itemType = Protocol::ITEM_TYPE_CONSUMABLE;
-        potion.maxStack = 99;
-
         LevelTemplate level1;
         level1.level = 1;
         level1.maxHp = MAX_HP;
@@ -100,8 +90,8 @@ protected:
         level2.expRequirement = 0;
 
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.items[POTION_TEMPLATE_ID] = potion;
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON).PhysicalAttack = SWORD_ATTACK;
+        TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
         tables.inventorySlotCounts = {
             { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },

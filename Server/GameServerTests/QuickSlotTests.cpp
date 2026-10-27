@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/QuickSlots/QuickSlotComponent.h"
@@ -27,17 +28,9 @@ namespace
     constexpr int32 COOLDOWN_MS = 10'000;
     constexpr uint64 NOW_MS = 100'000;
 
-    ItemTemplate MakeItem(int32 templateId, Protocol::ItemType itemType)
+    void AddPotion(GamedataTables& tables, int32 templateId)
     {
-        ItemTemplate item;
-        item.templateId = templateId;
-        item.itemType = itemType;
-        item.maxStack = 99;
-        if (itemType == Protocol::ITEM_TYPE_GEAR)
-            item.gearType = Protocol::GEAR_PART_WEAPON;
-        if (itemType == Protocol::ITEM_TYPE_CONSUMABLE)
-            item.cooldownMs = COOLDOWN_MS;
-        return item;
+        TestItemTables::AddConsumable(tables, templateId, 99).CooldownMs = COOLDOWN_MS;
     }
 
     QuickSlotRef ItemRef(int32 templateId)
@@ -62,10 +55,10 @@ protected:
     void SetUp() override
     {
         GamedataTables tables;
-        tables.items[HP_POTION_TEMPLATE_ID] = MakeItem(HP_POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
-        tables.items[MP_POTION_TEMPLATE_ID] = MakeItem(MP_POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
-        tables.items[SWORD_TEMPLATE_ID] = MakeItem(SWORD_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR);
-        tables.items[MISC_TEMPLATE_ID] = MakeItem(MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS);
+        AddPotion(tables, HP_POTION_TEMPLATE_ID);
+        AddPotion(tables, MP_POTION_TEMPLATE_ID);
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
+        TestItemTables::AddItem(tables, MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS, 99);
         tables.inventorySlotCounts = MakeInventorySections();
         tables.quickSlotCount = QUICK_SLOT_COUNT;
         Gamedata::Install(std::move(tables));

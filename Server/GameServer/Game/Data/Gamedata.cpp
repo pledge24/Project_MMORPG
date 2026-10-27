@@ -51,13 +51,15 @@ bool Gamedata::LoadAllGamedata()
 
     const DocumentFile files[] = {
         { GAMEDATA_DIR, GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
-        { GAMEDATA_DIR, GamedataFile::ITEMS, &documents.items },
         { GAMEDATA_DIR, GamedataFile::MAPS, &documents.maps },
         { GAMEDATA_DIR, GamedataFile::MONSTERS, &documents.monsters },
         { GAMEDATA_DIR, GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
         { GAMEDATA_DIR, GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
         { GAMEDATA_DIR, GamedataFile::QUICK_SLOTS, &documents.quickSlots },
         { GENERATED_DIR, DesignData::CURRENCY_FILE, &documents.currencies },
+        { GENERATED_DIR, DesignData::ITEM_FILE, &documents.items },
+        { GENERATED_DIR, DesignData::ITEM_EQUIP_STAT_FILE, &documents.itemEquipStats },
+        { GENERATED_DIR, DesignData::ITEM_CONSUME_EFFECT_FILE, &documents.itemConsumeEffects },
     };
 
     for (const DocumentFile& file : files)
@@ -106,10 +108,22 @@ void Gamedata::Install(GamedataTables tables)
     s_tables = std::move(tables);
 }
 
-const ItemTemplate* Gamedata::FindItem(int32 templateId)
+const DesignData::ItemRow* Gamedata::FindItem(int32 templateId)
 {
     auto it = s_tables.items.find(templateId);
     return it == s_tables.items.end() ? nullptr : &it->second;
+}
+
+const DesignData::ItemEquipStatRow* Gamedata::FindItemEquipStat(int32 templateId)
+{
+    auto it = s_tables.itemEquipStats.find(templateId);
+    return it == s_tables.itemEquipStats.end() ? nullptr : &it->second;
+}
+
+const DesignData::ItemConsumeEffectRow* Gamedata::FindItemConsumeEffect(int32 templateId)
+{
+    auto it = s_tables.itemConsumeEffects.find(templateId);
+    return it == s_tables.itemConsumeEffects.end() ? nullptr : &it->second;
 }
 
 const MonsterTemplate* Gamedata::FindMonster(int32 templateId)

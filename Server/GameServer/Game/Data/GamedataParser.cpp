@@ -19,25 +19,6 @@ namespace
     /** 기획 원본은 열거형 이름에서 접두사를 뺀 값(GEAR)을 적는다. 이름 표는 protobuf가 만든 것을 쓴다. */
     constexpr string_view ITEM_TYPE_NAME_PREFIX = "ITEM_TYPE_";
 
-    /** 직업 조건은 소문자 직업 이름(warrior)을 적는다. 이 값이면 모든 직업이 쓴다. */
-    constexpr string_view ANY_CLASS = "all";
-
-    /** 착용 조건의 직업 이름 → 직업. */
-    const unordered_map<string_view, Protocol::CharacterClass> CLASS_BY_NAME = {
-        { "warrior", Protocol::CHARACTER_CLASS_WARRIOR },
-        { "mage", Protocol::CHARACTER_CLASS_MAGE },
-    };
-
-    /** 장비의 세부 종류(itemSubtype) → 착용 부위. */
-    const unordered_map<string_view, Protocol::GearPart> GEAR_PART_BY_SUBTYPE = {
-        { JsonProperty::Item::GearSubtype_Helmet, Protocol::GEAR_PART_HELMET },
-        { JsonProperty::Item::GearSubtype_Chest, Protocol::GEAR_PART_CHEST },
-        { JsonProperty::Item::GearSubtype_Legs, Protocol::GEAR_PART_LEGS },
-        { JsonProperty::Item::GearSubtype_Arms, Protocol::GEAR_PART_ARMS },
-        { JsonProperty::Item::GearSubtype_Boots, Protocol::GEAR_PART_BOOTS },
-        { JsonProperty::Item::GearSubtype_Sword, Protocol::GEAR_PART_WEAPON },
-    };
-
     bool IsAbsent(const Json& object, string_view key)
     {
         auto it = object.find(key);
@@ -209,64 +190,6 @@ namespace
         return ClassLevelTable(std::move(rows));
     }
 
-    unordered_map<int32, ItemTemplate> ParseItems(string_view fileName, const Json& document)
-    {
-        using namespace JsonProperty::Item;
-
-        unordered_map<int32, ItemTemplate> items;
-        ForEachRow(fileName, document, [&](const Json& row, size_t)
-            {
-                ItemTemplate item;
-                item.templateId = Require<int32>(row, TemplateId);
-                item.itemType = RequireItemType(row, ItemType);
-
-                const string subtype = Require<string>(row, ItemSubtype);
-                if (item.itemType == Protocol::ITEM_TYPE_GEAR)
-                {
-                    auto gearTypeIt = GEAR_PART_BY_SUBTYPE.find(subtype);
-                    if (gearTypeIt == GEAR_PART_BY_SUBTYPE.end())
-                        throw RowError{ format("장비의 'itemSubtype' \"{}\"에 맞는 착용 부위가 없다", subtype) };
-
-                    item.gearType = gearTypeIt->second;
-                }
-
-                item.levelRequirement = Require<int32>(row, LevelRequirement);
-
-                const string className = Require<string>(row, ClassRequirement);
-                if (className != ANY_CLASS)
-                {
-                    auto classIt = CLASS_BY_NAME.find(className);
-                    if (classIt == CLASS_BY_NAME.end())
-                        throw RowError{ format("'classRequirement' \"{}\"는 직업이 아니다", className) };
-
-                    item.classRequirement = classIt->second;
-                }
-
-                item.buyPrice = Require<int64>(row, BuyPrice);
-                item.sellPrice = Require<int64>(row, SellPrice);
-                item.sellable = Require<bool>(row, Sellable);
-
-                item.maxStack = Require<int32>(row, MaxStack);
-                if (item.maxStack < 1)
-                    throw RowError{ format("'maxStack'이 1보다 작다: {}", item.maxStack) };
-
-                // 기획표는 대기가 없는 아이템에 -1을 적는다.
-                const double cooldownSeconds = Require<double>(row, Cooldown);
-                item.cooldownMs = cooldownSeconds > 0 ? static_cast<uint64>(cooldownSeconds * 1000) : 0;
-
-                item.hp = ReadOr<int32>(row, Hp, 0);
-                item.mp = ReadOr<int32>(row, Mp, 0);
-                item.physicalAttack = ReadOr<int32>(row, PhysicalAttack, 0);
-                item.magicalAttack = ReadOr<int32>(row, MagicalAttack, 0);
-                item.hpRestoreRatio = ReadOr<double>(row, HpRestore, 0.0);
-                item.mpRestoreRatio = ReadOr<double>(row, MpRestore, 0.0);
-
-                InsertUnique(items, item.templateId, std::move(item));
-            });
-
-        return items;
-    }
-
     unordered_map<int32, MonsterTemplate> ParseMonsters(string_view fileName, const Json& document)
     {
         using namespace JsonProperty::Monster;
@@ -355,14 +278,18 @@ namespace
         return maps;
     }
 
-    /** DataBuilder가 생성한 재화 표를 생성된 타입으로 읽는다. 기획 데이터의 규칙은 DataBuilder가 이미 검사했다. */
-    DesignData::CurrencyTable ParseCurrencies(const Json& document)
+    /**
+     * DataBuilder가 생성한 표를 생성된 역직렬화(DesignData::Parse<표>)로 읽는다.
+     * 기획 데이터의 규칙은 DataBuilder가 이미 검사했으므로 여기서는 형식만 본다.
+     */
+    template<typename Table>
+    Table ParseGenerated(const Json& document, optional<string> (*parse)(const Json&, Table&))
     {
-        DesignData::CurrencyTable currencies;
-        if (optional<string> error = DesignData::ParseCurrency(document, OUT currencies))
+        Table table;
+        if (optional<string> error = parse(document, OUT table))
             throw TableError{ error.value() };
 
-        return currencies;
+        return table;
     }
 
     InitialProgressTemplate ParseInitialProgress(string_view fileName, const Json& document)
@@ -518,11 +445,13 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
     try
     {
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ParseLevels(GamedataFile::WARRIOR_LEVELS, documents.warriorLevels);
-        tables.items = ParseItems(GamedataFile::ITEMS, documents.items);
         tables.monsters = ParseMonsters(GamedataFile::MONSTERS, documents.monsters);
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
 
-        tables.currencies = ParseCurrencies(documents.currencies);
+        tables.currencies = ParseGenerated(documents.currencies, DesignData::ParseCurrency);
+        tables.items = ParseGenerated(documents.items, DesignData::ParseItem);
+        tables.itemEquipStats = ParseGenerated(documents.itemEquipStats, DesignData::ParseItemEquipStat);
+        tables.itemConsumeEffects = ParseGenerated(documents.itemConsumeEffects, DesignData::ParseItemConsumeEffect);
         tables.initialProgress = ParseInitialProgress(GamedataFile::INITIAL_PROGRESS, documents.initialProgress);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
         tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);
