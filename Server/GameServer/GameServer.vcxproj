@@ -70,7 +70,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <!-- 디버거 작업 디렉터리. Gamedata 가 S_*.json 을 상대 경로로 열기 때문에
+  <!-- 디버거 작업 디렉터리. Gamedata 가 Game/Data/Generated/ 의 JSON 을 상대 경로로 열기 때문에
        실행 파일 위치(Binary\$(Configuration))가 아니라 프로젝트 폴더여야 한다.
        .vcxproj.user 는 gitignore 대상이라 여기에 둬서 VS·Rider 양쪽에 공유되게 한다. -->
   <PropertyGroup>
@@ -368,7 +368,6 @@
     <None Include="..\..\Protocol\Schema\Lobby.proto" />
     <None Include="Migrations\001_init.sql" />
     <None Include="Migrations\002_quick_slot.sql" />
-    <None Include="Game\Data\Json\S_Quest.json" />
     <None Include="Game\Data\Generated\Currency.json" />
     <None Include="Game\Data\Generated\DataVersion.json" />
     <None Include="Game\Data\Generated\Item.json" />

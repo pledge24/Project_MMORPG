@@ -50,9 +50,6 @@
     <Filter Include="Game\AI">
       <UniqueIdentifier>{710ba740-885c-460b-b0eb-233bf434b28e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Data\Json">
-      <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Game\Data\Generated">
       <UniqueIdentifier>{f82dec03-c22b-4774-8d5f-d43ea7f3e958}</UniqueIdentifier>
     </Filter>
@@ -509,9 +506,6 @@
     </None>
     <None Include="Migrations\002_quick_slot.sql">
       <Filter>Migrations</Filter>
-    </None>
-    <None Include="Game\Data\Json\S_Quest.json">
-      <Filter>Game\Data\Json</Filter>
     </None>
     <None Include="Game\Data\Generated\Currency.json">
       <Filter>Game\Data\Generated</Filter>

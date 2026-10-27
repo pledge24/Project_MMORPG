@@ -223,21 +223,6 @@ Release 분기에서 `Release` 폴더를 쓴다. 코드를 읽고 판단했고 R
 
 **유지보수 어려움** — 서버가 같은 엔티티를 두 번 스폰해도 로그가 남지 않는다. 경고가 있다고 믿고 로그에서 찾는 사람은 아무것도 찾지 못한다.
 
-## TD-060 기획 데이터 변환기가 실패해도 종료 코드 0으로 끝난다
-> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · build
-> 위치: `Tools/ExcelToJsonConverter/ExcelToJsonConverter.py` 마지막 `try`/`except` · `DesignData/GenJsonFile.bat`
-> 등록일: 2026년 10월 20일
-
-`ExcelToJsonConverter.py`의 진입점이 모든 예외를 잡아 「오류가 발생했습니다」만 출력하고 정상 종료한다. 그래서
-`GenJsonFile.bat`의 `IF ERRORLEVEL 1 PAUSE`가 변환 실패에 걸리지 않는다. 그 줄은 마지막 변환 뒤에 한 번만 있어서,
-종료 코드가 맞아도 앞선 변환의 실패는 보지 못한다. 변환에 실패한 표는 JSON이 만들어지지 않으므로, 뒤의 `MOVE`가 실패하고
-서버 폴더에는 옛 JSON이 남는다. 재화, 캐릭터 생성, 인벤토리 구역 표를 더하면서 찾았다. 없는 워크북 경로로 exe를 실행하면
-「오류가 발생했습니다: [Errno 2] No such file or directory」를 출력하고, JSON을 만들지 않은 채 종료 코드 0으로 끝난다(2026년 10월 20일 실측).
-
-### 영향
-
-**버그 발생 가능성 증가** — 원본을 고쳤는데 서버가 옛 값을 읽는다. 옛 JSON도 형식은 맞으므로 부팅 검증이 잡지 못한다.
-
 ## TD-063 훅의 SQL 스키마 변경 판정이 문자열 리터럴 안의 낱말에도 걸린다
 > **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · build
 > 위치: `.claude/hooks/guard_dangerous_cmd.py` (`check`, `SQL_DDL_PATTERNS`)

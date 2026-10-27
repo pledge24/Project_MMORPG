@@ -15,12 +15,6 @@ custom-harness/
 __pycache__/
 *.pyc
 
-# GenJsonFile.bat 이 만드는 빈 부산물.
-# 그 파일의 첫 실행 줄이 Original_Warrior_Level_Data.xlsx 를 변환하면서 --c_output 을
-# 주지 않아, ExcelToJsonConverter 의 기본값인 이 이름으로 떨어진다. 내용은 빈 객체뿐이고
-# 쓰는 곳이 없다. 근본 원인은 docs/tech-debt.md 에 적어 두었다.
-DesignData/C_TestJsonfile.json
-
 # 세션 리포트는 추적하지 않는다 (2026년 9월 21일 결정).
 #
 # 한 세션이 무엇을 했는지 설명하는 사람용 자료다. 저장소의 현행 상태를 정의하지 않으므로
