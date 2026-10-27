@@ -28,7 +28,7 @@ namespace
 
     /**
      * 레벨 1부터 maxLevel까지의 레벨 표와 전사의 능력치 표를 설치한다.
-     * 다음 레벨로 가는 경험치는 레벨 × 100이고, 최대 레벨은 0이다.
+     * 다음 레벨로 가는 경험치는 레벨 × 100이고, 최대 레벨의 필요 경험치는 0이다.
      */
     void InstallWarriorLevelTable(int32 maxLevel)
     {

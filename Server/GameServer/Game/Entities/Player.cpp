@@ -541,7 +541,10 @@ void Player::OnLevelUp()
     const DesignData::ClassLevelStatRow* before = Gamedata::FindClassLevelStat(_characterClass, level);
     const DesignData::ClassLevelStatRow* after = Gamedata::FindClassLevelStat(_characterClass, level + 1);
     if (before == nullptr || after == nullptr)
+    {
+        GLogger->Error("레벨 {}에 올랐지만 직업 {}의 능력치 행이 없어 스탯을 올리지 못했다", level + 1, static_cast<int32>(_characterClass));
         return;
+    }
 
     SetStatValue(Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP) + after->MaxHp - before->MaxHp);
     SetStatValue(Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP) + after->MaxMp - before->MaxMp);
@@ -577,7 +580,7 @@ optional<CombatStats> Player::CalculateFinalStat()
     const DesignData::ClassLevelStatRow* levelStat = Gamedata::FindClassLevelStat(_characterClass, _playerInfo->level());
     if (levelStat == nullptr)
     {
-        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 레벨 {}", _playerInfo->level());
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 직업별 능력치 표에 없는 레벨 {}", _playerInfo->level());
         return nullopt;
     }
 

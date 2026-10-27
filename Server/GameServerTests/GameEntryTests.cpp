@@ -81,13 +81,14 @@ protected:
         GamedataTables tables;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON).PhysicalAttack = SWORD_ATTACK;
         TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
-        for (auto [level, expRequirement, physicalAttack] : { tuple{ 1, LEVEL1_EXP_REQUIREMENT, PHYSICAL_ATTACK }, tuple{ 2, int64(0), LEVEL2_PHYSICAL_ATTACK } })
-        {
-            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, expRequirement);
-            stat.MaxHp = MAX_HP;
-            stat.MaxMp = MAX_MP;
-            stat.PhysicalAttack = physicalAttack;
-        }
+        DesignData::ClassLevelStatRow& level1 = TestLevelTables::AddWarriorLevel(tables, 1, LEVEL1_EXP_REQUIREMENT);
+        level1.MaxHp = MAX_HP;
+        level1.MaxMp = MAX_MP;
+        level1.PhysicalAttack = PHYSICAL_ATTACK;
+        DesignData::ClassLevelStatRow& level2 = TestLevelTables::AddWarriorLevel(tables, 2);
+        level2.MaxHp = MAX_HP;
+        level2.MaxMp = MAX_MP;
+        level2.PhysicalAttack = LEVEL2_PHYSICAL_ATTACK;
         tables.inventorySlotCounts = {
             { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
             { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
