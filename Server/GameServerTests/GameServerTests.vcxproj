@@ -78,7 +78,7 @@
   <PropertyGroup Label="UserMacros" />
   <!-- 작업 디렉터리를 GameServer 프로젝트 폴더로 둔다.
        테스트는 템플릿을 Gamedata::Install로 주입하고, 실 JSON을 읽는 테스트는 소스 위치로
-       파일을 찾는다. 디버거로 Gamedata::LoadAllGamedata를 직접 부를 때 상대 경로("Game/Data/Json/")가
+       파일을 찾는다. 디버거로 Gamedata::LoadAllGamedata를 직접 부를 때 상대 경로("Game/Data/Generated/")가
        맞도록 둔다. -->
   <PropertyGroup>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)GameServer\</LocalDebuggerWorkingDirectory>

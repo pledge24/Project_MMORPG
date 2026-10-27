@@ -32,7 +32,6 @@ GamedataTables Gamedata::s_tables;
 
 bool Gamedata::LoadAllGamedata()
 {
-    // TODO: 퀘스트를 만들 때 퀘스트 표(S_Quest.json)도 템플릿과 함께 불러온다.
     GamedataDocuments documents;
 
     const pair<string_view, Json*> files[] = {

@@ -15,8 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{B8FF33FE
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PacketHandlerGenerator", "..\Tools\PacketHandlerGenerator\PacketHandlerGenerator.pyproj", "{58104683-1B94-497F-896D-43E81AD37A6A}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ExcelToJsonConverter", "..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.pyproj", "{0F994859-0162-48F2-90EB-1BB905BC29F4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,19 +79,12 @@ Global
 		{58104683-1B94-497F-896D-43E81AD37A6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58104683-1B94-497F-896D-43E81AD37A6A}.Release|x64.ActiveCfg = Release|Any CPU
 		{58104683-1B94-497F-896D-43E81AD37A6A}.Release|x86.ActiveCfg = Release|Any CPU
-		{0F994859-0162-48F2-90EB-1BB905BC29F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0F994859-0162-48F2-90EB-1BB905BC29F4}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{0F994859-0162-48F2-90EB-1BB905BC29F4}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{0F994859-0162-48F2-90EB-1BB905BC29F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0F994859-0162-48F2-90EB-1BB905BC29F4}.Release|x64.ActiveCfg = Release|Any CPU
-		{0F994859-0162-48F2-90EB-1BB905BC29F4}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{58104683-1B94-497F-896D-43E81AD37A6A} = {B8FF33FE-A797-408D-BDBB-90E12829BDAB}
-		{0F994859-0162-48F2-90EB-1BB905BC29F4} = {B8FF33FE-A797-408D-BDBB-90E12829BDAB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {757703D2-C3BF-45FF-A37B-221190AC50BE}

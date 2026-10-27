@@ -535,13 +535,13 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | bytes | None]] = {
         "docs/build.md": (
             "스크립트는 `P1/Scripts/Invoke-UeBuild.ps1`:12이다.\n"
             "산출물은 `Server/Binary/{Debug,Release}/`, 로그는 `P1/Saved/Logs/P1.log`다.\n"
-            "원본은 `DesignData/Original_*.xlsx`, 모듈 상대 경로 `P1/Network`는 보지 않는다.\n"
+            "원본은 `DesignData/*.xlsx`, 모듈 상대 경로 `P1/Network`는 보지 않는다.\n"
             "```\nP1/Scripts/Example.ps1 처럼 펜스 안은 예시다 `P1/Gone.ps1`\n```\n"
         ),
         "docs/backlog.md": "새로 만들 `Protocol/Generate.ps1`.\n",
         "CLAUDE.md": "# CLAUDE\n",
         "P1/Scripts/Invoke-UeBuild.ps1": None,
-        "DesignData/Original_Item.xlsx": None,
+        "DesignData/Item.xlsx": None,
     },
     "backlog-ref": {
         "docs/backlog.md": _BACKLOG + "\n앞의 1번(첫 항목)과 겹친다.\n",

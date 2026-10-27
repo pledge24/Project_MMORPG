@@ -2,7 +2,7 @@
 
 **프로토콜·데이터 파일을 고치기 전에 반드시 읽는다.**
 
-생성 결과물을 클라이언트/서버 트리로 **복사**하는 파이프라인이 세 개 있다. 와이어 프로토콜, DataBuilder, 옛 기획 데이터 변환기다. 복사본이 git에 커밋되어 있어서 직접 수정해도 되는 파일처럼 보이지만 아니다. **생성기를 다시 돌리는 순간 덮어써진다.**
+생성 결과물을 클라이언트/서버 트리로 **복사**하는 파이프라인이 두 개 있다. 와이어 프로토콜과 DataBuilder다. 복사본이 git에 커밋되어 있어서 직접 수정해도 되는 파일처럼 보이지만 아니다. **생성기를 다시 돌리는 순간 덮어써진다.**
 
 ---
 
@@ -123,7 +123,7 @@
 C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
 2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다.
-설정은 설정 워크북의 초기 진행(`Progress`)과 로비(`Lobby`) 두 시트다. 옛 변환기는 퀘스트 표 하나만 만든다(아래 「게임 데이터」).
+설정은 설정 워크북의 초기 진행(`Progress`)과 로비(`Lobby`) 두 시트다. 기획 데이터는 모두 DataBuilder가 만든다(아래 「게임 데이터」).
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 같은 날(#320)부터 클라이언트 코드는 DataBuilder가 만든 데이터 테이블만 읽는다(아래 「클라이언트가 읽는 법」).
 
 ### 재생성
@@ -478,35 +478,18 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_Quest.xlsx`
-
-이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 2026년 10월 27일(#317)부터 이 경로에 남은 표는 퀘스트 표 하나다.
-옛 변환기와 퀘스트 표는 #322가 걷어낸다.
+기획 데이터 전체에 걸리는 규칙과 서버와 클라이언트가 산출물을 읽는 법이다. 기획 데이터는 모두 DataBuilder가 만든다.
+옛 변환기(`ExcelToJsonConverter`)와 그 변환기만 만들던 퀘스트 표는 2026년 10월 27일(#322)에 걷어냈다.
+퀘스트를 만들 때는 퀘스트 표를 DataBuilder에 새로 더한다.
 
 **원본에는 수치만 둔다. 에셋 경로 열을 만들지 않는다.** 아이콘, 메시, 몬스터 클래스는
 `DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
 행 이름이 `TemplateId`다. 근거는 `docs/adr/0009-keep-asset-references-out-of-design-data.md`에 있다.
 
 **Claude는 워크북을 `openpyxl`로 만들고 고친다. 기존 워크북을 고칠 때도 사람에게 넘기지 않는다.** 2026년 10월 27일
-사용자가 워크북 작업 전체를 사람의 개입 없이 하도록 허용했다. 변환기는 PyInstaller exe라서 `openpyxl` 없이 돈다.
-`openpyxl`은 Claude가 엑셀 파일을 만들거나 읽고 고칠 때만 설치한다.
+사용자가 워크북 작업 전체를 사람의 개입 없이 하도록 허용했다.
 — `openpyxl`은 저장할 때 이미지와 차트를 버린다. 워크북에는 값과 서식만 둔다.
 — Claude가 고친 워크북을 사람이 엑셀에서 열어 저장했을 때 형식이 깨지면 이 결정을 다시 본다.
-
-### 재생성
-
-`DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
-
-**산출물은 아래 표의 2개가 전부다.**
-— 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
-
-| 목적지 | 산출물 |
-|---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Quest.json` |
-| `P1/Content/P1/Data/DataTables/` | `C_Quest.json` |
-
-**이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
-갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
 
 **기획 데이터는 소비자별로 나눈다.** 로비 설정은 로비 모듈(`Lobby/Data/`)만, 나머지는 게임(`Game/Data/`)만 읽는다. 로비와 게임이
 함께 맞아야 하는 값(생성할 수 있는 직업이 직업별 능력치 표에 있는지)은 서버가 기동할 때 `Core/DataCrossCheck`가 대조하고, 어긋나면
@@ -553,28 +536,12 @@ UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한�
 **사람이 에디터에서 한다.** 메뉴의 결과는 에셋 변경이라, 실행과 확인을 사람에게 인계한다.
 생성된 행 구조체가 저장소의 JSON을 문제 없이 받는지는 `P1.Data.DesignDataTables` 테스트가 임시 테이블로 확인한다.
 
-### 옛 데이터 테이블 재임포트
-
-옛 변환기의 `C_Quest.json`을 소스로 쓰는 `Content/P1/Data/DataTables/DT_Quest`가 남은 옛 데이터 테이블이다. 클라이언트 코드는 이 테이블을 읽지 않는다.
-`C_Quest.json`을 다시 만들면 그 테이블을 다시 임포트한다.
-
-1. 에디터의 콘텐츠 브라우저에서 데이터 테이블을 우클릭해 Reimport를 실행한다.
-2. 테이블을 열어 바뀐 열의 값을 확인하고 저장한다.
-3. `.uasset`이 `C_*.json`보다 나중에 저장됐는지 수정 시각으로 확인한다.
-
-**사람이 에디터에서 한다.** 언리얼 MCP의 `DataTableTools`에는 재임포트 툴이 없다(2026년 10월 4일 확인).
-`import_file`은 새 에셋을 만드는 툴이고, `set_rows`로 값을 고치면 JSON과 테이블이 따로 바뀌므로 쓰지 않는다.
-재임포트 뒤 값의 확인은 MCP의 `DataTableTools.get_rows`로 할 수 있다.
-
-필드 이름을 바꿀 때는 대소문자만 다른 이름(`ItemSubType` → `ItemSubtype`)이면 기존 값이 그대로 읽힌다.
-언리얼이 속성 이름의 대소문자를 가리지 않기 때문이다.
-
 ### 로딩
 
 서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표,
 드롭 그룹 표, 레벨 두 표, 맵 표, 지역 표, 초기 진행 설정, 데이터 버전을, `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로
 `Lobby/Data/Generated/`의 로비 설정을 읽는다. 둘 다 생성된 `Parse<표>`로 읽고, 모든 표가 통과하면 그때 설치한다.
-게임 코드는 Json을 읽지 않고 `Gamedata::Find*`와 `Get*`으로 생성된 행만 읽는다. 서버는 옛 변환기의 표를 읽지 않는다.
+게임 코드는 Json을 읽지 않고 `Gamedata::Find*`와 `Get*`으로 생성된 행만 읽는다.
 
 **틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`Item.json` 2번째 행: 'BuyPrice'가 없다」처럼
 파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 열거형 값 이름이 아닌 값, 겹친 키가 여기 걸린다.
@@ -589,23 +556,16 @@ UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한�
 | 마을 | 지역 표(`Area.xlsx`)에서 `HasRespawnPoint`가 참인 지역(`Gamedata::GetTownAreaId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 | 골드의 재화 번호 | 재화 표(`Currency.xlsx`)에서 `Type`이 `GOLD`인 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 
-`S_Quest.json`은 생성되지만 서버가 읽지 않는다. 읽는 코드가 없는 표 때문에 서버가 뜨지 않는 일을 없애려고
-2026년 10월 9일(#207)에 불러오기를 뺐다. 퀘스트를 만들 때 템플릿과 함께 다시 읽는다.
-
 ---
 
 ## 생성기 자체
 
-두 생성기 exe는 `Tools/`의 파이썬 소스를 각 툴의 `MakeExe.bat`으로 PyInstaller 번들링해서 만든다.
-
-- `Tools/PacketHandlerGenerator/`
-- `Tools/ExcelToJsonConverter/`
-
-결과 exe는 각 툴 폴더 안에 놓인다. `Protocol/Generate.ps1`과 `DesignData/GenJsonFile.bat`이 그 exe를 부른다. `.bat`도 cp949다.
+패킷 핸들러 생성기 exe는 `Tools/PacketHandlerGenerator/`의 파이썬 소스를 그 폴더의 `MakeExe.bat`으로 PyInstaller 번들링해서 만든다.
+결과 exe는 같은 폴더에 놓이고, `Protocol/Generate.ps1`이 그 exe를 부른다. `.bat`도 cp949다.
 
 DataBuilder(`Tools/DataBuilder/`)는 exe를 만들지 않는다. 래퍼가 가상 환경의 파이썬으로 소스를 바로 돌리므로, 소스를 고치면 다음 실행에 반영된다.
 
-**생성기의 파이썬 소스를 고치면 `MakeExe.bat`으로 exe를 다시 만들어 소스와 함께 커밋한다.**
+**패킷 핸들러 생성기의 파이썬 소스를 고치면 `MakeExe.bat`으로 exe를 다시 만들어 소스와 함께 커밋한다.**
 — 스크립트는 소스가 아니라 exe를 부른다. exe를 다시 만들지 않으면 고친 소스가 돌지 않는다.
 
 exe를 다시 만들려면 `py -3 -m pip install pyinstaller jinja2`로 두 패키지를 설치한다. `MakeExe.bat`은 `pyinstaller`를 PATH에서

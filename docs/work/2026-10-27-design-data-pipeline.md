@@ -51,7 +51,7 @@
 | 7 | #319 클라이언트 행 구조체를 생성하고 새 데이터 테이블 채우기 | 2, 3, 4 | 머지 | #328 | #317을 merge한 뒤 DataBuilder 테스트 161개 통과 · 클라이언트 빌드 0 · `Run-UeTests.ps1` 19개 통과 · 규범 검사와 문서 검사 통과. 에디터 메뉴는 실행하지 않았다(사람의 확인) |
 | 8 | #320 클라이언트 코드를 새 데이터 테이블로 옮기고 손으로 쓴 행 구조체 지우기 | 7 | 머지 | #330 | 클라이언트 빌드 0 · `Run-UeTests.ps1` 20개 통과 · 규범 검사와 문서 검사 통과 · 사람이 에디터 메뉴로 새 테이블 6개를 채움(임포트 문제 0건) · 옛 테이블 셋 삭제. PIE는 확인하지 않았다 |
 | 9 | #321 P1Editor 모듈과 수치 테이블과 에셋 테이블의 짝 검증기 만들기 | 8 | 대기 | | |
-| 10 | #322 옛 변환기, 퀘스트 표, 시험용 파일 걷어내기 | 5, 6, 8 | 대기 | | |
+| 10 | #322 옛 변환기, 퀘스트 표, 시험용 파일 걷어내기 | 5, 6, 8 | 진행 | | 서버 솔루션 빌드 0(DummyClient 포함) · `GameServerTests` 484개 통과 · DataBuilder 실행 뒤 `git status`에 산출물 변경 없음 · 규범 검사와 문서 검사 통과. 클라이언트 빌드와 `Run-UeTests.ps1`은 아직 돌리지 못했다 |
 
 2 → 3 → 4 → 5의 순서는 참조 방향 때문이다. 드롭 항목은 아이템을, 지역은 몬스터를, 시작 맵은 맵을 참조하므로 참조되는 표가
 먼저 DataBuilder에 있어야 한다. 6번은 다른 표를 참조하지 않으므로 1번 뒤에 언제든 할 수 있다.
@@ -198,3 +198,17 @@
   3. `DT_Quest`를 다시 임포트하고 저장했다. 보상 아이템의 구조체가 `FP1QuestRewardItemData`로 바뀌었다
   4. `Content/P1/Data/DataTables/`의 `DT_Item`, `DT_Monster`, `DT_Map`을 지웠다. 지울 때 행 구조체가 없다는 `LogDataTable` 오류가 나오는 것은 예상한 결과다
 - 남은 것: PIE 시나리오 3줄의 「원본에서 지운 행이 테이블에서도 사라진다」와 4줄. 사람이 #312를 마친 뒤 확인한다
+
+**#322 (2026년 10월 27일)**
+
+- 지운 것: 옛 변환기(`Tools/ExcelToJsonConverter/`의 소스, exe, `MakeExe.bat`, `.pyproj`)와 `Server.sln`의 그 프로젝트, `DesignData/GenJsonFile.bat`,
+  퀘스트 원본 `Original_Quest.xlsx`와 산출물 `S_Quest.json`, `C_Quest.json`, 행 구조체 넷(`FP1QuestData`, `FP1QuestObjectiveData`, `FP1QuestRewardData`, `FP1QuestRewardItemData`)과
+  그 구조체 리디렉터, 시험용 원본 폴더 `DesignData/Sample/`, `.gitignore`의 `C_TestJsonfile.json` 줄
+- 서버에는 옛 파서 잔여물이 `S_Quest.json`의 프로젝트 항목과 `Gamedata.cpp`의 퀘스트 TODO뿐이었다. 손으로 쓴 열 이름 상수는 이미 없었고,
+  `Templates.h`에는 생성 타입을 묶는 `GamedataTables`만 남아 있다. 두 `.vcxproj` 주석의 옛 JSON 폴더 경로를 `Game/Data/Generated/`로 고쳤다
+- 정한 것: 퀘스트는 기능이 없고 표만 있었다. 퀘스트를 만들 때 DataBuilder에 표를 새로 더한다(`docs/codegen.md` 「게임 데이터」)
+- 변환기가 사라져 TD-060(변환기가 실패해도 종료 코드 0)을 `docs/tech-debt.md`에서 지웠다
+- 문서 검사의 자기 검증 입력이 예시로 쓰던 `Original_` 경로를 지금 원본 이름으로 바꿨다
+- 막힌 것: 클라이언트 빌드가 `[실패] 에디터가 떠 있어 빌드하지 않는다.`로 1을 돌려줬다. 떠 있는 에디터는 메인 체크아웃(`Project_MMORPG/P1/P1.uproject`)의 것이다(TD-075).
+  #321을 병렬로 진행하는 세션의 에디터일 수 있어 닫지 않았다. 클라이언트 빌드와 `Run-UeTests.ps1`이 남았다
+- 사람이 에디터에서 할 것: `Content/P1/Data/DataTables/DT_Quest`를 지운다. 행 구조체가 없다는 `LogDataTable` 오류가 나오는 것은 예상한 결과다
