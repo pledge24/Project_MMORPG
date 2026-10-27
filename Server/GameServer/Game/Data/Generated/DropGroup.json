@@ -1,0 +1,14 @@
+[
+{"Id":1,"Method":"INDEPENDENT","Rate":1.0,"PickCount":null,"Entries":[
+{"ItemId":2000,"Rate":0.1,"Weight":null,"MinCount":1,"MaxCount":2},
+{"ItemId":2001,"Rate":0.1,"Weight":null,"MinCount":1,"MaxCount":2}
+]},
+{"Id":2,"Method":"WEIGHTED","Rate":0.05,"PickCount":1,"Entries":[
+{"ItemId":1000,"Rate":null,"Weight":10,"MinCount":1,"MaxCount":1},
+{"ItemId":1001,"Rate":null,"Weight":10,"MinCount":1,"MaxCount":1},
+{"ItemId":1002,"Rate":null,"Weight":10,"MinCount":1,"MaxCount":1},
+{"ItemId":1003,"Rate":null,"Weight":10,"MinCount":1,"MaxCount":1},
+{"ItemId":1004,"Rate":null,"Weight":10,"MinCount":1,"MaxCount":1},
+{"ItemId":1005,"Rate":null,"Weight":10,"MinCount":1,"MaxCount":1}
+]}
+]

@@ -1,6 +1,7 @@
 #pragma once
 #include "Protocol/Common.pb.h"
 #include "Protocol/Item.pb.h"
+#include "Game/Data/Generated/DesignData.h"
 
 /*--------------------------------------------------------------
     기획 데이터 템플릿
@@ -9,190 +10,38 @@
     설치한 뒤에는 바뀌지 않으므로 여러 스레드가 락 없이 함께 읽는다.
 ---------------------------------------------------------------*/
 
-/** 기획표의 좌표. */
-struct TemplatePos
-{
-    float x = 0.f;
-    float y = 0.f;
-    float z = 0.f;
-};
-
-/** 아이템 표(S_Item.json)의 한 행. */
-struct ItemTemplate
-{
-    int32 templateId = 0;
-    Protocol::ItemType itemType = Protocol::ITEM_TYPE_NONE;
-    /** 착용 부위. 장비만 값이 있다. */
-    optional<Protocol::GearPart> gearType;
-
-    //~ 착용 조건. 장착할 때 서버가 판정한다.
-    int32 levelRequirement = 0;
-    /** 비어 있으면 모든 직업이 쓴다. 기획표의 "all"이다. */
-    optional<Protocol::CharacterClass> classRequirement;
-
-    int64 buyPrice = 0;
-    int64 sellPrice = 0;
-    bool sellable = false;
-    /** 1 이상이다. */
-    int32 maxStack = 1;
-    /** 같은 템플릿을 다시 쓰기까지의 대기(ms). 0이면 대기가 없다. */
-    uint64 cooldownMs = 0;
-
-    //~ 장비가 올려 주는 스탯. 표에 없으면 0이다.
-    int32 hp = 0;
-    int32 mp = 0;
-    int32 physicalAttack = 0;
-    int32 magicalAttack = 0;
-
-    //~ 소모품이 회복하는 비율(최대치 기준). 표에 없으면 0이다.
-    double hpRestoreRatio = 0.0;
-    double mpRestoreRatio = 0.0;
-};
-
-/** 몬스터 표(S_Monster.json)의 한 행. 보상의 최솟값은 최댓값보다 크지 않다. */
-struct MonsterTemplate
-{
-    int32 templateId = 0;
-    int32 maxHp = 0;
-    int32 baseAttack = 0;
-    float movementSpeed = 0.f;
-    bool isTargeting = false;
-
-    int64 minExp = 0;
-    int64 maxExp = 0;
-    int64 minGold = 0;
-    int64 maxGold = 0;
-
-    /** 공격 간격(초). */
-    float attackInterval = 0.f;
-    float tryAttackRange = 0.f;
-    float detectionRange = 0.f;
-    float chasingMaxRange = 0.f;
-};
-
-/** 직업별 레벨 표의 한 행. 증가량은 이전 레벨에서 이 레벨로 오를 때 더하는 값이다. */
-struct LevelTemplate
-{
-    int32 level = 0;
-    int32 maxHp = 0;
-    int32 maxMp = 0;
-    int32 physicalAttack = 0;
-    int32 magicalAttack = 0;
-    /** 이 레벨에서 다음 레벨로 가는 데 필요한 경험치. */
-    int64 expRequirement = 0;
-
-    int64 maxHpIncrement = 0;
-    int64 maxMpIncrement = 0;
-    int64 paIncrement = 0;
-    int64 maIncrement = 0;
-};
-
-/**
- * 한 직업의 레벨 표.
- *
- * 레벨마다 능력치와 필요 경험치를 담고, 그 직업의 최대 레벨을 정한다.
- */
-class ClassLevelTable
-{
-public:
-    ClassLevelTable() = default;
-    /** rows[i]의 레벨이 i + 1이어야 한다. 여기서는 확인하지 않는다. */
-    explicit ClassLevelTable(vector<LevelTemplate> rows) : _rows(std::move(rows)) {}
-
-    /** 표 밖의 레벨이면 nullptr. */
-    const LevelTemplate* Find(int32 level) const
-    {
-        if (level < 1 || level > GetMaxLevel())
-            return nullptr;
-
-        return &_rows[level - 1];
-    }
-
-    /** 행이 없으면 0이다. */
-    int32 GetMaxLevel() const { return static_cast<int32>(_rows.size()); }
-
-private:
-    vector<LevelTemplate> _rows;
-};
-
-/** 맵 표의 포털 하나. 출발 위치에서 맵의 portalRadius 안에 들어서면 목적지 룸의 목적지 좌표로 옮긴다. */
-struct PortalTemplate
-{
-    int32 portalId = 0;
-    /** 포털이 놓인 위치. 이 룸의 좌표다. */
-    TemplatePos srcPos;
-    int32 dstRoomId = 0;
-    TemplatePos dstPos;
-    float dstYaw = 0.f;
-};
-
-/** 맵 표(S_Map.json)의 한 행. 룸 하나가 이 행 하나로 만들어진다. */
-struct MapTemplate
-{
-    /** 룸 번호로 쓴다. */
-    int32 templateId = 0;
-    /** 이 룸이 속한 맵. 같은 맵의 룸끼리는 포털로, 다른 맵의 룸으로는 맵 간 이동으로 옮긴다. */
-    int32 mapId = 0;
-    TemplatePos center;
-    /** X 방향 반경. */
-    float depthHalfExtent = 0.f;
-    /** Y 방향 반경. */
-    float widthHalfExtent = 0.f;
-    /** 리스폰 지점. 마을만 값이 있다. */
-    optional<TemplatePos> respawnPoint;
-    vector<PortalTemplate> portals;
-    /** 이 룸의 포털을 탈 수 있는 거리. 평면(x, y) 거리로 재고 0보다 크다. */
-    float portalRadius = 0.f;
-
-    /** 이 룸에 스폰할 몬스터 템플릿. 비어 있으면 몬스터를 스폰하지 않는다. */
-    vector<int32> monsterIds;
-    /** 표에 없으면 0이다. */
-    int32 maxMonsterCount = 0;
-};
-
-/** 재화 표의 재화 종류. 서버가 종류로 찾아 쓰는 재화다. 기획 원본은 열거자 이름(GOLD)을 적는다. */
-enum class CurrencyType : uint8
-{
-    GOLD = 1,
-};
-
-/** 재화 표(S_Currency.json)의 한 행. */
-struct CurrencyTemplate
-{
-    /** DB가 재화를 가리키는 번호(CurrencyId)로 쓴다. */
-    int32 templateId = 0;
-    CurrencyType currencyType = CurrencyType::GOLD;
-};
-
-/** 초기 진행 표(S_Initial_Progress.json)의 유일한 행. 새 캐릭터가 첫 게임 입장에서 갖는 값이다. */
-struct InitialProgressTemplate
-{
-    /** 시작 맵. 맵 표의 mapId다. */
-    int32 startMapId = 0;
-    TemplatePos startPos;
-    float startYaw = 0.f;
-    /** 0 이상이다. */
-    int64 startGold = 0;
-};
-
 /** Gamedata에 한 번에 설치하는 기획 데이터 표 전체. */
 struct GamedataTables
 {
-    unordered_map<int32, ItemTemplate> items;
-    unordered_map<int32, MonsterTemplate> monsters;
-    /** 룸을 번호 순서로 만들도록 정렬된 맵을 쓴다. */
-    map<int32, MapTemplate> maps;
-    /** 직업(Protocol::CharacterClass) → 레벨 표. 로비가 생성할 수 있는 직업은 모두 표가 있다(기동할 때 대조한다). */
-    unordered_map<int32, ClassLevelTable> classLevelTables;
-    /** 사망한 플레이어가 돌아가는 마을 룸. 리스폰 지점이 있는 유일한 맵이다. */
-    int32 townRoomId = 0;
+    DesignData::ItemTable items;
+    /** 장비 아이템의 착용 부위와 스탯. 장비마다 행이 하나다(DataBuilder가 검사한다). */
+    DesignData::ItemEquipStatTable itemEquipStats;
+    /** 소모품의 사용 효과. 소모품마다 행이 하나다(DataBuilder가 검사한다). */
+    DesignData::ItemConsumeEffectTable itemConsumeEffects;
+    /** 기본 보상의 최솟값은 최댓값보다 크지 않다(DataBuilder가 검사한다). */
+    DesignData::MonsterTable monsters;
+    /** 몬스터의 드롭 그룹. 드롭 항목은 그룹의 Entries에 있다. */
+    DesignData::DropGroupTable dropGroups;
+    /** 시작 맵과 플레이어의 마지막 위치가 가리키는 맵. */
+    DesignData::MapTable maps;
+    /**
+     * 맵 안의 지역. 지금은 지역 하나가 룸 하나라서 룸을 지역 번호 순서로 만든다. 포털은 지역의 Portals에 있다.
+     * 포털의 도착 지역과 나오는 몬스터는 다른 표에 있고, 반경은 0보다 크다(DataBuilder가 검사한다).
+     */
+    DesignData::AreaTable areas;
+    /** 레벨마다 다음 레벨까지 필요한 경험치. 1부터 이어지고 마지막 레벨이 최대 레벨이다(DataBuilder가 검사한다). */
+    DesignData::LevelTable levels;
+    /**
+     * 직업과 레벨마다의 능력치. 표에 있는 직업은 모든 레벨에 행이 있다(DataBuilder가 검사한다).
+     * 로비가 생성할 수 있는 직업은 모두 표에 있다(기동할 때 대조한다).
+     */
+    DesignData::ClassLevelStatTable classLevelStats;
+    /** 사망한 플레이어가 돌아가는 마을. 리스폰 지점이 있는 유일한 지역이다(DataBuilder가 검사한다). */
+    int32 townAreaId = 0;
 
-    unordered_map<int32, CurrencyTemplate> currencies;
-    /** 재화 종류가 GOLD인 유일한 재화. */
+    DesignData::CurrencyTable currencies;
+    /** 재화 종류가 GOLD인 재화. DataBuilder가 하나뿐임을 검사한다. */
     int32 goldCurrencyId = 0;
-    InitialProgressTemplate initialProgress;
-    /** 아이템 종류(Protocol::ItemType) → 인벤토리에서 그 종류 구역의 칸 수. NONE을 뺀 모든 종류가 있다. */
-    unordered_map<int32, int32> inventorySlotCounts;
-    /** 플레이어 한 명의 퀵슬롯 개수. 1 이상 256 이하다. */
-    int32 quickSlotCount = 0;
+    /** 새 캐릭터가 첫 게임 입장에서 갖는 값. 시작 맵은 맵 표에 있고 시작 골드는 0 이상이다(DataBuilder가 검사한다). */
+    DesignData::ProgressConfig initialProgress;
 };

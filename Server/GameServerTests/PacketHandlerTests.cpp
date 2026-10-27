@@ -4,6 +4,7 @@
 #include "RecordingSession.h"
 #include "Network/GameSessionManager.h"
 #include "Lobby/Data/LobbyData.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     패킷 핸들러와 세션 단계 검사 테스트
@@ -72,10 +73,8 @@ class PacketHandlerTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1);
         Gamedata::Install(std::move(tables));
 
         ServerPacketHandler::Init();
@@ -88,7 +87,7 @@ protected:
     {
         GDBManager->Clear();
         Gamedata::Install(GamedataTables());
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
     }
 
     /** 로비 접속을 마친 세션으로 만든다. 계정 등록은 로비 접속 잡이 하는 것과 같이 세션 관리자로 한다. */
@@ -282,9 +281,9 @@ TEST_F(PacketHandlerTest, LobbyRequestsInGameAreDropped)
 // 생성할 수 없는 직업은 DB 큐로 넘기지 않고 결과 값으로 곧바로 거절한다. 캐릭터 ID도 발급하지 않는다.
 TEST_F(PacketHandlerTest, UncreatableClassIsRejectedWithoutDBJob)
 {
-    LobbyTables lobbyTables;
-    lobbyTables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
-    LobbyData::Install(std::move(lobbyTables));
+    LobbyDesignData::LobbyConfig lobbyConfig;
+    lobbyConfig.CreatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
+    LobbyData::Install(std::move(lobbyConfig));
     ConnectLobby();
 
     Protocol::C_CREATE_CHARACTER createPkt;

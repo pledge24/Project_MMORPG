@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include "FakeDBConnection.h"
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "RoomManagerTestAccess.h"
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
@@ -13,6 +14,8 @@
 #include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerSaveData.h"
+#include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     진행 저장소와 DAO 테스트
@@ -23,7 +26,7 @@
     저장 한 번은 트랜잭션 하나다. 중간 단계가 실패하면 앞 단계까지 되돌려야 레벨은 오르고 아이템은
     저장되지 않는 식으로 진행이 어긋나지 않는다.
 
-    픽스처 결합도: FakeDBConnection과, 골드 재화 번호, 맵 표(사냥터와 마을), 레벨 표, 아이템 표, 인벤토리 구역 표를
+    픽스처 결합도: FakeDBConnection과, 골드 재화 번호, 맵 표(사냥터와 마을), 레벨 표, 아이템 표를
     Gamedata::Install로 주입한다. 입장 테스트는 소켓 없는 GameSession과, 맵 표의 행마다 시작하지 않은 룸을 둔
     룸 관리자를 쓴다.
 ---------------------------------------------------------------*/
@@ -41,7 +44,6 @@ namespace
     constexpr int32 MAX_HP = 500;
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
-    constexpr int32 QUICK_SLOT_COUNT = 3;
     constexpr float START_X = -120.f;
     constexpr float START_YAW = 180.f;
     constexpr int64 START_GOLD = 500;
@@ -99,53 +101,27 @@ class ProgressStorageTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MapTemplate field;
-        field.templateId = FIELD_ROOM_ID;
-        field.mapId = FIELD_MAP_ID;
-        field.depthHalfExtent = 1000.f;
-        field.widthHalfExtent = 1000.f;
-
-        MapTemplate town;
-        town.templateId = TOWN_ROOM_ID;
-        town.mapId = TOWN_MAP_ID;
-        town.center = TemplatePos{ 0.f, 5000.f, 0.f };
-        town.depthHalfExtent = 1000.f;
-        town.widthHalfExtent = 1000.f;
-        town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 5000.f, 0.f };
-
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = MAX_HP;
-        level1.maxMp = 100;
-        level1.expRequirement = 1000;
-        LevelTemplate level2 = level1;
-        level2.level = 2;
-        level2.expRequirement = 0;
-
-        ItemTemplate potion;
-        potion.templateId = POTION_TEMPLATE_ID;
-        potion.itemType = Protocol::ITEM_TYPE_CONSUMABLE;
-        potion.maxStack = 99;
-
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
+        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID, 0.f, 5000.f, 1000.f);
+        TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 5000.f, 0.f);
 
         GamedataTables tables;
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
-        tables.maps[FIELD_ROOM_ID] = field;
-        tables.maps[TOWN_ROOM_ID] = town;
-        tables.townRoomId = TOWN_ROOM_ID;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
-        tables.items[POTION_TEMPLATE_ID] = potion;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.inventorySlotCounts = MakeInventorySections();
-        tables.quickSlotCount = QUICK_SLOT_COUNT;
-        tables.initialProgress.startMapId = FIELD_MAP_ID;
-        tables.initialProgress.startPos = TemplatePos{ START_X, 40.f, 5.f };
-        tables.initialProgress.startYaw = START_YAW;
-        tables.initialProgress.startGold = START_GOLD;
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_ROOM_ID, FIELD_MAP_ID, 0.f, 0.f, 1000.f));
+        TestAreaTables::AddTown(tables, town);
+        for (auto [level, expRequirement] : { pair{ 1, 1000 }, pair{ 2, 0 } })
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, expRequirement);
+            stat.MaxHp = MAX_HP;
+            stat.MaxMp = 100;
+        }
+        TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
+        tables.initialProgress.StartMapId = FIELD_MAP_ID;
+        tables.initialProgress.StartX = START_X;
+        tables.initialProgress.StartY = 40.f;
+        tables.initialProgress.StartZ = 5.f;
+        tables.initialProgress.StartYaw = START_YAW;
+        tables.initialProgress.StartGold = START_GOLD;
         Gamedata::Install(std::move(tables));
         rooms = make_unique<ScopedTestRoomManager>();
 
@@ -311,7 +287,7 @@ TEST_F(ProgressStorageTest, FirstEntryCreatesInitialProgressRowsThenLoadsThem)
     const auto& state = conn.executedParams[1];
     EXPECT_EQ(get<int64>(state.at(0)), CHARACTER_ID);
     EXPECT_EQ(get<int64>(state.at(1)), 0) << "누적 경험치는 0에서 시작한다";
-    EXPECT_EQ(get<int64>(state.at(2)), FIELD_MAP_ID) << "초기 진행 표의 시작 맵";
+    EXPECT_EQ(get<int64>(state.at(2)), FIELD_MAP_ID) << "초기 진행 설정의 시작 맵";
     EXPECT_DOUBLE_EQ(get<double>(state.at(3)), START_X);
     EXPECT_DOUBLE_EQ(get<double>(state.at(4)), 40.0);
     EXPECT_DOUBLE_EQ(get<double>(state.at(5)), 5.0);
@@ -425,7 +401,9 @@ TEST_F(ProgressStorageTest, EnterWithoutRoomToAssignIsRejected)
 {
     GamedataTables tables;
     tables.goldCurrencyId = GOLD_CURRENCY_ID;
-    tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, MAX_HP, 100 } });
+    DesignData::ClassLevelStatRow& level1 = TestLevelTables::AddWarriorLevel(tables, 1);
+    level1.MaxHp = MAX_HP;
+    level1.MaxMp = 100;
     Gamedata::Install(std::move(tables));
 
     FakeDBConnection conn;

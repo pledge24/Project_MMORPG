@@ -19,7 +19,7 @@ enum class MonsterState : uint8
 class MonsterAIComponent : public EntityComponent
 {
 public:
-    MonsterAIComponent(MonsterRef owner, const MonsterTemplate& monsterTemplate);
+    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow);
     virtual ~MonsterAIComponent() = default;
 
     //~ Begin EntityComponent Interface

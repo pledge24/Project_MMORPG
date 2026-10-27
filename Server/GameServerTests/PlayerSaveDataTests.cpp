@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -12,7 +13,7 @@
     Player를 가리키면 룸 스레드의 변경과 경쟁하므로, 사본을 뜬 뒤에 플레이어가 바뀌어도
     사본은 그대로여야 한다. 저장은 들고 있는 아이템 전체로 행을 맞추므로 소지품도 통째로 떠야 한다.
 
-    픽스처 결합도: 아이템 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -26,14 +27,8 @@ class PlayerSaveDataTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.inventorySlotCounts = MakeInventorySections();
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());

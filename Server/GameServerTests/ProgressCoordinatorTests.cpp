@@ -5,6 +5,8 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "PlayerTestAccess.h"
+#include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     진행 조율자 테스트
@@ -34,18 +36,11 @@ protected:
         previousCoordinator = GProgressCoordinator;
         GProgressCoordinator = &coordinator;
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = 100;
-
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         Gamedata::Install(std::move(tables));
 
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = ROOM_ID;
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
+        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
         room = Room::Create(mapTemplate);
         ASSERT_NE(room, nullptr);
 
@@ -69,11 +64,7 @@ protected:
     /** ROOM_ID + 1번 룸. 룸 이동의 목적지로 쓴다. */
     static RoomRef CreateNextRoom()
     {
-        MapTemplate nextMap;
-        nextMap.templateId = ROOM_ID + 1;
-        nextMap.depthHalfExtent = 5000.f;
-        nextMap.widthHalfExtent = 5000.f;
-        return Room::Create(nextMap);
+        return Room::Create(TestAreaTables::MakeArea(ROOM_ID + 1, 0, 0.f, 0.f, 5000.f));
     }
 
     void TearDown() override
@@ -458,19 +449,12 @@ TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
     constexpr int32 TOWN_ROOM_ID = 1;
     constexpr int32 TOWN_MAP_ID = 1001;
 
-    LevelTemplate level1;
-    level1.level = 1;
-    level1.maxHp = 100;
-
-    MapTemplate town;
-    town.templateId = TOWN_ROOM_ID;
-    town.mapId = TOWN_MAP_ID;
-    town.respawnPoint = TemplatePos{ 300.f, 0.f, 0.f };
+    DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+    TestAreaTables::SetRespawnPoint(town, 300.f, 0.f, 0.f);
 
     GamedataTables tables;
-    tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
-    tables.maps[TOWN_ROOM_ID] = town;
-    tables.townRoomId = TOWN_ROOM_ID;
+    TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
+    TestAreaTables::AddTown(tables, town);
     Gamedata::Install(std::move(tables));
 
     EnterRoom();

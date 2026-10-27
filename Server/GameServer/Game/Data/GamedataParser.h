@@ -1,30 +1,22 @@
 #pragma once
 #include "Game/Data/Templates.h"
 
-/** 기획표 파일 이름. */
-namespace GamedataFile
-{
-    constexpr string_view WARRIOR_LEVELS = "S_Warrior_Level_Data.json";
-    constexpr string_view ITEMS = "S_Item.json";
-    constexpr string_view MAPS = "S_Map.json";
-    constexpr string_view MONSTERS = "S_Monster.json";
-    constexpr string_view CURRENCIES = "S_Currency.json";
-    constexpr string_view INITIAL_PROGRESS = "S_Initial_Progress.json";
-    constexpr string_view INVENTORY_SECTIONS = "S_Inventory_Section.json";
-    constexpr string_view QUICK_SLOTS = "S_Quick_Slot.json";
-}
-
-/** 파싱만 마친 기획표 문서. 파일 하나가 행 배열 하나다. */
+/** 파싱만 마친 기획표 문서. DataBuilder가 생성한 파일 하나가 문서 하나다. 표는 행 배열이고 설정은 객체 하나다. */
 struct GamedataDocuments
 {
-    Json warriorLevels;
-    Json items;
     Json maps;
+    /** 포털은 지역 아래 중첩되어 있다. */
+    Json areas;
     Json monsters;
+    Json dropGroups;
     Json currencies;
+    Json items;
+    Json itemEquipStats;
+    Json itemConsumeEffects;
+    Json levels;
+    Json classLevelStats;
+    /** 설정 워크북의 초기 진행 시트(Progress.json). */
     Json initialProgress;
-    Json inventorySections;
-    Json quickSlots;
 };
 
 /**
@@ -34,7 +26,7 @@ struct GamedataDocuments
 namespace GamedataParser
 {
     /**
-     * 통과하면 nullopt, 실패하면 처음 걸린 오류를 "파일 N번째 행(templateId X): 사유" 형식으로 돌려준다.
+     * 통과하면 nullopt, 실패하면 처음 걸린 오류를 "파일 N번째 행: 사유" 형식으로 돌려준다.
      * 실패하면 tables에 일부만 채워졌을 수 있으므로 쓰지 않는다.
      */
     optional<string> Parse(const GamedataDocuments& documents, OUT GamedataTables& tables);

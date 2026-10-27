@@ -5,6 +5,8 @@
 #include "Game/Entities/PlayerProgress.h"
 #include "RecordingSession.h"
 #include "RoomManagerTestAccess.h"
+#include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     맵 로드 절차 테스트
@@ -42,25 +44,15 @@ namespace
         return pos;
     }
 
-    MapTemplate MakeRoomTemplate(int32 roomId, int32 mapId, float centerX)
+    DesignData::AreaRow MakeArea(int32 areaId, int32 mapId, float centerX)
     {
-        MapTemplate room;
-        room.templateId = roomId;
-        room.mapId = mapId;
-        room.center = TemplatePos{ centerX, 0.f, 0.f };
-        room.depthHalfExtent = 3000.f;
-        room.widthHalfExtent = 3000.f;
-        room.portalRadius = PORTAL_RADIUS;
-        return room;
+        return TestAreaTables::MakeArea(areaId, mapId, centerX, 0.f, 3000.f);
     }
 
-    PortalTemplate MakePortal(int32 portalId, int32 dstRoomId, float srcX, float dstX)
+    DesignData::PortalRow MakePortal(int32 portalId, int32 destAreaId, float srcX, float destX)
     {
-        PortalTemplate portal;
-        portal.portalId = portalId;
-        portal.dstRoomId = dstRoomId;
-        portal.srcPos = TemplatePos{ srcX, 0.f, 0.f };
-        portal.dstPos = TemplatePos{ dstX, 0.f, 0.f };
+        DesignData::PortalRow portal = TestAreaTables::MakePortal(portalId, destAreaId, srcX, 0.f, PORTAL_RADIUS);
+        portal.DestX = destX;
         return portal;
     }
 
@@ -85,21 +77,16 @@ protected:
     void SetUp() override
     {
         // 마을에는 같은 맵의 사냥터로 가는 포털과 다른 맵의 룸으로 가는 포털이 있다.
-        MapTemplate town = MakeRoomTemplate(TOWN_ROOM, MAP_A, 0.f);
-        town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 0.f, 0.f };
-        town.portals.push_back(MakePortal(PORTAL_TO_FIELD, FIELD_ROOM, -1000.f, FIELD_ARRIVAL_X));
-        town.portals.push_back(MakePortal(PORTAL_TO_OTHER_MAP, OTHER_MAP_ROOM, 1000.f, OTHER_MAP_ARRIVAL_X));
-
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = PLAYER_MAX_HP;
+        DesignData::AreaRow town = MakeArea(TOWN_ROOM, MAP_A, 0.f);
+        TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
+        town.Portals.push_back(MakePortal(PORTAL_TO_FIELD, FIELD_ROOM, -1000.f, FIELD_ARRIVAL_X));
+        town.Portals.push_back(MakePortal(PORTAL_TO_OTHER_MAP, OTHER_MAP_ROOM, 1000.f, OTHER_MAP_ARRIVAL_X));
 
         GamedataTables tables;
-        tables.maps[TOWN_ROOM] = town;
-        tables.maps[FIELD_ROOM] = MakeRoomTemplate(FIELD_ROOM, MAP_A, -10000.f);
-        tables.maps[OTHER_MAP_ROOM] = MakeRoomTemplate(OTHER_MAP_ROOM, MAP_B, 7000.f);
-        tables.townRoomId = TOWN_ROOM;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestAreaTables::AddTown(tables, town);
+        TestAreaTables::AddArea(tables, MakeArea(FIELD_ROOM, MAP_A, -10000.f));
+        TestAreaTables::AddArea(tables, MakeArea(OTHER_MAP_ROOM, MAP_B, 7000.f));
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
         rooms = make_unique<ScopedTestRoomManager>();

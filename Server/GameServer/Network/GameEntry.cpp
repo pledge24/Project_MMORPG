@@ -25,7 +25,7 @@ namespace
         const optional<RoomAssignment> assignment = RoomTransfer::AssignRoom(progress.mapId, pos);
         if (assignment.has_value() == false)
         {
-            GLogger->Error("캐릭터 {}가 맵 {}에서 들어갈 룸이 없어 입장을 거절합니다(맵 표에 마을 리스폰 지점이 없다)",
+            GLogger->Error("캐릭터 {}가 맵 {}에서 들어갈 룸이 없어 입장을 거절합니다(지역 표에 마을 리스폰 지점이 없다)",
                 progress.characterId, progress.mapId);
             return nullopt;
         }

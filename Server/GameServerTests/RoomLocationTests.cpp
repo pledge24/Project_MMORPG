@@ -11,8 +11,7 @@
     픽스처 결합도: Room::Create에 최소한의 룸 데이터를 넘긴다. Start()는 부르지 않으므로
     몬스터 스폰과 틱 타이머는 돌지 않는다. 여백 값은 Room.h의 LOCATION_PADDING_X·Y와 같다.
 
-    축: 언리얼 좌표를 따라 x가 depth, y가 width다. 맵 데이터의 depthHalfExtent가 x 범위를,
-    widthHalfExtent가 y 범위를 정한다.
+    축: 언리얼 좌표를 따른다. 지역 표의 HalfExtentX가 x 범위를, HalfExtentY가 y 범위를 정한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -25,13 +24,14 @@ namespace
 
     RoomRef MakeRoom(float depthHalfExtent, float widthHalfExtent)
     {
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = 99;
-        mapTemplate.center = TemplatePos{ CENTER_X, CENTER_Y, 0.f };
-        mapTemplate.depthHalfExtent = depthHalfExtent;
-        mapTemplate.widthHalfExtent = widthHalfExtent;
+        DesignData::AreaRow area;
+        area.Id = 99;
+        area.CenterX = CENTER_X;
+        area.CenterY = CENTER_Y;
+        area.HalfExtentX = depthHalfExtent;
+        area.HalfExtentY = widthHalfExtent;
 
-        return Room::Create(mapTemplate);
+        return Room::Create(area);
     }
 }
 

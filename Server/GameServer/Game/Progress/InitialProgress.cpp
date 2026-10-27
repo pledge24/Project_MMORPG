@@ -4,20 +4,19 @@
 
 bool InitialProgress::Fill(OUT PlayerProgress& progress)
 {
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(progress.classId);
-    const LevelTemplate* levelTemplate = classLevelTable != nullptr ? classLevelTable->Find(1) : nullptr;
-    if (levelTemplate == nullptr)
+    const DesignData::ClassLevelStatRow* levelStat = Gamedata::FindClassLevelStat(progress.classId, 1);
+    if (levelStat == nullptr)
         return false;
 
     // 새 캐릭터는 시작 맵의 시작 위치에서, HP와 MP가 가득 찬 채로, 시작 골드를 들고 시작한다.
-    const InitialProgressTemplate& initial = Gamedata::GetInitialProgress();
-    progress.mapId = initial.startMapId;
-    progress.pos = vector3D(initial.startPos.x, initial.startPos.y, initial.startPos.z);
-    progress.yaw = initial.startYaw;
+    const DesignData::ProgressConfig& initial = Gamedata::GetInitialProgress();
+    progress.mapId = initial.StartMapId;
+    progress.pos = vector3D(initial.StartX, initial.StartY, initial.StartZ);
+    progress.yaw = initial.StartYaw;
     progress.totalExp = 0;
-    progress.hp = levelTemplate->maxHp;
-    progress.mp = levelTemplate->maxMp;
-    progress.gold = initial.startGold;
+    progress.hp = levelStat->MaxHp;
+    progress.mp = levelStat->MaxMp;
+    progress.gold = initial.StartGold;
 
     return true;
 }

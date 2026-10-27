@@ -5,16 +5,13 @@
 
 namespace
 {
-    /**
-     * 작업 디렉터리(프로젝트 폴더) 기준 상대 경로다.
-     * GenJsonFile.bat이 Json을 옮기는 곳과 다르면 부팅 때 기획표를 찾지 못한다.
-     */
-    constexpr string_view GAMEDATA_DIR = "Game/Data/Json/";
+    /** DataBuilder의 산출물 폴더. 작업 디렉터리 기준이고, databuilder.toml의 game 모듈 폴더와 같아야 한다. */
+    constexpr string_view GENERATED_DIR = "Game/Data/Generated/";
 
     /** 파일을 열지 못하거나 Json 문법이 틀리면 사유를 돌려준다. */
     optional<string> ReadDocument(string_view fileName, OUT Json& document)
     {
-        ifstream file(string(GAMEDATA_DIR) + string(fileName));
+        ifstream file(string(GENERATED_DIR) + string(fileName));
         if (file.is_open() == false)
             return format("{}: 파일을 열지 못했다", fileName);
 
@@ -35,17 +32,20 @@ GamedataTables Gamedata::s_tables;
 
 bool Gamedata::LoadAllGamedata()
 {
-    // TODO: 퀘스트를 만들 때 퀘스트 표(S_Quest.json)도 템플릿과 함께 불러온다.
     GamedataDocuments documents;
+
     const pair<string_view, Json*> files[] = {
-        { GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
-        { GamedataFile::ITEMS, &documents.items },
-        { GamedataFile::MAPS, &documents.maps },
-        { GamedataFile::MONSTERS, &documents.monsters },
-        { GamedataFile::CURRENCIES, &documents.currencies },
-        { GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
-        { GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
-        { GamedataFile::QUICK_SLOTS, &documents.quickSlots },
+        { DesignData::CURRENCY_FILE, &documents.currencies },
+        { DesignData::ITEM_FILE, &documents.items },
+        { DesignData::ITEM_EQUIP_STAT_FILE, &documents.itemEquipStats },
+        { DesignData::ITEM_CONSUME_EFFECT_FILE, &documents.itemConsumeEffects },
+        { DesignData::LEVEL_FILE, &documents.levels },
+        { DesignData::CLASS_LEVEL_STAT_FILE, &documents.classLevelStats },
+        { DesignData::MONSTER_FILE, &documents.monsters },
+        { DesignData::DROP_GROUP_FILE, &documents.dropGroups },
+        { DesignData::MAP_FILE, &documents.maps },
+        { DesignData::AREA_FILE, &documents.areas },
+        { DesignData::PROGRESS_FILE, &documents.initialProgress },
     };
 
     for (const auto& [fileName, document] : files)
@@ -57,12 +57,25 @@ bool Gamedata::LoadAllGamedata()
         }
     }
 
+    // 어느 원본으로 만든 데이터를 읽었는지 로그로 남긴다. 원본 해시라서 같은 원본이면 같은 값이다.
+    Json versionDocument;
+    string dataVersion;
+    optional<string> versionError = ReadDocument(DesignData::VERSION_FILE, OUT versionDocument);
+    if (versionError.has_value() == false)
+        versionError = DesignData::ParseDataVersion(versionDocument, OUT dataVersion);
+    if (versionError.has_value())
+    {
+        GLogger->Error("기획 데이터 버전을 읽지 못했다. {}", versionError.value());
+        return false;
+    }
+
     if (optional<string> error = Load(documents))
     {
         GLogger->Error("기획 데이터 검증에 실패했다. {}", error.value());
         return false;
     }
 
+    GLogger->Info("기획 데이터 버전 {}을 불러왔다", dataVersion);
     return true;
 }
 
@@ -81,32 +94,44 @@ void Gamedata::Install(GamedataTables tables)
     s_tables = std::move(tables);
 }
 
-const ItemTemplate* Gamedata::FindItem(int32 templateId)
+const DesignData::ItemRow* Gamedata::FindItem(int32 templateId)
 {
     auto it = s_tables.items.find(templateId);
     return it == s_tables.items.end() ? nullptr : &it->second;
 }
 
-const MonsterTemplate* Gamedata::FindMonster(int32 templateId)
+const DesignData::ItemEquipStatRow* Gamedata::FindItemEquipStat(int32 templateId)
+{
+    auto it = s_tables.itemEquipStats.find(templateId);
+    return it == s_tables.itemEquipStats.end() ? nullptr : &it->second;
+}
+
+const DesignData::ItemConsumeEffectRow* Gamedata::FindItemConsumeEffect(int32 templateId)
+{
+    auto it = s_tables.itemConsumeEffects.find(templateId);
+    return it == s_tables.itemConsumeEffects.end() ? nullptr : &it->second;
+}
+
+const DesignData::MonsterRow* Gamedata::FindMonster(int32 templateId)
 {
     auto it = s_tables.monsters.find(templateId);
     return it == s_tables.monsters.end() ? nullptr : &it->second;
 }
 
-const MapTemplate* Gamedata::FindMap(int32 templateId)
+const DesignData::DropGroupRow* Gamedata::FindDropGroup(int32 dropGroupId)
 {
-    auto it = s_tables.maps.find(templateId);
-    return it == s_tables.maps.end() ? nullptr : &it->second;
+    auto it = s_tables.dropGroups.find(dropGroupId);
+    return it == s_tables.dropGroups.end() ? nullptr : &it->second;
 }
 
-const ClassLevelTable* Gamedata::FindClassLevelTable(int32 classId)
+const DesignData::AreaRow* Gamedata::FindArea(int32 areaId)
 {
-    auto it = s_tables.classLevelTables.find(classId);
-    return it == s_tables.classLevelTables.end() ? nullptr : &it->second;
+    auto it = s_tables.areas.find(areaId);
+    return it == s_tables.areas.end() ? nullptr : &it->second;
 }
 
-int32 Gamedata::GetInventorySlotCount(Protocol::ItemType itemType)
+const DesignData::ClassLevelStatRow* Gamedata::FindClassLevelStat(int32 classId, int32 level)
 {
-    auto it = s_tables.inventorySlotCounts.find(itemType);
-    return it == s_tables.inventorySlotCounts.end() ? 0 : it->second;
+    auto it = s_tables.classLevelStats.find({ static_cast<Protocol::CharacterClass>(classId), level });
+    return it == s_tables.classLevelStats.end() ? nullptr : &it->second;
 }

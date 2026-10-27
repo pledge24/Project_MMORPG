@@ -21,14 +21,14 @@ bool Monster::Init(const SpawnParams& params)
     SetPosInfo(params.spawnPos);
 
     const int32 templateId = params.templateId;
-    const MonsterTemplate* monsterTemplate = Gamedata::FindMonster(templateId);
-    if (monsterTemplate == nullptr)
+    const DesignData::MonsterRow* monsterRow = Gamedata::FindMonster(templateId);
+    if (monsterRow == nullptr)
     {
         GLogger->Warning("몬스터 표에 없는 템플릿 {}으로 몬스터를 만들 수 없다", templateId);
         return false;
     }
 
-    _template = *monsterTemplate;
+    _template = *monsterRow;
 
     CacheMonsterData();
 
@@ -71,18 +71,18 @@ Protocol::EntityInfo Monster::GetEntityInfo() const
 
 int64 Monster::GetExpReward()
 {
-    return Utils::GetRandom(_template.minExp, _template.maxExp);
+    return Utils::GetRandom(_template.MinExp, _template.MaxExp);
 }
 
 int64 Monster::GetGoldReward()
 {
-    return Utils::GetRandom(_template.minGold, _template.maxGold);
+    return Utils::GetRandom(_template.MinGold, _template.MaxGold);
 }
 
 void Monster::CacheMonsterData()
 {
-    _templateId = _template.templateId;
-    _maxHp = _template.maxHp;
+    _templateId = _template.Id;
+    _maxHp = _template.MaxHp;
 }
 
 void Monster::SetPlanePos(const vector2D& pos)

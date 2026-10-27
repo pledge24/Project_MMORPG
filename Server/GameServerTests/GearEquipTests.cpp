@@ -1,10 +1,12 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     장비 장착·탈착 결과 테스트
@@ -13,7 +15,7 @@
     그래서 두 값은 요청한 칸이 아니라 처리 결과여야 한다. gear_part는 장비 부위, template_id는
     처리 뒤 그 부위의 아이템이다. 나중에 룸에 들어온 플레이어가 보는 외형은 gear_appearance로 간다.
 
-    픽스처 결합도: 아이템 템플릿, 2레벨까지 있는 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿, 2레벨까지 있는 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 장착과 해제가 레벨 표로 최종 스탯을 다시 계산하므로 레벨 표가 있어야 한다.
 ---------------------------------------------------------------*/
 
@@ -35,43 +37,23 @@ class GearEquipTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.physicalAttack = 10;
-
-        ItemTemplate helmet;
-        helmet.templateId = HELMET_TEMPLATE_ID;
-        helmet.itemType = Protocol::ITEM_TYPE_GEAR;
-        helmet.gearType = Protocol::GEAR_PART_HELMET;
-        helmet.hp = HELMET_HP;
-        helmet.mp = HELMET_MP;
-
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = BASE_MAX_HP;
-        level1.maxMp = BASE_MAX_MP;
-        level1.physicalAttack = BASE_PHYSICAL_ATTACK;
-
-        ItemTemplate highLevelSword = sword;
-        highLevelSword.templateId = HIGH_LEVEL_SWORD_TEMPLATE_ID;
-        highLevelSword.levelRequirement = 2;
-
-        ItemTemplate mageSword = sword;
-        mageSword.templateId = MAGE_SWORD_TEMPLATE_ID;
-        mageSword.classRequirement = Protocol::CHARACTER_CLASS_MAGE;
-
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.items[HELMET_TEMPLATE_ID] = helmet;
-        tables.items[HIGH_LEVEL_SWORD_TEMPLATE_ID] = highLevelSword;
-        tables.items[MAGE_SWORD_TEMPLATE_ID] = mageSword;
-        LevelTemplate level2 = level1;
-        level2.level = 2;
+        for (int32 swordId : { SWORD_TEMPLATE_ID, HIGH_LEVEL_SWORD_TEMPLATE_ID, MAGE_SWORD_TEMPLATE_ID })
+            TestItemTables::AddGear(tables, swordId, Protocol::GEAR_PART_WEAPON).PhysicalAttack = 10;
+        tables.items[HIGH_LEVEL_SWORD_TEMPLATE_ID].LevelRequirement = 2;
+        tables.items[MAGE_SWORD_TEMPLATE_ID].AllowedClasses = { Protocol::CHARACTER_CLASS_MAGE };
 
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
-        tables.inventorySlotCounts = MakeInventorySections();
+        DesignData::ItemEquipStatRow& helmet = TestItemTables::AddGear(tables, HELMET_TEMPLATE_ID, Protocol::GEAR_PART_HELMET);
+        helmet.Hp = HELMET_HP;
+        helmet.Mp = HELMET_MP;
+
+        for (int32 level : { 1, 2 })
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, level == 1 ? 100 : 0);
+            stat.MaxHp = BASE_MAX_HP;
+            stat.MaxMp = BASE_MAX_MP;
+            stat.PhysicalAttack = BASE_PHYSICAL_ATTACK;
+        }
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());

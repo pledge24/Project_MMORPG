@@ -33,15 +33,15 @@ protected:
         if (HasFatalFailure())
             return;
 
-        LobbyTables tables;
-        tables.defaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
-        tables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
-        LobbyData::Install(std::move(tables));
+        LobbyDesignData::LobbyConfig config;
+        config.DefaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
+        config.CreatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
+        LobbyData::Install(std::move(config));
     }
 
     void TearDown() override
     {
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
         GameDBTestFixture::TearDown();
     }
 

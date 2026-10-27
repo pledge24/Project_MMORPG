@@ -6,9 +6,9 @@
 
 InventoryComponent::InventoryComponent(PlayerRef owner) : EntityComponent(owner)
 {
-    // 구역마다 칸 수는 기획 데이터의 인벤토리 구역 표가 정한다.
+    // 모든 구역의 칸 수가 같다. 클라이언트 UI가 구역마다 같은 칸 수를 고정으로 그린다.
     for (const InventorySection& section : InventorySections::ALL)
-        _sections.emplace_back(section.container, Gamedata::GetInventorySlotCount(section.itemType));
+        _sections.emplace_back(section.container, InventorySections::SLOT_COUNT);
 }
 
 InventoryComponent::~InventoryComponent()
@@ -20,15 +20,15 @@ bool InventoryComponent::AddNewItem(int32 templateId, int32 count)
     if (count <= 0)
         return false;
 
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(templateId);
+    if (itemRow == nullptr)
         return false;
 
-    ItemContainer* section = FindSectionFor(itemTemplate->itemType);
+    ItemContainer* section = FindSectionFor(itemRow->Type);
     if (section == nullptr)
         return false;
 
-    const int32 maxStack = itemTemplate->maxStack;
+    const int32 maxStack = itemRow->MaxStack;
 
     // 넣을 자리를 먼저 다 정한다. 칸을 바꾸기 시작한 뒤에 모자라면 되돌릴 수 없다.
     vector<pair<int32, int32>> stacks; // <칸 번호, 더할 수량>
@@ -36,7 +36,7 @@ bool InventoryComponent::AddNewItem(int32 templateId, int32 count)
     int32 remaining = count;
 
     // 장비는 합치지 않는다. 나머지는 같은 아이템이 든 칸의 남은 자리부터 채운다.
-    if (itemTemplate->itemType != Protocol::ITEM_TYPE_GEAR)
+    if (itemRow->Type != Protocol::ITEM_TYPE_GEAR)
     {
         for (int32 slotIndex : section->GetSlotIndices())
         {
@@ -77,7 +77,7 @@ bool InventoryComponent::AddNewItem(int32 templateId, int32 count)
         item.itemUid = GIdGenerator->Next();
         item.templateId = templateId;
         item.count = amount;
-        if (itemTemplate->itemType == Protocol::ITEM_TYPE_GEAR)
+        if (itemRow->Type == Protocol::ITEM_TYPE_GEAR)
             item.gear = GearDetail{};
 
         section->Put(slotIndex, item);
@@ -88,16 +88,16 @@ bool InventoryComponent::AddNewItem(int32 templateId, int32 count)
 
 bool InventoryComponent::AddItem(const ItemInstance& item)
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(item.templateId);
+    if (itemRow == nullptr)
         return false;
 
-    ItemContainer* section = FindSectionFor(itemTemplate->itemType);
+    ItemContainer* section = FindSectionFor(itemRow->Type);
     if (section == nullptr)
         return false;
 
     // 이미 있는 묶음에 더한 개수는 그 묶음의 UID를 따른다.
-    if (optional<int32> stackSlot = FindStackSlot(*section, itemTemplate->itemType, item.templateId))
+    if (optional<int32> stackSlot = FindStackSlot(*section, itemRow->Type, item.templateId))
         return section->AddCount(stackSlot.value(), item.count);
 
     optional<int32> emptySlot = section->FindEmptySlot();
@@ -123,11 +123,11 @@ bool InventoryComponent::LoadItem(const SlotAddress& address, const ItemInstance
     if (section->Find(address.slotIndex) != nullptr)
         return false;
 
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
-    if (itemTemplate == nullptr || InventorySections::FindContainer(itemTemplate->itemType) != address.container)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(item.templateId);
+    if (itemRow == nullptr || InventorySections::FindContainer(itemRow->Type) != address.container)
         return false;
 
-    if (item.count < 1 || item.count > itemTemplate->maxStack)
+    if (item.count < 1 || item.count > itemRow->MaxStack)
         return false;
 
     ItemInstance placed = item;
@@ -158,15 +158,15 @@ bool InventoryComponent::RemoveItem(const SlotAddress& address, int32 count)
 
 bool InventoryComponent::CanAddItem(const ItemInstance& item) const
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(item.templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(item.templateId);
+    if (itemRow == nullptr)
         return false;
 
-    const ItemContainer* section = FindSectionFor(itemTemplate->itemType);
+    const ItemContainer* section = FindSectionFor(itemRow->Type);
     if (section == nullptr)
         return false;
 
-    return FindStackSlot(*section, itemTemplate->itemType, item.templateId).has_value() || section->FindEmptySlot().has_value();
+    return FindStackSlot(*section, itemRow->Type, item.templateId).has_value() || section->FindEmptySlot().has_value();
 }
 
 const ItemInstance* InventoryComponent::FindItem(const SlotAddress& address) const
@@ -237,12 +237,13 @@ optional<int32> InventoryComponent::FindStackSlot(const ItemContainer& section, 
 
 bool InventoryComponent::IsCoolingDown(int32 templateId, uint64 nowMs) const
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
-    if (itemTemplate == nullptr)
+    // 재사용 대기는 소모품의 사용 효과에만 있다.
+    const DesignData::ItemConsumeEffectRow* consumeEffect = Gamedata::FindItemConsumeEffect(templateId);
+    if (consumeEffect == nullptr)
         return false;
 
     auto lastUseIt = _lastUseTimeMs.find(templateId);
-    return lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + itemTemplate->cooldownMs;
+    return lastUseIt != _lastUseTimeMs.end() && nowMs < lastUseIt->second + static_cast<uint64>(consumeEffect->CooldownMs);
 }
 
 void InventoryComponent::StartCooldown(int32 templateId, uint64 nowMs)

@@ -55,8 +55,8 @@ Project_MMORPG/
 
 **한 티어 안에서만 도는 스크립트는 `Tools/`에 두지 않는다.** 클라이언트의 빌드와 테스트 실행은
 `P1/Scripts/`가 맡는다. `Tools/`에 두는 것은 저장소 전체를 대상으로 삼거나 두 티어가 함께 쓰는
-것이다. 규범 검사(`Tools/ConventionLint/`)와 문서 검사(`Tools/DocLint/`)가 앞에, 패킷 핸들러
-생성기와 기획 수치 변환기가 뒤에 해당한다.
+것이다. 규범 검사(`Tools/ConventionLint/`)와 문서 검사(`Tools/DocLint/`)가 앞에, 기획 데이터 생성기(`Tools/DataBuilder/`)와 패킷 핸들러
+생성기가 뒤에 해당한다.
 
 `Server/`와 `Protocol/`이 언리얼 프로젝트 **바깥에** 있는 이유는 둘이다. 첫째, 언리얼의 쿠킹과
 패키징 대상에서 자연히 빠진다. 둘째, 서버를 빌드할 때 언리얼 빌드 도구가 필요 없어진다.
@@ -79,10 +79,11 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
-런타임 모듈은 Public과 Private을 나누지 않는다. 도메인 폴더에 `.h`와 `.cpp`를 함께 둔다.
+런타임 모듈과 에디터 모듈은 Public과 Private을 나누지 않는다. 도메인 폴더에 `.h`와 `.cpp`를 함께 둔다.
 다른 모듈에 공개할 API가 생기는 시점에 그 모듈만 나눈다.
 
 **도메인을 별도 모듈로 나누지 않는다.** 수작업 `.h`·`.cpp`가 130개 남짓인 지금 규모에서는 빌드
@@ -109,7 +110,7 @@ P1/Source/
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
-| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`) |
+| `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`). 하위 `Generated/`는 DataBuilder가 만드는 기획 데이터 행 구조체와 열거형이다 |
 | `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽 |
 | `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
@@ -293,7 +294,8 @@ P1/Content/
 │   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
-│   │   └── DataTables/
+│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`)
+│   │   └── DesignData/     DataBuilder JSON으로 채우는 기획 데이터 테이블(`DT_<표>`)
 │   ├── Maps/
 │   └── World/              레벨에 배치하는 액터
 ├── External/               참고용 외부 팩. 게임이 참조하지 않는다
@@ -530,6 +532,7 @@ Server/
 │   │   ├── AI/             몬스터 AI 컴포넌트
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
+│   │       └── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
@@ -613,6 +616,7 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 - 스키마 원본은 `Protocol/Schema/` 한 곳에만 둔다
 - 기획 수치 원본은 `DesignData/` 한 곳에만 둔다
 - 생성된 코드는 커밋한다
+- 생성기의 산출물 폴더에는 사람이 쓴 파일을 두지 않는다. 한 폴더에는 생성기 하나만 쓴다
 - 스키마 변경과 생성 결과를 같은 커밋에 담는다
 - 손으로 쓰는 파일 목록은 `docs/codegen.md` 「손으로 쓰는 것」에 있다
 
@@ -623,6 +627,22 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 테이블을 나눈다. 접두사만 기능이고, 요청과 응답이 같은 이름을 쓰는 짝은 관례다.
 
 절차와 목적지 목록은 `docs/codegen.md`에 있다.
+
+### 7.1 기획 데이터
+
+기획 데이터는 원본, 도구, 산출물이 세 곳에 나뉜다. 2026년 10월 27일(#313~#322)에 모든 표를 DataBuilder로 옮기고 옛 변환기를 걷어냈다.
+
+| 무엇 | 경로 | 이름 |
+| --- | --- | --- |
+| DataBuilder 원본 | `DesignData/` | 표 이름 그대로의 워크북(`Currency.xlsx`). 설정 시트는 `Config.xlsx`에 둔다 |
+| DataBuilder | `Tools/DataBuilder/` | 래퍼 `Invoke-DataBuilder.ps1`, 설정 `databuilder.toml`, 패키지 `databuilder/`, 테스트 `tests/` |
+| DataBuilder 산출물 | 서버 모듈의 `Data/Generated/` | 게임 모듈은 `Server/GameServer/Game/Data/Generated/`, 로비 모듈은 `Server/GameServer/Lobby/Data/Generated/`다. 폴더 이름은 `Generated`로 고정이다 |
+| DataBuilder 클라이언트 산출물 | `P1/DesignData/Generated/`, `P1/Source/P1/Game/Data/Generated/` | `<표>.json`과 `P1<표>Row.h`. `Content/` 밖의 JSON을 에디터 메뉴가 `Content/P1/Data/DesignData/`의 `DT_<표>`에 채운다 |
+| 데이터 테이블 채우기 메뉴 | `P1/Scripts/Editor/` | `p1_design_data_tables.py`. 에디터의 Python 시작 스크립트가 불러온다 |
+
+**산출물 폴더는 DataBuilder가 소유한다.** 실행할 때마다 비우고 다시 쓰므로 그 폴더에 손으로 쓴 파일을 두면 지워진다.
+서버 모듈(로비, 게임)마다 산출물 폴더가 하나이고, 어느 모듈이 어느 표를 읽는지는 `Tools/DataBuilder/databuilder.toml`이 정한다. 클라이언트 산출물 폴더 둘도 DataBuilder가 소유한다.
+로비 모듈의 산출물 폴더는 2026년 10월 27일(#317)에 로비 설정을 DataBuilder로 옮기면서 만들었다.
 
 ---
 

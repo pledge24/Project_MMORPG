@@ -46,7 +46,7 @@ public:
 
 private:
     /** level과 characterClass가 아이템 표의 착용 조건에 맞으면 true. */
-    static bool MeetsRequirement(const ItemTemplate& itemTemplate, int32 level, Protocol::CharacterClass characterClass);
+    static bool MeetsRequirement(const DesignData::ItemRow& itemRow, int32 level, Protocol::CharacterClass characterClass);
 
     /** 칸 번호가 장비 부위 값이다. 부위가 없음을 뜻하는 0번 칸은 없다. */
     ItemContainer _equipped;

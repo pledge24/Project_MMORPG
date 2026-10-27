@@ -19,12 +19,12 @@ public:
 
     //~ 생성
 public:
-    /** 룸을 만드는 유일한 길이다. 맵 표는 부팅 때 검증했으므로 실패하지 않는다. */
-    static RoomRef Create(const MapTemplate& mapTemplate);
+    /** 룸을 만드는 유일한 길이다. 지금은 지역 하나가 룸 하나다. 지역 표는 부팅 때 검증했으므로 실패하지 않는다. */
+    static RoomRef Create(const DesignData::AreaRow& area);
 
 protected:
     /** Create만 부른다. */
-    void Init(const MapTemplate& mapTemplate);
+    void Init(const DesignData::AreaRow& area);
     void CacheRoomData();
 
     //~ 시작
@@ -123,9 +123,9 @@ public:
     /** Init 뒤로는 바뀌지 않으므로 룸 큐 밖에서 읽어도 된다. */
     int32               GetRoomId() const { return _roomId; }
     /** 이 룸이 속한 맵. Init 뒤로는 바뀌지 않으므로 룸 큐 밖에서 읽어도 된다. */
-    int32               GetMapId() const { return _mapTemplate.mapId; }
-    /** 이 룸에 그 번호의 포털이 없으면 nullptr. */
-    const PortalTemplate* FindPortal(int32 portalId) const;
+    int32               GetMapId() const { return _area.MapId; }
+    /** 이 룸이 맡은 지역에 그 번호의 포털이 없으면 nullptr. */
+    const DesignData::PortalRow* FindPortal(int32 portalId) const;
     const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
 
     /** posInfo를 룸 안의 무작위 위치로 바꾼다. randYaw가 false면 yaw는 그대로 둔다. */
@@ -137,8 +137,8 @@ private:
     const float LOCATION_PADDING_Z = 100.f;
 
     int32 _roomId;
-    /** 맵 표의 행 사본. */
-    MapTemplate _mapTemplate;
+    /** 이 룸이 맡은 지역 표의 행 사본. */
+    DesignData::AreaRow _area;
 
     /** 언리얼 좌표를 따른다. depth가 x 방향, width가 y 방향의 반폭이다. */
     vector3D _roomCenterPos;

@@ -5,6 +5,8 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/AI/MonsterAIComponent.h"
+#include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     몬스터 AI 테스트
@@ -52,29 +54,22 @@ class MonsterAITest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MonsterTemplate monsterTemplate;
-        monsterTemplate.templateId = MONSTER_TEMPLATE_ID;
-        monsterTemplate.maxHp = 100;
-        monsterTemplate.baseAttack = 10;
-        monsterTemplate.attackInterval = 2.5f;
-        monsterTemplate.tryAttackRange = ATTACK_RANGE;
-        monsterTemplate.detectionRange = DETECTION_RANGE;
-        monsterTemplate.chasingMaxRange = 1200.f;
-        monsterTemplate.movementSpeed = 300.f;
-
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = PLAYER_MAX_HP;
+        DesignData::MonsterRow monsterRow;
+        monsterRow.Id = MONSTER_TEMPLATE_ID;
+        monsterRow.MaxHp = 100;
+        monsterRow.BaseAttack = 10;
+        monsterRow.AttackInterval = 2.5f;
+        monsterRow.TryAttackRange = ATTACK_RANGE;
+        monsterRow.DetectionRange = DETECTION_RANGE;
+        monsterRow.ChasingMaxRange = 1200.f;
+        monsterRow.MovementSpeed = 300.f;
 
         GamedataTables tables;
-        tables.monsters[MONSTER_TEMPLATE_ID] = monsterTemplate;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        tables.monsters[MONSTER_TEMPLATE_ID] = monsterRow;
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = ROOM_ID;
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
+        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
         room = Room::Create(mapTemplate);
         ASSERT_NE(room, nullptr);
 

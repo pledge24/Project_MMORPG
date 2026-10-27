@@ -7,6 +7,9 @@
 #include "Game/Inventory/InventoryComponent.h"
 #include "RecordingSession.h"
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
+#include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -15,7 +18,7 @@
     잡은 세션이 없어도 응답을 건너뛰고 끝나야 한다.
 
     픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 플레이어는 세션 없이 불러온 진행으로
-    만들어 EnterPlayer로 넣는다. 아이템, 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
+    만들어 EnterPlayer로 넣는다. 아이템과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -48,34 +51,18 @@ class RoomRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.sellable = true;
-
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = PLAYER_MAX_HP;
-
-        // 마을은 룸 객체 없이 맵 표에만 둔다. 리스폰 규칙은 맵 표만 읽는다.
-        MapTemplate town;
-        town.templateId = TOWN_ROOM_ID;
-        town.mapId = TOWN_MAP_ID;
-        town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 0.f, 0.f };
+        // 마을은 룸 객체 없이 지역 표에만 둔다. 리스폰 규칙은 지역 표만 읽는다.
+        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+        TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
 
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
-        tables.maps[TOWN_ROOM_ID] = town;
-        tables.townRoomId = TOWN_ROOM_ID;
-        tables.inventorySlotCounts = MakeInventorySections();
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
+        tables.items[SWORD_TEMPLATE_ID].Sellable = true;
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
+        TestAreaTables::AddTown(tables, town);
         Gamedata::Install(std::move(tables));
 
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = ROOM_ID;
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
+        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
         room = Room::Create(mapTemplate);
         ASSERT_NE(room, nullptr);
 

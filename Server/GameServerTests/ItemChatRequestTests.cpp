@@ -6,8 +6,11 @@
 #include "Network/ItemRequests.h"
 #include "Network/ChatRequests.h"
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "RecordingSession.h"
 #include "RoomManagerTestAccess.h"
+#include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     룸의 아이템과 채팅 요청 테스트
@@ -18,7 +21,7 @@
 
     픽스처 결합도: 맵 표의 두 행으로 시작하지 않은 룸 둘을 ScopedTestRoomManager에 만든다. 요청한 플레이어와
     지켜보는 플레이어를 한 룸에, 다른 플레이어 하나를 다른 룸에 RecordingSession으로 묶어 넣는다.
-    칼 하나와 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
+    칼 하나와 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -34,21 +37,11 @@ class ItemChatRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = 100;
-
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.inventorySlotCounts = MakeInventorySections();
-        tables.maps[ROOM_ID] = MakeRoomTemplate(ROOM_ID, 0.f);
-        tables.maps[OTHER_ROOM_ID] = MakeRoomTemplate(OTHER_ROOM_ID, 20000.f);
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f));
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(OTHER_ROOM_ID, 0, 20000.f, 0.f, 5000.f));
         Gamedata::Install(std::move(tables));
 
         rooms = make_unique<ScopedTestRoomManager>();
@@ -78,16 +71,6 @@ protected:
         otherRoom.reset();
         rooms.reset();
         Gamedata::Install(GamedataTables());
-    }
-
-    static MapTemplate MakeRoomTemplate(int32 roomId, float centerX)
-    {
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = roomId;
-        mapTemplate.center = TemplatePos{ centerX, 0.f, 0.f };
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
-        return mapTemplate;
     }
 
     PlayerRef EnterPlayer(const RoomRef& targetRoom, shared_ptr<RecordingSession>& outSession, const string& name)

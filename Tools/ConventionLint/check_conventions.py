@@ -53,6 +53,9 @@ GENERATED_FILE_NAMES = frozenset(
 # protoc가 스키마 파일마다 만드는 파일의 끝이다. 스키마 파일은 도메인마다 하나라서 이름을 나열하지 않는다.
 GENERATED_FILE_SUFFIXES = (".pb.h", ".pb.cc")
 
+# DataBuilder가 클라이언트 행 구조체를 만드는 폴더다. 그 아래의 파일은 모두 생성물이다.
+GENERATED_DIRS = (f"{CLIENT_SOURCE}/Game/Data/Generated/",)
+
 # 생성물이 이름으로 부르기 때문에 프로젝트 약어를 붙이지 않는 타입이다.
 # `Protocol/Templates/PacketHandler.h`가 이 이름들을 그대로 적는다 (`ue-client.md` 「이름과 파일」).
 GENERATED_NAME_DEPENDENTS = frozenset(
@@ -204,7 +207,11 @@ def strip_comments_and_strings(source: str, preserve_string_contents: bool = Fal
 
 def is_generated(rel_path: str) -> bool:
     name = Path(rel_path).name
-    return name in GENERATED_FILE_NAMES or name.endswith(GENERATED_FILE_SUFFIXES)
+    return (
+        name in GENERATED_FILE_NAMES
+        or name.endswith(GENERATED_FILE_SUFFIXES)
+        or rel_path.startswith(GENERATED_DIRS)
+    )
 
 
 # ----------------------------------------------------------------------------------

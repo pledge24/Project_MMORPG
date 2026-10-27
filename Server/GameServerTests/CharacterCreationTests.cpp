@@ -9,7 +9,7 @@
 
     거절은 화면 문구가 아니라 로비 결과 값으로 돌려준다. 클라이언트가 결과 값을 문구로 바꾼다.
 
-    로비 표의 생성할 수 있는 직업이 아니면 거절한다. 그런 직업의 캐릭터는 첫 게임 입장에서 초기 진행을
+    로비 설정의 생성할 수 있는 직업이 아니면 거절한다. 그런 직업의 캐릭터는 첫 게임 입장에서 초기 진행을
     만들지 못한다. 클라이언트의 마법사 버튼이 그 경로다. 이름이 DB 열 한도를 넘으면 생성이
     내부 오류로 끝난다.
 
@@ -37,14 +37,14 @@ class CharacterCreationTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LobbyTables tables;
-        tables.creatableClasses = { Protocol::CHARACTER_CLASS_NONE, Protocol::CHARACTER_CLASS_WARRIOR };
-        LobbyData::Install(std::move(tables));
+        LobbyDesignData::LobbyConfig config;
+        config.CreatableClasses = { Protocol::CHARACTER_CLASS_NONE, Protocol::CHARACTER_CLASS_WARRIOR };
+        LobbyData::Install(std::move(config));
     }
 
     void TearDown() override
     {
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
     }
 };
 

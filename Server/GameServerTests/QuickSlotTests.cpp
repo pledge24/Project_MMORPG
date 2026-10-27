@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/QuickSlots/QuickSlotComponent.h"
@@ -18,7 +19,6 @@
 
 namespace
 {
-    constexpr int32 QUICK_SLOT_COUNT = 4;
     constexpr int32 HP_POTION_TEMPLATE_ID = 2000;
     constexpr int32 MP_POTION_TEMPLATE_ID = 2001;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
@@ -27,17 +27,9 @@ namespace
     constexpr int32 COOLDOWN_MS = 10'000;
     constexpr uint64 NOW_MS = 100'000;
 
-    ItemTemplate MakeItem(int32 templateId, Protocol::ItemType itemType)
+    void AddPotion(GamedataTables& tables, int32 templateId)
     {
-        ItemTemplate item;
-        item.templateId = templateId;
-        item.itemType = itemType;
-        item.maxStack = 99;
-        if (itemType == Protocol::ITEM_TYPE_GEAR)
-            item.gearType = Protocol::GEAR_PART_WEAPON;
-        if (itemType == Protocol::ITEM_TYPE_CONSUMABLE)
-            item.cooldownMs = COOLDOWN_MS;
-        return item;
+        TestItemTables::AddConsumable(tables, templateId, 99).CooldownMs = COOLDOWN_MS;
     }
 
     QuickSlotRef ItemRef(int32 templateId)
@@ -54,6 +46,17 @@ namespace
     {
         return QuickSlot{ slotIndex, nullopt };
     }
+
+    /** 퀵슬롯 전체를 번호 순서로. registered에 없는 퀵슬롯은 비어 있다. */
+    vector<QuickSlot> AllWith(initializer_list<QuickSlot> registered)
+    {
+        vector<QuickSlot> quickSlots;
+        for (int32 slotIndex = 0; slotIndex < QUICK_SLOT_COUNT; slotIndex++)
+            quickSlots.push_back(Empty(slotIndex));
+        for (const QuickSlot& quickSlot : registered)
+            quickSlots[quickSlot.slotIndex] = quickSlot;
+        return quickSlots;
+    }
 }
 
 class QuickSlotTest : public ::testing::Test
@@ -62,12 +65,10 @@ protected:
     void SetUp() override
     {
         GamedataTables tables;
-        tables.items[HP_POTION_TEMPLATE_ID] = MakeItem(HP_POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
-        tables.items[MP_POTION_TEMPLATE_ID] = MakeItem(MP_POTION_TEMPLATE_ID, Protocol::ITEM_TYPE_CONSUMABLE);
-        tables.items[SWORD_TEMPLATE_ID] = MakeItem(SWORD_TEMPLATE_ID, Protocol::ITEM_TYPE_GEAR);
-        tables.items[MISC_TEMPLATE_ID] = MakeItem(MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS);
-        tables.inventorySlotCounts = MakeInventorySections();
-        tables.quickSlotCount = QUICK_SLOT_COUNT;
+        AddPotion(tables, HP_POTION_TEMPLATE_ID);
+        AddPotion(tables, MP_POTION_TEMPLATE_ID);
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
+        TestItemTables::AddItem(tables, MISC_TEMPLATE_ID, Protocol::ITEM_TYPE_MISCELLANEOUS, 99);
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
@@ -105,14 +106,14 @@ protected:
 
 TEST_F(QuickSlotTest, EveryQuickSlotStartsEmpty)
 {
-    EXPECT_EQ(AllQuickSlots(), (vector<QuickSlot>{ Empty(0), Empty(1), Empty(2), Empty(3) })) << "퀵슬롯 개수는 기획 데이터의 값이다";
+    EXPECT_EQ(AllQuickSlots(), (AllWith({}))) << "퀵슬롯 개수는 서버 상수다";
 }
 
 TEST_F(QuickSlotTest, RegisteringConsumableChangesOnlyThatQuickSlot)
 {
     EXPECT_EQ(Set(2, ItemRef(HP_POTION_TEMPLATE_ID)), (vector<QuickSlot>{ Registered(2, HP_POTION_TEMPLATE_ID) }));
 
-    EXPECT_EQ(AllQuickSlots(), (vector<QuickSlot>{ Empty(0), Empty(1), Registered(2, HP_POTION_TEMPLATE_ID), Empty(3) }));
+    EXPECT_EQ(AllQuickSlots(), (AllWith({ Registered(2, HP_POTION_TEMPLATE_ID) })));
 }
 
 TEST_F(QuickSlotTest, RegisteringDoesNotRequireOwningTheItem)
@@ -134,7 +135,7 @@ TEST_F(QuickSlotTest, EmptyRefClearsTheQuickSlot)
     Register(1, HP_POTION_TEMPLATE_ID);
 
     EXPECT_EQ(Set(1, nullopt), (vector<QuickSlot>{ Empty(1) }));
-    EXPECT_EQ(AllQuickSlots(), (vector<QuickSlot>{ Empty(0), Empty(1), Empty(2), Empty(3) }));
+    EXPECT_EQ(AllQuickSlots(), (AllWith({})));
 }
 
 TEST_F(QuickSlotTest, NoneTypeRefAlsoClears)
@@ -152,7 +153,7 @@ TEST_F(QuickSlotTest, RegisteringRefFromAnotherQuickSlotSwapsThem)
 
     EXPECT_EQ(Set(3, ItemRef(HP_POTION_TEMPLATE_ID)),
         (vector<QuickSlot>{ Registered(3, HP_POTION_TEMPLATE_ID), Registered(0, MP_POTION_TEMPLATE_ID) })) << "교환은 두 퀵슬롯이 바뀐다";
-    EXPECT_EQ(AllQuickSlots(), (vector<QuickSlot>{ Registered(0, MP_POTION_TEMPLATE_ID), Empty(1), Empty(2), Registered(3, HP_POTION_TEMPLATE_ID) }));
+    EXPECT_EQ(AllQuickSlots(), (AllWith({ Registered(0, MP_POTION_TEMPLATE_ID), Registered(3, HP_POTION_TEMPLATE_ID) })));
 }
 
 TEST_F(QuickSlotTest, MovingRefToEmptyQuickSlotEmptiesTheOld)
@@ -180,7 +181,7 @@ TEST_F(QuickSlotTest, NonConsumableItemIsRejected)
         EXPECT_EQ(Set(0, ItemRef(templateId)), nullopt);
     }
 
-    EXPECT_EQ(AllQuickSlots(), (vector<QuickSlot>{ Registered(0, HP_POTION_TEMPLATE_ID), Empty(1), Empty(2), Empty(3) })) << "거절한 요청은 아무것도 바꾸지 않는다";
+    EXPECT_EQ(AllQuickSlots(), (AllWith({ Registered(0, HP_POTION_TEMPLATE_ID) }))) << "거절한 요청은 아무것도 바꾸지 않는다";
 }
 
 TEST_F(QuickSlotTest, UnknownRefTypeIsRejected)
@@ -222,13 +223,13 @@ TEST_F(QuickSlotTest, LoadAcceptsOnlyValidRegistrations)
     QuickSlotComponent& quickSlots = PlayerTestAccess::QuickSlots(*player);
 
     EXPECT_TRUE(quickSlots.Load(Registered(2, HP_POTION_TEMPLATE_ID)));
-    EXPECT_FALSE(quickSlots.Load(Registered(QUICK_SLOT_COUNT, MP_POTION_TEMPLATE_ID))) << "기획에서 퀵슬롯 개수를 줄였다";
+    EXPECT_FALSE(quickSlots.Load(Registered(QUICK_SLOT_COUNT, MP_POTION_TEMPLATE_ID))) << "퀵슬롯 개수를 줄이기 전에 저장한 행이다";
     EXPECT_FALSE(quickSlots.Load(Registered(1, SWORD_TEMPLATE_ID))) << "기획에서 아이템 종류를 바꿨다";
     EXPECT_FALSE(quickSlots.Load(Registered(2, MP_POTION_TEMPLATE_ID))) << "같은 퀵슬롯의 두 번째 행";
     EXPECT_FALSE(quickSlots.Load(Registered(0, HP_POTION_TEMPLATE_ID))) << "같은 참조는 퀵슬롯 하나에만 있다";
     EXPECT_FALSE(quickSlots.Load(Empty(0))) << "빈 퀵슬롯은 행이 없다";
 
-    EXPECT_EQ(AllQuickSlots(), (vector<QuickSlot>{ Empty(0), Empty(1), Registered(2, HP_POTION_TEMPLATE_ID), Empty(3) }));
+    EXPECT_EQ(AllQuickSlots(), (AllWith({ Registered(2, HP_POTION_TEMPLATE_ID) })));
 }
 
 TEST_F(QuickSlotTest, SaveDataCarriesRegisteredQuickSlots)

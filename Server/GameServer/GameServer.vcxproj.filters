@@ -50,8 +50,8 @@
     <Filter Include="Game\AI">
       <UniqueIdentifier>{710ba740-885c-460b-b0eb-233bf434b28e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Data\Json">
-      <UniqueIdentifier>{c62d25c1-e03a-43d0-9d6c-62a2e9c0d2c0}</UniqueIdentifier>
+    <Filter Include="Game\Data\Generated">
+      <UniqueIdentifier>{f82dec03-c22b-4774-8d5f-d43ea7f3e958}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
@@ -61,6 +61,9 @@
     </Filter>
     <Filter Include="Lobby\Data">
       <UniqueIdentifier>{ad2d4e47-208a-4d86-b0bf-2f82fb834c9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lobby\Data\Generated">
+      <UniqueIdentifier>{e6ce951d-a0dd-45f8-acd3-f454489c373d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game\Progress">
       <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
@@ -442,9 +445,6 @@
     <ClInclude Include="Game\AI\MonsterAIComponent.h">
       <Filter>Game\AI</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Data\JsonProperty.h">
-      <Filter>Game\Data</Filter>
-    </ClInclude>
     <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
@@ -453,6 +453,12 @@
     </ClInclude>
     <ClInclude Include="Game\Data\Templates.h">
       <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\Generated\DesignData.h">
+      <Filter>Game\Data\Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\Data\Generated\DesignData.h">
+      <Filter>Lobby\Data\Generated</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\Room.h">
       <Filter>Game\Room</Filter>
@@ -501,20 +507,47 @@
     <None Include="Migrations\002_quick_slot.sql">
       <Filter>Migrations</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Item.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Game\Data\Generated\Currency.json">
+      <Filter>Game\Data\Generated</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Map.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Game\Data\Generated\DataVersion.json">
+      <Filter>Game\Data\Generated</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Monster.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Game\Data\Generated\Item.json">
+      <Filter>Game\Data\Generated</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Quest.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Game\Data\Generated\ItemEquipStat.json">
+      <Filter>Game\Data\Generated</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Warrior_Level_Data.json">
-      <Filter>Game\Data\Json</Filter>
+    <None Include="Game\Data\Generated\ItemConsumeEffect.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Level.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\ClassLevelStat.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Monster.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\DropGroup.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Map.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Area.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Progress.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Lobby\Data\Generated\DataVersion.json">
+      <Filter>Lobby\Data\Generated</Filter>
+    </None>
+    <None Include="Lobby\Data\Generated\Lobby.json">
+      <Filter>Lobby\Data\Generated</Filter>
     </None>
   </ItemGroup>
 </Project>
