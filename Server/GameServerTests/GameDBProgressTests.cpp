@@ -7,6 +7,7 @@
 #include "DB/ProgressStorage.h"
 #include "Lobby/Data/LobbyData.h"
 #include "Game/Entities/PlayerSaveData.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     진행 불러오기와 저장의 SQL 확인 (실제 DB)
@@ -87,17 +88,13 @@ protected:
         if (HasFatalFailure())
             return;
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = 120;
-        level1.maxMp = 45;
-        level1.expRequirement = 1000;
-        LevelTemplate level2 = level1;
-        level2.level = 2;
-        level2.expRequirement = 0;
-
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
+        for (auto [level, expRequirement] : { pair{ 1, 1000 }, pair{ 2, 0 } })
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, expRequirement);
+            stat.MaxHp = 120;
+            stat.MaxMp = 45;
+        }
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
         tables.initialProgress.startMapId = START_MAP_ID;
         tables.initialProgress.startPos = { 10.5f, -20.25f, 30.f };

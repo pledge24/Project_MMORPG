@@ -513,9 +513,6 @@
     <None Include="Game\Data\Json\S_Quest.json">
       <Filter>Game\Data\Json</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Warrior_Level_Data.json">
-      <Filter>Game\Data\Json</Filter>
-    </None>
     <None Include="Game\Data\Generated\Currency.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
@@ -529,6 +526,12 @@
       <Filter>Game\Data\Generated</Filter>
     </None>
     <None Include="Game\Data\Generated\ItemConsumeEffect.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Level.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\ClassLevelStat.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
     <None Include="Game\Data\Generated\Monster.json">

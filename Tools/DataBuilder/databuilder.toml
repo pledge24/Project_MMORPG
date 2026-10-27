@@ -26,6 +26,15 @@ modules = ["game"]
 workbook = "ItemConsumeEffect.xlsx"
 modules = ["game"]
 
+# 레벨마다 필요한 경험치는 직업과 무관하고, 레벨마다의 능력치는 직업마다 다르다.
+[tables.Level]
+workbook = "Level.xlsx"
+modules = ["game"]
+
+[tables.ClassLevelStat]
+workbook = "ClassLevelStat.xlsx"
+modules = ["game"]
+
 # 몬스터의 능력치와 기본 보상. 드롭은 아래 드롭 그룹 표를 참조한다.
 [tables.Monster]
 workbook = "Monster.xlsx"

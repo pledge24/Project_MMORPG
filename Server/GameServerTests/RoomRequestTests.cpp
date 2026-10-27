@@ -8,6 +8,7 @@
 #include "RecordingSession.h"
 #include "PlayerTestAccess.h"
 #include "TestItemTables.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -49,10 +50,6 @@ class RoomRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = PLAYER_MAX_HP;
-
         // 마을은 룸 객체 없이 맵 표에만 둔다. 리스폰 규칙은 맵 표만 읽는다.
         MapTemplate town;
         town.templateId = TOWN_ROOM_ID;
@@ -62,7 +59,7 @@ protected:
         GamedataTables tables;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.items[SWORD_TEMPLATE_ID].Sellable = true;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
         tables.inventorySlotCounts = MakeInventorySections();

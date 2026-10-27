@@ -1,8 +1,6 @@
 @echo off
 setlocal
 pushd %~dp0
-..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Warrior_Level_Data.xlsx --s_output=S_Warrior_Level_Data.json --c_output=C_Warrior_Level_Data.json
-DEL /Q C_Warrior_Level_Data.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Initial_Progress.xlsx --s_output=S_Initial_Progress.json --c_output=C_Initial_Progress.json
 DEL /Q C_Initial_Progress.json
 ..\Tools\ExcelToJsonConverter\ExcelToJsonConverter.exe --path=./Original_Inventory_Section.xlsx --s_output=S_Inventory_Section.json --c_output=C_Inventory_Section.json
@@ -16,7 +14,6 @@ DEL /Q C_Lobby.json
 
 IF ERRORLEVEL 1 PAUSE
 
-MOVE /Y S_Warrior_Level_Data.json		"../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Map.json				        "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Quest.json				    "../Server/GameServer/Game/Data/Json"
 MOVE /Y S_Initial_Progress.json		"../Server/GameServer/Game/Data/Json"

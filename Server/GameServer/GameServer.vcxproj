@@ -370,12 +370,13 @@
     <None Include="Migrations\002_quick_slot.sql" />
     <None Include="Game\Data\Json\S_Map.json" />
     <None Include="Game\Data\Json\S_Quest.json" />
-    <None Include="Game\Data\Json\S_Warrior_Level_Data.json" />
     <None Include="Game\Data\Generated\Currency.json" />
     <None Include="Game\Data\Generated\DataVersion.json" />
     <None Include="Game\Data\Generated\Item.json" />
     <None Include="Game\Data\Generated\ItemEquipStat.json" />
     <None Include="Game\Data\Generated\ItemConsumeEffect.json" />
+    <None Include="Game\Data\Generated\Level.json" />
+    <None Include="Game\Data\Generated\ClassLevelStat.json" />
     <None Include="Game\Data\Generated\Monster.json" />
     <None Include="Game\Data\Generated\DropGroup.json" />
   </ItemGroup>

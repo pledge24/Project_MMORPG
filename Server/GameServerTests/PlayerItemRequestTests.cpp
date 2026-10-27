@@ -6,6 +6,7 @@
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     아이템 요청 판정 테스트
@@ -50,10 +51,7 @@ protected:
         AddSword(tables, SWORD_TEMPLATE_ID, 100, 10, true, 10);
         AddSword(tables, GREATSWORD_TEMPLATE_ID, 80000, 8000, true, 500);
         AddSword(tables, UNSELLABLE_SWORD_TEMPLATE_ID, 100, 10, false, 10);
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.physicalAttack = BASE_PHYSICAL_ATTACK;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).PhysicalAttack = BASE_PHYSICAL_ATTACK;
         tables.inventorySlotCounts = MakeInventorySections(GEAR_SLOT_COUNT);
         Gamedata::Install(std::move(tables));
 

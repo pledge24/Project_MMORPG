@@ -6,6 +6,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Entities/PlayerProgress.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     서버 아이템 타입과 패킷의 변환 테스트
@@ -270,14 +271,10 @@ class ItemPacketsPossessionTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = 100;
-
         GamedataTables tables;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 10);
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         tables.inventorySlotCounts = {
             { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
             { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },

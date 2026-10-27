@@ -27,12 +27,17 @@ namespace
     constexpr int32 FIELD_ID = 20;
     constexpr int32 GOLD_ID = 1;
 
-    Json MakeLevelRow(int32 level)
+    /** DataBuilder가 생성하는 레벨 표의 행. */
+    Json MakeLevel(int32 level, int64 expRequirement)
+    {
+        return Json{{"Level", level}, {"ExpRequirement", expRequirement}};
+    }
+
+    /** DataBuilder가 생성하는 직업별 능력치 표의 행. */
+    Json MakeWarriorLevelStat(int32 level)
     {
         return Json{
-            {"level", level}, {"maxHp", 500 + level}, {"maxMp", 100}, {"physicalAttack", 10}, {"magicalAttack", 2},
-            {"expRequirement", 50 * level},
-            {"maxHpIncrement", 100}, {"maxMpIncrement", 100}, {"paIncrement", 10}, {"maIncrement", 2},
+            {"Class", "WARRIOR"}, {"Level", level}, {"MaxHp", 500 + level}, {"MaxMp", 100}, {"PhysicalAttack", 10}, {"MagicalAttack", 2},
         };
     }
 
@@ -146,7 +151,8 @@ namespace
     GamedataDocuments MakeValidDocuments()
     {
         GamedataDocuments documents;
-        documents.warriorLevels = Json::array({MakeLevelRow(1), MakeLevelRow(2), MakeLevelRow(3)});
+        documents.levels = Json::array({MakeLevel(1, 50), MakeLevel(2, 100), MakeLevel(3, 0)});
+        documents.classLevelStats = Json::array({MakeWarriorLevelStat(1), MakeWarriorLevelStat(2), MakeWarriorLevelStat(3)});
         documents.items = Json::array({MakeSword(), MakePotion()});
         documents.itemEquipStats = Json::array({MakeSwordEquipStat()});
         documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
@@ -217,12 +223,13 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_FLOAT_EQ(monster.AttackInterval, 2.5f);
     EXPECT_EQ(monster.DropGroups, vector<int32>({DROP_GROUP_ID}));
 
-    const ClassLevelTable& warrior = tables.classLevelTables.at(Protocol::CHARACTER_CLASS_WARRIOR);
-    EXPECT_EQ(warrior.GetMaxLevel(), 3) << "최대 레벨은 레벨 표의 마지막 레벨이다";
-    ASSERT_NE(warrior.Find(2), nullptr);
-    EXPECT_EQ(warrior.Find(2)->maxHp, 502);
-    EXPECT_EQ(warrior.Find(4), nullptr);
-    EXPECT_FALSE(tables.classLevelTables.contains(Protocol::CHARACTER_CLASS_NONE)) << "NONE에는 레벨 표가 없다";
+    ASSERT_EQ(tables.levels.size(), 3u);
+    EXPECT_EQ(tables.levels.at(2).ExpRequirement, 100);
+    const auto warriorLevel2 = tables.classLevelStats.find({ Protocol::CHARACTER_CLASS_WARRIOR, 2 });
+    ASSERT_NE(warriorLevel2, tables.classLevelStats.end());
+    EXPECT_EQ(warriorLevel2->second.MaxHp, 502);
+    EXPECT_EQ(warriorLevel2->second.MagicalAttack, 2);
+    EXPECT_FALSE(tables.classLevelStats.contains({ Protocol::CHARACTER_CLASS_MAGE, 1 })) << "표에 없는 직업에는 행이 없다";
 
     EXPECT_EQ(tables.townRoomId, TOWN_ID) << "마을은 리스폰 지점이 있는 맵이다";
     const MapTemplate& town = tables.maps.at(TOWN_ID);
@@ -340,15 +347,12 @@ TEST(GamedataParserTest, DuplicateTemplateIdIsRejected)
     ExpectMentions(ErrorOf(documents), {DesignData::ITEM_FILE, "3번째 행", "키가 겹친다"});
 }
 
-TEST(GamedataParserTest, LevelRowsMustStartAtOneWithoutGaps)
+TEST(GamedataParserTest, ClassLevelStatWithUnknownClassIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.warriorLevels = Json::array({MakeLevelRow(1), MakeLevelRow(3)});
+    documents.classLevelStats[1]["Class"] = "PALADIN";
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::WARRIOR_LEVELS, "2번째 행", "level"});
-
-    documents.warriorLevels = Json::array();
-    ExpectMentions(ErrorOf(documents), {GamedataFile::WARRIOR_LEVELS});
+    ExpectMentions(ErrorOf(documents), {DesignData::CLASS_LEVEL_STAT_FILE, "2번째 행", "Class"});
 }
 
 TEST(GamedataParserTest, RespawnMapWithoutRespawnPointIsRejected)
@@ -552,7 +556,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     const filesystem::path generatedDir = dataDir / "Generated";
 
     GamedataDocuments documents;
-    documents.warriorLevels = ReadJsonFile(dir / GamedataFile::WARRIOR_LEVELS);
+    documents.levels = ReadJsonFile(generatedDir / DesignData::LEVEL_FILE);
+    documents.classLevelStats = ReadJsonFile(generatedDir / DesignData::CLASS_LEVEL_STAT_FILE);
     documents.items = ReadJsonFile(generatedDir / DesignData::ITEM_FILE);
     documents.itemEquipStats = ReadJsonFile(generatedDir / DesignData::ITEM_EQUIP_STAT_FILE);
     documents.itemConsumeEffects = ReadJsonFile(generatedDir / DesignData::ITEM_CONSUME_EFFECT_FILE);
@@ -570,7 +575,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     const optional<string> error = GamedataParser::Parse(documents, OUT tables);
     EXPECT_FALSE(error.has_value()) << error.value_or("");
     EXPECT_EQ(tables.townRoomId, 10);
-    EXPECT_EQ(tables.classLevelTables.at(Protocol::CHARACTER_CLASS_WARRIOR).GetMaxLevel(), 50);
+    ASSERT_FALSE(tables.levels.empty());
+    EXPECT_EQ(tables.levels.rbegin()->first, 50);
 
     // DB 기본값과 코드 상수에서 옮겨 온 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
     EXPECT_EQ(tables.initialProgress.startMapId, 1111);
@@ -586,6 +592,16 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(tables.itemEquipStats.at(1005).PhysicalAttack, 10);
     ASSERT_TRUE(tables.itemConsumeEffects.contains(2000));
     EXPECT_EQ(tables.itemConsumeEffects.at(2000).CooldownMs, 10000);
+
+    // 전사 레벨 표를 레벨 표와 직업별 능력치 표로 나누면서 옮긴 값이다.
+    EXPECT_EQ(tables.levels.at(1).ExpRequirement, 50);
+    EXPECT_EQ(tables.levels.at(50).ExpRequirement, 0);
+    const DesignData::ClassLevelStatRow& warriorLevel1 = tables.classLevelStats.at({ Protocol::CHARACTER_CLASS_WARRIOR, 1 });
+    EXPECT_EQ(warriorLevel1.MaxHp, 500);
+    EXPECT_EQ(warriorLevel1.MaxMp, 100);
+    EXPECT_EQ(warriorLevel1.PhysicalAttack, 10);
+    EXPECT_EQ(warriorLevel1.MagicalAttack, 2);
+    EXPECT_EQ(tables.classLevelStats.at({ Protocol::CHARACTER_CLASS_WARRIOR, 50 }).MaxHp, 5400);
 
     // 몬스터 표를 기본 보상 열로 옮기면서 옮긴 값이다.
     ASSERT_TRUE(tables.monsters.contains(5000));

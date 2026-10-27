@@ -4,6 +4,7 @@
 #include <fstream>
 #include "Core/DataCrossCheck.h"
 #include "Lobby/Data/LobbyData.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     로비 기획 데이터와 기동할 때의 대조 테스트
@@ -118,7 +119,9 @@ protected:
     void SetUp() override
     {
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, 100, 50 } });
+        DesignData::ClassLevelStatRow& level1 = TestLevelTables::AddWarriorLevel(tables, 1);
+        level1.MaxHp = 100;
+        level1.MaxMp = 50;
         Gamedata::Install(std::move(tables));
     }
 

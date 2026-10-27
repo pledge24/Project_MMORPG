@@ -80,8 +80,6 @@ bool Player::OnLoaded()
 
 	RefreshFinalStat(nullptr);
 
-	CacheNextLevelUpData();
-
 	return true;
 }
 
@@ -107,15 +105,15 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
     SetStatValue(Protocol::STAT_TYPE_MP, progress.mp);
 
     // DB의 경험치는 누적값이고 레벨은 캐릭터 목록에 보일 사본이다. 레벨은 누적 경험치와 레벨 표로 다시 정한다.
-    // 레벨 표가 없는 직업은 OnLoaded의 스탯 계산이 거절한다.
-    if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
+    // 직업별 능력치 표에 없는 직업은 OnLoaded의 스탯 계산이 거절한다.
+    if (Gamedata::HasClassLevelStats(_characterClass))
     {
         const int64 loadedExp = progress.totalExp;
-        const int64 clampedExp = Leveling::ClampTotalExp(*classLevelTable, loadedExp);
+        const int64 clampedExp = Leveling::ClampTotalExp(Gamedata::GetLevels(), loadedExp);
         if (clampedExp != loadedExp)
             GLogger->Warning("캐릭터 {}의 누적 경험치 {}가 범위를 벗어나 {}로 자릅니다", characterId, loadedExp, clampedExp);
 
-        const LevelExp levelExp = SetTotalExp(*classLevelTable, clampedExp);
+        const LevelExp levelExp = SetTotalExp(clampedExp);
         if (levelExp.level != progress.level)
             GLogger->Info("캐릭터 {}의 저장된 레벨 {}이 누적 경험치로 계산한 레벨 {}과 달라 계산값을 씁니다", characterId, progress.level, levelExp.level);
 
@@ -398,9 +396,9 @@ RespawnResult Player::ProcessRespawn(Protocol::RespawnType type, const Protocol:
 	case Protocol::RESPAWN_TYPE_TOWN:
 	{
 		// 사망 패널티. 그 레벨 요구치의 10%를 잃고, 레벨은 내려가지 않는다.
-		if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
+		if (Gamedata::HasClassLevelStats(_characterClass))
 		{
-			SetTotalExp(*classLevelTable, Leveling::ApplyDeathPenalty(*classLevelTable, _totalExp));
+			SetTotalExp(Leveling::ApplyDeathPenalty(Gamedata::GetLevels(), _totalExp));
 
 			ProtoUtil::AddStat(&result.updatedStats, Protocol::STAT_TYPE_EXP, GetStatValue(Protocol::STAT_TYPE_EXP));
 		}
@@ -497,10 +495,10 @@ RewardResult Player::OnGetReward(const Reward& reward)
         _gold += reward.gold;
 
         // 경험치는 누적값에 더하고, 레벨은 누적 경험치로 다시 정한다. 보상 한 번에 여러 레벨이 오를 수 있다.
-        // 최대 레벨에 이르고 남는 경험치는 버린다. 레벨 표가 없는 직업은 오를 레벨이 없으므로 경험치를 쌓지 않는다.
-        if (const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass))
+        // 최대 레벨에 이르고 남는 경험치는 버린다. 직업별 능력치 표에 없는 직업은 오를 레벨이 없으므로 경험치를 쌓지 않는다.
+        if (Gamedata::HasClassLevelStats(_characterClass))
         {
-            const LevelExp levelExp = SetTotalExp(*classLevelTable, Leveling::AddExp(*classLevelTable, _totalExp, reward.exp));
+            const LevelExp levelExp = SetTotalExp(Leveling::AddExp(Gamedata::GetLevels(), _totalExp, reward.exp));
             while (_playerInfo->level() < levelExp.level)
                 OnLevelUp();
         }
@@ -536,48 +534,35 @@ void Player::OnLevelUp()
     if (IsMaxLevel())
         return;
 
-    _playerInfo->set_level(_playerInfo->level() + 1);
+    const int32 level = _playerInfo->level();
+    _playerInfo->set_level(level + 1);
 
-    SetStatValue(Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP) + _nextLevelUpData.maxHpIncrement);
-    SetStatValue(Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP) + _nextLevelUpData.maxMpIncrement);
-    SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) + _nextLevelUpData.paIncrement);
-    SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) + _nextLevelUpData.maIncrement);
+    // 기본 스탯이 오른 만큼만 더한다. 지금 스탯에는 장비의 증감량이 들어 있다.
+    const DesignData::ClassLevelStatRow* before = Gamedata::FindClassLevelStat(_characterClass, level);
+    const DesignData::ClassLevelStatRow* after = Gamedata::FindClassLevelStat(_characterClass, level + 1);
+    if (before == nullptr || after == nullptr)
+    {
+        GLogger->Error("레벨 {}에 올랐지만 직업 {}의 능력치 행이 없어 스탯을 올리지 못했다", level + 1, static_cast<int32>(_characterClass));
+        return;
+    }
 
-    CacheNextLevelUpData();
+    SetStatValue(Protocol::STAT_TYPE_MAX_HP, GetStatValue(Protocol::STAT_TYPE_MAX_HP) + after->MaxHp - before->MaxHp);
+    SetStatValue(Protocol::STAT_TYPE_MAX_MP, GetStatValue(Protocol::STAT_TYPE_MAX_MP) + after->MaxMp - before->MaxMp);
+    SetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK) + after->PhysicalAttack - before->PhysicalAttack);
+    SetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK, GetStatValue(Protocol::STAT_TYPE_MAGICAL_ATTACK) + after->MagicalAttack - before->MagicalAttack);
 }
 
 bool Player::IsMaxLevel() const
 {
-    // 레벨 표가 없는 직업은 오를 레벨이 없으므로 최대 레벨로 본다.
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
-    return classLevelTable == nullptr || _playerInfo->level() >= classLevelTable->GetMaxLevel();
+    // 직업별 능력치 표에 없는 직업은 오를 레벨이 없으므로 최대 레벨로 본다.
+    return Gamedata::HasClassLevelStats(_characterClass) == false || _playerInfo->level() >= Gamedata::GetMaxLevel();
 }
 
-void Player::CacheNextLevelUpData()
-{
-    // 최대 레벨에서는 오를 레벨이 없으므로 캐시를 그대로 둔다. 레벨 표가 없는 직업도 여기서 끝난다.
-    if (IsMaxLevel())
-        return;
-
-    // 다음 레벨 행이 없으면 빈 값으로 둔다.
-    _nextLevelUpData = NextLevelUpData{};
-
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
-    const LevelTemplate* nextLevelTemplate = classLevelTable != nullptr ? classLevelTable->Find(_playerInfo->level() + 1) : nullptr;
-    if (nextLevelTemplate == nullptr)
-        return;
-
-    _nextLevelUpData.maxHpIncrement = nextLevelTemplate->maxHpIncrement;
-    _nextLevelUpData.maxMpIncrement = nextLevelTemplate->maxMpIncrement;
-    _nextLevelUpData.paIncrement = nextLevelTemplate->paIncrement;
-    _nextLevelUpData.maIncrement = nextLevelTemplate->maIncrement;
-}
-
-LevelExp Player::SetTotalExp(const ClassLevelTable& classLevelTable, int64 totalExp)
+LevelExp Player::SetTotalExp(int64 totalExp)
 {
     _totalExp = totalExp;
 
-    const LevelExp levelExp = Leveling::Locate(classLevelTable, _totalExp);
+    const LevelExp levelExp = Leveling::Locate(Gamedata::GetLevels(), _totalExp);
     SetStatValue(Protocol::STAT_TYPE_EXP, levelExp.expInLevel);
     SetStatValue(Protocol::STAT_TYPE_MAX_EXP, levelExp.expRequirement);
 
@@ -586,21 +571,20 @@ LevelExp Player::SetTotalExp(const ClassLevelTable& classLevelTable, int64 total
 
 optional<CombatStats> Player::CalculateFinalStat()
 {
-    const ClassLevelTable* classLevelTable = Gamedata::FindClassLevelTable(_characterClass);
-    if (classLevelTable == nullptr)
+    if (Gamedata::HasClassLevelStats(_characterClass) == false)
     {
-        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 직업 {}", static_cast<int32>(_characterClass));
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 직업별 능력치 표에 없는 직업 {}", static_cast<int32>(_characterClass));
         return nullopt;
     }
 
-    const LevelTemplate* levelTemplate = classLevelTable->Find(_playerInfo->level());
-    if (levelTemplate == nullptr)
+    const DesignData::ClassLevelStatRow* levelStat = Gamedata::FindClassLevelStat(_characterClass, _playerInfo->level());
+    if (levelStat == nullptr)
     {
-        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 레벨 표에 없는 레벨 {}", _playerInfo->level());
+        GLogger->Error("스텟 계산에 문제가 생겼습니다. 사유: 직업별 능력치 표에 없는 레벨 {}", _playerInfo->level());
         return nullopt;
     }
 
-    CombatStats finalStat{ levelTemplate->maxHp, levelTemplate->maxMp, levelTemplate->physicalAttack, levelTemplate->magicalAttack };
+    CombatStats finalStat{ levelStat->MaxHp, levelStat->MaxMp, levelStat->PhysicalAttack, levelStat->MagicalAttack };
 
     // 스킬 패시브, 내실 등 캐릭터 스탯을 올릴 수 있는 요소가 추가되면 장비처럼 여기에 더한다.
     finalStat += _equipment->SumStatDelta();

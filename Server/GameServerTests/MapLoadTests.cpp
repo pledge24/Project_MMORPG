@@ -5,6 +5,7 @@
 #include "Game/Entities/PlayerProgress.h"
 #include "RecordingSession.h"
 #include "RoomManagerTestAccess.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     맵 로드 절차 테스트
@@ -90,16 +91,12 @@ protected:
         town.portals.push_back(MakePortal(PORTAL_TO_FIELD, FIELD_ROOM, -1000.f, FIELD_ARRIVAL_X));
         town.portals.push_back(MakePortal(PORTAL_TO_OTHER_MAP, OTHER_MAP_ROOM, 1000.f, OTHER_MAP_ARRIVAL_X));
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = PLAYER_MAX_HP;
-
         GamedataTables tables;
         tables.maps[TOWN_ROOM] = town;
         tables.maps[FIELD_ROOM] = MakeRoomTemplate(FIELD_ROOM, MAP_A, -10000.f);
         tables.maps[OTHER_MAP_ROOM] = MakeRoomTemplate(OTHER_MAP_ROOM, MAP_B, 7000.f);
         tables.townRoomId = TOWN_ROOM;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
         rooms = make_unique<ScopedTestRoomManager>();

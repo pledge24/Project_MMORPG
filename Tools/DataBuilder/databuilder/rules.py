@@ -84,6 +84,43 @@ def references_item_of_kind(item_type: str) -> Callable[[Table, DesignData], lis
     return rule
 
 
+def levels_from_one_ending_at_max(table: Table, _: DesignData) -> list[str]:
+    """서버는 마지막 행을 최대 레벨로 보고, 레벨마다 필요한 경험치를 앞에서부터 빼 레벨을 정한다.
+    레벨이 빠지거나 마지막이 아닌 레벨의 필요 경험치가 0이면 경험치 없이 레벨이 오른다."""
+    if not table.rows:
+        return [f"{table.config.workbook}: 행이 없다. 레벨 1 행은 있어야 한다"]
+    errors = []
+    last = len(table.rows) - 1
+    for index, row in enumerate(table.rows):
+        where = locate(table.config.workbook, row.sheet, row.number)
+        level, requirement = row.values["Level"], row.values["ExpRequirement"]
+        if level != index + 1:
+            errors.append(f"{where}: 레벨이 {index + 1}이어야 하는데 {level}이다. 레벨은 1부터 빠짐없이 이어져야 한다")
+        if index == last and requirement != 0:
+            errors.append(f"{where}: 최대 레벨 {level}의 ExpRequirement가 0이어야 하는데 {requirement}이다")
+        elif index != last and requirement < 1:
+            errors.append(f"{where}: ExpRequirement가 1 이상이어야 하는데 {requirement}이다. 0은 최대 레벨에만 적는다")
+    return errors
+
+
+def every_level_per_class(table: Table, data: DesignData) -> list[str]:
+    """표에 나오는 직업은 레벨 표의 모든 레벨에 능력치 행이 있어야 한다. 빠진 레벨에 오른 캐릭터는 능력치를 정하지 못한다."""
+    levels = data.tables.get("Level")
+    if levels is None:
+        return [f"{table.config.workbook}: 레벨을 확인할 표 'Level'이 설정 파일에 없다"]
+    all_levels = table_keys(levels)
+    by_class: dict[str, set[int]] = {}
+    for row in table.rows:
+        by_class.setdefault(row.values["Class"], set()).add(row.values["Level"])
+    errors = []
+    for class_name, class_levels in by_class.items():
+        missing = sorted(all_levels - class_levels)
+        if missing:
+            shown = ", ".join(str(level) for level in missing)
+            errors.append(f"{table.config.workbook}: 직업 {class_name}에 레벨 {shown}의 행이 없다")
+    return errors
+
+
 def range_ordered(low_column: str, high_column: str, minimum: int) -> Callable[[Table, DesignData], list[str]]:
     """최솟값 열이 minimum 이상이고 최댓값 열보다 크지 않은지 본다. 서버가 두 값 사이에서 고른다."""
 
@@ -179,6 +216,8 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Item": [item_key_in_kind_range, item_max_stack_at_least_one, item_has_kind_row],
     "ItemEquipStat": [references_item_of_kind("GEAR")],
     "ItemConsumeEffect": [references_item_of_kind("CONSUMABLE"), cooldown_not_negative],
+    "Level": [levels_from_one_ending_at_max],
+    "ClassLevelStat": [every_level_per_class],
     "Monster": [range_ordered("MinExp", "MaxExp", 0), range_ordered("MinGold", "MaxGold", 0)],
     "DropGroup": [drop_group_matches_method],
     "DropEntry": [drop_entry_matches_group_method, range_ordered("MinCount", "MaxCount", 1)],

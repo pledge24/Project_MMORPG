@@ -5,6 +5,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/AI/MonsterAIComponent.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     몬스터 AI 테스트
@@ -62,13 +63,9 @@ protected:
         monsterRow.ChasingMaxRange = 1200.f;
         monsterRow.MovementSpeed = 300.f;
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = PLAYER_MAX_HP;
-
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monsterRow;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;

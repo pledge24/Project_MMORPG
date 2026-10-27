@@ -14,6 +14,8 @@ namespace DesignData
     constexpr string_view ITEM_FILE = "Item.json";
     constexpr string_view ITEM_EQUIP_STAT_FILE = "ItemEquipStat.json";
     constexpr string_view ITEM_CONSUME_EFFECT_FILE = "ItemConsumeEffect.json";
+    constexpr string_view LEVEL_FILE = "Level.json";
+    constexpr string_view CLASS_LEVEL_STAT_FILE = "ClassLevelStat.json";
     constexpr string_view MONSTER_FILE = "Monster.json";
     constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
 
@@ -451,6 +453,70 @@ namespace DesignData
             row.CooldownMs = Detail::Read<int32>(object, "CooldownMs");
 
             auto key = row.ItemId;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Level 표(Level.xlsx)의 한 행. */
+    struct LevelRow
+    {
+        /** 레벨 */
+        int32 Level = 0;
+        /** 이 레벨에서 다음 레벨로 가는 데 필요한 경험치. 마지막 행이 최대 레벨이고 0이다 */
+        int64 ExpRequirement = 0;
+    };
+
+    /** Level → 행. 키 순서로 돈다. */
+    using LevelTable = map<int32, LevelRow>;
+
+    /** Level.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseLevel(const Json& document, OUT LevelTable& table)
+    {
+        return Detail::ParseTable(LEVEL_FILE, document, OUT table, [](const Json& object)
+        {
+            LevelRow row;
+            row.Level = Detail::Read<int32>(object, "Level");
+            row.ExpRequirement = Detail::Read<int64>(object, "ExpRequirement");
+
+            auto key = row.Level;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** ClassLevelStat 표(ClassLevelStat.xlsx)의 한 행. */
+    struct ClassLevelStatRow
+    {
+        /** 직업 */
+        Protocol::CharacterClass Class = {};
+        /** 레벨 */
+        int32 Level = 0;
+        /** 최대 HP */
+        int32 MaxHp = 0;
+        /** 최대 MP */
+        int32 MaxMp = 0;
+        /** 물리 공격력 */
+        int32 PhysicalAttack = 0;
+        /** 마법 공격력 */
+        int32 MagicalAttack = 0;
+    };
+
+    /** Class, Level → 행. 키 순서로 돈다. */
+    using ClassLevelStatTable = map<tuple<Protocol::CharacterClass, int32>, ClassLevelStatRow>;
+
+    /** ClassLevelStat.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseClassLevelStat(const Json& document, OUT ClassLevelStatTable& table)
+    {
+        return Detail::ParseTable(CLASS_LEVEL_STAT_FILE, document, OUT table, [](const Json& object)
+        {
+            ClassLevelStatRow row;
+            row.Class = Detail::Read<Protocol::CharacterClass>(object, "Class");
+            row.Level = Detail::Read<int32>(object, "Level");
+            row.MaxHp = Detail::Read<int32>(object, "MaxHp");
+            row.MaxMp = Detail::Read<int32>(object, "MaxMp");
+            row.PhysicalAttack = Detail::Read<int32>(object, "PhysicalAttack");
+            row.MagicalAttack = Detail::Read<int32>(object, "MagicalAttack");
+
+            auto key = tuple{ row.Class, row.Level };
             return pair{ std::move(key), std::move(row) };
         });
     }

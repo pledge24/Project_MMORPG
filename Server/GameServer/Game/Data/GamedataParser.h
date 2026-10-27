@@ -4,17 +4,15 @@
 /** 기획표 파일 이름. */
 namespace GamedataFile
 {
-    constexpr string_view WARRIOR_LEVELS = "S_Warrior_Level_Data.json";
     constexpr string_view MAPS = "S_Map.json";
     constexpr string_view INITIAL_PROGRESS = "S_Initial_Progress.json";
     constexpr string_view INVENTORY_SECTIONS = "S_Inventory_Section.json";
     constexpr string_view QUICK_SLOTS = "S_Quick_Slot.json";
 }
 
-/** 파싱만 마친 기획표 문서. 파일 하나가 행 배열 하나다. 재화, 아이템, 몬스터, 드롭 그룹 표는 DataBuilder가 생성한 표다. */
+/** 파싱만 마친 기획표 문서. 파일 하나가 행 배열 하나다. 재화, 아이템, 몬스터, 드롭 그룹, 레벨 표는 DataBuilder가 생성한 표다. */
 struct GamedataDocuments
 {
-    Json warriorLevels;
     Json maps;
     Json monsters;
     Json dropGroups;
@@ -22,6 +20,8 @@ struct GamedataDocuments
     Json items;
     Json itemEquipStats;
     Json itemConsumeEffects;
+    Json levels;
+    Json classLevelStats;
     Json initialProgress;
     Json inventorySections;
     Json quickSlots;

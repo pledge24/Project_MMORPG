@@ -5,6 +5,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "PlayerTestAccess.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     진행 조율자 테스트
@@ -34,12 +35,8 @@ protected:
         previousCoordinator = GProgressCoordinator;
         GProgressCoordinator = &coordinator;
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = 100;
-
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         Gamedata::Install(std::move(tables));
 
         MapTemplate mapTemplate;
@@ -458,17 +455,13 @@ TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
     constexpr int32 TOWN_ROOM_ID = 1;
     constexpr int32 TOWN_MAP_ID = 1001;
 
-    LevelTemplate level1;
-    level1.level = 1;
-    level1.maxHp = 100;
-
     MapTemplate town;
     town.templateId = TOWN_ROOM_ID;
     town.mapId = TOWN_MAP_ID;
     town.respawnPoint = TemplatePos{ 300.f, 0.f, 0.f };
 
     GamedataTables tables;
-    tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+    TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
     tables.maps[TOWN_ROOM_ID] = town;
     tables.townRoomId = TOWN_ROOM_ID;
     Gamedata::Install(std::move(tables));
