@@ -18,6 +18,8 @@ namespace DesignData
     constexpr string_view CLASS_LEVEL_STAT_FILE = "ClassLevelStat.json";
     constexpr string_view MONSTER_FILE = "Monster.json";
     constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
+    constexpr string_view MAP_FILE = "Map.json";
+    constexpr string_view AREA_FILE = "Area.json";
 
     //~ 열거형
 
@@ -106,6 +108,26 @@ namespace DesignData
             { "GEAR", Protocol::ITEM_TYPE_GEAR },
             { "CONSUMABLE", Protocol::ITEM_TYPE_CONSUMABLE },
             { "MISCELLANEOUS", Protocol::ITEM_TYPE_MISCELLANEOUS },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
+
+    enum class PortalType : int32
+    {
+        AREA = 1,
+    };
+
+    /** 셀에 적는 값 이름(AREA)을 PortalType로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT PortalType& value)
+    {
+        static const unordered_map<string_view, PortalType> VALUES = {
+            { "AREA", PortalType::AREA },
         };
 
         auto it = VALUES.find(name);
@@ -311,6 +333,51 @@ namespace DesignData
         row.Weight = Detail::Read<optional<int32>>(object, "Weight");
         row.MinCount = Detail::Read<int32>(object, "MinCount");
         row.MaxCount = Detail::Read<int32>(object, "MaxCount");
+        return row;
+    }
+
+    /** Portal 표(Portal.xlsx)의 한 행. Area 행의 Portals 아래에 키 순서로 실린다. */
+    struct PortalRow
+    {
+        /** 포털 번호. 클라이언트가 포털 이동을 요청할 때 보낸다 */
+        int32 Id = 0;
+        /** 포털 유형. 지금은 지역 사이를 잇는 AREA 하나다 */
+        PortalType Type = {};
+        /** 포털 위치의 X 좌표 */
+        float SrcX = 0.f;
+        /** 포털 위치의 Y 좌표 */
+        float SrcY = 0.f;
+        /** 포털 위치의 Z 좌표 */
+        float SrcZ = 0.f;
+        /** 포털을 탈 수 있는 평면 거리. 0보다 크다 */
+        float Radius = 0.f;
+        /** 도착 지역 */
+        int32 DestAreaId = 0;
+        /** 도착 위치의 X 좌표 */
+        float DestX = 0.f;
+        /** 도착 위치의 Y 좌표 */
+        float DestY = 0.f;
+        /** 도착 위치의 Z 좌표 */
+        float DestZ = 0.f;
+        /** 도착한 뒤의 방향(도) */
+        float DestYaw = 0.f;
+    };
+
+    /** Area 행의 Portals 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
+    inline PortalRow ReadPortalRow(const Json& object)
+    {
+        PortalRow row;
+        row.Id = Detail::Read<int32>(object, "Id");
+        row.Type = Detail::Read<PortalType>(object, "Type");
+        row.SrcX = Detail::Read<float>(object, "SrcX");
+        row.SrcY = Detail::Read<float>(object, "SrcY");
+        row.SrcZ = Detail::Read<float>(object, "SrcZ");
+        row.Radius = Detail::Read<float>(object, "Radius");
+        row.DestAreaId = Detail::Read<int32>(object, "DestAreaId");
+        row.DestX = Detail::Read<float>(object, "DestX");
+        row.DestY = Detail::Read<float>(object, "DestY");
+        row.DestZ = Detail::Read<float>(object, "DestZ");
+        row.DestYaw = Detail::Read<float>(object, "DestYaw");
         return row;
     }
 
@@ -609,6 +676,94 @@ namespace DesignData
             row.Rate = Detail::Read<float>(object, "Rate");
             row.PickCount = Detail::Read<optional<int32>>(object, "PickCount");
             row.Entries = Detail::ReadRows<DropEntryRow>(object, "Entries", ReadDropEntryRow);
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Map 표(Map.xlsx)의 한 행. */
+    struct MapRow
+    {
+        /** 맵 번호. 클라이언트가 이 번호로 열 레벨을 고른다 */
+        int32 Id = 0;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using MapTable = map<int32, MapRow>;
+
+    /** Map.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseMap(const Json& document, OUT MapTable& table)
+    {
+        return Detail::ParseTable(MAP_FILE, document, OUT table, [](const Json& object)
+        {
+            MapRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Area 표(Area.xlsx)의 한 행. */
+    struct AreaRow
+    {
+        /** 지역 번호 */
+        int32 Id = 0;
+        /** 이 지역이 속한 맵 */
+        int32 MapId = 0;
+        /** 리스폰 지점이 있으면 TRUE. 리스폰 지점이 있는 지역(마을)은 하나뿐이다 */
+        bool HasRespawnPoint = false;
+        /** 나오는 몬스터. ';'로 구분한다. 비어 있으면 몬스터가 나오지 않는다 */
+        vector<int32> Monsters;
+        /** 동시에 있는 몬스터의 최대 수. 0 이상이다 */
+        int32 MaxMonsterCount = 0;
+        /** 몬스터가 다시 나오는 시간(초). 0 이상이다 */
+        int32 MonsterRespawnSec = 0;
+        /** 지역 중심의 X 좌표 */
+        float CenterX = 0.f;
+        /** 지역 중심의 Y 좌표 */
+        float CenterY = 0.f;
+        /** 지역 중심의 Z 좌표 */
+        float CenterZ = 0.f;
+        /** 중심에서 X 방향 반경. 0보다 크다 */
+        float HalfExtentX = 0.f;
+        /** 중심에서 Y 방향 반경. 0보다 크다 */
+        float HalfExtentY = 0.f;
+        /** 리스폰 지점의 X 좌표. 리스폰 지점이 없으면 비워 둔다 */
+        optional<float> RespawnX;
+        /** 리스폰 지점의 Y 좌표 */
+        optional<float> RespawnY;
+        /** 리스폰 지점의 Z 좌표 */
+        optional<float> RespawnZ;
+        /** Portal 표에서 이 행에 속한 행. 키 순서다. */
+        vector<PortalRow> Portals;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using AreaTable = map<int32, AreaRow>;
+
+    /** Area.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseArea(const Json& document, OUT AreaTable& table)
+    {
+        return Detail::ParseTable(AREA_FILE, document, OUT table, [](const Json& object)
+        {
+            AreaRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.MapId = Detail::Read<int32>(object, "MapId");
+            row.HasRespawnPoint = Detail::Read<bool>(object, "HasRespawnPoint");
+            row.Monsters = Detail::Read<vector<int32>>(object, "Monsters");
+            row.MaxMonsterCount = Detail::Read<int32>(object, "MaxMonsterCount");
+            row.MonsterRespawnSec = Detail::Read<int32>(object, "MonsterRespawnSec");
+            row.CenterX = Detail::Read<float>(object, "CenterX");
+            row.CenterY = Detail::Read<float>(object, "CenterY");
+            row.CenterZ = Detail::Read<float>(object, "CenterZ");
+            row.HalfExtentX = Detail::Read<float>(object, "HalfExtentX");
+            row.HalfExtentY = Detail::Read<float>(object, "HalfExtentY");
+            row.RespawnX = Detail::Read<optional<float>>(object, "RespawnX");
+            row.RespawnY = Detail::Read<optional<float>>(object, "RespawnY");
+            row.RespawnZ = Detail::Read<optional<float>>(object, "RespawnZ");
+            row.Portals = Detail::ReadRows<PortalRow>(object, "Portals", ReadPortalRow);
 
             auto key = row.Id;
             return pair{ std::move(key), std::move(row) };

@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "Game/Room/RoomTransfer.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     룸 이동 판정과 입장할 룸 배정 테스트
@@ -11,15 +12,17 @@
 
 TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
 {
-    PortalTemplate portal;
-    portal.portalId = 11;
-    portal.dstRoomId = 20;
-    portal.dstPos = TemplatePos{ -8000.f, 10000.f, 50.f };
-    portal.dstYaw = 180.f;
+    DesignData::PortalRow portal;
+    portal.Id = 11;
+    portal.DestAreaId = 20;
+    portal.DestX = -8000.f;
+    portal.DestY = 10000.f;
+    portal.DestZ = 50.f;
+    portal.DestYaw = 180.f;
 
     const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal);
 
-    EXPECT_EQ(enterData.nextRoomId, 20);
+    EXPECT_EQ(enterData.nextRoomId, 20) << "지금은 도착 지역 하나를 룸 하나가 맡는다";
     ASSERT_TRUE(enterData.enterPos.has_value()) << "비어 있으면 포털의 도착 위치가 아니라 룸 중심에 선다";
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().x(), -8000.f);
     EXPECT_FLOAT_EQ(enterData.enterPos->pos().y(), 10000.f);
@@ -54,17 +57,14 @@ TEST(RoomTransferTest, UnsupportedRespawnTypesAreRejected)
     }
 }
 
-// 마을 리스폰의 목적지는 맵 표에서 읽는다. 룸 객체를 보지 않으므로 퇴장한 뒤의 저장에서도 쓸 수 있다.
-TEST(RoomTransferTest, TownRespawnComesFromMapTable)
+// 마을 리스폰의 목적지는 지역 표에서 읽는다. 룸 객체를 보지 않으므로 퇴장한 뒤의 저장에서도 쓸 수 있다.
+TEST(RoomTransferTest, TownRespawnComesFromAreaTable)
 {
-    MapTemplate town;
-    town.templateId = 10;
-    town.mapId = 1001;
-    town.respawnPoint = TemplatePos{ 100.f, 200.f, 30.f };
+    DesignData::AreaRow town = TestAreaTables::MakeArea(10, 1001);
+    TestAreaTables::SetRespawnPoint(town, 100.f, 200.f, 30.f);
 
     GamedataTables tables;
-    tables.maps[town.templateId] = town;
-    tables.townRoomId = town.templateId;
+    TestAreaTables::AddTown(tables, town);
     Gamedata::Install(std::move(tables));
 
     optional<TownRespawn> respawn = RoomTransfer::FindTownRespawn();
@@ -81,12 +81,8 @@ TEST(RoomTransferTest, TownRespawnComesFromMapTable)
 
 TEST(RoomTransferTest, TownWithoutRespawnPointHasNoTownRespawn)
 {
-    MapTemplate town;
-    town.templateId = 10;
-
     GamedataTables tables;
-    tables.maps[town.templateId] = town;
-    tables.townRoomId = town.templateId;
+    TestAreaTables::AddTown(tables, TestAreaTables::MakeArea(10, 1001));
     Gamedata::Install(std::move(tables));
 
     EXPECT_FALSE(RoomTransfer::FindTownRespawn().has_value());
@@ -112,15 +108,6 @@ namespace
         pos.mutable_pos()->set_z(z);
         return pos;
     }
-
-    PortalTemplate MakePortal(int32 portalId, int32 dstRoomId, float srcX, float srcY)
-    {
-        PortalTemplate portal;
-        portal.portalId = portalId;
-        portal.dstRoomId = dstRoomId;
-        portal.srcPos = TemplatePos{ srcX, srcY, 0.f };
-        return portal;
-    }
 }
 
 // 마을(MAP_A)에는 같은 맵의 사냥터로 가는 포털과 다른 맵(MAP_B)의 룸으로 가는 포털이 하나씩 있다.
@@ -129,26 +116,14 @@ class RoomTransferMapTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        town.templateId = TOWN_ROOM;
-        town.mapId = MAP_A;
-        town.portalRadius = PORTAL_RADIUS;
-        town.portals.push_back(MakePortal(11, FIELD_ROOM, -1200.f, 1000.f));
-        town.portals.push_back(MakePortal(12, OTHER_MAP_ROOM, 2000.f, 0.f));
-
-        MapTemplate field;
-        field.templateId = FIELD_ROOM;
-        field.mapId = MAP_A;
-        field.portalRadius = PORTAL_RADIUS;
-
-        MapTemplate otherMapRoom;
-        otherMapRoom.templateId = OTHER_MAP_ROOM;
-        otherMapRoom.mapId = MAP_B;
-        otherMapRoom.portalRadius = PORTAL_RADIUS;
+        town = TestAreaTables::MakeArea(TOWN_ROOM, MAP_A);
+        town.Portals.push_back(TestAreaTables::MakePortal(11, FIELD_ROOM, -1200.f, 1000.f, PORTAL_RADIUS));
+        town.Portals.push_back(TestAreaTables::MakePortal(12, OTHER_MAP_ROOM, 2000.f, 0.f, PORTAL_RADIUS));
 
         GamedataTables tables;
-        tables.maps[TOWN_ROOM] = town;
-        tables.maps[FIELD_ROOM] = field;
-        tables.maps[OTHER_MAP_ROOM] = otherMapRoom;
+        TestAreaTables::AddArea(tables, town);
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_ROOM, MAP_A));
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(OTHER_MAP_ROOM, MAP_B));
         Gamedata::Install(std::move(tables));
     }
 
@@ -157,28 +132,36 @@ protected:
         Gamedata::Install(GamedataTables());
     }
 
-    MapTemplate town;
+    DesignData::AreaRow town;
 };
 
 TEST_F(RoomTransferMapTest, PortalUseWithinRadiusPasses)
 {
-    const PortalTemplate& portal = town.portals[0];
-    EXPECT_FALSE(RoomTransfer::ValidatePortalUse(portal, PORTAL_RADIUS, MakePlayerPos(-1200.f + 300.f, 1000.f + 400.f)).has_value())
+    const DesignData::PortalRow& portal = town.Portals[0];
+    EXPECT_FALSE(RoomTransfer::ValidatePortalUse(portal, MakePlayerPos(-1200.f + 300.f, 1000.f + 400.f)).has_value())
         << "반경 경계(거리 500)는 통과한다";
-    EXPECT_FALSE(RoomTransfer::ValidatePortalUse(portal, PORTAL_RADIUS, MakePlayerPos(-1200.f, 1000.f, 5000.f)).has_value())
+    EXPECT_FALSE(RoomTransfer::ValidatePortalUse(portal, MakePlayerPos(-1200.f, 1000.f, 5000.f)).has_value())
         << "높이는 보지 않는다. 포털 좌표의 z는 바닥이고 플레이어의 z는 캡슐 중심이다";
 }
 
 TEST_F(RoomTransferMapTest, PortalUseOutsideRadiusIsRejected)
 {
-    const PortalTemplate& portal = town.portals[0];
-    EXPECT_TRUE(RoomTransfer::ValidatePortalUse(portal, PORTAL_RADIUS, MakePlayerPos(-1200.f + 301.f, 1000.f + 400.f)).has_value())
+    const DesignData::PortalRow& portal = town.Portals[0];
+    EXPECT_TRUE(RoomTransfer::ValidatePortalUse(portal, MakePlayerPos(-1200.f + 301.f, 1000.f + 400.f)).has_value())
         << "조작한 클라이언트는 룸 안 어디서든 포털을 탄다";
+}
+
+// 반경은 포털마다 다르다. 지역 하나의 포털이 같은 반경을 쓰지 않는다.
+TEST_F(RoomTransferMapTest, PortalUseUsesThatPortalsRadius)
+{
+    const DesignData::PortalRow narrow = TestAreaTables::MakePortal(13, FIELD_ROOM, 0.f, 0.f, 100.f);
+    EXPECT_FALSE(RoomTransfer::ValidatePortalUse(narrow, MakePlayerPos(100.f, 0.f)).has_value());
+    EXPECT_TRUE(RoomTransfer::ValidatePortalUse(narrow, MakePlayerPos(101.f, 0.f)).has_value());
 }
 
 //~ 입장할 룸 배정
 
-// DB와 기획 데이터는 맵과 좌표만 안다. 들어갈 룸은 서버가 맵 표 행의 범위로 고른다.
+// DB는 맵과 좌표만 안다. 들어갈 룸은 서버가 좌표가 드는 지역으로 고른다.
 // 마을(TOWN_ROOM, 중심 (0, 0), 반경 1000)과 그 서쪽에 붙은 사냥터(FIELD_ROOM, 중심 (-3000, 0), 반경 2000)가 x = -1000에서
 // 경계를 함께 쓴다. 다른 맵(MAP_B)의 룸은 마을과 같은 좌표 범위에 있다.
 class RoomAssignmentTest : public ::testing::Test
@@ -186,31 +169,19 @@ class RoomAssignmentTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MapTemplate town = MakeRange(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
-        town.respawnPoint = TemplatePos{ 100.f, 200.f, 30.f };
+        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
+        TestAreaTables::SetRespawnPoint(town, 100.f, 200.f, 30.f);
 
         GamedataTables tables;
-        tables.maps[TOWN_ROOM] = town;
-        tables.maps[FIELD_ROOM] = MakeRange(FIELD_ROOM, MAP_A, -3000.f, 0.f, 2000.f);
-        tables.maps[OTHER_MAP_ROOM] = MakeRange(OTHER_MAP_ROOM, MAP_B, 0.f, 0.f, 1000.f);
-        tables.townRoomId = TOWN_ROOM;
+        TestAreaTables::AddTown(tables, town);
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_ROOM, MAP_A, -3000.f, 0.f, 2000.f));
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(OTHER_MAP_ROOM, MAP_B, 0.f, 0.f, 1000.f));
         Gamedata::Install(std::move(tables));
     }
 
     void TearDown() override
     {
         Gamedata::Install(GamedataTables());
-    }
-
-    static MapTemplate MakeRange(int32 roomId, int32 mapId, float centerX, float centerY, float halfExtent)
-    {
-        MapTemplate range;
-        range.templateId = roomId;
-        range.mapId = mapId;
-        range.center = TemplatePos{ centerX, centerY, 0.f };
-        range.depthHalfExtent = halfExtent;
-        range.widthHalfExtent = halfExtent;
-        return range;
     }
 
     static void ExpectTownRespawn(const optional<RoomAssignment>& assignment)
@@ -252,12 +223,12 @@ TEST_F(RoomAssignmentTest, PosOnRangeBoundaryBelongsToThatRoom)
     EXPECT_FLOAT_EQ(minEdge->pos.pos().x(), -5000.f);
 }
 
-TEST_F(RoomAssignmentTest, SharedBoundaryGoesToSmallerMapTableRow)
+TEST_F(RoomAssignmentTest, SharedBoundaryGoesToSmallerAreaId)
 {
     const optional<RoomAssignment> assignment = RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(-1000.f, 0.f));
 
     ASSERT_TRUE(assignment.has_value());
-    EXPECT_EQ(assignment->roomId, TOWN_ROOM) << "두 범위가 함께 쓰는 경계는 맵 표 행 번호가 작은 쪽이 갖는다";
+    EXPECT_EQ(assignment->roomId, TOWN_ROOM) << "두 지역이 함께 쓰는 경계는 지역 번호가 작은 쪽이 갖는다";
 }
 
 TEST_F(RoomAssignmentTest, PosOutsideEveryRangeGoesToTownRespawn)
@@ -285,12 +256,11 @@ TEST_F(RoomAssignmentTest, MapIdNotInMapTableGoesToTownRespawn)
 TEST_F(RoomAssignmentTest, NoAssignmentWithoutTownRespawn)
 {
     GamedataTables tables;
-    tables.maps[FIELD_ROOM] = MakeRange(FIELD_ROOM, MAP_A, -3000.f, 0.f, 2000.f);
-    tables.maps[TOWN_ROOM] = MakeRange(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
-    tables.townRoomId = TOWN_ROOM;
+    TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_ROOM, MAP_A, -3000.f, 0.f, 2000.f));
+    TestAreaTables::AddTown(tables, TestAreaTables::MakeArea(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f));
     Gamedata::Install(std::move(tables));
 
     EXPECT_TRUE(RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(-3000.f, 0.f)).has_value())
-        << "범위 안의 좌표는 마을 리스폰 지점이 없어도 배정한다";
+        << "지역 안의 좌표는 마을 리스폰 지점이 없어도 배정한다";
     EXPECT_FALSE(RoomTransfer::AssignRoom(MAP_A, MakePlayerPos(50000.f, 0.f)).has_value());
 }

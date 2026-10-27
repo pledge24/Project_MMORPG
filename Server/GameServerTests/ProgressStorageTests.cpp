@@ -15,6 +15,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerSaveData.h"
 #include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     진행 저장소와 DAO 테스트
@@ -101,25 +102,13 @@ class ProgressStorageTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MapTemplate field;
-        field.templateId = FIELD_ROOM_ID;
-        field.mapId = FIELD_MAP_ID;
-        field.depthHalfExtent = 1000.f;
-        field.widthHalfExtent = 1000.f;
-
-        MapTemplate town;
-        town.templateId = TOWN_ROOM_ID;
-        town.mapId = TOWN_MAP_ID;
-        town.center = TemplatePos{ 0.f, 5000.f, 0.f };
-        town.depthHalfExtent = 1000.f;
-        town.widthHalfExtent = 1000.f;
-        town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 5000.f, 0.f };
+        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID, 0.f, 5000.f, 1000.f);
+        TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 5000.f, 0.f);
 
         GamedataTables tables;
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
-        tables.maps[FIELD_ROOM_ID] = field;
-        tables.maps[TOWN_ROOM_ID] = town;
-        tables.townRoomId = TOWN_ROOM_ID;
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_ROOM_ID, FIELD_MAP_ID, 0.f, 0.f, 1000.f));
+        TestAreaTables::AddTown(tables, town);
         for (auto [level, expRequirement] : { pair{ 1, 1000 }, pair{ 2, 0 } })
         {
             DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, expRequirement);

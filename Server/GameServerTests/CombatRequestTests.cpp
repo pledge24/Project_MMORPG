@@ -5,6 +5,7 @@
 #include "Game/Entities/PlayerProgress.h"
 #include "RecordingSession.h"
 #include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     룸의 공격과 이동 요청 테스트
@@ -31,10 +32,7 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = ROOM_ID;
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
+        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
         room = Room::Create(mapTemplate);
         ASSERT_NE(room, nullptr);
 

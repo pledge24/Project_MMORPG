@@ -211,6 +211,58 @@ def drop_group_used_by_monster(table: Table, data: DesignData) -> list[str]:
     ]
 
 
+def positive(*columns: str) -> Callable[[Table, DesignData], list[str]]:
+    """열이 0보다 큰지 본다. 지역과 포털의 반경에 쓴다. 반경이 0 이하면 서버의 포함 판정에 어떤 좌표도 들지 않는다."""
+
+    def rule(table: Table, _: DesignData) -> list[str]:
+        return [
+            f"{locate(table.config.workbook, row.sheet, row.number)}: {column}가 0보다 커야 하는데 {row.values[column]}이다"
+            for row in table.rows
+            for column in columns
+            if row.values[column] <= 0
+        ]
+
+    return rule
+
+
+def not_negative(column: str) -> Callable[[Table, DesignData], list[str]]:
+    def rule(table: Table, _: DesignData) -> list[str]:
+        return [
+            f"{locate(table.config.workbook, row.sheet, row.number)}: {column}가 0 이상이어야 하는데 {row.values[column]}이다"
+            for row in table.rows
+            if row.values[column] < 0
+        ]
+
+    return rule
+
+
+# 리스폰 지점의 좌표 열. 리스폰 지점이 있는 지역만 채운다.
+RESPAWN_COLUMNS = ("RespawnX", "RespawnY", "RespawnZ")
+
+
+def exactly_one_town(table: Table, _: DesignData) -> list[str]:
+    """리스폰 지점이 있는 지역이 마을이다. 사망한 플레이어가 돌아갈 곳이 하나로 정해져야 한다."""
+    towns = [row for row in table.rows if row.values["HasRespawnPoint"]]
+    if len(towns) == 1:
+        return []
+    places = ", ".join(f"시트 '{row.sheet}' {row.number}행" for row in towns)
+    return [f"{table.config.workbook}: HasRespawnPoint가 참인 지역(마을)이 하나여야 하는데 {len(towns)}개다" + (f" ({places})" if places else "")]
+
+
+def respawn_point_matches_coordinates(table: Table, _: DesignData) -> list[str]:
+    """리스폰 지점이 있는 지역은 좌표를 모두 채우고, 없는 지역은 모두 비워 둔다."""
+    errors = []
+    for row in table.rows:
+        where = locate(table.config.workbook, row.sheet, row.number)
+        has_point = row.values["HasRespawnPoint"]
+        for column in RESPAWN_COLUMNS:
+            if has_point and row.values[column] is None:
+                errors.append(f"{where}: 리스폰 지점이 있는 지역은 {column}를 채운다")
+            if not has_point and row.values[column] is not None:
+                errors.append(f"{where}: 리스폰 지점이 없는 지역은 {column}를 비워 둔다")
+    return errors
+
+
 TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Currency": [exactly_one_gold],
     "Item": [item_key_in_kind_range, item_max_stack_at_least_one, item_has_kind_row],
@@ -221,6 +273,14 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Monster": [range_ordered("MinExp", "MaxExp", 0), range_ordered("MinGold", "MaxGold", 0)],
     "DropGroup": [drop_group_matches_method],
     "DropEntry": [drop_entry_matches_group_method, range_ordered("MinCount", "MaxCount", 1)],
+    "Area": [
+        positive("HalfExtentX", "HalfExtentY"),
+        not_negative("MaxMonsterCount"),
+        not_negative("MonsterRespawnSec"),
+        exactly_one_town,
+        respawn_point_matches_coordinates,
+    ],
+    "Portal": [positive("Radius")],
 }
 
 # 산출물을 막지 않는 규칙. 어기면 경고를 남기고 생성은 계속한다.

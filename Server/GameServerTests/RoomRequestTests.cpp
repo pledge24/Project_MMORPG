@@ -9,6 +9,7 @@
 #include "PlayerTestAccess.h"
 #include "TestItemTables.h"
 #include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -50,25 +51,19 @@ class RoomRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        // 마을은 룸 객체 없이 맵 표에만 둔다. 리스폰 규칙은 맵 표만 읽는다.
-        MapTemplate town;
-        town.templateId = TOWN_ROOM_ID;
-        town.mapId = TOWN_MAP_ID;
-        town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 0.f, 0.f };
+        // 마을은 룸 객체 없이 지역 표에만 둔다. 리스폰 규칙은 지역 표만 읽는다.
+        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+        TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
 
         GamedataTables tables;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.items[SWORD_TEMPLATE_ID].Sellable = true;
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
-        tables.maps[TOWN_ROOM_ID] = town;
-        tables.townRoomId = TOWN_ROOM_ID;
+        TestAreaTables::AddTown(tables, town);
         tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
 
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = ROOM_ID;
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
+        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
         room = Room::Create(mapTemplate);
         ASSERT_NE(room, nullptr);
 

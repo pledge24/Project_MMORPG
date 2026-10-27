@@ -33,7 +33,7 @@ public:
     static const DesignData::ItemConsumeEffectRow* FindItemConsumeEffect(int32 templateId);
     static const DesignData::MonsterRow* FindMonster(int32 templateId);
     static const DesignData::DropGroupRow* FindDropGroup(int32 dropGroupId);
-    static const MapTemplate* FindMap(int32 templateId);
+    static const DesignData::AreaRow* FindArea(int32 areaId);
     /** 그 직업의 그 레벨 능력치. 표에 없는 직업이나 레벨이면 nullptr. */
     static const DesignData::ClassLevelStatRow* FindClassLevelStat(int32 classId, int32 level);
     /** 직업별 능력치 표에 그 직업이 있으면 true. 있으면 모든 레벨에 행이 있다. */
@@ -44,10 +44,10 @@ public:
     /** 레벨 표의 마지막 레벨. 표가 비어 있으면 0. */
     static int32 GetMaxLevel() { return s_tables.levels.empty() ? 0 : s_tables.levels.rbegin()->first; }
 
-    /** 룸 번호 순서다. */
-    static const map<int32, MapTemplate>& GetMaps() { return s_tables.maps; }
-    /** 사망한 플레이어가 돌아가는 마을 룸 번호. */
-    static int32 GetTownRoomId() { return s_tables.townRoomId; }
+    /** 지역 번호 순서다. */
+    static const DesignData::AreaTable& GetAreas() { return s_tables.areas; }
+    /** 사망한 플레이어가 돌아가는 마을의 지역 번호. */
+    static int32 GetTownAreaId() { return s_tables.townAreaId; }
 
     /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }
