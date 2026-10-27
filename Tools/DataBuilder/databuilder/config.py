@@ -15,6 +15,8 @@ TYPE_NAME = re.compile(r"^[A-Z][A-Za-z0-9]*$")
 MODULE_NAME = re.compile(r"^[a-z][a-z0-9]*$")
 ENUM_VALUE_NAME = re.compile(r"^[A-Z][A-Z0-9_]*$")
 OUTPUT_DIR_NAME = "Generated"
+# 모듈의 namespace를 적지 않으면 쓰는 C++ 네임스페이스.
+DEFAULT_NAMESPACE = "DesignData"
 
 
 class ConfigError(Exception):
@@ -27,6 +29,8 @@ class ModuleConfig:
 
     name: str
     server_dir: Path
+    # 생성되는 헤더의 C++ 네임스페이스. 한 번역 단위가 두 모듈의 헤더를 함께 include할 수 있어서 모듈마다 다르다.
+    namespace: str = DEFAULT_NAMESPACE
 
 
 @dataclass(frozen=True)
@@ -94,7 +98,14 @@ def load_config(path: Path, root: Path) -> Config:
         # 배포가 이 폴더를 통째로 지운다. 설정을 잘못 적어 사람이 쓴 폴더를 지우지 않도록 이름을 고정한다.
         if server_dir.name != OUTPUT_DIR_NAME:
             raise ConfigError(f"{path}: modules.{name}의 server_dir은 '{OUTPUT_DIR_NAME}' 폴더여야 한다")
-        modules[name] = ModuleConfig(name, server_dir)
+        namespace = section.get("namespace", DEFAULT_NAMESPACE)
+        if not isinstance(namespace, str) or not TYPE_NAME.match(namespace):
+            raise ConfigError(f"{path}: modules.{name}의 'namespace'는 PascalCase 식별자여야 한다")
+        # 게임과 로비의 헤더를 함께 include하는 코드(기동할 때의 대조)가 있어서, 같은 네임스페이스면 같은 이름이 두 번 정의된다.
+        for other in modules.values():
+            if other.namespace == namespace:
+                raise ConfigError(f"{path}: modules.{name}과 modules.{other.name}이 같은 namespace '{namespace}'를 쓴다")
+        modules[name] = ModuleConfig(name, server_dir, namespace)
 
     client = None
     if "client" in raw:

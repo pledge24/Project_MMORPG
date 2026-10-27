@@ -92,11 +92,6 @@ namespace
         };
     }
 
-    Json MakePos(float x, float y, float z)
-    {
-        return Json{{"posX", x}, {"posY", y}, {"posZ", z}};
-    }
-
     /** DataBuilder가 생성하는 맵 표의 행. 이름은 클라이언트만 쓴다. */
     Json MakeMap()
     {
@@ -137,21 +132,12 @@ namespace
         return Json{{"Id", id}, {"Name", "골드"}, {"Type", type}};
     }
 
+    /** DataBuilder가 생성하는 초기 진행 설정. 표가 아니라 객체 하나다. */
     Json MakeInitialProgress()
     {
         return Json{
-            {"startMapId", 1111}, {"startPos", MakePos(100, -200, 0)}, {"startYaw", 90.0}, {"startGold", 10000},
+            {"StartMapId", MAP_ID}, {"StartX", 100.0}, {"StartY", -200.0}, {"StartZ", 0.0}, {"StartYaw", 90.0}, {"StartGold", 10000},
         };
-    }
-
-    Json MakeInventorySection(const char* itemType, int32 slotCount)
-    {
-        return Json{{"itemType", itemType}, {"slotCount", slotCount}};
-    }
-
-    Json MakeQuickSlot(int32 slotCount)
-    {
-        return Json{{"slotCount", slotCount}};
     }
 
     GamedataDocuments MakeValidDocuments()
@@ -167,11 +153,7 @@ namespace
         documents.maps = Json::array({MakeMap()});
         documents.areas = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
-        documents.initialProgress = Json::array({MakeInitialProgress()});
-        documents.inventorySections = Json::array({
-            MakeInventorySection("GEAR", 32), MakeInventorySection("CONSUMABLE", 24), MakeInventorySection("MISCELLANEOUS", 16),
-        });
-        documents.quickSlots = Json::array({MakeQuickSlot(6)});
+        documents.initialProgress = MakeInitialProgress();
         return documents;
     }
 
@@ -263,18 +245,12 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     ASSERT_TRUE(tables.currencies.contains(GOLD_ID));
     EXPECT_EQ(tables.currencies.at(GOLD_ID).Type, DesignData::CurrencyType::GOLD);
 
-    const InitialProgressTemplate& initial = tables.initialProgress;
-    EXPECT_EQ(initial.startMapId, 1111);
-    EXPECT_FLOAT_EQ(initial.startPos.x, 100.f);
-    EXPECT_FLOAT_EQ(initial.startPos.y, -200.f);
-    EXPECT_FLOAT_EQ(initial.startYaw, 90.f);
-    EXPECT_EQ(initial.startGold, 10000);
-
-    EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_GEAR), 32);
-    EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_CONSUMABLE), 24);
-    EXPECT_EQ(tables.inventorySlotCounts.at(Protocol::ITEM_TYPE_MISCELLANEOUS), 16);
-
-    EXPECT_EQ(tables.quickSlotCount, 6);
+    const DesignData::ProgressConfig& initial = tables.initialProgress;
+    EXPECT_EQ(initial.StartMapId, MAP_ID);
+    EXPECT_FLOAT_EQ(initial.StartX, 100.f);
+    EXPECT_FLOAT_EQ(initial.StartY, -200.f);
+    EXPECT_FLOAT_EQ(initial.StartYaw, 90.f);
+    EXPECT_EQ(initial.StartGold, 10000);
 }
 
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
@@ -407,88 +383,16 @@ TEST(GamedataParserTest, DuplicateCurrencyIdIsRejected)
     ExpectMentions(ErrorOf(documents), {DesignData::CURRENCY_FILE, "2번째 행", "키가 겹친다"});
 }
 
-// 시작 맵은 맵 표의 맵 번호다. 지역 번호를 적으면 새 캐릭터가 들어갈 맵이 없다.
-TEST(GamedataParserTest, StartMapNotInMapTableIsRejected)
+// 시작 맵이 맵 표에 있는지와 시작 골드가 0 이상인지는 DataBuilder가 검사한다. 서버는 설정의 형식만 본다.
+TEST(GamedataParserTest, MalformedInitialProgressIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.initialProgress[0]["startMapId"] = TOWN_ID;
-
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS, "startMapId", "10"});
-}
-
-TEST(GamedataParserTest, InitialProgressMustHaveExactlyOneRow)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.initialProgress = Json::array();
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS});
+    documents.initialProgress.erase("StartGold");
+    ExpectMentions(ErrorOf(documents), {DesignData::PROGRESS_FILE, "StartGold"});
 
     documents = MakeValidDocuments();
-    documents.initialProgress.push_back(MakeInitialProgress());
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS});
-}
-
-TEST(GamedataParserTest, NegativeStartGoldIsRejected)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.initialProgress[0]["startGold"] = -1;
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INITIAL_PROGRESS, "startGold"});
-}
-
-TEST(GamedataParserTest, NonPositiveSectionSlotCountIsRejected)
-{
-    for (int32 slotCount : { 0, -1 })
-    {
-        GamedataDocuments documents = MakeValidDocuments();
-        documents.inventorySections[1]["slotCount"] = slotCount;
-
-        SCOPED_TRACE(slotCount);
-        ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "2번째 행", "slotCount"});
-    }
-}
-
-// 아이템은 자기 종류의 구역에만 들어간다. 구역이 없는 종류의 아이템은 인벤토리에 넣을 곳이 없다.
-TEST(GamedataParserTest, EveryItemTypeNeedsExactlyOneSection)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.inventorySections.erase(2);
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "MISCELLANEOUS"});
-
-    documents = MakeValidDocuments();
-    documents.inventorySections.push_back(MakeInventorySection("GEAR", 8));
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "4번째 행", "GEAR"});
-
-    documents = MakeValidDocuments();
-    documents.inventorySections[0]["itemType"] = "NONE";
-    ExpectMentions(ErrorOf(documents), {GamedataFile::INVENTORY_SECTIONS, "1번째 행", "itemType"});
-}
-
-// 퀵슬롯 개수는 서버와 클라이언트가 함께 쓰는 값 하나다.
-TEST(GamedataParserTest, QuickSlotTableNeedsExactlyOneRow)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.quickSlots = Json::array();
-    ExpectMentions(ErrorOf(documents), {GamedataFile::QUICK_SLOTS, "하나"});
-
-    documents = MakeValidDocuments();
-    documents.quickSlots.push_back(MakeQuickSlot(9));
-    ExpectMentions(ErrorOf(documents), {GamedataFile::QUICK_SLOTS, "하나"});
-}
-
-// DB의 QuickSlot.SlotIndex가 TINYINT라 256번째 퀵슬롯부터 저장하지 못한다.
-TEST(GamedataParserTest, QuickSlotCountOutOfRangeIsRejected)
-{
-    for (int32 slotCount : { 0, -1, 257 })
-    {
-        GamedataDocuments documents = MakeValidDocuments();
-        documents.quickSlots[0]["slotCount"] = slotCount;
-
-        SCOPED_TRACE(slotCount);
-        ExpectMentions(ErrorOf(documents), {GamedataFile::QUICK_SLOTS, "1번째 행", "slotCount"});
-    }
-
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.quickSlots[0]["slotCount"] = 256;
-    EXPECT_EQ(ErrorOf(documents), "") << "0번부터 255번까지 256개는 저장할 수 있다";
+    documents.initialProgress = Json::array({MakeInitialProgress()});
+    ExpectMentions(ErrorOf(documents), {DesignData::PROGRESS_FILE});
 }
 
 // 드롭의 판정과 지급은 아직 없다. 서버는 드롭 그룹을 생성된 타입으로 읽어 설치만 한다.
@@ -531,9 +435,7 @@ TEST(GamedataParserTest, FailedLoadKeepsPreviousTables)
 TEST(GamedataParserTest, RepositoryGamedataPasses)
 {
     // 테스트 소스 위치에서 GameServer의 기획표 폴더를 찾는다. 작업 디렉터리와 무관하게 돈다.
-    const filesystem::path dataDir = filesystem::path(__FILE__).parent_path() / ".." / "GameServer" / "Game" / "Data";
-    const filesystem::path dir = dataDir / "Json";
-    const filesystem::path generatedDir = dataDir / "Generated";
+    const filesystem::path generatedDir = filesystem::path(__FILE__).parent_path() / ".." / "GameServer" / "Game" / "Data" / "Generated";
 
     GamedataDocuments documents;
     documents.levels = ReadJsonFile(generatedDir / DesignData::LEVEL_FILE);
@@ -546,10 +448,7 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.monsters = ReadJsonFile(generatedDir / DesignData::MONSTER_FILE);
     documents.dropGroups = ReadJsonFile(generatedDir / DesignData::DROP_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
-    documents.initialProgress = ReadJsonFile(dir / GamedataFile::INITIAL_PROGRESS);
-    documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
-    documents.quickSlots = ReadJsonFile(dir / GamedataFile::QUICK_SLOTS);
-    ASSERT_TRUE(documents.initialProgress.is_array()) << "기획표를 찾지 못했다: " << dir.string();
+    documents.initialProgress = ReadJsonFile(generatedDir / DesignData::PROGRESS_FILE);
     ASSERT_TRUE(documents.items.is_array()) << "생성된 기획 데이터를 찾지 못했다: " << generatedDir.string();
 
     GamedataTables tables;
@@ -559,12 +458,11 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     ASSERT_FALSE(tables.levels.empty());
     EXPECT_EQ(tables.levels.rbegin()->first, 50);
 
-    // DB 기본값과 코드 상수에서 옮겨 온 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
-    EXPECT_EQ(tables.initialProgress.startMapId, 1111);
-    EXPECT_EQ(tables.initialProgress.startGold, 10000);
-    for (int32 itemType : { Protocol::ITEM_TYPE_GEAR, Protocol::ITEM_TYPE_CONSUMABLE, Protocol::ITEM_TYPE_MISCELLANEOUS })
-        EXPECT_EQ(tables.inventorySlotCounts.at(itemType), 32) << "클라이언트 UI가 구역마다 32칸을 고정으로 쓴다";
-    EXPECT_EQ(tables.quickSlotCount, 9) << "퀵슬롯 키는 1~9다";
+    // 옛 초기 진행 표에서 설정 워크북으로 옮긴 값이다. 옮기면서 값이 바뀌지 않았는지 본다.
+    EXPECT_EQ(tables.initialProgress.StartMapId, 1111);
+    EXPECT_FLOAT_EQ(tables.initialProgress.StartX, 0.f);
+    EXPECT_FLOAT_EQ(tables.initialProgress.StartYaw, 0.f);
+    EXPECT_EQ(tables.initialProgress.StartGold, 10000);
     EXPECT_EQ(tables.goldCurrencyId, 1) << "DB의 CharacterCurrency 행이 골드를 재화 번호 1로 가리킨다";
 
     // 아이템 표를 공통, 장비 능력치, 소모 효과 표로 나누면서 옮긴 값이다. DB의 아이템 행이 이 번호를 가리킨다.

@@ -18,7 +18,7 @@
     잡은 세션이 없어도 응답을 건너뛰고 끝나야 한다.
 
     픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 플레이어는 세션 없이 불러온 진행으로
-    만들어 EnterPlayer로 넣는다. 아이템, 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
+    만들어 EnterPlayer로 넣는다. 아이템과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -60,7 +60,6 @@ protected:
         tables.items[SWORD_TEMPLATE_ID].Sellable = true;
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         TestAreaTables::AddTown(tables, town);
-        tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
 
         DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);

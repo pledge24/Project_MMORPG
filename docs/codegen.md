@@ -122,7 +122,8 @@
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
 C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
-2026년 10월 27일(#316) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
+2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다.
+설정은 설정 워크북의 초기 진행(`Progress`)과 로비(`Lobby`) 두 시트다. 옛 변환기는 퀘스트 표 하나만 만든다(아래 「게임 데이터」).
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 클라이언트 코드는 아직 옛 데이터 테이블을 읽는다(아래 「클라이언트 산출물」).
 
 ### 재생성
@@ -147,7 +148,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 
 | 항목 | 정하는 것 |
 |---|---|
-| `[modules.<모듈>]` | 서버 모듈의 산출물 폴더(`server_dir`). 폴더 이름은 `Generated`여야 한다 |
+| `[modules.<모듈>]` | 서버 모듈의 산출물 폴더(`server_dir`)와 생성되는 헤더의 C++ 네임스페이스(`namespace`). 폴더 이름은 `Generated`여야 한다. `namespace`를 적지 않으면 `DesignData`다 |
 | `[client]` | 클라이언트 JSON 폴더(`json_dir`)와 생성 헤더 폴더(`source_dir`). 두 폴더 이름은 `Generated`여야 하고, `source_dir`은 `Source/<모듈>/` 아래여야 한다. 없으면 클라이언트 산출물을 만들지 않는다 |
 | `[tables.<표>]` | 가로형 표 하나. 워크북 파일 이름과 그 표를 읽는 모듈 목록. `nest`를 적으면 부모 표 행의 그 필드 아래에 중첩한다(아래 「산출물」) |
 | `[settings.<설정>]` | 세로형 설정 시트 하나. 워크북, 시트 이름, 모듈 목록 |
@@ -156,6 +157,11 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 표 이름과 설정 이름이 그대로 생성되는 C++ 이름(`CurrencyRow`, `CurrencyTable`, `ParseCurrency`)이 된다. 모듈의 산출물 폴더 이름을 고정한
 이유는 배포할 때 그 폴더를 통째로 지우기 때문이다.
 — 설정 파일의 경로를 잘못 적으면 사람이 쓴 폴더가 지워진다.
+
+**모듈마다 `namespace`가 달라야 한다.** 두 모듈이 같은 네임스페이스를 쓰면 DataBuilder가 설정 파일 오류로 멈춘다.
+게임 모듈은 `DesignData`, 로비 모듈은 `LobbyDesignData`다.
+— 서버의 pch가 게임 모듈의 헤더를 include하고, 기동할 때의 대조(`Core/DataCrossCheck`)가 로비 모듈의 헤더를 함께 include한다.
+네임스페이스가 같으면 두 헤더의 공통 함수와 열거형 이름 표가 한 번역 단위에 두 번 정의된다.
 
 ### 시트 규칙
 
@@ -220,7 +226,8 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 
 ### 산출물
 
-모듈마다 산출물 폴더 하나에 아래 파일을 만든다. 게임 모듈의 폴더는 `Server/GameServer/Game/Data/Generated/`다.
+모듈마다 산출물 폴더 하나에 아래 파일을 만든다. 게임 모듈의 폴더는 `Server/GameServer/Game/Data/Generated/`, 로비 모듈의 폴더는
+`Server/GameServer/Lobby/Data/Generated/`다. 데이터 버전 파일은 두 폴더에 같은 값으로 들어간다.
 
 | 파일 | 내용 |
 |---|---|
@@ -259,11 +266,11 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름, 중첩된 행 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
-표 하나의 의미 규칙을 더할 때는 `databuilder/rules.py`의 `TABLE_RULES`에 그 표 이름으로 함수를 넣는다.
+표 하나의 의미 규칙을 더할 때는 `databuilder/rules.py`의 `TABLE_RULES`에 그 표 이름으로 함수를 넣는다. 설정의 의미 규칙은 `SETTING_RULES`에 그 설정 이름으로 넣는다.
 
 **산출물을 막지 않는 규칙은 `TABLE_WARNINGS`에 넣는다.** 경고는 `[DataBuilder] 경고: ...`로 출력하고, 오류가 없으면 산출물을 배포하고 종료 코드 0으로 끝난다.
 작업 중이라 아직 틀리지 않은 상태(어느 몬스터도 쓰지 않는 드롭 그룹)에 쓴다.
@@ -275,15 +282,19 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
 세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
+초기 진행은 `Gamedata::GetInitialProgress`가 생성된 `DesignData::ProgressConfig`로 돌려준다.
 
-테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로,
+`LobbyData::LoadAll()`이 `Lobby/Data/Generated/`에서 `Lobby.json`을 생성된 `LobbyDesignData::ParseLobby`로 읽는다. 로비 코드는
+`Lobby/Data/LobbyData.h`만 include하고 게임의 `Game/Data/` 헤더를 include하지 않는다. `LobbyModuleTest`가 `Lobby/`의 소스에서 이 include를 찾는다.
+
+테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로, 생성된 `LobbyDesignData::LobbyConfig`를 `LobbyData::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로,
 레벨은 `Server/GameServerTests/TestLevelTables.h`로, 지역과 포털은 `Server/GameServerTests/TestAreaTables.h`로 넣는다. 레벨 헬퍼는 레벨 표의 행과 그 직업의 능력치 행을 함께 넣는다.
 지역 헬퍼는 지역의 맵을 맵 표에도 넣고, 마을을 넣으면 마을의 지역 번호도 정한다.
 장비에는 장비 능력치 행을, 소모품에는 소모 효과 행을 함께 넣고, `MaxStack`을 채운다.
 — 생성된 행의 `MaxStack` 기본값은 0이다. 0이면 아이템이 인벤토리에 들어가지 않는다. 실제 표에는 DataBuilder가 0을 막는다.
 
-**생성된 헤더는 `Templates.h`가 include한다.** 프로젝트 파일에는 `GameServer.vcxproj`에 `DesignData.h`와 JSON을 등록한다. 헤더만 생성하므로
-`GameServerTests.vcxproj`에 넣을 `.cpp`는 없다. 표를 더하면 그 표의 JSON을 `GameServer.vcxproj`와 `.filters`에 등록한다.
+**게임 모듈의 헤더는 `Templates.h`가, 로비 모듈의 헤더는 `LobbyData.h`가 include한다.** 프로젝트 파일에는 `GameServer.vcxproj`에 두 모듈의 `DesignData.h`와 JSON을 등록한다. 헤더만 생성하므로
+`GameServerTests.vcxproj`에 넣을 `.cpp`는 없다. 표나 설정을 더하면 그 JSON을 `GameServer.vcxproj`와 `.filters`에 등록한다.
 
 생성된 역직렬화의 공통 함수(`DesignData::Detail::Read`)는 `DesignDataReadTests`가 목록, 선택 값, 열거형 목록까지 인스턴스화해서 확인한다.
 아직 그 타입을 쓰는 표가 없어도 빌드가 그 코드를 컴파일하게 하려는 것이다.
@@ -360,7 +371,7 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 **레벨이 오를 때 더하는 능력치는 두 레벨 행의 차이다.** 옛 표의 증가분 열 넷은 인접한 두 행의 차이와 같아서 없앴다.
 — 지금 스탯에는 장비의 증감량이 들어 있으므로, 서버는 새 레벨의 능력치로 덮지 않고 차이만 더한다.
 
-마법사처럼 새 직업을 더할 때는 `ClassLevelStat.xlsx`에 그 직업의 시트를 더한다. 로비 표에 생성할 수 있는 직업으로 넣으면
+마법사처럼 새 직업을 더할 때는 `ClassLevelStat.xlsx`에 그 직업의 시트를 더한다. 설정 워크북의 `Lobby` 시트에 생성할 수 있는 직업으로 넣으면
 서버가 기동할 때 `Core/DataCrossCheck`가 이 표에 그 직업이 있는지 대조한다.
 
 ### 맵, 지역, 포털 표
@@ -421,13 +432,38 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 
 2026년 10월 27일 기준으로 클라이언트 코드는 새 데이터 테이블을 읽지 않는다. 옛 `DT_Item` 등과 손으로 쓴 행 구조체를 새 테이블로 옮기는 일은 #320이 한다.
 
+### 설정 워크북
+
+값이 하나뿐인 설정은 `Config.xlsx`의 세로형 시트에 둔다. 2026년 10월 27일(#317)에 옛 초기 진행 표(`Original_Initial_Progress.xlsx`)와
+로비 표(`Original_Lobby.xlsx`)에서 값을 그대로 옮겼다. 열은 모두 대상이 `server`다.
+
+| 시트 | 모듈 | 필드 |
+|---|---|---|
+| `Progress` (초기 진행) | `game` | 시작 맵(`StartMapId`, `ref:Map`), 시작 좌표(`StartX`, `StartY`, `StartZ`), 시작 방향(`StartYaw`), 시작 골드(`StartGold`) |
+| `Lobby` (로비) | `lobby` | 새 계정의 캐릭터 슬롯 수(`DefaultCharacterSlotCount`), 생성할 수 있는 직업(`CreatableClasses`, `enum[]:CharacterClass`) |
+
+**초기 진행의 산출물은 게임 모듈의 폴더로, 로비 설정의 산출물은 로비 모듈의 폴더로 간다.** 로비와 게임은 서로의 기획 데이터를 읽지 않는다(ADR-0021).
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- 시작 맵: 맵 표(`Map.xlsx`)에 있는 맵 번호다. 지역 번호를 적으면 참조 규칙이 막는다
+- 시작 골드: 0 이상이다
+- 슬롯 수: 1 이상이다
+- 생성할 수 있는 직업: 비어 있지 않고, 같은 직업이 두 번 나오지 않는다
+
+같은 키가 두 번 나오는 것은 설정 시트의 키 규칙이 막는다. 서버는 기동할 때 두 가지만 검사한다.
+
+- 슬롯 수가 255 이하인지. DB의 `Account.CharacterSlotCount`가 `TINYINT`다(`LobbyData::Load`)
+- 생성할 수 있는 직업마다 직업별 능력치 표에 행이 있는지(`Core/DataCrossCheck`)
+
 ---
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Quest, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+**원본**: `DesignData/Original_Quest.xlsx`
 
-이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 위 DataBuilder로 옮긴 표는 여기서 빠진다.
+이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 2026년 10월 27일(#317)부터 이 경로에 남은 표는 퀘스트 표 하나다.
+옛 변환기와 퀘스트 표는 #322가 걷어낸다.
 
 **원본에는 수치만 둔다. 에셋 경로 열을 만들지 않는다.** 아이콘, 메시, 몬스터 클래스는
 `DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
@@ -443,13 +479,12 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 6개가 전부다.**
+**산출물은 아래 표의 2개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
-| `Server/GameServer/Lobby/Data/Json/` | `S_Lobby.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Quest.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
@@ -465,32 +500,27 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 **`C_Map.json`도 2026년 10월 27일(#316)부터 생성기의 산출물이 아니지만 #320까지 남긴다.** 맵 표를 나눈 시점의 값이다.
 그 사이에 지역의 이름이나 유형을 바꾸면 클라이언트에는 반영되지 않는다.
 
-초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
-
-**기획 데이터는 소비자별로 나눈다.** 로비 표는 로비 모듈(`Lobby/Data/`)만, 나머지는 게임(`Game/Data/`)만 읽는다. 로비와 게임이
+**기획 데이터는 소비자별로 나눈다.** 로비 설정은 로비 모듈(`Lobby/Data/`)만, 나머지는 게임(`Game/Data/`)만 읽는다. 로비와 게임이
 함께 맞아야 하는 값(생성할 수 있는 직업이 직업별 능력치 표에 있는지)은 서버가 기동할 때 `Core/DataCrossCheck`가 대조하고, 어긋나면
 서버가 뜨지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
 
 ### 서버 전용 표
 
-재화, 캐릭터 생성, 인벤토리 구역 표는 2026년 10월 20일(#250)에 DB 기본값과 코드 상수에서 옮겨 왔다. 재화 표는 2026년 10월 27일(#313)에 DataBuilder로 옮겼다. 퀵슬롯 표는 2026년 10월 22일에 새로 만들었다. 열은 모두 `SERVER`다.
+옛 서버 전용 표 넷은 2026년 10월 27일(#317)에 모두 옮겼다. 초기 진행 표와 로비 표는 위 「설정 워크북」의 시트가 됐고,
+인벤토리 구역 표와 퀵슬롯 표는 서버 상수가 됐다. 재화 표는 그보다 먼저(#313) DataBuilder로 옮겼다.
 
-| 원본 | 열 | 규칙 |
-|---|---|---|
-| `Original_Initial_Progress.xlsx` (초기 진행) | `start_map_id` · `start_pos` · `start_yaw` · `start_gold` | 행이 정확히 하나다. `start_map_id`는 지역 번호가 아니라 맵 표(`Map.xlsx`)의 맵 번호다. 시작 골드는 0 이상이다 |
-| `Original_Inventory_Section.xlsx` (인벤토리 구역) | `item_type` · `slot_count` | `NONE`을 뺀 아이템 종류마다 행이 정확히 하나다. 칸 수는 1 이상이다 |
-| `Original_Quick_Slot.xlsx` (퀵슬롯) | `slot_count` | 행이 정확히 하나다. 퀵슬롯 개수는 1~256이다(DB의 퀵슬롯 번호 열이 `TINYINT`) |
-| `Original_Lobby.xlsx` (로비) | `default_character_slot_count` · `creatable_classes` | 행이 정확히 하나다. 슬롯 수는 1~255다(DB 열이 `TINYINT`). `creatable_classes`는 소문자 직업 이름의 JSON 배열(`["warrior"]`)이고, 비어 있거나 겹치면 안 된다 |
+| 옛 원본 | 지금 있는 곳 |
+|---|---|
+| `Original_Initial_Progress.xlsx` (초기 진행) | `Config.xlsx`의 `Progress` 시트 |
+| `Original_Lobby.xlsx` (로비) | `Config.xlsx`의 `Lobby` 시트. 직업은 소문자 JSON 배열(`["warrior"]`) 대신 열거형 값 이름 목록(`WARRIOR`)이다 |
+| `Original_Inventory_Section.xlsx` (인벤토리 구역) | 서버 상수 `InventorySections::SLOT_COUNT`(32). 모든 구역의 칸 수다 |
+| `Original_Quick_Slot.xlsx` (퀵슬롯) | 서버 상수 `QUICK_SLOT_COUNT`(9, `Game/QuickSlots/QuickSlotTypes.h`) |
 
-**인벤토리 구역의 칸 수는 32에서 바꾸지 않는다.** 클라이언트 UI가 구역마다 32칸을 고정으로 쓴다.
+**인벤토리 구역의 칸 수와 퀵슬롯 개수는 기획 데이터가 아니다.** 모든 캐릭터에게 같고, 바꾸면 클라이언트 UI도 함께 고쳐야 하는 값이다.
 
-**퀵슬롯 개수는 서버만 읽고 클라이언트는 입장 패킷으로 받는다.** 클라이언트의 퀵슬롯 위젯은 WBP에 놓인 슬롯
-위젯 아홉 개에 받은 퀵슬롯을 번호 순서로 그리므로, 개수를 9보다 늘리면 `WBP_QuickSlots`에도 슬롯 위젯을 더한다. 지금 값은 9다.
-
-2026년 10월 23일(#288)에 캐릭터 생성 표를 게임의 초기 진행 표와 로비 표로 나눴다. 첫 게임 입장이 시작 맵, 좌표, 방향,
-시작 골드를 초기 진행 표에서 읽는다. 로비 접속은 새 계정 행의 슬롯 수를, 캐릭터 생성은 생성할 수 있는 직업을 로비 표에서 읽는다.
-인벤토리는 구역마다 칸 수를 인벤토리 구역 표에서 읽는다.
-2026년 10월 22일부터 퀵슬롯 컴포넌트가 퀵슬롯 개수를 퀵슬롯 표에서 읽는다.
+- 인벤토리 구역의 칸 수: 클라이언트 UI가 구역마다 32칸을 고정으로 쓴다. 바꾸면 인벤토리 위젯도 함께 고친다
+- 퀵슬롯 개수: 클라이언트는 입장 패킷에 실린 퀵슬롯을 `WBP_QuickSlots`에 놓인 슬롯 위젯 아홉 개에 번호 순서로 그린다.
+  9를 넘기면 `WBP_QuickSlots`에도 슬롯 위젯을 더한다. 256을 넘기면 빌드가 실패한다(DB의 `QuickSlot.SlotIndex`가 `TINYINT`)
 
 ### 클라이언트 데이터 테이블 채우기
 
@@ -532,15 +562,14 @@ DataBuilder의 클라이언트 JSON(`P1/DesignData/Generated/<표>.json`)마다 
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 세 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표, 드롭 그룹 표, 레벨 두 표, 맵 표, 지역 표, 데이터 버전을,
-`LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로 `S_Lobby.json`을 읽는다.
-`GamedataParser::Parse`가 옛 변환기의 표를 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, DataBuilder의 표는 생성된
-`DesignData::Parse<표>`로 읽는다. 모든 표가 통과하면 그때 설치한다.
-게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿과 생성된 행만 읽는다.
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표,
+드롭 그룹 표, 레벨 두 표, 맵 표, 지역 표, 초기 진행 설정, 데이터 버전을, `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로
+`Lobby/Data/Generated/`의 로비 설정을 읽는다. 둘 다 생성된 `Parse<표>`로 읽고, 모든 표가 통과하면 그때 설치한다.
+게임 코드는 Json을 읽지 않고 `Gamedata::Find*`와 `Get*`으로 생성된 행만 읽는다. 서버는 옛 변환기의 표를 읽지 않는다.
 
-**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Quick_Slot.json` 1번째 행: 'slotCount'가 정수가 아니다」처럼
-파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 생성된 표에서 열거형 값 이름이 아닌 값과 겹친 키,
-맵 표에 없는 시작 맵이 여기 걸린다. 위 「서버 전용 표」의 규칙을 어긴 행도 같다.
+**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`Item.json` 2번째 행: 'BuyPrice'가 없다」처럼
+파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 열거형 값 이름이 아닌 값, 겹친 키가 여기 걸린다.
+위 「검사하는 곳」의 서버 기동 검사를 어긴 값도 같다.
 — 게임 중에 Json을 읽던 때는 틀린 행이 룸 스레드의 예외가 되거나 조용히 기본값으로 동작했다.
 
 세 값은 코드 상수가 아니라 기획표에서 온다.
@@ -550,9 +579,6 @@ DataBuilder의 클라이언트 JSON(`P1/DesignData/Generated/<표>.json`)마다 
 | 최대 레벨 | 레벨 표(`Level.xlsx`)의 마지막 레벨. 모든 직업이 같다. 레벨이 1부터 빠짐없이 이어지는지는 DataBuilder가 검사한다 |
 | 마을 | 지역 표(`Area.xlsx`)에서 `HasRespawnPoint`가 참인 지역(`Gamedata::GetTownAreaId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 | 골드의 재화 번호 | 재화 표(`Currency.xlsx`)에서 `Type`이 `GOLD`인 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
-
-DataBuilder로 옮기지 않은 표에서 서버가 읽는 열을 늘릴 때는 `JsonProperty.h`의 열 이름, `Templates.h`의 필드, `GamedataParser.cpp`의 변환을 함께 고친다.
-테스트는 표를 직접 고치지 않고 템플릿을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다.
 
 `S_Quest.json`은 생성되지만 서버가 읽지 않는다. 읽는 코드가 없는 표 때문에 서버가 뜨지 않는 일을 없애려고
 2026년 10월 9일(#207)에 불러오기를 뺐다. 퀘스트를 만들 때 템플릿과 함께 다시 읽는다.

@@ -65,6 +65,9 @@
     <Filter Include="Lobby\Data">
       <UniqueIdentifier>{ad2d4e47-208a-4d86-b0bf-2f82fb834c9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lobby\Data\Generated">
+      <UniqueIdentifier>{e6ce951d-a0dd-45f8-acd3-f454489c373d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Progress">
       <UniqueIdentifier>{259f4b1f-8a2e-45f0-8aac-a97aea953e7d}</UniqueIdentifier>
     </Filter>
@@ -445,9 +448,6 @@
     <ClInclude Include="Game\AI\MonsterAIComponent.h">
       <Filter>Game\AI</Filter>
     </ClInclude>
-    <ClInclude Include="Game\Data\JsonProperty.h">
-      <Filter>Game\Data</Filter>
-    </ClInclude>
     <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
@@ -459,6 +459,9 @@
     </ClInclude>
     <ClInclude Include="Game\Data\Generated\DesignData.h">
       <Filter>Game\Data\Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Lobby\Data\Generated\DesignData.h">
+      <Filter>Lobby\Data\Generated</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\Room.h">
       <Filter>Game\Room</Filter>
@@ -542,6 +545,15 @@
     </None>
     <None Include="Game\Data\Generated\Area.json">
       <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Progress.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Lobby\Data\Generated\DataVersion.json">
+      <Filter>Lobby\Data\Generated</Filter>
+    </None>
+    <None Include="Lobby\Data\Generated\Lobby.json">
+      <Filter>Lobby\Data\Generated</Filter>
     </None>
   </ItemGroup>
 </Project>

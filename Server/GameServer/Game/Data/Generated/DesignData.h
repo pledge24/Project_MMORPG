@@ -20,6 +20,7 @@ namespace DesignData
     constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
     constexpr string_view MAP_FILE = "Map.json";
     constexpr string_view AREA_FILE = "Area.json";
+    constexpr string_view PROGRESS_FILE = "Progress.json";
 
     //~ 열거형
 
@@ -767,6 +768,39 @@ namespace DesignData
 
             auto key = row.Id;
             return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    //~ 설정
+
+    /** Progress 설정(Config.xlsx의 Progress 시트). */
+    struct ProgressConfig
+    {
+        /** 새 캐릭터가 처음 서는 맵. 지역 번호가 아니라 맵 표의 맵 번호다 */
+        int32 StartMapId = 0;
+        /** 시작 위치의 X 좌표 */
+        float StartX = 0.f;
+        /** 시작 위치의 Y 좌표 */
+        float StartY = 0.f;
+        /** 시작 위치의 Z 좌표 */
+        float StartZ = 0.f;
+        /** 시작 방향(도) */
+        float StartYaw = 0.f;
+        /** 새 캐릭터가 들고 시작하는 골드. 0 이상이다 */
+        int64 StartGold = 0;
+    };
+
+    /** Progress.json을 읽는다. 실패하면 사유를 돌려준다. */
+    inline optional<string> ParseProgress(const Json& document, OUT ProgressConfig& config)
+    {
+        return Detail::ParseObject(PROGRESS_FILE, document, [&](const Json& object)
+        {
+            config.StartMapId = Detail::Read<int32>(object, "StartMapId");
+            config.StartX = Detail::Read<float>(object, "StartX");
+            config.StartY = Detail::Read<float>(object, "StartY");
+            config.StartZ = Detail::Read<float>(object, "StartZ");
+            config.StartYaw = Detail::Read<float>(object, "StartYaw");
+            config.StartGold = Detail::Read<int64>(object, "StartGold");
         });
     }
 }

@@ -6,9 +6,9 @@
 
 InventoryComponent::InventoryComponent(PlayerRef owner) : EntityComponent(owner)
 {
-    // 구역마다 칸 수는 기획 데이터의 인벤토리 구역 표가 정한다.
+    // 모든 구역의 칸 수가 같다. 클라이언트 UI가 구역마다 같은 칸 수를 고정으로 그린다.
     for (const InventorySection& section : InventorySections::ALL)
-        _sections.emplace_back(section.container, Gamedata::GetInventorySlotCount(section.itemType));
+        _sections.emplace_back(section.container, InventorySections::SLOT_COUNT);
 }
 
 InventoryComponent::~InventoryComponent()

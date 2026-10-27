@@ -3,7 +3,7 @@
 #include "Game/Entities/Player.h"
 
 QuickSlotComponent::QuickSlotComponent(PlayerRef owner)
-    : EntityComponent(owner), _slots(Gamedata::GetQuickSlotCount())
+    : EntityComponent(owner), _slots(QUICK_SLOT_COUNT)
 {
 }
 

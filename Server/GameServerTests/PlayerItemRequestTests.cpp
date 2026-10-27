@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "Game/Items/InventorySections.h"
 #include "PlayerTestAccess.h"
 #include "TestItemTables.h"
 #include "Game/Entities/Player.h"
@@ -16,7 +17,7 @@
     해제하며 다른 아이템을 받을 수 있었다. 판정은 서버의 칸에 든 아이템으로 하고, 요청의 uid는 클라이언트의
     칸이 어긋났는지 대조하는 데만 쓴다.
 
-    픽스처 결합도: 아이템 템플릿, 1레벨짜리 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이
+    픽스처 결합도: 아이템 템플릿, 1레벨짜리 전사 레벨 표를 Gamedata::Install로 주입하고 Player를 세션 없이
     EntityFactory로만 만든다. 시드한 장비에는 물리 공격력만 있다.
 ---------------------------------------------------------------*/
 
@@ -26,7 +27,7 @@ namespace
     constexpr int32 GREATSWORD_TEMPLATE_ID = 1035;
     constexpr int32 UNSELLABLE_SWORD_TEMPLATE_ID = 1005;
     constexpr int32 UNKNOWN_TEMPLATE_ID = 9999;
-    constexpr int32 GEAR_SLOT_COUNT = 32;
+    constexpr int32 GEAR_SLOT_COUNT = InventorySections::SLOT_COUNT;
 
     constexpr int64 START_GOLD = 1000;
     constexpr int32 BASE_PHYSICAL_ATTACK = 5;
@@ -52,7 +53,6 @@ protected:
         AddSword(tables, GREATSWORD_TEMPLATE_ID, 80000, 8000, true, 500);
         AddSword(tables, UNSELLABLE_SWORD_TEMPLATE_ID, 100, 10, false, 10);
         TestLevelTables::AddWarriorLevel(tables, 1).PhysicalAttack = BASE_PHYSICAL_ATTACK;
-        tables.inventorySlotCounts = MakeInventorySections(GEAR_SLOT_COUNT);
         Gamedata::Install(std::move(tables));
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
@@ -302,7 +302,6 @@ TEST_F(PlayerItemRequestTest, EquippingItemMissingFromTableIsInternalError)
     const ItemSlotRequest request = AddToInventory(SWORD_TEMPLATE_ID);
     // 기획 데이터에서 빠진 아이템이 인벤토리에 남아 있다
     GamedataTables tables;
-    tables.inventorySlotCounts = MakeInventorySections(GEAR_SLOT_COUNT);
     Gamedata::Install(std::move(tables));
 
     EXPECT_EQ(player->ProcessEquipGear(request).GetResult(), Protocol::ITEM_RESULT_INTERNAL_ERROR)

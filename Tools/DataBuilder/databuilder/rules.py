@@ -1,14 +1,14 @@
-"""표 하나에만 걸리는 기획 데이터 규칙. 시트 규칙과 타입으로 나타낼 수 없는 의미를 검사한다.
+"""표나 설정 하나에만 걸리는 기획 데이터 규칙. 시트 규칙과 타입으로 나타낼 수 없는 의미를 검사한다.
 
 코드가 정한 제약(DB 열 크기, 로비와 게임의 대조)은 여기 두지 않는다. 그 제약은 서버가 기동할 때 검사한다.
-규칙은 표 이름으로 찾는다. 표가 설정 파일에 없으면 규칙도 돌지 않는다.
+규칙은 표나 설정 이름으로 찾는다. 표나 설정이 설정 파일에 없으면 규칙도 돌지 않는다.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
 
-from databuilder.workbooks import DesignData, Table, locate, table_keys
+from databuilder.workbooks import DesignData, Setting, Table, locate, table_keys
 
 
 def exactly_one_gold(table: Table, _: DesignData) -> list[str]:
@@ -263,6 +263,31 @@ def respawn_point_matches_coordinates(table: Table, _: DesignData) -> list[str]:
     return errors
 
 
+def locate_field(setting: Setting, name: str) -> str:
+    return locate(setting.config.workbook, setting.config.sheet, setting.rows[name], "D", name)
+
+
+def field_at_least(name: str, minimum: int) -> Callable[[Setting, DesignData], list[str]]:
+    def rule(setting: Setting, _: DesignData) -> list[str]:
+        value = setting.values[name]
+        return [] if value >= minimum else [f"{locate_field(setting, name)}: {minimum} 이상이어야 하는데 {value}이다"]
+
+    return rule
+
+
+def non_empty_distinct_list(name: str) -> Callable[[Setting, DesignData], list[str]]:
+    """목록이 비어 있지 않고 같은 값이 두 번 나오지 않는지 본다."""
+
+    def rule(setting: Setting, _: DesignData) -> list[str]:
+        values = setting.values[name]
+        if not values:
+            return [f"{locate_field(setting, name)}: 목록이 비어 있다. 값을 하나 이상 적는다"]
+        repeated = sorted({value for value in values if values.count(value) > 1}, key=values.index)
+        return [f"{locate_field(setting, name)}: {value}가 두 번 이상 나온다" for value in repeated]
+
+    return rule
+
+
 TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Currency": [exactly_one_gold],
     "Item": [item_key_in_kind_range, item_max_stack_at_least_one, item_has_kind_row],
@@ -283,6 +308,13 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Portal": [positive("Radius")],
 }
 
+SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {
+    # 재화 수량은 음수가 될 수 없다.
+    "Progress": [field_at_least("StartGold", 0)],
+    # 슬롯이 없는 계정은 캐릭터를 만들 수 없고, 직업이 없으면 아무도 캐릭터를 만들 수 없다.
+    "Lobby": [field_at_least("DefaultCharacterSlotCount", 1), non_empty_distinct_list("CreatableClasses")],
+}
+
 # 산출물을 막지 않는 규칙. 어기면 경고를 남기고 생성은 계속한다.
 TABLE_WARNINGS: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "DropGroup": [drop_group_used_by_monster],
@@ -297,3 +329,9 @@ def check_rules(data: DesignData, errors: list[str], warnings: list[str]) -> Non
                 continue
             for rule in rules:
                 found.extend(rule(table, data))
+    for name, setting_rules in SETTING_RULES.items():
+        setting = data.settings.get(name)
+        if setting is None:
+            continue
+        for setting_rule in setting_rules:
+            errors.extend(setting_rule(setting, data))

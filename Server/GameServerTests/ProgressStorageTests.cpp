@@ -26,7 +26,7 @@
     저장 한 번은 트랜잭션 하나다. 중간 단계가 실패하면 앞 단계까지 되돌려야 레벨은 오르고 아이템은
     저장되지 않는 식으로 진행이 어긋나지 않는다.
 
-    픽스처 결합도: FakeDBConnection과, 골드 재화 번호, 맵 표(사냥터와 마을), 레벨 표, 아이템 표, 인벤토리 구역 표를
+    픽스처 결합도: FakeDBConnection과, 골드 재화 번호, 맵 표(사냥터와 마을), 레벨 표, 아이템 표를
     Gamedata::Install로 주입한다. 입장 테스트는 소켓 없는 GameSession과, 맵 표의 행마다 시작하지 않은 룸을 둔
     룸 관리자를 쓴다.
 ---------------------------------------------------------------*/
@@ -44,7 +44,6 @@ namespace
     constexpr int32 MAX_HP = 500;
     constexpr int32 POTION_TEMPLATE_ID = 2000;
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
-    constexpr int32 QUICK_SLOT_COUNT = 3;
     constexpr float START_X = -120.f;
     constexpr float START_YAW = 180.f;
     constexpr int64 START_GOLD = 500;
@@ -117,12 +116,12 @@ protected:
         }
         TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
-        tables.inventorySlotCounts = MakeInventorySections();
-        tables.quickSlotCount = QUICK_SLOT_COUNT;
-        tables.initialProgress.startMapId = FIELD_MAP_ID;
-        tables.initialProgress.startPos = TemplatePos{ START_X, 40.f, 5.f };
-        tables.initialProgress.startYaw = START_YAW;
-        tables.initialProgress.startGold = START_GOLD;
+        tables.initialProgress.StartMapId = FIELD_MAP_ID;
+        tables.initialProgress.StartX = START_X;
+        tables.initialProgress.StartY = 40.f;
+        tables.initialProgress.StartZ = 5.f;
+        tables.initialProgress.StartYaw = START_YAW;
+        tables.initialProgress.StartGold = START_GOLD;
         Gamedata::Install(std::move(tables));
         rooms = make_unique<ScopedTestRoomManager>();
 
@@ -288,7 +287,7 @@ TEST_F(ProgressStorageTest, FirstEntryCreatesInitialProgressRowsThenLoadsThem)
     const auto& state = conn.executedParams[1];
     EXPECT_EQ(get<int64>(state.at(0)), CHARACTER_ID);
     EXPECT_EQ(get<int64>(state.at(1)), 0) << "누적 경험치는 0에서 시작한다";
-    EXPECT_EQ(get<int64>(state.at(2)), FIELD_MAP_ID) << "초기 진행 표의 시작 맵";
+    EXPECT_EQ(get<int64>(state.at(2)), FIELD_MAP_ID) << "초기 진행 설정의 시작 맵";
     EXPECT_DOUBLE_EQ(get<double>(state.at(3)), START_X);
     EXPECT_DOUBLE_EQ(get<double>(state.at(4)), 40.0);
     EXPECT_DOUBLE_EQ(get<double>(state.at(5)), 5.0);

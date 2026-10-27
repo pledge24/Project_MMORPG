@@ -15,6 +15,9 @@ struct InventorySection
  */
 namespace InventorySections
 {
+    /** 구역마다의 칸 수. 클라이언트 UI가 구역마다 이 칸 수를 고정으로 그리므로 바꾸면 인벤토리 위젯도 함께 고친다. */
+    inline constexpr int32 SLOT_COUNT = 32;
+
     /** 구역 셋. 저장과 응답의 구역 순서도 이 순서다. */
     inline constexpr InventorySection ALL[] = {
         { ContainerType::INVENTORY_GEAR, Protocol::ITEM_TYPE_GEAR },

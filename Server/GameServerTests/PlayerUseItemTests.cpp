@@ -13,7 +13,7 @@
     요청의 uid가 칸의 아이템과 다르면 쓰지 않는다.
     HP나 MP가 가득 차 있어도 소비한다. 재사용 대기는 템플릿마다 따로 돌고 서버가 판정한다.
 
-    픽스처 결합도: 아이템 템플릿과 인벤토리 구역 표를 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
+    픽스처 결합도: 아이템 템플릿을 Gamedata::Install로 주입하고 Player를 세션 없이 EntityFactory로만 만든다.
     시각은 ProcessUseItem의 인자로 넘긴다.
 ---------------------------------------------------------------*/
 
@@ -48,7 +48,6 @@ protected:
         AddPotion(tables, MIX_POTION_TEMPLATE_ID, 0.4f, 0.4f);
 
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
-        tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(tables);
 
         player = EntityFactory::Create<Player>(PlayerSpawnParams());
