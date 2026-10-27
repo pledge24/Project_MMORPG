@@ -125,10 +125,11 @@
 `DT_ItemAssets`와 `DT_MonsterAssets`에 에디터로 넣는다. 두 테이블은 JSON에서 임포트하지 않으며,
 행 이름이 `TemplateId`다. 근거는 `docs/adr/0009-keep-asset-references-out-of-design-data.md`에 있다.
 
-**새 워크북은 Claude가 `openpyxl`로 만든다. 기존 워크북은 사람이 엑셀에서 고친다.** Claude가 기존 워크북을 고쳐야 하면
-고칠 내용을 사람에게 넘긴다. 변환기는 PyInstaller exe라서 `openpyxl` 없이 돈다. `openpyxl`은 Claude가 엑셀 파일을 만들거나
-읽을 때만 설치한다.
-— Claude가 만든 워크북을 사람이 엑셀에서 열어 저장했을 때 형식이 깨지면 이 결정을 다시 본다.
+**Claude는 워크북을 `openpyxl`로 만들고 고친다. 기존 워크북을 고칠 때도 사람에게 넘기지 않는다.** 2026년 10월 27일
+사용자가 워크북 작업 전체를 사람의 개입 없이 하도록 허용했다. 변환기는 PyInstaller exe라서 `openpyxl` 없이 돈다.
+`openpyxl`은 Claude가 엑셀 파일을 만들거나 읽고 고칠 때만 설치한다.
+— `openpyxl`은 저장할 때 이미지와 차트를 버린다. 워크북에는 값과 서식만 둔다.
+— Claude가 고친 워크북을 사람이 엑셀에서 열어 저장했을 때 형식이 깨지면 이 결정을 다시 본다.
 
 ### 재생성
 
