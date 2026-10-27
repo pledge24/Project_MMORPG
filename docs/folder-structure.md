@@ -636,12 +636,12 @@ SQL 스크립트는 그 DB를 소유한 티어 안에 둔다. `GameDB`는 게임
 | DataBuilder 원본 | `DesignData/` | 표 이름 그대로의 워크북(`Currency.xlsx`). 설정 시트는 `Config.xlsx`에 둔다 |
 | 옛 변환기 원본 | `DesignData/` | `Original_<표>.xlsx`. 옮긴 표의 워크북은 지운다 |
 | DataBuilder | `Tools/DataBuilder/` | 래퍼 `Invoke-DataBuilder.ps1`, 설정 `databuilder.toml`, 패키지 `databuilder/`, 테스트 `tests/` |
-| DataBuilder 산출물 | 서버 모듈의 `Data/Generated/` | 게임 모듈은 `Server/GameServer/Game/Data/Generated/`다. 폴더 이름은 `Generated`로 고정이다 |
+| DataBuilder 산출물 | 서버 모듈의 `Data/Generated/` | 게임 모듈은 `Server/GameServer/Game/Data/Generated/`, 로비 모듈은 `Server/GameServer/Lobby/Data/Generated/`다. 폴더 이름은 `Generated`로 고정이다 |
 | 옛 변환기 산출물 | 서버 모듈의 `Data/Json/`, 클라이언트의 `Content/P1/Data/DataTables/` | `S_<표>.json`, `C_<표>.json` |
 
 **산출물 폴더는 DataBuilder가 소유한다.** 실행할 때마다 비우고 다시 쓰므로 그 폴더에 손으로 쓴 파일을 두면 지워진다.
 서버 모듈(로비, 게임)마다 산출물 폴더가 하나이고, 어느 모듈이 어느 표를 읽는지는 `Tools/DataBuilder/databuilder.toml`이 정한다.
-로비 모듈의 산출물 폴더는 로비가 읽는 표를 DataBuilder로 옮길 때 로비 모듈 폴더 아래의 `Lobby/Data/Generated/`로 만든다.
+로비 모듈의 산출물 폴더는 2026년 10월 27일(#317)에 로비 설정을 DataBuilder로 옮기면서 만들었다.
 
 ---
 

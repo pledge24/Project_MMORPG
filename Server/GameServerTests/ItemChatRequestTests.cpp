@@ -21,7 +21,7 @@
 
     픽스처 결합도: 맵 표의 두 행으로 시작하지 않은 룸 둘을 ScopedTestRoomManager에 만든다. 요청한 플레이어와
     지켜보는 플레이어를 한 룸에, 다른 플레이어 하나를 다른 룸에 RecordingSession으로 묶어 넣는다.
-    칼 하나와 1레벨 전사 레벨 표, 인벤토리 구역 표를 Gamedata::Install로 주입한다.
+    칼 하나와 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -40,7 +40,6 @@ protected:
         GamedataTables tables;
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
-        tables.inventorySlotCounts = MakeInventorySections();
         TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f));
         TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(OTHER_ROOM_ID, 0, 20000.f, 0.f, 5000.f));
         Gamedata::Install(std::move(tables));

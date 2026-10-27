@@ -5,19 +5,13 @@
 
 namespace
 {
-    /**
-     * 작업 디렉터리(프로젝트 폴더) 기준 상대 경로다.
-     * GenJsonFile.bat이 Json을 옮기는 곳과 다르면 부팅 때 기획표를 찾지 못한다.
-     */
-    constexpr string_view GAMEDATA_DIR = "Game/Data/Json/";
-
     /** DataBuilder의 산출물 폴더. 작업 디렉터리 기준이고, databuilder.toml의 game 모듈 폴더와 같아야 한다. */
     constexpr string_view GENERATED_DIR = "Game/Data/Generated/";
 
     /** 파일을 열지 못하거나 Json 문법이 틀리면 사유를 돌려준다. */
-    optional<string> ReadDocument(string_view dir, string_view fileName, OUT Json& document)
+    optional<string> ReadDocument(string_view fileName, OUT Json& document)
     {
-        ifstream file(string(dir) + string(fileName));
+        ifstream file(string(GENERATED_DIR) + string(fileName));
         if (file.is_open() == false)
             return format("{}: 파일을 열지 못했다", fileName);
 
@@ -41,33 +35,23 @@ bool Gamedata::LoadAllGamedata()
     // TODO: 퀘스트를 만들 때 퀘스트 표(S_Quest.json)도 템플릿과 함께 불러온다.
     GamedataDocuments documents;
 
-    /** 옛 변환기의 표와 DataBuilder의 표는 폴더가 다르다. */
-    struct DocumentFile
-    {
-        string_view dir;
-        string_view fileName;
-        Json* document;
+    const pair<string_view, Json*> files[] = {
+        { DesignData::CURRENCY_FILE, &documents.currencies },
+        { DesignData::ITEM_FILE, &documents.items },
+        { DesignData::ITEM_EQUIP_STAT_FILE, &documents.itemEquipStats },
+        { DesignData::ITEM_CONSUME_EFFECT_FILE, &documents.itemConsumeEffects },
+        { DesignData::LEVEL_FILE, &documents.levels },
+        { DesignData::CLASS_LEVEL_STAT_FILE, &documents.classLevelStats },
+        { DesignData::MONSTER_FILE, &documents.monsters },
+        { DesignData::DROP_GROUP_FILE, &documents.dropGroups },
+        { DesignData::MAP_FILE, &documents.maps },
+        { DesignData::AREA_FILE, &documents.areas },
+        { DesignData::PROGRESS_FILE, &documents.initialProgress },
     };
 
-    const DocumentFile files[] = {
-        { GAMEDATA_DIR, GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
-        { GAMEDATA_DIR, GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
-        { GAMEDATA_DIR, GamedataFile::QUICK_SLOTS, &documents.quickSlots },
-        { GENERATED_DIR, DesignData::CURRENCY_FILE, &documents.currencies },
-        { GENERATED_DIR, DesignData::ITEM_FILE, &documents.items },
-        { GENERATED_DIR, DesignData::ITEM_EQUIP_STAT_FILE, &documents.itemEquipStats },
-        { GENERATED_DIR, DesignData::ITEM_CONSUME_EFFECT_FILE, &documents.itemConsumeEffects },
-        { GENERATED_DIR, DesignData::LEVEL_FILE, &documents.levels },
-        { GENERATED_DIR, DesignData::CLASS_LEVEL_STAT_FILE, &documents.classLevelStats },
-        { GENERATED_DIR, DesignData::MONSTER_FILE, &documents.monsters },
-        { GENERATED_DIR, DesignData::DROP_GROUP_FILE, &documents.dropGroups },
-        { GENERATED_DIR, DesignData::MAP_FILE, &documents.maps },
-        { GENERATED_DIR, DesignData::AREA_FILE, &documents.areas },
-    };
-
-    for (const DocumentFile& file : files)
+    for (const auto& [fileName, document] : files)
     {
-        if (optional<string> error = ReadDocument(file.dir, file.fileName, OUT *file.document))
+        if (optional<string> error = ReadDocument(fileName, OUT *document))
         {
             GLogger->Error("기획 데이터를 불러오지 못했다. {}", error.value());
             return false;
@@ -77,7 +61,7 @@ bool Gamedata::LoadAllGamedata()
     // 어느 원본으로 만든 데이터를 읽었는지 로그로 남긴다. 원본 해시라서 같은 원본이면 같은 값이다.
     Json versionDocument;
     string dataVersion;
-    optional<string> versionError = ReadDocument(GENERATED_DIR, DesignData::VERSION_FILE, OUT versionDocument);
+    optional<string> versionError = ReadDocument(DesignData::VERSION_FILE, OUT versionDocument);
     if (versionError.has_value() == false)
         versionError = DesignData::ParseDataVersion(versionDocument, OUT dataVersion);
     if (versionError.has_value())
@@ -151,10 +135,4 @@ const DesignData::ClassLevelStatRow* Gamedata::FindClassLevelStat(int32 classId,
 {
     auto it = s_tables.classLevelStats.find({ static_cast<Protocol::CharacterClass>(classId), level });
     return it == s_tables.classLevelStats.end() ? nullptr : &it->second;
-}
-
-int32 Gamedata::GetInventorySlotCount(Protocol::ItemType itemType)
-{
-    auto it = s_tables.inventorySlotCounts.find(itemType);
-    return it == s_tables.inventorySlotCounts.end() ? 0 : it->second;
 }

@@ -87,7 +87,7 @@ protected:
     {
         GDBManager->Clear();
         Gamedata::Install(GamedataTables());
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
     }
 
     /** 로비 접속을 마친 세션으로 만든다. 계정 등록은 로비 접속 잡이 하는 것과 같이 세션 관리자로 한다. */
@@ -281,9 +281,9 @@ TEST_F(PacketHandlerTest, LobbyRequestsInGameAreDropped)
 // 생성할 수 없는 직업은 DB 큐로 넘기지 않고 결과 값으로 곧바로 거절한다. 캐릭터 ID도 발급하지 않는다.
 TEST_F(PacketHandlerTest, UncreatableClassIsRejectedWithoutDBJob)
 {
-    LobbyTables lobbyTables;
-    lobbyTables.creatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
-    LobbyData::Install(std::move(lobbyTables));
+    LobbyDesignData::LobbyConfig lobbyConfig;
+    lobbyConfig.CreatableClasses = { Protocol::CHARACTER_CLASS_WARRIOR };
+    LobbyData::Install(std::move(lobbyConfig));
     ConnectLobby();
 
     Protocol::C_CREATE_CHARACTER createPkt;

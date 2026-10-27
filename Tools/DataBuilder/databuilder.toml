@@ -5,8 +5,15 @@ source_dir = "DesignData"
 proto_dir = "Protocol/Schema"
 
 # 서버 모듈마다 산출물 폴더가 하나다. DataBuilder가 실행마다 비우고 다시 쓴다.
+# 모듈마다 생성되는 C++ 네임스페이스가 다르다. 기동할 때의 대조가 두 모듈의 헤더를 함께 include한다.
 [modules.game]
 server_dir = "Server/GameServer/Game/Data/Generated"
+namespace = "DesignData"
+
+# 로비와 게임은 서로의 기획 데이터를 읽지 않는다.
+[modules.lobby]
+server_dir = "Server/GameServer/Lobby/Data/Generated"
+namespace = "LobbyDesignData"
 
 # 표. 워크북 하나가 표 하나다.
 [tables.Currency]
@@ -64,6 +71,19 @@ modules = ["game"]
 workbook = "Portal.xlsx"
 modules = ["game"]
 nest = "Portals"
+
+# 값이 하나뿐인 설정. 설정 워크북의 시트 하나가 구조체 하나다.
+# 새 캐릭터가 첫 게임 입장에서 갖는 진행. 시작 맵은 맵 표를 참조한다.
+[settings.Progress]
+workbook = "Config.xlsx"
+sheet = "Progress"
+modules = ["game"]
+
+# 로비만 읽는 기본 슬롯 수와 생성할 수 있는 직업.
+[settings.Lobby]
+workbook = "Config.xlsx"
+sheet = "Lobby"
+modules = ["lobby"]
 
 # .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
 [enums.CurrencyType]

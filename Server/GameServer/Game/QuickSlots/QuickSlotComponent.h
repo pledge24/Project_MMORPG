@@ -11,7 +11,6 @@
 class QuickSlotComponent : public EntityComponent
 {
 public:
-    /** 퀵슬롯 개수는 기획 데이터에서 읽는다. */
     QuickSlotComponent(PlayerRef owner);
     virtual ~QuickSlotComponent();
 

@@ -49,7 +49,7 @@ def generate(config: Config) -> BuildResult:
     for module in config.modules.values():
         tables = [data.tables[name] for name, table in config.tables.items() if module.name in table.modules]
         settings = [data.settings[name] for name, setting in config.settings.items() if module.name in setting.modules]
-        files = {VERSION_FILE: version_json(result.version), HEADER_FILE: module_header(tables, settings, data)}
+        files = {VERSION_FILE: version_json(result.version), HEADER_FILE: module_header(module.namespace, tables, settings, data)}
         for table in tables:
             if not table.config.nest:  # 중첩한 표는 부모 표의 파일에 실린다.
                 files[f"{table.name}.json"] = table_json(table, data)

@@ -11,7 +11,7 @@
     로그인은 GameDB의 계정 행을 만들거나 마지막 로그인 시각을 갱신하고, 그 행의 캐릭터 슬롯 수를
     클라이언트에 알린다. 슬롯 수의 원천은 이 행이다. 새 행의 슬롯 수만 로비 기획 데이터의 기본값을 쓴다.
 
-    픽스처 결합도: FakeDBConnection과 LobbyData::Install로 넣은 로비 표를 쓴다.
+    픽스처 결합도: FakeDBConnection과 LobbyData::Install로 넣은 로비 설정을 쓴다.
     행을 만드는지 갱신하는지는 실제 DB 테스트가 본다.
 ---------------------------------------------------------------*/
 
@@ -26,14 +26,14 @@ class AccountDAOTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LobbyTables tables;
-        tables.defaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
-        LobbyData::Install(std::move(tables));
+        LobbyDesignData::LobbyConfig config;
+        config.DefaultCharacterSlotCount = DEFAULT_SLOT_COUNT;
+        LobbyData::Install(std::move(config));
     }
 
     void TearDown() override
     {
-        LobbyData::Install(LobbyTables());
+        LobbyData::Install(LobbyDesignData::LobbyConfig());
     }
 
     FakeDBConnection conn;
@@ -47,7 +47,7 @@ TEST_F(AccountDAOTest, BindsAccountAndDefaultSlotCount)
 
     ASSERT_EQ(conn.executedParams.size(), 1u);
     EXPECT_EQ(get<int64>(conn.executedParams[0].at(0)), ACCOUNT_ID) << "int32로 바인딩하면 계정 번호가 잘린다";
-    EXPECT_EQ(get<int64>(conn.executedParams[0].at(1)), DEFAULT_SLOT_COUNT) << "새 계정 행의 슬롯 수는 로비 표의 기본값이다";
+    EXPECT_EQ(get<int64>(conn.executedParams[0].at(1)), DEFAULT_SLOT_COUNT) << "새 계정 행의 슬롯 수는 로비 설정의 기본값이다";
 }
 
 TEST_F(AccountDAOTest, ReturnsSlotCountOfAccountRow)

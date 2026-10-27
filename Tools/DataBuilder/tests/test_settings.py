@@ -27,11 +27,11 @@ class SettingTest(DesignDataCase):
 
     def test_two_sheets_of_one_workbook_are_two_settings(self):
         self.add_setting("Progress", setting_sheet(["StartGold", "int64", "server", 1, None]))
-        self.add_setting("Lobby", setting_sheet(["SlotCount", "int32", "server", 3, None]))
+        self.add_setting("Account", setting_sheet(["SlotCount", "int32", "server", 3, None]))
 
         result = self.build_ok()
         self.assertIn("Progress.json", result.outputs[self.out_dir])
-        self.assertIn("Lobby.json", result.outputs[self.out_dir])
+        self.assertIn("Account.json", result.outputs[self.out_dir])
 
     def test_wrong_header_is_rejected(self):
         self.add_setting("Progress", [["Name", "Type", "Target", "Value", "Description"], ["StartGold", "int64", "server", 1, None]])
@@ -39,8 +39,8 @@ class SettingTest(DesignDataCase):
 
     def test_missing_sheet_is_rejected(self):
         self.add_setting("Progress", setting_sheet(["StartGold", "int64", "server", 1, None]))
-        self.settings["Lobby"] = ("Config.xlsx", "Lobby", ["game"])
-        self.assert_error("Config.xlsx", "시트 'Lobby'가 없다")
+        self.settings["Account"] = ("Config.xlsx", "Account", ["game"])
+        self.assert_error("Config.xlsx", "시트 'Account'가 없다")
 
     def test_field_errors_name_the_row(self):
         self.add_setting("Progress", setting_sheet(

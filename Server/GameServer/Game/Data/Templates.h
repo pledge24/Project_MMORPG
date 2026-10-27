@@ -10,25 +10,6 @@
     설치한 뒤에는 바뀌지 않으므로 여러 스레드가 락 없이 함께 읽는다.
 ---------------------------------------------------------------*/
 
-/** 기획표의 좌표. */
-struct TemplatePos
-{
-    float x = 0.f;
-    float y = 0.f;
-    float z = 0.f;
-};
-
-/** 초기 진행 표(S_Initial_Progress.json)의 유일한 행. 새 캐릭터가 첫 게임 입장에서 갖는 값이다. */
-struct InitialProgressTemplate
-{
-    /** 시작 맵. 지역 번호가 아니라 맵 표의 맵 번호다. */
-    int32 startMapId = 0;
-    TemplatePos startPos;
-    float startYaw = 0.f;
-    /** 0 이상이다. */
-    int64 startGold = 0;
-};
-
 /** Gamedata에 한 번에 설치하는 기획 데이터 표 전체. */
 struct GamedataTables
 {
@@ -61,9 +42,6 @@ struct GamedataTables
     DesignData::CurrencyTable currencies;
     /** 재화 종류가 GOLD인 재화. DataBuilder가 하나뿐임을 검사한다. */
     int32 goldCurrencyId = 0;
-    InitialProgressTemplate initialProgress;
-    /** 아이템 종류(Protocol::ItemType) → 인벤토리에서 그 종류 구역의 칸 수. NONE을 뺀 모든 종류가 있다. */
-    unordered_map<int32, int32> inventorySlotCounts;
-    /** 플레이어 한 명의 퀵슬롯 개수. 1 이상 256 이하다. */
-    int32 quickSlotCount = 0;
+    /** 새 캐릭터가 첫 게임 입장에서 갖는 값. 시작 맵은 맵 표에 있고 시작 골드는 0 이상이다(DataBuilder가 검사한다). */
+    DesignData::ProgressConfig initialProgress;
 };

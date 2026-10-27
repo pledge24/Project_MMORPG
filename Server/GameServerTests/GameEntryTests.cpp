@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
+#include "Game/Items/InventorySections.h"
 #include "Network/GameEntry.h"
 #include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
@@ -19,7 +20,7 @@
     세션에 플레이어를 넣어 두고 DB가 그 플레이어에 직접 채웠다. 그래서 불러오기나 검증이 실패해도
     절반만 채운 플레이어가 세션에 남았다.
 
-    픽스처 결합도: 아이템 템플릿, 2레벨짜리 전사 레벨 표, 구역마다 칸 수가 다른 인벤토리 구역 표를
+    픽스처 결합도: 아이템 템플릿과 2레벨짜리 전사 레벨 표를
     Gamedata::Install로 주입하고, 소켓 없는 GameSession을 만든다. DB는 거치지 않고 DAO가 채울 진행 사본을
     손으로 만들거나, DB 행을 DAO와 같은 변환(ItemRows)으로 붙여 만든다.
 ---------------------------------------------------------------*/
@@ -36,9 +37,6 @@ namespace
     /** 레벨 2의 물리 공격력. 레벨 1과 달라야 다시 계산한 레벨의 공격력이 쓰이는지 드러난다. */
     constexpr int32 LEVEL2_PHYSICAL_ATTACK = 13;
     constexpr int32 SWORD_ATTACK = 15;
-    constexpr int32 GEAR_SLOT_COUNT = 32;
-    constexpr int32 CONSUMABLE_SLOT_COUNT = 24;
-    constexpr int32 MISC_SLOT_COUNT = 16;
     /** 레벨 1 → 2의 요구치. 레벨 2가 최대 레벨이라 누적 경험치는 이 값을 넘지 않는다. */
     constexpr int64 LEVEL1_EXP_REQUIREMENT = 50;
     constexpr int32 ENTER_ROOM_ID = 10;
@@ -90,11 +88,6 @@ protected:
         level2.MaxHp = MAX_HP;
         level2.MaxMp = MAX_MP;
         level2.PhysicalAttack = LEVEL2_PHYSICAL_ATTACK;
-        tables.inventorySlotCounts = {
-            { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
-            { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },
-            { Protocol::ITEM_TYPE_MISCELLANEOUS, MISC_SLOT_COUNT },
-        };
         Gamedata::Install(std::move(tables));
 
         session = make_shared<GameSession>();
@@ -170,15 +163,14 @@ TEST_F(GameEntryTest, LoadedSlotsGoToTheirSlotIds)
     EXPECT_EQ(sword->templateId, SWORD_TEMPLATE_ID);
 }
 
-TEST_F(GameEntryTest, InventorySectionsHaveSlotCountsOfSectionTable)
+TEST_F(GameEntryTest, InventorySectionsHaveFixedSlotCount)
 {
     PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, MakeValidProgress(), enterRoom, enterPos);
     ASSERT_NE(player, nullptr);
 
     const InventoryComponent& inventory = player->GetInventory();
-    EXPECT_EQ(inventory.FindSection(ContainerType::INVENTORY_GEAR)->GetSlotIndices().size(), size_t(GEAR_SLOT_COUNT));
-    EXPECT_EQ(inventory.FindSection(ContainerType::INVENTORY_CONSUMABLE)->GetSlotIndices().size(), size_t(CONSUMABLE_SLOT_COUNT));
-    EXPECT_EQ(inventory.FindSection(ContainerType::INVENTORY_MISC)->GetSlotIndices().size(), size_t(MISC_SLOT_COUNT));
+    for (const InventorySection& section : InventorySections::ALL)
+        EXPECT_EQ(inventory.FindSection(section.container)->GetSlotIndices().size(), size_t(InventorySections::SLOT_COUNT));
     EXPECT_EQ(inventory.FindSection(ContainerType::EQUIPPED), nullptr) << "착용 장비는 인벤토리의 구역이 아니다";
 }
 
@@ -340,20 +332,7 @@ TEST_F(GameEntryTest, ItemInOtherKindOfSectionIsRejected)
 TEST_F(GameEntryTest, SlotIndexBeyondSectionSlotCountIsRejected)
 {
     PlayerProgress progress = MakeValidProgress();
-    ASSERT_NO_FATAL_FAILURE(AddRow(progress, MakeInventoryRow(ItemRowType::CONSUMABLE, CONSUMABLE_SLOT_COUNT, POTION_TEMPLATE_ID, 501)));
+    ASSERT_NO_FATAL_FAILURE(AddRow(progress, MakeInventoryRow(ItemRowType::CONSUMABLE, InventorySections::SLOT_COUNT, POTION_TEMPLATE_ID, 501)));
 
     EXPECT_EQ(GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos), nullptr) << "범위 밖 번호는 Release 빌드에서 배열 밖에 쓴다";
-}
-
-TEST_F(GameEntryTest, SlotIndexWithinItsOwnSectionEnters)
-{
-    PlayerProgress progress = MakeValidProgress();
-    ASSERT_NO_FATAL_FAILURE(AddRow(progress, MakeInventoryRow(ItemRowType::GEAR, CONSUMABLE_SLOT_COUNT, SWORD_TEMPLATE_ID, 501)));
-
-    PlayerRef player = GameEntry::SpawnPlayer(session, USER_ID, progress, enterRoom, enterPos);
-
-    ASSERT_NE(player, nullptr) << "칸 수는 구역마다 따로다. 소모품 구역의 칸 수를 넘는 번호도 장비 구역에서는 들어간다";
-    const ItemInstance* item = player->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, CONSUMABLE_SLOT_COUNT });
-    ASSERT_NE(item, nullptr);
-    EXPECT_EQ(item->itemUid, 501);
 }
