@@ -2,6 +2,8 @@
 // 원본은 DesignData/의 워크북, 설정은 Tools/DataBuilder/databuilder.toml이다.
 // 다시 만들기: pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 #pragma once
+#include "Protocol/Common.pb.h"
+#include "Protocol/Item.pb.h"
 
 /** DataBuilder가 생성한 기획 데이터의 타입과 역직렬화. */
 namespace DesignData
@@ -9,8 +11,27 @@ namespace DesignData
     /** 원본 해시로 만든 데이터 버전을 담은 파일. */
     constexpr string_view VERSION_FILE = "DataVersion.json";
     constexpr string_view CURRENCY_FILE = "Currency.json";
+    constexpr string_view ITEM_FILE = "Item.json";
+    constexpr string_view ITEM_EQUIP_STAT_FILE = "ItemEquipStat.json";
+    constexpr string_view ITEM_CONSUME_EFFECT_FILE = "ItemConsumeEffect.json";
 
     //~ 열거형
+
+    /** 셀에 적는 값 이름(WARRIOR, MAGE)을 Protocol::CharacterClass로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT Protocol::CharacterClass& value)
+    {
+        static const unordered_map<string_view, Protocol::CharacterClass> VALUES = {
+            { "WARRIOR", Protocol::CHARACTER_CLASS_WARRIOR },
+            { "MAGE", Protocol::CHARACTER_CLASS_MAGE },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
 
     enum class CurrencyType : int32
     {
@@ -22,6 +43,43 @@ namespace DesignData
     {
         static const unordered_map<string_view, CurrencyType> VALUES = {
             { "GOLD", CurrencyType::GOLD },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
+
+    /** 셀에 적는 값 이름(HELMET, CHEST, LEGS, ARMS, BOOTS, WEAPON)을 Protocol::GearPart로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT Protocol::GearPart& value)
+    {
+        static const unordered_map<string_view, Protocol::GearPart> VALUES = {
+            { "HELMET", Protocol::GEAR_PART_HELMET },
+            { "CHEST", Protocol::GEAR_PART_CHEST },
+            { "LEGS", Protocol::GEAR_PART_LEGS },
+            { "ARMS", Protocol::GEAR_PART_ARMS },
+            { "BOOTS", Protocol::GEAR_PART_BOOTS },
+            { "WEAPON", Protocol::GEAR_PART_WEAPON },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
+
+    /** 셀에 적는 값 이름(GEAR, CONSUMABLE, MISCELLANEOUS)을 Protocol::ItemType로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT Protocol::ItemType& value)
+    {
+        static const unordered_map<string_view, Protocol::ItemType> VALUES = {
+            { "GEAR", Protocol::ITEM_TYPE_GEAR },
+            { "CONSUMABLE", Protocol::ITEM_TYPE_CONSUMABLE },
+            { "MISCELLANEOUS", Protocol::ITEM_TYPE_MISCELLANEOUS },
         };
 
         auto it = VALUES.find(name);
@@ -198,6 +256,120 @@ namespace DesignData
             row.Type = Detail::Read<CurrencyType>(object, "Type");
 
             auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Item 표(Item.xlsx)의 한 행. */
+    struct ItemRow
+    {
+        /** 아이템 번호. 장비 1000번대, 소모품 2000번대, 기타 3000번대다 */
+        int32 Id = 0;
+        /** 아이템 종류. 장비는 ItemEquipStat에, 소모품은 ItemConsumeEffect에 행이 있다 */
+        Protocol::ItemType Type = {};
+        /** 착용할 수 있는 최소 레벨 */
+        int32 LevelRequirement = 0;
+        /** 착용할 수 있는 직업. 비어 있으면 모든 직업이다 */
+        vector<Protocol::CharacterClass> AllowedClasses;
+        /** 상점 구매 가격(골드) */
+        int64 BuyPrice = 0;
+        /** 상점 판매 가격(골드) */
+        int64 SellPrice = 0;
+        /** 상점에 팔 수 있는지 */
+        bool Sellable = false;
+        /** 한 칸에 쌓을 수 있는 최대 개수. 1 이상이다 */
+        int32 MaxStack = 0;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using ItemTable = map<int32, ItemRow>;
+
+    /** Item.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseItem(const Json& document, OUT ItemTable& table)
+    {
+        return Detail::ParseTable(ITEM_FILE, document, OUT table, [](const Json& object)
+        {
+            ItemRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.Type = Detail::Read<Protocol::ItemType>(object, "Type");
+            row.LevelRequirement = Detail::Read<int32>(object, "LevelRequirement");
+            row.AllowedClasses = Detail::Read<vector<Protocol::CharacterClass>>(object, "AllowedClasses");
+            row.BuyPrice = Detail::Read<int64>(object, "BuyPrice");
+            row.SellPrice = Detail::Read<int64>(object, "SellPrice");
+            row.Sellable = Detail::Read<bool>(object, "Sellable");
+            row.MaxStack = Detail::Read<int32>(object, "MaxStack");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** ItemEquipStat 표(ItemEquipStat.xlsx)의 한 행. */
+    struct ItemEquipStatRow
+    {
+        /** 장비 아이템 번호 */
+        int32 ItemId = 0;
+        /** 착용 부위 */
+        Protocol::GearPart Part = {};
+        /** 착용하면 오르는 최대 HP */
+        int32 Hp = 0;
+        /** 착용하면 오르는 최대 MP */
+        int32 Mp = 0;
+        /** 착용하면 오르는 물리 공격력 */
+        int32 PhysicalAttack = 0;
+        /** 착용하면 오르는 마법 공격력 */
+        int32 MagicalAttack = 0;
+    };
+
+    /** ItemId → 행. 키 순서로 돈다. */
+    using ItemEquipStatTable = map<int32, ItemEquipStatRow>;
+
+    /** ItemEquipStat.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseItemEquipStat(const Json& document, OUT ItemEquipStatTable& table)
+    {
+        return Detail::ParseTable(ITEM_EQUIP_STAT_FILE, document, OUT table, [](const Json& object)
+        {
+            ItemEquipStatRow row;
+            row.ItemId = Detail::Read<int32>(object, "ItemId");
+            row.Part = Detail::Read<Protocol::GearPart>(object, "Part");
+            row.Hp = Detail::Read<int32>(object, "Hp");
+            row.Mp = Detail::Read<int32>(object, "Mp");
+            row.PhysicalAttack = Detail::Read<int32>(object, "PhysicalAttack");
+            row.MagicalAttack = Detail::Read<int32>(object, "MagicalAttack");
+
+            auto key = row.ItemId;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** ItemConsumeEffect 표(ItemConsumeEffect.xlsx)의 한 행. */
+    struct ItemConsumeEffectRow
+    {
+        /** 소모품 아이템 번호 */
+        int32 ItemId = 0;
+        /** 회복하는 HP의 비율. 최대 HP 기준이다 */
+        float HpRestoreRatio = 0.f;
+        /** 회복하는 MP의 비율. 최대 MP 기준이다 */
+        float MpRestoreRatio = 0.f;
+        /** 같은 아이템을 다시 쓰기까지의 대기(ms). 0이면 대기가 없다 */
+        int32 CooldownMs = 0;
+    };
+
+    /** ItemId → 행. 키 순서로 돈다. */
+    using ItemConsumeEffectTable = map<int32, ItemConsumeEffectRow>;
+
+    /** ItemConsumeEffect.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseItemConsumeEffect(const Json& document, OUT ItemConsumeEffectTable& table)
+    {
+        return Detail::ParseTable(ITEM_CONSUME_EFFECT_FILE, document, OUT table, [](const Json& object)
+        {
+            ItemConsumeEffectRow row;
+            row.ItemId = Detail::Read<int32>(object, "ItemId");
+            row.HpRestoreRatio = Detail::Read<float>(object, "HpRestoreRatio");
+            row.MpRestoreRatio = Detail::Read<float>(object, "MpRestoreRatio");
+            row.CooldownMs = Detail::Read<int32>(object, "CooldownMs");
+
+            auto key = row.ItemId;
             return pair{ std::move(key), std::move(row) };
         });
     }

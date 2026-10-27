@@ -7,6 +7,7 @@
 #include "Game/Inventory/InventoryComponent.h"
 #include "RecordingSession.h"
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -48,12 +49,6 @@ class RoomRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.sellable = true;
-
         LevelTemplate level1;
         level1.level = 1;
         level1.maxHp = PLAYER_MAX_HP;
@@ -65,7 +60,8 @@ protected:
         town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 0.f, 0.f };
 
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
+        tables.items[SWORD_TEMPLATE_ID].Sellable = true;
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;

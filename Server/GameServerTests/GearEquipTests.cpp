@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -35,38 +36,21 @@ class GearEquipTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.physicalAttack = 10;
-
-        ItemTemplate helmet;
-        helmet.templateId = HELMET_TEMPLATE_ID;
-        helmet.itemType = Protocol::ITEM_TYPE_GEAR;
-        helmet.gearType = Protocol::GEAR_PART_HELMET;
-        helmet.hp = HELMET_HP;
-        helmet.mp = HELMET_MP;
-
         LevelTemplate level1;
         level1.level = 1;
         level1.maxHp = BASE_MAX_HP;
         level1.maxMp = BASE_MAX_MP;
         level1.physicalAttack = BASE_PHYSICAL_ATTACK;
 
-        ItemTemplate highLevelSword = sword;
-        highLevelSword.templateId = HIGH_LEVEL_SWORD_TEMPLATE_ID;
-        highLevelSword.levelRequirement = 2;
-
-        ItemTemplate mageSword = sword;
-        mageSword.templateId = MAGE_SWORD_TEMPLATE_ID;
-        mageSword.classRequirement = Protocol::CHARACTER_CLASS_MAGE;
-
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
-        tables.items[HELMET_TEMPLATE_ID] = helmet;
-        tables.items[HIGH_LEVEL_SWORD_TEMPLATE_ID] = highLevelSword;
-        tables.items[MAGE_SWORD_TEMPLATE_ID] = mageSword;
+        for (int32 swordId : { SWORD_TEMPLATE_ID, HIGH_LEVEL_SWORD_TEMPLATE_ID, MAGE_SWORD_TEMPLATE_ID })
+            TestItemTables::AddGear(tables, swordId, Protocol::GEAR_PART_WEAPON).PhysicalAttack = 10;
+        tables.items[HIGH_LEVEL_SWORD_TEMPLATE_ID].LevelRequirement = 2;
+        tables.items[MAGE_SWORD_TEMPLATE_ID].AllowedClasses = { Protocol::CHARACTER_CLASS_MAGE };
+
+        DesignData::ItemEquipStatRow& helmet = TestItemTables::AddGear(tables, HELMET_TEMPLATE_ID, Protocol::GEAR_PART_HELMET);
+        helmet.Hp = HELMET_HP;
+        helmet.Mp = HELMET_MP;
         LevelTemplate level2 = level1;
         level2.level = 2;
 

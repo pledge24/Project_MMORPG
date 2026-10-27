@@ -28,7 +28,9 @@ public:
     //~ 조회
 public:
     /** Find*는 없는 번호면 nullptr. */
-    static const ItemTemplate* FindItem(int32 templateId);
+    static const DesignData::ItemRow* FindItem(int32 templateId);
+    static const DesignData::ItemEquipStatRow* FindItemEquipStat(int32 templateId);
+    static const DesignData::ItemConsumeEffectRow* FindItemConsumeEffect(int32 templateId);
     static const MonsterTemplate* FindMonster(int32 templateId);
     static const MapTemplate* FindMap(int32 templateId);
     static const ClassLevelTable* FindClassLevelTable(int32 classId);

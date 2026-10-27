@@ -35,24 +35,31 @@ namespace
         };
     }
 
+    /** DataBuilder가 생성하는 아이템 표의 행. */
     Json MakeSword()
     {
         return Json{
-            {"templateId", SWORD_ID}, {"itemName", "초보자의 검"}, {"itemType", "GEAR"}, {"itemSubtype", "sword"},
-            {"levelRequirement", 10}, {"classRequirement", "warrior"},
-            {"buyPrice", 100}, {"sellPrice", 10}, {"sellable", true}, {"stackable", false}, {"maxStack", 1},
-            {"cooldown", -1}, {"physicalAttack", 15}, {"magicalAttack", 0}, {"hp", 0}, {"mp", 0},
+            {"Id", SWORD_ID}, {"Type", "GEAR"}, {"LevelRequirement", 10}, {"AllowedClasses", Json::array({"WARRIOR"})},
+            {"BuyPrice", 100}, {"SellPrice", 10}, {"Sellable", true}, {"MaxStack", 1},
         };
     }
 
     Json MakePotion()
     {
         return Json{
-            {"templateId", POTION_ID}, {"itemName", "HP 포션"}, {"itemType", "CONSUMABLE"}, {"itemSubtype", "potion"},
-            {"levelRequirement", 0}, {"classRequirement", "all"},
-            {"buyPrice", 50}, {"sellPrice", 5}, {"sellable", true}, {"stackable", true}, {"maxStack", 99},
-            {"cooldown", 10}, {"hpRestore", 0.3}, {"mpRestore", 0},
+            {"Id", POTION_ID}, {"Type", "CONSUMABLE"}, {"LevelRequirement", 0}, {"AllowedClasses", Json::array()},
+            {"BuyPrice", 50}, {"SellPrice", 5}, {"Sellable", true}, {"MaxStack", 99},
         };
+    }
+
+    Json MakeSwordEquipStat()
+    {
+        return Json{{"ItemId", SWORD_ID}, {"Part", "WEAPON"}, {"Hp", 0}, {"Mp", 0}, {"PhysicalAttack", 15}, {"MagicalAttack", 0}};
+    }
+
+    Json MakePotionConsumeEffect()
+    {
+        return Json{{"ItemId", POTION_ID}, {"HpRestoreRatio", 0.3}, {"MpRestoreRatio", 0.0}, {"CooldownMs", 10000}};
     }
 
     Json MakeMonster()
@@ -128,6 +135,8 @@ namespace
         GamedataDocuments documents;
         documents.warriorLevels = Json::array({MakeLevelRow(1), MakeLevelRow(2), MakeLevelRow(3)});
         documents.items = Json::array({MakeSword(), MakePotion()});
+        documents.itemEquipStats = Json::array({MakeSwordEquipStat()});
+        documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
         documents.monsters = Json::array({MakeMonster()});
         documents.maps = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
@@ -169,24 +178,23 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     const optional<string> error = GamedataParser::Parse(MakeValidDocuments(), OUT tables);
     ASSERT_FALSE(error.has_value()) << error.value_or("");
 
-    const ItemTemplate& sword = tables.items.at(SWORD_ID);
-    EXPECT_EQ(sword.itemType, Protocol::ITEM_TYPE_GEAR);
-    ASSERT_TRUE(sword.gearType.has_value());
-    EXPECT_EQ(sword.gearType.value(), Protocol::GEAR_PART_WEAPON);
-    EXPECT_EQ(sword.physicalAttack, 15);
-    EXPECT_EQ(sword.cooldownMs, 0u) << "장비의 cooldown -1은 대기가 없다는 뜻이다";
-    EXPECT_EQ(sword.levelRequirement, 10);
-    ASSERT_TRUE(sword.classRequirement.has_value());
-    EXPECT_EQ(sword.classRequirement.value(), Protocol::CHARACTER_CLASS_WARRIOR);
+    const DesignData::ItemRow& sword = tables.items.at(SWORD_ID);
+    EXPECT_EQ(sword.Type, Protocol::ITEM_TYPE_GEAR);
+    EXPECT_EQ(sword.LevelRequirement, 10);
+    EXPECT_EQ(sword.AllowedClasses, vector<Protocol::CharacterClass>({Protocol::CHARACTER_CLASS_WARRIOR}));
+    const DesignData::ItemEquipStatRow& swordStat = tables.itemEquipStats.at(SWORD_ID);
+    EXPECT_EQ(swordStat.Part, Protocol::GEAR_PART_WEAPON);
+    EXPECT_EQ(swordStat.PhysicalAttack, 15);
+    EXPECT_FALSE(tables.itemConsumeEffects.contains(SWORD_ID));
 
-    const ItemTemplate& potion = tables.items.at(POTION_ID);
-    EXPECT_EQ(potion.itemType, Protocol::ITEM_TYPE_CONSUMABLE);
-    EXPECT_FALSE(potion.gearType.has_value());
-    EXPECT_EQ(potion.maxStack, 99);
-    EXPECT_EQ(potion.cooldownMs, 10000u);
-    EXPECT_DOUBLE_EQ(potion.hpRestoreRatio, 0.3);
-    EXPECT_EQ(potion.hp, 0) << "표에 없는 스탯은 0이다";
-    EXPECT_FALSE(potion.classRequirement.has_value()) << "\"all\"은 직업을 가리지 않는다";
+    const DesignData::ItemRow& potion = tables.items.at(POTION_ID);
+    EXPECT_EQ(potion.Type, Protocol::ITEM_TYPE_CONSUMABLE);
+    EXPECT_EQ(potion.MaxStack, 99);
+    EXPECT_TRUE(potion.AllowedClasses.empty()) << "빈 직업 목록은 직업을 가리지 않는다";
+    const DesignData::ItemConsumeEffectRow& potionEffect = tables.itemConsumeEffects.at(POTION_ID);
+    EXPECT_EQ(potionEffect.CooldownMs, 10000);
+    EXPECT_FLOAT_EQ(potionEffect.HpRestoreRatio, 0.3f);
+    EXPECT_FALSE(tables.itemEquipStats.contains(POTION_ID));
 
     const MonsterTemplate& monster = tables.monsters.at(MONSTER_ID);
     EXPECT_EQ(monster.maxHp, 200);
@@ -242,9 +250,9 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.items[1].erase("buyPrice");
+    documents.items[1].erase("BuyPrice");
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "2번째 행", "templateId 2000", "buyPrice"});
+    ExpectMentions(ErrorOf(documents), {DesignData::ITEM_FILE, "2번째 행", "BuyPrice"});
 }
 
 TEST(GamedataParserTest, WrongFieldTypeIsRejected)
@@ -263,54 +271,42 @@ TEST(GamedataParserTest, NestedFieldIsChecked)
     ExpectMentions(ErrorOf(documents), {GamedataFile::MONSTERS, "maxExp"});
 }
 
-TEST(GamedataParserTest, UnknownItemTypeIsRejected)
+// 아이템 표의 규칙(종류별 표의 짝, 번호 범위, 최대 개수)은 DataBuilder가 검사한다.
+// 서버는 생성된 역직렬화로 형식만 본다. 열거형은 셀에 적는 값 이름만 읽는다.
+TEST(GamedataParserTest, ItemTypeOtherThanValueNameIsRejected)
 {
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.items[0]["itemType"] = "WEAPON";
-
-    ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "1번째 행", "itemType", "WEAPON"});
-}
-
-// itemType에는 아이템 종류만 온다. 없앤 단계의 값(방어구·무기·소비)이나 종류가 아닌 값을 종류로 읽으면
-// 기획 원본이 다시 어긋나도 알아채지 못한다.
-TEST(GamedataParserTest, ItemTypeOtherThanKindIsRejected)
-{
-    for (const char* itemType : { "weapon", "consumption", "NONE", "gear", "" })
+    for (const char* itemType : { "WEAPON", "ITEM_TYPE_GEAR", "NONE", "gear", "" })
     {
         GamedataDocuments documents = MakeValidDocuments();
-        documents.items[1]["itemType"] = itemType;
+        documents.items[1]["Type"] = itemType;
 
         SCOPED_TRACE(itemType);
-        ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "itemType"});
+        ExpectMentions(ErrorOf(documents), {DesignData::ITEM_FILE, "2번째 행", "Type"});
     }
 }
 
-TEST(GamedataParserTest, GearWithUnknownSubtypeIsRejected)
+TEST(GamedataParserTest, UnknownGearPartIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.items[0]["itemSubtype"] = "shield";
+    documents.itemEquipStats[0]["Part"] = "SHIELD";
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "itemSubtype", "shield"});
+    ExpectMentions(ErrorOf(documents), {DesignData::ITEM_EQUIP_STAT_FILE, "1번째 행", "Part", "SHIELD"});
 }
 
-TEST(GamedataParserTest, UnknownClassRequirementIsRejected)
-{
-    for (const char* classRequirement : { "archer", "none", "" })
-    {
-        GamedataDocuments documents = MakeValidDocuments();
-        documents.items[0]["classRequirement"] = classRequirement;
-
-        SCOPED_TRACE(classRequirement);
-        ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "1번째 행", "classRequirement"});
-    }
-}
-
-TEST(GamedataParserTest, MaxStackBelowOneIsRejected)
+TEST(GamedataParserTest, UnknownAllowedClassIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.items[1]["maxStack"] = 0;
+    documents.items[0]["AllowedClasses"] = Json::array({"WARRIOR", "ARCHER"});
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "maxStack"});
+    ExpectMentions(ErrorOf(documents), {DesignData::ITEM_FILE, "1번째 행", "AllowedClasses", "ARCHER"});
+}
+
+TEST(GamedataParserTest, MissingConsumeEffectFieldIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.itemConsumeEffects[0].erase("CooldownMs");
+
+    ExpectMentions(ErrorOf(documents), {DesignData::ITEM_CONSUME_EFFECT_FILE, "1번째 행", "CooldownMs"});
 }
 
 TEST(GamedataParserTest, RewardMinAboveMaxIsRejected)
@@ -326,7 +322,7 @@ TEST(GamedataParserTest, DuplicateTemplateIdIsRejected)
     GamedataDocuments documents = MakeValidDocuments();
     documents.items.push_back(MakeSword());
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::ITEMS, "3번째 행", "중복"});
+    ExpectMentions(ErrorOf(documents), {DesignData::ITEM_FILE, "3번째 행", "키가 겹친다"});
 }
 
 TEST(GamedataParserTest, LevelRowsMustStartAtOneWithoutGaps)
@@ -502,8 +498,8 @@ TEST(GamedataParserTest, FailedLoadKeepsPreviousTables)
     ASSERT_NE(Gamedata::FindItem(SWORD_ID), nullptr);
 
     GamedataDocuments broken = MakeValidDocuments();
-    broken.items[0].erase("itemType");
-    broken.items[1]["templateId"] = 2999;
+    broken.items[0].erase("Type");
+    broken.items[1]["Id"] = 2999;
 
     EXPECT_TRUE(Gamedata::Load(broken).has_value());
     EXPECT_NE(Gamedata::FindItem(SWORD_ID), nullptr) << "실패한 불러오기가 이전 표를 지웠다";
@@ -521,14 +517,17 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
 
     GamedataDocuments documents;
     documents.warriorLevels = ReadJsonFile(dir / GamedataFile::WARRIOR_LEVELS);
-    documents.items = ReadJsonFile(dir / GamedataFile::ITEMS);
+    documents.items = ReadJsonFile(generatedDir / DesignData::ITEM_FILE);
+    documents.itemEquipStats = ReadJsonFile(generatedDir / DesignData::ITEM_EQUIP_STAT_FILE);
+    documents.itemConsumeEffects = ReadJsonFile(generatedDir / DesignData::ITEM_CONSUME_EFFECT_FILE);
     documents.maps = ReadJsonFile(dir / GamedataFile::MAPS);
     documents.monsters = ReadJsonFile(dir / GamedataFile::MONSTERS);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(dir / GamedataFile::INITIAL_PROGRESS);
     documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
     documents.quickSlots = ReadJsonFile(dir / GamedataFile::QUICK_SLOTS);
-    ASSERT_TRUE(documents.items.is_array()) << "기획표를 찾지 못했다: " << dir.string();
+    ASSERT_TRUE(documents.maps.is_array()) << "기획표를 찾지 못했다: " << dir.string();
+    ASSERT_TRUE(documents.items.is_array()) << "생성된 기획 데이터를 찾지 못했다: " << generatedDir.string();
 
     GamedataTables tables;
     const optional<string> error = GamedataParser::Parse(documents, OUT tables);
@@ -543,4 +542,11 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
         EXPECT_EQ(tables.inventorySlotCounts.at(itemType), 32) << "클라이언트 UI가 구역마다 32칸을 고정으로 쓴다";
     EXPECT_EQ(tables.quickSlotCount, 9) << "퀵슬롯 키는 1~9다";
     EXPECT_EQ(tables.goldCurrencyId, 1) << "DB의 CharacterCurrency 행이 골드를 재화 번호 1로 가리킨다";
+
+    // 아이템 표를 공통, 장비 능력치, 소모 효과 표로 나누면서 옮긴 값이다. DB의 아이템 행이 이 번호를 가리킨다.
+    ASSERT_TRUE(tables.itemEquipStats.contains(1005));
+    EXPECT_EQ(tables.itemEquipStats.at(1005).Part, Protocol::GEAR_PART_WEAPON);
+    EXPECT_EQ(tables.itemEquipStats.at(1005).PhysicalAttack, 10);
+    ASSERT_TRUE(tables.itemConsumeEffects.contains(2000));
+    EXPECT_EQ(tables.itemConsumeEffects.at(2000).CooldownMs, 10000);
 }

@@ -12,7 +12,7 @@ class EmitCppTest(DesignDataCase):
         return self.output("DesignData.h")
 
     def test_row_struct_uses_column_names_and_server_columns_only(self):
-        self.add_table("Item", sheet(
+        self.add_table("Thing", sheet(
             ["Id", "Name", "Type", "Icon", "Price"],
             ["key:int32", "string", "enum:ItemType", "string", "int64"],
             ["both", "both", "server", "client", "server"],
@@ -21,13 +21,13 @@ class EmitCppTest(DesignDataCase):
         ))
 
         header = self.header()
-        self.assertIn("    struct ItemRow\n    {\n        /** 번호 */\n        int32 Id = 0;\n", header)
+        self.assertIn("    struct ThingRow\n    {\n        /** 번호 */\n        int32 Id = 0;\n", header)
         self.assertIn("        string Name;\n", header)
         self.assertIn("        Protocol::ItemType Type = {};\n", header)
         self.assertIn("        int64 Price = 0;\n", header)
         self.assertNotIn("Icon", header)
-        self.assertIn("using ItemTable = map<int32, ItemRow>;", header)
-        self.assertIn('constexpr string_view ITEM_FILE = "Item.json";', header)
+        self.assertIn("using ThingTable = map<int32, ThingRow>;", header)
+        self.assertIn('constexpr string_view THING_FILE = "Thing.json";', header)
         self.assertIn('#include "Protocol/Common.pb.h"', header)
         self.assertIn('{ "GEAR", Protocol::ITEM_TYPE_GEAR },', header)
         self.assertNotIn("enum class ItemType", header, ".proto에 있는 열거형은 생성하지 않는다")
@@ -40,10 +40,10 @@ class EmitCppTest(DesignDataCase):
         self.assertNotIn("#include", header, "프로토콜 열거형을 쓰지 않으면 프로토콜 헤더도 include하지 않는다")
 
     def test_reference_list_optional_and_composite_key_types(self):
-        self.add_table("Item", sheet(["Id"], ["key:int32"], ["both"], [10]))
+        self.add_table("Thing", sheet(["Id"], ["key:int32"], ["both"], [10]))
         self.add_table("Stat", sheet(
             ["Class", "Level", "Rewards", "Bonus", "Classes"],
-            ["key:enum:CharacterClass", "key:int32", "ref[]:Item", "ref?:Item", "enum[]:CharacterClass"],
+            ["key:enum:CharacterClass", "key:int32", "ref[]:Thing", "ref?:Thing", "enum[]:CharacterClass"],
             ["both"] * 5,
             ["WARRIOR", 1, "10", None, "WARRIOR"],
         ))

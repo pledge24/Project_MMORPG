@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -30,11 +31,7 @@ namespace
 
     void SeedItem(int32 templateId, Protocol::ItemType itemType, int32 maxStack = 99)
     {
-        ItemTemplate item;
-        item.templateId = templateId;
-        item.itemType = itemType;
-        item.maxStack = maxStack;
-        seededTables.items[templateId] = item;
+        TestItemTables::AddItem(seededTables, templateId, itemType, maxStack);
         Gamedata::Install(seededTables);
     }
 

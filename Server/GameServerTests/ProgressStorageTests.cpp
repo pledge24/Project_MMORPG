@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include "FakeDBConnection.h"
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "RoomManagerTestAccess.h"
 #include "DB/CharacterStateDAO.h"
 #include "DB/DAOCommon.h"
@@ -122,24 +123,14 @@ protected:
         level2.level = 2;
         level2.expRequirement = 0;
 
-        ItemTemplate potion;
-        potion.templateId = POTION_TEMPLATE_ID;
-        potion.itemType = Protocol::ITEM_TYPE_CONSUMABLE;
-        potion.maxStack = 99;
-
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-
         GamedataTables tables;
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
         tables.maps[FIELD_ROOM_ID] = field;
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
-        tables.items[POTION_TEMPLATE_ID] = potion;
-        tables.items[SWORD_TEMPLATE_ID] = sword;
+        TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.inventorySlotCounts = MakeInventorySections();
         tables.quickSlotCount = QUICK_SLOT_COUNT;
         tables.initialProgress.startMapId = FIELD_MAP_ID;

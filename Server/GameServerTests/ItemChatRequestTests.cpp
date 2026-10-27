@@ -6,6 +6,7 @@
 #include "Network/ItemRequests.h"
 #include "Network/ChatRequests.h"
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "RecordingSession.h"
 #include "RoomManagerTestAccess.h"
 
@@ -38,14 +39,9 @@ protected:
         level1.level = 1;
         level1.maxHp = 100;
 
-        ItemTemplate sword;
-        sword.templateId = SWORD_TEMPLATE_ID;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-
         GamedataTables tables;
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
-        tables.items[SWORD_TEMPLATE_ID] = sword;
+        TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.inventorySlotCounts = MakeInventorySections();
         tables.maps[ROOM_ID] = MakeRoomTemplate(ROOM_ID, 0.f);
         tables.maps[OTHER_ROOM_ID] = MakeRoomTemplate(OTHER_ROOM_ID, 20000.f);

@@ -183,11 +183,11 @@ bool Player::ValidateLoadedStat()
 
 ItemOutcome<BuyItemResult> Player::ProcessBuyItem(int32 templateId, int32 count)
 {
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(templateId);
+    if (itemRow == nullptr)
         return ItemRejection{ Protocol::ITEM_RESULT_INVALID_REQUEST };
 
-    const int64 buyPrice = itemTemplate->buyPrice * count;
+    const int64 buyPrice = itemRow->BuyPrice * count;
 
     if (_gold < buyPrice)
         return ItemRejection{ Protocol::ITEM_RESULT_NOT_ENOUGH_GOLD };
@@ -216,14 +216,14 @@ ItemOutcome<SellItemResult> Player::ProcessSellItem(const ItemSlotRequest& reque
         return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
     // 칸에는 표에 있는 아이템만 들어가므로, 표에 없으면 기획 데이터가 바뀐 것이다.
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(owned->templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(owned->templateId);
+    if (itemRow == nullptr)
         return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
-    if (itemTemplate->sellable == false)
+    if (itemRow->Sellable == false)
         return ItemRejection{ Protocol::ITEM_RESULT_NOT_SELLABLE };
 
-    const int64 sellPrice = itemTemplate->sellPrice * count;
+    const int64 sellPrice = itemRow->SellPrice * count;
 
     if (_inventory->RemoveItem(request.address, count) == false)
         return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
@@ -250,10 +250,10 @@ ItemOutcome<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request
     if (MatchesRequest(owned, request) == false)
         return ItemRejection{ Protocol::ITEM_RESULT_SLOT_CHANGED };
 
-    // 칸에는 표에 있는 아이템만 들어가므로, 표에 없으면 기획 데이터가 바뀐 것이다.
+    // 소모품 구역에는 소모품만 들고 소모품마다 사용 효과 행이 있으므로(DataBuilder가 검사한다), 없으면 기획 데이터가 바뀐 것이다.
     const int32 templateId = owned->templateId;
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(templateId);
-    if (itemTemplate == nullptr)
+    const DesignData::ItemConsumeEffectRow* consumeEffect = Gamedata::FindItemConsumeEffect(templateId);
+    if (consumeEffect == nullptr)
         return ItemRejection{ Protocol::ITEM_RESULT_INTERNAL_ERROR };
 
     if (_inventory->IsCoolingDown(templateId, nowMs))
@@ -281,8 +281,8 @@ ItemOutcome<UseItemResult> Player::ProcessUseItem(const ItemSlotRequest& request
             ProtoUtil::AddStat(&result.changedStats, curType, updatedValue);
         };
 
-    restore(itemTemplate->hpRestoreRatio, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
-    restore(itemTemplate->mpRestoreRatio, Protocol::STAT_TYPE_MAX_MP, Protocol::STAT_TYPE_MP);
+    restore(consumeEffect->HpRestoreRatio, Protocol::STAT_TYPE_MAX_HP, Protocol::STAT_TYPE_HP);
+    restore(consumeEffect->MpRestoreRatio, Protocol::STAT_TYPE_MAX_MP, Protocol::STAT_TYPE_MP);
 
     return result;
 }

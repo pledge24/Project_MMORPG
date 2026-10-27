@@ -507,9 +507,6 @@
     <None Include="Migrations\002_quick_slot.sql">
       <Filter>Migrations</Filter>
     </None>
-    <None Include="Game\Data\Json\S_Item.json">
-      <Filter>Game\Data\Json</Filter>
-    </None>
     <None Include="Game\Data\Json\S_Map.json">
       <Filter>Game\Data\Json</Filter>
     </None>
@@ -526,6 +523,15 @@
       <Filter>Game\Data\Generated</Filter>
     </None>
     <None Include="Game\Data\Generated\DataVersion.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Item.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\ItemEquipStat.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\ItemConsumeEffect.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
   </ItemGroup>

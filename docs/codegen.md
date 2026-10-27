@@ -122,7 +122,7 @@
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
 C++ 타입을 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
-2026년 10월 27일(#313) 기준으로 DataBuilder가 맡은 표는 재화 하나다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
+2026년 10월 27일(#314) 기준으로 DataBuilder가 맡은 표는 재화와 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 아직 만들지 않는다.
 
 ### 재생성
@@ -242,7 +242,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나 | DataBuilder (`databuilder/rules.py`) |
+| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
@@ -252,7 +252,12 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
-`DesignData::CurrencyTable`이다.
+`DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
+세 표의 행을 찾는다.
+
+테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로 넣는다.
+장비에는 장비 능력치 행을, 소모품에는 소모 효과 행을 함께 넣고, `MaxStack`을 채운다.
+— 생성된 행의 `MaxStack` 기본값은 0이다. 0이면 아이템이 인벤토리에 들어가지 않는다. 실제 표에는 DataBuilder가 0을 막는다.
 
 **생성된 헤더는 `Templates.h`가 include한다.** 프로젝트 파일에는 `GameServer.vcxproj`에 `DesignData.h`와 JSON을 등록한다. 헤더만 생성하므로
 `GameServerTests.vcxproj`에 넣을 `.cpp`는 없다. 표를 더하면 그 표의 JSON을 `GameServer.vcxproj`와 `.filters`에 등록한다.
@@ -260,11 +265,33 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 생성된 역직렬화의 공통 함수(`DesignData::Detail::Read`)는 `DesignDataReadTests`가 목록, 선택 값, 열거형 목록까지 인스턴스화해서 확인한다.
 아직 그 타입을 쓰는 표가 없어도 빌드가 그 코드를 컴파일하게 하려는 것이다.
 
+### 아이템 표
+
+아이템은 공통 열과 종류별 열을 세 워크북에 나눠 둔다. 종류별 표의 키는 아이템 번호(`key:parent:Item`)다.
+
+| 워크북 | 담는 것 |
+|---|---|
+| `Item.xlsx` | 모든 아이템의 공통 열. 이름, 종류, 착용 조건, 가격, 최대 개수, 설명. 시트는 종류마다 하나다 |
+| `ItemEquipStat.xlsx` | 장비의 착용 부위(`enum:GearPart`)와 착용하면 오르는 스탯 |
+| `ItemConsumeEffect.xlsx` | 소모품이 회복하는 HP와 MP의 비율, 재사용 대기(`CooldownMs`) |
+
+DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 아이템은 종류별 표에 행이 없다.
+
+- 아이템 번호의 범위: 장비 1000~1999, 소모품 2000~2999, 기타 3000~3999
+- `MaxStack`: 1 이상
+- `CooldownMs`: 0 이상. 대기가 없으면 0이다. 옛 표의 -1은 쓰지 않는다
+- 장비 능력치 표: 장비(`GEAR`)만 참조한다. 모든 장비는 이 표에 행이 있다
+- 소모 효과 표: 소모품(`CONSUMABLE`)만 참조한다. 모든 소모품은 이 표에 행이 있다
+
+**착용할 수 있는 직업(`AllowedClasses`)이 빈 셀이면 모든 직업이 입는다.** 옛 표의 `all`이 빈 셀이 됐다.
+
+이름(`Name`)과 설명(`Description`)은 클라이언트만 쓰므로 대상이 `client`다. 2026년 10월 27일 기준으로 클라이언트 산출물은 없다.
+
 ---
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Item, Map, Monster, Quest, Warrior_Level_Data, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+**원본**: `DesignData/Original_*.xlsx` (Map, Monster, Quest, Warrior_Level_Data, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
 
 이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 위 DataBuilder로 옮긴 표는 여기서 빠진다.
 
@@ -282,20 +309,21 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 13개가 전부다.**
+**산출물은 아래 표의 11개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Item.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
 | `Server/GameServer/Lobby/Data/Json/` | `S_Lobby.json` |
-| `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Item.json` · `C_Map.json` · `C_Quest.json` |
+| `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Map.json` · `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
 
-장비 데이터는 `Original_Item.xlsx`의 첫 시트에 있다. 세 시트가 하나의 `C_Item.json`으로
-합쳐지므로 장비만 담는 산출물은 없다.
+**`C_Item.json`은 2026년 10월 27일(#314)부터 생성기의 산출물이 아니지만 지우지 않는다.** 아이템 표를 DataBuilder로 옮긴 시점의 값이다.
+클라이언트의 `DT_Item`이 이 값을 읽는다. 클라이언트를 새 데이터 테이블로 옮기는 #320까지 남긴다.
+— 그 사이에 아이템 수치를 바꾸면 클라이언트에는 반영되지 않는다.
 
 레벨, 초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
 
@@ -343,13 +371,14 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 일곱 파일과 `Game/Data/Generated/`의 재화 표와 데이터 버전을,
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 여섯 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 데이터 버전을,
 `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로 `S_Lobby.json`을 읽는다.
-`GamedataParser::Parse`가 모든 행을 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, 표가 통과하면 그때 설치한다.
-게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿만 읽는다.
+`GamedataParser::Parse`가 옛 변환기의 표를 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, DataBuilder의 표는 생성된
+`DesignData::Parse<표>`로 읽는다. 모든 표가 통과하면 그때 설치한다.
+게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿과 생성된 행만 읽는다.
 
-**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Item.json` 2번째 행(templateId 1001): 'buyPrice'가 정수가 아니다」처럼
-파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 표에 없는 아이템 종류와 장비 부위, 착용 조건의 직업(`all`이 아닌 값),
+**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Monster.json` 2번째 행(templateId 5001): 'maxHp'가 정수가 아니다」처럼
+파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 생성된 표에서 열거형 값 이름이 아닌 값,
 보상의 최솟값이 최댓값보다 큰 행, 0 이하의 포털 반경(`portalRadius`), 중복된 templateId, 맵 표에 없는 포털 목적지와 몬스터 표에 없는 스폰 몬스터가 여기 걸린다.
 위 「서버 전용 표」의 규칙을 어긴 행도 같다.
 — 게임 중에 Json을 읽던 때는 틀린 행이 룸 스레드의 예외가 되거나 조용히 기본값으로 동작했다.

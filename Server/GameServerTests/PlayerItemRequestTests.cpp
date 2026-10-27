@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include <gtest/gtest.h>
 #include "PlayerTestAccess.h"
+#include "TestItemTables.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
@@ -29,17 +30,14 @@ namespace
     constexpr int64 START_GOLD = 1000;
     constexpr int32 BASE_PHYSICAL_ATTACK = 5;
 
-    ItemTemplate MakeSword(int32 templateId, int64 buyPrice, int64 sellPrice, bool sellable, int32 physicalAttack)
+    void AddSword(GamedataTables& tables, int32 templateId, int64 buyPrice, int64 sellPrice, bool sellable, int32 physicalAttack)
     {
-        ItemTemplate sword;
-        sword.templateId = templateId;
-        sword.itemType = Protocol::ITEM_TYPE_GEAR;
-        sword.gearType = Protocol::GEAR_PART_WEAPON;
-        sword.buyPrice = buyPrice;
-        sword.sellPrice = sellPrice;
-        sword.sellable = sellable;
-        sword.physicalAttack = physicalAttack;
-        return sword;
+        TestItemTables::AddGear(tables, templateId, Protocol::GEAR_PART_WEAPON).PhysicalAttack = physicalAttack;
+
+        DesignData::ItemRow& sword = tables.items[templateId];
+        sword.BuyPrice = buyPrice;
+        sword.SellPrice = sellPrice;
+        sword.Sellable = sellable;
     }
 }
 
@@ -49,9 +47,9 @@ protected:
     void SetUp() override
     {
         GamedataTables tables;
-        tables.items[SWORD_TEMPLATE_ID] = MakeSword(SWORD_TEMPLATE_ID, 100, 10, true, 10);
-        tables.items[GREATSWORD_TEMPLATE_ID] = MakeSword(GREATSWORD_TEMPLATE_ID, 80000, 8000, true, 500);
-        tables.items[UNSELLABLE_SWORD_TEMPLATE_ID] = MakeSword(UNSELLABLE_SWORD_TEMPLATE_ID, 100, 10, false, 10);
+        AddSword(tables, SWORD_TEMPLATE_ID, 100, 10, true, 10);
+        AddSword(tables, GREATSWORD_TEMPLATE_ID, 80000, 8000, true, 500);
+        AddSword(tables, UNSELLABLE_SWORD_TEMPLATE_ID, 100, 10, false, 10);
         LevelTemplate level1;
         level1.level = 1;
         level1.physicalAttack = BASE_PHYSICAL_ATTACK;

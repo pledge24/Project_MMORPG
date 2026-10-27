@@ -89,8 +89,8 @@ bool QuickSlotComponent::CanRegister(const QuickSlotRef& ref)
     if (ref.type != QuickSlotRefType::ITEM)
         return false;
 
-    const ItemTemplate* itemTemplate = Gamedata::FindItem(ref.id);
-    return itemTemplate != nullptr && itemTemplate->itemType == Protocol::ITEM_TYPE_CONSUMABLE;
+    const DesignData::ItemRow* itemRow = Gamedata::FindItem(ref.id);
+    return itemRow != nullptr && itemRow->Type == Protocol::ITEM_TYPE_CONSUMABLE;
 }
 
 optional<int32> QuickSlotComponent::FindIndexOf(const QuickSlotRef& ref) const
