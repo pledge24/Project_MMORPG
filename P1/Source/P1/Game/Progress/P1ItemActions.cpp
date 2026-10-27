@@ -1,6 +1,6 @@
 #include "Game/Progress/P1ItemActions.h"
 #include "Game/Data/P1GameDataSettings.h"
-#include "Game/Data/P1ItemData.h"
+#include "Game/Data/Generated/P1ItemRow.h"
 #include "Game/Inventory/P1InventorySlotAction.h"
 #include "Game/Items/P1ItemContainer.h"
 #include "Game/Items/P1ItemPackets.h"
@@ -63,12 +63,12 @@ UP1ItemActions::EResult UP1ItemActions::RequestForSlot(EP1ItemIntent Intent, con
 UP1ItemActions::EResult UP1ItemActions::RequestBuy(int32 TemplateId)
 {
     const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
-    const FP1ItemData* ItemData = TemplateId > 0 ? UP1GameDataSettings::FindItemData(TemplateId) : nullptr;
+    const FP1ItemRow* Item = TemplateId > 0 ? UP1GameDataSettings::FindItemRow(TemplateId) : nullptr;
 
     EResult Result = EResult::Sent;
-    if (MyPlayerData == nullptr || ItemData == nullptr)
+    if (MyPlayerData == nullptr || Item == nullptr)
         Result = EResult::Empty;
-    else if (MyPlayerData->GetGold() < ItemData->BuyPrice)
+    else if (MyPlayerData->GetGold() < Item->BuyPrice)
         Result = EResult::NotEnoughGold;
 
     if (Result == EResult::Sent)
@@ -97,8 +97,8 @@ UP1ItemActions::EResult UP1ItemActions::RequestSetQuickSlot(int32 QuickSlotIndex
     else if (Ref.IsEmpty() == false)
     {
         // 서버도 소모품이 아닌 대상을 거절한다. 다 떨어진 소모품도 등록하므로 소지 여부는 보지 않는다.
-        const FP1ItemData* ItemData = Ref.Type == EP1QuickSlotRefType::Item ? UP1GameDataSettings::FindItemData(Ref.Id) : nullptr;
-        if (ItemData == nullptr || ItemData->GetItemType() != Protocol::ITEM_TYPE_CONSUMABLE)
+        const FP1ItemRow* Item = Ref.Type == EP1QuickSlotRefType::Item ? UP1GameDataSettings::FindItemRow(Ref.Id) : nullptr;
+        if (Item == nullptr || Item->GetType() != Protocol::ITEM_TYPE_CONSUMABLE)
             Result = EResult::Unusable;
     }
 
@@ -170,9 +170,9 @@ UP1ItemActions::EResult UP1ItemActions::DecideUse(const FP1SlotAddress& Address,
     const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
 
     // 정의가 없는 아이템은 종류를 몰라 쓸 수 없는 아이템으로 판정된다.
-    const FP1ItemData* ItemData = UP1GameDataSettings::FindItemData(Slot_->Item.TemplateId);
-    const Protocol::ItemType ItemType = ItemData ? ItemData->GetItemType() : Protocol::ITEM_TYPE_NONE;
-    const int32 LevelRequirement = ItemData ? ItemData->LevelRequirement : 0;
+    const FP1ItemRow* Item = UP1GameDataSettings::FindItemRow(Slot_->Item.TemplateId);
+    const Protocol::ItemType ItemType = Item ? Item->GetType() : Protocol::ITEM_TYPE_NONE;
+    const int32 LevelRequirement = Item ? Item->LevelRequirement : 0;
 
     ERequestKind Kind;
     switch (FP1InventorySlotAction::Decide(Address.Container, ItemType, Slot_->Item.TemplateId, LevelRequirement,
@@ -222,8 +222,8 @@ UP1ItemActions::EResult UP1ItemActions::DecideSell(const FP1SlotAddress& Address
         return EResult::Empty;
 
     // 서버도 팔 수 없는 아이템의 판매를 거절한다.
-    const FP1ItemData* ItemData = UP1GameDataSettings::FindItemData(Slot_->Item.TemplateId);
-    if (ItemData == nullptr || ItemData->Sellable == false)
+    const FP1ItemRow* Item = UP1GameDataSettings::FindItemRow(Slot_->Item.TemplateId);
+    if (Item == nullptr || Item->Sellable == false)
         return EResult::NotSellable;
 
     // 판매는 한 번에 하나씩이다.

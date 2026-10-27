@@ -1,4 +1,8 @@
 #include "UI/Common/P1ItemTooltipWidget.h"
+#include "Game/Data/P1GameDataSettings.h"
+#include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
+#include "Game/Data/Generated/P1ItemEquipStatRow.h"
+#include "Game/Data/Generated/P1ItemRow.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/VerticalBox.h"
@@ -15,9 +19,9 @@ static FString GetItemTypeDisplayName(Protocol::ItemType ItemType)
     }
 }
 
-void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
+void UP1ItemTooltipWidget::Init(const FP1ItemRow& Item, UTexture2D* Icon)
 {
-    if (Item.TemplateId <= 0)
+    if (Item.Id <= 0)
         return;
 
     if (Icon && ItemIcon)
@@ -27,7 +31,7 @@ void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
 
     if (ItemNameText)
     {
-        ItemNameText->SetText(FText::FromString(Item.ItemName));
+        ItemNameText->SetText(FText::FromString(Item.Name));
     }
 
     if (ItemDescriptionText)
@@ -44,19 +48,23 @@ void UP1ItemTooltipWidget::Init(const FP1ItemData& Item, UTexture2D* Icon)
         }
     }
 
+    // 종류별 값은 그 종류의 표에만 행이 있다. 행이 없는 줄은 0으로 보고 적지 않는다.
+    const FP1ItemEquipStatRow* EquipStat = UP1GameDataSettings::FindItemEquipStatRow(Item.Id);
+    const FP1ItemConsumeEffectRow* ConsumeEffect = UP1GameDataSettings::FindItemConsumeEffectRow(Item.Id);
+
     int32 ChildIdx = 0;
-    SetItemDetailsToVerticalBox(ChildIdx, TEXT("아이템 종류: "), GetItemTypeDisplayName(Item.GetItemType()));
+    SetItemDetailsToVerticalBox(ChildIdx, TEXT("아이템 종류: "), GetItemTypeDisplayName(Item.GetType()));
 
     SetItemStatToVerticalBox(ChildIdx, TEXT("레벨 제한: "), Item.LevelRequirement);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("쿨타임: "), Item.Cooldown);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("물리 피해 +"), Item.PhysicalAttack);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("마법 피해 +"), Item.MagicalAttack);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Hp +"), Item.Hp);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Mp +"), Item.Mp);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("Hp 회복 +"), Item.HpRestore, true);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("Mp 회복 +"), Item.MpRestore, true);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("상점 구매 가격: "), Item.BuyPrice);
-    SetItemStatToVerticalBox(ChildIdx, TEXT("상점 판매 가격: "), Item.SellPrice);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("쿨타임: "), ConsumeEffect ? ConsumeEffect->CooldownMs / 1000.f : 0.f);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("물리 피해 +"), EquipStat ? EquipStat->PhysicalAttack : 0);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("마법 피해 +"), EquipStat ? EquipStat->MagicalAttack : 0);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Hp +"), EquipStat ? EquipStat->Hp : 0);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("추가 Mp +"), EquipStat ? EquipStat->Mp : 0);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("Hp 회복 +"), ConsumeEffect ? ConsumeEffect->HpRestoreRatio : 0.f, true);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("Mp 회복 +"), ConsumeEffect ? ConsumeEffect->MpRestoreRatio : 0.f, true);
+    SetItemStatToVerticalBox(ChildIdx, TEXT("상점 구매 가격: "), static_cast<int32>(Item.BuyPrice));
+    SetItemStatToVerticalBox(ChildIdx, TEXT("상점 판매 가격: "), static_cast<int32>(Item.SellPrice));
 }
 
 void UP1ItemTooltipWidget::SetItemDetailsToVerticalBox(int32& ChildIdx, FString InfoText, FString DetailsText)

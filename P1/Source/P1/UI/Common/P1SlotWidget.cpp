@@ -7,7 +7,7 @@
 #include "TimerManager.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Data/P1GameDataSettings.h"
-#include "Game/Data/P1ItemData.h"
+#include "Game/Data/Generated/P1ItemRow.h"
 #include "Game/Inventory/P1ItemCooldown.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
@@ -191,10 +191,10 @@ UWidget* UP1SlotWidget::GetToolTipWidget() const
     if (Display.IsEmpty() || SlotTooltipWidget == nullptr)
         return nullptr;
 
-    const FP1ItemData* ItemData = UP1GameDataSettings::FindItemData(Display.TemplateId);
-    if (ItemData == nullptr)
+    const FP1ItemRow* Item = UP1GameDataSettings::FindItemRow(Display.TemplateId);
+    if (Item == nullptr)
         return nullptr;
 
-    SlotTooltipWidget->Init(*ItemData, UP1GameDataSettings::LoadItemIcon(Display.TemplateId));
+    SlotTooltipWidget->Init(*Item, UP1GameDataSettings::LoadItemIcon(Display.TemplateId));
     return SlotTooltipWidget;
 }
