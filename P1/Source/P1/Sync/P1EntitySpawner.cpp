@@ -5,7 +5,6 @@
 #include "Sync/P1StatefulEntityManager.h"
 #include "Sync/P1MoveSyncComponent.h"
 #include "Utils/LogCategory.h"
-#include "Game/Data/P1MonsterAssetData.h"
 
 namespace
 {
@@ -61,9 +60,12 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
         return nullptr;
     }
 
-    TSubclassOf<AP1Monster> MonsterBPClass = GetMonsterClass(TemplateId);
+    TSubclassOf<AP1Monster> MonsterBPClass = UP1GameDataSettings::LoadMonsterClass(TemplateId);
     if (MonsterBPClass == nullptr)
+    {
+        UE_LOG(LogP1Entity, Warning, TEXT("몬스터 에셋 테이블에 %d번 몬스터의 클래스가 없음"), TemplateId);
         return nullptr;
+    }
 
     AP1Monster* OutMonster = GetWorld()->SpawnActorDeferred<AP1Monster>(
         MonsterBPClass,
@@ -89,22 +91,6 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
     }
 
     return OutMonster;
-}
-
-TSubclassOf<AP1Monster> AP1EntitySpawner::GetMonsterClass(int32 TemplateId) const
-{
-    if (MonsterAssetTable == nullptr)
-    {
-        UE_LOG(LogP1Entity, Warning, TEXT("AP1EntitySpawner에 MonsterAssetTable이 지정되지 않음"));
-        return nullptr;
-    }
-
-    const FP1MonsterAssetData* AssetData = MonsterAssetTable->FindRow<FP1MonsterAssetData>(
-        FName(*FString::FromInt(TemplateId)), TEXT("AP1EntitySpawner::GetMonsterClass"));
-    if (AssetData == nullptr)
-        return nullptr;
-
-    return AssetData->MonsterClass.LoadSynchronous();
 }
 
 AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)

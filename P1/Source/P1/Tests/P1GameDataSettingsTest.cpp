@@ -27,6 +27,10 @@ bool FP1GameDataSettingsTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("장비 능력치"), Settings->ItemEquipStatTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_ItemEquipStat.DT_ItemEquipStat")));
         TestEqual(TEXT("소모 효과"), Settings->ItemConsumeEffectTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_ItemConsumeEffect.DT_ItemConsumeEffect")));
         TestEqual(TEXT("몬스터"), Settings->MonsterTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_Monster.DT_Monster")));
+
+        // 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다.
+        TestEqual(TEXT("아이템 에셋"), Settings->ItemAssetTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DataTables/DT_ItemAssets.DT_ItemAssets")));
+        TestEqual(TEXT("몬스터 에셋"), Settings->MonsterAssetTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DataTables/DT_MonsterAssets.DT_MonsterAssets")));
     }
 
     FP1DesignDataTestTables Tables;

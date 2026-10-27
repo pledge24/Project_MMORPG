@@ -33,14 +33,6 @@ public:
     /** ServerInfo가 있으면 그 정보로 위치와 엔티티를 초기화한다. 실패하면 nullptr. */
     AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo = NullOpt);
 
-    /** 몬스터 클래스를 동기 로드한다. 에셋 표에 행이 없으면 nullptr. */
-    TSubclassOf<AP1Monster> GetMonsterClass(int32 TemplateId) const;
-
-protected:
-    /** 몬스터 클래스를 담은 에셋 표. 행 구조체는 FP1MonsterAssetData. */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
-    TObjectPtr<UDataTable> MonsterAssetTable;
-
     //~ Player Spawn
 public:
     /**

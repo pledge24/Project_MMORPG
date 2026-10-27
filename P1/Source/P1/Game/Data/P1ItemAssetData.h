@@ -6,7 +6,7 @@
 
 /** 아이템의 에셋 참조. 행 이름은 TemplateId이고, 기획 원본에서 오지 않고 에디터에서만 편집한다. */
 USTRUCT(BlueprintType)
-struct FP1ItemAssetData : public FTableRowBase
+struct P1_API FP1ItemAssetData : public FTableRowBase
 {
     GENERATED_BODY()
 
