@@ -153,7 +153,9 @@ Node 24가 필요하다. CI도 Node 24로 돈다.
 
 ## 클라이언트 모듈과 include
 
-**`P1/Source/`에는 모듈이 두 개다.** 게임 모듈 `P1/` 외에 protobuf를 벤더링한 `ProtobufCore/`가 있고(`ProtobufCore.Build.cs`, `Include/google/**`, `Lib/Win64/libprotobuf.lib` 16MB), `P1.Build.cs`가 이를 `PrivateDependencyModuleNames`로 링크한다. `.lib`은 `P1/.gitignore`의 `*.lib`에 걸리지만 클론 즉시 빌드되도록 강제 추적 중이다 — 실수가 아니다.
+**`P1/Source/`에는 모듈이 세 개다.** 게임 모듈 `P1/` 외에 protobuf를 벤더링한 `ProtobufCore/`가 있고(`ProtobufCore.Build.cs`, `Include/google/**`, `Lib/Win64/libprotobuf.lib` 16MB), `P1.Build.cs`가 이를 `PrivateDependencyModuleNames`로 링크한다. `.lib`은 `P1/.gitignore`의 `*.lib`에 걸리지만 클론 즉시 빌드되도록 강제 추적 중이다 — 실수가 아니다.
+
+**에디터 모듈 `P1Editor/`는 에디터 타깃에만 들어간다.** `.uproject`에 `Type: Editor`로 등록했고 `P1Editor.Target.cs`의 `ExtraModuleNames`에 있다. 게임 타깃(`P1.Target.cs`)에는 넣지 않는다. 지금은 에셋 검증기(`Validation/`)와 그 테스트(`Tests/`)만 담는다. 엔진 플러그인 `DataValidation`에 의존하므로 `.uproject`에 그 플러그인을 에디터 전용으로 명시했다. 게임 모듈의 헤더는 `P1Editor.Build.cs`의 `PrivateIncludePaths`에 있는 `P1/`을 기준으로 `#include "Game/Data/P1GameDataSettings.h"`처럼 부른다. 게임 모듈의 타입을 에디터 모듈에서 쓰려면 그 타입에 `P1_API`가 있어야 한다. 없으면 `StaticStruct()` 같은 함수가 링크되지 않는다.
 
 **클라이언트 include는 경로를 한정한다.** `P1/Source/P1/P1.Build.cs`의 `PrivateIncludePaths`에는 모듈 루트 `P1/`과 생성물 폴더 `P1/Network` 둘만 있다. 헤더는 파일명이 아니라 모듈 루트 기준 상대 경로로 include한다(`#include "Game/Entities/P1Creature.h"`). **새 도메인 폴더를 만들어도 여기에 등록하지 않는다.**
 
