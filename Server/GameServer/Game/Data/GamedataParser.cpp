@@ -190,43 +190,6 @@ namespace
         return ClassLevelTable(std::move(rows));
     }
 
-    unordered_map<int32, MonsterTemplate> ParseMonsters(string_view fileName, const Json& document)
-    {
-        using namespace JsonProperty::Monster;
-
-        unordered_map<int32, MonsterTemplate> monsters;
-        ForEachRow(fileName, document, [&](const Json& row, size_t)
-            {
-                MonsterTemplate monster;
-                monster.templateId = Require<int32>(row, TemplateId);
-                monster.maxHp = Require<int32>(row, MaxHp);
-                monster.baseAttack = Require<int32>(row, BaseAttack);
-                monster.movementSpeed = Require<float>(row, MonsterSpeed);
-                monster.isTargeting = Require<bool>(row, IsTargeting);
-
-                const Json& expReward = RequireObject(row, ExpReward);
-                monster.minExp = Require<int64>(expReward, MinExp);
-                monster.maxExp = Require<int64>(expReward, MaxExp);
-                if (monster.minExp > monster.maxExp)
-                    throw RowError{ format("'minExp' {}가 'maxExp' {}보다 크다", monster.minExp, monster.maxExp) };
-
-                const Json& goldReward = RequireObject(row, GoldReward);
-                monster.minGold = Require<int64>(goldReward, MinGold);
-                monster.maxGold = Require<int64>(goldReward, MaxGold);
-                if (monster.minGold > monster.maxGold)
-                    throw RowError{ format("'minGold' {}가 'maxGold' {}보다 크다", monster.minGold, monster.maxGold) };
-
-                monster.attackInterval = Require<float>(row, AttackInterval);
-                monster.tryAttackRange = Require<float>(row, TryAttackRange);
-                monster.detectionRange = Require<float>(row, DetectionRange);
-                monster.chasingMaxRange = Require<float>(row, ChasingMaxRange);
-
-                InsertUnique(monsters, monster.templateId, std::move(monster));
-            });
-
-        return monsters;
-    }
-
     map<int32, MapTemplate> ParseMaps(string_view fileName, const Json& document)
     {
         using namespace JsonProperty::Map;
@@ -445,13 +408,14 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
     try
     {
         tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ParseLevels(GamedataFile::WARRIOR_LEVELS, documents.warriorLevels);
-        tables.monsters = ParseMonsters(GamedataFile::MONSTERS, documents.monsters);
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
 
         tables.currencies = ParseGenerated(documents.currencies, DesignData::ParseCurrency);
         tables.items = ParseGenerated(documents.items, DesignData::ParseItem);
         tables.itemEquipStats = ParseGenerated(documents.itemEquipStats, DesignData::ParseItemEquipStat);
         tables.itemConsumeEffects = ParseGenerated(documents.itemConsumeEffects, DesignData::ParseItemConsumeEffect);
+        tables.monsters = ParseGenerated(documents.monsters, DesignData::ParseMonster);
+        tables.dropGroups = ParseGenerated(documents.dropGroups, DesignData::ParseDropGroup);
         tables.initialProgress = ParseInitialProgress(GamedataFile::INITIAL_PROGRESS, documents.initialProgress);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
         tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);

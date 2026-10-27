@@ -1,0 +1,11 @@
+[
+{"Id":5000,"MaxHp":200,"BaseAttack":100,"MovementSpeed":300.0,"MinExp":5,"MaxExp":10,"MinGold":10,"MaxGold":20,"AttackInterval":2.5,"TryAttackRange":150.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1,2]},
+{"Id":5001,"MaxHp":150,"BaseAttack":80,"MovementSpeed":300.0,"MinExp":5,"MaxExp":15,"MinGold":10,"MaxGold":50,"AttackInterval":2.5,"TryAttackRange":600.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1,2]},
+{"Id":5002,"MaxHp":500,"BaseAttack":150,"MovementSpeed":300.0,"MinExp":5,"MaxExp":20,"MinGold":10,"MaxGold":80,"AttackInterval":2.5,"TryAttackRange":150.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1,2]},
+{"Id":5003,"MaxHp":600,"BaseAttack":200,"MovementSpeed":300.0,"MinExp":20,"MaxExp":50,"MinGold":80,"MaxGold":160,"AttackInterval":2.5,"TryAttackRange":150.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1]},
+{"Id":5004,"MaxHp":450,"BaseAttack":160,"MovementSpeed":300.0,"MinExp":20,"MaxExp":80,"MinGold":80,"MaxGold":200,"AttackInterval":2.5,"TryAttackRange":600.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1]},
+{"Id":5005,"MaxHp":1500,"BaseAttack":300,"MovementSpeed":300.0,"MinExp":20,"MaxExp":120,"MinGold":80,"MaxGold":300,"AttackInterval":2.5,"TryAttackRange":150.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1]},
+{"Id":5006,"MaxHp":1800,"BaseAttack":400,"MovementSpeed":300.0,"MinExp":120,"MaxExp":150,"MinGold":300,"MaxGold":500,"AttackInterval":2.5,"TryAttackRange":150.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1]},
+{"Id":5007,"MaxHp":1400,"BaseAttack":320,"MovementSpeed":300.0,"MinExp":120,"MaxExp":180,"MinGold":300,"MaxGold":800,"AttackInterval":2.5,"TryAttackRange":600.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1]},
+{"Id":5008,"MaxHp":4500,"BaseAttack":600,"MovementSpeed":300.0,"MinExp":120,"MaxExp":250,"MinGold":300,"MaxGold":2500,"AttackInterval":2.5,"TryAttackRange":150.0,"DetectionRange":900.0,"ChasingMaxRange":1200.0,"DropGroups":[1]}
+]

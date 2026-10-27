@@ -122,7 +122,7 @@
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
 C++ 타입을 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
-2026년 10월 27일(#314) 기준으로 DataBuilder가 맡은 표는 재화와 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
+2026년 10월 27일(#315) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 두 표(`Monster`, `DropGroup`, `DropEntry`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 아직 만들지 않는다.
 
 ### 재생성
@@ -148,7 +148,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 항목 | 정하는 것 |
 |---|---|
 | `[modules.<모듈>]` | 서버 모듈의 산출물 폴더(`server_dir`). 폴더 이름은 `Generated`여야 한다 |
-| `[tables.<표>]` | 가로형 표 하나. 워크북 파일 이름과 그 표를 읽는 모듈 목록 |
+| `[tables.<표>]` | 가로형 표 하나. 워크북 파일 이름과 그 표를 읽는 모듈 목록. `nest`를 적으면 부모 표 행의 그 필드 아래에 중첩한다(아래 「산출물」) |
 | `[settings.<설정>]` | 세로형 설정 시트 하나. 워크북, 시트 이름, 모듈 목록 |
 | `[enums.<열거형>]` | `.proto`에 없는 기획 데이터 전용 열거형의 값 이름과 번호. 번호는 1부터다 |
 
@@ -192,8 +192,10 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | `ref?:<표>` | 그 표의 키 하나, 또는 빈 셀 | `optional<키 타입>` |
 | `ref[]:<표>` | `;`로 구분한 그 표의 키 목록 | `vector<키 타입>` |
 | `parent:<표>` | 이 행이 속한 부모 표의 키. 필수다 | 그 표의 키 타입 |
+| `int32?` · `int64?` · `float?` | 수 하나, 또는 빈 셀. 빈 셀은 산출물 JSON에서 `null`이다 | `optional<수 타입>` |
 
-- `key:`를 앞에 붙이면 키 열이다(`key:int32`, `key:parent:Item`). 키 열이 될 수 있는 것은 정수, 문자열, 열거형, 참조 하나다. 실수, 불, 목록, 선택 참조는 키가 될 수 없다
+- `key:`를 앞에 붙이면 키 열이다(`key:int32`, `key:parent:Item`). 키 열이 될 수 있는 것은 정수, 문자열, 열거형, 참조 하나다. 실수, 불, 목록, 선택 참조, 선택 수는 키가 될 수 없다
+- 선택 수(`int32?` 등)는 다른 열의 값에 따라 채울지가 정해지는 열에 쓴다. 채울지 말지는 표의 의미 규칙이 검사한다(아래 「몬스터와 드롭 표」)
 - 참조하는 표는 설정 파일에 있고 키 열이 하나여야 한다. 셀의 값이 그 표의 키에 없으면 오류다
 - 부모 표 참조 열은 표에 하나까지다. 자기 자신을 부모 표로 삼을 수 없다
 - 목록 셀에 빈 항목(`A;;B`)이 있으면 오류다. 빈 셀은 빈 목록이다
@@ -231,6 +233,20 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 - 행 하나의 값을 바꾸면 그 표의 JSON diff는 그 행의 한 줄이다. 데이터 버전 파일도 함께 바뀐다
 - **산출물 폴더에 사람이 쓴 파일을 두지 않는다.** DataBuilder는 실행할 때마다 산출물 폴더를 비우고 다시 쓴다
 
+**설정 파일에서 `nest`를 적은 표는 자기 파일을 만들지 않고 부모 표의 파일에 중첩된다.** 부모 표는 그 표의 부모 표 참조 열(`parent:`)이 가리키는 표다.
+부모 행 한 줄 뒤에 그 행에 속한 자식 행이 키 순서로 한 줄씩 오고, `]}`로 닫는다. 자식 행에는 부모 표 참조 열을 싣지 않는다.
+
+```
+{"Id":1,"Method":"INDEPENDENT","Rate":1.0,"PickCount":null,"Entries":[
+{"ItemId":2000,"Rate":0.1,"Weight":null,"MinCount":1,"MaxCount":2}
+]},
+```
+
+- 생성된 헤더에는 자식 행 구조체(`<표>Row`)와 원소 하나를 읽는 함수(`Read<표>Row`)만 있다. 부모 행 구조체가 `vector<<표>Row> <nest>` 필드를 갖는다
+- 중첩한 표에는 부모 표 참조 열이 있어야 한다. 중첩은 한 단계까지다. `nest` 이름은 부모 표의 열 이름과 겹칠 수 없다
+- 중첩한 표는 부모 표와 모듈이 같아야 한다. 한쪽만 가는 모듈이 있으면 그 모듈의 헤더가 컴파일되지 않는다
+- 자식 행 하나를 바꾸면 diff는 그 자식 행의 한 줄이다
+
 **데이터 버전은 원본의 값으로 만든 해시다.** 표마다 열 이름, 타입, 대상과 키 순서로 정렬한 행 값을 넣고, 설정과 열거형도 넣는다.
 4행 설명, 시트 이름, 시트 안의 행 순서, 대상이 `none`인 열은 산출물을 바꾸지 않으므로 넣지 않는다. 워크북을 열어 고치지 않고 저장해도 버전은 그대로다.
 서버는 기동할 때 이 값을 로그에 남긴다(`기획 데이터 버전 342624c01048663c을 불러왔다`).
@@ -242,18 +258,21 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
-| JSON의 형식. 필드의 유무와 타입, 열거형 이름 | 서버. 생성된 `Parse<표>` |
+| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」와 「몬스터와 드롭 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| JSON의 형식. 필드의 유무와 타입, 열거형 이름, 중첩된 행 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
 표 하나의 의미 규칙을 더할 때는 `databuilder/rules.py`의 `TABLE_RULES`에 그 표 이름으로 함수를 넣는다.
+
+**산출물을 막지 않는 규칙은 `TABLE_WARNINGS`에 넣는다.** 경고는 `[DataBuilder] 경고: ...`로 출력하고, 오류가 없으면 산출물을 배포하고 종료 코드 0으로 끝난다.
+작업 중이라 아직 틀리지 않은 상태(어느 몬스터도 쓰지 않는 드롭 그룹)에 쓴다.
 
 ### 서버가 읽는 법
 
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
-세 표의 행을 찾는다.
+세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이 찾는다.
 
 테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로 넣는다.
 장비에는 장비 능력치 행을, 소모품에는 소모 효과 행을 함께 넣고, `MaxStack`을 채운다.
@@ -287,11 +306,40 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 이름(`Name`)과 설명(`Description`)은 클라이언트만 쓰므로 대상이 `client`다. 2026년 10월 27일 기준으로 클라이언트 산출물은 없다.
 
+### 몬스터와 드롭 표
+
+용어는 `CONTEXT.md`의 보상, 기본 보상, 드롭, 드롭 그룹, 드롭 항목을 따른다.
+
+| 워크북 | 담는 것 |
+|---|---|
+| `Monster.xlsx` | 몬스터의 능력치, AI 거리, 기본 보상(`MinExp`, `MaxExp`, `MinGold`, `MaxGold`), 드롭 그룹 목록(`DropGroups`, `ref[]:DropGroup`) |
+| `DropGroup.xlsx` | 판정 방식(`Method`, `enum:DropMethod`), 그룹 확률(`Rate`), 뽑는 개수(`PickCount`, `int32?`), 기획자용 메모(`Memo`, 대상 `none`) |
+| `DropEntry.xlsx` | 소속 그룹(`key:parent:DropGroup`), 아이템(`key:ref:Item`), 확률(`Rate`, `float?`), 가중치(`Weight`, `int32?`), 최소와 최대 수량 |
+
+**드롭 항목은 `DropGroup.json`의 각 그룹 아래 `Entries`에 중첩된다.** 설정 파일에서 `DropEntry`에 `nest = "Entries"`를 적었다. `DropEntry.json`은 없다.
+한 그룹 안에서 같은 아이템은 한 번만 나온다(키가 그룹과 아이템의 조합이다).
+
+판정 방식은 둘이다. `INDEPENDENT`는 항목마다 `Rate`로 따로 판정하고, `WEIGHTED`는 `Weight`에 비례해 `PickCount`개를 뽑는다.
+드롭의 판정과 지급은 아직 없다. 서버는 드롭 그룹 표를 읽어 설치만 한다.
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- 기본 보상: 최솟값은 0 이상이고 최댓값보다 크지 않다
+- 그룹 확률(`Rate`): 0 초과 1 이하
+- 그룹에 드롭 항목이 하나 이상 있다
+- `WEIGHTED` 그룹은 `PickCount`가 1 이상이고 항목 수 이하다. `INDEPENDENT` 그룹은 `PickCount`를 비워 둔다
+- `INDEPENDENT` 그룹의 항목은 `Rate`만, `WEIGHTED` 그룹의 항목은 `Weight`만 채운다. 항목의 `Rate`는 0 초과 1 이하, `Weight`는 1 이상이다
+- 항목의 수량: `MinCount`는 1 이상이고 `MaxCount`보다 크지 않다
+- 어느 몬스터도 쓰지 않는 그룹은 경고다
+
+몬스터의 이름, 레벨, 공격 방식(`AttackType`, `enum:MonsterAttackType`)은 클라이언트만 쓰므로 대상이 `client`다.
+옛 표의 `is_targeting`은 서버도 클라이언트도 읽지 않아 옮기지 않았다.
+
 ---
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Map, Monster, Quest, Warrior_Level_Data, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+**원본**: `DesignData/Original_*.xlsx` (Map, Quest, Warrior_Level_Data, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
 
 이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 위 DataBuilder로 옮긴 표는 여기서 빠진다.
 
@@ -309,14 +357,14 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 11개가 전부다.**
+**산출물은 아래 표의 9개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
 | `Server/GameServer/Lobby/Data/Json/` | `S_Lobby.json` |
-| `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Map.json` · `C_Quest.json` |
+| `P1/Content/P1/Data/DataTables/` | `C_Map.json` · `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
@@ -324,6 +372,9 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 **`C_Item.json`은 2026년 10월 27일(#314)부터 생성기의 산출물이 아니지만 지우지 않는다.** 아이템 표를 DataBuilder로 옮긴 시점의 값이다.
 클라이언트의 `DT_Item`이 이 값을 읽는다. 클라이언트를 새 데이터 테이블로 옮기는 #320까지 남긴다.
 — 그 사이에 아이템 수치를 바꾸면 클라이언트에는 반영되지 않는다.
+
+**`C_Monster.json`도 2026년 10월 27일(#315)부터 생성기의 산출물이 아니지만 #320까지 남긴다.** 몬스터 표를 DataBuilder로 옮긴 시점의 값이다.
+클라이언트의 몬스터 데이터 테이블이 이 값을 읽는다. 그 사이에 몬스터 수치를 바꾸면 클라이언트에는 반영되지 않는다.
 
 레벨, 초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
 
@@ -371,15 +422,15 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 여섯 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 데이터 버전을,
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 다섯 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표, 드롭 그룹 표, 데이터 버전을,
 `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로 `S_Lobby.json`을 읽는다.
 `GamedataParser::Parse`가 옛 변환기의 표를 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, DataBuilder의 표는 생성된
 `DesignData::Parse<표>`로 읽는다. 모든 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿과 생성된 행만 읽는다.
 
-**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Monster.json` 2번째 행(templateId 5001): 'maxHp'가 정수가 아니다」처럼
+**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Map.json` 2번째 행(templateId 20): 'portalRadius'가 수가 아니다」처럼
 파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 생성된 표에서 열거형 값 이름이 아닌 값,
-보상의 최솟값이 최댓값보다 큰 행, 0 이하의 포털 반경(`portalRadius`), 중복된 templateId, 맵 표에 없는 포털 목적지와 몬스터 표에 없는 스폰 몬스터가 여기 걸린다.
+0 이하의 포털 반경(`portalRadius`), 중복된 templateId, 맵 표에 없는 포털 목적지와 몬스터 표에 없는 스폰 몬스터가 여기 걸린다.
 위 「서버 전용 표」의 규칙을 어긴 행도 같다.
 — 게임 중에 Json을 읽던 때는 틀린 행이 룸 스레드의 예외가 되거나 조용히 기본값으로 동작했다.
 

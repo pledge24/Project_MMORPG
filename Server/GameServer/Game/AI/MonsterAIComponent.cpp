@@ -4,15 +4,15 @@
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 
-MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const MonsterTemplate& monsterTemplate)
+MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow)
     : EntityComponent(owner)
 {
-    _attackInterval = monsterTemplate.attackInterval;
-    _baseAttack = monsterTemplate.baseAttack;
-    _tryAttackRange = monsterTemplate.tryAttackRange;
-    _detectionRange = monsterTemplate.detectionRange;
-    _chasingMaxRange = monsterTemplate.chasingMaxRange;
-    _monsterSpeed = monsterTemplate.movementSpeed;
+    _attackInterval = monsterRow.AttackInterval;
+    _baseAttack = monsterRow.BaseAttack;
+    _tryAttackRange = monsterRow.TryAttackRange;
+    _detectionRange = monsterRow.DetectionRange;
+    _chasingMaxRange = monsterRow.ChasingMaxRange;
+    _monsterSpeed = monsterRow.MovementSpeed;
 
     // 스폰 정보에 Idle 이동 상태가 실리도록 룸에 들어가기 전에 맞춰 둔다.
     SwitchState(MonsterState::Idle);

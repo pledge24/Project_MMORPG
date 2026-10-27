@@ -18,27 +18,6 @@ struct TemplatePos
     float z = 0.f;
 };
 
-/** 몬스터 표(S_Monster.json)의 한 행. 보상의 최솟값은 최댓값보다 크지 않다. */
-struct MonsterTemplate
-{
-    int32 templateId = 0;
-    int32 maxHp = 0;
-    int32 baseAttack = 0;
-    float movementSpeed = 0.f;
-    bool isTargeting = false;
-
-    int64 minExp = 0;
-    int64 maxExp = 0;
-    int64 minGold = 0;
-    int64 maxGold = 0;
-
-    /** 공격 간격(초). */
-    float attackInterval = 0.f;
-    float tryAttackRange = 0.f;
-    float detectionRange = 0.f;
-    float chasingMaxRange = 0.f;
-};
-
 /** 직업별 레벨 표의 한 행. 증가량은 이전 레벨에서 이 레벨로 오를 때 더하는 값이다. */
 struct LevelTemplate
 {
@@ -138,7 +117,10 @@ struct GamedataTables
     DesignData::ItemEquipStatTable itemEquipStats;
     /** 소모품의 사용 효과. 소모품마다 행이 하나다(DataBuilder가 검사한다). */
     DesignData::ItemConsumeEffectTable itemConsumeEffects;
-    unordered_map<int32, MonsterTemplate> monsters;
+    /** 기본 보상의 최솟값은 최댓값보다 크지 않다(DataBuilder가 검사한다). */
+    DesignData::MonsterTable monsters;
+    /** 몬스터의 드롭 그룹. 드롭 항목은 그룹의 Entries에 있다. */
+    DesignData::DropGroupTable dropGroups;
     /** 룸을 번호 순서로 만들도록 정렬된 맵을 쓴다. */
     map<int32, MapTemplate> maps;
     /** 직업(Protocol::CharacterClass) → 레벨 표. 로비가 생성할 수 있는 직업은 모두 표가 있다(기동할 때 대조한다). */

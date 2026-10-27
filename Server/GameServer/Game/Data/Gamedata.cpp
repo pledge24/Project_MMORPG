@@ -52,7 +52,6 @@ bool Gamedata::LoadAllGamedata()
     const DocumentFile files[] = {
         { GAMEDATA_DIR, GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
         { GAMEDATA_DIR, GamedataFile::MAPS, &documents.maps },
-        { GAMEDATA_DIR, GamedataFile::MONSTERS, &documents.monsters },
         { GAMEDATA_DIR, GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
         { GAMEDATA_DIR, GamedataFile::INVENTORY_SECTIONS, &documents.inventorySections },
         { GAMEDATA_DIR, GamedataFile::QUICK_SLOTS, &documents.quickSlots },
@@ -60,6 +59,8 @@ bool Gamedata::LoadAllGamedata()
         { GENERATED_DIR, DesignData::ITEM_FILE, &documents.items },
         { GENERATED_DIR, DesignData::ITEM_EQUIP_STAT_FILE, &documents.itemEquipStats },
         { GENERATED_DIR, DesignData::ITEM_CONSUME_EFFECT_FILE, &documents.itemConsumeEffects },
+        { GENERATED_DIR, DesignData::MONSTER_FILE, &documents.monsters },
+        { GENERATED_DIR, DesignData::DROP_GROUP_FILE, &documents.dropGroups },
     };
 
     for (const DocumentFile& file : files)
@@ -126,10 +127,16 @@ const DesignData::ItemConsumeEffectRow* Gamedata::FindItemConsumeEffect(int32 te
     return it == s_tables.itemConsumeEffects.end() ? nullptr : &it->second;
 }
 
-const MonsterTemplate* Gamedata::FindMonster(int32 templateId)
+const DesignData::MonsterRow* Gamedata::FindMonster(int32 templateId)
 {
     auto it = s_tables.monsters.find(templateId);
     return it == s_tables.monsters.end() ? nullptr : &it->second;
+}
+
+const DesignData::DropGroupRow* Gamedata::FindDropGroup(int32 dropGroupId)
+{
+    auto it = s_tables.dropGroups.find(dropGroupId);
+    return it == s_tables.dropGroups.end() ? nullptr : &it->second;
 }
 
 const MapTemplate* Gamedata::FindMap(int32 templateId)
