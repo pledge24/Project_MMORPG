@@ -39,51 +39,6 @@ struct MonsterTemplate
     float chasingMaxRange = 0.f;
 };
 
-/** 직업별 레벨 표의 한 행. 증가량은 이전 레벨에서 이 레벨로 오를 때 더하는 값이다. */
-struct LevelTemplate
-{
-    int32 level = 0;
-    int32 maxHp = 0;
-    int32 maxMp = 0;
-    int32 physicalAttack = 0;
-    int32 magicalAttack = 0;
-    /** 이 레벨에서 다음 레벨로 가는 데 필요한 경험치. */
-    int64 expRequirement = 0;
-
-    int64 maxHpIncrement = 0;
-    int64 maxMpIncrement = 0;
-    int64 paIncrement = 0;
-    int64 maIncrement = 0;
-};
-
-/**
- * 한 직업의 레벨 표.
- *
- * 레벨마다 능력치와 필요 경험치를 담고, 그 직업의 최대 레벨을 정한다.
- */
-class ClassLevelTable
-{
-public:
-    ClassLevelTable() = default;
-    /** rows[i]의 레벨이 i + 1이어야 한다. 여기서는 확인하지 않는다. */
-    explicit ClassLevelTable(vector<LevelTemplate> rows) : _rows(std::move(rows)) {}
-
-    /** 표 밖의 레벨이면 nullptr. */
-    const LevelTemplate* Find(int32 level) const
-    {
-        if (level < 1 || level > GetMaxLevel())
-            return nullptr;
-
-        return &_rows[level - 1];
-    }
-
-    /** 행이 없으면 0이다. */
-    int32 GetMaxLevel() const { return static_cast<int32>(_rows.size()); }
-
-private:
-    vector<LevelTemplate> _rows;
-};
-
 /** 맵 표의 포털 하나. 출발 위치에서 맵의 portalRadius 안에 들어서면 목적지 룸의 목적지 좌표로 옮긴다. */
 struct PortalTemplate
 {
@@ -141,8 +96,13 @@ struct GamedataTables
     unordered_map<int32, MonsterTemplate> monsters;
     /** 룸을 번호 순서로 만들도록 정렬된 맵을 쓴다. */
     map<int32, MapTemplate> maps;
-    /** 직업(Protocol::CharacterClass) → 레벨 표. 로비가 생성할 수 있는 직업은 모두 표가 있다(기동할 때 대조한다). */
-    unordered_map<int32, ClassLevelTable> classLevelTables;
+    /** 레벨마다 다음 레벨까지 필요한 경험치. 1부터 이어지고 마지막 레벨이 최대 레벨이다(DataBuilder가 검사한다). */
+    DesignData::LevelTable levels;
+    /**
+     * 직업과 레벨마다의 능력치. 표에 있는 직업은 모든 레벨에 행이 있다(DataBuilder가 검사한다).
+     * 로비가 생성할 수 있는 직업은 모두 표에 있다(기동할 때 대조한다).
+     */
+    DesignData::ClassLevelStatTable classLevelStats;
     /** 사망한 플레이어가 돌아가는 마을 룸. 리스폰 지점이 있는 유일한 맵이다. */
     int32 townRoomId = 0;
 

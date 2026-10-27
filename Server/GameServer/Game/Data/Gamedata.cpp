@@ -50,7 +50,6 @@ bool Gamedata::LoadAllGamedata()
     };
 
     const DocumentFile files[] = {
-        { GAMEDATA_DIR, GamedataFile::WARRIOR_LEVELS, &documents.warriorLevels },
         { GAMEDATA_DIR, GamedataFile::MAPS, &documents.maps },
         { GAMEDATA_DIR, GamedataFile::MONSTERS, &documents.monsters },
         { GAMEDATA_DIR, GamedataFile::INITIAL_PROGRESS, &documents.initialProgress },
@@ -60,6 +59,8 @@ bool Gamedata::LoadAllGamedata()
         { GENERATED_DIR, DesignData::ITEM_FILE, &documents.items },
         { GENERATED_DIR, DesignData::ITEM_EQUIP_STAT_FILE, &documents.itemEquipStats },
         { GENERATED_DIR, DesignData::ITEM_CONSUME_EFFECT_FILE, &documents.itemConsumeEffects },
+        { GENERATED_DIR, DesignData::LEVEL_FILE, &documents.levels },
+        { GENERATED_DIR, DesignData::CLASS_LEVEL_STAT_FILE, &documents.classLevelStats },
     };
 
     for (const DocumentFile& file : files)
@@ -138,10 +139,10 @@ const MapTemplate* Gamedata::FindMap(int32 templateId)
     return it == s_tables.maps.end() ? nullptr : &it->second;
 }
 
-const ClassLevelTable* Gamedata::FindClassLevelTable(int32 classId)
+const DesignData::ClassLevelStatRow* Gamedata::FindClassLevelStat(int32 classId, int32 level)
 {
-    auto it = s_tables.classLevelTables.find(classId);
-    return it == s_tables.classLevelTables.end() ? nullptr : &it->second;
+    auto it = s_tables.classLevelStats.find({ static_cast<Protocol::CharacterClass>(classId), level });
+    return it == s_tables.classLevelStats.end() ? nullptr : &it->second;
 }
 
 int32 Gamedata::GetInventorySlotCount(Protocol::ItemType itemType)

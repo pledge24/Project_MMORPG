@@ -14,6 +14,7 @@
 #include "Network/GameSessionManager.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerSaveData.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     진행 저장소와 DAO 테스트
@@ -114,21 +115,17 @@ protected:
         town.widthHalfExtent = 1000.f;
         town.respawnPoint = TemplatePos{ TOWN_RESPAWN_X, 5000.f, 0.f };
 
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = MAX_HP;
-        level1.maxMp = 100;
-        level1.expRequirement = 1000;
-        LevelTemplate level2 = level1;
-        level2.level = 2;
-        level2.expRequirement = 0;
-
         GamedataTables tables;
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
         tables.maps[FIELD_ROOM_ID] = field;
         tables.maps[TOWN_ROOM_ID] = town;
         tables.townRoomId = TOWN_ROOM_ID;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
+        for (auto [level, expRequirement] : { pair{ 1, 1000 }, pair{ 2, 0 } })
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, expRequirement);
+            stat.MaxHp = MAX_HP;
+            stat.MaxMp = 100;
+        }
         TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.inventorySlotCounts = MakeInventorySections();
@@ -416,7 +413,9 @@ TEST_F(ProgressStorageTest, EnterWithoutRoomToAssignIsRejected)
 {
     GamedataTables tables;
     tables.goldCurrencyId = GOLD_CURRENCY_ID;
-    tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ LevelTemplate{ 1, MAX_HP, 100 } });
+    DesignData::ClassLevelStatRow& level1 = TestLevelTables::AddWarriorLevel(tables, 1);
+    level1.MaxHp = MAX_HP;
+    level1.MaxMp = 100;
     Gamedata::Install(std::move(tables));
 
     FakeDBConnection conn;

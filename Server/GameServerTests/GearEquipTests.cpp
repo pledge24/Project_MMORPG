@@ -6,6 +6,7 @@
 #include "Game/Entities/EntityFactory.h"
 #include "Game/Inventory/InventoryComponent.h"
 #include "Game/Equipment/EquipmentComponent.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     장비 장착·탈착 결과 테스트
@@ -36,12 +37,6 @@ class GearEquipTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = BASE_MAX_HP;
-        level1.maxMp = BASE_MAX_MP;
-        level1.physicalAttack = BASE_PHYSICAL_ATTACK;
-
         GamedataTables tables;
         for (int32 swordId : { SWORD_TEMPLATE_ID, HIGH_LEVEL_SWORD_TEMPLATE_ID, MAGE_SWORD_TEMPLATE_ID })
             TestItemTables::AddGear(tables, swordId, Protocol::GEAR_PART_WEAPON).PhysicalAttack = 10;
@@ -51,10 +46,14 @@ protected:
         DesignData::ItemEquipStatRow& helmet = TestItemTables::AddGear(tables, HELMET_TEMPLATE_ID, Protocol::GEAR_PART_HELMET);
         helmet.Hp = HELMET_HP;
         helmet.Mp = HELMET_MP;
-        LevelTemplate level2 = level1;
-        level2.level = 2;
 
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
+        for (int32 level : { 1, 2 })
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, level == 1 ? 100 : 0);
+            stat.MaxHp = BASE_MAX_HP;
+            stat.MaxMp = BASE_MAX_MP;
+            stat.PhysicalAttack = BASE_PHYSICAL_ATTACK;
+        }
         tables.inventorySlotCounts = MakeInventorySections();
         Gamedata::Install(std::move(tables));
 

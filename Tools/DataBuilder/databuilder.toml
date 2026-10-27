@@ -26,6 +26,15 @@ modules = ["game"]
 workbook = "ItemConsumeEffect.xlsx"
 modules = ["game"]
 
+# 레벨마다 필요한 경험치는 직업과 무관하고, 레벨마다의 능력치는 직업마다 다르다.
+[tables.Level]
+workbook = "Level.xlsx"
+modules = ["game"]
+
+[tables.ClassLevelStat]
+workbook = "ClassLevelStat.xlsx"
+modules = ["game"]
+
 # .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
 [enums.CurrencyType]
 GOLD = 1

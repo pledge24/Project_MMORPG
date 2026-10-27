@@ -4,6 +4,7 @@
 #include "RecordingSession.h"
 #include "Network/GameSessionManager.h"
 #include "Lobby/Data/LobbyData.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     패킷 핸들러와 세션 단계 검사 테스트
@@ -72,10 +73,8 @@ class PacketHandlerTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1);
         Gamedata::Install(std::move(tables));
 
         ServerPacketHandler::Init();

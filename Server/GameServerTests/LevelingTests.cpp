@@ -16,18 +16,16 @@ namespace
 {
     // 레벨 1 → 2에 100, 2 → 3에 200, 3 → 4에 300. 레벨 4가 최대 레벨이다.
     // 레벨이 시작하는 누적 경험치는 0, 100, 300, 600이다.
-    ClassLevelTable MakeLevelTable()
+    DesignData::LevelTable MakeLevelTable()
     {
-        vector<LevelTemplate> rows;
+        DesignData::LevelTable table;
         for (int64 requirement : { 100, 200, 300, 0 })
         {
-            LevelTemplate row;
-            row.level = static_cast<int32>(rows.size()) + 1;
-            row.expRequirement = requirement;
-            rows.push_back(row);
+            const int32 level = static_cast<int32>(table.size()) + 1;
+            table[level] = DesignData::LevelRow{ level, requirement };
         }
 
-        return ClassLevelTable(std::move(rows));
+        return table;
     }
 
     constexpr int64 MAX_TOTAL_EXP = 600;
@@ -44,7 +42,7 @@ TEST(LevelingTest, ZeroExpIsLevelOne)
 
 TEST(LevelingTest, ExpEqualToRequirementSumReachesLevel)
 {
-    const ClassLevelTable table = MakeLevelTable();
+    const DesignData::LevelTable table = MakeLevelTable();
 
     const LevelExp level2 = Leveling::Locate(table, 100);
     EXPECT_EQ(level2.level, 2);
@@ -56,7 +54,7 @@ TEST(LevelingTest, ExpEqualToRequirementSumReachesLevel)
 
 TEST(LevelingTest, ExpOneBelowRequirementSumStaysAtLowerLevel)
 {
-    const ClassLevelTable table = MakeLevelTable();
+    const DesignData::LevelTable table = MakeLevelTable();
 
     const LevelExp level1 = Leveling::Locate(table, 99);
     EXPECT_EQ(level1.level, 1);
@@ -70,7 +68,7 @@ TEST(LevelingTest, ExpOneBelowRequirementSumStaysAtLowerLevel)
 
 TEST(LevelingTest, OneRewardRaisesSeveralLevels)
 {
-    const ClassLevelTable table = MakeLevelTable();
+    const DesignData::LevelTable table = MakeLevelTable();
 
     const int64 totalExp = Leveling::AddExp(table, 50, 400);
 
@@ -88,7 +86,7 @@ TEST(LevelingTest, MaxTotalExpIsSumOfRequirementsBelowMaxLevel)
 
 TEST(LevelingTest, ExpDoesNotAccumulateAtMaxLevel)
 {
-    const ClassLevelTable table = MakeLevelTable();
+    const DesignData::LevelTable table = MakeLevelTable();
 
     EXPECT_EQ(Leveling::AddExp(table, 590, 100), MAX_TOTAL_EXP) << "최대 레벨에 이르고 남는 경험치는 버린다";
     EXPECT_EQ(Leveling::AddExp(table, MAX_TOTAL_EXP, 30), MAX_TOTAL_EXP);
@@ -100,7 +98,7 @@ TEST(LevelingTest, ExpDoesNotAccumulateAtMaxLevel)
 
 TEST(LevelingTest, ClampCutsExpBeyondMaxLevel)
 {
-    const ClassLevelTable table = MakeLevelTable();
+    const DesignData::LevelTable table = MakeLevelTable();
 
     EXPECT_EQ(Leveling::ClampTotalExp(table, MAX_TOTAL_EXP + 1), MAX_TOTAL_EXP);
     EXPECT_EQ(Leveling::ClampTotalExp(table, MAX_TOTAL_EXP), MAX_TOTAL_EXP);
@@ -125,7 +123,7 @@ TEST(LevelingTest, DeathPenaltyLosesTenPercentOfRequirement)
 
 TEST(LevelingTest, DeathPenaltyDoesNotLowerLevel)
 {
-    const ClassLevelTable table = MakeLevelTable();
+    const DesignData::LevelTable table = MakeLevelTable();
 
     // 레벨 2, 레벨 안 10. 요구치의 10%인 20을 다 잃으면 레벨 1로 내려간다.
     const int64 totalExp = Leveling::ApplyDeathPenalty(table, 110);

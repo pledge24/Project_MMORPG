@@ -159,37 +159,6 @@ namespace
 
     //~ 표별 변환
 
-    ClassLevelTable ParseLevels(string_view fileName, const Json& document)
-    {
-        using namespace JsonProperty::LevelTable;
-
-        vector<LevelTemplate> rows;
-        ForEachRow(fileName, document, [&](const Json& row, size_t index)
-            {
-                LevelTemplate level;
-                level.level = Require<int32>(row, Level);
-                // 레벨 표는 행 번호가 곧 레벨이다. 최대 레벨을 마지막 행에서 읽으므로 빠진 레벨이 없어야 한다.
-                if (level.level != static_cast<int32>(index) + 1)
-                    throw RowError{ format("'level'이 {}여야 하는데 {}다. 레벨은 1부터 빠짐없이 이어져야 한다", index + 1, level.level) };
-
-                level.maxHp = Require<int32>(row, MaxHp);
-                level.maxMp = Require<int32>(row, MaxMp);
-                level.physicalAttack = Require<int32>(row, PhysicalAttack);
-                level.magicalAttack = Require<int32>(row, MagicalAttack);
-                level.expRequirement = Require<int64>(row, ExpRequirement);
-                level.maxHpIncrement = Require<int64>(row, MaxHp_Increment);
-                level.maxMpIncrement = Require<int64>(row, MaxMp_Increment);
-                level.paIncrement = Require<int64>(row, PA_Increment);
-                level.maIncrement = Require<int64>(row, MA_Increment);
-                rows.push_back(level);
-            });
-
-        if (rows.empty())
-            throw TableError{ format("{}: 행이 하나도 없다", fileName) };
-
-        return ClassLevelTable(std::move(rows));
-    }
-
     unordered_map<int32, MonsterTemplate> ParseMonsters(string_view fileName, const Json& document)
     {
         using namespace JsonProperty::Monster;
@@ -444,7 +413,6 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
 {
     try
     {
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ParseLevels(GamedataFile::WARRIOR_LEVELS, documents.warriorLevels);
         tables.monsters = ParseMonsters(GamedataFile::MONSTERS, documents.monsters);
         tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
 
@@ -452,6 +420,8 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.items = ParseGenerated(documents.items, DesignData::ParseItem);
         tables.itemEquipStats = ParseGenerated(documents.itemEquipStats, DesignData::ParseItemEquipStat);
         tables.itemConsumeEffects = ParseGenerated(documents.itemConsumeEffects, DesignData::ParseItemConsumeEffect);
+        tables.levels = ParseGenerated(documents.levels, DesignData::ParseLevel);
+        tables.classLevelStats = ParseGenerated(documents.classLevelStats, DesignData::ParseClassLevelStat);
         tables.initialProgress = ParseInitialProgress(GamedataFile::INITIAL_PROGRESS, documents.initialProgress);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
         tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);

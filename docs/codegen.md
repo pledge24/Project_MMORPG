@@ -122,7 +122,7 @@
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
 C++ 타입을 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
-2026년 10월 27일(#314) 기준으로 DataBuilder가 맡은 표는 재화와 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
+2026년 10월 27일(#318) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 레벨 두 표(`Level`, `ClassLevelStat`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 아직 만들지 않는다.
 
 ### 재생성
@@ -242,7 +242,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」와 「레벨 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
@@ -253,9 +253,10 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
-세 표의 행을 찾는다.
+세 표의 행을 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 
-테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로 넣는다.
+테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로,
+레벨은 `Server/GameServerTests/TestLevelTables.h`로 넣는다. 레벨 헬퍼는 레벨 표의 행과 그 직업의 능력치 행을 함께 넣는다.
 장비에는 장비 능력치 행을, 소모품에는 소모 효과 행을 함께 넣고, `MaxStack`을 채운다.
 — 생성된 행의 `MaxStack` 기본값은 0이다. 0이면 아이템이 인벤토리에 들어가지 않는다. 실제 표에는 DataBuilder가 0을 막는다.
 
@@ -287,11 +288,35 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 이름(`Name`)과 설명(`Description`)은 클라이언트만 쓰므로 대상이 `client`다. 2026년 10월 27일 기준으로 클라이언트 산출물은 없다.
 
+### 레벨 표
+
+레벨마다 필요한 경험치는 직업과 무관하고, 레벨마다의 능력치는 직업마다 다르다. 그래서 두 워크북에 나눠 둔다.
+2026년 10월 27일(#318)에 옛 전사 레벨 표(`Original_Warrior_Level_Data.xlsx`)에서 옮겼다.
+
+| 워크북 | 키 | 담는 것 |
+|---|---|---|
+| `Level.xlsx` | `Level` | 다음 레벨까지 필요한 경험치(`ExpRequirement`) |
+| `ClassLevelStat.xlsx` | `Class`(`enum:CharacterClass`), `Level`(`ref:Level`) | 최대 HP, 최대 MP, 물리 공격력, 마법 공격력. 시트는 직업마다 하나이고, 각 행에 직업을 그대로 적는다 |
+
+DataBuilder가 검사하는 규칙은 세 가지다.
+
+- 레벨 표: 행이 있고, 레벨이 시트의 행 순서대로 1부터 빠짐없이 이어진다. 마지막 행이 최대 레벨이다
+- 레벨 표: 최대 레벨의 `ExpRequirement`는 0이고, 나머지 레벨은 1 이상이다. 0이면 경험치 없이 다음 레벨로 넘어간다
+- 직업별 능력치 표: 표에 나오는 직업은 레벨 표의 모든 레벨에 행이 있다. 표에 없는 직업은 행이 하나도 없다
+
+같은 직업과 레벨이 두 번 나오는 것은 복합 키 규칙이, 레벨 표에 없는 레벨은 참조 규칙이 막는다.
+
+**레벨이 오를 때 더하는 능력치는 두 레벨 행의 차이다.** 옛 표의 증가분 열 넷은 인접한 두 행의 차이와 같아서 없앴다.
+— 지금 스탯에는 장비의 증감량이 들어 있으므로, 서버는 새 레벨의 능력치로 덮지 않고 차이만 더한다.
+
+마법사처럼 새 직업을 더할 때는 `ClassLevelStat.xlsx`에 그 직업의 시트를 더한다. 로비 표에 생성할 수 있는 직업으로 넣으면
+서버가 기동할 때 `Core/DataCrossCheck`가 이 표에 그 직업이 있는지 대조한다.
+
 ---
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Map, Monster, Quest, Warrior_Level_Data, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+**원본**: `DesignData/Original_*.xlsx` (Map, Monster, Quest, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
 
 이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 위 DataBuilder로 옮긴 표는 여기서 빠진다.
 
@@ -309,12 +334,12 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 11개가 전부다.**
+**산출물은 아래 표의 10개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Warrior_Level_Data.json` · `S_Monster.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Monster.json` · `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
 | `Server/GameServer/Lobby/Data/Json/` | `S_Lobby.json` |
 | `P1/Content/P1/Data/DataTables/` | `C_Monster.json` · `C_Map.json` · `C_Quest.json` |
 
@@ -325,10 +350,10 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 클라이언트의 `DT_Item`이 이 값을 읽는다. 클라이언트를 새 데이터 테이블로 옮기는 #320까지 남긴다.
 — 그 사이에 아이템 수치를 바꾸면 클라이언트에는 반영되지 않는다.
 
-레벨, 초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
+초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
 
 **기획 데이터는 소비자별로 나눈다.** 로비 표는 로비 모듈(`Lobby/Data/`)만, 나머지는 게임(`Game/Data/`)만 읽는다. 로비와 게임이
-함께 맞아야 하는 값(생성할 수 있는 직업마다 레벨 표가 있는지)은 서버가 기동할 때 `Core/DataCrossCheck`가 대조하고, 어긋나면
+함께 맞아야 하는 값(생성할 수 있는 직업이 직업별 능력치 표에 있는지)은 서버가 기동할 때 `Core/DataCrossCheck`가 대조하고, 어긋나면
 서버가 뜨지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
 
 ### 서버 전용 표
@@ -371,7 +396,7 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 여섯 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 데이터 버전을,
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 다섯 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 레벨 두 표, 데이터 버전을,
 `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로 `S_Lobby.json`을 읽는다.
 `GamedataParser::Parse`가 옛 변환기의 표를 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, DataBuilder의 표는 생성된
 `DesignData::Parse<표>`로 읽는다. 모든 표가 통과하면 그때 설치한다.
@@ -387,7 +412,7 @@ DataBuilder가 검사하는 규칙은 다섯 가지다. 기타(`MISCELLANEOUS`) 
 
 | 값 | 원천 |
 |---|---|
-| 직업의 최대 레벨 | 그 직업 레벨 표의 마지막 레벨. 레벨은 1부터 빠짐없이 이어져야 한다 |
+| 최대 레벨 | 레벨 표(`Level.xlsx`)의 마지막 레벨. 모든 직업이 같다. 레벨이 1부터 빠짐없이 이어지는지는 DataBuilder가 검사한다 |
 | 마을 룸 번호 | 맵 표에서 `hasRespawnPoint`가 참인 유일한 맵. 둘 이상이거나 없으면 부팅이 실패한다 |
 | 골드의 재화 번호 | 재화 표(`Currency.xlsx`)에서 `Type`이 `GOLD`인 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 

@@ -4,6 +4,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/Entities/EntityFactory.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     레벨과 경험치 테스트
@@ -13,33 +14,32 @@
     레벨이 레벨 표 밖으로 나가면 다음 입장에서 레벨 표 조회가 실패해 그 캐릭터는 게임에
     들어오지 못한다.
 
-    픽스처 결합도: MAX_LEVEL행짜리 전사 레벨 표를 Gamedata::Install로 주입하고, 세션 없이
-    진행 사본으로 Player를 불러온다. 레벨 표에 스탯 값을 넣지 않으므로 최종 스탯 검증이 0으로 통과한다.
+    픽스처 결합도: MAX_LEVEL행짜리 레벨 표와 전사의 능력치 표를 Gamedata::Install로 주입하고, 세션 없이
+    진행 사본으로 Player를 불러온다. 불러올 때의 HP와 MP는 0이라 최종 스탯 검증을 통과한다.
 ---------------------------------------------------------------*/
 
 namespace
 {
     constexpr int32 MAX_LEVEL = 50;
 
-    /** 레벨 1부터 maxLevel까지의 표. 다음 레벨로 가는 경험치는 레벨 × 100이고 스탯 증가량은 0이다. */
-    ClassLevelTable MakeLevelTable(int32 maxLevel)
-    {
-        vector<LevelTemplate> rows;
-        for (int32 level = 1; level <= maxLevel; level++)
-        {
-            LevelTemplate row;
-            row.level = level;
-            row.expRequirement = level * 100;
-            rows.push_back(row);
-        }
+    /** 레벨이 오를 때마다 오르는 양이 다르도록 레벨의 제곱으로 정한 능력치. */
+    constexpr int32 MaxHpAt(int32 level) { return 1000 + level * level * 10; }
+    constexpr int32 PhysicalAttackAt(int32 level) { return 20 + level * level; }
 
-        return ClassLevelTable(std::move(rows));
-    }
-
+    /**
+     * 레벨 1부터 maxLevel까지의 레벨 표와 전사의 능력치 표를 설치한다.
+     * 다음 레벨로 가는 경험치는 레벨 × 100이고, 최대 레벨은 0이다.
+     */
     void InstallWarriorLevelTable(int32 maxLevel)
     {
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = MakeLevelTable(maxLevel);
+        for (int32 level = 1; level <= maxLevel; level++)
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, level < maxLevel ? level * 100 : 0);
+            stat.MaxHp = MaxHpAt(level);
+            stat.MaxMp = 100;
+            stat.PhysicalAttack = PhysicalAttackAt(level);
+        }
         Gamedata::Install(std::move(tables));
     }
 
@@ -106,13 +106,45 @@ TEST_F(PlayerLevelTest, MaxLevelIsLastLevelOfClassTable)
     EXPECT_TRUE(player->IsMaxLevel()) << "최대 레벨은 코드 상수가 아니라 레벨 표의 마지막 레벨이다";
 }
 
-TEST_F(PlayerLevelTest, ClassWithoutLevelTableIsMaxLevel)
+TEST_F(PlayerLevelTest, ClassWithoutLevelStatsIsMaxLevel)
 {
     player = EntityFactory::Create<Player>(PlayerSpawnParams());
     PlayerTestAccess::CharacterClass(*player) = Protocol::CHARACTER_CLASS_MAGE;
     PlayerTestAccess::PlayerInfo(*player).set_level(1);
 
-    EXPECT_TRUE(player->IsMaxLevel()) << "레벨 표가 없으면 오를 레벨이 없다";
+    EXPECT_TRUE(player->IsMaxLevel()) << "직업별 능력치 표에 없는 직업은 오를 레벨이 없다";
+}
+
+TEST_F(PlayerLevelTest, LoadedStatsComeFromClassLevelStatOfComputedLevel)
+{
+    LoadWithTotalExp(TotalExpAtLevel(3));
+
+    EXPECT_EQ(player->GetPlayerInfo().level(), 3);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MaxHpAt(3));
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), PhysicalAttackAt(3));
+}
+
+TEST_F(PlayerLevelTest, LevelUpAddsStatDifferenceBetweenLevels)
+{
+    LoadWithTotalExp(0);
+    // 장비처럼 기본 스탯 위에 얹힌 증감량은 레벨업 뒤에도 남아야 한다.
+    constexpr int64 GEAR_MAX_HP = 50;
+    player->SetStatValue(Protocol::STAT_TYPE_MAX_HP, player->GetStatValue(Protocol::STAT_TYPE_MAX_HP) + GEAR_MAX_HP);
+
+    // 1→2에 100, 2→3에 200. 한 보상으로 두 레벨이 오른다.
+    const RewardResult result = player->OnGetReward(MakeExpReward(300));
+
+    ASSERT_EQ(player->GetPlayerInfo().level(), 3);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_HP), MaxHpAt(3) + GEAR_MAX_HP) << "레벨 사이의 능력치 차이만 더한다";
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_PHYSICAL_ATTACK), PhysicalAttackAt(3));
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_MAX_MP), 100) << "능력치가 같은 레벨 사이에서는 그대로다";
+
+    ASSERT_TRUE(result.levelUp.has_value());
+    const auto& changedStats = result.levelUp->changedStats;
+    const auto maxHp = std::find_if(changedStats.begin(), changedStats.end(),
+        [](const Protocol::Stat& stat) { return stat.type() == Protocol::STAT_TYPE_MAX_HP; });
+    ASSERT_NE(maxHp, changedStats.end());
+    EXPECT_EQ(maxHp->value(), MaxHpAt(3) + GEAR_MAX_HP);
 }
 
 TEST_F(PlayerLevelTest, RewardBelowRequirementAccumulates)

@@ -9,6 +9,7 @@
 #include "TestItemTables.h"
 #include "RecordingSession.h"
 #include "RoomManagerTestAccess.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     룸의 아이템과 채팅 요청 테스트
@@ -35,12 +36,8 @@ class ItemChatRequestTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = 100;
-
         GamedataTables tables;
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1 });
+        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.inventorySlotCounts = MakeInventorySections();
         tables.maps[ROOM_ID] = MakeRoomTemplate(ROOM_ID, 0.f);

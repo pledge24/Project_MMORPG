@@ -9,6 +9,7 @@
 #include "Game/Room/Room.h"
 #include "DB/ItemRows.h"
 #include "TestItemTables.h"
+#include "TestLevelTables.h"
 
 /*--------------------------------------------------------------
     게임 입장 테스트
@@ -77,22 +78,16 @@ class GameEntryTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        LevelTemplate level1;
-        level1.level = 1;
-        level1.maxHp = MAX_HP;
-        level1.maxMp = MAX_MP;
-        level1.physicalAttack = PHYSICAL_ATTACK;
-        level1.expRequirement = LEVEL1_EXP_REQUIREMENT;
-
-        LevelTemplate level2 = level1;
-        level2.level = 2;
-        level2.physicalAttack = LEVEL2_PHYSICAL_ATTACK;
-        level2.expRequirement = 0;
-
         GamedataTables tables;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON).PhysicalAttack = SWORD_ATTACK;
         TestItemTables::AddConsumable(tables, POTION_TEMPLATE_ID, 99);
-        tables.classLevelTables[Protocol::CHARACTER_CLASS_WARRIOR] = ClassLevelTable({ level1, level2 });
+        for (auto [level, expRequirement, physicalAttack] : { tuple{ 1, LEVEL1_EXP_REQUIREMENT, PHYSICAL_ATTACK }, tuple{ 2, int64(0), LEVEL2_PHYSICAL_ATTACK } })
+        {
+            DesignData::ClassLevelStatRow& stat = TestLevelTables::AddWarriorLevel(tables, level, expRequirement);
+            stat.MaxHp = MAX_HP;
+            stat.MaxMp = MAX_MP;
+            stat.PhysicalAttack = physicalAttack;
+        }
         tables.inventorySlotCounts = {
             { Protocol::ITEM_TYPE_GEAR, GEAR_SLOT_COUNT },
             { Protocol::ITEM_TYPE_CONSUMABLE, CONSUMABLE_SLOT_COUNT },

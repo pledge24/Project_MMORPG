@@ -33,7 +33,15 @@ public:
     static const DesignData::ItemConsumeEffectRow* FindItemConsumeEffect(int32 templateId);
     static const MonsterTemplate* FindMonster(int32 templateId);
     static const MapTemplate* FindMap(int32 templateId);
-    static const ClassLevelTable* FindClassLevelTable(int32 classId);
+    /** 그 직업의 그 레벨 능력치. 표에 없는 직업이나 레벨이면 nullptr. */
+    static const DesignData::ClassLevelStatRow* FindClassLevelStat(int32 classId, int32 level);
+    /** 직업별 능력치 표에 그 직업이 있으면 true. 있으면 모든 레벨에 행이 있다. */
+    static bool HasClassLevelStats(int32 classId) { return FindClassLevelStat(classId, 1) != nullptr; }
+
+    /** 레벨마다 다음 레벨까지 필요한 경험치. 직업과 무관하다. */
+    static const DesignData::LevelTable& GetLevels() { return s_tables.levels; }
+    /** 레벨 표의 마지막 레벨. 표가 비어 있으면 0. */
+    static int32 GetMaxLevel() { return s_tables.levels.empty() ? 0 : s_tables.levels.rbegin()->first; }
 
     /** 룸 번호 순서다. */
     static const map<int32, MapTemplate>& GetMaps() { return s_tables.maps; }

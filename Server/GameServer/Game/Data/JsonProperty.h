@@ -26,21 +26,6 @@ namespace JsonProperty
         constexpr std::string_view IsTargeting = "isTargeting";
     }
 
-    namespace LevelTable
-    {
-        constexpr std::string_view Level = "level";
-        constexpr std::string_view MaxHp = "maxHp";
-        constexpr std::string_view MaxMp = "maxMp";
-        constexpr std::string_view PhysicalAttack = "physicalAttack";
-        constexpr std::string_view MagicalAttack = "magicalAttack";
-        constexpr std::string_view ExpRequirement = "expRequirement";
-
-        constexpr std::string_view MaxHp_Increment = "maxHpIncrement";
-        constexpr std::string_view MaxMp_Increment = "maxMpIncrement";
-        constexpr std::string_view PA_Increment = "paIncrement";
-        constexpr std::string_view MA_Increment = "maIncrement";
-    }
-
     namespace Map
     {
         constexpr std::string_view TemplateId = "templateId";
