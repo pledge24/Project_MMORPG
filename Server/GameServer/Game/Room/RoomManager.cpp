@@ -4,9 +4,10 @@
 
 bool RoomManager::CreateAllRooms()
 {
-    for (const auto& [roomId, mapTemplate] : Gamedata::GetMaps())
+    for (const auto& [areaId, area] : Gamedata::GetAreas())
     {
-        RoomRef room = Room::Create(mapTemplate);
+        RoomRef room = Room::Create(area);
+        const int32 roomId = room->GetRoomId();
         if (room->Start() == false)
         {
             // 룸 데이터가 틀렸다는 뜻이다. 룸 하나가 빠진 채로 뜨면 그 룸으로 가는 요청이 모두 깨진다.

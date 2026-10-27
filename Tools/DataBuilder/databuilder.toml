@@ -50,6 +50,21 @@ workbook = "DropEntry.xlsx"
 modules = ["game"]
 nest = "Entries"
 
+# 맵은 클라이언트가 로드하는 레벨이고, 지역은 맵 안의 공간이다. 서버는 지역마다 룸을 만든다.
+[tables.Map]
+workbook = "Map.xlsx"
+modules = ["game"]
+
+[tables.Area]
+workbook = "Area.xlsx"
+modules = ["game"]
+
+# 포털은 Area.json의 각 지역 아래 Portals에 싣는다.
+[tables.Portal]
+workbook = "Portal.xlsx"
+modules = ["game"]
+nest = "Portals"
+
 # .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
 [enums.CurrencyType]
 GOLD = 1
@@ -62,3 +77,12 @@ RANGED = 2
 [enums.DropMethod]
 INDEPENDENT = 1
 WEIGHTED = 2
+
+# 지역 유형. 서버는 읽지 않는다.
+[enums.AreaType]
+SAFE_ZONE = 1
+HUNTING_FIELD = 2
+
+# 포털 유형. 지금은 같은 맵이든 다른 맵이든 지역 사이를 잇는 AREA 하나다.
+[enums.PortalType]
+AREA = 1

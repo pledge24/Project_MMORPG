@@ -22,23 +22,23 @@ namespace
             if (optional<TownRespawn> town = RoomTransfer::FindTownRespawn())
                 player->ApplyTownRespawnForSave(town.value());
             else
-                GLogger->Error("플레이어 {}에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다(맵 표에 마을 리스폰 지점이 없다)", player->GetEntityId());
+                GLogger->Error("플레이어 {}에 마을 리스폰을 적용하지 못해 사망한 상태 그대로 저장합니다(지역 표에 마을 리스폰 지점이 없다)", player->GetEntityId());
         }
 
         return player->MakeSaveData();
     }
 }
 
-RoomRef Room::Create(const MapTemplate& mapTemplate)
+RoomRef Room::Create(const DesignData::AreaRow& area)
 {
     RoomRef newRoom = make_shared<Room>();
-    newRoom->Init(mapTemplate);
+    newRoom->Init(area);
     return newRoom;
 }
 
-void Room::Init(const MapTemplate& mapTemplate)
+void Room::Init(const DesignData::AreaRow& area)
 {
-    _mapTemplate = mapTemplate;
+    _area = area;
 
     CacheRoomData();
 
@@ -47,22 +47,22 @@ void Room::Init(const MapTemplate& mapTemplate)
 
 void Room::CacheRoomData()
 {
-    _roomId = _mapTemplate.templateId;
+    _roomId = RoomTransfer::SelectRoomForArea(_area.Id);
 
-    _roomCenterPos.x = _mapTemplate.center.x;
-    _roomCenterPos.y = _mapTemplate.center.y;
-    _roomCenterPos.z = _mapTemplate.center.z;
+    _roomCenterPos.x = _area.CenterX;
+    _roomCenterPos.y = _area.CenterY;
+    _roomCenterPos.z = _area.CenterZ;
 
-    _depthHalfExtent = _mapTemplate.depthHalfExtent;
-    _widthHalfExtent = _mapTemplate.widthHalfExtent;
+    _depthHalfExtent = _area.HalfExtentX;
+    _widthHalfExtent = _area.HalfExtentY;
 
     _roomMinX = _roomCenterPos.x - _depthHalfExtent;
     _roomMaxX = _roomCenterPos.x + _depthHalfExtent;
     _roomMinY = _roomCenterPos.y - _widthHalfExtent;
     _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
-    _maxMonsterCount = _mapTemplate.maxMonsterCount;
-    _monsterIds = _mapTemplate.monsterIds;
+    _maxMonsterCount = _area.MaxMonsterCount;
+    _monsterIds = _area.Monsters;
 }
 
 bool Room::Start()
@@ -331,23 +331,24 @@ void Room::C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player)
             SendPacket(session, usePortalPkt);
         };
 
-    const PortalTemplate* portal = FindPortal(pkt.portal_id());
+    const DesignData::PortalRow* portal = FindPortal(pkt.portal_id());
     if (portal == nullptr)
     {
         reject(Protocol::ENTRY_RESULT_INVALID_PORTAL, format("현재 룸 {}에 없는 포털 {}", _roomId, pkt.portal_id()));
         return;
     }
 
-    if (optional<string> rejection = RoomTransfer::ValidatePortalUse(*portal, _mapTemplate.portalRadius, player->GetPosInfo()))
+    if (optional<string> rejection = RoomTransfer::ValidatePortalUse(*portal, player->GetPosInfo()))
     {
         reject(Protocol::ENTRY_RESULT_TOO_FAR_FROM_PORTAL, rejection.value());
         return;
     }
 
-    RoomRef destination = GRoomManager->FindRoom(portal->dstRoomId);
+    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(*portal);
+    RoomRef destination = GRoomManager->FindRoom(enterData.nextRoomId);
     if (destination == nullptr)
     {
-        reject(Protocol::ENTRY_RESULT_INTERNAL_ERROR, format("포털 {}의 목적지 룸 {}이 없다", portal->portalId, portal->dstRoomId));
+        reject(Protocol::ENTRY_RESULT_INTERNAL_ERROR, format("포털 {}의 도착 지역 {}을 맡은 룸 {}이 없다", portal->Id, portal->DestAreaId, enterData.nextRoomId));
         return;
     }
 
@@ -357,7 +358,6 @@ void Room::C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player)
         usePortalPkt.set_map_id(destination->GetMapId());
     SendPacket(session, usePortalPkt);
 
-    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(*portal);
     MovePlayer(player, destination, enterData.enterPos.value());
 }
 
@@ -585,11 +585,11 @@ vector2D Room::GetRandomLocation(bool usePadding)
     return randomPos;
 }
 
-const PortalTemplate* Room::FindPortal(int32 portalId) const
+const DesignData::PortalRow* Room::FindPortal(int32 portalId) const
 {
-    for (const PortalTemplate& portal : _mapTemplate.portals)
+    for (const DesignData::PortalRow& portal : _area.Portals)
     {
-        if (portal.portalId == portalId)
+        if (portal.Id == portalId)
             return &portal;
     }
 

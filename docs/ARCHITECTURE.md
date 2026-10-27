@@ -409,7 +409,7 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 
 **Architecture Invariant:** `GRoomManager`는 부팅 때 `CreateAllRooms`로 모든 룸을 한 번 만들고, 그 뒤로는 `FindRoom`으로
 조회만 한다. 룸 목록이 바뀌지 않으므로 조회에 락이 없다. 룸은 `Room::Create`로만 만든다. 엔티티는 룸 관리자를 부르지 않는다.
-마을 리스폰의 목적지는 `RoomTransfer::FindTownRespawn`이 맵 표에서 찾는다.
+마을 리스폰의 목적지는 `RoomTransfer::FindTownRespawn`이 지역 표에서 찾는다.
 — 사망한 채 끊긴 플레이어의 저장은 룸에서 뺀 뒤에 뜨므로, 리스폰 규칙이 소속 룸이나 룸 객체에 기대면 실패한다.
 
 **Architecture Invariant:** 이동 요청(`C_MOVE`)의 위치는 `MoveValidation`이 판정한다. 직전에 받아들인 위치에서 평면 거리가
@@ -418,7 +418,7 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 — 클라이언트가 보낸 위치를 그대로 쓰면 조작한 클라이언트가 룸 안 어디로든 순간이동하고, 그 위치로 저장된다.
 
 **Architecture Invariant:** 위치에 묶인 룸 이동 요청은 서버가 플레이어 위치로 판정한다. 포털 이동은 플레이어와 포털 출발
-위치의 평면 거리가 맵 기획표의 `portalRadius` 안이어야 한다. 목적지가 다른 맵이어도 같다. 판정은 `RoomTransfer`가 한다.
+위치의 평면 거리가 포털 표의 그 포털 반경(`Radius`) 안이어야 한다. 목적지가 다른 맵이어도 같다. 판정은 `RoomTransfer`가 한다.
 
 `Room`은 몬스터의 근접 탐색을 위해 `CELL_SIZE` 단위 셀 행렬(`CellMatrix`)을 들고, 룸 틱마다 엔티티 `Tick`보다 먼저
 다시 채운다. `CellMatrix`는 엔티티 번호와 위치만 아는 공간 색인이고, 탐색 대상인지와 실제 거리는 룸이 판정한다.

@@ -194,7 +194,7 @@ public:
     void ApplyMove(const Protocol::PosInfo& posInfo, uint64 now);
     /** 서버가 위치를 정했거나 이동을 받아들인 마지막 시각(ms, GetTickCount64). */
     uint64 GetLastPositionTick() const { return _lastPositionTick; }
-    /** 지금 맵 또는 들어가는 맵. 맵 표의 mapId다. */
+    /** 지금 맵 또는 들어가는 맵. 지역 번호가 아니라 맵 표의 맵 번호다. */
     int32 GetMapId() const { return _mapId; }
     /** 마지막으로 들어간 룸. 룸에 들어간 적이 없으면 -1. */
     int32 GetRoomId() const { return _roomId; }

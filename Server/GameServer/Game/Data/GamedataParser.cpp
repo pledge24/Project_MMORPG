@@ -63,13 +63,6 @@ namespace
         return value.get<T>();
     }
 
-    /** 필드가 없거나 null이면 fallback. 있으면 Require와 같이 검사한다. */
-    template<typename T>
-    T ReadOr(const Json& object, string_view key, T fallback)
-    {
-        return IsAbsent(object, key) ? fallback : Require<T>(object, key);
-    }
-
     const Json& RequireObject(const Json& object, string_view key)
     {
         if (IsAbsent(object, key) || object.at(key).is_object() == false)
@@ -78,17 +71,9 @@ namespace
         return object.at(key);
     }
 
-    const Json& RequireArray(const Json& object, string_view key)
-    {
-        if (IsAbsent(object, key) || object.at(key).is_array() == false)
-            throw RowError{ format("'{}'가 없거나 배열이 아니다", key) };
-
-        return object.at(key);
-    }
-
     TemplatePos RequirePos(const Json& object)
     {
-        using namespace JsonProperty::Map;
+        using namespace JsonProperty::Pos;
 
         return TemplatePos{ Require<float>(object, PosX), Require<float>(object, PosY), Require<float>(object, PosZ) };
     }
@@ -112,14 +97,10 @@ namespace
         return itemType;
     }
 
-    /** 행 위치를 붙인 메시지. templateId를 읽을 수 있으면 함께 적는다. */
-    string Locate(string_view fileName, size_t rowIndex, const Json& row, string_view cause)
+    /** 행 위치를 붙인 메시지. */
+    string Locate(string_view fileName, size_t rowIndex, string_view cause)
     {
-        string location = format("{} {}번째 행", fileName, rowIndex + 1);
-        if (row.is_object() && row.contains("templateId") && row.at("templateId").is_number_integer())
-            location += format("(templateId {})", row.at("templateId").get<int64>());
-
-        return format("{}: {}", location, cause);
+        return format("{} {}번째 행: {}", fileName, rowIndex + 1, cause);
     }
 
     /**
@@ -144,71 +125,12 @@ namespace
             }
             catch (const RowError& error)
             {
-                throw TableError{ Locate(fileName, i, row, error.cause) };
+                throw TableError{ Locate(fileName, i, error.cause) };
             }
         }
     }
 
-    /** 같은 templateId가 두 번 나오면 RowError. */
-    template<typename Table, typename Template>
-    void InsertUnique(Table& table, int32 templateId, Template&& value)
-    {
-        if (table.emplace(templateId, std::forward<Template>(value)).second == false)
-            throw RowError{ format("templateId {}가 중복된다", templateId) };
-    }
-
     //~ 표별 변환
-
-    map<int32, MapTemplate> ParseMaps(string_view fileName, const Json& document)
-    {
-        using namespace JsonProperty::Map;
-
-        map<int32, MapTemplate> maps;
-        ForEachRow(fileName, document, [&](const Json& row, size_t)
-            {
-                MapTemplate mapTemplate;
-                mapTemplate.templateId = Require<int32>(row, TemplateId);
-                mapTemplate.mapId = Require<int32>(row, MapId);
-                mapTemplate.center = RequirePos(RequireObject(row, CenterPos));
-                mapTemplate.depthHalfExtent = Require<float>(row, DepthHalfExtent);
-                mapTemplate.widthHalfExtent = Require<float>(row, WidthHalfExtent);
-
-                if (Require<bool>(row, HasRespawnPoint))
-                    mapTemplate.respawnPoint = RequirePos(RequireObject(row, RespawnPoint));
-
-                for (const Json& portalRow : RequireArray(RequireObject(row, Portals), Lists))
-                {
-                    const Json& dst = RequireObject(portalRow, Dst);
-
-                    PortalTemplate portal;
-                    portal.portalId = Require<int32>(portalRow, PortalId);
-                    portal.srcPos = RequirePos(RequireObject(portalRow, Src));
-                    portal.dstRoomId = Require<int32>(dst, TemplateId);
-                    portal.dstPos = RequirePos(dst);
-                    portal.dstYaw = Require<float>(dst, Yaw);
-                    mapTemplate.portals.push_back(portal);
-                }
-
-                // 0 이하면 어디서도 포털을 탈 수 없다. 포털이 없는 맵도 같은 열을 가지므로 모든 행에서 본다.
-                mapTemplate.portalRadius = Require<float>(row, PortalRadius);
-                if (mapTemplate.portalRadius <= 0.f)
-                    throw RowError{ format("'portalRadius'가 0보다 커야 한다: {}", mapTemplate.portalRadius) };
-
-                for (const Json& monsterId : RequireArray(row, MonsterIds))
-                {
-                    if (monsterId.is_number_integer() == false)
-                        throw RowError{ format("'monsterIds'에 정수가 아닌 값이 있다: {}", monsterId.dump()) };
-
-                    mapTemplate.monsterIds.push_back(monsterId.get<int32>());
-                }
-
-                mapTemplate.maxMonsterCount = ReadOr<int32>(row, MaxMonsterCount, 0);
-
-                InsertUnique(maps, mapTemplate.templateId, std::move(mapTemplate));
-            });
-
-        return maps;
-    }
 
     /**
      * DataBuilder가 생성한 표를 생성된 역직렬화(DesignData::Parse<표>)로 읽는다.
@@ -306,41 +228,19 @@ namespace
 
     //~ 표 사이의 검사
 
-    /** 포털 목적지와 스폰 몬스터가 다른 표에 있는지 본다. */
-    void CheckMapReferences(const GamedataTables& tables)
+    /**
+     * 리스폰 지점이 있는 지역이 마을이다. 마을이 하나뿐인지는 DataBuilder가 검사하므로 여기서는 세지 않는다.
+     * 그래도 마을이 없으면 사망한 플레이어와 범위 밖에서 접속한 플레이어를 보낼 곳이 없으므로 부팅을 멈춘다.
+     */
+    int32 FindTownAreaId(const DesignData::AreaTable& areas)
     {
-        for (const auto& [mapId, mapTemplate] : tables.maps)
+        for (const auto& [areaId, area] : areas)
         {
-            for (const PortalTemplate& portal : mapTemplate.portals)
-            {
-                if (tables.maps.contains(portal.dstRoomId) == false)
-                    throw TableError{ format("{} templateId {}: 포털 {}의 목적지 룸 {}이 맵 표에 없다",
-                        GamedataFile::MAPS, mapId, portal.portalId, portal.dstRoomId) };
-            }
-
-            for (int32 monsterId : mapTemplate.monsterIds)
-            {
-                if (tables.monsters.contains(monsterId) == false)
-                    throw TableError{ format("{} templateId {}: 'monsterIds'의 몬스터 {}이 몬스터 표에 없다",
-                        GamedataFile::MAPS, mapId, monsterId) };
-            }
-        }
-    }
-
-    /** 리스폰 지점이 있는 맵이 마을이다. 사망한 플레이어가 돌아갈 곳이 하나로 정해져야 한다. */
-    int32 FindTownRoomId(const map<int32, MapTemplate>& maps)
-    {
-        vector<int32> townIds;
-        for (const auto& [mapId, mapTemplate] : maps)
-        {
-            if (mapTemplate.respawnPoint.has_value())
-                townIds.push_back(mapId);
+            if (area.HasRespawnPoint)
+                return areaId;
         }
 
-        if (townIds.size() != 1)
-            throw TableError{ format("{}: 리스폰 지점이 있는 맵(마을)이 하나여야 하는데 {}개다", GamedataFile::MAPS, townIds.size()) };
-
-        return townIds.front();
+        throw TableError{ format("{}: 리스폰 지점이 있는 지역(마을)이 없다", DesignData::AREA_FILE) };
     }
 
     /**
@@ -358,17 +258,13 @@ namespace
         throw TableError{ format("{}: 재화 종류가 GOLD인 재화가 없다", DesignData::CURRENCY_FILE) };
     }
 
-    /** 시작 맵은 룸 번호(templateId)가 아니라 맵 번호(mapId)다. 그 맵의 룸이 맵 표에 있어야 새 캐릭터가 들어간다. */
+    /** 시작 맵은 지역 번호가 아니라 맵 번호다. 초기 진행 표는 아직 옛 변환기의 표라서 맵 표를 참조로 검사하지 못하므로 여기서 대조한다. */
     void CheckStartMap(const GamedataTables& tables)
     {
+        // TODO: 초기 진행 표를 DataBuilder로 옮기면 시작 맵을 맵 표 참조 열로 바꾸고 이 대조를 지운다.
         const int32 startMapId = tables.initialProgress.startMapId;
-        for (const auto& [roomId, mapTemplate] : tables.maps)
-        {
-            if (mapTemplate.mapId == startMapId)
-                return;
-        }
-
-        throw TableError{ format("{}: 'startMapId' {}가 맵 표의 mapId에 없다", GamedataFile::INITIAL_PROGRESS, startMapId) };
+        if (tables.maps.contains(startMapId) == false)
+            throw TableError{ format("{}: 'startMapId' {}가 맵 표에 없다", GamedataFile::INITIAL_PROGRESS, startMapId) };
     }
 }
 
@@ -376,8 +272,6 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
 {
     try
     {
-        tables.maps = ParseMaps(GamedataFile::MAPS, documents.maps);
-
         tables.currencies = ParseGenerated(documents.currencies, DesignData::ParseCurrency);
         tables.items = ParseGenerated(documents.items, DesignData::ParseItem);
         tables.itemEquipStats = ParseGenerated(documents.itemEquipStats, DesignData::ParseItemEquipStat);
@@ -386,12 +280,13 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.classLevelStats = ParseGenerated(documents.classLevelStats, DesignData::ParseClassLevelStat);
         tables.monsters = ParseGenerated(documents.monsters, DesignData::ParseMonster);
         tables.dropGroups = ParseGenerated(documents.dropGroups, DesignData::ParseDropGroup);
+        tables.maps = ParseGenerated(documents.maps, DesignData::ParseMap);
+        tables.areas = ParseGenerated(documents.areas, DesignData::ParseArea);
         tables.initialProgress = ParseInitialProgress(GamedataFile::INITIAL_PROGRESS, documents.initialProgress);
         tables.inventorySlotCounts = ParseInventorySections(GamedataFile::INVENTORY_SECTIONS, documents.inventorySections);
         tables.quickSlotCount = ParseQuickSlotCount(GamedataFile::QUICK_SLOTS, documents.quickSlots);
 
-        CheckMapReferences(tables);
-        tables.townRoomId = FindTownRoomId(tables.maps);
+        tables.townAreaId = FindTownAreaId(tables.areas);
         tables.goldCurrencyId = FindGoldCurrencyId(tables.currencies);
         CheckStartMap(tables);
     }

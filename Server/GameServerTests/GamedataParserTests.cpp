@@ -23,6 +23,7 @@ namespace
     constexpr int32 POTION_ID = 2000;
     constexpr int32 MONSTER_ID = 5000;
     constexpr int32 DROP_GROUP_ID = 1;
+    constexpr int32 MAP_ID = 1111;
     constexpr int32 TOWN_ID = 10;
     constexpr int32 FIELD_ID = 20;
     constexpr int32 GOLD_ID = 1;
@@ -96,32 +97,37 @@ namespace
         return Json{{"posX", x}, {"posY", y}, {"posZ", z}};
     }
 
+    /** DataBuilder가 생성하는 맵 표의 행. 이름은 클라이언트만 쓴다. */
+    Json MakeMap()
+    {
+        return Json{{"Id", MAP_ID}};
+    }
+
+    /** DataBuilder가 생성하는 지역 표의 행. 포털은 지역 아래 Portals에 중첩된다. */
     Json MakeTown()
     {
         Json portal = {
-            {"portalId", 11}, {"type", "room"}, {"src", MakePos(-1200, 1000, 0)},
-            {"dst", {{"templateId", FIELD_ID}, {"posX", -8000}, {"posY", 10000}, {"posZ", 0}, {"yaw", 180.0}}},
+            {"Id", 11}, {"Type", "AREA"}, {"SrcX", -1200}, {"SrcY", 1000}, {"SrcZ", 0}, {"Radius", 500},
+            {"DestAreaId", FIELD_ID}, {"DestX", -8000}, {"DestY", 10000}, {"DestZ", 0}, {"DestYaw", 180.0},
         };
 
         return Json{
-            {"templateId", TOWN_ID}, {"mapId", 1111}, {"mapName", "마을"}, {"mapType", "safe zone"},
-            {"hasRespawnPoint", true}, {"centerPos", MakePos(0, 0, 0)},
-            {"widthHalfExtent", 1500}, {"depthHalfExtent", 1500}, {"respawnPoint", MakePos(10, 20, 0)},
-            {"portals", {{"lists", Json::array({portal})}}},
-            {"monsterIds", Json::array()}, {"maxMonsterCount", nullptr}, {"monsterRespawnTime", nullptr},
-            {"portalRadius", 500},
+            {"Id", TOWN_ID}, {"MapId", MAP_ID}, {"HasRespawnPoint", true},
+            {"Monsters", Json::array()}, {"MaxMonsterCount", 0}, {"MonsterRespawnSec", 0},
+            {"CenterX", 0}, {"CenterY", 0}, {"CenterZ", 0}, {"HalfExtentX", 1500}, {"HalfExtentY", 1500},
+            {"RespawnX", 10}, {"RespawnY", 20}, {"RespawnZ", 0},
+            {"Portals", Json::array({portal})},
         };
     }
 
     Json MakeField()
     {
         return Json{
-            {"templateId", FIELD_ID}, {"mapId", 1111}, {"mapName", "사냥터"}, {"mapType", "hunting field"},
-            {"hasRespawnPoint", false}, {"centerPos", MakePos(-10000, 10000, 0)},
-            {"widthHalfExtent", 2000}, {"depthHalfExtent", 2000}, {"respawnPoint", nullptr},
-            {"portals", {{"lists", Json::array()}}},
-            {"monsterIds", Json::array({MONSTER_ID})}, {"maxMonsterCount", 10}, {"monsterRespawnTime", 10},
-            {"portalRadius", 300.5},
+            {"Id", FIELD_ID}, {"MapId", MAP_ID}, {"HasRespawnPoint", false},
+            {"Monsters", Json::array({MONSTER_ID})}, {"MaxMonsterCount", 10}, {"MonsterRespawnSec", 10},
+            {"CenterX", -10000}, {"CenterY", 10000}, {"CenterZ", 0}, {"HalfExtentX", 2000}, {"HalfExtentY", 1000.5},
+            {"RespawnX", nullptr}, {"RespawnY", nullptr}, {"RespawnZ", nullptr},
+            {"Portals", Json::array()},
         };
     }
 
@@ -158,7 +164,8 @@ namespace
         documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
         documents.monsters = Json::array({MakeMonster()});
         documents.dropGroups = Json::array({MakeDropGroup()});
-        documents.maps = Json::array({MakeTown(), MakeField()});
+        documents.maps = Json::array({MakeMap()});
+        documents.areas = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
         documents.initialProgress = Json::array({MakeInitialProgress()});
         documents.inventorySections = Json::array({
@@ -231,25 +238,26 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_EQ(warriorLevel2->second.MagicalAttack, 2);
     EXPECT_FALSE(tables.classLevelStats.contains({ Protocol::CHARACTER_CLASS_MAGE, 1 })) << "표에 없는 직업에는 행이 없다";
 
-    EXPECT_EQ(tables.townRoomId, TOWN_ID) << "마을은 리스폰 지점이 있는 맵이다";
-    const MapTemplate& town = tables.maps.at(TOWN_ID);
-    ASSERT_TRUE(town.respawnPoint.has_value());
-    EXPECT_FLOAT_EQ(town.respawnPoint->y, 20.f);
-    ASSERT_EQ(town.portals.size(), 1u);
-    EXPECT_EQ(town.portals[0].portalId, 11);
-    EXPECT_EQ(town.portals[0].dstRoomId, FIELD_ID);
-    EXPECT_FLOAT_EQ(town.portals[0].dstYaw, 180.f);
-    EXPECT_FLOAT_EQ(town.portals[0].srcPos.x, -1200.f);
-    EXPECT_FLOAT_EQ(town.portals[0].srcPos.y, 1000.f);
-    EXPECT_FLOAT_EQ(town.portalRadius, 500.f);
-    EXPECT_EQ(town.mapId, 1111);
-    EXPECT_EQ(town.maxMonsterCount, 0) << "null인 몬스터 수는 0이다";
+    ASSERT_TRUE(tables.maps.contains(MAP_ID));
+    EXPECT_EQ(tables.townAreaId, TOWN_ID) << "마을은 리스폰 지점이 있는 지역이다";
+    const DesignData::AreaRow& town = tables.areas.at(TOWN_ID);
+    EXPECT_EQ(town.MapId, MAP_ID);
+    EXPECT_EQ(town.RespawnY, optional<float>(20.f));
+    ASSERT_EQ(town.Portals.size(), 1u);
+    EXPECT_EQ(town.Portals[0].Id, 11);
+    EXPECT_EQ(town.Portals[0].DestAreaId, FIELD_ID);
+    EXPECT_FLOAT_EQ(town.Portals[0].DestYaw, 180.f);
+    EXPECT_FLOAT_EQ(town.Portals[0].SrcX, -1200.f);
+    EXPECT_FLOAT_EQ(town.Portals[0].SrcY, 1000.f);
+    EXPECT_FLOAT_EQ(town.Portals[0].Radius, 500.f);
+    EXPECT_EQ(town.MaxMonsterCount, 0);
 
-    const MapTemplate& field = tables.maps.at(FIELD_ID);
-    EXPECT_FALSE(field.respawnPoint.has_value());
-    EXPECT_EQ(field.monsterIds, vector<int32>({MONSTER_ID}));
-    EXPECT_EQ(field.maxMonsterCount, 10);
-    EXPECT_FLOAT_EQ(field.portalRadius, 300.5f);
+    const DesignData::AreaRow& field = tables.areas.at(FIELD_ID);
+    EXPECT_EQ(field.RespawnX, nullopt);
+    EXPECT_EQ(field.Monsters, vector<int32>({MONSTER_ID}));
+    EXPECT_EQ(field.MaxMonsterCount, 10);
+    EXPECT_FLOAT_EQ(field.HalfExtentY, 1000.5f);
+    EXPECT_TRUE(field.Portals.empty());
 
     EXPECT_EQ(tables.goldCurrencyId, GOLD_ID) << "골드는 재화 종류가 GOLD인 재화다";
     ASSERT_TRUE(tables.currencies.contains(GOLD_ID));
@@ -355,49 +363,21 @@ TEST(GamedataParserTest, ClassLevelStatWithUnknownClassIsRejected)
     ExpectMentions(ErrorOf(documents), {DesignData::CLASS_LEVEL_STAT_FILE, "2번째 행", "Class"});
 }
 
-TEST(GamedataParserTest, RespawnMapWithoutRespawnPointIsRejected)
+// 마을이 없으면 사망한 플레이어를 보낼 곳이 없다. 마을이 둘 이상인지는 DataBuilder가 검사한다.
+TEST(GamedataParserTest, MissingTownIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.maps[0]["respawnPoint"] = nullptr;
+    documents.areas[0]["HasRespawnPoint"] = false;
 
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "1번째 행", "respawnPoint"});
+    ExpectMentions(ErrorOf(documents), {DesignData::AREA_FILE, "마을"});
 }
 
-TEST(GamedataParserTest, ExactlyOneTownIsRequired)
+TEST(GamedataParserTest, NestedPortalFieldIsChecked)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.maps[0]["hasRespawnPoint"] = false;
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "마을"});
+    documents.areas[0]["Portals"][0].erase("Radius");
 
-    documents = MakeValidDocuments();
-    documents.maps[1]["hasRespawnPoint"] = true;
-    documents.maps[1]["respawnPoint"] = MakePos(0, 0, 0);
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "마을"});
-}
-
-TEST(GamedataParserTest, PortalToUnknownMapIsRejected)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.maps[0]["portals"]["lists"][0]["dst"]["templateId"] = 99;
-
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "templateId 10", "99"});
-}
-
-// 반경이 0 이하면 어느 위치에서도 포털을 탈 수 없다. 표가 틀린 것이므로 부팅에서 막는다.
-TEST(GamedataParserTest, NonPositivePortalRadiusIsRejected)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.maps[1]["portalRadius"] = 0;
-
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "2번째 행", "portalRadius"});
-}
-
-TEST(GamedataParserTest, UnknownMonsterInMapIsRejected)
-{
-    GamedataDocuments documents = MakeValidDocuments();
-    documents.maps[1]["monsterIds"] = Json::array({MONSTER_ID, 5999});
-
-    ExpectMentions(ErrorOf(documents), {GamedataFile::MAPS, "templateId 20", "5999"});
+    ExpectMentions(ErrorOf(documents), {DesignData::AREA_FILE, "1번째 행", "'Portals' 1번째 원소", "Radius"});
 }
 
 // 서버는 재화 종류로 골드를 찾는다. 골드가 없으면 DB에 쓸 재화 번호가 없다.
@@ -427,7 +407,7 @@ TEST(GamedataParserTest, DuplicateCurrencyIdIsRejected)
     ExpectMentions(ErrorOf(documents), {DesignData::CURRENCY_FILE, "2번째 행", "키가 겹친다"});
 }
 
-// 시작 맵은 맵 표의 mapId다. 룸 번호(templateId)를 적으면 새 캐릭터가 들어갈 맵이 없다.
+// 시작 맵은 맵 표의 맵 번호다. 지역 번호를 적으면 새 캐릭터가 들어갈 맵이 없다.
 TEST(GamedataParserTest, StartMapNotInMapTableIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
@@ -561,20 +541,21 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.items = ReadJsonFile(generatedDir / DesignData::ITEM_FILE);
     documents.itemEquipStats = ReadJsonFile(generatedDir / DesignData::ITEM_EQUIP_STAT_FILE);
     documents.itemConsumeEffects = ReadJsonFile(generatedDir / DesignData::ITEM_CONSUME_EFFECT_FILE);
-    documents.maps = ReadJsonFile(dir / GamedataFile::MAPS);
+    documents.maps = ReadJsonFile(generatedDir / DesignData::MAP_FILE);
+    documents.areas = ReadJsonFile(generatedDir / DesignData::AREA_FILE);
     documents.monsters = ReadJsonFile(generatedDir / DesignData::MONSTER_FILE);
     documents.dropGroups = ReadJsonFile(generatedDir / DesignData::DROP_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(dir / GamedataFile::INITIAL_PROGRESS);
     documents.inventorySections = ReadJsonFile(dir / GamedataFile::INVENTORY_SECTIONS);
     documents.quickSlots = ReadJsonFile(dir / GamedataFile::QUICK_SLOTS);
-    ASSERT_TRUE(documents.maps.is_array()) << "기획표를 찾지 못했다: " << dir.string();
+    ASSERT_TRUE(documents.initialProgress.is_array()) << "기획표를 찾지 못했다: " << dir.string();
     ASSERT_TRUE(documents.items.is_array()) << "생성된 기획 데이터를 찾지 못했다: " << generatedDir.string();
 
     GamedataTables tables;
     const optional<string> error = GamedataParser::Parse(documents, OUT tables);
     EXPECT_FALSE(error.has_value()) << error.value_or("");
-    EXPECT_EQ(tables.townRoomId, 10);
+    EXPECT_EQ(tables.townAreaId, 10);
     ASSERT_FALSE(tables.levels.empty());
     EXPECT_EQ(tables.levels.rbegin()->first, 50);
 
@@ -608,4 +589,22 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(tables.monsters.at(5000).MinGold, 10);
     EXPECT_EQ(tables.monsters.at(5000).MaxGold, 20);
     EXPECT_EQ(tables.monsters.size(), 9u);
+
+    // 맵 표를 맵, 지역, 포털 표로 나누면서 옮긴 값이다. 포털 번호는 클라이언트 레벨의 포털이 보낸다.
+    ASSERT_EQ(tables.maps.size(), 1u);
+    EXPECT_TRUE(tables.maps.contains(1111));
+    ASSERT_EQ(tables.areas.size(), 4u);
+    const DesignData::AreaRow& town = tables.areas.at(10);
+    EXPECT_EQ(town.RespawnX, optional<float>(0.f));
+    ASSERT_EQ(town.Portals.size(), 3u);
+    EXPECT_EQ(town.Portals[0].Id, 11);
+    EXPECT_EQ(town.Portals[0].DestAreaId, 20);
+    EXPECT_FLOAT_EQ(town.Portals[0].Radius, 500.f);
+    const DesignData::AreaRow& advancedField = tables.areas.at(40);
+    EXPECT_EQ(advancedField.MapId, 1111);
+    EXPECT_FLOAT_EQ(advancedField.CenterY, -10000.f);
+    EXPECT_FLOAT_EQ(advancedField.HalfExtentX, 2500.f);
+    EXPECT_EQ(advancedField.Monsters, vector<int32>({5006, 5007, 5008}));
+    ASSERT_EQ(advancedField.Portals.size(), 1u);
+    EXPECT_FLOAT_EQ(advancedField.Portals[0].DestY, -1000.f);
 }

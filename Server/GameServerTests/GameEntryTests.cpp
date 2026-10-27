@@ -10,6 +10,7 @@
 #include "DB/ItemRows.h"
 #include "TestItemTables.h"
 #include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     게임 입장 테스트
@@ -99,9 +100,7 @@ protected:
         session = make_shared<GameSession>();
         sessionManager.RegisterUser(USER_ID, session);
 
-        MapTemplate enterRoomTemplate;
-        enterRoomTemplate.templateId = ENTER_ROOM_ID;
-        enterRoom = Room::Create(enterRoomTemplate);
+        enterRoom = Room::Create(TestAreaTables::MakeArea(ENTER_ROOM_ID, 0));
     }
 
     void TearDown() override

@@ -122,7 +122,7 @@
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
 C++ 타입을 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
-2026년 10월 27일(#318) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
+2026년 10월 27일(#316) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 나머지 표는 아래 「게임 데이터」의 옛 변환기가 만든다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 아직 만들지 않는다.
 
 ### 재생성
@@ -258,7 +258,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| 표 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름, 중첩된 행 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
@@ -273,9 +273,11 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
 세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
+지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
 
 테스트는 생성된 행을 채운 `GamedataTables`를 `Gamedata::Install`로 주입한다. 아이템은 `Server/GameServerTests/TestItemTables.h`로,
-레벨은 `Server/GameServerTests/TestLevelTables.h`로 넣는다. 레벨 헬퍼는 레벨 표의 행과 그 직업의 능력치 행을 함께 넣는다.
+레벨은 `Server/GameServerTests/TestLevelTables.h`로, 지역과 포털은 `Server/GameServerTests/TestAreaTables.h`로 넣는다. 레벨 헬퍼는 레벨 표의 행과 그 직업의 능력치 행을 함께 넣는다.
+지역 헬퍼는 지역의 맵을 맵 표에도 넣고, 마을을 넣으면 마을의 지역 번호도 정한다.
 장비에는 장비 능력치 행을, 소모품에는 소모 효과 행을 함께 넣고, `MaxStack`을 채운다.
 — 생성된 행의 `MaxStack` 기본값은 0이다. 0이면 아이템이 인벤토리에 들어가지 않는다. 실제 표에는 DataBuilder가 0을 막는다.
 
@@ -360,11 +362,42 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 마법사처럼 새 직업을 더할 때는 `ClassLevelStat.xlsx`에 그 직업의 시트를 더한다. 로비 표에 생성할 수 있는 직업으로 넣으면
 서버가 기동할 때 `Core/DataCrossCheck`가 이 표에 그 직업이 있는지 대조한다.
 
+### 맵, 지역, 포털 표
+
+용어는 `CONTEXT.md`의 맵과 지역을 따른다. 옛 맵 표의 행은 맵이 아니라 맵 1111 안의 지역이었다. 2026년 10월 27일(#316)에
+옛 맵 워크북(`Original_Map.xlsx`)을 세 워크북으로 나눠 옮겼다.
+
+| 워크북 | 키 | 담는 것 |
+|---|---|---|
+| `Map.xlsx` | `Id` | 맵 이름. 시작 맵과 플레이어의 마지막 위치가 이 번호를 가리킨다 |
+| `Area.xlsx` | `Id` | 소속 맵(`MapId`, `ref:Map`), 이름, 유형(`Type`, `enum:AreaType`), 리스폰 지점 유무, 나오는 몬스터(`Monsters`, `ref[]:Monster`), 최대 몬스터 수, 몬스터 리스폰 시간(`MonsterRespawnSec`), 중심 좌표와 X, Y 방향 반경, 리스폰 지점 좌표(`float?`) |
+| `Portal.xlsx` | `Id` | 소속 지역(`AreaId`, `parent:Area`), 유형(`Type`, `enum:PortalType`), 출발 좌표, 반경(`Radius`), 도착 지역(`DestAreaId`, `ref:Area`), 도착 좌표와 방향 |
+
+**포털은 `Area.json`의 각 지역 아래 `Portals`에 중첩된다.** 설정 파일에서 `Portal`에 `nest = "Portals"`를 적었다. `Portal.json`은 없다.
+포털 번호는 클라이언트가 포털 이동을 요청할 때 보내는 값이라 옛 번호를 그대로 옮겼다.
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- 지역의 반경(`HalfExtentX`, `HalfExtentY`)과 포털의 반경(`Radius`)은 0보다 크다
+- 지역의 `MaxMonsterCount`와 `MonsterRespawnSec`는 0 이상이다
+- `HasRespawnPoint`가 참인 지역(마을)은 정확히 하나다
+- 리스폰 지점이 있는 지역은 리스폰 좌표 셋을 모두 채우고, 없는 지역은 모두 비워 둔다
+
+없는 맵, 몬스터, 지역을 가리키는 것은 참조 규칙이 막는다. 서버는 마을이 없을 때만 부팅을 멈춘다(사망한 플레이어를 보낼 곳이 없어서).
+
+**지금은 지역 하나를 룸 하나가 맡고, 지역 번호를 룸 번호로 쓴다.** 그 규칙은 `RoomTransfer`의 `SelectRoomForArea` 한 곳에 있다.
+지역과 포털 표의 공간 열(중심, 반경, 리스폰 지점, 포털 좌표)은 에디터에서 추출하는 작업(`docs/backlog.md` 31번)이 대체한다.
+
+- 옛 열의 대응: `depth_half_extent`가 `HalfExtentX`, `width_half_extent`가 `HalfExtentY`다. 옛 `portal_radius`는 지역 하나에 하나였고, 지금은 포털마다 `Radius`가 있다
+- 유형 이름: 옛 지역 유형 `safe zone`과 `hunting field`는 `SAFE_ZONE`과 `HUNTING_FIELD`가 됐다. 옛 포털 유형 `room`은 `AREA`가 됐다. 기획 데이터는 룸을 모르기 때문이다
+- 서버가 읽지 않는 열: 지역 유형과 이름은 대상이 `client`다. 포털 유형과 몬스터 리스폰 시간은 서버로 가지만 아직 읽는 코드가 없다. 사망한 몬스터의 리젠은 백로그에 있다
+- 맵 1111의 이름: 옛 표에 없어서 「시작의 섬」으로 정했다. 클라이언트 산출물이 생기면(#319) 보이는 이름이다
+
 ---
 
 ## 게임 데이터
 
-**원본**: `DesignData/Original_*.xlsx` (Map, Quest, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
+**원본**: `DesignData/Original_*.xlsx` (Quest, Initial_Progress, Inventory_Section, Quick_Slot, Lobby)
 
 이 절은 옛 변환기(`Tools/ExcelToJsonConverter/`)의 경로다. 위 DataBuilder로 옮긴 표는 여기서 빠진다.
 
@@ -382,14 +415,14 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 
 `DesignData/GenJsonFile.bat` 실행. 각 워크북을 JSON으로 변환한 뒤 **MOVE**한다.
 
-**산출물은 아래 표의 8개가 전부다.**
+**산출물은 아래 표의 6개가 전부다.**
 — 와일드카드로 적으면 생성기가 만들지 않는 파일이 같은 폴더에 있어도 문서와 모순되지 않는다.
 
 | 목적지 | 산출물 |
 |---|---|
-| `Server/GameServer/Game/Data/Json/` | `S_Map.json` · `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
+| `Server/GameServer/Game/Data/Json/` | `S_Quest.json` · `S_Initial_Progress.json` · `S_Inventory_Section.json` · `S_Quick_Slot.json` |
 | `Server/GameServer/Lobby/Data/Json/` | `S_Lobby.json` |
-| `P1/Content/P1/Data/DataTables/` | `C_Map.json` · `C_Quest.json` |
+| `P1/Content/P1/Data/DataTables/` | `C_Quest.json` |
 
 **이 목록에 없는 `C_` 또는 `S_` 접두사 JSON은 생성기의 산출물이 아니다.** 엑셀 원본을 고쳐도
 갱신되지 않는다. 발견하면 쓰이는지 확인하고, 쓰이지 않으면 지운다.
@@ -400,6 +433,9 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 
 **`C_Monster.json`도 2026년 10월 27일(#315)부터 생성기의 산출물이 아니지만 #320까지 남긴다.** 몬스터 표를 DataBuilder로 옮긴 시점의 값이다.
 클라이언트의 몬스터 데이터 테이블이 이 값을 읽는다. 그 사이에 몬스터 수치를 바꾸면 클라이언트에는 반영되지 않는다.
+
+**`C_Map.json`도 2026년 10월 27일(#316)부터 생성기의 산출물이 아니지만 #320까지 남긴다.** 맵 표를 나눈 시점의 값이다.
+그 사이에 지역의 이름이나 유형을 바꾸면 클라이언트에는 반영되지 않는다.
 
 초기 진행, 인벤토리 구역, 퀵슬롯, 로비 표는 서버만 읽는다. `GenJsonFile.bat`이 변환기가 만든 `C_*.json`을 바로 지운다.
 
@@ -413,7 +449,7 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 
 | 원본 | 열 | 규칙 |
 |---|---|---|
-| `Original_Initial_Progress.xlsx` (초기 진행) | `start_map_id` · `start_pos` · `start_yaw` · `start_gold` | 행이 정확히 하나다. `start_map_id`는 룸 번호(`template_id`)가 아니라 맵 표의 `map_id`다. 시작 골드는 0 이상이다 |
+| `Original_Initial_Progress.xlsx` (초기 진행) | `start_map_id` · `start_pos` · `start_yaw` · `start_gold` | 행이 정확히 하나다. `start_map_id`는 지역 번호가 아니라 맵 표(`Map.xlsx`)의 맵 번호다. 시작 골드는 0 이상이다 |
 | `Original_Inventory_Section.xlsx` (인벤토리 구역) | `item_type` · `slot_count` | `NONE`을 뺀 아이템 종류마다 행이 정확히 하나다. 칸 수는 1 이상이다 |
 | `Original_Quick_Slot.xlsx` (퀵슬롯) | `slot_count` | 행이 정확히 하나다. 퀵슬롯 개수는 1~256이다(DB의 퀵슬롯 번호 열이 `TINYINT`) |
 | `Original_Lobby.xlsx` (로비) | `default_character_slot_count` · `creatable_classes` | 행이 정확히 하나다. 슬롯 수는 1~255다(DB 열이 `TINYINT`). `creatable_classes`는 소문자 직업 이름의 JSON 배열(`["warrior"]`)이고, 비어 있거나 겹치면 안 된다 |
@@ -447,16 +483,15 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 
 ### 로딩
 
-서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 다섯 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표, 드롭 그룹 표, 레벨 두 표, 데이터 버전을,
+서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Json/`에서 `S_Quest.json`을 뺀 세 파일과 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표, 드롭 그룹 표, 레벨 두 표, 맵 표, 지역 표, 데이터 버전을,
 `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로 `S_Lobby.json`을 읽는다.
 `GamedataParser::Parse`가 옛 변환기의 표를 검증해 템플릿 구조체(`Game/Data/Templates.h`)로 바꾸고, DataBuilder의 표는 생성된
 `DesignData::Parse<표>`로 읽는다. 모든 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`로 템플릿과 생성된 행만 읽는다.
 
-**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Map.json` 2번째 행(templateId 20): 'portalRadius'가 수가 아니다」처럼
-파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 생성된 표에서 열거형 값 이름이 아닌 값,
-0 이하의 포털 반경(`portalRadius`), 중복된 templateId, 맵 표에 없는 포털 목적지와 몬스터 표에 없는 스폰 몬스터가 여기 걸린다.
-위 「서버 전용 표」의 규칙을 어긴 행도 같다.
+**틀린 행이 하나라도 있으면 서버가 뜨지 않는다.** 「`S_Quick_Slot.json` 1번째 행: 'slotCount'가 정수가 아니다」처럼
+파일과 행과 필드를 로그에 남기고 종료 코드 1로 끝난다. 필수 열이 없거나 타입이 틀린 행, 생성된 표에서 열거형 값 이름이 아닌 값과 겹친 키,
+맵 표에 없는 시작 맵이 여기 걸린다. 위 「서버 전용 표」의 규칙을 어긴 행도 같다.
 — 게임 중에 Json을 읽던 때는 틀린 행이 룸 스레드의 예외가 되거나 조용히 기본값으로 동작했다.
 
 세 값은 코드 상수가 아니라 기획표에서 온다.
@@ -464,7 +499,7 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 | 값 | 원천 |
 |---|---|
 | 최대 레벨 | 레벨 표(`Level.xlsx`)의 마지막 레벨. 모든 직업이 같다. 레벨이 1부터 빠짐없이 이어지는지는 DataBuilder가 검사한다 |
-| 마을 룸 번호 | 맵 표에서 `hasRespawnPoint`가 참인 유일한 맵. 둘 이상이거나 없으면 부팅이 실패한다 |
+| 마을 | 지역 표(`Area.xlsx`)에서 `HasRespawnPoint`가 참인 지역(`Gamedata::GetTownAreaId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 | 골드의 재화 번호 | 재화 표(`Currency.xlsx`)에서 `Type`이 `GOLD`인 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 
 DataBuilder로 옮기지 않은 표에서 서버가 읽는 열을 늘릴 때는 `JsonProperty.h`의 열 이름, `Templates.h`의 필드, `GamedataParser.cpp`의 변환을 함께 고친다.

@@ -698,7 +698,7 @@ PlayerSaveData Player::MakeSaveData() const
 
 // 사망한 채 접속이 끊기면 사망 화면에서 마을 리스폰을 누른 것과 같은 상태로 저장한다.
 // 사망 여부는 저장되지 않으므로, 그대로 저장하면 다시 접속했을 때 HP 0으로 살아서 들어온다.
-// 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 맵 표에서 찾은 마을을 받는다.
+// 저장은 룸에서 뺀 뒤에 뜬다. 그래서 소속 룸이나 전역 룸 관리자를 읽지 않고 호출자가 지역 표에서 찾은 마을을 받는다.
 void Player::ApplyTownRespawnForSave(const TownRespawn& town)
 {
     ProcessRespawn(Protocol::RESPAWN_TYPE_TOWN, town.pos);

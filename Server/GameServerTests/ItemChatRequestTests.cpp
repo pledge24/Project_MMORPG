@@ -10,6 +10,7 @@
 #include "RecordingSession.h"
 #include "RoomManagerTestAccess.h"
 #include "TestLevelTables.h"
+#include "TestAreaTables.h"
 
 /*--------------------------------------------------------------
     룸의 아이템과 채팅 요청 테스트
@@ -40,8 +41,8 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
         tables.inventorySlotCounts = MakeInventorySections();
-        tables.maps[ROOM_ID] = MakeRoomTemplate(ROOM_ID, 0.f);
-        tables.maps[OTHER_ROOM_ID] = MakeRoomTemplate(OTHER_ROOM_ID, 20000.f);
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f));
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(OTHER_ROOM_ID, 0, 20000.f, 0.f, 5000.f));
         Gamedata::Install(std::move(tables));
 
         rooms = make_unique<ScopedTestRoomManager>();
@@ -71,16 +72,6 @@ protected:
         otherRoom.reset();
         rooms.reset();
         Gamedata::Install(GamedataTables());
-    }
-
-    static MapTemplate MakeRoomTemplate(int32 roomId, float centerX)
-    {
-        MapTemplate mapTemplate;
-        mapTemplate.templateId = roomId;
-        mapTemplate.center = TemplatePos{ centerX, 0.f, 0.f };
-        mapTemplate.depthHalfExtent = 5000.f;
-        mapTemplate.widthHalfExtent = 5000.f;
-        return mapTemplate;
     }
 
     PlayerRef EnterPlayer(const RoomRef& targetRoom, shared_ptr<RecordingSession>& outSession, const string& name)
