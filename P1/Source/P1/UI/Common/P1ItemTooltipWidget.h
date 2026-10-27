@@ -22,10 +22,7 @@ class P1_API UP1ItemTooltipWidget : public UP1UserWidget
 
     //~ Item Display
 public:
-    /**
-     * 아이콘은 부르는 쪽이 에셋 테이블에서 찾아 넘긴다. nullptr이면 아이콘을 바꾸지 않는다.
-     * 장비 능력치와 소모 효과는 아이템 번호로 직접 찾는다.
-     */
+    /** 아이콘은 부르는 쪽이 에셋 테이블에서 찾아 넘긴다. nullptr이면 아이콘을 바꾸지 않는다. */
     void Init(const FP1ItemRow& Item, UTexture2D* Icon);
 
     UPROPERTY(meta = (BindWidget))

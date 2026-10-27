@@ -44,14 +44,18 @@ private:
     void Install(TSoftObjectPtr<UDataTable>& Slot, UScriptStruct* RowStruct, const TCHAR* TableName)
     {
         FString Json;
-        FFileHelper::LoadFileToString(Json, *FPaths::Combine(FPaths::ProjectDir(), TEXT("DesignData/Generated"), FString(TableName) + TEXT(".json")));
+        const FString Path = FPaths::Combine(FPaths::ProjectDir(), TEXT("DesignData/Generated"), FString(TableName) + TEXT(".json"));
+        const bool bLoaded = FFileHelper::LoadFileToString(Json, *Path);
 
         // 에디터 메뉴와 같은 설정으로 채운다. 테스트 도중 GC가 돌아도 테이블이 남도록 루트에 둔다.
         UDataTable* Table = NewObject<UDataTable>(GetTransientPackage());
         Table->AddToRoot();
         Table->RowStruct = RowStruct;
         Table->ImportKeyField = TEXT("RowName");
-        Table->CreateTableFromJSONString(Json);
+        const TArray<FString> Problems = Table->CreateTableFromJSONString(Json);
+
+        // 실패를 넘기면 행을 찾지 못한 단언만 실패해서 원인이 보이지 않는다. ensure는 테스트를 실패로 만든다.
+        ensureMsgf(bLoaded && Problems.IsEmpty(), TEXT("%s를 채우지 못함: %s"), *Path, *FString::Join(Problems, TEXT(" / ")));
 
         Installed.Add({ &Slot, Slot, Table });
         Slot = Table;
