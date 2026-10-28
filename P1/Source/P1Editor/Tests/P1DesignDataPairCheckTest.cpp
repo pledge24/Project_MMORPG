@@ -1,7 +1,8 @@
 // 기획 데이터 테이블과 에셋 테이블의 짝 검사가 찾는 문제와 그 심각도를 고정한다.
 //
 // 왜 이것인가: 엑셀에 아이템이나 몬스터를 더하고 에셋 테이블에 같은 번호의 행을 넣지 않으면, 아이템은 아이콘과 메시가 비고
-// 몬스터는 스폰되지 않는다. 남는 흔적은 실행 중의 로그 경고뿐이었다. 짝이 없는 행, 빈 참조, 깨진 참조는 오류로 저장 때 드러나야 하고,
+// 몬스터는 스폰되지 않는다. 몬스터는 공용 클래스 하나로 스폰되고 행이 외형을 정하므로, 메시나 애니메이션 블루프린트가 빈 행은
+// 보이지 않거나 움직이지 않는 몬스터가 된다. 남는 흔적은 실행 중의 로그 경고뿐이었다. 짝이 없는 행, 빈 참조, 깨진 참조는 오류로 저장 때 드러나야 하고,
 // 기획에서 지운 행이 에셋 테이블에 남은 것은 게임을 깨지 않으므로 경고다.
 //
 // 실행: pwsh P1/Scripts/Run-UeTests.ps1 -Filter P1.Editor.DesignDataPairCheck
@@ -81,23 +82,32 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("깨진 경로"), CountIssues(Issues, true, T::Missing), 2);
     }
 
-    // 2) 몬스터. 몬스터 클래스는 블루프린트든 네이티브 클래스든 된다.
+    // 2) 몬스터. 메시와 애니메이션 블루프린트는 필수이고, 몽타주와 머티리얼은 깨졌을 때만 오류다.
+    //    애니메이션 블루프린트 자리에는 네이티브 애님 인스턴스 클래스도 된다.
     {
-        const UDataTable* MonsterTable = Tables.MakeDesignTable({ 5000, 5001, 5002, 5003, 5004 });
+        const UDataTable* MonsterTable = Tables.MakeDesignTable({ 5000, 5001, 5002, 5003, 5004, 5005, 5006, 5007 });
         const UDataTable* AssetTable = Tables.MakeMonsterAssetTable({
-            { 5000, T::NativeClass },
-            { 5001, TEXT("") },
-            { 5002, T::MissingClass },
-            { 5004, T::NativeClass },
-            { 5009, T::NativeClass },
+            { 5000, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
+            { 5001, T::MonsterAsset(TEXT(""), T::NativeAnimClass) },
+            { 5002, T::MonsterAsset(T::SkeletalMesh, TEXT("")) },
+            { 5004, T::MonsterAsset(T::Missing, T::NativeAnimClass) },
+            { 5005, T::MonsterAsset(T::SkeletalMesh, T::MissingClass) },
+            { 5006, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, T::MissingMontage) },
+            { 5007, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, TEXT(""), T::Missing) },
+            { 5009, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
         });
 
         const TArray<FIssue> Issues = FP1DesignDataPairCheck::CheckMonsters(*MonsterTable, *AssetTable);
 
-        TestEqual(TEXT("빈 몬스터 클래스"), CountIssues(Issues, true, TEXT("5001")), 1);
-        TestEqual(TEXT("깨진 몬스터 클래스"), CountIssues(Issues, true, T::MissingClass), 1);
+        TestEqual(TEXT("필수 참조가 모두 찬 몬스터"), CountIssues(Issues, true, TEXT("5000")), 0);
+        TestEqual(TEXT("빈 메시"), CountIssues(Issues, true, TEXT("5001")), 1);
+        TestEqual(TEXT("빈 애니메이션 블루프린트"), CountIssues(Issues, true, TEXT("5002")), 1);
         TestEqual(TEXT("에셋 행이 없는 몬스터"), CountIssues(Issues, true, TEXT("5003")), 1);
-        TestEqual(TEXT("오류 수"), CountIssues(Issues, true), 3);
+        TestEqual(TEXT("깨진 메시"), CountIssues(Issues, true, TEXT("5004")), 1);
+        TestEqual(TEXT("깨진 애니메이션 블루프린트"), CountIssues(Issues, true, T::MissingClass), 1);
+        TestEqual(TEXT("깨진 몽타주"), CountIssues(Issues, true, T::MissingMontage), 1);
+        TestEqual(TEXT("깨진 머티리얼"), CountIssues(Issues, true, TEXT("5007")), 1);
+        TestEqual(TEXT("오류 수"), CountIssues(Issues, true), 7);
         TestEqual(TEXT("기획에서 지운 행은 경고"), CountIssues(Issues, false, TEXT("5009")), 1);
         TestEqual(TEXT("경고 수"), CountIssues(Issues, false), 1);
     }
@@ -105,7 +115,7 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
     // 3) 짝이 모두 맞으면 문제가 없다.
     {
         const UDataTable* MonsterTable = Tables.MakeDesignTable({ 5000 });
-        const UDataTable* AssetTable = Tables.MakeMonsterAssetTable({ { 5000, T::NativeClass } });
+        const UDataTable* AssetTable = Tables.MakeMonsterAssetTable({ { 5000, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) } });
         TestEqual(TEXT("문제 없음"), FP1DesignDataPairCheck::CheckMonsters(*MonsterTable, *AssetTable).Num(), 0);
     }
 

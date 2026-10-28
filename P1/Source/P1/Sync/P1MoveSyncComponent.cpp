@@ -21,12 +21,11 @@ void UP1MoveSyncComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 틱 순서의 선행 조건 설정. 소유 액터의 Tick 뒤, 캐릭터 이동 컴포넌트의 틱 앞에 돌아야
-    // 여기서 넣은 이동 입력과 보정을 캐릭터 이동 컴포넌트가 같은 프레임에 이어받는다.
+    // 틱 순서의 선행 조건 설정. 캐릭터 이동 컴포넌트의 틱 앞에 돌아야 여기서 넣은 이동 입력과 보정을
+    // 캐릭터 이동 컴포넌트가 같은 프레임에 이어받는다. 소유 액터를 선행 조건으로 걸면 안 된다. 엔진이 캐릭터 이동
+    // 컴포넌트를 액터보다 먼저 틱하게 걸어 두므로 순환이 생기고, 엔진은 그 조건을 버리면서 틱마다 경고를 남긴다.
     if (ACharacter* Character = GetOwner<ACharacter>())
     {
-        AddTickPrerequisiteActor(Character);
-
         if (UCharacterMovementComponent* Movement = Character->GetCharacterMovement())
             Movement->AddTickPrerequisiteComponent(this);
     }

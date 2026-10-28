@@ -38,6 +38,9 @@ public:
     bool IsAttacking() const;
     bool CanStartNormalAttack() const;
 
+    /** 콤보 순번 1부터 차례로 재생할 몽타주를 바꾼다. 몬스터처럼 스폰할 때 외형을 입는 크리처가 쓴다. */
+    void SetNormalAttackMontages(const TArray<UAnimMontage*>& Montages);
+
 private:
     /** 몽타주를 재생하고 다른 몽타주는 모두 멈춘다. 재생하지 못하면 nullptr. */
     UAnimInstance* PlayMontage(UAnimMontage* Montage);

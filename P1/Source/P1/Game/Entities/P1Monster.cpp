@@ -1,6 +1,19 @@
 #include "Game/Entities/P1Monster.h"
-
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "Game/Combat/P1AttackSystemComponent.h"
+#include "Game/Data/P1MonsterAssetData.h"
+#include "Materials/MaterialInterface.h"
 #include "Utils/LogCategory.h"
+
+AP1Monster::AP1Monster()
+{
+    // 몬스터는 블루프린트 컴포넌트 없이 이 컴포넌트에 표현 데이터의 공격 몽타주를 넣는다.
+    AttackSystemComponent = CreateDefaultSubobject<UP1AttackSystemComponent>(TEXT("AttackSystem"));
+}
 
 void AP1Monster::Initialize(const Protocol::EntityInfo& EntityInfo)
 {
@@ -32,6 +45,39 @@ void AP1Monster::DespawnAfterDeath()
 {
     // Destroy만 하면 매니저의 등록이 남는다. 등록을 가진 매니저가 구독해서 등록과 액터를 함께 지운다.
     OnDespawnReady.Broadcast(this);
+}
+
+void AP1Monster::ApplyAssetData(const FP1MonsterAssetData& AssetData)
+{
+    if (USkeletalMeshComponent* MeshComponent = GetMesh())
+    {
+        MeshComponent->SetSkeletalMeshAsset(AssetData.SkeletalMesh.LoadSynchronous());
+        MeshComponent->SetAnimInstanceClass(AssetData.AnimClass.LoadSynchronous());
+
+        // 빈 칸은 메시의 머티리얼을 그대로 둔다.
+        for (int32 Index = 0; Index < AssetData.Materials.Num(); Index++)
+        {
+            if (UMaterialInterface* Material = AssetData.Materials[Index].LoadSynchronous())
+                MeshComponent->SetMaterial(Index, Material);
+        }
+
+        MeshComponent->SetRelativeLocation(AssetData.MeshOffset);
+        MeshComponent->SetRelativeScale3D(AssetData.MeshScale);
+    }
+
+    if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+        Capsule->SetCapsuleSize(AssetData.CapsuleRadius, AssetData.CapsuleHalfHeight);
+
+    if (AttackSystemComponent != nullptr)
+    {
+        TArray<UAnimMontage*> Montages;
+        for (const TSoftObjectPtr<UAnimMontage>& Montage : AssetData.AttackMontages)
+        {
+            if (UAnimMontage* Loaded = Montage.LoadSynchronous())
+                Montages.Add(Loaded);
+        }
+        AttackSystemComponent->SetNormalAttackMontages(Montages);
+    }
 }
 
 void AP1Monster::SetDefaultMonsterData(const FP1MonsterRow& InMonsterData)

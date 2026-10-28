@@ -1,7 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Engine/DataTable.h"
+#include "Engine/SkeletalMesh.h"
+#include "Materials/MaterialInterface.h"
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Data/P1MonsterAssetData.h"
 
@@ -36,15 +40,11 @@ public:
         return Table;
     }
 
-    UDataTable* MakeMonsterAssetTable(const TMap<int32, FString>& ClassPaths)
+    UDataTable* MakeMonsterAssetTable(const TMap<int32, FP1MonsterAssetData>& Rows)
     {
         UDataTable* Table = MakeTable(FP1MonsterAssetData::StaticStruct());
-        for (const TPair<int32, FString>& Row : ClassPaths)
-        {
-            FP1MonsterAssetData AssetData;
-            AssetData.MonsterClass = TSoftClassPtr<AP1Monster>(FSoftObjectPath(Row.Value));
-            Table->AddRow(RowName(Row.Key), AssetData);
-        }
+        for (const TPair<int32, FP1MonsterAssetData>& Row : Rows)
+            Table->AddRow(RowName(Row.Key), Row.Value);
         return Table;
     }
 
@@ -58,15 +58,30 @@ public:
         return AssetData;
     }
 
+    /** 빈 경로는 참조를 비워 둔다. 몽타주는 공격 몽타주 하나로, 머티리얼은 첫 슬롯 하나로 넣는다. */
+    static FP1MonsterAssetData MonsterAsset(const TCHAR* InSkeletalMesh, const TCHAR* InAnimClass,
+        const TCHAR* AttackMontage = TEXT(""), const TCHAR* Material = TEXT(""))
+    {
+        FP1MonsterAssetData AssetData;
+        AssetData.SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(InSkeletalMesh));
+        AssetData.AnimClass = TSoftClassPtr<UAnimInstance>(FSoftObjectPath(InAnimClass));
+        if (*AttackMontage != TEXT('\0'))
+            AssetData.AttackMontages.Add(TSoftObjectPtr<UAnimMontage>(FSoftObjectPath(AttackMontage)));
+        if (*Material != TEXT('\0'))
+            AssetData.Materials.Add(TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(Material)));
+        return AssetData;
+    }
+
     /** 엔진 콘텐츠에 있는 에셋. 테스트가 프로젝트 콘텐츠에 의존하지 않게 한다. */
     static constexpr const TCHAR* Texture = TEXT("/Engine/EngineResources/DefaultTexture.DefaultTexture");
     static constexpr const TCHAR* SkeletalMesh = TEXT("/Engine/EngineMeshes/SkeletalCube.SkeletalCube");
     static constexpr const TCHAR* StaticMesh = TEXT("/Engine/EngineMeshes/Sphere.Sphere");
-    static constexpr const TCHAR* NativeClass = TEXT("/Script/Engine.Actor");
+    static constexpr const TCHAR* NativeAnimClass = TEXT("/Script/Engine.AnimInstance");
 
     /** 어디에도 없는 에셋. */
     static constexpr const TCHAR* Missing = TEXT("/Game/P1/Missing/T_Missing.T_Missing");
-    static constexpr const TCHAR* MissingClass = TEXT("/Game/P1/Missing/BP_Missing.BP_Missing_C");
+    static constexpr const TCHAR* MissingClass = TEXT("/Game/P1/Missing/ABP_Missing.ABP_Missing_C");
+    static constexpr const TCHAR* MissingMontage = TEXT("/Game/P1/Missing/AM_Missing.AM_Missing");
 
     /** 패키지는 있지만 그 안에 없는 객체. */
     static constexpr const TCHAR* WrongObject = TEXT("/Engine/EngineResources/DefaultTexture.WrongName");

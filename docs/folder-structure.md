@@ -214,8 +214,7 @@ P1/Source/
 
 **`#include` 없이 포인터나 소프트 참조의 타입으로만 쓰는 전방 선언은 방향을 따지지 않는다.** 그 타입의
 멤버를 쓰려면 헤더를 불러야 하므로 그때는 표를 지킨다. `Game/Progress/P1MyPlayerData.h`는 스폰
-알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를, `Game/Data/P1MonsterAssetData.h`는 몬스터 클래스의
-소프트 참조로 `AP1Monster`를 전방 선언한다.
+알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를 전방 선언한다.
 — 알림을 받는 쪽이 그 액터를 쓰고, 보내는 쪽은 이름만 넘긴다. 이 알림을 다른 폴더로 옮기면 구독하는
 화면의 경로까지 바뀐다.
 
@@ -274,12 +273,11 @@ P1/Content/
 │   │   ├── Player/
 │   │   │   ├── Animations/ 공격 시퀀스와 몽타주
 │   │   │   └── Mannequins/ 팩에서 가져온 플레이어 메시
-│   │   └── Monsters/
-│   │       ├── Base/       베이스 블루프린트
-│   │       ├── Melee/
-│   │       ├── Ranged/
-│   │       ├── Super/
-│   │       └── <팩이름>/   팩에서 가져온 몬스터 메시와 애니메이션
+│   │   └── Monsters/       모델마다 폴더 하나. 몬스터 종류는 에셋 테이블의 행이다
+│   │       ├── Common/     공용 블루프린트(`BP_Monster`), 공용 스켈레톤, 마스터 머티리얼과 머티리얼 함수
+│   │       ├── MeleeMinion/
+│   │       ├── RangedMinion/
+│   │       └── SuperMinion/
 │   ├── Items/
 │   │   ├── Icons/
 │   │   └── Equipment/
