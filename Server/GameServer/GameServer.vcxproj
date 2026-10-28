@@ -382,6 +382,7 @@
     <None Include="Game\Data\Generated\Map.json" />
     <None Include="Game\Data\Generated\Area.json" />
     <None Include="Game\Data\Generated\Progress.json" />
+    <None Include="Game\Data\Extracted\Placement_1111.json" />
     <None Include="Lobby\Data\Generated\DataVersion.json" />
     <None Include="Lobby\Data\Generated\Lobby.json" />
   </ItemGroup>
