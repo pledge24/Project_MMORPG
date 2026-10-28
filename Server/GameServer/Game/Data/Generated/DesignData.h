@@ -344,24 +344,8 @@ namespace DesignData
         int32 Id = 0;
         /** 포털 유형. 지금은 지역 사이를 잇는 AREA 하나다 */
         PortalType Type = {};
-        /** 포털 위치의 X 좌표 */
-        float SrcX = 0.f;
-        /** 포털 위치의 Y 좌표 */
-        float SrcY = 0.f;
-        /** 포털 위치의 Z 좌표 */
-        float SrcZ = 0.f;
-        /** 포털을 탈 수 있는 평면 거리. 0보다 크다 */
-        float Radius = 0.f;
         /** 도착 지역 */
         int32 DestAreaId = 0;
-        /** 도착 위치의 X 좌표 */
-        float DestX = 0.f;
-        /** 도착 위치의 Y 좌표 */
-        float DestY = 0.f;
-        /** 도착 위치의 Z 좌표 */
-        float DestZ = 0.f;
-        /** 도착한 뒤의 방향(도) */
-        float DestYaw = 0.f;
     };
 
     /** Area 행의 Portals 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
@@ -370,15 +354,7 @@ namespace DesignData
         PortalRow row;
         row.Id = Detail::Read<int32>(object, "Id");
         row.Type = Detail::Read<PortalType>(object, "Type");
-        row.SrcX = Detail::Read<float>(object, "SrcX");
-        row.SrcY = Detail::Read<float>(object, "SrcY");
-        row.SrcZ = Detail::Read<float>(object, "SrcZ");
-        row.Radius = Detail::Read<float>(object, "Radius");
         row.DestAreaId = Detail::Read<int32>(object, "DestAreaId");
-        row.DestX = Detail::Read<float>(object, "DestX");
-        row.DestY = Detail::Read<float>(object, "DestY");
-        row.DestZ = Detail::Read<float>(object, "DestZ");
-        row.DestYaw = Detail::Read<float>(object, "DestYaw");
         return row;
     }
 
@@ -721,22 +697,6 @@ namespace DesignData
         int32 MaxMonsterCount = 0;
         /** 몬스터가 다시 나오는 시간(초). 0 이상이다 */
         int32 MonsterRespawnSec = 0;
-        /** 지역 중심의 X 좌표 */
-        float CenterX = 0.f;
-        /** 지역 중심의 Y 좌표 */
-        float CenterY = 0.f;
-        /** 지역 중심의 Z 좌표 */
-        float CenterZ = 0.f;
-        /** 중심에서 X 방향 반경. 0보다 크다 */
-        float HalfExtentX = 0.f;
-        /** 중심에서 Y 방향 반경. 0보다 크다 */
-        float HalfExtentY = 0.f;
-        /** 리스폰 지점의 X 좌표. 리스폰 지점이 없으면 비워 둔다 */
-        optional<float> RespawnX;
-        /** 리스폰 지점의 Y 좌표 */
-        optional<float> RespawnY;
-        /** 리스폰 지점의 Z 좌표 */
-        optional<float> RespawnZ;
         /** Portal 표에서 이 행에 속한 행. 키 순서다. */
         vector<PortalRow> Portals;
     };
@@ -756,14 +716,6 @@ namespace DesignData
             row.Monsters = Detail::Read<vector<int32>>(object, "Monsters");
             row.MaxMonsterCount = Detail::Read<int32>(object, "MaxMonsterCount");
             row.MonsterRespawnSec = Detail::Read<int32>(object, "MonsterRespawnSec");
-            row.CenterX = Detail::Read<float>(object, "CenterX");
-            row.CenterY = Detail::Read<float>(object, "CenterY");
-            row.CenterZ = Detail::Read<float>(object, "CenterZ");
-            row.HalfExtentX = Detail::Read<float>(object, "HalfExtentX");
-            row.HalfExtentY = Detail::Read<float>(object, "HalfExtentY");
-            row.RespawnX = Detail::Read<optional<float>>(object, "RespawnX");
-            row.RespawnY = Detail::Read<optional<float>>(object, "RespawnY");
-            row.RespawnZ = Detail::Read<optional<float>>(object, "RespawnZ");
             row.Portals = Detail::ReadRows<PortalRow>(object, "Portals", ReadPortalRow);
 
             auto key = row.Id;

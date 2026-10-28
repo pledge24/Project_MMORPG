@@ -15,4 +15,8 @@ struct FP1PortalRow
     /** 포털 번호. 클라이언트가 포털 이동을 요청할 때 보낸다 */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     int32 Id = 0;
+
+    /** 도착 지역 */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    int32 DestAreaId = 0;
 };
