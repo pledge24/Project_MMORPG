@@ -13,7 +13,7 @@
 
 namespace
 {
-    const MoveValidation::Bounds BOUNDS{ -5000.f, 5000.f, -5000.f, 5000.f };
+    const PlaneBounds BOUNDS{ -5000.f, 5000.f, -5000.f, 5000.f };
 
     /** elapsedMs 동안 허용하는 거리. */
     float AllowedDistance(uint64 elapsedMs)

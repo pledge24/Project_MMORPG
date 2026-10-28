@@ -29,37 +29,27 @@ namespace
     }
 }
 
-RoomRef Room::Create(const DesignData::AreaRow& area)
+RoomRef Room::Create(const DesignData::AreaRow& area, const AreaPlacement& placement)
 {
     RoomRef newRoom = make_shared<Room>();
-    newRoom->Init(area);
+    newRoom->Init(area, placement);
     return newRoom;
 }
 
-void Room::Init(const DesignData::AreaRow& area)
+void Room::Init(const DesignData::AreaRow& area, const AreaPlacement& placement)
 {
     _area = area;
+    _placement = placement;
 
     CacheRoomData();
 
-    _cellMatrix.Init(_roomMinX, _roomMaxX, _roomMinY, _roomMaxY, CELL_SIZE);
+    const PlaneBounds& bounds = _placement.bounds;
+    _cellMatrix.Init(bounds.minX, bounds.maxX, bounds.minY, bounds.maxY, CELL_SIZE);
 }
 
 void Room::CacheRoomData()
 {
     _roomId = RoomTransfer::SelectRoomForArea(_area.Id);
-
-    _roomCenterPos.x = _area.CenterX;
-    _roomCenterPos.y = _area.CenterY;
-    _roomCenterPos.z = _area.CenterZ;
-
-    _depthHalfExtent = _area.HalfExtentX;
-    _widthHalfExtent = _area.HalfExtentY;
-
-    _roomMinX = _roomCenterPos.x - _depthHalfExtent;
-    _roomMaxX = _roomCenterPos.x + _depthHalfExtent;
-    _roomMinY = _roomCenterPos.y - _widthHalfExtent;
-    _roomMaxY = _roomCenterPos.y + _widthHalfExtent;
 
     _maxMonsterCount = _area.MaxMonsterCount;
     _monsterIds = _area.Monsters;
@@ -338,13 +328,21 @@ void Room::C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player)
         return;
     }
 
-    if (optional<string> rejection = RoomTransfer::ValidatePortalUse(*portal, player->GetPosInfo()))
+    // 기동할 때 포털 표의 포털마다 배치 데이터가 있는지 대조했으므로 없으면 서버의 결함이다.
+    const PortalPlacement* placement = Gamedata::FindPortalPlacement(portal->Id);
+    if (placement == nullptr)
+    {
+        reject(Protocol::ENTRY_RESULT_INTERNAL_ERROR, format("포털 {}의 배치 데이터가 없다", portal->Id));
+        return;
+    }
+
+    if (optional<string> rejection = RoomTransfer::ValidatePortalUse(*placement, player->GetPosInfo()))
     {
         reject(Protocol::ENTRY_RESULT_TOO_FAR_FROM_PORTAL, rejection.value());
         return;
     }
 
-    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(*portal);
+    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(*portal, *placement);
     RoomRef destination = GRoomManager->FindRoom(enterData.nextRoomId);
     if (destination == nullptr)
     {
@@ -373,7 +371,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
     const vector2D from = MathUtil::PosInfoToVector2D(&player->GetPosInfo());
     const vector2D to = MathUtil::PosInfoToVector2D(&pkt.pos_info());
     if (optional<string> rejection = MoveValidation::Validate(from, to, now - player->GetLastPositionTick(),
-        MoveValidation::Bounds{ _roomMinX, _roomMaxX, _roomMinY, _roomMaxY }))
+        _placement.bounds))
     {
         GLogger->Warning("플레이어 {}의 이동을 버린다: {}", playerId, rejection.value());
         return;
@@ -572,10 +570,11 @@ vector2D Room::GetRandomLocation(bool usePadding)
     float paddingX = usePadding ? LOCATION_PADDING_X : 0.f;
     float paddingY = usePadding ? LOCATION_PADDING_Y : 0.f;
 
-    float paddedMinX = _roomMinX + paddingX;
-    float paddedMaxX = _roomMaxX - paddingX;
-    float paddedMinY = _roomMinY + paddingY;
-    float paddedMaxY = _roomMaxY - paddingY;
+    const PlaneBounds& bounds = _placement.bounds;
+    float paddedMinX = bounds.minX + paddingX;
+    float paddedMaxX = bounds.maxX - paddingX;
+    float paddedMinY = bounds.minY + paddingY;
+    float paddedMaxY = bounds.maxY - paddingY;
 
     vector2D randomPos;
 
@@ -603,7 +602,7 @@ void Room::SetRandomPos(Protocol::PosInfo* posInfo, bool usePadding, bool randYa
 
     pos->set_x(randomPos.x);
     pos->set_y(randomPos.y);
-    pos->set_z(_roomCenterPos.z + LOCATION_PADDING_Z);
+    pos->set_z(_placement.center.z + LOCATION_PADDING_Z);
 
     if(randYaw)
         posInfo->set_yaw(GetRandomYaw());

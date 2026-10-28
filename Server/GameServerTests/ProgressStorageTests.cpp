@@ -101,7 +101,7 @@ class ProgressStorageTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID, 0.f, 5000.f, 1000.f);
+        TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID, 0.f, 5000.f, 1000.f);
         TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 5000.f, 0.f);
 
         GamedataTables tables;

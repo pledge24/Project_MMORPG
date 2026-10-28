@@ -11,7 +11,7 @@
     픽스처 결합도: Room::Create에 최소한의 룸 데이터를 넘긴다. Start()는 부르지 않으므로
     몬스터 스폰과 틱 타이머는 돌지 않는다. 여백 값은 Room.h의 LOCATION_PADDING_X·Y와 같다.
 
-    축: 언리얼 좌표를 따른다. 지역 표의 HalfExtentX가 x 범위를, HalfExtentY가 y 범위를 정한다.
+    축: 언리얼 좌표를 따른다. 지역 볼륨의 X 방향 반경이 x 범위를, Y 방향 반경이 y 범위를 정한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -26,12 +26,13 @@ namespace
     {
         DesignData::AreaRow area;
         area.Id = 99;
-        area.CenterX = CENTER_X;
-        area.CenterY = CENTER_Y;
-        area.HalfExtentX = depthHalfExtent;
-        area.HalfExtentY = widthHalfExtent;
 
-        return Room::Create(area);
+        AreaPlacement placement;
+        placement.id = 99;
+        placement.center = vector3D(CENTER_X, CENTER_Y, 0.f);
+        placement.bounds = PlaneBounds::FromCenter(CENTER_X, CENTER_Y, depthHalfExtent, widthHalfExtent);
+
+        return Room::Create(area, placement);
     }
 }
 

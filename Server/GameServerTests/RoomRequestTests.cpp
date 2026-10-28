@@ -52,7 +52,7 @@ protected:
     void SetUp() override
     {
         // 마을은 룸 객체 없이 지역 표에만 둔다. 리스폰 규칙은 지역 표만 읽는다.
-        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+        TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
         TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
 
         GamedataTables tables;
@@ -62,8 +62,8 @@ protected:
         TestAreaTables::AddTown(tables, town);
         Gamedata::Install(std::move(tables));
 
-        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate);
+        TestAreaTables::TestArea mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
+        room = Room::Create(mapTemplate.row, mapTemplate.placement);
         ASSERT_NE(room, nullptr);
 
         const PlayerProgress progress = MakeProgressWithSword();

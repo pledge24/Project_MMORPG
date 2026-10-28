@@ -27,6 +27,7 @@ namespace
     constexpr int32 TOWN_ID = 10;
     constexpr int32 FIELD_ID = 20;
     constexpr int32 GOLD_ID = 1;
+    constexpr const char* PLACEMENT_FILE = "Placement_1111.json";
 
     /** DataBuilder가 생성하는 레벨 표의 행. */
     Json MakeLevel(int32 level, int64 expRequirement)
@@ -140,6 +141,27 @@ namespace
         };
     }
 
+    /** 추출 커맨드렛이 쓰는 맵의 배치 데이터. 마을과 필드의 볼륨, 마을의 리스폰 지점, 마을에서 필드로 가는 포털이 있다. */
+    Json MakePlacement()
+    {
+        return Json{
+            {"MapId", MAP_ID}, {"CenterX", -5000}, {"CenterY", 5000}, {"HalfExtentX", 8000}, {"HalfExtentY", 8000}, {"CellSize", 1000},
+            {"Areas", Json::array({
+                Json{{"Id", TOWN_ID}, {"CenterX", 0}, {"CenterY", 0}, {"CenterZ", 0}, {"HalfExtentX", 1500}, {"HalfExtentY", 1500}},
+                Json{{"Id", FIELD_ID}, {"CenterX", -10000}, {"CenterY", 10000}, {"CenterZ", 50}, {"HalfExtentX", 2000}, {"HalfExtentY", 1000.5}},
+            })},
+            {"RespawnPoints", Json::array({
+                Json{{"AreaId", TOWN_ID}, {"X", 10}, {"Y", 20}, {"Z", 0}, {"Yaw", 90}},
+            })},
+            {"Portals", Json::array({
+                Json{
+                    {"Id", 11}, {"SrcX", -1200}, {"SrcY", 1000}, {"SrcZ", 0}, {"Radius", 500},
+                    {"DestX", -8000}, {"DestY", 10000}, {"DestZ", 0}, {"DestYaw", 180},
+                },
+            })},
+        };
+    }
+
     GamedataDocuments MakeValidDocuments()
     {
         GamedataDocuments documents;
@@ -154,6 +176,7 @@ namespace
         documents.areas = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
         documents.initialProgress = MakeInitialProgress();
+        documents.placements[PLACEMENT_FILE] = MakePlacement();
         return documents;
     }
 
@@ -251,6 +274,126 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     EXPECT_FLOAT_EQ(initial.StartY, -200.f);
     EXPECT_FLOAT_EQ(initial.StartYaw, 90.f);
     EXPECT_EQ(initial.StartGold, 10000);
+}
+
+TEST(GamedataParserTest, PlacementBecomesMapAreaPortalAndRespawnSpace)
+{
+    GamedataTables tables;
+    const optional<string> error = GamedataParser::Parse(MakeValidDocuments(), OUT tables);
+    ASSERT_FALSE(error.has_value()) << error.value_or("");
+
+    const MapPlacement& map = tables.mapPlacements.at(MAP_ID);
+    EXPECT_FLOAT_EQ(map.cellSize, 1000.f);
+    EXPECT_FLOAT_EQ(map.bounds.minX, -13000.f);
+    EXPECT_FLOAT_EQ(map.bounds.maxY, 13000.f);
+
+    const AreaPlacement& field = tables.areaPlacements.at(FIELD_ID);
+    EXPECT_FLOAT_EQ(field.center.z, 50.f);
+    EXPECT_FLOAT_EQ(field.bounds.minX, -12000.f);
+    EXPECT_FLOAT_EQ(field.bounds.maxX, -8000.f);
+    EXPECT_FLOAT_EQ(field.bounds.minY, 8999.5f);
+    EXPECT_FLOAT_EQ(field.bounds.maxY, 11000.5f);
+    EXPECT_TRUE(tables.areaPlacements.contains(TOWN_ID));
+
+    const RespawnPointPlacement& respawn = tables.respawnPoints.at(TOWN_ID);
+    EXPECT_FLOAT_EQ(respawn.pos.y, 20.f);
+    EXPECT_FLOAT_EQ(respawn.yaw, 90.f);
+
+    const PortalPlacement& portal = tables.portalPlacements.at(11);
+    EXPECT_FLOAT_EQ(portal.src.x, -1200.f);
+    EXPECT_FLOAT_EQ(portal.radius, 500.f);
+    EXPECT_FLOAT_EQ(portal.dest.y, 10000.f);
+    EXPECT_FLOAT_EQ(portal.destYaw, 180.f);
+}
+
+TEST(GamedataParserTest, MissingPlacementFieldNamesFileAndField)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["Portals"][0].erase("Radius");
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "'Portals' 1번째 원소", "Radius"});
+}
+
+TEST(GamedataParserTest, MapWithoutPlacementIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements.clear();
+
+    ExpectMentions(ErrorOf(documents), {"맵 1111", "배치 데이터가 없다"});
+}
+
+TEST(GamedataParserTest, PlacementOfUnknownMapIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements["Placement_9999.json"] = MakePlacement();
+    documents.placements["Placement_9999.json"]["MapId"] = 9999;
+    documents.placements["Placement_9999.json"]["Areas"] = Json::array();
+    documents.placements["Placement_9999.json"]["RespawnPoints"] = Json::array();
+    documents.placements["Placement_9999.json"]["Portals"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {"Placement_9999.json", "맵 9999", "맵 표에 없다"});
+}
+
+TEST(GamedataParserTest, PlacedAreaNotInAreaTableIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["Areas"].push_back(
+        Json{{"Id", 99}, {"CenterX", 0}, {"CenterY", 0}, {"CenterZ", 0}, {"HalfExtentX", 1}, {"HalfExtentY", 1}});
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "지역 99", "지역 표에 없다"});
+}
+
+TEST(GamedataParserTest, AreaPlacedInOtherMapIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.maps.push_back(Json{{"Id", 2222}});
+    documents.areas[1]["MapId"] = 2222;
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "지역 20", "맵 2222"});
+}
+
+TEST(GamedataParserTest, AreaWithoutPlacementIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["Areas"].erase(1);
+
+    ExpectMentions(ErrorOf(documents), {"지역 20", "배치 데이터가 없다"});
+}
+
+TEST(GamedataParserTest, PlacedPortalNotInPortalTableIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    Json unknown = documents.placements[PLACEMENT_FILE]["Portals"][0];
+    unknown["Id"] = 99;
+    documents.placements[PLACEMENT_FILE]["Portals"].push_back(unknown);
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "포털 99", "포털 표에 없다"});
+}
+
+TEST(GamedataParserTest, PortalWithoutPlacementIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["Portals"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {"포털 11", "배치 데이터가 없다"});
+}
+
+TEST(GamedataParserTest, TownWithoutRespawnPointIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["RespawnPoints"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {"지역 10", "리스폰 지점"});
+}
+
+TEST(GamedataParserTest, RespawnPointInAreaWithoutRespawnIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    Json fieldRespawn = documents.placements[PLACEMENT_FILE]["RespawnPoints"][0];
+    fieldRespawn["AreaId"] = FIELD_ID;
+    documents.placements[PLACEMENT_FILE]["RespawnPoints"].push_back(fieldRespawn);
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "지역 20", "리스폰 지점이 없는 지역"});
 }
 
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
@@ -450,6 +593,14 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(generatedDir / DesignData::PROGRESS_FILE);
     ASSERT_TRUE(documents.items.is_array()) << "생성된 기획 데이터를 찾지 못했다: " << generatedDir.string();
+
+    const filesystem::path extractedDir = generatedDir / ".." / "Extracted";
+    for (const filesystem::directory_entry& entry : filesystem::directory_iterator(extractedDir))
+    {
+        const string fileName = entry.path().filename().string();
+        if (fileName.starts_with("Placement_"))
+            documents.placements[fileName] = ReadJsonFile(entry.path());
+    }
 
     GamedataTables tables;
     const optional<string> error = GamedataParser::Parse(documents, OUT tables);

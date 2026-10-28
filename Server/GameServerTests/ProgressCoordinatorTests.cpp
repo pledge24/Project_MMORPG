@@ -40,8 +40,8 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         Gamedata::Install(std::move(tables));
 
-        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate);
+        TestAreaTables::TestArea mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
+        room = Room::Create(mapTemplate.row, mapTemplate.placement);
         ASSERT_NE(room, nullptr);
 
         player = CreatePlayer(USER_ID);
@@ -64,7 +64,8 @@ protected:
     /** ROOM_ID + 1번 룸. 룸 이동의 목적지로 쓴다. */
     static RoomRef CreateNextRoom()
     {
-        return Room::Create(TestAreaTables::MakeArea(ROOM_ID + 1, 0, 0.f, 0.f, 5000.f));
+        const TestAreaTables::TestArea nextArea = TestAreaTables::MakeArea(ROOM_ID + 1, 0, 0.f, 0.f, 5000.f);
+        return Room::Create(nextArea.row, nextArea.placement);
     }
 
     void TearDown() override
@@ -449,7 +450,7 @@ TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
     constexpr int32 TOWN_ROOM_ID = 1;
     constexpr int32 TOWN_MAP_ID = 1001;
 
-    DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+    TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
     TestAreaTables::SetRespawnPoint(town, 300.f, 0.f, 0.f);
 
     GamedataTables tables;

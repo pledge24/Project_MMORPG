@@ -331,6 +331,9 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\PlaneBounds.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -452,6 +455,9 @@
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\Templates.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\Placement.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\Generated\DesignData.h">

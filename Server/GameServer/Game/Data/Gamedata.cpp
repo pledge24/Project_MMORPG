@@ -1,17 +1,20 @@
 #include "Core/pch.h"
 #include "Game/Data/Gamedata.h"
 #include "Game/Data/GamedataParser.h"
+#include <filesystem>
 #include <fstream>
 
 namespace
 {
     /** DataBuilder의 산출물 폴더. 작업 디렉터리 기준이고, databuilder.toml의 game 모듈 폴더와 같아야 한다. */
     constexpr string_view GENERATED_DIR = "Game/Data/Generated/";
+    /** 배치 추출의 산출물 폴더. 작업 디렉터리 기준이고, 추출 커맨드렛이 쓰는 폴더와 같아야 한다. */
+    constexpr string_view EXTRACTED_DIR = "Game/Data/Extracted/";
 
     /** 파일을 열지 못하거나 Json 문법이 틀리면 사유를 돌려준다. */
-    optional<string> ReadDocument(string_view fileName, OUT Json& document)
+    optional<string> ReadDocument(string_view fileName, OUT Json& document, string_view dir = GENERATED_DIR)
     {
-        ifstream file(string(GENERATED_DIR) + string(fileName));
+        ifstream file(string(dir) + string(fileName));
         if (file.is_open() == false)
             return format("{}: 파일을 열지 못했다", fileName);
 
@@ -55,6 +58,26 @@ bool Gamedata::LoadAllGamedata()
             GLogger->Error("기획 데이터를 불러오지 못했다. {}", error.value());
             return false;
         }
+    }
+
+    // 맵마다 하나인 배치 데이터. 어느 맵의 파일이 빠졌는지는 검증이 맵 표와 대조해 알린다.
+    error_code directoryError;
+    for (const filesystem::directory_entry& entry : filesystem::directory_iterator(EXTRACTED_DIR, directoryError))
+    {
+        const string fileName = entry.path().filename().string();
+        if (fileName.starts_with(PLACEMENT_FILE_PREFIX) == false)
+            continue;
+
+        if (optional<string> error = ReadDocument(fileName, OUT documents.placements[fileName], EXTRACTED_DIR))
+        {
+            GLogger->Error("배치 데이터를 불러오지 못했다. {}", error.value());
+            return false;
+        }
+    }
+    if (directoryError)
+    {
+        GLogger->Error("배치 데이터 폴더 {}를 읽지 못했다: {}", EXTRACTED_DIR, directoryError.message());
+        return false;
     }
 
     // 어느 원본으로 만든 데이터를 읽었는지 로그로 남긴다. 원본 해시라서 같은 원본이면 같은 값이다.
@@ -134,4 +157,28 @@ const DesignData::ClassLevelStatRow* Gamedata::FindClassLevelStat(int32 classId,
 {
     auto it = s_tables.classLevelStats.find({ static_cast<Protocol::CharacterClass>(classId), level });
     return it == s_tables.classLevelStats.end() ? nullptr : &it->second;
+}
+
+const MapPlacement* Gamedata::FindMapPlacement(int32 mapId)
+{
+    auto it = s_tables.mapPlacements.find(mapId);
+    return it == s_tables.mapPlacements.end() ? nullptr : &it->second;
+}
+
+const AreaPlacement* Gamedata::FindAreaPlacement(int32 areaId)
+{
+    auto it = s_tables.areaPlacements.find(areaId);
+    return it == s_tables.areaPlacements.end() ? nullptr : &it->second;
+}
+
+const PortalPlacement* Gamedata::FindPortalPlacement(int32 portalId)
+{
+    auto it = s_tables.portalPlacements.find(portalId);
+    return it == s_tables.portalPlacements.end() ? nullptr : &it->second;
+}
+
+const RespawnPointPlacement* Gamedata::FindRespawnPoint(int32 areaId)
+{
+    auto it = s_tables.respawnPoints.find(areaId);
+    return it == s_tables.respawnPoints.end() ? nullptr : &it->second;
 }

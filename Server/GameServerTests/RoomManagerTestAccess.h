@@ -23,7 +23,10 @@ public:
     ScopedTestRoomManager()
     {
         for (const auto& [areaId, area] : Gamedata::GetAreas())
-            RoomManagerTestAccess::AddRoom(_manager, Room::Create(area));
+        {
+            const AreaPlacement* placement = Gamedata::FindAreaPlacement(areaId);
+            RoomManagerTestAccess::AddRoom(_manager, Room::Create(area, placement != nullptr ? *placement : AreaPlacement{}));
+        }
 
         GRoomManager = &_manager;
     }

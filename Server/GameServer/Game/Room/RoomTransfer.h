@@ -36,19 +36,22 @@ namespace RoomTransfer
      * 플레이어가 포털 반경 안에 있는지 판정한다. 통과하면 nullopt, 거절하면 로그에 남길 사유.
      * 포털이 현재 룸에 있는지는 호출자가 확인한다.
      */
-    optional<string> ValidatePortalUse(const DesignData::PortalRow& portal, const Protocol::PosInfo& playerPos);
+    optional<string> ValidatePortalUse(const PortalPlacement& portal, const Protocol::PosInfo& playerPos);
 
     /** 그 지역을 맡은 룸의 번호. 어느 스레드에서 불러도 된다. */
     int32 SelectRoomForArea(int32 areaId);
 
-    /** 포털의 도착 지역을 맡은 룸과 도착 좌표로 포털 이동의 입장 정보를 만든다. 포털이 현재 룸에 있는지는 호출자가 확인한다. */
-    RoomEnterData MakePortalEnterData(const DesignData::PortalRow& portal);
+    /**
+     * 포털의 도착 지역을 맡은 룸과 배치한 도착 지점으로 포털 이동의 입장 정보를 만든다.
+     * 포털이 현재 룸에 있는지는 호출자가 확인한다.
+     */
+    RoomEnterData MakePortalEnterData(const DesignData::PortalRow& portal, const PortalPlacement& placement);
 
     /** 리스폰 요청을 판정한다. 통과하면 nullopt, 거절하면 S_RESPAWN에 실을 결과. */
     optional<Protocol::EntryResult> ValidateRespawn(bool isDead, Protocol::RespawnType respawnType);
 
     /**
-     * 마을과 그 리스폰 지점을 지역 표에서 찾는다. 어느 스레드에서 불러도 된다.
+     * 마을을 지역 표에서, 그 리스폰 지점을 배치 데이터에서 찾는다. 어느 스레드에서 불러도 된다.
      * 마을이 지역 표에 없거나 리스폰 지점이 없으면 nullopt.
      */
     optional<TownRespawn> FindTownRespawn();

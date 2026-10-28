@@ -69,8 +69,8 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
-        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate);
+        TestAreaTables::TestArea mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
+        room = Room::Create(mapTemplate.row, mapTemplate.placement);
         ASSERT_NE(room, nullptr);
 
         MonsterSpawnParams monsterParams;
