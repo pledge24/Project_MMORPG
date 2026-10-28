@@ -38,7 +38,7 @@ public:
     bool IsAttacking() const;
     bool CanStartNormalAttack() const;
 
-    /** 콤보 순번 1부터 차례로 재생할 몽타주를 바꾼다. 몬스터처럼 스폰할 때 외형을 입는 크리처가 쓴다. */
+    /** 콤보 순번 1부터 차례로 재생할 몽타주를 바꾼다. 재생 중인 콤보는 끊지 않는다. */
     void SetNormalAttackMontages(const TArray<UAnimMontage*>& Montages);
 
 private:

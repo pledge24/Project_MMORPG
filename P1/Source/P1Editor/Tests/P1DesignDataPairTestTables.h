@@ -59,12 +59,12 @@ public:
     }
 
     /** 빈 경로는 참조를 비워 둔다. 몽타주는 공격 몽타주 하나로, 머티리얼은 첫 슬롯 하나로 넣는다. */
-    static FP1MonsterAssetData MonsterAsset(const TCHAR* InSkeletalMesh, const TCHAR* InAnimClass,
+    static FP1MonsterAssetData MonsterAsset(const TCHAR* InSkeletalMesh, const TCHAR* AnimClass,
         const TCHAR* AttackMontage = TEXT(""), const TCHAR* Material = TEXT(""))
     {
         FP1MonsterAssetData AssetData;
         AssetData.SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(InSkeletalMesh));
-        AssetData.AnimClass = TSoftClassPtr<UAnimInstance>(FSoftObjectPath(InAnimClass));
+        AssetData.AnimClass = TSoftClassPtr<UAnimInstance>(FSoftObjectPath(AnimClass));
         if (*AttackMontage != TEXT('\0'))
             AssetData.AttackMontages.Add(TSoftObjectPtr<UAnimMontage>(FSoftObjectPath(AttackMontage)));
         if (*Material != TEXT('\0'))
@@ -80,7 +80,7 @@ public:
 
     /** 어디에도 없는 에셋. */
     static constexpr const TCHAR* Missing = TEXT("/Game/P1/Missing/T_Missing.T_Missing");
-    static constexpr const TCHAR* MissingClass = TEXT("/Game/P1/Missing/ABP_Missing.ABP_Missing_C");
+    static constexpr const TCHAR* MissingAnimClass = TEXT("/Game/P1/Missing/ABP_Missing.ABP_Missing_C");
     static constexpr const TCHAR* MissingMontage = TEXT("/Game/P1/Missing/AM_Missing.AM_Missing");
 
     /** 패키지는 있지만 그 안에 없는 객체. */

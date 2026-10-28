@@ -91,7 +91,7 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
             { 5001, T::MonsterAsset(TEXT(""), T::NativeAnimClass) },
             { 5002, T::MonsterAsset(T::SkeletalMesh, TEXT("")) },
             { 5004, T::MonsterAsset(T::Missing, T::NativeAnimClass) },
-            { 5005, T::MonsterAsset(T::SkeletalMesh, T::MissingClass) },
+            { 5005, T::MonsterAsset(T::SkeletalMesh, T::MissingAnimClass) },
             { 5006, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, T::MissingMontage) },
             { 5007, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, TEXT(""), T::Missing) },
             { 5009, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
@@ -104,7 +104,7 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("빈 애니메이션 블루프린트"), CountIssues(Issues, true, TEXT("5002")), 1);
         TestEqual(TEXT("에셋 행이 없는 몬스터"), CountIssues(Issues, true, TEXT("5003")), 1);
         TestEqual(TEXT("깨진 메시"), CountIssues(Issues, true, TEXT("5004")), 1);
-        TestEqual(TEXT("깨진 애니메이션 블루프린트"), CountIssues(Issues, true, T::MissingClass), 1);
+        TestEqual(TEXT("깨진 애니메이션 블루프린트"), CountIssues(Issues, true, T::MissingAnimClass), 1);
         TestEqual(TEXT("깨진 몽타주"), CountIssues(Issues, true, T::MissingMontage), 1);
         TestEqual(TEXT("깨진 머티리얼"), CountIssues(Issues, true, TEXT("5007")), 1);
         TestEqual(TEXT("오류 수"), CountIssues(Issues, true), 7);

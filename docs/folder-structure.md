@@ -274,7 +274,7 @@ P1/Content/
 │   │   │   ├── Animations/ 공격 시퀀스와 몽타주
 │   │   │   └── Mannequins/ 팩에서 가져온 플레이어 메시
 │   │   └── Monsters/       모델마다 폴더 하나. 몬스터 종류는 에셋 테이블의 행이다
-│   │       ├── Common/     공용 블루프린트(`BP_Monster`), 공용 스켈레톤, 마스터 머티리얼과 머티리얼 함수
+│   │       ├── Common/     공용 블루프린트(`BP_Monster`)와, 두 모델 이상이 함께 쓰는 스켈레톤·머티리얼·텍스처·애니메이션
 │   │       ├── MeleeMinion/
 │   │       ├── RangedMinion/
 │   │       └── SuperMinion/
