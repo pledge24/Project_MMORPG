@@ -671,8 +671,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
         ASSERT_TRUE(tables.portalPlacements.contains(expected.id)) << "포털 " << expected.id;
         const PortalPlacement& portal = tables.portalPlacements.at(expected.id);
         EXPECT_NEAR(portal.src.x, expected.srcX, TOLERANCE) << "포털 " << expected.id;
+        // 출발 위치의 높이는 포털 액터의 높이라 옮기지 않았다. 서버의 포털 판정은 높이를 보지 않는다.
         EXPECT_NEAR(portal.src.y, expected.srcY, TOLERANCE) << "포털 " << expected.id;
-        EXPECT_NEAR(portal.src.z, 0.f, TOLERANCE) << "포털 " << expected.id;
         EXPECT_NEAR(portal.radius, 500.f, TOLERANCE) << "포털 " << expected.id;
         EXPECT_NEAR(portal.dest.x, expected.destX, TOLERANCE) << "포털 " << expected.id;
         EXPECT_NEAR(portal.dest.y, expected.destY, TOLERANCE) << "포털 " << expected.id;

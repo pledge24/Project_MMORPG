@@ -409,7 +409,7 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 
 **Architecture Invariant:** `GRoomManager`는 부팅 때 `CreateAllRooms`로 모든 룸을 한 번 만들고, 그 뒤로는 `FindRoom`으로
 조회만 한다. 룸 목록이 바뀌지 않으므로 조회에 락이 없다. 룸은 `Room::Create`로만 만든다. 엔티티는 룸 관리자를 부르지 않는다.
-마을 리스폰의 목적지는 `RoomTransfer::FindTownRespawn`이 지역 표에서 찾는다.
+마을 리스폰의 목적지는 `RoomTransfer::FindTownRespawn`이 지역 표의 마을과 그 배치 데이터의 리스폰 지점에서 찾는다.
 — 사망한 채 끊긴 플레이어의 저장은 룸에서 뺀 뒤에 뜨므로, 리스폰 규칙이 소속 룸이나 룸 객체에 기대면 실패한다.
 
 **Architecture Invariant:** 이동 요청(`C_MOVE`)의 위치는 `MoveValidation`이 판정한다. 직전에 받아들인 위치에서 평면 거리가
@@ -418,7 +418,12 @@ GameDB의 표현과 패킷의 표현이 다른 곳(아이템의 자리, 골드, 
 — 클라이언트가 보낸 위치를 그대로 쓰면 조작한 클라이언트가 룸 안 어디로든 순간이동하고, 그 위치로 저장된다.
 
 **Architecture Invariant:** 위치에 묶인 룸 이동 요청은 서버가 플레이어 위치로 판정한다. 포털 이동은 플레이어와 포털 출발
-위치의 평면 거리가 포털 표의 그 포털 반경(`Radius`) 안이어야 한다. 목적지가 다른 맵이어도 같다. 판정은 `RoomTransfer`가 한다.
+위치의 평면 거리가 그 포털의 배치 데이터에 있는 반경 안이어야 한다. 목적지가 다른 맵이어도 같다. 판정은 `RoomTransfer`가 한다.
+
+**Architecture Invariant:** 지역의 경계, 리스폰 지점, 포털의 위치와 반경은 기획 데이터 표가 아니라 레벨에서 추출한 배치 데이터
+(`Game/Data/Extracted/`)에 있다. 서버는 기동할 때 한 번 읽고 바꾸지 않으므로 여러 룸이 락 없이 함께 읽는다. 경계 계산과 포함 판정은
+`PlaneBounds` 하나가 맡고, 룸 경계, 룸 배정, 이동 판정이 그것을 쓴다. 근거는 `docs/adr/0025-place-spatial-data-with-editor-only-markers.md`에 있다.
+— 세 곳이 같은 경계 규칙을 따로 구현하던 때는 한쪽만 바뀌면 경계에서 저장한 플레이어가 다른 룸으로 들어갈 수 있었다.
 
 `Room`은 몬스터의 근접 탐색을 위해 `CELL_SIZE` 단위 셀 행렬(`CellMatrix`)을 들고, 룸 틱마다 엔티티 `Tick`보다 먼저
 다시 채운다. `CellMatrix`는 엔티티 번호와 위치만 아는 공간 색인이고, 탐색 대상인지와 실제 거리는 룸이 판정한다.

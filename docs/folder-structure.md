@@ -79,7 +79,7 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
-├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Tests/ 그 테스트
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
@@ -111,7 +111,7 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`). 하위 `Generated/`는 DataBuilder가 만드는 기획 데이터 행 구조체와 열거형이다 |
-| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽 |
+| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽, 배치 추출이 읽는 에디터 전용 마커(맵 마커, 지역 볼륨, 리스폰 지점, 포털 도착 지점) |
 | `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
@@ -532,7 +532,8 @@ Server/
 │   │   ├── AI/             몬스터 AI 컴포넌트
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
-│   │       └── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
+│   │       ├── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
+│   │       └── Extracted/  배치 추출 커맨드렛의 산출물. 맵마다 배치 데이터 JSON
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물

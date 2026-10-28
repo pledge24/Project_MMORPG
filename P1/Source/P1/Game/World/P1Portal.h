@@ -25,12 +25,21 @@ protected:
     //~ End AActor Interface
 
     //~ Room Transfer
+public:
+    /** 포털 표의 Id. 0이면 포털 이동을 요청하지 않는다. */
+    int32 GetPortalId() const { return PortalId; }
+
+#if WITH_EDITORONLY_DATA
+    /** 서버가 포털 이동을 받아 주는 평면 거리. 배치 추출만 읽는다. */
+    double GetUseRadius() const { return UseRadius; }
+#endif
+
 private:
     UFUNCTION()
     void HandleBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
         int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-    /** PortalId 포털의 사용을 요청한다. 0이면 요청하지 않는다. */
+    /** PortalId 포털의 사용을 요청한다. */
     void RequestRoomTransfer();
 
     /** 블루프린트에서 밟는 범위로 쓰는 컴포넌트의 이름. */
@@ -38,6 +47,15 @@ private:
 
     UPROPERTY(EditAnywhere, Category = "Portal")
     int32 PortalId = 0;
+
+#if WITH_EDITORONLY_DATA
+    /**
+     * 서버가 포털 이동 요청을 받아 주는, 포털 위치에서의 평면 거리(cm). 밟는 범위보다 넉넉하게 둔다.
+     * 도착 지점은 포털 도착 지점 마커로 따로 둔다.
+     */
+    UPROPERTY(EditAnywhere, Category = "Portal", meta = (ClampMin = "1"))
+    float UseRadius = 500.f;
+#endif
 
     //~ Name Tag
 private:

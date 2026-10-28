@@ -282,6 +282,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
 세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
+지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`, `FindMapPlacement`가 찾는다(아래 「배치 추출」).
 초기 진행은 `Gamedata::GetInitialProgress`가 생성된 `DesignData::ProgressConfig`로 돌려준다.
 
 `LobbyData::LoadAll()`이 `Lobby/Data/Generated/`에서 `Lobby.json`을 생성된 `LobbyDesignData::ParseLobby`로 읽는다. 로비 코드는
@@ -382,25 +383,25 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 | 워크북 | 키 | 담는 것 |
 |---|---|---|
 | `Map.xlsx` | `Id` | 맵 이름. 시작 맵과 플레이어의 마지막 위치가 이 번호를 가리킨다 |
-| `Area.xlsx` | `Id` | 소속 맵(`MapId`, `ref:Map`), 이름, 유형(`Type`, `enum:AreaType`), 리스폰 지점 유무, 나오는 몬스터(`Monsters`, `ref[]:Monster`), 최대 몬스터 수, 몬스터 리스폰 시간(`MonsterRespawnSec`), 중심 좌표와 X, Y 방향 반경, 리스폰 지점 좌표(`float?`) |
-| `Portal.xlsx` | `Id` | 소속 지역(`AreaId`, `parent:Area`), 유형(`Type`, `enum:PortalType`), 출발 좌표, 반경(`Radius`), 도착 지역(`DestAreaId`, `ref:Area`), 도착 좌표와 방향 |
+| `Area.xlsx` | `Id` | 소속 맵(`MapId`, `ref:Map`), 이름, 유형(`Type`, `enum:AreaType`), 리스폰 지점 유무, 나오는 몬스터(`Monsters`, `ref[]:Monster`), 최대 몬스터 수, 몬스터 리스폰 시간(`MonsterRespawnSec`) |
+| `Portal.xlsx` | `Id` | 소속 지역(`AreaId`, `parent:Area`), 유형(`Type`, `enum:PortalType`), 도착 지역(`DestAreaId`, `ref:Area`) |
+
+**지역 표와 포털 표에는 공간 열이 없다.** 지역의 경계, 리스폰 지점, 포털의 출발 위치와 반경, 도착 위치와 방향은 레벨의 마커에서
+추출한다(아래 「배치 추출」). 2026년 10월 29일(#336)에 표의 좌표 열을 걷어 내고 값을 레벨로 옮겼다.
 
 **포털은 `Area.json`의 각 지역 아래 `Portals`에 중첩된다.** 설정 파일에서 `Portal`에 `nest = "Portals"`를 적었다. `Portal.json`은 없다.
 포털 번호는 클라이언트가 포털 이동을 요청할 때 보내는 값이라 옛 번호를 그대로 옮겼다.
 
 DataBuilder가 검사하는 규칙은 아래와 같다.
 
-- 지역의 반경(`HalfExtentX`, `HalfExtentY`)과 포털의 반경(`Radius`)은 0보다 크다
 - 지역의 `MaxMonsterCount`와 `MonsterRespawnSec`는 0 이상이다
 - `HasRespawnPoint`가 참인 지역(마을)은 정확히 하나다
-- 리스폰 지점이 있는 지역은 리스폰 좌표 셋을 모두 채우고, 없는 지역은 모두 비워 둔다
 
 없는 맵, 몬스터, 지역을 가리키는 것은 참조 규칙이 막는다. 서버는 마을이 없을 때만 부팅을 멈춘다(사망한 플레이어를 보낼 곳이 없어서).
 
 **지금은 지역 하나를 룸 하나가 맡고, 지역 번호를 룸 번호로 쓴다.** 그 규칙은 `RoomTransfer`의 `SelectRoomForArea` 한 곳에 있다.
-지역과 포털 표의 공간 열(중심, 반경, 리스폰 지점, 포털 좌표)은 에디터에서 추출하는 작업(`docs/backlog.md` 31번)이 대체한다.
 
-- 옛 열의 대응: `depth_half_extent`가 `HalfExtentX`, `width_half_extent`가 `HalfExtentY`다. 옛 `portal_radius`는 지역 하나에 하나였고, 지금은 포털마다 `Radius`가 있다
+- 포털의 도착 지역은 클라이언트에도 싣는다. 배치 추출이 도착 지점이 그 지역 안에 있는지 검사한다
 - 유형 이름: 옛 지역 유형 `safe zone`과 `hunting field`는 `SAFE_ZONE`과 `HUNTING_FIELD`가 됐다. 옛 포털 유형 `room`은 `AREA`가 됐다. 기획 데이터는 룸을 모르기 때문이다
 - 서버가 읽지 않는 열: 지역 유형과 이름은 대상이 `client`다. 포털 유형과 몬스터 리스폰 시간은 서버로 가지만 아직 읽는 코드가 없다. 사망한 몬스터의 리젠은 백로그에 있다
 - 맵 1111의 이름: 옛 표에 없어서 「시작의 섬」으로 정했다. 클라이언트 산출물의 `Map.json`에 실린다
@@ -579,6 +580,85 @@ UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한�
 | 최대 레벨 | 레벨 표(`Level.xlsx`)의 마지막 레벨. 모든 직업이 같다. 레벨이 1부터 빠짐없이 이어지는지는 DataBuilder가 검사한다 |
 | 마을 | 지역 표(`Area.xlsx`)에서 `HasRespawnPoint`가 참인 지역(`Gamedata::GetTownAreaId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
 | 골드의 재화 번호 | 재화 표(`Currency.xlsx`)에서 `Type`이 `GOLD`인 행(`Gamedata::GetGoldCurrencyId`). 둘 이상이면 DataBuilder가 실패하고, 없으면 부팅이 실패한다 |
+
+---
+
+## 배치 추출
+
+서버가 알아야 하는 공간 정보는 레벨에 마커로 배치하고, 커맨드렛이 레벨에서 추출해 서버가 읽는 배치 데이터를 쓴다.
+결정과 근거는 `docs/adr/0025-place-spatial-data-with-editor-only-markers.md`에 있다. 2026년 10월 29일(#336)에 지역, 리스폰 지점, 포털, 맵 경계를 옮겼다.
+
+### 재생성
+
+```
+pwsh P1/Scripts/Invoke-PlacementExtract.ps1
+```
+
+스크립트는 `UnrealEditor-Cmd`로 커맨드렛 `P1PlacementExtract`를 돌린다. 에디터를 띄우지 않는다. 클라이언트를 빌드한 뒤에 돌리고,
+레벨을 저장한 뒤에 돌린다. 커맨드렛은 저장된 레벨 파일을 읽는다.
+
+**검사가 하나라도 실패하면 산출물을 하나도 바꾸지 않고 종료 코드 1로 끝난다.** 오류는 `[배치 추출]`로 시작하는 줄에 하나씩 나오고,
+레벨 이름과 액터 이름이나 번호가 들어 있다. 전체 로그는 `P1/Saved/PlacementExtract/run.log`에 있다.
+
+**레벨이나 지역 표, 포털 표를 고치면 추출을 돌리고 산출물을 같은 커밋에 담는다.** 서버의 `GamedataParserTest.RepositoryGamedataPasses`가
+저장소의 배치 데이터와 기획 데이터를 함께 읽어 대조한다. 레벨을 고치고 추출을 돌리지 않았는지는 아직 감지하지 않는다(`docs/backlog.md` 41번).
+
+### 마커
+
+마커는 런타임 모듈의 `Game/World/`에 있고 `AP1PlacementMarker`를 상속한다. 베이스가 에디터 전용 액터로 표시하므로 쿠킹한 빌드에는 없다.
+
+| 액터 | 레벨에 두는 수 | 담는 것 |
+|---|---|---|
+| `AP1MapMarker` | 맵 레벨마다 하나 | 맵의 경계(상자)와 AOI 셀 크기(`CellSize`, cm) |
+| `AP1AreaVolume` | 지역 표의 그 맵 지역마다 하나 | 지역의 경계(상자)와 지역 번호(`AreaId`) |
+| `AP1RespawnPointMarker` | 리스폰 지점이 있는 지역마다 하나 | 위치와 방향. 소속 지역은 추출이 위치로 정한다 |
+| `AP1PortalArrivalMarker` | 포털마다 하나. 도착 지역의 맵 레벨에 둔다 | 위치, 방향, 포털 번호(`PortalId`) |
+| `AP1Portal`(마커가 아니다) | 포털 표의 포털마다 하나 | 포털 번호, 서버가 받아 주는 반경(`UseRadius`, 에디터 전용 속성) |
+
+- 상자 모양의 마커(`AP1MapMarker`, `AP1AreaVolume`)는 액터의 위치가 상자 바닥의 중심이다. 상자의 크기는 `Bounds` 컴포넌트의 Box Extent로 정한다. 회전하지 않는다
+- 포털은 클라이언트에도 보여야 하므로 레벨에 남는 액터다. 위치와 반경만 추출하고, 도착 지점은 마커로 따로 둔다
+- 경계 벽(`AP1FieldBoundaryWall`)은 에디터 전용 속성 `AreaVolume`이 가리키는 지역 볼륨에 맞춰 벽 넷을 세운다. 볼륨을 옮기거나 키우면 벽도 다시 맞춰진다
+
+### 검사
+
+커맨드렛은 프로젝트 설정의 맵 표(`MapLevels`)에 있는 레벨을 모두 열고, 클라이언트 기획 데이터(`P1/DesignData/Generated/`의 `Map.json`, `Area.json`)의
+번호와 대조한다. 검사는 레벨을 모르는 `FP1PlacementCheck`(`P1/Source/P1Editor/Placement/`)가 한다.
+
+- 레벨마다 맵 마커가 하나다. 맵 번호가 맵 표에 있다. 셀 크기와 상자의 반경이 0보다 크다
+- 지역 볼륨의 지역 번호가 지역 표에 있고, 지역 표에서 그 맵의 지역이다. 그 맵의 지역마다 볼륨이 하나다
+- 지역끼리 겹치지 않는다. 경계는 함께 쓸 수 있다
+- 지역 볼륨과 모든 마커와 포털이 맵 경계 안에 있다. 상자 모양의 마커는 회전하지 않는다
+- 리스폰 지점은 리스폰 지점이 있는 지역 안에 있고, 그런 지역마다 하나다
+- 포털의 포털 번호가 포털 표에 있고, 포털이 포털 표의 출발 지역 안에 있다. 포털 표의 포털마다 레벨에 포털이 하나다
+- 포털 도착 지점이 포털마다 하나이고, 포털 표의 도착 지역 안에 있다
+- 경계 벽이 그 레벨의 지역 볼륨을 가리키고, 맞춘 위치와 크기가 볼륨과 같다
+
+포함 판정에서 경계 위의 점은 안쪽이다. 서버의 `PlaneBounds`와 같다. 높이는 보지 않는다.
+
+### 산출물
+
+| 폴더 | 파일 | 내용 |
+|---|---|---|
+| `Server/GameServer/Game/Data/Extracted/` | `Placement_<맵 번호>.json` | 맵의 경계와 셀 크기, 지역(`Areas`), 리스폰 지점(`RespawnPoints`), 포털(`Portals`) |
+
+- 한 행이 한 줄이고, 행은 번호 순서다(리스폰 지점은 지역 번호 순서). 줄바꿈은 LF다
+- 좌표는 소수점 둘째 자리에서 반올림한다. 옮기지 않은 마커가 float 오차로 diff를 만들지 않는다
+- 포털 행은 출발 위치(`Src*`), 반경, 도착 위치(`Dest*`)와 방향을 함께 싣는다. 파일은 포털이 놓인 맵의 것이다
+- **산출물 폴더에 사람이 쓴 파일을 두지 않는다.** 커맨드렛은 맵 표에 없는 맵의 `Placement_*.json`을 지운다. DataBuilder 산출물 폴더(`Generated/`)에는 쓰지 않는다
+
+### 서버가 읽는 법
+
+`Gamedata::LoadAllGamedata()`가 `Game/Data/Extracted/`의 `Placement_*.json`을 모두 읽어 기획 데이터와 함께 검증한다. 서버는 형식과 번호만
+대조하고, 위치와 겹침은 추출이 이미 검사했으므로 다시 보지 않는다. 아래 하나라도 어기면 서버가 뜨지 않는다.
+
+- 배치 데이터의 맵, 지역, 포털이 기획 데이터의 그 맵에 있다. 리스폰 지점은 리스폰 지점이 있는 지역의 것이다
+- 맵 표의 맵마다, 지역 표의 지역마다, 포털 표의 포털마다 배치 데이터가 있다. 마을에는 리스폰 지점이 있다
+
+룸의 경계, 룸 배정, 이동 판정의 룸 경계는 지역의 배치 데이터(`AreaPlacement::bounds`)를 쓴다. 경계 계산과 포함 판정은 `Utils/PlaneBounds.h` 한 곳에 있다.
+포털 판정과 도착 위치는 포털의 배치 데이터를, 마을 리스폰은 마을의 리스폰 지점을 쓴다. 맵의 경계와 셀 크기는 읽어서 설치만 하고, 룸을 맵의 사본으로 바꾸는
+작업(#337)이 쓴다.
+
+테스트는 `Server/GameServerTests/TestAreaTables.h`의 `TestArea`로 지역 행과 그 배치 데이터를 함께 넣는다.
 
 ---
 
