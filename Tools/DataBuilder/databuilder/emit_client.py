@@ -6,6 +6,7 @@ JSON의 각 행은 첫 필드 `RowName`이 데이터 테이블의 행 이름이�
 
 `.proto`의 열거형은 `UPROPERTY`가 될 수 없으므로 값 이름(`FString`)으로 싣고, 행 구조체에 프로토콜 열거형을 돌려주는 함수를 둔다.
 설정 파일의 열거형은 `UENUM`으로 만든다. 이름은 클라이언트 규칙(`FP1<표>Row`, `EP1<열거형>`)을 따르고, 파일 하나에 타입 하나다.
+설정 시트에서 클라이언트로 가는 필드(수와 bool)는 데이터 테이블이 아니라 상수 헤더(`P1<설정>Config.h`)로 싣는다.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from __future__ import annotations
 from databuilder.column_types import ColumnType
 from databuilder.config import ClientConfig
 from databuilder.emit_json import dump, fields_text
-from databuilder.workbooks import Column, DesignData, Row, Table, locate, nested_children, sort_key, targets_client, value_type
+from databuilder.workbooks import Column, DesignData, Row, Setting, Table, locate, nested_children, sort_key, targets_client, value_type
 
 ROW_NAME_FIELD = "RowName"
 ENUM_NAMES_FILE = "P1DesignDataEnumNames.h"
@@ -31,6 +32,8 @@ SCALAR_UE = {"int32": "int32", "int64": "int64", "float": "float", "string": "FS
 SCALAR_UE_DEFAULT = {"int32": " = 0", "int64": " = 0", "float": " = 0.f", "bool": " = false"}
 # UENUM의 0번 값. 「값 없음」이라 셀에 적을 수 없다.
 UENUM_NONE = "None"
+# 설정 시트에서 클라이언트로 가는 필드의 타입. 데이터 테이블이 아니라 상수 헤더로 싣는다.
+SETTING_CONSTANT_TYPES = {"int32", "int64", "float", "bool"}
 
 
 def client_columns(columns: list[Column]) -> list[Column]:
@@ -70,8 +73,9 @@ def check_client(data: DesignData, errors: list[str]) -> None:
 
     for setting in data.settings.values():
         for column in client_columns(setting.fields):
-            where = locate(setting.config.workbook, setting.config.sheet, setting.rows[column.name], "C", column.name)
-            errors.append(f"{where}: 설정 시트는 클라이언트 산출물을 만들지 않는다. 대상을 server나 none으로 둔다")
+            if column.type.kind not in SETTING_CONSTANT_TYPES or column.type.is_list or column.type.is_optional:
+                where = locate(setting.config.workbook, setting.config.sheet, setting.rows[column.name], "B", column.name)
+                errors.append(f"{where}: 설정 시트에서 클라이언트로 보낼 수 있는 값은 수(int32, int64, float)와 bool뿐이다. 클라이언트는 상수 헤더로 읽는다")
 
     for name in used_client_enums(data):
         enum = data.enums[name]
@@ -305,6 +309,36 @@ def version_header(version: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def setting_header_name(setting: Setting) -> str:
+    return f"P1{setting.name}Config.h"
+
+
+def constant_literal(kind: str, value) -> str:
+    if kind == "bool":
+        return "true" if value else "false"
+    if kind == "float":
+        return f"{float(value)!r}f"
+    return str(int(value))
+
+
+def setting_header(setting: Setting) -> str:
+    """설정 시트에서 클라이언트로 가는 필드를 상수로 담은 헤더. 값을 바꾸면 클라이언트를 다시 빌드한다."""
+    lines = NOTICE + [
+        "#pragma once",
+        "",
+        '#include "CoreMinimal.h"',
+        "",
+        f"/** {setting.name} 설정({setting.config.workbook} 시트 '{setting.config.sheet}')에서 클라이언트로 가는 값. */",
+        f"namespace P1DesignData::{setting.name}",
+        "{",
+    ]
+    for column in client_columns(setting.fields):
+        lines += [f"    /** {column.description} */"] if column.description else []
+        lines.append(f"    inline constexpr {SCALAR_UE[column.type.kind]} {column.name} = {constant_literal(column.type.kind, setting.values[column.name])};")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
 def client_outputs(client: ClientConfig, data: DesignData, version: str) -> dict:
     """클라이언트 산출물 폴더 → 파일 이름 → 내용."""
     tables = client_tables(data)
@@ -317,6 +351,9 @@ def client_outputs(client: ClientConfig, data: DesignData, version: str) -> dict
     for name in enums:
         if data.enums[name].proto_file is None:
             source_files[enum_header_name(name)] = uenum_header(name, data)
+    for setting in data.settings.values():
+        if client_columns(setting.fields):
+            source_files[setting_header_name(setting)] = setting_header(setting)
     proto_enums = [name for name in enums if data.enums[name].proto_file]
     if proto_enums:
         source_files[ENUM_NAMES_FILE] = enum_names_header(proto_enums, data)

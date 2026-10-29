@@ -4,12 +4,13 @@
 #include "GameFramework/Actor.h"
 #include "P1FieldBoundaryWall.generated.h"
 
+class AP1AreaVolume;
 class UBoxComponent;
 
 /**
- * 필드 경계를 막는 보이지 않는 벽.
+ * 지역의 경계를 막는 보이지 않는 벽.
  *
- * 필드의 네 변에 벽을 세워 필드 밖으로 나가지 못하게 한다.
+ * 지역 볼륨의 네 변 바깥에 벽을 세워 플레이어가 지역 밖으로 나가지 못하게 한다. 서버의 룸 경계와 같은 곳을 막는다.
  */
 UCLASS()
 class P1_API AP1FieldBoundaryWall : public AActor
@@ -25,12 +26,19 @@ protected:
     //~ End AActor Interface
 
     //~ Boundary Walls
+#if WITH_EDITOR
 public:
-    /** 경계 크기 값으로 벽 넷의 위치와 크기를 다시 계산한다. */
-    UFUNCTION(BlueprintCallable, Category = "Boundary")
-    void UpdateWalls();
+    const AP1AreaVolume* GetAreaVolume() const { return AreaVolume; }
+
+    /** 벽이 막는 안쪽 영역. 맞춘 지역 볼륨과 같아야 한다. Z는 바닥의 높이다. */
+    FVector GetFittedCenter() const { return FittedCenter; }
+    FVector2D GetFittedHalfExtent() const { return FittedHalfExtent; }
+#endif
 
 private:
+    /** 지역 볼륨의 경계에 맞춰 벽 넷의 위치와 크기를 정한다. 벽은 액터의 변환과 무관하게 월드 기준으로 선다. */
+    void FitToAreaVolume();
+
     UPROPERTY()
     TObjectPtr<USceneComponent> Root;
 
@@ -56,11 +64,17 @@ private:
     UPROPERTY(EditAnywhere, Category = "Boundary")
     float WallHeight = 500.f;
 
-    /** 필드의 x 방향 길이. 서버 맵 데이터의 depthHalfExtent의 두 배와 같아야 한다. */
-    UPROPERTY(EditAnywhere, Category = "Boundary")
-    float BoundaryDepth = 100.f;
+#if WITH_EDITORONLY_DATA
+    /** 벽이 둘러쌀 지역 볼륨. 볼륨을 옮기거나 키우면 벽도 다시 맞춰진다. 쿠킹한 빌드에는 맞춘 벽만 남는다. */
+    UPROPERTY(EditInstanceOnly, Category = "Boundary")
+    TObjectPtr<AP1AreaVolume> AreaVolume;
 
-    /** 필드의 y 방향 길이. 서버 맵 데이터의 widthHalfExtent의 두 배와 같아야 한다. */
-    UPROPERTY(EditAnywhere, Category = "Boundary")
-    float BoundaryWidth = 100.f;
+    /** 마지막으로 맞춘 볼륨의 바닥 중심. 배치 추출이 볼륨과 대조한다. */
+    UPROPERTY(VisibleAnywhere, Category = "Boundary")
+    FVector FittedCenter = FVector::ZeroVector;
+
+    /** 마지막으로 맞춘 볼륨의 X, Y 방향 반경. */
+    UPROPERTY(VisibleAnywhere, Category = "Boundary")
+    FVector2D FittedHalfExtent = FVector2D::ZeroVector;
+#endif
 };

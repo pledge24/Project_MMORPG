@@ -88,7 +88,7 @@
     <!-- googletest 경로가 두 개인 이유:
          include\  → 테스트 코드의 #include <gtest/gtest.h>
          루트      → gtest-all.cc 안의 #include "src/gtest.cc" -->
-    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Protocol;$(SolutionDir);$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(SolutionDir)GameServer;$(SolutionDir)GameServer\Protocol;$(SolutionDir);$(SolutionDir)Libraries\googletest\include;$(SolutionDir)Libraries\googletest;$(SolutionDir)Libraries\include\sw\redis++\cxx17;$(SolutionDir)Libraries\include\sw\redis++\no_tls;$(SolutionDir)Libraries\include\sw\redis++;$(SolutionDir)Libraries\include\;$(SolutionDir)Libraries\recastnavigation\Detour\Include;$(SolutionDir)Libraries\recastnavigation\Recast\Include;$(SolutionDir)..\Tools\NavBuilder;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Libraries\Libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Binary\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -174,6 +174,7 @@
     <ClCompile Include="..\GameServer\Network\ChatRequests.cpp" />
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="MonsterSpawnTests.cpp" />
     <ClCompile Include="MapLoadTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="GameDBSchemaTests.cpp" />
@@ -208,6 +209,8 @@
     <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="LobbyRequestsTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="RoomChannelTests.cpp" />
+    <ClCompile Include="RoomVisibilityTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="QuickSlotTests.cpp" />
@@ -220,6 +223,7 @@
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="MonsterTests.cpp" />
+    <ClCompile Include="ShopRequestTests.cpp" />
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
@@ -291,6 +295,7 @@
     <ClCompile Include="..\GameServer\Game\Entities\Creature.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Entity.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp" />
+    <ClCompile Include="..\GameServer\Game\Entities\Npc.cpp" />
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp" />
     <ClCompile Include="..\GameServer\Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\Items\ItemContainer.cpp" />
@@ -300,12 +305,14 @@
     <ClCompile Include="..\GameServer\Game\QuickSlots\QuickSlotComponent.cpp" />
     <ClCompile Include="..\GameServer\DB\QuickSlotDAO.cpp" />
     <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\AI\MonsterStates.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\GamedataParser.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\Room.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomTransfer.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\MoveValidation.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp" />
+    <ClCompile Include="..\GameServer\Game\Room\MonsterSpawner.cpp" />
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp" />
     <ClCompile Include="..\GameServer\Lobby\AccountDAO.cpp" />
     <ClCompile Include="..\GameServer\Lobby\CharacterListDAO.cpp" />
@@ -323,6 +330,75 @@
       <Project>{06e33453-7277-4458-9eca-030e662c2598}</Project>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup Label="내비게이션 테스트와 빌드 도구의 navmesh 빌드">
+    <ClCompile Include="NavMeshBuildTests.cpp" />
+    <ClCompile Include="NavQueryTests.cpp" />
+    <ClCompile Include="RoomTerrainTests.cpp" />
+    <ClInclude Include="TestNavLevel.h" />
+    <ClCompile Include="..\GameServer\Game\Navigation\NavMesh.cpp" />
+    <ClCompile Include="..\GameServer\Game\Navigation\NavQuery.cpp" />
+    <ClCompile Include="..\GameServer\Game\Navigation\PathFollowingComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\Navigation\NavMeshes.cpp" />
+    <ClCompile Include="..\..\Tools\NavBuilder\NavMeshBuild.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup Label="recastnavigation — PCH 금지(서버 pch가 using namespace std를 전역에 푼다)">
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourAlloc.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourAssert.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourCommon.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMesh.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMeshBuilder.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMeshQuery.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNode.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\Recast.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastAlloc.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastArea.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastAssert.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastContour.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastFilter.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastLayers.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastMesh.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastMeshDetail.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastRasterization.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastRegion.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

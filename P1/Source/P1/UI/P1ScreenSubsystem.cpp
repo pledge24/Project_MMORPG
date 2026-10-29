@@ -6,6 +6,7 @@
 #include "UI/Screens/P1StatusWindowWidget.h"
 #include "UI/Screens/P1InventoryWidget.h"
 #include "UI/Screens/P1ShopWidget.h"
+#include "UI/Screens/P1ChannelListWidget.h"
 #include "UI/Screens/P1WarningTextWidget.h"
 #include "UI/Screens/P1DeathWidget.h"
 #include "UI/Screens/P1GameMenuWidget.h"
@@ -87,6 +88,7 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
         {EP1WidgetType::WIDGET_STATUS_WINDOW, CreateWindowWidget(InOwningPlayer, Settings->StatusWindowWidgetClass, WindowLayer)},
         {EP1WidgetType::WIDGET_INVENTORY, CreateWindowWidget(InOwningPlayer, Settings->InventoryWidgetClass, WindowLayer)},
         {EP1WidgetType::WIDGET_SHOP, CreateWindowWidget(InOwningPlayer, Settings->ShopWidgetClass, WindowLayer)},
+        {EP1WidgetType::WIDGET_CHANNEL_LIST, CreateWindowWidget(InOwningPlayer, Settings->ChannelListWidgetClass, WindowLayer)},
     };
 
     // 창보다 위에 그리는 화면.
@@ -113,8 +115,9 @@ void UP1ScreenSubsystem::ReleaseScreens()
     GameMenuWidget = nullptr;
     WindowWidgets.Empty();
     OpenWindowFlags = 0;
+    ShopNpcEntityId = 0;
     OwningPlayer = nullptr;
-    SyncShopOpen();
+    SyncShopNpc();
 }
 
 void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
@@ -129,7 +132,7 @@ void UP1ScreenSubsystem::OpenWindow(EP1WidgetType Type)
     OpenWindowFlags |= (1 << static_cast<uint8>(Type));
 
     RefreshInputMode();
-    SyncShopOpen();
+    SyncShopNpc();
 }
 
 void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)
@@ -147,7 +150,7 @@ void UP1ScreenSubsystem::CloseWindow(EP1WidgetType Type)
     OpenWindowFlags &= ~(1 << static_cast<uint8>(Type));
 
     RefreshInputMode();
-    SyncShopOpen();
+    SyncShopNpc();
 }
 
 void UP1ScreenSubsystem::ToggleWindow(EP1WidgetType Type)
@@ -168,6 +171,17 @@ void UP1ScreenSubsystem::RefreshInputMode()
     APlayerController* PC = OwningPlayer.Get();
     if (PC == nullptr)
         return;
+
+    // 상점이 열린 동안은 캐릭터 조작과 카메라 회전을 막는다. 카메라는 NPC 상호작용이 NPC 쪽으로 돌린다.
+    // 입력은 아래에서 상점 창만 받게 하지만, 상점 위에 채팅 입력칸이나 메뉴가 떴다 닫히는 사이에도 막히도록 따로 건다.
+    // 막는 횟수를 쌓지 않도록 매번 풀고 다시 건다.
+    PC->ResetIgnoreMoveInput();
+    PC->ResetIgnoreLookInput();
+    if (IsWindowOpen(EP1WidgetType::WIDGET_SHOP))
+    {
+        PC->SetIgnoreMoveInput(true);
+        PC->SetIgnoreLookInput(true);
+    }
 
     // 게임 메뉴와 사망 화면은 그 화면만 입력을 받는다. 사망 화면이 게임 입력을 막지 않으면 죽은 플레이어가 움직인다.
     // 채팅 입력칸은 사망 화면보다 앞이다. 사망한 채로도 말할 수 있고, 입력칸을 닫으면 다시 사망 화면이 입력을 받는다.
@@ -206,6 +220,17 @@ void UP1ScreenSubsystem::RefreshInputMode()
         PC->bShowMouseCursor = true;
         PC->SetInputMode(InputMode);
     }
+    else if (UUserWidget* ShopWindow = IsWindowOpen(EP1WidgetType::WIDGET_SHOP) ? FindWindow(EP1WidgetType::WIDGET_SHOP) : nullptr)
+    {
+        // 상점은 UI 모드다. 게임 입력이 들어가면 상점을 연 채 전투 모드를 켜고 공격하거나, 퀵슬롯을 쓰거나, 다른 창을 다시 연다.
+        // 메뉴 키와 채팅 키는 상점 창이 받는다.
+        FInputModeUIOnly InputMode;
+        InputMode.SetWidgetToFocus(ShopWindow->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+        PC->bShowMouseCursor = true;
+        PC->SetInputMode(InputMode);
+    }
     else if (OpenWindowFlags != 0)
     {
         PC->bShowMouseCursor = true;
@@ -230,13 +255,48 @@ UUserWidget* UP1ScreenSubsystem::FindWindow(EP1WidgetType Type) const
     return *Found;
 }
 
-void UP1ScreenSubsystem::SyncShopOpen() const
+void UP1ScreenSubsystem::SyncShopNpc() const
 {
     const ULocalPlayer* LocalPlayer = GetLocalPlayer();
     const UGameInstance* GameInstance = LocalPlayer ? LocalPlayer->GetGameInstance() : nullptr;
     const UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
     if (MyPlayerData)
-        MyPlayerData->GetItemActions()->SetShopOpen(IsWindowOpen(EP1WidgetType::WIDGET_SHOP));
+        MyPlayerData->GetItemActions()->SetShopNpc(IsWindowOpen(EP1WidgetType::WIDGET_SHOP) ? ShopNpcEntityId : 0);
+}
+
+bool UP1ScreenSubsystem::OpenShop(int64 NpcEntityId, int32 ShopId)
+{
+    UP1ShopWidget* ShopWidget = Cast<UP1ShopWidget>(FindWindow(EP1WidgetType::WIDGET_SHOP));
+    APlayerController* PC = OwningPlayer.Get();
+    if (ShopWidget == nullptr || PC == nullptr)
+        return false;
+
+    // 상점과 인벤토리만 남긴다. 다른 창은 닫은 채로 두고 상점을 닫아도 되살리지 않는다.
+    for (const TPair<EP1WidgetType, TObjectPtr<UUserWidget>>& Window : WindowWidgets)
+    {
+        if (Window.Key != EP1WidgetType::WIDGET_SHOP && Window.Key != EP1WidgetType::WIDGET_INVENTORY)
+            CloseWindow(Window.Key);
+    }
+
+    // 조작을 막기 전에 눌린 키를 놓는다. 놓지 않으면 상점을 닫은 뒤 그 키가 눌린 채 남는다.
+    PC->FlushPressedKeys();
+
+    ShopNpcEntityId = NpcEntityId;
+    ShopWidget->SetShop(ShopId);
+    OpenWindow(EP1WidgetType::WIDGET_INVENTORY);
+    OpenWindow(EP1WidgetType::WIDGET_SHOP);
+    return true;
+}
+
+void UP1ScreenSubsystem::CloseShop()
+{
+    if (IsWindowOpen(EP1WidgetType::WIDGET_SHOP) == false)
+        return;
+
+    CloseWindow(EP1WidgetType::WIDGET_SHOP);
+    CloseWindow(EP1WidgetType::WIDGET_INVENTORY);
+    ShopNpcEntityId = 0;
+    SyncShopNpc();
 }
 
 void UP1ScreenSubsystem::ToggleGameMenu()
@@ -317,4 +377,10 @@ void UP1ScreenSubsystem::ShowBattleMode(bool bBattleMode)
         DisplayWarningText(FText::FromString(TEXT("전투모드를 활성화합니다")));
     else
         DisplayWarningText(FText::FromString(TEXT("전투모드를 비활성화합니다")));
+}
+
+void UP1ScreenSubsystem::ShowInteractionPrompt(const FText& Prompt)
+{
+    if (HUDWidget)
+        HUDWidget->SetInteractionPrompt(Prompt);
 }

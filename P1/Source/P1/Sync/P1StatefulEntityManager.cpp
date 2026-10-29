@@ -7,6 +7,7 @@
 #include "Game/Entities/P1MyPlayer.h"
 #include "Game/Entities/P1Player.h"
 #include "Game/Entities/P1Monster.h"
+#include "Game/Entities/P1Npc.h"
 #include "Utils/LogCategory.h"
 
 void UP1StatefulEntityManager::Initialize(FSubsystemCollectionBase& Collection)
@@ -39,6 +40,8 @@ void UP1StatefulEntityManager::RegisterEntity(uint64 EntityId, AActor* SpawnedAc
         Monsters.Add(EntityId, Monster);
     else if (AP1Player* Player = Cast<AP1Player>(SpawnedActor))
         Players.Add(EntityId, Player);
+    else if (AP1Npc* Npc = Cast<AP1Npc>(SpawnedActor))
+        Npcs.Add(EntityId, Npc);
 }
 
 void UP1StatefulEntityManager::UnRegisterEntity(uint64 EntityId, EP1EntityType EntityType)
@@ -51,6 +54,10 @@ void UP1StatefulEntityManager::UnRegisterEntity(uint64 EntityId, EP1EntityType E
 
     case EP1EntityType::Player:
         Players.Remove(EntityId);
+        break;
+
+    case EP1EntityType::Npc:
+        Npcs.Remove(EntityId);
         break;
     default:
         UE_LOG(LogP1Entity, Log, TEXT("EntityType 지정 안 됨"))
@@ -66,6 +73,10 @@ AActor* UP1StatefulEntityManager::FindEntity(uint64 EntityId)
     else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(EntityId))
     {
         return *FindMonster;
+    }
+    else if (TObjectPtr<AP1Npc>* FindNpc = Npcs.Find(EntityId))
+    {
+        return *FindNpc;
     }
 
     UE_LOG(LogP1Entity, Warning, TEXT("해당 엔티티(Id:%d)를 EntityManager에서 찾지 못했습니다"), (int32)EntityId);
@@ -90,6 +101,10 @@ void UP1StatefulEntityManager::SpawnEntity(const Protocol::EntityInfo& InEntityI
 
     case Protocol::EntityInfo::kPlayerInfo:
         SpawnPlayer(InEntityInfo, SpawnerId);
+        break;
+
+    case Protocol::EntityInfo::kNpcInfo:
+        SpawnNpc(InEntityInfo, SpawnerId);
         break;
     default:
         UE_LOG(LogP1Entity, Warning, TEXT("세부 정보가 없는 엔티티 %llu는 스폰하지 않는다"), InEntityInfo.entity_id())
@@ -128,6 +143,12 @@ void UP1StatefulEntityManager::DespawnAllEntities()
 
     }
 
+    for (const TPair<uint64, TObjectPtr<AP1Npc>>& Pair : Npcs)
+    {
+        if (AP1Npc* Npc = Pair.Value)
+            Npc->Destroy();
+    }
+
     Clear();
 
     if (MyPlayer)
@@ -148,12 +169,20 @@ void UP1StatefulEntityManager::DespawnEntity(uint64 EntityId)
         (*FindMonster)->Destroy();
         return;
     }
+    else if (TObjectPtr<AP1Npc>* FindNpc = Npcs.Find(EntityId))
+    {
+        AP1Npc* Npc = *FindNpc;
+        UnRegisterEntity(EntityId, EP1EntityType::Npc);
+        Npc->Destroy();
+        return;
+    }
 }
 
 void UP1StatefulEntityManager::Clear()
 {
     Players.Empty();
     Monsters.Empty();
+    Npcs.Empty();
 }
 
 void UP1StatefulEntityManager::SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
@@ -215,6 +244,16 @@ void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityI
 }
 
     
+
+void UP1StatefulEntityManager::SpawnNpc(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId)
+{
+    const uint64 EntityId = InEntityInfo.entity_id();
+    if (Npcs.Contains(EntityId))
+        return;
+
+    if (AP1Npc* NewNpc = EntitySpawners[SpawnerId]->SpawnNpc(InEntityInfo))
+        RegisterEntity(EntityId, NewNpc);
+}
 
 void UP1StatefulEntityManager::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {

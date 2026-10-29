@@ -2,6 +2,8 @@
 #include "Protocol/Common.pb.h"
 #include "Protocol/Item.pb.h"
 #include "Game/Data/Generated/DesignData.h"
+#include "Game/Data/CreatureCombat.h"
+#include "Game/Data/Placement.h"
 
 /*--------------------------------------------------------------
     기획 데이터 템플릿
@@ -22,11 +24,16 @@ struct GamedataTables
     DesignData::MonsterTable monsters;
     /** 몬스터의 드롭 그룹. 드롭 항목은 그룹의 Entries에 있다. */
     DesignData::DropGroupTable dropGroups;
+    /**
+     * 스폰 마커가 가리키는 몬스터 구성, 최대 수, 리젠 시간. 스폰 항목은 그룹의 Entries에 있다.
+     * 그룹마다 항목이 하나 이상이고 가중치는 1 이상이다(DataBuilder가 검사한다).
+     */
+    DesignData::SpawnGroupTable spawnGroups;
     /** 시작 맵과 플레이어의 마지막 위치가 가리키는 맵. */
     DesignData::MapTable maps;
     /**
-     * 맵 안의 지역. 지금은 지역 하나가 룸 하나라서 룸을 지역 번호 순서로 만든다. 포털은 지역의 Portals에 있다.
-     * 포털의 도착 지역과 나오는 몬스터는 다른 표에 있고, 반경은 0보다 크다(DataBuilder가 검사한다).
+     * 맵 안의 지역. 룸 안에서 규칙이 다른 공간이다. 포털은 지역의 Portals에 있다.
+     * 포털의 도착 지역은 지역 표에 있다(DataBuilder가 검사한다).
      */
     DesignData::AreaTable areas;
     /** 레벨마다 다음 레벨까지 필요한 경험치. 1부터 이어지고 마지막 레벨이 최대 레벨이다(DataBuilder가 검사한다). */
@@ -44,4 +51,28 @@ struct GamedataTables
     int32 goldCurrencyId = 0;
     /** 새 캐릭터가 첫 게임 입장에서 갖는 값. 시작 맵은 맵 표에 있고 시작 골드는 0 이상이다(DataBuilder가 검사한다). */
     DesignData::ProgressConfig initialProgress;
+
+    /** 상점의 판매 목록. 목록은 비어 있지 않고 아이템 표의 아이템이다(DataBuilder가 검사한다). */
+    DesignData::ShopTable shops;
+    /** NPC가 여는 상점. 상점은 상점 표에 있다(DataBuilder가 검사한다). */
+    DesignData::NpcTable npcs;
+    /** NPC 상호작용의 사거리. 0보다 크다(DataBuilder가 검사한다). */
+    DesignData::InteractionConfig interaction;
+
+    // 배치 데이터. 맵, 지역, 포털마다 하나씩 있고 마을에는 리스폰 지점이 있다(기동할 때 대조하고, 위치는 추출이 검사한다).
+    map<int32, MapPlacement> mapPlacements;
+    map<int32, AreaPlacement> areaPlacements;
+    map<int32, PortalPlacement> portalPlacements;
+    /** 지역 번호 → 그 지역의 리스폰 지점. */
+    map<int32, RespawnPointPlacement> respawnPoints;
+    /** 맵 번호 → 그 맵의 스폰 마커. 마커의 스폰 그룹은 스폰 그룹 표에 있다(기동할 때 대조한다). 마커가 없는 맵은 키가 없다. */
+    map<int32, vector<SpawnPointPlacement>> spawnPoints;
+    /** NPC 번호 → 그 NPC의 마커. NPC 표의 NPC마다 하나다. */
+    map<int32, NpcPlacement> npcPlacements;
+
+    // 크리처 판정 데이터. 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 하나씩 있다(기동할 때 대조하고, 타이밍은 추출이 검사한다).
+    map<int32, CreatureCombat> monsterCombats;
+    map<Protocol::CharacterClass, CreatureCombat> classCombats;
+    /** 루트 모션 곡선의 초당 표본 수. */
+    int32 rootMotionSampleRate = 0;
 };

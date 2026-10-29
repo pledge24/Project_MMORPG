@@ -11,4 +11,5 @@ enum class EP1WidgetType : uint8
     WIDGET_STATUS_WINDOW = 1 UMETA(DisplayName="StatusWindow"),
     WIDGET_INVENTORY = 2 UMETA(DisplayName = "Inventory"),
     WIDGET_SHOP = 3 UMETA(DisplayName = "Shop"),
+    WIDGET_CHANNEL_LIST = 4 UMETA(DisplayName = "ChannelList"),
 };

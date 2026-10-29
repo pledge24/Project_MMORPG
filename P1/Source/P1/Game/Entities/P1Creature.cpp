@@ -18,8 +18,10 @@ void AP1Creature::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 공격 컴포넌트 연결.
-    AttackSystemComponent = FindComponentByClass<UP1AttackSystemComponent>();
+    // 공격 컴포넌트 연결. 생성자에서 만든 하위 클래스(몬스터)는 그 컴포넌트를 그대로 쓴다.
+    // 덮어쓰면 블루프린트가 붙인 다른 공격 컴포넌트가 잡혀, 스폰 때 넣은 몽타주가 재생되지 않을 수 있다.
+    if (AttackSystemComponent == nullptr)
+        AttackSystemComponent = FindComponentByClass<UP1AttackSystemComponent>();
     if (AttackSystemComponent == nullptr)
         UE_LOG(LogP1CharacterComp, Warning, TEXT("AP1Creature {%s} AttackSystemComponent 누락"), *this->GetName());
 

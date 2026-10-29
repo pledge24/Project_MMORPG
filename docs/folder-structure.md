@@ -56,7 +56,7 @@ Project_MMORPG/
 **한 티어 안에서만 도는 스크립트는 `Tools/`에 두지 않는다.** 클라이언트의 빌드와 테스트 실행은
 `P1/Scripts/`가 맡는다. `Tools/`에 두는 것은 저장소 전체를 대상으로 삼거나 두 티어가 함께 쓰는
 것이다. 규범 검사(`Tools/ConventionLint/`)와 문서 검사(`Tools/DocLint/`)가 앞에, 기획 데이터 생성기(`Tools/DataBuilder/`)와 패킷 핸들러
-생성기가 뒤에 해당한다.
+생성기, navmesh 빌드 도구(`Tools/NavBuilder/`)가 뒤에 해당한다. navmesh 빌드 도구는 클라이언트의 추출 스크립트가 부르고 서버가 그 산출물을 읽는다.
 
 `Server/`와 `Protocol/`이 언리얼 프로젝트 **바깥에** 있는 이유는 둘이다. 첫째, 언리얼의 쿠킹과
 패키징 대상에서 자연히 빠진다. 둘째, 서버를 빌드할 때 언리얼 빌드 도구가 필요 없어진다.
@@ -79,7 +79,7 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
-├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Tests/ 그 테스트
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Navigation/ navmesh 빌드에 넘기는 충돌 형상과 에이전트 설정, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
@@ -111,20 +111,25 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`). 하위 `Generated/`는 DataBuilder가 만드는 기획 데이터 행 구조체와 열거형이다 |
-| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽 |
-| `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
+| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽, 배치 추출이 읽는 에디터 전용 마커(맵 마커, 지역 볼륨, 리스폰 지점, 포털 도착 지점, 몬스터 스폰 마커, NPC 마커) |
+| `Game/Interaction/` | 내 플레이어가 NPC를 조준해 쓰는 상호작용. 조준 판정, 상점을 여닫는 상호작용 컴포넌트, 그 컴포넌트가 화면을 다루는 인터페이스(`IP1ShopScreen`) |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
 | `Game/Chat/` | 채팅 줄 `USTRUCT`, 받은 채팅을 보관하고 채팅을 보내는 채팅 서브시스템, 채팅의 패킷 변환 |
+| `Game/Channel/` | 채널 목록 줄 `USTRUCT`, 지금 채널과 채널 목록을 보관하고 채널 목록과 채널 변경 요청을 보내는 채널 서브시스템 |
 
 **`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
 — 두 폴더로 나누면 스폰 하나를 고칠 때 양쪽을 함께 열게 된다.
 
-**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 상점처럼 플레이어가 골라서 다가가 쓰는 대상은
-`Game/Interaction/`에 둔다.
+**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 조준해 쓰는 NPC는 서버 엔티티라 액터가 `Game/Entities/`에 있고,
+조준과 상점 여닫기는 `Game/Interaction/`에 있다. 레벨에는 NPC를 세울 자리인 NPC 마커만 놓는다.
 — 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
 아니라 레벨이 놓아 둔 장치다.
+
+**상호작용 컴포넌트는 인게임 플레이어 컨트롤러에 붙는다.** 컨트롤러가 내 플레이어의 비전투 클릭 알림(`OnNonCombatClick`)을
+컴포넌트에 잇는다.
+— 내 플레이어(`Game/Entities/`)가 컴포넌트를 만들면 `Game/Entities/`가 `Game/Interaction/`을 부르게 되어 3.3의 방향이 뒤집힌다.
 
 **`UI/` 하위는 표시 방식으로 나눈다.** 게임 도메인으로 나누지 않는다.
 
@@ -174,16 +179,17 @@ P1/Source/
 ### 3.3 의존 방향
 
 도메인끼리 서로 참조하면 경계가 무너진다. 각 폴더는 아래 표에 적힌 곳만 부른다. 게임 도메인은
-`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`, `Game/QuickSlots`, `Game/Chat`이다.
+`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`, `Game/QuickSlots`, `Game/Chat`, `Game/Channel`이다.
 
 | 폴더 | 부를 수 있는 곳 |
 | --- | --- |
 | `Core/`, `UI/` (배선) | 서로, 그리고 아래의 모든 폴더 |
 | `Auth/` | `Network/`의 설정(`P1NetworkSettings.h`), `Utils/` |
 | `Lobby/` | `Network/`의 송신 창구와 생성된 핸들러 헤더, 세션(`PacketSession.h`), `Game/Progress`(받은 입장 응답을 넘기는 패킷 핸들러), `Utils/` |
-| `Network/` | `Sync/`, `Game/Progress`와 `Game/Chat`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
+| `Network/` | `Sync/`, `Game/Progress`와 `Game/Chat`과 `Game/Channel`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
-| `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
+| `Game/World` | `Game/Entities`, `Utils/`, 송신 창구 |
+| `Game/Interaction` | `Game/Entities`, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/Entities` | 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | 게임 도메인 | `Game/Items`, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/Items` | `Utils/` |
@@ -209,13 +215,15 @@ P1/Source/
 `OnPossess`에서 화면 서브시스템에 이어 준다). 배선의 객체를 도메인이 호출해야 하면 `Game/`에 인터페이스를 두고 배선이
 구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`, 인게임 컨트롤러가 구현하는 `IP1ShopScreen`).
 
-**레벨에 놓인 액터(`Game/World/`, `Game/Interaction/`)는 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
-내 플레이어인지, 그 상태가 어떤지를 보고 반응하기 때문이다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
+**`Game/Interaction`은 `Game/Data`를 부른다.** 조준 판정이 상호작용 사거리(생성된 설정 상수)를, 상점을 열 때 NPC 표의 상점 번호를 읽는다.
+— 상점 창이 상점 표의 판매 목록을 진열하고 아이템 요청 창구가 상점을 연 NPC를 아는 일은 화면(`UI/`)이 잇는다. `Game/Interaction`은 `Game/Progress`를 부르지 않는다.
+
+**레벨에 놓인 액터(`Game/World/`)와 상호작용(`Game/Interaction/`)은 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
+내 플레이어인지, 그 상태가 어떤지, 조준한 것이 NPC인지를 보고 반응하기 때문이다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
 
 **`#include` 없이 포인터나 소프트 참조의 타입으로만 쓰는 전방 선언은 방향을 따지지 않는다.** 그 타입의
 멤버를 쓰려면 헤더를 불러야 하므로 그때는 표를 지킨다. `Game/Progress/P1MyPlayerData.h`는 스폰
-알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를, `Game/Data/P1MonsterAssetData.h`는 몬스터 클래스의
-소프트 참조로 `AP1Monster`를 전방 선언한다.
+알림(`OnMyPlayerSpawned`)의 인자로 `AP1MyPlayer`를 전방 선언한다.
 — 알림을 받는 쪽이 그 액터를 쓰고, 보내는 쪽은 이름만 넘긴다. 이 알림을 다른 폴더로 옮기면 구독하는
 화면의 경로까지 바뀐다.
 
@@ -274,12 +282,12 @@ P1/Content/
 │   │   ├── Player/
 │   │   │   ├── Animations/ 공격 시퀀스와 몽타주
 │   │   │   └── Mannequins/ 팩에서 가져온 플레이어 메시
-│   │   └── Monsters/
-│   │       ├── Base/       베이스 블루프린트
-│   │       ├── Melee/
-│   │       ├── Ranged/
-│   │       ├── Super/
-│   │       └── <팩이름>/   팩에서 가져온 몬스터 메시와 애니메이션
+│   │   ├── Monsters/       모델마다 폴더 하나. 몬스터 종류는 에셋 테이블의 행이다
+│   │   │   ├── Common/     공용 블루프린트(`BP_Monster`)와, 두 모델 이상이 함께 쓰는 스켈레톤·머티리얼·텍스처·애니메이션
+│   │   │   ├── MeleeMinion/
+│   │   │   ├── RangedMinion/
+│   │   │   └── SuperMinion/
+│   │   └── Npc/            모든 NPC가 함께 쓰는 것(초점 외곽선 머티리얼). NPC 종류는 에셋 테이블의 행이다
 │   ├── Items/
 │   │   ├── Icons/
 │   │   └── Equipment/
@@ -294,7 +302,7 @@ P1/Content/
 │   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
-│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`)
+│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`)
 │   │   └── DesignData/     DataBuilder JSON으로 채우는 기획 데이터 테이블(`DT_<표>`)
 │   ├── Maps/
 │   └── World/              레벨에 배치하는 액터
@@ -522,17 +530,19 @@ Server/
 │   ├── Network/            세션과 세션 단계별 허용표, 세션 관리자, 게임 패킷 핸들러, 아이템 요청 처리(퀵슬롯 등록 포함)와 아이템·퀵슬롯 패킷 변환, 저장 게이트, 진행 조율자, 게임 입장(게임 입장 창구), 인증 티켓 값 해석
 │   ├── Lobby/              로비 모듈. 로비 패킷 핸들러, 로비 요청의 응답을 만드는 요청 처리(LobbyRequests), 로비 복귀 창구(LobbyReturn), 캐릭터 생성 규칙, 계정 행과 캐릭터 행의 DAO, 로비 기획 데이터(Data/)
 │   ├── Game/               게임 도메인
-│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정, 몬스터 스폰 일정표
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 진행 사본과 저장 사본
 │   │   ├── Items/          아이템과 칸의 서버 타입, 범용 칸 배열(ItemContainer), 인벤토리 구역 대응 표
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   ├── QuickSlots/     퀵슬롯의 서버 타입과 퀵슬롯 컴포넌트
-│   │   ├── AI/             몬스터 AI 컴포넌트
+│   │   ├── AI/             몬스터 AI 컴포넌트와 상태 객체
+│   │   ├── Navigation/     navmesh 파일 형식(빌드 도구와 함께 컴파일), 맵마다의 navmesh와 그 보관소, 룸마다의 지형 질의, 크리처의 경로 추종 부품
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
-│   │       └── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
+│   │       ├── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
+│   │       └── Extracted/  추출 스크립트의 산출물. 맵마다 배치 데이터 JSON과 navmesh, 크리처 판정 데이터 JSON과 에이전트 설정 JSON 하나씩
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
@@ -548,7 +558,7 @@ Server/
 │   │   ├── common/         도메인이 아닌 공용 코드. 설정, DB 연결, 인증 티켓, 로그인 세션, 월드 디렉터리, 봉투, 에러, 비밀번호
 │   │   └── types/          타입 정의를 싣지 않는 패키지의 선언 파일
 │   └── migrations/         AccountDB 스키마. `NNN_<이름>.sql`을 번호 순서로 적용한다
-└── Libraries/              벤더링한 서드파티
+└── Libraries/              벤더링한 서드파티. 헤더와 프리빌트 라이브러리, 소스로 컴파일하는 googletest와 recastnavigation
 ```
 
 **`ServerCore`와 `GameServer`의 분리를 유지한다.** `ServerCore`는 게임 규칙을 모른다. 게임 규칙이
@@ -581,8 +591,11 @@ Server/
 게임 쪽 코드는 `Lobby/`를 include하지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
 2026년 10월 23일(#287)에 `Game/Characters/`와 `DB/`에서 옮겨 왔다.
 
-`Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
-소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+`Game/AI/`는 몬스터의 행동(대기, 배회, 추적, 공격, 귀환)을 정하는 `MonsterAIComponent`와 상태 객체(`MonsterStates`)를 담는다.
+몬스터는 이 컴포넌트를 멤버로 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+AI는 목적지만 정하고, 길을 따라 움직이는 일은 `Game/Navigation/`의 `PathFollowingComponent`가 맡는다. 이 부품은 몬스터에 묶이지 않은
+크리처 공용 부품이라 navmesh 질의(`NavQuery`)와 같은 폴더에 둔다. 2026년 10월 29일(#340)에 나눴다.
+몬스터를 스폰 마커에 채우고 리젠을 예약하는 일정표(`MonsterSpawner`)는 룸이 소유하므로 `Game/Room/`에 둔다.
 
 `Game/Progress/`는 진행의 규칙을 담는다. 2026년 10월 20일(#252) 기준으로 누적 경험치와 레벨 표로 레벨을 정하고
 보상과 사망 페널티를 판정하는 `Leveling`만 있다. 2026년 10월 23일(#288)에 새 캐릭터의 초기 진행을 정하는 `InitialProgress`가

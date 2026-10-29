@@ -150,6 +150,11 @@ public:
         return { posInfo->pos().x(), posInfo->pos().y() };
     }
 
+    static vector3D PosInfoToVector3D(const Protocol::PosInfo& posInfo)
+    {
+        return vector3D(posInfo.pos().x(), posInfo.pos().y(), posInfo.pos().z());
+    }
+
     /** 평면 거리가 range 이하면 true. */
     static bool InRange(const Protocol::PosInfo* curPos, const Protocol::PosInfo* target, float range)
     {

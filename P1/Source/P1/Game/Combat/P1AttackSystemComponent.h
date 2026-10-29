@@ -38,6 +38,12 @@ public:
     bool IsAttacking() const;
     bool CanStartNormalAttack() const;
 
+    /** 콤보 순번 1부터 차례로 재생할 몽타주를 바꾼다. 재생 중인 콤보는 끊지 않는다. */
+    void SetNormalAttackMontages(const TArray<UAnimMontage*>& Montages);
+
+    /** 콤보 순번 1부터 차례로 재생하는 몽타주. 빈 칸이 있을 수 있다. */
+    const TArray<TObjectPtr<UAnimMontage>>& GetNormalAttackMontages() const { return NormalAttackMontages; }
+
 private:
     /** 몽타주를 재생하고 다른 몽타주는 모두 멈춘다. 재생하지 못하면 nullptr. */
     UAnimInstance* PlayMontage(UAnimMontage* Montage);

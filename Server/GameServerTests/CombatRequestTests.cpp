@@ -6,6 +6,7 @@
 #include "RecordingSession.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "RoomManagerTestAccess.h"
 
 /*--------------------------------------------------------------
     룸의 공격과 이동 요청 테스트
@@ -13,7 +14,7 @@
     요청한 플레이어는 응답을 받고, 같은 룸의 다른 플레이어는 통지를 받는다. 통지는 엔티티 번호를
     메시지의 한 곳에만 싣는다.
 
-    픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 두 플레이어를 RecordingSession에 묶어
+    픽스처 결합도: CreateTestRoom으로 룸을 만들고 Start()는 부르지 않는다. 두 플레이어를 RecordingSession에 묶어
     EnterPlayer로 넣는다. 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
@@ -32,8 +33,7 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
-        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate);
+        room = CreateTestRoom(ROOM_ID, 0, 5000.f);
         ASSERT_NE(room, nullptr);
 
         attacker = EnterPlayer(attackerSession);

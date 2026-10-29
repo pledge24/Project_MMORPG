@@ -54,7 +54,7 @@ public:
 
     /**
      * 보낼 요청 하나. 구매는 TemplateId만, 퀵슬롯 등록은 QuickSlotIndex와 QuickSlotRef만, 퀵슬롯 사용은 QuickSlotIndex만,
-     * 나머지는 Address와 ItemUid를 쓴다.
+     * 나머지는 Address와 ItemUid를 쓴다. 구매와 판매는 상점을 연 NPC의 NpcEntityId도 쓴다.
      */
     struct FRequest
     {
@@ -64,6 +64,7 @@ public:
         int32 TemplateId = 0;
         int32 QuickSlotIndex = 0;
         FP1QuickSlotRef QuickSlotRef;
+        int64 NpcEntityId = 0;
     };
 
     using FRequestSender = TFunction<void(const FRequest&)>;
@@ -73,7 +74,7 @@ public:
     /** Address의 칸에 Intent를 요청한다. 보내지 않으면 그 이유를 로그로 남긴다. */
     EResult RequestForSlot(EP1ItemIntent Intent, const FP1SlotAddress& Address);
 
-    /** 상점에서 TemplateId 아이템 하나를 산다. */
+    /** 열린 상점에서 TemplateId 아이템 하나를 산다. */
     EResult RequestBuy(int32 TemplateId);
 
     /**
@@ -85,8 +86,11 @@ public:
     /** QuickSlotIndex 퀵슬롯에 등록된 소모품을 쓴다. 쓸 칸은 서버가 고르고, 응답은 칸을 골라 쓴 사용과 같다. */
     EResult RequestUseQuickSlot(int32 QuickSlotIndex);
 
-    /** 판매는 상점 창이 열려 있을 때만 보낸다. 상점 창을 여닫는 쪽이 부른다. */
-    void SetShopOpen(bool bOpen) { bShopOpen = bOpen; }
+    /**
+     * 상점 창을 연 NPC. 구매와 판매는 상점 창이 열려 있을 때만 그 NPC에게 보낸다. 0이면 상점이 닫혀 있다.
+     * 상점 창을 여닫는 쪽이 부른다.
+     */
+    void SetShopNpc(int64 NpcEntityId) { ShopNpcEntityId = NpcEntityId; }
 
     /** 요청을 보내는 함수를 바꾼다. 테스트가 송신을 기록하려고 쓴다. 비우면 패킷으로 보낸다. */
     void SetRequestSender(FRequestSender InSender) { RequestSender = MoveTemp(InSender); }
@@ -104,7 +108,8 @@ private:
 
     void SendPacket(const FRequest& Request) const;
 
-    bool bShopOpen = false;
+    /** 상점 창을 연 NPC의 엔티티 번호. 0이면 상점이 닫혀 있다. */
+    int64 ShopNpcEntityId = 0;
 
     FRequestSender RequestSender;
 

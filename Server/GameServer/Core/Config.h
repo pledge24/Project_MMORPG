@@ -58,4 +58,6 @@ struct Config
     string worldHost;
     /** 혼잡도를 정하는 기준이 되는 연결 계정 수. 이 수를 넘는 접속을 막지는 않는다. */
     int32 worldCapacity = 0;
+    /** 맵마다 만드는 룸(채널)의 수(1~20). 1이면 맵 하나에 룸 하나다. */
+    int32 channelCount = 0;
 };

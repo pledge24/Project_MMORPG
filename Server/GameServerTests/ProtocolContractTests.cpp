@@ -40,9 +40,11 @@
     X(S_ENTER_ROOM)                                                          \
     X(C_USE_PORTAL) X(S_USE_PORTAL)                                          \
     X(C_RESPAWN) X(S_RESPAWN)                                                \
-    X(C_RETURN_TO_LOBBY) X(S_RETURN_TO_LOBBY)
+    X(C_RETURN_TO_LOBBY) X(S_RETURN_TO_LOBBY)                                \
+    X(C_CHANNEL_LIST) X(S_CHANNEL_LIST)                                      \
+    X(C_CHANGE_CHANNEL) X(S_CHANGE_CHANNEL)
 
-#define ENTITY_PACKETS(X)                                                    \
+#define ENTITY_PACKETS(X)                                                  \
     X(S_SPAWN) X(S_DESPAWN)                                                  \
     X(C_MOVE) X(S_MOVE)                                                      \
     X(S_GEAR_APPEARANCE)

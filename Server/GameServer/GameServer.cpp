@@ -11,6 +11,7 @@
 #include "Network/GameSessionManager.h"
 #include "Network/WorldListing.h"
 #include "Game/Room/Room.h"
+#include "Game/Navigation/NavMeshes.h"
 #include "Utils/SnowflakeIdGenerator.h"
 
 enum
@@ -178,6 +179,13 @@ int main(void)
         return 1;
     }
 
+    // 맵마다의 navmesh. 맵 표와 대조하므로 기획 데이터 다음이다. 형식이나 에이전트 설정이 어긋난 navmesh로 뜨면 지형 판정이 조용히 틀린다.
+    if (NavMeshes::LoadAll() == false)
+    {
+        GLogger->Error("navmesh가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
+        return 1;
+    }
+
     if (LobbyData::LoadAll() == false)
     {
         GLogger->Error("로비 기획 데이터가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
@@ -205,7 +213,7 @@ int main(void)
     context.CreateIdGenerator(serverNodeId);
 
     // 룸은 여기서 한 번만 만든다. 워커 스레드가 뜬 뒤로는 룸 목록을 읽기만 한다.
-    if (GRoomManager->CreateAllRooms() == false)
+    if (GRoomManager->CreateAllRooms(config.channelCount) == false)
     {
         GLogger->Error("룸 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
         return 1;

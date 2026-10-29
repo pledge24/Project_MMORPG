@@ -11,9 +11,9 @@ class UP1ShopScreen : public UInterface
 };
 
 /**
- * 상점이 화면을 다루는 창구.
+ * NPC 상호작용이 화면을 다루는 창구.
  *
- * 상점이 화면의 구체 타입을 모른 채 상점 창과 경고 문구를 다루게 한다.
+ * 상호작용 컴포넌트가 화면의 구체 타입을 모른 채 상호작용 표시와 상점 창을 다루게 한다.
  * 게임 도메인이 UI/와 Core/를 부르지 않기 위해서다.
  */
 class P1_API IP1ShopScreen
@@ -21,12 +21,15 @@ class P1_API IP1ShopScreen
     GENERATED_BODY()
 
 public:
-    /** 내 플레이어가 상점 범위에 들어왔고 상점 창을 열 수 있을 때 부른다. */
-    virtual void OpenShopWindow() = 0;
+    /** 조준한 NPC로 할 수 있는 일을 화면에 띄운다. 빈 문구면 내린다. */
+    virtual void ShowInteractionPrompt(const FText& Prompt) = 0;
 
-    /** 상점 범위에서 겹침이 끝날 때 부른다. 창이 닫혀 있으면 아무것도 하지 않는다. */
+    /**
+     * 다른 창을 모두 내리고 NpcEntityId NPC의 ShopId 상점과 인벤토리를 연다. 상점이 열린 동안은 상점 창만 입력을 받는다.
+     * 화면이 없어 열지 못하면 false.
+     */
+    virtual bool OpenShopWindow(int64 NpcEntityId, int32 ShopId) = 0;
+
+    /** 상점과 인벤토리를 닫고 조작을 돌려준다. 상점이 닫혀 있으면 아무것도 하지 않는다. */
     virtual void CloseShopWindow() = 0;
-
-    /** 상점 창을 열 수 없는 이유를 플레이어에게 알릴 때 부른다. */
-    virtual void ShowShopWarning(const FText& Message) = 0;
 };

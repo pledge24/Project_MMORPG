@@ -21,6 +21,8 @@ description: 언리얼 MCP(`unreal`)의 이 저장소 전용 함정. `mcp__unrea
   파일 수정 시각이나 내용으로 확인한다. 리다이렉트로 불러온 에셋에는 변경 표시가 붙지 않고, 같은 부모로
   `set_parent`를 다시 불러도 붙지 않는다. 위젯 하나의 변수 표시를 `UMGToolSet.ToggleWidgetAsVariable`로 켰다
   끄면 값은 그대로 두고 표시만 붙는다.
+- `AssetTools.delete`는 `true`를 돌려주고도 블루프린트 `.uasset`을 디스크에 남길 때가 있다. 에디터 로그에는
+  `Force Deleting`만 남는다. 지운 뒤에는 `git status`로 파일이 사라졌는지 확인하고, 남은 파일은 git으로 지워 커밋한다.
 - 블루프린트 그래프를 조회할 때는 `BlueprintTools.find_nodes`(`title`을 빈 문자열로 주면 전부)와 `get_node_infos`를
   쓴다. 둘은 변경 표시를 붙이지 않는다. `read_graph_dsl`은 읽기만 해도 변경 표시를 붙이고, 같은 내용으로 저장해도
   `.uasset`의 바이트가 바뀌어 git에 차이가 남는다. 그래서 `read_graph_dsl`은 이어서 고치고 저장할 에셋에만 쓴다.
@@ -35,3 +37,6 @@ description: 언리얼 MCP(`unreal`)의 이 저장소 전용 함정. `mcp__unrea
   alongside the size change`로 거부한다. `reset_properties`로 비운 뒤 새 요소를 넣는다.
   개수를 늘릴 때도 기존 요소를 `get_properties`가 돌려준 형식 그대로 보낸다. 같은 값이라도 형식이 다르면(`"key":"T"`
   대신 `{"keyName":"T"}`) 바뀐 요소로 읽혀 `ArrayAdd: elements changed alongside the size change`로 거부된다.
+- `ActorTools.set_actor_transform`은 비운 필드를 기본값으로 덮는다. `location`만 넘기면 회전은 0, 크기는 1이 된다.
+  도구 설명의 「비운 필드는 바꾸지 않는다」와 다르다. 위치만 바꿀 때도 `get_actor_transform`으로 읽은 회전과 크기를
+  함께 넘기고, 바꾼 뒤 다시 읽어 확인한다.

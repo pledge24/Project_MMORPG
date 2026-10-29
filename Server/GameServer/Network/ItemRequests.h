@@ -8,7 +8,9 @@
  */
 namespace ItemRequests
 {
+    /** 요청이 가리킨 NPC가 이 룸에 있고 거래할 수 있는 거리여야 하며, 그 NPC의 판매 목록에 있는 아이템만 판다. */
     void HandleBuyItem(Room& room, const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt);
+    /** 요청이 가리킨 NPC가 이 룸에 있고 거래할 수 있는 거리여야 한다. */
     void HandleSellItem(Room& room, const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt);
     void HandleUseItem(Room& room, const PlayerRef& player, const Protocol::C_USE_ITEM& pkt);
     /** 성공하면 본인을 포함한 룸의 모든 플레이어에게 외형(부위와 템플릿)을 알린다. */

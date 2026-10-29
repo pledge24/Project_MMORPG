@@ -53,6 +53,9 @@
     <Filter Include="Game\Data\Generated">
       <UniqueIdentifier>{f82dec03-c22b-4774-8d5f-d43ea7f3e958}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Data\Extracted">
+      <UniqueIdentifier>{6b0f3e2a-9c41-4d7e-8a35-2f1c7d94b8e6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
@@ -179,6 +182,9 @@
     <ClCompile Include="Game\Entities\Monster.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Entities\Npc.cpp">
+      <Filter>Game\Entities</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Entities\Entity.cpp">
       <Filter>Game\Entities</Filter>
     </ClCompile>
@@ -230,6 +236,9 @@
     <ClCompile Include="Game\AI\MonsterAIComponent.cpp">
       <Filter>Game\AI</Filter>
     </ClCompile>
+    <ClCompile Include="Game\AI\MonsterStates.cpp">
+      <Filter>Game\AI</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
@@ -246,6 +255,9 @@
       <Filter>Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\CellMatrix.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Room\MonsterSpawner.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\RoomManager.cpp">
@@ -331,6 +343,9 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\PlaneBounds.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -368,6 +383,9 @@
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\Monster.h">
+      <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\Npc.h">
       <Filter>Game\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Game\Entities\Entity.h">
@@ -445,6 +463,9 @@
     <ClInclude Include="Game\AI\MonsterAIComponent.h">
       <Filter>Game\AI</Filter>
     </ClInclude>
+    <ClInclude Include="Game\AI\MonsterStates.h">
+      <Filter>Game\AI</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
@@ -452,6 +473,12 @@
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\Templates.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\CreatureCombat.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\Placement.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\Generated\DesignData.h">
@@ -470,6 +497,9 @@
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\CellMatrix.h">
+      <Filter>Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Room\MonsterSpawner.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\RoomManager.h">
@@ -534,11 +564,26 @@
     <None Include="Game\Data\Generated\DropGroup.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
+    <None Include="Game\Data\Generated\SpawnGroup.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
     <None Include="Game\Data\Generated\Map.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
     <None Include="Game\Data\Generated\Area.json">
       <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Shop.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Npc.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Interaction.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Extracted\Placement_1111.json">
+      <Filter>Game\Data\Extracted</Filter>
     </None>
     <None Include="Game\Data\Generated\Progress.json">
       <Filter>Game\Data\Generated</Filter>
@@ -549,5 +594,72 @@
     <None Include="Lobby\Data\Generated\Lobby.json">
       <Filter>Lobby\Data\Generated</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Game\Navigation">
+      <UniqueIdentifier>{8542d8de-2cb3-44f3-8101-878ccc6139a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{3b30cf64-bf9f-4ee6-acbe-3f5f1c4940df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\recastnavigation\Detour\Source">
+      <UniqueIdentifier>{40291bcd-4028-44dc-853f-571a90834d79}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\Navigation\NavMeshFile.h">
+      <Filter>Game\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Navigation\NavMesh.h">
+      <Filter>Game\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Navigation\NavQuery.h">
+      <Filter>Game\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Navigation\PathFollowingComponent.h">
+      <Filter>Game\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Navigation\NavMeshes.h">
+      <Filter>Game\Navigation</Filter>
+    </ClInclude>
+    <ClCompile Include="Game\Navigation\NavMesh.cpp">
+      <Filter>Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Navigation\NavQuery.cpp">
+      <Filter>Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Navigation\PathFollowingComponent.cpp">
+      <Filter>Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Navigation\NavMeshes.cpp">
+      <Filter>Game\Navigation</Filter>
+    </ClCompile>
+    <None Include="Game\Data\Extracted\NavAgent.json">
+      <Filter>Game\Data\Extracted</Filter>
+    </None>
+    <None Include="Game\Data\Extracted\NavMesh_1111.navmesh">
+      <Filter>Game\Data\Extracted</Filter>
+    </None>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourAlloc.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourAssert.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourCommon.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMesh.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMeshBuilder.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMeshQuery.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNode.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

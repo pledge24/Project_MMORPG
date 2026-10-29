@@ -29,6 +29,8 @@ namespace P1ItemActionsTest
 
     constexpr uint64 MY_PLAYER_ID = 100;
     constexpr int32 MY_LEVEL = 5;
+    /** 상점을 연 NPC의 엔티티 번호. */
+    constexpr int64 SHOP_NPC_ID = 77;
 
     void AddSlot(Protocol::ContainerSlots* ContainerSlots, int32 SlotIndex, int32 TemplateId = 0, int32 Count = 0, int64 ItemUid = 0)
     {
@@ -204,7 +206,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
     //    응답은 요청한 플레이어에게만 오므로, 실패 응답이어도 풀린다.
     {
         FFixture F;
-        F.Actions->SetShopOpen(true);
+        F.Actions->SetShopNpc(SHOP_NPC_ID);
         TestTrue(TEXT("첫 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Sent);
         TestTrue(TEXT("응답 전 두 번째 사용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(CONSUMABLE, 0)) == EResult::Pending);
         TestTrue(TEXT("사용 대기 중 착용"), F.Actions->RequestForSlot(EP1ItemIntent::Use, Address(GEAR, 0)) == EResult::Pending);
@@ -247,12 +249,12 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("응답 뒤 무기 해제"), F.Actions->RequestForSlot(EP1ItemIntent::Unequip, Address(EQUIPPED, 6)) == EResult::Sent);
     }
 
-    // 6) 판매는 상점 창이 열려 있을 때 인벤토리 칸의 팔 수 있는 아이템을 하나씩 판다.
+    // 6) 판매는 상점 창이 열려 있을 때 인벤토리 칸의 팔 수 있는 아이템을 하나씩 상점을 연 NPC에게 판다.
     {
         FFixture F;
         TestTrue(TEXT("상점이 닫힌 채 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(GEAR, 0)) == EResult::ShopClosed);
 
-        F.Actions->SetShopOpen(true);
+        F.Actions->SetShopNpc(SHOP_NPC_ID);
         TestTrue(TEXT("빈 칸 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(GEAR, 3)) == EResult::Empty);
         TestTrue(TEXT("팔 수 없는 검 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(GEAR, 2)) == EResult::NotSellable);
         TestTrue(TEXT("착용 장비 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(EQUIPPED, 6)) == EResult::Unusable);
@@ -264,6 +266,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
             TestTrue(TEXT("판매 요청"), F.Sent[0].Kind == EKind::Sell);
             TestTrue(TEXT("판매: 칸 주소"), F.Sent[0].Address == Address(GEAR, 0));
             TestEqual(TEXT("판매: uid"), F.Sent[0].ItemUid, 11LL);
+            TestEqual(TEXT("판매: NPC"), F.Sent[0].NpcEntityId, SHOP_NPC_ID);
         }
 
         TestNotNull(TEXT("보낸 뒤 두건 칸은 그대로"), F.Data->GetContainer(GEAR)->FindSlot(0));
@@ -274,14 +277,17 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         F.Data->HandleSellItem(Response);
         TestTrue(TEXT("응답 뒤 물약 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(CONSUMABLE, 0)) == EResult::Sent);
 
-        F.Actions->SetShopOpen(false);
+        F.Actions->SetShopNpc(0);
         F.Data->HandleSellItem(Response);
         TestTrue(TEXT("상점을 닫은 뒤 판매"), F.Actions->RequestForSlot(EP1ItemIntent::Sell, Address(GEAR, 0)) == EResult::ShopClosed);
     }
 
-    // 7) 구매는 골드가 가격 이상일 때 템플릿 하나를 산다.
+    // 7) 구매는 상점 창이 열려 있고 골드가 가격 이상일 때 템플릿 하나를 상점을 연 NPC에게서 산다.
     {
         FFixture F;
+        TestTrue(TEXT("상점이 닫힌 채 구매"), F.Actions->RequestBuy(2000) == EResult::ShopClosed);
+
+        F.Actions->SetShopNpc(SHOP_NPC_ID);
         TestTrue(TEXT("2000골드 검을 1000골드로 구매"), F.Actions->RequestBuy(1011) == EResult::NotEnoughGold);
         TestTrue(TEXT("정의가 없는 템플릿 구매"), F.Actions->RequestBuy(0) == EResult::Empty);
         TestTrue(TEXT("물약 구매"), F.Actions->RequestBuy(2000) == EResult::Sent);
@@ -291,6 +297,7 @@ bool FP1ItemActionsTest::RunTest(const FString& Parameters)
         {
             TestTrue(TEXT("구매 요청"), F.Sent[0].Kind == EKind::Buy);
             TestEqual(TEXT("구매: 템플릿"), F.Sent[0].TemplateId, 2000);
+            TestEqual(TEXT("구매: NPC"), F.Sent[0].NpcEntityId, SHOP_NPC_ID);
         }
         TestEqual(TEXT("보낸 뒤 골드는 그대로"), F.Data->GetGold(), 1000LL);
 

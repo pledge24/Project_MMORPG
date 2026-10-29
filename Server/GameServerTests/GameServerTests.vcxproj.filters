@@ -80,6 +80,7 @@
     </ClCompile>
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="MonsterSpawnTests.cpp" />
     <ClCompile Include="MapLoadTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="GameDBSchemaTests.cpp" />
@@ -122,6 +123,8 @@
     <ClCompile Include="LobbyDataTests.cpp" />
     <ClCompile Include="LobbyRequestsTests.cpp" />
     <ClCompile Include="RoomTransferTests.cpp" />
+    <ClCompile Include="RoomChannelTests.cpp" />
+    <ClCompile Include="RoomVisibilityTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="QuickSlotTests.cpp" />
@@ -134,6 +137,7 @@
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="MonsterTests.cpp" />
+    <ClCompile Include="ShopRequestTests.cpp" />
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
@@ -244,6 +248,9 @@
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Entities\Npc.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
@@ -271,6 +278,9 @@
     <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp">
       <Filter>GameServer\Game\AI</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Game\AI\MonsterStates.cpp">
+      <Filter>GameServer\Game\AI</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
       <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
@@ -287,6 +297,9 @@
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp">
+      <Filter>GameServer\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Room\MonsterSpawner.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp">
@@ -312,6 +325,95 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\DB\ItemRows.cpp">
       <Filter>GameServer\DB</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="GameServer\Game\Navigation">
+      <UniqueIdentifier>{1606ef41-37bf-48fa-ac3c-5f5413439162}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\recastnavigation\Detour\Source">
+      <UniqueIdentifier>{558d9b11-e1b6-4c78-a5de-c4df2c1a7fbb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\recastnavigation\Recast\Source">
+      <UniqueIdentifier>{d61a6850-1f57-4467-a918-c0e8d55e1400}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools\NavBuilder">
+      <UniqueIdentifier>{bb9327e5-fd1f-4ed7-afd5-3b7be2fb875f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="NavMeshBuildTests.cpp" />
+    <ClCompile Include="NavQueryTests.cpp" />
+    <ClCompile Include="RoomTerrainTests.cpp" />
+    <ClInclude Include="TestNavLevel.h" />
+    <ClCompile Include="..\..\Tools\NavBuilder\NavMeshBuild.cpp">
+      <Filter>Tools\NavBuilder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Navigation\NavMesh.cpp">
+      <Filter>GameServer\Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Navigation\NavQuery.cpp">
+      <Filter>GameServer\Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Navigation\PathFollowingComponent.cpp">
+      <Filter>GameServer\Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Navigation\NavMeshes.cpp">
+      <Filter>GameServer\Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourAlloc.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourAssert.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourCommon.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMesh.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMeshBuilder.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNavMeshQuery.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Detour\Source\DetourNode.cpp">
+      <Filter>Libraries\recastnavigation\Detour\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\Recast.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastAlloc.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastArea.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastAssert.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastContour.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastFilter.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastLayers.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastMesh.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastMeshDetail.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastRasterization.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Libraries\recastnavigation\Recast\Source\RecastRegion.cpp">
+      <Filter>Libraries\recastnavigation\Recast\Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

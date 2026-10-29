@@ -16,7 +16,7 @@ struct P1_API FP1MoveCorrection
     bool bSnapped = false;
 
     /**
-     * 한 틱 분량의 보정을 계산한다. 높이는 보정하지 않으므로 결과의 Z는 ClientLocation의 Z다.
+     * 한 틱 분량의 보정을 계산한다. 높이도 서버 위치(캡슐 중심)를 향해 보정한다.
      * bInAction이면 루트 모션에 맡기고, 순간이동할 때만 위치와 회전을 바꾼다.
      */
     static FP1MoveCorrection Compute(

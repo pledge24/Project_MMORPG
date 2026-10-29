@@ -1,11 +1,13 @@
 #include "Game/Data/P1GameDataSettings.h"
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Data/P1MonsterAssetData.h"
+#include "Game/Data/P1NpcAssetData.h"
 #include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
 #include "Game/Data/Generated/P1ItemEquipStatRow.h"
 #include "Game/Data/Generated/P1ItemRow.h"
 #include "Game/Data/Generated/P1MonsterRow.h"
-#include "Game/Entities/P1Monster.h"
+#include "Game/Data/Generated/P1NpcRow.h"
+#include "Game/Data/Generated/P1ShopRow.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
 
@@ -52,13 +54,24 @@ const FP1MonsterRow* UP1GameDataSettings::FindMonsterRow(int32 MonsterId)
     return FindRowById<FP1MonsterRow>(GetDefault<UP1GameDataSettings>()->MonsterTable, MonsterId, TEXT("UP1GameDataSettings::FindMonsterRow"));
 }
 
-TSubclassOf<AP1Monster> UP1GameDataSettings::LoadMonsterClass(int32 MonsterId)
+const FP1MonsterAssetData* UP1GameDataSettings::FindMonsterAssetData(int32 MonsterId)
 {
-    const FP1MonsterAssetData* AssetData = FindRowById<FP1MonsterAssetData>(GetDefault<UP1GameDataSettings>()->MonsterAssetTable, MonsterId, TEXT("UP1GameDataSettings::LoadMonsterClass"));
-    if (AssetData == nullptr || AssetData->MonsterClass.IsNull())
-        return nullptr;
+    return FindRowById<FP1MonsterAssetData>(GetDefault<UP1GameDataSettings>()->MonsterAssetTable, MonsterId, TEXT("UP1GameDataSettings::FindMonsterAssetData"));
+}
 
-    return AssetData->MonsterClass.LoadSynchronous();
+const FP1NpcRow* UP1GameDataSettings::FindNpcRow(int32 NpcId)
+{
+    return FindRowById<FP1NpcRow>(GetDefault<UP1GameDataSettings>()->NpcTable, NpcId, TEXT("UP1GameDataSettings::FindNpcRow"));
+}
+
+const FP1NpcAssetData* UP1GameDataSettings::FindNpcAssetData(int32 NpcId)
+{
+    return FindRowById<FP1NpcAssetData>(GetDefault<UP1GameDataSettings>()->NpcAssetTable, NpcId, TEXT("UP1GameDataSettings::FindNpcAssetData"));
+}
+
+const FP1ShopRow* UP1GameDataSettings::FindShopRow(int32 ShopId)
+{
+    return FindRowById<FP1ShopRow>(GetDefault<UP1GameDataSettings>()->ShopTable, ShopId, TEXT("UP1GameDataSettings::FindShopRow"));
 }
 
 TSoftObjectPtr<UWorld> UP1GameDataSettings::FindMapLevel(int32 MapId) const

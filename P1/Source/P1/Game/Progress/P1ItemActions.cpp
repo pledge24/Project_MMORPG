@@ -66,7 +66,9 @@ UP1ItemActions::EResult UP1ItemActions::RequestBuy(int32 TemplateId)
     const FP1ItemRow* Item = TemplateId > 0 ? UP1GameDataSettings::FindItemRow(TemplateId) : nullptr;
 
     EResult Result = EResult::Sent;
-    if (MyPlayerData == nullptr || Item == nullptr)
+    if (ShopNpcEntityId == 0)
+        Result = EResult::ShopClosed;
+    else if (MyPlayerData == nullptr || Item == nullptr)
         Result = EResult::Empty;
     else if (MyPlayerData->GetGold() < Item->BuyPrice)
         Result = EResult::NotEnoughGold;
@@ -76,6 +78,7 @@ UP1ItemActions::EResult UP1ItemActions::RequestBuy(int32 TemplateId)
         FRequest Request;
         Request.Kind = ERequestKind::Buy;
         Request.TemplateId = TemplateId;
+        Request.NpcEntityId = ShopNpcEntityId;
         Result = Send(Request);
     }
 
@@ -211,7 +214,7 @@ UP1ItemActions::EResult UP1ItemActions::DecideUnequip(const FP1SlotAddress& Addr
 UP1ItemActions::EResult UP1ItemActions::DecideSell(const FP1SlotAddress& Address, FRequest& OutRequest) const
 {
     // 상점 창이 열려 있을 때 인벤토리 칸의 아이템만 판다. 착용한 장비는 벗은 뒤에 판다.
-    if (bShopOpen == false)
+    if (ShopNpcEntityId == 0)
         return EResult::ShopClosed;
 
     if (IsInventorySection(Address.Container) == false)
@@ -230,6 +233,7 @@ UP1ItemActions::EResult UP1ItemActions::DecideSell(const FP1SlotAddress& Address
     OutRequest.Kind = ERequestKind::Sell;
     OutRequest.Address = Address;
     OutRequest.ItemUid = Slot_->Item.ItemUid;
+    OutRequest.NpcEntityId = ShopNpcEntityId;
     return EResult::Sent;
 }
 
@@ -284,6 +288,7 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
         Protocol::C_SELL_ITEM Pkt;
         *Pkt.mutable_address() = P1ItemPackets::ToProto(Request.Address);
         Pkt.set_item_uid(Request.ItemUid);
+        Pkt.set_npc_entity_id(Request.NpcEntityId);
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }
@@ -291,6 +296,7 @@ void UP1ItemActions::SendPacket(const FRequest& Request) const
     {
         Protocol::C_BUY_ITEM Pkt;
         Pkt.set_template_id(Request.TemplateId);
+        Pkt.set_npc_entity_id(Request.NpcEntityId);
         FP1PacketSender::Send(WorldContext, Pkt);
         break;
     }

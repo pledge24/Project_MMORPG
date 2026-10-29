@@ -211,15 +211,23 @@ def drop_group_used_by_monster(table: Table, data: DesignData) -> list[str]:
     ]
 
 
-def positive(*columns: str) -> Callable[[Table, DesignData], list[str]]:
-    """열이 0보다 큰지 본다. 지역과 포털의 반경에 쓴다. 반경이 0 이하면 서버의 포함 판정에 어떤 좌표도 들지 않는다."""
+def spawn_group_has_entry(table: Table, data: DesignData) -> list[str]:
+    """그룹에 스폰 항목이 하나도 없으면 그 그룹의 마커에서 나올 몬스터를 고를 수 없다."""
+    entries = data.tables.get("SpawnEntry")
+    used = {row.values["GroupId"] for row in entries.rows} if entries is not None else set()
+    return [
+        f"{locate(table.config.workbook, row.sheet, row.number)}: 그룹 {row.values['Id']}에 스폰 항목이 없다. 표 'SpawnEntry'에 항목을 하나 이상 둔다"
+        for row in table.rows
+        if row.values["Id"] not in used
+    ]
 
+
+def at_least_one(column: str) -> Callable[[Table, DesignData], list[str]]:
     def rule(table: Table, _: DesignData) -> list[str]:
         return [
-            f"{locate(table.config.workbook, row.sheet, row.number)}: {column}가 0보다 커야 하는데 {row.values[column]}이다"
+            f"{locate(table.config.workbook, row.sheet, row.number)}: {column}가 1 이상이어야 하는데 {row.values[column]}이다"
             for row in table.rows
-            for column in columns
-            if row.values[column] <= 0
+            if row.values[column] < 1
         ]
 
     return rule
@@ -236,10 +244,6 @@ def not_negative(column: str) -> Callable[[Table, DesignData], list[str]]:
     return rule
 
 
-# 리스폰 지점의 좌표 열. 리스폰 지점이 있는 지역만 채운다.
-RESPAWN_COLUMNS = ("RespawnX", "RespawnY", "RespawnZ")
-
-
 def exactly_one_town(table: Table, _: DesignData) -> list[str]:
     """리스폰 지점이 있는 지역이 마을이다. 사망한 플레이어가 돌아갈 곳이 하나로 정해져야 한다."""
     towns = [row for row in table.rows if row.values["HasRespawnPoint"]]
@@ -249,17 +253,21 @@ def exactly_one_town(table: Table, _: DesignData) -> list[str]:
     return [f"{table.config.workbook}: HasRespawnPoint가 참인 지역(마을)이 하나여야 하는데 {len(towns)}개다" + (f" ({places})" if places else "")]
 
 
-def respawn_point_matches_coordinates(table: Table, _: DesignData) -> list[str]:
-    """리스폰 지점이 있는 지역은 좌표를 모두 채우고, 없는 지역은 모두 비워 둔다."""
+def repeated_values(values: list) -> list:
+    """두 번 이상 나오는 값. 처음 나온 순서다."""
+    return sorted({value for value in values if values.count(value) > 1}, key=values.index)
+
+
+def shop_items_non_empty_distinct(table: Table, _: DesignData) -> list[str]:
+    """빈 상점은 열어도 살 것이 없고, 같은 아이템이 두 번 나오면 상점 창에 진열 칸이 겹친다."""
     errors = []
+    items_column = next(column for column in table.columns if column.name == "Items")
     for row in table.rows:
-        where = locate(table.config.workbook, row.sheet, row.number)
-        has_point = row.values["HasRespawnPoint"]
-        for column in RESPAWN_COLUMNS:
-            if has_point and row.values[column] is None:
-                errors.append(f"{where}: 리스폰 지점이 있는 지역은 {column}를 채운다")
-            if not has_point and row.values[column] is not None:
-                errors.append(f"{where}: 리스폰 지점이 없는 지역은 {column}를 비워 둔다")
+        items = row.values["Items"]
+        where = locate(table.config.workbook, row.sheet, row.number, items_column.letter, "Items")
+        if not items:
+            errors.append(f"{where}: 판매 목록이 비어 있다. 아이템을 하나 이상 적는다")
+        errors.extend(f"{where}: 아이템 {item}이 두 번 이상 나온다" for item in repeated_values(items))
     return errors
 
 
@@ -275,6 +283,14 @@ def field_at_least(name: str, minimum: int) -> Callable[[Setting, DesignData], l
     return rule
 
 
+def field_positive(name: str) -> Callable[[Setting, DesignData], list[str]]:
+    def rule(setting: Setting, _: DesignData) -> list[str]:
+        value = setting.values[name]
+        return [] if value > 0 else [f"{locate_field(setting, name)}: 0보다 커야 하는데 {value}이다"]
+
+    return rule
+
+
 def non_empty_distinct_list(name: str) -> Callable[[Setting, DesignData], list[str]]:
     """목록이 비어 있지 않고 같은 값이 두 번 나오지 않는지 본다."""
 
@@ -282,8 +298,7 @@ def non_empty_distinct_list(name: str) -> Callable[[Setting, DesignData], list[s
         values = setting.values[name]
         if not values:
             return [f"{locate_field(setting, name)}: 목록이 비어 있다. 값을 하나 이상 적는다"]
-        repeated = sorted({value for value in values if values.count(value) > 1}, key=values.index)
-        return [f"{locate_field(setting, name)}: {value}가 두 번 이상 나온다" for value in repeated]
+        return [f"{locate_field(setting, name)}: {value}가 두 번 이상 나온다" for value in repeated_values(values)]
 
     return rule
 
@@ -298,14 +313,12 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "Monster": [range_ordered("MinExp", "MaxExp", 0), range_ordered("MinGold", "MaxGold", 0)],
     "DropGroup": [drop_group_matches_method],
     "DropEntry": [drop_entry_matches_group_method, range_ordered("MinCount", "MaxCount", 1)],
-    "Area": [
-        positive("HalfExtentX", "HalfExtentY"),
-        not_negative("MaxMonsterCount"),
-        not_negative("MonsterRespawnSec"),
-        exactly_one_town,
-        respawn_point_matches_coordinates,
-    ],
-    "Portal": [positive("Radius")],
+    # 지역의 공간(경계, 리스폰 지점)과 포털의 위치와 반경은 레벨의 마커에서 추출하고, 추출이 검사한다.
+    "Area": [exactly_one_town],
+    # 스폰 마커의 위치와 반경은 레벨에서 추출한다. 마커가 가리키는 그룹 번호는 추출이 검사한다.
+    "SpawnGroup": [not_negative("MaxCount"), not_negative("RespawnSec"), spawn_group_has_entry],
+    "SpawnEntry": [at_least_one("Weight")],
+    "Shop": [shop_items_non_empty_distinct],
 }
 
 SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {
@@ -313,6 +326,8 @@ SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {
     "Progress": [field_at_least("StartGold", 0)],
     # 슬롯이 없는 계정은 캐릭터를 만들 수 없고, 직업이 없으면 아무도 캐릭터를 만들 수 없다.
     "Lobby": [field_at_least("DefaultCharacterSlotCount", 1), non_empty_distinct_list("CreatableClasses")],
+    # 사거리가 0이면 어느 NPC와도 상호작용할 수 없다.
+    "Interaction": [field_positive("InteractionRange")],
 }
 
 # 산출물을 막지 않는 규칙. 어기면 경고를 남기고 생성은 계속한다.

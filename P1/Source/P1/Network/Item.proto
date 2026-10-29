@@ -20,6 +20,7 @@ enum ItemResult
     ITEM_RESULT_DEAD = 9;                   // 사망한 플레이어는 소모품을 쓸 수 없다
     ITEM_RESULT_NOT_OWNED = 10;             // 퀵슬롯이 가리키는 소모품을 갖고 있지 않다
     ITEM_RESULT_INTERNAL_ERROR = 11;        // 검사를 통과한 뒤 칸을 바꾸지 못했다
+    ITEM_RESULT_NPC_OUT_OF_REACH = 12;      // 거래한 NPC가 같은 룸에 없거나 사거리 밖이다
 }
 
 // 아이템 종류. DB의 Item.ItemType에 숫자로 저장되고, 기획 데이터가 이름으로 읽는다
@@ -103,9 +104,11 @@ message QuickSlot
     QuickSlotRef ref = 2;
 }
 
+// 상점 요청은 상점을 연 NPC의 엔티티 번호를 싣는다. 서버는 그 NPC의 판매 목록과 거리를 검사한다
 message C_BUY_ITEM
 {
     int32 template_id = 1;
+    int64 npc_entity_id = 2;
 }
 
 message S_BUY_ITEM
@@ -121,6 +124,7 @@ message C_SELL_ITEM
 {
     SlotAddress address = 1;
     int64 item_uid = 2;
+    int64 npc_entity_id = 3;
 }
 
 message S_SELL_ITEM

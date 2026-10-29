@@ -4,6 +4,7 @@
 #include "Core/P1InGamePlayerController.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
+#include "Game/Channel/P1ChannelSubsystem.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UI/P1ScreenSubsystem.h"
 
@@ -23,6 +24,8 @@ void UP1GameMenuWidget::NativeOnInitialized()
     // 입력을 이 메뉴만 받으려면 키 포커스를 받을 수 있어야 한다.
     SetIsFocusable(true);
 
+    if (ChannelButton)
+        ChannelButton->OnClicked.AddDynamic(this, &UP1GameMenuWidget::OnChannelButtonClicked);
     CharacterSelectButton->OnClicked.AddDynamic(this, &UP1GameMenuWidget::OnCharacterSelectButtonClicked);
     WorldSelectButton->OnClicked.AddDynamic(this, &UP1GameMenuWidget::OnWorldSelectButtonClicked);
     QuitButton->OnClicked.AddDynamic(this, &UP1GameMenuWidget::OnQuitButtonClicked);
@@ -40,6 +43,21 @@ FReply UP1GameMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKe
     }
 
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
+void UP1GameMenuWidget::OnChannelButtonClicked()
+{
+    CloseMenu();
+
+    // 인원은 목록을 연 순간의 값이라 열 때마다 새로 받는다. 받기 전에는 지난번 목록이 보인다.
+    if (UGameInstance* GameInstance = GetGameInstance())
+    {
+        if (UP1ChannelSubsystem* Channels = GameInstance->GetSubsystem<UP1ChannelSubsystem>())
+            Channels->RequestChannelList();
+    }
+
+    if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
+        Screens->OpenWindow(EP1WidgetType::WIDGET_CHANNEL_LIST);
 }
 
 void UP1GameMenuWidget::OnCharacterSelectButtonClicked()

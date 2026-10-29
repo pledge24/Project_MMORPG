@@ -1,5 +1,7 @@
 #include "Sync/P1EntitySpawner.h"
 #include "Game/Data/P1GameDataSettings.h"
+#include "Game/Data/P1MonsterAssetData.h"
+#include "Game/Data/P1NpcAssetData.h"
 #include "Game/Entities/P1Monster.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1StatefulEntityManager.h"
@@ -60,24 +62,33 @@ AActor* AP1EntitySpawner::SpawnMonster(int32 TemplateId, const FVector& SpawnLoc
         return nullptr;
     }
 
-    TSubclassOf<AP1Monster> MonsterBPClass = UP1GameDataSettings::LoadMonsterClass(TemplateId);
-    if (MonsterBPClass == nullptr)
+    const FP1MonsterAssetData* AssetData = UP1GameDataSettings::FindMonsterAssetData(TemplateId);
+    if (AssetData == nullptr)
     {
-        UE_LOG(LogP1Entity, Warning, TEXT("몬스터 에셋 테이블에 %d번 몬스터의 클래스가 없음"), TemplateId);
+        UE_LOG(LogP1Entity, Warning, TEXT("몬스터 에셋 테이블에 %d번 몬스터가 없음"), TemplateId);
+        return nullptr;
+    }
+
+    if (!MonsterClass)
+    {
+        UE_LOG(LogP1Entity, Warning, TEXT("MonsterClass가 설정되지 않았습니다"));
         return nullptr;
     }
 
     AP1Monster* OutMonster = GetWorld()->SpawnActorDeferred<AP1Monster>(
-        MonsterBPClass,
+        MonsterClass,
         FTransform(SpawnRotation, SpawnLocation),
         nullptr, 
         nullptr, 
         ESpawnActorCollisionHandlingMethod::AlwaysSpawn
     );
 
-    // FinishSpawning 전에 이동 동기화와 몬스터 데이터 설정.
+    // FinishSpawning 전에 표현 데이터, 이동 동기화, 몬스터 데이터 설정.
+    // 표현 데이터를 먼저 넣어야 BeginPlay의 컴포넌트들이 바뀐 메시와 애님 인스턴스를 본다.
     if (OutMonster != nullptr)
     {
+        OutMonster->ApplyAssetData(*AssetData);
+
         UP1MoveSyncComponent* MoveSync = AttachMoveSync(OutMonster, EP1MoveSyncMode::RemoteMonster);
 
         if (ServerInfo.IsSet())
@@ -168,6 +179,31 @@ AActor* AP1EntitySpawner::SpawnPlayer(const Protocol::EntityInfo& InEntityInfo)
     }
 
     return OutPlayer;
+}
+
+AP1Npc* AP1EntitySpawner::SpawnNpc(const Protocol::EntityInfo& InEntityInfo)
+{
+    const int32 NpcId = InEntityInfo.npc_info().npc_id();
+    const FP1NpcAssetData* AssetData = UP1GameDataSettings::FindNpcAssetData(NpcId);
+    if (AssetData == nullptr)
+    {
+        UE_LOG(LogP1Entity, Warning, TEXT("NPC 에셋 테이블에 %d번 NPC가 없음"), NpcId);
+        return nullptr;
+    }
+
+    // NPC는 공용 클래스 하나로 세우고 외형만 표현 데이터로 입힌다. NPC 블루프린트가 따로 없다.
+    const Protocol::PosInfo& PosInfo = InEntityInfo.pos_info();
+    const FRotator Rotation(0.f, PosInfo.yaw(), 0.f);
+    const FVector Floor(PosInfo.pos().x(), PosInfo.pos().y(), PosInfo.pos().z());
+    AP1Npc* OutNpc = GetWorld()->SpawnActorDeferred<AP1Npc>(AP1Npc::StaticClass(), FTransform(Rotation, Floor),
+        nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (OutNpc == nullptr)
+        return nullptr;
+
+    OutNpc->Initialize(InEntityInfo.entity_id(), NpcId);
+    OutNpc->ApplyAssetData(*AssetData);
+    OutNpc->FinishSpawning(FTransform(Rotation, Floor + FVector(0.f, 0.f, OutNpc->GetCapsuleHalfHeight())));
+    return OutNpc;
 }
 
 

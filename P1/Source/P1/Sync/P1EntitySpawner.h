@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Game/Entities/P1Monster.h"
 #include "Game/Entities/P1MyPlayer.h"
+#include "Game/Entities/P1Npc.h"
 #include "GameFramework/Actor.h"
 #include "P1EntitySpawner.generated.h"
 
@@ -33,6 +34,11 @@ public:
     /** ServerInfo가 있으면 그 정보로 위치와 엔티티를 초기화한다. 실패하면 nullptr. */
     AActor* SpawnMonster(int32 TemplateId, const FVector& SpawnLocation, const FRotator& SpawnRotation, TOptional<Protocol::EntityInfo> ServerInfo = NullOpt);
 
+protected:
+    /** 모든 몬스터를 스폰할 공용 클래스. 종류마다 다른 외형은 몬스터 에셋 테이블의 행이 정한다. */
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<AP1Monster> MonsterClass;
+
     //~ Player Spawn
 public:
     /**
@@ -49,4 +55,9 @@ protected:
     /** 다른 플레이어로 스폰할 클래스. */
     UPROPERTY(EditAnywhere)
     TSubclassOf<AP1Player> OtherPlayerClass;
+
+    //~ Npc Spawn
+public:
+    /** 서버가 보낸 엔티티 정보로 스폰한다. 서버의 높이는 바닥이라 캡슐 반높이만큼 올려 세운다. 실패하면 nullptr. */
+    AP1Npc* SpawnNpc(const Protocol::EntityInfo& InEntityInfo);
 };

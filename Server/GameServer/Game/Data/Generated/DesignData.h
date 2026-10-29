@@ -20,7 +20,11 @@ namespace DesignData
     constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
     constexpr string_view MAP_FILE = "Map.json";
     constexpr string_view AREA_FILE = "Area.json";
+    constexpr string_view SHOP_FILE = "Shop.json";
+    constexpr string_view NPC_FILE = "Npc.json";
+    constexpr string_view SPAWN_GROUP_FILE = "SpawnGroup.json";
     constexpr string_view PROGRESS_FILE = "Progress.json";
+    constexpr string_view INTERACTION_FILE = "Interaction.json";
 
     //~ 열거형
 
@@ -344,24 +348,8 @@ namespace DesignData
         int32 Id = 0;
         /** 포털 유형. 지금은 지역 사이를 잇는 AREA 하나다 */
         PortalType Type = {};
-        /** 포털 위치의 X 좌표 */
-        float SrcX = 0.f;
-        /** 포털 위치의 Y 좌표 */
-        float SrcY = 0.f;
-        /** 포털 위치의 Z 좌표 */
-        float SrcZ = 0.f;
-        /** 포털을 탈 수 있는 평면 거리. 0보다 크다 */
-        float Radius = 0.f;
         /** 도착 지역 */
         int32 DestAreaId = 0;
-        /** 도착 위치의 X 좌표 */
-        float DestX = 0.f;
-        /** 도착 위치의 Y 좌표 */
-        float DestY = 0.f;
-        /** 도착 위치의 Z 좌표 */
-        float DestZ = 0.f;
-        /** 도착한 뒤의 방향(도) */
-        float DestYaw = 0.f;
     };
 
     /** Area 행의 Portals 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
@@ -370,15 +358,25 @@ namespace DesignData
         PortalRow row;
         row.Id = Detail::Read<int32>(object, "Id");
         row.Type = Detail::Read<PortalType>(object, "Type");
-        row.SrcX = Detail::Read<float>(object, "SrcX");
-        row.SrcY = Detail::Read<float>(object, "SrcY");
-        row.SrcZ = Detail::Read<float>(object, "SrcZ");
-        row.Radius = Detail::Read<float>(object, "Radius");
         row.DestAreaId = Detail::Read<int32>(object, "DestAreaId");
-        row.DestX = Detail::Read<float>(object, "DestX");
-        row.DestY = Detail::Read<float>(object, "DestY");
-        row.DestZ = Detail::Read<float>(object, "DestZ");
-        row.DestYaw = Detail::Read<float>(object, "DestYaw");
+        return row;
+    }
+
+    /** SpawnEntry 표(SpawnEntry.xlsx)의 한 행. SpawnGroup 행의 Entries 아래에 키 순서로 실린다. */
+    struct SpawnEntryRow
+    {
+        /** 나오는 몬스터 */
+        int32 MonsterId = 0;
+        /** 그룹 안에서 이 몬스터가 뽑힐 가중치. 1 이상이다. 스폰할 때마다 가중치에 비례해 한 종류를 뽑는다 */
+        int32 Weight = 0;
+    };
+
+    /** SpawnGroup 행의 Entries 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
+    inline SpawnEntryRow ReadSpawnEntryRow(const Json& object)
+    {
+        SpawnEntryRow row;
+        row.MonsterId = Detail::Read<int32>(object, "MonsterId");
+        row.Weight = Detail::Read<int32>(object, "Weight");
         return row;
     }
 
@@ -715,28 +713,6 @@ namespace DesignData
         int32 MapId = 0;
         /** 리스폰 지점이 있으면 TRUE. 리스폰 지점이 있는 지역(마을)은 하나뿐이다 */
         bool HasRespawnPoint = false;
-        /** 나오는 몬스터. ';'로 구분한다. 비어 있으면 몬스터가 나오지 않는다 */
-        vector<int32> Monsters;
-        /** 동시에 있는 몬스터의 최대 수. 0 이상이다 */
-        int32 MaxMonsterCount = 0;
-        /** 몬스터가 다시 나오는 시간(초). 0 이상이다 */
-        int32 MonsterRespawnSec = 0;
-        /** 지역 중심의 X 좌표 */
-        float CenterX = 0.f;
-        /** 지역 중심의 Y 좌표 */
-        float CenterY = 0.f;
-        /** 지역 중심의 Z 좌표 */
-        float CenterZ = 0.f;
-        /** 중심에서 X 방향 반경. 0보다 크다 */
-        float HalfExtentX = 0.f;
-        /** 중심에서 Y 방향 반경. 0보다 크다 */
-        float HalfExtentY = 0.f;
-        /** 리스폰 지점의 X 좌표. 리스폰 지점이 없으면 비워 둔다 */
-        optional<float> RespawnX;
-        /** 리스폰 지점의 Y 좌표 */
-        optional<float> RespawnY;
-        /** 리스폰 지점의 Z 좌표 */
-        optional<float> RespawnZ;
         /** Portal 표에서 이 행에 속한 행. 키 순서다. */
         vector<PortalRow> Portals;
     };
@@ -753,18 +729,91 @@ namespace DesignData
             row.Id = Detail::Read<int32>(object, "Id");
             row.MapId = Detail::Read<int32>(object, "MapId");
             row.HasRespawnPoint = Detail::Read<bool>(object, "HasRespawnPoint");
-            row.Monsters = Detail::Read<vector<int32>>(object, "Monsters");
-            row.MaxMonsterCount = Detail::Read<int32>(object, "MaxMonsterCount");
-            row.MonsterRespawnSec = Detail::Read<int32>(object, "MonsterRespawnSec");
-            row.CenterX = Detail::Read<float>(object, "CenterX");
-            row.CenterY = Detail::Read<float>(object, "CenterY");
-            row.CenterZ = Detail::Read<float>(object, "CenterZ");
-            row.HalfExtentX = Detail::Read<float>(object, "HalfExtentX");
-            row.HalfExtentY = Detail::Read<float>(object, "HalfExtentY");
-            row.RespawnX = Detail::Read<optional<float>>(object, "RespawnX");
-            row.RespawnY = Detail::Read<optional<float>>(object, "RespawnY");
-            row.RespawnZ = Detail::Read<optional<float>>(object, "RespawnZ");
             row.Portals = Detail::ReadRows<PortalRow>(object, "Portals", ReadPortalRow);
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Shop 표(Shop.xlsx)의 한 행. */
+    struct ShopRow
+    {
+        /** 상점 번호. NPC 표가 가리킨다 */
+        int32 Id = 0;
+        /** 파는 아이템. ';'로 구분하고 상점 창의 진열 순서다. 가격은 아이템 표의 BuyPrice다 */
+        vector<int32> Items;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using ShopTable = map<int32, ShopRow>;
+
+    /** Shop.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseShop(const Json& document, OUT ShopTable& table)
+    {
+        return Detail::ParseTable(SHOP_FILE, document, OUT table, [](const Json& object)
+        {
+            ShopRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.Items = Detail::Read<vector<int32>>(object, "Items");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Npc 표(Npc.xlsx)의 한 행. */
+    struct NpcRow
+    {
+        /** NPC 번호. 레벨의 NPC 마커가 이 번호를 가리킨다 */
+        int32 Id = 0;
+        /** 조준해 클릭하면 여는 상점 */
+        int32 ShopId = 0;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using NpcTable = map<int32, NpcRow>;
+
+    /** Npc.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseNpc(const Json& document, OUT NpcTable& table)
+    {
+        return Detail::ParseTable(NPC_FILE, document, OUT table, [](const Json& object)
+        {
+            NpcRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.ShopId = Detail::Read<int32>(object, "ShopId");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** SpawnGroup 표(SpawnGroup.xlsx)의 한 행. */
+    struct SpawnGroupRow
+    {
+        /** 스폰 그룹 번호. 레벨의 스폰 마커가 이 번호를 가리킨다 */
+        int32 Id = 0;
+        /** 마커 하나에 동시에 있는 몬스터의 최대 수. 0 이상이다 */
+        int32 MaxCount = 0;
+        /** 사망한 몬스터가 그 마커의 반경 안에 다시 나오기까지의 시간(초). 0 이상이다 */
+        int32 RespawnSec = 0;
+        /** SpawnEntry 표에서 이 행에 속한 행. 키 순서다. */
+        vector<SpawnEntryRow> Entries;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using SpawnGroupTable = map<int32, SpawnGroupRow>;
+
+    /** SpawnGroup.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseSpawnGroup(const Json& document, OUT SpawnGroupTable& table)
+    {
+        return Detail::ParseTable(SPAWN_GROUP_FILE, document, OUT table, [](const Json& object)
+        {
+            SpawnGroupRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.MaxCount = Detail::Read<int32>(object, "MaxCount");
+            row.RespawnSec = Detail::Read<int32>(object, "RespawnSec");
+            row.Entries = Detail::ReadRows<SpawnEntryRow>(object, "Entries", ReadSpawnEntryRow);
 
             auto key = row.Id;
             return pair{ std::move(key), std::move(row) };
@@ -801,6 +850,22 @@ namespace DesignData
             config.StartZ = Detail::Read<float>(object, "StartZ");
             config.StartYaw = Detail::Read<float>(object, "StartYaw");
             config.StartGold = Detail::Read<int64>(object, "StartGold");
+        });
+    }
+
+    /** Interaction 설정(Config.xlsx의 Interaction 시트). */
+    struct InteractionConfig
+    {
+        /** NPC를 조준해 상호작용할 수 있는 평면 거리(cm). 서버는 여기에 여유를 더해 판정한다. 0보다 크다 */
+        float InteractionRange = 0.f;
+    };
+
+    /** Interaction.json을 읽는다. 실패하면 사유를 돌려준다. */
+    inline optional<string> ParseInteraction(const Json& document, OUT InteractionConfig& config)
+    {
+        return Detail::ParseObject(INTERACTION_FILE, document, [&](const Json& object)
+        {
+            config.InteractionRange = Detail::Read<float>(object, "InteractionRange");
         });
     }
 }

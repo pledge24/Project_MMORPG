@@ -136,7 +136,8 @@ struct QuickSlotDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 QuickSlotDefaultTypeInternal _QuickSlot_default_instance_;
 PROTOBUF_CONSTEXPR C_BUY_ITEM::C_BUY_ITEM(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.template_id_)*/0
+    /*decltype(_impl_.npc_entity_id_)*/int64_t{0}
+  , /*decltype(_impl_.template_id_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_BUY_ITEMDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_BUY_ITEMDefaultTypeInternal()
@@ -166,6 +167,7 @@ PROTOBUF_CONSTEXPR C_SELL_ITEM::C_SELL_ITEM(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.address_)*/nullptr
   , /*decltype(_impl_.item_uid_)*/int64_t{0}
+  , /*decltype(_impl_.npc_entity_id_)*/int64_t{0}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_SELL_ITEMDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_SELL_ITEMDefaultTypeInternal()
@@ -397,6 +399,7 @@ const uint32_t TableStruct_Item_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_BUY_ITEM, _impl_.template_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_BUY_ITEM, _impl_.npc_entity_id_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_BUY_ITEM, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -414,6 +417,7 @@ const uint32_t TableStruct_Item_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(pro
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.address_),
   PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.item_uid_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::C_SELL_ITEM, _impl_.npc_entity_id_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_SELL_ITEM, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -508,18 +512,18 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 49, -1, -1, sizeof(::Protocol::QuickSlotRef)},
   { 57, -1, -1, sizeof(::Protocol::QuickSlot)},
   { 65, -1, -1, sizeof(::Protocol::C_BUY_ITEM)},
-  { 72, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
-  { 81, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
-  { 89, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
-  { 98, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
-  { 106, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
-  { 115, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
-  { 123, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
-  { 132, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
-  { 140, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
-  { 149, -1, -1, sizeof(::Protocol::C_SET_QUICK_SLOT)},
-  { 157, -1, -1, sizeof(::Protocol::S_SET_QUICK_SLOT)},
-  { 165, -1, -1, sizeof(::Protocol::C_USE_QUICK_SLOT)},
+  { 73, -1, -1, sizeof(::Protocol::S_BUY_ITEM)},
+  { 82, -1, -1, sizeof(::Protocol::C_SELL_ITEM)},
+  { 91, -1, -1, sizeof(::Protocol::S_SELL_ITEM)},
+  { 100, -1, -1, sizeof(::Protocol::C_EQUIP_GEAR)},
+  { 108, -1, -1, sizeof(::Protocol::S_EQUIP_GEAR)},
+  { 117, -1, -1, sizeof(::Protocol::C_UNEQUIP_GEAR)},
+  { 125, -1, -1, sizeof(::Protocol::S_UNEQUIP_GEAR)},
+  { 134, -1, -1, sizeof(::Protocol::C_USE_ITEM)},
+  { 142, -1, -1, sizeof(::Protocol::S_USE_ITEM)},
+  { 151, -1, -1, sizeof(::Protocol::C_SET_QUICK_SLOT)},
+  { 159, -1, -1, sizeof(::Protocol::S_SET_QUICK_SLOT)},
+  { 167, -1, -1, sizeof(::Protocol::C_USE_QUICK_SLOT)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -563,46 +567,48 @@ const char descriptor_table_protodef_Item_2eproto[] PROTOBUF_SECTION_VARIABLE(pr
   "2\032.Protocol.QuickSlotRefType\022\016\n\006ref_id\030\002"
   " \001(\005\"J\n\tQuickSlot\022\030\n\020quick_slot_index\030\001 "
   "\001(\005\022#\n\003ref\030\002 \001(\0132\026.Protocol.QuickSlotRef"
-  "\"!\n\nC_BUY_ITEM\022\023\n\013template_id\030\001 \001(\005\"m\n\nS"
-  "_BUY_ITEM\022$\n\006result\030\001 \001(\0162\024.Protocol.Ite"
-  "mResult\022+\n\rchanged_slots\030\002 \003(\0132\024.Protoco"
-  "l.SlotChange\022\014\n\004gold\030\003 \001(\003\"G\n\013C_SELL_ITE"
-  "M\022&\n\007address\030\001 \001(\0132\025.Protocol.SlotAddres"
-  "s\022\020\n\010item_uid\030\002 \001(\003\"n\n\013S_SELL_ITEM\022$\n\006re"
-  "sult\030\001 \001(\0162\024.Protocol.ItemResult\022+\n\rchan"
-  "ged_slots\030\002 \003(\0132\024.Protocol.SlotChange\022\014\n"
-  "\004gold\030\003 \001(\003\"H\n\014C_EQUIP_GEAR\022&\n\007address\030\001"
-  " \001(\0132\025.Protocol.SlotAddress\022\020\n\010item_uid\030"
-  "\002 \001(\003\"\210\001\n\014S_EQUIP_GEAR\022$\n\006result\030\001 \001(\0162\024"
-  ".Protocol.ItemResult\022+\n\rchanged_slots\030\002 "
-  "\003(\0132\024.Protocol.SlotChange\022%\n\rchanged_sta"
-  "ts\030\003 \003(\0132\016.Protocol.Stat\"J\n\016C_UNEQUIP_GE"
-  "AR\022&\n\007address\030\001 \001(\0132\025.Protocol.SlotAddre"
-  "ss\022\020\n\010item_uid\030\002 \001(\003\"\212\001\n\016S_UNEQUIP_GEAR\022"
-  "$\n\006result\030\001 \001(\0162\024.Protocol.ItemResult\022+\n"
-  "\rchanged_slots\030\002 \003(\0132\024.Protocol.SlotChan"
-  "ge\022%\n\rchanged_stats\030\003 \003(\0132\016.Protocol.Sta"
-  "t\"F\n\nC_USE_ITEM\022&\n\007address\030\001 \001(\0132\025.Proto"
-  "col.SlotAddress\022\020\n\010item_uid\030\002 \001(\003\"\206\001\n\nS_"
-  "USE_ITEM\022$\n\006result\030\001 \001(\0162\024.Protocol.Item"
-  "Result\022+\n\rchanged_slots\030\002 \003(\0132\024.Protocol"
-  ".SlotChange\022%\n\rchanged_stats\030\003 \003(\0132\016.Pro"
-  "tocol.Stat\"Q\n\020C_SET_QUICK_SLOT\022\030\n\020quick_"
-  "slot_index\030\001 \001(\005\022#\n\003ref\030\002 \001(\0132\026.Protocol"
-  ".QuickSlotRef\"j\n\020S_SET_QUICK_SLOT\022$\n\006res"
-  "ult\030\001 \001(\0162\024.Protocol.ItemResult\0220\n\023chang"
-  "ed_quick_slots\030\002 \003(\0132\023.Protocol.QuickSlo"
-  "t\",\n\020C_USE_QUICK_SLOT\022\030\n\020quick_slot_inde"
-  "x\030\001 \001(\005*\367\002\n\nItemResult\022\027\n\023ITEM_RESULT_SU"
-  "CCESS\020\000\022\037\n\033ITEM_RESULT_INVALID_REQUEST\020\001"
-  "\022\034\n\030ITEM_RESULT_SLOT_CHANGED\020\002\022\037\n\033ITEM_R"
-  "ESULT_NOT_ENOUGH_GOLD\020\003\022\036\n\032ITEM_RESULT_I"
-  "NVENTORY_FULL\020\004\022\034\n\030ITEM_RESULT_NOT_SELLA"
-  "BLE\020\005\022#\n\037ITEM_RESULT_REQUIREMENT_NOT_MET"
-  "\020\006\022\"\n\036ITEM_RESULT_GEAR_PART_OCCUPIED\020\007\022\030"
-  "\n\024ITEM_RESULT_COOLDOWN\020\010\022\024\n\020ITEM_RESULT_"
-  "DEAD\020\t\022\031\n\025ITEM_RESULT_NOT_OWNED\020\n\022\036\n\032ITE"
-  "M_RESULT_INTERNAL_ERROR\020\013*i\n\010ItemType\022\022\n"
+  "\"8\n\nC_BUY_ITEM\022\023\n\013template_id\030\001 \001(\005\022\025\n\rn"
+  "pc_entity_id\030\002 \001(\003\"m\n\nS_BUY_ITEM\022$\n\006resu"
+  "lt\030\001 \001(\0162\024.Protocol.ItemResult\022+\n\rchange"
+  "d_slots\030\002 \003(\0132\024.Protocol.SlotChange\022\014\n\004g"
+  "old\030\003 \001(\003\"^\n\013C_SELL_ITEM\022&\n\007address\030\001 \001("
+  "\0132\025.Protocol.SlotAddress\022\020\n\010item_uid\030\002 \001"
+  "(\003\022\025\n\rnpc_entity_id\030\003 \001(\003\"n\n\013S_SELL_ITEM"
+  "\022$\n\006result\030\001 \001(\0162\024.Protocol.ItemResult\022+"
+  "\n\rchanged_slots\030\002 \003(\0132\024.Protocol.SlotCha"
+  "nge\022\014\n\004gold\030\003 \001(\003\"H\n\014C_EQUIP_GEAR\022&\n\007add"
+  "ress\030\001 \001(\0132\025.Protocol.SlotAddress\022\020\n\010ite"
+  "m_uid\030\002 \001(\003\"\210\001\n\014S_EQUIP_GEAR\022$\n\006result\030\001"
+  " \001(\0162\024.Protocol.ItemResult\022+\n\rchanged_sl"
+  "ots\030\002 \003(\0132\024.Protocol.SlotChange\022%\n\rchang"
+  "ed_stats\030\003 \003(\0132\016.Protocol.Stat\"J\n\016C_UNEQ"
+  "UIP_GEAR\022&\n\007address\030\001 \001(\0132\025.Protocol.Slo"
+  "tAddress\022\020\n\010item_uid\030\002 \001(\003\"\212\001\n\016S_UNEQUIP"
+  "_GEAR\022$\n\006result\030\001 \001(\0162\024.Protocol.ItemRes"
+  "ult\022+\n\rchanged_slots\030\002 \003(\0132\024.Protocol.Sl"
+  "otChange\022%\n\rchanged_stats\030\003 \003(\0132\016.Protoc"
+  "ol.Stat\"F\n\nC_USE_ITEM\022&\n\007address\030\001 \001(\0132\025"
+  ".Protocol.SlotAddress\022\020\n\010item_uid\030\002 \001(\003\""
+  "\206\001\n\nS_USE_ITEM\022$\n\006result\030\001 \001(\0162\024.Protoco"
+  "l.ItemResult\022+\n\rchanged_slots\030\002 \003(\0132\024.Pr"
+  "otocol.SlotChange\022%\n\rchanged_stats\030\003 \003(\013"
+  "2\016.Protocol.Stat\"Q\n\020C_SET_QUICK_SLOT\022\030\n\020"
+  "quick_slot_index\030\001 \001(\005\022#\n\003ref\030\002 \001(\0132\026.Pr"
+  "otocol.QuickSlotRef\"j\n\020S_SET_QUICK_SLOT\022"
+  "$\n\006result\030\001 \001(\0162\024.Protocol.ItemResult\0220\n"
+  "\023changed_quick_slots\030\002 \003(\0132\023.Protocol.Qu"
+  "ickSlot\",\n\020C_USE_QUICK_SLOT\022\030\n\020quick_slo"
+  "t_index\030\001 \001(\005*\231\003\n\nItemResult\022\027\n\023ITEM_RES"
+  "ULT_SUCCESS\020\000\022\037\n\033ITEM_RESULT_INVALID_REQ"
+  "UEST\020\001\022\034\n\030ITEM_RESULT_SLOT_CHANGED\020\002\022\037\n\033"
+  "ITEM_RESULT_NOT_ENOUGH_GOLD\020\003\022\036\n\032ITEM_RE"
+  "SULT_INVENTORY_FULL\020\004\022\034\n\030ITEM_RESULT_NOT"
+  "_SELLABLE\020\005\022#\n\037ITEM_RESULT_REQUIREMENT_N"
+  "OT_MET\020\006\022\"\n\036ITEM_RESULT_GEAR_PART_OCCUPI"
+  "ED\020\007\022\030\n\024ITEM_RESULT_COOLDOWN\020\010\022\024\n\020ITEM_R"
+  "ESULT_DEAD\020\t\022\031\n\025ITEM_RESULT_NOT_OWNED\020\n\022"
+  "\036\n\032ITEM_RESULT_INTERNAL_ERROR\020\013\022 \n\034ITEM_"
+  "RESULT_NPC_OUT_OF_REACH\020\014*i\n\010ItemType\022\022\n"
   "\016ITEM_TYPE_NONE\020\000\022\022\n\016ITEM_TYPE_GEAR\020\001\022\030\n"
   "\024ITEM_TYPE_CONSUMABLE\020\002\022\033\n\027ITEM_TYPE_MIS"
   "CELLANEOUS\020\003*\264\001\n\rContainerType\022\027\n\023CONTAI"
@@ -619,7 +625,7 @@ static const ::_pbi::DescriptorTable* const descriptor_table_Item_2eproto_deps[1
 };
 static ::_pbi::once_flag descriptor_table_Item_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Item_2eproto = {
-    false, false, 2603, descriptor_table_protodef_Item_2eproto,
+    false, false, 2683, descriptor_table_protodef_Item_2eproto,
     "Item.proto",
     &descriptor_table_Item_2eproto_once, descriptor_table_Item_2eproto_deps, 1, 21,
     schemas, file_default_instances, TableStruct_Item_2eproto::offsets,
@@ -651,6 +657,7 @@ bool ItemResult_IsValid(int value) {
     case 9:
     case 10:
     case 11:
+    case 12:
       return true;
     default:
       return false;
@@ -2498,11 +2505,14 @@ C_BUY_ITEM::C_BUY_ITEM(const C_BUY_ITEM& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   C_BUY_ITEM* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.template_id_){}
+      decltype(_impl_.npc_entity_id_){}
+    , decltype(_impl_.template_id_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.template_id_ = from._impl_.template_id_;
+  ::memcpy(&_impl_.npc_entity_id_, &from._impl_.npc_entity_id_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.template_id_) -
+    reinterpret_cast<char*>(&_impl_.npc_entity_id_)) + sizeof(_impl_.template_id_));
   // @@protoc_insertion_point(copy_constructor:Protocol.C_BUY_ITEM)
 }
 
@@ -2511,7 +2521,8 @@ inline void C_BUY_ITEM::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.template_id_){0}
+      decltype(_impl_.npc_entity_id_){int64_t{0}}
+    , decltype(_impl_.template_id_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -2539,7 +2550,9 @@ void C_BUY_ITEM::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.template_id_ = 0;
+  ::memset(&_impl_.npc_entity_id_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.template_id_) -
+      reinterpret_cast<char*>(&_impl_.npc_entity_id_)) + sizeof(_impl_.template_id_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2553,6 +2566,14 @@ const char* C_BUY_ITEM::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.template_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int64 npc_entity_id = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.npc_entity_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -2592,6 +2613,12 @@ uint8_t* C_BUY_ITEM::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_template_id(), target);
   }
 
+  // int64 npc_entity_id = 2;
+  if (this->_internal_npc_entity_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(2, this->_internal_npc_entity_id(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -2607,6 +2634,11 @@ size_t C_BUY_ITEM::ByteSizeLong() const {
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // int64 npc_entity_id = 2;
+  if (this->_internal_npc_entity_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_npc_entity_id());
+  }
 
   // int32 template_id = 1;
   if (this->_internal_template_id() != 0) {
@@ -2631,6 +2663,9 @@ void C_BUY_ITEM::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PRO
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from._internal_npc_entity_id() != 0) {
+    _this->_internal_set_npc_entity_id(from._internal_npc_entity_id());
+  }
   if (from._internal_template_id() != 0) {
     _this->_internal_set_template_id(from._internal_template_id());
   }
@@ -2651,7 +2686,12 @@ bool C_BUY_ITEM::IsInitialized() const {
 void C_BUY_ITEM::InternalSwap(C_BUY_ITEM* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_.template_id_, other->_impl_.template_id_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(C_BUY_ITEM, _impl_.template_id_)
+      + sizeof(C_BUY_ITEM::_impl_.template_id_)
+      - PROTOBUF_FIELD_OFFSET(C_BUY_ITEM, _impl_.npc_entity_id_)>(
+          reinterpret_cast<char*>(&_impl_.npc_entity_id_),
+          reinterpret_cast<char*>(&other->_impl_.npc_entity_id_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata C_BUY_ITEM::GetMetadata() const {
@@ -2931,13 +2971,16 @@ C_SELL_ITEM::C_SELL_ITEM(const C_SELL_ITEM& from)
   new (&_impl_) Impl_{
       decltype(_impl_.address_){nullptr}
     , decltype(_impl_.item_uid_){}
+    , decltype(_impl_.npc_entity_id_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   if (from._internal_has_address()) {
     _this->_impl_.address_ = new ::Protocol::SlotAddress(*from._impl_.address_);
   }
-  _this->_impl_.item_uid_ = from._impl_.item_uid_;
+  ::memcpy(&_impl_.item_uid_, &from._impl_.item_uid_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.npc_entity_id_) -
+    reinterpret_cast<char*>(&_impl_.item_uid_)) + sizeof(_impl_.npc_entity_id_));
   // @@protoc_insertion_point(copy_constructor:Protocol.C_SELL_ITEM)
 }
 
@@ -2948,6 +2991,7 @@ inline void C_SELL_ITEM::SharedCtor(
   new (&_impl_) Impl_{
       decltype(_impl_.address_){nullptr}
     , decltype(_impl_.item_uid_){int64_t{0}}
+    , decltype(_impl_.npc_entity_id_){int64_t{0}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -2980,7 +3024,9 @@ void C_SELL_ITEM::Clear() {
     delete _impl_.address_;
   }
   _impl_.address_ = nullptr;
-  _impl_.item_uid_ = int64_t{0};
+  ::memset(&_impl_.item_uid_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.npc_entity_id_) -
+      reinterpret_cast<char*>(&_impl_.item_uid_)) + sizeof(_impl_.npc_entity_id_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -3002,6 +3048,14 @@ const char* C_SELL_ITEM::_InternalParse(const char* ptr, ::_pbi::ParseContext* c
       case 2:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
           _impl_.item_uid_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // int64 npc_entity_id = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _impl_.npc_entity_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -3048,6 +3102,12 @@ uint8_t* C_SELL_ITEM::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteInt64ToArray(2, this->_internal_item_uid(), target);
   }
 
+  // int64 npc_entity_id = 3;
+  if (this->_internal_npc_entity_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(3, this->_internal_npc_entity_id(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -3076,6 +3136,11 @@ size_t C_SELL_ITEM::ByteSizeLong() const {
     total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_item_uid());
   }
 
+  // int64 npc_entity_id = 3;
+  if (this->_internal_npc_entity_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_npc_entity_id());
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
@@ -3101,6 +3166,9 @@ void C_SELL_ITEM::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PR
   if (from._internal_item_uid() != 0) {
     _this->_internal_set_item_uid(from._internal_item_uid());
   }
+  if (from._internal_npc_entity_id() != 0) {
+    _this->_internal_set_npc_entity_id(from._internal_npc_entity_id());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -3119,8 +3187,8 @@ void C_SELL_ITEM::InternalSwap(C_SELL_ITEM* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(C_SELL_ITEM, _impl_.item_uid_)
-      + sizeof(C_SELL_ITEM::_impl_.item_uid_)
+      PROTOBUF_FIELD_OFFSET(C_SELL_ITEM, _impl_.npc_entity_id_)
+      + sizeof(C_SELL_ITEM::_impl_.npc_entity_id_)
       - PROTOBUF_FIELD_OFFSET(C_SELL_ITEM, _impl_.address_)>(
           reinterpret_cast<char*>(&_impl_.address_),
           reinterpret_cast<char*>(&other->_impl_.address_));

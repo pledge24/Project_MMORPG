@@ -1,7 +1,7 @@
 syntax = "proto3";
 package Protocol;
 
-// 게임 입장, 맵 로드, 룸 입장, 포털 이동, 리스폰, 로비 복귀
+// 게임 입장, 맵 로드, 룸 입장, 포털 이동, 리스폰, 채널 변경, 로비 복귀
 // @packet_id_range 300 399
 
 import "Common.proto";
@@ -18,6 +18,10 @@ enum EntryResult
     ENTRY_RESULT_NOT_DEAD = 5;                  // 사망하지 않은 플레이어는 리스폰할 수 없다
     ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE = 6;
     ENTRY_RESULT_INTERNAL_ERROR = 7;            // 진행을 불러오거나 저장하지 못했거나, 기획 데이터가 틀려 위치를 정하지 못했다
+    ENTRY_RESULT_DEAD = 8;                      // 사망한 플레이어는 채널을 바꿀 수 없다
+    ENTRY_RESULT_MAP_LOADING = 9;               // 맵을 다 열기 전에는 채널을 바꿀 수 없다
+    ENTRY_RESULT_SAME_CHANNEL = 10;             // 지금 있는 채널이다
+    ENTRY_RESULT_INVALID_CHANNEL = 11;          // 이 맵에 없는 채널 번호다
 }
 
 // 리스폰 유형. 지금은 마을 리스폰 하나다
@@ -53,11 +57,13 @@ message C_MAP_LOAD_COMPLETE
 {
 }
 
-// 내 플레이어가 룸에 들어갔다. C_MAP_LOAD_COMPLETE의 응답이고, 맵이 바뀌지 않는 포털 이동과 리스폰 뒤에도 온다
+// 내 플레이어가 룸에 들어갔다. C_MAP_LOAD_COMPLETE의 응답이고, 맵이 바뀌지 않는 포털 이동과 리스폰, 채널 변경 뒤에도 온다.
+// 클라이언트는 앞서 보던 엔티티를 모두 지운다. 주변 엔티티는 뒤따르는 S_SPAWN이 싣는다
 message S_ENTER_ROOM
 {
     EntryResult result = 1;
     EntityInfo my_entity = 2;
+    int32 channel = 3;                      // 들어간 룸의 채널. 1부터다
 }
 
 message C_USE_PORTAL
@@ -95,4 +101,35 @@ message C_RETURN_TO_LOBBY
 message S_RETURN_TO_LOBBY
 {
     EntryResult result = 1;
+}
+
+// 채널 하나의 인원
+message ChannelInfo
+{
+    int32 channel = 1;
+    int32 player_count = 2;
+}
+
+// 지금 맵의 채널 목록을 요청한다
+message C_CHANNEL_LIST
+{
+}
+
+// 채널 번호 순이다. 인원은 응답을 만든 순간의 값이다
+message S_CHANNEL_LIST
+{
+    repeated ChannelInfo channels = 1;
+}
+
+// 같은 맵의 다른 채널로 옮긴다
+message C_CHANGE_CHANNEL
+{
+    int32 channel = 1;
+}
+
+// 성공하면 맵을 다시 열지 않고 S_ENTER_ROOM이 뒤따른다
+message S_CHANGE_CHANNEL
+{
+    EntryResult result = 1;
+    int32 channel = 2;                      // 성공하면 옮겨 갈 채널
 }

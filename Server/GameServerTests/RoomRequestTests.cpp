@@ -10,6 +10,7 @@
 #include "TestItemTables.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "RoomManagerTestAccess.h"
 
 /*--------------------------------------------------------------
     룸 요청 처리 테스트
@@ -17,14 +18,14 @@
     룸 큐의 잡은 핸들러가 넣은 뒤 나중에 돈다. 그사이 연결이 끊겨 세션이 사라졌을 수 있으므로,
     잡은 세션이 없어도 응답을 건너뛰고 끝나야 한다.
 
-    픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다. 플레이어는 세션 없이 불러온 진행으로
+    픽스처 결합도: CreateTestRoom으로 룸을 만들고 Start()는 부르지 않는다. 플레이어는 세션 없이 불러온 진행으로
     만들어 EnterPlayer로 넣는다. 아이템과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
 {
     constexpr int32 ROOM_ID = 10;
-    constexpr int32 TOWN_ROOM_ID = 1;
+    constexpr int32 TOWN_AREA_ID = 1;
     constexpr int32 TOWN_MAP_ID = 1001;
     constexpr float TOWN_RESPAWN_X = 300.f;
     constexpr int32 PLAYER_MAX_HP = 100;
@@ -52,7 +53,7 @@ protected:
     void SetUp() override
     {
         // 마을은 룸 객체 없이 지역 표에만 둔다. 리스폰 규칙은 지역 표만 읽는다.
-        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+        TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_AREA_ID, TOWN_MAP_ID);
         TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
 
         GamedataTables tables;
@@ -62,8 +63,7 @@ protected:
         TestAreaTables::AddTown(tables, town);
         Gamedata::Install(std::move(tables));
 
-        DesignData::AreaRow mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate);
+        room = CreateTestRoom(ROOM_ID, 0, 5000.f);
         ASSERT_NE(room, nullptr);
 
         const PlayerProgress progress = MakeProgressWithSword();
@@ -184,7 +184,6 @@ TEST_F(RoomRequestTest, DeadPlayerIsSavedAsTownRespawn)
     ASSERT_TRUE(saveData.has_value());
 
     EXPECT_EQ(saveData->progress.mapId, TOWN_MAP_ID) << "DB에는 룸이 아니라 맵과 좌표를 저장한다";
-    EXPECT_EQ(player->GetRoomId(), TOWN_ROOM_ID);
     EXPECT_FLOAT_EQ(saveData->progress.pos.x, TOWN_RESPAWN_X);
     EXPECT_EQ(saveData->progress.hp, PLAYER_MAX_HP / 2)
         << "마을 리스폰은 HP를 절반으로 채운다";

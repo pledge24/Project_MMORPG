@@ -117,6 +117,13 @@ void AP1MyPlayer::Look(const FInputActionValue& Value)
 
 void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
 {
+    // 비전투 모드의 왼쪽 클릭은 조준한 NPC와의 상호작용이다. 무기가 없어도 된다.
+    if (bBattleMode == false)
+    {
+        OnNonCombatClick.Broadcast();
+        return;
+    }
+
     UStaticMesh* StaticMesh = WeaponMesh->GetStaticMesh();
     if (!StaticMesh)
     {
@@ -124,7 +131,7 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
         return;
     }
 
-    if (AttackSystemComponent != nullptr && bBattleMode == true)
+    if (AttackSystemComponent != nullptr)
     {
         // 입력을 받을 수 없으면 0이 돌아온다.
         const int32 Combo = AttackSystemComponent->StartNormalAttack();
@@ -150,6 +157,10 @@ void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)
 
 bool AP1MyPlayer::CanInputMovement() const
 {
+    // 이동 입력이 막힌 동안 입력을 캐시만 하면 이동 동기화가 제자리에서 달린다고 보낸다.
+    if (Controller != nullptr && Controller->IsMoveInputIgnored())
+        return false;
+
     return IsAttacking() == false;
 }
 

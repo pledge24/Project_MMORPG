@@ -47,10 +47,10 @@ class ReferenceTest(DesignDataCase):
         self.add_table("Thing", sheet(["Id", "Name"], ["key:int32", "string"], ["both", "both"], [10, "검"], [20, "물약"]))
 
     def add_shop(self, type_text: str, *values) -> None:
-        self.add_table("Shop", sheet(["Id", "Goods"], ["key:int32", type_text], ["both", "both"], *[[i + 1, v] for i, v in enumerate(values)]))
+        self.add_table("Stall", sheet(["Id", "Goods"], ["key:int32", type_text], ["both", "both"], *[[i + 1, v] for i, v in enumerate(values)]))
 
     def goods(self) -> list:
-        return [row["Goods"] for row in json.loads(self.output("Shop.json"))]
+        return [row["Goods"] for row in json.loads(self.output("Stall.json"))]
 
     def test_required_reference(self):
         self.add_shop("ref:Thing", 10, "20")
@@ -58,7 +58,7 @@ class ReferenceTest(DesignDataCase):
 
     def test_missing_reference_is_rejected(self):
         self.add_shop("ref:Thing", 10, 30)
-        self.assert_error("Shop.xlsx 시트 'Sheet1' 6행 B열(Goods)", "30", "'Thing'")
+        self.assert_error("Stall.xlsx 시트 'Sheet1' 6행 B열(Goods)", "30", "'Thing'")
 
     def test_empty_required_reference_is_rejected(self):
         self.add_shop("ref:Thing", None)
@@ -78,12 +78,12 @@ class ReferenceTest(DesignDataCase):
 
     def test_reference_to_unknown_table_is_rejected(self):
         self.add_shop("ref:Monster", 1)
-        self.assert_error("Shop.xlsx", "2행", "'Monster'", "설정 파일에 없다")
+        self.assert_error("Stall.xlsx", "2행", "'Monster'", "설정 파일에 없다")
 
     def test_reference_to_composite_key_table_is_rejected(self):
         self.add_table("Stat", sheet(["Class", "Level"], ["key:enum:CharacterClass", "key:int32"], ["both"] * 2, ["WARRIOR", 1]))
         self.add_shop("ref:Stat", 1)
-        self.assert_error("Shop.xlsx", "'Stat'", "키 열이 하나가 아니라서")
+        self.assert_error("Stall.xlsx", "'Stat'", "키 열이 하나가 아니라서")
 
     def test_parent_reference_as_key(self):
         self.add_table("ThingDetail", sheet(["ThingId", "Attack"], ["key:parent:Thing", "int32"], ["both"] * 2, [20, 5], [10, 3]))

@@ -2,17 +2,21 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
-#include "Templates/SubclassOf.h"
 #include "P1GameDataSettings.generated.h"
 
-class AP1Monster;
+class ACharacter;
 class UDataTable;
+class UMaterialInterface;
 class UTexture2D;
 class UWorld;
 struct FP1ItemConsumeEffectRow;
 struct FP1ItemEquipStatRow;
 struct FP1ItemRow;
+struct FP1MonsterAssetData;
 struct FP1MonsterRow;
+struct FP1NpcAssetData;
+struct FP1NpcRow;
+struct FP1ShopRow;
 
 /**
  * 게임 코드가 읽는 기획 데이터 테이블의 설정.
@@ -58,16 +62,47 @@ public:
 public:
     static const FP1MonsterRow* FindMonsterRow(int32 MonsterId);
 
-    /** 몬스터 번호의 몬스터 클래스를 동기 로드한다. 클래스가 없어도 nullptr. */
-    static TSubclassOf<AP1Monster> LoadMonsterClass(int32 MonsterId);
+    /** 몬스터 번호의 표현 데이터. 행이 가리키는 에셋은 불러오지 않는다. */
+    static const FP1MonsterAssetData* FindMonsterAssetData(int32 MonsterId);
 
     /** 몬스터 정의. 행 구조체는 FP1MonsterRow이고 행 이름은 몬스터 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterTable;
 
-    /** 몬스터의 에셋 참조. 행 구조체는 FP1MonsterAssetData이고 행 이름은 몬스터 번호. */
+    /** 몬스터의 표현 데이터. 행 구조체는 FP1MonsterAssetData이고 행 이름은 몬스터 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterAssetTable;
+
+    //~ Npcs
+public:
+    static const FP1NpcRow* FindNpcRow(int32 NpcId);
+
+    /** NPC 번호의 표현 데이터. 행이 가리키는 에셋은 불러오지 않는다. */
+    static const FP1NpcAssetData* FindNpcAssetData(int32 NpcId);
+
+    static const FP1ShopRow* FindShopRow(int32 ShopId);
+
+    /** NPC 정의. 행 구조체는 FP1NpcRow이고 행 이름은 NPC 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UDataTable> NpcTable;
+
+    /** NPC의 표현 데이터. 행 구조체는 FP1NpcAssetData이고 행 이름은 NPC 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UDataTable> NpcAssetTable;
+
+    /** 상점의 판매 목록. 행 구조체는 FP1ShopRow이고 행 이름은 상점 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UDataTable> ShopTable;
+
+    /** 조준한 NPC의 메시에 덧그려 외곽선을 보이는 머티리얼. 비어 있으면 외곽선 없이 상호작용 표시만 뜬다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UMaterialInterface> NpcFocusOverlayMaterial;
+
+    //~ Players
+public:
+    /** 직업 번호(Protocol::CharacterClass 값)마다 플레이어 블루프린트. 직업 표의 직업마다 하나씩 두고, 표에 없는 직업을 두면 서버가 뜨지 않는다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Players")
+    TMap<int32, TSoftClassPtr<ACharacter>> CharacterClassPlayers;
 
     //~ Maps
 public:

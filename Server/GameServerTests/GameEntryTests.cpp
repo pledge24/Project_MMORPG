@@ -12,6 +12,7 @@
 #include "TestItemTables.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "RoomManagerTestAccess.h"
 
 /*--------------------------------------------------------------
     게임 입장 테스트
@@ -93,7 +94,7 @@ protected:
         session = make_shared<GameSession>();
         sessionManager.RegisterUser(USER_ID, session);
 
-        enterRoom = Room::Create(TestAreaTables::MakeArea(ENTER_ROOM_ID, 0));
+        enterRoom = CreateTestRoom(ENTER_ROOM_ID, 0, 0.f);
     }
 
     void TearDown() override

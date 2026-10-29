@@ -17,7 +17,7 @@ class UP1ChatWidget;
 /**
  * 인게임 화면과 창의 관리자.
  *
- * HUD, 도움말, 채팅창, 경고 문구, 사망 화면, 게임 메뉴 같은 인게임 화면과 스탯 창, 인벤토리, 상점 같은 창을 띄우고 여닫는다.
+ * HUD, 도움말, 채팅창, 경고 문구, 사망 화면, 게임 메뉴 같은 인게임 화면과 스탯 창, 인벤토리, 상점, 채널 목록 같은 창을 띄우고 여닫는다.
  * 열린 창에 맞춰 입력 모드와 마우스 커서를 바꾼다.
  */
 UCLASS()
@@ -59,8 +59,8 @@ public:
     bool IsWindowOpen(EP1WidgetType Type) const;
 
     /**
-     * 게임 메뉴, 채팅 입력칸, 사망 화면, 열린 창의 순서로 먼저 해당하는 것에 입력과 커서를 맞춘다.
-     * 앞의 셋은 그것만 입력을 받고, 창은 UI와 게임이 함께 받는다. 아무것도 없으면 게임 모드다.
+     * 게임 메뉴, 채팅 입력칸, 사망 화면, 상점, 열린 창의 순서로 먼저 해당하는 것에 입력과 커서를 맞춘다.
+     * 앞의 넷은 그것만 입력을 받고, 창은 UI와 게임이 함께 받는다. 아무것도 없으면 게임 모드다.
      */
     void RefreshInputMode();
 
@@ -68,8 +68,8 @@ private:
     /** 등록되지 않은 종류면 경고를 남기고 nullptr. */
     UUserWidget* FindWindow(EP1WidgetType Type) const;
 
-    /** 상점 창이 열려 있는지를 아이템 요청 창구에 맞춘다. 판매는 상점 창이 열려 있을 때만 보낸다. */
-    void SyncShopOpen() const;
+    /** 상점 창을 연 NPC를 아이템 요청 창구에 맞춘다. 구매와 판매는 상점 창이 열려 있을 때 그 NPC에게 보낸다. */
+    void SyncShopNpc() const;
 
     UPROPERTY()
     TObjectPtr<UP1WindowLayerWidget> WindowLayer;
@@ -79,6 +79,21 @@ private:
 
     /** 열린 창의 비트 집합. EP1WidgetType 값이 비트 위치다. */
     int32 OpenWindowFlags = 0;
+
+    //~ Shop
+public:
+    /**
+     * 다른 창을 모두 내리고 NpcEntityId NPC의 ShopId 상점과 인벤토리를 연다. 상점이 열린 동안은 상점 창만 입력을 받는다.
+     * 상점 창이 없으면 아무것도 바꾸지 않고 false.
+     */
+    bool OpenShop(int64 NpcEntityId, int32 ShopId);
+
+    /** 상점과 인벤토리를 닫는다. 상점을 열 때 내린 창은 되살리지 않는다. 상점이 닫혀 있으면 아무것도 하지 않는다. */
+    void CloseShop();
+
+private:
+    /** 상점 창을 연 NPC의 엔티티 번호. 열지 않았으면 0. */
+    int64 ShopNpcEntityId = 0;
 
     //~ Game Menu
 public:
@@ -113,4 +128,7 @@ public:
 
     /** 내 플레이어의 전투 모드가 바뀌면 부른다. HUD 문구와 경고 문구로 알린다. */
     void ShowBattleMode(bool bBattleMode);
+
+    /** 조준한 NPC로 할 수 있는 일을 HUD에 띄운다. 빈 문구면 내린다. */
+    void ShowInteractionPrompt(const FText& Prompt);
 };

@@ -11,6 +11,7 @@
 #include "P1StatefulEntityManager.generated.h"
 
 class AP1Monster;
+class AP1Npc;
 class AP1Player;
 class AP1EntitySpawner;
 class UP1MyPlayerData;
@@ -71,6 +72,9 @@ protected:
     UPROPERTY()
     TMap<uint64, TObjectPtr<AP1Monster>> Monsters;
 
+    UPROPERTY()
+    TMap<uint64, TObjectPtr<AP1Npc>> Npcs;
+
     //~ Spawn
 public:
     /** SpawnerId 번 스포너로 스폰한다. 이미 등록된 id면 무시한다. */
@@ -83,6 +87,7 @@ protected:
     void SpawnMonster(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
     void HandleMonsterDespawnReady(AP1Monster* Monster);
     void SpawnPlayer(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
+    void SpawnNpc(const Protocol::EntityInfo& InEntityInfo, int32 SpawnerId);
 
     //~ Entity Packet Handlers
 public:

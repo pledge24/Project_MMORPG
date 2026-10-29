@@ -4,9 +4,8 @@
 namespace
 {
     // 그 맵에서 좌표가 드는 지역을 찾는다. 높이는 보지 않는다.
-    // 경계 위의 점은 안쪽이다. 이동 판정(MoveValidation)이 경계 위를 룸 안으로 받으므로, 경계에서 저장한
-    // 플레이어를 밖으로 판정하면 다음 입장에서 마을로 밀려난다. 두 지역이 경계를 함께 쓰면 지역 표를 지역 번호
-    // 순서로 돌기 때문에 번호가 작은 쪽이 잡힌다.
+    // 경계 위의 점은 안쪽이다. 추출이 지역끼리 겹치지 않음을 검사하지만 경계는 함께 쓸 수 있고, 그때는
+    // 지역 표를 지역 번호 순서로 돌기 때문에 번호가 작은 쪽이 잡힌다.
     const DesignData::AreaRow* FindAreaContaining(int32 mapId, const Protocol::Vector& pos)
     {
         for (const auto& [areaId, area] : Gamedata::GetAreas())
@@ -14,42 +13,44 @@ namespace
             if (area.MapId != mapId)
                 continue;
 
-            if (pos.x() < area.CenterX - area.HalfExtentX || pos.x() > area.CenterX + area.HalfExtentX)
-                continue;
-            if (pos.y() < area.CenterY - area.HalfExtentY || pos.y() > area.CenterY + area.HalfExtentY)
-                continue;
-
-            return &area;
+            const AreaPlacement* placement = Gamedata::FindAreaPlacement(areaId);
+            if (placement != nullptr && placement->bounds.Contains(pos.x(), pos.y()))
+                return &area;
         }
 
         return nullptr;
     }
+
+    Protocol::PosInfo MakeIdlePos(const vector3D& pos, float yaw)
+    {
+        Protocol::PosInfo posInfo;
+        posInfo.mutable_pos()->set_x(pos.x);
+        posInfo.mutable_pos()->set_y(pos.y);
+        posInfo.mutable_pos()->set_z(pos.z);
+        posInfo.set_yaw(yaw);
+        posInfo.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+        return posInfo;
+    }
 }
 
-int32 RoomTransfer::SelectRoomForArea(int32 areaId)
+optional<string> RoomTransfer::ValidatePortalUse(const PortalPlacement& portal, const Protocol::PosInfo& playerPos)
 {
-    // 지금은 지역 하나가 룸 하나라서 지역 번호가 룸 번호다. 룸을 만들 때도 이 함수로 룸 번호를 정한다.
-    // 지역 여럿을 룸 하나로 묶거나 지역 하나를 여러 룸으로 나눌 때, 입장할 룸을 고르는 규칙은 여기만 바꾼다.
-    return areaId;
+    // 높이는 보지 않는다. 포털 좌표의 z는 바닥이고 플레이어의 z는 캡슐 중심이다.
+    const float dx = playerPos.pos().x() - portal.src.x;
+    const float dy = playerPos.pos().y() - portal.src.y;
+    if (dx * dx + dy * dy > portal.radius * portal.radius)
+        return format("포털 {}의 반경 {} 밖에서 온 포털 이동 요청", portal.id, portal.radius);
+
+    return nullopt;
 }
 
-RoomEnterData RoomTransfer::MakePortalEnterData(const DesignData::PortalRow& portal)
+optional<MapPosition> RoomTransfer::FindPortalDestination(const DesignData::PortalRow& portal, const PortalPlacement& placement)
 {
-    RoomEnterData enterData;
-    enterData.nextRoomId = SelectRoomForArea(portal.DestAreaId);
+    const DesignData::AreaRow* destArea = Gamedata::FindArea(portal.DestAreaId);
+    if (destArea == nullptr)
+        return nullopt;
 
-    Protocol::PosInfo enterPos;
-    Protocol::Vector& pos = *enterPos.mutable_pos();
-    pos.set_x(portal.DestX);
-    pos.set_y(portal.DestY);
-    pos.set_z(portal.DestZ);
-    enterPos.set_yaw(portal.DestYaw);
-    enterPos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
-
-    // 룸 입장 응답이 내 엔티티의 위치로 이 값을 실으므로 반드시 채워야 한다.
-    enterData.enterPos = std::move(enterPos);
-
-    return enterData;
+    return MapPosition{ destArea->MapId, MakeIdlePos(placement.dest, placement.destYaw) };
 }
 
 optional<Protocol::EntryResult> RoomTransfer::ValidateRespawn(bool isDead, Protocol::RespawnType respawnType)
@@ -64,45 +65,55 @@ optional<Protocol::EntryResult> RoomTransfer::ValidateRespawn(bool isDead, Proto
     return nullopt;
 }
 
-optional<TownRespawn> RoomTransfer::FindTownRespawn()
+optional<MapPosition> RoomTransfer::FindTownRespawn()
 {
     const DesignData::AreaRow* town = Gamedata::FindArea(Gamedata::GetTownAreaId());
-    if (town == nullptr || town->HasRespawnPoint == false
-        || town->RespawnX.has_value() == false || town->RespawnY.has_value() == false || town->RespawnZ.has_value() == false)
+    if (town == nullptr || town->HasRespawnPoint == false)
         return nullopt;
 
-    TownRespawn respawn;
-    respawn.mapId = town->MapId;
-    respawn.roomId = SelectRoomForArea(town->Id);
-    respawn.pos.mutable_pos()->set_x(town->RespawnX.value());
-    respawn.pos.mutable_pos()->set_y(town->RespawnY.value());
-    respawn.pos.mutable_pos()->set_z(town->RespawnZ.value());
-    respawn.pos.set_yaw(0.f);
-    respawn.pos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
+    const RespawnPointPlacement* point = Gamedata::FindRespawnPoint(town->Id);
+    if (point == nullptr)
+        return nullopt;
 
-    return respawn;
+    return MapPosition{ town->MapId, MakeIdlePos(point->pos, point->yaw) };
 }
 
-optional<RoomAssignment> RoomTransfer::AssignRoom(int32 mapId, const Protocol::PosInfo& pos)
+optional<MapPosition> RoomTransfer::ResolveEnterPosition(int32 mapId, const Protocol::PosInfo& pos)
 {
+    // 지역 사이의 빈 공간에는 바닥이 없다. 저장된 좌표가 어느 지역에도 들지 않으면 그 자리에 세우지 않는다.
     if (const DesignData::AreaRow* area = FindAreaContaining(mapId, pos.pos()))
-        return RoomAssignment{ area->MapId, SelectRoomForArea(area->Id), pos };
+        return MapPosition{ area->MapId, pos };
 
-    // 어느 지역에도 들지 않는 좌표는 마을 리스폰 지점에서 시작한다. 지역 표가 바뀌어 저장된 좌표가 지역 밖이 된 경우다.
-    optional<TownRespawn> town = FindTownRespawn();
-    if (town.has_value() == false)
-        return nullopt;
-
-    return RoomAssignment{ town->mapId, town->roomId, town->pos };
+    // 어느 지역에도 들지 않는 좌표는 마을 리스폰 지점에서 시작한다. 레벨이 바뀌어 저장된 좌표가 지역 밖이 된 경우다.
+    return FindTownRespawn();
 }
 
-optional<string> RoomTransfer::ValidatePortalUse(const DesignData::PortalRow& portal, const Protocol::PosInfo& playerPos)
+int32 RoomTransfer::SelectLeastPopulatedChannel(const vector<int32>& playerCounts)
 {
-    // 높이는 보지 않는다. 포털 좌표의 z는 바닥이고 플레이어의 z는 캡슐 중심이다.
-    const float dx = playerPos.pos().x() - portal.SrcX;
-    const float dy = playerPos.pos().y() - portal.SrcY;
-    if (dx * dx + dy * dy > portal.Radius * portal.Radius)
-        return format("포털 {}의 반경 {} 밖에서 온 포털 이동 요청", portal.Id, portal.Radius);
+    if (playerCounts.empty())
+        return 0;
+
+    // min_element는 같은 값이면 앞의 것을 고른다. 인원이 같으면 1채널부터 채운다.
+    const auto least = std::min_element(playerCounts.begin(), playerCounts.end());
+    return static_cast<int32>(least - playerCounts.begin()) + 1;
+}
+
+optional<Protocol::EntryResult> RoomTransfer::ValidateChannelChange(bool isDead, bool isLoadingMap, int32 currentChannel,
+    int32 requestedChannel, int32 channelCount)
+{
+    if (requestedChannel < 1 || requestedChannel > channelCount)
+        return Protocol::ENTRY_RESULT_INVALID_CHANNEL;
+
+    // 맵 로드를 기다리는 플레이어는 아직 룸에 없으므로 옮길 룸이 없다.
+    if (isLoadingMap)
+        return Protocol::ENTRY_RESULT_MAP_LOADING;
+
+    // 사망한 플레이어는 리스폰할 때까지 사망한 룸에 남는다. 채널을 바꾸면 리스폰을 거치지 않고 다른 룸으로 빠져나간다.
+    if (isDead)
+        return Protocol::ENTRY_RESULT_DEAD;
+
+    if (requestedChannel == currentChannel)
+        return Protocol::ENTRY_RESULT_SAME_CHANNEL;
 
     return nullopt;
 }
