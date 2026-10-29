@@ -1,0 +1,2 @@
+# MSBuild 중간 산출물. 실행 파일은 Server/Binary/ 에 떨어지고 그 폴더는 Server/.gitignore 가 덮는다.
+x64/

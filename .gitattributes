@@ -18,6 +18,8 @@
 *.dll binary
 *.jpg binary
 *.png binary
+# 서버가 읽는 navmesh. 빌드 도구(Tools/NavBuilder)가 쓰는 Detour 타일 데이터다.
+*.navmesh binary
 
 # git 훅은 줄바꿈을 LF로 고정한다.
 # core.autocrlf 가 true 인 환경에서 CRLF 로 체크아웃되면 `#!/bin/sh` 뒤에 \r 이 붙어

@@ -11,6 +11,7 @@
 #include "Network/GameSessionManager.h"
 #include "Network/WorldListing.h"
 #include "Game/Room/Room.h"
+#include "Game/Navigation/NavMeshes.h"
 #include "Utils/SnowflakeIdGenerator.h"
 
 enum
@@ -175,6 +176,13 @@ int main(void)
     if (Gamedata::LoadAllGamedata() == false)
     {
         GLogger->Error("기획 데이터가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
+        return 1;
+    }
+
+    // 맵마다의 navmesh. 맵 표와 대조하므로 기획 데이터 다음이다. 형식이나 에이전트 설정이 어긋난 navmesh로 뜨면 지형 판정이 조용히 틀린다.
+    if (NavMeshes::LoadAll() == false)
+    {
+        GLogger->Error("navmesh가 틀려 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
         return 1;
     }
 

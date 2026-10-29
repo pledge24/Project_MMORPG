@@ -4,6 +4,8 @@
 #include "Game/Entities/Monster.h"
 #include "Game/Combat/Combat.h"
 #include "Game/Room/MoveValidation.h"
+#include "Game/Navigation/NavMeshes.h"
+#include "Game/Navigation/NavQuery.h"
 #include "Game/Room/RoomManager.h"
 #include "Network/ProgressCoordinator.h"
 
@@ -53,6 +55,8 @@ namespace
     }
 }
 
+Room::~Room() = default;
+
 RoomRef Room::Create(int32 roomId, int32 channel, const MapPlacement& map)
 {
     RoomRef newRoom = make_shared<Room>();
@@ -78,6 +82,10 @@ void Room::Init(int32 roomId, int32 channel, const MapPlacement& map)
     }
 
     _cellMatrix.Init(_map.bounds, _map.cellSize);
+
+    // 맵의 navmesh는 같은 맵의 룸들이 함께 읽고, 질의 상태만 룸마다 둔다. 테스트처럼 navmesh 없이 만든 룸은 지형을 보지 않는다.
+    if (shared_ptr<const NavMesh> navMesh = NavMeshes::Find(map.mapId))
+        _navQuery = make_unique<NavQuery>(std::move(navMesh));
 }
 
 bool Room::Start()
@@ -96,7 +104,7 @@ bool Room::Start()
 
             MonsterSpawnParams spawnParams;
             spawnParams.templateId = monsterTemplateId;
-            spawnParams.spawnPos = MakeRandomSpawnPos(area.placement);
+            spawnParams.spawnPos = MakeRandomSpawnPos(area.placement, monsterTemplateId);
             spawnParams.wanderBounds = area.placement.bounds;
 
             if (SpawnEntity<Monster>(spawnParams) == nullptr)
@@ -207,6 +215,11 @@ bool Room::EnterPlayer(PlayerRef enterPlayer, RoomEnterData roomEnterData)
     }
 
     enterPlayer->OnEnterRoom(static_pointer_cast<Room>(shared_from_this()), roomEnterData.enterPos);
+
+    // 배치한 지점(포털 도착, 리스폰)의 높이는 바닥이다. 클라이언트는 받은 높이로 캡슐 중심을 맞추므로 바닥 위로 올린다.
+    Protocol::PosInfo standingPos = enterPlayer->GetPosInfo();
+    if (PlaceOnFloor(standingPos, PlayerHalfHeight()))
+        enterPlayer->ApplyMove(standingPos, ::GetTickCount64());
 
     // AddEntity는 입장 전의 위치로 셀을 정했다. 들어간 위치의 셀로 옮겨 둬야 아래 알림이 맞는 이웃에게 간다.
     _cellMatrix.Place(enterPlayerId, _cellMatrix.ToCell(ToPlanePos(enterPlayer->GetPosInfo())));
@@ -319,7 +332,9 @@ void Room::TeleportPlayer(const PlayerRef& player, const Protocol::PosInfo& pos)
     const int64 playerId = player->GetEntityId();
 
     // 리스폰은 플레이어의 위치를 그대로 넘기므로, 위치를 바꾸기 전에 사본을 뜬다.
-    const Protocol::PosInfo destPos = pos;
+    // 배치한 지점의 높이는 바닥이므로 캡슐 중심 높이로 올린다.
+    Protocol::PosInfo destPos = pos;
+    PlaceOnFloor(destPos, PlayerHalfHeight());
 
     // 떠나는 자리에서 보던 쪽에는 사라진다. 리스폰이면 사망한 모습이 사라지고 아래에서 되살아난 모습이 스폰된다.
     BroadcastNearby(playerId, MakeDespawnPacket(playerId), playerId);
@@ -459,10 +474,10 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
 
     // 직전에 받아들인 위치에서 흐른 시간으로 갈 수 있는 곳인지 본다. 어기면 버리고, 서버의 위치는 그대로 둔다.
     const uint64 now = ::GetTickCount64();
-    const vector2D from = MathUtil::PosInfoToVector2D(&player->GetPosInfo());
-    const vector2D to = MathUtil::PosInfoToVector2D(&pkt.pos_info());
+    const vector3D from = MathUtil::PosInfoToVector3D(player->GetPosInfo());
+    const vector3D to = MathUtil::PosInfoToVector3D(pkt.pos_info());
     if (optional<string> rejection = MoveValidation::Validate(from, to, now - player->GetLastPositionTick(),
-        _map.bounds))
+        _map.bounds, _navQuery.get()))
     {
         GLogger->Warning("플레이어 {}의 이동을 버린다: {}", playerId, rejection.value());
         return;
@@ -762,7 +777,7 @@ vector3D Room::GetCenterPoint() const
     return vector3D((bounds.minX + bounds.maxX) * 0.5f, (bounds.minY + bounds.maxY) * 0.5f, 0.f);
 }
 
-Protocol::PosInfo Room::MakeRandomSpawnPos(const AreaPlacement& area) const
+Protocol::PosInfo Room::MakeRandomSpawnPos(const AreaPlacement& area, int32 monsterTemplateId)
 {
     const vector2D randomPos = GetRandomLocation(area.bounds);
 
@@ -773,7 +788,33 @@ Protocol::PosInfo Room::MakeRandomSpawnPos(const AreaPlacement& area) const
     pos->set_z(area.center.z + LOCATION_PADDING_Z);
     posInfo.set_yaw(GetRandomYaw());
 
+    // 클라이언트가 받은 높이로 캡슐 중심을 맞추므로, 그 몬스터의 캡슐이 바닥에 서는 높이로 둔다.
+    if (const CreatureCombat* combat = Gamedata::FindMonsterCombat(monsterTemplateId))
+        PlaceOnFloor(posInfo, combat->capsuleHalfHeight);
+
     return posInfo;
+}
+
+bool Room::PlaceOnFloor(Protocol::PosInfo& posInfo, float halfHeight)
+{
+    if (_navQuery == nullptr)
+        return false;
+
+    const vector3D pos = MathUtil::PosInfoToVector3D(posInfo);
+    const optional<float> floor = _navQuery->FindFloorHeight(pos);
+    if (floor.has_value() == false)
+    {
+        GLogger->Warning("룸 {}: ({}, {}, {}) 아래에 걸을 수 있는 바닥이 없어 높이를 그대로 둔다", _roomId, pos.x, pos.y, pos.z);
+        return false;
+    }
+
+    posInfo.mutable_pos()->set_z(floor.value() + halfHeight);
+    return true;
+}
+
+float Room::PlayerHalfHeight() const
+{
+    return _navQuery != nullptr ? _navQuery->GetAgentHalfHeight() : 0.f;
 }
 
 bool Room::AddEntity(EntityRef entity)

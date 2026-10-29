@@ -122,7 +122,12 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `RandomLocationAxisTest` | 1 | 지역의 X 범위는 깊이, Y 범위는 폭으로 계산 |
 | `RandomLocationTest` | 3 | 지역 안 무작위 위치(몬스터 스폰과 배회 목적지)가 여백 안에 머묾 · 여백이 없으면 지역 전체 · 여백보다 좁은 축은 가운데 |
 | `RoomRequestTest` | 5 | 룸 큐의 요청 처리. 이동은 보낸 사람의 위치만 바꿈 · 허용 거리를 넘는 이동은 버림 · 룸을 떠난 플레이어의 아이템 요청 무시 · 세션이 사라진 플레이어의 착용과 해제는 응답 없이 끝남 · 사망한 채 끊긴 플레이어는 마을의 맵과 리스폰 상태로 저장 |
-| `MoveValidation` | 5 | 이동 위치 판정. 허용 거리 안은 통과하고 넘으면 거절 · 허용 거리는 경과 시간에 따라 늘어남 · 평면 거리로 잼 · 룸 경계 밖 거절(경계 위는 안쪽) |
+| `MoveValidation` | 5 | 이동 위치 판정(지형 없음). 허용 거리 안은 통과하고 넘으면 거절 · 허용 거리는 경과 시간에 따라 늘어남 · 속도는 평면 거리로 잼(높이 차이는 들지 않음) · 룸 경계 밖 거절(경계 위는 안쪽) |
+| `MoveValidationTerrain` | 7 | 테스트 레벨(벽 하나와 경사로 하나)의 navmesh로 하는 이동 위치 판정. 바닥 위 이동은 통과 · 벽을 사이에 둔 두 점 사이 이동은 거절 · 벽에 붙어 미끄러지는 이동은 통과 · 바닥에서 크게 뜬 위치와 바닥 아래로 묻힌 위치 거절 · 바닥이 없는 위치 거절 · 경사로를 오르내리는 이동은 통과 |
+| `NavQueryTest` | 9 | 룸의 지형 질의. 벽을 돌아가는 경로를 찾고 꺾이는 점은 캡슐 중심 높이 · 막히지 않은 경로는 곧음 · navmesh 밖에서 시작하는 경로는 빔 · 표면을 따른 이동은 벽에서 반경만큼 떨어져 멈추고 막히지 않으면 끝까지 감 · 직선이 벽에 막힌 점과 막히지 않는 직선 · 바닥과 경사로의 바닥 높이 · 레벨 밖과 캡슐 하나보다 먼 아래의 바닥은 없음 |
+| `NavMeshBuildTest` | 5 | navmesh 빌드 도구의 빌드 함수(`Tools/NavBuilder/NavMeshBuild`). 같은 입력을 두 번 빌드하면 바이트가 같음 · 추출 커맨드렛이 쓰는 형상 문서를 읽어 빌드해도 같은 바이트 · 없는 꼭짓점을 가리키는 형상 문서 거절 · 걸을 수 있는 면이 없는 형상 거절 · 겹쳐 그리기용 폴리곤이 언리얼 좌표이고 바닥 높이에 있음 |
+| `NavMeshesTest` | 7 | 기동할 때의 navmesh 읽기(`NavMeshes::Load`). 맵 표의 맵마다 설치 · 형식 버전이 다른 파일과 에이전트 설정 해시가 다른 파일은 파일 이름과 함께 거절하고 아무것도 설치하지 않음 · navmesh가 없는 맵, 맵 표에 없는 맵의 navmesh, 필드가 빠진 에이전트 설정 거절 · 저장소의 navmesh와 에이전트 설정 통과(에이전트는 전사 캡슐 42/192이고, 마을 섬 안의 이동은 통과하고 섬 밖으로 나가는 이동은 거절) |
+| `RoomTerrainTest` | 3 | 룸이 맵의 navmesh로 지형을 보는지. 바닥 높이로 들어온 입장 위치를 캡슐 중심 높이로 올림 · 벽을 통과한 이동은 버림 · 바닥 위 이동은 받아들임 |
 | `RoomTransferTest` | 7 | 룸 이동 판정. 포털의 도착 지역이 속한 맵과 도착 위치 · 지역 표에 없는 도착 지역 · 사망한 플레이어의 마을 리스폰만 허용하고 거절을 결과 값으로 · 배치한 마을 리스폰 지점과 그 맵 |
 | `RoomTransferMapTest` | 3 | 위치를 보는 룸 이동 판정. 포털 반경 경계와 높이 무시 · 반경 밖 포털 이동 거절 · 포털마다 다른 반경 |
 | `EnterPositionTest` | 6 | 입장 위치. 맵의 지역 안(경계 포함) 좌표는 그대로 · 어느 지역에도 들지 않거나 다른 맵의 지역에만 드는 좌표, 맵 표에 없는 맵은 마을 리스폰 지점과 마을의 맵 · 마을 리스폰 지점이 없으면 지역 밖 좌표는 거절 |
@@ -141,7 +146,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | AuthServer `common/tests/errorHandlers.test.ts` | 1 | 도메인 라우터 없이 공용 핸들러만 붙인 앱에서 없는 경로의 404와 봉투 |
 | AuthServer `common/tests/ticket.test.ts` | 1 | Redis 주소 설정이 클라이언트의 `socket` 옵션으로 넘어감(Redis에 붙지 않고 옵션만 읽음) |
 | `P1.Network.PacketFraming` | 1 | 패킷 헤더의 size·id 배치 · 본문 왕복 · 빈 메시지 경계 |
-| `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · Z 유지 · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
+| `P1.Sync.MoveCorrection` | 1 | 원격 크리처 보정의 순간이동 경계(800) · 정지 중 접근 · 이동 중 수선의 발 접근 · 높이도 서버 위치를 따름(순간이동하면 서버의 Z, 다가갈 때 Z도 다가감, 높이 차이도 순간이동 거리에 듦) · 회전 보정 켜고 끄기 · ACTION 중 보정 멈춤과 순간이동 |
 | `P1.Sync.MoveSendThrottle` | 1 | 내 플레이어 이동 패킷의 주기 송신(0.2초)과 타이머 리셋 · 입력 변화 즉시 송신(이동 가능할 때만) · 회전 허용치(60도) 경계와 ±180도 감싸기 · 입력이 없을 때 서버와 마지막으로 맞춘 yaw와의 비교 · 공격 중 즉시 송신 억제 |
 | `P1.Inventory.SlotAction` | 1 | 인벤토리 칸 더블클릭의 요청 판정. 빈 칸 · 소모품 사용 · 무기와 방어구 착용 · 요구 레벨 경계 · 기타 칸, 착용 장비 칸, 컨테이너가 정해지지 않은 칸 · 재사용 대기 중인 소모품 |
 | `P1.Inventory.ItemCooldown` | 1 | 아이템 재사용 대기의 남은 시간과 남은 비율(1 → 0) · 끝나는 순간의 경계 · 길이가 0 이하인 아이템 |
@@ -171,7 +176,7 @@ py -3 Tools/ConventionLint/check_conventions.py
 | `P1.Editor.DesignDataPairValidator` | 1 | 에셋 검증기(`UP1DesignDataPairValidator`)를 검증 서브시스템으로 돌림. 프로젝트 설정의 수치 테이블, 장비 능력치 테이블, 에셋 테이블 어느 쪽을 검증해도 짝 오류로 실패 · 경고만 있으면 통과하고 경고를 실음 · 짝 테이블을 불러오지 못하면 설정 이름과 함께 실패 · 설정이 가리키지 않는 테이블은 짝 검사를 하지 않음 |
 | `P1.Progress.ItemActions` | 1 | 아이템 요청 창구의 판정. 퀵슬롯에는 소모품만 받은 번호로 등록하고 응답의 교환을 반영 · 소모품은 사용 요청, 장비는 착용 요청 · 요구 레벨 미달, 쓸 수 없는 아이템, 빈 칸은 보내지 않음 · 인벤토리 칸의 사용, 착용, 판매는 응답 대기 하나를 함께 쓰고 해제와 구매는 막지 않음(거절 응답으로도 풀림) · 재사용 대기 중인 소모품 · 착용 장비 해제 · 상점이 열려 있을 때만, 팔 수 있는 인벤토리 아이템만 판매 · 골드가 가격 이상일 때만 구매 · 다시 입장하면 대기가 풀림 · 보내도 칸과 골드를 바꾸지 않음 · 퀵슬롯 사용은 번호만 보내고 칸 사용과 응답 대기를 함께 씀 · 빈 퀵슬롯, 갖고 있지 않은 소모품, 재사용 대기 중인 소모품은 보내지 않음 |
 
-**안 덮는 것**: `Room` 본체의 대부분(이동, 아이템 착용과 해제, 접속 종료 저장만 `RoomRequestTest`가, 맵 로드와 룸 입장, 포털 이동, 리스폰만 `MapLoadTest`가, 채널 변경과 채널 목록만 `RoomChannelTest`가, 셀 기반 시야만 `RoomVisibilityTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer의 MSSQL 계정 저장소와 계정 상태 저장소, Redis 티켓 저장소, 로그인 세션 저장소, 월드 디렉터리의 Redis 명령 · 게임 서버가 월드 항목을 Redis에 쓰는 일(`WorldListing::Register`, `Publish`)과 갱신 스레드. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영, 클라이언트 컨테이너, 아이템 패킷 변환, 내 플레이어의 컨테이너 분배, 아이템 요청 판정, 퀵슬롯 표시, 퀵슬롯 사본, 로비의 캐릭터 목록 사본, 채널 사본, 접속 단계 전이, 맵 번호의 레벨 선택, 월드 목록 읽기, 수치 테이블과 에셋 테이블의 짝 검사와 그 검증기 열아홉 가지뿐이고 나머지 계층은 0개다.
+**안 덮는 것**: `Room` 본체의 대부분(이동, 아이템 착용과 해제, 접속 종료 저장만 `RoomRequestTest`가, 지형으로 하는 이동 판정과 입장 높이만 `RoomTerrainTest`가, 맵 로드와 룸 입장, 포털 이동, 리스폰만 `MapLoadTest`가, 채널 변경과 채널 목록만 `RoomChannelTest`가, 셀 기반 시야만 `RoomVisibilityTest`가, 룸 틱과 몬스터 피격만 `MonsterAITest`가 덮는다) · DAO의 SQL 문장과 ODBC 드라이버 동작(바인딩과 흐름은 가짜 연결로 덮는다) · IOCP(서버가 건 끊기의 상한만 `SessionDisconnectTest`가 루프백으로 덮는다) · 기획표 파일 읽기(`Gamedata::LoadAllGamedata`) · AuthServer의 MSSQL 계정 저장소와 계정 상태 저장소, Redis 티켓 저장소, 로그인 세션 저장소, 월드 디렉터리의 Redis 명령 · 게임 서버가 월드 항목을 Redis에 쓰는 일(`WorldListing::Register`, `Publish`)과 갱신 스레드. 나머지는 0개. UE 클라는 패킷 프레이밍, 이동 보정 계산, 이동 패킷 송신 판정, 인벤토리 칸 요청 판정, 아이템 재사용 대기 계산, 일반 공격 콤보 순번, 보상 결과 반영, 클라이언트 컨테이너, 아이템 패킷 변환, 내 플레이어의 컨테이너 분배, 아이템 요청 판정, 퀵슬롯 표시, 퀵슬롯 사본, 로비의 캐릭터 목록 사본, 채널 사본, 접속 단계 전이, 맵 번호의 레벨 선택, 월드 목록 읽기, 수치 테이블과 에셋 테이블의 짝 검사와 그 검증기 열아홉 가지뿐이고 나머지 계층은 0개다.
 
 ### 실제 DB 테스트
 
@@ -243,7 +248,9 @@ Server/Binary/Debug/GameServerTests.exe --gtest_also_run_disabled_tests --gtest_
 | 전투 판정 | 존재. `Combat`(`Game/Combat/`). 룸 대조와 패킷 전송은 `Room`에 있다 |
 | 룸 틱 | 존재. `Room::Tick(deltaTime)`. 테스트는 타이머를 기다리지 않고 시간을 넘긴다. 틱 예약(`RunScheduledTick`)은 테스트하지 않는다 |
 | 몬스터 AI | 존재. `MonsterAIComponent`의 `GetState`와 `GetTarget`, 그리고 룸 틱 뒤의 엔티티 상태. 몬스터는 `Room::SpawnEntity`로 넣는다 |
-| 이동 위치 판정 | 존재. `MoveValidation::Validate`. 기준 시각과 위치의 보관, 패킷 버리기는 `Room::C_HandleMove`와 `Player`에 있다 |
+| 이동 위치 판정 | 존재. `MoveValidation::Validate`. 지형은 `NavQuery`로 넘기고, 넘기지 않으면 평면만 본다. 기준 시각과 위치의 보관, 패킷 버리기는 `Room::C_HandleMove`와 `Player`에 있다 |
+| 지형 질의 | 존재. `NavQuery`의 공개 함수 넷. 테스트는 `TestNavLevel.h`의 테스트 레벨을 빌드 도구의 빌드 함수로 빌드해 쓴다. 룸에 navmesh를 주려면 `ScopedNavMeshes`로 설치한다 |
+| navmesh 빌드와 읽기 | 존재. 빌드 도구의 `NavMeshBuild::Build`·`ParseGeometry`·`DumpPolygons`와 서버의 `NavMeshes::Load`. 도구의 명령줄과 파일 쓰기(`Tools/NavBuilder/Main.cpp`), 서버의 파일 읽기(`NavMeshes::LoadAll`), 에디터의 형상 내보내기(`FP1NavGeometry`)는 테스트하지 않는다. 형상 내보내기는 추출을 두 번 돌려 같은 바이트인지로 확인한다 |
 | 룸 이동 판정 | 존재. `RoomTransfer`의 자유 함수. 퇴장과 입장, 목적지 큐로 넘기기는 `Room`에 있다 |
 | 기획표 검증과 변환 | 존재. `GamedataParser::Parse`와 `Gamedata::Load`. 파일 읽기는 `Gamedata::LoadAllGamedata`에 있고 테스트하지 않는다 |
 | 로비 기획 데이터 검증과 기동할 때의 대조 | 존재. `LobbyData::Load`와 `DataCrossCheck::Check`. 테스트는 `LobbyData::Install`로 생성된 로비 설정(`LobbyDesignData::LobbyConfig`)을 주입한다. 파일 읽기(`LobbyData::LoadAll`)와 기동 순서는 `main`에 있고 테스트하지 않는다 |

@@ -16,9 +16,8 @@ FP1MoveCorrection FP1MoveCorrection::Compute(
     Result.Location = ClientLocation;
     Result.Rotation = ClientRotation;
 
-    // 지금은 높이를 판정하지 않으므로 보정은 XY에만 적용한다. 서버 Z는 높이를 다룰 때를 위해 받아 둔다.
-    // 높이 판정을 도입할 때 이 줄부터 고친다.
-    const FVector Target(ServerLocation.X, ServerLocation.Y, ClientLocation.Z);
+    // 서버가 지형으로 높이를 판정하므로 높이도 서버 위치를 따른다. 경사를 오르는 원격 크리처가 평면 위치만 맞추면 땅에 묻히거나 뜬다.
+    const FVector Target = ServerLocation;
 
     if (FVector::Distance(ClientLocation, Target) >= P1MoveSync::SNAP_DISTANCE)
     {

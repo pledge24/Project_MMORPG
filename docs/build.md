@@ -33,7 +33,7 @@ git config core.hooksPath .githooks
 
 ## 게임 서버
 
-`Server/Server.sln` (x64)에는 C++ 4개(`ServerCore` · `GameServer` · `DummyClient` · `GameServerTests`)와 파이썬 생성기 1개(`PacketHandlerGenerator.pyproj`)만 들어 있다. C++ 4개는 Debug와 Release 어느 구성에서도 빌드 대상이다. 파이썬 생성기는 `Build.0` 항목이 없어 빌드되지 않는다.
+`Server/Server.sln` (x64)에는 C++ 5개(`ServerCore` · `GameServer` · `DummyClient` · `GameServerTests` · `NavBuilder`)와 파이썬 생성기 1개(`PacketHandlerGenerator.pyproj`)만 들어 있다. C++ 5개는 Debug와 Release 어느 구성에서도 빌드 대상이다. 파이썬 생성기는 `Build.0` 항목이 없어 빌드되지 않는다. `NavBuilder`는 솔루션의 `Tools` 폴더에 있고 프로젝트 파일은 `Tools/NavBuilder/`에 있다(아래 「navmesh 빌드 도구」).
 
 **AuthServer는 솔루션에 없다.** Node 프로젝트라 MSBuild가 `.NETCoreApp,v6.0` 참조를 요구하며 실패해서, 솔루션 빌드 신호를 상시 빨강으로 만들었다. `npm start`로만 다룬다.
 
@@ -72,9 +72,23 @@ git config core.hooksPath .githooks
 — 연결 풀은 DB 스레드마다 하나가 있어야 한다. 모자라면 동시에 돈 DB 잡 하나가 연결을 빌리지 못하고 실패한다. 부팅 때
 `main`은 DB 스레드를 띄우기 전에 연결을 하나 빌려 아이템 번호를 읽고 돌려준다.
 
-**게임 서버는 DB를 모두 준비한 뒤에 접속을 받는다.** 부팅 순서는 기획 데이터 → 설정 검증 → 룸 → DB와 Redis 연결 →
-아이템 번호 → DB 스레드 → 리슨 → 워커 스레드다.
+**게임 서버는 DB를 모두 준비한 뒤에 접속을 받는다.** 부팅 순서는 기획 데이터 → navmesh → 설정 검증 → 룸 → DB와 Redis 연결 →
+아이템 번호 → DB 스레드 → 리슨 → 워커 스레드다. navmesh는 맵 표와 대조하므로 기획 데이터 다음이고, 룸이 만들어질 때 맵의 navmesh를 찾으므로 룸 앞이다.
 — 리슨부터 열면 DB 큐가 생기기 전에 온 로그인이 없는 큐를 고르고, 다음 아이템 번호가 정해지기 전에 아이템이 만들어질 수 있다.
+
+### navmesh 빌드 도구
+
+`Tools/NavBuilder/`는 추출한 충돌 형상으로 맵마다 navmesh를 빌드하는 C++ 콘솔이다. 서버 솔루션을 빌드하면 `Server/Binary/<구성>/NavBuilder.exe`가 생긴다.
+사람이 직접 부르지 않고 추출 스크립트(`P1/Scripts/Invoke-PlacementExtract.ps1`)가 `Server/Binary/Debug/`의 실행 파일을 부른다. 그래서 추출을 돌리기 전에 서버 솔루션을 Debug로 빌드한다.
+입력과 산출물은 `docs/codegen.md` 「navmesh 빌드」에 있다.
+
+**도구와 게임 서버는 같은 recastnavigation 소스를 컴파일한다.** `Server/Libraries/recastnavigation/`에 v1.6.0의 `Recast/`와 `Detour/`를 벤더링했다.
+도구는 Recast와 Detour를, 게임 서버는 Detour만, 테스트 프로젝트는 둘 다 컴파일한다. 세 프로젝트 모두 이 소스에 서버 pch를 쓰지 않는다(`PrecompiledHeader=NotUsing`).
+navmesh 파일 형식(`Server/GameServer/Game/Navigation/NavMeshFile.h`)도 도구와 서버가 함께 컴파일한다. 이 헤더는 서버 pch 없이 표준 헤더와 `nlohmann/json`만 쓴다.
+— UE 엔진도 Recast와 Detour를 싣지만 수정한 판이라 직렬화 형식이 엔진 버전에 묶인다. 근거는 `docs/adr/0024-build-server-navmesh-from-extracted-geometry.md`에 있다.
+
+**recastnavigation 버전이나 도구의 빌드 매개변수를 바꾸면 `NavMeshFile::FORMAT_VERSION`을 올리고 추출을 다시 돌린다.** 서버는 형식 버전이 다른 navmesh로 뜨지 않는다.
+버전을 올리는 절차는 `Server/Libraries/recastnavigation/README.ko.md`에 있다.
 
 ---
 
@@ -277,6 +291,7 @@ pwsh P1/Scripts/Invoke-UeBuild.ps1 -CloseEditor
 
 - MSBuild 경로는 `vswhere.exe -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe"`로 찾는다. 머신마다 다르다.
 - **`/v:minimal`을 빼지 않는다.** 기본 상세도는 출력이 훨씬 커진다.
+- `GameServer.exe`가 떠 있으면 실행 파일이 잠겨 솔루션 빌드가 실패한다. `NavBuilder.exe`도 같다.
 - 이 빌드는 `Server/Libraries/Libs/ServerCore/`에 `ServerCore.lib`를 만든다. 이 폴더는 git이 추적하지 않으므로, 새로 클론한 뒤에는 솔루션을 한 번 빌드해야 게임 서버가 링크된다. GameServer·GameServerTests·DummyClient가 ServerCore를 `ProjectReference`로 참조해서 솔루션 빌드는 ServerCore를 먼저 빌드한다.
 
 **출력 규모** (2026년 9월 16일 증분 빌드 실측)

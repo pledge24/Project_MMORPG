@@ -56,7 +56,7 @@ Project_MMORPG/
 **한 티어 안에서만 도는 스크립트는 `Tools/`에 두지 않는다.** 클라이언트의 빌드와 테스트 실행은
 `P1/Scripts/`가 맡는다. `Tools/`에 두는 것은 저장소 전체를 대상으로 삼거나 두 티어가 함께 쓰는
 것이다. 규범 검사(`Tools/ConventionLint/`)와 문서 검사(`Tools/DocLint/`)가 앞에, 기획 데이터 생성기(`Tools/DataBuilder/`)와 패킷 핸들러
-생성기가 뒤에 해당한다.
+생성기, navmesh 빌드 도구(`Tools/NavBuilder/`)가 뒤에 해당한다. navmesh 빌드 도구는 클라이언트의 추출 스크립트가 부르고 서버가 그 산출물을 읽는다.
 
 `Server/`와 `Protocol/`이 언리얼 프로젝트 **바깥에** 있는 이유는 둘이다. 첫째, 언리얼의 쿠킹과
 패키징 대상에서 자연히 빠진다. 둘째, 서버를 빌드할 때 언리얼 빌드 도구가 필요 없어진다.
@@ -79,7 +79,7 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
-├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Tests/ 그 테스트
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Navigation/ navmesh 빌드에 넘기는 충돌 형상과 에이전트 설정, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
@@ -529,10 +529,11 @@ Server/
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   ├── QuickSlots/     퀵슬롯의 서버 타입과 퀵슬롯 컴포넌트
 │   │   ├── AI/             몬스터 AI 컴포넌트
+│   │   ├── Navigation/     navmesh 파일 형식(빌드 도구와 함께 컴파일), 맵마다의 navmesh와 그 보관소, 룸마다의 지형 질의
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   │       ├── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
-│   │       └── Extracted/  추출 커맨드렛의 산출물. 맵마다 배치 데이터 JSON과 크리처 판정 데이터 JSON 하나
+│   │       └── Extracted/  추출 스크립트의 산출물. 맵마다 배치 데이터 JSON과 navmesh, 크리처 판정 데이터 JSON과 에이전트 설정 JSON 하나씩
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
@@ -548,7 +549,7 @@ Server/
 │   │   ├── common/         도메인이 아닌 공용 코드. 설정, DB 연결, 인증 티켓, 로그인 세션, 월드 디렉터리, 봉투, 에러, 비밀번호
 │   │   └── types/          타입 정의를 싣지 않는 패키지의 선언 파일
 │   └── migrations/         AccountDB 스키마. `NNN_<이름>.sql`을 번호 순서로 적용한다
-└── Libraries/              벤더링한 서드파티
+└── Libraries/              벤더링한 서드파티. 헤더와 프리빌트 라이브러리, 소스로 컴파일하는 googletest와 recastnavigation
 ```
 
 **`ServerCore`와 `GameServer`의 분리를 유지한다.** `ServerCore`는 게임 규칙을 모른다. 게임 규칙이
