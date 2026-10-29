@@ -49,6 +49,9 @@ bool Gamedata::LoadAllGamedata()
         { DesignData::MAP_FILE, &documents.maps },
         { DesignData::AREA_FILE, &documents.areas },
         { DesignData::PROGRESS_FILE, &documents.initialProgress },
+        { DesignData::SHOP_FILE, &documents.shops },
+        { DesignData::NPC_FILE, &documents.npcs },
+        { DesignData::INTERACTION_FILE, &documents.interaction },
     };
 
     for (const auto& [fileName, document] : files)
@@ -157,6 +160,18 @@ const DesignData::AreaRow* Gamedata::FindArea(int32 areaId)
 {
     auto it = s_tables.areas.find(areaId);
     return it == s_tables.areas.end() ? nullptr : &it->second;
+}
+
+const DesignData::ShopRow* Gamedata::FindShop(int32 shopId)
+{
+    auto it = s_tables.shops.find(shopId);
+    return it == s_tables.shops.end() ? nullptr : &it->second;
+}
+
+const DesignData::NpcRow* Gamedata::FindNpc(int32 npcId)
+{
+    auto it = s_tables.npcs.find(npcId);
+    return it == s_tables.npcs.end() ? nullptr : &it->second;
 }
 
 const DesignData::ClassLevelStatRow* Gamedata::FindClassLevelStat(int32 classId, int32 level)

@@ -113,7 +113,7 @@ class ClientRuleTest(ClientOutputCase):
         self.add_table("Thing", sheet(["Id", "Bonus"], ["key:int32", "int32?"], ["both", "client"], [1, None]))
         self.assert_error("Thing.xlsx", "Bonus", "선택")
 
-    def test_setting_field_cannot_go_to_the_client(self):
+    def test_setting_field_other_than_number_or_bool_cannot_go_to_the_client(self):
         self.add_setting("Progress", setting_sheet(["StartGold", "int64", "server", 1, None], ["Note", "string", "client", "x", None]))
         self.assert_error("Config.xlsx", "Note", "클라이언트")
 
@@ -195,6 +195,27 @@ class ClientHeaderTest(ClientOutputCase):
         group = files["P1GroupRow.h"]
         self.assertIn('#include "Game/Data/Generated/P1EntryRow.h"', group)
         self.assertIn("    TArray<FP1EntryRow> Entries;\n", group)
+
+    def test_setting_numbers_and_bools_for_the_client_become_constants(self):
+        self.add_setting("Interaction", setting_sheet(
+            ["Range", "float", "both", 300, "사거리(cm)"],
+            ["MaxTargets", "int32", "client", 2, None],
+            ["Enabled", "bool", "client", True, None],
+            ["Secret", "int64", "server", 7, None],
+        ))
+
+        header = self.client_source()["P1InteractionConfig.h"]
+        self.assertIn("namespace P1DesignData::Interaction\n{", header)
+        self.assertIn("    /** 사거리(cm) */\n    inline constexpr float Range = 300.0f;\n", header)
+        self.assertIn("    inline constexpr int32 MaxTargets = 2;\n", header)
+        self.assertIn("    inline constexpr bool Enabled = true;\n", header)
+        self.assertNotIn("Secret", header)
+
+    def test_setting_without_client_fields_has_no_client_header(self):
+        self.add_setting("Progress", setting_sheet(["StartGold", "int64", "server", 1, None]))
+        self.add_table("Thing", sheet(*THING, [1, "검", "GEAR", "", 100, 2.0, True, 9, None]))
+
+        self.assertNotIn("P1ProgressConfig.h", self.client_source())
 
     def test_version_header_carries_the_data_version(self):
         self.add_table("Thing", sheet(*THING, [1, "검", "GEAR", "", 100, 2.0, True, 9, None]))

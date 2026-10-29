@@ -78,6 +78,16 @@ workbook = "Portal.xlsx"
 modules = ["game"]
 nest = "Portals"
 
+# 상점은 판매 목록이다. 가격은 아이템 표의 것이다.
+[tables.Shop]
+workbook = "Shop.xlsx"
+modules = ["game"]
+
+# NPC는 서버 엔티티다. 배치는 레벨의 NPC 마커에서 추출하고, 이 표는 NPC가 여는 상점을 정한다.
+[tables.Npc]
+workbook = "Npc.xlsx"
+modules = ["game"]
+
 # 값이 하나뿐인 설정. 설정 워크북의 시트 하나가 구조체 하나다.
 # 새 캐릭터가 첫 게임 입장에서 갖는 진행. 시작 맵은 맵 표를 참조한다.
 [settings.Progress]
@@ -90,6 +100,12 @@ modules = ["game"]
 workbook = "Config.xlsx"
 sheet = "Lobby"
 modules = ["lobby"]
+
+# NPC 상호작용의 사거리. 클라이언트는 조준 판정에, 서버는 거래의 거리 검사에 쓴다.
+[settings.Interaction]
+workbook = "Config.xlsx"
+sheet = "Interaction"
+modules = ["game"]
 
 # .proto에 없는 기획 데이터 전용 열거형. 값 번호는 DB나 패킷에 실릴 수 있으므로 바꾸지 않는다.
 [enums.CurrencyType]

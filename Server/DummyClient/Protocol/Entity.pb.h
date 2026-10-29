@@ -62,6 +62,9 @@ extern EntityMoveDefaultTypeInternal _EntityMove_default_instance_;
 class MonsterInfo;
 struct MonsterInfoDefaultTypeInternal;
 extern MonsterInfoDefaultTypeInternal _MonsterInfo_default_instance_;
+class NpcInfo;
+struct NpcInfoDefaultTypeInternal;
+extern NpcInfoDefaultTypeInternal _NpcInfo_default_instance_;
 class PlayerInfo;
 struct PlayerInfoDefaultTypeInternal;
 extern PlayerInfoDefaultTypeInternal _PlayerInfo_default_instance_;
@@ -92,6 +95,7 @@ template<> ::Protocol::C_MOVE* Arena::CreateMaybeMessage<::Protocol::C_MOVE>(Are
 template<> ::Protocol::EntityInfo* Arena::CreateMaybeMessage<::Protocol::EntityInfo>(Arena*);
 template<> ::Protocol::EntityMove* Arena::CreateMaybeMessage<::Protocol::EntityMove>(Arena*);
 template<> ::Protocol::MonsterInfo* Arena::CreateMaybeMessage<::Protocol::MonsterInfo>(Arena*);
+template<> ::Protocol::NpcInfo* Arena::CreateMaybeMessage<::Protocol::NpcInfo>(Arena*);
 template<> ::Protocol::PlayerInfo* Arena::CreateMaybeMessage<::Protocol::PlayerInfo>(Arena*);
 template<> ::Protocol::PlayerInfo_GearAppearanceEntry_DoNotUse* Arena::CreateMaybeMessage<::Protocol::PlayerInfo_GearAppearanceEntry_DoNotUse>(Arena*);
 template<> ::Protocol::PosInfo* Arena::CreateMaybeMessage<::Protocol::PosInfo>(Arena*);
@@ -874,6 +878,154 @@ class MonsterInfo final :
 };
 // -------------------------------------------------------------------
 
+class NpcInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.NpcInfo) */ {
+ public:
+  inline NpcInfo() : NpcInfo(nullptr) {}
+  ~NpcInfo() override;
+  explicit PROTOBUF_CONSTEXPR NpcInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  NpcInfo(const NpcInfo& from);
+  NpcInfo(NpcInfo&& from) noexcept
+    : NpcInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline NpcInfo& operator=(const NpcInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline NpcInfo& operator=(NpcInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const NpcInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const NpcInfo* internal_default_instance() {
+    return reinterpret_cast<const NpcInfo*>(
+               &_NpcInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    5;
+
+  friend void swap(NpcInfo& a, NpcInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(NpcInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(NpcInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  NpcInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<NpcInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const NpcInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const NpcInfo& from) {
+    NpcInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(NpcInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.NpcInfo";
+  }
+  protected:
+  explicit NpcInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNpcIdFieldNumber = 1,
+  };
+  // int32 npc_id = 1;
+  void clear_npc_id();
+  int32_t npc_id() const;
+  void set_npc_id(int32_t value);
+  private:
+  int32_t _internal_npc_id() const;
+  void _internal_set_npc_id(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.NpcInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t npc_id_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Entity_2eproto;
+};
+// -------------------------------------------------------------------
+
 class EntityInfo final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.EntityInfo) */ {
  public:
@@ -920,6 +1072,7 @@ class EntityInfo final :
   enum DetailsCase {
     kPlayerInfo = 3,
     kMonsterInfo = 4,
+    kNpcInfo = 5,
     DETAILS_NOT_SET = 0,
   };
 
@@ -928,7 +1081,7 @@ class EntityInfo final :
                &_EntityInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(EntityInfo& a, EntityInfo& b) {
     a.Swap(&b);
@@ -1005,6 +1158,7 @@ class EntityInfo final :
     kEntityIdFieldNumber = 1,
     kPlayerInfoFieldNumber = 3,
     kMonsterInfoFieldNumber = 4,
+    kNpcInfoFieldNumber = 5,
   };
   // .Protocol.PosInfo pos_info = 2;
   bool has_pos_info() const;
@@ -1069,6 +1223,24 @@ class EntityInfo final :
       ::Protocol::MonsterInfo* monster_info);
   ::Protocol::MonsterInfo* unsafe_arena_release_monster_info();
 
+  // .Protocol.NpcInfo npc_info = 5;
+  bool has_npc_info() const;
+  private:
+  bool _internal_has_npc_info() const;
+  public:
+  void clear_npc_info();
+  const ::Protocol::NpcInfo& npc_info() const;
+  PROTOBUF_NODISCARD ::Protocol::NpcInfo* release_npc_info();
+  ::Protocol::NpcInfo* mutable_npc_info();
+  void set_allocated_npc_info(::Protocol::NpcInfo* npc_info);
+  private:
+  const ::Protocol::NpcInfo& _internal_npc_info() const;
+  ::Protocol::NpcInfo* _internal_mutable_npc_info();
+  public:
+  void unsafe_arena_set_allocated_npc_info(
+      ::Protocol::NpcInfo* npc_info);
+  ::Protocol::NpcInfo* unsafe_arena_release_npc_info();
+
   void clear_details();
   DetailsCase details_case() const;
   // @@protoc_insertion_point(class_scope:Protocol.EntityInfo)
@@ -1076,6 +1248,7 @@ class EntityInfo final :
   class _Internal;
   void set_has_player_info();
   void set_has_monster_info();
+  void set_has_npc_info();
 
   inline bool has_details() const;
   inline void clear_has_details();
@@ -1091,6 +1264,7 @@ class EntityInfo final :
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
       ::Protocol::PlayerInfo* player_info_;
       ::Protocol::MonsterInfo* monster_info_;
+      ::Protocol::NpcInfo* npc_info_;
     } details_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
@@ -1149,7 +1323,7 @@ class EntityMove final :
                &_EntityMove_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(EntityMove& a, EntityMove& b) {
     a.Swap(&b);
@@ -1317,7 +1491,7 @@ class S_SPAWN final :
                &_S_SPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(S_SPAWN& a, S_SPAWN& b) {
     a.Swap(&b);
@@ -1474,7 +1648,7 @@ class S_DESPAWN final :
                &_S_DESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(S_DESPAWN& a, S_DESPAWN& b) {
     a.Swap(&b);
@@ -1636,7 +1810,7 @@ class C_MOVE final :
                &_C_MOVE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(C_MOVE& a, C_MOVE& b) {
     a.Swap(&b);
@@ -1793,7 +1967,7 @@ class S_MOVE final :
                &_S_MOVE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(S_MOVE& a, S_MOVE& b) {
     a.Swap(&b);
@@ -1950,7 +2124,7 @@ class S_GEAR_APPEARANCE final :
                &_S_GEAR_APPEARANCE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(S_GEAR_APPEARANCE& a, S_GEAR_APPEARANCE& b) {
     a.Swap(&b);
@@ -2516,6 +2690,30 @@ inline void MonsterInfo::set_hp(int64_t value) {
 
 // -------------------------------------------------------------------
 
+// NpcInfo
+
+// int32 npc_id = 1;
+inline void NpcInfo::clear_npc_id() {
+  _impl_.npc_id_ = 0;
+}
+inline int32_t NpcInfo::_internal_npc_id() const {
+  return _impl_.npc_id_;
+}
+inline int32_t NpcInfo::npc_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.NpcInfo.npc_id)
+  return _internal_npc_id();
+}
+inline void NpcInfo::_internal_set_npc_id(int32_t value) {
+  
+  _impl_.npc_id_ = value;
+}
+inline void NpcInfo::set_npc_id(int32_t value) {
+  _internal_set_npc_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.NpcInfo.npc_id)
+}
+
+// -------------------------------------------------------------------
+
 // EntityInfo
 
 // int64 entity_id = 1;
@@ -2773,6 +2971,80 @@ inline ::Protocol::MonsterInfo* EntityInfo::_internal_mutable_monster_info() {
 inline ::Protocol::MonsterInfo* EntityInfo::mutable_monster_info() {
   ::Protocol::MonsterInfo* _msg = _internal_mutable_monster_info();
   // @@protoc_insertion_point(field_mutable:Protocol.EntityInfo.monster_info)
+  return _msg;
+}
+
+// .Protocol.NpcInfo npc_info = 5;
+inline bool EntityInfo::_internal_has_npc_info() const {
+  return details_case() == kNpcInfo;
+}
+inline bool EntityInfo::has_npc_info() const {
+  return _internal_has_npc_info();
+}
+inline void EntityInfo::set_has_npc_info() {
+  _impl_._oneof_case_[0] = kNpcInfo;
+}
+inline void EntityInfo::clear_npc_info() {
+  if (_internal_has_npc_info()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.details_.npc_info_;
+    }
+    clear_has_details();
+  }
+}
+inline ::Protocol::NpcInfo* EntityInfo::release_npc_info() {
+  // @@protoc_insertion_point(field_release:Protocol.EntityInfo.npc_info)
+  if (_internal_has_npc_info()) {
+    clear_has_details();
+    ::Protocol::NpcInfo* temp = _impl_.details_.npc_info_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.details_.npc_info_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::Protocol::NpcInfo& EntityInfo::_internal_npc_info() const {
+  return _internal_has_npc_info()
+      ? *_impl_.details_.npc_info_
+      : reinterpret_cast< ::Protocol::NpcInfo&>(::Protocol::_NpcInfo_default_instance_);
+}
+inline const ::Protocol::NpcInfo& EntityInfo::npc_info() const {
+  // @@protoc_insertion_point(field_get:Protocol.EntityInfo.npc_info)
+  return _internal_npc_info();
+}
+inline ::Protocol::NpcInfo* EntityInfo::unsafe_arena_release_npc_info() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:Protocol.EntityInfo.npc_info)
+  if (_internal_has_npc_info()) {
+    clear_has_details();
+    ::Protocol::NpcInfo* temp = _impl_.details_.npc_info_;
+    _impl_.details_.npc_info_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void EntityInfo::unsafe_arena_set_allocated_npc_info(::Protocol::NpcInfo* npc_info) {
+  clear_details();
+  if (npc_info) {
+    set_has_npc_info();
+    _impl_.details_.npc_info_ = npc_info;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Protocol.EntityInfo.npc_info)
+}
+inline ::Protocol::NpcInfo* EntityInfo::_internal_mutable_npc_info() {
+  if (!_internal_has_npc_info()) {
+    clear_details();
+    set_has_npc_info();
+    _impl_.details_.npc_info_ = CreateMaybeMessage< ::Protocol::NpcInfo >(GetArenaForAllocation());
+  }
+  return _impl_.details_.npc_info_;
+}
+inline ::Protocol::NpcInfo* EntityInfo::mutable_npc_info() {
+  ::Protocol::NpcInfo* _msg = _internal_mutable_npc_info();
+  // @@protoc_insertion_point(field_mutable:Protocol.EntityInfo.npc_info)
   return _msg;
 }
 
@@ -3199,6 +3471,8 @@ inline void S_GEAR_APPEARANCE::set_template_id(int32_t value) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

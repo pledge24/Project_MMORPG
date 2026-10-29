@@ -47,12 +47,21 @@ struct GamedataTables
     /** 새 캐릭터가 첫 게임 입장에서 갖는 값. 시작 맵은 맵 표에 있고 시작 골드는 0 이상이다(DataBuilder가 검사한다). */
     DesignData::ProgressConfig initialProgress;
 
+    /** 상점의 판매 목록. 목록은 비어 있지 않고 아이템 표의 아이템이다(DataBuilder가 검사한다). */
+    DesignData::ShopTable shops;
+    /** NPC가 여는 상점. 상점은 상점 표에 있다(DataBuilder가 검사한다). */
+    DesignData::NpcTable npcs;
+    /** NPC 상호작용의 사거리. 0보다 크다(DataBuilder가 검사한다). */
+    DesignData::InteractionConfig interaction;
+
     // 배치 데이터. 맵, 지역, 포털마다 하나씩 있고 마을에는 리스폰 지점이 있다(기동할 때 대조하고, 위치는 추출이 검사한다).
     map<int32, MapPlacement> mapPlacements;
     map<int32, AreaPlacement> areaPlacements;
     map<int32, PortalPlacement> portalPlacements;
     /** 지역 번호 → 그 지역의 리스폰 지점. */
     map<int32, RespawnPointPlacement> respawnPoints;
+    /** NPC 번호 → 그 NPC의 마커. NPC 표의 NPC마다 하나다. */
+    map<int32, NpcPlacement> npcPlacements;
 
     // 크리처 판정 데이터. 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 하나씩 있다(기동할 때 대조하고, 타이밍은 추출이 검사한다).
     map<int32, CreatureCombat> monsterCombats;

@@ -48,3 +48,13 @@ struct PortalPlacement
     vector3D dest;
     float destYaw = 0.f;
 };
+
+/** NPC 마커. pos의 z는 바닥의 높이다. */
+struct NpcPlacement
+{
+    int32 npcId = 0;
+    /** 마커가 놓인 레벨의 맵. */
+    int32 mapId = 0;
+    vector3D pos;
+    float yaw = 0.f;
+};

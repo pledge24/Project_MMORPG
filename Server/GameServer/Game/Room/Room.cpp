@@ -2,6 +2,7 @@
 #include "Game/Room/Room.h"
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
+#include "Game/Entities/Npc.h"
 #include "Game/Combat/Combat.h"
 #include "Game/Room/MoveValidation.h"
 #include "Game/Navigation/NavMeshes.h"
@@ -29,6 +30,18 @@ namespace
         }
 
         return player->MakeSaveData();
+    }
+
+    // 서 있는 엔티티의 위치. 움직이지 않으므로 이동 방향이 없다.
+    Protocol::PosInfo MakeStandingPos(const vector3D& pos, float yaw)
+    {
+        Protocol::PosInfo posInfo;
+        posInfo.mutable_pos()->set_x(pos.x);
+        posInfo.mutable_pos()->set_y(pos.y);
+        posInfo.mutable_pos()->set_z(pos.z);
+        posInfo.set_yaw(yaw);
+        posInfo.set_state(Protocol::MOVE_STATE_IDLE);
+        return posInfo;
     }
 
     SendBufferRef MakeDespawnPacket(int64 entityId)
@@ -90,6 +103,10 @@ void Room::Init(int32 roomId, int32 channel, const MapPlacement& map)
 
 bool Room::Start()
 {
+    // NPC 스폰. 배치 데이터대로 두고, 시야는 다른 엔티티처럼 셀을 따른다.
+    if (SpawnNpcs() == false)
+        return false;
+
     // 몬스터 스폰. 지역마다 그 지역의 몬스터를 그 지역 안에 둔다. 마을처럼 몬스터 목록이 빈 지역은 건너뛴다.
     for (const RoomArea& area : _areas)
     {
@@ -117,6 +134,27 @@ bool Room::Start()
 
     _lastTickTime = GetTickCount64();
     DoTimer(ROOM_TICK_INTERVAL_MS, &Room::RunScheduledTick);
+
+    return true;
+}
+
+bool Room::SpawnNpcs()
+{
+    for (const auto& [npcId, placement] : Gamedata::GetNpcPlacements())
+    {
+        if (placement.mapId != _map.mapId)
+            continue;
+
+        NpcSpawnParams spawnParams;
+        spawnParams.npcId = npcId;
+        spawnParams.spawnPos = MakeStandingPos(placement.pos, placement.yaw);
+
+        if (SpawnEntity<Npc>(spawnParams) == nullptr)
+        {
+            GLogger->Error("룸 {}: NPC {}를 스폰하지 못했다", _roomId, npcId);
+            return false;
+        }
+    }
 
     return true;
 }
@@ -173,7 +211,7 @@ void Room::BroadcastMonsterMoves()
         Protocol::S_MOVE movePkt;
         for (const EntityRef& nearby : FindNearbyEntities(playerId))
         {
-            if (nearby->IsPlayer())
+            if (dynamic_pointer_cast<Monster>(nearby) == nullptr)
                 continue;
 
             Protocol::EntityMove* move = movePkt.add_moves();
@@ -815,6 +853,11 @@ bool Room::PlaceOnFloor(Protocol::PosInfo& posInfo, float halfHeight)
 float Room::PlayerHalfHeight() const
 {
     return _navQuery != nullptr ? _navQuery->GetAgentHalfHeight() : 0.f;
+}
+
+NpcRef Room::FindNpc(int64 entityId)
+{
+    return FindEntityAs<Npc>(entityId);
 }
 
 bool Room::AddEntity(EntityRef entity)

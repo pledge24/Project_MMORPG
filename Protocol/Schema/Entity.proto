@@ -43,6 +43,12 @@ message MonsterInfo
     int64 hp = 2;
 }
 
+// 상호작용하는 NPC. 움직이지 않고 싸우지 않는다
+message NpcInfo
+{
+    int32 npc_id = 1;                       // NPC 표의 번호
+}
+
 // 엔티티의 종류는 details에 실린 정보의 종류다
 message EntityInfo
 {
@@ -53,6 +59,7 @@ message EntityInfo
     {
         PlayerInfo player_info = 3;
         MonsterInfo monster_info = 4;
+        NpcInfo npc_info = 5;
     }
 }
 

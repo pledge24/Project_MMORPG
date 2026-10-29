@@ -20,7 +20,10 @@ namespace DesignData
     constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
     constexpr string_view MAP_FILE = "Map.json";
     constexpr string_view AREA_FILE = "Area.json";
+    constexpr string_view SHOP_FILE = "Shop.json";
+    constexpr string_view NPC_FILE = "Npc.json";
     constexpr string_view PROGRESS_FILE = "Progress.json";
+    constexpr string_view INTERACTION_FILE = "Interaction.json";
 
     //~ 열거형
 
@@ -723,6 +726,58 @@ namespace DesignData
         });
     }
 
+    /** Shop 표(Shop.xlsx)의 한 행. */
+    struct ShopRow
+    {
+        /** 상점 번호. NPC 표가 가리킨다 */
+        int32 Id = 0;
+        /** 파는 아이템. ';'로 구분하고 상점 창의 진열 순서다. 가격은 아이템 표의 BuyPrice다 */
+        vector<int32> Items;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using ShopTable = map<int32, ShopRow>;
+
+    /** Shop.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseShop(const Json& document, OUT ShopTable& table)
+    {
+        return Detail::ParseTable(SHOP_FILE, document, OUT table, [](const Json& object)
+        {
+            ShopRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.Items = Detail::Read<vector<int32>>(object, "Items");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Npc 표(Npc.xlsx)의 한 행. */
+    struct NpcRow
+    {
+        /** NPC 번호. 레벨의 NPC 마커가 이 번호를 가리킨다 */
+        int32 Id = 0;
+        /** 조준해 클릭하면 여는 상점 */
+        int32 ShopId = 0;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using NpcTable = map<int32, NpcRow>;
+
+    /** Npc.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseNpc(const Json& document, OUT NpcTable& table)
+    {
+        return Detail::ParseTable(NPC_FILE, document, OUT table, [](const Json& object)
+        {
+            NpcRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.ShopId = Detail::Read<int32>(object, "ShopId");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
     //~ 설정
 
     /** Progress 설정(Config.xlsx의 Progress 시트). */
@@ -753,6 +808,22 @@ namespace DesignData
             config.StartZ = Detail::Read<float>(object, "StartZ");
             config.StartYaw = Detail::Read<float>(object, "StartYaw");
             config.StartGold = Detail::Read<int64>(object, "StartGold");
+        });
+    }
+
+    /** Interaction 설정(Config.xlsx의 Interaction 시트). */
+    struct InteractionConfig
+    {
+        /** NPC를 조준해 상호작용할 수 있는 평면 거리(cm). 서버는 여기에 여유를 더해 판정한다. 0보다 크다 */
+        float InteractionRange = 0.f;
+    };
+
+    /** Interaction.json을 읽는다. 실패하면 사유를 돌려준다. */
+    inline optional<string> ParseInteraction(const Json& document, OUT InteractionConfig& config)
+    {
+        return Detail::ParseObject(INTERACTION_FILE, document, [&](const Json& object)
+        {
+            config.InteractionRange = Detail::Read<float>(object, "InteractionRange");
         });
     }
 }

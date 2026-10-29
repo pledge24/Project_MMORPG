@@ -17,6 +17,10 @@ struct GamedataDocuments
     Json classLevelStats;
     /** 설정 워크북의 초기 진행 시트(Progress.json). */
     Json initialProgress;
+    Json shops;
+    Json npcs;
+    /** 설정 워크북의 상호작용 시트(Interaction.json). */
+    Json interaction;
     /** 파일 이름 → 추출한 맵 하나의 배치 데이터. 오류 메시지가 파일 이름을 쓴다. */
     map<string, Json> placements;
     /** 추출한 크리처 판정 데이터(CreatureCombat.json). */
