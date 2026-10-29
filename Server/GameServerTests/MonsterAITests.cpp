@@ -7,6 +7,7 @@
 #include "Game/AI/MonsterAIComponent.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "TestCreatureCombat.h"
 
 /*--------------------------------------------------------------
     몬스터 AI 테스트
@@ -16,7 +17,7 @@
 
     픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다(몬스터 자동 스폰과 틱 예약을 피한다).
     몬스터는 Room::SpawnEntity로, 플레이어는 세션 없이 불러온 진행으로 만들어 EnterPlayer로 넣는다.
-    몬스터 템플릿과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
+    몬스터 템플릿과 그 크리처 판정 데이터, 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
@@ -26,6 +27,8 @@ namespace
     constexpr int32 PLAYER_MAX_HP = 100;
     constexpr float ATTACK_RANGE = 150.f;
     constexpr float DETECTION_RANGE = 900.f;
+    // 몬스터 공격 몽타주의 타격 시점. 상태 전환 판정 주기(0.2초)와 다르게 둔다. 이진수로 정확한 값이라 남은 시간이 오차로 0을 넘지 않는다.
+    constexpr float HIT_TIME = 0.375f;
 
     // 상태 전환 판정 주기(0.2초)를 한 번에 채우는 시간.
     constexpr float STATE_UPDATE_TIME = 0.2f;
@@ -66,6 +69,7 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monsterRow;
+        TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID, HIT_TIME);
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
@@ -135,7 +139,7 @@ TEST_F(MonsterAITest, LosesTargetOnFirstTickAfterTargetLeavesRoom)
     EXPECT_EQ(monster->GetAI().GetState(), MonsterState::Idle);
 }
 
-// 일반 공격은 공격을 알린 뒤 0.2초가 지나서 판정한다.
+// 일반 공격은 공격을 알린 뒤 공격 몽타주의 타격 시점이 지나서 판정한다.
 TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
 {
     EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
@@ -146,12 +150,28 @@ TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
     room->Tick(2.5f);
     ASSERT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
 
-    room->Tick(STATE_UPDATE_TIME);
+    room->Tick(HIT_TIME);
     EXPECT_LT(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
 }
 
+// 타격 지연이 상수(0.2초)였다. 애니메이션이 맞는 순간보다 먼저나 나중에 피격되었다.
+TEST_F(MonsterAITest, NormalAttackHitsAtExtractedHitTime)
+{
+    EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
+    room->Tick(STATE_UPDATE_TIME);
+    ASSERT_EQ(monster->GetAI().GetState(), MonsterState::Attacking);
+    room->Tick(2.5f);
+
+    constexpr float LAST_TICK = 0.125f;
+    room->Tick(HIT_TIME - LAST_TICK);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "타격 시점 전에는 맞지 않는다";
+
+    room->Tick(LAST_TICK);
+    EXPECT_LT(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "타격 시점에 맞는다";
+}
+
 // 피격 판정이 공격자가 룸에 남았는지만 보고 대상과의 거리를 다시 보지 않았다.
-// 공격을 알린 뒤 0.2초 안에 사거리를 빠져나간 플레이어도 맞았다.
+// 공격을 알린 뒤 타격 시점 전에 사거리를 빠져나간 플레이어도 맞았다.
 TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
 {
     // 한 번의 이동이 서버의 이동 판정(MoveValidation)에 걸리지 않도록 사거리 경계 가까이에서 시작한다.
@@ -163,7 +183,7 @@ TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
     Protocol::C_MOVE movePkt;
     movePkt.mutable_pos_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
     room->C_HandleMove(movePkt, player);
-    room->Tick(STATE_UPDATE_TIME);
+    room->Tick(HIT_TIME);
 
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "피한 공격에 맞으면 클라이언트가 보여 주는 거리와 판정이 어긋난다";
 }

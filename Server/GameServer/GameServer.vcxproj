@@ -236,6 +236,7 @@
     <ClInclude Include="Game\Data\Gamedata.h" />
     <ClInclude Include="Game\Data\GamedataParser.h" />
     <ClInclude Include="Game\Data\Templates.h" />
+    <ClInclude Include="Game\Data\CreatureCombat.h" />
     <ClInclude Include="Game\Data\Placement.h" />
     <ClInclude Include="Game\Data\Generated\DesignData.h" />
     <ClInclude Include="Game\Room\Room.h" />

@@ -2,6 +2,7 @@
 #include "Protocol/Common.pb.h"
 #include "Protocol/Item.pb.h"
 #include "Game/Data/Generated/DesignData.h"
+#include "Game/Data/CreatureCombat.h"
 #include "Game/Data/Placement.h"
 
 /*--------------------------------------------------------------
@@ -52,4 +53,10 @@ struct GamedataTables
     map<int32, PortalPlacement> portalPlacements;
     /** 지역 번호 → 그 지역의 리스폰 지점. */
     map<int32, RespawnPointPlacement> respawnPoints;
+
+    // 크리처 판정 데이터. 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 하나씩 있다(기동할 때 대조하고, 타이밍은 추출이 검사한다).
+    map<int32, CreatureCombat> monsterCombats;
+    map<Protocol::CharacterClass, CreatureCombat> classCombats;
+    /** 루트 모션 곡선의 초당 표본 수. */
+    int32 rootMotionSampleRate = 0;
 };

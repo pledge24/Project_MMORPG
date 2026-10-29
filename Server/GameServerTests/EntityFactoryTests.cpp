@@ -6,6 +6,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/Monster.h"
 #include "PlayerTestAccess.h"
+#include "TestCreatureCombat.h"
 
 /*--------------------------------------------------------------
     엔티티 생성 테스트
@@ -43,6 +44,7 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monster;
+        TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID);
         Gamedata::Install(std::move(tables));
     }
 

@@ -28,6 +28,14 @@ bool Monster::Init(const SpawnParams& params)
         return false;
     }
 
+    // 기동할 때 몬스터 표의 몬스터마다 판정 데이터가 있는지 대조했다. 없으면 표를 바꿔 끼운 테스트다.
+    const CreatureCombat* combat = Gamedata::FindMonsterCombat(templateId);
+    if (combat == nullptr)
+    {
+        GLogger->Warning("크리처 판정 데이터가 없는 템플릿 {}으로 몬스터를 만들 수 없다", templateId);
+        return false;
+    }
+
     _template = *monsterRow;
 
     CacheMonsterData();
@@ -37,7 +45,7 @@ bool Monster::Init(const SpawnParams& params)
     _monsterInfo->set_template_id(templateId);
 
     // AI는 스폰 위치를 배회의 기준점으로 읽으므로 위치를 쓴 뒤에 만든다.
-    _ai = make_shared<MonsterAIComponent>(static_pointer_cast<Monster>(shared_from_this()), _template);
+    _ai = make_shared<MonsterAIComponent>(static_pointer_cast<Monster>(shared_from_this()), _template, *combat);
 
     return true;
 }

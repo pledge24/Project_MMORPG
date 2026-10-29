@@ -79,7 +79,7 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
-├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Tests/ 그 테스트
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
@@ -531,7 +531,7 @@ Server/
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   │       ├── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
-│   │       └── Extracted/  배치 추출 커맨드렛의 산출물. 맵마다 배치 데이터 JSON
+│   │       └── Extracted/  추출 커맨드렛의 산출물. 맵마다 배치 데이터 JSON과 크리처 판정 데이터 JSON 하나
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물

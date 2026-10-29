@@ -19,6 +19,8 @@ struct GamedataDocuments
     Json initialProgress;
     /** 파일 이름 → 추출한 맵 하나의 배치 데이터. 오류 메시지가 파일 이름을 쓴다. */
     map<string, Json> placements;
+    /** 추출한 크리처 판정 데이터(CreatureCombat.json). */
+    Json creatureCombat;
 };
 
 /**

@@ -460,6 +460,9 @@
     <ClInclude Include="Game\Data\Templates.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Data\CreatureCombat.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Data\Placement.h">
       <Filter>Game\Data</Filter>
     </ClInclude>

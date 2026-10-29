@@ -155,6 +155,29 @@ namespace
         };
     }
 
+    /** 몬스터 하나와 전사의 크리처 판정 데이터. 전사의 공격만 루트 모션이 있다. */
+    Json MakeCreatureCombat()
+    {
+        return Json{
+            {"RootMotionSampleRate", 30},
+            {"Monsters", Json::array({
+                Json{{"Id", MONSTER_ID}, {"CapsuleRadius", 34}, {"CapsuleHalfHeight", 65}, {"Attacks", Json::array({
+                    Json{{"Montage", "/Game/AM_Monster.AM_Monster"}, {"Sections", Json::array({
+                        Json{{"Name", "Default"}, {"Length", 0.8333}, {"HitTimes", Json::array({0.21})}, {"RootMotion", Json::array()}},
+                    })}},
+                })}},
+            })},
+            {"Classes", Json::array({
+                Json{{"Id", 1}, {"CapsuleRadius", 42}, {"CapsuleHalfHeight", 96}, {"Attacks", Json::array({
+                    Json{{"Montage", "/Game/AM_Warrior.AM_Warrior"}, {"Sections", Json::array({
+                        Json{{"Name", "Default"}, {"Length", 0.05}, {"HitTimes", Json::array({0.04})},
+                            {"RootMotion", Json::array({Json::array({0, 0, 0}), Json::array({10, 0, 0}), Json::array({14.5, -1, 0})})}},
+                    })}},
+                })}},
+            })},
+        };
+    }
+
     GamedataDocuments MakeValidDocuments()
     {
         GamedataDocuments documents;
@@ -170,6 +193,7 @@ namespace
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
         documents.initialProgress = MakeInitialProgress();
         documents.placements[PLACEMENT_FILE] = MakePlacement();
+        documents.creatureCombat = MakeCreatureCombat();
         return documents;
     }
 
@@ -383,6 +407,93 @@ TEST(GamedataParserTest, RespawnPointInAreaWithoutRespawnIsRejected)
     ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "지역 20", "리스폰 지점이 없는 지역"});
 }
 
+TEST(GamedataParserTest, CreatureCombatBecomesHitTimesAndRootMotion)
+{
+    GamedataTables tables;
+    const optional<string> error = GamedataParser::Parse(MakeValidDocuments(), OUT tables);
+    ASSERT_FALSE(error.has_value()) << error.value_or("");
+
+    EXPECT_EQ(tables.rootMotionSampleRate, 30);
+    ASSERT_TRUE(tables.monsterCombats.contains(MONSTER_ID));
+    const CreatureCombat& monster = tables.monsterCombats.at(MONSTER_ID);
+    EXPECT_FLOAT_EQ(monster.capsuleRadius, 34.f);
+    EXPECT_FLOAT_EQ(monster.capsuleHalfHeight, 65.f);
+    ASSERT_EQ(monster.attacks.size(), 1u);
+    ASSERT_EQ(monster.attacks[0].sections.size(), 1u);
+    const AttackSectionCombat& monsterSection = monster.attacks[0].sections[0];
+    EXPECT_EQ(monsterSection.name, "Default");
+    EXPECT_FLOAT_EQ(monsterSection.length, 0.8333f);
+    EXPECT_EQ(monsterSection.hitTimes, vector<float>({0.21f}));
+    EXPECT_TRUE(monsterSection.rootMotion.empty());
+
+    ASSERT_TRUE(tables.classCombats.contains(Protocol::CHARACTER_CLASS_WARRIOR));
+    const AttackSectionCombat& warriorSection = tables.classCombats.at(Protocol::CHARACTER_CLASS_WARRIOR).attacks.at(0).sections.at(0);
+    ASSERT_EQ(warriorSection.rootMotion.size(), 3u);
+    EXPECT_FLOAT_EQ(warriorSection.rootMotion[2].x, 14.5f);
+    EXPECT_FLOAT_EQ(warriorSection.rootMotion[2].y, -1.f);
+}
+
+TEST(GamedataParserTest, MissingCreatureCombatFieldNamesFileAndField)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Monsters"][0]["Attacks"][0]["Sections"][0].erase("HitTimes");
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "'Monsters' 1번째 원소", "HitTimes"});
+}
+
+// 짝이 없는 몬스터는 피격을 언제 판정할지 모른다. 그런 몬스터를 만들기 전에 기동에서 막는다.
+TEST(GamedataParserTest, MonsterWithoutCreatureCombatIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Monsters"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {"몬스터 5000", "크리처 판정 데이터가 없다"});
+}
+
+TEST(GamedataParserTest, CreatureCombatOfUnknownMonsterIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    Json other = documents.creatureCombat["Monsters"][0];
+    other["Id"] = 5999;
+    documents.creatureCombat["Monsters"].push_back(other);
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "몬스터 5999", "몬스터 표에 없다"});
+}
+
+TEST(GamedataParserTest, ClassWithoutCreatureCombatIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Classes"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {"직업 1", "크리처 판정 데이터가 없다"});
+}
+
+TEST(GamedataParserTest, CreatureCombatOfClassNotInClassTableIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    Json mage = documents.creatureCombat["Classes"][0];
+    mage["Id"] = static_cast<int32>(Protocol::CHARACTER_CLASS_MAGE);
+    documents.creatureCombat["Classes"].push_back(mage);
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "직업 2", "직업별 능력치 표에 없다"});
+}
+
+TEST(GamedataParserTest, AttackSectionWithoutHitTimeIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Monsters"][0]["Attacks"][0]["Sections"][0]["HitTimes"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "몬스터 5000", "타격 시점이 없다"});
+}
+
+TEST(GamedataParserTest, CreatureWithoutAttackIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Classes"][0]["Attacks"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "직업 1", "공격 몽타주가 없다"});
+}
+
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
 {
     GamedataDocuments documents = MakeValidDocuments();
@@ -588,6 +699,7 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
         if (fileName.starts_with("Placement_"))
             documents.placements[fileName] = ReadJsonFile(entry.path());
     }
+    documents.creatureCombat = ReadJsonFile(extractedDir / CREATURE_COMBAT_FILE);
 
     GamedataTables tables;
     const optional<string> error = GamedataParser::Parse(documents, OUT tables);
@@ -679,4 +791,21 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
         EXPECT_NEAR(portal.dest.z, 0.f, TOLERANCE) << "포털 " << expected.id;
         EXPECT_NEAR(portal.destYaw, expected.destYaw, TOLERANCE) << "포털 " << expected.id;
     }
+
+    // 몬스터의 타격 시점을 몽타주의 노티파이에서 추출했다. 근접 미니언의 값은 옛 상수(0.2초)와 비슷하다.
+    EXPECT_EQ(tables.monsterCombats.size(), tables.monsters.size());
+    ASSERT_TRUE(tables.monsterCombats.contains(5000));
+    const AttackSectionCombat& meleeMinion = tables.monsterCombats.at(5000).attacks.at(0).sections.at(0);
+    EXPECT_NEAR(meleeMinion.hitTimes.at(0), 0.21f, TOLERANCE);
+    EXPECT_TRUE(meleeMinion.rootMotion.empty()) << "서버는 몬스터를 루트 모션으로 옮기지 않는다";
+
+    // 플레이어 캡슐은 AP1Player의 InitCapsuleSize와 같다. 전사의 공격은 루트 모션으로 앞(+X)으로 나간다.
+    ASSERT_TRUE(tables.classCombats.contains(Protocol::CHARACTER_CLASS_WARRIOR));
+    const CreatureCombat& warrior = tables.classCombats.at(Protocol::CHARACTER_CLASS_WARRIOR);
+    EXPECT_NEAR(warrior.capsuleRadius, 42.f, TOLERANCE);
+    EXPECT_NEAR(warrior.capsuleHalfHeight, 96.f, TOLERANCE);
+    ASSERT_EQ(warrior.attacks.size(), 4u) << "콤보 4단";
+    const vector<vector3D>& firstRootMotion = warrior.attacks[0].sections.at(0).rootMotion;
+    ASSERT_FALSE(firstRootMotion.empty());
+    EXPECT_GT(firstRootMotion.back().x, 100.f);
 }
