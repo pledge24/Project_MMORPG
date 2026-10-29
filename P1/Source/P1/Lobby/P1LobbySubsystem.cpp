@@ -57,6 +57,7 @@ void UP1LobbySubsystem::Reset()
 {
     Characters.Reset();
     CharacterSlotCount = 0;
+    bHasCharacterList = false;
     CreatableClasses.Reset();
 }
 
@@ -128,6 +129,7 @@ void UP1LobbySubsystem::HandleCharacterList(const Protocol::S_CHARACTER_LIST& Ch
         Characters.Add(ToLobbyCharacter(Character));
 
     CharacterSlotCount = CharacterListPkt.character_slot_count();
+    bHasCharacterList = true;
 
     // 클라이언트보다 새 서버가 이 클라이언트에 없는 직업을 열었으면, 고를 버튼을 그릴 수 없으므로 생성 화면에서 뺀다.
     CreatableClasses.Reset();

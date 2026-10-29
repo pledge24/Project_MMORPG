@@ -84,8 +84,10 @@ void UP1CharacterSelectWidget::ApplyCharacterSlotCount()
     const UP1LobbySubsystem* Lobby = GetLobby();
     const int32 CharacterSlotCount = Lobby ? Lobby->GetCharacterSlotCount() : 0;
 
-    // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 0 이하는 이 필드를 모르는 서버가 보낸 기본값이다.
-    if (CharacterSlots.Num() < CharacterSlotCount || CharacterSlotCount <= 0)
+    // 위젯이 모자라면 넘친 캐릭터를 보여 줄 자리가 없다. 받은 목록의 0 이하는 이 필드를 모르는 서버가 보낸 기본값이다.
+    // 목록을 받기 전의 0은 초깃값이므로 검사하지 않는다. 로그인 맵을 열 때마다 이 화면이 목록보다 먼저 생긴다.
+    const bool bHasCharacterList = Lobby && Lobby->HasCharacterList();
+    if (bHasCharacterList && (CharacterSlots.Num() < CharacterSlotCount || CharacterSlotCount <= 0))
     {
         UE_LOG(LogP1UI, Warning, TEXT("슬롯 위젯 수와 서버의 슬롯 수가 맞지 않습니다. 위젯 수: %d, 서버 슬롯 수: %d"), CharacterSlots.Num(), CharacterSlotCount);
     }

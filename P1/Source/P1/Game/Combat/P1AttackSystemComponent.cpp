@@ -69,6 +69,11 @@ void UP1AttackSystemComponent::PlayRemoteNormalAttack(int32 Combo)
     PlayMontage(NormalAttackMontages[Index]);
 }
 
+void UP1AttackSystemComponent::SetNormalAttackMontages(const TArray<UAnimMontage*>& Montages)
+{
+    NormalAttackMontages = Montages;
+}
+
 UAnimInstance* UP1AttackSystemComponent::PlayMontage(UAnimMontage* Montage)
 {
     UAnimInstance* AnimInstance = CharacterMesh ? CharacterMesh->GetAnimInstance() : nullptr;

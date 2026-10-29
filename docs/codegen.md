@@ -443,13 +443,14 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 | `ItemConsumeEffectTable` | `DT_ItemConsumeEffect` | `FindItemConsumeEffectRow`. 소모품이 아니면 `nullptr`이다 |
 | `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
 | `ItemAssetTable` | `DT_ItemAssets` | `LoadItemIcon`. 에셋 테이블이다 |
-| `MonsterAssetTable` | `DT_MonsterAssets` | `LoadMonsterClass`. 에셋 테이블이다 |
+| `MonsterAssetTable` | `DT_MonsterAssets` | `FindMonsterAssetData`. 에셋 테이블이다 |
 
 - 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 그대로 있다
 - 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다. 행 이름은 짝이 되는 수치 테이블의 행 이름(번호)과 같다. 에디터 모듈의 검증기가 두 테이블의 짝을 대조한다(아래 「수치 테이블과 에셋 테이블의 짝」)
 - 재사용 대기는 소모 효과 표의 `CooldownMs`다. 클라이언트의 대기 계산(`FP1ItemCooldown`)은 초 단위라 1000으로 나눠 넘긴다
 - 맵과 지역 테이블(`DT_Map`, `DT_Area`)을 읽는 코드는 없다. 서버가 알린 맵 번호로 레벨을 여는 표(`MapLevels`)의 키가 맵 표의 `Id`다
-- 몬스터 스포너(`AP1EntitySpawner`)는 몬스터 행과 몬스터 클래스를 모두 이 설정에서 찾는다. 스포너에 지정하는 테이블은 없다
+- 몬스터 스포너(`AP1EntitySpawner`)는 몬스터 행과 표현 데이터 행을 모두 이 설정에서 찾는다. 스포너에 지정하는 테이블은 없다.
+  스포너는 모든 몬스터를 공용 클래스(`MonsterClass`) 하나로 스폰하고, 표현 데이터 행의 메시, 애니메이션 블루프린트, 머티리얼, 크기, 캡슐, 공격 몽타주를 입힌다
 
 UE 테스트는 에디터 메뉴가 만든 테이블 에셋을 읽지 않는다. 기획 데이터가 필요한 테스트는 `Tests/P1DesignDataTestTables.h`로
 저장소의 클라이언트 JSON을 임시 테이블에 채워 설정에 끼운다.
@@ -465,7 +466,7 @@ UE 테스트는 에디터 메뉴가 만든 테이블 에셋을 읽지 않는다.
 | 경우 | 심각도 |
 |---|---|
 | 수치 테이블에 있는데 에셋 테이블에 없는 행 | 오류 |
-| 아이콘(`Icon`)이나 몬스터 클래스(`MonsterClass`)가 빈 행 | 오류 |
+| 아이콘(`Icon`)이 빈 행, 몬스터의 메시(`SkeletalMesh`)나 애니메이션 블루프린트(`AnimClass`)가 빈 행 | 오류 |
 | 장비(장비 능력치 테이블에 행이 있는 아이템)인데 `SkeletalMesh`와 `StaticMesh`가 모두 빈 행 | 오류 |
 | 채워진 참조가 없는 에셋을 가리키는 행. 패키지가 없거나, 패키지는 있지만 패키지 이름과 다른 객체를 가리킨다 | 오류 |
 | 짝이 되는 테이블을 설정에서 불러오지 못함, 에셋 테이블의 행 구조체가 다름 | 오류 |

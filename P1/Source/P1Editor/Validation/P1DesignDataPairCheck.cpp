@@ -103,6 +103,13 @@ TArray<FP1DesignDataPairCheck::FIssue> FP1DesignDataPairCheck::CheckMonsters(con
     return CheckPair<FP1MonsterAssetData>(MonsterTable, MonsterAssetTable, TEXT("몬스터"),
         [](TArray<FIssue>& Issues, FName RowName, const FString& Owner, const FP1MonsterAssetData& AssetData)
         {
-            CheckRequired(Issues, Owner, TEXT("MonsterClass"), AssetData.MonsterClass.ToSoftObjectPath());
+            // 몬스터는 공용 클래스 하나로 스폰되므로, 메시와 애니메이션 블루프린트가 없으면 보이지 않거나 움직이지 않는다.
+            CheckRequired(Issues, Owner, TEXT("SkeletalMesh"), AssetData.SkeletalMesh.ToSoftObjectPath());
+            CheckRequired(Issues, Owner, TEXT("AnimClass"), AssetData.AnimClass.ToSoftObjectPath());
+
+            for (const TSoftObjectPtr<UMaterialInterface>& Material : AssetData.Materials)
+                CheckOptional(Issues, Owner, TEXT("Materials"), Material.ToSoftObjectPath());
+            for (const TSoftObjectPtr<UAnimMontage>& Montage : AssetData.AttackMontages)
+                CheckOptional(Issues, Owner, TEXT("AttackMontages"), Montage.ToSoftObjectPath());
         });
 }
