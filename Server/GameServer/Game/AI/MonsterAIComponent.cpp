@@ -192,11 +192,7 @@ void MonsterAIComponent::SwitchState(MonsterState nextState)
     }
     case MonsterState::Wandering:
     {
-        RoomRef ownerRoom = owner->GetRoom();
-        if (ownerRoom == nullptr)
-            return;
-
-        vector2D newDest = ownerRoom->GetRandomLocation();
+        vector2D newDest = Room::GetRandomLocation(owner->GetWanderBounds());
 
         StartMovingTo(newDest);
 

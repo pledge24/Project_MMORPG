@@ -205,7 +205,7 @@ int main(void)
     context.CreateIdGenerator(serverNodeId);
 
     // 룸은 여기서 한 번만 만든다. 워커 스레드가 뜬 뒤로는 룸 목록을 읽기만 한다.
-    if (GRoomManager->CreateAllRooms() == false)
+    if (GRoomManager->CreateAllRooms(config.channelCount) == false)
     {
         GLogger->Error("룸 생성에 실패해 서버를 종료합니다. 위 로그에서 원인을 확인하세요");
         return 1;

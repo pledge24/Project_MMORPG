@@ -19,15 +19,16 @@
     룸의 모든 플레이어에게, 채팅 메시지는 말한 플레이어를 포함한 그 룸의 모든 플레이어에게 통지로 간다.
     다른 룸에는 가지 않는다. 거절한 요청은 통지를 보내지 않는다.
 
-    픽스처 결합도: 맵 표의 두 행으로 시작하지 않은 룸 둘을 ScopedTestRoomManager에 만든다. 요청한 플레이어와
+    픽스처 결합도: 맵 하나의 두 채널로 시작하지 않은 룸 둘을 ScopedTestRoomManager에 만든다. 요청한 플레이어와
     지켜보는 플레이어를 한 룸에, 다른 플레이어 하나를 다른 룸에 RecordingSession으로 묶어 넣는다.
+    맵의 셀은 넓어서 같은 룸의 플레이어는 서로를 본다.
     칼 하나와 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
 
 namespace
 {
-    constexpr int32 ROOM_ID = 10;
-    constexpr int32 OTHER_ROOM_ID = 20;
+    constexpr int32 MAP_ID = 1111;
+    constexpr int32 AREA_ID = 10;
     const string REQUESTER_NAME = "검은늑대";
     constexpr int32 SWORD_TEMPLATE_ID = 1001;
 }
@@ -40,13 +41,12 @@ protected:
         GamedataTables tables;
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         TestItemTables::AddGear(tables, SWORD_TEMPLATE_ID, Protocol::GEAR_PART_WEAPON);
-        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f));
-        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(OTHER_ROOM_ID, 0, 20000.f, 0.f, 5000.f));
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(AREA_ID, MAP_ID, 0.f, 0.f, 5000.f));
         Gamedata::Install(std::move(tables));
 
-        rooms = make_unique<ScopedTestRoomManager>();
-        room = rooms->FindRoom(ROOM_ID);
-        otherRoom = rooms->FindRoom(OTHER_ROOM_ID);
+        rooms = make_unique<ScopedTestRoomManager>(2);
+        room = rooms->FindRoom(MAP_ID, 1);
+        otherRoom = rooms->FindRoom(MAP_ID, 2);
         ASSERT_NE(room, nullptr);
         ASSERT_NE(otherRoom, nullptr);
 

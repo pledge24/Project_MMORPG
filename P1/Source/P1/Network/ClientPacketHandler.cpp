@@ -6,6 +6,7 @@
 #include "Sync/P1StatefulEntityManager.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Game/Chat/P1ChatSubsystem.h"
+#include "Game/Channel/P1ChannelSubsystem.h"
 #include "Utils/LogCategory.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
@@ -44,6 +45,18 @@ namespace
 
         return nullptr;
     }
+
+    /** 세션을 연 게임 인스턴스의 채널 서브시스템. 월드나 게임 인스턴스가 없으면 nullptr. */
+    UP1ChannelSubsystem* GetChannels(const PacketSessionRef& session)
+    {
+        if (UWorld* World = session->GetWorld())
+        {
+            if (UGameInstance* GameInstance = World->GetGameInstance())
+                return GameInstance->GetSubsystem<UP1ChannelSubsystem>();
+        }
+
+        return nullptr;
+    }
 }
 
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -72,10 +85,12 @@ bool Handle_S_ENTER_ROOM(PacketSessionRef& session, Protocol::S_ENTER_ROOM& pkt)
     if (EntityManager == nullptr || MyPlayerData == nullptr)
         return false;
 
-    // 내 엔티티 번호는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 배치는 엔티티 관리자가 맡는다.
+    // 내 엔티티 번호는 내 플레이어 데이터가, 엔티티 정리와 내 플레이어 배치는 엔티티 관리자가, 지금 채널은 채널 서브시스템이 맡는다.
     // 엔티티 관리자가 그 번호로 내 플레이어를 가리므로 내 플레이어 데이터가 먼저다.
     MyPlayerData->HandleEnterRoom(pkt);
     EntityManager->HandleEnterRoom(pkt);
+    if (UP1ChannelSubsystem* Channels = GetChannels(session))
+        Channels->HandleEnterRoom(pkt);
     return true;
 }
 
@@ -264,6 +279,26 @@ bool Handle_S_RESPAWN(PacketSessionRef& session, Protocol::S_RESPAWN& pkt)
     }
 
     return false;
+}
+
+bool Handle_S_CHANNEL_LIST(PacketSessionRef& session, Protocol::S_CHANNEL_LIST& pkt)
+{
+    UP1ChannelSubsystem* Channels = GetChannels(session);
+    if (Channels == nullptr)
+        return false;
+
+    Channels->HandleChannelList(pkt);
+    return true;
+}
+
+bool Handle_S_CHANGE_CHANNEL(PacketSessionRef& session, Protocol::S_CHANGE_CHANNEL& pkt)
+{
+    UP1ChannelSubsystem* Channels = GetChannels(session);
+    if (Channels == nullptr)
+        return false;
+
+    Channels->HandleChangeChannel(pkt);
+    return true;
 }
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)

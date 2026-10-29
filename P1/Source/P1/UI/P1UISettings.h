@@ -10,6 +10,7 @@ class UP1ChatWidget;
 class UP1StatusWindowWidget;
 class UP1InventoryWidget;
 class UP1ShopWidget;
+class UP1ChannelListWidget;
 class UP1WarningTextWidget;
 class UP1DeathWidget;
 class UP1GameMenuWidget;
@@ -62,6 +63,10 @@ public:
     /** 상점 창 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Windows")
     TSoftClassPtr<UP1ShopWidget> ShopWidgetClass;
+
+    /** 게임 메뉴의 채널 버튼으로 여는 채널 목록 창 위젯 클래스. */
+    UPROPERTY(Config, EditAnywhere, Category = "Windows")
+    TSoftClassPtr<UP1ChannelListWidget> ChannelListWidgetClass;
 
     /** 월드에 접속하거나 맵을 불러오는 동안 화면을 덮는 접속 진행 표시 위젯 클래스. */
     UPROPERTY(Config, EditAnywhere, Category = "Loading")

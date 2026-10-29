@@ -50,6 +50,12 @@ struct TableStruct_Entry_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_Entry_2eproto;
 namespace Protocol {
+class C_CHANGE_CHANNEL;
+struct C_CHANGE_CHANNELDefaultTypeInternal;
+extern C_CHANGE_CHANNELDefaultTypeInternal _C_CHANGE_CHANNEL_default_instance_;
+class C_CHANNEL_LIST;
+struct C_CHANNEL_LISTDefaultTypeInternal;
+extern C_CHANNEL_LISTDefaultTypeInternal _C_CHANNEL_LIST_default_instance_;
 class C_ENTER_GAME;
 struct C_ENTER_GAMEDefaultTypeInternal;
 extern C_ENTER_GAMEDefaultTypeInternal _C_ENTER_GAME_default_instance_;
@@ -65,6 +71,15 @@ extern C_RETURN_TO_LOBBYDefaultTypeInternal _C_RETURN_TO_LOBBY_default_instance_
 class C_USE_PORTAL;
 struct C_USE_PORTALDefaultTypeInternal;
 extern C_USE_PORTALDefaultTypeInternal _C_USE_PORTAL_default_instance_;
+class ChannelInfo;
+struct ChannelInfoDefaultTypeInternal;
+extern ChannelInfoDefaultTypeInternal _ChannelInfo_default_instance_;
+class S_CHANGE_CHANNEL;
+struct S_CHANGE_CHANNELDefaultTypeInternal;
+extern S_CHANGE_CHANNELDefaultTypeInternal _S_CHANGE_CHANNEL_default_instance_;
+class S_CHANNEL_LIST;
+struct S_CHANNEL_LISTDefaultTypeInternal;
+extern S_CHANNEL_LISTDefaultTypeInternal _S_CHANNEL_LIST_default_instance_;
 class S_ENTER_GAME;
 struct S_ENTER_GAMEDefaultTypeInternal;
 extern S_ENTER_GAMEDefaultTypeInternal _S_ENTER_GAME_default_instance_;
@@ -82,11 +97,16 @@ struct S_USE_PORTALDefaultTypeInternal;
 extern S_USE_PORTALDefaultTypeInternal _S_USE_PORTAL_default_instance_;
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
+template<> ::Protocol::C_CHANGE_CHANNEL* Arena::CreateMaybeMessage<::Protocol::C_CHANGE_CHANNEL>(Arena*);
+template<> ::Protocol::C_CHANNEL_LIST* Arena::CreateMaybeMessage<::Protocol::C_CHANNEL_LIST>(Arena*);
 template<> ::Protocol::C_ENTER_GAME* Arena::CreateMaybeMessage<::Protocol::C_ENTER_GAME>(Arena*);
 template<> ::Protocol::C_MAP_LOAD_COMPLETE* Arena::CreateMaybeMessage<::Protocol::C_MAP_LOAD_COMPLETE>(Arena*);
 template<> ::Protocol::C_RESPAWN* Arena::CreateMaybeMessage<::Protocol::C_RESPAWN>(Arena*);
 template<> ::Protocol::C_RETURN_TO_LOBBY* Arena::CreateMaybeMessage<::Protocol::C_RETURN_TO_LOBBY>(Arena*);
 template<> ::Protocol::C_USE_PORTAL* Arena::CreateMaybeMessage<::Protocol::C_USE_PORTAL>(Arena*);
+template<> ::Protocol::ChannelInfo* Arena::CreateMaybeMessage<::Protocol::ChannelInfo>(Arena*);
+template<> ::Protocol::S_CHANGE_CHANNEL* Arena::CreateMaybeMessage<::Protocol::S_CHANGE_CHANNEL>(Arena*);
+template<> ::Protocol::S_CHANNEL_LIST* Arena::CreateMaybeMessage<::Protocol::S_CHANNEL_LIST>(Arena*);
 template<> ::Protocol::S_ENTER_GAME* Arena::CreateMaybeMessage<::Protocol::S_ENTER_GAME>(Arena*);
 template<> ::Protocol::S_ENTER_ROOM* Arena::CreateMaybeMessage<::Protocol::S_ENTER_ROOM>(Arena*);
 template<> ::Protocol::S_RESPAWN* Arena::CreateMaybeMessage<::Protocol::S_RESPAWN>(Arena*);
@@ -104,12 +124,16 @@ enum EntryResult : int {
   ENTRY_RESULT_NOT_DEAD = 5,
   ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE = 6,
   ENTRY_RESULT_INTERNAL_ERROR = 7,
+  ENTRY_RESULT_DEAD = 8,
+  ENTRY_RESULT_MAP_LOADING = 9,
+  ENTRY_RESULT_SAME_CHANNEL = 10,
+  ENTRY_RESULT_INVALID_CHANNEL = 11,
   EntryResult_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EntryResult_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EntryResult_IsValid(int value);
 constexpr EntryResult EntryResult_MIN = ENTRY_RESULT_SUCCESS;
-constexpr EntryResult EntryResult_MAX = ENTRY_RESULT_INTERNAL_ERROR;
+constexpr EntryResult EntryResult_MAX = ENTRY_RESULT_INVALID_CHANNEL;
 constexpr int EntryResult_ARRAYSIZE = EntryResult_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntryResult_descriptor();
@@ -799,6 +823,7 @@ class S_ENTER_ROOM final :
   enum : int {
     kMyEntityFieldNumber = 2,
     kResultFieldNumber = 1,
+    kChannelFieldNumber = 3,
   };
   // .Protocol.EntityInfo my_entity = 2;
   bool has_my_entity() const;
@@ -827,6 +852,15 @@ class S_ENTER_ROOM final :
   void _internal_set_result(::Protocol::EntryResult value);
   public:
 
+  // int32 channel = 3;
+  void clear_channel();
+  int32_t channel() const;
+  void set_channel(int32_t value);
+  private:
+  int32_t _internal_channel() const;
+  void _internal_set_channel(int32_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:Protocol.S_ENTER_ROOM)
  private:
   class _Internal;
@@ -837,6 +871,7 @@ class S_ENTER_ROOM final :
   struct Impl_ {
     ::Protocol::EntityInfo* my_entity_;
     int result_;
+    int32_t channel_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -1752,6 +1787,747 @@ class S_RETURN_TO_LOBBY final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Entry_2eproto;
 };
+// -------------------------------------------------------------------
+
+class ChannelInfo final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.ChannelInfo) */ {
+ public:
+  inline ChannelInfo() : ChannelInfo(nullptr) {}
+  ~ChannelInfo() override;
+  explicit PROTOBUF_CONSTEXPR ChannelInfo(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  ChannelInfo(const ChannelInfo& from);
+  ChannelInfo(ChannelInfo&& from) noexcept
+    : ChannelInfo() {
+    *this = ::std::move(from);
+  }
+
+  inline ChannelInfo& operator=(const ChannelInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ChannelInfo& operator=(ChannelInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ChannelInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const ChannelInfo* internal_default_instance() {
+    return reinterpret_cast<const ChannelInfo*>(
+               &_ChannelInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    10;
+
+  friend void swap(ChannelInfo& a, ChannelInfo& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(ChannelInfo* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ChannelInfo* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ChannelInfo* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<ChannelInfo>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const ChannelInfo& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const ChannelInfo& from) {
+    ChannelInfo::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ChannelInfo* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.ChannelInfo";
+  }
+  protected:
+  explicit ChannelInfo(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kChannelFieldNumber = 1,
+    kPlayerCountFieldNumber = 2,
+  };
+  // int32 channel = 1;
+  void clear_channel();
+  int32_t channel() const;
+  void set_channel(int32_t value);
+  private:
+  int32_t _internal_channel() const;
+  void _internal_set_channel(int32_t value);
+  public:
+
+  // int32 player_count = 2;
+  void clear_player_count();
+  int32_t player_count() const;
+  void set_player_count(int32_t value);
+  private:
+  int32_t _internal_player_count() const;
+  void _internal_set_player_count(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.ChannelInfo)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t channel_;
+    int32_t player_count_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Entry_2eproto;
+};
+// -------------------------------------------------------------------
+
+class C_CHANNEL_LIST final :
+    public ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase /* @@protoc_insertion_point(class_definition:Protocol.C_CHANNEL_LIST) */ {
+ public:
+  inline C_CHANNEL_LIST() : C_CHANNEL_LIST(nullptr) {}
+  explicit PROTOBUF_CONSTEXPR C_CHANNEL_LIST(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  C_CHANNEL_LIST(const C_CHANNEL_LIST& from);
+  C_CHANNEL_LIST(C_CHANNEL_LIST&& from) noexcept
+    : C_CHANNEL_LIST() {
+    *this = ::std::move(from);
+  }
+
+  inline C_CHANNEL_LIST& operator=(const C_CHANNEL_LIST& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline C_CHANNEL_LIST& operator=(C_CHANNEL_LIST&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const C_CHANNEL_LIST& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const C_CHANNEL_LIST* internal_default_instance() {
+    return reinterpret_cast<const C_CHANNEL_LIST*>(
+               &_C_CHANNEL_LIST_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    11;
+
+  friend void swap(C_CHANNEL_LIST& a, C_CHANNEL_LIST& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(C_CHANNEL_LIST* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(C_CHANNEL_LIST* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  C_CHANNEL_LIST* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_CHANNEL_LIST>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyFrom;
+  inline void CopyFrom(const C_CHANNEL_LIST& from) {
+    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::CopyImpl(*this, from);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeFrom;
+  void MergeFrom(const C_CHANNEL_LIST& from) {
+    ::PROTOBUF_NAMESPACE_ID::internal::ZeroFieldsBase::MergeImpl(*this, from);
+  }
+  public:
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.C_CHANNEL_LIST";
+  }
+  protected:
+  explicit C_CHANNEL_LIST(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:Protocol.C_CHANNEL_LIST)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+  };
+  friend struct ::TableStruct_Entry_2eproto;
+};
+// -------------------------------------------------------------------
+
+class S_CHANNEL_LIST final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_CHANNEL_LIST) */ {
+ public:
+  inline S_CHANNEL_LIST() : S_CHANNEL_LIST(nullptr) {}
+  ~S_CHANNEL_LIST() override;
+  explicit PROTOBUF_CONSTEXPR S_CHANNEL_LIST(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  S_CHANNEL_LIST(const S_CHANNEL_LIST& from);
+  S_CHANNEL_LIST(S_CHANNEL_LIST&& from) noexcept
+    : S_CHANNEL_LIST() {
+    *this = ::std::move(from);
+  }
+
+  inline S_CHANNEL_LIST& operator=(const S_CHANNEL_LIST& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_CHANNEL_LIST& operator=(S_CHANNEL_LIST&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_CHANNEL_LIST& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_CHANNEL_LIST* internal_default_instance() {
+    return reinterpret_cast<const S_CHANNEL_LIST*>(
+               &_S_CHANNEL_LIST_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    12;
+
+  friend void swap(S_CHANNEL_LIST& a, S_CHANNEL_LIST& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(S_CHANNEL_LIST* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_CHANNEL_LIST* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_CHANNEL_LIST* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_CHANNEL_LIST>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const S_CHANNEL_LIST& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const S_CHANNEL_LIST& from) {
+    S_CHANNEL_LIST::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(S_CHANNEL_LIST* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.S_CHANNEL_LIST";
+  }
+  protected:
+  explicit S_CHANNEL_LIST(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kChannelsFieldNumber = 1,
+  };
+  // repeated .Protocol.ChannelInfo channels = 1;
+  int channels_size() const;
+  private:
+  int _internal_channels_size() const;
+  public:
+  void clear_channels();
+  ::Protocol::ChannelInfo* mutable_channels(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ChannelInfo >*
+      mutable_channels();
+  private:
+  const ::Protocol::ChannelInfo& _internal_channels(int index) const;
+  ::Protocol::ChannelInfo* _internal_add_channels();
+  public:
+  const ::Protocol::ChannelInfo& channels(int index) const;
+  ::Protocol::ChannelInfo* add_channels();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ChannelInfo >&
+      channels() const;
+
+  // @@protoc_insertion_point(class_scope:Protocol.S_CHANNEL_LIST)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ChannelInfo > channels_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Entry_2eproto;
+};
+// -------------------------------------------------------------------
+
+class C_CHANGE_CHANNEL final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.C_CHANGE_CHANNEL) */ {
+ public:
+  inline C_CHANGE_CHANNEL() : C_CHANGE_CHANNEL(nullptr) {}
+  ~C_CHANGE_CHANNEL() override;
+  explicit PROTOBUF_CONSTEXPR C_CHANGE_CHANNEL(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  C_CHANGE_CHANNEL(const C_CHANGE_CHANNEL& from);
+  C_CHANGE_CHANNEL(C_CHANGE_CHANNEL&& from) noexcept
+    : C_CHANGE_CHANNEL() {
+    *this = ::std::move(from);
+  }
+
+  inline C_CHANGE_CHANNEL& operator=(const C_CHANGE_CHANNEL& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline C_CHANGE_CHANNEL& operator=(C_CHANGE_CHANNEL&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const C_CHANGE_CHANNEL& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const C_CHANGE_CHANNEL* internal_default_instance() {
+    return reinterpret_cast<const C_CHANGE_CHANNEL*>(
+               &_C_CHANGE_CHANNEL_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    13;
+
+  friend void swap(C_CHANGE_CHANNEL& a, C_CHANGE_CHANNEL& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(C_CHANGE_CHANNEL* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(C_CHANGE_CHANNEL* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  C_CHANGE_CHANNEL* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<C_CHANGE_CHANNEL>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const C_CHANGE_CHANNEL& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const C_CHANGE_CHANNEL& from) {
+    C_CHANGE_CHANNEL::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(C_CHANGE_CHANNEL* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.C_CHANGE_CHANNEL";
+  }
+  protected:
+  explicit C_CHANGE_CHANNEL(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kChannelFieldNumber = 1,
+  };
+  // int32 channel = 1;
+  void clear_channel();
+  int32_t channel() const;
+  void set_channel(int32_t value);
+  private:
+  int32_t _internal_channel() const;
+  void _internal_set_channel(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.C_CHANGE_CHANNEL)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int32_t channel_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Entry_2eproto;
+};
+// -------------------------------------------------------------------
+
+class S_CHANGE_CHANNEL final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.S_CHANGE_CHANNEL) */ {
+ public:
+  inline S_CHANGE_CHANNEL() : S_CHANGE_CHANNEL(nullptr) {}
+  ~S_CHANGE_CHANNEL() override;
+  explicit PROTOBUF_CONSTEXPR S_CHANGE_CHANNEL(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  S_CHANGE_CHANNEL(const S_CHANGE_CHANNEL& from);
+  S_CHANGE_CHANNEL(S_CHANGE_CHANNEL&& from) noexcept
+    : S_CHANGE_CHANNEL() {
+    *this = ::std::move(from);
+  }
+
+  inline S_CHANGE_CHANNEL& operator=(const S_CHANGE_CHANNEL& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_CHANGE_CHANNEL& operator=(S_CHANGE_CHANNEL&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_CHANGE_CHANNEL& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_CHANGE_CHANNEL* internal_default_instance() {
+    return reinterpret_cast<const S_CHANGE_CHANNEL*>(
+               &_S_CHANGE_CHANNEL_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    14;
+
+  friend void swap(S_CHANGE_CHANNEL& a, S_CHANGE_CHANNEL& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(S_CHANGE_CHANNEL* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_CHANGE_CHANNEL* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_CHANGE_CHANNEL* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<S_CHANGE_CHANNEL>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const S_CHANGE_CHANNEL& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const S_CHANGE_CHANNEL& from) {
+    S_CHANGE_CHANNEL::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(S_CHANGE_CHANNEL* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "Protocol.S_CHANGE_CHANNEL";
+  }
+  protected:
+  explicit S_CHANGE_CHANNEL(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kResultFieldNumber = 1,
+    kChannelFieldNumber = 2,
+  };
+  // .Protocol.EntryResult result = 1;
+  void clear_result();
+  ::Protocol::EntryResult result() const;
+  void set_result(::Protocol::EntryResult value);
+  private:
+  ::Protocol::EntryResult _internal_result() const;
+  void _internal_set_result(::Protocol::EntryResult value);
+  public:
+
+  // int32 channel = 2;
+  void clear_channel();
+  int32_t channel() const;
+  void set_channel(int32_t value);
+  private:
+  int32_t _internal_channel() const;
+  void _internal_set_channel(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:Protocol.S_CHANGE_CHANNEL)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int result_;
+    int32_t channel_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Entry_2eproto;
+};
 // ===================================================================
 
 
@@ -2237,6 +3013,26 @@ inline void S_ENTER_ROOM::set_allocated_my_entity(::Protocol::EntityInfo* my_ent
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_ENTER_ROOM.my_entity)
 }
 
+// int32 channel = 3;
+inline void S_ENTER_ROOM::clear_channel() {
+  _impl_.channel_ = 0;
+}
+inline int32_t S_ENTER_ROOM::_internal_channel() const {
+  return _impl_.channel_;
+}
+inline int32_t S_ENTER_ROOM::channel() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_ENTER_ROOM.channel)
+  return _internal_channel();
+}
+inline void S_ENTER_ROOM::_internal_set_channel(int32_t value) {
+  
+  _impl_.channel_ = value;
+}
+inline void S_ENTER_ROOM::set_channel(int32_t value) {
+  _internal_set_channel(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_ENTER_ROOM.channel)
+}
+
 // -------------------------------------------------------------------
 
 // C_USE_PORTAL
@@ -2454,9 +3250,179 @@ inline void S_RETURN_TO_LOBBY::set_result(::Protocol::EntryResult value) {
   // @@protoc_insertion_point(field_set:Protocol.S_RETURN_TO_LOBBY.result)
 }
 
+// -------------------------------------------------------------------
+
+// ChannelInfo
+
+// int32 channel = 1;
+inline void ChannelInfo::clear_channel() {
+  _impl_.channel_ = 0;
+}
+inline int32_t ChannelInfo::_internal_channel() const {
+  return _impl_.channel_;
+}
+inline int32_t ChannelInfo::channel() const {
+  // @@protoc_insertion_point(field_get:Protocol.ChannelInfo.channel)
+  return _internal_channel();
+}
+inline void ChannelInfo::_internal_set_channel(int32_t value) {
+  
+  _impl_.channel_ = value;
+}
+inline void ChannelInfo::set_channel(int32_t value) {
+  _internal_set_channel(value);
+  // @@protoc_insertion_point(field_set:Protocol.ChannelInfo.channel)
+}
+
+// int32 player_count = 2;
+inline void ChannelInfo::clear_player_count() {
+  _impl_.player_count_ = 0;
+}
+inline int32_t ChannelInfo::_internal_player_count() const {
+  return _impl_.player_count_;
+}
+inline int32_t ChannelInfo::player_count() const {
+  // @@protoc_insertion_point(field_get:Protocol.ChannelInfo.player_count)
+  return _internal_player_count();
+}
+inline void ChannelInfo::_internal_set_player_count(int32_t value) {
+  
+  _impl_.player_count_ = value;
+}
+inline void ChannelInfo::set_player_count(int32_t value) {
+  _internal_set_player_count(value);
+  // @@protoc_insertion_point(field_set:Protocol.ChannelInfo.player_count)
+}
+
+// -------------------------------------------------------------------
+
+// C_CHANNEL_LIST
+
+// -------------------------------------------------------------------
+
+// S_CHANNEL_LIST
+
+// repeated .Protocol.ChannelInfo channels = 1;
+inline int S_CHANNEL_LIST::_internal_channels_size() const {
+  return _impl_.channels_.size();
+}
+inline int S_CHANNEL_LIST::channels_size() const {
+  return _internal_channels_size();
+}
+inline void S_CHANNEL_LIST::clear_channels() {
+  _impl_.channels_.Clear();
+}
+inline ::Protocol::ChannelInfo* S_CHANNEL_LIST::mutable_channels(int index) {
+  // @@protoc_insertion_point(field_mutable:Protocol.S_CHANNEL_LIST.channels)
+  return _impl_.channels_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ChannelInfo >*
+S_CHANNEL_LIST::mutable_channels() {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_CHANNEL_LIST.channels)
+  return &_impl_.channels_;
+}
+inline const ::Protocol::ChannelInfo& S_CHANNEL_LIST::_internal_channels(int index) const {
+  return _impl_.channels_.Get(index);
+}
+inline const ::Protocol::ChannelInfo& S_CHANNEL_LIST::channels(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHANNEL_LIST.channels)
+  return _internal_channels(index);
+}
+inline ::Protocol::ChannelInfo* S_CHANNEL_LIST::_internal_add_channels() {
+  return _impl_.channels_.Add();
+}
+inline ::Protocol::ChannelInfo* S_CHANNEL_LIST::add_channels() {
+  ::Protocol::ChannelInfo* _add = _internal_add_channels();
+  // @@protoc_insertion_point(field_add:Protocol.S_CHANNEL_LIST.channels)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::ChannelInfo >&
+S_CHANNEL_LIST::channels() const {
+  // @@protoc_insertion_point(field_list:Protocol.S_CHANNEL_LIST.channels)
+  return _impl_.channels_;
+}
+
+// -------------------------------------------------------------------
+
+// C_CHANGE_CHANNEL
+
+// int32 channel = 1;
+inline void C_CHANGE_CHANNEL::clear_channel() {
+  _impl_.channel_ = 0;
+}
+inline int32_t C_CHANGE_CHANNEL::_internal_channel() const {
+  return _impl_.channel_;
+}
+inline int32_t C_CHANGE_CHANNEL::channel() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_CHANGE_CHANNEL.channel)
+  return _internal_channel();
+}
+inline void C_CHANGE_CHANNEL::_internal_set_channel(int32_t value) {
+  
+  _impl_.channel_ = value;
+}
+inline void C_CHANGE_CHANNEL::set_channel(int32_t value) {
+  _internal_set_channel(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_CHANGE_CHANNEL.channel)
+}
+
+// -------------------------------------------------------------------
+
+// S_CHANGE_CHANNEL
+
+// .Protocol.EntryResult result = 1;
+inline void S_CHANGE_CHANNEL::clear_result() {
+  _impl_.result_ = 0;
+}
+inline ::Protocol::EntryResult S_CHANGE_CHANNEL::_internal_result() const {
+  return static_cast< ::Protocol::EntryResult >(_impl_.result_);
+}
+inline ::Protocol::EntryResult S_CHANGE_CHANNEL::result() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHANGE_CHANNEL.result)
+  return _internal_result();
+}
+inline void S_CHANGE_CHANNEL::_internal_set_result(::Protocol::EntryResult value) {
+  
+  _impl_.result_ = value;
+}
+inline void S_CHANGE_CHANNEL::set_result(::Protocol::EntryResult value) {
+  _internal_set_result(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_CHANGE_CHANNEL.result)
+}
+
+// int32 channel = 2;
+inline void S_CHANGE_CHANNEL::clear_channel() {
+  _impl_.channel_ = 0;
+}
+inline int32_t S_CHANGE_CHANNEL::_internal_channel() const {
+  return _impl_.channel_;
+}
+inline int32_t S_CHANGE_CHANNEL::channel() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHANGE_CHANNEL.channel)
+  return _internal_channel();
+}
+inline void S_CHANGE_CHANNEL::_internal_set_channel(int32_t value) {
+  
+  _impl_.channel_ = value;
+}
+inline void S_CHANGE_CHANNEL::set_channel(int32_t value) {
+  _internal_set_channel(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_CHANGE_CHANNEL.channel)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

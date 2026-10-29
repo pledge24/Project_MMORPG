@@ -15,8 +15,10 @@
     그 맵을 다 열었다고 알린 뒤에야 룸에 들어간다. 전에는 첫 입장만 이 순서를 지켰고, 맵 간 이동은 맵 입장 요청과
     룸 입장 요청 두 단계로 나뉘어 클라이언트가 보내지 않는 경로로 남아 있었다.
 
-    픽스처 결합도: 맵 표(MAP_A의 마을과 사냥터, MAP_B의 룸 하나)와 1레벨 전사 레벨 표를 Gamedata::Install로 주입하고,
-    맵 표의 행마다 시작하지 않은 룸을 둔 룸 관리자를 GRoomManager로 쓴다. 룸 큐의 잡은 테스트 스레드에서 곧바로 돈다.
+    같은 맵 안의 포털 이동과 리스폰은 맵 로드 없이 룸 안에서 옮긴다. 룸은 맵 하나 전체의 사본이기 때문이다.
+
+    픽스처 결합도: 지역 표(MAP_A의 마을과 사냥터, MAP_B의 지역 하나)와 1레벨 전사 레벨 표를 Gamedata::Install로 주입하고,
+    맵마다 시작하지 않은 룸 하나를 둔 룸 관리자를 GRoomManager로 쓴다. 룸 큐의 잡은 테스트 스레드에서 곧바로 돈다.
     플레이어는 패킷을 쌓는 RecordingSession에 묶는다.
 ---------------------------------------------------------------*/
 
@@ -24,9 +26,9 @@ namespace
 {
     constexpr int32 MAP_A = 1111;
     constexpr int32 MAP_B = 2222;
-    constexpr int32 TOWN_ROOM = 10;
-    constexpr int32 FIELD_ROOM = 20;
-    constexpr int32 OTHER_MAP_ROOM = 50;
+    constexpr int32 TOWN_AREA = 10;
+    constexpr int32 FIELD_AREA = 20;
+    constexpr int32 OTHER_MAP_AREA = 50;
     constexpr int32 PORTAL_TO_FIELD = 11;
     constexpr int32 PORTAL_TO_OTHER_MAP = 12;
     constexpr float PORTAL_RADIUS = 500.f;
@@ -75,28 +77,26 @@ protected:
     void SetUp() override
     {
         // 마을에는 같은 맵의 사냥터로 가는 포털과 다른 맵의 룸으로 가는 포털이 있다.
-        TestAreaTables::TestArea town = MakeArea(TOWN_ROOM, MAP_A, 0.f);
+        TestAreaTables::TestArea town = MakeArea(TOWN_AREA, MAP_A, 0.f);
         TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
-        AddPortal(town, PORTAL_TO_FIELD, FIELD_ROOM, -1000.f, FIELD_ARRIVAL_X);
-        AddPortal(town, PORTAL_TO_OTHER_MAP, OTHER_MAP_ROOM, 1000.f, OTHER_MAP_ARRIVAL_X);
+        AddPortal(town, PORTAL_TO_FIELD, FIELD_AREA, -1000.f, FIELD_ARRIVAL_X);
+        AddPortal(town, PORTAL_TO_OTHER_MAP, OTHER_MAP_AREA, 1000.f, OTHER_MAP_ARRIVAL_X);
 
         GamedataTables tables;
         TestAreaTables::AddTown(tables, town);
-        TestAreaTables::AddArea(tables, MakeArea(FIELD_ROOM, MAP_A, -10000.f));
-        TestAreaTables::AddArea(tables, MakeArea(OTHER_MAP_ROOM, MAP_B, 7000.f));
+        TestAreaTables::AddArea(tables, MakeArea(FIELD_AREA, MAP_A, -10000.f));
+        TestAreaTables::AddArea(tables, MakeArea(OTHER_MAP_AREA, MAP_B, 7000.f));
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
         rooms = make_unique<ScopedTestRoomManager>();
-        townRoom = rooms->FindRoom(TOWN_ROOM);
-        fieldRoom = rooms->FindRoom(FIELD_ROOM);
-        otherMapRoom = rooms->FindRoom(OTHER_MAP_ROOM);
+        townRoom = rooms->FindRoom(MAP_A);
+        otherMapRoom = rooms->FindRoom(MAP_B);
     }
 
     void TearDown() override
     {
         townRoom.reset();
-        fieldRoom.reset();
         otherMapRoom.reset();
         rooms.reset();
         sessions.clear();
@@ -139,8 +139,8 @@ protected:
 
     unique_ptr<ScopedTestRoomManager> rooms;
     vector<shared_ptr<RecordingSession>> sessions;
+    /** MAP_A의 룸. 마을과 사냥터가 함께 있다. */
     RoomRef townRoom;
-    RoomRef fieldRoom;
     RoomRef otherMapRoom;
 };
 
@@ -241,8 +241,8 @@ TEST_F(MapLoadTest, PortalToOtherMapEntersAfterMapLoadComplete)
     EXPECT_FLOAT_EQ(enterRooms[0].my_entity().pos_info().pos().x(), OTHER_MAP_ARRIVAL_X) << "포털의 도착 위치로 들어간다";
 }
 
-// 같은 맵 안의 포털 이동은 클라이언트가 레벨을 다시 열지 않으므로 로드 완료를 기다리지 않는다.
-TEST_F(MapLoadTest, PortalWithinSameMapEntersWithoutMapLoad)
+// 같은 맵 안의 포털 이동은 룸 안의 순간이동이다. 클라이언트가 레벨을 다시 열지 않으므로 로드 완료를 기다리지 않는다.
+TEST_F(MapLoadTest, PortalWithinSameMapTeleportsInsideRoom)
 {
     shared_ptr<RecordingSession> session;
     PlayerRef player = CreatePlayerIn(townRoom, MakePos(-1000.f, 0.f), session);
@@ -253,8 +253,28 @@ TEST_F(MapLoadTest, PortalWithinSameMapEntersWithoutMapLoad)
     ASSERT_EQ(responses.size(), 1u);
     EXPECT_EQ(responses[0].result(), Protocol::ENTRY_RESULT_SUCCESS);
     EXPECT_FALSE(responses[0].has_map_id());
-    EXPECT_TRUE(fieldRoom->Contains(player->GetEntityId()));
-    EXPECT_EQ(session->SentPackets<Protocol::S_ENTER_ROOM>(PKT_S_ENTER_ROOM).size(), 1u);
+    EXPECT_TRUE(townRoom->Contains(player->GetEntityId())) << "같은 맵이면 룸을 떠나지 않는다";
+    EXPECT_EQ(player->GetRoom(), townRoom);
+    EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), FIELD_ARRIVAL_X);
+
+    // 클라이언트는 룸 입장 응답을 받아야 내 플레이어를 옮기고 앞서 보던 엔티티를 지운다.
+    const vector<Protocol::S_ENTER_ROOM> enterRooms = session->SentPackets<Protocol::S_ENTER_ROOM>(PKT_S_ENTER_ROOM);
+    ASSERT_EQ(enterRooms.size(), 1u);
+    EXPECT_FLOAT_EQ(enterRooms[0].my_entity().pos_info().pos().x(), FIELD_ARRIVAL_X);
+}
+
+// 순간이동한 플레이어는 이동 판정의 기준점도 도착 위치로 바뀐다. 그대로면 도착 직후의 첫 이동이 떠난 자리에서 잰 거리로 버려진다.
+TEST_F(MapLoadTest, MoveAfterTeleportIsMeasuredFromArrival)
+{
+    shared_ptr<RecordingSession> session;
+    PlayerRef player = CreatePlayerIn(townRoom, MakePos(-1000.f, 0.f), session);
+    townRoom->C_HandleUsePortal(MakeUsePortal(PORTAL_TO_FIELD), player);
+
+    Protocol::C_MOVE movePkt;
+    *movePkt.mutable_pos_info() = MakePos(FIELD_ARRIVAL_X + 30.f, 0.f);
+    townRoom->C_HandleMove(movePkt, player);
+
+    EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), FIELD_ARRIVAL_X + 30.f);
 }
 
 TEST_F(MapLoadTest, PortalOutsideRadiusIsRejected)
@@ -298,8 +318,8 @@ TEST_F(MapLoadTest, RespawnToOtherMapEntersAfterMapLoadComplete)
     EXPECT_FLOAT_EQ(enterRooms[0].my_entity().pos_info().pos().x(), TOWN_RESPAWN_X);
 }
 
-// 사망한 룸으로 리스폰해도 퇴장과 입장을 거친다. 다른 플레이어는 사망한 모습을 지우고 리스폰한 모습을 받는다.
-TEST_F(MapLoadTest, RespawnInSameRoomLeavesAndEntersAgain)
+// 마을이 같은 맵에 있으면 룸 안에서 옮긴다. 보던 플레이어는 사망한 모습을 지우고 리스폰한 모습을 받는다.
+TEST_F(MapLoadTest, RespawnInSameMapTeleportsInsideRoom)
 {
     shared_ptr<RecordingSession> watcherSession;
     CreatePlayerIn(townRoom, MakePos(0.f, 500.f), watcherSession);
