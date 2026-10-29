@@ -65,6 +65,9 @@ public:
     /** 계정이 가질 수 있는 캐릭터 수. 캐릭터 목록을 받기 전에는 0. */
     int32 GetCharacterSlotCount() const { return CharacterSlotCount; }
 
+    /** 로비에 들어온 뒤 캐릭터 목록을 받았으면 true. 받기 전의 목록과 슬롯 수는 초깃값이다. */
+    bool HasCharacterList() const { return bHasCharacterList; }
+
     /** 캐릭터 생성 화면이 보여 줄 직업. 서버가 캐릭터 목록과 함께 알려 주며, 목록을 받기 전에는 비어 있다. */
     const TArray<EP1CharacterClass>& GetCreatableClasses() const { return CreatableClasses; }
 
@@ -75,6 +78,8 @@ private:
     TArray<FP1LobbyCharacter> Characters;
 
     int32 CharacterSlotCount = 0;
+
+    bool bHasCharacterList = false;
 
     TArray<EP1CharacterClass> CreatableClasses;
 

@@ -95,8 +95,11 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("목록 전에는 로비 입장 알림 없음"), F.EnteredCount, 0);
         TestEqual(TEXT("성공은 실패 알림 없음"), F.ConnectFailures.Num(), 0);
 
+        TestFalse(TEXT("목록 전에는 받은 목록 없음"), F.Lobby->HasCharacterList());
+
         F.Lobby->HandleCharacterList(MakeCharacterList());
 
+        TestTrue(TEXT("받은 목록 있음"), F.Lobby->HasCharacterList());
         TestEqual(TEXT("슬롯 수"), F.Lobby->GetCharacterSlotCount(), 4);
         const TArray<FP1LobbyCharacter>& Characters = F.Lobby->GetCharacters();
         if (TestEqual(TEXT("캐릭터 수"), Characters.Num(), 2))
@@ -210,6 +213,7 @@ bool FP1LobbySubsystemTest::RunTest(const FString& Parameters)
 
         TestEqual(TEXT("비운 뒤 캐릭터 수"), F.Lobby->GetCharacters().Num(), 0);
         TestEqual(TEXT("비운 뒤 슬롯 수"), F.Lobby->GetCharacterSlotCount(), 0);
+        TestFalse(TEXT("비운 뒤 받은 목록 없음"), F.Lobby->HasCharacterList());
         TestEqual(TEXT("비운 뒤 생성할 수 있는 직업 수"), F.Lobby->GetCreatableClasses().Num(), 0);
     }
 

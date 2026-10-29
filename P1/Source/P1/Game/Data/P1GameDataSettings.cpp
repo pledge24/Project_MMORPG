@@ -5,7 +5,6 @@
 #include "Game/Data/Generated/P1ItemEquipStatRow.h"
 #include "Game/Data/Generated/P1ItemRow.h"
 #include "Game/Data/Generated/P1MonsterRow.h"
-#include "Game/Entities/P1Monster.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
 
@@ -52,13 +51,9 @@ const FP1MonsterRow* UP1GameDataSettings::FindMonsterRow(int32 MonsterId)
     return FindRowById<FP1MonsterRow>(GetDefault<UP1GameDataSettings>()->MonsterTable, MonsterId, TEXT("UP1GameDataSettings::FindMonsterRow"));
 }
 
-TSubclassOf<AP1Monster> UP1GameDataSettings::LoadMonsterClass(int32 MonsterId)
+const FP1MonsterAssetData* UP1GameDataSettings::FindMonsterAssetData(int32 MonsterId)
 {
-    const FP1MonsterAssetData* AssetData = FindRowById<FP1MonsterAssetData>(GetDefault<UP1GameDataSettings>()->MonsterAssetTable, MonsterId, TEXT("UP1GameDataSettings::LoadMonsterClass"));
-    if (AssetData == nullptr || AssetData->MonsterClass.IsNull())
-        return nullptr;
-
-    return AssetData->MonsterClass.LoadSynchronous();
+    return FindRowById<FP1MonsterAssetData>(GetDefault<UP1GameDataSettings>()->MonsterAssetTable, MonsterId, TEXT("UP1GameDataSettings::FindMonsterAssetData"));
 }
 
 TSoftObjectPtr<UWorld> UP1GameDataSettings::FindMapLevel(int32 MapId) const

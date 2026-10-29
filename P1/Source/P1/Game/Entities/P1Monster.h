@@ -6,18 +6,23 @@
 #include "P1Monster.generated.h"
 
 class AP1Monster;
+struct FP1MonsterAssetData;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDespawnReady, AP1Monster*);
 
 /**
  * 월드에 보이는 몬스터.
  *
+ * 모든 몬스터 종류가 이 클래스 하나를 쓰고, 종류마다 다른 외형은 표현 데이터로 입는다.
  * 몬스터 종류의 고정 데이터를 들고, 사망한 몬스터를 연출 뒤 정리할 수 있게 알린다.
  */
 UCLASS()
 class P1_API AP1Monster : public AP1Creature
 {
     GENERATED_BODY()
+
+public:
+    AP1Monster();
 
     //~ Begin AP1Creature Interface
 public:
@@ -38,6 +43,14 @@ private:
     static constexpr float DESPAWN_DELAY_SECONDS = 3.0f;
 
     FTimerHandle DespawnTimerHandle;
+
+    //~ Appearance
+public:
+    /**
+     * 표현 데이터의 메시, 애님 인스턴스, 머티리얼, 크기, 캡슐, 공격 몽타주를 입힌다. 가리키는 에셋을 동기 로드한다.
+     * FinishSpawning 전에 불러야 BeginPlay의 컴포넌트들이 바뀐 메시를 본다.
+     */
+    void ApplyAssetData(const FP1MonsterAssetData& AssetData);
 
     //~ Monster Data
 public:

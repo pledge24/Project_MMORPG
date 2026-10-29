@@ -92,7 +92,10 @@ bool FP1DesignDataPairValidatorTest::RunTest(const FString& Parameters)
     // 2) 몬스터 5009는 기획에서 지운 행이다. 경고만 있으면 통과한다.
     {
         UDataTable* MonsterTable = Tables.MakeDesignTable({ 5000 });
-        UDataTable* AssetTable = Tables.MakeMonsterAssetTable({ { 5000, T::NativeClass }, { 5009, T::NativeClass } });
+        UDataTable* AssetTable = Tables.MakeMonsterAssetTable({
+            { 5000, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
+            { 5009, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
+        });
         FScopedSettingTable Monster(Settings->MonsterTable, MonsterTable);
         FScopedSettingTable Asset(Settings->MonsterAssetTable, AssetTable);
 
@@ -115,7 +118,7 @@ bool FP1DesignDataPairValidatorTest::RunTest(const FString& Parameters)
 
     // 4) 프로젝트 설정이 가리키지 않는 테이블은 짝 검사를 하지 않는다.
     {
-        UDataTable* Unrelated = Tables.MakeMonsterAssetTable({ { 5001, TEXT("") } });
+        UDataTable* Unrelated = Tables.MakeMonsterAssetTable({ { 5001, T::MonsterAsset(TEXT(""), TEXT("")) } });
         const FResult Result = Validate(Unrelated);
         TestTrue(TEXT("설정 밖의 테이블은 실패하지 않음"), Result.Result != EDataValidationResult::Invalid);
         TestEqual(TEXT("설정 밖의 테이블은 오류 없음"), Result.Errors.Num(), 0);
