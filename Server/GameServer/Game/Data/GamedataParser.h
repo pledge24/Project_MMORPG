@@ -9,6 +9,8 @@ struct GamedataDocuments
     Json areas;
     Json monsters;
     Json dropGroups;
+    /** 스폰 항목은 그룹 아래 중첩되어 있다. */
+    Json spawnGroups;
     Json currencies;
     Json items;
     Json itemEquipStats;

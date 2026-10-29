@@ -83,16 +83,15 @@ void Room::Init(int32 roomId, int32 channel, const MapPlacement& map)
     _channel = channel;
     _map = map;
 
-    // 지역은 룸 안에서 규칙이 다른 공간이다. 몬스터 스폰과 포털을 지역에서 찾는다.
+    // 지역은 룸 안에서 규칙이 다른 공간이다. 포털을 지역에서 찾는다.
     for (const auto& [areaId, area] : Gamedata::GetAreas())
     {
-        if (area.MapId != map.mapId)
-            continue;
-
-        // 기동할 때 지역마다 배치 데이터가 있는지 대조했다. 테스트처럼 배치 데이터 없이 만든 룸은 그 지역을 건너뛴다.
-        if (const AreaPlacement* placement = Gamedata::FindAreaPlacement(areaId))
-            _areas.push_back(RoomArea{ area, *placement });
+        if (area.MapId == map.mapId)
+            _areas.push_back(area);
     }
+
+    // 몬스터는 지역이 아니라 레벨에 배치한 스폰 마커에서 나온다.
+    _monsterSpawner.Init(Gamedata::GetSpawnPoints(map.mapId));
 
     _cellMatrix.Init(_map.bounds, _map.cellSize);
 
@@ -107,30 +106,9 @@ bool Room::Start()
     if (SpawnNpcs() == false)
         return false;
 
-    // 몬스터 스폰. 지역마다 그 지역의 몬스터를 그 지역 안에 둔다. 마을처럼 몬스터 목록이 빈 지역은 건너뛴다.
-    for (const RoomArea& area : _areas)
-    {
-        const vector<int32>& monsterIds = area.row.Monsters;
-        if (monsterIds.empty())
-            continue;
-
-        const int32 kindOfMonster = static_cast<int32>(monsterIds.size());
-        for (int32 i = 0; i < area.row.MaxMonsterCount; i++)
-        {
-            const int32 monsterTemplateId = monsterIds[Utils::GetRandom(0, kindOfMonster - 1)];
-
-            MonsterSpawnParams spawnParams;
-            spawnParams.templateId = monsterTemplateId;
-            spawnParams.spawnPos = MakeRandomSpawnPos(area.placement, monsterTemplateId);
-            spawnParams.wanderBounds = area.placement.bounds;
-
-            if (SpawnEntity<Monster>(spawnParams) == nullptr)
-            {
-                GLogger->Error("룸 {}: 지역 {}에 몬스터 {}를 스폰하지 못했다", _roomId, area.row.Id, monsterTemplateId);
-                return false;
-            }
-        }
-    }
+    // 몬스터 스폰.
+    if (SpawnInitialMonsters() == false)
+        return false;
 
     _lastTickTime = GetTickCount64();
     DoTimer(ROOM_TICK_INTERVAL_MS, &Room::RunScheduledTick);
@@ -164,6 +142,15 @@ void Room::Tick(float deltaTime)
     // 몬스터가 플레이어를 찾을 때 셀을 본다. 엔티티 Tick보다 먼저 맞춰야 이번 틱의 탐색이 지난 틱의 위치를 본다.
     // 셀을 넘은 몬스터의 스폰과 디스폰도 여기서 나간다.
     RefreshVisibility();
+
+    // 사망한 몬스터의 리젠. 룸에 들어간 몬스터는 이번 틱부터 돈다. 근처의 플레이어에게 스폰을 알린다.
+    for (int32 spawnPointIndex : _monsterSpawner.Tick(deltaTime))
+    {
+        if (MonsterRef monster = SpawnMonster(spawnPointIndex))
+            BroadcastNearby(monster->GetEntityId(), MakeSpawnPacket(monster), monster->GetEntityId());
+        else
+            _monsterSpawner.OnMonsterDied(spawnPointIndex); // 다시 예약하지 않으면 그 마커의 몬스터 수가 영영 줄어든다.
+    }
 
     // 엔티티의 Tick이 룸에서 엔티티를 뺄 수 있다(피격으로 사망한 몬스터). 순회 중인 맵을 바꾸지 않도록 목록을 떠 둔다.
     vector<EntityRef> entities;
@@ -773,33 +760,90 @@ void Room::HandleDie(CreatureRef creature)
     if (creature->IsPlayer())
         return;
 
+    // 사망한 몬스터는 그 몬스터가 나온 스폰 마커에서 리젠한다.
+    if (MonsterRef monster = dynamic_pointer_cast<Monster>(creature))
+        _monsterSpawner.OnMonsterDied(monster->GetSpawnPointIndex());
+
     RemoveEntity(entityId);
 }
 
-vector2D Room::GetRandomLocation(const PlaneBounds& bounds, bool usePadding)
+bool Room::SpawnInitialMonsters()
 {
-    const float paddingX = usePadding ? LOCATION_PADDING_X : 0.f;
-    const float paddingY = usePadding ? LOCATION_PADDING_Y : 0.f;
+    for (int32 spawnPointIndex : _monsterSpawner.GetInitialSpawns())
+    {
+        if (SpawnMonster(spawnPointIndex) == nullptr)
+            return false;
+    }
 
-    // 여백보다 좁은 지역에서 범위가 뒤집히면 무작위 함수가 터진다. 그 축은 가운데에 둔다.
-    auto pickInRange = [](float min, float max, float padding)
+    return true;
+}
+
+vector2D Room::GetRandomLocation(const vector2D& center, float radius)
+{
+    // 반지름을 그대로 뽑으면 가운데에 몰린다. 넓이가 반지름의 제곱에 비례하므로 제곱근을 씌운다.
+    const float distance = radius * sqrtf(Utils::GetRandom(0.f, 1.f));
+    const float angle = Utils::GetRandom(0.f, 2.f * std::numbers::pi_v<float>);
+    return vector2D(center.x + distance * cosf(angle), center.y + distance * sinf(angle));
+}
+
+MonsterRef Room::SpawnMonster(int32 spawnPointIndex)
+{
+    const SpawnPointPlacement& spawnPoint = _monsterSpawner.GetSpawnPoint(spawnPointIndex);
+    const int32 monsterTemplateId = _monsterSpawner.PickMonster(spawnPointIndex);
+
+    MonsterSpawnParams spawnParams;
+    spawnParams.templateId = monsterTemplateId;
+    spawnParams.spawnPos = MakeRandomSpawnPos(spawnPoint, monsterTemplateId);
+    spawnParams.spawnPoint = spawnPoint;
+    spawnParams.spawnPointIndex = spawnPointIndex;
+
+    MonsterRef monster = SpawnEntity<Monster>(spawnParams);
+    if (monster == nullptr)
+        GLogger->Error("룸 {}: 스폰 그룹 {}의 마커에 몬스터 {}를 스폰하지 못했다", _roomId, spawnPoint.spawnGroupId, monsterTemplateId);
+
+    return monster;
+}
+
+Protocol::PosInfo Room::MakeRandomSpawnPos(const SpawnPointPlacement& spawnPoint, int32 monsterTemplateId)
+{
+    // 클라이언트가 받은 높이로 캡슐 중심을 맞추므로, 그 몬스터의 캡슐이 바닥에 서는 높이로 둔다.
+    const CreatureCombat* combat = Gamedata::FindMonsterCombat(monsterTemplateId);
+    const float halfHeight = combat != nullptr ? combat->capsuleHalfHeight : 0.f;
+
+    Protocol::PosInfo posInfo;
+    posInfo.set_yaw(GetRandomYaw());
+    Protocol::Vector* pos = posInfo.mutable_pos();
+
+    // 반경 안에 장애물이 있으면 뽑은 곳에 바닥이 없을 수 있다. 몇 번 다시 뽑고, 그래도 없으면 마커 위치에 둔다.
+    // 마커 위치가 navmesh 위에 있는지는 navmesh 빌드가 검사했다.
+    for (int32 attempt = 0; attempt < SPAWN_POS_ATTEMPTS; ++attempt)
+    {
+        const vector2D randomPos = GetRandomLocation(vector2D(spawnPoint.pos.x, spawnPoint.pos.y), spawnPoint.radius);
+        pos->set_x(randomPos.x);
+        pos->set_y(randomPos.y);
+        pos->set_z(spawnPoint.pos.z + SPAWN_HEIGHT_PADDING);
+        if (_navQuery == nullptr)
+            return posInfo;
+
+        if (const optional<float> floor = _navQuery->FindFloorHeight(MathUtil::PosInfoToVector3D(posInfo)))
         {
-            const float paddedMin = min + padding;
-            const float paddedMax = max - padding;
-            if (paddedMin > paddedMax)
-                return (min + max) * 0.5f;
+            pos->set_z(floor.value() + halfHeight);
+            return posInfo;
+        }
+    }
 
-            return Utils::GetRandom(paddedMin, paddedMax);
-        };
-
-    return vector2D(pickInRange(bounds.minX, bounds.maxX, paddingX), pickInRange(bounds.minY, bounds.maxY, paddingY));
+    pos->set_x(spawnPoint.pos.x);
+    pos->set_y(spawnPoint.pos.y);
+    pos->set_z(spawnPoint.pos.z + SPAWN_HEIGHT_PADDING);
+    PlaceOnFloor(posInfo, halfHeight);
+    return posInfo;
 }
 
 const DesignData::PortalRow* Room::FindPortal(int32 portalId) const
 {
-    for (const RoomArea& area : _areas)
+    for (const DesignData::AreaRow& area : _areas)
     {
-        for (const DesignData::PortalRow& portal : area.row.Portals)
+        for (const DesignData::PortalRow& portal : area.Portals)
         {
             if (portal.Id == portalId)
                 return &portal;
@@ -813,24 +857,6 @@ vector3D Room::GetCenterPoint() const
 {
     const PlaneBounds& bounds = _map.bounds;
     return vector3D((bounds.minX + bounds.maxX) * 0.5f, (bounds.minY + bounds.maxY) * 0.5f, 0.f);
-}
-
-Protocol::PosInfo Room::MakeRandomSpawnPos(const AreaPlacement& area, int32 monsterTemplateId)
-{
-    const vector2D randomPos = GetRandomLocation(area.bounds);
-
-    Protocol::PosInfo posInfo;
-    Protocol::Vector* pos = posInfo.mutable_pos();
-    pos->set_x(randomPos.x);
-    pos->set_y(randomPos.y);
-    pos->set_z(area.center.z + LOCATION_PADDING_Z);
-    posInfo.set_yaw(GetRandomYaw());
-
-    // 클라이언트가 받은 높이로 캡슐 중심을 맞추므로, 그 몬스터의 캡슐이 바닥에 서는 높이로 둔다.
-    if (const CreatureCombat* combat = Gamedata::FindMonsterCombat(monsterTemplateId))
-        PlaceOnFloor(posInfo, combat->capsuleHalfHeight);
-
-    return posInfo;
 }
 
 bool Room::PlaceOnFloor(Protocol::PosInfo& posInfo, float halfHeight)

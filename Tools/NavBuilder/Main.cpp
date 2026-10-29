@@ -3,7 +3,8 @@
 // NavBuilder.exe --agent <NavAgent.json> --geometry-dir <형상 폴더> --out-dir <서버 추출 산출물 폴더> --polygon-dir <폴리곤 폴더>
 //
 // 형상 폴더의 NavGeometry_<맵 번호>.json마다 out-dir에 NavMesh_<맵 번호>.navmesh를, polygon-dir에 에디터가 겹쳐 그리는
-// NavMeshPolygons_<맵 번호>.json을 쓴다. 맵 하나라도 실패하면 아무 파일도 바꾸지 않고 1로 끝난다.
+// NavMeshPolygons_<맵 번호>.json을 쓴다. 형상에 실린 스폰 마커가 걸을 수 있는 면 위에 없으면 그 맵은 실패한다.
+// 맵 하나라도 실패하면 아무 파일도 바꾸지 않고 1로 끝난다.
 // out-dir에서 이번에 빌드하지 않은 맵의 옛 navmesh는 지운다. 그 폴더에는 사람이 쓴 파일을 두지 않는다.
 
 #include <algorithm>
@@ -145,6 +146,16 @@ int main(int argc, char* argv[])
         {
             built.mapId = geometry.mapId;
             error = NavMeshBuild::Build(geometry, agent, built.navMesh);
+        }
+
+        vector<string> offMesh;
+        if (error.has_value() == false)
+            error = NavMeshBuild::FindSpawnPointsOffMesh(built.navMesh, agent, geometry.spawnPoints, offMesh);
+        if (error.has_value() == false && offMesh.empty() == false)
+        {
+            for (const string& name : offMesh)
+                errors.push_back(format("{}: 스폰 마커 {}가 걸을 수 있는 바닥 위에 없다. 벽과 장애물에서 떨어진 바닥 위로 옮긴다", path.filename().string(), name));
+            continue;
         }
 
         Json polygons;

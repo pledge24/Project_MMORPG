@@ -22,6 +22,7 @@ namespace DesignData
     constexpr string_view AREA_FILE = "Area.json";
     constexpr string_view SHOP_FILE = "Shop.json";
     constexpr string_view NPC_FILE = "Npc.json";
+    constexpr string_view SPAWN_GROUP_FILE = "SpawnGroup.json";
     constexpr string_view PROGRESS_FILE = "Progress.json";
     constexpr string_view INTERACTION_FILE = "Interaction.json";
 
@@ -361,6 +362,24 @@ namespace DesignData
         return row;
     }
 
+    /** SpawnEntry 표(SpawnEntry.xlsx)의 한 행. SpawnGroup 행의 Entries 아래에 키 순서로 실린다. */
+    struct SpawnEntryRow
+    {
+        /** 나오는 몬스터 */
+        int32 MonsterId = 0;
+        /** 그룹 안에서 이 몬스터가 뽑힐 가중치. 1 이상이다. 스폰할 때마다 가중치에 비례해 한 종류를 뽑는다 */
+        int32 Weight = 0;
+    };
+
+    /** SpawnGroup 행의 Entries 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
+    inline SpawnEntryRow ReadSpawnEntryRow(const Json& object)
+    {
+        SpawnEntryRow row;
+        row.MonsterId = Detail::Read<int32>(object, "MonsterId");
+        row.Weight = Detail::Read<int32>(object, "Weight");
+        return row;
+    }
+
     /** Currency 표(Currency.xlsx)의 한 행. */
     struct CurrencyRow
     {
@@ -694,12 +713,6 @@ namespace DesignData
         int32 MapId = 0;
         /** 리스폰 지점이 있으면 TRUE. 리스폰 지점이 있는 지역(마을)은 하나뿐이다 */
         bool HasRespawnPoint = false;
-        /** 나오는 몬스터. ';'로 구분한다. 비어 있으면 몬스터가 나오지 않는다 */
-        vector<int32> Monsters;
-        /** 동시에 있는 몬스터의 최대 수. 0 이상이다 */
-        int32 MaxMonsterCount = 0;
-        /** 몬스터가 다시 나오는 시간(초). 0 이상이다 */
-        int32 MonsterRespawnSec = 0;
         /** Portal 표에서 이 행에 속한 행. 키 순서다. */
         vector<PortalRow> Portals;
     };
@@ -716,9 +729,6 @@ namespace DesignData
             row.Id = Detail::Read<int32>(object, "Id");
             row.MapId = Detail::Read<int32>(object, "MapId");
             row.HasRespawnPoint = Detail::Read<bool>(object, "HasRespawnPoint");
-            row.Monsters = Detail::Read<vector<int32>>(object, "Monsters");
-            row.MaxMonsterCount = Detail::Read<int32>(object, "MaxMonsterCount");
-            row.MonsterRespawnSec = Detail::Read<int32>(object, "MonsterRespawnSec");
             row.Portals = Detail::ReadRows<PortalRow>(object, "Portals", ReadPortalRow);
 
             auto key = row.Id;
@@ -772,6 +782,38 @@ namespace DesignData
             NpcRow row;
             row.Id = Detail::Read<int32>(object, "Id");
             row.ShopId = Detail::Read<int32>(object, "ShopId");
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** SpawnGroup 표(SpawnGroup.xlsx)의 한 행. */
+    struct SpawnGroupRow
+    {
+        /** 스폰 그룹 번호. 레벨의 스폰 마커가 이 번호를 가리킨다 */
+        int32 Id = 0;
+        /** 마커 하나에 동시에 있는 몬스터의 최대 수. 0 이상이다 */
+        int32 MaxCount = 0;
+        /** 사망한 몬스터가 그 마커의 반경 안에 다시 나오기까지의 시간(초). 0 이상이다 */
+        int32 RespawnSec = 0;
+        /** SpawnEntry 표에서 이 행에 속한 행. 키 순서다. */
+        vector<SpawnEntryRow> Entries;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using SpawnGroupTable = map<int32, SpawnGroupRow>;
+
+    /** SpawnGroup.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseSpawnGroup(const Json& document, OUT SpawnGroupTable& table)
+    {
+        return Detail::ParseTable(SPAWN_GROUP_FILE, document, OUT table, [](const Json& object)
+        {
+            SpawnGroupRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.MaxCount = Detail::Read<int32>(object, "MaxCount");
+            row.RespawnSec = Detail::Read<int32>(object, "RespawnSec");
+            row.Entries = Detail::ReadRows<SpawnEntryRow>(object, "Entries", ReadSpawnEntryRow);
 
             auto key = row.Id;
             return pair{ std::move(key), std::move(row) };

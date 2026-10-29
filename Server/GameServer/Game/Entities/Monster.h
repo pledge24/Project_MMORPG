@@ -1,16 +1,19 @@
 #pragma once
 #include "Game/Entities/Creature.h"
-#include "Utils/PlaneBounds.h"
+#include "Game/Data/Placement.h"
 
 class MonsterAIComponent;
+class PathFollowingComponent;
 
 /** 몬스터의 스폰 매개변수. */
 struct MonsterSpawnParams : public Creature::SpawnParams
 {
     int32 templateId = 0;
     Protocol::PosInfo spawnPos;
-    /** 배회 목적지를 고르는 평면 범위. 스폰한 지역의 경계다. */
-    PlaneBounds wanderBounds;
+    /** 배회하는 반경과 추적 한계를 재는 기준. 마커에서 나오지 않은 몬스터(테스트)는 직접 정한다. */
+    SpawnPointPlacement spawnPoint;
+    /** 룸의 몇 번째 스폰 마커에서 나왔는지. 사망하면 그 마커에서 리젠한다. 마커에서 나오지 않았으면 -1. */
+    int32 spawnPointIndex = -1;
 };
 
 /**
@@ -69,20 +72,19 @@ private:
 public:
     /** 읽기만 연다. */
     const MonsterAIComponent& GetAI() const { return *_ai; }
-    const PlaneBounds& GetWanderBounds() const { return _wanderBounds; }
+    const SpawnPointPlacement& GetSpawnPoint() const { return _spawnPoint; }
+    /** 마커에서 나오지 않았으면 -1. */
+    int32 GetSpawnPointIndex() const { return _spawnPointIndex; }
 
 private:
-    /** 아래 위치 함수는 MonsterAIComponent만 부른다. */
+    /** AI가 이동 창구(Creature)와 경로 추종 부품을 쓴다. */
     friend class MonsterAIComponent;
 
-    /** x와 y만 바꾼다. 높이는 스폰 때의 값을 유지한다. */
-    void SetPlanePos(const vector2D& pos);
-    /** 길이와 무관하게 단위 벡터로 쓴다. 영벡터면 멈춘 것이다. */
-    void SetMoveDirection(const vector2D& moveVec);
-    void SetYaw(float yaw);
-    void SetMoveState(Protocol::MoveState moveState);
+    PathFollowingComponent& GetPathFollowing() { return *_pathFollowing; }
 
     MonsterAIComponentRef _ai;
-    /** 스폰 매개변수의 사본. 룸은 맵 전체라 룸 경계에서 고르면 지역 사이의 빈 공간으로 걸어 나간다. */
-    PlaneBounds _wanderBounds;
+    PathFollowingComponentRef _pathFollowing;
+    /** 스폰 매개변수의 사본. */
+    SpawnPointPlacement _spawnPoint;
+    int32 _spawnPointIndex = -1;
 };

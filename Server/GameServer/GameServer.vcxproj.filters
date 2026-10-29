@@ -236,6 +236,9 @@
     <ClCompile Include="Game\AI\MonsterAIComponent.cpp">
       <Filter>Game\AI</Filter>
     </ClCompile>
+    <ClCompile Include="Game\AI\MonsterStates.cpp">
+      <Filter>Game\AI</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Data\Gamedata.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
@@ -252,6 +255,9 @@
       <Filter>Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\CellMatrix.cpp">
+      <Filter>Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Room\MonsterSpawner.cpp">
       <Filter>Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="Game\Room\RoomManager.cpp">
@@ -457,6 +463,9 @@
     <ClInclude Include="Game\AI\MonsterAIComponent.h">
       <Filter>Game\AI</Filter>
     </ClInclude>
+    <ClInclude Include="Game\AI\MonsterStates.h">
+      <Filter>Game\AI</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Data\Gamedata.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
@@ -488,6 +497,9 @@
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\CellMatrix.h">
+      <Filter>Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Room\MonsterSpawner.h">
       <Filter>Game\Room</Filter>
     </ClInclude>
     <ClInclude Include="Game\Room\RoomManager.h">
@@ -552,6 +564,9 @@
     <None Include="Game\Data\Generated\DropGroup.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
+    <None Include="Game\Data\Generated\SpawnGroup.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
     <None Include="Game\Data\Generated\Map.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
@@ -601,6 +616,9 @@
     <ClInclude Include="Game\Navigation\NavQuery.h">
       <Filter>Game\Navigation</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Navigation\PathFollowingComponent.h">
+      <Filter>Game\Navigation</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Navigation\NavMeshes.h">
       <Filter>Game\Navigation</Filter>
     </ClInclude>
@@ -608,6 +626,9 @@
       <Filter>Game\Navigation</Filter>
     </ClCompile>
     <ClCompile Include="Game\Navigation\NavQuery.cpp">
+      <Filter>Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Navigation\PathFollowingComponent.cpp">
       <Filter>Game\Navigation</Filter>
     </ClCompile>
     <ClCompile Include="Game\Navigation\NavMeshes.cpp">

@@ -16,6 +16,14 @@
 {"Id":31,"SrcX":-7750.0,"SrcY":0.0,"SrcZ":0.0,"Radius":500.0,"DestX":-1000.0,"DestY":0.0,"DestZ":0.0,"DestYaw":0.0},
 {"Id":41,"SrcX":-7750.0,"SrcY":-10000.0,"SrcZ":0.0,"Radius":500.0,"DestX":-1000.0,"DestY":-1000.0,"DestZ":0.0,"DestYaw":0.0}
 ],
+"SpawnPoints":[
+{"SpawnGroupId":1,"X":-10800.0,"Y":9200.0,"Z":0.0,"Radius":700.0},
+{"SpawnGroupId":1,"X":-10800.0,"Y":10800.0,"Z":0.0,"Radius":700.0},
+{"SpawnGroupId":2,"X":-10800.0,"Y":-800.0,"Z":0.0,"Radius":700.0},
+{"SpawnGroupId":2,"X":-10800.0,"Y":800.0,"Z":0.0,"Radius":700.0},
+{"SpawnGroupId":3,"X":-10800.0,"Y":-10800.0,"Z":0.0,"Radius":700.0},
+{"SpawnGroupId":3,"X":-10800.0,"Y":-9200.0,"Z":0.0,"Radius":700.0}
+],
 "Npcs":[
 {"Id":1,"X":897.54,"Y":763.69,"Z":0.0,"Yaw":-139.61}
 ]}

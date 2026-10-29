@@ -78,6 +78,15 @@ namespace
         return npc;
     }
 
+    SpawnPointPlacement ReadSpawnPointPlacement(const Json& object)
+    {
+        SpawnPointPlacement spawnPoint;
+        spawnPoint.spawnGroupId = DesignData::Detail::Read<int32>(object, "SpawnGroupId");
+        spawnPoint.pos = ReadPosition(object, "");
+        spawnPoint.radius = DesignData::Detail::Read<float>(object, "Radius");
+        return spawnPoint;
+    }
+
     /** 행을 번호로 넣는다. 다른 맵의 파일에 같은 번호가 있어도 겹친 것이다. */
     template<typename Placement>
     void AddPlacement(map<int32, Placement>& placements, int32 id, Placement placement, string_view kind)
@@ -103,8 +112,8 @@ namespace
 
     /** 배치 데이터의 행이 기획 데이터의 그 맵에 있는 번호를 가리키는지 본다. 위치와 겹침은 추출이 검사했다. */
     void CheckPlacementIds(const MapPlacement& mapPlacement, const vector<AreaPlacement>& areas,
-        const vector<RespawnPointPlacement>& respawnPoints, const vector<PortalPlacement>& portals, const vector<NpcPlacement>& npcs,
-        const GamedataTables& tables)
+        const vector<RespawnPointPlacement>& respawnPoints, const vector<PortalPlacement>& portals,
+        const vector<SpawnPointPlacement>& spawnPoints, const vector<NpcPlacement>& npcs, const GamedataTables& tables)
     {
         using DesignData::Detail::FieldError;
         const int32 mapId = mapPlacement.mapId;
@@ -138,6 +147,22 @@ namespace
                 throw FieldError{ format("포털 {}은 포털 표에서 맵 {}의 지역 {}에 있다", portal.id, owner->MapId, owner->Id) };
         }
 
+        // 추적 한계는 스폰 지점에서 잰다. 반경이 한계보다 좁아야 반경 안에서 대상을 감지한 몬스터가 쫓아갈 거리가 남는다.
+        for (const SpawnPointPlacement& spawnPoint : spawnPoints)
+        {
+            auto group = tables.spawnGroups.find(spawnPoint.spawnGroupId);
+            if (group == tables.spawnGroups.end())
+                throw FieldError{ format("스폰 마커의 스폰 그룹 {}이 스폰 그룹 표에 없다", spawnPoint.spawnGroupId) };
+
+            for (const DesignData::SpawnEntryRow& entry : group->second.Entries)
+            {
+                auto monster = tables.monsters.find(entry.MonsterId);
+                if (monster != tables.monsters.end() && spawnPoint.radius >= monster->second.ChasingMaxRange)
+                    throw FieldError{ format("스폰 그룹 {}의 마커 반경 {}이 몬스터 {}의 ChasingMaxRange {}보다 좁아야 한다",
+                        spawnPoint.spawnGroupId, spawnPoint.radius, entry.MonsterId, monster->second.ChasingMaxRange) };
+            }
+        }
+
         for (const NpcPlacement& npc : npcs)
         {
             if (tables.npcs.contains(npc.npcId) == false)
@@ -163,9 +188,10 @@ namespace
             vector<AreaPlacement> areas = ReadRows<AreaPlacement>(document, "Areas", ReadAreaPlacement);
             vector<RespawnPointPlacement> respawnPoints = ReadRows<RespawnPointPlacement>(document, "RespawnPoints", ReadRespawnPointPlacement);
             vector<PortalPlacement> portals = ReadRows<PortalPlacement>(document, "Portals", ReadPortalPlacement);
+            vector<SpawnPointPlacement> spawnPoints = ReadRows<SpawnPointPlacement>(document, "SpawnPoints", ReadSpawnPointPlacement);
             vector<NpcPlacement> npcs = ReadRows<NpcPlacement>(document, "Npcs", ReadNpcPlacement);
 
-            CheckPlacementIds(mapPlacement, areas, respawnPoints, portals, npcs, tables);
+            CheckPlacementIds(mapPlacement, areas, respawnPoints, portals, spawnPoints, npcs, tables);
 
             for (AreaPlacement& area : areas)
                 AddPlacement(tables.areaPlacements, area.id, std::move(area), "지역");
@@ -178,6 +204,8 @@ namespace
                 npc.mapId = mapPlacement.mapId;
                 AddPlacement(tables.npcPlacements, npc.npcId, std::move(npc), "NPC");
             }
+            if (spawnPoints.empty() == false)
+                tables.spawnPoints[mapPlacement.mapId] = std::move(spawnPoints);
             AddPlacement(tables.mapPlacements, mapPlacement.mapId, std::move(mapPlacement), "맵");
         }
         catch (const DesignData::Detail::FieldError& error)
@@ -390,6 +418,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.classLevelStats = ParseGenerated(documents.classLevelStats, DesignData::ParseClassLevelStat);
         tables.monsters = ParseGenerated(documents.monsters, DesignData::ParseMonster);
         tables.dropGroups = ParseGenerated(documents.dropGroups, DesignData::ParseDropGroup);
+        tables.spawnGroups = ParseGenerated(documents.spawnGroups, DesignData::ParseSpawnGroup);
         tables.maps = ParseGenerated(documents.maps, DesignData::ParseMap);
         tables.areas = ParseGenerated(documents.areas, DesignData::ParseArea);
         tables.initialProgress = ParseGenerated(documents.initialProgress, DesignData::ParseProgress);

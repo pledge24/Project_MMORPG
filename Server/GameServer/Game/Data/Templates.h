@@ -24,11 +24,16 @@ struct GamedataTables
     DesignData::MonsterTable monsters;
     /** 몬스터의 드롭 그룹. 드롭 항목은 그룹의 Entries에 있다. */
     DesignData::DropGroupTable dropGroups;
+    /**
+     * 스폰 마커가 가리키는 몬스터 구성, 최대 수, 리젠 시간. 스폰 항목은 그룹의 Entries에 있다.
+     * 그룹마다 항목이 하나 이상이고 가중치는 1 이상이다(DataBuilder가 검사한다).
+     */
+    DesignData::SpawnGroupTable spawnGroups;
     /** 시작 맵과 플레이어의 마지막 위치가 가리키는 맵. */
     DesignData::MapTable maps;
     /**
-     * 맵 안의 지역. 룸 안에서 규칙이 다른 공간이고, 룸은 지역마다 몬스터를 스폰한다. 포털은 지역의 Portals에 있다.
-     * 포털의 도착 지역과 나오는 몬스터는 다른 표에 있고, 반경은 0보다 크다(DataBuilder가 검사한다).
+     * 맵 안의 지역. 룸 안에서 규칙이 다른 공간이다. 포털은 지역의 Portals에 있다.
+     * 포털의 도착 지역은 지역 표에 있다(DataBuilder가 검사한다).
      */
     DesignData::AreaTable areas;
     /** 레벨마다 다음 레벨까지 필요한 경험치. 1부터 이어지고 마지막 레벨이 최대 레벨이다(DataBuilder가 검사한다). */
@@ -60,6 +65,8 @@ struct GamedataTables
     map<int32, PortalPlacement> portalPlacements;
     /** 지역 번호 → 그 지역의 리스폰 지점. */
     map<int32, RespawnPointPlacement> respawnPoints;
+    /** 맵 번호 → 그 맵의 스폰 마커. 마커의 스폰 그룹은 스폰 그룹 표에 있다(기동할 때 대조한다). 마커가 없는 맵은 키가 없다. */
+    map<int32, vector<SpawnPointPlacement>> spawnPoints;
     /** NPC 번호 → 그 NPC의 마커. NPC 표의 NPC마다 하나다. */
     map<int32, NpcPlacement> npcPlacements;
 

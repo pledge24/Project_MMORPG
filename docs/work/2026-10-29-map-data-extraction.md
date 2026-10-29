@@ -55,8 +55,8 @@
 | C | #337 룸을 맵의 사본으로 바꾸고 채널과 AOI 더하기 | B | 머지 | #344 | 서버 솔루션 빌드 종료 코드 0(DummyClient 포함) · `GameServerTests.exe` 528건 성공 종료 코드 0 · 실제 DB 테스트 25건 성공 종료 코드 0 · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 28건 성공 종료 코드 0(경고 동반 4건 포함) · PIE(클라이언트 둘, 채널 변경 세 번) 사람 확인 |
 | D | #338 추출한 충돌 형상으로 navmesh를 빌드하고 서버 이동 검증에 벽과 높이 더하기 | B, C | 머지 | #346 | 서버 솔루션 빌드 종료 코드 0(DummyClient, NavBuilder 포함) · `GameServerTests.exe` 568건 성공 종료 코드 0 · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 30건 성공 종료 코드 0(경고 동반 4건 포함) · `Invoke-PlacementExtract.ps1` 종료 코드 0 · 추출을 다시 돌린 형상과 navmesh, 도구만 두 번 더 돌린 navmesh가 같은 바이트 · `GameServer.exe`가 실제 navmesh로 기동 · 겹쳐 그리기 메뉴를 `-run=pythonscript`로 돌려 폴리곤 259개를 그림(눈으로는 확인하지 않음) · 겹쳐 그리기 스크린숏과 PIE 줄 4는 사람 확인 전 |
 | E | #339 몽타주 타이밍, 루트 모션, 캡슐 크기를 추출해 서버가 읽기 | A, B | 머지 | #345 | 서버 솔루션 빌드 종료 코드 0(DummyClient 포함) · `GameServerTests.exe` 537건 성공 종료 코드 0(#337 merge 뒤) · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 전체 30건 성공 종료 코드 0(#337 merge 뒤, 경고 동반 4건 포함) · `Invoke-PlacementExtract.ps1` 종료 코드 0(배치 데이터는 내용 diff 없음) · `GameServer.exe`가 실제 산출물로 기동 · 사람이 타격 순간을 다시 맞춘 뒤 추출과 두 테스트를 다시 돌려 통과 · PIE 줄 5 사람 확인 |
-| F | #340 몬스터를 배치한 스폰 그룹에서 리젠하고 AI를 상태 객체와 경로 추종으로 나누기 | C, D | 대기 | | |
-| G | #341 상점을 NPC 엔티티로 옮기고 조준 클릭으로 열기 | C | 머지 | | 서버 솔루션 빌드 종료 코드 0(DummyClient 포함) · `GameServerTests.exe` 582건 성공 종료 코드 0 · DataBuilder 테스트 164건 OK · 클라이언트 빌드(`Build.bat` 직접, `-NoHotReloadFromIDE`) 종료 코드 0 · `Run-UeTests.ps1` 31건 성공 종료 코드 0(경고 동반 4건 포함) · `Invoke-PlacementExtract.ps1` 종료 코드 0 · PIE 줄 7 미확인 |
+| F | #340 몬스터를 배치한 스폰 그룹에서 리젠하고 AI를 상태 객체와 경로 추종으로 나누기 | C, D | 머지 | #347 | 서버 솔루션 빌드 종료 코드 0(DummyClient, NavBuilder 포함) · `GameServerTests.exe` 585건 성공 종료 코드 0 · DataBuilder 테스트 161건 OK · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 전체 30건 성공 종료 코드 0(경고 동반 4건 포함) · `Invoke-PlacementExtract.ps1` 종료 코드 0(navmesh는 바이트가 그대로) · navmesh 밖 마커를 넣은 형상 사본으로 `NavBuilder.exe`가 종료 코드 1 · `GameServer.exe`가 실제 산출물로 기동 · PIE 줄 6은 사람 확인 전 |
+| G | #341 상점을 NPC 엔티티로 옮기고 조준 클릭으로 열기 | C | 머지 | | 통합 브랜치(#340 포함) merge 뒤: 서버 솔루션 빌드 종료 코드 0(DummyClient 포함) · `GameServerTests.exe` 599건 성공 종료 코드 0 · DataBuilder 테스트 169건 OK · 클라이언트 빌드(`Build.bat` 직접, `-NoHotReloadFromIDE`) 종료 코드 0 · `Run-UeTests.ps1` 31건 성공 종료 코드 0(경고 동반 4건 포함) · `Invoke-PlacementExtract.ps1` 종료 코드 0 · PIE 줄 7 미확인 |
 
 1단계는 A와 B를 병렬로 진행한다. 2단계는 C와 E를 병렬로 진행하고, C를 머지한 뒤 D를 진행한다. 3단계는 F와 G를 병렬로 진행한다.
 D가 C를 기다리는 것은 선행 관계가 아니라 `Room.cpp`의 병합 충돌을 줄이기 위해서다. 그래서 D의 차단에 C를 적었다.
@@ -186,6 +186,25 @@ C와 묶어도 F까지 가는 경로(C → D → F)는 길어지지 않는다.
 - 사람이 PIE 시나리오 5줄을 확인했다
 - TD-080의 「확인하지 않았다」를 확인했다. 레벨을 고치지 않고 추출을 다시 돌리면 배치 데이터가 `git status`에만 바뀐 파일로 나온다
 
+**#340 (2026년 10월 29일)**
+
+- 스폰 그룹은 드롭 그룹과 같은 모양으로 그룹 표(`SpawnGroup`)와 중첩 항목 표(`SpawnEntry`)로 나눴다. 이슈 본문의 「새 기획 표 SpawnGroup」 하나에 목록 열 둘(몬스터, 가중치)을 두면
+  두 목록의 길이를 맞추는 규칙이 따로 필요하다. 모든 열이 `server`라 클라이언트 산출물이 없어서, 추출은 그룹 번호를 서버 산출물의 `SpawnGroup.json`에서 읽는다
+- 최대 수는 마커 하나의 수다. 사냥터마다 마커 둘(반경 700)에 `MaxCount` 5를 둬 옛 표처럼 사냥터마다 열 마리가 나온다. 마커의 위치는 사냥터 볼륨의 서쪽 절반(x -10800)이고,
+  Claude가 언리얼 MCP로 놓았다(사람이 에디터를 알아서 열고 닫도록 허용했다)
+- 추적 한계는 몬스터가 스폰 마커의 중심에서 잰 거리다. 반경이 한계 이상이면 반경 끝에서 대상을 감지한 몬스터가 곧바로 돌아가므로, 서버가 기동할 때 마커의 반경이 그룹 몬스터 모두의
+  `ChasingMaxRange`보다 작은지 대조한다. 이슈 본문에 없던 검사다
+- navmesh 밖의 스폰 마커는 navmesh를 빌드한 뒤에야 알 수 있어 navmesh 빌드 도구가 검사한다. 커맨드렛이 형상 문서에 마커를 싣는다. 이 검사가 실패하면 배치 데이터는 이미 바뀌어 있다
+- 경로 추종(`Game/Navigation/PathFollowingComponent`)은 길찾기 결과의 꺾이는 점을 따라 크리처를 옮긴다. 위치를 쓰는 창구를 `Monster`에서 `Creature`로 옮겼다.
+  navmesh의 꺾이는 점은 플레이어 캡슐 높이라 소유자 캡슐 높이로 옮겨 쓴다
+- 상태는 값을 갖지 않는 상태 객체 다섯(`Game/AI/MonsterStates`)이고, 진입·갱신(0.2초)·틱·이탈을 둔다. 대상을 놓치면 대기가 아니라 귀환으로 간다.
+  귀환은 스폰 반경에 들면 마치고, 초당 최대 HP의 20%를 회복한다. 회복한 HP는 클라이언트에 가지 않는다(TD-084)
+- 스폰 직후의 몬스터가 공격 간격(2.5초) 동안 움직이지 못하던 것을 바꿨다. 마지막 공격 뒤 시간을 공격 간격에서 시작한다
+- 코드 리뷰(규범과 명세 두 축)를 반영했다. 리젠할 때 스폰에 실패하면 그 마커를 다시 예약하고, 귀환과 배회의 목적지 높이를 마커 바닥 + 캡슐 반높이로 바꾸고,
+  귀환에 들어가면 예약한 타격을 버린다. 닿지 못하는 대상 앞에서 멈춰 서는 것, 귀환을 마친 뒤 같은 플레이어를 곧바로 다시 잡는 것, 벽 근처의 스폰 위치가 navmesh를 조금 벗어날 수 있는 것은 고치지 않았다
+- 클라이언트 빌드 스크립트의 `-CloseEditor`가 이 체크아웃의 에디터와 함께 `UnrealEditor-Cmd.exe` 하나를 강제 종료했다. 무엇이었는지 확인하지 못했다(TD-075에 덧붙임)
+- 사람이 PIE 시나리오 6줄을 확인하기 전이다
+
 **#338 (2026년 10월 29일)**
 
 - recastnavigation v1.6.0의 Recast와 Detour를 `Server/Libraries/recastnavigation/`에 소스로 벤더링했다. 빌드 도구(`Tools/NavBuilder`)는 서버 솔루션의 `Tools` 폴더에 넣어 서버 빌드와 함께 빌드된다
@@ -227,9 +246,11 @@ C와 묶어도 F까지 가는 경로(C → D → F)는 길어지지 않는다.
   옛 블루프린트의 「상점」 글자(TextRender)는 옮기지 않았다
 - **#340과 레벨이 겹친다.** #340도 `L_InGameMap`에 스폰 마커를 둔다. 레벨은 병합할 수 없으므로 나중에 머지하는 쪽이 위 레벨 편집을 다시 한다.
   #341이 나중이면 위 줄의 세 가지(상점 볼륨 액터 삭제, 노점 액터, NPC 마커)를 다시 하고 추출을 돌린다
-- `Invoke-UeBuild.ps1`이 #340 세션의 에디터를 이 워크트리의 에디터로 보고, UBT도 그 에디터의 Live Coding 때문에 빌드를 거부했다. `Build.bat`을 `-NoHotReloadFromIDE`로 직접 불렀다(TD-084)
+  #340이 먼저 머지되어, #341 브랜치에 통합 브랜치를 merge하며 레벨은 #340의 것을 받고 세 가지를 같은 커맨드렛 스크립트로 다시 했다.
+  배치 데이터에는 #340의 스폰 마커 여섯과 NPC 하나가 함께 실린다. #340이 TD-084를 먼저 써서 이 작업의 부채 번호를 TD-085, TD-086으로 옮겼다
+- `Invoke-UeBuild.ps1`이 #340 세션의 에디터를 이 워크트리의 에디터로 보고, UBT도 그 에디터의 Live Coding 때문에 빌드를 거부했다. `Build.bat`을 `-NoHotReloadFromIDE`로 직접 불렀다(TD-085)
 - 처음 돌린 `Run-UeTests.ps1`은 18초 만에 에디터가 -1로 끝나 리포트가 없었다(`P1.Editor.CreatureCombat.Extract` 시작 직후). 다시 돌리니 31건 모두 통과했다. 원인은 찾지 않았다
 - DataBuilder를 처음 돌린 뒤 `Item.proto`에 결과 값을 더해서 데이터 버전이 바뀌었다. 데이터 버전에는 `.proto` 열거형이 들어간다. 다시 돌려 담았다
 - 기존 DataBuilder 테스트 둘이 일반 이름으로 `Shop` 표와 `Interaction` 설정을 써서 새 규칙에 걸렸다. 테스트의 표와 설정 이름을 `Stall`, `Tuning`으로 바꿨다
-- NPC 에셋 테이블의 짝은 검증기가 보지 않는다(TD-085)
+- NPC 에셋 테이블의 짝은 검증기가 보지 않는다(TD-086)
 - 확인하지 못한 것: PIE 시나리오 7줄 전체, 외곽선과 카메라 연출의 모양, 상점 창 닫기 버튼의 배치, 실제 서버 실행 파일의 기동(저장소 데이터는 `GamedataParserTest.RepositoryGamedataPasses`가 대조한다)

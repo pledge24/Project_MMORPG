@@ -6,6 +6,7 @@
 #include "DetourAlloc.h"
 #include "DetourNavMesh.h"
 #include "DetourNavMeshBuilder.h"
+#include "DetourNavMeshQuery.h"
 
 using namespace std;
 using Json = nlohmann::json;
@@ -70,6 +71,24 @@ namespace
     using ContourSetPtr = unique_ptr<rcContourSet, RecastDeleter<rcContourSet, rcFreeContourSet>>;
     using PolyMeshPtr = unique_ptr<rcPolyMesh, RecastDeleter<rcPolyMesh, rcFreePolyMesh>>;
     using PolyMeshDetailPtr = unique_ptr<rcPolyMeshDetail, RecastDeleter<rcPolyMeshDetail, rcFreePolyMeshDetail>>;
+
+    /** navmesh 파일의 타일 데이터를 Detour에 올린다. 형식이 맞지 않으면 사유. */
+    optional<string> LoadNavMesh(const vector<uint8_t>& file, const NavMeshFile::AgentSettings& agent, dtNavMesh& outNavMesh)
+    {
+        NavMeshFile::TileData tile;
+        if (optional<string> error = NavMeshFile::Read(file, NavMeshFile::HashAgent(agent), tile))
+            return error;
+
+        // Detour가 타일 데이터를 갖고 해제하므로 Detour의 할당자로 복사해 넘긴다.
+        unsigned char* data = static_cast<unsigned char*>(dtAlloc(tile.size, DT_ALLOC_PERM));
+        memcpy(data, tile.data, tile.size);
+        if (dtStatusFailed(outNavMesh.init(data, static_cast<int>(tile.size), DT_TILE_FREE_DATA)))
+        {
+            dtFree(data);
+            return string("Detour가 타일 데이터를 읽지 못했다");
+        }
+        return nullopt;
+    }
 }
 
 optional<string> NavMeshBuild::ParseGeometry(const Json& document, Geometry& outGeometry)
@@ -120,6 +139,22 @@ optional<string> NavMeshBuild::ParseGeometry(const Json& document, Geometry& out
 
     if (geometry.triangles.empty())
         return string("삼각형이 없다");
+
+    if (document.contains("SpawnPoints") == false || document["SpawnPoints"].is_array() == false)
+        return string("'SpawnPoints'가 없거나 배열이 아니다");
+    const Json& spawnPoints = document["SpawnPoints"];
+    for (size_t i = 0; i < spawnPoints.size(); ++i)
+    {
+        const Json& point = spawnPoints[i];
+        if (point.is_object() == false || point.contains("Name") == false || point["Name"].is_string() == false)
+            return format("{}번째 스폰 마커에 'Name'이 없다", i);
+        for (const char* axis : { "X", "Y", "Z" })
+        {
+            if (point.contains(axis) == false || point[axis].is_number() == false)
+                return format("{}번째 스폰 마커에 '{}'가 없다", i, axis);
+        }
+        geometry.spawnPoints.push_back(SpawnPoint{ point["Name"].get<string>(), point["X"].get<float>(), point["Y"].get<float>(), point["Z"].get<float>() });
+    }
 
     outGeometry = std::move(geometry);
     return nullopt;
@@ -236,19 +271,9 @@ optional<string> NavMeshBuild::Build(const Geometry& geometry, const NavMeshFile
 
 optional<string> NavMeshBuild::DumpPolygons(const vector<uint8_t>& file, int32_t mapId, const NavMeshFile::AgentSettings& agent, Json& outDocument)
 {
-    NavMeshFile::TileData tile;
-    if (optional<string> error = NavMeshFile::Read(file, NavMeshFile::HashAgent(agent), tile))
-        return error;
-
-    // Detour가 타일 데이터를 갖고 해제하므로 Detour의 할당자로 복사해 넘긴다.
-    unsigned char* data = static_cast<unsigned char*>(dtAlloc(tile.size, DT_ALLOC_PERM));
-    memcpy(data, tile.data, tile.size);
     dtNavMesh navMesh;
-    if (dtStatusFailed(navMesh.init(data, static_cast<int>(tile.size), DT_TILE_FREE_DATA)))
-    {
-        dtFree(data);
-        return string("Detour가 타일 데이터를 읽지 못했다");
-    }
+    if (optional<string> error = LoadNavMesh(file, agent, navMesh))
+        return error;
 
     Json polygons = Json::array();
     const dtNavMesh& constNavMesh = navMesh;
@@ -275,5 +300,33 @@ optional<string> NavMeshBuild::DumpPolygons(const vector<uint8_t>& file, int32_t
     }
 
     outDocument = Json{ { "MapId", mapId }, { "Polygons", std::move(polygons) } };
+    return nullopt;
+}
+
+optional<string> NavMeshBuild::FindSpawnPointsOffMesh(const vector<uint8_t>& file, const NavMeshFile::AgentSettings& agent,
+    const vector<SpawnPoint>& points, vector<string>& outOffMesh)
+{
+    dtNavMesh navMesh;
+    if (optional<string> error = LoadNavMesh(file, agent, navMesh))
+        return error;
+
+    dtNavMeshQuery query;
+    if (dtStatusFailed(query.init(&navMesh, 64)))
+        return string("navmesh 질의 객체를 만들지 못했다");
+
+    // 걸을 수 있는 면은 에이전트 반경만큼 깎여 있다. 마커가 그 면 위에 서지 않으면 몬스터가 나온 곳에서 길을 찾지 못한다.
+    // 높이는 캡슐 하나만큼 위아래를 찾는다. 그보다 멀리 있는 면(벽의 윗면)은 그 마커의 바닥이 아니다.
+    const dtQueryFilter filter;
+    const float halfExtents[3] = { agent.radius, agent.height, agent.radius };
+    outOffMesh.clear();
+    for (const SpawnPoint& point : points)
+    {
+        const float center[3] = { point.x, point.z, point.y };
+        dtPolyRef ref = 0;
+        float nearest[3];
+        bool isOverPoly = false;
+        if (dtStatusFailed(query.findNearestPoly(center, halfExtents, &filter, &ref, nearest, &isOverPoly)) || ref == 0 || isOverPoly == false)
+            outOffMesh.push_back(point.name);
+    }
     return nullopt;
 }

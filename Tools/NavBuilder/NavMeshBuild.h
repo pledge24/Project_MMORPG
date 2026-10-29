@@ -14,6 +14,15 @@
  */
 namespace NavMeshBuild
 {
+    /** 몬스터 스폰 마커의 위치. name은 오류 메시지에 쓰는 액터 이름이고, z는 바닥의 높이다. */
+    struct SpawnPoint
+    {
+        std::string name;
+        float x = 0.f;
+        float y = 0.f;
+        float z = 0.f;
+    };
+
     /** 맵 하나의 충돌 형상. 삼각형은 언리얼 좌표에서 오른손 법칙으로 바깥을 향한다. */
     struct Geometry
     {
@@ -22,6 +31,8 @@ namespace NavMeshBuild
         std::vector<float> vertices;
         /** 꼭짓점 번호 셋이 삼각형 하나다. */
         std::vector<int32_t> triangles;
+        /** 빌드한 navmesh 위에 있어야 하는 스폰 마커. 레벨에 저장된 순서다. */
+        std::vector<SpawnPoint> spawnPoints;
     };
 
     /** 추출 커맨드렛이 쓴 형상 문서(NavGeometry_<맵 번호>.json)를 읽는다. 형식이 틀리면 사유. */
@@ -35,4 +46,11 @@ namespace NavMeshBuild
      * 파일이 형식에 맞지 않으면 사유.
      */
     std::optional<std::string> DumpPolygons(const std::vector<uint8_t>& file, int32_t mapId, const NavMeshFile::AgentSettings& agent, nlohmann::json& outDocument);
+
+    /**
+     * 스폰 마커 중 걸을 수 있는 면 위에 있지 않은 마커의 이름을 points 순서대로 outOffMesh에 쓴다.
+     * 파일이 형식에 맞지 않으면 사유.
+     */
+    std::optional<std::string> FindSpawnPointsOffMesh(const std::vector<uint8_t>& file, const NavMeshFile::AgentSettings& agent,
+        const std::vector<SpawnPoint>& points, std::vector<std::string>& outOffMesh);
 }

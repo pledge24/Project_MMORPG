@@ -122,7 +122,7 @@
 `Tools/DataBuilder/`의 파이썬 스크립트 하나가 `DesignData/`의 워크북을 읽어 검사하고, 서버 모듈이 읽을 JSON과 그 JSON을 담는
 C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
-2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다.
+2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 2026년 10월 29일(#340)에 스폰 두 표(`SpawnGroup`, `SpawnEntry`)를 더했다.
 2026년 10월 29일(#341)에 NPC와 상점 표(`Npc`, `Shop`)를 더했다.
 설정은 설정 워크북의 초기 진행(`Progress`), 로비(`Lobby`), 상호작용(`Interaction`) 세 시트다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 같은 날(#320)부터 클라이언트 코드는 DataBuilder가 만든 데이터 테이블만 읽는다(아래 「클라이언트가 읽는 법」).
@@ -267,7 +267,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「스폰 그룹 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름, 중첩된 행 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
@@ -281,9 +281,9 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
-세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
+세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이, 스폰 그룹은 `Gamedata::FindSpawnGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
-지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`가 찾는다(아래 「배치 추출」).
+지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`가 찾고, 맵의 스폰 마커는 `Gamedata::GetSpawnPoints`가 돌려준다(아래 「배치 추출」).
 NPC는 `Gamedata::FindNpc`가, 상점은 `FindShop`이 찾는다. NPC의 자리는 `GetNpcPlacements`가, 상호작용 사거리는 `GetInteractionRange`가 돌려준다.
 초기 진행은 `Gamedata::GetInitialProgress`가 생성된 `DesignData::ProgressConfig`로 돌려준다.
 
@@ -385,7 +385,7 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 | 워크북 | 키 | 담는 것 |
 |---|---|---|
 | `Map.xlsx` | `Id` | 맵 이름. 시작 맵과 플레이어의 마지막 위치가 이 번호를 가리킨다 |
-| `Area.xlsx` | `Id` | 소속 맵(`MapId`, `ref:Map`), 이름, 유형(`Type`, `enum:AreaType`), 리스폰 지점 유무, 나오는 몬스터(`Monsters`, `ref[]:Monster`), 최대 몬스터 수, 몬스터 리스폰 시간(`MonsterRespawnSec`) |
+| `Area.xlsx` | `Id` | 소속 맵(`MapId`, `ref:Map`), 이름, 유형(`Type`, `enum:AreaType`), 리스폰 지점 유무 |
 | `Portal.xlsx` | `Id` | 소속 지역(`AreaId`, `parent:Area`), 유형(`Type`, `enum:PortalType`), 도착 지역(`DestAreaId`, `ref:Area`) |
 
 **지역 표와 포털 표에는 공간 열이 없다.** 지역의 경계, 리스폰 지점, 포털의 출발 위치와 반경, 도착 위치와 방향은 레벨의 마커에서
@@ -394,19 +394,45 @@ DataBuilder가 검사하는 규칙은 세 가지다.
 **포털은 `Area.json`의 각 지역 아래 `Portals`에 중첩된다.** 설정 파일에서 `Portal`에 `nest = "Portals"`를 적었다. `Portal.json`은 없다.
 포털 번호는 클라이언트가 포털 이동을 요청할 때 보내는 값이라 옛 번호를 그대로 옮겼다.
 
-DataBuilder가 검사하는 규칙은 아래와 같다.
+**지역 표에는 몬스터 열이 없다.** 나오는 몬스터와 수, 리젠 시간은 스폰 그룹 표에 두고, 몬스터가 나오는 곳은 레벨의 스폰 마커로 정한다(아래 「스폰 그룹 표」).
+2026년 10월 29일(#340)에 지역 표의 `Monsters`, `MaxMonsterCount`, `MonsterRespawnSec`를 걷어 냈다.
 
-- 지역의 `MaxMonsterCount`와 `MonsterRespawnSec`는 0 이상이다
-- `HasRespawnPoint`가 참인 지역(마을)은 정확히 하나다
+DataBuilder가 검사하는 규칙은 하나다. `HasRespawnPoint`가 참인 지역(마을)은 정확히 하나다.
 
-없는 맵, 몬스터, 지역을 가리키는 것은 참조 규칙이 막는다. 서버는 마을이 없을 때만 부팅을 멈춘다(사망한 플레이어를 보낼 곳이 없어서).
+없는 맵과 지역을 가리키는 것은 참조 규칙이 막는다. 서버는 마을이 없을 때만 부팅을 멈춘다(사망한 플레이어를 보낼 곳이 없어서).
 
 **지금은 지역 하나를 룸 하나가 맡고, 지역 번호를 룸 번호로 쓴다.** 그 규칙은 `RoomTransfer`의 `SelectRoomForArea` 한 곳에 있다.
 
 - 포털의 도착 지역은 클라이언트에도 싣는다. 배치 추출이 도착 지점이 그 지역 안에 있는지 검사한다
 - 유형 이름: 옛 지역 유형 `safe zone`과 `hunting field`는 `SAFE_ZONE`과 `HUNTING_FIELD`가 됐다. 옛 포털 유형 `room`은 `AREA`가 됐다. 기획 데이터는 룸을 모르기 때문이다
-- 서버가 읽지 않는 열: 지역 유형과 이름은 대상이 `client`다. 포털 유형과 몬스터 리스폰 시간은 서버로 가지만 아직 읽는 코드가 없다. 사망한 몬스터의 리젠은 백로그에 있다
+- 서버가 읽지 않는 열: 지역 유형과 이름은 대상이 `client`다. 포털 유형은 서버로 가지만 아직 읽는 코드가 없다
 - 맵 1111의 이름: 옛 표에 없어서 「시작의 섬」으로 정했다. 클라이언트 산출물의 `Map.json`에 실린다
+
+### 스폰 그룹 표
+
+스폰 그룹은 레벨의 스폰 마커 하나에 둘 몬스터의 구성이다. 마커는 위치, 반경, 스폰 그룹 번호만 갖고, 수치는 이 표에 둔다(ADR-0025).
+
+| 워크북 | 키 | 담는 것 |
+|---|---|---|
+| `SpawnGroup.xlsx` | `Id` | 마커 하나에 동시에 있는 몬스터의 최대 수(`MaxCount`), 리젠 시간(`RespawnSec`, 초), 기획자용 메모(`Memo`, 대상 `none`) |
+| `SpawnEntry.xlsx` | `GroupId`(`key:parent:SpawnGroup`), `MonsterId`(`key:ref:Monster`) | 그 그룹에서 이 몬스터가 뽑힐 가중치(`Weight`) |
+
+**스폰 항목은 `SpawnGroup.json`의 각 그룹 아래 `Entries`에 중첩된다.** 설정 파일에서 `SpawnEntry`에 `nest = "Entries"`를 적었다. `SpawnEntry.json`은 없다.
+모든 열이 대상 `server`라 클라이언트 산출물은 없다. 배치 추출은 마커가 가리키는 번호를 서버 산출물(`Server/GameServer/Game/Data/Generated/SpawnGroup.json`)에서 읽는다.
+
+서버는 마커마다 그 그룹의 `MaxCount`만큼 몬스터를 마커의 반경 안에 둔다. 한 마리를 둘 때마다 가중치에 비례해 종류를 뽑는다.
+사망한 몬스터는 `RespawnSec` 뒤에 같은 마커의 반경 안에 다시 나온다.
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- `MaxCount`와 `RespawnSec`는 0 이상이다
+- 그룹에 스폰 항목이 하나 이상 있다
+- 항목의 `Weight`는 1 이상이다
+
+없는 몬스터를 가리키는 항목은 참조 규칙이 막는다.
+
+2026년 10월 29일(#340)에 옛 지역 표의 사냥터 셋을 그룹 셋(1 초급, 2 중급, 3 상급)으로 옮겼다. 그룹마다 옛 표의 세 종류를 가중치 1로 두었다.
+사냥터마다 마커 둘에 `MaxCount` 5라서 옛 표처럼 사냥터마다 열 마리가 나온다. 리젠 시간은 옛 표의 10초다.
 
 ### NPC와 상점 표
 
@@ -595,7 +621,7 @@ UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한�
 ### 로딩
 
 서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표,
-드롭 그룹 표, 레벨 두 표, 맵 표, 지역 표, 상점 표, NPC 표, 초기 진행 설정, 상호작용 설정, 데이터 버전을, `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로
+드롭 그룹 표, 스폰 그룹 표, 레벨 두 표, 맵 표, 지역 표, 상점 표, NPC 표, 초기 진행 설정, 상호작용 설정, 데이터 버전을, `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로
 `Lobby/Data/Generated/`의 로비 설정을 읽는다. 둘 다 생성된 `Parse<표>`로 읽고, 모든 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`와 `Get*`으로 생성된 행만 읽는다.
 
@@ -646,11 +672,14 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 | `AP1RespawnPointMarker` | 리스폰 지점이 있는 지역마다 하나 | 위치와 방향. 소속 지역은 추출이 위치로 정한다 |
 | `AP1PortalArrivalMarker` | 포털마다 하나. 도착 지역의 맵 레벨에 둔다 | 위치, 방향, 포털 번호(`PortalId`) |
 | `AP1Portal`(마커가 아니다) | 포털 표의 포털마다 하나 | 포털 번호, 서버가 받아 주는 반경(`UseRadius`, 에디터 전용 속성) |
+| `AP1MonsterSpawnMarker` | 몬스터가 나오는 곳마다 하나. 수는 정해져 있지 않다 | 위치(바닥), 반경(`Radius`, cm), 스폰 그룹 번호(`SpawnGroupId`) |
 | `AP1NpcMarker` | NPC 표의 NPC마다 하나. 어느 맵 레벨이든 된다 | 바닥의 위치, 방향, NPC 번호(`NpcId`) |
 
 - 상자 모양의 마커(`AP1MapMarker`, `AP1AreaVolume`)는 액터의 위치가 상자 바닥의 중심이다. 상자의 크기는 `Bounds` 컴포넌트의 Box Extent로 정한다. 회전하지 않는다
 - 포털은 클라이언트에도 보여야 하므로 레벨에 남는 액터다. 위치와 반경만 추출하고, 도착 지점은 마커로 따로 둔다
 - 경계 벽(`AP1FieldBoundaryWall`)은 에디터 전용 속성 `AreaVolume`이 가리키는 지역 볼륨에 맞춰 벽 넷을 세운다. 볼륨을 옮기거나 키우면 벽도 다시 맞춰진다
+- 스폰 마커의 반경은 `Radius` 하나로 정하고 액터의 크기는 보지 않는다. 반경은 그 그룹 몬스터의 추적 한계(`ChasingMaxRange`)보다 작아야 한다. 추적 한계를 스폰 지점에서 재기 때문이다
+- 몬스터는 스폰 마커의 반경 안에서 나오고 배회한다. 마커가 어느 지역에 있는지는 보지 않는다
 
 ### 검사
 
@@ -667,6 +696,8 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 - 포털 도착 지점이 포털마다 하나이고, 포털 표의 도착 지역 안에 있다
 - NPC 마커의 NPC 번호가 NPC 표에 있고, NPC 표의 NPC마다 모든 레벨을 통틀어 마커가 하나다. 지역은 보지 않는다
 - 경계 벽이 그 레벨의 지역 볼륨을 가리키고, 맞춘 위치와 크기가 볼륨과 같다
+- 스폰 마커가 맵 경계 안에 있고, 반경이 0보다 크고, 스폰 그룹 번호가 스폰 그룹 표에 있다. 스폰 그룹 표는 서버 산출물의 `SpawnGroup.json`에서 읽는다
+- 스폰 마커가 걸을 수 있는 바닥 위에 있는지는 navmesh를 빌드한 뒤에야 알 수 있어 navmesh 빌드 도구가 검사한다(아래 「navmesh 빌드」)
 
 포함 판정에서 경계 위의 점은 안쪽이다. 서버의 `PlaneBounds`와 같다. 높이는 보지 않는다.
 
@@ -674,11 +705,12 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 
 | 폴더 | 파일 | 내용 |
 |---|---|---|
-| `Server/GameServer/Game/Data/Extracted/` | `Placement_<맵 번호>.json` | 맵의 경계와 셀 크기, 지역(`Areas`), 리스폰 지점(`RespawnPoints`), 포털(`Portals`), NPC(`Npcs`) |
+| `Server/GameServer/Game/Data/Extracted/` | `Placement_<맵 번호>.json` | 맵의 경계와 셀 크기, 지역(`Areas`), 리스폰 지점(`RespawnPoints`), 포털(`Portals`), 스폰 마커(`SpawnPoints`), NPC(`Npcs`) |
 | `Server/GameServer/Game/Data/Extracted/` | `NavAgent.json` | navmesh의 에이전트 설정. 아래 「navmesh 빌드」 |
 | `P1/Saved/NavExtract/` (추적하지 않음) | `NavGeometry_<맵 번호>.json` | navmesh 빌드 도구가 읽는 충돌 형상. 아래 「navmesh 빌드」 |
 
 - 한 행이 한 줄이고, 행은 번호 순서다(리스폰 지점은 지역 번호 순서). 줄바꿈은 LF다
+- 스폰 마커에는 번호가 없어 스폰 그룹 번호, X, Y 순서로 정렬한다. 서버의 룸이 이 순서의 번호로 마커를 가리키므로 레벨에 놓인 순서와 무관하게 정한다
 - 좌표는 소수점 둘째 자리에서 반올림한다. 옮기지 않은 마커가 float 오차로 diff를 만들지 않는다
 - 포털 행은 출발 위치(`Src*`), 반경, 도착 위치(`Dest*`)와 방향을 함께 싣는다. 파일은 포털이 놓인 맵의 것이다
 - **산출물 폴더에 사람이 쓴 파일을 두지 않는다.** 커맨드렛은 맵 표에 없는 맵의 `Placement_*.json`을 지운다. DataBuilder 산출물 폴더(`Generated/`)에는 쓰지 않는다
@@ -689,12 +721,13 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 대조하고, 위치와 겹침은 추출이 이미 검사했으므로 다시 보지 않는다. 아래 하나라도 어기면 서버가 뜨지 않는다.
 
 - 배치 데이터의 맵, 지역, 포털이 기획 데이터의 그 맵에 있다. 리스폰 지점은 리스폰 지점이 있는 지역의 것이다. NPC는 NPC 표에 있다
+- 스폰 마커의 스폰 그룹이 스폰 그룹 표에 있고, 마커의 반경이 그 그룹 몬스터 모두의 `ChasingMaxRange`보다 작다. 반경이 한계 이상이면 반경 끝에서 대상을 감지한 몬스터가 쫓지 않고 곧바로 돌아간다
 - 맵 표의 맵마다, 지역 표의 지역마다, 포털 표의 포털마다, NPC 표의 NPC마다 배치 데이터가 있다. 마을에는 리스폰 지점이 있다
 
 룸은 시작할 때 자기 맵의 NPC를 마커 자리에 엔티티로 세운다. NPC의 높이는 마커의 바닥 높이이고, 클라이언트가 캡슐 반높이만큼 올려 세운다.
 
 룸의 경계, 룸 배정, 이동 판정의 룸 경계는 지역의 배치 데이터(`AreaPlacement::bounds`)를 쓴다. 경계 계산과 포함 판정은 `Utils/PlaneBounds.h` 한 곳에 있다.
-포털 판정과 도착 위치는 포털의 배치 데이터를, 마을 리스폰은 마을의 리스폰 지점을 쓴다. 맵의 경계와 셀 크기는 읽어서 설치만 하고, 룸을 맵의 사본으로 바꾸는
+포털 판정과 도착 위치는 포털의 배치 데이터를, 마을 리스폰은 마을의 리스폰 지점을 쓴다. 몬스터 스폰과 리젠, 배회, 추적 한계는 스폰 마커를 쓴다(`Game/Room/MonsterSpawner`). 맵의 경계와 셀 크기는 읽어서 설치만 하고, 룸을 맵의 사본으로 바꾸는
 작업(#337)이 쓴다.
 
 테스트는 `Server/GameServerTests/TestAreaTables.h`의 `TestArea`로 지역 행과 그 배치 데이터를 함께 넣는다.
@@ -730,6 +763,10 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 도구는 언리얼 좌표(cm, z가 위)를 Recast의 y가 위인 좌표로 옮겨 맵 전체를 타일 하나로 빌드한다. 복셀은 가로 10cm, 높이 5cm이고,
 매개변수는 `Tools/NavBuilder/NavMeshBuild.cpp` 첫머리에 있다. 걸을 수 있는 면은 에이전트 반경만큼 깎이고, 바닥보다 복셀 한두 칸(5~10cm) 위에 놓인다.
 
+**형상 문서에 실린 스폰 마커가 걸을 수 있는 면 위에 없으면 그 맵의 빌드가 실패한다.** 걸을 수 있는 면은 에이전트 반경만큼 깎이므로 벽에 바짝 붙인 마커도 걸린다.
+높이는 캡슐 하나만큼 위아래를 본다. 추출 커맨드렛이 레벨의 스폰 마커를 형상 문서의 `SpawnPoints`(액터 이름과 위치)로 넘긴다.
+이 검사가 실패하면 배치 데이터는 이미 새 마커로 바뀌어 있고 navmesh만 그대로다. 마커를 옮기고 추출을 다시 돌린다.
+
 지금 레벨(`L_InGameMap`)은 삼각형 2,970개가 폴리곤 259개가 된다. 경계 벽 윗면과 화톳불 윗면에도 폴리곤이 생기지만 바닥과 이어지지 않아 걸어서 닿지 못한다.
 
 ### 산출물
@@ -761,6 +798,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 
 룸은 맵의 navmesh를 함께 읽고 질의 객체 `NavQuery`를 하나씩 둔다. 질의는 길찾기(`FindPath`), 표면을 따른 이동(`MoveAlongSurface`), 직선 통과(`Raycast`),
 바닥 높이(`FindFloorHeight`)다. 위치의 z는 캡슐 중심이다. 이동 판정(`MoveValidation`)이 바닥 높이와 표면 이동을 쓴다.
+몬스터는 경로 추종 부품(`Game/Navigation/PathFollowingComponent`)이 길찾기 결과를 따라 옮긴다. navmesh가 없는 룸에서는 목적지로 곧장 간다.
 
 테스트는 `Server/GameServerTests/TestNavLevel.h`의 테스트 레벨(벽 하나와 경사로 하나)을 빌드 도구로 빌드해 쓴다. navmesh를 설치하는 테스트는
 `ScopedNavMeshes`로 설치하고 끝에 비운다. navmesh가 없는 룸은 지형을 보지 않으므로, 다른 테스트의 룸은 지금처럼 평면만 판정한다.

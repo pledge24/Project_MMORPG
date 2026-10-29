@@ -63,7 +63,7 @@ workbook = "DropEntry.xlsx"
 modules = ["game"]
 nest = "Entries"
 
-# 맵은 클라이언트가 로드하는 레벨이고, 지역은 맵 안의 공간이다. 서버는 지역마다 룸을 만든다.
+# 맵은 클라이언트가 로드하는 레벨이고, 지역은 맵 안의 공간이다. 서버는 맵마다 룸을 만든다.
 [tables.Map]
 workbook = "Map.xlsx"
 modules = ["game"]
@@ -87,6 +87,17 @@ modules = ["game"]
 [tables.Npc]
 workbook = "Npc.xlsx"
 modules = ["game"]
+
+# 레벨의 스폰 마커가 가리키는 몬스터 구성. 마커마다 그룹의 최대 수만큼 몬스터를 두고, 사망하면 리젠 시간 뒤에 다시 둔다.
+[tables.SpawnGroup]
+workbook = "SpawnGroup.xlsx"
+modules = ["game"]
+
+# 스폰 항목은 SpawnGroup.json의 각 그룹 아래 Entries에 싣는다.
+[tables.SpawnEntry]
+workbook = "SpawnEntry.xlsx"
+modules = ["game"]
+nest = "Entries"
 
 # 값이 하나뿐인 설정. 설정 워크북의 시트 하나가 구조체 하나다.
 # 새 캐릭터가 첫 게임 입장에서 갖는 진행. 시작 맵은 맵 표를 참조한다.
