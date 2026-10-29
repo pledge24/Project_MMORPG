@@ -116,6 +116,7 @@ P1/Source/
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
 | `Game/Chat/` | 채팅 줄 `USTRUCT`, 받은 채팅을 보관하고 채팅을 보내는 채팅 서브시스템, 채팅의 패킷 변환 |
+| `Game/Channel/` | 채널 목록 줄 `USTRUCT`, 지금 채널과 채널 목록을 보관하고 채널 목록과 채널 변경 요청을 보내는 채널 서브시스템 |
 
 **`Sync/`가 엔티티 대응 관리와 스폰을 함께 담는다.** 서버가 보낸 엔티티를 액터로 세우는 일과 그
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
@@ -174,14 +175,14 @@ P1/Source/
 ### 3.3 의존 방향
 
 도메인끼리 서로 참조하면 경계가 무너진다. 각 폴더는 아래 표에 적힌 곳만 부른다. 게임 도메인은
-`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`, `Game/QuickSlots`, `Game/Chat`이다.
+`Game/Combat`, `Game/Inventory`, `Game/Equipment`, `Game/Progress`, `Game/QuickSlots`, `Game/Chat`, `Game/Channel`이다.
 
 | 폴더 | 부를 수 있는 곳 |
 | --- | --- |
 | `Core/`, `UI/` (배선) | 서로, 그리고 아래의 모든 폴더 |
 | `Auth/` | `Network/`의 설정(`P1NetworkSettings.h`), `Utils/` |
 | `Lobby/` | `Network/`의 송신 창구와 생성된 핸들러 헤더, 세션(`PacketSession.h`), `Game/Progress`(받은 입장 응답을 넘기는 패킷 핸들러), `Utils/` |
-| `Network/` | `Sync/`, `Game/Progress`와 `Game/Chat`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
+| `Network/` | `Sync/`, `Game/Progress`와 `Game/Chat`과 `Game/Channel`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
 | `Game/Entities` | 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |

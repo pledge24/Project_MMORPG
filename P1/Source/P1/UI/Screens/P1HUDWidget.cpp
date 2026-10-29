@@ -4,6 +4,7 @@
 #include "Network/Common.pb.h"
 #include "Core/P1GameInstance.h"
 #include "Game/Progress/P1MyPlayerData.h"
+#include "Game/Channel/P1ChannelSubsystem.h"
 
 void UP1HUDWidget::NativeConstruct()
 {
@@ -31,7 +32,25 @@ void UP1HUDWidget::NativeConstruct()
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_MAX_EXP].AddUObject(this, &UP1HUDWidget::UpdateMaxExp);
             MyPlayerData->OnStatChangedMappings[Protocol::STAT_TYPE_EXP].AddUObject(this, &UP1HUDWidget::UpdateCurExp);
         }
+
+        if (UP1ChannelSubsystem* Channels = GameInstance->GetSubsystem<UP1ChannelSubsystem>())
+        {
+            UpdateChannel(Channels->GetChannel());
+            Channels->OnChannelChanged.AddUObject(this, &UP1HUDWidget::UpdateChannel);
+        }
     }
+}
+
+void UP1HUDWidget::NativeDestruct()
+{
+    // 내 플레이어 데이터의 구독은 베이스가 뗀다.
+    if (auto* GameInstance = GetP1GameInstance())
+    {
+        if (UP1ChannelSubsystem* Channels = GameInstance->GetSubsystem<UP1ChannelSubsystem>())
+            Channels->RemoveListener(this);
+    }
+
+    Super::NativeDestruct();
 }
 
 void UP1HUDWidget::UpdateLevel(int32 Level)
@@ -82,4 +101,12 @@ void UP1HUDWidget::SetBattleModeTxt(bool battleMode)
         FString Message = TEXT("전투 모드: 비활성화");
         BattleMode_txt->SetText(FText::FromString(Message));
     }
+}
+
+void UP1HUDWidget::UpdateChannel(int32 Channel)
+{
+    if (Channel_txt == nullptr)
+        return;
+
+    Channel_txt->SetText(Channel > 0 ? FText::FromString(FString::Printf(TEXT("%d채널"), Channel)) : FText::GetEmpty());
 }
