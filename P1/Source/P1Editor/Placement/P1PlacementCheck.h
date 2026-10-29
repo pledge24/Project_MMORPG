@@ -36,7 +36,7 @@ public:
         FPlacedBox Box;
     };
 
-    /** 위치와 방향만 있는 마커와 포털. Id는 포털 번호이고, Radius는 포털만 쓴다. */
+    /** 위치와 방향만 있는 마커와 포털. Id는 포털이나 NPC의 번호이고, Radius는 포털만 쓴다. */
     struct FPlacedPoint
     {
         FString Name;
@@ -67,6 +67,8 @@ public:
         /** 포털 도착 지점. 다른 맵으로 가는 포털의 도착 지점은 도착 맵의 레벨에 있다. */
         TArray<FPlacedPoint> Arrivals;
         TArray<FPlacedWall> Walls;
+        /** NPC 마커. Id가 NPC 번호다. */
+        TArray<FPlacedPoint> Npcs;
     };
 
     /** 검사가 대조하는 기획 데이터의 번호. */
@@ -88,6 +90,7 @@ public:
         TSet<int32> MapIds;
         TMap<int32, FArea> Areas;
         TMap<int32, FPortal> Portals;
+        TSet<int32> NpcIds;
     };
 
     struct FResult
@@ -101,10 +104,10 @@ public:
     };
 
     /**
-     * 클라이언트 기획 데이터의 맵 표와 지역 표(포털이 중첩된) JSON에서 번호를 읽는다.
+     * 클라이언트 기획 데이터의 맵 표, 지역 표(포털이 중첩된), NPC 표 JSON에서 번호를 읽는다.
      * 형식이 틀리면 OutErrors에 사유를 더하고 false.
      */
-    static bool ParseDesignData(const FString& MapJson, const FString& AreaJson, FDesignData& OutDesign, TArray<FString>& OutErrors);
+    static bool ParseDesignData(const FString& MapJson, const FString& AreaJson, const FString& NpcJson, FDesignData& OutDesign, TArray<FString>& OutErrors);
 
     /** 추출할 모든 맵의 레벨을 함께 검사한다. 다른 맵으로 가는 포털의 도착 지점까지 보려고 레벨을 한 번에 받는다. */
     static FResult Run(const TArray<FLevel>& Levels, const FDesignData& Design);

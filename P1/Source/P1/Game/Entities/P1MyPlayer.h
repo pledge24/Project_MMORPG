@@ -83,7 +83,7 @@ private:
 
     //~ Movement
 public:
-    /** 이동 입력을 캐릭터에 반영할 수 있으면 true. 공격 중이면 false. */
+    /** 이동 입력을 캐릭터에 반영할 수 있으면 true. 공격 중이거나 상점처럼 화면이 이동 입력을 막았으면 false. */
     bool CanInputMovement() const;
 
     /** 이동 입력의 원본 값. 입력이 없으면 0 벡터. */
@@ -104,7 +104,13 @@ private:
     float DesiredMoveDirectionYaw = 0.f;
 
     //~ Combat
+public:
+    /** 비전투 모드에서 공격 키(왼쪽 클릭)를 눌렀다. 컨트롤러가 NPC 상호작용에 잇는다. */
+    DECLARE_MULTICAST_DELEGATE(FOnNonCombatClick);
+    FOnNonCombatClick OnNonCombatClick;
+
 protected:
+    /** 전투 모드면 일반 공격을, 아니면 OnNonCombatClick을 알린다. */
     void NormalAttack(const FInputActionValue& Value);
 
     //~ Battle Mode

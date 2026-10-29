@@ -18,6 +18,7 @@ namespace P1PlacementCheckTest
     constexpr int32 MAP_ID = 1111;
     constexpr int32 TOWN_ID = 10;
     constexpr int32 FIELD_ID = 20;
+    constexpr int32 NPC_ID = 7;
 
     FP1PlacementCheck::FPlacedBox MakeBox(const FString& Name, double CenterX, double CenterY, double HalfExtentX, double HalfExtentY)
     {
@@ -71,6 +72,8 @@ namespace P1PlacementCheckTest
         Level.Arrivals.Add(MakePoint(TEXT("FieldArrival"), 11, -8000.0, 10000.0, 180.0));
         Level.Arrivals.Add(MakePoint(TEXT("TownArrival"), 21, -1000.0, 1000.0, 0.0));
 
+        Level.Npcs.Add(MakePoint(TEXT("ShopNpc"), NPC_ID, 1180.0, 1100.0, -90.0));
+
         Level.Walls.Add(MakeWall(TEXT("TownWall"), TOWN_ID, 0.0, 0.0, 1500.0));
         Level.Walls.Add(MakeWall(TEXT("FieldWall"), FIELD_ID, -10000.0, 10000.0, 2500.0));
         return Level;
@@ -84,6 +87,7 @@ namespace P1PlacementCheckTest
         Design.Areas.Add(FIELD_ID, { MAP_ID, false });
         Design.Portals.Add(11, { TOWN_ID, FIELD_ID });
         Design.Portals.Add(21, { FIELD_ID, TOWN_ID });
+        Design.NpcIds.Add(NPC_ID);
         return Design;
     }
 
@@ -99,6 +103,9 @@ namespace P1PlacementCheckTest
         TEXT("\"Portals\":[\n")
         TEXT("{\"Id\":11,\"SrcX\":-1200.0,\"SrcY\":1000.0,\"SrcZ\":0.0,\"Radius\":500.0,\"DestX\":-8000.0,\"DestY\":10000.0,\"DestZ\":0.0,\"DestYaw\":180.0},\n")
         TEXT("{\"Id\":21,\"SrcX\":-7750.0,\"SrcY\":10000.0,\"SrcZ\":0.0,\"Radius\":500.0,\"DestX\":-1000.0,\"DestY\":1000.0,\"DestZ\":0.0,\"DestYaw\":0.0}\n")
+        TEXT("],\n")
+        TEXT("\"Npcs\":[\n")
+        TEXT("{\"Id\":7,\"X\":1180.0,\"Y\":1100.0,\"Z\":0.0,\"Yaw\":-90.0}\n")
         TEXT("]}\n");
 }
 
@@ -229,6 +236,35 @@ bool FP1PlacementCheckTest::RunTest(const FString& Parameters)
         FP1PlacementCheck::FLevel Level = MakeLevel();
         Level.Areas[0].Box.bRotated = true;
         ExpectRejected(TEXT("회전한 지역 볼륨"), Level, MakeDesign(), { TEXT("TownVolume"), TEXT("회전") });
+    }
+
+    // 10) NPC 마커는 NPC 표의 NPC를 가리키고, NPC마다 모든 레벨을 통틀어 하나다.
+    {
+        FP1PlacementCheck::FLevel Level = MakeLevel();
+        Level.Npcs[0].Id = 99;
+        ExpectRejected(TEXT("없는 NPC 번호"), Level, MakeDesign(), { TEXT("ShopNpc"), TEXT("NPC 99") });
+
+        Level = MakeLevel();
+        Level.Npcs.Add(MakePoint(TEXT("ShopNpc2"), NPC_ID, 500.0, 500.0));
+        ExpectRejected(TEXT("두 번 놓인 NPC"), Level, MakeDesign(), { TEXT("ShopNpc2"), TEXT("NPC 7") });
+
+        Level = MakeLevel();
+        Level.Npcs.Empty();
+        ExpectRejected(TEXT("놓이지 않은 NPC"), Level, MakeDesign(), { TEXT("NPC 7"), TEXT("NPC 마커") });
+
+        Level = MakeLevel();
+        Level.Npcs[0].Location = FVector(5000.0, 0.0, 0.0);
+        ExpectRejected(TEXT("맵 경계 밖의 NPC"), Level, MakeDesign(), { TEXT("ShopNpc"), TEXT("맵 경계 밖") });
+    }
+
+    // 11) 클라이언트 기획 데이터에서 NPC 번호를 읽는다.
+    {
+        FP1PlacementCheck::FDesignData Design;
+        TArray<FString> Errors;
+        const bool bParsed = FP1PlacementCheck::ParseDesignData(TEXT("[{\"RowName\":\"1111\",\"Id\":1111}]"),
+            TEXT("[]"), TEXT("[{\"RowName\":\"7\",\"Id\":7,\"Name\":\"상인\",\"ShopId\":1}]"), Design, Errors);
+        TestTrue(FString::Printf(TEXT("NPC 표를 읽는다. 오류: %s"), *FString::Join(Errors, TEXT("\n"))), bParsed);
+        TestTrue(TEXT("NPC 7"), Design.NpcIds.Contains(NPC_ID));
     }
 
     return true;

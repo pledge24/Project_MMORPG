@@ -2,9 +2,15 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Game/Entities/P1MyPlayer.h"
+#include "Game/Interaction/P1NpcInteractionComponent.h"
 #include "Game/Progress/P1ItemActions.h"
 #include "Game/Progress/P1MyPlayerData.h"
 #include "UI/P1ScreenSubsystem.h"
+
+AP1InGamePlayerController::AP1InGamePlayerController()
+{
+    NpcInteraction = CreateDefaultSubobject<UP1NpcInteractionComponent>(TEXT("NpcInteraction"));
+}
 
 void AP1InGamePlayerController::BeginPlay()
 {
@@ -68,6 +74,10 @@ void AP1InGamePlayerController::OnPossess(APawn* InPawn)
     {
         MyPlayer->OnBattleModeChanged.AddUObject(Screens, &UP1ScreenSubsystem::ShowBattleMode);
     }
+
+    // 비전투 모드의 왼쪽 클릭은 조준한 NPC와의 상호작용이다.
+    if (MyPlayer)
+        MyPlayer->OnNonCombatClick.AddUObject(NpcInteraction.Get(), &UP1NpcInteractionComponent::Interact);
 }
 
 bool AP1InGamePlayerController::IsGameMenuKey(const FKey& Key) const
@@ -104,6 +114,13 @@ void AP1InGamePlayerController::OnToggleInventoryWidget()
 
 void AP1InGamePlayerController::OnToggleGameMenu()
 {
+    // 상점이 열려 있으면 메뉴 키는 상점을 닫는다.
+    if (NpcInteraction->IsShopOpen())
+    {
+        NpcInteraction->CloseShop();
+        return;
+    }
+
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->ToggleGameMenu();
 }
@@ -119,22 +136,22 @@ UP1ScreenSubsystem* AP1InGamePlayerController::GetScreens() const
     return ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetLocalPlayer());
 }
 
-void AP1InGamePlayerController::OpenShopWindow()
+void AP1InGamePlayerController::ShowInteractionPrompt(const FText& Prompt)
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
-        Screens->OpenWindow(EP1WidgetType::WIDGET_SHOP);
+        Screens->ShowInteractionPrompt(Prompt);
+}
+
+void AP1InGamePlayerController::OpenShopWindow(int64 NpcEntityId, int32 ShopId)
+{
+    if (UP1ScreenSubsystem* Screens = GetScreens())
+        Screens->OpenShop(NpcEntityId, ShopId);
 }
 
 void AP1InGamePlayerController::CloseShopWindow()
 {
     if (UP1ScreenSubsystem* Screens = GetScreens())
-        Screens->CloseWindow(EP1WidgetType::WIDGET_SHOP);
-}
-
-void AP1InGamePlayerController::ShowShopWarning(const FText& Message)
-{
-    if (UP1ScreenSubsystem* Screens = GetScreens())
-        Screens->DisplayWarningText(Message);
+        Screens->CloseShop();
 }
 
 void AP1InGamePlayerController::OnUseQuickSlot(int32 QuickSlotIndex)

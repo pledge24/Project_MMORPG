@@ -72,7 +72,8 @@ namespace
     }
 
     FString WriteFile(const FLevel& Level, const FP1PlacementCheck::FPlacedMap& Map, const TArray<const FPlacedArea*>& Areas,
-        const TArray<TPair<int32, const FPlacedPoint*>>& RespawnPoints, const TArray<TPair<const FPlacedPoint*, const FPlacedPoint*>>& Portals)
+        const TArray<TPair<int32, const FPlacedPoint*>>& RespawnPoints, const TArray<TPair<const FPlacedPoint*, const FPlacedPoint*>>& Portals,
+        const TArray<const FPlacedPoint*>& Npcs)
     {
         const FPlacedBox& Bounds = Map.Bounds;
         const FString Header = JoinFields({
@@ -118,8 +119,18 @@ namespace
             }));
         }
 
-        return FString::Printf(TEXT("{%s,\n\"Areas\":%s,\n\"RespawnPoints\":%s,\n\"Portals\":%s}\n"),
-            *Header, *JoinRows(AreaRows), *JoinRows(RespawnRows), *JoinRows(PortalRows));
+        TArray<FString> NpcRows;
+        for (const FPlacedPoint* Npc : Npcs)
+        {
+            NpcRows.Add(JoinFields({
+                { TEXT("Id"), FString::FromInt(Npc->Id) },
+                { TEXT("X"), FormatNumber(Npc->Location.X) }, { TEXT("Y"), FormatNumber(Npc->Location.Y) },
+                { TEXT("Z"), FormatNumber(Npc->Location.Z) }, { TEXT("Yaw"), FormatNumber(Npc->Yaw) },
+            }));
+        }
+
+        return FString::Printf(TEXT("{%s,\n\"Areas\":%s,\n\"RespawnPoints\":%s,\n\"Portals\":%s,\n\"Npcs\":%s}\n"),
+            *Header, *JoinRows(AreaRows), *JoinRows(RespawnRows), *JoinRows(PortalRows), *JoinRows(NpcRows));
     }
 
     //~ 기획 데이터
@@ -145,7 +156,7 @@ namespace
     }
 }
 
-bool FP1PlacementCheck::ParseDesignData(const FString& MapJson, const FString& AreaJson, FDesignData& OutDesign, TArray<FString>& OutErrors)
+bool FP1PlacementCheck::ParseDesignData(const FString& MapJson, const FString& AreaJson, const FString& NpcJson, FDesignData& OutDesign, TArray<FString>& OutErrors)
 {
     const int32 ErrorCount = OutErrors.Num();
 
@@ -194,6 +205,17 @@ bool FP1PlacementCheck::ParseDesignData(const FString& MapJson, const FString& A
         }
     }
 
+    TArray<TSharedPtr<FJsonValue>> NpcRows;
+    if (ReadRows(NpcJson, TEXT("Npc.json"), NpcRows, OutErrors))
+    {
+        for (int32 Index = 0; Index < NpcRows.Num(); ++Index)
+        {
+            int32 NpcId = 0;
+            if (ReadInt(NpcRows[Index]->AsObject(), TEXT("Id"), FString::Printf(TEXT("Npc.json %d번째 행"), Index + 1), NpcId, OutErrors))
+                OutDesign.NpcIds.Add(NpcId);
+        }
+    }
+
     return OutErrors.Num() == ErrorCount;
 }
 
@@ -206,6 +228,7 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
     // 모든 레벨의 지역 볼륨과 도착 지점. 다른 맵으로 가는 포털의 도착 지점이 도착 지역 안인지 보려고 레벨을 넘어 모은다.
     TMap<int32, TPair<const FLevel*, const FPlacedArea*>> AreaById;
     TMap<int32, TPair<const FLevel*, const FPlacedPoint*>> ArrivalById;
+    TMap<int32, const FPlacedPoint*> NpcById;
     TSet<int32> ExtractedMapIds;
 
     // 맵마다 산출물에 들어갈 행. 레벨을 다 본 뒤 오류가 없을 때만 쓴다.
@@ -216,6 +239,7 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
         TArray<const FPlacedArea*> Areas;
         TArray<TPair<int32, const FPlacedPoint*>> RespawnPoints;
         TArray<const FPlacedPoint*> Portals;
+        TArray<const FPlacedPoint*> Npcs;
     };
     TArray<FMapRows> MapRows;
 
@@ -385,6 +409,21 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
                 ArrivalById.Add(Arrival.Id, { &Level, &Arrival });
         }
 
+        // NPC 마커. 서버가 NPC 번호로 상점을 찾으므로 NPC마다 모든 레벨을 통틀어 하나다. 지역은 보지 않는다.
+        for (const FPlacedPoint& Npc : Level.Npcs)
+        {
+            CheckInsideMap(Npc.Name, Npc.Location);
+            if (Design.NpcIds.Contains(Npc.Id) == false)
+                Error(FString::Printf(TEXT("%s %s: NPC %d이 NPC 표에 없다"), *LevelName, *Npc.Name, Npc.Id));
+            else if (const FPlacedPoint* const* Other = NpcById.Find(Npc.Id))
+                Error(FString::Printf(TEXT("%s %s: NPC %d의 마커가 %s와 둘이다"), *LevelName, *Npc.Name, Npc.Id, *(*Other)->Name));
+            else
+            {
+                NpcById.Add(Npc.Id, &Npc);
+                Rows.Npcs.Add(&Npc);
+            }
+        }
+
         // 경계 벽은 지역 볼륨의 크기로 맞춘다. 볼륨을 옮기고 벽을 다시 맞추지 않으면 클라이언트가 서버와 다른 곳에서 막힌다.
         for (const FP1PlacementCheck::FPlacedWall& Wall : Level.Walls)
         {
@@ -410,6 +449,15 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
     {
         if (ExtractedMapIds.Contains(MapId) == false)
             Error(FString::Printf(TEXT("맵 %d의 레벨이 없다. 프로젝트 설정 「P1 Game Data」의 맵 표(MapLevels)에 레벨을 더한다"), MapId));
+    }
+
+    // NPC 표의 NPC마다 어느 레벨에 마커가 있어야 서버가 그 NPC를 세운다.
+    TArray<int32> DesignNpcIds = Design.NpcIds.Array();
+    DesignNpcIds.Sort();
+    for (int32 NpcId : DesignNpcIds)
+    {
+        if (NpcById.Contains(NpcId) == false)
+            Error(FString::Printf(TEXT("NPC %d의 NPC 마커가 어느 레벨에도 없다"), NpcId));
     }
 
     // 포털의 도착 지점은 도착 지역의 맵 레벨에서 그 지역 안에 있어야 한다.
@@ -444,12 +492,13 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
         Rows.Areas.Sort([](const FPlacedArea& A, const FPlacedArea& B) { return A.AreaId < B.AreaId; });
         Rows.RespawnPoints.Sort([](const TPair<int32, const FPlacedPoint*>& A, const TPair<int32, const FPlacedPoint*>& B) { return A.Key < B.Key; });
         Rows.Portals.Sort([](const FPlacedPoint& A, const FPlacedPoint& B) { return A.Id < B.Id; });
+        Rows.Npcs.Sort([](const FPlacedPoint& A, const FPlacedPoint& B) { return A.Id < B.Id; });
 
         TArray<TPair<const FPlacedPoint*, const FPlacedPoint*>> Portals;
         for (const FPlacedPoint* Portal : Rows.Portals)
             Portals.Add({ Portal, ArrivalById[Portal->Id].Value });
 
-        Result.Files.Add(Rows.Level->MapId, WriteFile(*Rows.Level, *Rows.Map, Rows.Areas, Rows.RespawnPoints, Portals));
+        Result.Files.Add(Rows.Level->MapId, WriteFile(*Rows.Level, *Rows.Map, Rows.Areas, Rows.RespawnPoints, Portals, Rows.Npcs));
     }
 
     return Result;
