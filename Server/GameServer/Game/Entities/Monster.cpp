@@ -19,6 +19,7 @@ bool Monster::Init(const SpawnParams& params)
         return false;
 
     SetPosInfo(params.spawnPos);
+    _wanderBounds = params.wanderBounds;
 
     const int32 templateId = params.templateId;
     const DesignData::MonsterRow* monsterRow = Gamedata::FindMonster(templateId);

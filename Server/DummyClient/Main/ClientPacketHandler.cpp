@@ -133,6 +133,16 @@ bool Handle_S_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::S_RETURN_TO_L
 	return false;
 }
 
+bool Handle_S_CHANNEL_LIST(PacketSessionRef& session, Protocol::S_CHANNEL_LIST& pkt)
+{
+	return false;
+}
+
+bool Handle_S_CHANGE_CHANNEL(PacketSessionRef& session, Protocol::S_CHANGE_CHANNEL& pkt)
+{
+	return false;
+}
+
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
 	return true;

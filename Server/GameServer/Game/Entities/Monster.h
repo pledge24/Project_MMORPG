@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/Entities/Creature.h"
+#include "Utils/PlaneBounds.h"
 
 class MonsterAIComponent;
 
@@ -8,6 +9,8 @@ struct MonsterSpawnParams : public Creature::SpawnParams
 {
     int32 templateId = 0;
     Protocol::PosInfo spawnPos;
+    /** 배회 목적지를 고르는 평면 범위. 스폰한 지역의 경계다. */
+    PlaneBounds wanderBounds;
 };
 
 /**
@@ -66,6 +69,7 @@ private:
 public:
     /** 읽기만 연다. */
     const MonsterAIComponent& GetAI() const { return *_ai; }
+    const PlaneBounds& GetWanderBounds() const { return _wanderBounds; }
 
 private:
     /** 아래 위치 함수는 MonsterAIComponent만 부른다. */
@@ -79,4 +83,6 @@ private:
     void SetMoveState(Protocol::MoveState moveState);
 
     MonsterAIComponentRef _ai;
+    /** 스폰 매개변수의 사본. 룸은 맵 전체라 룸 경계에서 고르면 지역 사이의 빈 공간으로 걸어 나간다. */
+    PlaneBounds _wanderBounds;
 };

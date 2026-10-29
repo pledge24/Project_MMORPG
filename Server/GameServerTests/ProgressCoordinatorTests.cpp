@@ -7,6 +7,7 @@
 #include "PlayerTestAccess.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "RoomManagerTestAccess.h"
 
 /*--------------------------------------------------------------
     진행 조율자 테스트
@@ -17,7 +18,7 @@
 
     픽스처 결합도: 지역 SaveGate를 주입한 조율자를 전역 GProgressCoordinator에 끼운다.
     DB 잡과 만료 타이머는 목록에 쌓아 두고 테스트가 순서를 정해 돌린다.
-    저장과 불러오기는 일어난 순서만 기록한다. 룸은 Room::Create로 만들고 Start()는 부르지 않는다. 룸 큐의 잡은
+    저장과 불러오기는 일어난 순서만 기록한다. 룸은 CreateTestRoom으로 만들고 Start()는 부르지 않는다. 룸 큐의 잡은
     테스트 스레드에서 곧바로 돈다. 플레이어는 세션 없이 불러온 진행으로 만든다.
 ---------------------------------------------------------------*/
 
@@ -40,8 +41,7 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = 100;
         Gamedata::Install(std::move(tables));
 
-        TestAreaTables::TestArea mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate.row, mapTemplate.placement);
+        room = CreateTestRoom(ROOM_ID, 0, 5000.f);
         ASSERT_NE(room, nullptr);
 
         player = CreatePlayer(USER_ID);
@@ -64,8 +64,7 @@ protected:
     /** ROOM_ID + 1번 룸. 룸 이동의 목적지로 쓴다. */
     static RoomRef CreateNextRoom()
     {
-        const TestAreaTables::TestArea nextArea = TestAreaTables::MakeArea(ROOM_ID + 1, 0, 0.f, 0.f, 5000.f);
-        return Room::Create(nextArea.row, nextArea.placement);
+        return CreateTestRoom(ROOM_ID + 1, 0, 5000.f);
     }
 
     void TearDown() override
@@ -447,10 +446,10 @@ TEST_F(ProgressCoordinatorTest, ReenterAfterReturnLoadsAfterSave)
 // 사망한 채 복귀하면 접속 종료와 같이 마을로 리스폰한 상태로 저장한다.
 TEST_F(ProgressCoordinatorTest, ReturnWhileDeadSavesTownRespawn)
 {
-    constexpr int32 TOWN_ROOM_ID = 1;
+    constexpr int32 TOWN_AREA_ID = 1;
     constexpr int32 TOWN_MAP_ID = 1001;
 
-    TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID);
+    TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_AREA_ID, TOWN_MAP_ID);
     TestAreaTables::SetRespawnPoint(town, 300.f, 0.f, 0.f);
 
     GamedataTables tables;

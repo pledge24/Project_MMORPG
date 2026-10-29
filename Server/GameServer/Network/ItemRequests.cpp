@@ -26,12 +26,12 @@ namespace
         *response.mutable_changed_stats() = std::move(outcome->changedStats);
         SendPacket(session, response);
 
-        // 외형은 요청한 인벤토리 칸이 아니라 장착된 장비 부위로 알린다.
+        // 외형은 요청한 인벤토리 칸이 아니라 장착된 장비 부위로 알린다. 지금 보지 않는 플레이어는 나중에 스폰으로 외형을 받는다.
         Protocol::S_GEAR_APPEARANCE appearancePkt;
         appearancePkt.set_entity_id(player->GetEntityId());
         appearancePkt.set_gear_part(outcome->gearPart);
         appearancePkt.set_template_id(outcome->templateId);
-        room.Broadcast(ServerPacketHandler::MakeSerializedPacket(appearancePkt));
+        room.BroadcastNearby(player->GetEntityId(), ServerPacketHandler::MakeSerializedPacket(appearancePkt));
     }
 
     // 소모품 사용의 응답. 칸을 골라 쓴 요청과 퀵슬롯으로 쓴 요청이 같은 응답을 받는다.

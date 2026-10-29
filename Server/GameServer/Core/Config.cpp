@@ -19,6 +19,9 @@ namespace
     const char* DEFAULT_WORLD_NAME = "로컬 월드";
     const char* DEFAULT_WORLD_HOST = "127.0.0.1";
     constexpr int32 DEFAULT_WORLD_CAPACITY = 100;
+    constexpr int32 DEFAULT_CHANNEL_COUNT = 2;
+    // 채널 목록 창이 한 화면에 보여 줄 수 있는 수다.
+    constexpr int32 MAX_CHANNEL_COUNT = 20;
 
     // min~max가 아니거나 숫자가 아니면 nullopt.
     std::optional<int32> ParseInt(const string& text, int32 min, int32 max)
@@ -97,6 +100,9 @@ Config Config::Load(const EnvLookup& lookup, BuildConfiguration build)
 
     config.worldCapacity = DEFAULT_WORLD_CAPACITY;
     OverrideInt(lookup, "P1_WORLD_CAPACITY", 1, INT32_MAX, config.worldCapacity);
+
+    config.channelCount = DEFAULT_CHANNEL_COUNT;
+    OverrideInt(lookup, "P1_CHANNEL_COUNT", 1, MAX_CHANNEL_COUNT, config.channelCount);
 
     // 노드 번호는 틀린 값을 기본값으로 바꾸지 않는다. 다른 노드와 번호가 겹치면 발급한 ID가 겹친다.
     // 범위는 Validate가 본다. 노드가 하나뿐인 개발 머신(Debug)만 번호가 없을 때 0을 쓴다.

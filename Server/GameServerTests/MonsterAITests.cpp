@@ -7,6 +7,7 @@
 #include "Game/AI/MonsterAIComponent.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "RoomManagerTestAccess.h"
 
 /*--------------------------------------------------------------
     몬스터 AI 테스트
@@ -14,7 +15,7 @@
     몬스터는 룸 틱(Room::Tick)으로만 움직인다. 상태 전환 판정은 누적 시간이 0.2초를 채울 때마다 돌고,
     이동과 공격, 예약한 피격은 틱마다 돈다. 테스트는 타이머를 기다리지 않고 Room::Tick에 시간을 넘긴다.
 
-    픽스처 결합도: Room::Create로 룸을 만들고 Start()는 부르지 않는다(몬스터 자동 스폰과 틱 예약을 피한다).
+    픽스처 결합도: CreateTestRoom으로 룸을 만들고 Start()는 부르지 않는다(몬스터 자동 스폰과 틱 예약을 피한다).
     몬스터는 Room::SpawnEntity로, 플레이어는 세션 없이 불러온 진행으로 만들어 EnterPlayer로 넣는다.
     몬스터 템플릿과 1레벨 전사 레벨 표를 Gamedata::Install로 주입한다.
 ---------------------------------------------------------------*/
@@ -69,13 +70,13 @@ protected:
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 
-        TestAreaTables::TestArea mapTemplate = TestAreaTables::MakeArea(ROOM_ID, 0, 0.f, 0.f, 5000.f);
-        room = Room::Create(mapTemplate.row, mapTemplate.placement);
+        room = CreateTestRoom(ROOM_ID, 0, 5000.f);
         ASSERT_NE(room, nullptr);
 
         MonsterSpawnParams monsterParams;
         monsterParams.templateId = MONSTER_TEMPLATE_ID;
         monsterParams.spawnPos = MakePos(0.f, 0.f);
+        monsterParams.wanderBounds = PlaneBounds::FromCenter(0.f, 0.f, 5000.f, 5000.f);
         monster = room->SpawnEntity<Monster>(monsterParams);
         ASSERT_NE(monster, nullptr);
     }

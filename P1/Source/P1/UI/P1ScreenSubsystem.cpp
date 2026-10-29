@@ -6,6 +6,7 @@
 #include "UI/Screens/P1StatusWindowWidget.h"
 #include "UI/Screens/P1InventoryWidget.h"
 #include "UI/Screens/P1ShopWidget.h"
+#include "UI/Screens/P1ChannelListWidget.h"
 #include "UI/Screens/P1WarningTextWidget.h"
 #include "UI/Screens/P1DeathWidget.h"
 #include "UI/Screens/P1GameMenuWidget.h"
@@ -87,6 +88,7 @@ void UP1ScreenSubsystem::CreateScreens(APlayerController* InOwningPlayer)
         {EP1WidgetType::WIDGET_STATUS_WINDOW, CreateWindowWidget(InOwningPlayer, Settings->StatusWindowWidgetClass, WindowLayer)},
         {EP1WidgetType::WIDGET_INVENTORY, CreateWindowWidget(InOwningPlayer, Settings->InventoryWidgetClass, WindowLayer)},
         {EP1WidgetType::WIDGET_SHOP, CreateWindowWidget(InOwningPlayer, Settings->ShopWidgetClass, WindowLayer)},
+        {EP1WidgetType::WIDGET_CHANNEL_LIST, CreateWindowWidget(InOwningPlayer, Settings->ChannelListWidgetClass, WindowLayer)},
     };
 
     // 창보다 위에 그리는 화면.

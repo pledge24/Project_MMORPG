@@ -1,99 +1,121 @@
 #include "Core/pch.h"
 #include "Game/Room/CellMatrix.h"
 
-void CellMatrix::Init(float minX, float maxX, float minY, float maxY, float cellSize)
+void CellMatrix::Init(const PlaneBounds& bounds, float cellSize)
 {
     _cellSize = cellSize;
 
-    float snappedMinX = static_cast<float>(std::floor(minX / cellSize)) * cellSize;
-    float snappedMaxX = static_cast<float>(std::ceil(maxX / cellSize)) * cellSize;
-    float snappedMinY = static_cast<float>(std::floor(minY / cellSize)) * cellSize;
-    float snappedMaxY = static_cast<float>(std::ceil(maxY / cellSize)) * cellSize;
+    float snappedMinX = static_cast<float>(std::floor(bounds.minX / cellSize)) * cellSize;
+    float snappedMaxX = static_cast<float>(std::ceil(bounds.maxX / cellSize)) * cellSize;
+    float snappedMinY = static_cast<float>(std::floor(bounds.minY / cellSize)) * cellSize;
+    float snappedMaxY = static_cast<float>(std::ceil(bounds.maxY / cellSize)) * cellSize;
 
-    int32 cellCountX = static_cast<int32>((snappedMaxX - snappedMinX) / cellSize);
-    int32 cellCountY = static_cast<int32>((snappedMaxY - snappedMinY) / cellSize);
+    // 경계가 한 점이어도 칸이 하나는 있어야 엔티티를 둘 수 있다.
+    int32 cellCountX = (std::max)(1, static_cast<int32>((snappedMaxX - snappedMinX) / cellSize));
+    int32 cellCountY = (std::max)(1, static_cast<int32>((snappedMaxY - snappedMinY) / cellSize));
 
     _cells.assign(cellCountX, vector<Cell>(cellCountY));
+    _entityCells.clear();
     _offset = vector2D(snappedMinX, snappedMinY);
 }
 
-void CellMatrix::Update(const vector<pair<int64, vector2D>>& entities)
+CellIndex CellMatrix::ToCell(const vector2D& pos) const
 {
-    for (auto& column : _cells)
-    {
-        for (Cell& cell : column)
-            cell.clear();
-    }
+    const int32 cellCountX = static_cast<int32>(_cells.size());
+    const int32 cellCountY = _cells.empty() ? 0 : static_cast<int32>(_cells[0].size());
 
-    for (const auto& [entityId, pos] : entities)
-    {
-        optional<pair<int32, int32>> indices = FindCellIndices(pos);
-        if (indices.has_value() == false)
-        {
-            GLogger->Warning("엔티티 {}의 위치({}, {})가 셀 격자 밖이라 셀에 넣지 않는다", entityId, pos.x, pos.y);
-            continue;
-        }
+    // 격자 밖의 엔티티도 어느 칸엔가 있어야 누군가에게 보인다. 이동 판정이 맵 경계 밖을 막으므로 대개 몬스터가 밀려난 경우다.
+    // 최대 경계 위의 좌표는 나눗셈 결과가 칸 수와 같아지므로 마지막 칸에 넣는다.
+    const int32 indexX = static_cast<int32>(std::floor((pos.x - _offset.x) / _cellSize));
+    const int32 indexY = static_cast<int32>(std::floor((pos.y - _offset.y) / _cellSize));
 
-        _cells[indices->first][indices->second].insert(entityId);
-    }
+    return CellIndex{ std::clamp(indexX, 0, (std::max)(0, cellCountX - 1)), std::clamp(indexY, 0, (std::max)(0, cellCountY - 1)) };
 }
 
-void CellMatrix::Remove(int64 entityId, const vector2D& pos)
+void CellMatrix::Place(int64 entityId, const CellIndex& cell)
 {
-    optional<pair<int32, int32>> indices = FindCellIndices(pos);
-    if (indices.has_value())
-        _cells[indices->first][indices->second].erase(entityId);
+    if (_cells.empty() || _cells[0].empty())
+        return;
+
+    auto it = _entityCells.find(entityId);
+    if (it != _entityCells.end())
+    {
+        if (it->second == cell)
+            return;
+
+        _cells[it->second.x][it->second.y].erase(entityId);
+        it->second = cell;
+    }
+    else
+    {
+        _entityCells.emplace(entityId, cell);
+    }
+
+    _cells[cell.x][cell.y].insert(entityId);
 }
 
-vector<int64> CellMatrix::QueryRange(const vector2D& center, float range) const
+void CellMatrix::Remove(int64 entityId)
+{
+    auto it = _entityCells.find(entityId);
+    if (it == _entityCells.end())
+        return;
+
+    _cells[it->second.x][it->second.y].erase(entityId);
+    _entityCells.erase(it);
+}
+
+optional<CellIndex> CellMatrix::FindCell(int64 entityId) const
+{
+    auto it = _entityCells.find(entityId);
+    if (it == _entityCells.end())
+        return nullopt;
+
+    return it->second;
+}
+
+vector<int64> CellMatrix::QueryNeighbors(const CellIndex& cell) const
 {
     vector<int64> entityIds;
-
     if (_cells.empty() || _cells[0].empty())
         return entityIds;
 
-    // 상자를 격자 안으로 자른다. 넘친 부분에는 칸이 없다.
-    const float maxX = _offset.x + _cellSize * static_cast<float>(_cells.size());
-    const float maxY = _offset.y + _cellSize * static_cast<float>(_cells[0].size());
-    const vector2D boxMin(std::clamp(center.x - range, _offset.x, maxX), std::clamp(center.y - range, _offset.y, maxY));
-    const vector2D boxMax(std::clamp(center.x + range, _offset.x, maxX), std::clamp(center.y + range, _offset.y, maxY));
-
-    optional<pair<int32, int32>> minIndices = FindCellIndices(boxMin);
-    optional<pair<int32, int32>> maxIndices = FindCellIndices(boxMax);
-    if (minIndices.has_value() == false || maxIndices.has_value() == false)
-        return entityIds;
-
-    for (int32 indexX = minIndices->first; indexX <= maxIndices->first; indexX++)
+    const int32 cellCountX = static_cast<int32>(_cells.size());
+    const int32 cellCountY = static_cast<int32>(_cells[0].size());
+    for (int32 indexX = (std::max)(0, cell.x - 1); indexX <= (std::min)(cellCountX - 1, cell.x + 1); indexX++)
     {
-        for (int32 indexY = minIndices->second; indexY <= maxIndices->second; indexY++)
-        {
-            const Cell& cell = _cells[indexX][indexY];
-            entityIds.insert(entityIds.end(), cell.begin(), cell.end());
-        }
+        for (int32 indexY = (std::max)(0, cell.y - 1); indexY <= (std::min)(cellCountY - 1, cell.y + 1); indexY++)
+            AppendCell(indexX, indexY, OUT entityIds);
     }
 
     return entityIds;
 }
 
-optional<pair<int32, int32>> CellMatrix::FindCellIndices(const vector2D& pos) const
+vector<int64> CellMatrix::QueryRange(const vector2D& center, float range) const
 {
+    vector<int64> entityIds;
     if (_cells.empty() || _cells[0].empty())
-        return nullopt;
+        return entityIds;
 
-    float offsetX = pos.x - _offset.x;
-    float offsetY = pos.y - _offset.y;
+    // 상자의 두 모서리를 격자 안으로 붙이면 넘친 부분은 버려지고 안쪽 칸만 남는다.
+    const CellIndex boxMin = ToCell(vector2D(center.x - range, center.y - range));
+    const CellIndex boxMax = ToCell(vector2D(center.x + range, center.y + range));
 
-    if (offsetX < 0.f || offsetY < 0.f)
-        return nullopt;
+    for (int32 indexX = boxMin.x; indexX <= boxMax.x; indexX++)
+    {
+        for (int32 indexY = boxMin.y; indexY <= boxMax.y; indexY++)
+            AppendCell(indexX, indexY, OUT entityIds);
+    }
 
-    const int32 cellCountX = static_cast<int32>(_cells.size());
-    const int32 cellCountY = static_cast<int32>(_cells[0].size());
-    if (offsetX > _cellSize * cellCountX || offsetY > _cellSize * cellCountY)
-        return nullopt;
+    return entityIds;
+}
 
-    // 최대 경계 위의 좌표는 나눗셈 결과가 칸 수와 같아진다. 마지막 칸에 넣는다.
-    int32 indexX = (std::min)(static_cast<int32>(offsetX / _cellSize), cellCountX - 1);
-    int32 indexY = (std::min)(static_cast<int32>(offsetY / _cellSize), cellCountY - 1);
+bool CellMatrix::IsNeighbor(const CellIndex& a, const CellIndex& b)
+{
+    return std::abs(a.x - b.x) <= 1 && std::abs(a.y - b.y) <= 1;
+}
 
-    return make_pair(indexX, indexY);
+void CellMatrix::AppendCell(int32 indexX, int32 indexY, OUT vector<int64>& entityIds) const
+{
+    const Cell& cell = _cells[indexX][indexY];
+    entityIds.insert(entityIds.end(), cell.begin(), cell.end());
 }
