@@ -8,6 +8,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Data/P1MonsterAssetData.h"
+#include "Game/Data/P1NpcAssetData.h"
 
 /**
  * 짝 검사 테스트가 쓰는 임시 데이터 테이블을 만드는 도우미.
@@ -48,6 +49,14 @@ public:
         return Table;
     }
 
+    UDataTable* MakeNpcAssetTable(const TMap<int32, FP1NpcAssetData>& Rows)
+    {
+        UDataTable* Table = MakeTable(FP1NpcAssetData::StaticStruct());
+        for (const TPair<int32, FP1NpcAssetData>& Row : Rows)
+            Table->AddRow(RowName(Row.Key), Row.Value);
+        return Table;
+    }
+
     /** 빈 경로는 참조를 비워 둔다. */
     static FP1ItemAssetData ItemAsset(const TCHAR* Icon, const TCHAR* InSkeletalMesh = TEXT(""), const TCHAR* InStaticMesh = TEXT(""))
     {
@@ -69,6 +78,15 @@ public:
             AssetData.AttackMontages.Add(TSoftObjectPtr<UAnimMontage>(FSoftObjectPath(AttackMontage)));
         if (*Material != TEXT('\0'))
             AssetData.Materials.Add(TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(Material)));
+        return AssetData;
+    }
+
+    /** 빈 경로는 참조를 비워 둔다. */
+    static FP1NpcAssetData NpcAsset(const TCHAR* InSkeletalMesh, const TCHAR* IdleAnimation = TEXT(""))
+    {
+        FP1NpcAssetData AssetData;
+        AssetData.SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(InSkeletalMesh));
+        AssetData.IdleAnimation = TSoftObjectPtr<UAnimationAsset>(FSoftObjectPath(IdleAnimation));
         return AssetData;
     }
 

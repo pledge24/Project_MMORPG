@@ -89,7 +89,7 @@ bool Handle_C_BUY_ITEM(PacketSessionRef& session, Protocol::C_BUY_ITEM& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleBuyItem(*room, player, pkt);
+            ItemRequests::C_HandleBuyItem(*room, player, pkt);
         });
 }
 
@@ -97,7 +97,7 @@ bool Handle_C_SELL_ITEM(PacketSessionRef& session, Protocol::C_SELL_ITEM& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleSellItem(*room, player, pkt);
+            ItemRequests::C_HandleSellItem(*room, player, pkt);
         });
 }
 
@@ -105,7 +105,7 @@ bool Handle_C_EQUIP_GEAR(PacketSessionRef& session, Protocol::C_EQUIP_GEAR& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleEquipGear(*room, player, pkt);
+            ItemRequests::C_HandleEquipGear(*room, player, pkt);
         });
 }
 
@@ -114,7 +114,7 @@ bool Handle_C_UNEQUIP_GEAR(PacketSessionRef& session, Protocol::C_UNEQUIP_GEAR& 
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleUnequipGear(*room, player, pkt);
+            ItemRequests::C_HandleUnequipGear(*room, player, pkt);
         });
 }
 
@@ -122,7 +122,7 @@ bool Handle_C_USE_ITEM(PacketSessionRef& session, Protocol::C_USE_ITEM& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleUseItem(*room, player, pkt);
+            ItemRequests::C_HandleUseItem(*room, player, pkt);
         });
 }
 
@@ -130,7 +130,7 @@ bool Handle_C_SET_QUICK_SLOT(PacketSessionRef& session, Protocol::C_SET_QUICK_SL
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleSetQuickSlot(*room, player, pkt);
+            ItemRequests::C_HandleSetQuickSlot(*room, player, pkt);
         });
 }
 
@@ -138,7 +138,7 @@ bool Handle_C_USE_QUICK_SLOT(PacketSessionRef& session, Protocol::C_USE_QUICK_SL
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            ItemRequests::HandleUseQuickSlot(*room, player, pkt);
+            ItemRequests::C_HandleUseQuickSlot(*room, player, pkt);
         });
 }
 

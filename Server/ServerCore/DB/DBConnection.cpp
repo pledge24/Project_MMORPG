@@ -31,7 +31,15 @@ bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 	if (::SQLAllocHandle(SQL_HANDLE_DBC, henv, &_connection) != SQL_SUCCESS)
 		return false;
 
+	// wcscpy_s는 버퍼보다 긴 문자열을 받으면 false를 돌려줄 기회 없이 프로세스를 끝내므로 길이를 먼저 본다.
 	WCHAR stringBuffer[MAX_PATH] = { 0 };
+	const size_t connectionStringLength = ::wcslen(connectionString);
+	if (connectionStringLength >= _countof(stringBuffer))
+	{
+		GLogger->Error("DB 접속 문자열이 너무 길다({}자, 최대 {}자)", connectionStringLength, _countof(stringBuffer) - 1);
+		Clear();
+		return false;
+	}
 	::wcscpy_s(stringBuffer, connectionString);
 
 	WCHAR resultString[MAX_PATH] = { 0 };

@@ -15,7 +15,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+namespace P1RewardResultTest
 {
     /** 레벨 1, 경험치 0/100, 최대 HP 100, 골드 1000인 내 플레이어 데이터를 만든다. */
     UP1MyPlayerData* MakeLevelOneData()
@@ -61,6 +61,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FP1RewardResultTest::RunTest(const FString& Parameters)
 {
+    using namespace P1RewardResultTest;
+
     // 1) 레벨이 오르지 않으면 경험치만 쌓이고 레벨은 알리지 않는다.
     {
         UP1MyPlayerData* Data = MakeLevelOneData();

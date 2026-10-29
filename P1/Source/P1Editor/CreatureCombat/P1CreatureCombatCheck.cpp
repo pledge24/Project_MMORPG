@@ -105,6 +105,11 @@ namespace
             if (Attack.bHasRootMotion && bAllowRootMotion == false)
                 Errors.Add(FString::Printf(TEXT("%s %s: 몬스터의 공격 몽타주에 루트 모션이 있다. 서버는 몬스터를 루트 모션으로 옮기지 않는다"), *Who, *Attack.Montage));
 
+            // 섹션 길이와 타격 시점은 트랙 시간이라, 재생 속도가 1이 아니면 클라이언트가 재생하는 초와 서버의 판정 시점이 어긋난다.
+            if (FMath::IsNearlyEqual(Attack.RateScale, 1.f) == false)
+                Errors.Add(FString::Printf(TEXT("%s %s: 몽타주의 RateScale이 1이 아니다(%s). 재생 속도 대신 애니메이션 길이를 고친다"),
+                    *Who, *Attack.Montage, *FormatNumber(Attack.RateScale, TIME_DIGITS)));
+
             if (Attack.Sections.IsEmpty())
                 Errors.Add(FString::Printf(TEXT("%s %s: 섹션이 없다"), *Who, *Attack.Montage));
 

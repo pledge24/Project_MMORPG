@@ -61,7 +61,7 @@ namespace
     }
 }
 
-void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt)
+void ItemRequests::C_HandleBuyItem(Room& room, const PlayerRef& player, const Protocol::C_BUY_ITEM& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
@@ -99,7 +99,7 @@ void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Prot
     SendPacket(session, buyItemPkt);
 }
 
-void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt)
+void ItemRequests::C_HandleSellItem(Room& room, const PlayerRef& player, const Protocol::C_SELL_ITEM& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
@@ -129,7 +129,7 @@ void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Pro
     SendPacket(session, sellItemPkt);
 }
 
-void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Protocol::C_USE_ITEM& pkt)
+void ItemRequests::C_HandleUseItem(Room& room, const PlayerRef& player, const Protocol::C_USE_ITEM& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
@@ -143,7 +143,7 @@ void ItemRequests::HandleUseItem(Room& room, const PlayerRef& player, const Prot
     SendUseItem(session, outcome);
 }
 
-void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Protocol::C_EQUIP_GEAR& pkt)
+void ItemRequests::C_HandleEquipGear(Room& room, const PlayerRef& player, const Protocol::C_EQUIP_GEAR& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
@@ -153,7 +153,7 @@ void ItemRequests::HandleEquipGear(Room& room, const PlayerRef& player, const Pr
     SendGearChange<Protocol::S_EQUIP_GEAR>(room, player, outcome);
 }
 
-void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const Protocol::C_UNEQUIP_GEAR& pkt)
+void ItemRequests::C_HandleUnequipGear(Room& room, const PlayerRef& player, const Protocol::C_UNEQUIP_GEAR& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
@@ -163,7 +163,7 @@ void ItemRequests::HandleUnequipGear(Room& room, const PlayerRef& player, const 
     SendGearChange<Protocol::S_UNEQUIP_GEAR>(room, player, outcome);
 }
 
-void ItemRequests::HandleSetQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_SET_QUICK_SLOT& pkt)
+void ItemRequests::C_HandleSetQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_SET_QUICK_SLOT& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)
@@ -196,7 +196,7 @@ void ItemRequests::HandleSetQuickSlot(Room& room, const PlayerRef& player, const
     SendPacket(session, setQuickSlotPkt);
 }
 
-void ItemRequests::HandleUseQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_USE_QUICK_SLOT& pkt)
+void ItemRequests::C_HandleUseQuickSlot(Room& room, const PlayerRef& player, const Protocol::C_USE_QUICK_SLOT& pkt)
 {
     // 잡이 기다리는 사이 룸을 떠났으면 처리하지 않는다. 그 플레이어의 상태는 이제 새 룸 큐의 것이다.
     if (room.Contains(player->GetEntityId()) == false)

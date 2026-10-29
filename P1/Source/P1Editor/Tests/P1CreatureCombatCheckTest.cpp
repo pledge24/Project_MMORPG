@@ -175,6 +175,13 @@ bool FP1CreatureCombatCheckTest::RunTest(const FString& Parameters)
         TestFalse(TEXT("Id가 없는 행"), FP1CreatureCombatCheck::ParseMonsterIds(TEXT("[{\"Name\":\"x\"}]"), Ids, Errors));
     }
 
+    // 11) 재생 속도가 1이 아닌 몽타주. 추출한 시간이 실제로 재생되는 초와 달라진다.
+    {
+        FP1CreatureCombatCheck::FInput Input = MakeInput();
+        Input.Classes[0].Attacks[0].RateScale = 1.5f;
+        ExpectRejected(TEXT("재생 속도"), Input, { TEXT("직업 1"), TEXT("RateScale") });
+    }
+
     return true;
 }
 

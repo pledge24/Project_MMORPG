@@ -28,4 +28,7 @@ public:
 
     /** 몬스터 수치 테이블과 몬스터 에셋 테이블을 대조한다. 메시와 애니메이션 블루프린트가 필수다. */
     static TArray<FIssue> CheckMonsters(const UDataTable& MonsterTable, const UDataTable& MonsterAssetTable);
+
+    /** NPC 수치 테이블과 NPC 에셋 테이블을 대조한다. 메시가 필수다. */
+    static TArray<FIssue> CheckNpcs(const UDataTable& NpcTable, const UDataTable& NpcAssetTable);
 };

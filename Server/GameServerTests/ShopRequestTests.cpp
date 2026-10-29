@@ -118,7 +118,7 @@ protected:
         Protocol::C_BUY_ITEM pkt;
         pkt.set_template_id(templateId);
         pkt.set_npc_entity_id(npcEntityId);
-        ItemRequests::HandleBuyItem(*room, requester, pkt);
+        ItemRequests::C_HandleBuyItem(*room, requester, pkt);
 
         const auto responses = session->SentPackets<Protocol::S_BUY_ITEM>(PKT_S_BUY_ITEM);
         EXPECT_EQ(responses.size(), 1u) << "거절한 요청에도 응답한다";
@@ -137,7 +137,7 @@ protected:
         pkt.mutable_address()->set_slot_index(request.address.slotIndex);
         pkt.set_item_uid(request.itemUid);
         pkt.set_npc_entity_id(npcEntityId);
-        ItemRequests::HandleSellItem(*room, requester, pkt);
+        ItemRequests::C_HandleSellItem(*room, requester, pkt);
 
         const auto responses = session->SentPackets<Protocol::S_SELL_ITEM>(PKT_S_SELL_ITEM);
         EXPECT_EQ(responses.size(), 1u) << "거절한 요청에도 응답한다";

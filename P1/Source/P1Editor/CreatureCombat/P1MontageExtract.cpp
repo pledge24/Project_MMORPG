@@ -36,6 +36,7 @@ FP1CreatureCombatCheck::FAttack P1MontageExtract::Extract(const UAnimMontage& Mo
     FP1CreatureCombatCheck::FAttack Attack;
     Attack.Montage = Montage.GetPathName();
     Attack.bHasRootMotion = Montage.HasRootMotion();
+    Attack.RateScale = Montage.RateScale;
 
     for (int32 SectionIndex = 0; SectionIndex < Montage.CompositeSections.Num(); ++SectionIndex)
     {

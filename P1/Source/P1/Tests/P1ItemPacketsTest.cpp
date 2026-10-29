@@ -11,7 +11,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-namespace
+namespace P1ItemPacketsTest
 {
     void SetItem(Protocol::Item* Item, int64 ItemUid, int32 TemplateId, int32 Count)
     {
@@ -28,6 +28,8 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FP1ItemPacketsTest::RunTest(const FString& Parameters)
 {
+    using namespace P1ItemPacketsTest;
+
     // 1) 컨테이너 종류는 값마다 짝이 맞고, 모르는 값은 None이 된다.
     {
         const TPair<Protocol::ContainerType, EP1ContainerType> Pairs[] = {

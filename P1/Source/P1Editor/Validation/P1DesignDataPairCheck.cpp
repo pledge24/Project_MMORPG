@@ -2,6 +2,7 @@
 #include "Engine/DataTable.h"
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Data/P1MonsterAssetData.h"
+#include "Game/Data/P1NpcAssetData.h"
 #include "Misc/PackageName.h"
 
 namespace
@@ -111,5 +112,16 @@ TArray<FP1DesignDataPairCheck::FIssue> FP1DesignDataPairCheck::CheckMonsters(con
                 CheckOptional(Issues, Owner, TEXT("Materials"), Material.ToSoftObjectPath());
             for (const TSoftObjectPtr<UAnimMontage>& Montage : AssetData.AttackMontages)
                 CheckOptional(Issues, Owner, TEXT("AttackMontages"), Montage.ToSoftObjectPath());
+        });
+}
+
+TArray<FP1DesignDataPairCheck::FIssue> FP1DesignDataPairCheck::CheckNpcs(const UDataTable& NpcTable, const UDataTable& NpcAssetTable)
+{
+    return CheckPair<FP1NpcAssetData>(NpcTable, NpcAssetTable, TEXT("NPC"),
+        [](TArray<FIssue>& Issues, FName RowName, const FString& Owner, const FP1NpcAssetData& AssetData)
+        {
+            // NPC는 공용 클래스 하나로 세우고 외형을 이 행으로 입히므로, 메시가 없으면 보이지 않는 NPC가 된다.
+            CheckRequired(Issues, Owner, TEXT("SkeletalMesh"), AssetData.SkeletalMesh.ToSoftObjectPath());
+            CheckOptional(Issues, Owner, TEXT("IdleAnimation"), AssetData.IdleAnimation.ToSoftObjectPath());
         });
 }

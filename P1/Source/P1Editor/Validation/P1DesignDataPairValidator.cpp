@@ -10,6 +10,7 @@ namespace
         None,
         Item,
         Monster,
+        Npc,
     };
 
     /**
@@ -25,6 +26,8 @@ namespace
             return EP1DesignDataPair::Item;
         if (Path == Settings->MonsterTable.ToSoftObjectPath() || Path == Settings->MonsterAssetTable.ToSoftObjectPath())
             return EP1DesignDataPair::Monster;
+        if (Path == Settings->NpcTable.ToSoftObjectPath() || Path == Settings->NpcAssetTable.ToSoftObjectPath())
+            return EP1DesignDataPair::Npc;
         return EP1DesignDataPair::None;
     }
 
@@ -50,13 +53,21 @@ EDataValidationResult UP1DesignDataPairValidator::ValidateLoadedAsset_Implementa
     TArray<FP1DesignDataPairCheck::FIssue> Issues;
 
     // 저장 중인 테이블도 설정 경로로 불러온다. 이미 메모리에 있으므로 고친 내용 그대로 대조한다.
-    if (FindPair(InAsset) == EP1DesignDataPair::Item)
+    const EP1DesignDataPair Pair = FindPair(InAsset);
+    if (Pair == EP1DesignDataPair::Item)
     {
         const UDataTable* ItemTable = LoadTable(Settings->ItemTable, TEXT("ItemTable"), MissingSettings);
         const UDataTable* EquipStatTable = LoadTable(Settings->ItemEquipStatTable, TEXT("ItemEquipStatTable"), MissingSettings);
         const UDataTable* AssetTable = LoadTable(Settings->ItemAssetTable, TEXT("ItemAssetTable"), MissingSettings);
         if (MissingSettings.IsEmpty())
             Issues = FP1DesignDataPairCheck::CheckItems(*ItemTable, *EquipStatTable, *AssetTable);
+    }
+    else if (Pair == EP1DesignDataPair::Npc)
+    {
+        const UDataTable* NpcTable = LoadTable(Settings->NpcTable, TEXT("NpcTable"), MissingSettings);
+        const UDataTable* AssetTable = LoadTable(Settings->NpcAssetTable, TEXT("NpcAssetTable"), MissingSettings);
+        if (MissingSettings.IsEmpty())
+            Issues = FP1DesignDataPairCheck::CheckNpcs(*NpcTable, *AssetTable);
     }
     else
     {

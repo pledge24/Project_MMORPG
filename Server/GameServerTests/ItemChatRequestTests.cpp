@@ -127,7 +127,7 @@ protected:
 
 TEST_F(ItemChatRequestTest, EquipRespondsToRequesterAndShowsAppearanceToWholeRoom)
 {
-    ItemRequests::HandleEquipGear(*room, requester, MakeEquipSword());
+    ItemRequests::C_HandleEquipGear(*room, requester, MakeEquipSword());
 
     const auto responses = requesterSession->SentPackets<Protocol::S_EQUIP_GEAR>(PKT_S_EQUIP_GEAR);
     ASSERT_EQ(responses.size(), 1u);
@@ -150,7 +150,7 @@ TEST_F(ItemChatRequestTest, RejectedEquipCarriesResultWithoutAppearance)
     Protocol::C_EQUIP_GEAR pkt = MakeEquipSword();
     pkt.set_item_uid(pkt.item_uid() + 1);
 
-    ItemRequests::HandleEquipGear(*room, requester, pkt);
+    ItemRequests::C_HandleEquipGear(*room, requester, pkt);
 
     const auto responses = requesterSession->SentPackets<Protocol::S_EQUIP_GEAR>(PKT_S_EQUIP_GEAR);
     ASSERT_EQ(responses.size(), 1u) << "거절한 요청에도 응답한다";
@@ -162,7 +162,7 @@ TEST_F(ItemChatRequestTest, RejectedEquipCarriesResultWithoutAppearance)
 
 TEST_F(ItemChatRequestTest, UnequipShowsEmptiedPartToWholeRoom)
 {
-    ItemRequests::HandleEquipGear(*room, requester, MakeEquipSword());
+    ItemRequests::C_HandleEquipGear(*room, requester, MakeEquipSword());
     requesterSession->ClearSent();
     observerSession->ClearSent();
 
@@ -171,7 +171,7 @@ TEST_F(ItemChatRequestTest, UnequipShowsEmptiedPartToWholeRoom)
     pkt.mutable_address()->set_container(Protocol::CONTAINER_TYPE_EQUIPPED);
     pkt.mutable_address()->set_slot_index(Protocol::GEAR_PART_WEAPON);
     pkt.set_item_uid(equipped.itemUid);
-    ItemRequests::HandleUnequipGear(*room, requester, pkt);
+    ItemRequests::C_HandleUnequipGear(*room, requester, pkt);
 
     const auto responses = requesterSession->SentPackets<Protocol::S_UNEQUIP_GEAR>(PKT_S_UNEQUIP_GEAR);
     ASSERT_EQ(responses.size(), 1u);
@@ -191,7 +191,7 @@ TEST_F(ItemChatRequestTest, RejectedUseItemCarriesResult)
     pkt.mutable_address()->set_container(Protocol::CONTAINER_TYPE_INVENTORY_GEAR);
     pkt.set_item_uid(1);
 
-    ItemRequests::HandleUseItem(*room, requester, pkt);
+    ItemRequests::C_HandleUseItem(*room, requester, pkt);
 
     const auto responses = requesterSession->SentPackets<Protocol::S_USE_ITEM>(PKT_S_USE_ITEM);
     ASSERT_EQ(responses.size(), 1u);

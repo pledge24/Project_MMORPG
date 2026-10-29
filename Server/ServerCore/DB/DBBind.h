@@ -108,14 +108,15 @@ public:
 	template<int32 N>
 	void BindCol(int32 idx, WCHAR(&value)[N])
 	{
-		_dbConnection.BindCol(idx + 1, value, N - 1, &_columnIndex[idx][0]);
+		// SQLBindCol의 버퍼 길이는 문자 수가 아니라 널 문자를 포함한 바이트 수다.
+		_dbConnection.BindCol(idx + 1, value, size32(value), &_columnIndex[idx][0]);
 		_columnFlag |= (1LL << idx);
 	}
 
 	/** 특수화: len 길이의 문자열 포인터를 받아오는 경우 */
 	void BindCol(int32 idx, WCHAR* value, int32 len)
 	{
-		_dbConnection.BindCol(idx + 1, value, len - 1, &_columnIndex[idx][0]);
+		_dbConnection.BindCol(idx + 1, value, len * size32(WCHAR), &_columnIndex[idx][0]);
 		_columnFlag |= (1LL << idx);
 	}
 
