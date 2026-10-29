@@ -197,15 +197,15 @@ class ClientHeaderTest(ClientOutputCase):
         self.assertIn("    TArray<FP1EntryRow> Entries;\n", group)
 
     def test_setting_numbers_and_bools_for_the_client_become_constants(self):
-        self.add_setting("Interaction", setting_sheet(
+        self.add_setting("Tuning", setting_sheet(
             ["Range", "float", "both", 300, "사거리(cm)"],
             ["MaxTargets", "int32", "client", 2, None],
             ["Enabled", "bool", "client", True, None],
             ["Secret", "int64", "server", 7, None],
         ))
 
-        header = self.client_source()["P1InteractionConfig.h"]
-        self.assertIn("namespace P1DesignData::Interaction\n{", header)
+        header = self.client_source()["P1TuningConfig.h"]
+        self.assertIn("namespace P1DesignData::Tuning\n{", header)
         self.assertIn("    /** 사거리(cm) */\n    inline constexpr float Range = 300.0f;\n", header)
         self.assertIn("    inline constexpr int32 MaxTargets = 2;\n", header)
         self.assertIn("    inline constexpr bool Enabled = true;\n", header)

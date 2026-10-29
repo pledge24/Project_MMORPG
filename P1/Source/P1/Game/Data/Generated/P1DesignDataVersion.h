@@ -9,5 +9,5 @@
 namespace P1DesignData
 {
     /** 원본 해시로 만든 데이터 버전. 같은 원본이면 서버가 기동할 때 남기는 버전과 같다. */
-    inline constexpr const TCHAR* Version = TEXT("49704b9922faeb67");
+    inline constexpr const TCHAR* Version = TEXT("69a12581da1dd071");
 }
