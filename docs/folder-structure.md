@@ -582,8 +582,11 @@ Server/
 게임 쪽 코드는 `Lobby/`를 include하지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
 2026년 10월 23일(#287)에 `Game/Characters/`와 `DB/`에서 옮겨 왔다.
 
-`Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
-소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+`Game/AI/`는 몬스터의 행동(대기, 배회, 추적, 공격, 귀환)을 정하는 `MonsterAIComponent`와 상태 객체(`MonsterStates`)를 담는다.
+몬스터는 이 컴포넌트를 멤버로 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+AI는 목적지만 정하고, 길을 따라 움직이는 일은 `Game/Navigation/`의 `PathFollowingComponent`가 맡는다. 이 부품은 몬스터에 묶이지 않은
+크리처 공용 부품이라 navmesh 질의(`NavQuery`)와 같은 폴더에 둔다. 2026년 10월 29일(#340)에 나눴다.
+몬스터를 스폰 마커에 채우고 리젠을 예약하는 일정표(`MonsterSpawner`)는 룸이 소유하므로 `Game/Room/`에 둔다.
 
 `Game/Progress/`는 진행의 규칙을 담는다. 2026년 10월 20일(#252) 기준으로 누적 경험치와 레벨 표로 레벨을 정하고
 보상과 사망 페널티를 판정하는 `Leveling`만 있다. 2026년 10월 23일(#288)에 새 캐릭터의 초기 진행을 정하는 `InitialProgress`가
