@@ -23,6 +23,8 @@ Logger* GLogger = nullptr;
 // GLogger는 다른 전역 객체가 만들어지고 지워지는 동안에도 쓸 수 있도록 가장 먼저 만들고 가장 나중에 지운다.
 CoreGlobal::CoreGlobal()
 {
+    // 소스를 /utf-8로 컴파일하므로 로그는 UTF-8 바이트다. 콘솔의 기본 코드 페이지(cp949)로 두면 한국어 로그가 깨진다.
+    ::SetConsoleOutputCP(CP_UTF8);
     GLogger = new Logger(cout);
     GThreadManager = new ThreadManager();
     GGlobalQueue = new GlobalQueue();
@@ -31,7 +33,6 @@ CoreGlobal::CoreGlobal()
     GDBManager = new DBManager();
     GRedisManager = new RedisManager();
     SocketUtil::Init();
-    wcout.imbue(locale("kor"));
 }
 
 CoreGlobal::~CoreGlobal()

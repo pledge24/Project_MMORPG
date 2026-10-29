@@ -60,23 +60,23 @@ TEST(LoggerTest, LineHasTimeLevelThreadAndMessage)
     const auto time = MakeLocalTime(2026, 10, 9, 14, 3, 22, 123);
 
     EXPECT_EQ(Logger::FormatLine(LogLevel::Info, time, 3, "플레이어 입장"),
-              "2026-10-09 14:03:22.123 [INFO ] [T3] 플레이어 입장");
+              "2026-10-09 14:03:22.123 [INFO] [T3] 플레이어 입장");
 }
 
 TEST(LoggerTest, MillisecondsArePaddedToThreeDigits)
 {
     const auto time = MakeLocalTime(2026, 1, 2, 3, 4, 5, 6);
 
-    EXPECT_EQ(Logger::FormatLine(LogLevel::Info, time, 1, "a"), "2026-01-02 03:04:05.006 [INFO ] [T1] a");
+    EXPECT_EQ(Logger::FormatLine(LogLevel::Info, time, 1, "a"), "2026-01-02 03:04:05.006 [INFO] [T1] a");
 }
 
-TEST(LoggerTest, EachLevelHasItsOwnFiveCharacterLabel)
+TEST(LoggerTest, EachLevelHasItsOwnLabel)
 {
     const auto time = MakeLocalTime(2026, 10, 9, 0, 0, 0, 0);
 
     EXPECT_EQ(Logger::FormatLine(LogLevel::Debug, time, 1, "m"), "2026-10-09 00:00:00.000 [DEBUG] [T1] m");
-    EXPECT_EQ(Logger::FormatLine(LogLevel::Info, time, 1, "m"), "2026-10-09 00:00:00.000 [INFO ] [T1] m");
-    EXPECT_EQ(Logger::FormatLine(LogLevel::Warning, time, 1, "m"), "2026-10-09 00:00:00.000 [WARN ] [T1] m");
+    EXPECT_EQ(Logger::FormatLine(LogLevel::Info, time, 1, "m"), "2026-10-09 00:00:00.000 [INFO] [T1] m");
+    EXPECT_EQ(Logger::FormatLine(LogLevel::Warning, time, 1, "m"), "2026-10-09 00:00:00.000 [WARNING] [T1] m");
     EXPECT_EQ(Logger::FormatLine(LogLevel::Error, time, 1, "m"), "2026-10-09 00:00:00.000 [ERROR] [T1] m");
 }
 
@@ -91,7 +91,7 @@ TEST(LoggerTest, WriteUsesCallingThreadIdAndEndsLine)
     const vector<string> lines = SplitLines(out.str());
     ASSERT_EQ(lines.size(), 1u);
     EXPECT_TRUE(out.str().ends_with("\n"));
-    EXPECT_TRUE(lines[0].ends_with(" [WARN ] [T7] 몬스터 42 템플릿 없음")) << lines[0];
+    EXPECT_TRUE(lines[0].ends_with(" [WARNING] [T7] 몬스터 42 템플릿 없음")) << lines[0];
 }
 
 TEST(LoggerTest, ConcurrentWritersDoNotInterleaveLines)
@@ -115,7 +115,7 @@ TEST(LoggerTest, ConcurrentWritersDoNotInterleaveLines)
     for (thread& th : threads)
         th.join();
 
-    const regex linePattern(R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \[INFO \] \[T(\d+)\] writer=(\d+) line=(\d+)$)");
+    const regex linePattern(R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \[INFO\] \[T(\d+)\] writer=(\d+) line=(\d+)$)");
 
     const vector<string> lines = SplitLines(out.str());
     ASSERT_EQ(lines.size(), static_cast<size_t>(THREAD_COUNT * LINES_PER_THREAD));
