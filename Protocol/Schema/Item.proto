@@ -1,7 +1,7 @@
 syntax = "proto3";
 package Protocol;
 
-// ¼ÒÁöÇ°, »óÁ¡, Âø¿ë, ¼Ò¸ðÇ°, Äü½½·Ô
+// ì†Œì§€í’ˆ, ìƒì , ì°©ìš©, ì†Œëª¨í’ˆ, í€µìŠ¬ë¡¯
 // @packet_id_range 600 699
 
 import "Common.proto";
@@ -9,21 +9,21 @@ import "Common.proto";
 enum ItemResult
 {
     ITEM_RESULT_SUCCESS = 0;
-    ITEM_RESULT_INVALID_REQUEST = 1;        // Á¤»ó Å¬¶óÀÌ¾ðÆ®°¡ º¸³»Áö ¾Ê´Â ¿äÃ». ¾ø´Â ¾ÆÀÌÅÛ ¹øÈ£, ¾ÆÀÌÅÛ°ú ¸ÂÁö ¾Ê´Â ÄÁÅ×ÀÌ³Ê, ¹üÀ§ ¹ÛÀÇ Äü½½·Ô ¹øÈ£
-    ITEM_RESULT_SLOT_CHANGED = 2;           // Ä­ÀÇ ¾ÆÀÌÅÛÀÌ ¿äÃ»ÀÇ item_uid¿Í ´Ù¸£´Ù. Å¬¶óÀÌ¾ðÆ®ÀÇ Ä­ÀÌ ¼­¹öº¸´Ù ´Ê¾ú´Ù
+    ITEM_RESULT_INVALID_REQUEST = 1;        // ì •ìƒ í´ë¼ì´ì–¸íŠ¸ê°€ ë³´ë‚´ì§€ ì•ŠëŠ” ìš”ì²­. ì—†ëŠ” ì•„ì´í…œ ë²ˆí˜¸, ì•„ì´í…œê³¼ ë§žì§€ ì•ŠëŠ” ì»¨í…Œì´ë„ˆ, ë²”ìœ„ ë°–ì˜ í€µìŠ¬ë¡¯ ë²ˆí˜¸
+    ITEM_RESULT_SLOT_CHANGED = 2;           // ì¹¸ì˜ ì•„ì´í…œì´ ìš”ì²­ì˜ item_uidì™€ ë‹¤ë¥´ë‹¤. í´ë¼ì´ì–¸íŠ¸ì˜ ì¹¸ì´ ì„œë²„ë³´ë‹¤ ëŠ¦ì—ˆë‹¤
     ITEM_RESULT_NOT_ENOUGH_GOLD = 3;
-    ITEM_RESULT_INVENTORY_FULL = 4;         // ¾ÆÀÌÅÛÀÌ µé¾î°¥ ±¸¿ª¿¡ ºó Ä­ÀÌ ¾ø´Ù
+    ITEM_RESULT_INVENTORY_FULL = 4;         // ì•„ì´í…œì´ ë“¤ì–´ê°ˆ êµ¬ì—­ì— ë¹ˆ ì¹¸ì´ ì—†ë‹¤
     ITEM_RESULT_NOT_SELLABLE = 5;
-    ITEM_RESULT_REQUIREMENT_NOT_MET = 6;    // ·¹º§ÀÌ³ª Á÷¾÷ÀÌ Âø¿ë Á¶°Ç¿¡ ¸ø ¹ÌÄ£´Ù
-    ITEM_RESULT_GEAR_PART_OCCUPIED = 7;     // ±× ºÎÀ§¿¡ ÀÌ¹Ì Àåºñ¸¦ Âø¿ëÇÏ°í ÀÖ´Ù
-    ITEM_RESULT_COOLDOWN = 8;               // Àç»ç¿ë ´ë±â ÁßÀÌ´Ù
-    ITEM_RESULT_DEAD = 9;                   // »ç¸ÁÇÑ ÇÃ·¹ÀÌ¾î´Â ¼Ò¸ðÇ°À» ¾µ ¼ö ¾ø´Ù
-    ITEM_RESULT_NOT_OWNED = 10;             // Äü½½·ÔÀÌ °¡¸®Å°´Â ¼Ò¸ðÇ°À» °®°í ÀÖÁö ¾Ê´Ù
-    ITEM_RESULT_INTERNAL_ERROR = 11;        // °Ë»ç¸¦ Åë°úÇÑ µÚ Ä­À» ¹Ù²ÙÁö ¸øÇß´Ù
-    ITEM_RESULT_NPC_OUT_OF_REACH = 12;      // °Å·¡ÇÑ NPC°¡ °°Àº ·ë¿¡ ¾ø°Å³ª »ç°Å¸® ¹ÛÀÌ´Ù
+    ITEM_RESULT_REQUIREMENT_NOT_MET = 6;    // ë ˆë²¨ì´ë‚˜ ì§ì—…ì´ ì°©ìš© ì¡°ê±´ì— ëª» ë¯¸ì¹œë‹¤
+    ITEM_RESULT_GEAR_PART_OCCUPIED = 7;     // ê·¸ ë¶€ìœ„ì— ì´ë¯¸ ìž¥ë¹„ë¥¼ ì°©ìš©í•˜ê³  ìžˆë‹¤
+    ITEM_RESULT_COOLDOWN = 8;               // ìž¬ì‚¬ìš© ëŒ€ê¸° ì¤‘ì´ë‹¤
+    ITEM_RESULT_DEAD = 9;                   // ì‚¬ë§í•œ í”Œë ˆì´ì–´ëŠ” ì†Œëª¨í’ˆì„ ì“¸ ìˆ˜ ì—†ë‹¤
+    ITEM_RESULT_NOT_OWNED = 10;             // í€µìŠ¬ë¡¯ì´ ê°€ë¦¬í‚¤ëŠ” ì†Œëª¨í’ˆì„ ê°–ê³  ìžˆì§€ ì•Šë‹¤
+    ITEM_RESULT_INTERNAL_ERROR = 11;        // ê²€ì‚¬ë¥¼ í†µê³¼í•œ ë’¤ ì¹¸ì„ ë°”ê¾¸ì§€ ëª»í–ˆë‹¤
+    ITEM_RESULT_NPC_OUT_OF_REACH = 12;      // ê±°ëž˜í•œ NPCê°€ ê°™ì€ ë£¸ì— ì—†ê±°ë‚˜ ì‚¬ê±°ë¦¬ ë°–ì´ë‹¤
 }
 
-// ¾ÆÀÌÅÛ Á¾·ù. DBÀÇ Item.ItemType¿¡ ¼ýÀÚ·Î ÀúÀåµÇ°í, ±âÈ¹ µ¥ÀÌÅÍ°¡ ÀÌ¸§À¸·Î ÀÐ´Â´Ù
+// ì•„ì´í…œ ì¢…ë¥˜. DBì˜ Item.ItemTypeì— ìˆ«ìžë¡œ ì €ìž¥ë˜ê³ , ê¸°íš ë°ì´í„°ê°€ ì´ë¦„ìœ¼ë¡œ ì½ëŠ”ë‹¤
 enum ItemType
 {
     ITEM_TYPE_NONE = 0;
@@ -32,21 +32,21 @@ enum ItemType
     ITEM_TYPE_MISCELLANEOUS = 3;
 }
 
-// ¾ÆÀÌÅÛÀ» ´ã´Â ÄÁÅ×ÀÌ³ÊÀÇ Á¾·ù. ÀÎº¥Åä¸®ÀÇ ±¸¿ª ¼Â°ú Âø¿ë Àåºñ´Ù
+// ì•„ì´í…œì„ ë‹´ëŠ” ì»¨í…Œì´ë„ˆì˜ ì¢…ë¥˜. ì¸ë²¤í† ë¦¬ì˜ êµ¬ì—­ ì…‹ê³¼ ì°©ìš© ìž¥ë¹„ë‹¤
 enum ContainerType
 {
     CONTAINER_TYPE_NONE = 0;
     CONTAINER_TYPE_INVENTORY_GEAR = 1;
     CONTAINER_TYPE_INVENTORY_CONSUMABLE = 2;
     CONTAINER_TYPE_INVENTORY_MISC = 3;
-    CONTAINER_TYPE_EQUIPPED = 4;            // Âø¿ë Àåºñ. Ä­ ¹øÈ£°¡ GearPart °ªÀÌ´Ù
+    CONTAINER_TYPE_EQUIPPED = 4;            // ì°©ìš© ìž¥ë¹„. ì¹¸ ë²ˆí˜¸ê°€ GearPart ê°’ì´ë‹¤
 }
 
-// Äü½½·ÔÀÌ °¡¸®Å°´Â ´ë»óÀÇ Á¾·ù. DBÀÇ QuickSlot.RefType¿¡ ¼ýÀÚ·Î ÀúÀåµÈ´Ù
+// í€µìŠ¬ë¡¯ì´ ê°€ë¦¬í‚¤ëŠ” ëŒ€ìƒì˜ ì¢…ë¥˜. DBì˜ QuickSlot.RefTypeì— ìˆ«ìžë¡œ ì €ìž¥ëœë‹¤
 enum QuickSlotRefType
 {
     QUICK_SLOT_REF_TYPE_NONE = 0;
-    QUICK_SLOT_REF_TYPE_ITEM = 1;           // ¾ÆÀÌÅÛ Á¤ÀÇ. ref_id°¡ ¾ÆÀÌÅÛ ¹øÈ£´Ù
+    QUICK_SLOT_REF_TYPE_ITEM = 1;           // ì•„ì´í…œ ì •ì˜. ref_idê°€ ì•„ì´í…œ ë²ˆí˜¸ë‹¤
 }
 
 message Item
@@ -56,28 +56,28 @@ message Item
     int32 count = 3;
 }
 
-// Ä­ ÇÏ³ª¸¦ °¡¸®Å°´Â ÁÖ¼Ò
+// ì¹¸ í•˜ë‚˜ë¥¼ ê°€ë¦¬í‚¤ëŠ” ì£¼ì†Œ
 message SlotAddress
 {
     ContainerType container = 1;
-    int32 slot_index = 2;                   // ÄÁÅ×ÀÌ³Ê ¾ÈÀÇ Ä­ ¹øÈ£. Âø¿ë Àåºñ¿¡¼­´Â GearPart °ªÀÌ´Ù
+    int32 slot_index = 2;                   // ì»¨í…Œì´ë„ˆ ì•ˆì˜ ì¹¸ ë²ˆí˜¸. ì°©ìš© ìž¥ë¹„ì—ì„œëŠ” GearPart ê°’ì´ë‹¤
 }
 
-// ÀÌ ÁÖ¼ÒÀÇ Ä­Àº ÀÌÁ¦ ÀÌ ³»¿ëÀÌ´Ù. itemÀÌ ¾øÀ¸¸é ºó Ä­ÀÌ´Ù
+// ì´ ì£¼ì†Œì˜ ì¹¸ì€ ì´ì œ ì´ ë‚´ìš©ì´ë‹¤. itemì´ ì—†ìœ¼ë©´ ë¹ˆ ì¹¸ì´ë‹¤
 message SlotChange
 {
     SlotAddress address = 1;
     Item item = 2;
 }
 
-// ÄÁÅ×ÀÌ³Ê ¾ÈÀÇ Ä­ ÇÏ³ª. itemÀÌ ¾øÀ¸¸é ºó Ä­ÀÌ´Ù
+// ì»¨í…Œì´ë„ˆ ì•ˆì˜ ì¹¸ í•˜ë‚˜. itemì´ ì—†ìœ¼ë©´ ë¹ˆ ì¹¸ì´ë‹¤
 message Slot
 {
     int32 slot_index = 1;
     Item item = 2;
 }
 
-// ÄÁÅ×ÀÌ³Ê ÇÏ³ªÀÇ ¸ðµç Ä­. ºó Ä­µµ ½Æ´Â´Ù
+// ì»¨í…Œì´ë„ˆ í•˜ë‚˜ì˜ ëª¨ë“  ì¹¸. ë¹ˆ ì¹¸ë„ ì‹£ëŠ”ë‹¤
 message ContainerSlots
 {
     ContainerType container = 1;
@@ -87,24 +87,24 @@ message ContainerSlots
 message Possession
 {
     int64 gold = 1;
-    repeated ContainerSlots containers = 2; // ÀÎº¥Åä¸®ÀÇ ±¸¿ª ¼Â°ú Âø¿ë Àåºñ
+    repeated ContainerSlots containers = 2; // ì¸ë²¤í† ë¦¬ì˜ êµ¬ì—­ ì…‹ê³¼ ì°©ìš© ìž¥ë¹„
 }
 
-// Äü½½·ÔÀÌ °¡¸®Å°´Â ´ë»ó. ¾ÆÀÌÅÛ ÇÏ³ª°¡ ¾Æ´Ï¶ó ¾ÆÀÌÅÛ Á¤ÀÇ¸¦ °¡¸®Å²´Ù
+// í€µìŠ¬ë¡¯ì´ ê°€ë¦¬í‚¤ëŠ” ëŒ€ìƒ. ì•„ì´í…œ í•˜ë‚˜ê°€ ì•„ë‹ˆë¼ ì•„ì´í…œ ì •ì˜ë¥¼ ê°€ë¦¬í‚¨ë‹¤
 message QuickSlotRef
 {
     QuickSlotRefType ref_type = 1;
     int32 ref_id = 2;
 }
 
-// Äü½½·Ô ÇÏ³ª. ref°¡ ¾øÀ¸¸é ºó Äü½½·ÔÀÌ´Ù
+// í€µìŠ¬ë¡¯ í•˜ë‚˜. refê°€ ì—†ìœ¼ë©´ ë¹ˆ í€µìŠ¬ë¡¯ì´ë‹¤
 message QuickSlot
 {
-    int32 quick_slot_index = 1;             // 0ºÎÅÍ Äü½½·Ô °³¼ö ¹Ì¸¸
+    int32 quick_slot_index = 1;             // 0ë¶€í„° í€µìŠ¬ë¡¯ ê°œìˆ˜ ë¯¸ë§Œ
     QuickSlotRef ref = 2;
 }
 
-// »óÁ¡ ¿äÃ»Àº »óÁ¡À» ¿¬ NPCÀÇ ¿£Æ¼Æ¼ ¹øÈ£¸¦ ½Æ´Â´Ù. ¼­¹ö´Â ±× NPCÀÇ ÆÇ¸Å ¸ñ·Ï°ú °Å¸®¸¦ °Ë»çÇÑ´Ù
+// ìƒì  ìš”ì²­ì€ ìƒì ì„ ì—° NPCì˜ ì—”í‹°í‹° ë²ˆí˜¸ë¥¼ ì‹£ëŠ”ë‹¤. ì„œë²„ëŠ” ê·¸ NPCì˜ íŒë§¤ ëª©ë¡ê³¼ ê±°ë¦¬ë¥¼ ê²€ì‚¬í•œë‹¤
 message C_BUY_ITEM
 {
     int32 template_id = 1;
@@ -118,8 +118,8 @@ message S_BUY_ITEM
     int64 gold = 3;
 }
 
-// Ä­À» °¡¸®Å°´Â ¿äÃ»Àº Ä­ ÁÖ¼Ò¿Í, Å¬¶óÀÌ¾ðÆ®°¡ ±× Ä­¿¡¼­ º» ¾ÆÀÌÅÛÀÇ uid¸¦ ½Æ´Â´Ù.
-// ±× Ä­ÀÇ ¾ÆÀÌÅÛ uid°¡ ´Ù¸£¸é ¼­¹ö´Â ITEM_RESULT_SLOT_CHANGED·Î °ÅÀýÇÑ´Ù
+// ì¹¸ì„ ê°€ë¦¬í‚¤ëŠ” ìš”ì²­ì€ ì¹¸ ì£¼ì†Œì™€, í´ë¼ì´ì–¸íŠ¸ê°€ ê·¸ ì¹¸ì—ì„œ ë³¸ ì•„ì´í…œì˜ uidë¥¼ ì‹£ëŠ”ë‹¤.
+// ê·¸ ì¹¸ì˜ ì•„ì´í…œ uidê°€ ë‹¤ë¥´ë©´ ì„œë²„ëŠ” ITEM_RESULT_SLOT_CHANGEDë¡œ ê±°ì ˆí•œë‹¤
 message C_SELL_ITEM
 {
     SlotAddress address = 1;
@@ -140,7 +140,7 @@ message C_EQUIP_GEAR
     int64 item_uid = 2;
 }
 
-// ¿ÜÇüÀº S_GEAR_APPEARANCE°¡ ·ë¿¡ ¾Ë¸°´Ù
+// ì™¸í˜•ì€ S_GEAR_APPEARANCEê°€ ë£¸ì— ì•Œë¦°ë‹¤
 message S_EQUIP_GEAR
 {
     ItemResult result = 1;
@@ -167,7 +167,7 @@ message C_USE_ITEM
     int64 item_uid = 2;
 }
 
-// C_USE_ITEM°ú C_USE_QUICK_SLOTÀÇ ÀÀ´ä
+// C_USE_ITEMê³¼ C_USE_QUICK_SLOTì˜ ì‘ë‹µ
 message S_USE_ITEM
 {
     ItemResult result = 1;
@@ -175,7 +175,7 @@ message S_USE_ITEM
     repeated Stat changed_stats = 3;
 }
 
-// Äü½½·Ô ÇÏ³ª¿¡ ´ë»óÀ» µî·ÏÇÑ´Ù. ref°¡ ¾øÀ¸¸é ÇØÁ¦ÇÑ´Ù. ´Ù¸¥ Äü½½·Ô¿¡ ÀÖ´Â ´ë»óÀÌ¸é µÎ Äü½½·ÔÀÌ ¹Ù²ï´Ù
+// í€µìŠ¬ë¡¯ í•˜ë‚˜ì— ëŒ€ìƒì„ ë“±ë¡í•œë‹¤. refê°€ ì—†ìœ¼ë©´ í•´ì œí•œë‹¤. ë‹¤ë¥¸ í€µìŠ¬ë¡¯ì— ìžˆëŠ” ëŒ€ìƒì´ë©´ ë‘ í€µìŠ¬ë¡¯ì´ ë°”ë€ë‹¤
 message C_SET_QUICK_SLOT
 {
     int32 quick_slot_index = 1;
@@ -188,7 +188,7 @@ message S_SET_QUICK_SLOT
     repeated QuickSlot changed_quick_slots = 2;
 }
 
-// Äü½½·Ô¿¡ µî·ÏÇÑ ¼Ò¸ðÇ°À» ¾´´Ù. ¾µ Ä­Àº ¼­¹ö°¡ °í¸¥´Ù. ÀÀ´äÀº S_USE_ITEMÀÌ´Ù
+// í€µìŠ¬ë¡¯ì— ë“±ë¡í•œ ì†Œëª¨í’ˆì„ ì“´ë‹¤. ì“¸ ì¹¸ì€ ì„œë²„ê°€ ê³ ë¥¸ë‹¤. ì‘ë‹µì€ S_USE_ITEMì´ë‹¤
 message C_USE_QUICK_SLOT
 {
     int32 quick_slot_index = 1;

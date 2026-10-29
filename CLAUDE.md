@@ -144,8 +144,8 @@ Conventional Commits와 gitmoji를 기준으로 하고, 아래에 적힌 차이�
 
 ## 컨벤션
 
-- `.proto`와 `.bat`은 cp949, 나머지는 UTF-8이다. `.gitattributes`와 `.editorconfig`가 강제한다.
-  cp949 파일의 한국어가 깨져 보여도 정상이다. UTF-8로 다시 저장하면 이 파일을 읽는 도구가 깨진다.
+- 모든 텍스트 파일은 BOM 없는 UTF-8이다. DocLint(`Tools/DocLint/check_docs.py`)가 `.md`, `.proto`, `.bat`을 검사한다.
+  `.bat`은 `@echo off` 다음 줄에 `chcp 65001 >nul`을 둔다. 그래야 `cmd`가 한국어를 깨뜨리지 않는다.
 - 주석과 로그는 한국어로 쓴다. 영어 주석이 남은 파일을 고치면 그 파일의 주석도 한국어로 바꾼다.
   TODO는 `// TODO: 내용`으로 쓴다.
 - 주석, 테스트 이름, 로그에는 TD·이슈·PR·ADR 번호나 문서 경로 대신 그 번호가 가리키던 이유를 문장으로

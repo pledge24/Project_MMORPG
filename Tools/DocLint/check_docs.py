@@ -15,7 +15,7 @@
 | `path-ref`           | 백틱으로 적은 저장소 경로가 있는지             | 문서 전반의 상호 참조                 |
 | `backlog-ref`        | backlog 번호 참조가 실제 항목을 가리키는지     | `docs/backlog.md`                     |
 | `references-mention` | 규범 문서와 ADR이 `docs/references`를 안 쓰는지 | `docs/references/README.md`           |
-| `encoding`           | `.md`는 UTF-8, `.proto`·`.bat`은 cp949인지     | `CLAUDE.md` 「컨벤션」                |
+| `encoding`           | `.md`·`.proto`·`.bat`이 BOM 없는 UTF-8인지     | `CLAUDE.md` 「컨벤션」                |
 
 사용법:
 
@@ -121,12 +121,8 @@ def read_bytes(rel_path: str) -> bytes:
 
 
 def read_text(rel_path: str) -> str:
-    """저장소의 텍스트 파일을 읽는다. 인코딩이 섞여 있어도 검사가 멈추지 않게 한다."""
-    data = read_bytes(rel_path)
-    try:
-        return data.decode("utf-8")
-    except UnicodeDecodeError:
-        return data.decode("cp949", errors="replace")
+    """저장소의 텍스트 파일을 읽는다. UTF-8이 아닌 파일이 섞여 있어도 검사가 멈추지 않게 한다."""
+    return read_bytes(rel_path).decode("utf-8", errors="replace")
 
 
 # ----------------------------------------------------------------------------------
@@ -434,39 +430,31 @@ def check_references_mention(_: argparse.Namespace) -> list[Violation]:
 UTF8_BOM = b"\xef\xbb\xbf"
 
 
-def check_encoding(_: argparse.Namespace) -> list[Violation]:
-    """`.md`는 BOM 없는 UTF-8, `.proto`와 `.bat`은 cp949인지 본다.
+CHCP_UTF8 = re.compile(rb"^\s*chcp\s+65001\b", re.IGNORECASE | re.MULTILINE)
 
-    cp949 파일을 UTF-8로 다시 저장하면 그 파일을 읽는 생성기와 `cmd`가 깨진다. ASCII만 든
-    파일은 두 인코딩이 같으므로 판정하지 않는다. 벤더링한 라이브러리의 파일이 여기 해당한다.
+
+def check_encoding(_: argparse.Namespace) -> list[Violation]:
+    """`.md`, `.proto`, `.bat`이 BOM 없는 UTF-8인지 본다.
+
+    예전에는 `.proto`와 `.bat`을 cp949로 저장했다. 편집기가 그 습관대로 다시 저장하면 그 파일을
+    읽는 생성기가 깨지므로 되돌아가는 것을 잡는다. `cmd`는 콘솔 코드 페이지로 `.bat`을 읽으므로,
+    한국어가 든 `.bat`이 `chcp 65001`을 부르지 않으면 출력이 깨진다.
     """
     violations = []
     for path in run_git_ls_files(["*.md", "*.proto", "*.bat"]):
         data = read_bytes(path)
-        if path.endswith(".md"):
-            if data.startswith(UTF8_BOM):
-                violations.append(Violation(path, 0, "UTF-8 BOM이 있다. BOM 없이 저장한다"))
-                continue
-            try:
-                data.decode("utf-8")
-            except UnicodeDecodeError as error:
-                violations.append(Violation(path, 0, f"UTF-8이 아니다 ({error.reason})"))
-            continue
-
-        if all(byte < 0x80 for byte in data):
+        if data.startswith(UTF8_BOM):
+            violations.append(Violation(path, 0, "UTF-8 BOM이 있다. BOM 없이 저장한다"))
             continue
         try:
             data.decode("utf-8")
-            violations.append(
-                Violation(path, 0, "UTF-8로 저장돼 있다. .proto와 .bat은 cp949다 (CLAUDE.md 「컨벤션」)")
-            )
+        except UnicodeDecodeError as error:
+            violations.append(Violation(path, 0, f"UTF-8이 아니다 ({error.reason}) (CLAUDE.md 「컨벤션」)"))
             continue
-        except UnicodeDecodeError:
-            pass
-        try:
-            data.decode("cp949")
-        except UnicodeDecodeError:
-            violations.append(Violation(path, 0, "cp949로 읽히지 않는다 (CLAUDE.md 「컨벤션」)"))
+        if path.endswith(".bat") and any(byte >= 0x80 for byte in data) and not CHCP_UTF8.search(data):
+            violations.append(
+                Violation(path, 0, "한국어가 들어 있는데 chcp 65001을 부르지 않는다 (CLAUDE.md 「컨벤션」)")
+            )
     return violations
 
 
@@ -479,7 +467,7 @@ CHECKS = {
     "path-ref": ("저장소 경로 참조", check_path_ref),
     "backlog-ref": ("backlog 번호 참조", check_backlog_ref),
     "references-mention": ("docs/references 언급", check_references_mention),
-    "encoding": ("문서와 cp949 파일의 인코딩", check_encoding),
+    "encoding": ("문서, 스키마, 배치 파일의 인코딩", check_encoding),
 }
 
 
@@ -514,8 +502,9 @@ SELF_TEST_FIXTURES: dict[str, dict[str, str | bytes | None]] = {
         "CLAUDE.md": "# CLAUDE\n",
     },
     "encoding": {
-        "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("utf-8"),
+        "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("cp949"),
         "docs/build.md": UTF8_BOM + "# 빌드\n".encode("utf-8"),
+        "Tools/Example/Make.bat": "@echo off\necho 완료\n".encode("utf-8"),
     },
 }
 
@@ -554,9 +543,11 @@ SELF_TEST_CLEAN: dict[str, dict[str, str | bytes | None]] = {
         "CLAUDE.md": "- `docs/references/` — 앞으로의 설계에 참고할 자료\n",
     },
     "encoding": {
-        "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("cp949"),
+        "Protocol/Schema/Enum.proto": "// 한국어 주석\n".encode("utf-8"),
         "P1/Source/ProtobufCore/any.proto": b"syntax = \"proto3\";\n",
         "docs/build.md": "# 빌드\n".encode("utf-8"),
+        "Tools/Example/Make.bat": "@echo off\nchcp 65001 >nul\necho 완료\n".encode("utf-8"),
+        "Tools/Example/Ascii.bat": b"@echo off\necho done\n",
     },
 }
 

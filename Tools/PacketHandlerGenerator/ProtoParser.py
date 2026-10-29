@@ -11,8 +11,8 @@ MESSAGE_PATTERN = re.compile(r'^message\s+([A-Za-z_][A-Za-z0-9_]*)')
 # 핸들러 표(GPacketHandler)의 칸 수가 UINT16_MAX라 마지막 번호 65535는 쓸 수 없다
 MAX_PACKET_ID = 65534
 
-# 스키마 파일은 cp949다
-SCHEMA_ENCODING = 'cp949'
+# 스키마 파일은 BOM 없는 UTF-8이다
+SCHEMA_ENCODING = 'utf-8'
 
 
 class ProtoParseError(Exception):

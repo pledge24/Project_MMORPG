@@ -10,7 +10,7 @@
 
 **원본**: `Protocol/Schema/*.proto`. 도메인마다 한 파일이다(Common, Lobby, Entry, Entity, Combat, Item, Chat).
 
-`.proto`는 cp949다. UTF-8로 저장하지 않는다.
+`.proto`는 BOM 없는 UTF-8이다. 생성기와 DataBuilder가 UTF-8로 읽는다.
 
 ### 재생성
 
@@ -888,7 +888,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 ## 생성기 자체
 
 패킷 핸들러 생성기 exe는 `Tools/PacketHandlerGenerator/`의 파이썬 소스를 그 폴더의 `MakeExe.bat`으로 PyInstaller 번들링해서 만든다.
-결과 exe는 같은 폴더에 놓이고, `Protocol/Generate.ps1`이 그 exe를 부른다. `.bat`도 cp949다.
+결과 exe는 같은 폴더에 놓이고, `Protocol/Generate.ps1`이 그 exe를 부른다. `MakeExe.bat`은 UTF-8이고, 한국어 출력이 깨지지 않도록 `chcp 65001`을 부른다.
 
 DataBuilder(`Tools/DataBuilder/`)는 exe를 만들지 않는다. 래퍼가 가상 환경의 파이썬으로 소스를 바로 돌리므로, 소스를 고치면 다음 실행에 반영된다.
 

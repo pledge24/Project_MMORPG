@@ -139,13 +139,9 @@ def run_git_check_ignore(paths: list[str]) -> set[str]:
 
 def read_text(rel_path: str) -> str:
     """저장소의 텍스트 파일을 읽는다. 인코딩이 섞여 있어도 검사가 멈추지 않게 한다."""
-    data = (REPO_ROOT / rel_path).read_bytes()
-    try:
-        return data.decode("utf-8")
-    except UnicodeDecodeError:
-        # `.proto`와 `.bat`은 cp949다 (`CLAUDE.md` 「컨벤션」). 이 검사가 보는 파일은 전부
-        # UTF-8이지만, 새 파일이 섞여 들어와도 예외로 죽지 않게 한다.
-        return data.decode("cp949", errors="replace")
+    # 저장소의 텍스트 파일은 전부 UTF-8이다 (`CLAUDE.md` 「컨벤션」). 다른 인코딩의 파일이 섞여
+    # 들어와도 예외로 죽지 않게 한다. 인코딩 위반은 DocLint가 잡는다.
+    return (REPO_ROOT / rel_path).read_bytes().decode("utf-8", errors="replace")
 
 
 def strip_comments_and_strings(source: str, preserve_string_contents: bool = False) -> str:

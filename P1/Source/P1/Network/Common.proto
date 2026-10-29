@@ -1,10 +1,10 @@
 syntax = "proto3";
 package Protocol;
 
-// ¿©·¯ µµ¸ÞÀÎÀÌ ÇÔ²² ¾²´Â ÀÚ·áÇü°ú, ¼¼¼Ç ´Ü°è¿Í ¹«°üÇÑ ÆÐÅ¶
+// ì—¬ëŸ¬ ë„ë©”ì¸ì´ í•¨ê»˜ ì“°ëŠ” ìžë£Œí˜•ê³¼, ì„¸ì…˜ ë‹¨ê³„ì™€ ë¬´ê´€í•œ íŒ¨í‚·
 // @packet_id_range 100 199
 
-// Á÷¾÷. DBÀÇ Character.ClassId¿¡ ¼ýÀÚ·Î ÀúÀåµÈ´Ù. ·ÎºñÀÇ Ä³¸¯ÅÍ »ý¼º°ú °ÔÀÓÀÇ ·¹º§ Ç¥, Âø¿ë Á¶°ÇÀÌ ÇÔ²² ¾´´Ù
+// ì§ì—…. DBì˜ Character.ClassIdì— ìˆ«ìžë¡œ ì €ìž¥ëœë‹¤. ë¡œë¹„ì˜ ìºë¦­í„° ìƒì„±ê³¼ ê²Œìž„ì˜ ë ˆë²¨ í‘œ, ì°©ìš© ì¡°ê±´ì´ í•¨ê»˜ ì“´ë‹¤
 enum CharacterClass
 {
     CHARACTER_CLASS_NONE = 0;
@@ -12,7 +12,7 @@ enum CharacterClass
     CHARACTER_CLASS_MAGE = 2;
 }
 
-// Àåºñ ºÎÀ§. Âø¿ë ÀåºñÀÇ Ä­ ¹øÈ£(Item)ÀÌÀÚ ¿ÜÇüÀÇ ºÎÀ§(Entity)ÀÌ°í, DBÀÇ Item.SlotIndex¿¡ ¼ýÀÚ·Î ÀúÀåµÈ´Ù
+// ìž¥ë¹„ ë¶€ìœ„. ì°©ìš© ìž¥ë¹„ì˜ ì¹¸ ë²ˆí˜¸(Item)ì´ìž ì™¸í˜•ì˜ ë¶€ìœ„(Entity)ì´ê³ , DBì˜ Item.SlotIndexì— ìˆ«ìžë¡œ ì €ìž¥ëœë‹¤
 enum GearPart
 {
     GEAR_PART_NONE = 0;
@@ -33,31 +33,31 @@ enum StatType
     STAT_TYPE_MP = 4;
     STAT_TYPE_PHYSICAL_ATTACK = 5;
     STAT_TYPE_MAGICAL_ATTACK = 6;
-    STAT_TYPE_MAX_EXP = 7;          // Áö±Ý ·¹º§ÀÇ ¿ä±¸ °æÇèÄ¡
-    STAT_TYPE_EXP = 8;              // Áö±Ý ·¹º§ ¾È¿¡¼­ ½×Àº °æÇèÄ¡
+    STAT_TYPE_MAX_EXP = 7;          // ì§€ê¸ˆ ë ˆë²¨ì˜ ìš”êµ¬ ê²½í—˜ì¹˜
+    STAT_TYPE_EXP = 8;              // ì§€ê¸ˆ ë ˆë²¨ ì•ˆì—ì„œ ìŒ“ì€ ê²½í—˜ì¹˜
 }
 
-// ¹Ù²ï ½ºÅÈ ÇÏ³ª
+// ë°”ë€ ìŠ¤íƒ¯ í•˜ë‚˜
 message Stat
 {
     StatType type = 1;
     int64 value = 2;
 }
 
-// Å©¸®Ã³ÀÇ ¸ðµç ½ºÅÈ
+// í¬ë¦¬ì²˜ì˜ ëª¨ë“  ìŠ¤íƒ¯
 message StatInfo
 {
-    map<int32, int64> values = 1;   // <StatType °ª, ½ºÅÈ °ª>
+    map<int32, int64> values = 1;   // <StatType ê°’, ìŠ¤íƒ¯ ê°’>
 }
 
-// ¼­¹ö°¡ ¿¬°áÀ» ²÷´Â »çÀ¯
+// ì„œë²„ê°€ ì—°ê²°ì„ ëŠëŠ” ì‚¬ìœ 
 enum DisconnectReason
 {
     DISCONNECT_REASON_NONE = 0;
-    DISCONNECT_REASON_DUPLICATE_CONNECTION = 1;     // °°Àº °èÁ¤ÀÇ »õ ·Îºñ Á¢¼Ó¿¡ ¹Ð·Á³µ´Ù
+    DISCONNECT_REASON_DUPLICATE_CONNECTION = 1;     // ê°™ì€ ê³„ì •ì˜ ìƒˆ ë¡œë¹„ ì ‘ì†ì— ë°€ë ¤ë‚¬ë‹¤
 }
 
-// ¼­¹ö°¡ ¿¬°áÀ» ²÷±â Á÷Àü¿¡ º¸³½´Ù. ¼¼¼Ç ´Ü°è¿Í ¹«°üÇÏ°Ô ¿Â´Ù
+// ì„œë²„ê°€ ì—°ê²°ì„ ëŠê¸° ì§ì „ì— ë³´ë‚¸ë‹¤. ì„¸ì…˜ ë‹¨ê³„ì™€ ë¬´ê´€í•˜ê²Œ ì˜¨ë‹¤
 message S_DISCONNECT
 {
     DisconnectReason reason = 1;

@@ -60,7 +60,7 @@ class DesignDataCase(unittest.TestCase):
         self.root = Path(self._temp.name)
         (self.root / "DesignData").mkdir()
         (self.root / "Schema").mkdir()
-        (self.root / "Schema" / "Common.proto").write_bytes(PROTO.encode("cp949"))
+        (self.root / "Schema" / "Common.proto").write_bytes(PROTO.encode("utf-8"))
         self.out_dir = self.root / "Server" / "Game" / "Generated"
         # 모듈 이름 → (산출물 폴더, 설정 파일의 namespace). namespace가 None이면 설정 파일에 적지 않는다.
         self.modules: dict[str, tuple[str, str | None]] = {"game": ("Server/Game/Generated", None)}

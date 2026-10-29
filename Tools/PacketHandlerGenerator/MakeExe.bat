@@ -1,17 +1,18 @@
 @echo off
+chcp 65001 >nul
 setlocal
 pushd %~dp0
 
-pyinstaller --noconfirm --onefile PacketHandlerGenerator.py
+py -3 -m PyInstaller --noconfirm --onefile PacketHandlerGenerator.py
 IF ERRORLEVEL 1 (
-    echo [ERROR] PyInstaller ºôµå ½ÇÆĞ
+    echo [ERROR] PyInstaller ë¹Œë“œ ì‹¤íŒ¨
     PAUSE
     EXIT /b 1
 )
 
 MOVE /Y ".\dist\PacketHandlerGenerator.exe"         "./"
 IF ERRORLEVEL 1 (
-    echo [ERROR] ½ÇÇà ÆÄÀÏ ÀÌµ¿ ½ÇÆĞ
+    echo [ERROR] ì‹¤í–‰ íŒŒì¼ ì´ë™ ì‹¤íŒ¨
     PAUSE
     EXIT /b 1
 )
@@ -20,7 +21,7 @@ RD /S /Q ".\build"
 RD /S /Q ".\dist"
 DEL /F /Q ".\PacketHandlerGenerator.spec"
 
-echo [INFO] ¿Ï·áµÇ¾ú½À´Ï´Ù.
+echo [INFO] ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
 PAUSE
 popd
 endlocal

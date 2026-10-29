@@ -1,7 +1,7 @@
 syntax = "proto3";
 package Protocol;
 
-// ·Îºñ Á¢¼Ó°ú Ä³¸¯ÅÍ ¸ñ·Ï, »ý¼º, »èÁ¦
+// ë¡œë¹„ ì ‘ì†ê³¼ ìºë¦­í„° ëª©ë¡, ìƒì„±, ì‚­ì œ
 // @packet_id_range 200 299
 
 import "Common.proto";
@@ -9,22 +9,22 @@ import "Common.proto";
 enum LobbyResult
 {
     LOBBY_RESULT_SUCCESS = 0;
-    LOBBY_RESULT_INVALID_AUTH_TICKET = 1;   // ÀÎÁõ Æ¼ÄÏÀÌ ¾ø°Å³ª, ÀÌ¹Ì ¾²¿´°Å³ª, ´Ù¸¥ ¿ùµåÀÇ °ÍÀÌ´Ù
-    LOBBY_RESULT_INVALID_NAME = 2;          // ÀÌ¸§ÀÌ ºñ¾ú°Å³ª ±æÀÌ Á¦ÇÑÀ» ³Ñ´Â´Ù
-    LOBBY_RESULT_NAME_TAKEN = 3;            // ÀÌ ¿ùµå¿¡ °°Àº ÀÌ¸§ÀÇ Ä³¸¯ÅÍ°¡ ÀÖ´Ù
-    LOBBY_RESULT_UNAVAILABLE_CLASS = 4;     // »ý¼ºÇÒ ¼ö ÀÖ´Â Á÷¾÷ÀÌ ¾Æ´Ï´Ù
-    LOBBY_RESULT_NO_EMPTY_SLOT = 5;         // ºó Ä³¸¯ÅÍ ½½·ÔÀÌ ¾ø´Ù
-    LOBBY_RESULT_CHARACTER_NOT_FOUND = 6;   // ÀÌ °èÁ¤ÀÇ Ä³¸¯ÅÍ°¡ ¾Æ´Ï°Å³ª ÀÌ¹Ì »èÁ¦µÆ´Ù
-    LOBBY_RESULT_INTERNAL_ERROR = 7;        // DB ¿À·ùÃ³·³ ¿äÃ»À» ¹Ù²ãµµ Ç®¸®Áö ¾Ê´Â ½ÇÆÐ
+    LOBBY_RESULT_INVALID_AUTH_TICKET = 1;   // ì¸ì¦ í‹°ì¼“ì´ ì—†ê±°ë‚˜, ì´ë¯¸ ì“°ì˜€ê±°ë‚˜, ë‹¤ë¥¸ ì›”ë“œì˜ ê²ƒì´ë‹¤
+    LOBBY_RESULT_INVALID_NAME = 2;          // ì´ë¦„ì´ ë¹„ì—ˆê±°ë‚˜ ê¸¸ì´ ì œí•œì„ ë„˜ëŠ”ë‹¤
+    LOBBY_RESULT_NAME_TAKEN = 3;            // ì´ ì›”ë“œì— ê°™ì€ ì´ë¦„ì˜ ìºë¦­í„°ê°€ ìžˆë‹¤
+    LOBBY_RESULT_UNAVAILABLE_CLASS = 4;     // ìƒì„±í•  ìˆ˜ ìžˆëŠ” ì§ì—…ì´ ì•„ë‹ˆë‹¤
+    LOBBY_RESULT_NO_EMPTY_SLOT = 5;         // ë¹ˆ ìºë¦­í„° ìŠ¬ë¡¯ì´ ì—†ë‹¤
+    LOBBY_RESULT_CHARACTER_NOT_FOUND = 6;   // ì´ ê³„ì •ì˜ ìºë¦­í„°ê°€ ì•„ë‹ˆê±°ë‚˜ ì´ë¯¸ ì‚­ì œëë‹¤
+    LOBBY_RESULT_INTERNAL_ERROR = 7;        // DB ì˜¤ë¥˜ì²˜ëŸ¼ ìš”ì²­ì„ ë°”ê¿”ë„ í’€ë¦¬ì§€ ì•ŠëŠ” ì‹¤íŒ¨
 }
 
-// Ä³¸¯ÅÍ ¸ñ·ÏÀÇ Ç×¸ñ
+// ìºë¦­í„° ëª©ë¡ì˜ í•­ëª©
 message LobbyCharacter
 {
     int64 character_id = 1;
     string name = 2;
     CharacterClass character_class = 3;
-    int32 level = 4;                        // ¸¶Áö¸·À¸·Î ÀúÀåÇÑ ·¹º§
+    int32 level = 4;                        // ë§ˆì§€ë§‰ìœ¼ë¡œ ì €ìž¥í•œ ë ˆë²¨
 }
 
 message C_CONNECT_LOBBY
@@ -32,18 +32,18 @@ message C_CONNECT_LOBBY
     string auth_ticket = 1;
 }
 
-// ¼º°øÇÏ¸é S_CHARACTER_LIST°¡ µÚµû¸¥´Ù. ½ÇÆÐÇÏ¸é ¼­¹ö°¡ ÀÌ ÀÀ´äÀ» º¸³½ µÚ ¿¬°áÀ» ²÷´Â´Ù
+// ì„±ê³µí•˜ë©´ S_CHARACTER_LISTê°€ ë’¤ë”°ë¥¸ë‹¤. ì‹¤íŒ¨í•˜ë©´ ì„œë²„ê°€ ì´ ì‘ë‹µì„ ë³´ë‚¸ ë’¤ ì—°ê²°ì„ ëŠëŠ”ë‹¤
 message S_CONNECT_LOBBY
 {
     LobbyResult result = 1;
 }
 
-// ¼¼¼ÇÀÌ ·Îºñ¿¡ µé¾î°¥ ¶§¸¶´Ù ¿Â´Ù. ·Îºñ Á¢¼Ó¿¡ ¼º°øÇßÀ» ¶§¿Í ·Îºñ º¹±ÍÀÇ ÀúÀåÀÌ ³¡³µÀ» ¶§´Ù
+// ì„¸ì…˜ì´ ë¡œë¹„ì— ë“¤ì–´ê°ˆ ë•Œë§ˆë‹¤ ì˜¨ë‹¤. ë¡œë¹„ ì ‘ì†ì— ì„±ê³µí–ˆì„ ë•Œì™€ ë¡œë¹„ ë³µê·€ì˜ ì €ìž¥ì´ ëë‚¬ì„ ë•Œë‹¤
 message S_CHARACTER_LIST
 {
     repeated LobbyCharacter characters = 1;
     int32 character_slot_count = 2;
-    repeated CharacterClass creatable_classes = 3;  // ·Îºñ Ç¥ÀÇ »ý¼ºÇÒ ¼ö ÀÖ´Â Á÷¾÷. Ä³¸¯ÅÍ »ý¼º È­¸éÀº ÀÌ Á÷¾÷¸¸ º¸¿© ÁØ´Ù
+    repeated CharacterClass creatable_classes = 3;  // ë¡œë¹„ í‘œì˜ ìƒì„±í•  ìˆ˜ ìžˆëŠ” ì§ì—…. ìºë¦­í„° ìƒì„± í™”ë©´ì€ ì´ ì§ì—…ë§Œ ë³´ì—¬ ì¤€ë‹¤
 }
 
 message C_CREATE_CHARACTER
@@ -55,7 +55,7 @@ message C_CREATE_CHARACTER
 message S_CREATE_CHARACTER
 {
     LobbyResult result = 1;
-    LobbyCharacter character = 2;           // ¼º°øÇßÀ» ¶§¸¸ ÀÖ´Ù
+    LobbyCharacter character = 2;           // ì„±ê³µí–ˆì„ ë•Œë§Œ ìžˆë‹¤
 }
 
 message C_DELETE_CHARACTER
@@ -66,5 +66,5 @@ message C_DELETE_CHARACTER
 message S_DELETE_CHARACTER
 {
     LobbyResult result = 1;
-    int64 character_id = 2;                 // ¿äÃ»ÇÑ Ä³¸¯ÅÍ ¹øÈ£
+    int64 character_id = 2;                 // ìš”ì²­í•œ ìºë¦­í„° ë²ˆí˜¸
 }

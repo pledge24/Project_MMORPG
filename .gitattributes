@@ -4,10 +4,6 @@
 # XML 파일들 (UTF-8)
 *.xml text encoding=UTF-8
 
-# ANSI 인코딩이 필요한 파일들
-*.proto text encoding=cp949
-*.bat text encoding=cp949
-
 # 기타 텍스트 파일들도 UTF-8로
 *.txt text encoding=UTF-8
 *.md text encoding=UTF-8
