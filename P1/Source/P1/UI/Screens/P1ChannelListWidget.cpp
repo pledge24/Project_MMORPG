@@ -7,6 +7,7 @@
 #include "Game/Channel/P1ChannelSubsystem.h"
 #include "UI/P1ScreenSubsystem.h"
 #include "UI/Screens/P1ChannelRowWidget.h"
+#include "Utils/LogCategory.h"
 
 void UP1ChannelListWidget::NativeOnInitialized()
 {
@@ -43,11 +44,20 @@ void UP1ChannelListWidget::RefreshRows()
     NoticeText->SetText(FText::GetEmpty());
 
     const UP1ChannelSubsystem* Channels = GetChannels();
-    if (Channels == nullptr || RowWidgetClass == nullptr)
+    if (Channels == nullptr)
+    {
+        UE_LOG(LogP1UI, Warning, TEXT("채널 목록 창이 채널 서브시스템을 찾지 못해 목록을 그리지 않는다"));
         return;
+    }
 
     const int32 CurrentChannel = Channels->GetChannel();
     CurrentChannelText->SetText(FText::FromString(FString::Printf(TEXT("지금 채널: %d채널"), CurrentChannel)));
+
+    if (RowWidgetClass == nullptr)
+    {
+        UE_LOG(LogP1UI, Warning, TEXT("채널 목록 창의 Row Widget Class가 비어 있어 채널 줄을 그리지 않는다: %s"), *GetClass()->GetPathName());
+        return;
+    }
 
     const TArray<FP1ChannelEntry>& Entries = Channels->GetChannels();
     while (RowWidgets.Num() < Entries.Num())
@@ -83,6 +93,8 @@ void UP1ChannelListWidget::HandleMoveClicked(int32 Channel)
 
 void UP1ChannelListWidget::HandleChannelChanged(int32 Channel)
 {
+    // 닫힌 창은 다음에 열 때 다시 그리지만, 지금 채널 문구가 낡은 채로 한 번 보이지 않도록 여기서도 그린다.
+    RefreshRows();
     CloseSelf();
 }
 
