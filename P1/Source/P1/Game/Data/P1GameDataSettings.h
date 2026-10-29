@@ -4,6 +4,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "P1GameDataSettings.generated.h"
 
+class ACharacter;
 class UDataTable;
 class UTexture2D;
 class UWorld;
@@ -67,6 +68,12 @@ public:
     /** 몬스터의 표현 데이터. 행 구조체는 FP1MonsterAssetData이고 행 이름은 몬스터 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterAssetTable;
+
+    //~ Players
+public:
+    /** 직업 번호(Protocol::CharacterClass 값)마다 플레이어 블루프린트. 직업 표의 직업마다 하나씩 두고, 표에 없는 직업을 두면 서버가 뜨지 않는다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Players")
+    TMap<int32, TSoftClassPtr<ACharacter>> CharacterClassPlayers;
 
     //~ Maps
 public:

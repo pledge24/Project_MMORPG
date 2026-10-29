@@ -19,7 +19,7 @@ enum class MonsterState : uint8
 class MonsterAIComponent : public EntityComponent
 {
 public:
-    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow);
+    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const CreatureCombat& combat);
     virtual ~MonsterAIComponent() = default;
 
     //~ Begin EntityComponent Interface
@@ -93,14 +93,13 @@ private:
     /** 예약한 피격의 때가 되면 룸에 판정을 넘긴다. */
     void UpdatePendingHit(float deltaTime);
 
-    /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간(초). */
-    static constexpr float NORMAL_ATTACK_HIT_DELAY = 0.2f;
-
     /** 공격 간격(초). */
     float _attackInterval;
     int32 _baseAttack;
     /** 공격 사거리. */
     float _tryAttackRange;
+    /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간(초). 공격 몽타주의 타격 시점이다. */
+    float _normalAttackHitDelay;
 
     /** 마지막 공격 뒤 흐른 시간(초). */
     float _timeSinceLastAttack = 0.f;

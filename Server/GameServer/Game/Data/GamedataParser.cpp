@@ -191,6 +191,132 @@ namespace
         }
     }
 
+    //~ 크리처 판정 데이터
+
+    AttackSectionCombat ReadAttackSection(const Json& object)
+    {
+        using DesignData::Detail::Read;
+        AttackSectionCombat section;
+        section.name = Read<string>(object, "Name");
+        section.length = Read<float>(object, "Length");
+        section.hitTimes = Read<vector<float>>(object, "HitTimes");
+        for (const vector<float>& sample : Read<vector<vector<float>>>(object, "RootMotion"))
+        {
+            if (sample.size() != 3)
+                throw DesignData::Detail::FieldError{ "'RootMotion'의 표본이 x, y, z 셋이 아니다" };
+            section.rootMotion.push_back(vector3D(sample[0], sample[1], sample[2]));
+        }
+        return section;
+    }
+
+    AttackCombat ReadAttack(const Json& object)
+    {
+        AttackCombat attack;
+        attack.montage = DesignData::Detail::Read<string>(object, "Montage");
+        attack.sections = DesignData::Detail::ReadRows<AttackSectionCombat>(object, "Sections", ReadAttackSection);
+        return attack;
+    }
+
+    /** 몬스터나 직업 하나의 행. 번호는 행을 읽는 쪽이 대조한다. */
+    pair<int32, CreatureCombat> ReadCreatureCombat(const Json& object)
+    {
+        using DesignData::Detail::Read;
+        CreatureCombat combat;
+        combat.capsuleRadius = Read<float>(object, "CapsuleRadius");
+        combat.capsuleHalfHeight = Read<float>(object, "CapsuleHalfHeight");
+        combat.attacks = DesignData::Detail::ReadRows<AttackCombat>(object, "Attacks", ReadAttack);
+        return { Read<int32>(object, "Id"), std::move(combat) };
+    }
+
+    /**
+     * 게임 코드가 공격마다 첫 섹션과 첫 타격 시점을 꺼내 쓴다. 타이밍의 나머지 검사는 추출이 했으므로 여기서는 비어 있지 않은지만 본다.
+     * who는 오류 메시지의 주어(「몬스터 5000」)다.
+     */
+    void CheckAttacks(const CreatureCombat& combat, const string& who)
+    {
+        if (combat.attacks.empty())
+            throw DesignData::Detail::FieldError{ format("{}: 공격 몽타주가 없다", who) };
+
+        for (const AttackCombat& attack : combat.attacks)
+        {
+            if (attack.sections.empty())
+                throw DesignData::Detail::FieldError{ format("{} {}: 섹션이 없다", who, attack.montage) };
+            for (const AttackSectionCombat& section : attack.sections)
+            {
+                if (section.hitTimes.empty())
+                    throw DesignData::Detail::FieldError{ format("{} {} 섹션 {}: 타격 시점이 없다", who, attack.montage, section.name) };
+            }
+        }
+    }
+
+    /** 직업별 능력치 표에 있는 직업. 이 직업들이 판정 데이터와 짝을 맺는다. */
+    set<Protocol::CharacterClass> CollectClasses(const DesignData::ClassLevelStatTable& classLevelStats)
+    {
+        set<Protocol::CharacterClass> classes;
+        for (const auto& [key, row] : classLevelStats)
+            classes.insert(get<0>(key));
+        return classes;
+    }
+
+    /**
+     * 크리처 판정 데이터를 읽고 몬스터 표, 직업별 능력치 표와 짝을 대조해 표에 더한다. 두 표를 먼저 읽어 둬야 한다.
+     * 짝이 없는 몬스터는 피격을 언제 판정할지 모르므로 부팅을 멈춘다.
+     */
+    void ParseCreatureCombat(const Json& document, GamedataTables& tables)
+    {
+        using DesignData::Detail::FieldError;
+        using DesignData::Detail::Read;
+        using DesignData::Detail::ReadRows;
+
+        const set<Protocol::CharacterClass> classes = CollectClasses(tables.classLevelStats);
+        try
+        {
+            if (document.is_object() == false)
+                throw FieldError{ "객체가 아니다" };
+
+            tables.rootMotionSampleRate = Read<int32>(document, "RootMotionSampleRate");
+            if (tables.rootMotionSampleRate <= 0)
+                throw FieldError{ format("'RootMotionSampleRate'가 0보다 커야 하는데 {}이다", tables.rootMotionSampleRate) };
+
+            for (auto& [monsterId, combat] : ReadRows<pair<int32, CreatureCombat>>(document, "Monsters", ReadCreatureCombat))
+            {
+                const string who = format("몬스터 {}", monsterId);
+                if (tables.monsters.contains(monsterId) == false)
+                    throw FieldError{ format("{}이 몬스터 표에 없다", who) };
+                CheckAttacks(combat, who);
+                if (tables.monsterCombats.emplace(monsterId, std::move(combat)).second == false)
+                    throw FieldError{ format("{}이 겹친다", who) };
+            }
+
+            for (auto& [classId, combat] : ReadRows<pair<int32, CreatureCombat>>(document, "Classes", ReadCreatureCombat))
+            {
+                const string who = format("직업 {}", classId);
+                const auto characterClass = static_cast<Protocol::CharacterClass>(classId);
+                if (Protocol::CharacterClass_IsValid(classId) == false || classes.contains(characterClass) == false)
+                    throw FieldError{ format("{}이 직업별 능력치 표에 없다", who) };
+                CheckAttacks(combat, who);
+                if (tables.classCombats.emplace(characterClass, std::move(combat)).second == false)
+                    throw FieldError{ format("{}이 겹친다", who) };
+            }
+        }
+        catch (const FieldError& error)
+        {
+            throw TableError{ format("{}: {}", CREATURE_COMBAT_FILE, error.cause) };
+        }
+
+        for (const auto& [monsterId, monster] : tables.monsters)
+        {
+            if (tables.monsterCombats.contains(monsterId) == false)
+                throw TableError{ format("몬스터 {}의 크리처 판정 데이터가 없다. 몬스터 에셋 테이블에 행을 두고 추출을 돌린다", monsterId) };
+        }
+        for (Protocol::CharacterClass characterClass : classes)
+        {
+            if (tables.classCombats.contains(characterClass) == false)
+                throw TableError{ format("직업 {}의 크리처 판정 데이터가 없다. 프로젝트 설정의 CharacterClassPlayers에 직업을 더하고 추출을 돌린다",
+                    static_cast<int32>(characterClass)) };
+        }
+    }
+
     //~ 표 사이의 검사
 
     /**
@@ -245,6 +371,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         for (const auto& [fileName, document] : documents.placements)
             ParsePlacement(fileName, document, tables);
         CheckEveryRowPlaced(tables);
+        ParseCreatureCombat(documents.creatureCombat, tables);
     }
     catch (const TableError& error)
     {

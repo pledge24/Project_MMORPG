@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include "Game/Entities/Monster.h"
 #include "Game/Entities/EntityFactory.h"
+#include "TestCreatureCombat.h"
 
 /*--------------------------------------------------------------
     몬스터 초기화 테스트
@@ -36,6 +37,7 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = data;
+        TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID);
         Gamedata::Install(std::move(tables));
 
         MonsterSpawnParams spawnParams;

@@ -9,6 +9,7 @@
 #include "RoomManagerTestAccess.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
+#include "TestCreatureCombat.h"
 
 /*--------------------------------------------------------------
     시야(AOI) 테스트
@@ -98,6 +99,7 @@ protected:
 
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = monsterRow;
+        TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID);
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
         Gamedata::Install(std::move(tables));
 

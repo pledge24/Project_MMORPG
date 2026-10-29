@@ -8,7 +8,7 @@ namespace
 {
     /** DataBuilder의 산출물 폴더. 작업 디렉터리 기준이고, databuilder.toml의 game 모듈 폴더와 같아야 한다. */
     constexpr string_view GENERATED_DIR = "Game/Data/Generated/";
-    /** 배치 추출의 산출물 폴더. 작업 디렉터리 기준이고, 추출 커맨드렛이 쓰는 폴더와 같아야 한다. */
+    /** 배치 추출과 크리처 추출의 산출물 폴더. 작업 디렉터리 기준이고, 추출 커맨드렛이 쓰는 폴더와 같아야 한다. */
     constexpr string_view EXTRACTED_DIR = "Game/Data/Extracted/";
 
     /** 파일을 열지 못하거나 Json 문법이 틀리면 사유를 돌려준다. */
@@ -77,6 +77,12 @@ bool Gamedata::LoadAllGamedata()
     if (directoryError)
     {
         GLogger->Error("배치 데이터 폴더 {}를 읽지 못했다: {}", EXTRACTED_DIR, directoryError.message());
+        return false;
+    }
+
+    if (optional<string> error = ReadDocument(CREATURE_COMBAT_FILE, OUT documents.creatureCombat, EXTRACTED_DIR))
+    {
+        GLogger->Error("크리처 판정 데이터를 불러오지 못했다. {}. 에셋에서 추출을 돌린다", error.value());
         return false;
     }
 
@@ -181,4 +187,16 @@ const RespawnPointPlacement* Gamedata::FindRespawnPoint(int32 areaId)
 {
     auto it = s_tables.respawnPoints.find(areaId);
     return it == s_tables.respawnPoints.end() ? nullptr : &it->second;
+}
+
+const CreatureCombat* Gamedata::FindMonsterCombat(int32 templateId)
+{
+    auto it = s_tables.monsterCombats.find(templateId);
+    return it == s_tables.monsterCombats.end() ? nullptr : &it->second;
+}
+
+const CreatureCombat* Gamedata::FindClassCombat(Protocol::CharacterClass classId)
+{
+    auto it = s_tables.classCombats.find(classId);
+    return it == s_tables.classCombats.end() ? nullptr : &it->second;
 }

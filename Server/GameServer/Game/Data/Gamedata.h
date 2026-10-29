@@ -58,6 +58,10 @@ public:
     /** 그 지역의 리스폰 지점. 리스폰 지점이 없는 지역이면 nullptr. */
     static const RespawnPointPlacement* FindRespawnPoint(int32 areaId);
 
+    /** 크리처 판정 데이터. 없는 번호면 nullptr. 기동할 때 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 있는지 대조한다. */
+    static const CreatureCombat* FindMonsterCombat(int32 templateId);
+    static const CreatureCombat* FindClassCombat(Protocol::CharacterClass classId);
+
     /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }
     /** 새 캐릭터가 첫 게임 입장에서 갖는 시작 맵, 위치, 방향, 골드. */
