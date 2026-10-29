@@ -52,7 +52,7 @@
 |---|---|---|---|---|---|
 | A | #335 클라이언트 경고를 정리하고 몬스터를 데이터 주도형으로 바꾸기 | — | 머지 | | 클라이언트 빌드 0 · `Run-UeTests.ps1` 26건 통과(`P1.Sync.MoveCorrection` 포함) · 사람의 PIE 시나리오 1줄 |
 | B | #336 레벨에 배치한 지역, 리스폰 지점, 포털을 추출해 서버가 읽기 | — | 머지 | #343 | 서버 솔루션 빌드 종료 코드 0 · `GameServerTests.exe` 495건 성공 종료 코드 0 · DataBuilder 테스트 156건 OK · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 전체 27건 성공 종료 코드 0(통합 브랜치 merge 뒤, 경고 동반 4건 포함) · `Invoke-PlacementExtract.ps1` 종료 코드 0(마커 없을 때 오류 22건으로 1) · `L_InGameMap`만 쿠킹(Success, 오류 0)한 결과에 마커 0건 · PIE(포털 이동, 사망과 마을 리스폰, 재접속 위치) 사람 확인 |
-| C | #337 룸을 맵의 사본으로 바꾸고 채널과 AOI 더하기 | B | 진행 | | 서버 솔루션 빌드 종료 코드 0(DummyClient 포함) · `GameServerTests.exe` 528건 성공 종료 코드 0 · 실제 DB 테스트 25건 성공 종료 코드 0 · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 28건 성공 종료 코드 0(경고 동반 4건 포함) · 채널 창 WBP와 PIE(클라이언트 둘)는 사람 확인 전 |
+| C | #337 룸을 맵의 사본으로 바꾸고 채널과 AOI 더하기 | B | 진행 | | 서버 솔루션 빌드 종료 코드 0(DummyClient 포함) · `GameServerTests.exe` 528건 성공 종료 코드 0 · 실제 DB 테스트 25건 성공 종료 코드 0 · 클라이언트 빌드 종료 코드 0 · `Run-UeTests.ps1` 28건 성공 종료 코드 0(경고 동반 4건 포함) · PIE(클라이언트 둘)는 사람 확인 전 |
 | D | #338 추출한 충돌 형상으로 navmesh를 빌드하고 서버 이동 검증에 벽과 높이 더하기 | B, C | 대기 | | |
 | E | #339 몽타주 타이밍, 루트 모션, 캡슐 크기를 추출해 서버가 읽기 | A, B | 대기 | | |
 | F | #340 몬스터를 배치한 스폰 그룹에서 리젠하고 AI를 상태 객체와 경로 추종으로 나누기 | C, D | 대기 | | |
@@ -143,10 +143,8 @@ C와 묶어도 F까지 가는 경로(C → D → F)는 길어지지 않는다.
 - 장비 외형 통지도 시야를 따른다. 이슈 본문의 목록(스폰, 디스폰, 이동, 공격, 피격, 사망)에는 없지만 「채팅을 뺀 룸 브로드캐스트」에 든다
 - 클라이언트의 지금 채널과 채널 목록은 새 채널 서브시스템(`Game/Channel/`)이 갖는다. HUD의 채널 표시(`Channel_txt`)와 게임 메뉴의
   채널 버튼(`ChannelButton`)은 `BindWidgetOptional`이라 WBP에 없어도 HUD와 메뉴가 그대로 열린다
-- 사람에게 넘길 에디터 작업(언리얼 MCP가 연결되지 않은 세션이었다):
-  1. `UP1ChannelRowWidget`을 부모로 채널 한 줄 WBP를 만든다. 위젯 이름 `ChannelText`(TextBlock), `PlayerCountText`(TextBlock), `MoveButton`(Button)
-  2. `UP1ChannelListWidget`을 부모로 채널 목록 창 WBP를 만든다. 위젯 이름 `RowsBox`(VerticalBox 등 패널), `CurrentChannelText`, `NoticeText`(TextBlock),
-     `CloseButton`(Button). 클래스 기본값의 `Row Widget Class`에 1의 WBP를 넣는다
-  3. 프로젝트 설정 「P1 UI」의 `Channel List Widget Class`에 2의 WBP를 넣는다(`Config/DefaultGame.ini`에 저장된다)
-  4. 게임 메뉴 WBP에 Button `ChannelButton`을, HUD WBP에 TextBlock `Channel_txt`를 더한다
-  5. 클라이언트 둘로 PIE 시나리오 3줄을 확인한다
+- 에디터 작업은 사람이 MCP를 다시 연결한 뒤 Claude가 언리얼 MCP로 했다. 새 WBP 둘(`UI/Screens/WBP_ChannelRow`, `WBP_ChannelList`)은
+  게임 메뉴의 패널과 버튼 텍스처, 글꼴, 색을 그대로 썼다. 게임 메뉴에는 「채널 변경」 버튼을 맨 위에, HUD에는 전투 모드 문구 아래 오른쪽 위에
+  채널 문구를 더했다. 채널 목록 창의 `Row Widget Class`는 생성된 클래스의 기본 객체에 넣었고, 저장한 파일에 그 참조가 있는지 확인했다.
+  프로젝트 설정 「P1 UI」의 `Channel List Widget Class`는 설정 툴로 넣었다(`Config/DefaultGame.ini`)
+- 남은 것은 사람의 PIE 확인(클라이언트 둘, PIE 시나리오 3줄)이다
