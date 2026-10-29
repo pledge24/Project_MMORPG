@@ -132,6 +132,29 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("몬스터 에셋 테이블의 행 구조체 오류"), CountIssues(MonsterIssues, true, TEXT("FP1MonsterAssetData")), 1);
     }
 
+    // 5) NPC. 메시는 필수이고, 서 있는 애니메이션은 깨졌을 때만 오류다.
+    {
+        const UDataTable* NpcTable = Tables.MakeDesignTable({ 9000, 9001, 9002, 9003, 9004 });
+        const UDataTable* AssetTable = Tables.MakeNpcAssetTable({
+            { 9000, T::NpcAsset(T::SkeletalMesh) },
+            { 9001, T::NpcAsset(TEXT("")) },
+            { 9002, T::NpcAsset(T::Missing) },
+            { 9004, T::NpcAsset(T::SkeletalMesh, T::MissingMontage) },
+            { 9009, T::NpcAsset(T::SkeletalMesh) },
+        });
+
+        const TArray<FIssue> Issues = FP1DesignDataPairCheck::CheckNpcs(*NpcTable, *AssetTable);
+
+        TestEqual(TEXT("메시가 찬 NPC"), CountIssues(Issues, true, TEXT("9000")), 0);
+        TestEqual(TEXT("빈 메시"), CountIssues(Issues, true, TEXT("9001")), 1);
+        TestEqual(TEXT("깨진 메시"), CountIssues(Issues, true, TEXT("9002")), 1);
+        TestEqual(TEXT("에셋 행이 없는 NPC"), CountIssues(Issues, true, TEXT("9003")), 1);
+        TestEqual(TEXT("깨진 서 있는 애니메이션"), CountIssues(Issues, true, T::MissingMontage), 1);
+        TestEqual(TEXT("오류 수"), CountIssues(Issues, true), 4);
+        TestEqual(TEXT("기획에서 지운 행은 경고"), CountIssues(Issues, false, TEXT("9009")), 1);
+        TestEqual(TEXT("경고 수"), CountIssues(Issues, false), 1);
+    }
+
     return true;
 }
 

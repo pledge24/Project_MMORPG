@@ -5,8 +5,6 @@
 #include "Main/ClientPacketHandler.h"
 #include "ServerCore/Network/SocketUtil.h"
 
-char sendData[] = "Hello World";
-
 /**
  * 더미 클라이언트가 게임 서버와 맺는 세션.
  *

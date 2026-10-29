@@ -103,7 +103,7 @@ void PacketSession::Disconnect()
 		RecvWorkerThread = nullptr;
 	}
 
-	// 소켓은 게임 인스턴스가 소유하고 곧 해제한다. 핸들러가 연결을 끊어도 펌프가 이 세션을 쥐고 있어서
+	// 소켓은 연결 서브시스템(UP1ConnectionSubsystem)이 소유하고 곧 해제한다. 핸들러가 연결을 끊어도 펌프가 이 세션을 쥐고 있어서
 	// 소멸자가 나중에 Disconnect를 다시 부른다. 그때 해제된 소켓을 건드리지 않도록 놓는다.
 	Socket = nullptr;
 }

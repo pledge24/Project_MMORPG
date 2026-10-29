@@ -13,8 +13,8 @@ class ItemDAO
 {
 public:
     /**
-     * 캐릭터의 아이템을 progress의 인벤토리와 착용 장비에 붙인다. 컨테이너나 구역을 모르는 행이 있으면 DBError.
-     * 행마다 칸을 하나씩 붙일 뿐이라 배열 순번은 칸 번호가 아니다. 칸 번호는 각 칸의 slot_id다.
+     * 캐릭터의 아이템을 progress의 아이템 목록에 담는다. 컨테이너나 구역을 모르는 행이 있으면 DBError.
+     * 목록 순번은 칸 번호가 아니다. 칸 번호는 각 아이템의 SlotAddress::slotIndex다.
      */
     static void LoadItems(DBConnection& conn, int64 characterId, OUT PlayerProgress& progress);
     /**

@@ -31,6 +31,8 @@ public:
         /** 몽타주의 오브젝트 경로. 오류 메시지와 산출물에 쓴다. */
         FString Montage;
         bool bHasRootMotion = false;
+        /** 몽타주의 RateScale. 시간은 이 값을 반영하지 않은 트랙 시간이다. */
+        float RateScale = 1.f;
         TArray<FSection> Sections;
     };
 

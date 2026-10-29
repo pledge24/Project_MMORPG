@@ -151,7 +151,7 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
     ASSERT_TRUE(room->LeavePlayer(traveler, true));
 
     const auto sellPkt = MakeSwordRequest<Protocol::C_SELL_ITEM>(Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
-    ItemRequests::HandleSellItem(*room, traveler, sellPkt);
+    ItemRequests::C_HandleSellItem(*room, traveler, sellPkt);
 
     EXPECT_NE(traveler->GetInventory().FindItem(SlotAddress{ ContainerType::INVENTORY_GEAR, 0 }), nullptr)
         << "룸을 떠난 플레이어의 소지품을 옛 룸 큐에서 바꾸면 새 룸 큐와 경쟁한다";
@@ -162,10 +162,10 @@ TEST_F(RoomRequestTest, ItemRequestOfPlayerWhoLeftIsIgnored)
 TEST_F(RoomRequestTest, EquipAndUnequipWithoutSessionDoNotSend)
 {
     const auto equipPkt = MakeSwordRequest<Protocol::C_EQUIP_GEAR>(Protocol::CONTAINER_TYPE_INVENTORY_GEAR, 0);
-    ItemRequests::HandleEquipGear(*room, player, equipPkt);
+    ItemRequests::C_HandleEquipGear(*room, player, equipPkt);
 
     const auto unequipPkt = MakeSwordRequest<Protocol::C_UNEQUIP_GEAR>(Protocol::CONTAINER_TYPE_EQUIPPED, Protocol::GEAR_PART_WEAPON);
-    ItemRequests::HandleUnequipGear(*room, player, unequipPkt);
+    ItemRequests::C_HandleUnequipGear(*room, player, unequipPkt);
 
     SUCCEED() << "세션이 없어도 응답을 건너뛰고 끝나야 한다";
 }

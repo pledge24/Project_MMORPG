@@ -166,8 +166,15 @@ void UP1MyPlayerData::ApplyStats(const google::protobuf::RepeatedPtrField<Protoc
 
 int64 UP1MyPlayerData::GetStatValue(Protocol::StatType statType)
 {
-    auto* statMappings = _StatInfo->mutable_values();
-    return statMappings->at((int32)statType);
+    // protobuf Map::at은 키가 없으면 프로세스를 중단시키므로 find로 읽는다.
+    const auto& statMappings = _StatInfo->values();
+    const auto It = statMappings.find((int32)statType);
+    if (It == statMappings.end())
+    {
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("스탯 %d가 없어 0으로 읽습니다"), (int32)statType);
+        return 0;
+    }
+    return It->second;
 }
 
 void UP1MyPlayerData::ApplyLevel(int32 Level)

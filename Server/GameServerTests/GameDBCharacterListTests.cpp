@@ -234,6 +234,23 @@ TEST_F(DISABLED_GameDBCharacterListTest, ListExcludesDeletedCharacters)
     EXPECT_EQ(characters[0].level, 7) << "목록의 레벨은 DB에 저장된 사본이다";
 }
 
+TEST_F(DISABLED_GameDBCharacterListTest, ListReadsNameUpToColumnLength)
+{
+    constexpr int64 ACCOUNT_ID = 9'000'000'000'116;
+    constexpr int64 CHARACTER_ID = 9'000'000'116'001;
+    const string name = "DB_NAME_LIMIT_abcdefghijklmnopqr";
+    ASSERT_EQ(name.size(), static_cast<size_t>(CHARACTER_NAME_COLUMN_LENGTH));
+    CleanupAccount(ACCOUNT_ID);
+    AccountDAO::RecordLogin(Connection(), ACCOUNT_ID);
+    ASSERT_FALSE(Create(ACCOUNT_ID, CHARACTER_ID, name).rejection.has_value());
+
+    vector<CharacterListRow> characters;
+    CharacterListDAO::LoadCharacterList(Connection(), ACCOUNT_ID, OUT characters);
+
+    ASSERT_EQ(characters.size(), 1u);
+    EXPECT_EQ(characters[0].name, name) << "열 크기만큼 긴 이름도 잘리지 않고 읽힌다";
+}
+
 TEST_F(DISABLED_GameDBCharacterListTest, CreateWithoutAccountRowIsDBError)
 {
     constexpr int64 ACCOUNT_ID = 9'000'000'000'112;

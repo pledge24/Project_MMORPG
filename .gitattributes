@@ -27,6 +27,18 @@
 # 에셋 본체가 올라가지 않는데, 그 실패는 다른 사람이 클론할 때까지 드러나지 않는다.
 .githooks/* text eol=lf
 
+# 생성기가 LF로 쓰는 산출물은 체크아웃도 LF로 고정한다.
+# core.autocrlf 가 true 인 환경에서 CRLF 로 체크아웃되면, 원본을 고치지 않고 생성기만 다시 돌려도
+# 산출물 전체가 바뀐 파일로 보여서 무엇이 실제로 바뀌었는지 git status 로 가릴 수 없다.
+Server/GameServer/Protocol/*.pb.* text eol=lf
+Server/DummyClient/Protocol/*.pb.* text eol=lf
+P1/Source/P1/Network/*.pb.* text eol=lf
+Server/GameServer/Game/Data/Generated/** text eol=lf
+Server/GameServer/Lobby/Data/Generated/** text eol=lf
+P1/DesignData/Generated/** text eol=lf
+P1/Source/P1/Game/Data/Generated/** text eol=lf
+Server/GameServer/Game/Data/Extracted/*.json text eol=lf
+
 # 언리얼 에셋은 Git LFS로 추적한다 (ADR-0006).
 # 추적 범위는 P1/.gitignore의 화이트리스트가 정한다. 여기서는 형식만 정한다.
 # -text 를 붙이는 이유는 위의 `* text=auto` 가 이 바이너리에 줄바꿈 변환을 걸지 못하게 막는 것이다.

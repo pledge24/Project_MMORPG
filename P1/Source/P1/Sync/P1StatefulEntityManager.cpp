@@ -79,7 +79,7 @@ AActor* UP1StatefulEntityManager::FindEntity(uint64 EntityId)
         return *FindNpc;
     }
 
-    UE_LOG(LogP1Entity, Warning, TEXT("해당 엔티티(Id:%d)를 EntityManager에서 찾지 못했습니다"), (int32)EntityId);
+    UE_LOG(LogP1Entity, Warning, TEXT("해당 엔티티(Id:%llu)를 EntityManager에서 찾지 못했습니다"), EntityId);
 
     return nullptr;
 }
@@ -157,16 +157,19 @@ void UP1StatefulEntityManager::DespawnAllEntities()
 
 void UP1StatefulEntityManager::DespawnEntity(uint64 EntityId)
 {
+    // 등록을 풀면 맵 원소가 사라지므로, 액터 포인터를 먼저 꺼내 둔다.
     if (TObjectPtr<AP1Player>* FindPlayer = Players.Find(EntityId))
     {
+        AP1Player* Player = *FindPlayer;
         UnRegisterEntity(EntityId, EP1EntityType::Player);
-        (*FindPlayer)->Destroy();
+        Player->Destroy();
         return;
     }
     else if (TObjectPtr<AP1Monster>* FindMonster = Monsters.Find(EntityId))
     {
+        AP1Monster* Monster = *FindMonster;
         UnRegisterEntity(EntityId, EP1EntityType::Monster);
-        (*FindMonster)->Destroy();
+        Monster->Destroy();
         return;
     }
     else if (TObjectPtr<AP1Npc>* FindNpc = Npcs.Find(EntityId))
@@ -190,9 +193,6 @@ void UP1StatefulEntityManager::SpawnMonster(const Protocol::EntityInfo& InEntity
     AP1EntitySpawner* Spawner = EntitySpawners[SpawnerId];
 
     const uint64 EntityId = InEntityInfo.entity_id();
-    if (Monsters.Find(EntityId) != nullptr)
-        return;
-
     if (Monsters.Find(EntityId))
     {
         UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 EntityId를 가진 몬스터 스폰 시도"));
@@ -223,9 +223,6 @@ void UP1StatefulEntityManager::SpawnPlayer(const Protocol::EntityInfo& InEntityI
     AP1EntitySpawner* Spawner = EntitySpawners[SpawnerId];
 
     const uint64 EntityId = InEntityInfo.entity_id();
-    if (Players.Find(EntityId) != nullptr)
-        return;
-
     if (Players.Find(EntityId))
     {
         UE_LOG(LogP1Entity, Warning, TEXT("이미 존재하는 EntityId를 가진 플레이어 스폰 시도"));
