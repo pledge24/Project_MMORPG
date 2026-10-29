@@ -895,5 +895,5 @@ DataBuilder(`Tools/DataBuilder/`)는 exe를 만들지 않는다. 래퍼가 가�
 **패킷 핸들러 생성기의 파이썬 소스를 고치면 `MakeExe.bat`으로 exe를 다시 만들어 소스와 함께 커밋한다.**
 — 스크립트는 소스가 아니라 exe를 부른다. exe를 다시 만들지 않으면 고친 소스가 돌지 않는다.
 
-exe를 다시 만들려면 `py -3 -m pip install pyinstaller jinja2`로 두 패키지를 설치한다. `MakeExe.bat`은 `pyinstaller`를 PATH에서
-찾으므로, `--user`로 설치했으면 `%APPDATA%\Python\Python313\Scripts`를 PATH에 더한다.
+exe를 다시 만들려면 `py -3 -m pip install pyinstaller jinja2`로 두 패키지를 설치한다. `MakeExe.bat`은 PyInstaller를
+`py -3 -m PyInstaller`로 부르므로, `--user`로 설치해도 PATH를 고칠 필요가 없다.
