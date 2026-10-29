@@ -1,16 +1,16 @@
 [
 {"RowName":"10","Id":10,"MapId":1111,"Name":"마을","Type":"SAFE_ZONE","HasRespawnPoint":true,"Portals":[
-{"Id":11},
-{"Id":12},
-{"Id":13}
+{"Id":11,"DestAreaId":20},
+{"Id":12,"DestAreaId":30},
+{"Id":13,"DestAreaId":40}
 ]},
 {"RowName":"20","Id":20,"MapId":1111,"Name":"초급 사냥터","Type":"HUNTING_FIELD","HasRespawnPoint":false,"Portals":[
-{"Id":21}
+{"Id":21,"DestAreaId":10}
 ]},
 {"RowName":"30","Id":30,"MapId":1111,"Name":"중급 사냥터","Type":"HUNTING_FIELD","HasRespawnPoint":false,"Portals":[
-{"Id":31}
+{"Id":31,"DestAreaId":10}
 ]},
 {"RowName":"40","Id":40,"MapId":1111,"Name":"고급 사냥터","Type":"HUNTING_FIELD","HasRespawnPoint":false,"Portals":[
-{"Id":41}
+{"Id":41,"DestAreaId":10}
 ]}
 ]

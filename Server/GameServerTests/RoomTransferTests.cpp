@@ -10,17 +10,18 @@
     목적지 룸이 없는 리스폰 유형은 서버를 죽였다.
 ---------------------------------------------------------------*/
 
-TEST(RoomTransferTest, PortalEnterDataUsesPortalDestination)
+TEST(RoomTransferTest, PortalEnterDataUsesPlacedDestination)
 {
     DesignData::PortalRow portal;
     portal.Id = 11;
     portal.DestAreaId = 20;
-    portal.DestX = -8000.f;
-    portal.DestY = 10000.f;
-    portal.DestZ = 50.f;
-    portal.DestYaw = 180.f;
 
-    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal);
+    PortalPlacement placement;
+    placement.id = 11;
+    placement.dest = vector3D(-8000.f, 10000.f, 50.f);
+    placement.destYaw = 180.f;
+
+    const RoomEnterData enterData = RoomTransfer::MakePortalEnterData(portal, placement);
 
     EXPECT_EQ(enterData.nextRoomId, 20) << "지금은 도착 지역 하나를 룸 하나가 맡는다";
     ASSERT_TRUE(enterData.enterPos.has_value()) << "비어 있으면 포털의 도착 위치가 아니라 룸 중심에 선다";
@@ -57,10 +58,10 @@ TEST(RoomTransferTest, UnsupportedRespawnTypesAreRejected)
     }
 }
 
-// 마을 리스폰의 목적지는 지역 표에서 읽는다. 룸 객체를 보지 않으므로 퇴장한 뒤의 저장에서도 쓸 수 있다.
-TEST(RoomTransferTest, TownRespawnComesFromAreaTable)
+// 마을 리스폰의 목적지는 배치한 리스폰 지점이다. 룸 객체를 보지 않으므로 퇴장한 뒤의 저장에서도 쓸 수 있다.
+TEST(RoomTransferTest, TownRespawnComesFromPlacedRespawnPoint)
 {
-    DesignData::AreaRow town = TestAreaTables::MakeArea(10, 1001);
+    TestAreaTables::TestArea town = TestAreaTables::MakeArea(10, 1001);
     TestAreaTables::SetRespawnPoint(town, 100.f, 200.f, 30.f);
 
     GamedataTables tables;
@@ -117,8 +118,8 @@ protected:
     void SetUp() override
     {
         town = TestAreaTables::MakeArea(TOWN_ROOM, MAP_A);
-        town.Portals.push_back(TestAreaTables::MakePortal(11, FIELD_ROOM, -1200.f, 1000.f, PORTAL_RADIUS));
-        town.Portals.push_back(TestAreaTables::MakePortal(12, OTHER_MAP_ROOM, 2000.f, 0.f, PORTAL_RADIUS));
+        TestAreaTables::AddPortal(town, 11, FIELD_ROOM, -1200.f, 1000.f, PORTAL_RADIUS);
+        TestAreaTables::AddPortal(town, 12, OTHER_MAP_ROOM, 2000.f, 0.f, PORTAL_RADIUS);
 
         GamedataTables tables;
         TestAreaTables::AddArea(tables, town);
@@ -132,12 +133,12 @@ protected:
         Gamedata::Install(GamedataTables());
     }
 
-    DesignData::AreaRow town;
+    TestAreaTables::TestArea town;
 };
 
 TEST_F(RoomTransferMapTest, PortalUseWithinRadiusPasses)
 {
-    const DesignData::PortalRow& portal = town.Portals[0];
+    const PortalPlacement& portal = town.portals[0];
     EXPECT_FALSE(RoomTransfer::ValidatePortalUse(portal, MakePlayerPos(-1200.f + 300.f, 1000.f + 400.f)).has_value())
         << "반경 경계(거리 500)는 통과한다";
     EXPECT_FALSE(RoomTransfer::ValidatePortalUse(portal, MakePlayerPos(-1200.f, 1000.f, 5000.f)).has_value())
@@ -146,7 +147,7 @@ TEST_F(RoomTransferMapTest, PortalUseWithinRadiusPasses)
 
 TEST_F(RoomTransferMapTest, PortalUseOutsideRadiusIsRejected)
 {
-    const DesignData::PortalRow& portal = town.Portals[0];
+    const PortalPlacement& portal = town.portals[0];
     EXPECT_TRUE(RoomTransfer::ValidatePortalUse(portal, MakePlayerPos(-1200.f + 301.f, 1000.f + 400.f)).has_value())
         << "조작한 클라이언트는 룸 안 어디서든 포털을 탄다";
 }
@@ -154,7 +155,9 @@ TEST_F(RoomTransferMapTest, PortalUseOutsideRadiusIsRejected)
 // 반경은 포털마다 다르다. 지역 하나의 포털이 같은 반경을 쓰지 않는다.
 TEST_F(RoomTransferMapTest, PortalUseUsesThatPortalsRadius)
 {
-    const DesignData::PortalRow narrow = TestAreaTables::MakePortal(13, FIELD_ROOM, 0.f, 0.f, 100.f);
+    PortalPlacement narrow;
+    narrow.id = 13;
+    narrow.radius = 100.f;
     EXPECT_FALSE(RoomTransfer::ValidatePortalUse(narrow, MakePlayerPos(100.f, 0.f)).has_value());
     EXPECT_TRUE(RoomTransfer::ValidatePortalUse(narrow, MakePlayerPos(101.f, 0.f)).has_value());
 }
@@ -169,7 +172,7 @@ class RoomAssignmentTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        DesignData::AreaRow town = TestAreaTables::MakeArea(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
+        TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_ROOM, MAP_A, 0.f, 0.f, 1000.f);
         TestAreaTables::SetRespawnPoint(town, 100.f, 200.f, 30.f);
 
         GamedataTables tables;

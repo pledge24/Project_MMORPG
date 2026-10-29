@@ -6,7 +6,15 @@ bool RoomManager::CreateAllRooms()
 {
     for (const auto& [areaId, area] : Gamedata::GetAreas())
     {
-        RoomRef room = Room::Create(area);
+        // 기동할 때 지역마다 배치 데이터가 있는지 대조했으므로 없으면 서버의 결함이다.
+        const AreaPlacement* placement = Gamedata::FindAreaPlacement(areaId);
+        if (placement == nullptr)
+        {
+            GLogger->Error("지역 {}의 배치 데이터가 없어 룸을 만들지 못했다", areaId);
+            return false;
+        }
+
+        RoomRef room = Room::Create(area, *placement);
         const int32 roomId = room->GetRoomId();
         if (room->Start() == false)
         {

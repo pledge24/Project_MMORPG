@@ -17,6 +17,8 @@ struct GamedataDocuments
     Json classLevelStats;
     /** 설정 워크북의 초기 진행 시트(Progress.json). */
     Json initialProgress;
+    /** 파일 이름 → 추출한 맵 하나의 배치 데이터. 오류 메시지가 파일 이름을 쓴다. */
+    map<string, Json> placements;
 };
 
 /**

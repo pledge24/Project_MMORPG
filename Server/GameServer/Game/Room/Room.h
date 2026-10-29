@@ -19,12 +19,15 @@ public:
 
     //~ 생성
 public:
-    /** 룸을 만드는 유일한 길이다. 지금은 지역 하나가 룸 하나다. 지역 표는 부팅 때 검증했으므로 실패하지 않는다. */
-    static RoomRef Create(const DesignData::AreaRow& area);
+    /**
+     * 룸을 만드는 유일한 길이다. 지금은 지역 하나가 룸 하나이고, 룸의 경계는 그 지역의 배치 데이터다.
+     * 지역 표와 배치 데이터는 부팅 때 검증했으므로 실패하지 않는다.
+     */
+    static RoomRef Create(const DesignData::AreaRow& area, const AreaPlacement& placement);
 
 protected:
     /** Create만 부른다. */
-    void Init(const DesignData::AreaRow& area);
+    void Init(const DesignData::AreaRow& area, const AreaPlacement& placement);
     void CacheRoomData();
 
     //~ 시작
@@ -126,7 +129,7 @@ public:
     int32               GetMapId() const { return _area.MapId; }
     /** 이 룸이 맡은 지역에 그 번호의 포털이 없으면 nullptr. */
     const DesignData::PortalRow* FindPortal(int32 portalId) const;
-    const vector3D&     GetCenterPoint() const { return _roomCenterPos; }
+    const vector3D&     GetCenterPoint() const { return _placement.center; }
 
     /** posInfo를 룸 안의 무작위 위치로 바꾼다. randYaw가 false면 yaw는 그대로 둔다. */
     void SetRandomPos(IN Protocol::PosInfo* posInfo, bool usePadding = true, bool randYaw = false);
@@ -139,16 +142,8 @@ private:
     int32 _roomId;
     /** 이 룸이 맡은 지역 표의 행 사본. */
     DesignData::AreaRow _area;
-
-    /** 언리얼 좌표를 따른다. depth가 x 방향, width가 y 방향의 반폭이다. */
-    vector3D _roomCenterPos;
-    float _depthHalfExtent;
-    float _widthHalfExtent;
-
-    float _roomMinX;
-    float _roomMaxX;
-    float _roomMinY;
-    float _roomMaxY;
+    /** 이 룸이 맡은 지역의 배치 데이터 사본. 경계가 룸의 경계다. */
+    AreaPlacement _placement;
 
     //~ 엔티티
 public:

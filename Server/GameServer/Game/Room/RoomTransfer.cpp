@@ -4,9 +4,9 @@
 namespace
 {
     // 그 맵에서 좌표가 드는 지역을 찾는다. 높이는 보지 않는다.
-    // 경계 위의 점은 안쪽이다. 이동 판정(MoveValidation)이 경계 위를 룸 안으로 받으므로, 경계에서 저장한
-    // 플레이어를 밖으로 판정하면 다음 입장에서 마을로 밀려난다. 두 지역이 경계를 함께 쓰면 지역 표를 지역 번호
-    // 순서로 돌기 때문에 번호가 작은 쪽이 잡힌다.
+    // 경계 위의 점은 안쪽이다. 이동 판정(MoveValidation)이 같은 경계로 판정하므로, 경계에서 저장한 플레이어도
+    // 다음 입장에서 같은 지역에 든다. 추출이 지역끼리 겹치지 않음을 검사하지만 경계는 함께 쓸 수 있고, 그때는
+    // 지역 표를 지역 번호 순서로 돌기 때문에 번호가 작은 쪽이 잡힌다.
     const DesignData::AreaRow* FindAreaContaining(int32 mapId, const Protocol::Vector& pos)
     {
         for (const auto& [areaId, area] : Gamedata::GetAreas())
@@ -14,12 +14,9 @@ namespace
             if (area.MapId != mapId)
                 continue;
 
-            if (pos.x() < area.CenterX - area.HalfExtentX || pos.x() > area.CenterX + area.HalfExtentX)
-                continue;
-            if (pos.y() < area.CenterY - area.HalfExtentY || pos.y() > area.CenterY + area.HalfExtentY)
-                continue;
-
-            return &area;
+            const AreaPlacement* placement = Gamedata::FindAreaPlacement(areaId);
+            if (placement != nullptr && placement->bounds.Contains(pos.x(), pos.y()))
+                return &area;
         }
 
         return nullptr;
@@ -33,17 +30,17 @@ int32 RoomTransfer::SelectRoomForArea(int32 areaId)
     return areaId;
 }
 
-RoomEnterData RoomTransfer::MakePortalEnterData(const DesignData::PortalRow& portal)
+RoomEnterData RoomTransfer::MakePortalEnterData(const DesignData::PortalRow& portal, const PortalPlacement& placement)
 {
     RoomEnterData enterData;
     enterData.nextRoomId = SelectRoomForArea(portal.DestAreaId);
 
     Protocol::PosInfo enterPos;
     Protocol::Vector& pos = *enterPos.mutable_pos();
-    pos.set_x(portal.DestX);
-    pos.set_y(portal.DestY);
-    pos.set_z(portal.DestZ);
-    enterPos.set_yaw(portal.DestYaw);
+    pos.set_x(placement.dest.x);
+    pos.set_y(placement.dest.y);
+    pos.set_z(placement.dest.z);
+    enterPos.set_yaw(placement.destYaw);
     enterPos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
     // 룸 입장 응답이 내 엔티티의 위치로 이 값을 실으므로 반드시 채워야 한다.
@@ -67,17 +64,20 @@ optional<Protocol::EntryResult> RoomTransfer::ValidateRespawn(bool isDead, Proto
 optional<TownRespawn> RoomTransfer::FindTownRespawn()
 {
     const DesignData::AreaRow* town = Gamedata::FindArea(Gamedata::GetTownAreaId());
-    if (town == nullptr || town->HasRespawnPoint == false
-        || town->RespawnX.has_value() == false || town->RespawnY.has_value() == false || town->RespawnZ.has_value() == false)
+    if (town == nullptr || town->HasRespawnPoint == false)
+        return nullopt;
+
+    const RespawnPointPlacement* point = Gamedata::FindRespawnPoint(town->Id);
+    if (point == nullptr)
         return nullopt;
 
     TownRespawn respawn;
     respawn.mapId = town->MapId;
     respawn.roomId = SelectRoomForArea(town->Id);
-    respawn.pos.mutable_pos()->set_x(town->RespawnX.value());
-    respawn.pos.mutable_pos()->set_y(town->RespawnY.value());
-    respawn.pos.mutable_pos()->set_z(town->RespawnZ.value());
-    respawn.pos.set_yaw(0.f);
+    respawn.pos.mutable_pos()->set_x(point->pos.x);
+    respawn.pos.mutable_pos()->set_y(point->pos.y);
+    respawn.pos.mutable_pos()->set_z(point->pos.z);
+    respawn.pos.set_yaw(point->yaw);
     respawn.pos.set_state(Protocol::MoveState::MOVE_STATE_IDLE);
 
     return respawn;
@@ -96,13 +96,13 @@ optional<RoomAssignment> RoomTransfer::AssignRoom(int32 mapId, const Protocol::P
     return RoomAssignment{ town->mapId, town->roomId, town->pos };
 }
 
-optional<string> RoomTransfer::ValidatePortalUse(const DesignData::PortalRow& portal, const Protocol::PosInfo& playerPos)
+optional<string> RoomTransfer::ValidatePortalUse(const PortalPlacement& portal, const Protocol::PosInfo& playerPos)
 {
     // 높이는 보지 않는다. 포털 좌표의 z는 바닥이고 플레이어의 z는 캡슐 중심이다.
-    const float dx = playerPos.pos().x() - portal.SrcX;
-    const float dy = playerPos.pos().y() - portal.SrcY;
-    if (dx * dx + dy * dy > portal.Radius * portal.Radius)
-        return format("포털 {}의 반경 {} 밖에서 온 포털 이동 요청", portal.Id, portal.Radius);
+    const float dx = playerPos.pos().x() - portal.src.x;
+    const float dy = playerPos.pos().y() - portal.src.y;
+    if (dx * dx + dy * dy > portal.radius * portal.radius)
+        return format("포털 {}의 반경 {} 밖에서 온 포털 이동 요청", portal.id, portal.radius);
 
     return nullopt;
 }

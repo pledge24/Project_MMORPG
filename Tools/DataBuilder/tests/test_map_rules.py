@@ -13,31 +13,29 @@ MONSTER = (
     ["both", "server", "server", "server", "server"],
 )
 MAP = (["Id", "Name"], ["key:int32", "string"], ["both", "client"])
+# 공간 열(중심, 반경, 리스폰 지점, 포털 좌표)은 없다. 레벨의 마커에서 추출한다.
 AREA = (
-    ["Id", "MapId", "Name", "HasRespawnPoint", "Monsters", "MaxMonsterCount", "MonsterRespawnSec",
-     "CenterX", "CenterY", "CenterZ", "HalfExtentX", "HalfExtentY", "RespawnX", "RespawnY", "RespawnZ"],
-    ["key:int32", "ref:Map", "string", "bool", "ref[]:Monster", "int32", "int32",
-     "float", "float", "float", "float", "float", "float?", "float?", "float?"],
-    ["both", "both", "client", "both", "server", "server", "server",
-     "server", "server", "server", "server", "server", "server", "server", "server"],
+    ["Id", "MapId", "Name", "HasRespawnPoint", "Monsters", "MaxMonsterCount", "MonsterRespawnSec"],
+    ["key:int32", "ref:Map", "string", "bool", "ref[]:Monster", "int32", "int32"],
+    ["both", "both", "client", "both", "server", "server", "server"],
 )
 PORTAL = (
-    ["Id", "AreaId", "SrcX", "SrcY", "SrcZ", "Radius", "DestAreaId", "DestX", "DestY", "DestZ", "DestYaw"],
-    ["key:int32", "parent:Area", "float", "float", "float", "float", "ref:Area", "float", "float", "float", "float"],
-    ["both", "both", "server", "server", "server", "server", "server", "server", "server", "server", "server"],
+    ["Id", "AreaId", "DestAreaId"],
+    ["key:int32", "parent:Area", "ref:Area"],
+    ["both", "both", "both"],
 )
 
 
 def town(area_id: int = 10, map_id: int = 1111) -> list:
-    return [area_id, map_id, "마을", True, None, 0, 0, 0, 0, 0, 1500, 1500, 0, 0, 0]
+    return [area_id, map_id, "마을", True, None, 0, 0]
 
 
-def field(area_id: int = 20, map_id: int = 1111, monsters: str | None = "5000", half_extent: float = 2500) -> list:
-    return [area_id, map_id, "초급 사냥터", False, monsters, 10, 10, -10000, 10000, 0, half_extent, half_extent, None, None, None]
+def field(area_id: int = 20, map_id: int = 1111, monsters: str | None = "5000") -> list:
+    return [area_id, map_id, "초급 사냥터", False, monsters, 10, 10]
 
 
-def portal(portal_id: int = 11, area_id: int = 10, dest_area_id: int = 20, radius: float = 500) -> list:
-    return [portal_id, area_id, -1200, 1000, 0, radius, dest_area_id, -8000, 10000, 0, 180]
+def portal(portal_id: int = 11, area_id: int = 10, dest_area_id: int = 20) -> list:
+    return [portal_id, area_id, dest_area_id]
 
 
 class MapRuleCase(DesignDataCase):
@@ -77,10 +75,6 @@ class AreaTableTest(MapRuleCase):
         self.add_portals()
         self.assert_error("Area.xlsx", "6행", "Monsters", "5999")
 
-    def test_zero_half_extent_is_rejected(self):
-        self.add_areas(town(), field(half_extent=0))
-        self.add_portals()
-        self.assert_error("Area.xlsx", "6행", "HalfExtentX", "0보다 커야")
 
     def test_negative_max_monster_count_is_rejected(self):
         row = field()
@@ -110,18 +104,6 @@ class TownRuleTest(MapRuleCase):
         self.add_areas(town(10), town(30))
         self.assert_error("Area.xlsx", "HasRespawnPoint", "하나여야", "2개", "5행", "6행")
 
-    def test_respawn_point_without_coordinates_is_rejected(self):
-        row = town()
-        row[12] = None
-        self.add_areas(row, field())
-        self.assert_error("Area.xlsx", "5행", "RespawnX")
-
-    def test_coordinates_without_respawn_point_are_rejected(self):
-        row = field()
-        row[12:15] = [0, 0, 0]
-        self.add_areas(town(), row)
-        self.assert_error("Area.xlsx", "6행", "리스폰 지점이 없는", "RespawnX")
-
 
 class PortalTableTest(MapRuleCase):
     def setUp(self) -> None:
@@ -135,14 +117,6 @@ class PortalTableTest(MapRuleCase):
     def test_unknown_source_area_is_rejected(self):
         self.add_portals(portal(11, 99, 20))
         self.assert_error("Portal.xlsx", "5행", "AreaId", "99")
-
-    def test_zero_radius_is_rejected(self):
-        self.add_portals(portal(radius=0))
-        self.assert_error("Portal.xlsx", "5행", "Radius", "0보다 커야")
-
-    def test_negative_radius_is_rejected(self):
-        self.add_portals(portal(radius=-5))
-        self.assert_error("Portal.xlsx", "5행", "Radius", "-5")
 
 
 if __name__ == "__main__":

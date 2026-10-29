@@ -93,7 +93,8 @@ protected:
         session = make_shared<GameSession>();
         sessionManager.RegisterUser(USER_ID, session);
 
-        enterRoom = Room::Create(TestAreaTables::MakeArea(ENTER_ROOM_ID, 0));
+        const TestAreaTables::TestArea enterArea = TestAreaTables::MakeArea(ENTER_ROOM_ID, 0);
+        enterRoom = Room::Create(enterArea.row, enterArea.placement);
     }
 
     void TearDown() override

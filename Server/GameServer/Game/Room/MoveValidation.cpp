@@ -1,9 +1,9 @@
 #include "Core/pch.h"
 #include "Game/Room/MoveValidation.h"
 
-optional<string> MoveValidation::Validate(const vector2D& from, const vector2D& to, uint64 elapsedMs, const Bounds& bounds)
+optional<string> MoveValidation::Validate(const vector2D& from, const vector2D& to, uint64 elapsedMs, const PlaneBounds& bounds)
 {
-    if (to.x < bounds.minX || to.x > bounds.maxX || to.y < bounds.minY || to.y > bounds.maxY)
+    if (bounds.Contains(to.x, to.y) == false)
         return format("룸 경계 밖의 위치({}, {})", to.x, to.y);
 
     // 경과 시간에 상한을 두지 않는다. 버린 이동 뒤에 서버와 클라이언트의 위치가 벌어져도 시간이 흐르면 다시 받아들이기 위해서다.

@@ -53,6 +53,9 @@
     <Filter Include="Game\Data\Generated">
       <UniqueIdentifier>{f82dec03-c22b-4774-8d5f-d43ea7f3e958}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Data\Extracted">
+      <UniqueIdentifier>{6b0f3e2a-9c41-4d7e-8a35-2f1c7d94b8e6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Room">
       <UniqueIdentifier>{051f4125-af34-4448-85ea-16f1b0558bb2}</UniqueIdentifier>
     </Filter>
@@ -331,6 +334,9 @@
     <ClInclude Include="Utils\Utils.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\PlaneBounds.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\SnowflakeIdGenerator.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -454,6 +460,9 @@
     <ClInclude Include="Game\Data\Templates.h">
       <Filter>Game\Data</Filter>
     </ClInclude>
+    <ClInclude Include="Game\Data\Placement.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
     <ClInclude Include="Game\Data\Generated\DesignData.h">
       <Filter>Game\Data\Generated</Filter>
     </ClInclude>
@@ -539,6 +548,9 @@
     </None>
     <None Include="Game\Data\Generated\Area.json">
       <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Extracted\Placement_1111.json">
+      <Filter>Game\Data\Extracted</Filter>
     </None>
     <None Include="Game\Data\Generated\Progress.json">
       <Filter>Game\Data\Generated</Filter>

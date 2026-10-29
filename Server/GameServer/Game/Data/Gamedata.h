@@ -49,6 +49,12 @@ public:
     /** 사망한 플레이어가 돌아가는 마을의 지역 번호. */
     static int32 GetTownAreaId() { return s_tables.townAreaId; }
 
+    /** 배치 데이터. Find*는 없는 번호면 nullptr. 기동할 때 기획 데이터의 맵, 지역, 포털마다 있는지 대조한다. */
+    static const AreaPlacement* FindAreaPlacement(int32 areaId);
+    static const PortalPlacement* FindPortalPlacement(int32 portalId);
+    /** 그 지역의 리스폰 지점. 리스폰 지점이 없는 지역이면 nullptr. */
+    static const RespawnPointPlacement* FindRespawnPoint(int32 areaId);
+
     /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }
     /** 새 캐릭터가 첫 게임 입장에서 갖는 시작 맵, 위치, 방향, 골드. */

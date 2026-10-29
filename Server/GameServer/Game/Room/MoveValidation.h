@@ -1,4 +1,5 @@
 #pragma once
+#include "Utils/PlaneBounds.h"
 #include "Utils/Utils.h"
 
 /**
@@ -16,18 +17,9 @@ namespace MoveValidation
     /** 경과 시간과 무관하게 더 허용하는 거리(cm). */
     constexpr float DISTANCE_TOLERANCE = 50.f;
 
-    /** 룸의 평면 경계. 경계 위의 점은 안쪽이다. */
-    struct Bounds
-    {
-        float minX = 0.f;
-        float maxX = 0.f;
-        float minY = 0.f;
-        float maxY = 0.f;
-    };
-
     /**
-     * from(직전에 받아들인 위치)에서 elapsedMs 뒤에 to로 옮기는 요청을 판정한다.
+     * from(직전에 받아들인 위치)에서 elapsedMs 뒤에 to로 옮기는 요청을 룸 경계 bounds 안에서 판정한다.
      * 통과하면 nullopt, 거절하면 로그에 남길 사유.
      */
-    optional<string> Validate(const vector2D& from, const vector2D& to, uint64 elapsedMs, const Bounds& bounds);
+    optional<string> Validate(const vector2D& from, const vector2D& to, uint64 elapsedMs, const PlaneBounds& bounds);
 }

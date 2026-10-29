@@ -210,6 +210,7 @@
     <ClInclude Include="Lobby\Data\Generated\DesignData.h" />
     <ClInclude Include="Game\Entities\EntityFactory.h" />
     <ClInclude Include="Utils\Utils.h" />
+    <ClInclude Include="Utils\PlaneBounds.h" />
     <ClInclude Include="Utils\SnowflakeIdGenerator.h" />
     <ClInclude Include="Game\Entities\Creature.h" />
     <ClInclude Include="Game\Entities\Entity.h" />
@@ -235,6 +236,7 @@
     <ClInclude Include="Game\Data\Gamedata.h" />
     <ClInclude Include="Game\Data\GamedataParser.h" />
     <ClInclude Include="Game\Data\Templates.h" />
+    <ClInclude Include="Game\Data\Placement.h" />
     <ClInclude Include="Game\Data\Generated\DesignData.h" />
     <ClInclude Include="Game\Room\Room.h" />
     <ClInclude Include="Game\Room\RoomTransfer.h" />
@@ -380,6 +382,7 @@
     <None Include="Game\Data\Generated\Map.json" />
     <None Include="Game\Data\Generated\Area.json" />
     <None Include="Game\Data\Generated\Progress.json" />
+    <None Include="Game\Data\Extracted\Placement_1111.json" />
     <None Include="Lobby\Data\Generated\DataVersion.json" />
     <None Include="Lobby\Data\Generated\Lobby.json" />
   </ItemGroup>

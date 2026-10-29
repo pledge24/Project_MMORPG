@@ -44,16 +44,14 @@ namespace
         return pos;
     }
 
-    DesignData::AreaRow MakeArea(int32 areaId, int32 mapId, float centerX)
+    TestAreaTables::TestArea MakeArea(int32 areaId, int32 mapId, float centerX)
     {
         return TestAreaTables::MakeArea(areaId, mapId, centerX, 0.f, 3000.f);
     }
 
-    DesignData::PortalRow MakePortal(int32 portalId, int32 destAreaId, float srcX, float destX)
+    void AddPortal(TestAreaTables::TestArea& area, int32 portalId, int32 destAreaId, float srcX, float destX)
     {
-        DesignData::PortalRow portal = TestAreaTables::MakePortal(portalId, destAreaId, srcX, 0.f, PORTAL_RADIUS);
-        portal.DestX = destX;
-        return portal;
+        TestAreaTables::AddPortal(area, portalId, destAreaId, srcX, 0.f, PORTAL_RADIUS).dest.x = destX;
     }
 
     Protocol::C_USE_PORTAL MakeUsePortal(int32 portalId)
@@ -77,10 +75,10 @@ protected:
     void SetUp() override
     {
         // 마을에는 같은 맵의 사냥터로 가는 포털과 다른 맵의 룸으로 가는 포털이 있다.
-        DesignData::AreaRow town = MakeArea(TOWN_ROOM, MAP_A, 0.f);
+        TestAreaTables::TestArea town = MakeArea(TOWN_ROOM, MAP_A, 0.f);
         TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 0.f, 0.f);
-        town.Portals.push_back(MakePortal(PORTAL_TO_FIELD, FIELD_ROOM, -1000.f, FIELD_ARRIVAL_X));
-        town.Portals.push_back(MakePortal(PORTAL_TO_OTHER_MAP, OTHER_MAP_ROOM, 1000.f, OTHER_MAP_ARRIVAL_X));
+        AddPortal(town, PORTAL_TO_FIELD, FIELD_ROOM, -1000.f, FIELD_ARRIVAL_X);
+        AddPortal(town, PORTAL_TO_OTHER_MAP, OTHER_MAP_ROOM, 1000.f, OTHER_MAP_ARRIVAL_X);
 
         GamedataTables tables;
         TestAreaTables::AddTown(tables, town);

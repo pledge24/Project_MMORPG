@@ -397,6 +397,25 @@ DataBuilder는 산출물을 LF로 쓴다. 이 머신은 `core.autocrlf`가 `true
 **개발 속도 저하** — DataBuilder를 돌린 뒤 `git status`만 보고는 원본을 고친 결과가 어느 산출물에 드러났는지 알 수 없다.
 산출물을 다시 체크아웃해야 상태가 깨끗해진다.
 
+2026년 10월 29일 덧붙임: 배치 추출 커맨드렛도 산출물(`Server/GameServer/Game/Data/Extracted/Placement_*.json`)을 LF로 쓴다.
+레벨을 고치지 않고 추출을 다시 돌리면 같은 이유로 바뀐 파일로 보일 것이다. #336에서 확인하지 않았다.
+
+## TD-081 새 워크트리에서 띄운 에디터는 언리얼 MCP 서버를 열지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini`의 `[/Script/ModelContextProtocolEngine.ModelContextProtocolSettings]`
+> 등록일: 2026년 10월 29일
+
+언리얼 MCP 서버를 에디터가 띄울 때 여는 설정(`bAutoStartServer=True`, 포트 8000)은 git이 추적하지 않는 사용자별 설정 파일에만 있다.
+새 워크트리의 `P1/Saved/`에는 이 설정이 없어서, 그 워크트리에서 띄운 에디터는 MCP 포트를 열지 않고 MCP 호출은 `ECONNREFUSED`로 실패한다.
+#336에서 원본 체크아웃의 설정 파일에서 그 절을 워크트리의 같은 파일로 옮기고 에디터를 다시 띄워 풀었다.
+에디터가 떠 있는 동안 `UnrealEditor-Cmd`를 돌리면, 그 프로세스의 MCP 서버가 같은 포트를 잡지 못해 `HttpListener unable to bind to 127.0.0.1:8000` 오류를 남기고
+엔진의 종료 코드가 1이 된다. 배치 추출 스크립트는 이 때문에 엔진의 종료 코드 대신 커맨드렛의 결과 줄로 판정한다.
+
+### 영향
+
+**작업 흐름 정지** — 워크트리 세션이 언리얼 MCP로 에디터 작업을 하려면 사람이 설정을 옮기거나 에디터에서 서버를 켜야 한다.
+원인을 모르면 MCP가 고장 난 것으로 보인다.
+
 ## TD-002 상점 판매 목록과 상점 위치를 서버가 보지 않는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
 > 위치: `Server/GameServer/Game/Entities/Player.cpp` (`ProcessBuyItem`, `ProcessSellItem`)
