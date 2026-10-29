@@ -116,6 +116,8 @@ void MonsterAttackingState::Tick(MonsterAIComponent& ai, float deltaTime) const
 
 void MonsterReturningState::Enter(MonsterAIComponent& ai) const
 {
+    // 돌아가기로 한 몬스터의 공격은 들어가지 않는다.
+    ai.CancelPendingHit();
     ai.ClearTarget();
     ai.ReturnToSpawnPoint();
 }

@@ -55,7 +55,7 @@ void PathFollowingComponent::Tick(float deltaTime)
     }
     owner->SetMoveState(Protocol::MoveState::MOVE_STATE_RUN);
 
-    if (_path.empty() || MathUtil::Distance(vector2D(pos.x, pos.y), _goal) <= _acceptanceRadius)
+    if (_path.empty() || PlaneDistance(pos, vector3D(_goal.x, _goal.y, 0.f)) <= _acceptanceRadius)
         Stop();
 }
 

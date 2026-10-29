@@ -9,8 +9,8 @@ class USphereComponent;
 /**
  * 몬스터가 나오는 지점.
  *
- * 스폰 그룹 표의 그룹 하나를 가리킨다. 서버는 그 그룹의 최대 수만큼 몬스터를 마커의 반경 안에 두고, 몬스터는 그 반경 안에서 배회한다.
- * 액터의 위치는 바닥에 둔다. 걸을 수 있는 바닥 위에 있어야 하고, 반경의 크기는 Radius로 정한다.
+ * 스폰 그룹 표의 그룹 하나를 가리키고, 그 그룹의 몬스터가 나와 배회하는 반경을 정한다.
+ * 액터의 위치는 걸을 수 있는 바닥 위에 둔다.
  */
 UCLASS()
 class P1_API AP1MonsterSpawnMarker : public AP1PlacementMarker

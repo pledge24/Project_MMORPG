@@ -142,9 +142,11 @@ void MonsterAIComponent::WanderInSpawnRadius()
     if (owner == nullptr)
         return;
 
+    // 마커의 z는 바닥이다. 목적지는 그 바닥에 선 캡슐의 중심 높이로 준다.
     const SpawnPointPlacement& spawnPoint = owner->GetSpawnPoint();
+    PathFollowingComponent& pathFollowing = owner->GetPathFollowing();
     const vector2D dest = Room::GetRandomLocation(vector2D(spawnPoint.pos.x, spawnPoint.pos.y), spawnPoint.radius);
-    owner->GetPathFollowing().MoveTo(vector3D(dest.x, dest.y, owner->GetPosInfo().pos().z()));
+    pathFollowing.MoveTo(vector3D(dest.x, dest.y, spawnPoint.pos.z + pathFollowing.GetHalfHeight()));
 }
 
 void MonsterAIComponent::ReturnToSpawnPoint()
@@ -153,9 +155,10 @@ void MonsterAIComponent::ReturnToSpawnPoint()
     if (owner == nullptr)
         return;
 
+    // 길을 찾지 못하면 멈춘 자리에서 귀환을 마친다.
     const SpawnPointPlacement& spawnPoint = owner->GetSpawnPoint();
-    const vector3D dest(spawnPoint.pos.x, spawnPoint.pos.y, owner->GetPosInfo().pos().z());
-    owner->GetPathFollowing().MoveTo(dest, spawnPoint.radius);
+    PathFollowingComponent& pathFollowing = owner->GetPathFollowing();
+    pathFollowing.MoveTo(vector3D(spawnPoint.pos.x, spawnPoint.pos.y, spawnPoint.pos.z + pathFollowing.GetHalfHeight()), spawnPoint.radius);
 }
 
 bool MonsterAIComponent::IsMoving() const

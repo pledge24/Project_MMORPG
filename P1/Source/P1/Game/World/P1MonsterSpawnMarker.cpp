@@ -6,7 +6,6 @@ AP1MonsterSpawnMarker::AP1MonsterSpawnMarker()
 {
     RadiusPreview = CreateDefaultSubobject<USphereComponent>(TEXT("RadiusPreview"));
     RadiusPreview->SetupAttachment(RootComponent);
-    RadiusPreview->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     RadiusPreview->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
     RadiusPreview->SetHiddenInGame(true);
     RadiusPreview->SetSphereRadius(Radius);

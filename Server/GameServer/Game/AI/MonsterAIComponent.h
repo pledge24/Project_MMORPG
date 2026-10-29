@@ -6,8 +6,7 @@
 /**
  * 몬스터 하나의 행동을 정하는 두뇌.
  *
- * 대기, 배회, 추적, 공격, 귀환 상태 사이를 오가며 어디로 갈지와 언제 공격할지를 정한다.
- * 정한 목적지까지 실제로 움직이는 일은 몬스터의 경로 추종 부품이 맡는다. 룸 큐 위에서만 쓴다.
+ * 대기, 배회, 추적, 공격, 귀환 상태 사이를 오가며 어디로 갈지와 언제 공격할지를 정한다. 룸 큐 위에서만 쓴다.
  */
 class MonsterAIComponent : public EntityComponent
 {
@@ -73,6 +72,8 @@ public:
     bool CanAttack() const { return _timeSinceLastAttack >= _attackInterval; }
     /** 룸에 일반 공격을 알리고, 공격 몽타주의 타격 시점 뒤의 피격 판정을 예약한다. */
     void NormalAttack();
+    /** 예약한 피격 판정을 버린다. */
+    void CancelPendingHit() { _pendingHit.reset(); }
 
     /** deltaTime(초)만큼 귀환 중의 체력을 회복한다. 최대 HP를 넘지 않는다. */
     void RecoverHp(float deltaTime);

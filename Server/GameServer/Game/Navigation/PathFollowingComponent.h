@@ -4,8 +4,7 @@
 /**
  * 크리처를 목적지까지 navmesh의 길을 따라 옮기는 부품.
  *
- * 쓰는 쪽(AI)이 목적지만 정하면 소속 룸의 navmesh로 길을 찾고, 틱마다 꺾이는 점을 따라 크리처의 위치와 방향을 옮긴다.
- * 소속 룸에 navmesh가 없으면 목적지로 곧장 간다. 룸 큐 위에서만 쓴다.
+ * 서버가 위치를 정하는 크리처의 이동을 맡는다. 어디로 갈지는 쓰는 쪽(AI)이 정한다. 룸 큐 위에서만 쓴다.
  */
 class PathFollowingComponent : public EntityComponent
 {
@@ -30,6 +29,8 @@ public:
     void Stop();
     /** 따라갈 길이 남아 있으면 true. 도착했거나 멈췄으면 false. */
     bool IsMoving() const { return _path.empty() == false; }
+    /** 소유자 캡슐의 반높이(cm). 바닥 높이에 더하면 MoveTo가 받는 캡슐 중심 높이다. */
+    float GetHalfHeight() const { return _halfHeight; }
 
 private:
     /** 소유자가 이미 사라졌으면 nullptr. */

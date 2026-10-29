@@ -110,6 +110,8 @@ void Room::Tick(float deltaTime)
     {
         if (MonsterRef monster = SpawnMonster(spawnPointIndex))
             BroadcastNearby(monster->GetEntityId(), MakeSpawnPacket(monster), monster->GetEntityId());
+        else
+            _monsterSpawner.OnMonsterDied(spawnPointIndex); // 다시 예약하지 않으면 그 마커의 몬스터 수가 영영 줄어든다.
     }
 
     // 엔티티의 Tick이 룸에서 엔티티를 뺄 수 있다(피격으로 사망한 몬스터). 순회 중인 맵을 바꾸지 않도록 목록을 떠 둔다.
