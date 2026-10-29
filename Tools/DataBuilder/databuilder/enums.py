@@ -38,10 +38,10 @@ def screaming_prefix(enum_name: str) -> str:
 
 
 def read_proto_enums(proto_dir: Path) -> dict[str, EnumDef]:
-    """`.proto` 파일(cp949)의 최상위 열거형을 모두 읽는다. 접두사 규칙을 어긴 값이 있으면 EnumError."""
+    """`.proto` 파일(UTF-8)의 최상위 열거형을 모두 읽는다. 접두사 규칙을 어긴 값이 있으면 EnumError."""
     enums: dict[str, EnumDef] = {}
     for proto_path in sorted(proto_dir.glob("*.proto")):
-        text = LINE_COMMENT.sub("", proto_path.read_text(encoding="cp949"))
+        text = LINE_COMMENT.sub("", proto_path.read_text(encoding="utf-8"))
         for match in PROTO_ENUM.finditer(text):
             name, body = match.group(1), match.group(2)
             prefix = screaming_prefix(name)

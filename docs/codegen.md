@@ -10,7 +10,7 @@
 
 **원본**: `Protocol/Schema/*.proto`. 도메인마다 한 파일이다(Common, Lobby, Entry, Entity, Combat, Item, Chat).
 
-`.proto`는 cp949다. UTF-8로 저장하지 않는다.
+`.proto`는 BOM 없는 UTF-8이다. 생성기와 DataBuilder가 UTF-8로 읽는다.
 
 ### 재생성
 
@@ -888,12 +888,12 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 ## 생성기 자체
 
 패킷 핸들러 생성기 exe는 `Tools/PacketHandlerGenerator/`의 파이썬 소스를 그 폴더의 `MakeExe.bat`으로 PyInstaller 번들링해서 만든다.
-결과 exe는 같은 폴더에 놓이고, `Protocol/Generate.ps1`이 그 exe를 부른다. `.bat`도 cp949다.
+결과 exe는 같은 폴더에 놓이고, `Protocol/Generate.ps1`이 그 exe를 부른다. `MakeExe.bat`은 UTF-8이고, 한국어 출력이 깨지지 않도록 `chcp 65001`을 부른다.
 
 DataBuilder(`Tools/DataBuilder/`)는 exe를 만들지 않는다. 래퍼가 가상 환경의 파이썬으로 소스를 바로 돌리므로, 소스를 고치면 다음 실행에 반영된다.
 
 **패킷 핸들러 생성기의 파이썬 소스를 고치면 `MakeExe.bat`으로 exe를 다시 만들어 소스와 함께 커밋한다.**
 — 스크립트는 소스가 아니라 exe를 부른다. exe를 다시 만들지 않으면 고친 소스가 돌지 않는다.
 
-exe를 다시 만들려면 `py -3 -m pip install pyinstaller jinja2`로 두 패키지를 설치한다. `MakeExe.bat`은 `pyinstaller`를 PATH에서
-찾으므로, `--user`로 설치했으면 `%APPDATA%\Python\Python313\Scripts`를 PATH에 더한다.
+exe를 다시 만들려면 `py -3 -m pip install pyinstaller jinja2`로 두 패키지를 설치한다. `MakeExe.bat`은 PyInstaller를
+`py -3 -m PyInstaller`로 부르므로, `--user`로 설치해도 PATH를 고칠 필요가 없다.

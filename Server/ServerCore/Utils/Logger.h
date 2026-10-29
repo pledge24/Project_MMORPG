@@ -44,7 +44,7 @@ public:
 
 	/**
 	 * 줄바꿈을 뺀 한 줄을 만든다. 시각은 로컬 시간으로 적는다.
-	 * 형식: "2026-10-09 14:03:22.123 [INFO ] [T3] 메시지"
+	 * 형식: "2026-10-09 14:03:22.123 [INFO] [T3] 메시지"
 	 */
 	static string	FormatLine(LogLevel level, chrono::system_clock::time_point time, uint32 threadId, string_view message);
 

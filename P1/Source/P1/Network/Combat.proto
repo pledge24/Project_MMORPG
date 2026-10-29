@@ -1,7 +1,7 @@
 syntax = "proto3";
 package Protocol;
 
-// °ø°İ, ÇÇ°İ, »ç¸Á, º¸»ó
+// ê³µê²©, í”¼ê²©, ì‚¬ë§, ë³´ìƒ
 // @packet_id_range 500 599
 
 import "Common.proto";
@@ -9,7 +9,7 @@ import "Common.proto";
 enum CombatResult
 {
     COMBAT_RESULT_SUCCESS = 0;
-    COMBAT_RESULT_DEAD = 1;                 // »ç¸ÁÇÑ ÇÃ·¹ÀÌ¾î´Â °ø°İÇÒ ¼ö ¾ø´Ù
+    COMBAT_RESULT_DEAD = 1;                 // ì‚¬ë§í•œ í”Œë ˆì´ì–´ëŠ” ê³µê²©í•  ìˆ˜ ì—†ë‹¤
 }
 
 message C_NORMAL_ATTACK
@@ -23,7 +23,7 @@ message S_NORMAL_ATTACK
     CombatResult result = 1;
 }
 
-// Å©¸®Ã³°¡ ÀÏ¹İ °ø°İÀ» Çß´Ù. ·ëÀÇ ÇÃ·¹ÀÌ¾î¿¡°Ô °¡°í, °ø°İÇÑ Å©¸®Ã³°¡ ÇÃ·¹ÀÌ¾î¸é ±× ÇÃ·¹ÀÌ¾î´Â ¹ŞÁö ¾Ê´Â´Ù
+// í¬ë¦¬ì²˜ê°€ ì¼ë°˜ ê³µê²©ì„ í–ˆë‹¤. ë£¸ì˜ í”Œë ˆì´ì–´ì—ê²Œ ê°€ê³ , ê³µê²©í•œ í¬ë¦¬ì²˜ê°€ í”Œë ˆì´ì–´ë©´ ê·¸ í”Œë ˆì´ì–´ëŠ” ë°›ì§€ ì•ŠëŠ”ë‹¤
 message S_ATTACK
 {
     int64 entity_id = 1;
@@ -31,12 +31,12 @@ message S_ATTACK
     float yaw = 3;
 }
 
-// Å©¸®Ã³°¡ ÇÇ°İµÆ´Ù
+// í¬ë¦¬ì²˜ê°€ í”¼ê²©ëë‹¤
 message S_HIT
 {
     int64 entity_id = 1;
     int64 damage = 2;
-    int64 hp = 3;                           // ÇÇ°İ µÚ ³²Àº Ã¼·Â
+    int64 hp = 3;                           // í”¼ê²© ë’¤ ë‚¨ì€ ì²´ë ¥
 }
 
 message S_DIE
@@ -46,14 +46,14 @@ message S_DIE
 
 message LevelUp
 {
-    int32 level = 1;                        // ¿À¸¥ µÚÀÇ ·¹º§
+    int32 level = 1;                        // ì˜¤ë¥¸ ë’¤ì˜ ë ˆë²¨
     repeated Stat changed_stats = 2;
 }
 
-// Ã³Ä¡ º¸»óÀ» ¹Ş¾Ò´Ù. ¹ŞÀº ÇÃ·¹ÀÌ¾î¿¡°Ô¸¸ °£´Ù
+// ì²˜ì¹˜ ë³´ìƒì„ ë°›ì•˜ë‹¤. ë°›ì€ í”Œë ˆì´ì–´ì—ê²Œë§Œ ê°„ë‹¤
 message S_REWARD
 {
-    int64 exp = 1;                          // º¸»óÀ» ´õÇÑ µÚ Áö±İ ·¹º§ ¾ÈÀÇ °æÇèÄ¡
-    int64 gold = 2;                         // º¸»óÀ» ´õÇÑ µÚÀÇ °ñµå
-    LevelUp level_up = 3;                   // ·¹º§ÀÌ ¿À¸£Áö ¾Ê¾ÒÀ¸¸é ¾ø´Ù
+    int64 exp = 1;                          // ë³´ìƒì„ ë”í•œ ë’¤ ì§€ê¸ˆ ë ˆë²¨ ì•ˆì˜ ê²½í—˜ì¹˜
+    int64 gold = 2;                         // ë³´ìƒì„ ë”í•œ ë’¤ì˜ ê³¨ë“œ
+    LevelUp level_up = 3;                   // ë ˆë²¨ì´ ì˜¤ë¥´ì§€ ì•Šì•˜ìœ¼ë©´ ì—†ë‹¤
 }

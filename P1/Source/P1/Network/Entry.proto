@@ -1,7 +1,7 @@
 syntax = "proto3";
 package Protocol;
 
-// °ÔÀÓ ÀÔÀå, ¸Ê ·Îµå, ·ë ÀÔÀå, Æ÷ÅÐ ÀÌµ¿, ¸®½ºÆù, Ã¤³Î º¯°æ, ·Îºñ º¹±Í
+// ê²Œìž„ ìž…ìž¥, ë§µ ë¡œë“œ, ë£¸ ìž…ìž¥, í¬í„¸ ì´ë™, ë¦¬ìŠ¤í°, ì±„ë„ ë³€ê²½, ë¡œë¹„ ë³µê·€
 // @packet_id_range 300 399
 
 import "Common.proto";
@@ -11,59 +11,59 @@ import "Item.proto";
 enum EntryResult
 {
     ENTRY_RESULT_SUCCESS = 0;
-    ENTRY_RESULT_CHARACTER_NOT_FOUND = 1;       // ÀÌ °èÁ¤ÀÇ Ä³¸¯ÅÍ°¡ ¾Æ´Ï°Å³ª »èÁ¦µÆ´Ù
-    ENTRY_RESULT_PREVIOUS_SAVE_PENDING = 2;     // ¾Õ ¿¬°áÀÇ ÁøÇà ÀúÀåÀÌ Á¤ÇØÁø ½Ã°£ ¾È¿¡ ³¡³ªÁö ¾Ê¾Ò´Ù
-    ENTRY_RESULT_INVALID_PORTAL = 3;            // ÇÃ·¹ÀÌ¾î°¡ ÀÖ´Â ·ëÀÇ Æ÷ÅÐÀÌ ¾Æ´Ï´Ù
+    ENTRY_RESULT_CHARACTER_NOT_FOUND = 1;       // ì´ ê³„ì •ì˜ ìºë¦­í„°ê°€ ì•„ë‹ˆê±°ë‚˜ ì‚­ì œëë‹¤
+    ENTRY_RESULT_PREVIOUS_SAVE_PENDING = 2;     // ì•ž ì—°ê²°ì˜ ì§„í–‰ ì €ìž¥ì´ ì •í•´ì§„ ì‹œê°„ ì•ˆì— ëë‚˜ì§€ ì•Šì•˜ë‹¤
+    ENTRY_RESULT_INVALID_PORTAL = 3;            // í”Œë ˆì´ì–´ê°€ ìžˆëŠ” ë£¸ì˜ í¬í„¸ì´ ì•„ë‹ˆë‹¤
     ENTRY_RESULT_TOO_FAR_FROM_PORTAL = 4;
-    ENTRY_RESULT_NOT_DEAD = 5;                  // »ç¸ÁÇÏÁö ¾ÊÀº ÇÃ·¹ÀÌ¾î´Â ¸®½ºÆùÇÒ ¼ö ¾ø´Ù
+    ENTRY_RESULT_NOT_DEAD = 5;                  // ì‚¬ë§í•˜ì§€ ì•Šì€ í”Œë ˆì´ì–´ëŠ” ë¦¬ìŠ¤í°í•  ìˆ˜ ì—†ë‹¤
     ENTRY_RESULT_UNSUPPORTED_RESPAWN_TYPE = 6;
-    ENTRY_RESULT_INTERNAL_ERROR = 7;            // ÁøÇàÀ» ºÒ·¯¿À°Å³ª ÀúÀåÇÏÁö ¸øÇß°Å³ª, ±âÈ¹ µ¥ÀÌÅÍ°¡ Æ²·Á À§Ä¡¸¦ Á¤ÇÏÁö ¸øÇß´Ù
-    ENTRY_RESULT_DEAD = 8;                      // »ç¸ÁÇÑ ÇÃ·¹ÀÌ¾î´Â Ã¤³ÎÀ» ¹Ù²Ü ¼ö ¾ø´Ù
-    ENTRY_RESULT_MAP_LOADING = 9;               // ¸ÊÀ» ´Ù ¿­±â Àü¿¡´Â Ã¤³ÎÀ» ¹Ù²Ü ¼ö ¾ø´Ù
-    ENTRY_RESULT_SAME_CHANNEL = 10;             // Áö±Ý ÀÖ´Â Ã¤³ÎÀÌ´Ù
-    ENTRY_RESULT_INVALID_CHANNEL = 11;          // ÀÌ ¸Ê¿¡ ¾ø´Â Ã¤³Î ¹øÈ£´Ù
+    ENTRY_RESULT_INTERNAL_ERROR = 7;            // ì§„í–‰ì„ ë¶ˆëŸ¬ì˜¤ê±°ë‚˜ ì €ìž¥í•˜ì§€ ëª»í–ˆê±°ë‚˜, ê¸°íš ë°ì´í„°ê°€ í‹€ë ¤ ìœ„ì¹˜ë¥¼ ì •í•˜ì§€ ëª»í–ˆë‹¤
+    ENTRY_RESULT_DEAD = 8;                      // ì‚¬ë§í•œ í”Œë ˆì´ì–´ëŠ” ì±„ë„ì„ ë°”ê¿€ ìˆ˜ ì—†ë‹¤
+    ENTRY_RESULT_MAP_LOADING = 9;               // ë§µì„ ë‹¤ ì—´ê¸° ì „ì—ëŠ” ì±„ë„ì„ ë°”ê¿€ ìˆ˜ ì—†ë‹¤
+    ENTRY_RESULT_SAME_CHANNEL = 10;             // ì§€ê¸ˆ ìžˆëŠ” ì±„ë„ì´ë‹¤
+    ENTRY_RESULT_INVALID_CHANNEL = 11;          // ì´ ë§µì— ì—†ëŠ” ì±„ë„ ë²ˆí˜¸ë‹¤
 }
 
-// ¸®½ºÆù À¯Çü. Áö±ÝÀº ¸¶À» ¸®½ºÆù ÇÏ³ª´Ù
+// ë¦¬ìŠ¤í° ìœ í˜•. ì§€ê¸ˆì€ ë§ˆì„ ë¦¬ìŠ¤í° í•˜ë‚˜ë‹¤
 enum RespawnType
 {
     RESPAWN_TYPE_NONE = 0;
     RESPAWN_TYPE_TOWN = 1;
 }
 
-// ·Îºñ¿¡¼­ °í¸¥ Ä³¸¯ÅÍ·Î °ÔÀÓ¿¡ ÀÔÀåÇÑ´Ù. ·Îºñ°¡ ¹Þ¾Æ Ä³¸¯ÅÍÀÇ ¼ÒÀ¯¸¦ È®ÀÎÇÑ´Ù
+// ë¡œë¹„ì—ì„œ ê³ ë¥¸ ìºë¦­í„°ë¡œ ê²Œìž„ì— ìž…ìž¥í•œë‹¤. ë¡œë¹„ê°€ ë°›ì•„ ìºë¦­í„°ì˜ ì†Œìœ ë¥¼ í™•ì¸í•œë‹¤
 message C_ENTER_GAME
 {
     int64 character_id = 1;
 }
 
-// ¼º°øÇÏ¸é Å¬¶óÀÌ¾ðÆ®´Â map_idÀÇ ¸ÊÀ» ´Ù ¿¬ µÚ C_MAP_LOAD_COMPLETE¸¦ º¸³½´Ù
+// ì„±ê³µí•˜ë©´ í´ë¼ì´ì–¸íŠ¸ëŠ” map_idì˜ ë§µì„ ë‹¤ ì—° ë’¤ C_MAP_LOAD_COMPLETEë¥¼ ë³´ë‚¸ë‹¤
 message S_ENTER_GAME
 {
     EntryResult result = 1;
     int32 map_id = 2;
 
-    // ³» Ä³¸¯ÅÍÀÇ °³ÀÎ Á¤º¸. ¸ÊÀ» ¿©´Â µ¿¾È ¸¸µé¾îÁö´Â È­¸éÀÌ ·ë ÀÔÀå Àü¿¡ ÀÐ´Â´Ù
+    // ë‚´ ìºë¦­í„°ì˜ ê°œì¸ ì •ë³´. ë§µì„ ì—¬ëŠ” ë™ì•ˆ ë§Œë“¤ì–´ì§€ëŠ” í™”ë©´ì´ ë£¸ ìž…ìž¥ ì „ì— ì½ëŠ”ë‹¤
     string name = 3;
     CharacterClass character_class = 4;
     int32 level = 5;
     StatInfo stats = 6;
     Possession possession = 7;
-    repeated QuickSlot quick_slots = 8;     // ¸ðµç Äü½½·Ô. ºó Äü½½·Ôµµ ½Æ´Â´Ù
+    repeated QuickSlot quick_slots = 8;     // ëª¨ë“  í€µìŠ¬ë¡¯. ë¹ˆ í€µìŠ¬ë¡¯ë„ ì‹£ëŠ”ë‹¤
 }
 
-// ¼­¹ö°¡ ¾Ë¸° ¸ÊÀ» ´Ù ¿­¾ú´Ù
+// ì„œë²„ê°€ ì•Œë¦° ë§µì„ ë‹¤ ì—´ì—ˆë‹¤
 message C_MAP_LOAD_COMPLETE
 {
 }
 
-// ³» ÇÃ·¹ÀÌ¾î°¡ ·ë¿¡ µé¾î°¬´Ù. C_MAP_LOAD_COMPLETEÀÇ ÀÀ´äÀÌ°í, ¸ÊÀÌ ¹Ù²îÁö ¾Ê´Â Æ÷ÅÐ ÀÌµ¿°ú ¸®½ºÆù, Ã¤³Î º¯°æ µÚ¿¡µµ ¿Â´Ù.
-// Å¬¶óÀÌ¾ðÆ®´Â ¾Õ¼­ º¸´ø ¿£Æ¼Æ¼¸¦ ¸ðµÎ Áö¿î´Ù. ÁÖº¯ ¿£Æ¼Æ¼´Â µÚµû¸£´Â S_SPAWNÀÌ ½Æ´Â´Ù
+// ë‚´ í”Œë ˆì´ì–´ê°€ ë£¸ì— ë“¤ì–´ê°”ë‹¤. C_MAP_LOAD_COMPLETEì˜ ì‘ë‹µì´ê³ , ë§µì´ ë°”ë€Œì§€ ì•ŠëŠ” í¬í„¸ ì´ë™ê³¼ ë¦¬ìŠ¤í°, ì±„ë„ ë³€ê²½ ë’¤ì—ë„ ì˜¨ë‹¤.
+// í´ë¼ì´ì–¸íŠ¸ëŠ” ì•žì„œ ë³´ë˜ ì—”í‹°í‹°ë¥¼ ëª¨ë‘ ì§€ìš´ë‹¤. ì£¼ë³€ ì—”í‹°í‹°ëŠ” ë’¤ë”°ë¥´ëŠ” S_SPAWNì´ ì‹£ëŠ”ë‹¤
 message S_ENTER_ROOM
 {
     EntryResult result = 1;
     EntityInfo my_entity = 2;
-    int32 channel = 3;                      // µé¾î°£ ·ëÀÇ Ã¤³Î. 1ºÎÅÍ´Ù
+    int32 channel = 3;                      // ë“¤ì–´ê°„ ë£¸ì˜ ì±„ë„. 1ë¶€í„°ë‹¤
 }
 
 message C_USE_PORTAL
@@ -71,8 +71,8 @@ message C_USE_PORTAL
     int32 portal_id = 1;
 }
 
-// map_id°¡ ÀÖÀ¸¸é ¸ÊÀÌ ¹Ù²ï´Ù. Å¬¶óÀÌ¾ðÆ®´Â ±× ¸ÊÀ» ´Ù ¿¬ µÚ C_MAP_LOAD_COMPLETE¸¦ º¸³½´Ù.
-// ¾øÀ¸¸é ¼­¹ö°¡ ¹Ù·Î S_ENTER_ROOMÀ» º¸³½´Ù
+// map_idê°€ ìžˆìœ¼ë©´ ë§µì´ ë°”ë€ë‹¤. í´ë¼ì´ì–¸íŠ¸ëŠ” ê·¸ ë§µì„ ë‹¤ ì—° ë’¤ C_MAP_LOAD_COMPLETEë¥¼ ë³´ë‚¸ë‹¤.
+// ì—†ìœ¼ë©´ ì„œë²„ê°€ ë°”ë¡œ S_ENTER_ROOMì„ ë³´ë‚¸ë‹¤
 message S_USE_PORTAL
 {
     EntryResult result = 1;
@@ -84,52 +84,52 @@ message C_RESPAWN
     RespawnType respawn_type = 1;
 }
 
-// map_idÀÇ ¶æÀº S_USE_PORTAL°ú °°´Ù
+// map_idì˜ ëœ»ì€ S_USE_PORTALê³¼ ê°™ë‹¤
 message S_RESPAWN
 {
     EntryResult result = 1;
     optional int32 map_id = 2;
-    repeated Stat changed_stats = 3;        // ¸®½ºÆùÀ¸·Î È¸º¹ÇÑ ½ºÅÈ
+    repeated Stat changed_stats = 3;        // ë¦¬ìŠ¤í°ìœ¼ë¡œ íšŒë³µí•œ ìŠ¤íƒ¯
 }
 
-// ¼­¹ö´Â ÇÃ·¹ÀÌ¾î¸¦ ¹Ù·Î ·ë¿¡¼­ ÅðÀå½ÃÅ°°í, Á¢¼Ó Á¾·á¿Í °°Àº ÀýÂ÷·Î ÁøÇàÀ» ÀúÀåÇÑ´Ù
+// ì„œë²„ëŠ” í”Œë ˆì´ì–´ë¥¼ ë°”ë¡œ ë£¸ì—ì„œ í‡´ìž¥ì‹œí‚¤ê³ , ì ‘ì† ì¢…ë£Œì™€ ê°™ì€ ì ˆì°¨ë¡œ ì§„í–‰ì„ ì €ìž¥í•œë‹¤
 message C_RETURN_TO_LOBBY
 {
 }
 
-// ÀúÀåÀÌ ³¡³­ µÚ¿¡ ¿Â´Ù. ¼º°øÇÏ¸é S_CHARACTER_LIST°¡ µÚµû¸¥´Ù
+// ì €ìž¥ì´ ëë‚œ ë’¤ì— ì˜¨ë‹¤. ì„±ê³µí•˜ë©´ S_CHARACTER_LISTê°€ ë’¤ë”°ë¥¸ë‹¤
 message S_RETURN_TO_LOBBY
 {
     EntryResult result = 1;
 }
 
-// Ã¤³Î ÇÏ³ªÀÇ ÀÎ¿ø
+// ì±„ë„ í•˜ë‚˜ì˜ ì¸ì›
 message ChannelInfo
 {
     int32 channel = 1;
     int32 player_count = 2;
 }
 
-// Áö±Ý ¸ÊÀÇ Ã¤³Î ¸ñ·ÏÀ» ¿äÃ»ÇÑ´Ù
+// ì§€ê¸ˆ ë§µì˜ ì±„ë„ ëª©ë¡ì„ ìš”ì²­í•œë‹¤
 message C_CHANNEL_LIST
 {
 }
 
-// Ã¤³Î ¹øÈ£ ¼øÀÌ´Ù. ÀÎ¿øÀº ÀÀ´äÀ» ¸¸µç ¼ø°£ÀÇ °ªÀÌ´Ù
+// ì±„ë„ ë²ˆí˜¸ ìˆœì´ë‹¤. ì¸ì›ì€ ì‘ë‹µì„ ë§Œë“  ìˆœê°„ì˜ ê°’ì´ë‹¤
 message S_CHANNEL_LIST
 {
     repeated ChannelInfo channels = 1;
 }
 
-// °°Àº ¸ÊÀÇ ´Ù¸¥ Ã¤³Î·Î ¿Å±ä´Ù
+// ê°™ì€ ë§µì˜ ë‹¤ë¥¸ ì±„ë„ë¡œ ì˜®ê¸´ë‹¤
 message C_CHANGE_CHANNEL
 {
     int32 channel = 1;
 }
 
-// ¼º°øÇÏ¸é ¸ÊÀ» ´Ù½Ã ¿­Áö ¾Ê°í S_ENTER_ROOMÀÌ µÚµû¸¥´Ù
+// ì„±ê³µí•˜ë©´ ë§µì„ ë‹¤ì‹œ ì—´ì§€ ì•Šê³  S_ENTER_ROOMì´ ë’¤ë”°ë¥¸ë‹¤
 message S_CHANGE_CHANNEL
 {
     EntryResult result = 1;
-    int32 channel = 2;                      // ¼º°øÇÏ¸é ¿Å°Ü °¥ Ã¤³Î
+    int32 channel = 2;                      // ì„±ê³µí•˜ë©´ ì˜®ê²¨ ê°ˆ ì±„ë„
 }

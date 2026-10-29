@@ -3,6 +3,7 @@
 #include <sql.h>
 #include <sqlext.h>
 #include "Core/Config.h"
+#include "Utils/EncodingConverter.h"
 
 /*--------------------------------------------------------------
     ODBC 드라이버 동작 재현
@@ -89,7 +90,8 @@ namespace
             SQLWCHAR message[512] = {};
             SQLSMALLINT length = 0;
             for (SQLSMALLINT i = 1; ::SQLGetDiagRecW(SQL_HANDLE_STMT, stmt, i, state, &nativeError, message, 512, &length) == SQL_SUCCESS; i++)
-                std::wcout << L"  진단 " << i << L": [" << state << L"] " << message << L'\n';
+                std::cout << "  진단 " << i << ": [" << EncodingConverter::WCharToString(reinterpret_cast<const wchar_t*>(state))
+                          << "] " << EncodingConverter::WCharToString(reinterpret_cast<const wchar_t*>(message)) << '\n';
         }
     };
 

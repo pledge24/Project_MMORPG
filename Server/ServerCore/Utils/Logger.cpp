@@ -3,18 +3,17 @@
 
 namespace
 {
-	/** 레벨 표시는 다섯 칸으로 맞춰 뒤따르는 스레드 표시의 열을 맞춘다. */
 	string_view LevelLabel(LogLevel level)
 	{
 		switch (level)
 		{
 		case LogLevel::Debug:	return "DEBUG";
-		case LogLevel::Info:	return "INFO ";
-		case LogLevel::Warning:	return "WARN ";
+		case LogLevel::Info:	return "INFO";
+		case LogLevel::Warning:	return "WARNING";
 		case LogLevel::Error:	return "ERROR";
 		}
 
-		return "?????";
+		return "UNKNOWN";
 	}
 }
 
