@@ -123,7 +123,8 @@
 C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
 2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 2026년 10월 29일(#340)에 스폰 두 표(`SpawnGroup`, `SpawnEntry`)를 더했다.
-설정은 설정 워크북의 초기 진행(`Progress`)과 로비(`Lobby`) 두 시트다.
+2026년 10월 29일(#341)에 NPC와 상점 표(`Npc`, `Shop`)를 더했다.
+설정은 설정 워크북의 초기 진행(`Progress`), 로비(`Lobby`), 상호작용(`Interaction`) 세 시트다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 같은 날(#320)부터 클라이언트 코드는 DataBuilder가 만든 데이터 테이블만 읽는다(아래 「클라이언트가 읽는 법」).
 
 ### 재생성
@@ -283,6 +284,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이, 스폰 그룹은 `Gamedata::FindSpawnGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
 지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`가 찾고, 맵의 스폰 마커는 `Gamedata::GetSpawnPoints`가 돌려준다(아래 「배치 추출」).
+NPC는 `Gamedata::FindNpc`가, 상점은 `FindShop`이 찾는다. NPC의 자리는 `GetNpcPlacements`가, 상호작용 사거리는 `GetInteractionRange`가 돌려준다.
 초기 진행은 `Gamedata::GetInitialProgress`가 생성된 `DesignData::ProgressConfig`로 돌려준다.
 
 `LobbyData::LoadAll()`이 `Lobby/Data/Generated/`에서 `Lobby.json`을 생성된 `LobbyDesignData::ParseLobby`로 읽는다. 로비 코드는
@@ -432,12 +434,30 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 2026년 10월 29일(#340)에 옛 지역 표의 사냥터 셋을 그룹 셋(1 초급, 2 중급, 3 상급)으로 옮겼다. 그룹마다 옛 표의 세 종류를 가중치 1로 두었다.
 사냥터마다 마커 둘에 `MaxCount` 5라서 옛 표처럼 사냥터마다 열 마리가 나온다. 리젠 시간은 옛 표의 10초다.
 
+### NPC와 상점 표
+
+용어는 `CONTEXT.md`의 NPC, 상점, 상호작용 사거리를 따른다. 2026년 10월 29일(#341)에 만들었다. 옛 상점 창의 진열 칸에 위젯 속성으로 적혀 있던
+아이템 39개를 그대로 옮겼다.
+
+| 워크북 | 키 | 담는 것 |
+|---|---|---|
+| `Npc.xlsx` | `Id` | 이름(`Name`, 대상 `client`), 조준해 클릭하면 여는 상점(`ShopId`, `ref:Shop`) |
+| `Shop.xlsx` | `Id` | 파는 아이템(`Items`, `ref[]:Item`). 순서가 상점 창의 진열 순서다. 가격은 아이템 표의 `BuyPrice`다 |
+
+**NPC 표에는 공간 열이 없다.** NPC가 서는 자리와 방향은 레벨의 NPC 마커에서 추출한다(아래 「배치 추출」).
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- 상점의 판매 목록은 비어 있지 않고, 같은 아이템이 두 번 나오지 않는다
+
+없는 상점을 가리키는 NPC와 없는 아이템을 파는 상점은 참조 규칙이 막는다.
+
 
 ### 클라이언트 산출물
 
 **키 말고 클라이언트로 가는 열(`both`, `client`)이 하나라도 있는 표만 클라이언트 산출물을 만든다.** 키만 클라이언트로 가는 표(`Level`)와
 서버 전용 표(`Currency`, `DropGroup`, `ClassLevelStat`)는 만들지 않는다. 2026년 10월 27일(#319) 기준으로 `Item`, `ItemEquipStat`, `ItemConsumeEffect`,
-`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다.
+`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다. 2026년 10월 29일(#341)에 `Npc`, `Shop`이 더해졌다.
 
 | 폴더 | 파일 | 내용 |
 |---|---|---|
@@ -451,9 +471,14 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - 행 구조체의 속성은 열 이름 그대로이고 `VisibleAnywhere`다. 에디터에서 행 값을 고치지 않는다. 값은 원본을 고치고 DataBuilder와 에디터 메뉴를 다시 돌려 바꾼다
 - `.proto` 열거형은 `UPROPERTY`가 될 수 없어서 값 이름(`FString`)으로 싣는다. 게임 코드는 생성된 `Get<열>()`로 프로토콜 값을 얻는다. 값 이름이 아니면 0번 값이다
 - 클라이언트로 가는 열에는 선택 값(`int32?`, `ref?:` 등)을 쓰지 않는다. 행 구조체가 빈 값을 담지 못해서 DataBuilder가 막는다
-- 설정 시트는 클라이언트 산출물을 만들지 않는다. 설정 시트의 필드 대상이 `both`나 `client`면 DataBuilder가 막는다
+- 설정 시트는 데이터 테이블을 만들지 않는다. 클라이언트로 가는 필드가 있는 설정은 상수 헤더 `P1<설정>Config.h` 하나를 만든다(아래)
+- 설정 시트에서 클라이언트로 보낼 수 있는 필드는 수(`int32`, `int64`, `float`)와 `bool`뿐이다. 다른 타입이면 DataBuilder가 막는다
 - 중첩한 표가 클라이언트 산출물을 만들면 부모 표도 만들어야 한다. 아니면 DataBuilder가 막는다
 - 클라이언트로 가는 설정 파일의 열거형에는 값 이름 `NONE`과 255를 넘는 번호를 쓰지 않는다. `UENUM`의 0번 값과 겹치고, 값 타입이 `uint8`이다
+
+**설정의 클라이언트 필드는 상수다.** `P1<설정>Config.h`가 `P1DesignData::<설정>` 네임스페이스에 필드마다 `inline constexpr` 상수를 둔다
+(`P1DesignData::Interaction::InteractionRange`). 값을 바꾸면 DataBuilder를 돌리고 클라이언트를 다시 빌드한다. 에디터 메뉴는 필요 없다.
+— 설정은 값이 하나라 행 이름으로 찾을 데이터 테이블을 두지 않는다.
 
 **데이터 버전 로그는 빌드에 들어간 헤더의 값이다.** DataBuilder를 다시 돌리고 에디터 메뉴를 돌리지 않으면 로그와 데이터 테이블의 값이 어긋난다.
 
@@ -470,8 +495,11 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 | `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
 | `ItemAssetTable` | `DT_ItemAssets` | `LoadItemIcon`. 에셋 테이블이다 |
 | `MonsterAssetTable` | `DT_MonsterAssets` | `FindMonsterAssetData`. 에셋 테이블이다 |
+| `NpcTable` | `DT_Npc` | `FindNpcRow` |
+| `NpcAssetTable` | `DT_NpcAssets` | `FindNpcAssetData`. 에셋 테이블이다 |
+| `ShopTable` | `DT_Shop` | `FindShopRow` |
 
-- 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 그대로 있다
+- 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 있다
 - 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다. 행 이름은 짝이 되는 수치 테이블의 행 이름(번호)과 같다. 에디터 모듈의 검증기가 두 테이블의 짝을 대조한다(아래 「수치 테이블과 에셋 테이블의 짝」)
 - 재사용 대기는 소모 효과 표의 `CooldownMs`다. 클라이언트의 대기 계산(`FP1ItemCooldown`)은 초 단위라 1000으로 나눠 넘긴다
 - 맵과 지역 테이블(`DT_Map`, `DT_Area`)을 읽는 코드는 없다. 서버가 알린 맵 번호로 레벨을 여는 표(`MapLevels`)의 키가 맵 표의 `Id`다
@@ -505,12 +533,13 @@ UE 테스트는 에디터 메뉴가 만든 테이블 에셋을 읽지 않는다.
 ### 설정 워크북
 
 값이 하나뿐인 설정은 `Config.xlsx`의 세로형 시트에 둔다. 2026년 10월 27일(#317)에 옛 초기 진행 표(`Original_Initial_Progress.xlsx`)와
-로비 표(`Original_Lobby.xlsx`)에서 값을 그대로 옮겼다. 열은 모두 대상이 `server`다.
+로비 표(`Original_Lobby.xlsx`)에서 값을 그대로 옮겼다. 상호작용 시트만 대상이 `both`인 필드가 있고, 나머지 열은 모두 대상이 `server`다.
 
 | 시트 | 모듈 | 필드 |
 |---|---|---|
 | `Progress` (초기 진행) | `game` | 시작 맵(`StartMapId`, `ref:Map`), 시작 좌표(`StartX`, `StartY`, `StartZ`), 시작 방향(`StartYaw`), 시작 골드(`StartGold`) |
 | `Lobby` (로비) | `lobby` | 새 계정의 캐릭터 슬롯 수(`DefaultCharacterSlotCount`), 생성할 수 있는 직업(`CreatableClasses`, `enum[]:CharacterClass`) |
+| `Interaction` (상호작용) | `game` | 상호작용 사거리(`InteractionRange`, cm). 대상이 `both`라 클라이언트에는 상수 헤더로 간다 |
 
 **초기 진행의 산출물은 게임 모듈의 폴더로, 로비 설정의 산출물은 로비 모듈의 폴더로 간다.** 로비와 게임은 서로의 기획 데이터를 읽지 않는다(ADR-0021).
 
@@ -520,6 +549,7 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - 시작 골드: 0 이상이다
 - 슬롯 수: 1 이상이다
 - 생성할 수 있는 직업: 비어 있지 않고, 같은 직업이 두 번 나오지 않는다
+- 상호작용 사거리: 0보다 크다
 
 같은 키가 두 번 나오는 것은 설정 시트의 키 규칙이 막는다. 서버는 기동할 때 두 가지만 검사한다.
 
@@ -591,7 +621,7 @@ UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한�
 ### 로딩
 
 서버는 부팅 시 `Gamedata::LoadAllGamedata()`(`Server/GameServer/Game/Data/Gamedata.h`)로 `Game/Data/Generated/`의 재화 표, 아이템 세 표, 몬스터 표,
-드롭 그룹 표, 스폰 그룹 표, 레벨 두 표, 맵 표, 지역 표, 초기 진행 설정, 데이터 버전을, `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로
+드롭 그룹 표, 스폰 그룹 표, 레벨 두 표, 맵 표, 지역 표, 상점 표, NPC 표, 초기 진행 설정, 상호작용 설정, 데이터 버전을, `LobbyData::LoadAll()`(`Server/GameServer/Lobby/Data/LobbyData.h`)로
 `Lobby/Data/Generated/`의 로비 설정을 읽는다. 둘 다 생성된 `Parse<표>`로 읽고, 모든 표가 통과하면 그때 설치한다.
 게임 코드는 Json을 읽지 않고 `Gamedata::Find*`와 `Get*`으로 생성된 행만 읽는다.
 
@@ -643,6 +673,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 | `AP1PortalArrivalMarker` | 포털마다 하나. 도착 지역의 맵 레벨에 둔다 | 위치, 방향, 포털 번호(`PortalId`) |
 | `AP1Portal`(마커가 아니다) | 포털 표의 포털마다 하나 | 포털 번호, 서버가 받아 주는 반경(`UseRadius`, 에디터 전용 속성) |
 | `AP1MonsterSpawnMarker` | 몬스터가 나오는 곳마다 하나. 수는 정해져 있지 않다 | 위치(바닥), 반경(`Radius`, cm), 스폰 그룹 번호(`SpawnGroupId`) |
+| `AP1NpcMarker` | NPC 표의 NPC마다 하나. 어느 맵 레벨이든 된다 | 바닥의 위치, 방향, NPC 번호(`NpcId`) |
 
 - 상자 모양의 마커(`AP1MapMarker`, `AP1AreaVolume`)는 액터의 위치가 상자 바닥의 중심이다. 상자의 크기는 `Bounds` 컴포넌트의 Box Extent로 정한다. 회전하지 않는다
 - 포털은 클라이언트에도 보여야 하므로 레벨에 남는 액터다. 위치와 반경만 추출하고, 도착 지점은 마커로 따로 둔다
@@ -653,7 +684,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 ### 검사
 
 커맨드렛은 프로젝트 설정의 맵 표(`MapLevels`)에 있는 레벨을 모두 열고, 클라이언트 기획 데이터(`P1/DesignData/Generated/`의 `Map.json`, `Area.json`)의
-번호와 대조한다. 검사는 레벨을 모르는 `FP1PlacementCheck`(`P1/Source/P1Editor/Placement/`)가 한다.
+번호와 대조한다. NPC 번호는 `Npc.json`과 대조한다. 검사는 레벨을 모르는 `FP1PlacementCheck`(`P1/Source/P1Editor/Placement/`)가 한다.
 
 - 레벨마다 맵 마커가 하나다. 맵 번호가 맵 표에 있다. 셀 크기와 상자의 반경이 0보다 크다
 - 맵 표의 맵마다 프로젝트 설정의 맵 표(`MapLevels`)에 레벨이 있다
@@ -663,6 +694,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 - 리스폰 지점은 리스폰 지점이 있는 지역 안에 있고, 그런 지역마다 하나다
 - 포털의 포털 번호가 포털 표에 있고, 포털이 포털 표의 출발 지역 안에 있다. 포털 표의 포털마다 레벨에 포털이 하나다
 - 포털 도착 지점이 포털마다 하나이고, 포털 표의 도착 지역 안에 있다
+- NPC 마커의 NPC 번호가 NPC 표에 있고, NPC 표의 NPC마다 모든 레벨을 통틀어 마커가 하나다. 지역은 보지 않는다
 - 경계 벽이 그 레벨의 지역 볼륨을 가리키고, 맞춘 위치와 크기가 볼륨과 같다
 - 스폰 마커가 맵 경계 안에 있고, 반경이 0보다 크고, 스폰 그룹 번호가 스폰 그룹 표에 있다. 스폰 그룹 표는 서버 산출물의 `SpawnGroup.json`에서 읽는다
 - 스폰 마커가 걸을 수 있는 바닥 위에 있는지는 navmesh를 빌드한 뒤에야 알 수 있어 navmesh 빌드 도구가 검사한다(아래 「navmesh 빌드」)
@@ -673,7 +705,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 
 | 폴더 | 파일 | 내용 |
 |---|---|---|
-| `Server/GameServer/Game/Data/Extracted/` | `Placement_<맵 번호>.json` | 맵의 경계와 셀 크기, 지역(`Areas`), 리스폰 지점(`RespawnPoints`), 포털(`Portals`), 스폰 마커(`SpawnPoints`) |
+| `Server/GameServer/Game/Data/Extracted/` | `Placement_<맵 번호>.json` | 맵의 경계와 셀 크기, 지역(`Areas`), 리스폰 지점(`RespawnPoints`), 포털(`Portals`), 스폰 마커(`SpawnPoints`), NPC(`Npcs`) |
 | `Server/GameServer/Game/Data/Extracted/` | `NavAgent.json` | navmesh의 에이전트 설정. 아래 「navmesh 빌드」 |
 | `P1/Saved/NavExtract/` (추적하지 않음) | `NavGeometry_<맵 번호>.json` | navmesh 빌드 도구가 읽는 충돌 형상. 아래 「navmesh 빌드」 |
 
@@ -688,9 +720,11 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Extracted/`의 `Placement_*.json`을 모두 읽어 기획 데이터와 함께 검증한다. 서버는 형식과 번호만
 대조하고, 위치와 겹침은 추출이 이미 검사했으므로 다시 보지 않는다. 아래 하나라도 어기면 서버가 뜨지 않는다.
 
-- 배치 데이터의 맵, 지역, 포털이 기획 데이터의 그 맵에 있다. 리스폰 지점은 리스폰 지점이 있는 지역의 것이다
+- 배치 데이터의 맵, 지역, 포털이 기획 데이터의 그 맵에 있다. 리스폰 지점은 리스폰 지점이 있는 지역의 것이다. NPC는 NPC 표에 있다
 - 스폰 마커의 스폰 그룹이 스폰 그룹 표에 있고, 마커의 반경이 그 그룹 몬스터 모두의 `ChasingMaxRange`보다 작다. 반경이 한계 이상이면 반경 끝에서 대상을 감지한 몬스터가 쫓지 않고 곧바로 돌아간다
-- 맵 표의 맵마다, 지역 표의 지역마다, 포털 표의 포털마다 배치 데이터가 있다. 마을에는 리스폰 지점이 있다
+- 맵 표의 맵마다, 지역 표의 지역마다, 포털 표의 포털마다, NPC 표의 NPC마다 배치 데이터가 있다. 마을에는 리스폰 지점이 있다
+
+룸은 시작할 때 자기 맵의 NPC를 마커 자리에 엔티티로 세운다. NPC의 높이는 마커의 바닥 높이이고, 클라이언트가 캡슐 반높이만큼 올려 세운다.
 
 룸의 경계, 룸 배정, 이동 판정의 룸 경계는 지역의 배치 데이터(`AreaPlacement::bounds`)를 쓴다. 경계 계산과 포함 판정은 `Utils/PlaneBounds.h` 한 곳에 있다.
 포털 판정과 도착 위치는 포털의 배치 데이터를, 마을 리스폰은 마을의 리스폰 지점을 쓴다. 몬스터 스폰과 리젠, 배회, 추적 한계는 스폰 마커를 쓴다(`Game/Room/MonsterSpawner`). 맵의 경계와 셀 크기는 읽어서 설치만 하고, 룸을 맵의 사본으로 바꾸는

@@ -35,6 +35,8 @@ public:
     static const DesignData::DropGroupRow* FindDropGroup(int32 dropGroupId);
     static const DesignData::SpawnGroupRow* FindSpawnGroup(int32 spawnGroupId);
     static const DesignData::AreaRow* FindArea(int32 areaId);
+    static const DesignData::ShopRow* FindShop(int32 shopId);
+    static const DesignData::NpcRow* FindNpc(int32 npcId);
     /** 그 직업의 그 레벨 능력치. 표에 없는 직업이나 레벨이면 nullptr. */
     static const DesignData::ClassLevelStatRow* FindClassLevelStat(int32 classId, int32 level);
     /** 직업별 능력치 표에 그 직업이 있으면 true. 있으면 모든 레벨에 행이 있다. */
@@ -60,6 +62,8 @@ public:
     static const RespawnPointPlacement* FindRespawnPoint(int32 areaId);
     /** 그 맵의 스폰 마커. 마커가 없는 맵이면 빈 목록. 마커의 스폰 그룹은 기동할 때 스폰 그룹 표와 대조한다. */
     static const vector<SpawnPointPlacement>& GetSpawnPoints(int32 mapId);
+    /** NPC 번호 순서다. 기동할 때 NPC 표의 NPC마다 하나씩 있는지 대조한다. */
+    static const map<int32, NpcPlacement>& GetNpcPlacements() { return s_tables.npcPlacements; }
 
     /** 크리처 판정 데이터. 없는 번호면 nullptr. 기동할 때 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 있는지 대조한다. */
     static const CreatureCombat* FindMonsterCombat(int32 templateId);
@@ -69,6 +73,8 @@ public:
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }
     /** 새 캐릭터가 첫 게임 입장에서 갖는 시작 맵, 위치, 방향, 골드. */
     static const DesignData::ProgressConfig& GetInitialProgress() { return s_tables.initialProgress; }
+    /** NPC를 조준해 상호작용할 수 있는 평면 거리(cm). 클라이언트의 조준 판정과 같은 값이다. */
+    static float GetInteractionRange() { return s_tables.interaction.InteractionRange; }
 
     //~ 공통
 private:

@@ -29,6 +29,8 @@ namespace
     constexpr int32 FIELD_ID = 20;
     constexpr int32 GOLD_ID = 1;
     constexpr const char* PLACEMENT_FILE = "Placement_1111.json";
+    constexpr int32 SHOP_ID = 1;
+    constexpr int32 NPC_ID = 7;
 
     /** DataBuilder가 생성하는 레벨 표의 행. */
     Json MakeLevel(int32 level, int64 expRequirement)
@@ -166,6 +168,9 @@ namespace
             {"SpawnPoints", Json::array({
                 Json{{"SpawnGroupId", SPAWN_GROUP_ID}, {"X", -10500}, {"Y", 10200}, {"Z", 50}, {"Radius", 600}},
             })},
+            {"Npcs", Json::array({
+                Json{{"Id", NPC_ID}, {"X", 1180}, {"Y", 1100}, {"Z", 20}, {"Yaw", -90}},
+            })},
         };
     }
 
@@ -207,6 +212,9 @@ namespace
         documents.areas = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
         documents.initialProgress = MakeInitialProgress();
+        documents.shops = Json::array({Json{{"Id", SHOP_ID}, {"Items", Json::array({SWORD_ID, POTION_ID})}}});
+        documents.npcs = Json::array({Json{{"Id", NPC_ID}, {"ShopId", SHOP_ID}}});
+        documents.interaction = Json{{"InteractionRange", 300.0}};
         documents.placements[PLACEMENT_FILE] = MakePlacement();
         documents.creatureCombat = MakeCreatureCombat();
         return documents;
@@ -329,6 +337,49 @@ TEST(GamedataParserTest, PlacementBecomesMapAreaPortalAndRespawnSpace)
     EXPECT_FLOAT_EQ(portal.destYaw, 180.f);
 }
 
+TEST(GamedataParserTest, NpcPlacementBecomesNpcSpaceOfItsMap)
+{
+    GamedataTables tables;
+    const optional<string> error = GamedataParser::Parse(MakeValidDocuments(), OUT tables);
+    ASSERT_FALSE(error.has_value()) << error.value_or("");
+
+    const NpcPlacement& npc = tables.npcPlacements.at(NPC_ID);
+    EXPECT_EQ(npc.mapId, MAP_ID) << "NPC의 맵은 마커가 놓인 레벨의 맵이다";
+    EXPECT_FLOAT_EQ(npc.pos.x, 1180.f);
+    EXPECT_FLOAT_EQ(npc.pos.z, 20.f);
+    EXPECT_FLOAT_EQ(npc.yaw, -90.f);
+    EXPECT_EQ(tables.npcs.at(NPC_ID).ShopId, SHOP_ID);
+    EXPECT_EQ(tables.shops.at(SHOP_ID).Items, (vector<int32>{ SWORD_ID, POTION_ID }));
+    EXPECT_FLOAT_EQ(tables.interaction.InteractionRange, 300.f);
+}
+
+TEST(GamedataParserTest, PlacedNpcNotInNpcTableIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    Json unknown = documents.placements[PLACEMENT_FILE]["Npcs"][0];
+    unknown["Id"] = 99;
+    documents.placements[PLACEMENT_FILE]["Npcs"].push_back(unknown);
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "NPC 99"});
+}
+
+TEST(GamedataParserTest, NpcWithoutPlacementIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["Npcs"] = Json::array();
+
+    ExpectMentions(ErrorOf(documents), {"NPC 7", "배치 데이터"});
+}
+
+TEST(GamedataParserTest, NpcPlacedTwiceIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    Json again = documents.placements[PLACEMENT_FILE]["Npcs"][0];
+    documents.placements[PLACEMENT_FILE]["Npcs"].push_back(again);
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "NPC 7", "겹친다"});
+}
+
 TEST(GamedataParserTest, MissingPlacementFieldNamesFileAndField)
 {
     GamedataDocuments documents = MakeValidDocuments();
@@ -353,6 +404,7 @@ TEST(GamedataParserTest, PlacementOfUnknownMapIsRejected)
     documents.placements["Placement_9999.json"]["Areas"] = Json::array();
     documents.placements["Placement_9999.json"]["RespawnPoints"] = Json::array();
     documents.placements["Placement_9999.json"]["Portals"] = Json::array();
+    documents.placements["Placement_9999.json"]["Npcs"] = Json::array();
 
     ExpectMentions(ErrorOf(documents), {"Placement_9999.json", "맵 9999", "맵 표에 없다"});
 }
@@ -742,6 +794,9 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.spawnGroups = ReadJsonFile(generatedDir / DesignData::SPAWN_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(generatedDir / DesignData::PROGRESS_FILE);
+    documents.shops = ReadJsonFile(generatedDir / DesignData::SHOP_FILE);
+    documents.npcs = ReadJsonFile(generatedDir / DesignData::NPC_FILE);
+    documents.interaction = ReadJsonFile(generatedDir / DesignData::INTERACTION_FILE);
     ASSERT_TRUE(documents.items.is_array()) << "생성된 기획 데이터를 찾지 못했다: " << generatedDir.string();
 
     const filesystem::path extractedDir = generatedDir / ".." / "Extracted";

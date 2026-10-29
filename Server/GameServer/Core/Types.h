@@ -13,6 +13,7 @@ namespace Protobuf = google::protobuf;
 USING_SHARED_PTR(GameSession);
 USING_SHARED_PTR(Player);
 USING_SHARED_PTR(Monster);
+USING_SHARED_PTR(Npc);
 USING_SHARED_PTR(Creature);
 USING_SHARED_PTR(Entity);
 USING_SHARED_PTR(Room);

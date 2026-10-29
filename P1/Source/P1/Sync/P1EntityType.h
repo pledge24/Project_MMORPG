@@ -10,4 +10,5 @@ enum class EP1EntityType : uint8
     Monster UMETA(DisplayName = "Monster"),
     Player UMETA(DisplayName = "Player"),
     Projectile UMETA(DisplayName = "Projectile"),
+    Npc UMETA(DisplayName = "Npc"),
 };

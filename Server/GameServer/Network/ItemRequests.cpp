@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include "Network/ItemRequests.h"
+#include "Game/Entities/Npc.h"
 #include "Game/Entities/Player.h"
 #include "Game/Room/Room.h"
 #include "Network/ItemPackets.h"
@@ -34,6 +35,17 @@ namespace
         room.BroadcastNearby(player->GetEntityId(), ServerPacketHandler::MakeSerializedPacket(appearancePkt));
     }
 
+    // 상점 요청이 가리킨 NPC가 이 룸에 있고 플레이어가 그 NPC와 거래할 수 있는 거리인지 본다. 거래할 수 없으면 nullptr.
+    // 다른 룸의 NPC 번호는 이 룸에서 찾지 못한다. 클라이언트의 화면에서 NPC가 사라진 뒤에 온 요청도 여기서 걸린다.
+    NpcRef FindReachableNpc(Room& room, const PlayerRef& player, int64 npcEntityId)
+    {
+        NpcRef npc = room.FindNpc(npcEntityId);
+        if (npc == nullptr || npc->IsWithinReach(player->GetPosInfo()) == false)
+            return nullptr;
+
+        return npc;
+    }
+
     // 소모품 사용의 응답. 칸을 골라 쓴 요청과 퀵슬롯으로 쓴 요청이 같은 응답을 받는다.
     void SendUseItem(const GameSessionRef& session, ItemOutcome<UseItemResult>& outcome)
     {
@@ -60,6 +72,22 @@ void ItemRequests::HandleBuyItem(Room& room, const PlayerRef& player, const Prot
         return;
 
     Protocol::S_BUY_ITEM buyItemPkt;
+    NpcRef npc = FindReachableNpc(room, player, pkt.npc_entity_id());
+    if (npc == nullptr)
+    {
+        buyItemPkt.set_result(Protocol::ITEM_RESULT_NPC_OUT_OF_REACH);
+        SendPacket(session, buyItemPkt);
+        return;
+    }
+
+    // 상점 창은 판매 목록의 아이템만 진열하므로 정상 클라이언트는 목록 밖의 아이템을 사지 않는다.
+    if (npc->Sells(pkt.template_id()) == false)
+    {
+        buyItemPkt.set_result(Protocol::ITEM_RESULT_INVALID_REQUEST);
+        SendPacket(session, buyItemPkt);
+        return;
+    }
+
     ItemOutcome<BuyItemResult> outcome = player->ProcessBuyItem(pkt.template_id());
     buyItemPkt.set_result(outcome.GetResult());
     if (outcome.IsSuccess())
@@ -82,6 +110,14 @@ void ItemRequests::HandleSellItem(Room& room, const PlayerRef& player, const Pro
         return;
 
     Protocol::S_SELL_ITEM sellItemPkt;
+    // 어느 상점이든 팔 수 있는 아이템이면 사들인다. 거리만 본다.
+    if (FindReachableNpc(room, player, pkt.npc_entity_id()) == nullptr)
+    {
+        sellItemPkt.set_result(Protocol::ITEM_RESULT_NPC_OUT_OF_REACH);
+        SendPacket(session, sellItemPkt);
+        return;
+    }
+
     ItemOutcome<SellItemResult> outcome = player->ProcessSellItem(ItemPackets::ToRequest(pkt.address(), pkt.item_uid()));
     sellItemPkt.set_result(outcome.GetResult());
     if (outcome.IsSuccess())

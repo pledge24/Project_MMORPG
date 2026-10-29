@@ -149,12 +149,13 @@ enum ItemResult : int {
   ITEM_RESULT_DEAD = 9,
   ITEM_RESULT_NOT_OWNED = 10,
   ITEM_RESULT_INTERNAL_ERROR = 11,
+  ITEM_RESULT_NPC_OUT_OF_REACH = 12,
   ItemResult_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   ItemResult_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool ItemResult_IsValid(int value);
 constexpr ItemResult ItemResult_MIN = ITEM_RESULT_SUCCESS;
-constexpr ItemResult ItemResult_MAX = ITEM_RESULT_INTERNAL_ERROR;
+constexpr ItemResult ItemResult_MAX = ITEM_RESULT_NPC_OUT_OF_REACH;
 constexpr int ItemResult_ARRAYSIZE = ItemResult_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ItemResult_descriptor();
@@ -1711,8 +1712,18 @@ class C_BUY_ITEM final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kNpcEntityIdFieldNumber = 2,
     kTemplateIdFieldNumber = 1,
   };
+  // int64 npc_entity_id = 2;
+  void clear_npc_entity_id();
+  int64_t npc_entity_id() const;
+  void set_npc_entity_id(int64_t value);
+  private:
+  int64_t _internal_npc_entity_id() const;
+  void _internal_set_npc_entity_id(int64_t value);
+  public:
+
   // int32 template_id = 1;
   void clear_template_id();
   int32_t template_id() const;
@@ -1730,6 +1741,7 @@ class C_BUY_ITEM final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    int64_t npc_entity_id_;
     int32_t template_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -2040,6 +2052,7 @@ class C_SELL_ITEM final :
   enum : int {
     kAddressFieldNumber = 1,
     kItemUidFieldNumber = 2,
+    kNpcEntityIdFieldNumber = 3,
   };
   // .Protocol.SlotAddress address = 1;
   bool has_address() const;
@@ -2068,6 +2081,15 @@ class C_SELL_ITEM final :
   void _internal_set_item_uid(int64_t value);
   public:
 
+  // int64 npc_entity_id = 3;
+  void clear_npc_entity_id();
+  int64_t npc_entity_id() const;
+  void set_npc_entity_id(int64_t value);
+  private:
+  int64_t _internal_npc_entity_id() const;
+  void _internal_set_npc_entity_id(int64_t value);
+  public:
+
   // @@protoc_insertion_point(class_scope:Protocol.C_SELL_ITEM)
  private:
   class _Internal;
@@ -2078,6 +2100,7 @@ class C_SELL_ITEM final :
   struct Impl_ {
     ::Protocol::SlotAddress* address_;
     int64_t item_uid_;
+    int64_t npc_entity_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -4537,6 +4560,26 @@ inline void C_BUY_ITEM::set_template_id(int32_t value) {
   // @@protoc_insertion_point(field_set:Protocol.C_BUY_ITEM.template_id)
 }
 
+// int64 npc_entity_id = 2;
+inline void C_BUY_ITEM::clear_npc_entity_id() {
+  _impl_.npc_entity_id_ = int64_t{0};
+}
+inline int64_t C_BUY_ITEM::_internal_npc_entity_id() const {
+  return _impl_.npc_entity_id_;
+}
+inline int64_t C_BUY_ITEM::npc_entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_BUY_ITEM.npc_entity_id)
+  return _internal_npc_entity_id();
+}
+inline void C_BUY_ITEM::_internal_set_npc_entity_id(int64_t value) {
+  
+  _impl_.npc_entity_id_ = value;
+}
+inline void C_BUY_ITEM::set_npc_entity_id(int64_t value) {
+  _internal_set_npc_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_BUY_ITEM.npc_entity_id)
+}
+
 // -------------------------------------------------------------------
 
 // S_BUY_ITEM
@@ -4733,6 +4776,26 @@ inline void C_SELL_ITEM::_internal_set_item_uid(int64_t value) {
 inline void C_SELL_ITEM::set_item_uid(int64_t value) {
   _internal_set_item_uid(value);
   // @@protoc_insertion_point(field_set:Protocol.C_SELL_ITEM.item_uid)
+}
+
+// int64 npc_entity_id = 3;
+inline void C_SELL_ITEM::clear_npc_entity_id() {
+  _impl_.npc_entity_id_ = int64_t{0};
+}
+inline int64_t C_SELL_ITEM::_internal_npc_entity_id() const {
+  return _impl_.npc_entity_id_;
+}
+inline int64_t C_SELL_ITEM::npc_entity_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_SELL_ITEM.npc_entity_id)
+  return _internal_npc_entity_id();
+}
+inline void C_SELL_ITEM::_internal_set_npc_entity_id(int64_t value) {
+  
+  _impl_.npc_entity_id_ = value;
+}
+inline void C_SELL_ITEM::set_npc_entity_id(int64_t value) {
+  _internal_set_npc_entity_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_SELL_ITEM.npc_entity_id)
 }
 
 // -------------------------------------------------------------------

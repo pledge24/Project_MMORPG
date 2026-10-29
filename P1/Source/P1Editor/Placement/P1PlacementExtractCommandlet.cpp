@@ -6,6 +6,7 @@
 #include "Game/World/P1FieldBoundaryWall.h"
 #include "Game/World/P1MapMarker.h"
 #include "Game/World/P1MonsterSpawnMarker.h"
+#include "Game/World/P1NpcMarker.h"
 #include "Game/World/P1Portal.h"
 #include "Game/World/P1PortalArrivalMarker.h"
 #include "Game/World/P1RespawnPointMarker.h"
@@ -90,6 +91,8 @@ namespace
                 Level.Areas.Add({ Area->GetAreaId(), MakeBox(*Area) });
             else if (Cast<AP1RespawnPointMarker>(Actor) != nullptr)
                 Level.RespawnPoints.Add(MakePoint(*Actor, 0));
+            else if (const AP1NpcMarker* Npc = Cast<AP1NpcMarker>(Actor))
+                Level.Npcs.Add(MakePoint(*Npc, Npc->GetNpcId()));
             else if (const AP1PortalArrivalMarker* Arrival = Cast<AP1PortalArrivalMarker>(Actor))
                 Level.Arrivals.Add(MakePoint(*Arrival, Arrival->GetPortalId()));
             else if (const AP1MonsterSpawnMarker* Spawn = Cast<AP1MonsterSpawnMarker>(Actor))
@@ -246,15 +249,17 @@ int32 UP1PlacementExtractCommandlet::Main(const FString& Params)
     const FString DesignDir = FPaths::ProjectDir() / TEXT("DesignData/Generated/");
     FString MapJson;
     FString AreaJson;
+    FString NpcJson;
     FString SpawnGroupJson;
     FP1PlacementCheck::FDesignData Design;
     if (FFileHelper::LoadFileToString(MapJson, *(DesignDir / TEXT("Map.json"))) == false
-        || FFileHelper::LoadFileToString(AreaJson, *(DesignDir / TEXT("Area.json"))) == false)
-        Errors.Add(FString::Printf(TEXT("%s에서 Map.json이나 Area.json을 읽지 못했다. DataBuilder를 돌린다"), *DesignDir));
+        || FFileHelper::LoadFileToString(AreaJson, *(DesignDir / TEXT("Area.json"))) == false
+        || FFileHelper::LoadFileToString(NpcJson, *(DesignDir / TEXT("Npc.json"))) == false)
+        Errors.Add(FString::Printf(TEXT("%s에서 Map.json, Area.json, Npc.json을 읽지 못했다. DataBuilder를 돌린다"), *DesignDir));
     else if (FFileHelper::LoadFileToString(SpawnGroupJson, *(GetServerDesignDataDir() / TEXT("SpawnGroup.json"))) == false)
         Errors.Add(FString::Printf(TEXT("%s에서 SpawnGroup.json을 읽지 못했다. DataBuilder를 돌린다"), *GetServerDesignDataDir()));
     else
-        FP1PlacementCheck::ParseDesignData(MapJson, AreaJson, SpawnGroupJson, Design, Errors);
+        FP1PlacementCheck::ParseDesignData(MapJson, AreaJson, NpcJson, SpawnGroupJson, Design, Errors);
 
     // navmesh의 에이전트는 플레이어 캡슐과 이동 컴포넌트다.
     FP1NavGeometry::FAgent Agent;

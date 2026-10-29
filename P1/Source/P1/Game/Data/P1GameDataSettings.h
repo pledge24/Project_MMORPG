@@ -6,6 +6,7 @@
 
 class ACharacter;
 class UDataTable;
+class UMaterialInterface;
 class UTexture2D;
 class UWorld;
 struct FP1ItemConsumeEffectRow;
@@ -13,6 +14,9 @@ struct FP1ItemEquipStatRow;
 struct FP1ItemRow;
 struct FP1MonsterAssetData;
 struct FP1MonsterRow;
+struct FP1NpcAssetData;
+struct FP1NpcRow;
+struct FP1ShopRow;
 
 /**
  * 게임 코드가 읽는 기획 데이터 테이블의 설정.
@@ -68,6 +72,31 @@ public:
     /** 몬스터의 표현 데이터. 행 구조체는 FP1MonsterAssetData이고 행 이름은 몬스터 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterAssetTable;
+
+    //~ Npcs
+public:
+    static const FP1NpcRow* FindNpcRow(int32 NpcId);
+
+    /** NPC 번호의 표현 데이터. 행이 가리키는 에셋은 불러오지 않는다. */
+    static const FP1NpcAssetData* FindNpcAssetData(int32 NpcId);
+
+    static const FP1ShopRow* FindShopRow(int32 ShopId);
+
+    /** NPC 정의. 행 구조체는 FP1NpcRow이고 행 이름은 NPC 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UDataTable> NpcTable;
+
+    /** NPC의 표현 데이터. 행 구조체는 FP1NpcAssetData이고 행 이름은 NPC 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UDataTable> NpcAssetTable;
+
+    /** 상점의 판매 목록. 행 구조체는 FP1ShopRow이고 행 이름은 상점 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UDataTable> ShopTable;
+
+    /** 조준한 NPC의 메시에 덧그려 외곽선을 보이는 머티리얼. 비어 있으면 외곽선 없이 상호작용 표시만 뜬다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Npcs")
+    TSoftObjectPtr<UMaterialInterface> NpcFocusOverlayMaterial;
 
     //~ Players
 public:

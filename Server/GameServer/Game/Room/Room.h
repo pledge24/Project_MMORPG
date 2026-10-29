@@ -35,8 +35,12 @@ protected:
 
     //~ 시작
 public:
-    /** 몬스터를 처음 채우고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
+    /** 맵에 배치한 NPC를 두고 몬스터를 처음 채운 뒤 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
     bool Start();
+
+private:
+    /** 이 룸의 맵에 배치한 NPC를 마커 자리에 둔다. 스폰에 실패하면 false. */
+    bool SpawnNpcs();
 
     //~ 룸 틱
 public:
@@ -49,7 +53,7 @@ public:
 protected:
     /** 지난 틱부터 흐른 시간으로 Tick을 부르고 다음 틱을 예약한다. */
     void RunScheduledTick();
-    /** 플레이어마다 그 플레이어가 보는 몬스터의 위치를 S_MOVE 하나로 모아 보낸다. */
+    /** 플레이어마다 그 플레이어가 보는 몬스터의 위치를 S_MOVE 하나로 모아 보낸다. 움직이지 않는 NPC는 싣지 않는다. */
     void BroadcastMonsterMoves();
 
 private:
@@ -183,6 +187,8 @@ public:
     bool Contains(int64 entityId) { return _entities.contains(entityId); }
     /** 룸에 있는 플레이어 수. 룸 큐 밖에서 읽으면 읽는 순간의 값이다. */
     int32 GetPlayerCount() const { return _playerCount.load(); }
+    /** 이 룸의 NPC. 없거나 NPC가 아니면 nullptr. 룸 큐 위에서 부른다. */
+    NpcRef FindNpc(int64 entityId);
 
     /**
      * 엔티티를 만들어 이 룸에 넣고 Start까지 부른다. UWorld::SpawnActor에 대응한다.

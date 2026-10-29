@@ -81,4 +81,14 @@ protected:
     /** WBP에 없으면 채널을 보이지 않는다. */
     UPROPERTY(meta = (BindWidgetOptional))
     TObjectPtr<UTextBlock> Channel_txt;
+
+    //~ Interaction Prompt
+public:
+    /** 조준한 NPC로 할 수 있는 일. 빈 문구면 내린다. */
+    void SetInteractionPrompt(const FText& Prompt);
+
+protected:
+    /** 화면 중앙 아래의 상호작용 표시. WBP에 없으면 보이지 않는다. */
+    UPROPERTY(meta = (BindWidgetOptional))
+    TObjectPtr<UTextBlock> InteractionPrompt_txt;
 };

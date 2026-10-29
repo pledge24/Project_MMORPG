@@ -217,6 +217,7 @@
     <ClInclude Include="Game\Entities\EntityComponent.h" />
     <ClInclude Include="Game\Entities\CombatStats.h" />
     <ClInclude Include="Game\Entities\Monster.h" />
+    <ClInclude Include="Game\Entities\Npc.h" />
     <ClInclude Include="Game\Entities\Player.h" />
     <ClInclude Include="Game\Entities\PlayerSaveData.h" />
     <ClInclude Include="Game\Entities\PlayerProgress.h" />
@@ -338,6 +339,7 @@
     <ClCompile Include="Game\Entities\Creature.cpp" />
     <ClCompile Include="Game\Entities\Entity.cpp" />
     <ClCompile Include="Game\Entities\Monster.cpp" />
+    <ClCompile Include="Game\Entities\Npc.cpp" />
     <ClCompile Include="Game\Entities\Player.cpp" />
     <ClCompile Include="Game\Inventory\InventoryComponent.cpp" />
     <ClCompile Include="Game\Items\ItemContainer.cpp" />
@@ -387,6 +389,9 @@
     <None Include="Game\Data\Generated\SpawnGroup.json" />
     <None Include="Game\Data\Generated\Map.json" />
     <None Include="Game\Data\Generated\Area.json" />
+    <None Include="Game\Data\Generated\Shop.json" />
+    <None Include="Game\Data\Generated\Npc.json" />
+    <None Include="Game\Data\Generated\Interaction.json" />
     <None Include="Game\Data\Generated\Progress.json" />
     <None Include="Game\Data\Extracted\Placement_1111.json" />
     <None Include="Lobby\Data\Generated\DataVersion.json" />

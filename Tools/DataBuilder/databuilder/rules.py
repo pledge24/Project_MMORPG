@@ -253,6 +253,24 @@ def exactly_one_town(table: Table, _: DesignData) -> list[str]:
     return [f"{table.config.workbook}: HasRespawnPoint가 참인 지역(마을)이 하나여야 하는데 {len(towns)}개다" + (f" ({places})" if places else "")]
 
 
+def repeated_values(values: list) -> list:
+    """두 번 이상 나오는 값. 처음 나온 순서다."""
+    return sorted({value for value in values if values.count(value) > 1}, key=values.index)
+
+
+def shop_items_non_empty_distinct(table: Table, _: DesignData) -> list[str]:
+    """빈 상점은 열어도 살 것이 없고, 같은 아이템이 두 번 나오면 상점 창에 진열 칸이 겹친다."""
+    errors = []
+    items_column = next(column for column in table.columns if column.name == "Items")
+    for row in table.rows:
+        items = row.values["Items"]
+        where = locate(table.config.workbook, row.sheet, row.number, items_column.letter, "Items")
+        if not items:
+            errors.append(f"{where}: 판매 목록이 비어 있다. 아이템을 하나 이상 적는다")
+        errors.extend(f"{where}: 아이템 {item}이 두 번 이상 나온다" for item in repeated_values(items))
+    return errors
+
+
 def locate_field(setting: Setting, name: str) -> str:
     return locate(setting.config.workbook, setting.config.sheet, setting.rows[name], "D", name)
 
@@ -265,6 +283,14 @@ def field_at_least(name: str, minimum: int) -> Callable[[Setting, DesignData], l
     return rule
 
 
+def field_positive(name: str) -> Callable[[Setting, DesignData], list[str]]:
+    def rule(setting: Setting, _: DesignData) -> list[str]:
+        value = setting.values[name]
+        return [] if value > 0 else [f"{locate_field(setting, name)}: 0보다 커야 하는데 {value}이다"]
+
+    return rule
+
+
 def non_empty_distinct_list(name: str) -> Callable[[Setting, DesignData], list[str]]:
     """목록이 비어 있지 않고 같은 값이 두 번 나오지 않는지 본다."""
 
@@ -272,8 +298,7 @@ def non_empty_distinct_list(name: str) -> Callable[[Setting, DesignData], list[s
         values = setting.values[name]
         if not values:
             return [f"{locate_field(setting, name)}: 목록이 비어 있다. 값을 하나 이상 적는다"]
-        repeated = sorted({value for value in values if values.count(value) > 1}, key=values.index)
-        return [f"{locate_field(setting, name)}: {value}가 두 번 이상 나온다" for value in repeated]
+        return [f"{locate_field(setting, name)}: {value}가 두 번 이상 나온다" for value in repeated_values(values)]
 
     return rule
 
@@ -293,6 +318,7 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     # 스폰 마커의 위치와 반경은 레벨에서 추출한다. 마커가 가리키는 그룹 번호는 추출이 검사한다.
     "SpawnGroup": [not_negative("MaxCount"), not_negative("RespawnSec"), spawn_group_has_entry],
     "SpawnEntry": [at_least_one("Weight")],
+    "Shop": [shop_items_non_empty_distinct],
 }
 
 SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {
@@ -300,6 +326,8 @@ SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {
     "Progress": [field_at_least("StartGold", 0)],
     # 슬롯이 없는 계정은 캐릭터를 만들 수 없고, 직업이 없으면 아무도 캐릭터를 만들 수 없다.
     "Lobby": [field_at_least("DefaultCharacterSlotCount", 1), non_empty_distinct_list("CreatableClasses")],
+    # 사거리가 0이면 어느 NPC와도 상호작용할 수 없다.
+    "Interaction": [field_positive("InteractionRange")],
 }
 
 # 산출물을 막지 않는 규칙. 어기면 경고를 남기고 생성은 계속한다.

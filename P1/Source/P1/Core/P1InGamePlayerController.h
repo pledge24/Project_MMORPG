@@ -7,6 +7,7 @@
 
 class UInputAction;
 class UInputMappingContext;
+class UP1NpcInteractionComponent;
 class UP1ScreenSubsystem;
 
 /**
@@ -20,7 +21,7 @@ class P1_API AP1InGamePlayerController : public APlayerController, public IP1Sho
     GENERATED_BODY()
 
 public:
-    AP1InGamePlayerController() = default;
+    AP1InGamePlayerController();
 
     //~ Begin AActor Interface
 protected:
@@ -36,10 +37,19 @@ protected:
 
     //~ Begin IP1ShopScreen Interface
 public:
-    virtual void OpenShopWindow() override;
+    virtual void ShowInteractionPrompt(const FText& Prompt) override;
+    virtual bool OpenShopWindow(int64 NpcEntityId, int32 ShopId) override;
     virtual void CloseShopWindow() override;
-    virtual void ShowShopWarning(const FText& Message) override;
     //~ End IP1ShopScreen Interface
+
+    //~ Npc Interaction
+public:
+    /** 상점 창의 닫기 버튼이 상점을 닫을 때 쓴다. */
+    UP1NpcInteractionComponent* GetNpcInteraction() const { return NpcInteraction; }
+
+private:
+    UPROPERTY(VisibleAnywhere, Category = "Interaction")
+    TObjectPtr<UP1NpcInteractionComponent> NpcInteraction;
 
     //~ Screen Input
 public:

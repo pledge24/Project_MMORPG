@@ -110,3 +110,12 @@ void UP1HUDWidget::UpdateChannel(int32 Channel)
 
     Channel_txt->SetText(Channel > 0 ? FText::FromString(FString::Printf(TEXT("%d채널"), Channel)) : FText::GetEmpty());
 }
+
+void UP1HUDWidget::SetInteractionPrompt(const FText& Prompt)
+{
+    if (InteractionPrompt_txt == nullptr)
+        return;
+
+    InteractionPrompt_txt->SetText(Prompt);
+    InteractionPrompt_txt->SetVisibility(Prompt.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+}

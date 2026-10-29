@@ -69,6 +69,15 @@ namespace
         return portal;
     }
 
+    NpcPlacement ReadNpcPlacement(const Json& object)
+    {
+        NpcPlacement npc;
+        npc.npcId = DesignData::Detail::Read<int32>(object, "Id");
+        npc.pos = ReadPosition(object, "");
+        npc.yaw = DesignData::Detail::Read<float>(object, "Yaw");
+        return npc;
+    }
+
     SpawnPointPlacement ReadSpawnPointPlacement(const Json& object)
     {
         SpawnPointPlacement spawnPoint;
@@ -104,7 +113,7 @@ namespace
     /** 배치 데이터의 행이 기획 데이터의 그 맵에 있는 번호를 가리키는지 본다. 위치와 겹침은 추출이 검사했다. */
     void CheckPlacementIds(const MapPlacement& mapPlacement, const vector<AreaPlacement>& areas,
         const vector<RespawnPointPlacement>& respawnPoints, const vector<PortalPlacement>& portals,
-        const vector<SpawnPointPlacement>& spawnPoints, const GamedataTables& tables)
+        const vector<SpawnPointPlacement>& spawnPoints, const vector<NpcPlacement>& npcs, const GamedataTables& tables)
     {
         using DesignData::Detail::FieldError;
         const int32 mapId = mapPlacement.mapId;
@@ -153,6 +162,12 @@ namespace
                         spawnPoint.spawnGroupId, spawnPoint.radius, entry.MonsterId, monster->second.ChasingMaxRange) };
             }
         }
+
+        for (const NpcPlacement& npc : npcs)
+        {
+            if (tables.npcs.contains(npc.npcId) == false)
+                throw FieldError{ format("NPC {}이 NPC 표에 없다", npc.npcId) };
+        }
     }
 
     /** 맵 하나의 배치 데이터를 읽고 번호를 대조해 표에 더한다. 맵 표와 지역 표를 먼저 읽어 둬야 한다. */
@@ -174,8 +189,9 @@ namespace
             vector<RespawnPointPlacement> respawnPoints = ReadRows<RespawnPointPlacement>(document, "RespawnPoints", ReadRespawnPointPlacement);
             vector<PortalPlacement> portals = ReadRows<PortalPlacement>(document, "Portals", ReadPortalPlacement);
             vector<SpawnPointPlacement> spawnPoints = ReadRows<SpawnPointPlacement>(document, "SpawnPoints", ReadSpawnPointPlacement);
+            vector<NpcPlacement> npcs = ReadRows<NpcPlacement>(document, "Npcs", ReadNpcPlacement);
 
-            CheckPlacementIds(mapPlacement, areas, respawnPoints, portals, spawnPoints, tables);
+            CheckPlacementIds(mapPlacement, areas, respawnPoints, portals, spawnPoints, npcs, tables);
 
             for (AreaPlacement& area : areas)
                 AddPlacement(tables.areaPlacements, area.id, std::move(area), "지역");
@@ -183,6 +199,11 @@ namespace
                 AddPlacement(tables.respawnPoints, respawn.areaId, std::move(respawn), "리스폰 지점의 지역");
             for (PortalPlacement& portal : portals)
                 AddPlacement(tables.portalPlacements, portal.id, std::move(portal), "포털");
+            for (NpcPlacement& npc : npcs)
+            {
+                npc.mapId = mapPlacement.mapId;
+                AddPlacement(tables.npcPlacements, npc.npcId, std::move(npc), "NPC");
+            }
             if (spawnPoints.empty() == false)
                 tables.spawnPoints[mapPlacement.mapId] = std::move(spawnPoints);
             AddPlacement(tables.mapPlacements, mapPlacement.mapId, std::move(mapPlacement), "맵");
@@ -194,8 +215,8 @@ namespace
     }
 
     /**
-     * 기획 데이터의 맵, 지역, 포털이 모두 배치되어 있는지 본다. 마을에는 리스폰 지점이 있어야 한다.
-     * 하나라도 빠지면 그 룸이나 포털, 리스폰이 서버에서 깨지므로 부팅을 멈춘다.
+     * 기획 데이터의 맵, 지역, 포털, NPC가 모두 배치되어 있는지 본다. 마을에는 리스폰 지점이 있어야 한다.
+     * 하나라도 빠지면 그 룸이나 포털, 리스폰, 상점이 서버에서 깨지므로 부팅을 멈춘다.
      */
     void CheckEveryRowPlaced(const GamedataTables& tables)
     {
@@ -217,6 +238,12 @@ namespace
                 if (tables.portalPlacements.contains(portal.Id) == false)
                     throw TableError{ format("포털 {}의 배치 데이터가 없다. 맵 {}의 레벨에 포털을 둔다", portal.Id, area.MapId) };
             }
+        }
+
+        for (const auto& [npcId, npc] : tables.npcs)
+        {
+            if (tables.npcPlacements.contains(npcId) == false)
+                throw TableError{ format("NPC {}의 배치 데이터가 없다. 맵 레벨에 NPC 마커를 둔다", npcId) };
         }
     }
 
@@ -395,6 +422,9 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.maps = ParseGenerated(documents.maps, DesignData::ParseMap);
         tables.areas = ParseGenerated(documents.areas, DesignData::ParseArea);
         tables.initialProgress = ParseGenerated(documents.initialProgress, DesignData::ParseProgress);
+        tables.shops = ParseGenerated(documents.shops, DesignData::ParseShop);
+        tables.npcs = ParseGenerated(documents.npcs, DesignData::ParseNpc);
+        tables.interaction = ParseGenerated(documents.interaction, DesignData::ParseInteraction);
         tables.townAreaId = FindTownAreaId(tables.areas);
         tables.goldCurrencyId = FindGoldCurrencyId(tables.currencies);
 

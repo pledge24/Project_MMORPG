@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Game/Entities/P1Monster.h"
 #include "Game/Entities/P1MyPlayer.h"
+#include "Game/Entities/P1Npc.h"
 #include "GameFramework/Actor.h"
 #include "P1EntitySpawner.generated.h"
 
@@ -54,4 +55,9 @@ protected:
     /** 다른 플레이어로 스폰할 클래스. */
     UPROPERTY(EditAnywhere)
     TSubclassOf<AP1Player> OtherPlayerClass;
+
+    //~ Npc Spawn
+public:
+    /** 서버가 보낸 엔티티 정보로 스폰한다. 서버의 높이는 바닥이라 캡슐 반높이만큼 올려 세운다. 실패하면 nullptr. */
+    AP1Npc* SpawnNpc(const Protocol::EntityInfo& InEntityInfo);
 };

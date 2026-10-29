@@ -137,6 +137,7 @@
     <ClCompile Include="PlayerLevelTests.cpp" />
     <ClCompile Include="PlayerSaveDataTests.cpp" />
     <ClCompile Include="MonsterTests.cpp" />
+    <ClCompile Include="ShopRequestTests.cpp" />
     <ClCompile Include="RandomTests.cpp" />
     <ClCompile Include="RoomLocationTests.cpp" />
     <ClCompile Include="ServerConfigTests.cpp" />
@@ -245,6 +246,9 @@
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\Monster.cpp">
+      <Filter>GameServer\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Entities\Npc.cpp">
       <Filter>GameServer\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Entities\Player.cpp">

@@ -111,8 +111,8 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`). 하위 `Generated/`는 DataBuilder가 만드는 기획 데이터 행 구조체와 열거형이다 |
-| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽, 배치 추출이 읽는 에디터 전용 마커(맵 마커, 지역 볼륨, 리스폰 지점, 포털 도착 지점, 몬스터 스폰 마커) |
-| `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
+| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽, 배치 추출이 읽는 에디터 전용 마커(맵 마커, 지역 볼륨, 리스폰 지점, 포털 도착 지점, 몬스터 스폰 마커, NPC 마커) |
+| `Game/Interaction/` | 내 플레이어가 NPC를 조준해 쓰는 상호작용. 조준 판정, 상점을 여닫는 상호작용 컴포넌트, 그 컴포넌트가 화면을 다루는 인터페이스(`IP1ShopScreen`) |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
 | `Game/Chat/` | 채팅 줄 `USTRUCT`, 받은 채팅을 보관하고 채팅을 보내는 채팅 서브시스템, 채팅의 패킷 변환 |
@@ -122,10 +122,14 @@ P1/Source/
 액터를 서버 상태에 맞추는 일은 같은 일의 양면이라 함께 바뀐다.
 — 두 폴더로 나누면 스폰 하나를 고칠 때 양쪽을 함께 열게 된다.
 
-**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 상점처럼 플레이어가 골라서 다가가 쓰는 대상은
-`Game/Interaction/`에 둔다.
+**`Game/World/`는 상호작용 대상이 아닌 액터만 담는다.** 플레이어가 조준해 쓰는 NPC는 서버 엔티티라 액터가 `Game/Entities/`에 있고,
+조준과 상점 여닫기는 `Game/Interaction/`에 있다. 레벨에는 NPC를 세울 자리인 NPC 마커만 놓는다.
 — 포털은 밟으면 맵 이동을 요청하고 경계 벽은 통과를 막는다. 둘 다 플레이어가 고르는 대상이
 아니라 레벨이 놓아 둔 장치다.
+
+**상호작용 컴포넌트는 인게임 플레이어 컨트롤러에 붙는다.** 컨트롤러가 내 플레이어의 비전투 클릭 알림(`OnNonCombatClick`)을
+컴포넌트에 잇는다.
+— 내 플레이어(`Game/Entities/`)가 컴포넌트를 만들면 `Game/Entities/`가 `Game/Interaction/`을 부르게 되어 3.3의 방향이 뒤집힌다.
 
 **`UI/` 하위는 표시 방식으로 나눈다.** 게임 도메인으로 나누지 않는다.
 
@@ -184,7 +188,8 @@ P1/Source/
 | `Lobby/` | `Network/`의 송신 창구와 생성된 핸들러 헤더, 세션(`PacketSession.h`), `Game/Progress`(받은 입장 응답을 넘기는 패킷 핸들러), `Utils/` |
 | `Network/` | `Sync/`, `Game/Progress`와 `Game/Chat`과 `Game/Channel`(받은 패킷을 넘기는 패킷 핸들러), `Utils/` |
 | `Sync/` | `Game/Entities`, 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
-| `Game/World`, `Game/Interaction` | `Game/Entities`, `Utils/`, 송신 창구 |
+| `Game/World` | `Game/Entities`, `Utils/`, 송신 창구 |
+| `Game/Interaction` | `Game/Entities`, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/Entities` | 게임 도메인, `Game/Data`, `Utils/`, 송신 창구 |
 | 게임 도메인 | `Game/Items`, `Game/Data`, `Utils/`, 송신 창구 |
 | `Game/Items` | `Utils/` |
@@ -210,8 +215,11 @@ P1/Source/
 `OnPossess`에서 화면 서브시스템에 이어 준다). 배선의 객체를 도메인이 호출해야 하면 `Game/`에 인터페이스를 두고 배선이
 구현한다(예: 네임플레이트 위젯이 구현하는 `IP1CreatureBoundWidget`, 인게임 컨트롤러가 구현하는 `IP1ShopScreen`).
 
-**레벨에 놓인 액터(`Game/World/`, `Game/Interaction/`)는 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
-내 플레이어인지, 그 상태가 어떤지를 보고 반응하기 때문이다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
+**`Game/Interaction`은 `Game/Data`를 부른다.** 조준 판정이 상호작용 사거리(생성된 설정 상수)를, 상점을 열 때 NPC 표의 상점 번호를 읽는다.
+— 상점 창이 상점 표의 판매 목록을 진열하고 아이템 요청 창구가 상점을 연 NPC를 아는 일은 화면(`UI/`)이 잇는다. `Game/Interaction`은 `Game/Progress`를 부르지 않는다.
+
+**레벨에 놓인 액터(`Game/World/`)와 상호작용(`Game/Interaction/`)은 `Game/Entities/`를 읽을 수 있다.** 들어온 액터가
+내 플레이어인지, 그 상태가 어떤지, 조준한 것이 NPC인지를 보고 반응하기 때문이다. 포털처럼 폰의 일반 속성으로 가릴 수 있으면 `Game/Entities/`를 부르지 않는다.
 
 **`#include` 없이 포인터나 소프트 참조의 타입으로만 쓰는 전방 선언은 방향을 따지지 않는다.** 그 타입의
 멤버를 쓰려면 헤더를 불러야 하므로 그때는 표를 지킨다. `Game/Progress/P1MyPlayerData.h`는 스폰
@@ -274,11 +282,12 @@ P1/Content/
 │   │   ├── Player/
 │   │   │   ├── Animations/ 공격 시퀀스와 몽타주
 │   │   │   └── Mannequins/ 팩에서 가져온 플레이어 메시
-│   │   └── Monsters/       모델마다 폴더 하나. 몬스터 종류는 에셋 테이블의 행이다
-│   │       ├── Common/     공용 블루프린트(`BP_Monster`)와, 두 모델 이상이 함께 쓰는 스켈레톤·머티리얼·텍스처·애니메이션
-│   │       ├── MeleeMinion/
-│   │       ├── RangedMinion/
-│   │       └── SuperMinion/
+│   │   ├── Monsters/       모델마다 폴더 하나. 몬스터 종류는 에셋 테이블의 행이다
+│   │   │   ├── Common/     공용 블루프린트(`BP_Monster`)와, 두 모델 이상이 함께 쓰는 스켈레톤·머티리얼·텍스처·애니메이션
+│   │   │   ├── MeleeMinion/
+│   │   │   ├── RangedMinion/
+│   │   │   └── SuperMinion/
+│   │   └── Npc/            모든 NPC가 함께 쓰는 것(초점 외곽선 머티리얼). NPC 종류는 에셋 테이블의 행이다
 │   ├── Items/
 │   │   ├── Icons/
 │   │   └── Equipment/
@@ -293,7 +302,7 @@ P1/Content/
 │   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
-│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`)
+│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`)
 │   │   └── DesignData/     DataBuilder JSON으로 채우는 기획 데이터 테이블(`DT_<표>`)
 │   ├── Maps/
 │   └── World/              레벨에 배치하는 액터
