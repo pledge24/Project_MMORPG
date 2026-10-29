@@ -25,6 +25,8 @@ struct FP1NavGeometry
     TArray<FVector> Vertices;
     /** 꼭짓점 번호 셋이 삼각형 하나다. */
     TArray<int32> Triangles;
+    /** 빌드한 navmesh 위에 있어야 하는 몬스터 스폰 마커. 액터 이름과 위치(바닥)다. 빌드 도구가 검사한다. */
+    TArray<TPair<FString, FVector>> SpawnPoints;
 
     /**
      * 레벨의 액터에서 폰을 막는 충돌을 모은다. 폰은 뺀다. 컴포넌트를 등록한 월드여야 위치가 맞다.

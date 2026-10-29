@@ -231,6 +231,15 @@ FString FP1NavGeometry::ToJson(int32 MapId, const FString& LevelPath) const
         Lines.Add(FString::Printf(TEXT("[%d, %d, %d]%s"), Triangles[i], Triangles[i + 1], Triangles[i + 2],
             i + 3 < Triangles.Num() ? TEXT(",") : TEXT("")));
     }
+    Lines.Add(TEXT("],"));
+
+    Lines.Add(TEXT("\"SpawnPoints\": ["));
+    for (int32 i = 0; i < SpawnPoints.Num(); ++i)
+    {
+        const FVector& Location = SpawnPoints[i].Value;
+        Lines.Add(FString::Printf(TEXT("{\"Name\": \"%s\", \"X\": %s, \"Y\": %s, \"Z\": %s}%s"), *SpawnPoints[i].Key.ReplaceCharWithEscapedChar(),
+            *FormatNumber(Location.X), *FormatNumber(Location.Y), *FormatNumber(Location.Z), i + 1 < SpawnPoints.Num() ? TEXT(",") : TEXT("")));
+    }
     Lines.Add(TEXT("]"));
     Lines.Add(TEXT("}"));
 

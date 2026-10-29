@@ -143,7 +143,7 @@ protected:
         MonsterSpawnParams params;
         params.templateId = MONSTER_TEMPLATE_ID;
         params.spawnPos = MakePos(x, y);
-        params.wanderBounds = PlaneBounds::FromCenter(x, y, 0.f, 0.f);
+        params.spawnPoint = SpawnPointPlacement{ 0, vector3D(x, y, 0.f), 0.f };
         return room->SpawnEntity<Monster>(params);
     }
 

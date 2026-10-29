@@ -46,6 +46,7 @@ bool Gamedata::LoadAllGamedata()
         { DesignData::CLASS_LEVEL_STAT_FILE, &documents.classLevelStats },
         { DesignData::MONSTER_FILE, &documents.monsters },
         { DesignData::DROP_GROUP_FILE, &documents.dropGroups },
+        { DesignData::SPAWN_GROUP_FILE, &documents.spawnGroups },
         { DesignData::MAP_FILE, &documents.maps },
         { DesignData::AREA_FILE, &documents.areas },
         { DesignData::PROGRESS_FILE, &documents.initialProgress },
@@ -153,6 +154,12 @@ const DesignData::DropGroupRow* Gamedata::FindDropGroup(int32 dropGroupId)
     return it == s_tables.dropGroups.end() ? nullptr : &it->second;
 }
 
+const DesignData::SpawnGroupRow* Gamedata::FindSpawnGroup(int32 spawnGroupId)
+{
+    auto it = s_tables.spawnGroups.find(spawnGroupId);
+    return it == s_tables.spawnGroups.end() ? nullptr : &it->second;
+}
+
 const DesignData::AreaRow* Gamedata::FindArea(int32 areaId)
 {
     auto it = s_tables.areas.find(areaId);
@@ -187,6 +194,13 @@ const RespawnPointPlacement* Gamedata::FindRespawnPoint(int32 areaId)
 {
     auto it = s_tables.respawnPoints.find(areaId);
     return it == s_tables.respawnPoints.end() ? nullptr : &it->second;
+}
+
+const vector<SpawnPointPlacement>& Gamedata::GetSpawnPoints(int32 mapId)
+{
+    static const vector<SpawnPointPlacement> NO_SPAWN_POINTS;
+    auto it = s_tables.spawnPoints.find(mapId);
+    return it == s_tables.spawnPoints.end() ? NO_SPAWN_POINTS : it->second;
 }
 
 const CreatureCombat* Gamedata::FindMonsterCombat(int32 templateId)

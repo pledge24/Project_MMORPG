@@ -5,6 +5,7 @@
 #include "Game/World/P1AreaVolume.h"
 #include "Game/World/P1FieldBoundaryWall.h"
 #include "Game/World/P1MapMarker.h"
+#include "Game/World/P1MonsterSpawnMarker.h"
 #include "Game/World/P1Portal.h"
 #include "Game/World/P1PortalArrivalMarker.h"
 #include "Game/World/P1RespawnPointMarker.h"
@@ -22,6 +23,15 @@ namespace
     FString GetOutputDir()
     {
         return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("../Server/GameServer/Game/Data/Extracted/"));
+    }
+
+    /**
+     * 서버가 읽는 DataBuilder 산출물 폴더. databuilder.toml의 game 모듈 폴더와 같아야 한다.
+     * 스폰 그룹 표는 클라이언트로 가는 열이 없어 클라이언트 산출물이 없으므로, 마커가 가리키는 번호를 여기서 읽는다.
+     */
+    FString GetServerDesignDataDir()
+    {
+        return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("../Server/GameServer/Game/Data/Generated/"));
     }
 
     /** 서버의 PLACEMENT_FILE_PREFIX와 같다. */
@@ -82,6 +92,12 @@ namespace
                 Level.RespawnPoints.Add(MakePoint(*Actor, 0));
             else if (const AP1PortalArrivalMarker* Arrival = Cast<AP1PortalArrivalMarker>(Actor))
                 Level.Arrivals.Add(MakePoint(*Arrival, Arrival->GetPortalId()));
+            else if (const AP1MonsterSpawnMarker* Spawn = Cast<AP1MonsterSpawnMarker>(Actor))
+            {
+                FP1PlacementCheck::FPlacedPoint Point = MakePoint(*Spawn, Spawn->GetSpawnGroupId());
+                Point.Radius = Spawn->GetRadius();
+                Level.SpawnPoints.Add(Point);
+            }
             else if (const AP1Portal* Portal = Cast<AP1Portal>(Actor))
             {
                 FP1PlacementCheck::FPlacedPoint Point = MakePoint(*Portal, Portal->GetPortalId());
@@ -133,6 +149,9 @@ namespace
 
         OutLevel = CollectLevel(MapId, *World);
         OutGeometry = FP1NavGeometry::CollectLevel(*World, OutErrors);
+        // 스폰 마커가 걸을 수 있는 바닥 위에 있는지는 navmesh를 빌드한 뒤에야 알 수 있어 빌드 도구가 검사한다.
+        for (const FP1PlacementCheck::FPlacedPoint& Spawn : OutLevel.SpawnPoints)
+            OutGeometry.SpawnPoints.Add({ Spawn.Name, Spawn.Location });
 
         if (bInitializedHere)
             World->CleanupWorld();
@@ -227,12 +246,15 @@ int32 UP1PlacementExtractCommandlet::Main(const FString& Params)
     const FString DesignDir = FPaths::ProjectDir() / TEXT("DesignData/Generated/");
     FString MapJson;
     FString AreaJson;
+    FString SpawnGroupJson;
     FP1PlacementCheck::FDesignData Design;
     if (FFileHelper::LoadFileToString(MapJson, *(DesignDir / TEXT("Map.json"))) == false
         || FFileHelper::LoadFileToString(AreaJson, *(DesignDir / TEXT("Area.json"))) == false)
         Errors.Add(FString::Printf(TEXT("%s에서 Map.json이나 Area.json을 읽지 못했다. DataBuilder를 돌린다"), *DesignDir));
+    else if (FFileHelper::LoadFileToString(SpawnGroupJson, *(GetServerDesignDataDir() / TEXT("SpawnGroup.json"))) == false)
+        Errors.Add(FString::Printf(TEXT("%s에서 SpawnGroup.json을 읽지 못했다. DataBuilder를 돌린다"), *GetServerDesignDataDir()));
     else
-        FP1PlacementCheck::ParseDesignData(MapJson, AreaJson, Design, Errors);
+        FP1PlacementCheck::ParseDesignData(MapJson, AreaJson, SpawnGroupJson, Design, Errors);
 
     // navmesh의 에이전트는 플레이어 캡슐과 이동 컴포넌트다.
     FP1NavGeometry::FAgent Agent;

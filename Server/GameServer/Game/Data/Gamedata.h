@@ -33,6 +33,7 @@ public:
     static const DesignData::ItemConsumeEffectRow* FindItemConsumeEffect(int32 templateId);
     static const DesignData::MonsterRow* FindMonster(int32 templateId);
     static const DesignData::DropGroupRow* FindDropGroup(int32 dropGroupId);
+    static const DesignData::SpawnGroupRow* FindSpawnGroup(int32 spawnGroupId);
     static const DesignData::AreaRow* FindArea(int32 areaId);
     /** 그 직업의 그 레벨 능력치. 표에 없는 직업이나 레벨이면 nullptr. */
     static const DesignData::ClassLevelStatRow* FindClassLevelStat(int32 classId, int32 level);
@@ -57,6 +58,8 @@ public:
     static const PortalPlacement* FindPortalPlacement(int32 portalId);
     /** 그 지역의 리스폰 지점. 리스폰 지점이 없는 지역이면 nullptr. */
     static const RespawnPointPlacement* FindRespawnPoint(int32 areaId);
+    /** 그 맵의 스폰 마커. 마커가 없는 맵이면 빈 목록. 마커의 스폰 그룹은 기동할 때 스폰 그룹 표와 대조한다. */
+    static const vector<SpawnPointPlacement>& GetSpawnPoints(int32 mapId);
 
     /** 크리처 판정 데이터. 없는 번호면 nullptr. 기동할 때 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 있는지 대조한다. */
     static const CreatureCombat* FindMonsterCombat(int32 templateId);

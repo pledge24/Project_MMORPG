@@ -7,17 +7,13 @@ import unittest
 
 from tests.helpers import DesignDataCase, sheet
 
-MONSTER = (
-    ["Id", "MinExp", "MaxExp", "MinGold", "MaxGold"],
-    ["key:int32", "int64", "int64", "int64", "int64"],
-    ["both", "server", "server", "server", "server"],
-)
 MAP = (["Id", "Name"], ["key:int32", "string"], ["both", "client"])
 # 공간 열(중심, 반경, 리스폰 지점, 포털 좌표)은 없다. 레벨의 마커에서 추출한다.
+# 몬스터 구성과 수, 리젠 시간은 스폰 그룹 표에 있다.
 AREA = (
-    ["Id", "MapId", "Name", "HasRespawnPoint", "Monsters", "MaxMonsterCount", "MonsterRespawnSec"],
-    ["key:int32", "ref:Map", "string", "bool", "ref[]:Monster", "int32", "int32"],
-    ["both", "both", "client", "both", "server", "server", "server"],
+    ["Id", "MapId", "Name", "HasRespawnPoint"],
+    ["key:int32", "ref:Map", "string", "bool"],
+    ["both", "both", "client", "both"],
 )
 PORTAL = (
     ["Id", "AreaId", "DestAreaId"],
@@ -27,11 +23,11 @@ PORTAL = (
 
 
 def town(area_id: int = 10, map_id: int = 1111) -> list:
-    return [area_id, map_id, "마을", True, None, 0, 0]
+    return [area_id, map_id, "마을", True]
 
 
-def field(area_id: int = 20, map_id: int = 1111, monsters: str | None = "5000") -> list:
-    return [area_id, map_id, "초급 사냥터", False, monsters, 10, 10]
+def field(area_id: int = 20, map_id: int = 1111) -> list:
+    return [area_id, map_id, "초급 사냥터", False]
 
 
 def portal(portal_id: int = 11, area_id: int = 10, dest_area_id: int = 20) -> list:
@@ -41,7 +37,6 @@ def portal(portal_id: int = 11, area_id: int = 10, dest_area_id: int = 20) -> li
 class MapRuleCase(DesignDataCase):
     def setUp(self) -> None:
         super().setUp()
-        self.add_table("Monster", sheet(*MONSTER, [5000, 1, 2, 1, 2]))
         self.add_table("Map", sheet(*MAP, [1111, "시작의 섬"]))
 
     def add_areas(self, *rows: list) -> None:
@@ -69,26 +64,6 @@ class AreaTableTest(MapRuleCase):
         self.add_areas(town(), field(map_id=2222))
         self.add_portals()
         self.assert_error("Area.xlsx", "6행", "MapId", "2222")
-
-    def test_unknown_monster_is_rejected(self):
-        self.add_areas(town(), field(monsters="5000;5999"))
-        self.add_portals()
-        self.assert_error("Area.xlsx", "6행", "Monsters", "5999")
-
-
-    def test_negative_max_monster_count_is_rejected(self):
-        row = field()
-        row[5] = -1
-        self.add_areas(town(), row)
-        self.add_portals()
-        self.assert_error("Area.xlsx", "6행", "MaxMonsterCount", "-1")
-
-    def test_negative_monster_respawn_time_is_rejected(self):
-        row = field()
-        row[6] = -1
-        self.add_areas(town(), row)
-        self.add_portals()
-        self.assert_error("Area.xlsx", "6행", "MonsterRespawnSec", "-1")
 
 
 class TownRuleTest(MapRuleCase):

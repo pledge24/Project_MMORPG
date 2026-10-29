@@ -211,6 +211,28 @@ def drop_group_used_by_monster(table: Table, data: DesignData) -> list[str]:
     ]
 
 
+def spawn_group_has_entry(table: Table, data: DesignData) -> list[str]:
+    """그룹에 스폰 항목이 하나도 없으면 그 그룹의 마커에서 나올 몬스터를 고를 수 없다."""
+    entries = data.tables.get("SpawnEntry")
+    used = {row.values["GroupId"] for row in entries.rows} if entries is not None else set()
+    return [
+        f"{locate(table.config.workbook, row.sheet, row.number)}: 그룹 {row.values['Id']}에 스폰 항목이 없다. 표 'SpawnEntry'에 항목을 하나 이상 둔다"
+        for row in table.rows
+        if row.values["Id"] not in used
+    ]
+
+
+def at_least_one(column: str) -> Callable[[Table, DesignData], list[str]]:
+    def rule(table: Table, _: DesignData) -> list[str]:
+        return [
+            f"{locate(table.config.workbook, row.sheet, row.number)}: {column}가 1 이상이어야 하는데 {row.values[column]}이다"
+            for row in table.rows
+            if row.values[column] < 1
+        ]
+
+    return rule
+
+
 def not_negative(column: str) -> Callable[[Table, DesignData], list[str]]:
     def rule(table: Table, _: DesignData) -> list[str]:
         return [
@@ -267,11 +289,10 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "DropGroup": [drop_group_matches_method],
     "DropEntry": [drop_entry_matches_group_method, range_ordered("MinCount", "MaxCount", 1)],
     # 지역의 공간(경계, 리스폰 지점)과 포털의 위치와 반경은 레벨의 마커에서 추출하고, 추출이 검사한다.
-    "Area": [
-        not_negative("MaxMonsterCount"),
-        not_negative("MonsterRespawnSec"),
-        exactly_one_town,
-    ],
+    "Area": [exactly_one_town],
+    # 스폰 마커의 위치와 반경은 레벨에서 추출한다. 마커가 가리키는 그룹 번호는 추출이 검사한다.
+    "SpawnGroup": [not_negative("MaxCount"), not_negative("RespawnSec"), spawn_group_has_entry],
+    "SpawnEntry": [at_least_one("Weight")],
 }
 
 SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {

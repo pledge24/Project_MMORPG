@@ -66,3 +66,30 @@ void Creature::SetStatValue(Protocol::StatType statType, const int64& value)
     (*statMappings)[(int32)statType] = value;
 }
 
+void Creature::SetLocation(const vector3D& pos)
+{
+    Protocol::Vector* location = _posInfo->mutable_pos();
+    location->set_x(pos.x);
+    location->set_y(pos.y);
+    location->set_z(pos.z);
+}
+
+void Creature::SetMoveDirection(const vector2D& moveVec)
+{
+    vector2D unitVec = moveVec.GetNormalize();
+    Protocol::Vector* moveDirection = _posInfo->mutable_move_direction();
+
+    moveDirection->Clear();
+    unitVec.CopyTo(moveDirection);
+}
+
+void Creature::SetYaw(float yaw)
+{
+    _posInfo->set_yaw(yaw);
+}
+
+void Creature::SetMoveState(Protocol::MoveState moveState)
+{
+    _posInfo->set_state(moveState);
+}
+

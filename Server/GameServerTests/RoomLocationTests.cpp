@@ -5,84 +5,48 @@
 /*--------------------------------------------------------------
     무작위 위치 테스트
 
-    몬스터 스폰 위치와 배회 목적지는 그 몬스터가 스폰한 지역의 경계에서 여백을 뺀 안쪽에서 뽑는다.
-    경계에 붙거나 밖으로 밀린 몬스터는 지역 사이의 빈 공간으로 걸어 나간다.
+    몬스터 스폰 위치와 배회 목적지는 그 몬스터가 나온 스폰 마커의 반경 안에서 뽑는다.
+    반경 밖으로 나간 몬스터는 배치한 곳과 다른 곳에 나타나고, 추적 한계를 넘어 곧바로 돌아간다.
 
-    픽스처 결합도: 없음. Room::GetRandomLocation에 경계만 넘긴다. 여백 값은 Room.h의 LOCATION_PADDING_X·Y와 같다.
-
-    축: 언리얼 좌표를 따른다. 지역 볼륨의 X 방향 반경이 x 범위를, Y 방향 반경이 y 범위를 정한다.
+    픽스처 결합도: 없음. Room::GetRandomLocation에 중심과 반경만 넘긴다.
 ---------------------------------------------------------------*/
 
 namespace
 {
     constexpr float CENTER_X = 1000.f;
     constexpr float CENTER_Y = -2000.f;
-    constexpr float HALF_EXTENT = 1500.f;
-    constexpr float PADDING = 1000.f;
-    constexpr int32 DRAW_COUNT = 1000;
-
-    PlaneBounds MakeBounds(float depthHalfExtent, float widthHalfExtent)
-    {
-        return PlaneBounds::FromCenter(CENTER_X, CENTER_Y, depthHalfExtent, widthHalfExtent);
-    }
+    constexpr float RADIUS = 500.f;
+    constexpr int32 DRAW_COUNT = 2000;
 }
 
-TEST(RandomLocationTest, RandomLocationStaysInsidePadding)
+TEST(RandomLocationTest, RandomLocationStaysInsideRadius)
 {
-    const PlaneBounds bounds = MakeBounds(HALF_EXTENT, HALF_EXTENT);
-    const float innerHalf = HALF_EXTENT - PADDING;
-
     for (int32 i = 0; i < DRAW_COUNT; i++)
     {
-        const vector2D pos = Room::GetRandomLocation(bounds);
-        ASSERT_GE(pos.x, CENTER_X - innerHalf) << "여백을 무시하면 몬스터가 지역 경계에 붙어 스폰된다";
-        ASSERT_LE(pos.x, CENTER_X + innerHalf);
-        ASSERT_GE(pos.y, CENTER_Y - innerHalf);
-        ASSERT_LE(pos.y, CENTER_Y + innerHalf);
+        const vector2D pos = Room::GetRandomLocation(vector2D(CENTER_X, CENTER_Y), RADIUS);
+        ASSERT_LE(MathUtil::Distance(pos, vector2D(CENTER_X, CENTER_Y)), RADIUS + 0.01f) << "반경 밖에 몬스터를 둔다";
     }
 }
 
-TEST(RandomLocationTest, RandomLocationWithoutPaddingUsesWholeBounds)
+// 반지름을 고르게 뽑으면 원의 가운데에 몰린다. 바깥 고리(반경의 절반 밖)는 넓이의 3/4이다.
+TEST(RandomLocationTest, RandomLocationSpreadsOverArea)
 {
-    const PlaneBounds bounds = MakeBounds(HALF_EXTENT, HALF_EXTENT);
-
+    int32 outerCount = 0;
     for (int32 i = 0; i < DRAW_COUNT; i++)
     {
-        const vector2D pos = Room::GetRandomLocation(bounds, false);
-        ASSERT_GE(pos.x, CENTER_X - HALF_EXTENT);
-        ASSERT_LE(pos.x, CENTER_X + HALF_EXTENT);
-        ASSERT_GE(pos.y, CENTER_Y - HALF_EXTENT);
-        ASSERT_LE(pos.y, CENTER_Y + HALF_EXTENT);
-    }
-}
-
-TEST(RandomLocationTest, BoundsNarrowerThanPaddingUseCenter)
-{
-    const vector2D pos = Room::GetRandomLocation(MakeBounds(500.f, 3000.f));
-
-    EXPECT_FLOAT_EQ(pos.x, CENTER_X) << "여백보다 좁은 축에서 범위가 뒤집히면 무작위 함수가 터진다";
-    EXPECT_GE(pos.y, CENTER_Y - 2000.f);
-    EXPECT_LE(pos.y, CENTER_Y + 2000.f);
-}
-
-TEST(RandomLocationAxisTest, DepthBoundsXAndWidthBoundsY)
-{
-    constexpr float DEPTH_HALF = 3000.f;
-    constexpr float WIDTH_HALF = 500.f;
-
-    const PlaneBounds bounds = MakeBounds(DEPTH_HALF, WIDTH_HALF);
-
-    float maxOffsetX = 0.f;
-    for (int32 i = 0; i < DRAW_COUNT; i++)
-    {
-        const vector2D pos = Room::GetRandomLocation(bounds, false);
-        ASSERT_GE(pos.x, CENTER_X - DEPTH_HALF);
-        ASSERT_LE(pos.x, CENTER_X + DEPTH_HALF);
-        ASSERT_GE(pos.y, CENTER_Y - WIDTH_HALF) << "width가 x를 정하면 y가 지역 밖으로 나간다";
-        ASSERT_LE(pos.y, CENTER_Y + WIDTH_HALF);
-        maxOffsetX = max(maxOffsetX, abs(pos.x - CENTER_X));
+        const vector2D pos = Room::GetRandomLocation(vector2D(CENTER_X, CENTER_Y), RADIUS);
+        if (MathUtil::Distance(pos, vector2D(CENTER_X, CENTER_Y)) > RADIUS * 0.5f)
+            outerCount++;
     }
 
-    // 1000번 뽑으면 x가 width 반폭을 넘는 값이 나와야 한다. 나오지 않으면 depth가 x 범위를 정하지 않는 것이다.
-    EXPECT_GT(maxOffsetX, WIDTH_HALF);
+    EXPECT_GT(outerCount, DRAW_COUNT * 0.65f) << "가운데에 몰린다";
+    EXPECT_LT(outerCount, DRAW_COUNT * 0.85f);
+}
+
+TEST(RandomLocationTest, ZeroRadiusIsCenter)
+{
+    const vector2D pos = Room::GetRandomLocation(vector2D(CENTER_X, CENTER_Y), 0.f);
+
+    EXPECT_FLOAT_EQ(pos.x, CENTER_X);
+    EXPECT_FLOAT_EQ(pos.y, CENTER_Y);
 }
