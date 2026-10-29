@@ -11,6 +11,7 @@
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Navigation/P1NavGeometry.h"
 #include "Placement/P1PlacementCheck.h"
 #include "UObject/Package.h"
 #include "Utils/LogCategory.h"
@@ -25,6 +26,16 @@ namespace
 
     /** 서버의 PLACEMENT_FILE_PREFIX와 같다. */
     const TCHAR* PLACEMENT_FILE_PREFIX = TEXT("Placement_");
+    /** 서버와 빌드 도구의 NavMeshFile::AGENT_FILE과 같다. */
+    const TCHAR* NAV_AGENT_FILE = TEXT("NavAgent.json");
+    /** 빌드 도구(Tools/NavBuilder)가 읽는 형상 파일의 접두사. */
+    const TCHAR* NAV_GEOMETRY_FILE_PREFIX = TEXT("NavGeometry_");
+
+    /** navmesh 빌드 도구에 넘기는 형상 폴더. 중간 산출물이라 추적하지 않는다. 추출 스크립트가 같은 폴더를 도구에 넘긴다. */
+    FString GetNavGeometryDir()
+    {
+        return FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir() / TEXT("NavExtract/"));
+    }
 
     bool IsRotated(const AActor& Actor)
     {
@@ -91,8 +102,8 @@ namespace
         return Level;
     }
 
-    /** 맵 레벨을 열어 마커를 모은다. 레벨을 열지 못하면 OutErrors에 더하고 false. */
-    bool LoadLevel(int32 MapId, const TSoftObjectPtr<UWorld>& LevelRef, FP1PlacementCheck::FLevel& OutLevel, TArray<FString>& OutErrors)
+    /** 맵 레벨을 열어 마커와 충돌 형상을 모은다. 레벨을 열지 못하면 OutErrors에 더하고 false. 형상의 오류도 OutErrors에 더한다. */
+    bool LoadLevel(int32 MapId, const TSoftObjectPtr<UWorld>& LevelRef, FP1PlacementCheck::FLevel& OutLevel, FP1NavGeometry& OutGeometry, TArray<FString>& OutErrors)
     {
         const FString PackageName = LevelRef.ToSoftObjectPath().GetLongPackageName();
         UPackage* Package = LoadPackage(nullptr, *PackageName, LOAD_None);
@@ -121,6 +132,7 @@ namespace
         World->UpdateWorldComponents(true, false);
 
         OutLevel = CollectLevel(MapId, *World);
+        OutGeometry = FP1NavGeometry::CollectLevel(*World, OutErrors);
 
         if (bInitializedHere)
             World->CleanupWorld();
@@ -161,6 +173,42 @@ namespace
 
         return true;
     }
+
+    /**
+     * 빌드 도구가 읽는 형상과 서버가 읽는 에이전트 설정을 쓴다. 형상 폴더의 옛 형상은 먼저 지운다.
+     * 지우지 않으면 맵 표에서 빠진 맵의 navmesh를 도구가 계속 빌드한다.
+     */
+    bool WriteNavFiles(const TMap<int32, FP1NavGeometry>& Geometries, const TMap<int32, TSoftObjectPtr<UWorld>>& MapLevels, const FP1NavGeometry::FAgent& Agent)
+    {
+        const FString GeometryDir = GetNavGeometryDir();
+        IFileManager::Get().MakeDirectory(*GeometryDir, true);
+
+        TArray<FString> Existing;
+        IFileManager::Get().FindFiles(Existing, *(GeometryDir / FString(NAV_GEOMETRY_FILE_PREFIX) + TEXT("*.json")), true, false);
+        for (const FString& FileName : Existing)
+            IFileManager::Get().Delete(*(GeometryDir / FileName));
+
+        for (const TPair<int32, FP1NavGeometry>& Geometry : Geometries)
+        {
+            const FString Path = GeometryDir / FString::Printf(TEXT("%s%d.json"), NAV_GEOMETRY_FILE_PREFIX, Geometry.Key);
+            const FString LevelPath = MapLevels.FindChecked(Geometry.Key).ToSoftObjectPath().GetLongPackageName();
+            if (FFileHelper::SaveStringToFile(Geometry.Value.ToJson(Geometry.Key, LevelPath), *Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM) == false)
+            {
+                UE_LOG(LogP1Placement, Error, TEXT("[배치 추출] %s를 쓰지 못했다"), *Path);
+                return false;
+            }
+            UE_LOG(LogP1Placement, Display, TEXT("[배치 추출] %s (삼각형 %d개)"), *Path, Geometry.Value.Triangles.Num() / 3);
+        }
+
+        const FString AgentPath = GetOutputDir() / NAV_AGENT_FILE;
+        if (FFileHelper::SaveStringToFile(FP1NavGeometry::AgentToJson(Agent), *AgentPath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM) == false)
+        {
+            UE_LOG(LogP1Placement, Error, TEXT("[배치 추출] %s를 쓰지 못했다"), *AgentPath);
+            return false;
+        }
+        UE_LOG(LogP1Placement, Display, TEXT("[배치 추출] %s"), *AgentPath);
+        return true;
+    }
 }
 
 UP1PlacementExtractCommandlet::UP1PlacementExtractCommandlet()
@@ -186,8 +234,14 @@ int32 UP1PlacementExtractCommandlet::Main(const FString& Params)
     else
         FP1PlacementCheck::ParseDesignData(MapJson, AreaJson, Design, Errors);
 
+    // navmesh의 에이전트는 플레이어 캡슐과 이동 컴포넌트다.
+    FP1NavGeometry::FAgent Agent;
+    if (Errors.IsEmpty())
+        FP1NavGeometry::ReadAgent(*GetDefault<UP1GameDataSettings>(), Agent, Errors);
+
     // 맵 표의 레벨을 모두 연다. 맵 번호 순서로 열어 오류의 순서가 실행마다 같다.
     TArray<FP1PlacementCheck::FLevel> Levels;
+    TMap<int32, FP1NavGeometry> Geometries;
     if (Errors.IsEmpty())
     {
         TMap<int32, TSoftObjectPtr<UWorld>> MapLevels = GetDefault<UP1GameDataSettings>()->MapLevels;
@@ -195,8 +249,12 @@ int32 UP1PlacementExtractCommandlet::Main(const FString& Params)
         for (const TPair<int32, TSoftObjectPtr<UWorld>>& MapLevel : MapLevels)
         {
             FP1PlacementCheck::FLevel Level;
-            if (LoadLevel(MapLevel.Key, MapLevel.Value, Level, Errors))
+            FP1NavGeometry Geometry;
+            if (LoadLevel(MapLevel.Key, MapLevel.Value, Level, Geometry, Errors))
+            {
                 Levels.Add(MoveTemp(Level));
+                Geometries.Add(MapLevel.Key, MoveTemp(Geometry));
+            }
         }
     }
 
@@ -215,7 +273,7 @@ int32 UP1PlacementExtractCommandlet::Main(const FString& Params)
         return 1;
     }
 
-    if (WriteFiles(Result.Files) == false)
+    if (WriteFiles(Result.Files) == false || WriteNavFiles(Geometries, GetDefault<UP1GameDataSettings>()->MapLevels, Agent) == false)
         return 1;
 
     UE_LOG(LogP1Placement, Display, TEXT("[배치 추출] 맵 %d개의 배치 데이터를 썼다"), Result.Files.Num());

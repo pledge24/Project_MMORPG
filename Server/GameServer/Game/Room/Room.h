@@ -5,6 +5,8 @@
 #include "Game/Room/RoomTransfer.h"
 #include "Game/Room/CellMatrix.h"
 
+class NavQuery;
+
 /**
  * 맵 하나 전체를 시뮬레이션하는 사본. 같은 맵의 룸들은 플레이어에게 채널로 보인다.
  *
@@ -15,7 +17,8 @@ class Room : public JobQueue
 {
 public:
     Room() = default;
-	virtual ~Room() = default;
+    /** 질의 객체의 정의가 보이는 Room.cpp에서 지운다. */
+    virtual ~Room();
 
     //~ 생성
 public:
@@ -148,8 +151,12 @@ private:
         AreaPlacement placement;
     };
 
-    /** 지역 안의 무작위 위치. 높이는 지역 바닥보다 조금 위다. */
-    Protocol::PosInfo MakeRandomSpawnPos(const AreaPlacement& area) const;
+    /** 지역 안의 무작위 위치. 높이는 그 몬스터의 캡슐이 바닥에 서는 높이이고, navmesh가 없으면 지역 바닥보다 조금 위다. */
+    Protocol::PosInfo MakeRandomSpawnPos(const AreaPlacement& area, int32 monsterTemplateId);
+    /** posInfo의 높이를 바닥 위 캡슐 중심(바닥 + halfHeight)으로 바꾼다. navmesh가 없거나 바닥이 없으면 그대로 두고 false. */
+    bool PlaceOnFloor(Protocol::PosInfo& posInfo, float halfHeight);
+    /** 플레이어 캡슐의 반높이. navmesh의 에이전트가 플레이어 캡슐이다. navmesh가 없으면 0. */
+    float PlayerHalfHeight() const;
 
     static constexpr float LOCATION_PADDING_X = 1000.f;
     static constexpr float LOCATION_PADDING_Y = 1000.f;
@@ -161,6 +168,8 @@ private:
     MapPlacement _map;
     /** 이 맵의 지역. 지역 번호 순서다. */
     vector<RoomArea> _areas;
+    /** 맵의 navmesh에 묻는 이 룸의 질의 객체. navmesh 없이 만든 룸(테스트)이면 nullptr이고 지형을 보지 않는다. */
+    unique_ptr<NavQuery> _navQuery;
 
     //~ 엔티티
 public:

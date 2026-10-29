@@ -595,9 +595,9 @@ UE 테스트는 이 에셋을 읽지 않으므로 이 상태에서도 통과한�
 pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 ```
 
-스크립트는 `UnrealEditor-Cmd`로 커맨드렛 `P1PlacementExtract`를 돌린다. 에디터를 띄우지 않는다. 클라이언트를 빌드한 뒤에 돌리고,
-레벨을 저장한 뒤에 돌린다. 커맨드렛은 저장된 레벨 파일을 읽는다. 같은 스크립트가 이어서 크리처 추출(아래 「크리처 추출」)을 돌린다.
-한 단계가 실패해도 다음 단계를 돌려 오류를 한 번에 보여 주고, 실패한 단계의 산출물은 바꾸지 않는다.
+스크립트는 `UnrealEditor-Cmd`로 커맨드렛 `P1PlacementExtract`를 돌린다. 에디터를 띄우지 않는다. 클라이언트와 서버 솔루션(Debug)을 빌드한 뒤에 돌리고,
+레벨을 저장한 뒤에 돌린다. 커맨드렛은 저장된 레벨 파일을 읽는다. 같은 스크립트가 이어서 크리처 추출(아래 「크리처 추출」)과 navmesh 빌드(아래 「navmesh 빌드」)를 돌린다.
+한 단계가 실패해도 다음 단계를 돌려 오류를 한 번에 보여 주고, 실패한 단계의 산출물은 바꾸지 않는다. navmesh 빌드만은 배치 추출이 통과했을 때만 돈다.
 
 **검사가 하나라도 실패하면 산출물을 하나도 바꾸지 않고 종료 코드 1로 끝난다.** 오류는 `[배치 추출]`로 시작하는 줄에 하나씩 나오고,
 레벨 이름과 액터 이름이나 번호가 들어 있다. 전체 로그는 `P1/Saved/PlacementExtract/run.log`에 있다.
@@ -643,6 +643,8 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 | 폴더 | 파일 | 내용 |
 |---|---|---|
 | `Server/GameServer/Game/Data/Extracted/` | `Placement_<맵 번호>.json` | 맵의 경계와 셀 크기, 지역(`Areas`), 리스폰 지점(`RespawnPoints`), 포털(`Portals`) |
+| `Server/GameServer/Game/Data/Extracted/` | `NavAgent.json` | navmesh의 에이전트 설정. 아래 「navmesh 빌드」 |
+| `P1/Saved/NavExtract/` (추적하지 않음) | `NavGeometry_<맵 번호>.json` | navmesh 빌드 도구가 읽는 충돌 형상. 아래 「navmesh 빌드」 |
 
 - 한 행이 한 줄이고, 행은 번호 순서다(리스폰 지점은 지역 번호 순서). 줄바꿈은 LF다
 - 좌표는 소수점 둘째 자리에서 반올림한다. 옮기지 않은 마커가 float 오차로 diff를 만들지 않는다
@@ -662,6 +664,72 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 작업(#337)이 쓴다.
 
 테스트는 `Server/GameServerTests/TestAreaTables.h`의 `TestArea`로 지역 행과 그 배치 데이터를 함께 넣는다.
+
+## navmesh 빌드
+
+서버가 지형을 알도록 레벨의 충돌 형상으로 맵마다 navmesh를 빌드한다. 배치 추출 커맨드렛이 형상을 내보내고, 빌드 도구(`Tools/NavBuilder`)가
+독립 recastnavigation으로 빌드한다. 결정과 근거는 `docs/adr/0024-build-server-navmesh-from-extracted-geometry.md`에 있다. 2026년 10월 29일(#338)에 만들었다.
+
+### 재생성
+
+배치 추출과 같은 스크립트다. 크리처 추출 다음에 `Server/Binary/Debug/NavBuilder.exe`를 돌린다. 출력은 `[navmesh 빌드]`로 시작하는 줄이고,
+전체 로그는 `P1/Saved/PlacementExtract/navmesh.log`에 있다. **맵 하나라도 실패하면 navmesh를 하나도 바꾸지 않고, 스크립트는 1로 끝난다.**
+
+**레벨의 충돌이나 플레이어 캡슐, 플레이어의 이동 설정(걸을 수 있는 경사, 단차)을 고치면 추출을 돌리고 navmesh를 같은 커밋에 담는다.**
+같은 입력이면 같은 바이트를 내므로, 레벨이 바뀌지 않았는데 navmesh가 바뀌면 diff로 드러난다. 서버의 `NavMeshesTest.RepositoryNavMeshesPass`가
+저장소의 navmesh와 에이전트 설정을 맵 표와 함께 읽어 대조한다.
+
+### 내보내는 형상
+
+배치 추출 커맨드렛(`FP1NavGeometry`, `P1/Source/P1Editor/Navigation/`)이 레벨의 액터에서 폰 채널을 막는 충돌을 모은다.
+
+- 폰은 뺀다. 움직이는 컴포넌트(포털의 화톳불, 상점)도 레벨에 놓여 움직이지 않으면 넣는다. 캐릭터 이동이 그 충돌에 막히기 때문이다
+- 단순 충돌의 상자와 볼록 형상만 지원한다. 구, 캡슐, 복잡한 충돌을 단순 충돌로 쓰는 메시가 폰을 막으면 추출이 오류로 끝난다
+- 삼각형은 형상마다 형상 중심의 바깥을 향하도록 꼭짓점 순서를 맞춘다. 빌드 도구는 위를 향한 면만 걸을 수 있는 면으로 고른다
+- 액터는 레벨에 저장된 순서로 돈다. 좌표는 소수점 둘째 자리에서 반올림한다. 그래서 같은 레벨이면 형상 파일이 실행마다 같다
+
+에이전트 설정은 프로젝트 설정의 `CharacterClassPlayers`가 가리키는 플레이어 블루프린트에서 읽는다. 캡슐 반지름, 캡슐 높이(반높이의 두 배),
+이동 컴포넌트의 걸을 수 있는 경사(`WalkableFloorAngle`)와 단차(`MaxStepHeight`)다. 맵마다 navmesh가 하나라서 직업마다 값이 다르면 추출이 오류로 끝난다.
+
+### 빌드
+
+도구는 언리얼 좌표(cm, z가 위)를 Recast의 y가 위인 좌표로 옮겨 맵 전체를 타일 하나로 빌드한다. 복셀은 가로 10cm, 높이 5cm이고,
+매개변수는 `Tools/NavBuilder/NavMeshBuild.cpp` 첫머리에 있다. 걸을 수 있는 면은 에이전트 반경만큼 깎이고, 바닥보다 복셀 한두 칸(5~10cm) 위에 놓인다.
+
+지금 레벨(`L_InGameMap`)은 삼각형 2,970개가 폴리곤 259개가 된다. 경계 벽 윗면과 화톳불 윗면에도 폴리곤이 생기지만 바닥과 이어지지 않아 걸어서 닿지 못한다.
+
+### 산출물
+
+| 폴더 | 파일 | 내용 |
+|---|---|---|
+| `Server/GameServer/Game/Data/Extracted/` | `NavMesh_<맵 번호>.navmesh` | 머리(매직 `P1NM`, 형식 버전, 에이전트 설정 해시, 본문 크기) 뒤에 Detour 타일 데이터 |
+| `Server/GameServer/Game/Data/Extracted/` | `NavAgent.json` | 에이전트 설정 `{"Radius", "Height", "MaxSlope", "MaxStep"}`. 배치 추출 커맨드렛이 쓴다 |
+| `P1/Saved/NavExtract/` (추적하지 않음) | `NavMeshPolygons_<맵 번호>.json` | 에디터가 겹쳐 그리는 폴리곤(언리얼 좌표)과 레벨의 패키지 경로 |
+
+- 형식은 `Server/GameServer/Game/Navigation/NavMeshFile.h` 하나가 정하고, 도구와 서버가 함께 컴파일한다
+- 에이전트 설정 해시는 네 값의 FNV-1a 64비트다. 도구와 서버가 같은 `NavAgent.json`을 읽어 계산한다
+- 도구는 형상 폴더에 형상이 없는 맵의 옛 `NavMesh_*.navmesh`를 지운다. 커맨드렛은 실행할 때마다 형상 폴더의 옛 형상을 지운다
+
+### 에디터에서 겹쳐 그리기
+
+에디터 메인 메뉴의 **Tools > P1 > 서버 navmesh 겹쳐 그리기**가 지금 연 레벨 위에 서버 navmesh의 폴리곤 테두리를 초록 선으로 그린다.
+**서버 navmesh 지우기**가 선을 지운다. 메뉴는 `P1/Scripts/Editor/p1_server_navmesh.py`이고, `Config/DefaultEngine.ini`의 Python 시작 스크립트가 더한다.
+폴리곤 파일에 실린 레벨 경로로 지금 연 레벨의 파일을 고르므로, 추출 스크립트를 돌린 뒤에 쓴다.
+
+### 서버가 읽는 법
+
+`NavMeshes::LoadAll()`(`Server/GameServer/Game/Navigation/NavMeshes.h`)이 기획 데이터 다음에 `Game/Data/Extracted/`의 `NavAgent.json`과
+`NavMesh_*.navmesh`를 읽는다. 아래 하나라도 어기면 서버가 뜨지 않는다.
+
+- 파일 머리의 매직과 형식 버전이 서버의 `NavMeshFile::FORMAT_VERSION`과 같다
+- 파일 머리의 에이전트 설정 해시가 `NavAgent.json`으로 계산한 해시와 같다. 에이전트 설정을 바꾸고 navmesh를 다시 빌드하지 않은 상태가 여기 걸린다
+- 맵 표의 맵마다 navmesh가 있고, navmesh의 맵이 맵 표에 있다
+
+룸은 맵의 navmesh를 함께 읽고 질의 객체 `NavQuery`를 하나씩 둔다. 질의는 길찾기(`FindPath`), 표면을 따른 이동(`MoveAlongSurface`), 직선 통과(`Raycast`),
+바닥 높이(`FindFloorHeight`)다. 위치의 z는 캡슐 중심이다. 이동 판정(`MoveValidation`)이 바닥 높이와 표면 이동을 쓴다.
+
+테스트는 `Server/GameServerTests/TestNavLevel.h`의 테스트 레벨(벽 하나와 경사로 하나)을 빌드 도구로 빌드해 쓴다. navmesh를 설치하는 테스트는
+`ScopedNavMeshes`로 설치하고 끝에 비운다. navmesh가 없는 룸은 지형을 보지 않으므로, 다른 테스트의 룸은 지금처럼 평면만 판정한다.
 
 ## 크리처 추출
 

@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{B8FF33FE
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PacketHandlerGenerator", "..\Tools\PacketHandlerGenerator\PacketHandlerGenerator.pyproj", "{58104683-1B94-497F-896D-43E81AD37A6A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NavBuilder", "..\Tools\NavBuilder\NavBuilder.vcxproj", "{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,12 +81,23 @@ Global
 		{58104683-1B94-497F-896D-43E81AD37A6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58104683-1B94-497F-896D-43E81AD37A6A}.Release|x64.ActiveCfg = Release|Any CPU
 		{58104683-1B94-497F-896D-43E81AD37A6A}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Debug|Any CPU.Build.0 = Debug|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Debug|x64.ActiveCfg = Debug|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Debug|x64.Build.0 = Debug|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Debug|x86.ActiveCfg = Debug|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Release|Any CPU.ActiveCfg = Release|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Release|Any CPU.Build.0 = Release|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Release|x64.ActiveCfg = Release|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Release|x64.Build.0 = Release|x64
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{58104683-1B94-497F-896D-43E81AD37A6A} = {B8FF33FE-A797-408D-BDBB-90E12829BDAB}
+		{7C3A52E1-4D8B-4F0A-9B6E-2E1F5A9D3C47} = {B8FF33FE-A797-408D-BDBB-90E12829BDAB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {757703D2-C3BF-45FF-A37B-221190AC50BE}
