@@ -38,6 +38,8 @@ namespace
         { PKT_C_SET_QUICK_SLOT, Only(SessionPhase::IN_GAME) },
         { PKT_C_USE_QUICK_SLOT, Only(SessionPhase::IN_GAME) },
         { PKT_C_RESPAWN, Only(SessionPhase::IN_GAME) },
+        { PKT_C_CHANNEL_LIST, Only(SessionPhase::IN_GAME) },
+        { PKT_C_CHANGE_CHANNEL, Only(SessionPhase::IN_GAME) },
         { PKT_C_CHAT, Only(SessionPhase::IN_GAME) },
         { PKT_C_RETURN_TO_LOBBY, Only(SessionPhase::IN_GAME) },
     };

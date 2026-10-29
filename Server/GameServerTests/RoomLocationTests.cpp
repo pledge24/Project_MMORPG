@@ -3,13 +3,12 @@
 #include "Game/Room/Room.h"
 
 /*--------------------------------------------------------------
-    룸 무작위 위치 테스트
+    무작위 위치 테스트
 
-    몬스터 스폰 위치와 배회 목적지는 룸 경계에서 여백을 뺀 안쪽에서 뽑는다. 경계에
-    붙거나 밖으로 밀린 몬스터는 셀 행렬에 들어가지 않아 탐지에서 빠진다.
+    몬스터 스폰 위치와 배회 목적지는 그 몬스터가 스폰한 지역의 경계에서 여백을 뺀 안쪽에서 뽑는다.
+    경계에 붙거나 밖으로 밀린 몬스터는 지역 사이의 빈 공간으로 걸어 나간다.
 
-    픽스처 결합도: Room::Create에 최소한의 룸 데이터를 넘긴다. Start()는 부르지 않으므로
-    몬스터 스폰과 틱 타이머는 돌지 않는다. 여백 값은 Room.h의 LOCATION_PADDING_X·Y와 같다.
+    픽스처 결합도: 없음. Room::GetRandomLocation에 경계만 넘긴다. 여백 값은 Room.h의 LOCATION_PADDING_X·Y와 같다.
 
     축: 언리얼 좌표를 따른다. 지역 볼륨의 X 방향 반경이 x 범위를, Y 방향 반경이 y 범위를 정한다.
 ---------------------------------------------------------------*/
@@ -22,51 +21,34 @@ namespace
     constexpr float PADDING = 1000.f;
     constexpr int32 DRAW_COUNT = 1000;
 
-    RoomRef MakeRoom(float depthHalfExtent, float widthHalfExtent)
+    PlaneBounds MakeBounds(float depthHalfExtent, float widthHalfExtent)
     {
-        DesignData::AreaRow area;
-        area.Id = 99;
-
-        AreaPlacement placement;
-        placement.id = 99;
-        placement.center = vector3D(CENTER_X, CENTER_Y, 0.f);
-        placement.bounds = PlaneBounds::FromCenter(CENTER_X, CENTER_Y, depthHalfExtent, widthHalfExtent);
-
-        return Room::Create(area, placement);
+        return PlaneBounds::FromCenter(CENTER_X, CENTER_Y, depthHalfExtent, widthHalfExtent);
     }
 }
 
-class RoomLocationTest : public ::testing::Test
+TEST(RandomLocationTest, RandomLocationStaysInsidePadding)
 {
-protected:
-    void SetUp() override
-    {
-        room = MakeRoom(HALF_EXTENT, HALF_EXTENT);
-        ASSERT_NE(room, nullptr);
-    }
-
-    RoomRef room;
-};
-
-TEST_F(RoomLocationTest, RandomLocationStaysInsidePadding)
-{
+    const PlaneBounds bounds = MakeBounds(HALF_EXTENT, HALF_EXTENT);
     const float innerHalf = HALF_EXTENT - PADDING;
 
     for (int32 i = 0; i < DRAW_COUNT; i++)
     {
-        const vector2D pos = room->GetRandomLocation();
-        ASSERT_GE(pos.x, CENTER_X - innerHalf) << "여백을 무시하면 몬스터가 룸 경계에 붙어 스폰된다";
+        const vector2D pos = Room::GetRandomLocation(bounds);
+        ASSERT_GE(pos.x, CENTER_X - innerHalf) << "여백을 무시하면 몬스터가 지역 경계에 붙어 스폰된다";
         ASSERT_LE(pos.x, CENTER_X + innerHalf);
         ASSERT_GE(pos.y, CENTER_Y - innerHalf);
         ASSERT_LE(pos.y, CENTER_Y + innerHalf);
     }
 }
 
-TEST_F(RoomLocationTest, RandomLocationWithoutPaddingUsesWholeRoom)
+TEST(RandomLocationTest, RandomLocationWithoutPaddingUsesWholeBounds)
 {
+    const PlaneBounds bounds = MakeBounds(HALF_EXTENT, HALF_EXTENT);
+
     for (int32 i = 0; i < DRAW_COUNT; i++)
     {
-        const vector2D pos = room->GetRandomLocation(false);
+        const vector2D pos = Room::GetRandomLocation(bounds, false);
         ASSERT_GE(pos.x, CENTER_X - HALF_EXTENT);
         ASSERT_LE(pos.x, CENTER_X + HALF_EXTENT);
         ASSERT_GE(pos.y, CENTER_Y - HALF_EXTENT);
@@ -74,21 +56,29 @@ TEST_F(RoomLocationTest, RandomLocationWithoutPaddingUsesWholeRoom)
     }
 }
 
-TEST(RoomAxisTest, DepthBoundsXAndWidthBoundsY)
+TEST(RandomLocationTest, BoundsNarrowerThanPaddingUseCenter)
+{
+    const vector2D pos = Room::GetRandomLocation(MakeBounds(500.f, 3000.f));
+
+    EXPECT_FLOAT_EQ(pos.x, CENTER_X) << "여백보다 좁은 축에서 범위가 뒤집히면 무작위 함수가 터진다";
+    EXPECT_GE(pos.y, CENTER_Y - 2000.f);
+    EXPECT_LE(pos.y, CENTER_Y + 2000.f);
+}
+
+TEST(RandomLocationAxisTest, DepthBoundsXAndWidthBoundsY)
 {
     constexpr float DEPTH_HALF = 3000.f;
     constexpr float WIDTH_HALF = 500.f;
 
-    RoomRef room = MakeRoom(DEPTH_HALF, WIDTH_HALF);
-    ASSERT_NE(room, nullptr);
+    const PlaneBounds bounds = MakeBounds(DEPTH_HALF, WIDTH_HALF);
 
     float maxOffsetX = 0.f;
     for (int32 i = 0; i < DRAW_COUNT; i++)
     {
-        const vector2D pos = room->GetRandomLocation(false);
+        const vector2D pos = Room::GetRandomLocation(bounds, false);
         ASSERT_GE(pos.x, CENTER_X - DEPTH_HALF);
         ASSERT_LE(pos.x, CENTER_X + DEPTH_HALF);
-        ASSERT_GE(pos.y, CENTER_Y - WIDTH_HALF) << "width가 x를 정하면 y가 룸 밖으로 나간다";
+        ASSERT_GE(pos.y, CENTER_Y - WIDTH_HALF) << "width가 x를 정하면 y가 지역 밖으로 나간다";
         ASSERT_LE(pos.y, CENTER_Y + WIDTH_HALF);
         maxOffsetX = max(maxOffsetX, abs(pos.x - CENTER_X));
     }

@@ -37,9 +37,9 @@ namespace
     constexpr int64 CHARACTER_ID = 42;
     constexpr int32 GOLD_CURRENCY_ID = 3;
     constexpr int32 FIELD_MAP_ID = 2000;
-    constexpr int32 FIELD_ROOM_ID = 20;
+    constexpr int32 FIELD_AREA_ID = 20;
     constexpr int32 TOWN_MAP_ID = 1000;
-    constexpr int32 TOWN_ROOM_ID = 10;
+    constexpr int32 TOWN_AREA_ID = 10;
     constexpr float TOWN_RESPAWN_X = 300.f;
     constexpr int32 MAX_HP = 500;
     constexpr int32 POTION_TEMPLATE_ID = 2000;
@@ -101,12 +101,12 @@ class ProgressStorageTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_ROOM_ID, TOWN_MAP_ID, 0.f, 5000.f, 1000.f);
+        TestAreaTables::TestArea town = TestAreaTables::MakeArea(TOWN_AREA_ID, TOWN_MAP_ID, 0.f, 5000.f, 1000.f);
         TestAreaTables::SetRespawnPoint(town, TOWN_RESPAWN_X, 5000.f, 0.f);
 
         GamedataTables tables;
         tables.goldCurrencyId = GOLD_CURRENCY_ID;
-        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_ROOM_ID, FIELD_MAP_ID, 0.f, 0.f, 1000.f));
+        TestAreaTables::AddArea(tables, TestAreaTables::MakeArea(FIELD_AREA_ID, FIELD_MAP_ID, 0.f, 0.f, 1000.f));
         TestAreaTables::AddTown(tables, town);
         for (auto [level, expRequirement] : { pair{ 1, 1000 }, pair{ 2, 0 } })
         {
@@ -345,9 +345,9 @@ TEST_F(ProgressStorageTest, LoadOfOtherAccountsCharacterRollsBack)
     EXPECT_EQ(conn.commitCount, 0);
 }
 
-/* 입장할 룸 고르기: DB는 맵과 좌표만 안다 */
+/* 입장할 룸 고르기: DB는 맵과 좌표만 안다. 룸은 그 맵의 채널에서 고른다 */
 
-TEST_F(ProgressStorageTest, EnterGoesToRoomCoveringSavedPosition)
+TEST_F(ProgressStorageTest, EnterGoesToRoomOfSavedMap)
 {
     FakeDBConnection conn;
     conn.QueueResult({ MakeCharacterRow(1, 0, FIELD_MAP_ID, -150.0, 40.0, 100) });
@@ -357,12 +357,12 @@ TEST_F(ProgressStorageTest, EnterGoesToRoomCoveringSavedPosition)
     ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     PlayerRef player = session->GetPlayer();
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(FIELD_ROOM_ID)) << "그 룸의 큐에서 맵 로드 완료를 기다린다";
+    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(FIELD_MAP_ID)) << "그 룸의 큐에서 맵 로드 완료를 기다린다";
     EXPECT_EQ(pkt.map_id(), FIELD_MAP_ID);
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), -150.f);
 }
 
-TEST_F(ProgressStorageTest, EnterOutsideEveryRoomGoesToTownRespawn)
+TEST_F(ProgressStorageTest, EnterOutsideEveryAreaGoesToTownRespawn)
 {
     FakeDBConnection conn;
     conn.QueueResult({ MakeCharacterRow(1, 0, FIELD_MAP_ID, 50'000.0, 0.0, 100) });
@@ -372,7 +372,7 @@ TEST_F(ProgressStorageTest, EnterOutsideEveryRoomGoesToTownRespawn)
     ASSERT_EQ(pkt.result(), Protocol::ENTRY_RESULT_SUCCESS);
     PlayerRef player = session->GetPlayer();
     ASSERT_NE(player, nullptr);
-    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(TOWN_ROOM_ID));
+    EXPECT_EQ(player->GetRoom(), rooms->FindRoom(TOWN_MAP_ID));
     EXPECT_EQ(pkt.map_id(), TOWN_MAP_ID) << "마을로 보내면 맵도 마을의 맵이다";
     EXPECT_FLOAT_EQ(player->GetPosInfo().pos().x(), TOWN_RESPAWN_X);
 }

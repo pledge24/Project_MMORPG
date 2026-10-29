@@ -26,7 +26,7 @@ struct GamedataTables
     /** 시작 맵과 플레이어의 마지막 위치가 가리키는 맵. */
     DesignData::MapTable maps;
     /**
-     * 맵 안의 지역. 지금은 지역 하나가 룸 하나라서 룸을 지역 번호 순서로 만든다. 포털은 지역의 Portals에 있다.
+     * 맵 안의 지역. 룸 안에서 규칙이 다른 공간이고, 룸은 지역마다 몬스터를 스폰한다. 포털은 지역의 Portals에 있다.
      * 포털의 도착 지역과 나오는 몬스터는 다른 표에 있고, 반경은 0보다 크다(DataBuilder가 검사한다).
      */
     DesignData::AreaTable areas;

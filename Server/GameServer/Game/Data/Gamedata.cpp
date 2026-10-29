@@ -159,6 +159,12 @@ const DesignData::ClassLevelStatRow* Gamedata::FindClassLevelStat(int32 classId,
     return it == s_tables.classLevelStats.end() ? nullptr : &it->second;
 }
 
+const MapPlacement* Gamedata::FindMapPlacement(int32 mapId)
+{
+    auto it = s_tables.mapPlacements.find(mapId);
+    return it == s_tables.mapPlacements.end() ? nullptr : &it->second;
+}
+
 const AreaPlacement* Gamedata::FindAreaPlacement(int32 areaId)
 {
     auto it = s_tables.areaPlacements.find(areaId);

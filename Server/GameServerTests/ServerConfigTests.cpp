@@ -50,6 +50,7 @@ TEST(ServerConfigTest, UsesLocalDefaultsWithoutEnv)
     EXPECT_FALSE(config.worldName.empty());
     EXPECT_EQ(config.worldHost, "127.0.0.1");
     EXPECT_EQ(config.worldCapacity, 100);
+    EXPECT_EQ(config.channelCount, 2) << "맵마다 채널 둘";
     EXPECT_FALSE(config.Validate().has_value());
 }
 
@@ -67,12 +68,14 @@ TEST(ServerConfigTest, EnvOverridesEachValue)
         {"P1_WORLD_ID", "7"},
         {"P1_WORLD_NAME", "테스트 월드"},
         {"P1_WORLD_HOST", "10.0.0.5"},
-        {"P1_WORLD_CAPACITY", "300"}}));
+        {"P1_WORLD_CAPACITY", "300"},
+        {"P1_CHANNEL_COUNT", "1"}}));
 
     EXPECT_EQ(config.worldId, 7);
     EXPECT_EQ(config.worldName, "테스트 월드");
     EXPECT_EQ(config.worldHost, "10.0.0.5");
     EXPECT_EQ(config.worldCapacity, 300);
+    EXPECT_EQ(config.channelCount, 1);
     EXPECT_EQ(config.dbConnectionString, L"Driver={ODBC Driver 17 for SQL Server};Database=GameDB_Test;");
     EXPECT_EQ(config.redisUri, "tcp://127.0.0.1:6380");
     EXPECT_EQ(config.port, 7778);
@@ -230,5 +233,16 @@ TEST(ServerConfigTest, InvalidWorldCapacityFallsBackToDefault)
 
         const Config config = Config::Load(FakeEnv({{"P1_WORLD_CAPACITY", capacity}}));
         EXPECT_EQ(config.worldCapacity, 100);
+    }
+}
+
+TEST(ServerConfigTest, InvalidChannelCountFallsBackToDefault)
+{
+    for (const char* channelCount : { "0", "-1", "21", "abc" })
+    {
+        SCOPED_TRACE(channelCount);
+
+        const Config config = Config::Load(FakeEnv({{"P1_CHANNEL_COUNT", channelCount}}));
+        EXPECT_EQ(config.channelCount, 2) << "채널이 없으면 들어갈 룸이 없다";
     }
 }

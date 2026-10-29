@@ -150,6 +150,22 @@ bool Handle_C_RESPAWN(PacketSessionRef& session, Protocol::C_RESPAWN& pkt)
         });
 }
 
+bool Handle_C_CHANNEL_LIST(PacketSessionRef& session, Protocol::C_CHANNEL_LIST& pkt)
+{
+    return DispatchToPlayerRoom(session, [](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleChannelList(player);
+        });
+}
+
+bool Handle_C_CHANGE_CHANNEL(PacketSessionRef& session, Protocol::C_CHANGE_CHANNEL& pkt)
+{
+    return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
+        {
+            room->C_HandleChangeChannel(pkt, player);
+        });
+}
+
 bool Handle_C_RETURN_TO_LOBBY(PacketSessionRef& session, Protocol::C_RETURN_TO_LOBBY& pkt)
 {
     GameSessionRef gameSession = static_pointer_cast<GameSession>(session);

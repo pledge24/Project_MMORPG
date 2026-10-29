@@ -12,9 +12,8 @@
 
 namespace
 {
-    // DB는 맵과 좌표만 저장한다. 들어갈 룸은 그 맵과 좌표로 고르고, 범위 밖이면 마을의 룸과 리스폰 지점을 돌려준다.
-    // 들어갈 룸이 없으면 nullopt.
-    optional<RoomAssignment> AssignEnterRoom(const PlayerProgress& progress)
+    // DB는 맵과 좌표만 저장한다. 지역 밖의 좌표면 마을의 리스폰 지점을 돌려준다. 들어갈 곳이 없으면 nullopt.
+    optional<MapPosition> ResolveEnterPosition(const PlayerProgress& progress)
     {
         Protocol::PosInfo pos;
         pos.mutable_pos()->set_x(progress.pos.x);
@@ -22,7 +21,7 @@ namespace
         pos.mutable_pos()->set_z(progress.pos.z);
         pos.set_yaw(progress.yaw);
 
-        const optional<RoomAssignment> assignment = RoomTransfer::AssignRoom(progress.mapId, pos);
+        const optional<MapPosition> assignment = RoomTransfer::ResolveEnterPosition(progress.mapId, pos);
         if (assignment.has_value() == false)
         {
             GLogger->Error("캐릭터 {}가 맵 {}에서 들어갈 룸이 없어 입장을 거절합니다(지역 표에 마을 리스폰 지점이 없다)",
@@ -94,8 +93,9 @@ Protocol::S_ENTER_GAME GameEntry::Enter(DBConnection& conn, const GameSessionRef
         return enterGamePkt;
     }
 
-    const optional<RoomAssignment> assignment = AssignEnterRoom(progress);
-    RoomRef enterRoom = assignment.has_value() ? GRoomManager->FindRoom(assignment->roomId) : nullptr;
+    // 채널은 DB에 저장하지 않는다. 그 맵에서 인원이 가장 적은 채널로 들어간다.
+    const optional<MapPosition> assignment = ResolveEnterPosition(progress);
+    RoomRef enterRoom = assignment.has_value() ? GRoomManager->SelectRoom(assignment->mapId) : nullptr;
     if (enterRoom == nullptr)
     {
         enterGamePkt.set_result(Protocol::ENTRY_RESULT_INTERNAL_ERROR);

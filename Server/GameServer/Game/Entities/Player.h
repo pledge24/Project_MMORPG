@@ -12,7 +12,7 @@ class InventoryComponent;
 class EquipmentComponent;
 class QuickSlotComponent;
 struct RoomEnterData;
-struct TownRespawn;
+struct MapPosition;
 struct LevelExp;
 
 //~ 요청 처리 결과
@@ -185,7 +185,9 @@ public:
     void BeginMapLoad(const RoomRef& room, const Protocol::PosInfo& pos);
     /** roomId 룸에서 맵 로드를 기다리고 있었으면 기다림을 끝내고 true. 소속 룸 큐 위에서 부른다. */
     bool FinishMapLoad(int32 roomId);
-    /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 룸 중심에 둔다. */
+    /** 맵 로드를 기다리는 중이면 true. 소속 룸 큐 위에서 부른다. */
+    bool IsLoadingMap() const { return _mapLoadRoomId != -1; }
+    /** 입장하는 룸의 큐 위에서 부른다. enterPos가 없으면 맵 경계의 중심에 둔다. */
     void OnEnterRoom(RoomRef enterRoom, const optional<Protocol::PosInfo>& enterPos);
     /**
      * 위치를 posInfo로 바꾼다. 이동을 검증하지 않으므로 판정을 통과한 요청만 넘긴다.
@@ -301,8 +303,8 @@ public:
 
     /** 저장할 진행의 사본을 만든다. 룸 큐 위에서만 부른다. */
     PlayerSaveData MakeSaveData() const;
-    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 맵과 룸 번호도 마을로 바꾼다. */
-    void ApplyTownRespawnForSave(const TownRespawn& town);
+    /** 사망한 채 끊긴 플레이어를 저장 직전에 마을 리스폰 상태로 바꾼다. 저장할 맵도 마을의 맵으로 바꾼다. */
+    void ApplyTownRespawnForSave(const MapPosition& town);
 
 private:
     atomic<Presence> _presence = Presence::LOADED;
