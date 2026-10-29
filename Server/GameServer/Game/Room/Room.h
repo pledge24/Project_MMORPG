@@ -4,6 +4,7 @@
 #include "Game/Entities/PlayerSaveData.h"
 #include "Game/Room/RoomTransfer.h"
 #include "Game/Room/CellMatrix.h"
+#include "Game/Room/MonsterSpawner.h"
 
 class NavQuery;
 
@@ -34,7 +35,7 @@ protected:
 
     //~ 시작
 public:
-    /** 지역마다 몬스터를 스폰하고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
+    /** 몬스터를 처음 채우고 첫 룸 틱을 예약한다. 스폰에 실패하면 false. */
     bool Start();
 
     //~ 룸 틱
@@ -123,13 +124,30 @@ private:
     /** 공격한 엔티티를 뺀, 공격한 엔티티를 보는 플레이어에게 공격을 알린다. */
     void BroadcastAttack(int64 attackerId, int32 combo, float yaw);
 
-    //~ Room 정보 관련
+    //~ 몬스터 스폰
 public:
     /**
-     * bounds 안의 무작위 평면 위치. usePadding이면 경계에서 안쪽으로 떨어진 곳에서 고른다.
-     * 여백을 빼고 남는 폭이 없는 축은 그 축의 가운데다.
+     * 맵의 스폰 마커마다 그 스폰 그룹의 최대 수만큼 몬스터를 마커의 반경 안에 둔다. 스폰에 실패하면 false.
+     * Start가 부른다. 테스트는 룸 틱을 예약하지 않으려고 직접 부른다.
      */
-    static vector2D     GetRandomLocation(const PlaneBounds& bounds, bool usePadding = true);
+    bool SpawnInitialMonsters();
+    /** center에서 평면 거리 radius 안의 무작위 위치. 원 안에서 고르게 뽑는다. */
+    static vector2D GetRandomLocation(const vector2D& center, float radius);
+
+private:
+    /** 그 마커의 스폰 그룹에서 몬스터 하나를 뽑아 마커의 반경 안에 둔다. 실패하면 nullptr. */
+    MonsterRef SpawnMonster(int32 spawnPointIndex);
+    /** 마커의 반경 안의 무작위 위치. 높이는 그 몬스터의 캡슐이 바닥에 서는 높이이고, navmesh가 없으면 마커 바닥보다 조금 위다. */
+    Protocol::PosInfo MakeRandomSpawnPos(const SpawnPointPlacement& spawnPoint, int32 monsterTemplateId);
+
+    /** 반경 안에서 바닥이 있는 위치를 찾을 때 뽑아 보는 횟수. 다 실패하면 마커의 위치에 둔다. */
+    static constexpr int32 SPAWN_POS_ATTEMPTS = 8;
+    static constexpr float SPAWN_HEIGHT_PADDING = 100.f;
+
+    MonsterSpawner _monsterSpawner;
+
+    //~ Room 정보 관련
+public:
     /** -180도에서 180도 사이. */
     static float        GetRandomYaw() { return Utils::GetRandom(-180.f, 180.f); }
     RoomRef             GetRoomRef() { return static_pointer_cast<Room>(shared_from_this()); }
@@ -142,32 +160,21 @@ public:
     const DesignData::PortalRow* FindPortal(int32 portalId) const;
     /** 맵 경계의 중심. 높이는 0이다. */
     vector3D            GetCenterPoint() const;
+    /** 맵의 navmesh에 묻는 이 룸의 질의 객체. 룸 큐 위에서만 쓴다. navmesh 없이 만든 룸(테스트)이면 nullptr이다. */
+    NavQuery*           GetNavQuery() const { return _navQuery.get(); }
 
 private:
-    /** 몬스터를 스폰할 지역 하나. */
-    struct RoomArea
-    {
-        DesignData::AreaRow row;
-        AreaPlacement placement;
-    };
-
-    /** 지역 안의 무작위 위치. 높이는 그 몬스터의 캡슐이 바닥에 서는 높이이고, navmesh가 없으면 지역 바닥보다 조금 위다. */
-    Protocol::PosInfo MakeRandomSpawnPos(const AreaPlacement& area, int32 monsterTemplateId);
     /** posInfo의 높이를 바닥 위 캡슐 중심(바닥 + halfHeight)으로 바꾼다. navmesh가 없거나 바닥이 없으면 그대로 두고 false. */
     bool PlaceOnFloor(Protocol::PosInfo& posInfo, float halfHeight);
     /** 플레이어 캡슐의 반높이. navmesh의 에이전트가 플레이어 캡슐이다. navmesh가 없으면 0. */
     float PlayerHalfHeight() const;
 
-    static constexpr float LOCATION_PADDING_X = 1000.f;
-    static constexpr float LOCATION_PADDING_Y = 1000.f;
-    static constexpr float LOCATION_PADDING_Z = 100.f;
-
     int32 _roomId = 0;
     int32 _channel = 0;
     /** 이 룸이 맡은 맵의 배치 데이터 사본. 경계가 룸의 경계다. */
     MapPlacement _map;
-    /** 이 맵의 지역. 지역 번호 순서다. */
-    vector<RoomArea> _areas;
+    /** 이 맵의 지역 행. 지역 번호 순서다. 포털을 지역에서 찾는다. */
+    vector<DesignData::AreaRow> _areas;
     /** 맵의 navmesh에 묻는 이 룸의 질의 객체. navmesh 없이 만든 룸(테스트)이면 nullptr이고 지형을 보지 않는다. */
     unique_ptr<NavQuery> _navQuery;
 

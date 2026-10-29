@@ -111,7 +111,7 @@ P1/Source/
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
 | `Game/Data/` | DataTable 행 `USTRUCT`, DataAsset 클래스, 게임 코드가 읽는 데이터 테이블을 가리키는 설정(`UP1GameDataSettings`). 하위 `Generated/`는 DataBuilder가 만드는 기획 데이터 행 구조체와 열거형이다 |
-| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽, 배치 추출이 읽는 에디터 전용 마커(맵 마커, 지역 볼륨, 리스폰 지점, 포털 도착 지점) |
+| `Game/World/` | 레벨에 배치하는 액터. 포털, 경계 벽, 배치 추출이 읽는 에디터 전용 마커(맵 마커, 지역 볼륨, 리스폰 지점, 포털 도착 지점, 몬스터 스폰 마커) |
 | `Game/Interaction/` | 플레이어가 다가가 쓰는 레벨 액터와 그 액터가 화면에 알리는 인터페이스. 상점 |
 | `Game/Progress/` | 내 플레이어의 진행(레벨, 스탯, 골드, 소지품과 장비, 퀵슬롯)을 들고 있는 서브시스템과, 그 소지품과 퀵슬롯에 대한 요청을 판정하고 보내는 아이템 요청 창구 |
 | `Game/QuickSlots/` | 퀵슬롯과 그 대상의 `USTRUCT`, 퀵슬롯 사본 클래스, 퀵슬롯의 패킷 변환 |
@@ -521,15 +521,15 @@ Server/
 │   ├── Network/            세션과 세션 단계별 허용표, 세션 관리자, 게임 패킷 핸들러, 아이템 요청 처리(퀵슬롯 등록 포함)와 아이템·퀵슬롯 패킷 변환, 저장 게이트, 진행 조율자, 게임 입장(게임 입장 창구), 인증 티켓 값 해석
 │   ├── Lobby/              로비 모듈. 로비 패킷 핸들러, 로비 요청의 응답을 만드는 요청 처리(LobbyRequests), 로비 복귀 창구(LobbyReturn), 캐릭터 생성 규칙, 계정 행과 캐릭터 행의 DAO, 로비 기획 데이터(Data/)
 │   ├── Game/               게임 도메인
-│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정
+│   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정, 몬스터 스폰 일정표
 │   │   ├── Combat/         피격과 처치 판정
 │   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 진행 사본과 저장 사본
 │   │   ├── Items/          아이템과 칸의 서버 타입, 범용 칸 배열(ItemContainer), 인벤토리 구역 대응 표
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
 │   │   ├── Equipment/      장비 컴포넌트와 착용 조건
 │   │   ├── QuickSlots/     퀵슬롯의 서버 타입과 퀵슬롯 컴포넌트
-│   │   ├── AI/             몬스터 AI 컴포넌트
-│   │   ├── Navigation/     navmesh 파일 형식(빌드 도구와 함께 컴파일), 맵마다의 navmesh와 그 보관소, 룸마다의 지형 질의
+│   │   ├── AI/             몬스터 AI 컴포넌트와 상태 객체
+│   │   ├── Navigation/     navmesh 파일 형식(빌드 도구와 함께 컴파일), 맵마다의 navmesh와 그 보관소, 룸마다의 지형 질의, 크리처의 경로 추종 부품
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
 │   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
 │   │       ├── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
@@ -582,8 +582,11 @@ Server/
 게임 쪽 코드는 `Lobby/`를 include하지 않는다. 근거는 `docs/adr/0021-split-lobby-as-top-level-module.md`에 있다.
 2026년 10월 23일(#287)에 `Game/Characters/`와 `DB/`에서 옮겨 왔다.
 
-`Game/AI/`는 몬스터의 행동(배회, 추적, 공격)을 정하는 `MonsterAIComponent`를 담는다. 몬스터는 이 컴포넌트를 멤버로
-소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+`Game/AI/`는 몬스터의 행동(대기, 배회, 추적, 공격, 귀환)을 정하는 `MonsterAIComponent`와 상태 객체(`MonsterStates`)를 담는다.
+몬스터는 이 컴포넌트를 멤버로 소유하고 받은 룸 틱을 넘긴다. 2026년 10월 9일(#211)에 `Game/Entities/Monster`에서 떼어 냈다.
+AI는 목적지만 정하고, 길을 따라 움직이는 일은 `Game/Navigation/`의 `PathFollowingComponent`가 맡는다. 이 부품은 몬스터에 묶이지 않은
+크리처 공용 부품이라 navmesh 질의(`NavQuery`)와 같은 폴더에 둔다. 2026년 10월 29일(#340)에 나눴다.
+몬스터를 스폰 마커에 채우고 리젠을 예약하는 일정표(`MonsterSpawner`)는 룸이 소유하므로 `Game/Room/`에 둔다.
 
 `Game/Progress/`는 진행의 규칙을 담는다. 2026년 10월 20일(#252) 기준으로 누적 경험치와 레벨 표로 레벨을 정하고
 보상과 사망 페널티를 판정하는 `Leveling`만 있다. 2026년 10월 23일(#288)에 새 캐릭터의 초기 진행을 정하는 `InitialProgress`가

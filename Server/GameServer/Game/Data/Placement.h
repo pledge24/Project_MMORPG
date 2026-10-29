@@ -48,3 +48,12 @@ struct PortalPlacement
     vector3D dest;
     float destYaw = 0.f;
 };
+
+/** 몬스터 스폰 마커. pos의 z는 바닥의 높이이고, 몬스터는 pos에서 radius 안에 나와 그 안에서 배회한다. */
+struct SpawnPointPlacement
+{
+    int32 spawnGroupId = 0;
+    vector3D pos;
+    /** 평면 거리(cm). 0보다 크다. */
+    float radius = 0.f;
+};

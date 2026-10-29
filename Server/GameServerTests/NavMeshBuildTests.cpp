@@ -71,7 +71,7 @@ TEST(NavMeshBuildTest, GeometryDocumentRoundTripsToSameBytes)
 {
     // 추출 커맨드렛이 쓰는 문서를 읽어 빌드해도 같은 바이트다.
     const NavMeshBuild::Geometry geometry = TestNavLevel::MakeGeometry(MAP_ID);
-    Json document{ { "MapId", geometry.mapId }, { "Vertices", Json::array() }, { "Triangles", Json::array() } };
+    Json document{ { "MapId", geometry.mapId }, { "Vertices", Json::array() }, { "Triangles", Json::array() }, { "SpawnPoints", Json::array() } };
     for (size_t i = 0; i < geometry.vertices.size(); i += 3)
         document["Vertices"].push_back({ geometry.vertices[i], geometry.vertices[i + 1], geometry.vertices[i + 2] });
     for (size_t i = 0; i < geometry.triangles.size(); i += 3)
@@ -86,9 +86,48 @@ TEST(NavMeshBuildTest, GeometryDocumentRoundTripsToSameBytes)
     EXPECT_EQ(built, TestNavLevel::GetFile());
 }
 
+TEST(NavMeshBuildTest, GeometryDocumentCarriesSpawnPoints)
+{
+    const Json document{
+        { "MapId", MAP_ID }, { "Vertices", { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 } } }, { "Triangles", { { 0, 1, 2 } } },
+        { "SpawnPoints", { { { "Name", "SpawnMarker_1" }, { "X", 10.5 }, { "Y", -20 }, { "Z", 3 } } } },
+    };
+
+    NavMeshBuild::Geometry parsed;
+    ASSERT_EQ(NavMeshBuild::ParseGeometry(document, OUT parsed), nullopt);
+    ASSERT_EQ(parsed.spawnPoints.size(), 1u);
+    EXPECT_EQ(parsed.spawnPoints[0].name, "SpawnMarker_1");
+    EXPECT_FLOAT_EQ(parsed.spawnPoints[0].x, 10.5f);
+    EXPECT_FLOAT_EQ(parsed.spawnPoints[0].y, -20.f);
+    EXPECT_FLOAT_EQ(parsed.spawnPoints[0].z, 3.f);
+}
+
+TEST(NavMeshBuildTest, GeometryDocumentWithoutSpawnPointsIsRejected)
+{
+    const Json document{ { "MapId", MAP_ID }, { "Vertices", { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 } } }, { "Triangles", { { 0, 1, 2 } } } };
+
+    NavMeshBuild::Geometry parsed;
+    EXPECT_NE(NavMeshBuild::ParseGeometry(document, OUT parsed), nullopt);
+}
+
+// 스폰 마커가 걸을 수 있는 면 밖(벽 안, 바닥 밖)에 있으면 몬스터가 길을 찾지 못하는 곳에 나온다.
+TEST(NavMeshBuildTest, SpawnPointsOffWalkableSurfaceAreFound)
+{
+    const vector<NavMeshBuild::SpawnPoint> points = {
+        { "OnFloor", -500.f, -500.f, 0.f },
+        { "InsideWall", 0.f, -500.f, 0.f },
+        { "OutsideFloor", 2000.f, 0.f, 0.f },
+        { "OnRamp", 700.f, -600.f, 50.f },
+    };
+
+    vector<string> offMesh;
+    ASSERT_EQ(NavMeshBuild::FindSpawnPointsOffMesh(TestNavLevel::GetFile(), TestNavLevel::MakeAgent(), points, OUT offMesh), nullopt);
+    EXPECT_EQ(offMesh, vector<string>({ "InsideWall", "OutsideFloor" }));
+}
+
 TEST(NavMeshBuildTest, GeometryDocumentWithMissingVertexIsRejected)
 {
-    const Json document{ { "MapId", MAP_ID }, { "Vertices", { { 0, 0, 0 }, { 1, 0, 0 } } }, { "Triangles", { { 0, 1, 2 } } } };
+    const Json document{ { "MapId", MAP_ID }, { "Vertices", { { 0, 0, 0 }, { 1, 0, 0 } } }, { "Triangles", { { 0, 1, 2 } } }, { "SpawnPoints", Json::array() } };
 
     NavMeshBuild::Geometry parsed;
     EXPECT_NE(NavMeshBuild::ParseGeometry(document, OUT parsed), nullopt);

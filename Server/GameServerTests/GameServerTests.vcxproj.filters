@@ -80,6 +80,7 @@
     </ClCompile>
     <ClCompile Include="RoomRequestTests.cpp" />
     <ClCompile Include="MonsterAITests.cpp" />
+    <ClCompile Include="MonsterSpawnTests.cpp" />
     <ClCompile Include="MapLoadTests.cpp" />
     <ClCompile Include="DriverReproTests.cpp" />
     <ClCompile Include="GameDBSchemaTests.cpp" />
@@ -273,6 +274,9 @@
     <ClCompile Include="..\GameServer\Game\AI\MonsterAIComponent.cpp">
       <Filter>GameServer\Game\AI</Filter>
     </ClCompile>
+    <ClCompile Include="..\GameServer\Game\AI\MonsterStates.cpp">
+      <Filter>GameServer\Game\AI</Filter>
+    </ClCompile>
     <ClCompile Include="..\GameServer\Game\Data\Gamedata.cpp">
       <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
@@ -289,6 +293,9 @@
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\CellMatrix.cpp">
+      <Filter>GameServer\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Room\MonsterSpawner.cpp">
       <Filter>GameServer\Game\Room</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Room\RoomManager.cpp">
@@ -342,6 +349,9 @@
       <Filter>GameServer\Game\Navigation</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Navigation\NavQuery.cpp">
+      <Filter>GameServer\Game\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Navigation\PathFollowingComponent.cpp">
       <Filter>GameServer\Game\Navigation</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Navigation\NavMeshes.cpp">

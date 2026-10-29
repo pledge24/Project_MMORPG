@@ -72,7 +72,8 @@ namespace
     }
 
     FString WriteFile(const FLevel& Level, const FP1PlacementCheck::FPlacedMap& Map, const TArray<const FPlacedArea*>& Areas,
-        const TArray<TPair<int32, const FPlacedPoint*>>& RespawnPoints, const TArray<TPair<const FPlacedPoint*, const FPlacedPoint*>>& Portals)
+        const TArray<TPair<int32, const FPlacedPoint*>>& RespawnPoints, const TArray<TPair<const FPlacedPoint*, const FPlacedPoint*>>& Portals,
+        const TArray<const FPlacedPoint*>& SpawnPoints)
     {
         const FPlacedBox& Bounds = Map.Bounds;
         const FString Header = JoinFields({
@@ -118,8 +119,18 @@ namespace
             }));
         }
 
-        return FString::Printf(TEXT("{%s,\n\"Areas\":%s,\n\"RespawnPoints\":%s,\n\"Portals\":%s}\n"),
-            *Header, *JoinRows(AreaRows), *JoinRows(RespawnRows), *JoinRows(PortalRows));
+        TArray<FString> SpawnRows;
+        for (const FPlacedPoint* Spawn : SpawnPoints)
+        {
+            SpawnRows.Add(JoinFields({
+                { TEXT("SpawnGroupId"), FString::FromInt(Spawn->Id) },
+                { TEXT("X"), FormatNumber(Spawn->Location.X) }, { TEXT("Y"), FormatNumber(Spawn->Location.Y) },
+                { TEXT("Z"), FormatNumber(Spawn->Location.Z) }, { TEXT("Radius"), FormatNumber(Spawn->Radius) },
+            }));
+        }
+
+        return FString::Printf(TEXT("{%s,\n\"Areas\":%s,\n\"RespawnPoints\":%s,\n\"Portals\":%s,\n\"SpawnPoints\":%s}\n"),
+            *Header, *JoinRows(AreaRows), *JoinRows(RespawnRows), *JoinRows(PortalRows), *JoinRows(SpawnRows));
     }
 
     //~ 기획 데이터
@@ -145,7 +156,8 @@ namespace
     }
 }
 
-bool FP1PlacementCheck::ParseDesignData(const FString& MapJson, const FString& AreaJson, FDesignData& OutDesign, TArray<FString>& OutErrors)
+bool FP1PlacementCheck::ParseDesignData(const FString& MapJson, const FString& AreaJson, const FString& SpawnGroupJson,
+    FDesignData& OutDesign, TArray<FString>& OutErrors)
 {
     const int32 ErrorCount = OutErrors.Num();
 
@@ -194,6 +206,17 @@ bool FP1PlacementCheck::ParseDesignData(const FString& MapJson, const FString& A
         }
     }
 
+    TArray<TSharedPtr<FJsonValue>> SpawnGroupRows;
+    if (ReadRows(SpawnGroupJson, TEXT("SpawnGroup.json"), SpawnGroupRows, OutErrors))
+    {
+        for (int32 Index = 0; Index < SpawnGroupRows.Num(); ++Index)
+        {
+            int32 SpawnGroupId = 0;
+            if (ReadInt(SpawnGroupRows[Index]->AsObject(), TEXT("Id"), FString::Printf(TEXT("SpawnGroup.json %d번째 행"), Index + 1), SpawnGroupId, OutErrors))
+                OutDesign.SpawnGroupIds.Add(SpawnGroupId);
+        }
+    }
+
     return OutErrors.Num() == ErrorCount;
 }
 
@@ -216,6 +239,7 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
         TArray<const FPlacedArea*> Areas;
         TArray<TPair<int32, const FPlacedPoint*>> RespawnPoints;
         TArray<const FPlacedPoint*> Portals;
+        TArray<const FPlacedPoint*> SpawnPoints;
     };
     TArray<FMapRows> MapRows;
 
@@ -401,6 +425,17 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
             if (bSameCenter == false || bSameExtent == false)
                 Error(FString::Printf(TEXT("%s %s: 경계 벽이 지역 볼륨 %s와 위치나 크기가 다르다. 벽을 선택해 다시 맞춘다"), *LevelName, *Wall.Name, *Box.Name));
         }
+
+        // 스폰 마커. 마커가 navmesh 위에 있는지는 navmesh 빌드가 검사한다.
+        for (const FPlacedPoint& Spawn : Level.SpawnPoints)
+        {
+            CheckInsideMap(Spawn.Name, Spawn.Location);
+            if (Spawn.Radius <= 0.0)
+                Error(FString::Printf(TEXT("%s %s: 스폰 마커의 반경이 0보다 커야 한다"), *LevelName, *Spawn.Name));
+            if (Design.SpawnGroupIds.Contains(Spawn.Id) == false)
+                Error(FString::Printf(TEXT("%s %s: 스폰 그룹 %d이 스폰 그룹 표에 없다"), *LevelName, *Spawn.Name, Spawn.Id));
+            Rows.SpawnPoints.Add(&Spawn);
+        }
     }
 
     // 2) 레벨을 넘는 검사. 맵 표의 맵마다 레벨이 있어야 서버가 그 맵의 배치 데이터를 받는다.
@@ -444,12 +479,21 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
         Rows.Areas.Sort([](const FPlacedArea& A, const FPlacedArea& B) { return A.AreaId < B.AreaId; });
         Rows.RespawnPoints.Sort([](const TPair<int32, const FPlacedPoint*>& A, const TPair<int32, const FPlacedPoint*>& B) { return A.Key < B.Key; });
         Rows.Portals.Sort([](const FPlacedPoint& A, const FPlacedPoint& B) { return A.Id < B.Id; });
+        // 스폰 마커에는 번호가 없다. 서버의 룸이 이 순서로 마커를 가리키므로, 레벨에 놓인 순서와 무관하게 정한다.
+        Rows.SpawnPoints.Sort([](const FPlacedPoint& A, const FPlacedPoint& B)
+        {
+            if (A.Id != B.Id)
+                return A.Id < B.Id;
+            if (A.Location.X != B.Location.X)
+                return A.Location.X < B.Location.X;
+            return A.Location.Y < B.Location.Y;
+        });
 
         TArray<TPair<const FPlacedPoint*, const FPlacedPoint*>> Portals;
         for (const FPlacedPoint* Portal : Rows.Portals)
             Portals.Add({ Portal, ArrivalById[Portal->Id].Value });
 
-        Result.Files.Add(Rows.Level->MapId, WriteFile(*Rows.Level, *Rows.Map, Rows.Areas, Rows.RespawnPoints, Portals));
+        Result.Files.Add(Rows.Level->MapId, WriteFile(*Rows.Level, *Rows.Map, Rows.Areas, Rows.RespawnPoints, Portals, Rows.SpawnPoints));
     }
 
     return Result;

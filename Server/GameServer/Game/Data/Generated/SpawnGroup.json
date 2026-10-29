@@ -1,0 +1,17 @@
+[
+{"Id":1,"MaxCount":5,"RespawnSec":10,"Entries":[
+{"MonsterId":5000,"Weight":1},
+{"MonsterId":5001,"Weight":1},
+{"MonsterId":5002,"Weight":1}
+]},
+{"Id":2,"MaxCount":5,"RespawnSec":10,"Entries":[
+{"MonsterId":5003,"Weight":1},
+{"MonsterId":5004,"Weight":1},
+{"MonsterId":5005,"Weight":1}
+]},
+{"Id":3,"MaxCount":5,"RespawnSec":10,"Entries":[
+{"MonsterId":5006,"Weight":1},
+{"MonsterId":5007,"Weight":1},
+{"MonsterId":5008,"Weight":1}
+]}
+]

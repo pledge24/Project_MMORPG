@@ -49,7 +49,7 @@ namespace P1PlacementCheckTest
         return Wall;
     }
 
-    /** 마을과 사냥터 하나. 두 지역을 잇는 포털이 하나씩 있고, 마을에 리스폰 지점이 있다. */
+    /** 마을과 사냥터 하나. 두 지역을 잇는 포털이 하나씩 있고, 마을에 리스폰 지점이, 사냥터에 스폰 마커 둘이 있다. */
     FP1PlacementCheck::FLevel MakeLevel()
     {
         FP1PlacementCheck::FLevel Level;
@@ -73,6 +73,10 @@ namespace P1PlacementCheckTest
 
         Level.Walls.Add(MakeWall(TEXT("TownWall"), TOWN_ID, 0.0, 0.0, 1500.0));
         Level.Walls.Add(MakeWall(TEXT("FieldWall"), FIELD_ID, -10000.0, 10000.0, 2500.0));
+
+        // 산출물은 스폰 그룹 번호 순서다. 레벨에 놓인 순서와 다르게 둔다.
+        Level.SpawnPoints.Add(MakePoint(TEXT("FieldSpawnB"), 2, -11000.0, 9000.0, 0.0, 400.0));
+        Level.SpawnPoints.Add(MakePoint(TEXT("FieldSpawnA"), 1, -10000.0, 10000.004, 0.0, 600.0));
         return Level;
     }
 
@@ -84,6 +88,8 @@ namespace P1PlacementCheckTest
         Design.Areas.Add(FIELD_ID, { MAP_ID, false });
         Design.Portals.Add(11, { TOWN_ID, FIELD_ID });
         Design.Portals.Add(21, { FIELD_ID, TOWN_ID });
+        Design.SpawnGroupIds.Add(1);
+        Design.SpawnGroupIds.Add(2);
         return Design;
     }
 
@@ -99,6 +105,10 @@ namespace P1PlacementCheckTest
         TEXT("\"Portals\":[\n")
         TEXT("{\"Id\":11,\"SrcX\":-1200.0,\"SrcY\":1000.0,\"SrcZ\":0.0,\"Radius\":500.0,\"DestX\":-8000.0,\"DestY\":10000.0,\"DestZ\":0.0,\"DestYaw\":180.0},\n")
         TEXT("{\"Id\":21,\"SrcX\":-7750.0,\"SrcY\":10000.0,\"SrcZ\":0.0,\"Radius\":500.0,\"DestX\":-1000.0,\"DestY\":1000.0,\"DestZ\":0.0,\"DestYaw\":0.0}\n")
+        TEXT("],\n")
+        TEXT("\"SpawnPoints\":[\n")
+        TEXT("{\"SpawnGroupId\":1,\"X\":-10000.0,\"Y\":10000.0,\"Z\":0.0,\"Radius\":600.0},\n")
+        TEXT("{\"SpawnGroupId\":2,\"X\":-11000.0,\"Y\":9000.0,\"Z\":0.0,\"Radius\":400.0}\n")
         TEXT("]}\n");
 }
 
@@ -229,6 +239,33 @@ bool FP1PlacementCheckTest::RunTest(const FString& Parameters)
         FP1PlacementCheck::FLevel Level = MakeLevel();
         Level.Areas[0].Box.bRotated = true;
         ExpectRejected(TEXT("회전한 지역 볼륨"), Level, MakeDesign(), { TEXT("TownVolume"), TEXT("회전") });
+    }
+
+    // 10) 스폰 마커는 스폰 그룹 표의 그룹을 가리키고, 반경이 있고, 맵 경계 안에 있다.
+    // 없는 그룹을 가리키는 마커를 서버에 넘기면 서버가 뜨지 않는다.
+    {
+        FP1PlacementCheck::FLevel Level = MakeLevel();
+        Level.SpawnPoints[0].Id = 99;
+        ExpectRejected(TEXT("없는 스폰 그룹"), Level, MakeDesign(), { TEXT("FieldSpawnB"), TEXT("스폰 그룹 99") });
+
+        Level = MakeLevel();
+        Level.SpawnPoints[1].Radius = 0.0;
+        ExpectRejected(TEXT("반경이 없는 스폰 마커"), Level, MakeDesign(), { TEXT("FieldSpawnA"), TEXT("반경") });
+
+        Level = MakeLevel();
+        Level.SpawnPoints[1].Location = FVector(-10000.0, 14000.0, 0.0);
+        ExpectRejected(TEXT("맵 경계 밖의 스폰 마커"), Level, MakeDesign(), { TEXT("FieldSpawnA"), TEXT("맵 경계 밖") });
+    }
+
+    // 11) 스폰 그룹 번호는 서버 산출물(SpawnGroup.json)에서 읽는다. 스폰 그룹 표는 클라이언트로 가는 열이 없다.
+    {
+        FP1PlacementCheck::FDesignData Design;
+        TArray<FString> Errors;
+        const bool bParsed = FP1PlacementCheck::ParseDesignData(TEXT("[{\"Id\":1111}]"),
+            TEXT("[{\"Id\":10,\"MapId\":1111,\"HasRespawnPoint\":true,\"Portals\":[]}]"),
+            TEXT("[{\"Id\":3,\"MaxCount\":5,\"RespawnSec\":10,\"Entries\":[]}]"), Design, Errors);
+        TestTrue(FString::Printf(TEXT("기획 데이터 읽기. 오류: %s"), *FString::Join(Errors, TEXT("\n"))), bParsed);
+        TestTrue(TEXT("스폰 그룹 3"), Design.SpawnGroupIds.Contains(3));
     }
 
     return true;

@@ -23,6 +23,7 @@ namespace
     constexpr int32 POTION_ID = 2000;
     constexpr int32 MONSTER_ID = 5000;
     constexpr int32 DROP_GROUP_ID = 1;
+    constexpr int32 SPAWN_GROUP_ID = 1;
     constexpr int32 MAP_ID = 1111;
     constexpr int32 TOWN_ID = 10;
     constexpr int32 FIELD_ID = 20;
@@ -106,7 +107,6 @@ namespace
 
         return Json{
             {"Id", TOWN_ID}, {"MapId", MAP_ID}, {"HasRespawnPoint", true},
-            {"Monsters", Json::array()}, {"MaxMonsterCount", 0}, {"MonsterRespawnSec", 0},
             {"Portals", Json::array({portal})},
         };
     }
@@ -115,8 +115,16 @@ namespace
     {
         return Json{
             {"Id", FIELD_ID}, {"MapId", MAP_ID}, {"HasRespawnPoint", false},
-            {"Monsters", Json::array({MONSTER_ID})}, {"MaxMonsterCount", 10}, {"MonsterRespawnSec", 10},
             {"Portals", Json::array()},
+        };
+    }
+
+    /** DataBuilder가 생성하는 스폰 그룹 표의 행. 스폰 항목은 그룹 아래 Entries에 중첩된다. */
+    Json MakeSpawnGroup()
+    {
+        return Json{
+            {"Id", SPAWN_GROUP_ID}, {"MaxCount", 3}, {"RespawnSec", 10},
+            {"Entries", Json::array({ Json{{"MonsterId", MONSTER_ID}, {"Weight", 1}} })},
         };
     }
 
@@ -134,7 +142,10 @@ namespace
         };
     }
 
-    /** 추출 커맨드렛이 쓰는 맵의 배치 데이터. 마을과 필드의 볼륨, 마을의 리스폰 지점, 마을에서 필드로 가는 포털이 있다. */
+    /**
+     * 추출 커맨드렛이 쓰는 맵의 배치 데이터. 마을과 필드의 볼륨, 마을의 리스폰 지점, 마을에서 필드로 가는 포털,
+     * 필드의 스폰 마커가 있다.
+     */
     Json MakePlacement()
     {
         return Json{
@@ -151,6 +162,9 @@ namespace
                     {"Id", 11}, {"SrcX", -1200}, {"SrcY", 1000}, {"SrcZ", 0}, {"Radius", 500},
                     {"DestX", -8000}, {"DestY", 10000}, {"DestZ", 0}, {"DestYaw", 180},
                 },
+            })},
+            {"SpawnPoints", Json::array({
+                Json{{"SpawnGroupId", SPAWN_GROUP_ID}, {"X", -10500}, {"Y", 10200}, {"Z", 50}, {"Radius", 600}},
             })},
         };
     }
@@ -188,6 +202,7 @@ namespace
         documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
         documents.monsters = Json::array({MakeMonster()});
         documents.dropGroups = Json::array({MakeDropGroup()});
+        documents.spawnGroups = Json::array({MakeSpawnGroup()});
         documents.maps = Json::array({MakeMap()});
         documents.areas = Json::array({MakeTown(), MakeField()});
         documents.currencies = Json::array({MakeCurrency(GOLD_ID, "GOLD")});
@@ -267,12 +282,9 @@ TEST(GamedataParserTest, ValidDocumentsBecomeTemplates)
     ASSERT_EQ(town.Portals.size(), 1u);
     EXPECT_EQ(town.Portals[0].Id, 11);
     EXPECT_EQ(town.Portals[0].DestAreaId, FIELD_ID);
-    EXPECT_EQ(town.MaxMonsterCount, 0);
 
     const DesignData::AreaRow& field = tables.areas.at(FIELD_ID);
     EXPECT_FALSE(field.HasRespawnPoint);
-    EXPECT_EQ(field.Monsters, vector<int32>({MONSTER_ID}));
-    EXPECT_EQ(field.MaxMonsterCount, 10);
     EXPECT_TRUE(field.Portals.empty());
 
     EXPECT_EQ(tables.goldCurrencyId, GOLD_ID) << "골드는 재화 종류가 GOLD인 재화다";
@@ -405,6 +417,45 @@ TEST(GamedataParserTest, RespawnPointInAreaWithoutRespawnIsRejected)
     documents.placements[PLACEMENT_FILE]["RespawnPoints"].push_back(fieldRespawn);
 
     ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "지역 20", "리스폰 지점이 없는 지역"});
+}
+
+TEST(GamedataParserTest, SpawnPointsAreInstalledByMapWithTheirGroup)
+{
+    GamedataTables tables;
+    const optional<string> error = GamedataParser::Parse(MakeValidDocuments(), OUT tables);
+    ASSERT_FALSE(error.has_value()) << error.value_or("");
+
+    ASSERT_TRUE(tables.spawnPoints.contains(MAP_ID));
+    ASSERT_EQ(tables.spawnPoints.at(MAP_ID).size(), 1u);
+    const SpawnPointPlacement& spawnPoint = tables.spawnPoints.at(MAP_ID)[0];
+    EXPECT_EQ(spawnPoint.spawnGroupId, SPAWN_GROUP_ID);
+    EXPECT_FLOAT_EQ(spawnPoint.pos.x, -10500.f);
+    EXPECT_FLOAT_EQ(spawnPoint.pos.z, 50.f);
+    EXPECT_FLOAT_EQ(spawnPoint.radius, 600.f);
+
+    ASSERT_TRUE(tables.spawnGroups.contains(SPAWN_GROUP_ID));
+    const DesignData::SpawnGroupRow& group = tables.spawnGroups.at(SPAWN_GROUP_ID);
+    EXPECT_EQ(group.MaxCount, 3);
+    EXPECT_EQ(group.RespawnSec, 10);
+    ASSERT_EQ(group.Entries.size(), 1u);
+    EXPECT_EQ(group.Entries[0].MonsterId, MONSTER_ID);
+}
+
+TEST(GamedataParserTest, SpawnPointOfUnknownGroupIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["SpawnPoints"][0]["SpawnGroupId"] = 99;
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "스폰 그룹 99", "스폰 그룹 표에 없다"});
+}
+
+// 추적 한계는 스폰 지점에서 잰다. 반경이 한계보다 넓으면 반경 끝에서 대상을 감지한 몬스터가 쫓지 않고 곧바로 돌아간다.
+TEST(GamedataParserTest, SpawnRadiusReachingChaseLimitIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.placements[PLACEMENT_FILE]["SpawnPoints"][0]["Radius"] = 1200;
+
+    ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "스폰 그룹 1", "몬스터 5000", "ChasingMaxRange"});
 }
 
 TEST(GamedataParserTest, CreatureCombatBecomesHitTimesAndRootMotion)
@@ -688,6 +739,7 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.areas = ReadJsonFile(generatedDir / DesignData::AREA_FILE);
     documents.monsters = ReadJsonFile(generatedDir / DesignData::MONSTER_FILE);
     documents.dropGroups = ReadJsonFile(generatedDir / DesignData::DROP_GROUP_FILE);
+    documents.spawnGroups = ReadJsonFile(generatedDir / DesignData::SPAWN_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
     documents.initialProgress = ReadJsonFile(generatedDir / DesignData::PROGRESS_FILE);
     ASSERT_TRUE(documents.items.is_array()) << "생성된 기획 데이터를 찾지 못했다: " << generatedDir.string();
@@ -748,8 +800,30 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(town.Portals[0].DestAreaId, 20);
     const DesignData::AreaRow& advancedField = tables.areas.at(40);
     EXPECT_EQ(advancedField.MapId, 1111);
-    EXPECT_EQ(advancedField.Monsters, vector<int32>({5006, 5007, 5008}));
     ASSERT_EQ(advancedField.Portals.size(), 1u);
+
+    // 지역 표의 몬스터 구성과 수를 스폰 그룹과 레벨의 스폰 마커로 옮긴 값이다. 사냥터마다 옛 표의 세 종류가 열 마리 나온다.
+    struct ExpectedField { int32 areaId; vector<int32> monsters; };
+    for (const ExpectedField& expected : { ExpectedField{ 20, { 5000, 5001, 5002 } }, ExpectedField{ 30, { 5003, 5004, 5005 } },
+        ExpectedField{ 40, { 5006, 5007, 5008 } } })
+    {
+        const PlaneBounds& bounds = tables.areaPlacements.at(expected.areaId).bounds;
+        int32 monsterCount = 0;
+        for (const SpawnPointPlacement& spawnPoint : tables.spawnPoints.at(1111))
+        {
+            if (bounds.Contains(spawnPoint.pos.x, spawnPoint.pos.y) == false)
+                continue;
+
+            const DesignData::SpawnGroupRow& group = tables.spawnGroups.at(spawnPoint.spawnGroupId);
+            vector<int32> monsters;
+            for (const DesignData::SpawnEntryRow& entry : group.Entries)
+                monsters.push_back(entry.MonsterId);
+            EXPECT_EQ(monsters, expected.monsters) << "지역 " << expected.areaId;
+            EXPECT_EQ(group.RespawnSec, 10) << "지역 " << expected.areaId;
+            monsterCount += group.MaxCount;
+        }
+        EXPECT_EQ(monsterCount, 10) << "지역 " << expected.areaId;
+    }
 
     // 지역 표와 포털 표의 공간 열을 레벨의 마커로 옮기면서 옮긴 값이다. 옮기기 전 표의 값과 같아야 한다.
     constexpr float TOLERANCE = 0.01f;

@@ -48,5 +48,16 @@ public:
 
 protected:
     unique_ptr<Protocol::StatInfo> _statInfo;
+
+    //~ 서버가 정하는 이동
+protected:
+    /** 아래 함수는 위치를 서버가 정하는 크리처의 부품만 부른다. 플레이어의 위치는 클라이언트의 이동을 판정해 쓴다. */
+    friend class PathFollowingComponent;
+
+    void SetLocation(const vector3D& pos);
+    /** 길이와 무관하게 단위 벡터로 쓴다. 영벡터면 멈춘 것이다. */
+    void SetMoveDirection(const vector2D& moveVec);
+    void SetYaw(float yaw);
+    void SetMoveState(Protocol::MoveState moveState);
 };
 
