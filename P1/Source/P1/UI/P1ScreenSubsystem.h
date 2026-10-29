@@ -59,8 +59,8 @@ public:
     bool IsWindowOpen(EP1WidgetType Type) const;
 
     /**
-     * 게임 메뉴, 채팅 입력칸, 사망 화면, 열린 창의 순서로 먼저 해당하는 것에 입력과 커서를 맞춘다.
-     * 앞의 셋은 그것만 입력을 받고, 창은 UI와 게임이 함께 받는다. 아무것도 없으면 게임 모드다.
+     * 게임 메뉴, 채팅 입력칸, 사망 화면, 상점, 열린 창의 순서로 먼저 해당하는 것에 입력과 커서를 맞춘다.
+     * 앞의 넷은 그것만 입력을 받고, 창은 UI와 게임이 함께 받는다. 아무것도 없으면 게임 모드다.
      */
     void RefreshInputMode();
 
@@ -82,8 +82,11 @@ private:
 
     //~ Shop
 public:
-    /** 다른 창을 모두 내리고 NpcEntityId NPC의 ShopId 상점과 인벤토리를 연다. 상점이 열린 동안 캐릭터 조작과 카메라 회전을 막는다. */
-    void OpenShop(int64 NpcEntityId, int32 ShopId);
+    /**
+     * 다른 창을 모두 내리고 NpcEntityId NPC의 ShopId 상점과 인벤토리를 연다. 상점이 열린 동안은 상점 창만 입력을 받는다.
+     * 상점 창이 없으면 아무것도 바꾸지 않고 false.
+     */
+    bool OpenShop(int64 NpcEntityId, int32 ShopId);
 
     /** 상점과 인벤토리를 닫는다. 상점을 열 때 내린 창은 되살리지 않는다. 상점이 닫혀 있으면 아무것도 하지 않는다. */
     void CloseShop();

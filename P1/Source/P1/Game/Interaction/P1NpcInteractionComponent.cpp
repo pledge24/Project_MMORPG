@@ -67,9 +67,12 @@ void UP1NpcInteractionComponent::Interact()
     }
     bRestoringCamera = false;
 
+    // 화면이 상점을 열지 못하면 카메라도 당기지 않는다. 상점 창 없이 조작만 막힌 채 남는다.
+    if (Screen->OpenShopWindow(Npc->GetEntityId(), NpcRow->ShopId) == false)
+        return;
+
     ShopNpc = Npc;
     SetFocus(nullptr);
-    Screen->OpenShopWindow(Npc->GetEntityId(), NpcRow->ShopId);
 }
 
 void UP1NpcInteractionComponent::UpdateFocus()

@@ -24,8 +24,11 @@ public:
     /** 조준한 NPC로 할 수 있는 일을 화면에 띄운다. 빈 문구면 내린다. */
     virtual void ShowInteractionPrompt(const FText& Prompt) = 0;
 
-    /** 다른 창을 모두 내리고 NpcEntityId NPC의 ShopId 상점과 인벤토리를 연다. 상점이 열린 동안은 캐릭터 조작과 카메라 회전을 막는다. */
-    virtual void OpenShopWindow(int64 NpcEntityId, int32 ShopId) = 0;
+    /**
+     * 다른 창을 모두 내리고 NpcEntityId NPC의 ShopId 상점과 인벤토리를 연다. 상점이 열린 동안은 상점 창만 입력을 받는다.
+     * 화면이 없어 열지 못하면 false.
+     */
+    virtual bool OpenShopWindow(int64 NpcEntityId, int32 ShopId) = 0;
 
     /** 상점과 인벤토리를 닫고 조작을 돌려준다. 상점이 닫혀 있으면 아무것도 하지 않는다. */
     virtual void CloseShopWindow() = 0;

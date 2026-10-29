@@ -114,13 +114,6 @@ void AP1InGamePlayerController::OnToggleInventoryWidget()
 
 void AP1InGamePlayerController::OnToggleGameMenu()
 {
-    // 상점이 열려 있으면 메뉴 키는 상점을 닫는다.
-    if (NpcInteraction->IsShopOpen())
-    {
-        NpcInteraction->CloseShop();
-        return;
-    }
-
     if (UP1ScreenSubsystem* Screens = GetScreens())
         Screens->ToggleGameMenu();
 }
@@ -142,10 +135,10 @@ void AP1InGamePlayerController::ShowInteractionPrompt(const FText& Prompt)
         Screens->ShowInteractionPrompt(Prompt);
 }
 
-void AP1InGamePlayerController::OpenShopWindow(int64 NpcEntityId, int32 ShopId)
+bool AP1InGamePlayerController::OpenShopWindow(int64 NpcEntityId, int32 ShopId)
 {
-    if (UP1ScreenSubsystem* Screens = GetScreens())
-        Screens->OpenShop(NpcEntityId, ShopId);
+    UP1ScreenSubsystem* Screens = GetScreens();
+    return Screens != nullptr && Screens->OpenShop(NpcEntityId, ShopId);
 }
 
 void AP1InGamePlayerController::CloseShopWindow()

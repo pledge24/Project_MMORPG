@@ -20,7 +20,12 @@ class P1_API UP1ShopWidget : public UP1UserWidget
 
     //~ Begin UUserWidget Interface
 public:
+    virtual void NativeOnInitialized() override;
     virtual void NativeConstruct() override;
+
+protected:
+    /** 상점이 열린 동안은 이 창만 키를 받는다. 메뉴 키는 상점을 닫고, 채팅 키는 채팅 입력칸을 연다. */
+    virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
     //~ End UUserWidget Interface
 
     //~ Display
@@ -32,6 +37,9 @@ public:
 private:
     UFUNCTION()
     void HandleCloseClicked();
+
+    /** 상점을 닫고 카메라를 되돌린다. 컨트롤러가 없으면 아무것도 하지 않는다. */
+    void CloseShop();
 
     /** 상점을 닫는 버튼. WBP에 없으면 메뉴 키로만 닫는다. */
     UPROPERTY(meta = (BindWidgetOptional))

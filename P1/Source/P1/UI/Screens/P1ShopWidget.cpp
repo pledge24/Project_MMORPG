@@ -9,7 +9,16 @@
 #include "Game/Interaction/P1NpcInteractionComponent.h"
 #include "Game/Progress/P1ItemActions.h"
 #include "Game/Progress/P1MyPlayerData.h"
+#include "UI/P1ScreenSubsystem.h"
 #include "Utils/LogCategory.h"
+
+void UP1ShopWidget::NativeOnInitialized()
+{
+    Super::NativeOnInitialized();
+
+    // 상점이 열린 동안 키를 받으려면 포커스를 받을 수 있어야 한다.
+    SetIsFocusable(true);
+}
 
 void UP1ShopWidget::NativeConstruct()
 {
@@ -51,7 +60,32 @@ void UP1ShopWidget::SetShop(int32 ShopId)
         UE_LOG(LogP1UI, Warning, TEXT("상점 %d의 판매 목록 %d개가 진열 칸 %d개보다 많다"), ShopId, Items.Num(), ItemIndex);
 }
 
+FReply UP1ShopWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    // 상점이 열려 있으면 입력이 플레이어 컨트롤러에 가지 않는다. 메뉴 키와 채팅 키는 이 창이 처리한다.
+    const AP1InGamePlayerController* PlayerController = GetP1PlayerController<AP1InGamePlayerController>();
+    if (PlayerController && PlayerController->IsGameMenuKey(InKeyEvent.GetKey()))
+    {
+        CloseShop();
+        return FReply::Handled();
+    }
+
+    if (PlayerController && PlayerController->IsOpenChatKey(InKeyEvent.GetKey()))
+    {
+        if (UP1ScreenSubsystem* Screens = ULocalPlayer::GetSubsystem<UP1ScreenSubsystem>(GetOwningLocalPlayer()))
+            Screens->OpenChatInput();
+        return FReply::Handled();
+    }
+
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 void UP1ShopWidget::HandleCloseClicked()
+{
+    CloseShop();
+}
+
+void UP1ShopWidget::CloseShop()
 {
     if (AP1InGamePlayerController* PlayerController = GetP1PlayerController<AP1InGamePlayerController>())
         PlayerController->GetNpcInteraction()->CloseShop();

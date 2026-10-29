@@ -17,7 +17,9 @@ struct GamedataDocuments
     Json classLevelStats;
     /** 설정 워크북의 초기 진행 시트(Progress.json). */
     Json initialProgress;
+    /** 상점 표(Shop.json). 판매 목록이 행마다 있다. */
     Json shops;
+    /** NPC 표(Npc.json). */
     Json npcs;
     /** 설정 워크북의 상호작용 시트(Interaction.json). */
     Json interaction;

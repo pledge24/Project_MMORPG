@@ -105,8 +105,8 @@ private:
 
     //~ Combat
 public:
-    /** 비전투 모드에서 공격 키(왼쪽 클릭)를 눌렀다. 컨트롤러가 NPC 상호작용에 잇는다. */
     DECLARE_MULTICAST_DELEGATE(FOnNonCombatClick);
+    /** 비전투 모드에서 공격 키(왼쪽 클릭)를 눌렀다. 컨트롤러가 NPC 상호작용에 잇는다. */
     FOnNonCombatClick OnNonCombatClick;
 
 protected:

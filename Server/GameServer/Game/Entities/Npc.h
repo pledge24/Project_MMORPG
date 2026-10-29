@@ -42,10 +42,12 @@ private:
     /** 사거리에 더하는 여유(cm). 이동 패킷 주기 동안 달릴 수 있는 거리보다 넉넉하다. */
     static constexpr float REACH_TOLERANCE = 100.f;
 
-    /** NPC 표의 행 사본. */
-    DesignData::NpcRow _template;
-
     //~ Entity 정보
 public:
     int32 GetNpcId() const { return _template.Id; }
+
+    //~ 공통
+private:
+    /** NPC 표의 행 사본. */
+    DesignData::NpcRow _template;
 };

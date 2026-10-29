@@ -38,7 +38,7 @@ protected:
     //~ Begin IP1ShopScreen Interface
 public:
     virtual void ShowInteractionPrompt(const FText& Prompt) override;
-    virtual void OpenShopWindow(int64 NpcEntityId, int32 ShopId) override;
+    virtual bool OpenShopWindow(int64 NpcEntityId, int32 ShopId) override;
     virtual void CloseShopWindow() override;
     //~ End IP1ShopScreen Interface
 

@@ -173,6 +173,7 @@ void UP1ScreenSubsystem::RefreshInputMode()
         return;
 
     // 상점이 열린 동안은 캐릭터 조작과 카메라 회전을 막는다. 카메라는 NPC 상호작용이 NPC 쪽으로 돌린다.
+    // 입력은 아래에서 상점 창만 받게 하지만, 상점 위에 채팅 입력칸이나 메뉴가 떴다 닫히는 사이에도 막히도록 따로 건다.
     // 막는 횟수를 쌓지 않도록 매번 풀고 다시 건다.
     PC->ResetIgnoreMoveInput();
     PC->ResetIgnoreLookInput();
@@ -219,6 +220,17 @@ void UP1ScreenSubsystem::RefreshInputMode()
         PC->bShowMouseCursor = true;
         PC->SetInputMode(InputMode);
     }
+    else if (UUserWidget* ShopWindow = IsWindowOpen(EP1WidgetType::WIDGET_SHOP) ? FindWindow(EP1WidgetType::WIDGET_SHOP) : nullptr)
+    {
+        // 상점은 UI 모드다. 게임 입력이 들어가면 상점을 연 채 전투 모드를 켜고 공격하거나, 퀵슬롯을 쓰거나, 다른 창을 다시 연다.
+        // 메뉴 키와 채팅 키는 상점 창이 받는다.
+        FInputModeUIOnly InputMode;
+        InputMode.SetWidgetToFocus(ShopWindow->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+        PC->bShowMouseCursor = true;
+        PC->SetInputMode(InputMode);
+    }
     else if (OpenWindowFlags != 0)
     {
         PC->bShowMouseCursor = true;
@@ -252,12 +264,12 @@ void UP1ScreenSubsystem::SyncShopNpc() const
         MyPlayerData->GetItemActions()->SetShopNpc(IsWindowOpen(EP1WidgetType::WIDGET_SHOP) ? ShopNpcEntityId : 0);
 }
 
-void UP1ScreenSubsystem::OpenShop(int64 NpcEntityId, int32 ShopId)
+bool UP1ScreenSubsystem::OpenShop(int64 NpcEntityId, int32 ShopId)
 {
     UP1ShopWidget* ShopWidget = Cast<UP1ShopWidget>(FindWindow(EP1WidgetType::WIDGET_SHOP));
     APlayerController* PC = OwningPlayer.Get();
     if (ShopWidget == nullptr || PC == nullptr)
-        return;
+        return false;
 
     // 상점과 인벤토리만 남긴다. 다른 창은 닫은 채로 두고 상점을 닫아도 되살리지 않는다.
     for (const TPair<EP1WidgetType, TObjectPtr<UUserWidget>>& Window : WindowWidgets)
@@ -273,6 +285,7 @@ void UP1ScreenSubsystem::OpenShop(int64 NpcEntityId, int32 ShopId)
     ShopWidget->SetShop(ShopId);
     OpenWindow(EP1WidgetType::WIDGET_INVENTORY);
     OpenWindow(EP1WidgetType::WIDGET_SHOP);
+    return true;
 }
 
 void UP1ScreenSubsystem::CloseShop()
