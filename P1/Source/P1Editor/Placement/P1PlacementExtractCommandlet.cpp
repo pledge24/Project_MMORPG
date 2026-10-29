@@ -13,8 +13,7 @@
 #include "Misc/Paths.h"
 #include "Placement/P1PlacementCheck.h"
 #include "UObject/Package.h"
-
-DEFINE_LOG_CATEGORY_STATIC(LogP1Placement, Log, All);
+#include "Utils/LogCategory.h"
 
 namespace
 {

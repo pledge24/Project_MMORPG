@@ -282,7 +282,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
 세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
-지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`, `FindMapPlacement`가 찾는다(아래 「배치 추출」).
+지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`가 찾는다(아래 「배치 추출」).
 초기 진행은 `Gamedata::GetInitialProgress`가 생성된 `DesignData::ProgressConfig`로 돌려준다.
 
 `LobbyData::LoadAll()`이 `Lobby/Data/Generated/`에서 `Lobby.json`을 생성된 `LobbyDesignData::ParseLobby`로 읽는다. 로비 코드는
@@ -625,6 +625,7 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 번호와 대조한다. 검사는 레벨을 모르는 `FP1PlacementCheck`(`P1/Source/P1Editor/Placement/`)가 한다.
 
 - 레벨마다 맵 마커가 하나다. 맵 번호가 맵 표에 있다. 셀 크기와 상자의 반경이 0보다 크다
+- 맵 표의 맵마다 프로젝트 설정의 맵 표(`MapLevels`)에 레벨이 있다
 - 지역 볼륨의 지역 번호가 지역 표에 있고, 지역 표에서 그 맵의 지역이다. 그 맵의 지역마다 볼륨이 하나다
 - 지역끼리 겹치지 않는다. 경계는 함께 쓸 수 있다
 - 지역 볼륨과 모든 마커와 포털이 맵 경계 안에 있다. 상자 모양의 마커는 회전하지 않는다

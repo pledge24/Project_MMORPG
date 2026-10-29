@@ -195,6 +195,11 @@ bool FP1PlacementCheckTest::RunTest(const FString& Parameters)
         Level = MakeLevel();
         Level.MapMarkers.Empty();
         ExpectRejected(TEXT("맵 마커가 없는 레벨"), Level, MakeDesign(), { TEXT("L_Test"), TEXT("맵 마커") });
+
+        // 맵 표에 있는데 프로젝트 설정의 맵 표에 레벨이 없으면 추출할 레벨이 없다. 서버는 그 맵의 배치 데이터가 없어 뜨지 않는다.
+        FP1PlacementCheck::FDesignData Design = MakeDesign();
+        Design.MapIds.Add(2222);
+        ExpectRejected(TEXT("레벨이 없는 맵"), MakeLevel(), Design, { TEXT("맵 2222"), TEXT("레벨") });
     }
 
     // 7) 리스폰 지점은 마을에 하나다.

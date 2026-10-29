@@ -211,7 +211,6 @@ def drop_group_used_by_monster(table: Table, data: DesignData) -> list[str]:
     ]
 
 
-
 def not_negative(column: str) -> Callable[[Table, DesignData], list[str]]:
     def rule(table: Table, _: DesignData) -> list[str]:
         return [
@@ -223,7 +222,6 @@ def not_negative(column: str) -> Callable[[Table, DesignData], list[str]]:
     return rule
 
 
-
 def exactly_one_town(table: Table, _: DesignData) -> list[str]:
     """리스폰 지점이 있는 지역이 마을이다. 사망한 플레이어가 돌아갈 곳이 하나로 정해져야 한다."""
     towns = [row for row in table.rows if row.values["HasRespawnPoint"]]
@@ -231,7 +229,6 @@ def exactly_one_town(table: Table, _: DesignData) -> list[str]:
         return []
     places = ", ".join(f"시트 '{row.sheet}' {row.number}행" for row in towns)
     return [f"{table.config.workbook}: HasRespawnPoint가 참인 지역(마을)이 하나여야 하는데 {len(towns)}개다" + (f" ({places})" if places else "")]
-
 
 
 def locate_field(setting: Setting, name: str) -> str:

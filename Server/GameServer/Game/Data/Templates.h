@@ -46,8 +46,7 @@ struct GamedataTables
     /** 새 캐릭터가 첫 게임 입장에서 갖는 값. 시작 맵은 맵 표에 있고 시작 골드는 0 이상이다(DataBuilder가 검사한다). */
     DesignData::ProgressConfig initialProgress;
 
-    // 배치 데이터. 맵 표의 맵마다, 지역 표의 지역마다, 포털 표의 포털마다 하나씩 있고 마을에는 리스폰 지점이 있다(기동할 때 대조한다).
-    // 지역끼리 겹치지 않고, 포털의 출발과 도착이 그 지역 안에 있다(추출이 검사한다).
+    // 배치 데이터. 맵, 지역, 포털마다 하나씩 있고 마을에는 리스폰 지점이 있다(기동할 때 대조하고, 위치는 추출이 검사한다).
     map<int32, MapPlacement> mapPlacements;
     map<int32, AreaPlacement> areaPlacements;
     map<int32, PortalPlacement> portalPlacements;

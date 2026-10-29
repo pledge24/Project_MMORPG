@@ -403,7 +403,16 @@ FP1PlacementCheck::FResult FP1PlacementCheck::Run(const TArray<FLevel>& Levels, 
         }
     }
 
-    // 2) 레벨을 넘는 검사. 포털의 도착 지점은 도착 지역의 맵 레벨에서 그 지역 안에 있어야 한다.
+    // 2) 레벨을 넘는 검사. 맵 표의 맵마다 레벨이 있어야 서버가 그 맵의 배치 데이터를 받는다.
+    TArray<int32> DesignMapIds = Design.MapIds.Array();
+    DesignMapIds.Sort();
+    for (int32 MapId : DesignMapIds)
+    {
+        if (ExtractedMapIds.Contains(MapId) == false)
+            Error(FString::Printf(TEXT("맵 %d의 레벨이 없다. 프로젝트 설정 「P1 Game Data」의 맵 표(MapLevels)에 레벨을 더한다"), MapId));
+    }
+
+    // 포털의 도착 지점은 도착 지역의 맵 레벨에서 그 지역 안에 있어야 한다.
     for (const TPair<int32, FDesignData::FPortal>& DesignPortal : Design.Portals)
     {
         const FDesignData::FArea* Owner = Design.Areas.Find(DesignPortal.Value.AreaId);

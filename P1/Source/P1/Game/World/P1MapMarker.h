@@ -18,7 +18,7 @@ public:
     float GetCellSize() const { return CellSize; }
 
 private:
-    /** 서버가 맵을 나누는 셀 한 변의 길이(cm). 플레이어는 자기 셀과 이웃한 셀의 엔티티를 받는다. */
+    /** 서버가 맵을 AOI 셀로 나눌 때 셀 한 변의 길이(cm). 배치 데이터에 실린다. */
     UPROPERTY(EditAnywhere, Category = "Placement", meta = (ClampMin = "1"))
     float CellSize = 1000.f;
 };

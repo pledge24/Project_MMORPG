@@ -50,7 +50,6 @@ public:
     static int32 GetTownAreaId() { return s_tables.townAreaId; }
 
     /** 배치 데이터. Find*는 없는 번호면 nullptr. 기동할 때 기획 데이터의 맵, 지역, 포털마다 있는지 대조한다. */
-    static const MapPlacement* FindMapPlacement(int32 mapId);
     static const AreaPlacement* FindAreaPlacement(int32 areaId);
     static const PortalPlacement* FindPortalPlacement(int32 portalId);
     /** 그 지역의 리스폰 지점. 리스폰 지점이 없는 지역이면 nullptr. */
