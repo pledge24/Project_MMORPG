@@ -83,6 +83,8 @@ private:
     void TeleportPlayer(const PlayerRef& player, const Protocol::PosInfo& pos);
     /** 본인에게 룸 입장 응답과 주변 엔티티의 스폰을 보내고, 주변 플레이어에게 본인의 스폰을 알린다. */
     void AnnounceEnter(const PlayerRef& player);
+    /** 포털 이동과 리스폰이 들어갈 룸. 이 룸의 맵이면 이 룸, 다른 맵이면 그 맵에서 인원이 가장 적은 채널이다. 맵이 없으면 nullptr. */
+    RoomRef SelectDestinationRoom(int32 mapId);
 
     //~ 클라이언트 패킷 핸들러
 public:

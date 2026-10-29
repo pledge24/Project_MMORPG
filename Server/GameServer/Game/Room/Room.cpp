@@ -359,6 +359,15 @@ void Room::AnnounceEnter(const PlayerRef& player)
     BroadcastNearby(playerId, MakeSpawnPacket(player), playerId);
 }
 
+RoomRef Room::SelectDestinationRoom(int32 mapId)
+{
+    // 같은 맵이면 채널을 지킨 채 이 룸 안에서 옮긴다.
+    if (mapId == GetMapId())
+        return GetRoomRef();
+
+    return GRoomManager->SelectRoom(mapId);
+}
+
 void Room::C_HandleMapLoadComplete(PlayerRef player)
 {
     // 잡을 넣은 뒤 다른 룸으로 옮겼으면 이 룸 큐는 그 플레이어의 상태를 읽지 않는다.
@@ -425,8 +434,7 @@ void Room::C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player)
         return;
     }
 
-    // 같은 맵이면 채널을 지킨 채 이 룸 안에서 옮긴다. 다른 맵이면 그 맵에서 인원이 가장 적은 채널로 간다.
-    RoomRef destination = dest->mapId == GetMapId() ? GetRoomRef() : GRoomManager->SelectRoom(dest->mapId);
+    RoomRef destination = SelectDestinationRoom(dest->mapId);
     if (destination == nullptr)
     {
         reject(Protocol::ENTRY_RESULT_INTERNAL_ERROR, format("포털 {}의 도착 맵 {}에 룸이 없다", portal->Id, dest->mapId));
@@ -519,11 +527,8 @@ void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
         return;
     }
 
-    // 마을이 이 룸의 맵에 있으면 채널을 지킨 채 이 룸 안에서 옮긴다.
     optional<MapPosition> town = RoomTransfer::FindTownRespawn();
-    RoomRef destination = nullptr;
-    if (town.has_value())
-        destination = town->mapId == GetMapId() ? GetRoomRef() : GRoomManager->SelectRoom(town->mapId);
+    RoomRef destination = town.has_value() ? SelectDestinationRoom(town->mapId) : nullptr;
     if (destination == nullptr)
     {
         reject(Protocol::ENTRY_RESULT_INTERNAL_ERROR);
@@ -877,17 +882,11 @@ void Room::BroadcastNearby(int64 sourceId, SendBufferRef sendBuffer, int64 excep
 
 void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 {
-	for (auto& item : _entities)
-	{
-		PlayerRef player = dynamic_pointer_cast<Player>(item.second);
-		if (player == nullptr)
-			continue;
-		if (player->GetEntityId() == exceptId)
-			continue;
-
-		if (GameSessionRef session = player->GetSession())
-			session->Send(sendBuffer);
-	}
+    for (auto& [entityId, entity] : _entities)
+    {
+        if (entityId != exceptId)
+            SendToPlayer(entity, sendBuffer);
+    }
 }
 
 void Room::RefreshVisibility()
