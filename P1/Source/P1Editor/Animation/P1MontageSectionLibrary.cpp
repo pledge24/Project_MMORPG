@@ -57,10 +57,31 @@ bool UP1MontageSectionLibrary::SetSequenceSections(UAnimMontage* Montage, const 
         Montage->AddAnimCompositeSection(SectionNames[Index], SectionStarts[Index]);
 
     // 엔진은 새 섹션을 앞 섹션의 다음 섹션으로 잇는다. 이어 두면 입력이 없어도 다음 단계가 재생되므로 끊는다.
-    for (FCompositeSection& Section : Montage->CompositeSections)
-        Section.NextSectionName = NAME_None;
+    UnlinkSections(Montage);
 
     Montage->PostEditChange();
     Montage->MarkPackageDirty();
     return true;
+}
+
+int32 UP1MontageSectionLibrary::UnlinkSections(UAnimMontage* Montage)
+{
+    if (Montage == nullptr)
+        return 0;
+
+    int32 Unlinked = 0;
+    for (FCompositeSection& Section : Montage->CompositeSections)
+    {
+        if (Section.NextSectionName == NAME_None)
+            continue;
+
+        if (Unlinked == 0)
+            Montage->Modify();
+        Section.NextSectionName = NAME_None;
+        ++Unlinked;
+    }
+
+    if (Unlinked > 0)
+        Montage->MarkPackageDirty();
+    return Unlinked;
 }

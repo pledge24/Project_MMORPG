@@ -24,4 +24,8 @@ public:
      */
     UFUNCTION(BlueprintCallable, Category = "P1|Montage")
     static bool SetSequenceSections(UAnimMontage* Montage, const TArray<UAnimSequenceBase*>& Sequences, const TArray<FName>& SectionNames);
+
+    /** 섹션끼리의 연결(다음 섹션)을 모두 끊고 끊은 연결의 수를 돌려준다. 몽타주가 없으면 0. */
+    UFUNCTION(BlueprintCallable, Category = "P1|Montage")
+    static int32 UnlinkSections(UAnimMontage* Montage);
 };

@@ -2,7 +2,7 @@
 //
 // 왜 이것인가: 전사 콤보는 단계마다 회복 동작이 있는 시퀀스 넷을 몽타주 하나에 이어 붙인 것이다. 섹션 경계가 시퀀스 경계와 어긋나거나
 // 섹션끼리 이어져 있으면, 입력이 없어도 다음 단계가 재생되거나 단계의 타격 시점이 다른 섹션에 들어간다.
-// 서버는 섹션마다 타격 시점과 입력 창 시점을 몽타주에서 가져가야 하므로, 섹션마다 노티파이가 빠지지 않아야 한다.
+// 서버는 섹션마다 타격 시점과 입력 창 구간을 몽타주에서 가져가야 하므로, 섹션마다 노티파이가 빠지지 않아야 한다.
 //
 // 실행: pwsh P1/Scripts/Run-UeTests.ps1 -Filter P1.Editor.MontageSections
 
@@ -11,7 +11,7 @@
 #include "Animation/AnimSequence.h"
 #include "Animation/P1MontageSectionLibrary.h"
 #include "Game/Combat/P1AnimNotify_AttackHit.h"
-#include "Game/Combat/P1AnimNotify_ComboWindow.h"
+#include "Game/Combat/P1AnimNotifyState_ComboWindow.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -30,11 +30,13 @@ namespace P1MontageSectionLibraryTest
 
     const TCHAR* const COMBO_MONTAGE = TEXT("/Game/P1/Characters/Player/Animations/AM_AttackA_Combo.AM_AttackA_Combo");
 
-    /** 전사 콤보 몽타주의 노티파이 시점(몽타주 시작 기준 초). 옛 몽타주 넷의 시점을 섹션 시작만큼 옮긴 값이고, 마지막 단계에는 입력 창이 없다. */
-    const float COMBO_HIT_TIMES[] = { 1.09f, 2.613333f, 3.41f, 4.89f };
-    const float COMBO_WINDOW_TIMES[] = { 1.255599f, 2.730454f, 3.497609f };
+    /** 전사 콤보 몽타주의 타격 시점과 입력 창 구간(몽타주 시작 기준 초). 에디터에서 맞춘 값이고, 마지막 단계에는 입력 창이 없다. */
+    const float COMBO_HIT_TIMES[] = { 0.842387f, 2.613333f, 3.41f, 5.018222f };
+    const float COMBO_WINDOW_STARTS[] = { 0.950978f, 2.841457f, 3.497609f };
+    const float COMBO_WINDOW_ENDS[] = { 1.066667f, 3.166667f, 3.966667f };
     static_assert(UE_ARRAY_COUNT(COMBO_HIT_TIMES) == COMBO_STEP_COUNT);
-    static_assert(UE_ARRAY_COUNT(COMBO_WINDOW_TIMES) == COMBO_STEP_COUNT - 1);
+    static_assert(UE_ARRAY_COUNT(COMBO_WINDOW_STARTS) == COMBO_STEP_COUNT - 1);
+    static_assert(UE_ARRAY_COUNT(COMBO_WINDOW_ENDS) == COMBO_STEP_COUNT - 1);
 
     constexpr float TIME_TOLERANCE = 1.e-4f;
 
@@ -86,23 +88,24 @@ namespace P1MontageSectionLibraryTest
         Test.TestEqual(TEXT("몽타주 길이"), Montage.GetPlayLength(), Expected, TIME_TOLERANCE);
     }
 
-    /** 섹션 [Start, End)에 든 T 타입 노티파이의 시점(몽타주 시작 기준). 마지막 섹션만 끝을 포함한다. */
+    /** 섹션 [Start, End)에서 시작하는 T 타입 노티파이나 노티파이 스테이트. 마지막 섹션만 끝을 포함한다. */
     template <typename T>
-    TArray<float> NotifyTimesInSection(const UAnimMontage& Montage, int32 SectionIndex)
+    TArray<const FAnimNotifyEvent*> NotifiesInSection(const UAnimMontage& Montage, int32 SectionIndex)
     {
         float Start = 0.f;
         float End = 0.f;
         Montage.GetSectionStartAndEndTime(SectionIndex, Start, End);
         const bool bLastSection = SectionIndex == Montage.CompositeSections.Num() - 1;
 
-        TArray<float> Times;
+        TArray<const FAnimNotifyEvent*> Found;
         for (const FAnimNotifyEvent& Notify : Montage.Notifies)
         {
+            const bool bIsT = Cast<T>(Notify.Notify) || Cast<T>(Notify.NotifyStateClass);
             const float Time = Notify.GetTriggerTime();
-            if (Cast<T>(Notify.Notify) && Time >= Start && (Time < End || (bLastSection && Time <= End)))
-                Times.Add(Time);
+            if (bIsT && Time >= Start && (Time < End || (bLastSection && Time <= End)))
+                Found.Add(&Notify);
         }
-        return Times;
+        return Found;
     }
 }
 
@@ -180,6 +183,33 @@ bool FP1MontageSectionLibraryTest::RunTest(const FString& Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FP1MontageUnlinkSectionsTest,
+    "P1.Editor.MontageSections.UnlinkSections",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FP1MontageUnlinkSectionsTest::RunTest(const FString& Parameters)
+{
+    using namespace P1MontageSectionLibraryTest;
+
+    const TArray<UAnimSequenceBase*> Sequences = LoadSequences();
+    if (TestNotNull(TEXT("전사 공격 시퀀스"), Sequences[0]) == false)
+        return false;
+
+    // 에디터의 섹션 패널에서 이은 것처럼 섹션을 차례로 이어 두고 끊는다.
+    UAnimMontage* Montage = MakeMontage(*Sequences[0]);
+    UP1MontageSectionLibrary::SetSequenceSections(Montage, Sequences, ComboSectionNames());
+    const TArray<FName> Names = ComboSectionNames();
+    for (int32 Index = 0; Index + 1 < Names.Num(); ++Index)
+        Montage->CompositeSections[Index].NextSectionName = Names[Index + 1];
+
+    TestEqual(TEXT("끊은 연결 수"), UP1MontageSectionLibrary::UnlinkSections(Montage), Names.Num() - 1);
+    TestSectionsFollowSequences(*this, *Montage, Sequences);
+    TestEqual(TEXT("다시 끊은 연결 수"), UP1MontageSectionLibrary::UnlinkSections(Montage), 0);
+    TestEqual(TEXT("빈 몽타주"), UP1MontageSectionLibrary::UnlinkSections(nullptr), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FP1WarriorComboMontageTest,
     "P1.Editor.MontageSections.WarriorCombo",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -197,19 +227,28 @@ bool FP1WarriorComboMontageTest::RunTest(const FString& Parameters)
     if (Montage->CompositeSections.Num() != COMBO_STEP_COUNT)
         return false;
 
-    // 섹션마다 타격이 하나이고, 다음 단계가 없는 마지막 섹션에는 입력 창이 없다.
+    // 섹션마다 타격이 하나이고, 입력 창은 섹션 안에서 끝난다. 다음 단계가 없는 마지막 섹션에는 입력 창이 없다.
     for (int32 Index = 0; Index < COMBO_STEP_COUNT; ++Index)
     {
         const FString What = Montage->GetSectionName(Index).ToString();
-        const TArray<float> HitTimes = NotifyTimesInSection<UP1AnimNotify_AttackHit>(*Montage, Index);
-        const TArray<float> WindowTimes = NotifyTimesInSection<UP1AnimNotify_ComboWindow>(*Montage, Index);
+        const TArray<const FAnimNotifyEvent*> Hits = NotifiesInSection<UP1AnimNotify_AttackHit>(*Montage, Index);
+        const TArray<const FAnimNotifyEvent*> Windows = NotifiesInSection<UP1AnimNotifyState_ComboWindow>(*Montage, Index);
 
-        if (TestEqual(What + TEXT("의 타격 노티파이 수"), HitTimes.Num(), 1))
-            TestEqual(What + TEXT("의 타격 시점"), HitTimes[0], COMBO_HIT_TIMES[Index], TIME_TOLERANCE);
+        if (TestEqual(What + TEXT("의 타격 노티파이 수"), Hits.Num(), 1))
+            TestEqual(What + TEXT("의 타격 시점"), Hits[0]->GetTriggerTime(), COMBO_HIT_TIMES[Index], TIME_TOLERANCE);
 
         const bool bHasNextStep = Index < COMBO_STEP_COUNT - 1;
-        if (TestEqual(What + TEXT("의 콤보 입력 창 노티파이 수"), WindowTimes.Num(), bHasNextStep ? 1 : 0) && bHasNextStep)
-            TestEqual(What + TEXT("의 콤보 입력 창 시점"), WindowTimes[0], COMBO_WINDOW_TIMES[Index], TIME_TOLERANCE);
+        if (TestEqual(What + TEXT("의 콤보 입력 창 수"), Windows.Num(), bHasNextStep ? 1 : 0) == false || bHasNextStep == false)
+            continue;
+
+        float SectionStart = 0.f;
+        float SectionEnd = 0.f;
+        Montage->GetSectionStartAndEndTime(Index, SectionStart, SectionEnd);
+        TestEqual(What + TEXT("의 콤보 입력 창 시작"), Windows[0]->GetTriggerTime(), COMBO_WINDOW_STARTS[Index], TIME_TOLERANCE);
+        TestEqual(What + TEXT("의 콤보 입력 창 끝"), Windows[0]->GetEndTriggerTime(), COMBO_WINDOW_ENDS[Index], TIME_TOLERANCE);
+
+        // 입력 창은 그 단계의 입력을 받는 구간이므로 다음 섹션이 시작되기 전에 닫혀야 한다.
+        TestTrue(What + TEXT("의 콤보 입력 창이 섹션 안에서 끝남"), Windows[0]->GetEndTriggerTime() < SectionEnd);
     }
 
     TestEqual(TEXT("재생 속도"), Montage->RateScale, 1.f);
