@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Combat.pb.h"
+#include "Game/Combat/P1AnimNotifyState_ComboWindow.h"
 #include "Game/Combat/P1AttackAreaDebugDraw.h"
 #include "Game/Data/P1ActionAssetData.h"
 #include "Game/Data/P1GameDataSettings.h"
@@ -14,9 +15,6 @@
 
 namespace
 {
-    /** 콤보 입력 창 노티파이 스테이트가 몽타주 노티파이 이벤트로 보내는 이름. */
-    const FName COMBO_WINDOW_NOTIFY_NAME(TEXT("ComboWindow"));
-
     int32 FindNextComboAction(int32 ActionId)
     {
         const FP1ActionRow* Row = UP1GameDataSettings::FindActionRow(ActionId);
@@ -78,7 +76,7 @@ bool UP1ActionComponent::StartLocalAction(int32 ActionId)
 
 void UP1ActionComponent::HandleMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
 {
-    if (NotifyName != COMBO_WINDOW_NOTIFY_NAME || Payload.MontageInstanceID != ActionMontageInstanceId)
+    if (NotifyName != UP1AnimNotifyState_ComboWindow::NotifyEventName || Payload.MontageInstanceID != ActionMontageInstanceId)
         return;
 
     Combo.BeginWindow();
@@ -86,7 +84,7 @@ void UP1ActionComponent::HandleMontageNotifyBegin(FName NotifyName, const FBranc
 
 void UP1ActionComponent::HandleMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
 {
-    if (NotifyName != COMBO_WINDOW_NOTIFY_NAME || Payload.MontageInstanceID != ActionMontageInstanceId)
+    if (NotifyName != UP1AnimNotifyState_ComboWindow::NotifyEventName || Payload.MontageInstanceID != ActionMontageInstanceId)
         return;
 
     // 창 안에서 누른 입력이 있으면 창이 닫히는 지금 다음 단계로 넘어간다. 섹션 끝까지 기다리면 회복 동작을 다 본 뒤에야 이어진다.

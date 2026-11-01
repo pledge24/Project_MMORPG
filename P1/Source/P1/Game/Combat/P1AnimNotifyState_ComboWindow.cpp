@@ -5,13 +5,13 @@
 
 namespace
 {
-    const FName COMBO_WINDOW_NOTIFY_NAME(TEXT("ComboWindow"));
-
     UAnimInstance* FindAnimInstance(const FBranchingPointNotifyPayload& Payload)
     {
         return Payload.SkelMeshComponent ? Payload.SkelMeshComponent->GetAnimInstance() : nullptr;
     }
 }
+
+const FName UP1AnimNotifyState_ComboWindow::NotifyEventName(TEXT("ComboWindow"));
 
 UP1AnimNotifyState_ComboWindow::UP1AnimNotifyState_ComboWindow()
 {
@@ -30,7 +30,7 @@ void UP1AnimNotifyState_ComboWindow::BranchingPointNotifyBegin(FBranchingPointNo
 
     // 범용 몽타주 노티파이 윈도우와 같은 이벤트로 알린다. 액션 재생은 이 이름의 시작에서 입력 창을 열고, 끝에서 예약한 다음 단계로 넘어간다.
     if (UAnimInstance* AnimInstance = FindAnimInstance(BranchingPointPayload))
-        AnimInstance->OnPlayMontageNotifyBegin.Broadcast(COMBO_WINDOW_NOTIFY_NAME, BranchingPointPayload);
+        AnimInstance->OnPlayMontageNotifyBegin.Broadcast(NotifyEventName, BranchingPointPayload);
 }
 
 void UP1AnimNotifyState_ComboWindow::BranchingPointNotifyEnd(FBranchingPointNotifyPayload& BranchingPointPayload)
@@ -38,12 +38,12 @@ void UP1AnimNotifyState_ComboWindow::BranchingPointNotifyEnd(FBranchingPointNoti
     Super::BranchingPointNotifyEnd(BranchingPointPayload);
 
     if (UAnimInstance* AnimInstance = FindAnimInstance(BranchingPointPayload))
-        AnimInstance->OnPlayMontageNotifyEnd.Broadcast(COMBO_WINDOW_NOTIFY_NAME, BranchingPointPayload);
+        AnimInstance->OnPlayMontageNotifyEnd.Broadcast(NotifyEventName, BranchingPointPayload);
 }
 
 FString UP1AnimNotifyState_ComboWindow::GetNotifyName_Implementation() const
 {
-    return COMBO_WINDOW_NOTIFY_NAME.ToString();
+    return NotifyEventName.ToString();
 }
 
 #if WITH_EDITOR

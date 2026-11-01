@@ -27,4 +27,8 @@ public:
     virtual bool CanBePlaced(UAnimSequenceBase* Animation) const override;
 #endif
     //~ End UAnimNotifyState Interface
+
+public:
+    /** 몽타주 노티파이 이벤트로 보내는 이름. 액션 재생이 이 이름으로 입력 창의 시작과 끝을 고른다. */
+    static const FName NotifyEventName;
 };
