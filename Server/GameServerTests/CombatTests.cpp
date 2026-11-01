@@ -157,3 +157,44 @@ TEST_F(CombatTest, MonsterInfoHpFollowsStatAfterHit)
 
     EXPECT_EQ(monster->GetEntityInfo().monster_info().hp(), MONSTER_MAX_HP - 50) << "나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실려야 한다";
 }
+
+/*--------------------------------------------------------------
+    피해량 테스트
+
+    피해량은 액션의 피해 유형에 맞는 공격자의 공격력 × 액션의 계수다. 다른 유형의 공격력은 보지 않는다.
+    소수점 아래는 반올림한다.
+
+    픽스처 결합도: 없음. 전투 스탯 값과 순수 함수만 쓴다.
+---------------------------------------------------------------*/
+
+namespace
+{
+    CombatStats MakeAttackStats(int64 physicalAttack, int64 magicalAttack)
+    {
+        CombatStats stats;
+        stats.physicalAttack = physicalAttack;
+        stats.magicalAttack = magicalAttack;
+        return stats;
+    }
+}
+
+TEST(CombatDamage, PhysicalDamageUsesPhysicalAttack)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(100, 7), DamageType::Physical, 1.5f), 150);
+}
+
+TEST(CombatDamage, MagicalDamageUsesMagicalAttack)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(7, 100), DamageType::Magical, 1.5f), 150);
+}
+
+TEST(CombatDamage, FractionIsRounded)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(33, 0), DamageType::Physical, 1.5f), 50) << "49.5는 50이다";
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(33, 0), DamageType::Physical, 1.4f), 46) << "46.2는 46이다";
+}
+
+TEST(CombatDamage, ZeroCoefficientDealsNoDamage)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(100, 100), DamageType::Physical, 0.f), 0);
+}

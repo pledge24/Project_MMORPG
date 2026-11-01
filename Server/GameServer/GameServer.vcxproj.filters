@@ -224,6 +224,9 @@
     <ClCompile Include="Game\Combat\Combat.cpp">
       <Filter>Game\Combat</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Combat\AttackArea.cpp">
+      <Filter>Game\Combat</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
     </ClCompile>
@@ -446,6 +449,9 @@
       <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="Game\Combat\Combat.h">
+      <Filter>Game\Combat</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Combat\AttackArea.h">
       <Filter>Game\Combat</Filter>
     </ClInclude>
     <ClInclude Include="Game\Equipment\EquipmentComponent.h">

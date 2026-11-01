@@ -115,6 +115,7 @@
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
+    <ClCompile Include="AttackAreaTests.cpp" />
     <ClCompile Include="CombatRequestTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="ChatRequestsTests.cpp" />
@@ -264,6 +265,9 @@
       <Filter>GameServer\Network</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp">
+      <Filter>GameServer\Game\Combat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Combat\AttackArea.cpp">
       <Filter>GameServer\Game\Combat</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp">

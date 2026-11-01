@@ -37,3 +37,10 @@ optional<Combat::HitResult> Combat::ResolveHit(const EntityRef& attacker, const 
 
     return result;
 }
+
+int64 Combat::CalcDamage(const CombatStats& attackerStats, DamageType damageType, float coefficient)
+{
+    // 다른 유형의 공격력은 섞지 않는다.
+    const int64 attack = damageType == DamageType::Magical ? attackerStats.magicalAttack : attackerStats.physicalAttack;
+    return llround(static_cast<double>(attack) * coefficient);
+}

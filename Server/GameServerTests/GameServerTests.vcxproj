@@ -201,6 +201,7 @@
     <ClCompile Include="ProtocolContractTests.cpp" />
     <ClCompile Include="PacketDispatchTests.cpp" />
     <ClCompile Include="CombatTests.cpp" />
+    <ClCompile Include="AttackAreaTests.cpp" />
     <ClCompile Include="CombatRequestTests.cpp" />
     <ClCompile Include="CharacterCreationTests.cpp" />
     <ClCompile Include="ChatRequestsTests.cpp" />
@@ -301,6 +302,7 @@
     <ClCompile Include="..\GameServer\Game\Items\ItemContainer.cpp" />
     <ClCompile Include="..\GameServer\Network\ItemPackets.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
+    <ClCompile Include="..\GameServer\Game\Combat\AttackArea.cpp" />
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\QuickSlots\QuickSlotComponent.cpp" />
     <ClCompile Include="..\GameServer\DB\QuickSlotDAO.cpp" />

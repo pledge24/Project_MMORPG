@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/Combat/CombatTypes.h"
+#include "Game/Entities/CombatStats.h"
 
 /**
  * 피격과 처치의 판정.
@@ -32,4 +33,7 @@ namespace Combat
      * 공격자나 대상이 이미 사망했으면 아무것도 바꾸지 않고 nullopt.
      */
     optional<HitResult> ResolveHit(const EntityRef& attacker, const CreatureRef& target, const AttackInfo& attackInfo);
+
+    /** 피해 유형에 맞는 공격자의 공격력 × 계수를 반올림한 피해량. 룸과 엔티티를 모르는 순수 함수다. */
+    int64 CalcDamage(const CombatStats& attackerStats, DamageType damageType, float coefficient);
 }
