@@ -230,6 +230,7 @@
     <ClInclude Include="Game\Combat\Combat.h" />
     <ClInclude Include="Game\Combat\AttackArea.h" />
     <ClInclude Include="Game\Action\ActionComponent.h" />
+    <ClInclude Include="Game\Action\ActionValidation.h" />
     <ClInclude Include="Game\Data\ActionData.h" />
     <ClInclude Include="Game\Combat\CombatTypes.h" />
     <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
@@ -350,6 +351,7 @@
     <ClCompile Include="Game\Combat\Combat.cpp" />
     <ClCompile Include="Game\Combat\AttackArea.cpp" />
     <ClCompile Include="Game\Action\ActionComponent.cpp" />
+    <ClCompile Include="Game\Action\ActionValidation.cpp" />
     <ClCompile Include="Game\Data\ActionData.cpp" />
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="Game\QuickSlots\QuickSlotComponent.cpp" />

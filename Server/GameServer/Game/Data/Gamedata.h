@@ -74,6 +74,8 @@ public:
     static const CreatureCombat* FindMonsterCombat(int32 templateId);
     static const CreatureCombat* FindClassCombat(Protocol::CharacterClass classId);
     static const ActionTiming* FindActionTiming(int32 actionId);
+    /** 액션 타이밍의 루트 모션 곡선이 1초에 담는 표본 수. 크리처 판정 데이터를 설치하지 않았으면 0. */
+    static int32 GetRootMotionSampleRate() { return s_tables.rootMotionSampleRate; }
 
     /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }

@@ -6,6 +6,7 @@
 #include "Game/Combat/Combat.h"
 #include "Game/Combat/AttackArea.h"
 #include "Game/Action/ActionComponent.h"
+#include "Game/Action/ActionValidation.h"
 #include "Game/Data/ActionData.h"
 #include "Game/Room/MoveValidation.h"
 #include "Game/Navigation/NavMeshes.h"
@@ -552,20 +553,75 @@ void Room::C_HandleAction(Protocol::C_ACTION pkt, PlayerRef player)
     if (Contains(entityId) == false)
         return;
 
-    // 사망한 플레이어는 리스폰할 때까지 룸에 남으므로 여기서 거른다.
-    const bool isDead = player->IsDead();
-
     Protocol::S_ACTION actionPkt;
-    actionPkt.set_result(isDead ? Protocol::COMBAT_RESULT_DEAD : Protocol::COMBAT_RESULT_SUCCESS);
-    if (GameSessionRef session = player->GetSession())
-        SendPacket(session, actionPkt);
+    auto respond = [&](const optional<ActionRejection>& rejection)
+        {
+            if (rejection.has_value())
+                GLogger->Warning("플레이어 {}의 액션 {}을 거절한다: {}", entityId, pkt.action_id(), rejection->reason);
 
-    if (isDead)
+            actionPkt.set_result(rejection.has_value() ? rejection->result : Protocol::COMBAT_RESULT_SUCCESS);
+            if (GameSessionRef session = player->GetSession())
+                SendPacket(session, actionPkt);
+        };
+
+    // 사망한 플레이어는 리스폰할 때까지 룸에 남으므로 여기서 거른다.
+    if (player->IsDead())
+    {
+        respond(ActionRejection{ Protocol::COMBAT_RESULT_DEAD, "사망했다" });
         return;
+    }
 
-    // 플레이어의 액션은 아직 알리기만 하고 판정하지 않는다. 액션 번호, 방향, 시작 위치의 검증은 판정과 함께 더한다.
-    // 액션을 시작한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
-    BroadcastActionStart(entityId, pkt.action_id(), pkt.yaw());
+    if (optional<ActionRejection> rejection = ActionValidation::ValidateYaw(pkt.yaw()))
+    {
+        respond(rejection);
+        return;
+    }
+
+    // 직업 표는 직업별 능력치 표의 직업마다 있다(DataBuilder가 검사한다). 없으면 표를 바꿔 끼운 테스트다.
+    const DesignData::ClassRow* classRow = Gamedata::FindClass(player->GetCharacterClass());
+    if (classRow == nullptr)
+    {
+        respond(ActionRejection{ Protocol::COMBAT_RESULT_INVALID_ACTION, format("직업 {}이 직업 표에 없다", static_cast<int32>(player->GetCharacterClass())) });
+        return;
+    }
+
+    ActionComponent& action = player->GetAction();
+    if (optional<ActionRejection> rejection = ActionValidation::ValidateCombo(pkt.action_id(), classRow->NormalAttackAction, action.GetLastAction()))
+    {
+        respond(rejection);
+        return;
+    }
+
+    // 시작 위치는 클라이언트가 액션을 시작한 순간의 캡슐 중심이다. 이동 패킷과 같은 규칙으로 판정하고, 통과하면 그 위치로 옮긴다.
+    // 거절하면 서버의 위치를 그대로 둔다. 시작 위치를 믿으면 공격 패킷으로 이동 판정을 건너뛰어 순간이동할 수 있다.
+    const uint64 now = ::GetTickCount64();
+    const vector3D from = MathUtil::PosInfoToVector3D(player->GetPosInfo());
+    const vector3D startPos(pkt.start_pos().x(), pkt.start_pos().y(), pkt.start_pos().z());
+    if (optional<string> rejection = MoveValidation::Validate(from, startPos, now - player->GetLastPositionTick(), _map.bounds, _navQuery.get()))
+    {
+        respond(ActionRejection{ Protocol::COMBAT_RESULT_INVALID_POSITION, rejection.value() });
+        return;
+    }
+
+    Protocol::PosInfo startPosInfo = player->GetPosInfo();
+    {
+        startPosInfo.mutable_pos()->set_x(startPos.x);
+        startPosInfo.mutable_pos()->set_y(startPos.y);
+        startPosInfo.mutable_pos()->set_z(startPos.z);
+        startPosInfo.set_yaw(pkt.yaw());
+    }
+    player->ApplyMove(startPosInfo, now);
+    UpdateVisibility(player);
+
+    // 판정 데이터의 대조는 기동할 때 끝났으므로 실패하면 표를 바꿔 끼운 테스트다.
+    // 액션을 시작한 순간의 방향은 클라이언트만 안다. 시작하면 주변에 알리고, 타격은 액션 부품이 타격 시점마다 판정한다.
+    if (action.StartAction(pkt.action_id(), pkt.yaw()) == false)
+    {
+        respond(ActionRejection{ Protocol::COMBAT_RESULT_INVALID_ACTION, "액션 표나 크리처 판정 데이터에 없다" });
+        return;
+    }
+
+    respond(nullopt);
 }
 
 void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)

@@ -213,6 +213,8 @@
     <ClCompile Include="RoomChannelTests.cpp" />
     <ClCompile Include="RoomVisibilityTests.cpp" />
     <ClCompile Include="MoveValidationTests.cpp" />
+    <ClCompile Include="ActionValidationTests.cpp" />
+    <ClCompile Include="ActionHitPoseTests.cpp" />
     <ClCompile Include="PlayerItemRequestTests.cpp" />
     <ClCompile Include="QuickSlotTests.cpp" />
     <ClCompile Include="CellMatrixTests.cpp" />
@@ -304,6 +306,7 @@
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\AttackArea.cpp" />
     <ClCompile Include="..\GameServer\Game\Action\ActionComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\Action\ActionValidation.cpp" />
     <ClCompile Include="..\GameServer\Game\Data\ActionData.cpp" />
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\QuickSlots\QuickSlotComponent.cpp" />

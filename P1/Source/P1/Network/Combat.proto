@@ -10,6 +10,10 @@ enum CombatResult
 {
     COMBAT_RESULT_SUCCESS = 0;
     COMBAT_RESULT_DEAD = 1;                 // 사망한 플레이어는 공격할 수 없다
+    COMBAT_RESULT_INVALID_ACTION = 2;       // 직업의 콤보 첫 단계도, 직전 액션의 다음 단계도 아니다
+    COMBAT_RESULT_TOO_EARLY = 3;            // 직전 액션이 끝나지 않았고 그 콤보 입력 창도 아직 열리지 않았다
+    COMBAT_RESULT_INVALID_POSITION = 4;     // 시작 위치가 이동 판정을 통과하지 못했다
+    COMBAT_RESULT_INVALID_YAW = 5;          // 시작 방향이 -180도에서 180도 사이의 수가 아니다
 }
 
 // 내 플레이어가 액션을 시작했다. 클라이언트는 몽타주를 먼저 재생하고 보낸다
@@ -20,6 +24,7 @@ message C_ACTION
     Vector start_pos = 3;                   // 시작 위치(캡슐 중심)
 }
 
+// 액션 요청의 결과. 요청한 플레이어에게만 간다. 거절이면 클라이언트는 몽타주를 멈추고 콤보를 첫 단계로 돌린다
 message S_ACTION
 {
     CombatResult result = 1;

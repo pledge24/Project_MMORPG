@@ -233,6 +233,9 @@
     <ClCompile Include="Game\Action\ActionComponent.cpp">
       <Filter>Game\Action</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Action\ActionValidation.cpp">
+      <Filter>Game\Action</Filter>
+    </ClCompile>
     <ClCompile Include="Game\Data\ActionData.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
@@ -464,6 +467,9 @@
       <Filter>Game\Combat</Filter>
     </ClInclude>
     <ClInclude Include="Game\Action\ActionComponent.h">
+      <Filter>Game\Action</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Action\ActionValidation.h">
       <Filter>Game\Action</Filter>
     </ClInclude>
     <ClInclude Include="Game\Data\ActionData.h">
