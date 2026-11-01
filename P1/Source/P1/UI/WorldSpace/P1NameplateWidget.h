@@ -36,6 +36,11 @@ public:
     void InitializePlayerNameplate(AP1Player* TargetPlayer);
     void InitializeMonsterNameplate(AP1Monster* TargetMonster);
 
+private:
+    /** 몬스터가 맞으면 서버가 보낸 남은 HP로 막대를 줄인다. */
+    UFUNCTION()
+    void HandleMonsterHit(const int64& Damage, const int64& UpdatedHp);
+
     //~ Display
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))

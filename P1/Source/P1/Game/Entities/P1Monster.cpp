@@ -31,6 +31,13 @@ void AP1Monster::Initialize(const Protocol::EntityInfo& EntityInfo)
     CurHp = _MonsterInfo.hp();
 }
 
+void AP1Monster::S_Hit(int64 Damage, int64 UpdatedHp)
+{
+    CurHp = UpdatedHp;
+
+    Super::S_Hit(Damage, UpdatedHp);
+}
+
 void AP1Monster::S_Die()
 {
     Super::S_Die();
