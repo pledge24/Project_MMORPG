@@ -41,8 +41,8 @@ public:
     virtual bool IsMyPlayer() const override { return true; }
 
 protected:
-    /** 내 캐릭터의 공격은 입력이 시작한다. 서버 통지로 다시 재생하지 않는다. */
-    virtual void S_NormalAttack(uint32 Combo, float Yaw) override final {};
+    /** 내 캐릭터의 액션은 입력이 시작한다. 서버 통지로 다시 재생하지 않는다. */
+    virtual void S_ActionStart(int32 ActionId, float Yaw) override final {};
     //~ End AP1Creature Interface
 
     //~ Camera

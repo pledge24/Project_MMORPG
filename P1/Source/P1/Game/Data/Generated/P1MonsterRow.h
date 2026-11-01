@@ -5,7 +5,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "Game/Data/Generated/P1MonsterAttackType.h"
 #include "P1MonsterRow.generated.h"
 
 /** Monster 표(Monster.xlsx)의 한 행. 행 이름은 키(Id)다. */
@@ -25,10 +24,6 @@ struct FP1MonsterRow : public FTableRowBase
     /** 몬스터 레벨 */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     int32 Level = 0;
-
-    /** 공격 방식. 근거리(MELEE)나 원거리(RANGED) */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    EP1MonsterAttackType AttackType = EP1MonsterAttackType::None;
 
     /** 최대 HP */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

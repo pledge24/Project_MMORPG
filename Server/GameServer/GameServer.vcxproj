@@ -228,6 +228,10 @@
     <ClInclude Include="Game\Items\ItemContainer.h" />
     <ClInclude Include="Network\ItemPackets.h" />
     <ClInclude Include="Game\Combat\Combat.h" />
+    <ClInclude Include="Game\Combat\AttackArea.h" />
+    <ClInclude Include="Game\Action\ActionComponent.h" />
+    <ClInclude Include="Game\Action\ActionValidation.h" />
+    <ClInclude Include="Game\Data\ActionData.h" />
     <ClInclude Include="Game\Combat\CombatTypes.h" />
     <ClInclude Include="Game\Equipment\EquipmentComponent.h" />
     <ClInclude Include="Game\QuickSlots\QuickSlotComponent.h" />
@@ -345,6 +349,10 @@
     <ClCompile Include="Game\Items\ItemContainer.cpp" />
     <ClCompile Include="Network\ItemPackets.cpp" />
     <ClCompile Include="Game\Combat\Combat.cpp" />
+    <ClCompile Include="Game\Combat\AttackArea.cpp" />
+    <ClCompile Include="Game\Action\ActionComponent.cpp" />
+    <ClCompile Include="Game\Action\ActionValidation.cpp" />
+    <ClCompile Include="Game\Data\ActionData.cpp" />
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="Game\QuickSlots\QuickSlotComponent.cpp" />
     <ClCompile Include="DB\QuickSlotDAO.cpp" />
@@ -385,6 +393,8 @@
     <None Include="Game\Data\Generated\Level.json" />
     <None Include="Game\Data\Generated\ClassLevelStat.json" />
     <None Include="Game\Data\Generated\Monster.json" />
+    <None Include="Game\Data\Generated\Action.json" />
+    <None Include="Game\Data\Generated\Class.json" />
     <None Include="Game\Data\Generated\DropGroup.json" />
     <None Include="Game\Data\Generated\SpawnGroup.json" />
     <None Include="Game\Data\Generated\Map.json" />

@@ -118,8 +118,11 @@ public:
 
     //~ Combat Packet Handlers
 public:
-    /** 다른 크리처의 공격을 재생한다. 내 공격은 서버가 알리지 않는다. */
-    void HandleAttack(const Protocol::S_ATTACK& AttackPkt);
+    /** 서버가 내 액션을 거절했으면 내 플레이어의 액션을 멈추고 콤보를 첫 단계로 돌린다. 받아들였으면 아무것도 하지 않는다. */
+    void HandleActionResult(const Protocol::S_ACTION& ActionPkt);
+
+    /** 다른 크리처의 액션을 재생한다. 내 액션은 서버가 알리지 않는다. */
+    void HandleActionStart(const Protocol::S_ACTION_START& ActionStartPkt);
 
     /** 내 플레이어가 맞았으면 내 플레이어 데이터의 HP도 갱신한다. */
     void HandleHit(const Protocol::S_HIT& HitPkt);

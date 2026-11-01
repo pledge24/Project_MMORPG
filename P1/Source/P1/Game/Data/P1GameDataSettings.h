@@ -4,11 +4,16 @@
 #include "Engine/DeveloperSettings.h"
 #include "P1GameDataSettings.generated.h"
 
+namespace Protocol { enum CharacterClass : int; }
+
 class ACharacter;
 class UDataTable;
 class UMaterialInterface;
 class UTexture2D;
 class UWorld;
+struct FP1ActionAssetData;
+struct FP1ActionRow;
+struct FP1ClassRow;
 struct FP1ItemConsumeEffectRow;
 struct FP1ItemEquipStatRow;
 struct FP1ItemRow;
@@ -73,6 +78,21 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterAssetTable;
 
+    //~ Actions
+public:
+    static const FP1ActionRow* FindActionRow(int32 ActionId);
+
+    /** 액션 번호의 몽타주와 섹션. 행이 가리키는 몽타주는 불러오지 않는다. */
+    static const FP1ActionAssetData* FindActionAssetData(int32 ActionId);
+
+    /** 액션과 타격마다의 공격 범위. 행 구조체는 FP1ActionRow이고 행 이름은 액션 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Actions")
+    TSoftObjectPtr<UDataTable> ActionTable;
+
+    /** 액션마다 재생할 몽타주 섹션. 행 구조체는 FP1ActionAssetData이고 행 이름은 액션 번호. 기획 데이터의 액션마다 하나씩 둔다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Actions")
+    TSoftObjectPtr<UDataTable> ActionAssetTable;
+
     //~ Npcs
 public:
     static const FP1NpcRow* FindNpcRow(int32 NpcId);
@@ -100,6 +120,13 @@ public:
 
     //~ Players
 public:
+    /** 직업의 일반 공격 콤보 첫 단계. 행 이름은 직업의 값 이름(WARRIOR)이다. */
+    static const FP1ClassRow* FindClassRow(Protocol::CharacterClass CharacterClass);
+
+    /** 직업마다 일반 공격 콤보의 첫 단계 액션. 행 구조체는 FP1ClassRow이고 행 이름은 직업의 값 이름. */
+    UPROPERTY(Config, EditAnywhere, Category = "Players")
+    TSoftObjectPtr<UDataTable> ClassTable;
+
     /** 직업 번호(Protocol::CharacterClass 값)마다 플레이어 블루프린트. 직업 표의 직업마다 하나씩 두고, 표에 없는 직업을 두면 서버가 뜨지 않는다. */
     UPROPERTY(Config, EditAnywhere, Category = "Players")
     TMap<int32, TSoftClassPtr<ACharacter>> CharacterClassPlayers;

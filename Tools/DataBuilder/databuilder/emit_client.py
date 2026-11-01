@@ -5,6 +5,7 @@ JSON의 각 행은 첫 필드 `RowName`이 데이터 테이블의 행 이름이�
 에디터 스크립트가 데이터 테이블의 `ImportKeyField`를 `RowName`으로 두고 이 JSON으로 테이블을 채운다.
 
 `.proto`의 열거형은 `UPROPERTY`가 될 수 없으므로 값 이름(`FString`)으로 싣고, 행 구조체에 프로토콜 열거형을 돌려주는 함수를 둔다.
+행 구조체는 빈 값을 담지 못하므로 선택 값은 정수 키 표를 가리키는 참조만 싣고, 비어 있으면 0으로 싣는다.
 설정 파일의 열거형은 `UENUM`으로 만든다. 이름은 클라이언트 규칙(`FP1<표>Row`, `EP1<열거형>`)을 따르고, 파일 하나에 타입 하나다.
 설정 시트에서 클라이언트로 가는 필드(수와 bool)는 데이터 테이블이 아니라 상수 헤더(`P1<설정>Config.h`)로 싣는다.
 """
@@ -13,7 +14,7 @@ from __future__ import annotations
 
 from databuilder.column_types import ColumnType
 from databuilder.config import ClientConfig
-from databuilder.emit_json import dump, fields_text
+from databuilder.emit_json import dump
 from databuilder.workbooks import Column, DesignData, Row, Setting, Table, locate, nested_children, sort_key, targets_client, value_type
 
 ROW_NAME_FIELD = "RowName"
@@ -34,6 +35,9 @@ SCALAR_UE_DEFAULT = {"int32": " = 0", "int64": " = 0", "float": " = 0.f", "bool"
 UENUM_NONE = "None"
 # 설정 시트에서 클라이언트로 가는 필드의 타입. 데이터 테이블이 아니라 상수 헤더로 싣는다.
 SETTING_CONSTANT_TYPES = {"int32", "int64", "float", "bool"}
+# 클라이언트가 빈 선택 참조로 받는 값. 정수 키 표의 참조만 선택 값으로 보낼 수 있다.
+EMPTY_REFERENCE = 0
+INT_KEY_KINDS = {"int32", "int64"}
 
 
 def client_columns(columns: list[Column]) -> list[Column]:
@@ -59,13 +63,24 @@ def client_children(table: Table, data: DesignData) -> list[Table]:
     return [child for child in nested_children(table, data) if has_client_output(child)]
 
 
+def is_client_empty_reference(column_type: ColumnType, data: DesignData) -> bool:
+    """클라이언트로 빈 값을 0으로 싣는 선택 참조. 정수 키 표를 가리키는 것만 해당한다."""
+    return column_type.is_optional and column_type.kind == "ref" and value_type(column_type, data).kind in INT_KEY_KINDS
+
+
 def check_client(data: DesignData, errors: list[str]) -> None:
     """클라이언트 산출물로 담을 수 없는 원본을 막는다. 클라이언트 산출물을 만들 때만 검사한다."""
     for table in data.tables.values():
         workbook = table.config.workbook
         for column in client_columns(table.columns):
-            if column.type.is_optional:
-                errors.append(f"{locate(workbook, None, 2, column.letter, column.name)}: 선택 값(빈 셀)은 클라이언트로 보낼 수 없다. 데이터 테이블의 행 구조체가 빈 값을 담지 못한다")
+            where = locate(workbook, None, 2, column.letter, column.name)
+            if column.type.is_optional and not is_client_empty_reference(column.type, data):
+                errors.append(f"{where}: 선택 값(빈 셀)은 클라이언트로 보낼 수 없다. 데이터 테이블의 행 구조체가 빈 값을 담지 못한다. 정수 키 표의 참조만 빈 값을 0으로 보낸다")
+            elif column.type.is_optional:
+                target = data.tables[column.type.target]
+                key = target.key_columns[0].name
+                if any(row.values[key] == EMPTY_REFERENCE for row in target.rows):
+                    errors.append(f"{where}: 클라이언트는 빈 참조를 {EMPTY_REFERENCE}으로 받는데, 표 '{target.name}'에 키가 {EMPTY_REFERENCE}인 행이 있어 둘을 가릴 수 없다")
         if table.config.nest and has_client_output(table):
             parent = data.tables.get(table.parent_column.type.target) if table.parent_column else None
             if parent is not None and not has_client_output(parent):
@@ -99,6 +114,16 @@ def row_name(table: Table, row: Row) -> str:
     return "_".join(str(row.values[column.name]) for column in table.key_columns)
 
 
+def client_fields_text(columns: list[Column], row: Row, data: DesignData) -> str:
+    def client_value(column: Column):
+        value = row.values[column.name]
+        if value is None and is_client_empty_reference(column.type, data):
+            return EMPTY_REFERENCE
+        return value
+
+    return ",".join(f"{dump(column.name)}:{dump(client_value(column))}" for column in columns)
+
+
 def client_table_json(table: Table, data: DesignData) -> str:
     """한 행 한 줄이고, 행은 키 순서, 필드는 `RowName` 다음에 시트의 열 순서다. 중첩한 표의 행은 부모 행 아래에 한 줄씩 싣는다."""
     columns = client_columns(table.columns)
@@ -106,11 +131,11 @@ def client_table_json(table: Table, data: DesignData) -> str:
     key = table.key_columns[0].name
     lines = []
     for row in sorted(table.rows, key=lambda row: sort_key(table, row, data)):
-        text = "{" + f"{dump(ROW_NAME_FIELD)}:{dump(row_name(table, row))}," + fields_text(columns, row)
+        text = "{" + f"{dump(ROW_NAME_FIELD)}:{dump(row_name(table, row))}," + client_fields_text(columns, row, data)
         for child in children:
             parent = child.parent_column.name
             child_rows = sorted((r for r in child.rows if r.values[parent] == row.values[key]), key=lambda r: sort_key(child, r, data))
-            child_lines = ["{" + fields_text(nested_client_columns(child), child_row) + "}" for child_row in child_rows]
+            child_lines = ["{" + client_fields_text(nested_client_columns(child), child_row, data) + "}" for child_row in child_rows]
             text += f",{dump(child.config.nest)}:[" + ("\n" + ",\n".join(child_lines) + "\n" if child_lines else "") + "]"
         lines.append(text + "}")
     return "[\n" + ",\n".join(lines) + ("\n" if lines else "") + "]\n"
@@ -152,7 +177,10 @@ def ue_field(column: Column, data: DesignData) -> list[str]:
             default = "" if is_proto_enum(column.type, data) else f" = {value}::{UENUM_NONE}"
         else:
             default = SCALAR_UE_DEFAULT.get(base.kind, "")
-    lines = [f"    /** {column.description} */"] if column.description else []
+    description = column.description
+    if is_client_empty_reference(column.type, data):
+        description = f"{description}. 비어 있으면 {EMPTY_REFERENCE}이다" if description else f"비어 있으면 {EMPTY_REFERENCE}이다"
+    lines = [f"    /** {description} */"] if description else []
     lines += ["    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)", f"    {field_type} {column.name}{default};", ""]
     return lines
 

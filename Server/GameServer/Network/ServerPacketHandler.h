@@ -22,9 +22,9 @@ enum : uint16
 	PKT_C_CHAT = 700,
 	PKT_S_CHAT = 701,
 	PKT_S_CHAT_MESSAGE = 702,
-	PKT_C_NORMAL_ATTACK = 500,
-	PKT_S_NORMAL_ATTACK = 501,
-	PKT_S_ATTACK = 502,
+	PKT_C_ACTION = 500,
+	PKT_S_ACTION = 501,
+	PKT_S_ACTION_START = 502,
 	PKT_S_HIT = 503,
 	PKT_S_DIE = 504,
 	PKT_S_REWARD = 505,
@@ -93,7 +93,7 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 
 // 받는 패킷의 핸들러. 정의는 손으로 쓴다.
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt);
-bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt);
+bool Handle_C_ACTION(PacketSessionRef& session, Protocol::C_ACTION& pkt);
 bool Handle_C_MOVE(PacketSessionRef& session, Protocol::C_MOVE& pkt);
 bool Handle_C_ENTER_GAME(PacketSessionRef& session, Protocol::C_ENTER_GAME& pkt);
 bool Handle_C_MAP_LOAD_COMPLETE(PacketSessionRef& session, Protocol::C_MAP_LOAD_COMPLETE& pkt);
@@ -123,7 +123,7 @@ public:
 
 		// 받는 패킷마다 핸들러를 등록한다.
 		GPacketHandler[PKT_C_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CHAT>(Handle_C_CHAT, session, buffer, len); };
-		GPacketHandler[PKT_C_NORMAL_ATTACK] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_NORMAL_ATTACK>(Handle_C_NORMAL_ATTACK, session, buffer, len); };
+		GPacketHandler[PKT_C_ACTION] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ACTION>(Handle_C_ACTION, session, buffer, len); };
 		GPacketHandler[PKT_C_MOVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MOVE>(Handle_C_MOVE, session, buffer, len); };
 		GPacketHandler[PKT_C_ENTER_GAME] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ENTER_GAME>(Handle_C_ENTER_GAME, session, buffer, len); };
 		GPacketHandler[PKT_C_MAP_LOAD_COMPLETE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_MAP_LOAD_COMPLETE>(Handle_C_MAP_LOAD_COMPLETE, session, buffer, len); };
@@ -162,8 +162,8 @@ public:
 	// 보내는 패킷의 직렬화.
 	static SendBufferRef MakeSerializedPacket(Protocol::S_CHAT& pkt) { return MakeSerializedPacket(pkt, PKT_S_CHAT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_CHAT_MESSAGE& pkt) { return MakeSerializedPacket(pkt, PKT_S_CHAT_MESSAGE); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_NORMAL_ATTACK& pkt) { return MakeSerializedPacket(pkt, PKT_S_NORMAL_ATTACK); }
-	static SendBufferRef MakeSerializedPacket(Protocol::S_ATTACK& pkt) { return MakeSerializedPacket(pkt, PKT_S_ATTACK); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_ACTION& pkt) { return MakeSerializedPacket(pkt, PKT_S_ACTION); }
+	static SendBufferRef MakeSerializedPacket(Protocol::S_ACTION_START& pkt) { return MakeSerializedPacket(pkt, PKT_S_ACTION_START); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_HIT& pkt) { return MakeSerializedPacket(pkt, PKT_S_HIT); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_DIE& pkt) { return MakeSerializedPacket(pkt, PKT_S_DIE); }
 	static SendBufferRef MakeSerializedPacket(Protocol::S_REWARD& pkt) { return MakeSerializedPacket(pkt, PKT_S_REWARD); }

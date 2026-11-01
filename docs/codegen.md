@@ -123,7 +123,7 @@
 C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
 2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 2026년 10월 29일(#340)에 스폰 두 표(`SpawnGroup`, `SpawnEntry`)를 더했다.
-2026년 10월 29일(#341)에 NPC와 상점 표(`Npc`, `Shop`)를 더했다.
+2026년 10월 29일(#341)에 NPC와 상점 표(`Npc`, `Shop`)를 더했다. 2026년 11월 1일(#353)에 액션 두 표(`Action`, `ActionHit`)와 직업 표(`Class`)를 더했다.
 설정은 설정 워크북의 초기 진행(`Progress`), 로비(`Lobby`), 상호작용(`Interaction`) 세 시트다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 같은 날(#320)부터 클라이언트 코드는 DataBuilder가 만든 데이터 테이블만 읽는다(아래 「클라이언트가 읽는 법」).
 
@@ -267,7 +267,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「스폰 그룹 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「액션과 직업 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「스폰 그룹 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름, 중첩된 행 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
@@ -281,7 +281,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
-세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이, 스폰 그룹은 `Gamedata::FindSpawnGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
+세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 액션은 `Gamedata::FindAction`이, 직업의 일반 공격은 `Gamedata::FindClass`가, 드롭 그룹은 `Gamedata::FindDropGroup`이, 스폰 그룹은 `Gamedata::FindSpawnGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
 지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`가 찾고, 맵의 스폰 마커는 `Gamedata::GetSpawnPoints`가 돌려준다(아래 「배치 추출」).
 NPC는 `Gamedata::FindNpc`가, 상점은 `FindShop`이 찾는다. NPC의 자리는 `GetNpcPlacements`가, 상호작용 사거리는 `GetInteractionRange`가 돌려준다.
@@ -350,8 +350,64 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - 항목의 수량: `MinCount`는 1 이상이고 `MaxCount`보다 크지 않다
 - 어느 몬스터도 쓰지 않는 그룹은 경고다
 
-몬스터의 이름, 레벨, 공격 방식(`AttackType`, `enum:MonsterAttackType`)은 클라이언트만 쓰므로 대상이 `client`다.
+몬스터의 이름과 레벨은 클라이언트만 쓰므로 대상이 `client`다. 몬스터가 쓰는 일반 공격 액션은 `NormalAttackAction`(`ref:Action`)이다(아래 「액션과 직업 표」).
+옛 공격 방식 열(`AttackType`)은 생성 코드 밖에서 읽는 곳이 없어 2026년 11월 1일(#353)에 지웠다. 원거리 공격은 공격 범위의 형상으로 나타낸다.
 옛 표의 `is_targeting`은 서버도 클라이언트도 읽지 않아 옮기지 않았다.
+
+### 액션과 직업 표
+
+용어는 `CONTEXT.md`의 액션, 타격, 공격 범위, 일반 공격, 콤보를 따른다. 결정과 근거는 `docs/adr/0026-judge-hits-by-action-and-attack-area.md`에 있다.
+2026년 11월 1일(#353)에 만들었다. 서버는 표를 읽어 설치만 하고, 아직 판정에 쓰지 않는다.
+
+| 워크북 | 키 | 담는 것 |
+|---|---|---|
+| `Action.xlsx` | `Id` | 이름(`Name`, 대상 `client`), 피해 유형(`DamageType`, `enum:DamageType`), 피해 계수(`DamageCoefficient`), 콤보의 다음 단계(`NextAction`, `ref?:Action`), 대상 규칙(`TargetRule`, `enum:ActionTarget`) |
+| `ActionHit.xlsx` | `ActionId`(`key:parent:Action`), `HitIndex` | 타격 하나의 공격 범위. 형상(`Shape`, `enum:AttackAreaShape`), 형상의 값(`Radius`, `Angle`, `Length`, `Width`), 기준점(`OffsetX`, `OffsetY`), 높이 범위(`ZMin`, `ZMax`) |
+| `Class.xlsx` | `Class`(`enum:CharacterClass`) | 일반 공격 콤보의 첫 단계 액션(`NormalAttackAction`, `ref:Action`) |
+
+**타격은 `Action.json`의 각 액션 아래 `Hits`에 중첩된다.** 설정 파일에서 `ActionHit`에 `nest = "Hits"`를 적었다. `ActionHit.json`은 없다.
+워크북이 둘인 이유는 DataBuilder가 한 워크북의 시트를 한 표로 이어 붙이기 때문이다.
+
+**공격 범위의 좌표는 공격자 기준이다.** 거리는 cm이고, +X가 공격자의 앞, +Y가 오른쪽이다. 높이는 공격자 발밑 기준이다.
+
+| 형상 | 쓰는 값 | 모양 |
+|---|---|---|
+| `CIRCLE` | `Radius` | 기준점을 중심으로 한 원 |
+| `SECTOR` | `Radius`, `Angle` | 기준점을 꼭짓점으로 한 부채꼴. `Angle`은 +X를 가운데 둔 전체 각도(도)다 |
+| `RECTANGLE` | `Length`, `Width` | 기준점에서 +X로 `Length`만큼 뻗고, 좌우로 `Width`의 절반씩 펼친 직사각형 |
+
+- 기준점은 공격자 위치에서 (`OffsetX`, `OffsetY`)만큼 옮긴 점이다
+- 형상이 쓰지 않는 값은 0으로 적는다. 클라이언트로 가는 열이라 빈 셀(선택 값)을 쓸 수 없다
+- 서버의 판정(`Game/Combat/AttackArea`)과 클라이언트의 디버그 표시(`Game/Combat/P1AttackArea`)가 이 좌표 규칙을 같게 따른다
+- 서버는 기동할 때 몬스터의 `TryAttackRange`가 그 몬스터 일반 공격 액션의 공격 범위가 앞으로 닿는 거리(타격 중 가장 먼 것)를 넘으면 뜨지 않는다.
+  넘으면 공격을 시작한 거리에 선 대상을 맞히지 못한다
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- 액션마다 타격이 하나 이상 있다
+- `DamageCoefficient`는 0 이상이다. 피해량은 피해 유형에 맞는 공격력 × 계수다
+- 한 액션의 `HitIndex`는 0부터 빠짐없이 이어진다. 크리처 추출이 이 순번으로 타격 노티파이와 짝을 맞춘다
+- 형상이 쓰는 값은 0보다 크고, 쓰지 않는 값은 0이다. 부채꼴의 `Angle`은 360 이하다
+- `ZMin`은 `ZMax`보다 작다
+
+없는 액션을 가리키는 `NextAction`, 직업과 몬스터의 `NormalAttackAction`은 참조 규칙이 막는다. 서버는 기동할 때 액션 규칙을 다시 검사하지 않는다(ADR-0022).
+
+**`NextAction`과 직업 표는 클라이언트도 받는다.** 내 플레이어의 콤보가 직업 표의 `NormalAttackAction`에서 시작해 `NextAction`을 따라가기 때문이다.
+콤보의 마지막 단계는 `NextAction`이 빈 셀이고, 클라이언트는 그 값을 0으로 받는다(아래 「클라이언트 산출물」). 몬스터 표의 `NormalAttackAction`은 서버만 받는다.
+
+액션 번호는 직업의 액션이 1000번대, 몬스터의 액션이 2000번대다. DataBuilder가 검사하지 않는 관례다. 첫 데이터는 아래와 같다.
+
+| 액션 | 쓰는 크리처 | 공격 범위 |
+|---|---|---|
+| 1001~1003 전사 일반 공격 1~3단 | 전사(콤보 첫 단계 1001) | 반지름 200, 각도 120인 부채꼴 |
+| 1004 전사 일반 공격 4단 | 전사 | 반지름 250, 각도 180인 부채꼴 |
+| 2001 몬스터 근접 공격 | 근접 미니언 셋(5000, 5003, 5006) | 반지름 150, 각도 120인 부채꼴 |
+| 2002 몬스터 원거리 공격 | 원거리 미니언 셋(5001, 5004, 5007) | 길이 600, 폭 80인 직사각형 |
+| 2003 몬스터 슈퍼 공격 | 슈퍼 미니언 셋(5002, 5005, 5008) | 반지름 150, 각도 180인 부채꼴 |
+
+- 높이 범위는 모두 -100~200이다. 옛 판정은 높이를 보지 않았으므로 비탈에서도 맞도록 넓게 잡았다
+- 몬스터 액션의 앞쪽 끝은 그 몬스터의 `TryAttackRange`(근접 150, 원거리 600)와 같다. 옛 판정의 사거리를 유지하고 방향만 더했다
+- 전사의 피해 계수는 1.0, 1.0, 1.2, 1.5이고 몬스터는 1.0이다. 몬스터의 피해량은 옛 판정과 같은 `BaseAttack`이다
 
 ### 레벨 표
 
@@ -456,8 +512,8 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 ### 클라이언트 산출물
 
 **키 말고 클라이언트로 가는 열(`both`, `client`)이 하나라도 있는 표만 클라이언트 산출물을 만든다.** 키만 클라이언트로 가는 표(`Level`)와
-서버 전용 표(`Currency`, `DropGroup`, `ClassLevelStat`)는 만들지 않는다. 2026년 10월 27일(#319) 기준으로 `Item`, `ItemEquipStat`, `ItemConsumeEffect`,
-`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다. 2026년 10월 29일(#341)에 `Npc`, `Shop`이 더해졌다.
+서버 전용 표(`Currency`, `DropGroup`, `ClassLevelStat`, `Class`)는 만들지 않는다. 2026년 10월 27일(#319) 기준으로 `Item`, `ItemEquipStat`, `ItemConsumeEffect`,
+`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다. 2026년 10월 29일(#341)에 `Npc`, `Shop`이, 2026년 11월 1일(#353)에 `Action`과 그 아래 중첩되는 `ActionHit`이 더해졌다.
 
 | 폴더 | 파일 | 내용 |
 |---|---|---|
@@ -470,7 +526,8 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - JSON은 서버 산출물과 같이 한 행 한 줄, 키 순서, 열 순서다. 각 행의 첫 필드 `RowName`이 데이터 테이블의 행 이름이고, 값은 기획 데이터의 키다. 복합 키는 `_`로 잇는다(`WARRIOR_1`)
 - 행 구조체의 속성은 열 이름 그대로이고 `VisibleAnywhere`다. 에디터에서 행 값을 고치지 않는다. 값은 원본을 고치고 DataBuilder와 에디터 메뉴를 다시 돌려 바꾼다
 - `.proto` 열거형은 `UPROPERTY`가 될 수 없어서 값 이름(`FString`)으로 싣는다. 게임 코드는 생성된 `Get<열>()`로 프로토콜 값을 얻는다. 값 이름이 아니면 0번 값이다
-- 클라이언트로 가는 열에는 선택 값(`int32?`, `ref?:` 등)을 쓰지 않는다. 행 구조체가 빈 값을 담지 못해서 DataBuilder가 막는다
+- 클라이언트로 가는 열에 쓸 수 있는 선택 값은 정수 키 표를 가리키는 선택 참조(`ref?:`)뿐이다. 행 구조체가 빈 값을 담지 못하므로 빈 셀을 0으로 싣고, 속성 주석에
+  「비어 있으면 0이다」를 붙인다. 가리키는 표에 키가 0인 행이 있으면 빈 참조와 가릴 수 없어 DataBuilder가 막는다. 그 밖의 선택 값(`int32?`, 열거형 키 표의 `ref?:`)도 막는다
 - 설정 시트는 데이터 테이블을 만들지 않는다. 클라이언트로 가는 필드가 있는 설정은 상수 헤더 `P1<설정>Config.h` 하나를 만든다(아래)
 - 설정 시트에서 클라이언트로 보낼 수 있는 필드는 수(`int32`, `int64`, `float`)와 `bool`뿐이다. 다른 타입이면 DataBuilder가 막는다
 - 중첩한 표가 클라이언트 산출물을 만들면 부모 표도 만들어야 한다. 아니면 DataBuilder가 막는다
@@ -495,11 +552,14 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 | `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
 | `ItemAssetTable` | `DT_ItemAssets` | `LoadItemIcon`. 에셋 테이블이다 |
 | `MonsterAssetTable` | `DT_MonsterAssets` | `FindMonsterAssetData`. 에셋 테이블이다 |
+| `ActionTable` | `DT_Action` | `FindActionRow`. 타격마다의 공격 범위가 행의 `Hits`에 순번 순서로 실린다. 공격 범위 디버그 표시와 내 플레이어의 콤보(`NextAction`)가 읽는다 |
+| `ClassTable` | `DT_Class` | `FindClassRow`. 행 이름은 직업의 값 이름(`WARRIOR`)이라 프로토콜 직업 값을 받는다. 내 플레이어의 콤보가 첫 단계 액션을 읽는다 |
 | `NpcTable` | `DT_Npc` | `FindNpcRow` |
 | `NpcAssetTable` | `DT_NpcAssets` | `FindNpcAssetData`. 에셋 테이블이다 |
 | `ShopTable` | `DT_Shop` | `FindShopRow` |
+| `ActionAssetTable` | `DT_ActionAssets` | `FindActionAssetData`. 액션 재생(`UP1ActionComponent`)과 크리처 추출이 읽는다. 에셋 테이블이다. 수치 테이블 `ActionTable`과의 짝은 짝 검증기가 아니라 크리처 추출이 기획 데이터의 액션 표로 대조한다 |
 
-- 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 있다
+- 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`, `DT_ActionAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 있다
 - 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다. 행 이름은 짝이 되는 수치 테이블의 행 이름(번호)과 같다. 에디터 모듈의 검증기가 두 테이블의 짝을 대조한다(아래 「수치 테이블과 에셋 테이블의 짝」)
 - 재사용 대기는 소모 효과 표의 `CooldownMs`다. 클라이언트의 대기 계산(`FP1ItemCooldown`)은 초 단위라 1000으로 나눠 넘긴다
 - 맵과 지역 테이블(`DT_Map`, `DT_Area`)을 읽는 코드는 없다. 서버가 알린 맵 번호로 레벨을 여는 표(`MapLevels`)의 키가 맵 표의 `Id`다
@@ -805,8 +865,9 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 
 ## 크리처 추출
 
-서버가 피격을 판정하는 데 필요한 에셋 정보를 몬스터와 직업의 에셋에서 추출해 크리처 판정 데이터를 쓴다. 캡슐 크기, 공격 몽타주 섹션의
-길이와 타격 시점, 루트 모션 곡선이 여기 든다. 몬스터 번호와 직업 번호로 기획 데이터와 잇는다. 2026년 10월 29일(#339)에 만들었다.
+서버가 피격을 판정하는 데 필요한 에셋 정보를 몬스터, 직업, 액션의 에셋에서 추출해 크리처 판정 데이터를 쓴다. 크리처마다 캡슐 크기가,
+액션마다 몽타주 섹션의 길이와 타격 시점, 콤보 입력 창, 루트 모션 곡선이 여기 든다. 몬스터 번호, 직업 번호, 액션 번호로 기획 데이터와 잇는다.
+2026년 10월 29일(#339)에 크리처마다 공격 몽타주 배열을 읽게 만들었고, 2026년 11월 1일(#357)에 타이밍을 액션 단위로 바꿨다.
 
 ### 재생성
 
@@ -819,51 +880,81 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 스크립트가 배치 추출 다음에 커맨드렛 `P1CreatureCombatExtract`를 돌린다. 오류는 `[크리처 추출]`로 시작하는 줄에 하나씩 나오고,
 전체 로그는 `P1/Saved/PlacementExtract/creature.log`에 있다. **검사가 하나라도 실패하면 산출물을 바꾸지 않고, 스크립트는 1로 끝난다.**
 
-**공격 몽타주, 몬스터 에셋 테이블, 플레이어 블루프린트의 캡슐이나 공격 몽타주 배열을 고치면 추출을 돌리고 산출물을 같은 커밋에 담는다.**
+**액션 몽타주, 액션 에셋 테이블, 몬스터 에셋 테이블의 캡슐, 플레이어 블루프린트의 캡슐을 고치면 추출을 돌리고 산출물을 같은 커밋에 담는다.**
+**기획 데이터의 액션 표나 몬스터 표를 고친 뒤에도 추출을 돌린다.**
+— 추출이 타격 수, 다음 액션, 몬스터의 일반 공격 액션을 에셋과 대조한다.
 서버의 `GamedataParserTest.RepositoryGamedataPasses`가 저장소의 산출물과 기획 데이터를 함께 읽어 대조한다.
 
 ### 타격 노티파이
 
-공격이 대상에게 맞는 순간은 공격 몽타주의 노티파이 `UP1AnimNotify_AttackHit`(편집기 표시 이름 「P1 Attack Hit」)으로 표시한다.
+공격이 대상에게 맞는 순간은 액션 몽타주의 노티파이 `UP1AnimNotify_AttackHit`(편집기 표시 이름 「P1 Attack Hit」)으로 표시한다.
 클라이언트에서는 아무 일도 하지 않는 표시다.
 
 - 몽타주 트랙에 둔다. 시퀀스 안에 둔 노티파이는 추출이 읽지 않는다
-- 섹션마다 하나 이상 둔다. 섹션 경계에 놓인 노티파이는 뒤 섹션의 것이고, 마지막 섹션만 끝을 포함한다
-- 콤보 입력 창을 여는 `PlayMontageNotify`와는 다르다. 클라이언트의 콤보 처리는 타격 노티파이를 받지 않는다
+- 액션의 섹션 안에 그 액션의 타격 수(액션 표의 `Hits` 행 수)만큼 둔다. 시간 순서가 타격 순번(`HitIndex`) 순서다. 섹션 경계에 놓인 노티파이는 뒤 섹션의 것이고, 마지막 섹션만 끝을 포함한다
+- 콤보 입력 창 노티파이와는 다르다. 클라이언트의 콤보 처리는 타격 노티파이를 받지 않는다
+
+콤보의 다음 단계 입력을 받는 구간(콤보 입력 창)은 노티파이 스테이트 `UP1AnimNotifyState_ComboWindow`(편집기 표시 이름 「P1 Combo Window」)로
+표시한다. 콤보의 다음 단계는 이 구간 안에서 누른 입력으로만 이어진다. 시작과 끝에 범용 몽타주 노티파이 윈도우(`PlayMontageNotifyWindow`)와
+같은 몽타주 노티파이 이벤트를 보내므로, 지금 클라이언트의 콤보 처리는 시작을 받아 입력을 연다. 끝에서 입력을 닫거나 다음 섹션으로 넘어가는 일은
+아직 하지 않는다. 추출은 이 구간의 시작과 끝을 읽는다.
+
+- 몽타주 트랙에 둔다. 몽타주에서만 불리므로 에디터도 시퀀스에는 놓지 못하게 막는다
+- 다음 액션(액션 표의 `NextAction`)이 있는 액션의 섹션에 하나씩 둔다. 다음 액션이 없는 섹션에는 두지 않는다
+- 구간은 그 섹션 안에서 시작하고 섹션이 끝나기 전에 끝난다. 섹션 끝을 넘으면 다음 단계가 시작된 뒤에도 앞 단계의 입력 창이 열려 있다
+- 그 단계의 공격 동작이 끝나는 곳(회복 동작이 있으면 그 시작)에서 끝나게 둔다. 시작은 타격 노티파이보다 앞이어도 된다
+
+2026년 11월 1일에 전사 콤보 몽타주(`AM_AttackA_Combo`)에 처음 두었다. 이 몽타주는 `A_AttackA1`~`A_AttackA4`를 차례로 이어 붙이고 시퀀스마다
+섹션(`Combo1`~`Combo4`)을 하나 둔다. 섹션끼리는 잇지 않는다. 몽타주의 섹션은 Python에 노출되지 않으므로, 에디터 Python 스크립트는
+`UP1MontageSectionLibrary`(`P1/Source/P1Editor/Animation/`)의 `SetSequenceSections`로 세그먼트와 섹션을 만들고, `UnlinkSections`로 섹션 연결을 끊는다.
+**에디터의 몽타주 섹션 패널에서 섹션을 이으면 저장된다.** 패널의 「Create Default」 버튼도 섹션을 차례로 잇는다. 미리 보기로 이었으면 저장하기 전에 연결을 지운다. `P1.Editor.MontageSections.WarriorCombo`가 이은 섹션을 잡는다.
 
 2026년 10월 29일에 공격 몽타주 일곱 개(몬스터 셋, 전사 넷)에 처음 두었다. 시점은 Claude가 무기 쪽 손 뼈의 루트 기준 속도가 가장 큰
 프레임으로 추정했고, 사람이 에디터에서 원거리 미니언과 슈퍼 미니언의 시점을 다시 맞췄다.
 
 ### 읽는 곳
 
-| 크리처 | 출처 | 캡슐 | 공격 몽타주 |
-|---|---|---|---|
-| 몬스터 | 몬스터 에셋 테이블(`DT_MonsterAssets`)의 행. 행 이름이 몬스터 번호다 | 행의 `CapsuleRadius`, `CapsuleHalfHeight` | 행의 `AttackMontages` |
-| 직업 | 프로젝트 설정 「P1 Game Data」의 `CharacterClassPlayers`가 직업 번호(`Protocol::CharacterClass` 값)마다 가리키는 플레이어 블루프린트 | 블루프린트의 캡슐 컴포넌트 | 블루프린트에 붙은 `UP1AttackSystemComponent`의 공격 몽타주 배열 |
+| 대상 | 출처 | 읽는 값 |
+|---|---|---|
+| 몬스터 | 몬스터 에셋 테이블(`DT_MonsterAssets`)의 행. 행 이름이 몬스터 번호다 | 행의 `CapsuleRadius`, `CapsuleHalfHeight` |
+| 직업 | 프로젝트 설정 「P1 Game Data」의 `CharacterClassPlayers`가 직업 번호(`Protocol::CharacterClass` 값)마다 가리키는 플레이어 블루프린트 | 블루프린트의 캡슐 컴포넌트, 메시의 상대 회전과 크기 |
+| 액션 | 프로젝트 설정 「P1 Game Data」의 `ActionAssetTable`(`DT_ActionAssets`)의 행. 행 이름이 액션 번호이고, 행 구조체는 `FP1ActionAssetData`다 | 행의 `Montage`가 가리키는 몽타주에서 `Section` 섹션의 길이, 타격 노티파이, 콤보 입력 창, 루트 모션 |
+| 기획 데이터 | DataBuilder의 서버 산출물(`Server/GameServer/Game/Data/Generated/`)의 `Action.json`, `Monster.json` | 몬스터 번호, 액션마다 타격 수와 다음 액션이 있는지, 몬스터의 일반 공격 액션 |
 
+- 기획 데이터를 서버 산출물에서 읽는 것은 몬스터의 일반 공격 액션(`NormalAttackAction`)이 서버만 받는 열이기 때문이다
+- 액션 에셋 테이블은 기획 데이터에 에셋 참조를 넣지 않으려고(ADR-0009) 둔 표현 데이터다. 2026년 11월 1일(#357)에 만들었고, 전사 콤보 액션 넷(1001~1004)은
+  `AM_AttackA_Combo`의 섹션 `Combo1`~`Combo4`를, 몬스터 액션 셋(2001~2003)은 몬스터 공격 몽타주의 `Default` 섹션을 가리킨다
+- 클라이언트도 이 표로 액션의 몽타주 섹션을 재생한다. 크리처마다 공격 몽타주를 두던 몬스터 에셋 테이블의 열과 플레이어 공격 컴포넌트의 몽타주 배열은 2026년 11월 1일(#359)에 지웠다
 - 지금은 직업 표에 전사만 있어 `CharacterClassPlayers`에 전사(1) → `BP_Player` 하나만 있다. 직업을 더하면 이 표에도 더한다
-- 루트 모션은 메시 공간에서 꺼내고, 플레이어 블루프린트의 메시 상대 트랜스폼(지금 yaw -90도)으로 캐릭터 로컬 좌표에 옮긴다. +X가 캐릭터의 앞이다
+- 루트 모션은 메시 공간에서 꺼내고, 플레이어 블루프린트의 메시 상대 회전과 크기(지금 yaw -90도)로 캐릭터 로컬 좌표에 옮긴다. +X가 캐릭터의 앞이다.
+  액션은 어느 직업이 쓰는지 모르므로 모든 직업의 메시가 같은 회전과 크기로 붙어 있어야 한다
 - 슈퍼 미니언의 공격 몽타주는 `Minion_Lane_Core_Skeleton` 기반이고 메시는 `SK_Minion_Lane_Super`다. 타격 시점과 길이는 몽타주의 값이라 스켈레톤과
   무관하다. 몬스터 몽타주에는 루트 모션이 없어 곡선도 없다
 
 ### 검사
 
 검사는 에셋을 모르는 `FP1CreatureCombatCheck`(`P1/Source/P1Editor/CreatureCombat/`)가 한다. 몽타주에서 값을 꺼내는 일은 `P1MontageExtract`가 한다.
+커맨드렛은 테이블을 열지 못하거나, 행 이름이 번호가 아니거나, 행의 섹션이 몽타주에 없으면 검사 전에 오류를 낸다.
 
-- 클라이언트 기획 데이터(`P1/DesignData/Generated/Monster.json`)의 몬스터마다 몬스터 에셋 테이블에 행이 하나다. 에셋 테이블에만 있는 행도 오류다
-- 크리처마다 캡슐 반지름과 반높이가 0보다 크고, 공격 몽타주가 하나 이상이며 빈 칸이 없다
-- 공격 몽타주의 섹션마다 길이가 0보다 크고, 섹션 안에 타격 노티파이가 하나 이상이다
-- 몬스터의 공격 몽타주에는 루트 모션이 없다. 서버는 몬스터를 루트 모션으로 옮기지 않으므로, 루트 모션이 있으면 클라이언트와 서버의 위치가 어긋난다
-- `CharacterClassPlayers`가 비어 있지 않고, 가리키는 블루프린트를 열 수 있다. 직업이 직업 표에 있는지는 클라이언트에 직업 표가 없어 서버가 대조한다
+- 기획 데이터의 몬스터마다 몬스터 에셋 테이블에 행이 하나다. 에셋 테이블에만 있는 행도 오류다
+- 기획 데이터의 액션마다 액션 에셋 테이블에 행이 하나다. 에셋 테이블에만 있는 행도 오류다
+- 크리처마다 캡슐 반지름과 반높이가 0보다 크다
+- 액션마다 몽타주 칸이 비어 있지 않고, 섹션의 길이가 0보다 크며, 몽타주의 재생 속도(`RateScale`)가 1이다
+- 섹션 안의 타격 노티파이 수가 그 액션의 타격 수와 같고, 타격 시점이 섹션 안이다
+- 다음 액션이 있는 액션은 섹션 안에서 시작하는 콤보 입력 창이 하나이고, 그 구간이 섹션 끝 전에 끝난다. 다음 액션이 없는 액션에는 콤보 입력 창이 없다
+- 몬스터가 쓰는 액션의 몽타주에는 루트 모션이 없다. 서버는 몬스터를 루트 모션으로 옮기지 않으므로, 루트 모션이 있으면 클라이언트와 서버의 위치가 어긋난다
+- `CharacterClassPlayers`가 비어 있지 않고, 가리키는 블루프린트를 열 수 있으며, 메시의 상대 회전과 크기가 모두 같다. 직업이 직업 표에 있는지는 클라이언트에 직업 표가 없어 서버가 대조한다
 
 ### 산출물
 
 | 폴더 | 파일 | 내용 |
 |---|---|---|
-| `Server/GameServer/Game/Data/Extracted/` | `CreatureCombat.json` | 루트 모션 표본 수(`RootMotionSampleRate`, 초당 30), 몬스터(`Monsters`), 직업(`Classes`) |
+| `Server/GameServer/Game/Data/Extracted/` | `CreatureCombat.json` | 루트 모션 표본 수(`RootMotionSampleRate`, 초당 30), 몬스터(`Monsters`), 직업(`Classes`), 액션(`Actions`) |
 
-- 크리처 하나가 한 줄이고, 행은 번호 순서다. 공격(`Attacks`)은 콤보 순번 순서이고, 공격마다 몽타주 경로와 섹션(`Sections`)이 있다
-- 섹션은 이름, 길이(`Length`), 타격 시점(`HitTimes`), 루트 모션 곡선(`RootMotion`)이다. 시간은 섹션 시작에서 잰 초이고 소수점 넷째 자리에서 반올림한다
+- 크리처나 액션 하나가 한 줄이고, 행은 번호 순서다. 크리처는 번호와 캡슐(`CapsuleRadius`, `CapsuleHalfHeight`)이다
+- 액션은 번호, 몽타주 경로(`Montage`), 섹션 이름(`Section`), 길이(`Length`), 타격 시점(`HitTimes`), 콤보 입력 창(`ComboWindow`), 루트 모션 곡선(`RootMotion`)이다.
+  시간은 섹션 시작에서 잰 초이고 소수점 넷째 자리에서 반올림한다. 타격 시점은 타격 순번 순서다
+- 콤보 입력 창은 `[시작, 끝]`이고, 다음 액션이 없는 액션은 `null`이다
 - 루트 모션 곡선은 1/30초 간격의 누적 이동량 `[x, y, z]`(cm, 소수점 둘째 자리)다. 첫 표본은 0이고 마지막 표본은 섹션 끝이다. 마지막 간격은 1/30초보다 짧을 수 있다.
   엔진이 틱마다 하듯 구간마다 꺼낸 루트 모션을 이어 붙인다. 곡선의 끝은 섹션 전체의 루트 모션 이동량과 같다(`P1.Editor.CreatureCombat.Extract`)
 - 루트 모션이 없는 몽타주는 `RootMotion`이 `[]`다
@@ -871,17 +962,19 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 ### 서버가 읽는 법
 
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Extracted/CreatureCombat.json`을 읽어 기획 데이터와 함께 검증한다. 파일이 없으면 서버가 뜨지 않는다.
-서버는 형식과 번호를 대조하고, 게임 코드가 꺼내 쓰는 값이 비어 있지 않은지만 본다. 타이밍과 루트 모션의 검사는 추출이 했다. 아래 하나라도 어기면 서버가 뜨지 않는다.
+서버는 형식과 번호를 대조하고, 게임 코드가 타격 순번으로 꺼내 쓰는 타격 시점의 수만 본다. 타이밍과 루트 모션의 나머지 검사는 추출이 했다. 아래 하나라도 어기면 서버가 뜨지 않는다.
 
-- 판정 데이터의 몬스터가 몬스터 표에 있고, 직업이 직업별 능력치 표에 있다
-- 몬스터 표의 몬스터마다, 직업별 능력치 표의 직업마다 판정 데이터가 있다
-- 크리처마다 공격 몽타주가, 공격마다 섹션이, 섹션마다 타격 시점이 하나 이상이다
+- 판정 데이터의 몬스터가 몬스터 표에 있고, 직업이 직업별 능력치 표에 있고, 액션이 액션 표에 있다
+- 몬스터 표의 몬스터마다, 직업별 능력치 표의 직업마다, 액션 표의 액션마다 판정 데이터가 있다
+- 액션마다 타격 시점의 수가 액션 표의 타격 수와 같다. 서버는 타격 순번 i의 공격 범위를 i번째 타격 시점에 판정한다
+- 콤보 입력 창은 `null`이거나 시작과 끝 둘이다
 
-게임 코드는 `Gamedata::FindMonsterCombat`, `FindClassCombat`으로 찾는다. 몬스터 AI는 첫 공격 몽타주의 첫 섹션의 첫 타격 시점을 일반 공격의 타격
-지연으로 쓴다. 몬스터의 일반 공격은 콤보가 0이라 클라이언트가 첫 몽타주를 재생하기 때문이다. 직업의 판정 데이터는 읽어서 설치만 하고, 플레이어
-공격과 피격 판정 작업이 쓴다.
+게임 코드는 `Gamedata::FindMonsterCombat`, `FindClassCombat`으로 캡슐을, `FindActionTiming`으로 액션의 타이밍을 찾는다. 몬스터 AI는 그 몬스터의
+일반 공격 액션(`NormalAttackAction`)의 첫 타격 시점을 일반 공격의 타격 지연으로 쓴다. 직업의 캡슐과 액션의 콤보 입력 창, 루트 모션은 읽어서 설치만 하고,
+피격 판정 작업(#359, #360)이 쓴다.
 
-테스트는 `Server/GameServerTests/TestCreatureCombat.h`의 `AddMonster`로 몬스터의 판정 데이터를 넣는다. 판정 데이터가 없는 몬스터는 만들어지지 않는다.
+테스트는 `Server/GameServerTests/TestCreatureCombat.h`의 `AddMonster`로 몬스터의 판정 데이터와 일반 공격 액션의 타이밍을 넣는다. 둘 중 하나라도 없는
+몬스터는 만들어지지 않는다.
 
 ---
 

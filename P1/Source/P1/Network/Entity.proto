@@ -14,13 +14,6 @@ enum MoveState
     MOVE_STATE_ACTION = 3;                  // 루트 모션이 들어간 애니메이션 실행
 }
 
-message Vector
-{
-    float x = 1;
-    float y = 2;
-    float z = 3;
-}
-
 message PosInfo
 {
     Vector pos = 1;

@@ -1,22 +1,20 @@
 #include "Core/pch.h"
 #include "Game/AI/MonsterAIComponent.h"
+#include "Game/Action/ActionComponent.h"
 #include "Game/Entities/Monster.h"
 #include "Game/Entities/Player.h"
 #include "Game/Navigation/PathFollowingComponent.h"
 #include "Game/Room/Room.h"
 
-MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const CreatureCombat& combat)
+MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow)
     : EntityComponent(owner)
 {
     _attackInterval = monsterRow.AttackInterval;
-    _baseAttack = monsterRow.BaseAttack;
+    _normalAttackAction = monsterRow.NormalAttackAction;
     _tryAttackRange = monsterRow.TryAttackRange;
     _detectionRange = monsterRow.DetectionRange;
     _chasingMaxRange = monsterRow.ChasingMaxRange;
     _timeSinceLastAttack = _attackInterval;
-    // 몬스터의 일반 공격은 콤보가 0이라 클라이언트가 첫 공격 몽타주를 재생한다. 그 몽타주가 처음 맞는 순간에 판정한다.
-    // 공격 몽타주와 섹션, 타격 시점이 하나 이상인지는 기동할 때 대조했다.
-    _normalAttackHitDelay = combat.attacks.front().sections.front().hitTimes.front();
 
     // 스폰 정보에 Idle 이동 상태가 실리도록 룸에 들어가기 전에 맞춰 둔다.
     _state = &MonsterState::Get(MonsterStateType::Idle);
@@ -31,9 +29,6 @@ void MonsterAIComponent::Tick(float deltaTime)
         _timeSinceLastAttack += deltaTime;
         _timeSinceStateUpdate += deltaTime;
     }
-
-    // 예약한 피격 판정.
-    UpdatePendingHit(deltaTime);
 
     // 대상의 위치는 대상이 이 룸에 있을 때만 읽을 수 있다. 다른 룸으로 떠난 대상의 위치는 그 룸 큐가 쓴다.
     // 그래서 대상 확인은 상태 갱신 주기를 기다리지 않고 틱마다 하고, 놓친 대상은 쫓지 않고 스폰 지점으로 돌아간다.
@@ -101,14 +96,11 @@ bool MonsterAIComponent::IsTargetInAttackRange() const
 
 void MonsterAIComponent::LookAtTarget()
 {
-    MonsterRef owner = GetOwner();
-    const Protocol::PosInfo* targetPos = GetTargetPos();
-    if (owner == nullptr || targetPos == nullptr)
+    // 공격은 시작한 방향으로 판정한다. 대상을 따라 돌면 클라이언트가 보여 주는 방향과 판정이 어긋난다.
+    if (IsAttacking())
         return;
 
-    const vector2D lookAtVec = MathUtil::PosInfoToVector2D(targetPos) - MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
-    if (lookAtVec != vector2D::GetZeroVector())
-        owner->SetYaw(MathUtil::VectorToYaw(lookAtVec));
+    FaceTarget();
 }
 
 bool MonsterAIComponent::IsBeyondChaseLimit() const
@@ -129,8 +121,9 @@ void MonsterAIComponent::ChaseTarget()
     if (owner == nullptr || targetPos == nullptr)
         return;
 
-    // 공격한 뒤 공격 간격 동안은 공격 몽타주가 재생 중이라 움직이지 않는다.
-    if (CanAttack() == false)
+    // 공격한 뒤 공격 간격 동안은 공격 몽타주가 재생 중이라 움직이지 않는다. 판정은 타격 순간의 위치로 하므로,
+    // 공격 간격이 액션보다 짧아도 공격하는 동안 움직이면 범위 밖으로 피한 대상을 따라가 맞힌다.
+    if (CanAttack() == false || IsAttacking())
         return;
 
     owner->GetPathFollowing().MoveTo(MathUtil::PosInfoToVector3D(*targetPos), MIN_APPROACH_DISTANCE);
@@ -191,25 +184,26 @@ void MonsterAIComponent::HoldForAttack()
 void MonsterAIComponent::NormalAttack()
 {
     MonsterRef owner = GetOwner();
-    EntityRef target = _target.lock();
-    if (owner == nullptr || target == nullptr)
+    if (owner == nullptr || _target.expired())
         return;
 
-    if (auto ownerRoom = owner->GetRoom())
-    {
+    // 방향은 여기서 정해져 공격이 끝날 때까지 바뀌지 않는다. 플레이어는 그 방향을 보고 범위 밖으로 피한다.
+    // 앞 공격이 끝나기 전에 새 공격을 시작해도 대상을 다시 바라본다. 타격은 대상을 정하지 않고, 타격 순간 공격 범위 안에 있는 플레이어가 맞는다.
+    FaceTarget();
+    if (owner->GetAction().StartAction(_normalAttackAction, owner->GetPosInfo().yaw()))
         _timeSinceLastAttack = 0.f;
+}
 
-        int32 combo = 0;
-        ownerRoom->HandleNormalAttack(combo, owner);
+void MonsterAIComponent::CancelAttack()
+{
+    if (MonsterRef owner = GetOwner())
+        owner->GetAction().Cancel();
+}
 
-        // 일반 공격은 아직 콤보가 없다. 데미지는 몬스터 표의 기본 공격력이다.
-        AttackInfo attackInfo;
-        {
-            attackInfo.targetId = target->GetEntityId();
-            attackInfo.damage = _baseAttack;
-        }
-        _pendingHit = PendingHit{ attackInfo, target, _normalAttackHitDelay };
-    }
+bool MonsterAIComponent::IsAttacking() const
+{
+    MonsterRef owner = GetOwner();
+    return owner != nullptr && owner->GetAction().IsActing();
 }
 
 void MonsterAIComponent::RecoverHp(float deltaTime)
@@ -225,35 +219,16 @@ void MonsterAIComponent::RecoverHp(float deltaTime)
     owner->SetStatValue(Protocol::STAT_TYPE_HP, min(maxHp, hp + recovered));
 }
 
-void MonsterAIComponent::UpdatePendingHit(float deltaTime)
+void MonsterAIComponent::FaceTarget()
 {
-    if (_pendingHit.has_value() == false)
-        return;
-
-    _pendingHit->remainingTime -= deltaTime;
-    if (_pendingHit->remainingTime > 0.f)
-        return;
-
-    const PendingHit hit = std::move(_pendingHit.value());
-    _pendingHit.reset();
-
     MonsterRef owner = GetOwner();
-    EntityRef target = hit.target.lock();
-    if (owner == nullptr || target == nullptr)
+    const Protocol::PosInfo* targetPos = GetTargetPos();
+    if (owner == nullptr || targetPos == nullptr)
         return;
 
-    RoomRef ownerRoom = owner->GetRoom();
-    if (ownerRoom == nullptr)
-        return;
-
-    // 거리는 피격 시점에 다시 본다. 공격을 알린 뒤 사거리를 빠져나간 대상은 공격을 피한 것이다.
-    // 대상이 이 룸을 떠났으면 그 위치를 읽지 않는다.
-    if (ownerRoom->Contains(target->GetEntityId()) == false)
-        return;
-    if (MathUtil::InRange(&owner->GetPosInfo(), &target->GetPosInfo(), _tryAttackRange) == false)
-        return;
-
-    ownerRoom->HandleHit(owner, hit.attackInfo);
+    const vector2D lookAtVec = MathUtil::PosInfoToVector2D(targetPos) - MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
+    if (lookAtVec != vector2D::GetZeroVector())
+        owner->SetYaw(MathUtil::VectorToYaw(lookAtVec));
 }
 
 MonsterRef MonsterAIComponent::GetOwner() const

@@ -1,0 +1,23 @@
+[
+{"RowName":"1001","Id":1001,"Name":"전사 일반 공격 1단","NextAction":1002,"Hits":[
+{"HitIndex":0,"Shape":"SECTOR","Radius":200.0,"Angle":120.0,"Length":0.0,"Width":0.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]},
+{"RowName":"1002","Id":1002,"Name":"전사 일반 공격 2단","NextAction":1003,"Hits":[
+{"HitIndex":0,"Shape":"SECTOR","Radius":200.0,"Angle":120.0,"Length":0.0,"Width":0.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]},
+{"RowName":"1003","Id":1003,"Name":"전사 일반 공격 3단","NextAction":1004,"Hits":[
+{"HitIndex":0,"Shape":"SECTOR","Radius":200.0,"Angle":120.0,"Length":0.0,"Width":0.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]},
+{"RowName":"1004","Id":1004,"Name":"전사 일반 공격 4단","NextAction":0,"Hits":[
+{"HitIndex":0,"Shape":"SECTOR","Radius":250.0,"Angle":180.0,"Length":0.0,"Width":0.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]},
+{"RowName":"2001","Id":2001,"Name":"몬스터 근접 공격","NextAction":0,"Hits":[
+{"HitIndex":0,"Shape":"SECTOR","Radius":150.0,"Angle":120.0,"Length":0.0,"Width":0.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]},
+{"RowName":"2002","Id":2002,"Name":"몬스터 원거리 공격","NextAction":0,"Hits":[
+{"HitIndex":0,"Shape":"RECTANGLE","Radius":0.0,"Angle":0.0,"Length":600.0,"Width":80.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]},
+{"RowName":"2003","Id":2003,"Name":"몬스터 슈퍼 공격","NextAction":0,"Hits":[
+{"HitIndex":0,"Shape":"SECTOR","Radius":150.0,"Angle":180.0,"Length":0.0,"Width":0.0,"OffsetX":0.0,"OffsetY":0.0,"ZMin":-100.0,"ZMax":200.0}
+]}
+]

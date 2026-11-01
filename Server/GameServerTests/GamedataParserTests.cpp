@@ -31,6 +31,9 @@ namespace
     constexpr const char* PLACEMENT_FILE = "Placement_1111.json";
     constexpr int32 SHOP_ID = 1;
     constexpr int32 NPC_ID = 7;
+    constexpr int32 COMBO_FIRST_ACTION_ID = 1001;
+    constexpr int32 COMBO_LAST_ACTION_ID = 1002;
+    constexpr int32 MONSTER_ACTION_ID = 2001;
 
     /** DataBuilder가 생성하는 레벨 표의 행. */
     Json MakeLevel(int32 level, int64 expRequirement)
@@ -77,10 +80,35 @@ namespace
     Json MakeMonster()
     {
         return Json{
-            {"Id", MONSTER_ID}, {"MaxHp", 200}, {"BaseAttack", 100}, {"MovementSpeed", 300.0},
+            {"Id", MONSTER_ID}, {"NormalAttackAction", MONSTER_ACTION_ID}, {"MaxHp", 200}, {"BaseAttack", 100}, {"MovementSpeed", 300.0},
             {"MinExp", 5}, {"MaxExp", 10}, {"MinGold", 10}, {"MaxGold", 20},
             {"AttackInterval", 2.5}, {"TryAttackRange", 150.0}, {"DetectionRange", 900.0}, {"ChasingMaxRange", 1200.0},
             {"DropGroups", Json::array({DROP_GROUP_ID})},
+        };
+    }
+
+    /** DataBuilder가 생성하는 액션 표의 행. 타격은 액션 아래 Hits에 중첩된다. */
+    Json MakeAction(int32 id, Json nextAction, Json hit)
+    {
+        return Json{
+            {"Id", id}, {"DamageType", "PHYSICAL"}, {"DamageCoefficient", 1.5}, {"NextAction", nextAction}, {"TargetRule", "ENEMY"},
+            {"Hits", Json::array({hit})},
+        };
+    }
+
+    Json MakeSectorHit()
+    {
+        return Json{
+            {"HitIndex", 0}, {"Shape", "SECTOR"}, {"Radius", 200.0}, {"Angle", 120.0}, {"Length", 0.0}, {"Width", 0.0},
+            {"OffsetX", 30.0}, {"OffsetY", -10.0}, {"ZMin", -100.0}, {"ZMax", 200.0},
+        };
+    }
+
+    Json MakeRectangleHit()
+    {
+        return Json{
+            {"HitIndex", 0}, {"Shape", "RECTANGLE"}, {"Radius", 0.0}, {"Angle", 0.0}, {"Length", 600.0}, {"Width", 80.0},
+            {"OffsetX", 0.0}, {"OffsetY", 0.0}, {"ZMin", -100.0}, {"ZMax", 200.0},
         };
     }
 
@@ -174,25 +202,21 @@ namespace
         };
     }
 
-    /** 몬스터 하나와 전사의 크리처 판정 데이터. 전사의 공격만 루트 모션이 있다. */
+    /** 몬스터 하나와 전사의 크리처 판정 데이터, 액션 셋의 타이밍. 콤보의 첫 단계만 콤보 입력 창과 루트 모션이 있다. */
     Json MakeCreatureCombat()
     {
         return Json{
             {"RootMotionSampleRate", 30},
-            {"Monsters", Json::array({
-                Json{{"Id", MONSTER_ID}, {"CapsuleRadius", 34}, {"CapsuleHalfHeight", 65}, {"Attacks", Json::array({
-                    Json{{"Montage", "/Game/AM_Monster.AM_Monster"}, {"Sections", Json::array({
-                        Json{{"Name", "Default"}, {"Length", 0.8333}, {"HitTimes", Json::array({0.21})}, {"RootMotion", Json::array()}},
-                    })}},
-                })}},
-            })},
-            {"Classes", Json::array({
-                Json{{"Id", 1}, {"CapsuleRadius", 42}, {"CapsuleHalfHeight", 96}, {"Attacks", Json::array({
-                    Json{{"Montage", "/Game/AM_Warrior.AM_Warrior"}, {"Sections", Json::array({
-                        Json{{"Name", "Default"}, {"Length", 0.05}, {"HitTimes", Json::array({0.04})},
-                            {"RootMotion", Json::array({Json::array({0, 0, 0}), Json::array({10, 0, 0}), Json::array({14.5, -1, 0})})}},
-                    })}},
-                })}},
+            {"Monsters", Json::array({Json{{"Id", MONSTER_ID}, {"CapsuleRadius", 34}, {"CapsuleHalfHeight", 65}}})},
+            {"Classes", Json::array({Json{{"Id", 1}, {"CapsuleRadius", 42}, {"CapsuleHalfHeight", 96}}})},
+            {"Actions", Json::array({
+                Json{{"Id", COMBO_FIRST_ACTION_ID}, {"Montage", "/Game/AM_Warrior.AM_Warrior"}, {"Section", "Combo1"}, {"Length", 0.05},
+                    {"HitTimes", Json::array({0.04})}, {"ComboWindow", Json::array({0.01, 0.045})},
+                    {"RootMotion", Json::array({Json::array({0, 0, 0}), Json::array({10, 0, 0}), Json::array({14.5, -1, 0})})}},
+                Json{{"Id", COMBO_LAST_ACTION_ID}, {"Montage", "/Game/AM_Warrior.AM_Warrior"}, {"Section", "Combo2"}, {"Length", 0.05},
+                    {"HitTimes", Json::array({0.03})}, {"ComboWindow", nullptr}, {"RootMotion", Json::array()}},
+                Json{{"Id", MONSTER_ACTION_ID}, {"Montage", "/Game/AM_Monster.AM_Monster"}, {"Section", "Default"}, {"Length", 0.8333},
+                    {"HitTimes", Json::array({0.21})}, {"ComboWindow", nullptr}, {"RootMotion", Json::array()}},
             })},
         };
     }
@@ -206,6 +230,12 @@ namespace
         documents.itemEquipStats = Json::array({MakeSwordEquipStat()});
         documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
         documents.monsters = Json::array({MakeMonster()});
+        documents.actions = Json::array({
+            MakeAction(COMBO_FIRST_ACTION_ID, COMBO_LAST_ACTION_ID, MakeSectorHit()),
+            MakeAction(COMBO_LAST_ACTION_ID, nullptr, MakeSectorHit()),
+            MakeAction(MONSTER_ACTION_ID, nullptr, MakeRectangleHit()),
+        });
+        documents.classes = Json::array({Json{{"Class", "WARRIOR"}, {"NormalAttackAction", COMBO_FIRST_ACTION_ID}}});
         documents.dropGroups = Json::array({MakeDropGroup()});
         documents.spawnGroups = Json::array({MakeSpawnGroup()});
         documents.maps = Json::array({MakeMap()});
@@ -510,7 +540,7 @@ TEST(GamedataParserTest, SpawnRadiusReachingChaseLimitIsRejected)
     ExpectMentions(ErrorOf(documents), {PLACEMENT_FILE, "스폰 그룹 1", "몬스터 5000", "ChasingMaxRange"});
 }
 
-TEST(GamedataParserTest, CreatureCombatBecomesHitTimesAndRootMotion)
+TEST(GamedataParserTest, CreatureCombatBecomesCapsulesAndActionTimings)
 {
     GamedataTables tables;
     const optional<string> error = GamedataParser::Parse(MakeValidDocuments(), OUT tables);
@@ -518,33 +548,39 @@ TEST(GamedataParserTest, CreatureCombatBecomesHitTimesAndRootMotion)
 
     EXPECT_EQ(tables.rootMotionSampleRate, 30);
     ASSERT_TRUE(tables.monsterCombats.contains(MONSTER_ID));
-    const CreatureCombat& monster = tables.monsterCombats.at(MONSTER_ID);
-    EXPECT_FLOAT_EQ(monster.capsuleRadius, 34.f);
-    EXPECT_FLOAT_EQ(monster.capsuleHalfHeight, 65.f);
-    ASSERT_EQ(monster.attacks.size(), 1u);
-    ASSERT_EQ(monster.attacks[0].sections.size(), 1u);
-    const AttackSectionCombat& monsterSection = monster.attacks[0].sections[0];
-    EXPECT_EQ(monsterSection.name, "Default");
-    EXPECT_FLOAT_EQ(monsterSection.length, 0.8333f);
-    EXPECT_EQ(monsterSection.hitTimes, vector<float>({0.21f}));
-    EXPECT_TRUE(monsterSection.rootMotion.empty());
-
+    EXPECT_FLOAT_EQ(tables.monsterCombats.at(MONSTER_ID).capsuleRadius, 34.f);
+    EXPECT_FLOAT_EQ(tables.monsterCombats.at(MONSTER_ID).capsuleHalfHeight, 65.f);
     ASSERT_TRUE(tables.classCombats.contains(Protocol::CHARACTER_CLASS_WARRIOR));
-    const AttackSectionCombat& warriorSection = tables.classCombats.at(Protocol::CHARACTER_CLASS_WARRIOR).attacks.at(0).sections.at(0);
-    ASSERT_EQ(warriorSection.rootMotion.size(), 3u);
-    EXPECT_FLOAT_EQ(warriorSection.rootMotion[2].x, 14.5f);
-    EXPECT_FLOAT_EQ(warriorSection.rootMotion[2].y, -1.f);
+    EXPECT_FLOAT_EQ(tables.classCombats.at(Protocol::CHARACTER_CLASS_WARRIOR).capsuleRadius, 42.f);
+
+    ASSERT_TRUE(tables.actionTimings.contains(MONSTER_ACTION_ID));
+    const ActionTiming& monsterAttack = tables.actionTimings.at(MONSTER_ACTION_ID);
+    EXPECT_EQ(monsterAttack.section, "Default");
+    EXPECT_FLOAT_EQ(monsterAttack.length, 0.8333f);
+    EXPECT_EQ(monsterAttack.hitTimes, vector<float>({0.21f}));
+    EXPECT_FALSE(monsterAttack.comboWindow.has_value());
+    EXPECT_TRUE(monsterAttack.rootMotion.empty());
+
+    ASSERT_TRUE(tables.actionTimings.contains(COMBO_FIRST_ACTION_ID));
+    const ActionTiming& comboFirst = tables.actionTimings.at(COMBO_FIRST_ACTION_ID);
+    EXPECT_EQ(comboFirst.section, "Combo1");
+    ASSERT_TRUE(comboFirst.comboWindow.has_value());
+    EXPECT_FLOAT_EQ(comboFirst.comboWindow->start, 0.01f);
+    EXPECT_FLOAT_EQ(comboFirst.comboWindow->end, 0.045f);
+    ASSERT_EQ(comboFirst.rootMotion.size(), 3u);
+    EXPECT_FLOAT_EQ(comboFirst.rootMotion[2].x, 14.5f);
+    EXPECT_FLOAT_EQ(comboFirst.rootMotion[2].y, -1.f);
 }
 
 TEST(GamedataParserTest, MissingCreatureCombatFieldNamesFileAndField)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.creatureCombat["Monsters"][0]["Attacks"][0]["Sections"][0].erase("HitTimes");
+    documents.creatureCombat["Actions"][0].erase("HitTimes");
 
-    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "'Monsters' 1번째 원소", "HitTimes"});
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "'Actions' 1번째 원소", "HitTimes"});
 }
 
-// 짝이 없는 몬스터는 피격을 언제 판정할지 모른다. 그런 몬스터를 만들기 전에 기동에서 막는다.
+// 짝이 없는 몬스터는 피격을 판정할 캡슐이 없다. 그런 몬스터를 만들기 전에 기동에서 막는다.
 TEST(GamedataParserTest, MonsterWithoutCreatureCombatIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
@@ -581,20 +617,65 @@ TEST(GamedataParserTest, CreatureCombatOfClassNotInClassTableIsRejected)
     ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "직업 2", "직업별 능력치 표에 없다"});
 }
 
-TEST(GamedataParserTest, AttackSectionWithoutHitTimeIsRejected)
+// 타이밍이 없는 액션은 언제 타격을 판정할지 모른다. 그 액션을 쓰는 크리처가 공격하기 전에 기동에서 막는다.
+TEST(GamedataParserTest, ActionWithoutTimingIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.creatureCombat["Monsters"][0]["Attacks"][0]["Sections"][0]["HitTimes"] = Json::array();
+    documents.creatureCombat["Actions"].erase(2);
 
-    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "몬스터 5000", "타격 시점이 없다"});
+    ExpectMentions(ErrorOf(documents), {"액션 2001", "크리처 판정 데이터가 없다", "액션 에셋 표"});
 }
 
-TEST(GamedataParserTest, CreatureWithoutAttackIsRejected)
+TEST(GamedataParserTest, TimingOfUnknownActionIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();
-    documents.creatureCombat["Classes"][0]["Attacks"] = Json::array();
+    Json other = documents.creatureCombat["Actions"][2];
+    other["Id"] = 2999;
+    documents.creatureCombat["Actions"].push_back(other);
 
-    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "직업 1", "공격 몽타주가 없다"});
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "액션 2999", "액션 표에 없다"});
+}
+
+TEST(GamedataParserTest, DuplicateActionTimingIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Actions"].push_back(documents.creatureCombat["Actions"][2]);
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "액션 2001", "겹친다"});
+}
+
+// 타격 순번 i의 공격 범위를 i번째 타격 시점에 판정한다. 두 수가 다르면 공격 범위가 없는 타격이나 판정하지 않는 공격 범위가 생긴다.
+TEST(GamedataParserTest, HitTimeCountOtherThanHitCountIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Actions"][2]["HitTimes"] = Json::array({0.21, 0.4});
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "액션 2001", "타격 시점이 2개", "타격은 1개"});
+}
+
+// 몬스터는 공격 시작 거리에서 공격을 시작한다. 그 거리가 공격 범위의 앞쪽 끝을 넘으면 서 있는 대상을 영영 맞히지 못한다.
+TEST(GamedataParserTest, MonsterTryAttackRangeBeyondAttackAreaIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.monsters[0]["TryAttackRange"] = 600.5;
+
+    ExpectMentions(ErrorOf(documents), {"몬스터 5000", "TryAttackRange", "액션 2001"});
+}
+
+TEST(GamedataParserTest, MonsterTryAttackRangeAtAttackAreaFrontIsAccepted)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.monsters[0]["TryAttackRange"] = 600.0;
+
+    EXPECT_EQ(ErrorOf(documents), "");
+}
+
+TEST(GamedataParserTest, ComboWindowThatIsNotAPairIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.creatureCombat["Actions"][0]["ComboWindow"] = Json::array({0.01});
+
+    ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "액션 1001", "ComboWindow"});
 }
 
 TEST(GamedataParserTest, MissingFieldNamesFileRowAndField)
@@ -739,6 +820,56 @@ TEST(GamedataParserTest, MalformedInitialProgressIsRejected)
     ExpectMentions(ErrorOf(documents), {DesignData::PROGRESS_FILE});
 }
 
+// 판정은 아직 액션을 쓰지 않는다. 서버는 액션 표와 직업 표를 생성된 타입으로 읽어 설치만 한다.
+TEST(GamedataParserTest, ActionsAndClassesAreInstalledAsGeneratedRows)
+{
+    ASSERT_FALSE(Gamedata::Load(MakeValidDocuments()).has_value());
+
+    const DesignData::ClassRow* warrior = Gamedata::FindClass(Protocol::CHARACTER_CLASS_WARRIOR);
+    ASSERT_NE(warrior, nullptr);
+    EXPECT_EQ(warrior->NormalAttackAction, COMBO_FIRST_ACTION_ID);
+    EXPECT_EQ(Gamedata::FindClass(Protocol::CHARACTER_CLASS_MAGE), nullptr);
+
+    const DesignData::ActionRow* first = Gamedata::FindAction(COMBO_FIRST_ACTION_ID);
+    ASSERT_NE(first, nullptr);
+    EXPECT_EQ(first->DamageType, DesignData::DamageType::PHYSICAL);
+    EXPECT_FLOAT_EQ(first->DamageCoefficient, 1.5f);
+    EXPECT_EQ(first->TargetRule, DesignData::ActionTarget::ENEMY);
+    EXPECT_EQ(first->NextAction, optional<int32>(COMBO_LAST_ACTION_ID));
+    ASSERT_EQ(first->Hits.size(), 1u);
+    const DesignData::ActionHitRow& hit = first->Hits[0];
+    EXPECT_EQ(hit.Shape, DesignData::AttackAreaShape::SECTOR);
+    EXPECT_FLOAT_EQ(hit.Radius, 200.f);
+    EXPECT_FLOAT_EQ(hit.Angle, 120.f);
+    EXPECT_FLOAT_EQ(hit.OffsetX, 30.f);
+    EXPECT_FLOAT_EQ(hit.OffsetY, -10.f);
+    EXPECT_FLOAT_EQ(hit.ZMin, -100.f);
+    EXPECT_FLOAT_EQ(hit.ZMax, 200.f);
+    EXPECT_EQ(Gamedata::FindAction(COMBO_LAST_ACTION_ID)->NextAction, nullopt) << "콤보의 마지막 단계는 다음 액션이 없다";
+
+    const DesignData::MonsterRow* monster = Gamedata::FindMonster(MONSTER_ID);
+    ASSERT_NE(monster, nullptr);
+    EXPECT_EQ(monster->NormalAttackAction, MONSTER_ACTION_ID);
+    EXPECT_EQ(Gamedata::FindAction(MONSTER_ACTION_ID)->Hits.at(0).Shape, DesignData::AttackAreaShape::RECTANGLE);
+    EXPECT_EQ(Gamedata::FindAction(MONSTER_ACTION_ID + 1), nullptr);
+
+    Gamedata::Install(GamedataTables());
+}
+
+TEST(GamedataParserTest, NestedActionHitFieldIsChecked)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.actions[0]["Hits"][0].erase("ZMax");
+    ExpectMentions(ErrorOf(documents), {DesignData::ACTION_FILE, "ZMax"});
+}
+
+TEST(GamedataParserTest, UnknownAttackAreaShapeIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.actions[0]["Hits"][0]["Shape"] = "SPHERE";
+    ExpectMentions(ErrorOf(documents), {DesignData::ACTION_FILE, "Shape", "SPHERE"});
+}
+
 // 드롭의 판정과 지급은 아직 없다. 서버는 드롭 그룹을 생성된 타입으로 읽어 설치만 한다.
 TEST(GamedataParserTest, DropGroupsAreInstalledAsGeneratedRows)
 {
@@ -790,6 +921,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.maps = ReadJsonFile(generatedDir / DesignData::MAP_FILE);
     documents.areas = ReadJsonFile(generatedDir / DesignData::AREA_FILE);
     documents.monsters = ReadJsonFile(generatedDir / DesignData::MONSTER_FILE);
+    documents.actions = ReadJsonFile(generatedDir / DesignData::ACTION_FILE);
+    documents.classes = ReadJsonFile(generatedDir / DesignData::CLASS_FILE);
     documents.dropGroups = ReadJsonFile(generatedDir / DesignData::DROP_GROUP_FILE);
     documents.spawnGroups = ReadJsonFile(generatedDir / DesignData::SPAWN_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
@@ -844,6 +977,22 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(tables.monsters.at(5000).MinGold, 10);
     EXPECT_EQ(tables.monsters.at(5000).MaxGold, 20);
     EXPECT_EQ(tables.monsters.size(), 9u);
+
+    // 전사 콤보는 네 단계이고 마지막 단계에서 끝난다. 몬스터 9종이 근접, 원거리, 슈퍼 액션 셋을 나눠 쓴다.
+    vector<int32> combo;
+    for (optional<int32> actionId = tables.classes.at(Protocol::CHARACTER_CLASS_WARRIOR).NormalAttackAction;
+        actionId.has_value() && combo.size() < 10; actionId = tables.actions.at(actionId.value()).NextAction)
+        combo.push_back(actionId.value());
+    EXPECT_EQ(combo, vector<int32>({ 1001, 1002, 1003, 1004 }));
+    set<int32> monsterActions;
+    for (const auto& [monsterId, monster] : tables.monsters)
+        monsterActions.insert(monster.NormalAttackAction);
+    EXPECT_EQ(monsterActions, set<int32>({ 2001, 2002, 2003 }));
+
+    // 원거리 미니언의 즉발 공격(사거리 600)을 길이 600인 직사각형으로 옮겼다. 몬스터의 공격 시작 거리를 공격 범위가 덮는다.
+    const DesignData::ActionHitRow& rangedHit = tables.actions.at(tables.monsters.at(5001).NormalAttackAction).Hits.at(0);
+    EXPECT_EQ(rangedHit.Shape, DesignData::AttackAreaShape::RECTANGLE);
+    EXPECT_FLOAT_EQ(rangedHit.OffsetX + rangedHit.Length, tables.monsters.at(5001).TryAttackRange);
 
     // 맵 표를 맵, 지역, 포털 표로 나누면서 옮긴 값이다. 포털 번호는 클라이언트 레벨의 포털이 보낸다.
     ASSERT_EQ(tables.maps.size(), 1u);
@@ -921,20 +1070,29 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
         EXPECT_NEAR(portal.destYaw, expected.destYaw, TOLERANCE) << "포털 " << expected.id;
     }
 
-    // 몬스터의 타격 시점을 몽타주의 노티파이에서 추출했다. 근접 미니언의 값은 옛 상수(0.2초)와 비슷하다.
+    // 몬스터의 타격 시점을 액션 몽타주의 노티파이에서 추출했다. 근접 미니언의 값은 크리처마다 몽타주를 읽던 때와 같다.
     EXPECT_EQ(tables.monsterCombats.size(), tables.monsters.size());
-    ASSERT_TRUE(tables.monsterCombats.contains(5000));
-    const AttackSectionCombat& meleeMinion = tables.monsterCombats.at(5000).attacks.at(0).sections.at(0);
-    EXPECT_NEAR(meleeMinion.hitTimes.at(0), 0.21f, TOLERANCE);
+    EXPECT_EQ(tables.actionTimings.size(), tables.actions.size());
+    const ActionTiming& meleeMinion = tables.actionTimings.at(tables.monsters.at(5000).NormalAttackAction);
+    ASSERT_EQ(meleeMinion.hitTimes.size(), 1u);
+    EXPECT_NEAR(meleeMinion.hitTimes[0], 0.21f, TOLERANCE);
     EXPECT_TRUE(meleeMinion.rootMotion.empty()) << "서버는 몬스터를 루트 모션으로 옮기지 않는다";
+    EXPECT_FALSE(meleeMinion.comboWindow.has_value());
 
-    // 플레이어 캡슐은 AP1Player의 InitCapsuleSize와 같다. 전사의 공격은 루트 모션으로 앞(+X)으로 나간다.
+    // 플레이어 캡슐은 AP1Player의 InitCapsuleSize와 같다.
     ASSERT_TRUE(tables.classCombats.contains(Protocol::CHARACTER_CLASS_WARRIOR));
     const CreatureCombat& warrior = tables.classCombats.at(Protocol::CHARACTER_CLASS_WARRIOR);
     EXPECT_NEAR(warrior.capsuleRadius, 42.f, TOLERANCE);
     EXPECT_NEAR(warrior.capsuleHalfHeight, 96.f, TOLERANCE);
-    ASSERT_EQ(warrior.attacks.size(), 4u) << "콤보 4단";
-    const vector<vector3D>& firstRootMotion = warrior.attacks[0].sections.at(0).rootMotion;
+
+    // 전사 콤보는 한 몽타주의 섹션 넷이다. 마지막 단계만 콤보 입력 창이 없고, 첫 단계는 루트 모션으로 앞(+X)으로 나간다.
+    for (size_t index = 0; index < combo.size(); ++index)
+    {
+        const ActionTiming& timing = tables.actionTimings.at(combo[index]);
+        EXPECT_EQ(timing.section, format("Combo{}", index + 1)) << "액션 " << combo[index];
+        EXPECT_EQ(timing.comboWindow.has_value(), index + 1 < combo.size()) << "액션 " << combo[index];
+    }
+    const vector<vector3D>& firstRootMotion = tables.actionTimings.at(combo.front()).rootMotion;
     ASSERT_FALSE(firstRootMotion.empty());
     EXPECT_GT(firstRootMotion.back().x, 100.f);
 }

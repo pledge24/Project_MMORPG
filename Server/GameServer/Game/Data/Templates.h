@@ -22,6 +22,13 @@ struct GamedataTables
     DesignData::ItemConsumeEffectTable itemConsumeEffects;
     /** 기본 보상의 최솟값은 최댓값보다 크지 않다(DataBuilder가 검사한다). */
     DesignData::MonsterTable monsters;
+    /**
+     * 크리처가 하는 행동 하나의 정의. 타격과 그 공격 범위는 액션의 Hits에 있다.
+     * 액션마다 타격이 있고 타격 순번은 0부터 이어지며, 형상이 쓰는 값은 0보다 크다(DataBuilder가 검사한다).
+     */
+    DesignData::ActionTable actions;
+    /** 직업마다 일반 공격 콤보의 첫 단계 액션. 액션은 액션 표에 있다(DataBuilder가 검사한다). */
+    DesignData::ClassTable classes;
     /** 몬스터의 드롭 그룹. 드롭 항목은 그룹의 Entries에 있다. */
     DesignData::DropGroupTable dropGroups;
     /**
@@ -70,9 +77,11 @@ struct GamedataTables
     /** NPC 번호 → 그 NPC의 마커. NPC 표의 NPC마다 하나다. */
     map<int32, NpcPlacement> npcPlacements;
 
-    // 크리처 판정 데이터. 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 하나씩 있다(기동할 때 대조하고, 타이밍은 추출이 검사한다).
+    // 크리처 판정 데이터. 몬스터 표의 몬스터, 직업별 능력치 표의 직업, 액션 표의 액션마다 하나씩 있다(기동할 때 대조하고, 타이밍은 추출이 검사한다).
     map<int32, CreatureCombat> monsterCombats;
     map<Protocol::CharacterClass, CreatureCombat> classCombats;
+    /** 액션 번호 → 그 액션이 재생하는 섹션의 타이밍. */
+    map<int32, ActionTiming> actionTimings;
     /** 루트 모션 곡선의 초당 표본 수. */
     int32 rootMotionSampleRate = 0;
 };

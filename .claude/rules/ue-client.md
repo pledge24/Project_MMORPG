@@ -19,7 +19,7 @@ paths:
   — 남은 리다이렉트는 쌓이기만 하고, 옛 이름을 새 클래스에 쓸 수 없게 만든다. MCP로 다시 저장할 때의 함정은 `ue-mcp` 스킬에 있다
 - 예외: 델리게이트 타입(`FOn<사건>`)과, 생성 템플릿이 이름을 그대로 부르는 `ClientPacketHandler`·`PacketSession`·`SendBuffer`·`PacketHeader`에는 `P1`을 붙이지 않는다. `PacketHeader`와 `FP1PacketHeader`는 서로 다른 구조체다
 - 파일 하나에 타입 하나를 두고, 파일 이름을 주 타입 이름과 맞춘다. 그 타입 안에서만 쓰는 작은 열거형만 같은 파일에 둔다
-- `#include`는 `"Game/Combat/P1AttackSystemComponent.h"`처럼 경로를 한정한다. 근거는 ADR 0005에 있다
+- `#include`는 `"Game/Combat/P1ActionComponent.h"`처럼 경로를 한정한다. 근거는 ADR 0005에 있다
 - 로그는 `Utils/LogCategory.h`에 선언한 `LogP1*` 카테고리로 남긴다. 맞는 카테고리가 없으면 기능 단위로 하나 만든다. `LogTemp`은 필터로 걸러낼 수 없으므로 쓰지 않는다
 
 ## 클라이언트 주석

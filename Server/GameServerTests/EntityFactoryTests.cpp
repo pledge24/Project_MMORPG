@@ -71,6 +71,22 @@ TEST_F(EntityFactoryTest, UnknownMonsterTemplateFails)
     EXPECT_EQ(EntityFactory::Create<Monster>(MakeMonsterParams(UNKNOWN_TEMPLATE_ID)), nullptr);
 }
 
+// 일반 공격 액션의 타이밍이 없으면 몬스터 AI가 언제 타격을 판정할지 모른다. 기동 검사를 거치지 않고 표를 바꿔 끼운 경우다.
+TEST_F(EntityFactoryTest, MonsterWithoutNormalAttackTimingFails)
+{
+    DesignData::MonsterRow monster;
+    monster.Id = MONSTER_TEMPLATE_ID;
+    monster.MaxHp = MAX_HP;
+
+    GamedataTables tables;
+    tables.monsters[MONSTER_TEMPLATE_ID] = monster;
+    TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID);
+    tables.actionTimings.clear();
+    Gamedata::Install(std::move(tables));
+
+    EXPECT_EQ(EntityFactory::Create<Monster>(MakeMonsterParams(MONSTER_TEMPLATE_ID)), nullptr);
+}
+
 TEST_F(EntityFactoryTest, PlayerWithoutSessionGetsIdAndInventory)
 {
     PlayerRef player = EntityFactory::Create<Player>(PlayerSpawnParams());

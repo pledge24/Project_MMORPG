@@ -27,6 +27,7 @@ bool FP1GameDataSettingsTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("장비 능력치"), Settings->ItemEquipStatTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_ItemEquipStat.DT_ItemEquipStat")));
         TestEqual(TEXT("소모 효과"), Settings->ItemConsumeEffectTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_ItemConsumeEffect.DT_ItemConsumeEffect")));
         TestEqual(TEXT("몬스터"), Settings->MonsterTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_Monster.DT_Monster")));
+        TestEqual(TEXT("액션"), Settings->ActionTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DesignData/DT_Action.DT_Action")));
 
         // 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다.
         TestEqual(TEXT("아이템 에셋"), Settings->ItemAssetTable.ToSoftObjectPath().ToString(), FString(TEXT("/Game/P1/Data/DataTables/DT_ItemAssets.DT_ItemAssets")));
@@ -65,6 +66,17 @@ bool FP1GameDataSettingsTest::RunTest(const FString& Parameters)
         if (TestNotNull(TEXT("몬스터 5000"), Minion))
             TestEqual(TEXT("번호"), Minion->Id, 5000);
         TestNull(TEXT("없는 몬스터"), UP1GameDataSettings::FindMonsterRow(9999));
+    }
+
+    // 5) 액션 번호로 액션 행을 찾는다. 타격마다의 공격 범위가 행 안에 순번 순서로 실린다.
+    {
+        const FP1ActionRow* RangedAttack = UP1GameDataSettings::FindActionRow(2002);
+        if (TestNotNull(TEXT("액션 2002"), RangedAttack) && TestEqual(TEXT("타격 수"), RangedAttack->Hits.Num(), 1))
+        {
+            TestTrue(TEXT("형상"), RangedAttack->Hits[0].Shape == EP1AttackAreaShape::RECTANGLE);
+            TestEqual(TEXT("길이"), RangedAttack->Hits[0].Length, 600.f);
+        }
+        TestNull(TEXT("없는 액션"), UP1GameDataSettings::FindActionRow(9999));
     }
 
     return true;

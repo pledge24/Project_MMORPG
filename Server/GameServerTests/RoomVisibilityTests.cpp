@@ -28,6 +28,7 @@ namespace
     constexpr int32 ROOM_ID = 1;
     constexpr float HALF_EXTENT = 10000.f;
     constexpr float CELL_SIZE = 1000.f;
+    constexpr int32 PLAYER_ACTION_ID = 1001;
     constexpr int32 PLAYER_MAX_HP = 100;
     constexpr int32 MONSTER_TEMPLATE_ID = 5000;
 
@@ -101,6 +102,10 @@ protected:
         tables.monsters[MONSTER_TEMPLATE_ID] = monsterRow;
         TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID);
         TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
+        // 플레이어의 공격은 직업의 콤보 첫 단계만 받아들인다.
+        tables.classes[Protocol::CHARACTER_CLASS_WARRIOR] = DesignData::ClassRow{ Protocol::CHARACTER_CLASS_WARRIOR, PLAYER_ACTION_ID };
+        tables.actions[PLAYER_ACTION_ID] = TestCreatureCombat::MakeAction(PLAYER_ACTION_ID, TestCreatureCombat::MakeCircleHit(100.f));
+        tables.actionTimings[PLAYER_ACTION_ID] = TestCreatureCombat::MakeTiming(0.2f);
         Gamedata::Install(std::move(tables));
 
         room = CreateTestRoom(ROOM_ID, 0, HALF_EXTENT, CELL_SIZE);
@@ -233,12 +238,13 @@ TEST_F(RoomVisibilityTest, AttackGoesOnlyToViewers)
     shared_ptr<RecordingSession> farSession;
     EnterPlayerAt(FAR_AWAY, 0.f, farSession);
 
-    Protocol::C_NORMAL_ATTACK attackPkt;
-    attackPkt.set_combo(1);
-    room->C_HandleNormalAttack(attackPkt, attacker);
+    Protocol::C_ACTION actionPkt;
+    actionPkt.set_action_id(PLAYER_ACTION_ID);
+    actionPkt.mutable_start_pos()->CopyFrom(attacker->GetPosInfo().pos());
+    room->C_HandleAction(actionPkt, attacker);
 
-    EXPECT_EQ(nearSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK).size(), 1u);
-    EXPECT_TRUE(farSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK).empty());
+    EXPECT_EQ(nearSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START).size(), 1u);
+    EXPECT_TRUE(farSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START).empty());
 }
 
 TEST_F(RoomVisibilityTest, LeavingDespawnsOnlyForViewers)

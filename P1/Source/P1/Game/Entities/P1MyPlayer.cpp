@@ -6,7 +6,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Network/P1PacketSender.h"
-#include "Game/Combat/P1AttackSystemComponent.h"
+#include "Game/Combat/P1ActionComponent.h"
+#include "Game/Data/P1GameDataSettings.h"
+#include "Game/Data/Generated/P1ClassRow.h"
+#include "Game/Progress/P1MyPlayerData.h"
 #include "Utils/LogCategory.h"
 
 AP1MyPlayer::AP1MyPlayer()
@@ -131,20 +134,18 @@ void AP1MyPlayer::NormalAttack(const FInputActionValue& Value)
         return;
     }
 
-    if (AttackSystemComponent != nullptr)
+    // 콤보는 직업의 첫 단계 액션에서 시작해 액션 표의 다음 단계를 따라간다.
+    const UGameInstance* GameInstance = GetGameInstance();
+    const UP1MyPlayerData* MyPlayerData = GameInstance ? GameInstance->GetSubsystem<UP1MyPlayerData>() : nullptr;
+    const FP1ClassRow* ClassRow = MyPlayerData ? UP1GameDataSettings::FindClassRow(MyPlayerData->GetCharacterClass()) : nullptr;
+    if (ClassRow == nullptr)
     {
-        // 입력을 받을 수 없으면 0이 돌아온다.
-        const int32 Combo = AttackSystemComponent->StartNormalAttack();
-        if (Combo > 0)
-        {
-            Protocol::C_NORMAL_ATTACK NormalAttackPkt;
-            NormalAttackPkt.set_combo(Combo);
-            // 서버의 yaw는 마지막 이동 패킷의 값이라 늦을 수 있다. 다른 클라이언트는 이 값으로 돌려 세운다.
-            NormalAttackPkt.set_yaw(GetActorRotation().Yaw);
-
-            FP1PacketSender::Send(this, NormalAttackPkt);
-        }
+        UE_LOG(LogP1CharacterComp, Warning, TEXT("직업 표에 내 직업이 없어 일반 공격을 시작할 수 없습니다"));
+        return;
     }
+
+    if (ActionComponent != nullptr)
+        ActionComponent->InputNormalAttack(ClassRow->NormalAttackAction);
 }
 
 void AP1MyPlayer::ToggleBattleMode(const FInputActionValue& Value)

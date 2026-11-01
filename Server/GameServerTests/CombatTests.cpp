@@ -27,10 +27,9 @@ namespace
     constexpr int64 MIN_GOLD = 5;
     constexpr int64 MAX_GOLD = 8;
 
-    AttackInfo MakeAttack(int64 targetId, int64 damage)
+    AttackInfo MakeAttack(int64 damage)
     {
         AttackInfo attackInfo;
-        attackInfo.targetId = targetId;
         attackInfo.damage = damage;
         return attackInfo;
     }
@@ -78,7 +77,7 @@ protected:
 
 TEST_F(CombatTest, HitReducesHpByDamage)
 {
-    const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), 100));
+    const auto result = Combat::ResolveHit(monster, player, MakeAttack(100));
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->updatedHp, PLAYER_HP - 100);
@@ -89,7 +88,7 @@ TEST_F(CombatTest, HitReducesHpByDamage)
 
 TEST_F(CombatTest, OverkillClampsHpToZeroAndDies)
 {
-    const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), PLAYER_HP + 1000));
+    const auto result = Combat::ResolveHit(monster, player, MakeAttack(PLAYER_HP + 1000));
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result->updatedHp, 0) << "HP가 0 아래로 내려가면 안 된다";
@@ -102,7 +101,7 @@ TEST_F(CombatTest, DeadTargetIsNotHit)
     player->SetStatValue(Protocol::STAT_TYPE_HP, 0);
     player->OnDie(monster);
 
-    const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), 100));
+    const auto result = Combat::ResolveHit(monster, player, MakeAttack(100));
 
     EXPECT_FALSE(result.has_value()) << "사망한 플레이어는 리스폰할 때까지 룸에 남으므로 다시 맞으면 안 된다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), 0);
@@ -113,7 +112,7 @@ TEST_F(CombatTest, DeadAttackerDealsNoDamage)
     monster->SetStatValue(Protocol::STAT_TYPE_HP, 0);
     monster->OnDie(player);
 
-    const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), 100));
+    const auto result = Combat::ResolveHit(monster, player, MakeAttack(100));
 
     EXPECT_FALSE(result.has_value()) << "판정을 기다리는 사이 사망한 공격자의 공격은 없던 것이 된다";
     EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_HP);
@@ -121,7 +120,7 @@ TEST_F(CombatTest, DeadAttackerDealsNoDamage)
 
 TEST_F(CombatTest, PlayerKillingMonsterGetsReward)
 {
-    const auto result = Combat::ResolveHit(player, monster, MakeAttack(monster->GetEntityId(), MONSTER_MAX_HP));
+    const auto result = Combat::ResolveHit(player, monster, MakeAttack(MONSTER_MAX_HP));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->isDead);
@@ -135,7 +134,7 @@ TEST_F(CombatTest, PlayerKillingMonsterGetsReward)
 
 TEST_F(CombatTest, MonsterKillingPlayerIsNotKill)
 {
-    const auto result = Combat::ResolveHit(monster, player, MakeAttack(player->GetEntityId(), PLAYER_HP));
+    const auto result = Combat::ResolveHit(monster, player, MakeAttack(PLAYER_HP));
 
     ASSERT_TRUE(result.has_value());
     ASSERT_TRUE(result->isDead);
@@ -144,7 +143,7 @@ TEST_F(CombatTest, MonsterKillingPlayerIsNotKill)
 
 TEST_F(CombatTest, NonLethalHitHasNoReward)
 {
-    const auto result = Combat::ResolveHit(player, monster, MakeAttack(monster->GetEntityId(), 1));
+    const auto result = Combat::ResolveHit(player, monster, MakeAttack(1));
 
     ASSERT_TRUE(result.has_value());
     EXPECT_FALSE(result->isDead);
@@ -153,7 +152,48 @@ TEST_F(CombatTest, NonLethalHitHasNoReward)
 
 TEST_F(CombatTest, MonsterInfoHpFollowsStatAfterHit)
 {
-    Combat::ResolveHit(player, monster, MakeAttack(monster->GetEntityId(), 50));
+    Combat::ResolveHit(player, monster, MakeAttack(50));
 
     EXPECT_EQ(monster->GetEntityInfo().monster_info().hp(), MONSTER_MAX_HP - 50) << "나중에 들어온 플레이어가 받는 스폰 정보에 현재 HP가 실려야 한다";
+}
+
+/*--------------------------------------------------------------
+    피해량 테스트
+
+    피해량은 액션의 피해 유형에 맞는 공격자의 공격력 × 액션의 계수다. 다른 유형의 공격력은 보지 않는다.
+    소수점 아래는 반올림한다.
+
+    픽스처 결합도: 없음. 전투 스탯 값과 순수 함수만 쓴다.
+---------------------------------------------------------------*/
+
+namespace
+{
+    CombatStats MakeAttackStats(int64 physicalAttack, int64 magicalAttack)
+    {
+        CombatStats stats;
+        stats.physicalAttack = physicalAttack;
+        stats.magicalAttack = magicalAttack;
+        return stats;
+    }
+}
+
+TEST(CombatDamage, PhysicalDamageUsesPhysicalAttack)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(100, 7), DamageType::Physical, 1.5f), 150);
+}
+
+TEST(CombatDamage, MagicalDamageUsesMagicalAttack)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(7, 100), DamageType::Magical, 1.5f), 150);
+}
+
+TEST(CombatDamage, FractionIsRounded)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(33, 0), DamageType::Physical, 1.5f), 50) << "49.5는 50이다";
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(33, 0), DamageType::Physical, 1.4f), 46) << "46.2는 46이다";
+}
+
+TEST(CombatDamage, ZeroCoefficientDealsNoDamage)
+{
+    EXPECT_EQ(Combat::CalcDamage(MakeAttackStats(100, 100), DamageType::Physical, 0.f), 0);
 }

@@ -79,7 +79,7 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
-├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Navigation/ navmesh 빌드에 넘기는 충돌 형상과 에이전트 설정, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Tests/ 그 테스트
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Navigation/ navmesh 빌드에 넘기는 충돌 형상과 에이전트 설정, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Animation/ 에디터 Python 스크립트가 몽타주를 만들 때 부르는 함수, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
@@ -106,7 +106,7 @@ P1/Source/
 | `UI/` | 위젯 베이스 클래스와 뷰모델. 하위를 표시 방식으로 나눈다 |
 | `Utils/` | 함수 라이브러리, 로그 카테고리 선언, 공용 매크로 |
 | `Game/Entities/` | 베이스 캐릭터와 플레이어, 몬스터, NPC 캐릭터 클래스 |
-| `Game/Combat/` | 전투 요청 생성과 결과 연출. **판정은 여기 두지 않는다** |
+| `Game/Combat/` | 전투 요청 생성과 결과 연출(액션 재생 `UP1ActionComponent`, 내 플레이어의 콤보 규칙 `FP1ActionCombo`, 타격과 콤보 입력 창 노티파이), 공격 범위 디버그 표시와 그 기하 계산. **판정은 여기 두지 않는다**. 기하 계산은 서버의 판정 범위를 그리기 위한 것이고 피격을 고르지 않는다 |
 | `Game/Inventory/` | 인벤토리 컴포넌트와 슬롯 규칙 |
 | `Game/Equipment/` | 장비 컴포넌트와 장착 규칙 |
 | `Game/Items/` | 아이템과 칸의 상태 `USTRUCT`, 컨테이너 클래스, 아이템과 칸의 패킷 변환 |
@@ -302,7 +302,7 @@ P1/Content/
 │   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
-│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`)
+│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`, `DT_ActionAssets`)
 │   │   └── DesignData/     DataBuilder JSON으로 채우는 기획 데이터 테이블(`DT_<표>`)
 │   ├── Maps/
 │   └── World/              레벨에 배치하는 액터
@@ -531,7 +531,8 @@ Server/
 │   ├── Lobby/              로비 모듈. 로비 패킷 핸들러, 로비 요청의 응답을 만드는 요청 처리(LobbyRequests), 로비 복귀 창구(LobbyReturn), 캐릭터 생성 규칙, 계정 행과 캐릭터 행의 DAO, 로비 기획 데이터(Data/)
 │   ├── Game/               게임 도메인
 │   │   ├── Room/           룸, 룸 매니저, 셀 행렬(CellMatrix), 룸 이동 판정과 입장할 룸 배정, 이동 위치 판정, 몬스터 스폰 일정표
-│   │   ├── Combat/         피격과 처치 판정
+│   │   ├── Combat/         피격과 처치 판정, 공격 범위의 겹침 판정과 피해량
+│   │   ├── Action/         크리처의 액션 부품. 진행 중인 액션의 시간을 세고 타격 시점마다 룸에 판정을 넘긴다. 플레이어 액션 요청의 콤보와 방향 판정(ActionValidation)
 │   │   ├── Entities/       엔티티 계층과 컴포넌트 베이스, 엔티티 생성, 진행 사본과 저장 사본
 │   │   ├── Items/          아이템과 칸의 서버 타입, 범용 칸 배열(ItemContainer), 인벤토리 구역 대응 표
 │   │   ├── Inventory/      인벤토리 컴포넌트와 재사용 대기
@@ -540,14 +541,14 @@ Server/
 │   │   ├── AI/             몬스터 AI 컴포넌트와 상태 객체
 │   │   ├── Navigation/     navmesh 파일 형식(빌드 도구와 함께 컴파일), 맵마다의 navmesh와 그 보관소, 룸마다의 지형 질의, 크리처의 경로 추종 부품
 │   │   ├── Progress/       누적 경험치와 레벨 판정, 새 캐릭터의 초기 진행
-│   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더
+│   │   └── Data/           기획 데이터 템플릿과 그 검증, 로더, 액션 표를 판정 타입으로 옮기는 변환(ActionData)
 │   │       ├── Generated/  DataBuilder의 게임 모듈 산출물. JSON과 DesignData.h
 │   │       └── Extracted/  추출 스크립트의 산출물. 맵마다 배치 데이터 JSON과 navmesh, 크리처 판정 데이터 JSON과 에이전트 설정 JSON 하나씩
 │   ├── DB/                 게임의 데이터별 DAO(캐릭터 상태, 아이템, 퀵슬롯, 발급한 ID), 아이템 행 변환, 진행 저장소, DB 연결 가드와 DB 스레드 루프
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
 │   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
-├── GameServerTests/
+├── GameServerTests/        테스트. Data/에 클라이언트 테스트와 함께 읽는 공용 사례 파일
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
 │   ├── src/
@@ -579,9 +580,13 @@ Server/
 **빌드 도구를 MSBuild에서 바꾸지 않는다.** 근거는
 `docs/adr/0001-unify-build-path.md`의 「검토한 대안」에 있다.
 
-`Game/Combat/`은 피격과 처치를 판정한다. 룸과 세션을 모르고, 대상 찾기와 결과 전송은 `Game/Room/`이
+`Game/Combat/`은 피격과 처치를 판정하고, 공격 범위가 대상에 닿는지와 피해량을 계산한다. 룸과 세션을 모르고, 대상 찾기와 결과 전송은 `Game/Room/`이
 맡는다. `Game/Room/`의 `RoomTransfer`도 같은 모양이다. 룸 이동과 리스폰 요청을 판정하고, 맵과 좌표로 입장할 룸을
 고른다. 퇴장과 입장, 결과 전송은 `Room`이 맡는다.
+
+`Game/Action/`은 크리처의 액션 부품(`ActionComponent`)을 담는다. 크리처가 소유하고 받은 룸 틱으로 액션의 시간을 세며, 타격 시점마다 `Room::HandleHit`을 부른다.
+룸을 부르므로 `Game/Combat/`에 두지 않는다. 2026년 11월 1일(#359)에 몬스터 AI의 예약된 피격을 옮겨 만들었다.
+플레이어 액션 요청의 판정(`ActionValidation`)도 여기 둔다(2026년 11월 1일, #360). 액션 부품이 남긴 마지막 액션으로 콤보를 판정하고, 룸과 세션을 모른다.
 
 `Lobby/`는 로비가 하는 일(로비 접속, 캐릭터 목록, 생성, 삭제, 선택)을 담는 세로 모듈이다. 로비 패킷의 핸들러,
 캐릭터 생성 규칙(`CharacterCreation`), `GameDB`의 계정 행과 캐릭터 행을 다루는 DAO가 여기 있다. `Game/` 아래에 두지 않는
