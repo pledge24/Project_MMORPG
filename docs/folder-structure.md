@@ -302,7 +302,7 @@ P1/Content/
 │   │   ├── WorldSpace/     레벨 공간에 붙는 위젯
 │   │   └── Styles/         폰트
 │   ├── Data/
-│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`)
+│   │   ├── DataTables/     에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`, `DT_ActionAssets`)
 │   │   └── DesignData/     DataBuilder JSON으로 채우는 기획 데이터 테이블(`DT_<표>`)
 │   ├── Maps/
 │   └── World/              레벨에 배치하는 액터

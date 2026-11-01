@@ -31,11 +31,13 @@ bool Monster::Init(const SpawnParams& params)
         return false;
     }
 
-    // 기동할 때 몬스터 표의 몬스터마다 판정 데이터가 있는지 대조했다. 없으면 표를 바꿔 끼운 테스트다.
+    // 기동할 때 몬스터 표의 몬스터와 액션 표의 액션마다 판정 데이터가 있는지 대조했다. 없으면 표를 바꿔 끼운 테스트다.
     const CreatureCombat* combat = Gamedata::FindMonsterCombat(templateId);
-    if (combat == nullptr)
+    const ActionTiming* normalAttack = Gamedata::FindActionTiming(monsterRow->NormalAttackAction);
+    if (combat == nullptr || normalAttack == nullptr)
     {
-        GLogger->Warning("크리처 판정 데이터가 없는 템플릿 {}으로 몬스터를 만들 수 없다", templateId);
+        GLogger->Warning("크리처 판정 데이터나 일반 공격 액션 {}의 타이밍이 없는 템플릿 {}으로 몬스터를 만들 수 없다",
+            monsterRow->NormalAttackAction, templateId);
         return false;
     }
 
@@ -50,7 +52,7 @@ bool Monster::Init(const SpawnParams& params)
     // AI가 만들어지며 대기 상태에 들어가 경로 추종 부품을 멈추므로 경로 추종 부품을 먼저 만든다.
     const MonsterRef self = static_pointer_cast<Monster>(shared_from_this());
     _pathFollowing = make_shared<PathFollowingComponent>(self, _template.MovementSpeed, combat->capsuleHalfHeight);
-    _ai = make_shared<MonsterAIComponent>(self, _template, *combat);
+    _ai = make_shared<MonsterAIComponent>(self, _template, *normalAttack);
 
     return true;
 }

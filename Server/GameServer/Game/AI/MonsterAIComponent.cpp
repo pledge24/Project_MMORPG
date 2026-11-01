@@ -5,7 +5,7 @@
 #include "Game/Navigation/PathFollowingComponent.h"
 #include "Game/Room/Room.h"
 
-MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const CreatureCombat& combat)
+MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const ActionTiming& normalAttack)
     : EntityComponent(owner)
 {
     _attackInterval = monsterRow.AttackInterval;
@@ -14,9 +14,9 @@ MonsterAIComponent::MonsterAIComponent(MonsterRef owner, const DesignData::Monst
     _detectionRange = monsterRow.DetectionRange;
     _chasingMaxRange = monsterRow.ChasingMaxRange;
     _timeSinceLastAttack = _attackInterval;
-    // 몬스터의 일반 공격은 콤보가 0이라 클라이언트가 첫 공격 몽타주를 재생한다. 그 몽타주가 처음 맞는 순간에 판정한다.
-    // 공격 몽타주와 섹션, 타격 시점이 하나 이상인지는 기동할 때 대조했다.
-    _normalAttackHitDelay = combat.attacks.front().sections.front().hitTimes.front();
+    // 몬스터의 일반 공격 액션이 처음 맞는 순간에 판정한다.
+    // 타격 시점의 수가 액션의 타격 수와 같은지는 기동할 때 대조했고, 액션마다 타격이 하나 이상인지는 DataBuilder가 검사한다.
+    _normalAttackHitDelay = normalAttack.hitTimes.front();
 
     // 스폰 정보에 Idle 이동 상태가 실리도록 룸에 들어가기 전에 맞춰 둔다.
     _state = &MonsterState::Get(MonsterStateType::Idle);

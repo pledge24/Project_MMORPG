@@ -4,12 +4,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "CreatureCombat/P1CreatureCombatCheck.h"
 #include "CreatureCombat/P1MontageExtract.h"
-#include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/DataTable.h"
-#include "Engine/InheritableComponentHandler.h"
-#include "Engine/SCS_Node.h"
-#include "Engine/SimpleConstructionScript.h"
-#include "Game/Combat/P1AttackSystemComponent.h"
+#include "Game/Data/P1ActionAssetData.h"
 #include "Game/Data/P1GameDataSettings.h"
 #include "Game/Data/P1MonsterAssetData.h"
 #include "GameFramework/Character.h"
@@ -26,21 +22,13 @@ namespace
         return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("../Server/GameServer/Game/Data/Extracted/CreatureCombat.json"));
     }
 
-    void AddAttacks(const TArray<UAnimMontage*>& Montages, const FTransform& MeshToActor, FP1CreatureCombatCheck::FCreature& OutCreature)
+    /** DataBuilder의 서버 산출물 폴더. 다음 액션과 몬스터의 일반 공격 액션은 서버만 받는 열이라 클라이언트 산출물에 없다. */
+    FString GetServerDesignDataDir()
     {
-        for (const UAnimMontage* Montage : Montages)
-        {
-            if (Montage == nullptr)
-                OutCreature.Attacks.AddDefaulted();
-            else
-                OutCreature.Attacks.Add(P1MontageExtract::Extract(*Montage, MeshToActor));
-        }
+        return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("../Server/GameServer/Game/Data/Generated/"));
     }
 
-    /**
-     * 몬스터 에셋 테이블의 행마다 몬스터 하나. 메시의 상대 회전은 몬스터 블루프린트가 정하지만, 몬스터 몽타주는 루트 모션을 쓸 수 없으므로
-     * 곡선을 만들지 않아 회전이 필요 없다.
-     */
+    /** 몬스터 에셋 테이블의 행마다 몬스터 하나. */
     void CollectMonsters(const UP1GameDataSettings& Settings, TArray<FP1CreatureCombatCheck::FCreature>& OutMonsters, TArray<FString>& OutErrors)
     {
         const UDataTable* Table = Settings.MonsterAssetTable.LoadSynchronous();
@@ -65,50 +53,17 @@ namespace
             Monster.Source = FString::Printf(TEXT("%s 행 %s"), *Table->GetName(), *RowName);
             Monster.CapsuleRadius = AssetData.CapsuleRadius;
             Monster.CapsuleHalfHeight = AssetData.CapsuleHalfHeight;
-
-            TArray<UAnimMontage*> Montages;
-            for (const TSoftObjectPtr<UAnimMontage>& Montage : AssetData.AttackMontages)
-                Montages.Add(Montage.LoadSynchronous());
-            AddAttacks(Montages, FTransform::Identity, Monster);
         }
     }
 
     /**
-     * 블루프린트가 더한 공격 시스템 컴포넌트의 템플릿. 블루프린트 컴포넌트는 CDO에 없고 구성 스크립트에 있다.
-     * 자식 블루프린트가 덮어쓴 템플릿을 먼저 본다. 없으면 nullptr.
+     * 직업마다 플레이어 블루프린트 하나. 블루프린트의 메시 상대 트랜스폼(위치 제외)을 OutMeshToActor에 쓴다.
+     * 액션은 직업을 모르므로 모든 직업의 메시가 같은 회전과 크기로 붙어 있어야 한다.
      */
-    const UP1AttackSystemComponent* FindAttackSystemTemplate(UClass* PlayerClass)
+    void CollectClasses(const UP1GameDataSettings& Settings, TArray<FP1CreatureCombatCheck::FCreature>& OutClasses, FTransform& OutMeshToActor,
+        TArray<FString>& OutErrors)
     {
-        UBlueprintGeneratedClass* MostDerived = Cast<UBlueprintGeneratedClass>(PlayerClass);
-        for (UClass* Class = PlayerClass; Class != nullptr; Class = Class->GetSuperClass())
-        {
-            const UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(Class);
-            if (BlueprintClass == nullptr || BlueprintClass->SimpleConstructionScript == nullptr)
-                continue;
-
-            for (USCS_Node* Node : BlueprintClass->SimpleConstructionScript->GetAllNodes())
-            {
-                if (Node == nullptr || Cast<UP1AttackSystemComponent>(Node->ComponentTemplate) == nullptr)
-                    continue;
-
-                if (MostDerived != nullptr && MostDerived != BlueprintClass && MostDerived->InheritableComponentHandler != nullptr)
-                {
-                    if (const UP1AttackSystemComponent* Override = Cast<UP1AttackSystemComponent>(
-                        MostDerived->InheritableComponentHandler->GetOverridenComponentTemplate(FComponentKey(Node))))
-                        return Override;
-                }
-                return Cast<UP1AttackSystemComponent>(Node->ComponentTemplate);
-            }
-        }
-
-        // 네이티브로 붙인 컴포넌트는 CDO에 있다.
-        const AActor* Default = PlayerClass->GetDefaultObject<AActor>();
-        return Default != nullptr ? Default->FindComponentByClass<UP1AttackSystemComponent>() : nullptr;
-    }
-
-    /** 직업마다 플레이어 블루프린트 하나. 루트 모션은 블루프린트의 메시 상대 트랜스폼으로 캐릭터 로컬에 옮긴다. */
-    void CollectClasses(const UP1GameDataSettings& Settings, TArray<FP1CreatureCombatCheck::FCreature>& OutClasses, TArray<FString>& OutErrors)
-    {
+        TOptional<FTransform> MeshToActor;
         for (const TPair<int32, TSoftClassPtr<ACharacter>>& Entry : Settings.CharacterClassPlayers)
         {
             UClass* PlayerClass = Entry.Value.LoadSynchronous();
@@ -125,14 +80,52 @@ namespace
             Class.CapsuleRadius = Default->GetCapsuleComponent()->GetUnscaledCapsuleRadius();
             Class.CapsuleHalfHeight = Default->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 
-            const UP1AttackSystemComponent* AttackSystem = FindAttackSystemTemplate(PlayerClass);
-            if (AttackSystem == nullptr)
-                continue; // 공격 몽타주가 없다는 오류를 검사가 낸다.
+            // 루트 모션은 이동량이라 메시의 위치는 쓰지 않는다.
+            const FTransform& Relative = Default->GetMesh()->GetRelativeTransform();
+            const FTransform ClassMeshToActor(Relative.GetRotation(), FVector::ZeroVector, Relative.GetScale3D());
+            if (MeshToActor.IsSet() && MeshToActor->Equals(ClassMeshToActor) == false)
+                OutErrors.Add(FString::Printf(TEXT("직업 %d(%s): 메시의 상대 회전이나 크기가 다른 직업과 다르다. 액션의 루트 모션을 캐릭터 로컬로 옮길 수 없다"),
+                    Class.Id, *Class.Source));
+            else
+                MeshToActor = ClassMeshToActor;
+        }
+        OutMeshToActor = MeshToActor.Get(FTransform::Identity);
+    }
 
-            TArray<UAnimMontage*> Montages;
-            for (const TObjectPtr<UAnimMontage>& Montage : AttackSystem->GetNormalAttackMontages())
-                Montages.Add(Montage.Get());
-            AddAttacks(Montages, Default->GetMesh()->GetRelativeTransform(), Class);
+    /** 액션 에셋 테이블의 행마다 액션 하나. 루트 모션은 플레이어의 메시 트랜스폼으로 옮긴다. 몬스터의 액션은 루트 모션이 없다(검사가 막는다). */
+    void CollectActions(const UP1GameDataSettings& Settings, const FTransform& PlayerMeshToActor, TArray<FP1CreatureCombatCheck::FAction>& OutActions,
+        TArray<FString>& OutErrors)
+    {
+        const UDataTable* Table = Settings.ActionAssetTable.LoadSynchronous();
+        if (Table == nullptr)
+        {
+            OutErrors.Add(TEXT("액션 에셋 테이블을 열지 못했다. 프로젝트 설정 「P1 Game Data」의 ActionAssetTable을 본다"));
+            return;
+        }
+
+        for (const TPair<FName, uint8*>& Row : Table->GetRowMap())
+        {
+            const FString RowName = Row.Key.ToString();
+            const FString Source = FString::Printf(TEXT("%s 행 %s"), *Table->GetName(), *RowName);
+            if (RowName.IsNumeric() == false)
+            {
+                OutErrors.Add(FString::Printf(TEXT("%s: 행 이름이 액션 번호가 아니다"), *Source));
+                continue;
+            }
+
+            const FP1ActionAssetData& AssetData = *reinterpret_cast<const FP1ActionAssetData*>(Row.Value);
+            FP1CreatureCombatCheck::FAction Action;
+            const UAnimMontage* Montage = AssetData.Montage.LoadSynchronous();
+            if (Montage != nullptr && P1MontageExtract::ExtractSection(*Montage, AssetData.Section, PlayerMeshToActor, Action) == false)
+            {
+                OutErrors.Add(FString::Printf(TEXT("%s: 몽타주 %s에 섹션 %s가 없다"), *Source, *Montage->GetPathName(), *AssetData.Section.ToString()));
+                continue;
+            }
+
+            // 몽타주 칸이 비었으면 Montage가 빈 채로 넘겨 검사가 알린다.
+            Action.Id = FCString::Atoi(*RowName);
+            Action.Source = Source;
+            OutActions.Add(MoveTemp(Action));
         }
     }
 }
@@ -150,17 +143,21 @@ int32 UP1CreatureCombatExtractCommandlet::Main(const FString& Params)
     TArray<FString> Errors;
     FP1CreatureCombatCheck::FInput Input;
 
-    // 기획 데이터의 몬스터 번호. 몬스터 에셋 테이블의 행이 이 번호와 짝을 맺는다.
-    const FString MonsterPath = FPaths::ProjectDir() / TEXT("DesignData/Generated/Monster.json");
+    // 기획 데이터의 몬스터와 액션. 몬스터 에셋 테이블과 액션 에셋 테이블의 행이 이 번호와 짝을 맺는다.
+    const FString DesignDataDir = GetServerDesignDataDir();
+    FString ActionJson;
     FString MonsterJson;
-    if (FFileHelper::LoadFileToString(MonsterJson, *MonsterPath) == false)
-        Errors.Add(FString::Printf(TEXT("%s를 읽지 못했다. DataBuilder를 돌린다"), *MonsterPath));
+    if (FFileHelper::LoadFileToString(ActionJson, *(DesignDataDir / TEXT("Action.json"))) == false
+        || FFileHelper::LoadFileToString(MonsterJson, *(DesignDataDir / TEXT("Monster.json"))) == false)
+        Errors.Add(FString::Printf(TEXT("%s에서 Action.json과 Monster.json을 읽지 못했다. DataBuilder를 돌린다"), *DesignDataDir));
     else
-        FP1CreatureCombatCheck::ParseMonsterIds(MonsterJson, Input.DesignMonsterIds, Errors);
+        FP1CreatureCombatCheck::ParseDesignData(ActionJson, MonsterJson, Input, Errors);
 
     const UP1GameDataSettings& Settings = *GetDefault<UP1GameDataSettings>();
+    FTransform PlayerMeshToActor;
     CollectMonsters(Settings, Input.Monsters, Errors);
-    CollectClasses(Settings, Input.Classes, Errors);
+    CollectClasses(Settings, Input.Classes, PlayerMeshToActor, Errors);
+    CollectActions(Settings, PlayerMeshToActor, Input.Actions, Errors);
 
     FP1CreatureCombatCheck::FResult Result;
     if (Errors.IsEmpty())
@@ -186,6 +183,7 @@ int32 UP1CreatureCombatExtractCommandlet::Main(const FString& Params)
     }
 
     UE_LOG(LogP1CreatureCombat, Display, TEXT("[크리처 추출] %s"), *OutputPath);
-    UE_LOG(LogP1CreatureCombat, Display, TEXT("[크리처 추출] 몬스터 %d개와 직업 %d개의 판정 데이터를 썼다"), Input.Monsters.Num(), Input.Classes.Num());
+    UE_LOG(LogP1CreatureCombat, Display, TEXT("[크리처 추출] 몬스터 %d개와 직업 %d개, 액션 %d개의 판정 데이터를 썼다"),
+        Input.Monsters.Num(), Input.Classes.Num(), Input.Actions.Num());
     return 0;
 }

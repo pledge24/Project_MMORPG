@@ -82,6 +82,10 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Actions")
     TSoftObjectPtr<UDataTable> ActionTable;
 
+    /** 액션마다 재생할 몽타주 섹션. 행 구조체는 FP1ActionAssetData이고 행 이름은 액션 번호. 기획 데이터의 액션마다 하나씩 둔다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Actions")
+    TSoftObjectPtr<UDataTable> ActionAssetTable;
+
     //~ Npcs
 public:
     static const FP1NpcRow* FindNpcRow(int32 NpcId);

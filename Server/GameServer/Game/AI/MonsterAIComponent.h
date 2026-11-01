@@ -11,7 +11,7 @@
 class MonsterAIComponent : public EntityComponent
 {
 public:
-    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const CreatureCombat& combat);
+    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const ActionTiming& normalAttack);
     virtual ~MonsterAIComponent() = default;
 
     //~ Begin EntityComponent Interface
@@ -98,7 +98,7 @@ private:
     /** 공격 간격(초). */
     float _attackInterval;
     int32 _baseAttack;
-    /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간(초). 공격 몽타주의 타격 시점이다. */
+    /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간(초). 일반 공격 액션의 첫 타격 시점이다. */
     float _normalAttackHitDelay;
 
     /** 마지막 공격 뒤 흐른 시간(초). 스폰한 몬스터는 공격한 적이 없으므로 공격 간격에서 시작한다. */

@@ -67,9 +67,13 @@ public:
     /** NPC 번호 순서다. 기동할 때 NPC 표의 NPC마다 하나씩 있는지 대조한다. */
     static const map<int32, NpcPlacement>& GetNpcPlacements() { return s_tables.npcPlacements; }
 
-    /** 크리처 판정 데이터. 없는 번호면 nullptr. 기동할 때 몬스터 표의 몬스터와 직업별 능력치 표의 직업마다 있는지 대조한다. */
+    /**
+     * 크리처 판정 데이터. 없는 번호면 nullptr.
+     * 기동할 때 몬스터 표의 몬스터, 직업별 능력치 표의 직업, 액션 표의 액션마다 있는지 대조한다.
+     */
     static const CreatureCombat* FindMonsterCombat(int32 templateId);
     static const CreatureCombat* FindClassCombat(Protocol::CharacterClass classId);
+    static const ActionTiming* FindActionTiming(int32 actionId);
 
     /** 골드인 재화의 번호. DB의 CurrencyId로 쓴다. */
     static int32 GetGoldCurrencyId() { return s_tables.goldCurrencyId; }

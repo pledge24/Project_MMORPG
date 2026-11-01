@@ -243,3 +243,9 @@ const CreatureCombat* Gamedata::FindClassCombat(Protocol::CharacterClass classId
     auto it = s_tables.classCombats.find(classId);
     return it == s_tables.classCombats.end() ? nullptr : &it->second;
 }
+
+const ActionTiming* Gamedata::FindActionTiming(int32 actionId)
+{
+    auto it = s_tables.actionTimings.find(actionId);
+    return it == s_tables.actionTimings.end() ? nullptr : &it->second;
+}
