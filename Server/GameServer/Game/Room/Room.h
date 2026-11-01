@@ -7,6 +7,7 @@
 #include "Game/Room/MonsterSpawner.h"
 
 class NavQuery;
+struct AttackerPose;
 
 /**
  * 맵 하나 전체를 시뮬레이션하는 사본. 같은 맵의 룸들은 플레이어에게 채널로 보인다.
@@ -105,8 +106,8 @@ public:
     void C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player);
     /** 보낸 사람(player)의 위치를 바꾼다. */
     void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
-    /** 사망한 플레이어의 공격은 응답으로 거절하고 다른 플레이어에게 알리지 않는다. */
-    void C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player);
+    /** 사망한 플레이어의 액션은 응답으로 거절하고 다른 플레이어에게 알리지 않는다. 받아들인 액션은 알리기만 하고 판정하지 않는다. */
+    void C_HandleAction(Protocol::C_ACTION pkt, PlayerRef player);
     /** 이 룸에서 되살린 뒤 마을로 보낸다. 마을이 이 룸의 맵에 있으면 룸 안에서 옮긴다. */
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);
     /** 이 룸이 속한 맵의 채널마다 인원을 응답한다. */
@@ -116,17 +117,23 @@ public:
 
     //~ 전투와 리스폰
 public:
-    /** 공격 사실만 브로드캐스트한다. 피격 판정은 HandleHit이 따로 한다. */
-    void HandleNormalAttack(int32 combo, CreatureRef creature);
-    /** 공격 하나의 피격을 판정한다. 대상이 죽으면 보상과 사망까지 처리한다. */
-    void HandleHit(EntityRef attacker, AttackInfo attackInfo);
+    /** 크리처가 yaw(도) 방향으로 액션을 시작했다고 주변에 알린다. 크리처의 액션 부품이 부른다. */
+    void HandleActionStart(const CreatureRef& creature, int32 actionId, float yaw);
+    /**
+     * 액션의 타격 하나를 pose 기준의 공격 범위로 판정해, 범위 안의 대상마다 피해를 준다. 대상이 죽으면 보상과 사망까지 처리한다.
+     * 공격자가 그사이 이 룸을 떠났으면 아무것도 하지 않는다.
+     */
+    void HandleHit(const CreatureRef& attacker, int32 actionId, int32 hitIndex, const AttackerPose& pose);
     void HandleMonsterKill(PlayerRef player, const Reward& reward);
     /** 몬스터는 룸에서 뺀다. 플레이어는 리스폰할 때까지 룸에 남긴다. */
     void HandleDie(CreatureRef creature);
 
 private:
-    /** 공격한 엔티티를 뺀, 공격한 엔티티를 보는 플레이어에게 공격을 알린다. */
-    void BroadcastAttack(int64 attackerId, int32 combo, float yaw);
+    /** 시작한 크리처를 뺀, 그 크리처를 보는 플레이어에게 액션의 시작을 알린다. */
+    void BroadcastActionStart(int64 entityId, int32 actionId, float yaw);
+
+    /** 공격 범위 밖의 대상을 걸러 내기 전에 후보를 모을 때 범위에 더하는 여유(cm). 어느 크리처의 캡슐 반지름보다 크다. */
+    static constexpr float HIT_CANDIDATE_MARGIN = 200.f;
 
     //~ 몬스터 스폰
 public:
@@ -213,7 +220,7 @@ public:
 protected:
     /** 엔티티를 이 룸과 그 위치의 셀에 넣고, 처음 룸에 들어가는 엔티티면 Start를 부른다. 이미 있는 id면 false. */
     bool AddEntity(EntityRef entity);
-    /** 엔티티를 룸과 셀에서 뺀다. 알리지 않으므로 알릴 것은 부르기 전에 보낸다. */
+    /** 엔티티를 룸과 셀에서 빼고 진행 중인 액션을 버린다. 알리지 않으므로 알릴 것은 부르기 전에 보낸다. */
     bool RemoveEntity(int64 entityId);
 
     /** 엔티티를 찾아 T로 내린다. 없거나 T가 아니면 nullptr. */

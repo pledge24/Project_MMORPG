@@ -22,3 +22,4 @@ USING_SHARED_PTR(EquipmentComponent);
 USING_SHARED_PTR(QuickSlotComponent);
 USING_SHARED_PTR(MonsterAIComponent);
 USING_SHARED_PTR(PathFollowingComponent);
+USING_SHARED_PTR(ActionComponent);

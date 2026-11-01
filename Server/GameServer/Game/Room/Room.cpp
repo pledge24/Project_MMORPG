@@ -4,6 +4,9 @@
 #include "Game/Entities/Monster.h"
 #include "Game/Entities/Npc.h"
 #include "Game/Combat/Combat.h"
+#include "Game/Combat/AttackArea.h"
+#include "Game/Action/ActionComponent.h"
+#include "Game/Data/ActionData.h"
 #include "Game/Room/MoveValidation.h"
 #include "Game/Navigation/NavMeshes.h"
 #include "Game/Navigation/NavQuery.h"
@@ -56,6 +59,29 @@ namespace
         Protocol::S_SPAWN spawnPkt;
         spawnPkt.add_entities()->CopyFrom(entity->GetEntityInfo());
         return ServerPacketHandler::MakeSerializedPacket(spawnPkt);
+    }
+
+    // 대상 규칙. PvP가 없으므로 플레이어끼리, 몬스터끼리가 아군이다. 공격자 자신은 어느 규칙으로도 맞히지 않는다.
+    bool MatchesTargetRule(DesignData::ActionTarget rule, const CreatureRef& attacker, const CreatureRef& target)
+    {
+        if (target == attacker)
+            return false;
+
+        const bool isAlly = attacker->IsPlayer() == target->IsPlayer();
+        return rule == DesignData::ActionTarget::ALLY ? isAlly : isAlly == false;
+    }
+
+    TargetCapsule MakeTargetCapsule(const CreatureRef& target)
+    {
+        const CreatureCombat& capsule = target->GetCapsule();
+
+        TargetCapsule targetCapsule;
+        {
+            targetCapsule.foot = target->GetFootPosition();
+            targetCapsule.radius = capsule.capsuleRadius;
+            targetCapsule.halfHeight = capsule.capsuleHalfHeight;
+        }
+        return targetCapsule;
     }
 
     void SendToPlayer(const EntityRef& entity, const SendBufferRef& sendBuffer)
@@ -520,7 +546,7 @@ void Room::C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player)
     BroadcastNearby(playerId, ServerPacketHandler::MakeSerializedPacket(movePkt), playerId);
 }
 
-void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
+void Room::C_HandleAction(Protocol::C_ACTION pkt, PlayerRef player)
 {
     const int64 entityId = player->GetEntityId();
     if (Contains(entityId) == false)
@@ -529,16 +555,17 @@ void Room::C_HandleNormalAttack(Protocol::C_NORMAL_ATTACK pkt, PlayerRef player)
     // 사망한 플레이어는 리스폰할 때까지 룸에 남으므로 여기서 거른다.
     const bool isDead = player->IsDead();
 
-    Protocol::S_NORMAL_ATTACK normalAttackPkt;
-    normalAttackPkt.set_result(isDead ? Protocol::COMBAT_RESULT_DEAD : Protocol::COMBAT_RESULT_SUCCESS);
+    Protocol::S_ACTION actionPkt;
+    actionPkt.set_result(isDead ? Protocol::COMBAT_RESULT_DEAD : Protocol::COMBAT_RESULT_SUCCESS);
     if (GameSessionRef session = player->GetSession())
-        SendPacket(session, normalAttackPkt);
+        SendPacket(session, actionPkt);
 
     if (isDead)
         return;
 
-    // 공격한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
-    BroadcastAttack(entityId, pkt.combo(), pkt.yaw());
+    // 플레이어의 액션은 아직 알리기만 하고 판정하지 않는다. 액션 번호, 방향, 시작 위치의 검증은 판정과 함께 더한다.
+    // 액션을 시작한 순간의 방향은 클라이언트만 안다. _posInfo의 yaw는 마지막 이동 패킷의 값이다.
+    BroadcastActionStart(entityId, pkt.action_id(), pkt.yaw());
 }
 
 void Room::C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player)
@@ -655,44 +682,44 @@ void Room::C_HandleChangeChannel(Protocol::C_CHANGE_CHANNEL pkt, PlayerRef playe
     MovePlayer(player, destination, player->GetPosInfo());
 }
 
-void Room::HandleNormalAttack(int32 combo, CreatureRef creature)
+void Room::HandleActionStart(const CreatureRef& creature, int32 actionId, float yaw)
 {
-    BroadcastAttack(creature->GetEntityId(), combo, creature->GetPosInfo().yaw());
+    BroadcastActionStart(creature->GetEntityId(), actionId, yaw);
 }
 
-void Room::BroadcastAttack(int64 attackerId, int32 combo, float yaw)
-{
-    Protocol::S_ATTACK attackPkt;
-    {
-        attackPkt.set_entity_id(attackerId);
-        attackPkt.set_combo(combo);
-        attackPkt.set_yaw(yaw);
-    }
-
-    // 공격한 플레이어는 자기 공격을 이미 재생했으므로 받지 않는다. 몬스터의 번호는 어느 플레이어와도 겹치지 않는다.
-    BroadcastNearby(attackerId, ServerPacketHandler::MakeSerializedPacket(attackPkt), attackerId);
-}
-
-void Room::HandleHit(EntityRef attacker, AttackInfo attackInfo)
+void Room::HandleHit(const CreatureRef& attacker, int32 actionId, int32 hitIndex, const AttackerPose& pose)
 {
     // 그사이 룸을 떠났으면 공격은 없던 것이 된다.
     // id만 보면 그사이 나갔다 다시 들어온 같은 엔티티도 통과하므로 객체까지 대조한다.
-    if (FindEntityAs<Entity>(attacker->GetEntityId()) != attacker)
+    if (FindEntityAs<Creature>(attacker->GetEntityId()) != attacker)
         return;
 
-    vector<CreatureRef> targets;
-    if (attackInfo.targetId.has_value())
+    // 타격 순번의 수는 기동할 때 판정 데이터의 타격 시점 수와 대조했다. 어긋나면 표를 바꿔 끼운 테스트다.
+    const DesignData::ActionRow* action = Gamedata::FindAction(actionId);
+    if (action == nullptr || hitIndex < 0 || hitIndex >= static_cast<int32>(action->Hits.size()))
     {
-        int64 targetId = attackInfo.targetId.value();
-        if(Contains(targetId) == false)
-            return;
-
-        // 피격은 Creature만 받는다.
-        if (CreatureRef creature = FindEntityAs<Creature>(targetId))
-        {
-            targets.push_back(creature);
-        }
+        GLogger->Warning("룸 {}: 액션 {}에 타격 {}이 없어 판정하지 않는다", _roomId, actionId, hitIndex);
+        return;
     }
+
+    const AttackArea area = ActionData::ToAttackArea(action->Hits[hitIndex]);
+
+    // 셀에서 후보를 모으고, 대상 규칙과 공격 범위로 거른다. 사망한 대상은 판정(ResolveHit)이 거른다.
+    vector<CreatureRef> targets;
+    const vector2D center(pose.foot.x, pose.foot.y);
+    for (int64 candidateId : _cellMatrix.QueryRange(center, AttackAreaMath::GetPlaneReach(area) + HIT_CANDIDATE_MARGIN))
+    {
+        CreatureRef target = FindEntityAs<Creature>(candidateId);
+        if (target == nullptr || MatchesTargetRule(action->TargetRule, attacker, target) == false)
+            continue;
+
+        if (AttackAreaMath::Overlaps(area, pose, MakeTargetCapsule(target)))
+            targets.push_back(target);
+    }
+
+    // 피해량은 피격 대상마다 같다. 공격력은 타격 순간의 값이다.
+    AttackInfo attackInfo;
+    attackInfo.damage = Combat::CalcDamage(attacker->GetAttackStats(), ActionData::ToDamageType(action->DamageType), action->DamageCoefficient);
 
     for (const CreatureRef& target : targets)
     {
@@ -765,6 +792,19 @@ void Room::HandleDie(CreatureRef creature)
         _monsterSpawner.OnMonsterDied(monster->GetSpawnPointIndex());
 
     RemoveEntity(entityId);
+}
+
+void Room::BroadcastActionStart(int64 entityId, int32 actionId, float yaw)
+{
+    Protocol::S_ACTION_START actionStartPkt;
+    {
+        actionStartPkt.set_entity_id(entityId);
+        actionStartPkt.set_action_id(actionId);
+        actionStartPkt.set_yaw(yaw);
+    }
+
+    // 시작한 플레이어는 자기 액션을 이미 재생했으므로 받지 않는다. 몬스터의 번호는 어느 플레이어와도 겹치지 않는다.
+    BroadcastNearby(entityId, ServerPacketHandler::MakeSerializedPacket(actionStartPkt), entityId);
 }
 
 bool Room::SpawnInitialMonsters()
@@ -914,6 +954,10 @@ bool Room::RemoveEntity(int64 entityId)
 
     if (it->second->IsPlayer())
         _playerCount--;
+
+    // 액션의 시간은 룸 틱이 센다. 룸에서 빠지면 예약한 타격도 사라져야, 다시 들어간 룸에서 지난 액션이 판정되지 않는다.
+    if (CreatureRef creature = dynamic_pointer_cast<Creature>(it->second))
+        creature->GetAction().Cancel();
 
     _cellMatrix.Remove(entityId);
 	_entities.erase(it);

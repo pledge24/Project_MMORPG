@@ -61,4 +61,7 @@ namespace AttackAreaMath
 
     /** 공격자 기준으로 범위가 앞으로 가장 멀리 닿는 거리(cm). 대상의 반지름은 더하지 않는다. */
     float GetFrontReach(const AttackArea& area);
+
+    /** 공격자 발밑에서 평면으로 잰, 범위의 가장 먼 점까지의 거리(cm). 후보를 모으는 반경이다. 대상의 반지름은 더하지 않는다. */
+    float GetPlaneReach(const AttackArea& area);
 }

@@ -38,6 +38,9 @@
     <Filter Include="Game\Items">
       <UniqueIdentifier>{c58760dd-3164-4a92-8ce0-012d693cc985}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Action">
+      <UniqueIdentifier>{d5827dc6-513c-4055-a48a-6609a855074b}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Game\Combat">
       <UniqueIdentifier>{fa0fd672-07c0-466c-8912-9015a727cb9c}</UniqueIdentifier>
     </Filter>
@@ -226,6 +229,12 @@
     </ClCompile>
     <ClCompile Include="Game\Combat\AttackArea.cpp">
       <Filter>Game\Combat</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Action\ActionComponent.cpp">
+      <Filter>Game\Action</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Data\ActionData.cpp">
+      <Filter>Game\Data</Filter>
     </ClCompile>
     <ClCompile Include="Game\Equipment\EquipmentComponent.cpp">
       <Filter>Game\Equipment</Filter>
@@ -453,6 +462,12 @@
     </ClInclude>
     <ClInclude Include="Game\Combat\AttackArea.h">
       <Filter>Game\Combat</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Action\ActionComponent.h">
+      <Filter>Game\Action</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Data\ActionData.h">
+      <Filter>Game\Data</Filter>
     </ClInclude>
     <ClInclude Include="Game\Equipment\EquipmentComponent.h">
       <Filter>Game\Equipment</Filter>

@@ -110,8 +110,6 @@ TArray<FP1DesignDataPairCheck::FIssue> FP1DesignDataPairCheck::CheckMonsters(con
 
             for (const TSoftObjectPtr<UMaterialInterface>& Material : AssetData.Materials)
                 CheckOptional(Issues, Owner, TEXT("Materials"), Material.ToSoftObjectPath());
-            for (const TSoftObjectPtr<UAnimMontage>& Montage : AssetData.AttackMontages)
-                CheckOptional(Issues, Owner, TEXT("AttackMontages"), Montage.ToSoftObjectPath());
         });
 }
 

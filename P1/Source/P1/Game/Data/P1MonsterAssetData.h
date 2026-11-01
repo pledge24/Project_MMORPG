@@ -5,7 +5,6 @@
 #include "P1MonsterAssetData.generated.h"
 
 class UAnimInstance;
-class UAnimMontage;
 class UMaterialInterface;
 class USkeletalMesh;
 
@@ -31,10 +30,6 @@ struct P1_API FP1MonsterAssetData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
     FVector MeshScale = FVector::OneVector;
-
-    /** 콤보 순번 1부터 차례로 재생하는 일반 공격 몽타주. */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-    TArray<TSoftObjectPtr<UAnimMontage>> AttackMontages;
 
     /** 캡슐 반지름(cm). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")

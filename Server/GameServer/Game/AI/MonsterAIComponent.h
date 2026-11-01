@@ -1,6 +1,5 @@
 #pragma once
 #include "Game/Entities/EntityComponent.h"
-#include "Game/Combat/CombatTypes.h"
 #include "Game/AI/MonsterStates.h"
 
 /**
@@ -11,7 +10,7 @@
 class MonsterAIComponent : public EntityComponent
 {
 public:
-    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow, const ActionTiming& normalAttack);
+    MonsterAIComponent(MonsterRef owner, const DesignData::MonsterRow& monsterRow);
     virtual ~MonsterAIComponent() = default;
 
     //~ Begin EntityComponent Interface
@@ -51,6 +50,7 @@ public:
     void ClearTarget() { _target.reset(); }
     /** 아래 대상 함수는 대상이 있고 이 룸에 있을 때만 부른다. AI가 틱마다 대상을 놓쳤는지 먼저 본다. */
     bool IsTargetInAttackRange() const;
+    /** 공격하는 동안은 공격을 시작한 방향을 지키므로 돌지 않는다. */
     void LookAtTarget();
 
     /** 스폰 지점에서 잰 평면 거리가 추적 한계를 넘었으면 true. */
@@ -70,10 +70,12 @@ public:
 
     /** 마지막 공격 뒤 공격 간격이 지났으면 true. */
     bool CanAttack() const { return _timeSinceLastAttack >= _attackInterval; }
-    /** 룸에 일반 공격을 알리고, 공격 몽타주의 타격 시점 뒤의 피격 판정을 예약한다. */
+    /** 대상을 바라본 방향으로 일반 공격 액션을 시작한다. 피격은 액션이 타격 시점마다 공격 범위로 판정한다. */
     void NormalAttack();
-    /** 예약한 피격 판정을 버린다. */
-    void CancelPendingHit() { _pendingHit.reset(); }
+    /** 진행 중인 공격과 아직 판정하지 않은 타격을 버린다. */
+    void CancelAttack();
+    /** 공격 액션이 진행 중이면 true. */
+    bool IsAttacking() const;
 
     /** deltaTime(초)만큼 귀환 중의 체력을 회복한다. 최대 HP를 넘지 않는다. */
     void RecoverHp(float deltaTime);
@@ -87,35 +89,22 @@ private:
     float _detectionRange;
     /** 스폰 지점에서 잰다(cm). */
     float _chasingMaxRange;
-    /** 공격 사거리(cm). */
+    /** 공격을 시작하는 거리(cm). */
     float _tryAttackRange;
 
     //~ 공격
 private:
-    /** 예약한 피격의 때가 되면 룸에 판정을 넘긴다. */
-    void UpdatePendingHit(float deltaTime);
-
     /** 공격 간격(초). */
     float _attackInterval;
-    int32 _baseAttack;
-    /** 일반 공격을 알린 뒤 피격을 판정하기까지의 시간(초). 일반 공격 액션의 첫 타격 시점이다. */
-    float _normalAttackHitDelay;
+    int32 _normalAttackAction;
 
     /** 마지막 공격 뒤 흐른 시간(초). 스폰한 몬스터는 공격한 적이 없으므로 공격 간격에서 시작한다. */
     float _timeSinceLastAttack;
 
-    /** 판정을 기다리는 일반 공격. remainingTime은 초 단위다. */
-    struct PendingHit
-    {
-        AttackInfo attackInfo;
-        /** 공격을 알릴 때의 대상. 그사이 _target이 바뀌어도 이 대상으로 판정한다. */
-        weak_ptr<Entity> target;
-        float remainingTime = 0.f;
-    };
-    optional<PendingHit> _pendingHit;
-
     //~ 공통
 private:
+    /** 대상을 바라보게 돈다. 공격 중인지는 보지 않는다. */
+    void FaceTarget();
     /** 소유 몬스터. 소유자가 이미 사라졌으면 nullptr. */
     MonsterRef GetOwner() const;
     /** 대상의 위치. 대상이 없으면 nullptr. */

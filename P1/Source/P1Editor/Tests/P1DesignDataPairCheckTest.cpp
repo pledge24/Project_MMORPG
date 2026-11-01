@@ -82,18 +82,17 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("깨진 경로"), CountIssues(Issues, true, T::Missing), 2);
     }
 
-    // 2) 몬스터. 메시와 애니메이션 블루프린트는 필수이고, 몽타주와 머티리얼은 깨졌을 때만 오류다.
+    // 2) 몬스터. 메시와 애니메이션 블루프린트는 필수이고, 머티리얼은 깨졌을 때만 오류다. 몽타주는 액션 에셋 표에 있다.
     //    애니메이션 블루프린트 자리에는 네이티브 애님 인스턴스 클래스도 된다.
     {
-        const UDataTable* MonsterTable = Tables.MakeDesignTable({ 5000, 5001, 5002, 5003, 5004, 5005, 5006, 5007 });
+        const UDataTable* MonsterTable = Tables.MakeDesignTable({ 5000, 5001, 5002, 5003, 5004, 5005, 5007 });
         const UDataTable* AssetTable = Tables.MakeMonsterAssetTable({
             { 5000, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
             { 5001, T::MonsterAsset(TEXT(""), T::NativeAnimClass) },
             { 5002, T::MonsterAsset(T::SkeletalMesh, TEXT("")) },
             { 5004, T::MonsterAsset(T::Missing, T::NativeAnimClass) },
             { 5005, T::MonsterAsset(T::SkeletalMesh, T::MissingAnimClass) },
-            { 5006, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, T::MissingMontage) },
-            { 5007, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, TEXT(""), T::Missing) },
+            { 5007, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass, T::Missing) },
             { 5009, T::MonsterAsset(T::SkeletalMesh, T::NativeAnimClass) },
         });
 
@@ -105,9 +104,8 @@ bool FP1DesignDataPairCheckTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("에셋 행이 없는 몬스터"), CountIssues(Issues, true, TEXT("5003")), 1);
         TestEqual(TEXT("깨진 메시"), CountIssues(Issues, true, TEXT("5004")), 1);
         TestEqual(TEXT("깨진 애니메이션 블루프린트"), CountIssues(Issues, true, T::MissingAnimClass), 1);
-        TestEqual(TEXT("깨진 몽타주"), CountIssues(Issues, true, T::MissingMontage), 1);
         TestEqual(TEXT("깨진 머티리얼"), CountIssues(Issues, true, TEXT("5007")), 1);
-        TestEqual(TEXT("오류 수"), CountIssues(Issues, true), 7);
+        TestEqual(TEXT("오류 수"), CountIssues(Issues, true), 6);
         TestEqual(TEXT("기획에서 지운 행은 경고"), CountIssues(Issues, false, TEXT("5009")), 1);
         TestEqual(TEXT("경고 수"), CountIssues(Issues, false), 1);
     }

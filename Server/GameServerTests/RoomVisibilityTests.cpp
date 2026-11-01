@@ -233,12 +233,12 @@ TEST_F(RoomVisibilityTest, AttackGoesOnlyToViewers)
     shared_ptr<RecordingSession> farSession;
     EnterPlayerAt(FAR_AWAY, 0.f, farSession);
 
-    Protocol::C_NORMAL_ATTACK attackPkt;
-    attackPkt.set_combo(1);
-    room->C_HandleNormalAttack(attackPkt, attacker);
+    Protocol::C_ACTION actionPkt;
+    actionPkt.set_action_id(1001);
+    room->C_HandleAction(actionPkt, attacker);
 
-    EXPECT_EQ(nearSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK).size(), 1u);
-    EXPECT_TRUE(farSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK).empty());
+    EXPECT_EQ(nearSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START).size(), 1u);
+    EXPECT_TRUE(farSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START).empty());
 }
 
 TEST_F(RoomVisibilityTest, LeavingDespawnsOnlyForViewers)

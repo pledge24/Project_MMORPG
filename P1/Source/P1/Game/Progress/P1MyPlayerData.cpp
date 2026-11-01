@@ -80,6 +80,7 @@ void UP1MyPlayerData::InitMyPlayerData(const Protocol::S_ENTER_GAME& EnterGamePk
         _StatInfo->CopyFrom(EnterGamePkt.stats());
         _Gold = EnterGamePkt.possession().gold();
         _MapId = EnterGamePkt.map_id();
+        _CharacterClass = EnterGamePkt.character_class();
 
         _PlayerId = 0;
         _PlayerName = FText::FromString(UTF8_TO_TCHAR(EnterGamePkt.name().c_str()));

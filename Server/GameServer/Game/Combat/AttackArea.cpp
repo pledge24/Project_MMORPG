@@ -84,3 +84,20 @@ float AttackAreaMath::GetFrontReach(const AttackArea& area)
 
     return area.offsetX;
 }
+
+float AttackAreaMath::GetPlaneReach(const AttackArea& area)
+{
+    // 형상을 기준점 둘레의 원으로 덮고 기준점까지의 거리를 더한다. 부채꼴과 직사각형에는 실제보다 넉넉하다.
+    const float offset = hypot(area.offsetX, area.offsetY);
+    switch (area.shape)
+    {
+    case AttackShape::Circle:
+    case AttackShape::Sector:
+        return offset + area.radius;
+
+    case AttackShape::Rectangle:
+        return offset + hypot(area.length, area.width * 0.5f);
+    }
+
+    return offset;
+}

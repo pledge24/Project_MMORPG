@@ -77,11 +77,11 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
         });
 }
 
-bool Handle_C_NORMAL_ATTACK(PacketSessionRef& session, Protocol::C_NORMAL_ATTACK& pkt)
+bool Handle_C_ACTION(PacketSessionRef& session, Protocol::C_ACTION& pkt)
 {
     return DispatchToPlayerRoom(session, [pkt](const RoomRef& room, const PlayerRef& player)
         {
-            room->C_HandleNormalAttack(pkt, player);
+            room->C_HandleAction(pkt, player);
         });
 }
 

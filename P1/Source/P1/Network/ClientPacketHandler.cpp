@@ -138,20 +138,20 @@ bool Handle_S_MOVE(PacketSessionRef& session, Protocol::S_MOVE& pkt)
     return false;
 }
 
-bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
+bool Handle_S_ACTION(PacketSessionRef& session, Protocol::S_ACTION& pkt)
 {
-    // 내 공격은 누를 때 이미 재생했다. 거절되어도 되돌릴 연출이 없으므로 남기기만 한다.
+    // 내 액션은 누를 때 이미 재생했다. 거절된 액션의 몽타주를 멈추는 일은 서버가 액션 요청을 검증할 때 함께 더한다.
     if (pkt.result() != Protocol::COMBAT_RESULT_SUCCESS)
-        UE_LOG(LogP1Network, Warning, TEXT("일반 공격이 거절됐다: %s"), UTF8_TO_TCHAR(Protocol::CombatResult_Name(pkt.result()).c_str()));
+        UE_LOG(LogP1Network, Warning, TEXT("액션이 거절됐다: %s"), UTF8_TO_TCHAR(Protocol::CombatResult_Name(pkt.result()).c_str()));
 
     return true;
 }
 
-bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
+bool Handle_S_ACTION_START(PacketSessionRef& session, Protocol::S_ACTION_START& pkt)
 {
     if (auto* EntityManager = GetEntityManager(session))
     {
-        EntityManager->HandleAttack(pkt);
+        EntityManager->HandleActionStart(pkt);
         return true;
     }
 
