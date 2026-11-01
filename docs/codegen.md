@@ -549,6 +549,7 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 | `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
 | `ItemAssetTable` | `DT_ItemAssets` | `LoadItemIcon`. 에셋 테이블이다 |
 | `MonsterAssetTable` | `DT_MonsterAssets` | `FindMonsterAssetData`. 에셋 테이블이다 |
+| `ActionTable` | `DT_Action` | `FindActionRow`. 타격마다의 공격 범위가 행의 `Hits`에 순번 순서로 실린다. 공격 범위 디버그 표시가 읽는다 |
 | `NpcTable` | `DT_Npc` | `FindNpcRow` |
 | `NpcAssetTable` | `DT_NpcAssets` | `FindNpcAssetData`. 에셋 테이블이다 |
 | `ShopTable` | `DT_Shop` | `FindShopRow` |

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "Game/Data/P1GameDataSettings.h"
+#include "Game/Data/Generated/P1ActionRow.h"
 #include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
 #include "Game/Data/Generated/P1ItemEquipStatRow.h"
 #include "Game/Data/Generated/P1ItemRow.h"
@@ -26,6 +27,7 @@ public:
         Install(Settings->ItemEquipStatTable, FP1ItemEquipStatRow::StaticStruct(), TEXT("ItemEquipStat"));
         Install(Settings->ItemConsumeEffectTable, FP1ItemConsumeEffectRow::StaticStruct(), TEXT("ItemConsumeEffect"));
         Install(Settings->MonsterTable, FP1MonsterRow::StaticStruct(), TEXT("Monster"));
+        Install(Settings->ActionTable, FP1ActionRow::StaticStruct(), TEXT("Action"));
     }
 
     ~FP1DesignDataTestTables()

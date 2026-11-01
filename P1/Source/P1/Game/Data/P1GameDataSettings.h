@@ -9,6 +9,7 @@ class UDataTable;
 class UMaterialInterface;
 class UTexture2D;
 class UWorld;
+struct FP1ActionRow;
 struct FP1ItemConsumeEffectRow;
 struct FP1ItemEquipStatRow;
 struct FP1ItemRow;
@@ -72,6 +73,14 @@ public:
     /** 몬스터의 표현 데이터. 행 구조체는 FP1MonsterAssetData이고 행 이름은 몬스터 번호. */
     UPROPERTY(Config, EditAnywhere, Category = "Monsters")
     TSoftObjectPtr<UDataTable> MonsterAssetTable;
+
+    //~ Actions
+public:
+    static const FP1ActionRow* FindActionRow(int32 ActionId);
+
+    /** 액션과 타격마다의 공격 범위. 행 구조체는 FP1ActionRow이고 행 이름은 액션 번호. */
+    UPROPERTY(Config, EditAnywhere, Category = "Actions")
+    TSoftObjectPtr<UDataTable> ActionTable;
 
     //~ Npcs
 public:
