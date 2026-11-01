@@ -32,7 +32,7 @@ namespace P1MontageSectionLibraryTest
 
     /** 전사 콤보 몽타주의 타격 시점과 입력 창 구간(몽타주 시작 기준 초). 에디터에서 맞춘 값이고, 마지막 단계에는 입력 창이 없다. */
     const float COMBO_HIT_TIMES[] = { 0.842387f, 2.613333f, 3.41f, 5.018222f };
-    const float COMBO_WINDOW_STARTS[] = { 0.950978f, 2.841457f, 3.497609f };
+    const float COMBO_WINDOW_STARTS[] = { 0.486997f, 2.500875f, 3.497609f };
     const float COMBO_WINDOW_ENDS[] = { 1.066667f, 3.166667f, 3.966667f };
     static_assert(UE_ARRAY_COUNT(COMBO_HIT_TIMES) == COMBO_STEP_COUNT);
     static_assert(UE_ARRAY_COUNT(COMBO_WINDOW_STARTS) == COMBO_STEP_COUNT - 1);
