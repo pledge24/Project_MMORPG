@@ -22,6 +22,10 @@ struct FP1ActionRow : public FTableRowBase
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     FString Name;
 
+    /** 콤보의 다음 단계 액션. 콤보의 마지막 단계와 몬스터의 공격은 비워 둔다. 비어 있으면 0이다 */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    int32 NextAction = 0;
+
     /** ActionHit 표에서 이 행에 속한 행. 키 순서다. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TArray<FP1ActionHitRow> Hits;

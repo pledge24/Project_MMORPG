@@ -77,10 +77,10 @@ protected:
         return player;
     }
 
-    Protocol::C_NORMAL_ATTACK MakeAttack()
+    Protocol::C_ACTION MakeAction()
     {
-        Protocol::C_NORMAL_ATTACK pkt;
-        pkt.set_combo(2);
+        Protocol::C_ACTION pkt;
+        pkt.set_action_id(1002);
         pkt.set_yaw(45.f);
         return pkt;
     }
@@ -92,36 +92,36 @@ protected:
     shared_ptr<RecordingSession> observerSession;
 };
 
-TEST_F(CombatRequestTest, NormalAttackRespondsToAttackerAndNotifiesOthers)
+TEST_F(CombatRequestTest, ActionRespondsToAttackerAndNotifiesOthers)
 {
-    room->C_HandleNormalAttack(MakeAttack(), attacker);
+    room->C_HandleAction(MakeAction(), attacker);
 
-    const auto responses = attackerSession->SentPackets<Protocol::S_NORMAL_ATTACK>(PKT_S_NORMAL_ATTACK);
+    const auto responses = attackerSession->SentPackets<Protocol::S_ACTION>(PKT_S_ACTION);
     ASSERT_EQ(responses.size(), 1u) << "요청한 플레이어는 언제나 응답을 받는다";
     EXPECT_EQ(responses[0].result(), Protocol::COMBAT_RESULT_SUCCESS);
-    EXPECT_TRUE(attackerSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK).empty()) << "공격한 플레이어는 자기 공격을 이미 재생했다";
+    EXPECT_TRUE(attackerSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START).empty()) << "공격한 플레이어는 자기 공격을 이미 재생했다";
 
-    const auto notices = observerSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK);
+    const auto notices = observerSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START);
     ASSERT_EQ(notices.size(), 1u);
     EXPECT_EQ(notices[0].entity_id(), attacker->GetEntityId());
-    EXPECT_EQ(notices[0].combo(), 2);
+    EXPECT_EQ(notices[0].action_id(), 1002);
     EXPECT_FLOAT_EQ(notices[0].yaw(), 45.f) << "공격한 순간의 방향은 클라이언트가 보낸 값이다";
-    EXPECT_TRUE(observerSession->SentPackets<Protocol::S_NORMAL_ATTACK>(PKT_S_NORMAL_ATTACK).empty()) << "응답은 요청한 플레이어에게만 간다";
+    EXPECT_TRUE(observerSession->SentPackets<Protocol::S_ACTION>(PKT_S_ACTION).empty()) << "응답은 요청한 플레이어에게만 간다";
 }
 
-TEST_F(CombatRequestTest, DeadPlayerAttackIsRejectedWithoutNotice)
+TEST_F(CombatRequestTest, DeadPlayerActionIsRejectedWithoutNotice)
 {
     AttackInfo lethalAttack;
     lethalAttack.damage = PLAYER_MAX_HP * 10;
     attacker->OnHit(nullptr, lethalAttack);
     ASSERT_TRUE(attacker->IsDead());
 
-    room->C_HandleNormalAttack(MakeAttack(), attacker);
+    room->C_HandleAction(MakeAction(), attacker);
 
-    const auto responses = attackerSession->SentPackets<Protocol::S_NORMAL_ATTACK>(PKT_S_NORMAL_ATTACK);
+    const auto responses = attackerSession->SentPackets<Protocol::S_ACTION>(PKT_S_ACTION);
     ASSERT_EQ(responses.size(), 1u);
     EXPECT_EQ(responses[0].result(), Protocol::COMBAT_RESULT_DEAD);
-    EXPECT_TRUE(observerSession->SentPackets<Protocol::S_ATTACK>(PKT_S_ATTACK).empty()) << "사망한 플레이어가 공격하는 모습이 다른 클라이언트에 보이면 안 된다";
+    EXPECT_TRUE(observerSession->SentPackets<Protocol::S_ACTION_START>(PKT_S_ACTION_START).empty()) << "사망한 플레이어가 공격하는 모습이 다른 클라이언트에 보이면 안 된다";
 }
 
 TEST_F(CombatRequestTest, MoveNotifiesOthersWithSenderEntityId)

@@ -303,6 +303,8 @@
     <ClCompile Include="..\GameServer\Network\ItemPackets.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\Combat.cpp" />
     <ClCompile Include="..\GameServer\Game\Combat\AttackArea.cpp" />
+    <ClCompile Include="..\GameServer\Game\Action\ActionComponent.cpp" />
+    <ClCompile Include="..\GameServer\Game\Data\ActionData.cpp" />
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp" />
     <ClCompile Include="..\GameServer\Game\QuickSlots\QuickSlotComponent.cpp" />
     <ClCompile Include="..\GameServer\DB\QuickSlotDAO.cpp" />

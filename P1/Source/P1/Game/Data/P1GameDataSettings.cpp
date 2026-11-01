@@ -2,6 +2,9 @@
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Data/P1MonsterAssetData.h"
 #include "Game/Data/P1NpcAssetData.h"
+#include "Game/Data/P1ActionAssetData.h"
+#include "Game/Data/Generated/P1ClassRow.h"
+#include "Network/Common.pb.h"
 #include "Game/Data/Generated/P1ActionRow.h"
 #include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
 #include "Game/Data/Generated/P1ItemEquipStatRow.h"
@@ -65,6 +68,11 @@ const FP1ActionRow* UP1GameDataSettings::FindActionRow(int32 ActionId)
     return FindRowById<FP1ActionRow>(GetDefault<UP1GameDataSettings>()->ActionTable, ActionId, TEXT("UP1GameDataSettings::FindActionRow"));
 }
 
+const FP1ActionAssetData* UP1GameDataSettings::FindActionAssetData(int32 ActionId)
+{
+    return FindRowById<FP1ActionAssetData>(GetDefault<UP1GameDataSettings>()->ActionAssetTable, ActionId, TEXT("UP1GameDataSettings::FindActionAssetData"));
+}
+
 const FP1NpcRow* UP1GameDataSettings::FindNpcRow(int32 NpcId)
 {
     return FindRowById<FP1NpcRow>(GetDefault<UP1GameDataSettings>()->NpcTable, NpcId, TEXT("UP1GameDataSettings::FindNpcRow"));
@@ -78,6 +86,18 @@ const FP1NpcAssetData* UP1GameDataSettings::FindNpcAssetData(int32 NpcId)
 const FP1ShopRow* UP1GameDataSettings::FindShopRow(int32 ShopId)
 {
     return FindRowById<FP1ShopRow>(GetDefault<UP1GameDataSettings>()->ShopTable, ShopId, TEXT("UP1GameDataSettings::FindShopRow"));
+}
+
+const FP1ClassRow* UP1GameDataSettings::FindClassRow(Protocol::CharacterClass CharacterClass)
+{
+    const UDataTable* Table = GetDefault<UP1GameDataSettings>()->ClassTable.LoadSynchronous();
+    if (Table == nullptr)
+        return nullptr;
+
+    // 직업 표의 행 이름은 셀에 적는 값 이름이다. 프로토콜 값 이름에서 열거형 접두사를 뺀 것이다.
+    FString RowName = UTF8_TO_TCHAR(Protocol::CharacterClass_Name(CharacterClass).c_str());
+    RowName.RemoveFromStart(TEXT("CHARACTER_CLASS_"));
+    return Table->FindRow<FP1ClassRow>(FName(*RowName), TEXT("UP1GameDataSettings::FindClassRow"), false);
 }
 
 TSoftObjectPtr<UWorld> UP1GameDataSettings::FindMapLevel(int32 MapId) const

@@ -18,6 +18,9 @@
     <Filter Include="GameServer\Game\Entities">
       <UniqueIdentifier>{e5a6358a-dfd2-5357-8003-e1fdd1fd97cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GameServer\Game\Action">
+      <UniqueIdentifier>{e3925098-3adf-46cf-aba6-aa14b1d2c247}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GameServer\Game\Combat">
       <UniqueIdentifier>{4a73e681-a0c0-4209-be7d-05fbf6e6f7ca}</UniqueIdentifier>
     </Filter>
@@ -269,6 +272,12 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Combat\AttackArea.cpp">
       <Filter>GameServer\Game\Combat</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Action\ActionComponent.cpp">
+      <Filter>GameServer\Game\Action</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GameServer\Game\Data\ActionData.cpp">
+      <Filter>GameServer\Game\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\GameServer\Game\Equipment\EquipmentComponent.cpp">
       <Filter>GameServer\Game\Equipment</Filter>

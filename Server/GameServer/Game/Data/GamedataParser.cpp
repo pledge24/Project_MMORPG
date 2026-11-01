@@ -1,5 +1,6 @@
 #include "Core/pch.h"
 #include "Game/Data/GamedataParser.h"
+#include "Game/Data/ActionData.h"
 
 namespace
 {
@@ -405,6 +406,25 @@ namespace
 
         throw TableError{ format("{}: 재화 종류가 GOLD인 재화가 없다", DesignData::CURRENCY_FILE) };
     }
+
+    /**
+     * 몬스터는 대상이 공격 시작 거리 안에 들면 공격을 시작한다. 그 거리가 일반 공격의 공격 범위가 앞으로 닿는 거리를 넘으면
+     * 그 사이에 선 대상을 영영 맞히지 못하는 몬스터가 생기므로 부팅을 멈춘다. 일반 공격 액션이 액션 표에 있는지는 DataBuilder가 검사한다.
+     */
+    void CheckMonsterAttackReach(const DesignData::MonsterTable& monsters, const DesignData::ActionTable& actions)
+    {
+        for (const auto& [monsterId, monster] : monsters)
+        {
+            auto actionIt = actions.find(monster.NormalAttackAction);
+            if (actionIt == actions.end())
+                continue;
+
+            const float reach = ActionData::GetFrontReach(actionIt->second);
+            if (monster.TryAttackRange > reach)
+                throw TableError{ format("{}: 몬스터 {}의 TryAttackRange {}가 일반 공격 액션 {}의 공격 범위가 앞으로 닿는 거리 {}를 넘는다",
+                    DesignData::MONSTER_FILE, monsterId, monster.TryAttackRange, monster.NormalAttackAction, reach) };
+        }
+    }
 }
 
 optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT GamedataTables& tables)
@@ -430,6 +450,7 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.interaction = ParseGenerated(documents.interaction, DesignData::ParseInteraction);
         tables.townAreaId = FindTownAreaId(tables.areas);
         tables.goldCurrencyId = FindGoldCurrencyId(tables.currencies);
+        CheckMonsterAttackReach(tables.monsters, tables.actions);
 
         for (const auto& [fileName, document] : documents.placements)
             ParsePlacement(fileName, document, tables);

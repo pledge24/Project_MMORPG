@@ -86,6 +86,17 @@ class ClientJsonTest(ClientOutputCase):
 
         self.assert_error("Entry.xlsx", "Group", "클라이언트")
 
+    def test_empty_optional_reference_is_zero_on_the_client(self):
+        self.add_table("Step", sheet(
+            ["Id", "Next"], ["key:int32", "ref?:Step"], ["both", "both"],
+            [1, 2], [2, None],
+        ))
+
+        self.assertEqual(
+            self.client_json()["Step.json"],
+            '[\n{"RowName":"1","Id":1,"Next":2},\n{"RowName":"2","Id":2,"Next":0}\n]\n',
+        )
+
     def test_client_folders_are_emptied_on_each_run(self):
         self.add_table("Thing", sheet(*THING, [1, "검", "GEAR", "", 100, 2.0, True, 9, None]))
         for folder in (self.client_json_dir, self.client_source_dir):
@@ -112,6 +123,16 @@ class ClientRuleTest(ClientOutputCase):
     def test_optional_value_cannot_go_to_the_client(self):
         self.add_table("Thing", sheet(["Id", "Bonus"], ["key:int32", "int32?"], ["both", "client"], [1, None]))
         self.assert_error("Thing.xlsx", "Bonus", "선택")
+
+    def test_optional_reference_to_a_table_with_key_zero_cannot_go_to_the_client(self):
+        # 클라이언트는 빈 참조를 0으로 받는다. 키 0인 행이 있으면 빈 참조와 그 행을 가릴 수 없다.
+        self.add_table("Step", sheet(["Id", "Next"], ["key:int32", "ref?:Step"], ["both", "both"], [0, None], [1, 0]))
+        self.assert_error("Step.xlsx", "Next", "0")
+
+    def test_optional_reference_to_an_enum_key_cannot_go_to_the_client(self):
+        self.add_table("Stat", sheet(["Class", "Hp"], ["key:enum:CharacterClass", "int32"], ["both", "both"], ["WARRIOR", 10]))
+        self.add_table("Thing", sheet(["Id", "Class"], ["key:int32", "ref?:Stat"], ["both", "both"], [1, None]))
+        self.assert_error("Thing.xlsx", "Class", "선택")
 
     def test_setting_field_other_than_number_or_bool_cannot_go_to_the_client(self):
         self.add_setting("Progress", setting_sheet(["StartGold", "int64", "server", 1, None], ["Note", "string", "client", "x", None]))
@@ -184,6 +205,12 @@ class ClientHeaderTest(ClientOutputCase):
         header = self.client_source()["P1ShopRow.h"]
         self.assertIn("    TArray<int32> Items;\n", header)
         self.assertIn("    int32 Main = 0;\n", header)
+
+    def test_optional_reference_is_an_int_that_is_zero_when_empty(self):
+        self.add_table("Step", sheet(["Id", "Next"], ["key:int32", "ref?:Step"], ["both", "both"], [1, None], descriptions=["번호", "다음 단계"]))
+
+        header = self.client_source()["P1StepRow.h"]
+        self.assertIn("    /** 다음 단계. 비어 있으면 0이다 */\n    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)\n    int32 Next = 0;\n", header)
 
     def test_nested_child_is_a_plain_struct_in_its_own_header(self):
         self.add_table("Group", sheet(["Id", "Name"], ["key:int32", "string"], ["both", "client"], [1, "그룹"]))

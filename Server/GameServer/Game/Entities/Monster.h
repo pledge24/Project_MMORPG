@@ -44,6 +44,11 @@ protected:
 public:
     virtual void OnDie(EntityRef attacker) override;
 
+    //~ 전투
+public:
+    /** 몬스터 표의 공격력을 물리 공격력으로 본다. */
+    virtual CombatStats GetAttackStats() const override;
+
     //~ Entity 정보
 public:
     /** 몬스터 정보의 HP는 부를 때의 스탯 값이다. */

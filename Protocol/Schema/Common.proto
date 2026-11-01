@@ -37,6 +37,14 @@ enum StatType
     STAT_TYPE_EXP = 8;              // 지금 레벨 안에서 쌓은 경험치
 }
 
+// 월드 좌표(cm). 엔티티의 위치와 액션의 시작 위치가 함께 쓴다
+message Vector
+{
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
 // 바뀐 스탯 하나
 message Stat
 {

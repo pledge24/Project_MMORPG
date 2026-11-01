@@ -1,5 +1,9 @@
 #pragma once
 #include "Game/Entities/Entity.h"
+#include "Game/Entities/CombatStats.h"
+#include "Game/Data/CreatureCombat.h"
+
+class ActionComponent;
 
 /**
  * 스탯과 생사를 갖는 엔티티.
@@ -48,6 +52,22 @@ public:
 
 protected:
     unique_ptr<Protocol::StatInfo> _statInfo;
+
+    //~ 전투
+public:
+    /** 피해량을 정하는 공격력. 피해 유형에 맞는 값을 고르는 일은 판정이 한다. */
+    virtual CombatStats GetAttackStats() const;
+    /** 피격과 공격 범위를 재는 캡슐. 크리처 판정 데이터가 없으면 크기가 0이다. */
+    const CreatureCombat& GetCapsule() const { return _capsule; }
+
+    ActionComponent& GetAction() { return *_action; }
+    const ActionComponent& GetAction() const { return *_action; }
+
+protected:
+    CreatureCombat _capsule;
+
+private:
+    ActionComponentRef _action;
 
     //~ 서버가 정하는 이동
 protected:

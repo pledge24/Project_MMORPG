@@ -120,6 +120,40 @@ TEST(AttackArea, SharedFrontReachCasesMatchExpected)
     }
 }
 
+// 룸은 공격자 발밑에서 이 거리 안의 셀에서 후보를 모은다. 닿는 대상이 그 밖에 있으면 맞아야 할 대상이 빠진다.
+TEST(AttackArea, PlaneReachCoversEveryOverlappingTarget)
+{
+    const Json cases = ReadCases();
+    ASSERT_TRUE(cases.contains("OverlapCases")) << "사례 파일을 읽지 못했다: " << CASES_FILE.string();
+
+    for (const Json& testCase : cases["OverlapCases"])
+    {
+        if (testCase.at("Expected").get<bool>() == false)
+            continue;
+
+        SCOPED_TRACE(testCase.at("Name").get<string>());
+        const AttackArea area = ReadArea(testCase.at("Area"));
+        const AttackerPose attacker = ReadAttacker(testCase.at("Attacker"));
+        const TargetCapsule target = ReadTarget(testCase.at("Target"));
+
+        const float distance = hypot(target.foot.x - attacker.foot.x, target.foot.y - attacker.foot.y);
+        EXPECT_LE(distance, AttackAreaMath::GetPlaneReach(area) + target.radius + AttackAreaMath::OVERLAP_TOLERANCE);
+    }
+}
+
+TEST(AttackArea, PlaneReachOfOffsetRectangleReachesFarCorner)
+{
+    AttackArea area;
+    area.shape = AttackShape::Rectangle;
+    area.length = 300.f;
+    area.width = 80.f;
+    area.offsetX = 30.f;
+    area.offsetY = 40.f;
+
+    // 기준점까지 50, 기준점에서 먼 모서리까지 hypot(300, 40)이다.
+    EXPECT_FLOAT_EQ(AttackAreaMath::GetPlaneReach(area), 50.f + hypot(300.f, 40.f));
+}
+
 TEST(AttackArea, TouchingTargetIsHitAfterRotation)
 {
     // 공격자를 돌린 계산은 부동소수 오차를 낸다. 경계에 닿은 대상이 방향에 따라 걸렸다 빠졌다 하면 안 된다.

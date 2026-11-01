@@ -82,7 +82,13 @@ protected:
         tables.monsters[RANGED_ID] = MakeMonsterRow(RANGED_ID);
         TestCreatureCombat::AddMonster(tables, MELEE_ID);
         TestCreatureCombat::AddMonster(tables, RANGED_ID);
-        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
+        DesignData::ClassLevelStatRow& warriorLevel = TestLevelTables::AddWarriorLevel(tables, 1);
+        warriorLevel.MaxHp = PLAYER_MAX_HP;
+        warriorLevel.PhysicalAttack = 100;
+        // 플레이어의 타격 한 번에 어느 몬스터든 죽는다. 범위와 캡슐을 점에 가깝게 줄여, 무작위로 놓인 이웃 몬스터는 맞지 않게 한다.
+        TestCreatureCombat::AddStrikeAction(tables, 1000.f, 0.f);
+        tables.monsterCombats.at(MELEE_ID).capsuleRadius = 0.01f;
+        tables.monsterCombats.at(RANGED_ID).capsuleRadius = 0.01f;
     }
 
     void TearDown() override
@@ -138,13 +144,10 @@ protected:
         return monsters;
     }
 
-    void Kill(int64 monsterId)
+    void Kill(const Protocol::EntityInfo& monster)
     {
-        AttackInfo attackInfo;
-        attackInfo.targetId = monsterId;
-        attackInfo.damage = 1000;
-        room->HandleHit(player, attackInfo);
-        ASSERT_FALSE(room->Contains(monsterId)) << "준비: 몬스터가 죽어 룸에서 빠진다";
+        room->HandleHit(player, TestCreatureCombat::STRIKE_ACTION_ID, 0, TestCreatureCombat::StrikePoseAt(monster.pos_info()));
+        ASSERT_FALSE(room->Contains(monster.entity_id())) << "준비: 몬스터가 죽어 룸에서 빠진다";
     }
 
     GamedataTables tables;
@@ -191,7 +194,7 @@ TEST_F(MonsterSpawnTest, KilledMonsterRespawnsAfterRespawnTimeInsideRadius)
     const vector<Protocol::EntityInfo> monsters = EnterPlayer();
     ASSERT_EQ(monsters.size(), 1u);
 
-    Kill(monsters[0].entity_id());
+    Kill(monsters[0]);
     session->ClearSent();
 
     room->Tick(RESPAWN_SEC - 0.5f);
@@ -213,7 +216,7 @@ TEST_F(MonsterSpawnTest, RespawnDoesNotExceedMaxCount)
     const vector<Protocol::EntityInfo> monsters = EnterPlayer();
     ASSERT_EQ(monsters.size(), 2u);
 
-    Kill(monsters[0].entity_id());
+    Kill(monsters[0]);
     session->ClearSent();
     room->Tick(RESPAWN_SEC);
     room->Tick(RESPAWN_SEC);
@@ -232,7 +235,7 @@ TEST_F(MonsterSpawnTest, MonsterSpawnedOutsideSpawnPointIsNotRespawned)
     ASSERT_NE(loose, nullptr);
     EnterPlayer();
 
-    Kill(loose->GetEntityId());
+    Kill(loose->GetEntityInfo());
     session->ClearSent();
     room->Tick(RESPAWN_SEC);
 

@@ -653,6 +653,23 @@ TEST(GamedataParserTest, HitTimeCountOtherThanHitCountIsRejected)
     ExpectMentions(ErrorOf(documents), {CREATURE_COMBAT_FILE, "액션 2001", "타격 시점이 2개", "타격은 1개"});
 }
 
+// 몬스터는 공격 시작 거리에서 공격을 시작한다. 그 거리가 공격 범위의 앞쪽 끝을 넘으면 서 있는 대상을 영영 맞히지 못한다.
+TEST(GamedataParserTest, MonsterTryAttackRangeBeyondAttackAreaIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.monsters[0]["TryAttackRange"] = 600.5;
+
+    ExpectMentions(ErrorOf(documents), {"몬스터 5000", "TryAttackRange", "액션 2001"});
+}
+
+TEST(GamedataParserTest, MonsterTryAttackRangeAtAttackAreaFrontIsAccepted)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.monsters[0]["TryAttackRange"] = 600.0;
+
+    EXPECT_EQ(ErrorOf(documents), "");
+}
+
 TEST(GamedataParserTest, ComboWindowThatIsNotAPairIsRejected)
 {
     GamedataDocuments documents = MakeValidDocuments();

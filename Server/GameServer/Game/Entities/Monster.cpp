@@ -42,6 +42,7 @@ bool Monster::Init(const SpawnParams& params)
     }
 
     _template = *monsterRow;
+    _capsule = *combat;
 
     CacheMonsterData();
 
@@ -52,7 +53,7 @@ bool Monster::Init(const SpawnParams& params)
     // AI가 만들어지며 대기 상태에 들어가 경로 추종 부품을 멈추므로 경로 추종 부품을 먼저 만든다.
     const MonsterRef self = static_pointer_cast<Monster>(shared_from_this());
     _pathFollowing = make_shared<PathFollowingComponent>(self, _template.MovementSpeed, combat->capsuleHalfHeight);
-    _ai = make_shared<MonsterAIComponent>(self, _template, *normalAttack);
+    _ai = make_shared<MonsterAIComponent>(self, _template);
 
     return true;
 }
@@ -77,6 +78,13 @@ void Monster::Tick(float deltaTime)
 void Monster::OnDie(EntityRef attacker)
 {
     Creature::OnDie(attacker);
+}
+
+CombatStats Monster::GetAttackStats() const
+{
+    CombatStats stats;
+    stats.physicalAttack = _template.BaseAttack;
+    return stats;
 }
 
 Protocol::EntityInfo Monster::GetEntityInfo() const

@@ -293,13 +293,13 @@ void UP1StatefulEntityManager::HandleChatMessage(const Protocol::S_CHAT_MESSAGE&
     (*Player)->ShowChatBubble(UTF8_TO_TCHAR(ChatMessagePkt.message().c_str()));
 }
 
-void UP1StatefulEntityManager::HandleAttack(const Protocol::S_ATTACK& AttackPkt)
+void UP1StatefulEntityManager::HandleActionStart(const Protocol::S_ACTION_START& ActionStartPkt)
 {
-    AP1Creature* Creature = FindEntityAs<AP1Creature>(AttackPkt.entity_id());
+    AP1Creature* Creature = FindEntityAs<AP1Creature>(ActionStartPkt.entity_id());
     if (Creature == nullptr)
         return;
 
-    Creature->S_NormalAttack(AttackPkt.combo(), AttackPkt.yaw());
+    Creature->S_ActionStart(ActionStartPkt.action_id(), ActionStartPkt.yaw());
 }
 
 void UP1StatefulEntityManager::HandleHit(const Protocol::S_HIT& HitPkt)

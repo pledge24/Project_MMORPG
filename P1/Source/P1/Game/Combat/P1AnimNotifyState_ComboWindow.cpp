@@ -28,7 +28,7 @@ void UP1AnimNotifyState_ComboWindow::BranchingPointNotifyBegin(FBranchingPointNo
 {
     Super::BranchingPointNotifyBegin(BranchingPointPayload);
 
-    // 범용 몽타주 노티파이 윈도우와 같은 이벤트로 알린다. 지금 콤보 처리는 이 이벤트의 어떤 노티파이든 다음 입력을 연다.
+    // 범용 몽타주 노티파이 윈도우와 같은 이벤트로 알린다. 액션 재생은 이 이름의 시작에서 입력 창을 열고, 끝에서 예약한 다음 단계로 넘어간다.
     if (UAnimInstance* AnimInstance = FindAnimInstance(BranchingPointPayload))
         AnimInstance->OnPlayMontageNotifyBegin.Broadcast(COMBO_WINDOW_NOTIFY_NAME, BranchingPointPayload);
 }

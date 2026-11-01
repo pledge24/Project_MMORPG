@@ -86,9 +86,6 @@ extern S_MOVEDefaultTypeInternal _S_MOVE_default_instance_;
 class S_SPAWN;
 struct S_SPAWNDefaultTypeInternal;
 extern S_SPAWNDefaultTypeInternal _S_SPAWN_default_instance_;
-class Vector;
-struct VectorDefaultTypeInternal;
-extern VectorDefaultTypeInternal _Vector_default_instance_;
 }  // namespace Protocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::Protocol::C_MOVE* Arena::CreateMaybeMessage<::Protocol::C_MOVE>(Arena*);
@@ -103,7 +100,6 @@ template<> ::Protocol::S_DESPAWN* Arena::CreateMaybeMessage<::Protocol::S_DESPAW
 template<> ::Protocol::S_GEAR_APPEARANCE* Arena::CreateMaybeMessage<::Protocol::S_GEAR_APPEARANCE>(Arena*);
 template<> ::Protocol::S_MOVE* Arena::CreateMaybeMessage<::Protocol::S_MOVE>(Arena*);
 template<> ::Protocol::S_SPAWN* Arena::CreateMaybeMessage<::Protocol::S_SPAWN>(Arena*);
-template<> ::Protocol::Vector* Arena::CreateMaybeMessage<::Protocol::Vector>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
@@ -135,176 +131,6 @@ inline bool MoveState_Parse(
     MoveState_descriptor(), name, value);
 }
 // ===================================================================
-
-class Vector final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.Vector) */ {
- public:
-  inline Vector() : Vector(nullptr) {}
-  ~Vector() override;
-  explicit PROTOBUF_CONSTEXPR Vector(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
-
-  Vector(const Vector& from);
-  Vector(Vector&& from) noexcept
-    : Vector() {
-    *this = ::std::move(from);
-  }
-
-  inline Vector& operator=(const Vector& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline Vector& operator=(Vector&& from) noexcept {
-    if (this == &from) return *this;
-    if (GetOwningArena() == from.GetOwningArena()
-  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
-        && GetOwningArena() != nullptr
-  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
-    ) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
-    return GetDescriptor();
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const Vector& default_instance() {
-    return *internal_default_instance();
-  }
-  static inline const Vector* internal_default_instance() {
-    return reinterpret_cast<const Vector*>(
-               &_Vector_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    0;
-
-  friend void swap(Vector& a, Vector& b) {
-    a.Swap(&b);
-  }
-  inline void Swap(Vector* other) {
-    if (other == this) return;
-  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
-    if (GetOwningArena() != nullptr &&
-        GetOwningArena() == other->GetOwningArena()) {
-   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
-    if (GetOwningArena() == other->GetOwningArena()) {
-  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
-      InternalSwap(other);
-    } else {
-      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(Vector* other) {
-    if (other == this) return;
-    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  Vector* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<Vector>(arena);
-  }
-  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const Vector& from);
-  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const Vector& from) {
-    Vector::MergeImpl(*this, from);
-  }
-  private:
-  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
-  public:
-  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
-  uint8_t* _InternalSerialize(
-      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
-  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(Vector* other);
-
-  private:
-  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
-  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "Protocol.Vector";
-  }
-  protected:
-  explicit Vector(::PROTOBUF_NAMESPACE_ID::Arena* arena,
-                       bool is_message_owned = false);
-  public:
-
-  static const ClassData _class_data_;
-  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
-
-  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  enum : int {
-    kXFieldNumber = 1,
-    kYFieldNumber = 2,
-    kZFieldNumber = 3,
-  };
-  // float x = 1;
-  void clear_x();
-  float x() const;
-  void set_x(float value);
-  private:
-  float _internal_x() const;
-  void _internal_set_x(float value);
-  public:
-
-  // float y = 2;
-  void clear_y();
-  float y() const;
-  void set_y(float value);
-  private:
-  float _internal_y() const;
-  void _internal_set_y(float value);
-  public:
-
-  // float z = 3;
-  void clear_z();
-  float z() const;
-  void set_z(float value);
-  private:
-  float _internal_z() const;
-  void _internal_set_z(float value);
-  public:
-
-  // @@protoc_insertion_point(class_scope:Protocol.Vector)
- private:
-  class _Internal;
-
-  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
-  typedef void InternalArenaConstructable_;
-  typedef void DestructorSkippable_;
-  struct Impl_ {
-    float x_;
-    float y_;
-    float z_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_Entity_2eproto;
-};
-// -------------------------------------------------------------------
 
 class PosInfo final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:Protocol.PosInfo) */ {
@@ -354,7 +180,7 @@ class PosInfo final :
                &_PosInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    0;
 
   friend void swap(PosInfo& a, PosInfo& b) {
     a.Swap(&b);
@@ -577,7 +403,7 @@ class PlayerInfo final :
                &_PlayerInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    2;
 
   friend void swap(PlayerInfo& a, PlayerInfo& b) {
     a.Swap(&b);
@@ -767,7 +593,7 @@ class MonsterInfo final :
                &_MonsterInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    3;
 
   friend void swap(MonsterInfo& a, MonsterInfo& b) {
     a.Swap(&b);
@@ -926,7 +752,7 @@ class NpcInfo final :
                &_NpcInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    4;
 
   friend void swap(NpcInfo& a, NpcInfo& b) {
     a.Swap(&b);
@@ -1081,7 +907,7 @@ class EntityInfo final :
                &_EntityInfo_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    5;
 
   friend void swap(EntityInfo& a, EntityInfo& b) {
     a.Swap(&b);
@@ -1323,7 +1149,7 @@ class EntityMove final :
                &_EntityMove_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    6;
 
   friend void swap(EntityMove& a, EntityMove& b) {
     a.Swap(&b);
@@ -1491,7 +1317,7 @@ class S_SPAWN final :
                &_S_SPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    7;
 
   friend void swap(S_SPAWN& a, S_SPAWN& b) {
     a.Swap(&b);
@@ -1648,7 +1474,7 @@ class S_DESPAWN final :
                &_S_DESPAWN_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    8;
 
   friend void swap(S_DESPAWN& a, S_DESPAWN& b) {
     a.Swap(&b);
@@ -1810,7 +1636,7 @@ class C_MOVE final :
                &_C_MOVE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    9;
 
   friend void swap(C_MOVE& a, C_MOVE& b) {
     a.Swap(&b);
@@ -1967,7 +1793,7 @@ class S_MOVE final :
                &_S_MOVE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    10;
 
   friend void swap(S_MOVE& a, S_MOVE& b) {
     a.Swap(&b);
@@ -2124,7 +1950,7 @@ class S_GEAR_APPEARANCE final :
                &_S_GEAR_APPEARANCE_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    11;
 
   friend void swap(S_GEAR_APPEARANCE& a, S_GEAR_APPEARANCE& b) {
     a.Swap(&b);
@@ -2253,70 +2079,6 @@ class S_GEAR_APPEARANCE final :
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// Vector
-
-// float x = 1;
-inline void Vector::clear_x() {
-  _impl_.x_ = 0;
-}
-inline float Vector::_internal_x() const {
-  return _impl_.x_;
-}
-inline float Vector::x() const {
-  // @@protoc_insertion_point(field_get:Protocol.Vector.x)
-  return _internal_x();
-}
-inline void Vector::_internal_set_x(float value) {
-  
-  _impl_.x_ = value;
-}
-inline void Vector::set_x(float value) {
-  _internal_set_x(value);
-  // @@protoc_insertion_point(field_set:Protocol.Vector.x)
-}
-
-// float y = 2;
-inline void Vector::clear_y() {
-  _impl_.y_ = 0;
-}
-inline float Vector::_internal_y() const {
-  return _impl_.y_;
-}
-inline float Vector::y() const {
-  // @@protoc_insertion_point(field_get:Protocol.Vector.y)
-  return _internal_y();
-}
-inline void Vector::_internal_set_y(float value) {
-  
-  _impl_.y_ = value;
-}
-inline void Vector::set_y(float value) {
-  _internal_set_y(value);
-  // @@protoc_insertion_point(field_set:Protocol.Vector.y)
-}
-
-// float z = 3;
-inline void Vector::clear_z() {
-  _impl_.z_ = 0;
-}
-inline float Vector::_internal_z() const {
-  return _impl_.z_;
-}
-inline float Vector::z() const {
-  // @@protoc_insertion_point(field_get:Protocol.Vector.z)
-  return _internal_z();
-}
-inline void Vector::_internal_set_z(float value) {
-  
-  _impl_.z_ = value;
-}
-inline void Vector::set_z(float value) {
-  _internal_set_z(value);
-  // @@protoc_insertion_point(field_set:Protocol.Vector.z)
-}
-
-// -------------------------------------------------------------------
-
 // PosInfo
 
 // .Protocol.Vector pos = 1;
@@ -2325,12 +2087,6 @@ inline bool PosInfo::_internal_has_pos() const {
 }
 inline bool PosInfo::has_pos() const {
   return _internal_has_pos();
-}
-inline void PosInfo::clear_pos() {
-  if (GetArenaForAllocation() == nullptr && _impl_.pos_ != nullptr) {
-    delete _impl_.pos_;
-  }
-  _impl_.pos_ = nullptr;
 }
 inline const ::Protocol::Vector& PosInfo::_internal_pos() const {
   const ::Protocol::Vector* p = _impl_.pos_;
@@ -2392,11 +2148,12 @@ inline ::Protocol::Vector* PosInfo::mutable_pos() {
 inline void PosInfo::set_allocated_pos(::Protocol::Vector* pos) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
-    delete _impl_.pos_;
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.pos_);
   }
   if (pos) {
     ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(pos);
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
+                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(pos));
     if (message_arena != submessage_arena) {
       pos = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, pos, submessage_arena);
@@ -2435,12 +2192,6 @@ inline bool PosInfo::_internal_has_move_direction() const {
 }
 inline bool PosInfo::has_move_direction() const {
   return _internal_has_move_direction();
-}
-inline void PosInfo::clear_move_direction() {
-  if (GetArenaForAllocation() == nullptr && _impl_.move_direction_ != nullptr) {
-    delete _impl_.move_direction_;
-  }
-  _impl_.move_direction_ = nullptr;
 }
 inline const ::Protocol::Vector& PosInfo::_internal_move_direction() const {
   const ::Protocol::Vector* p = _impl_.move_direction_;
@@ -2502,11 +2253,12 @@ inline ::Protocol::Vector* PosInfo::mutable_move_direction() {
 inline void PosInfo::set_allocated_move_direction(::Protocol::Vector* move_direction) {
   ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   if (message_arena == nullptr) {
-    delete _impl_.move_direction_;
+    delete reinterpret_cast< ::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.move_direction_);
   }
   if (move_direction) {
     ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
-        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(move_direction);
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(
+                reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(move_direction));
     if (message_arena != submessage_arena) {
       move_direction = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, move_direction, submessage_arena);
@@ -3471,8 +3223,6 @@ inline void S_GEAR_APPEARANCE::set_template_id(int32_t value) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

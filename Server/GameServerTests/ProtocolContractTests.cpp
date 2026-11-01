@@ -50,8 +50,8 @@
     X(S_GEAR_APPEARANCE)
 
 #define COMBAT_PACKETS(X)                                                    \
-    X(C_NORMAL_ATTACK) X(S_NORMAL_ATTACK)                                    \
-    X(S_ATTACK)                                                              \
+    X(C_ACTION) X(S_ACTION)                                                  \
+    X(S_ACTION_START)                                                        \
     X(S_HIT)                                                                 \
     X(S_DIE)                                                                 \
     X(S_REWARD)

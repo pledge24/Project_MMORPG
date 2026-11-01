@@ -68,12 +68,12 @@ bool Handle_S_GEAR_APPEARANCE(PacketSessionRef& session, Protocol::S_GEAR_APPEAR
 	return false;
 }
 
-bool Handle_S_NORMAL_ATTACK(PacketSessionRef& session, Protocol::S_NORMAL_ATTACK& pkt)
+bool Handle_S_ACTION(PacketSessionRef& session, Protocol::S_ACTION& pkt)
 {
 	return false;
 }
 
-bool Handle_S_ATTACK(PacketSessionRef& session, Protocol::S_ATTACK& pkt)
+bool Handle_S_ACTION_START(PacketSessionRef& session, Protocol::S_ACTION_START& pkt)
 {
 	return false;
 }

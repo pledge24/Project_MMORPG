@@ -34,12 +34,13 @@ public:
 
     //~ Combat
 public:
-    virtual void S_NormalAttack(uint32 Combo, float Yaw);
+    /** 서버가 알린 액션을 Yaw(도) 방향으로 돌아서서 재생한다. */
+    virtual void S_ActionStart(int32 ActionId, float Yaw);
     virtual void S_Hit(int64 Damage, int64 UpdatedHp);
 
-    class UP1AttackSystemComponent* GetAttackSystemComponent() const { return AttackSystemComponent; }
+    class UP1ActionComponent* GetActionComponent() const { return ActionComponent; }
 
-    /** 공격 컴포넌트가 없으면 false. */
+    /** 내 콤보의 액션이 재생 중이면 true. */
     bool IsAttacking() const;
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHit, const int64&, Damage, const int64&, UpdatedHp);
@@ -49,7 +50,7 @@ public:
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<class UP1AttackSystemComponent> AttackSystemComponent;
+    TObjectPtr<class UP1ActionComponent> ActionComponent;
 
     //~ Death
 public:

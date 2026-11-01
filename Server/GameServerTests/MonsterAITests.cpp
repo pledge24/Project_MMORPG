@@ -5,6 +5,7 @@
 #include "Game/Entities/Player.h"
 #include "Game/Entities/PlayerProgress.h"
 #include "Game/AI/MonsterAIComponent.h"
+#include "Game/Action/ActionComponent.h"
 #include "TestLevelTables.h"
 #include "TestAreaTables.h"
 #include "TestNavLevel.h"
@@ -32,6 +33,7 @@ namespace
     constexpr int32 MONSTER_TEMPLATE_ID = 5000;
     constexpr int32 PLAYER_MAX_HP = 100;
     constexpr int32 MONSTER_MAX_HP = 100;
+    constexpr int32 PLAYER_ATTACK = 10;
     constexpr float ATTACK_RANGE = 150.f;
     constexpr float DETECTION_RANGE = 900.f;
     constexpr float CHASING_MAX_RANGE = 1200.f;
@@ -39,6 +41,8 @@ namespace
     constexpr float SPAWN_RADIUS = 500.f;
     // 몬스터 공격 몽타주의 타격 시점. 상태 갱신 주기(0.2초)와 다르게 둔다. 이진수로 정확한 값이라 남은 시간이 오차로 0을 넘지 않는다.
     constexpr float HIT_TIME = 0.375f;
+    // 일반 공격의 공격 범위는 앞을 가운데에 둔 부채꼴이다. 반지름은 공격 시작 거리와 같다.
+    constexpr float ATTACK_ANGLE = 90.f;
 
     // 상태 갱신 주기(0.2초)를 한 번에 채우는 시간.
     constexpr float STATE_UPDATE_TIME = 0.2f;
@@ -93,8 +97,13 @@ protected:
     {
         GamedataTables tables;
         tables.monsters[MONSTER_TEMPLATE_ID] = MakeMonsterRow();
-        TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID, HIT_TIME);
-        TestLevelTables::AddWarriorLevel(tables, 1).MaxHp = PLAYER_MAX_HP;
+        TestCreatureCombat::AddMonster(tables, MONSTER_TEMPLATE_ID, HIT_TIME, TestCreatureCombat::MakeSectorHit(ATTACK_RANGE, ATTACK_ANGLE));
+        TestCreatureCombat::AddClass(tables, Protocol::CHARACTER_CLASS_WARRIOR);
+        DesignData::ClassLevelStatRow& warriorLevel = TestLevelTables::AddWarriorLevel(tables, 1);
+        warriorLevel.MaxHp = PLAYER_MAX_HP;
+        warriorLevel.PhysicalAttack = PLAYER_ATTACK;
+        // 플레이어의 타격 한 번이 몬스터 HP의 절반을 깎는다.
+        TestCreatureCombat::AddStrikeAction(tables, static_cast<float>(MONSTER_MAX_HP / 2) / PLAYER_ATTACK);
         Gamedata::Install(std::move(tables));
 
         room = CreateTestRoom(ROOM_ID, 0, 5000.f);
@@ -223,10 +232,8 @@ TEST_F(MonsterAITest, ReturningIgnoresPlayersAndRecoversHp)
     SpawnMonster(0.f, 0.f, -(CHASING_MAX_RANGE + 300.f), 0.f, 100.f);
     EnterPlayerAt(400.f, 0.f);
     room->Tick(STATE_UPDATE_TIME);
-    AttackInfo attackInfo;
-    attackInfo.targetId = monster->GetEntityId();
-    attackInfo.damage = MONSTER_MAX_HP / 2;
-    room->HandleHit(player, attackInfo);
+    room->HandleHit(player, TestCreatureCombat::STRIKE_ACTION_ID, 0, TestCreatureCombat::StrikePoseAt(monster->GetPosInfo()));
+    ASSERT_EQ(monster->GetStatValue(Protocol::STAT_TYPE_HP), MONSTER_MAX_HP / 2);
     room->Tick(STATE_UPDATE_TIME);
     ASSERT_EQ(State(), MonsterStateType::Returning);
     const int64 damagedHp = monster->GetStatValue(Protocol::STAT_TYPE_HP);
@@ -273,8 +280,8 @@ TEST_F(MonsterAITest, LosesTargetOnFirstTickAfterTargetLeavesRoom)
     EXPECT_EQ(State(), MonsterStateType::Returning) << "대상을 놓치면 스폰 지점으로 돌아간다";
 }
 
-// 일반 공격은 공격을 알린 뒤 공격 몽타주의 타격 시점이 지나서 판정한다.
-TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
+// 일반 공격은 공격을 알린 뒤 액션의 타격 시점이 지나서, 공격 범위 안의 대상을 판정한다.
+TEST_F(MonsterAITest, NormalAttackHitsTargetInAttackArea)
 {
     SpawnMonster();
     EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
@@ -283,10 +290,11 @@ TEST_F(MonsterAITest, NormalAttackHitsTargetStillInRange)
 
     // 다음 상태 갱신에서 공격을 시작한다. 피격은 다음 틱 이후로 예약된다.
     room->Tick(2.5f);
+    ASSERT_TRUE(monster->GetAction().IsActing());
     ASSERT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
 
     room->Tick(HIT_TIME);
-    EXPECT_LT(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP - 10) << "피해량은 몬스터의 공격력 × 액션의 계수(1)다";
 }
 
 // 타격 지연이 상수(0.2초)였다. 애니메이션이 맞는 순간보다 먼저나 나중에 피격되었다.
@@ -306,23 +314,56 @@ TEST_F(MonsterAITest, NormalAttackHitsAtExtractedHitTime)
     EXPECT_LT(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "타격 시점에 맞는다";
 }
 
-// 피격 판정이 공격자가 룸에 남았는지만 보고 대상과의 거리를 다시 보지 않았다.
-// 공격을 알린 뒤 타격 시점 전에 사거리를 빠져나간 플레이어도 맞았다.
-TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftRangeBeforeHit)
+// 공격을 시작한 뒤 타격 시점 전에 공격 범위를 빠져나간 플레이어는 공격을 피한 것이다.
+TEST_F(MonsterAITest, NormalAttackMissesTargetThatLeftAttackAreaBeforeHit)
 {
     SpawnMonster();
-    // 한 번의 이동이 서버의 이동 판정(MoveValidation)에 걸리지 않도록 사거리 경계 가까이에서 시작한다.
     EnterPlayerAt(ATTACK_RANGE - 20.f, 0.f);
     room->Tick(STATE_UPDATE_TIME);
     ASSERT_EQ(State(), MonsterStateType::Attacking);
     room->Tick(2.5f);
 
-    Protocol::C_MOVE movePkt;
-    movePkt.mutable_pos_info()->mutable_pos()->set_x(ATTACK_RANGE + 20.f);
-    room->C_HandleMove(movePkt, player);
+    // 캡슐의 가장자리가 범위 밖으로 나가야 피한다. 반지름만큼 더 물러난다.
+    // 이동 판정은 실제 시각으로 거리를 제한하므로 테스트는 판정을 거치지 않고 옮긴다.
+    player->ApplyMove(MakePos(ATTACK_RANGE + TestCreatureCombat::PLAYER_CAPSULE_RADIUS + 20.f, 0.f), ::GetTickCount64());
     room->Tick(HIT_TIME);
 
-    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "피한 공격에 맞으면 클라이언트가 보여 주는 거리와 판정이 어긋난다";
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "피한 공격에 맞으면 클라이언트가 보여 주는 범위와 판정이 어긋난다";
+}
+
+// 몬스터는 공격을 시작할 때 방향을 고정한다. 대상을 따라 돌면 옆으로 피한 플레이어도 맞는다.
+TEST_F(MonsterAITest, NormalAttackKeepsDirectionFixedFromStart)
+{
+    SpawnMonster();
+    EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
+    room->Tick(STATE_UPDATE_TIME);
+    ASSERT_EQ(State(), MonsterStateType::Attacking);
+    room->Tick(2.5f);
+    ASSERT_TRUE(monster->GetAction().IsActing());
+    const float startYaw = monster->GetPosInfo().yaw();
+
+    // 부채꼴의 옆으로 비켜 선다. 공격 시작 거리 안이라 몬스터는 공격 상태에 남는다.
+    player->ApplyMove(MakePos(0.f, ATTACK_RANGE - 50.f), ::GetTickCount64());
+    room->Tick(HIT_TIME);
+
+    EXPECT_FLOAT_EQ(monster->GetPosInfo().yaw(), startYaw) << "공격하는 동안 대상을 따라 돌지 않는다";
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP) << "판정은 공격을 시작한 방향으로 한다";
+}
+
+// 룸에서 빠진 크리처의 예약한 타격은 사라진다. 남아 있으면 다시 들어온 룸에서 지난 공격이 판정된다.
+TEST_F(MonsterAITest, AttackerLeavingRoomCancelsPendingHit)
+{
+    SpawnMonster();
+    EnterPlayerAt(ATTACK_RANGE - 50.f, 0.f);
+    room->Tick(STATE_UPDATE_TIME);
+    room->Tick(2.5f);
+    ASSERT_TRUE(monster->GetAction().IsActing());
+
+    room->HandleDie(monster);
+    EXPECT_FALSE(monster->GetAction().IsActing()) << "룸에서 빠지면 진행 중인 액션과 예약한 타격을 버린다";
+
+    room->Tick(HIT_TIME);
+    EXPECT_EQ(player->GetStatValue(Protocol::STAT_TYPE_HP), PLAYER_MAX_HP);
 }
 
 /*--------------------------------------------------------------

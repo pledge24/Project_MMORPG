@@ -67,15 +67,12 @@ public:
         return AssetData;
     }
 
-    /** 빈 경로는 참조를 비워 둔다. 몽타주는 공격 몽타주 하나로, 머티리얼은 첫 슬롯 하나로 넣는다. */
-    static FP1MonsterAssetData MonsterAsset(const TCHAR* InSkeletalMesh, const TCHAR* AnimClass,
-        const TCHAR* AttackMontage = TEXT(""), const TCHAR* Material = TEXT(""))
+    /** 빈 경로는 참조를 비워 둔다. 머티리얼은 첫 슬롯 하나로 넣는다. */
+    static FP1MonsterAssetData MonsterAsset(const TCHAR* InSkeletalMesh, const TCHAR* AnimClass, const TCHAR* Material = TEXT(""))
     {
         FP1MonsterAssetData AssetData;
         AssetData.SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(InSkeletalMesh));
         AssetData.AnimClass = TSoftClassPtr<UAnimInstance>(FSoftObjectPath(AnimClass));
-        if (*AttackMontage != TEXT('\0'))
-            AssetData.AttackMontages.Add(TSoftObjectPtr<UAnimMontage>(FSoftObjectPath(AttackMontage)));
         if (*Material != TEXT('\0'))
             AssetData.Materials.Add(TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(Material)));
         return AssetData;

@@ -62,6 +62,8 @@ public:
     /** 룸에 들어가기 전에는 0. 내 엔티티 번호는 룸 입장 응답이 알린다. */
     uint64 GetPlayerId() const { return _PlayerId; }
     int32 GetPlayerLevel() const { return _PlayerInfo->level(); };
+    /** 입장한 캐릭터의 직업. 게임에 들어가기 전에는 NONE. */
+    Protocol::CharacterClass GetCharacterClass() const { return _CharacterClass; }
 
     /** 서버가 알린 지금 맵 또는 여는 맵. 맵 표의 맵 번호다. */
     int32 GetMapId() const { return _MapId; }
@@ -78,6 +80,7 @@ protected:
 
     uint64 _PlayerId = 0;
     int32 _MapId = 0;
+    Protocol::CharacterClass _CharacterClass = Protocol::CHARACTER_CLASS_NONE;
     FText _PlayerName = FText::FromString("NULL");
 
     //~ Stats

@@ -88,6 +88,9 @@ bool Player::ApplyProgress(const PlayerProgress& progress)
     const int64 characterId = progress.characterId;
     _characterId = characterId;
     _characterClass = static_cast<Protocol::CharacterClass>(progress.classId);
+    // 기동할 때 직업마다 판정 데이터가 있는지 대조했다. 없으면 표를 바꿔 끼운 테스트이고, 캡슐 없이 점으로 판정된다.
+    if (const CreatureCombat* combat = Gamedata::FindClassCombat(_characterClass))
+        _capsule = *combat;
     _playerInfo->set_name(progress.name);
     _playerInfo->set_level(progress.level);
 
