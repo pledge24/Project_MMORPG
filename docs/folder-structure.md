@@ -547,7 +547,7 @@ Server/
 │   ├── Migrations/         GameDB 스키마. `NNN_<이름>.sql`을 번호 순서로 GameDB와 GameDB_Test에 적용한다
 │   ├── Protocol/           생성물
 │   └── Utils/              난수, 평면 수학, 문자열 변환, 캐릭터 ID와 아이템 UID 발급기
-├── GameServerTests/
+├── GameServerTests/        테스트. Data/에 클라이언트 테스트와 함께 읽는 공용 사례 파일
 ├── DummyClient/
 ├── AuthServer/             Node 인증 서버
 │   ├── src/

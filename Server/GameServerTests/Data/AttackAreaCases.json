@@ -1,0 +1,1581 @@
+{
+  "Description": "공격 범위 계산의 공용 사례. 서버 테스트와 클라이언트 디버그 표시 테스트가 같은 답을 내야 한다. 거리는 cm, 각도는 도, 공격자 기준 +X가 앞, +Y가 오른쪽, Z는 발밑 높이다. 대상 캡슐은 발밑에서 HalfHeight의 두 배까지 선다.",
+  "OverlapCases": [
+    {
+      "Name": "원: 중심이 안",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "원: 밖",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 200,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "원: 대상 원이 가장자리에 걸침",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 120,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "원: 대상 원이 경계에 닿음",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 130,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "원: 경계에서 0.5만큼 밖",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 130.5,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "원: 오프셋의 중심이 안",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 50,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 100,
+        "OffsetY": 50,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 100,
+        "Y": 50,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "원: 오프셋 때문에 공격자 위치는 밖",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 50,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 100,
+        "OffsetY": 50,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 0.0,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "원: yaw 90에서 오른쪽 오프셋은 -X로 간다",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 50,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 100,
+        "OffsetY": 50,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 90
+      },
+      "Target": {
+        "X": -50,
+        "Y": 100,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "원: yaw 90에서 오른쪽 오프셋의 반대편은 밖",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 50,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 100,
+        "OffsetY": 50,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 90
+      },
+      "Target": {
+        "X": 50,
+        "Y": 100,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 중심이 안",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 100,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 반지름 밖",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 300,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 대상 원이 호에 걸침",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 220,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 대상 원이 호에 닿음",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 230,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 호에서 0.5만큼 밖",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 230.5,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 중심이 오른쪽 각도 경계 위",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 70.7107,
+        "Y": 70.7107,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 오른쪽 각도 경계 밖에서 대상 원이 걸침",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50.2046,
+        "Y": 91.2168,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 오른쪽 각도 경계 밖에서 대상 원이 닿지 않음",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 48.7904,
+        "Y": 92.631,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 왼쪽 각도 경계 밖에서 대상 원이 걸침",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50.2046,
+        "Y": -91.2168,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 왼쪽 각도 경계 밖에서 대상 원이 닿지 않음",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 48.7904,
+        "Y": -92.631,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 각도 밖이어도 반지름 안이면 꼭짓점 근처는 걸침",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -29,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 꼭짓점 뒤로 대상 반지름보다 멀면 밖",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -31,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 각도 경계 바깥, 호 끝 너머의 모서리",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 141.4214,
+        "Y": 176.7767,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 270도의 뒤쪽 틈은 밖",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 270,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -100,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 270도의 뒤쪽 틈에 큰 대상이 걸침",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 270,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -100,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 80,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: 360도는 원과 같음",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 360,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -100,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: yaw 180이면 뒤가 앞",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 180
+      },
+      "Target": {
+        "X": -100,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: yaw 180이면 앞이 뒤",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 180
+      },
+      "Target": {
+        "X": 100,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "부채꼴: 공격자가 원점이 아님",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 1000,
+        "Y": 500,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 1100,
+        "Y": 500,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 중심이 안",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 앞쪽 변에 닿음",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 330,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 앞쪽 변에서 0.5만큼 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 330.5,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: 뒤쪽 변에 닿음",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -30,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 뒤쪽 변에서 0.5만큼 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": -30.5,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: 오른쪽 변에 닿음",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": 80,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 오른쪽 변에서 0.5만큼 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": 80.5,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: 왼쪽 변에 닿음",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": -80,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 왼쪽 변에서 0.5만큼 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": -80.5,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: 대상 원이 앞쪽 모서리에 걸침",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 321,
+        "Y": 71,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 모서리 대각선 밖은 변을 늘린 경계 안이어도 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 325,
+        "Y": 75,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: yaw 90이면 +Y가 앞",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 90
+      },
+      "Target": {
+        "X": 0.0,
+        "Y": 150,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: yaw 90이면 +X는 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 90
+      },
+      "Target": {
+        "X": 150,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: yaw 45로 돈 앞 방향",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 45
+      },
+      "Target": {
+        "X": 141.4214,
+        "Y": 141.4214,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: yaw 45로 돌면 +X는 옆으로 벗어남",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 45
+      },
+      "Target": {
+        "X": 200,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: yaw 180과 앞 오프셋",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 100,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 180
+      },
+      "Target": {
+        "X": -250,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: yaw 180과 앞 오프셋의 반대편은 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 100,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 180
+      },
+      "Target": {
+        "X": 250,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: 앞 오프셋 때문에 공격자 바로 앞은 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 100,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "높이: 대상 발밑이 범위 위끝에 닿음",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": 200,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "높이: 대상 발밑이 범위 위끝보다 0.5만큼 위",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": 200.5,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "높이: 대상 머리가 범위 아래끝에 닿음",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": -180,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "높이: 대상 머리가 범위 아래끝보다 1만큼 아래",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": -181,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "높이: 범위는 공격자 발밑 기준",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 50
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 100,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "높이: 공격자 발밑 기준 범위 위로 벗어남",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 50
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 100,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": 151,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "높이: 음수 아래끝",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": -100,
+        "ZMax": 0
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 50,
+        "Y": 0.0,
+        "Z": -150,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    }
+  ],
+  "FrontReachCases": [
+    {
+      "Name": "원: 오프셋 + 반지름",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 50,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Expected": 150
+    },
+    {
+      "Name": "원: 옆 오프셋은 앞쪽 끝을 바꾸지 않음",
+      "Area": {
+        "Shape": "Circle",
+        "Radius": 100,
+        "Angle": 0,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 300,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Expected": 100
+    },
+    {
+      "Name": "부채꼴: 반지름",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Expected": 200
+    },
+    {
+      "Name": "부채꼴: 뒤 오프셋만큼 줄어듦",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 200,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": -20,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Expected": 180
+    },
+    {
+      "Name": "직사각형: 길이",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 600,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Expected": 600
+    },
+    {
+      "Name": "직사각형: 오프셋 + 길이",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 100,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Expected": 400
+    }
+  ]
+}
