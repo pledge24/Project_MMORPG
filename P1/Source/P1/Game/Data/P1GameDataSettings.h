@@ -98,6 +98,12 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "Npcs")
     TSoftObjectPtr<UMaterialInterface> NpcFocusOverlayMaterial;
 
+    //~ Actions
+public:
+    /** 액션마다 재생할 몽타주 섹션. 행 구조체는 FP1ActionAssetData이고 행 이름은 액션 번호. 기획 데이터의 액션마다 하나씩 둔다. */
+    UPROPERTY(Config, EditAnywhere, Category = "Actions")
+    TSoftObjectPtr<UDataTable> ActionAssetTable;
+
     //~ Players
 public:
     /** 직업 번호(Protocol::CharacterClass 값)마다 플레이어 블루프린트. 직업 표의 직업마다 하나씩 두고, 표에 없는 직업을 두면 서버가 뜨지 않는다. */

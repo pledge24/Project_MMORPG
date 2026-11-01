@@ -249,30 +249,6 @@ namespace
 
     //~ 크리처 판정 데이터
 
-    AttackSectionCombat ReadAttackSection(const Json& object)
-    {
-        using DesignData::Detail::Read;
-        AttackSectionCombat section;
-        section.name = Read<string>(object, "Name");
-        section.length = Read<float>(object, "Length");
-        section.hitTimes = Read<vector<float>>(object, "HitTimes");
-        for (const vector<float>& sample : Read<vector<vector<float>>>(object, "RootMotion"))
-        {
-            if (sample.size() != 3)
-                throw DesignData::Detail::FieldError{ "'RootMotion'의 표본이 x, y, z 셋이 아니다" };
-            section.rootMotion.push_back(vector3D(sample[0], sample[1], sample[2]));
-        }
-        return section;
-    }
-
-    AttackCombat ReadAttack(const Json& object)
-    {
-        AttackCombat attack;
-        attack.montage = DesignData::Detail::Read<string>(object, "Montage");
-        attack.sections = DesignData::Detail::ReadRows<AttackSectionCombat>(object, "Sections", ReadAttackSection);
-        return attack;
-    }
-
     /** 몬스터나 직업 하나의 행. 번호는 행을 읽는 쪽이 대조한다. */
     pair<int32, CreatureCombat> ReadCreatureCombat(const Json& object)
     {
@@ -280,29 +256,36 @@ namespace
         CreatureCombat combat;
         combat.capsuleRadius = Read<float>(object, "CapsuleRadius");
         combat.capsuleHalfHeight = Read<float>(object, "CapsuleHalfHeight");
-        combat.attacks = DesignData::Detail::ReadRows<AttackCombat>(object, "Attacks", ReadAttack);
-        return { Read<int32>(object, "Id"), std::move(combat) };
+        return { Read<int32>(object, "Id"), combat };
     }
 
-    /**
-     * 게임 코드가 공격마다 첫 섹션과 첫 타격 시점을 꺼내 쓴다. 타이밍의 나머지 검사는 추출이 했으므로 여기서는 비어 있지 않은지만 본다.
-     * who는 오류 메시지의 주어(「몬스터 5000」)다.
-     */
-    void CheckAttacks(const CreatureCombat& combat, const string& who)
+    /** 액션 하나의 행. 번호는 행을 읽는 쪽이 액션 표와 대조한다. */
+    pair<int32, ActionTiming> ReadActionTiming(const Json& object)
     {
-        if (combat.attacks.empty())
-            throw DesignData::Detail::FieldError{ format("{}: 공격 몽타주가 없다", who) };
+        using DesignData::Detail::FieldError;
+        using DesignData::Detail::Read;
 
-        for (const AttackCombat& attack : combat.attacks)
+        const int32 actionId = Read<int32>(object, "Id");
+        ActionTiming timing;
+        timing.montage = Read<string>(object, "Montage");
+        timing.section = Read<string>(object, "Section");
+        timing.length = Read<float>(object, "Length");
+        timing.hitTimes = Read<vector<float>>(object, "HitTimes");
+
+        if (optional<vector<float>> window = Read<optional<vector<float>>>(object, "ComboWindow"))
         {
-            if (attack.sections.empty())
-                throw DesignData::Detail::FieldError{ format("{} {}: 섹션이 없다", who, attack.montage) };
-            for (const AttackSectionCombat& section : attack.sections)
-            {
-                if (section.hitTimes.empty())
-                    throw DesignData::Detail::FieldError{ format("{} {} 섹션 {}: 타격 시점이 없다", who, attack.montage, section.name) };
-            }
+            if (window->size() != 2)
+                throw FieldError{ format("액션 {}: 'ComboWindow'가 시작과 끝 둘이 아니다", actionId) };
+            timing.comboWindow = ComboWindow{ (*window)[0], (*window)[1] };
         }
+
+        for (const vector<float>& sample : Read<vector<vector<float>>>(object, "RootMotion"))
+        {
+            if (sample.size() != 3)
+                throw FieldError{ format("액션 {}: 'RootMotion'의 표본이 x, y, z 셋이 아니다", actionId) };
+            timing.rootMotion.push_back(vector3D(sample[0], sample[1], sample[2]));
+        }
+        return { actionId, std::move(timing) };
     }
 
     /** 직업별 능력치 표에 있는 직업. 이 직업들이 판정 데이터와 짝을 맺는다. */
@@ -315,8 +298,9 @@ namespace
     }
 
     /**
-     * 크리처 판정 데이터를 읽고 몬스터 표, 직업별 능력치 표와 짝을 대조해 표에 더한다. 두 표를 먼저 읽어 둬야 한다.
-     * 짝이 없는 몬스터는 피격을 언제 판정할지 모르므로 부팅을 멈춘다.
+     * 크리처 판정 데이터를 읽고 몬스터 표, 직업별 능력치 표, 액션 표와 짝을 대조해 표에 더한다. 세 표를 먼저 읽어 둬야 한다.
+     * 짝이 없는 몬스터는 피격을 판정할 캡슐이 없고, 짝이 없는 액션은 언제 타격을 판정할지 모르므로 부팅을 멈춘다.
+     * 타이밍의 나머지 검사는 추출이 했으므로, 게임 코드가 타격 순번으로 꺼내 쓰는 타격 시점의 수만 본다.
      */
     void ParseCreatureCombat(const Json& document, GamedataTables& tables)
     {
@@ -339,8 +323,7 @@ namespace
                 const string who = format("몬스터 {}", monsterId);
                 if (tables.monsters.contains(monsterId) == false)
                     throw FieldError{ format("{}이 몬스터 표에 없다", who) };
-                CheckAttacks(combat, who);
-                if (tables.monsterCombats.emplace(monsterId, std::move(combat)).second == false)
+                if (tables.monsterCombats.emplace(monsterId, combat).second == false)
                     throw FieldError{ format("{}이 겹친다", who) };
             }
 
@@ -350,9 +333,22 @@ namespace
                 const auto characterClass = static_cast<Protocol::CharacterClass>(classId);
                 if (Protocol::CharacterClass_IsValid(classId) == false || classes.contains(characterClass) == false)
                     throw FieldError{ format("{}이 직업별 능력치 표에 없다", who) };
-                CheckAttacks(combat, who);
-                if (tables.classCombats.emplace(characterClass, std::move(combat)).second == false)
+                if (tables.classCombats.emplace(characterClass, combat).second == false)
                     throw FieldError{ format("{}이 겹친다", who) };
+            }
+
+            for (auto& [actionId, timing] : ReadRows<pair<int32, ActionTiming>>(document, "Actions", ReadActionTiming))
+            {
+                auto actionIt = tables.actions.find(actionId);
+                if (actionIt == tables.actions.end())
+                    throw FieldError{ format("액션 {}이 액션 표에 없다", actionId) };
+
+                // 타격 순번 i의 공격 범위를 i번째 타격 시점에 판정한다.
+                const size_t hitCount = actionIt->second.Hits.size();
+                if (timing.hitTimes.size() != hitCount)
+                    throw FieldError{ format("액션 {}: 타격 시점이 {}개인데 액션 표의 타격은 {}개다", actionId, timing.hitTimes.size(), hitCount) };
+                if (tables.actionTimings.emplace(actionId, std::move(timing)).second == false)
+                    throw FieldError{ format("액션 {}이 겹친다", actionId) };
             }
         }
         catch (const FieldError& error)
@@ -370,6 +366,11 @@ namespace
             if (tables.classCombats.contains(characterClass) == false)
                 throw TableError{ format("직업 {}의 크리처 판정 데이터가 없다. 프로젝트 설정의 CharacterClassPlayers에 직업을 더하고 추출을 돌린다",
                     static_cast<int32>(characterClass)) };
+        }
+        for (const auto& [actionId, action] : tables.actions)
+        {
+            if (tables.actionTimings.contains(actionId) == false)
+                throw TableError{ format("액션 {}의 크리처 판정 데이터가 없다. 액션 에셋 표에 행을 두고 추출을 돌린다", actionId) };
         }
     }
 

@@ -1,5 +1,6 @@
 #include "CreatureCombat/P1MontageExtract.h"
 #include "Animation/AnimMontage.h"
+#include "Game/Combat/P1AnimNotifyState_ComboWindow.h"
 #include "Game/Combat/P1AnimNotify_AttackHit.h"
 
 namespace
@@ -31,40 +32,45 @@ namespace
     }
 }
 
-FP1CreatureCombatCheck::FAttack P1MontageExtract::Extract(const UAnimMontage& Montage, const FTransform& MeshToActor)
+bool P1MontageExtract::ExtractSection(const UAnimMontage& Montage, FName Section, const FTransform& MeshToActor, FP1CreatureCombatCheck::FAction& OutAction)
 {
-    FP1CreatureCombatCheck::FAttack Attack;
-    Attack.Montage = Montage.GetPathName();
-    Attack.bHasRootMotion = Montage.HasRootMotion();
-    Attack.RateScale = Montage.RateScale;
+    const int32 SectionIndex = Montage.GetSectionIndex(Section);
+    if (SectionIndex == INDEX_NONE)
+        return false;
 
-    for (int32 SectionIndex = 0; SectionIndex < Montage.CompositeSections.Num(); ++SectionIndex)
+    float Start = 0.f;
+    float End = 0.f;
+    Montage.GetSectionStartAndEndTime(SectionIndex, Start, End);
+    const bool bLastSection = SectionIndex == Montage.CompositeSections.Num() - 1;
+    // 섹션 경계의 노티파이는 뒤 섹션의 시작이다. 마지막 섹션만 끝을 포함한다.
+    auto IsInSection = [&](float Time) { return Time >= Start && (Time < End || (bLastSection && Time <= End)); };
+
+    OutAction.Montage = Montage.GetPathName();
+    OutAction.Section = Section.ToString();
+    OutAction.bHasRootMotion = Montage.HasRootMotion();
+    OutAction.RateScale = Montage.RateScale;
+    OutAction.Length = End - Start;
+    OutAction.HitTimes.Reset();
+    OutAction.ComboWindows.Reset();
+    OutAction.RootMotion.Reset();
+
+    // 몽타주 트랙의 노티파이만 읽는다. 시퀀스 안에 둔 노티파이는 몽타주가 재생해도 서버가 모른다.
+    for (const FAnimNotifyEvent& Notify : Montage.Notifies)
     {
-        float Start = 0.f;
-        float End = 0.f;
-        Montage.GetSectionStartAndEndTime(SectionIndex, Start, End);
-        const bool bLastSection = SectionIndex == Montage.CompositeSections.Num() - 1;
+        const float Time = Notify.GetTriggerTime();
+        if (IsInSection(Time) == false)
+            continue;
 
-        FP1CreatureCombatCheck::FSection& Section = Attack.Sections.AddDefaulted_GetRef();
-        Section.Name = Montage.GetSectionName(SectionIndex).ToString();
-        Section.Length = End - Start;
-
-        // 몽타주 트랙의 노티파이만 읽는다. 시퀀스 안에 둔 타격 노티파이는 몽타주가 재생해도 서버가 모른다.
-        for (const FAnimNotifyEvent& Notify : Montage.Notifies)
-        {
-            if (Cast<UP1AnimNotify_AttackHit>(Notify.Notify) == nullptr)
-                continue;
-
-            // 섹션 경계의 노티파이는 뒤 섹션의 시작이다. 마지막 섹션만 끝을 포함한다.
-            const float Time = Notify.GetTriggerTime();
-            if (Time >= Start && (Time < End || (bLastSection && Time <= End)))
-                Section.HitTimes.Add(Time - Start);
-        }
-        Section.HitTimes.Sort();
-
-        if (Attack.bHasRootMotion)
-            Section.RootMotion = SampleRootMotion(Montage, Start, End, MeshToActor);
+        if (Cast<UP1AnimNotify_AttackHit>(Notify.Notify) != nullptr)
+            OutAction.HitTimes.Add(Time - Start);
+        // 입력 창은 시작한 섹션의 것이다. 섹션 끝을 넘는지는 검사가 본다.
+        else if (Cast<UP1AnimNotifyState_ComboWindow>(Notify.NotifyStateClass) != nullptr)
+            OutAction.ComboWindows.Add({ Time - Start, Notify.GetEndTriggerTime() - Start });
     }
+    OutAction.HitTimes.Sort();
+    OutAction.ComboWindows.Sort([](const FP1CreatureCombatCheck::FComboWindow& A, const FP1CreatureCombatCheck::FComboWindow& B) { return A.Start < B.Start; });
 
-    return Attack;
+    if (OutAction.bHasRootMotion)
+        OutAction.RootMotion = SampleRootMotion(Montage, Start, End, MeshToActor);
+    return true;
 }
