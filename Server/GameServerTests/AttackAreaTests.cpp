@@ -97,6 +97,15 @@ TEST(AttackArea, SharedOverlapCasesMatchExpected)
     EXPECT_EQ(coveredShapes.size(), 3u) << "형상마다 사례가 있어야 한다";
 }
 
+TEST(AttackArea, SharedCasesStateServerTolerance)
+{
+    // 경계 사례의 답은 여유에 달려 있다. 클라이언트는 사례 파일의 여유를 읽어 같은 답을 낸다.
+    const Json cases = ReadCases();
+    ASSERT_TRUE(cases.contains("Tolerance")) << "사례 파일을 읽지 못했다: " << CASES_FILE.string();
+
+    EXPECT_FLOAT_EQ(cases["Tolerance"].get<float>(), AttackAreaMath::OVERLAP_TOLERANCE);
+}
+
 TEST(AttackArea, SharedFrontReachCasesMatchExpected)
 {
     const Json cases = ReadCases();

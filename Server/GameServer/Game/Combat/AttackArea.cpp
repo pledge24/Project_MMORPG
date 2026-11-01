@@ -1,6 +1,8 @@
 #include "Core/pch.h"
 #include "Game/Combat/AttackArea.h"
 
+// 클라이언트의 공격 범위 디버그 표시가 같은 규칙으로 그린다. 규칙을 바꾸면 클라이언트 계산과 공용 사례 파일도 함께 고쳐야
+// 화면의 범위와 서버의 판정이 어긋나지 않는다.
 namespace
 {
     constexpr float DEGREES_TO_RADIANS = numbers::pi_v<float> / 180.f;

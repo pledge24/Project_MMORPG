@@ -1,7 +1,7 @@
 #pragma once
 #include "Utils/Utils.h"
 
-/** 공격 범위의 평면 형상. 3D 형상이나 회전한 형상은 종류를 더해 넓힌다. */
+/** 공격 범위의 평면 형상. */
 enum class AttackShape : uint8
 {
     Circle,
@@ -9,10 +9,7 @@ enum class AttackShape : uint8
     Rectangle,
 };
 
-/**
- * 타격 하나의 공격 범위. 거리는 cm, 각도는 도다.
- * 공격자 기준으로 +X가 앞, +Y가 오른쪽이고, 높이는 공격자 발밑 기준이다.
- */
+/** 타격 하나의 공격 범위. 거리는 cm, 각도는 도, 공격자 기준 +X가 앞, +Y가 오른쪽, 높이는 공격자 발밑 기준이다. */
 struct AttackArea
 {
     AttackShape shape = AttackShape::Circle;
@@ -53,7 +50,6 @@ struct TargetCapsule
  * 공격 범위의 기하 판정.
  *
  * 공격 범위가 대상 캡슐에 닿는지와 범위가 앞으로 닿는 거리를 계산한다. 룸과 기획 데이터를 모르는 순수 함수다.
- * 클라이언트의 공격 범위 디버그 표시가 같은 규칙으로 그리므로, 규칙을 바꾸면 클라이언트와 공용 테스트 사례도 고친다.
  */
 namespace AttackAreaMath
 {

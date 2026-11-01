@@ -1,5 +1,6 @@
 {
-  "Description": "공격 범위 계산의 공용 사례. 서버 테스트와 클라이언트 디버그 표시 테스트가 같은 답을 내야 한다. 거리는 cm, 각도는 도, 공격자 기준 +X가 앞, +Y가 오른쪽, Z는 발밑 높이다. 대상 캡슐은 발밑에서 HalfHeight의 두 배까지 선다.",
+  "Description": "공격 범위 계산의 공용 사례. 서버 테스트와 클라이언트 디버그 표시 테스트가 같은 답을 내야 한다. 거리는 cm, 각도는 도, 공격자 기준 +X가 앞, +Y가 오른쪽, Z는 발밑 높이다. 대상 캡슐은 발밑에서 HalfHeight의 두 배까지 선다. 평면 거리와 높이 구간의 경계에 Tolerance(cm)만큼 여유를 두고, 경계에 닿으면 걸린다.",
+  "Tolerance": 0.01,
   "OverlapCases": [
     {
       "Name": "원: 중심이 안",
@@ -786,6 +787,62 @@
       "Expected": true
     },
     {
+      "Name": "부채꼴: yaw -90에서 오른쪽 오프셋은 +X로 간다",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 100,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 100,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": -90
+      },
+      "Target": {
+        "X": 100,
+        "Y": -50,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "부채꼴: yaw -90에서 오른쪽 오프셋의 반대편은 밖",
+      "Area": {
+        "Shape": "Sector",
+        "Radius": 100,
+        "Angle": 90,
+        "Length": 0,
+        "Width": 0,
+        "OffsetX": 0,
+        "OffsetY": 100,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": -90
+      },
+      "Target": {
+        "X": -100,
+        "Y": -50,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
       "Name": "직사각형: 중심이 안",
       "Area": {
         "Shape": "Rectangle",
@@ -1260,6 +1317,90 @@
         "HalfHeight": 90
       },
       "Expected": false
+    },
+    {
+      "Name": "직사각형: 오른쪽 오프셋 안",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 100,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": 100,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
+    },
+    {
+      "Name": "직사각형: 오른쪽 오프셋의 반대편은 밖",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 100,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": 0
+      },
+      "Target": {
+        "X": 150,
+        "Y": -100,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": false
+    },
+    {
+      "Name": "직사각형: yaw -90이면 -Y가 앞",
+      "Area": {
+        "Shape": "Rectangle",
+        "Radius": 0,
+        "Angle": 0,
+        "Length": 300,
+        "Width": 100,
+        "OffsetX": 0,
+        "OffsetY": 0,
+        "ZMin": 0,
+        "ZMax": 200
+      },
+      "Attacker": {
+        "X": 0,
+        "Y": 0,
+        "Z": 0,
+        "Yaw": -90
+      },
+      "Target": {
+        "X": 0.0,
+        "Y": -150,
+        "Z": 0,
+        "Radius": 30,
+        "HalfHeight": 90
+      },
+      "Expected": true
     },
     {
       "Name": "직사각형: 앞 오프셋 때문에 공격자 바로 앞은 밖",
