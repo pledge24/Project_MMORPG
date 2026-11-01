@@ -11,7 +11,8 @@
        같은 커맨드렛이 레벨의 충돌 형상을 P1/Saved/NavExtract/NavGeometry_<맵 번호>.json 에, 플레이어 캡슐과 이동 설정을
        Extracted/NavAgent.json 에 쓴다.
     2. 크리처 추출(P1CreatureCombatExtract): 몬스터 에셋 테이블과 직업마다의 플레이어 블루프린트(CharacterClassPlayers)에서
-       캡슐 크기와 공격 몽타주의 타이밍, 루트 모션을 읽어, 문제가 없을 때만 같은 폴더에 CreatureCombat.json 을 쓴다.
+       캡슐 크기를, 액션 에셋 테이블이 가리키는 몽타주 섹션에서 액션마다 타이밍과 루트 모션을 읽어, 문제가 없을 때만 같은 폴더에
+       CreatureCombat.json 을 쓴다.
     3. navmesh 빌드(Server/Binary/Debug/NavBuilder.exe): 1이 쓴 형상으로 Extracted/ 에 맵마다 NavMesh_<맵 번호>.navmesh 를,
        P1/Saved/NavExtract/ 에 에디터가 겹쳐 그리는 NavMeshPolygons_<맵 번호>.json 을 쓴다. 1이 실패하면 돌리지 않는다.
        서버 솔루션(Debug)을 빌드해야 도구가 생긴다.
@@ -22,7 +23,7 @@
     오류 로그를 남기고, UnrealEditor-Cmd 는 추출과 무관한 그 오류 때문에도 1 을 돌려준다(2026년 10월 29일 실측).
     앞 단계가 실패해도 다음 단계를 돌려 오류를 한 번에 보여 준다. 각 단계의 산출물은 그 단계가 통과했을 때만 바뀐다.
 
-    레벨이나 공격 몽타주, 몬스터 에셋 테이블, 플레이어 캡슐을 고쳤으면 이 스크립트를 돌리고 산출물을 에셋과 같은 커밋에 담는다.
+    레벨이나 액션 몽타주, 액션 에셋 테이블, 몬스터 에셋 테이블, 플레이어 캡슐을 고쳤으면 이 스크립트를 돌리고 산출물을 에셋과 같은 커밋에 담는다.
     클라이언트와 서버 솔루션을 빌드한 뒤에 돌린다.
 
 .EXAMPLE
@@ -60,7 +61,7 @@ $logDir = (Resolve-Path $logDir).Path
 # 단계마다 커맨드렛 이름, 로그 머리말, 끝까지 돌았을 때 남기는 결과 줄.
 $steps = @(
     @{ Commandlet = 'P1PlacementExtract'; Tag = '배치 추출'; Finished = '맵 \d+개의 배치 데이터를 썼다'; Log = 'run.log' }
-    @{ Commandlet = 'P1CreatureCombatExtract'; Tag = '크리처 추출'; Finished = '몬스터 \d+개와 직업 \d+개의 판정 데이터를 썼다'; Log = 'creature.log' }
+    @{ Commandlet = 'P1CreatureCombatExtract'; Tag = '크리처 추출'; Finished = '몬스터 \d+개와 직업 \d+개, 액션 \d+개의 판정 데이터를 썼다'; Log = 'creature.log' }
 )
 
 $allPassed = $true
