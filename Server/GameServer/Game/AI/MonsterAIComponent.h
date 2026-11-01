@@ -89,7 +89,7 @@ private:
     float _detectionRange;
     /** 스폰 지점에서 잰다(cm). */
     float _chasingMaxRange;
-    /** 공격을 시작하는 거리(cm). 기동할 때 일반 공격 액션의 공격 범위가 이 거리까지 닿는지 검사한다. */
+    /** 공격을 시작하는 거리(cm). */
     float _tryAttackRange;
 
     //~ 공격
@@ -103,6 +103,8 @@ private:
 
     //~ 공통
 private:
+    /** 대상을 바라보게 돈다. 공격 중인지는 보지 않는다. */
+    void FaceTarget();
     /** 소유 몬스터. 소유자가 이미 사라졌으면 nullptr. */
     MonsterRef GetOwner() const;
     /** 대상의 위치. 대상이 없으면 nullptr. */

@@ -96,18 +96,11 @@ bool MonsterAIComponent::IsTargetInAttackRange() const
 
 void MonsterAIComponent::LookAtTarget()
 {
-    MonsterRef owner = GetOwner();
-    const Protocol::PosInfo* targetPos = GetTargetPos();
-    if (owner == nullptr || targetPos == nullptr)
-        return;
-
     // 공격은 시작한 방향으로 판정한다. 대상을 따라 돌면 클라이언트가 보여 주는 방향과 판정이 어긋난다.
     if (IsAttacking())
         return;
 
-    const vector2D lookAtVec = MathUtil::PosInfoToVector2D(targetPos) - MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
-    if (lookAtVec != vector2D::GetZeroVector())
-        owner->SetYaw(MathUtil::VectorToYaw(lookAtVec));
+    FaceTarget();
 }
 
 bool MonsterAIComponent::IsBeyondChaseLimit() const
@@ -128,8 +121,9 @@ void MonsterAIComponent::ChaseTarget()
     if (owner == nullptr || targetPos == nullptr)
         return;
 
-    // 공격한 뒤 공격 간격 동안은 공격 몽타주가 재생 중이라 움직이지 않는다.
-    if (CanAttack() == false)
+    // 공격한 뒤 공격 간격 동안은 공격 몽타주가 재생 중이라 움직이지 않는다. 판정은 타격 순간의 위치로 하므로,
+    // 공격 간격이 액션보다 짧아도 공격하는 동안 움직이면 범위 밖으로 피한 대상을 따라가 맞힌다.
+    if (CanAttack() == false || IsAttacking())
         return;
 
     owner->GetPathFollowing().MoveTo(MathUtil::PosInfoToVector3D(*targetPos), MIN_APPROACH_DISTANCE);
@@ -194,8 +188,8 @@ void MonsterAIComponent::NormalAttack()
         return;
 
     // 방향은 여기서 정해져 공격이 끝날 때까지 바뀌지 않는다. 플레이어는 그 방향을 보고 범위 밖으로 피한다.
-    // 타격은 대상을 정하지 않는다. 타격 순간 공격 범위 안에 있는 플레이어가 맞는다.
-    LookAtTarget();
+    // 앞 공격이 끝나기 전에 새 공격을 시작해도 대상을 다시 바라본다. 타격은 대상을 정하지 않고, 타격 순간 공격 범위 안에 있는 플레이어가 맞는다.
+    FaceTarget();
     if (owner->GetAction().StartAction(_normalAttackAction, owner->GetPosInfo().yaw()))
         _timeSinceLastAttack = 0.f;
 }
@@ -223,6 +217,18 @@ void MonsterAIComponent::RecoverHp(float deltaTime)
     const int64 recovered = static_cast<int64>(ceilf(maxHp * RETURN_HP_RECOVERY_RATIO * deltaTime));
     const int64 hp = owner->GetStatValue(Protocol::STAT_TYPE_HP);
     owner->SetStatValue(Protocol::STAT_TYPE_HP, min(maxHp, hp + recovered));
+}
+
+void MonsterAIComponent::FaceTarget()
+{
+    MonsterRef owner = GetOwner();
+    const Protocol::PosInfo* targetPos = GetTargetPos();
+    if (owner == nullptr || targetPos == nullptr)
+        return;
+
+    const vector2D lookAtVec = MathUtil::PosInfoToVector2D(targetPos) - MathUtil::PosInfoToVector2D(&owner->GetPosInfo());
+    if (lookAtVec != vector2D::GetZeroVector())
+        owner->SetYaw(MathUtil::VectorToYaw(lookAtVec));
 }
 
 MonsterRef MonsterAIComponent::GetOwner() const

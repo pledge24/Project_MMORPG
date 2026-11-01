@@ -78,8 +78,7 @@ bool FP1ActionComboTest::RunTest(const FString& Parameters)
         FP1ActionCombo Combo(&FindNextAction);
         Combo.Input(FIRST_ACTION);
         Combo.BeginWindow();
-        Combo.Input(FIRST_ACTION);
-        Combo.EndWindow();
+        TestEqual(TEXT("창에서 입력이 없으면 다음 단계가 없다"), Combo.EndWindow(), 0);
         Combo.EndAction();
         TestFalse(TEXT("섹션이 끝나면 콤보가 끝난다"), Combo.IsActing());
         TestEqual(TEXT("다음 입력은 첫 단계부터"), Combo.Input(FIRST_ACTION), 1);

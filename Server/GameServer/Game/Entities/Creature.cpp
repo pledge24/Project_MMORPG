@@ -92,6 +92,12 @@ CombatStats Creature::GetAttackStats() const
     return stats;
 }
 
+vector3D Creature::GetFootPosition() const
+{
+    const Protocol::Vector& pos = _posInfo->pos();
+    return vector3D(pos.x(), pos.y(), pos.z() - _capsule.capsuleHalfHeight);
+}
+
 void Creature::SetLocation(const vector3D& pos)
 {
     Protocol::Vector* location = _posInfo->mutable_pos();

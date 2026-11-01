@@ -64,11 +64,9 @@ void ActionComponent::JudgeHit(int32 hitIndex)
     if (ownerRoom == nullptr)
         return;
 
-    // 위치의 z는 캡슐 중심이고 공격 범위의 높이는 발밑 기준이다.
-    const Protocol::Vector& pos = owner->GetPosInfo().pos();
     AttackerPose pose;
     {
-        pose.foot = vector3D(pos.x(), pos.y(), pos.z() - owner->GetCapsule().capsuleHalfHeight);
+        pose.foot = owner->GetFootPosition();
         pose.yaw = _running->yaw;
     }
 

@@ -71,15 +71,13 @@ namespace
         return rule == DesignData::ActionTarget::ALLY ? isAlly : isAlly == false;
     }
 
-    // 위치의 z는 캡슐 중심이고 공격 범위는 발밑부터 잰다.
     TargetCapsule MakeTargetCapsule(const CreatureRef& target)
     {
-        const Protocol::Vector& pos = target->GetPosInfo().pos();
         const CreatureCombat& capsule = target->GetCapsule();
 
         TargetCapsule targetCapsule;
         {
-            targetCapsule.foot = vector3D(pos.x(), pos.y(), pos.z() - capsule.capsuleHalfHeight);
+            targetCapsule.foot = target->GetFootPosition();
             targetCapsule.radius = capsule.capsuleRadius;
             targetCapsule.halfHeight = capsule.capsuleHalfHeight;
         }

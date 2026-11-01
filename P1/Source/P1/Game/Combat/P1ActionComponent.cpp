@@ -82,11 +82,13 @@ void UP1ActionComponent::HandleMontageNotifyEnd(FName NotifyName, const FBranchi
 
 void UP1ActionComponent::HandleMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-    // 다른 몽타주가 끊은 끝은 새 재생이 상태를 쥐고 있으므로 건드리지 않는다.
-    if (bInterrupted)
+    // 블렌드 아웃 중에 다음 단계가 같은 몽타주를 다시 재생하면 앞 재생의 끝이 뒤늦게 온다. 새 재생이 상태를 쥐고 있으므로 건드리지 않는다.
+    const UAnimInstance* AnimInstance = GetAnimInstance();
+    if (AnimInstance && AnimInstance->Montage_IsPlaying(Montage))
         return;
 
-    // 섹션끼리 잇지 않았으므로 다음 단계 없이 섹션이 끝나면 몽타주가 끝난다. 콤보가 끝나고 다음 입력은 첫 단계부터다.
+    // 섹션끼리 잇지 않았으므로 다음 단계 없이 섹션이 끝나면 몽타주가 끝난다. 다른 몽타주가 끊어도 액션은 끝난다.
+    // 콤보가 끝나고 다음 입력은 첫 단계부터다.
     PlayingActionId = 0;
     ActionMontageInstanceId = INDEX_NONE;
     Combo.EndAction();

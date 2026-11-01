@@ -59,6 +59,8 @@ public:
     virtual CombatStats GetAttackStats() const;
     /** 피격과 공격 범위를 재는 캡슐. 크리처 판정 데이터가 없으면 크기가 0이다. */
     const CreatureCombat& GetCapsule() const { return _capsule; }
+    /** 캡슐의 바닥. 위치의 z는 캡슐 중심이고 공격 범위의 높이는 발밑부터 잰다. */
+    vector3D GetFootPosition() const;
 
     ActionComponent& GetAction() { return *_action; }
     const ActionComponent& GetAction() const { return *_action; }

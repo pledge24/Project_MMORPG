@@ -71,7 +71,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Action")
     int32 RestrictedArea = 0;
 
-    //~ Common
+    //~ 공통
 private:
     /**
      * 액션 에셋 표에서 액션의 몽타주 섹션을 찾아 재생한다. 같은 몽타주가 재생 중이면 블렌드 없이 그 섹션으로 넘어간다.
