@@ -2,6 +2,7 @@
 #include "Game/Data/P1ItemAssetData.h"
 #include "Game/Data/P1MonsterAssetData.h"
 #include "Game/Data/P1NpcAssetData.h"
+#include "Game/Data/Generated/P1ActionRow.h"
 #include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
 #include "Game/Data/Generated/P1ItemEquipStatRow.h"
 #include "Game/Data/Generated/P1ItemRow.h"
@@ -57,6 +58,11 @@ const FP1MonsterRow* UP1GameDataSettings::FindMonsterRow(int32 MonsterId)
 const FP1MonsterAssetData* UP1GameDataSettings::FindMonsterAssetData(int32 MonsterId)
 {
     return FindRowById<FP1MonsterAssetData>(GetDefault<UP1GameDataSettings>()->MonsterAssetTable, MonsterId, TEXT("UP1GameDataSettings::FindMonsterAssetData"));
+}
+
+const FP1ActionRow* UP1GameDataSettings::FindActionRow(int32 ActionId)
+{
+    return FindRowById<FP1ActionRow>(GetDefault<UP1GameDataSettings>()->ActionTable, ActionId, TEXT("UP1GameDataSettings::FindActionRow"));
 }
 
 const FP1NpcRow* UP1GameDataSettings::FindNpcRow(int32 NpcId)

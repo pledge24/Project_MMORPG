@@ -549,10 +549,11 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 | `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
 | `ItemAssetTable` | `DT_ItemAssets` | `LoadItemIcon`. 에셋 테이블이다 |
 | `MonsterAssetTable` | `DT_MonsterAssets` | `FindMonsterAssetData`. 에셋 테이블이다 |
+| `ActionTable` | `DT_Action` | `FindActionRow`. 타격마다의 공격 범위가 행의 `Hits`에 순번 순서로 실린다. 공격 범위 디버그 표시가 읽는다 |
 | `NpcTable` | `DT_Npc` | `FindNpcRow` |
 | `NpcAssetTable` | `DT_NpcAssets` | `FindNpcAssetData`. 에셋 테이블이다 |
 | `ShopTable` | `DT_Shop` | `FindShopRow` |
-| `ActionAssetTable` | `DT_ActionAssets` | 조회 함수가 아직 없고 크리처 추출만 읽는다. 에셋 테이블이다. 짝이 되는 수치 테이블이 없어 기획 데이터의 액션 표와의 짝은 크리처 추출이 대조한다 |
+| `ActionAssetTable` | `DT_ActionAssets` | 조회 함수가 아직 없고 크리처 추출만 읽는다. 에셋 테이블이다. 수치 테이블 `ActionTable`과의 짝은 짝 검증기가 아니라 크리처 추출이 기획 데이터의 액션 표로 대조한다 |
 
 - 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`, `DT_ActionAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 있다
 - 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다. 행 이름은 짝이 되는 수치 테이블의 행 이름(번호)과 같다. 에디터 모듈의 검증기가 두 테이블의 짝을 대조한다(아래 「수치 테이블과 에셋 테이블의 짝」)
