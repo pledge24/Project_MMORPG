@@ -27,6 +27,8 @@ public:
     //~ Begin AP1Creature Interface
 public:
     virtual void Initialize(const Protocol::EntityInfo& EntityInfo) override;
+    /** OnHit을 알릴 때 GetCurHp는 이미 피격 뒤의 HP다. */
+    virtual void S_Hit(int64 Damage, int64 UpdatedHp) override;
     /** 사망 연출 뒤 OnDespawnReady를 알린다. */
     virtual void S_Die() override;
     //~ End AP1Creature Interface
