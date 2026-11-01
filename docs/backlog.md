@@ -486,6 +486,7 @@ DB에는 늘린 칸 수만 저장하고 실제 칸 수는 기본 칸 수에 더�
 `P1/Content/P1/Characters/Player/Animations/`에 참조가 없어 보이는 에셋이 있다(`AM_Attack1`~`4`, `A_Attack1`~`4`,
 `A_AttackTest1`, `A_MainAttacks`, `A_SingleAttack1`). 몬스터 공격 몽타주의 이름(`Attack_C_SetB_Montage` 등)은 `AM_` 접두사 규칙을
 따르지 않는다. 참조 여부는 파일 이름과 문자열 검색으로만 보았다.
+2026년 11월 1일(#354)에 전사 콤보 몽타주를 원래 시퀀스 넷으로 만들면서 시퀀스 `A_AttackA_Combo`도 쓰지 않게 되었다.
 
 **할 일**: 참조 뷰어로 참조가 없음을 확인한 에셋을 지운다. 몬스터 몽타주를 규칙에 맞는 이름으로 바꾸고, 액션 에셋 표의 참조와
 추출 산출물을 함께 갱신한다.

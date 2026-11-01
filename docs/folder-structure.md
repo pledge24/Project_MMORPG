@@ -79,7 +79,7 @@ P1/Source/
 ├── P1.Target.cs
 ├── P1Editor.Target.cs
 ├── P1/                     런타임 게임 모듈
-├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Navigation/ navmesh 빌드에 넘기는 충돌 형상과 에이전트 설정, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Tests/ 그 테스트
+├── P1Editor/               에디터 모듈. Validation/ 에셋 검증기, Placement/ 배치 추출 커맨드렛과 그 검사, Navigation/ navmesh 빌드에 넘기는 충돌 형상과 에이전트 설정, CreatureCombat/ 크리처 추출 커맨드렛과 그 검사, Animation/ 에디터 Python 스크립트가 몽타주를 만들 때 부르는 함수, Tests/ 그 테스트
 └── ProtobufCore/           프리빌트 protobuf 링크 (ModuleType.External)
 ```
 
