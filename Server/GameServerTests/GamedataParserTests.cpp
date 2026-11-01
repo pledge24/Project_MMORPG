@@ -31,6 +31,9 @@ namespace
     constexpr const char* PLACEMENT_FILE = "Placement_1111.json";
     constexpr int32 SHOP_ID = 1;
     constexpr int32 NPC_ID = 7;
+    constexpr int32 COMBO_FIRST_ACTION_ID = 1001;
+    constexpr int32 COMBO_LAST_ACTION_ID = 1002;
+    constexpr int32 MONSTER_ACTION_ID = 2001;
 
     /** DataBuilder가 생성하는 레벨 표의 행. */
     Json MakeLevel(int32 level, int64 expRequirement)
@@ -77,10 +80,35 @@ namespace
     Json MakeMonster()
     {
         return Json{
-            {"Id", MONSTER_ID}, {"MaxHp", 200}, {"BaseAttack", 100}, {"MovementSpeed", 300.0},
+            {"Id", MONSTER_ID}, {"NormalAttackAction", MONSTER_ACTION_ID}, {"MaxHp", 200}, {"BaseAttack", 100}, {"MovementSpeed", 300.0},
             {"MinExp", 5}, {"MaxExp", 10}, {"MinGold", 10}, {"MaxGold", 20},
             {"AttackInterval", 2.5}, {"TryAttackRange", 150.0}, {"DetectionRange", 900.0}, {"ChasingMaxRange", 1200.0},
             {"DropGroups", Json::array({DROP_GROUP_ID})},
+        };
+    }
+
+    /** DataBuilder가 생성하는 액션 표의 행. 타격은 액션 아래 Hits에 중첩된다. */
+    Json MakeAction(int32 id, Json nextAction, Json hit)
+    {
+        return Json{
+            {"Id", id}, {"DamageType", "PHYSICAL"}, {"DamageCoefficient", 1.5}, {"NextAction", nextAction}, {"TargetRule", "ENEMY"},
+            {"Hits", Json::array({hit})},
+        };
+    }
+
+    Json MakeSectorHit()
+    {
+        return Json{
+            {"HitIndex", 0}, {"Shape", "SECTOR"}, {"Radius", 200.0}, {"Angle", 120.0}, {"Length", 0.0}, {"Width", 0.0},
+            {"OffsetX", 30.0}, {"OffsetY", -10.0}, {"ZMin", -100.0}, {"ZMax", 200.0},
+        };
+    }
+
+    Json MakeRectangleHit()
+    {
+        return Json{
+            {"HitIndex", 0}, {"Shape", "RECTANGLE"}, {"Radius", 0.0}, {"Angle", 0.0}, {"Length", 600.0}, {"Width", 80.0},
+            {"OffsetX", 0.0}, {"OffsetY", 0.0}, {"ZMin", -100.0}, {"ZMax", 200.0},
         };
     }
 
@@ -206,6 +234,12 @@ namespace
         documents.itemEquipStats = Json::array({MakeSwordEquipStat()});
         documents.itemConsumeEffects = Json::array({MakePotionConsumeEffect()});
         documents.monsters = Json::array({MakeMonster()});
+        documents.actions = Json::array({
+            MakeAction(COMBO_FIRST_ACTION_ID, COMBO_LAST_ACTION_ID, MakeSectorHit()),
+            MakeAction(COMBO_LAST_ACTION_ID, nullptr, MakeSectorHit()),
+            MakeAction(MONSTER_ACTION_ID, nullptr, MakeRectangleHit()),
+        });
+        documents.classes = Json::array({Json{{"Class", "WARRIOR"}, {"NormalAttackAction", COMBO_FIRST_ACTION_ID}}});
         documents.dropGroups = Json::array({MakeDropGroup()});
         documents.spawnGroups = Json::array({MakeSpawnGroup()});
         documents.maps = Json::array({MakeMap()});
@@ -739,6 +773,56 @@ TEST(GamedataParserTest, MalformedInitialProgressIsRejected)
     ExpectMentions(ErrorOf(documents), {DesignData::PROGRESS_FILE});
 }
 
+// 판정은 아직 액션을 쓰지 않는다. 서버는 액션 표와 직업 표를 생성된 타입으로 읽어 설치만 한다.
+TEST(GamedataParserTest, ActionsAndClassesAreInstalledAsGeneratedRows)
+{
+    ASSERT_FALSE(Gamedata::Load(MakeValidDocuments()).has_value());
+
+    const DesignData::ClassRow* warrior = Gamedata::FindClass(Protocol::CHARACTER_CLASS_WARRIOR);
+    ASSERT_NE(warrior, nullptr);
+    EXPECT_EQ(warrior->NormalAttackAction, COMBO_FIRST_ACTION_ID);
+    EXPECT_EQ(Gamedata::FindClass(Protocol::CHARACTER_CLASS_MAGE), nullptr);
+
+    const DesignData::ActionRow* first = Gamedata::FindAction(COMBO_FIRST_ACTION_ID);
+    ASSERT_NE(first, nullptr);
+    EXPECT_EQ(first->DamageType, DesignData::DamageType::PHYSICAL);
+    EXPECT_FLOAT_EQ(first->DamageCoefficient, 1.5f);
+    EXPECT_EQ(first->TargetRule, DesignData::ActionTarget::ENEMY);
+    EXPECT_EQ(first->NextAction, optional<int32>(COMBO_LAST_ACTION_ID));
+    ASSERT_EQ(first->Hits.size(), 1u);
+    const DesignData::ActionHitRow& hit = first->Hits[0];
+    EXPECT_EQ(hit.Shape, DesignData::AttackAreaShape::SECTOR);
+    EXPECT_FLOAT_EQ(hit.Radius, 200.f);
+    EXPECT_FLOAT_EQ(hit.Angle, 120.f);
+    EXPECT_FLOAT_EQ(hit.OffsetX, 30.f);
+    EXPECT_FLOAT_EQ(hit.OffsetY, -10.f);
+    EXPECT_FLOAT_EQ(hit.ZMin, -100.f);
+    EXPECT_FLOAT_EQ(hit.ZMax, 200.f);
+    EXPECT_EQ(Gamedata::FindAction(COMBO_LAST_ACTION_ID)->NextAction, nullopt) << "콤보의 마지막 단계는 다음 액션이 없다";
+
+    const DesignData::MonsterRow* monster = Gamedata::FindMonster(MONSTER_ID);
+    ASSERT_NE(monster, nullptr);
+    EXPECT_EQ(monster->NormalAttackAction, MONSTER_ACTION_ID);
+    EXPECT_EQ(Gamedata::FindAction(MONSTER_ACTION_ID)->Hits.at(0).Shape, DesignData::AttackAreaShape::RECTANGLE);
+    EXPECT_EQ(Gamedata::FindAction(MONSTER_ACTION_ID + 1), nullptr);
+
+    Gamedata::Install(GamedataTables());
+}
+
+TEST(GamedataParserTest, NestedActionHitFieldIsChecked)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.actions[0]["Hits"][0].erase("ZMax");
+    ExpectMentions(ErrorOf(documents), {DesignData::ACTION_FILE, "ZMax"});
+}
+
+TEST(GamedataParserTest, UnknownAttackAreaShapeIsRejected)
+{
+    GamedataDocuments documents = MakeValidDocuments();
+    documents.actions[0]["Hits"][0]["Shape"] = "SPHERE";
+    ExpectMentions(ErrorOf(documents), {DesignData::ACTION_FILE, "Shape", "SPHERE"});
+}
+
 // 드롭의 판정과 지급은 아직 없다. 서버는 드롭 그룹을 생성된 타입으로 읽어 설치만 한다.
 TEST(GamedataParserTest, DropGroupsAreInstalledAsGeneratedRows)
 {
@@ -790,6 +874,8 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     documents.maps = ReadJsonFile(generatedDir / DesignData::MAP_FILE);
     documents.areas = ReadJsonFile(generatedDir / DesignData::AREA_FILE);
     documents.monsters = ReadJsonFile(generatedDir / DesignData::MONSTER_FILE);
+    documents.actions = ReadJsonFile(generatedDir / DesignData::ACTION_FILE);
+    documents.classes = ReadJsonFile(generatedDir / DesignData::CLASS_FILE);
     documents.dropGroups = ReadJsonFile(generatedDir / DesignData::DROP_GROUP_FILE);
     documents.spawnGroups = ReadJsonFile(generatedDir / DesignData::SPAWN_GROUP_FILE);
     documents.currencies = ReadJsonFile(generatedDir / DesignData::CURRENCY_FILE);
@@ -844,6 +930,22 @@ TEST(GamedataParserTest, RepositoryGamedataPasses)
     EXPECT_EQ(tables.monsters.at(5000).MinGold, 10);
     EXPECT_EQ(tables.monsters.at(5000).MaxGold, 20);
     EXPECT_EQ(tables.monsters.size(), 9u);
+
+    // 전사 콤보는 네 단계이고 마지막 단계에서 끝난다. 몬스터 9종이 근접, 원거리, 슈퍼 액션 셋을 나눠 쓴다.
+    vector<int32> combo;
+    for (optional<int32> actionId = tables.classes.at(Protocol::CHARACTER_CLASS_WARRIOR).NormalAttackAction;
+        actionId.has_value() && combo.size() < 10; actionId = tables.actions.at(actionId.value()).NextAction)
+        combo.push_back(actionId.value());
+    EXPECT_EQ(combo, vector<int32>({ 1001, 1002, 1003, 1004 }));
+    set<int32> monsterActions;
+    for (const auto& [monsterId, monster] : tables.monsters)
+        monsterActions.insert(monster.NormalAttackAction);
+    EXPECT_EQ(monsterActions, set<int32>({ 2001, 2002, 2003 }));
+
+    // 원거리 미니언의 즉발 공격(사거리 600)을 길이 600인 직사각형으로 옮겼다. 몬스터의 공격 시작 거리를 공격 범위가 덮는다.
+    const DesignData::ActionHitRow& rangedHit = tables.actions.at(tables.monsters.at(5001).NormalAttackAction).Hits.at(0);
+    EXPECT_EQ(rangedHit.Shape, DesignData::AttackAreaShape::RECTANGLE);
+    EXPECT_FLOAT_EQ(rangedHit.OffsetX + rangedHit.Length, tables.monsters.at(5001).TryAttackRange);
 
     // 맵 표를 맵, 지역, 포털 표로 나누면서 옮긴 값이다. 포털 번호는 클라이언트 레벨의 포털이 보낸다.
     ASSERT_EQ(tables.maps.size(), 1u);

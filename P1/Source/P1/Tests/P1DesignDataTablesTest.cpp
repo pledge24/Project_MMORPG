@@ -13,6 +13,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Engine/DataTable.h"
+#include "Game/Data/Generated/P1ActionRow.h"
 #include "Game/Data/Generated/P1AreaRow.h"
 #include "Game/Data/Generated/P1ItemConsumeEffectRow.h"
 #include "Game/Data/Generated/P1ItemEquipStatRow.h"
@@ -63,6 +64,7 @@ bool FP1DesignDataTablesTest::RunTest(const FString& Parameters)
             { TEXT("Monster"), FP1MonsterRow::StaticStruct() },
             { TEXT("Map"), FP1MapRow::StaticStruct() },
             { TEXT("Area"), FP1AreaRow::StaticStruct() },
+            { TEXT("Action"), FP1ActionRow::StaticStruct() },
         };
         for (const TPair<FString, UScriptStruct*>& Entry : Tables)
         {
@@ -117,7 +119,22 @@ bool FP1DesignDataTablesTest::RunTest(const FString& Parameters)
         }
     }
 
-    // 4) 다시 채우면 테이블을 비우고 채운다. JSON에서 빠진 행은 남지 않는다.
+    // 4) 액션 행 아래 중첩된 타격의 공격 범위. 원거리 미니언의 공격은 길이 600인 직사각형이다.
+    {
+        const UDataTable* Table = Fill(FP1ActionRow::StaticStruct(), ReadGeneratedJson(TEXT("Action")));
+        const FP1ActionRow* Ranged = Table->FindRow<FP1ActionRow>(TEXT("2002"), TEXT("테스트"));
+        if (TestNotNull(TEXT("액션 2002"), Ranged) && TestEqual(TEXT("타격 수"), Ranged->Hits.Num(), 1))
+        {
+            const FP1ActionHitRow& Hit = Ranged->Hits[0];
+            TestEqual(TEXT("타격 순번"), Hit.HitIndex, 0);
+            TestTrue(TEXT("형상"), Hit.Shape == EP1AttackAreaShape::RECTANGLE);
+            TestEqual(TEXT("길이"), Hit.Length, 600.f);
+            TestEqual(TEXT("폭"), Hit.Width, 80.f);
+            TestEqual(TEXT("높이 범위 위"), Hit.ZMax, 200.f);
+        }
+    }
+
+    // 5) 다시 채우면 테이블을 비우고 채운다. JSON에서 빠진 행은 남지 않는다.
     {
         UDataTable* Table = Fill(FP1MapRow::StaticStruct(), TEXT("[{\"RowName\":\"1\",\"Id\":1,\"Name\":\"A\"},{\"RowName\":\"2\",\"Id\":2,\"Name\":\"B\"}]"));
         TestEqual(TEXT("처음 행 수"), Table->GetRowMap().Num(), 2);
@@ -130,7 +147,7 @@ bool FP1DesignDataTablesTest::RunTest(const FString& Parameters)
             TestEqual(TEXT("남은 행의 새 값"), Kept->Name, FString(TEXT("B2")));
     }
 
-    // 5) 값 이름이 아니면 0번 값이다. 셀의 값 이름은 대문자뿐이라 대소문자를 구분한다.
+    // 6) 값 이름이 아니면 0번 값이다. 셀의 값 이름은 대문자뿐이라 대소문자를 구분한다.
     {
         FP1ItemRow Row;
         Row.Type = TEXT("gear");

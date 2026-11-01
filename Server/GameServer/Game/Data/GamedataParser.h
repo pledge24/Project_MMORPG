@@ -8,6 +8,9 @@ struct GamedataDocuments
     /** 포털은 지역 아래 중첩되어 있다. */
     Json areas;
     Json monsters;
+    /** 타격은 액션 아래 중첩되어 있다. */
+    Json actions;
+    Json classes;
     Json dropGroups;
     /** 스폰 항목은 그룹 아래 중첩되어 있다. */
     Json spawnGroups;

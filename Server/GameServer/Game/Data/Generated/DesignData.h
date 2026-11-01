@@ -16,6 +16,8 @@ namespace DesignData
     constexpr string_view ITEM_CONSUME_EFFECT_FILE = "ItemConsumeEffect.json";
     constexpr string_view LEVEL_FILE = "Level.json";
     constexpr string_view CLASS_LEVEL_STAT_FILE = "ClassLevelStat.json";
+    constexpr string_view ACTION_FILE = "Action.json";
+    constexpr string_view CLASS_FILE = "Class.json";
     constexpr string_view MONSTER_FILE = "Monster.json";
     constexpr string_view DROP_GROUP_FILE = "DropGroup.json";
     constexpr string_view MAP_FILE = "Map.json";
@@ -27,6 +29,52 @@ namespace DesignData
     constexpr string_view INTERACTION_FILE = "Interaction.json";
 
     //~ 열거형
+
+    enum class ActionTarget : int32
+    {
+        ENEMY = 1,
+        ALLY = 2,
+    };
+
+    /** 셀에 적는 값 이름(ENEMY, ALLY)을 ActionTarget로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT ActionTarget& value)
+    {
+        static const unordered_map<string_view, ActionTarget> VALUES = {
+            { "ENEMY", ActionTarget::ENEMY },
+            { "ALLY", ActionTarget::ALLY },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
+
+    enum class AttackAreaShape : int32
+    {
+        CIRCLE = 1,
+        SECTOR = 2,
+        RECTANGLE = 3,
+    };
+
+    /** 셀에 적는 값 이름(CIRCLE, SECTOR, RECTANGLE)을 AttackAreaShape로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT AttackAreaShape& value)
+    {
+        static const unordered_map<string_view, AttackAreaShape> VALUES = {
+            { "CIRCLE", AttackAreaShape::CIRCLE },
+            { "SECTOR", AttackAreaShape::SECTOR },
+            { "RECTANGLE", AttackAreaShape::RECTANGLE },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
 
     /** 셀에 적는 값 이름(WARRIOR, MAGE)을 Protocol::CharacterClass로 읽는다. 모르는 이름이면 false. */
     inline bool ParseEnumName(string_view name, OUT Protocol::CharacterClass& value)
@@ -54,6 +102,28 @@ namespace DesignData
     {
         static const unordered_map<string_view, CurrencyType> VALUES = {
             { "GOLD", CurrencyType::GOLD },
+        };
+
+        auto it = VALUES.find(name);
+        if (it == VALUES.end())
+            return false;
+
+        value = it->second;
+        return true;
+    }
+
+    enum class DamageType : int32
+    {
+        PHYSICAL = 1,
+        MAGICAL = 2,
+    };
+
+    /** 셀에 적는 값 이름(PHYSICAL, MAGICAL)을 DamageType로 읽는다. 모르는 이름이면 false. */
+    inline bool ParseEnumName(string_view name, OUT DamageType& value)
+    {
+        static const unordered_map<string_view, DamageType> VALUES = {
+            { "PHYSICAL", DamageType::PHYSICAL },
+            { "MAGICAL", DamageType::MAGICAL },
         };
 
         auto it = VALUES.find(name);
@@ -313,6 +383,48 @@ namespace DesignData
     }
 
     //~ 표
+
+    /** ActionHit 표(ActionHit.xlsx)의 한 행. Action 행의 Hits 아래에 키 순서로 실린다. */
+    struct ActionHitRow
+    {
+        /** 액션 안의 타격 순번. 0부터 빠짐없이 이어지고, 몽타주 섹션의 타격 노티파이 순서다 */
+        int32 HitIndex = 0;
+        /** 공격 범위의 평면 형상. 원(CIRCLE), 부채꼴(SECTOR), 직사각형(RECTANGLE) */
+        AttackAreaShape Shape = {};
+        /** 원과 부채꼴의 반지름(cm). 0보다 크다. 직사각형은 0 */
+        float Radius = 0.f;
+        /** 부채꼴의 전체 각도(도). +X를 가운데 둔다. 0 초과 360 이하다. 원과 직사각형은 0 */
+        float Angle = 0.f;
+        /** 직사각형이 기준점에서 +X로 뻗는 길이(cm). 0보다 크다. 원과 부채꼴은 0 */
+        float Length = 0.f;
+        /** 직사각형의 폭(cm). 기준점의 좌우로 절반씩이다. 0보다 크다. 원과 부채꼴은 0 */
+        float Width = 0.f;
+        /** 형상의 기준점. 공격자 기준 앞(+X) 거리(cm) */
+        float OffsetX = 0.f;
+        /** 형상의 기준점. 공격자 기준 오른쪽(+Y) 거리(cm) */
+        float OffsetY = 0.f;
+        /** 공격자 발밑 기준 높이 범위의 아래(cm) */
+        float ZMin = 0.f;
+        /** 공격자 발밑 기준 높이 범위의 위(cm). ZMin보다 크다 */
+        float ZMax = 0.f;
+    };
+
+    /** Action 행의 Hits 원소 하나를 읽는다. 틀리면 Detail::FieldError를 던진다. */
+    inline ActionHitRow ReadActionHitRow(const Json& object)
+    {
+        ActionHitRow row;
+        row.HitIndex = Detail::Read<int32>(object, "HitIndex");
+        row.Shape = Detail::Read<AttackAreaShape>(object, "Shape");
+        row.Radius = Detail::Read<float>(object, "Radius");
+        row.Angle = Detail::Read<float>(object, "Angle");
+        row.Length = Detail::Read<float>(object, "Length");
+        row.Width = Detail::Read<float>(object, "Width");
+        row.OffsetX = Detail::Read<float>(object, "OffsetX");
+        row.OffsetY = Detail::Read<float>(object, "OffsetY");
+        row.ZMin = Detail::Read<float>(object, "ZMin");
+        row.ZMax = Detail::Read<float>(object, "ZMax");
+        return row;
+    }
 
     /** DropEntry 표(DropEntry.xlsx)의 한 행. DropGroup 행의 Entries 아래에 키 순서로 실린다. */
     struct DropEntryRow
@@ -587,11 +699,77 @@ namespace DesignData
         });
     }
 
+    /** Action 표(Action.xlsx)의 한 행. */
+    struct ActionRow
+    {
+        /** 액션 번호. 직업의 액션은 1000번대, 몬스터의 액션은 2000번대다 */
+        int32 Id = 0;
+        /** 피해 유형. 물리(PHYSICAL)는 물리 공격력, 마법(MAGICAL)은 마법 공격력에 계수를 곱한다 */
+        DamageType DamageType = {};
+        /** 피해 계수. 0 이상이다. 피해량은 피해 유형에 맞는 공격력 × 계수다 */
+        float DamageCoefficient = 0.f;
+        /** 콤보의 다음 단계 액션. 콤보의 마지막 단계와 몬스터의 공격은 비워 둔다 */
+        optional<int32> NextAction;
+        /** 맞히는 대상. 적만(ENEMY), 아군만(ALLY) */
+        ActionTarget TargetRule = {};
+        /** ActionHit 표에서 이 행에 속한 행. 키 순서다. */
+        vector<ActionHitRow> Hits;
+    };
+
+    /** Id → 행. 키 순서로 돈다. */
+    using ActionTable = map<int32, ActionRow>;
+
+    /** Action.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseAction(const Json& document, OUT ActionTable& table)
+    {
+        return Detail::ParseTable(ACTION_FILE, document, OUT table, [](const Json& object)
+        {
+            ActionRow row;
+            row.Id = Detail::Read<int32>(object, "Id");
+            row.DamageType = Detail::Read<DamageType>(object, "DamageType");
+            row.DamageCoefficient = Detail::Read<float>(object, "DamageCoefficient");
+            row.NextAction = Detail::Read<optional<int32>>(object, "NextAction");
+            row.TargetRule = Detail::Read<ActionTarget>(object, "TargetRule");
+            row.Hits = Detail::ReadRows<ActionHitRow>(object, "Hits", ReadActionHitRow);
+
+            auto key = row.Id;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
+    /** Class 표(Class.xlsx)의 한 행. */
+    struct ClassRow
+    {
+        /** 직업 */
+        Protocol::CharacterClass Class = {};
+        /** 일반 공격 콤보의 첫 단계 액션. 다음 단계는 액션 표의 NextAction이 정한다 */
+        int32 NormalAttackAction = 0;
+    };
+
+    /** Class → 행. 키 순서로 돈다. */
+    using ClassTable = map<Protocol::CharacterClass, ClassRow>;
+
+    /** Class.json을 읽는다. 실패하면 사유를 돌려주고, table에는 일부만 채워졌을 수 있다. */
+    inline optional<string> ParseClass(const Json& document, OUT ClassTable& table)
+    {
+        return Detail::ParseTable(CLASS_FILE, document, OUT table, [](const Json& object)
+        {
+            ClassRow row;
+            row.Class = Detail::Read<Protocol::CharacterClass>(object, "Class");
+            row.NormalAttackAction = Detail::Read<int32>(object, "NormalAttackAction");
+
+            auto key = row.Class;
+            return pair{ std::move(key), std::move(row) };
+        });
+    }
+
     /** Monster 표(Monster.xlsx)의 한 행. */
     struct MonsterRow
     {
         /** 몬스터 번호. 5000번대다 */
         int32 Id = 0;
+        /** 일반 공격 액션. 몬스터는 이 액션 하나로 공격한다 */
+        int32 NormalAttackAction = 0;
         /** 최대 HP */
         int32 MaxHp = 0;
         /** 공격력 */
@@ -628,6 +806,7 @@ namespace DesignData
         {
             MonsterRow row;
             row.Id = Detail::Read<int32>(object, "Id");
+            row.NormalAttackAction = Detail::Read<int32>(object, "NormalAttackAction");
             row.MaxHp = Detail::Read<int32>(object, "MaxHp");
             row.BaseAttack = Detail::Read<int32>(object, "BaseAttack");
             row.MovementSpeed = Detail::Read<float>(object, "MovementSpeed");

@@ -48,6 +48,22 @@ modules = ["game"]
 workbook = "ClassLevelStat.xlsx"
 modules = ["game"]
 
+# 액션은 크리처가 하는 행동 하나의 정의다. 크리처는 쓰는 액션을 번호로 가리키고, 여러 크리처가 같은 액션을 쓸 수 있다.
+[tables.Action]
+workbook = "Action.xlsx"
+modules = ["game"]
+
+# 타격은 Action.json의 각 액션 아래 Hits에 싣는다. 타격마다 공격 범위가 있다.
+[tables.ActionHit]
+workbook = "ActionHit.xlsx"
+modules = ["game"]
+nest = "Hits"
+
+# 직업마다 일반 공격 콤보의 첫 단계 액션.
+[tables.Class]
+workbook = "Class.xlsx"
+modules = ["game"]
+
 # 몬스터의 능력치와 기본 보상. 드롭은 아래 드롭 그룹 표를 참조한다.
 [tables.Monster]
 workbook = "Monster.xlsx"
@@ -122,9 +138,21 @@ modules = ["game"]
 [enums.CurrencyType]
 GOLD = 1
 
-[enums.MonsterAttackType]
-MELEE = 1
-RANGED = 2
+# 액션의 피해 유형. 피해량은 이 유형에 맞는 공격자의 공격력 × 계수다.
+[enums.DamageType]
+PHYSICAL = 1
+MAGICAL = 2
+
+# 액션이 맞히는 대상.
+[enums.ActionTarget]
+ENEMY = 1
+ALLY = 2
+
+# 공격 범위의 평면 형상. 3D 형상이나 회전은 값을 더해 넓힌다.
+[enums.AttackAreaShape]
+CIRCLE = 1
+SECTOR = 2
+RECTANGLE = 3
 
 # 드롭 그룹의 판정 방식. INDEPENDENT는 항목마다 따로, WEIGHTED는 가중치로 정해진 개수를 뽑는다.
 [enums.DropMethod]

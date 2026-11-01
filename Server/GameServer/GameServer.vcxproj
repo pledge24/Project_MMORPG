@@ -385,6 +385,8 @@
     <None Include="Game\Data\Generated\Level.json" />
     <None Include="Game\Data\Generated\ClassLevelStat.json" />
     <None Include="Game\Data\Generated\Monster.json" />
+    <None Include="Game\Data\Generated\Action.json" />
+    <None Include="Game\Data\Generated\Class.json" />
     <None Include="Game\Data\Generated\DropGroup.json" />
     <None Include="Game\Data\Generated\SpawnGroup.json" />
     <None Include="Game\Data\Generated\Map.json" />
