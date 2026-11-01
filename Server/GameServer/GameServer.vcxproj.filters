@@ -567,6 +567,12 @@
     <None Include="Game\Data\Generated\Monster.json">
       <Filter>Game\Data\Generated</Filter>
     </None>
+    <None Include="Game\Data\Generated\Action.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
+    <None Include="Game\Data\Generated\Class.json">
+      <Filter>Game\Data\Generated</Filter>
+    </None>
     <None Include="Game\Data\Generated\DropGroup.json">
       <Filter>Game\Data\Generated</Filter>
     </None>

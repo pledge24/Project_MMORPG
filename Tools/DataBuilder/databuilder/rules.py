@@ -271,6 +271,62 @@ def shop_items_non_empty_distinct(table: Table, _: DesignData) -> list[str]:
     return errors
 
 
+def action_has_hit(table: Table, data: DesignData) -> list[str]:
+    """타격이 없는 액션은 공격 범위를 판정할 순간이 없어 아무도 맞히지 못한다."""
+    hits = data.tables.get("ActionHit")
+    used = {row.values["ActionId"] for row in hits.rows} if hits is not None else set()
+    return [
+        f"{locate(table.config.workbook, row.sheet, row.number)}: 액션 {row.values['Id']}에 타격이 없다. 표 'ActionHit'에 타격을 하나 이상 둔다"
+        for row in table.rows
+        if row.values["Id"] not in used
+    ]
+
+
+# 공격 범위의 형상 → 그 형상이 쓰는 값. 나머지 형상 값은 0으로 적는다.
+ATTACK_AREA_SHAPE_VALUES = {"CIRCLE": ("Radius",), "SECTOR": ("Radius", "Angle"), "RECTANGLE": ("Length", "Width")}
+ATTACK_AREA_VALUE_COLUMNS = ("Radius", "Angle", "Length", "Width")
+# 부채꼴의 Angle은 +X를 가운데 둔 전체 각도(도)다. 360이면 원과 같다.
+MAX_SECTOR_ANGLE = 360.0
+
+
+def hit_indexes_from_zero(table: Table, _: DesignData) -> list[str]:
+    """타격 순번은 액션 안에서 노티파이의 순서다. 추출이 순번으로 타격 시점과 짝을 맞추므로 0부터 빠짐없이 이어져야 한다."""
+    by_action: dict[int, list] = {}
+    for row in table.rows:
+        by_action.setdefault(row.values["ActionId"], []).append(row)
+    errors = []
+    for action_id, rows in by_action.items():
+        for expected, row in enumerate(sorted(rows, key=lambda r: r.values["HitIndex"])):
+            if row.values["HitIndex"] != expected:
+                errors.append(f"{locate(table.config.workbook, row.sheet, row.number)}: 액션 {action_id}의 HitIndex 값이 {expected}이어야 하는데 {row.values['HitIndex']}이다. 타격 순번은 0부터 빠짐없이 이어진다")
+                break
+    return errors
+
+
+def attack_area_matches_shape(table: Table, _: DesignData) -> list[str]:
+    """형상이 쓰는 값은 0보다 크고, 쓰지 않는 값은 0이다. 높이 범위는 비어 있지 않다."""
+    errors = []
+    for row in table.rows:
+        where = locate(table.config.workbook, row.sheet, row.number)
+        shape = row.values["Shape"]
+        used = ATTACK_AREA_SHAPE_VALUES.get(shape)
+        if used is None:
+            # 설정 파일에 형상을 더하고 이 규칙에 그 형상이 쓰는 값을 적지 않았다.
+            errors.append(f"{where}: 형상 {shape}이 쓰는 값이 DataBuilder 규칙(ATTACK_AREA_SHAPE_VALUES)에 없다")
+            continue
+        for column in ATTACK_AREA_VALUE_COLUMNS:
+            value = row.values[column]
+            if column in used and value <= 0:
+                errors.append(f"{where}: 형상 {shape}의 {column} 값이 0보다 커야 하는데 {value}이다")
+            elif column not in used and value != 0:
+                errors.append(f"{where}: 형상 {shape}에는 {column} 값을 쓰지 않으므로 0으로 적는다. 지금 {value}이다")
+        if shape == "SECTOR" and row.values["Angle"] > MAX_SECTOR_ANGLE:
+            errors.append(f"{where}: 형상 SECTOR의 Angle 값이 {MAX_SECTOR_ANGLE:g} 이하여야 하는데 {row.values['Angle']}이다")
+        if row.values["ZMin"] >= row.values["ZMax"]:
+            errors.append(f"{where}: ZMin 값 {row.values['ZMin']}이 ZMax 값 {row.values['ZMax']}보다 작아야 한다")
+    return errors
+
+
 def locate_field(setting: Setting, name: str) -> str:
     return locate(setting.config.workbook, setting.config.sheet, setting.rows[name], "D", name)
 
@@ -319,6 +375,9 @@ TABLE_RULES: dict[str, list[Callable[[Table, DesignData], list[str]]]] = {
     "SpawnGroup": [not_negative("MaxCount"), not_negative("RespawnSec"), spawn_group_has_entry],
     "SpawnEntry": [at_least_one("Weight")],
     "Shop": [shop_items_non_empty_distinct],
+    # 피해량은 공격력 × 계수다. 음수 계수는 맞은 대상을 회복시킨다.
+    "Action": [action_has_hit, not_negative("DamageCoefficient")],
+    "ActionHit": [hit_indexes_from_zero, attack_area_matches_shape],
 }
 
 SETTING_RULES: dict[str, list[Callable[[Setting, DesignData], list[str]]]] = {

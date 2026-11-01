@@ -4,13 +4,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "P1MonsterAttackType.generated.h"
+#include "P1AttackAreaShape.generated.h"
 
-/** 기획 데이터 전용 열거형 MonsterAttackType. 값 번호가 서버의 생성된 열거형과 같다. */
+/** 기획 데이터 전용 열거형 AttackAreaShape. 값 번호가 서버의 생성된 열거형과 같다. */
 UENUM(BlueprintType)
-enum class EP1MonsterAttackType : uint8
+enum class EP1AttackAreaShape : uint8
 {
     None = 0 UMETA(Hidden),
-    MELEE = 1,
-    RANGED = 2,
+    CIRCLE = 1,
+    SECTOR = 2,
+    RECTANGLE = 3,
 };

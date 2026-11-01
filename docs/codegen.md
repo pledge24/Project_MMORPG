@@ -123,7 +123,7 @@
 C++ 타입, 클라이언트가 데이터 테이블에 채울 JSON과 그 행 구조체(`USTRUCT`)를 함께 생성한다. 결정과 근거는 `docs/adr/0022-generate-design-data-schema-with-databuilder.md`에 있다.
 
 2026년 10월 27일(#317) 기준으로 DataBuilder가 맡은 표는 재화, 아이템 세 표(`Item`, `ItemEquipStat`, `ItemConsumeEffect`), 몬스터와 드롭 표(`Monster`, `DropGroup`, `DropEntry`), 레벨 두 표(`Level`, `ClassLevelStat`), 맵 세 표(`Map`, `Area`, `Portal`)다. 2026년 10월 29일(#340)에 스폰 두 표(`SpawnGroup`, `SpawnEntry`)를 더했다.
-2026년 10월 29일(#341)에 NPC와 상점 표(`Npc`, `Shop`)를 더했다.
+2026년 10월 29일(#341)에 NPC와 상점 표(`Npc`, `Shop`)를 더했다. 2026년 11월 1일(#353)에 액션 두 표(`Action`, `ActionHit`)와 직업 표(`Class`)를 더했다.
 설정은 설정 워크북의 초기 진행(`Progress`), 로비(`Lobby`), 상호작용(`Interaction`) 세 시트다.
 표를 옮기는 순서는 `docs/work/2026-10-27-design-data-pipeline.md`에 있다. 클라이언트 산출물은 2026년 10월 27일(#319)부터 만든다. 같은 날(#320)부터 클라이언트 코드는 DataBuilder가 만든 데이터 테이블만 읽는다(아래 「클라이언트가 읽는 법」).
 
@@ -267,7 +267,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 | 검사 | 하는 곳 |
 |---|---|
 | 시트 규칙, 타입, 빈 셀, 키 중복, 다른 표의 키 참조, 열거형 값 | DataBuilder (`databuilder/workbooks.py`) |
-| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「스폰 그룹 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
+| 표나 설정 하나의 의미 규칙. 재화 표에 `Type`이 `GOLD`인 행이 정확히 하나, 아래 「아이템 표」, 「몬스터와 드롭 표」, 「액션과 직업 표」, 「레벨 표」, 「맵, 지역, 포털 표」, 「스폰 그룹 표」, 「설정 워크북」의 규칙 | DataBuilder (`databuilder/rules.py`) |
 | JSON의 형식. 필드의 유무와 타입, 열거형 이름, 중첩된 행 | 서버. 생성된 `Parse<표>` |
 | 코드가 정한 제약. DB 열 크기, 로비와 게임의 대조 | 서버 기동 |
 
@@ -281,7 +281,7 @@ pwsh Tools/DataBuilder/Invoke-DataBuilder.ps1
 `Gamedata::LoadAllGamedata()`가 `Game/Data/Generated/`에서 표의 JSON과 `DataVersion.json`을 읽는다. 표는 생성된
 `DesignData::Parse<표>`로 읽고, 게임 코드는 생성된 행 구조체를 그대로 쓴다. 재화는 `GamedataTables::currencies`가
 `DesignData::CurrencyTable`이다. 아이템은 `Gamedata::FindItem`, `FindItemEquipStat`, `FindItemConsumeEffect`가 아이템 번호로
-세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 드롭 그룹은 `Gamedata::FindDropGroup`이, 스폰 그룹은 `Gamedata::FindSpawnGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
+세 표의 행을 찾는다. 몬스터는 `Gamedata::FindMonster`가, 액션은 `Gamedata::FindAction`이, 직업의 일반 공격은 `Gamedata::FindClass`가, 드롭 그룹은 `Gamedata::FindDropGroup`이, 스폰 그룹은 `Gamedata::FindSpawnGroup`이 찾는다. 레벨은 `Gamedata::GetLevels`와 `GetMaxLevel`이, 능력치는 `Gamedata::FindClassLevelStat`이 직업과 레벨로 행을 찾는다.
 지역은 `Gamedata::GetAreas`와 `FindArea`가 지역 번호로 찾고, 마을은 `Gamedata::GetTownAreaId`가 돌려준다. 포털은 지역 행의 `Portals`에 있다.
 지역과 포털의 공간은 배치 데이터에서 `Gamedata::FindAreaPlacement`, `FindPortalPlacement`, `FindRespawnPoint`가 찾고, 맵의 스폰 마커는 `Gamedata::GetSpawnPoints`가 돌려준다(아래 「배치 추출」).
 NPC는 `Gamedata::FindNpc`가, 상점은 `FindShop`이 찾는다. NPC의 자리는 `GetNpcPlacements`가, 상호작용 사거리는 `GetInteractionRange`가 돌려준다.
@@ -350,8 +350,62 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - 항목의 수량: `MinCount`는 1 이상이고 `MaxCount`보다 크지 않다
 - 어느 몬스터도 쓰지 않는 그룹은 경고다
 
-몬스터의 이름, 레벨, 공격 방식(`AttackType`, `enum:MonsterAttackType`)은 클라이언트만 쓰므로 대상이 `client`다.
+몬스터의 이름과 레벨은 클라이언트만 쓰므로 대상이 `client`다. 몬스터가 쓰는 일반 공격 액션은 `NormalAttackAction`(`ref:Action`)이다(아래 「액션과 직업 표」).
+옛 공격 방식 열(`AttackType`)은 생성 코드 밖에서 읽는 곳이 없어 2026년 11월 1일(#353)에 지웠다. 원거리 공격은 공격 범위의 형상으로 나타낸다.
 옛 표의 `is_targeting`은 서버도 클라이언트도 읽지 않아 옮기지 않았다.
+
+### 액션과 직업 표
+
+용어는 `CONTEXT.md`의 액션, 타격, 공격 범위, 일반 공격, 콤보를 따른다. 결정과 근거는 `docs/adr/0026-judge-hits-by-action-and-attack-area.md`에 있다.
+2026년 11월 1일(#353)에 만들었다. 서버는 표를 읽어 설치만 하고, 아직 판정에 쓰지 않는다.
+
+| 워크북 | 키 | 담는 것 |
+|---|---|---|
+| `Action.xlsx` | `Id` | 이름(`Name`, 대상 `client`), 피해 유형(`DamageType`, `enum:DamageType`), 피해 계수(`DamageCoefficient`), 콤보의 다음 단계(`NextAction`, `ref?:Action`), 대상 규칙(`TargetRule`, `enum:ActionTarget`) |
+| `ActionHit.xlsx` | `ActionId`(`key:parent:Action`), `HitIndex` | 타격 하나의 공격 범위. 형상(`Shape`, `enum:AttackAreaShape`), 형상의 값(`Radius`, `Angle`, `Length`, `Width`), 기준점(`OffsetX`, `OffsetY`), 높이 범위(`ZMin`, `ZMax`) |
+| `Class.xlsx` | `Class`(`enum:CharacterClass`) | 일반 공격 콤보의 첫 단계 액션(`NormalAttackAction`, `ref:Action`) |
+
+**타격은 `Action.json`의 각 액션 아래 `Hits`에 중첩된다.** 설정 파일에서 `ActionHit`에 `nest = "Hits"`를 적었다. `ActionHit.json`은 없다.
+워크북이 둘인 이유는 DataBuilder가 한 워크북의 시트를 한 표로 이어 붙이기 때문이다.
+
+**공격 범위의 좌표는 공격자 기준이다.** 거리는 cm이고, +X가 공격자의 앞, +Y가 오른쪽이다. 높이는 공격자 발밑 기준이다.
+
+| 형상 | 쓰는 값 | 모양 |
+|---|---|---|
+| `CIRCLE` | `Radius` | 기준점을 중심으로 한 원 |
+| `SECTOR` | `Radius`, `Angle` | 기준점을 꼭짓점으로 한 부채꼴. `Angle`은 +X를 가운데 둔 전체 각도(도)다 |
+| `RECTANGLE` | `Length`, `Width` | 기준점에서 +X로 `Length`만큼 뻗고, 좌우로 `Width`의 절반씩 펼친 직사각형 |
+
+- 기준점은 공격자 위치에서 (`OffsetX`, `OffsetY`)만큼 옮긴 점이다
+- 형상이 쓰지 않는 값은 0으로 적는다. 클라이언트로 가는 열이라 빈 셀(선택 값)을 쓸 수 없다
+- 이 좌표 규칙으로 겹침을 판정하는 코드는 아직 없다. 서버의 판정(`Game/Combat/`)과 클라이언트의 디버그 표시는 이 규칙을 같게 따라야 한다
+
+DataBuilder가 검사하는 규칙은 아래와 같다.
+
+- 액션마다 타격이 하나 이상 있다
+- `DamageCoefficient`는 0 이상이다. 피해량은 피해 유형에 맞는 공격력 × 계수다
+- 한 액션의 `HitIndex`는 0부터 빠짐없이 이어진다. 크리처 추출이 이 순번으로 타격 노티파이와 짝을 맞춘다
+- 형상이 쓰는 값은 0보다 크고, 쓰지 않는 값은 0이다. 부채꼴의 `Angle`은 360 이하다
+- `ZMin`은 `ZMax`보다 작다
+
+없는 액션을 가리키는 `NextAction`, 직업과 몬스터의 `NormalAttackAction`은 참조 규칙이 막는다. 서버는 기동할 때 액션 규칙을 다시 검사하지 않는다(ADR-0022).
+
+**`NextAction`과 직업 표는 아직 서버만 받는다.** 콤보의 마지막 단계는 `NextAction`이 빈 셀이라 선택 참조가 필요하다. 클라이언트 행 구조체는 선택 값을 담지 못하므로,
+클라이언트에 콤보 재생을 넣는 작업(#360)이 두 값을 함께 클라이언트로 보낸다. 지금 클라이언트는 액션의 이름과 타격만 받는다.
+
+액션 번호는 직업의 액션이 1000번대, 몬스터의 액션이 2000번대다. DataBuilder가 검사하지 않는 관례다. 첫 데이터는 아래와 같다.
+
+| 액션 | 쓰는 크리처 | 공격 범위 |
+|---|---|---|
+| 1001~1003 전사 일반 공격 1~3단 | 전사(콤보 첫 단계 1001) | 반지름 200, 각도 120인 부채꼴 |
+| 1004 전사 일반 공격 4단 | 전사 | 반지름 250, 각도 180인 부채꼴 |
+| 2001 몬스터 근접 공격 | 근접 미니언 셋(5000, 5003, 5006) | 반지름 150, 각도 120인 부채꼴 |
+| 2002 몬스터 원거리 공격 | 원거리 미니언 셋(5001, 5004, 5007) | 길이 600, 폭 80인 직사각형 |
+| 2003 몬스터 슈퍼 공격 | 슈퍼 미니언 셋(5002, 5005, 5008) | 반지름 150, 각도 180인 부채꼴 |
+
+- 높이 범위는 모두 -100~200이다. 옛 판정은 높이를 보지 않았으므로 비탈에서도 맞도록 넓게 잡았다
+- 몬스터 액션의 앞쪽 끝은 그 몬스터의 `TryAttackRange`(근접 150, 원거리 600)와 같다. 옛 판정의 사거리를 유지하고 방향만 더했다
+- 전사의 피해 계수는 1.0, 1.0, 1.2, 1.5이고 몬스터는 1.0이다. 몬스터의 피해량은 옛 판정과 같은 `BaseAttack`이다
 
 ### 레벨 표
 
@@ -456,8 +510,8 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 ### 클라이언트 산출물
 
 **키 말고 클라이언트로 가는 열(`both`, `client`)이 하나라도 있는 표만 클라이언트 산출물을 만든다.** 키만 클라이언트로 가는 표(`Level`)와
-서버 전용 표(`Currency`, `DropGroup`, `ClassLevelStat`)는 만들지 않는다. 2026년 10월 27일(#319) 기준으로 `Item`, `ItemEquipStat`, `ItemConsumeEffect`,
-`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다. 2026년 10월 29일(#341)에 `Npc`, `Shop`이 더해졌다.
+서버 전용 표(`Currency`, `DropGroup`, `ClassLevelStat`, `Class`)는 만들지 않는다. 2026년 10월 27일(#319) 기준으로 `Item`, `ItemEquipStat`, `ItemConsumeEffect`,
+`Monster`, `Map`, `Area`와 `Area` 아래 중첩되는 `Portal`이 만든다. 2026년 10월 29일(#341)에 `Npc`, `Shop`이, 2026년 11월 1일(#353)에 `Action`과 그 아래 중첩되는 `ActionHit`이 더해졌다.
 
 | 폴더 | 파일 | 내용 |
 |---|---|---|

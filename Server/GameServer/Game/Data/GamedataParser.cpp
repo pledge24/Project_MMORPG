@@ -417,6 +417,8 @@ optional<string> GamedataParser::Parse(const GamedataDocuments& documents, OUT G
         tables.levels = ParseGenerated(documents.levels, DesignData::ParseLevel);
         tables.classLevelStats = ParseGenerated(documents.classLevelStats, DesignData::ParseClassLevelStat);
         tables.monsters = ParseGenerated(documents.monsters, DesignData::ParseMonster);
+        tables.actions = ParseGenerated(documents.actions, DesignData::ParseAction);
+        tables.classes = ParseGenerated(documents.classes, DesignData::ParseClass);
         tables.dropGroups = ParseGenerated(documents.dropGroups, DesignData::ParseDropGroup);
         tables.spawnGroups = ParseGenerated(documents.spawnGroups, DesignData::ParseSpawnGroup);
         tables.maps = ParseGenerated(documents.maps, DesignData::ParseMap);

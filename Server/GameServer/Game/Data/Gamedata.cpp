@@ -45,6 +45,8 @@ bool Gamedata::LoadAllGamedata()
         { DesignData::LEVEL_FILE, &documents.levels },
         { DesignData::CLASS_LEVEL_STAT_FILE, &documents.classLevelStats },
         { DesignData::MONSTER_FILE, &documents.monsters },
+        { DesignData::ACTION_FILE, &documents.actions },
+        { DesignData::CLASS_FILE, &documents.classes },
         { DesignData::DROP_GROUP_FILE, &documents.dropGroups },
         { DesignData::SPAWN_GROUP_FILE, &documents.spawnGroups },
         { DesignData::MAP_FILE, &documents.maps },
@@ -149,6 +151,18 @@ const DesignData::MonsterRow* Gamedata::FindMonster(int32 templateId)
 {
     auto it = s_tables.monsters.find(templateId);
     return it == s_tables.monsters.end() ? nullptr : &it->second;
+}
+
+const DesignData::ActionRow* Gamedata::FindAction(int32 actionId)
+{
+    auto it = s_tables.actions.find(actionId);
+    return it == s_tables.actions.end() ? nullptr : &it->second;
+}
+
+const DesignData::ClassRow* Gamedata::FindClass(Protocol::CharacterClass classId)
+{
+    auto it = s_tables.classes.find(classId);
+    return it == s_tables.classes.end() ? nullptr : &it->second;
 }
 
 const DesignData::DropGroupRow* Gamedata::FindDropGroup(int32 dropGroupId)

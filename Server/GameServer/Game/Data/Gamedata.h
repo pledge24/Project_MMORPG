@@ -32,6 +32,8 @@ public:
     static const DesignData::ItemEquipStatRow* FindItemEquipStat(int32 templateId);
     static const DesignData::ItemConsumeEffectRow* FindItemConsumeEffect(int32 templateId);
     static const DesignData::MonsterRow* FindMonster(int32 templateId);
+    static const DesignData::ActionRow* FindAction(int32 actionId);
+    static const DesignData::ClassRow* FindClass(Protocol::CharacterClass classId);
     static const DesignData::DropGroupRow* FindDropGroup(int32 dropGroupId);
     static const DesignData::SpawnGroupRow* FindSpawnGroup(int32 spawnGroupId);
     static const DesignData::AreaRow* FindArea(int32 areaId);
