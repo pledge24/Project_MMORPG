@@ -378,7 +378,9 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 
 - 기준점은 공격자 위치에서 (`OffsetX`, `OffsetY`)만큼 옮긴 점이다
 - 형상이 쓰지 않는 값은 0으로 적는다. 클라이언트로 가는 열이라 빈 셀(선택 값)을 쓸 수 없다
-- 이 좌표 규칙으로 겹침을 판정하는 코드는 아직 없다. 서버의 판정(`Game/Combat/`)과 클라이언트의 디버그 표시는 이 규칙을 같게 따라야 한다
+- 서버의 판정(`Game/Combat/AttackArea`)과 클라이언트의 디버그 표시(`Game/Combat/P1AttackArea`)가 이 좌표 규칙을 같게 따른다
+- 서버는 기동할 때 몬스터의 `TryAttackRange`가 그 몬스터 일반 공격 액션의 공격 범위가 앞으로 닿는 거리(타격 중 가장 먼 것)를 넘으면 뜨지 않는다.
+  넘으면 공격을 시작한 거리에 선 대상을 맞히지 못한다
 
 DataBuilder가 검사하는 규칙은 아래와 같다.
 
@@ -390,8 +392,8 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 
 없는 액션을 가리키는 `NextAction`, 직업과 몬스터의 `NormalAttackAction`은 참조 규칙이 막는다. 서버는 기동할 때 액션 규칙을 다시 검사하지 않는다(ADR-0022).
 
-**`NextAction`과 직업 표는 아직 서버만 받는다.** 콤보의 마지막 단계는 `NextAction`이 빈 셀이라 선택 참조가 필요하다. 클라이언트 행 구조체는 선택 값을 담지 못하므로,
-클라이언트에 콤보 재생을 넣는 작업(#360)이 두 값을 함께 클라이언트로 보낸다. 지금 클라이언트는 액션의 이름과 타격만 받는다.
+**`NextAction`과 직업 표는 클라이언트도 받는다.** 내 플레이어의 콤보가 직업 표의 `NormalAttackAction`에서 시작해 `NextAction`을 따라가기 때문이다.
+콤보의 마지막 단계는 `NextAction`이 빈 셀이고, 클라이언트는 그 값을 0으로 받는다(아래 「클라이언트 산출물」). 몬스터 표의 `NormalAttackAction`은 서버만 받는다.
 
 액션 번호는 직업의 액션이 1000번대, 몬스터의 액션이 2000번대다. DataBuilder가 검사하지 않는 관례다. 첫 데이터는 아래와 같다.
 
@@ -524,7 +526,8 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 - JSON은 서버 산출물과 같이 한 행 한 줄, 키 순서, 열 순서다. 각 행의 첫 필드 `RowName`이 데이터 테이블의 행 이름이고, 값은 기획 데이터의 키다. 복합 키는 `_`로 잇는다(`WARRIOR_1`)
 - 행 구조체의 속성은 열 이름 그대로이고 `VisibleAnywhere`다. 에디터에서 행 값을 고치지 않는다. 값은 원본을 고치고 DataBuilder와 에디터 메뉴를 다시 돌려 바꾼다
 - `.proto` 열거형은 `UPROPERTY`가 될 수 없어서 값 이름(`FString`)으로 싣는다. 게임 코드는 생성된 `Get<열>()`로 프로토콜 값을 얻는다. 값 이름이 아니면 0번 값이다
-- 클라이언트로 가는 열에는 선택 값(`int32?`, `ref?:` 등)을 쓰지 않는다. 행 구조체가 빈 값을 담지 못해서 DataBuilder가 막는다
+- 클라이언트로 가는 열에 쓸 수 있는 선택 값은 정수 키 표를 가리키는 선택 참조(`ref?:`)뿐이다. 행 구조체가 빈 값을 담지 못하므로 빈 셀을 0으로 싣고, 속성 주석에
+  「비어 있으면 0이다」를 붙인다. 가리키는 표에 키가 0인 행이 있으면 빈 참조와 가릴 수 없어 DataBuilder가 막는다. 그 밖의 선택 값(`int32?`, 열거형 키 표의 `ref?:`)도 막는다
 - 설정 시트는 데이터 테이블을 만들지 않는다. 클라이언트로 가는 필드가 있는 설정은 상수 헤더 `P1<설정>Config.h` 하나를 만든다(아래)
 - 설정 시트에서 클라이언트로 보낼 수 있는 필드는 수(`int32`, `int64`, `float`)와 `bool`뿐이다. 다른 타입이면 DataBuilder가 막는다
 - 중첩한 표가 클라이언트 산출물을 만들면 부모 표도 만들어야 한다. 아니면 DataBuilder가 막는다
@@ -549,11 +552,12 @@ DataBuilder가 검사하는 규칙은 아래와 같다.
 | `MonsterTable` | `DT_Monster` | `FindMonsterRow` |
 | `ItemAssetTable` | `DT_ItemAssets` | `LoadItemIcon`. 에셋 테이블이다 |
 | `MonsterAssetTable` | `DT_MonsterAssets` | `FindMonsterAssetData`. 에셋 테이블이다 |
-| `ActionTable` | `DT_Action` | `FindActionRow`. 타격마다의 공격 범위가 행의 `Hits`에 순번 순서로 실린다. 공격 범위 디버그 표시가 읽는다 |
+| `ActionTable` | `DT_Action` | `FindActionRow`. 타격마다의 공격 범위가 행의 `Hits`에 순번 순서로 실린다. 공격 범위 디버그 표시와 내 플레이어의 콤보(`NextAction`)가 읽는다 |
+| `ClassTable` | `DT_Class` | `FindClassRow`. 행 이름은 직업의 값 이름(`WARRIOR`)이라 프로토콜 직업 값을 받는다. 내 플레이어의 콤보가 첫 단계 액션을 읽는다 |
 | `NpcTable` | `DT_Npc` | `FindNpcRow` |
 | `NpcAssetTable` | `DT_NpcAssets` | `FindNpcAssetData`. 에셋 테이블이다 |
 | `ShopTable` | `DT_Shop` | `FindShopRow` |
-| `ActionAssetTable` | `DT_ActionAssets` | 조회 함수가 아직 없고 크리처 추출만 읽는다. 에셋 테이블이다. 수치 테이블 `ActionTable`과의 짝은 짝 검증기가 아니라 크리처 추출이 기획 데이터의 액션 표로 대조한다 |
+| `ActionAssetTable` | `DT_ActionAssets` | `FindActionAssetData`. 액션 재생(`UP1ActionComponent`)과 크리처 추출이 읽는다. 에셋 테이블이다. 수치 테이블 `ActionTable`과의 짝은 짝 검증기가 아니라 크리처 추출이 기획 데이터의 액션 표로 대조한다 |
 
 - 기획 데이터 테이블은 모두 `/Game/P1/Data/DesignData/`에 있다. 에셋 테이블(`DT_ItemAssets`, `DT_MonsterAssets`, `DT_NpcAssets`, `DT_ActionAssets`)은 옛 폴더(`/Game/P1/Data/DataTables/`)에 있다
 - 에셋 테이블은 에디터가 소유하고 에디터 메뉴가 채우지 않는다. 행 이름은 짝이 되는 수치 테이블의 행 이름(번호)과 같다. 에디터 모듈의 검증기가 두 테이블의 짝을 대조한다(아래 「수치 테이블과 에셋 테이블의 짝」)
@@ -917,11 +921,10 @@ pwsh P1/Scripts/Invoke-PlacementExtract.ps1
 | 액션 | 프로젝트 설정 「P1 Game Data」의 `ActionAssetTable`(`DT_ActionAssets`)의 행. 행 이름이 액션 번호이고, 행 구조체는 `FP1ActionAssetData`다 | 행의 `Montage`가 가리키는 몽타주에서 `Section` 섹션의 길이, 타격 노티파이, 콤보 입력 창, 루트 모션 |
 | 기획 데이터 | DataBuilder의 서버 산출물(`Server/GameServer/Game/Data/Generated/`)의 `Action.json`, `Monster.json` | 몬스터 번호, 액션마다 타격 수와 다음 액션이 있는지, 몬스터의 일반 공격 액션 |
 
-- 기획 데이터를 서버 산출물에서 읽는 것은 다음 액션(`NextAction`)과 몬스터의 일반 공격 액션(`NormalAttackAction`)이 서버만 받는 열이기 때문이다
+- 기획 데이터를 서버 산출물에서 읽는 것은 몬스터의 일반 공격 액션(`NormalAttackAction`)이 서버만 받는 열이기 때문이다
 - 액션 에셋 테이블은 기획 데이터에 에셋 참조를 넣지 않으려고(ADR-0009) 둔 표현 데이터다. 2026년 11월 1일(#357)에 만들었고, 전사 콤보 액션 넷(1001~1004)은
-  `AM_AttackA_Combo`의 섹션 `Combo1`~`Combo4`를, 몬스터 액션 셋(2001~2003)은 몬스터 에셋 테이블의 공격 몽타주와 같은 몽타주의 `Default` 섹션을 가리킨다
-- 몬스터 에셋 테이블의 `AttackMontages`와 플레이어의 `UP1AttackSystemComponent`의 공격 몽타주 배열은 추출이 읽지 않는다. 클라이언트 재생은 아직 이 둘을 쓰고,
-  재생을 액션 번호로 옮기는 작업(#359)이 지운다
+  `AM_AttackA_Combo`의 섹션 `Combo1`~`Combo4`를, 몬스터 액션 셋(2001~2003)은 몬스터 공격 몽타주의 `Default` 섹션을 가리킨다
+- 클라이언트도 이 표로 액션의 몽타주 섹션을 재생한다. 크리처마다 공격 몽타주를 두던 몬스터 에셋 테이블의 열과 플레이어 공격 컴포넌트의 몽타주 배열은 2026년 11월 1일(#359)에 지웠다
 - 지금은 직업 표에 전사만 있어 `CharacterClassPlayers`에 전사(1) → `BP_Player` 하나만 있다. 직업을 더하면 이 표에도 더한다
 - 루트 모션은 메시 공간에서 꺼내고, 플레이어 블루프린트의 메시 상대 회전과 크기(지금 yaw -90도)로 캐릭터 로컬 좌표에 옮긴다. +X가 캐릭터의 앞이다.
   액션은 어느 직업이 쓰는지 모르므로 모든 직업의 메시가 같은 회전과 크기로 붙어 있어야 한다
