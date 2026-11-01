@@ -40,6 +40,22 @@ void UP1ActionComponent::InputNormalAttack(int32 FirstActionId)
         Combo.EndAction();
 }
 
+void UP1ActionComponent::CancelLocalAction()
+{
+    const int32 CanceledAction = PlayingActionId;
+
+    // 상태를 먼저 비운다. 멈춘 몽타주의 끝 이벤트는 블렌드 아웃 뒤에 오고, 그사이 새로 누른 공격은 첫 단계부터 시작해야 한다.
+    PlayingActionId = 0;
+    ActionMontageInstanceId = INDEX_NONE;
+    Combo.EndAction();
+
+    const FP1ActionAssetData* AssetData = CanceledAction != 0 ? UP1GameDataSettings::FindActionAssetData(CanceledAction) : nullptr;
+    UAnimMontage* Montage = AssetData ? AssetData->Montage.Get() : nullptr;
+    UAnimInstance* AnimInstance = GetAnimInstance();
+    if (Montage && AnimInstance && AnimInstance->Montage_IsPlaying(Montage))
+        AnimInstance->Montage_Stop(Montage->GetDefaultBlendOutTime(), Montage);
+}
+
 bool UP1ActionComponent::StartLocalAction(int32 ActionId)
 {
     if (PlayActionSection(ActionId) == false)

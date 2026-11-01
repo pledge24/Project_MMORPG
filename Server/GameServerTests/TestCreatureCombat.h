@@ -79,7 +79,7 @@ namespace TestCreatureCombat
         tables.actionTimings[actionId] = MakeTiming(hitTime);
     }
 
-    /** 대상 자리에 두는 시험용 액션. 플레이어가 몬스터를 때리는 액션의 판정은 아직 없으므로 테스트가 룸의 타격 판정을 직접 부른다. */
+    /** 대상 자리에 두는 시험용 액션. 액션 요청과 콤보를 거치지 않으려고 테스트가 룸의 타격 판정을 직접 부른다. */
     constexpr int32 STRIKE_ACTION_ID = 900000;
 
     /** 피해량이 공격자의 물리 공격력 × coefficient인 시험용 액션을 넣는다. 범위는 기준점 둘레 반지름 radius이고 높이는 넉넉하다. */

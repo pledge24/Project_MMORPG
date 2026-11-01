@@ -83,12 +83,16 @@ namespace Protocol {
 enum CombatResult : int {
   COMBAT_RESULT_SUCCESS = 0,
   COMBAT_RESULT_DEAD = 1,
+  COMBAT_RESULT_INVALID_ACTION = 2,
+  COMBAT_RESULT_TOO_EARLY = 3,
+  COMBAT_RESULT_INVALID_POSITION = 4,
+  COMBAT_RESULT_INVALID_YAW = 5,
   CombatResult_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   CombatResult_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool CombatResult_IsValid(int value);
 constexpr CombatResult CombatResult_MIN = COMBAT_RESULT_SUCCESS;
-constexpr CombatResult CombatResult_MAX = COMBAT_RESULT_DEAD;
+constexpr CombatResult CombatResult_MAX = COMBAT_RESULT_INVALID_YAW;
 constexpr int CombatResult_ARRAYSIZE = CombatResult_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* CombatResult_descriptor();

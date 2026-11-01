@@ -106,7 +106,10 @@ public:
     void C_HandleUsePortal(Protocol::C_USE_PORTAL pkt, PlayerRef player);
     /** 보낸 사람(player)의 위치를 바꾼다. */
     void C_HandleMove(Protocol::C_MOVE pkt, PlayerRef player);
-    /** 사망한 플레이어의 액션은 응답으로 거절하고 다른 플레이어에게 알리지 않는다. 받아들인 액션은 알리기만 하고 판정하지 않는다. */
+    /**
+     * 액션 요청을 검증해 받아들이면 시작 위치로 옮기고 액션을 시작한다. 결과는 보낸 사람에게만 응답한다.
+     * 거절한 액션은 다른 플레이어에게 알리지 않고, 서버의 위치와 진행 중인 액션을 그대로 둔다.
+     */
     void C_HandleAction(Protocol::C_ACTION pkt, PlayerRef player);
     /** 이 룸에서 되살린 뒤 마을로 보낸다. 마을이 이 룸의 맵에 있으면 룸 안에서 옮긴다. */
     void C_HandleRespawn(Protocol::C_RESPAWN pkt, PlayerRef player);

@@ -1,6 +1,7 @@
 #include "Core/pch.h"
 #include "Game/Action/ActionComponent.h"
 #include "Game/Combat/AttackArea.h"
+#include "Game/Data/ActionData.h"
 #include "Game/Entities/Creature.h"
 #include "Game/Room/Room.h"
 
@@ -11,6 +12,10 @@ ActionComponent::ActionComponent(CreatureRef owner)
 
 void ActionComponent::Tick(float deltaTime)
 {
+    // 콤보 판정은 끝난 액션의 시간도 본다.
+    if (_last.has_value())
+        _last->elapsed += deltaTime;
+
     if (_running.has_value() == false)
         return;
 
@@ -18,14 +23,14 @@ void ActionComponent::Tick(float deltaTime)
 
     // 틱이 길면 타격 여럿이 한 틱에 지난다. 타격 순번 순서로 모두 판정한다.
     // 판정이 이 크리처의 액션을 끝낼 수 있으므로(룸에서 빠짐) 판정마다 진행 중인지 다시 본다.
-    while (_running.has_value() && _running->nextHitIndex < static_cast<int32>(_running->hitTimes.size())
-        && _running->elapsed >= _running->hitTimes[_running->nextHitIndex])
+    while (_running.has_value() && _running->nextHitIndex < static_cast<int32>(_running->timing.hitTimes.size())
+        && _running->elapsed >= _running->timing.hitTimes[_running->nextHitIndex])
     {
         const int32 hitIndex = _running->nextHitIndex++;
         JudgeHit(hitIndex);
     }
 
-    if (_running.has_value() && _running->elapsed >= _running->length)
+    if (_running.has_value() && _running->elapsed >= _running->timing.length)
         _running.reset();
 }
 
@@ -48,13 +53,20 @@ bool ActionComponent::StartAction(int32 actionId, float yaw)
     {
         running.actionId = actionId;
         running.yaw = yaw;
-        running.length = timing->length;
-        running.hitTimes = timing->hitTimes;
+        running.startFoot = owner->GetFootPosition();
+        running.timing = *timing;
     }
     _running = std::move(running);
+    _last = LastAction{ actionId, 0.f };
 
     ownerRoom->HandleActionStart(owner, actionId, yaw);
     return true;
+}
+
+void ActionComponent::Cancel()
+{
+    _running.reset();
+    _last.reset();
 }
 
 void ActionComponent::JudgeHit(int32 hitIndex)
@@ -64,12 +76,7 @@ void ActionComponent::JudgeHit(int32 hitIndex)
     if (ownerRoom == nullptr)
         return;
 
-    AttackerPose pose;
-    {
-        pose.foot = owner->GetFootPosition();
-        pose.yaw = _running->yaw;
-    }
-
+    const AttackerPose pose = ActionData::MakeHitPose(_running->startFoot, _running->yaw, _running->timing, hitIndex, Gamedata::GetRootMotionSampleRate());
     ownerRoom->HandleHit(owner, _running->actionId, hitIndex, pose);
 }
 

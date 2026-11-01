@@ -218,16 +218,19 @@ const char descriptor_table_protodef_Combat_2eproto[] PROTOBUF_SECTION_VARIABLE(
   " \001(\003\"\?\n\007LevelUp\022\r\n\005level\030\001 \001(\005\022%\n\rchange"
   "d_stats\030\002 \003(\0132\016.Protocol.Stat\"J\n\010S_REWAR"
   "D\022\013\n\003exp\030\001 \001(\003\022\014\n\004gold\030\002 \001(\003\022#\n\010level_up"
-  "\030\003 \001(\0132\021.Protocol.LevelUp*A\n\014CombatResul"
-  "t\022\031\n\025COMBAT_RESULT_SUCCESS\020\000\022\026\n\022COMBAT_R"
-  "ESULT_DEAD\020\001b\006proto3"
+  "\030\003 \001(\0132\021.Protocol.LevelUp*\303\001\n\014CombatResu"
+  "lt\022\031\n\025COMBAT_RESULT_SUCCESS\020\000\022\026\n\022COMBAT_"
+  "RESULT_DEAD\020\001\022 \n\034COMBAT_RESULT_INVALID_A"
+  "CTION\020\002\022\033\n\027COMBAT_RESULT_TOO_EARLY\020\003\022\"\n\036"
+  "COMBAT_RESULT_INVALID_POSITION\020\004\022\035\n\031COMB"
+  "AT_RESULT_INVALID_YAW\020\005b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_Combat_2eproto_deps[1] = {
   &::descriptor_table_Common_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Combat_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Combat_2eproto = {
-    false, false, 540, descriptor_table_protodef_Combat_2eproto,
+    false, false, 671, descriptor_table_protodef_Combat_2eproto,
     "Combat.proto",
     &descriptor_table_Combat_2eproto_once, descriptor_table_Combat_2eproto_deps, 1, 7,
     schemas, file_default_instances, TableStruct_Combat_2eproto::offsets,
@@ -249,6 +252,10 @@ bool CombatResult_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
       return true;
     default:
       return false;

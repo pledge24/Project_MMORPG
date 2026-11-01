@@ -3,6 +3,7 @@
 #include "Game/Progress/P1MyPlayerData.h"
 #include "Sync/P1EntitySpawner.h"
 #include "Sync/P1MoveSyncComponent.h"
+#include "Game/Combat/P1ActionComponent.h"
 #include "Game/Entities/P1Creature.h"
 #include "Game/Entities/P1MyPlayer.h"
 #include "Game/Entities/P1Player.h"
@@ -291,6 +292,21 @@ void UP1StatefulEntityManager::HandleChatMessage(const Protocol::S_CHAT_MESSAGE&
         return;
 
     (*Player)->ShowChatBubble(UTF8_TO_TCHAR(ChatMessagePkt.message().c_str()));
+}
+
+void UP1StatefulEntityManager::HandleActionResult(const Protocol::S_ACTION& ActionPkt)
+{
+    // 내 액션은 누를 때 이미 재생했다. 받아들였으면 그대로 둔다.
+    if (ActionPkt.result() == Protocol::COMBAT_RESULT_SUCCESS)
+        return;
+
+    UE_LOG(LogP1Combat, Warning, TEXT("서버가 내 액션을 거절했다: %s"), UTF8_TO_TCHAR(Protocol::CombatResult_Name(ActionPkt.result()).c_str()));
+
+    const UP1MyPlayerData* MyPlayerData = GetMyPlayerData();
+    const TObjectPtr<AP1Player>* Found = MyPlayerData ? Players.Find(MyPlayerData->GetPlayerId()) : nullptr;
+    const AP1Creature* MyPlayer = Found ? Found->Get() : nullptr;
+    if (MyPlayer && MyPlayer->GetActionComponent())
+        MyPlayer->GetActionComponent()->CancelLocalAction();
 }
 
 void UP1StatefulEntityManager::HandleActionStart(const Protocol::S_ACTION_START& ActionStartPkt)

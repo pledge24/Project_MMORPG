@@ -31,6 +31,8 @@ public:
      * 진행 중이면 콤보 입력 창 안의 입력만 다음 단계로 예약한다. 다음 단계는 입력 창이 닫힐 때 재생하고 알린다.
      */
     void InputNormalAttack(int32 FirstActionId);
+    /** 서버가 거절한 내 액션을 되돌릴 때 쓴다. 재생 중인 내 액션의 몽타주를 멈추고, 다음 입력은 콤보 첫 단계부터 받는다. */
+    void CancelLocalAction();
 
     /** 내 콤보의 액션이 재생 중이면 true. 원격 크리처의 액션은 세지 않는다. */
     bool IsActing() const { return Combo.IsActing(); }
