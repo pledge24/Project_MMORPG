@@ -54,4 +54,11 @@ void UP1NameplateWidget::InitializeMonsterNameplate(AP1Monster* TargetMonster)
     int64 CurHp = TargetMonster->GetCurHp();
     int64 MaxHp = MonsterData.MaxHp;
     HpBar->Init(CurHp, MaxHp);
+
+    TargetMonster->OnHit.AddUniqueDynamic(this, &UP1NameplateWidget::HandleMonsterHit);
+}
+
+void UP1NameplateWidget::HandleMonsterHit(const int64& Damage, const int64& UpdatedHp)
+{
+    HpBar->SetCurValue(UpdatedHp);
 }
