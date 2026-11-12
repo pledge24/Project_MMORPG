@@ -3,7 +3,7 @@
 이 문서는 코드를 읽어서 알 수 있는 내용을 반복하지 않는다.
 **왜 이렇게 되어 있는지**, 그리고 **깨면 안 되는 것**만 적는다.
 
-최종 수정: 2026-10-29
+최종 수정: 2026-11-12
 검증: 세션 1(2026-08-19)에서 실코드·라이브 DB·UE 에디터와 대조.
 
 불변식은 `**Architecture Invariant:**`로 표시한다. 대부분 **무언가의 부재**를 가리킨다 —
@@ -489,7 +489,7 @@ AI는 상태 객체(`MonsterStates`)로 목적지만 정하고, 길찾기와 이
 핸들러는 `Lobby/LobbyPacketHandlers.cpp`에, 나머지는 `Network/ServerPacketHandler.cpp`에 정의한다. 새 핸들러는 단계별
 허용표에도 더한다. 더하지 않으면 그 패킷은 어느 단계에서도 버려진다.
 
-일부 패킷은 의도적으로 스텁이다(핑/퐁).
+지금 스텁인 패킷은 없다.
 
 ### P1 (UE 클라이언트)
 
@@ -553,7 +553,7 @@ C++에 있고, 블루프린트 그래프에는 이벤트와 함수가 없다. �
 > 한정하면 어느 도메인이든 부른다. 차단하려면 도메인을 별도 모듈로 나눠야 하고 지금 규모에서는
 > 나누지 않는다. 근거는 `docs/adr/0005-drop-include-path-flattening.md`에 있다.
 
-**API Boundary:** `P1/Source/`에는 모듈이 둘이고(`P1`, `ProtobufCore`), protobuf를 아는
+**API Boundary:** `P1/Source/`에는 모듈이 셋이고(`P1`, `P1Editor`, `ProtobufCore`), protobuf를 아는
 경계는 `ProtobufCore`다. 상세는 `docs/build.md`.
 
 ### 생성물

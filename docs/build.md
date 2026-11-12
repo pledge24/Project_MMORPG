@@ -37,7 +37,7 @@ git config core.hooksPath .githooks
 
 **AuthServer는 솔루션에 없다.** Node 프로젝트라 MSBuild가 `.NETCoreApp,v6.0` 참조를 요구하며 실패해서, 솔루션 빌드 신호를 상시 빨강으로 만들었다. `npm start`로만 다룬다.
 
-`Server.slnLaunch.user`에 GameServer + DummyClient를 동시에 띄우는 다중 시작 프로필이 정의되어 있다.
+`Server.slnLaunch.user`에 GameServer + DummyClient를 동시에 띄우는 다중 시작 프로필이 정의되어 있다. 이 파일은 git이 추적하지 않으므로(`Server/.gitignore`의 `*.user`) 새로 클론한 저장소에는 없다.
 
 **빌드 순서가 중요하다.** `ServerCore`는 정적 라이브러리이고 `GameServer`와 `DummyClient`가 이를 링크한다.
 
@@ -60,6 +60,7 @@ git config core.hooksPath .githooks
 | `P1_WORLD_NAME` | `로컬 월드`. 월드 목록에 보이는 이름이다 |
 | `P1_WORLD_HOST` | `127.0.0.1`. 클라이언트가 이 월드에 접속할 IPv4 주소다. 포트는 `P1_GAME_SERVER_PORT`다 |
 | `P1_WORLD_CAPACITY` | `100`. 혼잡도를 나누는 정원이고, 접속을 막지 않는다 |
+| `P1_CHANNEL_COUNT` | `2`. 맵마다 만드는 룸(채널)의 수다. 1~20 |
 
 숫자가 아니거나 범위 밖인 값은 경고를 남기고 기본값을 쓴다. 바인드 주소나 월드 주소가 IPv4 주소가 아니거나, 연결 수가 DB 스레드 수보다
 작으면 서버가 사유를 로그에 남기고 종료 코드 1로 멈춘다. 환경 변수는 UTF-8로 바꿔 읽으므로 월드 이름에 한국어를 쓸 수 있다.
@@ -75,6 +76,10 @@ git config core.hooksPath .githooks
 **게임 서버는 DB를 모두 준비한 뒤에 접속을 받는다.** 부팅 순서는 기획 데이터 → navmesh → 설정 검증 → 룸 → DB와 Redis 연결 →
 아이템 번호 → DB 스레드 → 리슨 → 워커 스레드다. navmesh는 맵 표와 대조하므로 기획 데이터 다음이고, 룸이 만들어질 때 맵의 navmesh를 찾으므로 룸 앞이다.
 — 리슨부터 열면 DB 큐가 생기기 전에 온 로그인이 없는 큐를 고르고, 다음 아이템 번호가 정해지기 전에 아이템이 만들어질 수 있다.
+
+**`GameServer.exe`는 `Server/GameServer/`를 작업 디렉터리로 띄운다.** 기획 데이터와 추출 산출물을 상대 경로로 연다.
+— 실행 파일이 있는 `Server/Binary/Debug/`에서 띄우면 「기획 데이터를 불러오지 못했다」를 남기고 종료 코드 1로 멈춘다(2026년 11월 12일 실측).
+디버거로 띄울 때는 `GameServer.vcxproj`의 `LocalDebuggerWorkingDirectory`가 같은 폴더를 준다.
 
 ### navmesh 빌드 도구
 
