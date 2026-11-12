@@ -26,6 +26,12 @@ __pycache__/
 # docs/tech-debt.md, docs/adr/ 다.
 docs/reports/
 
+# 프로젝트 마무리의 최종 문서는 추적하지 않는다 (2026년 11월 12일 결정).
+#
+# 면접을 준비하는 본인이 읽는 자료(기능 설명, 어필 가이드, 녹화 대본)다. 공개하는 것은 README 이고,
+# 결정과 진행 현황은 docs/work/2026-11-12-project-wrap-up.md 에 있다. 이 PC 에만 남으므로 백업 대상에 포함할 것.
+docs/final/
+
 # MSYS 도구가 죽으면서 작업 디렉터리에 떨어뜨리는 크래시 덤프.
 #
 # 실제 사례: Git Bash 의 GNU grep 3.0 은 `-i` 와 패턴 2개 이상을 함께 받으면 패턴을
