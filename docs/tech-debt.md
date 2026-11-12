@@ -3,7 +3,7 @@
 지금 틀린 것만 담는다. 해결이 확정되면 항목을 지운다 — 수정 완료 표기를 남기지 않는다.
 무엇을 어떻게 고쳤는지는 커밋이 갖는다.
 
-항목 18개 (높음 0 · 중간 2 · 낮음 16) · 다음 번호 TD-092
+항목 24개 (높음 0 · 중간 2 · 낮음 22) · 다음 번호 TD-098
 
 ## 작성 방법
 
@@ -286,6 +286,99 @@ CI(`.github/workflows/ci.yml`)도 이 테스트를 돌리지 않는다. 새 워�
 ### 영향
 
 **유지보수 어려움** — 에디터 모듈에 무엇이 있는지를 이 문단으로 판단하면 추출 커맨드렛과 몽타주 도구를 놓친다.
+
+## TD-092 인증 티켓이 거절됐을 때의 문구와 주석은 다시 로그인하라고 하지만 클라이언트는 월드 선택에 남는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 파일 · client
+> 위치: `P1/Source/P1/Lobby/P1LobbySubsystem.cpp` 50줄(주석), 94줄(문구) · `P1/Source/P1/Core/P1EntryFlowSubsystem.cpp` 300~306줄
+> 등록일: 2026년 11월 12일
+
+`ConnectLobby`의 주석은 「다시 들어가려면 인증 서버에 다시 로그인해야 한다」고 적는다. `LOBBY_RESULT_INVALID_AUTH_TICKET`의 문구는
+「로그인 정보가 만료되었습니다. 다시 로그인하세요.」다. 접속 흐름(`HandleLobbyConnectFailed`)은 로그인 세션을 남긴 채 월드 선택 화면에
+그 문구를 띄운다. 월드를 다시 고르면 새 인증 티켓을 받으므로 다시 로그인할 필요가 없다. 코드를 읽고 판단했다.
+
+프로젝트 마무리 작업에서 기능 설명 문서를 쓰다가 찾았다. TD-093부터 TD-097까지도 같은 작업에서 찾았다.
+
+### 영향
+
+**유지보수 어려움** — 화면의 문구가 사용자에게 필요 없는 로그인을 시킨다. 주석을 믿으면 로비 접속의 실패가 로그인 단계로 돌아간다고 읽는다.
+
+## TD-093 사망한 플레이어의 이동 요청과 포털 요청을 서버가 받아들인다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · server
+> 위치: `Server/GameServer/Game/Room/Room.cpp` 458~518줄(`C_HandleUsePortal`), 520~548줄(`C_HandleMove`) · `Server/GameServer/Game/Room/RoomTransfer.cpp`(포털 판정)
+> 등록일: 2026년 11월 12일
+
+`C_HandleMove`와 `C_HandleUsePortal`, 포털 판정에는 사망 여부를 보는 검사가 없다. 액션 요청과 채널 변경 요청은 사망한 플레이어를 거절한다.
+그래서 사망한 플레이어가 보낸 이동은 이동 판정만 통과하면 서버의 위치를 옮긴다. 포털 반경 안에서 보낸 포털 요청은 사망한 채로 순간이동시킨다.
+클라이언트는 `S_ENTER_ROOM`을 받으면 내 플레이어의 `S_Respawn`을 부르므로(`P1/Source/P1/Sync/P1StatefulEntityManager.cpp` 386~387줄),
+서버와 클라이언트의 사망 상태가 어긋날 수 있다.
+
+코드를 읽고 판단했고 실행해 보지 않았다. 정상 클라이언트가 사망한 동안 이 요청을 보내는지는 확인하지 않았다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 조작한 클라이언트는 사망한 채 위치를 옮길 수 있다. 「사망한 플레이어는 리스폰할 때까지 룸에 남는다」는 규칙이
+이 두 요청에서는 위치까지 묶지 못한다.
+
+## TD-094 클라이언트가 정지 응답의 해제 시각을 읽지 않는다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 함수 · client
+> 위치: `P1/Source/P1/Auth/P1AuthClient.cpp` 278~284줄(`ReadEnvelope`)
+> 등록일: 2026년 11월 12일
+
+인증 서버는 `ACCOUNT_BANNED` 응답의 `error.bannedUntil`에 해제 시각을 싣는다. 클라이언트의 `ReadEnvelope`는 `error`에서 `code`와 `message`만
+읽는다. 정지된 계정의 화면에는 해제 시각 없이 서버의 문구만 보인다.
+
+### 영향
+
+**유지보수 어려움** — 계약(`docs/ARCHITECTURE.md`의 실패 응답 표)에 있는 필드를 읽는 쪽이 없다. 정지된 사용자는 언제 풀리는지 알 수 없다.
+
+## TD-095 주석 다섯 곳이 지금 동작과 다르다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · shared
+> 위치: 아래 표
+> 등록일: 2026년 11월 12일
+
+| 위치 | 주석이 적은 것 | 지금 동작 |
+|---|---|---|
+| `Protocol/Schema/Entity.proto` 83줄 | `S_MOVE`는 룸의 플레이어에게 간다 | 그 엔티티를 보는 플레이어에게만 간다(`Room::BroadcastNearby`) |
+| `Protocol/Schema/Entry.proto` 20줄 | `ENTRY_RESULT_INTERNAL_ERROR`는 진행을 저장하지 못했을 때도 나간다 | 저장 실패를 이 값으로 알리는 경로를 찾지 못했다. 로비 복귀는 캐릭터 목록을 불러오지 못했을 때만 이 값을 보낸다 |
+| `Server/GameServer/Network/ItemRequests.h` 16줄, 18줄 · `ItemRequests.cpp` 10줄 | 외형을 룸의 모든 플레이어에게 알린다 | 착용한 플레이어를 보는 플레이어에게만 알린다. 테스트 이름(`…ToWholeRoom`)도 옛 범위를 적는다 |
+| `Server/GameServer/Game/Entities/Npc.cpp` 34줄 | 기동할 때 NPC 표의 상점이 상점 표에 있는지 대조했다 | 게임 서버의 기동 검사에서 그 대조를 찾지 못했다. DataBuilder의 참조 규칙이 검사한다 |
+| `Server/GameServer/Migrations/001_init.sql` 16줄 | 슬롯 수의 처음 값은 캐릭터 생성 표에서 읽는다 | 로비 표의 기본 슬롯 수에서 읽는다 |
+
+코드를 읽고 판단했다. 마지막 줄의 마이그레이션은 이미 적용한 파일이라 고치지 않는다(`docs/build.md` 「데이터베이스」).
+
+### 영향
+
+**유지보수 어려움** — 주석을 믿고 브로드캐스트의 범위나 실패 값의 뜻을 판단하면 틀린다.
+
+## TD-096 `docs/ARCHITECTURE.md`와 `docs/codegen.md`의 문장 넷이 코드와 다르다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 프로젝트 · server
+> 위치: 아래 표
+> 등록일: 2026년 11월 12일
+
+| 문서 | 문장 | 코드 |
+|---|---|---|
+| `docs/ARCHITECTURE.md` | 「아이템의 컨테이너는 서버 C++ enum `ItemContainer`이고 DB에 그 값이 들어간다」 | DB에 들어가는 값의 enum은 `ItemRowContainer`(`Server/GameServer/DB/ItemRows.h` 14줄)다. `ItemContainer`는 칸을 담는 클래스다 |
+| `docs/ARCHITECTURE.md` | 「크리처는 액션을 시작할 때 위치와 방향을 정하고, 액션이 끝날 때까지 둘 다 바꾸지 않는다」 | 고정되는 것은 액션 부품이 잡아 둔 시작 발밑과 방향이다. 플레이어의 서버 위치는 액션 중에도 이동 요청으로 바뀐다(`C_HandleMove`에 액션 진행 검사가 없다) |
+| `docs/codegen.md` 「수치 테이블과 에셋 테이블의 짝」 | 아이템과 몬스터의 짝만 적는다 | 검증기는 NPC의 짝도 검사한다(`P1/Source/P1Editor/Validation/P1DesignDataPairValidator.cpp` 29~30줄) |
+| `docs/codegen.md` 서버가 부팅 시 읽는 표의 목록 | 액션 표와 직업 표가 없다 | `Gamedata::LoadAllGamedata`가 두 표를 읽는다(`Server/GameServer/Game/Data/Gamedata.cpp` 48~49줄) |
+
+프로젝트 마무리 작업은 문서를 고치는 범위를 미리 정한 목록으로 한정했으므로 이 문장들을 고치지 않았다.
+
+### 영향
+
+**유지보수 어려움** — 문서의 이름으로 코드를 찾으면 다른 타입에 닿는다. 액션 중의 위치를 문서대로 믿으면 타격의 기준 위치와 서버의 위치가 같다고 읽는다.
+
+## TD-097 리스너와 서버 서비스가 서로를 `shared_ptr`로 든다
+> **심각도:** 낮음 · **난이도:** 낮음 · **범위:** 모듈 · server
+> 위치: `Server/ServerCore/Network/Service.h` 110줄 · `Server/ServerCore/Network/Listener.h` 61줄
+> 등록일: 2026년 11월 12일
+
+`ServerService`가 `Listener`를 `shared_ptr`로 들고, `Listener`도 `ServerService`를 `shared_ptr`로 든다. 세션과 서비스, 엔티티와 룸의 순환은
+`weak_ptr`가 끊지만 이 순환을 끊는 자리는 없다. `CloseService`가 이 참조를 비우는 코드도 찾지 못했다. 코드를 읽고 판단했다.
+
+### 영향
+
+**버그 발생 가능성 증가** — 서버의 수명 동안 하나뿐이라 지금은 드러나지 않는다. 서비스를 여러 번 만들고 지우는 테스트나 도구에서는 둘 다 해제되지 않는다.
 
 ## TD-049 룸 이동에 실패한 플레이어가 끊기면 저장 대기가 풀리지 않는 창이 남는다
 > **심각도:** 낮음 · **난이도:** 중간 · **범위:** 기능 · server
