@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="t d"
+     font-family="-apple-system, 'Segoe UI', 'Noto Sans KR', 'Malgun Gothic', sans-serif" font-size="12">
+  <title id="t">Project_MMORPG 아키텍처</title>
+  <desc id="d">클라이언트는 인증 서버에 HTTP로 로그인해 월드를 고르고, 받은 인증 티켓으로 게임 서버에 TCP로 접속한다. 인증 서버와 게임 서버는 Redis의 키로만 이어진다.</desc>
+  <defs>
+    <marker id="aG" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#82e0aa"/></marker>
+    <marker id="aO" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#ffb86c"/></marker>
+    <marker id="aB" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#79b8ff"/></marker>
+    <marker id="aP" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#c8a2ff"/></marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="600" rx="10" fill="#0f1419"/>
+
+  <!-- 클라이언트 -->
+  <rect x="30" y="215" width="200" height="150" rx="6" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="130" y="244" text-anchor="middle" fill="#d8dee4" font-size="14" font-weight="700">클라이언트</text>
+  <text x="130" y="264" text-anchor="middle" fill="#828c99" font-size="11">Unreal Engine 5.8 · 모듈 P1</text>
+  <line x1="46" y1="278" x2="214" y2="278" stroke="#2a313a" stroke-width="1"/>
+  <text x="130" y="300" text-anchor="middle" fill="#d8dee4" font-size="11">접속 흐름 서브시스템</text>
+  <text x="130" y="320" text-anchor="middle" fill="#d8dee4" font-size="11">네트워크 스레드와 수신 펌프</text>
+  <text x="130" y="340" text-anchor="middle" fill="#d8dee4" font-size="11">엔티티 관리자 · 화면</text>
+
+  <!-- 인증 서버 -->
+  <rect x="370" y="40" width="230" height="96" rx="6" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="485" y="69" text-anchor="middle" fill="#d8dee4" font-size="14" font-weight="700">인증 서버</text>
+  <text x="485" y="89" text-anchor="middle" fill="#828c99" font-size="11">Node.js · Express · TypeScript</text>
+  <text x="485" y="115" text-anchor="middle" fill="#d8dee4" font-size="11">회원가입 · 로그인 · 월드 선택</text>
+
+  <!-- AccountDB -->
+  <rect x="740" y="52" width="190" height="72" rx="6" fill="#1a2029" stroke="#79b8ff" stroke-width="2"/>
+  <text x="835" y="82" text-anchor="middle" fill="#d8dee4" font-size="14" font-weight="700">AccountDB</text>
+  <text x="835" y="102" text-anchor="middle" fill="#828c99" font-size="11">SQL Server LocalDB · P1Auth</text>
+
+  <!-- Redis -->
+  <rect x="340" y="215" width="290" height="112" rx="6" fill="#1a2029" stroke="#ffb86c" stroke-width="2"/>
+  <text x="485" y="243" text-anchor="middle" fill="#ffb86c" font-size="14" font-weight="700">Redis</text>
+  <g font-family="ui-monospace, Consolas, monospace" font-size="11" fill="#d8dee4">
+    <text x="356" y="268">loginSession:{값}</text>
+    <text x="356" y="288">world:{월드}</text>
+    <text x="356" y="308">authTicket:{월드}:{티켓}</text>
+  </g>
+  <g font-size="11" fill="#828c99" text-anchor="end">
+    <text x="616" y="268">1시간</text>
+    <text x="616" y="288">15초</text>
+    <text x="616" y="308">30초 · 일회용</text>
+  </g>
+
+  <!-- 티어 경계 설명 -->
+  <text x="656" y="252" fill="#ffb86c" font-size="12" font-weight="700">두 서버를 잇는 것은 Redis의 키뿐이다.</text>
+  <text x="656" y="274" fill="#828c99" font-size="11">게임 서버는 AccountDB를 읽지 않고,</text>
+  <text x="656" y="292" fill="#828c99" font-size="11">인증 서버는 GameDB를 읽지 않는다.</text>
+
+  <!-- 게임 서버 -->
+  <rect x="300" y="400" width="380" height="170" rx="6" fill="#1a2029" stroke="#2a313a" stroke-width="2"/>
+  <text x="490" y="427" text-anchor="middle" fill="#d8dee4" font-size="14" font-weight="700">게임 서버</text>
+  <text x="490" y="445" text-anchor="middle" fill="#828c99" font-size="11">C++20 · 자체 IOCP 코어 · protobuf</text>
+  <g fill="#11161d" stroke="#2a313a" stroke-width="1.5">
+    <rect x="316" y="458" width="104" height="52" rx="5"/>
+    <rect x="438" y="458" width="104" height="52" rx="5"/>
+    <rect x="560" y="458" width="104" height="52" rx="5"/>
+  </g>
+  <g text-anchor="middle" font-size="11">
+    <text x="368" y="479" fill="#d8dee4" font-weight="600">IOCP 워커</text>
+    <text x="368" y="497" fill="#828c99">패킷 핸들러</text>
+    <text x="490" y="479" fill="#d8dee4" font-weight="600">룸 큐</text>
+    <text x="490" y="497" fill="#828c99">룸 틱 · 셀 시야</text>
+    <text x="612" y="479" fill="#d8dee4" font-weight="600">DB 스레드</text>
+    <text x="612" y="497" fill="#828c99">DB 큐</text>
+  </g>
+  <line x1="420" y1="484" x2="431" y2="484" stroke="#c8a2ff" stroke-width="2" marker-end="url(#aP)"/>
+  <line x1="542" y1="484" x2="553" y2="484" stroke="#c8a2ff" stroke-width="2" marker-end="url(#aP)"/>
+  <text x="490" y="532" text-anchor="middle" fill="#d8dee4" font-size="11">룸은 맵 하나의 사본이고, 룸의 상태는 그 룸의 큐 위에서만 바뀐다</text>
+  <text x="490" y="552" text-anchor="middle" fill="#828c99" font-size="11">이동 검증 · 타격 판정 · 몬스터 AI · 보상 · 소지품 · 상점</text>
+
+  <!-- GameDB -->
+  <rect x="740" y="448" width="190" height="72" rx="6" fill="#1a2029" stroke="#79b8ff" stroke-width="2"/>
+  <text x="835" y="478" text-anchor="middle" fill="#d8dee4" font-size="14" font-weight="700">GameDB</text>
+  <text x="835" y="498" text-anchor="middle" fill="#828c99" font-size="11">SQL Server LocalDB · P1Game</text>
+
+  <!-- ① 클라이언트 → 인증 서버 -->
+  <path d="M130,215 L130,88 L363,88" fill="none" stroke="#82e0aa" stroke-width="2" marker-end="url(#aG)"/>
+  <text x="250" y="80" text-anchor="middle" fill="#82e0aa" font-weight="600">① HTTP · JSON</text>
+  <text x="250" y="106" text-anchor="middle" fill="#828c99" font-size="11">로그인, 월드 목록, 월드 선택</text>
+
+  <!-- 인증 서버 → AccountDB -->
+  <line x1="600" y1="88" x2="733" y2="88" stroke="#79b8ff" stroke-width="2" marker-end="url(#aB)"/>
+  <text x="667" y="80" text-anchor="middle" fill="#79b8ff" font-size="11">계정 조회와 기록</text>
+
+  <!-- ② 인증 서버 → Redis -->
+  <line x1="485" y1="136" x2="485" y2="208" stroke="#ffb86c" stroke-width="2" marker-end="url(#aO)"/>
+  <text x="497" y="166" fill="#ffb86c" font-weight="600">② 인증 티켓 쓰기</text>
+  <text x="497" y="184" fill="#828c99" font-size="11">로그인 세션 쓰기, 월드 항목 읽기</text>
+
+  <!-- ④ 게임 서버 → Redis -->
+  <line x1="485" y1="400" x2="485" y2="334" stroke="#ffb86c" stroke-width="2" marker-end="url(#aO)"/>
+  <text x="497" y="362" fill="#ffb86c" font-weight="600">④ 인증 티켓 읽고 지우기</text>
+  <text x="497" y="380" fill="#828c99" font-size="11">월드 항목 쓰기 (5초마다)</text>
+
+  <!-- ③ 클라이언트 → 게임 서버 -->
+  <path d="M130,365 L130,484 L293,484" fill="none" stroke="#82e0aa" stroke-width="2" marker-end="url(#aG)"/>
+  <text x="214" y="476" text-anchor="middle" fill="#82e0aa" font-weight="600">③ TCP · protobuf 패킷</text>
+  <text x="214" y="502" text-anchor="middle" fill="#828c99" font-size="11">로비 접속부터 게임까지</text>
+
+  <!-- 게임 서버 → GameDB -->
+  <line x1="680" y1="484" x2="733" y2="484" stroke="#79b8ff" stroke-width="2" marker-end="url(#aB)"/>
+  <text x="835" y="438" text-anchor="middle" fill="#79b8ff" font-size="11">진행 불러오기와 저장</text>
+
+  <!-- 순서 -->
+  <text x="30" y="586" fill="#828c99" font-size="11">① 로그인과 월드 선택 → ② 그 월드에서만 쓸 수 있는 인증 티켓 발급 → ③ 티켓을 실은 로비 접속 → ④ 게임 서버가 티켓을 소비하고 계정을 확인</text>
+</svg>
